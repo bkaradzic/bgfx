@@ -942,6 +942,7 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
           id = id_inst->GetOperandAs<uint32_t>(1u);
           id_inst = vstate.FindDef(id);
         }
+        // Struct requirement is checked on variables so just move on here.
         if (SpvOpTypeStruct != id_inst->opcode()) continue;
         MemberConstraints constraints;
         ComputeMemberConstraintsForStruct(&constraints, id, LayoutConstraints(),
@@ -952,21 +953,40 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
                     : (push_constant ? "PushConstant" : "StorageBuffer");
 
         if (spvIsVulkanEnv(vstate.context()->target_env)) {
-          if (storage_buffer &&
-              hasDecoration(id, SpvDecorationBufferBlock, vstate)) {
+          const bool block = hasDecoration(id, SpvDecorationBlock, vstate);
+          const bool buffer_block =
+              hasDecoration(id, SpvDecorationBufferBlock, vstate);
+          if (storage_buffer && buffer_block) {
             return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(var_id))
                    << "Storage buffer id '" << var_id
                    << " In Vulkan, BufferBlock is disallowed on variables in "
                       "the StorageBuffer storage class";
           }
-          // Vulkan 14.5.1: Check Block decoration for PushConstant variables.
-          if (push_constant && !hasDecoration(id, SpvDecorationBlock, vstate)) {
+          // Vulkan 14.5.1/2: Check Block decoration for PushConstant, Uniform
+          // and StorageBuffer variables. Uniform can also use BufferBlock.
+          if (push_constant && !block) {
             return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                    << "PushConstant id '" << id
                    << "' is missing Block decoration.\n"
                    << "From Vulkan spec, section 14.5.1:\n"
                    << "Such variables must be identified with a Block "
                       "decoration";
+          }
+          if (storage_buffer && !block) {
+            return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
+                   << "StorageBuffer id '" << id
+                   << "' is missing Block decoration.\n"
+                   << "From Vulkan spec, section 14.5.2:\n"
+                   << "Such variables must be identified with a Block "
+                      "decoration";
+          }
+          if (uniform && !block && !buffer_block) {
+            return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
+                   << "Uniform id '" << id
+                   << "' is missing Block or BufferBlock decoration.\n"
+                   << "From Vulkan spec, section 14.5.2:\n"
+                   << "Such variables must be identified with a Block or "
+                      "BufferBlock decoration";
           }
           // Vulkan 14.5.2: Check DescriptorSet and Binding decoration for
           // Uniform and StorageBuffer variables.

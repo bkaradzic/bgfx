@@ -145,10 +145,9 @@ TEST_F(ValidateDerivatives, OpDPdxWrongExecutionModel) {
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Vertex").c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Derivative instructions require Fragment execution model: DPdx"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Derivative instructions require Fragment or GLCompute "
+                        "execution model: DPdx"));
 }
 
 }  // namespace

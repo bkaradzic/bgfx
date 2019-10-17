@@ -56,6 +56,7 @@
 		|| BX_PLATFORM_ANDROID          \
 		|| BX_PLATFORM_LINUX            \
 		|| BX_PLATFORM_WINDOWS          \
+		|| BX_PLATFORM_OSX              \
 		)
 
 #if BGFX_PLATFORM_SUPPORTS_DX9BC

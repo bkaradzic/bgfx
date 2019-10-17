@@ -18,6 +18,7 @@
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
+#include "source/val/validate_scopes.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -30,6 +31,37 @@ spv_result_t ValidateUndef(ValidationState_t& _, const Instruction* inst) {
       !_.IsPointerType(inst->type_id())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Cannot create undefined values with 8- or 16-bit types";
+  }
+
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst) << "OpUndef is disallowed";
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateShaderClock(ValidationState_t& _,
+                                 const Instruction* inst) {
+// #2952: disabled until scope discussion is resolved.
+#if 0
+  const uint32_t execution_scope = inst->word(3);
+  if (auto error = ValidateExecutionScope(_, inst, execution_scope)) {
+    return error;
+  }
+#endif
+
+  // Result Type must be a 64 - bit unsigned integer type or
+  // a vector of two - components of 32 -
+  // bit unsigned integer type
+  const uint32_t result_type = inst->type_id();
+  if (!(_.IsUnsignedIntScalarType(result_type) &&
+        _.GetBitWidth(result_type) == 64) &&
+      !(_.IsUnsignedIntVectorType(result_type) &&
+        _.GetDimension(result_type) == 2 && _.GetBitWidth(result_type) == 32)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst) << "Expected Value to be a "
+                                                   "vector of two components"
+                                                   " of unsigned integer"
+                                                   " or 64bit unsigned integer";
   }
 
   return SPV_SUCCESS;
@@ -110,6 +142,11 @@ spv_result_t MiscPass(ValidationState_t& _, const Instruction* inst) {
                << spvOpcodeString(inst->opcode());
       break;
     }
+    case SpvOpReadClockKHR:
+      if (auto error = ValidateShaderClock(_, inst)) {
+        return error;
+      }
+      break;
     default:
       break;
   }

@@ -111,20 +111,21 @@ class InterestingThenRandom : public InterestingnessTest {
 // |transformation_sequence_in| gets performed with respect to
 // |interestingness_function|.  If |expected_binary_out| is non-empty, it must
 // match the binary obtained by applying the final shrunk set of
-// transformations, in which case the number of such transforations should equal
-// |expected_transformations_out_size|.
+// transformations, in which case the number of such transformations should
+// equal |expected_transformations_out_size|.
+//
+// The |step_limit| parameter restricts the number of steps that the shrinker
+// will try; it can be set to something small for a faster (but less thorough)
+// test.
 void RunAndCheckShrinker(
     const spv_target_env& target_env, const std::vector<uint32_t>& binary_in,
     const protobufs::FactSequence& initial_facts,
     const protobufs::TransformationSequence& transformation_sequence_in,
     const Shrinker::InterestingnessFunction& interestingness_function,
     const std::vector<uint32_t>& expected_binary_out,
-    uint32_t expected_transformations_out_size) {
-  // We want tests to complete in reasonable time, so don't go on too long.
-  const uint32_t kStepLimit = 50;
-
+    uint32_t expected_transformations_out_size, uint32_t step_limit) {
   // Run the shrinker.
-  Shrinker shrinker(target_env, kStepLimit);
+  Shrinker shrinker(target_env, step_limit, false);
   shrinker.SetMessageConsumer(kSilentConsumer);
 
   std::vector<uint32_t> binary_out;
@@ -146,62 +147,65 @@ void RunAndCheckShrinker(
   }
 }
 
-// Assembles the given |shader| text, and then does the following |num_runs|
-// times, with successive seeds starting from |initial_seed|:
-// - Runs the fuzzer with the seed to yield a set of transformations
+// Assembles the given |shader| text, and then:
+// - Runs the fuzzer with |seed| to yield a set of transformations
 // - Shrinks the transformation with various interestingness functions,
 //   asserting some properties about the result each time
 void RunFuzzerAndShrinker(const std::string& shader,
                           const protobufs::FactSequence& initial_facts,
-                          uint32_t initial_seed, uint32_t num_runs) {
-  const auto env = SPV_ENV_UNIVERSAL_1_3;
+                          uint32_t seed) {
+  const auto env = SPV_ENV_UNIVERSAL_1_5;
 
   std::vector<uint32_t> binary_in;
   SpirvTools t(env);
+  t.SetMessageConsumer(kConsoleMessageConsumer);
   ASSERT_TRUE(t.Assemble(shader, &binary_in, kFuzzAssembleOption));
   ASSERT_TRUE(t.Validate(binary_in));
 
-  for (uint32_t seed = initial_seed; seed < initial_seed + num_runs; seed++) {
-    // Run the fuzzer and check that it successfully yields a valid binary.
-    std::vector<uint32_t> fuzzer_binary_out;
-    protobufs::TransformationSequence fuzzer_transformation_sequence_out;
-    spvtools::FuzzerOptions fuzzer_options;
-    spvFuzzerOptionsSetRandomSeed(fuzzer_options, seed);
-    Fuzzer fuzzer(env);
-    fuzzer.SetMessageConsumer(kSilentConsumer);
-    auto fuzzer_result_status =
-        fuzzer.Run(binary_in, initial_facts, fuzzer_options, &fuzzer_binary_out,
-                   &fuzzer_transformation_sequence_out);
-    ASSERT_EQ(Fuzzer::FuzzerResultStatus::kComplete, fuzzer_result_status);
-    ASSERT_TRUE(t.Validate(fuzzer_binary_out));
+  // Run the fuzzer and check that it successfully yields a valid binary.
+  std::vector<uint32_t> fuzzer_binary_out;
+  protobufs::TransformationSequence fuzzer_transformation_sequence_out;
+  spvtools::FuzzerOptions fuzzer_options;
+  spvFuzzerOptionsSetRandomSeed(fuzzer_options, seed);
+  Fuzzer fuzzer(env);
+  fuzzer.SetMessageConsumer(kSilentConsumer);
+  auto fuzzer_result_status =
+      fuzzer.Run(binary_in, initial_facts, fuzzer_options, &fuzzer_binary_out,
+                 &fuzzer_transformation_sequence_out);
+  ASSERT_EQ(Fuzzer::FuzzerResultStatus::kComplete, fuzzer_result_status);
+  ASSERT_TRUE(t.Validate(fuzzer_binary_out));
 
-    // With the AlwaysInteresting test, we should quickly shrink to the original
-    // binary with no transformations remaining.
-    RunAndCheckShrinker(env, binary_in, initial_facts,
-                        fuzzer_transformation_sequence_out,
-                        AlwaysInteresting().AsFunction(), binary_in, 0);
+  const uint32_t kReasonableStepLimit = 50;
+  const uint32_t kSmallStepLimit = 20;
 
-    // With the OnlyInterestingFirstTime test, no shrinking should be achieved.
-    RunAndCheckShrinker(
-        env, binary_in, initial_facts, fuzzer_transformation_sequence_out,
-        OnlyInterestingFirstTime().AsFunction(), fuzzer_binary_out,
-        static_cast<uint32_t>(
-            fuzzer_transformation_sequence_out.transformation_size()));
+  // With the AlwaysInteresting test, we should quickly shrink to the original
+  // binary with no transformations remaining.
+  RunAndCheckShrinker(
+      env, binary_in, initial_facts, fuzzer_transformation_sequence_out,
+      AlwaysInteresting().AsFunction(), binary_in, 0, kReasonableStepLimit);
 
-    // The PingPong test is unpredictable; passing an empty expected binary
-    // means that we don't check anything beyond that shrinking completes
-    // successfully.
-    RunAndCheckShrinker(env, binary_in, initial_facts,
-                        fuzzer_transformation_sequence_out,
-                        PingPong().AsFunction(), {}, 0);
+  // With the OnlyInterestingFirstTime test, no shrinking should be achieved.
+  RunAndCheckShrinker(
+      env, binary_in, initial_facts, fuzzer_transformation_sequence_out,
+      OnlyInterestingFirstTime().AsFunction(), fuzzer_binary_out,
+      static_cast<uint32_t>(
+          fuzzer_transformation_sequence_out.transformation_size()),
+      kReasonableStepLimit);
 
-    // The InterestingThenRandom test is unpredictable; passing an empty
-    // expected binary means that we do not check anything about shrinking
-    // results.
-    RunAndCheckShrinker(
-        env, binary_in, initial_facts, fuzzer_transformation_sequence_out,
-        InterestingThenRandom(PseudoRandomGenerator(seed)).AsFunction(), {}, 0);
-  }
+  // The PingPong test is unpredictable; passing an empty expected binary
+  // means that we don't check anything beyond that shrinking completes
+  // successfully.
+  RunAndCheckShrinker(env, binary_in, initial_facts,
+                      fuzzer_transformation_sequence_out,
+                      PingPong().AsFunction(), {}, 0, kSmallStepLimit);
+
+  // The InterestingThenRandom test is unpredictable; passing an empty
+  // expected binary means that we do not check anything about shrinking
+  // results.
+  RunAndCheckShrinker(
+      env, binary_in, initial_facts, fuzzer_transformation_sequence_out,
+      InterestingThenRandom(PseudoRandomGenerator(seed)).AsFunction(), {}, 0,
+      kSmallStepLimit);
 }
 
 TEST(FuzzerShrinkerTest, Miscellaneous1) {
@@ -369,9 +373,7 @@ TEST(FuzzerShrinkerTest, Miscellaneous1) {
 
   )";
 
-  // Do 2 fuzz-and-shrink runs, starting from an initial seed of 2 (seed value
-  // chosen arbitrarily).
-  RunFuzzerAndShrinker(shader, protobufs::FactSequence(), 2, 2);
+  RunFuzzerAndShrinker(shader, protobufs::FactSequence(), 2);
 }
 
 TEST(FuzzerShrinkerTest, Miscellaneous2) {
@@ -432,7 +434,7 @@ TEST(FuzzerShrinkerTest, Miscellaneous2) {
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main" %16 %139
+               OpEntryPoint Fragment %4 "main" %16 %139 %25 %68
                OpExecutionMode %4 OriginUpperLeft
                OpSource ESSL 310
                OpName %4 "main"
@@ -614,9 +616,7 @@ TEST(FuzzerShrinkerTest, Miscellaneous2) {
                OpFunctionEnd
   )";
 
-  // Do 2 fuzzer runs, starting from an initial seed of 19 (seed value chosen
-  // arbitrarily).
-  RunFuzzerAndShrinker(shader, protobufs::FactSequence(), 19, 2);
+  RunFuzzerAndShrinker(shader, protobufs::FactSequence(), 19);
 }
 
 TEST(FuzzerShrinkerTest, Miscellaneous3) {
@@ -732,7 +732,7 @@ TEST(FuzzerShrinkerTest, Miscellaneous3) {
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main" %68 %100
+               OpEntryPoint Fragment %4 "main" %68 %100 %24
                OpExecutionMode %4 OriginUpperLeft
                OpSource ESSL 310
                OpName %4 "main"
@@ -1101,7 +1101,7 @@ TEST(FuzzerShrinkerTest, Miscellaneous3) {
 
   // Do 2 fuzzer runs, starting from an initial seed of 194 (seed value chosen
   // arbitrarily).
-  RunFuzzerAndShrinker(shader, facts, 194, 2);
+  RunFuzzerAndShrinker(shader, facts, 194);
 }
 
 }  // namespace

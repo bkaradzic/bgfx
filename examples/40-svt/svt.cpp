@@ -33,17 +33,17 @@ struct PosTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosTexcoordVertex::ms_layout;
 
 static const float s_planeScale = 50.0f;
 
@@ -64,8 +64,8 @@ static const uint16_t s_planeIndices[] =
 class ExampleSVT : public entry::AppI
 {
 public:
-	ExampleSVT(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleSVT(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -107,7 +107,7 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_vplaneVertices, sizeof(s_vplaneVertices))
-			, PosTexcoordVertex::ms_decl
+			, PosTexcoordVertex::ms_layout
 		);
 
 		m_ibh = bgfx::createIndexBuffer(
@@ -372,4 +372,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleSVT, "40-svt", "Sparse Virtual Textures.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleSVT
+	, "40-svt"
+	, "Sparse Virtual Textures."
+	, "https://bkaradzic.github.io/bgfx/examples.html#svt"
+	);

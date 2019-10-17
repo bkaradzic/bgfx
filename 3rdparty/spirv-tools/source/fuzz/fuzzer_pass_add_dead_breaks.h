@@ -35,4 +35,4 @@ class FuzzerPassAddDeadBreaks : public FuzzerPass {
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // #define SOURCE_FUZZ_FUZZER_PASS_ADD_DEAD_BREAKS_H_
+#endif  // SOURCE_FUZZ_FUZZER_PASS_ADD_DEAD_BREAKS_H_

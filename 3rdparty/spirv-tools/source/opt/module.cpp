@@ -121,6 +121,9 @@ void Module::ForEachInst(const std::function<void(const Instruction*)>& f,
     static_cast<const Function*>(i.get())->ForEachInst(f,
                                                        run_on_debug_line_insts);
   }
+  if (run_on_debug_line_insts) {
+    for (auto& i : trailing_dbg_line_info_) DELEGATE(i);
+  }
 #undef DELEGATE
 }
 

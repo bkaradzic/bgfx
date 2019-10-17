@@ -65,17 +65,18 @@ class SameTypeTest : public ::testing::Test {
 #define TestMultipleInstancesOfTheSameType(ty, ...) \
   TestMultipleInstancesOfTheSameTypeQualified(ty, Simple, __VA_ARGS__)
 
-TestMultipleInstancesOfTheSameType(Void);
-TestMultipleInstancesOfTheSameType(Bool);
-TestMultipleInstancesOfTheSameType(Integer, 32, true);
-TestMultipleInstancesOfTheSameType(Float, 64);
-TestMultipleInstancesOfTheSameType(Vector, u32_t_.get(), 3);
-TestMultipleInstancesOfTheSameType(Matrix, v3u32_t_.get(), 4);
+// clang-format off
+TestMultipleInstancesOfTheSameType(Void)
+TestMultipleInstancesOfTheSameType(Bool)
+TestMultipleInstancesOfTheSameType(Integer, 32, true)
+TestMultipleInstancesOfTheSameType(Float, 64)
+TestMultipleInstancesOfTheSameType(Vector, u32_t_.get(), 3)
+TestMultipleInstancesOfTheSameType(Matrix, v3u32_t_.get(), 4)
 TestMultipleInstancesOfTheSameType(Image, f64_t_.get(), SpvDimCube, 0, 0, 1, 1,
                                    SpvImageFormatRgb10A2,
-                                   SpvAccessQualifierWriteOnly);
-TestMultipleInstancesOfTheSameType(Sampler);
-TestMultipleInstancesOfTheSameType(SampledImage, image_t_.get());
+                                   SpvAccessQualifierWriteOnly)
+TestMultipleInstancesOfTheSameType(Sampler)
+TestMultipleInstancesOfTheSameType(SampledImage, image_t_.get())
 // There are three classes of arrays, based on the kinds of length information
 // they have.
 // 1. Array length is a constant or spec constant without spec ID, with literals
@@ -85,34 +86,35 @@ TestMultipleInstancesOfTheSameTypeQualified(Array, LenConstant, u32_t_.get(),
                                                               {
                                                                   0,
                                                                   9999,
-                                                              }});
+                                                              }})
 // 2. Array length is a spec constant with a given spec id.
 TestMultipleInstancesOfTheSameTypeQualified(Array, LenSpecId, u32_t_.get(),
-                                            Array::LengthInfo{42, {1, 99}});
+                                            Array::LengthInfo{42, {1, 99}})
 // 3. Array length is an OpSpecConstantOp expression
 TestMultipleInstancesOfTheSameTypeQualified(Array, LenDefiningId, u32_t_.get(),
-                                            Array::LengthInfo{42, {2, 42}});
+                                            Array::LengthInfo{42, {2, 42}})
 
-TestMultipleInstancesOfTheSameType(RuntimeArray, u32_t_.get());
+TestMultipleInstancesOfTheSameType(RuntimeArray, u32_t_.get())
 TestMultipleInstancesOfTheSameType(Struct, std::vector<const Type*>{
-                                               u32_t_.get(), f64_t_.get()});
-TestMultipleInstancesOfTheSameType(Opaque, "testing rocks");
-TestMultipleInstancesOfTheSameType(Pointer, u32_t_.get(), SpvStorageClassInput);
+                                               u32_t_.get(), f64_t_.get()})
+TestMultipleInstancesOfTheSameType(Opaque, "testing rocks")
+TestMultipleInstancesOfTheSameType(Pointer, u32_t_.get(), SpvStorageClassInput)
 TestMultipleInstancesOfTheSameType(Function, u32_t_.get(),
-                                   {f64_t_.get(), f64_t_.get()});
-TestMultipleInstancesOfTheSameType(Event);
-TestMultipleInstancesOfTheSameType(DeviceEvent);
-TestMultipleInstancesOfTheSameType(ReserveId);
-TestMultipleInstancesOfTheSameType(Queue);
-TestMultipleInstancesOfTheSameType(Pipe, SpvAccessQualifierReadWrite);
-TestMultipleInstancesOfTheSameType(ForwardPointer, 10, SpvStorageClassUniform);
-TestMultipleInstancesOfTheSameType(PipeStorage);
-TestMultipleInstancesOfTheSameType(NamedBarrier);
-TestMultipleInstancesOfTheSameType(AccelerationStructureNV);
+                                   {f64_t_.get(), f64_t_.get()})
+TestMultipleInstancesOfTheSameType(Event)
+TestMultipleInstancesOfTheSameType(DeviceEvent)
+TestMultipleInstancesOfTheSameType(ReserveId)
+TestMultipleInstancesOfTheSameType(Queue)
+TestMultipleInstancesOfTheSameType(Pipe, SpvAccessQualifierReadWrite)
+TestMultipleInstancesOfTheSameType(ForwardPointer, 10, SpvStorageClassUniform)
+TestMultipleInstancesOfTheSameType(PipeStorage)
+TestMultipleInstancesOfTheSameType(NamedBarrier)
+TestMultipleInstancesOfTheSameType(AccelerationStructureNV)
 #undef TestMultipleInstanceOfTheSameType
 #undef TestMultipleInstanceOfTheSameTypeQual
 
 std::vector<std::unique_ptr<Type>> GenerateAllTypes() {
+  // clang-format on
   // Types in this test case are only equal to themselves, nothing else.
   std::vector<std::unique_ptr<Type>> types;
 

@@ -27,7 +27,7 @@ struct main0_in
     int index [[user(locn0)]];
 };
 
-float4 resolve(thread const Foobar& f)
+inline float4 resolve(thread const Foobar& f)
 {
     return float4(f.a + f.b);
 }

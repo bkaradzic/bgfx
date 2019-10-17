@@ -162,7 +162,7 @@ struct spvc_compiler_options_s : ScratchMemoryAllocation
 
 struct spvc_set_s : ScratchMemoryAllocation
 {
-	std::unordered_set<uint32_t> set;
+	std::unordered_set<VariableID> set;
 };
 
 // Dummy-inherit to we can keep our opaque type handle type safe in C-land as well,
@@ -545,6 +545,30 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_MSL_BUFFER_SIZE_BUFFER_INDEX:
 		options->msl.buffer_size_buffer_index = value;
 		break;
+
+	case SPVC_COMPILER_OPTION_MSL_MULTIVIEW:
+		options->msl.multiview = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_VIEW_MASK_BUFFER_INDEX:
+		options->msl.view_mask_buffer_index = value;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_DEVICE_INDEX:
+		options->msl.device_index = value;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_VIEW_INDEX_FROM_DEVICE_INDEX:
+		options->msl.view_index_from_device_index = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_DISPATCH_BASE:
+		options->msl.dispatch_base = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_DYNAMIC_OFFSETS_BUFFER_INDEX:
+		options->msl.dynamic_offsets_buffer_index = value;
+		break;
 #endif
 
 	default:
@@ -882,6 +906,27 @@ spvc_result spvc_compiler_msl_add_resource_binding(spvc_compiler compiler,
 #endif
 }
 
+spvc_result spvc_compiler_msl_add_dynamic_buffer(spvc_compiler compiler, unsigned desc_set, unsigned binding, unsigned index)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	msl.add_dynamic_buffer(desc_set, binding, index);
+	return SPVC_SUCCESS;
+#else
+	(void)binding;
+	(void)desc_set;
+	(void)index;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
 spvc_result spvc_compiler_msl_add_discrete_descriptor_set(spvc_compiler compiler, unsigned desc_set)
 {
 #if SPIRV_CROSS_C_API_MSL
@@ -960,6 +1005,22 @@ static void spvc_convert_msl_sampler(MSLConstexprSampler &samp, const spvc_msl_c
 	samp.coord = static_cast<MSLSamplerCoord>(sampler->coord);
 	samp.border_color = static_cast<MSLSamplerBorderColor>(sampler->border_color);
 }
+
+static void spvc_convert_msl_sampler_ycbcr_conversion(MSLConstexprSampler &samp, const spvc_msl_sampler_ycbcr_conversion *conv)
+{
+	samp.ycbcr_conversion_enable = conv != nullptr;
+	if (conv == nullptr) return;
+	samp.planes = conv->planes;
+	samp.resolution = static_cast<MSLFormatResolution>(conv->resolution);
+	samp.chroma_filter = static_cast<MSLSamplerFilter>(conv->chroma_filter);
+	samp.x_chroma_offset = static_cast<MSLChromaLocation>(conv->x_chroma_offset);
+	samp.y_chroma_offset = static_cast<MSLChromaLocation>(conv->y_chroma_offset);
+	for (int i = 0; i < 4; i++)
+		samp.swizzle[i] = static_cast<MSLComponentSwizzle>(conv->swizzle[i]);
+	samp.ycbcr_model = static_cast<MSLSamplerYCbCrModelConversion>(conv->ycbcr_model);
+	samp.ycbcr_range = static_cast<MSLSamplerYCbCrRange>(conv->ycbcr_range);
+	samp.bpc = conv->bpc;
+}
 #endif
 
 spvc_result spvc_compiler_msl_remap_constexpr_sampler(spvc_compiler compiler, spvc_variable_id id,
@@ -1005,6 +1066,60 @@ spvc_result spvc_compiler_msl_remap_constexpr_sampler_by_binding(spvc_compiler c
 	(void)desc_set;
 	(void)binding;
 	(void)sampler;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
+spvc_result spvc_compiler_msl_remap_constexpr_sampler_ycbcr(spvc_compiler compiler, spvc_variable_id id,
+                                                            const spvc_msl_constexpr_sampler *sampler,
+                                                            const spvc_msl_sampler_ycbcr_conversion *conv)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	MSLConstexprSampler samp;
+	spvc_convert_msl_sampler(samp, sampler);
+	spvc_convert_msl_sampler_ycbcr_conversion(samp, conv);
+	msl.remap_constexpr_sampler(id, samp);
+	return SPVC_SUCCESS;
+#else
+	(void)id;
+	(void)sampler;
+	(void)conv;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
+spvc_result spvc_compiler_msl_remap_constexpr_sampler_by_binding_ycbcr(spvc_compiler compiler,
+                                                                       unsigned desc_set, unsigned binding,
+                                                                       const spvc_msl_constexpr_sampler *sampler,
+                                                                       const spvc_msl_sampler_ycbcr_conversion *conv)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	MSLConstexprSampler samp;
+	spvc_convert_msl_sampler(samp, sampler);
+	spvc_convert_msl_sampler_ycbcr_conversion(samp, conv);
+	msl.remap_constexpr_sampler_by_binding(desc_set, binding, samp);
+	return SPVC_SUCCESS;
+#else
+	(void)desc_set;
+	(void)binding;
+	(void)sampler;
+	(void)conv;
 	compiler->context->report_error("MSL function used on a non-MSL backend.");
 	return SPVC_ERROR_INVALID_ARGUMENT;
 #endif
@@ -1994,6 +2109,24 @@ void spvc_msl_constexpr_sampler_init(spvc_msl_constexpr_sampler *sampler)
 	sampler->r_address = static_cast<spvc_msl_sampler_address>(defaults.r_address);
 #else
 	memset(sampler, 0, sizeof(*sampler));
+#endif
+}
+
+void spvc_msl_sampler_ycbcr_conversion_init(spvc_msl_sampler_ycbcr_conversion *conv)
+{
+#if SPIRV_CROSS_C_API_MSL
+	MSLConstexprSampler defaults;
+	conv->planes = defaults.planes;
+	conv->resolution = static_cast<spvc_msl_format_resolution>(defaults.resolution);
+	conv->chroma_filter = static_cast<spvc_msl_sampler_filter>(defaults.chroma_filter);
+	conv->x_chroma_offset = static_cast<spvc_msl_chroma_location>(defaults.x_chroma_offset);
+	conv->y_chroma_offset = static_cast<spvc_msl_chroma_location>(defaults.y_chroma_offset);
+	for (int i = 0; i < 4; i++)
+		conv->swizzle[i] = static_cast<spvc_msl_component_swizzle>(defaults.swizzle[i]);
+	conv->ycbcr_model = static_cast<spvc_msl_sampler_ycbcr_model_conversion>(defaults.ycbcr_model);
+	conv->ycbcr_range = static_cast<spvc_msl_sampler_ycbcr_range>(defaults.ycbcr_range);
+#else
+	memset(conv, 0, sizeof(*conv));
 #endif
 }
 

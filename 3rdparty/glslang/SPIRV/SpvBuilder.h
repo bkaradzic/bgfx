@@ -67,6 +67,7 @@ typedef enum {
     Spv_1_2 = (1 << 16) | (2 << 8),
     Spv_1_3 = (1 << 16) | (3 << 8),
     Spv_1_4 = (1 << 16) | (4 << 8),
+    Spv_1_5 = (1 << 16) | (5 << 8),
 } SpvVersion;
 
 class Builder {
@@ -105,6 +106,20 @@ public:
     void addModuleProcessed(const std::string& p) { moduleProcesses.push_back(p.c_str()); }
     void setEmitOpLines() { emitOpLines = true; }
     void addExtension(const char* ext) { extensions.insert(ext); }
+    void removeExtension(const char* ext)
+    {
+        extensions.erase(ext);
+    }
+    void addIncorporatedExtension(const char* ext, SpvVersion incorporatedVersion)
+    {
+        if (getSpvVersion() < static_cast<unsigned>(incorporatedVersion))
+            addExtension(ext);
+    }
+    void promoteIncorporatedExtension(const char* baseExt, const char* promoExt, SpvVersion incorporatedVersion)
+    {
+        removeExtension(baseExt);
+        addIncorporatedExtension(promoExt, incorporatedVersion);
+    }
     void addInclude(const std::string& name, const std::string& text)
     {
         spv::Id incId = getStringId(name);
@@ -201,7 +216,11 @@ public:
     bool isMatrixType(Id typeId)       const { return getTypeClass(typeId) == OpTypeMatrix; }
     bool isStructType(Id typeId)       const { return getTypeClass(typeId) == OpTypeStruct; }
     bool isArrayType(Id typeId)        const { return getTypeClass(typeId) == OpTypeArray; }
+#ifdef GLSLANG_WEB
+    bool isCooperativeMatrixType(Id typeId)const { return false; }
+#else
     bool isCooperativeMatrixType(Id typeId)const { return getTypeClass(typeId) == OpTypeCooperativeMatrixNV; }
+#endif
     bool isAggregateType(Id typeId)    const { return isArrayType(typeId) || isStructType(typeId) || isCooperativeMatrixType(typeId); }
     bool isImageType(Id typeId)        const { return getTypeClass(typeId) == OpTypeImage; }
     bool isSamplerType(Id typeId)      const { return getTypeClass(typeId) == OpTypeSampler; }
@@ -557,6 +576,14 @@ public:
 
         // Accumulate whether anything in the chain of structures has coherent decorations.
         struct CoherentFlags {
+            CoherentFlags() { clear(); }
+#ifdef GLSLANG_WEB
+            void clear() { }
+            bool isVolatile() const { return false; }
+            CoherentFlags operator |=(const CoherentFlags &other) { return *this; }
+#else
+            bool isVolatile() const { return volatil; }
+
             unsigned coherent : 1;
             unsigned devicecoherent : 1;
             unsigned queuefamilycoherent : 1;
@@ -577,7 +604,6 @@ public:
                 isImage = 0;
             }
 
-            CoherentFlags() { clear(); }
             CoherentFlags operator |=(const CoherentFlags &other) {
                 coherent |= other.coherent;
                 devicecoherent |= other.devicecoherent;
@@ -589,6 +615,7 @@ public:
                 isImage |= other.isImage;
                 return *this;
             }
+#endif
         };
         CoherentFlags coherentFlags;
     };

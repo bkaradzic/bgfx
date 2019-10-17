@@ -44,8 +44,9 @@ void FuzzerPassSplitBlocks::Apply() {
   // Now go through all the block pointers that were gathered.
   for (auto& block : blocks) {
     // Probabilistically decide whether to try to split this block.
-    if (GetFuzzerContext()->GetRandomGenerator()->RandomPercentage() >
-        GetFuzzerContext()->GetChanceOfSplittingBlock()) {
+    if (!GetFuzzerContext()->ChoosePercentage(
+            GetFuzzerContext()->GetChanceOfSplittingBlock())) {
+      // We are not going to try to split this block.
       continue;
     }
     // We are going to try to split this block.  We now need to choose where
@@ -77,9 +78,8 @@ void FuzzerPassSplitBlocks::Apply() {
     }
     // Having identified all the places we might be able to split the block,
     // we choose one of them.
-    auto base_offset = base_offset_pairs
-        [GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-            static_cast<uint32_t>(base_offset_pairs.size()))];
+    auto base_offset =
+        base_offset_pairs[GetFuzzerContext()->RandomIndex(base_offset_pairs)];
     auto transformation =
         TransformationSplitBlock(base_offset.first, base_offset.second,
                                  GetFuzzerContext()->GetFreshId());

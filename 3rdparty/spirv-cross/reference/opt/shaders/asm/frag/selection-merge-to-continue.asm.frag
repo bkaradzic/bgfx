@@ -11,14 +11,11 @@ void main()
         if (v0.x == 20.0)
         {
             FragColor += vec4(v0[_54 & 3]);
-            continue;
         }
         else
         {
             FragColor += vec4(v0[_54 & 1]);
-            continue;
         }
-        continue;
     }
 }
 

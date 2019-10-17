@@ -23,19 +23,26 @@ namespace spvtools {
 namespace reduce {
 namespace {
 
+const spv_target_env kEnv = SPV_ENV_UNIVERSAL_1_3;
+
 TEST(RemoveUnreferencedInstructionReductionPassTest, RemoveStores) {
-  const std::string prologue = R"(
+  // A module with some unused instructions, including some unused OpStore
+  // instructions.
+
+  RemoveUnreferencedInstructionReductionOpportunityFinder finder(true);
+
+  const std::string original = R"(
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450
                OpEntryPoint Fragment %4 "main"
                OpExecutionMode %4 OriginUpperLeft
-               OpSource ESSL 310
-               OpName %4 "main"
-               OpName %8 "a"
-               OpName %10 "b"
-               OpName %12 "c"
-               OpName %14 "d"
+               OpSource ESSL 310  ; 0
+               OpName %4 "main"   ; 1
+               OpName %8 "a"      ; 2
+               OpName %10 "b"     ; 3
+               OpName %12 "c"     ; 4
+               OpName %14 "d"     ; 5
           %2 = OpTypeVoid
           %3 = OpTypeFunction %2
           %6 = OpTypeInt 32 1
@@ -49,51 +56,323 @@ TEST(RemoveUnreferencedInstructionReductionPassTest, RemoveStores) {
          %10 = OpVariable %7 Function
          %12 = OpVariable %7 Function
          %14 = OpVariable %7 Function
+               OpStore %8 %9           ; 6
+               OpStore %10 %11         ; 7
+               OpStore %12 %13         ; 8
+         %15 = OpLoad %6 %8
+               OpStore %14 %15         ; 9
+               OpReturn
+               OpFunctionEnd
+
   )";
 
-  const std::string epilogue = R"(
+  const MessageConsumer consumer = nullptr;
+  const auto context =
+      BuildModule(kEnv, consumer, original, kReduceAssembleOption);
+
+  CheckValid(kEnv, context.get());
+
+  auto ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(10, ops.size());
+
+  for (auto& op : ops) {
+    ASSERT_TRUE(op->PreconditionHolds());
+    op->TryToApply();
+    CheckValid(kEnv, context.get());
+  }
+
+  const std::string step_2 = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypePointer Function %6
+          %9 = OpConstant %6 10       ; 0
+         %11 = OpConstant %6 20       ; 1
+         %13 = OpConstant %6 30       ; 2
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+          %8 = OpVariable %7 Function
+         %10 = OpVariable %7 Function ; 3
+         %12 = OpVariable %7 Function ; 4
+         %14 = OpVariable %7 Function ; 5
+         %15 = OpLoad %6 %8           ; 6
                OpReturn
                OpFunctionEnd
   )";
 
-  const std::string original = prologue + R"(
-               OpStore %8 %9
-               OpStore %10 %11
-               OpStore %12 %13
-         %15 = OpLoad %6 %8
-               OpStore %14 %15
-  )" + epilogue;
+  CheckEqual(kEnv, step_2, context.get());
 
-  const std::string expected_after_2 = prologue + R"(
-               OpStore %12 %13
-         %15 = OpLoad %6 %8
-               OpStore %14 %15
-  )" + epilogue;
+  ops = finder.GetAvailableOpportunities(context.get());
 
-  const std::string expected_after_4 = prologue + R"(
-         %15 = OpLoad %6 %8
-  )" + epilogue;
+  ASSERT_EQ(7, ops.size());
 
-  const auto env = SPV_ENV_UNIVERSAL_1_3;
-  const auto consumer = nullptr;
-  const auto context =
-      BuildModule(env, consumer, original, kReduceAssembleOption);
-  const auto ops = RemoveUnreferencedInstructionReductionOpportunityFinder()
-                       .GetAvailableOpportunities(context.get());
-  ASSERT_EQ(4, ops.size());
-  ASSERT_TRUE(ops[0]->PreconditionHolds());
-  ops[0]->TryToApply();
-  ASSERT_TRUE(ops[1]->PreconditionHolds());
-  ops[1]->TryToApply();
+  for (auto& op : ops) {
+    ASSERT_TRUE(op->PreconditionHolds());
+    op->TryToApply();
+    CheckValid(kEnv, context.get());
+  }
 
-  CheckEqual(env, expected_after_2, context.get());
+  const std::string step_3 = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypePointer Function %6
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+          %8 = OpVariable %7 Function   ; 0
+               OpReturn
+               OpFunctionEnd
+  )";
 
-  ASSERT_TRUE(ops[2]->PreconditionHolds());
-  ops[2]->TryToApply();
-  ASSERT_TRUE(ops[3]->PreconditionHolds());
-  ops[3]->TryToApply();
+  CheckEqual(kEnv, step_3, context.get());
 
-  CheckEqual(env, expected_after_4, context.get());
+  ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(1, ops.size());
+
+  for (auto& op : ops) {
+    ASSERT_TRUE(op->PreconditionHolds());
+    op->TryToApply();
+    CheckValid(kEnv, context.get());
+  }
+
+  const std::string step_4 = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypePointer Function %6  ; 0
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  CheckEqual(kEnv, step_4, context.get());
+
+  ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(1, ops.size());
+
+  for (auto& op : ops) {
+    ASSERT_TRUE(op->PreconditionHolds());
+    op->TryToApply();
+    CheckValid(kEnv, context.get());
+  }
+
+  const std::string step_5 = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1        ; 0
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  CheckEqual(kEnv, step_5, context.get());
+
+  ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(1, ops.size());
+
+  for (auto& op : ops) {
+    ASSERT_TRUE(op->PreconditionHolds());
+    op->TryToApply();
+    CheckValid(kEnv, context.get());
+  }
+
+  const std::string step_6 = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  CheckEqual(kEnv, step_6, context.get());
+
+  ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(0, ops.size());
+}
+
+TEST(RemoveUnreferencedInstructionReductionPassTest, Referenced) {
+  // A module with some unused global variables, constants, and types. Some will
+  // not be removed initially because of the OpDecorate instructions.
+
+  RemoveUnreferencedInstructionReductionOpportunityFinder finder(true);
+
+  const std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310                 ; 1
+               OpName %4 "main"                  ; 2
+               OpName %12 "a"                    ; 3
+               OpDecorate %12 RelaxedPrecision   ; 4
+               OpDecorate %13 RelaxedPrecision   ; 5
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool
+          %7 = OpConstantTrue %6                 ; 6
+         %10 = OpTypeInt 32 1
+         %11 = OpTypePointer Private %10
+         %12 = OpVariable %11 Private
+         %13 = OpConstant %10 1
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  auto context = BuildModule(kEnv, nullptr, shader, kReduceAssembleOption);
+
+  CheckValid(kEnv, context.get());
+
+  auto ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(6, ops.size());
+
+  for (auto& op : ops) {
+    ASSERT_TRUE(op->PreconditionHolds());
+    op->TryToApply();
+    CheckValid(kEnv, context.get());
+  }
+
+  std::string after = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool                 ; 1
+         %10 = OpTypeInt 32 1
+         %11 = OpTypePointer Private %10
+         %12 = OpVariable %11 Private     ; 2
+         %13 = OpConstant %10 1           ; 3
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+    )";
+
+  CheckEqual(kEnv, after, context.get());
+
+  ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(3, ops.size());
+
+  for (auto& op : ops) {
+    ASSERT_TRUE(op->PreconditionHolds());
+    op->TryToApply();
+    CheckValid(kEnv, context.get());
+  }
+
+  std::string after_2 = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeInt 32 1
+         %11 = OpTypePointer Private %10   ; 1
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+    )";
+
+  CheckEqual(kEnv, after_2, context.get());
+
+  ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(1, ops.size());
+
+  for (auto& op : ops) {
+    ASSERT_TRUE(op->PreconditionHolds());
+    op->TryToApply();
+    CheckValid(kEnv, context.get());
+  }
+
+  std::string after_3 = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeInt 32 1          ; 1
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+    )";
+
+  CheckEqual(kEnv, after_3, context.get());
+
+  ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(1, ops.size());
+
+  for (auto& op : ops) {
+    ASSERT_TRUE(op->PreconditionHolds());
+    op->TryToApply();
+    CheckValid(kEnv, context.get());
+  }
+
+  std::string after_4 = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+    )";
+
+  CheckEqual(kEnv, after_4, context.get());
+
+  ops = finder.GetAvailableOpportunities(context.get());
+
+  ASSERT_EQ(0, ops.size());
 }
 
 }  // namespace

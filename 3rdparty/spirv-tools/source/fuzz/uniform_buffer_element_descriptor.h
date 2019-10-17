@@ -15,7 +15,6 @@
 #ifndef SOURCE_FUZZ_UNIFORM_BUFFER_ELEMENT_DESCRIPTOR_H_
 #define SOURCE_FUZZ_UNIFORM_BUFFER_ELEMENT_DESCRIPTOR_H_
 
-#include <algorithm>
 #include <vector>
 
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
@@ -25,8 +24,8 @@
 namespace spvtools {
 namespace fuzz {
 
-// Factory method to create a uniform buffer element descriptor message from an
-// id and list of indices.
+// Factory method to create a uniform buffer element descriptor message from
+// descriptor set and binding ids and a list of indices.
 protobufs::UniformBufferElementDescriptor MakeUniformBufferElementDescriptor(
     uint32_t descriptor_set, uint32_t binding, std::vector<uint32_t>&& indices);
 
@@ -50,4 +49,4 @@ opt::Instruction* FindUniformVariable(
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // #define SOURCE_FUZZ_UNIFORM_BUFFER_ELEMENT_DESCRIPTOR_H_
+#endif  // SOURCE_FUZZ_UNIFORM_BUFFER_ELEMENT_DESCRIPTOR_H_

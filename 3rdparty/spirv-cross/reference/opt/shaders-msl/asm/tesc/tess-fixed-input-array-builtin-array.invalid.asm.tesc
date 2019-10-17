@@ -33,17 +33,58 @@ struct main0_in
     float4 gl_Position [[attribute(1)]];
 };
 
-// Implementation of an array copy function to cover GLSL's ability to copy an array via assignment.
-template<typename T, uint N>
-void spvArrayCopyFromStack1(thread T (&dst)[N], thread const T (&src)[N])
+template<typename T, uint A>
+inline void spvArrayCopyFromConstantToStack1(thread T (&dst)[A], constant T (&src)[A])
 {
-    for (uint i = 0; i < N; dst[i] = src[i], i++);
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
 }
 
-template<typename T, uint N>
-void spvArrayCopyFromConstant1(thread T (&dst)[N], constant T (&src)[N])
+template<typename T, uint A>
+inline void spvArrayCopyFromConstantToThreadGroup1(threadgroup T (&dst)[A], constant T (&src)[A])
 {
-    for (uint i = 0; i < N; dst[i] = src[i], i++);
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromStackToStack1(thread T (&dst)[A], thread const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromStackToThreadGroup1(threadgroup T (&dst)[A], thread const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromThreadGroupToStack1(thread T (&dst)[A], threadgroup const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromThreadGroupToThreadGroup1(threadgroup T (&dst)[A], threadgroup const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
 }
 
 kernel void main0(main0_in in [[stage_in]], uint gl_InvocationID [[thread_index_in_threadgroup]], uint gl_PrimitiveID [[threadgroup_position_in_grid]], device main0_out* spvOut [[buffer(28)]], constant uint* spvIndirectParams [[buffer(29)]], device MTLTriangleTessellationFactorsHalf* spvTessLevel [[buffer(26)]], threadgroup main0_in* gl_in [[threadgroup(0)]])
@@ -56,7 +97,7 @@ kernel void main0(main0_in in [[stage_in]], uint gl_InvocationID [[thread_index_
         return;
     VertexOutput _223[3] = { VertexOutput{ gl_in[0].gl_Position, gl_in[0].VertexOutput_uv }, VertexOutput{ gl_in[1].gl_Position, gl_in[1].VertexOutput_uv }, VertexOutput{ gl_in[2].gl_Position, gl_in[2].VertexOutput_uv } };
     VertexOutput param[3];
-    spvArrayCopyFromStack1(param, _223);
+    spvArrayCopyFromStackToStack1(param, _223);
     gl_out[gl_InvocationID].gl_Position = param[gl_InvocationID].pos;
     gl_out[gl_InvocationID]._entryPointOutput.uv = param[gl_InvocationID].uv;
     threadgroup_barrier(mem_flags::mem_device);

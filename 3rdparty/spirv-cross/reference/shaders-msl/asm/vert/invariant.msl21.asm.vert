@@ -10,7 +10,7 @@ struct main0_out
     float4 gl_Position [[position, invariant]];
 };
 
-float4 _main()
+inline float4 _main()
 {
     return float4(1.0);
 }

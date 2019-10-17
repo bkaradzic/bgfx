@@ -1780,6 +1780,102 @@ TEST_F(MergeReturnPassTest, MergeToMergeBranch) {
   SinglePassRunAndMatch<MergeReturnPass>(text, true);
 }
 
+TEST_F(MergeReturnPassTest, PhiInSecondMerge) {
+  //  Add and use a phi in the second merge block from the return.
+  const std::string text =
+      R"(
+; CHECK: OpLoopMerge
+; CHECK: OpLoopMerge [[merge_bb:%\w+]] [[continue_bb:%\w+]]
+; CHECK: [[continue_bb]] = OpLabel
+; CHECK-NEXT: [[val:%\w+]] = OpUndef %float
+; CHECK: [[merge_bb]] = OpLabel
+; CHECK-NEXT: [[phi:%\w+]] = OpPhi %float {{%\w+}} {{%\w+}} [[val]] [[continue_bb]]
+; CHECK-NOT: OpLabel
+; CHECK: OpBranchConditional {{%\w+}} {{%\w+}} [[old_merge:%\w+]]
+; CHECK: [[old_merge]] = OpLabel
+; CHECK-NEXT: OpConvertFToS %int [[phi]]
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource ESSL 310
+       %void = OpTypeVoid
+          %4 = OpTypeFunction %void
+        %int = OpTypeInt 32 1
+      %float = OpTypeFloat 32
+       %bool = OpTypeBool
+          %8 = OpUndef %bool
+          %2 = OpFunction %void None %4
+          %9 = OpLabel
+               OpBranch %10
+         %10 = OpLabel
+               OpLoopMerge %11 %12 None
+               OpBranch %13
+         %13 = OpLabel
+               OpLoopMerge %12 %14 None
+               OpBranchConditional %8 %15 %12
+         %15 = OpLabel
+               OpReturn
+         %14 = OpLabel
+               OpBranch %13
+         %12 = OpLabel
+         %16 = OpUndef %float
+               OpBranchConditional %8 %10 %11
+         %11 = OpLabel
+         %17 = OpConvertFToS %int %16
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SinglePassRunAndMatch<MergeReturnPass>(text, true);
+}
+
+TEST_F(MergeReturnPassTest, UnreachableMergeAndContinue) {
+  // Make sure that the pass can handle a single block that is both a merge and
+  // a continue.
+  const std::string text =
+      R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource ESSL 310
+       %void = OpTypeVoid
+          %4 = OpTypeFunction %void
+       %bool = OpTypeBool
+       %true = OpConstantTrue %bool
+          %2 = OpFunction %void None %4
+          %7 = OpLabel
+               OpBranch %8
+          %8 = OpLabel
+               OpLoopMerge %9 %10 None
+               OpBranch %11
+         %11 = OpLabel
+               OpSelectionMerge %10 None
+               OpBranchConditional %true %12 %13
+         %12 = OpLabel
+               OpReturn
+         %13 = OpLabel
+               OpReturn
+         %10 = OpLabel
+               OpBranch %8
+          %9 = OpLabel
+               OpUnreachable
+               OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  auto result = SinglePassRunAndDisassemble<MergeReturnPass>(text, true, true);
+
+  // Not looking for any particular output.  Other tests do that.
+  // Just want to make sure the check for unreachable blocks does not emit an
+  // error.
+  EXPECT_EQ(Pass::Status::SuccessWithChange, std::get<1>(result));
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

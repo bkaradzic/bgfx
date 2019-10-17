@@ -23,6 +23,7 @@
 #include "gmock/gmock.h"
 #include "source/assembly_grammar.h"
 #include "source/spirv_target_env.h"
+#include "spirv-tools/libspirv.h"
 #include "test/test_fixture.h"
 #include "test/unit_spirv.h"
 #include "test/val/val_fixtures.h"
@@ -33,6 +34,7 @@ namespace {
 
 using spvtest::ScopedContext;
 using testing::Combine;
+using testing::Eq;
 using testing::HasSubstr;
 using testing::Values;
 using testing::ValuesIn;
@@ -1286,221 +1288,264 @@ INSTANTIATE_TEST_SUITE_P(BuiltIn, ValidateCapability,
                             Values(
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn Position\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn Position\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 // Just mentioning PointSize, ClipDistance, or CullDistance as a BuiltIn does
 // not trigger the requirement for the associated capability.
 // See https://github.com/KhronosGroup/SPIRV-Tools/issues/365
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn PointSize\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn PointSize\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn ClipDistance\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn ClipDistance\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn CullDistance\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn CullDistance\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn VertexId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn VertexId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn InstanceId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn InstanceId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn PrimitiveId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn PrimitiveId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           GeometryTessellationDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn InvocationId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn InvocationId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           GeometryTessellationDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn Layer\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn Layer\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn ViewportIndex\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn ViewportIndex\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           std::vector<std::string>{"MultiViewport"}),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn TessLevelOuter\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn TessLevelOuter\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           TessellationDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn TessLevelInner\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn TessLevelInner\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           TessellationDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn TessCoord\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn TessCoord\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           TessellationDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn PatchVertices\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn PatchVertices\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           TessellationDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn FragCoord\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn FragCoord\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn PointCoord\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn PointCoord\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn FrontFacing\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn FrontFacing\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn SampleId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn SampleId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           std::vector<std::string>{"SampleRateShading"}),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn SamplePosition\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn SamplePosition\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           std::vector<std::string>{"SampleRateShading"}),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn SampleMask\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn SampleMask\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn FragDepth\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn FragDepth\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn HelperInvocation\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn HelperInvocation\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn VertexIndex\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn VertexIndex\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn InstanceIndex\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn InstanceIndex\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn NumWorkgroups\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn NumWorkgroups\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn WorkgroupSize\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn WorkgroupSize\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn WorkgroupId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn WorkgroupId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn LocalInvocationId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn LocalInvocationId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn GlobalInvocationId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn GlobalInvocationId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn LocalInvocationIndex\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn LocalInvocationIndex\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn WorkDim\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn WorkDim\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn GlobalSize\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn GlobalSize\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn EnqueuedWorkgroupSize\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn EnqueuedWorkgroupSize\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn GlobalOffset\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn GlobalOffset\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn GlobalLinearId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn GlobalLinearId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn SubgroupSize\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn SubgroupSize\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelAndGroupNonUniformDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn SubgroupMaxSize\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn SubgroupMaxSize\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn NumSubgroups\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn NumSubgroups\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelAndGroupNonUniformDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn NumEnqueuedSubgroups\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn NumEnqueuedSubgroups\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn SubgroupId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn SubgroupId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelAndGroupNonUniformDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn SubgroupLocalInvocationId\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn SubgroupLocalInvocationId\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           KernelAndGroupNonUniformDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn VertexIndex\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn VertexIndex\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n" +
-          "OpDecorate %intt BuiltIn InstanceIndex\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn InstanceIndex\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           ShaderDependencies())
 )));
 
@@ -1548,18 +1593,21 @@ INSTANTIATE_TEST_SUITE_P(BuiltIn, ValidateCapabilityOpenGL40,
                             Values(
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn PointSize\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn PointSize\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllSpirV10Capabilities()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn ClipDistance\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn ClipDistance\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllSpirV10Capabilities()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn CullDistance\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn CullDistance\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllSpirV10Capabilities())
 )));
 
@@ -1580,13 +1628,15 @@ INSTANTIATE_TEST_SUITE_P(Capabilities, ValidateCapabilityVulkan11,
                             Values(
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn PointSize\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn PointSize\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllVulkan11Capabilities()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n" +
-          "OpDecorate %intt BuiltIn CullDistance\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 BuiltIn CullDistance\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%int0 = OpConstant %intt 0\n" + std::string(kVoidFVoid),
           AllVulkan11Capabilities())
 )));
 
@@ -2434,6 +2484,178 @@ OpFunctionEnd
   CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_0);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_0))
       << getDiagnosticString();
+}
+
+// Test that extensions incorporated into SPIR-V 1.5 no longer require
+// the associated OpExtension instruction.  Test one capability per extension.
+
+struct CapabilityExtensionVersionCase {
+  std::string capability;
+  std::string capability_new_name;
+  std::string extension;
+  spv_target_env last_version_requiring_extension;
+  spv_target_env first_version_in_core;
+};
+
+using ValidateCapabilityExtensionVersionTest =
+    spvtest::ValidateBase<CapabilityExtensionVersionCase>;
+
+// Returns a minimal shader module with the given capability instruction.
+std::string MinimalShaderModuleWithCapability(std::string cap) {
+  std::string mem_model =
+      (cap.find("VulkanMemory") == 0) ? "VulkanKHR" : "GLSL450";
+  std::string extra_cap = (cap.find("VulkanMemoryModelDeviceScope") == 0)
+                              ? "\nOpCapability VulkanMemoryModelKHR\n"
+                              : "";
+  return std::string("OpCapability ") + cap + extra_cap + R"(
+OpCapability Shader
+OpMemoryModel Logical )" + mem_model + R"(
+OpEntryPoint Vertex %main "main"
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+}
+
+TEST_P(ValidateCapabilityExtensionVersionTest, FailsInOlderSpirvVersion) {
+  const auto spirv = MinimalShaderModuleWithCapability(GetParam().capability);
+  CompileSuccessfully(spirv, GetParam().last_version_requiring_extension);
+  EXPECT_EQ(SPV_ERROR_MISSING_EXTENSION,
+            ValidateInstructions(GetParam().last_version_requiring_extension));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr(std::string("1st operand of Capability: operand ") +
+                        GetParam().capability_new_name))
+      << spirv << "\n";
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr(std::string("requires one of these extensions: ") +
+                        GetParam().extension));
+}
+
+TEST_P(ValidateCapabilityExtensionVersionTest,
+       SucceedsInNewerSpirvVersionWithOldName) {
+  const auto spirv = MinimalShaderModuleWithCapability(GetParam().capability);
+  CompileSuccessfully(spirv, GetParam().first_version_in_core);
+  EXPECT_EQ(SPV_SUCCESS,
+            ValidateInstructions(GetParam().first_version_in_core));
+  EXPECT_THAT(getDiagnosticString(), Eq("")) << spirv << "\n";
+}
+
+TEST_P(ValidateCapabilityExtensionVersionTest,
+       SucceedsInNewerSpirvVersionWithNewName) {
+  const auto spirv =
+      MinimalShaderModuleWithCapability(GetParam().capability_new_name);
+  CompileSuccessfully(spirv, GetParam().first_version_in_core);
+  EXPECT_EQ(SPV_SUCCESS,
+            ValidateInstructions(GetParam().first_version_in_core));
+  EXPECT_THAT(getDiagnosticString(), Eq("")) << spirv << "\n";
+}
+
+std::vector<CapabilityExtensionVersionCase> CapVersionCases1_5() {
+#define IN15NOSUFFIX(C, E) \
+  { C, C, E, SPV_ENV_UNIVERSAL_1_4, SPV_ENV_UNIVERSAL_1_5 }
+#define IN15(C, C_WITHOUT_SUFFIX, E) \
+  { C, C_WITHOUT_SUFFIX, E, SPV_ENV_UNIVERSAL_1_4, SPV_ENV_UNIVERSAL_1_5 }
+  return std::vector<CapabilityExtensionVersionCase>{
+      // SPV_KHR_8bit_storage
+      IN15NOSUFFIX("StorageBuffer8BitAccess", "SPV_KHR_8bit_storage"),
+      IN15NOSUFFIX("UniformAndStorageBuffer8BitAccess", "SPV_KHR_8bit_storage"),
+      IN15NOSUFFIX("StoragePushConstant8", "SPV_KHR_8bit_storage"),
+      // SPV_EXT_descriptor_indexing
+      IN15("ShaderNonUniformEXT", "ShaderNonUniform",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("RuntimeDescriptorArrayEXT", "RuntimeDescriptorArray",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("InputAttachmentArrayDynamicIndexingEXT",
+           "InputAttachmentArrayDynamicIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("UniformTexelBufferArrayDynamicIndexingEXT",
+           "UniformTexelBufferArrayDynamicIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("StorageTexelBufferArrayDynamicIndexingEXT",
+           "StorageTexelBufferArrayDynamicIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("UniformBufferArrayNonUniformIndexingEXT",
+           "UniformBufferArrayNonUniformIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("SampledImageArrayNonUniformIndexingEXT",
+           "SampledImageArrayNonUniformIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("StorageBufferArrayNonUniformIndexingEXT",
+           "StorageBufferArrayNonUniformIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("StorageImageArrayNonUniformIndexingEXT",
+           "StorageImageArrayNonUniformIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("InputAttachmentArrayNonUniformIndexingEXT",
+           "InputAttachmentArrayNonUniformIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("UniformTexelBufferArrayNonUniformIndexingEXT",
+           "UniformTexelBufferArrayNonUniformIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      IN15("StorageTexelBufferArrayNonUniformIndexingEXT",
+           "StorageTexelBufferArrayNonUniformIndexing",
+           "SPV_EXT_descriptor_indexing"),
+      // SPV_EXT_physical_storage_buffer
+      IN15("PhysicalStorageBufferAddressesEXT",
+           "PhysicalStorageBufferAddresses", "SPV_EXT_physical_storage_buffer"),
+      // SPV_KHR_vulkan_memory_model
+      IN15("VulkanMemoryModelKHR", "VulkanMemoryModel",
+           "SPV_KHR_vulkan_memory_model"),
+      IN15("VulkanMemoryModelDeviceScopeKHR", "VulkanMemoryModelDeviceScope",
+           "SPV_KHR_vulkan_memory_model"),
+  };
+#undef IN15
+}
+
+INSTANTIATE_TEST_SUITE_P(NewInSpirv1_5, ValidateCapabilityExtensionVersionTest,
+                         ValuesIn(CapVersionCases1_5()));
+
+TEST_P(ValidateCapability,
+       CapShaderViewportIndexLayerFailsInOlderSpirvVersion) {
+  const auto spirv =
+      MinimalShaderModuleWithCapability("ShaderViewportIndexLayerEXT");
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_ERROR_MISSING_EXTENSION,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "1st operand of Capability: operand ShaderViewportIndexLayerEXT"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("requires one of these extensions: "
+                        "SPV_EXT_shader_viewport_index_layer"));
+}
+
+TEST_P(ValidateCapability, CapShaderViewportIndexLayerFailsInNewSpirvVersion) {
+  const auto spirv =
+      MinimalShaderModuleWithCapability("ShaderViewportIndexLayerEXT");
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_5);
+  EXPECT_EQ(SPV_ERROR_MISSING_EXTENSION,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_5));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "1st operand of Capability: operand ShaderViewportIndexLayerEXT"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("requires one of these extensions: "
+                        "SPV_EXT_shader_viewport_index_layer"));
+}
+
+TEST_F(ValidateCapability, CapShaderViewportIndexSucceedsInNewSpirvVersion) {
+  const auto spirv = MinimalShaderModuleWithCapability("ShaderViewportIndex");
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_5);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_5));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateCapability, CapShaderLayerSucceedsInNewSpirvVersion) {
+  const auto spirv = MinimalShaderModuleWithCapability("ShaderLayer");
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_5);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_5));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
 }
 
 }  // namespace

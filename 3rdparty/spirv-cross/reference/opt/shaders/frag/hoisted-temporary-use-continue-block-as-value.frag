@@ -15,14 +15,11 @@ void main()
         if ((vA + _57) == 20)
         {
             _58 = 50;
-            continue;
         }
         else
         {
             _58 = ((vB + _57) == 40) ? 60 : _60;
-            continue;
         }
-        continue;
     }
 }
 

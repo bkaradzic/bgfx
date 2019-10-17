@@ -155,13 +155,40 @@ changes are quite infrequent. For windows you can get binaries from
 The command to rebuild is:
 
 ```bash
+m4 -P MachineIndependent/glslang.m4 > MachineIndependent/glslang.y
 bison --defines=MachineIndependent/glslang_tab.cpp.h
       -t MachineIndependent/glslang.y
       -o MachineIndependent/glslang_tab.cpp
 ```
 
-The above command is also available in the bash script at
-`glslang/updateGrammar`.
+The above commands are also available in the bash script in `updateGrammar`,
+when executed from the glslang subdirectory of the glslang repository.
+With no arguments it builds the full grammar, and with a "web" argument,
+the web grammar subset (see more about the web subset in the next section).
+
+### Building to WASM for the Web and Node
+
+Use the steps in [Build Steps](#build-steps), with the following notes/exceptions:
+* For building the web subset of core glslang:
+  + execute `updateGrammar web` from the glslang subdirectory
+    (or if using your own scripts, `m4` needs a `-DGLSLANG_WEB` argument)
+  + set `-DENABLE_HLSL=OFF -DBUILD_TESTING=OFF -DENABLE_OPT=OFF -DINSTALL_GTEST=OFF`
+  + turn on `-DENABLE_GLSLANG_WEB=ON`
+  + optionally, for GLSL compilation error messages, turn on `-DENABLE_GLSLANG_WEB_DEVEL=ON`
+* `emsdk` needs to be present in your executable search path, *PATH* for
+  Bash-like enivironments
+  + [Instructions located
+    here](https://emscripten.org/docs/getting_started/downloads.html#sdk-download-and-install)
+* Wrap cmake call: `emcmake cmake`
+* To get a fully minimized build, make sure to use `brotli` to compress the .js
+  and .wasm files
+
+Example:
+
+```sh
+emcmake cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_GLSLANG_WEB=ON \
+    -DENABLE_HLSL=OFF -DBUILD_TESTING=OFF -DENABLE_OPT=OFF -DINSTALL_GTEST=OFF ..
+```
 
 Testing
 -------
@@ -244,7 +271,8 @@ The `main()` in `StandAlone/StandAlone.cpp` shows examples using both styles.
 ### C++ Class Interface (new, preferred)
 
 This interface is in roughly the last 1/3 of `ShaderLang.h`.  It is in the
-glslang namespace and contains the following.
+glslang namespace and contains the following, here with suggested calls
+for generating SPIR-V:
 
 ```cxx
 const char* GetEsslVersionString();
@@ -267,8 +295,17 @@ class TProgram
     Reflection queries
 ```
 
+For just validating (not generating code), subsitute these calls:
+
+```cxx
+    setEnvInput(EShSourceHlsl or EShSourceGlsl, stage,  EShClientNone, 0);
+    setEnvClient(EShClientNone, 0);
+    setEnvTarget(EShTargetNone, 0);
+```
+
 See `ShaderLang.h` and the usage of it in `StandAlone/StandAlone.cpp` for more
-details.
+details. There is a block comment giving more detail above the calls for
+`setEnvInput, setEnvClient, and setEnvTarget`.
 
 ### C Functional Interface (orignal)
 

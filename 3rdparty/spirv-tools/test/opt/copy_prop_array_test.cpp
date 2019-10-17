@@ -1157,7 +1157,7 @@ OpDecorate %MyCBuffer Binding 0
 OpStore %23 %35
 %36 = OpAccessChain %_ptr_Function_v4float %23 %24
 %37 = OpLoad %v4float %36
-%39 = OpStore %36 %v4const
+      OpStore %36 %v4const
 OpStore %out_var_SV_Target %37
 OpReturn
 OpFunctionEnd
@@ -1569,6 +1569,57 @@ OpFunctionEnd
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<CopyPropagateArrays>(before, after, true, true);
+}
+
+TEST_F(CopyPropArrayPassTest, IndexIsNullConstnat) {
+  const std::string text = R"(
+; CHECK: [[var:%\w+]] = OpVariable {{%\w+}} Uniform
+; CHECK: [[null:%\w+]] = OpConstantNull %uint
+; CHECK: [[ac1:%\w+]] = OpAccessChain %_ptr_Uniform__arr_uint_uint_1 [[var]] %uint_0 %uint_0
+; CHECK: OpAccessChain %_ptr_Uniform_uint [[ac1]] [[null]]
+; CHECK-NEXT: OpReturn
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main"
+               OpExecutionMode %main OriginUpperLeft
+               OpSource HLSL 600
+               OpDecorate %myCBuffer DescriptorSet 0
+               OpDecorate %myCBuffer Binding 0
+               OpDecorate %_arr_v4float_uint_1 ArrayStride 16
+               OpMemberDecorate %MyConstantBuffer 0 Offset 0
+               OpMemberDecorate %type_myCBuffer 0 Offset 0
+               OpDecorate %type_myCBuffer Block
+       %uint = OpTypeInt 32 0
+      %int_0 = OpConstant %uint 0
+     %uint_1 = OpConstant %uint 1
+%_arr_v4float_uint_1 = OpTypeArray %uint %uint_1
+%MyConstantBuffer = OpTypeStruct %_arr_v4float_uint_1
+%type_myCBuffer = OpTypeStruct %MyConstantBuffer
+%_ptr_Uniform_type_myCBuffer = OpTypePointer Uniform %type_myCBuffer
+%_arr_v4float_uint_1_0 = OpTypeArray %uint %uint_1
+       %void = OpTypeVoid
+         %19 = OpTypeFunction %void
+%_ptr_Function_v4float = OpTypePointer Function %uint
+%_ptr_Uniform_MyConstantBuffer = OpTypePointer Uniform %MyConstantBuffer
+  %myCBuffer = OpVariable %_ptr_Uniform_type_myCBuffer Uniform
+%_ptr_Function__arr_v4float_uint_1_0 = OpTypePointer Function %_arr_v4float_uint_1_0
+         %23 = OpConstantNull %uint
+       %main = OpFunction %void None %19
+         %24 = OpLabel
+         %25 = OpVariable %_ptr_Function__arr_v4float_uint_1_0 Function
+         %26 = OpAccessChain %_ptr_Uniform_MyConstantBuffer %myCBuffer %int_0
+         %27 = OpLoad %MyConstantBuffer %26
+         %28 = OpCompositeExtract %_arr_v4float_uint_1 %27 0
+         %29 = OpCompositeExtract %uint %28 0
+         %30 = OpCompositeConstruct %_arr_v4float_uint_1_0 %29
+               OpStore %25 %30
+         %31 = OpAccessChain %_ptr_Function_v4float %25 %23
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SinglePassRunAndMatch<CopyPropagateArrays>(text, true);
 }
 
 }  // namespace

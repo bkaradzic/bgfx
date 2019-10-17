@@ -37,8 +37,8 @@ TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
 class ExampleFontSDF : public entry::AppI
 {
 public:
-	ExampleFontSDF(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleFontSDF(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -282,4 +282,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleFontSDF, "11-fontsdf", "Use a single distance field font to render text of various size.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleFontSDF
+	, "11-fontsdf"
+	, "Use a single distance field font to render text of various size."
+	, "https://bkaradzic.github.io/bgfx/examples.html#fontsdf"
+	);

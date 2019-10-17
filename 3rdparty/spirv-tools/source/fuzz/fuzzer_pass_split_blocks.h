@@ -36,4 +36,4 @@ class FuzzerPassSplitBlocks : public FuzzerPass {
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // #define SOURCE_FUZZ_FUZZER_PASS_SPLIT_BLOCKS_
+#endif  // SOURCE_FUZZ_FUZZER_PASS_SPLIT_BLOCKS_

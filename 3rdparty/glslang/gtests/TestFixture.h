@@ -227,7 +227,9 @@ public:
             shader.setAutoMapBindings(true);
         }
         shader.setTextureSamplerTransformMode(texSampTransMode);
+#ifdef ENABLE_HLSL
         shader.setFlattenUniformArrays(flattenUniformArrays);
+#endif
 
         if (controls & EShMsgSpvRules) {
             if (controls & EShMsgVulkanRules) {
@@ -300,7 +302,9 @@ public:
         shader.setShiftSsboBinding(baseSsboBinding);
         shader.setAutoMapBindings(autoMapBindings);
         shader.setAutoMapLocations(true);
+#ifdef ENABLE_HLSL
         shader.setFlattenUniformArrays(flattenUniformArrays);
+#endif
 
         bool success = compile(&shader, code, entryPointName, controls);
 
@@ -308,7 +312,9 @@ public:
         program.addShader(&shader);
         
         success &= program.link(controls);
+#ifndef GLSLANG_WEB
         success &= program.mapIO();
+#endif
 
         spv::SpvBuildLogger logger;
 

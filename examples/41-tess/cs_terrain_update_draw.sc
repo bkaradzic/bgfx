@@ -10,11 +10,10 @@ void main()
 	uint counter = atomicCounterBuffer[1];
 
 	uint subd = 6 << (2 * u_gpu_subd - 1);
-	
+
 	if((2 * u_gpu_subd - 1) <= 0) {
 		subd = 3u;
 	}
-	
+
 	drawIndexedIndirect(indirectBuffer, 0, subd, counter / 2, 0u, 0u, 0u);
 }
-

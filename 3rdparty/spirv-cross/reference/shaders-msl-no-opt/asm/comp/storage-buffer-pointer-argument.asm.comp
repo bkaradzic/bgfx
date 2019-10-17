@@ -15,7 +15,7 @@ struct SSBORead
     float b;
 };
 
-void copy_out(device float& A, device const float& B)
+inline void copy_out(device float& A, device const float& B)
 {
     A = B;
 }

@@ -127,6 +127,7 @@ std::unique_ptr<Type> Type::Clone() const {
     DeclareKindCase(PipeStorage);
     DeclareKindCase(NamedBarrier);
     DeclareKindCase(AccelerationStructureNV);
+    DeclareKindCase(CooperativeMatrixNV);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -171,6 +172,7 @@ bool Type::operator==(const Type& other) const {
     DeclareKindCase(PipeStorage);
     DeclareKindCase(NamedBarrier);
     DeclareKindCase(AccelerationStructureNV);
+    DeclareKindCase(CooperativeMatrixNV);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -220,6 +222,7 @@ void Type::GetHashWords(std::vector<uint32_t>* words,
     DeclareKindCase(PipeStorage);
     DeclareKindCase(NamedBarrier);
     DeclareKindCase(AccelerationStructureNV);
+    DeclareKindCase(CooperativeMatrixNV);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -274,7 +277,7 @@ void Float::GetExtraHashWords(std::vector<uint32_t>* words,
   words->push_back(width_);
 }
 
-Vector::Vector(Type* type, uint32_t count)
+Vector::Vector(const Type* type, uint32_t count)
     : Type(kVector), element_type_(type), count_(count) {
   assert(type->AsBool() || type->AsInteger() || type->AsFloat());
 }
@@ -299,7 +302,7 @@ void Vector::GetExtraHashWords(std::vector<uint32_t>* words,
   words->push_back(count_);
 }
 
-Matrix::Matrix(Type* type, uint32_t count)
+Matrix::Matrix(const Type* type, uint32_t count)
     : Type(kMatrix), element_type_(type), count_(count) {
   assert(type->AsVector());
 }
@@ -426,7 +429,7 @@ void Array::GetExtraHashWords(std::vector<uint32_t>* words,
 
 void Array::ReplaceElementType(const Type* type) { element_type_ = type; }
 
-RuntimeArray::RuntimeArray(Type* type)
+RuntimeArray::RuntimeArray(const Type* type)
     : Type(kRuntimeArray), element_type_(type) {
   assert(!type->AsVoid());
 }
@@ -571,10 +574,10 @@ void Pointer::GetExtraHashWords(std::vector<uint32_t>* words,
 
 void Pointer::SetPointeeType(const Type* type) { pointee_type_ = type; }
 
-Function::Function(Type* ret_type, const std::vector<const Type*>& params)
+Function::Function(const Type* ret_type, const std::vector<const Type*>& params)
     : Type(kFunction), return_type_(ret_type), param_types_(params) {}
 
-Function::Function(Type* ret_type, std::vector<const Type*>& params)
+Function::Function(const Type* ret_type, std::vector<const Type*>& params)
     : Type(kFunction), return_type_(ret_type), param_types_(params) {}
 
 bool Function::IsSameImpl(const Type* that, IsSameCache* seen) const {
@@ -652,6 +655,44 @@ void ForwardPointer::GetExtraHashWords(
   words->push_back(target_id_);
   words->push_back(storage_class_);
   if (pointer_) pointer_->GetHashWords(words, seen);
+}
+
+CooperativeMatrixNV::CooperativeMatrixNV(const Type* type, const uint32_t scope,
+                                         const uint32_t rows,
+                                         const uint32_t columns)
+    : Type(kCooperativeMatrixNV),
+      component_type_(type),
+      scope_id_(scope),
+      rows_id_(rows),
+      columns_id_(columns) {
+  assert(type != nullptr);
+  assert(scope != 0);
+  assert(rows != 0);
+  assert(columns != 0);
+}
+
+std::string CooperativeMatrixNV::str() const {
+  std::ostringstream oss;
+  oss << "<" << component_type_->str() << ", " << scope_id_ << ", " << rows_id_
+      << ", " << columns_id_ << ">";
+  return oss.str();
+}
+
+void CooperativeMatrixNV::GetExtraHashWords(
+    std::vector<uint32_t>* words, std::unordered_set<const Type*>* pSet) const {
+  component_type_->GetHashWords(words, pSet);
+  words->push_back(scope_id_);
+  words->push_back(rows_id_);
+  words->push_back(columns_id_);
+}
+
+bool CooperativeMatrixNV::IsSameImpl(const Type* that,
+                                     IsSameCache* seen) const {
+  const CooperativeMatrixNV* mt = that->AsCooperativeMatrixNV();
+  if (!mt) return false;
+  return component_type_->IsSameImpl(mt->component_type_, seen) &&
+         scope_id_ == mt->scope_id_ && rows_id_ == mt->rows_id_ &&
+         columns_id_ == mt->columns_id_ && HasSameDecorations(that);
 }
 
 }  // namespace analysis

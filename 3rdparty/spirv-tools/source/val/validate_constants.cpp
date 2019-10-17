@@ -116,15 +116,13 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
             inst->GetOperandAs<uint32_t>(constituent_index);
         const auto constituent = _.FindDef(constituent_id);
         if (!constituent ||
-            !(SpvOpConstantComposite == constituent->opcode() ||
-              SpvOpSpecConstantComposite == constituent->opcode() ||
-              SpvOpUndef == constituent->opcode())) {
+            !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
           // The message says "... or undef" because the spec does not say
           // undef is a constant.
           return _.diag(SPV_ERROR_INVALID_ID, inst)
                  << opcode_name << " Constituent <id> '"
                  << _.getIdName(constituent_id)
-                 << "' is not a constant composite or undef.";
+                 << "' is not a constant or undef.";
         }
         const auto vector = _.FindDef(constituent->type_id());
         if (!vector) {
@@ -306,7 +304,6 @@ bool IsTypeNullable(const std::vector<uint32_t>& instruction,
     case SpvOpTypeBool:
     case SpvOpTypeInt:
     case SpvOpTypeFloat:
-    case SpvOpTypePointer:
     case SpvOpTypeEvent:
     case SpvOpTypeDeviceEvent:
     case SpvOpTypeReserveId:
@@ -327,6 +324,11 @@ bool IsTypeNullable(const std::vector<uint32_t>& instruction,
       }
       return true;
     }
+    case SpvOpTypePointer:
+      if (instruction[2] == SpvStorageClassPhysicalStorageBuffer) {
+        return false;
+      }
+      return true;
     default:
       return false;
   }
@@ -341,6 +343,21 @@ spv_result_t ValidateConstantNull(ValidationState_t& _,
            << _.getIdName(inst->type_id()) << "' cannot have a null value.";
   }
 
+  return SPV_SUCCESS;
+}
+
+// Validates that OpSpecConstant specializes to either int or float type.
+spv_result_t ValidateSpecConstant(ValidationState_t& _,
+                                  const Instruction* inst) {
+  // Operand 0 is the <id> of the type that we're specializing to.
+  auto type_id = inst->GetOperandAs<const uint32_t>(0);
+  auto type_instruction = _.FindDef(type_id);
+  auto type_opcode = type_instruction->opcode();
+  if (type_opcode != SpvOpTypeInt && type_opcode != SpvOpTypeFloat) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst) << "Specialization constant "
+                                                   "must be an integer or "
+                                                   "floating-point number.";
+  }
   return SPV_SUCCESS;
 }
 
@@ -423,6 +440,9 @@ spv_result_t ConstantPass(ValidationState_t& _, const Instruction* inst) {
       break;
     case SpvOpConstantNull:
       if (auto error = ValidateConstantNull(_, inst)) return error;
+      break;
+    case SpvOpSpecConstant:
+      if (auto error = ValidateSpecConstant(_, inst)) return error;
       break;
     case SpvOpSpecConstantOp:
       if (auto error = ValidateSpecConstantOp(_, inst)) return error;

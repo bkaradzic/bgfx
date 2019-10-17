@@ -8,7 +8,7 @@
 
 #include <vector>
 
-#include "../tools/objparser.h"
+#include "../tools/fast_obj.h"
 #include "miniz.h"
 
 // This file uses assert() to verify algorithm correctness
@@ -66,46 +66,57 @@ union Triangle {
 
 Mesh parseObj(const char* path, double& reindex)
 {
-	ObjFile file;
-
-	if (!objParseFile(file, path))
+	fastObjMesh* obj = fast_obj_read(path);
+	if (!obj)
 	{
 		printf("Error loading %s: file not found\n", path);
 		return Mesh();
 	}
 
-	if (!objValidate(file))
-	{
-		printf("Error loading %s: invalid file data\n", path);
-		return Mesh();
-	}
+	size_t total_indices = 0;
 
-	size_t total_indices = file.f_size / 3;
+	for (unsigned int i = 0; i < obj->face_count; ++i)
+		total_indices += 3 * (obj->face_vertices[i] - 2);
 
 	std::vector<Vertex> vertices(total_indices);
 
-	for (size_t i = 0; i < total_indices; ++i)
+	size_t vertex_offset = 0;
+	size_t index_offset = 0;
+
+	for (unsigned int i = 0; i < obj->face_count; ++i)
 	{
-		int vi = file.f[i * 3 + 0];
-		int vti = file.f[i * 3 + 1];
-		int vni = file.f[i * 3 + 2];
+		for (unsigned int j = 0; j < obj->face_vertices[i]; ++j)
+		{
+			fastObjIndex gi = obj->indices[index_offset + j];
 
-		Vertex v =
-		    {
-		        file.v[vi * 3 + 0],
-		        file.v[vi * 3 + 1],
-		        file.v[vi * 3 + 2],
+			Vertex v =
+			    {
+			        obj->positions[gi.p * 3 + 0],
+			        obj->positions[gi.p * 3 + 1],
+			        obj->positions[gi.p * 3 + 2],
+			        obj->normals[gi.n * 3 + 0],
+			        obj->normals[gi.n * 3 + 1],
+			        obj->normals[gi.n * 3 + 2],
+			        obj->texcoords[gi.t * 2 + 0],
+			        obj->texcoords[gi.t * 2 + 1],
+			    };
 
-		        vni >= 0 ? file.vn[vni * 3 + 0] : 0,
-		        vni >= 0 ? file.vn[vni * 3 + 1] : 0,
-		        vni >= 0 ? file.vn[vni * 3 + 2] : 0,
+			// triangulate polygon on the fly; offset-3 is always the first polygon vertex
+			if (j >= 3)
+			{
+				vertices[vertex_offset + 0] = vertices[vertex_offset - 3];
+				vertices[vertex_offset + 1] = vertices[vertex_offset - 1];
+				vertex_offset += 2;
+			}
 
-		        vti >= 0 ? file.vt[vti * 3 + 0] : 0,
-		        vti >= 0 ? file.vt[vti * 3 + 1] : 0,
-		    };
+			vertices[vertex_offset] = v;
+			vertex_offset++;
+		}
 
-		vertices[i] = v;
+		index_offset += obj->face_vertices[i];
 	}
+
+	fast_obj_destroy(obj);
 
 	reindex = timestamp();
 
@@ -400,6 +411,22 @@ void simplifySloppy(const Mesh& mesh, float threshold = 0.2f)
 	       int(mesh.indices.size() / 3), int(lod.indices.size() / 3), (end - start) * 1000);
 }
 
+void simplifyPoints(const Mesh& mesh, float threshold = 0.2f)
+{
+	double start = timestamp();
+
+	size_t target_vertex_count = size_t(mesh.vertices.size() * threshold);
+
+	std::vector<unsigned int> indices(target_vertex_count);
+	indices.resize(meshopt_simplifyPoints(&indices[0], &mesh.vertices[0].px, mesh.vertices.size(), sizeof(Vertex), target_vertex_count));
+
+	double end = timestamp();
+
+	printf("%-9s: %d points => %d points in %.2f msec\n",
+	       "SimplifyP",
+	       int(mesh.vertices.size()), int(indices.size()), (end - start) * 1000);
+}
+
 void simplifyComplete(const Mesh& mesh)
 {
 	static const size_t lod_count = 5;
@@ -621,16 +648,18 @@ void encodeVertex(const Mesh& mesh, const char* pvn)
 	       (double(result.size() * sizeof(PV)) / (1 << 30)) / (end - middle));
 }
 
-void stripify(const Mesh& mesh)
+void stripify(const Mesh& mesh, bool use_restart)
 {
+	unsigned int restart_index = use_restart ? ~0u : 0;
+
 	// note: input mesh is assumed to be optimized for vertex cache and vertex fetch
 	double start = timestamp();
 	std::vector<unsigned int> strip(meshopt_stripifyBound(mesh.indices.size()));
-	strip.resize(meshopt_stripify(&strip[0], &mesh.indices[0], mesh.indices.size(), mesh.vertices.size()));
+	strip.resize(meshopt_stripify(&strip[0], &mesh.indices[0], mesh.indices.size(), mesh.vertices.size(), restart_index));
 	double end = timestamp();
 
 	Mesh copy = mesh;
-	copy.indices.resize(meshopt_unstripify(&copy.indices[0], &strip[0], strip.size()));
+	copy.indices.resize(meshopt_unstripify(&copy.indices[0], &strip[0], strip.size(), restart_index));
 	assert(copy.indices.size() <= meshopt_unstripifyBound(strip.size()));
 
 	assert(isMeshValid(copy));
@@ -641,7 +670,8 @@ void stripify(const Mesh& mesh)
 	meshopt_VertexCacheStatistics vcs_amd = meshopt_analyzeVertexCache(&copy.indices[0], mesh.indices.size(), mesh.vertices.size(), 14, 64, 128);
 	meshopt_VertexCacheStatistics vcs_intel = meshopt_analyzeVertexCache(&copy.indices[0], mesh.indices.size(), mesh.vertices.size(), 128, 0, 0);
 
-	printf("Stripify : ACMR %f ATVR %f (NV %f AMD %f Intel %f); %d strip indices (%.1f%%) in %.2f msec\n",
+	printf("Stripify%c: ACMR %f ATVR %f (NV %f AMD %f Intel %f); %d strip indices (%.1f%%) in %.2f msec\n",
+	       use_restart ? 'R' : ' ',
 	       vcs.acmr, vcs.atvr, vcs_nv.atvr, vcs_amd.atvr, vcs_intel.atvr,
 	       int(strip.size()), double(strip.size()) / double(mesh.indices.size()) * 100,
 	       (end - start) * 1000);
@@ -757,6 +787,68 @@ void meshlets(const Mesh& mesh)
 	       (endc - startc) * 1000);
 }
 
+void spatialSort(const Mesh& mesh)
+{
+	typedef PackedVertexOct PV;
+
+	std::vector<PV> pv(mesh.vertices.size());
+	packMesh(pv, mesh.vertices);
+
+	double start = timestamp();
+
+	std::vector<unsigned int> remap(mesh.vertices.size());
+	meshopt_spatialSortRemap(&remap[0], &mesh.vertices[0].px, mesh.vertices.size(), sizeof(Vertex));
+
+	double end = timestamp();
+
+	meshopt_remapVertexBuffer(&pv[0], &pv[0], mesh.vertices.size(), sizeof(PV), &remap[0]);
+
+	std::vector<unsigned char> vbuf(meshopt_encodeVertexBufferBound(mesh.vertices.size(), sizeof(PV)));
+	vbuf.resize(meshopt_encodeVertexBuffer(&vbuf[0], vbuf.size(), &pv[0], mesh.vertices.size(), sizeof(PV)));
+
+	size_t csize = compress(vbuf);
+
+	printf("Spatial  : %.1f bits/vertex (post-deflate %.1f bits/vertex); sort %.2f msec\n",
+	       double(vbuf.size() * 8) / double(mesh.vertices.size()),
+	       double(csize * 8) / double(mesh.vertices.size()),
+	       (end - start) * 1000);
+}
+
+void spatialSortTriangles(const Mesh& mesh)
+{
+	typedef PackedVertexOct PV;
+
+	Mesh copy = mesh;
+
+	double start = timestamp();
+
+	meshopt_spatialSortTriangles(&copy.indices[0], &copy.indices[0], mesh.indices.size(), &copy.vertices[0].px, copy.vertices.size(), sizeof(Vertex));
+
+	double end = timestamp();
+
+	meshopt_optimizeVertexCache(&copy.indices[0], &copy.indices[0], copy.indices.size(), copy.vertices.size());
+	meshopt_optimizeVertexFetch(&copy.vertices[0], &copy.indices[0], copy.indices.size(), &copy.vertices[0], copy.vertices.size(), sizeof(Vertex));
+
+	std::vector<PV> pv(mesh.vertices.size());
+	packMesh(pv, copy.vertices);
+
+	std::vector<unsigned char> vbuf(meshopt_encodeVertexBufferBound(mesh.vertices.size(), sizeof(PV)));
+	vbuf.resize(meshopt_encodeVertexBuffer(&vbuf[0], vbuf.size(), &pv[0], mesh.vertices.size(), sizeof(PV)));
+
+	std::vector<unsigned char> ibuf(meshopt_encodeIndexBufferBound(mesh.indices.size(), mesh.vertices.size()));
+	ibuf.resize(meshopt_encodeIndexBuffer(&ibuf[0], ibuf.size(), &copy.indices[0], mesh.indices.size()));
+
+	size_t csizev = compress(vbuf);
+	size_t csizei = compress(ibuf);
+
+	printf("SpatialT : %.1f bits/vertex (post-deflate %.1f bits/vertex); %.1f bits/triangle (post-deflate %.1f bits/triangle); sort %.2f msec\n",
+	       double(vbuf.size() * 8) / double(mesh.vertices.size()),
+	       double(csizev * 8) / double(mesh.vertices.size()),
+	       double(ibuf.size() * 8) / double(mesh.indices.size() / 3),
+	       double(csizei * 8) / double(mesh.indices.size() / 3),
+	       (end - start) * 1000);
+}
+
 bool loadMesh(Mesh& mesh, const char* path)
 {
 	double start = timestamp();
@@ -779,42 +871,53 @@ void processDeinterleaved(const char* path)
 	// Most algorithms in the library work out of the box with deinterleaved geometry, but some require slightly special treatment;
 	// this code runs a simplified version of complete opt. pipeline using deinterleaved geo. There's no compression performed but you
 	// can trivially run it by quantizing all elements and running meshopt_encodeVertexBuffer once for each vertex stream.
-	ObjFile file;
-	if (!objParseFile(file, path) || !objValidate(file))
+	fastObjMesh* obj = fast_obj_read(path);
+	if (!obj)
 	{
-		printf("Error loading %s: file not found or invalid file data\n", path);
+		printf("Error loading %s: file not found\n", path);
 		return;
 	}
 
-	size_t total_indices = file.f_size / 3;
+	size_t total_indices = 0;
+
+	for (unsigned int i = 0; i < obj->face_count; ++i)
+		total_indices += 3 * (obj->face_vertices[i] - 2);
 
 	std::vector<float> unindexed_pos(total_indices * 3);
 	std::vector<float> unindexed_nrm(total_indices * 3);
 	std::vector<float> unindexed_uv(total_indices * 2);
 
-	for (size_t i = 0; i < total_indices; ++i)
+	size_t vertex_offset = 0;
+	size_t index_offset = 0;
+
+	for (unsigned int i = 0; i < obj->face_count; ++i)
 	{
-		int vi = file.f[i * 3 + 0];
-		int vti = file.f[i * 3 + 1];
-		int vni = file.f[i * 3 + 2];
-
-		unindexed_pos[i * 3 + 0] = file.v[vi * 3 + 0];
-		unindexed_pos[i * 3 + 1] = file.v[vi * 3 + 1];
-		unindexed_pos[i * 3 + 2] = file.v[vi * 3 + 2];
-
-		if (vni >= 0)
+		for (unsigned int j = 0; j < obj->face_vertices[i]; ++j)
 		{
-			unindexed_nrm[i * 3 + 0] = file.vn[vni * 3 + 0];
-			unindexed_nrm[i * 3 + 1] = file.vn[vni * 3 + 1];
-			unindexed_nrm[i * 3 + 2] = file.vn[vni * 3 + 2];
+			fastObjIndex gi = obj->indices[index_offset + j];
+
+			// triangulate polygon on the fly; offset-3 is always the first polygon vertex
+			if (j >= 3)
+			{
+				memcpy(&unindexed_pos[(vertex_offset + 0) * 3], &unindexed_pos[(vertex_offset - 3) * 3], 3 * sizeof(float));
+				memcpy(&unindexed_nrm[(vertex_offset + 0) * 3], &unindexed_nrm[(vertex_offset - 3) * 3], 3 * sizeof(float));
+				memcpy(&unindexed_uv[(vertex_offset + 0) * 2], &unindexed_uv[(vertex_offset - 3) * 2], 2 * sizeof(float));
+				memcpy(&unindexed_pos[(vertex_offset + 1) * 3], &unindexed_pos[(vertex_offset - 1) * 3], 3 * sizeof(float));
+				memcpy(&unindexed_nrm[(vertex_offset + 1) * 3], &unindexed_nrm[(vertex_offset - 1) * 3], 3 * sizeof(float));
+				memcpy(&unindexed_uv[(vertex_offset + 1) * 2], &unindexed_uv[(vertex_offset - 1) * 2], 2 * sizeof(float));
+				vertex_offset += 2;
+			}
+
+			memcpy(&unindexed_pos[vertex_offset * 3], &obj->positions[gi.p * 3], 3 * sizeof(float));
+			memcpy(&unindexed_nrm[vertex_offset * 3], &obj->normals[gi.n * 3], 3 * sizeof(float));
+			memcpy(&unindexed_uv[vertex_offset * 2], &obj->texcoords[gi.t * 2], 2 * sizeof(float));
+			vertex_offset++;
 		}
 
-		if (vti >= 0)
-		{
-			unindexed_uv[i * 2 + 0] = file.vt[vti * 3 + 0];
-			unindexed_uv[i * 2 + 1] = file.vt[vti * 3 + 1];
-		}
+		index_offset += obj->face_vertices[i];
 	}
+
+	fast_obj_destroy(obj);
 
 	double start = timestamp();
 
@@ -884,7 +987,9 @@ void process(const char* path)
 	meshopt_optimizeVertexCache(&copy.indices[0], &copy.indices[0], copy.indices.size(), copy.vertices.size());
 	meshopt_optimizeVertexFetch(&copy.vertices[0], &copy.indices[0], copy.indices.size(), &copy.vertices[0], copy.vertices.size(), sizeof(Vertex));
 
-	stripify(copy);
+	stripify(copy, false);
+	stripify(copy, true);
+
 	meshlets(copy);
 	shadow(copy);
 
@@ -896,6 +1001,10 @@ void process(const char* path)
 	simplify(mesh);
 	simplifySloppy(mesh);
 	simplifyComplete(mesh);
+	simplifyPoints(mesh);
+
+	spatialSort(mesh);
+	spatialSortTriangles(mesh);
 
 	if (path)
 		processDeinterleaved(path);
@@ -907,8 +1016,7 @@ void processDev(const char* path)
 	if (!loadMesh(mesh, path))
 		return;
 
-	simplify(mesh, 0.01f);
-	simplifySloppy(mesh, 0.01f);
+	simplifyPoints(mesh);
 }
 
 int main(int argc, char** argv)

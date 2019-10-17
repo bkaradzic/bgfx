@@ -16,6 +16,11 @@ compile_commands.json
 /testing
 /tools/clang/
 /utils/clang-format-diff.py
+bazel-bin
+bazel-genfiles
+bazel-out
+bazel-spirv-tools
+bazel-testlogs
 
 # Vim
 [._]*.s[a-w][a-z]

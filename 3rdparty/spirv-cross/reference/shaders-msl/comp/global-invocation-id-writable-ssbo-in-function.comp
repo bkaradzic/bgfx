@@ -13,12 +13,12 @@ struct myBlock
 
 // Implementation of the GLSL mod() function, which is slightly different than Metal fmod()
 template<typename Tx, typename Ty>
-Tx mod(Tx x, Ty y)
+inline Tx mod(Tx x, Ty y)
 {
     return x - y * floor(x / y);
 }
 
-float getB(device myBlock& myStorage, thread uint3& gl_GlobalInvocationID)
+inline float getB(device myBlock& myStorage, thread uint3& gl_GlobalInvocationID)
 {
     return myStorage.b[gl_GlobalInvocationID.x];
 }

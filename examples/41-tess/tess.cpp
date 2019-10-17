@@ -320,8 +320,8 @@ namespace
 	class ExampleTessellation : public entry::AppI
 	{
 	public:
-		ExampleTessellation(const char* _name, const char* _description)
-			: entry::AppI(_name, _description)
+		ExampleTessellation(const char* _name, const char* _description, const char* _url)
+			: entry::AppI(_name, _description, _url)
 		{
 		}
 
@@ -758,11 +758,11 @@ namespace
 
 			const uint32_t indices[] = { 0, 1, 3, 2, 3, 1 };
 
-			m_geometryDecl.begin().add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float).end();
+			m_geometryLayout.begin().add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float).end();
 
 			m_geometryVertices = bgfx::createVertexBuffer(
 				  bgfx::copy(vertices, sizeof(vertices) )
-				, m_geometryDecl
+				, m_geometryLayout
 				, BGFX_BUFFER_COMPUTE_READ
 				);
 			m_geometryIndices = bgfx::createIndexBuffer(
@@ -842,14 +842,14 @@ namespace
 				break;
 			}
 
-			m_instancedGeometryDecl
+			m_instancedGeometryLayout
 				.begin()
 				.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 				.end();
 
 			m_instancedGeometryVertices = bgfx::createVertexBuffer(
 				  bgfx::makeRef(vertices, sizeof(float) * 2 * m_instancedMeshVertexCount)
-				, m_instancedGeometryDecl
+				, m_instancedGeometryLayout
 				);
 
 			m_instancedGeometryIndices  = bgfx::createIndexBuffer(
@@ -872,11 +872,11 @@ namespace
 
 		bgfx::IndexBufferHandle m_geometryIndices;
 		bgfx::VertexBufferHandle m_geometryVertices;
-		bgfx::VertexDecl m_geometryDecl;
+		bgfx::VertexLayout m_geometryLayout;
 
 		bgfx::IndexBufferHandle m_instancedGeometryIndices;
 		bgfx::VertexBufferHandle m_instancedGeometryVertices;
-		bgfx::VertexDecl m_instancedGeometryDecl;
+		bgfx::VertexLayout m_instancedGeometryLayout;
 
 		bgfx::IndirectBufferHandle m_dispatchIndirect;
 
@@ -925,4 +925,9 @@ namespace
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleTessellation, "41-tess", "Adaptive Gpu Tessellation.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleTessellation
+	, "41-tess"
+	, "Adaptive Gpu Tessellation."
+	, "https://bkaradzic.github.io/bgfx/examples.html#tess"
+	);

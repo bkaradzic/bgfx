@@ -11,18 +11,18 @@
 #ifndef __cplusplus
 
 #if BGFX_SHADER_LANGUAGE_GLSL
-#	define __UAV_REG_0 4
-#	define __UAV_REG_1 5
-#	define __UAV_REG_2 6
-#	define __UAV_REG_3 7
+#	define FRAMEBUFFER_IMAGE2D_RW_0(_name, _format) IMAGE2D_RW(_name, _format, 4)
+#	define FRAMEBUFFER_IMAGE2D_RW_1(_name, _format) IMAGE2D_RW(_name, _format, 5)
+#	define FRAMEBUFFER_IMAGE2D_RW_2(_name, _format) IMAGE2D_RW(_name, _format, 6)
+#	define FRAMEBUFFER_IMAGE2D_RW_3(_name, _format) IMAGE2D_RW(_name, _format, 7)
 #else
-#	define __UAV_REG_0 16
-#	define __UAV_REG_1 17
-#	define __UAV_REG_2 18
-#	define __UAV_REG_3 19
+#	define FRAMEBUFFER_IMAGE2D_RW_0(_name, _format) IMAGE2D_RW(_name, _format, 16)
+#	define FRAMEBUFFER_IMAGE2D_RW_1(_name, _format) IMAGE2D_RW(_name, _format, 17)
+#	define FRAMEBUFFER_IMAGE2D_RW_2(_name, _format) IMAGE2D_RW(_name, _format, 18)
+#	define FRAMEBUFFER_IMAGE2D_RW_3(_name, _format) IMAGE2D_RW(_name, _format, 19)
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 
-#define FRAMEBUFFER_IMAGE2D_RW(_name, _format, _reg) IMAGE2D_RW(_name, _format, __UAV_REG_ ## _reg)
+#define FRAMEBUFFER_IMAGE2D_RW(_name, _format, _reg) FRAMEBUFFER_IMAGE2D_RW_ ## _reg(_name, _format)
 
 #if BGFX_SHADER_LANGUAGE_GLSL
 
@@ -138,7 +138,7 @@
 #define IMAGE3D_WR( _name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
 #define UIMAGE3D_WR(_name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
 
-#if BGFX_SHADER_LANGUAGE_METAL
+#if BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV
 #define BUFFER_RO(_name, _struct, _reg) StructuredBuffer<_struct>   _name : REGISTER(t, _reg)
 #define BUFFER_RW(_name, _struct, _reg) RWStructuredBuffer <_struct> _name : REGISTER(u, _reg)
 #define BUFFER_WR(_name, _struct, _reg) BUFFER_RW(_name, _struct, _reg)

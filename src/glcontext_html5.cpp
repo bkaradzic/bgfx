@@ -85,19 +85,24 @@ namespace bgfx { namespace gl
 		if (m_primary)
 		{
 			if (m_current == m_primary)
+			{
 				m_current = NULL;
+			}
+
 			BX_DELETE(g_allocator, m_primary);
 			m_primary = NULL;
 		}
 	}
 
 	void GlContext::resize(uint32_t _width, uint32_t _height, uint32_t /* _flags */)
-    {
+	{
 		if (m_primary == NULL)
+		{
 			return;
+		}
 
 		emscripten_set_canvas_element_size(m_primary->m_canvas, (int) _width, (int) _height);
-    }
+	}
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh)
 	{
@@ -108,8 +113,7 @@ namespace bgfx { namespace gl
 		s_attrs.stencil = true;
 		s_attrs.enableExtensionsByDefault = true;
 
-        // let emscripten figure out the best WebGL context to create
-		// TODO this isn't necessarily the right thing, I don't think the code actually does the fallback like it should
+		// let emscripten figure out the best WebGL context to create
 		s_attrs.majorVersion = 0;
 		s_attrs.majorVersion = 0;
 

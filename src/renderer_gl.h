@@ -949,6 +949,10 @@ typedef uint64_t GLuint64;
 #	define GL_BUFFER 0x82E0
 #endif // GL_BUFFER
 
+#ifndef GL_COMMAND_BARRIER_BIT
+#	define GL_COMMAND_BARRIER_BIT 0x00000040
+#endif // GL_COMMAND_BARRIER_BIT
+
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242
 #define GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH 0x8243
@@ -1210,10 +1214,10 @@ namespace bgfx { namespace gl
 
 	struct VertexBufferGL
 	{
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
+		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
 		{
 			m_size = _size;
-			m_decl = _declHandle;
+			m_layoutHandle = _layoutHandle;
 			const bool drawIndirect = 0 != (_flags & BGFX_BUFFER_DRAW_INDIRECT);
 
 			m_target = drawIndirect ? GL_DRAW_INDIRECT_BUFFER : GL_ARRAY_BUFFER;
@@ -1237,7 +1241,7 @@ namespace bgfx { namespace gl
 			{
 				// orphan buffer...
 				destroy();
-				create(m_size, NULL, m_decl, 0);
+				create(m_size, NULL, m_layoutHandle, 0);
 			}
 
 			GL_CHECK(glBindBuffer(m_target, m_id) );
@@ -1254,7 +1258,7 @@ namespace bgfx { namespace gl
 		GLuint m_id;
 		GLenum m_target;
 		uint32_t m_size;
-		VertexDeclHandle m_decl;
+		VertexLayoutHandle m_layoutHandle;
 	};
 
 	struct TextureGL
@@ -1371,7 +1375,7 @@ namespace bgfx { namespace gl
 			bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
 		}
 
-		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0);
+		void bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex = 0);
 
 		void bindAttributesEnd()
 		{

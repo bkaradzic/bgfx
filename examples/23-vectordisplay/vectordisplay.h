@@ -22,7 +22,7 @@ struct PosColorUvVertex
 	uint32_t m_abgr;
 
 	static void init();
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
 class VectorDisplay

@@ -35,18 +35,18 @@ bgfx::TextureHandle loadTexture(const char* _name, uint64_t _flags = BGFX_TEXTUR
 bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum _dstFormat);
 
 ///
-void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices);
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices);
 
 /// Returns true if both internal transient index and vertex buffer have
 /// enough space.
 ///
 /// @param[in] _numVertices Number of vertices.
-/// @param[in] _decl Vertex declaration.
+/// @param[in] _layout Vertex layout.
 /// @param[in] _numIndices Number of indices.
 ///
-inline bool checkAvailTransientBuffers(uint32_t _numVertices, const bgfx::VertexDecl& _decl, uint32_t _numIndices)
+inline bool checkAvailTransientBuffers(uint32_t _numVertices, const bgfx::VertexLayout& _layout, uint32_t _numIndices)
 {
-	return _numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, _decl)
+	return _numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, _layout)
 		&& (0 == _numIndices || _numIndices == bgfx::getAvailTransientIndexBuffer(_numIndices) )
 		;
 }
@@ -123,7 +123,7 @@ struct Mesh
 	void submit(bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state) const;
 	void submit(const MeshState*const* _state, uint8_t _numPasses, const float* _mtx, uint16_t _numMatrices) const;
 
-	bgfx::VertexDecl m_decl;
+	bgfx::VertexLayout m_layout;
 	GroupArray m_groups;
 };
 

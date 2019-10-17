@@ -178,7 +178,7 @@ bool TransformationReplaceBooleanConstantWithConstantBinary::IsApplicable(
       context->get_constant_mgr()->FindDeclaredConstant(message_.rhs_id());
   bool expected_result = (boolean_constant->opcode() == SpvOpConstantTrue);
 
-  const SpvOp binary_opcode = static_cast<SpvOp>(message_.opcode());
+  const auto binary_opcode = static_cast<SpvOp>(message_.opcode());
 
   // We consider the floating point, signed and unsigned integer cases
   // separately.  In each case the logic is very similar.
@@ -237,8 +237,17 @@ bool TransformationReplaceBooleanConstantWithConstantBinary::IsApplicable(
   }
 
   // The id use descriptor must identify some instruction
-  return transformation::FindInstruction(message_.id_use_descriptor(),
-                                         context) != nullptr;
+  auto instruction =
+      FindInstructionContainingUse(message_.id_use_descriptor(), context);
+  if (instruction == nullptr) {
+    return false;
+  }
+
+  // The instruction must not be an OpPhi, as we cannot insert a binary
+  // operator instruction before an OpPhi.
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2902): there is
+  //  scope for being less conservative.
+  return instruction->opcode() != SpvOpPhi;
 }
 
 void TransformationReplaceBooleanConstantWithConstantBinary::Apply(
@@ -259,7 +268,7 @@ TransformationReplaceBooleanConstantWithConstantBinary::ApplyWithResult(
       message_.fresh_id_for_binary_operation(), operands);
   opt::Instruction* result = binary_instruction.get();
   auto instruction_containing_constant_use =
-      transformation::FindInstruction(message_.id_use_descriptor(), context);
+      FindInstructionContainingUse(message_.id_use_descriptor(), context);
 
   // We want to insert the new instruction before the instruction that contains
   // the use of the boolean, but we need to go backwards one more instruction if

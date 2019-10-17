@@ -64,6 +64,365 @@ const bool ForwardCompatibility = false;
 // Using PureOperatorBuiltins=false is deprecated.
 bool PureOperatorBuiltins = true;
 
+namespace {
+
+//
+// A set of definitions for tabling of the built-in functions.
+//
+
+// Order matters here, as does correlation with the subsequent
+// "const int ..." declarations and the ArgType enumerants.
+const char* TypeString[] = {
+   "bool",  "bvec2", "bvec3", "bvec4",
+   "float",  "vec2",  "vec3",  "vec4",
+   "int",   "ivec2", "ivec3", "ivec4",
+   "uint",  "uvec2", "uvec3", "uvec4",
+};
+const int TypeStringCount = sizeof(TypeString) / sizeof(char*); // number of entries in 'TypeString'
+const int TypeStringRowShift = 2;                               // shift amount to go downe one row in 'TypeString'
+const int TypeStringColumnMask = (1 << TypeStringRowShift) - 1; // reduce type to its column number in 'TypeString'
+const int TypeStringScalarMask = ~TypeStringColumnMask;         // take type to its scalar column in 'TypeString'
+
+enum ArgType {
+    // numbers hardcoded to correspond to 'TypeString'; order and value matter
+    TypeB =   1 << 0,  // Boolean
+    TypeF =   1 << 1,  // float 32
+    TypeI =   1 << 2,  // int 32
+    TypeU =   1 << 3,  // uint 32
+    TypeF16 = 1 << 4,  // float 16
+    TypeF64 = 1 << 5,  // float 64
+    TypeI8  = 1 << 6,  // int 8
+    TypeI16 = 1 << 7,  // int 16
+    TypeI64 = 1 << 8,  // int 64
+    TypeU8  = 1 << 9,  // uint 8
+    TypeU16 = 1 << 10, // uint 16
+    TypeU64 = 1 << 11, // uint 64
+};
+// Mixtures of the above, to help the function tables
+const ArgType TypeFI  = static_cast<ArgType>(TypeF | TypeI);
+const ArgType TypeFIB = static_cast<ArgType>(TypeF | TypeI | TypeB);
+const ArgType TypeIU  = static_cast<ArgType>(TypeI | TypeU);
+
+// The relationships between arguments and return type, whether anything is
+// output, or other unusual situations.
+enum ArgClass {
+    ClassRegular = 0,    // nothing special, just all vector widths with matching return type; traditional arithmetic
+    ClassLS   = 1 << 0,  // the last argument is also held fixed as a (type-matched) scalar while the others cycle
+    ClassXLS  = 1 << 1,  // the last argument is exclusively a (type-matched) scalar while the others cycle
+    ClassLS2  = 1 << 2,  // the last two arguments are held fixed as a (type-matched) scalar while the others cycle
+    ClassFS   = 1 << 3,  // the first argument is held fixed as a (type-matched) scalar while the others cycle
+    ClassFS2  = 1 << 4,  // the first two arguments are held fixed as a (type-matched) scalar while the others cycle
+    ClassLO   = 1 << 5,  // the last argument is an output
+    ClassB    = 1 << 6,  // return type cycles through only bool/bvec, matching vector width of args
+    ClassLB   = 1 << 7,  // last argument cycles through only bool/bvec, matching vector width of args
+    ClassV1   = 1 << 8,  // scalar only
+    ClassFIO  = 1 << 9,  // first argument is inout
+    ClassRS   = 1 << 10, // the return is held scalar as the arguments cycle
+    ClassNS   = 1 << 11, // no scalar prototype
+    ClassCV   = 1 << 12, // first argument is 'coherent volatile'
+    ClassFO   = 1 << 13, // first argument is output
+    ClassV3   = 1 << 14, // vec3 only
+};
+// Mixtures of the above, to help the function tables
+const ArgClass ClassV1FIOCV = (ArgClass)(ClassV1 | ClassFIO | ClassCV);
+const ArgClass ClassV1FOCV  = (ArgClass)(ClassV1 | ClassFO  | ClassCV);
+const ArgClass ClassV1CV    = (ArgClass)(ClassV1 | ClassCV);
+const ArgClass ClassBNS     = (ArgClass)(ClassB  | ClassNS);
+const ArgClass ClassRSNS    = (ArgClass)(ClassRS | ClassNS);
+
+// A descriptor, for a single profile, of when something is available.
+// If the current profile does not match 'profile' mask below, the other fields
+// do not apply (nor validate).
+// profiles == EBadProfile is the end of an array of these
+struct Versioning {
+    EProfile profiles;       // the profile(s) (mask) that the following fields are valid for
+    int minExtendedVersion;  // earliest version when extensions are enabled; ignored if numExtensions is 0
+    int minCoreVersion;      // earliest version function is in core; 0 means never
+    int numExtensions;       // how many extensions are in the 'extensions' list
+    const char** extensions; // list of extension names enabling the function
+};
+
+EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECompatibilityProfile);
+
+// Declare pointers to put into the table for versioning.
+#ifdef GLSLANG_WEB
+    const Versioning* Es300Desktop130 = nullptr;
+#else
+    const Versioning Es300Desktop130Version[] = { { EEsProfile,      0, 300, 0, nullptr },
+                                                  { EDesktopProfile, 0, 130, 0, nullptr },
+                                                  { EBadProfile } };
+    const Versioning* Es300Desktop130 = &Es300Desktop130Version[0];
+
+    const Versioning Es310Desktop430Version[] = { { EEsProfile,      0, 310, 0, nullptr },
+                                                  { EDesktopProfile, 0, 430, 0, nullptr },
+                                                  { EBadProfile } };
+    const Versioning* Es310Desktop430 = &Es310Desktop430Version[0];
+
+    const Versioning Es310Desktop450Version[] = { { EEsProfile,      0, 310, 0, nullptr },
+                                                  { EDesktopProfile, 0, 450, 0, nullptr },
+                                                  { EBadProfile } };
+    const Versioning* Es310Desktop450 = &Es310Desktop450Version[0];
+#endif
+
+// The main descriptor of what a set of function prototypes can look like, and
+// a pointer to extra versioning information, when needed.
+struct BuiltInFunction {
+    TOperator op;                 // operator to map the name to
+    const char* name;             // function name
+    int numArguments;             // number of arguments (overloads with varying arguments need different entries)
+    ArgType types;                // ArgType mask
+    ArgClass classes;             // the ways this particular function entry manifests
+    const Versioning* versioning; // nullptr means always a valid version
+};
+
+// The tables can have the same built-in function name more than one time,
+// but the exact same prototype must be indicated at most once.
+// The prototypes that get declared are the union of all those indicated.
+// This is important when different releases add new prototypes for the same name.
+// It also also congnitively simpler tiling of the prototype space.
+// In practice, most names can be fully represented with one entry.
+//
+// Table is terminated by an OpNull TOperator.
+
+const BuiltInFunction BaseFunctions[] = {
+//    TOperator,           name,       arg-count,   ArgType,   ArgClass,     versioning
+//    ---------            ----        ---------    -------    --------      ----------
+    { EOpRadians,          "radians",          1,   TypeF,     ClassRegular, nullptr },
+    { EOpDegrees,          "degrees",          1,   TypeF,     ClassRegular, nullptr },
+    { EOpSin,              "sin",              1,   TypeF,     ClassRegular, nullptr },
+    { EOpCos,              "cos",              1,   TypeF,     ClassRegular, nullptr },
+    { EOpTan,              "tan",              1,   TypeF,     ClassRegular, nullptr },
+    { EOpAsin,             "asin",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpAcos,             "acos",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpAtan,             "atan",             2,   TypeF,     ClassRegular, nullptr },
+    { EOpAtan,             "atan",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpPow,              "pow",              2,   TypeF,     ClassRegular, nullptr },
+    { EOpExp,              "exp",              1,   TypeF,     ClassRegular, nullptr },
+    { EOpLog,              "log",              1,   TypeF,     ClassRegular, nullptr },
+    { EOpExp2,             "exp2",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpLog2,             "log2",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpSqrt,             "sqrt",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpInverseSqrt,      "inversesqrt",      1,   TypeF,     ClassRegular, nullptr },
+    { EOpAbs,              "abs",              1,   TypeF,     ClassRegular, nullptr },
+    { EOpSign,             "sign",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpFloor,            "floor",            1,   TypeF,     ClassRegular, nullptr },
+    { EOpCeil,             "ceil",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpFract,            "fract",            1,   TypeF,     ClassRegular, nullptr },
+    { EOpMod,              "mod",              2,   TypeF,     ClassLS,      nullptr },
+    { EOpMin,              "min",              2,   TypeF,     ClassLS,      nullptr },
+    { EOpMax,              "max",              2,   TypeF,     ClassLS,      nullptr },
+    { EOpClamp,            "clamp",            3,   TypeF,     ClassLS2,     nullptr },
+    { EOpMix,              "mix",              3,   TypeF,     ClassLS,      nullptr },
+    { EOpStep,             "step",             2,   TypeF,     ClassFS,      nullptr },
+    { EOpSmoothStep,       "smoothstep",       3,   TypeF,     ClassFS2,     nullptr },
+    { EOpNormalize,        "normalize",        1,   TypeF,     ClassRegular, nullptr },
+    { EOpFaceForward,      "faceforward",      3,   TypeF,     ClassRegular, nullptr },
+    { EOpReflect,          "reflect",          2,   TypeF,     ClassRegular, nullptr },
+    { EOpRefract,          "refract",          3,   TypeF,     ClassXLS,     nullptr },
+    { EOpLength,           "length",           1,   TypeF,     ClassRS,      nullptr },
+    { EOpDistance,         "distance",         2,   TypeF,     ClassRS,      nullptr },
+    { EOpDot,              "dot",              2,   TypeF,     ClassRS,      nullptr },
+    { EOpCross,            "cross",            2,   TypeF,     ClassV3,      nullptr },
+    { EOpLessThan,         "lessThan",         2,   TypeFI,    ClassBNS,     nullptr },
+    { EOpLessThanEqual,    "lessThanEqual",    2,   TypeFI,    ClassBNS,     nullptr },
+    { EOpGreaterThan,      "greaterThan",      2,   TypeFI,    ClassBNS,     nullptr },
+    { EOpGreaterThanEqual, "greaterThanEqual", 2,   TypeFI,    ClassBNS,     nullptr },
+    { EOpVectorEqual,      "equal",            2,   TypeFIB,   ClassBNS,     nullptr },
+    { EOpVectorNotEqual,   "notEqual",         2,   TypeFIB,   ClassBNS,     nullptr },
+    { EOpAny,              "any",              1,   TypeB,     ClassRSNS,    nullptr },
+    { EOpAll,              "all",              1,   TypeB,     ClassRSNS,    nullptr },
+    { EOpVectorLogicalNot, "not",              1,   TypeB,     ClassNS,      nullptr },
+    { EOpSinh,             "sinh",             1,   TypeF,     ClassRegular, Es300Desktop130 },
+    { EOpCosh,             "cosh",             1,   TypeF,     ClassRegular, Es300Desktop130 },
+    { EOpTanh,             "tanh",             1,   TypeF,     ClassRegular, Es300Desktop130 },
+    { EOpAsinh,            "asinh",            1,   TypeF,     ClassRegular, Es300Desktop130 },
+    { EOpAcosh,            "acosh",            1,   TypeF,     ClassRegular, Es300Desktop130 },
+    { EOpAtanh,            "atanh",            1,   TypeF,     ClassRegular, Es300Desktop130 },
+    { EOpAbs,              "abs",              1,   TypeI,     ClassRegular, Es300Desktop130 },
+    { EOpSign,             "sign",             1,   TypeI,     ClassRegular, Es300Desktop130 },
+    { EOpTrunc,            "trunc",            1,   TypeF,     ClassRegular, Es300Desktop130 },
+    { EOpRound,            "round",            1,   TypeF,     ClassRegular, Es300Desktop130 },
+    { EOpRoundEven,        "roundEven",        1,   TypeF,     ClassRegular, Es300Desktop130 },
+    { EOpModf,             "modf",             2,   TypeF,     ClassLO,      Es300Desktop130 },
+    { EOpMin,              "min",              2,   TypeIU,    ClassLS,      Es300Desktop130 },
+    { EOpMax,              "max",              2,   TypeIU,    ClassLS,      Es300Desktop130 },
+    { EOpClamp,            "clamp",            3,   TypeIU,    ClassLS2,     Es300Desktop130 },
+    { EOpMix,              "mix",              3,   TypeF,     ClassLB,      Es300Desktop130 },
+    { EOpIsInf,            "isinf",            1,   TypeF,     ClassB,       Es300Desktop130 },
+    { EOpIsNan,            "isnan",            1,   TypeF,     ClassB,       Es300Desktop130 },
+    { EOpLessThan,         "lessThan",         2,   TypeU,     ClassBNS,     Es300Desktop130 },
+    { EOpLessThanEqual,    "lessThanEqual",    2,   TypeU,     ClassBNS,     Es300Desktop130 },
+    { EOpGreaterThan,      "greaterThan",      2,   TypeU,     ClassBNS,     Es300Desktop130 },
+    { EOpGreaterThanEqual, "greaterThanEqual", 2,   TypeU,     ClassBNS,     Es300Desktop130 },
+    { EOpVectorEqual,      "equal",            2,   TypeU,     ClassBNS,     Es300Desktop130 },
+    { EOpVectorNotEqual,   "notEqual",         2,   TypeU,     ClassBNS,     Es300Desktop130 },
+#ifndef GLSLANG_WEB
+    { EOpAtomicAdd,        "atomicAdd",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop430 },
+    { EOpAtomicMin,        "atomicMin",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop430 },
+    { EOpAtomicMax,        "atomicMax",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop430 },
+    { EOpAtomicAnd,        "atomicAnd",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop430 },
+    { EOpAtomicOr,         "atomicOr",         2,   TypeIU,    ClassV1FIOCV, Es310Desktop430 },
+    { EOpAtomicXor,        "atomicXor",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop430 },
+    { EOpAtomicExchange,   "atomicExchange",   2,   TypeIU,    ClassV1FIOCV, Es310Desktop430 },
+    { EOpAtomicCompSwap,   "atomicCompSwap",   3,   TypeIU,    ClassV1FIOCV, Es310Desktop430 },
+    { EOpMix,              "mix",              3,   TypeB,     ClassRegular, Es310Desktop450 },
+    { EOpMix,              "mix",              3,   TypeIU,    ClassLB,      Es310Desktop450 },
+#endif
+    { EOpNull }
+};
+
+const BuiltInFunction DerivativeFunctions[] = {
+    { EOpDPdx,             "dFdx",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpDPdy,             "dFdy",             1,   TypeF,     ClassRegular, nullptr },
+    { EOpFwidth,           "fwidth",           1,   TypeF,     ClassRegular, nullptr },
+    { EOpNull }
+};
+
+// For the given table of functions, add all the indicated prototypes for each
+// one, to be returned in the passed in decls.
+void AddTabledBuiltin(TString& decls, const BuiltInFunction& function)
+{
+    const auto isScalarType = [](int type) { return (type & TypeStringColumnMask) == 0; };
+
+    // loop across these two:
+    //  0: the varying arg set, and
+    //  1: the fixed scalar args
+    const ArgClass ClassFixed = (ArgClass)(ClassLS | ClassXLS | ClassLS2 | ClassFS | ClassFS2);
+    for (int fixed = 0; fixed < ((function.classes & ClassFixed) > 0 ? 2 : 1); ++fixed) {
+
+        if (fixed == 0 && (function.classes & ClassXLS))
+            continue;
+
+        // walk the type strings in TypeString[]
+        for (int type = 0; type < TypeStringCount; ++type) {
+            // skip types not selected: go from type to row number to type bit
+            if ((function.types & (1 << (type >> TypeStringRowShift))) == 0)
+                continue;
+
+            // if we aren't on a scalar, and should be, skip
+            if ((function.classes & ClassV1) && !isScalarType(type))
+                continue;
+
+            // if we aren't on a 3-vector, and should be, skip
+            if ((function.classes & ClassV3) && (type & TypeStringColumnMask) != 2)
+                continue;
+
+            // skip replication of all arg scalars between the varying arg set and the fixed args
+            if (fixed == 1 && type == (type & TypeStringScalarMask) && (function.classes & ClassXLS) == 0)
+                continue;
+
+            // skip scalars when we are told to
+            if ((function.classes & ClassNS) && isScalarType(type))
+                continue;
+
+            // return type
+            if (function.classes & ClassB)
+                decls.append(TypeString[type & TypeStringColumnMask]);
+            else if (function.classes & ClassRS)
+                decls.append(TypeString[type & TypeStringScalarMask]);
+            else
+                decls.append(TypeString[type]);
+            decls.append(" ");
+            decls.append(function.name);
+            decls.append("(");
+
+            // arguments
+            for (int arg = 0; arg < function.numArguments; ++arg) {
+                if (arg == function.numArguments - 1 && (function.classes & ClassLO))
+                    decls.append("out ");
+                if (arg == 0) {
+                    if (function.classes & ClassCV)
+                        decls.append("coherent volatile ");
+                    if (function.classes & ClassFIO)
+                        decls.append("inout ");
+                    if (function.classes & ClassFO)
+                        decls.append("out ");
+                }
+                if ((function.classes & ClassLB) && arg == function.numArguments - 1)
+                    decls.append(TypeString[type & TypeStringColumnMask]);
+                else if (fixed && ((arg == function.numArguments - 1 && (function.classes & (ClassLS | ClassXLS |
+                                                                                                       ClassLS2))) ||
+                                   (arg == function.numArguments - 2 && (function.classes & ClassLS2))             ||
+                                   (arg == 0                         && (function.classes & (ClassFS | ClassFS2))) ||
+                                   (arg == 1                         && (function.classes & ClassFS2))))
+                    decls.append(TypeString[type & TypeStringScalarMask]);
+                else
+                    decls.append(TypeString[type]);
+                if (arg < function.numArguments - 1)
+                    decls.append(",");
+            }
+            decls.append(");\n");
+        }
+    }
+}
+
+// See if the tabled versioning information allows the current version.
+bool ValidVersion(const BuiltInFunction& function, int version, EProfile profile, const SpvVersion& /* spVersion */)
+{
+#ifdef GLSLANG_WEB
+    // all entries in table are valid
+    return true;
+#endif
+
+    // nullptr means always valid
+    if (function.versioning == nullptr)
+        return true;
+
+    // check for what is said about our current profile
+    for (const Versioning* v = function.versioning; v->profiles != EBadProfile; ++v) {
+        if ((v->profiles & profile) != 0) {
+            if (v->minCoreVersion <= version || (v->numExtensions > 0 && v->minExtendedVersion <= version))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+// Relate a single table of built-ins to their AST operator.
+// This can get called redundantly (especially for the common built-ins, when
+// called once per stage). This is a performance issue only, not a correctness
+// concern.  It is done for quality arising from simplicity, as there are subtlies
+// to get correct if instead trying to do it surgically.
+void RelateTabledBuiltins(const BuiltInFunction* functions, TSymbolTable& symbolTable)
+{
+    while (functions->op != EOpNull) {
+        symbolTable.relateToOperator(functions->name, functions->op);
+        ++functions;
+    }
+}
+
+} // end anonymous namespace
+
+// Add declarations for all tables of built-in functions.
+void TBuiltIns::addTabledBuiltins(int version, EProfile profile, const SpvVersion& spvVersion)
+{
+    const auto forEachFunction = [&](TString& decls, const BuiltInFunction* function) {
+        while (function->op != EOpNull) {
+            if (ValidVersion(*function, version, profile, spvVersion))
+                AddTabledBuiltin(decls, *function);
+            ++function;
+        }
+    };
+
+    forEachFunction(commonBuiltins, BaseFunctions);
+    forEachFunction(stageBuiltins[EShLangFragment], DerivativeFunctions);
+
+#ifdef GLSLANG_WEB
+    return;
+#endif
+
+    if ((profile == EEsProfile && version >= 320) || (profile != EEsProfile && version >= 450))
+        forEachFunction(stageBuiltins[EShLangCompute], DerivativeFunctions);
+}
+
+// Relate all tables of built-ins to the AST operators.
+void TBuiltIns::relateTabledBuiltins(int /* version */, EProfile /* profile */, const SpvVersion& /* spvVersion */, EShLanguage /* stage */, TSymbolTable& symbolTable)
+{
+    RelateTabledBuiltins(BaseFunctions, symbolTable);
+    RelateTabledBuiltins(DerivativeFunctions, symbolTable);
+}
+
 inline bool IncludeLegacy(int version, EProfile profile, const SpvVersion& spvVersion)
 {
     return profile != EEsProfile && (version <= 130 || (spvVersion.spv == 0 && ARBCompatibility) || profile == ECompatibilityProfile);
@@ -84,27 +443,30 @@ TBuiltIns::TBuiltIns()
     // Set up textual representations for making all the permutations
     // of texturing/imaging functions.
     prefixes[EbtFloat] =  "";
-#ifdef AMD_EXTENSIONS
+    prefixes[EbtInt]   = "i";
+    prefixes[EbtUint]  = "u";
+#ifndef GLSLANG_WEB
     prefixes[EbtFloat16] = "f16";
-#endif
     prefixes[EbtInt8]  = "i8";
     prefixes[EbtUint8] = "u8";
     prefixes[EbtInt16]  = "i16";
     prefixes[EbtUint16] = "u16";
-    prefixes[EbtInt]   = "i";
-    prefixes[EbtUint]  = "u";
+#endif
+
     postfixes[2] = "2";
     postfixes[3] = "3";
     postfixes[4] = "4";
 
     // Map from symbolic class of texturing dimension to numeric dimensions.
-    dimMap[Esd1D] = 1;
     dimMap[Esd2D] = 2;
-    dimMap[EsdRect] = 2;
     dimMap[Esd3D] = 3;
     dimMap[EsdCube] = 3;
+#ifndef GLSLANG_WEB
+    dimMap[Esd1D] = 1;
+    dimMap[EsdRect] = 2;
     dimMap[EsdBuffer] = 1;
     dimMap[EsdSubpass] = 2;  // potientially unused for now
+#endif
 }
 
 TBuiltIns::~TBuiltIns()
@@ -122,32 +484,18 @@ TBuiltIns::~TBuiltIns()
 //
 void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvVersion)
 {
+    addTabledBuiltins(version, profile, spvVersion);
+
     //============================================================================
     //
     // Prototypes for built-in functions used repeatly by different shaders
     //
     //============================================================================
 
+#ifndef GLSLANG_WEB
     //
     // Derivatives Functions.
     //
-    TString derivatives (
-        "float dFdx(float p);"
-        "vec2  dFdx(vec2  p);"
-        "vec3  dFdx(vec3  p);"
-        "vec4  dFdx(vec4  p);"
-
-        "float dFdy(float p);"
-        "vec2  dFdy(vec2  p);"
-        "vec3  dFdy(vec3  p);"
-        "vec4  dFdy(vec4  p);"
-
-        "float fwidth(float p);"
-        "vec2  fwidth(vec2  p);"
-        "vec3  fwidth(vec3  p);"
-        "vec4  fwidth(vec4  p);"
-    );
-
     TString derivativeControls (
         "float dFdxFine(float p);"
         "vec2  dFdxFine(vec2  p);"
@@ -279,318 +627,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     // Prototypes for built-in functions seen by both vertex and fragment shaders.
     //
     //============================================================================
-
-    //
-    // Angle and Trigonometric Functions.
-    //
-    commonBuiltins.append(
-        "float radians(float degrees);"
-        "vec2  radians(vec2  degrees);"
-        "vec3  radians(vec3  degrees);"
-        "vec4  radians(vec4  degrees);"
-
-        "float degrees(float radians);"
-        "vec2  degrees(vec2  radians);"
-        "vec3  degrees(vec3  radians);"
-        "vec4  degrees(vec4  radians);"
-
-        "float sin(float angle);"
-        "vec2  sin(vec2  angle);"
-        "vec3  sin(vec3  angle);"
-        "vec4  sin(vec4  angle);"
-
-        "float cos(float angle);"
-        "vec2  cos(vec2  angle);"
-        "vec3  cos(vec3  angle);"
-        "vec4  cos(vec4  angle);"
-
-        "float tan(float angle);"
-        "vec2  tan(vec2  angle);"
-        "vec3  tan(vec3  angle);"
-        "vec4  tan(vec4  angle);"
-
-        "float asin(float x);"
-        "vec2  asin(vec2  x);"
-        "vec3  asin(vec3  x);"
-        "vec4  asin(vec4  x);"
-
-        "float acos(float x);"
-        "vec2  acos(vec2  x);"
-        "vec3  acos(vec3  x);"
-        "vec4  acos(vec4  x);"
-
-        "float atan(float y, float x);"
-        "vec2  atan(vec2  y, vec2  x);"
-        "vec3  atan(vec3  y, vec3  x);"
-        "vec4  atan(vec4  y, vec4  x);"
-
-        "float atan(float y_over_x);"
-        "vec2  atan(vec2  y_over_x);"
-        "vec3  atan(vec3  y_over_x);"
-        "vec4  atan(vec4  y_over_x);"
-
-        "\n");
-
-    if (version >= 130) {
-        commonBuiltins.append(
-            "float sinh(float angle);"
-            "vec2  sinh(vec2  angle);"
-            "vec3  sinh(vec3  angle);"
-            "vec4  sinh(vec4  angle);"
-
-            "float cosh(float angle);"
-            "vec2  cosh(vec2  angle);"
-            "vec3  cosh(vec3  angle);"
-            "vec4  cosh(vec4  angle);"
-
-            "float tanh(float angle);"
-            "vec2  tanh(vec2  angle);"
-            "vec3  tanh(vec3  angle);"
-            "vec4  tanh(vec4  angle);"
-
-            "float asinh(float x);"
-            "vec2  asinh(vec2  x);"
-            "vec3  asinh(vec3  x);"
-            "vec4  asinh(vec4  x);"
-
-            "float acosh(float x);"
-            "vec2  acosh(vec2  x);"
-            "vec3  acosh(vec3  x);"
-            "vec4  acosh(vec4  x);"
-
-            "float atanh(float y_over_x);"
-            "vec2  atanh(vec2  y_over_x);"
-            "vec3  atanh(vec3  y_over_x);"
-            "vec4  atanh(vec4  y_over_x);"
-
-            "\n");
-    }
-
-    //
-    // Exponential Functions.
-    //
-    commonBuiltins.append(
-        "float pow(float x, float y);"
-        "vec2  pow(vec2  x, vec2  y);"
-        "vec3  pow(vec3  x, vec3  y);"
-        "vec4  pow(vec4  x, vec4  y);"
-
-        "float exp(float x);"
-        "vec2  exp(vec2  x);"
-        "vec3  exp(vec3  x);"
-        "vec4  exp(vec4  x);"
-
-        "float log(float x);"
-        "vec2  log(vec2  x);"
-        "vec3  log(vec3  x);"
-        "vec4  log(vec4  x);"
-
-        "float exp2(float x);"
-        "vec2  exp2(vec2  x);"
-        "vec3  exp2(vec3  x);"
-        "vec4  exp2(vec4  x);"
-
-        "float log2(float x);"
-        "vec2  log2(vec2  x);"
-        "vec3  log2(vec3  x);"
-        "vec4  log2(vec4  x);"
-
-        "float sqrt(float x);"
-        "vec2  sqrt(vec2  x);"
-        "vec3  sqrt(vec3  x);"
-        "vec4  sqrt(vec4  x);"
-
-        "float inversesqrt(float x);"
-        "vec2  inversesqrt(vec2  x);"
-        "vec3  inversesqrt(vec3  x);"
-        "vec4  inversesqrt(vec4  x);"
-
-        "\n");
-
-    //
-    // Common Functions.
-    //
-    commonBuiltins.append(
-        "float abs(float x);"
-        "vec2  abs(vec2  x);"
-        "vec3  abs(vec3  x);"
-        "vec4  abs(vec4  x);"
-
-        "float sign(float x);"
-        "vec2  sign(vec2  x);"
-        "vec3  sign(vec3  x);"
-        "vec4  sign(vec4  x);"
-
-        "float floor(float x);"
-        "vec2  floor(vec2  x);"
-        "vec3  floor(vec3  x);"
-        "vec4  floor(vec4  x);"
-
-        "float ceil(float x);"
-        "vec2  ceil(vec2  x);"
-        "vec3  ceil(vec3  x);"
-        "vec4  ceil(vec4  x);"
-
-        "float fract(float x);"
-        "vec2  fract(vec2  x);"
-        "vec3  fract(vec3  x);"
-        "vec4  fract(vec4  x);"
-
-        "float mod(float x, float y);"
-        "vec2  mod(vec2  x, float y);"
-        "vec3  mod(vec3  x, float y);"
-        "vec4  mod(vec4  x, float y);"
-        "vec2  mod(vec2  x, vec2  y);"
-        "vec3  mod(vec3  x, vec3  y);"
-        "vec4  mod(vec4  x, vec4  y);"
-
-        "float min(float x, float y);"
-        "vec2  min(vec2  x, float y);"
-        "vec3  min(vec3  x, float y);"
-        "vec4  min(vec4  x, float y);"
-        "vec2  min(vec2  x, vec2  y);"
-        "vec3  min(vec3  x, vec3  y);"
-        "vec4  min(vec4  x, vec4  y);"
-
-        "float max(float x, float y);"
-        "vec2  max(vec2  x, float y);"
-        "vec3  max(vec3  x, float y);"
-        "vec4  max(vec4  x, float y);"
-        "vec2  max(vec2  x, vec2  y);"
-        "vec3  max(vec3  x, vec3  y);"
-        "vec4  max(vec4  x, vec4  y);"
-
-        "float clamp(float x, float minVal, float maxVal);"
-        "vec2  clamp(vec2  x, float minVal, float maxVal);"
-        "vec3  clamp(vec3  x, float minVal, float maxVal);"
-        "vec4  clamp(vec4  x, float minVal, float maxVal);"
-        "vec2  clamp(vec2  x, vec2  minVal, vec2  maxVal);"
-        "vec3  clamp(vec3  x, vec3  minVal, vec3  maxVal);"
-        "vec4  clamp(vec4  x, vec4  minVal, vec4  maxVal);"
-
-        "float mix(float x, float y, float a);"
-        "vec2  mix(vec2  x, vec2  y, float a);"
-        "vec3  mix(vec3  x, vec3  y, float a);"
-        "vec4  mix(vec4  x, vec4  y, float a);"
-        "vec2  mix(vec2  x, vec2  y, vec2  a);"
-        "vec3  mix(vec3  x, vec3  y, vec3  a);"
-        "vec4  mix(vec4  x, vec4  y, vec4  a);"
-
-        "float step(float edge, float x);"
-        "vec2  step(vec2  edge, vec2  x);"
-        "vec3  step(vec3  edge, vec3  x);"
-        "vec4  step(vec4  edge, vec4  x);"
-        "vec2  step(float edge, vec2  x);"
-        "vec3  step(float edge, vec3  x);"
-        "vec4  step(float edge, vec4  x);"
-
-        "float smoothstep(float edge0, float edge1, float x);"
-        "vec2  smoothstep(vec2  edge0, vec2  edge1, vec2  x);"
-        "vec3  smoothstep(vec3  edge0, vec3  edge1, vec3  x);"
-        "vec4  smoothstep(vec4  edge0, vec4  edge1, vec4  x);"
-        "vec2  smoothstep(float edge0, float edge1, vec2  x);"
-        "vec3  smoothstep(float edge0, float edge1, vec3  x);"
-        "vec4  smoothstep(float edge0, float edge1, vec4  x);"
-
-        "\n");
-
-    if (version >= 130) {
-        commonBuiltins.append(
-            "  int abs(  int x);"
-            "ivec2 abs(ivec2 x);"
-            "ivec3 abs(ivec3 x);"
-            "ivec4 abs(ivec4 x);"
-
-            "  int sign(  int x);"
-            "ivec2 sign(ivec2 x);"
-            "ivec3 sign(ivec3 x);"
-            "ivec4 sign(ivec4 x);"
-
-            "float trunc(float x);"
-            "vec2  trunc(vec2  x);"
-            "vec3  trunc(vec3  x);"
-            "vec4  trunc(vec4  x);"
-
-            "float round(float x);"
-            "vec2  round(vec2  x);"
-            "vec3  round(vec3  x);"
-            "vec4  round(vec4  x);"
-
-            "float roundEven(float x);"
-            "vec2  roundEven(vec2  x);"
-            "vec3  roundEven(vec3  x);"
-            "vec4  roundEven(vec4  x);"
-
-            "float modf(float, out float);"
-            "vec2  modf(vec2,  out vec2 );"
-            "vec3  modf(vec3,  out vec3 );"
-            "vec4  modf(vec4,  out vec4 );"
-
-            "  int min(int    x, int y);"
-            "ivec2 min(ivec2  x, int y);"
-            "ivec3 min(ivec3  x, int y);"
-            "ivec4 min(ivec4  x, int y);"
-            "ivec2 min(ivec2  x, ivec2  y);"
-            "ivec3 min(ivec3  x, ivec3  y);"
-            "ivec4 min(ivec4  x, ivec4  y);"
-
-            " uint min(uint   x, uint y);"
-            "uvec2 min(uvec2  x, uint y);"
-            "uvec3 min(uvec3  x, uint y);"
-            "uvec4 min(uvec4  x, uint y);"
-            "uvec2 min(uvec2  x, uvec2  y);"
-            "uvec3 min(uvec3  x, uvec3  y);"
-            "uvec4 min(uvec4  x, uvec4  y);"
-
-            "  int max(int    x, int y);"
-            "ivec2 max(ivec2  x, int y);"
-            "ivec3 max(ivec3  x, int y);"
-            "ivec4 max(ivec4  x, int y);"
-            "ivec2 max(ivec2  x, ivec2  y);"
-            "ivec3 max(ivec3  x, ivec3  y);"
-            "ivec4 max(ivec4  x, ivec4  y);"
-
-            " uint max(uint   x, uint y);"
-            "uvec2 max(uvec2  x, uint y);"
-            "uvec3 max(uvec3  x, uint y);"
-            "uvec4 max(uvec4  x, uint y);"
-            "uvec2 max(uvec2  x, uvec2  y);"
-            "uvec3 max(uvec3  x, uvec3  y);"
-            "uvec4 max(uvec4  x, uvec4  y);"
-
-            "int    clamp(int x, int minVal, int maxVal);"
-            "ivec2  clamp(ivec2  x, int minVal, int maxVal);"
-            "ivec3  clamp(ivec3  x, int minVal, int maxVal);"
-            "ivec4  clamp(ivec4  x, int minVal, int maxVal);"
-            "ivec2  clamp(ivec2  x, ivec2  minVal, ivec2  maxVal);"
-            "ivec3  clamp(ivec3  x, ivec3  minVal, ivec3  maxVal);"
-            "ivec4  clamp(ivec4  x, ivec4  minVal, ivec4  maxVal);"
-
-            "uint   clamp(uint x, uint minVal, uint maxVal);"
-            "uvec2  clamp(uvec2  x, uint minVal, uint maxVal);"
-            "uvec3  clamp(uvec3  x, uint minVal, uint maxVal);"
-            "uvec4  clamp(uvec4  x, uint minVal, uint maxVal);"
-            "uvec2  clamp(uvec2  x, uvec2  minVal, uvec2  maxVal);"
-            "uvec3  clamp(uvec3  x, uvec3  minVal, uvec3  maxVal);"
-            "uvec4  clamp(uvec4  x, uvec4  minVal, uvec4  maxVal);"
-
-            "float mix(float x, float y, bool  a);"
-            "vec2  mix(vec2  x, vec2  y, bvec2 a);"
-            "vec3  mix(vec3  x, vec3  y, bvec3 a);"
-            "vec4  mix(vec4  x, vec4  y, bvec4 a);"
-
-            "bool  isnan(float x);"
-            "bvec2 isnan(vec2  x);"
-            "bvec3 isnan(vec3  x);"
-            "bvec4 isnan(vec4  x);"
-
-            "bool  isinf(float x);"
-            "bvec2 isinf(vec2  x);"
-            "bvec3 isinf(vec3  x);"
-            "bvec4 isinf(vec4  x);"
-
-            "\n");
-    }
 
     //
     // double functions added to desktop 4.00, but not fma, frexp, ldexp, or pack/unpack
@@ -959,31 +995,30 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "bvec3 notEqual(u64vec3, u64vec3);"
             "bvec4 notEqual(u64vec4, u64vec4);"
 
-            "int   findLSB(int64_t);"
-            "ivec2 findLSB(i64vec2);"
-            "ivec3 findLSB(i64vec3);"
-            "ivec4 findLSB(i64vec4);"
+            "int64_t findLSB(int64_t);"
+            "i64vec2 findLSB(i64vec2);"
+            "i64vec3 findLSB(i64vec3);"
+            "i64vec4 findLSB(i64vec4);"
 
-            "int   findLSB(uint64_t);"
-            "ivec2 findLSB(u64vec2);"
-            "ivec3 findLSB(u64vec3);"
-            "ivec4 findLSB(u64vec4);"
+            "int64_t findLSB(uint64_t);"
+            "i64vec2 findLSB(u64vec2);"
+            "i64vec3 findLSB(u64vec3);"
+            "i64vec4 findLSB(u64vec4);"
 
-            "int   findMSB(int64_t);"
-            "ivec2 findMSB(i64vec2);"
-            "ivec3 findMSB(i64vec3);"
-            "ivec4 findMSB(i64vec4);"
+            "int64_t findMSB(int64_t);"
+            "i64vec2 findMSB(i64vec2);"
+            "i64vec3 findMSB(i64vec3);"
+            "i64vec4 findMSB(i64vec4);"
 
-            "int   findMSB(uint64_t);"
-            "ivec2 findMSB(u64vec2);"
-            "ivec3 findMSB(u64vec3);"
-            "ivec4 findMSB(u64vec4);"
+            "int64_t findMSB(uint64_t);"
+            "i64vec2 findMSB(u64vec2);"
+            "i64vec3 findMSB(u64vec3);"
+            "i64vec4 findMSB(u64vec4);"
 
             "\n"
         );
     }
 
-#ifdef AMD_EXTENSIONS
     // GL_AMD_shader_trinary_minmax
     if (profile != EEsProfile && version >= 430) {
         commonBuiltins.append(
@@ -1080,48 +1115,31 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n"
         );
     }
-#endif
 
     if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 430)) {
         commonBuiltins.append(
-            "uint atomicAdd(coherent volatile inout uint, uint);"
-            " int atomicAdd(coherent volatile inout  int,  int);"
             "uint atomicAdd(coherent volatile inout uint, uint, int, int, int);"
             " int atomicAdd(coherent volatile inout  int,  int, int, int, int);"
 
-            "uint atomicMin(coherent volatile inout uint, uint);"
-            " int atomicMin(coherent volatile inout  int,  int);"
             "uint atomicMin(coherent volatile inout uint, uint, int, int, int);"
             " int atomicMin(coherent volatile inout  int,  int, int, int, int);"
 
-            "uint atomicMax(coherent volatile inout uint, uint);"
-            " int atomicMax(coherent volatile inout  int,  int);"
             "uint atomicMax(coherent volatile inout uint, uint, int, int, int);"
             " int atomicMax(coherent volatile inout  int,  int, int, int, int);"
 
-            "uint atomicAnd(coherent volatile inout uint, uint);"
-            " int atomicAnd(coherent volatile inout  int,  int);"
             "uint atomicAnd(coherent volatile inout uint, uint, int, int, int);"
             " int atomicAnd(coherent volatile inout  int,  int, int, int, int);"
 
-            "uint atomicOr (coherent volatile inout uint, uint);"
-            " int atomicOr (coherent volatile inout  int,  int);"
             "uint atomicOr (coherent volatile inout uint, uint, int, int, int);"
             " int atomicOr (coherent volatile inout  int,  int, int, int, int);"
 
-            "uint atomicXor(coherent volatile inout uint, uint);"
-            " int atomicXor(coherent volatile inout  int,  int);"
             "uint atomicXor(coherent volatile inout uint, uint, int, int, int);"
             " int atomicXor(coherent volatile inout  int,  int, int, int, int);"
 
-            "uint atomicExchange(coherent volatile inout uint, uint);"
-            " int atomicExchange(coherent volatile inout  int,  int);"
             "uint atomicExchange(coherent volatile inout uint, uint, int, int, int);"
             " int atomicExchange(coherent volatile inout  int,  int, int, int, int);"
 
-            "uint atomicCompSwap(coherent volatile inout uint, uint, uint);"
-            " int atomicCompSwap(coherent volatile inout  int,  int,  int);"
             "uint atomicCompSwap(coherent volatile inout uint, uint, uint, int, int, int, int, int);"
             " int atomicCompSwap(coherent volatile inout  int,  int,  int, int, int, int, int, int);"
 
@@ -1183,27 +1201,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void atomicStore(coherent volatile out  int64_t,  int64_t, int, int, int);"
             "\n");
     }
-
-    if ((profile == EEsProfile && version >= 310) ||
-        (profile != EEsProfile && version >= 450)) {
-        commonBuiltins.append(
-            "int    mix(int    x, int    y, bool  a);"
-            "ivec2  mix(ivec2  x, ivec2  y, bvec2 a);"
-            "ivec3  mix(ivec3  x, ivec3  y, bvec3 a);"
-            "ivec4  mix(ivec4  x, ivec4  y, bvec4 a);"
-
-            "uint   mix(uint   x, uint   y, bool  a);"
-            "uvec2  mix(uvec2  x, uvec2  y, bvec2 a);"
-            "uvec3  mix(uvec3  x, uvec3  y, bvec3 a);"
-            "uvec4  mix(uvec4  x, uvec4  y, bvec4 a);"
-
-            "bool   mix(bool   x, bool   y, bool  a);"
-            "bvec2  mix(bvec2  x, bvec2  y, bvec2 a);"
-            "bvec3  mix(bvec3  x, bvec3  y, bvec3 a);"
-            "bvec4  mix(bvec4  x, bvec4  y, bvec4 a);"
-
-            "\n");
-    }
+#endif
 
     if ((profile == EEsProfile && version >= 300) ||
         (profile != EEsProfile && version >= 330)) {
@@ -1231,6 +1229,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_WEB
     if ((profile != EEsProfile && version >= 400) ||
         (profile == EEsProfile && version >= 310)) {    // GL_OES_gpu_shader5
 
@@ -1284,6 +1283,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
     }
+#endif
 
     if ((profile == EEsProfile && version >= 300) ||
         (profile != EEsProfile && version >= 400)) {
@@ -1306,7 +1306,9 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append(
             "mediump vec2 unpackHalf2x16(highp uint);"
             "\n");
-    } else if (profile != EEsProfile && version >= 420) {
+    }
+#ifndef GLSLANG_WEB
+    else if (profile != EEsProfile && version >= 420) {
         commonBuiltins.append(
             "        vec2 unpackHalf2x16(highp uint);"
             "\n");
@@ -1331,48 +1333,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                     "vec4 unpackUnorm4x8(highp uint);"
             "\n");
     }
-
-    //
-    // Geometric Functions.
-    //
-    commonBuiltins.append(
-        "float length(float x);"
-        "float length(vec2  x);"
-        "float length(vec3  x);"
-        "float length(vec4  x);"
-
-        "float distance(float p0, float p1);"
-        "float distance(vec2  p0, vec2  p1);"
-        "float distance(vec3  p0, vec3  p1);"
-        "float distance(vec4  p0, vec4  p1);"
-
-        "float dot(float x, float y);"
-        "float dot(vec2  x, vec2  y);"
-        "float dot(vec3  x, vec3  y);"
-        "float dot(vec4  x, vec4  y);"
-
-        "vec3 cross(vec3 x, vec3 y);"
-        "float normalize(float x);"
-        "vec2  normalize(vec2  x);"
-        "vec3  normalize(vec3  x);"
-        "vec4  normalize(vec4  x);"
-
-        "float faceforward(float N, float I, float Nref);"
-        "vec2  faceforward(vec2  N, vec2  I, vec2  Nref);"
-        "vec3  faceforward(vec3  N, vec3  I, vec3  Nref);"
-        "vec4  faceforward(vec4  N, vec4  I, vec4  Nref);"
-
-        "float reflect(float I, float N);"
-        "vec2  reflect(vec2  I, vec2  N);"
-        "vec3  reflect(vec3  I, vec3  N);"
-        "vec4  reflect(vec4  I, vec4  N);"
-
-        "float refract(float I, float N, float eta);"
-        "vec2  refract(vec2  I, vec2  N, float eta);"
-        "vec3  refract(vec3  I, vec3  N, float eta);"
-        "vec4  refract(vec4  I, vec4  N, float eta);"
-
-        "\n");
+#endif
 
     //
     // Matrix Functions.
@@ -1431,109 +1392,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         }
     }
 
-    //
-    // Vector relational functions.
-    //
-    commonBuiltins.append(
-        "bvec2 lessThan(vec2 x, vec2 y);"
-        "bvec3 lessThan(vec3 x, vec3 y);"
-        "bvec4 lessThan(vec4 x, vec4 y);"
-
-        "bvec2 lessThan(ivec2 x, ivec2 y);"
-        "bvec3 lessThan(ivec3 x, ivec3 y);"
-        "bvec4 lessThan(ivec4 x, ivec4 y);"
-
-        "bvec2 lessThanEqual(vec2 x, vec2 y);"
-        "bvec3 lessThanEqual(vec3 x, vec3 y);"
-        "bvec4 lessThanEqual(vec4 x, vec4 y);"
-
-        "bvec2 lessThanEqual(ivec2 x, ivec2 y);"
-        "bvec3 lessThanEqual(ivec3 x, ivec3 y);"
-        "bvec4 lessThanEqual(ivec4 x, ivec4 y);"
-
-        "bvec2 greaterThan(vec2 x, vec2 y);"
-        "bvec3 greaterThan(vec3 x, vec3 y);"
-        "bvec4 greaterThan(vec4 x, vec4 y);"
-
-        "bvec2 greaterThan(ivec2 x, ivec2 y);"
-        "bvec3 greaterThan(ivec3 x, ivec3 y);"
-        "bvec4 greaterThan(ivec4 x, ivec4 y);"
-
-        "bvec2 greaterThanEqual(vec2 x, vec2 y);"
-        "bvec3 greaterThanEqual(vec3 x, vec3 y);"
-        "bvec4 greaterThanEqual(vec4 x, vec4 y);"
-
-        "bvec2 greaterThanEqual(ivec2 x, ivec2 y);"
-        "bvec3 greaterThanEqual(ivec3 x, ivec3 y);"
-        "bvec4 greaterThanEqual(ivec4 x, ivec4 y);"
-
-        "bvec2 equal(vec2 x, vec2 y);"
-        "bvec3 equal(vec3 x, vec3 y);"
-        "bvec4 equal(vec4 x, vec4 y);"
-
-        "bvec2 equal(ivec2 x, ivec2 y);"
-        "bvec3 equal(ivec3 x, ivec3 y);"
-        "bvec4 equal(ivec4 x, ivec4 y);"
-
-        "bvec2 equal(bvec2 x, bvec2 y);"
-        "bvec3 equal(bvec3 x, bvec3 y);"
-        "bvec4 equal(bvec4 x, bvec4 y);"
-
-        "bvec2 notEqual(vec2 x, vec2 y);"
-        "bvec3 notEqual(vec3 x, vec3 y);"
-        "bvec4 notEqual(vec4 x, vec4 y);"
-
-        "bvec2 notEqual(ivec2 x, ivec2 y);"
-        "bvec3 notEqual(ivec3 x, ivec3 y);"
-        "bvec4 notEqual(ivec4 x, ivec4 y);"
-
-        "bvec2 notEqual(bvec2 x, bvec2 y);"
-        "bvec3 notEqual(bvec3 x, bvec3 y);"
-        "bvec4 notEqual(bvec4 x, bvec4 y);"
-
-        "bool any(bvec2 x);"
-        "bool any(bvec3 x);"
-        "bool any(bvec4 x);"
-
-        "bool all(bvec2 x);"
-        "bool all(bvec3 x);"
-        "bool all(bvec4 x);"
-
-        "bvec2 not(bvec2 x);"
-        "bvec3 not(bvec3 x);"
-        "bvec4 not(bvec4 x);"
-
-        "\n");
-
-    if (version >= 130) {
-        commonBuiltins.append(
-            "bvec2 lessThan(uvec2 x, uvec2 y);"
-            "bvec3 lessThan(uvec3 x, uvec3 y);"
-            "bvec4 lessThan(uvec4 x, uvec4 y);"
-
-            "bvec2 lessThanEqual(uvec2 x, uvec2 y);"
-            "bvec3 lessThanEqual(uvec3 x, uvec3 y);"
-            "bvec4 lessThanEqual(uvec4 x, uvec4 y);"
-
-            "bvec2 greaterThan(uvec2 x, uvec2 y);"
-            "bvec3 greaterThan(uvec3 x, uvec3 y);"
-            "bvec4 greaterThan(uvec4 x, uvec4 y);"
-
-            "bvec2 greaterThanEqual(uvec2 x, uvec2 y);"
-            "bvec3 greaterThanEqual(uvec3 x, uvec3 y);"
-            "bvec4 greaterThanEqual(uvec4 x, uvec4 y);"
-
-            "bvec2 equal(uvec2 x, uvec2 y);"
-            "bvec3 equal(uvec3 x, uvec3 y);"
-            "bvec4 equal(uvec4 x, uvec4 y);"
-
-            "bvec2 notEqual(uvec2 x, uvec2 y);"
-            "bvec3 notEqual(uvec3 x, uvec3 y);"
-            "bvec4 notEqual(uvec4 x, uvec4 y);"
-
-            "\n");
-    }
-
+#ifndef GLSLANG_WEB
     //
     // Original-style texture functions existing in all stages.
     // (Per-stage functions below.)
@@ -1884,58 +1743,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "bool   subgroupAll(bool);\n"
             "bool   subgroupAny(bool);\n"
-
-            "bool   subgroupAllEqual(float);\n"
-            "bool   subgroupAllEqual(vec2);\n"
-            "bool   subgroupAllEqual(vec3);\n"
-            "bool   subgroupAllEqual(vec4);\n"
-            "bool   subgroupAllEqual(int);\n"
-            "bool   subgroupAllEqual(ivec2);\n"
-            "bool   subgroupAllEqual(ivec3);\n"
-            "bool   subgroupAllEqual(ivec4);\n"
-            "bool   subgroupAllEqual(uint);\n"
-            "bool   subgroupAllEqual(uvec2);\n"
-            "bool   subgroupAllEqual(uvec3);\n"
-            "bool   subgroupAllEqual(uvec4);\n"
-            "bool   subgroupAllEqual(bool);\n"
-            "bool   subgroupAllEqual(bvec2);\n"
-            "bool   subgroupAllEqual(bvec3);\n"
-            "bool   subgroupAllEqual(bvec4);\n"
-
-            "float  subgroupBroadcast(float, uint);\n"
-            "vec2   subgroupBroadcast(vec2, uint);\n"
-            "vec3   subgroupBroadcast(vec3, uint);\n"
-            "vec4   subgroupBroadcast(vec4, uint);\n"
-            "int    subgroupBroadcast(int, uint);\n"
-            "ivec2  subgroupBroadcast(ivec2, uint);\n"
-            "ivec3  subgroupBroadcast(ivec3, uint);\n"
-            "ivec4  subgroupBroadcast(ivec4, uint);\n"
-            "uint   subgroupBroadcast(uint, uint);\n"
-            "uvec2  subgroupBroadcast(uvec2, uint);\n"
-            "uvec3  subgroupBroadcast(uvec3, uint);\n"
-            "uvec4  subgroupBroadcast(uvec4, uint);\n"
-            "bool   subgroupBroadcast(bool, uint);\n"
-            "bvec2  subgroupBroadcast(bvec2, uint);\n"
-            "bvec3  subgroupBroadcast(bvec3, uint);\n"
-            "bvec4  subgroupBroadcast(bvec4, uint);\n"
-
-            "float  subgroupBroadcastFirst(float);\n"
-            "vec2   subgroupBroadcastFirst(vec2);\n"
-            "vec3   subgroupBroadcastFirst(vec3);\n"
-            "vec4   subgroupBroadcastFirst(vec4);\n"
-            "int    subgroupBroadcastFirst(int);\n"
-            "ivec2  subgroupBroadcastFirst(ivec2);\n"
-            "ivec3  subgroupBroadcastFirst(ivec3);\n"
-            "ivec4  subgroupBroadcastFirst(ivec4);\n"
-            "uint   subgroupBroadcastFirst(uint);\n"
-            "uvec2  subgroupBroadcastFirst(uvec2);\n"
-            "uvec3  subgroupBroadcastFirst(uvec3);\n"
-            "uvec4  subgroupBroadcastFirst(uvec4);\n"
-            "bool   subgroupBroadcastFirst(bool);\n"
-            "bvec2  subgroupBroadcastFirst(bvec2);\n"
-            "bvec3  subgroupBroadcastFirst(bvec3);\n"
-            "bvec4  subgroupBroadcastFirst(bvec4);\n"
-
             "uvec4  subgroupBallot(bool);\n"
             "bool   subgroupInverseBallot(uvec4);\n"
             "bool   subgroupBallotBitExtract(uvec4, uint);\n"
@@ -1944,1015 +1751,136 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "uint   subgroupBallotExclusiveBitCount(uvec4);\n"
             "uint   subgroupBallotFindLSB(uvec4);\n"
             "uint   subgroupBallotFindMSB(uvec4);\n"
-
-            "float  subgroupShuffle(float, uint);\n"
-            "vec2   subgroupShuffle(vec2, uint);\n"
-            "vec3   subgroupShuffle(vec3, uint);\n"
-            "vec4   subgroupShuffle(vec4, uint);\n"
-            "int    subgroupShuffle(int, uint);\n"
-            "ivec2  subgroupShuffle(ivec2, uint);\n"
-            "ivec3  subgroupShuffle(ivec3, uint);\n"
-            "ivec4  subgroupShuffle(ivec4, uint);\n"
-            "uint   subgroupShuffle(uint, uint);\n"
-            "uvec2  subgroupShuffle(uvec2, uint);\n"
-            "uvec3  subgroupShuffle(uvec3, uint);\n"
-            "uvec4  subgroupShuffle(uvec4, uint);\n"
-            "bool   subgroupShuffle(bool, uint);\n"
-            "bvec2  subgroupShuffle(bvec2, uint);\n"
-            "bvec3  subgroupShuffle(bvec3, uint);\n"
-            "bvec4  subgroupShuffle(bvec4, uint);\n"
-
-            "float  subgroupShuffleXor(float, uint);\n"
-            "vec2   subgroupShuffleXor(vec2, uint);\n"
-            "vec3   subgroupShuffleXor(vec3, uint);\n"
-            "vec4   subgroupShuffleXor(vec4, uint);\n"
-            "int    subgroupShuffleXor(int, uint);\n"
-            "ivec2  subgroupShuffleXor(ivec2, uint);\n"
-            "ivec3  subgroupShuffleXor(ivec3, uint);\n"
-            "ivec4  subgroupShuffleXor(ivec4, uint);\n"
-            "uint   subgroupShuffleXor(uint, uint);\n"
-            "uvec2  subgroupShuffleXor(uvec2, uint);\n"
-            "uvec3  subgroupShuffleXor(uvec3, uint);\n"
-            "uvec4  subgroupShuffleXor(uvec4, uint);\n"
-            "bool   subgroupShuffleXor(bool, uint);\n"
-            "bvec2  subgroupShuffleXor(bvec2, uint);\n"
-            "bvec3  subgroupShuffleXor(bvec3, uint);\n"
-            "bvec4  subgroupShuffleXor(bvec4, uint);\n"
-
-            "float  subgroupShuffleUp(float, uint delta);\n"
-            "vec2   subgroupShuffleUp(vec2, uint delta);\n"
-            "vec3   subgroupShuffleUp(vec3, uint delta);\n"
-            "vec4   subgroupShuffleUp(vec4, uint delta);\n"
-            "int    subgroupShuffleUp(int, uint delta);\n"
-            "ivec2  subgroupShuffleUp(ivec2, uint delta);\n"
-            "ivec3  subgroupShuffleUp(ivec3, uint delta);\n"
-            "ivec4  subgroupShuffleUp(ivec4, uint delta);\n"
-            "uint   subgroupShuffleUp(uint, uint delta);\n"
-            "uvec2  subgroupShuffleUp(uvec2, uint delta);\n"
-            "uvec3  subgroupShuffleUp(uvec3, uint delta);\n"
-            "uvec4  subgroupShuffleUp(uvec4, uint delta);\n"
-            "bool   subgroupShuffleUp(bool, uint delta);\n"
-            "bvec2  subgroupShuffleUp(bvec2, uint delta);\n"
-            "bvec3  subgroupShuffleUp(bvec3, uint delta);\n"
-            "bvec4  subgroupShuffleUp(bvec4, uint delta);\n"
-
-            "float  subgroupShuffleDown(float, uint delta);\n"
-            "vec2   subgroupShuffleDown(vec2, uint delta);\n"
-            "vec3   subgroupShuffleDown(vec3, uint delta);\n"
-            "vec4   subgroupShuffleDown(vec4, uint delta);\n"
-            "int    subgroupShuffleDown(int, uint delta);\n"
-            "ivec2  subgroupShuffleDown(ivec2, uint delta);\n"
-            "ivec3  subgroupShuffleDown(ivec3, uint delta);\n"
-            "ivec4  subgroupShuffleDown(ivec4, uint delta);\n"
-            "uint   subgroupShuffleDown(uint, uint delta);\n"
-            "uvec2  subgroupShuffleDown(uvec2, uint delta);\n"
-            "uvec3  subgroupShuffleDown(uvec3, uint delta);\n"
-            "uvec4  subgroupShuffleDown(uvec4, uint delta);\n"
-            "bool   subgroupShuffleDown(bool, uint delta);\n"
-            "bvec2  subgroupShuffleDown(bvec2, uint delta);\n"
-            "bvec3  subgroupShuffleDown(bvec3, uint delta);\n"
-            "bvec4  subgroupShuffleDown(bvec4, uint delta);\n"
-
-            "float  subgroupAdd(float);\n"
-            "vec2   subgroupAdd(vec2);\n"
-            "vec3   subgroupAdd(vec3);\n"
-            "vec4   subgroupAdd(vec4);\n"
-            "int    subgroupAdd(int);\n"
-            "ivec2  subgroupAdd(ivec2);\n"
-            "ivec3  subgroupAdd(ivec3);\n"
-            "ivec4  subgroupAdd(ivec4);\n"
-            "uint   subgroupAdd(uint);\n"
-            "uvec2  subgroupAdd(uvec2);\n"
-            "uvec3  subgroupAdd(uvec3);\n"
-            "uvec4  subgroupAdd(uvec4);\n"
-
-            "float  subgroupMul(float);\n"
-            "vec2   subgroupMul(vec2);\n"
-            "vec3   subgroupMul(vec3);\n"
-            "vec4   subgroupMul(vec4);\n"
-            "int    subgroupMul(int);\n"
-            "ivec2  subgroupMul(ivec2);\n"
-            "ivec3  subgroupMul(ivec3);\n"
-            "ivec4  subgroupMul(ivec4);\n"
-            "uint   subgroupMul(uint);\n"
-            "uvec2  subgroupMul(uvec2);\n"
-            "uvec3  subgroupMul(uvec3);\n"
-            "uvec4  subgroupMul(uvec4);\n"
-
-            "float  subgroupMin(float);\n"
-            "vec2   subgroupMin(vec2);\n"
-            "vec3   subgroupMin(vec3);\n"
-            "vec4   subgroupMin(vec4);\n"
-            "int    subgroupMin(int);\n"
-            "ivec2  subgroupMin(ivec2);\n"
-            "ivec3  subgroupMin(ivec3);\n"
-            "ivec4  subgroupMin(ivec4);\n"
-            "uint   subgroupMin(uint);\n"
-            "uvec2  subgroupMin(uvec2);\n"
-            "uvec3  subgroupMin(uvec3);\n"
-            "uvec4  subgroupMin(uvec4);\n"
-
-            "float  subgroupMax(float);\n"
-            "vec2   subgroupMax(vec2);\n"
-            "vec3   subgroupMax(vec3);\n"
-            "vec4   subgroupMax(vec4);\n"
-            "int    subgroupMax(int);\n"
-            "ivec2  subgroupMax(ivec2);\n"
-            "ivec3  subgroupMax(ivec3);\n"
-            "ivec4  subgroupMax(ivec4);\n"
-            "uint   subgroupMax(uint);\n"
-            "uvec2  subgroupMax(uvec2);\n"
-            "uvec3  subgroupMax(uvec3);\n"
-            "uvec4  subgroupMax(uvec4);\n"
-
-            "int    subgroupAnd(int);\n"
-            "ivec2  subgroupAnd(ivec2);\n"
-            "ivec3  subgroupAnd(ivec3);\n"
-            "ivec4  subgroupAnd(ivec4);\n"
-            "uint   subgroupAnd(uint);\n"
-            "uvec2  subgroupAnd(uvec2);\n"
-            "uvec3  subgroupAnd(uvec3);\n"
-            "uvec4  subgroupAnd(uvec4);\n"
-            "bool   subgroupAnd(bool);\n"
-            "bvec2  subgroupAnd(bvec2);\n"
-            "bvec3  subgroupAnd(bvec3);\n"
-            "bvec4  subgroupAnd(bvec4);\n"
-
-            "int    subgroupOr(int);\n"
-            "ivec2  subgroupOr(ivec2);\n"
-            "ivec3  subgroupOr(ivec3);\n"
-            "ivec4  subgroupOr(ivec4);\n"
-            "uint   subgroupOr(uint);\n"
-            "uvec2  subgroupOr(uvec2);\n"
-            "uvec3  subgroupOr(uvec3);\n"
-            "uvec4  subgroupOr(uvec4);\n"
-            "bool   subgroupOr(bool);\n"
-            "bvec2  subgroupOr(bvec2);\n"
-            "bvec3  subgroupOr(bvec3);\n"
-            "bvec4  subgroupOr(bvec4);\n"
-
-            "int    subgroupXor(int);\n"
-            "ivec2  subgroupXor(ivec2);\n"
-            "ivec3  subgroupXor(ivec3);\n"
-            "ivec4  subgroupXor(ivec4);\n"
-            "uint   subgroupXor(uint);\n"
-            "uvec2  subgroupXor(uvec2);\n"
-            "uvec3  subgroupXor(uvec3);\n"
-            "uvec4  subgroupXor(uvec4);\n"
-            "bool   subgroupXor(bool);\n"
-            "bvec2  subgroupXor(bvec2);\n"
-            "bvec3  subgroupXor(bvec3);\n"
-            "bvec4  subgroupXor(bvec4);\n"
-
-            "float  subgroupInclusiveAdd(float);\n"
-            "vec2   subgroupInclusiveAdd(vec2);\n"
-            "vec3   subgroupInclusiveAdd(vec3);\n"
-            "vec4   subgroupInclusiveAdd(vec4);\n"
-            "int    subgroupInclusiveAdd(int);\n"
-            "ivec2  subgroupInclusiveAdd(ivec2);\n"
-            "ivec3  subgroupInclusiveAdd(ivec3);\n"
-            "ivec4  subgroupInclusiveAdd(ivec4);\n"
-            "uint   subgroupInclusiveAdd(uint);\n"
-            "uvec2  subgroupInclusiveAdd(uvec2);\n"
-            "uvec3  subgroupInclusiveAdd(uvec3);\n"
-            "uvec4  subgroupInclusiveAdd(uvec4);\n"
-
-            "float  subgroupInclusiveMul(float);\n"
-            "vec2   subgroupInclusiveMul(vec2);\n"
-            "vec3   subgroupInclusiveMul(vec3);\n"
-            "vec4   subgroupInclusiveMul(vec4);\n"
-            "int    subgroupInclusiveMul(int);\n"
-            "ivec2  subgroupInclusiveMul(ivec2);\n"
-            "ivec3  subgroupInclusiveMul(ivec3);\n"
-            "ivec4  subgroupInclusiveMul(ivec4);\n"
-            "uint   subgroupInclusiveMul(uint);\n"
-            "uvec2  subgroupInclusiveMul(uvec2);\n"
-            "uvec3  subgroupInclusiveMul(uvec3);\n"
-            "uvec4  subgroupInclusiveMul(uvec4);\n"
-
-            "float  subgroupInclusiveMin(float);\n"
-            "vec2   subgroupInclusiveMin(vec2);\n"
-            "vec3   subgroupInclusiveMin(vec3);\n"
-            "vec4   subgroupInclusiveMin(vec4);\n"
-            "int    subgroupInclusiveMin(int);\n"
-            "ivec2  subgroupInclusiveMin(ivec2);\n"
-            "ivec3  subgroupInclusiveMin(ivec3);\n"
-            "ivec4  subgroupInclusiveMin(ivec4);\n"
-            "uint   subgroupInclusiveMin(uint);\n"
-            "uvec2  subgroupInclusiveMin(uvec2);\n"
-            "uvec3  subgroupInclusiveMin(uvec3);\n"
-            "uvec4  subgroupInclusiveMin(uvec4);\n"
-
-            "float  subgroupInclusiveMax(float);\n"
-            "vec2   subgroupInclusiveMax(vec2);\n"
-            "vec3   subgroupInclusiveMax(vec3);\n"
-            "vec4   subgroupInclusiveMax(vec4);\n"
-            "int    subgroupInclusiveMax(int);\n"
-            "ivec2  subgroupInclusiveMax(ivec2);\n"
-            "ivec3  subgroupInclusiveMax(ivec3);\n"
-            "ivec4  subgroupInclusiveMax(ivec4);\n"
-            "uint   subgroupInclusiveMax(uint);\n"
-            "uvec2  subgroupInclusiveMax(uvec2);\n"
-            "uvec3  subgroupInclusiveMax(uvec3);\n"
-            "uvec4  subgroupInclusiveMax(uvec4);\n"
-
-            "int    subgroupInclusiveAnd(int);\n"
-            "ivec2  subgroupInclusiveAnd(ivec2);\n"
-            "ivec3  subgroupInclusiveAnd(ivec3);\n"
-            "ivec4  subgroupInclusiveAnd(ivec4);\n"
-            "uint   subgroupInclusiveAnd(uint);\n"
-            "uvec2  subgroupInclusiveAnd(uvec2);\n"
-            "uvec3  subgroupInclusiveAnd(uvec3);\n"
-            "uvec4  subgroupInclusiveAnd(uvec4);\n"
-            "bool   subgroupInclusiveAnd(bool);\n"
-            "bvec2  subgroupInclusiveAnd(bvec2);\n"
-            "bvec3  subgroupInclusiveAnd(bvec3);\n"
-            "bvec4  subgroupInclusiveAnd(bvec4);\n"
-
-            "int    subgroupInclusiveOr(int);\n"
-            "ivec2  subgroupInclusiveOr(ivec2);\n"
-            "ivec3  subgroupInclusiveOr(ivec3);\n"
-            "ivec4  subgroupInclusiveOr(ivec4);\n"
-            "uint   subgroupInclusiveOr(uint);\n"
-            "uvec2  subgroupInclusiveOr(uvec2);\n"
-            "uvec3  subgroupInclusiveOr(uvec3);\n"
-            "uvec4  subgroupInclusiveOr(uvec4);\n"
-            "bool   subgroupInclusiveOr(bool);\n"
-            "bvec2  subgroupInclusiveOr(bvec2);\n"
-            "bvec3  subgroupInclusiveOr(bvec3);\n"
-            "bvec4  subgroupInclusiveOr(bvec4);\n"
-
-            "int    subgroupInclusiveXor(int);\n"
-            "ivec2  subgroupInclusiveXor(ivec2);\n"
-            "ivec3  subgroupInclusiveXor(ivec3);\n"
-            "ivec4  subgroupInclusiveXor(ivec4);\n"
-            "uint   subgroupInclusiveXor(uint);\n"
-            "uvec2  subgroupInclusiveXor(uvec2);\n"
-            "uvec3  subgroupInclusiveXor(uvec3);\n"
-            "uvec4  subgroupInclusiveXor(uvec4);\n"
-            "bool   subgroupInclusiveXor(bool);\n"
-            "bvec2  subgroupInclusiveXor(bvec2);\n"
-            "bvec3  subgroupInclusiveXor(bvec3);\n"
-            "bvec4  subgroupInclusiveXor(bvec4);\n"
-
-            "float  subgroupExclusiveAdd(float);\n"
-            "vec2   subgroupExclusiveAdd(vec2);\n"
-            "vec3   subgroupExclusiveAdd(vec3);\n"
-            "vec4   subgroupExclusiveAdd(vec4);\n"
-            "int    subgroupExclusiveAdd(int);\n"
-            "ivec2  subgroupExclusiveAdd(ivec2);\n"
-            "ivec3  subgroupExclusiveAdd(ivec3);\n"
-            "ivec4  subgroupExclusiveAdd(ivec4);\n"
-            "uint   subgroupExclusiveAdd(uint);\n"
-            "uvec2  subgroupExclusiveAdd(uvec2);\n"
-            "uvec3  subgroupExclusiveAdd(uvec3);\n"
-            "uvec4  subgroupExclusiveAdd(uvec4);\n"
-
-            "float  subgroupExclusiveMul(float);\n"
-            "vec2   subgroupExclusiveMul(vec2);\n"
-            "vec3   subgroupExclusiveMul(vec3);\n"
-            "vec4   subgroupExclusiveMul(vec4);\n"
-            "int    subgroupExclusiveMul(int);\n"
-            "ivec2  subgroupExclusiveMul(ivec2);\n"
-            "ivec3  subgroupExclusiveMul(ivec3);\n"
-            "ivec4  subgroupExclusiveMul(ivec4);\n"
-            "uint   subgroupExclusiveMul(uint);\n"
-            "uvec2  subgroupExclusiveMul(uvec2);\n"
-            "uvec3  subgroupExclusiveMul(uvec3);\n"
-            "uvec4  subgroupExclusiveMul(uvec4);\n"
-
-            "float  subgroupExclusiveMin(float);\n"
-            "vec2   subgroupExclusiveMin(vec2);\n"
-            "vec3   subgroupExclusiveMin(vec3);\n"
-            "vec4   subgroupExclusiveMin(vec4);\n"
-            "int    subgroupExclusiveMin(int);\n"
-            "ivec2  subgroupExclusiveMin(ivec2);\n"
-            "ivec3  subgroupExclusiveMin(ivec3);\n"
-            "ivec4  subgroupExclusiveMin(ivec4);\n"
-            "uint   subgroupExclusiveMin(uint);\n"
-            "uvec2  subgroupExclusiveMin(uvec2);\n"
-            "uvec3  subgroupExclusiveMin(uvec3);\n"
-            "uvec4  subgroupExclusiveMin(uvec4);\n"
-
-            "float  subgroupExclusiveMax(float);\n"
-            "vec2   subgroupExclusiveMax(vec2);\n"
-            "vec3   subgroupExclusiveMax(vec3);\n"
-            "vec4   subgroupExclusiveMax(vec4);\n"
-            "int    subgroupExclusiveMax(int);\n"
-            "ivec2  subgroupExclusiveMax(ivec2);\n"
-            "ivec3  subgroupExclusiveMax(ivec3);\n"
-            "ivec4  subgroupExclusiveMax(ivec4);\n"
-            "uint   subgroupExclusiveMax(uint);\n"
-            "uvec2  subgroupExclusiveMax(uvec2);\n"
-            "uvec3  subgroupExclusiveMax(uvec3);\n"
-            "uvec4  subgroupExclusiveMax(uvec4);\n"
-
-            "int    subgroupExclusiveAnd(int);\n"
-            "ivec2  subgroupExclusiveAnd(ivec2);\n"
-            "ivec3  subgroupExclusiveAnd(ivec3);\n"
-            "ivec4  subgroupExclusiveAnd(ivec4);\n"
-            "uint   subgroupExclusiveAnd(uint);\n"
-            "uvec2  subgroupExclusiveAnd(uvec2);\n"
-            "uvec3  subgroupExclusiveAnd(uvec3);\n"
-            "uvec4  subgroupExclusiveAnd(uvec4);\n"
-            "bool   subgroupExclusiveAnd(bool);\n"
-            "bvec2  subgroupExclusiveAnd(bvec2);\n"
-            "bvec3  subgroupExclusiveAnd(bvec3);\n"
-            "bvec4  subgroupExclusiveAnd(bvec4);\n"
-
-            "int    subgroupExclusiveOr(int);\n"
-            "ivec2  subgroupExclusiveOr(ivec2);\n"
-            "ivec3  subgroupExclusiveOr(ivec3);\n"
-            "ivec4  subgroupExclusiveOr(ivec4);\n"
-            "uint   subgroupExclusiveOr(uint);\n"
-            "uvec2  subgroupExclusiveOr(uvec2);\n"
-            "uvec3  subgroupExclusiveOr(uvec3);\n"
-            "uvec4  subgroupExclusiveOr(uvec4);\n"
-            "bool   subgroupExclusiveOr(bool);\n"
-            "bvec2  subgroupExclusiveOr(bvec2);\n"
-            "bvec3  subgroupExclusiveOr(bvec3);\n"
-            "bvec4  subgroupExclusiveOr(bvec4);\n"
-
-            "int    subgroupExclusiveXor(int);\n"
-            "ivec2  subgroupExclusiveXor(ivec2);\n"
-            "ivec3  subgroupExclusiveXor(ivec3);\n"
-            "ivec4  subgroupExclusiveXor(ivec4);\n"
-            "uint   subgroupExclusiveXor(uint);\n"
-            "uvec2  subgroupExclusiveXor(uvec2);\n"
-            "uvec3  subgroupExclusiveXor(uvec3);\n"
-            "uvec4  subgroupExclusiveXor(uvec4);\n"
-            "bool   subgroupExclusiveXor(bool);\n"
-            "bvec2  subgroupExclusiveXor(bvec2);\n"
-            "bvec3  subgroupExclusiveXor(bvec3);\n"
-            "bvec4  subgroupExclusiveXor(bvec4);\n"
-
-            "float  subgroupClusteredAdd(float, uint);\n"
-            "vec2   subgroupClusteredAdd(vec2, uint);\n"
-            "vec3   subgroupClusteredAdd(vec3, uint);\n"
-            "vec4   subgroupClusteredAdd(vec4, uint);\n"
-            "int    subgroupClusteredAdd(int, uint);\n"
-            "ivec2  subgroupClusteredAdd(ivec2, uint);\n"
-            "ivec3  subgroupClusteredAdd(ivec3, uint);\n"
-            "ivec4  subgroupClusteredAdd(ivec4, uint);\n"
-            "uint   subgroupClusteredAdd(uint, uint);\n"
-            "uvec2  subgroupClusteredAdd(uvec2, uint);\n"
-            "uvec3  subgroupClusteredAdd(uvec3, uint);\n"
-            "uvec4  subgroupClusteredAdd(uvec4, uint);\n"
-
-            "float  subgroupClusteredMul(float, uint);\n"
-            "vec2   subgroupClusteredMul(vec2, uint);\n"
-            "vec3   subgroupClusteredMul(vec3, uint);\n"
-            "vec4   subgroupClusteredMul(vec4, uint);\n"
-            "int    subgroupClusteredMul(int, uint);\n"
-            "ivec2  subgroupClusteredMul(ivec2, uint);\n"
-            "ivec3  subgroupClusteredMul(ivec3, uint);\n"
-            "ivec4  subgroupClusteredMul(ivec4, uint);\n"
-            "uint   subgroupClusteredMul(uint, uint);\n"
-            "uvec2  subgroupClusteredMul(uvec2, uint);\n"
-            "uvec3  subgroupClusteredMul(uvec3, uint);\n"
-            "uvec4  subgroupClusteredMul(uvec4, uint);\n"
-
-            "float  subgroupClusteredMin(float, uint);\n"
-            "vec2   subgroupClusteredMin(vec2, uint);\n"
-            "vec3   subgroupClusteredMin(vec3, uint);\n"
-            "vec4   subgroupClusteredMin(vec4, uint);\n"
-            "int    subgroupClusteredMin(int, uint);\n"
-            "ivec2  subgroupClusteredMin(ivec2, uint);\n"
-            "ivec3  subgroupClusteredMin(ivec3, uint);\n"
-            "ivec4  subgroupClusteredMin(ivec4, uint);\n"
-            "uint   subgroupClusteredMin(uint, uint);\n"
-            "uvec2  subgroupClusteredMin(uvec2, uint);\n"
-            "uvec3  subgroupClusteredMin(uvec3, uint);\n"
-            "uvec4  subgroupClusteredMin(uvec4, uint);\n"
-
-            "float  subgroupClusteredMax(float, uint);\n"
-            "vec2   subgroupClusteredMax(vec2, uint);\n"
-            "vec3   subgroupClusteredMax(vec3, uint);\n"
-            "vec4   subgroupClusteredMax(vec4, uint);\n"
-            "int    subgroupClusteredMax(int, uint);\n"
-            "ivec2  subgroupClusteredMax(ivec2, uint);\n"
-            "ivec3  subgroupClusteredMax(ivec3, uint);\n"
-            "ivec4  subgroupClusteredMax(ivec4, uint);\n"
-            "uint   subgroupClusteredMax(uint, uint);\n"
-            "uvec2  subgroupClusteredMax(uvec2, uint);\n"
-            "uvec3  subgroupClusteredMax(uvec3, uint);\n"
-            "uvec4  subgroupClusteredMax(uvec4, uint);\n"
-
-            "int    subgroupClusteredAnd(int, uint);\n"
-            "ivec2  subgroupClusteredAnd(ivec2, uint);\n"
-            "ivec3  subgroupClusteredAnd(ivec3, uint);\n"
-            "ivec4  subgroupClusteredAnd(ivec4, uint);\n"
-            "uint   subgroupClusteredAnd(uint, uint);\n"
-            "uvec2  subgroupClusteredAnd(uvec2, uint);\n"
-            "uvec3  subgroupClusteredAnd(uvec3, uint);\n"
-            "uvec4  subgroupClusteredAnd(uvec4, uint);\n"
-            "bool   subgroupClusteredAnd(bool, uint);\n"
-            "bvec2  subgroupClusteredAnd(bvec2, uint);\n"
-            "bvec3  subgroupClusteredAnd(bvec3, uint);\n"
-            "bvec4  subgroupClusteredAnd(bvec4, uint);\n"
-
-            "int    subgroupClusteredOr(int, uint);\n"
-            "ivec2  subgroupClusteredOr(ivec2, uint);\n"
-            "ivec3  subgroupClusteredOr(ivec3, uint);\n"
-            "ivec4  subgroupClusteredOr(ivec4, uint);\n"
-            "uint   subgroupClusteredOr(uint, uint);\n"
-            "uvec2  subgroupClusteredOr(uvec2, uint);\n"
-            "uvec3  subgroupClusteredOr(uvec3, uint);\n"
-            "uvec4  subgroupClusteredOr(uvec4, uint);\n"
-            "bool   subgroupClusteredOr(bool, uint);\n"
-            "bvec2  subgroupClusteredOr(bvec2, uint);\n"
-            "bvec3  subgroupClusteredOr(bvec3, uint);\n"
-            "bvec4  subgroupClusteredOr(bvec4, uint);\n"
-
-            "int    subgroupClusteredXor(int, uint);\n"
-            "ivec2  subgroupClusteredXor(ivec2, uint);\n"
-            "ivec3  subgroupClusteredXor(ivec3, uint);\n"
-            "ivec4  subgroupClusteredXor(ivec4, uint);\n"
-            "uint   subgroupClusteredXor(uint, uint);\n"
-            "uvec2  subgroupClusteredXor(uvec2, uint);\n"
-            "uvec3  subgroupClusteredXor(uvec3, uint);\n"
-            "uvec4  subgroupClusteredXor(uvec4, uint);\n"
-            "bool   subgroupClusteredXor(bool, uint);\n"
-            "bvec2  subgroupClusteredXor(bvec2, uint);\n"
-            "bvec3  subgroupClusteredXor(bvec3, uint);\n"
-            "bvec4  subgroupClusteredXor(bvec4, uint);\n"
-
-            "float  subgroupQuadBroadcast(float, uint);\n"
-            "vec2   subgroupQuadBroadcast(vec2, uint);\n"
-            "vec3   subgroupQuadBroadcast(vec3, uint);\n"
-            "vec4   subgroupQuadBroadcast(vec4, uint);\n"
-            "int    subgroupQuadBroadcast(int, uint);\n"
-            "ivec2  subgroupQuadBroadcast(ivec2, uint);\n"
-            "ivec3  subgroupQuadBroadcast(ivec3, uint);\n"
-            "ivec4  subgroupQuadBroadcast(ivec4, uint);\n"
-            "uint   subgroupQuadBroadcast(uint, uint);\n"
-            "uvec2  subgroupQuadBroadcast(uvec2, uint);\n"
-            "uvec3  subgroupQuadBroadcast(uvec3, uint);\n"
-            "uvec4  subgroupQuadBroadcast(uvec4, uint);\n"
-            "bool   subgroupQuadBroadcast(bool, uint);\n"
-            "bvec2  subgroupQuadBroadcast(bvec2, uint);\n"
-            "bvec3  subgroupQuadBroadcast(bvec3, uint);\n"
-            "bvec4  subgroupQuadBroadcast(bvec4, uint);\n"
-
-            "float  subgroupQuadSwapHorizontal(float);\n"
-            "vec2   subgroupQuadSwapHorizontal(vec2);\n"
-            "vec3   subgroupQuadSwapHorizontal(vec3);\n"
-            "vec4   subgroupQuadSwapHorizontal(vec4);\n"
-            "int    subgroupQuadSwapHorizontal(int);\n"
-            "ivec2  subgroupQuadSwapHorizontal(ivec2);\n"
-            "ivec3  subgroupQuadSwapHorizontal(ivec3);\n"
-            "ivec4  subgroupQuadSwapHorizontal(ivec4);\n"
-            "uint   subgroupQuadSwapHorizontal(uint);\n"
-            "uvec2  subgroupQuadSwapHorizontal(uvec2);\n"
-            "uvec3  subgroupQuadSwapHorizontal(uvec3);\n"
-            "uvec4  subgroupQuadSwapHorizontal(uvec4);\n"
-            "bool   subgroupQuadSwapHorizontal(bool);\n"
-            "bvec2  subgroupQuadSwapHorizontal(bvec2);\n"
-            "bvec3  subgroupQuadSwapHorizontal(bvec3);\n"
-            "bvec4  subgroupQuadSwapHorizontal(bvec4);\n"
-
-            "float  subgroupQuadSwapVertical(float);\n"
-            "vec2   subgroupQuadSwapVertical(vec2);\n"
-            "vec3   subgroupQuadSwapVertical(vec3);\n"
-            "vec4   subgroupQuadSwapVertical(vec4);\n"
-            "int    subgroupQuadSwapVertical(int);\n"
-            "ivec2  subgroupQuadSwapVertical(ivec2);\n"
-            "ivec3  subgroupQuadSwapVertical(ivec3);\n"
-            "ivec4  subgroupQuadSwapVertical(ivec4);\n"
-            "uint   subgroupQuadSwapVertical(uint);\n"
-            "uvec2  subgroupQuadSwapVertical(uvec2);\n"
-            "uvec3  subgroupQuadSwapVertical(uvec3);\n"
-            "uvec4  subgroupQuadSwapVertical(uvec4);\n"
-            "bool   subgroupQuadSwapVertical(bool);\n"
-            "bvec2  subgroupQuadSwapVertical(bvec2);\n"
-            "bvec3  subgroupQuadSwapVertical(bvec3);\n"
-            "bvec4  subgroupQuadSwapVertical(bvec4);\n"
-
-            "float  subgroupQuadSwapDiagonal(float);\n"
-            "vec2   subgroupQuadSwapDiagonal(vec2);\n"
-            "vec3   subgroupQuadSwapDiagonal(vec3);\n"
-            "vec4   subgroupQuadSwapDiagonal(vec4);\n"
-            "int    subgroupQuadSwapDiagonal(int);\n"
-            "ivec2  subgroupQuadSwapDiagonal(ivec2);\n"
-            "ivec3  subgroupQuadSwapDiagonal(ivec3);\n"
-            "ivec4  subgroupQuadSwapDiagonal(ivec4);\n"
-            "uint   subgroupQuadSwapDiagonal(uint);\n"
-            "uvec2  subgroupQuadSwapDiagonal(uvec2);\n"
-            "uvec3  subgroupQuadSwapDiagonal(uvec3);\n"
-            "uvec4  subgroupQuadSwapDiagonal(uvec4);\n"
-            "bool   subgroupQuadSwapDiagonal(bool);\n"
-            "bvec2  subgroupQuadSwapDiagonal(bvec2);\n"
-            "bvec3  subgroupQuadSwapDiagonal(bvec3);\n"
-            "bvec4  subgroupQuadSwapDiagonal(bvec4);\n"
-
-#ifdef NV_EXTENSIONS
-            "uvec4  subgroupPartitionNV(float);\n"
-            "uvec4  subgroupPartitionNV(vec2);\n"
-            "uvec4  subgroupPartitionNV(vec3);\n"
-            "uvec4  subgroupPartitionNV(vec4);\n"
-            "uvec4  subgroupPartitionNV(int);\n"
-            "uvec4  subgroupPartitionNV(ivec2);\n"
-            "uvec4  subgroupPartitionNV(ivec3);\n"
-            "uvec4  subgroupPartitionNV(ivec4);\n"
-            "uvec4  subgroupPartitionNV(uint);\n"
-            "uvec4  subgroupPartitionNV(uvec2);\n"
-            "uvec4  subgroupPartitionNV(uvec3);\n"
-            "uvec4  subgroupPartitionNV(uvec4);\n"
-            "uvec4  subgroupPartitionNV(bool);\n"
-            "uvec4  subgroupPartitionNV(bvec2);\n"
-            "uvec4  subgroupPartitionNV(bvec3);\n"
-            "uvec4  subgroupPartitionNV(bvec4);\n"
-
-            "float  subgroupPartitionedAddNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedAddNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedAddNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedAddNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedAddNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedAddNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedAddNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedAddNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedAddNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedAddNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedAddNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedAddNV(uvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedMulNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedMulNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedMulNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedMulNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedMulNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedMulNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedMulNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedMulNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedMulNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedMulNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedMulNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedMulNV(uvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedMinNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedMinNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedMinNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedMinNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedMinNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedMinNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedMinNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedMinNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedMinNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedMinNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedMinNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedMinNV(uvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedMaxNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedMaxNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedMaxNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedMaxNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedMaxNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedMaxNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedMaxNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedMaxNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedMaxNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedMaxNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedMaxNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedMaxNV(uvec4, uvec4 ballot);\n"
-
-            "int    subgroupPartitionedAndNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedAndNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedAndNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedAndNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedAndNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedAndNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedAndNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedAndNV(uvec4, uvec4 ballot);\n"
-            "bool   subgroupPartitionedAndNV(bool, uvec4 ballot);\n"
-            "bvec2  subgroupPartitionedAndNV(bvec2, uvec4 ballot);\n"
-            "bvec3  subgroupPartitionedAndNV(bvec3, uvec4 ballot);\n"
-            "bvec4  subgroupPartitionedAndNV(bvec4, uvec4 ballot);\n"
-
-            "int    subgroupPartitionedOrNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedOrNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedOrNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedOrNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedOrNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedOrNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedOrNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedOrNV(uvec4, uvec4 ballot);\n"
-            "bool   subgroupPartitionedOrNV(bool, uvec4 ballot);\n"
-            "bvec2  subgroupPartitionedOrNV(bvec2, uvec4 ballot);\n"
-            "bvec3  subgroupPartitionedOrNV(bvec3, uvec4 ballot);\n"
-            "bvec4  subgroupPartitionedOrNV(bvec4, uvec4 ballot);\n"
-
-            "int    subgroupPartitionedXorNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedXorNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedXorNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedXorNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedXorNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedXorNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedXorNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedXorNV(uvec4, uvec4 ballot);\n"
-            "bool   subgroupPartitionedXorNV(bool, uvec4 ballot);\n"
-            "bvec2  subgroupPartitionedXorNV(bvec2, uvec4 ballot);\n"
-            "bvec3  subgroupPartitionedXorNV(bvec3, uvec4 ballot);\n"
-            "bvec4  subgroupPartitionedXorNV(bvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedInclusiveAddNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedInclusiveAddNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedInclusiveAddNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedInclusiveAddNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedInclusiveAddNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedInclusiveAddNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedInclusiveAddNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedInclusiveAddNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedInclusiveAddNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedInclusiveAddNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedInclusiveAddNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedInclusiveAddNV(uvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedInclusiveMulNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedInclusiveMulNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedInclusiveMulNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedInclusiveMulNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedInclusiveMulNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedInclusiveMulNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedInclusiveMulNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedInclusiveMulNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedInclusiveMulNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedInclusiveMulNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedInclusiveMulNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedInclusiveMulNV(uvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedInclusiveMinNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedInclusiveMinNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedInclusiveMinNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedInclusiveMinNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedInclusiveMinNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedInclusiveMinNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedInclusiveMinNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedInclusiveMinNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedInclusiveMinNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedInclusiveMinNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedInclusiveMinNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedInclusiveMinNV(uvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedInclusiveMaxNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedInclusiveMaxNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedInclusiveMaxNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedInclusiveMaxNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedInclusiveMaxNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedInclusiveMaxNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedInclusiveMaxNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedInclusiveMaxNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedInclusiveMaxNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedInclusiveMaxNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedInclusiveMaxNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedInclusiveMaxNV(uvec4, uvec4 ballot);\n"
-
-            "int    subgroupPartitionedInclusiveAndNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedInclusiveAndNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedInclusiveAndNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedInclusiveAndNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedInclusiveAndNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedInclusiveAndNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedInclusiveAndNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedInclusiveAndNV(uvec4, uvec4 ballot);\n"
-            "bool   subgroupPartitionedInclusiveAndNV(bool, uvec4 ballot);\n"
-            "bvec2  subgroupPartitionedInclusiveAndNV(bvec2, uvec4 ballot);\n"
-            "bvec3  subgroupPartitionedInclusiveAndNV(bvec3, uvec4 ballot);\n"
-            "bvec4  subgroupPartitionedInclusiveAndNV(bvec4, uvec4 ballot);\n"
-
-            "int    subgroupPartitionedInclusiveOrNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedInclusiveOrNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedInclusiveOrNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedInclusiveOrNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedInclusiveOrNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedInclusiveOrNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedInclusiveOrNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedInclusiveOrNV(uvec4, uvec4 ballot);\n"
-            "bool   subgroupPartitionedInclusiveOrNV(bool, uvec4 ballot);\n"
-            "bvec2  subgroupPartitionedInclusiveOrNV(bvec2, uvec4 ballot);\n"
-            "bvec3  subgroupPartitionedInclusiveOrNV(bvec3, uvec4 ballot);\n"
-            "bvec4  subgroupPartitionedInclusiveOrNV(bvec4, uvec4 ballot);\n"
-
-            "int    subgroupPartitionedInclusiveXorNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedInclusiveXorNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedInclusiveXorNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedInclusiveXorNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedInclusiveXorNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedInclusiveXorNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedInclusiveXorNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedInclusiveXorNV(uvec4, uvec4 ballot);\n"
-            "bool   subgroupPartitionedInclusiveXorNV(bool, uvec4 ballot);\n"
-            "bvec2  subgroupPartitionedInclusiveXorNV(bvec2, uvec4 ballot);\n"
-            "bvec3  subgroupPartitionedInclusiveXorNV(bvec3, uvec4 ballot);\n"
-            "bvec4  subgroupPartitionedInclusiveXorNV(bvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedExclusiveAddNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedExclusiveAddNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedExclusiveAddNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedExclusiveAddNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedExclusiveAddNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedExclusiveAddNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedExclusiveAddNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedExclusiveAddNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedExclusiveAddNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedExclusiveAddNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedExclusiveAddNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedExclusiveAddNV(uvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedExclusiveMulNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedExclusiveMulNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedExclusiveMulNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedExclusiveMulNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedExclusiveMulNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedExclusiveMulNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedExclusiveMulNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedExclusiveMulNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedExclusiveMulNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedExclusiveMulNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedExclusiveMulNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedExclusiveMulNV(uvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedExclusiveMinNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedExclusiveMinNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedExclusiveMinNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedExclusiveMinNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedExclusiveMinNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedExclusiveMinNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedExclusiveMinNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedExclusiveMinNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedExclusiveMinNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedExclusiveMinNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedExclusiveMinNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedExclusiveMinNV(uvec4, uvec4 ballot);\n"
-
-            "float  subgroupPartitionedExclusiveMaxNV(float, uvec4 ballot);\n"
-            "vec2   subgroupPartitionedExclusiveMaxNV(vec2, uvec4 ballot);\n"
-            "vec3   subgroupPartitionedExclusiveMaxNV(vec3, uvec4 ballot);\n"
-            "vec4   subgroupPartitionedExclusiveMaxNV(vec4, uvec4 ballot);\n"
-            "int    subgroupPartitionedExclusiveMaxNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedExclusiveMaxNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedExclusiveMaxNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedExclusiveMaxNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedExclusiveMaxNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedExclusiveMaxNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedExclusiveMaxNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedExclusiveMaxNV(uvec4, uvec4 ballot);\n"
-
-            "int    subgroupPartitionedExclusiveAndNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedExclusiveAndNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedExclusiveAndNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedExclusiveAndNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedExclusiveAndNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedExclusiveAndNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedExclusiveAndNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedExclusiveAndNV(uvec4, uvec4 ballot);\n"
-            "bool   subgroupPartitionedExclusiveAndNV(bool, uvec4 ballot);\n"
-            "bvec2  subgroupPartitionedExclusiveAndNV(bvec2, uvec4 ballot);\n"
-            "bvec3  subgroupPartitionedExclusiveAndNV(bvec3, uvec4 ballot);\n"
-            "bvec4  subgroupPartitionedExclusiveAndNV(bvec4, uvec4 ballot);\n"
-
-            "int    subgroupPartitionedExclusiveOrNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedExclusiveOrNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedExclusiveOrNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedExclusiveOrNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedExclusiveOrNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedExclusiveOrNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedExclusiveOrNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedExclusiveOrNV(uvec4, uvec4 ballot);\n"
-            "bool   subgroupPartitionedExclusiveOrNV(bool, uvec4 ballot);\n"
-            "bvec2  subgroupPartitionedExclusiveOrNV(bvec2, uvec4 ballot);\n"
-            "bvec3  subgroupPartitionedExclusiveOrNV(bvec3, uvec4 ballot);\n"
-            "bvec4  subgroupPartitionedExclusiveOrNV(bvec4, uvec4 ballot);\n"
-
-            "int    subgroupPartitionedExclusiveXorNV(int, uvec4 ballot);\n"
-            "ivec2  subgroupPartitionedExclusiveXorNV(ivec2, uvec4 ballot);\n"
-            "ivec3  subgroupPartitionedExclusiveXorNV(ivec3, uvec4 ballot);\n"
-            "ivec4  subgroupPartitionedExclusiveXorNV(ivec4, uvec4 ballot);\n"
-            "uint   subgroupPartitionedExclusiveXorNV(uint, uvec4 ballot);\n"
-            "uvec2  subgroupPartitionedExclusiveXorNV(uvec2, uvec4 ballot);\n"
-            "uvec3  subgroupPartitionedExclusiveXorNV(uvec3, uvec4 ballot);\n"
-            "uvec4  subgroupPartitionedExclusiveXorNV(uvec4, uvec4 ballot);\n"
-            "bool   subgroupPartitionedExclusiveXorNV(bool, uvec4 ballot);\n"
-            "bvec2  subgroupPartitionedExclusiveXorNV(bvec2, uvec4 ballot);\n"
-            "bvec3  subgroupPartitionedExclusiveXorNV(bvec3, uvec4 ballot);\n"
-            "bvec4  subgroupPartitionedExclusiveXorNV(bvec4, uvec4 ballot);\n"
-#endif
-
-            "\n");
-
-        if (profile != EEsProfile && version >= 400) {
-            commonBuiltins.append(
-                "bool   subgroupAllEqual(double);\n"
-                "bool   subgroupAllEqual(dvec2);\n"
-                "bool   subgroupAllEqual(dvec3);\n"
-                "bool   subgroupAllEqual(dvec4);\n"
-
-                "double subgroupBroadcast(double, uint);\n"
-                "dvec2  subgroupBroadcast(dvec2, uint);\n"
-                "dvec3  subgroupBroadcast(dvec3, uint);\n"
-                "dvec4  subgroupBroadcast(dvec4, uint);\n"
-
-                "double subgroupBroadcastFirst(double);\n"
-                "dvec2  subgroupBroadcastFirst(dvec2);\n"
-                "dvec3  subgroupBroadcastFirst(dvec3);\n"
-                "dvec4  subgroupBroadcastFirst(dvec4);\n"
-
-                "double subgroupShuffle(double, uint);\n"
-                "dvec2  subgroupShuffle(dvec2, uint);\n"
-                "dvec3  subgroupShuffle(dvec3, uint);\n"
-                "dvec4  subgroupShuffle(dvec4, uint);\n"
-
-                "double subgroupShuffleXor(double, uint);\n"
-                "dvec2  subgroupShuffleXor(dvec2, uint);\n"
-                "dvec3  subgroupShuffleXor(dvec3, uint);\n"
-                "dvec4  subgroupShuffleXor(dvec4, uint);\n"
-
-                "double subgroupShuffleUp(double, uint delta);\n"
-                "dvec2  subgroupShuffleUp(dvec2, uint delta);\n"
-                "dvec3  subgroupShuffleUp(dvec3, uint delta);\n"
-                "dvec4  subgroupShuffleUp(dvec4, uint delta);\n"
-
-                "double subgroupShuffleDown(double, uint delta);\n"
-                "dvec2  subgroupShuffleDown(dvec2, uint delta);\n"
-                "dvec3  subgroupShuffleDown(dvec3, uint delta);\n"
-                "dvec4  subgroupShuffleDown(dvec4, uint delta);\n"
-
-                "double subgroupAdd(double);\n"
-                "dvec2  subgroupAdd(dvec2);\n"
-                "dvec3  subgroupAdd(dvec3);\n"
-                "dvec4  subgroupAdd(dvec4);\n"
-
-                "double subgroupMul(double);\n"
-                "dvec2  subgroupMul(dvec2);\n"
-                "dvec3  subgroupMul(dvec3);\n"
-                "dvec4  subgroupMul(dvec4);\n"
-
-                "double subgroupMin(double);\n"
-                "dvec2  subgroupMin(dvec2);\n"
-                "dvec3  subgroupMin(dvec3);\n"
-                "dvec4  subgroupMin(dvec4);\n"
-
-                "double subgroupMax(double);\n"
-                "dvec2  subgroupMax(dvec2);\n"
-                "dvec3  subgroupMax(dvec3);\n"
-                "dvec4  subgroupMax(dvec4);\n"
-
-                "double subgroupInclusiveAdd(double);\n"
-                "dvec2  subgroupInclusiveAdd(dvec2);\n"
-                "dvec3  subgroupInclusiveAdd(dvec3);\n"
-                "dvec4  subgroupInclusiveAdd(dvec4);\n"
-
-                "double subgroupInclusiveMul(double);\n"
-                "dvec2  subgroupInclusiveMul(dvec2);\n"
-                "dvec3  subgroupInclusiveMul(dvec3);\n"
-                "dvec4  subgroupInclusiveMul(dvec4);\n"
-
-                "double subgroupInclusiveMin(double);\n"
-                "dvec2  subgroupInclusiveMin(dvec2);\n"
-                "dvec3  subgroupInclusiveMin(dvec3);\n"
-                "dvec4  subgroupInclusiveMin(dvec4);\n"
-
-                "double subgroupInclusiveMax(double);\n"
-                "dvec2  subgroupInclusiveMax(dvec2);\n"
-                "dvec3  subgroupInclusiveMax(dvec3);\n"
-                "dvec4  subgroupInclusiveMax(dvec4);\n"
-
-                "double subgroupExclusiveAdd(double);\n"
-                "dvec2  subgroupExclusiveAdd(dvec2);\n"
-                "dvec3  subgroupExclusiveAdd(dvec3);\n"
-                "dvec4  subgroupExclusiveAdd(dvec4);\n"
-
-                "double subgroupExclusiveMul(double);\n"
-                "dvec2  subgroupExclusiveMul(dvec2);\n"
-                "dvec3  subgroupExclusiveMul(dvec3);\n"
-                "dvec4  subgroupExclusiveMul(dvec4);\n"
-
-                "double subgroupExclusiveMin(double);\n"
-                "dvec2  subgroupExclusiveMin(dvec2);\n"
-                "dvec3  subgroupExclusiveMin(dvec3);\n"
-                "dvec4  subgroupExclusiveMin(dvec4);\n"
-
-                "double subgroupExclusiveMax(double);\n"
-                "dvec2  subgroupExclusiveMax(dvec2);\n"
-                "dvec3  subgroupExclusiveMax(dvec3);\n"
-                "dvec4  subgroupExclusiveMax(dvec4);\n"
-
-                "double subgroupClusteredAdd(double, uint);\n"
-                "dvec2  subgroupClusteredAdd(dvec2, uint);\n"
-                "dvec3  subgroupClusteredAdd(dvec3, uint);\n"
-                "dvec4  subgroupClusteredAdd(dvec4, uint);\n"
-
-                "double subgroupClusteredMul(double, uint);\n"
-                "dvec2  subgroupClusteredMul(dvec2, uint);\n"
-                "dvec3  subgroupClusteredMul(dvec3, uint);\n"
-                "dvec4  subgroupClusteredMul(dvec4, uint);\n"
-
-                "double subgroupClusteredMin(double, uint);\n"
-                "dvec2  subgroupClusteredMin(dvec2, uint);\n"
-                "dvec3  subgroupClusteredMin(dvec3, uint);\n"
-                "dvec4  subgroupClusteredMin(dvec4, uint);\n"
-
-                "double subgroupClusteredMax(double, uint);\n"
-                "dvec2  subgroupClusteredMax(dvec2, uint);\n"
-                "dvec3  subgroupClusteredMax(dvec3, uint);\n"
-                "dvec4  subgroupClusteredMax(dvec4, uint);\n"
-
-                "double subgroupQuadBroadcast(double, uint);\n"
-                "dvec2  subgroupQuadBroadcast(dvec2, uint);\n"
-                "dvec3  subgroupQuadBroadcast(dvec3, uint);\n"
-                "dvec4  subgroupQuadBroadcast(dvec4, uint);\n"
-
-                "double subgroupQuadSwapHorizontal(double);\n"
-                "dvec2  subgroupQuadSwapHorizontal(dvec2);\n"
-                "dvec3  subgroupQuadSwapHorizontal(dvec3);\n"
-                "dvec4  subgroupQuadSwapHorizontal(dvec4);\n"
-
-                "double subgroupQuadSwapVertical(double);\n"
-                "dvec2  subgroupQuadSwapVertical(dvec2);\n"
-                "dvec3  subgroupQuadSwapVertical(dvec3);\n"
-                "dvec4  subgroupQuadSwapVertical(dvec4);\n"
-
-                "double subgroupQuadSwapDiagonal(double);\n"
-                "dvec2  subgroupQuadSwapDiagonal(dvec2);\n"
-                "dvec3  subgroupQuadSwapDiagonal(dvec3);\n"
-                "dvec4  subgroupQuadSwapDiagonal(dvec4);\n"
-
-
-#ifdef NV_EXTENSIONS
-                "uvec4  subgroupPartitionNV(double);\n"
-                "uvec4  subgroupPartitionNV(dvec2);\n"
-                "uvec4  subgroupPartitionNV(dvec3);\n"
-                "uvec4  subgroupPartitionNV(dvec4);\n"
-
-                "double subgroupPartitionedAddNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedAddNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedAddNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedAddNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedMulNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedMulNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedMulNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedMulNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedMinNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedMinNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedMinNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedMinNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedMaxNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedMaxNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedMaxNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedMaxNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedInclusiveAddNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedInclusiveAddNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedInclusiveAddNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedInclusiveAddNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedInclusiveMulNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedInclusiveMulNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedInclusiveMulNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedInclusiveMulNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedInclusiveMinNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedInclusiveMinNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedInclusiveMinNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedInclusiveMinNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedInclusiveMaxNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedInclusiveMaxNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedInclusiveMaxNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedInclusiveMaxNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedExclusiveAddNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedExclusiveAddNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedExclusiveAddNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedExclusiveAddNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedExclusiveMulNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedExclusiveMulNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedExclusiveMulNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedExclusiveMulNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedExclusiveMinNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedExclusiveMinNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedExclusiveMinNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedExclusiveMinNV(dvec4, uvec4 ballot);\n"
-
-                "double subgroupPartitionedExclusiveMaxNV(double, uvec4 ballot);\n"
-                "dvec2  subgroupPartitionedExclusiveMaxNV(dvec2, uvec4 ballot);\n"
-                "dvec3  subgroupPartitionedExclusiveMaxNV(dvec3, uvec4 ballot);\n"
-                "dvec4  subgroupPartitionedExclusiveMaxNV(dvec4, uvec4 ballot);\n"
-#endif
-
-                "\n");
+            );
+
+        // Generate all flavors of subgroup ops.
+        static const char *subgroupOps[] = 
+        {
+            "bool   subgroupAllEqual(%s);\n",
+            "%s     subgroupBroadcast(%s, uint);\n",
+            "%s     subgroupBroadcastFirst(%s);\n",
+            "%s     subgroupShuffle(%s, uint);\n",
+            "%s     subgroupShuffleXor(%s, uint);\n",
+            "%s     subgroupShuffleUp(%s, uint delta);\n",
+            "%s     subgroupShuffleDown(%s, uint delta);\n",
+            "%s     subgroupAdd(%s);\n",
+            "%s     subgroupMul(%s);\n",
+            "%s     subgroupMin(%s);\n",
+            "%s     subgroupMax(%s);\n",
+            "%s     subgroupAnd(%s);\n",
+            "%s     subgroupOr(%s);\n",
+            "%s     subgroupXor(%s);\n",
+            "%s     subgroupInclusiveAdd(%s);\n",
+            "%s     subgroupInclusiveMul(%s);\n",
+            "%s     subgroupInclusiveMin(%s);\n",
+            "%s     subgroupInclusiveMax(%s);\n",
+            "%s     subgroupInclusiveAnd(%s);\n",
+            "%s     subgroupInclusiveOr(%s);\n",
+            "%s     subgroupInclusiveXor(%s);\n",
+            "%s     subgroupExclusiveAdd(%s);\n",
+            "%s     subgroupExclusiveMul(%s);\n",
+            "%s     subgroupExclusiveMin(%s);\n",
+            "%s     subgroupExclusiveMax(%s);\n",
+            "%s     subgroupExclusiveAnd(%s);\n",
+            "%s     subgroupExclusiveOr(%s);\n",
+            "%s     subgroupExclusiveXor(%s);\n",
+            "%s     subgroupClusteredAdd(%s, uint);\n",
+            "%s     subgroupClusteredMul(%s, uint);\n",
+            "%s     subgroupClusteredMin(%s, uint);\n",
+            "%s     subgroupClusteredMax(%s, uint);\n",
+            "%s     subgroupClusteredAnd(%s, uint);\n",
+            "%s     subgroupClusteredOr(%s, uint);\n",
+            "%s     subgroupClusteredXor(%s, uint);\n",
+            "%s     subgroupQuadBroadcast(%s, uint);\n",
+            "%s     subgroupQuadSwapHorizontal(%s);\n",
+            "%s     subgroupQuadSwapVertical(%s);\n",
+            "%s     subgroupQuadSwapDiagonal(%s);\n",
+            "uvec4  subgroupPartitionNV(%s);\n",
+            "%s     subgroupPartitionedAddNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedMulNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedMinNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedMaxNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedAndNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedOrNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedXorNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedInclusiveAddNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedInclusiveMulNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedInclusiveMinNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedInclusiveMaxNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedInclusiveAndNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedInclusiveOrNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedInclusiveXorNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedExclusiveAddNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedExclusiveMulNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedExclusiveMinNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedExclusiveMaxNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedExclusiveAndNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedExclusiveOrNV(%s, uvec4 ballot);\n",
+            "%s     subgroupPartitionedExclusiveXorNV(%s, uvec4 ballot);\n",
+        };
+
+        static const char *floatTypes[] = { 
+            "float", "vec2", "vec3", "vec4", 
+            "float16_t", "f16vec2", "f16vec3", "f16vec4", 
+        };
+        static const char *doubleTypes[] = { 
+            "double", "dvec2", "dvec3", "dvec4", 
+        };
+        static const char *intTypes[] = { 
+            "int8_t", "i8vec2", "i8vec3", "i8vec4", 
+            "int16_t", "i16vec2", "i16vec3", "i16vec4", 
+            "int", "ivec2", "ivec3", "ivec4", 
+            "int64_t", "i64vec2", "i64vec3", "i64vec4", 
+            "uint8_t", "u8vec2", "u8vec3", "u8vec4", 
+            "uint16_t", "u16vec2", "u16vec3", "u16vec4", 
+            "uint", "uvec2", "uvec3", "uvec4", 
+            "uint64_t", "u64vec2", "u64vec3", "u64vec4", 
+        };
+        static const char *boolTypes[] = { 
+            "bool", "bvec2", "bvec3", "bvec4", 
+        };
+
+        for (size_t i = 0; i < sizeof(subgroupOps)/sizeof(subgroupOps[0]); ++i) {
+            const char *op = subgroupOps[i];
+
+            // Logical operations don't support float
+            bool logicalOp = strstr(op, "Or") || strstr(op, "And") ||
+                             (strstr(op, "Xor") && !strstr(op, "ShuffleXor"));
+            // Math operations don't support bool
+            bool mathOp = strstr(op, "Add") || strstr(op, "Mul") || strstr(op, "Min") || strstr(op, "Max");
+
+            const int bufSize = 256;
+            char buf[bufSize];
+
+            if (!logicalOp) {
+                for (size_t j = 0; j < sizeof(floatTypes)/sizeof(floatTypes[0]); ++j) {
+                    snprintf(buf, bufSize, op, floatTypes[j], floatTypes[j]);
+                    commonBuiltins.append(buf);
+                }
+                if (profile != EEsProfile && version >= 400) {
+                    for (size_t j = 0; j < sizeof(doubleTypes)/sizeof(doubleTypes[0]); ++j) {
+                        snprintf(buf, bufSize, op, doubleTypes[j], doubleTypes[j]);
+                        commonBuiltins.append(buf);
+                    }
+                }
             }
+            if (!mathOp) {
+                for (size_t j = 0; j < sizeof(boolTypes)/sizeof(boolTypes[0]); ++j) {
+                    snprintf(buf, bufSize, op, boolTypes[j], boolTypes[j]);
+                    commonBuiltins.append(buf);
+                }
+            }
+            for (size_t j = 0; j < sizeof(intTypes)/sizeof(intTypes[0]); ++j) {
+                snprintf(buf, bufSize, op, intTypes[j], intTypes[j]);
+                commonBuiltins.append(buf);
+            }
+        }
 
         stageBuiltins[EShLangCompute].append(
             "void subgroupMemoryBarrierShared();"
 
             "\n"
             );
-#ifdef NV_EXTENSIONS
         stageBuiltins[EShLangMeshNV].append(
             "void subgroupMemoryBarrierShared();"
             "\n"
@@ -2961,7 +1889,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void subgroupMemoryBarrierShared();"
             "\n"
             );
-#endif
     }
 
     if (profile != EEsProfile && version >= 460) {
@@ -2973,7 +1900,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-#ifdef AMD_EXTENSIONS
     // GL_AMD_shader_ballot
     if (profile != EEsProfile && version >= 450) {
         commonBuiltins.append(
@@ -3870,11 +2796,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-#endif  // AMD_EXTENSIONS
-
-
-#ifdef NV_EXTENSIONS
-    if ((profile != EEsProfile && version >= 450) || 
+    if ((profile != EEsProfile && version >= 450) ||
         (profile == EEsProfile && version >= 320)) {
         commonBuiltins.append(
             "struct gl_TextureFootprint2DNV {"
@@ -3907,7 +2829,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-#endif // NV_EXTENSIONS
     // GL_AMD_gpu_shader_half_float/Explicit types
     if (profile != EEsProfile && version >= 450) {
         commonBuiltins.append(
@@ -4889,7 +3810,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangCompute].append(
             "void barrier();"
             );
-#ifdef NV_EXTENSIONS
     if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         stageBuiltins[EShLangMeshNV].append(
             "void barrier();"
@@ -4898,7 +3818,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void barrier();"
             );
     }
-#endif
     if ((profile != EEsProfile && version >= 130) || esBarrier)
         commonBuiltins.append(
             "void memoryBarrier();"
@@ -4914,7 +3833,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void groupMemoryBarrier();"
             );
     }
-#ifdef NV_EXTENSIONS
     if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         stageBuiltins[EShLangMeshNV].append(
             "void memoryBarrierShared();"
@@ -4925,7 +3843,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void groupMemoryBarrier();"
         );
     }
-#endif
 
     commonBuiltins.append("void controlBarrier(int, int, int, int);\n"
                           "void memoryBarrier(int, int, int);\n");
@@ -4955,6 +3872,60 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void coopMatStoreNV(fcoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
 
             "fcoopmatNV coopMatMulAddNV(fcoopmatNV A, fcoopmatNV B, fcoopmatNV C);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent int8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent int16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent int[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent int64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent ivec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent ivec4[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uint8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uint16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uint[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uint64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uvec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
+
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent int8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent int16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent int[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent int64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent ivec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent ivec4[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uint8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uint16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uint[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uint64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uvec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
+
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent int8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent int16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent int[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent int64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent ivec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent ivec4[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uint8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uint16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uint[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uint64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uvec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
+
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent int8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent int16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent int[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent int64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent ivec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent ivec4[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uint8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uint16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uint[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uint64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uvec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
+
+            "icoopmatNV coopMatMulAddNV(icoopmatNV A, icoopmatNV B, icoopmatNV C);\n"
+            "ucoopmatNV coopMatMulAddNV(ucoopmatNV A, ucoopmatNV B, ucoopmatNV C);\n"
             );
     }
 
@@ -5000,9 +3971,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-    stageBuiltins[EShLangFragment].append(derivatives);
-    stageBuiltins[EShLangFragment].append("\n");
-
     // GL_ARB_derivative_control
     if (profile != EEsProfile && version >= 400) {
         stageBuiltins[EShLangFragment].append(derivativeControls);
@@ -5039,7 +4007,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "bool helperInvocationEXT();"
         "\n");
 
-#ifdef AMD_EXTENSIONS
     // GL_AMD_shader_explicit_vertex_parameter
     if (profile != EEsProfile && version >= 450) {
         stageBuiltins[EShLangFragment].append(
@@ -5113,9 +4080,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
         }
-#endif
-
-#ifdef NV_EXTENSIONS
 
     // Builtins for GL_NV_ray_tracing
     if (profile != EEsProfile && version >= 460) {
@@ -5145,7 +4109,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
     //E_SPV_NV_compute_shader_derivatives
     if ((profile == EEsProfile && version >= 320) || (profile != EEsProfile && version >= 450)) {
-        stageBuiltins[EShLangCompute].append(derivatives);
         stageBuiltins[EShLangCompute].append(derivativeControls);
         stageBuiltins[EShLangCompute].append("\n");
     }
@@ -5159,7 +4122,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         stageBuiltins[EShLangMeshNV].append(
             "void writePackedPrimitiveIndices4x8NV(uint, uint);"
-            "\n");   
+            "\n");
     }
 #endif
 
@@ -5183,11 +4146,13 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "highp float diff;"   // f - n
                 );
         } else {
+#ifndef GLSLANG_WEB
             commonBuiltins.append(
                 "float near;"  // n
                 "float far;"   // f
                 "float diff;"  // f - n
                 );
+#endif
         }
 
         commonBuiltins.append(
@@ -5196,6 +4161,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_WEB
     if (spvVersion.spv == 0 && IncludeLegacy(version, profile, spvVersion)) {
         //
         // Matrix state. p. 31, 32, 37, 39, 40.
@@ -5342,7 +4308,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-#ifdef NV_EXTENSIONS
     //============================================================================
     //
     // Define the interface to the mesh/task shader.
@@ -5430,7 +4395,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "\n");
         }
     }
-#endif
 
     //============================================================================
     //
@@ -5564,7 +4528,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 );
         }
 
-#ifdef NV_EXTENSIONS
         if (version >= 450)
             stageBuiltins[EShLangVertex].append(
                 "out int gl_ViewportMask[];"             // GL_NV_viewport_array2
@@ -5573,8 +4536,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "out vec4 gl_PositionPerViewNV[];"       // GL_NVX_multiview_per_view_attributes
                 "out int  gl_ViewportMaskPerViewNV[];"   // GL_NVX_multiview_per_view_attributes
                 );
-#endif
-
     } else {
         // ES profile
         if (version == 100) {
@@ -5589,15 +4550,19 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                     "in highp int gl_InstanceID;"    // needs qualifier fixed later
                     );
             if (spvVersion.vulkan > 0)
+#endif
                 stageBuiltins[EShLangVertex].append(
                     "in highp int gl_VertexIndex;"
                     "in highp int gl_InstanceIndex;"
                     );
+#ifndef GLSLANG_WEB
             if (version < 310)
+#endif
                 stageBuiltins[EShLangVertex].append(
                     "highp vec4  gl_Position;"    // needs qualifier fixed later
                     "highp float gl_PointSize;"   // needs qualifier fixed later
                     );
+#ifndef GLSLANG_WEB
             else
                 stageBuiltins[EShLangVertex].append(
                     "out gl_PerVertex {"
@@ -5649,10 +4614,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         if (version >= 450)
             stageBuiltins[EShLangGeometry].append(
                 "float gl_CullDistance[];"
-#ifdef NV_EXTENSIONS
                 "vec4 gl_SecondaryPositionNV;"   // GL_NV_stereo_view_rendering
                 "vec4 gl_PositionPerViewNV[];"   // GL_NVX_multiview_per_view_attributes
-#endif
                 );
         stageBuiltins[EShLangGeometry].append(
             "} gl_in[];"
@@ -5698,7 +4661,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in int gl_InvocationID;"
             );
 
-#ifdef NV_EXTENSIONS
         if (version >= 450)
             stageBuiltins[EShLangGeometry].append(
                 "out int gl_ViewportMask[];"               // GL_NV_viewport_array2
@@ -5707,7 +4669,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "out vec4 gl_PositionPerViewNV[];"         // GL_NVX_multiview_per_view_attributes
                 "out int  gl_ViewportMaskPerViewNV[];"     // GL_NVX_multiview_per_view_attributes
             );
-#endif
 
         stageBuiltins[EShLangGeometry].append("\n");
     } else if (profile == EEsProfile && version >= 310) {
@@ -5772,13 +4733,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         if (version >= 450)
             stageBuiltins[EShLangTessControl].append(
                 "float gl_CullDistance[];"
-#ifdef NV_EXTENSIONS
                 "int  gl_ViewportMask[];"             // GL_NV_viewport_array2
                 "vec4 gl_SecondaryPositionNV;"        // GL_NV_stereo_view_rendering
                 "int  gl_SecondaryViewportMaskNV[];"  // GL_NV_stereo_view_rendering
                 "vec4 gl_PositionPerViewNV[];"        // GL_NVX_multiview_per_view_attributes
                 "int  gl_ViewportMaskPerViewNV[];"    // GL_NVX_multiview_per_view_attributes
-#endif
                 );
         stageBuiltins[EShLangTessControl].append(
             "} gl_out[];"
@@ -5877,7 +4836,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "out int gl_Layer;"
                 "\n");
 
-#ifdef NV_EXTENSIONS
         if (version >= 450)
             stageBuiltins[EShLangTessEvaluation].append(
                 "out int  gl_ViewportMask[];"             // GL_NV_viewport_array2
@@ -5886,7 +4844,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "out vec4 gl_PositionPerViewNV[];"        // GL_NVX_multiview_per_view_attributes
                 "out int  gl_ViewportMaskPerViewNV[];"    // GL_NVX_multiview_per_view_attributes
                 );
-#endif
 
     } else if (profile == EEsProfile && version >= 310) {
         // Note:  "in gl_PerVertex {...} gl_in[gl_MaxPatchVertices];" is declared in initialize() below,
@@ -6011,7 +4968,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "flat in int   gl_FragInvocationCountEXT;"
                 );
 
-#ifdef AMD_EXTENSIONS
         if (version >= 450)
             stageBuiltins[EShLangFragment].append(
                 "in vec2 gl_BaryCoordNoPerspAMD;"
@@ -6022,9 +4978,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in vec2 gl_BaryCoordSmoothSampleAMD;"
                 "in vec3 gl_BaryCoordPullModelAMD;"
                 );
-#endif
 
-#ifdef NV_EXTENSIONS
         if (version >= 430)
             stageBuiltins[EShLangFragment].append(
                 "in bool gl_FragFullyCoveredNV;"
@@ -6037,7 +4991,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in vec3 gl_BaryCoordNoPerspNV;"
                 );
 
-#endif
     } else {
         // ES profile
 
@@ -6049,6 +5002,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "mediump vec2 gl_PointCoord;"   // needs qualifier fixed later
                 );
         }
+#endif
         if (version >= 300) {
             stageBuiltins[EShLangFragment].append(
                 "highp   vec4  gl_FragCoord;"    // needs qualifier fixed later
@@ -6057,6 +5011,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "highp   float gl_FragDepth;"    // needs qualifier fixed later
                 );
         }
+#ifndef GLSLANG_WEB
         if (version >= 310) {
             stageBuiltins[EShLangFragment].append(
                 "bool gl_HelperInvocation;"          // needs qualifier fixed later
@@ -6084,7 +5039,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "flat in ivec2 gl_FragSizeEXT;"
                 "flat in int   gl_FragInvocationCountEXT;"
             );
-#ifdef NV_EXTENSIONS
         if (version >= 320)
             stageBuiltins[EShLangFragment].append( // GL_NV_shading_rate_image
                 "flat in ivec2 gl_FragmentSizeNV;"
@@ -6095,17 +5049,19 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in vec3 gl_BaryCoordNV;"
                 "in vec3 gl_BaryCoordNoPerspNV;"
                 );
+    }
 #endif
 
-    }
     stageBuiltins[EShLangFragment].append("\n");
 
     if (version >= 130)
         add2ndGenerationSamplingImaging(version, profile, spvVersion);
 
+#ifndef GLSLANG_WEB
+
     // GL_ARB_shader_ballot
     if (profile != EEsProfile && version >= 450) {
-        const char* ballotDecls = 
+        const char* ballotDecls =
             "uniform uint gl_SubGroupSizeARB;"
             "in uint     gl_SubGroupInvocationARB;"
             "in uint64_t gl_SubGroupEqMaskARB;"
@@ -6114,7 +5070,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in uint64_t gl_SubGroupLeMaskARB;"
             "in uint64_t gl_SubGroupLtMaskARB;"
             "\n";
-        const char* fragmentBallotDecls = 
+        const char* fragmentBallotDecls =
             "uniform uint gl_SubGroupSizeARB;"
             "flat in uint     gl_SubGroupInvocationARB;"
             "flat in uint64_t gl_SubGroupEqMaskARB;"
@@ -6129,10 +5085,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangGeometry]      .append(ballotDecls);
         stageBuiltins[EShLangCompute]       .append(ballotDecls);
         stageBuiltins[EShLangFragment]      .append(fragmentBallotDecls);
-#ifdef NV_EXTENSIONS
         stageBuiltins[EShLangMeshNV]        .append(ballotDecls);
         stageBuiltins[EShLangTaskNV]        .append(ballotDecls);
-#endif
     }
 
     if ((profile != EEsProfile && version >= 140) ||
@@ -6186,7 +5140,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangCompute]       .append(subgroupDecls);
         stageBuiltins[EShLangCompute]       .append(computeSubgroupDecls);
         stageBuiltins[EShLangFragment]      .append(fragmentSubgroupDecls);
-#ifdef NV_EXTENSIONS
         stageBuiltins[EShLangMeshNV]        .append(subgroupDecls);
         stageBuiltins[EShLangMeshNV]        .append(computeSubgroupDecls);
         stageBuiltins[EShLangTaskNV]        .append(subgroupDecls);
@@ -6197,10 +5150,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangClosestHitNV]  .append(subgroupDecls);
         stageBuiltins[EShLangMissNV]        .append(subgroupDecls);
         stageBuiltins[EShLangCallableNV]    .append(subgroupDecls);
-#endif
     }
 
-#ifdef NV_EXTENSIONS
     // GL_NV_ray_tracing
     if (profile != EEsProfile && version >= 460) {
 
@@ -6300,7 +5251,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangClosestHitNV].append(deviceIndex);
         stageBuiltins[EShLangMissNV].append(deviceIndex);
     }
-#endif
 
     if (version >= 300 /* both ES and non-ES */) {
         stageBuiltins[EShLangFragment].append(
@@ -6330,6 +5280,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append("const int gl_StorageSemanticsImage    = 0x800;\n");
         commonBuiltins.append("const int gl_StorageSemanticsOutput   = 0x1000;\n");
     }
+#endif
 
     // printf("%s\n", commonBuiltins.c_str());
     // printf("%s\n", stageBuiltins[EShLangFragment].c_str());
@@ -6345,19 +5296,28 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
     // In this function proper, enumerate the types, then calls the next set of functions
     // to enumerate all the uses for that type.
     //
-#ifdef AMD_EXTENSIONS
-    TBasicType bTypes[4] = { EbtFloat, EbtFloat16, EbtInt, EbtUint };
-#else
-    TBasicType bTypes[3] = { EbtFloat, EbtInt, EbtUint };
-#endif
-    bool skipBuffer = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 140);
-    bool skipCubeArrayed = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 130);
 
     // enumerate all the types
-    for (int image = 0; image <= 1; ++image) { // loop over "bool" image vs sampler
-
+#ifdef GLSLANG_WEB
+    const TBasicType bTypes[] = { EbtFloat, EbtInt, EbtUint };
+    bool skipBuffer = true;
+    bool skipCubeArrayed = true;
+    const int image = 0;
+#else
+    const TBasicType bTypes[] = { EbtFloat, EbtInt, EbtUint, EbtFloat16 };
+    bool skipBuffer = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 140);
+    bool skipCubeArrayed = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 130);
+    for (int image = 0; image <= 1; ++image) // loop over "bool" image vs sampler
+#endif
+    {
         for (int shadow = 0; shadow <= 1; ++shadow) { // loop over "bool" shadow or not
-            for (int ms = 0; ms <=1; ++ms) {
+#ifdef GLSLANG_WEB
+            const int ms = 0;
+#else
+            for (int ms = 0; ms <= 1; ++ms)
+#endif
+            {
+#ifndef GLSLANG_WEB
                 if ((ms || image) && shadow)
                     continue;
                 if (ms && profile != EEsProfile && version < 150)
@@ -6366,9 +5326,19 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
                     continue;
                 if (ms && profile == EEsProfile && version < 310)
                     continue;
+#endif
 
                 for (int arrayed = 0; arrayed <= 1; ++arrayed) { // loop over "bool" arrayed or not
-                    for (int dim = Esd1D; dim < EsdNumDims; ++dim) { // 1D, 2D, ..., buffer
+#ifdef GLSLANG_WEB
+                    for (int dim = Esd2D; dim <= EsdCube; ++dim) { // 2D, 3D, and Cube
+#else
+                    for (int dim = Esd1D; dim < EsdNumDims; ++dim) { // 1D, ..., buffer, subpass
+                        if (dim == EsdSubpass && spvVersion.vulkan == 0)
+                            continue;
+                        if (dim == EsdSubpass && (image || shadow || arrayed))
+                            continue;
+                        if ((dim == Esd1D || dim == EsdRect) && profile == EEsProfile)
+                            continue;
                         if (dim == EsdSubpass && spvVersion.vulkan == 0)
                             continue;
                         if (dim == EsdSubpass && (image || shadow || arrayed))
@@ -6377,43 +5347,41 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
                             continue;
                         if (dim != Esd2D && dim != EsdSubpass && ms)
                             continue;
-                        if ((dim == Esd3D || dim == EsdRect) && arrayed)
-                            continue;
-                        if (dim == Esd3D && shadow)
-                            continue;
-                        if (dim == EsdCube && arrayed && skipCubeArrayed)
-                            continue;
                         if (dim == EsdBuffer && skipBuffer)
                             continue;
                         if (dim == EsdBuffer && (shadow || arrayed || ms))
                             continue;
                         if (ms && arrayed && profile == EEsProfile && version < 310)
                             continue;
-#ifdef AMD_EXTENSIONS
-                        for (int bType = 0; bType < 4; ++bType) { // float, float16, int, uint results
+#endif
+                        if (dim == Esd3D && shadow)
+                            continue;
+                        if (dim == EsdCube && arrayed && skipCubeArrayed)
+                            continue;
+                        if ((dim == Esd3D || dim == EsdRect) && arrayed)
+                            continue;
 
-                            if (shadow && bType > 1)
+                        // Loop over the bTypes
+                        for (size_t bType = 0; bType < sizeof(bTypes)/sizeof(TBasicType); ++bType) {
+#ifndef GLSLANG_WEB
+                            if (bTypes[bType] == EbtFloat16 && (profile == EEsProfile || version < 450))
                                 continue;
-
-                            if (bTypes[bType] == EbtFloat16 && (profile == EEsProfile ||version < 450))
-                                continue;
-#else
-                        for (int bType = 0; bType < 3; ++bType) { // float, int, uint results
-
-                            if (shadow && bType > 0)
+                            if (dim == EsdRect && version < 140 && bType > 0)
                                 continue;
 #endif
-                            if (dim == EsdRect && version < 140 && bType > 0)
+                            if (shadow && (bTypes[bType] == EbtInt || bTypes[bType] == EbtUint))
                                 continue;
 
                             //
                             // Now, make all the function prototypes for the type we just built...
                             //
-
                             TSampler sampler;
+#ifndef GLSLANG_WEB
                             if (dim == EsdSubpass) {
                                 sampler.setSubpass(bTypes[bType], ms ? true : false);
-                            } else if (image) {
+                            } else
+#endif
+                            if (image) {
                                 sampler.setImage(bTypes[bType], (TSamplerDim)dim, arrayed ? true : false,
                                                                                   shadow  ? true : false,
                                                                                   ms      ? true : false);
@@ -6425,10 +5393,12 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
 
                             TString typeName = sampler.getString();
 
+#ifndef GLSLANG_WEB
                             if (dim == EsdSubpass) {
                                 addSubpassSampling(sampler, typeName, version, profile);
                                 continue;
                             }
+#endif
 
                             addQueryFunctions(sampler, typeName, version, profile);
 
@@ -6436,8 +5406,8 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
                                 addImageFunctions(sampler, typeName, version, profile);
                             else {
                                 addSamplingFunctions(sampler, typeName, version, profile);
+#ifndef GLSLANG_WEB
                                 addGatherFunctions(sampler, typeName, version, profile);
-
                                 if (spvVersion.vulkan > 0 && sampler.isCombined() && !sampler.shadow) {
                                     // Base Vulkan allows texelFetch() for
                                     // textureBuffer (i.e. without sampler).
@@ -6452,6 +5422,7 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
                                     addSamplingFunctions(sampler, textureTypeName, version, profile);
                                     addQueryFunctions(sampler, textureTypeName, version, profile);
                                 }
+#endif
                             }
                         }
                     }
@@ -6460,13 +5431,14 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
         }
     }
 
+#ifndef GLSLANG_WEB
     //
     // sparseTexelsResidentARB()
     //
-
     if (profile != EEsProfile && version >= 450) {
         commonBuiltins.append("bool sparseTexelsResidentARB(int code);\n");
     }
+#endif
 }
 
 //
@@ -6477,14 +5449,25 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
 //
 void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int version, EProfile profile)
 {
-    if (sampler.image && ((profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 430)))
-        return;
-
     //
     // textureSize() and imageSize()
     //
 
     int sizeDims = dimMap[sampler.dim] + (sampler.arrayed ? 1 : 0) - (sampler.dim == EsdCube ? 1 : 0);
+
+#ifdef GLSLANG_WEB
+    commonBuiltins.append("highp ");
+    commonBuiltins.append("ivec");
+    commonBuiltins.append(postfixes[sizeDims]);
+    commonBuiltins.append(" textureSize(");
+    commonBuiltins.append(typeName);
+    commonBuiltins.append(",int);\n");
+    return;
+#endif
+
+    if (sampler.isImage() && ((profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 430)))
+        return;
+
     if (profile == EEsProfile)
         commonBuiltins.append("highp ");
     if (sizeDims == 1)
@@ -6493,12 +5476,12 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int
         commonBuiltins.append("ivec");
         commonBuiltins.append(postfixes[sizeDims]);
     }
-    if (sampler.image)
+    if (sampler.isImage())
         commonBuiltins.append(" imageSize(readonly writeonly volatile coherent ");
     else
         commonBuiltins.append(" textureSize(");
     commonBuiltins.append(typeName);
-    if (! sampler.image && sampler.dim != EsdRect && sampler.dim != EsdBuffer && ! sampler.ms)
+    if (! sampler.isImage() && ! sampler.isRect() && ! sampler.isBuffer() && ! sampler.isMultiSample())
         commonBuiltins.append(",int);\n");
     else
         commonBuiltins.append(");\n");
@@ -6509,9 +5492,9 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int
 
     // GL_ARB_shader_texture_image_samples
     // TODO: spec issue? there are no memory qualifiers; how to query a writeonly/readonly image, etc?
-    if (profile != EEsProfile && version >= 430 && sampler.ms) {
+    if (profile != EEsProfile && version >= 430 && sampler.isMultiSample()) {
         commonBuiltins.append("int ");
-        if (sampler.image)
+        if (sampler.isImage())
             commonBuiltins.append("imageSamples(readonly writeonly volatile coherent ");
         else
             commonBuiltins.append("textureSamples(");
@@ -6523,40 +5506,28 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int
     // textureQueryLod(), fragment stage only
     //
 
-    if (profile != EEsProfile && version >= 400 && sampler.combined && sampler.dim != EsdRect && ! sampler.ms && sampler.dim != EsdBuffer) {
-#ifdef AMD_EXTENSIONS
+    if (profile != EEsProfile && version >= 400 && sampler.isCombined() && sampler.dim != EsdRect &&
+        ! sampler.isMultiSample() && ! sampler.isBuffer()) {
         for (int f16TexAddr = 0; f16TexAddr < 2; ++f16TexAddr) {
             if (f16TexAddr && sampler.type != EbtFloat16)
                 continue;
-#endif
             stageBuiltins[EShLangFragment].append("vec2 textureQueryLod(");
             stageBuiltins[EShLangFragment].append(typeName);
             if (dimMap[sampler.dim] == 1)
-#ifdef AMD_EXTENSIONS
                 if (f16TexAddr)
                     stageBuiltins[EShLangFragment].append(", float16_t");
                 else
                     stageBuiltins[EShLangFragment].append(", float");
-#else
-                stageBuiltins[EShLangFragment].append(", float");
-#endif
             else {
-#ifdef AMD_EXTENSIONS
                 if (f16TexAddr)
                     stageBuiltins[EShLangFragment].append(", f16vec");
                 else
                     stageBuiltins[EShLangFragment].append(", vec");
-#else
-                stageBuiltins[EShLangFragment].append(", vec");
-#endif
                 stageBuiltins[EShLangFragment].append(postfixes[dimMap[sampler.dim]]);
             }
             stageBuiltins[EShLangFragment].append(");\n");
-#ifdef AMD_EXTENSIONS
         }
-#endif
 
-#ifdef NV_EXTENSIONS
         stageBuiltins[EShLangCompute].append("vec2 textureQueryLod(");
         stageBuiltins[EShLangCompute].append(typeName);
         if (dimMap[sampler.dim] == 1)
@@ -6566,14 +5537,14 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int
             stageBuiltins[EShLangCompute].append(postfixes[dimMap[sampler.dim]]);
         }
         stageBuiltins[EShLangCompute].append(");\n");
-#endif
     }
 
     //
     // textureQueryLevels()
     //
 
-    if (profile != EEsProfile && version >= 430 && ! sampler.image && sampler.dim != EsdRect && ! sampler.ms && sampler.dim != EsdBuffer) {
+    if (profile != EEsProfile && version >= 430 && ! sampler.isImage() && sampler.dim != EsdRect &&
+        ! sampler.isMultiSample() && ! sampler.isBuffer()) {
         commonBuiltins.append("int textureQueryLevels(");
         commonBuiltins.append(typeName);
         commonBuiltins.append(");\n");
@@ -6600,7 +5571,7 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
         imageParams.append(", ivec");
         imageParams.append(postfixes[dims]);
     }
-    if (sampler.ms)
+    if (sampler.isMultiSample())
         imageParams.append(", int");
 
     if (profile == EEsProfile)
@@ -6616,7 +5587,7 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
     commonBuiltins.append(prefixes[sampler.type]);
     commonBuiltins.append("vec4);\n");
 
-    if (sampler.dim != Esd1D && sampler.dim != EsdBuffer && profile != EEsProfile && version >= 450) {
+    if (! sampler.is1D() && ! sampler.isBuffer() && profile != EEsProfile && version >= 450) {
         commonBuiltins.append("int sparseImageLoadARB(readonly volatile coherent ");
         commonBuiltins.append(imageParams);
         commonBuiltins.append(", out ");
@@ -6693,8 +5664,7 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
         }
     }
 
-#ifdef AMD_EXTENSIONS
-    if (sampler.dim == EsdRect || sampler.dim == EsdBuffer || sampler.shadow || sampler.ms)
+    if (sampler.dim == EsdRect || sampler.dim == EsdBuffer || sampler.shadow || sampler.isMultiSample())
         return;
 
     if (profile == EEsProfile || version < 450)
@@ -6720,7 +5690,7 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
     commonBuiltins.append(prefixes[sampler.type]);
     commonBuiltins.append("vec4);\n");
 
-    if (sampler.dim != Esd1D) {
+    if (! sampler.is1D()) {
         commonBuiltins.append("int sparseImageLoadLodAMD(readonly volatile coherent ");
         commonBuiltins.append(imageLodParams);
         commonBuiltins.append(", out ");
@@ -6728,7 +5698,6 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
         commonBuiltins.append("vec4");
         commonBuiltins.append(");\n");
     }
-#endif
 }
 
 //
@@ -6743,7 +5712,7 @@ void TBuiltIns::addSubpassSampling(TSampler sampler, const TString& typeName, in
     stageBuiltins[EShLangFragment].append("vec4 subpassLoad");
     stageBuiltins[EShLangFragment].append("(");
     stageBuiltins[EShLangFragment].append(typeName.c_str());
-    if (sampler.ms)
+    if (sampler.isMultiSample())
         stageBuiltins[EShLangFragment].append(", int");
     stageBuiltins[EShLangFragment].append(");\n");
 }
@@ -6761,12 +5730,13 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
     //
     for (int proj = 0; proj <= 1; ++proj) { // loop over "bool" projective or not
 
-        if (proj && (sampler.dim == EsdCube || sampler.dim == EsdBuffer || sampler.arrayed || sampler.ms || !sampler.combined))
+        if (proj && (sampler.dim == EsdCube || sampler.isBuffer() || sampler.arrayed || sampler.isMultiSample()
+            || !sampler.isCombined()))
             continue;
 
         for (int lod = 0; lod <= 1; ++lod) {
 
-            if (lod && (sampler.dim == EsdBuffer || sampler.dim == EsdRect || sampler.ms || !sampler.combined))
+            if (lod && (sampler.isBuffer() || sampler.isRect() || sampler.isMultiSample() || !sampler.isCombined()))
                 continue;
             if (lod && sampler.dim == Esd2D && sampler.arrayed && sampler.shadow)
                 continue;
@@ -6775,18 +5745,18 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
 
             for (int bias = 0; bias <= 1; ++bias) {
 
-                if (bias && (lod || sampler.ms || !sampler.combined))
+                if (bias && (lod || sampler.isMultiSample() || !sampler.isCombined()))
                     continue;
                 if (bias && (sampler.dim == Esd2D || sampler.dim == EsdCube) && sampler.shadow && sampler.arrayed)
                     continue;
-                if (bias && (sampler.dim == EsdRect || sampler.dim == EsdBuffer))
+                if (bias && (sampler.isRect() || sampler.isBuffer()))
                     continue;
 
                 for (int offset = 0; offset <= 1; ++offset) { // loop over "bool" offset or not
 
                     if (proj + offset + bias + lod > 3)
                         continue;
-                    if (offset && (sampler.dim == EsdCube || sampler.dim == EsdBuffer || sampler.ms))
+                    if (offset && (sampler.dim == EsdCube || sampler.isBuffer() || sampler.isMultiSample()))
                         continue;
 
                     for (int fetch = 0; fetch <= 1; ++fetch) { // loop over "bool" fetch or not
@@ -6797,14 +5767,15 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                             continue;
                         if (fetch && (sampler.shadow || sampler.dim == EsdCube))
                             continue;
-                        if (fetch == 0 && (sampler.ms || sampler.dim == EsdBuffer || !sampler.combined))
+                        if (fetch == 0 && (sampler.isMultiSample() || sampler.isBuffer()
+                            || !sampler.isCombined()))
                             continue;
 
                         for (int grad = 0; grad <= 1; ++grad) { // loop over "bool" grad or not
 
-                            if (grad && (lod || bias || sampler.ms || !sampler.combined))
+                            if (grad && (lod || bias || sampler.isMultiSample() || !sampler.isCombined()))
                                 continue;
-                            if (grad && sampler.dim == EsdBuffer)
+                            if (grad && sampler.isBuffer())
                                 continue;
                             if (proj + offset + fetch + grad + bias + lod > 3)
                                 continue;
@@ -6824,31 +5795,46 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
 
                                 if (extraProj && ! proj)
                                     continue;
-                                if (extraProj && (sampler.dim == Esd3D || sampler.shadow || !sampler.combined))
+                                if (extraProj && (sampler.dim == Esd3D || sampler.shadow || !sampler.isCombined()))
                                     continue;
-#ifdef AMD_EXTENSIONS
-                                for (int f16TexAddr = 0; f16TexAddr <= 1; ++f16TexAddr) { // loop over 16-bit floating-point texel addressing
 
+                                // loop over 16-bit floating-point texel addressing
+#ifdef GLSLANG_WEB
+                                const int f16TexAddr = 0;
+#else
+                                for (int f16TexAddr = 0; f16TexAddr <= 1; ++f16TexAddr)
+#endif
+                                {
                                     if (f16TexAddr && sampler.type != EbtFloat16)
                                         continue;
                                     if (f16TexAddr && sampler.shadow && ! compare) {
                                         compare = true; // compare argument is always present
                                         totalDims--;
                                     }
+                                    // loop over "bool" lod clamp
+#ifdef GLSLANG_WEB
+                                    const int lodClamp = 0;
+#else
+                                    for (int lodClamp = 0; lodClamp <= 1 ;++lodClamp)
 #endif
-                                    for (int lodClamp = 0; lodClamp <= 1 ;++lodClamp) { // loop over "bool" lod clamp
-
+                                    {
                                         if (lodClamp && (profile == EEsProfile || version < 450))
                                             continue;
                                         if (lodClamp && (proj || lod || fetch))
                                             continue;
 
-                                        for (int sparse = 0; sparse <= 1; ++sparse) { // loop over "bool" sparse or not
-
+                                        // loop over "bool" sparse or not
+#ifdef GLSLANG_WEB
+                                        const int sparse = 0;
+#else
+                                        for (int sparse = 0; sparse <= 1; ++sparse)
+#endif
+                                        {
                                             if (sparse && (profile == EEsProfile || version < 450))
                                                 continue;
-                                            // Sparse sampling is not for 1D/1D array texture, buffer texture, and projective texture
-                                            if (sparse && (sampler.dim == Esd1D || sampler.dim == EsdBuffer || proj))
+                                            // Sparse sampling is not for 1D/1D array texture, buffer texture, and
+                                            // projective texture
+                                            if (sparse && (sampler.is1D() || sampler.isBuffer() || proj))
                                                 continue;
 
                                             TString s;
@@ -6858,14 +5844,10 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                                 s.append("int ");
                                             else {
                                                 if (sampler.shadow)
-#ifdef AMD_EXTENSIONS
                                                     if (sampler.type == EbtFloat16)
                                                         s.append("float16_t ");
                                                     else
                                                         s.append("float ");
-#else
-                                                    s.append("float ");
-#endif
                                                 else {
                                                     s.append(prefixes[sampler.type]);
                                                     s.append("vec4 ");
@@ -6903,7 +5885,6 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
 
                                             // sampler type
                                             s.append(typeName);
-#ifdef AMD_EXTENSIONS
                                             // P coordinate
                                             if (extraProj) {
                                                 if (f16TexAddr)
@@ -6921,31 +5902,15 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                                     s.append(postfixes[totalDims]);
                                                 }
                                             }
-#else
-                                            // P coordinate
-                                            if (extraProj)
-                                                s.append(",vec4");
-                                            else {
-                                                s.append(",");
-                                                TBasicType t = fetch ? EbtInt : EbtFloat;
-                                                if (totalDims == 1)
-                                                    s.append(TType::getBasicString(t));
-                                                else {
-                                                    s.append(prefixes[t]);
-                                                    s.append("vec");
-                                                    s.append(postfixes[totalDims]);
-                                                }
-                                            }
-#endif
                                             // non-optional compare
                                             if (compare)
                                                 s.append(",float");
 
                                             // non-optional lod argument (lod that's not driven by lod loop) or sample
-                                            if ((fetch && sampler.dim != EsdBuffer && sampler.dim != EsdRect && !sampler.ms) ||
-                                                (sampler.ms && fetch))
+                                            if ((fetch && !sampler.isBuffer() &&
+                                                 !sampler.isRect() && !sampler.isMultiSample())
+                                                 || (sampler.isMultiSample() && fetch))
                                                 s.append(",int");
-#ifdef AMD_EXTENSIONS
                                             // non-optional lod
                                             if (lod) {
                                                 if (f16TexAddr)
@@ -6974,23 +5939,6 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                                     s.append(postfixes[dimMap[sampler.dim]]);
                                                 }
                                             }
-#else
-                                            // non-optional lod
-                                            if (lod)
-                                                s.append(",float");
-
-                                            // gradient arguments
-                                            if (grad) {
-                                                if (dimMap[sampler.dim] == 1)
-                                                    s.append(",float,float");
-                                                else {
-                                                    s.append(",vec");
-                                                    s.append(postfixes[dimMap[sampler.dim]]);
-                                                    s.append(",vec");
-                                                    s.append(postfixes[dimMap[sampler.dim]]);
-                                                }
-                                            }
-#endif
                                             // offset
                                             if (offset) {
                                                 if (dimMap[sampler.dim] == 1)
@@ -7001,7 +5949,6 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                                 }
                                             }
 
-#ifdef AMD_EXTENSIONS
                                             // lod clamp
                                             if (lodClamp) {
                                                 if (f16TexAddr)
@@ -7009,29 +5956,19 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                                 else
                                                     s.append(",float");
                                             }
-#else
-                                            // lod clamp
-                                            if (lodClamp)
-                                                s.append(",float");
-#endif
                                             // texel out (for sparse texture)
                                             if (sparse) {
                                                 s.append(",out ");
                                                 if (sampler.shadow)
-#ifdef AMD_EXTENSIONS
                                                     if (sampler.type == EbtFloat16)
                                                         s.append("float16_t");
                                                     else
                                                         s.append("float");
-#else
-                                                    s.append("float");
-#endif
                                                 else {
                                                     s.append(prefixes[sampler.type]);
                                                     s.append("vec4");
                                                 }
                                             }
-#ifdef AMD_EXTENSIONS
                                             // optional bias
                                             if (bias) {
                                                 if (f16TexAddr)
@@ -7039,27 +5976,18 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                                 else
                                                     s.append(",float");
                                             }
-#else
-                                            // optional bias
-                                            if (bias)
-                                                s.append(",float");
-#endif
                                             s.append(");\n");
 
                                             // Add to the per-language set of built-ins
                                             if (bias || lodClamp) {
                                                 stageBuiltins[EShLangFragment].append(s);
-#ifdef NV_EXTENSIONS
                                                 stageBuiltins[EShLangCompute].append(s);
-#endif
                                             } else
                                                 commonBuiltins.append(s);
 
                                         }
                                     }
-#ifdef AMD_EXTENSIONS
                                 }
-#endif
                             }
                         }
                     }
@@ -7086,18 +6014,16 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
         return;
     }
 
-    if (sampler.ms)
+    if (sampler.isMultiSample())
         return;
 
     if (version < 140 && sampler.dim == EsdRect && sampler.type != EbtFloat)
         return;
 
-#ifdef AMD_EXTENSIONS
     for (int f16TexAddr = 0; f16TexAddr <= 1; ++f16TexAddr) { // loop over 16-bit floating-point texel addressing
 
         if (f16TexAddr && sampler.type != EbtFloat16)
             continue;
-#endif
         for (int offset = 0; offset < 3; ++offset) { // loop over three forms of offset in the call name:  none, Offset, and Offsets
 
             for (int comp = 0; comp < 2; ++comp) { // loop over presence of comp argument
@@ -7145,14 +6071,10 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
                     s.append(typeName);
 
                     // P coordinate argument
-#ifdef AMD_EXTENSIONS
                     if (f16TexAddr)
                         s.append(",f16vec");
                     else
                         s.append(",vec");
-#else
-                    s.append(",vec");
-#endif
                     int totalDims = dimMap[sampler.dim] + (sampler.arrayed ? 1 : 0);
                     s.append(postfixes[totalDims]);
 
@@ -7180,14 +6102,11 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
 
                     s.append(");\n");
                     commonBuiltins.append(s);
-#ifdef AMD_EXTENSIONS
                 }
-#endif
             }
         }
     }
 
-#ifdef AMD_EXTENSIONS
     if (sampler.dim == EsdRect || sampler.shadow)
         return;
 
@@ -7313,7 +6232,6 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
             }
         }
     }
-#endif
 }
 
 //
@@ -7382,6 +6300,9 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
             s.append(builtInConstant);
         }
 
+#ifdef GLSLANG_WEB
+    }
+#else
         if (version >= 310) {
             // geometry
 
@@ -7440,10 +6361,8 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
                     "in gl_PerVertex {"
                         "highp vec4 gl_Position;"
                         "highp float gl_PointSize;"
-#ifdef NV_EXTENSIONS
                         "highp vec4 gl_SecondaryPositionNV;"  // GL_NV_stereo_view_rendering
                         "highp vec4 gl_PositionPerViewNV[];"  // GL_NVX_multiview_per_view_attributes
-#endif
                     "} gl_in[gl_MaxPatchVertices];"
                     "\n");
             }
@@ -7630,10 +6549,8 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
                 if (profile != EEsProfile && version >= 450)
                     s.append(
                         "float gl_CullDistance[];"
-#ifdef NV_EXTENSIONS
                         "vec4 gl_SecondaryPositionNV;"  // GL_NV_stereo_view_rendering
                         "vec4 gl_PositionPerViewNV[];"  // GL_NVX_multiview_per_view_attributes
-#endif
                        );
                 s.append(
                     "} gl_in[gl_MaxPatchVertices];"
@@ -7761,7 +6678,6 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
         s.append(builtInConstant);
     }
 
-#ifdef NV_EXTENSIONS
     // SPV_NV_mesh_shader
     if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         snprintf(builtInConstant, maxSize, "const int gl_MaxMeshOutputVerticesNV = %d;", resources.maxMeshOutputVerticesNV);
@@ -7879,6 +6795,17 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
     switch(language) {
     case EShLangVertex:
+        if (spvVersion.vulkan > 0) {
+            BuiltInVariable("gl_VertexIndex",   EbvVertexIndex,   symbolTable);
+            BuiltInVariable("gl_InstanceIndex", EbvInstanceIndex, symbolTable);
+        }
+
+#ifndef GLSLANG_WEB
+        if (spvVersion.vulkan == 0) {
+            SpecialQualifier("gl_VertexID",   EvqVertexId,   EbvVertexId,   symbolTable);
+            SpecialQualifier("gl_InstanceID", EvqInstanceId, EbvInstanceId, symbolTable);
+        }
+
         if (profile != EEsProfile) {
             if (version >= 440) {
                 symbolTable.setVariableExtensions("gl_BaseVertexARB",   1, &E_GL_ARB_shader_draw_parameters);
@@ -7913,7 +6840,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
 
-#ifdef AMD_EXTENSIONS
         if (profile != EEsProfile) {
             symbolTable.setFunctionExtensions("minInvocationsAMD",                1, &E_GL_AMD_shader_ballot);
             symbolTable.setFunctionExtensions("maxInvocationsAMD",                1, &E_GL_AMD_shader_ballot);
@@ -7959,15 +6885,12 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("fragmentMaskFetchAMD", 1, &E_GL_AMD_shader_fragment_mask);
             symbolTable.setFunctionExtensions("fragmentFetchAMD",     1, &E_GL_AMD_shader_fragment_mask);
         }
-#endif
 
-#ifdef NV_EXTENSIONS
         symbolTable.setFunctionExtensions("textureFootprintNV",          1, &E_GL_NV_shader_texture_footprint);
         symbolTable.setFunctionExtensions("textureFootprintClampNV",     1, &E_GL_NV_shader_texture_footprint);
         symbolTable.setFunctionExtensions("textureFootprintLodNV",       1, &E_GL_NV_shader_texture_footprint);
         symbolTable.setFunctionExtensions("textureFootprintGradNV",      1, &E_GL_NV_shader_texture_footprint);
         symbolTable.setFunctionExtensions("textureFootprintGradClampNV", 1, &E_GL_NV_shader_texture_footprint);
-#endif
         // Compatibility variables, vertex only
         if (spvVersion.spv == 0) {
             BuiltInVariable("gl_Color",          EbvColor,          symbolTable);
@@ -8008,16 +6931,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("imageAtomicCompSwap", 1, &E_GL_OES_shader_image_atomic);
         }
 
-        if (spvVersion.vulkan == 0) {
-            SpecialQualifier("gl_VertexID",   EvqVertexId,   EbvVertexId,   symbolTable);
-            SpecialQualifier("gl_InstanceID", EvqInstanceId, EbvInstanceId, symbolTable);
-        }
-
-        if (spvVersion.vulkan > 0) {
-            BuiltInVariable("gl_VertexIndex",   EbvVertexIndex,   symbolTable);
-            BuiltInVariable("gl_InstanceIndex", EbvInstanceIndex, symbolTable);
-        }
-
         if (version >= 300 /* both ES and non-ES */) {
             symbolTable.setVariableExtensions("gl_ViewID_OVR", Num_OVR_multiview_EXTs, OVR_multiview_EXTs);
             BuiltInVariable("gl_ViewID_OVR", EbvViewIndex, symbolTable);
@@ -8027,7 +6940,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("shadow2DEXT",        1, &E_GL_EXT_shadow_samplers);
             symbolTable.setFunctionExtensions("shadow2DProjEXT",    1, &E_GL_EXT_shadow_samplers);
         }
-
         // Fall through
 
     case EShLangTessControl:
@@ -8043,22 +6955,26 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
                 BuiltInVariable("gl_BoundingBox", EbvBoundingBox, symbolTable);
             }
         }
-
         // Fall through
 
     case EShLangTessEvaluation:
     case EShLangGeometry:
+#endif
         SpecialQualifier("gl_Position",   EvqPosition,   EbvPosition,   symbolTable);
         SpecialQualifier("gl_PointSize",  EvqPointSize,  EbvPointSize,  symbolTable);
-        SpecialQualifier("gl_ClipVertex", EvqClipVertex, EbvClipVertex, symbolTable);
 
         BuiltInVariable("gl_in",  "gl_Position",     EbvPosition,     symbolTable);
         BuiltInVariable("gl_in",  "gl_PointSize",    EbvPointSize,    symbolTable);
-        BuiltInVariable("gl_in",  "gl_ClipDistance", EbvClipDistance, symbolTable);
-        BuiltInVariable("gl_in",  "gl_CullDistance", EbvCullDistance, symbolTable);
 
         BuiltInVariable("gl_out", "gl_Position",     EbvPosition,     symbolTable);
         BuiltInVariable("gl_out", "gl_PointSize",    EbvPointSize,    symbolTable);
+
+#ifndef GLSLANG_WEB
+        SpecialQualifier("gl_ClipVertex", EvqClipVertex, EbvClipVertex, symbolTable);
+
+        BuiltInVariable("gl_in",  "gl_ClipDistance", EbvClipDistance, symbolTable);
+        BuiltInVariable("gl_in",  "gl_CullDistance", EbvCullDistance, symbolTable);
+
         BuiltInVariable("gl_out", "gl_ClipDistance", EbvClipDistance, symbolTable);
         BuiltInVariable("gl_out", "gl_CullDistance", EbvCullDistance, symbolTable);
 
@@ -8070,19 +6986,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         BuiltInVariable("gl_Layer",           EbvLayer,          symbolTable);
         BuiltInVariable("gl_ViewportIndex",   EbvViewportIndex,  symbolTable);
 
-#ifdef NV_EXTENSIONS
         if (language != EShLangGeometry) {
             symbolTable.setVariableExtensions("gl_Layer",         Num_viewportEXTs, viewportEXTs);
             symbolTable.setVariableExtensions("gl_ViewportIndex", Num_viewportEXTs, viewportEXTs);
         }
-#else
-        if (language != EShLangGeometry && version >= 410) {
-            symbolTable.setVariableExtensions("gl_Layer",         1, &E_GL_ARB_shader_viewport_layer_array);
-            symbolTable.setVariableExtensions("gl_ViewportIndex", 1, &E_GL_ARB_shader_viewport_layer_array);
-        }
-#endif
-
-#ifdef NV_EXTENSIONS
         symbolTable.setVariableExtensions("gl_ViewportMask",            1, &E_GL_NV_viewport_array2);
         symbolTable.setVariableExtensions("gl_SecondaryPositionNV",     1, &E_GL_NV_stereo_view_rendering);
         symbolTable.setVariableExtensions("gl_SecondaryViewportMaskNV", 1, &E_GL_NV_stereo_view_rendering);
@@ -8095,7 +7002,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         BuiltInVariable("gl_PositionPerViewNV",         EbvPositionPerViewNV,       symbolTable);
         BuiltInVariable("gl_ViewportMaskPerViewNV",     EbvViewportMaskPerViewNV,   symbolTable);
 
-        if (language != EShLangVertex) {
+        if (language == EShLangVertex || language == EShLangGeometry) {
             symbolTable.setVariableExtensions("gl_in", "gl_SecondaryPositionNV", 1, &E_GL_NV_stereo_view_rendering);
             symbolTable.setVariableExtensions("gl_in", "gl_PositionPerViewNV",   1, &E_GL_NVX_multiview_per_view_attributes);
 
@@ -8113,7 +7020,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         BuiltInVariable("gl_out", "gl_SecondaryViewportMaskNV", EbvSecondaryViewportMaskNV, symbolTable);
         BuiltInVariable("gl_out", "gl_PositionPerViewNV",       EbvPositionPerViewNV,       symbolTable);
         BuiltInVariable("gl_out", "gl_ViewportMaskPerViewNV",   EbvViewportMaskPerViewNV,   symbolTable);
-#endif
 
         BuiltInVariable("gl_PatchVerticesIn", EbvPatchVertices,  symbolTable);
         BuiltInVariable("gl_TessLevelOuter",  EbvTessLevelOuter, symbolTable);
@@ -8214,7 +7120,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
             BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
-
+#endif
         break;
 
     case EShLangFragment:
@@ -8231,6 +7137,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             }
         }
         SpecialQualifier("gl_FragDepth",        EvqFragDepth,  EbvFragDepth,        symbolTable);
+#ifndef GLSLANG_WEB
         SpecialQualifier("gl_FragDepthEXT",     EvqFragDepth,  EbvFragDepth,        symbolTable);
         SpecialQualifier("gl_HelperInvocation", EvqVaryingIn,  EbvHelperInvocation, symbolTable);
 
@@ -8385,7 +7292,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("textureGradOffsetClampARB",          1, &E_GL_ARB_sparse_texture_clamp);
         }
 
-#ifdef AMD_EXTENSIONS
         // E_GL_AMD_shader_explicit_vertex_parameter
         if (profile != EEsProfile) {
             symbolTable.setVariableExtensions("gl_BaryCoordNoPerspAMD",         1, &E_GL_AMD_shader_explicit_vertex_parameter);
@@ -8423,9 +7329,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("imageStoreLodAMD",       1, &E_GL_AMD_shader_image_load_store_lod);
             symbolTable.setFunctionExtensions("sparseImageLoadLodAMD",  1, &E_GL_AMD_shader_image_load_store_lod);
         }
-#endif
-
-#ifdef NV_EXTENSIONS
         if (profile != EEsProfile && version >= 430) {
             symbolTable.setVariableExtensions("gl_FragFullyCoveredNV", 1, &E_GL_NV_conservative_raster_underestimation);
             BuiltInVariable("gl_FragFullyCoveredNV", EbvFragFullyCoveredNV, symbolTable);
@@ -8441,7 +7344,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_BaryCoordNV",        EbvBaryCoordNV,        symbolTable);
             BuiltInVariable("gl_BaryCoordNoPerspNV", EbvBaryCoordNoPerspNV, symbolTable);
         }
-#endif
 
         if ((profile != EEsProfile && version >= 450) ||
             (profile == EEsProfile && version >= 310)) {
@@ -8581,8 +7483,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("subgroupQuadSwapHorizontal",      1, &E_GL_KHR_shader_subgroup_quad);
             symbolTable.setFunctionExtensions("subgroupQuadSwapVertical",        1, &E_GL_KHR_shader_subgroup_quad);
             symbolTable.setFunctionExtensions("subgroupQuadSwapDiagonal",        1, &E_GL_KHR_shader_subgroup_quad);
-
-#ifdef NV_EXTENSIONS
             symbolTable.setFunctionExtensions("subgroupPartitionNV",                          1, &E_GL_NV_shader_subgroup_partitioned);
             symbolTable.setFunctionExtensions("subgroupPartitionedAddNV",                     1, &E_GL_NV_shader_subgroup_partitioned);
             symbolTable.setFunctionExtensions("subgroupPartitionedMulNV",                     1, &E_GL_NV_shader_subgroup_partitioned);
@@ -8605,7 +7505,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveAndNV",            1, &E_GL_NV_shader_subgroup_partitioned);
             symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveOrNV",             1, &E_GL_NV_shader_subgroup_partitioned);
             symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveXorNV",            1, &E_GL_NV_shader_subgroup_partitioned);
-#endif
 
             // GL_NV_shader_sm_builtins
             symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
@@ -8645,8 +7544,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         symbolTable.setFunctionExtensions("helperInvocationEXT",            1, &E_GL_EXT_demote_to_helper_invocation);
+#endif
         break;
 
+#ifndef GLSLANG_WEB
     case EShLangCompute:
         BuiltInVariable("gl_NumWorkGroups",         EbvNumWorkGroups,        symbolTable);
         BuiltInVariable("gl_WorkGroupSize",         EbvWorkGroupSize,        symbolTable);
@@ -8755,11 +7656,13 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("subgroupMemoryBarrierShared", 1, &E_GL_KHR_shader_subgroup_basic);
         }
 
-        symbolTable.setFunctionExtensions("coopMatLoadNV",              1, &E_GL_NV_cooperative_matrix);
-        symbolTable.setFunctionExtensions("coopMatStoreNV",             1, &E_GL_NV_cooperative_matrix);
-        symbolTable.setFunctionExtensions("coopMatMulAddNV",            1, &E_GL_NV_cooperative_matrix);
+        {
+            const char *coopExt[2] = { E_GL_NV_cooperative_matrix, E_GL_NV_integer_cooperative_matrix };
+            symbolTable.setFunctionExtensions("coopMatLoadNV",   2, coopExt);
+            symbolTable.setFunctionExtensions("coopMatStoreNV",  2, coopExt);
+            symbolTable.setFunctionExtensions("coopMatMulAddNV", 2, coopExt);
+        }
 
-#ifdef NV_EXTENSIONS
         if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
             symbolTable.setFunctionExtensions("dFdx",                   1, &E_GL_NV_compute_shader_derivatives);
             symbolTable.setFunctionExtensions("dFdy",                   1, &E_GL_NV_compute_shader_derivatives);
@@ -8771,10 +7674,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("dFdyCoarse",             1, &E_GL_NV_compute_shader_derivatives);
             symbolTable.setFunctionExtensions("fwidthCoarse",           1, &E_GL_NV_compute_shader_derivatives);
         }
-#endif
 
         break;
-#ifdef NV_EXTENSIONS
     case EShLangRayGenNV:
     case EShLangIntersectNV:
     case EShLangAnyHitNV:
@@ -9130,7 +8031,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     // expected to be resolved through a library of functions, versus as
     // operations.
     //
-    symbolTable.relateToOperator("not",              EOpVectorLogicalNot);
+
+    relateTabledBuiltins(version, profile, spvVersion, language, symbolTable);
 
     symbolTable.relateToOperator("matrixCompMult",   EOpMul);
     // 120 and 150 are correct for both ES and desktop
@@ -9143,61 +8045,11 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
     }
 
-    symbolTable.relateToOperator("mod",              EOpMod);
-    symbolTable.relateToOperator("modf",             EOpModf);
-
-    symbolTable.relateToOperator("equal",            EOpVectorEqual);
-    symbolTable.relateToOperator("notEqual",         EOpVectorNotEqual);
-    symbolTable.relateToOperator("lessThan",         EOpLessThan);
-    symbolTable.relateToOperator("greaterThan",      EOpGreaterThan);
-    symbolTable.relateToOperator("lessThanEqual",    EOpLessThanEqual);
-    symbolTable.relateToOperator("greaterThanEqual", EOpGreaterThanEqual);
-
-    symbolTable.relateToOperator("radians",      EOpRadians);
-    symbolTable.relateToOperator("degrees",      EOpDegrees);
-    symbolTable.relateToOperator("sin",          EOpSin);
-    symbolTable.relateToOperator("cos",          EOpCos);
-    symbolTable.relateToOperator("tan",          EOpTan);
-    symbolTable.relateToOperator("asin",         EOpAsin);
-    symbolTable.relateToOperator("acos",         EOpAcos);
-    symbolTable.relateToOperator("atan",         EOpAtan);
-    symbolTable.relateToOperator("sinh",         EOpSinh);
-    symbolTable.relateToOperator("cosh",         EOpCosh);
-    symbolTable.relateToOperator("tanh",         EOpTanh);
-    symbolTable.relateToOperator("asinh",        EOpAsinh);
-    symbolTable.relateToOperator("acosh",        EOpAcosh);
-    symbolTable.relateToOperator("atanh",        EOpAtanh);
-
-    symbolTable.relateToOperator("pow",          EOpPow);
-    symbolTable.relateToOperator("exp2",         EOpExp2);
-    symbolTable.relateToOperator("log",          EOpLog);
-    symbolTable.relateToOperator("exp",          EOpExp);
-    symbolTable.relateToOperator("log2",         EOpLog2);
-    symbolTable.relateToOperator("sqrt",         EOpSqrt);
-    symbolTable.relateToOperator("inversesqrt",  EOpInverseSqrt);
-
-    symbolTable.relateToOperator("abs",          EOpAbs);
-    symbolTable.relateToOperator("sign",         EOpSign);
-    symbolTable.relateToOperator("floor",        EOpFloor);
-    symbolTable.relateToOperator("trunc",        EOpTrunc);
-    symbolTable.relateToOperator("round",        EOpRound);
-    symbolTable.relateToOperator("roundEven",    EOpRoundEven);
-    symbolTable.relateToOperator("ceil",         EOpCeil);
-    symbolTable.relateToOperator("fract",        EOpFract);
-    symbolTable.relateToOperator("min",          EOpMin);
-    symbolTable.relateToOperator("max",          EOpMax);
-    symbolTable.relateToOperator("clamp",        EOpClamp);
-    symbolTable.relateToOperator("mix",          EOpMix);
-    symbolTable.relateToOperator("step",         EOpStep);
-    symbolTable.relateToOperator("smoothstep",   EOpSmoothStep);
-
-    symbolTable.relateToOperator("isnan",  EOpIsNan);
-    symbolTable.relateToOperator("isinf",  EOpIsInf);
-
     symbolTable.relateToOperator("floatBitsToInt",  EOpFloatBitsToInt);
     symbolTable.relateToOperator("floatBitsToUint", EOpFloatBitsToUint);
     symbolTable.relateToOperator("intBitsToFloat",  EOpIntBitsToFloat);
     symbolTable.relateToOperator("uintBitsToFloat", EOpUintBitsToFloat);
+#ifndef GLSLANG_WEB
     symbolTable.relateToOperator("doubleBitsToInt64",  EOpDoubleBitsToInt64);
     symbolTable.relateToOperator("doubleBitsToUint64", EOpDoubleBitsToUint64);
     symbolTable.relateToOperator("int64BitsToDouble",  EOpInt64BitsToDouble);
@@ -9211,12 +8063,14 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
     symbolTable.relateToOperator("int16BitsToHalf",  EOpInt16BitsToFloat16);
     symbolTable.relateToOperator("uint16BitsToHalf", EOpUint16BitsToFloat16);
+#endif
 
     symbolTable.relateToOperator("packSnorm2x16",   EOpPackSnorm2x16);
     symbolTable.relateToOperator("unpackSnorm2x16", EOpUnpackSnorm2x16);
     symbolTable.relateToOperator("packUnorm2x16",   EOpPackUnorm2x16);
     symbolTable.relateToOperator("unpackUnorm2x16", EOpUnpackUnorm2x16);
 
+#ifndef GLSLANG_WEB
     symbolTable.relateToOperator("packSnorm4x8",    EOpPackSnorm4x8);
     symbolTable.relateToOperator("unpackSnorm4x8",  EOpUnpackSnorm4x8);
     symbolTable.relateToOperator("packUnorm4x8",    EOpPackUnorm4x8);
@@ -9224,6 +8078,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
     symbolTable.relateToOperator("packDouble2x32",    EOpPackDouble2x32);
     symbolTable.relateToOperator("unpackDouble2x32",  EOpUnpackDouble2x32);
+#endif
 
     symbolTable.relateToOperator("packHalf2x16",    EOpPackHalf2x16);
     symbolTable.relateToOperator("unpackHalf2x16",  EOpUnpackHalf2x16);
@@ -9233,6 +8088,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("packUint2x32",    EOpPackUint2x32);
     symbolTable.relateToOperator("unpackUint2x32",  EOpUnpackUint2x32);
 
+#ifndef GLSLANG_WEB
     symbolTable.relateToOperator("packInt2x16",     EOpPackInt2x16);
     symbolTable.relateToOperator("unpackInt2x16",   EOpUnpackInt2x16);
     symbolTable.relateToOperator("packUint2x16",    EOpPackUint2x16);
@@ -9253,18 +8109,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("unpack16",        EOpUnpack16);
     symbolTable.relateToOperator("unpack8",         EOpUnpack8);
 
-    symbolTable.relateToOperator("length",       EOpLength);
-    symbolTable.relateToOperator("distance",     EOpDistance);
-    symbolTable.relateToOperator("dot",          EOpDot);
-    symbolTable.relateToOperator("cross",        EOpCross);
-    symbolTable.relateToOperator("normalize",    EOpNormalize);
-    symbolTable.relateToOperator("faceforward",  EOpFaceForward);
-    symbolTable.relateToOperator("reflect",      EOpReflect);
-    symbolTable.relateToOperator("refract",      EOpRefract);
-
-    symbolTable.relateToOperator("any",          EOpAny);
-    symbolTable.relateToOperator("all",          EOpAll);
-
     symbolTable.relateToOperator("barrier",                    EOpBarrier);
     symbolTable.relateToOperator("controlBarrier",             EOpBarrier);
     symbolTable.relateToOperator("memoryBarrier",              EOpMemoryBarrier);
@@ -9272,14 +8116,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("memoryBarrierBuffer",        EOpMemoryBarrierBuffer);
     symbolTable.relateToOperator("memoryBarrierImage",         EOpMemoryBarrierImage);
 
-    symbolTable.relateToOperator("atomicAdd",      EOpAtomicAdd);
-    symbolTable.relateToOperator("atomicMin",      EOpAtomicMin);
-    symbolTable.relateToOperator("atomicMax",      EOpAtomicMax);
-    symbolTable.relateToOperator("atomicAnd",      EOpAtomicAnd);
-    symbolTable.relateToOperator("atomicOr",       EOpAtomicOr);
-    symbolTable.relateToOperator("atomicXor",      EOpAtomicXor);
-    symbolTable.relateToOperator("atomicExchange", EOpAtomicExchange);
-    symbolTable.relateToOperator("atomicCompSwap", EOpAtomicCompSwap);
     symbolTable.relateToOperator("atomicLoad",     EOpAtomicLoad);
     symbolTable.relateToOperator("atomicStore",    EOpAtomicStore);
 
@@ -9320,8 +8156,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("findMSB",           EOpFindMSB);
 
     symbolTable.relateToOperator("helperInvocationEXT",  EOpIsHelperInvocation);
+#endif
 
     if (PureOperatorBuiltins) {
+#ifndef GLSLANG_WEB
         symbolTable.relateToOperator("imageSize",               EOpImageQuerySize);
         symbolTable.relateToOperator("imageSamples",            EOpImageQuerySamples);
         symbolTable.relateToOperator("imageLoad",               EOpImageLoad);
@@ -9339,6 +8177,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
         symbolTable.relateToOperator("subpassLoad",             EOpSubpassLoad);
         symbolTable.relateToOperator("subpassLoadMS",           EOpSubpassLoadMS);
+#endif
 
         symbolTable.relateToOperator("textureSize",             EOpTextureQuerySize);
         symbolTable.relateToOperator("textureQueryLod",         EOpTextureQueryLod);
@@ -9358,6 +8197,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("textureGradOffset",       EOpTextureGradOffset);
         symbolTable.relateToOperator("textureProjGrad",         EOpTextureProjGrad);
         symbolTable.relateToOperator("textureProjGradOffset",   EOpTextureProjGradOffset);
+
+#ifndef GLSLANG_WEB
         symbolTable.relateToOperator("textureGather",           EOpTextureGather);
         symbolTable.relateToOperator("textureGatherOffset",     EOpTextureGatherOffset);
         symbolTable.relateToOperator("textureGatherOffsets",    EOpTextureGatherOffsets);
@@ -9367,13 +8208,11 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("noise3", EOpNoise);
         symbolTable.relateToOperator("noise4", EOpNoise);
 
-#ifdef NV_EXTENSIONS
         symbolTable.relateToOperator("textureFootprintNV",          EOpImageSampleFootprintNV);
         symbolTable.relateToOperator("textureFootprintClampNV",     EOpImageSampleFootprintClampNV);
         symbolTable.relateToOperator("textureFootprintLodNV",       EOpImageSampleFootprintLodNV);
         symbolTable.relateToOperator("textureFootprintGradNV",      EOpImageSampleFootprintGradNV);
         symbolTable.relateToOperator("textureFootprintGradClampNV", EOpImageSampleFootprintGradClampNV);
-#endif
 
         if (spvVersion.spv == 0 && (IncludeLegacy(version, profile, spvVersion) ||
             (profile == EEsProfile && version == 100))) {
@@ -9469,7 +8308,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
                 symbolTable.relateToOperator("allInvocations",              EOpAllInvocations);
                 symbolTable.relateToOperator("allInvocationsEqual",         EOpAllInvocationsEqual);
             }
-#ifdef AMD_EXTENSIONS
             symbolTable.relateToOperator("minInvocationsAMD",                           EOpMinInvocations);
             symbolTable.relateToOperator("maxInvocationsAMD",                           EOpMaxInvocations);
             symbolTable.relateToOperator("addInvocationsAMD",                           EOpAddInvocations);
@@ -9514,7 +8352,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
             symbolTable.relateToOperator("fragmentMaskFetchAMD",                EOpFragmentMaskFetch);
             symbolTable.relateToOperator("fragmentFetchAMD",                    EOpFragmentFetch);
-#endif
         }
 
         // GL_KHR_shader_subgroup
@@ -9575,7 +8412,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("subgroupQuadSwapVertical",        EOpSubgroupQuadSwapVertical);
             symbolTable.relateToOperator("subgroupQuadSwapDiagonal",        EOpSubgroupQuadSwapDiagonal);
 
-#ifdef NV_EXTENSIONS
             symbolTable.relateToOperator("subgroupPartitionNV",                          EOpSubgroupPartition);
             symbolTable.relateToOperator("subgroupPartitionedAddNV",                     EOpSubgroupPartitionedAdd);
             symbolTable.relateToOperator("subgroupPartitionedMulNV",                     EOpSubgroupPartitionedMul);
@@ -9598,15 +8434,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("subgroupPartitionedExclusiveAndNV",            EOpSubgroupPartitionedExclusiveAnd);
             symbolTable.relateToOperator("subgroupPartitionedExclusiveOrNV",             EOpSubgroupPartitionedExclusiveOr);
             symbolTable.relateToOperator("subgroupPartitionedExclusiveXorNV",            EOpSubgroupPartitionedExclusiveXor);
-#endif
         }
 
         if (profile == EEsProfile) {
             symbolTable.relateToOperator("shadow2DEXT",              EOpTexture);
             symbolTable.relateToOperator("shadow2DProjEXT",          EOpTextureProj);
         }
+#endif
     }
 
+#ifndef GLSLANG_WEB
     switch(language) {
     case EShLangVertex:
         break;
@@ -9623,9 +8460,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         break;
 
     case EShLangFragment:
-        symbolTable.relateToOperator("dFdx",         EOpDPdx);
-        symbolTable.relateToOperator("dFdy",         EOpDPdy);
-        symbolTable.relateToOperator("fwidth",       EOpFwidth);
         if (profile != EEsProfile && version >= 400) {
             symbolTable.relateToOperator("dFdxFine",     EOpDPdxFine);
             symbolTable.relateToOperator("dFdyFine",     EOpDPdyFine);
@@ -9638,10 +8472,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("interpolateAtSample",   EOpInterpolateAtSample);
         symbolTable.relateToOperator("interpolateAtOffset",   EOpInterpolateAtOffset);
 
-#ifdef AMD_EXTENSIONS
         if (profile != EEsProfile)
             symbolTable.relateToOperator("interpolateAtVertexAMD", EOpInterpolateAtVertex);
-#endif
 
         symbolTable.relateToOperator("beginInvocationInterlockARB", EOpBeginInvocationInterlock);
         symbolTable.relateToOperator("endInvocationInterlockARB",   EOpEndInvocationInterlock);
@@ -9652,7 +8484,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("memoryBarrierShared",         EOpMemoryBarrierShared);
         symbolTable.relateToOperator("groupMemoryBarrier",          EOpGroupMemoryBarrier);
         symbolTable.relateToOperator("subgroupMemoryBarrierShared", EOpSubgroupMemoryBarrierShared);
-#ifdef NV_EXTENSIONS
         if ((profile != EEsProfile && version >= 450) ||
             (profile == EEsProfile && version >= 320)) {
             symbolTable.relateToOperator("dFdx",        EOpDPdx);
@@ -9665,13 +8496,11 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("dFdyCoarse",  EOpDPdyCoarse);
             symbolTable.relateToOperator("fwidthCoarse",EOpFwidthCoarse);
         }
-#endif
         symbolTable.relateToOperator("coopMatLoadNV",              EOpCooperativeMatrixLoad);
         symbolTable.relateToOperator("coopMatStoreNV",             EOpCooperativeMatrixStore);
         symbolTable.relateToOperator("coopMatMulAddNV",            EOpCooperativeMatrixMulAdd);
         break;
 
-#ifdef NV_EXTENSIONS
     case EShLangRayGenNV:
     case EShLangClosestHitNV:
     case EShLangMissNV:
@@ -9707,11 +8536,11 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("subgroupMemoryBarrierShared", EOpSubgroupMemoryBarrierShared);
         }
         break;
-#endif
 
     default:
         assert(false && "Language not supported");
     }
+#endif
 }
 
 //
@@ -9725,6 +8554,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 //
 void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources)
 {
+#ifndef GLSLANG_WEB
     if (profile != EEsProfile && version >= 430 && version < 440) {
         symbolTable.setVariableExtensions("gl_MaxTransformFeedbackBuffers", 1, &E_GL_ARB_enhanced_layouts);
         symbolTable.setVariableExtensions("gl_MaxTransformFeedbackInterleavedComponents", 1, &E_GL_ARB_enhanced_layouts);
@@ -9770,6 +8600,12 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         BuiltInVariable("gl_in", "gl_TexCoord",            EbvTexCoord,            symbolTable);
         BuiltInVariable("gl_in", "gl_FogFragCoord",        EbvFogFragCoord,        symbolTable);
 
+        symbolTable.setVariableExtensions("gl_in", "gl_SecondaryPositionNV", 1, &E_GL_NV_stereo_view_rendering);
+        symbolTable.setVariableExtensions("gl_in", "gl_PositionPerViewNV",   1, &E_GL_NVX_multiview_per_view_attributes);
+
+        BuiltInVariable("gl_in", "gl_SecondaryPositionNV", EbvSecondaryPositionNV, symbolTable);
+        BuiltInVariable("gl_in", "gl_PositionPerViewNV",   EbvPositionPerViewNV,   symbolTable);
+
         // extension requirements
         if (profile == EEsProfile) {
             symbolTable.setVariableExtensions("gl_in", "gl_PointSize", Num_AEP_tessellation_point_size, AEP_tessellation_point_size);
@@ -9780,6 +8616,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     default:
         break;
     }
+#endif
 }
 
 } // end namespace glslang

@@ -32,7 +32,7 @@ struct PosNormalTangentTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
@@ -41,10 +41,10 @@ struct PosNormalTangentTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosNormalTangentTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosNormalTangentTexcoordVertex::ms_layout;
 
 struct PosTexCoord0Vertex
 {
@@ -56,17 +56,17 @@ struct PosTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 struct DebugVertex
 {
@@ -77,17 +77,17 @@ struct DebugVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl DebugVertex::ms_decl;
+bgfx::VertexLayout DebugVertex::ms_layout;
 
 static PosNormalTangentTexcoordVertex s_cubeVertices[24] =
 {
@@ -137,10 +137,10 @@ static const uint16_t s_cubeIndices[36] =
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 		PosTexCoord0Vertex* vertex = (PosTexCoord0Vertex*)vb.data;
 
 		const float minx = -_width;
@@ -193,8 +193,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleDeferred : public entry::AppI
 {
 public:
-	ExampleDeferred(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleDeferred(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -247,7 +247,7 @@ public:
 
 		calcTangents(s_cubeVertices
 				, BX_COUNTOF(s_cubeVertices)
-				, PosNormalTangentTexcoordVertex::ms_decl
+				, PosNormalTangentTexcoordVertex::ms_layout
 				, s_cubeIndices
 				, BX_COUNTOF(s_cubeIndices)
 				);
@@ -255,7 +255,7 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 				bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-				, PosNormalTangentTexcoordVertex::ms_decl
+				, PosNormalTangentTexcoordVertex::ms_layout
 				);
 
 		// Create static index buffer.
@@ -699,7 +699,7 @@ public:
 						{
 							bgfx::TransientVertexBuffer tvb;
 							bgfx::TransientIndexBuffer tib;
-							if (bgfx::allocTransientBuffers(&tvb, DebugVertex::ms_decl, 4, &tib, 8) )
+							if (bgfx::allocTransientBuffers(&tvb, DebugVertex::ms_layout, 4, &tib, 8) )
 							{
 								uint32_t abgr = 0x8000ff00;
 
@@ -895,4 +895,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleDeferred, "21-deferred", "MRT rendering and deferred shading.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleDeferred
+	, "21-deferred"
+	, "MRT rendering and deferred shading."
+	, "https://bkaradzic.github.io/bgfx/examples.html#deferred"
+	);

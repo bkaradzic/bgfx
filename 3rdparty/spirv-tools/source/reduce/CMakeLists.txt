@@ -29,7 +29,6 @@ set(SPIRV_TOOLS_REDUCE_SOURCES
         remove_instruction_reduction_opportunity.h
         remove_function_reduction_opportunity.h
         remove_function_reduction_opportunity_finder.h
-        remove_opname_instruction_reduction_opportunity_finder.h
         remove_selection_reduction_opportunity.h
         remove_selection_reduction_opportunity_finder.h
         remove_unreferenced_instruction_reduction_opportunity_finder.h
@@ -59,7 +58,6 @@ set(SPIRV_TOOLS_REDUCE_SOURCES
         remove_selection_reduction_opportunity.cpp
         remove_selection_reduction_opportunity_finder.cpp
         remove_unreferenced_instruction_reduction_opportunity_finder.cpp
-        remove_opname_instruction_reduction_opportunity_finder.cpp
         structured_loop_to_selection_reduction_opportunity.cpp
         structured_loop_to_selection_reduction_opportunity_finder.cpp
         conditional_branch_to_simple_conditional_branch_opportunity_finder.cpp
@@ -79,8 +77,12 @@ add_library(SPIRV-Tools-reduce ${SPIRV_TOOLS_REDUCE_SOURCES})
 
 spvtools_default_compile_options(SPIRV-Tools-reduce)
 target_include_directories(SPIRV-Tools-reduce
-  PUBLIC ${spirv-tools_SOURCE_DIR}/include
-  PUBLIC ${SPIRV_HEADER_INCLUDE_DIR}
+  PUBLIC
+	$<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/include>
+  PUBLIC
+	$<BUILD_INTERFACE:${SPIRV_HEADER_INCLUDE_DIR}>
+	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE ${spirv-tools_BINARY_DIR}
 )
 # The reducer reuses a lot of functionality from the SPIRV-Tools library.
@@ -92,8 +94,9 @@ set_property(TARGET SPIRV-Tools-reduce PROPERTY FOLDER "SPIRV-Tools libraries")
 spvtools_check_symbol_exports(SPIRV-Tools-reduce)
 
 if(ENABLE_SPIRV_TOOLS_INSTALL)
-  install(TARGETS SPIRV-Tools-reduce
+  install(TARGETS SPIRV-Tools-reduce EXPORT SPIRV-Tools-reduceTargets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  install(EXPORT SPIRV-Tools-reduceTargets DESTINATION lib/cmake)
 endif(ENABLE_SPIRV_TOOLS_INSTALL)

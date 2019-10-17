@@ -82,9 +82,12 @@ OpCapability Shader
 %release_uniform_workgroup = OpConstant %u32 324
 %acquire_and_release_uniform = OpConstant %u32 70
 %acquire_release_subgroup = OpConstant %u32 136
+%acquire_release_workgroup = OpConstant %u32 264
 %uniform = OpConstant %u32 64
 %uniform_workgroup = OpConstant %u32 320
-
+%workgroup_memory = OpConstant %u32 256
+%image_memory = OpConstant %u32 2048
+%uniform_image_memory = OpConstant %u32 2112
 
 %main = OpFunction %void None %func
 %main_entry = OpLabel
@@ -251,7 +254,7 @@ OpControlBarrier %workgroup %workgroup %acquire_release_uniform_workgroup
 
 TEST_F(ValidateBarriers, OpControlBarrierWebGPUAcquireReleaseSuccess) {
   const std::string body = R"(
-OpControlBarrier %workgroup %workgroup %acquire_release_uniform_workgroup
+OpControlBarrier %workgroup %workgroup %acquire_release_workgroup
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
@@ -260,25 +263,39 @@ OpControlBarrier %workgroup %workgroup %acquire_release_uniform_workgroup
 
 TEST_F(ValidateBarriers, OpControlBarrierWebGPURelaxedFailure) {
   const std::string body = R"(
-OpControlBarrier %workgroup %workgroup %uniform_workgroup
+OpControlBarrier %workgroup %workgroup %workgroup
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("WebGPU spec requires AcquireRelease to set"));
+              HasSubstr("For WebGPU, AcquireRelease must be set for Memory "
+                        "Semantics of OpControlBarrier"));
 }
 
-TEST_F(ValidateBarriers, OpControlBarrierWebGPUAcquireFailure) {
+TEST_F(ValidateBarriers, OpControlBarrierWebGPUMissingWorkgroupFailure) {
   const std::string body = R"(
-OpControlBarrier %workgroup %workgroup %acquire_uniform_workgroup
+OpControlBarrier %workgroup %workgroup %acquire_release
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("For WebGPU, WorkgroupMemory must be set for Memory "
+                        "Semantics"));
+}
+
+TEST_F(ValidateBarriers, OpControlBarrierWebGPUUniformFailure) {
+  const std::string body = R"(
+OpControlBarrier %workgroup %workgroup %acquire_release_uniform_workgroup
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr("WebGPU spec disallows any bit masks in Memory Semantics"));
+      HasSubstr("For WebGPU only WorkgroupMemory and AcquireRelease may be set "
+                "for Memory Semantics of OpControlBarrier."));
 }
 
 TEST_F(ValidateBarriers, OpControlBarrierWebGPUReleaseFailure) {
@@ -288,9 +305,9 @@ OpControlBarrier %workgroup %workgroup %release_uniform_workgroup
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("WebGPU spec disallows any bit masks in Memory Semantics"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("For WebGPU, AcquireRelease must be set for Memory "
+                        "Semantics of OpControlBarrier"));
 }
 
 TEST_F(ValidateBarriers, OpControlBarrierExecutionModelFragmentSpirv12) {
@@ -459,6 +476,18 @@ OpControlBarrier %subgroup %cross_device %none
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("ControlBarrier: in Vulkan environment, Memory Scope "
                         "cannot be CrossDevice"));
+}
+
+TEST_F(ValidateBarriers, OpControlBarrierWebGPUMemoryScopeNonWorkgroup) {
+  const std::string body = R"(
+OpControlBarrier %workgroup %subgroup %acquire_release_workgroup
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("ControlBarrier: in WebGPU environment Memory Scope is "
+                        "limited to Workgroup for OpControlBarrier"));
 }
 
 TEST_F(ValidateBarriers, OpControlBarrierAcquireAndRelease) {
@@ -680,13 +709,37 @@ OpMemoryBarrier %workgroup %acquire_release_uniform_workgroup
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_0));
 }
 
-TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUAcquireReleaseSuccess) {
+TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUImageMemorySuccess) {
+  const std::string body = R"(
+OpMemoryBarrier %workgroup %image_memory
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
+}
+
+TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUDeviceFailure) {
+  const std::string body = R"(
+OpMemoryBarrier %subgroup %image_memory
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("in WebGPU environment Memory Scope is limited to "
+                        "Workgroup for OpMemoryBarrier"));
+}
+
+TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUAcquireReleaseFailure) {
   const std::string body = R"(
 OpMemoryBarrier %workgroup %acquire_release_uniform_workgroup
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
-  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("ImageMemory must be set for Memory Semantics of "
+                        "OpMemoryBarrier"));
 }
 
 TEST_F(ValidateBarriers, OpMemoryBarrierWebGPURelaxedFailure) {
@@ -697,7 +750,8 @@ OpMemoryBarrier %workgroup %uniform_workgroup
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("WebGPU spec requires AcquireRelease to set"));
+              HasSubstr("ImageMemory must be set for Memory Semantics of "
+                        "OpMemoryBarrier"));
 }
 
 TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUAcquireFailure) {
@@ -707,9 +761,9 @@ OpMemoryBarrier %workgroup %acquire_uniform_workgroup
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("WebGPU spec disallows any bit masks in Memory Semantics"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("ImageMemory must be set for Memory Semantics of "
+                        "OpMemoryBarrier"));
 }
 
 TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUReleaseFailure) {
@@ -719,9 +773,21 @@ OpMemoryBarrier %workgroup %release_uniform_workgroup
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("WebGPU spec disallows any bit masks in Memory Semantics"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("ImageMemory must be set for Memory Semantics of "
+                        "OpMemoryBarrier"));
+}
+
+TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUUniformFailure) {
+  const std::string body = R"(
+OpMemoryBarrier %workgroup %uniform_image_memory
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("only ImageMemory may be set for Memory Semantics of "
+                        "OpMemoryBarrier"));
 }
 
 TEST_F(ValidateBarriers, OpMemoryBarrierFloatMemoryScope) {

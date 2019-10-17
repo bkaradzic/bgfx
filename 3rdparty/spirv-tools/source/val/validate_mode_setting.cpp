@@ -485,6 +485,44 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateMemoryModel(ValidationState_t& _,
+                                 const Instruction* inst) {
+  // Already produced an error if multiple memory model instructions are
+  // present.
+  if (_.memory_model() != SpvMemoryModelVulkanKHR &&
+      _.HasCapability(SpvCapabilityVulkanMemoryModelKHR)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "VulkanMemoryModelKHR capability must only be specified if "
+              "the VulkanKHR memory model is used.";
+  }
+
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    if (_.addressing_model() != SpvAddressingModelLogical) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Addressing model must be Logical for WebGPU environment.";
+    }
+    if (_.memory_model() != SpvMemoryModelVulkanKHR) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Memory model must be VulkanKHR for WebGPU environment.";
+    }
+  }
+
+  if (spvIsOpenCLEnv(_.context()->target_env)) {
+    if ((_.addressing_model() != SpvAddressingModelPhysical32) &&
+        (_.addressing_model() != SpvAddressingModelPhysical64)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Addressing model must be Physical32 or Physical64 "
+             << "in the OpenCL environment.";
+    }
+    if (_.memory_model() != SpvMemoryModelOpenCL) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Memory model must be OpenCL in the OpenCL environment.";
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 spv_result_t ModeSettingPass(ValidationState_t& _, const Instruction* inst) {
@@ -495,6 +533,9 @@ spv_result_t ModeSettingPass(ValidationState_t& _, const Instruction* inst) {
     case SpvOpExecutionMode:
     case SpvOpExecutionModeId:
       if (auto error = ValidateExecutionMode(_, inst)) return error;
+      break;
+    case SpvOpMemoryModel:
+      if (auto error = ValidateMemoryModel(_, inst)) return error;
       break;
     default:
       break;

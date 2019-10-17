@@ -720,7 +720,22 @@ bool InlinePass::IsInlinableFunction(Function* func) {
     return false;
   }
 
+  // Do not inline functions with an OpKill if they are called from a continue
+  // construct. If it is inlined into a continue construct it will generate
+  // invalid code.
+  bool func_is_called_from_continue =
+      funcs_called_from_continue_.count(func->result_id()) != 0;
+
+  if (func_is_called_from_continue && ContainsKill(func)) {
+    return false;
+  }
+
   return true;
+}
+
+bool InlinePass::ContainsKill(Function* func) const {
+  return !func->WhileEachInst(
+      [](Instruction* inst) { return inst->opcode() != SpvOpKill; });
 }
 
 void InlinePass::InitializeInline() {
@@ -732,6 +747,8 @@ void InlinePass::InitializeInline() {
   inlinable_.clear();
   no_return_in_loop_.clear();
   early_return_funcs_.clear();
+  funcs_called_from_continue_ =
+      context()->GetStructuredCFGAnalysis()->FindFuncsCalledFromContinue();
 
   for (auto& fn : *get_module()) {
     // Initialize function and block maps.

@@ -1710,8 +1710,39 @@ spv_result_t ValidateImageQueryLod(ValidationState_t& _,
                                    const Instruction* inst) {
   _.function(inst->function()->id())
       ->RegisterExecutionModelLimitation(
-          SpvExecutionModelFragment,
-          "OpImageQueryLod requires Fragment execution model");
+          [&](SpvExecutionModel model, std::string* message) {
+            if (model != SpvExecutionModelFragment &&
+                model != SpvExecutionModelGLCompute) {
+              if (message) {
+                *message = std::string(
+                    "OpImageQueryLod requires Fragment or GLCompute execution "
+                    "model");
+              }
+              return false;
+            }
+            return true;
+          });
+  _.function(inst->function()->id())
+      ->RegisterLimitation([](const ValidationState_t& state,
+                              const Function* entry_point,
+                              std::string* message) {
+        const auto* models = state.GetExecutionModels(entry_point->id());
+        const auto* modes = state.GetExecutionModes(entry_point->id());
+        if (models->find(SpvExecutionModelGLCompute) != models->end() &&
+            modes->find(SpvExecutionModeDerivativeGroupLinearNV) ==
+                modes->end() &&
+            modes->find(SpvExecutionModeDerivativeGroupQuadsNV) ==
+                modes->end()) {
+          if (message) {
+            *message = std::string(
+                "OpImageQueryLod requires DerivativeGroupQuadsNV "
+                "or DerivativeGroupLinearNV execution mode for GLCompute "
+                "execution model");
+          }
+          return false;
+        }
+        return true;
+      });
 
   const uint32_t result_type = inst->type_id();
   if (!_.IsFloatVectorType(result_type)) {
@@ -1835,9 +1866,44 @@ spv_result_t ImagePass(ValidationState_t& _, const Instruction* inst) {
   const SpvOp opcode = inst->opcode();
   if (IsImplicitLod(opcode)) {
     _.function(inst->function()->id())
-        ->RegisterExecutionModelLimitation(
-            SpvExecutionModelFragment,
-            "ImplicitLod instructions require Fragment execution model");
+        ->RegisterExecutionModelLimitation([opcode](SpvExecutionModel model,
+                                                    std::string* message) {
+          if (model != SpvExecutionModelFragment &&
+              model != SpvExecutionModelGLCompute) {
+            if (message) {
+              *message =
+                  std::string(
+                      "ImplicitLod instructions require Fragment or GLCompute "
+                      "execution model: ") +
+                  spvOpcodeString(opcode);
+            }
+            return false;
+          }
+          return true;
+        });
+    _.function(inst->function()->id())
+        ->RegisterLimitation([opcode](const ValidationState_t& state,
+                                      const Function* entry_point,
+                                      std::string* message) {
+          const auto* models = state.GetExecutionModels(entry_point->id());
+          const auto* modes = state.GetExecutionModes(entry_point->id());
+          if (models->find(SpvExecutionModelGLCompute) != models->end() &&
+              modes->find(SpvExecutionModeDerivativeGroupLinearNV) ==
+                  modes->end() &&
+              modes->find(SpvExecutionModeDerivativeGroupQuadsNV) ==
+                  modes->end()) {
+            if (message) {
+              *message =
+                  std::string(
+                      "ImplicitLod instructions require DerivativeGroupQuadsNV "
+                      "or DerivativeGroupLinearNV execution mode for GLCompute "
+                      "execution model: ") +
+                  spvOpcodeString(opcode);
+            }
+            return false;
+          }
+          return true;
+        });
   }
 
   switch (opcode) {

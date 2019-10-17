@@ -255,7 +255,7 @@ OpFunctionEnd
           func_pt2_before,
       entry_after + names_annots + new_annots + consts_types_vars +
           new_consts_types_vars + func_pt1 + func_pt2_after + output_func,
-      true, true);
+      true, true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, NoInstrumentConstIndexInbounds) {
@@ -335,7 +335,8 @@ OpFunctionEnd
 )";
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  SinglePassRunAndCheck<InstBindlessCheckPass>(before, before, true, true);
+  SinglePassRunAndCheck<InstBindlessCheckPass>(before, before, true, true, 7u,
+                                               23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentMultipleInstructions) {
@@ -630,7 +631,7 @@ OpFunctionEnd
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentOpImage) {
@@ -858,7 +859,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentSampledImage) {
@@ -1081,7 +1082,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentImageWrite) {
@@ -1306,7 +1307,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentVertexSimple) {
@@ -1580,7 +1581,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, MultipleDebugFunctions) {
@@ -1903,7 +1904,8 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func1_before + func2_before,
-      defs_after + func1_after + func2_after + output_func, true, true);
+      defs_after + func1_after + func2_after + output_func, true, true, 7u, 23u,
+      false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, RuntimeArray) {
@@ -1913,7 +1915,7 @@ TEST_F(InstBindlessTest, RuntimeArray) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability RuntimeDescriptorArrayEXT
+OpCapability RuntimeDescriptorArray
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -1966,7 +1968,7 @@ OpDecorate %_entryPointOutput_vColor Location 0
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability RuntimeDescriptorArrayEXT
+OpCapability RuntimeDescriptorArray
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -2276,18 +2278,19 @@ OpFunctionEnd
 
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(whole_file, whole_file, true,
-                                               true);
+                                               true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentInitCheckOnScalarDescriptor) {
   // This test verifies that the pass will correctly instrument vanilla
   // texture sample on a scalar descriptor with an initialization check if the
-  // SPV_EXT_descriptor_checking extension is enabled. This is the same shader
-  // as NoInstrumentNonBindless, but with the extension hacked on in the SPIR-V.
+  // input_init_enable argument is set to true. This can happen when the
+  // descriptor indexing extension is enabled in the API but the SPIR-V
+  // does not have the extension enabled because it does not contain a
+  // runtime array. This is the same shader as NoInstrumentNonBindless.
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %MainPs "MainPs" %i_vTextureCoords %_entryPointOutput_vColor
@@ -2324,7 +2327,6 @@ OpDecorate %_entryPointOutput_vColor Location 0
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -2395,7 +2397,7 @@ OpDecorate %gl_FragCoord BuiltIn FragCoord
 %uint_6 = OpConstant %uint 6
 %uint_7 = OpConstant %uint 7
 %uint_8 = OpConstant %uint 8
-%uint_40 = OpConstant %uint 40
+%uint_39 = OpConstant %uint 39
 %113 = OpConstantNull %v4float
 )";
 
@@ -2429,7 +2431,7 @@ OpBranchConditional %52 %55 %56
 %59 = OpImageSampleImplicitLod %v4float %58 %20
 OpBranch %54
 %56 = OpLabel
-%112 = OpFunctionCall %void %60 %uint_40 %uint_1 %uint_0 %uint_0
+%112 = OpFunctionCall %void %60 %uint_39 %uint_1 %uint_0 %uint_0
 OpBranch %54
 %54 = OpLabel
 %114 = OpPhi %v4float %59 %55 %113 %56
@@ -2645,9 +2647,9 @@ TEST_F(InstBindlessTest, InstBoundsAndInitLoadUnsizedUBOArray) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -2668,9 +2670,9 @@ OpDecorate %uniformBuffer DescriptorSet 0
 OpDecorate %uniformBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %16 NonUniformEXT
-OpDecorate %20 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %16 NonUniform
+OpDecorate %20 NonUniform
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -2689,9 +2691,9 @@ OpDecorate %20 NonUniformEXT
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -2713,22 +2715,22 @@ OpDecorate %uniformBuffer DescriptorSet 0
 OpDecorate %uniformBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
-OpDecorate %102 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
+OpDecorate %102 NonUniform
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_31 Block
 OpMemberDecorate %_struct_31 0 Offset 0
 OpDecorate %33 DescriptorSet 7
 OpDecorate %33 Binding 1
-OpDecorate %130 NonUniformEXT
+OpDecorate %130 NonUniform
 OpDecorate %_struct_55 Block
 OpMemberDecorate %_struct_55 0 Offset 0
 OpMemberDecorate %_struct_55 1 Offset 4
 OpDecorate %57 DescriptorSet 7
 OpDecorate %57 Binding 0
 OpDecorate %gl_FragCoord BuiltIn FragCoord
-OpDecorate %127 NonUniformEXT
+OpDecorate %127 NonUniform
 %void = OpTypeVoid
 %10 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -2926,9 +2928,9 @@ TEST_F(InstBindlessTest, InstBoundsAndInitLoadUnsizedSSBOArrayDeprecated) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -2949,9 +2951,9 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %16 NonUniformEXT
-OpDecorate %20 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %16 NonUniform
+OpDecorate %20 NonUniform
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -2970,9 +2972,9 @@ OpDecorate %20 NonUniformEXT
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -2994,22 +2996,22 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
-OpDecorate %102 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
+OpDecorate %102 NonUniform
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_31 Block
 OpMemberDecorate %_struct_31 0 Offset 0
 OpDecorate %33 DescriptorSet 7
 OpDecorate %33 Binding 1
-OpDecorate %130 NonUniformEXT
+OpDecorate %130 NonUniform
 OpDecorate %_struct_55 Block
 OpMemberDecorate %_struct_55 0 Offset 0
 OpMemberDecorate %_struct_55 1 Offset 4
 OpDecorate %57 DescriptorSet 7
 OpDecorate %57 Binding 0
 OpDecorate %gl_FragCoord BuiltIn FragCoord
-OpDecorate %127 NonUniformEXT
+OpDecorate %127 NonUniform
 %void = OpTypeVoid
 %10 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -3196,9 +3198,9 @@ TEST_F(InstBindlessTest, InstBoundsAndInitLoadUnsizedSSBOArray) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -3219,9 +3221,9 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %16 NonUniformEXT
-OpDecorate %20 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %16 NonUniform
+OpDecorate %20 NonUniform
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -3240,9 +3242,9 @@ OpDecorate %20 NonUniformEXT
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -3264,22 +3266,22 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
-OpDecorate %102 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
+OpDecorate %102 NonUniform
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_31 Block
 OpMemberDecorate %_struct_31 0 Offset 0
 OpDecorate %33 DescriptorSet 7
 OpDecorate %33 Binding 1
-OpDecorate %130 NonUniformEXT
+OpDecorate %130 NonUniform
 OpDecorate %_struct_55 Block
 OpMemberDecorate %_struct_55 0 Offset 0
 OpMemberDecorate %_struct_55 1 Offset 4
 OpDecorate %57 DescriptorSet 7
 OpDecorate %57 Binding 0
 OpDecorate %gl_FragCoord BuiltIn FragCoord
-OpDecorate %127 NonUniformEXT
+OpDecorate %127 NonUniform
 %void = OpTypeVoid
 %10 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -3702,9 +3704,9 @@ TEST_F(InstBindlessTest, InstBoundsInitStoreUnsizedSSBOArray) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -3724,8 +3726,8 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 4
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %14 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %14 NonUniform
 OpDecorate %b Location 1
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
@@ -3745,9 +3747,9 @@ OpDecorate %b Location 1
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -3768,8 +3770,8 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 4
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
 OpDecorate %b Location 1
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_31 Block
@@ -3976,8 +3978,8 @@ TEST_F(InstBindlessTest, InstBoundsInitLoadSizedUBOArray) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -3998,9 +4000,9 @@ OpDecorate %uniformBuffer DescriptorSet 0
 OpDecorate %uniformBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %18 NonUniformEXT
-OpDecorate %22 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %18 NonUniform
+OpDecorate %22 NonUniform
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -4021,8 +4023,8 @@ OpDecorate %22 NonUniformEXT
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -4044,10 +4046,10 @@ OpDecorate %uniformBuffer DescriptorSet 0
 OpDecorate %uniformBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
-OpDecorate %89 NonUniformEXT
-OpDecorate %120 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
+OpDecorate %89 NonUniform
+OpDecorate %120 NonUniform
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_39 Block
 OpMemberDecorate %_struct_39 0 Offset 0
@@ -4059,7 +4061,7 @@ OpDecorate %_struct_98 Block
 OpMemberDecorate %_struct_98 0 Offset 0
 OpDecorate %100 DescriptorSet 7
 OpDecorate %100 Binding 1
-OpDecorate %117 NonUniformEXT
+OpDecorate %117 NonUniform
 %void = OpTypeVoid
 %10 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -4456,7 +4458,7 @@ OpFunctionEnd
           func_pt2_before,
       entry_after + names_annots + new_annots + consts_types_vars +
           new_consts_types_vars + func_pt1 + func_pt2_after + output_func,
-      true, true, 7u, 23u, true, true, 2u);
+      true, true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentMultipleInstructionsV2) {
@@ -4751,7 +4753,7 @@ OpFunctionEnd
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentOpImageV2) {
@@ -4979,7 +4981,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentSampledImageV2) {
@@ -5202,7 +5204,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentImageWriteV2) {
@@ -5427,7 +5429,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentVertexSimpleV2) {
@@ -5701,7 +5703,283 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
+}
+
+TEST_F(InstBindlessTest, InstrumentTeseSimpleV2) {
+  // This test verifies that the pass will correctly instrument tessellation
+  // evaluation shader doing bindless buffer load.
+  //
+  // clang-format off
+  //
+  // #version 450
+  // #extension GL_EXT_nonuniform_qualifier : enable
+  //
+  // layout(std140, set = 0, binding = 0) uniform ufoo { uint index; } uniform_index_buffer;
+  //
+  // layout(set = 0, binding = 1) buffer bfoo { vec4 val; } adds[11];
+  //
+  // layout(triangles, equal_spacing, cw) in;
+  //
+  // void main() {
+  //   gl_Position = adds[uniform_index_buffer.index].val;
+  // }
+  //
+  // clang-format on
+
+  const std::string defs_before =
+      R"(OpCapability Tessellation
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint TessellationEvaluation %main "main" %_
+OpExecutionMode %main Triangles
+OpExecutionMode %main SpacingEqual
+OpExecutionMode %main VertexOrderCw
+OpSource GLSL 450
+OpSourceExtension "GL_EXT_nonuniform_qualifier"
+OpName %main "main"
+OpName %gl_PerVertex "gl_PerVertex"
+OpMemberName %gl_PerVertex 0 "gl_Position"
+OpMemberName %gl_PerVertex 1 "gl_PointSize"
+OpMemberName %gl_PerVertex 2 "gl_ClipDistance"
+OpMemberName %gl_PerVertex 3 "gl_CullDistance"
+OpName %_ ""
+OpName %bfoo "bfoo"
+OpMemberName %bfoo 0 "val"
+OpName %adds "adds"
+OpName %ufoo "ufoo"
+OpMemberName %ufoo 0 "index"
+OpName %uniform_index_buffer "uniform_index_buffer"
+OpMemberDecorate %gl_PerVertex 0 BuiltIn Position
+OpMemberDecorate %gl_PerVertex 1 BuiltIn PointSize
+OpMemberDecorate %gl_PerVertex 2 BuiltIn ClipDistance
+OpMemberDecorate %gl_PerVertex 3 BuiltIn CullDistance
+OpDecorate %gl_PerVertex Block
+OpMemberDecorate %bfoo 0 Offset 0
+OpDecorate %bfoo Block
+OpDecorate %adds DescriptorSet 0
+OpDecorate %adds Binding 1
+OpMemberDecorate %ufoo 0 Offset 0
+OpDecorate %ufoo Block
+OpDecorate %uniform_index_buffer DescriptorSet 0
+OpDecorate %uniform_index_buffer Binding 0
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%v4float = OpTypeVector %float 4
+%uint = OpTypeInt 32 0
+%uint_1 = OpConstant %uint 1
+%_arr_float_uint_1 = OpTypeArray %float %uint_1
+%gl_PerVertex = OpTypeStruct %v4float %float %_arr_float_uint_1 %_arr_float_uint_1
+%_ptr_Output_gl_PerVertex = OpTypePointer Output %gl_PerVertex
+%_ = OpVariable %_ptr_Output_gl_PerVertex Output
+%int = OpTypeInt 32 1
+%int_0 = OpConstant %int 0
+%bfoo = OpTypeStruct %v4float
+%uint_11 = OpConstant %uint 11
+%_arr_bfoo_uint_11 = OpTypeArray %bfoo %uint_11
+%_ptr_StorageBuffer__arr_bfoo_uint_11 = OpTypePointer StorageBuffer %_arr_bfoo_uint_11
+%adds = OpVariable %_ptr_StorageBuffer__arr_bfoo_uint_11 StorageBuffer
+%ufoo = OpTypeStruct %uint
+%_ptr_Uniform_ufoo = OpTypePointer Uniform %ufoo
+%uniform_index_buffer = OpVariable %_ptr_Uniform_ufoo Uniform
+%_ptr_Uniform_uint = OpTypePointer Uniform %uint
+%_ptr_StorageBuffer_v4float = OpTypePointer StorageBuffer %v4float
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+)";
+
+  const std::string defs_after =
+      R"(OpCapability Tessellation
+OpExtension "SPV_KHR_storage_buffer_storage_class"
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint TessellationEvaluation %main "main" %_ %gl_PrimitiveID %gl_TessCoord
+OpExecutionMode %main Triangles
+OpExecutionMode %main SpacingEqual
+OpExecutionMode %main VertexOrderCw
+OpSource GLSL 450
+OpSourceExtension "GL_EXT_nonuniform_qualifier"
+OpName %main "main"
+OpName %gl_PerVertex "gl_PerVertex"
+OpMemberName %gl_PerVertex 0 "gl_Position"
+OpMemberName %gl_PerVertex 1 "gl_PointSize"
+OpMemberName %gl_PerVertex 2 "gl_ClipDistance"
+OpMemberName %gl_PerVertex 3 "gl_CullDistance"
+OpName %_ ""
+OpName %bfoo "bfoo"
+OpMemberName %bfoo 0 "val"
+OpName %adds "adds"
+OpName %ufoo "ufoo"
+OpMemberName %ufoo 0 "index"
+OpName %uniform_index_buffer "uniform_index_buffer"
+OpMemberDecorate %gl_PerVertex 0 BuiltIn Position
+OpMemberDecorate %gl_PerVertex 1 BuiltIn PointSize
+OpMemberDecorate %gl_PerVertex 2 BuiltIn ClipDistance
+OpMemberDecorate %gl_PerVertex 3 BuiltIn CullDistance
+OpDecorate %gl_PerVertex Block
+OpMemberDecorate %bfoo 0 Offset 0
+OpDecorate %bfoo Block
+OpDecorate %adds DescriptorSet 0
+OpDecorate %adds Binding 1
+OpMemberDecorate %ufoo 0 Offset 0
+OpDecorate %ufoo Block
+OpDecorate %uniform_index_buffer DescriptorSet 0
+OpDecorate %uniform_index_buffer Binding 0
+OpDecorate %_runtimearr_uint ArrayStride 4
+OpDecorate %_struct_47 Block
+OpMemberDecorate %_struct_47 0 Offset 0
+OpMemberDecorate %_struct_47 1 Offset 4
+OpDecorate %49 DescriptorSet 7
+OpDecorate %49 Binding 0
+OpDecorate %gl_PrimitiveID BuiltIn PrimitiveId
+OpDecorate %gl_TessCoord BuiltIn TessCoord
+%void = OpTypeVoid
+%10 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%v4float = OpTypeVector %float 4
+%uint = OpTypeInt 32 0
+%uint_1 = OpConstant %uint 1
+%_arr_float_uint_1 = OpTypeArray %float %uint_1
+%gl_PerVertex = OpTypeStruct %v4float %float %_arr_float_uint_1 %_arr_float_uint_1
+%_ptr_Output_gl_PerVertex = OpTypePointer Output %gl_PerVertex
+%_ = OpVariable %_ptr_Output_gl_PerVertex Output
+%int = OpTypeInt 32 1
+%int_0 = OpConstant %int 0
+%bfoo = OpTypeStruct %v4float
+%uint_11 = OpConstant %uint 11
+%_arr_bfoo_uint_11 = OpTypeArray %bfoo %uint_11
+%_ptr_StorageBuffer__arr_bfoo_uint_11 = OpTypePointer StorageBuffer %_arr_bfoo_uint_11
+%adds = OpVariable %_ptr_StorageBuffer__arr_bfoo_uint_11 StorageBuffer
+%ufoo = OpTypeStruct %uint
+%_ptr_Uniform_ufoo = OpTypePointer Uniform %ufoo
+%uniform_index_buffer = OpVariable %_ptr_Uniform_ufoo Uniform
+%_ptr_Uniform_uint = OpTypePointer Uniform %uint
+%_ptr_StorageBuffer_v4float = OpTypePointer StorageBuffer %v4float
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+%uint_0 = OpConstant %uint 0
+%bool = OpTypeBool
+%40 = OpTypeFunction %void %uint %uint %uint %uint
+%_runtimearr_uint = OpTypeRuntimeArray %uint
+%_struct_47 = OpTypeStruct %uint %_runtimearr_uint
+%_ptr_StorageBuffer__struct_47 = OpTypePointer StorageBuffer %_struct_47
+%49 = OpVariable %_ptr_StorageBuffer__struct_47 StorageBuffer
+%_ptr_StorageBuffer_uint = OpTypePointer StorageBuffer %uint
+%uint_10 = OpConstant %uint 10
+%uint_4 = OpConstant %uint 4
+%uint_23 = OpConstant %uint 23
+%uint_2 = OpConstant %uint 2
+%uint_3 = OpConstant %uint 3
+%_ptr_Input_uint = OpTypePointer Input %uint
+%gl_PrimitiveID = OpVariable %_ptr_Input_uint Input
+%v3float = OpTypeVector %float 3
+%_ptr_Input_v3float = OpTypePointer Input %v3float
+%gl_TessCoord = OpVariable %_ptr_Input_v3float Input
+%v3uint = OpTypeVector %uint 3
+%uint_5 = OpConstant %uint 5
+%uint_6 = OpConstant %uint 6
+%uint_7 = OpConstant %uint 7
+%uint_8 = OpConstant %uint 8
+%uint_9 = OpConstant %uint 9
+%uint_63 = OpConstant %uint 63
+%101 = OpConstantNull %v4float
+)";
+
+  const std::string func_before =
+      R"(%main = OpFunction %void None %3
+%5 = OpLabel
+%25 = OpAccessChain %_ptr_Uniform_uint %uniform_index_buffer %int_0
+%26 = OpLoad %uint %25
+%28 = OpAccessChain %_ptr_StorageBuffer_v4float %adds %26 %int_0
+%29 = OpLoad %v4float %28
+%31 = OpAccessChain %_ptr_Output_v4float %_ %int_0
+OpStore %31 %29
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string func_after =
+      R"(%main = OpFunction %void None %10
+%26 = OpLabel
+%27 = OpAccessChain %_ptr_Uniform_uint %uniform_index_buffer %int_0
+%28 = OpLoad %uint %27
+%29 = OpAccessChain %_ptr_StorageBuffer_v4float %adds %28 %int_0
+%34 = OpULessThan %bool %28 %uint_11
+OpSelectionMerge %35 None
+OpBranchConditional %34 %36 %37
+%36 = OpLabel
+%38 = OpLoad %v4float %29
+OpBranch %35
+%37 = OpLabel
+%100 = OpFunctionCall %void %39 %uint_63 %uint_0 %28 %uint_11
+OpBranch %35
+%35 = OpLabel
+%102 = OpPhi %v4float %38 %36 %101 %37
+%31 = OpAccessChain %_ptr_Output_v4float %_ %int_0
+OpStore %31 %102
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string output_func =
+      R"(%39 = OpFunction %void None %40
+%41 = OpFunctionParameter %uint
+%42 = OpFunctionParameter %uint
+%43 = OpFunctionParameter %uint
+%44 = OpFunctionParameter %uint
+%45 = OpLabel
+%51 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_0
+%54 = OpAtomicIAdd %uint %51 %uint_4 %uint_0 %uint_10
+%55 = OpIAdd %uint %54 %uint_10
+%56 = OpArrayLength %uint %49 1
+%57 = OpULessThanEqual %bool %55 %56
+OpSelectionMerge %58 None
+OpBranchConditional %57 %59 %58
+%59 = OpLabel
+%60 = OpIAdd %uint %54 %uint_0
+%61 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %60
+OpStore %61 %uint_10
+%63 = OpIAdd %uint %54 %uint_1
+%64 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %63
+OpStore %64 %uint_23
+%66 = OpIAdd %uint %54 %uint_2
+%67 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %66
+OpStore %67 %41
+%69 = OpIAdd %uint %54 %uint_3
+%70 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %69
+OpStore %70 %uint_2
+%73 = OpLoad %uint %gl_PrimitiveID
+%74 = OpIAdd %uint %54 %uint_4
+%75 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %74
+OpStore %75 %73
+%79 = OpLoad %v3float %gl_TessCoord
+%81 = OpBitcast %v3uint %79
+%82 = OpCompositeExtract %uint %81 0
+%83 = OpCompositeExtract %uint %81 1
+%85 = OpIAdd %uint %54 %uint_5
+%86 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %85
+OpStore %86 %82
+%88 = OpIAdd %uint %54 %uint_6
+%89 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %88
+OpStore %89 %83
+%91 = OpIAdd %uint %54 %uint_7
+%92 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %91
+OpStore %92 %42
+%94 = OpIAdd %uint %54 %uint_8
+%95 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %94
+OpStore %95 %43
+%97 = OpIAdd %uint %54 %uint_9
+%98 = OpAccessChain %_ptr_StorageBuffer_uint %49 %uint_1 %97
+OpStore %98 %44
+OpBranch %58
+%58 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SinglePassRunAndCheck<InstBindlessCheckPass>(
+      defs_before + func_before, defs_after + func_after + output_func, true,
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, MultipleDebugFunctionsV2) {
@@ -6025,7 +6303,7 @@ OpFunctionEnd
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func1_before + func2_before,
       defs_after + func1_after + func2_after + output_func, true, true, 7u, 23u,
-      true, true, 2u);
+      false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, RuntimeArrayV2) {
@@ -6035,7 +6313,7 @@ TEST_F(InstBindlessTest, RuntimeArrayV2) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability RuntimeDescriptorArrayEXT
+OpCapability RuntimeDescriptorArray
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -6088,7 +6366,7 @@ OpDecorate %_entryPointOutput_vColor Location 0
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability RuntimeDescriptorArrayEXT
+OpCapability RuntimeDescriptorArray
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -6327,12 +6605,13 @@ OpFunctionEnd
 TEST_F(InstBindlessTest, InstrumentInitCheckOnScalarDescriptorV2) {
   // This test verifies that the pass will correctly instrument vanilla
   // texture sample on a scalar descriptor with an initialization check if the
-  // SPV_EXT_descriptor_checking extension is enabled. This is the same shader
-  // as NoInstrumentNonBindless, but with the extension hacked on in the SPIR-V.
+  // input_init_enable argument is set to true. This can happen when the
+  // descriptor indexing extension is enabled in the API but the SPIR-V
+  // does not have the extension enabled because it does not contain a
+  // runtime array. This is the same shader as NoInstrumentNonBindless.
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %MainPs "MainPs" %i_vTextureCoords %_entryPointOutput_vColor
@@ -6369,7 +6648,6 @@ OpDecorate %_entryPointOutput_vColor Location 0
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -6440,7 +6718,7 @@ OpDecorate %gl_FragCoord BuiltIn FragCoord
 %uint_7 = OpConstant %uint 7
 %uint_8 = OpConstant %uint 8
 %uint_9 = OpConstant %uint 9
-%uint_40 = OpConstant %uint 40
+%uint_39 = OpConstant %uint 39
 %113 = OpConstantNull %v4float
 )";
 
@@ -6474,7 +6752,7 @@ OpBranchConditional %52 %55 %56
 %59 = OpImageSampleImplicitLod %v4float %58 %20
 OpBranch %54
 %56 = OpLabel
-%112 = OpFunctionCall %void %60 %uint_40 %uint_1 %uint_0 %uint_0
+%112 = OpFunctionCall %void %60 %uint_39 %uint_1 %uint_0 %uint_0
 OpBranch %54
 %54 = OpLabel
 %114 = OpPhi %v4float %59 %55 %113 %56
@@ -6692,9 +6970,9 @@ TEST_F(InstBindlessTest, InstBoundsAndInitLoadUnsizedUBOArrayV2) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -6715,9 +6993,9 @@ OpDecorate %uniformBuffer DescriptorSet 0
 OpDecorate %uniformBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %16 NonUniformEXT
-OpDecorate %20 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %16 NonUniform
+OpDecorate %20 NonUniform
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -6736,9 +7014,9 @@ OpDecorate %20 NonUniformEXT
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -6760,22 +7038,22 @@ OpDecorate %uniformBuffer DescriptorSet 0
 OpDecorate %uniformBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
-OpDecorate %102 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
+OpDecorate %102 NonUniform
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_31 Block
 OpMemberDecorate %_struct_31 0 Offset 0
 OpDecorate %33 DescriptorSet 7
 OpDecorate %33 Binding 1
-OpDecorate %130 NonUniformEXT
+OpDecorate %130 NonUniform
 OpDecorate %_struct_55 Block
 OpMemberDecorate %_struct_55 0 Offset 0
 OpMemberDecorate %_struct_55 1 Offset 4
 OpDecorate %57 DescriptorSet 7
 OpDecorate %57 Binding 0
 OpDecorate %gl_FragCoord BuiltIn FragCoord
-OpDecorate %127 NonUniformEXT
+OpDecorate %127 NonUniform
 %void = OpTypeVoid
 %10 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -6973,9 +7251,9 @@ TEST_F(InstBindlessTest, InstBoundsAndInitLoadUnsizedSSBOArrayDeprecatedV2) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -6996,9 +7274,9 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %16 NonUniformEXT
-OpDecorate %20 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %16 NonUniform
+OpDecorate %20 NonUniform
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -7017,9 +7295,9 @@ OpDecorate %20 NonUniformEXT
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -7041,22 +7319,22 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
-OpDecorate %102 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
+OpDecorate %102 NonUniform
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_31 Block
 OpMemberDecorate %_struct_31 0 Offset 0
 OpDecorate %33 DescriptorSet 7
 OpDecorate %33 Binding 1
-OpDecorate %130 NonUniformEXT
+OpDecorate %130 NonUniform
 OpDecorate %_struct_55 Block
 OpMemberDecorate %_struct_55 0 Offset 0
 OpMemberDecorate %_struct_55 1 Offset 4
 OpDecorate %57 DescriptorSet 7
 OpDecorate %57 Binding 0
 OpDecorate %gl_FragCoord BuiltIn FragCoord
-OpDecorate %127 NonUniformEXT
+OpDecorate %127 NonUniform
 %void = OpTypeVoid
 %10 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -7243,9 +7521,9 @@ TEST_F(InstBindlessTest, InstBoundsAndInitLoadUnsizedSSBOArrayV2) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -7266,9 +7544,9 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %16 NonUniformEXT
-OpDecorate %20 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %16 NonUniform
+OpDecorate %20 NonUniform
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -7287,9 +7565,9 @@ OpDecorate %20 NonUniformEXT
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -7311,22 +7589,22 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
-OpDecorate %102 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
+OpDecorate %102 NonUniform
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_31 Block
 OpMemberDecorate %_struct_31 0 Offset 0
 OpDecorate %33 DescriptorSet 7
 OpDecorate %33 Binding 1
-OpDecorate %130 NonUniformEXT
+OpDecorate %130 NonUniform
 OpDecorate %_struct_55 Block
 OpMemberDecorate %_struct_55 0 Offset 0
 OpMemberDecorate %_struct_55 1 Offset 4
 OpDecorate %57 DescriptorSet 7
 OpDecorate %57 Binding 0
 OpDecorate %gl_FragCoord BuiltIn FragCoord
-OpDecorate %127 NonUniformEXT
+OpDecorate %127 NonUniform
 %void = OpTypeVoid
 %10 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -7749,9 +8027,9 @@ TEST_F(InstBindlessTest, InstBoundsInitStoreUnsizedSSBOArrayV2) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -7771,8 +8049,8 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 4
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %14 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %14 NonUniform
 OpDecorate %b Location 1
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
@@ -7792,9 +8070,9 @@ OpDecorate %b Location 1
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability RuntimeDescriptorArrayEXT
-OpCapability StorageBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability RuntimeDescriptorArray
+OpCapability StorageBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -7815,8 +8093,8 @@ OpDecorate %storageBuffer DescriptorSet 0
 OpDecorate %storageBuffer Binding 4
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
 OpDecorate %b Location 1
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_31 Block
@@ -8023,8 +8301,8 @@ TEST_F(InstBindlessTest, InstBoundsInitLoadSizedUBOArrayV2) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -8045,9 +8323,9 @@ OpDecorate %uniformBuffer DescriptorSet 0
 OpDecorate %uniformBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %18 NonUniformEXT
-OpDecorate %22 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %18 NonUniform
+OpDecorate %22 NonUniform
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -8068,8 +8346,8 @@ OpDecorate %22 NonUniformEXT
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
-OpCapability UniformBufferArrayNonUniformIndexingEXT
+OpCapability ShaderNonUniform
+OpCapability UniformBufferArrayNonUniformIndexing
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -8091,10 +8369,10 @@ OpDecorate %uniformBuffer DescriptorSet 0
 OpDecorate %uniformBuffer Binding 3
 OpDecorate %nu_ii Flat
 OpDecorate %nu_ii Location 0
-OpDecorate %nu_ii NonUniformEXT
-OpDecorate %7 NonUniformEXT
-OpDecorate %89 NonUniformEXT
-OpDecorate %120 NonUniformEXT
+OpDecorate %nu_ii NonUniform
+OpDecorate %7 NonUniform
+OpDecorate %89 NonUniform
+OpDecorate %120 NonUniform
 OpDecorate %_runtimearr_uint ArrayStride 4
 OpDecorate %_struct_39 Block
 OpMemberDecorate %_struct_39 0 Offset 0
@@ -8106,7 +8384,7 @@ OpDecorate %_struct_98 Block
 OpMemberDecorate %_struct_98 0 Offset 0
 OpDecorate %100 DescriptorSet 7
 OpDecorate %100 Binding 1
-OpDecorate %117 NonUniformEXT
+OpDecorate %117 NonUniform
 %void = OpTypeVoid
 %10 = OpTypeFunction %void
 %float = OpTypeFloat 32
@@ -8297,7 +8575,7 @@ TEST_F(InstBindlessTest,
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability RuntimeDescriptorArrayEXT
+OpCapability RuntimeDescriptorArray
 OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -8344,7 +8622,7 @@ OpDecorate %images NonWritable
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability RuntimeDescriptorArrayEXT
+OpCapability RuntimeDescriptorArray
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
@@ -8617,7 +8895,7 @@ TEST_F(InstBindlessTest,
   // }
 
   const std::string defs_before =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -8645,7 +8923,7 @@ OpDecorate %images NonWritable
 )";
 
   const std::string defs_after =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -8941,7 +9219,7 @@ TEST_F(InstBindlessTest,
   // }
 
   const std::string defs_before =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -8969,7 +9247,7 @@ OpDecorate %images NonWritable
 )";
 
   const std::string defs_after =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -9265,7 +9543,7 @@ TEST_F(InstBindlessTest,
   // }
 
   const std::string defs_before =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -9293,7 +9571,7 @@ OpDecorate %images NonWritable
 )";
 
   const std::string defs_after =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -9589,7 +9867,7 @@ TEST_F(InstBindlessTest,
   // }
 
   const std::string defs_before =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -9617,7 +9895,7 @@ OpDecorate %images NonWritable
 )";
 
   const std::string defs_after =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -9913,7 +10191,7 @@ TEST_F(InstBindlessTest,
   // }
 
   const std::string defs_before =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -9941,7 +10219,7 @@ OpDecorate %images NonWritable
 )";
 
   const std::string defs_after =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -10237,7 +10515,7 @@ TEST_F(InstBindlessTest,
   // }
 
   const std::string defs_before =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"
@@ -10265,7 +10543,7 @@ OpDecorate %images NonWritable
 )";
 
   const std::string defs_after =
-      R"(OpCapability RuntimeDescriptorArrayEXT
+      R"(OpCapability RuntimeDescriptorArray
 OpCapability RayTracingNV
 OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_NV_ray_tracing"

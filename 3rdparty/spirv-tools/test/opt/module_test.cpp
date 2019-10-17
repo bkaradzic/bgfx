@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 #include "source/opt/build_module.h"
 #include "source/opt/module.h"
+#include "source/opt/pass.h"
 #include "spirv-tools/libspirv.hpp"
 #include "test/opt/module_utils.h"
 
@@ -227,6 +228,72 @@ OpFunctionEnd)";
   uint32_t next_id_bound = context->module()->TakeNextIdBound();
   EXPECT_EQ(next_id_bound, 0);
   EXPECT_EQ(current_bound, context->module()->id_bound());
+}
+
+// Tests that "text" does not change when it is assembled, converted into a
+// module, converted back to a binary, and then disassembled.
+void AssembleAndDisassemble(const std::string& text) {
+  std::unique_ptr<IRContext> context = BuildModule(text);
+  std::vector<uint32_t> binary;
+
+  context->module()->ToBinary(&binary, false);
+
+  SpirvTools tools(SPV_ENV_UNIVERSAL_1_1);
+  std::string s;
+  tools.Disassemble(binary, &s);
+  EXPECT_EQ(s, text);
+}
+
+TEST(ModuleTest, TrailingOpLine) {
+  const std::string text = R"(OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%5 = OpString "file.ext"
+%void = OpTypeVoid
+%2 = OpTypeFunction %void
+%3 = OpFunction %void None %2
+%4 = OpLabel
+OpReturn
+OpFunctionEnd
+OpLine %5 1 0
+)";
+
+  AssembleAndDisassemble(text);
+}
+
+TEST(ModuleTest, TrailingOpNoLine) {
+  const std::string text = R"(OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%2 = OpTypeFunction %void
+%3 = OpFunction %void None %2
+%4 = OpLabel
+OpReturn
+OpFunctionEnd
+OpNoLine
+)";
+
+  AssembleAndDisassemble(text);
+}
+
+TEST(ModuleTest, MulitpleTrailingOpLine) {
+  const std::string text = R"(OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%5 = OpString "file.ext"
+%void = OpTypeVoid
+%2 = OpTypeFunction %void
+%3 = OpFunction %void None %2
+%4 = OpLabel
+OpReturn
+OpFunctionEnd
+OpLine %5 1 0
+OpNoLine
+OpLine %5 1 1
+)";
+
+  AssembleAndDisassemble(text);
 }
 }  // namespace
 }  // namespace opt

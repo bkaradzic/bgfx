@@ -21,26 +21,69 @@ struct Composite
     float4 b;
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 constant float4 _43[2] = { float4(20.0), float4(40.0) };
 
-// Implementation of an array copy function to cover GLSL's ability to copy an array via assignment.
-template<typename T, uint N>
-void spvArrayCopyFromStack1(thread T (&dst)[N], thread const T (&src)[N])
+template<typename T, uint A>
+inline void spvArrayCopyFromConstantToStack1(thread T (&dst)[A], constant T (&src)[A])
 {
-    for (uint i = 0; i < N; dst[i] = src[i], i++);
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
 }
 
-template<typename T, uint N>
-void spvArrayCopyFromConstant1(thread T (&dst)[N], constant T (&src)[N])
+template<typename T, uint A>
+inline void spvArrayCopyFromConstantToThreadGroup1(threadgroup T (&dst)[A], constant T (&src)[A])
 {
-    for (uint i = 0; i < N; dst[i] = src[i], i++);
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromStackToStack1(thread T (&dst)[A], thread const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromStackToThreadGroup1(threadgroup T (&dst)[A], thread const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromThreadGroupToStack1(thread T (&dst)[A], threadgroup const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromThreadGroupToThreadGroup1(threadgroup T (&dst)[A], threadgroup const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
 }
 
 kernel void main0(device SSBO0& _16 [[buffer(0)]], device SSBO1& _32 [[buffer(1)]], uint3 gl_GlobalInvocationID [[thread_position_in_grid]], uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]])
 {
     float4 _37[2] = { _16.as[gl_GlobalInvocationID.x], _32.bs[gl_GlobalInvocationID.x] };
     float4 values[2];
-    spvArrayCopyFromStack1(values, _37);
+    spvArrayCopyFromStackToStack1(values, _37);
     Composite c = Composite{ values[0], _43[1] };
     _16.as[0] = values[gl_LocalInvocationIndex];
     _32.bs[1] = c.b;

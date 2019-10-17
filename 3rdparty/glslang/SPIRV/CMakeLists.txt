@@ -25,23 +25,13 @@ set(HEADERS
     spvIR.h
     doc.h
     SpvTools.h
-    disassemble.h)
+    disassemble.h
+    GLSL.ext.AMD.h
+    GLSL.ext.NV.h)
 
 set(SPVREMAP_HEADERS
     SPVRemapper.h
     doc.h)
-
-if(ENABLE_AMD_EXTENSIONS)
-    list(APPEND
-         HEADERS
-         GLSL.ext.AMD.h)
-endif(ENABLE_AMD_EXTENSIONS)
-
-if(ENABLE_NV_EXTENSIONS)
-    list(APPEND
-         HEADERS
-         GLSL.ext.NV.h)
-endif(ENABLE_NV_EXTENSIONS)
 
 add_library(SPIRV ${LIB_TYPE} ${SOURCES} ${HEADERS})
 set_property(TARGET SPIRV PROPERTY FOLDER glslang)
@@ -97,5 +87,5 @@ if(ENABLE_GLSLANG_INSTALL)
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
 
-    install(FILES ${HEADERS} ${SPVREMAP_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/SPIRV/)
+    install(FILES ${HEADERS} ${SPVREMAP_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/glslang/SPIRV/)
 endif(ENABLE_GLSLANG_INSTALL)

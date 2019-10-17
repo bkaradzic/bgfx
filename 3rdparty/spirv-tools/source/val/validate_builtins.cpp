@@ -2504,20 +2504,20 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
       switch (execution_model) {
         case SpvExecutionModelGeometry:
         case SpvExecutionModelFragment:
-        case SpvExecutionModelMeshNV: {
+        case SpvExecutionModelMeshNV:
           // Ok.
           break;
-          case SpvExecutionModelVertex:
-          case SpvExecutionModelTessellationEvaluation:
-            if (!_.HasCapability(SpvCapabilityShaderViewportIndexLayerEXT)) {
-              return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
-                     << "Using BuiltIn "
-                     << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
-                                                      decoration.params()[0])
-                     << " in Vertex or Tessellation execution model requires "
-                        "the ShaderViewportIndexLayerEXT capability.";
-            }
-            break;
+        case SpvExecutionModelVertex:
+        case SpvExecutionModelTessellationEvaluation: {
+          if (!_.HasCapability(SpvCapabilityShaderViewportIndexLayerEXT)) {
+            return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+                   << "Using BuiltIn "
+                   << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                    decoration.params()[0])
+                   << " in Vertex or Tessellation execution model requires "
+                      "the ShaderViewportIndexLayerEXT capability.";
+          }
+          break;
         }
         default: {
           return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
@@ -2901,6 +2901,26 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   const SpvBuiltIn label = SpvBuiltIn(decoration.params()[0]);
 
+  // Builtins can only be applied to variables, structures or constants.
+  auto target_opcode = inst.opcode();
+  if (target_opcode != SpvOpTypeStruct && target_opcode != SpvOpVariable &&
+      !spvOpcodeIsConstant(target_opcode)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+           << "BuiltIns can only target variables, structs or constants";
+  }
+
+  if (!spvIsVulkanOrWebGPUEnv(_.context()->target_env)) {
+    // Early return. All currently implemented rules are based on Vulkan or
+    // WebGPU spec.
+    //
+    // TODO: If you are adding validation rules for environments other than
+    // Vulkan or WebGPU (or general rules which are not environment
+    // independent), then you need to modify or remove this condition. Consider
+    // also adding early returns into BuiltIn-specific rules, so that the system
+    // doesn't spawn new rules which don't do anything.
+    return SPV_SUCCESS;
+  }
+
   if (spvIsWebGPUEnv(_.context()->target_env) &&
       !IsBuiltInValidForWebGPU(label)) {
     return _.diag(SPV_ERROR_INVALID_DATA, &inst)
@@ -3156,18 +3176,6 @@ spv_result_t BuiltInsValidator::Run() {
 
 // Validates correctness of built-in variables.
 spv_result_t ValidateBuiltIns(ValidationState_t& _) {
-  if (!spvIsVulkanOrWebGPUEnv(_.context()->target_env)) {
-    // Early return. All currently implemented rules are based on Vulkan or
-    // WebGPU spec.
-    //
-    // TODO: If you are adding validation rules for environments other than
-    // Vulkan or WebGPU (or general rules which are not environment
-    // independent), then you need to modify or remove this condition. Consider
-    // also adding early returns into BuiltIn-specific rules, so that the system
-    // doesn't spawn new rules which don't do anything.
-    return SPV_SUCCESS;
-  }
-
   BuiltInsValidator validator(_);
   return validator.Run();
 }

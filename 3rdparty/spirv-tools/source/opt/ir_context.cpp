@@ -94,6 +94,14 @@ void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
   if (analyses_to_invalidate & kAnalysisTypes) {
     analyses_to_invalidate |= kAnalysisConstants;
   }
+
+  // The dominator analysis hold the psuedo entry and exit nodes from the CFG.
+  // Also if the CFG change the dominators many changed as well, so the
+  // dominator analysis should be invalidated as well.
+  if (analyses_to_invalidate & kAnalysisCFG) {
+    analyses_to_invalidate |= kAnalysisDominatorAnalysis;
+  }
+
   if (analyses_to_invalidate & kAnalysisDefUse) {
     def_use_mgr_.reset(nullptr);
   }
@@ -156,13 +164,19 @@ Instruction* IRContext::KillInst(Instruction* inst) {
       decoration_mgr_->RemoveDecoration(inst);
     }
   }
-
   if (type_mgr_ && IsTypeInst(inst->opcode())) {
     type_mgr_->RemoveId(inst->result_id());
   }
-
   if (constant_mgr_ && IsConstantInst(inst->opcode())) {
     constant_mgr_->RemoveId(inst->result_id());
+  }
+  if (inst->opcode() == SpvOpCapability || inst->opcode() == SpvOpExtension) {
+    // We reset the feature manager, instead of updating it, because it is just
+    // as much work.  We would have to remove all capabilities implied by this
+    // capability that are not also implied by the remaining OpCapability
+    // instructions. We could update extensions, but we will see if it is
+    // needed.
+    ResetFeatureManager();
   }
 
   RemoveFromIdToName(inst);
@@ -190,6 +204,13 @@ bool IRContext::KillDef(uint32_t id) {
 }
 
 bool IRContext::ReplaceAllUsesWith(uint32_t before, uint32_t after) {
+  return ReplaceAllUsesWithPredicate(
+      before, after, [](Instruction*, uint32_t) { return true; });
+}
+
+bool IRContext::ReplaceAllUsesWithPredicate(
+    uint32_t before, uint32_t after,
+    const std::function<bool(Instruction*, uint32_t)>& predicate) {
   if (before == after) return false;
 
   // Ensure that |after| has been registered as def.
@@ -198,8 +219,10 @@ bool IRContext::ReplaceAllUsesWith(uint32_t before, uint32_t after) {
 
   std::vector<std::pair<Instruction*, uint32_t>> uses_to_update;
   get_def_use_mgr()->ForEachUse(
-      before, [&uses_to_update](Instruction* user, uint32_t index) {
-        uses_to_update.emplace_back(user, index);
+      before, [&predicate, &uses_to_update](Instruction* user, uint32_t index) {
+        if (predicate(user, index)) {
+          uses_to_update.emplace_back(user, index);
+        }
       });
 
   Instruction* prev = nullptr;
@@ -243,7 +266,6 @@ bool IRContext::IsConsistent() {
 #ifndef SPIRV_CHECK_CONTEXT
   return true;
 #endif
-
   if (AreAnalysesValid(kAnalysisDefUse)) {
     analysis::DefUseManager new_def_use(module());
     if (*get_def_use_mgr() != new_def_use) {
@@ -274,6 +296,15 @@ bool IRContext::IsConsistent() {
     analysis::DecorationManager current(module());
 
     if (*dec_mgr != current) {
+      return false;
+    }
+  }
+
+  if (feature_mgr_ != nullptr) {
+    FeatureManager current(grammar_);
+    current.Analyze(module());
+
+    if (current != *feature_mgr_) {
       return false;
     }
   }
@@ -678,7 +709,8 @@ uint32_t IRContext::GetBuiltinInputVarId(uint32_t builtin) {
       case SpvBuiltInVertexIndex:
       case SpvBuiltInInstanceIndex:
       case SpvBuiltInPrimitiveId:
-      case SpvBuiltInInvocationId: {
+      case SpvBuiltInInvocationId:
+      case SpvBuiltInSubgroupLocalInvocationId: {
         analysis::Integer uint_ty(32, false);
         reg_type = type_mgr->GetRegisteredType(&uint_ty);
         break;
@@ -689,6 +721,20 @@ uint32_t IRContext::GetBuiltinInputVarId(uint32_t builtin) {
         analysis::Type* reg_uint_ty = type_mgr->GetRegisteredType(&uint_ty);
         analysis::Vector v3uint_ty(reg_uint_ty, 3);
         reg_type = type_mgr->GetRegisteredType(&v3uint_ty);
+        break;
+      }
+      case SpvBuiltInTessCoord: {
+        analysis::Float float_ty(32);
+        analysis::Type* reg_float_ty = type_mgr->GetRegisteredType(&float_ty);
+        analysis::Vector v3float_ty(reg_float_ty, 3);
+        reg_type = type_mgr->GetRegisteredType(&v3float_ty);
+        break;
+      }
+      case SpvBuiltInSubgroupLtMask: {
+        analysis::Integer uint_ty(32, false);
+        analysis::Type* reg_uint_ty = type_mgr->GetRegisteredType(&uint_ty);
+        analysis::Vector v4uint_ty(reg_uint_ty, 4);
+        reg_type = type_mgr->GetRegisteredType(&v4uint_ty);
         break;
       }
       default: {
@@ -777,6 +823,42 @@ bool IRContext::ProcessCallTreeFromRoots(ProcessFunction& pfn,
     }
   }
   return modified;
+}
+
+void IRContext::EmitErrorMessage(std::string message, Instruction* inst) {
+  if (!consumer()) {
+    return;
+  }
+
+  Instruction* line_inst = inst;
+  while (line_inst != nullptr) {  // Stop at the beginning of the basic block.
+    if (!line_inst->dbg_line_insts().empty()) {
+      line_inst = &line_inst->dbg_line_insts().back();
+      if (line_inst->opcode() == SpvOpNoLine) {
+        line_inst = nullptr;
+      }
+      break;
+    }
+    line_inst = line_inst->PreviousNode();
+  }
+
+  uint32_t line_number = 0;
+  uint32_t col_number = 0;
+  char* source = nullptr;
+  if (line_inst != nullptr) {
+    Instruction* file_name =
+        get_def_use_mgr()->GetDef(line_inst->GetSingleWordInOperand(0));
+    source = reinterpret_cast<char*>(&file_name->GetInOperand(0).words[0]);
+
+    // Get the line number and column number.
+    line_number = line_inst->GetSingleWordInOperand(1);
+    col_number = line_inst->GetSingleWordInOperand(2);
+  }
+
+  message +=
+      "\n  " + inst->PrettyPrint(SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES);
+  consumer()(SPV_MSG_ERROR, source, {line_number, col_number, 0},
+             message.c_str());
 }
 
 // Gets the dominator analysis for function |f|.

@@ -258,7 +258,7 @@ bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum
 	return bimg::imageParse(entry::getAllocator(), data, size, bimg::TextureFormat::Enum(_dstFormat) );
 }
 
-void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices)
 {
 	struct PosTexcoord
 	{
@@ -286,14 +286,14 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 		uint32_t i1 = indices[1];
 		uint32_t i2 = indices[2];
 
-		bgfx::vertexUnpack(&v0.m_x, bgfx::Attrib::Position, _decl, _vertices, i0);
-		bgfx::vertexUnpack(&v0.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i0);
+		bgfx::vertexUnpack(&v0.m_x, bgfx::Attrib::Position, _layout, _vertices, i0);
+		bgfx::vertexUnpack(&v0.m_u, bgfx::Attrib::TexCoord0, _layout, _vertices, i0);
 
-		bgfx::vertexUnpack(&v1.m_x, bgfx::Attrib::Position, _decl, _vertices, i1);
-		bgfx::vertexUnpack(&v1.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i1);
+		bgfx::vertexUnpack(&v1.m_x, bgfx::Attrib::Position, _layout, _vertices, i1);
+		bgfx::vertexUnpack(&v1.m_u, bgfx::Attrib::TexCoord0, _layout, _vertices, i1);
 
-		bgfx::vertexUnpack(&v2.m_x, bgfx::Attrib::Position, _decl, _vertices, i2);
-		bgfx::vertexUnpack(&v2.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i2);
+		bgfx::vertexUnpack(&v2.m_x, bgfx::Attrib::Position, _layout, _vertices, i2);
+		bgfx::vertexUnpack(&v2.m_u, bgfx::Attrib::TexCoord0, _layout, _vertices, i2);
 
 		const float bax = v1.m_x - v0.m_x;
 		const float bay = v1.m_y - v0.m_y;
@@ -338,7 +338,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 		const bx::Vec3 tanv = bx::load<bx::Vec3>(&tangents[ii*6 + 3]);
 
 		float nxyzw[4];
-		bgfx::vertexUnpack(nxyzw, bgfx::Attrib::Normal, _decl, _vertices, ii);
+		bgfx::vertexUnpack(nxyzw, bgfx::Attrib::Normal, _layout, _vertices, ii);
 
 		const bx::Vec3 normal  = bx::load<bx::Vec3>(nxyzw);
 		const float    ndt     = bx::dot(normal, tanu);
@@ -349,7 +349,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 		bx::store(tangent, bx::normalize(tmp) );
 		tangent[3] = bx::dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
 
-		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _decl, _vertices, ii);
+		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _layout, _vertices, ii);
 	}
 
 	delete [] tangents;
@@ -375,7 +375,7 @@ void Group::reset()
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _layout, bx::Error* _err = NULL);
 }
 
 void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
@@ -406,9 +406,9 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 				read(_reader, group.m_aabb);
 				read(_reader, group.m_obb);
 				
-				read(_reader, m_decl);
+				read(_reader, m_layout);
 				
-				uint16_t stride = m_decl.getStride();
+				uint16_t stride = m_layout.getStride();
 				
 				read(_reader, group.m_numVertices);
 				const bgfx::Memory* mem = bgfx::alloc(group.m_numVertices*stride);
@@ -418,7 +418,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 					group.m_vertices = (uint8_t*)BX_ALLOC(allocator, group.m_numVertices*stride);
 					bx::memCopy(group.m_vertices, mem->data, mem->size);
 				}
-				group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
+				group.m_vbh = bgfx::createVertexBuffer(mem, m_layout);
 			}
 				break;
 				
@@ -428,9 +428,9 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 				read(_reader, group.m_aabb);
 				read(_reader, group.m_obb);
 				
-				read(_reader, m_decl);
+				read(_reader, m_layout);
 				
-				uint16_t stride = m_decl.getStride();
+				uint16_t stride = m_layout.getStride();
 				
 				read(_reader, group.m_numVertices);
 				
@@ -452,7 +452,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 					bx::memCopy(group.m_vertices, mem->data, mem->size);
 				}
 				
-				group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
+				group.m_vbh = bgfx::createVertexBuffer(mem, m_layout);
 			}
 				break;
 				

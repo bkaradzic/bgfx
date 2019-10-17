@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "source/fuzz/transformation_replace_constant_with_uniform.h"
+#include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/uniform_buffer_element_descriptor.h"
 #include "test/fuzz/fuzz_test_util.h"
 
@@ -116,11 +117,11 @@ TEST(TransformationReplaceConstantWithUniformTest, BasicReplacements) {
 
   // The constant ids are 9, 11 and 14, for 1, 2 and 3 respectively.
   protobufs::IdUseDescriptor use_of_9_in_store =
-      transformation::MakeIdUseDescriptor(9, SpvOpStore, 1, 8, 0);
+      MakeIdUseDescriptor(9, MakeInstructionDescriptor(8, SpvOpStore, 0), 1);
   protobufs::IdUseDescriptor use_of_11_in_add =
-      transformation::MakeIdUseDescriptor(11, SpvOpIAdd, 1, 12, 0);
+      MakeIdUseDescriptor(11, MakeInstructionDescriptor(12, SpvOpIAdd, 0), 1);
   protobufs::IdUseDescriptor use_of_14_in_add =
-      transformation::MakeIdUseDescriptor(14, SpvOpIAdd, 0, 15, 0);
+      MakeIdUseDescriptor(14, MakeInstructionDescriptor(15, SpvOpIAdd, 0), 0);
 
   // These transformations work: they match the facts.
   auto transformation_use_of_9_in_store =
@@ -167,7 +168,7 @@ TEST(TransformationReplaceConstantWithUniformTest, BasicReplacements) {
   // The following transformation does not apply because the id descriptor is
   // not sensible.
   protobufs::IdUseDescriptor nonsense_id_use_descriptor =
-      transformation::MakeIdUseDescriptor(9, SpvOpIAdd, 0, 15, 0);
+      MakeIdUseDescriptor(9, MakeInstructionDescriptor(15, SpvOpIAdd, 0), 0);
   ASSERT_FALSE(TransformationReplaceConstantWithUniform(
                    nonsense_id_use_descriptor, blockname_a, 101, 102)
                    .IsApplicable(context.get(), fact_manager));
@@ -477,13 +478,13 @@ TEST(TransformationReplaceConstantWithUniformTest, NestedStruct) {
 
   // The constant ids are 13, 15, 17 and 20, for 1, 2, 3 and 4 respectively.
   protobufs::IdUseDescriptor use_of_13_in_store =
-      transformation::MakeIdUseDescriptor(13, SpvOpStore, 1, 21, 0);
+      MakeIdUseDescriptor(13, MakeInstructionDescriptor(21, SpvOpStore, 0), 1);
   protobufs::IdUseDescriptor use_of_15_in_add =
-      transformation::MakeIdUseDescriptor(15, SpvOpIAdd, 1, 16, 0);
+      MakeIdUseDescriptor(15, MakeInstructionDescriptor(16, SpvOpIAdd, 0), 1);
   protobufs::IdUseDescriptor use_of_17_in_add =
-      transformation::MakeIdUseDescriptor(17, SpvOpIAdd, 0, 19, 0);
+      MakeIdUseDescriptor(17, MakeInstructionDescriptor(19, SpvOpIAdd, 0), 0);
   protobufs::IdUseDescriptor use_of_20_in_store =
-      transformation::MakeIdUseDescriptor(20, SpvOpStore, 1, 19, 1);
+      MakeIdUseDescriptor(20, MakeInstructionDescriptor(19, SpvOpStore, 1), 1);
 
   // These transformations work: they match the facts.
   auto transformation_use_of_13_in_store =
@@ -703,7 +704,7 @@ TEST(TransformationReplaceConstantWithUniformTest, NoUniformIntPointerPresent) {
 
   // The constant id is 9 for 0.
   protobufs::IdUseDescriptor use_of_9_in_store =
-      transformation::MakeIdUseDescriptor(9, SpvOpStore, 1, 8, 0);
+      MakeIdUseDescriptor(9, MakeInstructionDescriptor(8, SpvOpStore, 0), 1);
 
   // This transformation is not available because no uniform pointer to integer
   // type is present:
@@ -778,7 +779,7 @@ TEST(TransformationReplaceConstantWithUniformTest, NoConstantPresentForIndex) {
 
   // The constant id is 9 for 9.
   protobufs::IdUseDescriptor use_of_9_in_store =
-      transformation::MakeIdUseDescriptor(9, SpvOpStore, 1, 8, 0);
+      MakeIdUseDescriptor(9, MakeInstructionDescriptor(8, SpvOpStore, 0), 1);
 
   // This transformation is not available because no constant is present for the
   // index 1 required to index into the uniform buffer:
@@ -852,7 +853,7 @@ TEST(TransformationReplaceConstantWithUniformTest,
 
   // The constant id is 9 for 3.0.
   protobufs::IdUseDescriptor use_of_9_in_store =
-      transformation::MakeIdUseDescriptor(9, SpvOpStore, 1, 8, 0);
+      MakeIdUseDescriptor(9, MakeInstructionDescriptor(8, SpvOpStore, 0), 1);
 
   // This transformation is not available because no integer type is present to
   // allow a constant index to be expressed:
@@ -937,9 +938,9 @@ TEST(TransformationReplaceConstantWithUniformTest,
 
   // The constant ids for 9 and 10 are 9 and 11 respectively
   protobufs::IdUseDescriptor use_of_9_in_store =
-      transformation::MakeIdUseDescriptor(9, SpvOpStore, 1, 10, 0);
+      MakeIdUseDescriptor(9, MakeInstructionDescriptor(10, SpvOpStore, 0), 1);
   protobufs::IdUseDescriptor use_of_11_in_store =
-      transformation::MakeIdUseDescriptor(11, SpvOpStore, 1, 10, 1);
+      MakeIdUseDescriptor(11, MakeInstructionDescriptor(10, SpvOpStore, 1), 1);
 
   // These are right:
   ASSERT_TRUE(TransformationReplaceConstantWithUniform(use_of_9_in_store,
@@ -1220,58 +1221,58 @@ TEST(TransformationReplaceConstantWithUniformTest, ComplexReplacements) {
   std::vector<TransformationReplaceConstantWithUniform> transformations;
 
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(18, SpvOpStore, 1, 20, 0),
+      MakeIdUseDescriptor(18, MakeInstructionDescriptor(20, SpvOpStore, 0), 1),
       uniform_f_a_4, 200, 201));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(22, SpvOpStore, 1, 23, 0),
+      MakeIdUseDescriptor(22, MakeInstructionDescriptor(23, SpvOpStore, 0), 1),
       uniform_f_a_3, 202, 203));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(25, SpvOpStore, 1, 26, 0),
+      MakeIdUseDescriptor(25, MakeInstructionDescriptor(26, SpvOpStore, 0), 1),
       uniform_f_a_2, 204, 205));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(28, SpvOpStore, 1, 29, 0),
+      MakeIdUseDescriptor(28, MakeInstructionDescriptor(29, SpvOpStore, 0), 1),
       uniform_f_a_1, 206, 207));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(31, SpvOpStore, 1, 32, 0),
+      MakeIdUseDescriptor(31, MakeInstructionDescriptor(32, SpvOpStore, 0), 1),
       uniform_f_a_0, 208, 209));
 
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(30, SpvOpStore, 1, 35, 0),
+      MakeIdUseDescriptor(30, MakeInstructionDescriptor(35, SpvOpStore, 0), 1),
       uniform_f_b_w, 210, 211));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(27, SpvOpStore, 1, 37, 0),
+      MakeIdUseDescriptor(27, MakeInstructionDescriptor(37, SpvOpStore, 0), 1),
       uniform_f_b_z, 212, 213));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(24, SpvOpStore, 1, 39, 0),
+      MakeIdUseDescriptor(24, MakeInstructionDescriptor(39, SpvOpStore, 0), 1),
       uniform_f_b_y, 214, 215));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(21, SpvOpStore, 1, 41, 0),
+      MakeIdUseDescriptor(21, MakeInstructionDescriptor(41, SpvOpStore, 0), 1),
       uniform_f_b_x, 216, 217));
 
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(44, SpvOpStore, 1, 45, 0),
+      MakeIdUseDescriptor(44, MakeInstructionDescriptor(45, SpvOpStore, 0), 1),
       uniform_f_c_z, 220, 221));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(46, SpvOpStore, 1, 47, 0),
+      MakeIdUseDescriptor(46, MakeInstructionDescriptor(47, SpvOpStore, 0), 1),
       uniform_f_c_y, 222, 223));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(48, SpvOpStore, 1, 49, 0),
+      MakeIdUseDescriptor(48, MakeInstructionDescriptor(49, SpvOpStore, 0), 1),
       uniform_f_c_x, 224, 225));
 
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(50, SpvOpStore, 1, 52, 0),
+      MakeIdUseDescriptor(50, MakeInstructionDescriptor(52, SpvOpStore, 0), 1),
       uniform_f_d, 226, 227));
 
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(53, SpvOpStore, 1, 54, 0),
+      MakeIdUseDescriptor(53, MakeInstructionDescriptor(54, SpvOpStore, 0), 1),
       uniform_h_x, 228, 229));
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(55, SpvOpStore, 1, 56, 0),
+      MakeIdUseDescriptor(55, MakeInstructionDescriptor(56, SpvOpStore, 0), 1),
       uniform_h_y, 230, 231));
 
   transformations.emplace_back(TransformationReplaceConstantWithUniform(
-      transformation::MakeIdUseDescriptor(42, SpvOpStore, 1, 43, 0), uniform_g,
-      218, 219));
+      MakeIdUseDescriptor(42, MakeInstructionDescriptor(43, SpvOpStore, 0), 1),
+      uniform_g, 218, 219));
 
   for (auto& transformation : transformations) {
     ASSERT_TRUE(transformation.IsApplicable(context.get(), fact_manager));

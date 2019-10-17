@@ -923,7 +923,58 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
 
       case OpenCLLIB::Fract:
       case OpenCLLIB::Modf:
-      case OpenCLLIB::Sincos:
+      case OpenCLLIB::Sincos: {
+        if (!_.IsFloatScalarOrVectorType(result_type)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << ext_inst_name() << ": "
+                 << "expected Result Type to be a float scalar or vector type";
+        }
+
+        const uint32_t num_components = _.GetDimension(result_type);
+        if (num_components > 4 && num_components != 8 && num_components != 16) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << ext_inst_name() << ": "
+                 << "expected Result Type to be a scalar or a vector with 2, "
+                    "3, 4, 8 or 16 components";
+        }
+
+        const uint32_t x_type = _.GetOperandTypeId(inst, 4);
+        if (result_type != x_type) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << ext_inst_name() << ": "
+                 << "expected type of operand X to be equal to Result Type";
+        }
+
+        const uint32_t p_type = _.GetOperandTypeId(inst, 5);
+        uint32_t p_storage_class = 0;
+        uint32_t p_data_type = 0;
+        if (!_.GetPointerTypeInfo(p_type, &p_data_type, &p_storage_class)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << ext_inst_name() << ": "
+                 << "expected the last operand to be a pointer";
+        }
+
+        if (p_storage_class != SpvStorageClassGeneric &&
+            p_storage_class != SpvStorageClassCrossWorkgroup &&
+            p_storage_class != SpvStorageClassWorkgroup &&
+            p_storage_class != SpvStorageClassFunction) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << ext_inst_name() << ": "
+                 << "expected storage class of the pointer to be Generic, "
+                    "CrossWorkgroup, Workgroup or Function";
+        }
+
+        if (result_type != p_data_type) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << ext_inst_name() << ": "
+                 << "expected data type of the pointer to be equal to Result "
+                    "Type";
+        }
+        break;
+      }
+
+      case OpenCLLIB::Frexp:
+      case OpenCLLIB::Lgamma_r:
       case OpenCLLIB::Remquo: {
         if (!_.IsFloatScalarOrVectorType(result_type)) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
@@ -957,57 +1008,6 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
         }
 
         const uint32_t p_type = _.GetOperandTypeId(inst, operand_index++);
-        uint32_t p_storage_class = 0;
-        uint32_t p_data_type = 0;
-        if (!_.GetPointerTypeInfo(p_type, &p_data_type, &p_storage_class)) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << ext_inst_name() << ": "
-                 << "expected the last operand to be a pointer";
-        }
-
-        if (p_storage_class != SpvStorageClassGeneric &&
-            p_storage_class != SpvStorageClassCrossWorkgroup &&
-            p_storage_class != SpvStorageClassWorkgroup &&
-            p_storage_class != SpvStorageClassFunction) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << ext_inst_name() << ": "
-                 << "expected storage class of the pointer to be Generic, "
-                    "CrossWorkgroup, Workgroup or Function";
-        }
-
-        if (result_type != p_data_type) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << ext_inst_name() << ": "
-                 << "expected data type of the pointer to be equal to Result "
-                    "Type";
-        }
-        break;
-      }
-
-      case OpenCLLIB::Frexp:
-      case OpenCLLIB::Lgamma_r: {
-        if (!_.IsFloatScalarOrVectorType(result_type)) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << ext_inst_name() << ": "
-                 << "expected Result Type to be a float scalar or vector type";
-        }
-
-        const uint32_t num_components = _.GetDimension(result_type);
-        if (num_components > 4 && num_components != 8 && num_components != 16) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << ext_inst_name() << ": "
-                 << "expected Result Type to be a scalar or a vector with 2, "
-                    "3, 4, 8 or 16 components";
-        }
-
-        const uint32_t x_type = _.GetOperandTypeId(inst, 4);
-        if (result_type != x_type) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << ext_inst_name() << ": "
-                 << "expected type of operand X to be equal to Result Type";
-        }
-
-        const uint32_t p_type = _.GetOperandTypeId(inst, 5);
         uint32_t p_storage_class = 0;
         uint32_t p_data_type = 0;
         if (!_.GetPointerTypeInfo(p_type, &p_data_type, &p_storage_class)) {

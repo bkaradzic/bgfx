@@ -105,7 +105,7 @@ static const float s_meshScale[] =
 	0.05f
 };
 
-// Vertex decl for our screen space quad (used in deferred rendering)
+// Vertex layout for our screen space quad (used in deferred rendering)
 struct PosTexCoord0Vertex
 {
 	float m_x;
@@ -116,24 +116,24 @@ struct PosTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
-bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 // Utility function to draw a screen space quad for deferred rendering
 void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 		PosTexCoord0Vertex* vertex = (PosTexCoord0Vertex*)vb.data;
 
 		const float minx = -_width;
@@ -186,8 +186,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleRSM : public entry::AppI
 {
 public:
-	ExampleRSM(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleRSM(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 		, m_reading(0)
 		, m_currFrame(UINT32_MAX)
 		, m_cameraSpin(false)
@@ -359,7 +359,7 @@ public:
 
 		m_shadowBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_shadowBufferTex), m_shadowBufferTex, true);
 
-		// Vertex decl
+		// Vertex layout
 		PosTexCoord0Vertex::init();
 
 		// Init camera
@@ -758,4 +758,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleRSM, "31-rsm", "Global Illumination with Reflective Shadow Map.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleRSM
+	, "31-rsm"
+	, "Global Illumination with Reflective Shadow Map."
+	, "https://bkaradzic.github.io/bgfx/examples.html#rsm"
+	);

@@ -48,7 +48,7 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 
 namespace
 {
-	static bgfx::VertexDecl s_nvgDecl;
+	static bgfx::VertexLayout s_nvgLayout;
 
 	enum GLNVGshaderType
 	{
@@ -282,7 +282,7 @@ namespace
 			gl->u_halfTexel.idx = bgfx::kInvalidHandle;
 		}
 
-		s_nvgDecl
+		s_nvgLayout
 			.begin()
 			.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
@@ -370,7 +370,11 @@ namespace
 		uint32_t pitch = tex->width * bytesPerPixel;
 
 		const bgfx::Memory* mem = bgfx::alloc(w * h * bytesPerPixel);
-		bx::gather(mem->data, data + y * pitch + x * bytesPerPixel, w * bytesPerPixel, h, pitch);
+		bx::gather(mem->data,                            // dst
+		           data + y * pitch + x * bytesPerPixel, // src
+		           pitch,                                // srcStride
+		           w * bytesPerPixel,                    // stride
+		           h);                                   // num
 
 		bgfx::updateTexture2D(
 			  tex->id
@@ -758,7 +762,7 @@ namespace
 
 		if (gl->ncalls > 0)
 		{
-			bgfx::allocTransientVertexBuffer(&gl->tvb, gl->nverts, s_nvgDecl);
+			bgfx::allocTransientVertexBuffer(&gl->tvb, gl->nverts, s_nvgLayout);
 
 			int allocated = gl->tvb.size/gl->tvb.stride;
 

@@ -246,7 +246,7 @@ static void print_resources(const Compiler &compiler, const char *tag, const Sma
 		                compiler.get_decoration_bitset(type.self).get(DecorationBufferBlock);
 		bool is_sized_block = is_block && (compiler.get_storage_class(res.id) == StorageClassUniform ||
 		                                   compiler.get_storage_class(res.id) == StorageClassUniformConstant);
-		uint32_t fallback_id = !is_push_constant && is_block ? res.base_type_id : res.id;
+		ID fallback_id = !is_push_constant && is_block ? ID(res.base_type_id) : ID(res.id);
 
 		uint32_t block_size = 0;
 		uint32_t runtime_array_stride = 0;
@@ -268,7 +268,7 @@ static void print_resources(const Compiler &compiler, const char *tag, const Sma
 		for (auto arr : type.array)
 			array = join("[", arr ? convert_to_string(arr) : "", "]") + array;
 
-		fprintf(stderr, " ID %03u : %s%s", res.id,
+		fprintf(stderr, " ID %03u : %s%s", uint32_t(res.id),
 		        !res.name.empty() ? res.name.c_str() : compiler.get_fallback_name(fallback_id).c_str(), array.c_str());
 
 		if (mask.get(DecorationLocation))
@@ -442,7 +442,7 @@ static void print_spec_constants(const Compiler &compiler)
 	fprintf(stderr, "Specialization constants\n");
 	fprintf(stderr, "==================\n\n");
 	for (auto &c : spec_constants)
-		fprintf(stderr, "ID: %u, Spec ID: %u\n", c.id, c.constant_id);
+		fprintf(stderr, "ID: %u, Spec ID: %u\n", uint32_t(c.id), c.constant_id);
 	fprintf(stderr, "==================\n\n");
 }
 
@@ -516,10 +516,13 @@ struct CLIArguments
 	bool msl_texture_buffer_native = false;
 	bool msl_multiview = false;
 	bool msl_view_index_from_device_index = false;
+	bool msl_dispatch_base = false;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
+	bool vulkan_glsl_disable_ext_samplerless_texture_functions = false;
 	bool emit_line_directives = false;
 	SmallVector<uint32_t> msl_discrete_descriptor_sets;
+	SmallVector<pair<uint32_t, uint32_t>> msl_dynamic_buffers;
 	SmallVector<PLSArg> pls_in;
 	SmallVector<PLSArg> pls_out;
 	SmallVector<Remap> remaps;
@@ -584,6 +587,7 @@ static void print_help()
 	                "\t[--cpp-interface-name <name>]\n"
 	                "\t[--glsl-emit-push-constant-as-ubo]\n"
 	                "\t[--glsl-emit-ubo-as-plain-uniforms]\n"
+	                "\t[--vulkan-glsl-disable-ext-samplerless-texture-functions]\n"
 	                "\t[--msl]\n"
 	                "\t[--msl-version <MMmmpp>]\n"
 	                "\t[--msl-capture-output]\n"
@@ -596,6 +600,8 @@ static void print_help()
 	                "\t[--msl-discrete-descriptor-set <index>]\n"
 	                "\t[--msl-multiview]\n"
 	                "\t[--msl-view-index-from-device-index]\n"
+	                "\t[--msl-dispatch-base]\n"
+	                "\t[--msl-dynamic-buffer <set index> <binding>]\n"
 	                "\t[--hlsl]\n"
 	                "\t[--reflect]\n"
 	                "\t[--shader-model]\n"
@@ -756,16 +762,20 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.texture_buffer_native = args.msl_texture_buffer_native;
 		msl_opts.multiview = args.msl_multiview;
 		msl_opts.view_index_from_device_index = args.msl_view_index_from_device_index;
+		msl_opts.dispatch_base = args.msl_dispatch_base;
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
 			msl_comp->add_discrete_descriptor_set(v);
+		uint32_t i = 0;
+		for (auto &v : args.msl_dynamic_buffers)
+			msl_comp->add_dynamic_buffer(v.first, v.second, i++);
 	}
 	else if (args.hlsl)
 		compiler.reset(new CompilerHLSL(move(spirv_parser.get_parsed_ir())));
 	else
 	{
 		combined_image_samplers = !args.vulkan_semantics;
-		if (!args.vulkan_semantics)
+		if (!args.vulkan_semantics || args.vulkan_glsl_disable_ext_samplerless_texture_functions)
 			build_dummy_sampler = true;
 		compiler.reset(new CompilerGLSL(move(spirv_parser.get_parsed_ir())));
 	}
@@ -1058,6 +1068,8 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--metal", [&args](CLIParser &) { args.msl = true; }); // Legacy compatibility
 	cbs.add("--glsl-emit-push-constant-as-ubo", [&args](CLIParser &) { args.glsl_emit_push_constant_as_ubo = true; });
 	cbs.add("--glsl-emit-ubo-as-plain-uniforms", [&args](CLIParser &) { args.glsl_emit_ubo_as_plain_uniforms = true; });
+	cbs.add("--vulkan-glsl-disable-ext-samplerless-texture-functions",
+	        [&args](CLIParser &) { args.vulkan_glsl_disable_ext_samplerless_texture_functions = true; });
 	cbs.add("--msl", [&args](CLIParser &) { args.msl = true; });
 	cbs.add("--hlsl", [&args](CLIParser &) { args.hlsl = true; });
 	cbs.add("--hlsl-enable-compat", [&args](CLIParser &) { args.hlsl_compat = true; });
@@ -1078,6 +1090,14 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-multiview", [&args](CLIParser &) { args.msl_multiview = true; });
 	cbs.add("--msl-view-index-from-device-index",
 	        [&args](CLIParser &) { args.msl_view_index_from_device_index = true; });
+	cbs.add("--msl-dispatch-base", [&args](CLIParser &) { args.msl_dispatch_base = true; });
+	cbs.add("--msl-dynamic-buffer", [&args](CLIParser &parser) {
+		args.msl_argument_buffers = true;
+		// Make sure next_uint() is called in-order.
+		uint32_t desc_set = parser.next_uint();
+		uint32_t binding = parser.next_uint();
+		args.msl_dynamic_buffers.push_back(make_pair(desc_set, binding));
+	});
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();

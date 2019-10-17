@@ -24,7 +24,7 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
@@ -32,17 +32,17 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBottomLeft = false, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_layout);
 		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)vb.data;
 
 		const float zz = 0.0f;
@@ -140,8 +140,8 @@ void setOffsets4x4Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 class ExampleHDR : public entry::AppI
 {
 public:
-	ExampleHDR(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleHDR(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -629,4 +629,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleHDR, "09-hdr", "Using multiple views with frame buffers, and view order remapping.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleHDR
+	, "09-hdr"
+	, "Using multiple views with frame buffers, and view order remapping."
+	, "https://bkaradzic.github.io/bgfx/examples.html#hdr"
+	);

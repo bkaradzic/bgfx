@@ -41,6 +41,8 @@ struct SSBO
     uint u32;
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 kernel void main0(device SSBO& _96 [[buffer(0)]])
 {
     SSBO0_Type ssbo_0;

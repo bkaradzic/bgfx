@@ -43,4 +43,4 @@ class FuzzerPassAddUsefulConstructs : public FuzzerPass {
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // #define SOURCE_FUZZ_FUZZER_PASS_ADD_USEFUL_CONSTRUCTS_
+#endif  // SOURCE_FUZZ_FUZZER_PASS_ADD_USEFUL_CONSTRUCTS_

@@ -49,7 +49,6 @@ SPVTOOLS_SRC_FILES := \
 		source/val/validate_composites.cpp \
 		source/val/validate_constants.cpp \
 		source/val/validate_conversion.cpp \
-		source/val/validate_datarules.cpp \
 		source/val/validate_debug.cpp \
 		source/val/validate_decorations.cpp \
 		source/val/validate_derivatives.cpp \
@@ -75,6 +74,7 @@ SPVTOOLS_SRC_FILES := \
 
 SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/aggressive_dead_code_elim_pass.cpp \
+		source/opt/amd_ext_to_khr.cpp \
 		source/opt/basic_block.cpp \
 		source/opt/block_merge_pass.cpp \
 		source/opt/block_merge_util.cpp \
@@ -88,6 +88,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/composite.cpp \
 		source/opt/const_folding_rules.cpp \
 		source/opt/constants.cpp \
+		source/opt/convert_to_half_pass.cpp \
 		source/opt/copy_prop_arrays.cpp \
 		source/opt/dead_branch_elim_pass.cpp \
 		source/opt/dead_insert_elim_pass.cpp \
@@ -95,6 +96,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/decompose_initialized_variables_pass.cpp \
 		source/opt/decoration_manager.cpp \
 		source/opt/def_use_manager.cpp \
+		source/opt/desc_sroa.cpp \
 		source/opt/dominator_analysis.cpp \
 		source/opt/dominator_tree.cpp \
 		source/opt/eliminate_dead_constant_pass.cpp \
@@ -110,11 +112,13 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/freeze_spec_constant_value_pass.cpp \
 		source/opt/function.cpp \
 		source/opt/generate_webgpu_initializers_pass.cpp \
+		source/opt/graphics_robust_access_pass.cpp \
 		source/opt/if_conversion.cpp \
 		source/opt/inline_pass.cpp \
 		source/opt/inline_exhaustive_pass.cpp \
 		source/opt/inline_opaque_pass.cpp \
 		source/opt/inst_bindless_check_pass.cpp \
+		source/opt/inst_buff_addr_check_pass.cpp \
 		source/opt/instruction.cpp \
 		source/opt/instruction_list.cpp \
 		source/opt/instrument_pass.cpp \
@@ -126,7 +130,6 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/local_redundancy_elimination.cpp \
 		source/opt/local_single_block_elim_pass.cpp \
 		source/opt/local_single_store_elim_pass.cpp \
-		source/opt/local_ssa_elim_pass.cpp \
 		source/opt/loop_dependence.cpp \
 		source/opt/loop_dependence_helpers.cpp \
 		source/opt/loop_descriptor.cpp \
@@ -149,6 +152,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/reduce_load_size.cpp \
 		source/opt/redundancy_elimination.cpp \
 		source/opt/register_pressure.cpp \
+		source/opt/relax_float_ops_pass.cpp \
 		source/opt/remove_duplicates_pass.cpp \
 		source/opt/replace_invalid_opc.cpp \
 		source/opt/scalar_analysis.cpp \
@@ -169,7 +173,8 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/upgrade_memory_model.cpp \
 		source/opt/value_number_table.cpp \
 		source/opt/vector_dce.cpp \
-		source/opt/workaround1209.cpp
+		source/opt/workaround1209.cpp \
+		source/opt/wrap_opkill.cpp
 
 # Locations of grammar files.
 #
@@ -244,6 +249,8 @@ $(LOCAL_PATH)/source/ext_inst.cpp: \
 	$(1)/spv-amd-shader-ballot.insts.inc \
 	$(1)/spv-amd-shader-explicit-vertex-parameter.insts.inc \
 	$(1)/spv-amd-shader-trinary-minmax.insts.inc
+$(LOCAL_PATH)/source/opt/amd_ext_to_khr.cpp: \
+	$(1)/spv-amd-shader-ballot.insts.inc
 endef
 $(eval $(call gen_spvtools_grammar_tables,$(SPVTOOLS_OUT_PATH)))
 

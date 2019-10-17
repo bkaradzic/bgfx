@@ -203,7 +203,7 @@ static string image_format_to_type(ImageFormat fmt, SPIRType::BaseType basetype)
 	}
 }
 
-string CompilerHLSL::image_type_hlsl_modern(const SPIRType &type, uint32_t)
+string CompilerHLSL::image_type_hlsl_modern(const SPIRType &type, uint32_t id)
 {
 	auto &imagetype = get<SPIRType>(type.image.type);
 	const char *dim = nullptr;
@@ -235,7 +235,12 @@ string CompilerHLSL::image_type_hlsl_modern(const SPIRType &type, uint32_t)
 		if (type.image.sampled == 1)
 			return join("Buffer<", type_to_glsl(imagetype), components, ">");
 		else if (type.image.sampled == 2)
+		{
+			if (interlocked_resources.count(id))
+				return join("RasterizerOrderedBuffer<", image_format_to_type(type.image.format, imagetype.basetype),
+				            ">");
 			return join("RWBuffer<", image_format_to_type(type.image.format, imagetype.basetype), ">");
+		}
 		else
 			SPIRV_CROSS_THROW("Sampler buffers must be either sampled or unsampled. Cannot deduce in runtime.");
 	case DimSubpassData:
@@ -248,6 +253,8 @@ string CompilerHLSL::image_type_hlsl_modern(const SPIRType &type, uint32_t)
 	const char *arrayed = type.image.arrayed ? "Array" : "";
 	const char *ms = type.image.ms ? "MS" : "";
 	const char *rw = typed_load ? "RW" : "";
+	if (typed_load && interlocked_resources.count(id))
+		rw = "RasterizerOrdered";
 	return join(rw, "Texture", dim, ms, arrayed, "<",
 	            typed_load ? image_format_to_type(type.image.format, imagetype.basetype) :
 	                         join(type_to_glsl(imagetype), components),
@@ -1038,8 +1045,9 @@ void CompilerHLSL::emit_specialization_constants_and_structs()
 {
 	bool emitted = false;
 	SpecializationConstant wg_x, wg_y, wg_z;
-	uint32_t workgroup_size_id = get_work_group_size_specialization_constants(wg_x, wg_y, wg_z);
+	ID workgroup_size_id = get_work_group_size_specialization_constants(wg_x, wg_y, wg_z);
 
+	auto loop_lock = ir.create_loop_hard_lock();
 	for (auto &id_ : ir.ids_for_constant_or_type)
 	{
 		auto &id = ir.ids[id_];
@@ -1821,7 +1829,7 @@ void CompilerHLSL::emit_struct_member(const SPIRType &type, uint32_t member_type
 	string packing_offset;
 	bool is_push_constant = type.storage == StorageClassPushConstant;
 
-	if ((has_extended_decoration(type.self, SPIRVCrossDecorationPacked) || is_push_constant) &&
+	if ((has_extended_decoration(type.self, SPIRVCrossDecorationExplicitOffset) || is_push_constant) &&
 	    has_member_decoration(type.self, index, DecorationOffset))
 	{
 		uint32_t offset = memb[index].offset - base_offset;
@@ -1847,16 +1855,20 @@ void CompilerHLSL::emit_buffer_block(const SPIRVariable &var)
 		Bitset flags = ir.get_buffer_block_flags(var);
 		bool is_readonly = flags.get(DecorationNonWritable);
 		bool is_coherent = flags.get(DecorationCoherent);
+		bool is_interlocked = interlocked_resources.count(var.self) > 0;
+		const char *type_name = "ByteAddressBuffer ";
+		if (!is_readonly)
+			type_name = is_interlocked ? "RasterizerOrderedByteAddressBuffer " : "RWByteAddressBuffer ";
 		add_resource_name(var.self);
-		statement(is_coherent ? "globallycoherent " : "", is_readonly ? "ByteAddressBuffer " : "RWByteAddressBuffer ",
-		          to_name(var.self), type_to_array_glsl(type), to_resource_binding(var), ";");
+		statement(is_coherent ? "globallycoherent " : "", type_name, to_name(var.self), type_to_array_glsl(type),
+		          to_resource_binding(var), ";");
 	}
 	else
 	{
 		if (type.array.empty())
 		{
 			if (buffer_is_packing_standard(type, BufferPackingHLSLCbufferPackOffset))
-				set_extended_decoration(type.self, SPIRVCrossDecorationPacked);
+				set_extended_decoration(type.self, SPIRVCrossDecorationExplicitOffset);
 			else
 				SPIRV_CROSS_THROW("cbuffer cannot be expressed with either HLSL packing layout or packoffset.");
 
@@ -1942,7 +1954,7 @@ void CompilerHLSL::emit_push_constant_block(const SPIRVariable &var)
 			auto &type = get<SPIRType>(var.basetype);
 
 			if (buffer_is_packing_standard(type, BufferPackingHLSLCbufferPackOffset, layout.start, layout.end))
-				set_extended_decoration(type.self, SPIRVCrossDecorationPacked);
+				set_extended_decoration(type.self, SPIRVCrossDecorationExplicitOffset);
 			else
 				SPIRV_CROSS_THROW(
 				    "root constant cbuffer cannot be expressed with either HLSL packing layout or packoffset.");
@@ -2013,9 +2025,9 @@ void CompilerHLSL::emit_sampled_image_op(uint32_t result_type, uint32_t result_i
 	}
 }
 
-string CompilerHLSL::to_func_call_arg(uint32_t id)
+string CompilerHLSL::to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id)
 {
-	string arg_str = CompilerGLSL::to_func_call_arg(id);
+	string arg_str = CompilerGLSL::to_func_call_arg(arg, id);
 
 	if (hlsl_options.shader_model <= 30)
 		return arg_str;
@@ -2477,7 +2489,7 @@ void CompilerHLSL::emit_texture_op(const Instruction &i)
 
 	uint32_t result_type = ops[0];
 	uint32_t id = ops[1];
-	uint32_t img = ops[2];
+	VariableID img = ops[2];
 	uint32_t coord = ops[3];
 	uint32_t dref = 0;
 	uint32_t comp = 0;
@@ -2880,7 +2892,8 @@ void CompilerHLSL::emit_texture_op(const Instruction &i)
 		// according to GLSL spec, and it depends on the sampler itself.
 		// Just assume X == Y, so we will need to splat the result to a float2.
 		statement("float _", id, "_tmp = ", expr, ";");
-		emit_op(result_type, id, join("float2(_", id, "_tmp, _", id, "_tmp)"), true, true);
+		statement("float2 _", id, " = _", id, "_tmp.xx;");
+		set<SPIRExpression>(id, join("_", id), result_type, true);
 	}
 	else
 	{
@@ -2896,7 +2909,6 @@ void CompilerHLSL::emit_texture_op(const Instruction &i)
 	case OpImageSampleImplicitLod:
 	case OpImageSampleProjImplicitLod:
 	case OpImageSampleProjDrefImplicitLod:
-	case OpImageQueryLod:
 		register_control_dependent_expression(id);
 		break;
 
@@ -3712,7 +3724,7 @@ void CompilerHLSL::emit_access_chain(const Instruction &instruction)
 		e.row_major_matrix = row_major_matrix;
 		e.matrix_stride = matrix_stride;
 		e.immutable = should_forward(ops[2]);
-		e.loaded_from = backing_variable ? backing_variable->self : 0;
+		e.loaded_from = backing_variable ? backing_variable->self : ID(0);
 
 		if (chain)
 		{
@@ -4044,18 +4056,21 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 
 	case OpMatrixTimesVector:
 	{
+		// Matrices are kept in a transposed state all the time, flip multiplication order always.
 		emit_binary_func_op(ops[0], ops[1], ops[3], ops[2], "mul");
 		break;
 	}
 
 	case OpVectorTimesMatrix:
 	{
+		// Matrices are kept in a transposed state all the time, flip multiplication order always.
 		emit_binary_func_op(ops[0], ops[1], ops[3], ops[2], "mul");
 		break;
 	}
 
 	case OpMatrixTimesMatrix:
 	{
+		// Matrices are kept in a transposed state all the time, flip multiplication order always.
 		emit_binary_func_op(ops[0], ops[1], ops[3], ops[2], "mul");
 		break;
 	}
@@ -4479,7 +4494,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 
 		// When using the pointer, we need to know which variable it is actually loaded from.
 		auto *var = maybe_get_backing_variable(ops[2]);
-		e.loaded_from = var ? var->self : 0;
+		e.loaded_from = var ? var->self : ID(0);
 		break;
 	}
 
@@ -4637,8 +4652,11 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 	}
 
 	case OpBitCount:
-		HLSL_UFOP(countbits);
+	{
+		auto basetype = expression_type(ops[2]).basetype;
+		emit_unary_func_op_cast(ops[0], ops[1], ops[2], "countbits", basetype, basetype);
 		break;
+	}
 
 	case OpBitReverse:
 		HLSL_UFOP(reversebits);
@@ -4665,6 +4683,12 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 
 	case OpIsHelperInvocationEXT:
 		SPIRV_CROSS_THROW("helperInvocationEXT() is not supported in HLSL.");
+
+	case OpBeginInvocationInterlockEXT:
+	case OpEndInvocationInterlockEXT:
+		if (hlsl_options.shader_model < 51)
+			SPIRV_CROSS_THROW("Rasterizer order views require Shader Model 5.1.");
+		break; // Nothing to do in the body
 
 	default:
 		CompilerGLSL::emit_instruction(instruction);
@@ -4740,7 +4764,7 @@ void CompilerHLSL::add_vertex_attribute_remap(const HLSLVertexAttributeRemap &ve
 	remap_vertex_attributes.push_back(vertex_attributes);
 }
 
-uint32_t CompilerHLSL::remap_num_workgroups_builtin()
+VariableID CompilerHLSL::remap_num_workgroups_builtin()
 {
 	update_active_builtins();
 
@@ -4843,6 +4867,7 @@ string CompilerHLSL::compile()
 	validate_shader_model();
 	update_active_builtins();
 	analyze_image_and_sampler_usage();
+	analyze_interlocked_resource_usage();
 
 	// Subpass input needs SV_Position.
 	if (need_subpass_input)

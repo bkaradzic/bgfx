@@ -1274,6 +1274,12 @@ FoldingRule CompositeConstructFeedingExtract() {
            "Wrong opcode.  Should be OpCompositeExtract.");
     analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
     analysis::TypeManager* type_mgr = context->get_type_mgr();
+
+    // If there are no index operands, then this rule cannot do anything.
+    if (inst->NumInOperands() <= 1) {
+      return false;
+    }
+
     uint32_t cid = inst->GetSingleWordInOperand(kExtractCompositeIdInIdx);
     Instruction* cinst = def_use_mgr->GetDef(cid);
 
@@ -1399,6 +1405,20 @@ FoldingRule CompositeExtractFeedingConstruct() {
     inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {original_id}}});
     return true;
   };
+}
+
+// Folds an OpCompositeExtract instruction with no indexes into an OpCopyObject.
+bool ExtractWithNoIndexes(IRContext*, Instruction* inst,
+                          const std::vector<const analysis::Constant*>&) {
+  assert(inst->opcode() == SpvOpCompositeExtract &&
+         "Wrong opcode.  Should be OpCompositeExtract.");
+
+  if (inst->NumInOperands() > 1) {
+    return false;
+  }
+
+  inst->SetOpcode(SpvOpCopyObject);
+  return true;
 }
 
 FoldingRule InsertFeedingExtract() {
@@ -2200,13 +2220,14 @@ FoldingRule RemoveRedundantOperands() {
 
 }  // namespace
 
-FoldingRules::FoldingRules() {
+void FoldingRules::AddFoldingRules() {
   // Add all folding rules to the list for the opcodes to which they apply.
   // Note that the order in which rules are added to the list matters. If a rule
   // applies to the instruction, the rest of the rules will not be attempted.
   // Take that into consideration.
   rules_[SpvOpCompositeConstruct].push_back(CompositeExtractFeedingConstruct());
 
+  rules_[SpvOpCompositeExtract].push_back(ExtractWithNoIndexes);
   rules_[SpvOpCompositeExtract].push_back(InsertFeedingExtract());
   rules_[SpvOpCompositeExtract].push_back(CompositeConstructFeedingExtract());
   rules_[SpvOpCompositeExtract].push_back(VectorShuffleFeedingExtract());
@@ -2215,8 +2236,6 @@ FoldingRules::FoldingRules() {
   rules_[SpvOpDot].push_back(DotProductDoingExtract());
 
   rules_[SpvOpEntryPoint].push_back(RemoveRedundantOperands());
-
-  rules_[SpvOpExtInst].push_back(RedundantFMix());
 
   rules_[SpvOpFAdd].push_back(RedundantFAdd());
   rules_[SpvOpFAdd].push_back(MergeAddNegateArithmetic());
@@ -2271,6 +2290,15 @@ FoldingRules::FoldingRules() {
   rules_[SpvOpUDiv].push_back(MergeDivNegateArithmetic());
 
   rules_[SpvOpVectorShuffle].push_back(VectorShuffleFeedingShuffle());
+
+  FeatureManager* feature_manager = context_->get_feature_mgr();
+  // Add rules for GLSLstd450
+  uint32_t ext_inst_glslstd450_id =
+      feature_manager->GetExtInstImportId_GLSLstd450();
+  if (ext_inst_glslstd450_id != 0) {
+    ext_rules_[{ext_inst_glslstd450_id, GLSLstd450FMix}].push_back(
+        RedundantFMix());
+  }
 }
 }  // namespace opt
 }  // namespace spvtools

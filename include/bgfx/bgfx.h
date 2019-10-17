@@ -403,7 +403,7 @@ namespace bgfx
 	BGFX_HANDLE(TextureHandle)
 	BGFX_HANDLE(UniformHandle)
 	BGFX_HANDLE(VertexBufferHandle)
-	BGFX_HANDLE(VertexDeclHandle)
+	BGFX_HANDLE(VertexLayoutHandle)
 
 	/// Callback interface to implement application specific behavior.
 	/// Cached items are currently used for OpenGL and Direct3D 12 binary
@@ -754,7 +754,7 @@ namespace bgfx
 			uint32_t maxTextures;             //!< Maximum number of texture handles.
 			uint32_t maxTextureSamplers;      //!< Maximum number of texture samplers.
 			uint32_t maxComputeBindings;      //!< Maximum number of compute bindings.
-			uint32_t maxVertexDecls;          //!< Maximum number of vertex format declarations.
+			uint32_t maxVertexLayouts;        //!< Maximum number of vertex format layouts.
 			uint32_t maxVertexStreams;        //!< Maximum number of vertex streams.
 			uint32_t maxIndexBuffers;         //!< Maximum number of index buffer handles.
 			uint32_t maxVertexBuffers;        //!< Maximum number of vertex buffer handles.
@@ -811,12 +811,12 @@ namespace bgfx
 	///
 	struct TransientVertexBuffer
 	{
-		uint8_t* data;             //!< Pointer to data.
-		uint32_t size;             //!< Data size.
-		uint32_t startVertex;      //!< First vertex.
-		uint16_t stride;           //!< Vertex stride.
-		VertexBufferHandle handle; //!< Vertex buffer handle.
-		VertexDeclHandle decl;     //!< Vertex declaration handle.
+		uint8_t* data;                      //!< Pointer to data.
+		uint32_t size;                      //!< Data size.
+		uint32_t startVertex;               //!< First vertex.
+		uint16_t stride;                    //!< Vertex stride.
+		VertexBufferHandle handle;          //!< Vertex buffer handle.
+		VertexLayoutHandle layoutHandle;    //!< Vertex layout handle.
 	};
 
 	/// Instance data buffer info.
@@ -961,7 +961,7 @@ namespace bgfx
 		uint16_t numTextures;               //!< Number of used textures.
 		uint16_t numUniforms;               //!< Number of used uniforms.
 		uint16_t numVertexBuffers;          //!< Number of used vertex buffers.
-		uint16_t numVertexDecls;            //!< Number of used vertex declarations.
+		uint16_t numVertexLayouts;          //!< Number of used vertex layouts.
 
 		int64_t textureMemoryUsed;          //!< Estimate of texture memory used.
 		int64_t rtMemoryUsed;               //!< Estimate of render target memory used.
@@ -1225,7 +1225,7 @@ namespace bgfx
 		/// @param[in] _handle Vertex buffer.
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
-		/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
+		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_set_vertex_buffer`.
 		///
@@ -1234,7 +1234,7 @@ namespace bgfx
 			, VertexBufferHandle _handle
 			, uint32_t _startVertex
 			, uint32_t _numVertices
-			, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
+			, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 			);
 
 		/// Set vertex buffer for draw primitive.
@@ -1255,7 +1255,7 @@ namespace bgfx
 		/// @param[in] _handle Dynamic vertex buffer.
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
-		/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
+		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_set_dynamic_vertex_buffer`.
 		///
@@ -1264,7 +1264,7 @@ namespace bgfx
 			, DynamicVertexBufferHandle _handle
 			, uint32_t _startVertex
 			, uint32_t _numVertices
-			, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
+			, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 			);
 
 		/// Set vertex buffer for draw primitive.
@@ -1285,7 +1285,7 @@ namespace bgfx
 		/// @param[in] _tvb Transient vertex buffer.
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
-		/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
+		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_set_transient_vertex_buffer`.
 		///
@@ -1294,7 +1294,7 @@ namespace bgfx
 			, const TransientVertexBuffer* _tvb
 			, uint32_t _startVertex
 			, uint32_t _numVertices
-			, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
+			, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 			);
 
 		/// Set number of vertices for auto generated vertices use in conjuction
@@ -1662,27 +1662,27 @@ namespace bgfx
 			);
 	};
 
-	/// Vertex declaration.
+	/// Vertex layout.
 	///
-	/// @attention C99 equivalent is `bgfx_vertex_decl_t`.
+	/// @attention C99 equivalent is `bgfx_vertex_layout_t`.
 	///
-	struct VertexDecl
+	struct VertexLayout
 	{
-		VertexDecl();
+		VertexLayout();
 
-		/// Start VertexDecl.
+		/// Start VertexLayout.
 		///
-		/// @attention C99 equivalent is `bgfx_vertex_decl_begin`.
+		/// @attention C99 equivalent is `bgfx_vertex_layout_begin`.
 		///
-		VertexDecl& begin(RendererType::Enum _renderer = RendererType::Noop);
+		VertexLayout& begin(RendererType::Enum _renderer = RendererType::Noop);
 
-		/// End VertexDecl.
+		/// End VertexLayout.
 		///
-		/// @attention C99 equivalent is `bgfx_vertex_decl_end`.
+		/// @attention C99 equivalent is `bgfx_vertex_layout_end`.
 		///
 		void end();
 
-		/// Add attribute to VertexDecl.
+		/// Add attribute to VertexLayout.
 		///
 		/// @param[in] _attrib Attribute semantics. See: `bgfx::Attrib`
 		/// @param[in] _num Number of elements 1, 2, 3 or 4.
@@ -1698,9 +1698,9 @@ namespace bgfx
 		/// @remarks
 		///   Must be called between begin/end.
 		///
-		/// @attention C99 equivalent is `bgfx_vertex_decl_add`.
+		/// @attention C99 equivalent is `bgfx_vertex_layout_add`.
 		///
-		VertexDecl& add(
+		VertexLayout& add(
 			  Attrib::Enum _attrib
 			, uint8_t _num
 			, AttribType::Enum _type
@@ -1710,13 +1710,13 @@ namespace bgfx
 
 		/// Skip _num bytes in vertex stream.
 		///
-		/// @attention C99 equivalent is `bgfx_vertex_decl_skip`.
+		/// @attention C99 equivalent is `bgfx_vertex_layout_skip`.
 		///
-		VertexDecl& skip(uint8_t _num);
+		VertexLayout& skip(uint8_t _num);
 
 		/// Decode attribute.
 		///
-		/// @attention C99 equivalent is `bgfx_vertex_decl_decode`.
+		/// @attention C99 equivalent is `bgfx_vertex_layout_decode`.
 		///
 		void decode(
 			  Attrib::Enum _attrib
@@ -1726,9 +1726,9 @@ namespace bgfx
 			, bool& _asInt
 			) const;
 
-		/// Returns true if VertexDecl contains attribute.
+		/// Returns true if VertexLayout contains attribute.
 		///
-		/// @attention C99 equivalent is `bgfx_vertex_decl_has`.
+		/// @attention C99 equivalent is `bgfx_vertex_layout_has`.
 		///
 		bool has(Attrib::Enum _attrib) const { return UINT16_MAX != m_attributes[_attrib]; }
 
@@ -1752,7 +1752,7 @@ namespace bgfx
 	/// @param[in] _input Value to be packed into vertex stream.
 	/// @param[in] _inputNormalized True if input value is already normalized.
 	/// @param[in] _attr Attribute to pack.
-	/// @param[in] _decl Vertex stream declaration.
+	/// @param[in] _layout Vertex stream layout.
 	/// @param[in] _data Destination vertex stream where data will be packed.
 	/// @param[in] _index Vertex index that will be modified.
 	///
@@ -1762,7 +1762,7 @@ namespace bgfx
 		  const float _input[4]
 		, bool _inputNormalized
 		, Attrib::Enum _attr
-		, const VertexDecl& _decl
+		, const VertexLayout& _layout
 		, void* _data
 		, uint32_t _index = 0
 		);
@@ -1771,7 +1771,7 @@ namespace bgfx
 	///
 	/// @param[out] _output Result of unpacking.
 	/// @param[in]  _attr Attribute to unpack.
-	/// @param[in]  _decl Vertex stream declaration.
+	/// @param[in]  _layout Vertex stream layout.
 	/// @param[in]  _data Source vertex stream from where data will be unpacked.
 	/// @param[in]  _index Vertex index that will be unpacked.
 	///
@@ -1780,25 +1780,25 @@ namespace bgfx
 	void vertexUnpack(
 		  float _output[4]
 		, Attrib::Enum _attr
-		, const VertexDecl& _decl
+		, const VertexLayout& _layout
 		, const void* _data
 		, uint32_t _index = 0
 		);
 
 	/// Converts vertex stream data from one vertex stream format to another.
 	///
-	/// @param[in] _destDecl Destination vertex stream declaration.
+	/// @param[in] _destLayout Destination vertex stream layout.
 	/// @param[in] _destData Destination vertex stream.
-	/// @param[in] _srcDecl Source vertex stream declaration.
+	/// @param[in] _srcLayout Source vertex stream layout.
 	/// @param[in] _srcData Source vertex stream data.
 	/// @param[in] _num Number of vertices to convert from source to destination.
 	///
 	/// @attention C99 equivalent is `bgfx_vertex_convert`.
 	///
 	void vertexConvert(
-		  const VertexDecl& _destDecl
+		  const VertexLayout& _destLayout
 		, void* _destData
-		, const VertexDecl& _srcDecl
+		, const VertexLayout& _srcLayout
 		, const void* _srcData
 		, uint32_t _num = 1
 		);
@@ -1807,7 +1807,7 @@ namespace bgfx
 	///
 	/// @param[in] _output Welded vertices remapping table. The size of buffer
 	///   must be the same as number of vertices.
-	/// @param[in] _decl Vertex stream declaration.
+	/// @param[in] _layout Vertex stream layout.
 	/// @param[in] _data Vertex stream.
 	/// @param[in] _num Number of vertices in vertex stream.
 	/// @param[in] _epsilon Error tolerance for vertex position comparison.
@@ -1817,7 +1817,7 @@ namespace bgfx
 	///
 	uint16_t weldVertices(
 		  uint16_t* _output
-		, const VertexDecl& _decl
+		, const VertexLayout& _layout
 		, const void* _data
 		, uint16_t _num
 		, float _epsilon = 0.001f
@@ -2166,22 +2166,22 @@ namespace bgfx
 	///
 	void destroy(IndexBufferHandle _handle);
 
-	/// Create vertex declaration.
+	/// Create vertex layout.
 	///
-	/// @attention C99 equivalent is `bgfx_create_vertex_decl`.
+	/// @attention C99 equivalent is `bgfx_create_vertex_layout`.
 	///
-	VertexDeclHandle createVertexDecl(const VertexDecl& _decl);
+	VertexLayoutHandle createVertexLayout(const VertexLayout& _layout);
 
-	/// Destroy vertex declaration.
+	/// Destroy vertex layout.
 	///
-	/// @attention C99 equivalent is `bgfx_destroy_vertex_decl`.
+	/// @attention C99 equivalent is `bgfx_destroy_vertex_layout`.
 	///
-	void destroy(VertexDeclHandle _handle);
+	void destroy(VertexLayoutHandle _handle);
 
 	/// Create static vertex buffer.
 	///
 	/// @param[in] _mem Vertex buffer data.
-	/// @param[in] _decl Vertex declaration.
+	/// @param[in] _layout Vertex layout.
 	/// @param[in] _flags Buffer creation flags.
 	///   - `BGFX_BUFFER_NONE` - No flags.
 	///   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
@@ -2200,7 +2200,7 @@ namespace bgfx
 	///
 	VertexBufferHandle createVertexBuffer(
 		  const Memory* _mem
-		, const VertexDecl& _decl
+		, const VertexLayout& _layout
 		, uint16_t _flags = BGFX_BUFFER_NONE
 		);
 
@@ -2300,7 +2300,7 @@ namespace bgfx
 	/// Create empty dynamic vertex buffer.
 	///
 	/// @param[in] _num Number of vertices.
-	/// @param[in] _decl Vertex declaration.
+	/// @param[in] _layout Vertex layout.
 	/// @param[in] _flags Buffer creation flags.
 	///   - `BGFX_BUFFER_NONE` - No flags.
 	///   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
@@ -2319,14 +2319,14 @@ namespace bgfx
 	///
 	DynamicVertexBufferHandle createDynamicVertexBuffer(
 		  uint32_t _num
-		, const VertexDecl& _decl
+		, const VertexLayout& _layout
 		, uint16_t _flags = BGFX_BUFFER_NONE
 		);
 
 	/// Create dynamic vertex buffer and initialize it.
 	///
 	/// @param[in] _mem Vertex buffer data.
-	/// @param[in] _decl Vertex declaration.
+	/// @param[in] _layout Vertex layout.
 	/// @param[in] _flags Buffer creation flags.
 	///   - `BGFX_BUFFER_NONE` - No flags.
 	///   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
@@ -2345,7 +2345,7 @@ namespace bgfx
 	///
 	DynamicVertexBufferHandle createDynamicVertexBuffer(
 		  const Memory* _mem
-		, const VertexDecl& _decl
+		, const VertexLayout& _layout
 		, uint16_t _flags = BGFX_BUFFER_NONE
 		);
 
@@ -2382,13 +2382,13 @@ namespace bgfx
 	/// Returns number of requested or maximum available vertices.
 	///
 	/// @param[in] _num Number of required vertices.
-	/// @param[in] _decl Vertex declaration.
+	/// @param[in] _layout Vertex layout.
 	///
 	/// @attention C99 equivalent is `bgfx_get_avail_transient_vertex_buffer`.
 	///
 	uint32_t getAvailTransientVertexBuffer(
 		  uint32_t _num
-		, const VertexDecl& _decl
+		, const VertexLayout& _layout
 		);
 
 	/// Returns number of requested or maximum available instance buffer slots.
@@ -2426,14 +2426,14 @@ namespace bgfx
 	///   for the duration of frame, and it can be reused for multiple draw
 	///   calls.
 	/// @param[in] _num Number of vertices to allocate.
-	/// @param[in] _decl Vertex declaration.
+	/// @param[in] _layout Vertex layout.
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_transient_vertex_buffer`.
 	///
 	void allocTransientVertexBuffer(
 		  TransientVertexBuffer* _tvb
 		, uint32_t _num
-		, const VertexDecl& _decl
+		, const VertexLayout& _layout
 		);
 
 	/// Check for required space and allocate transient vertex and index
@@ -2447,7 +2447,7 @@ namespace bgfx
 	///
 	bool allocTransientBuffers(
 		  TransientVertexBuffer* _tvb
-		, const VertexDecl& _decl
+		, const VertexLayout& _layout
 		, uint32_t _numVertices
 		, TransientIndexBuffer* _tib
 		, uint32_t _numIndices
@@ -3621,7 +3621,7 @@ namespace bgfx
 	/// @param[in] _handle Vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
-	/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
+	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_vertex_buffer`.
 	///
@@ -3630,7 +3630,7 @@ namespace bgfx
 		, VertexBufferHandle _handle
 		, uint32_t _startVertex
 		, uint32_t _numVertices
-		, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
+		, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 		);
 
 	/// Set vertex buffer for draw primitive.
@@ -3651,7 +3651,7 @@ namespace bgfx
 	/// @param[in] _handle Dynamic vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
-	/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
+	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_dynamic_vertex_buffer`.
 	///
@@ -3660,7 +3660,7 @@ namespace bgfx
 		, DynamicVertexBufferHandle _handle
 		, uint32_t _startVertex
 		, uint32_t _numVertices
-		, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
+		, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 		);
 
 	/// Set vertex buffer for draw primitive.
@@ -3681,7 +3681,7 @@ namespace bgfx
 	/// @param[in] _tvb Transient vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
-	/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
+	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 	///
@@ -3690,7 +3690,7 @@ namespace bgfx
 		, const TransientVertexBuffer* _tvb
 		, uint32_t _startVertex
 		, uint32_t _numVertices
-		, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
+		, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 		);
 
 	/// Set number of vertices for auto generated vertices use in conjuction

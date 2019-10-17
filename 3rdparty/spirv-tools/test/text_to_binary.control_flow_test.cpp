@@ -342,7 +342,7 @@ TEST_P(OpSwitchInvalidTypeTestCase, InvalidTypes) {
       "%1 = " + GetParam() +
       "\n"
       "%3 = OpCopyObject %1 %2\n"  // We only care the type of the expression
-      "%4 = OpSwitch %3 %default 32 %c\n";
+      "     OpSwitch %3 %default 32 %c\n";
   EXPECT_THAT(CompileFailure(input),
               Eq("The selector operand for OpSwitch must be the result of an "
                  "instruction that generates an integer scalar"));
@@ -371,8 +371,11 @@ INSTANTIATE_TEST_SUITE_P(
        "OpTypeReserveId",
        "OpTypeQueue",
        "OpTypePipe ReadOnly",
-       "OpTypeForwardPointer %a UniformConstant",
-           // At least one thing that isn't a type at all
+
+       // Skip OpTypeForwardPointer becasuse it doesn't even produce a result
+       // ID.
+
+       // At least one thing that isn't a type at all
        "OpNot %a %b"
       },
     }));

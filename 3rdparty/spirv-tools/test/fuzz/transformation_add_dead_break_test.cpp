@@ -2080,6 +2080,534 @@ TEST(TransformationAddDeadBreakTest, PhiInstructions) {
   ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
 }
 
+TEST(TransformationAddDeadBreakTest, RespectDominanceRules1) {
+  // Right after the loop, an OpCopyObject defined by the loop is used.  Adding
+  // a dead break would prevent that use from being dominated by its definition,
+  // so is not allowed.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpLoopMerge %101 %102 None
+               OpBranch %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %104
+        %104 = OpLabel
+               OpBranch %102
+        %102 = OpLabel
+               OpBranchConditional %11 %100 %101
+        %101 = OpLabel
+        %201 = OpCopyObject %10 %200
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadBreak(100, 101, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadBreakTest, RespectDominanceRules2) {
+  // This example captures the following idiom:
+  //
+  //   if {
+  // L1:
+  //   }
+  //   definition;
+  // L2:
+  //   use;
+  //
+  // Adding a dead jump from L1 to L2 would lead to 'definition' no longer
+  // dominating 'use', and so is not allowed.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpSelectionMerge %101 None
+               OpBranchConditional %11 %102 %103
+        %102 = OpLabel
+               OpBranch %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %101
+        %101 = OpLabel
+        %201 = OpCopyObject %10 %200
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadBreak(102, 101, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadBreakTest, RespectDominanceRules3) {
+  // Right after the loop, an OpCopyObject defined by the loop is used in an
+  // OpPhi. Adding a dead break is OK in this case, due to the use being in an
+  // OpPhi.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpLoopMerge %101 %102 None
+               OpBranch %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %104
+        %104 = OpLabel
+               OpBranch %102
+        %102 = OpLabel
+               OpBranchConditional %11 %100 %101
+        %101 = OpLabel
+        %201 = OpPhi %10 %200 %102
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto good_transformation = TransformationAddDeadBreak(100, 101, false, {11});
+  ASSERT_TRUE(good_transformation.IsApplicable(context.get(), fact_manager));
+
+  good_transformation.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  std::string after_transformation = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpLoopMerge %101 %102 None
+               OpBranchConditional %11 %101 %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %104
+        %104 = OpLabel
+               OpBranch %102
+        %102 = OpLabel
+               OpBranchConditional %11 %100 %101
+        %101 = OpLabel
+        %201 = OpPhi %10 %200 %102 %11 %100
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
+}
+
+TEST(TransformationAddDeadBreakTest, RespectDominanceRules4) {
+  // This example captures the following idiom:
+  //
+  //   if {
+  // L1:
+  //   }
+  //   definition;
+  // L2:
+  //   use in OpPhi;
+  //
+  // Adding a dead jump from L1 to L2 is OK, due to 'use' being in an OpPhi.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpSelectionMerge %101 None
+               OpBranchConditional %11 %102 %103
+        %102 = OpLabel
+               OpBranch %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %101
+        %101 = OpLabel
+        %201 = OpPhi %10 %200 %103
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto good_transformation = TransformationAddDeadBreak(102, 101, false, {11});
+  ASSERT_TRUE(good_transformation.IsApplicable(context.get(), fact_manager));
+
+  good_transformation.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  std::string after_transformation = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpSelectionMerge %101 None
+               OpBranchConditional %11 %102 %103
+        %102 = OpLabel
+               OpBranchConditional %11 %101 %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %101
+        %101 = OpLabel
+        %201 = OpPhi %10 %200 %103 %11 %102
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
+}
+
+TEST(TransformationAddDeadBreakTest, RespectDominanceRules5) {
+  // After, but not right after, the loop, an OpCopyObject defined by the loop
+  // is used in an OpPhi. Adding a dead break is not OK in this case.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpLoopMerge %101 %102 None
+               OpBranch %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %104
+        %104 = OpLabel
+               OpBranch %102
+        %102 = OpLabel
+               OpBranchConditional %11 %100 %101
+        %101 = OpLabel
+               OpBranch %105
+        %105 = OpLabel
+        %201 = OpPhi %10 %200 %101
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadBreak(100, 101, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadBreakTest, RespectDominanceRules6) {
+  // This example captures the following idiom:
+  //
+  //   if {
+  // L1:
+  //   }
+  //   definition;
+  // L2:
+  //   goto L3;
+  // L3:
+  //   use in OpPhi;
+  //
+  // Adding a dead jump from L1 to L2 not OK, due to the use in an OpPhi being
+  // in L3.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpSelectionMerge %101 None
+               OpBranchConditional %11 %102 %103
+        %102 = OpLabel
+               OpBranch %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %101
+        %101 = OpLabel
+               OpBranch %150
+        %150 = OpLabel
+        %201 = OpPhi %10 %200 %101
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadBreak(102, 101, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadBreakTest, RespectDominanceRules7) {
+  // This example - a variation on an earlier test - captures the following
+  // idiom:
+  //
+  //   loop {
+  // L1:
+  //   }
+  //   definition;
+  // L2:
+  //   use;
+  //
+  // Adding a dead jump from L1 to L2 would lead to 'definition' no longer
+  // dominating 'use', and so is not allowed.
+  //
+  // This version of the test captures the case where L1 appears after the
+  // loop merge (which SPIR-V dominance rules allow).
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpLoopMerge %101 %104 None
+               OpBranchConditional %11 %102 %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %101
+        %101 = OpLabel
+        %201 = OpCopyObject %10 %200
+               OpReturn
+        %102 = OpLabel
+               OpBranch %103
+        %104 = OpLabel
+               OpBranch %100
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadBreak(102, 101, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadBreakTest, RespectDominanceRules8) {
+  // A variation of RespectDominanceRules8 where the defining block appears
+  // in the loop, but after the definition of interest.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpLoopMerge %101 %104 None
+               OpBranchConditional %11 %102 %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %101
+        %102 = OpLabel
+               OpBranch %103
+        %101 = OpLabel
+        %201 = OpCopyObject %10 %200
+               OpReturn
+        %104 = OpLabel
+               OpBranch %100
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadBreak(102, 101, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadBreakTest,
+     BreakWouldDisobeyDominanceBlockOrderingRules) {
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool
+          %9 = OpConstantTrue %6
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %10
+         %10 = OpLabel
+               OpLoopMerge %16 %15 None
+               OpBranch %11
+         %11 = OpLabel
+               OpSelectionMerge %14 None
+               OpBranchConditional %9 %12 %13
+         %14 = OpLabel
+               OpBranch %15
+         %12 = OpLabel
+               OpBranch %16
+         %13 = OpLabel
+               OpBranch %16
+         %15 = OpLabel
+               OpBranch %10
+         %16 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // Bad because 14 comes before 12 in the module, and 14 has no predecessors.
+  // This means that an edge from 12 to 14 will lead to 12 dominating 14, which
+  // is illegal if 12 appears after 14.
+  auto bad_transformation = TransformationAddDeadBreak(12, 14, true, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools

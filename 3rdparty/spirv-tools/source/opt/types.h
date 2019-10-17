@@ -58,6 +58,7 @@ class ForwardPointer;
 class PipeStorage;
 class NamedBarrier;
 class AccelerationStructureNV;
+class CooperativeMatrixNV;
 
 // Abstract class for a SPIR-V type. It has a bunch of As<sublcass>() methods,
 // which is used as a way to probe the actual <subclass>.
@@ -93,6 +94,7 @@ class Type {
     kPipeStorage,
     kNamedBarrier,
     kAccelerationStructureNV,
+    kCooperativeMatrixNV
   };
 
   Type(Kind k) : kind_(k) {}
@@ -196,6 +198,7 @@ class Type {
   DeclareCastMethod(PipeStorage)
   DeclareCastMethod(NamedBarrier)
   DeclareCastMethod(AccelerationStructureNV)
+  DeclareCastMethod(CooperativeMatrixNV)
 #undef DeclareCastMethod
 
  protected:
@@ -258,7 +261,7 @@ class Float : public Type {
 
 class Vector : public Type {
  public:
-  Vector(Type* element_type, uint32_t count);
+  Vector(const Type* element_type, uint32_t count);
   Vector(const Vector&) = default;
 
   std::string str() const override;
@@ -280,7 +283,7 @@ class Vector : public Type {
 
 class Matrix : public Type {
  public:
-  Matrix(Type* element_type, uint32_t count);
+  Matrix(const Type* element_type, uint32_t count);
   Matrix(const Matrix&) = default;
 
   std::string str() const override;
@@ -407,7 +410,7 @@ class Array : public Type {
 
 class RuntimeArray : public Type {
  public:
-  RuntimeArray(Type* element_type);
+  RuntimeArray(const Type* element_type);
   RuntimeArray(const RuntimeArray&) = default;
 
   std::string str() const override;
@@ -520,8 +523,8 @@ class Pointer : public Type {
 
 class Function : public Type {
  public:
-  Function(Type* ret_type, const std::vector<const Type*>& params);
-  Function(Type* ret_type, std::vector<const Type*>& params);
+  Function(const Type* ret_type, const std::vector<const Type*>& params);
+  Function(const Type* ret_type, std::vector<const Type*>& params);
   Function(const Function&) = default;
 
   std::string str() const override;
@@ -595,6 +598,36 @@ class ForwardPointer : public Type {
   uint32_t target_id_;
   SpvStorageClass storage_class_;
   const Pointer* pointer_;
+};
+
+class CooperativeMatrixNV : public Type {
+ public:
+  CooperativeMatrixNV(const Type* type, const uint32_t scope,
+                      const uint32_t rows, const uint32_t columns);
+  CooperativeMatrixNV(const CooperativeMatrixNV&) = default;
+
+  std::string str() const override;
+
+  CooperativeMatrixNV* AsCooperativeMatrixNV() override { return this; }
+  const CooperativeMatrixNV* AsCooperativeMatrixNV() const override {
+    return this;
+  }
+
+  void GetExtraHashWords(std::vector<uint32_t>*,
+                         std::unordered_set<const Type*>*) const override;
+
+  const Type* component_type() const { return component_type_; }
+  uint32_t scope_id() const { return scope_id_; }
+  uint32_t rows_id() const { return rows_id_; }
+  uint32_t columns_id() const { return columns_id_; }
+
+ private:
+  bool IsSameImpl(const Type* that, IsSameCache*) const override;
+
+  const Type* component_type_;
+  const uint32_t scope_id_;
+  const uint32_t rows_id_;
+  const uint32_t columns_id_;
 };
 
 #define DefineParameterlessType(type, name)                                    \

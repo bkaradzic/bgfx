@@ -87,7 +87,7 @@ private:
 	BufferCache* m_textBuffers;
 	bx::HandleAllocT<MAX_TEXT_BUFFER_COUNT> m_textBufferHandles;
 	FontManager* m_fontManager;
-	bgfx::VertexDecl m_vertexDecl;
+	bgfx::VertexLayout m_vertexLayout;
 	bgfx::UniformHandle s_texColor;
 	bgfx::ProgramHandle m_basicProgram;
 	bgfx::ProgramHandle m_distanceProgram;

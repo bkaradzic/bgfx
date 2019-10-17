@@ -30,6 +30,11 @@ extern const uint32_t kFalseBranchOperandIndex;
 // adding one if it does not exist.
 uint32_t FindOrCreateGlobalUndef(opt::IRContext* context, uint32_t type_id);
 
+// Removes any components of |to_block|'s phi instructions relating to
+// |from_id|.
+void AdaptPhiInstructionsForRemovedEdge(uint32_t from_id,
+                                        opt::BasicBlock* to_block);
+
 }  // namespace reduce
 }  // namespace spvtools
 

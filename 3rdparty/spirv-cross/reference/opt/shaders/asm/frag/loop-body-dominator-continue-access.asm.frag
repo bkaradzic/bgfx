@@ -46,11 +46,6 @@ void main()
                     _231 = true;
                     break;
                 }
-                else
-                {
-                    _227++;
-                    continue;
-                }
                 _227++;
                 continue;
             }

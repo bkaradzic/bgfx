@@ -212,7 +212,7 @@ TEST_F(ValidateLimits, SwitchNumBranchesGood) {
 %5 = OpFunction %1 None %2
 %7 = OpLabel
 %8 = OpIAdd %3 %4 %4
-%9 = OpSwitch %4 %10)";
+     OpSwitch %4 %10)";
 
   // Now add the (literal, label) pairs
   for (int i = 0; i < 16383; ++i) {
@@ -240,7 +240,7 @@ TEST_F(ValidateLimits, SwitchNumBranchesBad) {
 %5 = OpFunction %1 None %2
 %7 = OpLabel
 %8 = OpIAdd %3 %4 %4
-%9 = OpSwitch %4 %10)";
+     OpSwitch %4 %10)";
 
   // Now add the (literal, label) pairs
   for (int i = 0; i < 16384; ++i) {
@@ -271,7 +271,7 @@ TEST_F(ValidateLimits, CustomizedSwitchNumBranchesGood) {
 %5 = OpFunction %1 None %2
 %7 = OpLabel
 %8 = OpIAdd %3 %4 %4
-%9 = OpSwitch %4 %10)";
+     OpSwitch %4 %10)";
 
   // Now add the (literal, label) pairs
   for (int i = 0; i < 10; ++i) {
@@ -301,7 +301,7 @@ TEST_F(ValidateLimits, CustomizedSwitchNumBranchesBad) {
 %5 = OpFunction %1 None %2
 %7 = OpLabel
 %8 = OpIAdd %3 %4 %4
-%9 = OpSwitch %4 %10)";
+     OpSwitch %4 %10)";
 
   // Now add the (literal, label) pairs
   for (int i = 0; i < 11; ++i) {

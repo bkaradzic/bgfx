@@ -332,19 +332,19 @@ namespace bgfx { namespace d3d12
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
-	static D3D12_INPUT_ELEMENT_DESC* fillVertexDecl(uint8_t _stream, D3D12_INPUT_ELEMENT_DESC* _out, const VertexDecl& _decl)
+	static D3D12_INPUT_ELEMENT_DESC* fillVertexLayout(uint8_t _stream, D3D12_INPUT_ELEMENT_DESC* _out, const VertexLayout& _layout)
 	{
 		D3D12_INPUT_ELEMENT_DESC* elem = _out;
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
-			if (UINT16_MAX != _decl.m_attributes[attr])
+			if (UINT16_MAX != _layout.m_attributes[attr])
 			{
 				bx::memCopy(elem, &s_attrib[attr], sizeof(D3D12_INPUT_ELEMENT_DESC) );
 
 				elem->InputSlot = _stream;
 
-				if (0 == _decl.m_attributes[attr])
+				if (0 == _layout.m_attributes[attr])
 				{
 					elem->AlignedByteOffset = 0;
 				}
@@ -354,9 +354,9 @@ namespace bgfx { namespace d3d12
 					AttribType::Enum type;
 					bool normalized;
 					bool asInt;
-					_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
+					_layout.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 					elem->Format = s_attribType[type][num-1][normalized];
-					elem->AlignedByteOffset = _decl.m_offset[attr];
+					elem->AlignedByteOffset = _layout.m_offset[attr];
 				}
 
 				++elem;
@@ -1530,20 +1530,20 @@ namespace bgfx { namespace d3d12
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) override
+		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
 		{
-			VertexDecl& decl = m_vertexDecls[_handle.idx];
-			bx::memCopy(&decl, &_decl, sizeof(VertexDecl) );
-			dump(decl);
+			VertexLayout& layout = m_vertexLayouts[_handle.idx];
+			bx::memCopy(&layout, &_layout, sizeof(VertexLayout) );
+			dump(layout);
 		}
 
-		void destroyVertexDecl(VertexDeclHandle /*_handle*/) override
+		void destroyVertexLayout(VertexLayoutHandle /*_handle*/) override
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexDeclHandle _declHandle, uint16_t _flags) override
+		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle, _flags);
+			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
@@ -1568,8 +1568,8 @@ namespace bgfx { namespace d3d12
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			VertexDeclHandle decl = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
+			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
+			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1954,11 +1954,11 @@ namespace bgfx { namespace d3d12
 				| BGFX_STATE_DEPTH_TEST_ALWAYS
 				;
 
-			const VertexDecl* decls[1] = { &m_vertexDecls[_blitter.m_vb->decl.idx] };
+			const VertexLayout* layouts[1] = { &m_vertexLayouts[_blitter.m_vb->layoutHandle.idx] };
 			ID3D12PipelineState* pso = getPipelineState(state
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
 				, 1
-				, decls
+				, layouts
 				, _blitter.m_program
 				, 0
 				);
@@ -1992,11 +1992,11 @@ namespace bgfx { namespace d3d12
 			scratchBuffer.allocSrv(srvHandle, texture);
 			m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle);
 
-			VertexBufferD3D12& vb  = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			const VertexDecl& vertexDecl = m_vertexDecls[_blitter.m_vb->decl.idx];
+			VertexBufferD3D12&  vb     = m_vertexBuffers[_blitter.m_vb->handle.idx];
+			const VertexLayout& layout = m_vertexLayouts[_blitter.m_vb->layoutHandle.idx];
 			D3D12_VERTEX_BUFFER_VIEW viewDesc;
 			viewDesc.BufferLocation = vb.m_gpuVA;
-			viewDesc.StrideInBytes  = vertexDecl.m_stride;
+			viewDesc.StrideInBytes  = layout.m_stride;
 			viewDesc.SizeInBytes    = vb.m_size;
 			m_commandList->IASetVertexBuffers(0, 1, &viewDesc);
 
@@ -2016,7 +2016,7 @@ namespace bgfx { namespace d3d12
 			if (0 < numVertices)
 			{
 				m_indexBuffers [_blitter.m_ib->handle.idx].update(m_commandList, 0, _numIndices*2, _blitter.m_ib->data);
-				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandList, 0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data, true);
+				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandList, 0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data, true);
 
 				m_commandList->DrawIndexedInstanced(_numIndices
 					, 1
@@ -2604,7 +2604,7 @@ namespace bgfx { namespace d3d12
 			_desc.BackFace.StencilFunc         = s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT];
 		}
 
-		uint32_t setInputLayout(D3D12_INPUT_ELEMENT_DESC* _vertexElements, uint8_t _numStreams, const VertexDecl** _vertexDecls, const ProgramD3D12& _program, uint16_t _numInstanceData)
+		uint32_t setInputLayout(D3D12_INPUT_ELEMENT_DESC* _vertexElements, uint8_t _numStreams, const VertexLayout** _layouts, const ProgramD3D12& _program, uint16_t _numInstanceData)
 		{
 			uint16_t attrMask[Attrib::Count];
 			bx::memCopy(attrMask, _program.m_vsh->m_attrMask, sizeof(attrMask));
@@ -2613,19 +2613,19 @@ namespace bgfx { namespace d3d12
 
 			for (uint8_t stream = 0; stream < _numStreams; ++stream)
 			{
-				VertexDecl decl;
-				bx::memCopy(&decl, _vertexDecls[stream], sizeof(VertexDecl));
+				VertexLayout layout;
+				bx::memCopy(&layout, _layouts[stream], sizeof(VertexLayout));
 
 				const bool last = stream == _numStreams-1;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 				{
 					uint16_t mask = attrMask[ii];
-					uint16_t attr = (decl.m_attributes[ii] & mask);
+					uint16_t attr = (layout.m_attributes[ii] & mask);
 					if (0          == attr
 					||  UINT16_MAX == attr)
 					{
-						decl.m_attributes[ii] = last ? ~attr : UINT16_MAX;
+						layout.m_attributes[ii] = last ? ~attr : UINT16_MAX;
 					}
 					else
 					{
@@ -2633,7 +2633,7 @@ namespace bgfx { namespace d3d12
 					}
 				}
 
-				elem = fillVertexDecl(stream, elem, decl);
+				elem = fillVertexLayout(stream, elem, layout);
 			}
 
 			uint32_t num = uint32_t(elem-_vertexElements);
@@ -2671,10 +2671,10 @@ namespace bgfx { namespace d3d12
 			return uint32_t(elem-_vertexElements);
 		}
 
-		uint32_t setInputLayout(D3D12_INPUT_ELEMENT_DESC* _vertexElements, const VertexDecl& _vertexDecl, const ProgramD3D12& _program, uint16_t _numInstanceData)
+		uint32_t setInputLayout(D3D12_INPUT_ELEMENT_DESC* _vertexElements, const VertexLayout& _layout, const ProgramD3D12& _program, uint16_t _numInstanceData)
 		{
-			const VertexDecl* decls[1] = { &_vertexDecl };
-			return setInputLayout(_vertexElements, BX_COUNTOF(decls), decls, _program, _numInstanceData);
+			const VertexLayout* layouts[1] = { &_layout };
+			return setInputLayout(_vertexElements, BX_COUNTOF(layouts), layouts, _program, _numInstanceData);
 		}
 
 		static void patchCb0(DxbcInstruction& _instruction, void* _userData)
@@ -2792,7 +2792,7 @@ namespace bgfx { namespace d3d12
 			  uint64_t _state
 			, uint64_t _stencil
 			, uint8_t _numStreams
-			, const VertexDecl** _vertexDecls
+			, const VertexLayout** _layouts
 			, ProgramHandle _program
 			, uint8_t _numInstanceData
 			)
@@ -2817,17 +2817,17 @@ namespace bgfx { namespace d3d12
 
 			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
 
-			VertexDecl decl;
+			VertexLayout layout;
 			if (0 < _numStreams)
 			{
-				bx::memCopy(&decl, _vertexDecls[0], sizeof(VertexDecl) );
+				bx::memCopy(&layout, _layouts[0], sizeof(VertexLayout) );
 				const uint16_t* attrMask = program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 				{
 					uint16_t mask = attrMask[ii];
-					uint16_t attr = (decl.m_attributes[ii] & mask);
-					decl.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
+					uint16_t attr = (layout.m_attributes[ii] & mask);
+					layout.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
 				}
 			}
 
@@ -2845,10 +2845,10 @@ namespace bgfx { namespace d3d12
 
 			for (uint32_t ii = 0; ii < _numStreams; ++ii)
 			{
-				murmur.add(_vertexDecls[ii]->m_hash);
+				murmur.add(_layouts[ii]->m_hash);
 			}
 
-			murmur.add(decl.m_attributes, sizeof(decl.m_attributes) );
+			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
 			murmur.add(m_fbh.idx);
 			murmur.add(_numInstanceData);
 			const uint32_t hash = murmur.end();
@@ -2964,7 +2964,7 @@ namespace bgfx { namespace d3d12
 			setDepthStencilState(desc.DepthStencilState, _state, _stencil);
 
 			D3D12_INPUT_ELEMENT_DESC vertexElements[Attrib::Count + 1 + BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
-			desc.InputLayout.NumElements = setInputLayout(vertexElements, _numStreams, _vertexDecls, program, _numInstanceData);
+			desc.InputLayout.NumElements = setInputLayout(vertexElements, _numStreams, _layouts, program, _numInstanceData);
 			desc.InputLayout.pInputElementDescs = 0 == desc.InputLayout.NumElements
 				? NULL
 				: vertexElements
@@ -3356,7 +3356,7 @@ namespace bgfx { namespace d3d12
 		ShaderD3D12 m_shaders[BGFX_CONFIG_MAX_SHADERS];
 		ProgramD3D12 m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureD3D12 m_textures[BGFX_CONFIG_MAX_TEXTURES];
-		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
+		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 		FrameBufferD3D12 m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
@@ -3970,13 +3970,13 @@ namespace bgfx { namespace d3d12
 				VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[handle];
 				vb.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-				uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
-				const VertexDecl& vertexDecl = s_renderD3D12->m_vertexDecls[decl];
-				uint32_t stride = vertexDecl.m_stride;
+				const uint16_t layoutIdx = !isValid(vb.m_layoutHandle) ? stream.m_layoutHandle.idx : vb.m_layoutHandle.idx;
+				const VertexLayout& layout = s_renderD3D12->m_vertexLayouts[layoutIdx];
+				uint32_t stride = layout.m_stride;
 
 				D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
 				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
-				vbv.StrideInBytes  = vertexDecl.m_stride;
+				vbv.StrideInBytes  = layout.m_stride;
 				vbv.SizeInBytes    = vb.m_size;
 
 				_outNumVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
@@ -4442,10 +4442,10 @@ namespace bgfx { namespace d3d12
 		return _state;
 	}
 
-	void VertexBufferD3D12::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
+	void VertexBufferD3D12::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
 	{
 		BufferD3D12::create(_size, _data, _flags, true);
-		m_decl = _declHandle;
+		m_layoutHandle = _layoutHandle;
 	}
 
 	void ShaderD3D12::create(const Memory* _mem)
@@ -6254,7 +6254,7 @@ namespace bgfx { namespace d3d12
 						|| f3 == (state & f3)
 						;
 
-					const VertexDecl* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+					const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 
 					uint8_t numStreams = 0;
 					if (UINT8_MAX != draw.m_streamMask)
@@ -6268,18 +6268,18 @@ namespace bgfx { namespace d3d12
 							streamMask >>= ntz;
 							idx         += ntz;
 
-							currentState.m_stream[idx].m_decl        = draw.m_stream[idx].m_decl;
-							currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
-							currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+							currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
+							currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;
+							currentState.m_stream[idx].m_startVertex  = draw.m_stream[idx].m_startVertex;
 
 							uint16_t handle = draw.m_stream[idx].m_handle.idx;
 							const VertexBufferD3D12& vb = m_vertexBuffers[handle];
-							const uint16_t decl = isValid(draw.m_stream[idx].m_decl)
-								? draw.m_stream[idx].m_decl.idx
-								: vb.m_decl.idx;
-							const VertexDecl& vertexDecl = m_vertexDecls[decl];
+							const uint16_t layoutIdx = isValid(draw.m_stream[idx].m_layoutHandle)
+								? draw.m_stream[idx].m_layoutHandle.idx
+								: vb.m_layoutHandle.idx;
+							const VertexLayout& layout = m_vertexLayouts[layoutIdx];
 
-							decls[numStreams] = &vertexDecl;
+							layouts[numStreams] = &layout;
 						}
 					}
 
@@ -6287,7 +6287,7 @@ namespace bgfx { namespace d3d12
 						getPipelineState(state
 							, draw.m_stencil
 							, numStreams
-							, decls
+							, layouts
 							, key.m_program
 							, uint8_t(draw.m_instanceDataStride/16)
 							);

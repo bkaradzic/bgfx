@@ -138,8 +138,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(predefs + before,
-                                                 predefs + after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(LocalSSAElimTest, NestedForLoop) {
@@ -280,8 +280,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(predefs + before,
-                                                 predefs + after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(LocalSSAElimTest, ForLoopWithContinue) {
@@ -426,9 +426,9 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(
-      predefs + names + predefs2 + before, predefs + names + predefs2 + after,
-      true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + names + predefs2 + before,
+                                        predefs + names + predefs2 + after,
+                                        true, true);
 }
 
 TEST_F(LocalSSAElimTest, ForLoopWithBreak) {
@@ -567,8 +567,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(predefs + before,
-                                                 predefs + after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(LocalSSAElimTest, SwapProblem) {
@@ -704,8 +704,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(predefs + before,
-                                                 predefs + after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(LocalSSAElimTest, LostCopyProblem) {
@@ -848,8 +848,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(predefs + before,
-                                                 predefs + after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(LocalSSAElimTest, IfThenElse) {
@@ -948,8 +948,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(predefs + before,
-                                                 predefs + after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(LocalSSAElimTest, IfThen) {
@@ -1037,8 +1037,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(predefs + before,
-                                                 predefs + after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(LocalSSAElimTest, Switch) {
@@ -1168,8 +1168,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(predefs + before,
-                                                 predefs + after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(LocalSSAElimTest, SwitchWithFallThrough) {
@@ -1300,8 +1300,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(predefs + before,
-                                                 predefs + after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(LocalSSAElimTest, DontPatchPhiInLoopHeaderThatIsNotAVar) {
@@ -1331,7 +1331,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(before, before, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(before, before, true, true);
 }
 
 TEST_F(LocalSSAElimTest, OptInitializedVariableLikeStore) {
@@ -1428,8 +1428,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(
-      predefs + func_before, predefs + func_after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(predefs + func_before,
+                                        predefs + func_after, true, true);
 }
 
 TEST_F(LocalSSAElimTest, PointerVariable) {
@@ -1531,7 +1531,7 @@ OpFunctionEnd
   // Relax logical pointers to allow pointer allocations.
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   ValidatorOptions()->relax_logical_pointer = true;
-  SinglePassRunAndCheck<LocalMultiStoreElimPass>(before, after, true, true);
+  SinglePassRunAndCheck<SSARewritePass>(before, after, true, true);
 }
 
 TEST_F(LocalSSAElimTest, VerifyInstToBlockMap) {
@@ -1620,7 +1620,7 @@ OpFunctionEnd
   // Force the instruction to block mapping to get built.
   context->get_instr_block(27u);
 
-  auto pass = MakeUnique<LocalMultiStoreElimPass>();
+  auto pass = MakeUnique<SSARewritePass>();
   pass->SetMessageConsumer(nullptr);
   const auto status = pass->Run(context.get());
   EXPECT_TRUE(status == Pass::Status::SuccessWithChange);
@@ -1927,7 +1927,99 @@ TEST_F(LocalSSAElimTest, VariablePointerTest2) {
                OpReturn
                OpFunctionEnd
   )";
-  SinglePassRunAndMatch<LocalMultiStoreElimPass>(text, false);
+  SinglePassRunAndMatch<SSARewritePass>(text, false);
+}
+
+TEST_F(LocalSSAElimTest, ChainedTrivialPhis) {
+  // Check that the copy object get the undef value implicitly assigned in the
+  // entry block.
+  const std::string text = R"(
+; CHECK: [[undef:%\w+]] = OpUndef %v4float
+; CHECK: OpCopyObject %v4float [[undef]]
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %2 "main"
+               OpExecutionMode %2 LocalSize 1 18 6
+               OpSource ESSL 310
+       %void = OpTypeVoid
+          %4 = OpTypeFunction %void
+       %bool = OpTypeBool
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+          %2 = OpFunction %void None %4
+          %9 = OpLabel
+         %10 = OpVariable %_ptr_Function_v4float Function
+               OpBranch %11
+         %11 = OpLabel
+               OpLoopMerge %12 %13 None
+               OpBranch %14
+         %14 = OpLabel
+         %15 = OpUndef %bool
+               OpBranchConditional %15 %16 %12
+         %16 = OpLabel
+         %17 = OpUndef %bool
+               OpSelectionMerge %18 None
+               OpBranchConditional %17 %19 %18
+         %19 = OpLabel
+         %20 = OpUndef %bool
+               OpLoopMerge %21 %22 None
+               OpBranchConditional %20 %23 %21
+         %23 = OpLabel
+         %24 = OpLoad %v4float %10
+         %25 = OpCopyObject %v4float %24
+         %26 = OpUndef %bool
+               OpBranch %22
+         %22 = OpLabel
+               OpBranch %19
+         %21 = OpLabel
+               OpBranch %12
+         %18 = OpLabel
+               OpBranch %13
+         %13 = OpLabel
+               OpBranch %11
+         %12 = OpLabel
+         %27 = OpLoad %v4float %10
+               OpReturn
+               OpFunctionEnd
+  )";
+  SinglePassRunAndMatch<SSARewritePass>(text, false);
+}
+
+TEST_F(LocalSSAElimTest, Overflowtest1) {
+  // Check that the copy object get the undef value implicitly assigned in the
+  // entry block.
+  const std::string text = R"(
+OpCapability Geometry
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %4 "P2Mai" %12 %17
+OpExecutionMode %4 OriginUpperLeft
+%2 = OpTypeVoid
+%3 = OpTypeFunction %2
+%6 = OpTypeFloat 32
+%7 = OpTypeVector %6 4
+%11 = OpTypePointer Input %7
+%16 = OpTypePointer Output %7
+%23 = OpTypePointer Function %7
+%12 = OpVariable %11 Input
+%17 = OpVariable %16 Output
+%4 = OpFunction %2 None %3
+%2177 = OpLabel
+%4194302 = OpVariable %23 Function
+%4194301 = OpLoad %7 %4194302
+OpStore %17 %4194301
+OpReturn
+OpFunctionEnd
+  )";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+
+  std::vector<Message> messages = {
+      {SPV_MSG_ERROR, "", 0, 0, "ID overflow. Try running compact-ids."}};
+  SetMessageConsumer(GetTestMessageConsumer(messages));
+  auto result = SinglePassRunToBinary<SSARewritePass>(text, true);
+  EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
 }
 
 // TODO(greg-lunarg): Add tests to verify handling of these cases:

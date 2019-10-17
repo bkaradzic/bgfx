@@ -415,6 +415,7 @@ function gen.write(codes, outputfile)
 	local out = assert(io.open(outputfile, "wb"))
 	out:write(codes)
 	out:close()
+	print("Generating: " .. outputfile)
 end
 
 if (...) == nil then

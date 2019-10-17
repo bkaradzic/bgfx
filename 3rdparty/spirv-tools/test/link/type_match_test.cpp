@@ -84,44 +84,46 @@ using TypeMatch = spvtest::LinkerTest;
   MatchF(T##Of##A##Of##B, \
          MatchPart1(B, b) MatchPart2(A, a, b) MatchPart2(T, type, a))
 
+// clang-format off
 // Basic types
-Match1(Int);
-Match1(Float);
-Match1(Opaque);
-Match1(Sampler);
-Match1(Event);
-Match1(DeviceEvent);
-Match1(ReserveId);
-Match1(Queue);
-Match1(Pipe);
-Match1(PipeStorage);
-Match1(NamedBarrier);
+Match1(Int)
+Match1(Float)
+Match1(Opaque)
+Match1(Sampler)
+Match1(Event)
+Match1(DeviceEvent)
+Match1(ReserveId)
+Match1(Queue)
+Match1(Pipe)
+Match1(PipeStorage)
+Match1(NamedBarrier)
 
 // Simpler (restricted) compound types
-Match2(Vector, Float);
-Match3(Matrix, Vector, Float);
-Match2(Image, Float);
+Match2(Vector, Float)
+Match3(Matrix, Vector, Float)
+Match2(Image, Float)
 
 // Unrestricted compound types
 #define MatchCompounds1(A) \
-  Match2(RuntimeArray, A); \
-  Match2(Struct, A);       \
-  Match2(Pointer, A);      \
-  Match2(Function, A);     \
-  Match2(Array, A);
+  Match2(RuntimeArray, A)  \
+  Match2(Struct, A)        \
+  Match2(Pointer, A)       \
+  Match2(Function, A)      \
+  Match2(Array, A)
 #define MatchCompounds2(A, B) \
-  Match3(RuntimeArray, A, B); \
-  Match3(Struct, A, B);       \
-  Match3(Pointer, A, B);      \
-  Match3(Function, A, B);     \
-  Match3(Array, A, B);
+  Match3(RuntimeArray, A, B)  \
+  Match3(Struct, A, B)        \
+  Match3(Pointer, A, B)       \
+  Match3(Function, A, B)      \
+  Match3(Array, A, B)
 
-MatchCompounds1(Float);
-MatchCompounds2(Array, Float);
-MatchCompounds2(RuntimeArray, Float);
-MatchCompounds2(Struct, Float);
-MatchCompounds2(Pointer, Float);
-MatchCompounds2(Function, Float);
+MatchCompounds1(Float)
+MatchCompounds2(Array, Float)
+MatchCompounds2(RuntimeArray, Float)
+MatchCompounds2(Struct, Float)
+MatchCompounds2(Pointer, Float)
+MatchCompounds2(Function, Float)
+// clang-format on
 
 // ForwardPointer tests, which don't fit into the previous mold
 #define MatchFpF(N, CODE)                                             \
@@ -134,11 +136,13 @@ MatchCompounds2(Function, Float);
 #define MatchFp2(T, A) \
   MatchFpF(ForwardPointerOf##T, MatchPart1(A, a) MatchPart2(T, realtype, a))
 
-MatchFp1(Float);
-MatchFp2(Array, Float);
-MatchFp2(RuntimeArray, Float);
-MatchFp2(Struct, Float);
-MatchFp2(Function, Float);
+    // clang-format off
+MatchFp1(Float)
+MatchFp2(Array, Float)
+MatchFp2(RuntimeArray, Float)
+MatchFp2(Struct, Float)
+MatchFp2(Function, Float)
+// clang-format on
 
 }  // namespace
 }  // namespace spvtools

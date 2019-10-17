@@ -150,7 +150,7 @@ void writeCompressedVertices(bx::WriterI* _writer,  const uint8_t* _vertices, ui
 	free(compressedVertices);
 }
 
-void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices)
 {
 	struct PosTexcoord
 	{
@@ -178,14 +178,14 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 		uint32_t i1 = indices[1];
 		uint32_t i2 = indices[2];
 
-		bgfx::vertexUnpack(&v0.m_x, bgfx::Attrib::Position, _decl, _vertices, i0);
-		bgfx::vertexUnpack(&v0.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i0);
+		bgfx::vertexUnpack(&v0.m_x, bgfx::Attrib::Position, _layout, _vertices, i0);
+		bgfx::vertexUnpack(&v0.m_u, bgfx::Attrib::TexCoord0, _layout, _vertices, i0);
 
-		bgfx::vertexUnpack(&v1.m_x, bgfx::Attrib::Position, _decl, _vertices, i1);
-		bgfx::vertexUnpack(&v1.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i1);
+		bgfx::vertexUnpack(&v1.m_x, bgfx::Attrib::Position, _layout, _vertices, i1);
+		bgfx::vertexUnpack(&v1.m_u, bgfx::Attrib::TexCoord0, _layout, _vertices, i1);
 
-		bgfx::vertexUnpack(&v2.m_x, bgfx::Attrib::Position, _decl, _vertices, i2);
-		bgfx::vertexUnpack(&v2.m_u, bgfx::Attrib::TexCoord0, _decl, _vertices, i2);
+		bgfx::vertexUnpack(&v2.m_x, bgfx::Attrib::Position, _layout, _vertices, i2);
+		bgfx::vertexUnpack(&v2.m_u, bgfx::Attrib::TexCoord0, _layout, _vertices, i2);
 
 		const float bax = v1.m_x - v0.m_x;
 		const float bay = v1.m_y - v0.m_y;
@@ -230,7 +230,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 		const bx::Vec3 tanv = bx::load<bx::Vec3>(&tangents[ii*6 + 3]);
 
 		float nxyzw[4];
-		bgfx::vertexUnpack(nxyzw, bgfx::Attrib::Normal, _decl, _vertices, ii);
+		bgfx::vertexUnpack(nxyzw, bgfx::Attrib::Normal, _layout, _vertices, ii);
 
 		const bx::Vec3 normal  = bx::load<bx::Vec3>(nxyzw);
 		const float    ndt     = bx::dot(normal, tanu);
@@ -241,7 +241,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 		bx::store(tangent, bx::normalize(tmp) );
 		tangent[3] = bx::dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
 
-		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _decl, _vertices, ii);
+		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _layout, _vertices, ii);
 	}
 
 	delete [] tangents;
@@ -276,7 +276,7 @@ void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, u
 void write(bx::WriterI* _writer
 		, const uint8_t* _vertices
 		, uint32_t _numVertices
-		, const bgfx::VertexDecl& _decl
+		, const bgfx::VertexLayout& _layout
 		, const uint16_t* _indices
 		, uint32_t _numIndices
 		, bool _compress
@@ -287,14 +287,14 @@ void write(bx::WriterI* _writer
 	using namespace bx;
 	using namespace bgfx;
 
-	uint32_t stride = _decl.getStride();
+	uint32_t stride = _layout.getStride();
 
 	if (_compress)
 	{
 		write(_writer, BGFX_CHUNK_MAGIC_VBC);
 		write(_writer, _vertices, _numVertices, stride);
 
-		write(_writer, _decl);
+		write(_writer, _layout);
 
 		write(_writer, uint16_t(_numVertices) );
 		writeCompressedVertices(_writer, _vertices, _numVertices, uint16_t(stride));
@@ -304,7 +304,7 @@ void write(bx::WriterI* _writer
 		write(_writer, BGFX_CHUNK_MAGIC_VB);
 		write(_writer, _vertices, _numVertices, stride);
 
-		write(_writer, _decl);
+		write(_writer, _layout);
 
 		write(_writer, uint16_t(_numVertices) );
 		write(_writer, _vertices, _numVertices*stride);
@@ -793,18 +793,18 @@ int main(int _argc, const char* _argv[])
 		}
 	}
 
-	bgfx::VertexDecl decl;
-	decl.begin();
-	decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
+	bgfx::VertexLayout layout;
+	layout.begin();
+	layout.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
 
 	if (hasColor)
 	{
-		decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
+		layout.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
 	}
 
 	if (hasBc)
 	{
-		decl.add(bgfx::Attrib::Color1, 4, bgfx::AttribType::Uint8, true);
+		layout.add(bgfx::Attrib::Color1, 4, bgfx::AttribType::Uint8, true);
 	}
 
 	if (hasTexcoord)
@@ -813,11 +813,11 @@ int main(int _argc, const char* _argv[])
 		{
 		default:
 		case 0:
-			decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
+			layout.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float);
 			break;
 
 		case 1:
-			decl.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Half);
+			layout.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Half);
 			break;
 		}
 	}
@@ -830,26 +830,26 @@ int main(int _argc, const char* _argv[])
 		{
 		default:
 		case 0:
-			decl.add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float);
+			layout.add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float);
 			if (hasTangent)
 			{
-				decl.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Float);
+				layout.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Float);
 			}
 			break;
 
 		case 1:
-			decl.add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, true, true);
+			layout.add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, true, true);
 			if (hasTangent)
 			{
-				decl.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Uint8, true, true);
+				layout.add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Uint8, true, true);
 			}
 			break;
 		}
 	}
 
-	decl.end();
+	layout.end();
 
-	uint32_t stride = decl.getStride();
+	uint32_t stride = layout.getStride();
 	uint8_t* vertexData = new uint8_t[triangles.size() * 3 * stride];
 	uint16_t* indexData = new uint16_t[triangles.size() * 3];
 	int32_t numVertices = 0;
@@ -882,8 +882,8 @@ int main(int _argc, const char* _argv[])
 	prim.m_startVertex = 0;
 	prim.m_startIndex  = 0;
 
-	uint32_t positionOffset = decl.getOffset(bgfx::Attrib::Position);
-	uint32_t color0Offset   = decl.getOffset(bgfx::Attrib::Color0);
+	uint32_t positionOffset = layout.getOffset(bgfx::Attrib::Position);
+	uint32_t color0Offset   = layout.getOffset(bgfx::Attrib::Color0);
 
 	Group sentinelGroup;
 	sentinelGroup.m_startTriangle = 0;
@@ -909,7 +909,7 @@ int main(int _argc, const char* _argv[])
 
 				if (hasTangent)
 				{
-					calcTangents(vertexData, uint16_t(numVertices), decl, indexData, numIndices);
+					calcTangents(vertexData, uint16_t(numVertices), layout, indexData, numIndices);
 				}
 
 				triReorderElapsed -= bx::getHPCounter();
@@ -925,7 +925,7 @@ int main(int _argc, const char* _argv[])
 				write(&writer
 					, vertexData
 					, numVertices
-					, decl
+					, layout
 					, indexData
 					, numIndices
 					, compress
@@ -975,7 +975,7 @@ int main(int _argc, const char* _argv[])
 						(index.m_vbc == 1) ? 1.0f : 0.0f,
 						(index.m_vbc == 2) ? 1.0f : 0.0f,
 					};
-					bgfx::vertexPack(bc, true, bgfx::Attrib::Color1, decl, vertices);
+					bgfx::vertexPack(bc, true, bgfx::Attrib::Color1, layout, vertices);
 				}
 				
 				if (hasTexcoord)
@@ -988,7 +988,7 @@ int main(int _argc, const char* _argv[])
 						uv[1] = -uv[1];
 					}
 					
-					bgfx::vertexPack(uv, true, bgfx::Attrib::TexCoord0, decl, vertices);
+					bgfx::vertexPack(uv, true, bgfx::Attrib::TexCoord0, layout, vertices);
 				}
 				
 				if (hasNormal)
@@ -996,7 +996,7 @@ int main(int _argc, const char* _argv[])
 					float normal[4];
 					bx::store(normal, bx::normalize(bx::load<bx::Vec3>(&normals[index.m_normal]) ) );
 					normal[3] = 0.0f;
-					bgfx::vertexPack(normal, true, bgfx::Attrib::Normal, decl, vertices);
+					bgfx::vertexPack(normal, true, bgfx::Attrib::Normal, layout, vertices);
 				}
 
 				uint32_t hash = bx::hash<bx::HashMurmur2A>(vertices, stride);

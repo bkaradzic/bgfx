@@ -81,6 +81,7 @@ bool MergeReturnPass::ProcessStructured(
     return false;
   }
 
+  RecordImmediateDominators(function);
   AddDummyLoopAroundFunction();
 
   std::list<BasicBlock*> order;
@@ -236,10 +237,6 @@ void MergeReturnPass::UpdatePhiNodes(BasicBlock* new_source,
     inst->AddOperand({SPV_OPERAND_TYPE_ID, {new_source->id()}});
     context()->UpdateDefUse(inst);
   });
-
-  // Store the immediate dominator for this block in case new phi nodes will be
-  // needed later.
-  RecordImmediateDominator(target);
 }
 
 void MergeReturnPass::CreatePhiNodesForInst(BasicBlock* merge_block,
@@ -683,7 +680,7 @@ void MergeReturnPass::AddNewPhiNodes(BasicBlock* bb) {
     return;
   }
 
-  BasicBlock* current_bb = new_merge_nodes_[bb];
+  BasicBlock* current_bb = context()->get_instr_block(original_dominator_[bb]);
   while (current_bb != nullptr && current_bb != dominator) {
     for (Instruction& inst : *current_bb) {
       CreatePhiNodesForInst(bb, inst);
@@ -692,11 +689,16 @@ void MergeReturnPass::AddNewPhiNodes(BasicBlock* bb) {
   }
 }
 
-void MergeReturnPass::RecordImmediateDominator(BasicBlock* block) {
-  DominatorAnalysis* dom_tree =
-      context()->GetDominatorAnalysis(block->GetParent());
-  auto idom = dom_tree->ImmediateDominator(block);
-  new_merge_nodes_[block] = idom;
+void MergeReturnPass::RecordImmediateDominators(Function* function) {
+  DominatorAnalysis* dom_tree = context()->GetDominatorAnalysis(function);
+  for (BasicBlock& bb : *function) {
+    BasicBlock* dominator_bb = dom_tree->ImmediateDominator(&bb);
+    if (dominator_bb && dominator_bb != cfg()->pseudo_entry_block()) {
+      original_dominator_[&bb] = dominator_bb->terminator();
+    } else {
+      original_dominator_[&bb] = nullptr;
+    }
+  }
 }
 
 void MergeReturnPass::InsertAfterElement(BasicBlock* element,
@@ -818,12 +820,7 @@ bool MergeReturnPass::HasNontrivialUnreachableBlocks(Function* function) {
 
     StructuredCFGAnalysis* struct_cfg_analysis =
         context()->GetStructuredCFGAnalysis();
-    if (struct_cfg_analysis->IsMergeBlock(bb.id())) {
-      // |bb| must be an empty block ending with OpUnreachable.
-      if (bb.begin()->opcode() != SpvOpUnreachable) {
-        return true;
-      }
-    } else if (struct_cfg_analysis->IsContinueBlock(bb.id())) {
+    if (struct_cfg_analysis->IsContinueBlock(bb.id())) {
       // |bb| must be an empty block ending with a branch to the header.
       Instruction* inst = &*bb.begin();
       if (inst->opcode() != SpvOpBranch) {
@@ -832,6 +829,11 @@ bool MergeReturnPass::HasNontrivialUnreachableBlocks(Function* function) {
 
       if (inst->GetSingleWordInOperand(0) !=
           struct_cfg_analysis->ContainingLoop(bb.id())) {
+        return true;
+      }
+    } else if (struct_cfg_analysis->IsMergeBlock(bb.id())) {
+      // |bb| must be an empty block ending with OpUnreachable.
+      if (bb.begin()->opcode() != SpvOpUnreachable) {
         return true;
       }
     } else {

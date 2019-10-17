@@ -24,9 +24,9 @@ namespace {
 using DecomposeInitializedVariablesTest = PassTest<::testing::Test>;
 
 std::string single_entry_header = R"(OpCapability Shader
-OpCapability VulkanMemoryModelKHR
+OpCapability VulkanMemoryModel
 OpExtension "SPV_KHR_vulkan_memory_model"
-OpMemoryModel Logical VulkanKHR
+OpMemoryModel Logical Vulkan
 OpEntryPoint Vertex %1 "shader"
 %uint = OpTypeInt 32 0
 %uint_1 = OpConstant %uint 1
@@ -126,9 +126,9 @@ TEST_F(DecomposeInitializedVariablesTest, OutputUnchanged) {
 }
 
 std::string multiple_entry_header = R"(OpCapability Shader
-OpCapability VulkanMemoryModelKHR
+OpCapability VulkanMemoryModel
 OpExtension "SPV_KHR_vulkan_memory_model"
-OpMemoryModel Logical VulkanKHR
+OpMemoryModel Logical Vulkan
 OpEntryPoint Vertex %1 "vertex"
 OpEntryPoint Fragment %2 "fragment"
 %uint = OpTypeInt 32 0

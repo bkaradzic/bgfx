@@ -282,7 +282,7 @@ spv.coopmat.comp
              101:    100(ptr) AccessChain 91(block16) 99
              102:     85(ptr) Load 101 MakePointerVisibleKHR NonPrivatePointerKHR 71
              104:    103(ptr) AccessChain 102 58 31
-             105:          32 CooperativeMatrixLoadNV 104 74 76 Aligned 16
+             105:          32 CooperativeMatrixLoadNV 104 74 76 Aligned MakePointerVisibleKHR NonPrivatePointerKHR 16 71
                               Store 98(tempArg) 105
              106:          32 Load 98(tempArg)
                               Store 34(m) 106
@@ -290,7 +290,7 @@ spv.coopmat.comp
              108:    100(ptr) AccessChain 91(block16) 99
              109:     85(ptr) Load 108 MakePointerVisibleKHR NonPrivatePointerKHR 71
              110:    103(ptr) AccessChain 109 58 31
-                              CooperativeMatrixStoreNV 110 107 74 76 Aligned 16
+                              CooperativeMatrixStoreNV 110 107 74 76 Aligned MakePointerAvailableKHR NonPrivatePointerKHR 16 71
              113:          50 Load 112(A)
              115:          10 Load 114(B)
              117:          32 Load 116(C)

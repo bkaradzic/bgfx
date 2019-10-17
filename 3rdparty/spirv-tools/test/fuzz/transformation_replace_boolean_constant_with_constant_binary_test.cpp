@@ -16,6 +16,7 @@
 
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/id_use_descriptor.h"
+#include "source/fuzz/instruction_descriptor.h"
 #include "test/fuzz/fuzz_test_util.h"
 
 namespace spvtools {
@@ -164,12 +165,14 @@ TEST(TransformationReplaceBooleanConstantWithConstantBinaryTest,
   FactManager fact_manager;
 
   std::vector<protobufs::IdUseDescriptor> uses_of_true = {
-      transformation::MakeIdUseDescriptor(41, SpvOpStore, 1, 44, 12),
-      transformation::MakeIdUseDescriptor(41, SpvOpLogicalOr, 0, 46, 0)};
+      MakeIdUseDescriptor(41, MakeInstructionDescriptor(44, SpvOpStore, 12), 1),
+      MakeIdUseDescriptor(41, MakeInstructionDescriptor(46, SpvOpLogicalOr, 0),
+                          0)};
 
   std::vector<protobufs::IdUseDescriptor> uses_of_false = {
-      transformation::MakeIdUseDescriptor(43, SpvOpStore, 1, 44, 13),
-      transformation::MakeIdUseDescriptor(43, SpvOpLogicalAnd, 1, 48, 0)};
+      MakeIdUseDescriptor(43, MakeInstructionDescriptor(44, SpvOpStore, 13), 1),
+      MakeIdUseDescriptor(43, MakeInstructionDescriptor(48, SpvOpLogicalAnd, 0),
+                          1)};
 
   const uint32_t fresh_id = 100;
 
@@ -529,10 +532,10 @@ TEST(TransformationReplaceBooleanConstantWithConstantBinaryTest,
 
   FactManager fact_manager;
 
-  auto use_of_true_in_if =
-      transformation::MakeIdUseDescriptor(13, SpvOpBranchConditional, 0, 10, 0);
-  auto use_of_false_in_while =
-      transformation::MakeIdUseDescriptor(21, SpvOpBranchConditional, 0, 16, 0);
+  auto use_of_true_in_if = MakeIdUseDescriptor(
+      13, MakeInstructionDescriptor(10, SpvOpBranchConditional, 0), 0);
+  auto use_of_false_in_while = MakeIdUseDescriptor(
+      21, MakeInstructionDescriptor(16, SpvOpBranchConditional, 0), 0);
 
   auto replacement_1 = TransformationReplaceBooleanConstantWithConstantBinary(
       use_of_true_in_if, 9, 11, SpvOpSLessThan, 100);
@@ -595,6 +598,56 @@ TEST(TransformationReplaceBooleanConstantWithConstantBinaryTest,
   )";
 
   ASSERT_TRUE(IsEqual(env, after, context.get()));
+}
+
+TEST(TransformationReplaceBooleanConstantWithConstantBinaryTest, OpPhi) {
+  // Hand-written SPIR-V to check applicability of the transformation on an
+  // OpPhi argument.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool
+          %7 = OpTypePointer Function %6
+          %9 = OpConstantTrue %6
+         %16 = OpConstantFalse %6
+         %10 = OpTypeInt 32 1
+         %11 = OpTypePointer Function %10
+         %13 = OpConstant %10 0
+         %15 = OpConstant %10 1
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpSelectionMerge %20 None
+               OpBranchConditional %9 %21 %22
+         %21 = OpLabel
+               OpBranch %20
+         %22 = OpLabel
+               OpBranch %20
+         %20 = OpLabel
+         %23 = OpPhi %6 %9 %21 %16 %22
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto replacement = TransformationReplaceBooleanConstantWithConstantBinary(
+      MakeIdUseDescriptor(9, MakeInstructionDescriptor(23, SpvOpPhi, 0), 0), 13,
+      15, SpvOpSLessThan, 100);
+
+  ASSERT_FALSE(replacement.IsApplicable(context.get(), fact_manager));
 }
 
 }  // namespace

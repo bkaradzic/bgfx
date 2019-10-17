@@ -5,12 +5,14 @@
 
 using namespace metal;
 
-void set_f(thread int& f)
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
+inline void set_f(thread int& f)
 {
     f = 40;
 }
 
-void set_shared_u(threadgroup int& u)
+inline void set_shared_u(threadgroup int& u)
 {
     u = 50;
 }

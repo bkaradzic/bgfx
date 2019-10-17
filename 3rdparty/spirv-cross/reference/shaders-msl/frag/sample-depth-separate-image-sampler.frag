@@ -10,12 +10,12 @@ struct main0_out
     float FragColor [[color(0)]];
 };
 
-float sample_depth_from_function(thread const depth2d<float> uT, thread const sampler uS)
+inline float sample_depth_from_function(thread const depth2d<float> uT, thread const sampler uS)
 {
     return uT.sample_compare(uS, float3(0.5).xy, float3(0.5).z);
 }
 
-float sample_color_from_function(thread const texture2d<float> uT, thread const sampler uS)
+inline float sample_color_from_function(thread const texture2d<float> uT, thread const sampler uS)
 {
     return uT.sample(uS, float2(0.5)).x;
 }

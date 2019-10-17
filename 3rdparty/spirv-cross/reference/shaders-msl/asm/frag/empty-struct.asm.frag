@@ -10,12 +10,12 @@ struct EmptyStructTest
     int empty_struct_member;
 };
 
-float GetValue(thread const EmptyStructTest& self)
+inline float GetValue(thread const EmptyStructTest& self)
 {
     return 0.0;
 }
 
-float GetValue_1(EmptyStructTest self)
+inline float GetValue_1(EmptyStructTest self)
 {
     return 0.0;
 }

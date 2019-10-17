@@ -78,7 +78,7 @@ ERROR: node is still EOpNull!
 0:16      move second child to first child ( temp float)
 0:16        direct index ( temp float ClipDistance)
 0:16          gl_ClipDistance: direct index for structure ( out 17-element array of float ClipDistance)
-0:16            'anon@0' ( out block{ out 17-element array of float ClipDistance gl_ClipDistance, })
+0:16            'anon@0' ( out block{ out 17-element array of float ClipDistance gl_ClipDistance})
 0:16            Constant:
 0:16              2 (const uint)
 0:16          Constant:
@@ -206,7 +206,7 @@ ERROR: node is still EOpNull!
 0:?     'uv4' (layout( location=4) uniform 4-component vector of float)
 0:?     'b1' (layout( location=2) in block{ in 4-component vector of float v})
 0:?     'b2' (layout( location=2) out block{ out 4-component vector of float v})
-0:?     'anon@0' ( out block{ out 17-element array of float ClipDistance gl_ClipDistance, })
+0:?     'anon@0' ( out block{ out 17-element array of float ClipDistance gl_ClipDistance})
 0:?     'cs' (layout( location=10) smooth out 2-element array of structure{ global 7-element array of 3X2 matrix of float m,  global float f})
 0:?     'cf' (layout( location=54) smooth out float)
 0:?     'cg' (layout( location=53) smooth out float)
@@ -281,7 +281,7 @@ ERROR: node is still EOpNull!
 0:?     'uv4' (layout( location=4) uniform 4-component vector of float)
 0:?     'b1' (layout( location=2) in block{ in 4-component vector of float v})
 0:?     'b2' (layout( location=2) out block{ out 4-component vector of float v})
-0:?     'anon@0' ( out block{ out 17-element array of float ClipDistance gl_ClipDistance, })
+0:?     'anon@0' ( out block{ out 17-element array of float ClipDistance gl_ClipDistance})
 0:?     'cs' (layout( location=10) smooth out 2-element array of structure{ global 7-element array of 3X2 matrix of float m,  global float f})
 0:?     'cf' (layout( location=54) smooth out float)
 0:?     'cg' (layout( location=53) smooth out float)

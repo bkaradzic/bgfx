@@ -67,13 +67,87 @@ spv_result_t ValidateUniqueness(ValidationState_t& _, const Instruction* inst) {
 }
 
 spv_result_t ValidateTypeInt(ValidationState_t& _, const Instruction* inst) {
+  // Validates that the number of bits specified for an Int type is valid.
+  // Scalar integer types can be parameterized only with 32-bits.
+  // Int8, Int16, and Int64 capabilities allow using 8-bit, 16-bit, and 64-bit
+  // integers, respectively.
+  auto num_bits = inst->GetOperandAs<const uint32_t>(1);
+  if (num_bits != 32) {
+    if (num_bits == 8) {
+      if (_.features().declare_int8_type) {
+        return SPV_SUCCESS;
+      }
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Using an 8-bit integer type requires the Int8 capability,"
+                " or an extension that explicitly enables 8-bit integers.";
+    } else if (num_bits == 16) {
+      if (_.features().declare_int16_type) {
+        return SPV_SUCCESS;
+      }
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Using a 16-bit integer type requires the Int16 capability,"
+                " or an extension that explicitly enables 16-bit integers.";
+    } else if (num_bits == 64) {
+      if (_.HasCapability(SpvCapabilityInt64)) {
+        return SPV_SUCCESS;
+      }
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Using a 64-bit integer type requires the Int64 capability.";
+    } else {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Invalid number of bits (" << num_bits
+             << ") used for OpTypeInt.";
+    }
+  }
+
   const auto signedness_index = 2;
   const auto signedness = inst->GetOperandAs<uint32_t>(signedness_index);
   if (signedness != 0 && signedness != 1) {
     return _.diag(SPV_ERROR_INVALID_VALUE, inst)
            << "OpTypeInt has invalid signedness:";
   }
+
+  // SPIR-V Spec 2.16.3: Validation Rules for Kernel Capabilities: The
+  // Signedness in OpTypeInt must always be 0.
+  if (SpvOpTypeInt == inst->opcode() && _.HasCapability(SpvCapabilityKernel) &&
+      inst->GetOperandAs<uint32_t>(2) != 0u) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << "The Signedness in OpTypeInt "
+              "must always be 0 when Kernel "
+              "capability is used.";
+  }
+
   return SPV_SUCCESS;
+}
+
+spv_result_t ValidateTypeFloat(ValidationState_t& _, const Instruction* inst) {
+  // Validates that the number of bits specified for an Int type is valid.
+  // Scalar integer types can be parameterized only with 32-bits.
+  // Int8, Int16, and Int64 capabilities allow using 8-bit, 16-bit, and 64-bit
+  // integers, respectively.
+  auto num_bits = inst->GetOperandAs<const uint32_t>(1);
+  if (num_bits == 32) {
+    return SPV_SUCCESS;
+  }
+  if (num_bits == 16) {
+    if (_.features().declare_float16_type) {
+      return SPV_SUCCESS;
+    }
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Using a 16-bit floating point "
+           << "type requires the Float16 or Float16Buffer capability,"
+              " or an extension that explicitly enables 16-bit floating point.";
+  }
+  if (num_bits == 64) {
+    if (_.HasCapability(SpvCapabilityFloat64)) {
+      return SPV_SUCCESS;
+    }
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Using a 64-bit floating point "
+           << "type requires the Float64 capability.";
+  }
+  return _.diag(SPV_ERROR_INVALID_DATA, inst)
+         << "Invalid number of bits (" << num_bits << ") used for OpTypeFloat.";
 }
 
 spv_result_t ValidateTypeVector(ValidationState_t& _, const Instruction* inst) {
@@ -85,6 +159,27 @@ spv_result_t ValidateTypeVector(ValidationState_t& _, const Instruction* inst) {
            << "OpTypeVector Component Type <id> '" << _.getIdName(component_id)
            << "' is not a scalar type.";
   }
+
+  // Validates that the number of components in the vector is valid.
+  // Vector types can only be parameterized as having 2, 3, or 4 components.
+  // If the Vector16 capability is added, 8 and 16 components are also allowed.
+  auto num_components = inst->GetOperandAs<const uint32_t>(2);
+  if (num_components == 2 || num_components == 3 || num_components == 4) {
+    return SPV_SUCCESS;
+  } else if (num_components == 8 || num_components == 16) {
+    if (_.HasCapability(SpvCapabilityVector16)) {
+      return SPV_SUCCESS;
+    }
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Having " << num_components << " components for "
+           << spvOpcodeString(inst->opcode())
+           << " requires the Vector16 capability";
+  } else {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Illegal number of components (" << num_components << ") for "
+           << spvOpcodeString(inst->opcode());
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -94,9 +189,27 @@ spv_result_t ValidateTypeMatrix(ValidationState_t& _, const Instruction* inst) {
   const auto column_type = _.FindDef(column_type_id);
   if (!column_type || SpvOpTypeVector != column_type->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeMatrix Column Type <id> '" << _.getIdName(column_type_id)
-           << "' is not a vector.";
+           << "Columns in a matrix must be of type vector.";
   }
+
+  // Trace back once more to find out the type of components in the vector.
+  // Operand 1 is the <id> of the type of data in the vector.
+  const auto comp_type_id = column_type->GetOperandAs<uint32_t>(1);
+  auto comp_type_instruction = _.FindDef(comp_type_id);
+  if (comp_type_instruction->opcode() != SpvOpTypeFloat) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst) << "Matrix types can only be "
+                                                   "parameterized with "
+                                                   "floating-point types.";
+  }
+
+  // Validates that the matrix has 2,3, or 4 columns.
+  auto num_cols = inst->GetOperandAs<const uint32_t>(2);
+  if (num_cols != 2 && num_cols != 3 && num_cols != 4) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst) << "Matrix types can only be "
+                                                   "parameterized as having "
+                                                   "only 2, 3, or 4 columns.";
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -224,6 +337,11 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
   for (size_t member_type_index = 1;
        member_type_index < inst->operands().size(); ++member_type_index) {
     auto member_type_id = inst->GetOperandAs<uint32_t>(member_type_index);
+    if (member_type_id == inst->id()) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Structure members may not be self references";
+    }
+
     auto member_type = _.FindDef(member_type_id);
     if (!member_type || !spvOpcodeGeneratesType(member_type->opcode())) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
@@ -244,22 +362,6 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
              << "type. Structure <id> " << _.getIdName(struct_id)
              << " contains structure <id> " << _.getIdName(member_type_id)
              << ".";
-    }
-    if (_.IsForwardPointer(member_type_id)) {
-      // If we're dealing with a forward pointer:
-      // Find out the type that the pointer is pointing to (must be struct)
-      // word 3 is the <id> of the type being pointed to.
-      auto type_pointing_to = _.FindDef(member_type->words()[3]);
-      if (type_pointing_to && type_pointing_to->opcode() != SpvOpTypeStruct) {
-        // Forward declared operands of a struct may only point to a struct.
-        return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << "A forward reference operand in an OpTypeStruct must be an "
-                  "OpTypePointer that points to an OpTypeStruct. "
-                  "Found OpTypePointer that points to Op"
-               << spvOpcodeString(
-                      static_cast<SpvOp>(type_pointing_to->opcode()))
-               << ".";
-      }
     }
 
     if (spvIsVulkanOrWebGPUEnv(_.context()->target_env) &&
@@ -354,9 +456,14 @@ spv_result_t ValidateTypePointer(ValidationState_t& _,
       if (sampled == 2) _.RegisterPointerToStorageImage(inst->id());
     }
   }
+
+  if (!_.IsValidStorageClass(storage_class)) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << "Invalid storage class for target environment";
+  }
+
   return SPV_SUCCESS;
 }
-}  // namespace
 
 spv_result_t ValidateTypeFunction(ValidationState_t& _,
                                   const Instruction* inst) {
@@ -425,6 +532,13 @@ spv_result_t ValidateTypeForwardPointer(ValidationState_t& _,
            << "pointer definition.";
   }
 
+  const auto pointee_type_id = pointer_type_inst->GetOperandAs<uint32_t>(2);
+  const auto pointee_type = _.FindDef(pointee_type_id);
+  if (!pointee_type || pointee_type->opcode() != SpvOpTypeStruct) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Forward pointers must point to a structure";
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -474,6 +588,7 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
 
   return SPV_SUCCESS;
 }
+}  // namespace
 
 spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
   if (!spvOpcodeGeneratesType(inst->opcode()) &&
@@ -486,6 +601,9 @@ spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
   switch (inst->opcode()) {
     case SpvOpTypeInt:
       if (auto error = ValidateTypeInt(_, inst)) return error;
+      break;
+    case SpvOpTypeFloat:
+      if (auto error = ValidateTypeFloat(_, inst)) return error;
       break;
     case SpvOpTypeVector:
       if (auto error = ValidateTypeVector(_, inst)) return error;

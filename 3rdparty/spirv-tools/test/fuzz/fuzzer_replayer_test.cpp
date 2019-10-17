@@ -21,6 +21,8 @@ namespace spvtools {
 namespace fuzz {
 namespace {
 
+const uint32_t kNumFuzzerRuns = 20;
+
 // Assembles the given |shader| text, and then runs the fuzzer |num_runs|
 // times, using successive seeds starting from |initial_seed|.  Checks that
 // the binary produced after each fuzzer run is valid, and that replaying
@@ -29,10 +31,11 @@ namespace {
 void RunFuzzerAndReplayer(const std::string& shader,
                           const protobufs::FactSequence& initial_facts,
                           uint32_t initial_seed, uint32_t num_runs) {
-  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto env = SPV_ENV_UNIVERSAL_1_5;
 
   std::vector<uint32_t> binary_in;
   SpirvTools t(env);
+  t.SetMessageConsumer(kConsoleMessageConsumer);
   ASSERT_TRUE(t.Assemble(shader, &binary_in, kFuzzAssembleOption));
   ASSERT_TRUE(t.Validate(binary_in));
 
@@ -53,7 +56,7 @@ void RunFuzzerAndReplayer(const std::string& shader,
     std::vector<uint32_t> replayer_binary_out;
     protobufs::TransformationSequence replayer_transformation_sequence_out;
 
-    Replayer replayer(env);
+    Replayer replayer(env, false);
     replayer.SetMessageConsumer(kSilentConsumer);
     auto replayer_result_status = replayer.Run(
         binary_in, initial_facts, fuzzer_transformation_sequence_out,
@@ -239,9 +242,9 @@ TEST(FuzzerReplayerTest, Miscellaneous1) {
                OpFunctionEnd
   )";
 
-  // Do 10 fuzzer runs, starting from an initial seed of 0 (seed value chosen
+  // Do some fuzzer runs, starting from an initial seed of 0 (seed value chosen
   // arbitrarily).
-  RunFuzzerAndReplayer(shader, protobufs::FactSequence(), 0, 10);
+  RunFuzzerAndReplayer(shader, protobufs::FactSequence(), 0, kNumFuzzerRuns);
 }
 
 TEST(FuzzerReplayerTest, Miscellaneous2) {
@@ -302,7 +305,7 @@ TEST(FuzzerReplayerTest, Miscellaneous2) {
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main" %16 %139
+               OpEntryPoint Fragment %4 "main" %16 %139 %25 %68
                OpExecutionMode %4 OriginUpperLeft
                OpSource ESSL 310
                OpName %4 "main"
@@ -484,9 +487,9 @@ TEST(FuzzerReplayerTest, Miscellaneous2) {
                OpFunctionEnd
   )";
 
-  // Do 10 fuzzer runs, starting from an initial seed of 10 (seed value chosen
+  // Do some fuzzer runs, starting from an initial seed of 10 (seed value chosen
   // arbitrarily).
-  RunFuzzerAndReplayer(shader, protobufs::FactSequence(), 10, 10);
+  RunFuzzerAndReplayer(shader, protobufs::FactSequence(), 10, kNumFuzzerRuns);
 }
 
 TEST(FuzzerReplayerTest, Miscellaneous3) {
@@ -602,7 +605,7 @@ TEST(FuzzerReplayerTest, Miscellaneous3) {
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main" %68 %100
+               OpEntryPoint Fragment %4 "main" %68 %100 %24
                OpExecutionMode %4 OriginUpperLeft
                OpSource ESSL 310
                OpName %4 "main"
@@ -969,9 +972,9 @@ TEST(FuzzerReplayerTest, Miscellaneous3) {
     *facts.mutable_fact()->Add() = temp;
   }
 
-  // Do 10 fuzzer runs, starting from an initial seed of 94 (seed value chosen
+  // Do some fuzzer runs, starting from an initial seed of 94 (seed value chosen
   // arbitrarily).
-  RunFuzzerAndReplayer(shader, facts, 94, 10);
+  RunFuzzerAndReplayer(shader, facts, 94, kNumFuzzerRuns);
 }
 
 }  // namespace

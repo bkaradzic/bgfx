@@ -9,6 +9,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Adhere to GNU filesystem layout conventions
 include(GNUInstallDirs)
 
+# Needed for CMAKE_DEPENDENT_OPTION macro
+include(CMakeDependentOption)
+
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 
 set(LIB_TYPE STATIC)
@@ -23,12 +26,14 @@ if(NOT ${SKIP_GLSLANG_INSTALL})
 endif()
 option(ENABLE_SPVREMAPPER "Enables building of SPVRemapper" ON)
 
-option(ENABLE_AMD_EXTENSIONS "Enables support of AMD-specific extensions" ON)
 option(ENABLE_GLSLANG_BINARIES "Builds glslangValidator and spirv-remap" ON)
 
-option(ENABLE_NV_EXTENSIONS "Enables support of Nvidia-specific extensions" ON)
+option(ENABLE_GLSLANG_WEB "Reduces glslang to minimum needed for web use" OFF)
+option(ENABLE_GLSLANG_WEB_DEVEL "For ENABLE_GLSLANG_WEB builds, enables compilation error messages" OFF)
+option(ENABLE_EMSCRIPTEN_SINGLE_FILE "If using Emscripten, enables SINGLE_FILE build" OFF)
+option(ENABLE_EMSCRIPTEN_ENVIRONMENT_NODE "If using Emscripten, builds to run on Node instead of Web" OFF)
 
-option(ENABLE_HLSL "Enables HLSL input support" ON)
+CMAKE_DEPENDENT_OPTION(ENABLE_HLSL "Enables HLSL input support" ON "NOT ENABLE_GLSLANG_WEB" OFF)
 
 option(ENABLE_OPT "Enables spirv-opt capability if present" ON)
 
@@ -60,17 +65,16 @@ project(glslang)
 # make testing optional
 include(CTest)
 
-if(ENABLE_AMD_EXTENSIONS)
-    add_definitions(-DAMD_EXTENSIONS)
-endif(ENABLE_AMD_EXTENSIONS)
-
-if(ENABLE_NV_EXTENSIONS)
-    add_definitions(-DNV_EXTENSIONS)
-endif(ENABLE_NV_EXTENSIONS)
-
 if(ENABLE_HLSL)
     add_definitions(-DENABLE_HLSL)
 endif(ENABLE_HLSL)
+
+if(ENABLE_GLSLANG_WEB)
+    add_definitions(-DGLSLANG_WEB)
+    if(ENABLE_GLSLANG_WEB_DEVEL)
+        add_definitions(-DGLSLANG_WEB_DEVEL)
+    endif(ENABLE_GLSLANG_WEB_DEVEL)
+endif(ENABLE_GLSLANG_WEB)
 
 if(WIN32)
     set(CMAKE_DEBUG_POSTFIX "d")
@@ -88,11 +92,39 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
     add_compile_options(-Wall -Wmaybe-uninitialized -Wuninitialized -Wunused -Wunused-local-typedefs
                         -Wunused-parameter -Wunused-value  -Wunused-variable -Wunused-but-set-parameter -Wunused-but-set-variable -fno-exceptions)
     add_compile_options(-Wno-reorder)  # disable this from -Wall, since it happens all over.
+    add_compile_options(-fno-rtti)
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
     add_compile_options(-Wall -Wuninitialized -Wunused -Wunused-local-typedefs
                         -Wunused-parameter -Wunused-value  -Wunused-variable)
     add_compile_options(-Wno-reorder)  # disable this from -Wall, since it happens all over.
+    add_compile_options(-fno-rtti)
+elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+    add_compile_options(/GR-) # Disable RTTI
 endif()
+
+if(EMSCRIPTEN)
+    add_compile_options(-Os -fno-exceptions)
+    add_compile_options("SHELL: -s WASM=1")
+    add_compile_options("SHELL: -s WASM_OBJECT_FILES=0")
+    add_link_options(-Os)
+    add_link_options("SHELL: -s FILESYSTEM=0")
+    add_link_options("SHELL: --llvm-lto 1")
+    add_link_options("SHELL: --closure 1")
+    add_link_options("SHELL: -s ALLOW_MEMORY_GROWTH=1")
+
+    if(ENABLE_EMSCRIPTEN_SINGLE_FILE)
+        add_link_options("SHELL: -s SINGLE_FILE=1")
+    endif(ENABLE_EMSCRIPTEN_SINGLE_FILE)
+else()
+    if(ENABLE_GLSLANG_WEB)
+        if(MSVC)
+            add_compile_options(/Os /GR-)
+        else()
+            add_compile_options(-Os -fno-exceptions)
+            add_link_options(-Os)
+        endif()
+    endif(ENABLE_GLSLANG_WEB)
+endif(EMSCRIPTEN)
 
 # Request C++11
 if(${CMAKE_VERSION} VERSION_LESS 3.1)
@@ -104,8 +136,6 @@ else()
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
-
-add_compile_options(-fno-rtti)
 
 function(glslang_set_link_args TARGET)
     # For MinGW compiles, statically link against the GCC and C++ runtimes.

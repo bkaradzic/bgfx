@@ -89,13 +89,13 @@ struct OcornutImguiContext
 			uint32_t numVertices = (uint32_t)drawList->VtxBuffer.size();
 			uint32_t numIndices  = (uint32_t)drawList->IdxBuffer.size();
 
-			if (!checkAvailTransientBuffers(numVertices, m_decl, numIndices) )
+			if (!checkAvailTransientBuffers(numVertices, m_layout, numIndices) )
 			{
 				// not enough space in transient buffer just quit drawing the rest...
 				break;
 			}
 
-			bgfx::allocTransientVertexBuffer(&tvb, numVertices, m_decl);
+			bgfx::allocTransientVertexBuffer(&tvb, numVertices, m_layout);
 			bgfx::allocTransientIndexBuffer(&tib, numIndices);
 
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
@@ -247,7 +247,7 @@ struct OcornutImguiContext
 			, true
 			);
 
-		m_decl
+		m_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
@@ -391,7 +391,7 @@ struct OcornutImguiContext
 
 	ImGuiContext*       m_imgui;
 	bx::AllocatorI*     m_allocator;
-	bgfx::VertexDecl    m_decl;
+	bgfx::VertexLayout  m_layout;
 	bgfx::ProgramHandle m_program;
 	bgfx::ProgramHandle m_imageProgram;
 	bgfx::TextureHandle m_texture;
