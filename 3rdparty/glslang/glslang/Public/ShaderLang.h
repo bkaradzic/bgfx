@@ -487,7 +487,7 @@ public:
         environment.target.version = version;
     }
 
-    void getStrings(const char* const* &s, int& n) { s = strings; n = numStrings; };
+    void getStrings(const char* const* &s, int& n) { s = strings; n = numStrings; }
 
 #ifdef ENABLE_HLSL
     void setEnvTargetHlslFunctionality1() { environment.target.hlslFunctionality1 = true; }
@@ -775,7 +775,7 @@ public:
     TProgram();
     virtual ~TProgram();
     void addShader(TShader* shader) { stages[shader->stage].push_back(shader); }
-    std::list<TShader*>& getShaders(EShLanguage stage) { return stages[stage]; };
+    std::list<TShader*>& getShaders(EShLanguage stage) { return stages[stage]; }
     // Link Validation interface
     bool link(EShMessages);
     const char* getInfoLog();

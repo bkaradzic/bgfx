@@ -283,7 +283,7 @@ public:
                   const TString* entryPoint = nullptr);
     virtual ~TParseContext();
 
-    bool obeyPrecisionQualifiers() const { return precisionManager.respectingPrecisionQualifiers(); };
+    bool obeyPrecisionQualifiers() const { return precisionManager.respectingPrecisionQualifiers(); }
     void setPrecisionDefaults();
 
     void setLimits(const TBuiltInResource&) override;

@@ -20,6 +20,7 @@ else()
 endif()
 
 if(ENABLE_GLSLANG_INSTALL)
-    install(TARGETS OSDependent
+    install(TARGETS OSDependent EXPORT OSDependentTargets
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	install(EXPORT OSDependentTargets DESTINATION lib/cmake)
 endif(ENABLE_GLSLANG_INSTALL)

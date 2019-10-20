@@ -167,3 +167,12 @@ void qux2()
 }
 
 layout(early_fragment_tests) out;         // ERROR
+
+#extension GL_ARB_explicit_uniform_location : enable
+
+layout(location = 3) uniform vec4 ucolor0; // ERROR: explicit attrib location is also required for version < 330
+
+#extension GL_ARB_explicit_attrib_location : enable
+
+layout(location = 4) uniform vec4 ucolor1;
+
