@@ -3333,16 +3333,7 @@ INSTANTIATE_TEST_SUITE_P(CompositeExtractFoldingTest, GeneralInstructionFoldingT
             "%3 = OpCompositeExtract %float %2 4\n" +
             "OpReturn\n" +
             "OpFunctionEnd",
-        3, 0),
-    // Test case 14: Fold OpCompositeExtract with no indexes.
-    InstructionFoldingCase<uint32_t>(
-        Header() + "%main = OpFunction %void None %void_func\n" +
-            "%main_lab = OpLabel\n" +
-            "%2 = OpConstantComposite %v4float %float_1 %float_1 %float_1 %float_1\n" +
-            "%3 = OpCompositeExtract %v4float %2\n" +
-            "OpReturn\n" +
-            "OpFunctionEnd",
-        3, 2)
+        3, 0)
 ));
 
 INSTANTIATE_TEST_SUITE_P(CompositeConstructFoldingTest, GeneralInstructionFoldingTest,

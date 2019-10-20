@@ -153,8 +153,6 @@ if(SPIRV_BUILD_FUZZER)
   target_include_directories(SPIRV-Tools-fuzz
 		PUBLIC
 			$<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
-			$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/include>
-		PUBLIC
 			$<BUILD_INTERFACE:${SPIRV_HEADER_INCLUDE_DIR}>
 			$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         PRIVATE ${spirv-tools_BINARY_DIR}
@@ -174,7 +172,14 @@ if(SPIRV_BUILD_FUZZER)
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-	  install(EXPORT SPIRV-Tools-fuzzTargets DESTINATION lib/cmake)
+      export(EXPORT SPIRV-Tools-fuzzTargets FILE SPIRV-Tools-fuzzTarget.cmake)
+
+      spvtools_config_package_dir(SPIRV-Tools-fuzz PACKAGE_DIR)
+      install(EXPORT SPIRV-Tools-fuzzTargets FILE SPIRV-Tools-fuzzTarget.cmake
+            DESTINATION ${PACKAGE_DIR})
+
+      spvtools_generate_config_file(SPIRV-Tools-fuzz)
+      install(FILES ${CMAKE_BINARY_DIR}/SPIRV-Tools-fuzzConfig.cmake DESTINATION ${PACKAGE_DIR})
   endif(ENABLE_SPIRV_TOOLS_INSTALL)
 
 endif(SPIRV_BUILD_FUZZER)

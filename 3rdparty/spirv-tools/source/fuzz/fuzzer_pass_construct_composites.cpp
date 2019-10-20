@@ -43,21 +43,22 @@ void FuzzerPassConstructComposites::Apply() {
   }
 
   MaybeAddTransformationBeforeEachInstruction(
-      [this, &composite_type_ids](const opt::Function& function,
-                                  opt::BasicBlock* block,
-                                  opt::BasicBlock::iterator inst_it,
-                                  uint32_t base, uint32_t offset) -> uint32_t {
+      [this, &composite_type_ids](
+          const opt::Function& function, opt::BasicBlock* block,
+          opt::BasicBlock::iterator inst_it,
+          const protobufs::InstructionDescriptor& instruction_descriptor)
+          -> void {
         // Check whether it is legitimate to insert a composite construction
         // before the instruction.
         if (!fuzzerutil::CanInsertOpcodeBeforeInstruction(
                 SpvOpCompositeConstruct, inst_it)) {
-          return 0;
+          return;
         }
 
         // Randomly decide whether to try inserting an object copy here.
         if (!GetFuzzerContext()->ChoosePercentage(
                 GetFuzzerContext()->GetChanceOfConstructingComposite())) {
-          return 0;
+          return;
         }
 
         // For each instruction that is available at this program point (i.e. an
@@ -134,21 +135,20 @@ void FuzzerPassConstructComposites::Apply() {
           // We did not manage to make a composite; return 0 to indicate that no
           // instructions were added.
           assert(constructor_arguments == nullptr);
-          return 0;
+          return;
         }
         assert(constructor_arguments != nullptr);
 
         // Make and apply a transformation.
         TransformationConstructComposite transformation(
-            chosen_composite_type, *constructor_arguments, base, offset,
-            GetFuzzerContext()->GetFreshId());
+            chosen_composite_type, *constructor_arguments,
+            instruction_descriptor, GetFuzzerContext()->GetFreshId());
         assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
                "This transformation should be applicable by construction.");
         transformation.Apply(GetIRContext(), GetFactManager());
         *GetTransformations()->add_transformation() =
             transformation.ToMessage();
         // Indicate that one instruction was added.
-        return 1;
       });
 }
 

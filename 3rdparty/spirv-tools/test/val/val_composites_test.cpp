@@ -648,7 +648,6 @@ TEST_F(ValidateComposites, CompositeExtractSuccess) {
 %val16 = OpCompositeExtract %f32 %struct 4 1000 1
 %val17 = OpCompositeExtract %f32 %struct 5 0
 %val18 = OpCompositeExtract %u32 %struct 5 1
-%val19 = OpCompositeExtract %big_struct %struct
 )";
 
   CompileSuccessfully(GenerateShaderCode(body));
@@ -767,6 +766,18 @@ TEST_F(ValidateComposites, CompositeExtractTooManyIndices) {
                         "indexes still remain to be traversed."));
 }
 
+TEST_F(ValidateComposites, CompositeExtractNoIndices) {
+  const std::string body = R"(
+%struct = OpLoad %big_struct %var_big_struct
+%val1 = OpCompositeExtract %big_struct %struct
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body));
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Expected at least one index to OpCompositeExtract"));
+}
+
 TEST_F(ValidateComposites, CompositeExtractWrongType1) {
   const std::string body = R"(
 %struct = OpLoad %big_struct %var_big_struct
@@ -861,7 +872,6 @@ TEST_F(ValidateComposites, CompositeInsertSuccess) {
 %val16 = OpCompositeInsert %big_struct %f32_3 %struct 4 1000 1
 %val17 = OpCompositeInsert %big_struct %f32_3 %struct 5 0
 %val18 = OpCompositeInsert %big_struct %u32_3 %struct 5 1
-%val19 = OpCompositeInsert %big_struct %struct %struct
 )";
 
   CompileSuccessfully(GenerateShaderCode(body));
@@ -1157,9 +1167,8 @@ TEST_F(ValidateComposites, CompositeInsertWrongResultTypeBad) {
               HasSubstr("The Result Type must be the same as Composite type"));
 }
 
-// Valid: No Indexes were passed to OpCompositeExtract, and the Result Type is
-// the same as the Base Composite type.
-TEST_F(ValidateComposites, CompositeExtractNoIndexesGood) {
+// Invalid: No Indexes were passed to OpCompositeExtract.
+TEST_F(ValidateComposites, CompositeExtractNoIndices2) {
   std::ostringstream spirv;
   spirv << GetHeaderForTestsFromValId() << std::endl;
   spirv << "%matrix = OpLoad %mat4x3 %my_matrix" << std::endl;
@@ -1167,29 +1176,32 @@ TEST_F(ValidateComposites, CompositeExtractNoIndexesGood) {
   spirv << R"(OpReturn
               OpFunctionEnd)";
   CompileSuccessfully(spirv.str());
-  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Expected at least one index to OpCompositeExtract, zero found"));
 }
 
-// Invalid: No Indexes were passed to OpCompositeExtract, but the Result Type is
-// different from the Base Composite type.
-TEST_F(ValidateComposites, CompositeExtractNoIndexesBad) {
+// Invalid: No Indexes were passed to OpCompositeExtract.
+TEST_F(ValidateComposites, CompositeExtractNoIndicesWrongResultType) {
   std::ostringstream spirv;
   spirv << GetHeaderForTestsFromValId() << std::endl;
   spirv << "%matrix = OpLoad %mat4x3 %my_matrix" << std::endl;
-  spirv << "%float_entry = OpCompositeExtract  %float %matrix" << std::endl;
+  spirv << "%float_entry = OpCompositeExtract %float %matrix" << std::endl;
   spirv << R"(OpReturn
               OpFunctionEnd)";
   CompileSuccessfully(spirv.str());
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Result type (OpTypeFloat) does not match the type "
-                        "that results from indexing into the composite "
-                        "(OpTypeMatrix)."));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Expected at least one index to OpCompositeExtract, zero found"));
 }
 
-// Valid: No Indexes were passed to OpCompositeInsert, and the type of the
+// Invalid: No Indices were passed to OpCompositeInsert, and the type of the
 // Object<id> argument matches the Composite type.
-TEST_F(ValidateComposites, CompositeInsertMissingIndexesGood) {
+TEST_F(ValidateComposites, CompositeInsertMissingIndices) {
   std::ostringstream spirv;
   spirv << GetHeaderForTestsFromValId() << std::endl;
   spirv << "%matrix   = OpLoad %mat4x3 %my_matrix" << std::endl;
@@ -1199,12 +1211,16 @@ TEST_F(ValidateComposites, CompositeInsertMissingIndexesGood) {
               OpReturn
               OpFunctionEnd)";
   CompileSuccessfully(spirv.str());
-  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Expected at least one index to OpCompositeInsert, zero found"));
 }
 
-// Invalid: No Indexes were passed to OpCompositeInsert, but the type of the
+// Invalid: No Indices were passed to OpCompositeInsert, but the type of the
 // Object<id> argument does not match the Composite type.
-TEST_F(ValidateComposites, CompositeInsertMissingIndexesBad) {
+TEST_F(ValidateComposites, CompositeInsertMissingIndices2) {
   std::ostringstream spirv;
   spirv << GetHeaderForTestsFromValId() << std::endl;
   spirv << "%matrix = OpLoad %mat4x3 %my_matrix" << std::endl;
@@ -1214,10 +1230,10 @@ TEST_F(ValidateComposites, CompositeInsertMissingIndexesBad) {
               OpFunctionEnd)";
   CompileSuccessfully(spirv.str());
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("The Object type (OpTypeInt) does not match the type "
-                        "that results from indexing into the Composite "
-                        "(OpTypeMatrix)."));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Expected at least one index to OpCompositeInsert, zero found"));
 }
 
 // Valid: Tests that we can index into Struct, Array, Matrix, and Vector!

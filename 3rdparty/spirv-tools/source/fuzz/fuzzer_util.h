@@ -64,15 +64,10 @@ void AddUnreachableEdgeAndUpdateOpPhis(
 bool BlockIsInLoopContinueConstruct(opt::IRContext* context, uint32_t block_id,
                                     uint32_t maybe_loop_header_id);
 
-// Requires that |base_inst| is either the label instruction of |block| or an
-// instruction inside |block|.
-//
-// If the block contains a (non-label, non-terminator) instruction |offset|
-// instructions after |base_inst|, an iterator to this instruction is returned.
-//
+// If |block| contains |inst|, an iterator for |inst| is returned.
 // Otherwise |block|->end() is returned.
-opt::BasicBlock::iterator GetIteratorForBaseInstructionAndOffset(
-    opt::BasicBlock* block, const opt::Instruction* base_inst, uint32_t offset);
+opt::BasicBlock::iterator GetIteratorForInstruction(
+    opt::BasicBlock* block, const opt::Instruction* inst);
 
 // The function determines whether adding an edge from |bb_from| to |bb_to| -
 // is legitimate with respect to the SPIR-V rule that a definition must
