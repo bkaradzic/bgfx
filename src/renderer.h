@@ -523,6 +523,8 @@ namespace bgfx
 
 				viewStats.cpuTimeElapsed += bx::getHPCounter();
 				viewStats.gpuTimeElapsed = result.m_end - result.m_begin;
+				viewStats.gpuTimeBegin = result.m_begin;
+				viewStats.gpuTimeEnd = result.m_end;
 
 				++m_numViews;
 				m_queryIdx = UINT32_MAX;

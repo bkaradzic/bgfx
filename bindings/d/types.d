@@ -925,6 +925,8 @@ struct bgfx_view_stats_t
 	bgfx_view_id_t view; /// View id.
 	long cpuTimeElapsed; /// CPU (submit) time elapsed.
 	long gpuTimeElapsed; /// GPU time elapsed.
+	long gpuTimeBegin; /// GPU begin time.
+	long gpuTimeEnd; /// GPU end time.
 }
 
 /// Encoder stats.

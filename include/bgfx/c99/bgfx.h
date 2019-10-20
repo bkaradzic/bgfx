@@ -784,6 +784,8 @@ typedef struct bgfx_view_stats_s
     bgfx_view_id_t       view;               /** View id.                                 */
     int64_t              cpuTimeElapsed;     /** CPU (submit) time elapsed.               */
     int64_t              gpuTimeElapsed;     /** GPU time elapsed.                        */
+    int64_t              gpuTimeBegin;       /** GPU begin time.                          */
+    int64_t              gpuTimeEnd;         /** GPU end time.                            */
 
 } bgfx_view_stats_t;
 

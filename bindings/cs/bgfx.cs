@@ -2053,6 +2053,8 @@ public static partial class bgfx
 		public ushort view;
 		public long cpuTimeElapsed;
 		public long gpuTimeElapsed;
+		public long gpuTimeBegin;
+		public long gpuTimeEnd;
 	}
 	
 	public unsafe struct EncoderStats
