@@ -410,6 +410,10 @@ public:
 	// This corresponds to VK_KHR_push_descriptor in Vulkan.
 	void add_discrete_descriptor_set(uint32_t desc_set);
 
+	// If an argument buffer is large enough, it may need to be in the device storage space rather than
+	// constant. Opt-in to this behavior here on a per set basis.
+	void set_argument_buffer_device_address_space(uint32_t desc_set, bool device_storage);
+
 	// Query after compilation is done. This allows you to check if a location or set/binding combination was used by the shader.
 	bool is_msl_vertex_attribute_used(uint32_t location);
 
@@ -795,6 +799,8 @@ protected:
 
 	uint32_t argument_buffer_ids[kMaxArgumentBuffers];
 	uint32_t argument_buffer_discrete_mask = 0;
+	uint32_t argument_buffer_device_storage_mask = 0;
+
 	void analyze_argument_buffers();
 	bool descriptor_set_is_argument_buffer(uint32_t desc_set) const;
 

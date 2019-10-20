@@ -27,14 +27,14 @@ matrix:
     - os: windows
       before_install:
         - choco install python3
-        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
       env:
         - GENERATOR="Visual Studio 15 2017"
         - ARTIFACT=vs2017-32bit
     - os: windows
       before_install:
         - choco install python3
-        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
       env:
         - GENERATOR="Visual Studio 15 2017 Win64"
         - ARTIFACT=vs2017-64bit

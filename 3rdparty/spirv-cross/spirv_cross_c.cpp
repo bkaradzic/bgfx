@@ -946,6 +946,26 @@ spvc_result spvc_compiler_msl_add_discrete_descriptor_set(spvc_compiler compiler
 #endif
 }
 
+spvc_result spvc_compiler_msl_set_argument_buffer_device_address_space(spvc_compiler compiler, unsigned desc_set, spvc_bool device_address)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	msl.set_argument_buffer_device_address_space(desc_set, bool(device_address));
+	return SPVC_SUCCESS;
+#else
+	(void)desc_set;
+	(void)device_address;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
 spvc_bool spvc_compiler_msl_is_vertex_attribute_used(spvc_compiler compiler, unsigned location)
 {
 #if SPIRV_CROSS_C_API_MSL
