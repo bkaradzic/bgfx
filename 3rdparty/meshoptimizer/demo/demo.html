@@ -32,23 +32,21 @@
     <script>
         var canvas = document.getElementById("renderCanvas");
 
-        BABYLON.GLTF2.GLTFLoader.RegisterExtension("MESHOPT_compression", (loader) => new MESHOPT_compression(loader, MeshoptDecoder)); 
+        BABYLON.GLTF2.GLTFLoader.RegisterExtension("MESHOPT_compression", (loader) => new MESHOPT_compression(loader, MeshoptDecoder));
 
         var createScene = function () {
             var scene = new BABYLON.Scene(engine);
-        
-            var light = new BABYLON.HemisphericLight();
-        
+
             var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.8, 10, BABYLON.Vector3.Zero(), scene);
             camera.attachControl(canvas, false);
-        
+
             BABYLON.SceneLoader.Append("", "pirate.glb", scene, function (newMeshes) {
                 scene.activeCamera = null;
                 scene.createDefaultCameraOrLight(true);
                 scene.activeCamera.attachControl(canvas, false);
                 scene.activeCamera.alpha = Math.PI / 2;
             });
-        
+
             return scene;
         }
 
