@@ -3942,6 +3942,14 @@ namespace bgfx { namespace mtl
 						vp.zfar    = 1.0f;
 						rce.setViewport(vp);
 
+						MTLScissorRect sciRect = {
+							viewState.m_rect.m_x,
+							viewState.m_rect.m_y,
+							viewState.m_rect.m_width,
+							viewState.m_rect.m_height
+						};
+						rce.setScissorRect(sciRect);
+
 						if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK)
 							&& !clearWithRenderPass)
 						{

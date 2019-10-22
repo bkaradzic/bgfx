@@ -17,14 +17,14 @@ var MESHOPT_compression = /** @class */ (function () {
     /** @hidden */
     MESHOPT_compression.prototype.loadBufferViewAsync = function (context, bufferView) {
         if (bufferView.extensions && bufferView.extensions[NAME]) {
-            if (bufferView._decoded) {
-                return bufferView._decoded;
+            var extensionDef = bufferView.extensions[NAME];
+            if (extensionDef._decoded) {
+                return extensionDef._decoded;
             }
-            var view = this._loader.loadBufferViewAsync(context, bufferView);
+            var view = this._loader.loadBufferViewAsync(context, extensionDef);
             var decoder = this._decoder;
-            bufferView._decoded = Promise.all([view, decoder.ready]).then(function (res) {
+            extensionDef._decoded = Promise.all([view, decoder.ready]).then(function (res) {
                 var source = res[0];
-                var extensionDef = bufferView.extensions[NAME];
                 var count = extensionDef.count;
                 var stride = extensionDef.byteStride;
                 var result = new Uint8Array(new ArrayBuffer(count * stride));
@@ -40,7 +40,7 @@ var MESHOPT_compression = /** @class */ (function () {
                 }
                 return Promise.resolve(result);
             });
-            return bufferView._decoded;
+            return extensionDef._decoded;
         } else {
             return null;
         }

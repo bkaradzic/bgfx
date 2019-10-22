@@ -67,27 +67,26 @@ class FuzzerPass {
           instruction_is_relevant);
 
   // A helper method that iterates through each instruction in each block, at
-  // all times tracking a base instruction and offset that allows that latest
+  // all times tracking an instruction descriptor that allows the latest
   // instruction to be located even if it has no result id.
   //
-  // The code to manipulate the base and offset is a bit fiddly, and the point
-  // of this method is to avoiding having to duplicate it in multiple
+  // The code to manipulate the instruction descriptor is a bit fiddly, and the
+  // point of this method is to avoiding having to duplicate it in multiple
   // transformation passes.
   //
   // The function |maybe_apply_transformation| is invoked for each instruction
   // |inst_it| in block |block| of function |function| that is encountered.  The
-  // |base| and |offset| parameters to the function object allow |inst_it| to be
-  // identified.
+  // |instruction_descriptor| parameter to the function object allows |inst_it|
+  // to be identified.
   //
   // The job of |maybe_apply_transformation| is to randomly decide whether to
   // try to apply some transformation, and then - if selected - to attempt to
-  // apply it.  The function returns the number of instructions that were
-  // inserted before |inst_it|, so that |offset| can be updated.
-  //
+  // apply it.
   void MaybeAddTransformationBeforeEachInstruction(
-      std::function<uint32_t(
-          const opt::Function& function, opt::BasicBlock* block,
-          opt::BasicBlock::iterator inst_it, uint32_t base, uint32_t offset)>
+      std::function<
+          void(const opt::Function& function, opt::BasicBlock* block,
+               opt::BasicBlock::iterator inst_it,
+               const protobufs::InstructionDescriptor& instruction_descriptor)>
           maybe_apply_transformation);
 
  private:

@@ -29,10 +29,13 @@ ERROR: 0:153: 'early_fragment_tests' : not supported for this version or the ena
 ERROR: 0:154: 'image load store' : not supported for this version or the enabled extensions 
 ERROR: 0:154: 'iimage2D' : Reserved word. 
 ERROR: 0:169: 'early_fragment_tests' : can only apply to 'in' 
-ERROR: 28 compilation errors.  No code generated.
+ERROR: 0:173: 'location qualifier on uniform or buffer' : not supported for this version or the enabled extensions 
+ERROR: 29 compilation errors.  No code generated.
 
 
 Shader version: 130
+Requested GL_ARB_explicit_attrib_location
+Requested GL_ARB_explicit_uniform_location
 Requested GL_ARB_gpu_shader5
 Requested GL_ARB_separate_shader_objects
 Requested GL_ARB_shader_image_load_store
@@ -402,12 +405,16 @@ ERROR: node is still EOpNull!
 0:?     'gl_FogFragCoord' ( smooth in float)
 0:?     'iimg2Dbad' (layout( r32i) uniform iimage2D)
 0:?     'iimg2D' (layout( r32i) uniform iimage2D)
+0:?     'ucolor0' (layout( location=3) uniform 4-component vector of float)
+0:?     'ucolor1' (layout( location=4) uniform 4-component vector of float)
 
 
 Linked fragment stage:
 
 
 Shader version: 130
+Requested GL_ARB_explicit_attrib_location
+Requested GL_ARB_explicit_uniform_location
 Requested GL_ARB_gpu_shader5
 Requested GL_ARB_separate_shader_objects
 Requested GL_ARB_shader_image_load_store
@@ -457,4 +464,6 @@ ERROR: node is still EOpNull!
 0:?     'gl_FogFragCoord' ( smooth in float)
 0:?     'iimg2Dbad' (layout( r32i) uniform iimage2D)
 0:?     'iimg2D' (layout( r32i) uniform iimage2D)
+0:?     'ucolor0' (layout( location=3) uniform 4-component vector of float)
+0:?     'ucolor1' (layout( location=4) uniform 4-component vector of float)
 

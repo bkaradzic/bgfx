@@ -135,8 +135,8 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
     bool isYuv()         const { return yuv; }
 #endif
     void setCombined(bool c) { combined = c; }
-    void setBasicType(TBasicType t) { type = t; };
-    TBasicType getBasicType()  const { return type; };
+    void setBasicType(TBasicType t) { type = t; }
+    TBasicType getBasicType()  const { return type; }
     bool isShadow()      const { return shadow; }
     bool isArrayed()     const { return arrayed; }
 

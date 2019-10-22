@@ -522,6 +522,7 @@ struct CLIArguments
 	bool vulkan_glsl_disable_ext_samplerless_texture_functions = false;
 	bool emit_line_directives = false;
 	SmallVector<uint32_t> msl_discrete_descriptor_sets;
+	SmallVector<uint32_t> msl_device_argument_buffers;
 	SmallVector<pair<uint32_t, uint32_t>> msl_dynamic_buffers;
 	SmallVector<PLSArg> pls_in;
 	SmallVector<PLSArg> pls_out;
@@ -598,6 +599,7 @@ static void print_help()
 	                "\t[--msl-argument-buffers]\n"
 	                "\t[--msl-texture-buffer-native]\n"
 	                "\t[--msl-discrete-descriptor-set <index>]\n"
+	                "\t[--msl-device-argument-buffer <index>]\n"
 	                "\t[--msl-multiview]\n"
 	                "\t[--msl-view-index-from-device-index]\n"
 	                "\t[--msl-dispatch-base]\n"
@@ -766,6 +768,8 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
 			msl_comp->add_discrete_descriptor_set(v);
+		for (auto &v : args.msl_device_argument_buffers)
+			msl_comp->set_argument_buffer_device_address_space(v, true);
 		uint32_t i = 0;
 		for (auto &v : args.msl_dynamic_buffers)
 			msl_comp->add_dynamic_buffer(v.first, v.second, i++);
@@ -1086,6 +1090,8 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-argument-buffers", [&args](CLIParser &) { args.msl_argument_buffers = true; });
 	cbs.add("--msl-discrete-descriptor-set",
 	        [&args](CLIParser &parser) { args.msl_discrete_descriptor_sets.push_back(parser.next_uint()); });
+	cbs.add("--msl-device-argument-buffer",
+	        [&args](CLIParser &parser) { args.msl_device_argument_buffers.push_back(parser.next_uint()); });
 	cbs.add("--msl-texture-buffer-native", [&args](CLIParser &) { args.msl_texture_buffer_native = true; });
 	cbs.add("--msl-multiview", [&args](CLIParser &) { args.msl_multiview = true; });
 	cbs.add("--msl-view-index-from-device-index",

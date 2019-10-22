@@ -114,7 +114,7 @@ public:
     bool doAutoLocationMapping() const;
     TSlotSet::iterator findSlot(int set, int slot);
     bool checkEmpty(int set, int slot);
-    bool validateInOut(EShLanguage /*stage*/, TVarEntryInfo& /*ent*/) override { return true; };
+    bool validateInOut(EShLanguage /*stage*/, TVarEntryInfo& /*ent*/) override { return true; }
     int reserveSlot(int set, int slot, int size = 1);
     int getFreeSlot(int set, int base, int size = 1);
     int resolveSet(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
@@ -125,7 +125,7 @@ public:
     void addStage(EShLanguage stage) override {
         if (stage < EShLangCount)
             stageMask[stage] = true;
-    };
+    }
     uint32_t computeTypeLocationSize(const TType& type, EShLanguage stage);
 
     TSlotSetMap slots;
@@ -191,7 +191,7 @@ public:
     typedef std::map<TString, int> TVarSlotMap;  // <resourceName, location/binding>
     typedef std::map<int, TVarSlotMap> TSlotMap; // <resourceKey, TVarSlotMap>
     TDefaultGlslIoResolver(const TIntermediate& intermediate);
-    bool validateBinding(EShLanguage /*stage*/, TVarEntryInfo& /*ent*/) override { return true; };
+    bool validateBinding(EShLanguage /*stage*/, TVarEntryInfo& /*ent*/) override { return true; }
     TResourceType getResourceType(const glslang::TType& type) override;
     int resolveInOutLocation(EShLanguage stage, TVarEntryInfo& ent) override;
     int resolveUniformLocation(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
@@ -209,7 +209,7 @@ public:
     int buildStorageKey(EShLanguage stage, TStorageQualifier type) {
         assert(static_cast<uint32_t>(stage) <= 0x0000ffff && static_cast<uint32_t>(type) <= 0x0000ffff);
         return (stage << 16) | type;
-    };
+    }
 
 protected:
     // Use for mark pre stage, to get more interface symbol information.
@@ -242,7 +242,7 @@ struct TVarLivePair : std::pair<const TString, TVarEntryInfo> {
         const_cast<TString&>(first) = _Right.first;
         second = _Right.second;
         return (*this);
-    };
+    }
 };
 typedef std::vector<TVarLivePair> TVarLiveVector;
 
@@ -253,7 +253,7 @@ public:
     virtual ~TIoMapper() {}
     // grow the reflection stage by stage
     bool virtual addStage(EShLanguage, TIntermediate&, TInfoSink&, TIoMapResolver*);
-    bool virtual doMap(TIoMapResolver*, TInfoSink&) { return true; };
+    bool virtual doMap(TIoMapResolver*, TInfoSink&) { return true; }
 };
 
 // I/O mapper for OpenGL

@@ -15,6 +15,8 @@
 #include "source/fuzz/transformation_construct_composite.h"
 
 #include "source/fuzz/fuzzer_util.h"
+#include "source/fuzz/instruction_descriptor.h"
+#include "source/opt/instruction.h"
 
 namespace spvtools {
 namespace fuzz {
@@ -25,13 +27,14 @@ TransformationConstructComposite::TransformationConstructComposite(
 
 TransformationConstructComposite::TransformationConstructComposite(
     uint32_t composite_type_id, std::vector<uint32_t> component,
-    uint32_t base_instruction_id, uint32_t offset, uint32_t fresh_id) {
+    const protobufs::InstructionDescriptor& instruction_to_insert_before,
+    uint32_t fresh_id) {
   message_.set_composite_type_id(composite_type_id);
   for (auto a_component : component) {
     message_.add_component(a_component);
   }
-  message_.set_base_instruction_id(base_instruction_id);
-  message_.set_offset(offset);
+  *message_.mutable_instruction_to_insert_before() =
+      instruction_to_insert_before;
   message_.set_fresh_id(fresh_id);
 }
 
@@ -42,24 +45,11 @@ bool TransformationConstructComposite::IsApplicable(
     return false;
   }
 
-  auto base_instruction =
-      context->get_def_use_mgr()->GetDef(message_.base_instruction_id());
-  if (!base_instruction) {
-    // The given id to insert after is not defined.
-    return false;
-  }
-
-  auto destination_block = context->get_instr_block(base_instruction);
-  if (!destination_block) {
-    // The given id to insert after is not in a block.
-    return false;
-  }
-
-  auto insert_before = fuzzerutil::GetIteratorForBaseInstructionAndOffset(
-      destination_block, base_instruction, message_.offset());
-
-  if (insert_before == destination_block->end()) {
-    // The offset was inappropriate.
+  auto insert_before =
+      FindInstruction(message_.instruction_to_insert_before(), context);
+  if (!insert_before) {
+    // The instruction before which the composite should be inserted was not
+    // found.
     return false;
   }
 
@@ -125,11 +115,11 @@ void TransformationConstructComposite::Apply(opt::IRContext* context,
                                              FactManager* fact_manager) const {
   // Use the base and offset information from the transformation to determine
   // where in the module a new instruction should be inserted.
-  auto base_instruction =
-      context->get_def_use_mgr()->GetDef(message_.base_instruction_id());
-  auto destination_block = context->get_instr_block(base_instruction);
-  auto insert_before = fuzzerutil::GetIteratorForBaseInstructionAndOffset(
-      destination_block, base_instruction, message_.offset());
+  auto insert_before_inst =
+      FindInstruction(message_.instruction_to_insert_before(), context);
+  auto destination_block = context->get_instr_block(insert_before_inst);
+  auto insert_before = fuzzerutil::GetIteratorForInstruction(
+      destination_block, insert_before_inst);
 
   // Prepare the input operands for an OpCompositeConstruct instruction.
   opt::Instruction::OperandList in_operands;

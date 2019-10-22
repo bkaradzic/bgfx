@@ -6,6 +6,9 @@ matrix:
       compiler: gcc
     - os: linux
       compiler: clang
+    - os: linux
+      compiler: gcc
+      arch: arm64
     - os: osx
       compiler: clang
     - os: windows
