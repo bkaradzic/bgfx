@@ -15,6 +15,7 @@
 #include "source/fuzz/transformation_copy_object.h"
 
 #include "source/fuzz/fuzzer_util.h"
+#include "source/fuzz/instruction_descriptor.h"
 #include "source/opt/instruction.h"
 #include "source/util/make_unique.h"
 
@@ -25,13 +26,13 @@ TransformationCopyObject::TransformationCopyObject(
     const protobufs::TransformationCopyObject& message)
     : message_(message) {}
 
-TransformationCopyObject::TransformationCopyObject(uint32_t object,
-                                                   uint32_t base_instruction_id,
-                                                   uint32_t offset,
-                                                   uint32_t fresh_id) {
+TransformationCopyObject::TransformationCopyObject(
+    uint32_t object,
+    const protobufs::InstructionDescriptor& instruction_to_insert_before,
+    uint32_t fresh_id) {
   message_.set_object(object);
-  message_.set_base_instruction_id(base_instruction_id);
-  message_.set_offset(offset);
+  *message_.mutable_instruction_to_insert_before() =
+      instruction_to_insert_before;
   message_.set_fresh_id(fresh_id);
 }
 
@@ -50,24 +51,10 @@ bool TransformationCopyObject::IsApplicable(
     return false;
   }
 
-  auto base_instruction =
-      context->get_def_use_mgr()->GetDef(message_.base_instruction_id());
-  if (!base_instruction) {
-    // The given id to insert after is not defined.
-    return false;
-  }
-
-  auto destination_block = context->get_instr_block(base_instruction);
-  if (!destination_block) {
-    // The given id to insert after is not in a block.
-    return false;
-  }
-
-  auto insert_before = fuzzerutil::GetIteratorForBaseInstructionAndOffset(
-      destination_block, base_instruction, message_.offset());
-
-  if (insert_before == destination_block->end()) {
-    // The offset was inappropriate.
+  auto insert_before =
+      FindInstruction(message_.instruction_to_insert_before(), context);
+  if (!insert_before) {
+    // The instruction before which the copy should be inserted was not found.
     return false;
   }
 
@@ -86,7 +73,9 @@ bool TransformationCopyObject::IsApplicable(
   // insert it before the object's defining instruction.
   return !context->get_instr_block(object_inst) ||
          (object_inst != &*insert_before &&
-          context->GetDominatorAnalysis(destination_block->GetParent())
+          context
+              ->GetDominatorAnalysis(
+                  context->get_instr_block(insert_before)->GetParent())
               ->Dominates(object_inst, &*insert_before));
 }
 
@@ -94,13 +83,12 @@ void TransformationCopyObject::Apply(opt::IRContext* context,
                                      FactManager* fact_manager) const {
   auto object_inst = context->get_def_use_mgr()->GetDef(message_.object());
   assert(object_inst && "The object to be copied must exist.");
-  auto base_instruction =
-      context->get_def_use_mgr()->GetDef(message_.base_instruction_id());
-  assert(base_instruction && "The base instruction must exist.");
-  auto destination_block = context->get_instr_block(base_instruction);
+  auto insert_before_inst =
+      FindInstruction(message_.instruction_to_insert_before(), context);
+  auto destination_block = context->get_instr_block(insert_before_inst);
   assert(destination_block && "The base instruction must be in a block.");
-  auto insert_before = fuzzerutil::GetIteratorForBaseInstructionAndOffset(
-      destination_block, base_instruction, message_.offset());
+  auto insert_before = fuzzerutil::GetIteratorForInstruction(
+      destination_block, insert_before_inst);
   assert(insert_before != destination_block->end() &&
          "There must be an instruction before which the copy can be inserted.");
 

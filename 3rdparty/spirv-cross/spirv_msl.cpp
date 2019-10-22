@@ -73,6 +73,17 @@ void CompilerMSL::add_discrete_descriptor_set(uint32_t desc_set)
 		argument_buffer_discrete_mask |= 1u << desc_set;
 }
 
+void CompilerMSL::set_argument_buffer_device_address_space(uint32_t desc_set, bool device_storage)
+{
+	if (desc_set < kMaxArgumentBuffers)
+	{
+		if (device_storage)
+			argument_buffer_device_storage_mask |= 1u << desc_set;
+		else
+			argument_buffer_device_storage_mask &= ~(1u << desc_set);
+	}
+}
+
 bool CompilerMSL::is_msl_vertex_attribute_used(uint32_t location)
 {
 	return vtx_attrs_in_use.count(location) != 0;
@@ -8950,7 +8961,13 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 				// constant SSBO * constant (&array)[N].
 				// However, this only matters for argument buffers, since for MSL 1.0 style codegen,
 				// we emit the buffer array on stack instead, and that seems to work just fine apparently.
-				decl += " constant";
+
+				// If the argument was marked as being in device address space, any pointer to member would
+				// be const device, not constant.
+				if (argument_buffer_device_storage_mask & (1u << desc_set))
+					decl += " const device";
+				else
+					decl += " constant";
 			}
 		}
 
@@ -11213,8 +11230,20 @@ void CompilerMSL::analyze_argument_buffers()
 		argument_buffer_ids[desc_set] = next_id;
 
 		auto &buffer_type = set<SPIRType>(type_id);
-		buffer_type.storage = StorageClassUniform;
+
 		buffer_type.basetype = SPIRType::Struct;
+
+		if ((argument_buffer_device_storage_mask & (1u << desc_set)) != 0)
+		{
+			buffer_type.storage = StorageClassStorageBuffer;
+			// Make sure the argument buffer gets marked as const device.
+			set_decoration(next_id, DecorationNonWritable);
+			// Need to mark the type as a Block to enable this.
+			set_decoration(type_id, DecorationBlock);
+		}
+		else
+			buffer_type.storage = StorageClassUniform;
+
 		set_name(type_id, join("spvDescriptorSetBuffer", desc_set));
 
 		auto &ptr_type = set<SPIRType>(ptr_type_id);

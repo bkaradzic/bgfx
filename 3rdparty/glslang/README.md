@@ -307,7 +307,7 @@ See `ShaderLang.h` and the usage of it in `StandAlone/StandAlone.cpp` for more
 details. There is a block comment giving more detail above the calls for
 `setEnvInput, setEnvClient, and setEnvTarget`.
 
-### C Functional Interface (orignal)
+### C Functional Interface (original)
 
 This interface is in roughly the first 2/3 of `ShaderLang.h`, and referred to
 as the `Sh*()` interface, as all the entry points start `Sh`.

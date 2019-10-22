@@ -28,10 +28,10 @@ class TransformationConstructComposite : public Transformation {
   explicit TransformationConstructComposite(
       const protobufs::TransformationConstructComposite& message);
 
-  TransformationConstructComposite(uint32_t composite_type_id,
-                                   std::vector<uint32_t> component,
-                                   uint32_t base_instruction_id,
-                                   uint32_t offset, uint32_t fresh_id);
+  TransformationConstructComposite(
+      uint32_t composite_type_id, std::vector<uint32_t> component,
+      const protobufs::InstructionDescriptor& instruction_to_insert_before,
+      uint32_t fresh_id);
 
   // - |message_.fresh_id| must not be used by the module.
   // - |message_.composite_type_id| must be the id of a composite type

@@ -170,39 +170,14 @@ bool BlockIsInLoopContinueConstruct(opt::IRContext* context, uint32_t block_id,
   return false;
 }
 
-opt::BasicBlock::iterator GetIteratorForBaseInstructionAndOffset(
-    opt::BasicBlock* block, const opt::Instruction* base_inst,
-    uint32_t offset) {
-  // The cases where |base_inst| is the block's label, vs. inside the block,
-  // are dealt with separately.
-  if (base_inst == block->GetLabelInst()) {
-    // |base_inst| is the block's label.
-    if (offset == 0) {
-      // We cannot return an iterator to the block's label.
-      return block->end();
-    }
-    // Conceptually, the first instruction in the block is [label + 1].
-    // We thus start from 1 when applying the offset.
-    auto inst_it = block->begin();
-    for (uint32_t i = 1; i < offset && inst_it != block->end(); i++) {
-      ++inst_it;
-    }
-    // This is either the desired instruction, or the end of the block.
-    return inst_it;
-  }
-  // |base_inst| is inside the block.
+opt::BasicBlock::iterator GetIteratorForInstruction(
+    opt::BasicBlock* block, const opt::Instruction* inst) {
   for (auto inst_it = block->begin(); inst_it != block->end(); ++inst_it) {
-    if (base_inst == &*inst_it) {
-      // We have found the base instruction; we now apply the offset.
-      for (uint32_t i = 0; i < offset && inst_it != block->end(); i++) {
-        ++inst_it;
-      }
-      // This is either the desired instruction, or the end of the block.
+    if (inst == &*inst_it) {
       return inst_it;
     }
   }
-  assert(false && "The base instruction was not found.");
-  return nullptr;
+  return block->end();
 }
 
 bool NewEdgeRespectsUseDefDominance(opt::IRContext* context,

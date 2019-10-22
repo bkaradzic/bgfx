@@ -57,24 +57,27 @@ if(BUILD_TOOLS)
     target_link_libraries(gltfpack meshoptimizer)
     list(APPEND TARGETS gltfpack)
 
-    set_target_properties(gltfpack PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+    string(CONCAT RPATH "$ORIGIN/../" ${CMAKE_INSTALL_LIBDIR})
+    set_target_properties(gltfpack PROPERTIES INSTALL_RPATH ${RPATH})
 endif()
 
-install(TARGETS ${TARGETS} EXPORT meshoptimizerTargets
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    INCLUDES DESTINATION include)
+include(GNUInstallDirs)
 
-install(FILES src/meshoptimizer.h DESTINATION include)
-install(EXPORT meshoptimizerTargets DESTINATION lib/cmake/meshoptimizer NAMESPACE meshoptimizer::)
+install(TARGETS ${TARGETS} EXPORT meshoptimizerTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(FILES src/meshoptimizer.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(EXPORT meshoptimizerTargets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meshoptimizer NAMESPACE meshoptimizer::)
 
 # TARGET_PDB_FILE is available since 3.1
 if(MSVC AND NOT (CMAKE_VERSION VERSION_LESS "3.1"))
     foreach(TARGET ${TARGETS})
         get_target_property(TARGET_TYPE ${TARGET} TYPE)
         if(NOT ${TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
-            install(FILES $<TARGET_PDB_FILE:${TARGET}> DESTINATION bin OPTIONAL)
+            install(FILES $<TARGET_PDB_FILE:${TARGET}> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
         endif()
     endforeach(TARGET)
 endif()
@@ -83,11 +86,11 @@ include(CMakePackageConfigHelpers)
 
 configure_package_config_file(config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/meshoptimizerConfig.cmake
-    INSTALL_DESTINATION lib/cmake/meshoptimizer NO_SET_AND_CHECK_MACRO)
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meshoptimizer NO_SET_AND_CHECK_MACRO)
 
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/meshoptimizerConfigVersion.cmake COMPATIBILITY ExactVersion)
 
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/meshoptimizerConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/meshoptimizerConfigVersion.cmake
-    DESTINATION lib/cmake/meshoptimizer)
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meshoptimizer)

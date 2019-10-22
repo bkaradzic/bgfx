@@ -1407,20 +1407,6 @@ FoldingRule CompositeExtractFeedingConstruct() {
   };
 }
 
-// Folds an OpCompositeExtract instruction with no indexes into an OpCopyObject.
-bool ExtractWithNoIndexes(IRContext*, Instruction* inst,
-                          const std::vector<const analysis::Constant*>&) {
-  assert(inst->opcode() == SpvOpCompositeExtract &&
-         "Wrong opcode.  Should be OpCompositeExtract.");
-
-  if (inst->NumInOperands() > 1) {
-    return false;
-  }
-
-  inst->SetOpcode(SpvOpCopyObject);
-  return true;
-}
-
 FoldingRule InsertFeedingExtract() {
   return [](IRContext* context, Instruction* inst,
             const std::vector<const analysis::Constant*>&) {
@@ -2227,7 +2213,6 @@ void FoldingRules::AddFoldingRules() {
   // Take that into consideration.
   rules_[SpvOpCompositeConstruct].push_back(CompositeExtractFeedingConstruct());
 
-  rules_[SpvOpCompositeExtract].push_back(ExtractWithNoIndexes);
   rules_[SpvOpCompositeExtract].push_back(InsertFeedingExtract());
   rules_[SpvOpCompositeExtract].push_back(CompositeConstructFeedingExtract());
   rules_[SpvOpCompositeExtract].push_back(VectorShuffleFeedingExtract());

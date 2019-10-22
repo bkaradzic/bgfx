@@ -31,8 +31,9 @@ if(BUILD_TESTING)
         set_property(TARGET glslangtests PROPERTY FOLDER tests)
         glslang_set_link_args(glslangtests)
         if(ENABLE_GLSLANG_INSTALL)
-            install(TARGETS glslangtests
+            install(TARGETS glslangtests EXPORT glslangtestsTargets
                     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+			install(EXPORT glslangtestsTargets DESTINATION lib/cmake)
         endif(ENABLE_GLSLANG_INSTALL)
 
         set(GLSLANG_TEST_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Test")

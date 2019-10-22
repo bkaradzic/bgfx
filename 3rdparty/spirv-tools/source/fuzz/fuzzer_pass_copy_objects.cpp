@@ -31,19 +31,25 @@ FuzzerPassCopyObjects::~FuzzerPassCopyObjects() = default;
 void FuzzerPassCopyObjects::Apply() {
   MaybeAddTransformationBeforeEachInstruction(
       [this](const opt::Function& function, opt::BasicBlock* block,
-             opt::BasicBlock::iterator inst_it, uint32_t base,
-             uint32_t offset) -> uint32_t {
+             opt::BasicBlock::iterator inst_it,
+             const protobufs::InstructionDescriptor& instruction_descriptor)
+          -> void {
+        assert(inst_it->opcode() ==
+                   instruction_descriptor.target_instruction_opcode() &&
+               "The opcode of the instruction we might insert before must be "
+               "the same as the opcode in the descriptor for the instruction");
+
         // Check whether it is legitimate to insert a copy before this
         // instruction.
         if (!fuzzerutil::CanInsertOpcodeBeforeInstruction(SpvOpCopyObject,
                                                           inst_it)) {
-          return 0;
+          return;
         }
 
         // Randomly decide whether to try inserting an object copy here.
         if (!GetFuzzerContext()->ChoosePercentage(
                 GetFuzzerContext()->GetChanceOfCopyingObject())) {
-          return 0;
+          return;
         }
 
         std::vector<opt::Instruction*> relevant_instructions =
@@ -53,21 +59,20 @@ void FuzzerPassCopyObjects::Apply() {
         // At this point, |relevant_instructions| contains all the instructions
         // we might think of copying.
         if (relevant_instructions.empty()) {
-          return 0;
+          return;
         }
 
         // Choose a copyable instruction at random, and create and apply an
         // object copying transformation based on it.
         uint32_t index = GetFuzzerContext()->RandomIndex(relevant_instructions);
         TransformationCopyObject transformation(
-            relevant_instructions[index]->result_id(), base, offset,
+            relevant_instructions[index]->result_id(), instruction_descriptor,
             GetFuzzerContext()->GetFreshId());
         assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
                "This transformation should be applicable by construction.");
         transformation.Apply(GetIRContext(), GetFactManager());
         *GetTransformations()->add_transformation() =
             transformation.ToMessage();
-        return 1;
       });
 }
 

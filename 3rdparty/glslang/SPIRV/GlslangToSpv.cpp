@@ -100,11 +100,11 @@ struct OpDecorations {
     spv::Decoration precision;
 
 #ifdef GLSLANG_WEB
-        void addNoContraction(spv::Builder&, spv::Id) const { };
-        void addNonUniform(spv::Builder&, spv::Id) const { };
+        void addNoContraction(spv::Builder&, spv::Id) const { }
+        void addNonUniform(spv::Builder&, spv::Id) const { }
 #else
-        void addNoContraction(spv::Builder& builder, spv::Id t) { builder.addDecoration(t, noContraction); };
-        void addNonUniform(spv::Builder& builder, spv::Id t)  { builder.addDecoration(t, nonUniform); };
+        void addNoContraction(spv::Builder& builder, spv::Id t) { builder.addDecoration(t, noContraction); }
+        void addNonUniform(spv::Builder& builder, spv::Id t)  { builder.addDecoration(t, nonUniform); }
     protected:
         spv::Decoration noContraction;
         spv::Decoration nonUniform;
@@ -6401,7 +6401,7 @@ spv::Id TGlslangToSpvTraverser::createAtomicOperation(glslang::TOperator op, spv
         scopeId = builder.makeUintConstant(spv::ScopeDevice);
     }
     // semantics default to relaxed 
-    spv::Id semanticsId = builder.makeUintConstant(lvalueCoherentFlags.isVolatile() ? 
+    spv::Id semanticsId = builder.makeUintConstant(lvalueCoherentFlags.isVolatile() && glslangIntermediate->usingVulkanMemoryModel() ?
                                                     spv::MemorySemanticsVolatileMask :
                                                     spv::MemorySemanticsMaskNone);
     spv::Id semanticsId2 = semanticsId;

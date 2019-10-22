@@ -28,8 +28,10 @@ class TransformationCopyObject : public Transformation {
   explicit TransformationCopyObject(
       const protobufs::TransformationCopyObject& message);
 
-  TransformationCopyObject(uint32_t object, uint32_t base_instruction_id,
-                           uint32_t offset, uint32_t fresh_id);
+  TransformationCopyObject(
+      uint32_t object,
+      const protobufs::InstructionDescriptor& instruction_to_insert_before,
+      uint32_t fresh_id);
 
   // - |message_.fresh_id| must not be used by the module.
   // - |message_.object| must be a result id that is a legitimate operand for
