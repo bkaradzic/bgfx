@@ -146,6 +146,11 @@ project "spirv-opt"
 			"-Wno-switch",
 		}
 
+	configuration {"osx"}
+		buildoptions {
+			"-target x86_64-apple-macos10.11",
+		}
+
 	configuration { "mingw* or linux-gcc-*" }
 		buildoptions {
 			"-Wno-misleading-indentation",
@@ -195,6 +200,11 @@ project "spirv-cross"
 			"/wd4245", -- warning C4245: 'return': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
 			"/wd4706", -- warning C4706: assignment within conditional expression
 			"/wd4715", -- warning C4715: '': not all control paths return a value
+		}
+
+	configuration {"osx"}
+		buildoptions {
+			"-target x86_64-apple-macos10.11",
 		}
 
 	configuration {}
@@ -284,6 +294,7 @@ project "glslang"
 			"-Wno-c++11-extensions",
 			"-Wno-unused-const-variable",
 			"-Wno-deprecated-register",
+			"-target x86_64-apple-macos10.11",
 		}
 
 	configuration { "linux-gcc-*" }
@@ -540,6 +551,7 @@ project "glsl-optimizer"
 	configuration { "osx" }
 		buildoptions {
 			"-Wno-deprecated-register",
+			"-target x86_64-apple-macos10.11",
 		}
 
 	configuration { "mingw* or linux-gcc-*" }
@@ -586,7 +598,10 @@ project "fcpp"
 			"-Wno-incompatible-pointer-types",
 			"-Wno-parentheses-equality",
 		}
-
+	configuration {"osx"}
+		buildoptions {
+			"-target x86_64-apple-macos10.11",
+		}
 	configuration {}
 
 project "shaderc"
@@ -650,6 +665,10 @@ project "shaderc"
 	configuration { "osx or linux*" }
 		links {
 			"pthread",
+		}
+	configuration {"osx"}
+		buildoptions {
+			"-target x86_64-apple-macos10.11",
 		}
 
 	configuration {}

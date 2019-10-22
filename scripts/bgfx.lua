@@ -116,7 +116,11 @@ function bgfxProjectBase(_kind, _defines)
 		}
 
 	configuration { "osx" }
-		buildoptions { "-x objective-c++" }  -- additional build option for osx
+		-- additional build option for osx
+		buildoptions { 
+			"-x objective-c++",
+			"-target x86_64-apple-macos10.11",
+		}
 		linkoptions {
 			"-framework Cocoa",
 			"-framework QuartzCore",
