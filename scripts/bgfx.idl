@@ -853,6 +853,8 @@ struct.ViewStats
 	.name           "char[256]" --- View name.
 	.view           "ViewId"    --- View id.
 	.cpuTimeElapsed "int64_t"   --- CPU (submit) time elapsed.
+	.cpuTimeBegin   "int64_t"   --- CPU (submit) begin time.
+	.cpuTimeEnd     "int64_t"   --- CPU (submit) end time.
 	.gpuTimeElapsed "int64_t"   --- GPU time elapsed.
 	.gpuTimeBegin   "int64_t"   --- GPU begin time.
 	.gpuTimeEnd     "int64_t"   --- GPU end time.

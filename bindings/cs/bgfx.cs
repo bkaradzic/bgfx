@@ -2052,6 +2052,8 @@ public static partial class bgfx
 		public fixed byte name[256];
 		public ushort view;
 		public long cpuTimeElapsed;
+		public long cpuTimeBegin;
+		public long cpuTimeEnd;
 		public long gpuTimeElapsed;
 		public long gpuTimeBegin;
 		public long gpuTimeEnd;
