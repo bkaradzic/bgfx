@@ -131,7 +131,7 @@ public:
 
 ENTRY_IMPLEMENT_MAIN(
 	  ExampleHelloWorld
-	, "00-helloworld"
+	, "00-heybuddy"
 	, "Initialization and debug text."
 	, "https://bkaradzic.github.io/bgfx/examples.html#helloworld"
 	);
