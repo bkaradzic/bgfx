@@ -1,5 +1,6 @@
 #include "../src/meshoptimizer.h"
 #include "fast_obj.h"
+#include "../demo/miniz.h"
 
 #include <algorithm>
 #include <functional>
@@ -19,12 +20,19 @@ extern thread_local float kVertexScoreTableCache[1 + kCacheSizeMax];
 extern thread_local float kVertexScoreTableLive[1 + kValenceMax];
 } // namespace meshopt
 
-struct { int cache, warp, triangle; } profiles[] =
+struct Profile
 {
-	{14, 64, 128}, // AMD GCN
-	{32, 32, 32},  // NVidia Pascal
-	// { 16, 32, 32 }, // NVidia Kepler, Maxwell
-	// { 128, 0, 0 }, // Intel
+	float weight;
+	int cache, warp, triangle; // vcache tuning parameters
+};
+
+Profile profiles[] =
+{
+	{1.f, 0, 0, 0},  // Compression
+	{1.f, 14, 64, 128}, // AMD GCN
+	{1.f, 32, 32, 32},  // NVidia Pascal
+	// {1.f, 16, 32, 32}, // NVidia Kepler, Maxwell
+	// {1.f, 128, 0, 0}, // Intel
 };
 
 const int Profile_Count = sizeof(profiles) / sizeof(profiles[0]);
@@ -69,15 +77,19 @@ struct State
 
 struct Mesh
 {
+	const char* name;
+
 	size_t vertex_count;
 	std::vector<unsigned int> indices;
 
-	float atvr_base[Profile_Count];
+	float metric_base[Profile_Count];
 };
 
 Mesh gridmesh(unsigned int N)
 {
 	Mesh result;
+
+	result.name = "grid";
 
 	result.vertex_count = (N + 1) * (N + 1);
 	result.indices.reserve(N * N * 6);
@@ -160,6 +172,8 @@ Mesh objmesh(const char* path)
 
 	Mesh result;
 
+	result.name = path;
+
 	std::vector<unsigned int> remap(total_indices);
 
 	size_t total_vertices = meshopt_generateVertexRemap(&remap[0], NULL, total_indices, &vertices[0], total_indices, sizeof(Vertex));
@@ -172,7 +186,15 @@ Mesh objmesh(const char* path)
 	return result;
 }
 
-void compute_atvr(const State& state, const Mesh& mesh, float result[Profile_Count])
+template <typename T>
+size_t compress(const std::vector<T>& data)
+{
+	std::vector<unsigned char> cbuf(tdefl_compress_bound(data.size() * sizeof(T)));
+	unsigned int flags = tdefl_create_comp_flags_from_zip_params(MZ_DEFAULT_LEVEL, 15, MZ_DEFAULT_STRATEGY);
+	return tdefl_compress_mem_to_mem(&cbuf[0], cbuf.size(), &data[0], data.size() * sizeof(T), flags);
+}
+
+void compute_metric(const State& state, const Mesh& mesh, float result[Profile_Count])
 {
 	memcpy(meshopt::kVertexScoreTableCache + 1, state.cache, kCacheSizeMax * sizeof(float));
 	memcpy(meshopt::kVertexScoreTableLive + 1, state.live, kValenceMax * sizeof(float));
@@ -180,9 +202,25 @@ void compute_atvr(const State& state, const Mesh& mesh, float result[Profile_Cou
 	std::vector<unsigned int> indices(mesh.indices.size());
 
 	meshopt_optimizeVertexCache(&indices[0], &mesh.indices[0], mesh.indices.size(), mesh.vertex_count);
+	meshopt_optimizeVertexFetch(NULL, &indices[0], indices.size(), NULL, mesh.vertex_count, 0);
 
 	for (int profile = 0; profile < Profile_Count; ++profile)
-		result[profile] = meshopt_analyzeVertexCache(&indices[0], indices.size(), mesh.vertex_count, profiles[profile].cache, profiles[profile].warp, profiles[profile].triangle).atvr;
+	{
+		if (profiles[profile].cache)
+		{
+			meshopt_VertexCacheStatistics stats = meshopt_analyzeVertexCache(&indices[0], indices.size(), mesh.vertex_count, profiles[profile].cache, profiles[profile].warp, profiles[profile].triangle);
+			result[profile] = stats.atvr;
+		}
+		else
+		{
+			std::vector<unsigned char> ibuf(meshopt_encodeIndexBufferBound(indices.size(), mesh.vertex_count));
+			ibuf.resize(meshopt_encodeIndexBuffer(&ibuf[0], ibuf.size(), &indices[0], indices.size()));
+
+			size_t csize = compress(ibuf);
+
+			result[profile] = double(csize) / double(indices.size() / 3);
+		}
+	}
 }
 
 float fitness_score(const State& state, const std::vector<Mesh>& meshes)
@@ -192,13 +230,13 @@ float fitness_score(const State& state, const std::vector<Mesh>& meshes)
 
 	for (auto& mesh : meshes)
 	{
-		float atvr[Profile_Count];
-		compute_atvr(state, mesh, atvr);
+		float metric[Profile_Count];
+		compute_metric(state, mesh, metric);
 
 		for (int profile = 0; profile < Profile_Count; ++profile)
 		{
-			result += mesh.atvr_base[profile] / atvr[profile];
-			count += 1;
+			result += mesh.metric_base[profile] / metric[profile] * profiles[profile].weight;
+			count += profiles[profile].weight;
 		}
 	}
 
@@ -348,10 +386,32 @@ void dump_state(const State& state)
 	printf("\n");
 }
 
+void dump_stats(const State& state, const std::vector<Mesh>& meshes)
+{
+	float improvement[Profile_Count] = {};
+
+	for (size_t i = 0; i < meshes.size(); ++i)
+	{
+		float metric[Profile_Count];
+		compute_metric(state, meshes[i], metric);
+
+		printf(" %s", meshes[i].name);
+		for (int profile = 0; profile < Profile_Count; ++profile)
+			printf(" %f", metric[profile]);
+
+		for (int profile = 0; profile < Profile_Count; ++profile)
+			improvement[profile] += meshes[i].metric_base[profile] / metric[profile];
+	}
+
+	printf("; improvement");
+	for (int profile = 0; profile < Profile_Count; ++profile)
+		printf(" %f", improvement[profile] / float(meshes.size()));
+
+	printf("\n");
+}
+
 int main(int argc, char** argv)
 {
-	bool annealing = false;
-
 	State baseline;
 	memcpy(baseline.cache, meshopt::kVertexScoreTableCache + 1, kCacheSizeMax * sizeof(float));
 	memcpy(baseline.live, meshopt::kVertexScoreTableLive + 1, kValenceMax * sizeof(float));
@@ -367,7 +427,7 @@ int main(int argc, char** argv)
 
 	for (auto& mesh : meshes)
 	{
-		compute_atvr(baseline, mesh, mesh.atvr_base);
+		compute_metric(baseline, mesh, mesh.metric_base);
 
 		total_triangles += mesh.indices.size() / 3;
 	}
@@ -386,29 +446,22 @@ int main(int argc, char** argv)
 
 	printf("%d meshes, %.1fM triangles\n", int(meshes.size()), double(total_triangles) / 1e6);
 
-	float atvr_0[Profile_Count];
-	float atvr_N[Profile_Count];
-	compute_atvr(baseline, meshes[0], atvr_0);
-	compute_atvr(baseline, meshes.back(), atvr_N);
-
-	printf("baseline: grid %f %f %s %f %f\n", atvr_0[0], atvr_0[1], argv[argc - 1], atvr_N[0], atvr_N[1]);
+	printf("baseline:");
+	dump_stats(baseline, meshes);
 
 	for (;;)
 	{
 		auto best = genN(pop, meshes);
 		gen++;
 
-		compute_atvr(best.first, meshes[0], atvr_0);
-		compute_atvr(best.first, meshes.back(), atvr_N);
-
-		printf("%d: fitness %f; grid %f %f %s %f %f\n", int(gen), best.second, atvr_0[0], atvr_0[1], argv[argc - 1], atvr_N[0], atvr_N[1]);
-
-		if (gen % 100 == 0)
+		if (gen % 10 == 0)
 		{
-			char buf[128];
-			sprintf(buf, "gcloud logging write vcache-log \"fitness %f; grid %f %f %s %f %f\"", best.second, atvr_0[0], atvr_0[1], argv[argc - 1], atvr_N[0], atvr_N[1]);
-			int rc = system(buf);
-			(void)rc;
+			printf("%d: fitness %f;", int(gen), best.second);
+			dump_stats(best.first, meshes);
+		}
+		else
+		{
+			printf("%d: fitness %f\n", int(gen), best.second);
 		}
 
 		dump_state(best.first);

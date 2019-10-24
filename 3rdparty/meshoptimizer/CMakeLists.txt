@@ -57,8 +57,10 @@ if(BUILD_TOOLS)
     target_link_libraries(gltfpack meshoptimizer)
     list(APPEND TARGETS gltfpack)
 
-    string(CONCAT RPATH "$ORIGIN/../" ${CMAKE_INSTALL_LIBDIR})
-    set_target_properties(gltfpack PROPERTIES INSTALL_RPATH ${RPATH})
+    if(BUILD_SHARED_LIBS)
+        string(CONCAT RPATH "$ORIGIN/../" ${CMAKE_INSTALL_LIBDIR})
+        set_target_properties(gltfpack PROPERTIES INSTALL_RPATH ${RPATH})
+    endif()
 endif()
 
 include(GNUInstallDirs)
