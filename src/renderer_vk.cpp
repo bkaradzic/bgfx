@@ -3074,7 +3074,7 @@ VK_IMPORT_DEVICE
 				: VK_POLYGON_MODE_FILL
 				;
 			_desc.cullMode  = s_cullMode[cull];
-			_desc.frontFace = VK_FRONT_FACE_CLOCKWISE;
+			_desc.frontFace = (_state&BGFX_STATE_FRONT_CCW) ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
 			_desc.depthBiasEnable = VK_FALSE;
 			_desc.depthBiasConstantFactor = 0.0f;
 			_desc.depthBiasClamp          = 0.0f;

@@ -83,6 +83,10 @@ flag.StateCull { bits = 64, shift = 36, range = 2, base = 1, desc = "Culling mod
 	.Ccw		  --- Cull counter-clockwise triangles.
 	()
 
+--- Font facing. When BGFX_STATE_FRONT_CCW is not specified, front facing is CW
+flag.StateFrontCCW { bits = 64, shift = 39, range = 1, base = 1, desc = "Front facing" }
+	()
+
 --- Alpha reference value.
 flag.StateAlphaRef { bits = 64, shift = 40, range = 8, desc = "Alpha reference", "helper" }
 
