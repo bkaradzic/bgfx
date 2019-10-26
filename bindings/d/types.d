@@ -926,7 +926,6 @@ struct bgfx_view_stats_t
 	long cpuTimeElapsed; /// CPU (submit) time elapsed.
 	long cpuTimeBegin; /// CPU (submit) begin time.
 	long cpuTimeEnd; /// CPU (submit) end time.
-	long gpuTimeElapsed; /// GPU time elapsed.
 	long gpuTimeBegin; /// GPU begin time.
 	long gpuTimeEnd; /// GPU end time.
 }

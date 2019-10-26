@@ -438,8 +438,9 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 									ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
 
 									const float maxWidth = 30.0f*scale;
+									const float gpuTimeElapsed = float((viewStats.gpuTimeEnd - viewStats.gpuTimeBegin) * toGpuMs);
 									const float cpuWidth = bx::clamp(float(viewStats.cpuTimeElapsed*toCpuMs)*scale, 1.0f, maxWidth);
-									const float gpuWidth = bx::clamp(float(viewStats.gpuTimeElapsed*toGpuMs)*scale, 1.0f, maxWidth);
+									const float gpuWidth = bx::clamp(gpuTimeElapsed*scale, 1.0f, maxWidth);
 
 									ImGui::SameLine(64.0f);
 
@@ -458,7 +459,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 										ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]"
 											, pos
 											, viewStats.name
-											, viewStats.gpuTimeElapsed*toGpuMs
+											, gpuTimeElapsed
 											);
 									}
 								}
