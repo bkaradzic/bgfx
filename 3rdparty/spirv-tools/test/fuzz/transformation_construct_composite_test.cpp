@@ -28,10 +28,11 @@ bool SynonymFactHolds(const FactManager& fact_manager, uint32_t id,
     return false;
   }
   auto synonyms = fact_manager.GetSynonymsForId(id);
-  auto temp = MakeDataDescriptor(synonym_base_id, std::move(synonym_indices));
+  auto temp =
+      MakeDataDescriptor(synonym_base_id, std::move(synonym_indices), 1);
   return std::find_if(synonyms.begin(), synonyms.end(),
-                      [&temp](protobufs::DataDescriptor dd) -> bool {
-                        return DataDescriptorEquals()(&dd, &temp);
+                      [&temp](const protobufs::DataDescriptor* dd) -> bool {
+                        return DataDescriptorEquals()(dd, &temp);
                       }) != synonyms.end();
 }
 

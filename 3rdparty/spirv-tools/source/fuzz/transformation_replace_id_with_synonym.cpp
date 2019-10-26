@@ -53,8 +53,8 @@ bool TransformationReplaceIdWithSynonym::IsApplicable(
 
   auto available_synonyms = fact_manager.GetSynonymsForId(id_of_interest);
   if (std::find_if(available_synonyms.begin(), available_synonyms.end(),
-                   [this](protobufs::DataDescriptor dd) -> bool {
-                     return DataDescriptorEquals()(&dd,
+                   [this](const protobufs::DataDescriptor* dd) -> bool {
+                     return DataDescriptorEquals()(dd,
                                                    &message_.data_descriptor());
                    }) == available_synonyms.end()) {
     return false;

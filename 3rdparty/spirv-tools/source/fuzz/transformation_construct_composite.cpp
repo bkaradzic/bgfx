@@ -14,6 +14,7 @@
 
 #include "source/fuzz/transformation_construct_composite.h"
 
+#include "source/fuzz/data_descriptor.h"
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/instruction_descriptor.h"
 #include "source/opt/instruction.h"
@@ -138,12 +139,10 @@ void TransformationConstructComposite::Apply(opt::IRContext* context,
       context->get_type_mgr()->GetType(message_.composite_type_id());
   uint32_t index = 0;
   for (auto component : message_.component()) {
-    protobufs::Fact fact;
-    fact.mutable_id_synonym_fact()->set_id(component);
-    fact.mutable_id_synonym_fact()->mutable_data_descriptor()->set_object(
-        message_.fresh_id());
-    fact.mutable_id_synonym_fact()->mutable_data_descriptor()->add_index(index);
-    fact_manager->AddFact(fact, context);
+    // Decide how many contiguous composite elements are represented by the
+    // components.  This is always 1, except in the case of a vector that is
+    // constructed by smaller vectors.
+    uint32_t num_contiguous_elements;
     if (composite_type->AsVector()) {
       // The vector case is a bit fiddly, because one argument to a vector
       // constructor can cover more than one element.
@@ -152,17 +151,23 @@ void TransformationConstructComposite::Apply(opt::IRContext* context,
       if (component_type->AsVector()) {
         assert(component_type->AsVector()->element_type() ==
                composite_type->AsVector()->element_type());
-        index += component_type->AsVector()->element_count();
+        num_contiguous_elements = component_type->AsVector()->element_count();
       } else {
         assert(component_type == composite_type->AsVector()->element_type());
-        index++;
+        num_contiguous_elements = 1;
       }
     } else {
       // The non-vector cases are all easy: the constructor has exactly the same
       // number of arguments as the number of sub-components, so we can just
       // increment the index.
-      index++;
+      num_contiguous_elements = 1;
     }
+
+    fact_manager->AddFactDataSynonym(
+        MakeDataDescriptor(component, {}, 1),
+        MakeDataDescriptor(message_.fresh_id(), {index},
+                           num_contiguous_elements));
+    index += num_contiguous_elements;
   }
 
   fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());

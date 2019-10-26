@@ -165,18 +165,26 @@ std::unique_ptr<std::vector<uint32_t>>
 FuzzerPassConstructComposites::TryConstructingArrayComposite(
     const opt::analysis::Array& array_type,
     const TypeIdToInstructions& type_id_to_available_instructions) {
-  // TODO make these be true by construction
+  // At present we assume arrays have a constant size.
   assert(array_type.length_info().words.size() == 2);
   assert(array_type.length_info().words[0] ==
          opt::analysis::Array::LengthInfo::kConstant);
 
   auto result = MakeUnique<std::vector<uint32_t>>();
+
+  // Get the element type for the array.
   auto element_type_id =
       GetIRContext()->get_type_mgr()->GetId(array_type.element_type());
+
+  // Get all instructions at our disposal that compute something of this element
+  // type.
   auto available_instructions =
       type_id_to_available_instructions.find(element_type_id);
+
   if (available_instructions == type_id_to_available_instructions.cend()) {
-    // TODO comment infeasible
+    // If there are not any instructions available that compute the element type
+    // of the array then we are not in a position to construct a composite with
+    // this array type.
     return nullptr;
   }
   for (uint32_t index = 0; index < array_type.length_info().words[1]; index++) {
@@ -192,10 +200,30 @@ std::unique_ptr<std::vector<uint32_t>>
 FuzzerPassConstructComposites::TryConstructingMatrixComposite(
     const opt::analysis::Matrix& matrix_type,
     const TypeIdToInstructions& type_id_to_available_instructions) {
-  (void)(matrix_type);
-  (void)(type_id_to_available_instructions);
-  assert(false);
-  return nullptr;
+  auto result = MakeUnique<std::vector<uint32_t>>();
+
+  // Get the element type for the matrix.
+  auto element_type_id =
+      GetIRContext()->get_type_mgr()->GetId(matrix_type.element_type());
+
+  // Get all instructions at our disposal that compute something of this element
+  // type.
+  auto available_instructions =
+      type_id_to_available_instructions.find(element_type_id);
+
+  if (available_instructions == type_id_to_available_instructions.cend()) {
+    // If there are not any instructions available that compute the element type
+    // of the matrix then we are not in a position to construct a composite with
+    // this matrix type.
+    return nullptr;
+  }
+  for (uint32_t index = 0; index < matrix_type.element_count(); index++) {
+    result->push_back(available_instructions
+                          ->second[GetFuzzerContext()->RandomIndex(
+                              available_instructions->second)]
+                          ->result_id());
+  }
+  return result;
 }
 
 std::unique_ptr<std::vector<uint32_t>>
@@ -203,12 +231,16 @@ FuzzerPassConstructComposites::TryConstructingStructComposite(
     const opt::analysis::Struct& struct_type,
     const TypeIdToInstructions& type_id_to_available_instructions) {
   auto result = MakeUnique<std::vector<uint32_t>>();
+  // Consider the type of each field of the struct.
   for (auto element_type : struct_type.element_types()) {
     auto element_type_id = GetIRContext()->get_type_mgr()->GetId(element_type);
+    // Find the instructions at our disposal that compute something of the field
+    // type.
     auto available_instructions =
         type_id_to_available_instructions.find(element_type_id);
     if (available_instructions == type_id_to_available_instructions.cend()) {
-      // TODO comment infeasible
+      // If there are no such instructions, we cannot construct a composite of
+      // this struct type.
       return nullptr;
     }
     result->push_back(available_instructions
@@ -230,17 +262,14 @@ FuzzerPassConstructComposites::TryConstructingVectorComposite(
 
   // Collect a mapping, from type id to width, for scalar/vector types that are
   // smaller in width than |vector_type|, but that have the same underlying
-  // type.  For example, if |vector_type| is vec4, the mapping will be { float
-  // -> 1, vec2 -> 2, vec3 -> 3 }.  The mapping will have missing entries if
-  // some of these types do not exist.
+  // type.  For example, if |vector_type| is vec4, the mapping will be:
+  //   { float -> 1, vec2 -> 2, vec3 -> 3 }
+  // The mapping will have missing entries if some of these types do not exist.
 
-  // TODO comment why we have the list as well.
-  std::vector<uint32_t> smaller_vector_type_ids;
   std::map<uint32_t, uint32_t> smaller_vector_type_id_to_width;
   // Add the underlying type.  This id must exist, in order for |vector_type| to
   // exist.
   auto scalar_type_id = GetIRContext()->get_type_mgr()->GetId(element_type);
-  smaller_vector_type_ids.push_back(scalar_type_id);
   smaller_vector_type_id_to_width[scalar_type_id] = 1;
 
   // Now add every vector type with width at least 2, and less than the width of
@@ -250,9 +279,10 @@ FuzzerPassConstructComposites::TryConstructingVectorComposite(
                                               width);
     auto smaller_vector_type_id =
         GetIRContext()->get_type_mgr()->GetId(&smaller_vector_type);
-    // TODO recap why it might be 0
+    // We might find that there is no declared type of this smaller width.
+    // For example, a module can declare vec4 without having declared vec2 or
+    // vec3.
     if (smaller_vector_type_id) {
-      smaller_vector_type_ids.push_back(smaller_vector_type_id);
       smaller_vector_type_id_to_width[smaller_vector_type_id] = width;
     }
   }
@@ -291,7 +321,12 @@ FuzzerPassConstructComposites::TryConstructingVectorComposite(
                                          available_instructions->second.end());
     }
     if (instructions_to_choose_from.empty()) {
-      // TODO comment - like fuzzed into a corner
+      // We may get unlucky and find that there are not any instructions to
+      // choose from.  In this case we give up constructing a composite of this
+      // vector type.  It might be that we could construct the composite in
+      // another manner, so we could opt to retry a few times here, but it is
+      // simpler to just give up on the basis that this will not happen
+      // frequently.
       return nullptr;
     }
     auto instruction_to_use =

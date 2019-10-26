@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "source/fuzz/data_descriptor.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/opt/constants.h"
 
@@ -51,6 +52,10 @@ class FactManager {
   // with no side effects, if the fact is invalid.  Otherwise adds |fact| to the
   // fact manager.
   bool AddFact(const protobufs::Fact& fact, opt::IRContext* context);
+
+  // Record the fact that |data1| and |data2| are synonymous.
+  void AddFactDataSynonym(const protobufs::DataDescriptor& data1,
+                          const protobufs::DataDescriptor& data2);
 
   // The fact manager is responsible for managing a few distinct categories of
   // facts. In principle there could be different fact managers for each kind
@@ -101,12 +106,13 @@ class FactManager {
 
   // Returns every id for which a fact of the form "this id is synonymous
   // with this piece of data" is known.
-  const std::set<uint32_t>& GetIdsForWhichSynonymsAreKnown() const;
+  std::set<uint32_t> GetIdsForWhichSynonymsAreKnown() const;
 
   // Requires that at least one synonym for |id| is known, and returns the
-  // sequence of all known synonyms.
-  const std::vector<protobufs::DataDescriptor>& GetSynonymsForId(
-      uint32_t id) const;
+  // equivalence class of all known synonyms.
+  std::unordered_set<const protobufs::DataDescriptor*, DataDescriptorHash,
+                     DataDescriptorEquals>
+  GetSynonymsForId(uint32_t id) const;
 
   // End of id synonym facts
   //==============================
@@ -120,9 +126,10 @@ class FactManager {
   std::unique_ptr<ConstantUniformFacts>
       uniform_constant_facts_;  // Unique pointer to internal data.
 
-  struct IdSynonymFacts;  // Opaque struct for holding data about id synonyms.
-  std::unique_ptr<IdSynonymFacts>
-      id_synonym_facts_;  // Unique pointer to internal data.
+  struct DataSynonymFacts;  // Opaque struct for holding data about data
+                            // synonyms.
+  std::unique_ptr<DataSynonymFacts>
+      data_synonym_facts_;  // Unique pointer to internal data.
 };
 
 }  // namespace fuzz

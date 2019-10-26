@@ -18,6 +18,7 @@
 #include <memory>
 #include <sstream>
 
+#include "fuzzer_pass_adjust_memory_operands_masks.h"
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/fuzzer_context.h"
 #include "source/fuzz/fuzzer_pass_add_dead_breaks.h"
@@ -173,14 +174,17 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
   // Now apply some passes that it does not make sense to apply repeatedly,
   // as they do not unlock other passes.
   std::vector<std::unique_ptr<FuzzerPass>> final_passes;
-  MaybeAddPass<FuzzerPassAdjustFunctionControls>(&passes, ir_context.get(),
-                                                 &fact_manager, &fuzzer_context,
-                                                 transformation_sequence_out);
-  MaybeAddPass<FuzzerPassAdjustLoopControls>(&passes, ir_context.get(),
+  MaybeAddPass<FuzzerPassAdjustFunctionControls>(
+      &final_passes, ir_context.get(), &fact_manager, &fuzzer_context,
+      transformation_sequence_out);
+  MaybeAddPass<FuzzerPassAdjustLoopControls>(&final_passes, ir_context.get(),
                                              &fact_manager, &fuzzer_context,
                                              transformation_sequence_out);
+  MaybeAddPass<FuzzerPassAdjustMemoryOperandsMasks>(
+      &final_passes, ir_context.get(), &fact_manager, &fuzzer_context,
+      transformation_sequence_out);
   MaybeAddPass<FuzzerPassAdjustSelectionControls>(
-      &passes, ir_context.get(), &fact_manager, &fuzzer_context,
+      &final_passes, ir_context.get(), &fact_manager, &fuzzer_context,
       transformation_sequence_out);
   for (auto& pass : final_passes) {
     pass->Apply();

@@ -56,7 +56,7 @@ void FuzzerPassApplyIdSynonyms::Apply() {
           std::vector<const protobufs::DataDescriptor*> synonyms_to_try;
           for (auto& data_descriptor :
                GetFactManager()->GetSynonymsForId(id_with_known_synonyms)) {
-            synonyms_to_try.push_back(&data_descriptor);
+            synonyms_to_try.push_back(data_descriptor);
           }
           while (!synonyms_to_try.empty()) {
             auto synonym_index =

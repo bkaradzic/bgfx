@@ -94,6 +94,14 @@ bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst);
 // struct or vector.
 bool IsCompositeType(const opt::analysis::Type* type);
 
+// Given a type id, |base_object_type_id|, checks that the given sequence of
+// |indices| is suitable for indexing into this type.  Returns the id of the
+// type of the final sub-object reached via the indices if they are valid, and
+// 0 otherwise.
+uint32_t WalkCompositeIndices(
+    opt::IRContext* context, uint32_t base_object_type_id,
+    const google::protobuf::RepeatedField<google::protobuf::uint32>& indices);
+
 }  // namespace fuzzerutil
 
 }  // namespace fuzz
