@@ -274,6 +274,7 @@ public:
 		bool multiview = false;
 		bool view_index_from_device_index = false;
 		bool dispatch_base = false;
+		bool texture_1D_as_2D = false;
 
 		// Enable use of MSL 2.0 indirect argument buffers.
 		// MSL 2.0 must also be enabled.
