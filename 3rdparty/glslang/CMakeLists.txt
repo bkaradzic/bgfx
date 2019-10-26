@@ -6,6 +6,9 @@ if (POLICY CMP0048)
 endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# Enable compile commands database
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Adhere to GNU filesystem layout conventions
 include(GNUInstallDirs)
 
