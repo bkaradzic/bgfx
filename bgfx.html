@@ -222,8 +222,8 @@
 <h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>TL;DR for simple walkthrough how to use bgfx API, see <a class="reference external" href="https://dev.to/pperon/hello-bgfx-4dka">Hello, bgfx!</a>
-or <a class="reference external" href="https://www.sandeepnambiar.com/getting-started-with-bgfx/">Using the bgfx library with C++ on Ubuntu</a> tutorial.</p>
+<p>TL;DR for simple walkthrough how to use bgfx API, see <a class="reference external" href="https://dev.to/pperon/hello-bgfx-4dka">Hello, bgfx!</a>,
+<a class="reference external" href="https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example">bgfx-minimal-example</a>, or <a class="reference external" href="https://www.sandeepnambiar.com/getting-started-with-bgfx/">Using the bgfx library with C++ on Ubuntu</a> tutorial.</p>
 </div>
 <div class="section" id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
@@ -3005,7 +3005,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3040,7 +3040,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Dynamic vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3075,7 +3075,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_tvb</span></code>: Transient vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4158,7 +4158,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4193,7 +4193,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Dynamic vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4278,7 +4278,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_tvb</span></code>: Transient vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -7048,7 +7048,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2010-2018, Branimir Karadžić
+        &copy; Copyright 2010-2019, Branimir Karadžić
 
     </p>
   </div> 
