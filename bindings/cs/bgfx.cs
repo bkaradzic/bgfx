@@ -249,6 +249,11 @@ public static partial class bgfx
 		None                   = 0x0000000000000000,
 	
 		/// <summary>
+		/// Front counter-clockwise (default is clockwise).
+		/// </summary>
+		FrontCcw               = 0x0000008000000000,
+	
+		/// <summary>
 		/// Enable blend independent.
 		/// </summary>
 		BlendIndependent       = 0x0000000400000000,

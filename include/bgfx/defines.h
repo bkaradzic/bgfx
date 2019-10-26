@@ -6,7 +6,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(100)
+#define BGFX_API_VERSION UINT32_C(101)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -90,9 +90,6 @@
 #define BGFX_STATE_CULL_SHIFT               36                           //!< Culling mode bit shift
 #define BGFX_STATE_CULL_MASK                UINT64_C(0x0000003000000000) //!< Culling mode bit mask
 
-/// Front winding direction. Will default to clockwise unless otherwise specified.
-#define BGFX_STATE_FRONT_CCW                UINT64_C(0x0000008000000000) //!< Front counter-clockwise (default is clockwise).
-
 /**
  * Alpha reference value.
  *
@@ -125,6 +122,7 @@
 #define BGFX_STATE_LINEAA                   UINT64_C(0x0200000000000000) //!< Enable line AA rasterization.
 #define BGFX_STATE_CONSERVATIVE_RASTER      UINT64_C(0x0400000000000000) //!< Enable conservative rasterization.
 #define BGFX_STATE_NONE                     UINT64_C(0x0000000000000000) //!< No state.
+#define BGFX_STATE_FRONT_CCW                UINT64_C(0x0000008000000000) //!< Front counter-clockwise (default is clockwise).
 #define BGFX_STATE_BLEND_INDEPENDENT        UINT64_C(0x0000000400000000) //!< Enable blend independent.
 #define BGFX_STATE_BLEND_ALPHA_TO_COVERAGE  UINT64_C(0x0000000800000000) //!< Enable alpha to coverage.
 /// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise

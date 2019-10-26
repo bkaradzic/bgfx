@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(100)
+version(101)
 
 typedef "bool"
 typedef "char"
@@ -79,22 +79,18 @@ flag.StateBlendEquation { bits = 64, shift = 28, range = 6, base = 0, desc = "Bl
 
 --- Cull state. When `BGFX_STATE_CULL_*` is not specified culling will be disabled.
 flag.StateCull { bits = 64, shift = 36, range = 2, base = 1, desc = "Culling mode" }
-	.Cw               --- Cull clockwise triangles.
-	.Ccw		  --- Cull counter-clockwise triangles.
-	()
-
---- Font facing. When BGFX_STATE_FRONT_CCW is not specified, front facing is CW
-flag.StateFrontCCW { bits = 64, shift = 39, range = 1, base = 1, desc = "Front facing" }
+	.Cw  --- Cull clockwise triangles.
+	.Ccw --- Cull counter-clockwise triangles.
 	()
 
 --- Alpha reference value.
 flag.StateAlphaRef { bits = 64, shift = 40, range = 8, desc = "Alpha reference", "helper" }
 
 flag.StatePt { bits = 64, shift = 48, range = 3, base = 1, desc = "Primitive type" }
-	.Tristrip             --- Tristrip.
-	.Lines                --- Lines.
-	.Linestrip            --- Line strip.
-	.Points               --- Points.
+	.Tristrip  --- Tristrip.
+	.Lines     --- Lines.
+	.Linestrip --- Line strip.
+	.Points    --- Points.
 	()
 
 --- Point size value.
@@ -103,16 +99,16 @@ flag.StatePointSize { bits = 64, shift = 52, range = 4, desc = "Point size", "he
 --- Enable MSAA write when writing into MSAA frame buffer.
 --- This flag is ignored when not writing into MSAA frame buffer.
 flag.State { bits = 64 , range = 64 , desc = "State" }
-	.Msaa (57)               --- Enable MSAA rasterization.
-	.Lineaa (58)             --- Enable line AA rasterization.
-	.ConservativeRaster (59) --- Enable conservative rasterization.
-	.None (0)                --- No state.
-	.BlendIndependent(35)    --- Enable blend independent.
-	.BlendAlphaToCoverage (36)     --- Enable alpha to coverage.
+	.Msaa (57)                 --- Enable MSAA rasterization.
+	.Lineaa (58)               --- Enable line AA rasterization.
+	.ConservativeRaster (59)   --- Enable conservative rasterization.
+	.None (0)                  --- No state.
+	.FrontCcw(40)              --- Front counter-clockwise (default is clockwise).
+	.BlendIndependent(35)      --- Enable blend independent.
+	.BlendAlphaToCoverage (36) --- Enable alpha to coverage.
 	.Default { "WriteRgb", "WriteA", "WriteZ", "DepthTestLess", "CullCw", "Msaa" }
-				 --- Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
-				 --- culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
-
+	 --- Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
+	 --- culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
 
 --- Do not use!
 flag.StateReserved { bits = 64, shift = 61, range = 3 }
