@@ -923,7 +923,6 @@ struct bgfx_view_stats_t
 {
 	char[256] name; /// View name.
 	bgfx_view_id_t view; /// View id.
-	long cpuTimeElapsed; /// CPU (submit) time elapsed.
 	long cpuTimeBegin; /// CPU (submit) begin time.
 	long cpuTimeEnd; /// CPU (submit) end time.
 	long gpuTimeBegin; /// GPU begin time.

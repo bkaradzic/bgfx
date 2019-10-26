@@ -522,7 +522,6 @@ namespace bgfx
 				const typename Ty::Result& result = m_gpuTimer.m_result[viewStats.view];
 
 				viewStats.cpuTimeEnd = bx::getHPCounter();
-				viewStats.cpuTimeElapsed = viewStats.cpuTimeEnd - viewStats.cpuTimeBegin;
 				viewStats.gpuTimeBegin = result.m_begin;
 				viewStats.gpuTimeEnd = result.m_end;
 
