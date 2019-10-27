@@ -29,11 +29,11 @@
 #endif // BGFX_SHADER_LANGUAGE_HLSL > 3 && BGFX_SHADER_TYPE_FRAGMENT
 
 #if BGFX_SHADER_LANGUAGE_GLSL
-#   define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = _type[](
-#   define ARRAY_END() )
+#	define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = _type[](
+#	define ARRAY_END() )
 #else
-#   define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = {
-#   define ARRAY_END() }
+#	define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = {
+#	define ARRAY_END() }
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 
 #if BGFX_SHADER_LANGUAGE_HLSL \
