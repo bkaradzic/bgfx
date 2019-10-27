@@ -357,6 +357,13 @@ target="_blank"><img src="http://img.youtube.com/vi/Gz9weuemhDA/0.jpg"
 alt="Heroes of Hammerwatch"
 width="640" height="480" border="0" /></a>
 
+## openblack
+
+An open source reimplementation of the game Black & White (2001).
+[Github Repo](https://github.com/openblack/openblack)
+
+![openblack](https://user-images.githubusercontent.com/1388267/67631321-93c85380-f88c-11e9-9103-804807844af2.png)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
