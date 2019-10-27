@@ -371,9 +371,9 @@ float random(vec2 _uv)
 
 vec3 fixCubeLookup(vec3 _v, float _lod, float _topLevelCubeSize)
 {
-	// Reference:
-	// Seamless cube-map filtering
-	// http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
+	// Reference(s):
+	// - Seamless cube-map filtering
+	//   https://web.archive.org/web/20190411181934/http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
 	float ax = abs(_v.x);
 	float ay = abs(_v.y);
 	float az = abs(_v.z);
