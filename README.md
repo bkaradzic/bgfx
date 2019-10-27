@@ -360,7 +360,8 @@ width="640" height="480" border="0" /></a>
 ## openblack
 
 An open source reimplementation of the game Black & White (2001).
-[Github Repo](https://github.com/openblack/openblack)
+
+[OpenBlack](https://github.com/openblack/openblack#openblack)
 
 ![openblack](https://user-images.githubusercontent.com/1388267/67631321-93c85380-f88c-11e9-9103-804807844af2.png)
 
