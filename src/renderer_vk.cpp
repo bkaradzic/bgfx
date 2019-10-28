@@ -2761,6 +2761,10 @@ VK_IMPORT_DEVICE
 					releaseSwapchainFramebuffer();
 					releaseSwapchain();
 					
+					uint32_t numPresentModes(10);
+					VkPresentModeKHR presentModes[10];
+					vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
+
 					uint32_t presentModeIdx = numPresentModes;
 					VkPresentModeKHR preferredPresentMode[] = {
 						VK_PRESENT_MODE_FIFO_KHR,
