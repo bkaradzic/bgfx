@@ -2760,6 +2760,38 @@ VK_IMPORT_DEVICE
 					VK_CHECK(vkDeviceWaitIdle(m_device) );
 					releaseSwapchainFramebuffer();
 					releaseSwapchain();
+					
+					uint32_t presentModeIdx = numPresentModes;
+					VkPresentModeKHR preferredPresentMode[] = {
+						VK_PRESENT_MODE_FIFO_KHR,
+						VK_PRESENT_MODE_FIFO_RELAXED_KHR,
+						VK_PRESENT_MODE_MAILBOX_KHR,
+						VK_PRESENT_MODE_IMMEDIATE_KHR,
+					};
+					bool has_vsync[] = { true, true, true, false };
+					bool vsync = (flags & BGFX_RESET_VSYNC ? true : false);
+
+					for (uint32_t ii = 0; ii < BX_COUNTOF(preferredPresentMode); ++ii)
+					{
+						for (uint32_t jj = 0; jj < numPresentModes; ++jj)
+						{
+							if ((presentModes[jj] == preferredPresentMode[ii]) && (vsync == has_vsync[ii]))
+							{
+								presentModeIdx = jj;
+								BX_TRACE("present mode: %d", (int)preferredPresentMode[ii]);
+								break;
+							}
+						}
+						if (presentModeIdx < numPresentModes)
+						{
+							break;
+						}
+					}
+					if (presentModeIdx == numPresentModes)
+					{
+						presentModeIdx = 0;
+					}
+					m_sci.presentMode = presentModes[presentModeIdx];
 
 					VkSurfaceCapabilitiesKHR surfaceCapabilities;
 					VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities) );
