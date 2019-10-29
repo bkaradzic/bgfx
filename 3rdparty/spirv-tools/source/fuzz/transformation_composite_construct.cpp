@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/fuzz/transformation_construct_composite.h"
+#include "source/fuzz/transformation_composite_construct.h"
 
 #include "source/fuzz/data_descriptor.h"
 #include "source/fuzz/fuzzer_util.h"
@@ -22,11 +22,11 @@
 namespace spvtools {
 namespace fuzz {
 
-TransformationConstructComposite::TransformationConstructComposite(
-    const protobufs::TransformationConstructComposite& message)
+TransformationCompositeConstruct::TransformationCompositeConstruct(
+    const protobufs::TransformationCompositeConstruct& message)
     : message_(message) {}
 
-TransformationConstructComposite::TransformationConstructComposite(
+TransformationCompositeConstruct::TransformationCompositeConstruct(
     uint32_t composite_type_id, std::vector<uint32_t> component,
     const protobufs::InstructionDescriptor& instruction_to_insert_before,
     uint32_t fresh_id) {
@@ -39,7 +39,7 @@ TransformationConstructComposite::TransformationConstructComposite(
   message_.set_fresh_id(fresh_id);
 }
 
-bool TransformationConstructComposite::IsApplicable(
+bool TransformationCompositeConstruct::IsApplicable(
     opt::IRContext* context, const FactManager& /*fact_manager*/) const {
   if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
     // We require the id for the composite constructor to be unused.
@@ -112,7 +112,7 @@ bool TransformationConstructComposite::IsApplicable(
   return true;
 }
 
-void TransformationConstructComposite::Apply(opt::IRContext* context,
+void TransformationCompositeConstruct::Apply(opt::IRContext* context,
                                              FactManager* fact_manager) const {
   // Use the base and offset information from the transformation to determine
   // where in the module a new instruction should be inserted.
@@ -174,7 +174,7 @@ void TransformationConstructComposite::Apply(opt::IRContext* context,
   context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
 }
 
-bool TransformationConstructComposite::ComponentsForArrayConstructionAreOK(
+bool TransformationCompositeConstruct::ComponentsForArrayConstructionAreOK(
     opt::IRContext* context, const opt::analysis::Array& array_type) const {
   if (array_type.length_info().words[0] !=
       opt::analysis::Array::LengthInfo::kConstant) {
@@ -211,7 +211,7 @@ bool TransformationConstructComposite::ComponentsForArrayConstructionAreOK(
   return true;
 }
 
-bool TransformationConstructComposite::ComponentsForMatrixConstructionAreOK(
+bool TransformationCompositeConstruct::ComponentsForMatrixConstructionAreOK(
     opt::IRContext* context, const opt::analysis::Matrix& matrix_type) const {
   if (static_cast<uint32_t>(message_.component().size()) !=
       matrix_type.element_count()) {
@@ -237,7 +237,7 @@ bool TransformationConstructComposite::ComponentsForMatrixConstructionAreOK(
   return true;
 }
 
-bool TransformationConstructComposite::ComponentsForStructConstructionAreOK(
+bool TransformationCompositeConstruct::ComponentsForStructConstructionAreOK(
     opt::IRContext* context, const opt::analysis::Struct& struct_type) const {
   if (static_cast<uint32_t>(message_.component().size()) !=
       struct_type.element_types().size()) {
@@ -265,7 +265,7 @@ bool TransformationConstructComposite::ComponentsForStructConstructionAreOK(
   return true;
 }
 
-bool TransformationConstructComposite::ComponentsForVectorConstructionAreOK(
+bool TransformationCompositeConstruct::ComponentsForVectorConstructionAreOK(
     opt::IRContext* context, const opt::analysis::Vector& vector_type) const {
   uint32_t base_element_count = 0;
   auto element_type = vector_type.element_type();
@@ -295,9 +295,9 @@ bool TransformationConstructComposite::ComponentsForVectorConstructionAreOK(
   return base_element_count == vector_type.element_count();
 }
 
-protobufs::Transformation TransformationConstructComposite::ToMessage() const {
+protobufs::Transformation TransformationCompositeConstruct::ToMessage() const {
   protobufs::Transformation result;
-  *result.mutable_construct_composite() = message_;
+  *result.mutable_composite_construct() = message_;
   return result;
 }
 

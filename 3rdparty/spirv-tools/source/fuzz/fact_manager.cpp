@@ -283,7 +283,7 @@ bool FactManager::ConstantUniformFacts::AddFact(
   auto composite_type =
       should_be_uniform_pointer_instruction->GetSingleWordInOperand(1);
 
-  auto final_element_type_id = fuzzerutil::WalkCompositeIndices(
+  auto final_element_type_id = fuzzerutil::WalkCompositeTypeIndices(
       context, composite_type,
       fact.uniform_buffer_element_descriptor().index());
   if (!final_element_type_id) {

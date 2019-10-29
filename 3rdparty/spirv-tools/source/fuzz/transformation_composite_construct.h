@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_FUZZ_TRANSFORMATION_CONSTRUCT_COMPOSITE_H_
-#define SOURCE_FUZZ_TRANSFORMATION_CONSTRUCT_COMPOSITE_H_
+#ifndef SOURCE_FUZZ_TRANSFORMATION_COMPOSITE_CONSTRUCT_H_
+#define SOURCE_FUZZ_TRANSFORMATION_COMPOSITE_CONSTRUCT_H_
 
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
@@ -23,12 +23,12 @@
 namespace spvtools {
 namespace fuzz {
 
-class TransformationConstructComposite : public Transformation {
+class TransformationCompositeConstruct : public Transformation {
  public:
-  explicit TransformationConstructComposite(
-      const protobufs::TransformationConstructComposite& message);
+  explicit TransformationCompositeConstruct(
+      const protobufs::TransformationCompositeConstruct& message);
 
-  TransformationConstructComposite(
+  TransformationCompositeConstruct(
       uint32_t composite_type_id, std::vector<uint32_t> component,
       const protobufs::InstructionDescriptor& instruction_to_insert_before,
       uint32_t fresh_id);
@@ -79,10 +79,10 @@ class TransformationConstructComposite : public Transformation {
   bool ComponentsForVectorConstructionAreOK(
       opt::IRContext* context, const opt::analysis::Vector& vector_type) const;
 
-  protobufs::TransformationConstructComposite message_;
+  protobufs::TransformationCompositeConstruct message_;
 };
 
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // SOURCE_FUZZ_TRANSFORMATION_CONSTRUCT_COMPOSITE_H_
+#endif  // SOURCE_FUZZ_TRANSFORMATION_COMPOSITE_CONSTRUCT_H_

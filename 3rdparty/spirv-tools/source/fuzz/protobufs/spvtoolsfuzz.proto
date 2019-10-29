@@ -187,11 +187,12 @@ message Transformation {
     TransformationCopyObject copy_object = 13;
     TransformationReplaceIdWithSynonym replace_id_with_synonym = 14;
     TransformationSetSelectionControl set_selection_control = 15;
-    TransformationConstructComposite construct_composite = 16;
+    TransformationCompositeConstruct composite_construct = 16;
     TransformationSetLoopControl set_loop_control = 17;
     TransformationSetFunctionControl set_function_control = 18;
     TransformationAddNoContractionDecoration add_no_contraction_decoration = 19;
     TransformationSetMemoryOperandsMask set_memory_operands_mask = 20;
+    TransformationCompositeExtract composite_extract = 21;
     // Add additional option using the next available number.
   }
 }
@@ -325,24 +326,7 @@ message TransformationAddTypePointer {
 
 }
 
-message TransformationCopyObject {
-
-  // A transformation that introduces an OpCopyObject instruction to make a
-  // copy of an object.
-
-  // Id of the object to be copied
-  uint32 object = 1;
-
-  // A descriptor for an instruction in a block before which the new
-  // OpCopyObject instruction should be inserted
-  InstructionDescriptor instruction_to_insert_before = 2;
-
-  // A fresh id for the copied object
-  uint32 fresh_id = 3;
-
-}
-
-message TransformationConstructComposite {
+message TransformationCompositeConstruct {
 
   // A transformation that introduces an OpCompositeConstruct instruction to
   // make a composite object.
@@ -359,6 +343,43 @@ message TransformationConstructComposite {
 
   // A fresh id for the composite object
   uint32 fresh_id = 4;
+
+}
+
+message TransformationCompositeExtract {
+
+  // A transformation that adds an instruction to extract an element from a
+  // composite.
+
+  // A descriptor for an instruction in a block before which the new
+  // OpCompositeExtract instruction should be inserted
+  InstructionDescriptor instruction_to_insert_before = 1;
+
+  // Result id for the extract operation.
+  uint32 fresh_id = 2;
+
+  // Id of the composite from which data is to be extracted.
+  uint32 composite_id = 3;
+
+  // Indices that indicate which part of the composite should be extracted.
+  repeated uint32 index = 4;
+
+}
+
+message TransformationCopyObject {
+
+  // A transformation that introduces an OpCopyObject instruction to make a
+  // copy of an object.
+
+  // Id of the object to be copied
+  uint32 object = 1;
+
+  // A descriptor for an instruction in a block before which the new
+  // OpCopyObject instruction should be inserted
+  InstructionDescriptor instruction_to_insert_before = 2;
+
+  // A fresh id for the copied object
+  uint32 fresh_id = 3;
 
 }
 

@@ -275,22 +275,27 @@ bool TransformationReplaceIdWithSynonym::ReplacingUseWithSynonymIsOk(
 
   // We now need to check that replacing the use with the synonym will respect
   // dominance rules - i.e. the synonym needs to dominate the use.
-  auto dominator_analysis = context->GetDominatorAnalysis(
-      context->get_instr_block(use_instruction)->GetParent());
-  if (use_instruction->opcode() == SpvOpPhi) {
-    // In the case where the use is an operand to OpPhi, it is actually the
-    // *parent* block associated with the operand that must be dominated by the
-    // synonym.
-    auto parent_block =
-        use_instruction->GetSingleWordInOperand(use_in_operand_index + 1);
-    if (!dominator_analysis->Dominates(
-            context->get_instr_block(defining_instruction)->id(),
-            parent_block)) {
+  // This is only relevant if the defining instruction is in a block; if it is
+  // not in a block then it is at global scope, and so replacing the use with it
+  // is fine.
+  if (context->get_instr_block(defining_instruction)) {
+    auto dominator_analysis = context->GetDominatorAnalysis(
+        context->get_instr_block(use_instruction)->GetParent());
+    if (use_instruction->opcode() == SpvOpPhi) {
+      // In the case where the use is an operand to OpPhi, it is actually the
+      // *parent* block associated with the operand that must be dominated by
+      // the synonym.
+      auto parent_block =
+          use_instruction->GetSingleWordInOperand(use_in_operand_index + 1);
+      if (!dominator_analysis->Dominates(
+              context->get_instr_block(defining_instruction)->id(),
+              parent_block)) {
+        return false;
+      }
+    } else if (!dominator_analysis->Dominates(defining_instruction,
+                                              use_instruction)) {
       return false;
     }
-  } else if (!dominator_analysis->Dominates(defining_instruction,
-                                            use_instruction)) {
-    return false;
   }
   return true;
 }

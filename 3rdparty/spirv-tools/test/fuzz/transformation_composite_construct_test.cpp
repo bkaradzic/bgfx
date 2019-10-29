@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/fuzz/transformation_construct_composite.h"
+#include "source/fuzz/transformation_composite_construct.h"
 #include "source/fuzz/data_descriptor.h"
 #include "source/fuzz/instruction_descriptor.h"
 #include "test/fuzz/fuzz_test_util.h"
@@ -36,7 +36,7 @@ bool SynonymFactHolds(const FactManager& fact_manager, uint32_t id,
                       }) != synonyms.end();
 }
 
-TEST(TransformationConstructCompositeTest, ConstructArrays) {
+TEST(TransformationCompositeConstructTest, ConstructArrays) {
   std::string shader = R"(
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
@@ -146,11 +146,11 @@ TEST(TransformationConstructCompositeTest, ConstructArrays) {
   FactManager fact_manager;
 
   // Make a vec2[3]
-  TransformationConstructComposite make_vec2_array_length_3(
+  TransformationCompositeConstruct make_vec2_array_length_3(
       37, {41, 45, 27}, MakeInstructionDescriptor(46, SpvOpAccessChain, 0),
       200);
   // Bad: there are too many components
-  TransformationConstructComposite make_vec2_array_length_3_bad(
+  TransformationCompositeConstruct make_vec2_array_length_3_bad(
       37, {41, 45, 27, 27}, MakeInstructionDescriptor(46, SpvOpAccessChain, 0),
       200);
   ASSERT_TRUE(
@@ -164,10 +164,10 @@ TEST(TransformationConstructCompositeTest, ConstructArrays) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 27, 200, {2}));
 
   // Make a float[2]
-  TransformationConstructComposite make_float_array_length_2(
+  TransformationCompositeConstruct make_float_array_length_2(
       9, {24, 40}, MakeInstructionDescriptor(71, SpvOpStore, 0), 201);
   // Bad: %41 does not have type float
-  TransformationConstructComposite make_float_array_length_2_bad(
+  TransformationCompositeConstruct make_float_array_length_2_bad(
       9, {41, 40}, MakeInstructionDescriptor(71, SpvOpStore, 0), 201);
   ASSERT_TRUE(
       make_float_array_length_2.IsApplicable(context.get(), fact_manager));
@@ -179,11 +179,11 @@ TEST(TransformationConstructCompositeTest, ConstructArrays) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 40, 201, {1}));
 
   // Make a bool[3]
-  TransformationConstructComposite make_bool_array_length_3(
+  TransformationCompositeConstruct make_bool_array_length_3(
       47, {33, 50, 50}, MakeInstructionDescriptor(33, SpvOpSelectionMerge, 0),
       202);
   // Bad: %54 is not available at the desired program point.
-  TransformationConstructComposite make_bool_array_length_3_bad(
+  TransformationCompositeConstruct make_bool_array_length_3_bad(
       47, {33, 54, 50}, MakeInstructionDescriptor(33, SpvOpSelectionMerge, 0),
       202);
   ASSERT_TRUE(
@@ -197,10 +197,10 @@ TEST(TransformationConstructCompositeTest, ConstructArrays) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 50, 202, {2}));
 
   // make a uvec3[2][2]
-  TransformationConstructComposite make_uvec3_array_length_2_2(
+  TransformationCompositeConstruct make_uvec3_array_length_2_2(
       58, {69, 100}, MakeInstructionDescriptor(64, SpvOpStore, 0), 203);
   // Bad: Skip count 100 is too large.
-  TransformationConstructComposite make_uvec3_array_length_2_2_bad(
+  TransformationCompositeConstruct make_uvec3_array_length_2_2_bad(
       58, {33, 54}, MakeInstructionDescriptor(64, SpvOpStore, 100), 203);
   ASSERT_TRUE(
       make_uvec3_array_length_2_2.IsApplicable(context.get(), fact_manager));
@@ -319,7 +319,7 @@ TEST(TransformationConstructCompositeTest, ConstructArrays) {
   ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
 }
 
-TEST(TransformationConstructCompositeTest, ConstructMatrices) {
+TEST(TransformationCompositeConstructTest, ConstructMatrices) {
   std::string shader = R"(
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
@@ -399,10 +399,10 @@ TEST(TransformationConstructCompositeTest, ConstructMatrices) {
   FactManager fact_manager;
 
   // make a mat3x4
-  TransformationConstructComposite make_mat34(
+  TransformationCompositeConstruct make_mat34(
       32, {25, 28, 31}, MakeInstructionDescriptor(31, SpvOpReturn, 0), 200);
   // Bad: %35 is mat4x3, not mat3x4.
-  TransformationConstructComposite make_mat34_bad(
+  TransformationCompositeConstruct make_mat34_bad(
       35, {25, 28, 31}, MakeInstructionDescriptor(31, SpvOpReturn, 0), 200);
   ASSERT_TRUE(make_mat34.IsApplicable(context.get(), fact_manager));
   ASSERT_FALSE(make_mat34_bad.IsApplicable(context.get(), fact_manager));
@@ -413,10 +413,10 @@ TEST(TransformationConstructCompositeTest, ConstructMatrices) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 31, 200, {2}));
 
   // make a mat4x3
-  TransformationConstructComposite make_mat43(
+  TransformationCompositeConstruct make_mat43(
       35, {11, 13, 16, 100}, MakeInstructionDescriptor(31, SpvOpStore, 0), 201);
   // Bad: %25 does not match the matrix's column type.
-  TransformationConstructComposite make_mat43_bad(
+  TransformationCompositeConstruct make_mat43_bad(
       35, {25, 13, 16, 100}, MakeInstructionDescriptor(31, SpvOpStore, 0), 201);
   ASSERT_TRUE(make_mat43.IsApplicable(context.get(), fact_manager));
   ASSERT_FALSE(make_mat43_bad.IsApplicable(context.get(), fact_manager));
@@ -503,7 +503,7 @@ TEST(TransformationConstructCompositeTest, ConstructMatrices) {
   ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
 }
 
-TEST(TransformationConstructCompositeTest, ConstructStructs) {
+TEST(TransformationCompositeConstructTest, ConstructStructs) {
   std::string shader = R"(
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
@@ -600,10 +600,10 @@ TEST(TransformationConstructCompositeTest, ConstructStructs) {
   FactManager fact_manager;
 
   // make an Inner
-  TransformationConstructComposite make_inner(
+  TransformationCompositeConstruct make_inner(
       9, {25, 19}, MakeInstructionDescriptor(57, SpvOpAccessChain, 0), 200);
   // Bad: Too few fields to make the struct.
-  TransformationConstructComposite make_inner_bad(
+  TransformationCompositeConstruct make_inner_bad(
       9, {25}, MakeInstructionDescriptor(57, SpvOpAccessChain, 0), 200);
   ASSERT_TRUE(make_inner.IsApplicable(context.get(), fact_manager));
   ASSERT_FALSE(make_inner_bad.IsApplicable(context.get(), fact_manager));
@@ -613,11 +613,11 @@ TEST(TransformationConstructCompositeTest, ConstructStructs) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 19, 200, {1}));
 
   // make an Outer
-  TransformationConstructComposite make_outer(
+  TransformationCompositeConstruct make_outer(
       33, {46, 200, 56}, MakeInstructionDescriptor(200, SpvOpAccessChain, 0),
       201);
   // Bad: %200 is not available at the desired program point.
-  TransformationConstructComposite make_outer_bad(
+  TransformationCompositeConstruct make_outer_bad(
       33, {46, 200, 56},
       MakeInstructionDescriptor(200, SpvOpCompositeConstruct, 0), 201);
   ASSERT_TRUE(make_outer.IsApplicable(context.get(), fact_manager));
@@ -721,7 +721,7 @@ TEST(TransformationConstructCompositeTest, ConstructStructs) {
   ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
 }
 
-TEST(TransformationConstructCompositeTest, ConstructVectors) {
+TEST(TransformationCompositeConstructTest, ConstructVectors) {
   std::string shader = R"(
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
@@ -913,10 +913,10 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
 
   FactManager fact_manager;
 
-  TransformationConstructComposite make_vec2(
+  TransformationCompositeConstruct make_vec2(
       7, {17, 11}, MakeInstructionDescriptor(100, SpvOpStore, 0), 200);
   // Bad: not enough data for a vec2
-  TransformationConstructComposite make_vec2_bad(
+  TransformationCompositeConstruct make_vec2_bad(
       7, {11}, MakeInstructionDescriptor(100, SpvOpStore, 0), 200);
   ASSERT_TRUE(make_vec2.IsApplicable(context.get(), fact_manager));
   ASSERT_FALSE(make_vec2_bad.IsApplicable(context.get(), fact_manager));
@@ -925,11 +925,11 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 17, 200, {0}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 11, 200, {1}));
 
-  TransformationConstructComposite make_vec3(
+  TransformationCompositeConstruct make_vec3(
       25, {12, 32}, MakeInstructionDescriptor(35, SpvOpCompositeConstruct, 0),
       201);
   // Bad: too much data for a vec3
-  TransformationConstructComposite make_vec3_bad(
+  TransformationCompositeConstruct make_vec3_bad(
       25, {12, 32, 32},
       MakeInstructionDescriptor(35, SpvOpCompositeConstruct, 0), 201);
   ASSERT_TRUE(make_vec3.IsApplicable(context.get(), fact_manager));
@@ -939,11 +939,11 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 12, 201, {0}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 32, 201, {2}));
 
-  TransformationConstructComposite make_vec4(
+  TransformationCompositeConstruct make_vec4(
       44, {32, 32, 10, 11}, MakeInstructionDescriptor(75, SpvOpAccessChain, 0),
       202);
   // Bad: id 48 is not available at the insertion points
-  TransformationConstructComposite make_vec4_bad(
+  TransformationCompositeConstruct make_vec4_bad(
       44, {48, 32, 10, 11}, MakeInstructionDescriptor(75, SpvOpAccessChain, 0),
       202);
   ASSERT_TRUE(make_vec4.IsApplicable(context.get(), fact_manager));
@@ -955,10 +955,10 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 10, 202, {2}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 11, 202, {3}));
 
-  TransformationConstructComposite make_ivec2(
+  TransformationCompositeConstruct make_ivec2(
       51, {126, 120}, MakeInstructionDescriptor(128, SpvOpLoad, 0), 203);
   // Bad: if 128 is not available at the instruction that defines 128
-  TransformationConstructComposite make_ivec2_bad(
+  TransformationCompositeConstruct make_ivec2_bad(
       51, {128, 120}, MakeInstructionDescriptor(128, SpvOpLoad, 0), 203);
   ASSERT_TRUE(make_ivec2.IsApplicable(context.get(), fact_manager));
   ASSERT_FALSE(make_ivec2_bad.IsApplicable(context.get(), fact_manager));
@@ -967,11 +967,11 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 126, 203, {0}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 120, 203, {1}));
 
-  TransformationConstructComposite make_ivec3(
+  TransformationCompositeConstruct make_ivec3(
       114, {56, 117, 56}, MakeInstructionDescriptor(66, SpvOpAccessChain, 0),
       204);
   // Bad because 1300 is not an id
-  TransformationConstructComposite make_ivec3_bad(
+  TransformationCompositeConstruct make_ivec3_bad(
       114, {56, 117, 1300}, MakeInstructionDescriptor(66, SpvOpAccessChain, 0),
       204);
   ASSERT_TRUE(make_ivec3.IsApplicable(context.get(), fact_manager));
@@ -982,11 +982,11 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 117, 204, {1}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 56, 204, {2}));
 
-  TransformationConstructComposite make_ivec4(
+  TransformationCompositeConstruct make_ivec4(
       122, {56, 117, 117, 117}, MakeInstructionDescriptor(66, SpvOpIAdd, 0),
       205);
   // Bad because 86 is the wrong type.
-  TransformationConstructComposite make_ivec4_bad(
+  TransformationCompositeConstruct make_ivec4_bad(
       86, {56, 117, 117, 117}, MakeInstructionDescriptor(66, SpvOpIAdd, 0),
       205);
   ASSERT_TRUE(make_ivec4.IsApplicable(context.get(), fact_manager));
@@ -998,9 +998,9 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 117, 205, {2}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 117, 205, {3}));
 
-  TransformationConstructComposite make_uvec2(
+  TransformationCompositeConstruct make_uvec2(
       86, {18, 38}, MakeInstructionDescriptor(133, SpvOpAccessChain, 0), 206);
-  TransformationConstructComposite make_uvec2_bad(
+  TransformationCompositeConstruct make_uvec2_bad(
       86, {18, 38}, MakeInstructionDescriptor(133, SpvOpAccessChain, 200), 206);
   ASSERT_TRUE(make_uvec2.IsApplicable(context.get(), fact_manager));
   ASSERT_FALSE(make_uvec2_bad.IsApplicable(context.get(), fact_manager));
@@ -1009,10 +1009,10 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 18, 206, {0}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 38, 206, {1}));
 
-  TransformationConstructComposite make_uvec3(
+  TransformationCompositeConstruct make_uvec3(
       59, {14, 18, 136}, MakeInstructionDescriptor(137, SpvOpReturn, 0), 207);
   // Bad because 1300 is not an id
-  TransformationConstructComposite make_uvec3_bad(
+  TransformationCompositeConstruct make_uvec3_bad(
       59, {14, 18, 1300}, MakeInstructionDescriptor(137, SpvOpReturn, 0), 207);
   ASSERT_TRUE(make_uvec3.IsApplicable(context.get(), fact_manager));
   ASSERT_FALSE(make_uvec3_bad.IsApplicable(context.get(), fact_manager));
@@ -1022,11 +1022,11 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 18, 207, {1}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 136, 207, {2}));
 
-  TransformationConstructComposite make_uvec4(
+  TransformationCompositeConstruct make_uvec4(
       131, {14, 18, 136, 136},
       MakeInstructionDescriptor(137, SpvOpAccessChain, 0), 208);
   // Bad because 86 is the wrong type.
-  TransformationConstructComposite make_uvec4_bad(
+  TransformationCompositeConstruct make_uvec4_bad(
       86, {14, 18, 136, 136},
       MakeInstructionDescriptor(137, SpvOpAccessChain, 0), 208);
   ASSERT_TRUE(make_uvec4.IsApplicable(context.get(), fact_manager));
@@ -1038,7 +1038,7 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 136, 208, {2}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 136, 208, {3}));
 
-  TransformationConstructComposite make_bvec2(
+  TransformationCompositeConstruct make_bvec2(
       102,
       {
           111,
@@ -1046,7 +1046,7 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
       },
       MakeInstructionDescriptor(75, SpvOpAccessChain, 0), 209);
   // Bad because 0 is not a valid base instruction id
-  TransformationConstructComposite make_bvec2_bad(
+  TransformationCompositeConstruct make_bvec2_bad(
       102,
       {
           111,
@@ -1060,10 +1060,10 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 111, 209, {0}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 41, 209, {1}));
 
-  TransformationConstructComposite make_bvec3(
+  TransformationCompositeConstruct make_bvec3(
       93, {108, 73}, MakeInstructionDescriptor(108, SpvOpStore, 0), 210);
   // Bad because there are too many components for a bvec3
-  TransformationConstructComposite make_bvec3_bad(
+  TransformationCompositeConstruct make_bvec3_bad(
       93, {108, 108}, MakeInstructionDescriptor(108, SpvOpStore, 0), 210);
   ASSERT_TRUE(make_bvec3.IsApplicable(context.get(), fact_manager));
   ASSERT_FALSE(make_bvec3_bad.IsApplicable(context.get(), fact_manager));
@@ -1072,10 +1072,10 @@ TEST(TransformationConstructCompositeTest, ConstructVectors) {
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 108, 210, {0}));
   ASSERT_TRUE(SynonymFactHolds(fact_manager, 73, 210, {2}));
 
-  TransformationConstructComposite make_bvec4(
+  TransformationCompositeConstruct make_bvec4(
       70, {108, 108}, MakeInstructionDescriptor(108, SpvOpBranch, 0), 211);
   // Bad because 21 is a type, not a result id
-  TransformationConstructComposite make_bvec4_bad(
+  TransformationCompositeConstruct make_bvec4_bad(
       70, {21, 108}, MakeInstructionDescriptor(108, SpvOpBranch, 0), 211);
   ASSERT_TRUE(make_bvec4.IsApplicable(context.get(), fact_manager));
   ASSERT_FALSE(make_bvec4_bad.IsApplicable(context.get(), fact_manager));

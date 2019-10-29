@@ -31,7 +31,8 @@ if (${SPIRV_BUILD_FUZZER})
           transformation_add_type_float_test.cpp
           transformation_add_type_int_test.cpp
           transformation_add_type_pointer_test.cpp
-          transformation_construct_composite_test.cpp
+          transformation_composite_construct_test.cpp
+          transformation_composite_extract_test.cpp
           transformation_copy_object_test.cpp
           transformation_move_block_down_test.cpp
           transformation_replace_boolean_constant_with_constant_binary_test.cpp

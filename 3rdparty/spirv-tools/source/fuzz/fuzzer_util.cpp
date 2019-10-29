@@ -330,7 +330,7 @@ bool IsCompositeType(const opt::analysis::Type* type) {
                   type->AsVector());
 }
 
-uint32_t WalkCompositeIndices(
+uint32_t WalkCompositeTypeIndices(
     opt::IRContext* context, uint32_t base_object_type_id,
     const google::protobuf::RepeatedField<google::protobuf::uint32>& indices) {
   uint32_t sub_object_type_id = base_object_type_id;

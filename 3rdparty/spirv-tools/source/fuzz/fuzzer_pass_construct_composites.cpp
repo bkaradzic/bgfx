@@ -18,7 +18,7 @@
 #include <memory>
 
 #include "source/fuzz/fuzzer_util.h"
-#include "source/fuzz/transformation_construct_composite.h"
+#include "source/fuzz/transformation_composite_construct.h"
 #include "source/util/make_unique.h"
 
 namespace spvtools {
@@ -140,7 +140,7 @@ void FuzzerPassConstructComposites::Apply() {
         assert(constructor_arguments != nullptr);
 
         // Make and apply a transformation.
-        TransformationConstructComposite transformation(
+        TransformationCompositeConstruct transformation(
             chosen_composite_type, *constructor_arguments,
             instruction_descriptor, GetFuzzerContext()->GetFreshId());
         assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
