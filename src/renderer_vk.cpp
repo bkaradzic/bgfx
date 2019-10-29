@@ -2760,41 +2760,48 @@ VK_IMPORT_DEVICE
 					VK_CHECK(vkDeviceWaitIdle(m_device) );
 					releaseSwapchainFramebuffer();
 					releaseSwapchain();
-					
+
 					uint32_t numPresentModes(10);
 					VkPresentModeKHR presentModes[10];
 					vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
 
 					uint32_t presentModeIdx = numPresentModes;
-					VkPresentModeKHR preferredPresentMode[] = {
+					static const VkPresentModeKHR preferredPresentMode[] =
+					{
 						VK_PRESENT_MODE_FIFO_KHR,
 						VK_PRESENT_MODE_FIFO_RELAXED_KHR,
 						VK_PRESENT_MODE_MAILBOX_KHR,
 						VK_PRESENT_MODE_IMMEDIATE_KHR,
 					};
-					bool has_vsync[] = { true, true, true, false };
-					bool vsync = (flags & BGFX_RESET_VSYNC ? true : false);
+					static const bool hasVsync[] = { true, true, true, false };
+					BX_STATIC_ASSERT(BX_COUNTOF(preferredPresentMode) == BX_COUNTOF(hasVsync) );
+
+					const bool vsync = !!(flags & BGFX_RESET_VSYNC);
 
 					for (uint32_t ii = 0; ii < BX_COUNTOF(preferredPresentMode); ++ii)
 					{
 						for (uint32_t jj = 0; jj < numPresentModes; ++jj)
 						{
-							if ((presentModes[jj] == preferredPresentMode[ii]) && (vsync == has_vsync[ii]))
+							if (presentModes[jj] == preferredPresentMode[ii]
+							&&  vsync == hasVsync[ii])
 							{
 								presentModeIdx = jj;
-								BX_TRACE("present mode: %d", (int)preferredPresentMode[ii]);
+								BX_TRACE("present mode: %d", preferredPresentMode[ii]);
 								break;
 							}
 						}
+
 						if (presentModeIdx < numPresentModes)
 						{
 							break;
 						}
 					}
+
 					if (presentModeIdx == numPresentModes)
 					{
 						presentModeIdx = 0;
 					}
+
 					m_sci.presentMode = presentModes[presentModeIdx];
 
 					VkSurfaceCapabilitiesKHR surfaceCapabilities;
