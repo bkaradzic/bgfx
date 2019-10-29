@@ -40,17 +40,20 @@ inline T degrees(T r)
     return r * T(57.2957795131);
 }
 
-inline half2x2 test_mat2(thread const half2& a, thread const half2& b, thread const half2& c, thread const half2& d)
+static inline __attribute__((always_inline))
+half2x2 test_mat2(thread const half2& a, thread const half2& b, thread const half2& c, thread const half2& d)
 {
     return half2x2(half2(a), half2(b)) * half2x2(half2(c), half2(d));
 }
 
-inline half3x3 test_mat3(thread const half3& a, thread const half3& b, thread const half3& c, thread const half3& d, thread const half3& e, thread const half3& f)
+static inline __attribute__((always_inline))
+half3x3 test_mat3(thread const half3& a, thread const half3& b, thread const half3& c, thread const half3& d, thread const half3& e, thread const half3& f)
 {
     return half3x3(half3(a), half3(b), half3(c)) * half3x3(half3(d), half3(e), half3(f));
 }
 
-inline void test_constants()
+static inline __attribute__((always_inline))
+void test_constants()
 {
     half a = half(1.0);
     half b = half(1.5);
@@ -62,12 +65,14 @@ inline void test_constants()
     half h = half(9.5367431640625e-07);
 }
 
-inline half test_result()
+static inline __attribute__((always_inline))
+half test_result()
 {
     return half(1.0);
 }
 
-inline void test_conversions()
+static inline __attribute__((always_inline))
+void test_conversions()
 {
     half one = test_result();
     int a = int(one);
@@ -80,7 +85,8 @@ inline void test_conversions()
     half d2 = half(d);
 }
 
-inline void test_builtins(thread half4& v4, thread half3& v3, thread half& v1)
+static inline __attribute__((always_inline))
+void test_builtins(thread half4& v4, thread half3& v3, thread half& v1)
 {
     half4 res = radians(v4);
     res = degrees(v4);

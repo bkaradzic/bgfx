@@ -15,7 +15,8 @@ struct bar
     int b;
 };
 
-inline device int* _24(device foo& a, device bar& b, thread uint3& gl_GlobalInvocationID)
+static inline __attribute__((always_inline))
+device int* _24(device foo& a, device bar& b, thread uint3& gl_GlobalInvocationID)
 {
     return (gl_GlobalInvocationID.x != 0u) ? &a.a : &b.b;
 }

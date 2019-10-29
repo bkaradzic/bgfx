@@ -15,7 +15,8 @@ struct main0_in
     float3 vUV [[user(locn0)]];
 };
 
-inline void from_function(thread float2& FragColor, thread texture2d<float> uSampler2D, thread const sampler uSampler2DSmplr, thread float3& vUV, thread texture3d<float> uSampler3D, thread const sampler uSampler3DSmplr, thread texturecube<float> uSamplerCube, thread const sampler uSamplerCubeSmplr, thread texture2d<float> uTexture2D, thread sampler uSampler, thread texture3d<float> uTexture3D, thread texturecube<float> uTextureCube)
+static inline __attribute__((always_inline))
+void from_function(thread float2& FragColor, thread texture2d<float> uSampler2D, thread const sampler uSampler2DSmplr, thread float3& vUV, thread texture3d<float> uSampler3D, thread const sampler uSampler3DSmplr, thread texturecube<float> uSamplerCube, thread const sampler uSamplerCubeSmplr, thread texture2d<float> uTexture2D, thread sampler uSampler, thread texture3d<float> uTexture3D, thread texturecube<float> uTextureCube)
 {
     float2 _22;
     _22.x = uSampler2D.calculate_clamped_lod(uSampler2DSmplr, vUV.xy);

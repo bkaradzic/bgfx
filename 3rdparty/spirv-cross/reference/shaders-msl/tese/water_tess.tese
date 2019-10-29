@@ -28,12 +28,14 @@ struct main0_patchIn
     float4 vPatchLods [[attribute(1)]];
 };
 
-inline float2 lerp_vertex(thread const float2& tess_coord, thread float2& vOutPatchPosBase, constant UBO& v_31)
+static inline __attribute__((always_inline))
+float2 lerp_vertex(thread const float2& tess_coord, thread float2& vOutPatchPosBase, constant UBO& v_31)
 {
     return vOutPatchPosBase + (tess_coord * v_31.uPatchSize);
 }
 
-inline float2 lod_factor(thread const float2& tess_coord, thread float4& vPatchLods)
+static inline __attribute__((always_inline))
+float2 lod_factor(thread const float2& tess_coord, thread float4& vPatchLods)
 {
     float2 x = mix(vPatchLods.yx, vPatchLods.zw, float2(tess_coord.x));
     float level = mix(x.x, x.y, tess_coord.y);
@@ -42,7 +44,8 @@ inline float2 lod_factor(thread const float2& tess_coord, thread float4& vPatchL
     return float2(floor_level, fract_level);
 }
 
-inline float3 sample_height_displacement(thread const float2& uv, thread const float2& off, thread const float2& lod, thread texture2d<float> uHeightmapDisplacement, thread const sampler uHeightmapDisplacementSmplr)
+static inline __attribute__((always_inline))
+float3 sample_height_displacement(thread const float2& uv, thread const float2& off, thread const float2& lod, thread texture2d<float> uHeightmapDisplacement, thread const sampler uHeightmapDisplacementSmplr)
 {
     return mix(uHeightmapDisplacement.sample(uHeightmapDisplacementSmplr, (uv + (off * 0.5)), level(lod.x)).xyz, uHeightmapDisplacement.sample(uHeightmapDisplacementSmplr, (uv + (off * 1.0)), level(lod.x + 1.0)).xyz, float3(lod.y));
 }

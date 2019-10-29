@@ -938,11 +938,6 @@ struct SPIRFunction : IVariant
 	// Intentionally not a small vector, this one is rare, and std::function can be large.
 	Vector<std::function<void()>> fixup_hooks_in;
 
-	// On function entry, make sure to copy a constant array into thread addr space to work around
-	// the case where we are passing a constant array by value to a function on backends which do not
-	// consider arrays value types.
-	SmallVector<ID> constant_arrays_needed_on_stack;
-
 	bool active = false;
 	bool flush_undeclared = true;
 	bool do_combined_parameters = true;
