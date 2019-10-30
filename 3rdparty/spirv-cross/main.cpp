@@ -514,6 +514,9 @@ struct CLIArguments
 	bool msl_domain_lower_left = false;
 	bool msl_argument_buffers = false;
 	bool msl_texture_buffer_native = false;
+	bool msl_framebuffer_fetch = false;
+	bool msl_invariant_float_math = false;
+	bool msl_emulate_cube_array = false;
 	bool msl_multiview = false;
 	bool msl_view_index_from_device_index = false;
 	bool msl_dispatch_base = false;
@@ -598,6 +601,8 @@ static void print_help()
 	                "\t[--msl-domain-lower-left]\n"
 	                "\t[--msl-argument-buffers]\n"
 	                "\t[--msl-texture-buffer-native]\n"
+	                "\t[--msl-framebuffer-fetch]\n"
+	                "\t[--msl-emulate-cube-array]\n"
 	                "\t[--msl-discrete-descriptor-set <index>]\n"
 	                "\t[--msl-device-argument-buffer <index>]\n"
 	                "\t[--msl-multiview]\n"
@@ -756,8 +761,13 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 			msl_opts.msl_version = args.msl_version;
 		msl_opts.capture_output_to_buffer = args.msl_capture_output_to_buffer;
 		msl_opts.swizzle_texture_samples = args.msl_swizzle_texture_samples;
+		msl_opts.invariant_float_math = args.msl_invariant_float_math;
 		if (args.msl_ios)
+		{
 			msl_opts.platform = CompilerMSL::Options::iOS;
+			msl_opts.ios_use_framebuffer_fetch_subpasses = args.msl_framebuffer_fetch;
+			msl_opts.emulate_cube_array = args.msl_emulate_cube_array;
+		}
 		msl_opts.pad_fragment_output_components = args.msl_pad_fragment_output;
 		msl_opts.tess_domain_origin_lower_left = args.msl_domain_lower_left;
 		msl_opts.argument_buffers = args.msl_argument_buffers;
@@ -1093,6 +1103,9 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-device-argument-buffer",
 	        [&args](CLIParser &parser) { args.msl_device_argument_buffers.push_back(parser.next_uint()); });
 	cbs.add("--msl-texture-buffer-native", [&args](CLIParser &) { args.msl_texture_buffer_native = true; });
+	cbs.add("--msl-framebuffer-fetch", [&args](CLIParser &) { args.msl_framebuffer_fetch = true; });
+	cbs.add("--msl-invariant-float-math", [&args](CLIParser &) { args.msl_invariant_float_math = true; });
+	cbs.add("--msl-emulate-cube-array", [&args](CLIParser &) { args.msl_emulate_cube_array = true; });
 	cbs.add("--msl-multiview", [&args](CLIParser &) { args.msl_multiview = true; });
 	cbs.add("--msl-view-index-from-device-index",
 	        [&args](CLIParser &) { args.msl_view_index_from_device_index = true; });

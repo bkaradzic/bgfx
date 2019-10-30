@@ -25,7 +25,8 @@
 #include "source/fuzz/transformation_add_type_float.h"
 #include "source/fuzz/transformation_add_type_int.h"
 #include "source/fuzz/transformation_add_type_pointer.h"
-#include "source/fuzz/transformation_construct_composite.h"
+#include "source/fuzz/transformation_composite_construct.h"
+#include "source/fuzz/transformation_composite_extract.h"
 #include "source/fuzz/transformation_copy_object.h"
 #include "source/fuzz/transformation_move_block_down.h"
 #include "source/fuzz/transformation_replace_boolean_constant_with_constant_binary.h"
@@ -33,6 +34,7 @@
 #include "source/fuzz/transformation_replace_id_with_synonym.h"
 #include "source/fuzz/transformation_set_function_control.h"
 #include "source/fuzz/transformation_set_loop_control.h"
+#include "source/fuzz/transformation_set_memory_operands_mask.h"
 #include "source/fuzz/transformation_set_selection_control.h"
 #include "source/fuzz/transformation_split_block.h"
 #include "source/util/make_unique.h"
@@ -70,9 +72,12 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kAddTypePointer:
       return MakeUnique<TransformationAddTypePointer>(
           message.add_type_pointer());
-    case protobufs::Transformation::TransformationCase::kConstructComposite:
-      return MakeUnique<TransformationConstructComposite>(
-          message.construct_composite());
+    case protobufs::Transformation::TransformationCase::kCompositeConstruct:
+      return MakeUnique<TransformationCompositeConstruct>(
+          message.composite_construct());
+    case protobufs::Transformation::TransformationCase::kCompositeExtract:
+      return MakeUnique<TransformationCompositeExtract>(
+          message.composite_extract());
     case protobufs::Transformation::TransformationCase::kCopyObject:
       return MakeUnique<TransformationCopyObject>(message.copy_object());
     case protobufs::Transformation::TransformationCase::kMoveBlockDown:
@@ -94,6 +99,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kSetLoopControl:
       return MakeUnique<TransformationSetLoopControl>(
           message.set_loop_control());
+    case protobufs::Transformation::TransformationCase::kSetMemoryOperandsMask:
+      return MakeUnique<TransformationSetMemoryOperandsMask>(
+          message.set_memory_operands_mask());
     case protobufs::Transformation::TransformationCase::kSetSelectionControl:
       return MakeUnique<TransformationSetSelectionControl>(
           message.set_selection_control());

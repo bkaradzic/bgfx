@@ -82,6 +82,10 @@ message DataDescriptor {
   // 0 or more indices, used to index into a composite object
   repeated uint32 index = 2;
 
+  // The number of contiguous elements.  This will typically be 1, but e.g. 2 or
+  // 3 can be used to describe the 'xy' or 'xyz' portion of a vec4.
+  uint32 num_contiguous_elements = 3;
+
 }
 
 message UniformBufferElementDescriptor {
@@ -124,7 +128,7 @@ message Fact {
   oneof fact {
     // Order the fact options by numeric id (rather than alphabetically).
     FactConstantUniform constant_uniform_fact = 1;
-    FactIdSynonym id_synonym_fact = 2;
+    FactDataSynonym data_synonym_fact = 2;
   }
 }
 
@@ -146,19 +150,16 @@ message FactConstantUniform {
 
 }
 
-message FactIdSynonym {
+message FactDataSynonym {
 
-  // Records the fact that the data held in an id is guaranteed to be equal to
-  // the data held in a data descriptor.  spirv-fuzz can use this to replace
-  // uses of the id with references to the data described by the data
-  // descriptor.
+  // Records the fact that the data held in two data descriptors are guaranteed
+  // to be equal.  spirv-fuzz can use this to replace uses of one piece of data
+  // with a known-to-be-equal piece of data.
 
-  // An id
-  uint32 id = 1;
+  // Data descriptors guaranteed to hold identical data.
+  DataDescriptor data1 = 1;
 
-  // A data descriptor guaranteed to hold a value identical to that held by the
-  // id
-  DataDescriptor data_descriptor = 2;
+  DataDescriptor data2 = 2;
 
 }
 
@@ -186,10 +187,12 @@ message Transformation {
     TransformationCopyObject copy_object = 13;
     TransformationReplaceIdWithSynonym replace_id_with_synonym = 14;
     TransformationSetSelectionControl set_selection_control = 15;
-    TransformationConstructComposite construct_composite = 16;
+    TransformationCompositeConstruct composite_construct = 16;
     TransformationSetLoopControl set_loop_control = 17;
     TransformationSetFunctionControl set_function_control = 18;
     TransformationAddNoContractionDecoration add_no_contraction_decoration = 19;
+    TransformationSetMemoryOperandsMask set_memory_operands_mask = 20;
+    TransformationCompositeExtract composite_extract = 21;
     // Add additional option using the next available number.
   }
 }
@@ -323,24 +326,7 @@ message TransformationAddTypePointer {
 
 }
 
-message TransformationCopyObject {
-
-  // A transformation that introduces an OpCopyObject instruction to make a
-  // copy of an object.
-
-  // Id of the object to be copied
-  uint32 object = 1;
-
-  // A descriptor for an instruction in a block before which the new
-  // OpCopyObject instruction should be inserted
-  InstructionDescriptor instruction_to_insert_before = 2;
-
-  // A fresh id for the copied object
-  uint32 fresh_id = 3;
-
-}
-
-message TransformationConstructComposite {
+message TransformationCompositeConstruct {
 
   // A transformation that introduces an OpCompositeConstruct instruction to
   // make a composite object.
@@ -357,6 +343,43 @@ message TransformationConstructComposite {
 
   // A fresh id for the composite object
   uint32 fresh_id = 4;
+
+}
+
+message TransformationCompositeExtract {
+
+  // A transformation that adds an instruction to extract an element from a
+  // composite.
+
+  // A descriptor for an instruction in a block before which the new
+  // OpCompositeExtract instruction should be inserted
+  InstructionDescriptor instruction_to_insert_before = 1;
+
+  // Result id for the extract operation.
+  uint32 fresh_id = 2;
+
+  // Id of the composite from which data is to be extracted.
+  uint32 composite_id = 3;
+
+  // Indices that indicate which part of the composite should be extracted.
+  repeated uint32 index = 4;
+
+}
+
+message TransformationCopyObject {
+
+  // A transformation that introduces an OpCopyObject instruction to make a
+  // copy of an object.
+
+  // Id of the object to be copied
+  uint32 object = 1;
+
+  // A descriptor for an instruction in a block before which the new
+  // OpCopyObject instruction should be inserted
+  InstructionDescriptor instruction_to_insert_before = 2;
+
+  // A fresh id for the copied object
+  uint32 fresh_id = 3;
 
 }
 
@@ -461,6 +484,25 @@ message TransformationSetLoopControl {
   // PartialCount bit is set.  Must be zero if the PartialCount bit is not set
   // (can still be zero if this bit is set).
   uint32 partial_count = 4;
+
+}
+
+message TransformationSetMemoryOperandsMask {
+
+  // A transformation that sets the memory operands mask of a memory access
+  // instruction.
+
+  // A descriptor for a memory access instruction, e.g. an OpLoad
+  InstructionDescriptor memory_access_instruction = 1;
+
+  // A mask of memory operands to be applied to the instruction.  It must be the
+  // same as the original mask, except that Volatile can be added, and
+  // Nontemporal can be added or removed.
+  uint32 memory_operands_mask = 2;
+
+  // Some memory access instructions allow more than one mask to be specified;
+  // this field indicates which mask should be set
+  uint32 memory_operands_mask_index = 3;
 
 }
 

@@ -273,6 +273,8 @@ protected:
 	virtual std::string unpack_expression_type(std::string expr_str, const SPIRType &type, uint32_t physical_type_id,
 	                                           bool packed_type, bool row_major);
 
+	virtual bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const;
+
 	StringStream<> buffer;
 
 	template <typename T>
@@ -338,11 +340,12 @@ protected:
 
 	Options options;
 
-	std::string type_to_array_glsl(const SPIRType &type);
+	virtual std::string type_to_array_glsl(
+	    const SPIRType &type); // Allow Metal to use the array<T> template to make arrays a value type
 	std::string to_array_size(const SPIRType &type, uint32_t index);
 	uint32_t to_array_size_literal(const SPIRType &type, uint32_t index) const;
 	uint32_t to_array_size_literal(const SPIRType &type) const;
-	std::string variable_decl(const SPIRVariable &variable);
+	virtual std::string variable_decl(const SPIRVariable &variable); // Threadgroup arrays can't have a wrapper type
 	std::string variable_decl_function_local(SPIRVariable &variable);
 
 	void add_local_variable_name(uint32_t id);
@@ -414,6 +417,7 @@ protected:
 		bool native_pointers = false;
 		bool support_small_type_sampling_result = false;
 		bool support_case_fallthrough = true;
+		bool use_array_constructor = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
@@ -487,6 +491,9 @@ protected:
 	bool expression_suppresses_usage_tracking(uint32_t id) const;
 	SPIRExpression &emit_op(uint32_t result_type, uint32_t result_id, const std::string &rhs, bool forward_rhs,
 	                        bool suppress_usage_tracking = false);
+
+	void access_chain_internal_append_index(std::string &expr, uint32_t base, const SPIRType *type,
+	                                        AccessChainFlags flags, bool &access_chain_is_arrayed, uint32_t index);
 
 	std::string access_chain_internal(uint32_t base, const uint32_t *indices, uint32_t count, AccessChainFlags flags,
 	                                  AccessChainMeta *meta);
@@ -585,6 +592,9 @@ protected:
 	uint32_t indent = 0;
 
 	std::unordered_set<uint32_t> emitted_functions;
+
+	// Ensure that we declare phi-variable copies even if the original declaration isn't deferred
+	std::unordered_set<uint32_t> flushed_phi_variables;
 
 	std::unordered_set<uint32_t> flattened_buffer_blocks;
 	std::unordered_set<uint32_t> flattened_structs;

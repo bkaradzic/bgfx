@@ -47,7 +47,8 @@ struct main0_patchIn
     patch_control_point<main0_in> gl_in;
 };
 
-inline void set_from_function(thread float4& gl_Position, thread patch_control_point<main0_in>& gl_in, thread PatchBlock& patch_block, thread float4& vColors, thread Foo& vFoo)
+static inline __attribute__((always_inline))
+void set_from_function(thread float4& gl_Position, thread patch_control_point<main0_in>& gl_in, thread PatchBlock& patch_block, thread float4& vColors, thread Foo& vFoo)
 {
     gl_Position = gl_in[0].Block_a;
     gl_Position += gl_in[0].Block_b;
@@ -61,16 +62,12 @@ inline void set_from_function(thread float4& gl_Position, thread patch_control_p
     Foo foo = vFoo;
     gl_Position += foo.a;
     gl_Position += foo.b;
-    Foo vFoos_105;
-    vFoos_105.a = gl_in[0].Foo_a;
-    vFoos_105.b = gl_in[0].Foo_b;
-    foo = vFoos_105;
+    Foo _106 = Foo{ gl_in[0].Foo_a, gl_in[0].Foo_b };
+    foo = _106;
     gl_Position += foo.a;
     gl_Position += foo.b;
-    Foo vFoos_119;
-    vFoos_119.a = gl_in[1].Foo_a;
-    vFoos_119.b = gl_in[1].Foo_b;
-    foo = vFoos_119;
+    Foo _120 = Foo{ gl_in[1].Foo_a, gl_in[1].Foo_b };
+    foo = _120;
     gl_Position += foo.a;
     gl_Position += foo.b;
 }

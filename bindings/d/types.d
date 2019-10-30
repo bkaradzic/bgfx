@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 100;
+enum uint BGFX_API_VERSION = 101;
 
 alias bgfx_view_id_t = ushort;
 
@@ -100,6 +100,7 @@ enum ulong BGFX_STATE_MSAA = 0x0100000000000000; /// Enable MSAA rasterization.
 enum ulong BGFX_STATE_LINEAA = 0x0200000000000000; /// Enable line AA rasterization.
 enum ulong BGFX_STATE_CONSERVATIVE_RASTER = 0x0400000000000000; /// Enable conservative rasterization.
 enum ulong BGFX_STATE_NONE = 0x0000000000000000; /// No state.
+enum ulong BGFX_STATE_FRONT_CCW = 0x0000008000000000; /// Front counter-clockwise (default is clockwise).
 enum ulong BGFX_STATE_BLEND_INDEPENDENT = 0x0000000400000000; /// Enable blend independent.
 enum ulong BGFX_STATE_BLEND_ALPHA_TO_COVERAGE = 0x0000000800000000; /// Enable alpha to coverage.
 /**

@@ -565,6 +565,16 @@ if (SPIRV_CROSS_CLI)
 						${spirv-cross-externals}
 						${CMAKE_CURRENT_SOURCE_DIR}/shaders-reflection
 						WORKING_DIRECTORY $<TARGET_FILE_DIR:spirv-cross>)
+				add_test(NAME spirv-cross-test-ue4
+						COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_shaders.py --msl --parallel
+						${spirv-cross-externals}
+						${CMAKE_CURRENT_SOURCE_DIR}/shaders-ue4
+						WORKING_DIRECTORY $<TARGET_FILE_DIR:spirv-cross>)
+				add_test(NAME spirv-cross-test-ue4-opt
+						COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_shaders.py --msl --opt --parallel
+						${spirv-cross-externals}
+						${CMAKE_CURRENT_SOURCE_DIR}/shaders-ue4
+						WORKING_DIRECTORY $<TARGET_FILE_DIR:spirv-cross>)
 			endif()
 		elseif(NOT ${PYTHONINTERP_FOUND})
 			message(WARNING "Testing disabled. Could not find python3. If you have python3 installed try running "

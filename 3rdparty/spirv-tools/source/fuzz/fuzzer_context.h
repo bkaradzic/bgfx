@@ -71,6 +71,9 @@ class FuzzerContext {
   uint32_t GetChanceOfAdjustingLoopControl() {
     return chance_of_adjusting_loop_control_;
   }
+  uint32_t GetChanceOfAdjustingMemoryOperandsMask() {
+    return chance_of_adjusting_memory_operands_mask_;
+  }
   uint32_t GetChanceOfAdjustingSelectionControl() {
     return chance_of_adjusting_selection_control_;
   }
@@ -112,6 +115,7 @@ class FuzzerContext {
   uint32_t chance_of_adding_no_contraction_decoration_;
   uint32_t chance_of_adjusting_function_control_;
   uint32_t chance_of_adjusting_loop_control_;
+  uint32_t chance_of_adjusting_memory_operands_mask_;
   uint32_t chance_of_adjusting_selection_control_;
   uint32_t chance_of_constructing_composite_;
   uint32_t chance_of_copying_object_;

@@ -10,7 +10,8 @@ struct main0_out
     float4 FragColor [[color(0)]];
 };
 
-inline float4 load_subpasses(thread const texture2d_ms<float> uInput, thread uint& gl_SampleID, thread float4& gl_FragCoord)
+static inline __attribute__((always_inline))
+float4 load_subpasses(thread const texture2d_ms<float> uInput, thread uint& gl_SampleID, thread float4& gl_FragCoord)
 {
     return uInput.read(uint2(gl_FragCoord.xy), gl_SampleID);
 }

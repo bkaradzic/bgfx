@@ -37,12 +37,14 @@ struct main0_in
     float2 vUV [[user(locn0)]];
 };
 
-inline float4 samp_array(thread const array<texture2d<float>, 10000> uSamplers, thread const array<sampler, 10000> uSamplersSmplr, thread float2& vUV, constant UBO* const device (&vs)[10000])
+static inline __attribute__((always_inline))
+float4 samp_array(thread const array<texture2d<float>, 10000> uSamplers, thread const array<sampler, 10000> uSamplersSmplr, thread float2& vUV, constant UBO* const device (&vs)[10000])
 {
     return uSamplers[9999].sample(uSamplersSmplr[9999], vUV) + vs[5000]->v;
 }
 
-inline float4 samp_single(thread float2& vUV, thread texture2d<float> uSampler, thread const sampler uSamplerSmplr)
+static inline __attribute__((always_inline))
+float4 samp_single(thread float2& vUV, thread texture2d<float> uSampler, thread const sampler uSamplerSmplr)
 {
     return uSampler.sample(uSamplerSmplr, vUV);
 }

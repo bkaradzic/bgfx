@@ -30,6 +30,7 @@ if(SPIRV_BUILD_FUZZER)
 
   set(SPIRV_TOOLS_FUZZ_SOURCES
         data_descriptor.h
+        equivalence_relation.h
         fact_manager.h
         force_render_red.h
         fuzzer.h
@@ -41,6 +42,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_useful_constructs.h
         fuzzer_pass_adjust_function_controls.h
         fuzzer_pass_adjust_loop_controls.h
+        fuzzer_pass_adjust_memory_operands_masks.h
         fuzzer_pass_adjust_selection_controls.h
         fuzzer_pass_apply_id_synonyms.h
         fuzzer_pass_construct_composites.h
@@ -66,7 +68,8 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_type_float.h
         transformation_add_type_int.h
         transformation_add_type_pointer.h
-        transformation_construct_composite.h
+        transformation_composite_construct.h
+        transformation_composite_extract.h
         transformation_copy_object.h
         transformation_move_block_down.h
         transformation_replace_boolean_constant_with_constant_binary.h
@@ -74,6 +77,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_replace_id_with_synonym.h
         transformation_set_function_control.h
         transformation_set_loop_control.h
+        transformation_set_memory_operands_mask.h
         transformation_set_selection_control.h
         transformation_split_block.h
         uniform_buffer_element_descriptor.h
@@ -91,6 +95,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_useful_constructs.cpp
         fuzzer_pass_adjust_function_controls.cpp
         fuzzer_pass_adjust_loop_controls.cpp
+        fuzzer_pass_adjust_memory_operands_masks.cpp
         fuzzer_pass_adjust_selection_controls.cpp
         fuzzer_pass_apply_id_synonyms.cpp
         fuzzer_pass_construct_composites.cpp
@@ -115,7 +120,8 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_type_float.cpp
         transformation_add_type_int.cpp
         transformation_add_type_pointer.cpp
-        transformation_construct_composite.cpp
+        transformation_composite_construct.cpp
+        transformation_composite_extract.cpp
         transformation_copy_object.cpp
         transformation_move_block_down.cpp
         transformation_replace_boolean_constant_with_constant_binary.cpp
@@ -123,6 +129,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_replace_id_with_synonym.cpp
         transformation_set_function_control.cpp
         transformation_set_loop_control.cpp
+        transformation_set_memory_operands_mask.cpp
         transformation_set_selection_control.cpp
         transformation_split_block.cpp
         uniform_buffer_element_descriptor.cpp

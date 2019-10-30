@@ -2761,6 +2761,49 @@ VK_IMPORT_DEVICE
 					releaseSwapchainFramebuffer();
 					releaseSwapchain();
 
+					uint32_t numPresentModes(10);
+					VkPresentModeKHR presentModes[10];
+					vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
+
+					uint32_t presentModeIdx = numPresentModes;
+					static const VkPresentModeKHR preferredPresentMode[] =
+					{
+						VK_PRESENT_MODE_FIFO_KHR,
+						VK_PRESENT_MODE_FIFO_RELAXED_KHR,
+						VK_PRESENT_MODE_MAILBOX_KHR,
+						VK_PRESENT_MODE_IMMEDIATE_KHR,
+					};
+					static const bool hasVsync[] = { true, true, true, false };
+					BX_STATIC_ASSERT(BX_COUNTOF(preferredPresentMode) == BX_COUNTOF(hasVsync) );
+
+					const bool vsync = !!(flags & BGFX_RESET_VSYNC);
+
+					for (uint32_t ii = 0; ii < BX_COUNTOF(preferredPresentMode); ++ii)
+					{
+						for (uint32_t jj = 0; jj < numPresentModes; ++jj)
+						{
+							if (presentModes[jj] == preferredPresentMode[ii]
+							&&  vsync == hasVsync[ii])
+							{
+								presentModeIdx = jj;
+								BX_TRACE("present mode: %d", preferredPresentMode[ii]);
+								break;
+							}
+						}
+
+						if (presentModeIdx < numPresentModes)
+						{
+							break;
+						}
+					}
+
+					if (presentModeIdx == numPresentModes)
+					{
+						presentModeIdx = 0;
+					}
+
+					m_sci.presentMode = presentModes[presentModeIdx];
+
 					VkSurfaceCapabilitiesKHR surfaceCapabilities;
 					VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities) );
 
@@ -3074,7 +3117,7 @@ VK_IMPORT_DEVICE
 				: VK_POLYGON_MODE_FILL
 				;
 			_desc.cullMode  = s_cullMode[cull];
-			_desc.frontFace = VK_FRONT_FACE_CLOCKWISE;
+			_desc.frontFace = (_state&BGFX_STATE_FRONT_CCW) ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
 			_desc.depthBiasEnable = VK_FALSE;
 			_desc.depthBiasConstantFactor = 0.0f;
 			_desc.depthBiasClamp          = 0.0f;

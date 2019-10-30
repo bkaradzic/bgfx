@@ -174,7 +174,10 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
         subprocess.check_call([paths.glslang, '--amb' ,'--target-env', 'vulkan1.1', '-V', '-o', spirv_path, shader])
 
     if opt:
-        subprocess.check_call([paths.spirv_opt, '--skip-validation', '-O', '-o', spirv_path, spirv_path])
+        if '.graphics-robust-access.' in shader:
+            subprocess.check_call([paths.spirv_opt, '--skip-validation', '-O', '--graphics-robust-access', '-o', spirv_path, spirv_path])
+        else:
+            subprocess.check_call([paths.spirv_opt, '--skip-validation', '-O', '-o', spirv_path, spirv_path])
 
     spirv_cross_path = paths.spirv_cross
 
@@ -195,6 +198,12 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
         msl_args.append('--msl-argument-buffers')
     if '.texture-buffer-native.' in shader:
         msl_args.append('--msl-texture-buffer-native')
+    if '.framebuffer-fetch.' in shader:
+        msl_args.append('--msl-framebuffer-fetch')
+    if '.invariant-float-math.' in shader:
+        msl_args.append('--msl-invariant-float-math')
+    if '.emulate-cube-array.' in shader:
+        msl_args.append('--msl-emulate-cube-array')
     if '.discrete.' in shader:
         # Arbitrary for testing purposes.
         msl_args.append('--msl-discrete-descriptor-set')

@@ -4,8 +4,9 @@ set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER glslang)
 set_property(TARGET glslang-default-resource-limits PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_include_directories(glslang-default-resource-limits
-                           PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-                           PUBLIC ${PROJECT_SOURCE_DIR})
+                           PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                           PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>)
+
 
 set(SOURCES StandAlone.cpp DirStackFileIncluder.h)
 set(REMAPPER_SOURCES spirv-remap.cpp)

@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 
+#include "ir_builder.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/opt/ir_context.h"
 
@@ -1239,6 +1240,117 @@ FoldingRule MergeSubSubArithmetic() {
   };
 }
 
+// Helper function for MergeGenericAddSubArithmetic. If |addend| and
+// subtrahend of |sub| is the same, merge to copy of minuend of |sub|.
+bool MergeGenericAddendSub(uint32_t addend, uint32_t sub, Instruction* inst) {
+  IRContext* context = inst->context();
+  analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
+  Instruction* sub_inst = def_use_mgr->GetDef(sub);
+  if (sub_inst->opcode() != SpvOpFSub && sub_inst->opcode() != SpvOpISub)
+    return false;
+  if (sub_inst->opcode() == SpvOpFSub &&
+      !sub_inst->IsFloatingPointFoldingAllowed())
+    return false;
+  if (addend != sub_inst->GetSingleWordInOperand(1)) return false;
+  inst->SetOpcode(SpvOpCopyObject);
+  inst->SetInOperands(
+      {{SPV_OPERAND_TYPE_ID, {sub_inst->GetSingleWordInOperand(0)}}});
+  context->UpdateDefUse(inst);
+  return true;
+}
+
+// Folds addition of a subtraction where the subtrahend is equal to the
+// other addend. Return a copy of the minuend. Accepts generic (const and
+// non-const) operands.
+// Cases:
+// (a - b) + b = a
+// b + (a - b) = a
+FoldingRule MergeGenericAddSubArithmetic() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>&) {
+    assert(inst->opcode() == SpvOpFAdd || inst->opcode() == SpvOpIAdd);
+    const analysis::Type* type =
+        context->get_type_mgr()->GetType(inst->type_id());
+    bool uses_float = HasFloatingPoint(type);
+    if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
+
+    uint32_t width = ElementWidth(type);
+    if (width != 32 && width != 64) return false;
+
+    uint32_t add_op0 = inst->GetSingleWordInOperand(0);
+    uint32_t add_op1 = inst->GetSingleWordInOperand(1);
+    if (MergeGenericAddendSub(add_op0, add_op1, inst)) return true;
+    return MergeGenericAddendSub(add_op1, add_op0, inst);
+  };
+}
+
+// Helper function for FactorAddMuls. If |factor0_0| is the same as |factor1_0|,
+// generate |factor0_0| * (|factor0_1| + |factor1_1|).
+bool FactorAddMulsOpnds(uint32_t factor0_0, uint32_t factor0_1,
+                        uint32_t factor1_0, uint32_t factor1_1,
+                        Instruction* inst) {
+  IRContext* context = inst->context();
+  if (factor0_0 != factor1_0) return false;
+  InstructionBuilder ir_builder(
+      context, inst,
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+  Instruction* new_add_inst = ir_builder.AddBinaryOp(
+      inst->type_id(), inst->opcode(), factor0_1, factor1_1);
+  inst->SetOpcode(inst->opcode() == SpvOpFAdd ? SpvOpFMul : SpvOpIMul);
+  inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {factor0_0}},
+                       {SPV_OPERAND_TYPE_ID, {new_add_inst->result_id()}}});
+  context->UpdateDefUse(inst);
+  return true;
+}
+
+// Perform the following factoring identity, handling all operand order
+// combinations: (a * b) + (a * c) = a * (b + c)
+FoldingRule FactorAddMuls() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>&) {
+    assert(inst->opcode() == SpvOpFAdd || inst->opcode() == SpvOpIAdd);
+    const analysis::Type* type =
+        context->get_type_mgr()->GetType(inst->type_id());
+    bool uses_float = HasFloatingPoint(type);
+    if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
+
+    analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
+    uint32_t add_op0 = inst->GetSingleWordInOperand(0);
+    Instruction* add_op0_inst = def_use_mgr->GetDef(add_op0);
+    if (add_op0_inst->opcode() != SpvOpFMul &&
+        add_op0_inst->opcode() != SpvOpIMul)
+      return false;
+    uint32_t add_op1 = inst->GetSingleWordInOperand(1);
+    Instruction* add_op1_inst = def_use_mgr->GetDef(add_op1);
+    if (add_op1_inst->opcode() != SpvOpFMul &&
+        add_op1_inst->opcode() != SpvOpIMul)
+      return false;
+
+    // Only perform this optimization if both of the muls only have one use.
+    // Otherwise this is a deoptimization in size and performance.
+    if (def_use_mgr->NumUses(add_op0_inst) > 1) return false;
+    if (def_use_mgr->NumUses(add_op1_inst) > 1) return false;
+
+    if (add_op0_inst->opcode() == SpvOpFMul &&
+        (!add_op0_inst->IsFloatingPointFoldingAllowed() ||
+         !add_op1_inst->IsFloatingPointFoldingAllowed()))
+      return false;
+
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 2; j++) {
+        // Check if operand i in add_op0_inst matches operand j in add_op1_inst.
+        if (FactorAddMulsOpnds(add_op0_inst->GetSingleWordInOperand(i),
+                               add_op0_inst->GetSingleWordInOperand(1 - i),
+                               add_op1_inst->GetSingleWordInOperand(j),
+                               add_op1_inst->GetSingleWordInOperand(1 - j),
+                               inst))
+          return true;
+      }
+    }
+    return false;
+  };
+}
+
 FoldingRule IntMultipleBy1() {
   return [](IRContext*, Instruction* inst,
             const std::vector<const analysis::Constant*>& constants) {
@@ -2226,6 +2338,8 @@ void FoldingRules::AddFoldingRules() {
   rules_[SpvOpFAdd].push_back(MergeAddNegateArithmetic());
   rules_[SpvOpFAdd].push_back(MergeAddAddArithmetic());
   rules_[SpvOpFAdd].push_back(MergeAddSubArithmetic());
+  rules_[SpvOpFAdd].push_back(MergeGenericAddSubArithmetic());
+  rules_[SpvOpFAdd].push_back(FactorAddMuls());
 
   rules_[SpvOpFDiv].push_back(RedundantFDiv());
   rules_[SpvOpFDiv].push_back(ReciprocalFDiv());
@@ -2251,6 +2365,8 @@ void FoldingRules::AddFoldingRules() {
   rules_[SpvOpIAdd].push_back(MergeAddNegateArithmetic());
   rules_[SpvOpIAdd].push_back(MergeAddAddArithmetic());
   rules_[SpvOpIAdd].push_back(MergeAddSubArithmetic());
+  rules_[SpvOpIAdd].push_back(MergeGenericAddSubArithmetic());
+  rules_[SpvOpIAdd].push_back(FactorAddMuls());
 
   rules_[SpvOpIMul].push_back(IntMultipleBy1());
   rules_[SpvOpIMul].push_back(MergeMulMulArithmetic());

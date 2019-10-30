@@ -2557,8 +2557,8 @@ namespace bgfx { namespace d3d12
 				? D3D12_FILL_MODE_WIREFRAME
 				: D3D12_FILL_MODE_SOLID
 				;
-			_desc.CullMode = s_cullMode[cull];
-			_desc.FrontCounterClockwise = false;
+			_desc.CullMode              = s_cullMode[cull];
+			_desc.FrontCounterClockwise = !!(_state&BGFX_STATE_FRONT_CCW);;
 			_desc.DepthBias             = 0;
 			_desc.DepthBiasClamp        = 0.0f;
 			_desc.SlopeScaledDepthBias  = 0.0f;

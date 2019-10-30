@@ -61,7 +61,7 @@ void CFG::build_immediate_dominators()
 			if (immediate_dominators[block])
 			{
 				assert(immediate_dominators[edge]);
-				immediate_dominators[block] = find_common_dominator(block, edge);
+				immediate_dominators[block] = find_common_dominator(immediate_dominators[block], edge);
 			}
 			else
 				immediate_dominators[block] = edge;

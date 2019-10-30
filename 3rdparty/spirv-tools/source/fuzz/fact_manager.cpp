@@ -14,8 +14,12 @@
 
 #include "source/fuzz/fact_manager.h"
 
+#include <map>
 #include <sstream>
+#include <unordered_set>
 
+#include "source/fuzz/equivalence_relation.h"
+#include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/uniform_buffer_element_descriptor.h"
 #include "source/opt/ir_context.h"
 
@@ -276,42 +280,20 @@ bool FactManager::ConstantUniformFacts::AddFact(
   }
   auto should_be_uniform_pointer_instruction =
       context->get_def_use_mgr()->GetDef(uniform_variable->type_id());
-  auto element_type =
+  auto composite_type =
       should_be_uniform_pointer_instruction->GetSingleWordInOperand(1);
 
-  for (auto index : fact.uniform_buffer_element_descriptor().index()) {
-    auto should_be_composite_type =
-        context->get_def_use_mgr()->GetDef(element_type);
-    if (SpvOpTypeStruct == should_be_composite_type->opcode()) {
-      if (index >= should_be_composite_type->NumInOperands()) {
-        return false;
-      }
-      element_type = should_be_composite_type->GetSingleWordInOperand(index);
-    } else if (SpvOpTypeArray == should_be_composite_type->opcode()) {
-      auto array_length_constant =
-          context->get_constant_mgr()
-              ->GetConstantFromInst(context->get_def_use_mgr()->GetDef(
-                  should_be_composite_type->GetSingleWordInOperand(1)))
-              ->AsIntConstant();
-      if (array_length_constant->words().size() != 1) {
-        return false;
-      }
-      auto array_length = array_length_constant->GetU32();
-      if (index >= array_length) {
-        return false;
-      }
-      element_type = should_be_composite_type->GetSingleWordInOperand(0);
-    } else if (SpvOpTypeVector == should_be_composite_type->opcode()) {
-      auto vector_length = should_be_composite_type->GetSingleWordInOperand(1);
-      if (index >= vector_length) {
-        return false;
-      }
-      element_type = should_be_composite_type->GetSingleWordInOperand(0);
-    } else {
-      return false;
-    }
+  auto final_element_type_id = fuzzerutil::WalkCompositeTypeIndices(
+      context, composite_type,
+      fact.uniform_buffer_element_descriptor().index());
+  if (!final_element_type_id) {
+    return false;
   }
-  auto final_element_type = context->get_type_mgr()->GetType(element_type);
+  auto final_element_type =
+      context->get_type_mgr()->GetType(final_element_type_id);
+  assert(final_element_type &&
+         "There should be a type corresponding to this id.");
+
   if (!(final_element_type->AsFloat() || final_element_type->AsInteger())) {
     return false;
   }
@@ -329,7 +311,8 @@ bool FactManager::ConstantUniformFacts::AddFact(
     return false;
   }
   facts_and_type_ids.emplace_back(
-      std::pair<protobufs::FactConstantUniform, uint32_t>(fact, element_type));
+      std::pair<protobufs::FactConstantUniform, uint32_t>(
+          fact, final_element_type_id));
   return true;
 }
 
@@ -337,39 +320,30 @@ bool FactManager::ConstantUniformFacts::AddFact(
 //==============================
 
 //==============================
-// Id synonym facts
+// Data synonym facts
 
 // The purpose of this struct is to group the fields and data used to represent
-// facts about id synonyms.
-struct FactManager::IdSynonymFacts {
+// facts about data synonyms.
+struct FactManager::DataSynonymFacts {
   // See method in FactManager which delegates to this method.
-  void AddFact(const protobufs::FactIdSynonym& fact);
+  void AddFact(const protobufs::FactDataSynonym& fact);
 
-  // A record of all the synonyms that are available.
-  std::map<uint32_t, std::vector<protobufs::DataDescriptor>> synonyms;
-
-  // The set of keys to the above map; useful if you just want to know which ids
-  // have synonyms.
-  std::set<uint32_t> ids_with_synonyms;
+  EquivalenceRelation<protobufs::DataDescriptor, DataDescriptorHash,
+                      DataDescriptorEquals>
+      synonymous;
 };
 
-void FactManager::IdSynonymFacts::AddFact(
-    const protobufs::FactIdSynonym& fact) {
-  if (synonyms.count(fact.id()) == 0) {
-    assert(ids_with_synonyms.count(fact.id()) == 0);
-    ids_with_synonyms.insert(fact.id());
-    synonyms[fact.id()] = std::vector<protobufs::DataDescriptor>();
-  }
-  assert(ids_with_synonyms.count(fact.id()) == 1);
-  synonyms[fact.id()].push_back(fact.data_descriptor());
+void FactManager::DataSynonymFacts::AddFact(
+    const protobufs::FactDataSynonym& fact) {
+  synonymous.MakeEquivalent(fact.data1(), fact.data2());
 }
 
-// End of id synonym facts
+// End of data synonym facts
 //==============================
 
 FactManager::FactManager()
     : uniform_constant_facts_(MakeUnique<ConstantUniformFacts>()),
-      id_synonym_facts_(MakeUnique<IdSynonymFacts>()) {}
+      data_synonym_facts_(MakeUnique<DataSynonymFacts>()) {}
 
 FactManager::~FactManager() = default;
 
@@ -385,19 +359,27 @@ void FactManager::AddFacts(const MessageConsumer& message_consumer,
   }
 }
 
-bool FactManager::AddFact(const spvtools::fuzz::protobufs::Fact& fact,
-                          spvtools::opt::IRContext* context) {
+bool FactManager::AddFact(const fuzz::protobufs::Fact& fact,
+                          opt::IRContext* context) {
   switch (fact.fact_case()) {
     case protobufs::Fact::kConstantUniformFact:
       return uniform_constant_facts_->AddFact(fact.constant_uniform_fact(),
                                               context);
-    case protobufs::Fact::kIdSynonymFact:
-      id_synonym_facts_->AddFact(fact.id_synonym_fact());
+    case protobufs::Fact::kDataSynonymFact:
+      data_synonym_facts_->AddFact(fact.data_synonym_fact());
       return true;
     default:
       assert(false && "Unknown fact type.");
       return false;
   }
+}
+
+void FactManager::AddFactDataSynonym(const protobufs::DataDescriptor& data1,
+                                     const protobufs::DataDescriptor& data2) {
+  protobufs::FactDataSynonym fact;
+  *fact.mutable_data1() = data1;
+  *fact.mutable_data2() = data2;
+  data_synonym_facts_->AddFact(fact);
 }
 
 std::vector<uint32_t> FactManager::GetConstantsAvailableFromUniformsForType(
@@ -430,13 +412,26 @@ FactManager::GetConstantUniformFactsAndTypes() const {
   return uniform_constant_facts_->facts_and_type_ids;
 }
 
-const std::set<uint32_t>& FactManager::GetIdsForWhichSynonymsAreKnown() const {
-  return id_synonym_facts_->ids_with_synonyms;
+std::set<uint32_t> FactManager::GetIdsForWhichSynonymsAreKnown() const {
+  std::set<uint32_t> result;
+  for (auto& data_descriptor :
+       data_synonym_facts_->synonymous.GetAllKnownValues()) {
+    if (data_descriptor->index().empty()) {
+      assert(data_descriptor->num_contiguous_elements() == 1 &&
+             "Multiple contiguous elements are only allowed for data "
+             "descriptors that "
+             "are indices into vectors.");
+      result.insert(data_descriptor->object());
+    }
+  }
+  return result;
 }
 
-const std::vector<protobufs::DataDescriptor>& FactManager::GetSynonymsForId(
-    uint32_t id) const {
-  return id_synonym_facts_->synonyms.at(id);
+std::unordered_set<const protobufs::DataDescriptor*, DataDescriptorHash,
+                   DataDescriptorEquals>
+FactManager::GetSynonymsForId(uint32_t id) const {
+  return data_synonym_facts_->synonymous.GetEquivalenceClass(
+      MakeDataDescriptor(id, {}, 1));
 }
 
 }  // namespace fuzz

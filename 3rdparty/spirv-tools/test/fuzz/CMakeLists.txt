@@ -17,9 +17,11 @@ if (${SPIRV_BUILD_FUZZER})
   set(SOURCES
           fuzz_test_util.h
 
+          equivalence_relation_test.cpp
           fact_manager_test.cpp
           fuzz_test_util.cpp
           fuzzer_pass_add_useful_constructs_test.cpp
+          instruction_descriptor_test.cpp
           transformation_add_constant_boolean_test.cpp
           transformation_add_constant_scalar_test.cpp
           transformation_add_dead_break_test.cpp
@@ -29,14 +31,15 @@ if (${SPIRV_BUILD_FUZZER})
           transformation_add_type_float_test.cpp
           transformation_add_type_int_test.cpp
           transformation_add_type_pointer_test.cpp
-          transformation_construct_composite_test.cpp
+          transformation_composite_construct_test.cpp
+          transformation_composite_extract_test.cpp
           transformation_copy_object_test.cpp
           transformation_move_block_down_test.cpp
           transformation_replace_boolean_constant_with_constant_binary_test.cpp
           transformation_replace_constant_with_uniform_test.cpp
-          transformation_replace_id_with_synonym_test.cpp
           transformation_set_function_control_test.cpp
           transformation_set_loop_control_test.cpp
+          transformation_set_memory_operands_mask_test.cpp
           transformation_set_selection_control_test.cpp
           transformation_split_block_test.cpp
           uniform_buffer_element_descriptor_test.cpp)
