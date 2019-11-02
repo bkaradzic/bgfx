@@ -428,7 +428,7 @@ namespace bgfx { namespace mtl
 
 		void setFrontFacing(MTLWinding _frontFacing)
 		{
-			[m_obj setFrontFacing:_frontFacing];
+			[m_obj setFrontFacingWinding:_frontFacing];
 		}
 
 		void setCullMode(MTLCullMode _cullMode)
