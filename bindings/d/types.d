@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 101;
+enum uint BGFX_API_VERSION = 102;
 
 alias bgfx_view_id_t = ushort;
 
@@ -924,8 +924,10 @@ struct bgfx_view_stats_t
 {
 	char[256] name; /// View name.
 	bgfx_view_id_t view; /// View id.
-	long cpuTimeElapsed; /// CPU (submit) time elapsed.
-	long gpuTimeElapsed; /// GPU time elapsed.
+	long cpuTimeBegin; /// CPU (submit) begin time.
+	long cpuTimeEnd; /// CPU (submit) end time.
+	long gpuTimeBegin; /// GPU begin time.
+	long gpuTimeEnd; /// GPU end time.
 }
 
 /// Encoder stats.
