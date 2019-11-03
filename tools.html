@@ -184,6 +184,7 @@ function.</p></li>
 <code class="docutils literal notranslate"><span class="pre">sampler2D/3D/Cube/etc.</span></code> tokens.</p></li>
 <li><p>Must use <code class="docutils literal notranslate"><span class="pre">vec2/3/4_splat(&lt;value&gt;)</span></code> instead of
 <code class="docutils literal notranslate"><span class="pre">vec2/3/4(&lt;value&gt;)</span></code>.</p></li>
+<li><p>Must use <code class="docutils literal notranslate"><span class="pre">mtxFromCols / mtxFromRows</span></code> when constructing matrices in shaders.</p></li>
 <li><p>Must use <code class="docutils literal notranslate"><span class="pre">mul(x,</span> <span class="pre">y)</span></code> when multiplying vectors and matrices.</p></li>
 <li><p>Must use <code class="docutils literal notranslate"><span class="pre">varying.def.sc</span></code> to define input/output semantic and
 precission instead of using <code class="docutils literal notranslate"><span class="pre">attribute/in</span></code> and <code class="docutils literal notranslate"><span class="pre">varying/in/out</span></code>.</p></li>
