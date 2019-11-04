@@ -619,15 +619,15 @@ mat3 mtxFromCols(vec3 _0, vec3 _1, vec3 _2)
 }
 
 #if BGFX_SHADER_LANGUAGE_GLSL
-#define mtxFromRows3(_0, _1, _2)     transpose(mat3(_0, _1, _2))
-#define mtxFromRows4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3))
-#define mtxFromCols3(_0, _1, _2)     mat3(_0, _1, _2)
-#define mtxFromCols4(_0, _1, _2, _3) mat4(_0, _1, _2, _3)
+#define mtxFromRows3(_0, _1, _2)     transpose(mat3(_0, _1, _2) )
+#define mtxFromRows4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3) )
+#define mtxFromCols3(_0, _1, _2)               mat3(_0, _1, _2)
+#define mtxFromCols4(_0, _1, _2, _3)           mat4(_0, _1, _2, _3)
 #else
-#define mtxFromRows3(_0, _1, _2)     mat3(_0, _1, _2)
-#define mtxFromRows4(_0, _1, _2, _3) mat4(_0, _1, _2, _3)
-#define mtxFromCols3(_0, _1, _2)     transpose(mat3(_0, _1, _2))
-#define mtxFromCols4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3))
+#define mtxFromRows3(_0, _1, _2)               mat3(_0, _1, _2)
+#define mtxFromRows4(_0, _1, _2, _3)           mat4(_0, _1, _2, _3)
+#define mtxFromCols3(_0, _1, _2)     transpose(mat3(_0, _1, _2) )
+#define mtxFromCols4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3) )
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 
 uniform vec4  u_viewRect;
