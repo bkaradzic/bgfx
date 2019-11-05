@@ -21,21 +21,6 @@ namespace spvtools {
 namespace fuzz {
 namespace {
 
-bool SynonymFactHolds(const FactManager& fact_manager, uint32_t id,
-                      uint32_t synonym_base_id,
-                      std::vector<uint32_t>&& synonym_indices) {
-  if (fact_manager.GetIdsForWhichSynonymsAreKnown().count(id) == 0) {
-    return false;
-  }
-  auto synonyms = fact_manager.GetSynonymsForId(id);
-  auto temp =
-      MakeDataDescriptor(synonym_base_id, std::move(synonym_indices), 1);
-  return std::find_if(synonyms.begin(), synonyms.end(),
-                      [&temp](const protobufs::DataDescriptor* dd) -> bool {
-                        return DataDescriptorEquals()(dd, &temp);
-                      }) != synonyms.end();
-}
-
 TEST(TransformationCompositeConstructTest, ConstructArrays) {
   std::string shader = R"(
                OpCapability Shader
@@ -159,9 +144,12 @@ TEST(TransformationCompositeConstructTest, ConstructArrays) {
       make_vec2_array_length_3_bad.IsApplicable(context.get(), fact_manager));
   make_vec2_array_length_3.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 41, 200, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 45, 200, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 27, 200, {2}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(41, {}),
+                                        MakeDataDescriptor(200, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(45, {}),
+                                        MakeDataDescriptor(200, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(27, {}),
+                                        MakeDataDescriptor(200, {2})));
 
   // Make a float[2]
   TransformationCompositeConstruct make_float_array_length_2(
@@ -175,8 +163,10 @@ TEST(TransformationCompositeConstructTest, ConstructArrays) {
       make_float_array_length_2_bad.IsApplicable(context.get(), fact_manager));
   make_float_array_length_2.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 24, 201, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 40, 201, {1}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(24, {}),
+                                        MakeDataDescriptor(201, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(40, {}),
+                                        MakeDataDescriptor(201, {1})));
 
   // Make a bool[3]
   TransformationCompositeConstruct make_bool_array_length_3(
@@ -192,9 +182,12 @@ TEST(TransformationCompositeConstructTest, ConstructArrays) {
       make_bool_array_length_3_bad.IsApplicable(context.get(), fact_manager));
   make_bool_array_length_3.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 33, 202, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 50, 202, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 50, 202, {2}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(33, {}),
+                                        MakeDataDescriptor(202, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(50, {}),
+                                        MakeDataDescriptor(202, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(50, {}),
+                                        MakeDataDescriptor(202, {2})));
 
   // make a uvec3[2][2]
   TransformationCompositeConstruct make_uvec3_array_length_2_2(
@@ -208,8 +201,10 @@ TEST(TransformationCompositeConstructTest, ConstructArrays) {
                                                             fact_manager));
   make_uvec3_array_length_2_2.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 69, 203, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 100, 203, {1}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(69, {}),
+                                        MakeDataDescriptor(203, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(100, {}),
+                                        MakeDataDescriptor(203, {1})));
 
   std::string after_transformation = R"(
                OpCapability Shader
@@ -408,9 +403,12 @@ TEST(TransformationCompositeConstructTest, ConstructMatrices) {
   ASSERT_FALSE(make_mat34_bad.IsApplicable(context.get(), fact_manager));
   make_mat34.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 25, 200, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 28, 200, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 31, 200, {2}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(25, {}),
+                                        MakeDataDescriptor(200, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(28, {}),
+                                        MakeDataDescriptor(200, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(31, {}),
+                                        MakeDataDescriptor(200, {2})));
 
   // make a mat4x3
   TransformationCompositeConstruct make_mat43(
@@ -422,10 +420,14 @@ TEST(TransformationCompositeConstructTest, ConstructMatrices) {
   ASSERT_FALSE(make_mat43_bad.IsApplicable(context.get(), fact_manager));
   make_mat43.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 11, 201, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 13, 201, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 16, 201, {2}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 100, 201, {3}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(11, {}),
+                                        MakeDataDescriptor(201, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(13, {}),
+                                        MakeDataDescriptor(201, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(16, {}),
+                                        MakeDataDescriptor(201, {2})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(100, {}),
+                                        MakeDataDescriptor(201, {3})));
 
   std::string after_transformation = R"(
                OpCapability Shader
@@ -609,8 +611,10 @@ TEST(TransformationCompositeConstructTest, ConstructStructs) {
   ASSERT_FALSE(make_inner_bad.IsApplicable(context.get(), fact_manager));
   make_inner.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 25, 200, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 19, 200, {1}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(25, {}),
+                                        MakeDataDescriptor(200, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(19, {}),
+                                        MakeDataDescriptor(200, {1})));
 
   // make an Outer
   TransformationCompositeConstruct make_outer(
@@ -624,9 +628,12 @@ TEST(TransformationCompositeConstructTest, ConstructStructs) {
   ASSERT_FALSE(make_outer_bad.IsApplicable(context.get(), fact_manager));
   make_outer.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 46, 201, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 200, 201, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 56, 201, {2}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(46, {}),
+                                        MakeDataDescriptor(201, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(200, {}),
+                                        MakeDataDescriptor(201, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(56, {}),
+                                        MakeDataDescriptor(201, {2})));
 
   std::string after_transformation = R"(
                OpCapability Shader
@@ -922,8 +929,10 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_vec2_bad.IsApplicable(context.get(), fact_manager));
   make_vec2.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 17, 200, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 11, 200, {1}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(17, {}),
+                                        MakeDataDescriptor(200, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(11, {}),
+                                        MakeDataDescriptor(200, {1})));
 
   TransformationCompositeConstruct make_vec3(
       25, {12, 32}, MakeInstructionDescriptor(35, SpvOpCompositeConstruct, 0),
@@ -936,8 +945,12 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_vec3_bad.IsApplicable(context.get(), fact_manager));
   make_vec3.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 12, 201, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 32, 201, {2}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(12, {0}),
+                                        MakeDataDescriptor(201, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(12, {1}),
+                                        MakeDataDescriptor(201, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(32, {}),
+                                        MakeDataDescriptor(201, {2})));
 
   TransformationCompositeConstruct make_vec4(
       44, {32, 32, 10, 11}, MakeInstructionDescriptor(75, SpvOpAccessChain, 0),
@@ -950,10 +963,14 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_vec4_bad.IsApplicable(context.get(), fact_manager));
   make_vec4.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 32, 202, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 32, 202, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 10, 202, {2}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 11, 202, {3}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(32, {}),
+                                        MakeDataDescriptor(202, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(32, {}),
+                                        MakeDataDescriptor(202, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(10, {}),
+                                        MakeDataDescriptor(202, {2})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(11, {}),
+                                        MakeDataDescriptor(202, {3})));
 
   TransformationCompositeConstruct make_ivec2(
       51, {126, 120}, MakeInstructionDescriptor(128, SpvOpLoad, 0), 203);
@@ -964,8 +981,10 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_ivec2_bad.IsApplicable(context.get(), fact_manager));
   make_ivec2.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 126, 203, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 120, 203, {1}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(126, {}),
+                                        MakeDataDescriptor(203, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(120, {}),
+                                        MakeDataDescriptor(203, {1})));
 
   TransformationCompositeConstruct make_ivec3(
       114, {56, 117, 56}, MakeInstructionDescriptor(66, SpvOpAccessChain, 0),
@@ -978,9 +997,12 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_ivec3_bad.IsApplicable(context.get(), fact_manager));
   make_ivec3.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 56, 204, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 117, 204, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 56, 204, {2}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(56, {}),
+                                        MakeDataDescriptor(204, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(117, {}),
+                                        MakeDataDescriptor(204, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(56, {}),
+                                        MakeDataDescriptor(204, {2})));
 
   TransformationCompositeConstruct make_ivec4(
       122, {56, 117, 117, 117}, MakeInstructionDescriptor(66, SpvOpIAdd, 0),
@@ -993,10 +1015,14 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_ivec4_bad.IsApplicable(context.get(), fact_manager));
   make_ivec4.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 56, 205, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 117, 205, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 117, 205, {2}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 117, 205, {3}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(56, {}),
+                                        MakeDataDescriptor(205, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(117, {}),
+                                        MakeDataDescriptor(205, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(117, {}),
+                                        MakeDataDescriptor(205, {2})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(117, {}),
+                                        MakeDataDescriptor(205, {3})));
 
   TransformationCompositeConstruct make_uvec2(
       86, {18, 38}, MakeInstructionDescriptor(133, SpvOpAccessChain, 0), 206);
@@ -1006,8 +1032,10 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_uvec2_bad.IsApplicable(context.get(), fact_manager));
   make_uvec2.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 18, 206, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 38, 206, {1}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(18, {}),
+                                        MakeDataDescriptor(206, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(38, {}),
+                                        MakeDataDescriptor(206, {1})));
 
   TransformationCompositeConstruct make_uvec3(
       59, {14, 18, 136}, MakeInstructionDescriptor(137, SpvOpReturn, 0), 207);
@@ -1018,9 +1046,12 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_uvec3_bad.IsApplicable(context.get(), fact_manager));
   make_uvec3.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 14, 207, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 18, 207, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 136, 207, {2}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(14, {}),
+                                        MakeDataDescriptor(207, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(18, {}),
+                                        MakeDataDescriptor(207, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(136, {}),
+                                        MakeDataDescriptor(207, {2})));
 
   TransformationCompositeConstruct make_uvec4(
       131, {14, 18, 136, 136},
@@ -1033,10 +1064,14 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_uvec4_bad.IsApplicable(context.get(), fact_manager));
   make_uvec4.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 14, 208, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 18, 208, {1}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 136, 208, {2}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 136, 208, {3}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(14, {}),
+                                        MakeDataDescriptor(208, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(18, {}),
+                                        MakeDataDescriptor(208, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(136, {}),
+                                        MakeDataDescriptor(208, {2})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(136, {}),
+                                        MakeDataDescriptor(208, {3})));
 
   TransformationCompositeConstruct make_bvec2(
       102,
@@ -1057,8 +1092,10 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_bvec2_bad.IsApplicable(context.get(), fact_manager));
   make_bvec2.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 111, 209, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 41, 209, {1}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(111, {}),
+                                        MakeDataDescriptor(209, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(41, {}),
+                                        MakeDataDescriptor(209, {1})));
 
   TransformationCompositeConstruct make_bvec3(
       93, {108, 73}, MakeInstructionDescriptor(108, SpvOpStore, 0), 210);
@@ -1069,8 +1106,12 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_bvec3_bad.IsApplicable(context.get(), fact_manager));
   make_bvec3.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 108, 210, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 73, 210, {2}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(108, {0}),
+                                        MakeDataDescriptor(210, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(108, {1}),
+                                        MakeDataDescriptor(210, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(73, {}),
+                                        MakeDataDescriptor(210, {2})));
 
   TransformationCompositeConstruct make_bvec4(
       70, {108, 108}, MakeInstructionDescriptor(108, SpvOpBranch, 0), 211);
@@ -1081,8 +1122,14 @@ TEST(TransformationCompositeConstructTest, ConstructVectors) {
   ASSERT_FALSE(make_bvec4_bad.IsApplicable(context.get(), fact_manager));
   make_bvec4.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 108, 211, {0}));
-  ASSERT_TRUE(SynonymFactHolds(fact_manager, 108, 211, {2}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(108, {0}),
+                                        MakeDataDescriptor(211, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(108, {1}),
+                                        MakeDataDescriptor(211, {1})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(108, {0}),
+                                        MakeDataDescriptor(211, {2})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(108, {1}),
+                                        MakeDataDescriptor(211, {3})));
 
   std::string after_transformation = R"(
                OpCapability Shader

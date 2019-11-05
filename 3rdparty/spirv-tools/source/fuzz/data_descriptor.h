@@ -17,6 +17,7 @@
 
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 
+#include <ostream>
 #include <vector>
 
 namespace spvtools {
@@ -25,8 +26,7 @@ namespace fuzz {
 // Factory method to create a data descriptor message from an object id and a
 // list of indices.
 protobufs::DataDescriptor MakeDataDescriptor(uint32_t object,
-                                             std::vector<uint32_t>&& indices,
-                                             uint32_t num_contiguous_elements);
+                                             std::vector<uint32_t>&& indices);
 
 // Hash function for data descriptors.
 struct DataDescriptorHash {
@@ -38,6 +38,9 @@ struct DataDescriptorEquals {
   bool operator()(const protobufs::DataDescriptor* first,
                   const protobufs::DataDescriptor* second) const;
 };
+
+std::ostream& operator<<(std::ostream& out,
+                         const protobufs::DataDescriptor& data_descriptor);
 
 }  // namespace fuzz
 }  // namespace spvtools

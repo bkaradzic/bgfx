@@ -82,10 +82,6 @@ message DataDescriptor {
   // 0 or more indices, used to index into a composite object
   repeated uint32 index = 2;
 
-  // The number of contiguous elements.  This will typically be 1, but e.g. 2 or
-  // 3 can be used to describe the 'xy' or 'xyz' portion of a vec4.
-  uint32 num_contiguous_elements = 3;
-
 }
 
 message UniformBufferElementDescriptor {

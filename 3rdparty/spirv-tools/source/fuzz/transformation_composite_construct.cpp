@@ -133,45 +133,45 @@ void TransformationCompositeConstruct::Apply(opt::IRContext* context,
       context, SpvOpCompositeConstruct, message_.composite_type_id(),
       message_.fresh_id(), in_operands));
 
+  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
+
   // Inform the fact manager that we now have new synonyms: every component of
-  // the composite is synonymous with the id used to construct that component.
+  // the composite is synonymous with the id used to construct that component,
+  // except in the case of a vector where a single vector id can span multiple
+  // components.
   auto composite_type =
       context->get_type_mgr()->GetType(message_.composite_type_id());
   uint32_t index = 0;
   for (auto component : message_.component()) {
-    // Decide how many contiguous composite elements are represented by the
-    // components.  This is always 1, except in the case of a vector that is
-    // constructed by smaller vectors.
-    uint32_t num_contiguous_elements;
-    if (composite_type->AsVector()) {
-      // The vector case is a bit fiddly, because one argument to a vector
-      // constructor can cover more than one element.
-      auto component_type = context->get_type_mgr()->GetType(
-          context->get_def_use_mgr()->GetDef(component)->type_id());
-      if (component_type->AsVector()) {
-        assert(component_type->AsVector()->element_type() ==
-               composite_type->AsVector()->element_type());
-        num_contiguous_elements = component_type->AsVector()->element_count();
-      } else {
-        assert(component_type == composite_type->AsVector()->element_type());
-        num_contiguous_elements = 1;
+    auto component_type = context->get_type_mgr()->GetType(
+        context->get_def_use_mgr()->GetDef(component)->type_id());
+    if (composite_type->AsVector() && component_type->AsVector()) {
+      // The case where the composite being constructed is a vector and the
+      // component provided for construction is also a vector is special.  It
+      // requires adding a synonym fact relating each element of the sub-vector
+      // to the corresponding element of the composite being constructed.
+      assert(component_type->AsVector()->element_type() ==
+             composite_type->AsVector()->element_type());
+      assert(component_type->AsVector()->element_count() <
+             composite_type->AsVector()->element_count());
+      for (uint32_t subvector_index = 0;
+           subvector_index < component_type->AsVector()->element_count();
+           subvector_index++) {
+        fact_manager->AddFactDataSynonym(
+            MakeDataDescriptor(component, {subvector_index}),
+            MakeDataDescriptor(message_.fresh_id(), {index}), context);
+        index++;
       }
     } else {
-      // The non-vector cases are all easy: the constructor has exactly the same
-      // number of arguments as the number of sub-components, so we can just
-      // increment the index.
-      num_contiguous_elements = 1;
+      // The other cases are simple: the component is made directly synonymous
+      // with the element of the composite being constructed.
+      fact_manager->AddFactDataSynonym(
+          MakeDataDescriptor(component, {}),
+          MakeDataDescriptor(message_.fresh_id(), {index}), context);
+      index++;
     }
-
-    fact_manager->AddFactDataSynonym(
-        MakeDataDescriptor(component, {}, 1),
-        MakeDataDescriptor(message_.fresh_id(), {index},
-                           num_contiguous_elements));
-    index += num_contiguous_elements;
   }
-
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
-  context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
 }
 
 bool TransformationCompositeConstruct::ComponentsForArrayConstructionAreOK(

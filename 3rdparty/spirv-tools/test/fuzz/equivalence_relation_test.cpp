@@ -14,6 +14,7 @@
 
 #include <set>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source/fuzz/equivalence_relation.h"
 
@@ -33,12 +34,11 @@ struct UInt32Hash {
   }
 };
 
-std::set<uint32_t> ToUIntSet(
-    EquivalenceRelation<uint32_t, UInt32Hash, UInt32Equals>::ValueSet
-        pointers) {
-  std::set<uint32_t> result;
+std::vector<uint32_t> ToUIntVector(
+    const std::vector<const uint32_t*>& pointers) {
+  std::vector<uint32_t> result;
   for (auto pointer : pointers) {
-    result.insert(*pointer);
+    result.push_back(*pointer);
   }
   return result;
 }
@@ -59,38 +59,63 @@ TEST(EquivalenceRelationTest, BasicTest) {
 
   relation.MakeEquivalent(78, 80);
 
-  std::set<uint32_t> class1;
+  std::vector<uint32_t> class1;
   for (uint32_t element = 0; element < 98; element += 2) {
     ASSERT_TRUE(relation.IsEquivalent(0, element));
     ASSERT_TRUE(relation.IsEquivalent(element, element + 2));
-    class1.insert(element);
+    class1.push_back(element);
   }
-  class1.insert(98);
-  ASSERT_TRUE(class1 == ToUIntSet(relation.GetEquivalenceClass(0)));
-  ASSERT_TRUE(class1 == ToUIntSet(relation.GetEquivalenceClass(4)));
-  ASSERT_TRUE(class1 == ToUIntSet(relation.GetEquivalenceClass(40)));
+  class1.push_back(98);
 
-  std::set<uint32_t> class2;
+  ASSERT_THAT(ToUIntVector(relation.GetEquivalenceClass(0)),
+              testing::WhenSorted(class1));
+  ASSERT_THAT(ToUIntVector(relation.GetEquivalenceClass(4)),
+              testing::WhenSorted(class1));
+  ASSERT_THAT(ToUIntVector(relation.GetEquivalenceClass(40)),
+              testing::WhenSorted(class1));
+
+  std::vector<uint32_t> class2;
   for (uint32_t element = 1; element < 79; element += 2) {
     ASSERT_TRUE(relation.IsEquivalent(1, element));
     ASSERT_TRUE(relation.IsEquivalent(element, element + 2));
-    class2.insert(element);
+    class2.push_back(element);
   }
-  class2.insert(79);
-  ASSERT_TRUE(class2 == ToUIntSet(relation.GetEquivalenceClass(1)));
-  ASSERT_TRUE(class2 == ToUIntSet(relation.GetEquivalenceClass(11)));
-  ASSERT_TRUE(class2 == ToUIntSet(relation.GetEquivalenceClass(31)));
+  class2.push_back(79);
+  ASSERT_THAT(ToUIntVector(relation.GetEquivalenceClass(1)),
+              testing::WhenSorted(class2));
+  ASSERT_THAT(ToUIntVector(relation.GetEquivalenceClass(11)),
+              testing::WhenSorted(class2));
+  ASSERT_THAT(ToUIntVector(relation.GetEquivalenceClass(31)),
+              testing::WhenSorted(class2));
 
-  std::set<uint32_t> class3;
+  std::vector<uint32_t> class3;
   for (uint32_t element = 81; element < 99; element += 2) {
     ASSERT_TRUE(relation.IsEquivalent(81, element));
     ASSERT_TRUE(relation.IsEquivalent(element, element + 2));
-    class3.insert(element);
+    class3.push_back(element);
   }
-  class3.insert(99);
-  ASSERT_TRUE(class3 == ToUIntSet(relation.GetEquivalenceClass(81)));
-  ASSERT_TRUE(class3 == ToUIntSet(relation.GetEquivalenceClass(91)));
-  ASSERT_TRUE(class3 == ToUIntSet(relation.GetEquivalenceClass(99)));
+  class3.push_back(99);
+  ASSERT_THAT(ToUIntVector(relation.GetEquivalenceClass(81)),
+              testing::WhenSorted(class3));
+  ASSERT_THAT(ToUIntVector(relation.GetEquivalenceClass(91)),
+              testing::WhenSorted(class3));
+  ASSERT_THAT(ToUIntVector(relation.GetEquivalenceClass(99)),
+              testing::WhenSorted(class3));
+
+  bool first = true;
+  std::vector<const uint32_t*> previous_class;
+  for (auto representative : relation.GetEquivalenceClassRepresentatives()) {
+    std::vector<const uint32_t*> current_class =
+        relation.GetEquivalenceClass(*representative);
+    ASSERT_TRUE(std::find(current_class.begin(), current_class.end(),
+                          representative) != current_class.end());
+    if (!first) {
+      ASSERT_TRUE(std::find(previous_class.begin(), previous_class.end(),
+                            representative) == previous_class.end());
+    }
+    previous_class = current_class;
+    first = false;
+  }
 }
 
 }  // namespace

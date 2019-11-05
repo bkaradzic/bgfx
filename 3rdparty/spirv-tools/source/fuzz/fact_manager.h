@@ -55,7 +55,8 @@ class FactManager {
 
   // Record the fact that |data1| and |data2| are synonymous.
   void AddFactDataSynonym(const protobufs::DataDescriptor& data1,
-                          const protobufs::DataDescriptor& data2);
+                          const protobufs::DataDescriptor& data2,
+                          opt::IRContext* context);
 
   // The fact manager is responsible for managing a few distinct categories of
   // facts. In principle there could be different fact managers for each kind
@@ -106,13 +107,17 @@ class FactManager {
 
   // Returns every id for which a fact of the form "this id is synonymous
   // with this piece of data" is known.
-  std::set<uint32_t> GetIdsForWhichSynonymsAreKnown() const;
+  std::vector<uint32_t> GetIdsForWhichSynonymsAreKnown() const;
 
-  // Requires that at least one synonym for |id| is known, and returns the
-  // equivalence class of all known synonyms.
-  std::unordered_set<const protobufs::DataDescriptor*, DataDescriptorHash,
-                     DataDescriptorEquals>
-  GetSynonymsForId(uint32_t id) const;
+  // Returns the equivalence class of all known synonyms of |id|, or an empty
+  // set if no synonyms are known.
+  std::vector<const protobufs::DataDescriptor*> GetSynonymsForId(
+      uint32_t id) const;
+
+  // Return true if and ony if |data_descriptor1| and |data_descriptor2| are
+  // known to be synonymous.
+  bool IsSynonymous(const protobufs::DataDescriptor& data_descriptor1,
+                    const protobufs::DataDescriptor& data_descriptor2) const;
 
   // End of id synonym facts
   //==============================
@@ -121,13 +126,13 @@ class FactManager {
   // For each distinct kind of fact to be managed, we use a separate opaque
   // struct type.
 
-  struct ConstantUniformFacts;  // Opaque struct for holding data about uniform
-                                // buffer elements.
+  struct ConstantUniformFacts;  // Opaque class for management of
+                                // constant uniform facts.
   std::unique_ptr<ConstantUniformFacts>
       uniform_constant_facts_;  // Unique pointer to internal data.
 
-  struct DataSynonymFacts;  // Opaque struct for holding data about data
-                            // synonyms.
+  struct DataSynonymFacts;  // Opaque class for management of data synonym
+                            // facts.
   std::unique_ptr<DataSynonymFacts>
       data_synonym_facts_;  // Unique pointer to internal data.
 };

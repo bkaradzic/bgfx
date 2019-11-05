@@ -199,11 +199,11 @@ std::string ACCheck(const std::string& access_chain_inst,
                     const std::string& original,
                     const std::string& transformed) {
   return "\n ; CHECK: %ac = " + access_chain_inst + " %ptr_ty %var" +
-         (transformed.size() ? " " : "") + transformed +
+         (transformed.empty() ? "" : " ") + transformed +
          "\n ; CHECK-NOT: " + access_chain_inst +
          "\n ; CHECK-NEXT: OpReturn"
          "\n %ac = " +
-         access_chain_inst + " %ptr_ty %var " + (original.size() ? " " : "") +
+         access_chain_inst + " %ptr_ty %var " + (original.empty() ? "" : " ") +
          original + "\n";
 }
 
@@ -211,11 +211,11 @@ std::string ACCheckFail(const std::string& access_chain_inst,
                         const std::string& original,
                         const std::string& transformed) {
   return "\n ; CHECK: %ac = " + access_chain_inst + " %ptr_ty %var" +
-         (transformed.size() ? " " : "") + transformed +
+         (transformed.empty() ? "" : " ") + transformed +
          "\n ; CHECK-NOT: " + access_chain_inst +
          "\n ; CHECK-NOT: OpReturn"
          "\n %ac = " +
-         access_chain_inst + " %ptr_ty %var " + (original.size() ? " " : "") +
+         access_chain_inst + " %ptr_ty %var " + (original.empty() ? "" : " ") +
          original + "\n";
 }
 

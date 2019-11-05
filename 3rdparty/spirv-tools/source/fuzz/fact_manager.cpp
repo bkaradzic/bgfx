@@ -16,7 +16,6 @@
 
 #include <map>
 #include <sstream>
-#include <unordered_set>
 
 #include "source/fuzz/equivalence_relation.h"
 #include "source/fuzz/fuzzer_util.h"
@@ -328,6 +327,10 @@ struct FactManager::DataSynonymFacts {
   // See method in FactManager which delegates to this method.
   void AddFact(const protobufs::FactDataSynonym& fact);
 
+  // See method in FactManager which delegates to this method.
+  bool IsSynonymous(const protobufs::DataDescriptor& data_descriptor1,
+                    const protobufs::DataDescriptor& data_descriptor2) const;
+
   EquivalenceRelation<protobufs::DataDescriptor, DataDescriptorHash,
                       DataDescriptorEquals>
       synonymous;
@@ -336,6 +339,14 @@ struct FactManager::DataSynonymFacts {
 void FactManager::DataSynonymFacts::AddFact(
     const protobufs::FactDataSynonym& fact) {
   synonymous.MakeEquivalent(fact.data1(), fact.data2());
+}
+
+bool FactManager::DataSynonymFacts::IsSynonymous(
+    const protobufs::DataDescriptor& data_descriptor1,
+    const protobufs::DataDescriptor& data_descriptor2) const {
+  return synonymous.Exists(data_descriptor1) &&
+         synonymous.Exists(data_descriptor2) &&
+         synonymous.IsEquivalent(data_descriptor1, data_descriptor2);
 }
 
 // End of data synonym facts
@@ -375,7 +386,8 @@ bool FactManager::AddFact(const fuzz::protobufs::Fact& fact,
 }
 
 void FactManager::AddFactDataSynonym(const protobufs::DataDescriptor& data1,
-                                     const protobufs::DataDescriptor& data2) {
+                                     const protobufs::DataDescriptor& data2,
+                                     opt::IRContext* /*unused*/) {
   protobufs::FactDataSynonym fact;
   *fact.mutable_data1() = data1;
   *fact.mutable_data2() = data2;
@@ -412,27 +424,28 @@ FactManager::GetConstantUniformFactsAndTypes() const {
   return uniform_constant_facts_->facts_and_type_ids;
 }
 
-std::set<uint32_t> FactManager::GetIdsForWhichSynonymsAreKnown() const {
-  std::set<uint32_t> result;
+std::vector<uint32_t> FactManager::GetIdsForWhichSynonymsAreKnown() const {
+  std::vector<uint32_t> result;
   for (auto& data_descriptor :
        data_synonym_facts_->synonymous.GetAllKnownValues()) {
     if (data_descriptor->index().empty()) {
-      assert(data_descriptor->num_contiguous_elements() == 1 &&
-             "Multiple contiguous elements are only allowed for data "
-             "descriptors that "
-             "are indices into vectors.");
-      result.insert(data_descriptor->object());
+      result.push_back(data_descriptor->object());
     }
   }
   return result;
 }
 
-std::unordered_set<const protobufs::DataDescriptor*, DataDescriptorHash,
-                   DataDescriptorEquals>
-FactManager::GetSynonymsForId(uint32_t id) const {
+std::vector<const protobufs::DataDescriptor*> FactManager::GetSynonymsForId(
+    uint32_t id) const {
   return data_synonym_facts_->synonymous.GetEquivalenceClass(
-      MakeDataDescriptor(id, {}, 1));
+      MakeDataDescriptor(id, {}));
 }
+
+bool FactManager::IsSynonymous(
+    const protobufs::DataDescriptor& data_descriptor1,
+    const protobufs::DataDescriptor& data_descriptor2) const {
+  return data_synonym_facts_->IsSynonymous(data_descriptor1, data_descriptor2);
+};
 
 }  // namespace fuzz
 }  // namespace spvtools

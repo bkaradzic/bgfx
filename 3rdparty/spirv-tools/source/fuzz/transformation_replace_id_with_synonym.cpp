@@ -46,8 +46,9 @@ bool TransformationReplaceIdWithSynonym::IsApplicable(
   auto id_of_interest = message_.id_use_descriptor().id_of_interest();
 
   // Does the fact manager know about the synonym?
-  if (fact_manager.GetIdsForWhichSynonymsAreKnown().count(id_of_interest) ==
-      0) {
+  auto ids_with_known_synonyms = fact_manager.GetIdsForWhichSynonymsAreKnown();
+  if (std::find(ids_with_known_synonyms.begin(), ids_with_known_synonyms.end(),
+                id_of_interest) == ids_with_known_synonyms.end()) {
     return false;
   }
 

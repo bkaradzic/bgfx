@@ -102,9 +102,9 @@ void TransformationCopyObject::Apply(opt::IRContext* context,
   fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
   context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
 
-  fact_manager->AddFactDataSynonym(
-      MakeDataDescriptor(message_.object(), {}, 1),
-      MakeDataDescriptor(message_.fresh_id(), {}, 1));
+  fact_manager->AddFactDataSynonym(MakeDataDescriptor(message_.object(), {}),
+                                   MakeDataDescriptor(message_.fresh_id(), {}),
+                                   context);
 }
 
 protobufs::Transformation TransformationCopyObject::ToMessage() const {

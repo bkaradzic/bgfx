@@ -68,8 +68,6 @@ namespace fuzz {
 template <typename T, typename PointerHashT, typename PointerEqualsT>
 class EquivalenceRelation {
  public:
-  using ValueSet = std::unordered_set<const T*, PointerHashT, PointerEqualsT>;
-
   // Merges the equivalence classes associated with |value1| and |value2|.
   // If any of these values was not previously in the equivalence relation, it
   // is added to the pool of values known to be in the relation.
@@ -86,6 +84,7 @@ class EquivalenceRelation {
 
         // Initially say that the value is its own parent and that it has no
         // children.
+        assert(pointer_to_value && "Representatives should never be null.");
         parent_[pointer_to_value] = pointer_to_value;
         children_[pointer_to_value] = std::unordered_set<const T*>();
       }
@@ -105,18 +104,31 @@ class EquivalenceRelation {
     // are not already in the same class, make one the parent of the other.
     const T* representative1 = Find(value1_ptr);
     const T* representative2 = Find(value2_ptr);
+    assert(representative1 && "Representatives should never be null.");
+    assert(representative2 && "Representatives should never be null.");
     if (representative1 != representative2) {
       parent_[representative1] = representative2;
       children_[representative2].insert(representative1);
     }
   }
 
+  // Returns exactly one representative per equivalence class.
+  std::vector<const T*> GetEquivalenceClassRepresentatives() const {
+    std::vector<const T*> result;
+    for (auto& value : owned_values_) {
+      if (parent_[value.get()] == value.get()) {
+        result.push_back(value.get());
+      }
+    }
+    return result;
+  }
+
   // Returns pointers to all values in the equivalence class of |value|, which
   // must already be part of the equivalence relation.
-  ValueSet GetEquivalenceClass(const T& value) const {
+  std::vector<const T*> GetEquivalenceClass(const T& value) const {
     assert(Exists(value));
 
-    ValueSet result;
+    std::vector<const T*> result;
 
     // Traverse the tree of values rooted at the representative of the
     // equivalence class to which |value| belongs, and collect up all the values
@@ -125,7 +137,7 @@ class EquivalenceRelation {
     stack.push_back(Find(*value_set_.find(&value)));
     while (!stack.empty()) {
       const T* item = stack.back();
-      result.insert(item);
+      result.push_back(item);
       stack.pop_back();
       for (auto child : children_[item]) {
         stack.push_back(child);
@@ -141,40 +153,45 @@ class EquivalenceRelation {
     return Find(&value1) == Find(&value2);
   }
 
-  // Returns the set of all values known to be part of the equivalence relation.
-  ValueSet GetAllKnownValues() const {
-    ValueSet result;
+  // Returns all values known to be part of the equivalence relation.
+  std::vector<const T*> GetAllKnownValues() const {
+    std::vector<const T*> result;
     for (auto& value : owned_values_) {
-      result.insert(value.get());
+      result.push_back(value.get());
     }
     return result;
   }
 
- private:
   // Returns true if and only if |value| is known to be part of the equivalence
   // relation.
   bool Exists(const T& value) const {
     return value_set_.find(&value) != value_set_.end();
   }
 
+ private:
   // Returns the representative of the equivalence class of |value|, which must
   // already be known to the equivalence relation.  This is the 'Find' operation
   // in a classic union-find data structure.
   const T* Find(const T* value) const {
     assert(Exists(*value));
 
+    // Get the canonical pointer to the value from the value pool.
+    const T* known_value = *value_set_.find(value);
+    assert(parent_[known_value] && "Every known value should have a parent.");
+
     // Compute the result by chasing parents until we find a value that is its
     // own parent.
-    const T* result = value;
+    const T* result = known_value;
     while (parent_[result] != result) {
       result = parent_[result];
     }
+    assert(result && "Representatives should never be null.");
 
     // At this point, |result| is the representative of the equivalence class.
     // Now perform the 'path compression' optimization by doing another pass up
     // the parent chain, setting the parent of each node to be the
     // representative, and rewriting children correspondingly.
-    const T* current = value;
+    const T* current = known_value;
     while (parent_[current] != result) {
       const T* next = parent_[current];
       parent_[current] = result;
@@ -205,7 +222,7 @@ class EquivalenceRelation {
   // |owned_values_|, and |value_pool_| provides (via |PointerHashT| and
   // |PointerEqualsT|) a means for mapping a value of interest to a pointer
   // into an equivalent value in |owned_values_|.
-  ValueSet value_set_;
+  std::unordered_set<const T*, PointerHashT, PointerEqualsT> value_set_;
   std::vector<std::unique_ptr<T>> owned_values_;
 };
 

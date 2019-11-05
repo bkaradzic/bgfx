@@ -20,14 +20,12 @@ namespace spvtools {
 namespace fuzz {
 
 protobufs::DataDescriptor MakeDataDescriptor(uint32_t object,
-                                             std::vector<uint32_t>&& indices,
-                                             uint32_t num_contiguous_elements) {
+                                             std::vector<uint32_t>&& indices) {
   protobufs::DataDescriptor result;
   result.set_object(object);
   for (auto index : indices) {
     result.add_index(index);
   }
-  result.set_num_contiguous_elements(num_contiguous_elements);
   return result;
 }
 
@@ -48,6 +46,23 @@ bool DataDescriptorEquals::operator()(
          first->index().size() == second->index().size() &&
          std::equal(first->index().begin(), first->index().end(),
                     second->index().begin());
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         const protobufs::DataDescriptor& data_descriptor) {
+  out << data_descriptor.object();
+  out << "[";
+  bool first = true;
+  for (auto index : data_descriptor.index()) {
+    if (first) {
+      first = false;
+    } else {
+      out << ", ";
+    }
+    out << index;
+  }
+  out << "]";
+  return out;
 }
 
 }  // namespace fuzz

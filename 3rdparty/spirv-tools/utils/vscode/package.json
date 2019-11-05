@@ -18,7 +18,7 @@
                 "id": "spirv",
                 "configuration": "spirv.configuration.json",
                 "extensions": [
-                    "spirv"
+                    "spvasm"
                 ]
             }
         ],

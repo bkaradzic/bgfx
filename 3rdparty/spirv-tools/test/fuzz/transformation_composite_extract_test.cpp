@@ -20,13 +20,6 @@ namespace spvtools {
 namespace fuzz {
 namespace {
 
-bool IsSynonymous(const FactManager& fact_manager, uint32_t id,
-                  uint32_t composite_id, std::vector<uint32_t>&& indices) {
-  protobufs::DataDescriptor data_descriptor =
-      MakeDataDescriptor(composite_id, std::move(indices), 1);
-  return fact_manager.GetSynonymsForId(id).count(&data_descriptor) == 1;
-}
-
 TEST(TransformationCompositeExtractTest, BasicTest) {
   std::string shader = R"(
                OpCapability Shader
@@ -179,12 +172,18 @@ TEST(TransformationCompositeExtractTest, BasicTest) {
   transformation_6.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
-  ASSERT_TRUE(IsSynonymous(fact_manager, 201, 100, {2}));
-  ASSERT_TRUE(IsSynonymous(fact_manager, 202, 104, {0, 2}));
-  ASSERT_TRUE(IsSynonymous(fact_manager, 203, 104, {0}));
-  ASSERT_TRUE(IsSynonymous(fact_manager, 204, 101, {0}));
-  ASSERT_TRUE(IsSynonymous(fact_manager, 205, 102, {2}));
-  ASSERT_TRUE(IsSynonymous(fact_manager, 206, 103, {1}));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(201, {}),
+                                        MakeDataDescriptor(100, {2})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(202, {}),
+                                        MakeDataDescriptor(104, {0, 2})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(203, {}),
+                                        MakeDataDescriptor(104, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(204, {}),
+                                        MakeDataDescriptor(101, {0})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(205, {}),
+                                        MakeDataDescriptor(102, {2})));
+  ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(206, {}),
+                                        MakeDataDescriptor(103, {1})));
 
   std::string after_transformation = R"(
                OpCapability Shader
