@@ -60,8 +60,10 @@ source_set("glslang_sources") {
   sources = [
     "OGLCompilersDLL/InitializeDll.cpp",
     "OGLCompilersDLL/InitializeDll.h",
+    "SPIRV/GLSL.ext.AMD.h",
     "SPIRV/GLSL.ext.EXT.h",
     "SPIRV/GLSL.ext.KHR.h",
+    "SPIRV/GLSL.ext.NV.h",
     "SPIRV/GLSL.std.450.h",
     "SPIRV/GlslangToSpv.cpp",
     "SPIRV/GlslangToSpv.h",

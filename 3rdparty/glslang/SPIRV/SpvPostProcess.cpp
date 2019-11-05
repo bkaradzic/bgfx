@@ -39,6 +39,7 @@
 #include <cassert>
 #include <cstdlib>
 
+#include <unordered_map>
 #include <unordered_set>
 #include <algorithm>
 
@@ -319,16 +320,14 @@ void Builder::postProcess(Instruction& inst)
     }
 }
 
-// Called for each instruction in a reachable block.
-void Builder::postProcessReachable(const Instruction&)
-{
-    // did have code here, but questionable to do so without deleting the instructions
-}
-
 // comment in header
 void Builder::postProcess()
 {
+    // reachableBlocks is the set of blockss reached via control flow, or which are
+    // unreachable continue targert or unreachable merge.
     std::unordered_set<const Block*> reachableBlocks;
+    std::unordered_map<Block*, Block*> headerForUnreachableContinue;
+    std::unordered_set<Block*> unreachableMerges;
     std::unordered_set<Id> unreachableDefinitions;
     // Collect IDs defined in unreachable blocks. For each function, label the
     // reachable blocks first. Then for each unreachable block, collect the
@@ -336,14 +335,39 @@ void Builder::postProcess()
     for (auto fi = module.getFunctions().cbegin(); fi != module.getFunctions().cend(); fi++) {
         Function* f = *fi;
         Block* entry = f->getEntryBlock();
-        inReadableOrder(entry, [&reachableBlocks](const Block* b) { reachableBlocks.insert(b); });
+        inReadableOrder(entry,
+            [&reachableBlocks, &unreachableMerges, &headerForUnreachableContinue]
+            (Block* b, ReachReason why, Block* header) {
+               reachableBlocks.insert(b);
+               if (why == ReachDeadContinue) headerForUnreachableContinue[b] = header;
+               if (why == ReachDeadMerge) unreachableMerges.insert(b);
+            });
         for (auto bi = f->getBlocks().cbegin(); bi != f->getBlocks().cend(); bi++) {
             Block* b = *bi;
-            if (reachableBlocks.count(b) == 0) {
-                for (auto ii = b->getInstructions().cbegin(); ii != b->getInstructions().cend(); ii++)
+            if (unreachableMerges.count(b) != 0 || headerForUnreachableContinue.count(b) != 0) {
+                auto ii = b->getInstructions().cbegin();
+                ++ii; // Keep potential decorations on the label.
+                for (; ii != b->getInstructions().cend(); ++ii)
+                    unreachableDefinitions.insert(ii->get()->getResultId());
+            } else if (reachableBlocks.count(b) == 0) {
+                // The normal case for unreachable code.  All definitions are considered dead.
+                for (auto ii = b->getInstructions().cbegin(); ii != b->getInstructions().cend(); ++ii)
                     unreachableDefinitions.insert(ii->get()->getResultId());
             }
         }
+    }
+
+    // Modify unreachable merge blocks and unreachable continue targets.
+    // Delete their contents.
+    for (auto mergeIter = unreachableMerges.begin(); mergeIter != unreachableMerges.end(); ++mergeIter) {
+        (*mergeIter)->rewriteAsCanonicalUnreachableMerge();
+    }
+    for (auto continueIter = headerForUnreachableContinue.begin();
+         continueIter != headerForUnreachableContinue.end();
+         ++continueIter) {
+        Block* continue_target = continueIter->first;
+        Block* header = continueIter->second;
+        continue_target->rewriteAsCanonicalUnreachableContinue(header);
     }
 
     // Remove unneeded decorations, for unreachable instructions
@@ -372,13 +396,6 @@ void Builder::postProcess()
                 addCapability(spv::CapabilityStorageBuffer16BitAccess);
             }
         }
-    }
-
-    // process all reachable instructions...
-    for (auto bi = reachableBlocks.cbegin(); bi != reachableBlocks.cend(); ++bi) {
-        const Block* block = *bi;
-        const auto function = [this](const std::unique_ptr<Instruction>& inst) { postProcessReachable(*inst.get()); };
-        std::for_each(block->getInstructions().begin(), block->getInstructions().end(), function);
     }
 
     // process all block-contained instructions

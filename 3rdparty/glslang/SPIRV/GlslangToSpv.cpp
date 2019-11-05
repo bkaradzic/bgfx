@@ -1630,11 +1630,11 @@ void TGlslangToSpvTraverser::finishSpv()
     for (auto it = iOSet.cbegin(); it != iOSet.cend(); ++it)
         entryPoint->addIdOperand(*it);
 
-#ifndef GLSLANG_WEB
-    // Add capabilities, extensions, remove unneeded decorations, etc., 
+    // Add capabilities, extensions, remove unneeded decorations, etc.,
     // based on the resulting SPIR-V.
+    // Note: WebGPU code generation must have the opportunity to aggressively
+    // prune unreachable merge blocks and continue targets.
     builder.postProcess();
-#endif
 }
 
 // Write the SPV into 'out'.
@@ -8197,7 +8197,8 @@ int GetSpirvGeneratorVersion()
     // return 5; // make OpArrayLength result type be an int with signedness of 0
     // return 6; // revert version 5 change, which makes a different (new) kind of incorrect code,
                  // versions 4 and 6 each generate OpArrayLength as it has long been done
-    return 7; // GLSL volatile keyword maps to both SPIR-V decorations Volatile and Coherent
+    // return 7; // GLSL volatile keyword maps to both SPIR-V decorations Volatile and Coherent
+    return 8; // switch to new dead block eliminator; use OpUnreachable
 }
 
 // Write SPIR-V out to a binary file
