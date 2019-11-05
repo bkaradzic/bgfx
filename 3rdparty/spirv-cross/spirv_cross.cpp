@@ -2902,6 +2902,10 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 		if (length < 3)
 			return false;
 
+		// Return value may be a temporary.
+		if (compiler.get_type(args[0]).basetype != SPIRType::Void)
+			notify_variable_access(args[1], current_block->self);
+
 		length -= 3;
 		args += 3;
 
@@ -2922,9 +2926,6 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 			// Might try to copy a Phi variable here.
 			notify_variable_access(args[i], current_block->self);
 		}
-
-		// Return value may be a temporary.
-		notify_variable_access(args[1], current_block->self);
 		break;
 	}
 
