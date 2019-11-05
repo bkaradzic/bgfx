@@ -1,24 +1,23 @@
 language: cpp
 
-matrix:
-  include:
-    - os: linux
-      compiler: gcc
-    - os: linux
-      compiler: clang
-    - os: linux
-      compiler: gcc
-      arch: arm64
-    - os: osx
-      compiler: clang
-    - os: windows
-      compiler: cl
-      env:
-        - TARGET="Visual Studio 15 2017"
-    - os: windows
-      compiler: cl
-      env:
-        - TARGET="Visual Studio 15 2017 Win64"
+jobs:
+  - os: linux
+    compiler: gcc
+  - os: linux
+    compiler: clang
+  - os: linux
+    compiler: gcc
+    arch: arm64
+  - os: osx
+    compiler: clang
+  - os: windows
+    compiler: cl
+    env:
+      - TARGET="Visual Studio 15 2017"
+  - os: windows
+    compiler: cl
+    env:
+      - TARGET="Visual Studio 15 2017 Win64"
 
 script:
   - if [[ "$TRAVIS_COMPILER" == "gcc" ]]; then make -j2 config=coverage test; fi

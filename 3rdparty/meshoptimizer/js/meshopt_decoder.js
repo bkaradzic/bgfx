@@ -20,6 +20,9 @@ var MeshoptDecoder = (function() {
 		.then(bytes => WebAssembly.instantiate(bytes, { env }))
 		.then(function(result) {
 			instance = result.instance;
+			if (instance.exports.__wasm_call_ctors) {
+				instance.exports.__wasm_call_ctors();
+			}
 			env.emscripten_notify_memory_growth(0);
 		});
 
