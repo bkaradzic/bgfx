@@ -558,7 +558,8 @@ protected:
 	virtual void emit_block_hints(const SPIRBlock &block);
 	virtual std::string to_initializer_expression(const SPIRVariable &var);
 
-	bool buffer_is_packing_standard(const SPIRType &type, BufferPackingStandard packing, uint32_t start_offset = 0,
+	bool buffer_is_packing_standard(const SPIRType &type, BufferPackingStandard packing,
+	                                uint32_t *failed_index = nullptr, uint32_t start_offset = 0,
 	                                uint32_t end_offset = ~(0u));
 	std::string buffer_to_packing_standard(const SPIRType &type, bool support_std430_without_scalar_layout);
 

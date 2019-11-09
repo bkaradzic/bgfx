@@ -25,7 +25,8 @@ kernel void main0(device SSBO2& _27 [[buffer(0)]], uint3 gl_GlobalInvocationID [
             return;
         }
     }
-    for (int i = 0; i < 20; i++)
+    int i = 0;
+    while (i < 20)
     {
         if (i == 10)
         {

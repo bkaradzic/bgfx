@@ -27,8 +27,6 @@ struct VertexConstantsBuffer
     float4 vc[16];
 };
 
-constant float4 _295 = {};
-
 struct main0_out
 {
     float4 tc0 [[user(locn0)]];

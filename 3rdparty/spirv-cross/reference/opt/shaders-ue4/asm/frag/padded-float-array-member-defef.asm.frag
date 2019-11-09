@@ -102,7 +102,7 @@ constant spvUnsafeArray<float, 10> _506 = spvUnsafeArray<float, 10>({ -2.3010299
 constant spvUnsafeArray<float, 10> _507 = spvUnsafeArray<float, 10>({ 0.801995217800140380859375, 1.19800484180450439453125, 1.5943000316619873046875, 1.99730002880096435546875, 2.3782999515533447265625, 2.7683999538421630859375, 3.0515000820159912109375, 3.2746293544769287109375, 3.32743072509765625, 3.32743072509765625 });
 
 constant float3 _523 = {};
-constant float3 _3123 = {};
+constant float3 _3124 = {};
 
 struct main0_out
 {
@@ -182,7 +182,7 @@ fragment main0_out main0(main0_in in [[stage_in]], constant type_Globals& _Globa
     float _691 = _659 + (((-_686.y) * _Globals.WhiteTint) * 0.0500000007450580596923828125);
     float _695 = _670 + ((_686.x * _Globals.WhiteTint) * 0.0500000007450580596923828125);
     float _700 = ((2.0 * _691) - (8.0 * _695)) + 4.0;
-    float2 _706 = select(float2(_642, ((((-3.0) * _642) * _642) + (2.86999988555908203125 * _642)) - 0.2750000059604644775390625), _679, bool2(_Globals.WhiteTemp < 4000.0)) + (float2((3.0 * _691) / _700, (2.0 * _695) / _700) - _679);
+    float2 _706 = select(float2(_642, (_642 * (((-3.0) * _642) + 2.86999988555908203125)) - 0.2750000059604644775390625), _679, bool2(_Globals.WhiteTemp < 4000.0)) + (float2((3.0 * _691) / _700, (2.0 * _695) / _700) - _679);
     float _707 = _706.x;
     float _708 = _706.y;
     float _709 = fast::max(_708, 1.0000000133514319600180897396058e-10);
@@ -327,7 +327,7 @@ fragment main0_out main0(main0_in in [[stage_in]], constant type_Globals& _Globa
     float3 _1215;
     if (_Globals.ColorShadow_Tint2.w == 0.0)
     {
-        float3 _1157 = _3123;
+        float3 _1157 = _3124;
         _1157.x = dot(_932, _Globals.ColorMatrixR_ColorCurveCd1.xyz);
         float3 _1162 = _1157;
         _1162.y = dot(_932, _Globals.ColorMatrixG_ColorCurveCd3Cm3.xyz);

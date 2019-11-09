@@ -263,7 +263,7 @@ struct type_StructuredBuffer_v4float
     float4 _m0[1];
 };
 
-constant float4 _600 = {};
+constant float4 _602 = {};
 
 struct main0_out
 {
@@ -328,7 +328,7 @@ kernel void main0(main0_in in [[stage_in]], constant type_View& View [[buffer(0)
     float4 _328 = float4(param_var_I[_313].FactoryInterpolants.InterpolantsVSToPS.TangentToWorld2.xyz, 0.0);
     float4 _336 = float4(param_var_I[_315].FactoryInterpolants.InterpolantsVSToPS.TangentToWorld2.xyz, 0.0);
     float4 _344 = float4(param_var_I[_316].FactoryInterpolants.InterpolantsVSToPS.TangentToWorld2.xyz, 0.0);
-    spvUnsafeArray<float4, 3> _392 = spvUnsafeArray<float4, 3>({ param_var_I[gl_InvocationID].Position, (((((float4(2.0) * param_var_I[gl_InvocationID].Position) + param_var_I[_313].Position) - (float4(dot(param_var_I[_313].Position - param_var_I[gl_InvocationID].Position, _301)) * _301)) * float4(0.3333333432674407958984375)) + ((((float4(2.0) * param_var_I[_315].Position) + param_var_I[_316].Position) - (float4(dot(param_var_I[_316].Position - param_var_I[_315].Position, _336)) * _336)) * float4(0.3333333432674407958984375))) * float4(0.5), (((((float4(2.0) * param_var_I[_313].Position) + param_var_I[gl_InvocationID].Position) - (float4(dot(param_var_I[gl_InvocationID].Position - param_var_I[_313].Position, _328)) * _328)) * float4(0.3333333432674407958984375)) + ((((float4(2.0) * param_var_I[_316].Position) + param_var_I[_315].Position) - (float4(dot(param_var_I[_315].Position - param_var_I[_316].Position, _344)) * _344)) * float4(0.3333333432674407958984375))) * float4(0.5) });
+    spvUnsafeArray<float4, 3> _392 = spvUnsafeArray<float4, 3>({ param_var_I[gl_InvocationID].Position, ((((float4(2.0) * param_var_I[gl_InvocationID].Position) + param_var_I[_313].Position) - (float4(dot(param_var_I[_313].Position - param_var_I[gl_InvocationID].Position, _301)) * _301)) + (((float4(2.0) * param_var_I[_315].Position) + param_var_I[_316].Position) - (float4(dot(param_var_I[_316].Position - param_var_I[_315].Position, _336)) * _336))) * float4(0.16666667163372039794921875), ((((float4(2.0) * param_var_I[_313].Position) + param_var_I[gl_InvocationID].Position) - (float4(dot(param_var_I[gl_InvocationID].Position - param_var_I[_313].Position, _328)) * _328)) + (((float4(2.0) * param_var_I[_316].Position) + param_var_I[_315].Position) - (float4(dot(param_var_I[_315].Position - param_var_I[_316].Position, _344)) * _344))) * float4(0.16666667163372039794921875) });
     gl_out[gl_InvocationID].out_var_TEXCOORD10_centroid = param_var_I[gl_InvocationID].FactoryInterpolants.InterpolantsVSToPS.TangentToWorld0;
     gl_out[gl_InvocationID].out_var_TEXCOORD11_centroid = param_var_I[gl_InvocationID].FactoryInterpolants.InterpolantsVSToPS.TangentToWorld2;
     gl_out[gl_InvocationID].out_var_COLOR0 = param_var_I[gl_InvocationID].FactoryInterpolants.InterpolantsVSToPS.Color;
@@ -346,7 +346,7 @@ kernel void main0(main0_in in [[stage_in]], constant type_View& View [[buffer(0)
     if (gl_InvocationID == 0u)
     {
         float4 _450 = (((((temp_var_hullMainRetVal[0u].WorldPosition[1] + temp_var_hullMainRetVal[0u].WorldPosition[2]) + temp_var_hullMainRetVal[1u].WorldPosition[1]) + temp_var_hullMainRetVal[1u].WorldPosition[2]) + temp_var_hullMainRetVal[2u].WorldPosition[1]) + temp_var_hullMainRetVal[2u].WorldPosition[2]) * float4(0.16666667163372039794921875);
-        float4 _463 = _600;
+        float4 _463 = _602;
         _463.x = 0.5 * (temp_var_hullMainRetVal[1u].TessellationMultiplier + temp_var_hullMainRetVal[2u].TessellationMultiplier);
         float4 _469 = _463;
         _469.y = 0.5 * (temp_var_hullMainRetVal[2u].TessellationMultiplier + temp_var_hullMainRetVal[0u].TessellationMultiplier);

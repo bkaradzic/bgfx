@@ -261,12 +261,6 @@ struct main0_in
     float4 in_var_TEXCOORD0_0 [[user(locn4)]];
 };
 
-static inline __attribute__((always_inline))
-void _353()
-{
-    discard_fragment();
-}
-
 fragment main0_out main0(main0_in in [[stage_in]], constant type_View& View [[buffer(0)]], constant type_PrimitiveDither& PrimitiveDither [[buffer(1)]], constant type_PrimitiveFade& PrimitiveFade [[buffer(2)]], constant type_Material& Material [[buffer(3)]], texture2d<float> Material_Texture2D_0 [[texture(0)]], texture2d<float> Material_Texture2D_3 [[texture(1)]], sampler Material_Texture2D_0Sampler [[sampler(0)]], sampler Material_Texture2D_3Sampler [[sampler(1)]], float4 gl_FragCoord [[position]])
 {
     main0_out out = {};
@@ -340,13 +334,13 @@ fragment main0_out main0(main0_in in [[stage_in]], constant type_View& View [[bu
             float _317 = fract(cos(dot(floor(gl_FragCoord.xy), float2(347.834503173828125, 3343.28369140625))) * 1000.0);
             if ((float((PrimitiveDither.PrimitiveDither_LODFactor < 0.0) ? ((PrimitiveDither.PrimitiveDither_LODFactor + 1.0) > _317) : (PrimitiveDither.PrimitiveDither_LODFactor < _317)) - 0.001000000047497451305389404296875) < 0.0)
             {
-                _353();
+                discard_fragment();
             }
         }
     }
     if ((((_218.z + ((fast::min(fast::max(1.0 - (_218.x * Material.Material_ScalarExpressions[2].y), 0.0), 1.0) + ((_237 + (_242.x * Material.Material_ScalarExpressions[2].z)) * 0.16666667163372039794921875)) + (-0.5))) * ((fast::clamp((View.View_RealTime * PrimitiveFade.PrimitiveFade_FadeTimeScaleBias.x) + PrimitiveFade.PrimitiveFade_FadeTimeScaleBias.y, 0.0, 1.0) + ((_237 + _254.x) * 0.16666667163372039794921875)) + (-0.5))) - 0.33329999446868896484375) < 0.0)
     {
-        _353();
+        discard_fragment();
     }
     float2 _351 = ((((in.in_var_TEXCOORD6.xy / float2(in.in_var_TEXCOORD6.w)) - View.View_TemporalAAJitter.xy) - ((in.in_var_TEXCOORD7.xy / float2(in.in_var_TEXCOORD7.w)) - View.View_TemporalAAJitter.zw)) * float2(0.2495000064373016357421875)) + float2(0.49999237060546875);
     out.gl_FragDepth = fast::min(_140.z / (_140.w + (sqrt(dot(_272, _272)) / (fast::max(sqrt(dot(_276, _276)) / sqrt(dot(_279, _279)), sqrt(dot(_284, _284)) / sqrt(dot(_287, _287))) / abs(dot(float3x3(View.View_ViewToTranslatedWorld[0].xyz, View.View_ViewToTranslatedWorld[1].xyz, View.View_ViewToTranslatedWorld[2].xyz) * float3(0.0, 0.0, 1.0), _151))))), gl_FragCoord.z);
