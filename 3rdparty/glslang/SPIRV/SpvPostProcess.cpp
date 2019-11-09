@@ -58,6 +58,7 @@ namespace spv {
 
 namespace spv {
 
+#ifndef GLSLANG_WEB
 // Hook to visit each operand type and result type of an instruction.
 // Will be called multiple times for one instruction, once for each typed
 // operand and the result.
@@ -319,9 +320,10 @@ void Builder::postProcess(Instruction& inst)
         }
     }
 }
+#endif
 
 // comment in header
-void Builder::postProcess()
+void Builder::postProcessCFG()
 {
     // reachableBlocks is the set of blockss reached via control flow, or which are
     // unreachable continue targert or unreachable merge.
@@ -377,7 +379,11 @@ void Builder::postProcess()
             return unreachableDefinitions.count(decoration_id) != 0;
         }),
         decorations.end());
+}
 
+#ifndef GLSLANG_WEB
+// comment in header
+void Builder::postProcessFeatures() {
     // Add per-instruction capabilities, extensions, etc.,
 
     // Look for any 8/16 bit type in physical storage buffer class, and set the
@@ -430,6 +436,15 @@ void Builder::postProcess()
             }
         }
     }
+}
+#endif
+
+// comment in header
+void Builder::postProcess() {
+  postProcessCFG();
+#ifndef GLSLANG_WEB
+  postProcessFeatures();
+#endif
 }
 
 }; // end spv namespace

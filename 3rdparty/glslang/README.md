@@ -28,6 +28,15 @@ comment in `glslang/MachineIndependent/Versions.cpp`.
 
 Tasks waiting to be done are documented as GitHub issues.
 
+Deprecations
+------------
+
+1. GLSLang, when installed through CMake, will install a `SPIRV` folder into
+`${CMAKE_INSTALL_INCLUDEDIR}`. This `SPIRV` folder is being moved to
+`glslang/SPIRV`. During the transition the `SPIRV` folder will be installed into
+both locations. The old install of `SPIRV/` will be removed as a CMake install
+target no sooner then May 1, 2020. See issue #1964.
+
 Execution of Standalone Wrapper
 -------------------------------
 

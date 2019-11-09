@@ -687,10 +687,17 @@ public:
     // based on the resulting SPIR-V.
     void postProcess();
 
+    // Prune unreachable blocks in the CFG and remove unneeded decorations.
+    void postProcessCFG();
+
+#ifndef GLSLANG_WEB
+    // Add capabilities, extensions based on instructions in the module.
+    void postProcessFeatures();
     // Hook to visit each instruction in a block in a function
     void postProcess(Instruction&);
     // Hook to visit each non-32-bit sized float/int operation in a block.
     void postProcessType(const Instruction&, spv::Id typeId);
+#endif
 
     void dump(std::vector<unsigned int>&) const;
 

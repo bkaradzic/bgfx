@@ -252,7 +252,7 @@ public:
         assert(header != nullptr);
         Instruction* branch = new Instruction(OpBranch);
         branch->addIdOperand(header->getId());
-        addInstruction(std::move(std::unique_ptr<Instruction>(branch)));
+        addInstruction(std::unique_ptr<Instruction>(branch));
         successors.push_back(header);
     }
 
