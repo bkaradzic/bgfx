@@ -144,19 +144,18 @@ OpFunctionEnd)";
   EXPECT_THAT(getDiagnosticString(), HasSubstr("vector of two components"));
 }
 
-// #2952: disabled until scope discussion is resolved.
-TEST_F(ValidateMisc, DISABLED_ShaderClockExecutionScope) {
+TEST_F(ValidateMisc, ShaderClockInvalidScopeValue) {
   const std::string spirv = ShaderClockSpriv + R"(
 %3 = OpTypeFunction %void
 %ulong = OpTypeInt 64 0
 %uint = OpTypeInt 32 0
 %_ptr_Function_ulong = OpTypePointer Function %ulong
-%uint_3 = OpConstant %uint 10
+%uint_10 = OpConstant %uint 10
 %uint_1 = OpConstant %uint 1
 %main = OpFunction %void None %3
 %5 = OpLabel
 %time1 = OpVariable %_ptr_Function_ulong Function
-%11 = OpReadClockKHR %ulong %uint_3
+%11 = OpReadClockKHR %ulong %uint_10
 OpStore %time1 %11
 OpReturn
 OpFunctionEnd)";
@@ -164,6 +163,68 @@ OpFunctionEnd)";
   CompileSuccessfully(spirv);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(), HasSubstr("Invalid scope value"));
+}
+
+TEST_F(ValidateMisc, ShaderClockSubgroupScope) {
+  const std::string spirv = ShaderClockSpriv + R"(
+%3 = OpTypeFunction %void
+%ulong = OpTypeInt 64 0
+%uint = OpTypeInt 32 0
+%_ptr_Function_ulong = OpTypePointer Function %ulong
+%subgroup = OpConstant %uint 3
+%uint_1 = OpConstant %uint 1
+%main = OpFunction %void None %3
+%5 = OpLabel
+%time1 = OpVariable %_ptr_Function_ulong Function
+%11 = OpReadClockKHR %ulong %subgroup
+OpStore %time1 %11
+OpReturn
+OpFunctionEnd)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateMisc, ShaderClockDeviceScope) {
+  const std::string spirv = ShaderClockSpriv + R"(
+%3 = OpTypeFunction %void
+%ulong = OpTypeInt 64 0
+%uint = OpTypeInt 32 0
+%_ptr_Function_ulong = OpTypePointer Function %ulong
+%device = OpConstant %uint 1
+%uint_1 = OpConstant %uint 1
+%main = OpFunction %void None %3
+%5 = OpLabel
+%time1 = OpVariable %_ptr_Function_ulong Function
+%11 = OpReadClockKHR %ulong %device
+OpStore %time1 %11
+OpReturn
+OpFunctionEnd)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateMisc, ShaderClockWorkgroupScope) {
+  const std::string spirv = ShaderClockSpriv + R"(
+%3 = OpTypeFunction %void
+%ulong = OpTypeInt 64 0
+%uint = OpTypeInt 32 0
+%_ptr_Function_ulong = OpTypePointer Function %ulong
+%workgroup = OpConstant %uint 2
+%uint_1 = OpConstant %uint 1
+%main = OpFunction %void None %3
+%5 = OpLabel
+%time1 = OpVariable %_ptr_Function_ulong Function
+%11 = OpReadClockKHR %ulong %workgroup
+OpStore %time1 %11
+OpReturn
+OpFunctionEnd)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Scope must be Subgroup or Device"));
 }
 }  // namespace
 }  // namespace val

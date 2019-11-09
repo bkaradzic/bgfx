@@ -86,7 +86,7 @@ def deduce_software_version(directory):
     # Linux.
     pattern = re.compile(r'^(v\d+\.\d+(-dev)?) \d\d\d\d-\d\d-\d\d\s*$')
     changes_file = os.path.join(directory, 'CHANGES')
-    with open(changes_file, mode='rU') as f:
+    with open(changes_file, mode='r') as f:
         for line in f.readlines():
             match = pattern.match(line)
             if match:

@@ -72,7 +72,7 @@ protobufs::InstructionDescriptor MakeInstructionDescriptor(
   const SpvOp opcode =
       inst_it->opcode();    // The opcode of the instruction being described.
   uint32_t skip_count = 0;  // The number of these opcodes we have skipped when
-                            // searching backwards.
+  // searching backwards.
 
   // Consider instructions in the block in reverse order, starting from
   // |inst_it|.
@@ -99,6 +99,28 @@ protobufs::InstructionDescriptor MakeInstructionDescriptor(
   // We did not find an instruction inside the block with a result id, so we use
   // the block's label's id.
   return MakeInstructionDescriptor(block.id(), opcode, skip_count);
+}
+
+protobufs::InstructionDescriptor MakeInstructionDescriptor(
+    opt::IRContext* context, opt::Instruction* inst) {
+  auto block = context->get_instr_block(inst);
+  uint32_t base_instruction_result_id = block->id();
+  uint32_t num_opcodes_to_ignore = 0;
+  for (auto& inst_in_block : *block) {
+    if (inst_in_block.HasResultId()) {
+      base_instruction_result_id = inst_in_block.result_id();
+      num_opcodes_to_ignore = 0;
+    }
+    if (&inst_in_block == inst) {
+      return MakeInstructionDescriptor(base_instruction_result_id,
+                                       inst->opcode(), num_opcodes_to_ignore);
+    }
+    if (inst_in_block.opcode() == inst->opcode()) {
+      num_opcodes_to_ignore++;
+    }
+  }
+  assert(false && "No matching instruction was found.");
+  return protobufs::InstructionDescriptor();
 }
 
 }  // namespace fuzz

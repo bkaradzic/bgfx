@@ -86,7 +86,7 @@ class EquivalenceRelation {
         // children.
         assert(pointer_to_value && "Representatives should never be null.");
         parent_[pointer_to_value] = pointer_to_value;
-        children_[pointer_to_value] = std::unordered_set<const T*>();
+        children_[pointer_to_value] = std::vector<const T*>();
       }
     }
 
@@ -108,7 +108,7 @@ class EquivalenceRelation {
     assert(representative2 && "Representatives should never be null.");
     if (representative1 != representative2) {
       parent_[representative1] = representative2;
-      children_[representative2].insert(representative1);
+      children_[representative2].push_back(representative1);
     }
   }
 
@@ -195,8 +195,13 @@ class EquivalenceRelation {
     while (parent_[current] != result) {
       const T* next = parent_[current];
       parent_[current] = result;
-      children_[result].insert(current);
-      children_[next].erase(current);
+      children_[result].push_back(current);
+      auto child_iterator =
+          std::find(children_[next].begin(), children_[next].end(), current);
+      assert(child_iterator != children_[next].end() &&
+             "'next' is the parent of 'current', so 'current' should be a "
+             "child of 'next'");
+      children_[next].erase(child_iterator);
       current = next;
     }
     return result;
@@ -216,9 +221,9 @@ class EquivalenceRelation {
   //
   // Mutable because the intuitively const method, 'Find', performs path
   // compression.
-  mutable std::unordered_map<const T*, std::unordered_set<const T*>> children_;
+  mutable std::unordered_map<const T*, std::vector<const T*>> children_;
 
-  // The values known to the equivalence relation are alloacated in
+  // The values known to the equivalence relation are allocated in
   // |owned_values_|, and |value_pool_| provides (via |PointerHashT| and
   // |PointerEqualsT|) a means for mapping a value of interest to a pointer
   // into an equivalent value in |owned_values_|.

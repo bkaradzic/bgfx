@@ -80,6 +80,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_set_memory_operands_mask.h
         transformation_set_selection_control.h
         transformation_split_block.h
+        transformation_vector_shuffle.h
         uniform_buffer_element_descriptor.h
         ${CMAKE_CURRENT_BINARY_DIR}/protobufs/spvtoolsfuzz.pb.h
 
@@ -132,6 +133,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_set_memory_operands_mask.cpp
         transformation_set_selection_control.cpp
         transformation_split_block.cpp
+        transformation_vector_shuffle.cpp
         uniform_buffer_element_descriptor.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/protobufs/spvtoolsfuzz.pb.cc
         )

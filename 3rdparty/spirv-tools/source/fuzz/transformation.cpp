@@ -37,6 +37,7 @@
 #include "source/fuzz/transformation_set_memory_operands_mask.h"
 #include "source/fuzz/transformation_set_selection_control.h"
 #include "source/fuzz/transformation_split_block.h"
+#include "source/fuzz/transformation_vector_shuffle.h"
 #include "source/util/make_unique.h"
 
 namespace spvtools {
@@ -107,6 +108,8 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
           message.set_selection_control());
     case protobufs::Transformation::TransformationCase::kSplitBlock:
       return MakeUnique<TransformationSplitBlock>(message.split_block());
+    case protobufs::Transformation::TransformationCase::kVectorShuffle:
+      return MakeUnique<TransformationVectorShuffle>(message.vector_shuffle());
     case protobufs::Transformation::TRANSFORMATION_NOT_SET:
       assert(false && "An unset transformation was encountered.");
       return nullptr;

@@ -105,34 +105,41 @@ class FactManager {
   //==============================
   // Querying facts about id synonyms
 
-  // Returns every id for which a fact of the form "this id is synonymous
-  // with this piece of data" is known.
-  std::vector<uint32_t> GetIdsForWhichSynonymsAreKnown() const;
+  // Returns every id for which a fact of the form "this id is synonymous with
+  // this piece of data" is known.
+  std::vector<uint32_t> GetIdsForWhichSynonymsAreKnown(
+      opt::IRContext* context) const;
 
   // Returns the equivalence class of all known synonyms of |id|, or an empty
   // set if no synonyms are known.
   std::vector<const protobufs::DataDescriptor*> GetSynonymsForId(
-      uint32_t id) const;
+      uint32_t id, opt::IRContext* context) const;
 
-  // Return true if and ony if |data_descriptor1| and |data_descriptor2| are
+  // Returns the equivalence class of all known synonyms of |data_descriptor|,
+  // or empty if no synonyms are known.
+  std::vector<const protobufs::DataDescriptor*> GetSynonymsForDataDescriptor(
+      const protobufs::DataDescriptor& data_descriptor,
+      opt::IRContext* context) const;
+
+  // Returns true if and ony if |data_descriptor1| and |data_descriptor2| are
   // known to be synonymous.
   bool IsSynonymous(const protobufs::DataDescriptor& data_descriptor1,
-                    const protobufs::DataDescriptor& data_descriptor2) const;
+                    const protobufs::DataDescriptor& data_descriptor2,
+                    opt::IRContext* context) const;
 
   // End of id synonym facts
   //==============================
 
  private:
   // For each distinct kind of fact to be managed, we use a separate opaque
-  // struct type.
+  // class type.
 
-  struct ConstantUniformFacts;  // Opaque class for management of
-                                // constant uniform facts.
+  class ConstantUniformFacts;  // Opaque class for management of
+                               // constant uniform facts.
   std::unique_ptr<ConstantUniformFacts>
       uniform_constant_facts_;  // Unique pointer to internal data.
 
-  struct DataSynonymFacts;  // Opaque class for management of data synonym
-                            // facts.
+  class DataSynonymFacts;  // Opaque class for management of data synonym facts.
   std::unique_ptr<DataSynonymFacts>
       data_synonym_facts_;  // Unique pointer to internal data.
 };

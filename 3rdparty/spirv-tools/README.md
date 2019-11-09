@@ -33,7 +33,7 @@ headers, and XML registry.
 See [`CHANGES`](CHANGES) for a high level summary of recent changes, by version.
 
 SPIRV-Tools project version numbers are of the form `v`*year*`.`*index* and with
-an optional `-dev` suffix to indicate work in progress.  For exampe, the
+an optional `-dev` suffix to indicate work in progress.  For example, the
 following versions are ordered from oldest to newest:
 
 * `v2016.0`
@@ -147,6 +147,24 @@ fatal error message.
 To suggest an additional capability for the reducer, [file an
 issue](https://github.com/KhronosGroup/SPIRV-Tools/issues]) with
 "Reducer:" as the start of its title.
+
+
+### Fuzzer
+
+*Note:* The fuzzer is still under development.
+
+The fuzzer applies semantics-preserving transformations to a SPIR-V binary
+module, to produce an equivalent module.  The original and transformed modules
+should produce essentially identical results when executed on identical inputs:
+their results should differ only due to floating-point round-off, if at all.
+Significant differences in results can pinpoint bugs in tools that process
+SPIR-V binaries, such as miscompilations.  This *metamorphic testing* approach
+is similar to the method used by the [GraphicsFuzz
+project](https://github.com/google/graphicsfuzz) for fuzzing of GLSL shaders.
+
+To suggest an additional capability for the fuzzer, [file an
+issue](https://github.com/KhronosGroup/SPIRV-Tools/issues]) with
+"Fuzzer:" as the start of its title.
 
 
 ### Extras
@@ -324,6 +342,7 @@ Other compilers or later versions may work, but they are not tested.
 
 The following CMake options are supported:
 
+* `SPIRV_BUILD_FUZZER={ON|OFF}`, default `OFF` - Build the spirv-fuzz tool.
 * `SPIRV_COLOR_TERMINAL={ON|OFF}`, default `ON` - Enables color console output.
 * `SPIRV_SKIP_TESTS={ON|OFF}`, default `OFF`- Build only the library and
   the command line tools.  This will prevent the tests from being built.
@@ -499,6 +518,19 @@ This is a work in progress, with initially only shrinks a module in a few ways.
   * `<spirv-dir>/tools/reduce`
 
 Run `spirv-reduce --help` to see how to specify interestingness.
+
+### Fuzzer tool
+
+The fuzzer transforms a SPIR-V binary module into a semantically-equivalent
+SPIR-V binary module by applying transformations in a randomized fashion.
+
+This is a work in progress, with initially only a few semantics-preserving
+transformations.
+
+* `spirv-fuzz` - the standalone fuzzer
+  * `<spirv-dir>/tools/fuzz`
+
+Run `spirv-fuzz --help` for a detailed list of options.
 
 ### Control flow dumper tool
 

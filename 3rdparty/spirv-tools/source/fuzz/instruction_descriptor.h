@@ -43,6 +43,10 @@ protobufs::InstructionDescriptor MakeInstructionDescriptor(
     const opt::BasicBlock& block,
     const opt::BasicBlock::const_iterator& inst_it);
 
+// Returns an InstructionDescriptor that describes the given instruction |inst|.
+protobufs::InstructionDescriptor MakeInstructionDescriptor(
+    opt::IRContext* context, opt::Instruction* inst);
+
 }  // namespace fuzz
 }  // namespace spvtools
 

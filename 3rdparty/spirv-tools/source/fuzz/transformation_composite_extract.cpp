@@ -99,6 +99,8 @@ void TransformationCompositeExtract::Apply(
 
   fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
 
+  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+
   // Add the fact that the id storing the extracted element is synonymous with
   // the index into the structure.
   std::vector<uint32_t> indices;

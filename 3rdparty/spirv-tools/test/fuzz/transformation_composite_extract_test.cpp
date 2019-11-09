@@ -173,17 +173,23 @@ TEST(TransformationCompositeExtractTest, BasicTest) {
   ASSERT_TRUE(IsValid(env, context.get()));
 
   ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(201, {}),
-                                        MakeDataDescriptor(100, {2})));
+                                        MakeDataDescriptor(100, {2}),
+                                        context.get()));
   ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(202, {}),
-                                        MakeDataDescriptor(104, {0, 2})));
+                                        MakeDataDescriptor(104, {0, 2}),
+                                        context.get()));
   ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(203, {}),
-                                        MakeDataDescriptor(104, {0})));
+                                        MakeDataDescriptor(104, {0}),
+                                        context.get()));
   ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(204, {}),
-                                        MakeDataDescriptor(101, {0})));
+                                        MakeDataDescriptor(101, {0}),
+                                        context.get()));
   ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(205, {}),
-                                        MakeDataDescriptor(102, {2})));
+                                        MakeDataDescriptor(102, {2}),
+                                        context.get()));
   ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(206, {}),
-                                        MakeDataDescriptor(103, {1})));
+                                        MakeDataDescriptor(103, {1}),
+                                        context.get()));
 
   std::string after_transformation = R"(
                OpCapability Shader

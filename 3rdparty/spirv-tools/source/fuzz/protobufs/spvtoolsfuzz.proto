@@ -189,6 +189,7 @@ message Transformation {
     TransformationAddNoContractionDecoration add_no_contraction_decoration = 19;
     TransformationSetMemoryOperandsMask set_memory_operands_mask = 20;
     TransformationCompositeExtract composite_extract = 21;
+    TransformationVectorShuffle vector_shuffle = 22;
     // Add additional option using the next available number.
   }
 }
@@ -431,19 +432,15 @@ message TransformationReplaceConstantWithUniform {
 
 message TransformationReplaceIdWithSynonym {
 
-  // Replaces an id use with something known to be synonymous with that id use,
-  // e.g. because it was obtained via applying OpCopyObject
+  // Replaces a use of an id with an id that is known to be synonymous, e.g.
+  // because it was obtained via applying OpCopyObject
 
-  // Identifies the id use that is to be replaced
+  // The id use that is to be replaced
   IdUseDescriptor id_use_descriptor = 1;
 
-  // Identifies the data with which the id use is expected to be synonymous
-  DataDescriptor data_descriptor = 2;
+  // The synonymous id
+  uint32 synonymous_id = 2;
 
-  // In the case that a temporary is required to express the synonym (e.g. to
-  // obtain an element of a vector, provides a fresh id for the temporary;
-  // should be set to 0 if no temporary is required
-  uint32 fresh_id_for_temporary = 3;
 }
 
 message TransformationSetFunctionControl {
@@ -535,5 +532,27 @@ message TransformationSplitBlock {
   // earlier transformations, it may inhibit later transformations from
   // applying.
   uint32 fresh_id = 2;
+
+}
+
+message TransformationVectorShuffle {
+
+  // A transformation that adds a vector shuffle instruction.
+
+  // A descriptor for an instruction in a block before which the new
+  // OpVectorShuffle instruction should be inserted
+  InstructionDescriptor instruction_to_insert_before = 1;
+
+  // Result id for the shuffle operation.
+  uint32 fresh_id = 2;
+
+  // Id of the first vector operand.
+  uint32 vector1 = 3;
+
+  // Id of the second vector operand.
+  uint32 vector2 = 4;
+
+  // Indices that indicate which components of the input vectors should be used.
+  repeated uint32 component = 5;
 
 }

@@ -31,13 +31,9 @@ TransformationReplaceIdWithSynonym::TransformationReplaceIdWithSynonym(
     : message_(message) {}
 
 TransformationReplaceIdWithSynonym::TransformationReplaceIdWithSynonym(
-    protobufs::IdUseDescriptor id_use_descriptor,
-    protobufs::DataDescriptor data_descriptor,
-    uint32_t fresh_id_for_temporary) {
-  assert((fresh_id_for_temporary == 0) == (data_descriptor.index().empty()));
+    protobufs::IdUseDescriptor id_use_descriptor, uint32_t synonymous_id) {
   *message_.mutable_id_use_descriptor() = std::move(id_use_descriptor);
-  *message_.mutable_data_descriptor() = std::move(data_descriptor);
-  message_.set_fresh_id_for_temporary(fresh_id_for_temporary);
+  message_.set_synonymous_id(synonymous_id);
 }
 
 bool TransformationReplaceIdWithSynonym::IsApplicable(
@@ -46,18 +42,10 @@ bool TransformationReplaceIdWithSynonym::IsApplicable(
   auto id_of_interest = message_.id_use_descriptor().id_of_interest();
 
   // Does the fact manager know about the synonym?
-  auto ids_with_known_synonyms = fact_manager.GetIdsForWhichSynonymsAreKnown();
-  if (std::find(ids_with_known_synonyms.begin(), ids_with_known_synonyms.end(),
-                id_of_interest) == ids_with_known_synonyms.end()) {
-    return false;
-  }
-
-  auto available_synonyms = fact_manager.GetSynonymsForId(id_of_interest);
-  if (std::find_if(available_synonyms.begin(), available_synonyms.end(),
-                   [this](const protobufs::DataDescriptor* dd) -> bool {
-                     return DataDescriptorEquals()(dd,
-                                                   &message_.data_descriptor());
-                   }) == available_synonyms.end()) {
+  auto data_descriptor_for_synonymous_id =
+      MakeDataDescriptor(message_.synonymous_id(), {});
+  if (!fact_manager.IsSynonymous(MakeDataDescriptor(id_of_interest, {}),
+                                 data_descriptor_for_synonymous_id, context)) {
     return false;
   }
 
@@ -68,34 +56,18 @@ bool TransformationReplaceIdWithSynonym::IsApplicable(
     return false;
   }
 
-  // Is it legitimate to replace the use identified by the id use descriptor
-  // with a synonym?
-  if (!ReplacingUseWithSynonymIsOk(
+  // Is the use suitable for being replaced in principle?
+  if (!UseCanBeReplacedWithSynonym(
           context, use_instruction,
-          message_.id_use_descriptor().in_operand_index(),
-          message_.data_descriptor())) {
+          message_.id_use_descriptor().in_operand_index())) {
     return false;
   }
 
-  if (message_.fresh_id_for_temporary() == 0) {
-    if (!message_.data_descriptor().index().empty()) {
-      // If we have no id to use as a temporary variable, we should not have any
-      // indices to extract from.
-      return false;
-    }
-  } else {
-    if (!fuzzerutil::IsFreshId(context, message_.fresh_id_for_temporary())) {
-      // The id to be used as a temporary needs to be fresh.
-      return false;
-    }
-    if (message_.data_descriptor().index_size() != 1) {
-      // At present we support just a single index to allow extracting directly
-      // from a composite.
-      return false;
-    }
-  }
-
-  return true;
+  // The transformation is applicable if the synonymous id is available at the
+  // use point.
+  return IdsIsAvailableAtUse(context, use_instruction,
+                             message_.id_use_descriptor().in_operand_index(),
+                             message_.synonymous_id());
 }
 
 void TransformationReplaceIdWithSynonym::Apply(
@@ -103,77 +75,9 @@ void TransformationReplaceIdWithSynonym::Apply(
     spvtools::fuzz::FactManager* /*unused*/) const {
   auto instruction_to_change =
       FindInstructionContainingUse(message_.id_use_descriptor(), context);
-
-  // Ultimately we are going to replace the id use identified in the
-  // transformation with |replacement_id|, which will either be the synonym's
-  // id, or the id of a temporary used to extract the synonym from a composite.
-  uint32_t replacement_id;
-
-  if (message_.fresh_id_for_temporary()) {
-    // The transformation having a temporary variable means that we need to
-    // extract the synonym from a composite.
-
-    uint32_t type_id_of_id_to_be_replaced =
-        context->get_def_use_mgr()
-            ->GetDef(message_.id_use_descriptor().id_of_interest())
-            ->type_id();
-    opt::analysis::Type* type_of_id_to_be_replaced =
-        context->get_type_mgr()->GetType(type_id_of_id_to_be_replaced);
-    opt::analysis::Type* type_of_composite = context->get_type_mgr()->GetType(
-        context->get_def_use_mgr()
-            ->GetDef(message_.data_descriptor().object())
-            ->type_id());
-
-    // Intuitively we want to make an OpCompositeExtract instruction, to get the
-    // synonym out of the composite. But in the case of a vector, the synonym
-    // might involve multiple vector indices; e.g. the y and z components of a
-    // vec4 might be synonymous with a vec2, and in that case OpCompositeExtract
-    // doesn't give us what we want; we need to use OpVectorShuffle instead.
-    std::unique_ptr<opt::Instruction> new_instruction;
-    if (type_of_composite->AsVector() &&
-        type_of_composite->AsVector()->element_type() !=
-            type_of_id_to_be_replaced) {
-      // We need to extract a vector from inside a vector, so we will need to
-      // use OpVectorShuffle.
-
-      assert(type_of_id_to_be_replaced->AsVector());
-      assert(type_of_id_to_be_replaced->AsVector()->element_type() ==
-             type_of_composite->AsVector()->element_type());
-      opt::Instruction::OperandList shuffle_operands = {
-          {SPV_OPERAND_TYPE_ID, {message_.data_descriptor().object()}},
-          {SPV_OPERAND_TYPE_ID, {message_.data_descriptor().object()}}};
-      for (uint32_t i = 0;
-           i < type_of_id_to_be_replaced->AsVector()->element_count(); i++) {
-        shuffle_operands.push_back({SPV_OPERAND_TYPE_LITERAL_INTEGER,
-                                    {message_.data_descriptor().index(0) + i}});
-      }
-      new_instruction = MakeUnique<opt::Instruction>(
-          context, SpvOpVectorShuffle, type_id_of_id_to_be_replaced,
-          message_.fresh_id_for_temporary(), shuffle_operands);
-    } else {
-      // We are either extracting from a non-vector, or extracting a scalar from
-      // a vector, so we can use OpCompositeExtract.
-      opt::Instruction::OperandList extract_operands = {
-          {SPV_OPERAND_TYPE_ID, {message_.data_descriptor().object()}},
-          {SPV_OPERAND_TYPE_LITERAL_INTEGER,
-           {message_.data_descriptor().index(0)}}};
-      new_instruction = MakeUnique<opt::Instruction>(
-          context, SpvOpCompositeExtract, type_id_of_id_to_be_replaced,
-          message_.fresh_id_for_temporary(), extract_operands);
-    }
-    instruction_to_change->InsertBefore(std::move(new_instruction));
-
-    // The replacement id is the temporary variable we used to extract the
-    // synonym from a composite.
-    replacement_id = message_.fresh_id_for_temporary();
-    fuzzerutil::UpdateModuleIdBound(context, replacement_id);
-  } else {
-    // The replacement id is the synonym's id.
-    replacement_id = message_.data_descriptor().object();
-  }
-
   instruction_to_change->SetInOperand(
-      message_.id_use_descriptor().in_operand_index(), {replacement_id});
+      message_.id_use_descriptor().in_operand_index(),
+      {message_.synonymous_id()});
   context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
 }
 
@@ -184,22 +88,33 @@ protobufs::Transformation TransformationReplaceIdWithSynonym::ToMessage()
   return result;
 }
 
-bool TransformationReplaceIdWithSynonym::ReplacingUseWithSynonymIsOk(
+bool TransformationReplaceIdWithSynonym::IdsIsAvailableAtUse(
     opt::IRContext* context, opt::Instruction* use_instruction,
-    uint32_t use_in_operand_index, const protobufs::DataDescriptor& synonym) {
-  auto defining_instruction =
-      context->get_def_use_mgr()->GetDef(synonym.object());
-
-  if (use_instruction == defining_instruction) {
-    // If we have an instruction:
-    //   %a = OpCopyObject %t %b
-    // then we know %a and %b are synonymous, but we do *not* want to turn
-    // this into:
-    //   %a = OpCopyObject %t %a
-    // We require this special case because an instruction dominates itself.
+    uint32_t use_input_operand_index, uint32_t id) {
+  if (!context->get_instr_block(id)) {
+    return true;
+  }
+  auto defining_instruction = context->get_def_use_mgr()->GetDef(id);
+  if (defining_instruction == use_instruction) {
     return false;
   }
+  auto dominator_analysis = context->GetDominatorAnalysis(
+      context->get_instr_block(use_instruction)->GetParent());
+  if (use_instruction->opcode() == SpvOpPhi) {
+    // In the case where the use is an operand to OpPhi, it is actually the
+    // *parent* block associated with the operand that must be dominated by
+    // the synonym.
+    auto parent_block =
+        use_instruction->GetSingleWordInOperand(use_input_operand_index + 1);
+    return dominator_analysis->Dominates(
+        context->get_instr_block(defining_instruction)->id(), parent_block);
+  }
+  return dominator_analysis->Dominates(defining_instruction, use_instruction);
+}
 
+bool TransformationReplaceIdWithSynonym::UseCanBeReplacedWithSynonym(
+    opt::IRContext* context, opt::Instruction* use_instruction,
+    uint32_t use_in_operand_index) {
   if (use_instruction->opcode() == SpvOpAccessChain &&
       use_in_operand_index > 0) {
     // This is an access chain index.  If the (sub-)object being accessed by the
@@ -270,31 +185,6 @@ bool TransformationReplaceIdWithSynonym::ReplacingUseWithSynonymIsOk(
     auto parameter_type = context->get_type_mgr()->GetType(
         function_type->GetSingleWordInOperand(use_in_operand_index));
     if (parameter_type->AsPointer()) {
-      return false;
-    }
-  }
-
-  // We now need to check that replacing the use with the synonym will respect
-  // dominance rules - i.e. the synonym needs to dominate the use.
-  // This is only relevant if the defining instruction is in a block; if it is
-  // not in a block then it is at global scope, and so replacing the use with it
-  // is fine.
-  if (context->get_instr_block(defining_instruction)) {
-    auto dominator_analysis = context->GetDominatorAnalysis(
-        context->get_instr_block(use_instruction)->GetParent());
-    if (use_instruction->opcode() == SpvOpPhi) {
-      // In the case where the use is an operand to OpPhi, it is actually the
-      // *parent* block associated with the operand that must be dominated by
-      // the synonym.
-      auto parent_block =
-          use_instruction->GetSingleWordInOperand(use_in_operand_index + 1);
-      if (!dominator_analysis->Dominates(
-              context->get_instr_block(defining_instruction)->id(),
-              parent_block)) {
-        return false;
-      }
-    } else if (!dominator_analysis->Dominates(defining_instruction,
-                                              use_instruction)) {
       return false;
     }
   }

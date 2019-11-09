@@ -118,6 +118,28 @@ TEST(EquivalenceRelationTest, BasicTest) {
   }
 }
 
+TEST(EquivalenceRelationTest, DeterministicEquivalenceClassOrder) {
+  EquivalenceRelation<uint32_t, UInt32Hash, UInt32Equals> relation1;
+  EquivalenceRelation<uint32_t, UInt32Hash, UInt32Equals> relation2;
+
+  for (uint32_t i = 0; i < 1000; ++i) {
+    if (i >= 10) {
+      relation1.MakeEquivalent(i, i - 10);
+      relation2.MakeEquivalent(i, i - 10);
+    }
+  }
+
+  // We constructed the equivalence relations in the same way, so we would like
+  // them to have identical representatives, and identically-ordered equivalence
+  // classes per representative.
+  ASSERT_THAT(ToUIntVector(relation1.GetEquivalenceClassRepresentatives()),
+              ToUIntVector(relation2.GetEquivalenceClassRepresentatives()));
+  for (auto representative : relation1.GetEquivalenceClassRepresentatives()) {
+    ASSERT_THAT(ToUIntVector(relation1.GetEquivalenceClass(*representative)),
+                ToUIntVector(relation2.GetEquivalenceClass(*representative)));
+  }
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools
