@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.15)
+    cmake_policy(SET CMP0091 NEW) # Enables use of MSVC_RUNTIME_LIBRARY
+    cmake_policy(SET CMP0092 NEW) # Enables clean /W4 override for MSVC
+endif()
+
 project(meshoptimizer VERSION 0.12 LANGUAGES CXX)
 
 option(BUILD_DEMO "Build demo" OFF)

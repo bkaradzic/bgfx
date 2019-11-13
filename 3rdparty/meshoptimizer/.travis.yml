@@ -1,6 +1,7 @@
 language: cpp
 
 jobs:
+  include:
   - os: linux
     compiler: gcc
   - os: linux

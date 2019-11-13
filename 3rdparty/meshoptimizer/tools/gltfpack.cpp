@@ -73,7 +73,7 @@ struct Settings
 	int pos_bits;
 	int tex_bits;
 	int nrm_bits;
-	bool nrm_unit;
+	bool nrm_unnormalized;
 
 	int anim_freq;
 	bool anim_const;
@@ -841,6 +841,29 @@ void reindexMesh(Mesh& mesh)
 	}
 }
 
+void filterMesh(Mesh& mesh)
+{
+	unsigned int* indices = &mesh.indices[0];
+	size_t total_indices = mesh.indices.size();
+
+	size_t write = 0;
+
+	for (size_t i = 0; i < total_indices; i += 3)
+	{
+		unsigned int a = indices[i + 0], b = indices[i + 1], c = indices[i + 2];
+
+		if (a != b && a != c && b != c)
+		{
+			indices[write + 0] = a;
+			indices[write + 1] = b;
+			indices[write + 2] = c;
+			write += 3;
+		}
+	}
+
+	mesh.indices.resize(write);
+}
+
 Stream* getStream(Mesh& mesh, cgltf_attribute_type type)
 {
 	for (size_t i = 0; i < mesh.streams.size(); ++i)
@@ -922,6 +945,9 @@ void sortBoneInfluences(Mesh& mesh)
 	if (!joints || !weights)
 		return;
 
+	// weights below cutoff can't be represented in quantized 8-bit storage
+	const float weight_cutoff = 0.5f / 255.f;
+
 	size_t vertex_count = mesh.streams[0].data.size();
 
 	for (size_t i = 0; i < vertex_count; ++i)
@@ -933,7 +959,7 @@ void sortBoneInfluences(Mesh& mesh)
 		int count = 0;
 
 		for (int k = 0; k < 4; ++k)
-			if (wa.f[k] > 0.f)
+			if (wa.f[k] > weight_cutoff)
 			{
 				inf[count].i = ja.f[k];
 				inf[count].w = wa.f[k];
@@ -1156,20 +1182,51 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 		{
 			float pos_rscale = params.pos_scale == 0.f ? 0.f : 1.f / params.pos_scale;
 
+			int maxv = 0;
+
 			for (size_t i = 0; i < stream.data.size(); ++i)
 			{
 				const Attr& a = stream.data[i];
 
-				int16_t v[4] = {
-				    int16_t((a.f[0] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits)),
-				    int16_t((a.f[1] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits)),
-				    int16_t((a.f[2] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits)),
-				    0};
-				bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+				maxv = std::max(maxv, meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits));
+				maxv = std::max(maxv, meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits));
+				maxv = std::max(maxv, meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits));
 			}
 
-			StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_16, false, 8};
-			return format;
+			if (maxv <= 127)
+			{
+				for (size_t i = 0; i < stream.data.size(); ++i)
+				{
+					const Attr& a = stream.data[i];
+
+					int8_t v[4] = {
+					    int8_t((a.f[0] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits)),
+					    int8_t((a.f[1] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits)),
+					    int8_t((a.f[2] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits)),
+					    0};
+					bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+				}
+
+				StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_8, false, 4};
+				return format;
+			}
+			else
+			{
+				for (size_t i = 0; i < stream.data.size(); ++i)
+				{
+					const Attr& a = stream.data[i];
+
+					int16_t v[4] = {
+					    int16_t((a.f[0] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits)),
+					    int16_t((a.f[1] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits)),
+					    int16_t((a.f[2] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits)),
+					    0};
+					bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+				}
+
+				StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_16, false, 8};
+				return format;
+			}
 		}
 	}
 	else if (stream.type == cgltf_attribute_type_texcoord)
@@ -1195,8 +1252,8 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 	}
 	else if (stream.type == cgltf_attribute_type_normal)
 	{
-		bool nrm_unit = has_targets || settings.nrm_unit;
-		int bits = nrm_unit ? (settings.nrm_bits > 8 ? 16 : 8) : settings.nrm_bits;
+		bool unnormalized = settings.nrm_unnormalized && !has_targets;
+		int bits = unnormalized ? settings.nrm_bits : (settings.nrm_bits > 8 ? 16 : 8);
 
 		for (size_t i = 0; i < stream.data.size(); ++i)
 		{
@@ -1204,7 +1261,7 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 
 			float nx = a.f[0], ny = a.f[1], nz = a.f[2];
 
-			if (!nrm_unit)
+			if (unnormalized)
 				rescaleNormal(nx, ny, nz);
 
 			if (bits > 8)
@@ -1240,8 +1297,8 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 	}
 	else if (stream.type == cgltf_attribute_type_tangent)
 	{
-		bool nrm_unit = has_targets || settings.nrm_unit;
-		int bits = nrm_unit ? (settings.nrm_bits > 8 ? 16 : 8) : settings.nrm_bits;
+		bool unnormalized = settings.nrm_unnormalized && !has_targets;
+		int bits = unnormalized ? settings.nrm_bits : (settings.nrm_bits > 8 ? 16 : 8);
 
 		for (size_t i = 0; i < stream.data.size(); ++i)
 		{
@@ -1249,7 +1306,7 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 
 			float nx = a.f[0], ny = a.f[1], nz = a.f[2], nw = a.f[3];
 
-			if (!nrm_unit)
+			if (unnormalized)
 				rescaleNormal(nx, ny, nz);
 
 			if (bits > 8)
@@ -3143,6 +3200,7 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 
 		case cgltf_primitive_type_triangles:
 			reindexMesh(mesh);
+			filterMesh(mesh);
 			simplifyMesh(mesh, settings.simplify_threshold, settings.simplify_aggressive);
 			optimizeMesh(mesh);
 			sortBoneInfluences(mesh);
@@ -3443,8 +3501,9 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 		json.append(data->json + data->asset.extras.start_offset, data->json + data->asset.extras.end_offset);
 	}
 	append(json, "}");
+
 	append(json, ",\"extensionsUsed\":[");
-	append(json, "\"MESHOPT_quantized_geometry\"");
+	append(json, "\"KHR_quantized_geometry\"");
 	if (settings.compress)
 	{
 		comma(json);
@@ -3471,16 +3530,15 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 		append(json, "\"KHR_lights_punctual\"");
 	}
 	append(json, "]");
+
+	append(json, ",\"extensionsRequired\":[");
+	append(json, "\"KHR_quantized_geometry\"");
 	if (settings.compress && !settings.fallback)
 	{
-		append(json, ",\"extensionsRequired\":[");
-		// Note: ideally we should include MESHOPT_quantized_geometry in the required extension list (regardless of compression)
-		// This extension *only* allows the use of quantized attributes for positions/normals/etc. This happens to be supported
-		// by popular JS frameworks, however, Babylon.JS refuses to load files with unsupported required extensions.
-		// For now we don't include it in the list, which will be fixed at some point once this extension becomes official.
+		comma(json);
 		append(json, "\"MESHOPT_compression\"");
-		append(json, "]");
 	}
+	append(json, "]");
 
 	if (!views.empty())
 	{
@@ -3833,7 +3891,7 @@ int main(int argc, char** argv)
 		}
 		else if (strcmp(arg, "-vu") == 0)
 		{
-			settings.nrm_unit = true;
+			settings.nrm_unnormalized = true;
 		}
 		else if (strcmp(arg, "-af") == 0 && i + 1 < argc && isdigit(argv[i + 1][0]))
 		{
@@ -3917,7 +3975,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "-vp N: use N-bit quantization for positions (default: 14; N should be between 1 and 16)\n");
 		fprintf(stderr, "-vt N: use N-bit quantization for texture corodinates (default: 12; N should be between 1 and 16)\n");
 		fprintf(stderr, "-vn N: use N-bit quantization for normals and tangents (default: 8; N should be between 1 and 16)\n");
-		fprintf(stderr, "-vu: use unit-length normal/tangent vectors (default: off)\n");
+		fprintf(stderr, "-vu: use unnormalized normal/tangent vectors to improve compression (default: off)\n");
 		fprintf(stderr, "-af N: resample animations at N Hz (default: 30)\n");
 		fprintf(stderr, "-ac: keep constant animation tracks even if they don't modify the node transform\n");
 		fprintf(stderr, "-kn: keep named nodes and meshes attached to named nodes so that named nodes can be transformed externally\n");
