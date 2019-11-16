@@ -769,6 +769,26 @@ spvc_variable_id spvc_compiler_hlsl_remap_num_workgroups_builtin(spvc_compiler c
 #endif
 }
 
+spvc_result spvc_compiler_hlsl_set_resource_binding_flags(spvc_compiler compiler,
+                                                          spvc_hlsl_binding_flags flags)
+{
+#if SPIRV_CROSS_C_API_HLSL
+	if (compiler->backend != SPVC_BACKEND_HLSL)
+	{
+		compiler->context->report_error("HLSL function used on a non-HLSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &hlsl = *static_cast<CompilerHLSL *>(compiler->compiler.get());
+	hlsl.set_resource_binding_flags(flags);
+	return SPVC_SUCCESS;
+#else
+	(void)flags;
+	compiler->context->report_error("HLSL function used on a non-HLSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
 spvc_bool spvc_compiler_msl_is_rasterization_disabled(spvc_compiler compiler)
 {
 #if SPIRV_CROSS_C_API_MSL

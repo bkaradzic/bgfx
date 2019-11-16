@@ -552,6 +552,7 @@ struct CLIArguments
 	bool hlsl = false;
 	bool hlsl_compat = false;
 	bool hlsl_support_nonzero_base = false;
+	HLSLBindingFlags hlsl_binding_flags = 0;
 	bool vulkan_semantics = false;
 	bool flatten_multidimensional_arrays = false;
 	bool use_420pack_extension = true;
@@ -614,6 +615,7 @@ static void print_help()
 	                "\t[--shader-model]\n"
 	                "\t[--hlsl-enable-compat]\n"
 	                "\t[--hlsl-support-nonzero-basevertex-baseinstance]\n"
+	                "\t[--hlsl-auto-binding (push, cbv, srv, uav, sampler, all)]\n"
 	                "\t[--separate-shader-objects]\n"
 	                "\t[--pls-in format input-name]\n"
 	                "\t[--pls-out format output-name]\n"
@@ -734,6 +736,27 @@ static ExecutionModel stage_to_execution_model(const std::string &stage)
 		return ExecutionModelGeometry;
 	else
 		SPIRV_CROSS_THROW("Invalid stage.");
+}
+
+static HLSLBindingFlags hlsl_resource_type_to_flag(const std::string &arg)
+{
+	if (arg == "push")
+		return HLSL_BINDING_AUTO_PUSH_CONSTANT_BIT;
+	else if (arg == "cbv")
+		return HLSL_BINDING_AUTO_CBV_BIT;
+	else if (arg == "srv")
+		return HLSL_BINDING_AUTO_SRV_BIT;
+	else if (arg == "uav")
+		return HLSL_BINDING_AUTO_UAV_BIT;
+	else if (arg == "sampler")
+		return HLSL_BINDING_AUTO_SAMPLER_BIT;
+	else if (arg == "all")
+		return HLSL_BINDING_AUTO_ALL;
+	else
+	{
+		fprintf(stderr, "Invalid resource type for --hlsl-auto-binding: %s\n", arg.c_str());
+		return 0;
+	}
 }
 
 static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> spirv_file)
@@ -939,6 +962,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 
 		hlsl_opts.support_nonzero_base_vertex_base_instance = args.hlsl_support_nonzero_base;
 		hlsl->set_hlsl_options(hlsl_opts);
+		hlsl->set_resource_binding_flags(args.hlsl_binding_flags);
 	}
 
 	if (build_dummy_sampler)
@@ -1089,6 +1113,9 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--hlsl-enable-compat", [&args](CLIParser &) { args.hlsl_compat = true; });
 	cbs.add("--hlsl-support-nonzero-basevertex-baseinstance",
 	        [&args](CLIParser &) { args.hlsl_support_nonzero_base = true; });
+	cbs.add("--hlsl-auto-binding", [&args](CLIParser &parser) {
+		args.hlsl_binding_flags |= hlsl_resource_type_to_flag(parser.next_string());
+	});
 	cbs.add("--vulkan-semantics", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("--flatten-multidimensional-arrays", [&args](CLIParser &) { args.flatten_multidimensional_arrays = true; });
 	cbs.add("--no-420pack-extension", [&args](CLIParser &) { args.use_420pack_extension = false; });

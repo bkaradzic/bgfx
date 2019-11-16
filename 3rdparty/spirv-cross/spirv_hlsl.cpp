@@ -1980,7 +1980,7 @@ void CompilerHLSL::emit_push_constant_block(const SPIRVariable &var)
 			auto &memb = ir.meta[type.self].members;
 
 			statement("cbuffer SPIRV_CROSS_RootConstant_", to_name(var.self),
-			          to_resource_register('b', layout.binding, layout.space));
+			          to_resource_register(HLSL_BINDING_AUTO_PUSH_CONSTANT_BIT, 'b', layout.binding, layout.space));
 			begin_scope();
 
 			// Index of the next field in the generated root constant constant buffer
@@ -2943,21 +2943,31 @@ string CompilerHLSL::to_resource_binding(const SPIRVariable &var)
 	const auto &type = get<SPIRType>(var.basetype);
 	char space = '\0';
 
+	HLSLBindingFlags resource_flags = 0;
+
 	switch (type.basetype)
 	{
 	case SPIRType::SampledImage:
 		space = 't'; // SRV
+		resource_flags = HLSL_BINDING_AUTO_SRV_BIT;
 		break;
 
 	case SPIRType::Image:
 		if (type.image.sampled == 2 && type.image.dim != DimSubpassData)
+		{
 			space = 'u'; // UAV
+			resource_flags = HLSL_BINDING_AUTO_UAV_BIT;
+		}
 		else
+		{
 			space = 't'; // SRV
+			resource_flags = HLSL_BINDING_AUTO_SRV_BIT;
+		}
 		break;
 
 	case SPIRType::Sampler:
 		space = 's';
+		resource_flags = HLSL_BINDING_AUTO_SAMPLER_BIT;
 		break;
 
 	case SPIRType::Struct:
@@ -2970,18 +2980,26 @@ string CompilerHLSL::to_resource_binding(const SPIRVariable &var)
 				Bitset flags = ir.get_buffer_block_flags(var);
 				bool is_readonly = flags.get(DecorationNonWritable);
 				space = is_readonly ? 't' : 'u'; // UAV
+				resource_flags = is_readonly ? HLSL_BINDING_AUTO_SRV_BIT : HLSL_BINDING_AUTO_UAV_BIT;
 			}
 			else if (has_decoration(type.self, DecorationBlock))
+			{
 				space = 'b'; // Constant buffers
+				resource_flags = HLSL_BINDING_AUTO_CBV_BIT;
+			}
 		}
 		else if (storage == StorageClassPushConstant)
+		{
 			space = 'b'; // Constant buffers
+			resource_flags = HLSL_BINDING_AUTO_PUSH_CONSTANT_BIT;
+		}
 		else if (storage == StorageClassStorageBuffer)
 		{
 			// UAV or SRV depending on readonly flag.
 			Bitset flags = ir.get_buffer_block_flags(var);
 			bool is_readonly = flags.get(DecorationNonWritable);
 			space = is_readonly ? 't' : 'u';
+			resource_flags = is_readonly ? HLSL_BINDING_AUTO_SRV_BIT : HLSL_BINDING_AUTO_UAV_BIT;
 		}
 
 		break;
@@ -2993,7 +3011,7 @@ string CompilerHLSL::to_resource_binding(const SPIRVariable &var)
 	if (!space)
 		return "";
 
-	return to_resource_register(space, get_decoration(var.self, DecorationBinding),
+	return to_resource_register(resource_flags, space, get_decoration(var.self, DecorationBinding),
 	                            get_decoration(var.self, DecorationDescriptorSet));
 }
 
@@ -3003,16 +3021,21 @@ string CompilerHLSL::to_resource_binding_sampler(const SPIRVariable &var)
 	if (!has_decoration(var.self, DecorationBinding))
 		return "";
 
-	return to_resource_register('s', get_decoration(var.self, DecorationBinding),
+	return to_resource_register(HLSL_BINDING_AUTO_SAMPLER_BIT, 's', get_decoration(var.self, DecorationBinding),
 	                            get_decoration(var.self, DecorationDescriptorSet));
 }
 
-string CompilerHLSL::to_resource_register(char space, uint32_t binding, uint32_t space_set)
+string CompilerHLSL::to_resource_register(uint32_t flags, char space, uint32_t binding, uint32_t space_set)
 {
-	if (hlsl_options.shader_model >= 51)
-		return join(" : register(", space, binding, ", space", space_set, ")");
+	if ((flags & resource_binding_flags) == 0)
+	{
+		if (hlsl_options.shader_model >= 51)
+			return join(" : register(", space, binding, ", space", space_set, ")");
+		else
+			return join(" : register(", space, binding, ")");
+	}
 	else
-		return join(" : register(", space, binding, ")");
+		return "";
 }
 
 void CompilerHLSL::emit_modern_uniform(const SPIRVariable &var)
@@ -4891,6 +4914,11 @@ VariableID CompilerHLSL::remap_num_workgroups_builtin()
 
 	num_workgroups_builtin = variable_id;
 	return variable_id;
+}
+
+void CompilerHLSL::set_resource_binding_flags(HLSLBindingFlags flags)
+{
+	resource_binding_flags = flags;
 }
 
 void CompilerHLSL::validate_shader_model()
