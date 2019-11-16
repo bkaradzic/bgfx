@@ -1129,6 +1129,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpLit:
     case EOpMax:
     case EOpMin:
+    case EOpMod:
     case EOpModf:
     case EOpPow:
     case EOpReflect:

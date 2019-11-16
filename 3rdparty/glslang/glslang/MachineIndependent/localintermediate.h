@@ -229,10 +229,6 @@ class TIntermediate {
 public:
     explicit TIntermediate(EShLanguage l, int v = 0, EProfile p = ENoProfile) :
         language(l),
-#ifdef ENABLE_HLSL
-        implicitThisName("@this"), implicitCounterName("@count"),
-        source(EShSourceNone),
-#endif
         profile(p), version(v), treeRoot(0),
         numEntryPoints(0), numErrors(0), numPushConstants(0), recursive(false),
         invertY(false),
@@ -241,6 +237,8 @@ public:
         depthReplacing(false)
 #ifndef GLSLANG_WEB
         ,
+        implicitThisName("@this"), implicitCounterName("@count"),
+        source(EShSourceNone),
         useVulkanMemoryModel(false),
         invocations(TQualifier::layoutNotSet), vertices(TQualifier::layoutNotSet),
         inputPrimitive(ElgNone), outputPrimitive(ElgNone),
@@ -895,13 +893,6 @@ protected:
     static const char* getResourceName(TResourceType);
 
     const EShLanguage language;  // stage, known at construction time
-#ifdef ENABLE_HLSL
-public:
-    const char* const implicitThisName;
-    const char* const implicitCounterName;
-protected:
-    EShSource source;            // source language, known a bit later
-#endif
     std::string entryPointName;
     std::string entryPointMangledName;
     typedef std::list<TCall> TGraph;
@@ -925,6 +916,11 @@ protected:
     bool localSizeNotDefault[3];
     int localSizeSpecId[3];
 #ifndef GLSLANG_WEB
+public:
+    const char* const implicitThisName;
+    const char* const implicitCounterName;
+protected:
+    EShSource source;            // source language, known a bit later
     bool useVulkanMemoryModel;
     int invocations;
     int vertices;
