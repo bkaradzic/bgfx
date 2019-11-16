@@ -7,8 +7,8 @@
 // files can be further compressed with deflate/etc.
 //
 // To load regular glb files, it should be sufficient to use a standard glTF loader (although note that these files
-// use quantized position/texture coordinates that are technically invalid per spec; THREE.js and BabylonJS support
-// these files out of the box).
+// use quantized position/texture coordinates that require support for KHR_mesh_quantization; THREE.js and BabylonJS
+// support these files out of the box).
 // To load packed glb files, meshoptimizer vertex decoder needs to be integrated into the loader; demo/GLTFLoader.js
 // contains a work-in-progress loader - please note that the extension specification isn't ready yet so the format
 // will change!
@@ -864,10 +864,10 @@ void filterMesh(Mesh& mesh)
 	mesh.indices.resize(write);
 }
 
-Stream* getStream(Mesh& mesh, cgltf_attribute_type type)
+Stream* getStream(Mesh& mesh, cgltf_attribute_type type, int index = 0)
 {
 	for (size_t i = 0; i < mesh.streams.size(); ++i)
-		if (mesh.streams[i].type == type)
+		if (mesh.streams[i].type == type && mesh.streams[i].index == index)
 			return &mesh.streams[i];
 
 	return 0;
@@ -930,19 +930,44 @@ struct BoneInfluence
 {
 	float i;
 	float w;
+};
 
-	bool operator<(const BoneInfluence& other) const
+struct BoneInfluenceIndexPredicate
+{
+	bool operator()(const BoneInfluence& lhs, const BoneInfluence& rhs) const
 	{
-		return i < other.i;
+		return lhs.i < rhs.i;
 	}
 };
 
-void sortBoneInfluences(Mesh& mesh)
+struct BoneInfluenceWeightPredicate
 {
-	Stream* joints = getStream(mesh, cgltf_attribute_type_joints);
-	Stream* weights = getStream(mesh, cgltf_attribute_type_weights);
+	bool operator()(const BoneInfluence& lhs, const BoneInfluence& rhs) const
+	{
+		return lhs.w > rhs.w;
+	}
+};
 
-	if (!joints || !weights)
+void filterBones(Mesh& mesh)
+{
+	const int kMaxGroups = 8;
+
+	std::pair<Stream*, Stream*> groups[kMaxGroups];
+	int group_count = 0;
+
+	// gather all joint/weight groups; each group contains 4 bone influences
+	for (int i = 0; i < kMaxGroups; ++i)
+	{
+		Stream* jg = getStream(mesh, cgltf_attribute_type_joints, int(i));
+		Stream* wg = getStream(mesh, cgltf_attribute_type_weights, int(i));
+
+		if (!jg || !wg)
+			break;
+
+		groups[group_count++] = std::make_pair(jg, wg);
+	}
+
+	if (group_count == 0)
 		return;
 
 	// weights below cutoff can't be represented in quantized 8-bit storage
@@ -950,29 +975,61 @@ void sortBoneInfluences(Mesh& mesh)
 
 	size_t vertex_count = mesh.streams[0].data.size();
 
+	BoneInfluence inf[kMaxGroups * 4] = {};
+
 	for (size_t i = 0; i < vertex_count; ++i)
 	{
-		Attr& ja = joints->data[i];
-		Attr& wa = weights->data[i];
-
-		BoneInfluence inf[4] = {};
 		int count = 0;
 
-		for (int k = 0; k < 4; ++k)
-			if (wa.f[k] > weight_cutoff)
-			{
-				inf[count].i = ja.f[k];
-				inf[count].w = wa.f[k];
-				count++;
-			}
+		// gather all bone influences for this vertex
+		for (int j = 0; j < group_count; ++j)
+		{
+			const Attr& ja = groups[j].first->data[i];
+			const Attr& wa = groups[j].second->data[i];
 
-		std::sort(inf, inf + count);
+			for (int k = 0; k < 4; ++k)
+				if (wa.f[k] > weight_cutoff)
+				{
+					inf[count].i = ja.f[k];
+					inf[count].w = wa.f[k];
+					count++;
+				}
+		}
+
+		// pick top 4 influences - could use partial_sort but it is slower on small sets
+		std::sort(inf, inf + count, BoneInfluenceWeightPredicate());
+
+		// now sort top 4 influences by bone index - this improves compression ratio
+		std::sort(inf, inf + std::min(4, count), BoneInfluenceIndexPredicate());
+
+		// copy the top 4 influences back into stream 0 - we will remove other streams at the end
+		Attr& ja = groups[0].first->data[i];
+		Attr& wa = groups[0].second->data[i];
 
 		for (int k = 0; k < 4; ++k)
 		{
-			ja.f[k] = inf[k].i;
-			wa.f[k] = inf[k].w;
+			if (k < count)
+			{
+				ja.f[k] = inf[k].i;
+				wa.f[k] = inf[k].w;
+			}
+			else
+			{
+				ja.f[k] = 0.f;
+				wa.f[k] = 0.f;
+			}
 		}
+	}
+
+	// remove redundant weight/joint streams
+	for (size_t i = 0; i < mesh.streams.size();)
+	{
+		Stream& s = mesh.streams[i];
+
+		if ((s.type == cgltf_attribute_type_joints || s.type == cgltf_attribute_type_weights) && s.index > 0)
+			mesh.streams.erase(mesh.streams.begin() + i);
+		else
+			++i;
 	}
 }
 
@@ -1026,6 +1083,29 @@ void sortPointMesh(Mesh& mesh)
 		assert(mesh.streams[i].data.size() == vertex_count);
 
 		meshopt_remapVertexBuffer(&mesh.streams[i].data[0], &mesh.streams[i].data[0], vertex_count, sizeof(Attr), &remap[0]);
+	}
+}
+
+void processMesh(Mesh& mesh, const Settings& settings)
+{
+	switch (mesh.type)
+	{
+	case cgltf_primitive_type_points:
+		assert(mesh.indices.empty());
+		simplifyPointMesh(mesh, settings.simplify_threshold);
+		sortPointMesh(mesh);
+		break;
+
+	case cgltf_primitive_type_triangles:
+		filterBones(mesh);
+		reindexMesh(mesh);
+		filterMesh(mesh);
+		simplifyMesh(mesh, settings.simplify_threshold, settings.simplify_aggressive);
+		optimizeMesh(mesh);
+		break;
+
+	default:
+		assert(!"Unknown primitive type");
 	}
 }
 
@@ -1365,13 +1445,17 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 		{
 			const Attr& a = stream.data[i];
 
-			uint8_t v[4] = {
-			    uint8_t(meshopt_quantizeUnorm(a.f[0], 8)),
-			    uint8_t(meshopt_quantizeUnorm(a.f[1], 8)),
-			    uint8_t(meshopt_quantizeUnorm(a.f[2], 8)),
-			    uint8_t(meshopt_quantizeUnorm(a.f[3], 8))};
+			float ws = a.f[0] + a.f[1] + a.f[2] + a.f[3];
+			float wsi = (ws == 0.f) ? 0.f : 1.f / ws;
 
-			renormalizeWeights(v);
+			uint8_t v[4] = {
+			    uint8_t(meshopt_quantizeUnorm(a.f[0] * wsi, 8)),
+			    uint8_t(meshopt_quantizeUnorm(a.f[1] * wsi, 8)),
+			    uint8_t(meshopt_quantizeUnorm(a.f[2] * wsi, 8)),
+			    uint8_t(meshopt_quantizeUnorm(a.f[3] * wsi, 8))};
+
+			if (wsi != 0.f)
+				renormalizeWeights(v);
 
 			bin.append(reinterpret_cast<const char*>(v), sizeof(v));
 		}
@@ -1778,6 +1862,14 @@ void writeMaterialInfo(std::string& json, const cgltf_data* data, const cgltf_ma
 {
 	static const float white[4] = {1, 1, 1, 1};
 	static const float black[4] = {0, 0, 0, 0};
+
+	if (material.name && *material.name)
+	{
+		comma(json);
+		append(json, "\"name\":\"");
+		append(json, material.name);
+		append(json, "\"");
+	}
 
 	if (material.has_pbr_metallic_roughness)
 	{
@@ -3188,27 +3280,7 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 
 	for (size_t i = 0; i < meshes.size(); ++i)
 	{
-		Mesh& mesh = meshes[i];
-
-		switch (mesh.type)
-		{
-		case cgltf_primitive_type_points:
-			assert(mesh.indices.empty());
-			simplifyPointMesh(mesh, settings.simplify_threshold);
-			sortPointMesh(mesh);
-			break;
-
-		case cgltf_primitive_type_triangles:
-			reindexMesh(mesh);
-			filterMesh(mesh);
-			simplifyMesh(mesh, settings.simplify_threshold, settings.simplify_aggressive);
-			optimizeMesh(mesh);
-			sortBoneInfluences(mesh);
-			break;
-
-		default:
-			assert(!"Unknown primitive type");
-		}
+		processMesh(meshes[i], settings);
 	}
 
 	if (settings.verbose)
@@ -3503,7 +3575,7 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 	append(json, "}");
 
 	append(json, ",\"extensionsUsed\":[");
-	append(json, "\"KHR_quantized_geometry\"");
+	append(json, "\"KHR_mesh_quantization\"");
 	if (settings.compress)
 	{
 		comma(json);
@@ -3532,7 +3604,7 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 	append(json, "]");
 
 	append(json, ",\"extensionsRequired\":[");
-	append(json, "\"KHR_quantized_geometry\"");
+	append(json, "\"KHR_mesh_quantization\"");
 	if (settings.compress && !settings.fallback)
 	{
 		comma(json);
