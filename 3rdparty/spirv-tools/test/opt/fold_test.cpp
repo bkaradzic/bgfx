@@ -7058,6 +7058,96 @@ INSTANTIATE_TEST_SUITE_P(FloatControlsFoldingTest, FloatControlsFoldingTest,
                                  1, false)
 ));
 
+std::string ImageOperandsTestBody(const std::string& image_instruction) {
+  std::string body = R"(
+               OpCapability Shader
+               OpCapability ImageGatherExtended
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main"
+               OpExecutionMode %main OriginUpperLeft
+               OpDecorate %Texture DescriptorSet 0
+               OpDecorate %Texture Binding 0
+        %int = OpTypeInt 32 1
+     %int_n1 = OpConstant %int -1
+          %5 = OpConstant %int 0
+      %float = OpTypeFloat 32
+    %float_0 = OpConstant %float 0
+%type_2d_image = OpTypeImage %float 2D 2 0 0 1 Unknown
+%type_sampled_image = OpTypeSampledImage %type_2d_image
+%type_sampler = OpTypeSampler
+%_ptr_UniformConstant_type_sampler = OpTypePointer UniformConstant %type_sampler
+%_ptr_UniformConstant_type_2d_image = OpTypePointer UniformConstant %type_2d_image
+   %_ptr_int = OpTypePointer Function %int
+      %v2int = OpTypeVector %int 2
+         %10 = OpTypeVector %float 4
+       %void = OpTypeVoid
+         %22 = OpTypeFunction %void
+    %v2float = OpTypeVector %float 2
+      %v3int = OpTypeVector %int 3
+    %Texture = OpVariable %_ptr_UniformConstant_type_2d_image UniformConstant
+   %gSampler = OpVariable %_ptr_UniformConstant_type_sampler UniformConstant
+        %101 = OpConstantComposite %v2int %int_n1 %int_n1
+         %20 = OpConstantComposite %v2float %float_0 %float_0
+       %main = OpFunction %void None %22
+         %23 = OpLabel
+        %var = OpVariable %_ptr_int Function
+         %88 = OpLoad %type_2d_image %Texture
+        %val = OpLoad %int %var
+    %sampler = OpLoad %type_sampler %gSampler
+         %26 = OpSampledImage %type_sampled_image %88 %sampler
+)" + image_instruction + R"(
+               OpReturn
+               OpFunctionEnd
+)";
+
+  return body;
+}
+
+INSTANTIATE_TEST_SUITE_P(ImageOperandsBitmaskFoldingTest, MatchingInstructionWithNoResultFoldingTest,
+::testing::Values(
+    // Test case 0: OpImageFetch without Offset
+    InstructionFoldingCase<bool>(ImageOperandsTestBody(
+        "%89 = OpImageFetch %10 %88 %101 Lod %5 \n")
+        , 89, false),
+    // Test case 1: OpImageFetch with non-const offset
+    InstructionFoldingCase<bool>(ImageOperandsTestBody(
+        "%89 = OpImageFetch %10 %88 %101 Lod|Offset %5 %val \n")
+        , 89, false),
+    // Test case 2: OpImageFetch with Lod and Offset
+    InstructionFoldingCase<bool>(ImageOperandsTestBody(
+      "         %89 = OpImageFetch %10 %88 %101 Lod|Offset %5 %101      \n"
+      "; CHECK: %89 = OpImageFetch %10 %88 %101 Lod|ConstOffset %5 %101 \n")
+      , 89, true),
+    // Test case 3: OpImageFetch with Bias and Offset
+    InstructionFoldingCase<bool>(ImageOperandsTestBody(
+      "         %89 = OpImageFetch %10 %88 %101 Bias|Offset %5 %101      \n"
+      "; CHECK: %89 = OpImageFetch %10 %88 %101 Bias|ConstOffset %5 %101 \n")
+      , 89, true),
+    // Test case 4: OpImageFetch with Grad and Offset.
+    // Grad adds 2 operands to the instruction.
+    InstructionFoldingCase<bool>(ImageOperandsTestBody(
+      "         %89 = OpImageFetch %10 %88 %101 Grad|Offset %5 %5 %101      \n"
+      "; CHECK: %89 = OpImageFetch %10 %88 %101 Grad|ConstOffset %5 %5 %101 \n")
+      , 89, true),
+    // Test case 5: OpImageFetch with Offset and MinLod.
+    // This is an example of a case where the bitmask bit-offset is larger than
+    // that of the Offset.
+    InstructionFoldingCase<bool>(ImageOperandsTestBody(
+      "         %89 = OpImageFetch %10 %88 %101 Offset|MinLod %101 %5      \n"
+      "; CHECK: %89 = OpImageFetch %10 %88 %101 ConstOffset|MinLod %101 %5 \n")
+      , 89, true),
+    // Test case 6: OpImageGather with constant Offset
+    InstructionFoldingCase<bool>(ImageOperandsTestBody(
+      "         %89 = OpImageGather %10 %26 %20 %5 Offset %101      \n"
+      "; CHECK: %89 = OpImageGather %10 %26 %20 %5 ConstOffset %101 \n")
+      , 89, true),
+    // Test case 7: OpImageWrite with constant Offset
+    InstructionFoldingCase<bool>(ImageOperandsTestBody(
+      "         OpImageWrite %88 %5 %101 Offset %101      \n"
+      "; CHECK: OpImageWrite %88 %5 %101 ConstOffset %101 \n")
+      , 0 /* No result-id */, true)
+));
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

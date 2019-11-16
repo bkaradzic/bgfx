@@ -522,10 +522,13 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
       const auto typeId = array_inst->word(2);
       const auto element_inst = vstate.FindDef(typeId);
       // Check array stride.
-      auto array_stride = 0;
+      uint32_t array_stride = 0;
       for (auto& decoration : vstate.id_decorations(array_inst->id())) {
         if (SpvDecorationArrayStride == decoration.dec_type()) {
           array_stride = decoration.params()[0];
+          if (array_stride == 0) {
+            return fail(memberIdx) << "contains an array with stride 0";
+          }
           if (!IsAlignedTo(array_stride, array_alignment))
             return fail(memberIdx)
                    << "contains an array with stride " << decoration.params()[0]
@@ -563,6 +566,14 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
                             ? getScalarAlignment(array_inst->id(), vstate)
                             : getBaseAlignment(array_inst->id(), blockRules,
                                                constraint, constraints, vstate);
+
+      const auto element_size =
+          getSize(element_inst->id(), constraint, constraints, vstate);
+      if (element_size > array_stride) {
+        return fail(memberIdx)
+               << "contains an array with stride " << array_stride
+               << ", but with an element size of " << element_size;
+      }
     }
     nextValidOffset = offset + size;
     if (!scalar_block_layout && blockRules &&

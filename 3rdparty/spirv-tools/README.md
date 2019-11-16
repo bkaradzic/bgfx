@@ -49,9 +49,11 @@ version.  An API call reports the software version as a C-style string.
 
 ### Assembler, binary parser, and disassembler
 
-* Support for SPIR-V 1.0, 1.1, 1.2, and 1.3
+* Support for SPIR-V 1.0, through 1.5
   * Based on SPIR-V syntax described by JSON grammar files in the
     [SPIRV-Headers](https://github.com/KhronosGroup/SPIRV-Headers) repository.
+  * Usually, support for a new version of SPIR-V is ready within days after
+    publication.
 * Support for extended instruction sets:
   * GLSL std450 version 1.0 Rev 3
   * OpenCL version 1.0 Rev 2
@@ -88,14 +90,22 @@ limits accepted by a more than minimally capable SPIR-V consumer.
 
 ### Optimizer
 
-*Note:* The optimizer is still under development.
+The optimizer is a collection of code transforms, or "passes".
+Transforms are written for a diverse set of reasons:
 
-Currently supported optimizations:
-* General
+* To restructure, simplify, or normalize the code for further processing.
+* To eliminate undesirable code.
+* To improve code quality in some metric such as size or performance.
+  **Note**: These transforms are not guaranteed to actually improve any
+  given metric. Users should always measure results for their own situation.
+
+As of this writing, there are 67 transforms including examples such as:
+* Simplification
   * Strip debug info
+  * Strip reflection info
 * Specialization Constants
   * Set spec constant default value
-  * Freeze spec constant
+  * Freeze spec constant to default value
   * Fold `OpSpecConstantOp` and `OpSpecConstantComposite`
   * Unify constants
   * Eliminate dead constant
@@ -112,6 +122,29 @@ Currently supported optimizations:
   * Eliminate common uniform loads
   * Remove duplicates: Capabilities, extended instruction imports, types, and
     decorations.
+* Normalization
+  * Compact IDs
+  * CFG cleanup
+  * Flatten decorations
+  * Merge returns
+  * Convert AMD-specific instructions to KHR instructions
+* Code improvement
+  * Conditional constant propagation
+  * If-conversion
+  * Loop fission
+  * Loop fusion
+  * Loop-invariant code motion
+  * Loop unroll
+* Other
+  * Generate WebGPU initializers
+  * Graphics robust access
+  * Upgrade memory model to VulkanKHR
+
+Additionally, certain sets of transformations have been packaged into
+higher-level recipes.  These include:
+
+* Optimization for size (`spirv-opt -Os`)
+* Optimization for performance (`spirv-opt -O`)
 
 For the latest list with detailed documentation, please refer to
 [`include/spirv-tools/optimizer.hpp`](include/spirv-tools/optimizer.hpp).
@@ -319,11 +352,11 @@ installed regardless of your OS:
 targets, you need to install CMake Version 2.8.12 or later.
 - [Python 3](http://www.python.org/): for utility scripts and running the test
 suite.
-- [Bazel](https://baze.build/) (optional): if building the source with Bazel,
+- [Bazel](https://bazel.build/) (optional): if building the source with Bazel,
 you need to install Bazel Version 0.29.1 on your machine. Other versions may
 also work, but are not verified.
 
-SPIRV-Tools is regularly tested with the the following compilers:
+SPIRV-Tools is regularly tested with the following compilers:
 
 On Linux
 - GCC version 4.8.5

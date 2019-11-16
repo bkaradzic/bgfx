@@ -36,6 +36,45 @@ const uint32_t kFMixYIdInIdx = 3;
 const uint32_t kFMixAIdInIdx = 4;
 const uint32_t kStoreObjectInIdx = 1;
 
+// Some image instructions may contain an "image operands" argument.
+// Returns the operand index for the "image operands".
+// Returns -1 if the instruction does not have image operands.
+int32_t ImageOperandsMaskInOperandIndex(Instruction* inst) {
+  const auto opcode = inst->opcode();
+  switch (opcode) {
+    case SpvOpImageSampleImplicitLod:
+    case SpvOpImageSampleExplicitLod:
+    case SpvOpImageSampleProjImplicitLod:
+    case SpvOpImageSampleProjExplicitLod:
+    case SpvOpImageFetch:
+    case SpvOpImageRead:
+    case SpvOpImageSparseSampleImplicitLod:
+    case SpvOpImageSparseSampleExplicitLod:
+    case SpvOpImageSparseSampleProjImplicitLod:
+    case SpvOpImageSparseSampleProjExplicitLod:
+    case SpvOpImageSparseFetch:
+    case SpvOpImageSparseRead:
+      return inst->NumOperands() > 4 ? 2 : -1;
+    case SpvOpImageSampleDrefImplicitLod:
+    case SpvOpImageSampleDrefExplicitLod:
+    case SpvOpImageSampleProjDrefImplicitLod:
+    case SpvOpImageSampleProjDrefExplicitLod:
+    case SpvOpImageGather:
+    case SpvOpImageDrefGather:
+    case SpvOpImageSparseSampleDrefImplicitLod:
+    case SpvOpImageSparseSampleDrefExplicitLod:
+    case SpvOpImageSparseSampleProjDrefImplicitLod:
+    case SpvOpImageSparseSampleProjDrefExplicitLod:
+    case SpvOpImageSparseGather:
+    case SpvOpImageSparseDrefGather:
+      return inst->NumOperands() > 5 ? 3 : -1;
+    case SpvOpImageWrite:
+      return inst->NumOperands() > 3 ? 3 : -1;
+    default:
+      return -1;
+  }
+}
+
 // Returns the element width of |type|.
 uint32_t ElementWidth(const analysis::Type* type) {
   if (const analysis::Vector* vec_type = type->AsVector()) {
@@ -2316,6 +2355,64 @@ FoldingRule RemoveRedundantOperands() {
   };
 }
 
+// If an image instruction's operand is a constant, updates the image operand
+// flag from Offset to ConstOffset.
+FoldingRule UpdateImageOperands() {
+  return [](IRContext*, Instruction* inst,
+            const std::vector<const analysis::Constant*>& constants) {
+    const auto opcode = inst->opcode();
+    (void)opcode;
+    assert((opcode == SpvOpImageSampleImplicitLod ||
+            opcode == SpvOpImageSampleExplicitLod ||
+            opcode == SpvOpImageSampleDrefImplicitLod ||
+            opcode == SpvOpImageSampleDrefExplicitLod ||
+            opcode == SpvOpImageSampleProjImplicitLod ||
+            opcode == SpvOpImageSampleProjExplicitLod ||
+            opcode == SpvOpImageSampleProjDrefImplicitLod ||
+            opcode == SpvOpImageSampleProjDrefExplicitLod ||
+            opcode == SpvOpImageFetch || opcode == SpvOpImageGather ||
+            opcode == SpvOpImageDrefGather || opcode == SpvOpImageRead ||
+            opcode == SpvOpImageWrite ||
+            opcode == SpvOpImageSparseSampleImplicitLod ||
+            opcode == SpvOpImageSparseSampleExplicitLod ||
+            opcode == SpvOpImageSparseSampleDrefImplicitLod ||
+            opcode == SpvOpImageSparseSampleDrefExplicitLod ||
+            opcode == SpvOpImageSparseSampleProjImplicitLod ||
+            opcode == SpvOpImageSparseSampleProjExplicitLod ||
+            opcode == SpvOpImageSparseSampleProjDrefImplicitLod ||
+            opcode == SpvOpImageSparseSampleProjDrefExplicitLod ||
+            opcode == SpvOpImageSparseFetch ||
+            opcode == SpvOpImageSparseGather ||
+            opcode == SpvOpImageSparseDrefGather ||
+            opcode == SpvOpImageSparseRead) &&
+           "Wrong opcode.  Should be an image instruction.");
+
+    int32_t operand_index = ImageOperandsMaskInOperandIndex(inst);
+    if (operand_index >= 0) {
+      auto image_operands = inst->GetSingleWordInOperand(operand_index);
+      if (image_operands & SpvImageOperandsOffsetMask) {
+        uint32_t offset_operand_index = operand_index + 1;
+        if (image_operands & SpvImageOperandsBiasMask) offset_operand_index++;
+        if (image_operands & SpvImageOperandsLodMask) offset_operand_index++;
+        if (image_operands & SpvImageOperandsGradMask)
+          offset_operand_index += 2;
+        assert(((image_operands & SpvImageOperandsConstOffsetMask) == 0) &&
+               "Offset and ConstOffset may not be used together");
+        if (offset_operand_index < inst->NumOperands()) {
+          if (constants[offset_operand_index]) {
+            image_operands = image_operands | SpvImageOperandsConstOffsetMask;
+            image_operands = image_operands & ~SpvImageOperandsOffsetMask;
+            inst->SetInOperand(operand_index, {image_operands});
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  };
+}
+
 }  // namespace
 
 void FoldingRules::AddFoldingRules() {
@@ -2391,6 +2488,38 @@ void FoldingRules::AddFoldingRules() {
   rules_[SpvOpUDiv].push_back(MergeDivNegateArithmetic());
 
   rules_[SpvOpVectorShuffle].push_back(VectorShuffleFeedingShuffle());
+
+  rules_[SpvOpImageSampleImplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSampleExplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSampleDrefImplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSampleDrefExplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSampleProjImplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSampleProjExplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSampleProjDrefImplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSampleProjDrefExplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageFetch].push_back(UpdateImageOperands());
+  rules_[SpvOpImageGather].push_back(UpdateImageOperands());
+  rules_[SpvOpImageDrefGather].push_back(UpdateImageOperands());
+  rules_[SpvOpImageRead].push_back(UpdateImageOperands());
+  rules_[SpvOpImageWrite].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSparseSampleImplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSparseSampleExplicitLod].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSparseSampleDrefImplicitLod].push_back(
+      UpdateImageOperands());
+  rules_[SpvOpImageSparseSampleDrefExplicitLod].push_back(
+      UpdateImageOperands());
+  rules_[SpvOpImageSparseSampleProjImplicitLod].push_back(
+      UpdateImageOperands());
+  rules_[SpvOpImageSparseSampleProjExplicitLod].push_back(
+      UpdateImageOperands());
+  rules_[SpvOpImageSparseSampleProjDrefImplicitLod].push_back(
+      UpdateImageOperands());
+  rules_[SpvOpImageSparseSampleProjDrefExplicitLod].push_back(
+      UpdateImageOperands());
+  rules_[SpvOpImageSparseFetch].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSparseGather].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSparseDrefGather].push_back(UpdateImageOperands());
+  rules_[SpvOpImageSparseRead].push_back(UpdateImageOperands());
 
   FeatureManager* feature_manager = context_->get_feature_mgr();
   // Add rules for GLSLstd450
