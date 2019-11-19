@@ -1209,6 +1209,7 @@ namespace bgfx
 		UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
 		m_uniformEnd = uniformBuffer->getPos();
 
+		m_key.reset();
 		m_key.m_program = isValid(_program)
 			? _program
 			: ProgramHandle{0}
