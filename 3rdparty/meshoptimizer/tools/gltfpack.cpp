@@ -83,6 +83,8 @@ struct Settings
 	float simplify_threshold;
 	bool simplify_aggressive;
 
+	bool texture_embed;
+
 	bool compress;
 	bool fallback;
 
@@ -2634,6 +2636,58 @@ void writeEmbeddedImage(std::string& json, std::vector<BufferView>& views, const
 	append(json, "\"");
 }
 
+std::string inferMimeType(const char* path)
+{
+	const char* ext = strrchr(path, '.');
+	if (!ext)
+		return "";
+
+	std::string extl = ext + 1;
+	for (size_t i = 0; i < extl.length(); ++i)
+		extl[i] = tolower(extl[i]);
+
+	if (extl == "jpg")
+		return "image/jpeg";
+	else
+		return "image/" + extl;
+}
+
+bool writeEmbeddedImage(std::string& json, std::vector<BufferView>& views, const char* path, const char* base_path)
+{
+	std::string full_path = base_path;
+
+	std::string::size_type slash = full_path.find_last_of("/\\");
+	full_path.erase(slash == std::string::npos ? 0 : slash + 1);
+
+	full_path += path;
+
+	FILE* image = fopen(full_path.c_str(), "rb");
+	if (!image)
+		return false;
+
+	fseek(image, 0, SEEK_END);
+	long length = ftell(image);
+	fseek(image, 0, SEEK_SET);
+
+	if (length <= 0)
+	{
+		fclose(image);
+		return false;
+	}
+
+	std::vector<char> data(length);
+	if (fread(&data[0], 1, data.size(), image) != data.size())
+	{
+		fclose(image);
+		return false;
+	}
+
+	fclose(image);
+
+	writeEmbeddedImage(json, views, &data[0], data.size(), inferMimeType(path).c_str());
+	return true;
+}
+
 void writeMeshAttributes(std::string& json, std::vector<BufferView>& views, std::string& json_accessors, size_t& accr_offset, const Mesh& mesh, int target, const QuantizationParams& qp, const Settings& settings)
 {
 	std::string scratch;
@@ -3229,7 +3283,7 @@ void printAttributeStats(const std::vector<BufferView>& views, BufferView::Kind 
 	}
 }
 
-void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin, std::string& fallback)
+void process(cgltf_data* data, const char* data_path, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin, std::string& fallback)
 {
 	if (settings.verbose)
 	{
@@ -3326,6 +3380,11 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 			if (parseDataUri(image.uri, mime_type, img))
 			{
 				writeEmbeddedImage(json_images, views, img.c_str(), img.size(), mime_type.c_str());
+			}
+			else if (settings.texture_embed)
+			{
+				if (!writeEmbeddedImage(json_images, views, image.uri, data_path))
+					fprintf(stderr, "Warning: unable to read image %s, skipping\n", image.uri);
 			}
 			else
 			{
@@ -3833,7 +3892,7 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 	}
 
 	std::string json, bin, fallback;
-	process(data, meshes, settings, json, bin, fallback);
+	process(data, input, meshes, settings, json, bin, fallback);
 
 	cgltf_free(data);
 
@@ -3985,6 +4044,10 @@ int main(int argc, char** argv)
 		{
 			settings.simplify_aggressive = true;
 		}
+		else if (strcmp(arg, "-te") == 0)
+		{
+			settings.texture_embed = true;
+		}
 		else if (strcmp(arg, "-i") == 0 && i + 1 < argc && !input)
 		{
 			input = argv[++i];
@@ -4053,6 +4116,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "-kn: keep named nodes and meshes attached to named nodes so that named nodes can be transformed externally\n");
 		fprintf(stderr, "-si R: simplify meshes to achieve the ratio R (default: 1; R should be between 0 and 1)\n");
 		fprintf(stderr, "-sa: aggressively simplify to the target ratio disregarding quality\n");
+		fprintf(stderr, "-te: embed all textures into main buffer\n");
 		fprintf(stderr, "-c: produce compressed gltf/glb files\n");
 		fprintf(stderr, "-cf: produce compressed gltf/glb files with fallback for loaders that don't support compression\n");
 		fprintf(stderr, "-v: verbose output\n");
