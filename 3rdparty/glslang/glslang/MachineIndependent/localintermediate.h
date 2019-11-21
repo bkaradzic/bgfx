@@ -147,6 +147,7 @@ struct TOffsetRange {
     TRange offset;
 };
 
+#ifndef GLSLANG_WEB
 // Things that need to be tracked per xfb buffer.
 struct TXfbBuffer {
     TXfbBuffer() : stride(TQualifier::layoutXfbStrideEnd), implicitStride(0), contains64BitType(false),
@@ -158,6 +159,7 @@ struct TXfbBuffer {
     bool contains32BitType;
     bool contains16BitType;
 };
+#endif
 
 // Track a set of strings describing how the module was processed.
 // Using the form:
@@ -227,10 +229,6 @@ class TIntermediate {
 public:
     explicit TIntermediate(EShLanguage l, int v = 0, EProfile p = ENoProfile) :
         language(l),
-#ifdef ENABLE_HLSL
-        implicitThisName("@this"), implicitCounterName("@count"),
-        source(EShSourceNone),
-#endif
         profile(p), version(v), treeRoot(0),
         numEntryPoints(0), numErrors(0), numPushConstants(0), recursive(false),
         invertY(false),
@@ -239,6 +237,8 @@ public:
         depthReplacing(false)
 #ifndef GLSLANG_WEB
         ,
+        implicitThisName("@this"), implicitCounterName("@count"),
+        source(EShSourceNone),
         useVulkanMemoryModel(false),
         invocations(TQualifier::layoutNotSet), vertices(TQualifier::layoutNotSet),
         inputPrimitive(ElgNone), outputPrimitive(ElgNone),
@@ -267,7 +267,6 @@ public:
         uniformLocationBase(0)
 #endif
     {
-#ifndef GLSLANG_WEB
         localSize[0] = 1;
         localSize[1] = 1;
         localSize[2] = 1;
@@ -277,6 +276,7 @@ public:
         localSizeSpecId[0] = TQualifier::layoutNotSet;
         localSizeSpecId[1] = TQualifier::layoutNotSet;
         localSizeSpecId[2] = TQualifier::layoutNotSet;
+#ifndef GLSLANG_WEB
         xfbBuffers.resize(TQualifier::layoutXfbBufferEnd);
         shiftBinding.fill(0);
 #endif
@@ -465,7 +465,23 @@ public:
     bool usingStorageBuffer() const { return useStorageBuffer; }
     void setDepthReplacing() { depthReplacing = true; }
     bool isDepthReplacing() const { return depthReplacing; }
-
+    bool setLocalSize(int dim, int size)
+    {
+        if (localSizeNotDefault[dim])
+            return size == localSize[dim];
+        localSizeNotDefault[dim] = true;
+        localSize[dim] = size;
+        return true;
+    }
+    unsigned int getLocalSize(int dim) const { return localSize[dim]; }
+    bool setLocalSizeSpecId(int dim, int id)
+    {
+        if (localSizeSpecId[dim] != TQualifier::layoutNotSet)
+            return id == localSizeSpecId[dim];
+        localSizeSpecId[dim] = id;
+        return true;
+    }
+    int getLocalSizeSpecId(int dim) const { return localSizeSpecId[dim]; }
 #ifdef GLSLANG_WEB
     void output(TInfoSink&, bool tree) { }
 
@@ -492,6 +508,7 @@ public:
     bool usingVariablePointers() const { return false; }
     unsigned getXfbStride(int buffer) const { return 0; }
     bool hasLayoutDerivativeModeNone() const { return false; }
+    ComputeDerivativeMode getLayoutDerivativeModeNone() const { return LayoutDerivativeNone; }
 #else
     void output(TInfoSink&, bool tree);
 
@@ -655,24 +672,6 @@ public:
     }
     TInterlockOrdering getInterlockOrdering() const { return interlockOrdering; }
 
-    bool setLocalSize(int dim, int size)
-    {
-        if (localSizeNotDefault[dim])
-            return size == localSize[dim];
-        localSizeNotDefault[dim] = true;
-        localSize[dim] = size;
-        return true;
-    }
-    unsigned int getLocalSize(int dim) const { return localSize[dim]; }
-
-    bool setLocalSizeSpecId(int dim, int id)
-    {
-        if (localSizeSpecId[dim] != TQualifier::layoutNotSet)
-            return id == localSizeSpecId[dim];
-        localSizeSpecId[dim] = id;
-        return true;
-    }
-    int getLocalSizeSpecId(int dim) const { return localSizeSpecId[dim]; }
     void setXfbMode() { xfbMode = true; }
     bool getXfbMode() const { return xfbMode; }
     void setMultiStream() { multiStream = true; }
@@ -757,7 +756,7 @@ public:
 
     void setBinaryDoubleOutput() { binaryDoubleOutput = true; }
     bool getBinaryDoubleOutput() { return binaryDoubleOutput; }
-#endif
+#endif // GLSLANG_WEB
 
 #ifdef ENABLE_HLSL
     void setHlslFunctionality1() { hlslFunctionality1 = true; }
@@ -894,13 +893,6 @@ protected:
     static const char* getResourceName(TResourceType);
 
     const EShLanguage language;  // stage, known at construction time
-#ifdef ENABLE_HLSL
-public:
-    const char* const implicitThisName;
-    const char* const implicitCounterName;
-protected:
-    EShSource source;            // source language, known a bit later
-#endif
     std::string entryPointName;
     std::string entryPointMangledName;
     typedef std::list<TCall> TGraph;
@@ -920,7 +912,15 @@ protected:
     bool useStorageBuffer;
     bool nanMinMaxClamp;            // true if desiring min/max/clamp to favor non-NaN over NaN
     bool depthReplacing;
+    int localSize[3];
+    bool localSizeNotDefault[3];
+    int localSizeSpecId[3];
 #ifndef GLSLANG_WEB
+public:
+    const char* const implicitThisName;
+    const char* const implicitCounterName;
+protected:
+    EShSource source;            // source language, known a bit later
     bool useVulkanMemoryModel;
     int invocations;
     int vertices;
@@ -932,9 +932,6 @@ protected:
     TVertexOrder vertexOrder;
     TInterlockOrdering interlockOrdering;
     bool pointMode;
-    int localSize[3];
-    bool localSizeNotDefault[3];
-    int localSizeSpecId[3];
     bool earlyFragmentTests;
     bool postDepthCoverage;
     TLayoutDepth depthLayout;

@@ -499,9 +499,8 @@ TEST_F(ValidateAtomics, AtomicLoadWrongScopeType) {
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicLoad: expected Memory Scope to be a 32-bit int"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicLoad: expected scope to be a 32-bit int"));
 }
 
 TEST_F(ValidateAtomics, AtomicLoadWrongMemorySemanticsType) {
@@ -674,10 +673,9 @@ OpAtomicStore %f32_var %f32_1 %relaxed %f32_1
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicStore: expected Memory Scope to be a 32-bit int\n  "
-                "OpAtomicStore %28 %float_1 %uint_0_1 %float_1\n"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicStore: expected scope to be a 32-bit int\n  "
+                        "OpAtomicStore %28 %float_1 %uint_0_1 %float_1\n"));
 }
 
 TEST_F(ValidateAtomics, AtomicStoreWrongMemorySemanticsType) {
@@ -788,9 +786,8 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicExchange: expected Memory Scope to be a 32-bit int"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicExchange: expected scope to be a 32-bit int"));
 }
 
 TEST_F(ValidateAtomics, AtomicExchangeWrongMemorySemanticsType) {
@@ -902,10 +899,9 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicCompareExchange: expected Memory Scope to be a 32-bit "
-                "int"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicCompareExchange: expected scope to be a 32-bit "
+                        "int"));
 }
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeWrongMemorySemanticsType1) {
@@ -1085,8 +1081,7 @@ TEST_F(ValidateAtomics, AtomicFlagTestAndSetWrongScopeType) {
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr(
-          "AtomicFlagTestAndSet: expected Memory Scope to be a 32-bit int"));
+      HasSubstr("AtomicFlagTestAndSet: expected scope to be a 32-bit int"));
 }
 
 TEST_F(ValidateAtomics, AtomicFlagTestAndSetWrongMemorySemanticsType) {
@@ -1159,7 +1154,7 @@ OpAtomicFlagClear %u32_var %u64_1 %relaxed
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("AtomicFlagClear: expected Memory Scope to be a 32-bit "
+              HasSubstr("AtomicFlagClear: expected scope to be a 32-bit "
                         "int\n  OpAtomicFlagClear %30 %ulong_1 %uint_0_1\n"));
 }
 

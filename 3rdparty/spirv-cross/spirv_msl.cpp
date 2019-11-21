@@ -27,6 +27,7 @@ using namespace std;
 
 static const uint32_t k_unknown_location = ~0u;
 static const uint32_t k_unknown_component = ~0u;
+static const char *force_inline = "static inline __attribute__((always_inline))";
 
 CompilerMSL::CompilerMSL(std::vector<uint32_t> spirv_)
     : CompilerGLSL(move(spirv_))
@@ -121,6 +122,11 @@ void CompilerMSL::set_fragment_output_components(uint32_t location, uint32_t com
 	fragment_output_components[location] = components;
 }
 
+bool CompilerMSL::builtin_translates_to_nonarray(spv::BuiltIn builtin) const
+{
+	return (builtin == BuiltInSampleMask);
+}
+
 void CompilerMSL::build_implicit_builtins()
 {
 	bool need_sample_pos = active_input_builtins.get(BuiltInSamplePosition);
@@ -157,8 +163,10 @@ void CompilerMSL::build_implicit_builtins()
 			if (var.storage != StorageClassInput || !ir.meta[var.self].decoration.builtin)
 				return;
 
+			// Use Metal's native frame-buffer fetch API for subpass inputs.
 			BuiltIn builtin = ir.meta[var.self].decoration.builtin_type;
-			if (need_subpass_input && builtin == BuiltInFragCoord)
+			if (need_subpass_input && (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses) &&
+			    builtin == BuiltInFragCoord)
 			{
 				builtin_frag_coord_id = var.self;
 				has_frag_coord = true;
@@ -226,17 +234,19 @@ void CompilerMSL::build_implicit_builtins()
 
 			if (need_multiview)
 			{
-				if (builtin == BuiltInInstanceIndex)
+				switch (builtin)
 				{
+				case BuiltInInstanceIndex:
 					// The view index here is derived from the instance index.
 					builtin_instance_idx_id = var.self;
 					has_instance_idx = true;
-				}
-
-				if (builtin == BuiltInViewIndex)
-				{
+					break;
+				case BuiltInViewIndex:
 					builtin_view_idx_id = var.self;
 					has_view_idx = true;
+					break;
+				default:
+					break;
 				}
 			}
 
@@ -248,7 +258,9 @@ void CompilerMSL::build_implicit_builtins()
 				workgroup_id_type = var.basetype;
 		});
 
-		if (!has_frag_coord && need_subpass_input)
+		// Use Metal's native frame-buffer fetch API for subpass inputs.
+		if (!has_frag_coord && (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses) &&
+		    need_subpass_input)
 		{
 			uint32_t offset = ir.increase_bound_by(3);
 			uint32_t type_id = offset;
@@ -579,6 +591,35 @@ void CompilerMSL::build_implicit_builtins()
 	}
 }
 
+// Checks if the specified builtin variable (e.g. gl_InstanceIndex) is marked as active.
+// If not, it marks it as active and forces a recompilation.
+// This might be used when the optimization of inactive builtins was too optimistic (e.g. when "spvOut" is emitted).
+void CompilerMSL::ensure_builtin(spv::StorageClass storage, spv::BuiltIn builtin)
+{
+	Bitset *active_builtins = nullptr;
+	switch (storage)
+	{
+	case StorageClassInput:
+		active_builtins = &active_input_builtins;
+		break;
+
+	case StorageClassOutput:
+		active_builtins = &active_output_builtins;
+		break;
+
+	default:
+		break;
+	}
+
+	// At this point, the specified builtin variable must have already been declared in the entry point.
+	// If not, mark as active and force recompile.
+	if (active_builtins != nullptr && !active_builtins->get(builtin))
+	{
+		active_builtins->set(builtin);
+		force_recompile();
+	}
+}
+
 void CompilerMSL::mark_implicit_builtin(StorageClass storage, BuiltIn builtin, uint32_t id)
 {
 	Bitset *active_builtins = nullptr;
@@ -685,6 +726,8 @@ std::string CompilerMSL::get_tess_factor_struct_name()
 void CompilerMSL::emit_entry_point_declarations()
 {
 	// FIXME: Get test coverage here ...
+	// Constant arrays of non-primitive types (i.e. matrices) won't link properly into Metal libraries
+	declare_complex_constant_arrays();
 
 	// Emit constexpr samplers here.
 	for (auto &samp : constexpr_samplers_by_id)
@@ -841,8 +884,10 @@ void CompilerMSL::emit_entry_point_declarations()
 				SPIRV_CROSS_THROW("Runtime arrays with dynamic offsets are not supported yet.");
 			else
 			{
+				use_builtin_array = true;
 				statement(get_argument_address_space(var), " ", type_to_glsl(type), "* ", to_restrict(var_id), name,
 				          type_to_array_glsl(type), " =");
+
 				uint32_t dim = uint32_t(type.array.size());
 				uint32_t j = 0;
 				for (SmallVector<uint32_t> indices(type.array.size());
@@ -870,6 +915,7 @@ void CompilerMSL::emit_entry_point_declarations()
 				}
 				end_scope_decl();
 				statement_no_indent("");
+				use_builtin_array = false;
 			}
 		}
 		else
@@ -886,8 +932,10 @@ void CompilerMSL::emit_entry_point_declarations()
 	{
 		const auto &var = get<SPIRVariable>(array_id);
 		const auto &type = get_variable_data_type(var);
+		const auto &buffer_type = get_variable_element_type(var);
 		string name = to_name(array_id);
-		statement(get_argument_address_space(var), " ", type_to_glsl(type), "* ", to_restrict(array_id), name, "[] =");
+		statement(get_argument_address_space(var), " ", type_to_glsl(buffer_type), "* ", to_restrict(array_id), name,
+		          "[] =");
 		begin_scope();
 		for (uint32_t i = 0; i < to_array_size_literal(type); ++i)
 			statement(name, "_", i, ",");
@@ -925,13 +973,14 @@ string CompilerMSL::compile()
 	backend.native_row_major_matrix = false;
 	backend.unsized_array_supported = false;
 	backend.can_declare_arrays_inline = false;
-	backend.can_return_array = false;
+	backend.can_return_array = true; // <-- Allow Metal to use the array<T> template
 	backend.allow_truncated_access_chain = true;
-	backend.array_is_value_type = false;
+	backend.array_is_value_type = true; // <-- Allow Metal to use the array<T> template to make arrays a value type
 	backend.comparison_image_samples_scalar = true;
 	backend.native_pointers = true;
 	backend.nonuniform_qualifier = "";
 	backend.support_small_type_sampling_result = true;
+	backend.supports_empty_struct = true;
 
 	capture_output_to_buffer = msl_options.capture_output_to_buffer;
 	is_rasterization_disabled = msl_options.disable_rasterization || capture_output_to_buffer;
@@ -1025,6 +1074,7 @@ string CompilerMSL::compile()
 		buffer.reset();
 
 		emit_header();
+		emit_custom_templates();
 		emit_specialization_constants_and_structs();
 		emit_resources();
 		emit_custom_functions();
@@ -1153,8 +1203,10 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 				if (global_var_ids.find(base_id) != global_var_ids.end())
 					added_arg_ids.insert(base_id);
 
+				// Use Metal's native frame-buffer fetch API for subpass inputs.
 				auto &type = get<SPIRType>(ops[0]);
-				if (type.basetype == SPIRType::Image && type.image.dim == DimSubpassData)
+				if (type.basetype == SPIRType::Image && type.image.dim == DimSubpassData &&
+				    (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses))
 				{
 					// Implicitly reads gl_FragCoord.
 					assert(builtin_frag_coord_id != 0);
@@ -1199,6 +1251,20 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 				base_id = ops[4];
 				if (global_var_ids.find(base_id) != global_var_ids.end())
 					added_arg_ids.insert(base_id);
+				break;
+			}
+
+			// Emulate texture2D atomic operations
+			case OpImageTexelPointer:
+			{
+				// When using the pointer, we need to know which variable it is actually loaded from.
+				uint32_t base_id = ops[2];
+				auto *var = maybe_get_backing_variable(base_id);
+				if (var && atomic_image_vars.count(var->self))
+				{
+					if (global_var_ids.find(base_id) != global_var_ids.end())
+						added_arg_ids.insert(base_id);
+				}
 				break;
 			}
 
@@ -1545,10 +1611,13 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 	if (is_builtin)
 		set_name(var.self, builtin_to_glsl(builtin, StorageClassFunction));
 
-	entry_func.add_local_variable(var.self);
-
-	// We need to declare the variable early and at entry-point scope.
-	vars_needing_early_declaration.push_back(var.self);
+	// Only flatten/unflatten IO composites for non-tessellation cases where arrays are not stripped.
+	if (!strip_array)
+	{
+		entry_func.add_local_variable(var.self);
+		// We need to declare the variable early and at entry-point scope.
+		vars_needing_early_declaration.push_back(var.self);
+	}
 
 	for (uint32_t i = 0; i < elem_cnt; i++)
 	{
@@ -1618,6 +1687,7 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 
 		set_extended_member_decoration(ib_type.self, ib_mbr_idx, SPIRVCrossDecorationInterfaceOrigID, var.self);
 
+		// Only flatten/unflatten IO composites for non-tessellation cases where arrays are not stripped.
 		if (!strip_array)
 		{
 			switch (storage)
@@ -2125,60 +2195,37 @@ void CompilerMSL::add_variable_to_interface_block(StorageClass storage, const st
 void CompilerMSL::fix_up_interface_member_indices(StorageClass storage, uint32_t ib_type_id)
 {
 	// Only needed for tessellation shaders.
+	// Need to redirect interface indices back to variables themselves.
+	// For structs, each member of the struct need a separate instance.
 	if (get_execution_model() != ExecutionModelTessellationControl &&
 	    !(get_execution_model() == ExecutionModelTessellationEvaluation && storage == StorageClassInput))
 		return;
 
-	bool in_array = false;
-	for (uint32_t i = 0; i < ir.meta[ib_type_id].members.size(); i++)
+	auto mbr_cnt = uint32_t(ir.meta[ib_type_id].members.size());
+	for (uint32_t i = 0; i < mbr_cnt; i++)
 	{
 		uint32_t var_id = get_extended_member_decoration(ib_type_id, i, SPIRVCrossDecorationInterfaceOrigID);
 		if (!var_id)
 			continue;
 		auto &var = get<SPIRVariable>(var_id);
 
-		// Unfortunately, all this complexity is needed to handle flattened structs and/or
-		// arrays.
-		if (storage == StorageClassInput)
+		auto &type = get_variable_element_type(var);
+		if (storage == StorageClassInput && type.basetype == SPIRType::Struct)
 		{
-			auto &type = get_variable_element_type(var);
-			if (is_array(type) || is_matrix(type))
-			{
-				if (in_array)
-					continue;
-				in_array = true;
-				set_extended_decoration(var_id, SPIRVCrossDecorationInterfaceMemberIndex, i);
-			}
-			else
-			{
-				if (type.basetype == SPIRType::Struct)
-				{
-					uint32_t mbr_idx =
-					    get_extended_member_decoration(ib_type_id, i, SPIRVCrossDecorationInterfaceMemberIndex);
-					auto &mbr_type = get<SPIRType>(type.member_types[mbr_idx]);
+			uint32_t mbr_idx = get_extended_member_decoration(ib_type_id, i, SPIRVCrossDecorationInterfaceMemberIndex);
 
-					if (is_array(mbr_type) || is_matrix(mbr_type))
-					{
-						if (in_array)
-							continue;
-						in_array = true;
-						set_extended_member_decoration(var_id, mbr_idx, SPIRVCrossDecorationInterfaceMemberIndex, i);
-					}
-					else
-					{
-						in_array = false;
-						set_extended_member_decoration(var_id, mbr_idx, SPIRVCrossDecorationInterfaceMemberIndex, i);
-					}
-				}
-				else
-				{
-					in_array = false;
-					set_extended_decoration(var_id, SPIRVCrossDecorationInterfaceMemberIndex, i);
-				}
-			}
+			// Only set the lowest InterfaceMemberIndex for each variable member.
+			// IB struct members will be emitted in-order w.r.t. interface member index.
+			if (!has_extended_member_decoration(var_id, mbr_idx, SPIRVCrossDecorationInterfaceMemberIndex))
+				set_extended_member_decoration(var_id, mbr_idx, SPIRVCrossDecorationInterfaceMemberIndex, i);
 		}
 		else
-			set_extended_decoration(var_id, SPIRVCrossDecorationInterfaceMemberIndex, i);
+		{
+			// Only set the lowest InterfaceMemberIndex for each variable.
+			// IB struct members will be emitted in-order w.r.t. interface member index.
+			if (!has_extended_decoration(var_id, SPIRVCrossDecorationInterfaceMemberIndex))
+				set_extended_decoration(var_id, SPIRVCrossDecorationInterfaceMemberIndex, i);
+		}
 	}
 }
 
@@ -2314,11 +2361,21 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 					{
 						// The first member of the indirect buffer is always the number of vertices
 						// to draw.
-						statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "& ", ib_var_ref, " = ",
-						          output_buffer_var_name, "[(", to_expression(builtin_instance_idx_id), " - ",
-						          to_expression(builtin_base_instance_id), ") * spvIndirectParams[0] + ",
-						          to_expression(builtin_vertex_idx_id), " - ", to_expression(builtin_base_vertex_id),
-						          "];");
+						// We zero-base the InstanceID & VertexID variables for HLSL emulation elsewhere, so don't do it twice
+						if (msl_options.enable_base_index_zero)
+						{
+							statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "& ", ib_var_ref,
+							          " = ", output_buffer_var_name, "[", to_expression(builtin_instance_idx_id),
+							          " * spvIndirectParams[0] + ", to_expression(builtin_vertex_idx_id), "];");
+						}
+						else
+						{
+							statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "& ", ib_var_ref,
+							          " = ", output_buffer_var_name, "[(", to_expression(builtin_instance_idx_id),
+							          " - ", to_expression(builtin_base_instance_id), ") * spvIndirectParams[0] + ",
+							          to_expression(builtin_vertex_idx_id), " - ",
+							          to_expression(builtin_base_vertex_id), "];");
+						}
 					}
 				});
 				break;
@@ -3108,6 +3165,14 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 	}
 }
 
+static bool expression_ends_with(const string &expr_str, const std::string &ending)
+{
+	if (expr_str.length() >= ending.length())
+		return (expr_str.compare(expr_str.length() - ending.length(), ending.length(), ending) == 0);
+	else
+		return false;
+}
+
 // Converts the format of the current expression from packed to unpacked,
 // by wrapping the expression in a constructor of the appropriate type.
 // Also, handle special physical ID remapping scenarios, similar to emit_store_statement().
@@ -3128,9 +3193,17 @@ string CompilerMSL::unpack_expression_type(string expr_str, const SPIRType &type
 		".xyz",
 	};
 
-	// std140 array cases for vectors.
-	if (physical_type && is_vector(*physical_type) && is_array(*physical_type) && physical_type->vecsize > type.vecsize)
+	if (physical_type && is_vector(*physical_type) && is_array(*physical_type) &&
+	    physical_type->vecsize > type.vecsize && !expression_ends_with(expr_str, swizzle_lut[type.vecsize - 1]))
 	{
+		// std140 array cases for vectors.
+		assert(type.vecsize >= 1 && type.vecsize <= 3);
+		return enclose_expression(expr_str) + swizzle_lut[type.vecsize - 1];
+	}
+	else if (physical_type && is_matrix(*physical_type) && is_vector(type) &&
+	         physical_type->vecsize > type.vecsize)
+	{
+		// Extract column from padded matrix.
 		assert(type.vecsize >= 1 && type.vecsize <= 3);
 		return enclose_expression(expr_str) + swizzle_lut[type.vecsize - 1];
 	}
@@ -3172,7 +3245,9 @@ string CompilerMSL::unpack_expression_type(string expr_str, const SPIRType &type
 		return unpack_expr;
 	}
 	else
+	{
 		return join(type_to_glsl(type), "(", expr_str, ")");
+	}
 }
 
 // Emits the file header info
@@ -3181,6 +3256,11 @@ void CompilerMSL::emit_header()
 	// This particular line can be overridden during compilation, so make it a flag and not a pragma line.
 	if (suppress_missing_prototypes)
 		statement("#pragma clang diagnostic ignored \"-Wmissing-prototypes\"");
+
+	// Disable warning about missing braces for array<T> template to make arrays a value type
+	if (spv_function_implementations.count(SPVFuncImplUnsafeArray) != 0)
+		statement("#pragma clang diagnostic ignored \"-Wmissing-braces\"");
+
 	for (auto &pragma : pragma_lines)
 		statement(pragma);
 
@@ -3218,7 +3298,63 @@ void CompilerMSL::add_typedef_line(const string &line)
 		force_recompile();
 }
 
+// Template struct like spvUnsafeArray<> need to be declared *before* any resources are declared
+void CompilerMSL::emit_custom_templates()
+{
+	for (const auto &spv_func : spv_function_implementations)
+	{
+		switch (spv_func)
+		{
+		case SPVFuncImplUnsafeArray:
+			statement("template<typename T, size_t Num>");
+			statement("struct spvUnsafeArray");
+			begin_scope();
+			statement("T elements[Num ? Num : 1];");
+			statement("");
+			statement("thread T& operator [] (size_t pos) thread");
+			begin_scope();
+			statement("return elements[pos];");
+			end_scope();
+			statement("constexpr const thread T& operator [] (size_t pos) const thread");
+			begin_scope();
+			statement("return elements[pos];");
+			end_scope();
+			statement("");
+			statement("device T& operator [] (size_t pos) device");
+			begin_scope();
+			statement("return elements[pos];");
+			end_scope();
+			statement("constexpr const device T& operator [] (size_t pos) const device");
+			begin_scope();
+			statement("return elements[pos];");
+			end_scope();
+			statement("");
+			statement("constexpr const constant T& operator [] (size_t pos) const constant");
+			begin_scope();
+			statement("return elements[pos];");
+			end_scope();
+			statement("");
+			statement("threadgroup T& operator [] (size_t pos) threadgroup");
+			begin_scope();
+			statement("return elements[pos];");
+			end_scope();
+			statement("constexpr const threadgroup T& operator [] (size_t pos) const threadgroup");
+			begin_scope();
+			statement("return elements[pos];");
+			end_scope();
+			end_scope_decl();
+			statement("");
+			break;
+
+		default:
+			break;
+		}
+	}
+}
+
 // Emits any needed custom function bodies.
+// Metal helper functions must be static force-inline, i.e. static inline __attribute__((always_inline))
+// otherwise they will cause problems when linked together in a single Metallib.
 void CompilerMSL::emit_custom_functions()
 {
 	for (uint32_t i = SPVFuncImplArrayCopyMultidimMax; i >= 2; i--)
@@ -3258,7 +3394,7 @@ void CompilerMSL::emit_custom_functions()
 		spv_function_implementations.insert(SPVFuncImplGetSwizzle);
 	}
 
-	for (auto &spv_func : spv_function_implementations)
+	for (const auto &spv_func : spv_function_implementations)
 	{
 		switch (spv_func)
 		{
@@ -3390,32 +3526,159 @@ void CompilerMSL::emit_custom_functions()
 				end_scope();
 				statement("");
 			}
-
 			break;
 		}
 
+		// Support for Metal 2.1's new texture_buffer type.
 		case SPVFuncImplTexelBufferCoords:
 		{
-			string tex_width_str = convert_to_string(msl_options.texel_buffer_texture_width);
-			statement("// Returns 2D texture coords corresponding to 1D texel buffer coords");
-			statement("inline uint2 spvTexelBufferCoord(uint tc)");
-			begin_scope();
-			statement(join("return uint2(tc % ", tex_width_str, ", tc / ", tex_width_str, ");"));
-			end_scope();
+			if (msl_options.texel_buffer_texture_width > 0)
+			{
+				string tex_width_str = convert_to_string(msl_options.texel_buffer_texture_width);
+				statement("// Returns 2D texture coords corresponding to 1D texel buffer coords");
+				statement(force_inline);
+				statement("uint2 spvTexelBufferCoord(uint tc)");
+				begin_scope();
+				statement(join("return uint2(tc % ", tex_width_str, ", tc / ", tex_width_str, ");"));
+				end_scope();
+				statement("");
+			}
+			else
+			{
+				statement("// Returns 2D texture coords corresponding to 1D texel buffer coords");
+				statement(
+				    "#define spvTexelBufferCoord(tc, tex) uint2((tc) % (tex).get_width(), (tc) / (tex).get_width())");
+				statement("");
+			}
+			break;
+		}
+
+		// Emulate texture2D atomic operations
+		case SPVFuncImplImage2DAtomicCoords:
+		{
+			statement("// Returns buffer coords corresponding to 2D texture coords for emulating 2D texture atomics");
+			statement("#define spvImage2DAtomicCoord(tc, tex) (((tex).get_width() * (tc).x) + (tc).y)");
 			statement("");
 			break;
 		}
 
+		// "fadd" intrinsic support
+		case SPVFuncImplFAdd:
+			statement("template<typename T>");
+			statement("T spvFAdd(T l, T r)");
+			begin_scope();
+			statement("return fma(T(1), l, r);");
+			end_scope();
+			statement("");
+			break;
+
+		// "fmul' intrinsic support
+		case SPVFuncImplFMul:
+			statement("template<typename T>");
+			statement("T spvFMul(T l, T r)");
+			begin_scope();
+			statement("return fma(l, r, T(0));");
+			end_scope();
+			statement("");
+
+			statement("template<typename T, int Cols, int Rows>");
+			statement("vec<T, Cols> spvFMulVectorMatrix(vec<T, Rows> v, matrix<T, Cols, Rows> m)");
+			begin_scope();
+			statement("vec<T, Cols> res = vec<T, Cols>(0);");
+			statement("for (uint i = Rows; i > 0; --i)");
+			begin_scope();
+			statement("vec<T, Cols> tmp(0);");
+			statement("for (uint j = 0; j < Cols; ++j)");
+			begin_scope();
+			statement("tmp[j] = m[j][i - 1];");
+			end_scope();
+			statement("res = fma(tmp, vec<T, Cols>(v[i - 1]), res);");
+			end_scope();
+			statement("return res;");
+			end_scope();
+			statement("");
+
+			statement("template<typename T, int Cols, int Rows>");
+			statement("vec<T, Rows> spvFMulMatrixVector(matrix<T, Cols, Rows> m, vec<T, Cols> v)");
+			begin_scope();
+			statement("vec<T, Rows> res = vec<T, Rows>(0);");
+			statement("for (uint i = Cols; i > 0; --i)");
+			begin_scope();
+			statement("res = fma(m[i - 1], vec<T, Rows>(v[i - 1]), res);");
+			end_scope();
+			statement("return res;");
+			end_scope();
+			statement("");
+
+			statement("template<typename T, int LCols, int LRows, int RCols, int RRows>");
+			statement(
+			    "matrix<T, RCols, LRows> spvFMulMatrixMatrix(matrix<T, LCols, LRows> l, matrix<T, RCols, RRows> r)");
+			begin_scope();
+			statement("matrix<T, RCols, LRows> res;");
+			statement("for (uint i = 0; i < RCols; i++)");
+			begin_scope();
+			statement("vec<T, RCols> tmp(0);");
+			statement("for (uint j = 0; j < LCols; j++)");
+			begin_scope();
+			statement("tmp = fma(vec<T, RCols>(r[i][j]), l[j], tmp);");
+			end_scope();
+			statement("res[i] = tmp;");
+			end_scope();
+			statement("return res;");
+			end_scope();
+			statement("");
+			break;
+
+		// Emulate texturecube_array with texture2d_array for iOS where this type is not available
+		case SPVFuncImplCubemapTo2DArrayFace:
+			statement(force_inline);
+			statement("float3 spvCubemapTo2DArrayFace(float3 P)");
+			begin_scope();
+			statement("float3 Coords = abs(P.xyz);");
+			statement("float CubeFace = 0;");
+			statement("float ProjectionAxis = 0;");
+			statement("float u = 0;");
+			statement("float v = 0;");
+			statement("if (Coords.x >= Coords.y && Coords.x >= Coords.z)");
+			begin_scope();
+			statement("CubeFace = P.x >= 0 ? 0 : 1;");
+			statement("ProjectionAxis = Coords.x;");
+			statement("u = P.x >= 0 ? -P.z : P.z;");
+			statement("v = -P.y;");
+			end_scope();
+			statement("else if (Coords.y >= Coords.x && Coords.y >= Coords.z)");
+			begin_scope();
+			statement("CubeFace = P.y >= 0 ? 2 : 3;");
+			statement("ProjectionAxis = Coords.y;");
+			statement("u = P.x;");
+			statement("v = P.y >= 0 ? P.z : -P.z;");
+			end_scope();
+			statement("else");
+			begin_scope();
+			statement("CubeFace = P.z >= 0 ? 4 : 5;");
+			statement("ProjectionAxis = Coords.z;");
+			statement("u = P.z >= 0 ? P.x : -P.x;");
+			statement("v = -P.y;");
+			end_scope();
+			statement("u = 0.5 * (u/ProjectionAxis + 1);");
+			statement("v = 0.5 * (v/ProjectionAxis + 1);");
+			statement("return float3(u, v, CubeFace);");
+			end_scope();
+			statement("");
+			break;
+
 		case SPVFuncImplInverse4x4:
 			statement("// Returns the determinant of a 2x2 matrix.");
-			statement("inline float spvDet2x2(float a1, float a2, float b1, float b2)");
+			statement(force_inline);
+			statement("float spvDet2x2(float a1, float a2, float b1, float b2)");
 			begin_scope();
 			statement("return a1 * b2 - b1 * a2;");
 			end_scope();
 			statement("");
 
 			statement("// Returns the determinant of a 3x3 matrix.");
-			statement("inline float spvDet3x3(float a1, float a2, float a3, float b1, float b2, float b3, float c1, "
+			statement(force_inline);
+			statement("float spvDet3x3(float a1, float a2, float a3, float b1, float b2, float b3, float c1, "
 			          "float c2, float c3)");
 			begin_scope();
 			statement("return a1 * spvDet2x2(b2, b3, c2, c3) - b1 * spvDet2x2(a2, a3, c2, c3) + c1 * spvDet2x2(a2, a3, "
@@ -3424,7 +3687,8 @@ void CompilerMSL::emit_custom_functions()
 			statement("");
 			statement("// Returns the inverse of a matrix, by using the algorithm of calculating the classical");
 			statement("// adjoint and dividing by the determinant. The contents of the matrix are changed.");
-			statement("inline float4x4 spvInverse4x4(float4x4 m)");
+			statement(force_inline);
+			statement("float4x4 spvInverse4x4(float4x4 m)");
 			begin_scope();
 			statement("float4x4 adj;	// The adjoint matrix (inverse after dividing by determinant)");
 			statement_no_indent("");
@@ -3480,7 +3744,8 @@ void CompilerMSL::emit_custom_functions()
 			if (spv_function_implementations.count(SPVFuncImplInverse4x4) == 0)
 			{
 				statement("// Returns the determinant of a 2x2 matrix.");
-				statement("inline float spvDet2x2(float a1, float a2, float b1, float b2)");
+				statement(force_inline);
+				statement("float spvDet2x2(float a1, float a2, float b1, float b2)");
 				begin_scope();
 				statement("return a1 * b2 - b1 * a2;");
 				end_scope();
@@ -3489,7 +3754,8 @@ void CompilerMSL::emit_custom_functions()
 
 			statement("// Returns the inverse of a matrix, by using the algorithm of calculating the classical");
 			statement("// adjoint and dividing by the determinant. The contents of the matrix are changed.");
-			statement("inline float3x3 spvInverse3x3(float3x3 m)");
+			statement(force_inline);
+			statement("float3x3 spvInverse3x3(float3x3 m)");
 			begin_scope();
 			statement("float3x3 adj;	// The adjoint matrix (inverse after dividing by determinant)");
 			statement_no_indent("");
@@ -3519,7 +3785,8 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplInverse2x2:
 			statement("// Returns the inverse of a matrix, by using the algorithm of calculating the classical");
 			statement("// adjoint and dividing by the determinant. The contents of the matrix are changed.");
-			statement("inline float2x2 spvInverse2x2(float2x2 m)");
+			statement(force_inline);
+			statement("float2x2 spvInverse2x2(float2x2 m)");
 			begin_scope();
 			statement("float2x2 adj;	// The adjoint matrix (inverse after dividing by determinant)");
 			statement_no_indent("");
@@ -4530,6 +4797,8 @@ void CompilerMSL::declare_undefined_values()
 
 void CompilerMSL::declare_constant_arrays()
 {
+	bool fully_inlined = ir.ids_for_type[TypeFunction].size() == 1;
+
 	// MSL cannot declare arrays inline (except when declaring a variable), so we must move them out to
 	// global constants directly, so we are able to use constants as variable expressions.
 	bool emitted = false;
@@ -4539,10 +4808,44 @@ void CompilerMSL::declare_constant_arrays()
 			return;
 
 		auto &type = this->get<SPIRType>(c.constant_type);
-		if (!type.array.empty())
+		// Constant arrays of non-primitive types (i.e. matrices) won't link properly into Metal libraries.
+		// FIXME: However, hoisting constants to main() means we need to pass down constant arrays to leaf functions if they are used there.
+		// If there are multiple functions in the module, drop this case to avoid breaking use cases which do not need to
+		// link into Metal libraries. This is hacky.
+		if (!type.array.empty() && (!fully_inlined || is_scalar(type) || is_vector(type)))
 		{
 			auto name = to_name(c.self);
 			statement("constant ", variable_decl(type, name), " = ", constant_expression(c), ";");
+			emitted = true;
+		}
+	});
+
+	if (emitted)
+		statement("");
+}
+
+// Constant arrays of non-primitive types (i.e. matrices) won't link properly into Metal libraries
+void CompilerMSL::declare_complex_constant_arrays()
+{
+	// If we do not have a fully inlined module, we did not opt in to
+	// declaring constant arrays of complex types. See CompilerMSL::declare_constant_arrays().
+	bool fully_inlined = ir.ids_for_type[TypeFunction].size() == 1;
+	if (!fully_inlined)
+		return;
+
+	// MSL cannot declare arrays inline (except when declaring a variable), so we must move them out to
+	// global constants directly, so we are able to use constants as variable expressions.
+	bool emitted = false;
+
+	ir.for_each_typed_id<SPIRConstant>([&](uint32_t, SPIRConstant &c) {
+		if (c.specialization)
+			return;
+
+		auto &type = this->get<SPIRType>(c.constant_type);
+		if (!type.array.empty() && !(is_scalar(type) || is_vector(type)))
+		{
+			auto name = to_name(c.self);
+			statement("", variable_decl(type, name), " = ", constant_expression(c), ";");
 			emitted = true;
 		}
 	});
@@ -4716,15 +5019,301 @@ void CompilerMSL::emit_binary_unord_op(uint32_t result_type, uint32_t result_id,
 	inherit_expression_dependencies(result_id, op1);
 }
 
+bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id, uint32_t ptr)
+{
+	auto &ptr_type = expression_type(ptr);
+	auto &result_type = get<SPIRType>(result_type_id);
+	if (ptr_type.storage != StorageClassInput && ptr_type.storage != StorageClassOutput)
+		return false;
+	if (ptr_type.storage == StorageClassOutput && get_execution_model() == ExecutionModelTessellationEvaluation)
+		return false;
+
+	bool flat_data_type = is_matrix(result_type) || is_array(result_type) || result_type.basetype == SPIRType::Struct;
+	if (!flat_data_type)
+		return false;
+
+	if (has_decoration(ptr, DecorationPatch))
+		return false;
+
+	// Now, we must unflatten a composite type and take care of interleaving array access with gl_in/gl_out.
+	// Lots of painful code duplication since we *really* should not unroll these kinds of loads in entry point fixup
+	// unless we're forced to do this when the code is emitting inoptimal OpLoads.
+	string expr;
+
+	uint32_t interface_index = get_extended_decoration(ptr, SPIRVCrossDecorationInterfaceMemberIndex);
+	auto *var = maybe_get_backing_variable(ptr);
+	bool ptr_is_io_variable = ir.ids[ptr].get_type() == TypeVariable;
+
+	const auto &iface_type = expression_type(stage_in_ptr_var_id);
+
+	if (result_type.array.size() > 2)
+	{
+		SPIRV_CROSS_THROW("Cannot load tessellation IO variables with more than 2 dimensions.");
+	}
+	else if (result_type.array.size() == 2)
+	{
+		if (!ptr_is_io_variable)
+			SPIRV_CROSS_THROW("Loading an array-of-array must be loaded directly from an IO variable.");
+		if (interface_index == uint32_t(-1))
+			SPIRV_CROSS_THROW("Interface index is unknown. Cannot continue.");
+		if (result_type.basetype == SPIRType::Struct || is_matrix(result_type))
+			SPIRV_CROSS_THROW("Cannot load array-of-array of composite type in tessellation IO.");
+
+		expr += type_to_glsl(result_type) + "({ ";
+		uint32_t num_control_points = to_array_size_literal(result_type, 1);
+		uint32_t base_interface_index = interface_index;
+
+		auto &sub_type = get<SPIRType>(result_type.parent_type);
+
+		for (uint32_t i = 0; i < num_control_points; i++)
+		{
+			expr += type_to_glsl(sub_type) + "({ ";
+			interface_index = base_interface_index;
+			uint32_t array_size = to_array_size_literal(result_type, 0);
+			for (uint32_t j = 0; j < array_size; j++, interface_index++)
+			{
+				const uint32_t indices[2] = { i, interface_index };
+
+				AccessChainMeta meta;
+				expr += access_chain_internal(stage_in_ptr_var_id, indices, 2,
+				                              ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+
+				if (j + 1 < array_size)
+					expr += ", ";
+			}
+			expr += " })";
+			if (i + 1 < num_control_points)
+				expr += ", ";
+		}
+		expr += " })";
+	}
+	else if (result_type.basetype == SPIRType::Struct)
+	{
+		bool is_array_of_struct = is_array(result_type);
+		if (is_array_of_struct && !ptr_is_io_variable)
+			SPIRV_CROSS_THROW("Loading array of struct from IO variable must come directly from IO variable.");
+
+		uint32_t num_control_points = 1;
+		if (is_array_of_struct)
+		{
+			num_control_points = to_array_size_literal(result_type, 0);
+			expr += type_to_glsl(result_type) + "({ ";
+		}
+
+		auto &struct_type = is_array_of_struct ? get<SPIRType>(result_type.parent_type) : result_type;
+		assert(struct_type.array.empty());
+
+		for (uint32_t i = 0; i < num_control_points; i++)
+		{
+			expr += type_to_glsl(struct_type) + "{ ";
+			for (uint32_t j = 0; j < uint32_t(struct_type.member_types.size()); j++)
+			{
+				// The base interface index is stored per variable for structs.
+				if (var)
+				{
+					interface_index =
+					    get_extended_member_decoration(var->self, j, SPIRVCrossDecorationInterfaceMemberIndex);
+				}
+
+				if (interface_index == uint32_t(-1))
+					SPIRV_CROSS_THROW("Interface index is unknown. Cannot continue.");
+
+				const auto &mbr_type = get<SPIRType>(struct_type.member_types[j]);
+				if (is_matrix(mbr_type))
+				{
+					expr += type_to_glsl(mbr_type) + "(";
+					for (uint32_t k = 0; k < mbr_type.columns; k++, interface_index++)
+					{
+						if (is_array_of_struct)
+						{
+							const uint32_t indices[2] = { i, interface_index };
+							AccessChainMeta meta;
+							expr += access_chain_internal(
+							    stage_in_ptr_var_id, indices, 2,
+							    ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+						}
+						else
+							expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+
+						if (k + 1 < mbr_type.columns)
+							expr += ", ";
+					}
+					expr += ")";
+				}
+				else if (is_array(mbr_type))
+				{
+					expr += type_to_glsl(mbr_type) + "({ ";
+					uint32_t array_size = to_array_size_literal(mbr_type, 0);
+					for (uint32_t k = 0; k < array_size; k++, interface_index++)
+					{
+						if (is_array_of_struct)
+						{
+							const uint32_t indices[2] = { i, interface_index };
+							AccessChainMeta meta;
+							expr += access_chain_internal(
+							    stage_in_ptr_var_id, indices, 2,
+							    ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+						}
+						else
+							expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+
+						if (k + 1 < array_size)
+							expr += ", ";
+					}
+					expr += " })";
+				}
+				else
+				{
+					if (is_array_of_struct)
+					{
+						const uint32_t indices[2] = { i, interface_index };
+						AccessChainMeta meta;
+						expr += access_chain_internal(stage_in_ptr_var_id, indices, 2,
+						                              ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT,
+						                              &meta);
+					}
+					else
+						expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+				}
+
+				if (j + 1 < struct_type.member_types.size())
+					expr += ", ";
+			}
+			expr += " }";
+			if (i + 1 < num_control_points)
+				expr += ", ";
+		}
+		if (is_array_of_struct)
+			expr += " })";
+	}
+	else if (is_matrix(result_type))
+	{
+		bool is_array_of_matrix = is_array(result_type);
+		if (is_array_of_matrix && !ptr_is_io_variable)
+			SPIRV_CROSS_THROW("Loading array of matrix from IO variable must come directly from IO variable.");
+		if (interface_index == uint32_t(-1))
+			SPIRV_CROSS_THROW("Interface index is unknown. Cannot continue.");
+
+		if (is_array_of_matrix)
+		{
+			// Loading a matrix from each control point.
+			uint32_t base_interface_index = interface_index;
+			uint32_t num_control_points = to_array_size_literal(result_type, 0);
+			expr += type_to_glsl(result_type) + "({ ";
+
+			auto &matrix_type = get_variable_element_type(get<SPIRVariable>(ptr));
+
+			for (uint32_t i = 0; i < num_control_points; i++)
+			{
+				interface_index = base_interface_index;
+				expr += type_to_glsl(matrix_type) + "(";
+				for (uint32_t j = 0; j < result_type.columns; j++, interface_index++)
+				{
+					const uint32_t indices[2] = { i, interface_index };
+
+					AccessChainMeta meta;
+					expr +=
+					    access_chain_internal(stage_in_ptr_var_id, indices, 2,
+					                          ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+					if (j + 1 < result_type.columns)
+						expr += ", ";
+				}
+				expr += ")";
+				if (i + 1 < num_control_points)
+					expr += ", ";
+			}
+
+			expr += " })";
+		}
+		else
+		{
+			expr += type_to_glsl(result_type) + "(";
+			for (uint32_t i = 0; i < result_type.columns; i++, interface_index++)
+			{
+				expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+				if (i + 1 < result_type.columns)
+					expr += ", ";
+			}
+			expr += ")";
+		}
+	}
+	else if (ptr_is_io_variable)
+	{
+		assert(is_array(result_type));
+		assert(result_type.array.size() == 1);
+		if (interface_index == uint32_t(-1))
+			SPIRV_CROSS_THROW("Interface index is unknown. Cannot continue.");
+
+		// We're loading an array directly from a global variable.
+		// This means we're loading one member from each control point.
+		expr += type_to_glsl(result_type) + "({ ";
+		uint32_t num_control_points = to_array_size_literal(result_type, 0);
+
+		for (uint32_t i = 0; i < num_control_points; i++)
+		{
+			const uint32_t indices[2] = { i, interface_index };
+
+			AccessChainMeta meta;
+			expr += access_chain_internal(stage_in_ptr_var_id, indices, 2,
+			                              ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+
+			if (i + 1 < num_control_points)
+				expr += ", ";
+		}
+		expr += " })";
+	}
+	else
+	{
+		// We're loading an array from a concrete control point.
+		assert(is_array(result_type));
+		assert(result_type.array.size() == 1);
+		if (interface_index == uint32_t(-1))
+			SPIRV_CROSS_THROW("Interface index is unknown. Cannot continue.");
+
+		expr += type_to_glsl(result_type) + "({ ";
+		uint32_t array_size = to_array_size_literal(result_type, 0);
+		for (uint32_t i = 0; i < array_size; i++, interface_index++)
+		{
+			expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+			if (i + 1 < array_size)
+				expr += ", ";
+		}
+		expr += " })";
+	}
+
+	emit_op(result_type_id, id, expr, false);
+	register_read(id, ptr, false);
+	return true;
+}
+
 bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t length)
 {
 	// If this is a per-vertex output, remap it to the I/O array buffer.
-	auto *var = maybe_get<SPIRVariable>(ops[2]);
+
+	// Any object which did not go through IO flattening shenanigans will go there instead.
+	// We will unflatten on-demand instead as needed, but not all possible cases can be supported, especially with arrays.
+
+	auto *var = maybe_get_backing_variable(ops[2]);
+	bool patch = false;
+	bool flat_data = false;
+	bool ptr_is_chain = false;
+
+	if (var)
+	{
+		patch = has_decoration(ops[2], DecorationPatch) || is_patch_block(get_variable_data_type(*var));
+
+		// Should match strip_array in add_interface_block.
+		flat_data = var->storage == StorageClassInput ||
+		            (var->storage == StorageClassOutput && get_execution_model() == ExecutionModelTessellationControl);
+
+		// We might have a chained access chain, where
+		// we first take the access chain to the control point, and then we chain into a member or something similar.
+		// In this case, we need to skip gl_in/gl_out remapping.
+		ptr_is_chain = var->self != ID(ops[2]);
+	}
+
 	BuiltIn bi_type = BuiltIn(get_decoration(ops[2], DecorationBuiltIn));
-	if (var &&
-	    (var->storage == StorageClassInput ||
-	     (get_execution_model() == ExecutionModelTessellationControl && var->storage == StorageClassOutput)) &&
-	    !(has_decoration(ops[2], DecorationPatch) || is_patch_block(get_variable_data_type(*var))) &&
+	if (var && flat_data && !patch &&
 	    (!is_builtin_variable(*var) || bi_type == BuiltInPosition || bi_type == BuiltInPointSize ||
 	     bi_type == BuiltInClipDistance || bi_type == BuiltInCullDistance ||
 	     get_variable_data_type(*var).basetype == SPIRType::Struct))
@@ -4740,26 +5329,35 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 		new_uint_type.width = 32;
 		set<SPIRType>(type_id, new_uint_type);
 
-		indices.push_back(ops[3]);
+		uint32_t first_non_array_index = ptr_is_chain ? 3 : 4;
+		VariableID stage_var_id = var->storage == StorageClassInput ? stage_in_ptr_var_id : stage_out_ptr_var_id;
+		VariableID ptr = ptr_is_chain ? VariableID(ops[2]) : stage_var_id;
+		if (!ptr_is_chain)
+		{
+			// Index into gl_in/gl_out with first array index.
+			indices.push_back(ops[3]);
+		}
+
+		auto &result_ptr_type = get<SPIRType>(ops[0]);
 
 		uint32_t const_mbr_id = next_id++;
-		uint32_t index = get_extended_decoration(ops[2], SPIRVCrossDecorationInterfaceMemberIndex);
-		uint32_t ptr = var->storage == StorageClassInput ? stage_in_ptr_var_id : stage_out_ptr_var_id;
+		uint32_t index = get_extended_decoration(var->self, SPIRVCrossDecorationInterfaceMemberIndex);
 		if (var->storage == StorageClassInput || has_decoration(get_variable_element_type(*var).self, DecorationBlock))
 		{
-			uint32_t i = 4;
+			uint32_t i = first_non_array_index;
 			auto *type = &get_variable_element_type(*var);
-			if (index == uint32_t(-1) && length >= 5)
+			if (index == uint32_t(-1) && length >= (first_non_array_index + 1))
 			{
 				// Maybe this is a struct type in the input class, in which case
 				// we put it as a decoration on the corresponding member.
-				index = get_extended_member_decoration(ops[2], get_constant(ops[4]).scalar(),
+				index = get_extended_member_decoration(var->self, get_constant(ops[first_non_array_index]).scalar(),
 				                                       SPIRVCrossDecorationInterfaceMemberIndex);
 				assert(index != uint32_t(-1));
 				i++;
-				type = &get<SPIRType>(type->member_types[get_constant(ops[4]).scalar()]);
+				type = &get<SPIRType>(type->member_types[get_constant(ops[first_non_array_index]).scalar()]);
 			}
-			// In this case, we flattened structures and arrays, so now we have to
+
+			// In this case, we're poking into flattened structures and arrays, so now we have to
 			// combine the following indices. If we encounter a non-constant index,
 			// we're hosed.
 			for (; i < length; ++i)
@@ -4767,92 +5365,35 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 				if (!is_array(*type) && !is_matrix(*type) && type->basetype != SPIRType::Struct)
 					break;
 
-				auto &c = get_constant(ops[i]);
-				index += c.scalar();
+				auto *c = maybe_get<SPIRConstant>(ops[i]);
+				if (!c || c->specialization)
+					SPIRV_CROSS_THROW("Trying to dynamically index into an array interface variable in tessellation. "
+					                  "This is currently unsupported.");
+
+				// We're in flattened space, so just increment the member index into IO block.
+				// We can only do this once in the current implementation, so either:
+				// Struct, Matrix or 1-dimensional array for a control point.
+				index += c->scalar();
+
 				if (type->parent_type)
 					type = &get<SPIRType>(type->parent_type);
 				else if (type->basetype == SPIRType::Struct)
-					type = &get<SPIRType>(type->member_types[c.scalar()]);
+					type = &get<SPIRType>(type->member_types[c->scalar()]);
 			}
-			// If the access chain terminates at a composite type, the composite
-			// itself might be copied. In that case, we must unflatten it.
-			if (is_matrix(*type) || is_array(*type) || type->basetype == SPIRType::Struct)
-			{
-				std::string temp_name = join(to_name(var->self), "_", ops[1]);
-				statement(variable_decl(*type, temp_name, var->self), ";");
-				// Set up the initializer for this temporary variable.
-				indices.push_back(const_mbr_id);
-				if (type->basetype == SPIRType::Struct)
-				{
-					for (uint32_t j = 0; j < type->member_types.size(); j++)
-					{
-						index = get_extended_member_decoration(ops[2], j, SPIRVCrossDecorationInterfaceMemberIndex);
-						const auto &mbr_type = get<SPIRType>(type->member_types[j]);
-						if (is_matrix(mbr_type))
-						{
-							for (uint32_t k = 0; k < mbr_type.columns; k++, index++)
-							{
-								set<SPIRConstant>(const_mbr_id, type_id, index, false);
-								auto e = access_chain(ptr, indices.data(), uint32_t(indices.size()), mbr_type, nullptr,
-								                      true);
-								statement(temp_name, ".", to_member_name(*type, j), "[", k, "] = ", e, ";");
-							}
-						}
-						else if (is_array(mbr_type))
-						{
-							for (uint32_t k = 0; k < to_array_size_literal(mbr_type, 0); k++, index++)
-							{
-								set<SPIRConstant>(const_mbr_id, type_id, index, false);
-								auto e = access_chain(ptr, indices.data(), uint32_t(indices.size()), mbr_type, nullptr,
-								                      true);
-								statement(temp_name, ".", to_member_name(*type, j), "[", k, "] = ", e, ";");
-							}
-						}
-						else
-						{
-							set<SPIRConstant>(const_mbr_id, type_id, index, false);
-							auto e =
-							    access_chain(ptr, indices.data(), uint32_t(indices.size()), mbr_type, nullptr, true);
-							statement(temp_name, ".", to_member_name(*type, j), " = ", e, ";");
-						}
-					}
-				}
-				else if (is_matrix(*type))
-				{
-					for (uint32_t j = 0; j < type->columns; j++, index++)
-					{
-						set<SPIRConstant>(const_mbr_id, type_id, index, false);
-						auto e = access_chain(ptr, indices.data(), uint32_t(indices.size()), *type, nullptr, true);
-						statement(temp_name, "[", j, "] = ", e, ";");
-					}
-				}
-				else // Must be an array
-				{
-					assert(is_array(*type));
-					for (uint32_t j = 0; j < to_array_size_literal(*type, 0); j++, index++)
-					{
-						set<SPIRConstant>(const_mbr_id, type_id, index, false);
-						auto e = access_chain(ptr, indices.data(), uint32_t(indices.size()), *type, nullptr, true);
-						statement(temp_name, "[", j, "] = ", e, ";");
-					}
-				}
 
-				// This needs to be a variable instead of an expression so we don't
-				// try to dereference this as a variable pointer.
-				set<SPIRVariable>(ops[1], ops[0], var->storage);
-				ir.meta[ops[1]] = ir.meta[ops[2]];
-				set_name(ops[1], temp_name);
-				if (has_decoration(var->self, DecorationInvariant))
-					set_decoration(ops[1], DecorationInvariant);
-				for (uint32_t j = 2; j < length; j++)
-					inherit_expression_dependencies(ops[1], ops[j]);
-				return true;
+			if (is_matrix(result_ptr_type) || is_array(result_ptr_type) || result_ptr_type.basetype == SPIRType::Struct)
+			{
+				// We're not going to emit the actual member name, we let any further OpLoad take care of that.
+				// Tag the access chain with the member index we're referencing.
+				set_extended_decoration(ops[1], SPIRVCrossDecorationInterfaceMemberIndex, index);
 			}
 			else
 			{
+				// Access the appropriate member of gl_in/gl_out.
 				set<SPIRConstant>(const_mbr_id, type_id, index, false);
 				indices.push_back(const_mbr_id);
 
+				// Append any straggling access chain indices.
 				if (i < length)
 					indices.insert(indices.end(), ops + i, ops + length);
 			}
@@ -4868,7 +5409,39 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 
 		// We use the pointer to the base of the input/output array here,
 		// so this is always a pointer chain.
-		auto e = access_chain(ptr, indices.data(), uint32_t(indices.size()), get<SPIRType>(ops[0]), &meta, true);
+		string e;
+
+		if (!ptr_is_chain)
+		{
+			// This is the start of an access chain, use ptr_chain to index into control point array.
+			e = access_chain(ptr, indices.data(), uint32_t(indices.size()), result_ptr_type, &meta, true);
+		}
+		else
+		{
+			// If we're accessing a struct, we need to use member indices which are based on the IO block,
+			// not actual struct type, so we have to use a split access chain here where
+			// first path resolves the control point index, i.e. gl_in[index], and second half deals with
+			// looking up flattened member name.
+
+			// However, it is possible that we partially accessed a struct,
+			// by taking pointer to member inside the control-point array.
+			// For this case, we fall back to a natural access chain since we have already dealt with remapping struct members.
+			// One way to check this here is if we have 2 implied read expressions.
+			// First one is the gl_in/gl_out struct itself, then an index into that array.
+			// If we have traversed further, we use a normal access chain formulation.
+			auto *ptr_expr = maybe_get<SPIRExpression>(ptr);
+			if (ptr_expr && ptr_expr->implied_read_expressions.size() == 2)
+			{
+				e = join(to_expression(ptr),
+				         access_chain_internal(stage_var_id, indices.data(), uint32_t(indices.size()),
+				                               ACCESS_CHAIN_CHAIN_ONLY_BIT, &meta));
+			}
+			else
+			{
+				e = access_chain_internal(ptr, indices.data(), uint32_t(indices.size()), 0, &meta);
+			}
+		}
+
 		auto &expr = set<SPIRExpression>(ops[1], move(e), ops[0], should_forward(ops[2]));
 		expr.loaded_from = var->self;
 		expr.need_transpose = meta.need_transpose;
@@ -4882,11 +5455,23 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 		if (meta.storage_is_invariant)
 			set_decoration(ops[1], DecorationInvariant);
 
+		// If we have some expression dependencies in our access chain, this access chain is technically a forwarded
+		// temporary which could be subject to invalidation.
+		// Need to assume we're forwarded while calling inherit_expression_depdendencies.
+		forwarded_temporaries.insert(ops[1]);
+		// The access chain itself is never forced to a temporary, but its dependencies might.
+		suppressed_usage_tracking.insert(ops[1]);
+
 		for (uint32_t i = 2; i < length; i++)
 		{
 			inherit_expression_dependencies(ops[1], ops[i]);
 			add_implied_read_expression(expr, ops[i]);
 		}
+
+		// If we have no dependencies after all, i.e., all indices in the access chain are immutable temporaries,
+		// we're not forwarded after all.
+		if (expr.expression_dependencies.empty())
+			forwarded_temporaries.erase(ops[1]);
 
 		return true;
 	}
@@ -4966,6 +5551,24 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 
 	switch (opcode)
 	{
+	case OpLoad:
+	{
+		uint32_t id = ops[1];
+		uint32_t ptr = ops[2];
+		if (is_tessellation_shader())
+		{
+			if (!emit_tessellation_io_load(ops[0], id, ptr))
+				CompilerGLSL::emit_instruction(instruction);
+		}
+		else
+		{
+			// Sample mask input for Metal is not an array
+			if (BuiltIn(get_decoration(ptr, DecorationBuiltIn)) == BuiltInSampleMask)
+				set_decoration(id, DecorationBuiltIn, BuiltInSampleMask);
+			CompilerGLSL::emit_instruction(instruction);
+		}
+		break;
+	}
 
 	// Comparisons
 	case OpIEqual:
@@ -5117,6 +5720,20 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		MSL_BFOP(fmod);
 		break;
 
+	case OpFMul:
+		if (msl_options.invariant_float_math)
+			MSL_BFOP(spvFMul);
+		else
+			MSL_BOP(*);
+		break;
+
+	case OpFAdd:
+		if (msl_options.invariant_float_math)
+			MSL_BFOP(spvFAdd);
+		else
+			MSL_BOP(+);
+		break;
+
 	// Atomics
 	case OpAtomicExchange:
 	{
@@ -5242,6 +5859,41 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		break;
 	}
 
+	// Emulate texture2D atomic operations
+	case OpImageTexelPointer:
+	{
+		// When using the pointer, we need to know which variable it is actually loaded from.
+		auto *var = maybe_get_backing_variable(ops[2]);
+		if (var && atomic_image_vars.count(var->self))
+		{
+			uint32_t result_type = ops[0];
+			uint32_t id = ops[1];
+
+			std::string coord = to_expression(ops[3]);
+			auto &type = expression_type(ops[2]);
+			if (type.image.dim == Dim2D)
+			{
+				coord = join("spvImage2DAtomicCoord(", coord, ", ", to_expression(ops[2]), ")");
+			}
+
+			auto &e = set<SPIRExpression>(id, join(to_expression(ops[2]), "_atomic[", coord, "]"), result_type, true);
+			e.loaded_from = var ? var->self : ID(0);
+			inherit_expression_dependencies(id, ops[3]);
+		}
+		else
+		{
+			uint32_t result_type = ops[0];
+			uint32_t id = ops[1];
+			auto &e =
+			    set<SPIRExpression>(id, join(to_expression(ops[2]), ", ", to_expression(ops[3])), result_type, true);
+
+			// When using the pointer, we need to know which variable it is actually loaded from.
+			e.loaded_from = var ? var->self : ID(0);
+			inherit_expression_dependencies(id, ops[3]);
+		}
+		break;
+	}
+
 	case OpImageWrite:
 	{
 		uint32_t img_id = ops[0];
@@ -5337,7 +5989,11 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 			expr += ", " + img_exp + ".get_depth(" + lod + ")";
 
 		if (img_is_array)
+		{
 			expr += ", " + img_exp + ".get_array_size()";
+			if (img_dim == DimCube && msl_options.emulate_cube_array)
+				expr += " / 6";
+		}
 
 		expr += ")";
 
@@ -5418,9 +6074,6 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		}
 		break;
 	}
-
-	case OpImageTexelPointer:
-		SPIRV_CROSS_THROW("MSL does not support atomic operations on images or texel buffers.");
 
 	// Casting
 	case OpQuantizeToF16:
@@ -5511,6 +6164,85 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		emit_op(result_type, id, expr, should_forward(a) && should_forward(b));
 		inherit_expression_dependencies(id, a);
 		inherit_expression_dependencies(id, b);
+		break;
+	}
+
+	case OpVectorTimesMatrix:
+	case OpMatrixTimesVector:
+	{
+		if (!msl_options.invariant_float_math)
+		{
+			CompilerGLSL::emit_instruction(instruction);
+			break;
+		}
+
+		// If the matrix needs transpose, just flip the multiply order.
+		auto *e = maybe_get<SPIRExpression>(ops[opcode == OpMatrixTimesVector ? 2 : 3]);
+		if (e && e->need_transpose)
+		{
+			e->need_transpose = false;
+			string expr;
+
+			if (opcode == OpMatrixTimesVector)
+			{
+				expr = join("spvFMulVectorMatrix(", to_enclosed_unpacked_expression(ops[3]), ", ",
+				            to_unpacked_row_major_matrix_expression(ops[2]), ")");
+			}
+			else
+			{
+				expr = join("spvFMulMatrixVector(", to_unpacked_row_major_matrix_expression(ops[3]), ", ",
+				            to_enclosed_unpacked_expression(ops[2]), ")");
+			}
+
+			bool forward = should_forward(ops[2]) && should_forward(ops[3]);
+			emit_op(ops[0], ops[1], expr, forward);
+			e->need_transpose = true;
+			inherit_expression_dependencies(ops[1], ops[2]);
+			inherit_expression_dependencies(ops[1], ops[3]);
+		}
+		else
+		{
+			if (opcode == OpMatrixTimesVector)
+				MSL_BFOP(spvFMulMatrixVector);
+			else
+				MSL_BFOP(spvFMulVectorMatrix);
+		}
+		break;
+	}
+
+	case OpMatrixTimesMatrix:
+	{
+		if (!msl_options.invariant_float_math)
+		{
+			CompilerGLSL::emit_instruction(instruction);
+			break;
+		}
+
+		auto *a = maybe_get<SPIRExpression>(ops[2]);
+		auto *b = maybe_get<SPIRExpression>(ops[3]);
+
+		// If both matrices need transpose, we can multiply in flipped order and tag the expression as transposed.
+		// a^T * b^T = (b * a)^T.
+		if (a && b && a->need_transpose && b->need_transpose)
+		{
+			a->need_transpose = false;
+			b->need_transpose = false;
+
+			auto expr =
+			    join("spvFMulMatrixMatrix(", enclose_expression(to_unpacked_row_major_matrix_expression(ops[3])), ", ",
+			         enclose_expression(to_unpacked_row_major_matrix_expression(ops[2])), ")");
+
+			bool forward = should_forward(ops[2]) && should_forward(ops[3]);
+			auto &e = emit_op(ops[0], ops[1], expr, forward);
+			e.need_transpose = true;
+			a->need_transpose = true;
+			b->need_transpose = true;
+			inherit_expression_dependencies(ops[1], ops[2]);
+			inherit_expression_dependencies(ops[1], ops[3]);
+		}
+		else
+			MSL_BFOP(spvFMulMatrixMatrix);
+
 		break;
 	}
 
@@ -5654,6 +6386,34 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 	previous_instruction_opcode = opcode;
 }
 
+void CompilerMSL::emit_texture_op(const Instruction &i)
+{
+	if (msl_options.is_ios() && msl_options.ios_use_framebuffer_fetch_subpasses)
+	{
+		auto *ops = stream(i);
+
+		uint32_t result_type_id = ops[0];
+		uint32_t id = ops[1];
+		uint32_t img = ops[2];
+
+		auto &type = expression_type(img);
+		auto &imgtype = get<SPIRType>(type.self);
+
+		// Use Metal's native frame-buffer fetch API for subpass inputs.
+		if (imgtype.image.dim == DimSubpassData)
+		{
+			// Subpass inputs cannot be invalidated,
+			// so just forward the expression directly.
+			string expr = to_expression(img);
+			emit_op(result_type_id, id, expr, true);
+			return;
+		}
+	}
+
+	// Fallback to default implementation
+	CompilerGLSL::emit_texture_op(i);
+}
+
 void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uint32_t id_mem_sem)
 {
 	if (get_execution_model() != ExecutionModelGLCompute && get_execution_model() != ExecutionModelTessellationControl)
@@ -5682,8 +6442,11 @@ void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uin
 		if (get_execution_model() == ExecutionModelTessellationControl ||
 		    (mem_sem & (MemorySemanticsUniformMemoryMask | MemorySemanticsCrossWorkgroupMemoryMask)))
 			mem_flags += "mem_flags::mem_device";
-		if (mem_sem & (MemorySemanticsSubgroupMemoryMask | MemorySemanticsWorkgroupMemoryMask |
-		               MemorySemanticsAtomicCounterMemoryMask))
+
+		// Fix tessellation patch function processing
+		if (get_execution_model() == ExecutionModelTessellationControl ||
+		    (mem_sem & (MemorySemanticsSubgroupMemoryMask | MemorySemanticsWorkgroupMemoryMask |
+		                MemorySemanticsAtomicCounterMemoryMask)))
 		{
 			if (!mem_flags.empty())
 				mem_flags += " | ";
@@ -5753,59 +6516,76 @@ void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uin
 void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id, StorageClass lhs_storage,
                                   StorageClass rhs_storage)
 {
-	// Assignment from an array initializer is fine.
-	auto &type = expression_type(rhs_id);
-	auto *var = maybe_get_backing_variable(rhs_id);
+	// Allow Metal to use the array<T> template to make arrays a value type.
+	// This, however, cannot be used for threadgroup address specifiers, so consider the custom array copy as fallback.
+	bool lhs_thread = (lhs_storage == StorageClassOutput || lhs_storage == StorageClassFunction ||
+	                   lhs_storage == StorageClassGeneric || lhs_storage == StorageClassPrivate);
+	bool rhs_thread = (rhs_storage == StorageClassInput || rhs_storage == StorageClassFunction ||
+	                   rhs_storage == StorageClassGeneric || rhs_storage == StorageClassPrivate);
 
-	// Unfortunately, we cannot template on address space in MSL,
-	// so explicit address space redirection it is ...
-	bool is_constant = false;
-	if (ir.ids[rhs_id].get_type() == TypeConstant)
+	// If threadgroup storage qualifiers are *not* used:
+	// Avoid spvCopy* wrapper functions; Otherwise, spvUnsafeArray<> template cannot be used with that storage qualifier.
+	if (lhs_thread && rhs_thread && !use_builtin_array)
 	{
-		is_constant = true;
-	}
-	else if (var && var->remapped_variable && var->statically_assigned &&
-	         ir.ids[var->static_expression].get_type() == TypeConstant)
-	{
-		is_constant = true;
-	}
-
-	// For the case where we have OpLoad triggering an array copy,
-	// we cannot easily detect this case ahead of time since it's
-	// context dependent. We might have to force a recompile here
-	// if this is the only use of array copies in our shader.
-	if (type.array.size() > 1)
-	{
-		if (type.array.size() > SPVFuncImplArrayCopyMultidimMax)
-			SPIRV_CROSS_THROW("Cannot support this many dimensions for arrays of arrays.");
-		auto func = static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + type.array.size());
-		add_spv_func_and_recompile(func);
+		statement(lhs, " = ", to_expression(rhs_id), ";");
 	}
 	else
-		add_spv_func_and_recompile(SPVFuncImplArrayCopy);
+	{
+		// Assignment from an array initializer is fine.
+		auto &type = expression_type(rhs_id);
+		auto *var = maybe_get_backing_variable(rhs_id);
 
-	bool lhs_thread = lhs_storage == StorageClassOutput || lhs_storage == StorageClassFunction ||
-	                  lhs_storage == StorageClassGeneric || lhs_storage == StorageClassPrivate;
-	bool rhs_thread = rhs_storage == StorageClassInput || rhs_storage == StorageClassFunction ||
-	                  rhs_storage == StorageClassGeneric || rhs_storage == StorageClassPrivate;
+		// Unfortunately, we cannot template on address space in MSL,
+		// so explicit address space redirection it is ...
+		bool is_constant = false;
+		if (ir.ids[rhs_id].get_type() == TypeConstant)
+		{
+			is_constant = true;
+		}
+		else if (var && var->remapped_variable && var->statically_assigned &&
+		         ir.ids[var->static_expression].get_type() == TypeConstant)
+		{
+			is_constant = true;
+		}
 
-	const char *tag = nullptr;
-	if (lhs_thread && is_constant)
-		tag = "FromConstantToStack";
-	else if (lhs_storage == StorageClassWorkgroup && is_constant)
-		tag = "FromConstantToThreadGroup";
-	else if (lhs_thread && rhs_thread)
-		tag = "FromStackToStack";
-	else if (lhs_storage == StorageClassWorkgroup && rhs_thread)
-		tag = "FromStackToThreadGroup";
-	else if (lhs_thread && rhs_storage == StorageClassWorkgroup)
-		tag = "FromThreadGroupToStack";
-	else if (lhs_storage == StorageClassWorkgroup && rhs_storage == StorageClassWorkgroup)
-		tag = "FromThreadGroupToThreadGroup";
-	else
-		SPIRV_CROSS_THROW("Unknown storage class used for copying arrays.");
+		// For the case where we have OpLoad triggering an array copy,
+		// we cannot easily detect this case ahead of time since it's
+		// context dependent. We might have to force a recompile here
+		// if this is the only use of array copies in our shader.
+		if (type.array.size() > 1)
+		{
+			if (type.array.size() > SPVFuncImplArrayCopyMultidimMax)
+				SPIRV_CROSS_THROW("Cannot support this many dimensions for arrays of arrays.");
+			auto func = static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + type.array.size());
+			add_spv_func_and_recompile(func);
+		}
+		else
+			add_spv_func_and_recompile(SPVFuncImplArrayCopy);
 
-	statement("spvArrayCopy", tag, type.array.size(), "(", lhs, ", ", to_expression(rhs_id), ");");
+		const char *tag = nullptr;
+		if (lhs_thread && is_constant)
+			tag = "FromConstantToStack";
+		else if (lhs_storage == StorageClassWorkgroup && is_constant)
+			tag = "FromConstantToThreadGroup";
+		else if (lhs_thread && rhs_thread)
+			tag = "FromStackToStack";
+		else if (lhs_storage == StorageClassWorkgroup && rhs_thread)
+			tag = "FromStackToThreadGroup";
+		else if (lhs_thread && rhs_storage == StorageClassWorkgroup)
+			tag = "FromThreadGroupToStack";
+		else if (lhs_storage == StorageClassWorkgroup && rhs_storage == StorageClassWorkgroup)
+			tag = "FromThreadGroupToThreadGroup";
+		else
+			SPIRV_CROSS_THROW("Unknown storage class used for copying arrays.");
+
+		// Pass internal array of spvUnsafeArray<> into wrapper functions
+		if (lhs_thread)
+			statement("spvArrayCopy", tag, type.array.size(), "(", lhs, ".elements, ", to_expression(rhs_id), ");");
+		else if (rhs_thread)
+			statement("spvArrayCopy", tag, type.array.size(), "(", lhs, ", ", to_expression(rhs_id), ".elements);");
+		else
+			statement("spvArrayCopy", tag, type.array.size(), "(", lhs, ", ", to_expression(rhs_id), ");");
+	}
 }
 
 // Since MSL does not allow arrays to be copied via simple variable assignment,
@@ -5860,7 +6640,18 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
 	auto *var = maybe_get_backing_variable(obj);
 	if (!var)
 		SPIRV_CROSS_THROW("No backing variable for atomic operation.");
-	exp += get_argument_address_space(*var);
+
+	// Emulate texture2D atomic operations
+	const auto &res_type = get<SPIRType>(var->basetype);
+	if (res_type.storage == StorageClassUniformConstant && res_type.basetype == SPIRType::Image)
+	{
+		exp += "device";
+	}
+	else
+	{
+		exp += get_argument_address_space(*var);
+	}
+
 	exp += " atomic_";
 	exp += type_to_glsl(type);
 	exp += "*)";
@@ -6230,37 +7021,20 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 		add_function_overload(func);
 
 	local_variable_names = resource_names;
+	string decl;
 
 	processing_entry_point = func.self == ir.default_entry_point;
 
-	string decl = processing_entry_point ? "" : "inline ";
+	// Metal helper functions must be static force-inline otherwise they will cause problems when linked together in a single Metallib.
+	if (!processing_entry_point)
+		statement(force_inline);
 
 	auto &type = get<SPIRType>(func.return_type);
 
-	if (type.array.empty())
-	{
-		decl += func_type_decl(type);
-	}
-	else
-	{
-		// We cannot return arrays in MSL, so "return" through an out variable.
-		decl += "void";
-	}
-
+	decl += func_type_decl(type);
 	decl += " ";
 	decl += to_name(func.self);
 	decl += "(";
-
-	if (!type.array.empty())
-	{
-		// Fake arrays returns by writing to an out array instead.
-		decl += "thread ";
-		decl += type_to_glsl(type);
-		decl += " (&SPIRV_Cross_return_value)";
-		decl += type_to_array_glsl(type);
-		if (!func.arguments.empty())
-			decl += ", ";
-	}
 
 	if (processing_entry_point)
 	{
@@ -6596,6 +7370,14 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		else if (sampling_type_needs_f32_conversion(coord_type))
 			tex_coords = convert_to_f32(tex_coords, 1);
 
+		if (msl_options.texture_1D_as_2D)
+		{
+			if (is_fetch)
+				tex_coords = "uint2(" + tex_coords + ", 0)";
+			else
+				tex_coords = "float2(" + tex_coords + ", 0.5)";
+		}
+
 		alt_coord_component = 1;
 		break;
 
@@ -6610,14 +7392,27 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		else
 		{
 			// Metal texel buffer textures are 2D, so convert 1D coord to 2D.
+			// Support for Metal 2.1's new texture_buffer type.
 			if (is_fetch)
-				tex_coords = "spvTexelBufferCoord(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
+			{
+				if (msl_options.texel_buffer_texture_width > 0)
+				{
+					tex_coords = "spvTexelBufferCoord(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
+				}
+				else
+				{
+					tex_coords = "spvTexelBufferCoord(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ", " +
+					             to_expression(img) + ")";
+				}
+			}
 		}
 
 		alt_coord_component = 1;
 		break;
 
 	case DimSubpassData:
+		// If we're using Metal's native frame-buffer fetch API for subpass inputs,
+		// this path will not be hit.
 		if (imgtype.image.ms)
 			tex_coords = "uint2(gl_FragCoord.xy)";
 		else
@@ -6703,28 +7498,46 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 
 	if (!farg_str.empty())
 		farg_str += ", ";
-	farg_str += tex_coords;
 
-	// If fetch from cube, add face explicitly
-	if (is_cube_fetch)
+	if (imgtype.image.dim == DimCube && imgtype.image.arrayed && msl_options.emulate_cube_array)
 	{
-		// Special case for cube arrays, face and layer are packed in one dimension.
-		if (imgtype.image.arrayed)
-			farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ") % 6u";
-		else
-			farg_str += ", uint(" + round_fp_tex_coords(to_extract_component_expression(coord, 2), coord_is_fp) + ")";
-	}
+		farg_str += "spvCubemapTo2DArrayFace(" + tex_coords + ").xy";
 
-	// If array, use alt coord
-	if (imgtype.image.arrayed)
-	{
-		// Special case for cube arrays, face and layer are packed in one dimension.
-		if (imgtype.image.dim == DimCube && is_fetch)
-			farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ") / 6u";
+		if (is_cube_fetch)
+			farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ")";
 		else
-			farg_str += ", uint(" +
+			farg_str += ", uint(spvCubemapTo2DArrayFace(" + tex_coords + ").z) + (uint(" +
 			            round_fp_tex_coords(to_extract_component_expression(coord, alt_coord_component), coord_is_fp) +
-			            ")";
+			            ") * 6u)";
+
+		add_spv_func_and_recompile(SPVFuncImplCubemapTo2DArrayFace);
+	}
+	else
+	{
+		farg_str += tex_coords;
+
+		// If fetch from cube, add face explicitly
+		if (is_cube_fetch)
+		{
+			// Special case for cube arrays, face and layer are packed in one dimension.
+			if (imgtype.image.arrayed)
+				farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ") % 6u";
+			else
+				farg_str +=
+				    ", uint(" + round_fp_tex_coords(to_extract_component_expression(coord, 2), coord_is_fp) + ")";
+		}
+
+		// If array, use alt coord
+		if (imgtype.image.arrayed)
+		{
+			// Special case for cube arrays, face and layer are packed in one dimension.
+			if (imgtype.image.dim == DimCube && is_fetch)
+				farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ") / 6u";
+			else
+				farg_str +=
+				    ", uint(" +
+				    round_fp_tex_coords(to_extract_component_expression(coord, alt_coord_component), coord_is_fp) + ")";
+		}
 	}
 
 	// Depth compare reference value
@@ -6787,14 +7600,14 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 
 	// LOD Options
 	// Metal does not support LOD for 1D textures.
-	if (bias && imgtype.image.dim != Dim1D)
+	if (bias && (imgtype.image.dim != Dim1D || msl_options.texture_1D_as_2D))
 	{
 		forward = forward && should_forward(bias);
 		farg_str += ", bias(" + to_expression(bias) + ")";
 	}
 
 	// Metal does not support LOD for 1D textures.
-	if (lod && imgtype.image.dim != Dim1D)
+	if (lod && (imgtype.image.dim != Dim1D || msl_options.texture_1D_as_2D))
 	{
 		forward = forward && should_forward(lod);
 		if (is_fetch)
@@ -6806,8 +7619,8 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 			farg_str += ", level(" + to_expression(lod) + ")";
 		}
 	}
-	else if (is_fetch && !lod && imgtype.image.dim != Dim1D && imgtype.image.dim != DimBuffer && !imgtype.image.ms &&
-	         imgtype.image.sampled != 2)
+	else if (is_fetch && !lod && (imgtype.image.dim != Dim1D || msl_options.texture_1D_as_2D) &&
+	         imgtype.image.dim != DimBuffer && !imgtype.image.ms && imgtype.image.sampled != 2)
 	{
 		// Lod argument is optional in OpImageFetch, but we require a LOD value, pick 0 as the default.
 		// Check for sampled type as well, because is_fetch is also used for OpImageRead in MSL.
@@ -6815,7 +7628,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 	}
 
 	// Metal does not support LOD for 1D textures.
-	if ((grad_x || grad_y) && imgtype.image.dim != Dim1D)
+	if ((grad_x || grad_y) && (imgtype.image.dim != Dim1D || msl_options.texture_1D_as_2D))
 	{
 		forward = forward && should_forward(grad_x);
 		forward = forward && should_forward(grad_y);
@@ -6829,7 +7642,10 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 			grad_opt = "3d";
 			break;
 		case DimCube:
-			grad_opt = "cube";
+			if (imgtype.image.arrayed && msl_options.emulate_cube_array)
+				grad_opt = "2d";
+			else
+				grad_opt = "cube";
 			break;
 		default:
 			grad_opt = "unsupported_gradient_dimension";
@@ -7164,38 +7980,16 @@ string CompilerMSL::to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_
 	if (is_dynamic_img_sampler && !arg_is_dynamic_img_sampler)
 		arg_str = join("spvDynamicImageSampler<", type_to_glsl(get<SPIRType>(type.image.type)), ">(");
 
-	auto *c = maybe_get<SPIRConstant>(id);
-	if (c && !get<SPIRType>(c->constant_type).array.empty())
-	{
-		// If we are passing a constant array directly to a function for some reason,
-		// the callee will expect an argument in thread const address space
-		// (since we can only bind to arrays with references in MSL).
-		// To resolve this, we must emit a copy in this address space.
-		// This kind of code gen should be rare enough that performance is not a real concern.
-		// Inline the SPIR-V to avoid this kind of suboptimal codegen.
-		//
-		// We risk calling this inside a continue block (invalid code),
-		// so just create a thread local copy in the current function.
-		arg_str = join("_", id, "_array_copy");
-		auto &constants = current_function->constant_arrays_needed_on_stack;
-		auto itr = find(begin(constants), end(constants), ID(id));
-		if (itr == end(constants))
-		{
-			force_recompile();
-			constants.push_back(id);
-		}
-	}
-	else
-		arg_str += CompilerGLSL::to_func_call_arg(arg, id);
+	arg_str += CompilerGLSL::to_func_call_arg(arg, id);
+
+	// Need to check the base variable in case we need to apply a qualified alias.
+	uint32_t var_id = 0;
+	auto *var = maybe_get<SPIRVariable>(id);
+	if (var)
+		var_id = var->basevariable;
 
 	if (!arg_is_dynamic_img_sampler)
 	{
-		// Need to check the base variable in case we need to apply a qualified alias.
-		uint32_t var_id = 0;
-		auto *var = maybe_get<SPIRVariable>(id);
-		if (var)
-			var_id = var->basevariable;
-
 		auto *constexpr_sampler = find_constexpr_sampler(var_id ? var_id : id);
 		if (type.basetype == SPIRType::SampledImage)
 		{
@@ -7285,6 +8079,13 @@ string CompilerMSL::to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_
 
 		if (is_dynamic_img_sampler)
 			arg_str += ")";
+	}
+
+	// Emulate texture2D atomic operations
+	auto *backing_var = maybe_get_backing_variable(var_id);
+	if (backing_var && atomic_image_vars.count(backing_var->self))
+	{
+		arg_str += ", " + to_expression(var_id) + "_atomic";
 	}
 
 	return arg_str;
@@ -7435,6 +8236,7 @@ string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_
 	// If this member is packed, mark it as so.
 	string pack_pfx;
 
+	// Allow Metal to use the array<T> template to make arrays a value type
 	uint32_t orig_id = 0;
 	if (has_extended_member_decoration(type.self, index, SPIRVCrossDecorationInterfaceOrigID))
 		orig_id = get_extended_member_decoration(type.self, index, SPIRVCrossDecorationInterfaceOrigID);
@@ -7445,6 +8247,17 @@ string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_
 
 	SPIRType row_major_physical_type;
 	const SPIRType *declared_type = &physical_type;
+
+	// If a struct is being declared with physical layout,
+	// do not use array<T> wrappers.
+	// This avoids a lot of complicated cases with packed vectors and matrices,
+	// and generally we cannot copy full arrays in and out of buffers into Function
+	// address space.
+	// Array of resources should also be declared as builtin arrays.
+	if (has_member_decoration(type.self, index, DecorationOffset))
+		use_builtin_array = true;
+	else if (has_extended_member_decoration(type.self, index, SPIRVCrossDecorationResourceIndexPrimary))
+		use_builtin_array = true;
 
 	if (member_is_packed_physical_type(type, index))
 	{
@@ -7498,11 +8311,17 @@ string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_
 	if (physical_type.basetype != SPIRType::Image && physical_type.basetype != SPIRType::Sampler &&
 	    physical_type.basetype != SPIRType::SampledImage)
 	{
+		BuiltIn builtin = BuiltInMax;
+		if (is_member_builtin(type, index, &builtin))
+			use_builtin_array = true;
 		array_type = type_to_array_glsl(physical_type);
 	}
 
-	return join(pack_pfx, type_to_glsl(*declared_type, orig_id), " ", qualifier, to_member_name(type, index),
-	            member_attribute_qualifier(type, index), array_type, ";");
+	auto result = join(pack_pfx, type_to_glsl(*declared_type, orig_id), " ", qualifier, to_member_name(type, index),
+	                   member_attribute_qualifier(type, index), array_type, ";");
+
+	use_builtin_array = false;
+	return result;
 }
 
 // Emit a structure member, padding and packing to maintain the correct memeber alignments.
@@ -7516,7 +8335,10 @@ void CompilerMSL::emit_struct_member(const SPIRType &type, uint32_t member_type_
 		statement("char _m", index, "_pad", "[", pad_len, "];");
 	}
 
+	// Handle HLSL-style 0-based vertex/instance index.
+	builtin_declaration = true;
 	statement(to_struct_member(type, member_type_id, index, qualifier));
+	builtin_declaration = false;
 }
 
 void CompilerMSL::emit_struct_padding_target(const SPIRType &type)
@@ -8071,6 +8893,8 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 				if (!ep_args.empty())
 					ep_args += ", ";
 
+				// Handle HLSL-style 0-based vertex/instance index.
+				builtin_declaration = true;
 				ep_args += builtin_type_decl(bi_type, var_id) + " " + to_expression(var_id);
 				ep_args += " [[" + builtin_qualifier(bi_type);
 				if (bi_type == BuiltInSampleMask && get_entry_point().flags.get(ExecutionModePostDepthCoverage))
@@ -8082,6 +8906,7 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 					ep_args += ", post_depth_coverage";
 				}
 				ep_args += "]]";
+				builtin_declaration = false;
 			}
 		}
 
@@ -8105,12 +8930,12 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 	for (auto &var : active_builtins)
 		var.first->basetype = ensure_correct_builtin_type(var.first->basetype, var.second);
 
-	// Vertex and instance index built-ins
-	if (needs_vertex_idx_arg)
-		ep_args += built_in_func_arg(BuiltInVertexIndex, !ep_args.empty());
+	// Handle HLSL-style 0-based vertex/instance index.
+	if (needs_base_vertex_arg == TriState::Yes)
+		ep_args += built_in_func_arg(BuiltInBaseVertex, !ep_args.empty());
 
-	if (needs_instance_idx_arg)
-		ep_args += built_in_func_arg(BuiltInInstanceIndex, !ep_args.empty());
+	if (needs_base_instance_arg == TriState::Yes)
+		ep_args += built_in_func_arg(BuiltInBaseInstance, !ep_args.empty());
 
 	if (capture_output_to_buffer)
 	{
@@ -8255,6 +9080,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 		SPIRType::BaseType basetype;
 		uint32_t index;
 		uint32_t plane;
+		uint32_t secondary_index;
 	};
 
 	SmallVector<Resource> resources;
@@ -8289,6 +9115,13 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 				}
 			}
 
+			// Emulate texture2D atomic operations
+			uint32_t secondary_index = 0;
+			if (atomic_image_vars.count(var.self))
+			{
+				secondary_index = get_metal_resource_index(var, SPIRType::AtomicCounter, 0);
+			}
+
 			if (type.basetype == SPIRType::SampledImage)
 			{
 				add_resource_name(var_id);
@@ -8299,20 +9132,20 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 
 				for (uint32_t i = 0; i < plane_count; i++)
 					resources.push_back({ &var, to_name(var_id), SPIRType::Image,
-					                      get_metal_resource_index(var, SPIRType::Image, i), i });
+					                      get_metal_resource_index(var, SPIRType::Image, i), i, secondary_index });
 
 				if (type.image.dim != DimBuffer && !constexpr_sampler)
 				{
 					resources.push_back({ &var, to_sampler_expression(var_id), SPIRType::Sampler,
-					                      get_metal_resource_index(var, SPIRType::Sampler), 0 });
+					                      get_metal_resource_index(var, SPIRType::Sampler), 0, 0 });
 				}
 			}
 			else if (!constexpr_sampler)
 			{
 				// constexpr samplers are not declared as resources.
 				add_resource_name(var_id);
-				resources.push_back(
-				    { &var, to_name(var_id), type.basetype, get_metal_resource_index(var, type.basetype), 0 });
+				resources.push_back({ &var, to_name(var_id), type.basetype,
+				                      get_metal_resource_index(var, type.basetype), 0, secondary_index });
 			}
 		}
 	});
@@ -8348,6 +9181,8 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 				if (array_size == 0)
 					SPIRV_CROSS_THROW("Unsized arrays of buffers are not supported in MSL.");
 
+				// Allow Metal to use the array<T> template to make arrays a value type
+				use_builtin_array = true;
 				buffer_arrays.push_back(var_id);
 				for (uint32_t i = 0; i < array_size; ++i)
 				{
@@ -8360,6 +9195,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 						ep_args += ", raster_order_group(0)";
 					ep_args += "]]";
 				}
+				use_builtin_array = false;
 			}
 			else
 			{
@@ -8381,16 +9217,38 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 			ep_args += " [[sampler(" + convert_to_string(r.index) + ")]]";
 			break;
 		case SPIRType::Image:
+		{
 			if (!ep_args.empty())
 				ep_args += ", ";
-			ep_args += image_type_glsl(type, var_id) + " " + r.name;
-			if (r.plane > 0)
-				ep_args += join(plane_name_suffix, r.plane);
-			ep_args += " [[texture(" + convert_to_string(r.index) + ")";
-			if (interlocked_resources.count(var_id))
-				ep_args += ", raster_order_group(0)";
-			ep_args += "]]";
+
+			// Use Metal's native frame-buffer fetch API for subpass inputs.
+			const auto &basetype = get<SPIRType>(var.basetype);
+			if (basetype.image.dim != DimSubpassData || !msl_options.is_ios() ||
+			    !msl_options.ios_use_framebuffer_fetch_subpasses)
+			{
+				ep_args += image_type_glsl(type, var_id) + " " + r.name;
+				if (r.plane > 0)
+					ep_args += join(plane_name_suffix, r.plane);
+				ep_args += " [[texture(" + convert_to_string(r.index) + ")";
+				if (interlocked_resources.count(var_id))
+					ep_args += ", raster_order_group(0)";
+				ep_args += "]]";
+			}
+			else
+			{
+				ep_args += image_type_glsl(type, var_id) + "4 " + r.name;
+				ep_args += " [[color(" + convert_to_string(r.index) + ")]]";
+			}
+
+			// Emulate texture2D atomic operations
+			if (atomic_image_vars.count(var.self))
+			{
+				ep_args += ", device atomic_" + type_to_glsl(get<SPIRType>(basetype.image.type), 0);
+				ep_args += "* " + r.name + "_atomic";
+				ep_args += " [[buffer(" + convert_to_string(r.secondary_index) + ")]]";
+			}
 			break;
+		}
 		default:
 			if (!ep_args.empty())
 				ep_args += ", ";
@@ -8799,6 +9657,19 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	if (has_extended_decoration(var.self, resource_decoration))
 		return get_extended_decoration(var.self, resource_decoration);
 
+	// Allow user to enable decoration binding
+	if (msl_options.enable_decoration_binding)
+	{
+		// If there is no explicit mapping of bindings to MSL, use the declared binding.
+		if (has_decoration(var.self, DecorationBinding))
+		{
+			var_binding = get_decoration(var.self, DecorationBinding);
+			// Avoid emitting sentinel bindings.
+			if (var_binding < 0x80000000u)
+				return var_binding;
+		}
+	}
+
 	// If we did not explicitly remap, allocate bindings on demand.
 	// We cannot reliably use Binding decorations since SPIR-V and MSL's binding models are very different.
 
@@ -8887,13 +9758,22 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 	                              type.image.dim == Dim2D && type_is_floating_point(get<SPIRType>(type.image.type)) &&
 	                              spv_function_implementations.count(SPVFuncImplDynamicImageSampler);
 
+	// Allow Metal to use the array<T> template to make arrays a value type
+	string address_space = get_argument_address_space(var);
 	bool builtin = is_builtin_variable(var);
+	use_builtin_array = builtin;
+	if (address_space == "threadgroup")
+		use_builtin_array = true;
+
 	if (var.basevariable && (var.basevariable == stage_in_ptr_var_id || var.basevariable == stage_out_ptr_var_id))
 		decl += type_to_glsl(type, arg.id);
 	else if (builtin)
 		decl += builtin_type_decl(static_cast<BuiltIn>(get_decoration(arg.id, DecorationBuiltIn)), arg.id);
 	else if ((storage == StorageClassUniform || storage == StorageClassStorageBuffer) && is_array(type))
+	{
+		use_builtin_array = true;
 		decl += join(type_to_glsl(type, arg.id), "*");
+	}
 	else if (is_dynamic_img_sampler)
 	{
 		decl += join("spvDynamicImageSampler<", type_to_glsl(get<SPIRType>(type.image.type)), ">");
@@ -8905,40 +9785,14 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 
 	bool opaque_handle = storage == StorageClassUniformConstant;
 
-	string address_space = get_argument_address_space(var);
-
 	if (!builtin && !opaque_handle && !is_pointer &&
 	    (storage == StorageClassFunction || storage == StorageClassGeneric))
 	{
 		// If the argument is a pure value and not an opaque type, we will pass by value.
-		if (is_array(type))
-		{
-			// We are receiving an array by value. This is problematic.
-			// We cannot be sure of the target address space since we are supposed to receive a copy,
-			// but this is not possible with MSL without some extra work.
-			// We will have to assume we're getting a reference in thread address space.
-			// If we happen to get a reference in constant address space, the caller must emit a copy and pass that.
-			// Thread const therefore becomes the only logical choice, since we cannot "create" a constant array from
-			// non-constant arrays, but we can create thread const from constant.
-			decl = string("thread const ") + decl;
-			decl += " (&";
-			const char *restrict_kw = to_restrict(name_id);
-			if (*restrict_kw)
-			{
-				decl += " ";
-				decl += restrict_kw;
-			}
-			decl += to_expression(name_id);
-			decl += ")";
-			decl += type_to_array_glsl(type);
-		}
-		else
-		{
-			if (!address_space.empty())
-				decl = join(address_space, " ", decl);
-			decl += " ";
-			decl += to_expression(name_id);
-		}
+		if (!address_space.empty())
+			decl = join(address_space, " ", decl);
+		decl += " ";
+		decl += to_expression(name_id);
 	}
 	else if (is_array(type) && !type_is_image)
 	{
@@ -9005,6 +9859,16 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 		decl += " ";
 		decl += to_expression(name_id);
 	}
+
+	// Emulate texture2D atomic operations
+	auto *backing_var = maybe_get_backing_variable(name_id);
+	if (backing_var && atomic_image_vars.count(backing_var->self))
+	{
+		decl += ", device atomic_" + type_to_glsl(get<SPIRType>(var_type.image.type), 0);
+		decl += "* " + to_expression(name_id) + "_atomic";
+	}
+
+	use_builtin_array = false;
 
 	return decl;
 }
@@ -9376,6 +10240,7 @@ string CompilerMSL::type_to_glsl(const SPIRType &type, uint32_t id)
 	{
 		const char *restrict_kw;
 		type_name = join(get_type_address_space(type, id), " ", type_to_glsl(get<SPIRType>(type.parent_type), id));
+
 		switch (type.basetype)
 		{
 		case SPIRType::Image:
@@ -9401,7 +10266,9 @@ string CompilerMSL::type_to_glsl(const SPIRType &type, uint32_t id)
 	{
 	case SPIRType::Struct:
 		// Need OpName lookup here to get a "sensible" name for a struct.
-		return to_name(type.self);
+		// Allow Metal to use the array<T> template to make arrays a value type
+		type_name = to_name(type.self);
+		break;
 
 	case SPIRType::Image:
 	case SPIRType::SampledImage:
@@ -9474,7 +10341,69 @@ string CompilerMSL::type_to_glsl(const SPIRType &type, uint32_t id)
 	if (type.vecsize > 1)
 		type_name += to_string(type.vecsize);
 
-	return type_name;
+	if (type.array.empty() || use_builtin_array)
+	{
+		return type_name;
+	}
+	else
+	{
+		// Allow Metal to use the array<T> template to make arrays a value type
+		add_spv_func_and_recompile(SPVFuncImplUnsafeArray);
+		string res;
+		string sizes;
+
+		for (uint32_t i = 0; i < uint32_t(type.array.size()); i++)
+		{
+			res += "spvUnsafeArray<";
+			sizes += ", ";
+			sizes += to_array_size(type, i);
+			sizes += ">";
+		}
+
+		res += type_name + sizes;
+		return res;
+	}
+}
+
+string CompilerMSL::type_to_array_glsl(const SPIRType &type)
+{
+	// Allow Metal to use the array<T> template to make arrays a value type
+	switch (type.basetype)
+	{
+	case SPIRType::AtomicCounter:
+	case SPIRType::ControlPointArray:
+	{
+		return CompilerGLSL::type_to_array_glsl(type);
+	}
+	default:
+	{
+		if (use_builtin_array)
+			return CompilerGLSL::type_to_array_glsl(type);
+		else
+			return "";
+	}
+	}
+}
+
+// Threadgroup arrays can't have a wrapper type
+std::string CompilerMSL::variable_decl(const SPIRVariable &variable)
+{
+	if (variable.storage == StorageClassWorkgroup)
+	{
+		use_builtin_array = true;
+	}
+	std::string expr = CompilerGLSL::variable_decl(variable);
+	if (variable.storage == StorageClassWorkgroup)
+	{
+		use_builtin_array = false;
+	}
+	return expr;
+}
+
+// GCC workaround of lambdas calling protected funcs
+std::string CompilerMSL::variable_decl(const SPIRType &type, const std::string &name, uint32_t id)
+{
+	return CompilerGLSL::variable_decl(type, name, id);
 }
 
 std::string CompilerMSL::sampler_type(const SPIRType &type)
@@ -9547,9 +10476,14 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 		switch (img_type.dim)
 		{
 		case Dim1D:
-			img_type_name += "depth1d_unsupported_by_metal";
-			break;
 		case Dim2D:
+			if (img_type.dim == Dim1D && !msl_options.texture_1D_as_2D)
+			{
+				// Use a native Metal 1D texture
+				img_type_name += "depth1d_unsupported_by_metal";
+				break;
+			}
+
 			if (img_type.ms && img_type.arrayed)
 			{
 				if (!msl_options.supports_msl_version(2, 1))
@@ -9567,7 +10501,10 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 			img_type_name += "depth3d_unsupported_by_metal";
 			break;
 		case DimCube:
-			img_type_name += (img_type.arrayed ? "depthcube_array" : "depthcube");
+			if (!msl_options.emulate_cube_array)
+				img_type_name += (img_type.arrayed ? "depthcube_array" : "depthcube");
+			else
+				img_type_name += (img_type.arrayed ? "depth2d_array" : "depthcube");
 			break;
 		default:
 			img_type_name += "unknown_depth_texture_type";
@@ -9578,9 +10515,6 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 	{
 		switch (img_type.dim)
 		{
-		case Dim1D:
-			img_type_name += (img_type.arrayed ? "texture1d_array" : "texture1d");
-			break;
 		case DimBuffer:
 			if (img_type.ms || img_type.arrayed)
 				SPIRV_CROSS_THROW("Cannot use texel buffers with multisampling or array layers.");
@@ -9594,8 +10528,22 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 			else
 				img_type_name += "texture2d";
 			break;
+		case Dim1D:
 		case Dim2D:
 		case DimSubpassData:
+			if (img_type.dim == Dim1D && !msl_options.texture_1D_as_2D)
+			{
+				// Use a native Metal 1D texture
+				img_type_name += (img_type.arrayed ? "texture1d_array" : "texture1d");
+				break;
+			}
+
+			// Use Metal's native frame-buffer fetch API for subpass inputs.
+			if (img_type.dim == DimSubpassData && msl_options.is_ios() &&
+			    msl_options.ios_use_framebuffer_fetch_subpasses)
+			{
+				return type_to_glsl(get<SPIRType>(img_type.type));
+			}
 			if (img_type.ms && img_type.arrayed)
 			{
 				if (!msl_options.supports_msl_version(2, 1))
@@ -9613,7 +10561,10 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 			img_type_name += "texture3d";
 			break;
 		case DimCube:
-			img_type_name += (img_type.arrayed ? "texturecube_array" : "texturecube");
+			if (!msl_options.emulate_cube_array)
+				img_type_name += (img_type.arrayed ? "texturecube_array" : "texturecube");
+			else
+				img_type_name += (img_type.arrayed ? "texture2d_array" : "texturecube");
 			break;
 		default:
 			img_type_name += "unknown_texture_type";
@@ -9926,19 +10877,114 @@ string CompilerMSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 	switch (builtin)
 	{
 
+	// Handle HLSL-style 0-based vertex/instance index.
 	// Override GLSL compiler strictness
 	case BuiltInVertexId:
-		return "gl_VertexID";
+		ensure_builtin(StorageClassInput, BuiltInVertexId);
+		if (msl_options.enable_base_index_zero && msl_options.supports_msl_version(1, 1) &&
+		    (msl_options.ios_support_base_vertex_instance || msl_options.is_macos()))
+		{
+			if (builtin_declaration)
+			{
+				if (needs_base_vertex_arg != TriState::No)
+					needs_base_vertex_arg = TriState::Yes;
+				return "gl_VertexID";
+			}
+			else
+			{
+				ensure_builtin(StorageClassInput, BuiltInBaseVertex);
+				return "(gl_VertexID - gl_BaseVertex)";
+			}
+		}
+		else
+		{
+			return "gl_VertexID";
+		}
 	case BuiltInInstanceId:
-		return "gl_InstanceID";
+		ensure_builtin(StorageClassInput, BuiltInInstanceId);
+		if (msl_options.enable_base_index_zero && msl_options.supports_msl_version(1, 1) &&
+		    (msl_options.ios_support_base_vertex_instance || msl_options.is_macos()))
+		{
+			if (builtin_declaration)
+			{
+				if (needs_base_instance_arg != TriState::No)
+					needs_base_instance_arg = TriState::Yes;
+				return "gl_InstanceID";
+			}
+			else
+			{
+				ensure_builtin(StorageClassInput, BuiltInBaseInstance);
+				return "(gl_InstanceID - gl_BaseInstance)";
+			}
+		}
+		else
+		{
+			return "gl_InstanceID";
+		}
 	case BuiltInVertexIndex:
-		return "gl_VertexIndex";
+		ensure_builtin(StorageClassInput, BuiltInVertexIndex);
+		if (msl_options.enable_base_index_zero && msl_options.supports_msl_version(1, 1) &&
+		    (msl_options.ios_support_base_vertex_instance || msl_options.is_macos()))
+		{
+			if (builtin_declaration)
+			{
+				if (needs_base_vertex_arg != TriState::No)
+					needs_base_vertex_arg = TriState::Yes;
+				return "gl_VertexIndex";
+			}
+			else
+			{
+				ensure_builtin(StorageClassInput, BuiltInBaseVertex);
+				return "(gl_VertexIndex - gl_BaseVertex)";
+			}
+		}
+		else
+		{
+			return "gl_VertexIndex";
+		}
 	case BuiltInInstanceIndex:
-		return "gl_InstanceIndex";
+		ensure_builtin(StorageClassInput, BuiltInInstanceIndex);
+		if (msl_options.enable_base_index_zero && msl_options.supports_msl_version(1, 1) &&
+		    (msl_options.ios_support_base_vertex_instance || msl_options.is_macos()))
+		{
+			if (builtin_declaration)
+			{
+				if (needs_base_instance_arg != TriState::No)
+					needs_base_instance_arg = TriState::Yes;
+				return "gl_InstanceIndex";
+			}
+			else
+			{
+				ensure_builtin(StorageClassInput, BuiltInBaseInstance);
+				return "(gl_InstanceIndex - gl_BaseInstance)";
+			}
+		}
+		else
+		{
+			return "gl_InstanceIndex";
+		}
 	case BuiltInBaseVertex:
-		return "gl_BaseVertex";
+		if (msl_options.supports_msl_version(1, 1) &&
+		    (msl_options.ios_support_base_vertex_instance || msl_options.is_macos()))
+		{
+			needs_base_vertex_arg = TriState::No;
+			return "gl_BaseVertex";
+		}
+		else
+		{
+			SPIRV_CROSS_THROW("BaseVertex requires Metal 1.1 and Mac or Apple A9+ hardware.");
+		}
 	case BuiltInBaseInstance:
-		return "gl_BaseInstance";
+		if (msl_options.supports_msl_version(1, 1) &&
+		    (msl_options.ios_support_base_vertex_instance || msl_options.is_macos()))
+		{
+			needs_base_instance_arg = TriState::No;
+			return "gl_BaseInstance";
+		}
+		else
+		{
+			SPIRV_CROSS_THROW("BaseInstance requires Metal 1.1 and Mac or Apple A9+ hardware.");
+		}
 	case BuiltInDrawIndex:
 		SPIRV_CROSS_THROW("DrawIndex is not supported in MSL.");
 
@@ -10321,9 +11367,12 @@ string CompilerMSL::built_in_func_arg(BuiltIn builtin, bool prefix_comma)
 	if (prefix_comma)
 		bi_arg += ", ";
 
+	// Handle HLSL-style 0-based vertex/instance index.
+	builtin_declaration = true;
 	bi_arg += builtin_type_decl(builtin);
 	bi_arg += " " + builtin_to_glsl(builtin, StorageClassInput);
 	bi_arg += " [[" + builtin_qualifier(builtin) + "]]";
+	builtin_declaration = false;
 
 	return bi_arg;
 }
@@ -10617,6 +11666,14 @@ bool CompilerMSL::OpCodePreprocessor::handle(Op opcode, const uint32_t *args, ui
 		suppress_missing_prototypes = true;
 		break;
 
+	// Emulate texture2D atomic operations
+	case OpImageTexelPointer:
+	{
+		auto *var = compiler.maybe_get_backing_variable(args[2]);
+		image_pointers[args[1]] = var ? var->self : ID(0);
+		break;
+	}
+
 	case OpImageWrite:
 		uses_resource_write = true;
 		break;
@@ -10625,6 +11682,7 @@ bool CompilerMSL::OpCodePreprocessor::handle(Op opcode, const uint32_t *args, ui
 		check_resource_write(args[0]);
 		break;
 
+	// Emulate texture2D atomic operations
 	case OpAtomicExchange:
 	case OpAtomicCompareExchange:
 	case OpAtomicCompareExchangeWeak:
@@ -10639,13 +11697,39 @@ bool CompilerMSL::OpCodePreprocessor::handle(Op opcode, const uint32_t *args, ui
 	case OpAtomicAnd:
 	case OpAtomicOr:
 	case OpAtomicXor:
+	{
 		uses_atomics = true;
+		auto it = image_pointers.find(args[2]);
+		if (it != image_pointers.end())
+		{
+			compiler.atomic_image_vars.insert(it->second);
+		}
 		check_resource_write(args[2]);
 		break;
+	}
+
+	case OpAtomicStore:
+	{
+		uses_atomics = true;
+		auto it = image_pointers.find(args[0]);
+		if (it != image_pointers.end())
+		{
+			compiler.atomic_image_vars.insert(it->second);
+		}
+		check_resource_write(args[0]);
+		break;
+	}
 
 	case OpAtomicLoad:
+	{
 		uses_atomics = true;
+		auto it = image_pointers.find(args[2]);
+		if (it != image_pointers.end())
+		{
+			compiler.atomic_image_vars.insert(it->second);
+		}
 		break;
+	}
 
 	case OpGroupNonUniformInverseBallot:
 		needs_subgroup_invocation_id = true;
@@ -10672,6 +11756,7 @@ bool CompilerMSL::OpCodePreprocessor::handle(Op opcode, const uint32_t *args, ui
 		uint32_t result_type = args[0];
 		uint32_t id = args[1];
 		uint32_t ptr = args[2];
+
 		compiler.set<SPIRExpression>(id, "", result_type, true);
 		compiler.register_read(id, ptr, true);
 		compiler.ir.ids[id].set_allow_type_rewrite();
@@ -10707,60 +11792,55 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 	case OpFMod:
 		return SPVFuncImplMod;
 
-	case OpFunctionCall:
-	{
-		auto &return_type = compiler.get<SPIRType>(args[0]);
-		if (return_type.array.size() > 1)
+	case OpFAdd:
+		if (compiler.msl_options.invariant_float_math)
 		{
-			if (return_type.array.size() > SPVFuncImplArrayCopyMultidimMax)
-				SPIRV_CROSS_THROW("Cannot support this many dimensions for arrays of arrays.");
-			return static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + return_type.array.size());
+			return SPVFuncImplFAdd;
 		}
-		else if (return_type.array.size() > 0)
-			return SPVFuncImplArrayCopy;
-
 		break;
+
+	case OpFMul:
+	case OpOuterProduct:
+	case OpMatrixTimesVector:
+	case OpVectorTimesMatrix:
+	case OpMatrixTimesMatrix:
+		if (compiler.msl_options.invariant_float_math)
+		{
+			return SPVFuncImplFMul;
+		}
+		break;
+
+	case OpTypeArray:
+	{
+		// Allow Metal to use the array<T> template to make arrays a value type
+		return SPVFuncImplUnsafeArray;
 	}
 
-	case OpStore:
+	// Emulate texture2D atomic operations
+	case OpAtomicExchange:
+	case OpAtomicCompareExchange:
+	case OpAtomicCompareExchangeWeak:
+	case OpAtomicIIncrement:
+	case OpAtomicIDecrement:
+	case OpAtomicIAdd:
+	case OpAtomicISub:
+	case OpAtomicSMin:
+	case OpAtomicUMin:
+	case OpAtomicSMax:
+	case OpAtomicUMax:
+	case OpAtomicAnd:
+	case OpAtomicOr:
+	case OpAtomicXor:
+	case OpAtomicLoad:
+	case OpAtomicStore:
 	{
-		// Get the result type of the RHS. Since this is run as a pre-processing stage,
-		// we must extract the result type directly from the Instruction, rather than the ID.
-		uint32_t id_lhs = args[0];
-		uint32_t id_rhs = args[1];
-
-		const SPIRType *type = nullptr;
-		if (compiler.ir.ids[id_rhs].get_type() != TypeNone)
+		auto it = image_pointers.find(args[opcode == OpAtomicStore ? 0 : 2]);
+		if (it != image_pointers.end())
 		{
-			// Could be a constant, or similar.
-			type = &compiler.expression_type(id_rhs);
+			uint32_t tid = compiler.get<SPIRVariable>(it->second).basetype;
+			if (tid && compiler.get<SPIRType>(tid).image.dim == Dim2D)
+				return SPVFuncImplImage2DAtomicCoords;
 		}
-		else
-		{
-			// Or ... an expression.
-			uint32_t tid = result_types[id_rhs];
-			if (tid)
-				type = &compiler.get<SPIRType>(tid);
-		}
-
-		auto *var = compiler.maybe_get<SPIRVariable>(id_lhs);
-
-		// Are we simply assigning to a statically assigned variable which takes a constant?
-		// Don't bother emitting this function.
-		bool static_expression_lhs =
-		    var && var->storage == StorageClassFunction && var->statically_assigned && var->remapped_variable;
-		if (type && compiler.is_array(*type) && !static_expression_lhs)
-		{
-			if (type->array.size() > 1)
-			{
-				if (type->array.size() > SPVFuncImplArrayCopyMultidimMax)
-					SPIRV_CROSS_THROW("Cannot support this many dimensions for arrays of arrays.");
-				return static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + type->array.size());
-			}
-			else
-				return SPVFuncImplArrayCopy;
-		}
-
 		break;
 	}
 

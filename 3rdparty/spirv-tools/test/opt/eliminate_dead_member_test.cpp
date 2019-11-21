@@ -561,6 +561,7 @@ TEST_F(EliminateDeadMemberTest, RemoveMembersUpdateArrayLength) {
                OpName %main "main"
                OpDecorate %_Globals DescriptorSet 0
                OpDecorate %_Globals Binding 0
+               OpDecorate %_runtimearr_float ArrayStride 16
                OpMemberDecorate %type__Globals 0 Offset 0
                OpMemberDecorate %type__Globals 1 Offset 4
                OpMemberDecorate %type__Globals 2 Offset 16

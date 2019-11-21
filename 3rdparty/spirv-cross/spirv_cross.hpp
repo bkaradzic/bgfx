@@ -888,6 +888,7 @@ protected:
 
 		void add_hierarchy_to_comparison_ids(uint32_t ids);
 		bool need_subpass_input = false;
+		void add_dependency(uint32_t dst, uint32_t src);
 	};
 
 	void build_function_control_flow_graphs_and_analyze();
@@ -925,6 +926,8 @@ protected:
 		std::unordered_map<uint32_t, std::unordered_set<uint32_t>> complete_write_variables_to_block;
 		std::unordered_map<uint32_t, std::unordered_set<uint32_t>> partial_write_variables_to_block;
 		std::unordered_set<uint32_t> access_chain_expressions;
+		// Access chains used in multiple blocks mean hoisting all the variables used to construct the access chain as not all backends can use pointers.
+		std::unordered_map<uint32_t, std::unordered_set<uint32_t>> access_chain_children;
 		const SPIRBlock *current_block = nullptr;
 	};
 

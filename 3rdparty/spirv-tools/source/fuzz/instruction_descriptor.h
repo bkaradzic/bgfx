@@ -16,6 +16,7 @@
 #define SOURCE_FUZZ_INSTRUCTION_DESCRIPTOR_H_
 
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/opt/basic_block.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -33,6 +34,18 @@ opt::Instruction* FindInstruction(
 protobufs::InstructionDescriptor MakeInstructionDescriptor(
     uint32_t base_instruction_result_id, SpvOp target_instruction_opcode,
     uint32_t num_opcodes_to_ignore);
+
+// Returns an instruction descriptor that describing the instruction at
+// |inst_it|, which must be inside |block|.  The descriptor will be with
+// respect to the first instruction at or before |inst_it| that has a result
+// id.
+protobufs::InstructionDescriptor MakeInstructionDescriptor(
+    const opt::BasicBlock& block,
+    const opt::BasicBlock::const_iterator& inst_it);
+
+// Returns an InstructionDescriptor that describes the given instruction |inst|.
+protobufs::InstructionDescriptor MakeInstructionDescriptor(
+    opt::IRContext* context, opt::Instruction* inst);
 
 }  // namespace fuzz
 }  // namespace spvtools

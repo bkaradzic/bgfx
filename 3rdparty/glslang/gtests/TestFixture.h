@@ -113,7 +113,7 @@ public:
           forceVersionProfile(false),
           isForwardCompatible(false) {
         // Perform validation by default.
-        validatorOptions.validate = true;
+        spirvOptions.validate = true;
     }
 
     // Tries to load the contents from the file at the given |path|. On success,
@@ -693,14 +693,14 @@ public:
                                     expectedOutputFname, result.spirvWarningsErrors);
     }
 
-    glslang::SpvOptions& options() { return validatorOptions; }
+    glslang::SpvOptions& options() { return spirvOptions; }
 
 private:
     const int defaultVersion;
     const EProfile defaultProfile;
     const bool forceVersionProfile;
     const bool isForwardCompatible;
-    glslang::SpvOptions validatorOptions;
+    glslang::SpvOptions spirvOptions;
 };
 
 }  // namespace glslangtest

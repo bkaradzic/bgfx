@@ -15,13 +15,15 @@ struct SSBO0
     uint values0[1];
 };
 
-inline void callee2(device SSBO1& v_14, thread float4& gl_FragCoord)
+static inline __attribute__((always_inline))
+void callee2(device SSBO1& v_14, thread float4& gl_FragCoord)
 {
     int _25 = int(gl_FragCoord.x);
     v_14.values1[_25]++;
 }
 
-inline void callee(device SSBO1& v_14, thread float4& gl_FragCoord, device SSBO0& v_35)
+static inline __attribute__((always_inline))
+void callee(device SSBO1& v_14, thread float4& gl_FragCoord, device SSBO0& v_35)
 {
     int _38 = int(gl_FragCoord.x);
     v_35.values0[_38]++;

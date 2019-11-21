@@ -2236,4 +2236,37 @@ OpFunctionEnd
   SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
 }
 
+TEST_F(UpgradeMemoryModelTest, CoherentStructMemberInArray) {
+  const std::string text = R"(
+; CHECK-NOT: OpMemberDecorate
+; CHECK: [[int:%[a-zA-Z0-9_]+]] = OpTypeInt 32 0
+; CHECK: [[device:%[a-zA-Z0-9_]+]] = OpConstant [[int]] 1
+; CHECK: OpLoad [[int]] {{.*}} MakePointerVisible|NonPrivatePointer
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpMemberDecorate %inner 1 Coherent
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%int_4 = OpConstant %int 4
+%inner = OpTypeStruct %int %int
+%array = OpTypeArray %inner %int_4
+%struct = OpTypeStruct %array
+%ptr_ssbo_struct = OpTypePointer StorageBuffer %struct
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ssbo_var = OpVariable %ptr_ssbo_struct StorageBuffer
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep = OpAccessChain %ptr_ssbo_int %ssbo_var %int_0 %int_0 %int_1
+%ld = OpLoad %int %gep
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
 }  // namespace

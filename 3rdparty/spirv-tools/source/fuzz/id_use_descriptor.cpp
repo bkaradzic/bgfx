@@ -51,31 +51,11 @@ protobufs::IdUseDescriptor MakeIdUseDescriptor(
 protobufs::IdUseDescriptor MakeIdUseDescriptorFromUse(
     opt::IRContext* context, opt::Instruction* inst,
     uint32_t in_operand_index) {
-  auto in_operand = inst->GetInOperand(in_operand_index);
+  const auto& in_operand = inst->GetInOperand(in_operand_index);
   assert(in_operand.type == SPV_OPERAND_TYPE_ID);
-  auto id_of_interest = in_operand.words[0];
-
-  auto block = context->get_instr_block(inst);
-  uint32_t base_instruction_result_id = block->id();
-  uint32_t num_opcodes_to_ignore = 0;
-  for (auto& inst_in_block : *block) {
-    if (inst_in_block.HasResultId()) {
-      base_instruction_result_id = inst_in_block.result_id();
-      num_opcodes_to_ignore = 0;
-    }
-    if (&inst_in_block == inst) {
-      return MakeIdUseDescriptor(
-          id_of_interest,
-          MakeInstructionDescriptor(base_instruction_result_id, inst->opcode(),
-                                    num_opcodes_to_ignore),
-          in_operand_index);
-    }
-    if (inst_in_block.opcode() == inst->opcode()) {
-      num_opcodes_to_ignore++;
-    }
-  }
-  assert(false && "No matching instruction was found.");
-  return protobufs::IdUseDescriptor();
+  return MakeIdUseDescriptor(in_operand.words[0],
+                             MakeInstructionDescriptor(context, inst),
+                             in_operand_index);
 }
 
 }  // namespace fuzz

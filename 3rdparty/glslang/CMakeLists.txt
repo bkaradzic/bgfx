@@ -6,6 +6,9 @@ if (POLICY CMP0048)
 endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# Enable compile commands database
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Adhere to GNU filesystem layout conventions
 include(GNUInstallDirs)
 
@@ -38,6 +41,7 @@ CMAKE_DEPENDENT_OPTION(ENABLE_HLSL "Enables HLSL input support" ON "NOT ENABLE_G
 
 option(ENABLE_OPT "Enables spirv-opt capability if present" ON)
 option(ENABLE_PCH "Enables Precompiled header" ON)
+option(ENABLE_CTEST "Enables testing" ON)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND WIN32)
     set(CMAKE_INSTALL_PREFIX "install" CACHE STRING "..." FORCE)
@@ -64,8 +68,10 @@ macro(glslang_pch SRCS PCHCPP)
 endmacro(glslang_pch)
 
 project(glslang)
-# make testing optional
-include(CTest)
+
+if(ENABLE_CTEST)
+    include(CTest)
+endif()
 
 if(ENABLE_HLSL)
     add_definitions(-DENABLE_HLSL)
@@ -180,7 +186,9 @@ add_subdirectory(SPIRV)
 if(ENABLE_HLSL)
     add_subdirectory(hlsl)
 endif(ENABLE_HLSL)
-add_subdirectory(gtests)
+if(ENABLE_CTEST)
+    add_subdirectory(gtests)
+endif()
 
 if(BUILD_TESTING)
     # glslang-testsuite runs a bash script on Windows.

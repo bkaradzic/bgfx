@@ -64,7 +64,7 @@
 
 namespace bgfx
 {
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	typedef ::IUnknown IUnknown;
 #else
 	typedef ::IGraphicsUnknown IUnknown;

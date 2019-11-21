@@ -15,12 +15,14 @@ struct main0_out
     float3 FragColor [[color(0)]];
 };
 
-inline void someFunction(thread AStruct& s)
+static inline __attribute__((always_inline))
+void someFunction(thread AStruct& s)
 {
     s.foobar = float4(1.0);
 }
 
-inline void otherFunction(thread float3& global_variable)
+static inline __attribute__((always_inline))
+void otherFunction(thread float3& global_variable)
 {
     global_variable = float3(1.0);
 }

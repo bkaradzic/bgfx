@@ -7,8 +7,8 @@
 // files can be further compressed with deflate/etc.
 //
 // To load regular glb files, it should be sufficient to use a standard glTF loader (although note that these files
-// use quantized position/texture coordinates that are technically invalid per spec; THREE.js and BabylonJS support
-// these files out of the box).
+// use quantized position/texture coordinates that require support for KHR_mesh_quantization; THREE.js and BabylonJS
+// support these files out of the box).
 // To load packed glb files, meshoptimizer vertex decoder needs to be integrated into the loader; demo/GLTFLoader.js
 // contains a work-in-progress loader - please note that the extension specification isn't ready yet so the format
 // will change!
@@ -73,7 +73,7 @@ struct Settings
 	int pos_bits;
 	int tex_bits;
 	int nrm_bits;
-	bool nrm_unit;
+	bool nrm_unnormalized;
 
 	int anim_freq;
 	bool anim_const;
@@ -82,6 +82,8 @@ struct Settings
 
 	float simplify_threshold;
 	bool simplify_aggressive;
+
+	bool texture_embed;
 
 	bool compress;
 	bool fallback;
@@ -841,10 +843,33 @@ void reindexMesh(Mesh& mesh)
 	}
 }
 
-Stream* getStream(Mesh& mesh, cgltf_attribute_type type)
+void filterMesh(Mesh& mesh)
+{
+	unsigned int* indices = &mesh.indices[0];
+	size_t total_indices = mesh.indices.size();
+
+	size_t write = 0;
+
+	for (size_t i = 0; i < total_indices; i += 3)
+	{
+		unsigned int a = indices[i + 0], b = indices[i + 1], c = indices[i + 2];
+
+		if (a != b && a != c && b != c)
+		{
+			indices[write + 0] = a;
+			indices[write + 1] = b;
+			indices[write + 2] = c;
+			write += 3;
+		}
+	}
+
+	mesh.indices.resize(write);
+}
+
+Stream* getStream(Mesh& mesh, cgltf_attribute_type type, int index = 0)
 {
 	for (size_t i = 0; i < mesh.streams.size(); ++i)
-		if (mesh.streams[i].type == type)
+		if (mesh.streams[i].type == type && mesh.streams[i].index == index)
 			return &mesh.streams[i];
 
 	return 0;
@@ -907,46 +932,106 @@ struct BoneInfluence
 {
 	float i;
 	float w;
+};
 
-	bool operator<(const BoneInfluence& other) const
+struct BoneInfluenceIndexPredicate
+{
+	bool operator()(const BoneInfluence& lhs, const BoneInfluence& rhs) const
 	{
-		return i < other.i;
+		return lhs.i < rhs.i;
 	}
 };
 
-void sortBoneInfluences(Mesh& mesh)
+struct BoneInfluenceWeightPredicate
 {
-	Stream* joints = getStream(mesh, cgltf_attribute_type_joints);
-	Stream* weights = getStream(mesh, cgltf_attribute_type_weights);
+	bool operator()(const BoneInfluence& lhs, const BoneInfluence& rhs) const
+	{
+		return lhs.w > rhs.w;
+	}
+};
 
-	if (!joints || !weights)
+void filterBones(Mesh& mesh)
+{
+	const int kMaxGroups = 8;
+
+	std::pair<Stream*, Stream*> groups[kMaxGroups];
+	int group_count = 0;
+
+	// gather all joint/weight groups; each group contains 4 bone influences
+	for (int i = 0; i < kMaxGroups; ++i)
+	{
+		Stream* jg = getStream(mesh, cgltf_attribute_type_joints, int(i));
+		Stream* wg = getStream(mesh, cgltf_attribute_type_weights, int(i));
+
+		if (!jg || !wg)
+			break;
+
+		groups[group_count++] = std::make_pair(jg, wg);
+	}
+
+	if (group_count == 0)
 		return;
+
+	// weights below cutoff can't be represented in quantized 8-bit storage
+	const float weight_cutoff = 0.5f / 255.f;
 
 	size_t vertex_count = mesh.streams[0].data.size();
 
+	BoneInfluence inf[kMaxGroups * 4] = {};
+
 	for (size_t i = 0; i < vertex_count; ++i)
 	{
-		Attr& ja = joints->data[i];
-		Attr& wa = weights->data[i];
-
-		BoneInfluence inf[4] = {};
 		int count = 0;
 
-		for (int k = 0; k < 4; ++k)
-			if (wa.f[k] > 0.f)
-			{
-				inf[count].i = ja.f[k];
-				inf[count].w = wa.f[k];
-				count++;
-			}
+		// gather all bone influences for this vertex
+		for (int j = 0; j < group_count; ++j)
+		{
+			const Attr& ja = groups[j].first->data[i];
+			const Attr& wa = groups[j].second->data[i];
 
-		std::sort(inf, inf + count);
+			for (int k = 0; k < 4; ++k)
+				if (wa.f[k] > weight_cutoff)
+				{
+					inf[count].i = ja.f[k];
+					inf[count].w = wa.f[k];
+					count++;
+				}
+		}
+
+		// pick top 4 influences - could use partial_sort but it is slower on small sets
+		std::sort(inf, inf + count, BoneInfluenceWeightPredicate());
+
+		// now sort top 4 influences by bone index - this improves compression ratio
+		std::sort(inf, inf + std::min(4, count), BoneInfluenceIndexPredicate());
+
+		// copy the top 4 influences back into stream 0 - we will remove other streams at the end
+		Attr& ja = groups[0].first->data[i];
+		Attr& wa = groups[0].second->data[i];
 
 		for (int k = 0; k < 4; ++k)
 		{
-			ja.f[k] = inf[k].i;
-			wa.f[k] = inf[k].w;
+			if (k < count)
+			{
+				ja.f[k] = inf[k].i;
+				wa.f[k] = inf[k].w;
+			}
+			else
+			{
+				ja.f[k] = 0.f;
+				wa.f[k] = 0.f;
+			}
 		}
+	}
+
+	// remove redundant weight/joint streams
+	for (size_t i = 0; i < mesh.streams.size();)
+	{
+		Stream& s = mesh.streams[i];
+
+		if ((s.type == cgltf_attribute_type_joints || s.type == cgltf_attribute_type_weights) && s.index > 0)
+			mesh.streams.erase(mesh.streams.begin() + i);
+		else
+			++i;
 	}
 }
 
@@ -1000,6 +1085,29 @@ void sortPointMesh(Mesh& mesh)
 		assert(mesh.streams[i].data.size() == vertex_count);
 
 		meshopt_remapVertexBuffer(&mesh.streams[i].data[0], &mesh.streams[i].data[0], vertex_count, sizeof(Attr), &remap[0]);
+	}
+}
+
+void processMesh(Mesh& mesh, const Settings& settings)
+{
+	switch (mesh.type)
+	{
+	case cgltf_primitive_type_points:
+		assert(mesh.indices.empty());
+		simplifyPointMesh(mesh, settings.simplify_threshold);
+		sortPointMesh(mesh);
+		break;
+
+	case cgltf_primitive_type_triangles:
+		filterBones(mesh);
+		reindexMesh(mesh);
+		filterMesh(mesh);
+		simplifyMesh(mesh, settings.simplify_threshold, settings.simplify_aggressive);
+		optimizeMesh(mesh);
+		break;
+
+	default:
+		assert(!"Unknown primitive type");
 	}
 }
 
@@ -1156,20 +1264,51 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 		{
 			float pos_rscale = params.pos_scale == 0.f ? 0.f : 1.f / params.pos_scale;
 
+			int maxv = 0;
+
 			for (size_t i = 0; i < stream.data.size(); ++i)
 			{
 				const Attr& a = stream.data[i];
 
-				int16_t v[4] = {
-				    int16_t((a.f[0] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits)),
-				    int16_t((a.f[1] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits)),
-				    int16_t((a.f[2] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits)),
-				    0};
-				bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+				maxv = std::max(maxv, meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits));
+				maxv = std::max(maxv, meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits));
+				maxv = std::max(maxv, meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits));
 			}
 
-			StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_16, false, 8};
-			return format;
+			if (maxv <= 127)
+			{
+				for (size_t i = 0; i < stream.data.size(); ++i)
+				{
+					const Attr& a = stream.data[i];
+
+					int8_t v[4] = {
+					    int8_t((a.f[0] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits)),
+					    int8_t((a.f[1] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits)),
+					    int8_t((a.f[2] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits)),
+					    0};
+					bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+				}
+
+				StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_8, false, 4};
+				return format;
+			}
+			else
+			{
+				for (size_t i = 0; i < stream.data.size(); ++i)
+				{
+					const Attr& a = stream.data[i];
+
+					int16_t v[4] = {
+					    int16_t((a.f[0] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits)),
+					    int16_t((a.f[1] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits)),
+					    int16_t((a.f[2] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits)),
+					    0};
+					bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+				}
+
+				StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_16, false, 8};
+				return format;
+			}
 		}
 	}
 	else if (stream.type == cgltf_attribute_type_texcoord)
@@ -1195,8 +1334,8 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 	}
 	else if (stream.type == cgltf_attribute_type_normal)
 	{
-		bool nrm_unit = has_targets || settings.nrm_unit;
-		int bits = nrm_unit ? (settings.nrm_bits > 8 ? 16 : 8) : settings.nrm_bits;
+		bool unnormalized = settings.nrm_unnormalized && !has_targets;
+		int bits = unnormalized ? settings.nrm_bits : (settings.nrm_bits > 8 ? 16 : 8);
 
 		for (size_t i = 0; i < stream.data.size(); ++i)
 		{
@@ -1204,7 +1343,7 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 
 			float nx = a.f[0], ny = a.f[1], nz = a.f[2];
 
-			if (!nrm_unit)
+			if (unnormalized)
 				rescaleNormal(nx, ny, nz);
 
 			if (bits > 8)
@@ -1240,8 +1379,8 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 	}
 	else if (stream.type == cgltf_attribute_type_tangent)
 	{
-		bool nrm_unit = has_targets || settings.nrm_unit;
-		int bits = nrm_unit ? (settings.nrm_bits > 8 ? 16 : 8) : settings.nrm_bits;
+		bool unnormalized = settings.nrm_unnormalized && !has_targets;
+		int bits = unnormalized ? settings.nrm_bits : (settings.nrm_bits > 8 ? 16 : 8);
 
 		for (size_t i = 0; i < stream.data.size(); ++i)
 		{
@@ -1249,7 +1388,7 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 
 			float nx = a.f[0], ny = a.f[1], nz = a.f[2], nw = a.f[3];
 
-			if (!nrm_unit)
+			if (unnormalized)
 				rescaleNormal(nx, ny, nz);
 
 			if (bits > 8)
@@ -1308,13 +1447,17 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 		{
 			const Attr& a = stream.data[i];
 
-			uint8_t v[4] = {
-			    uint8_t(meshopt_quantizeUnorm(a.f[0], 8)),
-			    uint8_t(meshopt_quantizeUnorm(a.f[1], 8)),
-			    uint8_t(meshopt_quantizeUnorm(a.f[2], 8)),
-			    uint8_t(meshopt_quantizeUnorm(a.f[3], 8))};
+			float ws = a.f[0] + a.f[1] + a.f[2] + a.f[3];
+			float wsi = (ws == 0.f) ? 0.f : 1.f / ws;
 
-			renormalizeWeights(v);
+			uint8_t v[4] = {
+			    uint8_t(meshopt_quantizeUnorm(a.f[0] * wsi, 8)),
+			    uint8_t(meshopt_quantizeUnorm(a.f[1] * wsi, 8)),
+			    uint8_t(meshopt_quantizeUnorm(a.f[2] * wsi, 8)),
+			    uint8_t(meshopt_quantizeUnorm(a.f[3] * wsi, 8))};
+
+			if (wsi != 0.f)
+				renormalizeWeights(v);
 
 			bin.append(reinterpret_cast<const char*>(v), sizeof(v));
 		}
@@ -1721,6 +1864,14 @@ void writeMaterialInfo(std::string& json, const cgltf_data* data, const cgltf_ma
 {
 	static const float white[4] = {1, 1, 1, 1};
 	static const float black[4] = {0, 0, 0, 0};
+
+	if (material.name && *material.name)
+	{
+		comma(json);
+		append(json, "\"name\":\"");
+		append(json, material.name);
+		append(json, "\"");
+	}
 
 	if (material.has_pbr_metallic_roughness)
 	{
@@ -2485,6 +2636,58 @@ void writeEmbeddedImage(std::string& json, std::vector<BufferView>& views, const
 	append(json, "\"");
 }
 
+std::string inferMimeType(const char* path)
+{
+	const char* ext = strrchr(path, '.');
+	if (!ext)
+		return "";
+
+	std::string extl = ext + 1;
+	for (size_t i = 0; i < extl.length(); ++i)
+		extl[i] = tolower(extl[i]);
+
+	if (extl == "jpg")
+		return "image/jpeg";
+	else
+		return "image/" + extl;
+}
+
+bool writeEmbeddedImage(std::string& json, std::vector<BufferView>& views, const char* path, const char* base_path)
+{
+	std::string full_path = base_path;
+
+	std::string::size_type slash = full_path.find_last_of("/\\");
+	full_path.erase(slash == std::string::npos ? 0 : slash + 1);
+
+	full_path += path;
+
+	FILE* image = fopen(full_path.c_str(), "rb");
+	if (!image)
+		return false;
+
+	fseek(image, 0, SEEK_END);
+	long length = ftell(image);
+	fseek(image, 0, SEEK_SET);
+
+	if (length <= 0)
+	{
+		fclose(image);
+		return false;
+	}
+
+	std::vector<char> data(length);
+	if (fread(&data[0], 1, data.size(), image) != data.size())
+	{
+		fclose(image);
+		return false;
+	}
+
+	fclose(image);
+
+	writeEmbeddedImage(json, views, &data[0], data.size(), inferMimeType(path).c_str());
+	return true;
+}
+
 void writeMeshAttributes(std::string& json, std::vector<BufferView>& views, std::string& json_accessors, size_t& accr_offset, const Mesh& mesh, int target, const QuantizationParams& qp, const Settings& settings)
 {
 	std::string scratch;
@@ -3080,7 +3283,7 @@ void printAttributeStats(const std::vector<BufferView>& views, BufferView::Kind 
 	}
 }
 
-void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin, std::string& fallback)
+void process(cgltf_data* data, const char* data_path, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin, std::string& fallback)
 {
 	if (settings.verbose)
 	{
@@ -3131,26 +3334,7 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 
 	for (size_t i = 0; i < meshes.size(); ++i)
 	{
-		Mesh& mesh = meshes[i];
-
-		switch (mesh.type)
-		{
-		case cgltf_primitive_type_points:
-			assert(mesh.indices.empty());
-			simplifyPointMesh(mesh, settings.simplify_threshold);
-			sortPointMesh(mesh);
-			break;
-
-		case cgltf_primitive_type_triangles:
-			reindexMesh(mesh);
-			simplifyMesh(mesh, settings.simplify_threshold, settings.simplify_aggressive);
-			optimizeMesh(mesh);
-			sortBoneInfluences(mesh);
-			break;
-
-		default:
-			assert(!"Unknown primitive type");
-		}
+		processMesh(meshes[i], settings);
 	}
 
 	if (settings.verbose)
@@ -3196,6 +3380,11 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 			if (parseDataUri(image.uri, mime_type, img))
 			{
 				writeEmbeddedImage(json_images, views, img.c_str(), img.size(), mime_type.c_str());
+			}
+			else if (settings.texture_embed)
+			{
+				if (!writeEmbeddedImage(json_images, views, image.uri, data_path))
+					fprintf(stderr, "Warning: unable to read image %s, skipping\n", image.uri);
 			}
 			else
 			{
@@ -3443,8 +3632,9 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 		json.append(data->json + data->asset.extras.start_offset, data->json + data->asset.extras.end_offset);
 	}
 	append(json, "}");
+
 	append(json, ",\"extensionsUsed\":[");
-	append(json, "\"MESHOPT_quantized_geometry\"");
+	append(json, "\"KHR_mesh_quantization\"");
 	if (settings.compress)
 	{
 		comma(json);
@@ -3471,16 +3661,15 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 		append(json, "\"KHR_lights_punctual\"");
 	}
 	append(json, "]");
+
+	append(json, ",\"extensionsRequired\":[");
+	append(json, "\"KHR_mesh_quantization\"");
 	if (settings.compress && !settings.fallback)
 	{
-		append(json, ",\"extensionsRequired\":[");
-		// Note: ideally we should include MESHOPT_quantized_geometry in the required extension list (regardless of compression)
-		// This extension *only* allows the use of quantized attributes for positions/normals/etc. This happens to be supported
-		// by popular JS frameworks, however, Babylon.JS refuses to load files with unsupported required extensions.
-		// For now we don't include it in the list, which will be fixed at some point once this extension becomes official.
+		comma(json);
 		append(json, "\"MESHOPT_compression\"");
-		append(json, "]");
 	}
+	append(json, "]");
 
 	if (!views.empty())
 	{
@@ -3703,7 +3892,7 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 	}
 
 	std::string json, bin, fallback;
-	process(data, meshes, settings, json, bin, fallback);
+	process(data, input, meshes, settings, json, bin, fallback);
 
 	cgltf_free(data);
 
@@ -3833,7 +4022,7 @@ int main(int argc, char** argv)
 		}
 		else if (strcmp(arg, "-vu") == 0)
 		{
-			settings.nrm_unit = true;
+			settings.nrm_unnormalized = true;
 		}
 		else if (strcmp(arg, "-af") == 0 && i + 1 < argc && isdigit(argv[i + 1][0]))
 		{
@@ -3854,6 +4043,10 @@ int main(int argc, char** argv)
 		else if (strcmp(arg, "-sa") == 0)
 		{
 			settings.simplify_aggressive = true;
+		}
+		else if (strcmp(arg, "-te") == 0)
+		{
+			settings.texture_embed = true;
 		}
 		else if (strcmp(arg, "-i") == 0 && i + 1 < argc && !input)
 		{
@@ -3917,12 +4110,13 @@ int main(int argc, char** argv)
 		fprintf(stderr, "-vp N: use N-bit quantization for positions (default: 14; N should be between 1 and 16)\n");
 		fprintf(stderr, "-vt N: use N-bit quantization for texture corodinates (default: 12; N should be between 1 and 16)\n");
 		fprintf(stderr, "-vn N: use N-bit quantization for normals and tangents (default: 8; N should be between 1 and 16)\n");
-		fprintf(stderr, "-vu: use unit-length normal/tangent vectors (default: off)\n");
+		fprintf(stderr, "-vu: use unnormalized normal/tangent vectors to improve compression (default: off)\n");
 		fprintf(stderr, "-af N: resample animations at N Hz (default: 30)\n");
 		fprintf(stderr, "-ac: keep constant animation tracks even if they don't modify the node transform\n");
 		fprintf(stderr, "-kn: keep named nodes and meshes attached to named nodes so that named nodes can be transformed externally\n");
 		fprintf(stderr, "-si R: simplify meshes to achieve the ratio R (default: 1; R should be between 0 and 1)\n");
 		fprintf(stderr, "-sa: aggressively simplify to the target ratio disregarding quality\n");
+		fprintf(stderr, "-te: embed all textures into main buffer\n");
 		fprintf(stderr, "-c: produce compressed gltf/glb files\n");
 		fprintf(stderr, "-cf: produce compressed gltf/glb files with fallback for loaders that don't support compression\n");
 		fprintf(stderr, "-v: verbose output\n");

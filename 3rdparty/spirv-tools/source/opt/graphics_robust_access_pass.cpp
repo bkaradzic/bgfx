@@ -160,7 +160,6 @@
 namespace spvtools {
 namespace opt {
 
-using opt::BasicBlock;
 using opt::Instruction;
 using opt::Operand;
 using spvtools::MakeUnique;

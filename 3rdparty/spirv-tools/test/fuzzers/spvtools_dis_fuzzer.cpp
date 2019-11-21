@@ -55,8 +55,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
        options++) {
     spvBinaryToText(context, input.data(), input.size(), options, &text,
                     &diagnostic);
-    if (diagnostic) spvDiagnosticDestroy(diagnostic);
-    if (text) spvTextDestroy(text);
+    if (diagnostic) {
+      spvDiagnosticDestroy(diagnostic);
+      diagnostic = nullptr;
+    }
+
+    if (text) {
+      spvTextDestroy(text);
+      text = nullptr;
+    }
   }
 
   spvContextDestroy(context);

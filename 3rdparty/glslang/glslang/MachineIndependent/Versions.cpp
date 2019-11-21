@@ -527,11 +527,11 @@ const char* StageName(EShLanguage stage)
     switch(stage) {
     case EShLangVertex:         return "vertex";
     case EShLangFragment:       return "fragment";
+    case EShLangCompute:        return "compute";
 #ifndef GLSLANG_WEB
     case EShLangTessControl:    return "tessellation control";
     case EShLangTessEvaluation: return "tessellation evaluation";
     case EShLangGeometry:       return "geometry";
-    case EShLangCompute:        return "compute";
     case EShLangRayGenNV:       return "ray-generation";
     case EShLangIntersectNV:    return "intersection";
     case EShLangAnyHitNV:       return "any-hit";

@@ -33,7 +33,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 19
+#define SPVC_C_API_VERSION_MINOR 21
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -466,6 +466,18 @@ typedef struct spvc_msl_sampler_ycbcr_conversion
  */
 SPVC_PUBLIC_API void spvc_msl_sampler_ycbcr_conversion_init(spvc_msl_sampler_ycbcr_conversion *conv);
 
+/* Maps to C++ API. */
+typedef enum spvc_hlsl_binding_flag_bits
+{
+	SPVC_HLSL_BINDING_AUTO_PUSH_CONSTANT_BIT = 1 << 0,
+	SPVC_HLSL_BINDING_AUTO_CBV_BIT = 1 << 1,
+	SPVC_HLSL_BINDING_AUTO_SRV_BIT = 1 << 2,
+	SPVC_HLSL_BINDING_AUTO_UAV_BIT = 1 << 3,
+	SPVC_HLSL_BINDING_AUTO_SAMPLER_BIT = 1 << 4,
+	SPVC_HLSL_BINDING_AUTO_ALL = 0x7fffffff
+} spvc_hlsl_binding_flag_bits;
+typedef unsigned spvc_hlsl_binding_flags;
+
 /* Maps to the various spirv_cross::Compiler*::Option structures. See C++ API for defaults and details. */
 typedef enum spvc_compiler_option
 {
@@ -527,6 +539,12 @@ typedef enum spvc_compiler_option
 	SPVC_COMPILER_OPTION_MSL_VIEW_INDEX_FROM_DEVICE_INDEX = 41 | SPVC_COMPILER_OPTION_MSL_BIT,
 	SPVC_COMPILER_OPTION_MSL_DISPATCH_BASE = 42 | SPVC_COMPILER_OPTION_MSL_BIT,
 	SPVC_COMPILER_OPTION_MSL_DYNAMIC_OFFSETS_BUFFER_INDEX = 43 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_TEXTURE_1D_AS_2D = 44 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_ENABLE_BASE_INDEX_ZERO = 45 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_IOS_FRAMEBUFFER_FETCH_SUBPASS = 46 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_INVARIANT_FP_MATH = 47 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_EMULATE_CUBEMAP_ARRAY = 48 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_ENABLE_DECORATION_BINDING = 49 | SPVC_COMPILER_OPTION_MSL_BIT,
 
 	SPVC_COMPILER_OPTION_INT_MAX = 0x7fffffff
 } spvc_compiler_option;
@@ -599,6 +617,9 @@ SPVC_PUBLIC_API spvc_result spvc_compiler_hlsl_add_vertex_attribute_remap(spvc_c
                                                                           const spvc_hlsl_vertex_attribute_remap *remap,
                                                                           size_t remaps);
 SPVC_PUBLIC_API spvc_variable_id spvc_compiler_hlsl_remap_num_workgroups_builtin(spvc_compiler compiler);
+
+SPVC_PUBLIC_API spvc_result spvc_compiler_hlsl_set_resource_binding_flags(spvc_compiler compiler,
+                                                                          spvc_hlsl_binding_flags flags);
 
 /*
  * MSL specifics.
@@ -712,6 +733,12 @@ SPVC_PUBLIC_API SpvExecutionModel spvc_compiler_get_execution_model(spvc_compile
  * Maps to C++ API, except it's read-only.
  */
 SPVC_PUBLIC_API spvc_type spvc_compiler_get_type_handle(spvc_compiler compiler, spvc_type_id id);
+
+/* Pulls out SPIRType::self. This effectively gives the type ID without array or pointer qualifiers.
+ * This is necessary when reflecting decoration/name information on members of a struct,
+ * which are placed in the base type, not the qualified type.
+ * This is similar to spvc_reflected_resource::base_type_id. */
+SPVC_PUBLIC_API spvc_type_id spvc_type_get_base_type_id(spvc_type type);
 
 SPVC_PUBLIC_API spvc_basetype spvc_type_get_basetype(spvc_type type);
 SPVC_PUBLIC_API unsigned spvc_type_get_bit_width(spvc_type type);

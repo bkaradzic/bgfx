@@ -94,6 +94,29 @@ bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst);
 // struct or vector.
 bool IsCompositeType(const opt::analysis::Type* type);
 
+// Returns a vector containing the same elements as |repeated_field|.
+std::vector<uint32_t> RepeatedFieldToVector(
+    const google::protobuf::RepeatedField<uint32_t>& repeated_field);
+
+// Given a type id, |base_object_type_id|, checks that the given sequence of
+// |indices| is suitable for indexing into this type.  Returns the id of the
+// type of the final sub-object reached via the indices if they are valid, and
+// 0 otherwise.
+uint32_t WalkCompositeTypeIndices(
+    opt::IRContext* context, uint32_t base_object_type_id,
+    const google::protobuf::RepeatedField<google::protobuf::uint32>& indices);
+
+// Returns the number of members associated with |struct_type_instruction|,
+// which must be an OpStructType instruction.
+uint32_t GetNumberOfStructMembers(
+    const opt::Instruction& struct_type_instruction);
+
+// Returns the constant size of the array associated with
+// |array_type_instruction|, which must be an OpArrayType instruction. Returns
+// 0 if there is not a static size.
+uint32_t GetArraySize(const opt::Instruction& array_type_instruction,
+                      opt::IRContext* context);
+
 }  // namespace fuzzerutil
 
 }  // namespace fuzz

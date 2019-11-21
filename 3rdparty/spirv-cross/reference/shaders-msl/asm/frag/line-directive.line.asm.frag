@@ -16,7 +16,8 @@ struct main0_in
 };
 
 #line 6 "test.frag"
-inline void func(thread float& FragColor, thread float& vColor)
+static inline __attribute__((always_inline))
+void func(thread float& FragColor, thread float& vColor)
 {
 #line 8 "test.frag"
     FragColor = 1.0;

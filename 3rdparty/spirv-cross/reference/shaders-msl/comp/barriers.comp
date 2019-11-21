@@ -7,57 +7,68 @@ using namespace metal;
 
 constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(4u, 1u, 1u);
 
-inline void barrier_shared()
+static inline __attribute__((always_inline))
+void barrier_shared()
 {
     threadgroup_barrier(mem_flags::mem_threadgroup);
 }
 
-inline void full_barrier()
+static inline __attribute__((always_inline))
+void full_barrier()
 {
     threadgroup_barrier(mem_flags::mem_device | mem_flags::mem_threadgroup | mem_flags::mem_texture);
 }
 
-inline void image_barrier()
+static inline __attribute__((always_inline))
+void image_barrier()
 {
     threadgroup_barrier(mem_flags::mem_texture);
 }
 
-inline void buffer_barrier()
+static inline __attribute__((always_inline))
+void buffer_barrier()
 {
     threadgroup_barrier(mem_flags::mem_device);
 }
 
-inline void group_barrier()
+static inline __attribute__((always_inline))
+void group_barrier()
 {
     threadgroup_barrier(mem_flags::mem_device | mem_flags::mem_threadgroup | mem_flags::mem_texture);
 }
 
-inline void barrier_shared_exec()
+static inline __attribute__((always_inline))
+void barrier_shared_exec()
 {
     threadgroup_barrier(mem_flags::mem_threadgroup);
 }
 
-inline void full_barrier_exec()
+static inline __attribute__((always_inline))
+void full_barrier_exec()
 {
     threadgroup_barrier(mem_flags::mem_device | mem_flags::mem_threadgroup | mem_flags::mem_texture);
 }
 
-inline void image_barrier_exec()
+static inline __attribute__((always_inline))
+void image_barrier_exec()
 {
     threadgroup_barrier(mem_flags::mem_texture);
 }
 
-inline void buffer_barrier_exec()
+static inline __attribute__((always_inline))
+void buffer_barrier_exec()
 {
     threadgroup_barrier(mem_flags::mem_device);
 }
 
-inline void group_barrier_exec()
+static inline __attribute__((always_inline))
+void group_barrier_exec()
 {
     threadgroup_barrier(mem_flags::mem_device | mem_flags::mem_threadgroup | mem_flags::mem_texture);
 }
 
-inline void exec_barrier()
+static inline __attribute__((always_inline))
+void exec_barrier()
 {
     threadgroup_barrier(mem_flags::mem_threadgroup);
 }

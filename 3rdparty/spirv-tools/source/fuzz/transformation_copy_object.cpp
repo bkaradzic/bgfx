@@ -14,6 +14,7 @@
 
 #include "source/fuzz/transformation_copy_object.h"
 
+#include "source/fuzz/data_descriptor.h"
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/instruction_descriptor.h"
 #include "source/opt/instruction.h"
@@ -101,11 +102,9 @@ void TransformationCopyObject::Apply(opt::IRContext* context,
   fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
   context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
 
-  protobufs::Fact fact;
-  fact.mutable_id_synonym_fact()->set_id(message_.object());
-  fact.mutable_id_synonym_fact()->mutable_data_descriptor()->set_object(
-      message_.fresh_id());
-  fact_manager->AddFact(fact, context);
+  fact_manager->AddFactDataSynonym(MakeDataDescriptor(message_.object(), {}),
+                                   MakeDataDescriptor(message_.fresh_id(), {}),
+                                   context);
 }
 
 protobufs::Transformation TransformationCopyObject::ToMessage() const {

@@ -569,6 +569,30 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_MSL_DYNAMIC_OFFSETS_BUFFER_INDEX:
 		options->msl.dynamic_offsets_buffer_index = value;
 		break;
+
+	case SPVC_COMPILER_OPTION_MSL_TEXTURE_1D_AS_2D:
+		options->msl.texture_1D_as_2D = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_ENABLE_BASE_INDEX_ZERO:
+		options->msl.enable_base_index_zero = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_IOS_FRAMEBUFFER_FETCH_SUBPASS:
+		options->msl.ios_use_framebuffer_fetch_subpasses = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_INVARIANT_FP_MATH:
+		options->msl.invariant_float_math = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_EMULATE_CUBEMAP_ARRAY:
+		options->msl.emulate_cube_array = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_ENABLE_DECORATION_BINDING:
+		options->msl.enable_decoration_binding = value != 0;
+		break;
 #endif
 
 	default:
@@ -742,6 +766,26 @@ spvc_variable_id spvc_compiler_hlsl_remap_num_workgroups_builtin(spvc_compiler c
 #else
 	compiler->context->report_error("HLSL function used on a non-HLSL backend.");
 	return 0;
+#endif
+}
+
+spvc_result spvc_compiler_hlsl_set_resource_binding_flags(spvc_compiler compiler,
+                                                          spvc_hlsl_binding_flags flags)
+{
+#if SPIRV_CROSS_C_API_HLSL
+	if (compiler->backend != SPVC_BACKEND_HLSL)
+	{
+		compiler->context->report_error("HLSL function used on a non-HLSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &hlsl = *static_cast<CompilerHLSL *>(compiler->compiler.get());
+	hlsl.set_resource_binding_flags(flags);
+	return SPVC_SUCCESS;
+#else
+	(void)flags;
+	compiler->context->report_error("HLSL function used on a non-HLSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
 #endif
 }
 
@@ -1637,6 +1681,11 @@ spvc_type spvc_compiler_get_type_handle(spvc_compiler compiler, spvc_type_id id)
 		return static_cast<spvc_type>(&compiler->compiler->get_type(id));
 	}
 	SPVC_END_SAFE_SCOPE(compiler->context, nullptr)
+}
+
+spvc_type_id spvc_type_get_base_type_id(spvc_type type)
+{
+	return type->self;
 }
 
 static spvc_basetype convert_basetype(SPIRType::BaseType type)

@@ -42,13 +42,18 @@ spv_result_t ValidateUndef(ValidationState_t& _, const Instruction* inst) {
 
 spv_result_t ValidateShaderClock(ValidationState_t& _,
                                  const Instruction* inst) {
-// #2952: disabled until scope discussion is resolved.
-#if 0
-  const uint32_t execution_scope = inst->word(3);
-  if (auto error = ValidateExecutionScope(_, inst, execution_scope)) {
+  const uint32_t scope = inst->GetOperandAs<uint32_t>(2);
+  if (auto error = ValidateScope(_, inst, scope)) {
     return error;
   }
-#endif
+
+  bool is_int32 = false, is_const_int32 = false;
+  uint32_t value = 0;
+  std::tie(is_int32, is_const_int32, value) = _.EvalInt32IfConst(scope);
+  if (is_const_int32 && value != SpvScopeSubgroup && value != SpvScopeDevice) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Scope must be Subgroup or Device";
+  }
 
   // Result Type must be a 64 - bit unsigned integer type or
   // a vector of two - components of 32 -

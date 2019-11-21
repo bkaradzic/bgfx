@@ -1,13 +1,14 @@
 /*
  * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
- *
- * vim: set tabstop=4 expandtab:
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 /*
  *
- * AUTO GENERATED! DO NOT EDIT! ( source : temp.bgfx.h )
+ * AUTO GENERATED FROM IDL! DO NOT EDIT! (source : temp.bgfx.h)
+ *
+ * More info about IDL:
+ * https://gist.github.com/bkaradzic/05a1c86a6dd57bf86e2d828878e88dc2#bgfx-is-switching-to-idl-to-generate-api
  *
  */
 
@@ -782,8 +783,10 @@ typedef struct bgfx_view_stats_s
 {
     char                 name[256];          /** View name.                               */
     bgfx_view_id_t       view;               /** View id.                                 */
-    int64_t              cpuTimeElapsed;     /** CPU (submit) time elapsed.               */
-    int64_t              gpuTimeElapsed;     /** GPU time elapsed.                        */
+    int64_t              cpuTimeBegin;       /** CPU (submit) begin time.                 */
+    int64_t              cpuTimeEnd;         /** CPU (submit) end time.                   */
+    int64_t              gpuTimeBegin;       /** GPU begin time.                          */
+    int64_t              gpuTimeEnd;         /** GPU end time.                            */
 
 } bgfx_view_stats_t;
 
