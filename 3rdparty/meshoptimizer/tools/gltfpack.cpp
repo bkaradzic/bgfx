@@ -34,6 +34,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include "cgltf.h"
 #include "fast_obj.h"
 
@@ -84,6 +88,7 @@ struct Settings
 	bool simplify_aggressive;
 
 	bool texture_embed;
+	bool texture_basis;
 
 	bool compress;
 	bool fallback;
@@ -126,6 +131,11 @@ struct MaterialInfo
 	bool keep;
 
 	int remap;
+};
+
+struct ImageInfo
+{
+	bool normal_map;
 };
 
 struct BufferView
@@ -2652,40 +2662,187 @@ std::string inferMimeType(const char* path)
 		return "image/" + extl;
 }
 
-bool writeEmbeddedImage(std::string& json, std::vector<BufferView>& views, const char* path, const char* base_path)
+std::string getFullPath(const char* path, const char* base_path)
 {
-	std::string full_path = base_path;
+	std::string result = base_path;
 
-	std::string::size_type slash = full_path.find_last_of("/\\");
-	full_path.erase(slash == std::string::npos ? 0 : slash + 1);
+	std::string::size_type slash = result.find_last_of("/\\");
+	result.erase(slash == std::string::npos ? 0 : slash + 1);
 
-	full_path += path;
+	result += path;
 
-	FILE* image = fopen(full_path.c_str(), "rb");
-	if (!image)
+	return result;
+}
+
+std::string getFileName(const char* path)
+{
+	std::string result = path;
+
+	std::string::size_type slash = result.find_last_of("/\\");
+	if (slash != std::string::npos)
+		result.erase(0, slash + 1);
+
+	std::string::size_type dot = result.find_last_of('.');
+	if (dot != std::string::npos)
+		result.erase(dot);
+
+	return result;
+}
+
+bool readFile(const char* path, std::string& data)
+{
+	FILE* file = fopen(path, "rb");
+	if (!file)
 		return false;
 
-	fseek(image, 0, SEEK_END);
-	long length = ftell(image);
-	fseek(image, 0, SEEK_SET);
+	fseek(file, 0, SEEK_END);
+	long length = ftell(file);
+	fseek(file, 0, SEEK_SET);
 
 	if (length <= 0)
 	{
-		fclose(image);
+		fclose(file);
 		return false;
 	}
 
-	std::vector<char> data(length);
-	if (fread(&data[0], 1, data.size(), image) != data.size())
+	data.resize(length);
+	size_t result = fread(&data[0], 1, data.size(), file);
+	fclose(file);
+
+	return result == data.size();
+}
+
+bool writeFile(const char* path, const std::string& data)
+{
+	FILE* file = fopen(path, "wb");
+	if (!file)
+		return false;
+
+	size_t result = fwrite(&data[0], 1, data.size(), file);
+	fclose(file);
+
+	return result == data.size();
+}
+
+bool encodeBasisFile(const char* input, const char* output, bool normal_map)
+{
+	std::string cmd = "basisu";
+
+	cmd += " -mipmap";
+	if (normal_map)
 	{
-		fclose(image);
-		return false;
+		cmd += " -normal_map";
+		// for optimal quality we should specify seperate_rg_to_color_alpha but this requires renderer awareness
 	}
 
-	fclose(image);
+	cmd += " -file ";
+	cmd += input;
+	cmd += " -output_file ";
+	cmd += output;
 
-	writeEmbeddedImage(json, views, &data[0], data.size(), inferMimeType(path).c_str());
-	return true;
+#ifdef _WIN32
+	cmd += " >nul";
+#else
+	cmd += " >/dev/null";
+#endif
+
+	return system(cmd.c_str()) == 0;
+}
+
+bool encodeBasisData(const std::string& data, std::string& result, bool normal_map, const char* output_path)
+{
+	std::string temp_name = getFileName(output_path) + ".temp";
+	std::string temp_input = getFullPath(temp_name.c_str(), output_path) + ".png";
+	std::string temp_output = getFullPath(temp_name.c_str(), output_path) + ".basis";
+
+	bool ok =
+	    writeFile(temp_input.c_str(), data) &&
+	    encodeBasisFile(temp_input.c_str(), temp_output.c_str(), normal_map) &&
+	    readFile(temp_output.c_str(), result);
+
+	unlink(temp_input.c_str());
+	unlink(temp_output.c_str());
+	return ok;
+}
+
+void writeImage(std::string& json, std::vector<BufferView>& views, const cgltf_image& image, const ImageInfo& info, size_t index, const char* input_path, const char* output_path, const Settings& settings)
+{
+	std::string img_data;
+	std::string mime_type;
+
+	if (image.uri && parseDataUri(image.uri, mime_type, img_data))
+	{
+		// we will re-embed img_data below
+	}
+	else if (image.buffer_view && image.buffer_view->buffer->data && image.mime_type)
+	{
+		const cgltf_buffer_view* view = image.buffer_view;
+
+		img_data.assign(static_cast<const char*>(view->buffer->data) + view->offset, view->size);
+		mime_type = image.mime_type;
+	}
+	else if (image.uri && settings.texture_embed)
+	{
+		std::string full_path = getFullPath(image.uri, input_path);
+
+		if (!readFile(full_path.c_str(), img_data))
+		{
+			fprintf(stderr, "Warning: unable to read image %s, skipping\n", image.uri);
+		}
+
+		mime_type = inferMimeType(image.uri);
+	}
+
+	if (!img_data.empty())
+	{
+		if (settings.texture_basis)
+		{
+			std::string encoded;
+
+			if (encodeBasisData(img_data, encoded, info.normal_map, output_path))
+			{
+				writeEmbeddedImage(json, views, encoded.c_str(), encoded.size(), "image/basis");
+			}
+			else
+			{
+				fprintf(stderr, "Warning: unable to encode image %d with Basis, skipping\n", int(index));
+			}
+		}
+		else
+		{
+			writeEmbeddedImage(json, views, img_data.c_str(), img_data.size(), mime_type.c_str());
+		}
+	}
+	else if (image.uri)
+	{
+		if (settings.texture_basis)
+		{
+			std::string full_path = getFullPath(image.uri, input_path);
+			std::string basis_path = getFileName(image.uri) + ".basis";
+			std::string basis_full_path = getFullPath(basis_path.c_str(), output_path);
+
+			if (encodeBasisFile(full_path.c_str(), basis_full_path.c_str(), info.normal_map))
+			{
+				append(json, "\"uri\":\"");
+				append(json, basis_path);
+				append(json, "\"");
+			}
+			else
+			{
+				fprintf(stderr, "Warning: unable to encode image %s with Basis, skipping\n", image.uri);
+			}
+		}
+		else
+		{
+			append(json, "\"uri\":\"");
+			append(json, image.uri);
+			append(json, "\"");
+		}
+	}
+	else
+	{
+		fprintf(stderr, "Warning: ignoring image %d since it has no URI and no valid buffer data\n", int(index));
+	}
 }
 
 void writeMeshAttributes(std::string& json, std::vector<BufferView>& views, std::string& json_accessors, size_t& accr_offset, const Mesh& mesh, int target, const QuantizationParams& qp, const Settings& settings)
@@ -3283,7 +3440,7 @@ void printAttributeStats(const std::vector<BufferView>& views, BufferView::Kind 
 	}
 }
 
-void process(cgltf_data* data, const char* data_path, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin, std::string& fallback)
+void process(cgltf_data* data, const char* input_path, const char* output_path, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin, std::string& fallback)
 {
 	if (settings.verbose)
 	{
@@ -3342,6 +3499,16 @@ void process(cgltf_data* data, const char* data_path, std::vector<Mesh>& meshes,
 		printMeshStats(meshes, "output");
 	}
 
+	std::vector<ImageInfo> images(data->images_count);
+
+	for (size_t i = 0; i < data->materials_count; ++i)
+	{
+		const cgltf_material& material = data->materials[i];
+
+		if (material.normal_texture.texture && material.normal_texture.texture->image)
+			images[material.normal_texture.texture->image - data->images].normal_map = true;
+	}
+
 	QuantizationParams qp = prepareQuantization(meshes, settings);
 
 	std::string json_images;
@@ -3368,43 +3535,17 @@ void process(cgltf_data* data, const char* data_path, std::vector<Mesh>& meshes,
 
 	for (size_t i = 0; i < data->images_count; ++i)
 	{
-		const cgltf_image& image = data->images[i];
+		if (settings.verbose && settings.texture_basis)
+		{
+			const char* uri = data->images[i].uri;
+			bool embedded = !uri || strncmp(uri, "data:", 5) == 0;
+
+			printf("image %d (%s) is being encoded with Basis\n", int(i), embedded ? "embedded" : uri);
+		}
 
 		comma(json_images);
 		append(json_images, "{");
-		if (image.uri)
-		{
-			std::string mime_type;
-			std::string img;
-
-			if (parseDataUri(image.uri, mime_type, img))
-			{
-				writeEmbeddedImage(json_images, views, img.c_str(), img.size(), mime_type.c_str());
-			}
-			else if (settings.texture_embed)
-			{
-				if (!writeEmbeddedImage(json_images, views, image.uri, data_path))
-					fprintf(stderr, "Warning: unable to read image %s, skipping\n", image.uri);
-			}
-			else
-			{
-				append(json_images, "\"uri\":\"");
-				append(json_images, image.uri);
-				append(json_images, "\"");
-			}
-		}
-		else if (image.buffer_view && image.buffer_view->buffer->data && image.mime_type)
-		{
-			const char* img = static_cast<const char*>(image.buffer_view->buffer->data) + image.buffer_view->offset;
-			size_t size = image.buffer_view->size;
-
-			writeEmbeddedImage(json_images, views, img, size, image.mime_type);
-		}
-		else
-		{
-			fprintf(stderr, "Warning: ignoring image %d since it has no URI and no valid buffer data\n", int(i));
-		}
-
+		writeImage(json_images, views, data->images[i], images[i], i, input_path, output_path, settings);
 		append(json_images, "}");
 	}
 
@@ -3892,7 +4033,7 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 	}
 
 	std::string json, bin, fallback;
-	process(data, input, meshes, settings, json, bin, fallback);
+	process(data, input, output, meshes, settings, json, bin, fallback);
 
 	cgltf_free(data);
 
@@ -4048,6 +4189,10 @@ int main(int argc, char** argv)
 		{
 			settings.texture_embed = true;
 		}
+		else if (strcmp(arg, "-tb") == 0)
+		{
+			settings.texture_basis = true;
+		}
 		else if (strcmp(arg, "-i") == 0 && i + 1 < argc && !input)
 		{
 			input = argv[++i];
@@ -4117,6 +4262,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "-si R: simplify meshes to achieve the ratio R (default: 1; R should be between 0 and 1)\n");
 		fprintf(stderr, "-sa: aggressively simplify to the target ratio disregarding quality\n");
 		fprintf(stderr, "-te: embed all textures into main buffer\n");
+		fprintf(stderr, "-tb: convert all textures to Basis Universal format (with basisu executable)\n");
 		fprintf(stderr, "-c: produce compressed gltf/glb files\n");
 		fprintf(stderr, "-cf: produce compressed gltf/glb files with fallback for loaders that don't support compression\n");
 		fprintf(stderr, "-v: verbose output\n");
