@@ -29,11 +29,11 @@
 #endif // BGFX_SHADER_LANGUAGE_HLSL > 3 && BGFX_SHADER_TYPE_FRAGMENT
 
 #if BGFX_SHADER_LANGUAGE_GLSL
-#   define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = _type[](
-#   define ARRAY_END() )
+#	define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = _type[](
+#	define ARRAY_END() )
 #else
-#   define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = {
-#   define ARRAY_END() }
+#	define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = {
+#	define ARRAY_END() }
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 
 #if BGFX_SHADER_LANGUAGE_HLSL \
@@ -593,7 +593,6 @@ mat4 mtxFromRows(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
 	return mat4(_0, _1, _2, _3);
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
-
 mat4 mtxFromCols(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
 {
 #if BGFX_SHADER_LANGUAGE_GLSL
@@ -602,7 +601,14 @@ mat4 mtxFromCols(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
 	return transpose(mat4(_0, _1, _2, _3) );
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
-
+mat3 mtxFromRows(vec3 _0, vec3 _1, vec3 _2)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+	return transpose(mat3(_0, _1, _2) );
+#else
+	return mat3(_0, _1, _2);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
 mat3 mtxFromCols(vec3 _0, vec3 _1, vec3 _2)
 {
 #if BGFX_SHADER_LANGUAGE_GLSL
@@ -611,6 +617,18 @@ mat3 mtxFromCols(vec3 _0, vec3 _1, vec3 _2)
 	return transpose(mat3(_0, _1, _2) );
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
+
+#if BGFX_SHADER_LANGUAGE_GLSL
+#define mtxFromRows3(_0, _1, _2)     transpose(mat3(_0, _1, _2) )
+#define mtxFromRows4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3) )
+#define mtxFromCols3(_0, _1, _2)               mat3(_0, _1, _2)
+#define mtxFromCols4(_0, _1, _2, _3)           mat4(_0, _1, _2, _3)
+#else
+#define mtxFromRows3(_0, _1, _2)               mat3(_0, _1, _2)
+#define mtxFromRows4(_0, _1, _2, _3)           mat4(_0, _1, _2, _3)
+#define mtxFromCols3(_0, _1, _2)     transpose(mat3(_0, _1, _2) )
+#define mtxFromCols4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3) )
+#endif // BGFX_SHADER_LANGUAGE_GLSL
 
 uniform vec4  u_viewRect;
 uniform vec4  u_viewTexel;

@@ -2389,7 +2389,10 @@ namespace bgfx { namespace d3d11
 
 				m_scd.width  = _resolution.width;
 				m_scd.height = _resolution.height;
-				m_scd.format = s_textureFormat[_resolution.format].m_fmt;
+				m_scd.format = (_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
+					? s_textureFormat[_resolution.format].m_fmtSrgb
+					: s_textureFormat[_resolution.format].m_fmt
+					;
 
 				preReset();
 
@@ -2846,6 +2849,7 @@ namespace bgfx { namespace d3d11
 				| BGFX_STATE_MSAA
 				| BGFX_STATE_LINEAA
 				| BGFX_STATE_CONSERVATIVE_RASTER
+				| BGFX_STATE_FRONT_CCW
 				;
 			_state |= _wireframe ? BGFX_STATE_PT_LINES : BGFX_STATE_NONE;
 			_state |= _scissor   ? BGFX_STATE_RESERVED_MASK : 0;
@@ -2862,7 +2866,7 @@ namespace bgfx { namespace d3d11
 					D3D11_RASTERIZER_DESC2 desc;
 					desc.FillMode = _wireframe ? D3D11_FILL_WIREFRAME : D3D11_FILL_SOLID;
 					desc.CullMode = s_cullMode[cull];
-					desc.FrontCounterClockwise = false;
+					desc.FrontCounterClockwise = !!(_state&BGFX_STATE_FRONT_CCW);
 					desc.DepthBias             = 0;
 					desc.DepthBiasClamp        = 0.0f;
 					desc.SlopeScaledDepthBias  = 0.0f;

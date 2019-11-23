@@ -156,7 +156,8 @@ std::vector<std::unique_ptr<Type>> GenerateAllTypes() {
   types.emplace_back(new ReserveId());
   types.emplace_back(new Queue());
 
-  // Pipe, Forward Pointer, PipeStorage, NamedBarrier, AccelerationStructureNV
+  // Pipe, Forward Pointer, PipeStorage, NamedBarrier, AccelerationStructureNV,
+  // CooperativeMatrixNV
   types.emplace_back(new Pipe(SpvAccessQualifierReadWrite));
   types.emplace_back(new Pipe(SpvAccessQualifierReadOnly));
   types.emplace_back(new ForwardPointer(1, SpvStorageClassInput));
@@ -165,6 +166,7 @@ std::vector<std::unique_ptr<Type>> GenerateAllTypes() {
   types.emplace_back(new PipeStorage());
   types.emplace_back(new NamedBarrier());
   types.emplace_back(new AccelerationStructureNV());
+  types.emplace_back(new CooperativeMatrixNV(f32, 24, 24, 24));
 
   return types;
 }
@@ -214,6 +216,7 @@ TEST(TypeManager, TypeStrings) {
     %arr_spec_const_with_id = OpTypeArray %s32 %spec_const_with_id
     %arr_long_constant = OpTypeArray %s32 %long_constant
     %arr_spec_const_op = OpTypeArray %s32 %spec_const_op
+    %cm   = OpTypeCooperativeMatrixNV %f64 %id4 %id4 %id4
   )";
 
   std::vector<std::pair<uint32_t, std::string>> type_id_strs = {
@@ -251,6 +254,7 @@ TEST(TypeManager, TypeStrings) {
       {36, "[sint32, id(1), words(1,99,42)]"},
       {37, "[sint32, id(33), words(0,705032704,1)]"},
       {38, "[sint32, id(34), words(2,34)]"},
+      {39, "<float64, 6, 6, 6>"},
   };
 
   std::unique_ptr<IRContext> context =
@@ -1060,6 +1064,7 @@ TEST(TypeManager, GetTypeInstructionAllTypes) {
 ; CHECK: OpTypePipeStorage
 ; CHECK: OpTypeNamedBarrier
 ; CHECK: OpTypeAccelerationStructureNV
+; CHECK: OpTypeCooperativeMatrixNV [[f32]] [[uint24]] [[uint24]] [[uint24]]
 OpCapability Shader
 OpCapability Int64
 OpCapability Linkage

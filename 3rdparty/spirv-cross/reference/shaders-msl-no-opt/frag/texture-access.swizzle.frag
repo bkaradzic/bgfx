@@ -6,7 +6,8 @@
 using namespace metal;
 
 // Returns 2D texture coords corresponding to 1D texel buffer coords
-inline uint2 spvTexelBufferCoord(uint tc)
+static inline __attribute__((always_inline))
+uint2 spvTexelBufferCoord(uint tc)
 {
     return uint2(tc % 4096, tc / 4096);
 }

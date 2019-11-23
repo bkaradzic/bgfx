@@ -25,11 +25,26 @@ namespace {
 
 const std::pair<uint32_t, uint32_t> kChanceOfAddingDeadBreak = {5, 80};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingDeadContinue = {5, 80};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingNoContractionDecoration = {
+    5, 70};
+const std::pair<uint32_t, uint32_t> kChanceOfAdjustingFunctionControl = {20,
+                                                                         70};
+const std::pair<uint32_t, uint32_t> kChanceOfAdjustingLoopControl = {20, 90};
+const std::pair<uint32_t, uint32_t> kChanceOfAdjustingMemoryOperandsMask = {20,
+                                                                            90};
+const std::pair<uint32_t, uint32_t> kChanceOfAdjustingSelectionControl = {20,
+                                                                          90};
 const std::pair<uint32_t, uint32_t> kChanceOfCopyingObject = {20, 50};
+const std::pair<uint32_t, uint32_t> kChanceOfConstructingComposite = {20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfMovingBlockDown = {20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfObfuscatingConstant = {10, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfReplacingIdWithSynonym = {10, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfSplittingBlock = {40, 95};
+
+// Default limits for various quantities that are chosen during fuzzing.
+// Keep them in alphabetical order.
+const uint32_t kDefaultMaxLoopControlPartialCount = 100;
+const uint32_t kDefaultMaxLoopControlPeelCount = 100;
 
 // Default functions for controlling how deep to go during recursive
 // generation/transformation. Keep them in alphabetical order.
@@ -53,6 +68,18 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfAddingDeadBreak);
   chance_of_adding_dead_continue_ =
       ChooseBetweenMinAndMax(kChanceOfAddingDeadContinue);
+  chance_of_adding_no_contraction_decoration_ =
+      ChooseBetweenMinAndMax(kChanceOfAddingNoContractionDecoration);
+  chance_of_adjusting_function_control_ =
+      ChooseBetweenMinAndMax(kChanceOfAdjustingFunctionControl);
+  chance_of_adjusting_loop_control_ =
+      ChooseBetweenMinAndMax(kChanceOfAdjustingLoopControl);
+  chance_of_adjusting_memory_operands_mask_ =
+      ChooseBetweenMinAndMax(kChanceOfAdjustingMemoryOperandsMask);
+  chance_of_adjusting_selection_control_ =
+      ChooseBetweenMinAndMax(kChanceOfAdjustingSelectionControl);
+  chance_of_constructing_composite_ =
+      ChooseBetweenMinAndMax(kChanceOfConstructingComposite);
   chance_of_copying_object_ = ChooseBetweenMinAndMax(kChanceOfCopyingObject);
   chance_of_moving_block_down_ =
       ChooseBetweenMinAndMax(kChanceOfMovingBlockDown);
@@ -61,6 +88,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
   chance_of_replacing_id_with_synonym_ =
       ChooseBetweenMinAndMax(kChanceOfReplacingIdWithSynonym);
   chance_of_splitting_block_ = ChooseBetweenMinAndMax(kChanceOfSplittingBlock);
+  max_loop_control_partial_count_ = kDefaultMaxLoopControlPartialCount;
+  max_loop_control_peel_count_ = kDefaultMaxLoopControlPeelCount;
 }
 
 FuzzerContext::~FuzzerContext() = default;

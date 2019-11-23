@@ -1189,6 +1189,7 @@ public:
     virtual void traverse(TIntermTraverser*);
     TOperator getFlowOp() const { return flowOp; }
     TIntermTyped* getExpression() const { return expression; }
+    void setExpression(TIntermTyped* pExpression) { expression = pExpression; }
 protected:
     TOperator flowOp;
     TIntermTyped* expression;
@@ -1222,7 +1223,7 @@ public:
     // it is essential to use "symbol = sym" to assign to symbol
     TIntermSymbol(int i, const TString& n, const TType& t)
         : TIntermTyped(t), id(i),
-#ifdef ENABLE_HLSL
+#ifndef GLSLANG_WEB
         flattenSubset(-1),
 #endif
         constSubtree(nullptr)
@@ -1237,7 +1238,7 @@ public:
     const TConstUnionArray& getConstArray() const { return constArray; }
     void setConstSubtree(TIntermTyped* subtree) { constSubtree = subtree; }
     TIntermTyped* getConstSubtree() const { return constSubtree; }
-#ifdef ENABLE_HLSL
+#ifndef GLSLANG_WEB
     void setFlattenSubset(int subset) { flattenSubset = subset; }
     int getFlattenSubset() const { return flattenSubset; } // -1 means full object
 #endif
@@ -1248,7 +1249,7 @@ public:
 
 protected:
     int id;                      // the unique id of the symbol this node represents
-#ifdef ENABLE_HLSL
+#ifndef GLSLANG_WEB
     int flattenSubset;           // how deeply the flattened object rooted at id has been dereferenced
 #endif
     TString name;                // the name of the symbol this node represents
@@ -1309,11 +1310,13 @@ public:
     bool isSparseTexture()  const { return false; }
     bool isImageFootprint() const { return false; }
     bool isSparseImage()    const { return false; }
+    bool isSubgroup()       const { return false; }
 #else
     bool isImage()    const { return op > EOpImageGuardBegin    && op < EOpImageGuardEnd; }
     bool isSparseTexture() const { return op > EOpSparseTextureGuardBegin && op < EOpSparseTextureGuardEnd; }
     bool isImageFootprint() const { return op > EOpImageFootprintGuardBegin && op < EOpImageFootprintGuardEnd; }
     bool isSparseImage()   const { return op == EOpSparseImageLoad; }
+    bool isSubgroup() const { return op > EOpSubgroupGuardStart && op < EOpSubgroupGuardStop; }
 #endif
 
     void setOperationPrecision(TPrecisionQualifier p) { operationPrecision = p; }

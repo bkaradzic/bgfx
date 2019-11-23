@@ -7,8 +7,8 @@
 // files can be further compressed with deflate/etc.
 //
 // To load regular glb files, it should be sufficient to use a standard glTF loader (although note that these files
-// use quantized position/texture coordinates that are technically invalid per spec; THREE.js and BabylonJS support
-// these files out of the box).
+// use quantized position/texture coordinates that require support for KHR_mesh_quantization; THREE.js and BabylonJS
+// support these files out of the box).
 // To load packed glb files, meshoptimizer vertex decoder needs to be integrated into the loader; demo/GLTFLoader.js
 // contains a work-in-progress loader - please note that the extension specification isn't ready yet so the format
 // will change!
@@ -73,7 +73,7 @@ struct Settings
 	int pos_bits;
 	int tex_bits;
 	int nrm_bits;
-	bool nrm_unit;
+	bool nrm_unnormalized;
 
 	int anim_freq;
 	bool anim_const;
@@ -83,7 +83,11 @@ struct Settings
 	float simplify_threshold;
 	bool simplify_aggressive;
 
+	bool texture_embed;
+
 	bool compress;
+	bool fallback;
+
 	int verbose;
 };
 
@@ -178,6 +182,30 @@ cgltf_accessor* getAccessor(const cgltf_attribute* attributes, size_t attribute_
 			return attributes[i].data;
 
 	return 0;
+}
+
+void readAccessor(std::vector<float>& data, const cgltf_accessor* accessor)
+{
+	assert(accessor->type == cgltf_type_scalar);
+
+	data.resize(accessor->count);
+	cgltf_accessor_unpack_floats(accessor, &data[0], data.size());
+}
+
+void readAccessor(std::vector<Attr>& data, const cgltf_accessor* accessor)
+{
+	size_t components = cgltf_num_components(accessor->type);
+
+	std::vector<float> temp(accessor->count * components);
+	cgltf_accessor_unpack_floats(accessor, &temp[0], temp.size());
+
+	data.resize(accessor->count);
+
+	for (size_t i = 0; i < accessor->count; ++i)
+	{
+		for (size_t k = 0; k < components && k < 4; ++k)
+			data[i].f[k] = temp[i * components + k];
+	}
 }
 
 void transformPosition(float* ptr, const float* transform)
@@ -291,10 +319,7 @@ void parseMeshesGltf(cgltf_data* data, std::vector<Mesh>& meshes)
 				}
 
 				Stream s = {attr.type, attr.index};
-				s.data.resize(attr.data->count);
-
-				for (size_t i = 0; i < attr.data->count; ++i)
-					cgltf_accessor_read_float(attr.data, i, s.data[i].f, 4);
+				readAccessor(s.data, attr.data);
 
 				result.streams.push_back(s);
 			}
@@ -314,10 +339,7 @@ void parseMeshesGltf(cgltf_data* data, std::vector<Mesh>& meshes)
 					}
 
 					Stream s = {attr.type, attr.index, int(ti + 1)};
-					s.data.resize(attr.data->count);
-
-					for (size_t i = 0; i < attr.data->count; ++i)
-						cgltf_accessor_read_float(attr.data, i, s.data[i].f, 4);
+					readAccessor(s.data, attr.data);
 
 					result.streams.push_back(s);
 				}
@@ -821,10 +843,33 @@ void reindexMesh(Mesh& mesh)
 	}
 }
 
-const Stream* getPositionStream(const Mesh& mesh)
+void filterMesh(Mesh& mesh)
+{
+	unsigned int* indices = &mesh.indices[0];
+	size_t total_indices = mesh.indices.size();
+
+	size_t write = 0;
+
+	for (size_t i = 0; i < total_indices; i += 3)
+	{
+		unsigned int a = indices[i + 0], b = indices[i + 1], c = indices[i + 2];
+
+		if (a != b && a != c && b != c)
+		{
+			indices[write + 0] = a;
+			indices[write + 1] = b;
+			indices[write + 2] = c;
+			write += 3;
+		}
+	}
+
+	mesh.indices.resize(write);
+}
+
+Stream* getStream(Mesh& mesh, cgltf_attribute_type type, int index = 0)
 {
 	for (size_t i = 0; i < mesh.streams.size(); ++i)
-		if (mesh.streams[i].type == cgltf_attribute_type_position)
+		if (mesh.streams[i].type == type && mesh.streams[i].index == index)
 			return &mesh.streams[i];
 
 	return 0;
@@ -835,7 +880,7 @@ void simplifyMesh(Mesh& mesh, float threshold, bool aggressive)
 	if (threshold >= 1)
 		return;
 
-	const Stream* positions = getPositionStream(mesh);
+	const Stream* positions = getStream(mesh, cgltf_attribute_type_position);
 	if (!positions)
 		return;
 
@@ -883,12 +928,119 @@ void optimizeMesh(Mesh& mesh)
 	}
 }
 
+struct BoneInfluence
+{
+	float i;
+	float w;
+};
+
+struct BoneInfluenceIndexPredicate
+{
+	bool operator()(const BoneInfluence& lhs, const BoneInfluence& rhs) const
+	{
+		return lhs.i < rhs.i;
+	}
+};
+
+struct BoneInfluenceWeightPredicate
+{
+	bool operator()(const BoneInfluence& lhs, const BoneInfluence& rhs) const
+	{
+		return lhs.w > rhs.w;
+	}
+};
+
+void filterBones(Mesh& mesh)
+{
+	const int kMaxGroups = 8;
+
+	std::pair<Stream*, Stream*> groups[kMaxGroups];
+	int group_count = 0;
+
+	// gather all joint/weight groups; each group contains 4 bone influences
+	for (int i = 0; i < kMaxGroups; ++i)
+	{
+		Stream* jg = getStream(mesh, cgltf_attribute_type_joints, int(i));
+		Stream* wg = getStream(mesh, cgltf_attribute_type_weights, int(i));
+
+		if (!jg || !wg)
+			break;
+
+		groups[group_count++] = std::make_pair(jg, wg);
+	}
+
+	if (group_count == 0)
+		return;
+
+	// weights below cutoff can't be represented in quantized 8-bit storage
+	const float weight_cutoff = 0.5f / 255.f;
+
+	size_t vertex_count = mesh.streams[0].data.size();
+
+	BoneInfluence inf[kMaxGroups * 4] = {};
+
+	for (size_t i = 0; i < vertex_count; ++i)
+	{
+		int count = 0;
+
+		// gather all bone influences for this vertex
+		for (int j = 0; j < group_count; ++j)
+		{
+			const Attr& ja = groups[j].first->data[i];
+			const Attr& wa = groups[j].second->data[i];
+
+			for (int k = 0; k < 4; ++k)
+				if (wa.f[k] > weight_cutoff)
+				{
+					inf[count].i = ja.f[k];
+					inf[count].w = wa.f[k];
+					count++;
+				}
+		}
+
+		// pick top 4 influences - could use partial_sort but it is slower on small sets
+		std::sort(inf, inf + count, BoneInfluenceWeightPredicate());
+
+		// now sort top 4 influences by bone index - this improves compression ratio
+		std::sort(inf, inf + std::min(4, count), BoneInfluenceIndexPredicate());
+
+		// copy the top 4 influences back into stream 0 - we will remove other streams at the end
+		Attr& ja = groups[0].first->data[i];
+		Attr& wa = groups[0].second->data[i];
+
+		for (int k = 0; k < 4; ++k)
+		{
+			if (k < count)
+			{
+				ja.f[k] = inf[k].i;
+				wa.f[k] = inf[k].w;
+			}
+			else
+			{
+				ja.f[k] = 0.f;
+				wa.f[k] = 0.f;
+			}
+		}
+	}
+
+	// remove redundant weight/joint streams
+	for (size_t i = 0; i < mesh.streams.size();)
+	{
+		Stream& s = mesh.streams[i];
+
+		if ((s.type == cgltf_attribute_type_joints || s.type == cgltf_attribute_type_weights) && s.index > 0)
+			mesh.streams.erase(mesh.streams.begin() + i);
+		else
+			++i;
+	}
+}
+
 void simplifyPointMesh(Mesh& mesh, float threshold)
 {
 	if (threshold >= 1)
 		return;
 
-	const Stream* positions = getPositionStream(mesh);
+	const Stream* positions = getStream(mesh, cgltf_attribute_type_position);
 	if (!positions)
 		return;
 
@@ -919,7 +1071,7 @@ void simplifyPointMesh(Mesh& mesh, float threshold)
 
 void sortPointMesh(Mesh& mesh)
 {
-	const Stream* positions = getPositionStream(mesh);
+	const Stream* positions = getStream(mesh, cgltf_attribute_type_position);
 	if (!positions)
 		return;
 
@@ -933,6 +1085,29 @@ void sortPointMesh(Mesh& mesh)
 		assert(mesh.streams[i].data.size() == vertex_count);
 
 		meshopt_remapVertexBuffer(&mesh.streams[i].data[0], &mesh.streams[i].data[0], vertex_count, sizeof(Attr), &remap[0]);
+	}
+}
+
+void processMesh(Mesh& mesh, const Settings& settings)
+{
+	switch (mesh.type)
+	{
+	case cgltf_primitive_type_points:
+		assert(mesh.indices.empty());
+		simplifyPointMesh(mesh, settings.simplify_threshold);
+		sortPointMesh(mesh);
+		break;
+
+	case cgltf_primitive_type_triangles:
+		filterBones(mesh);
+		reindexMesh(mesh);
+		filterMesh(mesh);
+		simplifyMesh(mesh, settings.simplify_threshold, settings.simplify_aggressive);
+		optimizeMesh(mesh);
+		break;
+
+	default:
+		assert(!"Unknown primitive type");
 	}
 }
 
@@ -1089,20 +1264,51 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 		{
 			float pos_rscale = params.pos_scale == 0.f ? 0.f : 1.f / params.pos_scale;
 
+			int maxv = 0;
+
 			for (size_t i = 0; i < stream.data.size(); ++i)
 			{
 				const Attr& a = stream.data[i];
 
-				int16_t v[4] = {
-				    int16_t((a.f[0] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits)),
-				    int16_t((a.f[1] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits)),
-				    int16_t((a.f[2] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits)),
-				    0};
-				bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+				maxv = std::max(maxv, meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits));
+				maxv = std::max(maxv, meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits));
+				maxv = std::max(maxv, meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits));
 			}
 
-			StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_16, false, 8};
-			return format;
+			if (maxv <= 127)
+			{
+				for (size_t i = 0; i < stream.data.size(); ++i)
+				{
+					const Attr& a = stream.data[i];
+
+					int8_t v[4] = {
+					    int8_t((a.f[0] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits)),
+					    int8_t((a.f[1] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits)),
+					    int8_t((a.f[2] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits)),
+					    0};
+					bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+				}
+
+				StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_8, false, 4};
+				return format;
+			}
+			else
+			{
+				for (size_t i = 0; i < stream.data.size(); ++i)
+				{
+					const Attr& a = stream.data[i];
+
+					int16_t v[4] = {
+					    int16_t((a.f[0] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[0]) * pos_rscale, params.pos_bits)),
+					    int16_t((a.f[1] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[1]) * pos_rscale, params.pos_bits)),
+					    int16_t((a.f[2] >= 0.f ? 1 : -1) * meshopt_quantizeUnorm(fabsf(a.f[2]) * pos_rscale, params.pos_bits)),
+					    0};
+					bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+				}
+
+				StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_16, false, 8};
+				return format;
+			}
 		}
 	}
 	else if (stream.type == cgltf_attribute_type_texcoord)
@@ -1128,8 +1334,8 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 	}
 	else if (stream.type == cgltf_attribute_type_normal)
 	{
-		bool nrm_unit = has_targets || settings.nrm_unit;
-		int bits = nrm_unit ? (settings.nrm_bits > 8 ? 16 : 8) : settings.nrm_bits;
+		bool unnormalized = settings.nrm_unnormalized && !has_targets;
+		int bits = unnormalized ? settings.nrm_bits : (settings.nrm_bits > 8 ? 16 : 8);
 
 		for (size_t i = 0; i < stream.data.size(); ++i)
 		{
@@ -1137,7 +1343,7 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 
 			float nx = a.f[0], ny = a.f[1], nz = a.f[2];
 
-			if (!nrm_unit)
+			if (unnormalized)
 				rescaleNormal(nx, ny, nz);
 
 			if (bits > 8)
@@ -1173,8 +1379,8 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 	}
 	else if (stream.type == cgltf_attribute_type_tangent)
 	{
-		bool nrm_unit = has_targets || settings.nrm_unit;
-		int bits = nrm_unit ? (settings.nrm_bits > 8 ? 16 : 8) : settings.nrm_bits;
+		bool unnormalized = settings.nrm_unnormalized && !has_targets;
+		int bits = unnormalized ? settings.nrm_bits : (settings.nrm_bits > 8 ? 16 : 8);
 
 		for (size_t i = 0; i < stream.data.size(); ++i)
 		{
@@ -1182,7 +1388,7 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 
 			float nx = a.f[0], ny = a.f[1], nz = a.f[2], nw = a.f[3];
 
-			if (!nrm_unit)
+			if (unnormalized)
 				rescaleNormal(nx, ny, nz);
 
 			if (bits > 8)
@@ -1241,13 +1447,17 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 		{
 			const Attr& a = stream.data[i];
 
-			uint8_t v[4] = {
-			    uint8_t(meshopt_quantizeUnorm(a.f[0], 8)),
-			    uint8_t(meshopt_quantizeUnorm(a.f[1], 8)),
-			    uint8_t(meshopt_quantizeUnorm(a.f[2], 8)),
-			    uint8_t(meshopt_quantizeUnorm(a.f[3], 8))};
+			float ws = a.f[0] + a.f[1] + a.f[2] + a.f[3];
+			float wsi = (ws == 0.f) ? 0.f : 1.f / ws;
 
-			renormalizeWeights(v);
+			uint8_t v[4] = {
+			    uint8_t(meshopt_quantizeUnorm(a.f[0] * wsi, 8)),
+			    uint8_t(meshopt_quantizeUnorm(a.f[1] * wsi, 8)),
+			    uint8_t(meshopt_quantizeUnorm(a.f[2] * wsi, 8)),
+			    uint8_t(meshopt_quantizeUnorm(a.f[3] * wsi, 8))};
+
+			if (wsi != 0.f)
+				renormalizeWeights(v);
 
 			bin.append(reinterpret_cast<const char*>(v), sizeof(v));
 		}
@@ -1655,6 +1865,14 @@ void writeMaterialInfo(std::string& json, const cgltf_data* data, const cgltf_ma
 	static const float white[4] = {1, 1, 1, 1};
 	static const float black[4] = {0, 0, 0, 0};
 
+	if (material.name && *material.name)
+	{
+		comma(json);
+		append(json, "\"name\":\"");
+		append(json, material.name);
+		append(json, "\"");
+	}
+
 	if (material.has_pbr_metallic_roughness)
 	{
 		const cgltf_pbr_metallic_roughness& pbr = material.pbr_metallic_roughness;
@@ -1870,13 +2088,20 @@ size_t getBufferView(std::vector<BufferView>& views, BufferView::Kind kind, int 
 	return views.size() - 1;
 }
 
-void writeBufferView(std::string& json, BufferView::Kind kind, size_t count, size_t stride, size_t bin_offset, size_t bin_size, int compression)
+void writeBufferView(std::string& json, BufferView::Kind kind, size_t count, size_t stride, size_t bin_offset, size_t bin_size, int compression, size_t compressed_offset, size_t compressed_size)
 {
-	append(json, "{\"buffer\":0");
-	append(json, ",\"byteLength\":");
-	append(json, bin_size);
+	assert(bin_size == count * stride);
+
+	// when compression is enabled, we store uncompressed data in buffer 1 and compressed data in buffer 0
+	// when compression is disabled, we store uncompressed data in buffer 0
+	size_t buffer = compression >= 0 ? 1 : 0;
+
+	append(json, "{\"buffer\":");
+	append(json, buffer);
 	append(json, ",\"byteOffset\":");
 	append(json, bin_offset);
+	append(json, ",\"byteLength\":");
+	append(json, bin_size);
 	if (kind == BufferView::Kind_Vertex)
 	{
 		append(json, ",\"byteStride\":");
@@ -1891,12 +2116,17 @@ void writeBufferView(std::string& json, BufferView::Kind kind, size_t count, siz
 	{
 		append(json, ",\"extensions\":{");
 		append(json, "\"MESHOPT_compression\":{");
-		append(json, "\"mode\":");
+		append(json, "\"buffer\":0");
+		append(json, ",\"byteOffset\":");
+		append(json, size_t(compressed_offset));
+		append(json, ",\"byteLength\":");
+		append(json, size_t(compressed_size));
+		append(json, ",\"byteStride\":");
+		append(json, stride);
+		append(json, ",\"mode\":");
 		append(json, size_t(compression));
 		append(json, ",\"count\":");
 		append(json, count);
-		append(json, ",\"byteStride\":");
-		append(json, stride);
 		append(json, "}}");
 	}
 	append(json, "}");
@@ -1961,7 +2191,7 @@ float getDelta(const Attr& l, const Attr& r, cgltf_animation_path_type type)
 	}
 }
 
-bool isTrackConstant(const cgltf_animation_sampler& sampler, cgltf_animation_path_type type, cgltf_node* target_node)
+bool isTrackConstant(const cgltf_animation_sampler& sampler, cgltf_animation_path_type type, cgltf_node* target_node, Attr* out_first = 0)
 {
 	const float tolerance = 1e-3f;
 
@@ -1972,15 +2202,16 @@ bool isTrackConstant(const cgltf_animation_sampler& sampler, cgltf_animation_pat
 
 	assert(sampler.input->count * value_stride * components == sampler.output->count);
 
+	std::vector<Attr> output;
+	readAccessor(output, sampler.output);
+
 	for (size_t j = 0; j < components; ++j)
 	{
-		Attr first = {};
-		cgltf_accessor_read_float(sampler.output, j * value_stride + value_offset, first.f, 4);
+		Attr first = output[j * value_stride + value_offset];
 
 		for (size_t i = 1; i < sampler.input->count; ++i)
 		{
-			Attr attr = {};
-			cgltf_accessor_read_float(sampler.output, (i * components + j) * value_stride + value_offset, attr.f, 4);
+			const Attr& attr = output[(i * components + j) * value_stride + value_offset];
 
 			if (getDelta(first, attr, type) > tolerance)
 				return false;
@@ -1992,8 +2223,7 @@ bool isTrackConstant(const cgltf_animation_sampler& sampler, cgltf_animation_pat
 			{
 				for (int k = 0; k < 2; ++k)
 				{
-					Attr t = {};
-					cgltf_accessor_read_float(sampler.output, (i * components + j) * 3 + k * 2, t.f, 4);
+					const Attr& t = output[(i * components + j) * 3 + k * 2];
 
 					float error = fabsf(t.f[0]) + fabsf(t.f[1]) + fabsf(t.f[2]) + fabsf(t.f[3]);
 
@@ -2003,6 +2233,9 @@ bool isTrackConstant(const cgltf_animation_sampler& sampler, cgltf_animation_pat
 			}
 		}
 	}
+
+	if (out_first)
+		*out_first = output[value_offset];
 
 	return true;
 }
@@ -2093,6 +2326,11 @@ void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& s
 {
 	size_t components = (type == cgltf_animation_path_type_weights) ? target_node->mesh->primitives[0].targets_count : 1;
 
+	std::vector<float> input;
+	readAccessor(input, sampler.input);
+	std::vector<Attr> output;
+	readAccessor(output, sampler.output);
+
 	size_t cursor = 0;
 
 	for (int i = 0; i < frames; ++i)
@@ -2101,8 +2339,7 @@ void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& s
 
 		while (cursor + 1 < sampler.input->count)
 		{
-			float next_time = 0;
-			cgltf_accessor_read_float(sampler.input, cursor + 1, &next_time, 1);
+			float next_time = input[cursor + 1];
 
 			if (next_time > time)
 				break;
@@ -2112,10 +2349,8 @@ void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& s
 
 		if (cursor + 1 < sampler.input->count)
 		{
-			float cursor_time = 0;
-			float next_time = 0;
-			cgltf_accessor_read_float(sampler.input, cursor + 0, &cursor_time, 1);
-			cgltf_accessor_read_float(sampler.input, cursor + 1, &next_time, 1);
+			float cursor_time = input[cursor + 0];
+			float next_time = input[cursor + 1];
 
 			float range = next_time - cursor_time;
 			float inv_range = (range == 0.f) ? 0.f : 1.f / (next_time - cursor_time);
@@ -2127,32 +2362,25 @@ void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& s
 				{
 				case cgltf_interpolation_type_linear:
 				{
-					Attr v0 = {};
-					Attr v1 = {};
-					cgltf_accessor_read_float(sampler.output, (cursor + 0) * components + j, v0.f, 4);
-					cgltf_accessor_read_float(sampler.output, (cursor + 1) * components + j, v1.f, 4);
+					const Attr& v0 = output[(cursor + 0) * components + j];
+					const Attr& v1 = output[(cursor + 1) * components + j];
 					data.push_back(interpolateLinear(v0, v1, t, type));
 				}
 				break;
 
 				case cgltf_interpolation_type_step:
 				{
-					Attr v = {};
-					cgltf_accessor_read_float(sampler.output, cursor * components + j, v.f, 4);
+					const Attr& v = output[cursor * components + j];
 					data.push_back(v);
 				}
 				break;
 
 				case cgltf_interpolation_type_cubic_spline:
 				{
-					Attr v0 = {};
-					Attr b0 = {};
-					Attr a1 = {};
-					Attr v1 = {};
-					cgltf_accessor_read_float(sampler.output, (cursor * 3 + 1) * components + j, v0.f, 4);
-					cgltf_accessor_read_float(sampler.output, (cursor * 3 + 2) * components + j, b0.f, 4);
-					cgltf_accessor_read_float(sampler.output, (cursor * 3 + 3) * components + j, a1.f, 4);
-					cgltf_accessor_read_float(sampler.output, (cursor * 3 + 4) * components + j, v1.f, 4);
+					const Attr& v0 = output[(cursor * 3 + 1) * components + j];
+					const Attr& b0 = output[(cursor * 3 + 2) * components + j];
+					const Attr& a1 = output[(cursor * 3 + 3) * components + j];
+					const Attr& v1 = output[(cursor * 3 + 4) * components + j];
 					data.push_back(interpolateHermite(v0, b0, v1, a1, t, range, type));
 				}
 				break;
@@ -2168,8 +2396,7 @@ void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& s
 
 			for (size_t j = 0; j < components; ++j)
 			{
-				Attr v = {};
-				cgltf_accessor_read_float(sampler.output, offset * components + j, v.f, 4);
+				const Attr& v = output[offset * components + j];
 				data.push_back(v);
 			}
 		}
@@ -2193,8 +2420,15 @@ void markAnimated(cgltf_data* data, std::vector<NodeInfo>& nodes)
 			NodeInfo& ni = nodes[channel.target_node - data->nodes];
 
 			// mark nodes that have animation tracks that change their base transform as animated
-			if (!isTrackConstant(sampler, channel.target_path, channel.target_node))
+			Attr first = {};
+			if (!isTrackConstant(sampler, channel.target_path, channel.target_node, &first))
 			{
+				ni.animated_paths |= (1 << channel.target_path);
+			}
+			else if (channel.target_path == cgltf_animation_path_type_weights)
+			{
+				// we currently preserve constant weight tracks because the usecase is very rare and
+				// isTrackConstant doesn't return the full set of weights to compare against
 				ni.animated_paths |= (1 << channel.target_path);
 			}
 			else
@@ -2212,11 +2446,9 @@ void markAnimated(cgltf_data* data, std::vector<NodeInfo>& nodes)
 				case cgltf_animation_path_type_scale:
 					memcpy(base.f, channel.target_node->scale, 3 * sizeof(float));
 					break;
-				default:;
+				default:
+					assert(!"Unknown target path");
 				}
-
-				Attr first = {};
-				cgltf_accessor_read_float(sampler.output, 0, first.f, 4);
 
 				const float tolerance = 1e-3f;
 
@@ -2402,6 +2634,58 @@ void writeEmbeddedImage(std::string& json, std::vector<BufferView>& views, const
 	append(json, ",\"mimeType\":\"");
 	append(json, mime_type);
 	append(json, "\"");
+}
+
+std::string inferMimeType(const char* path)
+{
+	const char* ext = strrchr(path, '.');
+	if (!ext)
+		return "";
+
+	std::string extl = ext + 1;
+	for (size_t i = 0; i < extl.length(); ++i)
+		extl[i] = tolower(extl[i]);
+
+	if (extl == "jpg")
+		return "image/jpeg";
+	else
+		return "image/" + extl;
+}
+
+bool writeEmbeddedImage(std::string& json, std::vector<BufferView>& views, const char* path, const char* base_path)
+{
+	std::string full_path = base_path;
+
+	std::string::size_type slash = full_path.find_last_of("/\\");
+	full_path.erase(slash == std::string::npos ? 0 : slash + 1);
+
+	full_path += path;
+
+	FILE* image = fopen(full_path.c_str(), "rb");
+	if (!image)
+		return false;
+
+	fseek(image, 0, SEEK_END);
+	long length = ftell(image);
+	fseek(image, 0, SEEK_SET);
+
+	if (length <= 0)
+	{
+		fclose(image);
+		return false;
+	}
+
+	std::vector<char> data(length);
+	if (fread(&data[0], 1, data.size(), image) != data.size())
+	{
+		fclose(image);
+		return false;
+	}
+
+	fclose(image);
+
+	writeEmbeddedImage(json, views, &data[0], data.size(), inferMimeType(path).c_str());
+	return true;
 }
 
 void writeMeshAttributes(std::string& json, std::vector<BufferView>& views, std::string& json_accessors, size_t& accr_offset, const Mesh& mesh, int target, const QuantizationParams& qp, const Settings& settings)
@@ -2896,6 +3180,53 @@ void writeLight(std::string& json, const cgltf_light& light)
 	append(json, "}");
 }
 
+void finalizeBufferViews(std::string& json, std::vector<BufferView>& views, std::string& bin, std::string& fallback)
+{
+	for (size_t i = 0; i < views.size(); ++i)
+	{
+		BufferView& view = views[i];
+
+		size_t bin_offset = bin.size();
+		size_t fallback_offset = fallback.size();
+
+		size_t count = view.data.size() / view.stride;
+
+		int compression = -1;
+
+		if (view.compressed)
+		{
+			if (view.kind == BufferView::Kind_Index)
+			{
+				compressIndexStream(bin, view.data, count, view.stride);
+				compression = 1;
+			}
+			else
+			{
+				compressVertexStream(bin, view.data, count, view.stride);
+				compression = 0;
+			}
+
+			fallback += view.data;
+		}
+		else
+		{
+			bin += view.data;
+		}
+
+		size_t raw_offset = (compression >= 0) ? fallback_offset : bin_offset;
+
+		comma(json);
+		writeBufferView(json, view.kind, count, view.stride, raw_offset, view.data.size(), compression, bin_offset, bin.size() - bin_offset);
+
+		// record written bytes for statistics
+		view.bytes = bin.size() - bin_offset;
+
+		// align each bufferView by 4 bytes
+		bin.resize((bin.size() + 3) & ~3);
+		fallback.resize((fallback.size() + 3) & ~3);
+	}
+}
+
 void printMeshStats(const std::vector<Mesh>& meshes, const char* name)
 {
 	size_t triangles = 0;
@@ -2952,7 +3283,7 @@ void printAttributeStats(const std::vector<BufferView>& views, BufferView::Kind 
 	}
 }
 
-void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin)
+void process(cgltf_data* data, const char* data_path, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin, std::string& fallback)
 {
 	if (settings.verbose)
 	{
@@ -3003,25 +3334,7 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 
 	for (size_t i = 0; i < meshes.size(); ++i)
 	{
-		Mesh& mesh = meshes[i];
-
-		switch (mesh.type)
-		{
-		case cgltf_primitive_type_points:
-			assert(mesh.indices.empty());
-			simplifyPointMesh(mesh, settings.simplify_threshold);
-			sortPointMesh(mesh);
-			break;
-
-		case cgltf_primitive_type_triangles:
-			reindexMesh(mesh);
-			simplifyMesh(mesh, settings.simplify_threshold, settings.simplify_aggressive);
-			optimizeMesh(mesh);
-			break;
-
-		default:
-			assert(!"Unknown primitive type");
-		}
+		processMesh(meshes[i], settings);
 	}
 
 	if (settings.verbose)
@@ -3067,6 +3380,11 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 			if (parseDataUri(image.uri, mime_type, img))
 			{
 				writeEmbeddedImage(json_images, views, img.c_str(), img.size(), mime_type.c_str());
+			}
+			else if (settings.texture_embed)
+			{
+				if (!writeEmbeddedImage(json_images, views, image.uri, data_path))
+					fprintf(stderr, "Warning: unable to read image %s, skipping\n", image.uri);
 			}
 			else
 			{
@@ -3314,8 +3632,9 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 		json.append(data->json + data->asset.extras.start_offset, data->json + data->asset.extras.end_offset);
 	}
 	append(json, "}");
+
 	append(json, ",\"extensionsUsed\":[");
-	append(json, "\"MESHOPT_quantized_geometry\"");
+	append(json, "\"KHR_mesh_quantization\"");
 	if (settings.compress)
 	{
 		comma(json);
@@ -3342,58 +3661,23 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 		append(json, "\"KHR_lights_punctual\"");
 	}
 	append(json, "]");
-	if (settings.compress)
-	{
-		append(json, ",\"extensionsRequired\":[");
-		// Note: ideally we should include MESHOPT_quantized_geometry in the required extension list (regardless of compression)
-		// This extension *only* allows the use of quantized attributes for positions/normals/etc. This happens to be supported
-		// by popular JS frameworks, however, Babylon.JS refuses to load files with unsupported required extensions.
-		// For now we don't include it in the list, which will be fixed at some point once this extension becomes official.
-		append(json, "\"MESHOPT_compression\"");
-		append(json, "]");
-	}
 
-	size_t bytes[BufferView::Kind_Count] = {};
+	append(json, ",\"extensionsRequired\":[");
+	append(json, "\"KHR_mesh_quantization\"");
+	if (settings.compress && !settings.fallback)
+	{
+		comma(json);
+		append(json, "\"MESHOPT_compression\"");
+	}
+	append(json, "]");
 
 	if (!views.empty())
 	{
+		std::string json_views;
+		finalizeBufferViews(json_views, views, bin, fallback);
+
 		append(json, ",\"bufferViews\":[");
-		for (size_t i = 0; i < views.size(); ++i)
-		{
-			BufferView& view = views[i];
-
-			size_t offset = bin.size();
-			size_t count = view.data.size() / view.stride;
-
-			int compression = -1;
-
-			if (view.compressed)
-			{
-				if (view.kind == BufferView::Kind_Index)
-				{
-					compressIndexStream(bin, view.data, count, view.stride);
-					compression = 1;
-				}
-				else
-				{
-					compressVertexStream(bin, view.data, count, view.stride);
-					compression = 0;
-				}
-			}
-			else
-			{
-				bin += view.data;
-			}
-
-			comma(json);
-			writeBufferView(json, view.kind, count, view.stride, offset, bin.size() - offset, compression);
-
-			view.bytes = bin.size() - offset;
-			bytes[view.kind] += view.bytes;
-
-			// align each bufferView by 4 bytes
-			bin.resize((bin.size() + 3) & ~3);
-		}
+		append(json, json_views);
 		append(json, "]");
 	}
 	if (!json_accessors.empty())
@@ -3466,6 +3750,14 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 
 	if (settings.verbose)
 	{
+		size_t bytes[BufferView::Kind_Count] = {};
+
+		for (size_t i = 0; i < views.size(); ++i)
+		{
+			BufferView& view = views[i];
+			bytes[view.kind] += view.bytes;
+		}
+
 		printf("output: %d nodes, %d meshes (%d primitives), %d materials\n", int(node_offset), int(mesh_offset), int(meshes.size()), int(material_offset));
 		printf("output: JSON %d bytes, buffers %d bytes\n", int(json.size()), int(bin.size()));
 		printf("output: buffers: vertex %d bytes, index %d bytes, skin %d bytes, time %d bytes, keyframe %d bytes, image %d bytes\n",
@@ -3493,6 +3785,56 @@ bool requiresExtension(cgltf_data* data, const char* name)
 			return true;
 
 	return false;
+}
+
+const char* getBaseName(const char* path)
+{
+	const char* slash = strrchr(path, '/');
+	const char* backslash = strrchr(path, '\\');
+
+	const char* rs = slash ? slash + 1 : path;
+	const char* bs = backslash ? backslash + 1 : path;
+
+	return std::max(rs, bs);
+}
+
+std::string getBufferSpec(const char* bin_path, size_t bin_size, const char* fallback_path, size_t fallback_size, bool fallback_ref)
+{
+	std::string json;
+	append(json, "\"buffers\":[");
+	append(json, "{");
+	if (bin_path)
+	{
+		append(json, "\"uri\":\"");
+		append(json, bin_path);
+		append(json, "\"");
+	}
+	comma(json);
+	append(json, "\"byteLength\":");
+	append(json, bin_size);
+	append(json, "}");
+	if (fallback_ref)
+	{
+		comma(json);
+		append(json, "{");
+		if (fallback_path)
+		{
+			append(json, "\"uri\":\"");
+			append(json, fallback_path);
+			append(json, "\"");
+		}
+		comma(json);
+		append(json, "\"byteLength\":");
+		append(json, fallback_size);
+		append(json, ",\"extensions\":{");
+		append(json, "\"MESHOPT_compression\":{");
+		append(json, "\"fallback\":true");
+		append(json, "}}");
+		append(json, "}");
+	}
+	append(json, "]");
+
+	return json;
 }
 
 int gltfpack(const char* input, const char* output, const Settings& settings)
@@ -3549,8 +3891,8 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 		return 2;
 	}
 
-	std::string json, bin;
-	process(data, meshes, settings, json, bin);
+	std::string json, bin, fallback;
+	process(data, input, meshes, settings, json, bin, fallback);
 
 	cgltf_free(data);
 
@@ -3566,41 +3908,52 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 		std::string binpath = output;
 		binpath.replace(binpath.size() - 5, 5, ".bin");
 
-		std::string binname = binpath;
-		std::string::size_type slash = binname.find_last_of("/\\");
-		if (slash != std::string::npos)
-			binname.erase(0, slash + 1);
+		std::string fbpath = output;
+		fbpath.replace(fbpath.size() - 5, 5, ".fallback.bin");
 
 		FILE* outjson = fopen(output, "wb");
 		FILE* outbin = fopen(binpath.c_str(), "wb");
-		if (!outjson || !outbin)
+		FILE* outfb = settings.fallback ? fopen(fbpath.c_str(), "wb") : NULL;
+		if (!outjson || !outbin || (!outfb && settings.fallback))
 		{
 			fprintf(stderr, "Error saving %s\n", output);
 			return 4;
 		}
 
-		fprintf(outjson, "{\"buffers\":[{\"uri\":\"%s\",\"byteLength\":%zu}],", binname.c_str(), bin.size());
+		std::string bufferspec = getBufferSpec(getBaseName(binpath.c_str()), bin.size(), settings.fallback ? getBaseName(fbpath.c_str()) : NULL, fallback.size(), settings.compress);
+
+		fprintf(outjson, "{");
+		fwrite(bufferspec.c_str(), bufferspec.size(), 1, outjson);
+		fprintf(outjson, ",");
 		fwrite(json.c_str(), json.size(), 1, outjson);
 		fprintf(outjson, "}");
 
 		fwrite(bin.c_str(), bin.size(), 1, outbin);
 
+		if (settings.fallback)
+			fwrite(fallback.c_str(), fallback.size(), 1, outfb);
+
 		fclose(outjson);
 		fclose(outbin);
+		if (outfb)
+			fclose(outfb);
 	}
 	else if (oext && (strcmp(oext, ".glb") == 0 || strcmp(oext, ".GLB") == 0))
 	{
+		std::string fbpath = output;
+		fbpath.replace(fbpath.size() - 4, 4, ".fallback.bin");
+
 		FILE* out = fopen(output, "wb");
-		if (!out)
+		FILE* outfb = settings.fallback ? fopen(fbpath.c_str(), "wb") : NULL;
+		if (!out || (!outfb && settings.fallback))
 		{
 			fprintf(stderr, "Error saving %s\n", output);
 			return 4;
 		}
 
-		char bufferspec[64];
-		sprintf(bufferspec, "{\"buffers\":[{\"byteLength\":%zu}],", bin.size());
+		std::string bufferspec = getBufferSpec(NULL, bin.size(), settings.fallback ? getBaseName(fbpath.c_str()) : NULL, fallback.size(), settings.compress);
 
-		json.insert(0, bufferspec);
+		json.insert(0, "{" + bufferspec + ",");
 		json.push_back('}');
 
 		while (json.size() % 4)
@@ -3621,7 +3974,12 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 		writeU32(out, 0x004E4942);
 		fwrite(bin.c_str(), bin.size(), 1, out);
 
+		if (settings.fallback)
+			fwrite(fallback.c_str(), fallback.size(), 1, outfb);
+
 		fclose(out);
+		if (outfb)
+			fclose(outfb);
 	}
 	else
 	{
@@ -3664,7 +4022,7 @@ int main(int argc, char** argv)
 		}
 		else if (strcmp(arg, "-vu") == 0)
 		{
-			settings.nrm_unit = true;
+			settings.nrm_unnormalized = true;
 		}
 		else if (strcmp(arg, "-af") == 0 && i + 1 < argc && isdigit(argv[i + 1][0]))
 		{
@@ -3686,6 +4044,10 @@ int main(int argc, char** argv)
 		{
 			settings.simplify_aggressive = true;
 		}
+		else if (strcmp(arg, "-te") == 0)
+		{
+			settings.texture_embed = true;
+		}
 		else if (strcmp(arg, "-i") == 0 && i + 1 < argc && !input)
 		{
 			input = argv[++i];
@@ -3697,6 +4059,11 @@ int main(int argc, char** argv)
 		else if (strcmp(arg, "-c") == 0)
 		{
 			settings.compress = true;
+		}
+		else if (strcmp(arg, "-cf") == 0)
+		{
+			settings.compress = true;
+			settings.fallback = true;
 		}
 		else if (strcmp(arg, "-v") == 0)
 		{
@@ -3743,13 +4110,15 @@ int main(int argc, char** argv)
 		fprintf(stderr, "-vp N: use N-bit quantization for positions (default: 14; N should be between 1 and 16)\n");
 		fprintf(stderr, "-vt N: use N-bit quantization for texture corodinates (default: 12; N should be between 1 and 16)\n");
 		fprintf(stderr, "-vn N: use N-bit quantization for normals and tangents (default: 8; N should be between 1 and 16)\n");
-		fprintf(stderr, "-vu: use unit-length normal/tangent vectors (default: off)\n");
+		fprintf(stderr, "-vu: use unnormalized normal/tangent vectors to improve compression (default: off)\n");
 		fprintf(stderr, "-af N: resample animations at N Hz (default: 30)\n");
 		fprintf(stderr, "-ac: keep constant animation tracks even if they don't modify the node transform\n");
 		fprintf(stderr, "-kn: keep named nodes and meshes attached to named nodes so that named nodes can be transformed externally\n");
 		fprintf(stderr, "-si R: simplify meshes to achieve the ratio R (default: 1; R should be between 0 and 1)\n");
 		fprintf(stderr, "-sa: aggressively simplify to the target ratio disregarding quality\n");
-		fprintf(stderr, "-c: produce compressed glb files\n");
+		fprintf(stderr, "-te: embed all textures into main buffer\n");
+		fprintf(stderr, "-c: produce compressed gltf/glb files\n");
+		fprintf(stderr, "-cf: produce compressed gltf/glb files with fallback for loaders that don't support compression\n");
 		fprintf(stderr, "-v: verbose output\n");
 		fprintf(stderr, "-h: display this help and exit\n");
 

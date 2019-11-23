@@ -18,12 +18,18 @@
 #include <memory>
 #include <sstream>
 
+#include "fuzzer_pass_adjust_memory_operands_masks.h"
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/fuzzer_context.h"
 #include "source/fuzz/fuzzer_pass_add_dead_breaks.h"
 #include "source/fuzz/fuzzer_pass_add_dead_continues.h"
+#include "source/fuzz/fuzzer_pass_add_no_contraction_decorations.h"
 #include "source/fuzz/fuzzer_pass_add_useful_constructs.h"
+#include "source/fuzz/fuzzer_pass_adjust_function_controls.h"
+#include "source/fuzz/fuzzer_pass_adjust_loop_controls.h"
+#include "source/fuzz/fuzzer_pass_adjust_selection_controls.h"
 #include "source/fuzz/fuzzer_pass_apply_id_synonyms.h"
+#include "source/fuzz/fuzzer_pass_construct_composites.h"
 #include "source/fuzz/fuzzer_pass_copy_objects.h"
 #include "source/fuzz/fuzzer_pass_obfuscate_constants.h"
 #include "source/fuzz/fuzzer_pass_permute_blocks.h"
@@ -138,6 +144,9 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
     MaybeAddPass<FuzzerPassApplyIdSynonyms>(&passes, ir_context.get(),
                                             &fact_manager, &fuzzer_context,
                                             transformation_sequence_out);
+    MaybeAddPass<FuzzerPassConstructComposites>(&passes, ir_context.get(),
+                                                &fact_manager, &fuzzer_context,
+                                                transformation_sequence_out);
     MaybeAddPass<FuzzerPassCopyObjects>(&passes, ir_context.get(),
                                         &fact_manager, &fuzzer_context,
                                         transformation_sequence_out);
@@ -160,6 +169,32 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
           fuzzer_context.ChoosePercentage(kChanceOfApplyingAnotherPass))) {
     is_first = false;
     passes[fuzzer_context.RandomIndex(passes)]->Apply();
+  }
+
+  // Now apply some passes that it does not make sense to apply repeatedly,
+  // as they do not unlock other passes.
+  std::vector<std::unique_ptr<FuzzerPass>> final_passes;
+  MaybeAddPass<FuzzerPassAdjustFunctionControls>(
+      &final_passes, ir_context.get(), &fact_manager, &fuzzer_context,
+      transformation_sequence_out);
+  MaybeAddPass<FuzzerPassAdjustLoopControls>(&final_passes, ir_context.get(),
+                                             &fact_manager, &fuzzer_context,
+                                             transformation_sequence_out);
+  MaybeAddPass<FuzzerPassAdjustMemoryOperandsMasks>(
+      &final_passes, ir_context.get(), &fact_manager, &fuzzer_context,
+      transformation_sequence_out);
+  MaybeAddPass<FuzzerPassAdjustSelectionControls>(
+      &final_passes, ir_context.get(), &fact_manager, &fuzzer_context,
+      transformation_sequence_out);
+  for (auto& pass : final_passes) {
+    pass->Apply();
+  }
+
+  if (fuzzer_context.ChooseEven()) {
+    FuzzerPassAddNoContractionDecorations(ir_context.get(), &fact_manager,
+                                          &fuzzer_context,
+                                          transformation_sequence_out)
+        .Apply();
   }
 
   // Encode the module as a binary.

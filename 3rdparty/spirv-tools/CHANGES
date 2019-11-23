@@ -1,7 +1,17 @@
 Revision history for SPIRV-Tools
 
-v2019.5-dev 2019-08-08
+v2019.5-dev 2019-10-21
  - General:
+   - Export SPIRV-Tools targets on installation
+   - SPIRV-Tools support for SPIR-V 1.5 (#2865)
+   - Add WebGPU SPIR-V Assembler in JavaScript. (#2876)
+   - Add Bazel build configuration. (#2891)
+   - Add support for building with emscripten (#2948)
+   - Update SPIR-V binary header test for SPIR-V 1.5 (#2967)
+   - Add fuzzer for spirv-as call path (#2976)
+   - Improved CMake install step. (#2963)
+   - Add fuzzer for spirv-dis call path (#2977)
+   - Ensure timestamp does not vary with timezone. (#2982)
  - Optimizer
    - Add descriptor array scalar replacement (#2742)
    - Add pass to wrap OpKill in a function call (#2790)
@@ -9,17 +19,51 @@ v2019.5-dev 2019-08-08
    - Add pass to replace AMD shader ballot extension (#2811)
    - Add pass to make Float32 operation relax precision (#2808)
    - Add pass to make relax precision operation Float16 (#2808)
+   - Add pass to replace uses of 3 AMD extensions (#2814)
+   - Fold Min, Max, and Clamp instructions. (#2836)
+   - Better handling of OpKill in continues (#2842,#2922,#2933)
+   - Enable OpTypeCooperativeMatrix specialization (#2927)
+   - Support constant-folding UConvert and SConvert (#2960)
    Fixes:
-   Instrument: Fix version 2 output record write for tess eval shaders. (#2782)
-   Instrument: Add support for Buffer Device Address extension (#2792)
-   Fix check for changed binary in API call. (#2798)
+   - Instrument: Fix version 2 output record write for tess eval shaders. (#2782)
+   - Instrument: Add support for Buffer Device Address extension (#2792)
+   - Fix check for changed binary in API call. (#2798)
+   - For WebGPU<->Vulkan optimization, set correct execution environment (#2834)
+   - Handle OpConstantNull in copy-prop-arrays. (#2870)
+   - Use OpReturn* in wrap-opkill (#2886)
  - Validator
+   - Add generic builtin validation of target (#2843)
+   - Extra resource interface validation (#2864)
+   - Adding valilidation checks for OpEntryPoint duplicate names and execution mode (#2862)
+   - Relaxed bitcast with pointers (#2878)
+   - Validate physical storage buffer restrictions (#2930)
+   - Add SPV_KHR_shader_clock validation (#2879)
+   - Validate that selections are structured (#2962)
+   - Disallow use of OpCompositeExtract/OpCompositeInsert with no indices (#2980)
+   - Check that derivatives operate on 32-bit values (#2983)
    Fixes:
-   Fix validation of constant matrices (#2794)
-   Update "remquor" validation
+   - Fix validation of constant matrices (#2794)
+   - Update "remquor" validation
+   - Only allow previously declared forward refs in structs (#2920)
  - Reduce
    - Remove relaxed precision decorations (#2797)
+   - Reduce/fuzz: improve command line args (#2932)
+   - Improve remove unref instr pass (#2945)
    Fixes:
+ - Fuzz
+   - Fix add-dead-break and add-dead-continue passes to respect dominance (#2838)
+   - Add fuzzer pass to copy objects (#2853)
+   - Add fuzzer pass to replace ids with synonyms (#2857)
+   - Allow validation during spirv-fuzz replay (#2873)
+   - Employ the "swarm testing" idea in spirv-fuzz (#2890)
+   - reduce/fuzz: improve command line args (#2932)
+   - option to convert shader into a form that renders red (#2934)
+   - Add fuzzer pass to change selection controls (#2944)
+   - add transformation and pass to construct composites (#2941)
+   - Add fuzzer pass to change loop controls (#2949)
+   - Add fuzzer pass to change function controls (#2951)
+   - Add fuzzer pass to add NoContraction decorations (#2950)
+
 
 v2019.4 2019-08-08
  - General:

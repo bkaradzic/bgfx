@@ -81,8 +81,8 @@ class GraphicsRobustAccessPass : public Pass {
   // sign extension or zero extension.  The new instruction is inserted
   // immediately before |before_inst|, and is analyzed for definitions and uses.
   // Returns the newly inserted instruction.  Assumes the |value| is an integer
-  // scalar of a narrower type than |bitwidth| bits.
-  Instruction* WidenInteger(bool sign_extend, uint32_t bitwidth,
+  // scalar of a narrower type than |bit_width| bits.
+  Instruction* WidenInteger(bool sign_extend, uint32_t bit_width,
                             Instruction* value, Instruction* before_inst);
 
   // Returns a new instruction that invokes the UClamp GLSL.std.450 extended
@@ -109,7 +109,8 @@ class GraphicsRobustAccessPass : public Pass {
   // the module is modified.  Returns a status code to indicate success
   // or failure.  If assumptions are not met, returns an error status code
   // and emits a diagnostic.
-  spv_result_t ClampCoordinateForImageTexelPointer(opt::Instruction* itp);
+  spv_result_t ClampCoordinateForImageTexelPointer(
+      opt::Instruction* image_texel_pointer);
 
   // Gets the instruction that defines the given id.
   opt::Instruction* GetDef(uint32_t id) {

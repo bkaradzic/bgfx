@@ -2729,6 +2729,12 @@ void Compiler::AnalyzeVariableScopeAccessHandler::notify_variable_access(uint32_
 	if (id == 0)
 		return;
 
+	// Access chains used in multiple blocks mean hoisting all the variables used to construct the access chain as not all backends can use pointers.
+	auto itr = access_chain_children.find(id);
+	if (itr != end(access_chain_children))
+		for (auto child_id : itr->second)
+			notify_variable_access(child_id, block);
+
 	if (id_is_phi_variable(id))
 		accessed_variables_to_block[id].insert(block);
 	else if (id_is_potential_temporary(id))
@@ -2793,14 +2799,21 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 		if (length < 3)
 			return false;
 
+		// Access chains used in multiple blocks mean hoisting all the variables used to construct the access chain as not all backends can use pointers.
 		uint32_t ptr = args[2];
 		auto *var = compiler.maybe_get<SPIRVariable>(ptr);
 		if (var)
+		{
 			accessed_variables_to_block[var->self].insert(current_block->self);
+			access_chain_children[args[1]].insert(var->self);
+		}
 
 		// args[2] might be another access chain we have to track use of.
 		for (uint32_t i = 2; i < length; i++)
+		{
 			notify_variable_access(args[i], current_block->self);
+			access_chain_children[args[1]].insert(args[i]);
+		}
 
 		// Also keep track of the access chain pointer itself.
 		// In exceptionally rare cases, we can end up with a case where
@@ -2889,6 +2902,10 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 		if (length < 3)
 			return false;
 
+		// Return value may be a temporary.
+		if (compiler.get_type(args[0]).basetype != SPIRType::Void)
+			notify_variable_access(args[1], current_block->self);
+
 		length -= 3;
 		args += 3;
 
@@ -2909,9 +2926,6 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 			// Might try to copy a Phi variable here.
 			notify_variable_access(args[i], current_block->self);
 		}
-
-		// Return value may be a temporary.
-		notify_variable_access(args[1], current_block->self);
 		break;
 	}
 
@@ -3290,6 +3304,7 @@ void Compiler::analyze_variable_scope(SPIRFunction &entry, AnalyzeVariableScopeA
 
 		DominatorBuilder builder(cfg);
 		bool force_temporary = false;
+		bool used_in_header_hoisted_continue_block = false;
 
 		// Figure out which block is dominating all accesses of those temporaries.
 		auto &blocks = var.second;
@@ -3304,10 +3319,8 @@ void Compiler::analyze_variable_scope(SPIRFunction &entry, AnalyzeVariableScopeA
 				// This is moot for complex loops however.
 				auto &loop_header_block = get<SPIRBlock>(ir.continue_block_to_loop_header[block]);
 				assert(loop_header_block.merge == SPIRBlock::MergeLoop);
-
-				// Only relevant if the loop is not marked as complex.
-				if (!loop_header_block.complex_continue)
-					builder.add_block(loop_header_block.self);
+				builder.add_block(loop_header_block.self);
+				used_in_header_hoisted_continue_block = true;
 			}
 		}
 
@@ -3332,11 +3345,22 @@ void Compiler::analyze_variable_scope(SPIRFunction &entry, AnalyzeVariableScopeA
 				{
 					// Exceptionally rare case.
 					// We cannot declare temporaries of access chains (except on MSL perhaps with pointers).
-					// Rather than do that, we force a complex loop to make sure access chains are created and consumed
-					// in expected order.
-					auto &loop_header_block = get<SPIRBlock>(dominating_block);
-					assert(loop_header_block.merge == SPIRBlock::MergeLoop);
-					loop_header_block.complex_continue = true;
+					// Rather than do that, we force the indexing expressions to be declared in the right scope by
+					// tracking their usage to that end. There is no temporary to hoist.
+					// However, we still need to observe declaration order of the access chain.
+
+					if (used_in_header_hoisted_continue_block)
+					{
+						// For this scenario, we used an access chain inside a continue block where we also registered an access to header block.
+						// This is a problem as we need to declare an access chain properly first with full definition.
+						// We cannot use temporaries for these expressions,
+						// so we must make sure the access chain is declared ahead of time.
+						// Force a complex for loop to deal with this.
+						// TODO: Out-of-order declaring for loops where continue blocks are emitted last might be another option.
+						auto &loop_header_block = get<SPIRBlock>(dominating_block);
+						assert(loop_header_block.merge == SPIRBlock::MergeLoop);
+						loop_header_block.complex_continue = true;
+					}
 				}
 				else
 				{
@@ -3773,6 +3797,13 @@ void Compiler::analyze_image_and_sampler_usage()
 
 	CombinedImageSamplerUsageHandler handler(*this, dref_handler.dref_combined_samplers);
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
+
+	// Need to run this traversal twice. First time, we propagate any comparison sampler usage from leaf functions
+	// down to main().
+	// In the second pass, we can propagate up forced depth state coming from main() up into leaf functions.
+	handler.dependency_hierarchy.clear();
+	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
+
 	comparison_ids = move(handler.comparison_ids);
 	need_subpass_input = handler.need_subpass_input;
 
@@ -3888,6 +3919,14 @@ bool Compiler::CFGBuilder::follow_function_call(const SPIRFunction &func)
 		return false;
 }
 
+void Compiler::CombinedImageSamplerUsageHandler::add_dependency(uint32_t dst, uint32_t src)
+{
+	dependency_hierarchy[dst].insert(src);
+	// Propagate up any comparison state if we're loading from one such variable.
+	if (comparison_ids.count(src))
+		comparison_ids.insert(dst);
+}
+
 bool Compiler::CombinedImageSamplerUsageHandler::begin_function_scope(const uint32_t *args, uint32_t length)
 {
 	if (length < 3)
@@ -3900,7 +3939,7 @@ bool Compiler::CombinedImageSamplerUsageHandler::begin_function_scope(const uint
 	for (uint32_t i = 0; i < length; i++)
 	{
 		auto &argument = func.arguments[i];
-		dependency_hierarchy[argument.id].insert(arg[i]);
+		add_dependency(argument.id, arg[i]);
 	}
 
 	return true;
@@ -3910,6 +3949,7 @@ void Compiler::CombinedImageSamplerUsageHandler::add_hierarchy_to_comparison_ids
 {
 	// Traverse the variable dependency hierarchy and tag everything in its path with comparison ids.
 	comparison_ids.insert(id);
+
 	for (auto &dep_id : dependency_hierarchy[id])
 		add_hierarchy_to_comparison_ids(dep_id);
 }
@@ -3925,7 +3965,8 @@ bool Compiler::CombinedImageSamplerUsageHandler::handle(Op opcode, const uint32_
 	{
 		if (length < 3)
 			return false;
-		dependency_hierarchy[args[1]].insert(args[2]);
+
+		add_dependency(args[1], args[2]);
 
 		// Ideally defer this to OpImageRead, but then we'd need to track loaded IDs.
 		// If we load an image, we're going to use it and there is little harm in declaring an unused gl_FragCoord.
@@ -3947,14 +3988,17 @@ bool Compiler::CombinedImageSamplerUsageHandler::handle(Op opcode, const uint32_
 		uint32_t result_type = args[0];
 		uint32_t result_id = args[1];
 		auto &type = compiler.get<SPIRType>(result_type);
+
+		// If the underlying resource has been used for comparison then duplicate loads of that resource must be too.
+		// This image must be a depth image.
+		uint32_t image = args[2];
+		uint32_t sampler = args[3];
+
 		if (type.image.depth || dref_combined_samplers.count(result_id) != 0)
 		{
-			// This image must be a depth image.
-			uint32_t image = args[2];
 			add_hierarchy_to_comparison_ids(image);
 
 			// This sampler must be a SamplerComparisonState, and not a regular SamplerState.
-			uint32_t sampler = args[3];
 			add_hierarchy_to_comparison_ids(sampler);
 
 			// Mark the OpSampledImage itself as being comparison state.

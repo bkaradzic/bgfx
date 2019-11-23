@@ -56,7 +56,7 @@ set(spirv-compiler-options "")
 set(spirv-compiler-defines "")
 set(spirv-cross-link-flags "")
 
-message(STATUS "Finding Git version for SPIRV-Cross.")
+message(STATUS "SPIRV-Cross: Finding Git version for SPIRV-Cross.")
 set(spirv-cross-build-version "unknown")
 find_package(Git)
 if (GIT_FOUND)
@@ -67,9 +67,9 @@ if (GIT_FOUND)
 		ERROR_QUIET
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
-	message(STATUS "Git hash: ${spirv-cross-build-version}")
+	message(STATUS "SPIRV-Cross: Git hash: ${spirv-cross-build-version}")
 else()
-	message(STATUS "Git not found, using unknown build version.")
+	message(STATUS "SPIRV-Cross: Git not found, using unknown build version.")
 endif()
 
 string(TIMESTAMP spirv-cross-timestamp)
@@ -308,7 +308,7 @@ if (SPIRV_CROSS_STATIC)
 endif()
 
 set(spirv-cross-abi-major 0)
-set(spirv-cross-abi-minor 18)
+set(spirv-cross-abi-minor 21)
 set(spirv-cross-abi-patch 0)
 
 if (SPIRV_CROSS_SHARED)
@@ -453,14 +453,14 @@ if (SPIRV_CROSS_CLI)
 
 		if ((${spirv-cross-glslang} MATCHES "NOTFOUND") OR (${spirv-cross-spirv-as} MATCHES "NOTFOUND") OR (${spirv-cross-spirv-val} MATCHES "NOTFOUND") OR (${spirv-cross-spirv-opt} MATCHES "NOTFOUND"))
 			set(SPIRV_CROSS_ENABLE_TESTS OFF)
-			message("Could not find glslang or SPIRV-Tools build under external/. Run ./checkout_glslang_spirv_tools.sh and ./build_glslang_spirv_tools.sh. Testing will be disabled.")
+			message("SPIRV-Cross:  Testing will be disabled for SPIRV-Cross. Could not find glslang or SPIRV-Tools build under external/. To enable testing, run ./checkout_glslang_spirv_tools.sh and ./build_glslang_spirv_tools.sh first.")
 		else()
 			set(SPIRV_CROSS_ENABLE_TESTS ON)
-			message("Found glslang and SPIRV-Tools. Enabling test suite.")
-			message("Found glslangValidator in: ${spirv-cross-glslang}.")
-			message("Found spirv-as in: ${spirv-cross-spirv-as}.")
-			message("Found spirv-val in: ${spirv-cross-spirv-val}.")
-			message("Found spirv-opt in: ${spirv-cross-spirv-opt}.")
+			message("SPIRV-Cross: Found glslang and SPIRV-Tools. Enabling test suite.")
+			message("SPIRV-Cross: Found glslangValidator in: ${spirv-cross-glslang}.")
+			message("SPIRV-Cross: Found spirv-as in: ${spirv-cross-spirv-as}.")
+			message("SPIRV-Cross: Found spirv-val in: ${spirv-cross-spirv-val}.")
+			message("SPIRV-Cross: Found spirv-opt in: ${spirv-cross-spirv-opt}.")
 		endif()
 
 		set(spirv-cross-externals
@@ -565,9 +565,19 @@ if (SPIRV_CROSS_CLI)
 						${spirv-cross-externals}
 						${CMAKE_CURRENT_SOURCE_DIR}/shaders-reflection
 						WORKING_DIRECTORY $<TARGET_FILE_DIR:spirv-cross>)
+				add_test(NAME spirv-cross-test-ue4
+						COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_shaders.py --msl --parallel
+						${spirv-cross-externals}
+						${CMAKE_CURRENT_SOURCE_DIR}/shaders-ue4
+						WORKING_DIRECTORY $<TARGET_FILE_DIR:spirv-cross>)
+				add_test(NAME spirv-cross-test-ue4-opt
+						COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_shaders.py --msl --opt --parallel
+						${spirv-cross-externals}
+						${CMAKE_CURRENT_SOURCE_DIR}/shaders-ue4
+						WORKING_DIRECTORY $<TARGET_FILE_DIR:spirv-cross>)
 			endif()
 		elseif(NOT ${PYTHONINTERP_FOUND})
-			message(WARNING "Testing disabled. Could not find python3. If you have python3 installed try running "
+			message(WARNING "SPIRV-Cross: Testing disabled. Could not find python3. If you have python3 installed try running "
 					"cmake with -DPYTHON_EXECUTABLE:FILEPATH=/path/to/python3 to help it find the executable")
 		endif()
 	endif()

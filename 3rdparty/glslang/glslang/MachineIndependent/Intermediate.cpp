@@ -562,6 +562,237 @@ bool TIntermediate::isConversionAllowed(TOperator op, TIntermTyped* node) const
     return true;
 }
 
+bool TIntermediate::buildConvertOp(TBasicType dst, TBasicType src, TOperator& newOp) const
+{
+    switch (dst) {
+#ifndef GLSLANG_WEB
+    case EbtDouble:
+        switch (src) {
+        case EbtUint:    newOp = EOpConvUintToDouble;    break;
+        case EbtBool:    newOp = EOpConvBoolToDouble;    break;
+        case EbtFloat:   newOp = EOpConvFloatToDouble;   break;
+        case EbtInt:     newOp = EOpConvIntToDouble;     break;
+        case EbtInt8:    newOp = EOpConvInt8ToDouble;    break;
+        case EbtUint8:   newOp = EOpConvUint8ToDouble;   break;
+        case EbtInt16:   newOp = EOpConvInt16ToDouble;   break;
+        case EbtUint16:  newOp = EOpConvUint16ToDouble;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToDouble; break;
+        case EbtInt64:   newOp = EOpConvInt64ToDouble;   break;
+        case EbtUint64:  newOp = EOpConvUint64ToDouble;  break;
+        default:
+            return false;
+        }
+        break;
+#endif
+    case EbtFloat:
+        switch (src) {
+        case EbtInt:     newOp = EOpConvIntToFloat;     break;
+        case EbtUint:    newOp = EOpConvUintToFloat;    break;
+        case EbtBool:    newOp = EOpConvBoolToFloat;    break;
+#ifndef GLSLANG_WEB
+        case EbtDouble:  newOp = EOpConvDoubleToFloat;  break;
+        case EbtInt8:    newOp = EOpConvInt8ToFloat;    break;
+        case EbtUint8:   newOp = EOpConvUint8ToFloat;   break;
+        case EbtInt16:   newOp = EOpConvInt16ToFloat;   break;
+        case EbtUint16:  newOp = EOpConvUint16ToFloat;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToFloat; break;
+        case EbtInt64:   newOp = EOpConvInt64ToFloat;   break;
+        case EbtUint64:  newOp = EOpConvUint64ToFloat;  break;
+#endif
+        default:
+            return false;
+        }
+        break;
+#ifndef GLSLANG_WEB
+    case EbtFloat16:
+        switch (src) {
+        case EbtInt8:   newOp = EOpConvInt8ToFloat16;   break;
+        case EbtUint8:  newOp = EOpConvUint8ToFloat16;  break;
+        case EbtInt16:  newOp = EOpConvInt16ToFloat16;  break;
+        case EbtUint16: newOp = EOpConvUint16ToFloat16; break;
+        case EbtInt:    newOp = EOpConvIntToFloat16;    break;
+        case EbtUint:   newOp = EOpConvUintToFloat16;   break;
+        case EbtBool:   newOp = EOpConvBoolToFloat16;   break;
+        case EbtFloat:  newOp = EOpConvFloatToFloat16;  break;
+        case EbtDouble: newOp = EOpConvDoubleToFloat16; break;
+        case EbtInt64:  newOp = EOpConvInt64ToFloat16;  break;
+        case EbtUint64: newOp = EOpConvUint64ToFloat16; break;
+        default:
+            return false;
+        }
+        break;
+#endif
+    case EbtBool:
+        switch (src) {
+        case EbtInt:     newOp = EOpConvIntToBool;     break;
+        case EbtUint:    newOp = EOpConvUintToBool;    break;
+        case EbtFloat:   newOp = EOpConvFloatToBool;   break;
+#ifndef GLSLANG_WEB
+        case EbtDouble:  newOp = EOpConvDoubleToBool;  break;
+        case EbtInt8:    newOp = EOpConvInt8ToBool;    break;
+        case EbtUint8:   newOp = EOpConvUint8ToBool;   break;
+        case EbtInt16:   newOp = EOpConvInt16ToBool;   break;
+        case EbtUint16:  newOp = EOpConvUint16ToBool;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToBool; break;
+        case EbtInt64:   newOp = EOpConvInt64ToBool;   break;
+        case EbtUint64:  newOp = EOpConvUint64ToBool;  break;
+#endif
+        default:
+            return false;
+        }
+        break;
+#ifndef GLSLANG_WEB
+    case EbtInt8:
+        switch (src) {
+        case EbtUint8:   newOp = EOpConvUint8ToInt8;   break;
+        case EbtInt16:   newOp = EOpConvInt16ToInt8;   break;
+        case EbtUint16:  newOp = EOpConvUint16ToInt8;  break;
+        case EbtInt:     newOp = EOpConvIntToInt8;     break;
+        case EbtUint:    newOp = EOpConvUintToInt8;    break;
+        case EbtInt64:   newOp = EOpConvInt64ToInt8;   break;
+        case EbtUint64:  newOp = EOpConvUint64ToInt8;  break;
+        case EbtBool:    newOp = EOpConvBoolToInt8;    break;
+        case EbtFloat:   newOp = EOpConvFloatToInt8;   break;
+        case EbtDouble:  newOp = EOpConvDoubleToInt8;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToInt8; break;
+        default:
+            return false;
+        }
+        break;
+    case EbtUint8:
+        switch (src) {
+        case EbtInt8:    newOp = EOpConvInt8ToUint8;    break;
+        case EbtInt16:   newOp = EOpConvInt16ToUint8;   break;
+        case EbtUint16:  newOp = EOpConvUint16ToUint8;  break;
+        case EbtInt:     newOp = EOpConvIntToUint8;     break;
+        case EbtUint:    newOp = EOpConvUintToUint8;    break;
+        case EbtInt64:   newOp = EOpConvInt64ToUint8;   break;
+        case EbtUint64:  newOp = EOpConvUint64ToUint8;  break;
+        case EbtBool:    newOp = EOpConvBoolToUint8;    break;
+        case EbtFloat:   newOp = EOpConvFloatToUint8;   break;
+        case EbtDouble:  newOp = EOpConvDoubleToUint8;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToUint8; break;
+        default:
+            return false;
+        }
+        break;
+
+    case EbtInt16:
+        switch (src) {
+        case EbtUint8:   newOp = EOpConvUint8ToInt16;   break;
+        case EbtInt8:    newOp = EOpConvInt8ToInt16;    break;
+        case EbtUint16:  newOp = EOpConvUint16ToInt16;  break;
+        case EbtInt:     newOp = EOpConvIntToInt16;     break;
+        case EbtUint:    newOp = EOpConvUintToInt16;    break;
+        case EbtInt64:   newOp = EOpConvInt64ToInt16;   break;
+        case EbtUint64:  newOp = EOpConvUint64ToInt16;  break;
+        case EbtBool:    newOp = EOpConvBoolToInt16;    break;
+        case EbtFloat:   newOp = EOpConvFloatToInt16;   break;
+        case EbtDouble:  newOp = EOpConvDoubleToInt16;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToInt16; break;
+        default:
+            return false;
+        }
+        break;
+    case EbtUint16:
+        switch (src) {
+        case EbtInt8:    newOp = EOpConvInt8ToUint16;    break;
+        case EbtUint8:   newOp = EOpConvUint8ToUint16;   break;
+        case EbtInt16:   newOp = EOpConvInt16ToUint16;   break;
+        case EbtInt:     newOp = EOpConvIntToUint16;     break;
+        case EbtUint:    newOp = EOpConvUintToUint16;    break;
+        case EbtInt64:   newOp = EOpConvInt64ToUint16;   break;
+        case EbtUint64:  newOp = EOpConvUint64ToUint16;  break;
+        case EbtBool:    newOp = EOpConvBoolToUint16;    break;
+        case EbtFloat:   newOp = EOpConvFloatToUint16;   break;
+        case EbtDouble:  newOp = EOpConvDoubleToUint16;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToUint16; break;
+        default:
+            return false;
+        }
+        break;
+#endif
+
+    case EbtInt:
+        switch (src) {
+        case EbtUint:    newOp = EOpConvUintToInt;    break;
+        case EbtBool:    newOp = EOpConvBoolToInt;    break;
+        case EbtFloat:   newOp = EOpConvFloatToInt;   break;
+#ifndef GLSLANG_WEB
+        case EbtInt8:    newOp = EOpConvInt8ToInt;    break;
+        case EbtUint8:   newOp = EOpConvUint8ToInt;   break;
+        case EbtInt16:   newOp = EOpConvInt16ToInt;   break;
+        case EbtUint16:  newOp = EOpConvUint16ToInt;  break;
+        case EbtDouble:  newOp = EOpConvDoubleToInt;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToInt; break;
+        case EbtInt64:   newOp = EOpConvInt64ToInt;   break;
+        case EbtUint64:  newOp = EOpConvUint64ToInt;  break;
+#endif
+        default:
+            return false;
+        }
+        break;
+    case EbtUint:
+        switch (src) {
+        case EbtInt:     newOp = EOpConvIntToUint;     break;
+        case EbtBool:    newOp = EOpConvBoolToUint;    break;
+        case EbtFloat:   newOp = EOpConvFloatToUint;   break;
+#ifndef GLSLANG_WEB
+        case EbtInt8:    newOp = EOpConvInt8ToUint;    break;
+        case EbtUint8:   newOp = EOpConvUint8ToUint;   break;
+        case EbtInt16:   newOp = EOpConvInt16ToUint;   break;
+        case EbtUint16:  newOp = EOpConvUint16ToUint;  break;
+        case EbtDouble:  newOp = EOpConvDoubleToUint;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToUint; break;
+        case EbtInt64:   newOp = EOpConvInt64ToUint;   break;
+        case EbtUint64:  newOp = EOpConvUint64ToUint;  break;
+#endif
+        default:
+            return false;
+        }
+        break;
+#ifndef GLSLANG_WEB
+    case EbtInt64:
+        switch (src) {
+        case EbtInt8:    newOp = EOpConvInt8ToInt64;    break;
+        case EbtUint8:   newOp = EOpConvUint8ToInt64;   break;
+        case EbtInt16:   newOp = EOpConvInt16ToInt64;   break;
+        case EbtUint16:  newOp = EOpConvUint16ToInt64;  break;
+        case EbtInt:     newOp = EOpConvIntToInt64;     break;
+        case EbtUint:    newOp = EOpConvUintToInt64;    break;
+        case EbtBool:    newOp = EOpConvBoolToInt64;    break;
+        case EbtFloat:   newOp = EOpConvFloatToInt64;   break;
+        case EbtDouble:  newOp = EOpConvDoubleToInt64;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToInt64; break;
+        case EbtUint64:  newOp = EOpConvUint64ToInt64;  break;
+        default:
+            return false;
+        }
+        break;
+    case EbtUint64:
+        switch (src) {
+        case EbtInt8:    newOp = EOpConvInt8ToUint64;    break;
+        case EbtUint8:   newOp = EOpConvUint8ToUint64;   break;
+        case EbtInt16:   newOp = EOpConvInt16ToUint64;   break;
+        case EbtUint16:  newOp = EOpConvUint16ToUint64;  break;
+        case EbtInt:     newOp = EOpConvIntToUint64;     break;
+        case EbtUint:    newOp = EOpConvUintToUint64;    break;
+        case EbtBool:    newOp = EOpConvBoolToUint64;    break;
+        case EbtFloat:   newOp = EOpConvFloatToUint64;   break;
+        case EbtDouble:  newOp = EOpConvDoubleToUint64;  break;
+        case EbtFloat16: newOp = EOpConvFloat16ToUint64; break;
+        case EbtInt64:   newOp = EOpConvInt64ToUint64;   break;
+        default:
+            return false;
+        }
+        break;
+#endif
+    default:
+        return false;
+    }
+    return true;
+}
+
 // This is 'mechanism' here, it does any conversion told.
 // It is about basic type, not about shape.
 // The policy comes from the shader or the calling code.
@@ -570,10 +801,8 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
     //
     // Add a new newNode for the conversion.
     //
-    TIntermUnary* newNode = nullptr;
 
-    TOperator newOp = EOpNull;
-
+#ifndef GLSLANG_WEB
     bool convertToIntTypes = (convertTo == EbtInt8  || convertTo == EbtUint8  ||
                               convertTo == EbtInt16 || convertTo == EbtUint16 ||
                               convertTo == EbtInt   || convertTo == EbtUint   ||
@@ -607,231 +836,11 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
             (node->getBasicType() == EbtFloat16 && ! convertToFloatTypes))
             return nullptr;
     }
-
-    switch (convertTo) {
-#ifndef GLSLANG_WEB
-    case EbtDouble:
-        switch (node->getBasicType()) {
-        case EbtUint:    newOp = EOpConvUintToDouble;    break;
-        case EbtBool:    newOp = EOpConvBoolToDouble;    break;
-        case EbtFloat:   newOp = EOpConvFloatToDouble;   break;
-        case EbtInt:     newOp = EOpConvIntToDouble;     break;
-        case EbtInt8:    newOp = EOpConvInt8ToDouble;    break;
-        case EbtUint8:   newOp = EOpConvUint8ToDouble;   break;
-        case EbtInt16:   newOp = EOpConvInt16ToDouble;   break;
-        case EbtUint16:  newOp = EOpConvUint16ToDouble;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToDouble; break;
-        case EbtInt64:   newOp = EOpConvInt64ToDouble;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToDouble;  break;
-        default:
-            return nullptr;
-        }
-        break;
-#endif
-    case EbtFloat:
-        switch (node->getBasicType()) {
-        case EbtInt:     newOp = EOpConvIntToFloat;     break;
-        case EbtUint:    newOp = EOpConvUintToFloat;    break;
-        case EbtBool:    newOp = EOpConvBoolToFloat;    break;
-#ifndef GLSLANG_WEB
-        case EbtDouble:  newOp = EOpConvDoubleToFloat;  break;
-        case EbtInt8:    newOp = EOpConvInt8ToFloat;    break;
-        case EbtUint8:   newOp = EOpConvUint8ToFloat;   break;
-        case EbtInt16:   newOp = EOpConvInt16ToFloat;   break;
-        case EbtUint16:  newOp = EOpConvUint16ToFloat;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToFloat; break;
-        case EbtInt64:   newOp = EOpConvInt64ToFloat;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToFloat;  break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-#ifndef GLSLANG_WEB
-    case EbtFloat16:
-        switch (node->getBasicType()) {
-        case EbtInt8:   newOp = EOpConvInt8ToFloat16;   break;
-        case EbtUint8:  newOp = EOpConvUint8ToFloat16;  break;
-        case EbtInt16:  newOp = EOpConvInt16ToFloat16;  break;
-        case EbtUint16: newOp = EOpConvUint16ToFloat16; break;
-        case EbtInt:    newOp = EOpConvIntToFloat16;    break;
-        case EbtUint:   newOp = EOpConvUintToFloat16;   break;
-        case EbtBool:   newOp = EOpConvBoolToFloat16;   break;
-        case EbtFloat:  newOp = EOpConvFloatToFloat16;  break;
-        case EbtDouble: newOp = EOpConvDoubleToFloat16; break;
-        case EbtInt64:  newOp = EOpConvInt64ToFloat16;  break;
-        case EbtUint64: newOp = EOpConvUint64ToFloat16; break;
-        default:
-            return nullptr;
-        }
-        break;
-#endif
-    case EbtBool:
-        switch (node->getBasicType()) {
-        case EbtInt:     newOp = EOpConvIntToBool;     break;
-        case EbtUint:    newOp = EOpConvUintToBool;    break;
-        case EbtFloat:   newOp = EOpConvFloatToBool;   break;
-#ifndef GLSLANG_WEB
-        case EbtDouble:  newOp = EOpConvDoubleToBool;  break;
-        case EbtInt8:    newOp = EOpConvInt8ToBool;    break;
-        case EbtUint8:   newOp = EOpConvUint8ToBool;   break;
-        case EbtInt16:   newOp = EOpConvInt16ToBool;   break;
-        case EbtUint16:  newOp = EOpConvUint16ToBool;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToBool; break;
-        case EbtInt64:   newOp = EOpConvInt64ToBool;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToBool;  break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-#ifndef GLSLANG_WEB
-    case EbtInt8:
-        switch (node->getBasicType()) {
-        case EbtUint8:   newOp = EOpConvUint8ToInt8;   break;
-        case EbtInt16:   newOp = EOpConvInt16ToInt8;   break;
-        case EbtUint16:  newOp = EOpConvUint16ToInt8;  break;
-        case EbtInt:     newOp = EOpConvIntToInt8;     break;
-        case EbtUint:    newOp = EOpConvUintToInt8;    break;
-        case EbtInt64:   newOp = EOpConvInt64ToInt8;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToInt8;  break;
-        case EbtBool:    newOp = EOpConvBoolToInt8;    break;
-        case EbtFloat:   newOp = EOpConvFloatToInt8;   break;
-        case EbtDouble:  newOp = EOpConvDoubleToInt8;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToInt8; break;
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtUint8:
-        switch (node->getBasicType()) {
-        case EbtInt8:    newOp = EOpConvInt8ToUint8;    break;
-        case EbtInt16:   newOp = EOpConvInt16ToUint8;   break;
-        case EbtUint16:  newOp = EOpConvUint16ToUint8;  break;
-        case EbtInt:     newOp = EOpConvIntToUint8;     break;
-        case EbtUint:    newOp = EOpConvUintToUint8;    break;
-        case EbtInt64:   newOp = EOpConvInt64ToUint8;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToUint8;  break;
-        case EbtBool:    newOp = EOpConvBoolToUint8;    break;
-        case EbtFloat:   newOp = EOpConvFloatToUint8;   break;
-        case EbtDouble:  newOp = EOpConvDoubleToUint8;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToUint8; break;
-        default:
-            return nullptr;
-        }
-        break;
-
-    case EbtInt16:
-        switch (node->getBasicType()) {
-        case EbtUint8:   newOp = EOpConvUint8ToInt16;   break;
-        case EbtInt8:    newOp = EOpConvInt8ToInt16;    break;
-        case EbtUint16:  newOp = EOpConvUint16ToInt16;  break;
-        case EbtInt:     newOp = EOpConvIntToInt16;     break;
-        case EbtUint:    newOp = EOpConvUintToInt16;    break;
-        case EbtInt64:   newOp = EOpConvInt64ToInt16;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToInt16;  break;
-        case EbtBool:    newOp = EOpConvBoolToInt16;    break;
-        case EbtFloat:   newOp = EOpConvFloatToInt16;   break;
-        case EbtDouble:  newOp = EOpConvDoubleToInt16;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToInt16; break;
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtUint16:
-        switch (node->getBasicType()) {
-        case EbtInt8:    newOp = EOpConvInt8ToUint16;    break;
-        case EbtUint8:   newOp = EOpConvUint8ToUint16;   break;
-        case EbtInt16:   newOp = EOpConvInt16ToUint16;   break;
-        case EbtInt:     newOp = EOpConvIntToUint16;     break;
-        case EbtUint:    newOp = EOpConvUintToUint16;    break;
-        case EbtInt64:   newOp = EOpConvInt64ToUint16;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToUint16;  break;
-        case EbtBool:    newOp = EOpConvBoolToUint16;    break;
-        case EbtFloat:   newOp = EOpConvFloatToUint16;   break;
-        case EbtDouble:  newOp = EOpConvDoubleToUint16;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToUint16; break;
-        default:
-            return nullptr;
-        }
-        break;
 #endif
 
-    case EbtInt:
-        switch (node->getBasicType()) {
-        case EbtUint:    newOp = EOpConvUintToInt;    break;
-        case EbtBool:    newOp = EOpConvBoolToInt;    break;
-        case EbtFloat:   newOp = EOpConvFloatToInt;   break;
-#ifndef GLSLANG_WEB
-        case EbtInt8:    newOp = EOpConvInt8ToInt;    break;
-        case EbtUint8:   newOp = EOpConvUint8ToInt;   break;
-        case EbtInt16:   newOp = EOpConvInt16ToInt;   break;
-        case EbtUint16:  newOp = EOpConvUint16ToInt;  break;
-        case EbtDouble:  newOp = EOpConvDoubleToInt;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToInt; break;
-        case EbtInt64:   newOp = EOpConvInt64ToInt;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToInt;  break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtUint:
-        switch (node->getBasicType()) {
-        case EbtInt:     newOp = EOpConvIntToUint;     break;
-        case EbtBool:    newOp = EOpConvBoolToUint;    break;
-        case EbtFloat:   newOp = EOpConvFloatToUint;   break;
-#ifndef GLSLANG_WEB
-        case EbtInt8:    newOp = EOpConvInt8ToUint;    break;
-        case EbtUint8:   newOp = EOpConvUint8ToUint;   break;
-        case EbtInt16:   newOp = EOpConvInt16ToUint;   break;
-        case EbtUint16:  newOp = EOpConvUint16ToUint;  break;
-        case EbtDouble:  newOp = EOpConvDoubleToUint;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToUint; break;
-        case EbtInt64:   newOp = EOpConvInt64ToUint;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToUint;  break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-#ifndef GLSLANG_WEB
-    case EbtInt64:
-        switch (node->getBasicType()) {
-        case EbtInt8:    newOp = EOpConvInt8ToInt64;    break;
-        case EbtUint8:   newOp = EOpConvUint8ToInt64;   break;
-        case EbtInt16:   newOp = EOpConvInt16ToInt64;   break;
-        case EbtUint16:  newOp = EOpConvUint16ToInt64;  break;
-        case EbtInt:     newOp = EOpConvIntToInt64;     break;
-        case EbtUint:    newOp = EOpConvUintToInt64;    break;
-        case EbtBool:    newOp = EOpConvBoolToInt64;    break;
-        case EbtFloat:   newOp = EOpConvFloatToInt64;   break;
-        case EbtDouble:  newOp = EOpConvDoubleToInt64;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToInt64; break;
-        case EbtUint64:  newOp = EOpConvUint64ToInt64;  break;
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtUint64:
-        switch (node->getBasicType()) {
-        case EbtInt8:    newOp = EOpConvInt8ToUint64;    break;
-        case EbtUint8:   newOp = EOpConvUint8ToUint64;   break;
-        case EbtInt16:   newOp = EOpConvInt16ToUint64;   break;
-        case EbtUint16:  newOp = EOpConvUint16ToUint64;  break;
-        case EbtInt:     newOp = EOpConvIntToUint64;     break;
-        case EbtUint:    newOp = EOpConvUintToUint64;    break;
-        case EbtBool:    newOp = EOpConvBoolToUint64;    break;
-        case EbtFloat:   newOp = EOpConvFloatToUint64;   break;
-        case EbtDouble:  newOp = EOpConvDoubleToUint64;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToUint64; break;
-        case EbtInt64:   newOp = EOpConvInt64ToUint64;   break;
-        default:
-            return nullptr;
-        }
-        break;
-#endif
-    default:
+    TIntermUnary* newNode = nullptr;
+    TOperator newOp = EOpNull;
+    if (!buildConvertOp(convertTo, node->getBasicType(), newOp)) {
         return nullptr;
     }
 
@@ -839,11 +848,14 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
     newNode = addUnaryNode(newOp, node, node->getLoc(), newType);
 
     if (node->getAsConstantUnion()) {
+#ifndef GLSLANG_WEB
         // 8/16-bit storage extensions don't support 8/16-bit constants, so don't fold conversions
         // to those types
         if ((getArithemeticInt8Enabled() || !(convertTo == EbtInt8 || convertTo == EbtUint8)) &&
             (getArithemeticInt16Enabled() || !(convertTo == EbtInt16 || convertTo == EbtUint16)) &&
-            (getArithemeticFloat16Enabled() || !(convertTo == EbtFloat16))) {
+            (getArithemeticFloat16Enabled() || !(convertTo == EbtFloat16)))
+#endif
+        {
             TIntermTyped* folded = node->getAsConstantUnion()->fold(newOp, newType);
             if (folded)
                 return folded;
@@ -1117,6 +1129,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpLit:
     case EOpMax:
     case EOpMin:
+    case EOpMod:
     case EOpModf:
     case EOpPow:
     case EOpReflect:

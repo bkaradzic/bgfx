@@ -5,9 +5,9 @@ layout(binding = 1, rgba32f) uniform writeonly image2D outImageTexture;
 
 void main()
 {
+    int _27_copy;
     int _30;
     _30 = 7;
-    int _27_copy;
     for (int _27 = 7; _27 >= 0; _27_copy = _27, _27--, _30 = _27_copy)
     {
         if (5.0 > float(_27))

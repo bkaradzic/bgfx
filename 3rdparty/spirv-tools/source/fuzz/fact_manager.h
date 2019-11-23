@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "source/fuzz/data_descriptor.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/opt/constants.h"
 
@@ -51,6 +52,11 @@ class FactManager {
   // with no side effects, if the fact is invalid.  Otherwise adds |fact| to the
   // fact manager.
   bool AddFact(const protobufs::Fact& fact, opt::IRContext* context);
+
+  // Record the fact that |data1| and |data2| are synonymous.
+  void AddFactDataSynonym(const protobufs::DataDescriptor& data1,
+                          const protobufs::DataDescriptor& data2,
+                          opt::IRContext* context);
 
   // The fact manager is responsible for managing a few distinct categories of
   // facts. In principle there could be different fact managers for each kind
@@ -99,30 +105,43 @@ class FactManager {
   //==============================
   // Querying facts about id synonyms
 
-  // Returns every id for which a fact of the form "this id is synonymous
-  // with this piece of data" is known.
-  const std::set<uint32_t>& GetIdsForWhichSynonymsAreKnown() const;
+  // Returns every id for which a fact of the form "this id is synonymous with
+  // this piece of data" is known.
+  std::vector<uint32_t> GetIdsForWhichSynonymsAreKnown(
+      opt::IRContext* context) const;
 
-  // Requires that at least one synonym for |id| is known, and returns the
-  // sequence of all known synonyms.
-  const std::vector<protobufs::DataDescriptor>& GetSynonymsForId(
-      uint32_t id) const;
+  // Returns the equivalence class of all known synonyms of |id|, or an empty
+  // set if no synonyms are known.
+  std::vector<const protobufs::DataDescriptor*> GetSynonymsForId(
+      uint32_t id, opt::IRContext* context) const;
+
+  // Returns the equivalence class of all known synonyms of |data_descriptor|,
+  // or empty if no synonyms are known.
+  std::vector<const protobufs::DataDescriptor*> GetSynonymsForDataDescriptor(
+      const protobufs::DataDescriptor& data_descriptor,
+      opt::IRContext* context) const;
+
+  // Returns true if and ony if |data_descriptor1| and |data_descriptor2| are
+  // known to be synonymous.
+  bool IsSynonymous(const protobufs::DataDescriptor& data_descriptor1,
+                    const protobufs::DataDescriptor& data_descriptor2,
+                    opt::IRContext* context) const;
 
   // End of id synonym facts
   //==============================
 
  private:
   // For each distinct kind of fact to be managed, we use a separate opaque
-  // struct type.
+  // class type.
 
-  struct ConstantUniformFacts;  // Opaque struct for holding data about uniform
-                                // buffer elements.
+  class ConstantUniformFacts;  // Opaque class for management of
+                               // constant uniform facts.
   std::unique_ptr<ConstantUniformFacts>
       uniform_constant_facts_;  // Unique pointer to internal data.
 
-  struct IdSynonymFacts;  // Opaque struct for holding data about id synonyms.
-  std::unique_ptr<IdSynonymFacts>
-      id_synonym_facts_;  // Unique pointer to internal data.
+  class DataSynonymFacts;  // Opaque class for management of data synonym facts.
+  std::unique_ptr<DataSynonymFacts>
+      data_synonym_facts_;  // Unique pointer to internal data.
 };
 
 }  // namespace fuzz

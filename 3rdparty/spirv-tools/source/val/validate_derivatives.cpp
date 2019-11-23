@@ -46,6 +46,10 @@ spv_result_t DerivativesPass(ValidationState_t& _, const Instruction* inst) {
                << "Expected Result Type to be float scalar or vector type: "
                << spvOpcodeString(opcode);
       }
+      if (!_.ContainsSizedIntOrFloatType(result_type, SpvOpTypeFloat, 32)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Result type component width must be 32 bits";
+      }
 
       const uint32_t p_type = _.GetOperandTypeId(inst, 2);
       if (p_type != result_type) {

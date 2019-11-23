@@ -59,20 +59,23 @@ inline T spvFindSMSB(T x)
 }
 
 // Returns the determinant of a 2x2 matrix.
-inline float spvDet2x2(float a1, float a2, float b1, float b2)
+static inline __attribute__((always_inline))
+float spvDet2x2(float a1, float a2, float b1, float b2)
 {
     return a1 * b2 - b1 * a2;
 }
 
 // Returns the determinant of a 3x3 matrix.
-inline float spvDet3x3(float a1, float a2, float a3, float b1, float b2, float b3, float c1, float c2, float c3)
+static inline __attribute__((always_inline))
+float spvDet3x3(float a1, float a2, float a3, float b1, float b2, float b3, float c1, float c2, float c3)
 {
     return a1 * spvDet2x2(b2, b3, c2, c3) - b1 * spvDet2x2(a2, a3, c2, c3) + c1 * spvDet2x2(a2, a3, b2, b3);
 }
 
 // Returns the inverse of a matrix, by using the algorithm of calculating the classical
 // adjoint and dividing by the determinant. The contents of the matrix are changed.
-inline float4x4 spvInverse4x4(float4x4 m)
+static inline __attribute__((always_inline))
+float4x4 spvInverse4x4(float4x4 m)
 {
     float4x4 adj;	// The adjoint matrix (inverse after dividing by determinant)
 

@@ -174,6 +174,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_texture_cube_map_array]       = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_texture_lod]           = EBhDisable;
     extensionBehavior[E_GL_ARB_explicit_attrib_location]     = EBhDisable;
+    extensionBehavior[E_GL_ARB_explicit_uniform_location]    = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_image_load_store]      = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_atomic_counters]       = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_draw_parameters]       = EBhDisable;
@@ -378,6 +379,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_texture_cube_map_array 1\n"
             "#define GL_ARB_shader_texture_lod 1\n"
             "#define GL_ARB_explicit_attrib_location 1\n"
+            "#define GL_ARB_explicit_uniform_location 1\n"
             "#define GL_ARB_shader_image_load_store 1\n"
             "#define GL_ARB_shader_atomic_counters 1\n"
             "#define GL_ARB_shader_draw_parameters 1\n"
@@ -525,11 +527,11 @@ const char* StageName(EShLanguage stage)
     switch(stage) {
     case EShLangVertex:         return "vertex";
     case EShLangFragment:       return "fragment";
+    case EShLangCompute:        return "compute";
 #ifndef GLSLANG_WEB
     case EShLangTessControl:    return "tessellation control";
     case EShLangTessEvaluation: return "tessellation evaluation";
     case EShLangGeometry:       return "geometry";
-    case EShLangCompute:        return "compute";
     case EShLangRayGenNV:       return "ray-generation";
     case EShLangIntersectNV:    return "intersection";
     case EShLangAnyHitNV:       return "any-hit";

@@ -28,8 +28,9 @@ class TransformationSplitBlock : public Transformation {
   explicit TransformationSplitBlock(
       const protobufs::TransformationSplitBlock& message);
 
-  TransformationSplitBlock(uint32_t base_instruction_id, uint32_t offset,
-                           uint32_t fresh_id);
+  TransformationSplitBlock(
+      const protobufs::InstructionDescriptor& instruction_to_split_before,
+      uint32_t fresh_id);
 
   // - |message_.base_instruction_id| must be the result id of an instruction
   //   'base' in some block 'blk'.

@@ -62,7 +62,17 @@ OpCapability DerivativeControl
 
 %f32vec4_ptr_input = OpTypePointer Input %f32vec4
 %f32vec4_var_input = OpVariable %f32vec4_ptr_input Input
+)";
 
+  if (capabilities_and_extensions.find("OpCapability Float16") !=
+      std::string::npos) {
+    ss << "%f16 = OpTypeFloat 16\n"
+       << "%f16vec4 = OpTypeVector %f16 4\n"
+       << "%f16_0 = OpConstantNull %f16\n"
+       << "%f16vec4_0 = OpConstantNull %f16vec4\n";
+  }
+
+  ss << R"(
 %main = OpFunction %void None %func
 %main_entry = OpLabel
 )";
@@ -149,6 +159,36 @@ TEST_F(ValidateDerivatives, OpDPdxWrongExecutionModel) {
               HasSubstr("Derivative instructions require Fragment or GLCompute "
                         "execution model: DPdx"));
 }
+
+using ValidateHalfDerivatives = spvtest::ValidateBase<std::string>;
+
+TEST_P(ValidateHalfDerivatives, ScalarFailure) {
+  const std::string op = GetParam();
+  const std::string body = "%val = " + op + " %f16 %f16_0\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, "OpCapability Float16\n").c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Result type component width must be 32 bits"));
+}
+
+TEST_P(ValidateHalfDerivatives, VectorFailure) {
+  const std::string op = GetParam();
+  const std::string body = "%val = " + op + " %f16vec4 %f16vec4_0\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, "OpCapability Float16\n").c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Result type component width must be 32 bits"));
+}
+
+INSTANTIATE_TEST_SUITE_P(HalfDerivatives, ValidateHalfDerivatives,
+                         ::testing::Values("OpDPdx", "OpDPdy", "OpFwidth",
+                                           "OpDPdxFine", "OpDPdyFine",
+                                           "OpFwidthFine", "OpDPdxCoarse",
+                                           "OpDPdyCoarse", "OpFwidthCoarse"));
 
 }  // namespace
 }  // namespace val

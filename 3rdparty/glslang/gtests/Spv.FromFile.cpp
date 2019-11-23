@@ -63,6 +63,7 @@ std::string FileNameAsCustomTestSuffixIoMap(
 }
 
 using CompileVulkanToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
+using CompileVulkanToSpirvDeadCodeElimTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileVulkanToDebugSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileVulkan1_1ToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileToSpirv14Test = GlslangTest<::testing::TestWithParam<std::string>>;
@@ -79,6 +80,13 @@ using CompileUpgradeTextureToSampledTextureAndDropSamplersTest = GlslangTest<::t
 // Compiling GLSL to SPIR-V under Vulkan semantics. Expected to successfully
 // generate SPIR-V.
 TEST_P(CompileVulkanToSpirvTest, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
+                            Target::Spv);
+}
+
+TEST_P(CompileVulkanToSpirvDeadCodeElimTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
                             Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
@@ -404,6 +412,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.storageBuffer.vert",
         "spv.precise.tese",
         "spv.precise.tesc",
+        "spv.volatileAtomic.comp",
         "spv.vulkan100.subgroupArithmetic.comp",
         "spv.vulkan100.subgroupPartitioned.comp",
         "spv.xfb.vert",
@@ -412,6 +421,23 @@ INSTANTIATE_TEST_CASE_P(
         "spv.samplerlessTextureFunctions.frag",
         "spv.smBuiltins.vert",
         "spv.smBuiltins.frag",
+    })),
+    FileNameAsCustomTestSuffix
+);
+
+// Cases with deliberately unreachable code.
+// By default the compiler will aggressively eliminate
+// unreachable merges and continues.
+INSTANTIATE_TEST_CASE_P(
+    GlslWithDeadCode, CompileVulkanToSpirvDeadCodeElimTest,
+    ::testing::ValuesIn(std::vector<std::string>({
+        "spv.dead-after-continue.vert",
+        "spv.dead-after-discard.frag",
+        "spv.dead-after-return.vert",
+        "spv.dead-after-loop-break.vert",
+        "spv.dead-after-switch-break.vert",
+        "spv.dead-complex-continue-after-return.vert",
+        "spv.dead-complex-merge-after-return.vert",
     })),
     FileNameAsCustomTestSuffix
 );

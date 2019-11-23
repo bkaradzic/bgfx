@@ -6,6 +6,9 @@ if (POLICY CMP0048)
 endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# Enable compile commands database
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Adhere to GNU filesystem layout conventions
 include(GNUInstallDirs)
 
@@ -13,6 +16,7 @@ include(GNUInstallDirs)
 include(CMakeDependentOption)
 
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
+option(BUILD_EXTERNAL "Build external dependencies in /External" ON)
 
 set(LIB_TYPE STATIC)
 
@@ -36,6 +40,8 @@ option(ENABLE_EMSCRIPTEN_ENVIRONMENT_NODE "If using Emscripten, builds to run on
 CMAKE_DEPENDENT_OPTION(ENABLE_HLSL "Enables HLSL input support" ON "NOT ENABLE_GLSLANG_WEB" OFF)
 
 option(ENABLE_OPT "Enables spirv-opt capability if present" ON)
+option(ENABLE_PCH "Enables Precompiled header" ON)
+option(ENABLE_CTEST "Enables testing" ON)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND WIN32)
     set(CMAKE_INSTALL_PREFIX "install" CACHE STRING "..." FORCE)
@@ -51,7 +57,7 @@ endif()
 
 # Precompiled header macro. Parameters are source file list and filename for pch cpp file.
 macro(glslang_pch SRCS PCHCPP)
-  if(MSVC AND CMAKE_GENERATOR MATCHES "^Visual Studio")
+  if(MSVC AND CMAKE_GENERATOR MATCHES "^Visual Studio" AND ENABLE_PCH)
     set(PCH_NAME "$(IntDir)\\pch.pch")
     # make source files use/depend on PCH_NAME
     set_source_files_properties(${${SRCS}} PROPERTIES COMPILE_FLAGS "/Yupch.h /FIpch.h /Fp${PCH_NAME} /Zm300" OBJECT_DEPENDS "${PCH_NAME}")
@@ -62,8 +68,10 @@ macro(glslang_pch SRCS PCHCPP)
 endmacro(glslang_pch)
 
 project(glslang)
-# make testing optional
-include(CTest)
+
+if(ENABLE_CTEST)
+    include(CTest)
+endif()
 
 if(ENABLE_HLSL)
     add_definitions(-DENABLE_HLSL)
@@ -148,12 +156,12 @@ endfunction(glslang_set_link_args)
 
 # CMake needs to find the right version of python, right from the beginning,
 # otherwise, it will find the wrong version and fail later
-if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/External)
+if(BUILD_EXTERNAL AND IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/External)
     find_package(PythonInterp 3 REQUIRED)
-endif()
 
-# We depend on these for later projects, so they should come first.
-add_subdirectory(External)
+	# We depend on these for later projects, so they should come first.
+	add_subdirectory(External)
+endif()
 
 if(NOT TARGET SPIRV-Tools-opt)
     set(ENABLE_OPT OFF)
@@ -178,4 +186,29 @@ add_subdirectory(SPIRV)
 if(ENABLE_HLSL)
     add_subdirectory(hlsl)
 endif(ENABLE_HLSL)
-add_subdirectory(gtests)
+if(ENABLE_CTEST)
+    add_subdirectory(gtests)
+endif()
+
+if(BUILD_TESTING)
+    # glslang-testsuite runs a bash script on Windows.
+    # Make sure to use '-o igncr' flag to ignore carriage returns (\r).
+    set(IGNORE_CR_FLAG "")
+    if(WIN32)
+        set(IGNORE_CR_FLAG -o igncr)
+    endif()
+
+    if (CMAKE_CONFIGURATION_TYPES)
+        set(RESULTS_PATH ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>/localResults)
+        set(VALIDATOR_PATH ${CMAKE_CURRENT_BINARY_DIR}/StandAlone/$<CONFIGURATION>/glslangValidator)
+        set(REMAP_PATH ${CMAKE_CURRENT_BINARY_DIR}/StandAlone/$<CONFIGURATION>/spirv-remap)
+    else(CMAKE_CONFIGURATION_TYPES)
+        set(RESULTS_PATH ${CMAKE_CURRENT_BINARY_DIR}/localResults)
+        set(VALIDATOR_PATH ${CMAKE_CURRENT_BINARY_DIR}/StandAlone/glslangValidator)
+        set(REMAP_PATH ${CMAKE_CURRENT_BINARY_DIR}/StandAlone/spirv-remap)
+    endif(CMAKE_CONFIGURATION_TYPES)
+
+    add_test(NAME glslang-testsuite
+        COMMAND bash ${IGNORE_CR_FLAG} runtests ${RESULTS_PATH} ${VALIDATOR_PATH} ${REMAP_PATH}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Test/)
+endif(BUILD_TESTING)

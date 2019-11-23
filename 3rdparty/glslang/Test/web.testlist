@@ -5,3 +5,5 @@ web.controlFlow.frag
 web.operations.frag
 web.texture.frag
 web.array.frag
+web.separate.frag
+web.comp

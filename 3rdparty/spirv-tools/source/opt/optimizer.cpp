@@ -560,19 +560,25 @@ bool Optimizer::Run(const uint32_t* original_binary,
     return false;
   }
 
-  optimized_binary->clear();
-  context->module()->ToBinary(optimized_binary, /* skip_nop = */ true);
-
 #ifndef NDEBUG
   if (status == opt::Pass::Status::SuccessWithoutChange) {
-    auto changed = optimized_binary->size() != original_binary_size ||
-                   memcmp(optimized_binary->data(), original_binary,
-                          original_binary_size) != 0;
-    assert(!changed &&
-           "Binary unexpectedly changed despite optimizer saying there was no "
-           "change");
+    std::vector<uint32_t> optimized_binary_with_nop;
+    context->module()->ToBinary(&optimized_binary_with_nop,
+                                /* skip_nop = */ false);
+    assert(optimized_binary_with_nop.size() == original_binary_size &&
+           "Binary size unexpectedly changed despite the optimizer saying "
+           "there was no change");
+    assert(memcmp(optimized_binary_with_nop.data(), original_binary,
+                  original_binary_size) == 0 &&
+           "Binary content unexpectedly changed despite the optimizer saying "
+           "there was no change");
   }
 #endif  // !NDEBUG
+
+  // Note that |original_binary| and |optimized_binary| may share the same
+  // buffer and the below will invalidate |original_binary|.
+  optimized_binary->clear();
+  context->module()->ToBinary(optimized_binary, /* skip_nop = */ true);
 
   return true;
 }

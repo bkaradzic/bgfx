@@ -744,6 +744,54 @@ INSTANTIATE_TEST_SUITE_P(
          // pass
          "compact-ids"}}));
 
+TEST(Optimizer, RemoveNop) {
+  // Test that OpNops are removed even if no optimizations are run.
+  const std::string before = R"(OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%2 = OpTypeFunction %void
+%3 = OpFunction %void None %2
+%4 = OpLabel
+OpNop
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string after = R"(OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%2 = OpTypeFunction %void
+%3 = OpFunction %void None %2
+%4 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  std::vector<uint32_t> binary;
+  {
+    SpirvTools tools(SPV_ENV_VULKAN_1_1);
+    tools.Assemble(before, &binary);
+  }
+
+  Optimizer opt(SPV_ENV_VULKAN_1_1);
+
+  std::vector<uint32_t> optimized;
+  class ValidatorOptions validator_options;
+  ASSERT_TRUE(opt.Run(binary.data(), binary.size(), &optimized,
+                      validator_options, true))
+      << before << "\n";
+  std::string disassembly;
+  {
+    SpirvTools tools(SPV_ENV_WEBGPU_0);
+    tools.Disassemble(optimized.data(), optimized.size(), &disassembly);
+  }
+
+  EXPECT_EQ(after, disassembly)
+      << "Was expecting the OpNop to have been removed.";
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

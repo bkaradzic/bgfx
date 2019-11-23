@@ -114,12 +114,14 @@ void main (void)
 
 #extension GL_KHR_shader_subgroup_ballot: enable
 void ballot_works(vec4 f4) {
+  int i;
   gl_SubgroupEqMask;
   gl_SubgroupGeMask;
   gl_SubgroupGtMask;
   gl_SubgroupLeMask;
   gl_SubgroupLtMask;
   subgroupBroadcast(f4, 0);
+  subgroupBroadcast(f4, i);
   subgroupBroadcastFirst(f4);
   uvec4 ballot = subgroupBallot(false);
   subgroupInverseBallot(uvec4(0x1));
@@ -192,7 +194,9 @@ void clustered_works(vec4 f4)
 #extension GL_KHR_shader_subgroup_quad: enable
 void quad_works(vec4 f4)
 {
+  int i;
   subgroupQuadBroadcast(f4, 0);
+  subgroupQuadBroadcast(f4, i);
   subgroupQuadSwapHorizontal(f4);
   subgroupQuadSwapVertical(f4);
   subgroupQuadSwapDiagonal(f4);

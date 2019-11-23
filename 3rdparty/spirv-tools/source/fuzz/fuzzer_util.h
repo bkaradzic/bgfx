@@ -64,15 +64,10 @@ void AddUnreachableEdgeAndUpdateOpPhis(
 bool BlockIsInLoopContinueConstruct(opt::IRContext* context, uint32_t block_id,
                                     uint32_t maybe_loop_header_id);
 
-// Requires that |base_inst| is either the label instruction of |block| or an
-// instruction inside |block|.
-//
-// If the block contains a (non-label, non-terminator) instruction |offset|
-// instructions after |base_inst|, an iterator to this instruction is returned.
-//
+// If |block| contains |inst|, an iterator for |inst| is returned.
 // Otherwise |block|->end() is returned.
-opt::BasicBlock::iterator GetIteratorForBaseInstructionAndOffset(
-    opt::BasicBlock* block, const opt::Instruction* base_inst, uint32_t offset);
+opt::BasicBlock::iterator GetIteratorForInstruction(
+    opt::BasicBlock* block, const opt::Instruction* inst);
 
 // The function determines whether adding an edge from |bb_from| to |bb_to| -
 // is legitimate with respect to the SPIR-V rule that a definition must
@@ -86,6 +81,41 @@ bool NewEdgeRespectsUseDefDominance(opt::IRContext* context,
 // the function that contains |bb|.
 bool BlockIsReachableInItsFunction(opt::IRContext* context,
                                    opt::BasicBlock* bb);
+
+// Determines whether it is OK to insert an instruction with opcode |opcode|
+// before |instruction_in_block|.
+bool CanInsertOpcodeBeforeInstruction(
+    SpvOp opcode, const opt::BasicBlock::iterator& instruction_in_block);
+
+// Determines whether it is OK to make a synonym of |inst|.
+bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst);
+
+// Determines whether the given type is a composite; that is: an array, matrix,
+// struct or vector.
+bool IsCompositeType(const opt::analysis::Type* type);
+
+// Returns a vector containing the same elements as |repeated_field|.
+std::vector<uint32_t> RepeatedFieldToVector(
+    const google::protobuf::RepeatedField<uint32_t>& repeated_field);
+
+// Given a type id, |base_object_type_id|, checks that the given sequence of
+// |indices| is suitable for indexing into this type.  Returns the id of the
+// type of the final sub-object reached via the indices if they are valid, and
+// 0 otherwise.
+uint32_t WalkCompositeTypeIndices(
+    opt::IRContext* context, uint32_t base_object_type_id,
+    const google::protobuf::RepeatedField<google::protobuf::uint32>& indices);
+
+// Returns the number of members associated with |struct_type_instruction|,
+// which must be an OpStructType instruction.
+uint32_t GetNumberOfStructMembers(
+    const opt::Instruction& struct_type_instruction);
+
+// Returns the constant size of the array associated with
+// |array_type_instruction|, which must be an OpArrayType instruction. Returns
+// 0 if there is not a static size.
+uint32_t GetArraySize(const opt::Instruction& array_type_instruction,
+                      opt::IRContext* context);
 
 }  // namespace fuzzerutil
 
