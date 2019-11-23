@@ -653,6 +653,37 @@ TEST_F(ValueTableTest, PhiLoopTest) {
   EXPECT_NE(vtable.GetValueNumber(phi1), vtable.GetValueNumber(phi2));
 }
 
+// Test to make sure that OpPhi instructions with no in operands are handled
+// correctly.
+TEST_F(ValueTableTest, EmptyPhiTest) {
+  const std::string text = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource GLSL 430
+       %void = OpTypeVoid
+          %4 = OpTypeFunction %void
+       %bool = OpTypeBool
+       %true = OpConstantTrue %bool
+          %2 = OpFunction %void None %4
+          %7 = OpLabel
+               OpSelectionMerge %8 None
+               OpBranchConditional %true %9 %8
+          %9 = OpLabel
+               OpKill
+          %8 = OpLabel
+         %10 = OpPhi %bool
+               OpReturn
+               OpFunctionEnd
+  )";
+  auto context = BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text);
+  ValueNumberTable vtable(context.get());
+  Instruction* inst = context->get_def_use_mgr()->GetDef(10);
+  vtable.GetValueNumber(inst);
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools
