@@ -598,14 +598,14 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 		, true
 		);
 
-	m_vertexDecl
+	m_vertexLayout
 		.begin()
 		.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
 		.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Int16, true)
 		.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
 		.end();
 
-	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 }
 
 TextBufferManager::~TextBufferManager()
@@ -700,7 +700,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 	case FONT_TYPE_ALPHA:
 		program = m_basicProgram;
 		bgfx::setState(0
-			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_WRITE_RGB
 			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 			);
 		break;
@@ -708,7 +708,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 	case FONT_TYPE_DISTANCE:
 		program = m_distanceProgram;
 		bgfx::setState(0
-			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_WRITE_RGB
 			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 			);
 		break;
@@ -716,7 +716,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 	case FONT_TYPE_DISTANCE_SUBPIXEL:
 		program = m_distanceSubpixelProgram;
 		bgfx::setState(0
-			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_WRITE_RGB
 			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_INV_SRC_COLOR)
 			, bc.textBuffer->getTextColor()
 			);
@@ -738,7 +738,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 
 				vbh = bgfx::createVertexBuffer(
 								  bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
-								, m_vertexDecl
+								, m_vertexLayout
 								);
 
 				bc.vertexBufferHandleIdx = vbh.idx;
@@ -768,7 +768,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 
 				vbh = bgfx::createDynamicVertexBuffer(
 								  bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
-								, m_vertexDecl
+								, m_vertexLayout
 								);
 
 				bc.indexBufferHandleIdx = ibh.idx;
@@ -779,15 +779,17 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 				ibh.idx = bc.indexBufferHandleIdx;
 				vbh.idx = bc.vertexBufferHandleIdx;
 
-				bgfx::updateDynamicIndexBuffer(ibh
-						, 0
-						, bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)
-						);
+				bgfx::update(
+					  ibh
+					, 0
+					, bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)
+					);
 
-				bgfx::updateDynamicVertexBuffer(vbh
-						, 0
-						, bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
-						);
+				bgfx::update(
+					  vbh
+					, 0
+					, bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
+					);
 			}
 
 			bgfx::setVertexBuffer(0, vbh, 0, bc.textBuffer->getVertexCount() );
@@ -800,7 +802,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 			bgfx::TransientIndexBuffer tib;
 			bgfx::TransientVertexBuffer tvb;
 			bgfx::allocTransientIndexBuffer(&tib, bc.textBuffer->getIndexCount() );
-			bgfx::allocTransientVertexBuffer(&tvb, bc.textBuffer->getVertexCount(), m_vertexDecl);
+			bgfx::allocTransientVertexBuffer(&tvb, bc.textBuffer->getVertexCount(), m_vertexLayout);
 			bx::memCopy(tib.data, bc.textBuffer->getIndexBuffer(), indexSize);
 			bx::memCopy(tvb.data, bc.textBuffer->getVertexBuffer(), vertexSize);
 			bgfx::setVertexBuffer(0, &tvb, 0, bc.textBuffer->getVertexCount() );

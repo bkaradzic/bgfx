@@ -7,7 +7,7 @@
 declare -r EXE='../build/install/bin/glslangValidator'
 
 # search common locations for spirv-tools: keep first one
-for toolsdir in '../External/spirv-tools/build/tools' '../../SPIRV-Tools/build/tools' '/usr/local/bin'; do
+for toolsdir in '../External/spirv-tools/build/tools' '../../SPIRV-Tools/build/tools/bin' '/usr/local/bin'; do
     [[ -z "$VAL" && -x "${toolsdir}/spirv-val" ]] && declare -r VAL="${toolsdir}/spirv-val"
     [[ -z "$DIS" && -x "${toolsdir}/spirv-dis" ]] && declare -r DIS="${toolsdir}/spirv-dis"
 done

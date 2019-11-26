@@ -19,7 +19,7 @@ ERROR: 0:82: 'xr' : vector swizzle selectors not from the same set
 ERROR: 0:83: 'xyxyx' : vector swizzle too long 
 ERROR: 0:84: 'z' : vector swizzle selection out of range 
 ERROR: 0:85: 'assign' :  l-value required 
-ERROR: 0:91: 'int' : overloaded functions must have the same return type 
+ERROR: 0:91: 'main' : overloaded functions must have the same return type 
 ERROR: 0:91: 'main' : function already has a body 
 ERROR: 0:91: 'int' :  entry point cannot return a value
 ERROR: 0:92: 'main' : function cannot take any parameter(s) 
@@ -52,8 +52,12 @@ ERROR: 0:209: 'assign' :  cannot convert from ' const float' to ' temp 4-compone
 ERROR: 0:212: 'sampler2DRect' : Reserved word. 
 ERROR: 0:244: ':' :  wrong operand types: no operation ':' exists that takes a left-hand operand of type ' global void' and a right operand of type ' const int' (or there is no acceptable conversion)
 ERROR: 0:245: ':' :  wrong operand types: no operation ':' exists that takes a left-hand operand of type ' const int' and a right operand of type ' global void' (or there is no acceptable conversion)
+ERROR: 0:248: 'half floating-point suffix' : required extension not requested: Possible extensions include:
+GL_AMD_gpu_shader_half_float
+GL_EXT_shader_explicit_arithmetic_types
+GL_EXT_shader_explicit_arithmetic_types_float16
 ERROR: 0:248: '' :  syntax error, unexpected IDENTIFIER, expecting COMMA or SEMICOLON
-ERROR: 54 compilation errors.  No code generated.
+ERROR: 55 compilation errors.  No code generated.
 
 
 Shader version: 120

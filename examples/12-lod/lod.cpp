@@ -29,8 +29,8 @@ static const KnightPos knightTour[8*4] =
 class ExampleLod : public entry::AppI
 {
 public:
-	ExampleLod(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleLod(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -43,8 +43,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -57,8 +62,8 @@ public:
 			, 0
 			);
 
-		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
-		s_texStipple = bgfx::createUniform("s_texStipple", bgfx::UniformType::Int1);
+		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Sampler);
+		s_texStipple = bgfx::createUniform("s_texStipple", bgfx::UniformType::Sampler);
 		u_stipple    = bgfx::createUniform("u_stipple",    bgfx::UniformType::Vec4);
 
 		m_program = loadProgram("vs_tree", "fs_tree");
@@ -76,7 +81,7 @@ public:
 
 		m_textureStipple = bgfx::createTexture2D(8, 4, false, 1
 			, bgfx::TextureFormat::R8
-			, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT
+			, BGFX_SAMPLER_MAG_POINT|BGFX_SAMPLER_MIN_POINT
 			, stippleTex
 			);
 
@@ -171,24 +176,10 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			float at[3]  = { 0.0f, 1.0f,      0.0f };
-			float eye[3] = { 0.0f, 2.0f, -distance };
+			const bx::Vec3 at  = { 0.0f, 1.0f,      0.0f };
+			const bx::Vec3 eye = { 0.0f, 2.0f, -distance };
 
 			// Set view and projection matrix for view 0.
-			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-			{
-				float view[16];
-				bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
-				bgfx::setViewTransform(0, view, hmd->eye[0].projection, BGFX_VIEW_STEREO, hmd->eye[1].projection);
-
-				// Set view 0 default viewport.
-				//
-				// Use HMD's m_width/m_height since HMD's internal frame buffer size
-				// might be much larger than window size.
-				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-			}
-			else
 			{
 				float view[16];
 				bx::mtxLookAt(view, eye, at);
@@ -219,8 +210,8 @@ public:
 			stippleInv[2] = (float(m_transitionFrame)*4.0f/255.0f) - (1.0f/255.0f);
 
 			const uint64_t stateTransparent = 0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
 				| BGFX_STATE_DEPTH_TEST_LESS
 				| BGFX_STATE_CULL_CCW
 				| BGFX_STATE_MSAA
@@ -254,12 +245,12 @@ public:
 			}
 
 			int lod = 0;
-			if (eye[2] < -2.5f)
+			if (eye.z < -2.5f)
 			{
 				lod = 1;
 			}
 
-			if (eye[2] < -5.0f)
+			if (eye.z < -5.0f)
 			{
 				lod = 2;
 			}
@@ -320,4 +311,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleLod, "12-lod", "Mesh LOD transitions.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleLod
+	, "12-lod"
+	, "Mesh LOD transitions."
+	, "https://bkaradzic.github.io/bgfx/examples.html#lod"
+	);

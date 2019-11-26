@@ -2,9 +2,23 @@
 
 vec4 getColor();
 
-out vec4 color;
+layout(location=0) out vec4 color;
+
+int a1[];  // max size from link1
+int a2[];  // max size from link2
+int b[5];
+int c[];
+int i;
+
+layout (binding = 0) buffer bnameRuntime  { float r[]; };
+layout (binding = 1) buffer bnameImplicit { float m[]; };
 
 void main()
 {
     color = getColor();
+
+    a1[8] = 1;
+    a2[1] = 1;
+    b[i] = 1;
+    c[3] = 1;
 }

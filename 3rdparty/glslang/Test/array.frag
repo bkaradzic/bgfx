@@ -104,3 +104,10 @@ void foo3()
 int[] i = int[]();    // ERROR, need constructor arguments
 float emptyA[];
 float b = vec4(emptyA);    // ERROR, array can't be a constructor argument
+uniform sampler2D s2d[];
+
+void foo4()
+{
+    s2d[a];                         // ERROR, can't variably index unsized array
+    float local[] = gUnusedUnsized; // ERROR, can initialize with runtime-sized array
+}

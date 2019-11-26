@@ -14400,11 +14400,11 @@ enum D3D11_CREATE_DEVICE_FLAG
 #if !defined( D3D11_IGNORE_SDK_LAYERS ) 
 #include "d3d11sdklayers.h" 
 #endif 
-#include "d3d10_1.h"
-#include "d3d10shader.h" 
-#include "d3d10_1shader.h" 
-#include "d3d10misc.h" 
-#include "d3d10effect.h" 
+// BK - #include "d3d10_1.h"
+// BK - #include "d3d10shader.h"
+// BK - #include "d3d10_1shader.h"
+// BK - #include "d3d10misc.h"
+// BK - #include "d3d10effect.h"
 
 ///////////////////////////////////////////////////////////////////////////
 // D3D11CreateDevice

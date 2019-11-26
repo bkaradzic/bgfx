@@ -7,5 +7,7 @@
 
 #pragma undefined_pragma(x, 4)
 
+#pragma once
+
 int main() {
 }

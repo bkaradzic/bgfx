@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -7,7 +7,7 @@
 #define IMGUI_H_HEADER_GUARD
 
 #include <bgfx/bgfx.h>
-#include <ocornut-imgui/imgui.h>
+#include <dear-imgui/imgui.h>
 #include <iconfontheaders/icons_kenney.h>
 #include <iconfontheaders/icons_font_awesome.h>
 
@@ -30,7 +30,7 @@ namespace bx { struct AllocatorI; }
 void imguiCreate(float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL);
 void imguiDestroy();
 
-void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar = 0, bgfx::ViewId _view = 255);
+void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, int _inputChar = -1, bgfx::ViewId _view = 255);
 void imguiEndFrame();
 
 namespace entry { class AppI; }
@@ -108,32 +108,11 @@ namespace ImGui
 		SetCursorPosY(GetCursorPosY() + GetTextLineHeightWithSpacing() );
 	}
 
-	inline bool TabButton(const char* _text, float _width, bool _active)
-	{
-		int32_t count = 1;
-
-		if (_active)
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.75f, 0.0f, 0.78f) );
-			ImGui::PushStyleColor(ImGuiCol_Text,   ImVec4(0.0f, 0.0f,  0.0f, 1.0f ) );
-			count = 2;
-		}
-		else
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 0.7f) );
-		}
-
-		bool retval = ImGui::Button(_text, ImVec2(_width, 20.0f) );
-		ImGui::PopStyleColor(count);
-
-		return retval;
-	}
-
 	inline bool MouseOverArea()
 	{
 		return false
 			|| ImGui::IsAnyItemHovered()
-			|| ImGui::IsAnyWindowHovered()
+			|| ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
 			;
 	}
 

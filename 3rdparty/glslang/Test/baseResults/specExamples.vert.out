@@ -19,7 +19,6 @@ ERROR: 0:85: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCount
 ERROR: 0:87: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCounterBindings 
 ERROR: 0:89: 'binding' : atomic_uint binding is too large 
 ERROR: 0:91: 'bar' : redefinition 
-ERROR: 0:92: 'atomic_uint' : layout(binding=X) is required 
 ERROR: 0:94: 'a2' : redefinition 
 ERROR: 0:95: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCounterBindings 
 ERROR: 0:96: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCounterBindings 
@@ -31,8 +30,10 @@ ERROR: 0:132: 'shared' : not supported in this stage: vertex
 ERROR: 0:134: '' : function does not return a value: funcA
 ERROR: 0:136: '' : function does not return a value: funcB
 ERROR: 0:153: '' : function does not return a value: func3
+ERROR: 0:169: 'format' : image formats must match 
 ERROR: 0:170: 'coherent' : argument cannot drop memory qualifier when passed to formal parameter 
-ERROR: 33 compilation errors.  No code generated.
+ERROR: 0:170: 'format' : image formats must match 
+ERROR: 34 compilation errors.  No code generated.
 
 
 Shader version: 430
@@ -277,7 +278,7 @@ ERROR: node is still EOpNull!
 0:?   Linker Objects
 0:?     'Coords' ( out block{ out 4-component vector of float Position,  out 2-component vector of float Texture})
 0:?     'anon@0' ( out block{ out 4-component vector of float Color})
-0:?     'transforms' (layout( column_major shared) uniform 4-element array of block{layout( column_major shared) uniform 4X4 matrix of float ModelViewMatrix, layout( column_major shared) uniform 4X4 matrix of float ModelViewProjectionMatrix, layout( column_major shared) uniform implicitly-sized array of 4-component vector of float a, layout( column_major shared) uniform float Deformation})
+0:?     'transforms' (layout( column_major shared) uniform 4-element array of block{layout( column_major shared) uniform 4X4 matrix of float ModelViewMatrix, layout( column_major shared) uniform 4X4 matrix of float ModelViewProjectionMatrix, layout( column_major shared) uniform unsized 1-element array of 4-component vector of float a, layout( column_major shared) uniform float Deformation})
 0:?     'normal' (layout( location=3) in 4-component vector of float)
 0:?     'colors' (layout( location=6) in 3-element array of 4-component vector of float)
 0:?     'transforms2' (layout( location=9) in 2-element array of 4X4 matrix of float)
@@ -296,7 +297,7 @@ ERROR: node is still EOpNull!
 0:?     'b2' (layout( binding=2) uniform atomic_uint)
 0:?     'c2' (layout( binding=3) uniform atomic_uint)
 0:?     'd2' (layout( binding=2) uniform atomic_uint)
-0:?     'anon@5' ( out block{ invariant gl_Position 4-component vector of float Position gl_Position,  gl_PointSize float PointSize gl_PointSize,  out implicitly-sized array of float ClipDistance gl_ClipDistance,  gl_ClipVertex 4-component vector of float ClipVertex gl_ClipVertex,  flat out 4-component vector of float FrontColor gl_FrontColor,  out 4-component vector of float BackColor gl_BackColor,  out 4-component vector of float FrontSecondaryColor gl_FrontSecondaryColor,  out 4-component vector of float BackSecondaryColor gl_BackSecondaryColor,  out implicitly-sized array of 4-component vector of float TexCoord gl_TexCoord,  out float FogFragCoord gl_FogFragCoord})
+0:?     'anon@5' ( out block{ invariant gl_Position 4-component vector of float Position gl_Position,  gl_PointSize float PointSize gl_PointSize,  out unsized 1-element array of float ClipDistance gl_ClipDistance,  gl_ClipVertex 4-component vector of float ClipVertex gl_ClipVertex,  flat out 4-component vector of float FrontColor gl_FrontColor,  out 4-component vector of float BackColor gl_BackColor,  out 4-component vector of float FrontSecondaryColor gl_FrontSecondaryColor,  out 4-component vector of float BackSecondaryColor gl_BackSecondaryColor,  out unsized 1-element array of 4-component vector of float TexCoord gl_TexCoord,  out float FogFragCoord gl_FogFragCoord})
 0:?     'ColorInv' ( smooth out 3-component vector of float)
 0:?     'Color4' ( invariant centroid smooth out 3-component vector of float)
 0:?     'position' ( noContraction smooth out 4-component vector of float)
@@ -306,7 +307,7 @@ ERROR: node is still EOpNull!
 0:?     'c' ( in 4-component vector of float)
 0:?     'd' ( in 4-component vector of float)
 0:?     'v' ( noContraction smooth out 4-component vector of float)
-0:?     'anon@6' (layout( column_major shared) coherent buffer block{layout( column_major shared) readonly buffer 4-component vector of float member1, layout( column_major shared) buffer 4-component vector of float member2})
+0:?     'anon@6' (layout( column_major shared) coherent buffer block{layout( column_major shared) coherent readonly buffer 4-component vector of float member1, layout( column_major shared) coherent buffer 4-component vector of float member2})
 0:?     'anon@7' (layout( column_major shared) buffer block{layout( column_major shared) coherent readonly buffer 4-component vector of float member1A, layout( column_major shared) coherent buffer 4-component vector of float member2A})
 0:?     'shv' ( shared 4-component vector of float)
 0:?     'img1' (layout( rgba32f) uniform image2D)
@@ -589,7 +590,7 @@ ERROR: node is still EOpNull!
 0:?     'c' ( in 4-component vector of float)
 0:?     'd' ( in 4-component vector of float)
 0:?     'v' ( noContraction smooth out 4-component vector of float)
-0:?     'anon@6' (layout( column_major shared) coherent buffer block{layout( column_major shared) readonly buffer 4-component vector of float member1, layout( column_major shared) buffer 4-component vector of float member2})
+0:?     'anon@6' (layout( column_major shared) coherent buffer block{layout( column_major shared) coherent readonly buffer 4-component vector of float member1, layout( column_major shared) coherent buffer 4-component vector of float member2})
 0:?     'anon@7' (layout( column_major shared) buffer block{layout( column_major shared) coherent readonly buffer 4-component vector of float member1A, layout( column_major shared) coherent buffer 4-component vector of float member2A})
 0:?     'shv' ( shared 4-component vector of float)
 0:?     'img1' (layout( rgba32f) uniform image2D)

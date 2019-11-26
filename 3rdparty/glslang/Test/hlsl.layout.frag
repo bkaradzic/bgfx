@@ -14,5 +14,6 @@ tbuffer tbufName2 : layout(set=4,binding=7) {
 
 float4 PixelShaderFunction(float4 input) : COLOR0
 {
-    return input + v1 + v5 + v1PostLayout;
+    float4 layout = 2.0;
+    return input + v1 + v5 + v1PostLayout * layout;
 }

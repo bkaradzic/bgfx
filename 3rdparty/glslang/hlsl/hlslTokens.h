@@ -95,6 +95,7 @@ enum EHlslTokenClass {
     EHTokBool,
     EHTokInt,
     EHTokUint,
+    EHTokUint64,
     EHTokDword,
     EHTokHalf,
     EHTokFloat,
@@ -297,6 +298,7 @@ enum EHlslTokenClass {
     EHTokConstantBuffer,
 
     // constant
+    EHTokFloat16Constant,
     EHTokFloatConstant,
     EHTokDoubleConstant,
     EHTokIntConstant,

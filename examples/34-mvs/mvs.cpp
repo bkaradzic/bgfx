@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -18,16 +18,16 @@ struct PosVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosVertex::ms_decl;
+bgfx::VertexLayout PosVertex::ms_layout;
 
 struct ColorVertex
 {
@@ -35,16 +35,16 @@ struct ColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl ColorVertex::ms_decl;
+bgfx::VertexLayout ColorVertex::ms_layout;
 
 static PosVertex s_cubePosVertices[] =
 {
@@ -105,8 +105,8 @@ static const uint16_t s_cubeTriStrip[] =
 class ExampleMvs : public entry::AppI
 {
 public:
-	ExampleMvs(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleMvs(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -121,8 +121,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -143,13 +148,13 @@ public:
 		m_vbh[0] = bgfx::createVertexBuffer(
 				// Static data can be passed with bgfx::makeRef
 				  bgfx::makeRef(s_cubePosVertices, sizeof(s_cubePosVertices) )
-				, PosVertex::ms_decl
+				, PosVertex::ms_layout
 				);
 
 		m_vbh[1] = bgfx::createVertexBuffer(
 				// Static data can be passed with bgfx::makeRef
 				  bgfx::makeRef(s_cubeColorVertices, sizeof(s_cubeColorVertices) )
-				, ColorVertex::ms_decl
+				, ColorVertex::ms_layout
 				);
 
 		// Create static index buffer.
@@ -202,24 +207,10 @@ public:
 
 			float time = (float)( (bx::getHPCounter()-m_timeOffset)/double(bx::getHPFrequency() ) );
 
-			float at[3]  = { 0.0f, 0.0f,   0.0f };
-			float eye[3] = { 0.0f, 0.0f, -35.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
 			// Set view and projection matrix for view 0.
-			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-			{
-				float view[16];
-				bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
-				bgfx::setViewTransform(0, view, hmd->eye[0].projection, BGFX_VIEW_STEREO, hmd->eye[1].projection);
-
-				// Set view 0 default viewport.
-				//
-				// Use HMD's width/height since HMD's internal frame buffer size
-				// might be much larger than window size.
-				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-			}
-			else
 			{
 				float view[16];
 				bx::mtxLookAt(view, eye, at);
@@ -290,4 +281,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleMvs, "34-mvs", "Multiple vertex streams.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleMvs
+	, "34-mvs"
+	, "Multiple vertex streams."
+	, "https://bkaradzic.github.io/bgfx/examples.html#mvs"
+	);

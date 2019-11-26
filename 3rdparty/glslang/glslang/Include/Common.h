@@ -37,9 +37,25 @@
 #ifndef _COMMON_INCLUDED_
 #define _COMMON_INCLUDED_
 
-#if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/) // || defined MINGW_HAS_SECURE_API
+#include <sstream>
+
+#if defined(__ANDROID__) || (defined(_MSC_VER) && _MSC_VER < 1700)
+
+namespace std {
+template<typename T>
+std::string to_string(const T& val) {
+  std::ostringstream os;
+  os << val;
+  return os.str();
+}
+}
+#endif
+
+#if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/) || defined MINGW_HAS_SECURE_API
     #include <basetsd.h>
+    #ifndef snprintf
     #define snprintf sprintf_s
+    #endif
     #define safe_vsprintf(buf,max,format,args) vsnprintf_s((buf), (max), (max), (format), (args))
 #elif defined (solaris)
     #define safe_vsprintf(buf,max,format,args) vsnprintf((buf), (max), (format), (args))
@@ -51,31 +67,20 @@
     #define UINT_PTR uintptr_t
 #endif
 
-#if defined(__ANDROID__) || _MSC_VER < 1700
-#include <sstream>
-namespace std {
-template<typename T>
-std::string to_string(const T& val) {
-  std::ostringstream os;
-  os << val;
-  return os.str();
-}
-}
-#endif
-
 #if defined(_MSC_VER) && _MSC_VER < 1800
-inline long long int strtoll (const char* str, char** endptr, int base)
-{
-  return _strtoi64(str, endptr, base);
-}
-inline unsigned long long int strtoull (const char* str, char** endptr, int base)
-{
-  return _strtoui64(str, endptr, base);
-}
-inline long long int atoll (const char* str)
-{
-  return strtoll(str, NULL, 10);
-}
+    #include <stdlib.h>
+    inline long long int strtoll (const char* str, char** endptr, int base)
+    {
+        return _strtoi64(str, endptr, base);
+    }
+    inline unsigned long long int strtoull (const char* str, char** endptr, int base)
+    {
+        return _strtoui64(str, endptr, base);
+    }
+    inline long long int atoll (const char* str)
+    {
+        return strtoll(str, NULL, 10);
+    }
 #endif
 
 #if defined(_MSC_VER)
@@ -98,6 +103,7 @@ inline long long int atoll (const char* str)
 #include <algorithm>
 #include <string>
 #include <cstdio>
+#include <cstdlib>
 #include <cassert>
 
 #include "PoolAlloc.h"
@@ -155,7 +161,7 @@ inline TString* NewPoolTString(const char* s)
     return new(memory) TString(s);
 }
 
-template<class T> inline T* NewPoolObject(T)
+template<class T> inline T* NewPoolObject(T*)
 {
     return new(GetThreadPoolAllocator().allocate(sizeof(T))) T;
 }
@@ -225,16 +231,29 @@ inline const TString String(const int i, const int /*base*/ = 10)
 #endif
 
 struct TSourceLoc {
-    void init() { name = nullptr; string = 0; line = 0; column = 0; }
+    void init()
+    {
+        name = nullptr; string = 0; line = 0; column = 0;
+    }
     void init(int stringNum) { init(); string = stringNum; }
     // Returns the name if it exists. Otherwise, returns the string number.
     std::string getStringNameOrNum(bool quoteStringName = true) const
     {
-        if (name != nullptr)
-            return quoteStringName ? ("\"" + std::string(name) + "\"") : name;
+        if (name != nullptr) {
+            TString qstr = quoteStringName ? ("\"" + *name + "\"") : *name;
+            std::string ret_str(qstr.c_str());
+            return ret_str;
+        }
         return std::to_string((long long)string);
     }
-    const char* name; // descriptive name for this string
+    const char* getFilename() const
+    {
+        if (name == nullptr)
+            return nullptr;
+        return name->c_str();
+    }
+    const char* getFilenameStr() const { return name == nullptr ? "" : name->c_str(); }
+    TString* name; // descriptive name for this string, when a textual name is available, otherwise nullptr
     int string;
     int line;
     int column;

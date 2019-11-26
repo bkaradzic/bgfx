@@ -1,7 +1,7 @@
 300.frag
 ERROR: 0:2: 'float' : type requires declaration of default precision qualifier 
 ERROR: 0:30: 'noperspective' : Reserved word. 
-ERROR: 0:30: 'noperspective' : not supported with this profile: es
+ERROR: 0:30: 'noperspective' : not supported for this version or the enabled extensions 
 ERROR: 0:31: 'sampler2D' : sampler/image types can only be used in uniform variables or function parameters: bads
 ERROR: 0:32: 'uint' : cannot apply precision statement to this type; use 'float', 'int' or a sampler type 
 ERROR: 0:39: 'structure' : must be qualified as flat in
@@ -26,6 +26,7 @@ ERROR: 0:101: 'arrays of arrays' : not supported for this version or the enabled
 ERROR: 0:102: 'arrays of arrays' : not supported for this version or the enabled extensions 
 ERROR: 0:102: 'arrays of arrays' : not supported for this version or the enabled extensions 
 ERROR: 0:103: 'arrays of arrays' : not supported for this version or the enabled extensions 
+ERROR: 0:103: 'arrays of arrays' : not supported for this version or the enabled extensions 
 ERROR: 0:100: 'arrays of arrays' : not supported for this version or the enabled extensions 
 ERROR: 0:100: 'array-of-array of block' : not supported with this profile: es
 ERROR: 0:111: 'variable indexing fragment shader output array' : not supported with this profile: es
@@ -44,7 +45,7 @@ ERROR: 0:157: 'invariant' : can only apply to an output
 ERROR: 0:158: 'invariant' : can only apply to an output 
 ERROR: 0:160: 'imageBuffer' : Reserved word. 
 ERROR: 0:160: '' :  syntax error, unexpected IMAGEBUFFER, expecting COMMA or SEMICOLON
-ERROR: 45 compilation errors.  No code generated.
+ERROR: 46 compilation errors.  No code generated.
 
 
 Shader version: 300
@@ -392,7 +393,7 @@ ERROR: node is still EOpNull!
 0:?     'sc' ( out lowp 3-component vector of float)
 0:?     'sf' ( out lowp float)
 0:?     'arrayedSampler' ( uniform 5-element array of lowp sampler2D)
-0:?     'multiInst' (layout( column_major shared) uniform 2-element array of 3-element array of block{layout( column_major shared) uniform 2-element array of mediump int a, layout( column_major shared) uniform 2-element array of 3-element array of mediump int b, layout( column_major shared) uniform 2-element array of 3-element array of mediump int c})
+0:?     'multiInst' (layout( column_major shared) uniform 2-element array of 3-element array of block{layout( column_major shared) uniform 3-element array of 2-element array of mediump int a, layout( column_major shared) uniform 2-element array of 3-element array of mediump int b, layout( column_major shared) uniform 2-element array of 3-element array of mediump int c})
 0:?     'colors' ( out 4-element array of lowp 4-component vector of float)
 0:?     'st1' ( uniform structure{ global mediump int i,  global lowp sampler2D s})
 0:?     'st2' ( uniform structure{ global mediump int i,  global lowp sampler2D s})
@@ -623,7 +624,7 @@ ERROR: node is still EOpNull!
 0:?     'sc' ( out lowp 3-component vector of float)
 0:?     'sf' ( out lowp float)
 0:?     'arrayedSampler' ( uniform 5-element array of lowp sampler2D)
-0:?     'multiInst' (layout( column_major shared) uniform 2-element array of 3-element array of block{layout( column_major shared) uniform 2-element array of mediump int a, layout( column_major shared) uniform 2-element array of 3-element array of mediump int b, layout( column_major shared) uniform 2-element array of 3-element array of mediump int c})
+0:?     'multiInst' (layout( column_major shared) uniform 2-element array of 3-element array of block{layout( column_major shared) uniform 3-element array of 2-element array of mediump int a, layout( column_major shared) uniform 2-element array of 3-element array of mediump int b, layout( column_major shared) uniform 2-element array of 3-element array of mediump int c})
 0:?     'colors' ( out 4-element array of lowp 4-component vector of float)
 0:?     'st1' ( uniform structure{ global mediump int i,  global lowp sampler2D s})
 0:?     'st2' ( uniform structure{ global mediump int i,  global lowp sampler2D s})

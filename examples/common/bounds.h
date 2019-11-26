@@ -1,130 +1,149 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #ifndef BOUNDS_H_HEADER_GUARD
 #define BOUNDS_H_HEADER_GUARD
 
+#include <bx/math.h>
+
+///
 struct Aabb
 {
-	float m_min[3];
-	float m_max[3];
+	bx::Vec3 min;
+	bx::Vec3 max;
 };
 
-struct Cylinder
-{
-	float m_pos[3];
-	float m_end[3];
-	float m_radius;
-};
-
+///
 struct Capsule
 {
-	float m_pos[3];
-	float m_end[3];
-	float m_radius;
+	bx::Vec3 pos;
+	bx::Vec3 end;
+	float    radius;
 };
 
+///
 struct Cone
 {
-	float m_pos[3];
-	float m_end[3];
-	float m_radius;
+	bx::Vec3 pos;
+	bx::Vec3 end;
+	float    radius;
 };
 
+///
+struct Cylinder
+{
+	bx::Vec3 pos;
+	bx::Vec3 end;
+	float    radius;
+};
+
+///
 struct Disk
 {
-	float m_center[3];
-	float m_normal[3];
-	float m_radius;
+	bx::Vec3 center;
+	bx::Vec3 normal;
+	float    radius;
 };
 
+///
 struct Obb
 {
-	float m_mtx[16];
+	float mtx[16];
 };
 
-struct Plane
-{
-	float m_normal[3];
-	float m_dist;
-};
-
-struct Ray
-{
-	float m_pos[3];
-	float m_dir[3];
-};
-
+///
 struct Sphere
 {
-	float m_center[3];
-	float m_radius;
+	bx::Vec3 center;
+	float    radius;
 };
 
-struct Tris
+///
+struct Triangle
 {
-	float m_v0[3];
-	float m_v1[3];
-	float m_v2[3];
+	bx::Vec3 v0;
+	bx::Vec3 v1;
+	bx::Vec3 v2;
 };
 
+///
+struct Ray
+{
+	bx::Vec3 pos;
+	bx::Vec3 dir;
+};
+
+///
 struct Hit
 {
-	float m_pos[3];
-	float m_normal[3];
-	float m_dist;
+	bx::Vec3  pos;
+	bx::Plane plane;
 };
 
-/// Convert axis aligned bounding box to oriented bounding box.
-void aabbToObb(Obb& _obb, const Aabb& _aabb);
+///
+bx::Vec3 getCenter(const Aabb& _aabb);
 
-/// Convert oriented bounding box to axis aligned bounding box.
-void toAabb(Aabb& _aabb, const Obb& _obb);
+///
+bx::Vec3 getExtents(const Aabb& _aabb);
 
-/// Convert sphere to axis aligned bounding box.
-void toAabb(Aabb& _aabb, const Sphere& _sphere);
+///
+bx::Vec3 getCenter(const Triangle& _triangle);
 
-/// Convert disk to axis aligned bounding box.
-void toAabb(Aabb& _aabb, const Disk& _disk);
+///
+void toAabb(Aabb& _outAabb, const bx::Vec3& _extents);
+
+///
+void toAabb(Aabb& _outAabb, const bx::Vec3& _center, const bx::Vec3& _extents);
 
 /// Convert cylinder to axis aligned bounding box.
-void toAabb(Aabb& _aabb, const Cylinder& _cylinder);
+void toAabb(Aabb& _outAabb, const Cylinder& _cylinder);
+
+/// Convert disk to axis aligned bounding box.
+void toAabb(Aabb& _outAabb, const Disk& _disk);
+
+/// Convert oriented bounding box to axis aligned bounding box.
+void toAabb(Aabb& _outAabb, const Obb& _obb);
+
+/// Convert sphere to axis aligned bounding box.
+void toAabb(Aabb& _outAabb, const Sphere& _sphere);
+
+/// Convert triangle to axis aligned bounding box.
+void toAabb(Aabb& _outAabb, const Triangle& _triangle);
 
 /// Calculate axis aligned bounding box.
-void toAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
+void toAabb(Aabb& _outAabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
 
 /// Transform vertices and calculate axis aligned bounding box.
-void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
+void toAabb(Aabb& _outAabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
 
 /// Expand AABB.
-void aabbExpand(Aabb& _aabb, float _factor);
+void aabbExpand(Aabb& _outAabb, float _factor);
 
 /// Expand AABB with xyz.
-void aabbExpand(Aabb& _aabb, const float* _pos);
+void aabbExpand(Aabb& _outAabb, const bx::Vec3& _pos);
 
 /// Calculate surface area of axis aligned bounding box.
 float calcAreaAabb(const Aabb& _aabb);
 
-/// Returns 0 is two AABB don't overlap, otherwise returns flags of overlap
-/// test.
-uint32_t aabbOverlapTest(const Aabb& _aabb0, const Aabb& _aabb1);
+/// Convert axis aligned bounding box to oriented bounding box.
+void toObb(Obb& _outObb, const Aabb& _aabb);
 
 /// Calculate oriented bounding box.
-void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _stride, uint32_t _steps = 17);
+void calcObb(Obb& _outObb, const void* _vertices, uint32_t _numVertices, uint32_t _stride, uint32_t _steps = 17);
 
 /// Calculate maximum bounding sphere.
-void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
+void calcMaxBoundingSphere(Sphere& _outSphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
 
 /// Calculate minimum bounding sphere.
-void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step = 0.01f);
+void calcMinBoundingSphere(Sphere& _outSphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step = 0.01f);
 
 /// Returns 6 (near, far, left, right, top, bottom) planes representing frustum planes.
-void buildFrustumPlanes(Plane* _planes, const float* _viewProj);
+void buildFrustumPlanes(bx::Plane* _outPlanes, const float* _viewProj);
 
 /// Returns point from 3 intersecting planes.
-void intersectPlanes(float _result[3], const Plane& _pa, const Plane& _pb, const Plane& _pc);
+bx::Vec3 intersectPlanes(const bx::Plane& _pa, const bx::Plane& _pb, const bx::Plane& _pc);
 
 /// Make screen space ray from x, y coordinate and inverse view-projection matrix.
 Ray makeRay(float _x, float _y, const float* _invVp);
@@ -148,12 +167,282 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit = NULL);
 bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit = NULL);
 
 /// Intersect ray / plane.
-bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit = NULL);
+bool intersect(const Ray& _ray, const bx::Plane& _plane, Hit* _hit = NULL);
 
 /// Intersect ray / sphere.
 bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit = NULL);
 
 /// Intersect ray / triangle.
-bool intersect(const Ray& _ray, const Tris& _triangle, Hit* _hit = NULL);
+bool intersect(const Ray& _ray, const Triangle& _triangle, Hit* _hit = NULL);
+
+///
+bool overlap(const Aabb& _aabb, const bx::Vec3& _pos);
+
+///
+bool overlap(const Aabb& _aabb, const Sphere& _sphere);
+
+///
+bool overlap(const Aabb& _aabbA, const Aabb& _aabbB);
+
+///
+bool overlap(const Aabb& _aabb, const bx::Plane& _plane);
+
+///
+bool overlap(const Aabb& _aabb, const Triangle& _triangle);
+
+///
+bool overlap(const Aabb& _aabb, const Cylinder& _cylinder);
+
+///
+bool overlap(const Aabb& _aabb, const Capsule& _capsule);
+
+///
+bool overlap(const Aabb& _aabb, const Cone& _cone);
+
+///
+bool overlap(const Aabb& _aabb, const Disk& _disk);
+
+///
+bool overlap(const Aabb& _aabb, const Obb& _obb);
+
+///
+bool overlap(const Capsule& _capsule, const bx::Vec3& _pos);
+
+///
+bool overlap(const Capsule& _capsule, const Sphere& _sphere);
+
+///
+bool overlap(const Capsule& _capsule, const Aabb& _aabb);
+
+///
+bool overlap(const Capsule& _capsule, const bx::Plane& _plane);
+
+///
+bool overlap(const Capsule& _capsule, const Triangle& _triangle);
+
+///
+bool overlap(const Capsule& _capsule, const Cylinder& _cylinder);
+
+///
+bool overlap(const Capsule& _capsuleA, const Capsule& _capsuleB);
+
+///
+bool overlap(const Capsule& _capsule, const Cone& _cone);
+
+///
+bool overlap(const Capsule& _capsule, const Disk& _disk);
+
+///
+bool overlap(const Capsule& _capsule, const Obb& _obb);
+
+///
+bool overlap(const Cone& _cone, const bx::Vec3& _pos);
+
+///
+bool overlap(const Cone& _cone, const Sphere& _sphere);
+
+///
+bool overlap(const Cone& _cone, const Aabb& _aabb);
+
+///
+bool overlap(const Cone& _cone, const bx::Plane& _plane);
+
+///
+bool overlap(const Cone& _cone, const Triangle& _triangle);
+
+///
+bool overlap(const Cone& _cone, const Cylinder& _cylinder);
+
+///
+bool overlap(const Cone& _cone, const Capsule& _capsule);
+
+///
+bool overlap(const Cone& _coneA, const Cone& _coneB);
+
+///
+bool overlap(const Cone& _cone, const Disk& _disk);
+
+///
+bool overlap(const Cone& _cone, const Obb& _obb);
+
+///
+bool overlap(const Cylinder& _cylinder, const bx::Vec3& _pos);
+
+///
+bool overlap(const Cylinder& _cylinder, const Sphere& _sphere);
+
+///
+bool overlap(const Cylinder& _cylinder, const Aabb& _aabb);
+
+///
+bool overlap(const Cylinder& _cylinder, const bx::Plane& _plane);
+
+///
+bool overlap(const Cylinder& _cylinder, const Triangle& _triangle);
+
+///
+bool overlap(const Cylinder& _cylinderA, const Cylinder& _cylinderB);
+
+///
+bool overlap(const Cylinder& _cylinder, const Capsule& _capsule);
+
+///
+bool overlap(const Cylinder& _cylinder, const Cone& _cone);
+
+///
+bool overlap(const Cylinder& _cylinder, const Disk& _disk);
+
+///
+bool overlap(const Cylinder& _cylinder, const Obb& _obb);
+
+///
+bool overlap(const Disk& _disk, const bx::Vec3& _pos);
+
+///
+bool overlap(const Disk& _disk, const Sphere& _sphere);
+
+///
+bool overlap(const Disk& _disk, const Aabb& _aabb);
+
+///
+bool overlap(const Disk& _disk, const bx::Plane& _plane);
+
+///
+bool overlap(const Disk& _disk, const Triangle& _triangle);
+
+///
+bool overlap(const Disk& _disk, const Cylinder& _cylinder);
+
+///
+bool overlap(const Disk& _disk, const Capsule& _capsule);
+
+///
+bool overlap(const Disk& _disk, const Cone& _cone);
+
+///
+bool overlap(const Disk& _diskA, const Disk& _diskB);
+
+///
+bool overlap(const Disk& _disk, const Obb& _obb);
+
+///
+bool overlap(const Obb& _obb, const bx::Vec3& _pos);
+
+///
+bool overlap(const Obb& _obb, const Sphere& _sphere);
+
+///
+bool overlap(const Obb& _obb, const Aabb& _aabb);
+
+///
+bool overlap(const Obb& _obb, const bx::Plane& _plane);
+
+///
+bool overlap(const Obb& _obb, const Triangle& _triangle);
+
+///
+bool overlap(const Obb& _obb, const Cylinder& _cylinder);
+
+///
+bool overlap(const Obb& _obb, const Capsule& _capsule);
+
+///
+bool overlap(const Obb& _obb, const Cone& _cone);
+
+///
+bool overlap(const Obb& _obb, const Disk& _disk);
+
+///
+bool overlap(const Obb& _obbA, const Obb& _obbB);
+
+///
+bool overlap(const bx::Plane& _plane, const bx::Vec3& _pos);
+
+///
+bool overlap(const bx::Plane& _plane, const Sphere& _sphere);
+
+///
+bool overlap(const bx::Plane& _plane, const Aabb& _aabb);
+
+///
+bool overlap(const bx::Plane& _planeA, const bx::Plane& _planeB);
+
+///
+bool overlap(const bx::Plane& _plane, const Triangle& _triangle);
+
+///
+bool overlap(const bx::Plane& _plane, const Cylinder& _cylinder);
+
+///
+bool overlap(const bx::Plane& _plane, const Capsule& _capsule);
+
+///
+bool overlap(const bx::Plane& _plane, const Cone& _cone);
+
+///
+bool overlap(const bx::Plane& _plane, const Disk& _disk);
+
+///
+bool overlap(const bx::Plane& _plane, const Obb& _obb);
+
+///
+bool overlap(const Sphere& _sphere, const bx::Vec3& _pos);
+
+///
+bool overlap(const Sphere& _sphereA, const Sphere& _sphereB);
+
+///
+bool overlap(const Sphere& _sphere, const Aabb& _aabb);
+
+///
+bool overlap(const Sphere& _sphere, const bx::Plane& _plane);
+
+///
+bool overlap(const Sphere& _sphere, const Triangle& _triangle);
+
+///
+bool overlap(const Sphere& _sphere, const Cylinder& _cylinder);
+
+///
+bool overlap(const Sphere& _sphere, const Capsule& _capsule);
+
+///
+bool overlap(const Sphere& _sphere, const Cone& _cone);
+
+///
+bool overlap(const Sphere& _sphere, const Disk& _disk);
+
+///
+bool overlap(const Sphere& _sphere, const Obb& _obb);
+
+///
+bool overlap(const Triangle& _triangle, const bx::Vec3& _pos);
+
+///
+bool overlap(const Triangle& _triangle, const Sphere& _sphere);
+
+///
+bool overlap(const Triangle& _triangle, const Aabb& _aabb);
+
+///
+bool overlap(const Triangle& _triangle, const bx::Plane& _plane);
+
+///
+bool overlap(const Triangle& _triangleA, const Triangle& _triangleB);
+
+///
+bool overlap(const Triangle& _triangle, const Cylinder& _cylinder);
+
+///
+bool overlap(const Triangle& _triangle, const Capsule& _capsule);
+
+///
+bool overlap(const Triangle& _triangle, const Cone& _cone);
+
+///
+bool overlap(const Triangle& _triangle, const Disk& _disk);
+
+///
+bool overlap(const Triangle& _triangle, const Obb& _obb);
 
 #endif // BOUNDS_H_HEADER_GUARD

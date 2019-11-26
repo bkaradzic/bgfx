@@ -19,20 +19,21 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
-#include	<stdio.h>
-#include	<ctype.h>
-#include	"cppdef.h"
-#include	"cpp.h"
+#include <stdio.h>
+#include <ctype.h>
 
-INLINE FILE_LOCAL ReturnCode checkparm(struct Global *, int, DEFBUF *, int);
-INLINE FILE_LOCAL ReturnCode stparmscan(struct Global *, int);
-INLINE FILE_LOCAL ReturnCode textput(struct Global *, char *);
-FILE_LOCAL ReturnCode charput(struct Global *, int);
-INLINE FILE_LOCAL ReturnCode expcollect(struct Global *);
-INLINE FILE_LOCAL char *doquoting(char *, char *);
+#include "cppdef.h"
+#include "cpp.h"
+
+INLINE FILE_LOCAL ReturnCode fpp_checkparm(struct Global *, int, DEFBUF *, int);
+INLINE FILE_LOCAL ReturnCode fpp_stparmscan(struct Global *, int);
+INLINE FILE_LOCAL ReturnCode fpp_textput(struct Global *, char *);
+FILE_LOCAL ReturnCode fpp_charput(struct Global *, int);
+INLINE FILE_LOCAL ReturnCode fpp_expcollect(struct Global *);
+INLINE FILE_LOCAL char *fpp_doquoting(char *, char *);
 
 
-ReturnCode dodefine(struct Global *global)
+ReturnCode fpp_dodefine(struct Global *global)
 {
   /*
    * Called from control when a #define is scanned.  This module
@@ -61,63 +62,63 @@ ReturnCode dodefine(struct Global *global)
    * is not.
    *
    * The following subroutines are called from define():
-   * checkparm	called when a token is scanned.  It checks through the
+   * fpp_checkparm	called when a token is scanned.  It checks through the
    *		array of formal parameters.  If a match is found, the
    *		token is replaced by a control byte which will be used
    *		to locate the parameter when the macro is expanded.
-   * textput	puts a string in the macro work area (parm[]), updating
+   * fpp_textput	puts a string in the macro work area (parm[]), updating
    *		parmp to point to the first free byte in parm[].
-   *		textput() tests for work buffer overflow.
-   * charput	puts a single character in the macro work area (parm[])
-   *		in a manner analogous to textput().
+   *		fpp_textput() tests for work buffer overflow.
+   * fpp_charput	puts a single character in the macro work area (parm[])
+   *		in a manner analogous to fpp_textput().
    */
   int c;
   DEFBUF *dp;	/* -> new definition	*/
-  int isredefine;	/* TRUE if redefined	*/
+  int isredefine;	/* FPP_TRUE if redefined	*/
   char *old = NULL;		/* Remember redefined	*/
   ReturnCode ret;
 #if OK_CONCAT
   int quoting;	/* Remember we saw a #	*/
 #endif
   
-  if (type[(c = skipws(global))] != LET) {
-    cerror(global, ERROR_DEFINE_SYNTAX);
-    global->inmacro = FALSE;		/* Stop <newline> hack	*/
+  if (type[(c = fpp_skipws(global))] != LET) {
+    fpp_cerror(global, ERROR_DEFINE_SYNTAX);
+    global->inmacro = FPP_FALSE;		/* Stop <newline> hack	*/
     return(FPP_OK);
   }
-  isredefine = FALSE;			/* Set if redefining	*/
-  if ((dp = lookid(global, c)) == NULL) { /* If not known now     */
-    dp = defendel(global, global->tokenbuf, FALSE); /* Save the name  */
+  isredefine = FPP_FALSE;			/* Set if redefining	*/
+  if ((dp = fpp_lookid(global, c)) == NULL) { /* If not known now     */
+    dp = fpp_defendel(global, global->tokenbuf, FPP_FALSE); /* Save the name  */
     if(!dp)
       return(FPP_OUT_OF_MEMORY);
   } else {				/* It's known:          */
-    isredefine = TRUE;			/* Remember this fact	*/
+    isredefine = FPP_TRUE;			/* Remember this fact	*/
     old = dp->repl;			/* Remember replacement */
     dp->repl = NULL;			/* No replacement now	*/
   }
   global->parlist[0] = global->parmp = global->parm; /* Setup parm buffer */
-  if ((c = get(global)) == '(') {       /* With arguments?      */
+  if ((c = fpp_get(global)) == '(') {       /* With arguments?      */
     global->nargs = 0;			/* Init formals counter */
     do {				/* Collect formal parms */
       if (global->nargs >= LASTPARM) {
-	cfatal(global, FATAL_TOO_MANY_ARGUMENTS_MACRO);
+	fpp_cfatal(global, FATAL_TOO_MANY_ARGUMENTS_MACRO);
 	return(FPP_TOO_MANY_ARGUMENTS);
-      } else if ((c = skipws(global)) == ')')
+      } else if ((c = fpp_skipws(global)) == ')')
 	break;			/* Got them all 	*/
       else if (type[c] != LET) {         /* Bad formal syntax    */
-	cerror(global, ERROR_DEFINE_SYNTAX);
-	global->inmacro = FALSE;		/* Stop <newline> hack	*/
+	fpp_cerror(global, ERROR_DEFINE_SYNTAX);
+	global->inmacro = FPP_FALSE;		/* Stop <newline> hack	*/
 	return(FPP_OK);
       }
-      scanid(global, c);                        /* Get the formal param */
+      fpp_scanid(global, c);                        /* Get the formal param */
       global->parlist[global->nargs++] = global->parmp; /* Save its start */
-      ret=textput(global, global->tokenbuf); /* Save text in parm[]  */
+      ret=fpp_textput(global, global->tokenbuf); /* Save text in parm[]  */
       if(ret)
 	return(ret);
-    } while ((c = skipws(global)) == ',');    /* Get another argument */
+    } while ((c = fpp_skipws(global)) == ',');    /* Get another argument */
     if (c != ')') {                     /* Must end at )        */
-      cerror(global, ERROR_DEFINE_SYNTAX);
-      global->inmacro = FALSE;		/* Stop <newline> hack	*/
+      fpp_cerror(global, ERROR_DEFINE_SYNTAX);
+      global->inmacro = FPP_FALSE;		/* Stop <newline> hack	*/
       return(FPP_OK);
     }
     c = ' ';                            /* Will skip to body    */
@@ -130,14 +131,14 @@ ReturnCode dodefine(struct Global *global)
     global->nargs = DEF_NOARGS;         /* No () parameters     */
   }
   if (type[c] == SPA)                   /* At whitespace?       */
-    c = skipws(global);                 /* Not any more.        */
+    c = fpp_skipws(global);                 /* Not any more.        */
   global->workp = global->work;         /* Replacement put here */
-  global->inmacro = TRUE;               /* Keep \<newline> now	*/
+  global->inmacro = FPP_TRUE;               /* Keep \<newline> now	*/
   quoting = 0;                          /* No # seen yet.	*/
   while (c != EOF_CHAR && c != '\n') {  /* Compile macro body   */
 #if OK_CONCAT
     if (c == '#') {                     /* Token concatenation? */
-      if ((c = get(global)) != '#') {   /* No, not really       */
+      if ((c = fpp_get(global)) != '#') {   /* No, not really       */
         quoting = 1;                    /* Maybe quoting op.    */
         continue;
       }
@@ -145,16 +146,16 @@ ReturnCode dodefine(struct Global *global)
         --global->workp;                /* Erase leading spaces */
 //       if ((ret=save(global, TOK_SEP)))  /* Stuff a delimiter    */
 //         return(ret);
-      c = skipws(global);               /* Eat whitespace       */
+      c = fpp_skipws(global);               /* Eat whitespace       */
       continue;
     }
 #endif
     switch (type[c]) {
     case LET:
 #if OK_CONCAT
-      ret=checkparm(global, c, dp, quoting);      /* Might be a formal    */
+      ret=fpp_checkparm(global, c, dp, quoting);      /* Might be a formal    */
 #else
-      ret=checkparm(c, dp);               /* Might be a formal    */
+      ret=fpp_checkparm(c, dp);               /* Might be a formal    */
 #endif
       if(ret)
 	return(ret);
@@ -162,24 +163,24 @@ ReturnCode dodefine(struct Global *global)
 	
     case DIG:				/* Number in mac. body	*/
     case DOT:				/* Maybe a float number */
-      ret=scannumber(global, c, save);  /* Scan it off          */
+      ret=fpp_scannumber(global, c, fpp_save);  /* Scan it off          */
       if(ret)
 	return(ret);
       break;
 	
     case QUO:				/* String in mac. body	*/
-      ret=stparmscan(global, c);
+      ret=fpp_stparmscan(global, c);
       if(ret)
 	return(ret);
       break;
 	
     case BSH:				/* Backslash		*/
-      ret=save(global, '\\');
+      ret=fpp_save(global, '\\');
       if(ret)
 	return(ret);
-      if ((c = get(global)) == '\n')
-	global->wrongline = TRUE;
-      ret=save(global, c);
+      if ((c = fpp_get(global)) == '\n')
+	global->wrongline = FPP_TRUE;
+      ret=fpp_save(global, c);
       if(ret)
 	return(ret);
       break;
@@ -195,27 +196,27 @@ ReturnCode dodefine(struct Global *global)
 	c = ' ';                      /* Normalize tabs       */
       /* Fall through to store character			*/
     default:				/* Other character	*/
-      ret=save(global, c);
+      ret=fpp_save(global, c);
       if(ret)
 	return(ret);
       break;
     }
-    c = get(global);
+    c = fpp_get(global);
     quoting = 0;			/* Only when immediately*/
     /* preceding a formal	*/
   }
-  global->inmacro = FALSE;		/* Stop newline hack	*/
-  unget(global);                            /* For control check    */
+  global->inmacro = FPP_FALSE;		/* Stop newline hack	*/
+  fpp_unget(global);                            /* For control check    */
   if (global->workp > global->work && global->workp[-1] == ' ') /* Drop trailing blank  */
     global->workp--;
   *global->workp = EOS;		/* Terminate work	*/
-  dp->repl = savestring(global, global->work); /* Save the string      */
+  dp->repl = fpp_savestring(global, global->work); /* Save the string      */
   dp->nargs = global->nargs;			/* Save arg count	*/
   if (isredefine) {                   /* Error if redefined   */
     if ((old != NULL && dp->repl != NULL && !streq(old, dp->repl))
 	|| (old == NULL && dp->repl != NULL)
 	|| (old != NULL && dp->repl == NULL)) {
-      cerror(global, ERROR_REDEFINE, dp->name);
+      fpp_cerror(global, ERROR_REDEFINE, dp->name);
     }
     if (old != NULL)                  /* We don't need the    */
       free(old);                      /* old definition now.  */
@@ -224,7 +225,7 @@ ReturnCode dodefine(struct Global *global)
 }
 
 INLINE FILE_LOCAL
-ReturnCode checkparm(struct Global *global,
+ReturnCode fpp_checkparm(struct Global *global,
 		     int c,
 		     DEFBUF *dp,
 		     int quoting)	/* Preceded by a # ?	*/
@@ -233,7 +234,7 @@ ReturnCode checkparm(struct Global *global,
    * Replace this param if it's defined.  Note that the macro name is a
    * possible replacement token. We stuff DEF_MAGIC in front of the token
    * which is treated as a LETTER by the token scanner and eaten by
-   * the output routine. This prevents the macro expander from
+   * the fpp_output routine. This prevents the macro expander from
    * looping if someone writes "#define foo foo".
    */
   
@@ -241,29 +242,29 @@ ReturnCode checkparm(struct Global *global,
   char *cp;
   ReturnCode ret=FPP_OK;
       
-  scanid(global, c);                /* Get parm to tokenbuf */
+  fpp_scanid(global, c);                /* Get parm to tokenbuf */
   for (i = 0; i < global->nargs; i++) {     /* For each argument    */
     if (streq(global->parlist[i], global->tokenbuf)) {  /* If it's known */
 #if OK_CONCAT
       if (quoting) {                    /* Special handling of  */
-	ret=save(global, QUOTE_PARM);     /* #formal inside defn  */
+	ret=fpp_save(global, QUOTE_PARM);     /* #formal inside defn  */
 	if(ret)
 	  return(ret);
       }
 #endif
-      ret=save(global, i + MAC_PARM);     /* Save a magic cookie  */
+      ret=fpp_save(global, i + MAC_PARM);     /* Save a magic cookie  */
       return(ret);		      /* And exit the search	*/
     }
   }
   if (streq(dp->name, global->tokenbuf))    /* Macro name in body?  */
-    ret=save(global, DEF_MAGIC);            /* Save magic marker    */
-  for (cp = global->tokenbuf; *cp != EOS;)  /* And save             */
-    ret=save(global, *cp++);                /* The token itself     */
+    ret=fpp_save(global, DEF_MAGIC);            /* Save magic marker    */
+  for (cp = global->tokenbuf; *cp != EOS;)  /* And fpp_save             */
+    ret=fpp_save(global, *cp++);                /* The token itself     */
   return(ret);
 }
 
 INLINE FILE_LOCAL
-ReturnCode stparmscan(struct Global *global, int delim)
+ReturnCode fpp_stparmscan(struct Global *global, int delim)
 {
   /*
    * Normal string parameter scan.
@@ -274,9 +275,9 @@ ReturnCode stparmscan(struct Global *global, int delim)
   ReturnCode ret;
       
   wp = (unsigned char *)global->workp;	/* Here's where it starts       */
-  ret=scanstring(global, delim, save);
+  ret=fpp_scanstring(global, delim, fpp_save);
   if(ret)
-    return(ret);		/* Exit on scanstring error	*/
+    return(ret);		/* Exit on fpp_scanstring error	*/
   global->workp[-1] = EOS;		/* Erase trailing quote 	*/
   wp++;				/* -> first string content byte */
   for (i = 0; i < global->nargs; i++) {
@@ -292,23 +293,23 @@ ReturnCode stparmscan(struct Global *global, int delim)
   return(FPP_OK);
 }
   
-void doundef(struct Global *global)
+void fpp_doundef(struct Global *global)
   /*
    * Remove the symbol from the defined list.
    * Called from the #control processor.
    */
 {
   int c;
-  if (type[(c = skipws(global))] != LET)
-    cerror(global, ERROR_ILLEGAL_UNDEF);
+  if (type[(c = fpp_skipws(global))] != LET)
+    fpp_cerror(global, ERROR_ILLEGAL_UNDEF);
   else {
-    scanid(global, c);                         /* Get name to tokenbuf */
-    (void) defendel(global, global->tokenbuf, TRUE);
+    fpp_scanid(global, c);                         /* Get name to tokenbuf */
+    (void) fpp_defendel(global, global->tokenbuf, FPP_TRUE);
   }
 }
 
 INLINE FILE_LOCAL  
-ReturnCode textput(struct Global *global, char *text)
+ReturnCode fpp_textput(struct Global *global, char *text)
 {
   /*
    * Put the string in the parm[] buffer.
@@ -318,7 +319,7 @@ ReturnCode textput(struct Global *global, char *text)
   
   size = strlen(text) + 1;
   if ((global->parmp + size) >= &global->parm[NPARMWORK]) {
-    cfatal(global, FATAL_MACRO_AREA_OVERFLOW);
+    fpp_cfatal(global, FATAL_MACRO_AREA_OVERFLOW);
     return(FPP_WORK_AREA_OVERFLOW);
   } else {
     strcpy(global->parmp, text);
@@ -328,14 +329,14 @@ ReturnCode textput(struct Global *global, char *text)
 }
 
 FILE_LOCAL
-ReturnCode charput(struct Global *global, int c)
+ReturnCode fpp_charput(struct Global *global, int c)
 {
   /*
    * Put the byte in the parm[] buffer.
    */
   
   if (global->parmp >= &global->parm[NPARMWORK]) {
-    cfatal(global, FATAL_MACRO_AREA_OVERFLOW);
+    fpp_cfatal(global, FATAL_MACRO_AREA_OVERFLOW);
     return(FPP_WORK_AREA_OVERFLOW);
   }
   *global->parmp++ = c;
@@ -346,15 +347,15 @@ ReturnCode charput(struct Global *global, int c)
  *		M a c r o   E x p a n s i o n
  */
 
-ReturnCode expand(struct Global *global, DEFBUF *tokenp)
+ReturnCode fpp_expand(struct Global *global, DEFBUF *tokenp)
 {
   /*
    * Expand a macro.  Called from the cpp mainline routine (via subroutine
-   * macroid()) when a token is found in the symbol table.  It calls
-   * expcollect() to parse actual parameters, checking for the correct number.
+   * fpp_macroid()) when a token is found in the symbol table.  It calls
+   * fpp_expcollect() to parse actual parameters, checking for the correct number.
    * It then creates a "file" containing a single line containing the
    * macro with actual parameters inserted appropriately.  This is
-   * "pushed back" onto the input stream.  (When the get() routine runs
+   * "pushed back" onto the input stream.  (When the fpp_get() routine runs
    * off the end of the macro line, it will dismiss the macro itself.)
    */
   int c;
@@ -368,12 +369,12 @@ ReturnCode expand(struct Global *global, DEFBUF *tokenp)
   if (global->recursion++ == 0)
     global->macro = tokenp;
   else if (global->recursion == RECURSION_LIMIT) {
-    cerror(global, ERROR_RECURSIVE_MACRO, tokenp->name, global->macro->name);
+    fpp_cerror(global, ERROR_RECURSIVE_MACRO, tokenp->name, global->macro->name);
     if (global->rec_recover) {
       do {
-	c = get(global);
+	c = fpp_get(global);
       } while (global->infile != NULL && global->infile->fp == NULL);
-      unget(global);
+      fpp_unget(global);
       global->recursion = 0;
       return(FPP_OK);
     }
@@ -396,7 +397,7 @@ ReturnCode expand(struct Global *global, DEFBUF *tokenp)
 		  break;
 	      }
 	  }
-      ret=ungetstring(global, global->work);
+      ret=fpp_ungetstring(global, global->work);
       if(ret)
 	  return(ret);
       break;
@@ -406,7 +407,7 @@ ReturnCode expand(struct Global *global, DEFBUF *tokenp)
       if (file->fp != NULL) {
 	sprintf(global->work, "\"%s\"", (file->progname != NULL)
 		? file->progname : file->filename);
-	ret=ungetstring(global, global->work);
+	ret=fpp_ungetstring(global, global->work);
 	if(ret)
 	  return(ret);
 	break;
@@ -417,14 +418,14 @@ ReturnCode expand(struct Global *global, DEFBUF *tokenp)
   case (-4):				/* __FUNC__ */
     sprintf(global->work, "\"%s\"", global->functionname[0]?
 	    global->functionname : "<unknown function>");
-    ret=ungetstring(global, global->work);
+    ret=fpp_ungetstring(global, global->work);
     if(ret)
 	return(ret);
     break;
 
   case (-5):                              /* __FUNC_LINE__ */
     sprintf(global->work, "%d", global->funcline);
-    ret=ungetstring(global, global->work);
+    ret=fpp_ungetstring(global, global->work);
     if(ret)
       return(ret);
     break;
@@ -434,11 +435,11 @@ ReturnCode expand(struct Global *global, DEFBUF *tokenp)
      * Nothing funny about this macro.
      */
     if (tokenp->nargs < 0) {
-      cfatal(global, FATAL_ILLEGAL_MACRO, tokenp->name);
+      fpp_cfatal(global, FATAL_ILLEGAL_MACRO, tokenp->name);
       return(FPP_ILLEGAL_MACRO);
     }
-    while ((c = skipws(global)) == '\n')      /* Look for (, skipping */
-      global->wrongline = TRUE;		/* spaces and newlines	*/
+    while ((c = fpp_skipws(global)) == '\n')      /* Look for (, skipping */
+      global->wrongline = FPP_TRUE;		/* spaces and newlines	*/
     if (c != '(') {
       /*
        * If the programmer writes
@@ -447,27 +448,27 @@ ReturnCode expand(struct Global *global, DEFBUF *tokenp)
        *	foo [no ()]
        * just write foo to the output stream.
        */
-      unget(global);
-      cwarn(global, WARN_MACRO_NEEDS_ARGUMENTS, tokenp->name);
+      fpp_unget(global);
+      fpp_cwarn(global, WARN_MACRO_NEEDS_ARGUMENTS, tokenp->name);
 
       /* fputs(tokenp->name, stdout); */
-      Putstring(global, tokenp->name);
+      fpp_Putstring(global, tokenp->name);
       return(FPP_OK);
-    } else if (!(ret=expcollect(global))) {     /* Collect arguments    */
+    } else if (!(ret=fpp_expcollect(global))) {     /* Collect arguments    */
       if (tokenp->nargs != global->nargs) {     /* Should be an error?  */
-	cwarn(global, WARN_WRONG_NUMBER_ARGUMENTS, tokenp->name);
+	fpp_cwarn(global, WARN_WRONG_NUMBER_ARGUMENTS, tokenp->name);
       }
     } else {				/* Collect arguments		*/
       return(ret); /* We failed in argument colleting! */
     }
   case DEF_NOARGS:			/* No parameters just stuffs	*/
-    ret=expstuff(global, tokenp->name, tokenp->repl); /* expand macro   */
+    ret=fpp_expstuff(global, tokenp->name, tokenp->repl); /* expand macro   */
   }					/* nargs switch 		*/
   return(ret);
 }
 
 INLINE FILE_LOCAL
-ReturnCode expcollect(struct Global *global)
+ReturnCode fpp_expcollect(struct Global *global)
 {
   /*
    * Collect the actual parameters for this macro.
@@ -479,8 +480,8 @@ ReturnCode expcollect(struct Global *global)
       
   for (;;) {
     paren = 0;			    /* Collect next arg.    */
-    while ((c = skipws(global)) == '\n')/* Skip over whitespace */
-      global->wrongline = TRUE;		/* and newlines.	*/
+    while ((c = fpp_skipws(global)) == '\n')/* Skip over whitespace */
+      global->wrongline = FPP_TRUE;		/* and newlines.	*/
     if (c == ')') {                     /* At end of all args?  */
       /*
        * Note that there is a guard byte in parm[]
@@ -490,22 +491,22 @@ ReturnCode expcollect(struct Global *global)
       break;			    /* Exit collection loop */
     }
     else if (global->nargs >= LASTPARM) {
-      cfatal(global, FATAL_TOO_MANY_ARGUMENTS_EXPANSION);
+      fpp_cfatal(global, FATAL_TOO_MANY_ARGUMENTS_EXPANSION);
       return(FPP_TOO_MANY_ARGUMENTS);
     }
     global->parlist[global->nargs++] = global->parmp; /* At start of new arg */
-    for (;; c = cget(global)) {               /* Collect arg's bytes  */
+    for (;; c = fpp_cget(global)) {               /* Collect arg's bytes  */
       if (c == EOF_CHAR) {
-	cerror(global, ERROR_EOF_IN_ARGUMENT);
+	fpp_cerror(global, ERROR_EOF_IN_ARGUMENT);
 	return(FPP_EOF_IN_MACRO); /* Sorry.               */
       }
       else if (c == '\\') {             /* Quote next character */
-	charput(global, c);             /* Save the \ for later */
-	charput(global, cget(global));  /* Save the next char.  */
+	fpp_charput(global, c);             /* Save the \ for later */
+	fpp_charput(global, fpp_cget(global));  /* Save the next char.  */
 	continue;			/* And go get another   */
       }
       else if (type[c] == QUO) {        /* Start of string?     */
-	ret=scanstring(global, c, (ReturnCode (*)(struct Global *, int))charput); /* Scan it off    */
+	ret=fpp_scanstring(global, c, (ReturnCode (*)(struct Global *, int))fpp_charput); /* Scan it off    */
 	if(ret)
 	  return(ret);
 	continue;			    /* Go get next char     */
@@ -514,7 +515,7 @@ ReturnCode expcollect(struct Global *global)
 	paren++;			/* To know about commas */
       else if (c == ')') {              /* Other side too       */
 	if (paren == 0) {               /* At the end?          */
-	  unget(global);                /* Look at it later     */
+	  fpp_unget(global);                /* Look at it later     */
 	  break;			/* Exit arg getter.     */
 	}
 	paren--;			/* More to come.        */
@@ -522,10 +523,10 @@ ReturnCode expcollect(struct Global *global)
       else if (c == ',' && paren == 0)  /* Comma delimits args  */
 	break;
       else if (c == '\n')               /* Newline inside arg?  */
-	global->wrongline = TRUE;	/* We'll need a #line   */
-      charput(global, c);               /* Store this one       */
+	global->wrongline = FPP_TRUE;	/* We'll need a #line   */
+      fpp_charput(global, c);               /* Store this one       */
     }				        /* Collect an argument  */
-    charput(global, EOS);               /* Terminate argument   */
+    fpp_charput(global, EOS);               /* Terminate argument   */
   }				        /* Collect all args.    */
   return(FPP_OK);                       /* Normal return        */
 }
@@ -534,7 +535,7 @@ ReturnCode expcollect(struct Global *global)
 #if OK_CONCAT
   
 INLINE FILE_LOCAL
-char *doquoting(char *to, char *from)
+char *fpp_doquoting(char *to, char *from)
 {
   *to++ = '"';
   while (*from) {
@@ -549,7 +550,7 @@ char *doquoting(char *to, char *from)
   
 #endif
   
-ReturnCode expstuff(struct Global *global,
+ReturnCode fpp_expstuff(struct Global *global,
 		    char *MacroName,
 		    char *MacroReplace)
 {
@@ -568,7 +569,7 @@ ReturnCode expstuff(struct Global *global,
   char quoting;	/* Quote macro argument */
 #endif
       
-  ret = getfile(global, NBUFF, MacroName, &file);
+  ret = fpp_getfile(global, NBUFF, MacroName, &file);
   if(ret)
     return(ret);
   inp = MacroReplace;			/* -> macro replacement */
@@ -599,7 +600,7 @@ ReturnCode expstuff(struct Global *global,
 	  }
 #endif
 	  if ((defp + size) >= defend) {
-	    cfatal(global, FATAL_OUT_OF_SPACE_IN_ARGUMENT, MacroName);
+	    fpp_cfatal(global, FATAL_OUT_OF_SPACE_IN_ARGUMENT, MacroName);
 	    return(FPP_OUT_OF_SPACE_IN_MACRO_EXPANSION);
 	  }
 	  /*
@@ -611,7 +612,7 @@ ReturnCode expstuff(struct Global *global,
 	  }
 #if OK_CONCAT
 else if (quoting)
-  defp = doquoting(defp, global->parlist[c]);
+  defp = fpp_doquoting(defp, global->parlist[c]);
 #endif
 else {
   strcpy(defp, global->parlist[c]);
@@ -620,7 +621,7 @@ else {
 	}
       }
       else if (defp >= defend) {
-	cfatal(global, FATAL_OUT_OF_SPACE_IN_ARGUMENT, MacroName);
+	fpp_cfatal(global, FATAL_OUT_OF_SPACE_IN_ARGUMENT, MacroName);
 	return(FPP_OUT_OF_SPACE_IN_MACRO_EXPANSION);
       } else
 	*defp++ = c;

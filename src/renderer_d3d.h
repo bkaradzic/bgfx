@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -19,21 +19,56 @@
 #	define DX_CHECK_EXTRA_ARGS
 #endif // BGFX_CONFIG_DEBUG && BGFX_CONFIG_RENDERER_DIRECT3D9
 
-#ifndef D3DCOLOR_ARGB
-#	define D3DCOLOR_ARGB(_a, _r, _g, _b) ( (DWORD)( ( ( (_a)&0xff)<<24)|( ( (_r)&0xff)<<16)|( ( (_g)&0xff)<<8)|( (_b)&0xff) ) )
-#endif // D3DCOLOR_ARGB
-
-#ifndef D3DCOLOR_RGBA
-#	define D3DCOLOR_RGBA(_r, _g, _b, _a) D3DCOLOR_ARGB(_a, _r, _g, _b)
-#endif // D3DCOLOR_RGBA
+#define DXGI_FORMAT_ASTC_4X4_TYPELESS     DXGI_FORMAT(133)
+#define DXGI_FORMAT_ASTC_4X4_UNORM        DXGI_FORMAT(134)
+#define DXGI_FORMAT_ASTC_4X4_UNORM_SRGB   DXGI_FORMAT(135)
+#define DXGI_FORMAT_ASTC_5X4_TYPELESS     DXGI_FORMAT(137)
+#define DXGI_FORMAT_ASTC_5X4_UNORM        DXGI_FORMAT(138)
+#define DXGI_FORMAT_ASTC_5X4_UNORM_SRGB   DXGI_FORMAT(139)
+#define DXGI_FORMAT_ASTC_5X5_TYPELESS     DXGI_FORMAT(141)
+#define DXGI_FORMAT_ASTC_5X5_UNORM        DXGI_FORMAT(142)
+#define DXGI_FORMAT_ASTC_5X5_UNORM_SRGB   DXGI_FORMAT(143)
+#define DXGI_FORMAT_ASTC_6X5_TYPELESS     DXGI_FORMAT(145)
+#define DXGI_FORMAT_ASTC_6X5_UNORM        DXGI_FORMAT(146)
+#define DXGI_FORMAT_ASTC_6X5_UNORM_SRGB   DXGI_FORMAT(147)
+#define DXGI_FORMAT_ASTC_6X6_TYPELESS     DXGI_FORMAT(149)
+#define DXGI_FORMAT_ASTC_6X6_UNORM        DXGI_FORMAT(150)
+#define DXGI_FORMAT_ASTC_6X6_UNORM_SRGB   DXGI_FORMAT(151)
+#define DXGI_FORMAT_ASTC_8X5_TYPELESS     DXGI_FORMAT(153)
+#define DXGI_FORMAT_ASTC_8X5_UNORM        DXGI_FORMAT(154)
+#define DXGI_FORMAT_ASTC_8X5_UNORM_SRGB   DXGI_FORMAT(155)
+#define DXGI_FORMAT_ASTC_8X6_TYPELESS     DXGI_FORMAT(157)
+#define DXGI_FORMAT_ASTC_8X6_UNORM        DXGI_FORMAT(158)
+#define DXGI_FORMAT_ASTC_8X6_UNORM_SRGB   DXGI_FORMAT(159)
+#define DXGI_FORMAT_ASTC_8X8_TYPELESS     DXGI_FORMAT(161)
+#define DXGI_FORMAT_ASTC_8X8_UNORM        DXGI_FORMAT(162)
+#define DXGI_FORMAT_ASTC_8X8_UNORM_SRGB   DXGI_FORMAT(163)
+#define DXGI_FORMAT_ASTC_10X5_TYPELESS    DXGI_FORMAT(165)
+#define DXGI_FORMAT_ASTC_10X5_UNORM       DXGI_FORMAT(166)
+#define DXGI_FORMAT_ASTC_10X5_UNORM_SRGB  DXGI_FORMAT(167)
+#define DXGI_FORMAT_ASTC_10X6_TYPELESS    DXGI_FORMAT(169)
+#define DXGI_FORMAT_ASTC_10X6_UNORM       DXGI_FORMAT(170)
+#define DXGI_FORMAT_ASTC_10X6_UNORM_SRGB  DXGI_FORMAT(171)
+#define DXGI_FORMAT_ASTC_10X8_TYPELESS    DXGI_FORMAT(173)
+#define DXGI_FORMAT_ASTC_10X8_UNORM       DXGI_FORMAT(174)
+#define DXGI_FORMAT_ASTC_10X8_UNORM_SRGB  DXGI_FORMAT(175)
+#define DXGI_FORMAT_ASTC_10X10_TYPELESS   DXGI_FORMAT(177)
+#define DXGI_FORMAT_ASTC_10X10_UNORM      DXGI_FORMAT(178)
+#define DXGI_FORMAT_ASTC_10X10_UNORM_SRGB DXGI_FORMAT(179)
+#define DXGI_FORMAT_ASTC_12X10_TYPELESS   DXGI_FORMAT(181)
+#define DXGI_FORMAT_ASTC_12X10_UNORM      DXGI_FORMAT(182)
+#define DXGI_FORMAT_ASTC_12X10_UNORM_SRGB DXGI_FORMAT(183)
+#define DXGI_FORMAT_ASTC_12X12_TYPELESS   DXGI_FORMAT(185)
+#define DXGI_FORMAT_ASTC_12X12_UNORM      DXGI_FORMAT(186)
+#define DXGI_FORMAT_ASTC_12X12_UNORM_SRGB DXGI_FORMAT(187)
 
 namespace bgfx
 {
-#if BX_PLATFORM_XBOXONE
-	typedef ::IGraphicsUnknown IUnknown;
-#else
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	typedef ::IUnknown IUnknown;
-#endif // BX_PLATFORM_XBOXONE
+#else
+	typedef ::IGraphicsUnknown IUnknown;
+#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 
 #define _DX_CHECK(_call) \
 			BX_MACRO_BLOCK_BEGIN \
@@ -77,7 +112,8 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG_OBJECT_NAME
 
 #define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
-#define DX_RELEASE_WARNONLY(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
+#define DX_RELEASE_W(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
+#define DX_RELEASE_I(_ptr) _DX_RELEASE(_ptr, 0, BX_NOOP)
 
 	typedef int     (WINAPI* PFN_D3DPERF_BEGIN_EVENT)(DWORD _color, LPCWSTR _name);
 	typedef int     (WINAPI* PFN_D3DPERF_END_EVENT)();
@@ -86,15 +122,12 @@ namespace bgfx
 	typedef BOOL    (WINAPI* PFN_D3DPERF_QUERY_REPEAT_FRAME)();
 	typedef void    (WINAPI* PFN_D3DPERF_SET_OPTIONS)(DWORD _options);
 	typedef DWORD   (WINAPI* PFN_D3DPERF_GET_STATUS)();
-	typedef HRESULT (WINAPI* PFN_CREATE_DXGI_FACTORY)(REFIID _riid, void** _factory);
-	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE)(REFIID _riid, void** _debug);
-	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE1)(UINT _flags, REFIID _riid, void** _debug);
 
-#define _PIX_SETMARKER(_col, _name)  D3DPERF_SetMarker(_col, _name)
-#define _PIX_BEGINEVENT(_col, _name) D3DPERF_BeginEvent(_col, _name)
-#define _PIX_ENDEVENT()              D3DPERF_EndEvent()
+#define _PIX_SETMARKER(_color, _name)    D3DPERF_SetMarker(_color, _name)
+#define _PIX_BEGINEVENT(_color, _name)   D3DPERF_BeginEvent(_color, _name)
+#define _PIX_ENDEVENT()                  D3DPERF_EndEvent()
 
-#if BGFX_CONFIG_DEBUG_PIX
+#if BGFX_CONFIG_DEBUG_ANNOTATION
 #	define PIX_SETMARKER(_color, _name)  _PIX_SETMARKER(_color, _name)
 #	define PIX_BEGINEVENT(_color, _name) _PIX_BEGINEVENT(_color, _name)
 #	define PIX_ENDEVENT()                _PIX_ENDEVENT()
@@ -102,15 +135,20 @@ namespace bgfx
 #	define PIX_SETMARKER(_color, _name)  BX_UNUSED(_name)
 #	define PIX_BEGINEVENT(_color, _name) BX_UNUSED(_name)
 #	define PIX_ENDEVENT()
-#endif // BGFX_CONFIG_DEBUG_PIX
+#endif // BGFX_CONFIG_DEBUG_ANNOTATION
 
-#define D3DCOLOR_FRAME   D3DCOLOR_RGBA(0xff, 0xd7, 0xc9, 0xff)
-#define D3DCOLOR_VIEW    D3DCOLOR_RGBA(0xe4, 0xb4, 0x8e, 0xff)
-#define D3DCOLOR_VIEW_L  D3DCOLOR_RGBA(0xf9, 0xee, 0xe5, 0xff)
-#define D3DCOLOR_VIEW_R  D3DCOLOR_RGBA(0xe8, 0xd3, 0xc0, 0xff)
-#define D3DCOLOR_DRAW    D3DCOLOR_RGBA(0xc6, 0xe5, 0xb9, 0xff)
-#define D3DCOLOR_COMPUTE D3DCOLOR_RGBA(0xa7, 0xdb, 0xd8, 0xff)
-#define D3DCOLOR_MARKER  D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff)
+	inline bool isType(IUnknown* _interface, const GUID& _id)
+	{
+		IUnknown* out;
+		HRESULT hr = _interface->QueryInterface(_id, (void**)&out);
+		if (FAILED(hr) )
+		{
+			return false;
+		}
+
+		out->Release();
+		return true;
+	}
 
 	inline int getRefCount(IUnknown* _interface)
 	{
@@ -149,7 +187,7 @@ namespace bgfx
 			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
-				DX_RELEASE_WARNONLY(it->second, 0);
+				DX_RELEASE_W(it->second, 0);
 				m_hashMap.erase(it);
 			}
 		}

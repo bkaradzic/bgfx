@@ -11,6 +11,7 @@
 #include <bx/thread.h>
 #include <bx/math.h>
 #include <Unknwn.h>
+#include <cmath>
 
 using namespace Windows::ApplicationModel;
 using namespace Windows::ApplicationModel::Core;
@@ -24,7 +25,7 @@ using namespace Windows::Graphics::Display;
 #endif // BX_PLATFORM_WINRT
 using namespace Platform;
 
-static const char* const g_emptyArgs[] = { "app.exe" };
+static const char* const g_emptyArgs[] = { "app.exe", "", "" };
 static entry::WindowHandle g_defaultWindow = { 0 };
 static entry::EventQueue g_eventQueue;
 
@@ -91,8 +92,8 @@ public:
 		auto dpi = DisplayInformation::GetForCurrentView()->LogicalDpi;
 		static const float dipsPerInch = 96.0f;
 		g_eventQueue.postSizeEvent(g_defaultWindow
-			, lround(bx::ffloor(bounds.Width  * dpi / dipsPerInch + 0.5f) )
-			, lround(bx::ffloor(bounds.Height * dpi / dipsPerInch + 0.5f) )
+			, std::lround(bx::floor(bounds.Width  * dpi / dipsPerInch + 0.5f) )
+			, std::lround(bx::floor(bounds.Height * dpi / dipsPerInch + 0.5f) )
 			);
 #endif // BX_PLATFORM_WINRT
 
@@ -209,9 +210,9 @@ namespace entry
 		BX_UNUSED(_handle, _title);
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		BX_UNUSED(_handle);
+		BX_UNUSED(_handle, _flags, _enabled);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)

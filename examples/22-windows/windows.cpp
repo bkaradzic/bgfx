@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -26,17 +26,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -69,8 +69,8 @@ static const uint16_t s_cubeIndices[36] =
 class ExampleWindows : public entry::AppI
 {
 public:
-	ExampleWindows(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleWindows(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -83,8 +83,13 @@ public:
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		const bgfx::Caps* caps = bgfx::getCaps();
 		bool swapChainSupported = 0 != (caps->supported & BGFX_CAPS_SWAP_CHAIN);
@@ -121,7 +126,7 @@ public:
 		m_vbh = bgfx::createVertexBuffer(
 			  // Static data can be passed with bgfx::makeRef
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-			, PosColorVertex::ms_decl
+			, PosColorVertex::ms_layout
 			);
 
 		// Create static index buffer.
@@ -152,6 +157,7 @@ public:
 			}
 		}
 
+		inputRemoveBindings("22-windows");
 		BX_FREE(entry::getAllocator(), m_bindings);
 
 		// Cleanup.
@@ -167,7 +173,7 @@ public:
 
 	bool update() override
 	{
-		if ( !entry::processWindowEvents(m_state, m_debug, m_reset) )
+		if (!entry::processWindowEvents(m_state, m_debug, m_reset) )
 		{
 			entry::MouseState mouseState = m_state.m_mouse;
 
@@ -225,8 +231,8 @@ public:
 				}
 			}
 
-			float at[3]  = { 0.0f, 0.0f,   0.0f };
-			float eye[3] = { 0.0f, 0.0f, -35.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
 			float view[16];
 			bx::mtxLookAt(view, eye, at);
@@ -274,7 +280,7 @@ public:
 			else
 			{
 				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " Multiple windows is not supported by `%s` renderer. ", bgfx::getRendererName(bgfx::getCaps()->rendererType) );
+				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Multiple windows is not supported by `%s` renderer. ", bgfx::getRendererName(bgfx::getCaps()->rendererType) );
 			}
 
 			uint32_t count = 0;
@@ -372,7 +378,12 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleWindows, "22-windows", "Rendering into multiple windows.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleWindows
+	, "22-windows"
+	, "Rendering into multiple windows."
+	, "https://bkaradzic.github.io/bgfx/examples.html#windows"
+	);
 
 void cmdCreateWindow(const void* _userData)
 {

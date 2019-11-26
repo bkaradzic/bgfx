@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -15,8 +15,13 @@
 #endif // GLFW_VERSION_MINOR < 2
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#	define GLFW_EXPOSE_NATIVE_X11
-#	define GLFW_EXPOSE_NATIVE_GLX
+#	if ENTRY_CONFIG_USE_WAYLAND
+#		include <wayland-egl.h>
+#		define GLFW_EXPOSE_NATIVE_WAYLAND
+#	else
+#		define GLFW_EXPOSE_NATIVE_X11
+#		define GLFW_EXPOSE_NATIVE_GLX
+#	endif
 #elif BX_PLATFORM_OSX
 #	define GLFW_EXPOSE_NATIVE_COCOA
 #	define GLFW_EXPOSE_NATIVE_NSGL
@@ -40,7 +45,22 @@ namespace entry
 	static void* glfwNativeWindowHandle(GLFWwindow* _window)
 	{
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+# 		if ENTRY_CONFIG_USE_WAYLAND
+		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
+		if(!win_impl)
+		{
+			int width, height;
+			glfwGetWindowSize(_window, &width, &height);
+			struct wl_surface* surface = (struct wl_surface*)glfwGetWaylandWindow(_window);
+			if(!surface)
+				return nullptr;
+			win_impl = wl_egl_window_create(surface, width, height);
+			glfwSetWindowUserPointer(_window, (void*)(uintptr_t)win_impl);
+		}
+		return (void*)(uintptr_t)win_impl;
+#		else
 		return (void*)(uintptr_t)glfwGetX11Window(_window);
+#		endif
 #	elif BX_PLATFORM_OSX
 		return glfwGetCocoaWindow(_window);
 #	elif BX_PLATFORM_WINDOWS
@@ -48,11 +68,32 @@ namespace entry
 #	endif // BX_PLATFORM_
 	}
 
+	static void glfwDestroyWindowImpl(GLFWwindow *_window)
+	{
+		if(!_window)
+			return;
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if ENTRY_CONFIG_USE_WAYLAND
+		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
+		if(win_impl)
+		{ 
+			glfwSetWindowUserPointer(_window, nullptr);
+			wl_egl_window_destroy(win_impl);
+		}
+#		endif
+#	endif
+		glfwDestroyWindow(_window);
+	}
+
 	static void glfwSetWindow(GLFWwindow* _window)
 	{
 		bgfx::PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+# 		if ENTRY_CONFIG_USE_WAYLAND
+		pd.ndt      = glfwGetWaylandDisplay();
+#		else
 		pd.ndt      = glfwGetX11Display();
+		#endif
 #	elif BX_PLATFORM_OSX
 		pd.ndt      = NULL;
 #	elif BX_PLATFORM_WINDOWS
@@ -276,7 +317,7 @@ namespace entry
 	static void joystickCb(int _jid, int _action);
 
 	// Based on cutef8 by Jeff Bezanson (Public Domain)
-	static uint8_t encodeUTF8(uint8_t _chars[4], unsigned int _scancode)
+	static uint8_t encodeUTF8(uint8_t _chars[4], uint32_t _scancode)
 	{
 		uint8_t length = 0;
 
@@ -432,6 +473,7 @@ namespace entry
 			glfwSetCursorPosCallback(m_windows[0], cursorPosCb);
 			glfwSetMouseButtonCallback(m_windows[0], mouseButtonCb);
 			glfwSetWindowSizeCallback(m_windows[0], windowSizeCb);
+			glfwSetDropCallback(m_windows[0], dropFileCb);
 
 			glfwSetWindow(m_windows[0]);
 			m_eventQueue.postSizeEvent(handle, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
@@ -491,6 +533,7 @@ namespace entry
 							glfwSetCursorPosCallback(window, cursorPosCb);
 							glfwSetMouseButtonCallback(window, mouseButtonCb);
 							glfwSetWindowSizeCallback(window, windowSizeCb);
+							glfwSetDropCallback(window, dropFileCb);
 
 							m_windows[msg->m_handle.idx] = window;
 							m_eventQueue.postSizeEvent(msg->m_handle, msg->m_width, msg->m_height);
@@ -504,7 +547,7 @@ namespace entry
 							{
 								GLFWwindow* window = m_windows[msg->m_handle.idx];
 								m_eventQueue.postWindowEvent(msg->m_handle);
-								glfwDestroyWindow(window);
+								glfwDestroyWindowImpl(window);
 								m_windows[msg->m_handle.idx] = NULL;
 							}
 						}
@@ -596,7 +639,7 @@ namespace entry
 			m_eventQueue.postExitEvent();
 			m_thread.shutdown();
 
-			glfwDestroyWindow(m_windows[0]);
+			glfwDestroyWindowImpl(m_windows[0]);
 			glfwTerminate();
 
 			return m_thread.getExitCode();
@@ -619,12 +662,13 @@ namespace entry
 			return invalid;
 		}
 
-		static void keyCb(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods);
-		static void charCb(GLFWwindow* _window, unsigned int _scancode);
+		static void keyCb(GLFWwindow* _window, int32_t _key, int32_t _scancode, int32_t _action, int32_t _mods);
+		static void charCb(GLFWwindow* _window, uint32_t _scancode);
 		static void scrollCb(GLFWwindow* _window, double _dx, double _dy);
 		static void cursorPosCb(GLFWwindow* _window, double _mx, double _my);
-		static void mouseButtonCb(GLFWwindow* _window, int _button, int _action, int _mods);
-		static void windowSizeCb(GLFWwindow* _window, int _width, int _height);
+		static void mouseButtonCb(GLFWwindow* _window, int32_t _button, int32_t _action, int32_t _mods);
+		static void windowSizeCb(GLFWwindow* _window, int32_t _width, int32_t _height);
+		static void dropFileCb(GLFWwindow* _window, int32_t _count, const char** _filePaths);
 
 		MainThreadEntry m_mte;
 		bx::Thread m_thread;
@@ -649,7 +693,7 @@ namespace entry
 
 	Context s_ctx;
 
-	void Context::keyCb(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
+	void Context::keyCb(GLFWwindow* _window, int32_t _key, int32_t _scancode, int32_t _action, int32_t _mods)
 	{
 		BX_UNUSED(_scancode);
 		if (_key == GLFW_KEY_UNKNOWN)
@@ -663,7 +707,7 @@ namespace entry
 		s_ctx.m_eventQueue.postKeyEvent(handle, key, mods, down);
 	}
 
-	void Context::charCb(GLFWwindow* _window, unsigned int _scancode)
+	void Context::charCb(GLFWwindow* _window, uint32_t _scancode)
 	{
 		WindowHandle handle = s_ctx.findHandle(_window);
 		uint8_t chars[4];
@@ -700,7 +744,7 @@ namespace entry
 			);
 	}
 
-	void Context::mouseButtonCb(GLFWwindow* _window, int _button, int _action, int _mods)
+	void Context::mouseButtonCb(GLFWwindow* _window, int32_t _button, int32_t _action, int32_t _mods)
 	{
 		BX_UNUSED(_mods);
 		WindowHandle handle = s_ctx.findHandle(_window);
@@ -716,10 +760,19 @@ namespace entry
 			);
 	}
 
-	void Context::windowSizeCb(GLFWwindow* _window, int _width, int _height)
+	void Context::windowSizeCb(GLFWwindow* _window, int32_t _width, int32_t _height)
 	{
 		WindowHandle handle = s_ctx.findHandle(_window);
 		s_ctx.m_eventQueue.postSizeEvent(handle, _width, _height);
+	}
+
+	void Context::dropFileCb(GLFWwindow* _window, int32_t _count, const char** _filePaths)
+	{
+		WindowHandle handle = s_ctx.findHandle(_window);
+		for (int32_t ii = 0; ii < _count; ++ii)
+		{
+			s_ctx.m_eventQueue.postDropFileEvent(handle, _filePaths[ii]);
+		}
 	}
 
 	static void joystickCb(int _jid, int _action)
@@ -813,12 +866,9 @@ namespace entry
 		glfwPostEmptyEvent();
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		Msg* msg = new Msg(GLFW_WINDOW_TOGGLE_FRAME);
-		msg->m_handle = _handle;
-		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
+		BX_UNUSED(_handle, _flags, _enabled);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)

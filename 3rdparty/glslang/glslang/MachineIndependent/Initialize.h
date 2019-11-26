@@ -67,7 +67,6 @@ public:
     virtual const TString& getStageString(EShLanguage language) const { return stageBuiltins[language]; }
 
     virtual void identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable) = 0;
-
     virtual void identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources) = 0;
 
 protected:
@@ -89,10 +88,11 @@ public:
     void initialize(const TBuiltInResource& resources, int version, EProfile, const SpvVersion& spvVersion, EShLanguage);
 
     void identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable);
-
     void identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources);
 
 protected:
+    void addTabledBuiltins(int version, EProfile profile, const SpvVersion& spvVersion);
+    void relateTabledBuiltins(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage, TSymbolTable&);
     void add2ndGenerationSamplingImaging(int version, EProfile profile, const SpvVersion& spvVersion);
     void addSubpassSampling(TSampler, const TString& typeName, int version, EProfile profile);
     void addQueryFunctions(TSampler, const TString& typeName, int version, EProfile profile);

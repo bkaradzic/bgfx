@@ -51,7 +51,7 @@ patch sample in vec3 badp4;         // ERROR
 
 #extension GL_ARB_separate_shader_objects : enable
 
-in gl_PerVertex            // ERROR, no size
+in gl_PerVertex
 {
     float gl_ClipDistance[1];
 } gl_in[];
@@ -114,7 +114,7 @@ void devi()
 #extension GL_EXT_device_group : enable
 #endif
 
-#ifdef GL_EXT_device_group
+#ifdef GL_EXT_multiview
 #extension GL_EXT_multiview : enable
 #endif
 

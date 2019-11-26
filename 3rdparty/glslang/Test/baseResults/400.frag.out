@@ -516,7 +516,7 @@ ERROR: node is still EOpNull!
 0:?     'vl' (layout( location=4) smooth in 4-component vector of float)
 0:?     'vl2' (layout( location=6) smooth in 4-component vector of float)
 0:?     'uv3' (layout( location=3) uniform 3-component vector of float)
-0:?     'anon@0' ( in block{ in float FogFragCoord gl_FogFragCoord,  in implicitly-sized array of 4-component vector of float TexCoord gl_TexCoord,  smooth in 4-component vector of float Color gl_Color,  in 4-component vector of float SecondaryColor gl_SecondaryColor})
+0:?     'anon@0' ( in block{ in float FogFragCoord gl_FogFragCoord,  in unsized 1-element array of 4-component vector of float TexCoord gl_TexCoord,  smooth in 4-component vector of float Color gl_Color,  in 4-component vector of float SecondaryColor gl_SecondaryColor})
 0:?     'gl_FragCoord' ( gl_FragCoord 4-component vector of float FragCoord)
 0:?     'u2drs' ( uniform sampler2DRectShadow)
 0:?     'patchIn' ( smooth patch in 4-component vector of float)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -40,21 +40,21 @@ namespace bgfx { namespace gl
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLSWAPINTERVALPROC)(EGLDisplay dpy, EGLint interval);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLTERMINATEPROC)(EGLDisplay dpy);
 
-#define EGL_IMPORT \
-			EGL_IMPORT_FUNC(PFNEGLCHOOSECONFIGPROC,        eglChooseConfig); \
-			EGL_IMPORT_FUNC(PFNEGLCREATECONTEXTPROC,       eglCreateContext); \
-			EGL_IMPORT_FUNC(PFNEGLCREATEWINDOWSURFACEPROC, eglCreateWindowSurface); \
-			EGL_IMPORT_FUNC(PFNEGLGETDISPLAYPROC,          eglGetDisplay); \
-			EGL_IMPORT_FUNC(PFNEGLGETERRORPROC,            eglGetError); \
-			EGL_IMPORT_FUNC(PFNEGLGETPROCADDRESSPROC,      eglGetProcAddress); \
-			EGL_IMPORT_FUNC(PFNEGLDESTROYCONTEXTPROC,      eglDestroyContext); \
-			EGL_IMPORT_FUNC(PFNEGLDESTROYSURFACEPROC,      eglDestroySurface); \
-			EGL_IMPORT_FUNC(PFNEGLINITIALIZEPROC,          eglInitialize); \
-			EGL_IMPORT_FUNC(PFNEGLMAKECURRENTPROC,         eglMakeCurrent); \
-			EGL_IMPORT_FUNC(PGNEGLQUERYSTRINGPROC,         eglQueryString); \
-			EGL_IMPORT_FUNC(PFNEGLSWAPBUFFERSPROC,         eglSwapBuffers); \
-			EGL_IMPORT_FUNC(PFNEGLSWAPINTERVALPROC,        eglSwapInterval); \
-			EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,           eglTerminate);
+#define EGL_IMPORT                                                          \
+	EGL_IMPORT_FUNC(PFNEGLCHOOSECONFIGPROC,        eglChooseConfig);        \
+	EGL_IMPORT_FUNC(PFNEGLCREATECONTEXTPROC,       eglCreateContext);       \
+	EGL_IMPORT_FUNC(PFNEGLCREATEWINDOWSURFACEPROC, eglCreateWindowSurface); \
+	EGL_IMPORT_FUNC(PFNEGLGETDISPLAYPROC,          eglGetDisplay);          \
+	EGL_IMPORT_FUNC(PFNEGLGETERRORPROC,            eglGetError);            \
+	EGL_IMPORT_FUNC(PFNEGLGETPROCADDRESSPROC,      eglGetProcAddress);      \
+	EGL_IMPORT_FUNC(PFNEGLDESTROYCONTEXTPROC,      eglDestroyContext);      \
+	EGL_IMPORT_FUNC(PFNEGLDESTROYSURFACEPROC,      eglDestroySurface);      \
+	EGL_IMPORT_FUNC(PFNEGLINITIALIZEPROC,          eglInitialize);          \
+	EGL_IMPORT_FUNC(PFNEGLMAKECURRENTPROC,         eglMakeCurrent);         \
+	EGL_IMPORT_FUNC(PGNEGLQUERYSTRINGPROC,         eglQueryString);         \
+	EGL_IMPORT_FUNC(PFNEGLSWAPBUFFERSPROC,         eglSwapBuffers);         \
+	EGL_IMPORT_FUNC(PFNEGLSWAPINTERVALPROC,        eglSwapInterval);        \
+	EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,           eglTerminate);
 
 #define EGL_IMPORT_FUNC(_proto, _func) _proto _func
 EGL_IMPORT
@@ -65,10 +65,10 @@ EGL_IMPORT
 		void* handle = bx::dlopen("libEGL." BX_DL_EXT);
 		BGFX_FATAL(NULL != handle, Fatal::UnableToInitialize, "Failed to load libEGL dynamic library.");
 
-#define EGL_IMPORT_FUNC(_proto, _func) \
-			_func = (_proto)bx::dlsym(handle, #_func); \
-			BX_TRACE("%p " #_func, _func); \
-			BGFX_FATAL(NULL != _func, Fatal::UnableToInitialize, "Failed get " #_func ".")
+#define EGL_IMPORT_FUNC(_proto, _func)                                        \
+	_func = (_proto)bx::dlsym(handle, #_func);                                \
+	BX_TRACE("%p " #_func, _func);                                            \
+	BGFX_FATAL(NULL != _func, Fatal::UnableToInitialize, "Failed get " #_func ".")
 EGL_IMPORT
 #undef EGL_IMPORT_FUNC
 
@@ -107,6 +107,8 @@ EGL_IMPORT
 			: m_nwh(_nwh)
 			, m_display(_display)
 		{
+            EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
+
 			m_surface = eglCreateWindowSurface(m_display, _config, _nwh, NULL);
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
@@ -119,13 +121,18 @@ EGL_IMPORT
 			swapBuffers();
 			GL_CHECK(glClear(GL_COLOR_BUFFER_BIT) );
 			swapBuffers();
+            eglMakeCurrent(m_display, defaultSurface, defaultSurface, _context);
 		}
 
 		~SwapChainGL()
 		{
+            EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
+            EGLContext defaultContext = eglGetCurrentContext();
+
 			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			eglDestroyContext(m_display, m_context);
 			eglDestroySurface(m_display, m_surface);
+            eglMakeCurrent(m_display, defaultSurface, defaultSurface, defaultContext);
 		}
 
 		void makeCurrent()
@@ -196,7 +203,7 @@ EGL_IMPORT
 			dumpExtensions(extensions);
 
 			// https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_recordable.txt
-			const bool hasEglAndroidRecordable = !!bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable");
+			const bool hasEglAndroidRecordable = !bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable").isEmpty();
 
 			EGLint attrs[] =
 			{
@@ -256,8 +263,8 @@ EGL_IMPORT
 			m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
-			const bool hasEglKhrCreateContext = !!bx::findIdentifierMatch(extensions, "EGL_KHR_create_context");
-			const bool hasEglKhrNoError       = !!bx::findIdentifierMatch(extensions, "EGL_KHR_create_context_no_error");
+			const bool hasEglKhrCreateContext = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context").isEmpty();
+			const bool hasEglKhrNoError       = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context_no_error").isEmpty();
 
 			const uint32_t gles = BGFX_CONFIG_RENDERER_OPENGLES;
 
@@ -380,6 +387,7 @@ EGL_IMPORT
 		return BX_ENABLED(0
 						| BX_PLATFORM_LINUX
 						| BX_PLATFORM_WINDOWS
+						| BX_PLATFORM_ANDROID
 						)
 			? BGFX_CAPS_SWAP_CHAIN
 			: 0
@@ -438,26 +446,27 @@ EGL_IMPORT
 		BX_TRACE("Import:");
 #	if BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX
 		void* glesv2 = bx::dlopen("libGLESv2." BX_DL_EXT);
-#		define GL_EXTENSION(_optional, _proto, _func, _import) \
-					{ \
-						if (NULL == _func) \
-						{ \
-							_func = (_proto)bx::dlsym(glesv2, #_import); \
-							BX_TRACE("\t%p " #_func " (" #_import ")", _func); \
-							BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
-						} \
-					}
+#		define GL_EXTENSION(_optional, _proto, _func, _import)                                                                                                   \
+			{                                                                                                                                                    \
+				if (NULL == _func)                                                                                                                               \
+				{                                                                                                                                                \
+					_func = (_proto)bx::dlsym(glesv2, #_import);                                                                                                 \
+					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                                                                                           \
+					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
+				}                                                                                                                                                \
+			}
 #	else
-#		define GL_EXTENSION(_optional, _proto, _func, _import) \
-					{ \
-						if (NULL == _func) \
-						{ \
-							_func = (_proto)eglGetProcAddress(#_import); \
-							BX_TRACE("\t%p " #_func " (" #_import ")", _func); \
-							BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
-						} \
-					}
+#		define GL_EXTENSION(_optional, _proto, _func, _import)                                                                                                   \
+			{                                                                                                                                                    \
+				if (NULL == _func)                                                                                                                               \
+				{                                                                                                                                                \
+					_func = (_proto)eglGetProcAddress(#_import);                                                                                                 \
+					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                                                                                           \
+					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
+				}                                                                                                                                                \
+			}
 #	endif // BX_PLATFORM_
+
 #	include "glimports.h"
 	}
 

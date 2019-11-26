@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -62,6 +62,7 @@ namespace bgfx { namespace glsl
 
 			printCode(_code.c_str(), line, start, end, column);
 			fprintf(stderr, "Error: %s\n", log);
+			glslopt_shader_delete(shader);
 			glslopt_cleanup(ctx);
 			return false;
 		}
@@ -71,7 +72,7 @@ namespace bgfx { namespace glsl
 		// Trim all directives.
 		while ('#' == *optimizedShader)
 		{
-			optimizedShader = bx::strnl(optimizedShader);
+			optimizedShader = bx::strFindNl(optimizedShader).getPtr();
 		}
 
 		{
@@ -103,17 +104,15 @@ namespace bgfx { namespace glsl
 
 		if (target != kGlslTargetMetal)
 		{
-			const char* parse = optimizedShader;
+			bx::StringView parse(optimizedShader);
 
-			while (NULL != parse
-				&&  *parse != '\0')
+			while (!parse.isEmpty() )
 			{
-				parse = bx::strws(parse);
-				const char* eol = bx::strFind(parse, ';');
-				if (NULL != eol)
+				parse = bx::strLTrimSpace(parse);
+				bx::StringView eol = bx::strFind(parse, ';');
+				if (!eol.isEmpty() )
 				{
-					const char* qualifier = parse;
-					parse = bx::strws(bx::strSkipWord(parse) );
+					bx::StringView qualifier = nextWord(parse);
 
 					if (0 == bx::strCmp(qualifier, "attribute", 9)
 					||  0 == bx::strCmp(qualifier, "varying",   7)
@@ -122,39 +121,38 @@ namespace bgfx { namespace glsl
 					   )
 					{
 						// skip attributes and varyings.
-						parse = eol + 1;
+						parse.set(eol.getPtr() + 1, parse.getTerm() );
 						continue;
 					}
 
 					if (0 == bx::strCmp(parse, "tmpvar", 6) )
 					{
 						// skip temporaries
-						parse = eol + 1;
+						parse.set(eol.getPtr() + 1, parse.getTerm() );
 						continue;
 					}
 
 					if (0 != bx::strCmp(qualifier, "uniform", 7) )
 					{
 						// end if there is no uniform keyword.
-						parse = NULL;
+						parse.clear();
 						continue;
 					}
 
-					const char* precision = NULL;
-					const char* typen = parse;
+					bx::StringView precision;
+					bx::StringView typen = nextWord(parse);
 
 					if (0 == bx::strCmp(typen, "lowp", 4)
 					||  0 == bx::strCmp(typen, "mediump", 7)
 					||  0 == bx::strCmp(typen, "highp", 5) )
 					{
 						precision = typen;
-						typen = parse = bx::strws(bx::strSkipWord(parse) );
+						typen = nextWord(parse);
 					}
 
 					BX_UNUSED(precision);
 
 					char uniformType[256];
-					parse = bx::strSkipWord(parse);
 
 					if (0 == bx::strCmp(typen, "sampler", 7) )
 					{
@@ -162,26 +160,20 @@ namespace bgfx { namespace glsl
 					}
 					else
 					{
-						bx::strCopy(uniformType, int32_t(parse-typen+1), typen);
+						bx::strCopy(uniformType, BX_COUNTOF(uniformType), typen);
 					}
 
-					const char* name = parse = bx::strws(parse);
+					bx::StringView name = nextWord(parse);
 
-					char uniformName[256];
 					uint8_t num = 1;
-					const char* array = bx::strFind(bx::StringView(name, int32_t(eol-parse) ), "[");
-					if (NULL != array)
+					bx::StringView array = bx::strSubstr(parse, 0, 1);
+					if (0 == bx::strCmp(array, "[", 1) )
 					{
-						bx::strCopy(uniformName, int32_t(array-name+1), name);
+						parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
 
-						char arraySize[32];
-						const char* end = bx::strFind(bx::StringView(array, int32_t(eol-array) ), "]");
-						bx::strCopy(arraySize, int32_t(end-array), array+1);
-						num = uint8_t(atoi(arraySize) );
-					}
-					else
-					{
-						bx::strCopy(uniformName, int32_t(eol-name+1), name);
+						uint32_t tmp;
+						bx::fromString(&tmp, parse);
+						num = uint8_t(tmp);
 					}
 
 					Uniform un;
@@ -189,58 +181,64 @@ namespace bgfx { namespace glsl
 
 					if (UniformType::Count != un.type)
 					{
-						BX_TRACE("name: %s (type %d, num %d)", uniformName, un.type, num);
+						un.name.assign(name.getPtr(), name.getTerm());
 
-						un.name = uniformName;
+						BX_TRACE("name: %s (type %d, num %d)", un.name.c_str(), un.type, num);
+
 						un.num = num;
 						un.regIndex = 0;
 						un.regCount = num;
 						uniforms.push_back(un);
 					}
 
-					parse = eol + 1;
+					parse = bx::strLTrimSpace(bx::strFindNl(bx::StringView(eol.getPtr(), parse.getTerm() ) ) );
 				}
 			}
 		}
 		else
 		{
-			const char* parse = bx::strFind(optimizedShader, "struct xlatMtlShaderUniform {");
-			const char* end   = parse;
-			if (NULL != parse)
+			const bx::StringView optShader(optimizedShader);
+			bx::StringView parse = bx::strFind(optimizedShader, "struct xlatMtlShaderUniform {");
+			bx::StringView end   = parse;
+			if (!parse.isEmpty() )
 			{
-				parse += bx::strLen("struct xlatMtlShaderUniform {");
-				end   =  bx::strFind(parse, "};");
+				parse.set(parse.getPtr() + bx::strLen("struct xlatMtlShaderUniform {"), optShader.getTerm() );
+				end = bx::strFind(parse, "};");
 			}
 
-			while ( parse < end
-			&&     *parse != '\0')
+			while ( parse.getPtr() < end.getPtr()
+			&&     !parse.isEmpty() )
 			{
-				parse = bx::strws(parse);
-				const char* eol = bx::strFind(parse, ';');
-				if (NULL != eol)
+				parse.set(bx::strLTrimSpace(parse).getPtr(), optShader.getTerm() );
+				const bx::StringView eol = bx::strFind(parse, ';');
+				if (!eol.isEmpty() )
 				{
-					const char* typen = parse;
+					const char* typen = parse.getPtr();
 
 					char uniformType[256];
-					parse = bx::strSkipWord(parse);
-					bx::strCopy(uniformType, int32_t(parse-typen+1), typen);
-					const char* name = parse = bx::strws(parse);
+					parse = bx::strWord(parse);
+					bx::strCopy(uniformType, parse.getLength()+1, typen);
+					parse.set(parse.getPtr()+parse.getLength(),optShader.getTerm());
+					const char* name = bx::strLTrimSpace(parse).getPtr();
+					parse.set(name, optShader.getTerm() );
 
 					char uniformName[256];
 					uint8_t num = 1;
-					const char* array = bx::strFind(bx::StringView(name, int32_t(eol-parse) ), "[");
-					if (NULL != array)
+					bx::StringView array = bx::strFind(bx::StringView(name, int32_t(eol.getPtr()-parse.getPtr() ) ), "[");
+					if (!array.isEmpty() )
 					{
-						bx::strCopy(uniformName, int32_t(array-name+1), name);
+						bx::strCopy(uniformName, int32_t(array.getPtr()-name+1), name);
 
 						char arraySize[32];
-						const char* arrayEnd = bx::strFind(bx::StringView(array, int32_t(eol-array) ), "]");
-						bx::strCopy(arraySize, int32_t(arrayEnd-array), array+1);
-						num = uint8_t(atoi(arraySize) );
+						bx::StringView arrayEnd = bx::strFind(bx::StringView(array.getPtr(), int32_t(eol.getPtr()-array.getPtr() ) ), "]");
+						bx::strCopy(arraySize, int32_t(arrayEnd.getPtr()-array.getPtr() ), array.getPtr()+1);
+						uint32_t tmp;
+						bx::fromString(&tmp, arraySize);
+						num = uint8_t(tmp);
 					}
 					else
 					{
-						bx::strCopy(uniformName, int32_t(eol-name+1), name);
+						bx::strCopy(uniformName, int32_t(eol.getPtr()-name+1), name);
 					}
 
 					Uniform un;
@@ -257,7 +255,61 @@ namespace bgfx { namespace glsl
 						uniforms.push_back(un);
 					}
 
-					parse = eol + 1;
+					parse = eol.getPtr() + 1;
+				}
+			}
+
+			bx::StringView mainEntry("xlatMtlShaderOutput xlatMtlMain (");
+			parse = bx::strFind(optimizedShader, mainEntry);
+			end = parse;
+			if (!parse.isEmpty())
+			{
+				parse.set(parse.getPtr() + mainEntry.getLength(), optShader.getTerm());
+				end = bx::strFind(parse, "{");
+			}
+
+			while (parse.getPtr() < end.getPtr()
+				&& !parse.isEmpty())
+			{
+				parse.set(bx::strLTrimSpace(parse).getPtr(), optShader.getTerm());
+				const bx::StringView textureNameMark("[[texture(");
+				const bx::StringView textureName = bx::strFind(parse, textureNameMark);
+
+				if (!textureName.isEmpty())
+				{
+					Uniform un;
+					un.type = nameToUniformTypeEnum("int");	// int for sampler
+					const char* varNameEnd = textureName.getPtr() - 1;
+					parse.set(parse.getPtr(), varNameEnd - 1);
+					const char* varNameBeg = parse.getPtr();
+					for (int ii = parse.getLength() - 1; 0 <= ii; --ii)
+					{
+						if (varNameBeg[ii] == ' ')
+						{
+							parse.set(varNameBeg + ii + 1, varNameEnd);
+							break;
+						}
+					}
+					char uniformName[256];
+					bx::strCopy(uniformName, parse.getLength() + 1, parse);					
+					un.name = uniformName;
+					const char* regIndexBeg = textureName.getPtr() + textureNameMark.getLength();
+					bx::StringView regIndex = bx::strFind(regIndexBeg, ")");
+
+					regIndex.set(regIndexBeg, regIndex.getPtr());
+					uint32_t tmp;
+					bx::fromString(&tmp, regIndex);
+					un.regIndex = uint16_t(tmp);
+					un.num = 1;
+					un.regCount = 1;
+
+					uniforms.push_back(un);
+
+					parse = regIndex.getPtr() + 1;
+				}
+				else
+				{
+					parse = textureName;
 				}
 			}
 		}
@@ -298,6 +350,7 @@ namespace bgfx { namespace glsl
 			writeFile(disasmfp.c_str(), optimizedShader, shaderSize);
 		}
 
+		glslopt_shader_delete(shader);
 		glslopt_cleanup(ctx);
 
 		return true;

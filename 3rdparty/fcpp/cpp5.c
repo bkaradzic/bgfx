@@ -21,15 +21,16 @@ SOFTWARE.
 ******************************************************************************/
 #include <stdio.h>
 #include <ctype.h>
+
 #include "cppdef.h"
 #include "cpp.h"
 
-INLINE FILE_LOCAL ReturnCode evallex(struct Global *, int, int *);
-INLINE FILE_LOCAL ReturnCode dosizeof(struct Global *, int *);
-INLINE FILE_LOCAL int bittest(int);
-INLINE FILE_LOCAL int evalnum(struct Global *, int);
-INLINE FILE_LOCAL int evalchar(struct Global *, int);
-INLINE FILE_LOCAL int *evaleval(struct Global *, int *, int, int);
+INLINE FILE_LOCAL ReturnCode fpp_evallex(struct Global *, int, int *);
+INLINE FILE_LOCAL ReturnCode fpp_dosizeof(struct Global *, int *);
+INLINE FILE_LOCAL int fpp_bittest(int);
+INLINE FILE_LOCAL int fpp_evalnum(struct Global *, int);
+INLINE FILE_LOCAL int fpp_evalchar(struct Global *, int);
+INLINE FILE_LOCAL int *fpp_evaleval(struct Global *, int *, int, int);
 
 /*
  * Evaluate an #if expression.
@@ -92,7 +93,7 @@ static char opdope[OP_MAX] = {
 typedef struct optab {
   char	op;			/* Operator			*/
   char	prec;			/* Its precedence		*/
-  char	skip;			/* Short-circuit: TRUE to skip	*/
+  char	skip;			/* Short-circuit: FPP_TRUE to skip	*/
 } OPTAB;
      
 #ifdef	nomacargs
@@ -216,18 +217,18 @@ SIZES size_table[] = {
 
 #endif /* OK_SIZEOF */
 
-ReturnCode eval(struct Global *global, int *eval)
+ReturnCode fpp_eval(struct Global *global, int *eval)
 {
   /*
    * Evaluate an expression.  Straight-forward operator precedence.
-   * This is called from control() on encountering an #if statement.
+   * This is called from fpp_control() on encountering an #if statement.
    * It calls the following routines:
-   * evallex	Lexical analyser -- returns the type and value of
+   * fpp_evallex	Lexical analyser -- returns the type and value of
    *		the next input token.
-   * evaleval	Evaluate the current operator, given the values on
+   * fpp_evaleval	Evaluate the current operator, given the values on
    *		the value stack.  Returns a pointer to the (new)
    *		value stack.
-   * For compatiblity with older cpp's, this return returns 1 (TRUE)
+   * For compatiblity with older cpp's, this return returns 1 (FPP_TRUE)
    * if a syntax error is detected.
    */
   int op;		/* Current operator		*/
@@ -240,7 +241,7 @@ ReturnCode eval(struct Global *global, int *eval)
   int value[NEXP];	/* Value stack			*/
   OPTAB opstack[NEXP];	/* Operand stack		*/
   ReturnCode ret;
-  char again=TRUE;
+  char again=FPP_TRUE;
   
   valp = value;
   opp = opstack;
@@ -250,7 +251,7 @@ ReturnCode eval(struct Global *global, int *eval)
   binop = 0;
 
   while(again) {
-    ret=evallex(global, opp->skip, &op);
+    ret=fpp_evallex(global, opp->skip, &op);
     if(ret)
       return(ret);
     if (op == OP_SUB && binop == 0)
@@ -263,27 +264,27 @@ ReturnCode eval(struct Global *global, int *eval)
     }
     if (op == DIG) {                      /* Value?               */
       if (binop != 0) {
-	cerror(global, ERROR_MISPLACED_CONSTANT);
+	fpp_cerror(global, ERROR_MISPLACED_CONSTANT);
 	*eval=1;
 	return(FPP_OK);
       } else if (valp >= &value[NEXP-1]) {
-	cerror(global, ERROR_IF_OVERFLOW);
+	fpp_cerror(global, ERROR_IF_OVERFLOW);
 	*eval=1;
 	return(FPP_OK);
       } else {
 	*valp++ = global->evalue;
 	binop = 1;
       }
-      again=TRUE;
+      again=FPP_TRUE;
       continue;
     } else if (op > OP_END) {
-      cerror(global, ERROR_ILLEGAL_IF_LINE);
+      fpp_cerror(global, ERROR_ILLEGAL_IF_LINE);
       *eval=1;
       return(FPP_OK);
     }
     prec = opdope[op];
     if (binop != (prec & 1)) {
-      cerror(global, ERROR_OPERATOR, opname[op]);
+      fpp_cerror(global, ERROR_OPERATOR, opname[op]);
       *eval=1;
       return(FPP_OK);
     }
@@ -300,7 +301,7 @@ ReturnCode eval(struct Global *global, int *eval)
 	 */
 	opp++;
 	if (opp >= &opstack[NEXP]) {
-	  cerror(global, ERROR_EXPR_OVERFLOW, opname[op]);
+	  fpp_cerror(global, ERROR_EXPR_OVERFLOW, opname[op]);
 	  *eval=1;
 	  return(FPP_OK);
 	}
@@ -323,7 +324,7 @@ ReturnCode eval(struct Global *global, int *eval)
 	else {				/* Other ops leave	*/
 	  opp->skip = op1;		/*  skipping unchanged. */
 	}
-	again=TRUE;
+	again=FPP_TRUE;
 	continue;
       }
       /*
@@ -338,11 +339,11 @@ ReturnCode eval(struct Global *global, int *eval)
 	  return(FPP_OK);
 	}
 	/* Read another op.	*/
-	again=TRUE;
+	again=FPP_TRUE;
 	continue;
       case OP_LPA:			/* ( on stack           */
 	if (op != OP_RPA) {             /* Matches ) on input   */
-	  cerror(global, ERROR_UNBALANCED_PARENS, opname[op]);
+	  fpp_cerror(global, ERROR_UNBALANCED_PARENS, opname[op]);
 	  *eval=1;
 	  return(FPP_OK);
 	}
@@ -350,12 +351,12 @@ ReturnCode eval(struct Global *global, int *eval)
 	/* -- Fall through 	*/
       case OP_QUE:
 	/* Evaluate true expr.	*/
-	again=TRUE;
+	again=FPP_TRUE;
 	continue;
       case OP_COL:			/* : on stack.		*/
 	opp--;				/* Unstack :		*/
 	if (opp->op != OP_QUE) {        /* Matches ? on stack?  */
-	  cerror(global, ERROR_MISPLACED, opname[(unsigned)opp->op]);
+	  fpp_cerror(global, ERROR_MISPLACED, opname[(unsigned)opp->op]);
 	  *eval=1;
 	  return(FPP_OK);
 	}
@@ -364,8 +365,8 @@ ReturnCode eval(struct Global *global, int *eval)
 	 */
       default:				/* Others:		*/
 	opp--;				/* Unstack the operator */
-	valp = evaleval(global, valp, op1, skip);
-	again=FALSE;
+	valp = fpp_evaleval(global, valp, op1, skip);
+	again=FPP_FALSE;
       }					/* op1 switch end	*/
     } while (!again);			/* Stack unwind loop	*/
   }
@@ -373,16 +374,16 @@ ReturnCode eval(struct Global *global, int *eval)
 }
 
 INLINE FILE_LOCAL
-ReturnCode evallex(struct Global *global,
-		   int skip,	/* TRUE if short-circuit evaluation */
+ReturnCode fpp_evallex(struct Global *global,
+		   int skip,	/* FPP_TRUE if short-circuit evaluation */
 		   int *op)
 {
   /*
-   * Set *op to next eval operator or value. Called from eval(). It
+   * Set *op to next fpp_eval operator or value. Called from fpp_eval(). It
    * calls a special-purpose routines for 'char' strings and
    * numeric values:
-   * evalchar	called to evaluate 'x'
-   * evalnum	called to evaluate numbers.
+   * fpp_evalchar	called to evaluate 'x'
+   * fpp_evalnum	called to evaluate numbers.
    */
 
   int c, c1, t;
@@ -391,55 +392,55 @@ ReturnCode evallex(struct Global *global,
   
   do { /* while(loop); */
   /* again: */
-    loop=FALSE;
+    loop=FPP_FALSE;
     do {					/* Collect the token	*/
-      c = skipws(global);
-      if((ret=macroid(global, &c)))
+      c = fpp_skipws(global);
+      if((ret=fpp_macroid(global, &c)))
       return(ret);
       if (c == EOF_CHAR || c == '\n') {
-	unget(global);
+	fpp_unget(global);
 	*op=OP_EOE;           /* End of expression    */
 	return(FPP_OK);
       }
-    } while ((t = type[c]) == LET && catenate(global, &ret) && !ret);
+    } while ((t = type[c]) == LET && fpp_catenate(global, 0, &ret) && !ret);
     if(ret)
       /* If the loop was broken because of a fatal error! */
       return(ret);
     if (t == INV) {                         /* Total nonsense       */
       if (!skip) {
 	if (isascii(c) && isprint(c))
-	  cerror(global, ERROR_ILLEGAL_CHARACTER, c);
+	  fpp_cerror(global, ERROR_ILLEGAL_CHARACTER, c);
 	else
-	  cerror(global, ERROR_ILLEGAL_CHARACTER2, c);
+	  fpp_cerror(global, ERROR_ILLEGAL_CHARACTER2, c);
       }
       return(FPP_ILLEGAL_CHARACTER);
     } else if (t == QUO) {                  /* ' or "               */
       if (c == '\'') {                    /* Character constant   */
-	global->evalue = evalchar(global, skip);  /* Somewhat messy       */
+	global->evalue = fpp_evalchar(global, skip);  /* Somewhat messy       */
 	*op=DIG;                          /* Return a value       */
 	return(FPP_OK);
       }
-      cerror(global, ERROR_STRING_IN_IF);
+      fpp_cerror(global, ERROR_STRING_IN_IF);
       return(FPP_CANT_USE_STRING_IN_IF);
     } else if (t == LET) {                  /* ID must be a macro   */
       if (streq(global->tokenbuf, "defined")) {   /* Or defined name      */
-	c1 = c = skipws(global);
+	c1 = c = fpp_skipws(global);
 	if (c == '(')                     /* Allow defined(name)  */
-	  c = skipws(global);
+	  c = fpp_skipws(global);
 	if (type[c] == LET) {
-	  global->evalue = (lookid(global, c) != NULL);
+	  global->evalue = (fpp_lookid(global, c) != NULL);
 	  if (c1 != '('                   /* Need to balance      */
-	      || skipws(global) == ')') { /* Did we balance?      */
+	      || fpp_skipws(global) == ')') { /* Did we balance?      */
 	    *op=DIG;
 	    return(FPP_OK);               /* Parsed ok            */
 	  }
 	}
-	cerror(global, ERROR_DEFINED_SYNTAX);
+	fpp_cerror(global, ERROR_DEFINED_SYNTAX);
 	return(FPP_BAD_IF_DEFINED_SYNTAX);
       }
 #if OK_SIZEOF
 else if (streq(global->tokenbuf, "sizeof")) { /* New sizeof hackery   */
-  ret=dosizeof(global, op);             /* Gets own routine     */
+  ret=fpp_dosizeof(global, op);             /* Gets own routine     */
   return(ret);
 }
 #endif
@@ -448,13 +449,13 @@ else if (streq(global->tokenbuf, "sizeof")) { /* New sizeof hackery   */
       return(FPP_OK);
     }
     else if (t == DIG) {                  /* Numbers are harder   */
-      global->evalue = evalnum(global, c);
+      global->evalue = fpp_evalnum(global, c);
     }
     else if (strchr("!=<>&|\\", c) != NULL) {
       /*
        * Process a possible multi-byte lexeme.
        */
-      c1 = cget(global);                        /* Peek at next char    */
+      c1 = fpp_cget(global);                        /* Peek at next char    */
       switch (c) {
       case '!':
 	if (c1 == '=') {
@@ -465,8 +466,8 @@ else if (streq(global->tokenbuf, "sizeof")) { /* New sizeof hackery   */
 	
       case '=':
 	if (c1 != '=') {                  /* Can't say a=b in #if */
-	  unget(global);
-	  cerror(global, ERROR_ILLEGAL_ASSIGN);
+	  fpp_unget(global);
+	  fpp_cerror(global, ERROR_ILLEGAL_ASSIGN);
 	  return (FPP_IF_ERROR);
 	}
 	*op=OP_EQ;
@@ -493,14 +494,14 @@ else if (streq(global->tokenbuf, "sizeof")) { /* New sizeof hackery   */
       
       case '\\':
 	if (c1 == '\n') {                  /* Multi-line if        */
-	  loop=TRUE;
+	  loop=FPP_TRUE;
 	  break;
 	}
-	cerror(global, ERROR_ILLEGAL_BACKSLASH);
+	fpp_cerror(global, ERROR_ILLEGAL_BACKSLASH);
 	return(FPP_IF_ERROR);
       }
       if(!loop)
-	unget(global);
+	fpp_unget(global);
     }
   } while(loop);
   *op=t;
@@ -510,7 +511,7 @@ else if (streq(global->tokenbuf, "sizeof")) { /* New sizeof hackery   */
 #if OK_SIZEOF
 
 INLINE FILE_LOCAL
-ReturnCode dosizeof(struct Global *global, int *result)
+ReturnCode fpp_dosizeof(struct Global *global, int *result)
 {
   /*
    * Process the sizeof (basic type) operation in an #if string.
@@ -525,44 +526,44 @@ ReturnCode dosizeof(struct Global *global, int *result)
   short typecode;
   ReturnCode ret;
   
-  if ((c = skipws(global)) != '(') {
-    unget(global);
-    cerror(global, ERROR_SIZEOF_SYNTAX);
+  if ((c = fpp_skipws(global)) != '(') {
+    fpp_unget(global);
+    fpp_cerror(global, ERROR_SIZEOF_SYNTAX);
     return(FPP_SIZEOF_ERROR);
   }
   /*
    * Scan off the tokens.
    */
   typecode = 0;
-  while ((c = skipws(global))) {
-    if((ret=macroid(global, &c)))
+  while ((c = fpp_skipws(global))) {
+    if((ret=fpp_macroid(global, &c)))
       return(ret);
     /* (I) return on fail! */
     if (c  == EOF_CHAR || c == '\n') {
       /* End of line is a bug */
-      unget(global);
-      cerror(global, ERROR_SIZEOF_SYNTAX);
+      fpp_unget(global);
+      fpp_cerror(global, ERROR_SIZEOF_SYNTAX);
       return(FPP_SIZEOF_ERROR);
     } else if (c == '(') {                /* thing (*)() func ptr */
-      if (skipws(global) == '*'
-	  && skipws(global) == ')') {         /* We found (*)         */
-	if (skipws(global) != '(')            /* Let () be optional   */
-	  unget(global);
-	else if (skipws(global) != ')') {
-	  unget(global);
-	  cerror(global, ERROR_SIZEOF_SYNTAX);
+      if (fpp_skipws(global) == '*'
+	  && fpp_skipws(global) == ')') {         /* We found (*)         */
+	if (fpp_skipws(global) != '(')            /* Let () be optional   */
+	  fpp_unget(global);
+	else if (fpp_skipws(global) != ')') {
+	  fpp_unget(global);
+	  fpp_cerror(global, ERROR_SIZEOF_SYNTAX);
 	  return(FPP_SIZEOF_ERROR);
 	}
 	typecode |= T_FPTR; 		/* Function pointer	*/
       } else {				/* Junk is a bug	*/
-	unget(global);
-	cerror(global, ERROR_SIZEOF_SYNTAX);
+	fpp_unget(global);
+	fpp_cerror(global, ERROR_SIZEOF_SYNTAX);
 	return(FPP_SIZEOF_ERROR);
       }
     }
     else if (type[c] != LET)            /* Exit if not a type   */
       break;
-    else if (!catenate(global, &ret) && !ret) { /* Maybe combine tokens */
+    else if (!fpp_catenate(global, 0, &ret) && !ret) { /* Maybe combine tokens */
       /*
        * Look for this unexpandable token in basic_types.
        * The code accepts "int long" as well as "long int"
@@ -574,7 +575,7 @@ ReturnCode dosizeof(struct Global *global, int *result)
 	  break;
       }
       if (tp->name == NULLST) {
-	cerror(global, ERROR_SIZEOF_UNKNOWN, global->tokenbuf);
+	fpp_cerror(global, ERROR_SIZEOF_UNKNOWN, global->tokenbuf);
 	return(FPP_SIZEOF_ERROR);
       }
       typecode |= tp->type;		/* Or in the type bit	*/
@@ -586,12 +587,12 @@ ReturnCode dosizeof(struct Global *global, int *result)
    */
   if (c == '*') {
     typecode |= T_PTR;
-    c = skipws(global);
+    c = fpp_skipws(global);
   }
   if (c == ')') {                         /* Last syntax check    */
     for (testp = test_table; *testp != 0; testp++) {
-      if (!bittest(typecode & *testp)) {
-	cerror(global, ERROR_SIZEOF_ILLEGAL_TYPE);
+      if (!fpp_bittest(typecode & *testp)) {
+	fpp_cerror(global, ERROR_SIZEOF_ILLEGAL_TYPE);
 	return(FPP_SIZEOF_ERROR);
       }
     }
@@ -609,7 +610,7 @@ ReturnCode dosizeof(struct Global *global, int *result)
 	typecode &= ~T_INT;
     }
     if ((typecode & ~T_PTR) == 0) {
-      cerror(global, ERROR_SIZEOF_NO_TYPE);
+      fpp_cerror(global, ERROR_SIZEOF_NO_TYPE);
       return(FPP_SIZEOF_ERROR);
     }
     /*
@@ -623,19 +624,19 @@ ReturnCode dosizeof(struct Global *global, int *result)
 	return(FPP_OK);
       }
     }					/* We shouldn't fail    */
-    cerror(global, ERROR_SIZEOF_BUG, typecode);
+    fpp_cerror(global, ERROR_SIZEOF_BUG, typecode);
     return(FPP_SIZEOF_ERROR);
   }
-  unget(global);
-  cerror(global, ERROR_SIZEOF_SYNTAX);
+  fpp_unget(global);
+  fpp_cerror(global, ERROR_SIZEOF_SYNTAX);
   return(FPP_SIZEOF_ERROR);
 }
 
 INLINE FILE_LOCAL
-int bittest(int value)
+int fpp_bittest(int value)
 {
   /*
-   * TRUE if value is zero or exactly one bit is set in value.
+   * FPP_TRUE if value is zero or exactly one bit is set in value.
    */
 
 #if (4096 & ~(-4096)) == 0
@@ -651,10 +652,10 @@ int bittest(int value)
 #endif /* OK_SIZEOF */
 
 INLINE FILE_LOCAL
-int evalnum(struct Global *global, int c)
+int fpp_evalnum(struct Global *global, int c)
 {
   /*
-   * Expand number for #if lexical analysis.  Note: evalnum recognizes
+   * Expand number for #if lexical analysis.  Note: fpp_evalnum recognizes
    * the unsigned suffix, but only returns a signed int value.
    */
 
@@ -664,16 +665,16 @@ int evalnum(struct Global *global, int c)
   
   if (c != '0')
     base = 10;
-  else if ((c = cget(global)) == 'x' || c == 'X') {
+  else if ((c = fpp_cget(global)) == 'x' || c == 'X') {
     base = 16;
-    c = cget(global);
+    c = fpp_cget(global);
   }
   else base = 8;
   value = 0;
   for (;;) {
     c1 = c;
     if (isascii(c) && isupper(c1))
-      c1 = tolower(c1);
+      c1 = fpp_tolower(c1);
     if (c1 >= 'a')
       c1 -= ('a' - 10);
     else c1 -= '0';
@@ -681,17 +682,17 @@ int evalnum(struct Global *global, int c)
       break;
     value *= base;
     value += c1;
-    c = cget(global);
+    c = fpp_cget(global);
   }
   if (c == 'u' || c == 'U')       /* Unsigned nonsense            */
-    c = cget(global);
-  unget(global);
+    c = fpp_cget(global);
+  fpp_unget(global);
   return (value);
 }
 
 INLINE FILE_LOCAL
-int evalchar(struct Global *global,
-	     int skip)		/* TRUE if short-circuit evaluation	*/
+int fpp_evalchar(struct Global *global,
+	     int skip)		/* FPP_TRUE if short-circuit evaluation	*/
      /*
       * Get a character constant
       */
@@ -700,9 +701,9 @@ int evalchar(struct Global *global,
   int value;
   int count;
   
-  global->instring = TRUE;
-  if ((c = cget(global)) == '\\') {
-    switch ((c = cget(global))) {
+  global->instring = FPP_TRUE;
+  if ((c = fpp_cget(global)) == '\\') {
+    switch ((c = fpp_cget(global))) {
     case 'a':                           /* New in Standard      */
 #if ('a' == '\a' || '\a' == ALERT)
       value = ALERT;			/* Use predefined value */
@@ -742,14 +743,14 @@ int evalchar(struct Global *global,
     case 'x':                           /* '\xFF'               */
       count = 3;
       value = 0;
-      while ((((c = get(global)) >= '0' && c <= '9')
+      while ((((c = fpp_get(global)) >= '0' && c <= '9')
 	      || (c >= 'a' && c <= 'f')
 	      || (c >= 'A' && c <= 'F'))
 	     && (--count >= 0)) {
 	value *= 16;
 	value += (c <= '9') ? (c - '0') : ((c & 0xF) + 9);
       }
-      unget(global);
+      fpp_unget(global);
       break;
       
     default:
@@ -759,9 +760,9 @@ int evalchar(struct Global *global,
 	while (c >= '0' && c <= '7' && --count >= 0) {
 	  value *= 8;
 	  value += (c - '0');
-	  c = get(global);
+	  c = fpp_get(global);
 	}
-	unget(global);
+	fpp_unget(global);
       } else
 	value = c;
       break;
@@ -776,9 +777,9 @@ int evalchar(struct Global *global,
 #if BIG_ENDIAN
   count = 0;
 #endif
-  while ((c = get(global)) != '\'' && c != EOF_CHAR && c != '\n') {
+  while ((c = fpp_get(global)) != '\'' && c != EOF_CHAR && c != '\n') {
     if (!skip)
-      cwarn(global, WARN_MULTIBYTE_NOT_PORTABLE, c);
+      fpp_cwarn(global, WARN_MULTIBYTE_NOT_PORTABLE, c);
 #if BIG_ENDIAN
     count += BITS_CHAR;
     value += (c << count);
@@ -787,15 +788,15 @@ int evalchar(struct Global *global,
     value += c;
 #endif
   }
-  global->instring = FALSE;
+  global->instring = FPP_FALSE;
   return (value);
 }
 
 INLINE FILE_LOCAL
-int *evaleval(struct Global *global,
+int *fpp_evaleval(struct Global *global,
 	      int *valp,
 	      int op,
-	      int skip)		/* TRUE if short-circuit evaluation	*/
+	      int skip)		/* FPP_TRUE if short-circuit evaluation	*/
 {
   /*
    * Apply the argument operator to the data on the value stack.
@@ -804,7 +805,7 @@ int *evaleval(struct Global *global,
    *
    * OP_COL is a special case.
    *
-   * evaleval() returns the new pointer to the top of the value stack.
+   * fpp_evaleval() returns the new pointer to the top of the value stack.
    */
   int v1, v2 = 0;
   
@@ -827,7 +828,7 @@ int *evaleval(struct Global *global,
   case OP_MOD:
     if (v2 == 0) {
       if (!skip) {
-	cwarn(global, WARN_DIVISION_BY_ZERO,
+	fpp_cwarn(global, WARN_DIVISION_BY_ZERO,
 	      (op == OP_DIV) ? "divide" : "mod");
       }
       v1 = 0;
@@ -895,7 +896,7 @@ int *evaleval(struct Global *global,
     v1 = !v1;
     break;
   default:
-    cerror(global, ERROR_IF_OPERAND, op);
+    fpp_cerror(global, ERROR_IF_OPERAND, op);
     v1 = 0;
   }
   *valp++ = v1;

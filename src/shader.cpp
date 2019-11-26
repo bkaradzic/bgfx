@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -10,30 +10,36 @@
 
 namespace bgfx
 {
-	static bool printAsm(uint32_t, const DxbcInstruction& _instruction, void* _userData)
+	static bool printAsm(uint32_t _offset, const DxbcInstruction& _instruction, void* _userData)
 	{
+		BX_UNUSED(_offset);
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
 		bx::write(writer, temp, (int32_t)bx::strLen(temp) );
+		bx::write(writer, '\n');
 		return true;
 	}
 
-	static bool printAsm(uint32_t, const Dx9bcInstruction& _instruction, void* _userData)
+	static bool printAsm(uint32_t _offset, const Dx9bcInstruction& _instruction, void* _userData)
 	{
+		BX_UNUSED(_offset);
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
 		bx::write(writer, temp, (int32_t)bx::strLen(temp) );
+		bx::write(writer, '\n');
 		return true;
 	}
 
-	static bool printAsm(uint32_t, const SpvInstruction& _instruction, void* _userData)
+	static bool printAsm(uint32_t _offset, const SpvInstruction& _instruction, void* _userData)
 	{
+		BX_UNUSED(_offset);
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
 		bx::write(writer, temp, (int32_t)bx::strLen(temp) );
+		bx::write(writer, '\n');
 		return true;
 	}
 
@@ -69,14 +75,23 @@ namespace bgfx
 		uint32_t magic;
 		bx::peek(_reader, magic);
 
-		if (BGFX_CHUNK_MAGIC_CSH == magic
-		||  BGFX_CHUNK_MAGIC_FSH == magic
-		||  BGFX_CHUNK_MAGIC_VSH == magic)
+		if (isShaderBin(magic) )
 		{
 			bx::read(_reader, magic);
 
-			uint32_t iohash;
-			bx::read(_reader, iohash, _err);
+			uint32_t hashIn;
+			bx::read(_reader, hashIn);
+
+			uint32_t hashOut;
+
+			if (isShaderVerLess(magic, 6) )
+			{
+				hashOut = hashIn;
+			}
+			else
+			{
+				bx::read(_reader, hashOut);
+			}
 
 			uint16_t count;
 			bx::read(_reader, count, _err);

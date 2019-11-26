@@ -7,12 +7,12 @@ ERROR: 0:48: 'constructor' : constructing non-array constituent from array argum
 ERROR: 0:49: 'constructor' : array constructor argument not correct type to construct array element 
 ERROR: 0:62: '[' :  array index out of range '4'
 ERROR: 0:78: 'assign' :  cannot convert from ' global 4-element array of 7-element array of highp float' to ' global 5-element array of 7-element array of highp float'
-ERROR: 0:79: 'assign' :  cannot convert from ' global 4-element array of 7-element array of highp float' to ' global implicitly-sized array of 7-element array of highp float'
+ERROR: 0:79: 'assign' :  cannot convert from ' global 4-element array of 7-element array of highp float' to ' global unsized 1-element array of 7-element array of highp float'
 ERROR: 0:81: 'foo' : no matching overloaded function found 
 ERROR: 0:86: '==' :  wrong operand types: no operation '==' exists that takes a left-hand operand of type ' global 4-element array of 7-element array of highp float' and a right operand of type ' global 5-element array of 7-element array of highp float' (or there is no acceptable conversion)
 ERROR: 0:90: '[' :  array index out of range '5'
 ERROR: 0:94: '[' :  index out of range '-1'
-ERROR: 0:96: 'assign' :  cannot convert from ' temp 3-element array of highp 4-component vector of float' to 'layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float'
+ERROR: 0:96: 'assign' :  cannot convert from ' temp 3-element array of highp 4-component vector of float' to 'layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float'
 ERROR: 0:103: '' : array size required 
 ERROR: 0:104: '' : array size required 
 ERROR: 0:105: '' : array size required 
@@ -245,7 +245,7 @@ ERROR: node is still EOpNull!
 0:77        Function Call: foo(f1[5][7]; ( global 4-element array of 7-element array of highp float)
 0:77          'g5' ( global 5-element array of 7-element array of highp float)
 0:78      'g5' ( global 5-element array of 7-element array of highp float)
-0:79      'gu' ( global implicitly-sized array of 7-element array of highp float)
+0:79      'gu' ( global unsized 1-element array of 7-element array of highp float)
 0:81      Constant:
 0:81        0.000000
 0:82      Function Call: bar(f1[5][7]; ( global void)
@@ -275,9 +275,9 @@ ERROR: node is still EOpNull!
 0:91      Function Call: foo(f1[5][7]; ( global 4-element array of 7-element array of highp float)
 0:91        'u' ( temp 5-element array of 7-element array of highp float)
 0:94      direct index (layout( column_major shared) temp highp 4-component vector of float)
-0:94        v: direct index for structure (layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float)
-0:94          direct index (layout( column_major shared) temp block{layout( column_major shared) buffer implicitly-sized array of highp float u, layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float v})
-0:94            'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer implicitly-sized array of highp float u, layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float v})
+0:94        v: direct index for structure (layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float)
+0:94          direct index (layout( column_major shared) temp block{layout( column_major shared) buffer unsized 1-element array of highp float u, layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float v})
+0:94            'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer unsized 1-element array of highp float u, layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float v})
 0:94            Constant:
 0:94              1 (const int)
 0:94          Constant:
@@ -286,9 +286,9 @@ ERROR: node is still EOpNull!
 0:94          -1 (const int)
 0:95      move second child to first child ( temp highp 4-component vector of float)
 0:95        direct index (layout( column_major shared) temp highp 4-component vector of float)
-0:95          v: direct index for structure (layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float)
-0:95            direct index (layout( column_major shared) temp block{layout( column_major shared) buffer implicitly-sized array of highp float u, layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float v})
-0:95              'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer implicitly-sized array of highp float u, layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float v})
+0:95          v: direct index for structure (layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float)
+0:95            direct index (layout( column_major shared) temp block{layout( column_major shared) buffer unsized 1-element array of highp float u, layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float v})
+0:95              'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer unsized 1-element array of highp float u, layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float v})
 0:95              Constant:
 0:95                1 (const int)
 0:95            Constant:
@@ -300,9 +300,9 @@ ERROR: node is still EOpNull!
 0:95          4.300000
 0:95          4.300000
 0:95          4.300000
-0:96      v: direct index for structure (layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float)
-0:96        direct index (layout( column_major shared) temp block{layout( column_major shared) buffer implicitly-sized array of highp float u, layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float v})
-0:96          'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer implicitly-sized array of highp float u, layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float v})
+0:96      v: direct index for structure (layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float)
+0:96        direct index (layout( column_major shared) temp block{layout( column_major shared) buffer unsized 1-element array of highp float u, layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float v})
+0:96          'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer unsized 1-element array of highp float u, layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float v})
 0:96          Constant:
 0:96            1 (const int)
 0:96        Constant:
@@ -310,20 +310,39 @@ ERROR: node is still EOpNull!
 0:98      Constant:
 0:98        7 (const int)
 0:99      array length ( temp int)
-0:99        v: direct index for structure (layout( column_major shared) buffer implicitly-sized array of 7-element array of highp 4-component vector of float)
-0:99          direct index (layout( column_major shared) temp block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer implicitly-sized array of 7-element array of highp 4-component vector of float v})
-0:99            'name3' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer implicitly-sized array of 7-element array of highp 4-component vector of float v})
+0:99        v: direct index for structure (layout( column_major shared) buffer unsized 2-element array of 7-element array of highp 4-component vector of float)
+0:99          direct index (layout( column_major shared) temp block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer unsized 2-element array of 7-element array of highp 4-component vector of float v})
+0:99            'name3' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer unsized 2-element array of 7-element array of highp 4-component vector of float v})
 0:99            Constant:
 0:99              0 (const int)
 0:99          Constant:
 0:99            1 (const int)
+0:117  Function Definition: func(mf33[3][2]; ( global highp 3-component vector of float)
+0:117    Function Parameters: 
+0:117      'x' ( in 3-element array of 2-element array of highp 3X3 matrix of float)
+0:119    Sequence
+0:119      Sequence
+0:119        move second child to first child ( temp highp 3X3 matrix of float)
+0:119          'a0' ( temp highp 3X3 matrix of float)
+0:119          direct index ( temp highp 3X3 matrix of float)
+0:119            direct index ( temp 2-element array of highp 3X3 matrix of float)
+0:119              'x' ( in 3-element array of 2-element array of highp 3X3 matrix of float)
+0:119              Constant:
+0:119                2 (const int)
+0:119            Constant:
+0:119              1 (const int)
+0:120      Branch: Return with expression
+0:120        direct index ( temp highp 3-component vector of float)
+0:120          'a0' ( temp highp 3X3 matrix of float)
+0:120          Constant:
+0:120            2 (const int)
 0:?   Linker Objects
-0:?     'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer implicitly-sized array of highp float u, layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float v})
-0:?     'uname' (layout( column_major shared) uniform 3-element array of block{layout( column_major shared) uniform highp float u, layout( column_major shared) uniform implicitly-sized array of highp 4-component vector of float v})
-0:?     'name2' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer implicitly-sized array of 1-element array of highp 4-component vector of float v})
-0:?     'name3' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer implicitly-sized array of 7-element array of highp 4-component vector of float v})
+0:?     'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer unsized 1-element array of highp float u, layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float v})
+0:?     'uname' (layout( column_major shared) uniform 3-element array of block{layout( column_major shared) uniform highp float u, layout( column_major shared) uniform unsized 1-element array of highp 4-component vector of float v})
+0:?     'name2' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer unsized 1-element array of 1-element array of highp 4-component vector of float v})
+0:?     'name3' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer unsized 2-element array of 7-element array of highp 4-component vector of float v})
 0:?     'many' ( global 1-element array of 2-element array of 3-element array of 4-element array of 5-element array of 6-element array of highp float)
-0:?     'gu' ( global implicitly-sized array of 7-element array of highp float)
+0:?     'gu' ( global unsized 1-element array of 7-element array of highp float)
 0:?     'g4' ( global 4-element array of 7-element array of highp float)
 0:?     'g5' ( global 5-element array of 7-element array of highp float)
 0:?     'inArray' ( in 2-element array of 3-element array of highp float)
@@ -359,10 +378,10 @@ ERROR: node is still EOpNull!
 0:13          2 (const uint)
 0:13        'd' ( temp 3-element array of 2-element array of highp int)
 0:?   Linker Objects
-0:?     'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer implicitly-sized array of highp float u, layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float v})
+0:?     'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer 1-element array of highp float u, layout( column_major shared) buffer unsized 2-element array of highp 4-component vector of float v})
 0:?     'uname' (layout( column_major shared) uniform 3-element array of block{layout( column_major shared) uniform highp float u, layout( column_major shared) uniform 1-element array of highp 4-component vector of float v})
-0:?     'name2' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer implicitly-sized array of 1-element array of highp 4-component vector of float v})
-0:?     'name3' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer implicitly-sized array of 7-element array of highp 4-component vector of float v})
+0:?     'name2' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer unsized 1-element array of 1-element array of highp 4-component vector of float v})
+0:?     'name3' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer highp float u, layout( column_major shared) buffer unsized 2-element array of 7-element array of highp 4-component vector of float v})
 0:?     'many' ( global 1-element array of 2-element array of 3-element array of 4-element array of 5-element array of 6-element array of highp float)
 0:?     'gu' ( global 1-element array of 7-element array of highp float)
 0:?     'g4' ( global 4-element array of 7-element array of highp float)

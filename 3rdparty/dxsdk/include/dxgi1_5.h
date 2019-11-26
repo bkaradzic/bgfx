@@ -78,6 +78,9 @@ extern "C"{
 /* interface __MIDL_itf_dxgi1_5_0000_0000 */
 /* [local] */ 
 
+#include <winapifamily.h>
+// BK - pragma region App Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 typedef 
 enum DXGI_OUTDUPL_FLAG
     {
@@ -416,7 +419,8 @@ typedef
 enum DXGI_HDR_METADATA_TYPE
     {
         DXGI_HDR_METADATA_TYPE_NONE	= 0,
-        DXGI_HDR_METADATA_TYPE_HDR10	= 1
+        DXGI_HDR_METADATA_TYPE_HDR10	= 1,
+        DXGI_HDR_METADATA_TYPE_HDR10PLUS	= 2
     } 	DXGI_HDR_METADATA_TYPE;
 
 typedef struct DXGI_HDR_METADATA_HDR10
@@ -430,6 +434,11 @@ typedef struct DXGI_HDR_METADATA_HDR10
     UINT16 MaxContentLightLevel;
     UINT16 MaxFrameAverageLightLevel;
     } 	DXGI_HDR_METADATA_HDR10;
+
+typedef struct DXGI_HDR_METADATA_HDR10PLUS
+    {
+    BYTE Data[ 72 ];
+    } 	DXGI_HDR_METADATA_HDR10PLUS;
 
 
 
@@ -1512,6 +1521,8 @@ EXTERN_C const IID IID_IDXGIFactory5;
 /* interface __MIDL_itf_dxgi1_5_0000_0004 */
 /* [local] */ 
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+// BK - pragma endregion
 DEFINE_GUID(IID_IDXGIOutput5,0x80A07424,0xAB52,0x42EB,0x83,0x3C,0x0C,0x42,0xFD,0x28,0x2D,0x98);
 DEFINE_GUID(IID_IDXGISwapChain4,0x3D585D5A,0xBD4A,0x489E,0xB1,0xF4,0x3D,0xBC,0xB6,0x45,0x2F,0xFB);
 DEFINE_GUID(IID_IDXGIDevice4,0x95B4F95F,0xD8DA,0x4CA4,0x9E,0xE6,0x3B,0x76,0xD5,0x96,0x8A,0x10);

@@ -54,7 +54,7 @@ int main(int argc, char** argv)
             glslangtest::GlobalTestSettings.updateMode = true;
         }
         if (std::string("--test-root") == argv[i]) {
-            // Allow the user set the tets root directory.  This is useful
+            // Allow the user set the test root directory.  This is useful
             // for testing with files from another source tree.
             if (i + 1 < argc) {
                 glslangtest::GlobalTestSettings.testRoot = argv[i + 1];
@@ -63,6 +63,11 @@ int main(int argc, char** argv)
                 printf("error: --test-root requires an argument\n");
                 return 1;
             }
+        }
+        if (std::string("--help") == argv[i]) {
+            printf("\nExtra options:\n\n");
+            printf("  --update-mode\n      Update the golden results for the tests.\n");
+            printf("  --test-root <arg>\n      Specify the test root directory (useful for testing with\n      files from another source tree).\n");
         }
     }
 

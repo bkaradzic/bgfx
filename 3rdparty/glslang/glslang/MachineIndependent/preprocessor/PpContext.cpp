@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013 LunarG, Inc.
+// Copyright (C) 2015-2018 Google, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -77,6 +78,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
 
 #include <cstdlib>
+#include <locale>
 
 #include "PpContext.h"
 
@@ -91,6 +93,8 @@ TPpContext::TPpContext(TParseContextBase& pc, const std::string& rootFileName, T
     for (elsetracker = 0; elsetracker < maxIfNesting; elsetracker++)
         elseSeen[elsetracker] = false;
     elsetracker = 0;
+
+    strtodStream.imbue(std::locale::classic());
 }
 
 TPpContext::~TPpContext()

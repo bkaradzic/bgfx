@@ -2,7 +2,8 @@
 ERROR: 0:5: 'a' : redefinition 
 ERROR: 0:57: 'z' : undeclared identifier 
 ERROR: 0:57: 'z' : redefinition 
-ERROR: 3 compilation errors.  No code generated.
+ERROR: 0:83: 'S' : redefinition struct
+ERROR: 4 compilation errors.  No code generated.
 
 
 Shader version: 110
@@ -120,6 +121,21 @@ ERROR: node is still EOpNull!
 0:69            0 (const int)
 0:73      Constant:
 0:73        183.346494
+0:?       Sequence
+0:77        move second child to first child ( temp int)
+0:77          x: direct index for structure ( temp int)
+0:77            's' ( temp structure{ temp int x})
+0:77            Constant:
+0:77              0 (const int)
+0:77          Constant:
+0:77            3 (const int)
+0:82        move second child to first child ( temp bool)
+0:82          b: direct index for structure ( temp bool)
+0:82            't' ( temp structure{ temp bool b})
+0:82            Constant:
+0:82              0 (const int)
+0:82          Constant:
+0:82            true (const bool)
 0:?   Linker Objects
 0:?     'b' ( global bool)
 0:?     'c' ( global bool)
@@ -236,6 +252,21 @@ ERROR: node is still EOpNull!
 0:69            0 (const int)
 0:73      Constant:
 0:73        183.346494
+0:?       Sequence
+0:77        move second child to first child ( temp int)
+0:77          x: direct index for structure ( temp int)
+0:77            's' ( temp structure{ temp int x})
+0:77            Constant:
+0:77              0 (const int)
+0:77          Constant:
+0:77            3 (const int)
+0:82        move second child to first child ( temp bool)
+0:82          b: direct index for structure ( temp bool)
+0:82            't' ( temp structure{ temp bool b})
+0:82            Constant:
+0:82              0 (const int)
+0:82          Constant:
+0:82            true (const bool)
 0:?   Linker Objects
 0:?     'b' ( global bool)
 0:?     'c' ( global bool)

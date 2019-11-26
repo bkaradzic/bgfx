@@ -32,17 +32,17 @@ struct PosNormalVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,   4, bgfx::AttribType::Uint8, true, true)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosNormalVertex::ms_decl;
+bgfx::VertexLayout PosNormalVertex::ms_layout;
 
 static PosNormalVertex s_hplaneVertices[] =
 {
@@ -61,8 +61,8 @@ static const uint16_t s_planeIndices[] =
 class ExampleShadowmapsSimple : public entry::AppI
 {
 public:
-	ExampleShadowmapsSimple(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleShadowmapsSimple(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -75,14 +75,19 @@ public:
 		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
 
 		// Uniforms.
-		s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Int1);
+		s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Sampler);
 		u_lightPos  = bgfx::createUniform("u_lightPos",  bgfx::UniformType::Vec4);
 		u_lightMtx  = bgfx::createUniform("u_lightMtx",  bgfx::UniformType::Mat4);
 
@@ -101,6 +106,8 @@ public:
 		}
 		bgfx::setUniform(u_depthScaleOffset, depthScaleOffset);
 
+		bgfx::touch(0);
+
 		// Create vertex stream declaration.
 		PosNormalVertex::init();
 
@@ -111,7 +118,7 @@ public:
 
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_hplaneVertices, sizeof(s_hplaneVertices) )
-			, PosNormalVertex::ms_decl
+			, PosNormalVertex::ms_layout
 			);
 
 		m_ibh = bgfx::createIndexBuffer(
@@ -124,77 +131,23 @@ public:
 		// Shadow samplers are supported at least partially supported if texture
 		// compare less equal feature is supported.
 		m_shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL);
+		m_useShadowSampler = m_shadowSamplerSupported;
 
-		bgfx::TextureHandle shadowMapTexture;
-
-		if (m_shadowSamplerSupported)
-		{
-			// Depth textures and shadow samplers are supported.
-			m_progShadow = loadProgram("vs_sms_shadow", "fs_sms_shadow");
-			m_progMesh   = loadProgram("vs_sms_mesh",   "fs_sms_mesh");
-
-			bgfx::TextureHandle fbtextures[] =
-			{
-				bgfx::createTexture2D(
-					  m_shadowMapSize
-					, m_shadowMapSize
-					, false
-					, 1
-					, bgfx::TextureFormat::D16
-					, BGFX_TEXTURE_RT | BGFX_TEXTURE_COMPARE_LEQUAL
-					),
-			};
-			shadowMapTexture = fbtextures[0];
-			m_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
-		}
-		else
-		{
-			// Depth textures and shadow samplers are not supported. Use float
-			// depth packing into color buffer instead.
-			m_progShadow = loadProgram("vs_sms_shadow_pd", "fs_sms_shadow_pd");
-			m_progMesh   = loadProgram("vs_sms_mesh",      "fs_sms_mesh_pd");
-
-			bgfx::TextureHandle fbtextures[] =
-			{
-				bgfx::createTexture2D(
-					  m_shadowMapSize
-					, m_shadowMapSize
-					, false
-					, 1
-					, bgfx::TextureFormat::BGRA8
-					, BGFX_TEXTURE_RT
-					),
-				bgfx::createTexture2D(
-					  m_shadowMapSize
-					, m_shadowMapSize
-					, false
-					, 1
-					, bgfx::TextureFormat::D16
-					, BGFX_TEXTURE_RT_WRITE_ONLY
-					),
-			};
-			shadowMapTexture = fbtextures[0];
-			m_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
-		}
+		m_shadowMapFB = BGFX_INVALID_HANDLE;
+		m_progShadow = BGFX_INVALID_HANDLE;
+		m_progMesh = BGFX_INVALID_HANDLE;
 
 		m_state[0] = meshStateCreate();
-		m_state[0]->m_state = 0
-			| BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_DEPTH_WRITE
-			| BGFX_STATE_DEPTH_TEST_LESS
-			| BGFX_STATE_CULL_CCW
-			| BGFX_STATE_MSAA
-			;
+		m_state[0]->m_state = 0;
 		m_state[0]->m_program = m_progShadow;
 		m_state[0]->m_viewId  = RENDER_SHADOW_PASS_ID;
 		m_state[0]->m_numTextures = 0;
 
 		m_state[1] = meshStateCreate();
 		m_state[1]->m_state = 0
-			| BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
-			| BGFX_STATE_DEPTH_WRITE
+			| BGFX_STATE_WRITE_RGB
+			| BGFX_STATE_WRITE_A
+			| BGFX_STATE_WRITE_Z
 			| BGFX_STATE_DEPTH_TEST_LESS
 			| BGFX_STATE_CULL_CCW
 			| BGFX_STATE_MSAA
@@ -205,12 +158,12 @@ public:
 		m_state[1]->m_textures[0].m_flags = UINT32_MAX;
 		m_state[1]->m_textures[0].m_stage = 0;
 		m_state[1]->m_textures[0].m_sampler = s_shadowMap;
-		m_state[1]->m_textures[0].m_texture = shadowMapTexture;
+		m_state[1]->m_textures[0].m_texture = BGFX_INVALID_HANDLE;
 
 		// Set view and projection matrices.
 
-		float eye[3] = { 0.0f, 30.0f, -60.0f };
-		float at[3]  = { 0.0f,  5.0f,   0.0f };
+		const bx::Vec3 at  = { 0.0f,  5.0f,   0.0f };
+		const bx::Vec3 eye = { 0.0f, 30.0f, -60.0f };
 		bx::mtxLookAt(m_view, eye, at);
 
 		const float aspect = float(int32_t(m_width) ) / float(int32_t(m_height) );
@@ -267,17 +220,117 @@ public:
 
 			showExampleDialog(this);
 
+			ImGui::SetNextWindowPos(
+				ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+			);
+			ImGui::SetNextWindowSize(
+				ImVec2(m_width / 5.0f, m_height / 2.0f)
+				, ImGuiCond_FirstUseEver
+			);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+			);
+
+			bool shadowSamplerModeChanged = false;
+			if (m_shadowSamplerSupported)
+			{
+				shadowSamplerModeChanged = ImGui::Checkbox("Use Shadow Sampler", &m_useShadowSampler);
+			}
+			else
+			{
+				ImGui::Text("Shadow sampler is not supported");
+			}
+
+			ImGui::End();
+
 			imguiEndFrame();
 
 			int64_t now = bx::getHPCounter();
 			const double freq = double(bx::getHPFrequency() );
 			float time = float( (now-m_timeOffset)/freq);
 
+			if (!bgfx::isValid(m_shadowMapFB) || shadowSamplerModeChanged)
+			{
+				bgfx::TextureHandle shadowMapTexture;
+
+				if (bgfx::isValid(m_progShadow))
+					bgfx::destroy(m_progShadow);
+				if (bgfx::isValid(m_progMesh))
+					bgfx::destroy(m_progMesh);
+
+				if (bgfx::isValid(m_shadowMapFB))
+					bgfx::destroy(m_shadowMapFB);
+
+				if (m_useShadowSampler)
+				{
+					// Depth textures and shadow samplers are supported.
+					m_progShadow = loadProgram("vs_sms_shadow", "fs_sms_shadow");
+					m_progMesh = loadProgram("vs_sms_mesh", "fs_sms_mesh");
+
+					bgfx::TextureHandle fbtextures[] =
+					{
+						bgfx::createTexture2D(
+							  m_shadowMapSize
+							, m_shadowMapSize
+							, false
+							, 1
+							, bgfx::TextureFormat::D16
+							, BGFX_TEXTURE_RT | BGFX_SAMPLER_COMPARE_LEQUAL
+							),
+					};
+					shadowMapTexture = fbtextures[0];
+					m_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+				}
+				else
+				{
+					// Depth textures and shadow samplers are not supported. Use float
+					// depth packing into color buffer instead.
+					m_progShadow = loadProgram("vs_sms_shadow_pd", "fs_sms_shadow_pd");
+					m_progMesh = loadProgram("vs_sms_mesh", "fs_sms_mesh_pd");
+
+					bgfx::TextureHandle fbtextures[] =
+					{
+						bgfx::createTexture2D(
+							  m_shadowMapSize
+							, m_shadowMapSize
+							, false
+							, 1
+							, bgfx::TextureFormat::BGRA8
+							, BGFX_TEXTURE_RT
+							),
+						bgfx::createTexture2D(
+							  m_shadowMapSize
+							, m_shadowMapSize
+							, false
+							, 1
+							, bgfx::TextureFormat::D16
+							, BGFX_TEXTURE_RT_WRITE_ONLY
+							),
+					};
+					shadowMapTexture = fbtextures[0];
+					m_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+				}
+
+				m_state[0]->m_program = m_progShadow;
+				m_state[0]->m_state = 0
+					| (m_useShadowSampler ? 0 : BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A)
+					| BGFX_STATE_WRITE_Z
+					| BGFX_STATE_DEPTH_TEST_LESS
+					| BGFX_STATE_CULL_CCW
+					| BGFX_STATE_MSAA
+					;
+
+				m_state[1]->m_program = m_progMesh;
+				m_state[1]->m_textures[0].m_texture = shadowMapTexture;
+			}
+
 			// Setup lights.
 			float lightPos[4];
-			lightPos[0] = -bx::fcos(time);
+			lightPos[0] = -bx::cos(time);
 			lightPos[1] = -1.0f;
-			lightPos[2] = -bx::fsin(time);
+			lightPos[2] = -bx::sin(time);
 			lightPos[3] = 0.0f;
 
 			bgfx::setUniform(u_lightPos, lightPos);
@@ -315,9 +368,8 @@ public:
 			float lightView[16];
 			float lightProj[16];
 
-			float eye[3] = { -lightPos[0], -lightPos[1], -lightPos[2] };
-			float at[3]  = { 0.0f,  0.0f,   0.0f };
-
+			const bx::Vec3 at  = { 0.0f,  0.0f,   0.0f };
+			const bx::Vec3 eye = { -lightPos[0], -lightPos[1], -lightPos[2] };
 			bx::mtxLookAt(lightView, eye, at);
 
 			const bgfx::Caps* caps = bgfx::getCaps();
@@ -441,6 +493,7 @@ public:
 	bgfx::FrameBufferHandle m_shadowMapFB;
 
 	bool m_shadowSamplerSupported;
+	bool m_useShadowSampler;
 
 	MeshState* m_state[2];
 
@@ -452,4 +505,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleShadowmapsSimple, "15-shadowmaps-simple", "Shadow maps example");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleShadowmapsSimple
+	, "15-shadowmaps-simple"
+	, "Shadow maps example"
+	, "https://bkaradzic.github.io/bgfx/examples.html#shadowmaps-simple"
+	);

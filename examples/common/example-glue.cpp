@@ -1,14 +1,66 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "imgui/imgui.h"
 #include "entry/entry.h"
 #include "entry/cmd.h"
+#include "entry/dialog.h"
 #include <bx/string.h>
 #include <bx/timer.h>
 #include <bx/math.h>
+
+struct SampleData
+{
+	static constexpr uint32_t kNumSamples = 100;
+
+	SampleData()
+	{
+		reset();
+	}
+
+	void reset()
+	{
+		m_offset = 0;
+		bx::memSet(m_values, 0, sizeof(m_values) );
+
+		m_min = 0.0f;
+		m_max = 0.0f;
+		m_avg = 0.0f;
+	}
+
+	void pushSample(float value)
+	{
+		m_values[m_offset] = value;
+		m_offset = (m_offset+1) % kNumSamples;
+
+		float min =  bx::kFloatMax;
+		float max = -bx::kFloatMax;
+		float avg =  0.0f;
+
+		for (uint32_t ii = 0; ii < kNumSamples; ++ii)
+		{
+			const float val = m_values[ii];
+			min  = bx::min(min, val);
+			max  = bx::max(max, val);
+			avg += val;
+		}
+
+		m_min = min;
+		m_max = max;
+		m_avg = avg / kNumSamples;
+	}
+
+	int32_t m_offset;
+	float m_values[kNumSamples];
+
+	float m_min;
+	float m_max;
+	float m_avg;
+};
+
+static SampleData s_frameTime;
 
 static bool bar(float _width, float _maxWidth, float _height, const ImVec4& _color)
 {
@@ -33,7 +85,7 @@ static bool bar(float _width, float _maxWidth, float _height, const ImVec4& _col
 	itemHovered |= ImGui::IsItemHovered();
 
 	ImGui::SameLine();
-	ImGui::InvisibleButton("", ImVec2(_maxWidth-_width, _height) );
+	ImGui::InvisibleButton("", ImVec2(bx::max(1.0f, _maxWidth-_width), _height) );
 	itemHovered |= ImGui::IsItemHovered();
 
 	ImGui::PopStyleVar(2);
@@ -80,13 +132,30 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		, ImGuiCond_FirstUseEver
 		);
 	ImGui::SetNextWindowSize(
-		  ImVec2(300.0f, 200.0f)
+		  ImVec2(300.0f, 210.0f)
 		, ImGuiCond_FirstUseEver
 		);
 
 	ImGui::Begin(temp);
 
 	ImGui::TextWrapped("%s", _app->getDescription() );
+
+	bx::StringView url = _app->getUrl();
+	if (!url.isEmpty() )
+	{
+		ImGui::SameLine();
+		if (ImGui::SmallButton(ICON_FA_LINK) )
+		{
+			openUrl(url);
+		}
+		else if (ImGui::IsItemHovered() )
+		{
+			char tmp[1024];
+			bx::snprintf(tmp, BX_COUNTOF(tmp), "Documentation: %.*s", url.getLength(), url.getPtr() );
+			ImGui::SetTooltip(tmp);
+		}
+	}
+
 	ImGui::Separator();
 
 	if (NULL != _errorText)
@@ -228,9 +297,31 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 	const bgfx::Stats* stats = bgfx::getStats();
 	const double toMsCpu = 1000.0/stats->cpuTimerFreq;
 	const double toMsGpu = 1000.0/stats->gpuTimerFreq;
-	ImGui::Text("Frame %0.3f"
-		, double(stats->cpuTimeFrame)*toMsCpu
+	const double frameMs = double(stats->cpuTimeFrame)*toMsCpu;
+
+	s_frameTime.pushSample(float(frameMs) );
+
+	char frameTextOverlay[256];
+	bx::snprintf(frameTextOverlay, BX_COUNTOF(frameTextOverlay), "%s%.3fms, %s%.3fms\nAvg: %.3fms, %.1f FPS"
+		, ICON_FA_ARROW_DOWN
+		, s_frameTime.m_min
+		, ICON_FA_ARROW_UP
+		, s_frameTime.m_max
+		, s_frameTime.m_avg
+		, 1000.0f/s_frameTime.m_avg
 		);
+
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImColor(0.0f, 0.5f, 0.15f, 1.0f).Value);
+	ImGui::PlotHistogram("Frame"
+		, s_frameTime.m_values
+		, SampleData::kNumSamples
+		, s_frameTime.m_offset
+		, frameTextOverlay
+		, 0.0f
+		, 60.0f
+		, ImVec2(0.0f, 45.0f)
+		);
+	ImGui::PopStyleColor();
 
 	ImGui::Text("Submit CPU %0.3f, GPU %0.3f (L: %d)"
 		, double(stats->cpuTimeEnd - stats->cpuTimeBegin)*toMsCpu
@@ -277,7 +368,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				resourceBar("  T", "Textures",               stats->numTextures,             caps->limits.maxTextures,             maxWidth, itemHeight);
 				resourceBar("  U", "Uniforms",               stats->numUniforms,             caps->limits.maxUniforms,             maxWidth, itemHeight);
 				resourceBar(" VB", "Vertex buffers",         stats->numVertexBuffers,        caps->limits.maxVertexBuffers,        maxWidth, itemHeight);
-				resourceBar(" VD", "Vertex declarations",    stats->numVertexDecls,          caps->limits.maxVertexDecls,          maxWidth, itemHeight);
+				resourceBar(" VL", "Vertex layouts",         stats->numVertexLayouts,        caps->limits.maxVertexLayouts,        maxWidth, itemHeight);
 				ImGui::PopFont();
 			}
 
@@ -347,8 +438,10 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 									ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
 
 									const float maxWidth = 30.0f*scale;
-									const float cpuWidth = bx::clamp(float(viewStats.cpuTimeElapsed*toCpuMs)*scale, 1.0f, maxWidth);
-									const float gpuWidth = bx::clamp(float(viewStats.gpuTimeElapsed*toGpuMs)*scale, 1.0f, maxWidth);
+									const float cpuTimeElapsed = float((viewStats.cpuTimeEnd - viewStats.cpuTimeBegin) * toCpuMs);
+									const float gpuTimeElapsed = float((viewStats.gpuTimeEnd - viewStats.gpuTimeBegin) * toGpuMs);
+									const float cpuWidth = bx::clamp(cpuTimeElapsed*scale, 1.0f, maxWidth);
+									const float gpuWidth = bx::clamp(gpuTimeElapsed*scale, 1.0f, maxWidth);
 
 									ImGui::SameLine(64.0f);
 
@@ -357,7 +450,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 										ImGui::SetTooltip("View %d \"%s\", CPU: %f [ms]"
 											, pos
 											, viewStats.name
-											, viewStats.cpuTimeElapsed*toCpuMs
+											, cpuTimeElapsed
 											);
 									}
 
@@ -367,7 +460,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 										ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]"
 											, pos
 											, viewStats.name
-											, viewStats.gpuTimeElapsed*toGpuMs
+											, gpuTimeElapsed
 											);
 									}
 								}
@@ -382,9 +475,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 					ImGui::EndChild();
 				}
 			}
-
-			ImGui::End();
 		}
+		ImGui::End();
 	}
 
 	ImGui::End();

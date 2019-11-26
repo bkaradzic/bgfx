@@ -1,7 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013-2016 LunarG, Inc.
-// Copyright (C) 2015-2017 Google, Inc.
+// Copyright (C) 2015-2018 Google, Inc.
 //
 // All rights reserved.
 //
@@ -66,6 +66,11 @@
 #include "reflection.h"
 #include "iomapper.h"
 #include "Initialize.h"
+
+// TODO: this really shouldn't be here, it is only because of the trial addition
+// of printing pre-processed tokens, which requires knowing the string literal
+// token to print ", but none of that seems appropriate for this file.
+#include "preprocessor/PpTokens.h"
 
 namespace { // anonymous namespace for file-local functions and symbols
 
@@ -283,6 +288,11 @@ void InitializeStageSymbolTable(TBuiltInParseables& builtInParseables, int versi
                                 EShLanguage language, EShSource source, TInfoSink& infoSink, TSymbolTable** commonTable,
                                 TSymbolTable** symbolTables)
 {
+#ifdef GLSLANG_WEB
+    profile = EEsProfile;
+    version = 310;
+#endif
+
     (*symbolTables[language]).adoptLevels(*commonTable[CommonIndex(profile, language)]);
     InitializeSymbolTable(builtInParseables.getStageString(language), version, profile, spvVersion, language, source,
                           infoSink, *symbolTables[language]);
@@ -299,6 +309,11 @@ void InitializeStageSymbolTable(TBuiltInParseables& builtInParseables, int versi
 //
 bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TSymbolTable** symbolTables, int version, EProfile profile, const SpvVersion& spvVersion, EShSource source)
 {
+#ifdef GLSLANG_WEB
+    profile = EEsProfile;
+    version = 310;
+#endif
+
     std::unique_ptr<TBuiltInParseables> builtInParseables(CreateBuiltInParseables(infoSink, source));
 
     if (builtInParseables == nullptr)
@@ -321,6 +336,7 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
     InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangFragment, source,
                                infoSink, commonTable, symbolTables);
 
+#ifndef GLSLANG_WEB
     // check for tessellation
     if ((profile != EEsProfile && version >= 150) ||
         (profile == EEsProfile && version >= 310)) {
@@ -335,11 +351,40 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
         (profile == EEsProfile && version >= 310))
         InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangGeometry, source,
                                    infoSink, commonTable, symbolTables);
+#endif
 
     // check for compute
     if ((profile != EEsProfile && version >= 420) ||
         (profile == EEsProfile && version >= 310))
         InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangCompute, source,
+                                   infoSink, commonTable, symbolTables);
+
+    // check for ray tracing stages
+    if (profile != EEsProfile && version >= 450) {
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangRayGenNV, source,
+            infoSink, commonTable, symbolTables);
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangIntersectNV, source,
+            infoSink, commonTable, symbolTables);
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangAnyHitNV, source,
+            infoSink, commonTable, symbolTables);
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangClosestHitNV, source,
+            infoSink, commonTable, symbolTables);
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMissNV, source,
+            infoSink, commonTable, symbolTables);
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangCallableNV, source,
+            infoSink, commonTable, symbolTables);
+    }
+
+    // check for mesh
+    if ((profile != EEsProfile && version >= 450) ||
+        (profile == EEsProfile && version >= 320))
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMeshNV, source,
+                                   infoSink, commonTable, symbolTables);
+
+    // check for task
+    if ((profile != EEsProfile && version >= 450) ||
+        (profile == EEsProfile && version >= 320))
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTaskNV, source,
                                    infoSink, commonTable, symbolTables);
 
     return true;
@@ -439,6 +484,18 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
     glslang::ReleaseGlobalLock();
 }
 
+// Function to Print all builtins
+void DumpBuiltinSymbolTable(TInfoSink& infoSink, const TSymbolTable& symbolTable)
+{
+#ifndef GLSLANG_WEB
+    infoSink.debug << "BuiltinSymbolTable {\n";
+
+    symbolTable.dump(infoSink, true);
+
+    infoSink.debug << "}\n";
+#endif
+}
+
 // Return true if the shader was correctly specified for version/profile/stage.
 bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNotFirst, int defaultVersion,
                           EShSource source, int& version, EProfile& profile, const SpvVersion& spvVersion)
@@ -534,6 +591,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
         break;
     }
 
+#ifndef GLSLANG_WEB
     // Correct for stage type...
     switch (stage) {
     case EShLangGeometry:
@@ -565,6 +623,26 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
             version = profile == EEsProfile ? 310 : 420;
         }
         break;
+    case EShLangRayGenNV:
+    case EShLangIntersectNV:
+    case EShLangAnyHitNV:
+    case EShLangClosestHitNV:
+    case EShLangMissNV:
+    case EShLangCallableNV:
+        if (profile == EEsProfile || version < 460) {
+            correct = false;
+            infoSink.info.message(EPrefixError, "#version: ray tracing shaders require non-es profile with version 460 or above");
+            version = 460;
+        }
+        break;
+    case EShLangMeshNV:
+    case EShLangTaskNV:
+        if ((profile == EEsProfile && version < 320) ||
+            (profile != EEsProfile && version < 450)) {
+            correct = false;
+            infoSink.info.message(EPrefixError, "#version: mesh/task shaders require es profile with version 320 or above, or non-es profile with version 450 or above");
+            version = profile == EEsProfile ? 320 : 450;
+        }
     default:
         break;
     }
@@ -577,15 +655,10 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
     // Check for SPIR-V compatibility
     if (spvVersion.spv != 0) {
         switch (profile) {
-        case  EEsProfile:
-            if (spvVersion.vulkan >= 100 && version < 310) {
+        case EEsProfile:
+            if (version < 310) {
                 correct = false;
-                infoSink.info.message(EPrefixError, "#version: ES shaders for Vulkan SPIR-V require version 310 or higher");
-                version = 310;
-            }
-            if (spvVersion.openGl >= 100) {
-                correct = false;
-                infoSink.info.message(EPrefixError, "#version: ES shaders for OpenGL SPIR-V are not supported");
+                infoSink.info.message(EPrefixError, "#version: ES shaders for SPIR-V require version 310 or higher");
                 version = 310;
             }
             break;
@@ -593,7 +666,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
             infoSink.info.message(EPrefixError, "#version: compilation for SPIR-V does not support the compatibility profile");
             break;
         default:
-            if (spvVersion.vulkan >= 100 && version < 140) {
+            if (spvVersion.vulkan > 0 && version < 140) {
                 correct = false;
                 infoSink.info.message(EPrefixError, "#version: Desktop shaders for Vulkan SPIR-V require version 140 or higher");
                 version = 140;
@@ -606,6 +679,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
             break;
         }
     }
+#endif
 
     return correct;
 }
@@ -619,9 +693,9 @@ void TranslateEnvironment(const TEnvironment* environment, EShMessages& messages
 {
     // Set up environmental defaults, first ignoring 'environment'.
     if (messages & EShMsgSpvRules)
-        spvVersion.spv = 0x00010000;
+        spvVersion.spv = EShTargetSpv_1_0;
     if (messages & EShMsgVulkanRules) {
-        spvVersion.vulkan = 100;
+        spvVersion.vulkan = EShTargetVulkan_1_0;
         spvVersion.vulkanGlsl = 100;
     } else if (spvVersion.spv != 0)
         spvVersion.openGl = 100;
@@ -744,9 +818,9 @@ bool ProcessDeferred(
     const int numPre = 2;
     const int numPost = requireNonempty? 1 : 0;
     const int numTotal = numPre + numStrings + numPost;
-    size_t* lengths = new size_t[numTotal];
-    const char** strings = new const char*[numTotal];
-    const char** names = new const char*[numTotal];
+    std::unique_ptr<size_t[]> lengths(new size_t[numTotal]);
+    std::unique_ptr<const char*[]> strings(new const char*[numTotal]);
+    std::unique_ptr<const char*[]> names(new const char*[numTotal]);
     for (int s = 0; s < numStrings; ++s) {
         strings[s + numPre] = shaderStrings[s];
         if (inputLengths == nullptr || inputLengths[s] < 0)
@@ -764,11 +838,17 @@ bool ProcessDeferred(
 
     // Get all the stages, languages, clients, and other environment
     // stuff sorted out.
-    EShSource source = (messages & EShMsgReadHlsl) != 0 ? EShSourceHlsl : EShSourceGlsl;
+    EShSource sourceGuess = (messages & EShMsgReadHlsl) != 0 ? EShSourceHlsl : EShSourceGlsl;
     SpvVersion spvVersion;
     EShLanguage stage = compiler->getLanguage();
-    TranslateEnvironment(environment, messages, source, stage, spvVersion);
-
+    TranslateEnvironment(environment, messages, sourceGuess, stage, spvVersion);
+#ifdef ENABLE_HLSL
+    EShSource source = sourceGuess;
+    if (environment != nullptr && environment->target.hlslFunctionality1)
+        intermediate.setHlslFunctionality1();
+#else
+    const EShSource source = EShSourceGlsl;
+#endif
     // First, without using the preprocessor or parser, find the #version, so we know what
     // symbol tables, processing rules, etc. to set up.  This does not need the extra strings
     // outlined above, just the user shader, after the system and user preambles.
@@ -781,6 +861,7 @@ bool ProcessDeferred(
                                 : userInput.scanVersion(version, profile, versionNotFirstToken);
     bool versionNotFound = version == 0;
     if (forceDefaultVersionAndProfile && source == EShSourceGlsl) {
+#ifndef GLSLANG_WEB
         if (! (messages & EShMsgSuppressWarnings) && ! versionNotFound &&
             (version != defaultVersion || profile != defaultProfile)) {
             compiler->infoSink.info << "Warning, (version, profile) forced to be ("
@@ -788,7 +869,7 @@ bool ProcessDeferred(
                                     << "), while in source code it is ("
                                     << version << ", " << ProfileName(profile) << ")\n";
         }
-
+#endif
         if (versionNotFound) {
             versionNotFirstToken = false;
             versionNotFirst = false;
@@ -800,7 +881,13 @@ bool ProcessDeferred(
 
     bool goodVersion = DeduceVersionProfile(compiler->infoSink, stage,
                                             versionNotFirst, defaultVersion, source, version, profile, spvVersion);
+#ifdef GLSLANG_WEB
+    profile = EEsProfile;
+    version = 310;
+#endif
+
     bool versionWillBeError = (versionNotFound || (profile == EEsProfile && version >= 300 && versionNotFirst));
+#ifndef GLSLANG_WEB
     bool warnVersionNotFirst = false;
     if (! versionWillBeError && versionNotFirstToken) {
         if (messages & EShMsgRelaxedErrors)
@@ -808,20 +895,26 @@ bool ProcessDeferred(
         else
             versionWillBeError = true;
     }
+#endif
 
     intermediate.setSource(source);
     intermediate.setVersion(version);
     intermediate.setProfile(profile);
     intermediate.setSpv(spvVersion);
     RecordProcesses(intermediate, messages, sourceEntryPointName);
-    if (spvVersion.vulkan >= 100)
+    if (spvVersion.vulkan > 0)
         intermediate.setOriginUpperLeft();
+#ifdef ENABLE_HLSL
     if ((messages & EShMsgHlslOffsets) || source == EShSourceHlsl)
         intermediate.setHlslOffsets();
+#endif
     if (messages & EShMsgDebugInfo) {
         intermediate.setSourceFile(names[numPre]);
-        for (int s = 0; s < numStrings; ++s)
-            intermediate.addSourceText(strings[numPre + s]);
+        for (int s = 0; s < numStrings; ++s) {
+            // The string may not be null-terminated, so make sure we provide
+            // the length along with the string.
+            intermediate.addSourceText(strings[numPre + s], lengths[numPre + s]);
+        }
     }
     SetupBuiltinSymbolTable(version, profile, spvVersion, source);
 
@@ -832,25 +925,27 @@ bool ProcessDeferred(
                                                   [stage];
 
     // Dynamically allocate the symbol table so we can control when it is deallocated WRT the pool.
-    TSymbolTable* symbolTableMemory = new TSymbolTable;
-    TSymbolTable& symbolTable = *symbolTableMemory;
+    std::unique_ptr<TSymbolTable> symbolTable(new TSymbolTable);
     if (cachedTable)
-        symbolTable.adoptLevels(*cachedTable);
+        symbolTable->adoptLevels(*cachedTable);
 
     // Add built-in symbols that are potentially context dependent;
     // they get popped again further down.
-    if (! AddContextSpecificSymbols(resources, compiler->infoSink, symbolTable, version, profile, spvVersion,
-                                    stage, source))
+    if (! AddContextSpecificSymbols(resources, compiler->infoSink, *symbolTable, version, profile, spvVersion,
+                                    stage, source)) {
         return false;
+    }
+
+    if (messages & EShMsgBuiltinSymbolTable)
+        DumpBuiltinSymbolTable(compiler->infoSink, *symbolTable);
 
     //
     // Now we can process the full shader under proper symbols and rules.
     //
 
-    TParseContextBase* parseContext = CreateParseContext(symbolTable, intermediate, version, profile, source,
-                                                         stage, compiler->infoSink,
-                                                         spvVersion, forwardCompatible, messages, false, sourceEntryPointName);
-
+    std::unique_ptr<TParseContextBase> parseContext(CreateParseContext(*symbolTable, intermediate, version, profile, source,
+                                                    stage, compiler->infoSink,
+                                                    spvVersion, forwardCompatible, messages, false, sourceEntryPointName));
     TPpContext ppContext(*parseContext, names[numPre] ? names[numPre] : "", includer);
 
     // only GLSL (bison triggered, really) needs an externally set scan context
@@ -862,11 +957,13 @@ bool ProcessDeferred(
     parseContext->setLimits(*resources);
     if (! goodVersion)
         parseContext->addError();
+#ifndef GLSLANG_WEB
     if (warnVersionNotFirst) {
         TSourceLoc loc;
         loc.init();
         parseContext->warn(loc, "Illegal to have non-comment, non-whitespace tokens before #version", "#version", "");
     }
+#endif
 
     parseContext->initializeExtensionBehavior();
 
@@ -886,25 +983,18 @@ bool ProcessDeferred(
         lengths[postIndex] = strlen(strings[numStrings + numPre]);
         names[postIndex] = nullptr;
     }
-    TInputScanner fullInput(numStrings + numPre + numPost, strings, lengths, names, numPre, numPost);
+    TInputScanner fullInput(numStrings + numPre + numPost, strings.get(), lengths.get(), names.get(), numPre, numPost);
 
     // Push a new symbol allocation scope that will get used for the shader's globals.
-    symbolTable.push();
+    symbolTable->push();
 
     bool success = processingContext(*parseContext, ppContext, fullInput,
-                                     versionWillBeError, symbolTable,
+                                     versionWillBeError, *symbolTable,
                                      intermediate, optLevel, messages);
-
-    // Clean up the symbol table. The AST is self-sufficient now.
-    delete symbolTableMemory;
-
-    delete parseContext;
-    delete [] lengths;
-    delete [] strings;
-    delete [] names;
-
     return success;
 }
+
+#ifndef GLSLANG_WEB
 
 // Responsible for keeping track of the most recent source string and line in
 // the preprocessor and outputting newlines appropriately if the source string
@@ -912,7 +1002,7 @@ bool ProcessDeferred(
 class SourceLineSynchronizer {
 public:
     SourceLineSynchronizer(const std::function<int()>& lastSourceIndex,
-                           std::stringstream* output)
+                           std::string* output)
       : getLastSourceIndex(lastSourceIndex), output(output), lastSource(-1), lastLine(0) {}
 //    SourceLineSynchronizer(const SourceLineSynchronizer&) = delete;
 //    SourceLineSynchronizer& operator=(const SourceLineSynchronizer&) = delete;
@@ -927,7 +1017,7 @@ public:
             // used. We also need to output a newline to separate the output
             // from the previous source string (if there is one).
             if (lastSource != -1 || lastLine != 0)
-                *output << std::endl;
+                *output += '\n';
             lastSource = getLastSourceIndex();
             lastLine = -1;
             return true;
@@ -942,7 +1032,7 @@ public:
         syncToMostRecentString();
         const bool newLineStarted = lastLine < tokenLine;
         for (; lastLine < tokenLine; ++lastLine) {
-            if (lastLine > 0) *output << std::endl;
+            if (lastLine > 0) *output += '\n';
         }
         return newLineStarted;
     }
@@ -956,8 +1046,8 @@ private:
     // A function for getting the index of the last valid source string we've
     // read tokens from.
     const std::function<int()> getLastSourceIndex;
-    // output stream for newlines.
-    std::stringstream* output;
+    // output string for newlines.
+    std::string* output;
     // lastSource is the source string index (starting from 0) of the last token
     // processed. It is tracked in order for newlines to be inserted when a new
     // source string starts. -1 means we haven't started processing any source
@@ -973,6 +1063,8 @@ private:
 // DoPreprocessing is a valid ProcessingContext template argument,
 // which only performs the preprocessing step of compilation.
 // It places the result in the "string" argument to its constructor.
+//
+// This is not an officially supported or fully working path.
 struct DoPreprocessing {
     explicit DoPreprocessing(std::string* string): outputString(string) {}
     bool operator()(TParseContextBase& parseContext, TPpContext& ppContext,
@@ -988,27 +1080,33 @@ struct DoPreprocessing {
         parseContext.setScanner(&input);
         ppContext.setInput(input, versionWillBeError);
 
-        std::stringstream outputStream;
+        std::string outputBuffer;
         SourceLineSynchronizer lineSync(
-            std::bind(&TInputScanner::getLastValidSourceIndex, &input), &outputStream);
+            std::bind(&TInputScanner::getLastValidSourceIndex, &input), &outputBuffer);
 
-        parseContext.setExtensionCallback([&lineSync, &outputStream](
+        parseContext.setExtensionCallback([&lineSync, &outputBuffer](
             int line, const char* extension, const char* behavior) {
                 lineSync.syncToLine(line);
-                outputStream << "#extension " << extension << " : " << behavior;
+                outputBuffer += "#extension ";
+                outputBuffer += extension;
+                outputBuffer += " : ";
+                outputBuffer += behavior;
         });
 
-        parseContext.setLineCallback([&lineSync, &outputStream, &parseContext](
+        parseContext.setLineCallback([&lineSync, &outputBuffer, &parseContext](
             int curLineNum, int newLineNum, bool hasSource, int sourceNum, const char* sourceName) {
             // SourceNum is the number of the source-string that is being parsed.
             lineSync.syncToLine(curLineNum);
-            outputStream << "#line " << newLineNum;
+            outputBuffer += "#line ";
+            outputBuffer += std::to_string(newLineNum);
             if (hasSource) {
-                outputStream << " ";
+                outputBuffer += ' ';
                 if (sourceName != nullptr) {
-                    outputStream << "\"" << sourceName << "\"";
+                    outputBuffer += '\"';
+                    outputBuffer += sourceName;
+                    outputBuffer += '\"';
                 } else {
-                    outputStream << sourceNum;
+                    outputBuffer += std::to_string(sourceNum);
                 }
             }
             if (parseContext.lineDirectiveShouldSetNextLine()) {
@@ -1016,33 +1114,36 @@ struct DoPreprocessing {
                 // directive. So the new line number for the current line is
                 newLineNum -= 1;
             }
-            outputStream << std::endl;
+            outputBuffer += '\n';
             // And we are at the next line of the #line directive now.
             lineSync.setLineNum(newLineNum + 1);
         });
 
         parseContext.setVersionCallback(
-            [&lineSync, &outputStream](int line, int version, const char* str) {
+            [&lineSync, &outputBuffer](int line, int version, const char* str) {
                 lineSync.syncToLine(line);
-                outputStream << "#version " << version;
+                outputBuffer += "#version ";
+                outputBuffer += std::to_string(version);
                 if (str) {
-                    outputStream << " " << str;
+                    outputBuffer += ' ';
+                    outputBuffer += str;
                 }
             });
 
-        parseContext.setPragmaCallback([&lineSync, &outputStream](
+        parseContext.setPragmaCallback([&lineSync, &outputBuffer](
             int line, const glslang::TVector<glslang::TString>& ops) {
                 lineSync.syncToLine(line);
-                outputStream << "#pragma ";
+                outputBuffer += "#pragma ";
                 for(size_t i = 0; i < ops.size(); ++i) {
-                    outputStream << ops[i];
+                    outputBuffer += ops[i].c_str();
                 }
         });
 
-        parseContext.setErrorCallback([&lineSync, &outputStream](
+        parseContext.setErrorCallback([&lineSync, &outputBuffer](
             int line, const char* errorMessage) {
                 lineSync.syncToLine(line);
-                outputStream << "#error " << errorMessage;
+                outputBuffer += "#error ";
+                outputBuffer += errorMessage;
         });
 
         int lastToken = EndOfInput; // lastToken records the last token processed.
@@ -1058,7 +1159,7 @@ struct DoPreprocessing {
                 // Don't emit whitespace onto empty lines.
                 // Copy any whitespace characters at the start of a line
                 // from the input to the output.
-                outputStream << std::string(ppToken.loc.column - 1, ' ');
+                outputBuffer += std::string(ppToken.loc.column - 1, ' ');
             }
 
             // Output a space in between tokens, but not at the start of a line,
@@ -1068,13 +1169,17 @@ struct DoPreprocessing {
                 (unNeededSpaceTokens.find((char)token) == std::string::npos) &&
                 (unNeededSpaceTokens.find((char)lastToken) == std::string::npos) &&
                 (noSpaceBeforeTokens.find((char)token) == std::string::npos)) {
-                outputStream << " ";
+                outputBuffer += ' ';
             }
             lastToken = token;
-            outputStream << ppToken.name;
+            if (token == PpAtomConstString)
+                outputBuffer += "\"";
+            outputBuffer += ppToken.name;
+            if (token == PpAtomConstString)
+                outputBuffer += "\"";
         } while (true);
-        outputStream << std::endl;
-        *outputString = outputStream.str();
+        outputBuffer += '\n';
+        *outputString = std::move(outputBuffer);
 
         bool success = true;
         if (parseContext.getNumErrors() > 0) {
@@ -1086,6 +1191,8 @@ struct DoPreprocessing {
     }
     std::string* outputString;
 };
+
+#endif
 
 // DoFullParse is a valid ProcessingConext template argument for fully
 // parsing the shader.  It populates the "intermediate" with the AST.
@@ -1117,10 +1224,14 @@ struct DoFullParse{
     }
 };
 
+#ifndef GLSLANG_WEB
 // Take a single compilation unit, and run the preprocessor on it.
 // Return: True if there were no issues found in preprocessing,
 //         False if during preprocessing any unknown version, pragmas or
 //         extensions were found.
+//
+// NOTE: Doing just preprocessing to obtain a correct preprocessed shader string
+// is not an officially supported or fully working path.
 bool PreprocessDeferred(
     TCompiler* compiler,
     const char* const shaderStrings[],
@@ -1146,6 +1257,7 @@ bool PreprocessDeferred(
                            forwardCompatible, messages, intermediate, parser,
                            false, includer);
 }
+#endif
 
 //
 // do a partial compile on the given strings for a single compilation unit
@@ -1265,7 +1377,7 @@ void ShDestruct(ShHandle handle)
 //
 // Cleanup symbol tables
 //
-int __fastcall ShFinalize()
+int ShFinalize()
 {
     glslang::GetGlobalLock();
     --NumberOfClients;
@@ -1568,14 +1680,17 @@ namespace glslang {
 
 #include "../Include/revision.h"
 
+#define QUOTE(s) #s
+#define STR(n) QUOTE(n)
+
 const char* GetEsslVersionString()
 {
-    return "OpenGL ES GLSL 3.20 glslang Khronos." GLSLANG_REVISION " " GLSLANG_DATE;
+    return "OpenGL ES GLSL 3.20 glslang Khronos. " STR(GLSLANG_MINOR_VERSION) "." STR(GLSLANG_PATCH_LEVEL);
 }
 
 const char* GetGlslVersionString()
 {
-    return "4.60 glslang Khronos." GLSLANG_REVISION " " GLSLANG_DATE;
+    return "4.60 glslang Khronos. " STR(GLSLANG_MINOR_VERSION) "." STR(GLSLANG_PATCH_LEVEL);
 }
 
 int GetKhronosToolId()
@@ -1612,6 +1727,7 @@ TShader::TShader(EShLanguage s)
     environment.input.dialect = EShClientNone;
     environment.client.client = EShClientNone;
     environment.target.language = EShTargetNone;
+    environment.target.hlslFunctionality1 = false;
 }
 
 TShader::~TShader()
@@ -1660,6 +1776,11 @@ void TShader::addProcesses(const std::vector<std::string>& p)
     intermediate->addProcesses(p);
 }
 
+void TShader::setInvertY(bool invert)                   { intermediate->setInvertY(invert); }
+void TShader::setNanMinMaxClamp(bool useNonNan)         { intermediate->setNanMinMaxClamp(useNonNan); }
+
+#ifndef GLSLANG_WEB
+
 // Set binding base for given resource type
 void TShader::setShiftBinding(TResourceType res, unsigned int base) {
     intermediate->setShiftBinding(res, base);
@@ -1687,15 +1808,27 @@ void TShader::setShiftSsboBinding(unsigned int base)    { setShiftBinding(EResSs
 // Enables binding automapping using TIoMapper
 void TShader::setAutoMapBindings(bool map)              { intermediate->setAutoMapBindings(map); }
 // Enables position.Y output negation in vertex shader
-void TShader::setInvertY(bool invert)                   { intermediate->setInvertY(invert); }
+
 // Fragile: currently within one stage: simple auto-assignment of location
 void TShader::setAutoMapLocations(bool map)             { intermediate->setAutoMapLocations(map); }
-// See comment above TDefaultHlslIoMapper in iomapper.cpp:
-void TShader::setHlslIoMapping(bool hlslIoMap)          { intermediate->setHlslIoMapping(hlslIoMap); }
-void TShader::setFlattenUniformArrays(bool flatten)     { intermediate->setFlattenUniformArrays(flatten); }
+void TShader::addUniformLocationOverride(const char* name, int loc)
+{
+    intermediate->addUniformLocationOverride(name, loc);
+}
+void TShader::setUniformLocationBase(int base)
+{
+    intermediate->setUniformLocationBase(base);
+}
 void TShader::setNoStorageFormat(bool useUnknownFormat) { intermediate->setNoStorageFormat(useUnknownFormat); }
 void TShader::setResourceSetBinding(const std::vector<std::string>& base)   { intermediate->setResourceSetBinding(base); }
 void TShader::setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode) { intermediate->setTextureSamplerTransformMode(mode); }
+#endif
+
+#ifdef ENABLE_HLSL
+// See comment above TDefaultHlslIoMapper in iomapper.cpp:
+void TShader::setHlslIoMapping(bool hlslIoMap)          { intermediate->setHlslIoMapping(hlslIoMap); }
+void TShader::setFlattenUniformArrays(bool flatten)     { intermediate->setFlattenUniformArrays(flatten); }
+#endif
 
 //
 // Turn the shader strings into a parse tree in the TIntermediate.
@@ -1719,8 +1852,12 @@ bool TShader::parse(const TBuiltInResource* builtInResources, int defaultVersion
                            &environment);
 }
 
+#ifndef GLSLANG_WEB
 // Fill in a string with the result of preprocessing ShaderStrings
 // Returns true if all extensions, pragmas and version strings were valid.
+//
+// NOTE: Doing just preprocessing to obtain a correct preprocessed shader string
+// is not an officially supported or fully working path.
 bool TShader::preprocess(const TBuiltInResource* builtInResources,
                          int defaultVersion, EProfile defaultProfile,
                          bool forceDefaultVersionAndProfile,
@@ -1740,6 +1877,7 @@ bool TShader::preprocess(const TBuiltInResource* builtInResources,
                               defaultProfile, forceDefaultVersionAndProfile,
                               forwardCompatible, message, includer, *intermediate, output_string);
 }
+#endif
 
 const char* TShader::getInfoLog()
 {
@@ -1751,7 +1889,11 @@ const char* TShader::getInfoDebugLog()
     return infoSink->debug.c_str();
 }
 
-TProgram::TProgram() : reflection(0), ioMapper(nullptr), linked(false)
+TProgram::TProgram() :
+#ifndef GLSLANG_WEB
+    reflection(0),
+#endif
+    linked(false)
 {
     pool = new TPoolAllocator;
     infoSink = new TInfoSink;
@@ -1763,9 +1905,10 @@ TProgram::TProgram() : reflection(0), ioMapper(nullptr), linked(false)
 
 TProgram::~TProgram()
 {
-    delete ioMapper;
     delete infoSink;
+#ifndef GLSLANG_WEB
     delete reflection;
+#endif
 
     for (int s = 0; s < EShLangCount; ++s)
         if (newedIntermediate[s])
@@ -1810,6 +1953,7 @@ bool TProgram::linkStage(EShLanguage stage, EShMessages messages)
     if (stages[stage].size() == 0)
         return true;
 
+#ifndef GLSLANG_WEB
     int numEsShaders = 0, numNonEsShaders = 0;
     for (auto it = stages[stage].begin(); it != stages[stage].end(); ++it) {
         if ((*it)->intermediate->getProfile() == EEsProfile) {
@@ -1858,7 +2002,9 @@ bool TProgram::linkStage(EShLanguage stage, EShMessages messages)
         for (it = stages[stage].begin(); it != stages[stage].end(); ++it)
             intermediate[stage]->merge(*infoSink, *(*it)->intermediate);
     }
-
+#else
+    intermediate[stage] = stages[stage].front()->intermediate;
+#endif
     intermediate[stage]->finalCheck(*infoSink, (messages & EShMsgKeepUncalled) != 0);
 
     if (messages & EShMsgAST)
@@ -1877,16 +2023,33 @@ const char* TProgram::getInfoDebugLog()
     return infoSink->debug.c_str();
 }
 
+#ifndef GLSLANG_WEB
+
 //
 // Reflection implementation.
 //
 
-bool TProgram::buildReflection()
+bool TProgram::buildReflection(int opts)
 {
-    if (! linked || reflection)
+    if (! linked || reflection != nullptr)
         return false;
 
-    reflection = new TReflection;
+    int firstStage = EShLangVertex, lastStage = EShLangFragment;
+
+    if (opts & EShReflectionIntermediateIO) {
+        // if we're reflecting intermediate I/O, determine the first and last stage linked and use those as the
+        // boundaries for which stages generate pipeline inputs/outputs
+        firstStage = EShLangCount;
+        lastStage = 0;
+        for (int s = 0; s < EShLangCount; ++s) {
+            if (intermediate[s]) {
+                firstStage = std::min(firstStage, s);
+                lastStage = std::max(lastStage, s);
+            }
+        }
+    }
+
+    reflection = new TReflection((EShReflectionOptions)opts, (EShLanguage)firstStage, (EShLanguage)lastStage);
 
     for (int s = 0; s < EShLangCount; ++s) {
         if (intermediate[s]) {
@@ -1898,46 +2061,50 @@ bool TProgram::buildReflection()
     return true;
 }
 
-int TProgram::getNumLiveUniformVariables() const             { return reflection->getNumUniforms(); }
-int TProgram::getNumLiveUniformBlocks() const                { return reflection->getNumUniformBlocks(); }
-const char* TProgram::getUniformName(int index) const        { return reflection->getUniform(index).name.c_str(); }
-const char* TProgram::getUniformBlockName(int index) const   { return reflection->getUniformBlock(index).name.c_str(); }
-int TProgram::getUniformBlockSize(int index) const           { return reflection->getUniformBlock(index).size; }
-int TProgram::getUniformIndex(const char* name) const        { return reflection->getIndex(name); }
-int TProgram::getUniformBinding(int index) const             { return reflection->getUniform(index).getBinding(); }
-int TProgram::getUniformBlockIndex(int index) const          { return reflection->getUniform(index).index; }
-int TProgram::getUniformBlockCounterIndex(int index) const   { return reflection->getUniformBlock(index).counterIndex; }
-int TProgram::getUniformType(int index) const                { return reflection->getUniform(index).glDefineType; }
-int TProgram::getUniformBufferOffset(int index) const        { return reflection->getUniform(index).offset; }
-int TProgram::getUniformArraySize(int index) const           { return reflection->getUniform(index).size; }
-int TProgram::getNumLiveAttributes() const                   { return reflection->getNumAttributes(); }
-const char* TProgram::getAttributeName(int index) const      { return reflection->getAttribute(index).name.c_str(); }
-int TProgram::getAttributeType(int index) const              { return reflection->getAttribute(index).glDefineType; }
-const TType* TProgram::getAttributeTType(int index) const    { return reflection->getAttribute(index).getType(); }
-const TType* TProgram::getUniformTType(int index) const      { return reflection->getUniform(index).getType(); }
-const TType* TProgram::getUniformBlockTType(int index) const { return reflection->getUniformBlock(index).getType(); }
-unsigned TProgram::getLocalSize(int dim) const               { return reflection->getLocalSize(dim); }
+unsigned TProgram::getLocalSize(int dim) const                        { return reflection->getLocalSize(dim); }
+int TProgram::getReflectionIndex(const char* name) const              { return reflection->getIndex(name); }
+int TProgram::getReflectionPipeIOIndex(const char* name, const bool inOrOut) const
+                                                                      { return reflection->getPipeIOIndex(name, inOrOut); }
 
-void TProgram::dumpReflection()                      { reflection->dump(); }
+int TProgram::getNumUniformVariables() const                          { return reflection->getNumUniforms(); }
+const TObjectReflection& TProgram::getUniform(int index) const        { return reflection->getUniform(index); }
+int TProgram::getNumUniformBlocks() const                             { return reflection->getNumUniformBlocks(); }
+const TObjectReflection& TProgram::getUniformBlock(int index) const   { return reflection->getUniformBlock(index); }
+int TProgram::getNumPipeInputs() const                                { return reflection->getNumPipeInputs(); }
+const TObjectReflection& TProgram::getPipeInput(int index) const      { return reflection->getPipeInput(index); }
+int TProgram::getNumPipeOutputs() const                               { return reflection->getNumPipeOutputs(); }
+const TObjectReflection& TProgram::getPipeOutput(int index) const     { return reflection->getPipeOutput(index); }
+int TProgram::getNumBufferVariables() const                           { return reflection->getNumBufferVariables(); }
+const TObjectReflection& TProgram::getBufferVariable(int index) const { return reflection->getBufferVariable(index); }
+int TProgram::getNumBufferBlocks() const                              { return reflection->getNumStorageBuffers(); }
+const TObjectReflection& TProgram::getBufferBlock(int index) const    { return reflection->getStorageBufferBlock(index); }
+int TProgram::getNumAtomicCounters() const                            { return reflection->getNumAtomicCounters(); }
+const TObjectReflection& TProgram::getAtomicCounter(int index) const  { return reflection->getAtomicCounter(index); }
+void TProgram::dumpReflection() { if (reflection != nullptr) reflection->dump(); }
 
 //
 // I/O mapping implementation.
 //
-bool TProgram::mapIO(TIoMapResolver* resolver)
+bool TProgram::mapIO(TIoMapResolver* pResolver, TIoMapper* pIoMapper)
 {
-    if (! linked || ioMapper)
+    if (! linked)
         return false;
-
-    ioMapper = new TIoMapper;
-
+    TIoMapper* ioMapper = nullptr;
+    TIoMapper defaultIOMapper;
+    if (pIoMapper == nullptr)
+        ioMapper = &defaultIOMapper;
+    else
+        ioMapper = pIoMapper;
     for (int s = 0; s < EShLangCount; ++s) {
         if (intermediate[s]) {
-            if (! ioMapper->addStage((EShLanguage)s, *intermediate[s], *infoSink, resolver))
+            if (! ioMapper->addStage((EShLanguage)s, *intermediate[s], *infoSink, pResolver))
                 return false;
         }
     }
 
-    return true;
+    return ioMapper->doMap(pResolver, *infoSink);
 }
+
+#endif // GLSLANG_WEB
 
 } // end namespace glslang

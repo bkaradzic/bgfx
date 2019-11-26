@@ -1,7 +1,7 @@
 $input v_texcoord0, v_color0
 
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -16,5 +16,8 @@ void main()
 	dir = normalize(mul(u_mtx, vec4(dir, 0.0) ).xyz);
 
 	vec4 color = textureCubeLod(s_texColor, dir, u_textureLod);
-	gl_FragColor = toEv(color * v_color0);
+	color.xyz = applyExposure(color.xyz);
+	color *= v_color0;
+
+	gl_FragColor = toOutput(color, u_outputFormat, u_sdrWhiteNits);
 }

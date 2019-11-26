@@ -7,6 +7,7 @@
 #define FONT_MANAGER_H_HEADER_GUARD
 
 #include <bx/handlealloc.h>
+#include <bx/string.h>
 #include <bgfx/bgfx.h>
 
 class Atlas;

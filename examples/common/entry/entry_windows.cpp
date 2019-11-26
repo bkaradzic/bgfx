@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -18,6 +18,7 @@
 
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
+#include <tinystl/vector.h>
 
 #include <windows.h>
 #include <windowsx.h>
@@ -33,6 +34,16 @@
 
 namespace entry
 {
+	typedef tinystl::vector<WCHAR> WSTRING;
+
+	inline WSTRING UTF8ToUTF16(const char *utf8_str)
+	{
+		int len = MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, NULL, 0);
+		WSTRING utf16(len);
+		MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, utf16.data(), len);
+		return utf16;
+	}
+
 	///
 	inline void winSetHwnd(::HWND _window)
 	{
@@ -266,6 +277,7 @@ namespace entry
 		WM_USER_WINDOW_CREATE = WM_USER,
 		WM_USER_WINDOW_DESTROY,
 		WM_USER_WINDOW_SET_TITLE,
+		WM_USER_WINDOW_SET_FLAGS,
 		WM_USER_WINDOW_SET_POS,
 		WM_USER_WINDOW_SET_SIZE,
 		WM_USER_WINDOW_TOGGLE_FRAME,
@@ -324,6 +336,7 @@ namespace entry
 			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
+			, m_flagsEnabled(false)
 		{
 		}
 
@@ -333,6 +346,7 @@ namespace entry
 		uint32_t m_height;
 		uint32_t m_flags;
 		tinystl::string m_title;
+		bool m_flagsEnabled;
 	};
 
 	static void mouseCapture(HWND _hwnd, bool _capture)
@@ -356,6 +370,7 @@ namespace entry
 			, m_init(false)
 			, m_exit(false)
 		{
+			m_surrogate = 0;
 			bx::memSet(s_translateKey, 0, sizeof(s_translateKey) );
 			s_translateKey[VK_ESCAPE]     = Key::Esc;
 			s_translateKey[VK_RETURN]     = Key::Return;
@@ -453,7 +468,7 @@ namespace entry
 
 			HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
 
-			WNDCLASSEXA wnd;
+			WNDCLASSEXW wnd;
 			bx::memSet(&wnd, 0, sizeof(wnd) );
 			wnd.cbSize = sizeof(wnd);
 			wnd.style = CS_HREDRAW | CS_VREDRAW;
@@ -461,12 +476,14 @@ namespace entry
 			wnd.hInstance = instance;
 			wnd.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 			wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wnd.lpszClassName = "bgfx";
+			wnd.lpszClassName = L"bgfx";
 			wnd.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-			RegisterClassExA(&wnd);
+			RegisterClassExW(&wnd);
 
 			m_windowAlloc.alloc();
-			m_hwnd[0] = CreateWindowA("bgfx"
+			m_hwnd[0] = CreateWindowExA(
+				  WS_EX_ACCEPTFILES
+				, "bgfx"
 				, "BGFX"
 				, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 				, 0
@@ -516,10 +533,10 @@ namespace entry
 				s_xinput.update(m_eventQueue);
 				WaitForInputIdle(GetCurrentProcess(), 16);
 
-				while (0 != PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE) )
+				while (0 != PeekMessageW(&msg, NULL, 0U, 0U, PM_REMOVE) )
 				{
 					TranslateMessage(&msg);
-					DispatchMessage(&msg);
+					DispatchMessageW(&msg);
 				}
 			}
 
@@ -543,8 +560,8 @@ namespace entry
 				case WM_USER_WINDOW_CREATE:
 					{
 						Msg* msg = (Msg*)_lparam;
-						HWND hwnd = CreateWindowA("bgfx"
-							, msg->m_title.c_str()
+						HWND hwnd = CreateWindowW(L"bgfx"
+							, UTF8ToUTF16(msg->m_title.c_str()).data()
 							, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 							, msg->m_x
 							, msg->m_y
@@ -585,7 +602,24 @@ namespace entry
 				case WM_USER_WINDOW_SET_TITLE:
 					{
 						Msg* msg = (Msg*)_lparam;
-						SetWindowTextA(m_hwnd[_wparam], msg->m_title.c_str() );
+						SetWindowTextW(m_hwnd[_wparam], UTF8ToUTF16(msg->m_title.c_str()).data() );
+						delete msg;
+					}
+					break;
+
+				case WM_USER_WINDOW_SET_FLAGS:
+					{
+						Msg* msg = (Msg*)_lparam;
+
+						if (msg->m_flagsEnabled)
+						{
+							m_flags[_wparam] |= msg->m_flags;
+						}
+						else
+						{
+							m_flags[_wparam] &= ~msg->m_flags;
+						}
+
 						delete msg;
 					}
 					break;
@@ -820,21 +854,50 @@ namespace entry
 
 				case WM_CHAR:
 					{
+						WCHAR utf16[2] = { (WCHAR)_wparam };
 						uint8_t utf8[4] = {};
-						uint8_t len = (uint8_t)WideCharToMultiByte(CP_UTF8
-											, 0
-											, (LPCWSTR)&_wparam
-											, 1
-											, (LPSTR)utf8
-											, BX_COUNTOF(utf8)
-											, NULL
-											, NULL
-											);
-						if (0 != len)
-						{
-							WindowHandle handle = findHandle(_hwnd);
-							m_eventQueue.postCharEvent(handle, len, utf8);
+
+						if (utf16[0] >= 0xD800 && utf16[0] <= 0xDBFF) {
+							m_surrogate = utf16[0];
+						} else {
+							int utf16_len;
+							if (utf16[0] >= 0xDC00 && utf16[0] <= 0xDFFF) {
+								utf16[1] = utf16[0];
+								utf16[0] = m_surrogate;
+								m_surrogate = 0;
+								utf16_len = 2;
+							} else {
+								utf16_len = 1;
+							}
+
+							uint8_t len = (uint8_t)WideCharToMultiByte(CP_UTF8
+												, 0
+												, utf16
+												, utf16_len
+												, (LPSTR)utf8
+												, BX_COUNTOF(utf8)
+												, NULL
+												, NULL
+												);
+							if (0 != len)
+							{
+								WindowHandle handle = findHandle(_hwnd);
+								m_eventQueue.postCharEvent(handle, len, utf8);
+							}
 						}
+					}
+					break;
+
+				case WM_DROPFILES:
+					{
+						HDROP drop = (HDROP)_wparam;
+						char tmp[bx::kMaxFilePath];
+						WCHAR utf16[bx::kMaxFilePath];
+						uint32_t result = DragQueryFileW(drop, 0, utf16, bx::kMaxFilePath);
+						BX_UNUSED(result);
+						WideCharToMultiByte(CP_UTF8, 0, utf16, -1, tmp, bx::kMaxFilePath, NULL, NULL);
+						WindowHandle handle = findHandle(_hwnd);
+						m_eventQueue.postDropFileEvent(handle, tmp);
 					}
 					break;
 
@@ -843,7 +906,7 @@ namespace entry
 				}
 			}
 
-			return DefWindowProc(_hwnd, _id, _wparam, _lparam);
+			return DefWindowProcW(_hwnd, _id, _wparam, _lparam);
 		}
 
 		WindowHandle findHandle(HWND _hwnd)
@@ -871,6 +934,7 @@ namespace entry
 			HDC hdc = GetDC(_hwnd);
 			SelectObject(hdc, brush);
 			FillRect(hdc, &rect, brush);
+			ReleaseDC(_hwnd, hdc);
 		}
 
 		void adjust(HWND _hwnd, uint32_t _width, uint32_t _height, bool _windowFrame)
@@ -981,6 +1045,7 @@ namespace entry
 		static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
 
 		EventQueue m_eventQueue;
+		WCHAR m_surrogate;
 		bx::Mutex m_lock;
 
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
@@ -1081,9 +1146,12 @@ namespace entry
 		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_TITLE, _handle.idx, (LPARAM)msg);
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_TOGGLE_FRAME, _handle.idx, 0);
+		Msg* msg = new Msg;
+		msg->m_flags = _flags;
+		msg->m_flagsEnabled = _enabled;
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_FLAGS, _handle.idx, (LPARAM)msg);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)

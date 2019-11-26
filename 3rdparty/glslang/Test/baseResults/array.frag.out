@@ -2,7 +2,7 @@ array.frag
 ERROR: 0:21: '[' :  array index out of range '2'
 ERROR: 0:27: '[' :  array must be redeclared with a size before being indexed with a variable
 ERROR: 0:30: 'assign' :  cannot convert from ' global 4-element array of float' to ' global 5-element array of float'
-ERROR: 0:31: 'assign' :  cannot convert from ' global 4-element array of float' to ' global implicitly-sized array of float'
+ERROR: 0:31: 'assign' :  cannot convert from ' global 4-element array of float' to ' global runtime-sized array of float'
 ERROR: 0:33: 'foo' : no matching overloaded function found 
 ERROR: 0:42: '[' :  array index out of range '5'
 ERROR: 0:45: '[' :  array index out of range '1000'
@@ -23,9 +23,12 @@ ERROR: 0:84: 'return' : type does not match, or is not convertible to, the funct
 ERROR: 0:93: 'length' :  array must be declared with a size before using this method
 ERROR: 0:101: '[' :  array index out of range '5'
 ERROR: 0:104: 'constructor' : array constructor must have at least one argument 
-ERROR: 0:104: '=' :  cannot convert from ' const float' to ' global implicitly-sized array of int'
+ERROR: 0:104: '=' :  cannot convert from ' const float' to ' global unsized 1-element array of int'
 ERROR: 0:106: 'constructor' : array argument must be sized 
-ERROR: 26 compilation errors.  No code generated.
+ERROR: 0:111: 'variable index' : required extension not requested: GL_EXT_nonuniform_qualifier
+ERROR: 0:111: 'variable indexing sampler array' : not supported with this profile: none
+ERROR: 0:112: '[]' : array initializer must be sized 
+ERROR: 29 compilation errors.  No code generated.
 
 
 Shader version: 130
@@ -68,21 +71,21 @@ ERROR: node is still EOpNull!
 0:21            4.000000
 0:24      move second child to first child ( temp float)
 0:24        direct index ( temp float)
-0:24          'gu' ( global implicitly-sized array of float)
+0:24          'gu' ( global runtime-sized array of float)
 0:24          Constant:
 0:24            2 (const int)
 0:24        Constant:
 0:24          4.000000
 0:26      move second child to first child ( temp float)
 0:26        direct index ( temp float)
-0:26          'gu' ( global implicitly-sized array of float)
+0:26          'gu' ( global runtime-sized array of float)
 0:26          Constant:
 0:26            3 (const int)
 0:26        Constant:
 0:26          3.000000
 0:27      move second child to first child ( temp float)
 0:27        indirect index ( temp float)
-0:27          'gu' ( global implicitly-sized array of float)
+0:27          'gu' ( global runtime-sized array of float)
 0:27          'a' ( uniform int)
 0:27        Constant:
 0:27          5.000000
@@ -91,7 +94,7 @@ ERROR: node is still EOpNull!
 0:29        Function Call: foo(f1[5]; ( global 4-element array of float)
 0:29          'g5' ( global 5-element array of float)
 0:30      'g5' ( global 5-element array of float)
-0:31      'gu' ( global implicitly-sized array of float)
+0:31      'gu' ( global runtime-sized array of float)
 0:33      Constant:
 0:33        0.000000
 0:34      Function Call: bar(f1[5]; ( global void)
@@ -108,7 +111,7 @@ ERROR: node is still EOpNull!
 0:36        true case
 0:37        move second child to first child ( temp float)
 0:37          direct index ( temp float)
-0:37            'gu' ( global implicitly-sized array of float)
+0:37            'gu' ( global runtime-sized array of float)
 0:37            Constant:
 0:37              0 (const int)
 0:37          Constant:
@@ -199,21 +202,21 @@ ERROR: node is still EOpNull!
 0:?     Sequence
 0:71      move second child to first child ( temp int)
 0:71        direct index ( temp int)
-0:71          'uns' ( temp implicitly-sized array of int)
+0:71          'uns' ( temp unsized 4-element array of int)
 0:71          Constant:
 0:71            3 (const int)
 0:71        Constant:
 0:71          40 (const int)
 0:72      move second child to first child ( temp int)
 0:72        direct index ( temp int)
-0:72          'uns' ( temp implicitly-sized array of int)
+0:72          'uns' ( temp unsized 4-element array of int)
 0:72          Constant:
 0:72            1 (const int)
 0:72        Constant:
 0:72          30 (const int)
 0:73      move second child to first child ( temp 3-component vector of float)
 0:73        direct index ( temp 3-component vector of float)
-0:73          'guns' ( global implicitly-sized array of 3-component vector of float)
+0:73          'guns' ( global unsized 8-element array of 3-component vector of float)
 0:73          Constant:
 0:73            2 (const int)
 0:73        Constant:
@@ -222,11 +225,11 @@ ERROR: node is still EOpNull!
 0:73          2.400000
 0:76      Constant:
 0:76        0.000000
-0:79  Function Definition: foo2( ( global implicitly-sized array of float)
+0:79  Function Definition: foo2( ( global unsized 1-element array of float)
 0:79    Function Parameters: 
 0:?     Sequence
 0:82      Branch: Return with expression
-0:82        'f' ( temp implicitly-sized array of float)
+0:82        'f' ( temp unsized 1-element array of float)
 0:84      Branch: Return with expression
 0:84        'g' ( temp 9-element array of float)
 0:89  Function Definition: foo3( ( global void)
@@ -264,17 +267,28 @@ ERROR: node is still EOpNull!
 0:106      'b' ( global float)
 0:106      Constant:
 0:106        0.000000
+0:109  Function Definition: foo4( ( global void)
+0:109    Function Parameters: 
+0:111    Sequence
+0:111      indirect index ( temp sampler2D)
+0:111        's2d' ( uniform runtime-sized array of sampler2D)
+0:111        'a' ( uniform int)
+0:112      Sequence
+0:112        move second child to first child ( temp unsized 1-element array of float)
+0:112          'local' ( temp unsized 1-element array of float)
+0:112          'gUnusedUnsized' ( global unsized 1-element array of float)
 0:?   Linker Objects
-0:?     'gu' ( global implicitly-sized array of float)
+0:?     'gu' ( global runtime-sized array of float)
 0:?     'g4' ( global 4-element array of float)
 0:?     'g5' ( global 5-element array of float)
 0:?     'a' ( uniform int)
-0:?     'guns' ( global implicitly-sized array of 3-component vector of float)
+0:?     'guns' ( global unsized 8-element array of 3-component vector of float)
 0:?     'f' ( global float)
-0:?     'gUnusedUnsized' ( global implicitly-sized array of float)
-0:?     'i' ( global implicitly-sized array of int)
-0:?     'emptyA' ( global implicitly-sized array of float)
+0:?     'gUnusedUnsized' ( global unsized 1-element array of float)
+0:?     'i' ( global unsized 1-element array of int)
+0:?     'emptyA' ( global unsized 1-element array of float)
 0:?     'b' ( global float)
+0:?     's2d' ( uniform runtime-sized array of sampler2D)
 
 
 Linked fragment stage:
@@ -320,21 +334,21 @@ ERROR: node is still EOpNull!
 0:21            4.000000
 0:24      move second child to first child ( temp float)
 0:24        direct index ( temp float)
-0:24          'gu' ( global 4-element array of float)
+0:24          'gu' ( global runtime-sized array of float)
 0:24          Constant:
 0:24            2 (const int)
 0:24        Constant:
 0:24          4.000000
 0:26      move second child to first child ( temp float)
 0:26        direct index ( temp float)
-0:26          'gu' ( global 4-element array of float)
+0:26          'gu' ( global runtime-sized array of float)
 0:26          Constant:
 0:26            3 (const int)
 0:26        Constant:
 0:26          3.000000
 0:27      move second child to first child ( temp float)
 0:27        indirect index ( temp float)
-0:27          'gu' ( global 4-element array of float)
+0:27          'gu' ( global runtime-sized array of float)
 0:27          'a' ( uniform int)
 0:27        Constant:
 0:27          5.000000
@@ -343,7 +357,7 @@ ERROR: node is still EOpNull!
 0:29        Function Call: foo(f1[5]; ( global 4-element array of float)
 0:29          'g5' ( global 5-element array of float)
 0:30      'g5' ( global 5-element array of float)
-0:31      'gu' ( global 4-element array of float)
+0:31      'gu' ( global runtime-sized array of float)
 0:33      Constant:
 0:33        0.000000
 0:34      Function Call: bar(f1[5]; ( global void)
@@ -360,7 +374,7 @@ ERROR: node is still EOpNull!
 0:36        true case
 0:37        move second child to first child ( temp float)
 0:37          direct index ( temp float)
-0:37            'gu' ( global 4-element array of float)
+0:37            'gu' ( global runtime-sized array of float)
 0:37            Constant:
 0:37              0 (const int)
 0:37          Constant:
@@ -452,7 +466,7 @@ ERROR: node is still EOpNull!
 0:106      Constant:
 0:106        0.000000
 0:?   Linker Objects
-0:?     'gu' ( global 4-element array of float)
+0:?     'gu' ( global runtime-sized array of float)
 0:?     'g4' ( global 4-element array of float)
 0:?     'g5' ( global 5-element array of float)
 0:?     'a' ( uniform int)
@@ -462,4 +476,5 @@ ERROR: node is still EOpNull!
 0:?     'i' ( global 1-element array of int)
 0:?     'emptyA' ( global 1-element array of float)
 0:?     'b' ( global float)
+0:?     's2d' ( uniform runtime-sized array of sampler2D)
 

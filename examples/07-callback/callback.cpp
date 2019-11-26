@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -29,17 +29,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -69,13 +69,13 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
-void savePng(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
+void savePng(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bimg::TextureFormat::Enum _format, bool _yflip)
 {
 	bx::FileWriter writer;
 	bx::Error err;
 	if (bx::open(&writer, _filePath, false, &err) )
 	{
-		bimg::imageWritePng(&writer, _width, _height, _srcPitch, _src, _grayscale, _yflip, &err);
+		bimg::imageWritePng(&writer, _width, _height, _srcPitch, _src, _format, _yflip, &err);
 		bx::close(&writer);
 	}
 }
@@ -97,8 +97,10 @@ struct BgfxCallback : public bgfx::CallbackI
 	{
 	}
 
-	virtual void fatal(bgfx::Fatal::Enum _code, const char* _str) override
+	virtual void fatal(const char* _filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char* _str) override
 	{
+		BX_UNUSED(_filePath, _line);
+
 		// Something unexpected happened, inform user and bail out.
 		bx::debugPrintf("Fatal error: 0x%08x: %s", _code, _str);
 
@@ -188,7 +190,7 @@ struct BgfxCallback : public bgfx::CallbackI
 
 		// Save screen shot as PNG.
 		bx::snprintf(temp, BX_COUNTOF(temp), "%s.png", _filePath);
-		savePng(temp, _width, _height, _pitch, _data, false, _yflip);
+		savePng(temp, _width, _height, _pitch, _data, bimg::TextureFormat::BGRA8, _yflip);
 
 		// Save screen shot as TGA.
 		bx::snprintf(temp, BX_COUNTOF(temp), "%s.tga", _filePath);
@@ -305,8 +307,8 @@ private:
 class ExampleCallback : public entry::AppI
 {
 public:
-	ExampleCallback(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleCallback(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -323,14 +325,15 @@ public:
 			| BGFX_RESET_MSAA_X16
 			;
 
-		bgfx::init(
-			  args.m_type
-			, args.m_pciId
-			, 0
-			, &m_callback  // custom callback handler
-			, &m_allocator // custom allocator
-			);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		init.callback  = &m_callback;  // custom callback handler
+		init.allocator = &m_allocator; // custom allocator
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -349,7 +352,7 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-			, PosColorVertex::ms_decl
+			, PosColorVertex::ms_layout
 			);
 
 		// Create static index buffer.
@@ -420,8 +423,8 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			float at[3]  = { 0.0f, 0.0f,   0.0f };
-			float eye[3] = { 0.0f, 0.0f, -35.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
 			float view[16];
 			float proj[16];
@@ -495,4 +498,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleCallback, "07-callback", "Implementing application specific callbacks for taking screen shots, caching OpenGL binary shaders, and video capture.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleCallback
+	, "07-callback"
+	, "Implementing application specific callbacks for taking screen shots, caching OpenGL binary shaders, and video capture."
+	, "https://bkaradzic.github.io/bgfx/examples.html#callback"
+	);

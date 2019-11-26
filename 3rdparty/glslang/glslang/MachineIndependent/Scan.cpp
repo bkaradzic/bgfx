@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013 LunarG, Inc.
+// Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
 //
@@ -45,6 +46,7 @@
 #include "../Include/Types.h"
 #include "SymbolTable.h"
 #include "ParseHelper.h"
+#include "attribute.h"
 #include "glslang_tab.cpp.h"
 #include "ScanContext.h"
 #include "Scan.h"
@@ -322,7 +324,9 @@ struct str_hash
 // A single global usable by all threads, by all versions, by all languages.
 // After a single process-level initialization, this is read only and thread safe
 std::unordered_map<const char*, int, str_hash, str_eq>* KeywordMap = nullptr;
+#ifndef GLSLANG_WEB
 std::unordered_set<const char*, str_hash, str_eq>* ReservedSet = nullptr;
+#endif
 
 };
 
@@ -339,8 +343,15 @@ void TScanContext::fillInKeywordMap()
 
     (*KeywordMap)["const"] =                   CONST;
     (*KeywordMap)["uniform"] =                 UNIFORM;
+    (*KeywordMap)["buffer"] =                  BUFFER;
     (*KeywordMap)["in"] =                      IN;
     (*KeywordMap)["out"] =                     OUT;
+    (*KeywordMap)["smooth"] =                  SMOOTH;
+    (*KeywordMap)["flat"] =                    FLAT;
+    (*KeywordMap)["centroid"] =                CENTROID;
+    (*KeywordMap)["invariant"] =               INVARIANT;
+    (*KeywordMap)["packed"] =                  PACKED;
+    (*KeywordMap)["resource"] =                RESOURCE;
     (*KeywordMap)["inout"] =                   INOUT;
     (*KeywordMap)["struct"] =                  STRUCT;
     (*KeywordMap)["break"] =                   BREAK;
@@ -373,23 +384,12 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["mat4"] =                    MAT4;
     (*KeywordMap)["true"] =                    BOOLCONSTANT;
     (*KeywordMap)["false"] =                   BOOLCONSTANT;
-    (*KeywordMap)["attribute"] =               ATTRIBUTE;
-    (*KeywordMap)["varying"] =                 VARYING;
-    (*KeywordMap)["buffer"] =                  BUFFER;
-    (*KeywordMap)["coherent"] =                COHERENT;
-    (*KeywordMap)["restrict"] =                RESTRICT;
-    (*KeywordMap)["readonly"] =                READONLY;
-    (*KeywordMap)["writeonly"] =               WRITEONLY;
-    (*KeywordMap)["atomic_uint"] =             ATOMIC_UINT;
-    (*KeywordMap)["volatile"] =                VOLATILE;
     (*KeywordMap)["layout"] =                  LAYOUT;
     (*KeywordMap)["shared"] =                  SHARED;
-    (*KeywordMap)["patch"] =                   PATCH;
-    (*KeywordMap)["sample"] =                  SAMPLE;
-    (*KeywordMap)["subroutine"] =              SUBROUTINE;
     (*KeywordMap)["highp"] =                   HIGH_PRECISION;
     (*KeywordMap)["mediump"] =                 MEDIUM_PRECISION;
     (*KeywordMap)["lowp"] =                    LOW_PRECISION;
+    (*KeywordMap)["superp"] =                  SUPERP;
     (*KeywordMap)["precision"] =               PRECISION;
     (*KeywordMap)["mat2x2"] =                  MAT2X2;
     (*KeywordMap)["mat2x3"] =                  MAT2X3;
@@ -400,6 +400,31 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["mat4x2"] =                  MAT4X2;
     (*KeywordMap)["mat4x3"] =                  MAT4X3;
     (*KeywordMap)["mat4x4"] =                  MAT4X4;
+    (*KeywordMap)["uint"] =                    UINT;
+    (*KeywordMap)["uvec2"] =                   UVEC2;
+    (*KeywordMap)["uvec3"] =                   UVEC3;
+    (*KeywordMap)["uvec4"] =                   UVEC4;
+
+#ifndef GLSLANG_WEB
+    (*KeywordMap)["nonuniformEXT"] =           NONUNIFORM;
+    (*KeywordMap)["demote"] =                  DEMOTE;
+    (*KeywordMap)["attribute"] =               ATTRIBUTE;
+    (*KeywordMap)["varying"] =                 VARYING;
+    (*KeywordMap)["noperspective"] =           NOPERSPECTIVE;
+    (*KeywordMap)["coherent"] =                COHERENT;
+    (*KeywordMap)["devicecoherent"] =          DEVICECOHERENT;
+    (*KeywordMap)["queuefamilycoherent"] =     QUEUEFAMILYCOHERENT;
+    (*KeywordMap)["workgroupcoherent"] =       WORKGROUPCOHERENT;
+    (*KeywordMap)["subgroupcoherent"] =        SUBGROUPCOHERENT;
+    (*KeywordMap)["nonprivate"] =              NONPRIVATE;
+    (*KeywordMap)["restrict"] =                RESTRICT;
+    (*KeywordMap)["readonly"] =                READONLY;
+    (*KeywordMap)["writeonly"] =               WRITEONLY;
+    (*KeywordMap)["atomic_uint"] =             ATOMIC_UINT;
+    (*KeywordMap)["volatile"] =                VOLATILE;
+    (*KeywordMap)["patch"] =                   PATCH;
+    (*KeywordMap)["sample"] =                  SAMPLE;
+    (*KeywordMap)["subroutine"] =              SUBROUTINE;
     (*KeywordMap)["dmat2"] =                   DMAT2;
     (*KeywordMap)["dmat3"] =                   DMAT3;
     (*KeywordMap)["dmat4"] =                   DMAT4;
@@ -449,11 +474,6 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["dvec2"] =                   DVEC2;
     (*KeywordMap)["dvec3"] =                   DVEC3;
     (*KeywordMap)["dvec4"] =                   DVEC4;
-    (*KeywordMap)["uint"] =                    UINT;
-    (*KeywordMap)["uvec2"] =                   UVEC2;
-    (*KeywordMap)["uvec3"] =                   UVEC3;
-    (*KeywordMap)["uvec4"] =                   UVEC4;
-
     (*KeywordMap)["int64_t"] =                 INT64_T;
     (*KeywordMap)["uint64_t"] =                UINT64_T;
     (*KeywordMap)["i64vec2"] =                 I64VEC2;
@@ -463,15 +483,33 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["u64vec3"] =                 U64VEC3;
     (*KeywordMap)["u64vec4"] =                 U64VEC4;
 
-#ifdef AMD_EXTENSIONS
+    // GL_EXT_shader_explicit_arithmetic_types
+    (*KeywordMap)["int8_t"] =                  INT8_T;
+    (*KeywordMap)["i8vec2"] =                  I8VEC2;
+    (*KeywordMap)["i8vec3"] =                  I8VEC3;
+    (*KeywordMap)["i8vec4"] =                  I8VEC4;
+    (*KeywordMap)["uint8_t"] =                 UINT8_T;
+    (*KeywordMap)["u8vec2"] =                  U8VEC2;
+    (*KeywordMap)["u8vec3"] =                  U8VEC3;
+    (*KeywordMap)["u8vec4"] =                  U8VEC4;
+
     (*KeywordMap)["int16_t"] =                 INT16_T;
-    (*KeywordMap)["uint16_t"] =                UINT16_T;
     (*KeywordMap)["i16vec2"] =                 I16VEC2;
     (*KeywordMap)["i16vec3"] =                 I16VEC3;
     (*KeywordMap)["i16vec4"] =                 I16VEC4;
+    (*KeywordMap)["uint16_t"] =                UINT16_T;
     (*KeywordMap)["u16vec2"] =                 U16VEC2;
     (*KeywordMap)["u16vec3"] =                 U16VEC3;
     (*KeywordMap)["u16vec4"] =                 U16VEC4;
+
+    (*KeywordMap)["int32_t"] =                 INT32_T;
+    (*KeywordMap)["i32vec2"] =                 I32VEC2;
+    (*KeywordMap)["i32vec3"] =                 I32VEC3;
+    (*KeywordMap)["i32vec4"] =                 I32VEC4;
+    (*KeywordMap)["uint32_t"] =                UINT32_T;
+    (*KeywordMap)["u32vec2"] =                 U32VEC2;
+    (*KeywordMap)["u32vec3"] =                 U32VEC3;
+    (*KeywordMap)["u32vec4"] =                 U32VEC4;
 
     (*KeywordMap)["float16_t"] =               FLOAT16_T;
     (*KeywordMap)["f16vec2"] =                 F16VEC2;
@@ -489,20 +527,43 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["f16mat4x2"] =               F16MAT4X2;
     (*KeywordMap)["f16mat4x3"] =               F16MAT4X3;
     (*KeywordMap)["f16mat4x4"] =               F16MAT4X4;
+
+    (*KeywordMap)["float32_t"] =               FLOAT32_T;
+    (*KeywordMap)["f32vec2"] =                 F32VEC2;
+    (*KeywordMap)["f32vec3"] =                 F32VEC3;
+    (*KeywordMap)["f32vec4"] =                 F32VEC4;
+    (*KeywordMap)["f32mat2"] =                 F32MAT2;
+    (*KeywordMap)["f32mat3"] =                 F32MAT3;
+    (*KeywordMap)["f32mat4"] =                 F32MAT4;
+    (*KeywordMap)["f32mat2x2"] =               F32MAT2X2;
+    (*KeywordMap)["f32mat2x3"] =               F32MAT2X3;
+    (*KeywordMap)["f32mat2x4"] =               F32MAT2X4;
+    (*KeywordMap)["f32mat3x2"] =               F32MAT3X2;
+    (*KeywordMap)["f32mat3x3"] =               F32MAT3X3;
+    (*KeywordMap)["f32mat3x4"] =               F32MAT3X4;
+    (*KeywordMap)["f32mat4x2"] =               F32MAT4X2;
+    (*KeywordMap)["f32mat4x3"] =               F32MAT4X3;
+    (*KeywordMap)["f32mat4x4"] =               F32MAT4X4;
+    (*KeywordMap)["float64_t"] =               FLOAT64_T;
+    (*KeywordMap)["f64vec2"] =                 F64VEC2;
+    (*KeywordMap)["f64vec3"] =                 F64VEC3;
+    (*KeywordMap)["f64vec4"] =                 F64VEC4;
+    (*KeywordMap)["f64mat2"] =                 F64MAT2;
+    (*KeywordMap)["f64mat3"] =                 F64MAT3;
+    (*KeywordMap)["f64mat4"] =                 F64MAT4;
+    (*KeywordMap)["f64mat2x2"] =               F64MAT2X2;
+    (*KeywordMap)["f64mat2x3"] =               F64MAT2X3;
+    (*KeywordMap)["f64mat2x4"] =               F64MAT2X4;
+    (*KeywordMap)["f64mat3x2"] =               F64MAT3X2;
+    (*KeywordMap)["f64mat3x3"] =               F64MAT3X3;
+    (*KeywordMap)["f64mat3x4"] =               F64MAT3X4;
+    (*KeywordMap)["f64mat4x2"] =               F64MAT4X2;
+    (*KeywordMap)["f64mat4x3"] =               F64MAT4X3;
+    (*KeywordMap)["f64mat4x4"] =               F64MAT4X4;
 #endif
 
     (*KeywordMap)["sampler2D"] =               SAMPLER2D;
     (*KeywordMap)["samplerCube"] =             SAMPLERCUBE;
-    (*KeywordMap)["samplerCubeArray"] =        SAMPLERCUBEARRAY;
-    (*KeywordMap)["samplerCubeArrayShadow"] =  SAMPLERCUBEARRAYSHADOW;
-    (*KeywordMap)["isamplerCubeArray"] =       ISAMPLERCUBEARRAY;
-    (*KeywordMap)["usamplerCubeArray"] =       USAMPLERCUBEARRAY;
-    (*KeywordMap)["sampler1DArrayShadow"] =    SAMPLER1DARRAYSHADOW;
-    (*KeywordMap)["isampler1DArray"] =         ISAMPLER1DARRAY;
-    (*KeywordMap)["usampler1D"] =              USAMPLER1D;
-    (*KeywordMap)["isampler1D"] =              ISAMPLER1D;
-    (*KeywordMap)["usampler1DArray"] =         USAMPLER1DARRAY;
-    (*KeywordMap)["samplerBuffer"] =           SAMPLERBUFFER;
     (*KeywordMap)["samplerCubeShadow"] =       SAMPLERCUBESHADOW;
     (*KeywordMap)["sampler2DArray"] =          SAMPLER2DARRAY;
     (*KeywordMap)["sampler2DArrayShadow"] =    SAMPLER2DARRAYSHADOW;
@@ -514,6 +575,39 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["usampler3D"] =              USAMPLER3D;
     (*KeywordMap)["usamplerCube"] =            USAMPLERCUBE;
     (*KeywordMap)["usampler2DArray"] =         USAMPLER2DARRAY;
+    (*KeywordMap)["sampler3D"] =               SAMPLER3D;
+    (*KeywordMap)["sampler2DShadow"] =         SAMPLER2DSHADOW;
+
+    (*KeywordMap)["texture2D"] =               TEXTURE2D;
+    (*KeywordMap)["textureCube"] =             TEXTURECUBE;
+    (*KeywordMap)["texture2DArray"] =          TEXTURE2DARRAY;
+    (*KeywordMap)["itexture2D"] =              ITEXTURE2D;
+    (*KeywordMap)["itexture3D"] =              ITEXTURE3D;
+    (*KeywordMap)["itextureCube"] =            ITEXTURECUBE;
+    (*KeywordMap)["itexture2DArray"] =         ITEXTURE2DARRAY;
+    (*KeywordMap)["utexture2D"] =              UTEXTURE2D;
+    (*KeywordMap)["utexture3D"] =              UTEXTURE3D;
+    (*KeywordMap)["utextureCube"] =            UTEXTURECUBE;
+    (*KeywordMap)["utexture2DArray"] =         UTEXTURE2DARRAY;
+    (*KeywordMap)["texture3D"] =               TEXTURE3D;
+
+    (*KeywordMap)["sampler"] =                 SAMPLER;
+    (*KeywordMap)["samplerShadow"] =           SAMPLERSHADOW;
+
+#ifndef GLSLANG_WEB
+    (*KeywordMap)["textureCubeArray"] =        TEXTURECUBEARRAY;
+    (*KeywordMap)["itextureCubeArray"] =       ITEXTURECUBEARRAY;
+    (*KeywordMap)["utextureCubeArray"] =       UTEXTURECUBEARRAY;
+    (*KeywordMap)["samplerCubeArray"] =        SAMPLERCUBEARRAY;
+    (*KeywordMap)["samplerCubeArrayShadow"] =  SAMPLERCUBEARRAYSHADOW;
+    (*KeywordMap)["isamplerCubeArray"] =       ISAMPLERCUBEARRAY;
+    (*KeywordMap)["usamplerCubeArray"] =       USAMPLERCUBEARRAY;
+    (*KeywordMap)["sampler1DArrayShadow"] =    SAMPLER1DARRAYSHADOW;
+    (*KeywordMap)["isampler1DArray"] =         ISAMPLER1DARRAY;
+    (*KeywordMap)["usampler1D"] =              USAMPLER1D;
+    (*KeywordMap)["isampler1D"] =              ISAMPLER1D;
+    (*KeywordMap)["usampler1DArray"] =         USAMPLER1DARRAY;
+    (*KeywordMap)["samplerBuffer"] =           SAMPLERBUFFER;
     (*KeywordMap)["isampler2DRect"] =          ISAMPLER2DRECT;
     (*KeywordMap)["usampler2DRect"] =          USAMPLER2DRECT;
     (*KeywordMap)["isamplerBuffer"] =          ISAMPLERBUFFER;
@@ -526,36 +620,19 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["usampler2DMSArray"] =       USAMPLER2DMSARRAY;
     (*KeywordMap)["sampler1D"] =               SAMPLER1D;
     (*KeywordMap)["sampler1DShadow"] =         SAMPLER1DSHADOW;
-    (*KeywordMap)["sampler3D"] =               SAMPLER3D;
-    (*KeywordMap)["sampler2DShadow"] =         SAMPLER2DSHADOW;
     (*KeywordMap)["sampler2DRect"] =           SAMPLER2DRECT;
     (*KeywordMap)["sampler2DRectShadow"] =     SAMPLER2DRECTSHADOW;
     (*KeywordMap)["sampler1DArray"] =          SAMPLER1DARRAY;
 
     (*KeywordMap)["samplerExternalOES"] =      SAMPLEREXTERNALOES; // GL_OES_EGL_image_external
 
-    (*KeywordMap)["sampler"] =                 SAMPLER;
-    (*KeywordMap)["samplerShadow"] =           SAMPLERSHADOW;
+    (*KeywordMap)["__samplerExternal2DY2YEXT"] = SAMPLEREXTERNAL2DY2YEXT; // GL_EXT_YUV_target
 
-    (*KeywordMap)["texture2D"] =               TEXTURE2D;
-    (*KeywordMap)["textureCube"] =             TEXTURECUBE;
-    (*KeywordMap)["textureCubeArray"] =        TEXTURECUBEARRAY;
-    (*KeywordMap)["itextureCubeArray"] =       ITEXTURECUBEARRAY;
-    (*KeywordMap)["utextureCubeArray"] =       UTEXTURECUBEARRAY;
     (*KeywordMap)["itexture1DArray"] =         ITEXTURE1DARRAY;
     (*KeywordMap)["utexture1D"] =              UTEXTURE1D;
     (*KeywordMap)["itexture1D"] =              ITEXTURE1D;
     (*KeywordMap)["utexture1DArray"] =         UTEXTURE1DARRAY;
     (*KeywordMap)["textureBuffer"] =           TEXTUREBUFFER;
-    (*KeywordMap)["texture2DArray"] =          TEXTURE2DARRAY;
-    (*KeywordMap)["itexture2D"] =              ITEXTURE2D;
-    (*KeywordMap)["itexture3D"] =              ITEXTURE3D;
-    (*KeywordMap)["itextureCube"] =            ITEXTURECUBE;
-    (*KeywordMap)["itexture2DArray"] =         ITEXTURE2DARRAY;
-    (*KeywordMap)["utexture2D"] =              UTEXTURE2D;
-    (*KeywordMap)["utexture3D"] =              UTEXTURE3D;
-    (*KeywordMap)["utextureCube"] =            UTEXTURECUBE;
-    (*KeywordMap)["utexture2DArray"] =         UTEXTURE2DARRAY;
     (*KeywordMap)["itexture2DRect"] =          ITEXTURE2DRECT;
     (*KeywordMap)["utexture2DRect"] =          UTEXTURE2DRECT;
     (*KeywordMap)["itextureBuffer"] =          ITEXTUREBUFFER;
@@ -567,7 +644,6 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["itexture2DMSArray"] =       ITEXTURE2DMSARRAY;
     (*KeywordMap)["utexture2DMSArray"] =       UTEXTURE2DMSARRAY;
     (*KeywordMap)["texture1D"] =               TEXTURE1D;
-    (*KeywordMap)["texture3D"] =               TEXTURE3D;
     (*KeywordMap)["texture2DRect"] =           TEXTURE2DRECT;
     (*KeywordMap)["texture1DArray"] =          TEXTURE1DARRAY;
 
@@ -578,18 +654,68 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["usubpassInput"] =           USUBPASSINPUT;
     (*KeywordMap)["usubpassInputMS"] =         USUBPASSINPUTMS;
 
-    (*KeywordMap)["noperspective"] =           NOPERSPECTIVE;
-    (*KeywordMap)["smooth"] =                  SMOOTH;
-    (*KeywordMap)["flat"] =                    FLAT;
-#ifdef AMD_EXTENSIONS
-    (*KeywordMap)["__explicitInterpAMD"] =     __EXPLICITINTERPAMD;
-#endif
-    (*KeywordMap)["centroid"] =                CENTROID;
+    (*KeywordMap)["f16sampler1D"] =                 F16SAMPLER1D;
+    (*KeywordMap)["f16sampler2D"] =                 F16SAMPLER2D;
+    (*KeywordMap)["f16sampler3D"] =                 F16SAMPLER3D;
+    (*KeywordMap)["f16sampler2DRect"] =             F16SAMPLER2DRECT;
+    (*KeywordMap)["f16samplerCube"] =               F16SAMPLERCUBE;
+    (*KeywordMap)["f16sampler1DArray"] =            F16SAMPLER1DARRAY;
+    (*KeywordMap)["f16sampler2DArray"] =            F16SAMPLER2DARRAY;
+    (*KeywordMap)["f16samplerCubeArray"] =          F16SAMPLERCUBEARRAY;
+    (*KeywordMap)["f16samplerBuffer"] =             F16SAMPLERBUFFER;
+    (*KeywordMap)["f16sampler2DMS"] =               F16SAMPLER2DMS;
+    (*KeywordMap)["f16sampler2DMSArray"] =          F16SAMPLER2DMSARRAY;
+    (*KeywordMap)["f16sampler1DShadow"] =           F16SAMPLER1DSHADOW;
+    (*KeywordMap)["f16sampler2DShadow"] =           F16SAMPLER2DSHADOW;
+    (*KeywordMap)["f16sampler2DRectShadow"] =       F16SAMPLER2DRECTSHADOW;
+    (*KeywordMap)["f16samplerCubeShadow"] =         F16SAMPLERCUBESHADOW;
+    (*KeywordMap)["f16sampler1DArrayShadow"] =      F16SAMPLER1DARRAYSHADOW;
+    (*KeywordMap)["f16sampler2DArrayShadow"] =      F16SAMPLER2DARRAYSHADOW;
+    (*KeywordMap)["f16samplerCubeArrayShadow"] =    F16SAMPLERCUBEARRAYSHADOW;
+
+    (*KeywordMap)["f16image1D"] =                   F16IMAGE1D;
+    (*KeywordMap)["f16image2D"] =                   F16IMAGE2D;
+    (*KeywordMap)["f16image3D"] =                   F16IMAGE3D;
+    (*KeywordMap)["f16image2DRect"] =               F16IMAGE2DRECT;
+    (*KeywordMap)["f16imageCube"] =                 F16IMAGECUBE;
+    (*KeywordMap)["f16image1DArray"] =              F16IMAGE1DARRAY;
+    (*KeywordMap)["f16image2DArray"] =              F16IMAGE2DARRAY;
+    (*KeywordMap)["f16imageCubeArray"] =            F16IMAGECUBEARRAY;
+    (*KeywordMap)["f16imageBuffer"] =               F16IMAGEBUFFER;
+    (*KeywordMap)["f16image2DMS"] =                 F16IMAGE2DMS;
+    (*KeywordMap)["f16image2DMSArray"] =            F16IMAGE2DMSARRAY;
+
+    (*KeywordMap)["f16texture1D"] =                 F16TEXTURE1D;
+    (*KeywordMap)["f16texture2D"] =                 F16TEXTURE2D;
+    (*KeywordMap)["f16texture3D"] =                 F16TEXTURE3D;
+    (*KeywordMap)["f16texture2DRect"] =             F16TEXTURE2DRECT;
+    (*KeywordMap)["f16textureCube"] =               F16TEXTURECUBE;
+    (*KeywordMap)["f16texture1DArray"] =            F16TEXTURE1DARRAY;
+    (*KeywordMap)["f16texture2DArray"] =            F16TEXTURE2DARRAY;
+    (*KeywordMap)["f16textureCubeArray"] =          F16TEXTURECUBEARRAY;
+    (*KeywordMap)["f16textureBuffer"] =             F16TEXTUREBUFFER;
+    (*KeywordMap)["f16texture2DMS"] =               F16TEXTURE2DMS;
+    (*KeywordMap)["f16texture2DMSArray"] =          F16TEXTURE2DMSARRAY;
+
+    (*KeywordMap)["f16subpassInput"] =              F16SUBPASSINPUT;
+    (*KeywordMap)["f16subpassInputMS"] =            F16SUBPASSINPUTMS;
+    (*KeywordMap)["__explicitInterpAMD"] =     EXPLICITINTERPAMD;
+    (*KeywordMap)["pervertexNV"] =             PERVERTEXNV;
     (*KeywordMap)["precise"] =                 PRECISE;
-    (*KeywordMap)["invariant"] =               INVARIANT;
-    (*KeywordMap)["packed"] =                  PACKED;
-    (*KeywordMap)["resource"] =                RESOURCE;
-    (*KeywordMap)["superp"] =                  SUPERP;
+
+    (*KeywordMap)["rayPayloadNV"] =            PAYLOADNV;
+    (*KeywordMap)["rayPayloadInNV"] =          PAYLOADINNV;
+    (*KeywordMap)["hitAttributeNV"] =          HITATTRNV;
+    (*KeywordMap)["callableDataNV"] =          CALLDATANV;
+    (*KeywordMap)["callableDataInNV"] =        CALLDATAINNV;
+    (*KeywordMap)["accelerationStructureNV"] = ACCSTRUCTNV;
+    (*KeywordMap)["perprimitiveNV"] =          PERPRIMITIVENV;
+    (*KeywordMap)["perviewNV"] =               PERVIEWNV;
+    (*KeywordMap)["taskNV"] =                  PERTASKNV;
+
+    (*KeywordMap)["fcoopmatNV"] =              FCOOPMATNV;
+    (*KeywordMap)["icoopmatNV"] =              ICOOPMATNV;
+    (*KeywordMap)["ucoopmatNV"] =              UCOOPMATNV;
 
     ReservedSet = new std::unordered_set<const char*, str_hash, str_eq>;
 
@@ -630,14 +756,17 @@ void TScanContext::fillInKeywordMap()
     ReservedSet->insert("cast");
     ReservedSet->insert("namespace");
     ReservedSet->insert("using");
+#endif
 }
 
 void TScanContext::deleteKeywordMap()
 {
     delete KeywordMap;
     KeywordMap = nullptr;
+#ifndef GLSLANG_WEB
     delete ReservedSet;
     ReservedSet = nullptr;
+#endif
 }
 
 // Called by yylex to get the next token.
@@ -655,7 +784,7 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
         loc = ppToken.loc;
         parserToken->sType.lex.loc = loc;
         switch (token) {
-        case ';':  afterType = false;   return SEMICOLON;
+        case ';':  afterType = false; afterBuffer = false; return SEMICOLON;
         case ',':  afterType = false;   return COMMA;
         case ':':                       return COLON;
         case '=':  afterType = false;   return EQUAL;
@@ -677,7 +806,7 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
         case '?':                       return QUESTION;
         case '[':                       return LEFT_BRACKET;
         case ']':                       return RIGHT_BRACKET;
-        case '{':                       return LEFT_BRACE;
+        case '{':  afterStruct = false; afterBuffer = false; return LEFT_BRACE;
         case '}':                       return RIGHT_BRACE;
         case '\\':
             parseContext.error(loc, "illegal use of escape character", "\\", "");
@@ -714,18 +843,16 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
             parseContext.error(loc, "not supported", "::", "");
             break;
 
-        case PpAtomConstInt:           parserToken->sType.lex.i   = ppToken.ival;       return INTCONSTANT;
-        case PpAtomConstUint:          parserToken->sType.lex.i   = ppToken.ival;       return UINTCONSTANT;
-        case PpAtomConstInt64:         parserToken->sType.lex.i64 = ppToken.i64val;     return INT64CONSTANT;
-        case PpAtomConstUint64:        parserToken->sType.lex.i64 = ppToken.i64val;     return UINT64CONSTANT;
-#ifdef AMD_EXTENSIONS
-        case PpAtomConstInt16:         parserToken->sType.lex.i   = ppToken.ival;       return INT16CONSTANT;
-        case PpAtomConstUint16:        parserToken->sType.lex.i   = ppToken.ival;       return UINT16CONSTANT;
-#endif
-        case PpAtomConstFloat:         parserToken->sType.lex.d   = ppToken.dval;       return FLOATCONSTANT;
-        case PpAtomConstDouble:        parserToken->sType.lex.d   = ppToken.dval;       return DOUBLECONSTANT;
-#ifdef AMD_EXTENSIONS
-        case PpAtomConstFloat16:       parserToken->sType.lex.d   = ppToken.dval;       return FLOAT16CONSTANT;
+        case PpAtomConstInt:           parserToken->sType.lex.i    = ppToken.ival;       return INTCONSTANT;
+        case PpAtomConstUint:          parserToken->sType.lex.i    = ppToken.ival;       return UINTCONSTANT;
+        case PpAtomConstFloat:         parserToken->sType.lex.d    = ppToken.dval;       return FLOATCONSTANT;
+#ifndef GLSLANG_WEB
+        case PpAtomConstInt16:         parserToken->sType.lex.i    = ppToken.ival;       return INT16CONSTANT;
+        case PpAtomConstUint16:        parserToken->sType.lex.i    = ppToken.ival;       return UINT16CONSTANT;
+        case PpAtomConstInt64:         parserToken->sType.lex.i64  = ppToken.i64val;     return INT64CONSTANT;
+        case PpAtomConstUint64:        parserToken->sType.lex.i64  = ppToken.i64val;     return UINT64CONSTANT;
+        case PpAtomConstDouble:        parserToken->sType.lex.d    = ppToken.dval;       return DOUBLECONSTANT;
+        case PpAtomConstFloat16:       parserToken->sType.lex.d    = ppToken.dval;       return FLOAT16CONSTANT;
 #endif
         case PpAtomIdentifier:
         {
@@ -748,8 +875,10 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
 
 int TScanContext::tokenizeIdentifier()
 {
+#ifndef GLSLANG_WEB
     if (ReservedSet->find(tokenText) != ReservedSet->end())
         return reservedWord();
+#endif
 
     auto it = KeywordMap->find(tokenText);
     if (it == KeywordMap->end()) {
@@ -764,7 +893,6 @@ int TScanContext::tokenizeIdentifier()
     case IN:
     case OUT:
     case INOUT:
-    case STRUCT:
     case BREAK:
     case CONTINUE:
     case DO:
@@ -777,10 +905,21 @@ int TScanContext::tokenizeIdentifier()
     case CASE:
         return keyword;
 
+    case BUFFER:
+        afterBuffer = true;
+        if ((parseContext.isEsProfile() && parseContext.version < 310) ||
+            (!parseContext.isEsProfile() && parseContext.version < 430))
+            return identifierOrType();
+        return keyword;
+
+    case STRUCT:
+        afterStruct = true;
+        return keyword;
+
     case SWITCH:
     case DEFAULT:
-        if ((parseContext.profile == EEsProfile && parseContext.version < 300) ||
-            (parseContext.profile != EEsProfile && parseContext.version < 130))
+        if ((parseContext.isEsProfile() && parseContext.version < 300) ||
+            (!parseContext.isEsProfile() && parseContext.version < 130))
             reservedWord();
         return keyword;
 
@@ -812,74 +951,131 @@ int TScanContext::tokenizeIdentifier()
             parserToken->sType.lex.b = false;
         return keyword;
 
-    case ATTRIBUTE:
-    case VARYING:
-        if (parseContext.profile == EEsProfile && parseContext.version >= 300)
-            reservedWord();
-        return keyword;
-
-    case BUFFER:
-        if ((parseContext.profile == EEsProfile && parseContext.version < 310) ||
-            (parseContext.profile != EEsProfile && parseContext.version < 430))
+    case SMOOTH:
+        if ((parseContext.isEsProfile() && parseContext.version < 300) ||
+            (!parseContext.isEsProfile() && parseContext.version < 130))
             return identifierOrType();
         return keyword;
+    case FLAT:
+        if (parseContext.isEsProfile() && parseContext.version < 300)
+            reservedWord();
+        else if (!parseContext.isEsProfile() && parseContext.version < 130)
+            return identifierOrType();
+        return keyword;
+    case CENTROID:
+        if (parseContext.version < 120)
+            return identifierOrType();
+        return keyword;
+    case INVARIANT:
+        if (!parseContext.isEsProfile() && parseContext.version < 120)
+            return identifierOrType();
+        return keyword;
+    case PACKED:
+        if ((parseContext.isEsProfile() && parseContext.version < 300) ||
+            (!parseContext.isEsProfile() && parseContext.version < 330))
+            return reservedWord();
+        return identifierOrType();
 
+    case RESOURCE:
+    {
+        bool reserved = (parseContext.isEsProfile() && parseContext.version >= 300) ||
+                        (!parseContext.isEsProfile() && parseContext.version >= 420);
+        return identifierOrReserved(reserved);
+    }
+    case SUPERP:
+    {
+        bool reserved = parseContext.isEsProfile() || parseContext.version >= 130;
+        return identifierOrReserved(reserved);
+    }
+
+#ifndef GLSLANG_WEB
+    case NOPERSPECTIVE:
+        if (parseContext.isEsProfile() && parseContext.version >= 300 &&
+            parseContext.extensionTurnedOn(E_GL_NV_shader_noperspective_interpolation))
+            return keyword;
+        return es30ReservedFromGLSL(130);
+
+    case NONUNIFORM:
+        if (parseContext.extensionTurnedOn(E_GL_EXT_nonuniform_qualifier))
+            return keyword;
+        else
+            return identifierOrType();
+    case ATTRIBUTE:
+    case VARYING:
+        if (parseContext.isEsProfile() && parseContext.version >= 300)
+            reservedWord();
+        return keyword;
+    case PAYLOADNV:
+    case PAYLOADINNV:
+    case HITATTRNV:
+    case CALLDATANV:
+    case CALLDATAINNV:
+    case ACCSTRUCTNV:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (!parseContext.isEsProfile() && parseContext.version >= 460
+                 && parseContext.extensionTurnedOn(E_GL_NV_ray_tracing)))
+            return keyword;
+        return identifierOrType();
     case ATOMIC_UINT:
-        if ((parseContext.profile == EEsProfile && parseContext.version >= 310) ||
+        if ((parseContext.isEsProfile() && parseContext.version >= 310) ||
             parseContext.extensionTurnedOn(E_GL_ARB_shader_atomic_counters))
             return keyword;
         return es30ReservedFromGLSL(420);
 
     case COHERENT:
+    case DEVICECOHERENT:
+    case QUEUEFAMILYCOHERENT:
+    case WORKGROUPCOHERENT:
+    case SUBGROUPCOHERENT:
+    case NONPRIVATE:
     case RESTRICT:
     case READONLY:
     case WRITEONLY:
-        if (parseContext.profile == EEsProfile && parseContext.version >= 310)
+        if (parseContext.isEsProfile() && parseContext.version >= 310)
             return keyword;
         return es30ReservedFromGLSL(parseContext.extensionTurnedOn(E_GL_ARB_shader_image_load_store) ? 130 : 420);
-
     case VOLATILE:
-        if (parseContext.profile == EEsProfile && parseContext.version >= 310)
+        if (parseContext.isEsProfile() && parseContext.version >= 310)
             return keyword;
-        if (! parseContext.symbolTable.atBuiltInLevel() && (parseContext.profile == EEsProfile || (parseContext.version < 420 && ! parseContext.extensionTurnedOn(E_GL_ARB_shader_image_load_store))))
+        if (! parseContext.symbolTable.atBuiltInLevel() && (parseContext.isEsProfile() ||
+            (parseContext.version < 420 && ! parseContext.extensionTurnedOn(E_GL_ARB_shader_image_load_store))))
             reservedWord();
         return keyword;
-
-    case LAYOUT:
-    {
-        const int numLayoutExts = 2;
-        const char* layoutExts[numLayoutExts] = { E_GL_ARB_shading_language_420pack,
-                                                  E_GL_ARB_explicit_attrib_location };
-        if ((parseContext.profile == EEsProfile && parseContext.version < 300) ||
-            (parseContext.profile != EEsProfile && parseContext.version < 140 &&
-            ! parseContext.extensionsTurnedOn(numLayoutExts, layoutExts)))
-            return identifierOrType();
-        return keyword;
-    }
-    case SHARED:
-        if ((parseContext.profile == EEsProfile && parseContext.version < 300) ||
-            (parseContext.profile != EEsProfile && parseContext.version < 140))
-            return identifierOrType();
-        return keyword;
-
     case PATCH:
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            (parseContext.profile == EEsProfile &&
-             (parseContext.version >= 320 || 
+            (parseContext.isEsProfile() &&
+             (parseContext.version >= 320 ||
               parseContext.extensionsTurnedOn(Num_AEP_tessellation_shader, AEP_tessellation_shader))) ||
-            (parseContext.profile != EEsProfile && parseContext.extensionTurnedOn(E_GL_ARB_tessellation_shader)))
+            (!parseContext.isEsProfile() && parseContext.extensionTurnedOn(E_GL_ARB_tessellation_shader)))
             return keyword;
 
         return es30ReservedFromGLSL(400);
 
     case SAMPLE:
-        if ((parseContext.profile == EEsProfile && parseContext.version >= 320) ||
+        if ((parseContext.isEsProfile() && parseContext.version >= 320) ||
             parseContext.extensionsTurnedOn(1, &E_GL_OES_shader_multisample_interpolation))
             return keyword;
         return es30ReservedFromGLSL(400);
 
     case SUBROUTINE:
         return es30ReservedFromGLSL(400);
+#endif
+    case SHARED:
+        if ((parseContext.isEsProfile() && parseContext.version < 300) ||
+            (!parseContext.isEsProfile() && parseContext.version < 140))
+            return identifierOrType();
+        return keyword;
+    case LAYOUT:
+    {
+        const int numLayoutExts = 2;
+        const char* layoutExts[numLayoutExts] = { E_GL_ARB_shading_language_420pack,
+                                                  E_GL_ARB_explicit_attrib_location };
+        if ((parseContext.isEsProfile() && parseContext.version < 300) ||
+            (!parseContext.isEsProfile() && parseContext.version < 140 &&
+            ! parseContext.extensionsTurnedOn(numLayoutExts, layoutExts)))
+            return identifierOrType();
+        return keyword;
+    }
 
     case HIGH_PRECISION:
     case MEDIUM_PRECISION:
@@ -898,6 +1094,7 @@ int TScanContext::tokenizeIdentifier()
     case MAT4X4:
         return matNxM();
 
+#ifndef GLSLANG_WEB
     case DMAT2:
     case DMAT3:
     case DMAT4:
@@ -928,7 +1125,7 @@ int TScanContext::tokenizeIdentifier()
     case IIMAGEBUFFER:
     case UIMAGEBUFFER:
         afterType = true;
-        if ((parseContext.profile == EEsProfile && parseContext.version >= 320) ||
+        if ((parseContext.isEsProfile() && parseContext.version >= 320) ||
             parseContext.extensionsTurnedOn(Num_AEP_texture_buffer, AEP_texture_buffer))
             return keyword;
         return firstGenerationImage(false);
@@ -952,7 +1149,7 @@ int TScanContext::tokenizeIdentifier()
     case IIMAGECUBEARRAY:
     case UIMAGECUBEARRAY:
         afterType = true;
-        if ((parseContext.profile == EEsProfile && parseContext.version >= 320) ||
+        if ((parseContext.isEsProfile() && parseContext.version >= 320) ||
             parseContext.extensionsTurnedOn(Num_AEP_texture_cube_map_array, AEP_texture_cube_map_array))
             return keyword;
         return secondGenerationImage();
@@ -971,7 +1168,7 @@ int TScanContext::tokenizeIdentifier()
     case DVEC3:
     case DVEC4:
         afterType = true;
-        if (parseContext.profile == EEsProfile || parseContext.version < 400)
+        if (parseContext.isEsProfile() || parseContext.version < 400)
             reservedWord();
         return keyword;
 
@@ -985,12 +1182,30 @@ int TScanContext::tokenizeIdentifier()
     case U64VEC4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            (parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_int64) &&
-             parseContext.profile != EEsProfile && parseContext.version >= 450))
+            (!parseContext.isEsProfile() && parseContext.version >= 450 &&
+             (parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_int64) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int64))))
             return keyword;
         return identifierOrType();
 
-#ifdef AMD_EXTENSIONS
+    case INT8_T:
+    case UINT8_T:
+    case I8VEC2:
+    case I8VEC3:
+    case I8VEC4:
+    case U8VEC2:
+    case U8VEC3:
+    case U8VEC4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_8bit_storage) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int8)) &&
+              !parseContext.isEsProfile() && parseContext.version >= 450))
+            return keyword;
+        return identifierOrType();
+
     case INT16_T:
     case UINT16_T:
     case I16VEC2:
@@ -1001,8 +1216,73 @@ int TScanContext::tokenizeIdentifier()
     case U16VEC4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_int16) &&
-             parseContext.profile != EEsProfile && parseContext.version >= 450))
+            (!parseContext.isEsProfile() && parseContext.version >= 450 &&
+             (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_int16) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_16bit_storage) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int16))))
+            return keyword;
+        return identifierOrType();
+    case INT32_T:
+    case UINT32_T:
+    case I32VEC2:
+    case I32VEC3:
+    case I32VEC4:
+    case U32VEC2:
+    case U32VEC3:
+    case U32VEC4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+           ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+             parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int32)) &&
+             !parseContext.isEsProfile() && parseContext.version >= 450))
+            return keyword;
+        return identifierOrType();
+    case FLOAT32_T:
+    case F32VEC2:
+    case F32VEC3:
+    case F32VEC4:
+    case F32MAT2:
+    case F32MAT3:
+    case F32MAT4:
+    case F32MAT2X2:
+    case F32MAT2X3:
+    case F32MAT2X4:
+    case F32MAT3X2:
+    case F32MAT3X3:
+    case F32MAT3X4:
+    case F32MAT4X2:
+    case F32MAT4X3:
+    case F32MAT4X4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float32)) &&
+              !parseContext.isEsProfile() && parseContext.version >= 450))
+            return keyword;
+        return identifierOrType();
+
+    case FLOAT64_T:
+    case F64VEC2:
+    case F64VEC3:
+    case F64VEC4:
+    case F64MAT2:
+    case F64MAT3:
+    case F64MAT4:
+    case F64MAT2X2:
+    case F64MAT2X3:
+    case F64MAT2X4:
+    case F64MAT3X2:
+    case F64MAT3X3:
+    case F64MAT3X4:
+    case F64MAT4X2:
+    case F64MAT4X3:
+    case F64MAT4X4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float64)) &&
+              !parseContext.isEsProfile() && parseContext.version >= 450))
             return keyword;
         return identifierOrType();
 
@@ -1010,6 +1290,17 @@ int TScanContext::tokenizeIdentifier()
     case F16VEC2:
     case F16VEC3:
     case F16VEC4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (!parseContext.isEsProfile() && parseContext.version >= 450 &&
+             (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_16bit_storage) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float16))))
+            return keyword;
+
+        return identifierOrType();
+
     case F16MAT2:
     case F16MAT3:
     case F16MAT4:
@@ -1024,31 +1315,34 @@ int TScanContext::tokenizeIdentifier()
     case F16MAT4X4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) &&
-             parseContext.profile != EEsProfile && parseContext.version >= 450))
+            (!parseContext.isEsProfile() && parseContext.version >= 450 &&
+             (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float16))))
             return keyword;
+
         return identifierOrType();
-#endif
 
     case SAMPLERCUBEARRAY:
     case SAMPLERCUBEARRAYSHADOW:
     case ISAMPLERCUBEARRAY:
     case USAMPLERCUBEARRAY:
         afterType = true;
-        if ((parseContext.profile == EEsProfile && parseContext.version >= 320) ||
+        if ((parseContext.isEsProfile() && parseContext.version >= 320) ||
             parseContext.extensionsTurnedOn(Num_AEP_texture_cube_map_array, AEP_texture_cube_map_array))
             return keyword;
-        if (parseContext.profile == EEsProfile || (parseContext.version < 400 && ! parseContext.extensionTurnedOn(E_GL_ARB_texture_cube_map_array)))
+        if (parseContext.isEsProfile() || (parseContext.version < 400 && ! parseContext.extensionTurnedOn(E_GL_ARB_texture_cube_map_array)))
             reservedWord();
         return keyword;
 
-    case ISAMPLER1D:
-    case ISAMPLER1DARRAY:
-    case SAMPLER1DARRAYSHADOW:
-    case USAMPLER1D:
-    case USAMPLER1DARRAY:
-        afterType = true;
-        return es30ReservedFromGLSL(130);
+    case TEXTURECUBEARRAY:
+    case ITEXTURECUBEARRAY:
+    case UTEXTURECUBEARRAY:
+        if (parseContext.spvVersion.vulkan > 0)
+            return keyword;
+        else
+            return identifierOrType();
+#endif
 
     case UINT:
     case UVEC2:
@@ -1068,6 +1362,49 @@ int TScanContext::tokenizeIdentifier()
         afterType = true;
         return nonreservedKeyword(300, 130);
 
+    case SAMPLER3D:
+        afterType = true;
+        if (parseContext.isEsProfile() && parseContext.version < 300) {
+            if (!parseContext.extensionTurnedOn(E_GL_OES_texture_3D))
+                reservedWord();
+        }
+        return keyword;
+
+    case SAMPLER2DSHADOW:
+        afterType = true;
+        if (parseContext.isEsProfile() && parseContext.version < 300) {
+            if (!parseContext.extensionTurnedOn(E_GL_EXT_shadow_samplers))
+                reservedWord();
+        }
+        return keyword;
+
+    case TEXTURE2D:
+    case TEXTURECUBE:
+    case TEXTURE2DARRAY:
+    case ITEXTURE2D:
+    case ITEXTURE3D:
+    case ITEXTURECUBE:
+    case ITEXTURE2DARRAY:
+    case UTEXTURE2D:
+    case UTEXTURE3D:
+    case UTEXTURECUBE:
+    case UTEXTURE2DARRAY:
+    case TEXTURE3D:
+    case SAMPLER:
+    case SAMPLERSHADOW:
+        if (parseContext.spvVersion.vulkan > 0)
+            return keyword;
+        else
+            return identifierOrType();
+
+#ifndef GLSLANG_WEB
+    case ISAMPLER1D:
+    case ISAMPLER1DARRAY:
+    case SAMPLER1DARRAYSHADOW:
+    case USAMPLER1D:
+    case USAMPLER1DARRAY:
+        afterType = true;
+        return es30ReservedFromGLSL(130);
     case ISAMPLER2DRECT:
     case USAMPLER2DRECT:
         afterType = true;
@@ -1075,7 +1412,7 @@ int TScanContext::tokenizeIdentifier()
 
     case SAMPLERBUFFER:
         afterType = true;
-        if ((parseContext.profile == EEsProfile && parseContext.version >= 320) ||
+        if ((parseContext.isEsProfile() && parseContext.version >= 320) ||
             parseContext.extensionsTurnedOn(Num_AEP_texture_buffer, AEP_texture_buffer))
             return keyword;
         return es30ReservedFromGLSL(130);
@@ -1083,7 +1420,7 @@ int TScanContext::tokenizeIdentifier()
     case ISAMPLERBUFFER:
     case USAMPLERBUFFER:
         afterType = true;
-        if ((parseContext.profile == EEsProfile && parseContext.version >= 320) ||
+        if ((parseContext.isEsProfile() && parseContext.version >= 320) ||
             parseContext.extensionsTurnedOn(Num_AEP_texture_buffer, AEP_texture_buffer))
             return keyword;
         return es30ReservedFromGLSL(140);
@@ -1092,7 +1429,7 @@ int TScanContext::tokenizeIdentifier()
     case ISAMPLER2DMS:
     case USAMPLER2DMS:
         afterType = true;
-        if (parseContext.profile == EEsProfile && parseContext.version >= 310)
+        if (parseContext.isEsProfile() && parseContext.version >= 310)
             return keyword;
         return es30ReservedFromGLSL(150);
 
@@ -1100,7 +1437,7 @@ int TScanContext::tokenizeIdentifier()
     case ISAMPLER2DMSARRAY:
     case USAMPLER2DMSARRAY:
         afterType = true;
-        if ((parseContext.profile == EEsProfile && parseContext.version >= 320) ||
+        if ((parseContext.isEsProfile() && parseContext.version >= 320) ||
             parseContext.extensionsTurnedOn(1, &E_GL_OES_texture_storage_multisample_2d_array))
             return keyword;
         return es30ReservedFromGLSL(150);
@@ -1108,30 +1445,14 @@ int TScanContext::tokenizeIdentifier()
     case SAMPLER1D:
     case SAMPLER1DSHADOW:
         afterType = true;
-        if (parseContext.profile == EEsProfile)
+        if (parseContext.isEsProfile())
             reservedWord();
-        return keyword;
-
-    case SAMPLER3D:
-        afterType = true;
-        if (parseContext.profile == EEsProfile && parseContext.version < 300) {
-            if (! parseContext.extensionTurnedOn(E_GL_OES_texture_3D))
-                reservedWord();
-        }
-        return keyword;
-
-    case SAMPLER2DSHADOW:
-        afterType = true;
-        if (parseContext.profile == EEsProfile && parseContext.version < 300) {
-            if (!parseContext.extensionTurnedOn(E_GL_EXT_shadow_samplers))
-                reservedWord();
-        }
         return keyword;
 
     case SAMPLER2DRECT:
     case SAMPLER2DRECTSHADOW:
         afterType = true;
-        if (parseContext.profile == EEsProfile)
+        if (parseContext.isEsProfile())
             reservedWord();
         else if (parseContext.version < 140 && ! parseContext.symbolTable.atBuiltInLevel() && ! parseContext.extensionTurnedOn(E_GL_ARB_texture_rectangle)) {
             if (parseContext.relaxedErrors())
@@ -1143,10 +1464,10 @@ int TScanContext::tokenizeIdentifier()
 
     case SAMPLER1DARRAY:
         afterType = true;
-        if (parseContext.profile == EEsProfile && parseContext.version == 300)
+        if (parseContext.isEsProfile() && parseContext.version == 300)
             reservedWord();
-        else if ((parseContext.profile == EEsProfile && parseContext.version < 300) ||
-                 (parseContext.profile != EEsProfile && parseContext.version < 130))
+        else if ((parseContext.isEsProfile() && parseContext.version < 300) ||
+                 (!parseContext.isEsProfile() && parseContext.version < 130))
             return identifierOrType();
         return keyword;
 
@@ -1158,25 +1479,18 @@ int TScanContext::tokenizeIdentifier()
             return keyword;
         return identifierOrType();
 
-    case TEXTURE2D:
-    case TEXTURECUBE:
-    case TEXTURECUBEARRAY:
-    case ITEXTURECUBEARRAY:
-    case UTEXTURECUBEARRAY:
+    case SAMPLEREXTERNAL2DY2YEXT:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_YUV_target))
+            return keyword;
+        return identifierOrType();
+
     case ITEXTURE1DARRAY:
     case UTEXTURE1D:
     case ITEXTURE1D:
     case UTEXTURE1DARRAY:
     case TEXTUREBUFFER:
-    case TEXTURE2DARRAY:
-    case ITEXTURE2D:
-    case ITEXTURE3D:
-    case ITEXTURECUBE:
-    case ITEXTURE2DARRAY:
-    case UTEXTURE2D:
-    case UTEXTURE3D:
-    case UTEXTURECUBE:
-    case UTEXTURE2DARRAY:
     case ITEXTURE2DRECT:
     case UTEXTURE2DRECT:
     case ITEXTUREBUFFER:
@@ -1188,12 +1502,9 @@ int TScanContext::tokenizeIdentifier()
     case ITEXTURE2DMSARRAY:
     case UTEXTURE2DMSARRAY:
     case TEXTURE1D:
-    case TEXTURE3D:
     case TEXTURE2DRECT:
     case TEXTURE1DARRAY:
-    case SAMPLER:
-    case SAMPLERSHADOW:
-        if (parseContext.spvVersion.vulkan >= 100)
+        if (parseContext.spvVersion.vulkan > 0)
             return keyword;
         else
             return identifierOrType();
@@ -1204,73 +1515,117 @@ int TScanContext::tokenizeIdentifier()
     case ISUBPASSINPUTMS:
     case USUBPASSINPUT:
     case USUBPASSINPUTMS:
-        if (parseContext.spvVersion.vulkan >= 100)
+        if (parseContext.spvVersion.vulkan > 0)
             return keyword;
         else
             return identifierOrType();
 
-    case NOPERSPECTIVE:
-        return es30ReservedFromGLSL(130);
+    case F16SAMPLER1D:
+    case F16SAMPLER2D:
+    case F16SAMPLER3D:
+    case F16SAMPLER2DRECT:
+    case F16SAMPLERCUBE:
+    case F16SAMPLER1DARRAY:
+    case F16SAMPLER2DARRAY:
+    case F16SAMPLERCUBEARRAY:
+    case F16SAMPLERBUFFER:
+    case F16SAMPLER2DMS:
+    case F16SAMPLER2DMSARRAY:
+    case F16SAMPLER1DSHADOW:
+    case F16SAMPLER2DSHADOW:
+    case F16SAMPLER1DARRAYSHADOW:
+    case F16SAMPLER2DARRAYSHADOW:
+    case F16SAMPLER2DRECTSHADOW:
+    case F16SAMPLERCUBESHADOW:
+    case F16SAMPLERCUBEARRAYSHADOW:
 
-    case SMOOTH:
-        if ((parseContext.profile == EEsProfile && parseContext.version < 300) ||
-            (parseContext.profile != EEsProfile && parseContext.version < 130))
-            return identifierOrType();
-        return keyword;
+    case F16IMAGE1D:
+    case F16IMAGE2D:
+    case F16IMAGE3D:
+    case F16IMAGE2DRECT:
+    case F16IMAGECUBE:
+    case F16IMAGE1DARRAY:
+    case F16IMAGE2DARRAY:
+    case F16IMAGECUBEARRAY:
+    case F16IMAGEBUFFER:
+    case F16IMAGE2DMS:
+    case F16IMAGE2DMSARRAY:
 
-#ifdef AMD_EXTENSIONS
-    case __EXPLICITINTERPAMD:
-        if (parseContext.profile != EEsProfile && parseContext.version >= 450 &&
+    case F16TEXTURE1D:
+    case F16TEXTURE2D:
+    case F16TEXTURE3D:
+    case F16TEXTURE2DRECT:
+    case F16TEXTURECUBE:
+    case F16TEXTURE1DARRAY:
+    case F16TEXTURE2DARRAY:
+    case F16TEXTURECUBEARRAY:
+    case F16TEXTUREBUFFER:
+    case F16TEXTURE2DMS:
+    case F16TEXTURE2DMSARRAY:
+
+    case F16SUBPASSINPUT:
+    case F16SUBPASSINPUTMS:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float_fetch) &&
+             !parseContext.isEsProfile() && parseContext.version >= 450))
+            return keyword;
+        return identifierOrType();
+
+    case EXPLICITINTERPAMD:
+        if (!parseContext.isEsProfile() && parseContext.version >= 450 &&
             parseContext.extensionTurnedOn(E_GL_AMD_shader_explicit_vertex_parameter))
             return keyword;
         return identifierOrType();
-#endif
 
-    case FLAT:
-        if (parseContext.profile == EEsProfile && parseContext.version < 300)
-            reservedWord();
-        else if (parseContext.profile != EEsProfile && parseContext.version < 130)
-            return identifierOrType();
-        return keyword;
-
-    case CENTROID:
-        if (parseContext.version < 120)
-            return identifierOrType();
-        return keyword;
+    case PERVERTEXNV:
+        if (((!parseContext.isEsProfile() && parseContext.version >= 450) ||
+            (parseContext.isEsProfile() && parseContext.version >= 320)) &&
+            parseContext.extensionTurnedOn(E_GL_NV_fragment_shader_barycentric))
+            return keyword;
+        return identifierOrType();
 
     case PRECISE:
-        if ((parseContext.profile == EEsProfile &&
+        if ((parseContext.isEsProfile() &&
              (parseContext.version >= 320 || parseContext.extensionsTurnedOn(Num_AEP_gpu_shader5, AEP_gpu_shader5))) ||
-            (parseContext.profile != EEsProfile && parseContext.version >= 400))
+            (!parseContext.isEsProfile() && parseContext.version >= 400))
             return keyword;
-        if (parseContext.profile == EEsProfile && parseContext.version == 310) {
+        if (parseContext.isEsProfile() && parseContext.version == 310) {
             reservedWord();
             return keyword;
         }
         return identifierOrType();
 
-    case INVARIANT:
-        if (parseContext.profile != EEsProfile && parseContext.version < 120)
-            return identifierOrType();
-        return keyword;
-
-    case PACKED:
-        if ((parseContext.profile == EEsProfile && parseContext.version < 300) ||
-            (parseContext.profile != EEsProfile && parseContext.version < 330))
-            return reservedWord();
+    case PERPRIMITIVENV:
+    case PERVIEWNV:
+    case PERTASKNV:
+        if ((!parseContext.isEsProfile() && parseContext.version >= 450) ||
+            (parseContext.isEsProfile() && parseContext.version >= 320) ||
+            parseContext.extensionTurnedOn(E_GL_NV_mesh_shader))
+            return keyword;
         return identifierOrType();
 
-    case RESOURCE:
-    {
-        bool reserved = (parseContext.profile == EEsProfile && parseContext.version >= 300) ||
-                        (parseContext.profile != EEsProfile && parseContext.version >= 420);
-        return identifierOrReserved(reserved);
-    }
-    case SUPERP:
-    {
-        bool reserved = parseContext.profile == EEsProfile || parseContext.version >= 130;
-        return identifierOrReserved(reserved);
-    }
+    case FCOOPMATNV:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_NV_cooperative_matrix))
+            return keyword;
+        return identifierOrType();
+
+    case UCOOPMATNV:
+    case ICOOPMATNV:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_NV_integer_cooperative_matrix))
+            return keyword;
+        return identifierOrType();
+
+    case DEMOTE:
+        if (parseContext.extensionTurnedOn(E_GL_EXT_demote_to_helper_invocation))
+            return keyword;
+        else
+            return identifierOrType();
+#endif
 
     default:
         parseContext.infoSink.info.message(EPrefixInternalError, "Unknown glslang keyword", loc);
@@ -1285,9 +1640,11 @@ int TScanContext::identifierOrType()
         return IDENTIFIER;
 
     parserToken->sType.lex.symbol = parseContext.symbolTable.find(*parserToken->sType.lex.string);
-    if (afterType == false && parserToken->sType.lex.symbol) {
+    if ((afterType == false && afterStruct == false) && parserToken->sType.lex.symbol != nullptr) {
         if (const TVariable* variable = parserToken->sType.lex.symbol->getAsVariable()) {
-            if (variable->isUserType()) {
+            if (variable->isUserType() &&
+                // treat redeclaration of forward-declared buffer/uniform reference as an identifier
+                !(variable->getType().isReference() && afterBuffer)) {
                 afterType = true;
 
                 return TYPE_NAME;
@@ -1317,7 +1674,7 @@ int TScanContext::identifierOrReserved(bool reserved)
         return 0;
     }
 
-    if (parseContext.forwardCompatible)
+    if (parseContext.isForwardCompatible())
         parseContext.warn(loc, "using future reserved keyword", tokenText, "");
 
     return identifierOrType();
@@ -1330,13 +1687,13 @@ int TScanContext::es30ReservedFromGLSL(int version)
     if (parseContext.symbolTable.atBuiltInLevel())
         return keyword;
 
-    if ((parseContext.profile == EEsProfile && parseContext.version < 300) ||
-        (parseContext.profile != EEsProfile && parseContext.version < version)) {
-            if (parseContext.forwardCompatible)
+    if ((parseContext.isEsProfile() && parseContext.version < 300) ||
+        (!parseContext.isEsProfile() && parseContext.version < version)) {
+            if (parseContext.isForwardCompatible())
                 parseContext.warn(loc, "future reserved word in ES 300 and keyword in GLSL", tokenText, "");
 
             return identifierOrType();
-    } else if (parseContext.profile == EEsProfile && parseContext.version >= 300)
+    } else if (parseContext.isEsProfile() && parseContext.version >= 300)
         reservedWord();
 
     return keyword;
@@ -1346,9 +1703,9 @@ int TScanContext::es30ReservedFromGLSL(int version)
 // showed up, both in an es version and a non-ES version.
 int TScanContext::nonreservedKeyword(int esVersion, int nonEsVersion)
 {
-    if ((parseContext.profile == EEsProfile && parseContext.version < esVersion) ||
-        (parseContext.profile != EEsProfile && parseContext.version < nonEsVersion)) {
-        if (parseContext.forwardCompatible)
+    if ((parseContext.isEsProfile() && parseContext.version < esVersion) ||
+        (!parseContext.isEsProfile() && parseContext.version < nonEsVersion)) {
+        if (parseContext.isForwardCompatible())
             parseContext.warn(loc, "using future keyword", tokenText, "");
 
         return identifierOrType();
@@ -1359,10 +1716,10 @@ int TScanContext::nonreservedKeyword(int esVersion, int nonEsVersion)
 
 int TScanContext::precisionKeyword()
 {
-    if (parseContext.profile == EEsProfile || parseContext.version >= 130)
+    if (parseContext.isEsProfile() || parseContext.version >= 130)
         return keyword;
 
-    if (parseContext.forwardCompatible)
+    if (parseContext.isForwardCompatible())
         parseContext.warn(loc, "using ES precision qualifier keyword", tokenText, "");
 
     return identifierOrType();
@@ -1375,7 +1732,7 @@ int TScanContext::matNxM()
     if (parseContext.version > 110)
         return keyword;
 
-    if (parseContext.forwardCompatible)
+    if (parseContext.isForwardCompatible())
         parseContext.warn(loc, "using future non-square matrix type keyword", tokenText, "");
 
     return identifierOrType();
@@ -1385,16 +1742,16 @@ int TScanContext::dMat()
 {
     afterType = true;
 
-    if (parseContext.profile == EEsProfile && parseContext.version >= 300) {
+    if (parseContext.isEsProfile() && parseContext.version >= 300) {
         reservedWord();
 
         return keyword;
     }
 
-    if (parseContext.profile != EEsProfile && parseContext.version >= 400)
+    if (!parseContext.isEsProfile() && parseContext.version >= 400)
         return keyword;
 
-    if (parseContext.forwardCompatible)
+    if (parseContext.isForwardCompatible())
         parseContext.warn(loc, "using future type keyword", tokenText, "");
 
     return identifierOrType();
@@ -1403,18 +1760,19 @@ int TScanContext::dMat()
 int TScanContext::firstGenerationImage(bool inEs310)
 {
     if (parseContext.symbolTable.atBuiltInLevel() ||
-        (parseContext.profile != EEsProfile && (parseContext.version >= 420 || parseContext.extensionTurnedOn(E_GL_ARB_shader_image_load_store))) ||
-        (inEs310 && parseContext.profile == EEsProfile && parseContext.version >= 310))
+        (!parseContext.isEsProfile() && (parseContext.version >= 420 ||
+         parseContext.extensionTurnedOn(E_GL_ARB_shader_image_load_store))) ||
+        (inEs310 && parseContext.isEsProfile() && parseContext.version >= 310))
         return keyword;
 
-    if ((parseContext.profile == EEsProfile && parseContext.version >= 300) ||
-        (parseContext.profile != EEsProfile && parseContext.version >= 130)) {
+    if ((parseContext.isEsProfile() && parseContext.version >= 300) ||
+        (!parseContext.isEsProfile() && parseContext.version >= 130)) {
         reservedWord();
 
         return keyword;
     }
 
-    if (parseContext.forwardCompatible)
+    if (parseContext.isForwardCompatible())
         parseContext.warn(loc, "using future type keyword", tokenText, "");
 
     return identifierOrType();
@@ -1422,17 +1780,17 @@ int TScanContext::firstGenerationImage(bool inEs310)
 
 int TScanContext::secondGenerationImage()
 {
-    if (parseContext.profile == EEsProfile && parseContext.version >= 310) {
+    if (parseContext.isEsProfile() && parseContext.version >= 310) {
         reservedWord();
         return keyword;
     }
 
     if (parseContext.symbolTable.atBuiltInLevel() ||
-        (parseContext.profile != EEsProfile &&
+        (!parseContext.isEsProfile() &&
          (parseContext.version >= 420 || parseContext.extensionTurnedOn(E_GL_ARB_shader_image_load_store))))
         return keyword;
 
-    if (parseContext.forwardCompatible)
+    if (parseContext.isForwardCompatible())
         parseContext.warn(loc, "using future type keyword", tokenText, "");
 
     return identifierOrType();

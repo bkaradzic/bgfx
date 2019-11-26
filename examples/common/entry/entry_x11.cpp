@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -346,7 +346,7 @@ namespace entry
 		int32_t run(int _argc, const char* const* _argv)
 		{
 			XInitThreads();
-			m_display = XOpenDisplay(0);
+			m_display = XOpenDisplay(NULL);
 
 			int32_t screen = DefaultScreen(m_display);
 			m_depth  = DefaultDepth(m_display, screen);
@@ -758,9 +758,9 @@ namespace entry
 		XStoreName(display, window, _title);
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		BX_UNUSED(_handle);
+		BX_UNUSED(_handle, _flags, _enabled);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)

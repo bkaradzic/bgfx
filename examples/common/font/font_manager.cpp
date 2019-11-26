@@ -3,8 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#define USE_EDTAA3 0
-
 #include <bx/macros.h>
 
 #if BX_COMPILER_MSVC
@@ -28,12 +26,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 #include <bgfx/bgfx.h>
 
-#if USE_EDTAA3
-#	include <edtaa3/edtaa3func.cpp>
-#else
-#	define SDF_IMPLEMENTATION
-#	include <sdf/sdf.h>
-#endif // USE_EDTAA3
+#define SDF_IMPLEMENTATION
+#include <sdf/sdf.h>
 
 #include <wchar.h> // wcslen
 
@@ -272,102 +266,6 @@ bool TrueTypeFont::bakeGlyphSubpixel(CodePoint _codePoint, GlyphInfo& _glyphInfo
 	return true;
 }
 
-static void makeDistanceMap(const uint8_t* _img, uint8_t* _outImg, uint32_t _width, uint32_t _height)
-{
-#if USE_EDTAA3
-	int16_t* xdist = (int16_t*)malloc(_width * _height * sizeof(int16_t) );
-	int16_t* ydist = (int16_t*)malloc(_width * _height * sizeof(int16_t) );
-	double* gx = (double*)calloc(_width * _height, sizeof(double) );
-	double* gy = (double*)calloc(_width * _height, sizeof(double) );
-	double* data = (double*)calloc(_width * _height, sizeof(double) );
-	double* outside = (double*)calloc(_width * _height, sizeof(double) );
-	double* inside = (double*)calloc(_width * _height, sizeof(double) );
-	uint32_t ii;
-
-	// Convert img into double (data)
-	double img_min = 255, img_max = -255;
-	for (ii = 0; ii < _width * _height; ++ii)
-	{
-		double v = _img[ii];
-		data[ii] = v;
-		if (v > img_max)
-		{
-			img_max = v;
-		}
-
-		if (v < img_min)
-		{
-			img_min = v;
-		}
-	}
-
-	// Rescale image levels between 0 and 1
-	for (ii = 0; ii < _width * _height; ++ii)
-	{
-		data[ii] = (_img[ii] - img_min) / (img_max - img_min);
-	}
-
-	// Compute outside = edtaa3(bitmap); % Transform background (0's)
-	computegradient(data, _width, _height, gx, gy);
-	edtaa3(data, gx, gy, _width, _height, xdist, ydist, outside);
-	for (ii = 0; ii < _width * _height; ++ii)
-	{
-		if (outside[ii] < 0)
-		{
-			outside[ii] = 0.0;
-		}
-	}
-
-	// Compute inside = edtaa3(1-bitmap); % Transform foreground (1's)
-	bx::memSet(gx, 0, sizeof(double) * _width * _height);
-	bx::memSet(gy, 0, sizeof(double) * _width * _height);
-	for (ii = 0; ii < _width * _height; ++ii)
-	{
-		data[ii] = 1.0 - data[ii];
-	}
-
-	computegradient(data, _width, _height, gx, gy);
-	edtaa3(data, gx, gy, _width, _height, xdist, ydist, inside);
-	for (ii = 0; ii < _width * _height; ++ii)
-	{
-		if (inside[ii] < 0)
-		{
-			inside[ii] = 0.0;
-		}
-	}
-
-	// distmap = outside - inside; % Bipolar distance field
-	uint8_t* out = _outImg;
-	for (ii = 0; ii < _width * _height; ++ii)
-	{
-		outside[ii] -= inside[ii];
-		outside[ii] = 128 + outside[ii] * 16;
-
-		if (outside[ii] < 0)
-		{
-			outside[ii] = 0;
-		}
-
-		if (outside[ii] > 255)
-		{
-			outside[ii] = 255;
-		}
-
-		out[ii] = 255 - (uint8_t) outside[ii];
-	}
-
-	free(xdist);
-	free(ydist);
-	free(gx);
-	free(gy);
-	free(data);
-	free(outside);
-	free(inside);
-#else
-	sdfBuild(_outImg, _width, 8.0f, _img, _width, _height, _width);
-#endif // USE_EDTAA3
-}
-
 bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
@@ -426,7 +324,7 @@ bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo
 			bx::memCopy(alphaImg + ii * nw + dw, _outBuffer + (ii - dh) * ww, ww);
 		}
 
-		makeDistanceMap(alphaImg, _outBuffer, nw, nh);
+		sdfBuild(_outBuffer, nw, 8.0f, alphaImg, nw, nh, nw);
 		free(alphaImg);
 
 		_glyphInfo.offset_x -= (float)dw;
@@ -719,6 +617,11 @@ const GlyphInfo* FontManager::getGlyphInfo(FontHandle _handle, CodePoint _codePo
 
 bool FontManager::addBitmap(GlyphInfo& _glyphInfo, const uint8_t* _data)
 {
-	_glyphInfo.regionIndex = m_atlas->addRegion( (uint16_t) ceil(_glyphInfo.width), (uint16_t) ceil(_glyphInfo.height), _data, AtlasRegion::TYPE_GRAY);
+	_glyphInfo.regionIndex = m_atlas->addRegion(
+		  (uint16_t)bx::ceil(_glyphInfo.width)
+		, (uint16_t)bx::ceil(_glyphInfo.height)
+		, _data
+		, AtlasRegion::TYPE_GRAY
+		);
 	return true;
 }

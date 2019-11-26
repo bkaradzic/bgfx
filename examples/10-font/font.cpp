@@ -54,8 +54,8 @@ static const char* s_fontFilePath[] =
 class ExampleFont : public entry::AppI
 {
 public:
-	ExampleFont(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleFont(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -68,8 +68,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -244,17 +249,17 @@ public:
 			const double toMs = 1000.0 / freq;
 
 			// Use transient text to display debug information.
-			wchar_t fpsText[64];
-			bx::swnprintf(fpsText, BX_COUNTOF(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
+			char fpsText[64];
+			bx::snprintf(fpsText, BX_COUNTOF(fpsText), "Frame: % 7.3f[ms]", double(frameTime) * toMs);
 
 			m_textBufferManager->clearTextBuffer(m_transientText);
 			m_textBufferManager->setPenPosition(m_transientText, m_width - 150.0f, 10.0f);
-			m_textBufferManager->appendText(m_transientText, m_visitor10, L"Transient\n");
-			m_textBufferManager->appendText(m_transientText, m_visitor10, L"text buffer\n");
+			m_textBufferManager->appendText(m_transientText, m_visitor10, "Transient\n");
+			m_textBufferManager->appendText(m_transientText, m_visitor10, "text buffer\n");
 			m_textBufferManager->appendText(m_transientText, m_visitor10, fpsText);
 
-			float at[3]  = { 0, 0,  0.0f };
-			float eye[3] = { 0, 0, -1.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,  0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -1.0f };
 
 			float view[16];
 			bx::mtxLookAt(view, eye, at);
@@ -262,49 +267,7 @@ public:
 			const float centering = 0.5f;
 
 			// Setup a top-left ortho matrix for screen space drawing.
-			const bgfx::HMD*  hmd  = bgfx::getHMD();
 			const bgfx::Caps* caps = bgfx::getCaps();
-			if (NULL != hmd
-			&&  0 != (hmd->flags & BGFX_HMD_RENDERING) )
-			{
-				float proj[16];
-				bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f, caps->homogeneousDepth);
-
-				static float time = 0.0f;
-				time += 0.05f;
-
-				const float dist = 10.0f;
-				const float offset0 = -proj[8] + (hmd->eye[0].viewOffset[0] / dist * proj[0]);
-				const float offset1 = -proj[8] + (hmd->eye[1].viewOffset[0] / dist * proj[0]);
-
-				float ortho[2][16];
-				const float offsetx = m_width/2.0f;
-				bx::mtxOrtho(
-					  ortho[0]
-					, centering
-					, offsetx  + centering
-					, m_height + centering
-					, centering
-					, -1.0f
-					, 1.0f
-					, offset0
-					, caps->homogeneousDepth
-					);
-				bx::mtxOrtho(
-					  ortho[1]
-					, centering
-					, offsetx  + centering
-					, m_height + centering
-					, centering
-					, -1.0f
-					, 1.0f
-					, offset1
-					, caps->homogeneousDepth
-					);
-				bgfx::setViewTransform(0, view, ortho[0], BGFX_VIEW_STEREO, ortho[1]);
-				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-			}
-			else
 			{
 				float ortho[16];
 				bx::mtxOrtho(
@@ -366,4 +329,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleFont, "10-font", "Use the font system to display text and styled text.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleFont
+	, "10-font"
+	, "Use the font system to display text and styled text."
+	, "https://bkaradzic.github.io/bgfx/examples.html#font"
+	);

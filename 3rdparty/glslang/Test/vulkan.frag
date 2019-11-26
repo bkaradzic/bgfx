@@ -1,9 +1,9 @@
 #version 450
 
-uniform sampler s;
-uniform sampler sA[4];
-uniform texture2D t2d;
-uniform texture3D t3d[4];
+uniform sampler s;         // ERROR, no binding
+uniform sampler sA[4];     // ERROR, no binding
+uniform texture2D t2d;     // ERROR, no binding
+uniform texture3D t3d[4];  // ERROR, no binding
 int i;
 uniform samplerShadow sShadow;
 uniform texture3D t3d5[5];
@@ -21,14 +21,14 @@ void badConst()
     sampler3D[4](t3d5, sA[2]);    // ERROR, can't make array
     sampler2D(i2d, s);            // ERROR, image instead of texture
     sampler2D(t3d[1], s);         // ERROR, 3D not 2D
-    sampler2D(t2d, sShadow);      // ERROR, shadow mismatch
-    sampler2DShadow(t2d, s);      // ERROR, shadow mismatch
+    sampler2D(t2d, sShadow);
+    sampler2DShadow(t2d, s);
 }
 
 sampler2D s2D = sampler2D(t2d, s);            // ERROR, no sampler constructor
 sampler3D s3d[4] = sampler3D[4](t3d, sA[2]);  // ERROR, no sampler constructor
 
-out vec4 color;
+out vec4 color; // ERROR, no location
 
 void main()
 {

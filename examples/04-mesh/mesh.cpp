@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -13,8 +13,8 @@ namespace
 class ExampleMesh : public entry::AppI
 {
 public:
-	ExampleMesh(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleMesh(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -27,8 +27,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -98,24 +103,10 @@ public:
 			float time = (float)( (bx::getHPCounter()-m_timeOffset)/double(bx::getHPFrequency() ) );
 			bgfx::setUniform(u_time, &time);
 
-			float at[3]  = { 0.0f, 1.0f,  0.0f };
-			float eye[3] = { 0.0f, 1.0f, -2.5f };
+			const bx::Vec3 at  = { 0.0f, 1.0f,  0.0f };
+			const bx::Vec3 eye = { 0.0f, 1.0f, -2.5f };
 
 			// Set view and projection matrix for view 0.
-			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-			{
-				float view[16];
-				bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
-				bgfx::setViewTransform(0, view, hmd->eye[0].projection, BGFX_VIEW_STEREO, hmd->eye[1].projection);
-
-				// Set view 0 default viewport.
-				//
-				// Use HMD's width/height since HMD's internal frame buffer size
-				// might be much larger than window size.
-				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-			}
-			else
 			{
 				float view[16];
 				bx::mtxLookAt(view, eye, at);
@@ -161,4 +152,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleMesh, "04-mesh", "Loading meshes.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleMesh
+	, "04-mesh"
+	, "Loading meshes."
+	, "https://bkaradzic.github.io/bgfx/examples.html#mesh"
+	);

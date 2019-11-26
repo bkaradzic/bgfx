@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -22,7 +22,6 @@ namespace bgfx { namespace noop
 				| BGFX_CAPS_FRAGMENT_ORDERING
 				| BGFX_CAPS_GRAPHICS_DEBUGGER
 				| BGFX_CAPS_HIDPI
-				| BGFX_CAPS_HMD
 				| BGFX_CAPS_INDEX32
 				| BGFX_CAPS_INSTANCING
 				| BGFX_CAPS_OCCLUSION_QUERY
@@ -38,6 +37,36 @@ namespace bgfx { namespace noop
 				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				;
+
+			// Pretend all features are available for all texture formats.
+			for (uint32_t formatIdx = 0; formatIdx < TextureFormat::Count; ++formatIdx)
+			{
+				g_caps.formats[formatIdx] = 0
+					| BGFX_CAPS_FORMAT_TEXTURE_NONE
+					| BGFX_CAPS_FORMAT_TEXTURE_2D
+					| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
+					| BGFX_CAPS_FORMAT_TEXTURE_3D
+					| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
+					| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
+					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+					| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
+					| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+					| BGFX_CAPS_FORMAT_TEXTURE_MSAA
+					| BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
+					;
+			}
+
+			// Pretend we have no limits
+			g_caps.limits.maxTextureSize     = 16384;
+			g_caps.limits.maxTextureLayers   = 2048;
+			g_caps.limits.maxComputeBindings = g_caps.limits.maxTextureSamplers;
+			g_caps.limits.maxFBAttachments   = BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS;
+			g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 		}
 
 		~RendererContextNOOP()
@@ -59,11 +88,11 @@ namespace bgfx { namespace noop
 			return false;
 		}
 
-		void flip(HMD& /*_hmd*/) override
+		void flip() override
 		{
 		}
 
-		void createIndexBuffer(IndexBufferHandle /*_handle*/, Memory* /*_mem*/, uint16_t /*_flags*/) override
+		void createIndexBuffer(IndexBufferHandle /*_handle*/, const Memory* /*_mem*/, uint16_t /*_flags*/) override
 		{
 		}
 
@@ -71,15 +100,15 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createVertexDecl(VertexDeclHandle /*_handle*/, const VertexDecl& /*_decl*/) override
+		void createVertexLayout(VertexLayoutHandle /*_handle*/, const VertexLayout& /*_layout*/) override
 		{
 		}
 
-		void destroyVertexDecl(VertexDeclHandle /*_handle*/) override
+		void destroyVertexLayout(VertexLayoutHandle /*_handle*/) override
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle /*_handle*/, Memory* /*_mem*/, VertexDeclHandle /*_declHandle*/, uint16_t /*_flags*/) override
+		void createVertexBuffer(VertexBufferHandle /*_handle*/, const Memory* /*_mem*/, VertexLayoutHandle /*_layoutHandle*/, uint16_t /*_flags*/) override
 		{
 		}
 
@@ -91,7 +120,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void updateDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_offset*/, uint32_t /*_size*/, Memory* /*_mem*/) override
+		void updateDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_offset*/, uint32_t /*_size*/, const Memory* /*_mem*/) override
 		{
 		}
 
@@ -103,7 +132,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void updateDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_offset*/, uint32_t /*_size*/, Memory* /*_mem*/) override
+		void updateDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_offset*/, uint32_t /*_size*/, const Memory* /*_mem*/) override
 		{
 		}
 
@@ -111,7 +140,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createShader(ShaderHandle /*_handle*/, Memory* /*_mem*/) override
+		void createShader(ShaderHandle /*_handle*/, const Memory* /*_mem*/) override
 		{
 		}
 
@@ -127,7 +156,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void* createTexture(TextureHandle /*_handle*/, Memory* /*_mem*/, uint32_t /*_flags*/, uint8_t /*_skip*/) override
+		void* createTexture(TextureHandle /*_handle*/, const Memory* /*_mem*/, uint64_t /*_flags*/, uint8_t /*_skip*/) override
 		{
 			return NULL;
 		}
@@ -148,7 +177,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void resizeTexture(TextureHandle /*_handle*/, uint16_t /*_width*/, uint16_t /*_height*/, uint8_t /*_numMips*/) override
+		void resizeTexture(TextureHandle /*_handle*/, uint16_t /*_width*/, uint16_t /*_height*/, uint8_t /*_numMips*/, uint16_t /*_numLayers*/) override
 		{
 		}
 
@@ -169,7 +198,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createFrameBuffer(FrameBufferHandle /*_handle*/, void* /*_nwh*/, uint32_t /*_width*/, uint32_t /*_height*/, TextureFormat::Enum /*_depthFormat*/) override
+		void createFrameBuffer(FrameBufferHandle /*_handle*/, void* /*_nwh*/, uint32_t /*_width*/, uint32_t /*_height*/, TextureFormat::Enum /*_format*/, TextureFormat::Enum /*_depthFormat*/) override
 		{
 		}
 
@@ -197,20 +226,36 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void setMarker(const char* /*_marker*/, uint32_t /*_size*/) override
-		{
-		}
-
 		void invalidateOcclusionQuery(OcclusionQueryHandle /*_handle*/) override
 		{
 		}
 
-		virtual void setName(Handle /*_handle*/, const char* /*_name*/) override
+		void setMarker(const char* /*_marker*/, uint16_t /*_len*/) override
 		{
 		}
 
-		void submit(Frame* /*_render*/, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& /*_textVideoMemBlitter*/) override
+		virtual void setName(Handle /*_handle*/, const char* /*_name*/, uint16_t /*_len*/) override
 		{
+		}
+
+		void submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& /*_textVideoMemBlitter*/) override
+		{
+			const int64_t timerFreq = bx::getHPFrequency();
+			const int64_t timeBegin = bx::getHPCounter();
+
+			Stats& perfStats = _render->m_perfStats;
+			perfStats.cpuTimeBegin  = timeBegin;
+			perfStats.cpuTimeEnd    = timeBegin;
+			perfStats.cpuTimerFreq  = timerFreq;
+
+			perfStats.gpuTimeBegin  = 0;
+			perfStats.gpuTimeEnd    = 0;
+			perfStats.gpuTimerFreq  = 1000000000;
+
+			bx::memSet(perfStats.numPrims, 0, sizeof(perfStats.numPrims) );
+
+			perfStats.gpuMemoryMax  = -INT64_MAX;
+			perfStats.gpuMemoryUsed = -INT64_MAX;
 		}
 
 		void blitSetup(TextVideoMemBlitter& /*_blitter*/) override

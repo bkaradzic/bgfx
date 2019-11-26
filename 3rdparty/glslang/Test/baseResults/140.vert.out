@@ -52,7 +52,7 @@ ERROR: node is still EOpNull!
 0:17        'gl_DepthRange' ( uniform structure{ global float near,  global float far,  global float diff})
 0:17        Constant:
 0:17          1 (const int)
-0:18      'gl_TexCoord' ( smooth out implicitly-sized array of 4-component vector of float TexCoord)
+0:18      'gl_TexCoord' ( smooth out unsized 1-element array of 4-component vector of float TexCoord)
 0:19      'gl_FogFragCoord' ( smooth out float FogFragCoord)
 0:20      'gl_FrontColor' ( smooth out 4-component vector of float FrontColor)
 0:48  Function Definition: foo( ( global void)
@@ -133,7 +133,7 @@ ERROR: node is still EOpNull!
 0:?   Linker Objects
 0:?     'sbuf' ( uniform isamplerBuffer)
 0:?     'anon@0' (layout( column_major std140) uniform block{layout( column_major std140 offset=0) uniform int anonMem})
-0:?     'gl_TexCoord' ( smooth out implicitly-sized array of 4-component vector of float TexCoord)
+0:?     'gl_TexCoord' ( smooth out unsized 1-element array of 4-component vector of float TexCoord)
 0:?     'gl_Position' ( smooth out 4-component vector of float)
 0:?     'locBad' (layout( location=9) in 4-component vector of float)
 0:?     'loc' (layout( location=9) in 4-component vector of float)

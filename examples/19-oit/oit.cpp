@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -19,17 +19,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 struct PosColorTexCoord0Vertex
 {
@@ -42,7 +42,7 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
@@ -50,10 +50,10 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -93,10 +93,10 @@ inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, flo
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBottomLeft = false, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_layout);
 		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)vb.data;
 
 		const float zz = 0.0f;
@@ -152,8 +152,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 class ExampleOIT : public entry::AppI
 {
 public:
-	ExampleOIT(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleOIT(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -166,8 +166,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -198,15 +203,15 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-			, PosColorVertex::ms_decl
+			, PosColorVertex::ms_layout
 			);
 
 		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 		// Create texture sampler uniforms.
-		s_texColor0 = bgfx::createUniform("s_texColor0", bgfx::UniformType::Int1);
-		s_texColor1 = bgfx::createUniform("s_texColor1", bgfx::UniformType::Int1);
+		s_texColor0 = bgfx::createUniform("s_texColor0", bgfx::UniformType::Sampler);
+		s_texColor1 = bgfx::createUniform("s_texColor1", bgfx::UniformType::Sampler);
 		u_color     = bgfx::createUniform("u_color",     bgfx::UniformType::Vec4);
 
 		m_blend          = loadProgram("vs_oit",      "fs_oit"                  );
@@ -341,13 +346,13 @@ public:
 				const double freq = double(bx::getHPFrequency() );
 				float time = (float)( (now-m_timeOffset)/freq);
 
-				// Reference:
-				// Weighted, Blended Order-Independent Transparency
-				// http://jcgt.org/published/0002/02/09/
-				// http://casual-effects.blogspot.com/2014/03/weighted-blended-order-independent.html
-
-				float at[3] = { 0.0f, 0.0f, 0.0f };
-				float eye[3] = { 0.0f, 0.0f, -7.0f };
+				// Reference(s):
+				// - Weighted, Blended Order-Independent Transparency
+				//   https://web.archive.org/save/http://jcgt.org/published/0002/02/09/
+				//   https://web.archive.org/web/20181126040455/http://casual-effects.blogspot.com/2014/03/weighted-blended-order-independent.html
+				//
+				const bx::Vec3 at  = { 0.0f, 0.0f,  0.0f };
+				const bx::Vec3 eye = { 0.0f, 0.0f, -7.0f };
 
 				float view[16];
 				float proj[16];
@@ -402,7 +407,7 @@ public:
 							if (m_fadeInOut
 							&&  zz == 1)
 							{
-								color[3] = bx::fsin(time*3.0f)*0.49f+0.5f;
+								color[3] = bx::sin(time*3.0f)*0.49f+0.5f;
 							}
 
 							bgfx::setUniform(u_color, color);
@@ -424,16 +429,16 @@ public:
 
 							const uint64_t state = 0
 								| BGFX_STATE_CULL_CW
-								| BGFX_STATE_RGB_WRITE
-								| BGFX_STATE_ALPHA_WRITE
+								| BGFX_STATE_WRITE_RGB
+								| BGFX_STATE_WRITE_A
 								| BGFX_STATE_DEPTH_TEST_LESS
 								| BGFX_STATE_MSAA
 								;
 
 							const uint64_t stateNoDepth = 0
 								| BGFX_STATE_CULL_CW
-								| BGFX_STATE_RGB_WRITE
-								| BGFX_STATE_ALPHA_WRITE
+								| BGFX_STATE_WRITE_RGB
+								| BGFX_STATE_WRITE_A
 								| BGFX_STATE_DEPTH_TEST_ALWAYS
 								| BGFX_STATE_MSAA
 								;
@@ -486,7 +491,7 @@ public:
 					bgfx::setTexture(0, s_texColor0, m_fbtextures[0]);
 					bgfx::setTexture(1, s_texColor1, m_fbtextures[1]);
 					bgfx::setState(0
-						| BGFX_STATE_RGB_WRITE
+						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_SRC_ALPHA, BGFX_STATE_BLEND_SRC_ALPHA)
 						);
 					screenSpaceQuad( (float)m_width, (float)m_height, s_flipV);
@@ -545,4 +550,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleOIT, "19-oit", "Weighted, Blended Order Independent Transparency.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleOIT
+	, "19-oit"
+	, "Weighted, Blended Order Independent Transparency."
+	, "https://bkaradzic.github.io/bgfx/examples.html#oit"
+	);

@@ -19,26 +19,32 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
-#include        <stdio.h>
-#include        <ctype.h>
-#include        <time.h>        /*OIS*0.92*/
-#include        "cppdef.h"
-#include        "cpp.h"
+#include <stdio.h>
+#include <ctype.h>
+#include <time.h> /*OIS*0.92*/
 
-ReturnCode openfile(struct Global *global, char *filename)
+#include "cppdef.h"
+#include "cpp.h"
+
+ReturnCode fpp_openfile(struct Global *global, char *filename)
 {
   /*
    * Open a file, add it to the linked list of open files.
-   * This is called only from openfile() in cpp2.c.
+   * This is called only from fpp_openfile() in cpp2.c.
    */
 
   FILE *fp;
   ReturnCode ret;
 
-  if ((fp = fopen(filename, "r")) == NULL)
+  if (global->openfile)
+    fp = global->openfile(filename, "r", global->userdata);
+  else
+    fp = fopen(filename, "r");
+
+  if (fp == NULL)
     ret=FPP_OPEN_ERROR;
   else
-    ret=addfile(global, fp, filename);
+    ret=fpp_addfile(global, fp, filename);
 
   if(!ret && global->depends) {
 	global->depends(filename, global->userdata);
@@ -46,51 +52,51 @@ ReturnCode openfile(struct Global *global, char *filename)
 
   if(!ret && global->showincluded) {
           /* no error occured! */
-          Error(global, "cpp: included \"");
-          Error(global, filename);
-          Error(global, "\"\n");
+          fpp_Error(global, "cpp: included \"");
+          fpp_Error(global, filename);
+          fpp_Error(global, "\"\n");
   }
   return(ret);
 }
 
-ReturnCode addfile(struct Global *global,
+ReturnCode fpp_addfile(struct Global *global,
                    FILE *fp,            /* Open file pointer */
                    char *filename)      /* Name of the file  */
 {
   /*
-   * Initialize tables for this open file.  This is called from openfile()
+   * Initialize tables for this open file.  This is called from fpp_openfile()
    * above (for #include files), and from the entry to cpp to open the main
-   * input file. It calls a common routine, getfile() to build the FILEINFO
-   * structure which is used to read characters. (getfile() is also called
+   * input file. It calls a common routine, fpp_getfile() to build the FILEINFO
+   * structure which is used to read characters. (fpp_getfile() is also called
    * to setup a macro replacement.)
    */
 
   FILEINFO *file;
   ReturnCode ret;
 
-  ret = getfile(global, NBUFF, filename, &file);
+  ret = fpp_getfile(global, NBUFF, filename, &file);
   if(ret)
     return(ret);
   file->fp = fp;                        /* Better remember FILE *       */
   file->buffer[0] = EOS;                /* Initialize for first read    */
   global->line = 1;                     /* Working on line 1 now        */
-  global->wrongline = TRUE;             /* Force out initial #line      */
+  global->wrongline = FPP_TRUE;             /* Force out initial #line      */
   return(FPP_OK);
 }
 
-int dooptions(struct Global *global, struct fppTag *tags)
+int fpp_dooptions(struct Global *global, struct fppTag *tags)
 {
   /*
-   * dooptions is called to process command line arguments (-Detc).
+   * fpp_dooptions is called to process command line arguments (-Detc).
    * It is called only at cpp startup.
    */
   DEFBUF *dp;
-  char end=FALSE; /* end of taglist */
+  char end=FPP_FALSE; /* end of taglist */
 
   while(tags && !end) {
     switch(tags->tag) {
     case FPPTAG_END:
-      end=TRUE;
+      end=FPP_TRUE;
       break;
     case FPPTAG_INITFUNC:
       global->initialfunc = (char *) tags->data;
@@ -122,7 +128,7 @@ int dooptions(struct Global *global, struct fppTag *tags)
     case FPPTAG_OUTPUTINCLUDES:
       global->showincluded = tags->data?1:0;
       break;
-    case FPPTAG_IGNOREVERSION:
+    case FPPTAG_SHOWVERSION:
       global->showversion = tags->data?1:0;
       break;
     case FPPTAG_WARNILLEGALCPP:
@@ -133,8 +139,8 @@ int dooptions(struct Global *global, struct fppTag *tags)
       break;
     case FPPTAG_KEEPCOMMENTS:
       if(tags->data) {
-        global->cflag = TRUE;
-        global->keepcomments = TRUE;
+        global->cflag = FPP_TRUE;
+        global->keepcomments = FPP_TRUE;
       }
       break;
     case FPPTAG_DEFINE:
@@ -153,19 +159,19 @@ int dooptions(struct Global *global, struct fppTag *tags)
         /*
          * Now, save the word and its definition.
          */
-        dp = defendel(global, symbol, FALSE);
+        dp = fpp_defendel(global, symbol, FPP_FALSE);
         if(!dp)
           return(FPP_OUT_OF_MEMORY);
-        dp->repl = savestring(global, text);
+        dp->repl = fpp_savestring(global, text);
         dp->nargs = DEF_NOARGS;
       }
       break;
     case FPPTAG_IGNORE_NONFATAL:
-      global->eflag = TRUE;
+      global->eflag = FPP_TRUE;
       break;
     case FPPTAG_INCLUDE_DIR:
       if (global->incend >= &global->incdir[NINCLUDE]) {
-          cfatal(global, FATAL_TOO_MANY_INCLUDE_DIRS);
+          fpp_cfatal(global, FATAL_TOO_MANY_INCLUDE_DIRS);
           return(FPP_TOO_MANY_INCLUDE_DIRS);
       }
       *global->incend++ = (char *)tags->data;
@@ -173,7 +179,7 @@ int dooptions(struct Global *global, struct fppTag *tags)
     case FPPTAG_INCLUDE_FILE:
     case FPPTAG_INCLUDE_MACRO_FILE:
       if (global->included >= NINCLUDE) {
-          cfatal(global, FATAL_TOO_MANY_INCLUDE_FILES);
+          fpp_cfatal(global, FATAL_TOO_MANY_INCLUDE_FILES);
           return(FPP_TOO_MANY_INCLUDE_FILES);
       }
       global->include[(unsigned)global->included] = (char *)tags->data;
@@ -196,7 +202,7 @@ int dooptions(struct Global *global, struct fppTag *tags)
       {
         SIZES *sizp;    /* For -S               */
         int size;       /* For -S               */
-        int isdatum;    /* FALSE for -S*        */
+        int isdatum;    /* FPP_FALSE for -S*        */
         int endtest;    /* For -S               */
 
         char *text=(char *)tags->data;
@@ -225,14 +231,14 @@ int dooptions(struct Global *global, struct fppTag *tags)
           sizp++;
         }
         if (sizp->bits != endtest)
-          cwarn(global, WARN_TOO_FEW_VALUES_TO_SIZEOF, NULL);
+          fpp_cwarn(global, WARN_TOO_FEW_VALUES_TO_SIZEOF, NULL);
         else if (*text != EOS)
-          cwarn(global, WARN_TOO_MANY_VALUES_TO_SIZEOF, NULL);
+          fpp_cwarn(global, WARN_TOO_MANY_VALUES_TO_SIZEOF, NULL);
       }
       break;
     case FPPTAG_UNDEFINE:
-      if (defendel(global, (char *)tags->data, TRUE) == NULL)
-        cwarn(global, WARN_NOT_DEFINED, tags->data);
+      if (fpp_defendel(global, (char *)tags->data, FPP_TRUE) == NULL)
+        fpp_cwarn(global, WARN_NOT_DEFINED, tags->data);
       break;
     case FPPTAG_OUTPUT_DEFINES:
       global->wflag++;
@@ -265,8 +271,14 @@ int dooptions(struct Global *global, struct fppTag *tags)
     case FPPTAG_WEBMODE:
       global->webmode=(tags->data?1:0);
       break;
+    case FPPTAG_ALLOW_INCLUDE_LOCAL:
+      global->allowincludelocal=(tags->data?1:0);
+      break;
+    case FPPTAG_FILEOPENFUNC:
+      global->openfile = (FILE* (*)(char *,char *,void *))tags->data;
+      break;
     default:
-      cwarn(global, WARN_INTERNAL_ERROR, NULL);
+      fpp_cwarn(global, WARN_INTERNAL_ERROR, NULL);
       break;
     }
     tags++;
@@ -274,7 +286,7 @@ int dooptions(struct Global *global, struct fppTag *tags)
   return(0);
 }
 
-ReturnCode initdefines(struct Global *global)
+ReturnCode fpp_initdefines(struct Global *global)
 {
   /*
    * Initialize the built-in #define's.  There are two flavors:
@@ -307,23 +319,23 @@ ReturnCode initdefines(struct Global *global)
   if (!(global->nflag & NFLAG_BUILTIN)) {
     for (pp = global->preset; *pp != NULL; pp++) {
       if (*pp[0] != EOS) {
-        dp = defendel(global, *pp, FALSE);
+        dp = fpp_defendel(global, *pp, FPP_FALSE);
         if(!dp)
           return(FPP_OUT_OF_MEMORY);
-        dp->repl = savestring(global, "1");
+        dp->repl = fpp_savestring(global, "1");
         dp->nargs = DEF_NOARGS;
       }
     }
   }
   /*
    * The magic pre-defines (__FILE__ and __LINE__ are
-   * initialized with negative argument counts.  expand()
+   * initialized with negative argument counts.  fpp_expand()
    * notices this and calls the appropriate routine.
    * DEF_NOARGS is one greater than the first "magic" definition.
    */
   if (!(global->nflag & NFLAG_PREDEFINE)) {
     for (pp = global->magic, i = DEF_NOARGS; *pp != NULL; pp++) {
-      dp = defendel(global, *pp, FALSE);
+      dp = fpp_defendel(global, *pp, FPP_FALSE);
       if(!dp)
         return(FPP_OUT_OF_MEMORY);
       dp->nargs = --i;
@@ -332,8 +344,8 @@ ReturnCode initdefines(struct Global *global)
     /*
      * Define __DATE__ as today's date.
      */
-    dp = defendel(global, "__DATE__", FALSE);
-    tp = malloc(14);
+    dp = fpp_defendel(global, "__DATE__", FPP_FALSE);
+    tp = malloc(32);
     if(!tp || !dp)
       return(FPP_OUT_OF_MEMORY);
     dp->repl = tp;
@@ -348,7 +360,7 @@ ReturnCode initdefines(struct Global *global)
     /*
      * Define __TIME__ as this moment's time.
      */
-    dp = defendel(global, "__TIME__", FALSE);
+    dp = fpp_defendel(global, "__TIME__", FPP_FALSE);
     tp = malloc(11);
     if(!tp || !dp)
       return(FPP_OUT_OF_MEMORY);
@@ -363,7 +375,7 @@ ReturnCode initdefines(struct Global *global)
   return(FPP_OK);
 }
 
-void deldefines(struct Global *global)
+void fpp_delbuiltindefines(struct Global *global)
 {
   /*
    * Delete the built-in #define's.
@@ -376,25 +388,25 @@ void deldefines(struct Global *global)
    */
   if (global->wflag < 2) {
     for (pp = global->preset; *pp != NULL; pp++) {
-      defendel(global, *pp, TRUE);
+      fpp_defendel(global, *pp, FPP_TRUE);
     }
   }
   /*
    * The magic pre-defines __FILE__ and __LINE__
    */
   for (pp = global->magic; *pp != NULL; pp++) {
-    defendel(global, *pp, TRUE);
+    fpp_defendel(global, *pp, FPP_TRUE);
   }
 #if OK_DATE
   /*
    * Undefine __DATE__.
    */
-  defendel(global, "__DATE__", TRUE);
+  fpp_defendel(global, "__DATE__", FPP_TRUE);
 
   /*
    * Undefine __TIME__.
    */
-  defendel(global, "__TIME__", TRUE);
+  fpp_defendel(global, "__TIME__", FPP_TRUE);
 #endif
   return;
 }

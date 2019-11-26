@@ -1,11 +1,11 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "bgfx_p.h"
 
-#if BGFX_CONFIG_DEBUG_PIX && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX
 #	if BX_PLATFORM_WINDOWS
 #		include <psapi.h>
 #	endif // BX_PLATFORM_WINDOWS
@@ -56,7 +56,7 @@ namespace bgfx
 	}
 
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
-	static RENDERDOC_API_1_1_0* s_renderDoc = NULL;
+	static RENDERDOC_API_1_1_2* s_renderDoc = NULL;
 	static void* s_renderDocDll = NULL;
 
 	void* loadRenderDoc()
@@ -72,15 +72,22 @@ namespace bgfx
 			return NULL;
 		}
 
-		void* renderDocDll = bx::dlopen("renderdoc.dll");
+		void* renderDocDll = bx::dlopen(
+#if BX_PLATFORM_WINDOWS
+				"renderdoc.dll"
+#else
+				"./librenderdoc.so"
+#endif // BX_PLATFORM_WINDOWS
+				);
 
 		if (NULL != renderDocDll)
 		{
 			RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)bx::dlsym(renderDocDll, "RENDERDOC_GetAPI");
+
 			if (NULL != RENDERDOC_GetAPI
-			&&  1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_0, (void**)&s_renderDoc) )
+			&&  1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void**)&s_renderDoc) )
 			{
-				s_renderDoc->SetLogFilePathTemplate(BGFX_CONFIG_RENDERDOC_LOG_FILEPATH);
+				s_renderDoc->SetCaptureFilePathTemplate(BGFX_CONFIG_RENDERDOC_LOG_FILEPATH);
 
  				s_renderDoc->SetFocusToggleKeys(NULL, 0);
 
@@ -147,4 +154,4 @@ namespace bgfx
 
 } // namespace bgfx
 
-#endif // BGFX_CONFIG_DEBUG_PIX && (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
+#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX

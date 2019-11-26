@@ -23,7 +23,7 @@ ERROR: 0:157: 'centroid/sample/patch' : can't use auxiliary qualifier on a fragm
 ERROR: 0:158: 'flat/smooth/noperspective' : can't use interpolation qualifier on a fragment output 
 ERROR: 0:159: 'flat/smooth/noperspective' : can't use interpolation qualifier on a fragment output 
 ERROR: 0:160: 'noperspective' : Reserved word. 
-ERROR: 0:160: 'noperspective' : not supported with this profile: es
+ERROR: 0:160: 'noperspective' : not supported for this version or the enabled extensions 
 ERROR: 0:160: 'flat/smooth/noperspective' : can't use interpolation qualifier on a fragment output 
 ERROR: 0:165: 'centroid/sample/patch' : can't use auxiliary qualifier on a fragment output 
 ERROR: 0:180: 'interpolateAtCentroid' : no matching overloaded function found 
@@ -211,12 +211,12 @@ ERROR: node is still EOpNull!
 0:113        move second child to first child ( temp highp int)
 0:113          'a3' ( temp highp int)
 0:113          direct index ( flat temp highp int SampleMaskIn)
-0:113            'gl_SampleMaskIn' ( flat in implicitly-sized array of highp int SampleMaskIn)
+0:113            'gl_SampleMaskIn' ( flat in unsized 1-element array of highp int SampleMaskIn)
 0:113            Constant:
 0:113              0 (const int)
 0:114      move second child to first child ( temp highp int)
 0:114        direct index ( temp highp int SampleMaskIn)
-0:114          'gl_SampleMask' ( out implicitly-sized array of highp int SampleMaskIn)
+0:114          'gl_SampleMask' ( out unsized 1-element array of highp int SampleMaskIn)
 0:114          Constant:
 0:114            0 (const int)
 0:114        'a3' ( temp highp int)
@@ -473,8 +473,8 @@ ERROR: node is still EOpNull!
 0:?     'CA5' ( uniform highp samplerCubeArrayShadow)
 0:?     'CA6' ( uniform highp isamplerCubeArray)
 0:?     'CA7' ( uniform highp usamplerCubeArray)
-0:?     'gl_SampleMaskIn' ( flat in implicitly-sized array of highp int SampleMaskIn)
-0:?     'gl_SampleMask' ( out implicitly-sized array of highp int SampleMaskIn)
+0:?     'gl_SampleMaskIn' ( flat in unsized 1-element array of highp int SampleMaskIn)
+0:?     'gl_SampleMask' ( out unsized 1-element array of highp int SampleMaskIn)
 0:?     'im2Df' (layout( r32f) uniform highp image2D)
 0:?     'im2Du' (layout( r32ui) uniform highp uimage2D)
 0:?     'im2Di' (layout( r32i) uniform highp iimage2D)

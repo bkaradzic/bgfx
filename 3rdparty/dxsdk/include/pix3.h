@@ -103,10 +103,6 @@ inline void PIXScopedEvent(UINT64, _In_ PCWSTR, ...) {}
 inline void PIXScopedEvent(void*, UINT64, _In_ PCSTR, ...) {}
 inline void PIXScopedEvent(void*, UINT64, _In_ PCWSTR, ...) {}
 
-// don't show warnings about expressions with no effect
-#pragma warning(disable:4548)
-#pragma warning(disable:4555)
-
 #endif // USE_PIX
 
 // Use these functions to specify colors to pass as metadata to a PIX event/marker API.

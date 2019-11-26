@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -37,17 +37,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -100,8 +100,8 @@ int32_t threadFunc(bx::Thread* _thread, void* _userData);
 class ExampleDrawStress : public entry::AppI
 {
 public:
-	ExampleDrawStress(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleDrawStress(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -126,11 +126,16 @@ public:
 		m_deltaTimeAvgNs = 0;
 		m_numFrames      = 0;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		const bgfx::Caps* caps = bgfx::getCaps();
-		m_maxDim = (int32_t)bx::fpow(float(caps->limits.maxDrawCalls), 1.0f/3.0f);
+		m_maxDim = (int32_t)bx::pow(float(caps->limits.maxDrawCalls), 1.0f/3.0f);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -158,7 +163,7 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-			, PosColorVertex::ms_decl
+			, PosColorVertex::ms_layout
 			);
 
 		// Create static index buffer.
@@ -299,7 +304,7 @@ public:
 
 			if (m_deltaTimeNs > 1000000)
 			{
-				m_deltaTimeAvgNs = m_deltaTimeNs / bx::int64_max(1, m_numFrames);
+				m_deltaTimeAvgNs = m_deltaTimeNs / bx::max<int64_t>(1, m_numFrames);
 
 				if (m_autoAdjust)
 				{
@@ -370,8 +375,8 @@ public:
 
 			imguiEndFrame();
 
-			float at[3] = { 0.0f, 0.0f, 0.0f };
-			float eye[3] = { 0.0f, 0.0f, -35.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
 			float view[16];
 			bx::mtxLookAt(view, eye, at);
@@ -454,4 +459,9 @@ int32_t threadFunc(bx::Thread* _thread, void* _userData)
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleDrawStress, "17-drawstress", "Draw stress, maximizing number of draw calls.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleDrawStress
+	, "17-drawstress"
+	, "Draw stress, maximizing number of draw calls."
+	, "https://bkaradzic.github.io/bgfx/examples.html#drawstress"
+	);

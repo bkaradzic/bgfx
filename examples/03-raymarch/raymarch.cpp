@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -21,7 +21,7 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
@@ -29,17 +29,17 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program, float _x, float _y, float _width, float _height)
 {
 	bgfx::TransientVertexBuffer tvb;
 	bgfx::TransientIndexBuffer tib;
 
-	if (bgfx::allocTransientBuffers(&tvb, PosColorTexCoord0Vertex::ms_decl, 4, &tib, 6) )
+	if (bgfx::allocTransientBuffers(&tvb, PosColorTexCoord0Vertex::ms_layout, 4, &tib, 6) )
 	{
 		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)tvb.data;
 
@@ -102,8 +102,8 @@ void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program, float _x
 class ExampleRaymarch : public entry::AppI
 {
 public:
-	ExampleRaymarch(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleRaymarch(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -116,8 +116,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -187,8 +192,8 @@ public:
 			// if no other draw calls are submitted to viewZ 0.
 			bgfx::touch(0);
 
-			float at[3]  = { 0.0f, 0.0f,   0.0f };
-			float eye[3] = { 0.0f, 0.0f, -15.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -15.0f };
 
 			float view[16];
 			float proj[16];
@@ -219,11 +224,9 @@ public:
 
 			float mtxInv[16];
 			bx::mtxInverse(mtxInv, mtx);
-			float lightDirModel[4] = { -0.4f, -0.5f, -1.0f, 0.0f };
-			float lightDirModelN[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-			bx::vec3Norm(lightDirModelN, lightDirModel);
 			float lightDirTime[4];
-			bx::vec4MulMtx(lightDirTime, lightDirModelN, mtxInv);
+			const bx::Vec3 lightDirModelN = bx::normalize(bx::Vec3{-0.4f, -0.5f, -1.0f});
+			bx::store(lightDirTime, bx::mul(lightDirModelN, mtxInv) );
 			lightDirTime[3] = time;
 			bgfx::setUniform(u_lightDirTime, lightDirTime);
 
@@ -261,4 +264,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleRaymarch, "03-raymarch", "Updating shader uniforms.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleRaymarch
+	, "03-raymarch"
+	, "Updating shader uniforms."
+	, "https://bkaradzic.github.io/bgfx/examples.html#raymarch"
+	);

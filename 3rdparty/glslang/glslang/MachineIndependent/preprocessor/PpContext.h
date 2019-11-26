@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2013 LunarG, Inc.
+// Copyright (C) 2015-2018 Google, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -80,8 +81,10 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stack>
 #include <unordered_map>
+#include <sstream>
 
 #include "../ParseHelper.h"
+#include "PpTokens.h"
 
 /* windows only pragma */
 #ifdef _MSC_VER
@@ -92,13 +95,16 @@ namespace glslang {
 
 class TPpToken {
 public:
-    TPpToken() : space(false), i64val(0)
+    TPpToken() { clear(); }
+    void clear()
     {
+        space = false;
+        i64val = 0;
         loc.init();
         name[0] = 0;
     }
 
-    // This is used for comparing macro definitions, so checks what is relevant for that.
+    // Used for comparing macro definitions, so checks what is relevant for that.
     bool operator==(const TPpToken& right)
     {
         return space == right.space &&
@@ -108,15 +114,17 @@ public:
     bool operator!=(const TPpToken& right) { return ! operator==(right); }
 
     TSourceLoc loc;
-    bool space;  // true if a space (for white space or a removed comment) should also be recognized, in front of the token returned
-
+    // True if a space (for white space or a removed comment) should also be
+    // recognized, in front of the token returned:
+    bool space;
+    // Numeric value of the token:
     union {
         int ival;
         double dval;
         long long i64val;
     };
-
-    char   name[MaxTokenLength + 1];
+    // Text string of the token:
+    char name[MaxTokenLength + 1];
 };
 
 class TStringAtomMap {
@@ -177,6 +185,13 @@ protected:
 
 class TInputScanner;
 
+enum MacroExpandResult {
+    MacroExpandNotStarted, // macro not expanded, which might not be an error
+    MacroExpandError,      // a clear error occurred while expanding, no expansion
+    MacroExpandStarted,    // macro expansion process has started
+    MacroExpandUndef       // macro is undefined and will be expanded
+};
+
 // This class is the result of turning a huge pile of C code communicating through globals
 // into a class.  This was done to allowing instancing to attain thread safety.
 // Don't expect too much in terms of OO design.
@@ -198,7 +213,8 @@ public:
         virtual int scan(TPpToken*) = 0;
         virtual int getch() = 0;
         virtual void ungetch() = 0;
-        virtual bool peekPasting() { return false; }          // true when about to see ##
+        virtual bool peekPasting() { return false; }             // true when about to see ##
+        virtual bool peekContinuedPasting(int) { return false; } // true when non-spaced tokens can paste
         virtual bool endOfReplacementList() { return false; } // true when at the end of a macro replacement list (RHS of #define)
         virtual bool isMacroInput() { return false; }
 
@@ -229,24 +245,79 @@ public:
     // From PpTokens.cpp
     //
 
+    // Capture the needed parts of a token stream for macro recording/playback.
     class TokenStream {
     public:
-        TokenStream() : current(0) { }
+        // Manage a stream of these 'Token', which capture the relevant parts
+        // of a TPpToken, plus its atom.
+        class Token {
+        public:
+            Token(int atom, const TPpToken& ppToken) : 
+                atom(atom),
+                space(ppToken.space),
+                i64val(ppToken.i64val),
+                name(ppToken.name) { }
+            int get(TPpToken& ppToken)
+            {
+                ppToken.clear();
+                ppToken.space = space;
+                ppToken.i64val = i64val;
+                snprintf(ppToken.name, sizeof(ppToken.name), "%s", name.c_str());
+                return atom;
+            }
+            bool isAtom(int a) const { return atom == a; }
+            int getAtom() const { return atom; }
+            bool nonSpaced() const { return !space; }
+        protected:
+            Token() {}
+            int atom;
+            bool space;        // did a space precede the token?
+            long long i64val;
+            TString name;
+        };
+
+        TokenStream() : currentPos(0) { }
 
         void putToken(int token, TPpToken* ppToken);
+        bool peekToken(int atom) { return !atEnd() && stream[currentPos].isAtom(atom); }
+        bool peekContinuedPasting(int atom)
+        {
+            // This is basically necessary because, for example, the PP
+            // tokenizer only accepts valid numeric-literals plus suffixes, so
+            // separates numeric-literals plus bad suffix into two tokens, which
+            // should get both pasted together as one token when token pasting.
+            //
+            // The following code is a bit more generalized than the above example.
+            if (!atEnd() && atom == PpAtomIdentifier && stream[currentPos].nonSpaced()) {
+                switch(stream[currentPos].getAtom()) {
+                    case PpAtomConstInt:
+                    case PpAtomConstUint:
+                    case PpAtomConstInt64:
+                    case PpAtomConstUint64:
+                    case PpAtomConstInt16:
+                    case PpAtomConstUint16:
+                    case PpAtomConstFloat:
+                    case PpAtomConstDouble:
+                    case PpAtomConstFloat16:
+                    case PpAtomConstString:
+                    case PpAtomIdentifier:
+                        return true;
+                    default:
+                        break;
+                }
+            }
+
+            return false;
+        }
         int getToken(TParseContextBase&, TPpToken*);
-        bool atEnd() { return current >= data.size(); }
+        bool atEnd() { return currentPos >= stream.size(); }
         bool peekTokenizedPasting(bool lastTokenPastes);
         bool peekUntokenizedPasting();
-        void reset() { current = 0; }
+        void reset() { currentPos = 0; }
 
     protected:
-        void putSubtoken(char);
-        int getSubtoken();
-        void ungetSubtoken();
-
-        TVector<unsigned char> data;
-        size_t current;
+        TVector<Token> stream;
+        size_t currentPos;
     };
 
     //
@@ -254,12 +325,12 @@ public:
     //
 
     struct MacroSymbol {
-        MacroSymbol() : emptyArgs(0), busy(0), undef(0) { }
+        MacroSymbol() : functionLike(0), busy(0), undef(0) { }
         TVector<int> args;
         TokenStream body;
-        unsigned emptyArgs : 1;
-        unsigned busy      : 1;
-        unsigned undef     : 1;
+        unsigned functionLike : 1;  // 0 means object-like, 1 means function-like
+        unsigned busy         : 1;
+        unsigned undef        : 1;
     };
 
     typedef TMap<int, MacroSymbol> TSymbolMap;
@@ -306,6 +377,10 @@ protected:
     int  getChar() { return inputStack.back()->getch(); }
     void ungetChar() { inputStack.back()->ungetch(); }
     bool peekPasting() { return !inputStack.empty() && inputStack.back()->peekPasting(); }
+    bool peekContinuedPasting(int a)
+    {
+        return !inputStack.empty() && inputStack.back()->peekContinuedPasting(a);
+    }
     bool endOfReplacementList() { return inputStack.empty() || inputStack.back()->endOfReplacementList(); }
     bool isMacroInput() { return inputStack.size() > 0 && inputStack.back()->isMacroInput(); }
 
@@ -330,6 +405,7 @@ protected:
         virtual int getch() override { assert(0); return EndOfInput; }
         virtual void ungetch() override { assert(0); }
         bool peekPasting() override { return prepaste; }
+        bool peekContinuedPasting(int a) override { return mac->body.peekContinuedPasting(a); }
         bool endOfReplacementList() override { return mac->body.atEnd(); }
         bool isMacroInput() override { return true; }
 
@@ -394,7 +470,7 @@ protected:
     int readCPPline(TPpToken * ppToken);
     int scanHeaderName(TPpToken* ppToken, char delimit);
     TokenStream* PrescanMacroArg(TokenStream&, TPpToken*, bool newLineOkay);
-    int MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOkay);
+    MacroExpandResult MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOkay);
 
     //
     // From PpTokens.cpp
@@ -404,14 +480,18 @@ protected:
 
     class tTokenInput : public tInput {
     public:
-        tTokenInput(TPpContext* pp, TokenStream* t, bool prepasting) : tInput(pp), tokens(t), lastTokenPastes(prepasting) { }
+        tTokenInput(TPpContext* pp, TokenStream* t, bool prepasting) :
+            tInput(pp),
+            tokens(t),
+            lastTokenPastes(prepasting) { }
         virtual int scan(TPpToken *ppToken) override { return tokens->getToken(pp->parseContext, ppToken); }
         virtual int getch() override { assert(0); return EndOfInput; }
         virtual void ungetch() override { assert(0); }
         virtual bool peekPasting() override { return tokens->peekTokenizedPasting(lastTokenPastes); }
+        bool peekContinuedPasting(int a) override { return tokens->peekContinuedPasting(a); }
     protected:
         TokenStream* tokens;
-        bool lastTokenPastes;     // true if the last token in the input is to be pasted, rather than consumed as a token
+        bool lastTokenPastes; // true if the last token in the input is to be pasted, rather than consumed as a token
     };
 
     class tUngotTokenInput : public tInput {
@@ -520,7 +600,7 @@ protected:
               prologue_(prologue),
               epilogue_(epilogue),
               includedFile_(includedFile),
-              scanner(3, strings, lengths, names, 0, 0, true),
+              scanner(3, strings, lengths, nullptr, 0, 0, true),
               prevScanner(nullptr),
               stringInput(pp, scanner)
         {
@@ -535,9 +615,9 @@ protected:
               scanner.setLine(startLoc.line);
               scanner.setString(startLoc.string);
 
-              scanner.setFile(startLoc.name, 0);
-              scanner.setFile(startLoc.name, 1);
-              scanner.setFile(startLoc.name, 2);
+              scanner.setFile(startLoc.getFilenameStr(), 0);
+              scanner.setFile(startLoc.getFilenameStr(), 1);
+              scanner.setFile(startLoc.getFilenameStr(), 2);
         }
 
         // tInput methods:
@@ -577,8 +657,6 @@ protected:
         const char* strings[3];
         // Length of str_, passed to scanner constructor.
         size_t lengths[3];
-        // String names
-        const char* names[3];
         // Scans over str_.
         TInputScanner scanner;
         // The previous effective scanner before the scanner in this instance
@@ -615,6 +693,8 @@ protected:
     std::string rootFileName;
     std::stack<TShader::Includer::IncludeResult*> includeStack;
     std::string currentSourceFile;
+
+    std::istringstream strtodStream;
 };
 
 } // end namespace glslang

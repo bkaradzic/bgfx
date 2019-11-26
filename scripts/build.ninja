@@ -4,6 +4,10 @@ rule geometryc_pack_normal
     command = geometryc -f $in -o $out --packnormal 1
     description = Converting geometry $in...
 
+rule geometryc_pack_normal_compressed
+    command = geometryc -f $in -o $out --packnormal 1 -c
+    description = Converting geometry $in...
+
 rule geometryc_pack_normal_barycentric
     command = geometryc -f $in -o $out --packnormal 1 --barycentric
     description = Converting geometry $in...
@@ -23,6 +27,9 @@ rule texturec_bc4
 rule texturec_bc5
     command = texturec -f $in -o $out -t bc5 -m
 
+rule texturec_bc7
+    command = texturec -f $in -o $out -t bc7 -m
+
 rule texturec_etc1
     command = texturec -f $in -o $out -t etc1 -m
 
@@ -37,6 +44,9 @@ rule texturec_normal
 
 rule texturec_height
     command = texturec -f $in -o $out -t r8
+
+rule texturec_equirect
+    command = texturec -f $in -o $out --max 512 -t rgba16f --equirect
 
 pwd = ../examples/assets/meshes
 subninja ../examples/assets/meshes/meshes.ninja

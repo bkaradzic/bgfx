@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -107,7 +107,7 @@ namespace bgfx { namespace hlsl
 
 			if (g_verbose)
 			{
-				char filePath[MAX_PATH];
+				char filePath[bx::kMaxFilePath];
 				GetModuleFileNameA( (HMODULE)s_d3dcompilerdll, filePath, sizeof(filePath) );
 				BX_TRACE("Loaded %s compiler (%s).", compiler->fileName, filePath);
 			}
@@ -213,14 +213,14 @@ namespace bgfx { namespace hlsl
 
 	static const UniformRemap s_uniformRemap[] =
 	{
-		{ UniformType::Int1, D3D_SVC_SCALAR,         D3D_SVT_INT,         0, 0 },
+		{ UniformType::Sampler, D3D_SVC_SCALAR,         D3D_SVT_INT,         0, 0 },
 		{ UniformType::Vec4, D3D_SVC_VECTOR,         D3D_SVT_FLOAT,       0, 0 },
 		{ UniformType::Mat3, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT,       3, 3 },
 		{ UniformType::Mat4, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT,       4, 4 },
-		{ UniformType::Int1, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER,     0, 0 },
-		{ UniformType::Int1, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER2D,   0, 0 },
-		{ UniformType::Int1, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER3D,   0, 0 },
-		{ UniformType::Int1, D3D_SVC_OBJECT,         D3D_SVT_SAMPLERCUBE, 0, 0 },
+		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER,     0, 0 },
+		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER2D,   0, 0 },
+		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER3D,   0, 0 },
+		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLERCUBE, 0, 0 },
 	};
 
 	UniformType::Enum findUniformType(const D3D11_SHADER_TYPE_DESC& constDesc)
@@ -522,12 +522,12 @@ namespace bgfx { namespace hlsl
 						, bindDesc.BindCount
 						);
 
-					const char * end = bx::strFind(bindDesc.Name, "Sampler");
-					if (NULL != end)
+					bx::StringView end = bx::strFind(bindDesc.Name, "Sampler");
+					if (!end.isEmpty() )
 					{
 						Uniform un;
-						un.name.assign(bindDesc.Name, (end - bindDesc.Name) );
-						un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Int1);
+						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );
+						un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Sampler);
 						un.num = 1;
 						un.regIndex = uint16_t(bindDesc.BindPoint);
 						un.regCount = uint16_t(bindDesc.BindCount);
@@ -624,8 +624,17 @@ namespace bgfx { namespace hlsl
 			int32_t start  = 0;
 			int32_t end    = INT32_MAX;
 
+			if (!hlslfp.empty())
+			{
+				bx::StringView logfp = bx::strFind(log, hlslfp.c_str() );
+				if (!logfp.isEmpty() )
+				{
+					log = logfp.getPtr() + hlslfp.length();
+				}
+			}
+
 			bool found = false
-				|| 2 == sscanf(log, "(%u,%u):",  &line, &column)
+				|| 2 == sscanf(log, "(%u,%u",  &line, &column)
 				|| 2 == sscanf(log, " :%u:%u: ", &line, &column)
 				;
 
@@ -694,7 +703,7 @@ namespace bgfx { namespace hlsl
 							// included in the uniform blob that the application must upload
 							// we can't just remove them, because unused functions might still reference
 							// them and cause a compile error when they're gone
-							if (!!bx::findIdentifierMatch(strLine.c_str(), it->c_str() ) )
+							if (!bx::findIdentifierMatch(strLine.c_str(), it->c_str() ).isEmpty() )
 							{
 								strLine = strLine.replace(index, strLength, "static");
 								unusedUniforms.erase(it);

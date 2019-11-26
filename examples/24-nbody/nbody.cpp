@@ -113,8 +113,8 @@ const uint32_t kMaxParticleCount      = 32 * 1024;
 class ExampleNbody : public entry::AppI
 {
 public:
-	ExampleNbody(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleNbody(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -127,8 +127,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -149,8 +154,8 @@ public:
 
 		if (m_computeSupported)
 		{
-			bgfx::VertexDecl quadVertexDecl;
-			quadVertexDecl.begin()
+			bgfx::VertexLayout quadVertexLayout;
+			quadVertexLayout.begin()
 				.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
 				.end();
 
@@ -158,7 +163,7 @@ public:
 			m_vbh = bgfx::createVertexBuffer(
 				// Static data can be passed with bgfx::makeRef
 				bgfx::makeRef(s_quadVertices, sizeof(s_quadVertices) )
-				, quadVertexDecl
+				, quadVertexLayout
 				);
 
 			// Create static index buffer.
@@ -171,15 +176,15 @@ public:
 			m_particleProgram = loadProgram("vs_particle", "fs_particle");
 
 			// Setup compute buffers
-			bgfx::VertexDecl computeVertexDecl;
-			computeVertexDecl.begin()
+			bgfx::VertexLayout computeVertexLayout;
+			computeVertexLayout.begin()
 				.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
 				.end();
 
-			m_currPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
-			m_currPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
-			m_prevPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
-			m_prevPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
+			m_currPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexLayout, BGFX_BUFFER_COMPUTE_READ_WRITE);
+			m_currPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexLayout, BGFX_BUFFER_COMPUTE_READ_WRITE);
+			m_prevPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexLayout, BGFX_BUFFER_COMPUTE_READ_WRITE);
+			m_prevPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexLayout, BGFX_BUFFER_COMPUTE_READ_WRITE);
 
 			u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 3);
 
@@ -202,9 +207,8 @@ public:
 			bgfx::setBuffer(1, m_currPositionBuffer0, bgfx::Access::Write);
 			bgfx::dispatch(0, m_initInstancesProgram, kMaxParticleCount / kThreadGroupUpdateSize, 1, 1);
 
-			float initialPos[3] = { 0.0f, 0.0f, -45.0f };
 			cameraCreate();
-			cameraSetPosition(initialPos);
+			cameraSetPosition({ 0.0f, 0.0f, -45.0f });
 			cameraSetVerticalAngle(0.0f);
 
 			m_useIndirect = false;
@@ -360,8 +364,8 @@ public:
 					bgfx::dispatch(0, m_updateInstancesProgram, uint16_t(m_paramsData.dispatchSize), 1, 1);
 				}
 
-				bx::xchg(m_currPositionBuffer0, m_currPositionBuffer1);
-				bx::xchg(m_prevPositionBuffer0, m_prevPositionBuffer1);
+				bx::swap(m_currPositionBuffer0, m_currPositionBuffer1);
+				bx::swap(m_prevPositionBuffer0, m_prevPositionBuffer1);
 
 				// Update camera.
 				cameraUpdate(deltaTime, m_mouseState);
@@ -370,30 +374,6 @@ public:
 				cameraGetViewMtx(view);
 
 				// Set view and projection matrix for view 0.
-				const bgfx::HMD* hmd = bgfx::getHMD();
-				if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-				{
-					float viewHead[16];
-					float eye[3] = {};
-					bx::mtxQuatTranslationHMD(viewHead, hmd->eye[0].rotation, eye);
-
-					float tmp[16];
-					bx::mtxMul(tmp, view, viewHead);
-					bgfx::setViewTransform(
-						  0
-						, tmp
-						, hmd->eye[0].projection
-						, BGFX_VIEW_STEREO
-						, hmd->eye[1].projection
-						);
-
-					// Set view 0 default viewport.
-					//
-					// Use HMD's width/height since HMD's internal frame buffer size
-					// might be much larger than window size.
-					bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-				}
-				else
 				{
 					float proj[16];
 					bx::mtxProj(
@@ -420,7 +400,7 @@ public:
 
 				// Set render states.
 				bgfx::setState(0
-					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_WRITE_RGB
 					| BGFX_STATE_BLEND_ADD
 					| BGFX_STATE_DEPTH_TEST_ALWAYS
 					);
@@ -478,4 +458,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleNbody, "24-nbody", "N-body simulation with compute shaders using buffers.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleNbody
+	, "24-nbody"
+	, "N-body simulation with compute shaders using buffers."
+	, "https://bkaradzic.github.io/bgfx/examples.html#nbody"
+	);

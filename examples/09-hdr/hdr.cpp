@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -24,7 +24,7 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
@@ -32,17 +32,17 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBottomLeft = false, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_layout);
 		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)vb.data;
 
 		const float zz = 0.0f;
@@ -140,8 +140,8 @@ void setOffsets4x4Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 class ExampleHDR : public entry::AppI
 {
 public:
-	ExampleHDR(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleHDR(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -154,8 +154,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable m_debug text.
 		bgfx::setDebug(m_debug);
@@ -163,11 +168,11 @@ public:
 		// Create vertex stream declaration.
 		PosColorTexCoord0Vertex::init();
 
-		m_uffizi = loadTexture("textures/uffizi.dds"
+		m_uffizi = loadTexture("textures/uffizi.ktx"
 				, 0
-				| BGFX_TEXTURE_U_CLAMP
-				| BGFX_TEXTURE_V_CLAMP
-				| BGFX_TEXTURE_W_CLAMP
+				| BGFX_SAMPLER_U_CLAMP
+				| BGFX_SAMPLER_V_CLAMP
+				| BGFX_SAMPLER_W_CLAMP
 				);
 
 		m_skyProgram     = loadProgram("vs_hdr_skybox",  "fs_hdr_skybox");
@@ -178,10 +183,10 @@ public:
 		m_meshProgram    = loadProgram("vs_hdr_mesh",    "fs_hdr_mesh");
 		m_tonemapProgram = loadProgram("vs_hdr_tonemap", "fs_hdr_tonemap");
 
-		s_texCube   = bgfx::createUniform("s_texCube",  bgfx::UniformType::Int1);
-		s_texColor  = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
-		s_texLum    = bgfx::createUniform("s_texLum",   bgfx::UniformType::Int1);
-		s_texBlur   = bgfx::createUniform("s_texBlur",  bgfx::UniformType::Int1);
+		s_texCube   = bgfx::createUniform("s_texCube",  bgfx::UniformType::Sampler);
+		s_texColor  = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+		s_texLum    = bgfx::createUniform("s_texLum",   bgfx::UniformType::Sampler);
+		s_texBlur   = bgfx::createUniform("s_texBlur",  bgfx::UniformType::Sampler);
 		u_mtx       = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
 		u_tonemap   = bgfx::createUniform("u_tonemap",  bgfx::UniformType::Vec4);
 		u_offset    = bgfx::createUniform("u_offset",   bgfx::UniformType::Vec4, 16);
@@ -302,10 +307,10 @@ public:
 					, false
 					, 1
 					, bgfx::TextureFormat::BGRA8
-					, ((msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_U_CLAMP | BGFX_TEXTURE_V_CLAMP
+					, (uint64_t(msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
 					);
 
-				const uint32_t textureFlags = BGFX_TEXTURE_RT_WRITE_ONLY|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT);
+				const uint64_t textureFlags = BGFX_TEXTURE_RT_WRITE_ONLY|(uint64_t(msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT);
 
 				bgfx::TextureFormat::Enum depthFormat =
 					  bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D16,   textureFlags) ? bgfx::TextureFormat::D16
@@ -361,7 +366,7 @@ public:
 			{
 				union { uint32_t color; uint8_t bgra[4]; } cast = { m_lumBgra8 };
 				float exponent = cast.bgra[3]/255.0f * 255.0f - 128.0f;
-				float lumAvg   = cast.bgra[2]/255.0f * bx::fexp2(exponent);
+				float lumAvg   = cast.bgra[2]/255.0f * bx::exp2(exponent);
 				ImGui::SliderFloat("Lum Avg", &lumAvg, 0.0f, 1.0f);
 			}
 
@@ -464,8 +469,8 @@ public:
 				bgfx::setViewTransform(ii, NULL, proj);
 			}
 
-			float at[3]  = { 0.0f, 1.0f, 0.0f };
-			float eye[3] = { 0.0f, 1.0f, -2.5f };
+			const bx::Vec3 at  = { 0.0f, 1.0f,  0.0f };
+			const bx::Vec3 eye = { 0.0f, 1.0f, -2.5f };
 
 			float mtx[16];
 			bx::mtxRotateXY(mtx
@@ -473,21 +478,20 @@ public:
 					, m_time
 					);
 
-			float temp[4];
-			bx::vec3MulMtx(temp, eye, mtx);
+			const bx::Vec3 tmp = bx::mul(eye, mtx);
 
 			float view[16];
-			bx::mtxLookAt(view, temp, at);
+			bx::mtxLookAt(view, tmp, at);
 			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, caps->homogeneousDepth);
 
 			// Set view and projection matrix for view hdrMesh.
 			bgfx::setViewTransform(hdrMesh, view, proj);
 
-			float tonemap[4] = { m_middleGray, bx::fsq(m_white), m_threshold, m_time };
+			float tonemap[4] = { m_middleGray, bx::square(m_white), m_threshold, m_time };
 
 			// Render skybox into view hdrSkybox.
 			bgfx::setTexture(0, s_texCube, m_uffizi);
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			bgfx::setUniform(u_mtx, mtx);
 			screenSpaceQuad( (float)m_width, (float)m_height, true);
 			bgfx::submit(hdrSkybox, m_skyProgram);
@@ -500,35 +504,35 @@ public:
 			// Calculate luminance.
 			setOffsets2x2Lum(u_offset, 128, 128);
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(128.0f, 128.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLuminance, m_lumProgram);
 
 			// Downscale luminance 0.
 			setOffsets4x4Lum(u_offset, 128, 128);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[0]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(64.0f, 64.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLumScale0, m_lumAvgProgram);
 
 			// Downscale luminance 1.
 			setOffsets4x4Lum(u_offset, 64, 64);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[1]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(16.0f, 16.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLumScale1, m_lumAvgProgram);
 
 			// Downscale luminance 2.
 			setOffsets4x4Lum(u_offset, 16, 16);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[2]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(4.0f, 4.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLumScale2, m_lumAvgProgram);
 
 			// Downscale luminance 3.
 			setOffsets4x4Lum(u_offset, 4, 4);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[3]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(1.0f, 1.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLumScale3, m_lumAvgProgram);
 
@@ -536,14 +540,14 @@ public:
 			setOffsets4x4Lum(u_offset, m_width/2, m_height/2);
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
 			bgfx::setTexture(1, s_texLum, bgfx::getTexture(m_lum[4]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			bgfx::setUniform(u_tonemap, tonemap);
 			screenSpaceQuad( (float)m_width/2.0f, (float)m_height/2.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrBrightness, m_brightProgram);
 
 			// m_blur m_bright pass vertically.
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_bright) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			bgfx::setUniform(u_tonemap, tonemap);
 			screenSpaceQuad( (float)m_width/8.0f, (float)m_height/8.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrVBlur, m_blurProgram);
@@ -552,7 +556,7 @@ public:
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
 			bgfx::setTexture(1, s_texLum, bgfx::getTexture(m_lum[4]) );
 			bgfx::setTexture(2, s_texBlur, bgfx::getTexture(m_blur) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad( (float)m_width, (float)m_height, m_caps->originBottomLeft);
 			bgfx::submit(hdrHBlurTonemap, m_tonemapProgram);
 
@@ -625,4 +629,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleHDR, "09-hdr", "Using multiple views with frame buffers, and view order remapping.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleHDR
+	, "09-hdr"
+	, "Using multiple views with frame buffers, and view order remapping."
+	, "https://bkaradzic.github.io/bgfx/examples.html#hdr"
+	);

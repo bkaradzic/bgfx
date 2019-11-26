@@ -41,10 +41,20 @@ namespace {
 
 using CompileToAstTest = GlslangTest<::testing::TestWithParam<std::string>>;
 
+using CompileToAstTestNV = GlslangTest<::testing::TestWithParam<std::string>>;
+
 TEST_P(CompileToAstTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::OpenGL,
+                            Source::GLSL, Semantics::OpenGL, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
+                            Target::AST);
+}
+
+// Compiling GLSL to SPIR-V under OpenGL semantics (NV extensions enabled).
+TEST_P(CompileToAstTestNV, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
+                            Source::GLSL, Semantics::OpenGL, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::AST);
 }
 
@@ -79,12 +89,17 @@ INSTANTIATE_TEST_CASE_P(
         "cppSimple.vert",
         "cppIndent.vert",
         "cppIntMinOverNegativeOne.frag",
+        "cppMerge.frag",
         "cppNest.vert",
         "cppBad.vert",
         "cppBad2.vert",
+        "cppBad3.vert",
+        "cppBad4.vert",
+        "cppBad5.vert",
         "cppComplexExpr.vert",
         "cppDeepNest.frag",
         "cppPassMacroName.frag",
+        "cppRelaxSkipTokensErrors.vert",
         "badChars.frag",
         "pointCoord.frag",
         "array.frag",
@@ -98,6 +113,7 @@ INSTANTIATE_TEST_CASE_P(
         "300operations.frag",
         "300block.frag",
         "300samplerExternal.frag",
+        "300samplerExternalYUV.frag",
         "310.comp",
         "310.vert",
         "310.geom",
@@ -105,7 +121,9 @@ INSTANTIATE_TEST_CASE_P(
         "310.tesc",
         "310.tese",
         "310implicitSizeArrayError.vert",
+        "310.inheritMemory.frag",
         "310AofA.vert",
+        "310runtimeArray.vert",
         "320.comp",
         "320.vert",
         "320.geom",
@@ -184,11 +202,15 @@ INSTANTIATE_TEST_CASE_P(
         "loopsArtificial.frag",
         "matrix.frag",
         "matrix2.frag",
+        "mixedArrayDecls.frag",
+        "nonuniform.frag",
         "newTexture.frag",
         "Operations.frag",
         "overlongLiteral.frag",
         "prepost.frag",
+        "runtimeArray.vert",
         "simpleFunctionCall.frag",
+        "stringToDouble.vert",
         "structAssignment.frag",
         "structDeref.frag",
         "structure.frag",
@@ -210,6 +232,56 @@ INSTANTIATE_TEST_CASE_P(
         "precise.tesc",
         "precise_struct_block.vert",
         "maxClipDistances.vert",
+        "findFunction.frag",
+        "constantUnaryConversion.comp",
+        "glsl.450.subgroup.frag",
+        "glsl.450.subgroup.geom",
+        "glsl.450.subgroup.tesc",
+        "glsl.450.subgroup.tese",
+        "glsl.450.subgroup.vert",
+        "glsl.450.subgroupArithmetic.comp",
+        "glsl.450.subgroupBasic.comp",
+        "glsl.450.subgroupBallot.comp",
+        "glsl.450.subgroupBallotNeg.comp",
+        "glsl.450.subgroupClustered.comp",
+        "glsl.450.subgroupClusteredNeg.comp",
+        "glsl.450.subgroupPartitioned.comp",
+        "glsl.450.subgroupShuffle.comp",
+        "glsl.450.subgroupShuffleRelative.comp",
+        "glsl.450.subgroupQuad.comp",
+        "glsl.450.subgroupVote.comp",
+        "glsl.460.subgroup.mesh",
+        "glsl.460.subgroup.task",
+        "glsl.460.subgroup.rahit",
+        "glsl.460.subgroup.rcall",
+        "glsl.460.subgroup.rchit",
+        "glsl.460.subgroup.rgen",
+        "glsl.460.subgroup.rint",
+        "glsl.460.subgroup.rmiss",
+        "glsl.es320.subgroup.frag",
+        "glsl.es320.subgroup.geom",
+        "glsl.es320.subgroup.tesc",
+        "glsl.es320.subgroup.tese",
+        "glsl.es320.subgroup.vert",
+        "glsl.es320.subgroupArithmetic.comp",
+        "glsl.es320.subgroupBasic.comp",
+        "glsl.es320.subgroupBallot.comp",
+        "glsl.es320.subgroupBallotNeg.comp",
+        "glsl.es320.subgroupClustered.comp",
+        "glsl.es320.subgroupClusteredNeg.comp",
+        "glsl.es320.subgroupPartitioned.comp",
+        "glsl.es320.subgroupShuffle.comp",
+        "glsl.es320.subgroupShuffleRelative.comp",
+        "glsl.es320.subgroupQuad.comp",
+        "glsl.es320.subgroupVote.comp",
+    })),
+    FileNameAsCustomTestSuffix
+);
+
+INSTANTIATE_TEST_CASE_P(
+    Glsl, CompileToAstTestNV,
+    ::testing::ValuesIn(std::vector<std::string>({
+        "nvShaderNoperspectiveInterpolation.frag",
     })),
     FileNameAsCustomTestSuffix
 );

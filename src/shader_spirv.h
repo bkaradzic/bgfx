@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -15,8 +15,9 @@ BX_ERROR_RESULT(BGFX_SHADER_SPIRV_INVALID_INSTRUCTION, BX_MAKEFOURCC('S', 'H', 0
 
 namespace bgfx
 {
-	// Reference: https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.html
-
+	// Reference(s):
+	// - https://web.archive.org/web/20181126035927/https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.html
+	//
 	struct SpvOpcode
 	{
 		enum Enum
@@ -601,7 +602,7 @@ namespace bgfx
 		bool hasType;
 		bool hasResult;
 
-		SpvOperand operand[10];
+		SpvOperand operand[32];
 	};
 
 	int32_t read(bx::ReaderI* _reader, SpvInstruction& _instruction, bx::Error* _err);

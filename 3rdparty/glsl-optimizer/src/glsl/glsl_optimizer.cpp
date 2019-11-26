@@ -61,6 +61,7 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 		ctx->Extensions.EXT_shader_framebuffer_fetch = true;
 		break;
 	case kGlslTargetMetal:
+		ctx->Const.GLSLVersion = 150;
 		ctx->Extensions.ARB_ES3_compatibility = true;
 		ctx->Extensions.EXT_shader_framebuffer_fetch = true;
 		break;
@@ -170,6 +171,10 @@ struct glslopt_shader
 	{
 		for (unsigned i = 0; i < MESA_SHADER_STAGES; i++)
 			ralloc_free(whole_program->_LinkedShaders[i]);
+		for(GLuint i =0;i< whole_program->NumShaders;i++)
+			ralloc_free(whole_program->Shaders[i]);
+		ralloc_free(whole_program->Shaders);
+		ralloc_free(whole_program->InfoLog);
 		ralloc_free(whole_program);
 		ralloc_free(rawOutput);
 		ralloc_free(optimizedOutput);

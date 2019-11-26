@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -13,12 +13,13 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
-#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x3)
-#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x5)
-#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
+#define BGFX_SHADER_BIN_VERSION 6
+#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', BGFX_SHADER_BIN_VERSION)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', BGFX_SHADER_BIN_VERSION)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 6
+#define BGFX_SHADERC_VERSION_MINOR 16
 
 namespace bgfx
 {
@@ -112,13 +113,18 @@ namespace bgfx
 		"uint2",
 		"uint3",
 		"uint4",
+		"isampler2D",
+		"usampler2D",
 		"isampler3D",
 		"usampler3D",
+		"isamplerCube",
+		"usamplerCube",
 		NULL
 	};
 
 	static const char* s_textureArray[] =
 	{
+		"sampler2DArray",
 		"texture2DArray",
 		"texture2DArrayLod",
 		"shadow2DArray",
@@ -150,6 +156,33 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_uniformTypeName) == UniformType::Count*2);
 
+	static const char* s_allowedVertexShaderInputs[] =
+	{
+		"a_position",
+		"a_normal",
+		"a_tangent",
+		"a_bitangent",
+		"a_color0",
+		"a_color1",
+		"a_color2",
+		"a_color3",
+		"a_indices",
+		"a_weight",
+		"a_texcoord0",
+		"a_texcoord1",
+		"a_texcoord2",
+		"a_texcoord3",
+		"a_texcoord4",
+		"a_texcoord5",
+		"a_texcoord6",
+		"a_texcoord7",
+		"i_data0",
+		"i_data1",
+		"i_data2",
+		"i_data3",
+		"i_data4",
+		NULL
+	};
 
 	Options::Options()
 		: shaderType(' ')
@@ -164,6 +197,7 @@ namespace bgfx
 		, preferFlowControl(false)
 		, backwardsCompatibility(false)
 		, warningsAreErrors(false)
+		, keepIntermediate(false)
 		, optimize(false)
 		, optimizationLevel(3)
 	{
@@ -188,6 +222,7 @@ namespace bgfx
 			"\t  preferFlowControl: %s\n"
 			"\t  backwardsCompatibility: %s\n"
 			"\t  warningsAreErrors: %s\n"
+			"\t  keepIntermediate: %s\n"
 			"\t  optimize: %s\n"
 			"\t  optimizationLevel: %d\n"
 
@@ -207,18 +242,25 @@ namespace bgfx
 			, preferFlowControl ? "true" : "false"
 			, backwardsCompatibility ? "true" : "false"
 			, warningsAreErrors ? "true" : "false"
+			, keepIntermediate ? "true" : "false"
 			, optimize ? "true" : "false"
 			, optimizationLevel
 			);
 
-		for(size_t i=0; i<includeDirs.size(); ++i)
-			BX_TRACE("\t  include :%s\n", includeDirs[i].c_str());
+		for (size_t ii = 0; ii < includeDirs.size(); ++ii)
+		{
+			BX_TRACE("\t  include :%s\n", includeDirs[ii].c_str());
+		}
 
-		for(size_t i=0; i<defines.size(); ++i)
-			BX_TRACE("\t  define :%s\n", defines[i].c_str());
+		for (size_t ii = 0; ii < defines.size(); ++ii)
+		{
+			BX_TRACE("\t  define :%s\n", defines[ii].c_str());
+		}
 
-		for(size_t i=0; i<dependencies.size(); ++i)
-			BX_TRACE("\t  dependency :%s\n", dependencies[i].c_str());
+		for (size_t ii = 0; ii < dependencies.size(); ++ii)
+		{
+			BX_TRACE("\t  dependency :%s\n", dependencies[ii].c_str());
+		}
 	}
 
 	const char* interpolationDx11(const char* _glsl)
@@ -286,7 +328,7 @@ namespace bgfx
 	class Bin2cWriter : public bx::FileWriter
 	{
 	public:
-		Bin2cWriter(const char* _name)
+		Bin2cWriter(const bx::StringView& _name)
 			: m_name(_name)
 		{
 		}
@@ -317,7 +359,7 @@ namespace bgfx
 			const uint8_t* data = &m_buffer[0];
 			uint32_t size = (uint32_t)m_buffer.size();
 
-			outf("static const uint8_t %s[%d] =\n{\n", m_name.c_str(), size);
+			outf("static const uint8_t %.*s[%d] =\n{\n", m_name.getLength(), m_name.getPtr(), size);
 
 			if (NULL != data)
 			{
@@ -330,7 +372,7 @@ namespace bgfx
 					bx::snprintf(&hex[hexPos], sizeof(hex)-hexPos, "0x%02x, ", data[asciiPos]);
 					hexPos += 6;
 
-					ascii[asciiPos] = isprint(data[asciiPos]) && data[asciiPos] != '\\' ? data[asciiPos] : '.';
+					ascii[asciiPos] = isprint(data[asciiPos]) && data[asciiPos] != '\\'  && data[asciiPos] != '\t' ? data[asciiPos] : '.';
 					asciiPos++;
 
 					if (HEX_DUMP_WIDTH == asciiPos)
@@ -379,8 +421,7 @@ namespace bgfx
 			return size;
 		}
 
-		std::string m_filePath;
-		std::string m_name;
+		bx::StringView m_name;
 		typedef std::vector<uint8_t> Buffer;
 		Buffer m_buffer;
 	};
@@ -400,8 +441,18 @@ namespace bgfx
 	class File
 	{
 	public:
-		File(const char* _filePath)
+		File()
 			: m_data(NULL)
+			, m_size(0)
+		{
+		}
+
+		~File()
+		{
+			delete [] m_data;
+		}
+
+		void load(const bx::FilePath& _filePath)
 		{
 			bx::FileReader reader;
 			if (bx::open(&reader, _filePath) )
@@ -421,11 +472,6 @@ namespace bgfx
 
 				m_data[m_size] = '\0';
 			}
-		}
-
-		~File()
-		{
-			delete [] m_data;
 		}
 
 		const char* getData() const
@@ -464,12 +510,12 @@ namespace bgfx
 		replace[len] = '\0';
 
 		BX_CHECK(len >= bx::strLen(_replace), "");
-		for (const char* ptr = bx::strFind(_str, _find)
-			; NULL != ptr
-			; ptr = bx::strFind(ptr + len, _find)
+		for (bx::StringView ptr = bx::strFind(_str, _find)
+			; !ptr.isEmpty()
+			; ptr = bx::strFind(ptr.getPtr() + len, _find)
 			)
 		{
-			bx::memCopy(const_cast<char*>(ptr), replace, len);
+			bx::memCopy(const_cast<char*>(ptr.getPtr() ), replace, len);
 		}
 	}
 
@@ -481,7 +527,7 @@ namespace bgfx
 
 	void printCode(const char* _code, int32_t _line, int32_t _start, int32_t _end, int32_t _column)
 	{
-		fprintf(stderr, "Code:\n---\n");
+		bx::printf("Code:\n---\n");
 
 		bx::Error err;
 		LineReader reader(_code);
@@ -493,26 +539,26 @@ namespace bgfx
 			if (err.isOk()
 			&&  line >= _start)
 			{
-				std::string strLine(str, len);
+				bx::StringView strLine(str, len);
 
 				if (_line == line)
 				{
-					fprintf(stderr, "\n");
-					fprintf(stderr, ">>> %3d: %s", line, strLine.c_str() );
+					bx::printf("\n");
+					bx::printf(">>> %3d: %.*s", line, strLine.getLength(), strLine.getPtr() );
 					if (-1 != _column)
 					{
-						fprintf(stderr, ">>> %3d: %*s\n", _column, _column, "^");
+						bx::printf(">>> %3d: %*s\n", _column, _column, "^");
 					}
-					fprintf(stderr, "\n");
+					bx::printf("\n");
 				}
 				else
 				{
-					fprintf(stderr, "    %3d: %s", line, strLine.c_str() );
+					bx::printf("    %3d: %.*s", line, strLine.getLength(), strLine.getPtr() );
 				}
 			}
 		}
 
-		fprintf(stderr, "---\n");
+		bx::printf("---\n");
 	}
 
 	void writeFile(const char* _filePath, const void* _data, int32_t _size)
@@ -552,7 +598,7 @@ namespace bgfx
 			m_tagptr->data = (void*)fppError;
 			m_tagptr++;
 
-			m_tagptr->tag = FPPTAG_IGNOREVERSION;
+			m_tagptr->tag = FPPTAG_SHOWVERSION;
 			m_tagptr->data = (void*)0;
 			m_tagptr++;
 
@@ -605,16 +651,16 @@ namespace bgfx
 		{
 			char* start = scratch(_includeDir);
 
-			for (char* split = const_cast<char*>(bx::strFind(start, ';') )
-				; NULL != split
-				; split = const_cast<char*>(bx::strFind(start, ';') )
+			for (bx::StringView split = bx::strFind(start, ';')
+				; !split.isEmpty()
+				; split = bx::strFind(start, ';')
 				)
 			{
-				*split = '\0';
+				*const_cast<char*>(split.getPtr() ) = '\0';
 				m_tagptr->tag = FPPTAG_INCLUDE_DIR;
 				m_tagptr->data = start;
 				m_tagptr++;
-				start = split + 1;
+				start = const_cast<char*>(split.getPtr() ) + 1;
 			}
 
 			m_tagptr->tag = FPPTAG_INCLUDE_DIR;
@@ -638,8 +684,10 @@ namespace bgfx
 
 			int32_t len = bx::strLen(_input)+1;
 			char* temp = new char[len];
-			bx::eolLF(temp, len, _input);
-			m_input += temp;
+			bx::StringView normalized = bx::normalizeEolLf(temp, len, _input);
+			std::string str;
+			str.assign(normalized.getPtr(), normalized.getTerm() );
+			m_input += str;
 			delete [] temp;
 
 			fppTag* tagptr = m_tagptr;
@@ -691,7 +739,7 @@ namespace bgfx
 
 		static void fppError(void* /*_userData*/, char* _format, va_list _vargs)
 		{
-			vfprintf(stderr, _format, _vargs);
+			bx::vprintf(_format, _vargs);
 		}
 
 		char* scratch(const char* _str)
@@ -717,27 +765,31 @@ namespace bgfx
 
 	typedef std::vector<std::string> InOut;
 
-	uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
+	uint32_t parseInOut(InOut& _inout, const bx::StringView& _str)
 	{
 		uint32_t hash = 0;
-		_str = bx::strws(_str);
+		bx::StringView str = bx::strLTrimSpace(_str);
 
-		if (_str < _eol)
+		if (!str.isEmpty() )
 		{
-			const char* delim;
+			bx::StringView delim;
 			do
 			{
-				delim = strpbrk(_str, " ,");
-				if (NULL != delim)
+				delim = bx::strFind(str, ',');
+				if (delim.isEmpty() )
 				{
-					delim = delim > _eol ? _eol : delim;
-					std::string token;
-					token.assign(_str, delim-_str);
-					_inout.push_back(token);
-					_str = bx::strws(delim + 1);
+					delim = bx::strFind(str, ' ');
+				}
+
+				const bx::StringView token(bx::strRTrim(bx::StringView(str.getPtr(), delim.getPtr() ), " ") );
+
+				if (!token.isEmpty() )
+				{
+					_inout.push_back(std::string(token.getPtr(), token.getTerm() ) );
+					str = bx::strLTrimSpace(bx::StringView(delim.getPtr() + 1, str.getTerm() ) );
 				}
 			}
-			while (delim < _eol && _str < _eol && NULL != delim);
+			while (!delim.isEmpty() );
 
 			std::sort(_inout.begin(), _inout.end() );
 
@@ -759,12 +811,12 @@ namespace bgfx
 		bx::snprintf(find, sizeof(find), "gl_FragData[%d]", _idx);
 
 		char replace[32];
-		bx::snprintf(replace, sizeof(replace), "gl_FragData_%d_", _idx);
+		bx::snprintf(replace, sizeof(replace), "bgfx_FragData%d", _idx);
 
 		strReplace(_data, find, replace);
 
 		_preprocessor.writef(
-			" \\\n\t%sout vec4 gl_FragData_%d_ : SV_TARGET%d"
+			" \\\n\t%sout vec4 bgfx_FragData%d : SV_TARGET%d"
 			, _comma ? ", " : "  "
 			, _idx
 			, _idx
@@ -779,13 +831,10 @@ namespace bgfx
 		strReplace(_data, find, "bgfx_VoidFrag");
 	}
 
-	const char* baseName(const char* _filePath)
+	bx::StringView baseName(const bx::StringView& _filePath)
 	{
 		bx::FilePath fp(_filePath);
-		char tmp[bx::kMaxFilePath];
-		bx::strCopy(tmp, BX_COUNTOF(tmp), fp.getFileName() );
-		const char* base = bx::strFind(_filePath, tmp);
-		return base;
+		return bx::strFind(_filePath, fp.getBaseName() );
 	}
 
 	// c - compute
@@ -811,38 +860,46 @@ namespace bgfx
 	{
 		if (NULL != _error)
 		{
-			fprintf(stderr, "Error:\n%s\n\n", _error);
+			bx::printf("Error:\n%s\n\n", _error);
 		}
 
-		fprintf(stderr
-			, "shaderc, bgfx shader compiler tool, version %d.%d.%d.\n"
-			  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
+		bx::printf(
+			  "shaderc, bgfx shader compiler tool, version %d.%d.%d.\n"
+			  "Copyright 2011-2019 Branimir Karadzic. All rights reserved.\n"
 			  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 			, BGFX_SHADERC_VERSION_MAJOR
 			, BGFX_SHADERC_VERSION_MINOR
 			, BGFX_API_VERSION
 			);
 
-		fprintf(stderr
-			, "Usage: shaderc -f <in> -o <out> --type <v/f> --platform <platform>\n"
+		bx::printf(
+			  "Usage: shaderc -f <in> -o <out> --type <v/f> --platform <platform>\n"
 
 			  "\n"
 			  "Options:\n"
 			  "  -h, --help                    Help.\n"
 			  "  -v, --version                 Version information only.\n"
 			  "  -f <file path>                Input file path.\n"
-			  "  -i <include path>             Include path (for multiple paths use use -i multiple times).\n"
+			  "  -i <include path>             Include path (for multiple paths use -i multiple times).\n"
 			  "  -o <file path>                Output file path.\n"
-			  "      --bin2c <file path>       Generate C header file.\n"
+			  "      --bin2c [array name]      Generate C header file. If array name is not specified base file name will be used as name.\n"
 			  "      --depends                 Generate makefile style depends file.\n"
 			  "      --platform <platform>     Target platform.\n"
 			  "           android\n"
 			  "           asm.js\n"
 			  "           ios\n"
 			  "           linux\n"
-			  "           nacl\n"
+			  "           orbis\n"
 			  "           osx\n"
 			  "           windows\n"
+				"      -p, --profile <profile>   Shader model (default GLSL).\n"
+				"           s_3\n"
+				"           s_4\n"
+				"           s_4_0_level\n"
+				"           s_5\n"
+				"           metal\n"
+				"           pssl\n"
+				"           spirv\n"
 			  "      --preprocess              Preprocess only.\n"
 			  "      --define <defines>        Add defines to preprocessor (semicolon separated).\n"
 			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
@@ -856,7 +913,6 @@ namespace bgfx
 			  "\n"
 			  "      --debug                   Debug information.\n"
 			  "      --disasm                  Disassemble compiled shader.\n"
-			  "  -p, --profile <profile>       Shader model (f.e. ps_3_0).\n"
 			  "  -O <level>                    Optimization level (0, 1, 2, 3).\n"
 			  "      --Werror                  Treat warnings as errors.\n"
 
@@ -865,8 +921,14 @@ namespace bgfx
 			);
 	}
 
+	bx::StringView nextWord(bx::StringView& _parse)
+	{
+		bx::StringView word = bx::strWord(bx::strLTrimSpace(_parse) );
+		_parse = bx::strLTrimSpace(bx::StringView(word.getTerm(), _parse.getTerm() ) );
+		return word;
+	}
 
-	bool compileShader(const char* _varying, char* _shader, uint32_t _shaderLen, Options& _options, bx::FileWriter* _writer)
+	bool compileShader(const char* _varying, const char* _comment, char* _shader, uint32_t _shaderLen, Options& _options, bx::FileWriter* _writer)
 	{
 		uint32_t glsl  = 0;
 		uint32_t essl  = 0;
@@ -909,7 +971,7 @@ namespace bgfx
 			}
 			else
 			{
-				glsl = atoi(profile);
+				bx::fromString(&glsl, profile);
 			}
 		}
 		else
@@ -919,14 +981,20 @@ namespace bgfx
 
 		Preprocessor preprocessor(_options.inputFilePath.c_str(), 0 != essl);
 
-		for(size_t i=0; i<_options.includeDirs.size(); ++i)
-			preprocessor.addInclude(_options.includeDirs[i].c_str());
+		for (size_t ii = 0; ii < _options.includeDirs.size(); ++ii)
+		{
+			preprocessor.addInclude(_options.includeDirs[ii].c_str() );
+		}
 
-		for(size_t i=0; i<_options.defines.size(); ++i)
-			preprocessor.setDefine(_options.defines[i].c_str());
+		for (size_t ii = 0; ii < _options.defines.size(); ++ii)
+		{
+			preprocessor.setDefine(_options.defines[ii].c_str() );
+		}
 
-		for(size_t i=0; i<_options.dependencies.size(); ++i)
-			preprocessor.addDependency(_options.dependencies[i].c_str());
+		for (size_t ii = 0; ii < _options.dependencies.size(); ++ii)
+		{
+			preprocessor.addDependency(_options.dependencies[ii].c_str() );
+		}
 
 		preprocessor.setDefaultDefine("BX_PLATFORM_ANDROID");
 		preprocessor.setDefaultDefine("BX_PLATFORM_EMSCRIPTEN");
@@ -969,7 +1037,14 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "ios") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_IOS=1");
-			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+			if (metal)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_METAL=1");
+			}
+			else
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+			}
 		}
 		else if (0 == bx::strCmpI(platform, "linux") )
 		{
@@ -986,7 +1061,10 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "osx") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_OSX=1");
-			preprocessor.setDefine(glslDefine);
+			if (!metal)
+			{
+				preprocessor.setDefine(glslDefine);
+			}
 			char temp[256];
 			bx::snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_METAL=%d", metal);
 			preprocessor.setDefine(temp);
@@ -1022,37 +1100,41 @@ namespace bgfx
 			break;
 
 		default:
-			fprintf(stderr, "Unknown type: %c?!", _options.shaderType);
+			bx::printf("Unknown type: %c?!", _options.shaderType);
 			return false;
 		}
 
 		bool compiled = false;
 
 		VaryingMap varyingMap;
-		const char* parse = _varying;
+		bx::StringView parse(_varying);
+		bx::StringView term(parse);
 
-		while (NULL != parse
-			&&  *parse != '\0')
+		bool usesInterpolationQualifiers = false;
+
+		while (!parse.isEmpty() )
 		{
-			parse = bx::strws(parse);
-			const char* eol = bx::strFind(parse, ';');
-			if (NULL == eol)
+			parse = bx::strLTrimSpace(parse);
+			bx::StringView eol = bx::strFind(parse, ';');
+			if (eol.isEmpty() )
 			{
-				eol = bx::streol(parse);
+				eol = bx::strFindEol(parse);
 			}
 
-			if (NULL != eol)
+			if (!eol.isEmpty() )
 			{
-				const char* precision = NULL;
-				const char* interpolation = NULL;
-				const char* typen = parse;
+				eol.set(eol.getPtr() + 1, parse.getTerm() );
+
+				bx::StringView precision;
+				bx::StringView interpolation;
+				bx::StringView typen = nextWord(parse);
 
 				if (0 == bx::strCmp(typen, "lowp", 4)
 				||  0 == bx::strCmp(typen, "mediump", 7)
 				||  0 == bx::strCmp(typen, "highp", 5) )
 				{
 					precision = typen;
-					typen = parse = bx::strws(bx::strSkipWord(parse) );
+					typen = nextWord(parse);
 				}
 
 				if (0 == bx::strCmp(typen, "flat", 4)
@@ -1060,36 +1142,52 @@ namespace bgfx
 				||  0 == bx::strCmp(typen, "noperspective", 13)
 				||  0 == bx::strCmp(typen, "centroid", 8) )
 				{
-					interpolation = typen;
-					typen = parse = bx::strws(bx::strSkipWord(parse) );
+					if ('f' == _options.shaderType
+					||    0 != glsl
+					||    0 != essl)
+					{
+						interpolation = typen;
+						usesInterpolationQualifiers = true;
+					}
+
+					typen = nextWord(parse);
 				}
 
-				const char* name      = parse = bx::strws(bx::strSkipWord(parse) );
-				const char* column    = parse = bx::strws(bx::strSkipWord(parse) );
-				const char* semantics = parse = bx::strws( (*parse == ':' ? ++parse : parse) );
-				const char* assign    = parse = bx::strws(bx::strSkipWord(parse) );
-				const char* init      = parse = bx::strws( (*parse == '=' ? ++parse : parse) );
+				bx::StringView name   = nextWord(parse);
+				bx::StringView column = bx::strSubstr(parse, 0, 1);
+				bx::StringView semantics;
+				if (0 == bx::strCmp(column, ":", 1) )
+				{
+					parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
+					semantics = nextWord(parse);
+				}
 
-				if (typen < eol
-				&&  name < eol
-				&&  column < eol
-				&&  ':' == *column
-				&&  semantics < eol)
+				bx::StringView assign = bx::strSubstr(parse, 0, 1);
+				bx::StringView init;
+				if (0 == bx::strCmp(assign, "=", 1))
+				{
+					parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
+					init.set(parse.getPtr(), eol.getPtr() );
+				}
+
+				if (!typen.isEmpty()
+				&&  !name.isEmpty()
+				&&  !semantics.isEmpty() )
 				{
 					Varying var;
-					if (NULL != precision)
+					if (!precision.isEmpty() )
 					{
-						var.m_precision.assign(precision, bx::strSkipWord(precision)-precision);
+						var.m_precision.assign(precision.getPtr(), precision.getTerm() );
 					}
 
-					if (NULL != interpolation)
+					if (!interpolation.isEmpty() )
 					{
-						var.m_interpolation.assign(interpolation, bx::strSkipWord(interpolation)-interpolation);
+						var.m_interpolation.assign(interpolation.getPtr(), interpolation.getTerm() );
 					}
 
-					var.m_type.assign(typen, bx::strSkipWord(typen)-typen);
-					var.m_name.assign(name, bx::strSkipWord(name)-name);
-					var.m_semantics.assign(semantics, bx::strSkipWord(semantics)-semantics);
+					var.m_type.assign(typen.getPtr(), typen.getTerm() );
+					var.m_name.assign(name.getPtr(), name.getTerm() );
+					var.m_semantics.assign(semantics.getPtr(), semantics.getTerm() );
 
 					if (d3d == 9
 					&&  var.m_semantics == "BITANGENT")
@@ -1097,17 +1195,15 @@ namespace bgfx
 						var.m_semantics = "BINORMAL";
 					}
 
-					if (assign < eol
-					&&  '=' == *assign
-					&&  init < eol)
+					if (!init.isEmpty() )
 					{
-						var.m_init.assign(init, eol-init);
+						var.m_init.assign(init.getPtr(), init.getTerm() );
 					}
 
 					varyingMap.insert(std::make_pair(var.m_name, var) );
 				}
 
-				parse = bx::strws(bx::strnl(eol) );
+				parse = bx::strLTrimSpace(bx::strFindNl(bx::StringView(eol.getPtr(), term.getTerm() ) ) );
 			}
 		}
 
@@ -1124,15 +1220,20 @@ namespace bgfx
 			data = _shader;
 			uint32_t size = _shaderLen;
 
-			const size_t padding = 4096;
+			const size_t padding = 16384;
 
 			if (!raw)
 			{
 				// To avoid commented code being recognized as used feature,
 				// first preprocess pass is used to strip all comments before
 				// substituting code.
-				preprocessor.run(data);
+				bool ok = preprocessor.run(data);
 				delete [] data;
+
+				if (!ok)
+				{
+					return false;
+				}
 
 				size = (uint32_t)preprocessor.m_preprocessed.size();
 				data = new char[size+padding+1];
@@ -1142,53 +1243,81 @@ namespace bgfx
 
 			strNormalizeEol(data);
 
-			input = const_cast<char*>(bx::strws(data) );
+			input = const_cast<char*>(bx::strLTrimSpace(data).getPtr() );
 			while (input[0] == '$')
 			{
-				const char* str = bx::strws(input+1);
-				const char* eol = bx::streol(str);
-				const char* nl  = bx::strnl(eol);
-				input = const_cast<char*>(nl);
+				bx::StringView str = bx::strLTrimSpace(input+1);
+				bx::StringView eol = bx::strFindEol(str);
+				bx::StringView nl  = bx::strFindNl(eol);
+				input = const_cast<char*>(nl.getPtr() );
 
 				if (0 == bx::strCmp(str, "input", 5) )
 				{
-					str += 5;
-					const char* comment = bx::strFind(str, "//");
-					eol = NULL != comment && comment < eol ? comment : eol;
-					inputHash = parseInOut(shaderInputs, str, eol);
+					str = bx::StringView(str.getPtr() + 5, str.getTerm() );
+					bx::StringView comment = bx::strFind(str, "//");
+					eol = !comment.isEmpty() && comment.getPtr() < eol.getPtr() ? comment.getPtr() : eol;
+					inputHash = parseInOut(shaderInputs, bx::StringView(str.getPtr(), eol.getPtr() ) );
 				}
 				else if (0 == bx::strCmp(str, "output", 6) )
 				{
-					str += 6;
-					const char* comment = bx::strFind(str, "//");
-					eol = NULL != comment && comment < eol ? comment : eol;
-					outputHash = parseInOut(shaderOutputs, str, eol);
+					str = bx::StringView(str.getPtr() + 6, str.getTerm() );
+					bx::StringView comment = bx::strFind(str, "//");
+					eol = !comment.isEmpty() && comment.getPtr() < eol.getPtr() ? comment.getPtr() : eol;
+					outputHash = parseInOut(shaderOutputs, bx::StringView(str.getPtr(), eol.getPtr() ) );
 				}
 				else if (0 == bx::strCmp(str, "raw", 3) )
 				{
 					raw = true;
-					str += 3;
+					str = bx::StringView(str.getPtr() + 3, str.getTerm() );
 				}
 
-				input = const_cast<char*>(bx::strws(input) );
+				input = const_cast<char*>(bx::strLTrimSpace(input).getPtr() );
 			}
 		}
 
-		if (raw)
+		bool invalidShaderAttribute = false;
+		if ('v' == _options.shaderType)
+		{
+			for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
+			{
+				if (bx::findIdentifierMatch(it->c_str(), s_allowedVertexShaderInputs).isEmpty() )
+				{
+					invalidShaderAttribute = true;
+					bx::printf(
+						  "Invalid vertex shader input attribute '%s'.\n"
+						  "\n"
+						  "Valid input attributes:\n"
+						  "  a_position, a_normal, a_tangent, a_bitangent, a_color0, a_color1, a_color2, a_color3, a_indices, a_weight,\n"
+						  "  a_texcoord0, a_texcoord1, a_texcoord2, a_texcoord3, a_texcoord4, a_texcoord5, a_texcoord6, a_texcoord7,\n"
+						  "  i_data0, i_data1, i_data2, i_data3, i_data4.\n"
+						  "\n"
+						, it->c_str() );
+					break;
+				}
+			}
+		}
+
+		if (invalidShaderAttribute)
+		{
+		}
+		else if (raw)
 		{
 			if ('f' == _options.shaderType)
 			{
 				bx::write(_writer, BGFX_CHUNK_MAGIC_FSH);
 				bx::write(_writer, inputHash);
+				bx::write(_writer, uint32_t(0) );
 			}
 			else if ('v' == _options.shaderType)
 			{
 				bx::write(_writer, BGFX_CHUNK_MAGIC_VSH);
+				bx::write(_writer, uint32_t(0) );
 				bx::write(_writer, outputHash);
 			}
 			else
 			{
 				bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
+				bx::write(_writer, uint32_t(0) );
 				bx::write(_writer, outputHash);
 			}
 
@@ -1214,20 +1343,24 @@ namespace bgfx
 		}
 		else if ('c' == _options.shaderType) // Compute
 		{
-			char* entry = const_cast<char*>(bx::strFind(input, "void main()") );
-			if (NULL == entry)
+			bx::StringView entry = bx::strFind(input, "void main()");
+			if (entry.isEmpty() )
 			{
-				fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
+				bx::printf("Shader entry point 'void main()' is not found.\n");
 			}
 			else
 			{
 				if (0 != glsl
-				||  0 != essl
-				||  0 != metal)
+				||  0 != essl)
 				{
 				}
 				else
 				{
+					if (0 != pssl)
+					{
+						preprocessor.writef(getPsslPreamble() );
+					}
+
 					preprocessor.writef(
 						"#define lowp\n"
 						"#define mediump\n"
@@ -1246,17 +1379,17 @@ namespace bgfx
 						"#define mat4 float4x4\n"
 						);
 
-					entry[4] = '_';
+					*const_cast<char*>(entry.getPtr() + 4) = '_';
 
 					preprocessor.writef("#define void_main()");
 					preprocessor.writef(" \\\n\tvoid main(");
 
 					uint32_t arg = 0;
 
-					const bool hasLocalInvocationID    = NULL != bx::strFind(input, "gl_LocalInvocationID");
-					const bool hasLocalInvocationIndex = NULL != bx::strFind(input, "gl_LocalInvocationIndex");
-					const bool hasGlobalInvocationID   = NULL != bx::strFind(input, "gl_GlobalInvocationID");
-					const bool hasWorkGroupID          = NULL != bx::strFind(input, "gl_WorkGroupID");
+					const bool hasLocalInvocationID    = !bx::strFind(input, "gl_LocalInvocationID").isEmpty();
+					const bool hasLocalInvocationIndex = !bx::strFind(input, "gl_LocalInvocationIndex").isEmpty();
+					const bool hasGlobalInvocationID   = !bx::strFind(input, "gl_GlobalInvocationID").isEmpty();
+					const bool hasWorkGroupID          = !bx::strFind(input, "gl_WorkGroupID").isEmpty();
 
 					if (hasLocalInvocationID)
 					{
@@ -1297,9 +1430,6 @@ namespace bgfx
 
 				if (preprocessor.run(input) )
 				{
-					//BX_TRACE("Input file: %s", filePath);
-					//BX_TRACE("Output file: %s", outFilePath);
-
 					if (_options.preprocessOnly)
 					{
 						bx::write(_writer, preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
@@ -1308,14 +1438,15 @@ namespace bgfx
 					}
 
 					{
+						std::string code;
+
 						bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
+						bx::write(_writer, uint32_t(0) );
 						bx::write(_writer, outputHash);
 
 						if (0 != glsl
 						||  0 != essl)
 						{
-							std::string code;
-
 							if (essl)
 							{
 								bx::stringPrintf(code, "#version 310 es\n");
@@ -1325,8 +1456,9 @@ namespace bgfx
 								bx::stringPrintf(code, "#version %d\n", glsl == 0 ? 430 : glsl);
 							}
 
-							code += preprocessor.m_preprocessed;
 #if 1
+							code += preprocessor.m_preprocessed;
+
 							bx::write(_writer, uint16_t(0) );
 
 							uint32_t shaderSize = (uint32_t)code.size();
@@ -1336,20 +1468,33 @@ namespace bgfx
 
 							compiled = true;
 #else
+							code += _comment;
+							code += preprocessor.m_preprocessed;
+
 							compiled = compileGLSLShader(cmdLine, essl, code, writer);
 #endif // 0
 						}
-						else if (0 != spirv)
-						{
-							compiled = compileSPIRVShader(_options, 0, preprocessor.m_preprocessed, _writer);
-						}
-						else if (0 != pssl)
-						{
-							compiled = compilePSSLShader(_options, 0, preprocessor.m_preprocessed, _writer);
-						}
 						else
 						{
-							compiled = compileHLSLShader(_options, d3d, preprocessor.m_preprocessed, _writer);
+							code += _comment;
+							code += preprocessor.m_preprocessed;
+
+							if (0 != metal)
+							{
+								compiled = compileMetalShader(_options, BX_MAKEFOURCC('M', 'T', 'L', 0), code, _writer);
+							}
+							else if (0 != spirv)
+							{
+								compiled = compileSPIRVShader(_options, 0, code, _writer);
+							}
+							else if (0 != pssl)
+							{
+								compiled = compilePSSLShader(_options, 0, code, _writer);
+							}
+							else
+							{
+								compiled = compileHLSLShader(_options, d3d, code, _writer);
+							}
 						}
 					}
 
@@ -1372,16 +1517,16 @@ namespace bgfx
 		}
 		else // Vertex/Fragment
 		{
-			char* entry = const_cast<char*>(bx::strFind(input, "void main()") );
-			if (NULL == entry)
+			bx::StringView shader(input);
+			bx::StringView entry = bx::strFind(shader, "void main()");
+			if (entry.isEmpty() )
 			{
-				fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
+				bx::printf("Shader entry point 'void main()' is not found.\n");
 			}
 			else
 			{
 				if (0 != glsl
-				||  0 != essl
-				||  0 != metal)
+				||  0 != essl)
 				{
 					if (0 == essl)
 					{
@@ -1404,21 +1549,23 @@ namespace bgfx
 							if (0 == bx::strCmp(name, "a_", 2)
 							||  0 == bx::strCmp(name, "i_", 2) )
 							{
-								preprocessor.writef("attribute %s %s %s %s;\n"
-										, var.m_precision.c_str()
-										, var.m_interpolation.c_str()
-										, var.m_type.c_str()
-										, name
-										);
+								preprocessor.writef(
+									  "attribute %s %s %s %s;\n"
+									, var.m_precision.c_str()
+									, var.m_interpolation.c_str()
+									, var.m_type.c_str()
+									, name
+									);
 							}
 							else
 							{
-								preprocessor.writef("%s varying %s %s %s;\n"
-										, var.m_interpolation.c_str()
-										, var.m_precision.c_str()
-										, var.m_type.c_str()
-										, name
-										);
+								preprocessor.writef(
+									  "%s varying %s %s %s;\n"
+									, var.m_interpolation.c_str()
+									, var.m_precision.c_str()
+									, var.m_type.c_str()
+									, name
+									);
 							}
 						}
 					}
@@ -1439,6 +1586,11 @@ namespace bgfx
 				}
 				else
 				{
+					if (0 != pssl)
+					{
+						preprocessor.writef(getPsslPreamble() );
+					}
+
 					preprocessor.writef(
 						"#define lowp\n"
 						"#define mediump\n"
@@ -1468,21 +1620,21 @@ namespace bgfx
 							);
 					}
 
-					entry[4] = '_';
+					*const_cast<char*>(entry.getPtr() + 4) = '_';
 
 					if ('f' == _options.shaderType)
 					{
-						const char* insert = bx::strFind(entry, "{");
-						if (NULL != insert)
+						bx::StringView insert = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						if (!insert.isEmpty() )
 						{
-							insert = strInsert(const_cast<char*>(insert+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
+							insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
 						}
 
-						const bool hasFragColor   = NULL != bx::strFind(input, "gl_FragColor");
-						const bool hasFragCoord   = NULL != bx::strFind(input, "gl_FragCoord") || hlsl > 3 || hlsl == 2;
-						const bool hasFragDepth   = NULL != bx::strFind(input, "gl_FragDepth");
-						const bool hasFrontFacing = NULL != bx::strFind(input, "gl_FrontFacing");
-						const bool hasPrimitiveId = NULL != bx::strFind(input, "gl_PrimitiveID");
+						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
+						const bool hasFragCoord   = !bx::strFind(input, "gl_FragCoord").isEmpty() || hlsl > 3 || hlsl == 2;
+						const bool hasFragDepth   = !bx::strFind(input, "gl_FragDepth").isEmpty();
+						const bool hasFrontFacing = !bx::strFind(input, "gl_FrontFacing").isEmpty();
+						const bool hasPrimitiveId = !bx::strFind(input, "gl_PrimitiveID").isEmpty();
 
 						bool hasFragData[8] = {};
 						uint32_t numFragData = 0;
@@ -1490,7 +1642,7 @@ namespace bgfx
 						{
 							char temp[32];
 							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-							hasFragData[ii] = NULL != bx::strFind(input, temp);
+							hasFragData[ii] = !bx::strFind(input, temp).isEmpty();
 							numFragData += hasFragData[ii];
 						}
 
@@ -1498,18 +1650,18 @@ namespace bgfx
 						{
 							// GL errors when both gl_FragColor and gl_FragData is used.
 							// This will trigger the same error with HLSL compiler too.
-							preprocessor.writef("#define gl_FragColor gl_FragData_0_\n");
+							preprocessor.writef("#define gl_FragColor bgfx_FragData0\n");
 
 							// If it has gl_FragData or gl_FragColor, color target at
 							// index 0 exists, otherwise shader is not modifying color
 							// targets.
 							hasFragData[0] |= hasFragColor || d3d < 11;
 
-							if (NULL != insert
+							if (!insert.isEmpty()
 							&&  d3d < 11
 							&&  !hasFragColor)
 							{
-								insert = strInsert(const_cast<char*>(insert+1), "\ngl_FragColor = bgfx_VoidFrag;\n");
+								insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\ngl_FragColor = bgfx_VoidFrag;\n");
 							}
 						}
 
@@ -1565,18 +1717,27 @@ namespace bgfx
 								);
 						}
 
-						if (hasFrontFacing
-						&&  hlsl >= 3)
+						if (hasFrontFacing)
 						{
-							preprocessor.writef(
-								" \\\n\t%sfloat __vface : VFACE"
-								, arg++ > 0 ? ", " : "  "
-								);
+							if (hlsl == 3)
+							{
+								preprocessor.writef(
+									" \\\n\t%sfloat __vface : VFACE"
+									, arg++ > 0 ? ", " : "  "
+									);
+							}
+							else
+							{
+								preprocessor.writef(
+									" \\\n\t%sbool gl_FrontFacing : SV_IsFrontFace"
+									, arg++ > 0 ? ", " : "  "
+									);
+							}
 						}
 
 						if (hasPrimitiveId)
 						{
-							if (d3d > 9)
+							if (hlsl > 3)
 							{
 								preprocessor.writef(
 									" \\\n\t%suint gl_PrimitiveID : SV_PrimitiveID"
@@ -1585,7 +1746,7 @@ namespace bgfx
 							}
 							else
 							{
-								fprintf(stderr, "gl_PrimitiveID builtin is not supported by this D3D9 HLSL.\n");
+								bx::printf("gl_PrimitiveID builtin is not supported by this D3D9 HLSL.\n");
 								return false;
 							}
 						}
@@ -1596,32 +1757,26 @@ namespace bgfx
 
 						if (hasFrontFacing)
 						{
-							if (hlsl >= 3)
+							if (hlsl == 3)
 							{
 								preprocessor.writef(
-									"#define gl_FrontFacing (__vface <= 0.0)\n"
-									);
-							}
-							else
-							{
-								preprocessor.writef(
-									"#define gl_FrontFacing false\n"
+									"#define gl_FrontFacing (__vface >= 0.0)\n"
 									);
 							}
 						}
 					}
 					else if ('v' == _options.shaderType)
 					{
-						const bool hasVertexId    = NULL != bx::strFind(input, "gl_VertexID");
-						const bool hasInstanceId  = NULL != bx::strFind(input, "gl_InstanceID");
+						const bool hasVertexId    = !bx::strFind(input, "gl_VertexID").isEmpty();
+						const bool hasInstanceId  = !bx::strFind(input, "gl_InstanceID").isEmpty();
 
-						const char* brace = bx::strFind(entry, "{");
-						if (NULL != brace)
+						bx::StringView brace = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						if (!brace.isEmpty() )
 						{
-							const char* end = bx::strmb(brace, '{', '}');
-							if (NULL != end)
+							bx::StringView block = bx::strFindBlock(bx::StringView(brace.getPtr(), shader.getTerm() ), '{', '}');
+							if (!block.isEmpty() )
 							{
-								strInsert(const_cast<char*>(end), "__RETURN__;\n");
+								strInsert(const_cast<char*>(block.getTerm()-1), "__RETURN__;\n");
 							}
 						}
 
@@ -1685,7 +1840,7 @@ namespace bgfx
 							}
 							else
 							{
-								fprintf(stderr, "gl_VertexID builtin is not supported by this D3D9 HLSL.\n");
+								bx::printf("gl_VertexID builtin is not supported by this D3D9 HLSL.\n");
 								return false;
 							}
 						}
@@ -1701,7 +1856,7 @@ namespace bgfx
 							}
 							else
 							{
-								fprintf(stderr, "gl_InstanceID builtin is not supported by this D3D9 HLSL.\n");
+								bx::printf("gl_InstanceID builtin is not supported by this D3D9 HLSL.\n");
 								return false;
 							}
 						}
@@ -1740,6 +1895,13 @@ namespace bgfx
 //									);
 						}
 
+						if (0 != spirv)
+						{
+							preprocessor.writef(
+								"\tgl_Position.y = -gl_Position.y; \\\n"
+								);
+						}
+
 						preprocessor.writef(
 							"\treturn _varying_"
 							);
@@ -1770,57 +1932,68 @@ namespace bgfx
 					}
 
 					{
+						std::string code;
+
 						if ('f' == _options.shaderType)
 						{
 							bx::write(_writer, BGFX_CHUNK_MAGIC_FSH);
 							bx::write(_writer, inputHash);
+							bx::write(_writer, uint32_t(0) );
 						}
 						else if ('v' == _options.shaderType)
 						{
 							bx::write(_writer, BGFX_CHUNK_MAGIC_VSH);
+							bx::write(_writer, uint32_t(0) );
 							bx::write(_writer, outputHash);
 						}
 						else
 						{
 							bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
+							bx::write(_writer, uint32_t(0) );
 							bx::write(_writer, outputHash);
 						}
 
 						if (0 != glsl
-						||  0 != essl
-						||  0 != metal)
+						||  0 != essl)
 						{
-							std::string code;
+							const bx::StringView preprocessedInput(preprocessor.m_preprocessed.c_str() );
+
+							if (!bx::strFind(preprocessedInput, "layout(std430").isEmpty()
+							||  !bx::strFind(preprocessedInput, "image2D").isEmpty() )
+							{
+								glsl = 430;
+							}
 
 							if (glsl < 400)
 							{
 								const bool usesTextureLod   = false
-									|| !!bx::findIdentifierMatch(input, s_ARB_shader_texture_lod)
-									|| !!bx::findIdentifierMatch(input, s_EXT_shader_texture_lod)
+									|| !bx::findIdentifierMatch(input, s_ARB_shader_texture_lod).isEmpty()
+									|| !bx::findIdentifierMatch(input, s_EXT_shader_texture_lod).isEmpty()
 									;
-								const bool usesInstanceID   = !!bx::strFind(input, "gl_InstanceID");
-								const bool usesGpuShader4   = !!bx::findIdentifierMatch(input, s_EXT_gpu_shader4);
-								const bool usesGpuShader5   = !!bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
-								const bool usesTexelFetch   = !!bx::findIdentifierMatch(input, s_texelFetch);
-								const bool usesTextureMS    = !!bx::findIdentifierMatch(input, s_ARB_texture_multisample);
-								const bool usesTextureArray = !!bx::findIdentifierMatch(input, s_textureArray);
-								const bool usesPacking      = !!bx::findIdentifierMatch(input, s_ARB_shading_language_packing);
+								const bool usesInstanceID   = !bx::findIdentifierMatch(input, "gl_InstanceID").isEmpty();
+								const bool usesGpuShader4   = !bx::findIdentifierMatch(input, s_EXT_gpu_shader4).isEmpty();
+								const bool usesGpuShader5   = !bx::findIdentifierMatch(input, s_ARB_gpu_shader5).isEmpty();
+								const bool usesTexelFetch   = !bx::findIdentifierMatch(input, s_texelFetch).isEmpty();
+								const bool usesTextureMS    = !bx::findIdentifierMatch(input, s_ARB_texture_multisample).isEmpty();
+								const bool usesTextureArray = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
+								const bool usesPacking      = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
 
 								if (0 == essl)
 								{
-									const bool need130 = 120 == glsl && (false
-										|| bx::findIdentifierMatch(input, s_130)
+									const bool need130 = (120 == glsl && (false
+										|| !bx::findIdentifierMatch(input, s_130).isEmpty()
+										|| usesInterpolationQualifiers
 										|| usesTexelFetch
-										);
+										) );
 
-									if (0 != metal)
+									bx::stringPrintf(code, "#version %s\n", need130 ? "130" : _options.profile.c_str());
+									glsl = 130;
+
+									if (need130)
 									{
-										bx::stringPrintf(code, "#version 120\n");
-									}
-									else
-									{
-										bx::stringPrintf(code, "#version %s\n", need130 ? "130" : _options.profile.c_str());
-										glsl = 130;
+										bx::stringPrintf(code, "#define varying %s\n"
+											, 'f' == _options.shaderType ? "in" : "out"
+											);
 									}
 
 									if (usesInstanceID)
@@ -1918,50 +2091,102 @@ namespace bgfx
 									{
 										bx::stringPrintf(code
 											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
-												"#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
+											  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
 											);
 									}
 									else
 									{
 										bx::stringPrintf(code
 											, "#define bgfxShadow2D     shadow2D\n"
-												"#define bgfxShadow2DProj shadow2DProj\n"
+											  "#define bgfxShadow2DProj shadow2DProj\n"
 											);
 									}
 								}
 								else
 								{
+									if (usesInterpolationQualifiers)
+									{
+										bx::stringPrintf(code, "#version 300 es\n");
+										bx::stringPrintf(code, "#define attribute in\n");
+										bx::stringPrintf(code, "#define varying %s\n"
+											, 'f' == _options.shaderType ? "in" : "out"
+											);
+									}
+									else if (essl == 2)
+									{
+										code +=
+											"mat2 transpose(mat2 _mtx)\n"
+											"{\n"
+											"	vec2 v0 = _mtx[0];\n"
+											"	vec2 v1 = _mtx[1];\n"
+											"\n"
+											"	return mat2(\n"
+											"		  vec2(v0.x, v1.x)\n"
+											"		, vec2(v0.y, v1.y)\n"
+											"		);\n"
+											"}\n"
+											"\n"
+											"mat3 transpose(mat3 _mtx)\n"
+											"{\n"
+											"	vec3 v0 = _mtx[0];\n"
+											"	vec3 v1 = _mtx[1];\n"
+											"	vec3 v2 = _mtx[2];\n"
+											"\n"
+											"	return mat3(\n"
+											"		  vec3(v0.x, v1.x, v2.x)\n"
+											"		, vec3(v0.y, v1.y, v2.y)\n"
+											"		, vec3(v0.z, v1.z, v2.z)\n"
+											"		);\n"
+											"}\n"
+											"\n"
+											"mat4 transpose(mat4 _mtx)\n"
+											"{\n"
+											"	vec4 v0 = _mtx[0];\n"
+											"	vec4 v1 = _mtx[1];\n"
+											"	vec4 v2 = _mtx[2];\n"
+											"	vec4 v3 = _mtx[3];\n"
+											"\n"
+											"	return mat4(\n"
+											"		  vec4(v0.x, v1.x, v2.x, v3.x)\n"
+											"		, vec4(v0.y, v1.y, v2.y, v3.y)\n"
+											"		, vec4(v0.z, v1.z, v2.z, v3.z)\n"
+											"		, vec4(v0.w, v1.w, v2.w, v3.w)\n"
+											"		);\n"
+											"}\n"
+											;
+									}
+
 									// Pretend that all extensions are available.
 									// This will be stripped later.
 									if (usesTextureLod)
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_shader_texture_lod : enable\n"
-												"#define texture2DLod      texture2DLodEXT\n"
-												"#define texture2DGrad     texture2DGradEXT\n"
-												"#define texture2DProjLod  texture2DProjLodEXT\n"
-												"#define texture2DProjGrad texture2DProjGradEXT\n"
-												"#define textureCubeLod    textureCubeLodEXT\n"
-												"#define textureCubeGrad   textureCubeGradEXT\n"
+											  "#define texture2DLod      texture2DLodEXT\n"
+											  "#define texture2DGrad     texture2DGradEXT\n"
+											  "#define texture2DProjLod  texture2DProjLodEXT\n"
+											  "#define texture2DProjGrad texture2DProjGradEXT\n"
+											  "#define textureCubeLod    textureCubeLodEXT\n"
+											  "#define textureCubeGrad   textureCubeGradEXT\n"
 											);
 									}
 
-									if (NULL != bx::findIdentifierMatch(input, s_OES_standard_derivatives) )
+									if (!bx::findIdentifierMatch(input, s_OES_standard_derivatives).isEmpty() )
 									{
 										bx::stringPrintf(code, "#extension GL_OES_standard_derivatives : enable\n");
 									}
 
-									if (NULL != bx::findIdentifierMatch(input, s_OES_texture_3D) )
+									if (!bx::findIdentifierMatch(input, s_OES_texture_3D).isEmpty() )
 									{
 										bx::stringPrintf(code, "#extension GL_OES_texture_3D : enable\n");
 									}
 
-									if (NULL != bx::findIdentifierMatch(input, s_EXT_shadow_samplers) )
+									if (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty() )
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_shadow_samplers : enable\n"
-												"#define shadow2D shadow2DEXT\n"
-												"#define shadow2DProj shadow2DProjEXT\n"
+											  "#define shadow2D shadow2DEXT\n"
+											  "#define shadow2DProj shadow2DProjEXT\n"
 											);
 									}
 
@@ -1979,11 +2204,11 @@ namespace bgfx
 											);
 									}
 
-									if (NULL != bx::findIdentifierMatch(input, "gl_FragDepth") )
+									if (!bx::findIdentifierMatch(input, "gl_FragDepth").isEmpty() )
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_frag_depth : enable\n"
-												"#define gl_FragDepth gl_FragDepthEXT\n"
+											  "#define gl_FragDepth gl_FragDepthEXT\n"
 											);
 									}
 
@@ -1994,22 +2219,45 @@ namespace bgfx
 											);
 									}
 
-									bx::stringPrintf(code,
-											"#define ivec2 vec2\n"
-											"#define ivec3 vec3\n"
-											"#define ivec4 vec4\n"
-											);
+									bx::stringPrintf(code
+										, "#define ivec2 vec2\n"
+										  "#define ivec3 vec3\n"
+										  "#define ivec4 vec4\n"
+										  "#define uvec2 vec2\n"
+										  "#define uvec3 vec3\n"
+										  "#define uvec4 vec4\n"
+									);
 								}
 							}
 							else
 							{
 								bx::stringPrintf(code, "#version %d\n", glsl);
-							}
 
-							code += preprocessor.m_preprocessed;
+								bx::stringPrintf(code
+									, "#define texture2DLod      textureLod\n"
+									  "#define texture2DGrad     textureGrad\n"
+									  "#define texture2DProjLod  textureProjLod\n"
+									  "#define texture2DProjGrad textureProjGrad\n"
+									  "#define textureCubeLod    textureLod\n"
+									  "#define textureCubeGrad   textureGrad\n"
+									  "#define texture3D         texture\n"
+									);
+
+								bx::stringPrintf(code, "#define attribute in\n");
+								bx::stringPrintf(code, "#define varying %s\n"
+									, 'f' == _options.shaderType ? "in" : "out"
+									);
+
+								bx::stringPrintf(code
+									, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
+									  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
+									);
+							}
 
 							if (glsl > 400)
 							{
+								code += preprocessor.m_preprocessed;
+
 								bx::write(_writer, uint16_t(0) );
 
 								uint32_t shaderSize = (uint32_t)code.size();
@@ -2021,36 +2269,33 @@ namespace bgfx
 							}
 							else
 							{
-								compiled = compileGLSLShader(_options
-									, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : essl
-									, code
-									, _writer
-									);
+								code += _comment;
+								code += preprocessor.m_preprocessed;
+
+								compiled = compileGLSLShader(_options, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : essl, code, _writer);
 							}
-						}
-						else if (0 != spirv)
-						{
-							compiled = compileSPIRVShader(_options
-								, 0
-								, preprocessor.m_preprocessed
-								, _writer
-								);
-						}
-						else if (0 != pssl)
-						{
-							compiled = compilePSSLShader(_options
-								, 0
-								, preprocessor.m_preprocessed
-								, _writer
-								);
 						}
 						else
 						{
-							compiled = compileHLSLShader(_options
-								, d3d
-								, preprocessor.m_preprocessed
-								, _writer
-								);
+							code += _comment;
+							code += preprocessor.m_preprocessed;
+
+							if (0 != metal)
+							{
+								compiled = compileMetalShader(_options, BX_MAKEFOURCC('M', 'T', 'L', 0), code, _writer);
+							}
+							else if (0 != spirv)
+							{
+								compiled = compileSPIRVShader(_options, 0, code, _writer);
+							}
+							else if (0 != pssl)
+							{
+								compiled = compilePSSLShader(_options, 0, code, _writer);
+							}
+							else
+							{
+								compiled = compileHLSLShader(_options, d3d, code, _writer);
+							}
 						}
 					}
 
@@ -2082,8 +2327,8 @@ namespace bgfx
 
 		if (cmdLine.hasArg('v', "version") )
 		{
-			fprintf(stderr
-				, "shaderc, bgfx shader compiler tool, version %d.%d.%d.\n"
+			bx::printf(
+				  "shaderc, bgfx shader compiler tool, version %d.%d.%d.\n"
 				, BGFX_SHADERC_VERSION_MAJOR
 				, BGFX_SHADERC_VERSION_MINOR
 				, BGFX_API_VERSION
@@ -2144,14 +2389,15 @@ namespace bgfx
 			options.profile = profile;
 		}
 
-		{	// hlsl only
-			options.debugInformation = cmdLine.hasArg('\0', "debug");
-			options.avoidFlowControl = cmdLine.hasArg('\0', "avoid-flow-control");
-			options.noPreshader = cmdLine.hasArg('\0', "no-preshader");
-			options.partialPrecision = cmdLine.hasArg('\0', "partial-precision");
-			options.preferFlowControl = cmdLine.hasArg('\0', "prefer-flow-control");
+		{
+			options.debugInformation       = cmdLine.hasArg('\0', "debug");
+			options.avoidFlowControl       = cmdLine.hasArg('\0', "avoid-flow-control");
+			options.noPreshader            = cmdLine.hasArg('\0', "no-preshader");
+			options.partialPrecision       = cmdLine.hasArg('\0', "partial-precision");
+			options.preferFlowControl      = cmdLine.hasArg('\0', "prefer-flow-control");
 			options.backwardsCompatibility = cmdLine.hasArg('\0', "backwards-compatibility");
-			options.warningsAreErrors = cmdLine.hasArg('\0', "Werror");
+			options.warningsAreErrors      = cmdLine.hasArg('\0', "Werror");
+			options.keepIntermediate       = cmdLine.hasArg('\0', "keep-intermediate");
 
 			uint32_t optimization = 3;
 			if (cmdLine.hasArg(optimization, 'O') )
@@ -2161,38 +2407,45 @@ namespace bgfx
 			}
 		}
 
-		const char* bin2c = NULL;
+		bx::StringView bin2c;
 		if (cmdLine.hasArg("bin2c") )
 		{
-			bin2c = cmdLine.findOption("bin2c");
-			if (NULL == bin2c)
+			const char* bin2cArg = cmdLine.findOption("bin2c");
+			if (NULL != bin2cArg)
+			{
+				bin2c.set(bin2cArg);
+			}
+			else
 			{
 				bin2c = baseName(outFilePath);
-				uint32_t len = (uint32_t)bx::strLen(bin2c);
-				char* temp = (char*)alloca(len+1);
-				for (char *out = temp; *bin2c != '\0';)
+				if (!bin2c.isEmpty() )
 				{
-					char ch = *bin2c++;
-					if (isalnum(ch) )
+					char* temp = (char*)alloca(bin2c.getLength()+1);
+					for (uint32_t ii = 0, num = bin2c.getLength(); ii < num; ++ii)
 					{
-						*out++ = ch;
+						char ch = bin2c.getPtr()[ii];
+						if (bx::isAlphaNum(ch) )
+						{
+							temp[ii] = ch;
+						}
+						else
+						{
+							temp[ii] = '_';
+						}
 					}
-					else
-					{
-						*out++ = '_';
-					}
-				}
-				temp[len] = '\0';
 
-				bin2c = temp;
+					temp[bin2c.getLength()] = '\0';
+
+					bin2c = temp;
+				}
 			}
 		}
 
-		bool depends = cmdLine.hasArg("depends");
+		options.depends = cmdLine.hasArg("depends");
 		options.preprocessOnly = cmdLine.hasArg("preprocess");
 		const char* includeDir = cmdLine.findOption('i');
 
-		BX_TRACE("depends: %d", depends);
+		BX_TRACE("depends: %d", options.depends);
 		BX_TRACE("preprocessOnly: %d", options.preprocessOnly);
 		BX_TRACE("includeDir: %s", includeDir);
 
@@ -2204,54 +2457,62 @@ namespace bgfx
 
 		std::string dir;
 		{
-			const char* base = baseName(filePath);
+			bx::FilePath fp(filePath);
+			bx::StringView path(fp.getPath() );
 
-			if (base != filePath)
-			{
-				dir.assign(filePath, base-filePath);
-				options.includeDirs.push_back(dir.c_str());
-			}
+			dir.assign(path.getPtr(), path.getTerm() );
+			options.includeDirs.push_back(dir);
 		}
 
 		const char* defines = cmdLine.findOption("define");
 		while (NULL != defines
 		&&    '\0'  != *defines)
 		{
-			defines = bx::strws(defines);
-			const char* eol = bx::strFind(defines, ';');
-			if (NULL == eol)
-			{
-				eol = defines + bx::strLen(defines);
-			}
-			std::string define(defines, eol);
+			defines = bx::strLTrimSpace(defines).getPtr();
+			bx::StringView eol = bx::strFind(defines, ';');
+			std::string define(defines, eol.getPtr() );
 			options.defines.push_back(define.c_str() );
-			defines = ';' == *eol ? eol+1 : eol;
+			defines = ';' == *eol.getPtr() ? eol.getPtr()+1 : eol.getPtr();
 		}
+
+		std::string commandLineComment = "// shaderc command line:\n//";
+		for (int32_t ii = 0, num = cmdLine.getNum(); ii < num; ++ii)
+		{
+			commandLineComment += " ";
+			commandLineComment += cmdLine.get(ii);
+		}
+		commandLineComment += "\n\n";
 
 		bool compiled = false;
 
 		bx::FileReader reader;
 		if (!bx::open(&reader, filePath) )
 		{
-			fprintf(stderr, "Unable to open file '%s'.\n", filePath);
+			bx::printf("Unable to open file '%s'.\n", filePath);
 		}
 		else
 		{
-			std::string defaultVarying = dir + "varying.def.sc";
-			const char* varyingdef = cmdLine.findOption("varyingdef", defaultVarying.c_str() );
-			File attribdef(varyingdef);
-			const char* parse = attribdef.getData();
-			if (NULL != parse
-			&&  *parse != '\0')
+			const char* varying = NULL;
+			File attribdef;
+
+			if ('c' != options.shaderType)
 			{
-				options.dependencies.push_back(varyingdef);
-			}
-			else
-			{
-				fprintf(stderr, "ERROR: Failed to parse varying def file: \"%s\" No input/output semantics will be generated in the code!\n", varyingdef);
+				std::string defaultVarying = dir + "varying.def.sc";
+				const char* varyingdef = cmdLine.findOption("varyingdef", defaultVarying.c_str() );
+				attribdef.load(varyingdef);
+				varying = attribdef.getData();
+				if (NULL     != varying
+				&&  *varying != '\0')
+				{
+					options.dependencies.push_back(varyingdef);
+				}
+				else
+				{
+					bx::printf("ERROR: Failed to parse varying def file: \"%s\" No input/output semantics will be generated in the code!\n", varyingdef);
+				}
 			}
 
-			const size_t padding = 4096;
+			const size_t padding    = 16384;
 			uint32_t size = (uint32_t)bx::getSize(&reader);
 			char* data = new char[size+padding+1];
 			size = (uint32_t)bx::read(&reader, data, size);
@@ -2272,7 +2533,7 @@ namespace bgfx
 
 			bx::FileWriter* writer = NULL;
 
-			if (NULL != bin2c)
+			if (!bin2c.isEmpty() )
 			{
 				writer = new Bin2cWriter(bin2c);
 			}
@@ -2283,12 +2544,11 @@ namespace bgfx
 
 			if (!bx::open(writer, outFilePath) )
 			{
-				fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
+				bx::printf("Unable to open output file '%s'.", outFilePath);
 				return bx::kExitFailure;
 			}
 
-			if ( compileShader(attribdef.getData(), data, size, options, writer) )
-				compiled = true;
+			compiled = compileShader(varying, commandLineComment.c_str(), data, size, options, writer);
 
 			bx::close(writer);
 			delete writer;
@@ -2299,9 +2559,9 @@ namespace bgfx
 			return bx::kExitSuccess;
 		}
 
-		remove(outFilePath);
+		bx::remove(outFilePath);
 
-		fprintf(stderr, "Failed to build shader.\n");
+		bx::printf("Failed to build shader.\n");
 		return bx::kExitFailure;
 	}
 

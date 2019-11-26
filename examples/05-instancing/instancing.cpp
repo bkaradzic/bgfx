@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -19,17 +19,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -62,8 +62,8 @@ static const uint16_t s_cubeIndices[36] =
 class ExampleInstancing : public entry::AppI
 {
 public:
-	ExampleInstancing(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleInstancing(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -76,8 +76,13 @@ public:
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -96,7 +101,7 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 					  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-					, PosColorVertex::ms_decl
+					, PosColorVertex::ms_layout
 					);
 
 		// Create static index buffer.
@@ -163,28 +168,14 @@ public:
 				// When instancing is not supported by GPU, implement alternative
 				// code path that doesn't use instancing.
 				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " Instancing is not supported by GPU. ");
+				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Instancing is not supported by GPU. ");
 			}
 			else
 			{
-				float at[3]  = { 0.0f, 0.0f,   0.0f };
-				float eye[3] = { 0.0f, 0.0f, -35.0f };
+				const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+				const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
 				// Set view and projection matrix for view 0.
-				const bgfx::HMD* hmd = bgfx::getHMD();
-				if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-				{
-					float view[16];
-					bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
-					bgfx::setViewTransform(0, view, hmd->eye[0].projection, BGFX_VIEW_STEREO, hmd->eye[1].projection);
-
-					// Set view 0 default viewport.
-					//
-					// Use HMD's width/height since HMD's internal frame buffer size
-					// might be much larger than window size.
-					bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-				}
-				else
 				{
 					float view[16];
 					bx::mtxLookAt(view, eye, at);
@@ -221,9 +212,9 @@ public:
 							mtx[14] = 0.0f;
 
 							float* color = (float*)&data[64];
-							color[0] = bx::fsin(time+float(xx)/11.0f)*0.5f+0.5f;
-							color[1] = bx::fcos(time+float(yy)/11.0f)*0.5f+0.5f;
-							color[2] = bx::fsin(time*3.0f)*0.5f+0.5f;
+							color[0] = bx::sin(time+float(xx)/11.0f)*0.5f+0.5f;
+							color[1] = bx::cos(time+float(yy)/11.0f)*0.5f+0.5f;
+							color[2] = bx::sin(time*3.0f)*0.5f+0.5f;
 							color[3] = 1.0f;
 
 							data += instanceStride;
@@ -270,4 +261,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleInstancing, "05-instancing", "Geometry instancing.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleInstancing
+	, "05-instancing"
+	, "Geometry instancing."
+	, "https://bkaradzic.github.io/bgfx/examples.html#instancing"
+	);

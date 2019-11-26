@@ -85,12 +85,12 @@ ERROR: node is still EOpNull!
 0:17        move second child to first child ( temp int)
 0:17          'obig' ( temp int)
 0:17          Constant:
-0:17            995208915 (const int)
+0:17            -1662398820 (const int)
 0:18      Sequence
 0:18        move second child to first child ( temp int)
 0:18          'omax1' ( temp int)
 0:18          Constant:
-0:18            536870912 (const int)
+0:18            0 (const int)
 0:20      Sequence
 0:20        move second child to first child ( temp uint)
 0:20          'uo5' ( temp uint)
@@ -225,7 +225,7 @@ ERROR: node is still EOpNull!
 0:50        move second child to first child ( temp int)
 0:50          'hbig' ( temp int)
 0:50          Constant:
-0:50            -1 (const int)
+0:50            -15 (const int)
 0:52      Sequence
 0:52        move second child to first child ( temp float)
 0:52          'f1' ( temp float)
@@ -330,7 +330,7 @@ ERROR: node is still EOpNull!
 0:73        move second child to first child ( temp float)
 0:73          'g6' ( temp float)
 0:73          Constant:
-0:73            0.000005
+0:73            5.0000000000000e-06
 0:74      Sequence
 0:74        move second child to first child ( temp float)
 0:74          'g7' ( temp float)
@@ -494,12 +494,12 @@ ERROR: node is still EOpNull!
 0:17        move second child to first child ( temp int)
 0:17          'obig' ( temp int)
 0:17          Constant:
-0:17            995208915 (const int)
+0:17            -1662398820 (const int)
 0:18      Sequence
 0:18        move second child to first child ( temp int)
 0:18          'omax1' ( temp int)
 0:18          Constant:
-0:18            536870912 (const int)
+0:18            0 (const int)
 0:20      Sequence
 0:20        move second child to first child ( temp uint)
 0:20          'uo5' ( temp uint)
@@ -634,7 +634,7 @@ ERROR: node is still EOpNull!
 0:50        move second child to first child ( temp int)
 0:50          'hbig' ( temp int)
 0:50          Constant:
-0:50            -1 (const int)
+0:50            -15 (const int)
 0:52      Sequence
 0:52        move second child to first child ( temp float)
 0:52          'f1' ( temp float)
@@ -739,7 +739,7 @@ ERROR: node is still EOpNull!
 0:73        move second child to first child ( temp float)
 0:73          'g6' ( temp float)
 0:73          Constant:
-0:73            0.000005
+0:73            5.0000000000000e-06
 0:74      Sequence
 0:74        move second child to first child ( temp float)
 0:74          'g7' ( temp float)

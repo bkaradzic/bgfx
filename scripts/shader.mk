@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+# Copyright 2011-2019 Branimir Karadzic. All rights reserved.
 # License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 #
 
@@ -22,7 +22,7 @@ all:
 	@echo "  TARGET=4 (glsl)"
 	@echo "  TARGET=5 (metal)"
 	@echo "  TARGET=6 (pssl)"
-	@echo "  TARGET=7 (spriv)"
+	@echo "  TARGET=7 (spirv)"
 
 .PHONY: rebuild
 rebuild:
@@ -44,8 +44,8 @@ FS_FLAGS=--platform windows -p ps_3_0 -O 3
 SHADER_PATH=shaders/dx9
 else
 ifeq ($(TARGET), 1)
-VS_FLAGS=--platform windows -p vs_4_0 -O 3
-FS_FLAGS=--platform windows -p ps_4_0 -O 3
+VS_FLAGS=--platform windows -p vs_5_0 -O 3
+FS_FLAGS=--platform windows -p ps_5_0 -O 3
 CS_FLAGS=--platform windows -p cs_5_0 -O 1
 SHADER_PATH=shaders/dx11
 else
@@ -116,22 +116,22 @@ CS_BIN = $(addprefix $(BUILD_INTERMEDIATE_DIR)/, $(addsuffix .bin, $(basename $(
 BIN = $(VS_BIN) $(FS_BIN)
 ASM = $(VS_ASM) $(FS_ASM)
 
-ifeq ($(TARGET), $(filter $(TARGET),1 3 4 6))
+ifeq ($(TARGET), $(filter $(TARGET),1 3 4 5 6 7))
 BIN += $(CS_BIN)
 ASM += $(CS_ASM)
 endif
 
-$(BUILD_INTERMEDIATE_DIR)/vs_%.bin : $(SHADERS_DIR)vs_%.sc
+$(BUILD_INTERMEDIATE_DIR)/vs_%.bin: $(SHADERS_DIR)vs_%.sc
 	@echo [$(<)]
 	$(SILENT) $(SHADERC) $(VS_FLAGS) --type vertex --depends -o $(@) -f $(<) --disasm
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
-$(BUILD_INTERMEDIATE_DIR)/fs_%.bin : $(SHADERS_DIR)fs_%.sc
+$(BUILD_INTERMEDIATE_DIR)/fs_%.bin: $(SHADERS_DIR)fs_%.sc
 	@echo [$(<)]
 	$(SILENT) $(SHADERC) $(FS_FLAGS) --type fragment --depends -o $(@) -f $(<) --disasm
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
-$(BUILD_INTERMEDIATE_DIR)/cs_%.bin : $(SHADERS_DIR)cs_%.sc
+$(BUILD_INTERMEDIATE_DIR)/cs_%.bin: $(SHADERS_DIR)cs_%.sc
 	@echo [$(<)]
 	$(SILENT) $(SHADERC) $(CS_FLAGS) --type compute --depends -o $(@) -f $(<) --disasm
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
@@ -157,6 +157,8 @@ dirs:
 
 .PHONY: rebuild
 rebuild: clean all
+
+$(BIN) : | $(BUILD_INTERMEDIATE_DIR)
 
 endif # TARGET
 

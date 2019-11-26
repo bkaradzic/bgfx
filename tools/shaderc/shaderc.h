@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -45,9 +45,7 @@ namespace bgfx
 #endif // SHADERC_CONFIG_HLSL
 
 #include <alloca.h>
-#include <stdio.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include <algorithm>
 #include <string>
@@ -89,7 +87,7 @@ namespace bgfx
 
 			uint32_t pos = m_pos;
 			const char* str = &m_str[pos];
-			const char* nl = bx::strnl(str);
+			const char* nl = bx::strFindNl(str).getPtr();
 			pos += (uint32_t)(nl - str);
 
 			const char* eol = &m_str[pos];
@@ -106,6 +104,8 @@ namespace bgfx
 		uint32_t m_pos;
 		uint32_t m_size;
 	};
+
+	bx::StringView nextWord(bx::StringView& _parse);
 
 #define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
 #define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
@@ -152,6 +152,7 @@ namespace bgfx
 		bool preferFlowControl;
 		bool backwardsCompatibility;
 		bool warningsAreErrors;
+		bool keepIntermediate;
 
 		bool optimize;
 		uint32_t optimizationLevel;
@@ -166,8 +167,11 @@ namespace bgfx
 
 	bool compileGLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
 	bool compileHLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
+	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
 	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
 	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
+
+	const char* getPsslPreamble();
 
 } // namespace bgfx
 

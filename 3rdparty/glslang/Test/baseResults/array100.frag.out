@@ -10,7 +10,7 @@ ERROR: 0:24: 'array assignment' : not supported for this version or the enabled 
 ERROR: 0:25: 'array assignment' : not supported for this version or the enabled extensions 
 ERROR: 0:25: 'assign' :  cannot convert from ' global 4-element array of mediump float' to ' global 5-element array of mediump float'
 ERROR: 0:26: 'array assignment' : not supported for this version or the enabled extensions 
-ERROR: 0:26: 'assign' :  cannot convert from ' global 4-element array of mediump float' to ' global implicitly-sized array of mediump float'
+ERROR: 0:26: 'assign' :  cannot convert from ' global 4-element array of mediump float' to ' global unsized 1-element array of mediump float'
 ERROR: 0:28: 'foo' : no matching overloaded function found 
 ERROR: 0:31: 'arrayed constructor' : not supported for this version or the enabled extensions 
 ERROR: 0:31: 'array comparison' : not supported for this version or the enabled extensions 
@@ -67,7 +67,7 @@ ERROR: node is still EOpNull!
 0:24        Function Call: foo(f1[5]; ( global 4-element array of mediump float)
 0:24          'g5' ( global 5-element array of mediump float)
 0:25      'g5' ( global 5-element array of mediump float)
-0:26      'gu' ( global implicitly-sized array of mediump float)
+0:26      'gu' ( global unsized 1-element array of mediump float)
 0:28      Constant:
 0:28        0.000000
 0:29      Function Call: bar(f1[5]; ( global void)
@@ -84,7 +84,7 @@ ERROR: node is still EOpNull!
 0:31        true case
 0:32        move second child to first child ( temp mediump float)
 0:32          direct index ( temp mediump float)
-0:32            'gu' ( global implicitly-sized array of mediump float)
+0:32            'gu' ( global unsized 1-element array of mediump float)
 0:32            Constant:
 0:32              0 (const int)
 0:32          Constant:
@@ -152,7 +152,7 @@ ERROR: node is still EOpNull!
 0:69          'initSb' ( temp structure{ global mediump 4-component vector of float v4,  global structure{ global mediump 3-component vector of float v3,  global 4-element array of mediump 2-component vector of float v2} sa})
 0:69          's1' ( temp structure{ global mediump 4-component vector of float v4,  global structure{ global mediump 3-component vector of float v3,  global 4-element array of mediump 2-component vector of float v2} sa})
 0:?   Linker Objects
-0:?     'gu' ( global implicitly-sized array of mediump float)
+0:?     'gu' ( global unsized 1-element array of mediump float)
 0:?     'g4' ( global 4-element array of mediump float)
 0:?     'g5' ( global 5-element array of mediump float)
 0:?     'a' ( uniform mediump int)

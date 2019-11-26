@@ -2,7 +2,6 @@ atomic_uint.frag
 ERROR: 0:10: 'atomic_uint' : samplers and atomic_uints cannot be output parameters 
 ERROR: 0:12: 'return' : type does not match, or is not convertible to, the function's return type 
 ERROR: 0:18: 'atomic_uint' : atomic_uints can only be used in uniform variables or function parameters: non_uniform_counter
-ERROR: 0:18: 'atomic_uint' : layout(binding=X) is required 
 ERROR: 0:23: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCounterBindings 
 ERROR: 0:28: '+' :  wrong operand types: no operation '+' exists that takes a left-hand operand of type 'layout( binding=0 offset=0) uniform atomic_uint' and a right operand of type 'layout( binding=0 offset=0) uniform atomic_uint' (or there is no acceptable conversion)
 ERROR: 0:29: '-' :  wrong operand type no operation '-' exists that takes an operand of type layout( binding=0 offset=0) uniform atomic_uint (or there is no acceptable conversion)
@@ -10,14 +9,10 @@ ERROR: 0:31: '[]' : scalar integer expression required
 ERROR: 0:34: 'assign' :  l-value required "counter" (can't modify a uniform)
 ERROR: 0:34: 'assign' :  cannot convert from ' const int' to 'layout( binding=0 offset=0) uniform atomic_uint'
 ERROR: 0:37: 'atomic_uint' : atomic_uints can only be used in uniform variables or function parameters: acin
-ERROR: 0:37: 'atomic_uint' : layout(binding=X) is required 
 ERROR: 0:38: 'atomic_uint' : atomic_uints can only be used in uniform variables or function parameters: acg
-ERROR: 0:38: 'atomic_uint' : layout(binding=X) is required 
-ERROR: 0:40: 'atomic_uint' : layout(binding=X) is required 
-ERROR: 0:46: 'atomic_uint' : layout(binding=X) is required 
 ERROR: 0:47: 'offset' : atomic counters sharing the same offset: 12
 ERROR: 0:48: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCounterBindings 
-ERROR: 18 compilation errors.  No code generated.
+ERROR: 13 compilation errors.  No code generated.
 
 
 Shader version: 420

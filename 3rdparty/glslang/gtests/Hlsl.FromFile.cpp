@@ -58,16 +58,27 @@ std::string FileNameAsCustomTestSuffix(
 }
 
 using HlslCompileTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
+using HlslVulkan1_1CompileTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
 using HlslCompileAndFlattenTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
 using HlslLegalizeTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
+using HlslDebugTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
+using HlslDX9CompatibleTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
+using HlslLegalDebugTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
 
 // Compiling HLSL to pre-legalized SPIR-V under Vulkan semantics. Expected
 // to successfully generate both AST and SPIR-V.
 TEST_P(HlslCompileTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
-                            Source::HLSL, Semantics::Vulkan,
-                            Target::BothASTAndSpv, GetParam().entryPoint);
+                            Source::HLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0,  glslang::EShTargetSpv_1_0,
+                            Target::BothASTAndSpv, true, GetParam().entryPoint);
+}
+
+TEST_P(HlslVulkan1_1CompileTest, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
+                            Source::HLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_1, glslang::EShTargetSpv_1_3,
+                            Target::BothASTAndSpv, true, GetParam().entryPoint);
 }
 
 TEST_P(HlslCompileAndFlattenTest, FromFile)
@@ -82,9 +93,39 @@ TEST_P(HlslCompileAndFlattenTest, FromFile)
 TEST_P(HlslLegalizeTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
-                            Source::HLSL, Semantics::Vulkan,
-                            Target::Spv, GetParam().entryPoint,
-                            "/baseLegalResults/", false);
+                            Source::HLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0,  glslang::EShTargetSpv_1_0,
+                            Target::Spv, true, GetParam().entryPoint,
+                            "/baseLegalResults/", true);
+}
+
+// Compiling HLSL to pre-legalized SPIR-V. Expected to successfully generate
+// SPIR-V with debug instructions, particularly line info.
+TEST_P(HlslDebugTest, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
+                            Source::HLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
+                            Target::Spv, true, GetParam().entryPoint,
+                            "/baseResults/", false, true);
+}
+
+TEST_P(HlslDX9CompatibleTest, FromFile)
+{
+    loadFileCompileAndCheckWithOptions(GlobalTestSettings.testRoot, GetParam().fileName, Source::HLSL,
+                                       Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
+                                       Target::BothASTAndSpv, true,
+                                       GetParam().entryPoint, "/baseResults/",
+                                       EShMessages::EShMsgHlslDX9Compatible);
+}
+
+// Compiling HLSL to legalized SPIR-V with debug instructions. Expected to
+// successfully generate SPIR-V with debug instructions preserved through
+// legalization, particularly line info.
+TEST_P(HlslLegalDebugTest, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
+                            Source::HLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
+                            Target::Spv, true, GetParam().entryPoint,
+                            "/baseResults/", true, true);
 }
 
 // clang-format off
@@ -140,10 +181,12 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.constructArray.vert", "main"},
         {"hlsl.constructexpr.frag", "main"},
         {"hlsl.constructimat.frag", "main"},
+        {"hlsl.coverage.frag", "main"},
         {"hlsl.depthGreater.frag", "PixelShaderFunction"},
         {"hlsl.depthLess.frag", "PixelShaderFunction"},
         {"hlsl.discard.frag", "PixelShaderFunction"},
         {"hlsl.doLoop.frag", "PixelShaderFunction"},
+        {"hlsl.earlydepthstencil.frag", "main"},
         {"hlsl.emptystructreturn.frag", "main"},
         {"hlsl.emptystructreturn.vert", "main"},
         {"hlsl.emptystruct.init.vert", "main"},
@@ -187,8 +230,11 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.hull.void.tesc", "main"},
         {"hlsl.hull.ctrlpt-1.tesc", "main"},
         {"hlsl.hull.ctrlpt-2.tesc", "main"},
+        {"hlsl.format.rwtexture.frag", "main"},
+        {"hlsl.groupid.comp", "main"},
         {"hlsl.identifier.sample.frag", "main"},
         {"hlsl.if.frag", "PixelShaderFunction"},
+        {"hlsl.imagefetch-subvec4.comp", "main"},
         {"hlsl.implicitBool.frag", "main"},
         {"hlsl.inf.vert", "main"},
         {"hlsl.inoutquals.frag", "main"},
@@ -247,7 +293,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.matrixindex.frag", "main"},
         {"hlsl.nonstaticMemberFunction.frag", "main"},
         {"hlsl.numericsuffixes.frag", "main"},
-        {"hlsl.numthreads.comp", "main_aux1"},
+        {"hlsl.numthreads.comp", "main_aux2"},
         {"hlsl.overload.frag", "PixelShaderFunction"},
         {"hlsl.opaque-type-bug.frag", "main"},
         {"hlsl.params.default.frag", "main"},
@@ -304,8 +350,11 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.semicolons.frag", "main"},
         {"hlsl.shapeConv.frag", "main"},
         {"hlsl.shapeConvRet.frag", "main"},
+        {"hlsl.self_cast.frag", "main"},
         {"hlsl.snorm.uav.comp", "main"},
+        {"hlsl.specConstant.frag", "main"},
         {"hlsl.staticMemberFunction.frag", "main"},
+        {"hlsl.staticFuncInit.frag", "main"},
         {"hlsl.store.rwbyteaddressbuffer.type.comp", "main"},
         {"hlsl.stringtoken.frag", "main"},
         {"hlsl.string.frag", "main"},
@@ -361,6 +410,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.targetStruct1.frag", "main"},
         {"hlsl.targetStruct2.frag", "main"},
         {"hlsl.templatetypes.frag", "PixelShaderFunction"},
+        {"hlsl.tristream-append.geom", "main"},
         {"hlsl.tx.bracket.frag", "main"},
         {"hlsl.tx.overload.frag", "main"},
         {"hlsl.type.half.frag", "main"},
@@ -368,7 +418,26 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.typeGraphCopy.vert", "main"},
         {"hlsl.typedef.frag", "PixelShaderFunction"},
         {"hlsl.whileLoop.frag", "PixelShaderFunction"},
-        {"hlsl.void.frag", "PixelShaderFunction"}
+        {"hlsl.void.frag", "PixelShaderFunction"},
+        {"hlsl.type.type.conversion.all.frag", "main"}
+    }),
+    FileNameAsCustomTestSuffix
+);
+// clang-format on
+
+// clang-format off
+INSTANTIATE_TEST_CASE_P(
+    ToSpirv, HlslVulkan1_1CompileTest,
+    ::testing::ValuesIn(std::vector<FileNameEntryPointPair>{
+        {"hlsl.wavebroadcast.comp", "CSMain"},
+        {"hlsl.waveprefix.comp", "CSMain"},
+        {"hlsl.wavequad.comp", "CSMain"},
+        {"hlsl.wavequery.comp", "CSMain"},
+        {"hlsl.wavequery.frag", "PixelShaderFunction"},
+        {"hlsl.wavereduction.comp", "CSMain"},
+        {"hlsl.wavevote.comp", "CSMain"},
+        { "hlsl.type.type.conversion.valid.frag", "main" },
+        {"hlsl.int.dot.frag", "main"}
     }),
     FileNameAsCustomTestSuffix
 );
@@ -385,7 +454,7 @@ INSTANTIATE_TEST_CASE_P(
 );
 // clang-format on
 
-#ifdef ENABLE_OPT
+#if ENABLE_OPT
 // clang-format off
 INSTANTIATE_TEST_CASE_P(
     ToSpirv, HlslLegalizeTest,
@@ -403,6 +472,35 @@ INSTANTIATE_TEST_CASE_P(
 );
 // clang-format on
 #endif
+
+// clang-format off
+INSTANTIATE_TEST_CASE_P(
+    ToSpirv, HlslDebugTest,
+    ::testing::ValuesIn(std::vector<FileNameEntryPointPair>{
+        {"hlsl.pp.line2.frag", "MainPs"}
+    }),
+    FileNameAsCustomTestSuffix
+);
+
+INSTANTIATE_TEST_CASE_P(
+    ToSpirv, HlslDX9CompatibleTest,
+    ::testing::ValuesIn(std::vector<FileNameEntryPointPair>{
+        {"hlsl.sample.dx9.frag", "main"},
+        {"hlsl.sample.dx9.vert", "main"},
+    }),
+    FileNameAsCustomTestSuffix
+);
+
+// clang-format off
+INSTANTIATE_TEST_CASE_P(
+    ToSpirv, HlslLegalDebugTest,
+    ::testing::ValuesIn(std::vector<FileNameEntryPointPair>{
+        {"hlsl.pp.line4.frag", "MainPs"}
+    }),
+    FileNameAsCustomTestSuffix
+);
+
+// clang-format on
 
 }  // anonymous namespace
 }  // namespace glslangtest

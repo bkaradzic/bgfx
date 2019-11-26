@@ -179,6 +179,10 @@ ERROR: node is still EOpNull!
 0:83        2147483647 (const int)
 0:84      Constant:
 0:84        +1.#INF
+0:84      Constant:
+0:84        -1.#INF
+0:84      Constant:
+0:84        1.#IND
 0:88      Constant:
 0:88        2 (const uint)
 0:88        3 (const uint)

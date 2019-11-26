@@ -46,30 +46,22 @@
 
 #include "disassemble.h"
 #include "doc.h"
+#include "SpvTools.h"
 
 namespace spv {
     extern "C" {
         // Include C-based headers that don't have a namespace
         #include "GLSL.std.450.h"
-#ifdef AMD_EXTENSIONS
         #include "GLSL.ext.AMD.h"
-#endif
-#ifdef NV_EXTENSIONS
         #include "GLSL.ext.NV.h"
-#endif
     }
 }
 const char* GlslStd450DebugNames[spv::GLSLstd450Count];
 
 namespace spv {
 
-#ifdef AMD_EXTENSIONS
 static const char* GLSLextAMDGetDebugNames(const char*, unsigned);
-#endif
-
-#ifdef NV_EXTENSIONS
 static const char* GLSLextNVGetDebugNames(const char*, unsigned);
-#endif
 
 static void Kill(std::ostream& out, const char* message)
 {
@@ -80,12 +72,8 @@ static void Kill(std::ostream& out, const char* message)
 // used to identify the extended instruction library imported when printing
 enum ExtInstSet {
     GLSL450Inst,
-#ifdef AMD_EXTENSIONS
     GLSLextAMDInst,
-#endif
-#ifdef NV_EXTENSIONS
     GLSLextNVInst,
-#endif
     OpenCLExtInst,
 };
 
@@ -349,10 +337,21 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
         if (resultId != 0 && idDescriptor[resultId].size() == 0) {
             switch (opCode) {
             case OpTypeInt:
-                idDescriptor[resultId] = "int";
+                switch (stream[word]) {
+                case 8:  idDescriptor[resultId] = "int8_t"; break;
+                case 16: idDescriptor[resultId] = "int16_t"; break;
+                default: assert(0); // fallthrough
+                case 32: idDescriptor[resultId] = "int"; break;
+                case 64: idDescriptor[resultId] = "int64_t"; break;
+                }
                 break;
             case OpTypeFloat:
-                idDescriptor[resultId] = "float";
+                switch (stream[word]) {
+                case 16: idDescriptor[resultId] = "float16_t"; break;
+                default: assert(0); // fallthrough
+                case 32: idDescriptor[resultId] = "float"; break;
+                case 64: idDescriptor[resultId] = "float64_t"; break;
+                }
                 break;
             case OpTypeBool:
                 idDescriptor[resultId] = "bool";
@@ -364,8 +363,18 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
                 idDescriptor[resultId] = "ptr";
                 break;
             case OpTypeVector:
-                if (idDescriptor[stream[word]].size() > 0)
+                if (idDescriptor[stream[word]].size() > 0) {
                     idDescriptor[resultId].append(idDescriptor[stream[word]].begin(), idDescriptor[stream[word]].begin() + 1);
+                    if (strstr(idDescriptor[stream[word]].c_str(), "8")) {
+                        idDescriptor[resultId].append("8");
+                    }
+                    if (strstr(idDescriptor[stream[word]].c_str(), "16")) {
+                        idDescriptor[resultId].append("16");
+                    }
+                    if (strstr(idDescriptor[stream[word]].c_str(), "64")) {
+                        idDescriptor[resultId].append("64");
+                    }
+                }
                 idDescriptor[resultId].append("vec");
                 switch (stream[word + 1]) {
                 case 2:   idDescriptor[resultId].append("2");   break;
@@ -473,35 +482,29 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
                 const char* name = idDescriptor[stream[word - 2]].c_str();
                 if (0 == memcmp("OpenCL", name, 6)) {
                     extInstSet = OpenCLExtInst;
-#ifdef AMD_EXTENSIONS
                 } else if (strcmp(spv::E_SPV_AMD_shader_ballot, name) == 0 ||
                            strcmp(spv::E_SPV_AMD_shader_trinary_minmax, name) == 0 ||
                            strcmp(spv::E_SPV_AMD_shader_explicit_vertex_parameter, name) == 0 ||
                            strcmp(spv::E_SPV_AMD_gcn_shader, name) == 0) {
                     extInstSet = GLSLextAMDInst;
-#endif
-#ifdef NV_EXTENSIONS
-                }else if (strcmp(spv::E_SPV_NV_sample_mask_override_coverage, name) == 0 ||
+                } else if (strcmp(spv::E_SPV_NV_sample_mask_override_coverage, name) == 0 ||
                           strcmp(spv::E_SPV_NV_geometry_shader_passthrough, name) == 0 ||
                           strcmp(spv::E_SPV_NV_viewport_array2, name) == 0 ||
-                          strcmp(spv::E_SPV_NVX_multiview_per_view_attributes, name) == 0) {
+                          strcmp(spv::E_SPV_NVX_multiview_per_view_attributes, name) == 0 || 
+                          strcmp(spv::E_SPV_NV_fragment_shader_barycentric, name) == 0 ||
+                          strcmp(spv::E_SPV_NV_mesh_shader, name) == 0) {
                     extInstSet = GLSLextNVInst;
-#endif
                 }
                 unsigned entrypoint = stream[word - 1];
                 if (extInstSet == GLSL450Inst) {
                     if (entrypoint < GLSLstd450Count) {
                         out << "(" << GlslStd450DebugNames[entrypoint] << ")";
                     }
-#ifdef AMD_EXTENSIONS
                 } else if (extInstSet == GLSLextAMDInst) {
                     out << "(" << GLSLextAMDGetDebugNames(name, entrypoint) << ")";
-#endif
-#ifdef NV_EXTENSIONS
                 }
                 else if (extInstSet == GLSLextNVInst) {
                     out << "(" << GLSLextNVGetDebugNames(name, entrypoint) << ")";
-#endif
                 }
             }
             break;
@@ -509,6 +512,19 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
         case OperandLiteralString:
             numOperands -= disassembleString();
             break;
+        case OperandMemoryAccess:
+            outputMask(OperandMemoryAccess, stream[word++]);
+            --numOperands;
+            // Aligned is the only memory access operand that uses an immediate
+            // value, and it is also the first operand that uses a value at all.
+            if (stream[word-1] & MemoryAccessAlignedMask) {
+                disassembleImmediates(1);
+                numOperands--;
+                if (numOperands)
+                    out << " ";
+            }
+            disassembleIds(numOperands);
+            return;
         default:
             assert(operandClass >= OperandSource && operandClass < OperandOpcode);
 
@@ -607,9 +623,11 @@ static void GLSLstd450GetDebugNames(const char** names)
     names[GLSLstd450InterpolateAtCentroid]   = "InterpolateAtCentroid";
     names[GLSLstd450InterpolateAtSample]     = "InterpolateAtSample";
     names[GLSLstd450InterpolateAtOffset]     = "InterpolateAtOffset";
+    names[GLSLstd450NMin]                    = "NMin";
+    names[GLSLstd450NMax]                    = "NMax";
+    names[GLSLstd450NClamp]                  = "NClamp";
 }
 
-#ifdef AMD_EXTENSIONS
 static const char* GLSLextAMDGetDebugNames(const char* name, unsigned entrypoint)
 {
     if (strcmp(name, spv::E_SPV_AMD_shader_ballot) == 0) {
@@ -651,37 +669,60 @@ static const char* GLSLextAMDGetDebugNames(const char* name, unsigned entrypoint
 
     return "Bad";
 }
-#endif
 
-
-#ifdef NV_EXTENSIONS
 static const char* GLSLextNVGetDebugNames(const char* name, unsigned entrypoint)
 {
     if (strcmp(name, spv::E_SPV_NV_sample_mask_override_coverage) == 0 ||
         strcmp(name, spv::E_SPV_NV_geometry_shader_passthrough) == 0 ||
         strcmp(name, spv::E_ARB_shader_viewport_layer_array) == 0 ||
         strcmp(name, spv::E_SPV_NV_viewport_array2) == 0 ||
-        strcmp(spv::E_SPV_NVX_multiview_per_view_attributes, name) == 0) {
+        strcmp(name, spv::E_SPV_NVX_multiview_per_view_attributes) == 0 ||
+        strcmp(name, spv::E_SPV_NV_fragment_shader_barycentric) == 0 ||
+        strcmp(name, spv::E_SPV_NV_mesh_shader) == 0 ||
+        strcmp(name, spv::E_SPV_NV_shader_image_footprint) == 0) {
         switch (entrypoint) {
-        case DecorationOverrideCoverageNV:          return "OverrideCoverageNV";
-        case DecorationPassthroughNV:               return "PassthroughNV";
-        case CapabilityGeometryShaderPassthroughNV: return "GeometryShaderPassthroughNV";
-        case DecorationViewportRelativeNV:          return "ViewportRelativeNV";
+        // NV builtins
         case BuiltInViewportMaskNV:                 return "ViewportMaskNV";
-        case CapabilityShaderViewportMaskNV:        return "ShaderViewportMaskNV";
-        case DecorationSecondaryViewportRelativeNV: return "SecondaryViewportRelativeNV";
         case BuiltInSecondaryPositionNV:            return "SecondaryPositionNV";
         case BuiltInSecondaryViewportMaskNV:        return "SecondaryViewportMaskNV";
-        case CapabilityShaderStereoViewNV:          return "ShaderStereoViewNV";
         case BuiltInPositionPerViewNV:              return "PositionPerViewNV";
         case BuiltInViewportMaskPerViewNV:          return "ViewportMaskPerViewNV";
+        case BuiltInBaryCoordNV:                    return "BaryCoordNV";
+        case BuiltInBaryCoordNoPerspNV:             return "BaryCoordNoPerspNV";
+        case BuiltInTaskCountNV:                    return "TaskCountNV";
+        case BuiltInPrimitiveCountNV:               return "PrimitiveCountNV";
+        case BuiltInPrimitiveIndicesNV:             return "PrimitiveIndicesNV";
+        case BuiltInClipDistancePerViewNV:          return "ClipDistancePerViewNV";
+        case BuiltInCullDistancePerViewNV:          return "CullDistancePerViewNV";
+        case BuiltInLayerPerViewNV:                 return "LayerPerViewNV";
+        case BuiltInMeshViewCountNV:                return "MeshViewCountNV";
+        case BuiltInMeshViewIndicesNV:              return "MeshViewIndicesNV";
+
+        // NV Capabilities
+        case CapabilityGeometryShaderPassthroughNV: return "GeometryShaderPassthroughNV";
+        case CapabilityShaderViewportMaskNV:        return "ShaderViewportMaskNV";
+        case CapabilityShaderStereoViewNV:          return "ShaderStereoViewNV";
         case CapabilityPerViewAttributesNV:         return "PerViewAttributesNV";
+        case CapabilityFragmentBarycentricNV:       return "FragmentBarycentricNV";
+        case CapabilityMeshShadingNV:               return "MeshShadingNV";
+        case CapabilityImageFootprintNV:            return "ImageFootprintNV";
+        case CapabilitySampleMaskOverrideCoverageNV:return "SampleMaskOverrideCoverageNV";
+
+        // NV Decorations
+        case DecorationOverrideCoverageNV:          return "OverrideCoverageNV";
+        case DecorationPassthroughNV:               return "PassthroughNV";
+        case DecorationViewportRelativeNV:          return "ViewportRelativeNV";
+        case DecorationSecondaryViewportRelativeNV: return "SecondaryViewportRelativeNV";
+        case DecorationPerVertexNV:                 return "PerVertexNV";
+        case DecorationPerPrimitiveNV:              return "PerPrimitiveNV";
+        case DecorationPerViewNV:                   return "PerViewNV";
+        case DecorationPerTaskNV:                   return "PerTaskNV";
+
         default:                                    return "Bad";
         }
     }
     return "Bad";
 }
-#endif
 
 void Disassemble(std::ostream& out, const std::vector<unsigned int>& stream)
 {

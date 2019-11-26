@@ -105,7 +105,7 @@ static const float s_meshScale[] =
 	0.05f
 };
 
-// Vertex decl for our screen space quad (used in deferred rendering)
+// Vertex layout for our screen space quad (used in deferred rendering)
 struct PosTexCoord0Vertex
 {
 	float m_x;
@@ -116,24 +116,24 @@ struct PosTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
-bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 // Utility function to draw a screen space quad for deferred rendering
 void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 		PosTexCoord0Vertex* vertex = (PosTexCoord0Vertex*)vb.data;
 
 		const float minx = -_width;
@@ -186,8 +186,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleRSM : public entry::AppI
 {
 public:
-	ExampleRSM(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleRSM(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 		, m_reading(0)
 		, m_currFrame(UINT32_MAX)
 		, m_cameraSpin(false)
@@ -208,9 +208,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -254,12 +258,12 @@ public:
 		u_rsmAmount     = bgfx::createUniform("u_rsmAmount",     bgfx::UniformType::Vec4);  // How much RSM to use vs directional light
 
 		// Create texture sampler uniforms (used when we bind textures)
-		s_normal    = bgfx::createUniform("s_normal",    bgfx::UniformType::Int1);  // Normal gbuffer
-		s_depth     = bgfx::createUniform("s_depth",     bgfx::UniformType::Int1);  // Normal gbuffer
-		s_color     = bgfx::createUniform("s_color",     bgfx::UniformType::Int1);  // Color (albedo) gbuffer
-		s_light     = bgfx::createUniform("s_light",     bgfx::UniformType::Int1);  // Light buffer
-		s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Int1);  // Shadow map
-		s_rsm       = bgfx::createUniform("s_rsm",       bgfx::UniformType::Int1);  // Reflective shadow map
+		s_normal    = bgfx::createUniform("s_normal",    bgfx::UniformType::Sampler);  // Normal gbuffer
+		s_depth     = bgfx::createUniform("s_depth",     bgfx::UniformType::Sampler);  // Normal gbuffer
+		s_color     = bgfx::createUniform("s_color",     bgfx::UniformType::Sampler);  // Color (albedo) gbuffer
+		s_light     = bgfx::createUniform("s_light",     bgfx::UniformType::Sampler);  // Light buffer
+		s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Sampler);  // Shadow map
+		s_rsm       = bgfx::createUniform("s_rsm",       bgfx::UniformType::Sampler);  // Reflective shadow map
 
 		// Create program from shaders.
 		m_gbufferProgram = loadProgram("vs_rsm_gbuffer", "fs_rsm_gbuffer");  // Gbuffer
@@ -298,36 +302,36 @@ public:
 		// Light sphere
 		m_lightSphere = meshLoad("meshes/unit_sphere.bin");
 
-		const uint32_t samplerFlags = 0
+		const uint64_t tsFlags = 0
 			| BGFX_TEXTURE_RT
-			| BGFX_TEXTURE_MIN_POINT
-			| BGFX_TEXTURE_MAG_POINT
-			| BGFX_TEXTURE_MIP_POINT
-			| BGFX_TEXTURE_U_CLAMP
-			| BGFX_TEXTURE_V_CLAMP
+			| BGFX_SAMPLER_MIN_POINT
+			| BGFX_SAMPLER_MAG_POINT
+			| BGFX_SAMPLER_MIP_POINT
+			| BGFX_SAMPLER_U_CLAMP
+			| BGFX_SAMPLER_V_CLAMP
 			;
 
 		// Make gbuffer and related textures
-		m_gbufferTex[GBUFFER_RT_NORMAL] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-		m_gbufferTex[GBUFFER_RT_COLOR]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::D24,   samplerFlags);
+		m_gbufferTex[GBUFFER_RT_NORMAL] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
+		m_gbufferTex[GBUFFER_RT_COLOR]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
+		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::D24,   tsFlags);
 		m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
 
 		// Make light buffer
-		m_lightBufferTex = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
+		m_lightBufferTex = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
 		bgfx::TextureHandle lightBufferRTs[] =  {
 			m_lightBufferTex
 		};
 		m_lightBuffer = bgfx::createFrameBuffer(BX_COUNTOF(lightBufferRTs), lightBufferRTs, true);
 
 		// Make shadow buffer
-		const uint32_t rsmFlags = 0
+		const uint64_t rsmFlags = 0
 			| BGFX_TEXTURE_RT
-			| BGFX_TEXTURE_MIN_POINT
-			| BGFX_TEXTURE_MAG_POINT
-			| BGFX_TEXTURE_MIP_POINT
-			| BGFX_TEXTURE_U_CLAMP
-			| BGFX_TEXTURE_V_CLAMP
+			| BGFX_SAMPLER_MIN_POINT
+			| BGFX_SAMPLER_MAG_POINT
+			| BGFX_SAMPLER_MIP_POINT
+			| BGFX_SAMPLER_U_CLAMP
+			| BGFX_SAMPLER_V_CLAMP
 			;
 
 		// Reflective shadow map
@@ -336,8 +340,8 @@ public:
 				, SHADOW_MAP_DIM
 				, false
 				, 1
-				, bgfx::TextureFormat::BGRA8,
-				rsmFlags
+				, bgfx::TextureFormat::BGRA8
+				, rsmFlags
 				);
 
 		// Typical shadow map
@@ -346,22 +350,21 @@ public:
 				, SHADOW_MAP_DIM
 				, false
 				, 1
-				, bgfx::TextureFormat::D16,
-				BGFX_TEXTURE_RT/* | BGFX_TEXTURE_COMPARE_LEQUAL*/
-				);  // Note I'm not setting BGFX_TEXTURE_COMPARE_LEQUAL.  Why?
-		// Normally a PCF shadow map such as this requires a compare.  However, this sample also
-		// reads from this texture in the lighting pass, and only uses the PCF capabilites in the
-		// combine pass, so the flag is disabled by default.
+				, bgfx::TextureFormat::D16
+				, BGFX_TEXTURE_RT /* | BGFX_SAMPLER_COMPARE_LEQUAL*/
+				);  // Note I'm not setting BGFX_SAMPLER_COMPARE_LEQUAL.  Why?
+					// Normally a PCF shadow map such as this requires a compare.  However, this sample also
+					// reads from this texture in the lighting pass, and only uses the PCF capabilites in the
+					// combine pass, so the flag is disabled by default.
 
 		m_shadowBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_shadowBufferTex), m_shadowBufferTex, true);
 
-		// Vertex decl
+		// Vertex layout
 		PosTexCoord0Vertex::init();
 
 		// Init camera
 		cameraCreate();
-		float camPos[] = {0.0f, 1.5f, 0.0f};
-		cameraSetPosition(camPos);
+		cameraSetPosition({0.0f, 1.5f, 0.0f});
 		cameraSetVerticalAngle(-0.3f);
 
 		// Init directional light
@@ -472,7 +475,7 @@ public:
 			lightAt[1] = 0.0f;
 			lightAt[2] = 0.0f;
 
-			bx::mtxLookAt(smView, lightEye, lightAt);
+			bx::mtxLookAt(smView, bx::load<bx::Vec3>(lightEye), bx::load<bx::Vec3>(lightAt) );
 			const float area = 10.0f;
 			const bgfx::Caps* caps = bgfx::getCaps();
 			bx::mtxOrtho(smProj, -area, area, -area, area, -100.0f, 100.0f, 0.0f, caps->homogeneousDepth);
@@ -525,9 +528,9 @@ public:
 					bgfx::setUniform(u_sphereInfo, sphereInfo);
 
 					const uint64_t lightDrawState = 0
-						| BGFX_STATE_RGB_WRITE
+						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_BLEND_ADD   // <===  Overlapping lights contribute more
-						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_WRITE_A
 						| BGFX_STATE_CULL_CW     // <===  If we go into the lights, there will be problems, so we draw the far back face.
 						;
 
@@ -549,7 +552,7 @@ public:
 			bgfx::setTexture(2, s_light,     bgfx::getTexture(m_lightBuffer, 0) );
 			bgfx::setTexture(3, s_depth,     bgfx::getTexture(m_gbuffer, GBUFFER_RT_DEPTH) );
 			bgfx::setTexture(4, s_shadowMap, bgfx::getTexture(m_shadowBuffer, SHADOW_RT_DEPTH)
-				, BGFX_TEXTURE_COMPARE_LEQUAL
+				, BGFX_SAMPLER_COMPARE_LEQUAL
 				);
 
 			// Uniforms for combine pass
@@ -565,8 +568,8 @@ public:
 			// Set up state for combine pass
 			// point of this is to avoid doing depth test, which is in the default state
 			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
 				);
 
 			// Set up transform matrix for fullscreen quad
@@ -676,9 +679,9 @@ public:
 	{
 		float el = m_lightElevation * (bx::kPi/180.0f);
 		float az = m_lightAzimuth   * (bx::kPi/180.0f);
-		m_lightDir[0] = bx::fcos(el)*bx::fcos(az);
-		m_lightDir[2] = bx::fcos(el)*bx::fsin(az);
-		m_lightDir[1] = bx::fsin(el);
+		m_lightDir[0] = bx::cos(el)*bx::cos(az);
+		m_lightDir[2] = bx::cos(el)*bx::sin(az);
+		m_lightDir[1] = bx::sin(el);
 		m_lightDir[3] = 0.0f;
 	}
 
@@ -755,4 +758,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleRSM, "31-rsm", "Global Illumination with Reflective Shadow Map.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleRSM
+	, "31-rsm"
+	, "Global Illumination with Reflective Shadow Map."
+	, "https://bkaradzic.github.io/bgfx/examples.html#rsm"
+	);

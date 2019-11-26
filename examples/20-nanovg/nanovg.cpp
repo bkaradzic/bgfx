@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -23,9 +23,6 @@
 
 #include "common.h"
 #include "bgfx_utils.h"
-
-#include <stdio.h>
-#include <math.h>
 
 #include <bx/string.h>
 #include <bx/timer.h>
@@ -70,7 +67,9 @@ static char* cpToUTF8(int cp, char* str)
 	else if (cp < 0x200000) n = 4;
 	else if (cp < 0x4000000) n = 5;
 	else if (cp <= 0x7fffffff) n = 6;
+
 	str[n] = '\0';
+
 	switch (n)
 	{
 		case 6: str[5] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0x4000000; BX_FALLTHROUGH;
@@ -78,8 +77,9 @@ static char* cpToUTF8(int cp, char* str)
 		case 4: str[3] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0x10000;   BX_FALLTHROUGH;
 		case 3: str[2] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0x800;     BX_FALLTHROUGH;
 		case 2: str[1] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0xc0;      BX_FALLTHROUGH;
-		case 1: str[0] = char(cp);                                          BX_FALLTHROUGH;
+		case 1: str[0] = char(cp); break;
 	}
+
 	return str;
 }
 
@@ -518,6 +518,32 @@ void drawGraph(struct NVGcontext* vg, float x, float y, float w, float h, float 
 	nvgStrokeWidth(vg, 1.0f);
 }
 
+void drawSpinner(struct NVGcontext* vg, float cx, float cy, float r, float t)
+{
+	float a0 = 0.0f + t*6;
+	float a1 = NVG_PI + t*6;
+	float r0 = r;
+	float r1 = r * 0.75f;
+	float ax,ay, bx,by;
+	struct NVGpaint paint;
+
+	nvgSave(vg);
+
+	nvgBeginPath(vg);
+	nvgArc(vg, cx,cy, r0, a0, a1, NVG_CW);
+	nvgArc(vg, cx,cy, r1, a1, a0, NVG_CCW);
+	nvgClosePath(vg);
+	ax = cx + cosf(a0) * (r0+r1)*0.5f;
+	ay = cy + sinf(a0) * (r0+r1)*0.5f;
+	bx = cx + cosf(a1) * (r0+r1)*0.5f;
+	by = cy + sinf(a1) * (r0+r1)*0.5f;
+	paint = nvgLinearGradient(vg, ax,ay, bx,by, nvgRGBA(0,0,0,0), nvgRGBA(0,0,0,128) );
+	nvgFillPaint(vg, paint);
+	nvgFill(vg);
+
+	nvgRestore(vg);
+}
+
 void drawThumbnails(struct NVGcontext* vg, float x, float y, float w, float h, const int* images, int nimages, float t)
 {
 	float cornerRadius = 3.0f;
@@ -529,7 +555,8 @@ void drawThumbnails(struct NVGcontext* vg, float x, float y, float w, float h, c
 	float stackh = (nimages/2) * (thumb+10) + 10;
 	int i;
 	float u = (1+cosf(t*0.5f) )*0.5f;
-	float scrollh;
+	float u2 = (1-cosf(t*0.2f) )*0.5f;
+	float scrollh, dv;
 
 	nvgSave(vg);
 	//	nvgClearState(vg);
@@ -556,8 +583,10 @@ void drawThumbnails(struct NVGcontext* vg, float x, float y, float w, float h, c
 	nvgScissor(vg, x,y,w,h);
 	nvgTranslate(vg, 0, -(stackh - h)*u);
 
+	dv = 1.0f / (float)(nimages-1);
+
 	for (i = 0; i < nimages; i++) {
-		float tx, ty;
+		float tx, ty, v, a;
 		tx = x+10;
 		ty = y+10;
 		tx += (i%2) * (thumb+10);
@@ -574,7 +603,14 @@ void drawThumbnails(struct NVGcontext* vg, float x, float y, float w, float h, c
 			ix = -(iw-thumb)*0.5f;
 			iy = 0;
 		}
-		imgPaint = nvgImagePattern(vg, tx+ix, ty+iy, iw,ih, 0.0f/180.0f*NVG_PI, images[i], 1.0f);
+
+		v = i * dv;
+		a = bx::clamp((u2-v) / dv, 0.0f, 1.0f);
+
+		if (a < 1.0f)
+			drawSpinner(vg, tx+thumb/2,ty+thumb/2, thumb*0.25f, t);
+
+		imgPaint = nvgImagePattern(vg, tx+ix, ty+iy, iw,ih, 0.0f/180.0f*NVG_PI, images[i], a);
 		nvgBeginPath(vg);
 		nvgRoundedRect(vg, tx,ty, thumb,thumb, 5);
 		nvgFillPaint(vg, imgPaint);
@@ -786,6 +822,7 @@ void drawLines(struct NVGcontext* vg, float x, float y, float w, float h, float 
 		}
 	}
 
+
 	nvgRestore(vg);
 }
 
@@ -939,11 +976,11 @@ void drawBlendish(struct NVGcontext* _vg, float _x, float _y, float _w, float _h
 
 struct DemoData
 {
-	int fontNormal, fontBold, fontIcons;
+	int fontNormal, fontBold, fontIcons, fontEmoji;
 	int images[12];
 };
 
-int createImage(struct NVGcontext* _ctx, const char* _filePath, int _imageFlags)
+int32_t createImage(struct NVGcontext* _ctx, const char* _filePath, int _imageFlags)
 {
 	uint32_t size;
 	void* data = load(_filePath, &size);
@@ -965,7 +1002,7 @@ int createImage(struct NVGcontext* _ctx, const char* _filePath, int _imageFlags)
 		return 0;
 	}
 
-	int texId = nvgCreateImageRGBA(
+	int32_t texId = nvgCreateImageRGBA(
 		  _ctx
 		, imageContainer->m_width
 		, imageContainer->m_height
@@ -978,42 +1015,71 @@ int createImage(struct NVGcontext* _ctx, const char* _filePath, int _imageFlags)
 	return texId;
 }
 
+int32_t createFont(NVGcontext* _ctx, const char* _name, const char* _filePath)
+{
+	uint32_t size;
+	void* data = load(_filePath, &size);
+	if (NULL == data)
+	{
+		return -1;
+	}
+
+	return nvgCreateFontMem(_ctx, _name, (uint8_t*)data, size, 0);
+}
+
 int loadDemoData(struct NVGcontext* vg, struct DemoData* data)
 {
-	for (uint32_t ii = 0; ii < 12; ++ii)
+	int i;
+
+	if (vg == NULL)
+		return -1;
+
+	for (i = 0; i < 12; i++)
 	{
 		char file[128];
-		bx::snprintf(file, 128, "images/image%d.jpg", ii+1);
-		data->images[ii] = createImage(vg, file, 0);
-		if (data->images[ii] == 0)
+		bx::snprintf(file, 128, "images/image%d.jpg", i+1);
+		data->images[i] = createImage(vg, file, 0);
+		if (data->images[i] == 0)
 		{
-			printf("Could not load %s.\n", file);
+			bx::debugPrintf("Could not load %s.\n", file);
 			return -1;
 		}
 	}
 
-	data->fontIcons = nvgCreateFont(vg, "icons", "font/entypo.ttf");
+	int32_t result = 0;
+
+	data->fontIcons = createFont(vg, "icons", "font/entypo.ttf");
 	if (data->fontIcons == -1)
 	{
-		printf("Could not add font icons.\n");
-		return -1;
+		bx::debugPrintf("Could not add font icons.\n");
+		result = -1;
 	}
 
-	data->fontNormal = nvgCreateFont(vg, "sans", "font/roboto-regular.ttf");
+	data->fontNormal = createFont(vg, "sans", "font/roboto-regular.ttf");
 	if (data->fontNormal == -1)
 	{
-		printf("Could not add font italic.\n");
-		return -1;
+		bx::debugPrintf("Could not add font italic.\n");
+		result = -1;
 	}
 
-	data->fontBold = nvgCreateFont(vg, "sans-bold", "font/roboto-bold.ttf");
+	data->fontBold = createFont(vg, "sans-bold", "font/roboto-bold.ttf");
 	if (data->fontBold == -1)
 	{
-		printf("Could not add font bold.\n");
-		return -1;
+		bx::debugPrintf("Could not add font bold.\n");
+		result = -1;
 	}
 
-	return 0;
+	data->fontEmoji = createFont(vg, "emoji", "font/NotoEmoji-Regular.ttf");
+	if (data->fontEmoji == -1)
+	{
+		bx::debugPrintf("Could not add font emoji.\n");
+		result = -1;
+	}
+
+	nvgAddFallbackFontId(vg, data->fontNormal, data->fontEmoji);
+	nvgAddFallbackFontId(vg, data->fontBold, data->fontEmoji);
+
+	return result;
 }
 
 void freeDemoData(struct NVGcontext* vg, struct DemoData* data)
@@ -1031,13 +1097,14 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 {
 	struct NVGtextRow rows[3];
 	struct NVGglyphPosition glyphs[100];
-	const char* text = "This is longer chunk of text.\n  \n  Would have used lorem ipsum but she    was busy jumping over the lazy dog with the fox and all the men who came to the aid of the party.";
+	const char* text = "This is longer chunk of text.\n  \n  Would have used lorem ipsum but she    was busy jumping over the lazy dog with the fox and all the men who came to the aid of the party.🎉";
 	const char* start;
 	const char* end;
 	int nrows, i, nglyphs, j, lnum = 0;
 	float lineh;
 	float caretx, px;
 	float bounds[4];
+	float a;
 	float gx = 0.0f, gy = 0.0f;
 	int gutter = 0;
 	NVG_NOTUSED(height);
@@ -1061,7 +1128,7 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 			int hit = mx > x && mx < (x+width) && my >= y && my < (y+lineh);
 
 			nvgBeginPath(vg);
-			nvgFillColor(vg, nvgRGBA(255,255,255,hit?64:8) );
+			nvgFillColor(vg, nvgRGBA(255,255,255,hit?64:16) );
 			nvgRect(vg, x, y, row->width, lineh);
 			nvgFill(vg);
 
@@ -1108,11 +1175,11 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 		nvgBeginPath(vg);
 		nvgFillColor(vg, nvgRGBA(255,192,0,255) );
 		nvgRoundedRect(vg
-			,  bx::fround(bounds[0])-4.0f
-			,  bx::fround(bounds[1])-2.0f
-			,  bx::fround(bounds[2]-bounds[0])+8.0f
-			,  bx::fround(bounds[3]-bounds[1])+4.0f
-			, (bx::fround(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
+			,  bx::round(bounds[0])-4.0f
+			,  bx::round(bounds[1])-2.0f
+			,  bx::round(bounds[2]-bounds[0])+8.0f
+			,  bx::round(bounds[3]-bounds[1])+4.0f
+			, (bx::round(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
 			);
 		nvgFill(vg);
 
@@ -1127,13 +1194,21 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 	nvgTextLineHeight(vg, 1.2f);
 
 	nvgTextBoxBounds(vg, x,y, 150, "Hover your mouse over the text to see calculated caret position.", NULL, bounds);
+
+	// Fade the tooltip out when close to it.
+	gx = bx::abs((mx - (bounds[0]+bounds[2])*0.5f) / (bounds[0] - bounds[2]) );
+	gy = bx::abs((my - (bounds[1]+bounds[3])*0.5f) / (bounds[1] - bounds[3]) );
+	a = bx::max(gx, gy) - 0.5f;
+	a = bx::clamp(a, 0.0f, 1.0f);
+	nvgGlobalAlpha(vg, a);
+
 	nvgBeginPath(vg);
 	nvgFillColor(vg, nvgRGBA(220,220,220,255) );
 	nvgRoundedRect(vg
-		, bx::fround(bounds[0]-2.0f)
-		, bx::fround(bounds[1]-2.0f)
-		, bx::fround(bounds[2]-bounds[0])+4.0f
-		, bx::fround(bounds[3]-bounds[1])+4.0f
+		, bx::round(bounds[0]-2.0f)
+		, bx::round(bounds[1]-2.0f)
+		, bx::round(bounds[2]-bounds[0])+4.0f
+		, bx::round(bounds[3]-bounds[1])+4.0f
 		, 3.0f
 		);
 	px = float( (int)( (bounds[2]+bounds[0])/2) );
@@ -1150,13 +1225,15 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 
 void drawWidths(struct NVGcontext* vg, float x, float y, float width)
 {
+	int i;
+
 	nvgSave(vg);
 
 	nvgStrokeColor(vg, nvgRGBA(0,0,0,255) );
 
-	for (uint32_t ii = 0; ii < 20; ++ii)
+	for (i = 0; i < 20; i++)
 	{
-		float w = (ii+0.5f)*0.1f;
+		float w = (i+0.5f)*0.1f;
 		nvgStrokeWidth(vg, w);
 		nvgBeginPath(vg);
 		nvgMoveTo(vg, x,y);
@@ -1164,6 +1241,73 @@ void drawWidths(struct NVGcontext* vg, float x, float y, float width)
 		nvgStroke(vg);
 		y += 10;
 	}
+
+	nvgRestore(vg);
+}
+
+void drawCaps(struct NVGcontext* vg, float x, float y, float width)
+{
+	int i;
+	int caps[3] = {NVG_BUTT, NVG_ROUND, NVG_SQUARE};
+	float lineWidth = 8.0f;
+
+	nvgSave(vg);
+
+	nvgBeginPath(vg);
+	nvgRect(vg, x-lineWidth/2, y, width+lineWidth, 40);
+	nvgFillColor(vg, nvgRGBA(255,255,255,32) );
+	nvgFill(vg);
+
+	nvgBeginPath(vg);
+	nvgRect(vg, x, y, width, 40);
+	nvgFillColor(vg, nvgRGBA(255,255,255,32) );
+	nvgFill(vg);
+
+	nvgStrokeWidth(vg, lineWidth);
+	for (i = 0; i < 3; i++) {
+		nvgLineCap(vg, caps[i]);
+		nvgStrokeColor(vg, nvgRGBA(0,0,0,255) );
+		nvgBeginPath(vg);
+		nvgMoveTo(vg, x, y + i*10 + 5);
+		nvgLineTo(vg, x+width, y + i*10 + 5);
+		nvgStroke(vg);
+	}
+
+	nvgRestore(vg);
+}
+
+void drawScissor(struct NVGcontext* vg, float x, float y, float t)
+{
+	nvgSave(vg);
+
+	// Draw first rect and set scissor to it's area.
+	nvgTranslate(vg, x, y);
+	nvgRotate(vg, nvgDegToRad(5) );
+	nvgBeginPath(vg);
+	nvgRect(vg, -20,-20,60,40);
+	nvgFillColor(vg, nvgRGBA(255,0,0,255) );
+	nvgFill(vg);
+	nvgScissor(vg, -20,-20,60,40);
+
+	// Draw second rectangle with offset and rotation.
+	nvgTranslate(vg, 40,0);
+	nvgRotate(vg, t);
+
+	// Draw the intended second rectangle without any scissoring.
+	nvgSave(vg);
+	nvgResetScissor(vg);
+	nvgBeginPath(vg);
+	nvgRect(vg, -20,-10,60,30);
+	nvgFillColor(vg, nvgRGBA(255,128,0,64) );
+	nvgFill(vg);
+	nvgRestore(vg);
+
+	// Draw second rectangle with combined scissoring.
+	nvgIntersectScissor(vg, -20,-10,60,30);
+	nvgBeginPath(vg);
+	nvgRect(vg, -20,-10,60,30);
+	nvgFillColor(vg, nvgRGBA(255,128,0,255) );
+	nvgFill(vg);
 
 	nvgRestore(vg);
 }
@@ -1181,15 +1325,20 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 	// Line joints
 	drawLines(vg, 50, height-50, 600, 35, t);
 
+	// Line caps
+	drawWidths(vg, width-50, 35, 30);
+
+	// Line caps
+	drawCaps(vg, width-50, 260, 30);
+
+	drawScissor(vg, 40, height-150, t);
+
 	nvgSave(vg);
 	if (blowup)
 	{
 		nvgRotate(vg, sinf(t*0.3f)*5.0f/180.0f*NVG_PI);
 		nvgScale(vg, 2.0f, 2.0f);
 	}
-
-	// Line width.
-	drawWidths(vg, width-50, 35, 30);
 
 	// Widgets.
 	x = width-520; y = height-420;
@@ -1236,8 +1385,8 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 class ExampleNanoVG : public entry::AppI
 {
 public:
-	ExampleNanoVG(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleNanoVG(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -1250,8 +1399,13 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -1271,7 +1425,7 @@ public:
 
 		loadDemoData(m_nvg, &m_data);
 
-		bndSetFont(nvgCreateFont(m_nvg, "droidsans", "font/droidsans.ttf") );
+		bndSetFont(createFont(m_nvg, "droidsans", "font/droidsans.ttf") );
 		bndSetIconImage(createImage(m_nvg, "images/blender_icons16.png", 0) );
 
 		m_timeOffset = bx::getHPCounter();
@@ -1320,7 +1474,7 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			nvgBeginFrame(m_nvg, m_width, m_height, 1.0f);
+			nvgBeginFrame(m_nvg, float(m_width), float(m_height), 1.0f);
 
 			renderDemo(m_nvg, float(m_mouseState.m_mx), float(m_mouseState.m_my), float(m_width), float(m_height), time, 0, &m_data);
 
@@ -1351,4 +1505,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleNanoVG, "20-nanovg", "NanoVG is small antialiased vector graphics rendering library.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleNanoVG
+	, "20-nanovg"
+	, "NanoVG is small antialiased vector graphics rendering library."
+	, "https://bkaradzic.github.io/bgfx/examples.html#nanovg"
+	);

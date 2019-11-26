@@ -1,7 +1,7 @@
 $input v_texcoord0, v_color0
 
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -15,6 +15,9 @@ void main()
 	vec4 fgColor = vec4(1.0, 1.0, 1.0, 1.0);
 
 	float sigDist = texture2DLod(s_texColor, v_texcoord0.xy, u_textureLod).x;
-	float opacity = clamp(sigDist/fwidth(sigDist) + 0.5, 0.0, 1.0);
+	float width   = fwidth(sigDist);
+	float edge    = 0.5;
+	float opacity = clamp(smoothstep(edge - width, edge + width, sigDist), 0.0, 1.0);
+
 	gl_FragColor  = mix(bgColor, fgColor, opacity);
 }

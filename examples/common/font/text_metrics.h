@@ -47,22 +47,10 @@ public:
 	float getLineHeight() const { return m_lineHeight; }
 
 	/// Return the number of text line in the given text.
-	uint32_t getLineCount(const char* _string) const;
-
-	/// Return the number of text line in the given text.
-	uint32_t getLineCount(const wchar_t* _string) const;
+	uint32_t getLineCount(const bx::StringView& _string) const;
 
 	/// Return the first and last character visible in the [_firstLine, _lastLine] range.
-	void getSubText(const char* _string, uint32_t _firstLine, uint32_t _lastLine, const char*& _begin, const char*& _end);
-
-	/// Return the first and last character visible in the [_firstLine, _lastLine] range.
-	void getSubText(const wchar_t* _string, uint32_t _firstLine, uint32_t _lastLine, const wchar_t*& _begin, const wchar_t*& _end);
-
-	/// Return the first and last character visible in the [_top, _bottom] range,
-	void getVisibleText(const char* _string, float _top, float _bottom, const char*& _begin, const char*& _end);
-
-	/// Return the first and last character visible in the [_top, _bottom] range,
-	void getVisibleText(const wchar_t* _string, float _top, float _bottom, const wchar_t*& _begin, const wchar_t*& _end);
+	void getSubText(const bx::StringView& _str, uint32_t _firstLine, uint32_t _lastLine, const char*& _begin, const char*& _end);
 
 private:
 	float m_lineHeight;

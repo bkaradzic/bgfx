@@ -22,23 +22,23 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
-		.begin()
-		.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-		.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-		.end();
+		ms_layout
+			.begin()
+			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 class ExampleVectorDisplay : public entry::AppI
 {
 public:
-	ExampleVectorDisplay(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleVectorDisplay(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -50,8 +50,13 @@ public:
 		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
 		float texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
@@ -114,8 +119,8 @@ public:
 				m_vd.resize(uint16_t(m_width), uint16_t(m_height) );
 			}
 
-			const float at[3]  = { 0.0f, 0.0f,   0.0f };
-			const float eye[3] = { 0.0f, 0.0f, -35.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
 			float view[16];
 			float proj[16];
@@ -182,8 +187,9 @@ public:
 			// draw moving shape
 			static float counter = 0.0f;
 			counter += 0.01f;
-			float posX = m_width  / 2.0f + bx::fsin(counter * 3.18378f) * (m_width / 2.0f);
-			float posY = m_height / 2.0f + bx::fcos(counter) * (m_height / 2.0f);
+
+			const float posX = m_width  / 2.0f + bx::sin(counter * 3.18378f) * (m_width / 2.0f);
+			const float posY = m_height / 2.0f + bx::cos(counter) * (m_height / 2.0f);
 			m_vd.drawCircle(posX, posY, 5.0f, 10.0f);
 
 			m_vd.endFrame();
@@ -212,4 +218,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleVectorDisplay, "23-vectordisplay", "Rendering lines as oldschool vectors.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleVectorDisplay
+	, "23-vectordisplay"
+	, "Rendering lines as oldschool vectors."
+	, "https://bkaradzic.github.io/bgfx/examples.html#vectordisplay"
+	);
