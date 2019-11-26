@@ -14,6 +14,7 @@ THREE.GLTFLoader = ( function () {
 
 		this.dracoLoader = null;
 		this.ddsLoader = null;
+		this.basisLoader = null;
 		this.meshoptDecoder = null;
 
 	}
@@ -107,6 +108,13 @@ THREE.GLTFLoader = ( function () {
 		setDDSLoader: function ( ddsLoader ) {
 
 			this.ddsLoader = ddsLoader;
+			return this;
+
+		},
+
+		setBasisLoader: function ( basisLoader ) {
+
+			this.basisLoader = basisLoader;
 			return this;
 
 		},
@@ -222,7 +230,9 @@ THREE.GLTFLoader = ( function () {
 
 				path: path || this.resourcePath || '',
 				crossOrigin: this.crossOrigin,
-				manager: this.manager
+				manager: this.manager,
+				ddsLoader: this.ddsLoader,
+				basisLoader: this.basisLoader,
 
 			} );
 
@@ -1390,95 +1400,9 @@ THREE.GLTFLoader = ( function () {
 			var morphPositions = accessors[ 0 ];
 			var morphNormals = accessors[ 1 ];
 
-			// Clone morph target accessors before modifying them.
-
-			for ( var i = 0, il = morphPositions.length; i < il; i ++ ) {
-
-				if ( geometry.attributes.position === morphPositions[ i ] ) continue;
-
-				morphPositions[ i ] = cloneBufferAttribute( morphPositions[ i ] );
-
-			}
-
-			for ( var i = 0, il = morphNormals.length; i < il; i ++ ) {
-
-				if ( geometry.attributes.normal === morphNormals[ i ] ) continue;
-
-				morphNormals[ i ] = cloneBufferAttribute( morphNormals[ i ] );
-
-			}
-
-			for ( var i = 0, il = targets.length; i < il; i ++ ) {
-
-				var target = targets[ i ];
-				var attributeName = 'morphTarget' + i;
-
-				if ( hasMorphPosition ) {
-
-					// Three.js morph position is absolute value. The formula is
-					//   basePosition
-					//     + weight0 * ( morphPosition0 - basePosition )
-					//     + weight1 * ( morphPosition1 - basePosition )
-					//     ...
-					// while the glTF one is relative
-					//   basePosition
-					//     + weight0 * glTFmorphPosition0
-					//     + weight1 * glTFmorphPosition1
-					//     ...
-					// then we need to convert from relative to absolute here.
-
-					if ( target.POSITION !== undefined ) {
-
-						var positionAttribute = morphPositions[ i ];
-						positionAttribute.name = attributeName;
-
-						var position = geometry.attributes.position;
-
-						for ( var j = 0, jl = positionAttribute.count; j < jl; j ++ ) {
-
-							positionAttribute.setXYZ(
-								j,
-								positionAttribute.getX( j ) + position.getX( j ),
-								positionAttribute.getY( j ) + position.getY( j ),
-								positionAttribute.getZ( j ) + position.getZ( j )
-							);
-
-						}
-
-					}
-
-				}
-
-				if ( hasMorphNormal ) {
-
-					// see target.POSITION's comment
-
-					if ( target.NORMAL !== undefined ) {
-
-						var normalAttribute = morphNormals[ i ];
-						normalAttribute.name = attributeName;
-
-						var normal = geometry.attributes.normal;
-
-						for ( var j = 0, jl = normalAttribute.count; j < jl; j ++ ) {
-
-							normalAttribute.setXYZ(
-								j,
-								normalAttribute.getX( j ) + normal.getX( j ),
-								normalAttribute.getY( j ) + normal.getY( j ),
-								normalAttribute.getZ( j ) + normal.getZ( j )
-							);
-
-						}
-
-					}
-
-				}
-
-			}
-
 			if ( hasMorphPosition ) geometry.morphAttributes.position = morphPositions;
 			if ( hasMorphNormal ) geometry.morphAttributes.normal = morphNormals;
+			geometry.morphTargetsRelative = true;
 
 			return geometry;
 
@@ -1563,31 +1487,6 @@ THREE.GLTFLoader = ( function () {
 		}
 
 		return attributesKey;
-
-	}
-
-	function cloneBufferAttribute( attribute ) {
-
-		if ( attribute.isInterleavedBufferAttribute ) {
-
-			var count = attribute.count;
-			var itemSize = attribute.itemSize;
-			var array = attribute.array.slice( 0, count * itemSize );
-
-			for ( var i = 0, j = 0; i < count; ++ i ) {
-
-				array[ j ++ ] = attribute.getX( i );
-				if ( itemSize >= 2 ) array[ j ++ ] = attribute.getY( i );
-				if ( itemSize >= 3 ) array[ j ++ ] = attribute.getZ( i );
-				if ( itemSize >= 4 ) array[ j ++ ] = attribute.getW( i );
-
-			}
-
-			return new THREE.BufferAttribute( array, itemSize, attribute.normalized );
-
-		}
-
-		return attribute.clone();
 
 	}
 
@@ -2081,11 +1980,43 @@ THREE.GLTFLoader = ( function () {
 
 			var loader = options.manager.getHandler( sourceURI );
 
+			if ( ! loader && textureExtensions[ EXTENSIONS.MSFT_TEXTURE_DDS ] ) {
+
+				loader = parser.extensions[ EXTENSIONS.MSFT_TEXTURE_DDS ].ddsLoader
+
+			}
+
+			if ( ! loader && options.ddsLoader ) {
+
+				if ( source.uri !== undefined && source.uri.toLowerCase().endsWith(".dds") ) {
+
+					loader = options.ddsLoader;
+
+				} else if ( source.bufferView !== undefined && source.mimeType == "image/vnd-ms.dds" ) {
+
+					loader = options.ddsLoader;
+
+				}
+
+			}
+
+			if ( ! loader && options.basisLoader ) {
+
+				if ( source.uri !== undefined && source.uri.toLowerCase().endsWith(".basis") ) {
+
+					loader = options.basisLoader;
+
+				} else if ( source.bufferView !== undefined && source.mimeType == "image/basis" ) {
+
+					loader = options.basisLoader;
+
+				}
+
+			}
+
 			if ( ! loader ) {
 
-				loader = textureExtensions[ EXTENSIONS.MSFT_TEXTURE_DDS ]
-					? parser.extensions[ EXTENSIONS.MSFT_TEXTURE_DDS ].ddsLoader
-					: textureLoader;
+				loader = textureLoader;
 
 			}
 
@@ -2460,6 +2391,73 @@ THREE.GLTFLoader = ( function () {
 	 * @param {THREE.BufferGeometry} geometry
 	 * @param {GLTF.Primitive} primitiveDef
 	 * @param {GLTFParser} parser
+	 */
+	function computeBounds( geometry, primitiveDef, parser ) {
+
+		var attributes = primitiveDef.attributes;
+
+		var box = new THREE.Box3();
+
+		if ( attributes.POSITION !== undefined ) {
+
+			var accessor = parser.json.accessors[ attributes.POSITION ];
+			var min = accessor.min;
+			var max = accessor.max;
+
+			box.set(
+				new THREE.Vector3( min[ 0 ], min[ 1 ], min[ 2 ] ),
+				new THREE.Vector3( max[ 0 ], max[ 1 ], max[ 2 ] ) );
+
+		} else {
+
+			return;
+
+		}
+
+		var targets = primitiveDef.targets;
+
+		if ( targets !== undefined ) {
+
+			var vector = new THREE.Vector3();
+
+			for ( var i = 0, il = targets.length; i < il; i ++ ) {
+
+				var target = targets[ i ];
+
+				if ( target.POSITION !== undefined ) {
+
+					var accessor = parser.json.accessors[ target.POSITION ];
+					var min = accessor.min;
+					var max = accessor.max;
+
+					// we need to get max of absolute components because target weight is [-1,1]
+					vector.setX( Math.max( Math.abs( min[ 0 ] ), Math.abs( max[ 0 ] ) ) );
+					vector.setY( Math.max( Math.abs( min[ 1 ] ), Math.abs( max[ 1 ] ) ) );
+					vector.setZ( Math.max( Math.abs( min[ 2 ] ), Math.abs( max[ 2 ] ) ) );
+
+					box.expandByVector( vector );
+
+				}
+
+			}
+
+		}
+
+		geometry.boundingBox = box;
+
+		var sphere = new THREE.Sphere();
+
+		box.getCenter( sphere.center );
+		sphere.radius = box.min.distanceTo( box.max ) / 2;
+
+		geometry.boundingSphere = sphere;
+
+	}
+
+	/**
+	 * @param {THREE.BufferGeometry} geometry
+	 * @param {GLTF.Primitive} primitiveDef
+	 * @param {GLTFParser} parser
 	 * @return {Promise<THREE.BufferGeometry>}
 	 */
 	function addPrimitiveAttributes( geometry, primitiveDef, parser ) {
@@ -2503,6 +2501,8 @@ THREE.GLTFLoader = ( function () {
 		}
 
 		assignExtrasToUserData( geometry, primitiveDef );
+
+		computeBounds( geometry, primitiveDef, parser );
 
 		return Promise.all( pending ).then( function () {
 

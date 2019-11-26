@@ -34,7 +34,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <unistd.h>
 #endif
 
@@ -89,6 +91,8 @@ struct Settings
 
 	bool texture_embed;
 	bool texture_basis;
+
+	int texture_quality;
 
 	bool compress;
 	bool fallback;
@@ -1525,11 +1529,7 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 		{
 			const Attr& a = stream.data[i];
 
-			float v[4] = {
-			    a.f[0],
-			    a.f[1],
-			    a.f[2],
-			    a.f[3]};
+			float v[4] = {a.f[0], a.f[1], a.f[2], a.f[3]};
 			bin.append(reinterpret_cast<const char*>(v), sizeof(v));
 		}
 
@@ -1656,17 +1656,35 @@ StreamFormat writeKeyframeStream(std::string& bin, cgltf_animation_path_type typ
 		StreamFormat format = {cgltf_type_scalar, cgltf_component_type_r_8u, true, 1};
 		return format;
 	}
+	else if (type == cgltf_animation_path_type_translation || type == cgltf_animation_path_type_scale)
+	{
+		int bits = 15;
+
+		for (size_t i = 0; i < data.size(); ++i)
+		{
+			const Attr& a = data[i];
+
+			float v[3] = {
+			    meshopt_quantizeFloat(a.f[0], bits),
+			    meshopt_quantizeFloat(a.f[1], bits),
+			    meshopt_quantizeFloat(a.f[2], bits)};
+			bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+		}
+
+		StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_32f, false, 12};
+		return format;
+	}
 	else
 	{
 		for (size_t i = 0; i < data.size(); ++i)
 		{
 			const Attr& a = data[i];
 
-			float v[3] = {a.f[0], a.f[1], a.f[2]};
+			float v[4] = {a.f[0], a.f[1], a.f[2], a.f[3]};
 			bin.append(reinterpret_cast<const char*>(v), sizeof(v));
 		}
 
-		StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_32f, false, 12};
+		StreamFormat format = {cgltf_type_vec4, cgltf_component_type_r_32f, false, 16};
 		return format;
 	}
 }
@@ -2724,9 +2742,52 @@ bool writeFile(const char* path, const std::string& data)
 	return result == data.size();
 }
 
-bool encodeBasisFile(const char* input, const char* output, bool normal_map)
+struct TempFile
 {
-	std::string cmd = "basisu";
+	std::string path;
+	int fd;
+
+	TempFile(const char* suffix)
+	    : fd(-1)
+	{
+#ifdef _WIN32
+		const char* temp_dir = getenv("TEMP");
+		path = temp_dir ? temp_dir : ".";
+		path += "\\gltfpack-XXXXXX";
+		(void)_mktemp(&path[0]);
+		path += suffix;
+#else
+		path = "/tmp/gltfpack-XXXXXX";
+		path += suffix;
+		fd = mkstemps(&path[0], strlen(suffix));
+#endif
+	}
+
+	~TempFile()
+	{
+		unlink(path.c_str());
+#ifndef _WIN32
+		close(fd);
+#endif
+	}
+};
+
+bool encodeBasis(const std::string& data, std::string& result, bool normal_map, int quality)
+{
+	TempFile temp_input(".raw");
+	TempFile temp_output(".basis");
+
+	if (!writeFile(temp_input.path.c_str(), data))
+		return false;
+
+	const char* basisu_path = getenv("BASISU_PATH");
+	std::string cmd = basisu_path ? basisu_path : "basisu";
+
+	char ql[16];
+	sprintf(ql, "%d", (quality * 255 + 50) / 100);
+
+	cmd += " -q ";
+	cmd += ql;
 
 	cmd += " -mipmap";
 	if (normal_map)
@@ -2736,9 +2797,9 @@ bool encodeBasisFile(const char* input, const char* output, bool normal_map)
 	}
 
 	cmd += " -file ";
-	cmd += input;
+	cmd += temp_input.path;
 	cmd += " -output_file ";
-	cmd += output;
+	cmd += temp_output.path;
 
 #ifdef _WIN32
 	cmd += " >nul";
@@ -2746,23 +2807,9 @@ bool encodeBasisFile(const char* input, const char* output, bool normal_map)
 	cmd += " >/dev/null";
 #endif
 
-	return system(cmd.c_str()) == 0;
-}
+	int rc = system(cmd.c_str());
 
-bool encodeBasisData(const std::string& data, std::string& result, bool normal_map, const char* output_path)
-{
-	std::string temp_name = getFileName(output_path) + ".temp";
-	std::string temp_input = getFullPath(temp_name.c_str(), output_path) + ".png";
-	std::string temp_output = getFullPath(temp_name.c_str(), output_path) + ".basis";
-
-	bool ok =
-	    writeFile(temp_input.c_str(), data) &&
-	    encodeBasisFile(temp_input.c_str(), temp_output.c_str(), normal_map) &&
-	    readFile(temp_output.c_str(), result);
-
-	unlink(temp_input.c_str());
-	unlink(temp_output.c_str());
-	return ok;
+	return rc == 0 && readFile(temp_output.path.c_str(), result);
 }
 
 void writeImage(std::string& json, std::vector<BufferView>& views, const cgltf_image& image, const ImageInfo& info, size_t index, const char* input_path, const char* output_path, const Settings& settings)
@@ -2799,7 +2846,7 @@ void writeImage(std::string& json, std::vector<BufferView>& views, const cgltf_i
 		{
 			std::string encoded;
 
-			if (encodeBasisData(img_data, encoded, info.normal_map, output_path))
+			if (encodeBasis(img_data, encoded, info.normal_map, settings.texture_quality))
 			{
 				writeEmbeddedImage(json, views, encoded.c_str(), encoded.size(), "image/basis");
 			}
@@ -2821,15 +2868,28 @@ void writeImage(std::string& json, std::vector<BufferView>& views, const cgltf_i
 			std::string basis_path = getFileName(image.uri) + ".basis";
 			std::string basis_full_path = getFullPath(basis_path.c_str(), output_path);
 
-			if (encodeBasisFile(full_path.c_str(), basis_full_path.c_str(), info.normal_map))
+			if (!readFile(full_path.c_str(), img_data))
 			{
-				append(json, "\"uri\":\"");
-				append(json, basis_path);
-				append(json, "\"");
+				fprintf(stderr, "Warning: unable to read image %s, skipping\n", image.uri);
 			}
 			else
 			{
-				fprintf(stderr, "Warning: unable to encode image %s with Basis, skipping\n", image.uri);
+				std::string encoded;
+
+				if (!encodeBasis(img_data, encoded, info.normal_map, settings.texture_quality))
+				{
+					fprintf(stderr, "Warning: unable to encode image %s with Basis, skipping\n", image.uri);
+				}
+				else if (!writeFile(basis_full_path.c_str(), encoded))
+				{
+					fprintf(stderr, "Warning: unable to save Basis image %s, skipping\n", image.uri);
+				}
+				else
+				{
+					append(json, "\"uri\":\"");
+					append(json, basis_path);
+					append(json, "\"");
+				}
 			}
 		}
 		else
@@ -4139,6 +4199,7 @@ int main(int argc, char** argv)
 	settings.nrm_bits = 8;
 	settings.anim_freq = 30;
 	settings.simplify_threshold = 1.f;
+	settings.texture_quality = 50;
 
 	const char* input = 0;
 	const char* output = 0;
@@ -4192,6 +4253,10 @@ int main(int argc, char** argv)
 		else if (strcmp(arg, "-tb") == 0)
 		{
 			settings.texture_basis = true;
+		}
+		else if (strcmp(arg, "-tq") == 0 && i + 1 < argc && isdigit(argv[i + 1][0]))
+		{
+			settings.texture_quality = atoi(argv[++i]);
 		}
 		else if (strcmp(arg, "-i") == 0 && i + 1 < argc && !input)
 		{
@@ -4263,6 +4328,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "-sa: aggressively simplify to the target ratio disregarding quality\n");
 		fprintf(stderr, "-te: embed all textures into main buffer\n");
 		fprintf(stderr, "-tb: convert all textures to Basis Universal format (with basisu executable)\n");
+		fprintf(stderr, "-tq N: set texture encoding quality (default: 50; N should be between 1 and 100\n");
 		fprintf(stderr, "-c: produce compressed gltf/glb files\n");
 		fprintf(stderr, "-cf: produce compressed gltf/glb files with fallback for loaders that don't support compression\n");
 		fprintf(stderr, "-v: verbose output\n");
