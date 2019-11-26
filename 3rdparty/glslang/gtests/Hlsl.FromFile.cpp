@@ -230,6 +230,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.hull.void.tesc", "main"},
         {"hlsl.hull.ctrlpt-1.tesc", "main"},
         {"hlsl.hull.ctrlpt-2.tesc", "main"},
+        {"hlsl.format.rwtexture.frag", "main"},
         {"hlsl.groupid.comp", "main"},
         {"hlsl.identifier.sample.frag", "main"},
         {"hlsl.if.frag", "PixelShaderFunction"},

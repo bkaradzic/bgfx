@@ -149,7 +149,7 @@ bool TransformationReplaceConstantWithUniform::IsApplicable(
   // The id use descriptor must identify some instruction with respect to the
   // module.
   auto instruction_using_constant =
-      transformation::FindInstruction(message_.id_use_descriptor(), context);
+      FindInstructionContainingUse(message_.id_use_descriptor(), context);
   if (!instruction_using_constant) {
     return false;
   }
@@ -188,7 +188,7 @@ void TransformationReplaceConstantWithUniform::Apply(
     spvtools::fuzz::FactManager* /*unused*/) const {
   // Get the instruction that contains the id use we wish to replace.
   auto instruction_containing_constant_use =
-      transformation::FindInstruction(message_.id_use_descriptor(), context);
+      FindInstructionContainingUse(message_.id_use_descriptor(), context);
   assert(instruction_containing_constant_use &&
          "Precondition requires that the id use can be found.");
   assert(instruction_containing_constant_use->GetSingleWordInOperand(

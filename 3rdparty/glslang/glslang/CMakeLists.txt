@@ -6,7 +6,12 @@ else(WIN32)
     message("unknown platform")
 endif(WIN32)
 
+if(EMSCRIPTEN OR ENABLE_GLSLANG_WEB)
+    add_subdirectory(OSDependent/Web)
+endif(EMSCRIPTEN OR ENABLE_GLSLANG_WEB)
+
 set(SOURCES
+    MachineIndependent/glslang.m4
     MachineIndependent/glslang.y
     MachineIndependent/glslang_tab.cpp
     MachineIndependent/attribute.cpp
@@ -71,22 +76,15 @@ set(HEADERS
     MachineIndependent/preprocessor/PpContext.h
     MachineIndependent/preprocessor/PpTokens.h)
 
-# This might be useful for making grammar changes:
-#
-# find_package(BISON)
-# add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp.h
-#                    COMMAND ${BISON_EXECUTABLE} --defines=${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp.h -t ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang.y -o ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp
-#                    MAIN_DEPENDENCY MachineIndependent/glslang.y
-#                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-# set(BISON_GLSLParser_OUTPUT_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp)
-
 glslang_pch(SOURCES MachineIndependent/pch.cpp)
 
 add_library(glslang ${LIB_TYPE} ${BISON_GLSLParser_OUTPUT_SOURCE} ${SOURCES} ${HEADERS})
 set_property(TARGET glslang PROPERTY FOLDER glslang)
 set_property(TARGET glslang PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(glslang OGLCompiler OSDependent)
-target_include_directories(glslang PUBLIC ..)
+target_include_directories(glslang PUBLIC 
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
     set_target_properties(glslang PROPERTIES PREFIX "")
@@ -106,14 +104,15 @@ endif(WIN32)
 
 if(ENABLE_GLSLANG_INSTALL)
     if(BUILD_SHARED_LIBS)
-        install(TARGETS glslang
+        install(TARGETS glslang EXPORT glslangTargets
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
                 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     else()
-        install(TARGETS glslang
+        install(TARGETS glslang EXPORT glslangTargets
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
+	install(EXPORT glslangTargets DESTINATION lib/cmake)
 endif(ENABLE_GLSLANG_INSTALL)
 
 if(ENABLE_GLSLANG_INSTALL)

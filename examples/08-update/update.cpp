@@ -26,17 +26,17 @@ struct PosTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 3, bgfx::AttribType::Float)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosTexcoordVertex::ms_layout;
 
 static PosTexcoordVertex s_cubeVertices[] =
 {
@@ -145,8 +145,8 @@ static const uint32_t kTexture2dSize = 256;
 class ExampleUpdate : public entry::AppI
 {
 public:
-	ExampleUpdate(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleUpdate(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 		, m_cube(kTextureSide)
 	{
 	}
@@ -239,7 +239,7 @@ public:
 		}
 
 		// Create static vertex buffer.
-		m_vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ), PosTexcoordVertex::ms_decl);
+		m_vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ), PosTexcoordVertex::ms_layout);
 
 		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
@@ -723,4 +723,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleUpdate, "08-update", "Updating textures.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleUpdate
+	, "08-update"
+	, "Updating textures."
+	, "https://bkaradzic.github.io/bgfx/examples.html#update"
+	);

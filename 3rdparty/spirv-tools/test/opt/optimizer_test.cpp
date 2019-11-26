@@ -222,7 +222,7 @@ TEST(Optimizer, CanRegisterPassesFromFlags) {
 }
 
 TEST(Optimizer, VulkanToWebGPUSetsCorrectPasses) {
-  Optimizer opt(SPV_ENV_WEBGPU_0);
+  Optimizer opt(SPV_ENV_VULKAN_1_1);
   opt.RegisterVulkanToWebGPUPasses();
   std::vector<const char*> pass_names = opt.GetPassNames();
 
@@ -267,13 +267,14 @@ TEST_P(VulkanToWebGPUPassTest, Ran) {
     tools.Assemble(GetParam().input, &binary);
   }
 
-  Optimizer opt(SPV_ENV_WEBGPU_0);
+  Optimizer opt(SPV_ENV_VULKAN_1_1);
   opt.RegisterVulkanToWebGPUPasses();
 
   std::vector<uint32_t> optimized;
   class ValidatorOptions validator_options;
   ASSERT_TRUE(opt.Run(binary.data(), binary.size(), &optimized,
-                      validator_options, true));
+                      validator_options, true))
+      << GetParam().input << "\n";
   std::string disassembly;
   {
     SpirvTools tools(SPV_ENV_WEBGPU_0);
@@ -290,9 +291,9 @@ INSTANTIATE_TEST_SUITE_P(
         // FlattenDecorations
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Fragment %main \"main\" %hue %saturation %value\n"
          "OpExecutionMode %main OriginUpperLeft\n"
          "OpDecorate %group Flat\n"
@@ -311,9 +312,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Fragment %1 \"main\" %2 %3 %4\n"
          "OpExecutionMode %1 OriginUpperLeft\n"
          "%void = OpTypeVoid\n"
@@ -332,9 +333,9 @@ INSTANTIATE_TEST_SUITE_P(
         // Strip Debug
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %func \"shader\"\n"
          "OpName %main \"main\"\n"
          "OpName %void_fn \"void_fn\"\n"
@@ -346,9 +347,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%void = OpTypeVoid\n"
          "%3 = OpTypeFunction %void\n"
@@ -361,9 +362,9 @@ INSTANTIATE_TEST_SUITE_P(
         // Eliminate Dead Constants
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %func \"shader\"\n"
          "%u32 = OpTypeInt 32 0\n"
          "%u32_ptr = OpTypePointer Workgroup %u32\n"
@@ -380,9 +381,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%_ptr_Workgroup_uint = OpTypePointer Workgroup %uint\n"
@@ -397,9 +398,9 @@ INSTANTIATE_TEST_SUITE_P(
         // Strip Atomic Counter Memory
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %func \"shader\"\n"
          "%u32 = OpTypeInt 32 0\n"
          "%u32_ptr = OpTypePointer Workgroup %u32\n"
@@ -412,7 +413,7 @@ INSTANTIATE_TEST_SUITE_P(
          "%void_f = OpTypeFunction %void\n"
          "%func = OpFunction %void None %void_f\n"
          "%label = OpLabel\n"
-         "%val0 = OpAtomicStore %u32_var %cross_device "
+         "        OpAtomicStore %u32_var %cross_device "
          "%acquire_release_atomic_counter_workgroup %u32_1\n"
          "%val1 = OpAtomicIIncrement %u32 %u32_var %cross_device "
          "%acquire_release_atomic_counter_workgroup\n"
@@ -423,9 +424,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%_ptr_Workgroup_uint = OpTypePointer Workgroup %uint\n"
@@ -449,9 +450,9 @@ INSTANTIATE_TEST_SUITE_P(
         // Generate WebGPU Initializers
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %func \"shader\"\n"
          "%u32 = OpTypeInt 32 0\n"
          "%u32_ptr = OpTypePointer Private %u32\n"
@@ -466,9 +467,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%_ptr_Private_uint = OpTypePointer Private %uint\n"
@@ -487,9 +488,9 @@ INSTANTIATE_TEST_SUITE_P(
         // Legalize Vector Shuffle
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%v3uint = OpTypeVector %uint 3\n"
@@ -506,9 +507,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%v3uint = OpTypeVector %uint 3\n"
@@ -529,9 +530,9 @@ INSTANTIATE_TEST_SUITE_P(
         // Split Invalid Unreachable
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%uint_1 = OpConstant %uint 1\n"
@@ -560,9 +561,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%uint_1 = OpConstant %uint 1\n"
@@ -596,9 +597,9 @@ INSTANTIATE_TEST_SUITE_P(
         // Compact IDs
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1000 \"shader\"\n"
          "%10 = OpTypeVoid\n"
          "%100 = OpTypeFunction %10\n"
@@ -608,9 +609,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%void = OpTypeVoid\n"
          "%3 = OpTypeFunction %void\n"
@@ -622,7 +623,7 @@ INSTANTIATE_TEST_SUITE_P(
          "compact-ids"}}));
 
 TEST(Optimizer, WebGPUToVulkanSetsCorrectPasses) {
-  Optimizer opt(SPV_ENV_VULKAN_1_1);
+  Optimizer opt(SPV_ENV_WEBGPU_0);
   opt.RegisterWebGPUToVulkanPasses();
   std::vector<const char*> pass_names = opt.GetPassNames();
 
@@ -659,7 +660,7 @@ TEST_P(WebGPUToVulkanPassTest, Ran) {
     tools.Assemble(GetParam().input, &binary);
   }
 
-  Optimizer opt(SPV_ENV_VULKAN_1_1);
+  Optimizer opt(SPV_ENV_WEBGPU_0);
   opt.RegisterWebGPUToVulkanPasses();
 
   std::vector<uint32_t> optimized;
@@ -682,9 +683,9 @@ INSTANTIATE_TEST_SUITE_P(
         // Decompose Initialized Variables
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%_ptr_Function_uint = OpTypePointer Function %uint\n"
@@ -698,9 +699,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%_ptr_Function_uint = OpTypePointer Function %uint\n"
@@ -718,9 +719,9 @@ INSTANTIATE_TEST_SUITE_P(
         // Compact IDs
         {// input
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1000 \"shader\"\n"
          "%10 = OpTypeVoid\n"
          "%100 = OpTypeFunction %10\n"
@@ -730,9 +731,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // expected
          "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModelKHR\n"
+         "OpCapability VulkanMemoryModel\n"
          "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical VulkanKHR\n"
+         "OpMemoryModel Logical Vulkan\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%void = OpTypeVoid\n"
          "%3 = OpTypeFunction %void\n"
@@ -742,6 +743,54 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // pass
          "compact-ids"}}));
+
+TEST(Optimizer, RemoveNop) {
+  // Test that OpNops are removed even if no optimizations are run.
+  const std::string before = R"(OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%2 = OpTypeFunction %void
+%3 = OpFunction %void None %2
+%4 = OpLabel
+OpNop
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string after = R"(OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%2 = OpTypeFunction %void
+%3 = OpFunction %void None %2
+%4 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  std::vector<uint32_t> binary;
+  {
+    SpirvTools tools(SPV_ENV_VULKAN_1_1);
+    tools.Assemble(before, &binary);
+  }
+
+  Optimizer opt(SPV_ENV_VULKAN_1_1);
+
+  std::vector<uint32_t> optimized;
+  class ValidatorOptions validator_options;
+  ASSERT_TRUE(opt.Run(binary.data(), binary.size(), &optimized,
+                      validator_options, true))
+      << before << "\n";
+  std::string disassembly;
+  {
+    SpirvTools tools(SPV_ENV_WEBGPU_0);
+    tools.Disassemble(optimized.data(), optimized.size(), &disassembly);
+  }
+
+  EXPECT_EQ(after, disassembly)
+      << "Was expecting the OpNop to have been removed.";
+}
 
 }  // namespace
 }  // namespace opt

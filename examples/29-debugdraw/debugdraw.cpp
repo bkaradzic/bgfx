@@ -761,8 +761,8 @@ void imageCheckerboard(void* _dst, uint32_t _width, uint32_t _height, uint32_t _
 class ExampleDebugDraw : public entry::AppI
 {
 public:
-	ExampleDebugDraw(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleDebugDraw(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -1224,4 +1224,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleDebugDraw, "29-debugdraw", "Debug draw.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleDebugDraw
+	, "29-debugdraw"
+	, "Debug draw."
+	, "https://bkaradzic.github.io/bgfx/examples.html#debugdraw"
+	);

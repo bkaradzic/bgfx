@@ -63,6 +63,7 @@ std::string FileNameAsCustomTestSuffixIoMap(
 }
 
 using CompileVulkanToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
+using CompileVulkanToSpirvDeadCodeElimTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileVulkanToDebugSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileVulkan1_1ToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileToSpirv14Test = GlslangTest<::testing::TestWithParam<std::string>>;
@@ -72,17 +73,20 @@ using OpenGLSemantics = GlslangTest<::testing::TestWithParam<std::string>>;
 using VulkanAstSemantics = GlslangTest<::testing::TestWithParam<std::string>>;
 using HlslIoMap = GlslangTest<::testing::TestWithParam<IoMapData>>;
 using GlslIoMap = GlslangTest<::testing::TestWithParam<IoMapData>>;
-#ifdef AMD_EXTENSIONS
 using CompileVulkanToSpirvTestAMD = GlslangTest<::testing::TestWithParam<std::string>>;
-#endif
-#ifdef NV_EXTENSIONS
 using CompileVulkanToSpirvTestNV = GlslangTest<::testing::TestWithParam<std::string>>;
-#endif
 using CompileUpgradeTextureToSampledTextureAndDropSamplersTest = GlslangTest<::testing::TestWithParam<std::string>>;
 
 // Compiling GLSL to SPIR-V under Vulkan semantics. Expected to successfully
 // generate SPIR-V.
 TEST_P(CompileVulkanToSpirvTest, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
+                            Target::Spv);
+}
+
+TEST_P(CompileVulkanToSpirvDeadCodeElimTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
                             Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
@@ -179,7 +183,6 @@ TEST_P(GlslIoMap, FromFile)
                                  GetParam().flattenUniforms);
 }
 
-#ifdef AMD_EXTENSIONS
 // Compiling GLSL to SPIR-V under Vulkan semantics (AMD extensions enabled).
 // Expected to successfully generate SPIR-V.
 TEST_P(CompileVulkanToSpirvTestAMD, FromFile)
@@ -188,9 +191,7 @@ TEST_P(CompileVulkanToSpirvTestAMD, FromFile)
                             Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::Spv);
 }
-#endif
 
-#ifdef NV_EXTENSIONS
 // Compiling GLSL to SPIR-V under Vulkan semantics (NV extensions enabled).
 // Expected to successfully generate SPIR-V.
 TEST_P(CompileVulkanToSpirvTestNV, FromFile)
@@ -199,7 +200,6 @@ TEST_P(CompileVulkanToSpirvTestNV, FromFile)
                             Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::Spv);
 }
-#endif
 
 TEST_P(CompileUpgradeTextureToSampledTextureAndDropSamplersTest, FromFile)
 {
@@ -292,10 +292,12 @@ INSTANTIATE_TEST_CASE_P(
         "spv.bufferhandle7.frag",
         "spv.bufferhandle8.frag",
         "spv.bufferhandle9.frag",
+        "spv.bufferhandleUvec2.frag",
         "spv.bufferhandle_Error.frag",
         "spv.builtInXFB.vert",
         "spv.conditionalDemote.frag",
         "spv.conditionalDiscard.frag",
+        "spv.constructComposite.comp",
         "spv.constStruct.vert",
         "spv.constConstruct.vert",
         "spv.controlFlowAttributes.frag",
@@ -332,6 +334,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.GeometryShaderPassthrough.geom",
         "spv.interpOps.frag",
         "spv.int64.frag",
+        "spv.intcoopmat.comp",
         "spv.intOps.vert",
         "spv.layoutNested.vert",
         "spv.length.frag",
@@ -409,6 +412,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.storageBuffer.vert",
         "spv.precise.tese",
         "spv.precise.tesc",
+        "spv.volatileAtomic.comp",
         "spv.vulkan100.subgroupArithmetic.comp",
         "spv.vulkan100.subgroupPartitioned.comp",
         "spv.xfb.vert",
@@ -417,6 +421,23 @@ INSTANTIATE_TEST_CASE_P(
         "spv.samplerlessTextureFunctions.frag",
         "spv.smBuiltins.vert",
         "spv.smBuiltins.frag",
+    })),
+    FileNameAsCustomTestSuffix
+);
+
+// Cases with deliberately unreachable code.
+// By default the compiler will aggressively eliminate
+// unreachable merges and continues.
+INSTANTIATE_TEST_CASE_P(
+    GlslWithDeadCode, CompileVulkanToSpirvDeadCodeElimTest,
+    ::testing::ValuesIn(std::vector<std::string>({
+        "spv.dead-after-continue.vert",
+        "spv.dead-after-discard.frag",
+        "spv.dead-after-return.vert",
+        "spv.dead-after-loop-break.vert",
+        "spv.dead-after-switch-break.vert",
+        "spv.dead-complex-continue-after-return.vert",
+        "spv.dead-complex-merge-after-return.vert",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -465,6 +486,22 @@ INSTANTIATE_TEST_CASE_P(
         "spv.subgroupShuffleRelative.comp",
         "spv.subgroupQuad.comp",
         "spv.subgroupVote.comp",
+        "spv.subgroupExtendedTypesArithmetic.comp",
+        "spv.subgroupExtendedTypesArithmeticNeg.comp",
+        "spv.subgroupExtendedTypesBallot.comp",
+        "spv.subgroupExtendedTypesBallotNeg.comp",
+        "spv.subgroupExtendedTypesClustered.comp",
+        "spv.subgroupExtendedTypesClusteredNeg.comp",
+        "spv.subgroupExtendedTypesPartitioned.comp",
+        "spv.subgroupExtendedTypesPartitionedNeg.comp",
+        "spv.subgroupExtendedTypesShuffle.comp",
+        "spv.subgroupExtendedTypesShuffleNeg.comp",
+        "spv.subgroupExtendedTypesShuffleRelative.comp",
+        "spv.subgroupExtendedTypesShuffleRelativeNeg.comp",
+        "spv.subgroupExtendedTypesQuad.comp",
+        "spv.subgroupExtendedTypesQuadNeg.comp",
+        "spv.subgroupExtendedTypesVote.comp",
+        "spv.subgroupExtendedTypesVoteNeg.comp",
         "spv.vulkan110.storageBuffer.vert",
     })),
     FileNameAsCustomTestSuffix
@@ -484,6 +521,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.1.4.image.frag",
         "spv.1.4.sparseTexture.frag",
         "spv.1.4.texture.frag",
+        "spv.1.4.constructComposite.comp",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -570,7 +608,6 @@ INSTANTIATE_TEST_CASE_P(
     FileNameAsCustomTestSuffix
 );
 
-#ifdef AMD_EXTENSIONS
 INSTANTIATE_TEST_CASE_P(
     Glsl, CompileVulkanToSpirvTestAMD,
     ::testing::ValuesIn(std::vector<std::string>({
@@ -586,9 +623,7 @@ INSTANTIATE_TEST_CASE_P(
     })),
     FileNameAsCustomTestSuffix
 );
-#endif
 
-#ifdef NV_EXTENSIONS
 INSTANTIATE_TEST_CASE_P(
     Glsl, CompileVulkanToSpirvTestNV,
     ::testing::ValuesIn(std::vector<std::string>({
@@ -636,7 +671,6 @@ INSTANTIATE_TEST_CASE_P(
 })),
 FileNameAsCustomTestSuffix
 );
-#endif
 
 INSTANTIATE_TEST_CASE_P(
     Glsl, CompileUpgradeTextureToSampledTextureAndDropSamplersTest,

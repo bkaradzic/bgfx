@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "gmock/gmock.h"
+#include "source/util/string_utils.h"
 #include "test/test_fixture.h"
 #include "test/unit_spirv.h"
 
@@ -26,7 +27,7 @@ namespace spvtools {
 namespace {
 
 using spvtest::MakeInstruction;
-using spvtest::MakeVector;
+using utils::MakeVector;
 using spvtest::TextToBinaryTest;
 using ::testing::Eq;
 

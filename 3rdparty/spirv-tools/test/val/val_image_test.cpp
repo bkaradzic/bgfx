@@ -2938,7 +2938,7 @@ TEST_F(ValidateImage, ReadCoordinateSizeTooSmall) {
 TEST_F(ValidateImage, WriteSuccess1) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %u32vec4_0123
+OpImageWrite %img %u32vec2_01 %u32vec4_0123
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -2949,7 +2949,7 @@ TEST_F(ValidateImage, WriteSuccess1) {
 TEST_F(ValidateImage, WriteSuccess2) {
   const std::string body = R"(
 %img = OpLoad %type_image_f32_1d_0002_rgba32f %uniform_image_f32_1d_0002_rgba32f
-%res1 = OpImageWrite %img %u32_1 %f32vec4_0000
+OpImageWrite %img %u32_1 %f32vec4_0000
 )";
 
   const std::string extra = "\nOpCapability Image1D\n";
@@ -2960,7 +2960,7 @@ TEST_F(ValidateImage, WriteSuccess2) {
 TEST_F(ValidateImage, WriteSuccess3) {
   const std::string body = R"(
 %img = OpLoad %type_image_f32_cube_0102_rgba32f %uniform_image_f32_cube_0102_rgba32f
-%res1 = OpImageWrite %img %u32vec3_012 %f32vec4_0000
+OpImageWrite %img %u32vec3_012 %f32vec4_0000
 )";
 
   const std::string extra = "\nOpCapability ImageCubeArray\n";
@@ -2972,8 +2972,8 @@ TEST_F(ValidateImage, WriteSuccess4) {
   const std::string body = R"(
 %img = OpLoad %type_image_f32_2d_0010 %uniform_image_f32_2d_0010
 ;TODO(atgoo@github.com) Is it legal to write to MS image without sample index?
-%res1 = OpImageWrite %img %u32vec2_01 %f32vec4_0000
-%res2 = OpImageWrite %img %u32vec2_01 %f32vec4_0000 Sample %u32_1
+OpImageWrite %img %u32vec2_01 %f32vec4_0000
+OpImageWrite %img %u32vec2_01 %f32vec4_0000 Sample %u32_1
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -2984,7 +2984,7 @@ TEST_F(ValidateImage, WriteSuccess4) {
 TEST_F(ValidateImage, WriteSubpassData) {
   const std::string body = R"(
 %img = OpLoad %type_image_f32_spd_0002 %uniform_image_f32_spd_0002
-%res1 = OpImageWrite %img %u32vec2_01 %f32vec4_0000
+OpImageWrite %img %u32vec2_01 %f32vec4_0000
 )";
 
   CompileSuccessfully(GenerateShaderCode(body).c_str());
@@ -2996,7 +2996,7 @@ TEST_F(ValidateImage, WriteSubpassData) {
 TEST_F(ValidateImage, WriteNeedCapabilityStorageImageWriteWithoutFormat) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %u32vec4_0123
+OpImageWrite %img %u32vec2_01 %u32vec4_0123
 )";
 
   CompileSuccessfully(GenerateShaderCode(body).c_str());
@@ -3006,7 +3006,7 @@ TEST_F(ValidateImage, WriteNeedCapabilityStorageImageWriteWithoutFormat) {
 TEST_F(ValidateImage, WriteNeedCapabilityStorageImageWriteWithoutFormatVulkan) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %u32vec4_0123
+OpImageWrite %img %u32vec2_01 %u32vec4_0123
 )";
 
   spv_target_env env = SPV_ENV_VULKAN_1_0;
@@ -3023,7 +3023,7 @@ TEST_F(ValidateImage, WriteNeedCapabilityStorageImageWriteWithoutFormatVulkan) {
 TEST_F(ValidateImage, WriteNeedCapabilityImage1D) {
   const std::string body = R"(
 %img = OpLoad %type_image_f32_1d_0002_rgba32f %uniform_image_f32_1d_0002_rgba32f
-%res1 = OpImageWrite %img %u32vec2_01 %f32vec4_0000
+OpImageWrite %img %u32vec2_01 %f32vec4_0000
 )";
 
   CompileSuccessfully(GenerateShaderCode(body).c_str());
@@ -3036,7 +3036,7 @@ TEST_F(ValidateImage, WriteNeedCapabilityImage1D) {
 TEST_F(ValidateImage, WriteNeedCapabilityImageCubeArray) {
   const std::string body = R"(
 %img = OpLoad %type_image_f32_cube_0102_rgba32f %uniform_image_f32_cube_0102_rgba32f
-%res1 = OpImageWrite %img %u32vec3_012 %f32vec4_0000
+OpImageWrite %img %u32vec3_012 %f32vec4_0000
 )";
 
   CompileSuccessfully(GenerateShaderCode(body).c_str());
@@ -3050,7 +3050,7 @@ TEST_F(ValidateImage, WriteNeedCapabilityImageCubeArray) {
 TEST_F(ValidateImage, WriteNotImage) {
   const std::string body = R"(
 %sampler = OpLoad %type_sampler %uniform_sampler
-%res1 = OpImageWrite %sampler %u32vec2_01 %f32vec4_0000
+OpImageWrite %sampler %u32vec2_01 %f32vec4_0000
 )";
 
   CompileSuccessfully(GenerateShaderCode(body).c_str());
@@ -3062,7 +3062,7 @@ TEST_F(ValidateImage, WriteNotImage) {
 TEST_F(ValidateImage, WriteImageSampled) {
   const std::string body = R"(
 %img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
-%res1 = OpImageWrite %img %u32vec2_01 %f32vec4_0000
+OpImageWrite %img %u32vec2_01 %f32vec4_0000
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -3075,7 +3075,7 @@ TEST_F(ValidateImage, WriteImageSampled) {
 TEST_F(ValidateImage, WriteWrongCoordinateType) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %f32vec2_00 %u32vec4_0123
+OpImageWrite %img %f32vec2_00 %u32vec4_0123
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -3088,7 +3088,7 @@ TEST_F(ValidateImage, WriteWrongCoordinateType) {
 TEST_F(ValidateImage, WriteCoordinateSizeTooSmall) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32_1 %u32vec4_0123
+OpImageWrite %img %u32_1 %u32vec4_0123
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -3102,7 +3102,7 @@ TEST_F(ValidateImage, WriteCoordinateSizeTooSmall) {
 TEST_F(ValidateImage, WriteTexelWrongType) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %img
+OpImageWrite %img %u32vec2_01 %img
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -3115,7 +3115,7 @@ TEST_F(ValidateImage, WriteTexelWrongType) {
 TEST_F(ValidateImage, DISABLED_WriteTexelNotVector4) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %u32vec3_012
+OpImageWrite %img %u32vec2_01 %u32vec3_012
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -3128,7 +3128,7 @@ TEST_F(ValidateImage, DISABLED_WriteTexelNotVector4) {
 TEST_F(ValidateImage, WriteTexelWrongComponentType) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %f32vec4_0000
+OpImageWrite %img %u32vec2_01 %f32vec4_0000
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -3143,7 +3143,7 @@ TEST_F(ValidateImage, WriteTexelWrongComponentType) {
 TEST_F(ValidateImage, WriteSampleNotInteger) {
   const std::string body = R"(
 %img = OpLoad %type_image_f32_2d_0010 %uniform_image_f32_2d_0010
-%res1 = OpImageWrite %img %u32vec2_01 %f32vec4_0000 Sample %f32_1
+OpImageWrite %img %u32vec2_01 %f32vec4_0000 Sample %f32_1
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -3156,7 +3156,7 @@ TEST_F(ValidateImage, WriteSampleNotInteger) {
 TEST_F(ValidateImage, SampleNotMultisampled) {
   const std::string body = R"(
 %img = OpLoad %type_image_f32_2d_0002 %uniform_image_f32_2d_0002
-%res2 = OpImageWrite %img %u32vec2_01 %f32vec4_0000 Sample %u32_1
+OpImageWrite %img %u32vec2_01 %f32vec4_0000 Sample %u32_1
 )";
 
   const std::string extra = "\nOpCapability StorageImageWriteWithoutFormat\n";
@@ -4527,7 +4527,7 @@ OpExtension "SPV_KHR_vulkan_memory_model"
 TEST_F(ValidateImage, MakeTexelAvailableKHRSuccessImageWrite) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %u32vec4_0123 MakeTexelAvailableKHR|NonPrivateTexelKHR %u32_2
+OpImageWrite %img %u32vec2_01 %u32vec4_0123 MakeTexelAvailableKHR|NonPrivateTexelKHR %u32_2
 )";
 
   const std::string extra = R"(
@@ -4567,7 +4567,7 @@ OpExtension "SPV_KHR_vulkan_memory_model"
 TEST_F(ValidateImage, MakeTexelAvailableKHRFailureMissingNonPrivate) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %u32vec4_0123 MakeTexelAvailableKHR %u32_1
+OpImageWrite %img %u32vec2_01 %u32vec4_0123 MakeTexelAvailableKHR %u32_1
 )";
 
   const std::string extra = R"(
@@ -4588,7 +4588,7 @@ OpExtension "SPV_KHR_vulkan_memory_model"
 TEST_F(ValidateImage, VulkanMemoryModelDeviceScopeImageWriteBad) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %u32vec4_0123 MakeTexelAvailableKHR|NonPrivateTexelKHR %u32_1
+OpImageWrite %img %u32vec2_01 %u32vec4_0123 MakeTexelAvailableKHR|NonPrivateTexelKHR %u32_1
 )";
 
   const std::string extra = R"(
@@ -4610,7 +4610,7 @@ OpExtension "SPV_KHR_vulkan_memory_model"
 TEST_F(ValidateImage, VulkanMemoryModelDeviceScopeImageWriteGood) {
   const std::string body = R"(
 %img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
-%res1 = OpImageWrite %img %u32vec2_01 %u32vec4_0123 MakeTexelAvailableKHR|NonPrivateTexelKHR %u32_1
+OpImageWrite %img %u32vec2_01 %u32vec4_0123 MakeTexelAvailableKHR|NonPrivateTexelKHR %u32_1
 )";
 
   const std::string extra = R"(

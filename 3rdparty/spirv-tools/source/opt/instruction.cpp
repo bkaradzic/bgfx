@@ -469,7 +469,7 @@ bool Instruction::IsOpaqueType() const {
 
 bool Instruction::IsFoldable() const {
   return IsFoldableByFoldScalar() ||
-         context()->get_instruction_folder().HasConstFoldingRule(opcode());
+         context()->get_instruction_folder().HasConstFoldingRule(this);
 }
 
 bool Instruction::IsFoldableByFoldScalar() const {

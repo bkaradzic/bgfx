@@ -888,7 +888,7 @@ struct PosUvwColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 3, bgfx::AttribType::Float)
@@ -906,10 +906,10 @@ struct PosUvwColorVertex
 		m_abgr = _abgr;
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosUvwColorVertex::ms_decl;
+bgfx::VertexLayout PosUvwColorVertex::ms_layout;
 
 static uint32_t addQuad(uint16_t* _indices, uint16_t _idx0, uint16_t _idx1, uint16_t _idx2, uint16_t _idx3)
 {
@@ -937,10 +937,10 @@ void setGeometry(
 {
 	if (Geometry::Quad == _type)
 	{
-		if (6 == bgfx::getAvailTransientVertexBuffer(6, PosUvwColorVertex::ms_decl) )
+		if (6 == bgfx::getAvailTransientVertexBuffer(6, PosUvwColorVertex::ms_layout) )
 		{
 			bgfx::TransientVertexBuffer vb;
-			bgfx::allocTransientVertexBuffer(&vb, 6, PosUvwColorVertex::ms_decl);
+			bgfx::allocTransientVertexBuffer(&vb, 6, PosUvwColorVertex::ms_layout);
 			PosUvwColorVertex* vertex = (PosUvwColorVertex*)vb.data;
 
 			const float widthf  = float(_width);
@@ -971,10 +971,10 @@ void setGeometry(
 	{
 		const uint32_t numVertices = 14;
 		const uint32_t numIndices  = 36;
-		if (checkAvailTransientBuffers(numVertices, PosUvwColorVertex::ms_decl, numIndices) )
+		if (checkAvailTransientBuffers(numVertices, PosUvwColorVertex::ms_layout, numIndices) )
 		{
 			bgfx::TransientVertexBuffer tvb;
-			bgfx::allocTransientVertexBuffer(&tvb, numVertices, PosUvwColorVertex::ms_decl);
+			bgfx::allocTransientVertexBuffer(&tvb, numVertices, PosUvwColorVertex::ms_layout);
 
 			bgfx::TransientIndexBuffer tib;
 			bgfx::allocTransientIndexBuffer(&tib, numIndices);

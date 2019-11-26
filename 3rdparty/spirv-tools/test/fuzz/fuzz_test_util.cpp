@@ -16,6 +16,8 @@
 
 #include <iostream>
 
+#include "tools/io.h"
+
 namespace spvtools {
 namespace fuzz {
 
@@ -79,10 +81,28 @@ bool IsValid(spv_target_env env, const opt::IRContext* ir) {
 std::string ToString(spv_target_env env, const opt::IRContext* ir) {
   std::vector<uint32_t> binary;
   ir->module()->ToBinary(&binary, false);
+  return ToString(env, binary);
+}
+
+std::string ToString(spv_target_env env, const std::vector<uint32_t>& binary) {
   SpirvTools t(env);
   std::string result;
   t.Disassemble(binary, &result, kFuzzDisassembleOption);
   return result;
+}
+
+void DumpShader(opt::IRContext* context, const char* filename) {
+  std::vector<uint32_t> binary;
+  context->module()->ToBinary(&binary, false);
+  DumpShader(binary, filename);
+}
+
+void DumpShader(const std::vector<uint32_t>& binary, const char* filename) {
+  auto write_file_succeeded =
+      WriteFile(filename, "wb", &binary[0], binary.size());
+  if (!write_file_succeeded) {
+    std::cerr << "Failed to dump shader" << std::endl;
+  }
 }
 
 }  // namespace fuzz

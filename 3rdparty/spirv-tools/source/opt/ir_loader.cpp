@@ -159,6 +159,9 @@ void IrLoader::EndModule() {
   for (auto& function : *module_) {
     for (auto& bb : function) bb.SetParent(&function);
   }
+
+  // Copy any trailing Op*Line instruction into the module
+  module_->SetTrailingDbgLineInfo(std::move(dbg_line_info_));
 }
 
 }  // namespace opt

@@ -113,7 +113,7 @@ public:
           forceVersionProfile(false),
           isForwardCompatible(false) {
         // Perform validation by default.
-        validatorOptions.validate = true;
+        spirvOptions.validate = true;
     }
 
     // Tries to load the contents from the file at the given |path|. On success,
@@ -227,7 +227,9 @@ public:
             shader.setAutoMapBindings(true);
         }
         shader.setTextureSamplerTransformMode(texSampTransMode);
+#ifdef ENABLE_HLSL
         shader.setFlattenUniformArrays(flattenUniformArrays);
+#endif
 
         if (controls & EShMsgSpvRules) {
             if (controls & EShMsgVulkanRules) {
@@ -300,7 +302,9 @@ public:
         shader.setShiftSsboBinding(baseSsboBinding);
         shader.setAutoMapBindings(autoMapBindings);
         shader.setAutoMapLocations(true);
+#ifdef ENABLE_HLSL
         shader.setFlattenUniformArrays(flattenUniformArrays);
+#endif
 
         bool success = compile(&shader, code, entryPointName, controls);
 
@@ -308,7 +312,9 @@ public:
         program.addShader(&shader);
         
         success &= program.link(controls);
+#ifndef GLSLANG_WEB
         success &= program.mapIO();
+#endif
 
         spv::SpvBuildLogger logger;
 
@@ -687,14 +693,14 @@ public:
                                     expectedOutputFname, result.spirvWarningsErrors);
     }
 
-    glslang::SpvOptions& options() { return validatorOptions; }
+    glslang::SpvOptions& options() { return spirvOptions; }
 
 private:
     const int defaultVersion;
     const EProfile defaultProfile;
     const bool forceVersionProfile;
     const bool isForwardCompatible;
-    glslang::SpvOptions validatorOptions;
+    glslang::SpvOptions spirvOptions;
 };
 
 }  // namespace glslangtest

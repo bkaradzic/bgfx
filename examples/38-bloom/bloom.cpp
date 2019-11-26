@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Eric Arneb‰ck. All rights reserved.
+ * Copyright 2018 Eric Arneb√§ck. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -43,16 +43,16 @@ struct PosVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosVertex::ms_decl;
+bgfx::VertexLayout PosVertex::ms_layout;
 
 struct PosTexCoord0Vertex
 {
@@ -64,17 +64,17 @@ struct PosTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 constexpr float cs = 0.29f;
 
@@ -126,10 +126,10 @@ static const uint16_t s_cubeIndices[36] =
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 		PosTexCoord0Vertex* vertex = (PosTexCoord0Vertex*)vb.data;
 
 		const float minx = -_width;
@@ -182,8 +182,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleDeferred : public entry::AppI
 {
 public:
-	ExampleDeferred(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleDeferred(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -238,7 +238,7 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-			, PosVertex::ms_decl
+			, PosVertex::ms_layout
 			);
 
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
@@ -658,4 +658,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleDeferred, "38-bloom", "Bloom.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleDeferred
+	, "38-bloom"
+	, "Bloom."
+	, "https://bkaradzic.github.io/bgfx/examples.html#bloom"
+	);

@@ -19,17 +19,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -62,8 +62,8 @@ static const uint16_t s_cubeIndices[36] =
 class ExampleInstancing : public entry::AppI
 {
 public:
-	ExampleInstancing(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleInstancing(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -101,7 +101,7 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 					  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-					, PosColorVertex::ms_decl
+					, PosColorVertex::ms_layout
 					);
 
 		// Create static index buffer.
@@ -261,4 +261,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleInstancing, "05-instancing", "Geometry instancing.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleInstancing
+	, "05-instancing"
+	, "Geometry instancing."
+	, "https://bkaradzic.github.io/bgfx/examples.html#instancing"
+	);

@@ -13,8 +13,8 @@ namespace
 class ExampleMesh : public entry::AppI
 {
 public:
-	ExampleMesh(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleMesh(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -152,4 +152,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleMesh, "04-mesh", "Loading meshes.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleMesh
+	, "04-mesh"
+	, "Loading meshes."
+	, "https://bkaradzic.github.io/bgfx/examples.html#mesh"
+	);

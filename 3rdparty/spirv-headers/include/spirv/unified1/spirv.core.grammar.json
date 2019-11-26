@@ -26,15 +26,122 @@
   ],
   "magic_number" : "0x07230203",
   "major_version" : 1,
-  "minor_version" : 4,
+  "minor_version" : 5,
   "revision" : 1,
+  "instruction_printing_class" : [
+    {
+      "tag"     : "@exclude"
+    },
+    {
+      "tag"     : "Miscellaneous",
+      "heading" : "Miscellaneous Instructions"
+    },
+    {
+      "tag"     : "Debug",
+      "heading" : "Debug Instructions"
+    },
+    {
+      "tag"     : "Annotation",
+      "heading" : "Annotation Instructions"
+    },
+    {
+      "tag"     : "Extension",
+      "heading" : "Extension Instructions"
+    },
+    {
+      "tag"     : "Mode-Setting",
+      "heading" : "Mode-Setting Instructions"
+    },
+    {
+      "tag"     : "Type-Declaration",
+      "heading" : "Type-Declaration Instructions"
+    },
+    {
+      "tag"     : "Constant-Creation",
+      "heading" : "Constant-Creation Instructions"
+    },
+    {
+      "tag"     : "Memory",
+      "heading" : "Memory Instructions"
+    },
+    {
+      "tag"     : "Function",
+      "heading" : "Function Instructions"
+    },
+    {
+      "tag"     : "Image",
+      "heading" : "Image Instructions"
+    },
+    {
+      "tag"     : "Conversion",
+      "heading" : "Conversion Instructions"
+    },
+    {
+      "tag"     : "Composite",
+      "heading" : "Composite Instructions"
+    },
+    {
+      "tag"     : "Arithmetic",
+      "heading" : "Arithmetic Instructions"
+    },
+    {
+      "tag"     : "Bit",
+      "heading" : "Bit Instructions"
+    },
+    {
+      "tag"     : "Relational_and_Logical",
+      "heading" : "Relational and Logical Instructions"
+    },
+    {
+      "tag"     : "Derivative",
+      "heading" : "Derivative Instructions"
+    },
+    {
+      "tag"     : "Control-Flow",
+      "heading" : "Control-Flow Instructions"
+    },
+    {
+      "tag"     : "Atomic",
+      "heading" : "Atomic Instructions"
+    },
+    {
+      "tag"     : "Primitive",
+      "heading" : "Primitive Instructions"
+    },
+    {
+      "tag"     : "Barrier",
+      "heading" : "Barrier Instructions"
+    },
+    {
+      "tag"     : "Group",
+      "heading" : "Group and Subgroup Instructions"
+    },
+    {
+      "tag"     : "Device-Side_Enqueue",
+      "heading" : "Device-Side Enqueue Instructions"
+    },
+    {
+      "tag"     : "Pipe",
+      "heading" : "Pipe Instructions"
+    },
+    {
+      "tag"     : "Non-Uniform",
+      "heading" : "Non-Uniform Instructions"
+    },
+    {
+      "tag"     : "Reserved",
+      "heading" : "Reserved Instructions"
+    }
+  ],
   "instructions" : [
     {
       "opname" : "OpNop",
+      "class"  : "Miscellaneous",
       "opcode" : 0
     },
     {
       "opname" : "OpUndef",
+      "class"  : "Miscellaneous",
       "opcode" : 1,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -43,6 +150,7 @@
     },
     {
       "opname" : "OpSourceContinued",
+      "class"  : "Debug",
       "opcode" : 2,
       "operands" : [
         { "kind" : "LiteralString", "name" : "'Continued Source'" }
@@ -50,6 +158,7 @@
     },
     {
       "opname" : "OpSource",
+      "class"  : "Debug",
       "opcode" : 3,
       "operands" : [
         { "kind" : "SourceLanguage" },
@@ -60,6 +169,7 @@
     },
     {
       "opname" : "OpSourceExtension",
+      "class"  : "Debug",
       "opcode" : 4,
       "operands" : [
         { "kind" : "LiteralString", "name" : "'Extension'" }
@@ -67,6 +177,7 @@
     },
     {
       "opname" : "OpName",
+      "class"  : "Debug",
       "opcode" : 5,
       "operands" : [
         { "kind" : "IdRef",         "name" : "'Target'" },
@@ -75,6 +186,7 @@
     },
     {
       "opname" : "OpMemberName",
+      "class"  : "Debug",
       "opcode" : 6,
       "operands" : [
         { "kind" : "IdRef",          "name" : "'Type'" },
@@ -84,6 +196,7 @@
     },
     {
       "opname" : "OpString",
+      "class"  : "Debug",
       "opcode" : 7,
       "operands" : [
         { "kind" : "IdResult" },
@@ -92,6 +205,7 @@
     },
     {
       "opname" : "OpLine",
+      "class"  : "Debug",
       "opcode" : 8,
       "operands" : [
         { "kind" : "IdRef",          "name" : "'File'" },
@@ -101,6 +215,7 @@
     },
     {
       "opname" : "OpExtension",
+      "class"  : "Extension",
       "opcode" : 10,
       "operands" : [
         { "kind" : "LiteralString", "name" : "'Name'" }
@@ -108,6 +223,7 @@
     },
     {
       "opname" : "OpExtInstImport",
+      "class"  : "Extension",
       "opcode" : 11,
       "operands" : [
         { "kind" : "IdResult" },
@@ -116,6 +232,7 @@
     },
     {
       "opname" : "OpExtInst",
+      "class"  : "Extension",
       "opcode" : 12,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -127,6 +244,7 @@
     },
     {
       "opname" : "OpMemoryModel",
+      "class"  : "Mode-Setting",
       "opcode" : 14,
       "operands" : [
         { "kind" : "AddressingModel" },
@@ -135,6 +253,7 @@
     },
     {
       "opname" : "OpEntryPoint",
+      "class"  : "Mode-Setting",
       "opcode" : 15,
       "operands" : [
         { "kind" : "ExecutionModel" },
@@ -145,6 +264,7 @@
     },
     {
       "opname" : "OpExecutionMode",
+      "class"  : "Mode-Setting",
       "opcode" : 16,
       "operands" : [
         { "kind" : "IdRef",         "name" : "'Entry Point'" },
@@ -153,6 +273,7 @@
     },
     {
       "opname" : "OpCapability",
+      "class"  : "Mode-Setting",
       "opcode" : 17,
       "operands" : [
         { "kind" : "Capability", "name" : "'Capability'" }
@@ -160,6 +281,7 @@
     },
     {
       "opname" : "OpTypeVoid",
+      "class"  : "Type-Declaration",
       "opcode" : 19,
       "operands" : [
         { "kind" : "IdResult" }
@@ -167,6 +289,7 @@
     },
     {
       "opname" : "OpTypeBool",
+      "class"  : "Type-Declaration",
       "opcode" : 20,
       "operands" : [
         { "kind" : "IdResult" }
@@ -174,6 +297,7 @@
     },
     {
       "opname" : "OpTypeInt",
+      "class"  : "Type-Declaration",
       "opcode" : 21,
       "operands" : [
         { "kind" : "IdResult" },
@@ -183,6 +307,7 @@
     },
     {
       "opname" : "OpTypeFloat",
+      "class"  : "Type-Declaration",
       "opcode" : 22,
       "operands" : [
         { "kind" : "IdResult" },
@@ -191,6 +316,7 @@
     },
     {
       "opname" : "OpTypeVector",
+      "class"  : "Type-Declaration",
       "opcode" : 23,
       "operands" : [
         { "kind" : "IdResult" },
@@ -200,6 +326,7 @@
     },
     {
       "opname" : "OpTypeMatrix",
+      "class"  : "Type-Declaration",
       "opcode" : 24,
       "operands" : [
         { "kind" : "IdResult" },
@@ -210,6 +337,7 @@
     },
     {
       "opname" : "OpTypeImage",
+      "class"  : "Type-Declaration",
       "opcode" : 25,
       "operands" : [
         { "kind" : "IdResult" },
@@ -225,6 +353,7 @@
     },
     {
       "opname" : "OpTypeSampler",
+      "class"  : "Type-Declaration",
       "opcode" : 26,
       "operands" : [
         { "kind" : "IdResult" }
@@ -232,6 +361,7 @@
     },
     {
       "opname" : "OpTypeSampledImage",
+      "class"  : "Type-Declaration",
       "opcode" : 27,
       "operands" : [
         { "kind" : "IdResult" },
@@ -240,6 +370,7 @@
     },
     {
       "opname" : "OpTypeArray",
+      "class"  : "Type-Declaration",
       "opcode" : 28,
       "operands" : [
         { "kind" : "IdResult" },
@@ -249,6 +380,7 @@
     },
     {
       "opname" : "OpTypeRuntimeArray",
+      "class"  : "Type-Declaration",
       "opcode" : 29,
       "operands" : [
         { "kind" : "IdResult" },
@@ -258,6 +390,7 @@
     },
     {
       "opname" : "OpTypeStruct",
+      "class"  : "Type-Declaration",
       "opcode" : 30,
       "operands" : [
         { "kind" : "IdResult" },
@@ -266,6 +399,7 @@
     },
     {
       "opname" : "OpTypeOpaque",
+      "class"  : "Type-Declaration",
       "opcode" : 31,
       "operands" : [
         { "kind" : "IdResult" },
@@ -275,6 +409,7 @@
     },
     {
       "opname" : "OpTypePointer",
+      "class"  : "Type-Declaration",
       "opcode" : 32,
       "operands" : [
         { "kind" : "IdResult" },
@@ -284,6 +419,7 @@
     },
     {
       "opname" : "OpTypeFunction",
+      "class"  : "Type-Declaration",
       "opcode" : 33,
       "operands" : [
         { "kind" : "IdResult" },
@@ -293,6 +429,7 @@
     },
     {
       "opname" : "OpTypeEvent",
+      "class"  : "Type-Declaration",
       "opcode" : 34,
       "operands" : [
         { "kind" : "IdResult" }
@@ -301,6 +438,7 @@
     },
     {
       "opname" : "OpTypeDeviceEvent",
+      "class"  : "Type-Declaration",
       "opcode" : 35,
       "operands" : [
         { "kind" : "IdResult" }
@@ -309,6 +447,7 @@
     },
     {
       "opname" : "OpTypeReserveId",
+      "class"  : "Type-Declaration",
       "opcode" : 36,
       "operands" : [
         { "kind" : "IdResult" }
@@ -317,6 +456,7 @@
     },
     {
       "opname" : "OpTypeQueue",
+      "class"  : "Type-Declaration",
       "opcode" : 37,
       "operands" : [
         { "kind" : "IdResult" }
@@ -325,6 +465,7 @@
     },
     {
       "opname" : "OpTypePipe",
+      "class"  : "Type-Declaration",
       "opcode" : 38,
       "operands" : [
         { "kind" : "IdResult" },
@@ -334,6 +475,7 @@
     },
     {
       "opname" : "OpTypeForwardPointer",
+      "class"  : "Type-Declaration",
       "opcode" : 39,
       "operands" : [
         { "kind" : "IdRef",        "name" : "'Pointer Type'" },
@@ -341,11 +483,12 @@
       ],
       "capabilities" : [
         "Addresses",
-        "PhysicalStorageBufferAddressesEXT"
+        "PhysicalStorageBufferAddresses"
       ]
     },
     {
       "opname" : "OpConstantTrue",
+      "class"  : "Constant-Creation",
       "opcode" : 41,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -354,6 +497,7 @@
     },
     {
       "opname" : "OpConstantFalse",
+      "class"  : "Constant-Creation",
       "opcode" : 42,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -362,6 +506,7 @@
     },
     {
       "opname" : "OpConstant",
+      "class"  : "Constant-Creation",
       "opcode" : 43,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -371,6 +516,7 @@
     },
     {
       "opname" : "OpConstantComposite",
+      "class"  : "Constant-Creation",
       "opcode" : 44,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -380,6 +526,7 @@
     },
     {
       "opname" : "OpConstantSampler",
+      "class"  : "Constant-Creation",
       "opcode" : 45,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -392,6 +539,7 @@
     },
     {
       "opname" : "OpConstantNull",
+      "class"  : "Constant-Creation",
       "opcode" : 46,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -400,6 +548,7 @@
     },
     {
       "opname" : "OpSpecConstantTrue",
+      "class"  : "Constant-Creation",
       "opcode" : 48,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -408,6 +557,7 @@
     },
     {
       "opname" : "OpSpecConstantFalse",
+      "class"  : "Constant-Creation",
       "opcode" : 49,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -416,6 +566,7 @@
     },
     {
       "opname" : "OpSpecConstant",
+      "class"  : "Constant-Creation",
       "opcode" : 50,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -425,6 +576,7 @@
     },
     {
       "opname" : "OpSpecConstantComposite",
+      "class"  : "Constant-Creation",
       "opcode" : 51,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -434,6 +586,7 @@
     },
     {
       "opname" : "OpSpecConstantOp",
+      "class"  : "Constant-Creation",
       "opcode" : 52,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -443,6 +596,7 @@
     },
     {
       "opname" : "OpFunction",
+      "class"  : "Function",
       "opcode" : 54,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -453,6 +607,7 @@
     },
     {
       "opname" : "OpFunctionParameter",
+      "class"  : "Function",
       "opcode" : 55,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -461,10 +616,12 @@
     },
     {
       "opname" : "OpFunctionEnd",
+      "class"  : "Function",
       "opcode" : 56
     },
     {
       "opname" : "OpFunctionCall",
+      "class"  : "Function",
       "opcode" : 57,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -475,6 +632,7 @@
     },
     {
       "opname" : "OpVariable",
+      "class"  : "Memory",
       "opcode" : 59,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -485,6 +643,7 @@
     },
     {
       "opname" : "OpImageTexelPointer",
+      "class"  : "Memory",
       "opcode" : 60,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -496,6 +655,7 @@
     },
     {
       "opname" : "OpLoad",
+      "class"  : "Memory",
       "opcode" : 61,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -506,6 +666,7 @@
     },
     {
       "opname" : "OpStore",
+      "class"  : "Memory",
       "opcode" : 62,
       "operands" : [
         { "kind" : "IdRef",                            "name" : "'Pointer'" },
@@ -515,6 +676,7 @@
     },
     {
       "opname" : "OpCopyMemory",
+      "class"  : "Memory",
       "opcode" : 63,
       "operands" : [
         { "kind" : "IdRef",                            "name" : "'Target'" },
@@ -525,6 +687,7 @@
     },
     {
       "opname" : "OpCopyMemorySized",
+      "class"  : "Memory",
       "opcode" : 64,
       "operands" : [
         { "kind" : "IdRef",                            "name" : "'Target'" },
@@ -537,6 +700,7 @@
     },
     {
       "opname" : "OpAccessChain",
+      "class"  : "Memory",
       "opcode" : 65,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -547,6 +711,7 @@
     },
     {
       "opname" : "OpInBoundsAccessChain",
+      "class"  : "Memory",
       "opcode" : 66,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -557,6 +722,7 @@
     },
     {
       "opname" : "OpPtrAccessChain",
+      "class"  : "Memory",
       "opcode" : 67,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -569,11 +735,12 @@
         "Addresses",
         "VariablePointers",
         "VariablePointersStorageBuffer",
-        "PhysicalStorageBufferAddressesEXT"
+        "PhysicalStorageBufferAddresses"
       ]
     },
     {
       "opname" : "OpArrayLength",
+      "class"  : "Memory",
       "opcode" : 68,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -585,6 +752,7 @@
     },
     {
       "opname" : "OpGenericPtrMemSemantics",
+      "class"  : "Memory",
       "opcode" : 69,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -595,6 +763,7 @@
     },
     {
       "opname" : "OpInBoundsPtrAccessChain",
+      "class"  : "Memory",
       "opcode" : 70,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -607,6 +776,7 @@
     },
     {
       "opname" : "OpDecorate",
+      "class"  : "Annotation",
       "opcode" : 71,
       "operands" : [
         { "kind" : "IdRef",      "name" : "'Target'" },
@@ -615,6 +785,7 @@
     },
     {
       "opname" : "OpMemberDecorate",
+      "class"  : "Annotation",
       "opcode" : 72,
       "operands" : [
         { "kind" : "IdRef",          "name" : "'Structure Type'" },
@@ -624,6 +795,7 @@
     },
     {
       "opname" : "OpDecorationGroup",
+      "class"  : "Annotation",
       "opcode" : 73,
       "operands" : [
         { "kind" : "IdResult" }
@@ -631,6 +803,7 @@
     },
     {
       "opname" : "OpGroupDecorate",
+      "class"  : "Annotation",
       "opcode" : 74,
       "operands" : [
         { "kind" : "IdRef",                     "name" : "'Decoration Group'" },
@@ -639,6 +812,7 @@
     },
     {
       "opname" : "OpGroupMemberDecorate",
+      "class"  : "Annotation",
       "opcode" : 75,
       "operands" : [
         { "kind" : "IdRef",                                       "name" : "'Decoration Group'" },
@@ -647,6 +821,7 @@
     },
     {
       "opname" : "OpVectorExtractDynamic",
+      "class"  : "Composite",
       "opcode" : 77,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -657,6 +832,7 @@
     },
     {
       "opname" : "OpVectorInsertDynamic",
+      "class"  : "Composite",
       "opcode" : 78,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -668,6 +844,7 @@
     },
     {
       "opname" : "OpVectorShuffle",
+      "class"  : "Composite",
       "opcode" : 79,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -679,6 +856,7 @@
     },
     {
       "opname" : "OpCompositeConstruct",
+      "class"  : "Composite",
       "opcode" : 80,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -688,6 +866,7 @@
     },
     {
       "opname" : "OpCompositeExtract",
+      "class"  : "Composite",
       "opcode" : 81,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -698,6 +877,7 @@
     },
     {
       "opname" : "OpCompositeInsert",
+      "class"  : "Composite",
       "opcode" : 82,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -709,6 +889,7 @@
     },
     {
       "opname" : "OpCopyObject",
+      "class"  : "Composite",
       "opcode" : 83,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -718,6 +899,7 @@
     },
     {
       "opname" : "OpTranspose",
+      "class"  : "Composite",
       "opcode" : 84,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -728,6 +910,7 @@
     },
     {
       "opname" : "OpSampledImage",
+      "class"  : "Image",
       "opcode" : 86,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -738,6 +921,7 @@
     },
     {
       "opname" : "OpImageSampleImplicitLod",
+      "class"  : "Image",
       "opcode" : 87,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -750,6 +934,7 @@
     },
     {
       "opname" : "OpImageSampleExplicitLod",
+      "class"  : "Image",
       "opcode" : 88,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -761,6 +946,7 @@
     },
     {
       "opname" : "OpImageSampleDrefImplicitLod",
+      "class"  : "Image",
       "opcode" : 89,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -774,6 +960,7 @@
     },
     {
       "opname" : "OpImageSampleDrefExplicitLod",
+      "class"  : "Image",
       "opcode" : 90,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -787,6 +974,7 @@
     },
     {
       "opname" : "OpImageSampleProjImplicitLod",
+      "class"  : "Image",
       "opcode" : 91,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -799,6 +987,7 @@
     },
     {
       "opname" : "OpImageSampleProjExplicitLod",
+      "class"  : "Image",
       "opcode" : 92,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -811,6 +1000,7 @@
     },
     {
       "opname" : "OpImageSampleProjDrefImplicitLod",
+      "class"  : "Image",
       "opcode" : 93,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -824,6 +1014,7 @@
     },
     {
       "opname" : "OpImageSampleProjDrefExplicitLod",
+      "class"  : "Image",
       "opcode" : 94,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -837,6 +1028,7 @@
     },
     {
       "opname" : "OpImageFetch",
+      "class"  : "Image",
       "opcode" : 95,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -848,6 +1040,7 @@
     },
     {
       "opname" : "OpImageGather",
+      "class"  : "Image",
       "opcode" : 96,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -861,6 +1054,7 @@
     },
     {
       "opname" : "OpImageDrefGather",
+      "class"  : "Image",
       "opcode" : 97,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -874,6 +1068,7 @@
     },
     {
       "opname" : "OpImageRead",
+      "class"  : "Image",
       "opcode" : 98,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -885,6 +1080,7 @@
     },
     {
       "opname" : "OpImageWrite",
+      "class"  : "Image",
       "opcode" : 99,
       "operands" : [
         { "kind" : "IdRef",                             "name" : "'Image'" },
@@ -895,6 +1091,7 @@
     },
     {
       "opname" : "OpImage",
+      "class"  : "Image",
       "opcode" : 100,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -904,6 +1101,7 @@
     },
     {
       "opname" : "OpImageQueryFormat",
+      "class"  : "Image",
       "opcode" : 101,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -914,6 +1112,7 @@
     },
     {
       "opname" : "OpImageQueryOrder",
+      "class"  : "Image",
       "opcode" : 102,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -924,6 +1123,7 @@
     },
     {
       "opname" : "OpImageQuerySizeLod",
+      "class"  : "Image",
       "opcode" : 103,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -935,6 +1135,7 @@
     },
     {
       "opname" : "OpImageQuerySize",
+      "class"  : "Image",
       "opcode" : 104,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -945,6 +1146,7 @@
     },
     {
       "opname" : "OpImageQueryLod",
+      "class"  : "Image",
       "opcode" : 105,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -956,6 +1158,7 @@
     },
     {
       "opname" : "OpImageQueryLevels",
+      "class"  : "Image",
       "opcode" : 106,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -966,6 +1169,7 @@
     },
     {
       "opname" : "OpImageQuerySamples",
+      "class"  : "Image",
       "opcode" : 107,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -976,6 +1180,7 @@
     },
     {
       "opname" : "OpConvertFToU",
+      "class"  : "Conversion",
       "opcode" : 109,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -985,6 +1190,7 @@
     },
     {
       "opname" : "OpConvertFToS",
+      "class"  : "Conversion",
       "opcode" : 110,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -994,6 +1200,7 @@
     },
     {
       "opname" : "OpConvertSToF",
+      "class"  : "Conversion",
       "opcode" : 111,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1003,6 +1210,7 @@
     },
     {
       "opname" : "OpConvertUToF",
+      "class"  : "Conversion",
       "opcode" : 112,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1012,6 +1220,7 @@
     },
     {
       "opname" : "OpUConvert",
+      "class"  : "Conversion",
       "opcode" : 113,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1021,6 +1230,7 @@
     },
     {
       "opname" : "OpSConvert",
+      "class"  : "Conversion",
       "opcode" : 114,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1030,6 +1240,7 @@
     },
     {
       "opname" : "OpFConvert",
+      "class"  : "Conversion",
       "opcode" : 115,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1039,6 +1250,7 @@
     },
     {
       "opname" : "OpQuantizeToF16",
+      "class"  : "Conversion",
       "opcode" : 116,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1048,6 +1260,7 @@
     },
     {
       "opname" : "OpConvertPtrToU",
+      "class"  : "Conversion",
       "opcode" : 117,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1056,11 +1269,12 @@
       ],
       "capabilities" : [
         "Addresses",
-        "PhysicalStorageBufferAddressesEXT"
+        "PhysicalStorageBufferAddresses"
       ]
     },
     {
       "opname" : "OpSatConvertSToU",
+      "class"  : "Conversion",
       "opcode" : 118,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1071,6 +1285,7 @@
     },
     {
       "opname" : "OpSatConvertUToS",
+      "class"  : "Conversion",
       "opcode" : 119,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1081,6 +1296,7 @@
     },
     {
       "opname" : "OpConvertUToPtr",
+      "class"  : "Conversion",
       "opcode" : 120,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1089,11 +1305,12 @@
       ],
       "capabilities" : [
         "Addresses",
-        "PhysicalStorageBufferAddressesEXT"
+        "PhysicalStorageBufferAddresses"
       ]
     },
     {
       "opname" : "OpPtrCastToGeneric",
+      "class"  : "Conversion",
       "opcode" : 121,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1104,6 +1321,7 @@
     },
     {
       "opname" : "OpGenericCastToPtr",
+      "class"  : "Conversion",
       "opcode" : 122,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1114,6 +1332,7 @@
     },
     {
       "opname" : "OpGenericCastToPtrExplicit",
+      "class"  : "Conversion",
       "opcode" : 123,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1125,6 +1344,7 @@
     },
     {
       "opname" : "OpBitcast",
+      "class"  : "Conversion",
       "opcode" : 124,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1134,6 +1354,7 @@
     },
     {
       "opname" : "OpSNegate",
+      "class"  : "Arithmetic",
       "opcode" : 126,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1143,6 +1364,7 @@
     },
     {
       "opname" : "OpFNegate",
+      "class"  : "Arithmetic",
       "opcode" : 127,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1152,6 +1374,7 @@
     },
     {
       "opname" : "OpIAdd",
+      "class"  : "Arithmetic",
       "opcode" : 128,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1162,6 +1385,7 @@
     },
     {
       "opname" : "OpFAdd",
+      "class"  : "Arithmetic",
       "opcode" : 129,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1172,6 +1396,7 @@
     },
     {
       "opname" : "OpISub",
+      "class"  : "Arithmetic",
       "opcode" : 130,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1182,6 +1407,7 @@
     },
     {
       "opname" : "OpFSub",
+      "class"  : "Arithmetic",
       "opcode" : 131,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1192,6 +1418,7 @@
     },
     {
       "opname" : "OpIMul",
+      "class"  : "Arithmetic",
       "opcode" : 132,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1202,6 +1429,7 @@
     },
     {
       "opname" : "OpFMul",
+      "class"  : "Arithmetic",
       "opcode" : 133,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1212,6 +1440,7 @@
     },
     {
       "opname" : "OpUDiv",
+      "class"  : "Arithmetic",
       "opcode" : 134,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1222,6 +1451,7 @@
     },
     {
       "opname" : "OpSDiv",
+      "class"  : "Arithmetic",
       "opcode" : 135,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1232,6 +1462,7 @@
     },
     {
       "opname" : "OpFDiv",
+      "class"  : "Arithmetic",
       "opcode" : 136,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1242,6 +1473,7 @@
     },
     {
       "opname" : "OpUMod",
+      "class"  : "Arithmetic",
       "opcode" : 137,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1252,6 +1484,7 @@
     },
     {
       "opname" : "OpSRem",
+      "class"  : "Arithmetic",
       "opcode" : 138,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1262,6 +1495,7 @@
     },
     {
       "opname" : "OpSMod",
+      "class"  : "Arithmetic",
       "opcode" : 139,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1272,6 +1506,7 @@
     },
     {
       "opname" : "OpFRem",
+      "class"  : "Arithmetic",
       "opcode" : 140,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1282,6 +1517,7 @@
     },
     {
       "opname" : "OpFMod",
+      "class"  : "Arithmetic",
       "opcode" : 141,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1292,6 +1528,7 @@
     },
     {
       "opname" : "OpVectorTimesScalar",
+      "class"  : "Arithmetic",
       "opcode" : 142,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1302,6 +1539,7 @@
     },
     {
       "opname" : "OpMatrixTimesScalar",
+      "class"  : "Arithmetic",
       "opcode" : 143,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1313,6 +1551,7 @@
     },
     {
       "opname" : "OpVectorTimesMatrix",
+      "class"  : "Arithmetic",
       "opcode" : 144,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1324,6 +1563,7 @@
     },
     {
       "opname" : "OpMatrixTimesVector",
+      "class"  : "Arithmetic",
       "opcode" : 145,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1335,6 +1575,7 @@
     },
     {
       "opname" : "OpMatrixTimesMatrix",
+      "class"  : "Arithmetic",
       "opcode" : 146,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1346,6 +1587,7 @@
     },
     {
       "opname" : "OpOuterProduct",
+      "class"  : "Arithmetic",
       "opcode" : 147,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1357,6 +1599,7 @@
     },
     {
       "opname" : "OpDot",
+      "class"  : "Arithmetic",
       "opcode" : 148,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1367,6 +1610,7 @@
     },
     {
       "opname" : "OpIAddCarry",
+      "class"  : "Arithmetic",
       "opcode" : 149,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1377,6 +1621,7 @@
     },
     {
       "opname" : "OpISubBorrow",
+      "class"  : "Arithmetic",
       "opcode" : 150,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1387,6 +1632,7 @@
     },
     {
       "opname" : "OpUMulExtended",
+      "class"  : "Arithmetic",
       "opcode" : 151,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1397,6 +1643,7 @@
     },
     {
       "opname" : "OpSMulExtended",
+      "class"  : "Arithmetic",
       "opcode" : 152,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1407,6 +1654,7 @@
     },
     {
       "opname" : "OpAny",
+      "class"  : "Relational_and_Logical",
       "opcode" : 154,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1416,6 +1664,7 @@
     },
     {
       "opname" : "OpAll",
+      "class"  : "Relational_and_Logical",
       "opcode" : 155,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1425,6 +1674,7 @@
     },
     {
       "opname" : "OpIsNan",
+      "class"  : "Relational_and_Logical",
       "opcode" : 156,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1434,6 +1684,7 @@
     },
     {
       "opname" : "OpIsInf",
+      "class"  : "Relational_and_Logical",
       "opcode" : 157,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1443,6 +1694,7 @@
     },
     {
       "opname" : "OpIsFinite",
+      "class"  : "Relational_and_Logical",
       "opcode" : 158,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1453,6 +1705,7 @@
     },
     {
       "opname" : "OpIsNormal",
+      "class"  : "Relational_and_Logical",
       "opcode" : 159,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1463,6 +1716,7 @@
     },
     {
       "opname" : "OpSignBitSet",
+      "class"  : "Relational_and_Logical",
       "opcode" : 160,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1473,6 +1727,7 @@
     },
     {
       "opname" : "OpLessOrGreater",
+      "class"  : "Relational_and_Logical",
       "opcode" : 161,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1484,6 +1739,7 @@
     },
     {
       "opname" : "OpOrdered",
+      "class"  : "Relational_and_Logical",
       "opcode" : 162,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1495,6 +1751,7 @@
     },
     {
       "opname" : "OpUnordered",
+      "class"  : "Relational_and_Logical",
       "opcode" : 163,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1506,6 +1763,7 @@
     },
     {
       "opname" : "OpLogicalEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 164,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1516,6 +1774,7 @@
     },
     {
       "opname" : "OpLogicalNotEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 165,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1526,6 +1785,7 @@
     },
     {
       "opname" : "OpLogicalOr",
+      "class"  : "Relational_and_Logical",
       "opcode" : 166,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1536,6 +1796,7 @@
     },
     {
       "opname" : "OpLogicalAnd",
+      "class"  : "Relational_and_Logical",
       "opcode" : 167,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1546,6 +1807,7 @@
     },
     {
       "opname" : "OpLogicalNot",
+      "class"  : "Relational_and_Logical",
       "opcode" : 168,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1555,6 +1817,7 @@
     },
     {
       "opname" : "OpSelect",
+      "class"  : "Relational_and_Logical",
       "opcode" : 169,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1566,6 +1829,7 @@
     },
     {
       "opname" : "OpIEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 170,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1576,6 +1840,7 @@
     },
     {
       "opname" : "OpINotEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 171,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1586,6 +1851,7 @@
     },
     {
       "opname" : "OpUGreaterThan",
+      "class"  : "Relational_and_Logical",
       "opcode" : 172,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1596,6 +1862,7 @@
     },
     {
       "opname" : "OpSGreaterThan",
+      "class"  : "Relational_and_Logical",
       "opcode" : 173,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1606,6 +1873,7 @@
     },
     {
       "opname" : "OpUGreaterThanEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 174,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1616,6 +1884,7 @@
     },
     {
       "opname" : "OpSGreaterThanEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 175,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1626,6 +1895,7 @@
     },
     {
       "opname" : "OpULessThan",
+      "class"  : "Relational_and_Logical",
       "opcode" : 176,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1636,6 +1906,7 @@
     },
     {
       "opname" : "OpSLessThan",
+      "class"  : "Relational_and_Logical",
       "opcode" : 177,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1646,6 +1917,7 @@
     },
     {
       "opname" : "OpULessThanEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 178,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1656,6 +1928,7 @@
     },
     {
       "opname" : "OpSLessThanEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 179,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1666,6 +1939,7 @@
     },
     {
       "opname" : "OpFOrdEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 180,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1676,6 +1950,7 @@
     },
     {
       "opname" : "OpFUnordEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 181,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1686,6 +1961,7 @@
     },
     {
       "opname" : "OpFOrdNotEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 182,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1696,6 +1972,7 @@
     },
     {
       "opname" : "OpFUnordNotEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 183,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1706,6 +1983,7 @@
     },
     {
       "opname" : "OpFOrdLessThan",
+      "class"  : "Relational_and_Logical",
       "opcode" : 184,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1716,6 +1994,7 @@
     },
     {
       "opname" : "OpFUnordLessThan",
+      "class"  : "Relational_and_Logical",
       "opcode" : 185,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1726,6 +2005,7 @@
     },
     {
       "opname" : "OpFOrdGreaterThan",
+      "class"  : "Relational_and_Logical",
       "opcode" : 186,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1736,6 +2016,7 @@
     },
     {
       "opname" : "OpFUnordGreaterThan",
+      "class"  : "Relational_and_Logical",
       "opcode" : 187,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1746,6 +2027,7 @@
     },
     {
       "opname" : "OpFOrdLessThanEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 188,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1756,6 +2038,7 @@
     },
     {
       "opname" : "OpFUnordLessThanEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 189,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1766,6 +2049,7 @@
     },
     {
       "opname" : "OpFOrdGreaterThanEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 190,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1776,6 +2060,7 @@
     },
     {
       "opname" : "OpFUnordGreaterThanEqual",
+      "class"  : "Relational_and_Logical",
       "opcode" : 191,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1786,6 +2071,7 @@
     },
     {
       "opname" : "OpShiftRightLogical",
+      "class"  : "Bit",
       "opcode" : 194,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1796,6 +2082,7 @@
     },
     {
       "opname" : "OpShiftRightArithmetic",
+      "class"  : "Bit",
       "opcode" : 195,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1806,6 +2093,7 @@
     },
     {
       "opname" : "OpShiftLeftLogical",
+      "class"  : "Bit",
       "opcode" : 196,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1816,6 +2104,7 @@
     },
     {
       "opname" : "OpBitwiseOr",
+      "class"  : "Bit",
       "opcode" : 197,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1826,6 +2115,7 @@
     },
     {
       "opname" : "OpBitwiseXor",
+      "class"  : "Bit",
       "opcode" : 198,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1836,6 +2126,7 @@
     },
     {
       "opname" : "OpBitwiseAnd",
+      "class"  : "Bit",
       "opcode" : 199,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1846,6 +2137,7 @@
     },
     {
       "opname" : "OpNot",
+      "class"  : "Bit",
       "opcode" : 200,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1855,6 +2147,7 @@
     },
     {
       "opname" : "OpBitFieldInsert",
+      "class"  : "Bit",
       "opcode" : 201,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1868,6 +2161,7 @@
     },
     {
       "opname" : "OpBitFieldSExtract",
+      "class"  : "Bit",
       "opcode" : 202,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1880,6 +2174,7 @@
     },
     {
       "opname" : "OpBitFieldUExtract",
+      "class"  : "Bit",
       "opcode" : 203,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1892,6 +2187,7 @@
     },
     {
       "opname" : "OpBitReverse",
+      "class"  : "Bit",
       "opcode" : 204,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1902,6 +2198,7 @@
     },
     {
       "opname" : "OpBitCount",
+      "class"  : "Bit",
       "opcode" : 205,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1911,6 +2208,7 @@
     },
     {
       "opname" : "OpDPdx",
+      "class"  : "Derivative",
       "opcode" : 207,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1921,6 +2219,7 @@
     },
     {
       "opname" : "OpDPdy",
+      "class"  : "Derivative",
       "opcode" : 208,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1931,6 +2230,7 @@
     },
     {
       "opname" : "OpFwidth",
+      "class"  : "Derivative",
       "opcode" : 209,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1941,6 +2241,7 @@
     },
     {
       "opname" : "OpDPdxFine",
+      "class"  : "Derivative",
       "opcode" : 210,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1951,6 +2252,7 @@
     },
     {
       "opname" : "OpDPdyFine",
+      "class"  : "Derivative",
       "opcode" : 211,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1961,6 +2263,7 @@
     },
     {
       "opname" : "OpFwidthFine",
+      "class"  : "Derivative",
       "opcode" : 212,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1971,6 +2274,7 @@
     },
     {
       "opname" : "OpDPdxCoarse",
+      "class"  : "Derivative",
       "opcode" : 213,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1981,6 +2285,7 @@
     },
     {
       "opname" : "OpDPdyCoarse",
+      "class"  : "Derivative",
       "opcode" : 214,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -1991,6 +2296,7 @@
     },
     {
       "opname" : "OpFwidthCoarse",
+      "class"  : "Derivative",
       "opcode" : 215,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2001,16 +2307,19 @@
     },
     {
       "opname" : "OpEmitVertex",
+      "class"  : "Primitive",
       "opcode" : 218,
       "capabilities" : [ "Geometry" ]
     },
     {
       "opname" : "OpEndPrimitive",
+      "class"  : "Primitive",
       "opcode" : 219,
       "capabilities" : [ "Geometry" ]
     },
     {
       "opname" : "OpEmitStreamVertex",
+      "class"  : "Primitive",
       "opcode" : 220,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Stream'" }
@@ -2019,6 +2328,7 @@
     },
     {
       "opname" : "OpEndStreamPrimitive",
+      "class"  : "Primitive",
       "opcode" : 221,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Stream'" }
@@ -2027,6 +2337,7 @@
     },
     {
       "opname" : "OpControlBarrier",
+      "class"  : "Barrier",
       "opcode" : 224,
       "operands" : [
         { "kind" : "IdScope",           "name" : "'Execution'" },
@@ -2036,6 +2347,7 @@
     },
     {
       "opname" : "OpMemoryBarrier",
+      "class"  : "Barrier",
       "opcode" : 225,
       "operands" : [
         { "kind" : "IdScope",           "name" : "'Memory'" },
@@ -2044,6 +2356,7 @@
     },
     {
       "opname" : "OpAtomicLoad",
+      "class"  : "Atomic",
       "opcode" : 227,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2055,6 +2368,7 @@
     },
     {
       "opname" : "OpAtomicStore",
+      "class"  : "Atomic",
       "opcode" : 228,
       "operands" : [
         { "kind" : "IdRef",             "name" : "'Pointer'" },
@@ -2065,6 +2379,7 @@
     },
     {
       "opname" : "OpAtomicExchange",
+      "class"  : "Atomic",
       "opcode" : 229,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2077,6 +2392,7 @@
     },
     {
       "opname" : "OpAtomicCompareExchange",
+      "class"  : "Atomic",
       "opcode" : 230,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2091,6 +2407,7 @@
     },
     {
       "opname" : "OpAtomicCompareExchangeWeak",
+      "class"  : "Atomic",
       "opcode" : 231,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2107,6 +2424,7 @@
     },
     {
       "opname" : "OpAtomicIIncrement",
+      "class"  : "Atomic",
       "opcode" : 232,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2118,6 +2436,7 @@
     },
     {
       "opname" : "OpAtomicIDecrement",
+      "class"  : "Atomic",
       "opcode" : 233,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2129,6 +2448,7 @@
     },
     {
       "opname" : "OpAtomicIAdd",
+      "class"  : "Atomic",
       "opcode" : 234,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2141,6 +2461,7 @@
     },
     {
       "opname" : "OpAtomicISub",
+      "class"  : "Atomic",
       "opcode" : 235,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2153,6 +2474,7 @@
     },
     {
       "opname" : "OpAtomicSMin",
+      "class"  : "Atomic",
       "opcode" : 236,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2165,6 +2487,7 @@
     },
     {
       "opname" : "OpAtomicUMin",
+      "class"  : "Atomic",
       "opcode" : 237,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2177,6 +2500,7 @@
     },
     {
       "opname" : "OpAtomicSMax",
+      "class"  : "Atomic",
       "opcode" : 238,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2189,6 +2513,7 @@
     },
     {
       "opname" : "OpAtomicUMax",
+      "class"  : "Atomic",
       "opcode" : 239,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2201,6 +2526,7 @@
     },
     {
       "opname" : "OpAtomicAnd",
+      "class"  : "Atomic",
       "opcode" : 240,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2213,6 +2539,7 @@
     },
     {
       "opname" : "OpAtomicOr",
+      "class"  : "Atomic",
       "opcode" : 241,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2225,6 +2552,7 @@
     },
     {
       "opname" : "OpAtomicXor",
+      "class"  : "Atomic",
       "opcode" : 242,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2237,6 +2565,7 @@
     },
     {
       "opname" : "OpPhi",
+      "class"  : "Control-Flow",
       "opcode" : 245,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2246,6 +2575,7 @@
     },
     {
       "opname" : "OpLoopMerge",
+      "class"  : "Control-Flow",
       "opcode" : 246,
       "operands" : [
         { "kind" : "IdRef",       "name" : "'Merge Block'" },
@@ -2255,6 +2585,7 @@
     },
     {
       "opname" : "OpSelectionMerge",
+      "class"  : "Control-Flow",
       "opcode" : 247,
       "operands" : [
         { "kind" : "IdRef",            "name" : "'Merge Block'" },
@@ -2263,6 +2594,7 @@
     },
     {
       "opname" : "OpLabel",
+      "class"  : "Control-Flow",
       "opcode" : 248,
       "operands" : [
         { "kind" : "IdResult" }
@@ -2270,6 +2602,7 @@
     },
     {
       "opname" : "OpBranch",
+      "class"  : "Control-Flow",
       "opcode" : 249,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Target Label'" }
@@ -2277,6 +2610,7 @@
     },
     {
       "opname" : "OpBranchConditional",
+      "class"  : "Control-Flow",
       "opcode" : 250,
       "operands" : [
         { "kind" : "IdRef",                              "name" : "'Condition'" },
@@ -2287,6 +2621,7 @@
     },
     {
       "opname" : "OpSwitch",
+      "class"  : "Control-Flow",
       "opcode" : 251,
       "operands" : [
         { "kind" : "IdRef",                                       "name" : "'Selector'" },
@@ -2296,15 +2631,18 @@
     },
     {
       "opname" : "OpKill",
+      "class"  : "Control-Flow",
       "opcode" : 252,
       "capabilities" : [ "Shader" ]
     },
     {
       "opname" : "OpReturn",
+      "class"  : "Control-Flow",
       "opcode" : 253
     },
     {
       "opname" : "OpReturnValue",
+      "class"  : "Control-Flow",
       "opcode" : 254,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Value'" }
@@ -2312,10 +2650,12 @@
     },
     {
       "opname" : "OpUnreachable",
+      "class"  : "Control-Flow",
       "opcode" : 255
     },
     {
       "opname" : "OpLifetimeStart",
+      "class"  : "Control-Flow",
       "opcode" : 256,
       "operands" : [
         { "kind" : "IdRef",          "name" : "'Pointer'" },
@@ -2325,6 +2665,7 @@
     },
     {
       "opname" : "OpLifetimeStop",
+      "class"  : "Control-Flow",
       "opcode" : 257,
       "operands" : [
         { "kind" : "IdRef",          "name" : "'Pointer'" },
@@ -2334,6 +2675,7 @@
     },
     {
       "opname" : "OpGroupAsyncCopy",
+      "class"  : "Group",
       "opcode" : 259,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2349,6 +2691,7 @@
     },
     {
       "opname" : "OpGroupWaitEvents",
+      "class"  : "Group",
       "opcode" : 260,
       "operands" : [
         { "kind" : "IdScope", "name" : "'Execution'" },
@@ -2359,6 +2702,7 @@
     },
     {
       "opname" : "OpGroupAll",
+      "class"  : "Group",
       "opcode" : 261,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2370,6 +2714,7 @@
     },
     {
       "opname" : "OpGroupAny",
+      "class"  : "Group",
       "opcode" : 262,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2381,6 +2726,7 @@
     },
     {
       "opname" : "OpGroupBroadcast",
+      "class"  : "Group",
       "opcode" : 263,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2393,6 +2739,7 @@
     },
     {
       "opname" : "OpGroupIAdd",
+      "class"  : "Group",
       "opcode" : 264,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2405,6 +2752,7 @@
     },
     {
       "opname" : "OpGroupFAdd",
+      "class"  : "Group",
       "opcode" : 265,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2417,6 +2765,7 @@
     },
     {
       "opname" : "OpGroupFMin",
+      "class"  : "Group",
       "opcode" : 266,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2429,6 +2778,7 @@
     },
     {
       "opname" : "OpGroupUMin",
+      "class"  : "Group",
       "opcode" : 267,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2441,6 +2791,7 @@
     },
     {
       "opname" : "OpGroupSMin",
+      "class"  : "Group",
       "opcode" : 268,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2453,6 +2804,7 @@
     },
     {
       "opname" : "OpGroupFMax",
+      "class"  : "Group",
       "opcode" : 269,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2465,6 +2817,7 @@
     },
     {
       "opname" : "OpGroupUMax",
+      "class"  : "Group",
       "opcode" : 270,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2477,6 +2830,7 @@
     },
     {
       "opname" : "OpGroupSMax",
+      "class"  : "Group",
       "opcode" : 271,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2489,6 +2843,7 @@
     },
     {
       "opname" : "OpReadPipe",
+      "class"  : "Pipe",
       "opcode" : 274,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2502,6 +2857,7 @@
     },
     {
       "opname" : "OpWritePipe",
+      "class"  : "Pipe",
       "opcode" : 275,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2515,6 +2871,7 @@
     },
     {
       "opname" : "OpReservedReadPipe",
+      "class"  : "Pipe",
       "opcode" : 276,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2530,6 +2887,7 @@
     },
     {
       "opname" : "OpReservedWritePipe",
+      "class"  : "Pipe",
       "opcode" : 277,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2545,6 +2903,7 @@
     },
     {
       "opname" : "OpReserveReadPipePackets",
+      "class"  : "Pipe",
       "opcode" : 278,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2558,6 +2917,7 @@
     },
     {
       "opname" : "OpReserveWritePipePackets",
+      "class"  : "Pipe",
       "opcode" : 279,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2571,6 +2931,7 @@
     },
     {
       "opname" : "OpCommitReadPipe",
+      "class"  : "Pipe",
       "opcode" : 280,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Pipe'" },
@@ -2582,6 +2943,7 @@
     },
     {
       "opname" : "OpCommitWritePipe",
+      "class"  : "Pipe",
       "opcode" : 281,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Pipe'" },
@@ -2593,6 +2955,7 @@
     },
     {
       "opname" : "OpIsValidReserveId",
+      "class"  : "Pipe",
       "opcode" : 282,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2603,6 +2966,7 @@
     },
     {
       "opname" : "OpGetNumPipePackets",
+      "class"  : "Pipe",
       "opcode" : 283,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2615,6 +2979,7 @@
     },
     {
       "opname" : "OpGetMaxPipePackets",
+      "class"  : "Pipe",
       "opcode" : 284,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2627,6 +2992,7 @@
     },
     {
       "opname" : "OpGroupReserveReadPipePackets",
+      "class"  : "Pipe",
       "opcode" : 285,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2641,6 +3007,7 @@
     },
     {
       "opname" : "OpGroupReserveWritePipePackets",
+      "class"  : "Pipe",
       "opcode" : 286,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2655,6 +3022,7 @@
     },
     {
       "opname" : "OpGroupCommitReadPipe",
+      "class"  : "Pipe",
       "opcode" : 287,
       "operands" : [
         { "kind" : "IdScope", "name" : "'Execution'" },
@@ -2667,6 +3035,7 @@
     },
     {
       "opname" : "OpGroupCommitWritePipe",
+      "class"  : "Pipe",
       "opcode" : 288,
       "operands" : [
         { "kind" : "IdScope", "name" : "'Execution'" },
@@ -2679,6 +3048,7 @@
     },
     {
       "opname" : "OpEnqueueMarker",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 291,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2692,6 +3062,7 @@
     },
     {
       "opname" : "OpEnqueueKernel",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 292,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2712,6 +3083,7 @@
     },
     {
       "opname" : "OpGetKernelNDrangeSubGroupCount",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 293,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2726,6 +3098,7 @@
     },
     {
       "opname" : "OpGetKernelNDrangeMaxSubGroupSize",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 294,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2740,6 +3113,7 @@
     },
     {
       "opname" : "OpGetKernelWorkGroupSize",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 295,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2753,6 +3127,7 @@
     },
     {
       "opname" : "OpGetKernelPreferredWorkGroupSizeMultiple",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 296,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2766,6 +3141,7 @@
     },
     {
       "opname" : "OpRetainEvent",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 297,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Event'" }
@@ -2774,6 +3150,7 @@
     },
     {
       "opname" : "OpReleaseEvent",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 298,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Event'" }
@@ -2782,6 +3159,7 @@
     },
     {
       "opname" : "OpCreateUserEvent",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 299,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2791,6 +3169,7 @@
     },
     {
       "opname" : "OpIsValidEvent",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 300,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2801,6 +3180,7 @@
     },
     {
       "opname" : "OpSetUserEventStatus",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 301,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Event'" },
@@ -2810,6 +3190,7 @@
     },
     {
       "opname" : "OpCaptureEventProfilingInfo",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 302,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Event'" },
@@ -2820,6 +3201,7 @@
     },
     {
       "opname" : "OpGetDefaultQueue",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 303,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2829,6 +3211,7 @@
     },
     {
       "opname" : "OpBuildNDRange",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 304,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2841,6 +3224,7 @@
     },
     {
       "opname" : "OpImageSparseSampleImplicitLod",
+      "class"  : "Image",
       "opcode" : 305,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2853,6 +3237,7 @@
     },
     {
       "opname" : "OpImageSparseSampleExplicitLod",
+      "class"  : "Image",
       "opcode" : 306,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2865,6 +3250,7 @@
     },
     {
       "opname" : "OpImageSparseSampleDrefImplicitLod",
+      "class"  : "Image",
       "opcode" : 307,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2878,6 +3264,7 @@
     },
     {
       "opname" : "OpImageSparseSampleDrefExplicitLod",
+      "class"  : "Image",
       "opcode" : 308,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2891,6 +3278,7 @@
     },
     {
       "opname" : "OpImageSparseSampleProjImplicitLod",
+      "class"  : "Image",
       "opcode" : 309,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2904,6 +3292,7 @@
     },
     {
       "opname" : "OpImageSparseSampleProjExplicitLod",
+      "class"  : "Image",
       "opcode" : 310,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2917,6 +3306,7 @@
     },
     {
       "opname" : "OpImageSparseSampleProjDrefImplicitLod",
+      "class"  : "Image",
       "opcode" : 311,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2931,6 +3321,7 @@
     },
     {
       "opname" : "OpImageSparseSampleProjDrefExplicitLod",
+      "class"  : "Image",
       "opcode" : 312,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2945,6 +3336,7 @@
     },
     {
       "opname" : "OpImageSparseFetch",
+      "class"  : "Image",
       "opcode" : 313,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2957,6 +3349,7 @@
     },
     {
       "opname" : "OpImageSparseGather",
+      "class"  : "Image",
       "opcode" : 314,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2970,6 +3363,7 @@
     },
     {
       "opname" : "OpImageSparseDrefGather",
+      "class"  : "Image",
       "opcode" : 315,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2983,6 +3377,7 @@
     },
     {
       "opname" : "OpImageSparseTexelsResident",
+      "class"  : "Image",
       "opcode" : 316,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -2993,10 +3388,12 @@
     },
     {
       "opname" : "OpNoLine",
+      "class"  : "Debug",
       "opcode" : 317
     },
     {
       "opname" : "OpAtomicFlagTestAndSet",
+      "class"  : "Atomic",
       "opcode" : 318,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3009,6 +3406,7 @@
     },
     {
       "opname" : "OpAtomicFlagClear",
+      "class"  : "Atomic",
       "opcode" : 319,
       "operands" : [
         { "kind" : "IdRef",             "name" : "'Pointer'" },
@@ -3019,6 +3417,7 @@
     },
     {
       "opname" : "OpImageSparseRead",
+      "class"  : "Image",
       "opcode" : 320,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3031,6 +3430,7 @@
     },
     {
       "opname" : "OpSizeOf",
+      "class"  : "Miscellaneous",
       "opcode" : 321,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3042,6 +3442,7 @@
     },
     {
       "opname" : "OpTypePipeStorage",
+      "class"  : "Type-Declaration",
       "opcode" : 322,
       "operands" : [
         { "kind" : "IdResult" }
@@ -3051,6 +3452,7 @@
     },
     {
       "opname" : "OpConstantPipeStorage",
+      "class"  : "Pipe",
       "opcode" : 323,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3064,6 +3466,7 @@
     },
     {
       "opname" : "OpCreatePipeFromPipeStorage",
+      "class"  : "Pipe",
       "opcode" : 324,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3075,6 +3478,7 @@
     },
     {
       "opname" : "OpGetKernelLocalSizeForSubgroupCount",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 325,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3090,6 +3494,7 @@
     },
     {
       "opname" : "OpGetKernelMaxNumSubgroups",
+      "class"  : "Device-Side_Enqueue",
       "opcode" : 326,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3104,6 +3509,7 @@
     },
     {
       "opname" : "OpTypeNamedBarrier",
+      "class"  : "Type-Declaration",
       "opcode" : 327,
       "operands" : [
         { "kind" : "IdResult" }
@@ -3113,6 +3519,7 @@
     },
     {
       "opname" : "OpNamedBarrierInitialize",
+      "class"  : "Barrier",
       "opcode" : 328,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3124,6 +3531,7 @@
     },
     {
       "opname" : "OpMemoryNamedBarrier",
+      "class"  : "Barrier",
       "opcode" : 329,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Named Barrier'" },
@@ -3135,6 +3543,7 @@
     },
     {
       "opname" : "OpModuleProcessed",
+      "class"  : "Debug",
       "opcode" : 330,
       "operands" : [
         { "kind" : "LiteralString", "name" : "'Process'" }
@@ -3143,6 +3552,7 @@
     },
     {
       "opname" : "OpExecutionModeId",
+      "class"  : "Mode-Setting",
       "opcode" : 331,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Entry Point'" },
@@ -3152,6 +3562,7 @@
     },
     {
       "opname" : "OpDecorateId",
+      "class"  : "Annotation",
       "opcode" : 332,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Target'" },
@@ -3162,6 +3573,7 @@
     },
     {
       "opname" : "OpGroupNonUniformElect",
+      "class"  : "Non-Uniform",
       "opcode" : 333,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3173,6 +3585,7 @@
     },
     {
       "opname" : "OpGroupNonUniformAll",
+      "class"  : "Non-Uniform",
       "opcode" : 334,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3185,6 +3598,7 @@
     },
     {
       "opname" : "OpGroupNonUniformAny",
+      "class"  : "Non-Uniform",
       "opcode" : 335,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3197,6 +3611,7 @@
     },
     {
       "opname" : "OpGroupNonUniformAllEqual",
+      "class"  : "Non-Uniform",
       "opcode" : 336,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3209,6 +3624,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBroadcast",
+      "class"  : "Non-Uniform",
       "opcode" : 337,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3222,6 +3638,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBroadcastFirst",
+      "class"  : "Non-Uniform",
       "opcode" : 338,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3234,6 +3651,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBallot",
+      "class"  : "Non-Uniform",
       "opcode" : 339,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3246,6 +3664,7 @@
     },
     {
       "opname" : "OpGroupNonUniformInverseBallot",
+      "class"  : "Non-Uniform",
       "opcode" : 340,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3258,6 +3677,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBallotBitExtract",
+      "class"  : "Non-Uniform",
       "opcode" : 341,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3271,6 +3691,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBallotBitCount",
+      "class"  : "Non-Uniform",
       "opcode" : 342,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3284,6 +3705,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBallotFindLSB",
+      "class"  : "Non-Uniform",
       "opcode" : 343,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3296,6 +3718,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBallotFindMSB",
+      "class"  : "Non-Uniform",
       "opcode" : 344,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3308,6 +3731,7 @@
     },
     {
       "opname" : "OpGroupNonUniformShuffle",
+      "class"  : "Non-Uniform",
       "opcode" : 345,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3321,6 +3745,7 @@
     },
     {
       "opname" : "OpGroupNonUniformShuffleXor",
+      "class"  : "Non-Uniform",
       "opcode" : 346,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3334,6 +3759,7 @@
     },
     {
       "opname" : "OpGroupNonUniformShuffleUp",
+      "class"  : "Non-Uniform",
       "opcode" : 347,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3347,6 +3773,7 @@
     },
     {
       "opname" : "OpGroupNonUniformShuffleDown",
+      "class"  : "Non-Uniform",
       "opcode" : 348,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3360,6 +3787,7 @@
     },
     {
       "opname" : "OpGroupNonUniformIAdd",
+      "class"  : "Non-Uniform",
       "opcode" : 349,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3374,6 +3802,7 @@
     },
     {
       "opname" : "OpGroupNonUniformFAdd",
+      "class"  : "Non-Uniform",
       "opcode" : 350,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3388,6 +3817,7 @@
     },
     {
       "opname" : "OpGroupNonUniformIMul",
+      "class"  : "Non-Uniform",
       "opcode" : 351,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3402,6 +3832,7 @@
     },
     {
       "opname" : "OpGroupNonUniformFMul",
+      "class"  : "Non-Uniform",
       "opcode" : 352,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3416,6 +3847,7 @@
     },
     {
       "opname" : "OpGroupNonUniformSMin",
+      "class"  : "Non-Uniform",
       "opcode" : 353,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3430,6 +3862,7 @@
     },
     {
       "opname" : "OpGroupNonUniformUMin",
+      "class"  : "Non-Uniform",
       "opcode" : 354,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3444,6 +3877,7 @@
     },
     {
       "opname" : "OpGroupNonUniformFMin",
+      "class"  : "Non-Uniform",
       "opcode" : 355,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3458,6 +3892,7 @@
     },
     {
       "opname" : "OpGroupNonUniformSMax",
+      "class"  : "Non-Uniform",
       "opcode" : 356,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3472,6 +3907,7 @@
     },
     {
       "opname" : "OpGroupNonUniformUMax",
+      "class"  : "Non-Uniform",
       "opcode" : 357,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3486,6 +3922,7 @@
     },
     {
       "opname" : "OpGroupNonUniformFMax",
+      "class"  : "Non-Uniform",
       "opcode" : 358,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3500,6 +3937,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBitwiseAnd",
+      "class"  : "Non-Uniform",
       "opcode" : 359,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3514,6 +3952,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBitwiseOr",
+      "class"  : "Non-Uniform",
       "opcode" : 360,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3528,6 +3967,7 @@
     },
     {
       "opname" : "OpGroupNonUniformBitwiseXor",
+      "class"  : "Non-Uniform",
       "opcode" : 361,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3542,6 +3982,7 @@
     },
     {
       "opname" : "OpGroupNonUniformLogicalAnd",
+      "class"  : "Non-Uniform",
       "opcode" : 362,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3556,6 +3997,7 @@
     },
     {
       "opname" : "OpGroupNonUniformLogicalOr",
+      "class"  : "Non-Uniform",
       "opcode" : 363,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3570,6 +4012,7 @@
     },
     {
       "opname" : "OpGroupNonUniformLogicalXor",
+      "class"  : "Non-Uniform",
       "opcode" : 364,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3584,6 +4027,7 @@
     },
     {
       "opname" : "OpGroupNonUniformQuadBroadcast",
+      "class"  : "Non-Uniform",
       "opcode" : 365,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3597,6 +4041,7 @@
     },
     {
       "opname" : "OpGroupNonUniformQuadSwap",
+      "class"  : "Non-Uniform",
       "opcode" : 366,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3610,6 +4055,7 @@
     },
     {
       "opname" : "OpCopyLogical",
+      "class"  : "Composite",
       "opcode" : 400,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3620,6 +4066,7 @@
     },
     {
       "opname" : "OpPtrEqual",
+      "class"  : "Memory",
       "opcode" : 401,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3631,6 +4078,7 @@
     },
     {
       "opname" : "OpPtrNotEqual",
+      "class"  : "Memory",
       "opcode" : 402,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3642,6 +4090,7 @@
     },
     {
       "opname" : "OpPtrDiff",
+      "class"  : "Memory",
       "opcode" : 403,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3654,6 +4103,7 @@
     },
     {
       "opname" : "OpSubgroupBallotKHR",
+      "class"  : "Group",
       "opcode" : 4421,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3666,6 +4116,7 @@
     },
     {
       "opname" : "OpSubgroupFirstInvocationKHR",
+      "class"  : "Group",
       "opcode" : 4422,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3678,6 +4129,7 @@
     },
     {
       "opname" : "OpSubgroupAllKHR",
+      "class"  : "Group",
       "opcode" : 4428,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3692,6 +4144,7 @@
     },
     {
       "opname" : "OpSubgroupAnyKHR",
+      "class"  : "Group",
       "opcode" : 4429,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3706,6 +4159,7 @@
     },
     {
       "opname" : "OpSubgroupAllEqualKHR",
+      "class"  : "Group",
       "opcode" : 4430,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3720,6 +4174,7 @@
     },
     {
       "opname" : "OpSubgroupReadInvocationKHR",
+      "class"  : "Group",
       "opcode" : 4432,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3733,6 +4188,7 @@
     },
     {
       "opname" : "OpGroupIAddNonUniformAMD",
+      "class"  : "Group",
       "opcode" : 5000,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3747,6 +4203,7 @@
     },
     {
       "opname" : "OpGroupFAddNonUniformAMD",
+      "class"  : "Group",
       "opcode" : 5001,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3761,6 +4218,7 @@
     },
     {
       "opname" : "OpGroupFMinNonUniformAMD",
+      "class"  : "Group",
       "opcode" : 5002,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3775,6 +4233,7 @@
     },
     {
       "opname" : "OpGroupUMinNonUniformAMD",
+      "class"  : "Group",
       "opcode" : 5003,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3789,6 +4248,7 @@
     },
     {
       "opname" : "OpGroupSMinNonUniformAMD",
+      "class"  : "Group",
       "opcode" : 5004,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3803,6 +4263,7 @@
     },
     {
       "opname" : "OpGroupFMaxNonUniformAMD",
+      "class"  : "Group",
       "opcode" : 5005,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3817,6 +4278,7 @@
     },
     {
       "opname" : "OpGroupUMaxNonUniformAMD",
+      "class"  : "Group",
       "opcode" : 5006,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3831,6 +4293,7 @@
     },
     {
       "opname" : "OpGroupSMaxNonUniformAMD",
+      "class"  : "Group",
       "opcode" : 5007,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3845,6 +4308,7 @@
     },
     {
       "opname" : "OpFragmentMaskFetchAMD",
+      "class"  : "Reserved",
       "opcode" : 5011,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3858,6 +4322,7 @@
     },
     {
       "opname" : "OpFragmentFetchAMD",
+      "class"  : "Reserved",
       "opcode" : 5012,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3872,6 +4337,7 @@
     },
     {
       "opname" : "OpReadClockKHR",
+      "class"  : "Reserved",
       "opcode" : 5056,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3884,6 +4350,7 @@
     },
     {
       "opname" : "OpImageSampleFootprintNV",
+      "class"  : "Image",
       "opcode" : 5283,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3900,6 +4367,7 @@
     },
     {
       "opname" : "OpGroupNonUniformPartitionNV",
+      "class"  : "Non-Uniform",
       "opcode" : 5296,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3912,6 +4380,7 @@
     },
     {
       "opname" : "OpWritePackedPrimitiveIndices4x8NV",
+      "class"  : "Reserved",
       "opcode" : 5299,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Index Offset'" },
@@ -3923,6 +4392,7 @@
     },
     {
       "opname" : "OpReportIntersectionNV",
+      "class"  : "Reserved",
       "opcode" : 5334,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -3931,24 +4401,30 @@
         { "kind" : "IdRef", "name" : "'HitKind'" }
       ],
       "capabilities" : [ "RayTracingNV" ],
-      "extensions" : [ "SPV_NV_ray_tracing" ]
+      "extensions" : [ "SPV_NV_ray_tracing" ],
+      "version" : "None"
     },
     {
       "opname" : "OpIgnoreIntersectionNV",
+      "class"  : "Reserved",
       "opcode" : 5335,
 
       "capabilities" : [ "RayTracingNV" ],
-      "extensions" : [ "SPV_NV_ray_tracing" ]
+      "extensions" : [ "SPV_NV_ray_tracing" ],
+      "version" : "None"
     },
     {
       "opname" : "OpTerminateRayNV",
+      "class"  : "Reserved",
       "opcode" : 5336,
 
       "capabilities" : [ "RayTracingNV" ],
-      "extensions" : [ "SPV_NV_ray_tracing" ]
+      "extensions" : [ "SPV_NV_ray_tracing" ],
+      "version" : "None"
     },
     {
       "opname" : "OpTraceNV",
+      "class"  : "Reserved",
       "opcode" : 5337,
       "operands" : [
 
@@ -3965,19 +4441,23 @@
         { "kind" : "IdRef", "name" : "'PayloadId'" }
       ],
       "capabilities" : [ "RayTracingNV" ],
-      "extensions" : [ "SPV_NV_ray_tracing" ]
+      "extensions" : [ "SPV_NV_ray_tracing" ],
+      "version" : "None"
     },
     {
       "opname" : "OpTypeAccelerationStructureNV",
+      "class"  : "Reserved",
       "opcode" : 5341,
       "operands" : [
         { "kind" : "IdResult" }
       ],
       "capabilities" : [ "RayTracingNV" ],
-      "extensions" : [ "SPV_NV_ray_tracing" ]
+      "extensions" : [ "SPV_NV_ray_tracing" ],
+      "version" : "None"
     },
     {
       "opname" : "OpExecuteCallableNV",
+      "class"  : "Reserved",
       "opcode" : 5344,
       "operands" : [
 
@@ -3985,10 +4465,12 @@
         { "kind" : "IdRef", "name" : "'Callable DataId'" }
       ],
       "capabilities" : [ "RayTracingNV" ],
-      "extensions" : [ "SPV_NV_ray_tracing" ]
+      "extensions" : [ "SPV_NV_ray_tracing" ],
+      "version" : "None"
     },
     {
       "opname" : "OpTypeCooperativeMatrixNV",
+      "class"  : "Reserved",
       "opcode" : 5358,
       "operands" : [
         { "kind" : "IdResult" },
@@ -4003,6 +4485,7 @@
     },
     {
       "opname" : "OpCooperativeMatrixLoadNV",
+      "class"  : "Reserved",
       "opcode" : 5359,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4018,6 +4501,7 @@
     },
     {
       "opname" : "OpCooperativeMatrixStoreNV",
+      "class"  : "Reserved",
       "opcode" : 5360,
       "operands" : [
         { "kind" : "IdRef",             "name" : "'Pointer'" },
@@ -4032,6 +4516,7 @@
     },
     {
       "opname" : "OpCooperativeMatrixMulAddNV",
+      "class"  : "Reserved",
       "opcode" : 5361,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4046,6 +4531,7 @@
     },
     {
       "opname" : "OpCooperativeMatrixLengthNV",
+      "class"  : "Reserved",
       "opcode" : 5362,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4058,6 +4544,7 @@
     },
     {
       "opname" : "OpBeginInvocationInterlockEXT",
+      "class"  : "Reserved",
       "opcode" : 5364,
       "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
       "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
@@ -4065,6 +4552,7 @@
     },
     {
       "opname" : "OpEndInvocationInterlockEXT",
+      "class"  : "Reserved",
       "opcode" : 5365,
       "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
       "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
@@ -4072,6 +4560,7 @@
     },
     {
       "opname" : "OpDemoteToHelperInvocationEXT",
+      "class"  : "Reserved",
       "opcode" : 5380,
       "capabilities" : [ "DemoteToHelperInvocationEXT" ],
       "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
@@ -4079,6 +4568,7 @@
     },
     {
       "opname" : "OpIsHelperInvocationEXT",
+      "class"  : "Reserved",
       "opcode" : 5381,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4090,6 +4580,7 @@
     },
     {
       "opname" : "OpSubgroupShuffleINTEL",
+      "class"  : "Group",
       "opcode" : 5571,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4102,6 +4593,7 @@
     },
     {
       "opname" : "OpSubgroupShuffleDownINTEL",
+      "class"  : "Group",
       "opcode" : 5572,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4115,6 +4607,7 @@
     },
     {
       "opname" : "OpSubgroupShuffleUpINTEL",
+      "class"  : "Group",
       "opcode" : 5573,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4128,6 +4621,7 @@
     },
     {
       "opname" : "OpSubgroupShuffleXorINTEL",
+      "class"  : "Group",
       "opcode" : 5574,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4140,6 +4634,7 @@
     },
     {
       "opname" : "OpSubgroupBlockReadINTEL",
+      "class"  : "Group",
       "opcode" : 5575,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4151,6 +4646,7 @@
     },
     {
       "opname" : "OpSubgroupBlockWriteINTEL",
+      "class"  : "Group",
       "opcode" : 5576,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Ptr'" },
@@ -4161,6 +4657,7 @@
     },
     {
       "opname" : "OpSubgroupImageBlockReadINTEL",
+      "class"  : "Group",
       "opcode" : 5577,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4173,6 +4670,7 @@
     },
     {
       "opname" : "OpSubgroupImageBlockWriteINTEL",
+      "class"  : "Group",
       "opcode" : 5578,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Image'" },
@@ -4184,6 +4682,7 @@
     },
     {
       "opname" : "OpSubgroupImageMediaBlockReadINTEL",
+      "class"  : "Group",
       "opcode" : 5580,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4198,6 +4697,7 @@
     },
     {
       "opname" : "OpSubgroupImageMediaBlockWriteINTEL",
+      "class"  : "Group",
       "opcode" : 5581,
       "operands" : [
         { "kind" : "IdRef", "name" : "'Image'" },
@@ -4211,6 +4711,7 @@
     },
     {
       "opname" : "OpUCountLeadingZerosINTEL",
+      "class"  : "Reserved",
       "opcode" : 5585,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4222,6 +4723,7 @@
     },
     {
       "opname" : "OpUCountTrailingZerosINTEL",
+      "class"  : "Reserved",
       "opcode" : 5586,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4233,6 +4735,7 @@
     },
     {
       "opname" : "OpAbsISubINTEL",
+      "class"  : "Reserved",
       "opcode" : 5587,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4245,6 +4748,7 @@
     },
     {
       "opname" : "OpAbsUSubINTEL",
+      "class"  : "Reserved",
       "opcode" : 5588,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4257,6 +4761,7 @@
     },
     {
       "opname" : "OpIAddSatINTEL",
+      "class"  : "Reserved",
       "opcode" : 5589,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4269,6 +4774,7 @@
     },
     {
       "opname" : "OpUAddSatINTEL",
+      "class"  : "Reserved",
       "opcode" : 5590,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4281,6 +4787,7 @@
     },
     {
       "opname" : "OpIAverageINTEL",
+      "class"  : "Reserved",
       "opcode" : 5591,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4293,6 +4800,7 @@
     },
     {
       "opname" : "OpUAverageINTEL",
+      "class"  : "Reserved",
       "opcode" : 5592,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4305,6 +4813,7 @@
     },
     {
       "opname" : "OpIAverageRoundedINTEL",
+      "class"  : "Reserved",
       "opcode" : 5593,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4317,6 +4826,7 @@
     },
     {
       "opname" : "OpUAverageRoundedINTEL",
+      "class"  : "Reserved",
       "opcode" : 5594,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4329,6 +4839,7 @@
     },
     {
       "opname" : "OpISubSatINTEL",
+      "class"  : "Reserved",
       "opcode" : 5595,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4341,6 +4852,7 @@
     },
     {
       "opname" : "OpUSubSatINTEL",
+      "class"  : "Reserved",
       "opcode" : 5596,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4353,6 +4865,7 @@
     },
     {
       "opname" : "OpIMul32x16INTEL",
+      "class"  : "Reserved",
       "opcode" : 5597,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4365,6 +4878,7 @@
     },
     {
       "opname" : "OpUMul32x16INTEL",
+      "class"  : "Reserved",
       "opcode" : 5598,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4377,6 +4891,7 @@
     },
     {
       "opname" : "OpDecorateString",
+      "class"  : "Annotation",
       "opcode" : 5632,
       "operands" : [
         { "kind" : "IdRef",         "name" : "'Target'" },
@@ -4387,6 +4902,7 @@
     },
     {
       "opname" : "OpDecorateStringGOOGLE",
+      "class"  : "Annotation",
       "opcode" : 5632,
       "operands" : [
         { "kind" : "IdRef",         "name" : "'Target'" },
@@ -4397,6 +4913,7 @@
     },
     {
       "opname" : "OpMemberDecorateString",
+      "class"  : "Annotation",
       "opcode" : 5633,
       "operands" : [
         { "kind" : "IdRef",          "name" : "'Struct Type'" },
@@ -4408,6 +4925,7 @@
     },
     {
       "opname" : "OpMemberDecorateStringGOOGLE",
+      "class"  : "Annotation",
       "opcode" : 5633,
       "operands" : [
         { "kind" : "IdRef",          "name" : "'Struct Type'" },
@@ -4419,6 +4937,7 @@
     },
     {
       "opname" : "OpVmeImageINTEL",
+      "class"  : "@exclude",
       "opcode" : 5699,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4431,6 +4950,7 @@
     },
     {
       "opname" : "OpTypeVmeImageINTEL",
+      "class"  : "@exclude",
       "opcode" : 5700,
       "operands" : [
         { "kind" : "IdResult" },
@@ -4441,6 +4961,7 @@
     },
     {
       "opname" : "OpTypeAvcImePayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5701,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4450,6 +4971,7 @@
     },
     {
       "opname" : "OpTypeAvcRefPayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5702,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4459,6 +4981,7 @@
     },
     {
       "opname" : "OpTypeAvcSicPayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5703,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4468,6 +4991,7 @@
     },
     {
       "opname" : "OpTypeAvcMcePayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5704,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4477,6 +5001,7 @@
     },
     {
       "opname" : "OpTypeAvcMceResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5705,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4486,6 +5011,7 @@
     },
     {
       "opname" : "OpTypeAvcImeResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5706,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4495,6 +5021,7 @@
     },
     {
       "opname" : "OpTypeAvcImeResultSingleReferenceStreamoutINTEL",
+      "class"  : "@exclude",
       "opcode" : 5707,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4504,6 +5031,7 @@
     },
     {
       "opname" : "OpTypeAvcImeResultDualReferenceStreamoutINTEL",
+      "class"  : "@exclude",
       "opcode" : 5708,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4513,6 +5041,7 @@
     },
     {
       "opname" : "OpTypeAvcImeSingleReferenceStreaminINTEL",
+      "class"  : "@exclude",
       "opcode" : 5709,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4522,6 +5051,7 @@
     },
     {
       "opname" : "OpTypeAvcImeDualReferenceStreaminINTEL",
+      "class"  : "@exclude",
       "opcode" : 5710,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4531,6 +5061,7 @@
     },
     {
       "opname" : "OpTypeAvcRefResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5711,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4540,6 +5071,7 @@
     },
     {
       "opname" : "OpTypeAvcSicResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5712,
       "operands" : [
         { "kind" : "IdResult" }
@@ -4549,6 +5081,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultInterBaseMultiReferencePenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5713,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4561,6 +5094,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceSetInterBaseMultiReferencePenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5714,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4573,6 +5107,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultInterShapePenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5715,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4585,6 +5120,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceSetInterShapePenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5716,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4597,6 +5133,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultInterDirectionPenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5717,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4609,6 +5146,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceSetInterDirectionPenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5718,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4621,6 +5159,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultIntraLumaShapePenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5719,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4633,6 +5172,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultInterMotionVectorCostTableINTEL",
+      "class"  : "@exclude",
       "opcode" : 5720,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4645,6 +5185,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultHighPenaltyCostTableINTEL",
+      "class"  : "@exclude",
       "opcode" : 5721,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4655,6 +5196,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultMediumPenaltyCostTableINTEL",
+      "class"  : "@exclude",
       "opcode" : 5722,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4665,6 +5207,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultLowPenaltyCostTableINTEL",
+      "class"  : "@exclude",
       "opcode" : 5723,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4675,6 +5218,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceSetMotionVectorCostFunctionINTEL",
+      "class"  : "@exclude",
       "opcode" : 5724,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4689,6 +5233,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultIntraLumaModePenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5725,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4701,6 +5246,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultNonDcLumaIntraPenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5726,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4711,6 +5257,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetDefaultIntraChromaModeBasePenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5727,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4721,6 +5268,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceSetAcOnlyHaarINTEL",
+      "class"  : "@exclude",
       "opcode" : 5728,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4732,6 +5280,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceSetSourceInterlacedFieldPolarityINTEL",
+      "class"  : "@exclude",
       "opcode" : 5729,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4744,6 +5293,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceSetSingleReferenceInterlacedFieldPolarityINTEL",
+      "class"  : "@exclude",
       "opcode" : 5730,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4756,6 +5306,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceSetDualReferenceInterlacedFieldPolaritiesINTEL",
+      "class"  : "@exclude",
       "opcode" : 5731,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4769,6 +5320,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceConvertToImePayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5732,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4780,6 +5332,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceConvertToImeResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5733,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4791,6 +5344,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceConvertToRefPayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5734,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4802,6 +5356,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceConvertToRefResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5735,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4813,6 +5368,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceConvertToSicPayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5736,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4824,6 +5380,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceConvertToSicResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5737,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4835,6 +5392,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetMotionVectorsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5738,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4846,6 +5404,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetInterDistortionsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5739,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4857,6 +5416,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetBestInterDistortionsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5740,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4868,6 +5428,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetInterMajorShapeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5741,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4879,6 +5440,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetInterMinorShapeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5742,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4890,6 +5452,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetInterDirectionsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5743,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4901,6 +5464,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetInterMotionVectorCountINTEL",
+      "class"  : "@exclude",
       "opcode" : 5744,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4912,6 +5476,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetInterReferenceIdsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5745,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4923,6 +5488,7 @@
     },
     {
       "opname" : "OpSubgroupAvcMceGetInterReferenceInterlacedFieldPolaritiesINTEL",
+      "class"  : "@exclude",
       "opcode" : 5746,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4936,6 +5502,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeInitializeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5747,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4949,6 +5516,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeSetSingleReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5748,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4962,6 +5530,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeSetDualReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5749,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4976,6 +5545,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeRefWindowSizeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5750,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4988,6 +5558,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeAdjustRefOffsetINTEL",
+      "class"  : "@exclude",
       "opcode" : 5751,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5002,6 +5573,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeConvertToMcePayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5752,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5013,6 +5585,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeSetMaxMotionVectorCountINTEL",
+      "class"  : "@exclude",
       "opcode" : 5753,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5025,6 +5598,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeSetUnidirectionalMixDisableINTEL",
+      "class"  : "@exclude",
       "opcode" : 5754,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5036,6 +5610,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeSetEarlySearchTerminationThresholdINTEL",
+      "class"  : "@exclude",
       "opcode" : 5755,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5048,6 +5623,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeSetWeightedSadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5756,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5060,6 +5636,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeEvaluateWithSingleReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5757,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5073,6 +5650,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeEvaluateWithDualReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5758,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5087,6 +5665,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeEvaluateWithSingleReferenceStreaminINTEL",
+      "class"  : "@exclude",
       "opcode" : 5759,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5101,6 +5680,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeEvaluateWithDualReferenceStreaminINTEL",
+      "class"  : "@exclude",
       "opcode" : 5760,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5116,6 +5696,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeEvaluateWithSingleReferenceStreamoutINTEL",
+      "class"  : "@exclude",
       "opcode" : 5761,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5129,6 +5710,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeEvaluateWithDualReferenceStreamoutINTEL",
+      "class"  : "@exclude",
       "opcode" : 5762,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5143,6 +5725,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeEvaluateWithSingleReferenceStreaminoutINTEL",
+      "class"  : "@exclude",
       "opcode" : 5763,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5157,6 +5740,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeEvaluateWithDualReferenceStreaminoutINTEL",
+      "class"  : "@exclude",
       "opcode" : 5764,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5172,6 +5756,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeConvertToMceResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5765,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5183,6 +5768,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetSingleReferenceStreaminINTEL",
+      "class"  : "@exclude",
       "opcode" : 5766,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5194,6 +5780,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetDualReferenceStreaminINTEL",
+      "class"  : "@exclude",
       "opcode" : 5767,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5205,6 +5792,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeStripSingleReferenceStreamoutINTEL",
+      "class"  : "@exclude",
       "opcode" : 5768,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5216,6 +5804,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeStripDualReferenceStreamoutINTEL",
+      "class"  : "@exclude",
       "opcode" : 5769,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5227,6 +5816,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetStreamoutSingleReferenceMajorShapeMotionVectorsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5770,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5239,6 +5829,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetStreamoutSingleReferenceMajorShapeDistortionsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5771,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5251,6 +5842,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetStreamoutSingleReferenceMajorShapeReferenceIdsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5772,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5263,6 +5855,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetStreamoutDualReferenceMajorShapeMotionVectorsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5773,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5276,6 +5869,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetStreamoutDualReferenceMajorShapeDistortionsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5774,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5289,6 +5883,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetStreamoutDualReferenceMajorShapeReferenceIdsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5775,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5302,6 +5897,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetBorderReachedINTEL",
+      "class"  : "@exclude",
       "opcode" : 5776,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5314,6 +5910,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetTruncatedSearchIndicationINTEL",
+      "class"  : "@exclude",
       "opcode" : 5777,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5325,6 +5922,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetUnidirectionalEarlySearchTerminationINTEL",
+      "class"  : "@exclude",
       "opcode" : 5778,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5336,6 +5934,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetWeightingPatternMinimumMotionVectorINTEL",
+      "class"  : "@exclude",
       "opcode" : 5779,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5347,6 +5946,7 @@
     },
     {
       "opname" : "OpSubgroupAvcImeGetWeightingPatternMinimumDistortionINTEL",
+      "class"  : "@exclude",
       "opcode" : 5780,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5358,6 +5958,7 @@
     },
     {
       "opname" : "OpSubgroupAvcFmeInitializeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5781,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5375,6 +5976,7 @@
     },
     {
       "opname" : "OpSubgroupAvcBmeInitializeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5782,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5393,6 +5995,7 @@
     },
     {
       "opname" : "OpSubgroupAvcRefConvertToMcePayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5783,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5404,6 +6007,7 @@
     },
     {
       "opname" : "OpSubgroupAvcRefSetBidirectionalMixDisableINTEL",
+      "class"  : "@exclude",
       "opcode" : 5784,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5415,6 +6019,7 @@
     },
     {
       "opname" : "OpSubgroupAvcRefSetBilinearFilterEnableINTEL",
+      "class"  : "@exclude",
       "opcode" : 5785,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5426,6 +6031,7 @@
     },
     {
       "opname" : "OpSubgroupAvcRefEvaluateWithSingleReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5786,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5439,6 +6045,7 @@
     },
     {
       "opname" : "OpSubgroupAvcRefEvaluateWithDualReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5787,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5453,6 +6060,7 @@
     },
     {
       "opname" : "OpSubgroupAvcRefEvaluateWithMultiReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5788,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5466,6 +6074,7 @@
     },
     {
       "opname" : "OpSubgroupAvcRefEvaluateWithMultiReferenceInterlacedINTEL",
+      "class"  : "@exclude",
       "opcode" : 5789,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5480,6 +6089,7 @@
     },
     {
       "opname" : "OpSubgroupAvcRefConvertToMceResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5790,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5491,6 +6101,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicInitializeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5791,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5502,6 +6113,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicConfigureSkcINTEL",
+      "class"  : "@exclude",
       "opcode" : 5792,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5518,6 +6130,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicConfigureIpeLumaINTEL",
+      "class"  : "@exclude",
       "opcode" : 5793,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5536,6 +6149,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicConfigureIpeLumaChromaINTEL",
+      "class"  : "@exclude",
       "opcode" : 5794,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5557,6 +6171,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicGetMotionVectorMaskINTEL",
+      "class"  : "@exclude",
       "opcode" : 5795,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5569,6 +6184,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicConvertToMcePayloadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5796,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5580,6 +6196,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicSetIntraLumaShapePenaltyINTEL",
+      "class"  : "@exclude",
       "opcode" : 5797,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5592,6 +6209,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicSetIntraLumaModeCostFunctionINTEL",
+      "class"  : "@exclude",
       "opcode" : 5798,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5606,6 +6224,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicSetIntraChromaModeCostFunctionINTEL",
+      "class"  : "@exclude",
       "opcode" : 5799,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5618,6 +6237,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicSetBilinearFilterEnableINTEL",
+      "class"  : "@exclude",
       "opcode" : 5800,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5629,6 +6249,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicSetSkcForwardTransformEnableINTEL",
+      "class"  : "@exclude",
       "opcode" : 5801,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5641,6 +6262,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicSetBlockBasedRawSkipSadINTEL",
+      "class"  : "@exclude",
       "opcode" : 5802,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5653,6 +6275,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicEvaluateIpeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5803,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5665,6 +6288,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicEvaluateWithSingleReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5804,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5678,6 +6302,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicEvaluateWithDualReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5805,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5692,6 +6317,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicEvaluateWithMultiReferenceINTEL",
+      "class"  : "@exclude",
       "opcode" : 5806,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5705,6 +6331,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicEvaluateWithMultiReferenceInterlacedINTEL",
+      "class"  : "@exclude",
       "opcode" : 5807,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5719,6 +6346,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicConvertToMceResultINTEL",
+      "class"  : "@exclude",
       "opcode" : 5808,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5730,6 +6358,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicGetIpeLumaShapeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5809,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5741,6 +6370,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicGetBestIpeLumaDistortionINTEL",
+      "class"  : "@exclude",
       "opcode" : 5810,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5752,6 +6382,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicGetBestIpeChromaDistortionINTEL",
+      "class"  : "@exclude",
       "opcode" : 5811,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5763,6 +6394,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicGetPackedIpeLumaModesINTEL",
+      "class"  : "@exclude",
       "opcode" : 5812,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5774,6 +6406,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicGetIpeChromaModeINTEL",
+      "class"  : "@exclude",
       "opcode" : 5813,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5785,6 +6418,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL",
+      "class"  : "@exclude",
       "opcode" : 5814,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5796,6 +6430,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL",
+      "class"  : "@exclude",
       "opcode" : 5815,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5807,6 +6442,7 @@
     },
     {
       "opname" : "OpSubgroupAvcSicGetInterRawSadsINTEL",
+      "class"  : "@exclude",
       "opcode" : 5816,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -5888,34 +6524,68 @@
           ]
         },
         {
-          "enumerant" : "MakeTexelAvailableKHR",
+          "enumerant" : "MakeTexelAvailable",
           "value" : "0x0100",
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "capabilities" : [ "VulkanMemoryModel" ],
           "parameters" : [
             { "kind" : "IdScope" }
           ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "MakeTexelAvailableKHR",
+          "value" : "0x0100",
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "parameters" : [
+            { "kind" : "IdScope" }
+          ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "MakeTexelVisible",
+          "value" : "0x0200",
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "parameters" : [
+            { "kind" : "IdScope" }
+          ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "MakeTexelVisibleKHR",
           "value" : "0x0200",
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "capabilities" : [ "VulkanMemoryModel" ],
           "parameters" : [
             { "kind" : "IdScope" }
           ],
-          "version" : "None"
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "NonPrivateTexel",
+          "value" : "0x0400",
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "NonPrivateTexelKHR",
           "value" : "0x0400",
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "VolatileTexel",
+          "value" : "0x0800",
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "VolatileTexelKHR",
           "value" : "0x0800",
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "SignExtend",
@@ -6134,28 +6804,50 @@
           "value" : "0x0800"
         },
         {
+          "enumerant" : "OutputMemory",
+          "value" : "0x1000",
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "OutputMemoryKHR",
           "value" : "0x1000",
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "MakeAvailable",
+          "value" : "0x2000",
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "MakeAvailableKHR",
           "value" : "0x2000",
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "MakeVisible",
+          "value" : "0x4000",
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "MakeVisibleKHR",
           "value" : "0x4000",
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "Volatile",
           "value" : "0x8000",
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
         }
       ]
     },
@@ -6183,13 +6875,32 @@
           "value" : "0x0004"
         },
         {
+          "enumerant" : "MakePointerAvailable",
+          "value" : "0x0008",
+          "parameters" : [
+            { "kind" : "IdScope" }
+          ],
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "MakePointerAvailableKHR",
           "value" : "0x0008",
           "parameters" : [
             { "kind" : "IdScope" }
           ],
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "MakePointerVisible",
+          "value" : "0x0010",
+          "parameters" : [
+            { "kind" : "IdScope" }
+          ],
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "MakePointerVisibleKHR",
@@ -6197,14 +6908,22 @@
           "parameters" : [
             { "kind" : "IdScope" }
           ],
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "NonPrivatePointer",
+          "value" : "0x0020",
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "NonPrivatePointerKHR",
           "value" : "0x0020",
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
         }
       ]
     },
@@ -6361,11 +7080,18 @@
           "capabilities" : [ "Addresses" ]
         },
         {
+          "enumerant" : "PhysicalStorageBuffer64",
+          "value" : 5348,
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
+          "capabilities" : [ "PhysicalStorageBufferAddresses" ],
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "PhysicalStorageBuffer64EXT",
           "value" : 5348,
           "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
-          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
-          "version" : "None"
+          "capabilities" : [ "PhysicalStorageBufferAddresses" ],
+          "version" : "1.5"
         }
       ]
     },
@@ -6389,10 +7115,17 @@
           "capabilities" : [ "Kernel" ]
         },
         {
+          "enumerant" : "Vulkan",
+          "value" : 3,
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "VulkanKHR",
           "value" : 3,
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "1.5"
         }
       ]
     },
@@ -6888,11 +7621,18 @@
           "version" : "None"
         },
         {
+          "enumerant" : "PhysicalStorageBuffer",
+          "value" : 5349,
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
+          "capabilities" : [ "PhysicalStorageBufferAddresses" ],
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "PhysicalStorageBufferEXT",
           "value" : 5349,
           "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
-          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
-          "version" : "None"
+          "capabilities" : [ "PhysicalStorageBufferAddresses" ],
+          "version" : "1.5"
         }
       ]
     },
@@ -7873,23 +8613,45 @@
           "version" : "None"
         },
         {
+          "enumerant" : "NonUniform",
+          "value" : 5300,
+          "capabilities" : [ "ShaderNonUniform" ],
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "NonUniformEXT",
           "value" : 5300,
-          "capabilities" : [ "ShaderNonUniformEXT" ]
+          "capabilities" : [ "ShaderNonUniform" ],
+          "extensions" : [ "SPV_EXT_descriptor_indexing" ],
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "RestrictPointer",
+          "value" : 5355,
+          "capabilities" : [ "PhysicalStorageBufferAddresses" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "RestrictPointerEXT",
           "value" : 5355,
-          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
+          "capabilities" : [ "PhysicalStorageBufferAddresses" ],
           "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "AliasedPointer",
+          "value" : 5356,
+          "capabilities" : [ "PhysicalStorageBufferAddresses" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "AliasedPointerEXT",
           "value" : 5356,
-          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
+          "capabilities" : [ "PhysicalStorageBufferAddresses" ],
           "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
-          "version" : "None"
+          "version" : "1.5"
         },
         {
           "enumerant" : "CounterBuffer",
@@ -7983,12 +8745,12 @@
         {
           "enumerant" : "Layer",
           "value" : 9,
-          "capabilities" : [ "Geometry" ]
+          "capabilities" : [ "Geometry", "ShaderLayer", "ShaderViewportIndexLayerEXT" ]
         },
         {
           "enumerant" : "ViewportIndex",
           "value" : 10,
-          "capabilities" : [ "MultiViewport" ]
+          "capabilities" : [ "MultiViewport", "ShaderViewportIndex", "ShaderViewportIndexLayerEXT" ]
         },
         {
           "enumerant" : "TessLevelOuter",
@@ -8581,10 +9343,16 @@
           "value" : 4
         },
         {
+          "enumerant" : "QueueFamily",
+          "value" : 5,
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "QueueFamilyKHR",
           "value" : 5,
-          "capabilities" : [ "VulkanMemoryModelKHR" ],
-          "version" : "None"
+          "capabilities" : [ "VulkanMemoryModel" ],
+          "version" : "1.5"
         }
       ]
     },
@@ -8996,6 +9764,16 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "ShaderLayer",
+          "value" : 69,
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "ShaderViewportIndex",
+          "value" : 70,
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "SubgroupBallotKHR",
           "value" : 4423,
           "extensions" : [ "SPV_KHR_shader_ballot" ],
@@ -9101,20 +9879,20 @@
           "enumerant" : "StorageBuffer8BitAccess",
           "value" : 4448,
           "extensions" : [ "SPV_KHR_8bit_storage" ],
-          "version" : "None"
+          "version" : "1.5"
         },
         {
           "enumerant" : "UniformAndStorageBuffer8BitAccess",
           "value" : 4449,
           "capabilities" : [ "StorageBuffer8BitAccess" ],
           "extensions" : [ "SPV_KHR_8bit_storage" ],
-          "version" : "None"
+          "version" : "1.5"
         },
         {
           "enumerant" : "StoragePushConstant8",
           "value" : 4450,
           "extensions" : [ "SPV_KHR_8bit_storage" ],
-          "version" : "None"
+          "version" : "1.5"
         },
         {
           "enumerant" : "DenormPreserve",
@@ -9290,88 +10068,160 @@
           "version" : "None"
         },
         {
+          "enumerant" : "ShaderNonUniform",
+          "value" : 5301,
+          "capabilities" : [ "Shader" ],
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "ShaderNonUniformEXT",
           "value" : 5301,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "RuntimeDescriptorArray",
+          "value" : 5302,
+          "capabilities" : [ "Shader" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "RuntimeDescriptorArrayEXT",
           "value" : 5302,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "InputAttachmentArrayDynamicIndexing",
+          "value" : 5303,
+          "capabilities" : [ "InputAttachment" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "InputAttachmentArrayDynamicIndexingEXT",
           "value" : 5303,
           "capabilities" : [ "InputAttachment" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "UniformTexelBufferArrayDynamicIndexing",
+          "value" : 5304,
+          "capabilities" : [ "SampledBuffer" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "UniformTexelBufferArrayDynamicIndexingEXT",
           "value" : 5304,
           "capabilities" : [ "SampledBuffer" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "StorageTexelBufferArrayDynamicIndexing",
+          "value" : 5305,
+          "capabilities" : [ "ImageBuffer" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "StorageTexelBufferArrayDynamicIndexingEXT",
           "value" : 5305,
           "capabilities" : [ "ImageBuffer" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "UniformBufferArrayNonUniformIndexing",
+          "value" : 5306,
+          "capabilities" : [ "ShaderNonUniform" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "UniformBufferArrayNonUniformIndexingEXT",
           "value" : 5306,
-          "capabilities" : [ "ShaderNonUniformEXT" ],
+          "capabilities" : [ "ShaderNonUniform" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "SampledImageArrayNonUniformIndexing",
+          "value" : 5307,
+          "capabilities" : [ "ShaderNonUniform" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "SampledImageArrayNonUniformIndexingEXT",
           "value" : 5307,
-          "capabilities" : [ "ShaderNonUniformEXT" ],
+          "capabilities" : [ "ShaderNonUniform" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "StorageBufferArrayNonUniformIndexing",
+          "value" : 5308,
+          "capabilities" : [ "ShaderNonUniform" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "StorageBufferArrayNonUniformIndexingEXT",
           "value" : 5308,
-          "capabilities" : [ "ShaderNonUniformEXT" ],
+          "capabilities" : [ "ShaderNonUniform" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "StorageImageArrayNonUniformIndexing",
+          "value" : 5309,
+          "capabilities" : [ "ShaderNonUniform" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "StorageImageArrayNonUniformIndexingEXT",
           "value" : 5309,
-          "capabilities" : [ "ShaderNonUniformEXT" ],
+          "capabilities" : [ "ShaderNonUniform" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "InputAttachmentArrayNonUniformIndexing",
+          "value" : 5310,
+          "capabilities" : [ "InputAttachment", "ShaderNonUniform" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "InputAttachmentArrayNonUniformIndexingEXT",
           "value" : 5310,
-          "capabilities" : [ "InputAttachment", "ShaderNonUniformEXT" ],
+          "capabilities" : [ "InputAttachment", "ShaderNonUniform" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "UniformTexelBufferArrayNonUniformIndexing",
+          "value" : 5311,
+          "capabilities" : [ "SampledBuffer", "ShaderNonUniform" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "UniformTexelBufferArrayNonUniformIndexingEXT",
           "value" : 5311,
-          "capabilities" : [ "SampledBuffer", "ShaderNonUniformEXT" ],
+          "capabilities" : [ "SampledBuffer", "ShaderNonUniform" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "StorageTexelBufferArrayNonUniformIndexing",
+          "value" : 5312,
+          "capabilities" : [ "ImageBuffer", "ShaderNonUniform" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "StorageTexelBufferArrayNonUniformIndexingEXT",
           "value" : 5312,
-          "capabilities" : [ "ImageBuffer", "ShaderNonUniformEXT" ],
+          "capabilities" : [ "ImageBuffer", "ShaderNonUniform" ],
           "extensions" : [ "SPV_EXT_descriptor_indexing" ],
-          "version" : "None"
+          "version" : "1.5"
         },
         {
           "enumerant" : "RayTracingNV",
@@ -9381,23 +10231,40 @@
           "version" : "None"
         },
         {
+          "enumerant" : "VulkanMemoryModel",
+          "value" : 5345,
+          "version" : "1.5"
+        },
+        {
           "enumerant" : "VulkanMemoryModelKHR",
           "value" : 5345,
           "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "VulkanMemoryModelDeviceScope",
+          "value" : 5346,
+          "version" : "1.5"
         },
         {
           "enumerant" : "VulkanMemoryModelDeviceScopeKHR",
           "value" : 5346,
           "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
-          "version" : "None"
+          "version" : "1.5"
+        },
+        {
+          "enumerant" : "PhysicalStorageBufferAddresses",
+          "value" : 5347,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
+          "version" : "1.5"
         },
         {
           "enumerant" : "PhysicalStorageBufferAddressesEXT",
           "value" : 5347,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
-          "version" : "None"
+          "version" : "1.5"
         },
         {
           "enumerant" : "ComputeDerivativeGroupLinearNV",

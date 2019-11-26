@@ -505,6 +505,22 @@ static void quadricFromPlane(Quadric& Q, float a, float b, float c, float d, flo
 	Q.w = w;
 }
 
+static void quadricFromPoint(Quadric& Q, float x, float y, float z, float w)
+{
+	// we need to encode (x - X) ^ 2 + (y - Y)^2 + (z - Z)^2 into the quadric
+	Q.a00 = w;
+	Q.a11 = w;
+	Q.a22 = w;
+	Q.a10 = 0.f;
+	Q.a20 = 0.f;
+	Q.a21 = 0.f;
+	Q.b0 = -2.f * x * w;
+	Q.b1 = -2.f * y * w;
+	Q.b2 = -2.f * z * w;
+	Q.c = (x * x + y * y + z * z) * w;
+	Q.w = w;
+}
+
 static void quadricFromTriangle(Quadric& Q, const Vector3& p0, const Vector3& p1, const Vector3& p2, float weight)
 {
 	Vector3 p10 = {p1.x - p0.x, p1.y - p0.y, p1.z - p0.z};
@@ -909,6 +925,25 @@ struct CellHasher
 	}
 };
 
+struct IdHasher
+{
+	size_t hash(unsigned int id) const
+	{
+		unsigned int h = id;
+
+		// MurmurHash2 finalizer
+		h ^= h >> 13;
+		h *= 0x5bd1e995;
+		h ^= h >> 15;
+		return h;
+	}
+
+	bool equal(unsigned int lhs, unsigned int rhs) const
+	{
+		return lhs == rhs;
+	}
+};
+
 struct TriangleHasher
 {
 	unsigned int* indices;
@@ -989,6 +1024,26 @@ static size_t fillVertexCells(unsigned int* table, size_t table_size, unsigned i
 	return result;
 }
 
+static size_t countVertexCells(unsigned int* table, size_t table_size, const unsigned int* vertex_ids, size_t vertex_count)
+{
+	IdHasher hasher;
+
+	memset(table, -1, table_size * sizeof(unsigned int));
+
+	size_t result = 0;
+
+	for (size_t i = 0; i < vertex_count; ++i)
+	{
+		unsigned int id = vertex_ids[i];
+		unsigned int* entry = hashLookup2(table, table_size, hasher, id, ~0u);
+
+		result += (*entry == ~0u);
+		*entry = id;
+	}
+
+	return result;
+}
+
 static void fillCellQuadrics(Quadric* cell_quadrics, const unsigned int* indices, size_t index_count, const Vector3* vertex_positions, const unsigned int* vertex_cells)
 {
 	for (size_t i = 0; i < index_count; i += 3)
@@ -1016,6 +1071,20 @@ static void fillCellQuadrics(Quadric* cell_quadrics, const unsigned int* indices
 			quadricAdd(cell_quadrics[c1], Q);
 			quadricAdd(cell_quadrics[c2], Q);
 		}
+	}
+}
+
+static void fillCellQuadrics(Quadric* cell_quadrics, const Vector3* vertex_positions, size_t vertex_count, const unsigned int* vertex_cells)
+{
+	for (size_t i = 0; i < vertex_count; ++i)
+	{
+		unsigned int c = vertex_cells[i];
+		const Vector3& v = vertex_positions[i];
+
+		Quadric Q;
+		quadricFromPoint(Q, v.x, v.y, v.z, 1.f);
+
+		quadricAdd(cell_quadrics[c], Q);
 	}
 }
 
@@ -1362,4 +1431,116 @@ size_t meshopt_simplifySloppy(unsigned int* destination, const unsigned int* ind
 #endif
 
 	return write;
+}
+
+size_t meshopt_simplifyPoints(unsigned int* destination, const float* vertex_positions_data, size_t vertex_count, size_t vertex_positions_stride, size_t target_vertex_count)
+{
+	using namespace meshopt;
+
+	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride % sizeof(float) == 0);
+	assert(target_vertex_count <= vertex_count);
+
+	size_t target_cell_count = target_vertex_count;
+
+	if (target_cell_count == 0)
+		return 0;
+
+	meshopt_Allocator allocator;
+
+	Vector3* vertex_positions = allocator.allocate<Vector3>(vertex_count);
+	rescalePositions(vertex_positions, vertex_positions_data, vertex_count, vertex_positions_stride);
+
+	// find the optimal grid size using guided binary search
+#if TRACE
+	printf("source: %d vertices\n", int(vertex_count));
+	printf("target: %d cells\n", int(target_cell_count));
+#endif
+
+	unsigned int* vertex_ids = allocator.allocate<unsigned int>(vertex_count);
+
+	size_t table_size = hashBuckets2(vertex_count);
+	unsigned int* table = allocator.allocate<unsigned int>(table_size);
+
+	const int kInterpolationPasses = 5;
+
+	// invariant: # of vertices in min_grid <= target_count
+	int min_grid = 0;
+	int max_grid = 1025;
+	size_t min_vertices = 0;
+	size_t max_vertices = vertex_count;
+
+	// instead of starting in the middle, let's guess as to what the answer might be! triangle count usually grows as a square of grid size...
+	int next_grid_size = int(sqrtf(float(target_cell_count)) + 0.5f);
+
+	for (int pass = 0; pass < 10 + kInterpolationPasses; ++pass)
+	{
+		assert(min_vertices < target_vertex_count);
+		assert(max_grid - min_grid > 1);
+
+		// we clamp the prediction of the grid size to make sure that the search converges
+		int grid_size = next_grid_size;
+		grid_size = (grid_size <= min_grid) ? min_grid + 1 : (grid_size >= max_grid) ? max_grid - 1 : grid_size;
+
+		computeVertexIds(vertex_ids, vertex_positions, vertex_count, grid_size);
+		size_t vertices = countVertexCells(table, table_size, vertex_ids, vertex_count);
+
+#if TRACE
+		printf("pass %d (%s): grid size %d, vertices %d, %s\n",
+		       pass, (pass == 0) ? "guess" : (pass <= kInterpolationPasses) ? "lerp" : "binary",
+		       grid_size, int(vertices),
+		       (vertices <= target_vertex_count) ? "under" : "over");
+#endif
+
+		float tip = interpolate(float(target_vertex_count), float(min_grid), float(min_vertices), float(grid_size), float(vertices), float(max_grid), float(max_vertices));
+
+		if (vertices <= target_vertex_count)
+		{
+			min_grid = grid_size;
+			min_vertices = vertices;
+		}
+		else
+		{
+			max_grid = grid_size;
+			max_vertices = vertices;
+		}
+
+		if (vertices == target_vertex_count || max_grid - min_grid <= 1)
+			break;
+
+		// we start by using interpolation search - it usually converges faster
+		// however, interpolation search has a worst case of O(N) so we switch to binary search after a few iterations which converges in O(logN)
+		next_grid_size = (pass < kInterpolationPasses) ? int(tip + 0.5f) : (min_grid + max_grid) / 2;
+	}
+
+	if (min_vertices == 0)
+		return 0;
+
+	// build vertex->cell association by mapping all vertices with the same quantized position to the same cell
+	unsigned int* vertex_cells = allocator.allocate<unsigned int>(vertex_count);
+
+	computeVertexIds(vertex_ids, vertex_positions, vertex_count, min_grid);
+	size_t cell_count = fillVertexCells(table, table_size, vertex_cells, vertex_ids, vertex_count);
+
+	// build a quadric for each target cell
+	Quadric* cell_quadrics = allocator.allocate<Quadric>(cell_count);
+	memset(cell_quadrics, 0, cell_count * sizeof(Quadric));
+
+	fillCellQuadrics(cell_quadrics, vertex_positions, vertex_count, vertex_cells);
+
+	// for each target cell, find the vertex with the minimal error
+	unsigned int* cell_remap = allocator.allocate<unsigned int>(cell_count);
+	float* cell_errors = allocator.allocate<float>(cell_count);
+
+	fillCellRemap(cell_remap, cell_errors, cell_count, vertex_cells, cell_quadrics, vertex_positions, vertex_count);
+
+	// copy results to the output
+	assert(cell_count <= target_vertex_count);
+	memcpy(destination, cell_remap, sizeof(unsigned int) * cell_count);
+
+#if TRACE
+	printf("result: %d cells\n", int(cell_count));
+#endif
+
+	return cell_count;
 }

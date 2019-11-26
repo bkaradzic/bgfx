@@ -212,14 +212,6 @@ ValidationState_t::ValidationState_t(const spv_const_context ctx,
     }
   }
 
-  switch (env) {
-    case SPV_ENV_WEBGPU_0:
-      features_.bans_op_undef = true;
-      break;
-    default:
-      break;
-  }
-
   // Only attempt to count if we have words, otherwise let the other validation
   // fail and generate an error.
   if (num_words > 0) {
@@ -1275,6 +1267,53 @@ bool ValidationState_t::ContainsLimitedUseIntOrFloatType(uint32_t id) const {
     return true;
   }
   return false;
+}
+
+bool ValidationState_t::IsValidStorageClass(
+    SpvStorageClass storage_class) const {
+  if (spvIsWebGPUEnv(context()->target_env)) {
+    switch (storage_class) {
+      case SpvStorageClassUniformConstant:
+      case SpvStorageClassUniform:
+      case SpvStorageClassStorageBuffer:
+      case SpvStorageClassInput:
+      case SpvStorageClassOutput:
+      case SpvStorageClassImage:
+      case SpvStorageClassWorkgroup:
+      case SpvStorageClassPrivate:
+      case SpvStorageClassFunction:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  if (spvIsVulkanEnv(context()->target_env)) {
+    switch (storage_class) {
+      case SpvStorageClassUniformConstant:
+      case SpvStorageClassUniform:
+      case SpvStorageClassStorageBuffer:
+      case SpvStorageClassInput:
+      case SpvStorageClassOutput:
+      case SpvStorageClassImage:
+      case SpvStorageClassWorkgroup:
+      case SpvStorageClassPrivate:
+      case SpvStorageClassFunction:
+      case SpvStorageClassPushConstant:
+      case SpvStorageClassPhysicalStorageBuffer:
+      case SpvStorageClassRayPayloadNV:
+      case SpvStorageClassIncomingRayPayloadNV:
+      case SpvStorageClassHitAttributeNV:
+      case SpvStorageClassCallableDataNV:
+      case SpvStorageClassIncomingCallableDataNV:
+      case SpvStorageClassShaderRecordBufferNV:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  return true;
 }
 
 }  // namespace val

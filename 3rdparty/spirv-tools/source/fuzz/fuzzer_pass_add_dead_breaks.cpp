@@ -47,14 +47,11 @@ void FuzzerPassAddDeadBreaks::Apply() {
     // ones that turn out to be no good.
     for (auto& block : function) {
       for (auto merge_block_id : merge_block_ids) {
-        // TODO(afd): right now we completely ignore OpPhi instructions at
-        //  merge blocks.  This will lead to interesting opportunities being
-        //  missed.
-        std::vector<uint32_t> phi_ids;
+        // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2856): right
+        //  now we completely ignore OpPhi instructions at merge blocks.  This
+        //  will lead to interesting opportunities being missed.
         auto candidate_transformation = TransformationAddDeadBreak(
-            block.id(), merge_block_id,
-            GetFuzzerContext()->GetRandomGenerator()->RandomBool(),
-            std::move(phi_ids));
+            block.id(), merge_block_id, GetFuzzerContext()->ChooseEven(), {});
         if (candidate_transformation.IsApplicable(GetIRContext(),
                                                   *GetFactManager())) {
           // Only consider a transformation as a candidate if it is applicable.
@@ -79,19 +76,15 @@ void FuzzerPassAddDeadBreaks::Apply() {
   while (!candidate_transformations.empty()) {
     // Choose a random index into the sequence of remaining candidate
     // transformations.
-    auto index = GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-        static_cast<uint32_t>(candidate_transformations.size()));
+    auto index = GetFuzzerContext()->RandomIndex(candidate_transformations);
     // Remove the transformation at the chosen index from the sequence.
     auto transformation = std::move(candidate_transformations[index]);
     candidate_transformations.erase(candidate_transformations.begin() + index);
-    // Probabilistically decide whether to try to apply it vs. ignore it.
-    if (GetFuzzerContext()->GetRandomGenerator()->RandomPercentage() >
-        GetFuzzerContext()->GetChanceOfAddingDeadBreak()) {
-      continue;
-    }
-    // If the transformation can be applied, apply it and add it to the
-    // sequence of transformations that have been applied.
-    if (transformation.IsApplicable(GetIRContext(), *GetFactManager())) {
+    // Probabilistically decide whether to try to apply it vs. ignore it, in the
+    // case that it is applicable.
+    if (transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
+        GetFuzzerContext()->ChoosePercentage(
+            GetFuzzerContext()->GetChanceOfAddingDeadBreak())) {
       transformation.Apply(GetIRContext(), GetFactManager());
       *GetTransformations()->add_transformation() = transformation.ToMessage();
     }

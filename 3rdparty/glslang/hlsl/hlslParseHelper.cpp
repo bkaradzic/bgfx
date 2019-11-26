@@ -1950,6 +1950,52 @@ void HlslParseContext::transferTypeAttributes(const TSourceLoc& loc, const TAttr
                 setSpecConstantId(loc, type.getQualifier(), value);
             }
             break;
+
+        // image formats
+        case EatFormatRgba32f:      type.getQualifier().layoutFormat = ElfRgba32f;      break;
+        case EatFormatRgba16f:      type.getQualifier().layoutFormat = ElfRgba16f;      break;
+        case EatFormatR32f:         type.getQualifier().layoutFormat = ElfR32f;         break;
+        case EatFormatRgba8:        type.getQualifier().layoutFormat = ElfRgba8;        break;
+        case EatFormatRgba8Snorm:   type.getQualifier().layoutFormat = ElfRgba8Snorm;   break;
+        case EatFormatRg32f:        type.getQualifier().layoutFormat = ElfRg32f;        break;
+        case EatFormatRg16f:        type.getQualifier().layoutFormat = ElfRg16f;        break;
+        case EatFormatR11fG11fB10f: type.getQualifier().layoutFormat = ElfR11fG11fB10f; break;
+        case EatFormatR16f:         type.getQualifier().layoutFormat = ElfR16f;         break;
+        case EatFormatRgba16:       type.getQualifier().layoutFormat = ElfRgba16;       break;
+        case EatFormatRgb10A2:      type.getQualifier().layoutFormat = ElfRgb10A2;      break;
+        case EatFormatRg16:         type.getQualifier().layoutFormat = ElfRg16;         break;
+        case EatFormatRg8:          type.getQualifier().layoutFormat = ElfRg8;          break;
+        case EatFormatR16:          type.getQualifier().layoutFormat = ElfR16;          break;
+        case EatFormatR8:           type.getQualifier().layoutFormat = ElfR8;           break;
+        case EatFormatRgba16Snorm:  type.getQualifier().layoutFormat = ElfRgba16Snorm;  break;
+        case EatFormatRg16Snorm:    type.getQualifier().layoutFormat = ElfRg16Snorm;    break;
+        case EatFormatRg8Snorm:     type.getQualifier().layoutFormat = ElfRg8Snorm;     break;
+        case EatFormatR16Snorm:     type.getQualifier().layoutFormat = ElfR16Snorm;     break;
+        case EatFormatR8Snorm:      type.getQualifier().layoutFormat = ElfR8Snorm;      break;
+        case EatFormatRgba32i:      type.getQualifier().layoutFormat = ElfRgba32i;      break;
+        case EatFormatRgba16i:      type.getQualifier().layoutFormat = ElfRgba16i;      break;
+        case EatFormatRgba8i:       type.getQualifier().layoutFormat = ElfRgba8i;       break;
+        case EatFormatR32i:         type.getQualifier().layoutFormat = ElfR32i;         break;
+        case EatFormatRg32i:        type.getQualifier().layoutFormat = ElfRg32i;        break;
+        case EatFormatRg16i:        type.getQualifier().layoutFormat = ElfRg16i;        break;
+        case EatFormatRg8i:         type.getQualifier().layoutFormat = ElfRg8i;         break;
+        case EatFormatR16i:         type.getQualifier().layoutFormat = ElfR16i;         break;
+        case EatFormatR8i:          type.getQualifier().layoutFormat = ElfR8i;          break;
+        case EatFormatRgba32ui:     type.getQualifier().layoutFormat = ElfRgba32ui;     break;
+        case EatFormatRgba16ui:     type.getQualifier().layoutFormat = ElfRgba16ui;     break;
+        case EatFormatRgba8ui:      type.getQualifier().layoutFormat = ElfRgba8ui;      break;
+        case EatFormatR32ui:        type.getQualifier().layoutFormat = ElfR32ui;        break;
+        case EatFormatRgb10a2ui:    type.getQualifier().layoutFormat = ElfRgb10a2ui;    break;
+        case EatFormatRg32ui:       type.getQualifier().layoutFormat = ElfRg32ui;       break;
+        case EatFormatRg16ui:       type.getQualifier().layoutFormat = ElfRg16ui;       break;
+        case EatFormatRg8ui:        type.getQualifier().layoutFormat = ElfRg8ui;        break;
+        case EatFormatR16ui:        type.getQualifier().layoutFormat = ElfR16ui;        break;
+        case EatFormatR8ui:         type.getQualifier().layoutFormat = ElfR8ui;         break;
+        case EatFormatUnknown:      type.getQualifier().layoutFormat = ElfNone;         break;
+
+        case EatNonWritable:  type.getQualifier().readonly = true;   break;
+        case EatNonReadable:  type.getQualifier().writeonly = true;  break;
+
         default:
             if (! allowEntry)
                 warn(loc, "attribute does not apply to a type", "", "");
@@ -8703,25 +8749,19 @@ void HlslParseContext::fixXfbOffsets(TQualifier& qualifier, TTypeList& typeList)
     for (unsigned int member = 0; member < typeList.size(); ++member) {
         TQualifier& memberQualifier = typeList[member].type->getQualifier();
         bool contains64BitType = false;
-#ifdef AMD_EXTENSIONS
         bool contains32BitType = false;
         bool contains16BitType = false;
         int memberSize = intermediate.computeTypeXfbSize(*typeList[member].type, contains64BitType, contains32BitType, contains16BitType);
-#else
-        int memberSize = intermediate.computeTypeXfbSize(*typeList[member].type, contains64BitType);
-#endif
         // see if we need to auto-assign an offset to this member
         if (! memberQualifier.hasXfbOffset()) {
             // "if applied to an aggregate containing a double or 64-bit integer, the offset must also be a multiple of 8"
             if (contains64BitType)
                 RoundToPow2(nextOffset, 8);
-#ifdef AMD_EXTENSIONS
             else if (contains32BitType)
                 RoundToPow2(nextOffset, 4);
             // "if applied to an aggregate containing a half float or 16-bit integer, the offset must also be a multiple of 2"
             else if (contains16BitType)
                 RoundToPow2(nextOffset, 2);
-#endif
             memberQualifier.layoutXfbOffset = nextOffset;
         } else
             nextOffset = memberQualifier.layoutXfbOffset;

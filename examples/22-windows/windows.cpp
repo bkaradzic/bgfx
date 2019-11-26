@@ -26,17 +26,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -69,8 +69,8 @@ static const uint16_t s_cubeIndices[36] =
 class ExampleWindows : public entry::AppI
 {
 public:
-	ExampleWindows(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleWindows(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -126,7 +126,7 @@ public:
 		m_vbh = bgfx::createVertexBuffer(
 			  // Static data can be passed with bgfx::makeRef
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-			, PosColorVertex::ms_decl
+			, PosColorVertex::ms_layout
 			);
 
 		// Create static index buffer.
@@ -378,7 +378,12 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleWindows, "22-windows", "Rendering into multiple windows.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleWindows
+	, "22-windows"
+	, "Rendering into multiple windows."
+	, "https://bkaradzic.github.io/bgfx/examples.html#windows"
+	);
 
 void cmdCreateWindow(const void* _userData)
 {

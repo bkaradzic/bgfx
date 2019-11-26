@@ -22,6 +22,7 @@ Supported rendering backends:
  * OpenGL 3.1+
  * OpenGL ES 2
  * OpenGL ES 3.1
+ * Vulkan
  * WebGL 1.0
  * WebGL 2.0
 
@@ -48,8 +49,9 @@ Supported compilers:
 Languages:
 
  * [C/C++ API documentation](https://bkaradzic.github.io/bgfx/bgfx.html)
- * [C#/VB/F# language API bindings](https://github.com/MikePopoloski/SharpBgfx)
- * [D language API bindings](https://github.com/DerelictOrg/DerelictBgfx)
+ * [C# language API bindings #1](https://github.com/bkaradzic/bgfx/tree/master/bindings/cs)
+ * [C#/VB/F# language API bindings #2](https://github.com/MikePopoloski/SharpBgfx)
+ * [D language API bindings](https://github.com/GoaLitiuM/bindbc-bgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
  * [Haskell language API bindings](https://github.com/haskell-game/bgfx)
  * [Lightweight Java Game Library 3 bindings](https://github.com/LWJGL/lwjgl3)
@@ -78,8 +80,8 @@ Languages:
 [Tools](https://bkaradzic.github.io/bgfx/tools.html)
 ----------------------------------------------------
 
-Who is using it? #madewithbgfx
-------------------------------
+Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&f=live)
+-------------------------------------------------------------------------------------
 
 ## Airmech
 
@@ -354,6 +356,14 @@ Instantly load and view assets on any device. All you need is a web browser.
 target="_blank"><img src="http://img.youtube.com/vi/Gz9weuemhDA/0.jpg" 
 alt="Heroes of Hammerwatch"
 width="640" height="480" border="0" /></a>
+
+## openblack
+
+An open source reimplementation of the game Black & White (2001).
+
+[OpenBlack](https://github.com/openblack/openblack#openblack)
+
+![openblack](https://user-images.githubusercontent.com/1388267/67631321-93c85380-f88c-11e9-9103-804807844af2.png)
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------

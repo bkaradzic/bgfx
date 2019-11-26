@@ -556,6 +556,14 @@ typedef uint64_t GLuint64;
 #	define GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB 0x8E8F
 #endif // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB
 
+#ifndef GL_SRGB_EXT
+#	define GL_SRGB_EXT 0x8C40
+#endif // GL_SRGB_EXT
+
+#ifndef GL_SRGB_ALPHA_EXT
+#	define GL_SRGB_ALPHA_EXT 0x8C42
+#endif // GL_SRGB_ALPHA_EXT
+
 #ifndef GL_SRGB8_ALPHA8
 #	define GL_SRGB8_ALPHA8 0x8C43
 #endif // GL_SRGB8_ALPHA8
@@ -1214,10 +1222,10 @@ namespace bgfx { namespace gl
 
 	struct VertexBufferGL
 	{
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
+		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
 		{
 			m_size = _size;
-			m_decl = _declHandle;
+			m_layoutHandle = _layoutHandle;
 			const bool drawIndirect = 0 != (_flags & BGFX_BUFFER_DRAW_INDIRECT);
 
 			m_target = drawIndirect ? GL_DRAW_INDIRECT_BUFFER : GL_ARRAY_BUFFER;
@@ -1241,7 +1249,7 @@ namespace bgfx { namespace gl
 			{
 				// orphan buffer...
 				destroy();
-				create(m_size, NULL, m_decl, 0);
+				create(m_size, NULL, m_layoutHandle, 0);
 			}
 
 			GL_CHECK(glBindBuffer(m_target, m_id) );
@@ -1258,7 +1266,7 @@ namespace bgfx { namespace gl
 		GLuint m_id;
 		GLenum m_target;
 		uint32_t m_size;
-		VertexDeclHandle m_decl;
+		VertexLayoutHandle m_layoutHandle;
 	};
 
 	struct TextureGL
@@ -1375,7 +1383,7 @@ namespace bgfx { namespace gl
 			bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
 		}
 
-		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0);
+		void bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex = 0);
 
 		void bindAttributesEnd()
 		{

@@ -377,34 +377,34 @@ TEST_F(ValidateAtomics, AtomicLoadVulkanInt64) {
 TEST_F(ValidateAtomics, AtomicLoadWebGPUSuccess) {
   const std::string body = R"(
 %val1 = OpAtomicLoad %u32 %u32_var %queuefamily %relaxed
-%val2 = OpAtomicLoad %u32 %u32_var %workgroup %relaxed
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
 }
 
+TEST_F(ValidateAtomics, AtomicLoadWebGPUNonQueueFamilyFailure) {
+  const std::string body = R"(
+%val3 = OpAtomicLoad %u32 %u32_var %invocation %relaxed
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Memory Scope is limited to QueueFamilyKHR for "
+                        "OpAtomic* operations"));
+}
+
 TEST_F(ValidateAtomics, AtomicLoadWebGPUNonRelaxedFailure) {
   const std::string body = R"(
 %val1 = OpAtomicLoad %u32 %u32_var %queuefamily %acquire
-%val2 = OpAtomicLoad %u32 %u32_var %workgroup %release
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("WebGPU spec disallows, for OpAtomic*, any bit masks"));
-}
-
-TEST_F(ValidateAtomics, AtomicLoadWebGPUSequentiallyConsistentFailure) {
-  const std::string body = R"(
-%val3 = OpAtomicLoad %u32 %u32_var %invocation %sequentially_consistent
-)";
-
-  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
-  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("WebGPU spec disallows, for OpAtomic*, any bit masks"));
+              HasSubstr("no bits may be set for Memory Semantics of OpAtomic* "
+                        "instructions"));
 }
 
 TEST_F(ValidateAtomics, VK_KHR_shader_atomic_int64Success) {
@@ -499,9 +499,8 @@ TEST_F(ValidateAtomics, AtomicLoadWrongScopeType) {
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicLoad: expected Memory Scope to be a 32-bit int"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicLoad: expected scope to be a 32-bit int"));
 }
 
 TEST_F(ValidateAtomics, AtomicLoadWrongMemorySemanticsType) {
@@ -592,6 +591,17 @@ OpAtomicStore %u32_var %queuefamily %relaxed %u32_1
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
 }
+TEST_F(ValidateAtomics, AtomicStoreWebGPUNonQueueFamilyFailure) {
+  const std::string body = R"(
+OpAtomicStore %u32_var %workgroup %relaxed %u32_1
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Memory Scope is limited to QueueFamilyKHR for "
+                        "OpAtomic* operations"));
+}
 
 TEST_F(ValidateAtomics, AtomicStoreWebGPUNonRelaxedFailure) {
   const std::string body = R"(
@@ -601,18 +611,8 @@ OpAtomicStore %u32_var %queuefamily %release %u32_1
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("WebGPU spec disallows, for OpAtomic*, any bit masks"));
-}
-
-TEST_F(ValidateAtomics, AtomicStoreWebGPUSequentiallyConsistent) {
-  const std::string body = R"(
-OpAtomicStore %u32_var %queuefamily %sequentially_consistent %u32_1
-)";
-
-  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
-  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("WebGPU spec disallows, for OpAtomic*, any bit masks"));
+              HasSubstr("no bits may be set for Memory Semantics of OpAtomic* "
+                        "instructions"));
 }
 
 TEST_F(ValidateAtomics, AtomicStoreWrongPointerType) {
@@ -673,10 +673,9 @@ OpAtomicStore %f32_var %f32_1 %relaxed %f32_1
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicStore: expected Memory Scope to be a 32-bit int\n  "
-                "OpAtomicStore %28 %float_1 %uint_0_1 %float_1\n"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicStore: expected scope to be a 32-bit int\n  "
+                        "OpAtomicStore %28 %float_1 %uint_0_1 %float_1\n"));
 }
 
 TEST_F(ValidateAtomics, AtomicStoreWrongMemorySemanticsType) {
@@ -707,7 +706,7 @@ OpAtomicStore %f32_var %device %relaxed %u32_1
 
 TEST_F(ValidateAtomics, AtomicExchangeShaderSuccess) {
   const std::string body = R"(
-%val1 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val2 = OpAtomicExchange %u32 %u32_var %device %relaxed %u32_0
 )";
 
@@ -719,7 +718,7 @@ TEST_F(ValidateAtomics, AtomicExchangeKernelSuccess) {
   const std::string body = R"(
 OpAtomicStore %f32_var %device %relaxed %f32_1
 %val2 = OpAtomicExchange %f32 %f32_var %device %relaxed %f32_0
-%val3 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val4 = OpAtomicExchange %u32 %u32_var %device %relaxed %u32_0
 )";
 
@@ -742,7 +741,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
 TEST_F(ValidateAtomics, AtomicExchangeWrongResultType) {
   const std::string body = R"(
-%val1 = OpStore %f32vec4_var %f32vec4_0000
+OpStore %f32vec4_var %f32vec4_0000
 %val2 = OpAtomicExchange %f32vec4 %f32vec4_var %device %relaxed %f32vec4_0000
 )";
 
@@ -767,7 +766,7 @@ TEST_F(ValidateAtomics, AtomicExchangeWrongPointerType) {
 
 TEST_F(ValidateAtomics, AtomicExchangeWrongPointerDataType) {
   const std::string body = R"(
-%val1 = OpStore %f32vec4_var %f32vec4_0000
+OpStore %f32vec4_var %f32vec4_0000
 %val2 = OpAtomicExchange %f32 %f32vec4_var %device %relaxed %f32vec4_0000
 )";
 
@@ -787,9 +786,8 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicExchange: expected Memory Scope to be a 32-bit int"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicExchange: expected scope to be a 32-bit int"));
 }
 
 TEST_F(ValidateAtomics, AtomicExchangeWrongMemorySemanticsType) {
@@ -821,7 +819,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeShaderSuccess) {
   const std::string body = R"(
-%val1 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val2 = OpAtomicCompareExchange %u32 %u32_var %device %relaxed %relaxed %u32_0 %u32_0
 )";
 
@@ -833,7 +831,7 @@ TEST_F(ValidateAtomics, AtomicCompareExchangeKernelSuccess) {
   const std::string body = R"(
 OpAtomicStore %f32_var %device %relaxed %f32_1
 %val2 = OpAtomicCompareExchange %f32 %f32_var %device %relaxed %relaxed %f32_0 %f32_1
-%val3 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val4 = OpAtomicCompareExchange %u32 %u32_var %device %relaxed %relaxed %u32_0 %u32_0
 )";
 
@@ -856,7 +854,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeWrongResultType) {
   const std::string body = R"(
-%val1 = OpStore %f32vec4_var %f32vec4_0000
+OpStore %f32vec4_var %f32vec4_0000
 %val2 = OpAtomicCompareExchange %f32vec4 %f32vec4_var %device %relaxed %relaxed %f32vec4_0000 %f32vec4_0000
 )";
 
@@ -881,7 +879,7 @@ TEST_F(ValidateAtomics, AtomicCompareExchangeWrongPointerType) {
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeWrongPointerDataType) {
   const std::string body = R"(
-%val1 = OpStore %f32vec4_var %f32vec4_0000
+OpStore %f32vec4_var %f32vec4_0000
 %val2 = OpAtomicCompareExchange %f32 %f32vec4_var %device %relaxed %relaxed %f32_0 %f32_1
 )";
 
@@ -901,10 +899,9 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicCompareExchange: expected Memory Scope to be a 32-bit "
-                "int"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicCompareExchange: expected scope to be a 32-bit "
+                        "int"));
 }
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeWrongMemorySemanticsType1) {
@@ -974,7 +971,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeWeakSuccess) {
   const std::string body = R"(
-%val3 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val4 = OpAtomicCompareExchangeWeak %u32 %u32_var %device %relaxed %relaxed %u32_0 %u32_0
 )";
 
@@ -1084,8 +1081,7 @@ TEST_F(ValidateAtomics, AtomicFlagTestAndSetWrongScopeType) {
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr(
-          "AtomicFlagTestAndSet: expected Memory Scope to be a 32-bit int"));
+      HasSubstr("AtomicFlagTestAndSet: expected scope to be a 32-bit int"));
 }
 
 TEST_F(ValidateAtomics, AtomicFlagTestAndSetWrongMemorySemanticsType) {
@@ -1158,7 +1154,7 @@ OpAtomicFlagClear %u32_var %u64_1 %relaxed
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("AtomicFlagClear: expected Memory Scope to be a 32-bit "
+              HasSubstr("AtomicFlagClear: expected scope to be a 32-bit "
                         "int\n  OpAtomicFlagClear %30 %ulong_1 %uint_0_1\n"));
 }
 
@@ -1919,11 +1915,9 @@ TEST_F(ValidateAtomics, WebGPUCrossDeviceMemoryScopeBad) {
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicLoad: in WebGPU environment Memory Scope is limited to "
-                "Workgroup, Invocation, and QueueFamilyKHR\n"
-                "  %34 = OpAtomicLoad %uint %29 %uint_0_0 %uint_0_1\n"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("in WebGPU environment Memory Scope is limited to "
+                        "QueueFamilyKHR for OpAtomic* operations"));
 }
 
 TEST_F(ValidateAtomics, WebGPUDeviceMemoryScopeBad) {
@@ -1933,20 +1927,21 @@ TEST_F(ValidateAtomics, WebGPUDeviceMemoryScopeBad) {
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicLoad: in WebGPU environment Memory Scope is limited to "
-                "Workgroup, Invocation, and QueueFamilyKHR\n"
-                "  %34 = OpAtomicLoad %uint %29 %uint_1_0 %uint_0_1\n"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("in WebGPU environment Memory Scope is limited to "
+                        "QueueFamilyKHR for OpAtomic* operations"));
 }
 
-TEST_F(ValidateAtomics, WebGPUWorkgroupMemoryScopeGood) {
+TEST_F(ValidateAtomics, WebGPUWorkgroupMemoryScopeBad) {
   const std::string body = R"(
 %val1 = OpAtomicLoad %u32 %u32_var %workgroup %relaxed
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
-  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("in WebGPU environment Memory Scope is limited to "
+                        "QueueFamilyKHR for OpAtomic* operations"));
 }
 
 TEST_F(ValidateAtomics, WebGPUSubgroupMemoryScopeBad) {
@@ -1956,20 +1951,21 @@ TEST_F(ValidateAtomics, WebGPUSubgroupMemoryScopeBad) {
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicLoad: in WebGPU environment Memory Scope is limited to "
-                "Workgroup, Invocation, and QueueFamilyKHR\n"
-                "  %34 = OpAtomicLoad %uint %29 %uint_3 %uint_0_1\n"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("in WebGPU environment Memory Scope is limited to "
+                        "QueueFamilyKHR for OpAtomic* operations"));
 }
 
-TEST_F(ValidateAtomics, WebGPUInvocationMemoryScopeGood) {
+TEST_F(ValidateAtomics, WebGPUInvocationMemoryScopeBad) {
   const std::string body = R"(
 %val1 = OpAtomicLoad %u32 %u32_var %invocation %relaxed
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
-  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("in WebGPU environment Memory Scope is limited to "
+                        "QueueFamilyKHR for OpAtomic* operations"));
 }
 
 TEST_F(ValidateAtomics, WebGPUQueueFamilyMemoryScopeGood) {

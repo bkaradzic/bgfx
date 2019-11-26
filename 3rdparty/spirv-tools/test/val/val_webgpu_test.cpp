@@ -187,23 +187,6 @@ TEST_F(ValidateWebGPU, LogicalAddressingVulkanKHRMemoryGood) {
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
 }
 
-TEST_F(ValidateWebGPU, NonLogicalAddressingModelBad) {
-  std::string spirv = R"(
-     OpCapability Shader
-     OpCapability VulkanMemoryModelKHR
-     OpExtension "SPV_KHR_vulkan_memory_model"
-     OpMemoryModel Physical32 VulkanKHR
-)";
-
-  CompileSuccessfully(spirv);
-
-  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Addressing model must be Logical for WebGPU "
-                        "environment.\n  OpMemoryModel Physical32 "
-                        "VulkanKHR\n"));
-}
-
 TEST_F(ValidateWebGPU, NonVulkanKHRMemoryModelBad) {
   std::string spirv = R"(
      OpCapability Shader

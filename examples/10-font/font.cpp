@@ -54,8 +54,8 @@ static const char* s_fontFilePath[] =
 class ExampleFont : public entry::AppI
 {
 public:
-	ExampleFont(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleFont(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -329,4 +329,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleFont, "10-font", "Use the font system to display text and styled text.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleFont
+	, "10-font"
+	, "Use the font system to display text and styled text."
+	, "https://bkaradzic.github.io/bgfx/examples.html#font"
+	);

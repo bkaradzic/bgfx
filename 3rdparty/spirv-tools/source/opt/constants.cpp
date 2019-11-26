@@ -103,6 +103,45 @@ int64_t Constant::GetS64() const {
   }
 }
 
+uint64_t Constant::GetZeroExtendedValue() const {
+  const auto* int_type = type()->AsInteger();
+  assert(int_type != nullptr);
+  const auto width = int_type->width();
+  assert(width <= 64);
+
+  uint64_t value = 0;
+  if (const IntConstant* ic = AsIntConstant()) {
+    if (width <= 32) {
+      value = ic->GetU32BitValue();
+    } else {
+      value = ic->GetU64BitValue();
+    }
+  } else {
+    assert(AsNullConstant() && "Must be an integer constant.");
+  }
+  return value;
+}
+
+int64_t Constant::GetSignExtendedValue() const {
+  const auto* int_type = type()->AsInteger();
+  assert(int_type != nullptr);
+  const auto width = int_type->width();
+  assert(width <= 64);
+
+  int64_t value = 0;
+  if (const IntConstant* ic = AsIntConstant()) {
+    if (width <= 32) {
+      // Let the C++ compiler do the sign extension.
+      value = int64_t(ic->GetS32BitValue());
+    } else {
+      value = ic->GetS64BitValue();
+    }
+  } else {
+    assert(AsNullConstant() && "Must be an integer constant.");
+  }
+  return value;
+}
+
 ConstantManager::ConstantManager(IRContext* ctx) : ctx_(ctx) {
   // Populate the constant table with values from constant declarations in the
   // module.  The values of each OpConstant declaration is the identity
@@ -252,7 +291,7 @@ std::unique_ptr<Constant> ConstantManager::CreateConstant(
   }
 }
 
-const Constant* ConstantManager::GetConstantFromInst(Instruction* inst) {
+const Constant* ConstantManager::GetConstantFromInst(const Instruction* inst) {
   std::vector<uint32_t> literal_words_or_ids;
 
   // Collect the constant defining literals or component ids.
@@ -348,6 +387,13 @@ const Constant* ConstantManager::GetConstant(
     const Type* type, const std::vector<uint32_t>& literal_words_or_ids) {
   auto cst = CreateConstant(type, literal_words_or_ids);
   return cst ? RegisterConstant(std::move(cst)) : nullptr;
+}
+
+uint32_t ConstantManager::GetFloatConst(float val) {
+  Type* float_type = context()->get_type_mgr()->GetFloatType();
+  utils::FloatProxy<float> v(val);
+  const Constant* c = GetConstant(float_type, v.GetWords());
+  return GetDefiningInstruction(c)->result_id();
 }
 
 std::vector<const analysis::Constant*> Constant::GetVectorComponents(

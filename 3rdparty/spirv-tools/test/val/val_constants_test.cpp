@@ -442,6 +442,42 @@ OpMemoryModel Logical GLSL450
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
 }
 
+TEST_F(ValidateConstant, NullMatrix) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%float = OpTypeFloat 32
+%v2float = OpTypeVector %float 2
+%mat2x2 = OpTypeMatrix %v2float 2
+%null_vector = OpConstantNull %v2float
+%null_matrix = OpConstantComposite %mat2x2 %null_vector %null_vector
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateConstant, NullPhysicalStorageBuffer) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability PhysicalStorageBufferAddresses
+OpCapability Linkage
+OpExtension "SPV_KHR_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64 GLSL450
+OpName %ptr "ptr"
+%int = OpTypeInt 32 0
+%ptr = OpTypePointer PhysicalStorageBuffer %int
+%null = OpConstantNull %ptr
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpConstantNull Result Type <id> '1[%ptr]' cannot have "
+                        "a null value"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

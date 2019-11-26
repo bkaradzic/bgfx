@@ -18,7 +18,7 @@
 #include "spirv-tools/optimizer.hpp"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-  spvtools::Optimizer optimizer(SPV_ENV_WEBGPU_0);
+  spvtools::Optimizer optimizer(SPV_ENV_VULKAN_1_1);
   optimizer.SetMessageConsumer([](spv_message_level_t, const char*,
                                   const spv_position_t&, const char*) {});
 

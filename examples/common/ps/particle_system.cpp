@@ -37,7 +37,7 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
@@ -45,10 +45,10 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 void EmitterUniforms::reset()
 {
@@ -535,7 +535,7 @@ namespace ps
 				bgfx::TransientVertexBuffer tvb;
 				bgfx::TransientIndexBuffer tib;
 
-				const uint32_t numVertices = bgfx::getAvailTransientVertexBuffer(m_num*4, PosColorTexCoord0Vertex::ms_decl);
+				const uint32_t numVertices = bgfx::getAvailTransientVertexBuffer(m_num*4, PosColorTexCoord0Vertex::ms_layout);
 				const uint32_t numIndices  = bgfx::getAvailTransientIndexBuffer(m_num*6);
 				const uint32_t max = bx::uint32_min(numVertices/4, numIndices/6);
 				BX_WARN(m_num == max
@@ -547,7 +547,7 @@ namespace ps
 				if (0 < max)
 				{
 					bgfx::allocTransientBuffers(&tvb
-						, PosColorTexCoord0Vertex::ms_decl
+						, PosColorTexCoord0Vertex::ms_layout
 						, max*4
 						, &tib
 						, max*6

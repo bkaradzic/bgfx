@@ -50,7 +50,8 @@ class Shrinker {
       const std::vector<uint32_t>& binary, uint32_t counter)>;
 
   // Constructs a shrinker from the given target environment.
-  Shrinker(spv_target_env env, uint32_t step_limit);
+  Shrinker(spv_target_env env, uint32_t step_limit,
+           bool validate_during_replay);
 
   // Disables copy/move constructor/assignment operations.
   Shrinker(const Shrinker&) = delete;

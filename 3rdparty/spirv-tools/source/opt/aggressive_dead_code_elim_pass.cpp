@@ -664,6 +664,9 @@ Pass::Status AggressiveDCEPass::ProcessImpl() {
   // been marked, it is safe to remove dead global values.
   modified |= ProcessGlobalValues();
 
+  // Sanity check.
+  assert(to_kill_.size() == 0 || modified);
+
   // Kill all dead instructions.
   for (auto inst : to_kill_) {
     context()->KillInst(inst);
@@ -836,7 +839,17 @@ bool AggressiveDCEPass::ProcessGlobalValues() {
   // attributes here.
   for (auto& val : get_module()->types_values()) {
     if (IsDead(&val)) {
+      // Save forwarded pointer if pointer is live since closure does not mark
+      // this live as it does not have a result id. This is a little too
+      // conservative since it is not known if the structure type that needed
+      // it is still live. TODO(greg-lunarg): Only save if needed.
+      if (val.opcode() == SpvOpTypeForwardPointer) {
+        uint32_t ptr_ty_id = val.GetSingleWordInOperand(0);
+        Instruction* ptr_ty_inst = get_def_use_mgr()->GetDef(ptr_ty_id);
+        if (!IsDead(ptr_ty_inst)) continue;
+      }
       to_kill_.push_back(&val);
+      modified = true;
     }
   }
 
@@ -918,6 +931,7 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_NV_mesh_shader",
       "SPV_NV_ray_tracing",
       "SPV_EXT_fragment_invocation_density",
+      "SPV_EXT_physical_storage_buffer",
   });
 }
 

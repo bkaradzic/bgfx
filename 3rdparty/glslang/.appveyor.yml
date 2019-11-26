@@ -66,7 +66,6 @@ after_test:
     bin\glslangValidator.exe
     bin\spirv-remap.exe
     include\glslang\*
-    include\SPIRV\*
     lib\glslang%SUFFIX%.lib
     lib\HLSL%SUFFIX%.lib
     lib\OGLCompiler%SUFFIX%.lib

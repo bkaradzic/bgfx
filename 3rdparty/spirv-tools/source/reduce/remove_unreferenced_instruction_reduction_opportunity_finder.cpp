@@ -21,12 +21,86 @@
 namespace spvtools {
 namespace reduce {
 
-using opt::IRContext;
+RemoveUnreferencedInstructionReductionOpportunityFinder::
+    RemoveUnreferencedInstructionReductionOpportunityFinder(
+        bool remove_constants_and_undefs)
+    : remove_constants_and_undefs_(remove_constants_and_undefs) {}
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
 RemoveUnreferencedInstructionReductionOpportunityFinder::
-    GetAvailableOpportunities(IRContext* context) const {
+    GetAvailableOpportunities(opt::IRContext* context) const {
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
+
+  for (auto& inst : context->module()->debugs1()) {
+    if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
+      continue;
+    }
+    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+  }
+
+  for (auto& inst : context->module()->debugs2()) {
+    if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
+      continue;
+    }
+    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+  }
+
+  for (auto& inst : context->module()->debugs3()) {
+    if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
+      continue;
+    }
+    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+  }
+
+  for (auto& inst : context->module()->types_values()) {
+    if (context->get_def_use_mgr()->NumUsers(&inst) > 0) {
+      continue;
+    }
+    if (!remove_constants_and_undefs_ &&
+        spvOpcodeIsConstantOrUndef(inst.opcode())) {
+      continue;
+    }
+    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+  }
+
+  for (auto& inst : context->module()->annotations()) {
+    if (context->get_def_use_mgr()->NumUsers(&inst) > 0) {
+      continue;
+    }
+
+    uint32_t decoration = SpvDecorationMax;
+    switch (inst.opcode()) {
+      case SpvOpDecorate:
+      case SpvOpDecorateId:
+      case SpvOpDecorateString:
+        decoration = inst.GetSingleWordInOperand(1u);
+        break;
+      case SpvOpMemberDecorate:
+      case SpvOpMemberDecorateString:
+        decoration = inst.GetSingleWordInOperand(2u);
+        break;
+      default:
+        break;
+    }
+
+    // We conservatively only remove specific decorations that we believe will
+    // not change the shader interface, will not make the shader invalid, will
+    // actually be found in practice, etc.
+
+    switch (decoration) {
+      case SpvDecorationRelaxedPrecision:
+      case SpvDecorationNoSignedWrap:
+      case SpvDecorationNoContraction:
+      case SpvDecorationNoUnsignedWrap:
+      case SpvDecorationUserSemantic:
+        break;
+      default:
+        // Give up.
+        continue;
+    }
+
+    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+  }
 
   for (auto& function : *context->module()) {
     for (auto& block : function) {
@@ -34,17 +108,22 @@ RemoveUnreferencedInstructionReductionOpportunityFinder::
         if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
           continue;
         }
+        if (!remove_constants_and_undefs_ &&
+            spvOpcodeIsConstantOrUndef(inst.opcode())) {
+          continue;
+        }
         if (spvOpcodeIsBlockTerminator(inst.opcode()) ||
             inst.opcode() == SpvOpSelectionMerge ||
             inst.opcode() == SpvOpLoopMerge) {
-          // In this reduction pass we do not want to affect static control
-          // flow.
+          // In this reduction pass we do not want to affect static
+          // control flow.
           continue;
         }
-        // Given that we're in a block, we should only get here if the
-        // instruction is not directly related to control flow; i.e., it's
-        // some straightforward instruction with an unused result, like an
-        // arithmetic operation or function call.
+        // Given that we're in a block, we should only get here if
+        // the instruction is not directly related to control flow;
+        // i.e., it's some straightforward instruction with an
+        // unused result, like an arithmetic operation or function
+        // call.
         result.push_back(
             MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
       }

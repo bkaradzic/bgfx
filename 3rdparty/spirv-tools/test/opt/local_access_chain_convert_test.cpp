@@ -820,6 +820,113 @@ OpFunctionEnd
   SinglePassRunAndCheck<LocalAccessChainConvertPass>(test, test, false, true);
 }
 
+TEST_F(LocalAccessChainConvertTest, IdOverflowReplacingLoad) {
+  const std::string text =
+      R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "PSMain"
+               OpExecutionMode %4 OriginUpperLeft
+               OpDecorate %10 Location 47360
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+  %_struct_8 = OpTypeStruct %v4float
+%_ptr_Function__struct_8 = OpTypePointer Function %_struct_8
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+          %4 = OpFunction %void None %3
+          %5 = OpLabel
+         %10 = OpVariable %_ptr_Function__struct_8 Function
+    %4194301 = OpAccessChain %_ptr_Function_v4float %10 %int_0
+    %4194302 = OpLoad %v4float %4194301
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+
+  std::vector<Message> messages = {
+      {SPV_MSG_ERROR, "", 0, 0, "ID overflow. Try running compact-ids."}};
+  SetMessageConsumer(GetTestMessageConsumer(messages));
+  auto result = SinglePassRunToBinary<LocalAccessChainConvertPass>(text, true);
+  EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
+}
+
+TEST_F(LocalAccessChainConvertTest, IdOverflowReplacingStore1) {
+  const std::string text =
+      R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "PSMain"
+               OpExecutionMode %4 OriginUpperLeft
+               OpDecorate %10 Location 47360
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+  %_struct_7 = OpTypeStruct %v4float
+%_ptr_Function__struct_7 = OpTypePointer Function %_struct_7
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+         %13 = OpConstantNull %v4float
+          %4 = OpFunction %void None %3
+          %5 = OpLabel
+         %10 = OpVariable %_ptr_Function__struct_7 Function
+    %4194302 = OpAccessChain %_ptr_Function_v4float %10 %int_0
+               OpStore %4194302 %13
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+
+  std::vector<Message> messages = {
+      {SPV_MSG_ERROR, "", 0, 0, "ID overflow. Try running compact-ids."}};
+  SetMessageConsumer(GetTestMessageConsumer(messages));
+  auto result = SinglePassRunToBinary<LocalAccessChainConvertPass>(text, true);
+  EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
+}
+
+TEST_F(LocalAccessChainConvertTest, IdOverflowReplacingStore2) {
+  const std::string text =
+      R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "PSMain"
+               OpExecutionMode %4 OriginUpperLeft
+               OpDecorate %10 Location 47360
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+  %_struct_7 = OpTypeStruct %v4float
+%_ptr_Function__struct_7 = OpTypePointer Function %_struct_7
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+         %13 = OpConstantNull %v4float
+          %4 = OpFunction %void None %3
+          %5 = OpLabel
+         %10 = OpVariable %_ptr_Function__struct_7 Function
+    %4194301 = OpAccessChain %_ptr_Function_v4float %10 %int_0
+               OpStore %4194301 %13
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+
+  std::vector<Message> messages = {
+      {SPV_MSG_ERROR, "", 0, 0, "ID overflow. Try running compact-ids."}};
+  SetMessageConsumer(GetTestMessageConsumer(messages));
+  auto result = SinglePassRunToBinary<LocalAccessChainConvertPass>(text, true);
+  EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    Assorted vector and matrix types

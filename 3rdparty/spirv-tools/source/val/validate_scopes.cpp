@@ -39,8 +39,8 @@ bool IsValidScope(uint32_t scope) {
   return false;
 }
 
-spv_result_t ValidateExecutionScope(ValidationState_t& _,
-                                    const Instruction* inst, uint32_t scope) {
+spv_result_t ValidateScope(ValidationState_t& _, const Instruction* inst,
+                           uint32_t scope) {
   SpvOp opcode = inst->opcode();
   bool is_int32 = false, is_const_int32 = false;
   uint32_t value = 0;
@@ -48,8 +48,7 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
 
   if (!is_int32) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << spvOpcodeString(opcode)
-           << ": expected Execution Scope to be a 32-bit int";
+           << spvOpcodeString(opcode) << ": expected scope to be a 32-bit int";
   }
 
   if (!is_const_int32) {
@@ -66,12 +65,29 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
              << "Scope ids must be constant or specialization constant when "
              << "CooperativeMatrixNV capability is present";
     }
-    return SPV_SUCCESS;
   }
 
   if (is_const_int32 && !IsValidScope(value)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Invalid scope value:\n " << _.Disassemble(*_.FindDef(scope));
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateExecutionScope(ValidationState_t& _,
+                                    const Instruction* inst, uint32_t scope) {
+  SpvOp opcode = inst->opcode();
+  bool is_int32 = false, is_const_int32 = false;
+  uint32_t value = 0;
+  std::tie(is_int32, is_const_int32, value) = _.EvalInt32IfConst(scope);
+
+  if (auto error = ValidateScope(_, inst, scope)) {
+    return error;
+  }
+
+  if (!is_const_int32) {
+    return SPV_SUCCESS;
   }
 
   // Vulkan specific rules
@@ -122,7 +138,6 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
 
   // WebGPU Specific rules
   if (spvIsWebGPUEnv(_.context()->target_env)) {
-    // Scope for execution must be limited to Workgroup or Subgroup
     if (value != SpvScopeWorkgroup) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << spvOpcodeString(opcode)
@@ -153,32 +168,12 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
   uint32_t value = 0;
   std::tie(is_int32, is_const_int32, value) = _.EvalInt32IfConst(scope);
 
-  if (!is_int32) {
-    return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << spvOpcodeString(opcode)
-           << ": expected Memory Scope to be a 32-bit int";
+  if (auto error = ValidateScope(_, inst, scope)) {
+    return error;
   }
 
   if (!is_const_int32) {
-    if (_.HasCapability(SpvCapabilityShader) &&
-        !_.HasCapability(SpvCapabilityCooperativeMatrixNV)) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "Scope ids must be OpConstant when Shader capability is "
-             << "present";
-    }
-    if (_.HasCapability(SpvCapabilityShader) &&
-        _.HasCapability(SpvCapabilityCooperativeMatrixNV) &&
-        !spvOpcodeIsConstant(_.GetIdOpcode(scope))) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "Scope ids must be constant or specialization constant when "
-             << "CooperativeMatrixNV capability is present";
-    }
     return SPV_SUCCESS;
-  }
-
-  if (is_const_int32 && !IsValidScope(value)) {
-    return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << "Invalid scope value:\n " << _.Disassemble(*_.FindDef(scope));
   }
 
   if (value == SpvScopeQueueFamilyKHR) {
@@ -229,12 +224,41 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
 
   // WebGPU specific rules
   if (spvIsWebGPUEnv(_.context()->target_env)) {
-    if (value != SpvScopeWorkgroup && value != SpvScopeInvocation &&
-        value != SpvScopeQueueFamilyKHR) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << spvOpcodeString(opcode)
-             << ": in WebGPU environment Memory Scope is limited to "
-             << "Workgroup, Invocation, and QueueFamilyKHR";
+    switch (inst->opcode()) {
+      case SpvOpControlBarrier:
+        if (value != SpvScopeWorkgroup) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << spvOpcodeString(opcode)
+                 << ": in WebGPU environment Memory Scope is limited to "
+                 << "Workgroup for OpControlBarrier";
+        }
+        break;
+      case SpvOpMemoryBarrier:
+        if (value != SpvScopeWorkgroup) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << spvOpcodeString(opcode)
+                 << ": in WebGPU environment Memory Scope is limited to "
+                 << "Workgroup for OpMemoryBarrier";
+        }
+        break;
+      default:
+        if (spvOpcodeIsAtomicOp(inst->opcode())) {
+          if (value != SpvScopeQueueFamilyKHR) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << spvOpcodeString(opcode)
+                   << ": in WebGPU environment Memory Scope is limited to "
+                   << "QueueFamilyKHR for OpAtomic* operations";
+          }
+        }
+
+        if (value != SpvScopeWorkgroup && value != SpvScopeInvocation &&
+            value != SpvScopeQueueFamilyKHR) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << spvOpcodeString(opcode)
+                 << ": in WebGPU environment Memory Scope is limited to "
+                 << "Workgroup, Invocation, and QueueFamilyKHR";
+        }
+        break;
     }
   }
 

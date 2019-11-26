@@ -214,6 +214,11 @@ class FuzzerOptions {
     return options_;
   }
 
+  // See spvFuzzerOptionsEnableReplayValidation.
+  void enable_replay_validation() {
+    spvFuzzerOptionsEnableReplayValidation(options_);
+  }
+
   // See spvFuzzerOptionsSetRandomSeed.
   void set_random_seed(uint32_t seed) {
     spvFuzzerOptionsSetRandomSeed(options_, seed);

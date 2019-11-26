@@ -51,10 +51,15 @@ MultipleArrays.tri[0].v[2].normal[0]: offset 60, type 1406, size 3, index 1, bin
 MultipleArrays.vert[0].position[0]: offset 360, type 1406, size 3, index 1, binding -1, stages 1, arrayStride 4, topLevelArrayStride 24
 MultipleArrays.vert[0].normal[0]: offset 372, type 1406, size 3, index 1, binding -1, stages 0, arrayStride 4, topLevelArrayStride 24
 MultipleArrays.f[0]: offset 480, type 1406, size 5, index 1, binding -1, stages 1, arrayStride 4, topLevelArrayStride 4
+ArrayedBind[0].a: offset 0, type 1406, size 1, index 4, binding -1, stages 0
+ArrayedBind[0].b: offset 4, type 1406, size 1, index 4, binding -1, stages 1
 
 Buffer block reflection:
 VertexCollection: offset -1, type ffffffff, size 400, index -1, binding -1, stages 1, numMembers 7
 MultipleArrays: offset -1, type ffffffff, size 500, index -1, binding -1, stages 1, numMembers 9
+ArrayedBind[0]: offset -1, type ffffffff, size 8, index -1, binding -1, stages 1, numMembers 2
+ArrayedBind[1]: offset -1, type ffffffff, size 8, index -1, binding -1, stages 1, numMembers 2
+ArrayedBind[2]: offset -1, type ffffffff, size 8, index -1, binding -1, stages 1, numMembers 2
 
 Pipeline input reflection:
 gl_InstanceID: offset 0, type 1404, size 1, index 0, binding -1, stages 1

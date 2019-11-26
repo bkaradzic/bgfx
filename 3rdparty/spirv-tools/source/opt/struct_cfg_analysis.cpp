@@ -45,6 +45,7 @@ void StructuredCFGAnalysis::AddBlocksInFunction(Function* func) {
   struct TraversalInfo {
     ConstructInfo cinfo;
     uint32_t merge_node;
+    uint32_t continue_node;
   };
 
   // Set up a stack to keep track of currently active constructs.
@@ -53,7 +54,9 @@ void StructuredCFGAnalysis::AddBlocksInFunction(Function* func) {
   state[0].cinfo.containing_construct = 0;
   state[0].cinfo.containing_loop = 0;
   state[0].cinfo.containing_switch = 0;
+  state[0].cinfo.in_continue = false;
   state[0].merge_node = 0;
+  state[0].continue_node = 0;
 
   for (BasicBlock* block : order) {
     if (context_->cfg()->IsPseudoEntryBlock(block) ||
@@ -63,6 +66,12 @@ void StructuredCFGAnalysis::AddBlocksInFunction(Function* func) {
 
     if (block->id() == state.back().merge_node) {
       state.pop_back();
+    }
+
+    // This works because the structured order is designed to keep the blocks in
+    // the continue construct between the continue header and the merge node.
+    if (block->id() == state.back().continue_node) {
+      state.back().cinfo.in_continue = true;
     }
 
     bb_to_construct_.emplace(std::make_pair(block->id(), state.back().cinfo));
@@ -76,8 +85,14 @@ void StructuredCFGAnalysis::AddBlocksInFunction(Function* func) {
       if (merge_inst->opcode() == SpvOpLoopMerge) {
         new_state.cinfo.containing_loop = block->id();
         new_state.cinfo.containing_switch = 0;
+        new_state.cinfo.in_continue = false;
+        new_state.continue_node =
+            merge_inst->GetSingleWordInOperand(kContinueNodeIndex);
       } else {
         new_state.cinfo.containing_loop = state.back().cinfo.containing_loop;
+        new_state.cinfo.in_continue = state.back().cinfo.in_continue;
+        new_state.continue_node = state.back().continue_node;
+
         if (merge_inst->NextNode()->opcode() == SpvOpSwitch) {
           new_state.cinfo.containing_switch = block->id();
         } else {
@@ -146,8 +161,58 @@ bool StructuredCFGAnalysis::IsContinueBlock(uint32_t bb_id) {
   return LoopContinueBlock(bb_id) == bb_id;
 }
 
+bool StructuredCFGAnalysis::IsInContainingLoopsContinueConstruct(
+    uint32_t bb_id) {
+  auto it = bb_to_construct_.find(bb_id);
+  if (it == bb_to_construct_.end()) {
+    return false;
+  }
+  return it->second.in_continue;
+}
+
+bool StructuredCFGAnalysis::IsInContinueConstruct(uint32_t bb_id) {
+  while (bb_id != 0) {
+    if (IsInContainingLoopsContinueConstruct(bb_id)) {
+      return true;
+    }
+    bb_id = ContainingLoop(bb_id);
+  }
+  return false;
+}
+
 bool StructuredCFGAnalysis::IsMergeBlock(uint32_t bb_id) {
   return merge_blocks_.Get(bb_id);
+}
+
+std::unordered_set<uint32_t>
+StructuredCFGAnalysis::FindFuncsCalledFromContinue() {
+  std::unordered_set<uint32_t> called_from_continue;
+  std::queue<uint32_t> funcs_to_process;
+
+  // First collect the functions that are called directly from a continue
+  // construct.
+  for (Function& func : *context_->module()) {
+    for (auto& bb : func) {
+      if (IsInContainingLoopsContinueConstruct(bb.id())) {
+        for (const Instruction& inst : bb) {
+          if (inst.opcode() == SpvOpFunctionCall) {
+            funcs_to_process.push(inst.GetSingleWordInOperand(0));
+          }
+        }
+      }
+    }
+  }
+
+  // Now collect all of the functions that are indirectly called as well.
+  while (!funcs_to_process.empty()) {
+    uint32_t func_id = funcs_to_process.front();
+    funcs_to_process.pop();
+    Function* func = context_->GetFunction(func_id);
+    if (called_from_continue.insert(func_id).second) {
+      context_->AddCalls(func, &funcs_to_process);
+    }
+  }
+  return called_from_continue;
 }
 
 }  // namespace opt

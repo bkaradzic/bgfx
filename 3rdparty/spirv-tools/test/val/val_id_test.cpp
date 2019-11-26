@@ -1476,7 +1476,8 @@ TEST_F(ValidateIdWithMessage, OpSpecConstantTrueBad) {
   CompileSuccessfully(spirv.c_str());
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Specialization constant must be a boolean type."));
+              HasSubstr("OpSpecConstantTrue Result Type <id> '1[%void]' is not "
+                        "a boolean type"));
 }
 
 TEST_F(ValidateIdWithMessage, OpSpecConstantFalseGood) {
@@ -1492,8 +1493,10 @@ TEST_F(ValidateIdWithMessage, OpSpecConstantFalseBad) {
 %2 = OpSpecConstantFalse %1)";
   CompileSuccessfully(spirv.c_str());
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Specialization constant must be a boolean type."));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("OpSpecConstantFalse Result Type <id> '1[%void]' is not "
+                "a boolean type"));
 }
 
 TEST_F(ValidateIdWithMessage, OpSpecConstantGood) {
@@ -1715,7 +1718,7 @@ TEST_F(ValidateIdWithMessage,
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("OpSpecConstantComposite Constituent <id> '7[%7]' is "
-                        "not a constant composite or undef."));
+                        "not a constant or undef."));
 }
 
 // Invalid: Composite contains a column that is *not* a vector (it's an array)
@@ -2317,8 +2320,8 @@ TEST_F(ValidateIdWithMessage, OpLoadGood) {
  %6 = OpFunction %1 None %4
  %7 = OpLabel
  %8 = OpLoad %2 %5
- %9 = OpReturn
-%10 = OpFunctionEnd
+      OpReturn
+      OpFunctionEnd
 )";
   CompileSuccessfully(spirv.c_str());
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
@@ -5176,8 +5179,7 @@ TEST_F(ValidateIdWithMessage, UndefinedTypeId) {
   CompileSuccessfully(spirv.c_str());
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Forward reference operands in an OpTypeStruct must "
-                        "first be declared using OpTypeForwardPointer."));
+              HasSubstr("Operand 2[%2] requires a previous definition"));
 }
 
 TEST_F(ValidateIdWithMessage, UndefinedIdScope) {
@@ -6462,6 +6464,26 @@ TEST_F(ValidateIdWithMessage, OpTypeForwardPointerWrongStorageClass) {
                 "pointer definition.\n  OpTypeForwardPointer "
                 "%_ptr_Function_int CrossWorkgroup"));
 }
+
+TEST_F(ValidateIdWithMessage, MissingForwardPointer) {
+  const std::string spirv = R"(
+               OpCapability Linkage
+               OpCapability Shader
+               OpMemoryModel Logical Simple
+      %float = OpTypeFloat 32
+  %_struct_9 = OpTypeStruct %float %_ptr_Uniform__struct_9
+%_ptr_Uniform__struct_9 = OpTypePointer Uniform %_struct_9
+       %1278 = OpVariable %_ptr_Uniform__struct_9 Uniform
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Operand 3[%_ptr_Uniform__struct_2] requires a previous definition"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

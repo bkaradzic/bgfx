@@ -15,7 +15,7 @@
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _layout, bx::Error* _err = NULL);
 }
 
 namespace
@@ -43,7 +43,7 @@ struct PosNormalTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
@@ -51,10 +51,10 @@ struct PosNormalTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosNormalTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosNormalTexcoordVertex::ms_layout;
 
 static const float s_texcoord = 5.0f;
 static PosNormalTexcoordVertex s_hplaneVertices[] =
@@ -622,15 +622,15 @@ struct Group
 
 struct Mesh
 {
-	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		Group group;
 		const bgfx::Memory* mem;
 		uint32_t size;
 
-		size = _numVertices*_decl.getStride();
+		size = _numVertices*_layout.getStride();
 		mem = bgfx::makeRef(_vertices, size);
-		group.m_vbh = bgfx::createVertexBuffer(mem, _decl);
+		group.m_vbh = bgfx::createVertexBuffer(mem, _layout);
 
 		size = _numIndices*2;
 		mem = bgfx::makeRef(_indices, size);
@@ -661,15 +661,15 @@ struct Mesh
 					bx::read(reader, group.m_aabb);
 					bx::read(reader, group.m_obb);
 
-					bgfx::read(reader, m_decl);
-					uint16_t stride = m_decl.getStride();
+					bgfx::read(reader, m_layout);
+					uint16_t stride = m_layout.getStride();
 
 					uint16_t numVertices;
 					bx::read(reader, numVertices);
 					const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
 					bx::read(reader, mem->data, mem->size);
 
-					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
+					group.m_vbh = bgfx::createVertexBuffer(mem, m_layout);
 				}
 				break;
 
@@ -780,7 +780,7 @@ struct Mesh
 		}
 	}
 
-	bgfx::VertexDecl m_decl;
+	bgfx::VertexLayout m_layout;
 	typedef std::vector<Group> GroupArray;
 	GroupArray m_groups;
 };
@@ -789,8 +789,8 @@ struct Mesh
 class ExampleStencil : public entry::AppI
 {
 public:
-	ExampleStencil(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleStencil(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -832,9 +832,9 @@ public:
 
 		m_bunnyMesh.load("meshes/bunny.bin");
 		m_columnMesh.load("meshes/column.bin");
-		m_cubeMesh.load(s_cubeVertices, BX_COUNTOF(s_cubeVertices), PosNormalTexcoordVertex::ms_decl, s_cubeIndices, BX_COUNTOF(s_cubeIndices) );
-		m_hplaneMesh.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
-		m_vplaneMesh.load(s_vplaneVertices, BX_COUNTOF(s_vplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
+		m_cubeMesh.load(s_cubeVertices, BX_COUNTOF(s_cubeVertices), PosNormalTexcoordVertex::ms_layout, s_cubeIndices, BX_COUNTOF(s_cubeIndices) );
+		m_hplaneMesh.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordVertex::ms_layout, s_planeIndices, BX_COUNTOF(s_planeIndices) );
+		m_vplaneMesh.load(s_vplaneVertices, BX_COUNTOF(s_vplaneVertices), PosNormalTexcoordVertex::ms_layout, s_planeIndices, BX_COUNTOF(s_planeIndices) );
 
 		m_figureTex     = loadTexture("textures/figure-rgba.dds");
 		m_flareTex      = loadTexture("textures/flare.dds");
@@ -1402,4 +1402,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleStencil, "13-stencil", "Stencil reflections and shadows.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleStencil
+	, "13-stencil"
+	, "Stencil reflections and shadows."
+	, "https://bkaradzic.github.io/bgfx/examples.html#stencil"
+	);

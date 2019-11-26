@@ -233,6 +233,10 @@ uint32_t MemPass::Type2Undef(uint32_t type_id) {
   const auto uitr = type2undefs_.find(type_id);
   if (uitr != type2undefs_.end()) return uitr->second;
   const uint32_t undefId = TakeNextId();
+  if (undefId == 0) {
+    return 0;
+  }
+
   std::unique_ptr<Instruction> undef_inst(
       new Instruction(context(), SpvOpUndef, type_id, undefId, {}));
   get_def_use_mgr()->AnalyzeInstDefUse(&*undef_inst);

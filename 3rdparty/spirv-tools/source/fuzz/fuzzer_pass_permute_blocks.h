@@ -36,4 +36,4 @@ class FuzzerPassPermuteBlocks : public FuzzerPass {
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // #define SOURCE_FUZZ_FUZZER_PASS_PERMUTE_BLOCKS_
+#endif  // SOURCE_FUZZ_FUZZER_PASS_PERMUTE_BLOCKS_

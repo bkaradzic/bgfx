@@ -60,22 +60,26 @@ class CFG {
 
   // Compute structured block order into |order| for |func| starting at |root|.
   // This order has the property that dominators come before all blocks they
-  // dominate and merge blocks come after all blocks that are in the control
-  // constructs of their header.
+  // dominate, merge blocks come after all blocks that are in the control
+  // constructs of their header, and continue blocks come after all of the
+  // blocks in the body of their loop.
   void ComputeStructuredOrder(Function* func, BasicBlock* root,
                               std::list<BasicBlock*>* order);
 
-  // Applies |f| to the basic block in post order starting with |bb|.
-  // Note that basic blocks that cannot be reached from |bb| node will not be
-  // processed.
+  // Applies |f| to all blocks that can be reach from |bb| in post order.
   void ForEachBlockInPostOrder(BasicBlock* bb,
                                const std::function<void(BasicBlock*)>& f);
 
-  // Applies |f| to the basic block in reverse post order starting with |bb|.
-  // Note that basic blocks that cannot be reached from |bb| node will not be
-  // processed.
+  // Applies |f| to all blocks that can be reach from |bb| in reverse post
+  // order.
   void ForEachBlockInReversePostOrder(
       BasicBlock* bb, const std::function<void(BasicBlock*)>& f);
+
+  // Applies |f| to all blocks that can be reach from |bb| in reverse post
+  // order.  Return false if |f| return false on any basic block, and stops
+  // processing.
+  bool WhileEachBlockInReversePostOrder(
+      BasicBlock* bb, const std::function<bool(BasicBlock*)>& f);
 
   // Registers |blk| as a basic block in the cfg, this also updates the
   // predecessor lists of each successor of |blk|. |blk| must have a terminator

@@ -209,7 +209,7 @@ public:
 	// For this to work, all types in the block must be the same basic type, e.g. mixing vec2 and vec4 is fine, but
 	// mixing int and float is not.
 	// The name of the uniform array will be the same as the interface block name.
-	void flatten_buffer_block(uint32_t id);
+	void flatten_buffer_block(VariableID id);
 
 protected:
 	void reset();
@@ -244,6 +244,8 @@ protected:
 
 	virtual void emit_sampled_image_op(uint32_t result_type, uint32_t result_id, uint32_t image_id, uint32_t samp_id);
 	virtual void emit_texture_op(const Instruction &i);
+	virtual std::string to_texture_op(const Instruction &i, bool *forward,
+	                                  SmallVector<uint32_t> &inherited_expressions);
 	virtual void emit_subgroup_op(const Instruction &i);
 	virtual std::string type_to_glsl(const SPIRType &type, uint32_t id = 0);
 	virtual std::string builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage);
@@ -256,11 +258,11 @@ protected:
 	virtual std::string constant_expression_vector(const SPIRConstant &c, uint32_t vector);
 	virtual void emit_fixup();
 	virtual std::string variable_decl(const SPIRType &type, const std::string &name, uint32_t id = 0);
-	virtual std::string to_func_call_arg(uint32_t id);
-	virtual std::string to_function_name(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
+	virtual std::string to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id);
+	virtual std::string to_function_name(VariableID img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
 	                                     bool is_proj, bool has_array_offsets, bool has_offset, bool has_grad,
 	                                     bool has_dref, uint32_t lod, uint32_t minlod);
-	virtual std::string to_function_args(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
+	virtual std::string to_function_args(VariableID img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
 	                                     bool is_proj, uint32_t coord, uint32_t coord_components, uint32_t dref,
 	                                     uint32_t grad_x, uint32_t grad_y, uint32_t lod, uint32_t coffset,
 	                                     uint32_t offset, uint32_t bias, uint32_t comp, uint32_t sample,
@@ -270,6 +272,8 @@ protected:
 	virtual void emit_uniform(const SPIRVariable &var);
 	virtual std::string unpack_expression_type(std::string expr_str, const SPIRType &type, uint32_t physical_type_id,
 	                                           bool packed_type, bool row_major);
+
+	virtual bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const;
 
 	StringStream<> buffer;
 
@@ -330,16 +334,18 @@ protected:
 
 	void begin_scope();
 	void end_scope();
+	void end_scope(const std::string &trailer);
 	void end_scope_decl();
 	void end_scope_decl(const std::string &decl);
 
 	Options options;
 
-	std::string type_to_array_glsl(const SPIRType &type);
+	virtual std::string type_to_array_glsl(
+	    const SPIRType &type); // Allow Metal to use the array<T> template to make arrays a value type
 	std::string to_array_size(const SPIRType &type, uint32_t index);
 	uint32_t to_array_size_literal(const SPIRType &type, uint32_t index) const;
 	uint32_t to_array_size_literal(const SPIRType &type) const;
-	std::string variable_decl(const SPIRVariable &variable);
+	virtual std::string variable_decl(const SPIRVariable &variable); // Threadgroup arrays can't have a wrapper type
 	std::string variable_decl_function_local(SPIRVariable &variable);
 
 	void add_local_variable_name(uint32_t id);
@@ -411,6 +417,7 @@ protected:
 		bool native_pointers = false;
 		bool support_small_type_sampling_result = false;
 		bool support_case_fallthrough = true;
+		bool use_array_constructor = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
@@ -425,18 +432,17 @@ protected:
 	void emit_interface_block(const SPIRVariable &type);
 	void emit_flattened_io_block(const SPIRVariable &var, const char *qual);
 	void emit_block_chain(SPIRBlock &block);
-	void emit_hoisted_temporaries(SmallVector<std::pair<uint32_t, uint32_t>> &temporaries);
+	void emit_hoisted_temporaries(SmallVector<std::pair<TypeID, ID>> &temporaries);
 	std::string constant_value_macro_name(uint32_t id);
 	void emit_constant(const SPIRConstant &constant);
 	void emit_specialization_constant_op(const SPIRConstantOp &constant);
 	std::string emit_continue_block(uint32_t continue_block, bool follow_true_block, bool follow_false_block);
 	bool attempt_emit_loop_header(SPIRBlock &block, SPIRBlock::Method method);
 
-	void branch(uint32_t from, uint32_t to);
-	void branch_to_continue(uint32_t from, uint32_t to);
-	void branch(uint32_t from, uint32_t cond, uint32_t true_block, uint32_t false_block);
-	void flush_phi(uint32_t from, uint32_t to);
-	bool flush_phi_required(uint32_t from, uint32_t to);
+	void branch(BlockID from, BlockID to);
+	void branch_to_continue(BlockID from, BlockID to);
+	void branch(BlockID from, uint32_t cond, BlockID true_block, BlockID false_block);
+	void flush_phi(BlockID from, BlockID to);
 	void flush_variable_declaration(uint32_t id);
 	void flush_undeclared_variables(SPIRBlock &block);
 	void emit_variable_temporary_copies(const SPIRVariable &var);
@@ -459,11 +465,18 @@ protected:
 	                              SPIRType::BaseType input_type, bool skip_cast_if_equal_type);
 	void emit_trinary_func_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, uint32_t op2,
 	                               const char *op, SPIRType::BaseType input_type);
+	void emit_trinary_func_op_bitextract(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1,
+	                                     uint32_t op2, const char *op, SPIRType::BaseType expected_result_type,
+	                                     SPIRType::BaseType input_type0, SPIRType::BaseType input_type1,
+	                                     SPIRType::BaseType input_type2);
+	void emit_bitfield_insert_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, uint32_t op2,
+	                             uint32_t op3, const char *op, SPIRType::BaseType offset_count_type);
 
 	void emit_unary_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op);
 	void emit_unrolled_unary_op(uint32_t result_type, uint32_t result_id, uint32_t operand, const char *op);
 	void emit_binary_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
-	void emit_unrolled_binary_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
+	void emit_unrolled_binary_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op,
+	                             bool negate, SPIRType::BaseType expected_type);
 	void emit_binary_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op,
 	                         SPIRType::BaseType input_type, bool skip_cast_if_equal_type);
 
@@ -478,6 +491,9 @@ protected:
 	bool expression_suppresses_usage_tracking(uint32_t id) const;
 	SPIRExpression &emit_op(uint32_t result_type, uint32_t result_id, const std::string &rhs, bool forward_rhs,
 	                        bool suppress_usage_tracking = false);
+
+	void access_chain_internal_append_index(std::string &expr, uint32_t base, const SPIRType *type,
+	                                        AccessChainFlags flags, bool &access_chain_is_arrayed, uint32_t index);
 
 	std::string access_chain_internal(uint32_t base, const uint32_t *indices, uint32_t count, AccessChainFlags flags,
 	                                  AccessChainMeta *meta);
@@ -535,13 +551,15 @@ protected:
 	virtual std::string layout_for_member(const SPIRType &type, uint32_t index);
 	virtual std::string to_interpolation_qualifiers(const Bitset &flags);
 	std::string layout_for_variable(const SPIRVariable &variable);
-	std::string to_combined_image_sampler(uint32_t image_id, uint32_t samp_id);
+	std::string to_combined_image_sampler(VariableID image_id, VariableID samp_id);
 	virtual bool skip_argument(uint32_t id) const;
-	virtual void emit_array_copy(const std::string &lhs, uint32_t rhs_id);
+	virtual void emit_array_copy(const std::string &lhs, uint32_t rhs_id, spv::StorageClass lhs_storage,
+	                             spv::StorageClass rhs_storage);
 	virtual void emit_block_hints(const SPIRBlock &block);
 	virtual std::string to_initializer_expression(const SPIRVariable &var);
 
-	bool buffer_is_packing_standard(const SPIRType &type, BufferPackingStandard packing, uint32_t start_offset = 0,
+	bool buffer_is_packing_standard(const SPIRType &type, BufferPackingStandard packing,
+	                                uint32_t *failed_index = nullptr, uint32_t start_offset = 0,
 	                                uint32_t end_offset = ~(0u));
 	std::string buffer_to_packing_standard(const SPIRType &type, bool support_std430_without_scalar_layout);
 
@@ -575,6 +593,9 @@ protected:
 	uint32_t indent = 0;
 
 	std::unordered_set<uint32_t> emitted_functions;
+
+	// Ensure that we declare phi-variable copies even if the original declaration isn't deferred
+	std::unordered_set<uint32_t> flushed_phi_variables;
 
 	std::unordered_set<uint32_t> flattened_buffer_blocks;
 	std::unordered_set<uint32_t> flattened_structs;

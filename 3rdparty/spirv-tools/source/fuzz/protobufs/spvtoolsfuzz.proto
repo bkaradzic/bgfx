@@ -21,17 +21,37 @@ syntax = "proto3";
 
 package spvtools.fuzz.protobufs;
 
+message InstructionDescriptor {
+
+  // Describes an instruction in some block of a function with respect to a
+  // base instruction.
+
+  // The id of an instruction after which the instruction being described is
+  // believed to be located.  It might be the using instruction itself.
+  uint32 base_instruction_result_id = 1;
+
+  // The opcode for the instruction being described.
+  uint32 target_instruction_opcode = 2;
+
+  // The number of matching opcodes to skip over when searching from the base
+  // instruction to the instruction being described.
+  uint32 num_opcodes_to_ignore = 3;
+
+}
+
 message IdUseDescriptor {
 
-  // Describes a use of an id as an input operand to an instruction in some block
-  // of a function.
+  // Describes a use of an id as an input operand to an instruction in some
+  // block of a function.
 
   // Example:
   //   - id_of_interest = 42
-  //   - target_instruction_opcode = OpStore
+  //   - enclosing_instruction = (
+  //         base_instruction_result_id = 50,
+  //         target_instruction_opcode = OpStore
+  //         num_opcodes_to_ignore = 7
+  //     )
   //   - in_operand_index = 1
-  //   - base_instruction_result_id = 50
-  //   - num_opcodes_to_ignore = 7
   // represents a use of id 42 as input operand 1 to an OpStore instruction,
   // such that the OpStore instruction can be found in the same basic block as
   // the instruction with result id 50, and in particular is the 8th OpStore
@@ -41,19 +61,26 @@ message IdUseDescriptor {
   // An id that we would like to be able to find a use of.
   uint32 id_of_interest = 1;
 
-  // The opcode for the instruction that uses the id.
-  uint32 target_instruction_opcode = 2;
-
   // The input operand index at which the use is expected.
+  InstructionDescriptor enclosing_instruction = 2;
+
   uint32 in_operand_index = 3;
 
-  // The id of an instruction after which the instruction that contains the use
-  // is believed to occur; it might be the using instruction itself.
-  uint32 base_instruction_result_id = 4;
+}
 
-  // The number of matching opcodes to skip over when searching for the using
-  // instruction from the base instruction.
-  uint32 num_opcodes_to_ignore = 5;
+message DataDescriptor {
+
+  // Represents a data element that can be accessed from an id, by walking the
+  // type hierarchy via a sequence of 0 or more indices.
+  //
+  // Very similar to a UniformBufferElementDescriptor, except that a
+  // DataDescriptor is rooted at the id of a scalar or composite.
+
+  // The object being accessed - a scalar or composite
+  uint32 object = 1;
+
+  // 0 or more indices, used to index into a composite object
+  repeated uint32 index = 2;
 
 }
 
@@ -97,6 +124,7 @@ message Fact {
   oneof fact {
     // Order the fact options by numeric id (rather than alphabetically).
     FactConstantUniform constant_uniform_fact = 1;
+    FactDataSynonym data_synonym_fact = 2;
   }
 }
 
@@ -118,6 +146,19 @@ message FactConstantUniform {
 
 }
 
+message FactDataSynonym {
+
+  // Records the fact that the data held in two data descriptors are guaranteed
+  // to be equal.  spirv-fuzz can use this to replace uses of one piece of data
+  // with a known-to-be-equal piece of data.
+
+  // Data descriptors guaranteed to hold identical data.
+  DataDescriptor data1 = 1;
+
+  DataDescriptor data2 = 2;
+
+}
+
 message TransformationSequence {
   repeated Transformation transformation = 1;
 }
@@ -134,9 +175,21 @@ message Transformation {
     TransformationAddTypeFloat add_type_float = 6;
     TransformationAddTypeInt add_type_int = 7;
     TransformationAddDeadBreak add_dead_break = 8;
-    TransformationReplaceBooleanConstantWithConstantBinary replace_boolean_constant_with_constant_binary = 9;
+    TransformationReplaceBooleanConstantWithConstantBinary
+      replace_boolean_constant_with_constant_binary = 9;
     TransformationAddTypePointer add_type_pointer = 10;
     TransformationReplaceConstantWithUniform replace_constant_with_uniform = 11;
+    TransformationAddDeadContinue add_dead_continue = 12;
+    TransformationCopyObject copy_object = 13;
+    TransformationReplaceIdWithSynonym replace_id_with_synonym = 14;
+    TransformationSetSelectionControl set_selection_control = 15;
+    TransformationCompositeConstruct composite_construct = 16;
+    TransformationSetLoopControl set_loop_control = 17;
+    TransformationSetFunctionControl set_function_control = 18;
+    TransformationAddNoContractionDecoration add_no_contraction_decoration = 19;
+    TransformationSetMemoryOperandsMask set_memory_operands_mask = 20;
+    TransformationCompositeExtract composite_extract = 21;
+    TransformationVectorShuffle vector_shuffle = 22;
     // Add additional option using the next available number.
   }
 }
@@ -187,6 +240,34 @@ message TransformationAddDeadBreak {
   // A sequence of ids suitable for extending OpPhi instructions as a result of
   // the new break edge
   repeated uint32 phi_id = 4;
+
+}
+
+message TransformationAddDeadContinue {
+
+  // A transformation that turns a basic block appearing in a loop and that
+  // unconditionally branches to its successor into a block that potentially
+  // branches to the continue target of the loop, but in such a manner that the
+  // continue branch cannot actually be taken.
+
+  // The block to continue from
+  uint32 from_block = 1;
+
+  // Determines whether the continue condition is true or false
+  bool continue_condition_value = 2;
+
+  // A sequence of ids suitable for extending OpPhi instructions as a result of
+  // the new break edge
+  repeated uint32 phi_id = 3;
+
+}
+
+message TransformationAddNoContractionDecoration {
+
+  // Applies OpDecorate NoContraction to the given result id
+
+  // Result id to be decorated
+  uint32 result_id = 1;
 
 }
 
@@ -242,6 +323,63 @@ message TransformationAddTypePointer {
 
 }
 
+message TransformationCompositeConstruct {
+
+  // A transformation that introduces an OpCompositeConstruct instruction to
+  // make a composite object.
+
+  // Id of the type of the composite that is to be constructed
+  uint32 composite_type_id = 1;
+
+  // Ids of the objects that will form the components of the composite
+  repeated uint32 component = 2;
+
+  // A descriptor for an instruction in a block before which the new
+  // OpCompositeConstruct instruction should be inserted
+  InstructionDescriptor instruction_to_insert_before = 3;
+
+  // A fresh id for the composite object
+  uint32 fresh_id = 4;
+
+}
+
+message TransformationCompositeExtract {
+
+  // A transformation that adds an instruction to extract an element from a
+  // composite.
+
+  // A descriptor for an instruction in a block before which the new
+  // OpCompositeExtract instruction should be inserted
+  InstructionDescriptor instruction_to_insert_before = 1;
+
+  // Result id for the extract operation.
+  uint32 fresh_id = 2;
+
+  // Id of the composite from which data is to be extracted.
+  uint32 composite_id = 3;
+
+  // Indices that indicate which part of the composite should be extracted.
+  repeated uint32 index = 4;
+
+}
+
+message TransformationCopyObject {
+
+  // A transformation that introduces an OpCopyObject instruction to make a
+  // copy of an object.
+
+  // Id of the object to be copied
+  uint32 object = 1;
+
+  // A descriptor for an instruction in a block before which the new
+  // OpCopyObject instruction should be inserted
+  InstructionDescriptor instruction_to_insert_before = 2;
+
+  // A fresh id for the copied object
+  uint32 fresh_id = 3;
+
+}
+
 message TransformationMoveBlockDown {
 
   // A transformation that moves a basic block to be one position lower in
@@ -251,26 +389,8 @@ message TransformationMoveBlockDown {
   uint32 block_id = 1;
 }
 
-message TransformationReplaceConstantWithUniform {
-
-  // Replaces a use of a constant id with the the result of a load from an
-  // element of uniform buffer known to hold the same value as the constant
-
-  // A descriptor for the id we would like to replace
-  IdUseDescriptor id_use_descriptor = 1;
-
-  // Uniform descriptor to identify which uniform value to choose
-  UniformBufferElementDescriptor uniform_descriptor = 2;
-
-  // Id that will store the result of an access chain
-  uint32 fresh_id_for_access_chain = 3;
-
-  // Id that will store the result of a load
-  uint32 fresh_id_for_load = 4;
-
-}
-
 message TransformationReplaceBooleanConstantWithConstantBinary {
+
   // A transformation to capture replacing a use of a boolean constant with
   // binary operation on two constant values
 
@@ -291,16 +411,117 @@ message TransformationReplaceBooleanConstantWithConstantBinary {
 
 }
 
+message TransformationReplaceConstantWithUniform {
+
+  // Replaces a use of a constant id with the result of a load from an
+  // element of uniform buffer known to hold the same value as the constant
+
+  // A descriptor for the id we would like to replace
+  IdUseDescriptor id_use_descriptor = 1;
+
+  // Uniform descriptor to identify which uniform value to choose
+  UniformBufferElementDescriptor uniform_descriptor = 2;
+
+  // Id that will store the result of an access chain
+  uint32 fresh_id_for_access_chain = 3;
+
+  // Id that will store the result of a load
+  uint32 fresh_id_for_load = 4;
+
+}
+
+message TransformationReplaceIdWithSynonym {
+
+  // Replaces a use of an id with an id that is known to be synonymous, e.g.
+  // because it was obtained via applying OpCopyObject
+
+  // The id use that is to be replaced
+  IdUseDescriptor id_use_descriptor = 1;
+
+  // The synonymous id
+  uint32 synonymous_id = 2;
+
+}
+
+message TransformationSetFunctionControl {
+
+  // A transformation that sets the function control operand of an OpFunction
+  // instruction.
+
+  // The result id of an OpFunction instruction
+  uint32 function_id = 1;
+
+  // The value to which the 'function control' operand should be set.
+  uint32 function_control = 2;
+
+}
+
+message TransformationSetLoopControl {
+
+  // A transformation that sets the loop control operand of an OpLoopMerge
+  // instruction.
+
+  // The id of a basic block that should contain OpLoopMerge
+  uint32 block_id = 1;
+
+  // The value to which the 'loop control' operand should be set.
+  // This must be a legal loop control mask.
+  uint32 loop_control = 2;
+
+  // Provides a peel count value for the loop.  Used if and only if the
+  // PeelCount bit is set.  Must be zero if the PeelCount bit is not set (can
+  // still be zero if this bit is set).
+  uint32 peel_count = 3;
+
+  // Provides a partial count value for the loop.  Used if and only if the
+  // PartialCount bit is set.  Must be zero if the PartialCount bit is not set
+  // (can still be zero if this bit is set).
+  uint32 partial_count = 4;
+
+}
+
+message TransformationSetMemoryOperandsMask {
+
+  // A transformation that sets the memory operands mask of a memory access
+  // instruction.
+
+  // A descriptor for a memory access instruction, e.g. an OpLoad
+  InstructionDescriptor memory_access_instruction = 1;
+
+  // A mask of memory operands to be applied to the instruction.  It must be the
+  // same as the original mask, except that Volatile can be added, and
+  // Nontemporal can be added or removed.
+  uint32 memory_operands_mask = 2;
+
+  // Some memory access instructions allow more than one mask to be specified;
+  // this field indicates which mask should be set
+  uint32 memory_operands_mask_index = 3;
+
+}
+
+message TransformationSetSelectionControl {
+
+  // A transformation that sets the selection control operand of an
+  // OpSelectionMerge instruction.
+
+  // The id of a basic block that should contain OpSelectionMerge
+  uint32 block_id = 1;
+
+  // The value to which the 'selection control' operand should be set.
+  // Although technically 'selection control' is a literal mask that can be
+  // some combination of 'None', 'Flatten' and 'DontFlatten', the combination
+  // 'Flatten | DontFlatten' does not make sense and is not allowed here.
+  uint32 selection_control = 2;
+
+}
+
 message TransformationSplitBlock {
 
-  // A transformation that splits a basic block into two basic blocks.
+  // A transformation that splits a basic block into two basic blocks
 
-  // The result id of an instruction.
-  uint32 result_id = 1;
-
-  // An offset, such that the block containing |result_id_| should be split
-  // right before the instruction |offset_| instructions after |result_id_|.
-  uint32 offset = 2;
+  // A descriptor for an instruction such that the block containing the
+  // described instruction should be split right before the instruction.
+  InstructionDescriptor instruction_to_split_before = 1;
 
   // An id that must not yet be used by the module to which this transformation
   // is applied.  Rather than having the transformation choose a suitable id on
@@ -310,6 +531,28 @@ message TransformationSplitBlock {
   // transformation, and if we end up changing what that id is, due to removing
   // earlier transformations, it may inhibit later transformations from
   // applying.
-  uint32 fresh_id = 3;
+  uint32 fresh_id = 2;
+
+}
+
+message TransformationVectorShuffle {
+
+  // A transformation that adds a vector shuffle instruction.
+
+  // A descriptor for an instruction in a block before which the new
+  // OpVectorShuffle instruction should be inserted
+  InstructionDescriptor instruction_to_insert_before = 1;
+
+  // Result id for the shuffle operation.
+  uint32 fresh_id = 2;
+
+  // Id of the first vector operand.
+  uint32 vector1 = 3;
+
+  // Id of the second vector operand.
+  uint32 vector2 = 4;
+
+  // Indices that indicate which components of the input vectors should be used.
+  repeated uint32 component = 5;
 
 }

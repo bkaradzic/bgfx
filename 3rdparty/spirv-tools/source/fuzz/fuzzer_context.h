@@ -16,6 +16,7 @@
 #define SOURCE_FUZZ_FUZZER_CONTEXT_H_
 
 #include <functional>
+#include <utility>
 
 #include "source/fuzz/random_generator.h"
 #include "source/opt/function.h"
@@ -34,8 +35,22 @@ class FuzzerContext {
 
   ~FuzzerContext();
 
-  // Provides the random generator used to control fuzzing.
-  RandomGenerator* GetRandomGenerator();
+  // Returns a random boolean.
+  bool ChooseEven();
+
+  // Returns true if and only if a randomly-chosen integer in the range [0, 100]
+  // is less than |percentage_chance|.
+  bool ChoosePercentage(uint32_t percentage_chance);
+
+  // Returns a random index into |sequence|, which is expected to have a 'size'
+  // method, and which must be non-empty.  Typically 'HasSizeMethod' will be an
+  // std::vector.
+  template <typename HasSizeMethod>
+  uint32_t RandomIndex(const HasSizeMethod& sequence) {
+    assert(sequence.size() > 0);
+    return random_generator_->RandomUint32(
+        static_cast<uint32_t>(sequence.size()));
+  }
 
   // Yields an id that is guaranteed not to be used in the module being fuzzed,
   // or to have been issued before.
@@ -44,17 +59,47 @@ class FuzzerContext {
   // Probabilities associated with applying various transformations.
   // Keep them in alphabetical order.
   uint32_t GetChanceOfAddingDeadBreak() { return chance_of_adding_dead_break_; }
+  uint32_t GetChanceOfAddingDeadContinue() {
+    return chance_of_adding_dead_continue_;
+  }
+  uint32_t GetChanceOfAddingNoContractionDecoration() {
+    return chance_of_adding_no_contraction_decoration_;
+  }
+  uint32_t GetChanceOfAdjustingFunctionControl() {
+    return chance_of_adjusting_function_control_;
+  }
+  uint32_t GetChanceOfAdjustingLoopControl() {
+    return chance_of_adjusting_loop_control_;
+  }
+  uint32_t GetChanceOfAdjustingMemoryOperandsMask() {
+    return chance_of_adjusting_memory_operands_mask_;
+  }
+  uint32_t GetChanceOfAdjustingSelectionControl() {
+    return chance_of_adjusting_selection_control_;
+  }
+  uint32_t GetChanceOfConstructingComposite() {
+    return chance_of_constructing_composite_;
+  }
+  uint32_t GetChanceOfCopyingObject() { return chance_of_copying_object_; }
   uint32_t GetChanceOfMovingBlockDown() { return chance_of_moving_block_down_; }
   uint32_t GetChanceOfObfuscatingConstant() {
     return chance_of_obfuscating_constant_;
   }
+  uint32_t GetChanceOfReplacingIdWithSynonym() {
+    return chance_of_replacing_id_with_synonym_;
+  }
   uint32_t GetChanceOfSplittingBlock() { return chance_of_splitting_block_; }
+  uint32_t GetRandomLoopControlPeelCount() {
+    return random_generator_->RandomUint32(max_loop_control_peel_count_);
+  }
+  uint32_t GetRandomLoopControlPartialCount() {
+    return random_generator_->RandomUint32(max_loop_control_partial_count_);
+  }
 
-  // Probability distributions to control how deeply to recurse.
+  // Functions to control how deeply to recurse.
   // Keep them in alphabetical order.
-  const std::function<bool(uint32_t, RandomGenerator*)>&
-  GoDeeperInConstantObfuscation() {
-    return go_deeper_in_constant_obfuscation_;
+  bool GoDeeperInConstantObfuscation(uint32_t depth) {
+    return go_deeper_in_constant_obfuscation_(depth, random_generator_);
   }
 
  private:
@@ -66,14 +111,33 @@ class FuzzerContext {
   // Probabilities associated with applying various transformations.
   // Keep them in alphabetical order.
   uint32_t chance_of_adding_dead_break_;
+  uint32_t chance_of_adding_dead_continue_;
+  uint32_t chance_of_adding_no_contraction_decoration_;
+  uint32_t chance_of_adjusting_function_control_;
+  uint32_t chance_of_adjusting_loop_control_;
+  uint32_t chance_of_adjusting_memory_operands_mask_;
+  uint32_t chance_of_adjusting_selection_control_;
+  uint32_t chance_of_constructing_composite_;
+  uint32_t chance_of_copying_object_;
   uint32_t chance_of_moving_block_down_;
   uint32_t chance_of_obfuscating_constant_;
+  uint32_t chance_of_replacing_id_with_synonym_;
   uint32_t chance_of_splitting_block_;
+
+  // Limits associated with various quantities for which random values are
+  // chosen during fuzzing.
+  // Keep them in alphabetical order.
+  uint32_t max_loop_control_partial_count_;
+  uint32_t max_loop_control_peel_count_;
 
   // Functions to determine with what probability to go deeper when generating
   // or mutating constructs recursively.
   const std::function<bool(uint32_t, RandomGenerator*)>&
       go_deeper_in_constant_obfuscation_;
+
+  // Requires |min_max.first| <= |min_max.second|, and returns a value in the
+  // range [ |min_max.first|, |min_max.second| ]
+  uint32_t ChooseBetweenMinAndMax(const std::pair<uint32_t, uint32_t>& min_max);
 };
 
 }  // namespace fuzz

@@ -191,7 +191,7 @@ namespace bgfx { namespace d3d9
 		{
 		}
 
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle);
+		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
 			if (NULL  != m_dynamic
@@ -232,7 +232,7 @@ namespace bgfx { namespace d3d9
 		IDirect3DVertexBuffer9* m_ptr;
 		uint8_t* m_dynamic;
 		uint32_t m_size;
-		VertexDeclHandle m_decl;
+		VertexLayoutHandle m_layoutHandle;
 	};
 
 	struct ShaderD3D9
