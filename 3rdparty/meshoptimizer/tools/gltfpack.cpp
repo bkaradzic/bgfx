@@ -91,6 +91,7 @@ struct Settings
 
 	bool texture_embed;
 	bool texture_basis;
+	bool texture_ktx2;
 
 	int texture_quality;
 
@@ -140,6 +141,15 @@ struct MaterialInfo
 struct ImageInfo
 {
 	bool normal_map;
+	bool srgb;
+};
+
+struct ExtensionInfo
+{
+	const char* name;
+
+	bool used;
+	bool required;
 };
 
 struct BufferView
@@ -2612,6 +2622,36 @@ void remapNodes(cgltf_data* data, std::vector<NodeInfo>& nodes, size_t& node_off
 	}
 }
 
+void analyzeImages(cgltf_data* data, std::vector<ImageInfo>& images)
+{
+	for (size_t i = 0; i < data->materials_count; ++i)
+	{
+		const cgltf_material& material = data->materials[i];
+
+		if (material.has_pbr_metallic_roughness)
+		{
+			const cgltf_pbr_metallic_roughness& pbr = material.pbr_metallic_roughness;
+
+			if (pbr.base_color_texture.texture && pbr.base_color_texture.texture->image)
+				images[pbr.base_color_texture.texture->image - data->images].srgb = true;
+		}
+
+		if (material.has_pbr_specular_glossiness)
+		{
+			const cgltf_pbr_specular_glossiness& pbr = material.pbr_specular_glossiness;
+
+			if (pbr.diffuse_texture.texture && pbr.diffuse_texture.texture->image)
+				images[pbr.diffuse_texture.texture->image - data->images].srgb = true;
+		}
+
+		if (material.emissive_texture.texture && material.emissive_texture.texture->image)
+			images[material.emissive_texture.texture->image - data->images].srgb = true;
+
+		if (material.normal_texture.texture && material.normal_texture.texture->image)
+			images[material.normal_texture.texture->image - data->images].normal_map = true;
+	}
+}
+
 bool parseDataUri(const char* uri, std::string& mime_type, std::string& result)
 {
 	if (strncmp(uri, "data:", 5) == 0)
@@ -2772,7 +2812,7 @@ struct TempFile
 	}
 };
 
-bool encodeBasis(const std::string& data, std::string& result, bool normal_map, int quality)
+bool encodeBasis(const std::string& data, std::string& result, bool normal_map, bool srgb, int quality)
 {
 	TempFile temp_input(".raw");
 	TempFile temp_output(".basis");
@@ -2790,10 +2830,15 @@ bool encodeBasis(const std::string& data, std::string& result, bool normal_map, 
 	cmd += ql;
 
 	cmd += " -mipmap";
+
 	if (normal_map)
 	{
 		cmd += " -normal_map";
 		// for optimal quality we should specify seperate_rg_to_color_alpha but this requires renderer awareness
+	}
+	else if (!srgb)
+	{
+		cmd += " -linear";
 	}
 
 	cmd += " -file ";
@@ -2811,6 +2856,9 @@ bool encodeBasis(const std::string& data, std::string& result, bool normal_map, 
 
 	return rc == 0 && readFile(temp_output.path.c_str(), result);
 }
+
+// basistoktx.cpp
+extern std::string basisToKtx(const std::string& basis, bool srgb);
 
 void writeImage(std::string& json, std::vector<BufferView>& views, const cgltf_image& image, const ImageInfo& info, size_t index, const char* input_path, const char* output_path, const Settings& settings)
 {
@@ -2846,9 +2894,12 @@ void writeImage(std::string& json, std::vector<BufferView>& views, const cgltf_i
 		{
 			std::string encoded;
 
-			if (encodeBasis(img_data, encoded, info.normal_map, settings.texture_quality))
+			if (encodeBasis(img_data, encoded, info.normal_map, info.srgb, settings.texture_quality))
 			{
-				writeEmbeddedImage(json, views, encoded.c_str(), encoded.size(), "image/basis");
+				if (settings.texture_ktx2)
+					encoded = basisToKtx(encoded, info.srgb);
+
+				writeEmbeddedImage(json, views, encoded.c_str(), encoded.size(), settings.texture_ktx2 ? "image/ktx2" : "image/basis");
 			}
 			else
 			{
@@ -2865,31 +2916,37 @@ void writeImage(std::string& json, std::vector<BufferView>& views, const cgltf_i
 		if (settings.texture_basis)
 		{
 			std::string full_path = getFullPath(image.uri, input_path);
-			std::string basis_path = getFileName(image.uri) + ".basis";
+			std::string basis_path = getFileName(image.uri) + (settings.texture_ktx2 ? ".ktx" : ".basis");
 			std::string basis_full_path = getFullPath(basis_path.c_str(), output_path);
 
-			if (!readFile(full_path.c_str(), img_data))
-			{
-				fprintf(stderr, "Warning: unable to read image %s, skipping\n", image.uri);
-			}
-			else
+			if (readFile(full_path.c_str(), img_data))
 			{
 				std::string encoded;
 
-				if (!encodeBasis(img_data, encoded, info.normal_map, settings.texture_quality))
+				if (encodeBasis(img_data, encoded, info.normal_map, info.srgb, settings.texture_quality))
 				{
-					fprintf(stderr, "Warning: unable to encode image %s with Basis, skipping\n", image.uri);
-				}
-				else if (!writeFile(basis_full_path.c_str(), encoded))
-				{
-					fprintf(stderr, "Warning: unable to save Basis image %s, skipping\n", image.uri);
+					if (settings.texture_ktx2)
+						encoded = basisToKtx(encoded, info.srgb);
+
+					if (writeFile(basis_full_path.c_str(), encoded))
+					{
+						append(json, "\"uri\":\"");
+						append(json, basis_path);
+						append(json, "\"");
+					}
+					else
+					{
+						fprintf(stderr, "Warning: unable to save Basis image %s, skipping\n", image.uri);
+					}
 				}
 				else
 				{
-					append(json, "\"uri\":\"");
-					append(json, basis_path);
-					append(json, "\"");
+					fprintf(stderr, "Warning: unable to encode image %s with Basis, skipping\n", image.uri);
 				}
+			}
+			else
+			{
+				fprintf(stderr, "Warning: unable to read image %s, skipping\n", image.uri);
 			}
 		}
 		else
@@ -2902,6 +2959,24 @@ void writeImage(std::string& json, std::vector<BufferView>& views, const cgltf_i
 	else
 	{
 		fprintf(stderr, "Warning: ignoring image %d since it has no URI and no valid buffer data\n", int(index));
+	}
+}
+
+void writeTexture(std::string& json, const cgltf_texture& texture, cgltf_data* data, const Settings& settings)
+{
+	if (texture.image)
+	{
+		if (settings.texture_ktx2)
+		{
+			append(json, "\"extensions\":{\"KHR_texture_basisu\":{\"source\":");
+			append(json, size_t(texture.image - data->images));
+			append(json, "}}");
+		}
+		else
+		{
+			append(json, "\"source\":");
+			append(json, size_t(texture.image - data->images));
+		}
 	}
 }
 
@@ -3317,18 +3392,18 @@ void writeCamera(std::string& json, const cgltf_camera& camera)
 	case cgltf_camera_type_perspective:
 		append(json, "\"type\":\"perspective\",\"perspective\":{");
 		append(json, "\"yfov\":");
-		append(json, camera.perspective.yfov);
+		append(json, camera.data.perspective.yfov);
 		append(json, ",\"znear\":");
-		append(json, camera.perspective.znear);
-		if (camera.perspective.aspect_ratio != 0.f)
+		append(json, camera.data.perspective.znear);
+		if (camera.data.perspective.aspect_ratio != 0.f)
 		{
 			append(json, ",\"aspectRatio\":");
-			append(json, camera.perspective.aspect_ratio);
+			append(json, camera.data.perspective.aspect_ratio);
 		}
-		if (camera.perspective.zfar != 0.f)
+		if (camera.data.perspective.zfar != 0.f)
 		{
 			append(json, ",\"zfar\":");
-			append(json, camera.perspective.zfar);
+			append(json, camera.data.perspective.zfar);
 		}
 		append(json, "}");
 		break;
@@ -3336,13 +3411,13 @@ void writeCamera(std::string& json, const cgltf_camera& camera)
 	case cgltf_camera_type_orthographic:
 		append(json, "\"type\":\"orthographic\",\"orthographic\":{");
 		append(json, "\"xmag\":");
-		append(json, camera.orthographic.xmag);
+		append(json, camera.data.orthographic.xmag);
 		append(json, ",\"ymag\":");
-		append(json, camera.orthographic.ymag);
+		append(json, camera.data.orthographic.ymag);
 		append(json, ",\"znear\":");
-		append(json, camera.orthographic.znear);
+		append(json, camera.data.orthographic.znear);
 		append(json, ",\"zfar\":");
-		append(json, camera.orthographic.zfar);
+		append(json, camera.data.orthographic.zfar);
 		append(json, "}");
 		break;
 
@@ -3395,6 +3470,46 @@ void writeLight(std::string& json, const cgltf_light& light)
 		append(json, "}");
 	}
 	append(json, "}");
+}
+
+void writeArray(std::string& json, const char* name, const std::string& contents)
+{
+	if (contents.empty())
+		return;
+
+	comma(json);
+	append(json, "\"");
+	append(json, name);
+	append(json, "\":[");
+	append(json, contents);
+	append(json, "]");
+}
+
+void writeExtensions(std::string& json, const ExtensionInfo* extensions, size_t count)
+{
+	comma(json);
+	append(json, "\"extensionsUsed\":[");
+	for (size_t i = 0; i < count; ++i)
+		if (extensions[i].used)
+		{
+			comma(json);
+			append(json, "\"");
+			append(json, extensions[i].name);
+			append(json, "\"");
+		}
+	append(json, "]");
+
+	comma(json);
+	append(json, "\"extensionsRequired\":[");
+	for (size_t i = 0; i < count; ++i)
+		if (extensions[i].used && extensions[i].required)
+		{
+			comma(json);
+			append(json, "\"");
+			append(json, extensions[i].name);
+			append(json, "\"");
+		}
+	append(json, "]");
 }
 
 void finalizeBufferViews(std::string& json, std::vector<BufferView>& views, std::string& bin, std::string& fallback)
@@ -3458,6 +3573,23 @@ void printMeshStats(const std::vector<Mesh>& meshes, const char* name)
 	}
 
 	printf("%s: %d triangles, %d vertices\n", name, int(triangles), int(vertices));
+}
+
+void printSceneStats(const std::vector<BufferView>& views, const std::vector<Mesh>& meshes, size_t node_offset, size_t mesh_offset, size_t material_offset, size_t json_size, size_t bin_size)
+{
+	size_t bytes[BufferView::Kind_Count] = {};
+
+	for (size_t i = 0; i < views.size(); ++i)
+	{
+		const BufferView& view = views[i];
+		bytes[view.kind] += view.bytes;
+	}
+
+	printf("output: %d nodes, %d meshes (%d primitives), %d materials\n", int(node_offset), int(mesh_offset), int(meshes.size()), int(material_offset));
+	printf("output: JSON %d bytes, buffers %d bytes\n", int(json_size), int(bin_size));
+	printf("output: buffers: vertex %d bytes, index %d bytes, skin %d bytes, time %d bytes, keyframe %d bytes, image %d bytes\n",
+	       int(bytes[BufferView::Kind_Vertex]), int(bytes[BufferView::Kind_Index]), int(bytes[BufferView::Kind_Skin]),
+	       int(bytes[BufferView::Kind_Time]), int(bytes[BufferView::Kind_Keyframe]), int(bytes[BufferView::Kind_Image]));
 }
 
 void printAttributeStats(const std::vector<BufferView>& views, BufferView::Kind kind, const char* name)
@@ -3561,13 +3693,7 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 
 	std::vector<ImageInfo> images(data->images_count);
 
-	for (size_t i = 0; i < data->materials_count; ++i)
-	{
-		const cgltf_material& material = data->materials[i];
-
-		if (material.normal_texture.texture && material.normal_texture.texture->image)
-			images[material.normal_texture.texture->image - data->images].normal_map = true;
-	}
+	analyzeImages(data, images);
 
 	QuantizationParams qp = prepareQuantization(meshes, settings);
 
@@ -3595,9 +3721,11 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 
 	for (size_t i = 0; i < data->images_count; ++i)
 	{
+		const cgltf_image& image = data->images[i];
+
 		if (settings.verbose && settings.texture_basis)
 		{
-			const char* uri = data->images[i].uri;
+			const char* uri = image.uri;
 			bool embedded = !uri || strncmp(uri, "data:", 5) == 0;
 
 			printf("image %d (%s) is being encoded with Basis\n", int(i), embedded ? "embedded" : uri);
@@ -3605,7 +3733,7 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 
 		comma(json_images);
 		append(json_images, "{");
-		writeImage(json_images, views, data->images[i], images[i], i, input_path, output_path, settings);
+		writeImage(json_images, views, image, images[i], i, input_path, output_path, settings);
 		append(json_images, "}");
 	}
 
@@ -3615,11 +3743,7 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 
 		comma(json_textures);
 		append(json_textures, "{");
-		if (texture.image)
-		{
-			append(json_textures, "\"source\":");
-			append(json_textures, size_t(texture.image - data->images));
-		}
+		writeTexture(json_textures, texture, data, settings);
 		append(json_textures, "}");
 	}
 
@@ -3834,110 +3958,42 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 	}
 	append(json, "}");
 
-	append(json, ",\"extensionsUsed\":[");
-	append(json, "\"KHR_mesh_quantization\"");
-	if (settings.compress)
-	{
-		comma(json);
-		append(json, "\"MESHOPT_compression\"");
-	}
-	if (!json_textures.empty())
-	{
-		comma(json);
-		append(json, "\"KHR_texture_transform\"");
-	}
-	if (ext_pbr_specular_glossiness)
-	{
-		comma(json);
-		append(json, "\"KHR_materials_pbrSpecularGlossiness\"");
-	}
-	if (ext_unlit)
-	{
-		comma(json);
-		append(json, "\"KHR_materials_unlit\"");
-	}
-	if (data->lights_count)
-	{
-		comma(json);
-		append(json, "\"KHR_lights_punctual\"");
-	}
-	append(json, "]");
+	const ExtensionInfo extensions[] = {
+	    {"KHR_mesh_quantization", true, true},
+	    {"MESHOPT_compression", settings.compress, !settings.fallback},
+	    {"KHR_texture_transform", !json_textures.empty(), false},
+	    {"KHR_materials_pbrSpecularGlossiness", ext_pbr_specular_glossiness, false},
+	    {"KHR_materials_unlit", ext_unlit, false},
+	    {"KHR_lights_punctual", data->lights_count > 0, false},
+	    {"KHR_image_ktx2", !json_textures.empty() && settings.texture_ktx2, true},
+	    {"KHR_texture_basisu", !json_textures.empty() && settings.texture_ktx2, true},
+	};
 
-	append(json, ",\"extensionsRequired\":[");
-	append(json, "\"KHR_mesh_quantization\"");
-	if (settings.compress && !settings.fallback)
-	{
-		comma(json);
-		append(json, "\"MESHOPT_compression\"");
-	}
-	append(json, "]");
+	writeExtensions(json, extensions, sizeof(extensions) / sizeof(extensions[0]));
 
-	if (!views.empty())
-	{
-		std::string json_views;
-		finalizeBufferViews(json_views, views, bin, fallback);
+	std::string json_views;
+	finalizeBufferViews(json_views, views, bin, fallback);
 
-		append(json, ",\"bufferViews\":[");
-		append(json, json_views);
-		append(json, "]");
-	}
-	if (!json_accessors.empty())
-	{
-		append(json, ",\"accessors\":[");
-		append(json, json_accessors);
-		append(json, "]");
-	}
-	if (!json_images.empty())
-	{
-		append(json, ",\"images\":[");
-		append(json, json_images);
-		append(json, "]");
-	}
-	if (!json_textures.empty())
-	{
-		append(json, ",\"textures\":[");
-		append(json, json_textures);
-		append(json, "]");
-	}
-	if (!json_materials.empty())
-	{
-		append(json, ",\"materials\":[");
-		append(json, json_materials);
-		append(json, "]");
-	}
-	if (!json_meshes.empty())
-	{
-		append(json, ",\"meshes\":[");
-		append(json, json_meshes);
-		append(json, "]");
-	}
-	if (!json_skins.empty())
-	{
-		append(json, ",\"skins\":[");
-		append(json, json_skins);
-		append(json, "]");
-	}
-	if (!json_animations.empty())
-	{
-		append(json, ",\"animations\":[");
-		append(json, json_animations);
-		append(json, "]");
-	}
+	writeArray(json, "bufferViews", json_views);
+	writeArray(json, "accessors", json_accessors);
+	writeArray(json, "images", json_images);
+	writeArray(json, "textures", json_textures);
+	writeArray(json, "materials", json_materials);
+	writeArray(json, "meshes", json_meshes);
+	writeArray(json, "skins", json_skins);
+	writeArray(json, "animations", json_animations);
+	writeArray(json, "nodes", json_nodes);
+
 	if (!json_roots.empty())
 	{
-		append(json, ",\"nodes\":[");
-		append(json, json_nodes);
-		append(json, "],\"scenes\":[");
+		append(json, ",\"scenes\":[");
 		append(json, "{\"nodes\":[");
 		append(json, json_roots);
 		append(json, "]}]");
 	}
-	if (!json_cameras.empty())
-	{
-		append(json, ",\"cameras\":[");
-		append(json, json_cameras);
-		append(json, "]");
-	}
+
+	writeArray(json, "cameras", json_cameras);
+
 	if (!json_lights.empty())
 	{
 		append(json, ",\"extensions\":{\"KHR_lights_punctual\":{\"lights\":[");
@@ -3951,19 +4007,7 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 
 	if (settings.verbose)
 	{
-		size_t bytes[BufferView::Kind_Count] = {};
-
-		for (size_t i = 0; i < views.size(); ++i)
-		{
-			BufferView& view = views[i];
-			bytes[view.kind] += view.bytes;
-		}
-
-		printf("output: %d nodes, %d meshes (%d primitives), %d materials\n", int(node_offset), int(mesh_offset), int(meshes.size()), int(material_offset));
-		printf("output: JSON %d bytes, buffers %d bytes\n", int(json.size()), int(bin.size()));
-		printf("output: buffers: vertex %d bytes, index %d bytes, skin %d bytes, time %d bytes, keyframe %d bytes, image %d bytes\n",
-		       int(bytes[BufferView::Kind_Vertex]), int(bytes[BufferView::Kind_Index]), int(bytes[BufferView::Kind_Skin]),
-		       int(bytes[BufferView::Kind_Time]), int(bytes[BufferView::Kind_Keyframe]), int(bytes[BufferView::Kind_Image]));
+		printSceneStats(views, meshes, node_offset, mesh_offset, material_offset, json.size(), bin.size());
 	}
 
 	if (settings.verbose > 1)
@@ -4254,6 +4298,11 @@ int main(int argc, char** argv)
 		{
 			settings.texture_basis = true;
 		}
+		else if (strcmp(arg, "-tc") == 0)
+		{
+			settings.texture_basis = true;
+			settings.texture_ktx2 = true;
+		}
 		else if (strcmp(arg, "-tq") == 0 && i + 1 < argc && isdigit(argv[i + 1][0]))
 		{
 			settings.texture_quality = atoi(argv[++i]);
@@ -4328,6 +4377,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "-sa: aggressively simplify to the target ratio disregarding quality\n");
 		fprintf(stderr, "-te: embed all textures into main buffer\n");
 		fprintf(stderr, "-tb: convert all textures to Basis Universal format (with basisu executable)\n");
+		fprintf(stderr, "-tc: convert all textures to KTX2 with BasisU supercompression (using basisu executable)\n");
 		fprintf(stderr, "-tq N: set texture encoding quality (default: 50; N should be between 1 and 100\n");
 		fprintf(stderr, "-c: produce compressed gltf/glb files\n");
 		fprintf(stderr, "-cf: produce compressed gltf/glb files with fallback for loaders that don't support compression\n");

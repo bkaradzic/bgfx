@@ -58,7 +58,7 @@ if(BUILD_DEMO)
 endif()
 
 if(BUILD_TOOLS)
-    add_executable(gltfpack tools/gltfpack.cpp tools/meshloader.cpp)
+    add_executable(gltfpack tools/gltfpack.cpp tools/meshloader.cpp tools/basistoktx.cpp)
     target_link_libraries(gltfpack meshoptimizer)
     list(APPEND TARGETS gltfpack)
 

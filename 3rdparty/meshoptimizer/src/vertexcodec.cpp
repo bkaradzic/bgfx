@@ -420,7 +420,8 @@ static unsigned char kDecodeBytesGroupCount[256];
 #ifdef EMSCRIPTEN
 __attribute__((cold)) // this saves 500 bytes in the output binary - we don't need to vectorize this loop!
 #endif
-static bool decodeBytesGroupBuildTables()
+static bool
+decodeBytesGroupBuildTables()
 {
 	for (int mask = 0; mask < 256; ++mask)
 	{
