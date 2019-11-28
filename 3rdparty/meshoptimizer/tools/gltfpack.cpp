@@ -36,6 +36,8 @@
 
 #ifdef _WIN32
 #include <io.h>
+#define popen _popen
+#define pclose _pclose
 #else
 #include <unistd.h>
 #endif
@@ -2712,7 +2714,7 @@ std::string inferMimeType(const char* path)
 
 	std::string extl = ext + 1;
 	for (size_t i = 0; i < extl.length(); ++i)
-		extl[i] = tolower(extl[i]);
+		extl[i] = char(tolower(extl[i]));
 
 	if (extl == "jpg")
 		return "image/jpeg";
@@ -2811,6 +2813,28 @@ struct TempFile
 #endif
 	}
 };
+
+bool checkBasis()
+{
+	const char* basisu_path = getenv("BASISU_PATH");
+	std::string cmd = basisu_path ? basisu_path : "basisu";
+
+#ifdef _WIN32
+	cmd += " 2>nul";
+#else
+	cmd += " 2>/dev/null";
+#endif
+
+	FILE* pipe = popen(cmd.c_str(), "r");
+	if (!pipe)
+		return false;
+
+	char buf[15];
+	size_t read = fread(buf, 1, sizeof(buf), pipe);
+	pclose(pipe);
+
+	return read == sizeof(buf) && memcmp(buf, "Basis Universal", sizeof(buf)) == 0;
+}
 
 bool encodeBasis(const std::string& data, std::string& result, bool normal_map, bool srgb, int quality)
 {
@@ -4134,6 +4158,15 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 	{
 		fprintf(stderr, "Error loading %s: unknown extension (expected .gltf or .glb or .obj)\n", input);
 		return 2;
+	}
+
+	if (data->images_count && settings.texture_basis)
+	{
+		if (!checkBasis())
+		{
+			fprintf(stderr, "Error: basisu is not present in PATH or BASISU_PATH is not set\n");
+			return 3;
+		}
 	}
 
 	std::string json, bin, fallback;

@@ -5,7 +5,7 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.15)
     cmake_policy(SET CMP0092 NEW) # Enables clean /W4 override for MSVC
 endif()
 
-project(meshoptimizer VERSION 0.12 LANGUAGES CXX)
+project(meshoptimizer VERSION 0.13 LANGUAGES CXX)
 
 option(BUILD_DEMO "Build demo" OFF)
 option(BUILD_TOOLS "Build tools" OFF)
@@ -29,14 +29,14 @@ set(SOURCES
     src/vfetchoptimizer.cpp
 )
 
+if(MSVC)
+    add_compile_options(/W4 /WX)
+else()
+    add_compile_options(-Wall -Wextra -Wshadow -Wno-missing-field-initializers -Werror)
+endif()
+
 add_library(meshoptimizer ${SOURCES})
 target_include_directories(meshoptimizer INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>")
-
-if(MSVC)
-    target_compile_options(meshoptimizer PRIVATE /W4 /WX)
-else()
-    target_compile_options(meshoptimizer PRIVATE -Wall -Wextra -Werror)
-endif()
 
 if(BUILD_SHARED_LIBS)
     set_target_properties(meshoptimizer PROPERTIES CXX_VISIBILITY_PRESET hidden)
