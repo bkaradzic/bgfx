@@ -125,19 +125,21 @@ TEST(ReducerTest, ExprToConstantAndRemoveUnreferenced) {
          %29 = OpAccessChain %28 %27 %9
          %30 = OpLoad %24 %29
          %32 = OpFOrdGreaterThan %22 %30 %31
-               OpSelectionMerge %34 None
+               OpSelectionMerge %90 None
                OpBranchConditional %32 %33 %46
          %33 = OpLabel
          %40 = OpFAdd %24 %71 %30
          %45 = OpISub %6 %73 %21
-               OpBranch %34
+               OpBranch %90
          %46 = OpLabel
          %50 = OpFMul %24 %71 %30
          %54 = OpSDiv %6 %73 %21
-               OpBranch %34
-         %34 = OpLabel
+               OpBranch %90
+         %90 = OpLabel
          %77 = OpPhi %6 %45 %33 %54 %46
          %76 = OpPhi %24 %40 %33 %50 %46
+               OpBranch %34
+         %34 = OpLabel
          %57 = OpIAdd %6 %70 %56
                OpBranch %10
          %12 = OpLabel
@@ -193,11 +195,13 @@ TEST(ReducerTest, ExprToConstantAndRemoveUnreferenced) {
                OpLoopMerge %12 %34 None
                OpBranchConditional %100 %11 %12
          %11 = OpLabel
-               OpSelectionMerge %34 None
+               OpSelectionMerge %90 None
                OpBranchConditional %100 %33 %46
          %33 = OpLabel
-               OpBranch %34
+               OpBranch %90
          %46 = OpLabel
+               OpBranch %90
+         %90 = OpLabel
                OpBranch %34
          %34 = OpLabel
                OpBranch %10
@@ -345,7 +349,6 @@ const std::string kShaderWithLoopsDivAndMul = R"(
                OpLoopMerge %33 %38 None
                OpBranch %32
          %32 = OpLabel
-               OpSelectionMerge %38 None
                OpBranchConditional %30 %37 %38
          %37 = OpLabel
                OpSelectionMerge %42 None

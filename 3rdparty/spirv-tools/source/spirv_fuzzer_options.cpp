@@ -23,7 +23,8 @@ spv_fuzzer_options_t::spv_fuzzer_options_t()
     : has_random_seed(false),
       random_seed(0),
       replay_validation_enabled(false),
-      shrinker_step_limit(kDefaultStepLimit) {}
+      shrinker_step_limit(kDefaultStepLimit),
+      fuzzer_pass_validation_enabled(false) {}
 
 SPIRV_TOOLS_EXPORT spv_fuzzer_options spvFuzzerOptionsCreate() {
   return new spv_fuzzer_options_t();
@@ -47,4 +48,9 @@ SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetRandomSeed(
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetShrinkerStepLimit(
     spv_fuzzer_options options, uint32_t shrinker_step_limit) {
   options->shrinker_step_limit = shrinker_step_limit;
+}
+
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableFuzzerPassValidation(
+    spv_fuzzer_options options) {
+  options->fuzzer_pass_validation_enabled = true;
 }

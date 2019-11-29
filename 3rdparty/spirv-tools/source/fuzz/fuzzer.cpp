@@ -65,13 +65,26 @@ void MaybeAddPass(
 }  // namespace
 
 struct Fuzzer::Impl {
-  explicit Impl(spv_target_env env) : target_env(env) {}
+  explicit Impl(spv_target_env env, uint32_t random_seed,
+                bool validate_after_each_pass)
+      : target_env(env),
+        seed(random_seed),
+        validate_after_each_fuzzer_pass(validate_after_each_pass) {}
 
-  const spv_target_env target_env;  // Target environment.
-  MessageConsumer consumer;         // Message consumer.
+  bool ApplyPassAndCheckValidity(FuzzerPass* pass,
+                                 const opt::IRContext& ir_context,
+                                 const spvtools::SpirvTools& tools) const;
+
+  const spv_target_env target_env;       // Target environment.
+  const uint32_t seed;                   // Seed for random number generator.
+  bool validate_after_each_fuzzer_pass;  // Determines whether the validator
+  // should be invoked after every fuzzer pass.
+  MessageConsumer consumer;  // Message consumer.
 };
 
-Fuzzer::Fuzzer(spv_target_env env) : impl_(MakeUnique<Impl>(env)) {}
+Fuzzer::Fuzzer(spv_target_env env, uint32_t seed,
+               bool validate_after_each_fuzzer_pass)
+    : impl_(MakeUnique<Impl>(env, seed, validate_after_each_fuzzer_pass)) {}
 
 Fuzzer::~Fuzzer() = default;
 
@@ -79,10 +92,27 @@ void Fuzzer::SetMessageConsumer(MessageConsumer c) {
   impl_->consumer = std::move(c);
 }
 
+bool Fuzzer::Impl::ApplyPassAndCheckValidity(
+    FuzzerPass* pass, const opt::IRContext& ir_context,
+    const spvtools::SpirvTools& tools) const {
+  pass->Apply();
+  if (validate_after_each_fuzzer_pass) {
+    std::vector<uint32_t> binary_to_validate;
+    ir_context.module()->ToBinary(&binary_to_validate, false);
+    if (!tools.Validate(&binary_to_validate[0], binary_to_validate.size())) {
+      consumer(SPV_MSG_INFO, nullptr, {},
+               "Binary became invalid during fuzzing (set a breakpoint to "
+               "inspect); stopping.");
+      return false;
+    }
+  }
+  return true;
+}
+
 Fuzzer::FuzzerResultStatus Fuzzer::Run(
     const std::vector<uint32_t>& binary_in,
     const protobufs::FactSequence& initial_facts,
-    spv_const_fuzzer_options options, std::vector<uint32_t>* binary_out,
+    std::vector<uint32_t>* binary_out,
     protobufs::TransformationSequence* transformation_sequence_out) const {
   // Check compatibility between the library version being linked with and the
   // header files being used.
@@ -108,10 +138,8 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
       impl_->target_env, impl_->consumer, binary_in.data(), binary_in.size());
   assert(ir_context);
 
-  // Make a PRNG, either from a given seed or from a random device.
-  PseudoRandomGenerator random_generator(
-      options->has_random_seed ? options->random_seed
-                               : static_cast<uint32_t>(std::random_device()()));
+  // Make a PRNG from the seed passed to the fuzzer on creation.
+  PseudoRandomGenerator random_generator(impl_->seed);
 
   // The fuzzer will introduce new ids into the module.  The module's id bound
   // gives the smallest id that can be used for this purpose.  We add an offset
@@ -128,9 +156,13 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
 
   // Add some essential ingredients to the module if they are not already
   // present, such as boolean constants.
-  FuzzerPassAddUsefulConstructs(ir_context.get(), &fact_manager,
-                                &fuzzer_context, transformation_sequence_out)
-      .Apply();
+  FuzzerPassAddUsefulConstructs add_useful_constructs(
+      ir_context.get(), &fact_manager, &fuzzer_context,
+      transformation_sequence_out);
+  if (!impl_->ApplyPassAndCheckValidity(&add_useful_constructs, *ir_context,
+                                        tools)) {
+    return Fuzzer::FuzzerResultStatus::kFuzzerPassLedToInvalidModule;
+  }
 
   // Apply some semantics-preserving passes.
   std::vector<std::unique_ptr<FuzzerPass>> passes;
@@ -168,7 +200,11 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
          (is_first ||
           fuzzer_context.ChoosePercentage(kChanceOfApplyingAnotherPass))) {
     is_first = false;
-    passes[fuzzer_context.RandomIndex(passes)]->Apply();
+    if (!impl_->ApplyPassAndCheckValidity(
+            passes[fuzzer_context.RandomIndex(passes)].get(), *ir_context,
+            tools)) {
+      return Fuzzer::FuzzerResultStatus::kFuzzerPassLedToInvalidModule;
+    }
   }
 
   // Now apply some passes that it does not make sense to apply repeatedly,
@@ -186,15 +222,13 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
   MaybeAddPass<FuzzerPassAdjustSelectionControls>(
       &final_passes, ir_context.get(), &fact_manager, &fuzzer_context,
       transformation_sequence_out);
+  MaybeAddPass<FuzzerPassAddNoContractionDecorations>(
+      &final_passes, ir_context.get(), &fact_manager, &fuzzer_context,
+      transformation_sequence_out);
   for (auto& pass : final_passes) {
-    pass->Apply();
-  }
-
-  if (fuzzer_context.ChooseEven()) {
-    FuzzerPassAddNoContractionDecorations(ir_context.get(), &fact_manager,
-                                          &fuzzer_context,
-                                          transformation_sequence_out)
-        .Apply();
+    if (!impl_->ApplyPassAndCheckValidity(pass.get(), *ir_context, tools)) {
+      return Fuzzer::FuzzerResultStatus::kFuzzerPassLedToInvalidModule;
+    }
   }
 
   // Encode the module as a binary.

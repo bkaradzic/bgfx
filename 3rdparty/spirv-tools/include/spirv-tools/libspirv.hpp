@@ -229,6 +229,11 @@ class FuzzerOptions {
     spvFuzzerOptionsSetShrinkerStepLimit(options_, shrinker_step_limit);
   }
 
+  // See spvFuzzerOptionsEnableFuzzerPassValidation.
+  void enable_fuzzer_pass_validation() {
+    spvFuzzerOptionsEnableFuzzerPassValidation(options_);
+  }
+
  private:
   spv_fuzzer_options options_;
 };

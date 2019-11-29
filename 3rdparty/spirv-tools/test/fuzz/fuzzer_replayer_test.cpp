@@ -62,13 +62,11 @@ void RunFuzzerAndReplayer(const std::string& shader,
   for (uint32_t seed = initial_seed; seed < initial_seed + num_runs; seed++) {
     std::vector<uint32_t> fuzzer_binary_out;
     protobufs::TransformationSequence fuzzer_transformation_sequence_out;
-    spvtools::FuzzerOptions fuzzer_options;
-    spvFuzzerOptionsSetRandomSeed(fuzzer_options, seed);
 
-    Fuzzer fuzzer(env);
+    Fuzzer fuzzer(env, seed, true);
     fuzzer.SetMessageConsumer(kSilentConsumer);
     auto fuzzer_result_status =
-        fuzzer.Run(binary_in, initial_facts, fuzzer_options, &fuzzer_binary_out,
+        fuzzer.Run(binary_in, initial_facts, &fuzzer_binary_out,
                    &fuzzer_transformation_sequence_out);
     ASSERT_EQ(Fuzzer::FuzzerResultStatus::kComplete, fuzzer_result_status);
     ASSERT_TRUE(t.Validate(fuzzer_binary_out));

@@ -5932,7 +5932,6 @@ OpBranch %42
 %42 = OpLabel
 %43 = OpLoad %int %i
 %44 = OpSLessThan %bool %43 %int_1
-OpSelectionMerge %45 None
 OpBranchConditional %44 %46 %40
 %46 = OpLabel
 %47 = OpLoad %int %i

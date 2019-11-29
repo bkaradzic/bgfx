@@ -291,7 +291,7 @@ TEST(TransformationCopyObjectTest, CheckIllegalCases) {
          %31 = OpLabel
          %42 = OpAccessChain %36 %18 %41
          %43 = OpLoad %11 %42
-               OpSelectionMerge %47 None
+               OpSelectionMerge %45 None
                OpSwitch %43 %46 0 %44 1 %45
          %46 = OpLabel
          %69 = OpIAdd %11 %96 %27

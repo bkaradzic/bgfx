@@ -209,117 +209,6 @@ TEST(TransformationAddDeadContinueTest, SimpleExample) {
   ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
 }
 
-TEST(TransformationAddDeadContinueTest,
-     DoNotAllowContinueToMergeBlockOfAnotherLoop) {
-  // A loop header must dominate its merge block if that merge block is
-  // reachable. We are thus not allowed to add a dead continue that would result
-  // in violation of this property. This test checks for such a scenario.
-
-  std::string shader = R"(
-               OpCapability Shader
-          %1 = OpExtInstImport "GLSL.std.450"
-               OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main" %16 %139
-               OpExecutionMode %4 OriginUpperLeft
-               OpSource ESSL 310
-          %2 = OpTypeVoid
-          %3 = OpTypeFunction %2
-          %6 = OpTypeFloat 32
-          %7 = OpTypePointer Function %6
-          %8 = OpTypeBool
-         %14 = OpTypeVector %6 4
-         %15 = OpTypePointer Input %14
-         %16 = OpVariable %15 Input
-        %138 = OpTypePointer Output %14
-        %139 = OpVariable %138 Output
-        %400 = OpConstantTrue %8
-          %4 = OpFunction %2 None %3
-          %5 = OpLabel
-               OpBranch %500
-        %500 = OpLabel
-               OpLoopMerge %501 %502 None
-               OpBranch %503 ; We are not allowed to change this to OpBranchConditional %400 %503 %502
-        %503 = OpLabel
-               OpLoopMerge %502 %504 None
-               OpBranchConditional %400 %505 %504
-        %505 = OpLabel
-               OpBranch %502
-        %504 = OpLabel
-               OpBranch %503
-        %502 = OpLabel
-               OpBranchConditional %400 %501 %500
-        %501 = OpLabel
-               OpReturn
-               OpFunctionEnd
-  )";
-
-  const auto env = SPV_ENV_UNIVERSAL_1_3;
-  const auto consumer = nullptr;
-  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
-  ASSERT_TRUE(IsValid(env, context.get()));
-  FactManager fact_manager;
-
-  ASSERT_FALSE(TransformationAddDeadContinue(500, true, {})
-                   .IsApplicable(context.get(), fact_manager));
-  ASSERT_FALSE(TransformationAddDeadContinue(500, false, {})
-                   .IsApplicable(context.get(), fact_manager));
-}
-
-TEST(TransformationAddDeadContinueTest, DoNotAllowContinueToSelectionMerge) {
-  // A selection header must dominate its merge block if that merge block is
-  // reachable. We are thus not allowed to add a dead continue that would result
-  // in violation of this property. This test checks for such a scenario.
-
-  std::string shader = R"(
-               OpCapability Shader
-          %1 = OpExtInstImport "GLSL.std.450"
-               OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main" %16 %139
-               OpExecutionMode %4 OriginUpperLeft
-               OpSource ESSL 310
-          %2 = OpTypeVoid
-          %3 = OpTypeFunction %2
-          %6 = OpTypeFloat 32
-          %7 = OpTypePointer Function %6
-          %8 = OpTypeBool
-         %14 = OpTypeVector %6 4
-         %15 = OpTypePointer Input %14
-         %16 = OpVariable %15 Input
-        %138 = OpTypePointer Output %14
-        %139 = OpVariable %138 Output
-        %400 = OpConstantTrue %8
-          %4 = OpFunction %2 None %3
-          %5 = OpLabel
-               OpBranch %500
-        %500 = OpLabel
-               OpLoopMerge %501 %502 None
-               OpBranch %503 ; We are not allowed to change this to OpBranchConditional %400 %503 %502
-        %503 = OpLabel
-               OpSelectionMerge %502 None
-               OpBranchConditional %400 %505 %504
-        %505 = OpLabel
-               OpBranch %502
-        %504 = OpLabel
-               OpBranch %502
-        %502 = OpLabel
-               OpBranchConditional %400 %501 %500
-        %501 = OpLabel
-               OpReturn
-               OpFunctionEnd
-  )";
-
-  const auto env = SPV_ENV_UNIVERSAL_1_3;
-  const auto consumer = nullptr;
-  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
-  ASSERT_TRUE(IsValid(env, context.get()));
-  FactManager fact_manager;
-
-  ASSERT_FALSE(TransformationAddDeadContinue(500, true, {})
-                   .IsApplicable(context.get(), fact_manager));
-  ASSERT_FALSE(TransformationAddDeadContinue(500, false, {})
-                   .IsApplicable(context.get(), fact_manager));
-}
-
 TEST(TransformationAddDeadContinueTest, LoopNest) {
   // Checks some allowed and disallowed scenarios for a nest of loops, including
   // continuing a loop from an if or switch.
@@ -1420,7 +1309,6 @@ TEST(TransformationAddDeadContinueTest, Miscellaneous2) {
                OpLoopMerge %1557 %1570 None
                OpBranchConditional %395 %1562 %1557
        %1562 = OpLabel
-               OpSelectionMerge %1570 None
                OpBranchConditional %395 %1571 %1570
        %1571 = OpLabel
                OpBranch %1557
