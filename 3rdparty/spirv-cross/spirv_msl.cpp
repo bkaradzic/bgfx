@@ -9627,9 +9627,14 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	// If a matching binding has been specified, find and use it.
 	auto itr = resource_bindings.find({ execution.model, var_desc_set, var_binding });
 
-	auto resource_decoration = var_type.basetype == SPIRType::SampledImage && basetype == SPIRType::Sampler ?
-	                               SPIRVCrossDecorationResourceIndexSecondary :
-	                               SPIRVCrossDecorationResourceIndexPrimary;
+	// Atomic helper buffers for image atomics need to use secondary bindings as well.
+	bool use_secondary_binding = (var_type.basetype == SPIRType::SampledImage && basetype == SPIRType::Sampler) ||
+	                             basetype == SPIRType::AtomicCounter;
+
+	auto resource_decoration = use_secondary_binding ?
+	                           SPIRVCrossDecorationResourceIndexSecondary :
+	                           SPIRVCrossDecorationResourceIndexPrimary;
+
 	if (plane == 1)
 		resource_decoration = SPIRVCrossDecorationResourceIndexTertiary;
 	if (plane == 2)
