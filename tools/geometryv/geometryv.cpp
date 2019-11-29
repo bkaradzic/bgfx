@@ -115,7 +115,7 @@ static const InputBinding s_bindingView[] =
 	{ entry::Key::KeyS,      entry::Modifier::None,       1, NULL, "view orbit y +0.1"         },
 	{ entry::Key::KeyA,      entry::Modifier::None,       1, NULL, "view orbit x +0.1"         },
 	{ entry::Key::KeyD,      entry::Modifier::None,       1, NULL, "view orbit x -0.1"         },
-	
+
 	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "view file-up"            },
 	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "view file-down"          },
 
@@ -199,17 +199,17 @@ struct Camera
 		m_orbit[0] += _dx;
 		m_orbit[1] += _dy;
 	}
-	
+
 	void distance(float _z)
 	{
 		_z = bx::clamp(_z, m_near, m_far);
-		
+
 		bx::Vec3 toTarget     = bx::sub(m_target.dest, m_pos.dest);
 		bx::Vec3 toTargetNorm = bx::normalize(toTarget);
-		
+
 		m_pos.dest = bx::mad(toTargetNorm, -_z, m_target.dest);
 	}
-	
+
 	void dolly(float _dz)
 	{
 		const bx::Vec3 toTarget     = bx::sub(m_target.dest, m_pos.dest);
@@ -219,7 +219,7 @@ struct Camera
 
 		float delta  = toTargetLen * _dz;
 		float newLen = toTargetLen - delta;
-		
+
 		if ( (m_near  < newLen || _dz < 0.0f)
 			&&   (newLen < m_far   || _dz > 0.0f) )
 		{
@@ -393,17 +393,17 @@ struct View
 					int axis = (_argv[2][0] == 'x' ? 0 : 1);
 					float orbit[2] = { 0.0f, 0.0f};
 					bx::fromString(&orbit[axis], _argv[3]);
-					
+
 					m_camera.orbit(orbit[0], orbit[1]);
 					m_idleTimer = 0.0f;
 				}
 				else
 				{
 					m_camera.m_target.dest = m_meshCenter;
-						
+
 					m_camera.m_pos.dest = m_meshCenter;
 					m_camera.m_pos.dest.z -= m_meshRadius * 2.0f;
-						
+
 					m_camera.m_orbit[0] = 0.0f;
 					m_camera.m_orbit[1] = 0.0f;
 				}
@@ -576,7 +576,7 @@ struct View
 	float	 m_meshRadius;
 	float	 m_idleTimer;
 
-}; 
+};
 
 int cmdView(CmdContext* /*_context*/, void* _userData, int _argc, char const* const* _argv)
 {
@@ -640,7 +640,7 @@ struct InterpolatorT
 	}
 };
 
-typedef InterpolatorT<bx::lerp,      bx::easeInOutQuad>  Interpolator;
+typedef InterpolatorT<bx::lerp, bx::easeInOutQuad> Interpolator;
 
 void keyBindingHelp(const char* _bindings, const char* _description)
 {
@@ -653,11 +653,11 @@ void help(const char* _error = NULL)
 {
 	if (NULL != _error)
 	{
-		fprintf(stderr, "Error:\n%s\n\n", _error);
+		bx::printf("Error:\n%s\n\n", _error);
 	}
 
-	fprintf(stderr
-		, "geometryv, bgfx geometry viewer tool, version %d.%d.%d.\n"
+	bx::printf(
+		  "geometryv, bgfx geometry viewer tool, version %d.%d.%d.\n"
 		  "Copyright 2019-2019 Attila Kocsis. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		, BGFX_GEOMETRYV_VERSION_MAJOR
@@ -665,19 +665,19 @@ void help(const char* _error = NULL)
 		, BGFX_API_VERSION
 		);
 
-	fprintf(stderr
-		, "Usage: geometryv <file path>\n"
+	bx::printf(
+		  "Usage: geometryv <file path>\n"
 		  "\n"
 		  "Supported input file types:\n"
 		  );
 
 	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 	{
-		fprintf(stderr, "    *.%s\n", s_supportedExt[ii]);
+		bx::printf("    *.%s\n", s_supportedExt[ii]);
 	}
 
-	fprintf(stderr
-		, "\n"
+	bx::printf(
+		  "\n"
 		  "Options:\n"
 		  "  -h, --help               Help.\n"
 		  "  -v, --version            Version information only.\n"
@@ -692,8 +692,8 @@ int _main_(int _argc, char** _argv)
 
 	if (cmdLine.hasArg('v', "version") )
 	{
-		fprintf(stderr
-			, "geometryv, bgfx geometry viewer tool, version %d.%d.%d.\n"
+		bx::printf(
+			  "geometryv, bgfx geometry viewer tool, version %d.%d.%d.\n"
 			, BGFX_GEOMETRYV_VERSION_MAJOR
 			, BGFX_GEOMETRYV_VERSION_MINOR
 			, BGFX_API_VERSION
@@ -737,7 +737,7 @@ int _main_(int _argc, char** _argv)
 		);
 
 	imguiCreate();
-	
+
 	ddInit();
 
 	const bgfx::Caps* caps = bgfx::getCaps();
@@ -868,9 +868,9 @@ int _main_(int _argc, char** _argv)
 					{
 						cmdExec(s_resetCmd);
 					}
-					
+
 					ImGui::Separator();
-					
+
 					bool axes = view.m_axes;
 					if (ImGui::MenuItem("XYZ Axes", NULL, &axes) )
 					{
@@ -1203,13 +1203,15 @@ int _main_(int _argc, char** _argv)
 						numIndices += (uint32_t)it->m_numIndices;
 					}
 
-					bx::stringPrintf(title, "%s (g %d, p %d, v %d, i %d)"
+					bx::stringPrintf(
+						  title
+						, "%s (g %d, p %d, v %d, i %d)"
 						, fp.getCPtr()
 						, mesh->m_groups.size()
 						, numPrimitives
 						, numVertices
 						, numIndices
-					);
+						);
 
 					view.m_meshCenter = getCenter(boundingBox);
 					view.m_meshRadius = bx::length(getExtents(boundingBox));
@@ -1253,6 +1255,7 @@ int _main_(int _argc, char** _argv)
 				DebugDrawEncoder dde;
 				dde.begin(SCENE_VIEW_ID);
 				dde.drawAxis(0.0f, 0.0f, 0.0f);
+				dde.drawGrid(Axis::Y, {0.0f, 0.0f, 0.0f});
 				dde.end();
 			}
 
@@ -1294,7 +1297,7 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroy(meshProgram);
 
 	ddShutdown();
-	
+
 	imguiDestroy();
 
 	bgfx::shutdown();
