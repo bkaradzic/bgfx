@@ -25,6 +25,9 @@ project ("example-common")
 		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "3rdparty"),
+		path.join(BGFX_DIR, "3rdparty/nanogui/ext/eigen"),			
+		path.join(BGFX_DIR, "3rdparty/nanogui/include"),
+		path.join(BGFX_DIR, "examples/common/nanovg"),
 	}
 
 	files {
@@ -32,8 +35,16 @@ project ("example-common")
 		path.join(BGFX_DIR, "3rdparty/meshoptimizer/src/**.h"),
 		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.h"),
+		path.join(BGFX_DIR, "3rdparty/nanogui/src/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/nanogui/include/**.h"),
 		path.join(BGFX_DIR, "examples/common/**.cpp"),
 		path.join(BGFX_DIR, "examples/common/**.h"),
+	}
+
+	defines {
+		"NANOGUI_CUSTOM_FONT_FUNCTION=1",
+		"NANOGUI_EIGEN_DONT_ALIGN=1",
+		"EIGEN_HAS_CXX11_NOEXCEPT=0",
 	}
 
 	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"),

@@ -423,8 +423,19 @@ function exampleProject(_combined, ...)
 				path.join(BGFX_DIR, "examples", name, "**.bin.h"),
 			}
 
+			includedirs {
+				path.join(BGFX_DIR, "3rdparty/nanogui/ext/eigen"),
+				path.join(BGFX_DIR, "3rdparty/nanogui/include"),
+			}
+
 			defines {
 				"ENTRY_CONFIG_IMPLEMENT_MAIN=1",
+				"EIGEN_HAS_CXX11_NOEXCEPT=0"
+			}
+
+			buildoptions {
+				"/wd4244",
+				"/wd4702",
 			}
 
 			exampleProjectDefaults()
@@ -499,6 +510,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "39-assao"
 		, "40-svt"
 		, "41-tess"
+		, "42-nanogui"
 		)
 
 	-- C99 source doesn't compile under WinRT settings
