@@ -125,6 +125,7 @@ typedef enum cgltf_result
 	cgltf_result_file_not_found,
 	cgltf_result_io_error,
 	cgltf_result_out_of_memory,
+	cgltf_result_legacy_gltf,
 } cgltf_result;
 
 typedef enum cgltf_buffer_view_type
@@ -763,7 +764,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 	uint32_t version = tmp;
 	if (version != GlbVersion)
 	{
-		return cgltf_result_unknown_format;
+		return version < GlbVersion ? cgltf_result_legacy_gltf : cgltf_result_unknown_format;
 	}
 
 	// Total length
@@ -1707,6 +1708,7 @@ cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size 
 
 #define CGLTF_ERROR_JSON -1
 #define CGLTF_ERROR_NOMEM -2
+#define CGLTF_ERROR_LEGACY -3
 
 #define CGLTF_CHECK_TOKTYPE(tok_, type_) if ((tok_).type != (type_)) { return CGLTF_ERROR_JSON; }
 #define CGLTF_CHECK_KEY(tok_) if ((tok_).type != JSMN_STRING || (tok_).size == 0) { return CGLTF_ERROR_JSON; } /* checking size for 0 verifies that a value follows the key */
@@ -1826,7 +1828,10 @@ static int cgltf_parse_json_string(cgltf_options* options, jsmntok_t const* toke
 static int cgltf_parse_json_array(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, size_t element_size, void** out_array, cgltf_size* out_size)
 {
 	(void)json_chunk;
-	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_ARRAY);
+	if (tokens[i].type != JSMN_ARRAY)
+	{
+		return tokens[i].type == JSMN_OBJECT ? CGLTF_ERROR_LEGACY : CGLTF_ERROR_JSON;
+	}
 	if (*out_array)
 	{
 		return CGLTF_ERROR_JSON;
@@ -4049,6 +4054,11 @@ static int cgltf_parse_json_asset(cgltf_options* options, jsmntok_t const* token
 		}
 	}
 
+	if (out_asset->version && atof(out_asset->version) < 2)
+	{
+		return CGLTF_ERROR_LEGACY;
+	}
+
 	return i;
 }
 
@@ -4315,7 +4325,13 @@ cgltf_result cgltf_parse_json(cgltf_options* options, const uint8_t* json_chunk,
 	if (i < 0)
 	{
 		cgltf_free(data);
-		return (i == CGLTF_ERROR_NOMEM) ? cgltf_result_out_of_memory : cgltf_result_invalid_gltf;
+
+		switch (i)
+		{
+		case CGLTF_ERROR_NOMEM: return cgltf_result_out_of_memory;
+		case CGLTF_ERROR_LEGACY: return cgltf_result_legacy_gltf;
+		default: return cgltf_result_invalid_gltf;
+		}
 	}
 
 	if (cgltf_fixup_pointers(data) < 0)

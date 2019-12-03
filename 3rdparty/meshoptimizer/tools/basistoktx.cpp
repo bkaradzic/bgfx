@@ -9,7 +9,66 @@
 
 #include "basisu_format.h"
 #include "khr_df.h"
-#include "ktx2_format.h"
+
+// KTX Specification: 2. File Structure
+struct Ktx2Header
+{
+	uint8_t identifier[12];
+	uint32_t vkFormat;
+	uint32_t typeSize;
+	uint32_t pixelWidth;
+	uint32_t pixelHeight;
+	uint32_t pixelDepth;
+	uint32_t layerCount;
+	uint32_t faceCount;
+	uint32_t levelCount;
+	uint32_t supercompressionScheme;
+
+	uint32_t dfdByteOffset;
+	uint32_t dfdByteLength;
+	uint32_t kvdByteOffset;
+	uint32_t kvdByteLength;
+	uint64_t sgdByteOffset;
+	uint64_t sgdByteLength;
+};
+
+struct Ktx2LevelIndex
+{
+    uint64_t byteOffset;
+    uint64_t byteLength;
+    uint64_t uncompressedByteLength;
+};
+
+enum
+{
+	Ktx2SupercompressionSchemeBasis = 1,
+};
+
+// KTX Specification: 3.1. identifier
+static const uint8_t Ktx2FileIdentifier[12] = {
+  0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A,
+};
+
+// KTX Specification: 3.12.2. Basis Universal Global Data
+struct Ktx2BasisGlobalHeader
+{
+	uint32_t globalFlags;
+	uint16_t endpointCount;
+	uint16_t selectorCount;
+	uint32_t endpointsByteLength;
+	uint32_t selectorsByteLength;
+	uint32_t tablesByteLength;
+	uint32_t extendedByteLength;
+};
+
+struct Ktx2BasisImageDesc
+{
+	uint32_t imageFlags;
+	uint32_t rgbSliceByteOffset;
+	uint32_t rgbSliceByteLength;
+	uint32_t alphaSliceByteOffset;
+	uint32_t alphaSliceByteLength;
+};
 
 template <typename T>
 static void read(const std::string& data, size_t offset, T& result)
@@ -99,16 +158,17 @@ std::string basisToKtx(const std::string& basis, bool srgb)
 	uint32_t height = slices[0].m_orig_height;
 	uint32_t levels = has_alpha ? uint32_t(slices.size()) / 2 : uint32_t(slices.size());
 
-	KTX_header2 ktx_header = {KTX2_IDENTIFIER_REF};
+	Ktx2Header ktx_header = {};
+	memcpy(ktx_header.identifier, Ktx2FileIdentifier, sizeof(Ktx2FileIdentifier));
 	ktx_header.typeSize = 1;
 	ktx_header.pixelWidth = width;
 	ktx_header.pixelHeight = height;
 	ktx_header.layerCount = 0;
 	ktx_header.faceCount = 1;
 	ktx_header.levelCount = levels;
-	ktx_header.supercompressionScheme = KTX_SUPERCOMPRESSION_BASIS;
+	ktx_header.supercompressionScheme = Ktx2SupercompressionSchemeBasis;
 
-	size_t header_size = sizeof(KTX_header2) + levels * sizeof(ktxLevelIndexEntry);
+	size_t header_size = sizeof(Ktx2Header) + levels * sizeof(Ktx2LevelIndex);
 
 	std::vector<uint32_t> dfd;
 	createDfd(dfd, has_alpha ? 4 : 3, srgb);
@@ -138,17 +198,17 @@ std::string basisToKtx(const std::string& basis, bool srgb)
 	size_t dfd_size = dfd.size() * sizeof(uint32_t);
 
 	size_t bgd_size =
-	    sizeof(ktxBasisGlobalHeader) + sizeof(ktxBasisSliceDesc) * levels +
+	    sizeof(Ktx2BasisGlobalHeader) + sizeof(Ktx2BasisImageDesc) * levels +
 	    basis_header.m_endpoint_cb_file_size + basis_header.m_selector_cb_file_size + basis_header.m_tables_file_size;
 
-	ktx_header.dataFormatDescriptor.byteOffset = uint32_t(header_size);
-	ktx_header.dataFormatDescriptor.byteLength = uint32_t(dfd_size);
+	ktx_header.dfdByteOffset = uint32_t(header_size);
+	ktx_header.dfdByteLength = uint32_t(dfd_size);
 
-	ktx_header.keyValueData.byteOffset = uint32_t(header_size + dfd_size);
-	ktx_header.keyValueData.byteLength = uint32_t(kvp_size);
+	ktx_header.kvdByteOffset = uint32_t(header_size + dfd_size);
+	ktx_header.kvdByteLength = uint32_t(kvp_size);
 
-	ktx_header.supercompressionGlobalData.byteOffset = (header_size + dfd_size + kvp_size + 7) & ~7;
-	ktx_header.supercompressionGlobalData.byteLength = bgd_size;
+	ktx_header.sgdByteOffset = (header_size + dfd_size + kvp_size + 7) & ~7;
+	ktx_header.sgdByteLength = bgd_size;
 
 	// KTX2 header
 	write(ktx, ktx_header);
@@ -157,7 +217,7 @@ std::string basisToKtx(const std::string& basis, bool srgb)
 
 	for (size_t i = 0; i < levels; ++i)
 	{
-		ktxLevelIndexEntry le = {}; // This will be patched later
+		Ktx2LevelIndex le = {}; // This will be patched later
 		write(ktx, le);
 	}
 
@@ -170,7 +230,7 @@ std::string basisToKtx(const std::string& basis, bool srgb)
 	ktx.resize((ktx.size() + 7) & ~7);
 
 	// supercompression global data
-	ktxBasisGlobalHeader sgd_header = {};
+	Ktx2BasisGlobalHeader sgd_header = {};
 	sgd_header.globalFlags = basis_header.m_flags;
 	sgd_header.endpointCount = uint16_t(basis_header.m_total_endpoints);
 	sgd_header.selectorCount = uint16_t(basis_header.m_total_selectors);
@@ -185,8 +245,8 @@ std::string basisToKtx(const std::string& basis, bool srgb)
 
 	for (size_t i = 0; i < levels; ++i)
 	{
-		ktxBasisSliceDesc sgd_slice = {}; // This will be patched later
-		write(ktx, sgd_slice);
+		Ktx2BasisImageDesc sgd_image = {}; // This will be patched later
+		write(ktx, sgd_image);
 	}
 
 	ktx.append(basis.substr(basis_header.m_endpoint_cb_file_ofs, basis_header.m_endpoint_cb_file_size));
@@ -199,12 +259,14 @@ std::string basisToKtx(const std::string& basis, bool srgb)
 	// mip levels
 	for (size_t i = 0; i < levels; ++i)
 	{
-		size_t slice_index = (levels - i - 1) * (has_alpha + 1);
+		size_t level_index = levels - i - 1;
+		size_t slice_index = level_index * (has_alpha + 1);
+
 		const basist::basis_slice_desc& slice = slices[slice_index];
 		const basist::basis_slice_desc* slice_alpha = has_alpha ? &slices[slice_index + 1] : 0;
 
 		assert(slice.m_image_index == 0);
-		assert(slice.m_level_index == levels - i - 1);
+		assert(slice.m_level_index == level_index);
 
 		size_t file_offset = ktx.size();
 
@@ -213,28 +275,30 @@ std::string basisToKtx(const std::string& basis, bool srgb)
 		if (slice_alpha)
 			ktx.append(basis.substr(slice_alpha->m_file_ofs, slice_alpha->m_file_size));
 
-		ktxLevelIndexEntry le = {};
+		Ktx2LevelIndex le = {};
 		le.byteOffset = file_offset;
 		le.byteLength = ktx.size() - file_offset;
 		le.uncompressedByteLength = 0;
 
-		write(ktx, ktx_level_offset + i * sizeof(ktxLevelIndexEntry), le);
+		write(ktx, ktx_level_offset + level_index * sizeof(Ktx2LevelIndex), le);
 
-		ktxBasisSliceDesc sgd_slice = {};
-		sgd_slice.sliceByteOffset = 0;
-		sgd_slice.sliceByteLength = slice.m_file_size;
+		Ktx2BasisImageDesc sgd_image = {};
+		sgd_image.rgbSliceByteOffset = 0;
+		sgd_image.rgbSliceByteLength = slice.m_file_size;
 
 		if (slice_alpha)
 		{
-			sgd_slice.alphaSliceByteOffset = slice.m_file_size;
-			sgd_slice.alphaSliceByteLength = slice_alpha->m_file_size;
+			sgd_image.alphaSliceByteOffset = slice.m_file_size;
+			sgd_image.alphaSliceByteLength = slice_alpha->m_file_size;
 		}
 
-		write(ktx, sgd_level_offset + i * sizeof(ktxBasisSliceDesc), sgd_slice);
+		write(ktx, sgd_level_offset + level_index * sizeof(Ktx2BasisImageDesc), sgd_image);
 
 		if (i + 1 != levels)
 			ktx.resize((ktx.size() + 7) & ~7);
 	}
+
+	ktx.resize((ktx.size() + 7) & ~7);
 
 	return ktx;
 }
