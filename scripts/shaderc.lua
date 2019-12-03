@@ -652,6 +652,11 @@ project "shaderc"
 			"pthread",
 		}
 
+        configuration { "linux*" }
+                links {
+                        "dl",
+                }
+
 	configuration {}
 
 	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"), {
