@@ -3240,7 +3240,7 @@ namespace bgfx
 	/// @param[in] _ratio Width and height will be set in respect to back-buffer size. See:
 	///   `BackbufferRatio::Enum`.
 	///
-	/// @attention C99 equivalent is `bgfx_set_view_rect_auto`.
+	/// @attention C99 equivalent is `bgfx_set_view_rect_ratio`.
 	///
 	void setViewRect(
 		  ViewId _id
