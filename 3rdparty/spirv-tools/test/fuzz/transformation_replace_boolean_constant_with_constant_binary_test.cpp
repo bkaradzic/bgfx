@@ -16,6 +16,7 @@
 
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/id_use_descriptor.h"
+#include "source/fuzz/instruction_descriptor.h"
 #include "test/fuzz/fuzz_test_util.h"
 
 namespace spvtools {
@@ -164,12 +165,14 @@ TEST(TransformationReplaceBooleanConstantWithConstantBinaryTest,
   FactManager fact_manager;
 
   std::vector<protobufs::IdUseDescriptor> uses_of_true = {
-      transformation::MakeIdUseDescriptor(41, SpvOpStore, 1, 44, 12),
-      transformation::MakeIdUseDescriptor(41, SpvOpLogicalOr, 0, 46, 0)};
+      MakeIdUseDescriptor(41, MakeInstructionDescriptor(44, SpvOpStore, 12), 1),
+      MakeIdUseDescriptor(41, MakeInstructionDescriptor(46, SpvOpLogicalOr, 0),
+                          0)};
 
   std::vector<protobufs::IdUseDescriptor> uses_of_false = {
-      transformation::MakeIdUseDescriptor(43, SpvOpStore, 1, 44, 13),
-      transformation::MakeIdUseDescriptor(43, SpvOpLogicalAnd, 1, 48, 0)};
+      MakeIdUseDescriptor(43, MakeInstructionDescriptor(44, SpvOpStore, 13), 1),
+      MakeIdUseDescriptor(43, MakeInstructionDescriptor(48, SpvOpLogicalAnd, 0),
+                          1)};
 
   const uint32_t fresh_id = 100;
 
@@ -529,10 +532,10 @@ TEST(TransformationReplaceBooleanConstantWithConstantBinaryTest,
 
   FactManager fact_manager;
 
-  auto use_of_true_in_if =
-      transformation::MakeIdUseDescriptor(13, SpvOpBranchConditional, 0, 10, 0);
-  auto use_of_false_in_while =
-      transformation::MakeIdUseDescriptor(21, SpvOpBranchConditional, 0, 16, 0);
+  auto use_of_true_in_if = MakeIdUseDescriptor(
+      13, MakeInstructionDescriptor(10, SpvOpBranchConditional, 0), 0);
+  auto use_of_false_in_while = MakeIdUseDescriptor(
+      21, MakeInstructionDescriptor(16, SpvOpBranchConditional, 0), 0);
 
   auto replacement_1 = TransformationReplaceBooleanConstantWithConstantBinary(
       use_of_true_in_if, 9, 11, SpvOpSLessThan, 100);
@@ -641,8 +644,8 @@ TEST(TransformationReplaceBooleanConstantWithConstantBinaryTest, OpPhi) {
   FactManager fact_manager;
 
   auto replacement = TransformationReplaceBooleanConstantWithConstantBinary(
-      transformation::MakeIdUseDescriptor(9, SpvOpPhi, 0, 23, 0), 13, 15,
-      SpvOpSLessThan, 100);
+      MakeIdUseDescriptor(9, MakeInstructionDescriptor(23, SpvOpPhi, 0), 0), 13,
+      15, SpvOpSLessThan, 100);
 
   ASSERT_FALSE(replacement.IsApplicable(context.get(), fact_manager));
 }

@@ -33,7 +33,7 @@ headers, and XML registry.
 See [`CHANGES`](CHANGES) for a high level summary of recent changes, by version.
 
 SPIRV-Tools project version numbers are of the form `v`*year*`.`*index* and with
-an optional `-dev` suffix to indicate work in progress.  For exampe, the
+an optional `-dev` suffix to indicate work in progress.  For example, the
 following versions are ordered from oldest to newest:
 
 * `v2016.0`
@@ -49,9 +49,11 @@ version.  An API call reports the software version as a C-style string.
 
 ### Assembler, binary parser, and disassembler
 
-* Support for SPIR-V 1.0, 1.1, 1.2, and 1.3
+* Support for SPIR-V 1.0, through 1.5
   * Based on SPIR-V syntax described by JSON grammar files in the
     [SPIRV-Headers](https://github.com/KhronosGroup/SPIRV-Headers) repository.
+  * Usually, support for a new version of SPIR-V is ready within days after
+    publication.
 * Support for extended instruction sets:
   * GLSL std450 version 1.0 Rev 3
   * OpenCL version 1.0 Rev 2
@@ -88,14 +90,22 @@ limits accepted by a more than minimally capable SPIR-V consumer.
 
 ### Optimizer
 
-*Note:* The optimizer is still under development.
+The optimizer is a collection of code transforms, or "passes".
+Transforms are written for a diverse set of reasons:
 
-Currently supported optimizations:
-* General
+* To restructure, simplify, or normalize the code for further processing.
+* To eliminate undesirable code.
+* To improve code quality in some metric such as size or performance.
+  **Note**: These transforms are not guaranteed to actually improve any
+  given metric. Users should always measure results for their own situation.
+
+As of this writing, there are 67 transforms including examples such as:
+* Simplification
   * Strip debug info
+  * Strip reflection info
 * Specialization Constants
   * Set spec constant default value
-  * Freeze spec constant
+  * Freeze spec constant to default value
   * Fold `OpSpecConstantOp` and `OpSpecConstantComposite`
   * Unify constants
   * Eliminate dead constant
@@ -112,6 +122,29 @@ Currently supported optimizations:
   * Eliminate common uniform loads
   * Remove duplicates: Capabilities, extended instruction imports, types, and
     decorations.
+* Normalization
+  * Compact IDs
+  * CFG cleanup
+  * Flatten decorations
+  * Merge returns
+  * Convert AMD-specific instructions to KHR instructions
+* Code improvement
+  * Conditional constant propagation
+  * If-conversion
+  * Loop fission
+  * Loop fusion
+  * Loop-invariant code motion
+  * Loop unroll
+* Other
+  * Generate WebGPU initializers
+  * Graphics robust access
+  * Upgrade memory model to VulkanKHR
+
+Additionally, certain sets of transformations have been packaged into
+higher-level recipes.  These include:
+
+* Optimization for size (`spirv-opt -Os`)
+* Optimization for performance (`spirv-opt -O`)
 
 For the latest list with detailed documentation, please refer to
 [`include/spirv-tools/optimizer.hpp`](include/spirv-tools/optimizer.hpp).
@@ -147,6 +180,24 @@ fatal error message.
 To suggest an additional capability for the reducer, [file an
 issue](https://github.com/KhronosGroup/SPIRV-Tools/issues]) with
 "Reducer:" as the start of its title.
+
+
+### Fuzzer
+
+*Note:* The fuzzer is still under development.
+
+The fuzzer applies semantics-preserving transformations to a SPIR-V binary
+module, to produce an equivalent module.  The original and transformed modules
+should produce essentially identical results when executed on identical inputs:
+their results should differ only due to floating-point round-off, if at all.
+Significant differences in results can pinpoint bugs in tools that process
+SPIR-V binaries, such as miscompilations.  This *metamorphic testing* approach
+is similar to the method used by the [GraphicsFuzz
+project](https://github.com/google/graphicsfuzz) for fuzzing of GLSL shaders.
+
+To suggest an additional capability for the fuzzer, [file an
+issue](https://github.com/KhronosGroup/SPIRV-Tools/issues]) with
+"Fuzzer:" as the start of its title.
 
 
 ### Extras
@@ -301,11 +352,11 @@ installed regardless of your OS:
 targets, you need to install CMake Version 2.8.12 or later.
 - [Python 3](http://www.python.org/): for utility scripts and running the test
 suite.
-- [Bazel](https://baze.build/) (optional): if building the source with Bazel,
+- [Bazel](https://bazel.build/) (optional): if building the source with Bazel,
 you need to install Bazel Version 0.29.1 on your machine. Other versions may
 also work, but are not verified.
 
-SPIRV-Tools is regularly tested with the the following compilers:
+SPIRV-Tools is regularly tested with the following compilers:
 
 On Linux
 - GCC version 4.8.5
@@ -324,6 +375,7 @@ Other compilers or later versions may work, but they are not tested.
 
 The following CMake options are supported:
 
+* `SPIRV_BUILD_FUZZER={ON|OFF}`, default `OFF` - Build the spirv-fuzz tool.
 * `SPIRV_COLOR_TERMINAL={ON|OFF}`, default `ON` - Enables color console output.
 * `SPIRV_SKIP_TESTS={ON|OFF}`, default `OFF`- Build only the library and
   the command line tools.  This will prevent the tests from being built.
@@ -499,6 +551,19 @@ This is a work in progress, with initially only shrinks a module in a few ways.
   * `<spirv-dir>/tools/reduce`
 
 Run `spirv-reduce --help` to see how to specify interestingness.
+
+### Fuzzer tool
+
+The fuzzer transforms a SPIR-V binary module into a semantically-equivalent
+SPIR-V binary module by applying transformations in a randomized fashion.
+
+This is a work in progress, with initially only a few semantics-preserving
+transformations.
+
+* `spirv-fuzz` - the standalone fuzzer
+  * `<spirv-dir>/tools/fuzz`
+
+Run `spirv-fuzz --help` for a detailed list of options.
 
 ### Control flow dumper tool
 

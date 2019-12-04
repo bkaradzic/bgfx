@@ -1016,7 +1016,13 @@ void processDev(const char* path)
 	if (!loadMesh(mesh, path))
 		return;
 
-	simplifyPoints(mesh);
+	Mesh copy = mesh;
+	meshopt_optimizeVertexCache(&copy.indices[0], &copy.indices[0], copy.indices.size(), copy.vertices.size());
+	meshopt_optimizeVertexFetch(&copy.vertices[0], &copy.indices[0], copy.indices.size(), &copy.vertices[0], copy.vertices.size(), sizeof(Vertex));
+
+	encodeIndex(copy);
+	encodeVertex<PackedVertex>(copy, "");
+	encodeVertex<PackedVertexOct>(copy, "O");
 }
 
 int main(int argc, char** argv)

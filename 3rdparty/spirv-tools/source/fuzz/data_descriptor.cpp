@@ -29,6 +29,16 @@ protobufs::DataDescriptor MakeDataDescriptor(uint32_t object,
   return result;
 }
 
+size_t DataDescriptorHash::operator()(
+    const protobufs::DataDescriptor* data_descriptor) const {
+  std::u32string hash;
+  hash.push_back(data_descriptor->object());
+  for (auto an_index : data_descriptor->index()) {
+    hash.push_back(an_index);
+  }
+  return std::hash<std::u32string>()(hash);
+}
+
 bool DataDescriptorEquals::operator()(
     const protobufs::DataDescriptor* first,
     const protobufs::DataDescriptor* second) const {
@@ -36,6 +46,23 @@ bool DataDescriptorEquals::operator()(
          first->index().size() == second->index().size() &&
          std::equal(first->index().begin(), first->index().end(),
                     second->index().begin());
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         const protobufs::DataDescriptor& data_descriptor) {
+  out << data_descriptor.object();
+  out << "[";
+  bool first = true;
+  for (auto index : data_descriptor.index()) {
+    if (first) {
+      first = false;
+    } else {
+      out << ", ";
+    }
+    out << index;
+  }
+  out << "]";
+  return out;
 }
 
 }  // namespace fuzz

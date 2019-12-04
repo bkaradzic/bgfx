@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(100)
+version(102)
 
 typedef "bool"
 typedef "char"
@@ -79,18 +79,18 @@ flag.StateBlendEquation { bits = 64, shift = 28, range = 6, base = 0, desc = "Bl
 
 --- Cull state. When `BGFX_STATE_CULL_*` is not specified culling will be disabled.
 flag.StateCull { bits = 64, shift = 36, range = 2, base = 1, desc = "Culling mode" }
-	.Cw               --- Cull clockwise triangles.
-	.Ccw		  --- Cull counter-clockwise triangles.
+	.Cw  --- Cull clockwise triangles.
+	.Ccw --- Cull counter-clockwise triangles.
 	()
 
 --- Alpha reference value.
 flag.StateAlphaRef { bits = 64, shift = 40, range = 8, desc = "Alpha reference", "helper" }
 
 flag.StatePt { bits = 64, shift = 48, range = 3, base = 1, desc = "Primitive type" }
-	.Tristrip             --- Tristrip.
-	.Lines                --- Lines.
-	.Linestrip            --- Line strip.
-	.Points               --- Points.
+	.Tristrip  --- Tristrip.
+	.Lines     --- Lines.
+	.Linestrip --- Line strip.
+	.Points    --- Points.
 	()
 
 --- Point size value.
@@ -99,16 +99,16 @@ flag.StatePointSize { bits = 64, shift = 52, range = 4, desc = "Point size", "he
 --- Enable MSAA write when writing into MSAA frame buffer.
 --- This flag is ignored when not writing into MSAA frame buffer.
 flag.State { bits = 64 , range = 64 , desc = "State" }
-	.Msaa (57)               --- Enable MSAA rasterization.
-	.Lineaa (58)             --- Enable line AA rasterization.
-	.ConservativeRaster (59) --- Enable conservative rasterization.
-	.None (0)                --- No state.
-	.BlendIndependent(35)    --- Enable blend independent.
-	.BlendAlphaToCoverage (36)     --- Enable alpha to coverage.
+	.Msaa (57)                 --- Enable MSAA rasterization.
+	.Lineaa (58)               --- Enable line AA rasterization.
+	.ConservativeRaster (59)   --- Enable conservative rasterization.
+	.None (0)                  --- No state.
+	.FrontCcw(40)              --- Front counter-clockwise (default is clockwise).
+	.BlendIndependent(35)      --- Enable blend independent.
+	.BlendAlphaToCoverage (36) --- Enable alpha to coverage.
 	.Default { "WriteRgb", "WriteA", "WriteZ", "DepthTestLess", "CullCw", "Msaa" }
-				 --- Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
-				 --- culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
-
+	 --- Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
+	 --- culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
 
 --- Do not use!
 flag.StateReserved { bits = 64, shift = 61, range = 3 }
@@ -120,69 +120,69 @@ flag.StencilFuncRef { bits = 32, shift = 0, range = 8, "helper" }
 flag.StencilFuncRmask { bits = 32, shift = 8, range = 8, "helper" }
 
 flag.Stencil { bits = 32, const }
-	.None                (0x00000000)
-	.Mask                (0xffffffff)
-	.Default             (0x00000000)
+	.None    (0x00000000)
+	.Mask    (0xffffffff)
+	.Default (0x00000000)
 
 flag.StencilTest { bits = 32, shift = 16, range = 4 , base = 1, desc = "Stencil test" }
-	.Less                    --- Enable stencil test, less.
-	.Lequal                  --- Enable stencil test, less or equal.
-	.Equal                   --- Enable stencil test, equal.
-	.Gequal                  --- Enable stencil test, greater or equal.
-	.Greater                 --- Enable stencil test, greater.
-	.Notequal                --- Enable stencil test, not equal.
-	.Never                   --- Enable stencil test, never.
-	.Always                  --- Enable stencil test, always.
+	.Less     --- Enable stencil test, less.
+	.Lequal   --- Enable stencil test, less or equal.
+	.Equal    --- Enable stencil test, equal.
+	.Gequal   --- Enable stencil test, greater or equal.
+	.Greater  --- Enable stencil test, greater.
+	.Notequal --- Enable stencil test, not equal.
+	.Never    --- Enable stencil test, never.
+	.Always   --- Enable stencil test, always.
 	()
 
 flag.StencilOpFailS { bits = 32, shift = 20, range = 4, base = 0, desc = "Stencil operation fail" }
-	.Zero                    --- Zero.
-	.Keep                    --- Keep.
-	.Replace                 --- Replace.
-	.Incr                    --- Increment and wrap.
-	.Incrsat                 --- Increment and clamp.
-	.Decr                    --- Decrement and wrap.
-	.Decrsat                 --- Decrement and clamp.
-	.Invert                  --- Invert.
+	.Zero    --- Zero.
+	.Keep    --- Keep.
+	.Replace --- Replace.
+	.Incr    --- Increment and wrap.
+	.Incrsat --- Increment and clamp.
+	.Decr    --- Decrement and wrap.
+	.Decrsat --- Decrement and clamp.
+	.Invert  --- Invert.
 	()
 
 flag.StencilOpFailZ { bits = 32, shift = 24, range = 4, base = 0, desc = "Stencil operation depth fail" }
-	.Zero                    --- Zero.
-	.Keep                    --- Keep.
-	.Replace                 --- Replace.
-	.Incr                    --- Increment and wrap.
-	.Incrsat                 --- Increment and clamp.
-	.Decr                    --- Decrement and wrap.
-	.Decrsat                 --- Decrement and clamp.
-	.Invert                  --- Invert.
+	.Zero    --- Zero.
+	.Keep    --- Keep.
+	.Replace --- Replace.
+	.Incr    --- Increment and wrap.
+	.Incrsat --- Increment and clamp.
+	.Decr    --- Decrement and wrap.
+	.Decrsat --- Decrement and clamp.
+	.Invert  --- Invert.
 	()
 
 flag.StencilOpPassZ { bits = 32, shift = 28, range = 4 , base = 0, desc = "Stencil operation depth pass" }
-	.Zero                    --- Zero.
-	.Keep                    --- Keep.
-	.Replace                 --- Replace.
-	.Incr                    --- Increment and wrap.
-	.Incrsat                 --- Increment and clamp.
-	.Decr                    --- Decrement and wrap.
-	.Decrsat                 --- Decrement and clamp.
-	.Invert                  --- Invert.
+	.Zero    --- Zero.
+	.Keep    --- Keep.
+	.Replace --- Replace.
+	.Incr    --- Increment and wrap.
+	.Incrsat --- Increment and clamp.
+	.Decr    --- Decrement and wrap.
+	.Decrsat --- Decrement and clamp.
+	.Invert  --- Invert.
 	()
 
 flag.Clear { bits = 16 }
-	.None                    --- No clear flags.
-	.Color                   --- Clear color.
-	.Depth                   --- Clear depth.
-	.Stencil                 --- Clear stencil.
-	.DiscardColor_0          --- Discard frame buffer attachment 0.
-	.DiscardColor_1          --- Discard frame buffer attachment 1.
-	.DiscardColor_2          --- Discard frame buffer attachment 2.
-	.DiscardColor_3          --- Discard frame buffer attachment 3.
-	.DiscardColor_4          --- Discard frame buffer attachment 4.
-	.DiscardColor_5          --- Discard frame buffer attachment 5.
-	.DiscardColor_6          --- Discard frame buffer attachment 6.
-	.DiscardColor_7          --- Discard frame buffer attachment 7.
-	.DiscardDepth            --- Discard frame buffer depth attachment.
-	.DiscardStencil          --- Discard frame buffer stencil attachment.
+	.None                 --- No clear flags.
+	.Color                --- Clear color.
+	.Depth                --- Clear depth.
+	.Stencil              --- Clear stencil.
+	.DiscardColor_0       --- Discard frame buffer attachment 0.
+	.DiscardColor_1       --- Discard frame buffer attachment 1.
+	.DiscardColor_2       --- Discard frame buffer attachment 2.
+	.DiscardColor_3       --- Discard frame buffer attachment 3.
+	.DiscardColor_4       --- Discard frame buffer attachment 4.
+	.DiscardColor_5       --- Discard frame buffer attachment 5.
+	.DiscardColor_6       --- Discard frame buffer attachment 6.
+	.DiscardColor_7       --- Discard frame buffer attachment 7.
+	.DiscardDepth         --- Discard frame buffer depth attachment.
+	.DiscardStencil       --- Discard frame buffer stencil attachment.
 	.DiscardColorMask {
 		"DiscardColor_0",
 		"DiscardColor_1",
@@ -200,31 +200,31 @@ flag.Clear { bits = 16 }
 	}
 
 flag.Debug { bits = 32 }
-	.None                    --- No debug.
-	.Wireframe               --- Enable wireframe for all primitives.
-	.Ifh                     --- Enable infinitely fast hardware test. No draw calls will be submitted to driver.
-	                         --- It's useful when profiling to quickly assess bottleneck between CPU and GPU.
-	.Stats                   --- Enable statistics display.
-	.Text                    --- Enable debug text display.
-	.Profiler                --- Enable profiler.
+	.None      --- No debug.
+	.Wireframe --- Enable wireframe for all primitives.
+	.Ifh       --- Enable infinitely fast hardware test. No draw calls will be submitted to driver.
+	           --- It's useful when profiling to quickly assess bottleneck between CPU and GPU.
+	.Stats     --- Enable statistics display.
+	.Text      --- Enable debug text display.
+	.Profiler  --- Enable profiler.
 	()
 
 flag.BufferComputeFormat { bits = 16, shift = 0, range = 4, base = 1 }
-	._8x1            --- 1 8-bit value
-	._8x2            --- 2 8-bit values
-	._8x4            --- 4 8-bit values
-	._16x1           --- 1 16-bit value
-	._16x2           --- 2 16-bit values
-	._16x4           --- 4 16-bit values
-	._32x1           --- 1 32-bit value
-	._32x2           --- 2 32-bit values
-	._32x4           --- 4 32-bit values
+	._8x1  --- 1 8-bit value
+	._8x2  --- 2 8-bit values
+	._8x4  --- 4 8-bit values
+	._16x1 --- 1 16-bit value
+	._16x2 --- 2 16-bit values
+	._16x4 --- 4 16-bit values
+	._32x1 --- 1 32-bit value
+	._32x2 --- 2 32-bit values
+	._32x4 --- 4 32-bit values
 	()
 
 flag.BufferComputeType { bits = 16, shift = 4, range = 2, base = 1 }
-	.Int            --- Type `int`.
-	.Uint           --- Type `uint`.
-	.Float          --- Type `float`.
+	.Int   --- Type `int`.
+	.Uint  --- Type `uint`.
+	.Float --- Type `float`.
 	()
 
 flag.Buffer { bits = 16, base = 8 }
@@ -239,66 +239,66 @@ flag.Buffer { bits = 16, base = 8 }
 
 flag.Texture { bits = 64 }
 	.None         (0)
-	.MsaaSample   (36)      --- Texture will be used for MSAA sampling.
-	.Rt           (37)      --- Render target no MSAA.
-	.ComputeWrite (45)      --- Texture will be used for compute write.
-	.Srgb         (46)      --- Sample texture as sRGB.
-	.BlitDst      (47)      --- Texture will be used as blit destination.
-	.ReadBack     (48)      --- Texture will be used for read back from GPU.
+	.MsaaSample   (36) --- Texture will be used for MSAA sampling.
+	.Rt           (37) --- Render target no MSAA.
+	.ComputeWrite (45) --- Texture will be used for compute write.
+	.Srgb         (46) --- Sample texture as sRGB.
+	.BlitDst      (47) --- Texture will be used as blit destination.
+	.ReadBack     (48) --- Texture will be used for read back from GPU.
 	()
 
 flag.TextureRtMsaa { bits = 64, shift = 36, range = 3 , base = 2 }
-	.X2             --- Render target MSAAx2 mode.
-	.X4             --- Render target MSAAx4 mode.
-	.X8             --- Render target MSAAx8 mode.
-	.X16            --- Render target MSAAx16 mode.
+	.X2  --- Render target MSAAx2 mode.
+	.X4  --- Render target MSAAx4 mode.
+	.X8  --- Render target MSAAx8 mode.
+	.X16 --- Render target MSAAx16 mode.
 	()
 
 flag.TextureRt { bits = 64, shift = 36, range = 4 }
-	.WriteOnly (9)  --- Render target will be used for writing
+	.WriteOnly (9) --- Render target will be used for writing
 
 --- Sampler flags.
 flag.SamplerU { bits = 32, shift = 0, range = 2, base = 1 }
-	.Mirror         --- Wrap U mode: Mirror
-	.Clamp          --- Wrap U mode: Clamp
-	.Border         --- Wrap U mode: Border
+	.Mirror --- Wrap U mode: Mirror
+	.Clamp  --- Wrap U mode: Clamp
+	.Border --- Wrap U mode: Border
 	()
 
 flag.SamplerV { bits = 32, shift = 2, range = 2, base = 1 }
-	.Mirror         --- Wrap V mode: Mirror
-	.Clamp          --- Wrap V mode: Clamp
-	.Border         --- Wrap V mode: Border
+	.Mirror --- Wrap V mode: Mirror
+	.Clamp  --- Wrap V mode: Clamp
+	.Border --- Wrap V mode: Border
 	()
 
 flag.SamplerW { bits = 32, shift = 4, range = 2, base = 1 }
-	.Mirror         --- Wrap W mode: Mirror
-	.Clamp          --- Wrap W mode: Clamp
-	.Border         --- Wrap W mode: Border
+	.Mirror --- Wrap W mode: Mirror
+	.Clamp  --- Wrap W mode: Clamp
+	.Border --- Wrap W mode: Border
 	()
 
 flag.SamplerMin { bits = 32, shift = 6, range = 2, base = 1 }
-	.Point          --- Min sampling mode: Point
-	.Anisotropic    --- Min sampling mode: Anisotropic
+	.Point       --- Min sampling mode: Point
+	.Anisotropic --- Min sampling mode: Anisotropic
 	()
 
 flag.SamplerMag { bits = 32, shift = 8, range = 2, base = 1 }
-	.Point          --- Mag sampling mode: Point
-	.Anisotropic    --- Mag sampling mode: Anisotropic
+	.Point       --- Mag sampling mode: Point
+	.Anisotropic --- Mag sampling mode: Anisotropic
 	()
 
 flag.SamplerMip { bits = 32, shift = 10, range = 1, base = 1 }
-	.Point          --- Mip sampling mode: Point
+	.Point --- Mip sampling mode: Point
 	()
 
 flag.SamplerCompare { bits = 32 , shift = 16, range = 4, base = 1 }
-	.Less           --- Compare when sampling depth texture: less.
-	.Lequal         --- Compare when sampling depth texture: less or equal.
-	.Equal          --- Compare when sampling depth texture: equal.
-	.Gequal         --- Compare when sampling depth texture: greater or equal.
-	.Greater        --- Compare when sampling depth texture: greater.
-	.Notequal       --- Compare when sampling depth texture: not equal.
-	.Never          --- Compare when sampling depth texture: never.
-	.Always         --- Compare when sampling depth texture: always.
+	.Less     --- Compare when sampling depth texture: less.
+	.Lequal   --- Compare when sampling depth texture: less or equal.
+	.Equal    --- Compare when sampling depth texture: equal.
+	.Gequal   --- Compare when sampling depth texture: greater or equal.
+	.Greater  --- Compare when sampling depth texture: greater.
+	.Notequal --- Compare when sampling depth texture: not equal.
+	.Never    --- Compare when sampling depth texture: never.
+	.Always   --- Compare when sampling depth texture: always.
 	()
 
 flag.SamplerBorderColor { bits = 32, shift = 24, range = 4, "helper" }
@@ -307,35 +307,43 @@ flag.SamplerReserved { bits = 32, shift = 28, range = 4 }
 flag.Sampler { bits = 32 }
 	.None
 	.SampleStencil (21)  --- Sample stencil instead of depth.
-	.Point { "MinPoint", "MagPoint", "MipPoint" }
-	.UvwMirror { "UMirror", "VMirror", "WMirror" }
-	.UvwClamp { "UClamp", "VClamp", "WClamp" }
-	.UvwBorder { "UBorder", "VBorder", "WBorder" }
-	.BitsMask { "UMask", "VMask", "WMask", "MinMask", "MagMask", "MipMask", "CompareMask" }
+	.Point     { "MinPoint", "MagPoint", "MipPoint" }
+	.UvwMirror { "UMirror",  "VMirror",  "WMirror"  }
+	.UvwClamp  { "UClamp",   "VClamp",   "WClamp"   }
+	.UvwBorder { "UBorder",  "VBorder",  "WBorder"  }
+	.BitsMask  {
+		"UMask",
+		"VMask",
+		"WMask",
+		"MinMask",
+		"MagMask",
+		"MipMask",
+		"CompareMask"
+	}
 	()
 
 flag.ResetMsaa { bits = 32, shift = 4, range = 3, base = 1 }
-	.X2               --- Enable 2x MSAA.
-	.X4               --- Enable 4x MSAA.
-	.X8               --- Enable 8x MSAA.
-	.X16              --- Enable 16x MSAA.
+	.X2  --- Enable 2x MSAA.
+	.X4  --- Enable 4x MSAA.
+	.X8  --- Enable 8x MSAA.
+	.X16 --- Enable 16x MSAA.
 	()
 
 
 flag.Reset { bits = 32 }
-	.None                (0)   --- No reset flags.
-	.Fullscreen          (1)   --- Not supported yet.
-	.Vsync               (8)   --- Enable V-Sync.
-	.Maxanisotropy       (9)   --- Turn on/off max anisotropy.
-	.Capture             (10)  --- Begin screen capture.
-	.FlushAfterRender    (14)  --- Flush rendering after submitting to GPU.
-	.FlipAfterRender     (15)  --- This flag specifies where flip occurs. Default behavior is that flip occurs
-	                           --- before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
-	.SrgbBackbuffer      (16)  --- Enable sRGB backbuffer.
-	.Hdr10               (17)  --- Enable HDR10 rendering.
-	.Hidpi               (18)  --- Enable HiDPI rendering.
-	.DepthClamp          (19)  --- Enable depth clamp.
-	.Suspend             (20)  --- Suspend rendering.
+	.None             ( 0) --- No reset flags.
+	.Fullscreen       ( 1) --- Not supported yet.
+	.Vsync            ( 8) --- Enable V-Sync.
+	.Maxanisotropy    ( 9) --- Turn on/off max anisotropy.
+	.Capture          (10) --- Begin screen capture.
+	.FlushAfterRender (14) --- Flush rendering after submitting to GPU.
+	.FlipAfterRender  (15) --- This flag specifies where flip occurs. Default behavior is that flip occurs
+	                       --- before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+	.SrgbBackbuffer   (16) --- Enable sRGB backbuffer.
+	.Hdr10            (17) --- Enable HDR10 rendering.
+	.Hidpi            (18) --- Enable HiDPI rendering.
+	.DepthClamp       (19) --- Enable depth clamp.
+	.Suspend          (20) --- Suspend rendering.
 	()
 
 flag.ResetFullscreen { bits = 32, shift = 0, range = 1, base = 1 }
@@ -852,8 +860,10 @@ struct.Transform
 struct.ViewStats
 	.name           "char[256]" --- View name.
 	.view           "ViewId"    --- View id.
-	.cpuTimeElapsed "int64_t"   --- CPU (submit) time elapsed.
-	.gpuTimeElapsed "int64_t"   --- GPU time elapsed.
+	.cpuTimeBegin   "int64_t"   --- CPU (submit) begin time.
+	.cpuTimeEnd     "int64_t"   --- CPU (submit) end time.
+	.gpuTimeBegin   "int64_t"   --- GPU begin time.
+	.gpuTimeEnd     "int64_t"   --- GPU end time.
 
 --- Encoder stats.
 struct.EncoderStats

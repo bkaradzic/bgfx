@@ -62,6 +62,24 @@ class FuzzerContext {
   uint32_t GetChanceOfAddingDeadContinue() {
     return chance_of_adding_dead_continue_;
   }
+  uint32_t GetChanceOfAddingNoContractionDecoration() {
+    return chance_of_adding_no_contraction_decoration_;
+  }
+  uint32_t GetChanceOfAdjustingFunctionControl() {
+    return chance_of_adjusting_function_control_;
+  }
+  uint32_t GetChanceOfAdjustingLoopControl() {
+    return chance_of_adjusting_loop_control_;
+  }
+  uint32_t GetChanceOfAdjustingMemoryOperandsMask() {
+    return chance_of_adjusting_memory_operands_mask_;
+  }
+  uint32_t GetChanceOfAdjustingSelectionControl() {
+    return chance_of_adjusting_selection_control_;
+  }
+  uint32_t GetChanceOfConstructingComposite() {
+    return chance_of_constructing_composite_;
+  }
   uint32_t GetChanceOfCopyingObject() { return chance_of_copying_object_; }
   uint32_t GetChanceOfMovingBlockDown() { return chance_of_moving_block_down_; }
   uint32_t GetChanceOfObfuscatingConstant() {
@@ -71,6 +89,12 @@ class FuzzerContext {
     return chance_of_replacing_id_with_synonym_;
   }
   uint32_t GetChanceOfSplittingBlock() { return chance_of_splitting_block_; }
+  uint32_t GetRandomLoopControlPeelCount() {
+    return random_generator_->RandomUint32(max_loop_control_peel_count_);
+  }
+  uint32_t GetRandomLoopControlPartialCount() {
+    return random_generator_->RandomUint32(max_loop_control_partial_count_);
+  }
 
   // Functions to control how deeply to recurse.
   // Keep them in alphabetical order.
@@ -88,11 +112,23 @@ class FuzzerContext {
   // Keep them in alphabetical order.
   uint32_t chance_of_adding_dead_break_;
   uint32_t chance_of_adding_dead_continue_;
+  uint32_t chance_of_adding_no_contraction_decoration_;
+  uint32_t chance_of_adjusting_function_control_;
+  uint32_t chance_of_adjusting_loop_control_;
+  uint32_t chance_of_adjusting_memory_operands_mask_;
+  uint32_t chance_of_adjusting_selection_control_;
+  uint32_t chance_of_constructing_composite_;
   uint32_t chance_of_copying_object_;
   uint32_t chance_of_moving_block_down_;
   uint32_t chance_of_obfuscating_constant_;
   uint32_t chance_of_replacing_id_with_synonym_;
   uint32_t chance_of_splitting_block_;
+
+  // Limits associated with various quantities for which random values are
+  // chosen during fuzzing.
+  // Keep them in alphabetical order.
+  uint32_t max_loop_control_partial_count_;
+  uint32_t max_loop_control_peel_count_;
 
   // Functions to determine with what probability to go deeper when generating
   // or mutating constructs recursively.

@@ -57,7 +57,7 @@ typedef unsigned int SpvId;
 #define SPV_REVISION 1
 
 static const unsigned int SpvMagicNumber = 0x07230203;
-static const unsigned int SpvVersion = 0x00010400;
+static const unsigned int SpvVersion = 0x00010500;
 static const unsigned int SpvRevision = 1;
 static const unsigned int SpvOpCodeMask = 0xffff;
 static const unsigned int SpvWordCountShift = 16;

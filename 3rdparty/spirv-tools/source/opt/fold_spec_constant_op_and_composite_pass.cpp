@@ -316,6 +316,59 @@ bool IsValidTypeForComponentWiseOperation(const analysis::Type* type) {
   }
   return false;
 }
+
+// Encodes the integer |value| of in a word vector format appropriate for
+// representing this value as a operands for a constant definition. Performs
+// zero-extension/sign-extension/truncation when needed, based on the signess of
+// the given target type.
+//
+// Note: type |type| argument must be either Integer or Bool.
+utils::SmallVector<uint32_t, 2> EncodeIntegerAsWords(const analysis::Type& type,
+                                                     uint32_t value) {
+  const uint32_t all_ones = ~0;
+  uint32_t bit_width = 0;
+  uint32_t pad_value = 0;
+  bool result_type_signed = false;
+  if (auto* int_ty = type.AsInteger()) {
+    bit_width = int_ty->width();
+    result_type_signed = int_ty->IsSigned();
+    if (result_type_signed && static_cast<int32_t>(value) < 0) {
+      pad_value = all_ones;
+    }
+  } else if (type.AsBool()) {
+    bit_width = 1;
+  } else {
+    assert(false && "type must be Integer or Bool");
+  }
+
+  assert(bit_width > 0);
+  uint32_t first_word = value;
+  const uint32_t bits_per_word = 32;
+
+  // Truncate first_word if the |type| has width less than uint32.
+  if (bit_width < bits_per_word) {
+    const uint32_t num_high_bits_to_mask = bits_per_word - bit_width;
+    const bool is_negative_after_truncation =
+        result_type_signed &&
+        utils::IsBitAtPositionSet(first_word, bit_width - 1);
+
+    if (is_negative_after_truncation) {
+      // Truncate and sign-extend |first_word|. No padding words will be
+      // added and |pad_value| can be left as-is.
+      first_word = utils::SetHighBits(first_word, num_high_bits_to_mask);
+    } else {
+      first_word = utils::ClearHighBits(first_word, num_high_bits_to_mask);
+    }
+  }
+
+  utils::SmallVector<uint32_t, 2> words = {first_word};
+  for (uint32_t current_bit = bits_per_word; current_bit < bit_width;
+       current_bit += bits_per_word) {
+    words.push_back(pad_value);
+  }
+
+  return words;
+}
 }  // namespace
 
 Instruction* FoldSpecConstantOpAndCompositePass::DoComponentWiseOperation(
@@ -345,10 +398,10 @@ Instruction* FoldSpecConstantOpAndCompositePass::DoComponentWiseOperation(
 
   if (result_type->AsInteger() || result_type->AsBool()) {
     // Scalar operation
-    uint32_t result_val =
+    const uint32_t result_val =
         context()->get_instruction_folder().FoldScalars(spec_opcode, operands);
-    auto result_const =
-        context()->get_constant_mgr()->GetConstant(result_type, {result_val});
+    auto result_const = context()->get_constant_mgr()->GetConstant(
+        result_type, EncodeIntegerAsWords(*result_type, result_val));
     return context()->get_constant_mgr()->BuildInstructionAndAddToModule(
         result_const, pos);
   } else if (result_type->AsVector()) {
@@ -360,9 +413,9 @@ Instruction* FoldSpecConstantOpAndCompositePass::DoComponentWiseOperation(
         context()->get_instruction_folder().FoldVectors(spec_opcode, num_dims,
                                                         operands);
     std::vector<const analysis::Constant*> result_vector_components;
-    for (uint32_t r : result_vec) {
-      if (auto rc =
-              context()->get_constant_mgr()->GetConstant(element_type, {r})) {
+    for (const uint32_t r : result_vec) {
+      if (auto rc = context()->get_constant_mgr()->GetConstant(
+              element_type, EncodeIntegerAsWords(*element_type, r))) {
         result_vector_components.push_back(rc);
         if (!context()->get_constant_mgr()->BuildInstructionAndAddToModule(
                 rc, pos)) {

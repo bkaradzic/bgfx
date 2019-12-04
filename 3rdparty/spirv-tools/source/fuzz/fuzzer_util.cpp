@@ -170,39 +170,14 @@ bool BlockIsInLoopContinueConstruct(opt::IRContext* context, uint32_t block_id,
   return false;
 }
 
-opt::BasicBlock::iterator GetIteratorForBaseInstructionAndOffset(
-    opt::BasicBlock* block, const opt::Instruction* base_inst,
-    uint32_t offset) {
-  // The cases where |base_inst| is the block's label, vs. inside the block,
-  // are dealt with separately.
-  if (base_inst == block->GetLabelInst()) {
-    // |base_inst| is the block's label.
-    if (offset == 0) {
-      // We cannot return an iterator to the block's label.
-      return block->end();
-    }
-    // Conceptually, the first instruction in the block is [label + 1].
-    // We thus start from 1 when applying the offset.
-    auto inst_it = block->begin();
-    for (uint32_t i = 1; i < offset && inst_it != block->end(); i++) {
-      ++inst_it;
-    }
-    // This is either the desired instruction, or the end of the block.
-    return inst_it;
-  }
-  // |base_inst| is inside the block.
+opt::BasicBlock::iterator GetIteratorForInstruction(
+    opt::BasicBlock* block, const opt::Instruction* inst) {
   for (auto inst_it = block->begin(); inst_it != block->end(); ++inst_it) {
-    if (base_inst == &*inst_it) {
-      // We have found the base instruction; we now apply the offset.
-      for (uint32_t i = 0; i < offset && inst_it != block->end(); i++) {
-        ++inst_it;
-      }
-      // This is either the desired instruction, or the end of the block.
+    if (inst == &*inst_it) {
       return inst_it;
     }
   }
-  assert(false && "The base instruction was not found.");
-  return nullptr;
+  return block->end();
 }
 
 bool NewEdgeRespectsUseDefDominance(opt::IRContext* context,
@@ -215,6 +190,13 @@ bool NewEdgeRespectsUseDefDominance(opt::IRContext* context,
   if (bb_from->terminator()->GetSingleWordInOperand(0) == bb_to->id()) {
     return true;
   }
+
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2919): the
+  //  solution below to determining whether a new edge respects dominance
+  //  rules is incomplete.  Test
+  //  TransformationAddDeadContinueTest::DISABLED_Miscellaneous6 exposes the
+  //  problem.  In practice, this limitation does not bite too often, and the
+  //  worst it does is leads to SPIR-V that spirv-val rejects.
 
   // Let us assume that the module being manipulated is valid according to the
   // rules of the SPIR-V language.
@@ -305,6 +287,116 @@ bool BlockIsReachableInItsFunction(opt::IRContext* context,
   auto enclosing_function = bb->GetParent();
   return context->GetDominatorAnalysis(enclosing_function)
       ->Dominates(enclosing_function->entry().get(), bb);
+}
+
+bool CanInsertOpcodeBeforeInstruction(
+    SpvOp opcode, const opt::BasicBlock::iterator& instruction_in_block) {
+  if (instruction_in_block->PreviousNode() &&
+      (instruction_in_block->PreviousNode()->opcode() == SpvOpLoopMerge ||
+       instruction_in_block->PreviousNode()->opcode() == SpvOpSelectionMerge)) {
+    // We cannot insert directly after a merge instruction.
+    return false;
+  }
+  if (opcode != SpvOpVariable &&
+      instruction_in_block->opcode() == SpvOpVariable) {
+    // We cannot insert a non-OpVariable instruction directly before a
+    // variable; variables in a function must be contiguous in the entry block.
+    return false;
+  }
+  // We cannot insert a non-OpPhi instruction directly before an OpPhi, because
+  // OpPhi instructions need to be contiguous at the start of a block.
+  return opcode == SpvOpPhi || instruction_in_block->opcode() != SpvOpPhi;
+}
+
+bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst) {
+  if (!inst->HasResultId()) {
+    // We can only make a synonym of an instruction that generates an id.
+    return false;
+  }
+  if (!inst->type_id()) {
+    // We can only make a synonym of an instruction that has a type.
+    return false;
+  }
+  // We do not make synonyms of objects that have decorations: if the synonym is
+  // not decorated analogously, using the original object vs. its synonymous
+  // form may not be equivalent.
+  return ir_context->get_decoration_mgr()
+      ->GetDecorationsFor(inst->result_id(), true)
+      .empty();
+}
+
+bool IsCompositeType(const opt::analysis::Type* type) {
+  return type && (type->AsArray() || type->AsMatrix() || type->AsStruct() ||
+                  type->AsVector());
+}
+
+std::vector<uint32_t> RepeatedFieldToVector(
+    const google::protobuf::RepeatedField<uint32_t>& repeated_field) {
+  std::vector<uint32_t> result;
+  for (auto i : repeated_field) {
+    result.push_back(i);
+  }
+  return result;
+}
+
+uint32_t WalkCompositeTypeIndices(
+    opt::IRContext* context, uint32_t base_object_type_id,
+    const google::protobuf::RepeatedField<google::protobuf::uint32>& indices) {
+  uint32_t sub_object_type_id = base_object_type_id;
+  for (auto index : indices) {
+    auto should_be_composite_type =
+        context->get_def_use_mgr()->GetDef(sub_object_type_id);
+    assert(should_be_composite_type && "The type should exist.");
+    if (SpvOpTypeArray == should_be_composite_type->opcode()) {
+      auto array_length = GetArraySize(*should_be_composite_type, context);
+      if (array_length == 0 || index >= array_length) {
+        return 0;
+      }
+      sub_object_type_id = should_be_composite_type->GetSingleWordInOperand(0);
+    } else if (SpvOpTypeMatrix == should_be_composite_type->opcode()) {
+      auto matrix_column_count =
+          should_be_composite_type->GetSingleWordInOperand(1);
+      if (index >= matrix_column_count) {
+        return 0;
+      }
+      sub_object_type_id = should_be_composite_type->GetSingleWordInOperand(0);
+    } else if (SpvOpTypeStruct == should_be_composite_type->opcode()) {
+      if (index >= GetNumberOfStructMembers(*should_be_composite_type)) {
+        return 0;
+      }
+      sub_object_type_id =
+          should_be_composite_type->GetSingleWordInOperand(index);
+    } else if (SpvOpTypeVector == should_be_composite_type->opcode()) {
+      auto vector_length = should_be_composite_type->GetSingleWordInOperand(1);
+      if (index >= vector_length) {
+        return 0;
+      }
+      sub_object_type_id = should_be_composite_type->GetSingleWordInOperand(0);
+    } else {
+      return 0;
+    }
+  }
+  return sub_object_type_id;
+}
+
+uint32_t GetNumberOfStructMembers(
+    const opt::Instruction& struct_type_instruction) {
+  assert(struct_type_instruction.opcode() == SpvOpTypeStruct &&
+         "An OpTypeStruct instruction is required here.");
+  return struct_type_instruction.NumInOperands();
+}
+
+uint32_t GetArraySize(const opt::Instruction& array_type_instruction,
+                      opt::IRContext* context) {
+  auto array_length_constant =
+      context->get_constant_mgr()
+          ->GetConstantFromInst(context->get_def_use_mgr()->GetDef(
+              array_type_instruction.GetSingleWordInOperand(1)))
+          ->AsIntConstant();
+  if (array_length_constant->words().size() != 1) {
+    return 0;
+  }
+  return array_length_constant->GetU32();
 }
 
 }  // namespace fuzzerutil

@@ -137,7 +137,7 @@ public:
                 if (it == ioMapper.end()) {
                     // seperate pipe i/o params from uniforms and blocks
                     // in is only for input in first stage as out is only for last stage. check traverse in call stack.
-                    ioMapper[name.c_str()] = ioItems.size();
+                    ioMapper[name.c_str()] = static_cast<int>(ioItems.size());
                     ioItems.push_back(
                         TObjectReflection(name.c_str(), type, 0, mapToGlType(type), mapToGlArraySize(type), 0));
                     EShLanguageMask& stages = ioItems.back().stages;

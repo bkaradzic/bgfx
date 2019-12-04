@@ -1899,37 +1899,6 @@ TEST_F(ScalarReplacementTest, RelaxedPrecisionMemberDecoration) {
   SinglePassRunAndMatch<ScalarReplacementPass>(text, true);
 }
 
-TEST_F(ScalarReplacementTest, ExtractWithNoIndex) {
-  const std::string text = R"(
-; CHECK: [[var1:%\w+]] = OpVariable %_ptr_Function_float Function
-; CHECK: [[var2:%\w+]] = OpVariable %_ptr_Function_float Function
-; CHECK: [[ld1:%\w+]] = OpLoad %float [[var1]]
-; CHECK: [[ld2:%\w+]] = OpLoad %float [[var2]]
-; CHECK: [[constr:%\w+]] = OpCompositeConstruct {{%\w+}} [[ld2]] [[ld1]]
-; CHECK: OpCompositeExtract {{%\w+}} [[constr]]
-OpCapability Shader
-OpExtension ""
-OpMemoryModel Logical GLSL450
-OpEntryPoint Fragment %1 "main"
-OpExecutionMode %1 OriginUpperLeft
-%void = OpTypeVoid
-%3 = OpTypeFunction %void
-%float = OpTypeFloat 32
-%_struct_5 = OpTypeStruct %float %float
-%_ptr_Private__struct_5 = OpTypePointer Private %_struct_5
-%_ptr_Function__struct_5 = OpTypePointer Function %_struct_5
-%1 = OpFunction %void Inline %3
-%8 = OpLabel
-%9 = OpVariable %_ptr_Function__struct_5 Function
-%10 = OpLoad %_struct_5 %9
-%11 = OpCompositeExtract %_struct_5 %10
-OpReturn
-OpFunctionEnd
-)";
-
-  SinglePassRunAndMatch<ScalarReplacementPass>(text, true);
-}
-
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

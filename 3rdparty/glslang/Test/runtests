@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 
-TARGETDIR=localResults
+# Arguments:
+#  1- TargetDirectory, where to write test results and intermediary files
+#  2- Path to glslangValidator
+#  3- Path to spirv-remap
+
+TARGETDIR=${1:-localResults}
 BASEDIR=baseResults
-EXE=../build/install/bin/glslangValidator
-REMAPEXE=../build/install/bin/spirv-remap
+EXE=${2:-../build/install/bin/glslangValidator}
+REMAPEXE=${3:-../build/install/bin/spirv-remap}
 HASERROR=0
-mkdir -p localResults
+mkdir -p $TARGETDIR
 
 if [ -a localtestlist ]
   then
@@ -55,13 +60,13 @@ diff -b $BASEDIR/hlsl.automap.frag.out $TARGETDIR/hlsl.automap.frag.out || HASER
 # multi-threaded test
 #
 echo Comparing single thread to multithread for all tests in current directory...
-$EXE -i -C *.vert *.geom *.frag *.tesc *.tese *.comp > singleThread.out
-$EXE -i -C *.vert *.geom *.frag *.tesc *.tese *.comp -t > multiThread.out
-diff singleThread.out multiThread.out || HASERROR=1
+$EXE -i -C *.vert *.geom *.frag *.tesc *.tese *.comp > $TARGETDIR/singleThread.out
+$EXE -i -C *.vert *.geom *.frag *.tesc *.tese *.comp -t > $TARGETDIR/multiThread.out
+diff $TARGETDIR/singleThread.out $TARGETDIR/multiThread.out || HASERROR=1
 if [ $HASERROR -eq 0 ]
 then
-    rm singleThread.out
-    rm multiThread.out
+    rm $TARGETDIR/singleThread.out
+    rm $TARGETDIR/multiThread.out
 fi
 
 #

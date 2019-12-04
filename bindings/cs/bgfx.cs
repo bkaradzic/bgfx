@@ -249,6 +249,11 @@ public static partial class bgfx
 		None                   = 0x0000000000000000,
 	
 		/// <summary>
+		/// Front counter-clockwise (default is clockwise).
+		/// </summary>
+		FrontCcw               = 0x0000008000000000,
+	
+		/// <summary>
 		/// Enable blend independent.
 		/// </summary>
 		BlendIndependent       = 0x0000000400000000,
@@ -2051,8 +2056,10 @@ public static partial class bgfx
 	{
 		public fixed byte name[256];
 		public ushort view;
-		public long cpuTimeElapsed;
-		public long gpuTimeElapsed;
+		public long cpuTimeBegin;
+		public long cpuTimeEnd;
+		public long gpuTimeBegin;
+		public long gpuTimeEnd;
 	}
 	
 	public unsafe struct EncoderStats

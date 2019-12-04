@@ -321,34 +321,6 @@ OpFunctionEnd
   SinglePassRunAndCheck<ReduceLoadSize>(test, test, true, false);
 }
 
-TEST_F(ReduceLoadSizeTest, extract_with_no_index) {
-  const std::string test =
-      R"(
-               OpCapability ImageGatherExtended
-               OpExtension ""
-               OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "P�Ma'" %12 %17
-               OpExecutionMode %4 OriginUpperLeft
-       %void = OpTypeVoid
-          %3 = OpTypeFunction %void
-      %float = OpTypeFloat 32
-  %_struct_7 = OpTypeStruct %float %float
-%_ptr_Input__struct_7 = OpTypePointer Input %_struct_7
-%_ptr_Output__struct_7 = OpTypePointer Output %_struct_7
-         %12 = OpVariable %_ptr_Input__struct_7 Input
-         %17 = OpVariable %_ptr_Output__struct_7 Output
-          %4 = OpFunction %void DontInline|Pure|Const %3
-        %245 = OpLabel
-         %13 = OpLoad %_struct_7 %12
-         %33 = OpCompositeExtract %_struct_7 %13
-               OpReturn
-               OpFunctionEnd
-  )";
-
-  auto result = SinglePassRunAndDisassemble<ReduceLoadSize>(test, true, true);
-  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
-}
-
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

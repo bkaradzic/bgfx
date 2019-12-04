@@ -30,7 +30,7 @@
 		<a href="https://github.com/zeux/meshoptimizer" target="_blank" rel="noopener">meshoptimizer</a>
 		</div>
 
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/105/three.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
 
 		<script src="../js/meshopt_decoder.js"></script>
 		<script src="GLTFLoader.js"></script>
@@ -71,8 +71,8 @@
 					console.log(e);
 				};
 
-				var loader = new THREE.GLTFLoader()
-				loader.setMeshoptDecoder(MeshoptDecoder)
+				var loader = new THREE.GLTFLoader();
+				loader.setMeshoptDecoder(MeshoptDecoder);
 				loader.load('pirate.glb', function (gltf) {
 					var bbox = new THREE.Box3().setFromObject(gltf.scene);
 					var scale = 2 / (bbox.max.y - bbox.min.y);

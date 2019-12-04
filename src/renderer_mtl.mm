@@ -3942,6 +3942,14 @@ namespace bgfx { namespace mtl
 						vp.zfar    = 1.0f;
 						rce.setViewport(vp);
 
+						MTLScissorRect sciRect = {
+							viewState.m_rect.m_x,
+							viewState.m_rect.m_y,
+							viewState.m_rect.m_width,
+							viewState.m_rect.m_height
+						};
+						rce.setScissorRect(sciRect);
+
 						if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK)
 							&& !clearWithRenderPass)
 						{
@@ -4219,8 +4227,14 @@ namespace bgfx { namespace mtl
 					 | BGFX_STATE_CULL_MASK
 					 | BGFX_STATE_ALPHA_REF_MASK
 					 | BGFX_STATE_PT_MASK
+					 | BGFX_STATE_FRONT_CCW
 					 ) & changedFlags)
 				{
+					if (BGFX_STATE_FRONT_CCW & changedFlags)
+					{
+						rce.setFrontFacingWinding((newFlags&BGFX_STATE_FRONT_CCW) ? MTLWindingCounterClockwise : MTLWindingClockwise);
+					}
+
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
 						const uint64_t pt = newFlags&BGFX_STATE_CULL_MASK;

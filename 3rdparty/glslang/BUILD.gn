@@ -33,6 +33,19 @@
 
 import("//build_overrides/glslang.gni")
 
+# Both Chromium and Fuchsia use by default a set of warning errors
+# that is far too strict to compile this project. These are also
+# typically appended after |cflags|, overriding target-specific
+# definitions. To work around this, determine which configs to
+# add and remove in order to succesfully build the project.
+if (defined(is_fuchsia_tree) && is_fuchsia_tree) {
+  _configs_to_remove = [ "//build/config:default_warnings" ]
+  _configs_to_add = []
+} else {
+  _configs_to_remove = [ "//build/config/compiler:chromium_code" ]
+  _configs_to_add = [ "//build/config/compiler:no_chromium_code" ]
+}
+
 spirv_tools_dir = glslang_spirv_tools_dir
 
 config("glslang_public") {
@@ -47,8 +60,10 @@ source_set("glslang_sources") {
   sources = [
     "OGLCompilersDLL/InitializeDll.cpp",
     "OGLCompilersDLL/InitializeDll.h",
+    "SPIRV/GLSL.ext.AMD.h",
     "SPIRV/GLSL.ext.EXT.h",
     "SPIRV/GLSL.ext.KHR.h",
+    "SPIRV/GLSL.ext.NV.h",
     "SPIRV/GLSL.std.450.h",
     "SPIRV/GlslangToSpv.cpp",
     "SPIRV/GlslangToSpv.h",
@@ -159,7 +174,7 @@ source_set("glslang_sources") {
   }
 
   if (is_clang) {
-    cflags_cc = [
+    cflags = [
       "-Wno-extra-semi",
       "-Wno-ignored-qualifiers",
       "-Wno-implicit-fallthrough",
@@ -181,6 +196,9 @@ source_set("glslang_sources") {
     "${spirv_tools_dir}:spvtools_opt",
     "${spirv_tools_dir}:spvtools_val",
   ]
+
+  configs -= _configs_to_remove
+  configs += _configs_to_add
 }
 
 source_set("glslang_default_resource_limits_sources") {
@@ -192,6 +210,9 @@ source_set("glslang_default_resource_limits_sources") {
     ":glslang_sources",
   ]
   public_configs = [ ":glslang_public" ]
+
+  configs -= _configs_to_remove
+  configs += _configs_to_add
 }
 
 executable("glslang_validator") {
@@ -207,6 +228,9 @@ executable("glslang_validator") {
     ":glslang_default_resource_limits_sources",
     ":glslang_sources",
   ]
+
+  configs -= _configs_to_remove
+  configs += _configs_to_add
 }
 
 executable("spirv-remap") {
@@ -217,4 +241,7 @@ executable("spirv-remap") {
   deps = [
     ":glslang_sources",
   ]
+
+  configs -= _configs_to_remove
+  configs += _configs_to_add
 }

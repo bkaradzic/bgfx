@@ -21,5 +21,7 @@ echo "Using SPIRV-Cross in: \"$SPIRV_CROSS_PATH\"."
 ./test_shaders.py shaders-hlsl --update --hlsl --opt --spirv-cross "$SPIRV_CROSS_PATH" || exit 1
 ./test_shaders.py shaders-hlsl-no-opt --update --hlsl --spirv-cross "$SPIRV_CROSS_PATH" || exit 1
 ./test_shaders.py shaders-reflection --reflect --update --spirv-cross "$SPIRV_CROSS_PATH" || exit 1
+./test_shaders.py shaders-ue4 --update --msl --spirv-cross "$SPIRV_CROSS_PATH" || exit 1
+./test_shaders.py shaders-ue4 --update --msl --opt --spirv-cross "$SPIRV_CROSS_PATH" || exit 1
 
 

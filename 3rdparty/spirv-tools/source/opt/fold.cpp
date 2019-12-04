@@ -56,6 +56,10 @@ uint32_t InstructionFolder::UnaryOperate(SpvOp opcode, uint32_t operand) const {
       return ~operand;
     case SpvOp::SpvOpLogicalNot:
       return !static_cast<bool>(operand);
+    case SpvOp::SpvOpUConvert:
+      return operand;
+    case SpvOp::SpvOpSConvert:
+      return operand;
     default:
       assert(false &&
              "Unsupported unary operation for OpSpecConstantOp instruction");
@@ -596,6 +600,8 @@ bool InstructionFolder::IsFoldableOpcode(SpvOp opcode) const {
     case SpvOp::SpvOpSMod:
     case SpvOp::SpvOpSNegate:
     case SpvOp::SpvOpSRem:
+    case SpvOp::SpvOpSConvert:
+    case SpvOp::SpvOpUConvert:
     case SpvOp::SpvOpUDiv:
     case SpvOp::SpvOpUGreaterThan:
     case SpvOp::SpvOpUGreaterThanEqual:

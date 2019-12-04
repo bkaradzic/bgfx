@@ -10,10 +10,10 @@ vec4 encodeRE8(float _r)
 {
 	float exponent = ceil(log2(_r) );
 	return vec4(_r / exp2(exponent)
-			, 0.0
-			, 0.0
-			, (exponent + 128.0) / 255.0
-			);
+		, 0.0
+		, 0.0
+		, (exponent + 128.0) / 255.0
+		);
 }
 
 float decodeRE8(vec4 _re8)
@@ -62,9 +62,9 @@ vec3 decodeNormalSphereMap(vec2 _encodedNormal)
 
 vec2 octahedronWrap(vec2 _val)
 {
-	// Reference:
-	// Octahedron normal vector encoding
-	// http://kriscg.blogspot.com/2014/04/octahedron-normal-vector-encoding.html
+	// Reference(s):
+	// - Octahedron normal vector encoding
+	//   https://web.archive.org/web/20191027010600/https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/comment-page-1/
 	return (1.0 - abs(_val.yx) )
 		 * mix(vec2_splat(-1.0), vec2_splat(1.0), vec2(greaterThanEqual(_val.xy, vec2_splat(0.0) ) ) );
 }
@@ -89,9 +89,9 @@ vec3 decodeNormalOctahedron(vec2 _encodedNormal)
 
 vec3 convertRGB2XYZ(vec3 _rgb)
 {
-	// Reference:
-	// RGB/XYZ Matrices
-	// http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+	// Reference(s):
+	// - RGB/XYZ Matrices
+	//   https://web.archive.org/web/20191027010220/http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
 	vec3 xyz;
 	xyz.x = dot(vec3(0.4124564, 0.3575761, 0.1804375), _rgb);
 	xyz.y = dot(vec3(0.2126729, 0.7151522, 0.0721750), _rgb);
@@ -110,16 +110,18 @@ vec3 convertXYZ2RGB(vec3 _xyz)
 
 vec3 convertXYZ2Yxy(vec3 _xyz)
 {
-	// Reference:
-	// http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_xyY.html
+	// Reference(s):
+	// - XYZ to xyY
+	//   https://web.archive.org/web/20191027010144/http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_xyY.html
 	float inv = 1.0/dot(_xyz, vec3(1.0, 1.0, 1.0) );
 	return vec3(_xyz.y, _xyz.x*inv, _xyz.y*inv);
 }
 
 vec3 convertYxy2XYZ(vec3 _Yxy)
 {
-	// Reference:
-	// http://www.brucelindbloom.com/index.html?Eqn_xyY_to_XYZ.html
+	// Reference(s):
+	// - xyY to XYZ
+	//   https://web.archive.org/web/20191027010036/http://www.brucelindbloom.com/index.html?Eqn_xyY_to_XYZ.html
 	vec3 xyz;
 	xyz.x = _Yxy.x*_Yxy.y/_Yxy.z;
 	xyz.y = _Yxy.x;
@@ -248,9 +250,9 @@ vec4 toFilmic(vec4 _rgba)
 
 vec3 toAcesFilmic(vec3 _rgb)
 {
-	// Reference:
-	// ACES Filmic Tone Mapping Curve
-	// https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+	// Reference(s):
+	// - ACES Filmic Tone Mapping Curve
+	//   https://web.archive.org/web/20191027010704/https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
 	float aa = 2.51f;
 	float bb = 0.03f;
 	float cc = 2.43f;
@@ -369,9 +371,9 @@ float random(vec2 _uv)
 
 vec3 fixCubeLookup(vec3 _v, float _lod, float _topLevelCubeSize)
 {
-	// Reference:
-	// Seamless cube-map filtering
-	// http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
+	// Reference(s):
+	// - Seamless cube-map filtering
+	//   https://web.archive.org/web/20190411181934/http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
 	float ax = abs(_v.x);
 	float ay = abs(_v.y);
 	float az = abs(_v.z);
@@ -392,22 +394,23 @@ vec2 texture2DBc5(sampler2D _sampler, vec2 _uv)
 #endif
 }
 
-mat3 cofactor( mat4 _m )
+mat3 cofactor(mat4 _m)
 {
 	// Reference:
 	// Cofactor of matrix. Use to transform normals. The code assumes the last column of _m is [0,0,0,1].
 	// https://www.shadertoy.com/view/3s33zj
 	// https://github.com/graphitemaster/normals_revisited
-    return mat3( 
-     _m[1][1]*_m[2][2]-_m[1][2]*_m[2][1],
-     _m[1][2]*_m[2][0]-_m[1][0]*_m[2][2],
-     _m[1][0]*_m[2][1]-_m[1][1]*_m[2][0],
-     _m[0][2]*_m[2][1]-_m[0][1]*_m[2][2],
-	 _m[0][0]*_m[2][2]-_m[0][2]*_m[2][0],
-     _m[0][1]*_m[2][0]-_m[0][0]*_m[2][1],
-     _m[0][1]*_m[1][2]-_m[0][2]*_m[1][1],
-     _m[0][2]*_m[1][0]-_m[0][0]*_m[1][2],
-     _m[0][0]*_m[1][1]-_m[0][1]*_m[1][0] );
+	return mat3(
+		_m[1][1]*_m[2][2]-_m[1][2]*_m[2][1],
+		_m[1][2]*_m[2][0]-_m[1][0]*_m[2][2],
+		_m[1][0]*_m[2][1]-_m[1][1]*_m[2][0],
+		_m[0][2]*_m[2][1]-_m[0][1]*_m[2][2],
+		_m[0][0]*_m[2][2]-_m[0][2]*_m[2][0],
+		_m[0][1]*_m[2][0]-_m[0][0]*_m[2][1],
+		_m[0][1]*_m[1][2]-_m[0][2]*_m[1][1],
+		_m[0][2]*_m[1][0]-_m[0][0]*_m[1][2],
+		_m[0][0]*_m[1][1]-_m[0][1]*_m[1][0]
+		);
 }
 
 #endif // __SHADERLIB_SH__

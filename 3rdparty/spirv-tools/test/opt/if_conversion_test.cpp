@@ -375,14 +375,12 @@ OpEntryPoint Vertex %1 "func" %2
 OpSelectionMerge %12 None
 OpBranchConditional %true %13 %12
 %13 = OpLabel
-OpBranchConditional %true %14 %15
+OpBranchConditional %true %14 %12
 %14 = OpLabel
 OpBranch %12
-%15 = OpLabel
-OpBranch %12
 %12 = OpLabel
-%16 = OpPhi %uint %uint_0 %11 %uint_0 %14 %uint_1 %15
-OpStore %2 %16
+%15 = OpPhi %uint %uint_0 %11 %uint_0 %13 %uint_1 %14
+OpStore %2 %15
 OpReturn
 OpFunctionEnd
 )";

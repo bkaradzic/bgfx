@@ -274,14 +274,33 @@ public:
 		bool multiview = false;
 		bool view_index_from_device_index = false;
 		bool dispatch_base = false;
+		bool texture_1D_as_2D = false;
 
 		// Enable use of MSL 2.0 indirect argument buffers.
 		// MSL 2.0 must also be enabled.
 		bool argument_buffers = false;
 
+		// Ensures vertex and instance indices start at zero. This reflects the behavior of HLSL with SV_VertexID and SV_InstanceID.
+		bool enable_base_index_zero = false;
+
 		// Fragment output in MSL must have at least as many components as the render pass.
 		// Add support to explicit pad out components.
 		bool pad_fragment_output_components = false;
+
+		// Specifies whether the iOS target version supports the [[base_vertex]] and [[base_instance]] attributes.
+		bool ios_support_base_vertex_instance = false;
+
+		// Use Metal's native frame-buffer fetch API for subpass inputs.
+		bool ios_use_framebuffer_fetch_subpasses = false;
+
+		// Enables use of "fma" intrinsic for invariant float math
+		bool invariant_float_math = false;
+
+		// Emulate texturecube_array with texture2d_array for iOS where this type is not available
+		bool emulate_cube_array = false;
+
+		// Allow user to enable decoration binding
+		bool enable_decoration_binding = false;
 
 		// Requires MSL 2.1, use the native support for texel buffers.
 		bool texture_buffer_native = false;
@@ -410,6 +429,10 @@ public:
 	// This corresponds to VK_KHR_push_descriptor in Vulkan.
 	void add_discrete_descriptor_set(uint32_t desc_set);
 
+	// If an argument buffer is large enough, it may need to be in the device storage space rather than
+	// constant. Opt-in to this behavior here on a per set basis.
+	void set_argument_buffer_device_address_space(uint32_t desc_set, bool device_storage);
+
 	// Query after compilation is done. This allows you to check if a location or set/binding combination was used by the shader.
 	bool is_msl_vertex_attribute_used(uint32_t location);
 
@@ -483,6 +506,11 @@ protected:
 		SPVFuncImplArrayOfArrayCopy5Dim = SPVFuncImplArrayCopyMultidimBase + 5,
 		SPVFuncImplArrayOfArrayCopy6Dim = SPVFuncImplArrayCopyMultidimBase + 6,
 		SPVFuncImplTexelBufferCoords,
+		SPVFuncImplImage2DAtomicCoords, // Emulate texture2D atomic operations
+		SPVFuncImplFMul,
+		SPVFuncImplFAdd,
+		SPVFuncImplCubemapTo2DArrayFace,
+		SPVFuncImplUnsafeArray, // Allow Metal to use the array<T> template to make arrays a value type
 		SPVFuncImplInverse4x4,
 		SPVFuncImplInverse3x3,
 		SPVFuncImplInverse2x2,
@@ -527,6 +555,9 @@ protected:
 		SPVFuncImplArrayCopyMultidimMax = 6
 	};
 
+	// If the underlying resource has been used for comparison then duplicate loads of that resource must be too
+	// Use Metal's native frame-buffer fetch API for subpass inputs.
+	void emit_texture_op(const Instruction &i) override;
 	void emit_binary_unord_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
 	void emit_instruction(const Instruction &instr) override;
 	void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
@@ -546,6 +577,16 @@ protected:
 	                        const std::string &qualifier = "", uint32_t base_offset = 0) override;
 	void emit_struct_padding_target(const SPIRType &type) override;
 	std::string type_to_glsl(const SPIRType &type, uint32_t id = 0) override;
+
+	// Allow Metal to use the array<T> template to make arrays a value type
+	std::string type_to_array_glsl(const SPIRType &type) override;
+
+	// Threadgroup arrays can't have a wrapper type
+	std::string variable_decl(const SPIRVariable &variable) override;
+
+	// GCC workaround of lambdas calling protected functions (for older GCC versions)
+	std::string variable_decl(const SPIRType &type, const std::string &name, uint32_t id = 0) override;
+
 	std::string image_type_glsl(const SPIRType &type, uint32_t id = 0) override;
 	std::string sampler_type(const SPIRType &type);
 	std::string builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage) override;
@@ -559,8 +600,12 @@ protected:
 	                             uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset, uint32_t bias,
 	                             uint32_t comp, uint32_t sample, uint32_t minlod, bool *p_forward) override;
 	std::string to_initializer_expression(const SPIRVariable &var) override;
+
 	std::string unpack_expression_type(std::string expr_str, const SPIRType &type, uint32_t physical_type_id,
 	                                   bool is_packed, bool row_major) override;
+
+	// Returns true for BuiltInSampleMask because gl_SampleMask[] is an array in SPIR-V, but [[sample_mask]] is a scalar in Metal.
+	bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const override;
 
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
 	bool skip_argument(uint32_t id) const override;
@@ -569,6 +614,10 @@ protected:
 	void replace_illegal_names() override;
 	void declare_undefined_values() override;
 	void declare_constant_arrays();
+
+	// Constant arrays of non-primitive types (i.e. matrices) won't link properly into Metal libraries
+	void declare_complex_constant_arrays();
+
 	bool is_patch_block(const SPIRType &type);
 	bool is_non_native_row_major_matrix(uint32_t id) override;
 	bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index) override;
@@ -609,6 +658,7 @@ protected:
 	uint32_t ensure_correct_builtin_type(uint32_t type_id, spv::BuiltIn builtin);
 	uint32_t ensure_correct_attribute_type(uint32_t type_id, uint32_t location);
 
+	void emit_custom_templates();
 	void emit_custom_functions();
 	void emit_resources();
 	void emit_specialization_constants_and_structs();
@@ -706,7 +756,10 @@ protected:
 	void analyze_sampled_image_usage();
 
 	bool emit_tessellation_access_chain(const uint32_t *ops, uint32_t length);
+	bool emit_tessellation_io_load(uint32_t result_type, uint32_t id, uint32_t ptr);
 	bool is_out_of_bounds_tessellation_level(uint32_t id_lhs);
+
+	void ensure_builtin(spv::StorageClass storage, spv::BuiltIn builtin);
 
 	void mark_implicit_builtin(spv::StorageClass storage, spv::BuiltIn builtin, uint32_t id);
 
@@ -758,9 +811,20 @@ protected:
 	VariableID patch_stage_out_var_id = 0;
 	VariableID stage_in_ptr_var_id = 0;
 	VariableID stage_out_ptr_var_id = 0;
+
+	// Handle HLSL-style 0-based vertex/instance index.
+	enum class TriState
+	{
+		Neutral,
+		No,
+		Yes
+	};
+	TriState needs_base_vertex_arg = TriState::Neutral;
+	TriState needs_base_instance_arg = TriState::Neutral;
+
 	bool has_sampled_images = false;
-	bool needs_vertex_idx_arg = false;
-	bool needs_instance_idx_arg = false;
+	bool builtin_declaration = false; // Handle HLSL-style 0-based vertex/instance index.
+	bool use_builtin_array = false; // Force the use of C style array declaration.
 	bool is_rasterization_disabled = false;
 	bool capture_output_to_buffer = false;
 	bool needs_swizzle_buffer_def = false;
@@ -789,12 +853,15 @@ protected:
 
 	std::unordered_set<uint32_t> buffers_requiring_array_length;
 	SmallVector<uint32_t> buffer_arrays;
+	std::unordered_set<uint32_t> atomic_image_vars; // Emulate texture2D atomic operations
 
 	// Must be ordered since array is in a specific order.
 	std::map<SetBindingPair, std::pair<uint32_t, uint32_t>> buffers_requiring_dynamic_offset;
 
 	uint32_t argument_buffer_ids[kMaxArgumentBuffers];
 	uint32_t argument_buffer_discrete_mask = 0;
+	uint32_t argument_buffer_device_storage_mask = 0;
+
 	void analyze_argument_buffers();
 	bool descriptor_set_is_argument_buffer(uint32_t desc_set) const;
 
@@ -819,6 +886,7 @@ protected:
 
 		CompilerMSL &compiler;
 		std::unordered_map<uint32_t, uint32_t> result_types;
+		std::unordered_map<uint32_t, uint32_t> image_pointers; // Emulate texture2D atomic operations
 		bool suppress_missing_prototypes = false;
 		bool uses_atomics = false;
 		bool uses_resource_write = false;

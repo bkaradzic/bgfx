@@ -238,7 +238,7 @@ bool TransformationReplaceBooleanConstantWithConstantBinary::IsApplicable(
 
   // The id use descriptor must identify some instruction
   auto instruction =
-      transformation::FindInstruction(message_.id_use_descriptor(), context);
+      FindInstructionContainingUse(message_.id_use_descriptor(), context);
   if (instruction == nullptr) {
     return false;
   }
@@ -268,7 +268,7 @@ TransformationReplaceBooleanConstantWithConstantBinary::ApplyWithResult(
       message_.fresh_id_for_binary_operation(), operands);
   opt::Instruction* result = binary_instruction.get();
   auto instruction_containing_constant_use =
-      transformation::FindInstruction(message_.id_use_descriptor(), context);
+      FindInstructionContainingUse(message_.id_use_descriptor(), context);
 
   // We want to insert the new instruction before the instruction that contains
   // the use of the boolean, but we need to go backwards one more instruction if

@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/fuzz/transformation_copy_object.h"
+#include <algorithm>
+#include <set>
+#include <unordered_set>
+
 #include "source/fuzz/data_descriptor.h"
+#include "source/fuzz/instruction_descriptor.h"
+#include "source/fuzz/transformation_copy_object.h"
 #include "test/fuzz/fuzz_test_util.h"
 
 namespace spvtools {
@@ -47,58 +52,77 @@ TEST(TransformationCopyObjectTest, CopyBooleanConstants) {
 
   FactManager fact_manager;
 
-  ASSERT_EQ(0, fact_manager.GetIdsForWhichSynonymsAreKnown().size());
+  ASSERT_EQ(0,
+            fact_manager.GetIdsForWhichSynonymsAreKnown(context.get()).size());
 
-  TransformationCopyObject copy_true(7, 5, 1, 100);
-  ASSERT_TRUE(copy_true.IsApplicable(context.get(), fact_manager));
-  copy_true.Apply(context.get(), &fact_manager);
+  {
+    TransformationCopyObject copy_true(
+        7, MakeInstructionDescriptor(5, SpvOpReturn, 0), 100);
+    ASSERT_TRUE(copy_true.IsApplicable(context.get(), fact_manager));
+    copy_true.Apply(context.get(), &fact_manager);
 
-  const std::set<uint32_t>& ids_for_which_synonyms_are_known =
-      fact_manager.GetIdsForWhichSynonymsAreKnown();
-  ASSERT_EQ(1, ids_for_which_synonyms_are_known.size());
-  ASSERT_TRUE(ids_for_which_synonyms_are_known.find(7) !=
-              ids_for_which_synonyms_are_known.end());
-  ASSERT_EQ(1, fact_manager.GetSynonymsForId(7).size());
-  protobufs::DataDescriptor descriptor_100 = MakeDataDescriptor(100, {});
-  ASSERT_TRUE(DataDescriptorEquals()(&descriptor_100,
-                                     &fact_manager.GetSynonymsForId(7)[0]));
+    std::vector<uint32_t> ids_for_which_synonyms_are_known =
+        fact_manager.GetIdsForWhichSynonymsAreKnown(context.get());
+    ASSERT_EQ(2, ids_for_which_synonyms_are_known.size());
+    ASSERT_TRUE(std::find(ids_for_which_synonyms_are_known.begin(),
+                          ids_for_which_synonyms_are_known.end(),
+                          7) != ids_for_which_synonyms_are_known.end());
+    ASSERT_EQ(2, fact_manager.GetSynonymsForId(7, context.get()).size());
+    protobufs::DataDescriptor descriptor_100 = MakeDataDescriptor(100, {});
+    ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(7, {}),
+                                          descriptor_100, context.get()));
+  }
 
-  TransformationCopyObject copy_false(8, 100, 1, 101);
-  ASSERT_TRUE(copy_false.IsApplicable(context.get(), fact_manager));
-  copy_false.Apply(context.get(), &fact_manager);
-  ASSERT_EQ(2, ids_for_which_synonyms_are_known.size());
-  ASSERT_TRUE(ids_for_which_synonyms_are_known.find(8) !=
-              ids_for_which_synonyms_are_known.end());
-  ASSERT_EQ(1, fact_manager.GetSynonymsForId(8).size());
-  protobufs::DataDescriptor descriptor_101 = MakeDataDescriptor(101, {});
-  ASSERT_TRUE(DataDescriptorEquals()(&descriptor_101,
-                                     &fact_manager.GetSynonymsForId(8)[0]));
+  {
+    TransformationCopyObject copy_false(
+        8, MakeInstructionDescriptor(100, SpvOpReturn, 0), 101);
+    ASSERT_TRUE(copy_false.IsApplicable(context.get(), fact_manager));
+    copy_false.Apply(context.get(), &fact_manager);
+    std::vector<uint32_t> ids_for_which_synonyms_are_known =
+        fact_manager.GetIdsForWhichSynonymsAreKnown(context.get());
+    ASSERT_EQ(4, ids_for_which_synonyms_are_known.size());
+    ASSERT_TRUE(std::find(ids_for_which_synonyms_are_known.begin(),
+                          ids_for_which_synonyms_are_known.end(),
+                          8) != ids_for_which_synonyms_are_known.end());
+    ASSERT_EQ(2, fact_manager.GetSynonymsForId(8, context.get()).size());
+    protobufs::DataDescriptor descriptor_101 = MakeDataDescriptor(101, {});
+    ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(8, {}),
+                                          descriptor_101, context.get()));
+  }
 
-  TransformationCopyObject copy_false_again(101, 5, 3, 102);
-  ASSERT_TRUE(copy_false_again.IsApplicable(context.get(), fact_manager));
-  copy_false_again.Apply(context.get(), &fact_manager);
-  ASSERT_EQ(3, ids_for_which_synonyms_are_known.size());
-  ASSERT_TRUE(ids_for_which_synonyms_are_known.find(101) !=
-              ids_for_which_synonyms_are_known.end());
-  ASSERT_EQ(1, fact_manager.GetSynonymsForId(101).size());
-  protobufs::DataDescriptor descriptor_102 = MakeDataDescriptor(102, {});
-  ASSERT_TRUE(DataDescriptorEquals()(&descriptor_102,
-                                     &fact_manager.GetSynonymsForId(101)[0]));
+  {
+    TransformationCopyObject copy_false_again(
+        101, MakeInstructionDescriptor(5, SpvOpReturn, 0), 102);
+    ASSERT_TRUE(copy_false_again.IsApplicable(context.get(), fact_manager));
+    copy_false_again.Apply(context.get(), &fact_manager);
+    std::vector<uint32_t> ids_for_which_synonyms_are_known =
+        fact_manager.GetIdsForWhichSynonymsAreKnown(context.get());
+    ASSERT_EQ(5, ids_for_which_synonyms_are_known.size());
+    ASSERT_TRUE(std::find(ids_for_which_synonyms_are_known.begin(),
+                          ids_for_which_synonyms_are_known.end(),
+                          101) != ids_for_which_synonyms_are_known.end());
+    ASSERT_EQ(3, fact_manager.GetSynonymsForId(101, context.get()).size());
+    protobufs::DataDescriptor descriptor_102 = MakeDataDescriptor(102, {});
+    ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(101, {}),
+                                          descriptor_102, context.get()));
+  }
 
-  TransformationCopyObject copy_true_again(7, 102, 1, 103);
-  ASSERT_TRUE(copy_true_again.IsApplicable(context.get(), fact_manager));
-  copy_true_again.Apply(context.get(), &fact_manager);
-  // This does re-uses an id for which synonyms are already known, so the count
-  // of such ids does not change.
-  ASSERT_EQ(3, ids_for_which_synonyms_are_known.size());
-  ASSERT_TRUE(ids_for_which_synonyms_are_known.find(7) !=
-              ids_for_which_synonyms_are_known.end());
-  ASSERT_EQ(2, fact_manager.GetSynonymsForId(7).size());
-  protobufs::DataDescriptor descriptor_103 = MakeDataDescriptor(103, {});
-  ASSERT_TRUE(DataDescriptorEquals()(&descriptor_103,
-                                     &fact_manager.GetSynonymsForId(7)[0]) ||
-              DataDescriptorEquals()(&descriptor_103,
-                                     &fact_manager.GetSynonymsForId(7)[1]));
+  {
+    TransformationCopyObject copy_true_again(
+        7, MakeInstructionDescriptor(102, SpvOpReturn, 0), 103);
+    ASSERT_TRUE(copy_true_again.IsApplicable(context.get(), fact_manager));
+    copy_true_again.Apply(context.get(), &fact_manager);
+    std::vector<uint32_t> ids_for_which_synonyms_are_known =
+        fact_manager.GetIdsForWhichSynonymsAreKnown(context.get());
+    ASSERT_EQ(6, ids_for_which_synonyms_are_known.size());
+    ASSERT_TRUE(std::find(ids_for_which_synonyms_are_known.begin(),
+                          ids_for_which_synonyms_are_known.end(),
+                          7) != ids_for_which_synonyms_are_known.end());
+    ASSERT_EQ(3, fact_manager.GetSynonymsForId(7, context.get()).size());
+    protobufs::DataDescriptor descriptor_103 = MakeDataDescriptor(103, {});
+    ASSERT_TRUE(fact_manager.IsSynonymous(MakeDataDescriptor(7, {}),
+                                          descriptor_103, context.get()));
+  }
 
   std::string after_transformation = R"(
                OpCapability Shader
@@ -318,90 +342,113 @@ TEST(TransformationCopyObjectTest, CheckIllegalCases) {
   FactManager fact_manager;
 
   // Inapplicable because %18 is decorated.
-  ASSERT_FALSE(TransformationCopyObject(18, 21, 0, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   18, MakeInstructionDescriptor(21, SpvOpAccessChain, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because %77 is decorated.
-  ASSERT_FALSE(TransformationCopyObject(17, 17, 1, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   77, MakeInstructionDescriptor(77, SpvOpBranch, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because %80 is decorated.
-  ASSERT_FALSE(TransformationCopyObject(80, 77, 0, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   80, MakeInstructionDescriptor(77, SpvOpIAdd, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because %84 is not available at the requested point
-  ASSERT_FALSE(TransformationCopyObject(84, 32, 1, 200)
-                   .IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(
+      TransformationCopyObject(
+          84, MakeInstructionDescriptor(32, SpvOpCompositeExtract, 0), 200)
+          .IsApplicable(context.get(), fact_manager));
 
   // Fine because %84 is available at the requested point
-  ASSERT_TRUE(TransformationCopyObject(84, 32, 2, 200)
-                  .IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(
+      TransformationCopyObject(
+          84, MakeInstructionDescriptor(32, SpvOpCompositeConstruct, 0), 200)
+          .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because id %9 is already in use
-  ASSERT_FALSE(TransformationCopyObject(84, 32, 2, 9)
-                   .IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(
+      TransformationCopyObject(
+          84, MakeInstructionDescriptor(32, SpvOpCompositeConstruct, 0), 9)
+          .IsApplicable(context.get(), fact_manager));
 
-  // Inapplicable because the requested point is not in a block
-  ASSERT_FALSE(TransformationCopyObject(84, 86, 3, 200)
+  // Inapplicable because the requested point does not exist
+  ASSERT_FALSE(TransformationCopyObject(
+                   84, MakeInstructionDescriptor(86, SpvOpReturn, 2), 200)
                    .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because %9 is not in a function
-  ASSERT_FALSE(TransformationCopyObject(9, 9, 1, 200)
-                   .IsApplicable(context.get(), fact_manager));
-
-  // Inapplicable because %9 is not in a function
-  ASSERT_FALSE(TransformationCopyObject(9, 9, 1, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   9, MakeInstructionDescriptor(9, SpvOpTypeInt, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because the insert point is right before, or inside, a chunk
   // of OpPhis
-  ASSERT_FALSE(TransformationCopyObject(9, 30, 1, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   9, MakeInstructionDescriptor(30, SpvOpPhi, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
-  ASSERT_FALSE(TransformationCopyObject(9, 99, 1, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   9, MakeInstructionDescriptor(99, SpvOpPhi, 1), 200)
                    .IsApplicable(context.get(), fact_manager));
 
   // OK, because the insert point is just after a chunk of OpPhis.
-  ASSERT_TRUE(TransformationCopyObject(9, 96, 1, 200)
+  ASSERT_TRUE(TransformationCopyObject(
+                  9, MakeInstructionDescriptor(96, SpvOpAccessChain, 0), 200)
                   .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because the insert point is right after an OpSelectionMerge
-  ASSERT_FALSE(TransformationCopyObject(9, 58, 2, 200)
-                   .IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(
+      TransformationCopyObject(
+          9, MakeInstructionDescriptor(58, SpvOpBranchConditional, 0), 200)
+          .IsApplicable(context.get(), fact_manager));
 
   // OK, because the insert point is right before the OpSelectionMerge
-  ASSERT_TRUE(TransformationCopyObject(9, 58, 1, 200)
+  ASSERT_TRUE(TransformationCopyObject(
+                  9, MakeInstructionDescriptor(58, SpvOpSelectionMerge, 0), 200)
                   .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because the insert point is right after an OpSelectionMerge
-  ASSERT_FALSE(TransformationCopyObject(9, 43, 2, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   9, MakeInstructionDescriptor(43, SpvOpSwitch, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
 
   // OK, because the insert point is right before the OpSelectionMerge
-  ASSERT_TRUE(TransformationCopyObject(9, 43, 1, 200)
+  ASSERT_TRUE(TransformationCopyObject(
+                  9, MakeInstructionDescriptor(43, SpvOpSelectionMerge, 0), 200)
                   .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because the insert point is right after an OpLoopMerge
-  ASSERT_FALSE(TransformationCopyObject(9, 40, 2, 200)
-                   .IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(
+      TransformationCopyObject(
+          9, MakeInstructionDescriptor(40, SpvOpBranchConditional, 0), 200)
+          .IsApplicable(context.get(), fact_manager));
 
   // OK, because the insert point is right before the OpLoopMerge
-  ASSERT_TRUE(TransformationCopyObject(9, 40, 1, 200)
+  ASSERT_TRUE(TransformationCopyObject(
+                  9, MakeInstructionDescriptor(40, SpvOpLoopMerge, 0), 200)
                   .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because id %300 does not exist
-  ASSERT_FALSE(TransformationCopyObject(300, 40, 1, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   300, MakeInstructionDescriptor(40, SpvOpLoopMerge, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
 
   // Inapplicable because the following instruction is OpVariable
-  ASSERT_FALSE(TransformationCopyObject(9, 180, 0, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   9, MakeInstructionDescriptor(180, SpvOpVariable, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
-  ASSERT_FALSE(TransformationCopyObject(9, 181, 0, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   9, MakeInstructionDescriptor(181, SpvOpVariable, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
-  ASSERT_FALSE(TransformationCopyObject(9, 182, 0, 200)
+  ASSERT_FALSE(TransformationCopyObject(
+                   9, MakeInstructionDescriptor(182, SpvOpVariable, 0), 200)
                    .IsApplicable(context.get(), fact_manager));
 
   // OK, because this is just past the group of OpVariable instructions.
-  ASSERT_TRUE(TransformationCopyObject(9, 182, 1, 200)
+  ASSERT_TRUE(TransformationCopyObject(
+                  9, MakeInstructionDescriptor(182, SpvOpAccessChain, 0), 200)
                   .IsApplicable(context.get(), fact_manager));
 }
 
@@ -470,13 +517,20 @@ TEST(TransformationCopyObjectTest, MiscellaneousCopies) {
   FactManager fact_manager;
 
   std::vector<TransformationCopyObject> transformations = {
-      TransformationCopyObject(19, 22, 1, 100),
-      TransformationCopyObject(22, 22, 1, 101),
-      TransformationCopyObject(12, 22, 1, 102),
-      TransformationCopyObject(11, 22, 1, 103),
-      TransformationCopyObject(16, 22, 1, 104),
-      TransformationCopyObject(8, 22, 1, 105),
-      TransformationCopyObject(17, 22, 1, 106)};
+      TransformationCopyObject(19, MakeInstructionDescriptor(22, SpvOpStore, 0),
+                               100),
+      TransformationCopyObject(
+          22, MakeInstructionDescriptor(22, SpvOpCopyObject, 0), 101),
+      TransformationCopyObject(
+          12, MakeInstructionDescriptor(22, SpvOpCopyObject, 0), 102),
+      TransformationCopyObject(
+          11, MakeInstructionDescriptor(22, SpvOpCopyObject, 0), 103),
+      TransformationCopyObject(
+          16, MakeInstructionDescriptor(22, SpvOpCopyObject, 0), 104),
+      TransformationCopyObject(
+          8, MakeInstructionDescriptor(22, SpvOpCopyObject, 0), 105),
+      TransformationCopyObject(
+          17, MakeInstructionDescriptor(22, SpvOpCopyObject, 0), 106)};
 
   for (auto& transformation : transformations) {
     ASSERT_TRUE(transformation.IsApplicable(context.get(), fact_manager));
