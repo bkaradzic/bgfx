@@ -1819,7 +1819,7 @@ OpFunctionEnd
 %9 = OpLabel
 OpBranch %10
 %10 = OpLabel
-OpLoopMerge %12 %13 None
+OpLoopMerge %12 %10 None
 OpBranch %13
 %13 = OpLabel
 OpBranchConditional %true %10 %12
@@ -1980,7 +1980,7 @@ OpFunctionEnd
 OpBranch %13
 %13 = OpLabel
 %14 = OpCopyObject %bool %false
-OpLoopMerge %16 %19 None
+OpLoopMerge %16 %13 None
 OpBranch %17
 %17 = OpLabel
 %18 = OpCopyObject %bool %true
@@ -2145,7 +2145,7 @@ OpBranch %19
 %19 = OpLabel
 %20 = OpCopyObject %int %int_2
 %25 = OpCopyObject %int %int_0
-OpLoopMerge %23 %26 None
+OpLoopMerge %23 %19 None
 OpBranch %26
 %27 = OpLabel
 %28 = OpCopyObject %int %int_1

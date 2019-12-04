@@ -14,9 +14,8 @@
 
 #include "source/val/function.h"
 
-#include <cassert>
-
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
@@ -99,7 +98,7 @@ spv_result_t Function::RegisterLoopMerge(uint32_t merge_id,
 spv_result_t Function::RegisterSelectionMerge(uint32_t merge_id) {
   RegisterBlock(merge_id, false);
   BasicBlock& merge_block = blocks_.at(merge_id);
-  current_block_->set_type(kBlockTypeHeader);
+  current_block_->set_type(kBlockTypeSelection);
   merge_block.set_type(kBlockTypeMerge);
   merge_block_header_[&merge_block] = current_block_;
 
@@ -344,7 +343,7 @@ int Function::GetBlockDepth(BasicBlock* bb) {
     BasicBlock* header = merge_block_header_[bb];
     assert(header);
     block_depth_[bb] = GetBlockDepth(header);
-  } else if (bb_dom->is_type(kBlockTypeHeader) ||
+  } else if (bb_dom->is_type(kBlockTypeSelection) ||
              bb_dom->is_type(kBlockTypeLoop)) {
     // The dominator of the given block is a header block. So, the nesting
     // depth of this block is: 1 + nesting depth of the header.

@@ -12,7 +12,7 @@ LIBRARY_OBJECTS=$(LIBRARY_SOURCES:%=$(BUILD)/%.o)
 DEMO_SOURCES=$(wildcard demo/*.c demo/*.cpp) tools/meshloader.cpp
 DEMO_OBJECTS=$(DEMO_SOURCES:%=$(BUILD)/%.o)
 
-GLTFPACK_SOURCES=tools/gltfpack.cpp tools/meshloader.cpp
+GLTFPACK_SOURCES=tools/gltfpack.cpp tools/meshloader.cpp tools/basistoktx.cpp
 GLTFPACK_OBJECTS=$(GLTFPACK_SOURCES:%=$(BUILD)/%.o)
 
 OBJECTS=$(LIBRARY_OBJECTS) $(DEMO_OBJECTS) $(GLTFPACK_OBJECTS)

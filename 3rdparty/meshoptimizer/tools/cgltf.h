@@ -1,7 +1,7 @@
 /**
  * cgltf - a single-file glTF 2.0 parser written in C99.
  *
- * Version: 1.3
+ * Version: 1.4
  *
  * Website: https://github.com/jkuhlmann/cgltf
  *
@@ -125,6 +125,7 @@ typedef enum cgltf_result
 	cgltf_result_file_not_found,
 	cgltf_result_io_error,
 	cgltf_result_out_of_memory,
+	cgltf_result_legacy_gltf,
 } cgltf_result;
 
 typedef enum cgltf_buffer_view_type
@@ -420,7 +421,7 @@ typedef struct cgltf_camera {
 	union {
 		cgltf_camera_perspective perspective;
 		cgltf_camera_orthographic orthographic;
-	};
+	} data;
 	cgltf_extras extras;
 } cgltf_camera;
 
@@ -763,7 +764,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 	uint32_t version = tmp;
 	if (version != GlbVersion)
 	{
-		return cgltf_result_unknown_format;
+		return version < GlbVersion ? cgltf_result_legacy_gltf : cgltf_result_unknown_format;
 	}
 
 	// Total length
@@ -1707,11 +1708,12 @@ cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size 
 
 #define CGLTF_ERROR_JSON -1
 #define CGLTF_ERROR_NOMEM -2
+#define CGLTF_ERROR_LEGACY -3
 
 #define CGLTF_CHECK_TOKTYPE(tok_, type_) if ((tok_).type != (type_)) { return CGLTF_ERROR_JSON; }
 #define CGLTF_CHECK_KEY(tok_) if ((tok_).type != JSMN_STRING || (tok_).size == 0) { return CGLTF_ERROR_JSON; } /* checking size for 0 verifies that a value follows the key */
 
-#define CGLTF_PTRINDEX(type, idx) (type*)(cgltf_size)(idx + 1)
+#define CGLTF_PTRINDEX(type, idx) (type*)((cgltf_size)idx + 1)
 #define CGLTF_PTRFIXUP(var, data, size) if (var) { if ((cgltf_size)var > size) { return CGLTF_ERROR_JSON; } var = &data[(cgltf_size)var-1]; }
 #define CGLTF_PTRFIXUP_REQ(var, data, size) if (!var || (cgltf_size)var > size) { return CGLTF_ERROR_JSON; } var = &data[(cgltf_size)var-1];
 
@@ -1727,7 +1729,7 @@ static int cgltf_json_to_int(jsmntok_t const* tok, const uint8_t* json_chunk)
 {
 	CGLTF_CHECK_TOKTYPE(*tok, JSMN_PRIMITIVE);
 	char tmp[128];
-	int size = (cgltf_size)(tok->end - tok->start) < sizeof(tmp) ? tok->end - tok->start : sizeof(tmp) - 1;
+	int size = (cgltf_size)(tok->end - tok->start) < sizeof(tmp) ? tok->end - tok->start : (int)(sizeof(tmp) - 1);
 	strncpy(tmp, (const char*)json_chunk + tok->start, size);
 	tmp[size] = 0;
 	return atoi(tmp);
@@ -1737,7 +1739,7 @@ static cgltf_float cgltf_json_to_float(jsmntok_t const* tok, const uint8_t* json
 {
 	CGLTF_CHECK_TOKTYPE(*tok, JSMN_PRIMITIVE);
 	char tmp[128];
-	int size = (cgltf_size)(tok->end - tok->start) < sizeof(tmp) ? tok->end - tok->start : sizeof(tmp) - 1;
+	int size = (cgltf_size)(tok->end - tok->start) < sizeof(tmp) ? tok->end - tok->start : (int)(sizeof(tmp) - 1);
 	strncpy(tmp, (const char*)json_chunk + tok->start, size);
 	tmp[size] = 0;
 	return (cgltf_float)atof(tmp);
@@ -1826,7 +1828,10 @@ static int cgltf_parse_json_string(cgltf_options* options, jsmntok_t const* toke
 static int cgltf_parse_json_array(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, size_t element_size, void** out_array, cgltf_size* out_size)
 {
 	(void)json_chunk;
-	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_ARRAY);
+	if (tokens[i].type != JSMN_ARRAY)
+	{
+		return tokens[i].type == JSMN_OBJECT ? CGLTF_ERROR_LEGACY : CGLTF_ERROR_JSON;
+	}
 	if (*out_array)
 	{
 		return CGLTF_ERROR_JSON;
@@ -1865,7 +1870,7 @@ static int cgltf_parse_json_string_array(cgltf_options* options, jsmntok_t const
 static void cgltf_parse_attribute_type(const char* name, cgltf_attribute_type* out_type, int* out_index)
 {
 	const char* us = strchr(name, '_');
-	size_t len = us ? us - name : strlen(name);
+	size_t len = us ? (size_t)(us - name) : strlen(name);
 
 	if (len == 8 && strncmp(name, "POSITION", 8) == 0)
 	{
@@ -3284,30 +3289,30 @@ static int cgltf_parse_json_camera(cgltf_options* options, jsmntok_t const* toke
 				if (cgltf_json_strcmp(tokens+i, json_chunk, "aspectRatio") == 0)
 				{
 					++i;
-					out_camera->perspective.aspect_ratio = cgltf_json_to_float(tokens + i, json_chunk);
+					out_camera->data.perspective.aspect_ratio = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "yfov") == 0)
 				{
 					++i;
-					out_camera->perspective.yfov = cgltf_json_to_float(tokens + i, json_chunk);
+					out_camera->data.perspective.yfov = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "zfar") == 0)
 				{
 					++i;
-					out_camera->perspective.zfar = cgltf_json_to_float(tokens + i, json_chunk);
+					out_camera->data.perspective.zfar = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "znear") == 0)
 				{
 					++i;
-					out_camera->perspective.znear = cgltf_json_to_float(tokens + i, json_chunk);
+					out_camera->data.perspective.znear = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
 				{
-					i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_camera->perspective.extras);
+					i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_camera->data.perspective.extras);
 				}
 				else
 				{
@@ -3338,30 +3343,30 @@ static int cgltf_parse_json_camera(cgltf_options* options, jsmntok_t const* toke
 				if (cgltf_json_strcmp(tokens+i, json_chunk, "xmag") == 0)
 				{
 					++i;
-					out_camera->orthographic.xmag = cgltf_json_to_float(tokens + i, json_chunk);
+					out_camera->data.orthographic.xmag = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "ymag") == 0)
 				{
 					++i;
-					out_camera->orthographic.ymag = cgltf_json_to_float(tokens + i, json_chunk);
+					out_camera->data.orthographic.ymag = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "zfar") == 0)
 				{
 					++i;
-					out_camera->orthographic.zfar = cgltf_json_to_float(tokens + i, json_chunk);
+					out_camera->data.orthographic.zfar = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "znear") == 0)
 				{
 					++i;
-					out_camera->orthographic.znear = cgltf_json_to_float(tokens + i, json_chunk);
+					out_camera->data.orthographic.znear = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}
 				else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
 				{
-					i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_camera->orthographic.extras);
+					i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_camera->data.orthographic.extras);
 				}
 				else
 				{
@@ -4049,6 +4054,11 @@ static int cgltf_parse_json_asset(cgltf_options* options, jsmntok_t const* token
 		}
 	}
 
+	if (out_asset->version && atof(out_asset->version) < 2)
+	{
+		return CGLTF_ERROR_LEGACY;
+	}
+
 	return i;
 }
 
@@ -4315,7 +4325,13 @@ cgltf_result cgltf_parse_json(cgltf_options* options, const uint8_t* json_chunk,
 	if (i < 0)
 	{
 		cgltf_free(data);
-		return (i == CGLTF_ERROR_NOMEM) ? cgltf_result_out_of_memory : cgltf_result_invalid_gltf;
+
+		switch (i)
+		{
+		case CGLTF_ERROR_NOMEM: return cgltf_result_out_of_memory;
+		case CGLTF_ERROR_LEGACY: return cgltf_result_legacy_gltf;
+		default: return cgltf_result_invalid_gltf;
+		}
 	}
 
 	if (cgltf_fixup_pointers(data) < 0)

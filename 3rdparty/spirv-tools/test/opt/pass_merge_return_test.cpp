@@ -1390,7 +1390,6 @@ TEST_F(MergeReturnPassTest, SerialLoopsUpdateBlockMapping) {
                OpLoopMerge %36 %40 None
                OpBranch %35
          %35 = OpLabel
-               OpSelectionMerge %40 None
                OpBranchConditional %77 %39 %40
          %39 = OpLabel
                OpReturnValue %16
@@ -1402,7 +1401,6 @@ TEST_F(MergeReturnPassTest, SerialLoopsUpdateBlockMapping) {
                OpLoopMerge %45 %49 None
                OpBranch %44
          %44 = OpLabel
-               OpSelectionMerge %49 None
                OpBranchConditional %77 %48 %49
          %48 = OpLabel
                OpReturnValue %16
@@ -1415,7 +1413,6 @@ TEST_F(MergeReturnPassTest, SerialLoopsUpdateBlockMapping) {
                OpLoopMerge %64 %68 None
                OpBranch %63
          %63 = OpLabel
-               OpSelectionMerge %68 None
                OpBranchConditional %77 %67 %68
          %67 = OpLabel
                OpReturnValue %16
@@ -1813,12 +1810,14 @@ TEST_F(MergeReturnPassTest, PhiInSecondMerge) {
                OpLoopMerge %11 %12 None
                OpBranch %13
          %13 = OpLabel
-               OpLoopMerge %12 %14 None
-               OpBranchConditional %8 %15 %12
+               OpLoopMerge %18 %14 None
+               OpBranchConditional %8 %15 %18
          %15 = OpLabel
                OpReturn
          %14 = OpLabel
                OpBranch %13
+         %18 = OpLabel
+               OpBranch %12
          %12 = OpLabel
          %16 = OpUndef %float
                OpBranchConditional %8 %10 %11

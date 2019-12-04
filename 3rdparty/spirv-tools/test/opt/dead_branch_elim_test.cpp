@@ -2798,7 +2798,9 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<DeadBranchElimPass>(predefs + body, true);
+  // The selection merge in the loop naming the continue target as merge is
+  // invalid, but handled by this pass so validation is disabled.
+  SinglePassRunAndMatch<DeadBranchElimPass>(predefs + body, false);
 }
 
 TEST_F(DeadBranchElimTest, SelectionMergeWithNestedLoop) {
@@ -2942,7 +2944,9 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<DeadBranchElimPass>(body, true);
+  // The selection merge in the loop naming the continue target as merge is
+  // invalid, but handled by this pass so validation is disabled.
+  SinglePassRunAndMatch<DeadBranchElimPass>(body, false);
 }
 
 TEST_F(DeadBranchElimTest, UnreachableMergeAndContinueSameBlock) {

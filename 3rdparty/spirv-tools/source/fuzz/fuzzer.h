@@ -32,11 +32,16 @@ class Fuzzer {
   enum class FuzzerResultStatus {
     kComplete,
     kFailedToCreateSpirvToolsInterface,
+    kFuzzerPassLedToInvalidModule,
     kInitialBinaryInvalid,
   };
 
-  // Constructs a fuzzer from the given target environment.
-  explicit Fuzzer(spv_target_env env);
+  // Constructs a fuzzer from the given target environment |env|.  |seed| is a
+  // seed for pseudo-random number generation.
+  // |validate_after_each_fuzzer_pass| controls whether the validator will be
+  // invoked after every fuzzer pass is applied.
+  explicit Fuzzer(spv_target_env env, uint32_t seed,
+                  bool validate_after_each_fuzzer_pass);
 
   // Disables copy/move constructor/assignment operations.
   Fuzzer(const Fuzzer&) = delete;
@@ -51,14 +56,13 @@ class Fuzzer {
   void SetMessageConsumer(MessageConsumer consumer);
 
   // Transforms |binary_in| to |binary_out| by running a number of randomized
-  // fuzzer passes, controlled via |options|.  Initial facts about the input
-  // binary and the context in which it will execute are provided via
-  // |initial_facts|.  The transformation sequence that was applied is returned
-  // via |transformation_sequence_out|.
+  // fuzzer passes.  Initial facts about the input binary and the context in
+  // which it will execute are provided via |initial_facts|.  The transformation
+  // sequence that was applied is returned via |transformation_sequence_out|.
   FuzzerResultStatus Run(
       const std::vector<uint32_t>& binary_in,
       const protobufs::FactSequence& initial_facts,
-      spv_const_fuzzer_options options, std::vector<uint32_t>* binary_out,
+      std::vector<uint32_t>* binary_out,
       protobufs::TransformationSequence* transformation_sequence_out) const;
 
  private:

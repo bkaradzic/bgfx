@@ -229,6 +229,79 @@ static void decodeVertexRejectMalformedHeaders()
 	assert(meshopt_decodeVertexBuffer(decoded, vertex_count, sizeof(PV), &brokenbuffer[0], brokenbuffer.size()) < 0);
 }
 
+static void decodeVertexBitGroups()
+{
+	unsigned char data[16 * 4];
+
+	// this tests 0/2/4/8 bit groups in one stream
+	for (size_t i = 0; i < 16; ++i)
+	{
+		data[i * 4 + 0] = 0;
+		data[i * 4 + 1] = (unsigned char)(i * 1);
+		data[i * 4 + 2] = (unsigned char)(i * 2);
+		data[i * 4 + 3] = (unsigned char)(i * 8);
+	}
+
+	std::vector<unsigned char> buffer(meshopt_encodeVertexBufferBound(16, 4));
+	buffer.resize(meshopt_encodeVertexBuffer(&buffer[0], buffer.size(), data, 16, 4));
+
+	unsigned char decoded[16 * 4];
+	assert(meshopt_decodeVertexBuffer(decoded, 16, 4, &buffer[0], buffer.size()) == 0);
+	assert(memcmp(decoded, data, sizeof(data)) == 0);
+}
+
+static void decodeVertexBitGroupSentinels()
+{
+	unsigned char data[16 * 4];
+
+	// this tests 0/2/4/8 bit groups and sentinels in one stream
+	for (size_t i = 0; i < 16; ++i)
+	{
+		if (i == 7 || i == 13)
+		{
+			data[i * 4 + 0] = 42;
+			data[i * 4 + 1] = 42;
+			data[i * 4 + 2] = 42;
+			data[i * 4 + 3] = 42;
+		}
+		else
+		{
+			data[i * 4 + 0] = 0;
+			data[i * 4 + 1] = (unsigned char)(i * 1);
+			data[i * 4 + 2] = (unsigned char)(i * 2);
+			data[i * 4 + 3] = (unsigned char)(i * 8);
+		}
+	}
+
+	std::vector<unsigned char> buffer(meshopt_encodeVertexBufferBound(16, 4));
+	buffer.resize(meshopt_encodeVertexBuffer(&buffer[0], buffer.size(), data, 16, 4));
+
+	unsigned char decoded[16 * 4];
+	assert(meshopt_decodeVertexBuffer(decoded, 16, 4, &buffer[0], buffer.size()) == 0);
+	assert(memcmp(decoded, data, sizeof(data)) == 0);
+}
+
+static void decodeVertexLarge()
+{
+	unsigned char data[128 * 4];
+
+	// this tests 0/2/4/8 bit groups in one stream
+	for (size_t i = 0; i < 128; ++i)
+	{
+		data[i * 4 + 0] = 0;
+		data[i * 4 + 1] = (unsigned char)(i * 1);
+		data[i * 4 + 2] = (unsigned char)(i * 2);
+		data[i * 4 + 3] = (unsigned char)(i * 8);
+	}
+
+	std::vector<unsigned char> buffer(meshopt_encodeVertexBufferBound(128, 4));
+	buffer.resize(meshopt_encodeVertexBuffer(&buffer[0], buffer.size(), data, 128, 4));
+
+	unsigned char decoded[128 * 4];
+	assert(meshopt_decodeVertexBuffer(decoded, 128, 4, &buffer[0], buffer.size()) == 0);
+	assert(memcmp(decoded, data, sizeof(data)) == 0);
+}
+
 static void clusterBoundsDegenerate()
 {
 	const float vbd[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -310,6 +383,8 @@ static void customAllocator()
 	// customAlloc & customFree should not get called anymore
 	meshopt_optimizeVertexFetch(vb, ib, 3, vb, 3, 12);
 	assert(allocCount == 6 && freeCount == 6);
+
+	allocCount = freeCount = 0;
 }
 
 static void emptyMesh()
@@ -356,7 +431,7 @@ static void simplifyPointsStuck()
 	assert(meshopt_simplifyPoints(0, vb, 3, 12, 0) == 0);
 }
 
-void runTests()
+static void runTestsOnce()
 {
 	decodeIndexV0();
 	decodeIndex16();
@@ -370,6 +445,9 @@ void runTests()
 	decodeVertexMemorySafe();
 	decodeVertexRejectExtraBytes();
 	decodeVertexRejectMalformedHeaders();
+	decodeVertexBitGroups();
+	decodeVertexBitGroupSentinels();
+	decodeVertexLarge();
 
 	clusterBoundsDegenerate();
 
@@ -380,4 +458,26 @@ void runTests()
 	simplifyStuck();
 	simplifySloppyStuck();
 	simplifyPointsStuck();
+}
+
+namespace meshopt
+{
+extern unsigned int cpuid;
+}
+
+void runTests()
+{
+	runTestsOnce();
+
+#if !(defined(__AVX__) || defined(__SSSE3__)) && (defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__))
+	// When SSSE3/AVX support isn't enabled unconditionally, we use a cpuid-based fallback
+	// It's useful to be able to test scalar code in this case, so we temporarily fake the feature bits
+	// and restore them later
+	unsigned int cpuid = meshopt::cpuid;
+	meshopt::cpuid = 0;
+
+	runTestsOnce();
+
+	meshopt::cpuid = cpuid;
+#endif
 }

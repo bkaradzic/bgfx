@@ -34,6 +34,9 @@ struct spv_fuzzer_options_t {
 
   // See spvFuzzerOptionsSetShrinkerStepLimit.
   uint32_t shrinker_step_limit;
+
+  // See spvFuzzerOptionsValidateAfterEveryPass.
+  bool fuzzer_pass_validation_enabled;
 };
 
 #endif  // SOURCE_SPIRV_FUZZER_OPTIONS_H_

@@ -159,18 +159,20 @@ const std::string kComplexShader = R"(
          %65 = OpAccessChain %13 %11 %64
          %66 = OpLoad %6 %65
          %67 = OpSGreaterThan %29 %84 %66
-               OpSelectionMerge %69 None
+               OpSelectionMerge %1000 None
                OpBranchConditional %67 %68 %72
          %68 = OpLabel
          %71 = OpIAdd %6 %84 %26
-               OpBranch %69
+               OpBranch %1000
          %72 = OpLabel
          %74 = OpIAdd %6 %84 %64
         %205 = OpCopyObject %6 %74
-               OpBranch %69
-         %69 = OpLabel
+               OpBranch %1000
+       %1000 = OpLabel
          %86 = OpPhi %6 %71 %68 %74 %72
         %301 = OpPhi %6 %71 %68 %15 %72
+               OpBranch %69
+         %69 = OpLabel
                OpBranch %20
          %22 = OpLabel
          %75 = OpAccessChain %46 %42 %50
@@ -421,18 +423,20 @@ TEST(TransformationReplaceIdWithSynonymTest, LegalTransformations) {
          %65 = OpAccessChain %13 %11 %64
          %66 = OpLoad %6 %65
          %67 = OpSGreaterThan %29 %84 %66
-               OpSelectionMerge %69 None
+               OpSelectionMerge %1000 None
                OpBranchConditional %67 %68 %72
          %68 = OpLabel
          %71 = OpIAdd %6 %84 %26
-               OpBranch %69
+               OpBranch %1000
          %72 = OpLabel
          %74 = OpIAdd %6 %84 %64
         %205 = OpCopyObject %6 %74
-               OpBranch %69
-         %69 = OpLabel
+               OpBranch %1000
+       %1000 = OpLabel
          %86 = OpPhi %6 %71 %68 %205 %72
         %301 = OpPhi %6 %71 %68 %15 %72
+               OpBranch %69
+         %69 = OpLabel
                OpBranch %20
          %22 = OpLabel
          %75 = OpAccessChain %46 %42 %50
