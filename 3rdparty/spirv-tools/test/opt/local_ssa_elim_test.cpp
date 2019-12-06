@@ -193,7 +193,24 @@ OpDecorate %fo Location 0
 )";
 
   const std::string before =
-      R"(%main = OpFunction %void None %9
+      R"(
+; CHECK: = OpFunction
+; CHECK-NEXT: [[entry:%\w+]] = OpLabel
+; CHECK: [[outer_header:%\w+]] = OpLabel
+; CHECK-NEXT: [[outer_f:%\w+]] = OpPhi %float %float_0 [[entry]] [[inner_f:%\w+]] [[outer_be:%\w+]]
+; CHECK-NEXT: [[i:%\w+]] = OpPhi %int %int_0 [[entry]] [[i_next:%\w+]] [[outer_be]]
+; CHECK-NEXT: OpSLessThan {{%\w+}} [[i]]
+; CHECK: [[inner_pre_header:%\w+]] = OpLabel
+; CHECK: [[inner_header:%\w+]] = OpLabel
+; CHECK-NEXT: [[inner_f]] = OpPhi %float [[outer_f]] [[inner_pre_header]] [[f_next:%\w+]] [[inner_be:%\w+]]
+; CHECK-NEXT: [[j:%\w+]] = OpPhi %int %int_0 [[inner_pre_header]] [[j_next:%\w+]] [[inner_be]]
+; CHECK: [[inner_be]] = OpLabel
+; CHECK: [[f_next]] = OpFAdd %float [[inner_f]]
+; CHECK: [[j_next]] = OpIAdd %int [[j]] %int_1
+; CHECK: [[outer_be]] = OpLabel
+; CHECK: [[i_next]] = OpIAdd
+; CHECK: OpStore %fo [[outer_f]]
+%main = OpFunction %void None %9
 %24 = OpLabel
 %f = OpVariable %_ptr_Function_float Function
 %i = OpVariable %_ptr_Function_int Function
@@ -212,8 +229,8 @@ OpBranch %31
 %31 = OpLabel
 %32 = OpLoad %int %j
 %33 = OpSLessThan %bool %32 %int_4
-OpLoopMerge %29 %34 None
-OpBranchConditional %33 %34 %29
+OpLoopMerge %50 %34 None
+OpBranchConditional %33 %34 %50
 %34 = OpLabel
 %35 = OpLoad %float %f
 %36 = OpLoad %int %i
@@ -226,6 +243,8 @@ OpStore %f %40
 %42 = OpIAdd %int %41 %int_1
 OpStore %j %42
 OpBranch %31
+%50 = OpLabel
+OpBranch %29
 %29 = OpLabel
 %43 = OpLoad %int %i
 %44 = OpIAdd %int %43 %int_1
@@ -238,50 +257,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  const std::string after =
-      R"(%main = OpFunction %void None %9
-%24 = OpLabel
-%f = OpVariable %_ptr_Function_float Function
-%i = OpVariable %_ptr_Function_int Function
-%j = OpVariable %_ptr_Function_int Function
-OpStore %f %float_0
-OpStore %i %int_0
-OpBranch %25
-%25 = OpLabel
-%47 = OpPhi %float %float_0 %24 %50 %29
-%46 = OpPhi %int %int_0 %24 %44 %29
-%27 = OpSLessThan %bool %46 %int_4
-OpLoopMerge %28 %29 None
-OpBranchConditional %27 %30 %28
-%30 = OpLabel
-OpStore %j %int_0
-OpBranch %31
-%31 = OpLabel
-%50 = OpPhi %float %47 %30 %40 %34
-%48 = OpPhi %int %int_0 %30 %42 %34
-%33 = OpSLessThan %bool %48 %int_4
-OpLoopMerge %29 %34 None
-OpBranchConditional %33 %34 %29
-%34 = OpLabel
-%38 = OpAccessChain %_ptr_Input_float %BC %46 %48
-%39 = OpLoad %float %38
-%40 = OpFAdd %float %50 %39
-OpStore %f %40
-%42 = OpIAdd %int %48 %int_1
-OpStore %j %42
-OpBranch %31
-%29 = OpLabel
-%44 = OpIAdd %int %46 %int_1
-OpStore %i %44
-OpBranch %25
-%28 = OpLabel
-OpStore %fo %47
-OpReturn
-OpFunctionEnd
-)";
-
-  SinglePassRunAndCheck<SSARewritePass>(predefs + before, predefs + after, true,
-                                        true);
+  SinglePassRunAndMatch<SSARewritePass>(predefs + before, true);
 }
 
 TEST_F(LocalSSAElimTest, ForLoopWithContinue) {

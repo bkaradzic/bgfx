@@ -6331,7 +6331,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
     //============================================================================
 
     TString& s = commonBuiltins;
-    const int maxSize = 80;
+    const int maxSize = 200;
     char builtInConstant[maxSize];
 
     //

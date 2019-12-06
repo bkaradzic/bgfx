@@ -1,5 +1,6 @@
  //
 // Copyright (C) 2016 Google, Inc.
+// Copyright (C) 2019 ARM Limited.
 //
 // All rights reserved.
 //
@@ -263,6 +264,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.8bitstorage_Error-uint.frag",
         "spv.8bitstorage-ubo.vert",
         "spv.8bitstorage-ssbo.vert",
+        "spv.8bit-16bit-construction.frag",
         "spv.accessChain.frag",
         "spv.aggOps.frag",
         "spv.always-discard.frag",

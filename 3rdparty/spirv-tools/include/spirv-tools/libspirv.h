@@ -627,6 +627,11 @@ SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetRandomSeed(
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetShrinkerStepLimit(
     spv_fuzzer_options options, uint32_t shrinker_step_limit);
 
+// Enables running the validator after every pass is applied during a fuzzing
+// run.
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableFuzzerPassValidation(
+    spv_fuzzer_options options);
+
 // Encodes the given SPIR-V assembly text to its binary representation. The
 // length parameter specifies the number of bytes for text. Encoded binary will
 // be stored into *binary. Any error will be written into *diagnostic if

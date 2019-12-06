@@ -23,6 +23,14 @@
 #include <intrin.h> // __cpuid
 #endif
 
+// GCC 4.9+ and clang 3.8+ support targeting SIMD instruction sets from individual functions
+#if !defined(SIMD_SSE) && !defined(SIMD_AVX) && ((defined(__clang__) && __clang_major__ * 100 + __clang_minor__ >= 308) || (defined(__GNUC__) && __GNUC__ * 100 + __GNUC_MINOR__ >= 409)) && (defined(__i386__) || defined(__x86_64__))
+#define SIMD_SSE
+#define SIMD_FALLBACK
+#define SIMD_TARGET __attribute__((target("ssse3")))
+#include <cpuid.h> // __cpuid
+#endif
+
 #if !defined(SIMD_NEON) && defined(_MSC_VER) && (defined(_M_ARM) || defined(_M_ARM64))
 #define SIMD_NEON
 #endif
@@ -30,6 +38,10 @@
 // WebAssembly SIMD implementation requires a few bleeding edge intrinsics that are only available in Chrome Canary
 #if defined(__wasm_simd128__) && defined(__wasm_unimplemented_simd128__)
 #define SIMD_WASM
+#endif
+
+#ifndef SIMD_TARGET
+#define SIMD_TARGET
 #endif
 
 #ifdef SIMD_SSE
@@ -420,7 +432,8 @@ static unsigned char kDecodeBytesGroupCount[256];
 #ifdef EMSCRIPTEN
 __attribute__((cold)) // this saves 500 bytes in the output binary - we don't need to vectorize this loop!
 #endif
-static bool decodeBytesGroupBuildTables()
+static bool
+decodeBytesGroupBuildTables()
 {
 	for (int mask = 0; mask < 256; ++mask)
 	{
@@ -445,6 +458,7 @@ static bool gDecodeBytesGroupInitialized = decodeBytesGroupBuildTables();
 #endif
 
 #ifdef SIMD_SSE
+SIMD_TARGET
 static __m128i decodeShuffleMask(unsigned char mask0, unsigned char mask1)
 {
 	__m128i sm0 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&kDecodeBytesGroupShuffle[mask0]));
@@ -456,6 +470,7 @@ static __m128i decodeShuffleMask(unsigned char mask0, unsigned char mask1)
 	return _mm_unpacklo_epi64(sm0, sm1r);
 }
 
+SIMD_TARGET
 static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsigned char* buffer, int bitslog2)
 {
 	switch (bitslog2)
@@ -813,6 +828,7 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 #endif
 
 #if defined(SIMD_SSE) || defined(SIMD_AVX)
+SIMD_TARGET
 static void transpose8(__m128i& x0, __m128i& x1, __m128i& x2, __m128i& x3)
 {
 	__m128i t0 = _mm_unpacklo_epi8(x0, x1);
@@ -826,6 +842,7 @@ static void transpose8(__m128i& x0, __m128i& x1, __m128i& x2, __m128i& x3)
 	x3 = _mm_unpackhi_epi16(t1, t3);
 }
 
+SIMD_TARGET
 static __m128i unzigzag8(__m128i v)
 {
 	__m128i xl = _mm_sub_epi8(_mm_setzero_si128(), _mm_and_si128(v, _mm_set1_epi8(1)));
@@ -883,6 +900,7 @@ static v128_t unzigzag8(v128_t v)
 #endif
 
 #if defined(SIMD_SSE) || defined(SIMD_AVX) || defined(SIMD_NEON) || defined(SIMD_WASM)
+SIMD_TARGET
 static const unsigned char* decodeBytesSimd(const unsigned char* data, const unsigned char* data_end, unsigned char* buffer, size_t buffer_size)
 {
 	assert(buffer_size % kByteGroupSize == 0);
@@ -928,6 +946,7 @@ static const unsigned char* decodeBytesSimd(const unsigned char* data, const uns
 	return data;
 }
 
+SIMD_TARGET
 static const unsigned char* decodeVertexBlockSimd(const unsigned char* data, const unsigned char* data_end, unsigned char* vertex_data, size_t vertex_count, size_t vertex_size, unsigned char last_vertex[256])
 {
 	assert(vertex_count > 0 && vertex_count <= kVertexBlockMaxSize);
@@ -1024,6 +1043,21 @@ static const unsigned char* decodeVertexBlockSimd(const unsigned char* data, con
 
 	return data;
 }
+#endif
+
+#if defined(SIMD_SSE) && defined(SIMD_FALLBACK)
+static unsigned int getCpuFeatures()
+{
+	int cpuinfo[4] = {};
+#if defined(_MSC_VER) && !defined(__clang__)
+	__cpuid(cpuinfo, 1);
+#else
+	__cpuid(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+#endif
+	return cpuinfo[2];
+}
+
+unsigned int cpuid = getCpuFeatures();
 #endif
 
 } // namespace meshopt
@@ -1139,9 +1173,7 @@ int meshopt_decodeVertexBuffer(void* destination, size_t vertex_count, size_t ve
 	const unsigned char* (*decode)(const unsigned char*, const unsigned char*, unsigned char*, size_t, size_t, unsigned char[256]) = 0;
 
 #if defined(SIMD_SSE) && defined(SIMD_FALLBACK)
-	int cpuinfo[4] = {};
-	__cpuid(cpuinfo, 1);
-	decode = (cpuinfo[2] & (1 << 9)) ? decodeVertexBlockSimd : decodeVertexBlock;
+	decode = (cpuid & (1 << 9)) ? decodeVertexBlockSimd : decodeVertexBlock;
 #elif defined(SIMD_SSE) || defined(SIMD_AVX) || defined(SIMD_NEON) || defined(SIMD_WASM)
 	decode = decodeVertexBlockSimd;
 #else

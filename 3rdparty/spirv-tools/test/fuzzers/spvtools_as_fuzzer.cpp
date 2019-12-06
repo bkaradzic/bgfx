@@ -36,7 +36,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   input_str.resize(char_count);
   memcpy(input_str.data(), input.data(), input.size() * sizeof(uint32_t));
 
-  spv_binary binary;
+  spv_binary binary = nullptr;
   spv_diagnostic diagnostic = nullptr;
   spvTextToBinaryWithOptions(context, input_str.data(), input_str.size(),
                              SPV_TEXT_TO_BINARY_OPTION_NONE, &binary,
@@ -65,6 +65,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     spvBinaryDestroy(binary);
     binary = nullptr;
   }
+
+  spvContextDestroy(context);
 
   return 0;
 }

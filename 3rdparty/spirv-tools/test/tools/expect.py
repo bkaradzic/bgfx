@@ -510,7 +510,7 @@ class ErrorMessageSubstr(SpirvTest):
     if not status.stderr:
       return False, 'Expected error message, but no output on stderr'
     if self.expected_error_substr not in convert_to_unix_line_endings(
-        status.stderr.decode('utf8')):
+        status.stderr):
       return False, ('Incorrect stderr output:\n{act}\n'
                      'Expected substring not found in stderr:\n{exp}'.format(
                          act=status.stderr, exp=self.expected_error_substr))
@@ -530,7 +530,7 @@ class WarningMessage(SpirvTest):
                      ' command execution')
     if not status.stderr:
       return False, 'Expected warning message, but no output on stderr'
-    if self.expected_warning != convert_to_unix_line_endings(status.stderr.decode('utf8')):
+    if self.expected_warning != convert_to_unix_line_endings(status.stderr):
       return False, ('Incorrect stderr output:\n{act}\n'
                      'Expected:\n{exp}'.format(
                          act=status.stderr, exp=self.expected_warning))
@@ -590,16 +590,16 @@ class StdoutMatch(SpirvTest):
       if not status.stdout:
         return False, 'Expected something on stdout'
     elif type(self.expected_stdout) == str:
-      if self.expected_stdout != convert_to_unix_line_endings(status.stdout.decode('utf8')):
+      if self.expected_stdout != convert_to_unix_line_endings(status.stdout):
         return False, ('Incorrect stdout output:\n{ac}\n'
                        'Expected:\n{ex}'.format(
                            ac=status.stdout, ex=self.expected_stdout))
     else:
-      converted = convert_to_unix_line_endings(status.stdout.decode('utf8'))
+      converted = convert_to_unix_line_endings(status.stdout)
       if not self.expected_stdout.search(converted):
         return False, ('Incorrect stdout output:\n{ac}\n'
                        'Expected to match regex:\n{ex}'.format(
-                           ac=status.stdout.decode('utf8'), ex=self.expected_stdout.pattern))
+                           ac=status.stdout, ex=self.expected_stdout.pattern))
     return True, ''
 
 
@@ -624,13 +624,13 @@ class StderrMatch(SpirvTest):
       if not status.stderr:
         return False, 'Expected something on stderr'
     elif type(self.expected_stderr) == str:
-      if self.expected_stderr != convert_to_unix_line_endings(status.stderr.decode('utf8')):
+      if self.expected_stderr != convert_to_unix_line_endings(status.stderr):
         return False, ('Incorrect stderr output:\n{ac}\n'
                        'Expected:\n{ex}'.format(
                            ac=status.stderr, ex=self.expected_stderr))
     else:
       if not self.expected_stderr.search(
-          convert_to_unix_line_endings(status.stderr.decode('utf8'))):
+          convert_to_unix_line_endings(status.stderr)):
         return False, ('Incorrect stderr output:\n{ac}\n'
                        'Expected to match regex:\n{ex}'.format(
                            ac=status.stderr, ex=self.expected_stderr.pattern))
@@ -695,7 +695,7 @@ class ExecutedListOfPasses(SpirvTest):
     # Collect all the output lines containing a pass name.
     pass_names = []
     pass_name_re = re.compile(r'.*IR before pass (?P<pass_name>[\S]+)')
-    for line in status.stderr.decode('utf8').splitlines():
+    for line in status.stderr.splitlines():
       match = pass_name_re.match(line)
       if match:
         pass_names.append(match.group('pass_name'))
