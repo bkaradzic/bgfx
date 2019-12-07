@@ -232,16 +232,16 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormat(166/*PVRTC_RGBA_4BPP*/),       MTLPixelFormat(167/*PVRTC_RGBA_4BPP_sRGB*/) }, // PTC14A
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // PTC22
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // PTC24
-		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                       }, // ATC
-		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                       }, // ATCE
-		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                       }, // ATCI
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ATC
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ATCE
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ATCI
 #if BX_PLATFORM_IOS && !defined(TARGET_OS_MACCATALYST)
-		{ MTLPixelFormatASTC_4x4_LDR,					MTLPixelFormatASTC_4x4_sRGB                 }, // ASTC4x4
-		{ MTLPixelFormatASTC_5x5_LDR,					MTLPixelFormatASTC_5x5_sRGB                 }, // ASTC5x5
-		{ MTLPixelFormatASTC_6x6_LDR,					MTLPixelFormatASTC_6x6_sRGB                 }, // ASTC6x6
-		{ MTLPixelFormatASTC_8x5_LDR,					MTLPixelFormatASTC_8x5_sRGB                 }, // ASTC8x5
-		{ MTLPixelFormatASTC_8x6_LDR,					MTLPixelFormatASTC_8x6_sRGB                 }, // ASTC8x6
-		{ MTLPixelFormatASTC_10x5_LDR,					MTLPixelFormatASTC_10x5_sRGB                }, // ASTC10x5
+		{ MTLPixelFormatASTC_4x4_LDR,                   MTLPixelFormatASTC_4x4_sRGB                 }, // ASTC4x4
+		{ MTLPixelFormatASTC_5x5_LDR,                   MTLPixelFormatASTC_5x5_sRGB                 }, // ASTC5x5
+		{ MTLPixelFormatASTC_6x6_LDR,                   MTLPixelFormatASTC_6x6_sRGB                 }, // ASTC6x6
+		{ MTLPixelFormatASTC_8x5_LDR,                   MTLPixelFormatASTC_8x5_sRGB                 }, // ASTC8x5
+		{ MTLPixelFormatASTC_8x6_LDR,                   MTLPixelFormatASTC_8x6_sRGB                 }, // ASTC8x6
+		{ MTLPixelFormatASTC_10x5_LDR,                  MTLPixelFormatASTC_10x5_sRGB                }, // ASTC10x5
 #else
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC4x4
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC5x5
@@ -249,7 +249,7 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC8x5
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC8x6
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC10x5
-#endif
+#endif // BX_PLATFORM_IOS && !defined(TARGET_OS_MACCATALYST)
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // Unknown
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // R1
 		{ MTLPixelFormatA8Unorm,                        MTLPixelFormatInvalid                       }, // A8
@@ -839,7 +839,7 @@ namespace bgfx { namespace mtl
 		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
 		{
 			const TextureMtl& texture = m_textures[_handle.idx];
-			
+
 #if BX_PLATFORM_OSX
 			BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
 			bce.synchronizeTexture(texture.m_ptr, 0, _mip);
@@ -848,7 +848,7 @@ namespace bgfx { namespace mtl
 
 			m_cmd.kick(false, true);
 			m_commandBuffer = m_cmd.alloc();
-			
+
 			BX_CHECK(_mip<texture.m_numMips,"Invalid mip: %d num mips:",_mip,texture.m_numMips);
 
 			uint32_t srcWidth  = bx::uint32_max(1, texture.m_ptr.width()  >> _mip);
@@ -3069,7 +3069,7 @@ namespace bgfx { namespace mtl
 	void SwapChainMtl::resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
 		const int32_t sampleCount = s_msaa[(_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
-		
+
 #if BX_PLATFORM_OSX
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 		if (@available(macOS 10.13, *))
@@ -4395,7 +4395,7 @@ namespace bgfx { namespace mtl
 					{
 						commit(*vcb);
 					}
-					
+
 					UniformBuffer* fcb = currentPso->m_fshConstantBuffer;
 					if (NULL != fcb)
 					{
