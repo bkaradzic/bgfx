@@ -1,4 +1,4 @@
-// dear imgui, v1.74
+// dear imgui, v1.75 WIP
 // (main code and documentation)
 
 // Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp for demo code.
@@ -45,7 +45,7 @@ CODE
 // [SECTION] FORWARD DECLARATIONS
 // [SECTION] CONTEXT AND MEMORY ALLOCATORS
 // [SECTION] MAIN USER FACING STRUCTURES (ImGuiStyle, ImGuiIO)
-// [SECTION] MISC HELPERS/UTILITIES (Geomtry, String, Format, Hash, File functions)
+// [SECTION] MISC HELPERS/UTILITIES (Geometry, String, Format, Hash, File functions)
 // [SECTION] MISC HELPERS/UTILITIES (File functions)
 // [SECTION] MISC HELPERS/UTILITIES (ImText* functions)
 // [SECTION] MISC HELPERS/UTILITIES (Color functions)
@@ -353,6 +353,7 @@ CODE
  When you are not sure about a old symbol or function name, try using the Search/Find function of your IDE to look for comments or references in all imgui files.
  You can read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2019/12/06 (1.75) - removed implicit default parameter to IsMouseDragging(int button = 0) to be consistent with other mouse functions (none of the other functions have it).
  - 2019/11/21 (1.74) - ImFontAtlas::AddCustomRectRegular() now requires an ID larger than 0x110000 (instead of 0x10000) to conform with supporting Unicode planes 1-16 in a future update. ID below 0x110000 will now assert.
  - 2019/11/19 (1.74) - renamed IMGUI_DISABLE_FORMAT_STRING_FUNCTIONS to IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS for consistency.
  - 2019/11/19 (1.74) - renamed IMGUI_DISABLE_MATH_FUNCTIONS to IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS for consistency.
@@ -1002,6 +1003,7 @@ ImGuiIO::ImGuiIO()
 {
     // Most fields are initialized with zero
     memset(this, 0, sizeof(*this));
+    IM_STATIC_ASSERT(IM_ARRAYSIZE(MouseDown) == ImGuiMouseButton_COUNT && IM_ARRAYSIZE(MouseClicked) == ImGuiMouseButton_COUNT);
 
     // Settings
     ConfigFlags = ImGuiConfigFlags_None;
@@ -4218,7 +4220,8 @@ int ImGui::GetKeyIndex(ImGuiKey imgui_key)
     return g.IO.KeyMap[imgui_key];
 }
 
-// Note that imgui doesn't know the semantic of each entry of io.KeysDown[]. Use your own indices/enums according to how your back-end/engine stored them into io.KeysDown[]!
+// Note that dear imgui doesn't know the semantic of each entry of io.KeysDown[]!
+// Use your own indices/enums according to how your back-end/engine stored them into io.KeysDown[]!
 bool ImGui::IsKeyDown(int user_key_index)
 {
     if (user_key_index < 0)
@@ -4278,23 +4281,14 @@ bool ImGui::IsKeyReleased(int user_key_index)
     return g.IO.KeysDownDurationPrev[user_key_index] >= 0.0f && !g.IO.KeysDown[user_key_index];
 }
 
-bool ImGui::IsMouseDown(int button)
+bool ImGui::IsMouseDown(ImGuiMouseButton button)
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
     return g.IO.MouseDown[button];
 }
 
-bool ImGui::IsAnyMouseDown()
-{
-    ImGuiContext& g = *GImGui;
-    for (int n = 0; n < IM_ARRAYSIZE(g.IO.MouseDown); n++)
-        if (g.IO.MouseDown[n])
-            return true;
-    return false;
-}
-
-bool ImGui::IsMouseClicked(int button, bool repeat)
+bool ImGui::IsMouseClicked(ImGuiMouseButton button, bool repeat)
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
@@ -4309,18 +4303,17 @@ bool ImGui::IsMouseClicked(int button, bool repeat)
         if (amount > 0)
             return true;
     }
-
     return false;
 }
 
-bool ImGui::IsMouseReleased(int button)
+bool ImGui::IsMouseReleased(ImGuiMouseButton button)
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
     return g.IO.MouseReleased[button];
 }
 
-bool ImGui::IsMouseDoubleClicked(int button)
+bool ImGui::IsMouseDoubleClicked(ImGuiMouseButton button)
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
@@ -4328,7 +4321,7 @@ bool ImGui::IsMouseDoubleClicked(int button)
 }
 
 // [Internal] This doesn't test if the button is pressed
-bool ImGui::IsMouseDragPastThreshold(int button, float lock_threshold)
+bool ImGui::IsMouseDragPastThreshold(ImGuiMouseButton button, float lock_threshold)
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
@@ -4337,7 +4330,7 @@ bool ImGui::IsMouseDragPastThreshold(int button, float lock_threshold)
     return g.IO.MouseDragMaxDistanceSqr[button] >= lock_threshold * lock_threshold;
 }
 
-bool ImGui::IsMouseDragging(int button, float lock_threshold)
+bool ImGui::IsMouseDragging(ImGuiMouseButton button, float lock_threshold)
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
@@ -4348,7 +4341,8 @@ bool ImGui::IsMouseDragging(int button, float lock_threshold)
 
 ImVec2 ImGui::GetMousePos()
 {
-    return GImGui->IO.MousePos;
+    ImGuiContext& g = *GImGui;
+    return g.IO.MousePos;
 }
 
 // NB: prefer to call right after BeginPopup(). At the time Selectable/MenuItem is activated, the popup is already closed!
@@ -4371,10 +4365,19 @@ bool ImGui::IsMousePosValid(const ImVec2* mouse_pos)
     return p.x >= MOUSE_INVALID && p.y >= MOUSE_INVALID;
 }
 
+bool ImGui::IsAnyMouseDown()
+{
+    ImGuiContext& g = *GImGui;
+    for (int n = 0; n < IM_ARRAYSIZE(g.IO.MouseDown); n++)
+        if (g.IO.MouseDown[n])
+            return true;
+    return false;
+}
+
 // Return the delta from the initial clicking position while the mouse button is clicked or was just released.
 // This is locked and return 0.0f until the mouse moves past a distance threshold at least once.
 // NB: This is only valid if IsMousePosValid(). Back-ends in theory should always keep mouse position valid when dragging even outside the client window.
-ImVec2 ImGui::GetMouseDragDelta(int button, float lock_threshold)
+ImVec2 ImGui::GetMouseDragDelta(ImGuiMouseButton button, float lock_threshold)
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
@@ -4387,7 +4390,7 @@ ImVec2 ImGui::GetMouseDragDelta(int button, float lock_threshold)
     return ImVec2(0.0f, 0.0f);
 }
 
-void ImGui::ResetMouseDragDelta(int button)
+void ImGui::ResetMouseDragDelta(ImGuiMouseButton button)
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
@@ -4463,7 +4466,7 @@ bool ImGui::IsItemFocused()
     return true;
 }
 
-bool ImGui::IsItemClicked(int mouse_button)
+bool ImGui::IsItemClicked(ImGuiMouseButton mouse_button)
 {
     return IsMouseClicked(mouse_button) && IsItemHovered(ImGuiHoveredFlags_None);
 }
@@ -7562,7 +7565,7 @@ void ImGui::EndPopup()
     g.WithinEndChild = false;
 }
 
-bool ImGui::OpenPopupOnItemClick(const char* str_id, int mouse_button)
+bool ImGui::OpenPopupOnItemClick(const char* str_id, ImGuiMouseButton mouse_button)
 {
     ImGuiWindow* window = GImGui->CurrentWindow;
     if (IsMouseReleased(mouse_button) && IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
@@ -7578,7 +7581,7 @@ bool ImGui::OpenPopupOnItemClick(const char* str_id, int mouse_button)
 // This is a helper to handle the simplest case of associating one named popup to one given widget.
 // You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
 // You can pass a NULL str_id to use the identifier of the last item.
-bool ImGui::BeginPopupContextItem(const char* str_id, int mouse_button)
+bool ImGui::BeginPopupContextItem(const char* str_id, ImGuiMouseButton mouse_button)
 {
     ImGuiWindow* window = GImGui->CurrentWindow;
     if (window->SkipItems)
@@ -7590,7 +7593,7 @@ bool ImGui::BeginPopupContextItem(const char* str_id, int mouse_button)
     return BeginPopupEx(id, ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoSavedSettings);
 }
 
-bool ImGui::BeginPopupContextWindow(const char* str_id, int mouse_button, bool also_over_items)
+bool ImGui::BeginPopupContextWindow(const char* str_id, ImGuiMouseButton mouse_button, bool also_over_items)
 {
     if (!str_id)
         str_id = "window_context";
@@ -7601,7 +7604,7 @@ bool ImGui::BeginPopupContextWindow(const char* str_id, int mouse_button, bool a
     return BeginPopupEx(id, ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoSavedSettings);
 }
 
-bool ImGui::BeginPopupContextVoid(const char* str_id, int mouse_button)
+bool ImGui::BeginPopupContextVoid(const char* str_id, ImGuiMouseButton mouse_button)
 {
     if (!str_id)
         str_id = "void_context";
@@ -8795,7 +8798,7 @@ bool ImGui::BeginDragDropSource(ImGuiDragDropFlags flags)
     bool source_drag_active = false;
     ImGuiID source_id = 0;
     ImGuiID source_parent_id = 0;
-    int mouse_button = 0;
+    ImGuiMouseButton mouse_button = ImGuiMouseButton_Left;
     if (!(flags & ImGuiDragDropFlags_SourceExtern))
     {
         source_id = window->DC.LastItemId;

@@ -1,4 +1,4 @@
-// dear imgui, v1.74
+// dear imgui, v1.75 WIP
 // (demo code)
 
 // Message to the person tempted to delete this file when integrating Dear ImGui into their code base:
@@ -2445,7 +2445,7 @@ static void ShowDemoWindowLayout()
         ImVec2 pos = ImGui::GetCursorScreenPos();
         ImVec4 clip_rect(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
         ImGui::InvisibleButton("##dummy", size);
-        if (ImGui::IsItemActive() && ImGui::IsMouseDragging()) { offset.x += ImGui::GetIO().MouseDelta.x; offset.y += ImGui::GetIO().MouseDelta.y; }
+        if (ImGui::IsItemActive() && ImGui::IsMouseDragging(0)) { offset.x += ImGui::GetIO().MouseDelta.x; offset.y += ImGui::GetIO().MouseDelta.y; }
         ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), IM_COL32(90, 90, 120, 255));
         ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize()*2.0f, ImVec2(pos.x + offset.x, pos.y + offset.y), IM_COL32(255, 255, 255, 255), "Line 1 hello\nLine 2 clip me!", NULL, 0.0f, &clip_rect);
         ImGui::TreePop();
@@ -3051,7 +3051,7 @@ static void ShowDemoWindowMisc()
 
         if (ImGui::TreeNode("Mouse cursors"))
         {
-            const char* mouse_cursors_names[] = { "Arrow", "TextInput", "Move", "ResizeNS", "ResizeEW", "ResizeNESW", "ResizeNWSE", "Hand" };
+            const char* mouse_cursors_names[] = { "Arrow", "TextInput", "ResizeAll", "ResizeNS", "ResizeEW", "ResizeNESW", "ResizeNWSE", "Hand", "NotAllowed" };
             IM_ASSERT(IM_ARRAYSIZE(mouse_cursors_names) == ImGuiMouseCursor_COUNT);
 
             ImGui::Text("Current mouse cursor = %d: %s", ImGui::GetMouseCursor(), mouse_cursors_names[ImGui::GetMouseCursor()]);
