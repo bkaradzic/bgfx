@@ -33,7 +33,6 @@
         var canvas = document.getElementById("renderCanvas");
 
         BABYLON.GLTF2.GLTFLoader.RegisterExtension("MESHOPT_compression", (loader) => new MESHOPT_compression(loader, MeshoptDecoder));
-        BABYLON.GLTF2.GLTFLoader.RegisterExtension("KHR_quantized_geometry", (loader) => ({ name: "KHR_quantized_geometry", enabled: true }));
 
         var createScene = function () {
             var scene = new BABYLON.Scene(engine);

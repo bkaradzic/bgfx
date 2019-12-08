@@ -356,6 +356,12 @@ void parseMeshesGltf(cgltf_data* data, std::vector<Mesh>& meshes)
 				Stream s = {attr.type, attr.index};
 				readAccessor(s.data, attr.data);
 
+				if (attr.type == cgltf_attribute_type_color && attr.data->type == cgltf_type_vec3)
+				{
+					for (size_t i = 0; i < s.data.size(); ++i)
+						s.data[i].f[3] = 1.0f;
+				}
+
 				result.streams.push_back(s);
 			}
 
@@ -669,6 +675,42 @@ bool areMaterialsEqual(const cgltf_material& lhs, const cgltf_material& rhs)
 	return true;
 }
 
+bool usesTextureSet(const cgltf_material& material, int set)
+{
+	if (material.has_pbr_metallic_roughness)
+	{
+		const cgltf_pbr_metallic_roughness& pbr = material.pbr_metallic_roughness;
+
+		if (pbr.base_color_texture.texture && pbr.base_color_texture.texcoord == set)
+			return true;
+
+		if (pbr.metallic_roughness_texture.texture && pbr.metallic_roughness_texture.texcoord == set)
+			return true;
+	}
+
+	if (material.has_pbr_specular_glossiness)
+	{
+		const cgltf_pbr_specular_glossiness& pbr = material.pbr_specular_glossiness;
+
+		if (pbr.diffuse_texture.texture && pbr.diffuse_texture.texcoord == set)
+			return true;
+
+		if (pbr.specular_glossiness_texture.texture && pbr.specular_glossiness_texture.texcoord == set)
+			return true;
+	}
+
+	if (material.normal_texture.texture && material.normal_texture.texcoord == set)
+		return true;
+
+	if (material.occlusion_texture.texture && material.occlusion_texture.texcoord == set)
+		return true;
+
+	if (material.emissive_texture.texture && material.emissive_texture.texcoord == set)
+		return true;
+
+	return false;
+}
+
 void mergeMeshMaterials(cgltf_data* data, std::vector<Mesh>& meshes)
 {
 	for (size_t i = 0; i < meshes.size(); ++i)
@@ -849,24 +891,69 @@ void filterEmptyMeshes(std::vector<Mesh>& meshes)
 		if (mesh.type == cgltf_primitive_type_triangles && mesh.indices.empty())
 			continue;
 
-		if (i != write)
-		{
-			// the following code is roughly equivalent to meshes[write] = std::move(mesh)
-			std::vector<Stream> streams;
-			streams.swap(mesh.streams);
+		// the following code is roughly equivalent to meshes[write] = std::move(mesh)
+		std::vector<Stream> streams;
+		streams.swap(mesh.streams);
 
-			std::vector<unsigned int> indices;
-			indices.swap(mesh.indices);
+		std::vector<unsigned int> indices;
+		indices.swap(mesh.indices);
 
-			meshes[write] = mesh;
-			meshes[write].streams.swap(streams);
-			meshes[write].indices.swap(indices);
-		}
+		meshes[write] = mesh;
+		meshes[write].streams.swap(streams);
+		meshes[write].indices.swap(indices);
 
 		write++;
 	}
 
 	meshes.resize(write);
+}
+
+bool hasColorData(const std::vector<Attr>& data)
+{
+	const float threshold = 0.99f;
+
+	for (size_t i = 0; i < data.size(); ++i)
+	{
+		const Attr& a = data[i];
+
+		if (a.f[0] < threshold || a.f[1] < threshold || a.f[2] < threshold || a.f[3] < threshold)
+			return true;
+	}
+
+	return false;
+}
+
+void filterStreams(Mesh& mesh)
+{
+	size_t write = 0;
+
+	for (size_t i = 0; i < mesh.streams.size(); ++i)
+	{
+		Stream& stream = mesh.streams[i];
+
+		if (stream.type == cgltf_attribute_type_texcoord && (!mesh.material || !usesTextureSet(*mesh.material, stream.index)))
+			continue;
+
+		if (stream.type == cgltf_attribute_type_tangent && (!mesh.material || !mesh.material->normal_texture.texture))
+			continue;
+
+		if ((stream.type == cgltf_attribute_type_joints || stream.type == cgltf_attribute_type_weights) && !mesh.skin)
+			continue;
+
+		if (stream.type == cgltf_attribute_type_color && !hasColorData(stream.data))
+			continue;
+
+		// the following code is roughly equivalent to streams[write] = std::move(stream)
+		std::vector<Attr> data;
+		data.swap(stream.data);
+
+		mesh.streams[write] = stream;
+		mesh.streams[write].data.swap(data);
+
+		write++;
+	}
+
+	mesh.streams.resize(write);
 }
 
 void reindexMesh(Mesh& mesh)
@@ -901,7 +988,7 @@ void reindexMesh(Mesh& mesh)
 	}
 }
 
-void filterMesh(Mesh& mesh)
+void filterTriangles(Mesh& mesh)
 {
 	unsigned int* indices = &mesh.indices[0];
 	size_t total_indices = mesh.indices.size();
@@ -1148,6 +1235,8 @@ void sortPointMesh(Mesh& mesh)
 
 void processMesh(Mesh& mesh, const Settings& settings)
 {
+	filterStreams(mesh);
+
 	switch (mesh.type)
 	{
 	case cgltf_primitive_type_points:
@@ -1159,7 +1248,7 @@ void processMesh(Mesh& mesh, const Settings& settings)
 	case cgltf_primitive_type_triangles:
 		filterBones(mesh);
 		reindexMesh(mesh);
-		filterMesh(mesh);
+		filterTriangles(mesh);
 		simplifyMesh(mesh, settings.simplify_threshold, settings.simplify_aggressive);
 		optimizeMesh(mesh);
 		break;
@@ -2109,42 +2198,6 @@ void writeMaterialInfo(std::string& json, const cgltf_data* data, const cgltf_ma
 	}
 }
 
-bool usesTextureSet(const cgltf_material& material, int set)
-{
-	if (material.has_pbr_metallic_roughness)
-	{
-		const cgltf_pbr_metallic_roughness& pbr = material.pbr_metallic_roughness;
-
-		if (pbr.base_color_texture.texture && pbr.base_color_texture.texcoord == set)
-			return true;
-
-		if (pbr.metallic_roughness_texture.texture && pbr.metallic_roughness_texture.texcoord == set)
-			return true;
-	}
-
-	if (material.has_pbr_specular_glossiness)
-	{
-		const cgltf_pbr_specular_glossiness& pbr = material.pbr_specular_glossiness;
-
-		if (pbr.diffuse_texture.texture && pbr.diffuse_texture.texcoord == set)
-			return true;
-
-		if (pbr.specular_glossiness_texture.texture && pbr.specular_glossiness_texture.texcoord == set)
-			return true;
-	}
-
-	if (material.normal_texture.texture && material.normal_texture.texcoord == set)
-		return true;
-
-	if (material.occlusion_texture.texture && material.occlusion_texture.texcoord == set)
-		return true;
-
-	if (material.emissive_texture.texture && material.emissive_texture.texcoord == set)
-		return true;
-
-	return false;
-}
-
 size_t getBufferView(std::vector<BufferView>& views, BufferView::Kind kind, int variant, size_t stride, bool compressed)
 {
 	if (variant >= 0)
@@ -3045,15 +3098,6 @@ void writeMeshAttributes(std::string& json, std::vector<BufferView>& views, std:
 		const Stream& stream = mesh.streams[j];
 
 		if (stream.target != target)
-			continue;
-
-		if (stream.type == cgltf_attribute_type_texcoord && (!mesh.material || !usesTextureSet(*mesh.material, stream.index)))
-			continue;
-
-		if (stream.type == cgltf_attribute_type_tangent && (!mesh.material || !mesh.material->normal_texture.texture))
-			continue;
-
-		if ((stream.type == cgltf_attribute_type_joints || stream.type == cgltf_attribute_type_weights) && !mesh.skin)
 			continue;
 
 		scratch.clear();

@@ -34,9 +34,9 @@ struct Ktx2Header
 
 struct Ktx2LevelIndex
 {
-    uint64_t byteOffset;
-    uint64_t byteLength;
-    uint64_t uncompressedByteLength;
+	uint64_t byteOffset;
+	uint64_t byteLength;
+	uint64_t uncompressedByteLength;
 };
 
 enum
@@ -46,7 +46,7 @@ enum
 
 // KTX Specification: 3.1. identifier
 static const uint8_t Ktx2FileIdentifier[12] = {
-  0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A,
+    0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A, //
 };
 
 // KTX Specification: 3.12.2. Basis Universal Global Data
@@ -190,8 +190,7 @@ std::string basisToKtx(const std::string& basis, bool srgb)
 		kvp += value;
 		kvp += '\0';
 
-		if (i + 1 != kvp.size())
-			kvp.resize((kvp.size() + 3) & ~3);
+		kvp.resize((kvp.size() + 3) & ~3);
 	}
 
 	size_t kvp_size = kvp.size();
@@ -294,11 +293,8 @@ std::string basisToKtx(const std::string& basis, bool srgb)
 
 		write(ktx, sgd_level_offset + level_index * sizeof(Ktx2BasisImageDesc), sgd_image);
 
-		if (i + 1 != levels)
-			ktx.resize((ktx.size() + 7) & ~7);
+		ktx.resize((ktx.size() + 7) & ~7);
 	}
-
-	ktx.resize((ktx.size() + 7) & ~7);
 
 	return ktx;
 }
