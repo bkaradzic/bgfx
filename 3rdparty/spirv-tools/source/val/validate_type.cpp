@@ -19,29 +19,40 @@
 #include "source/val/instruction.h"
 #include "source/val/validate.h"
 #include "source/val/validation_state.h"
+#include "spirv/unified1/spirv.h"
 
 namespace spvtools {
 namespace val {
 namespace {
 
-// True if the integer constant is > 0. |const_words| are words of the
-// constant-defining instruction (either OpConstant or
-// OpSpecConstant). typeWords are the words of the constant's-type-defining
-// OpTypeInt.
-bool AboveZero(const std::vector<uint32_t>& const_words,
-               const std::vector<uint32_t>& type_words) {
-  const uint32_t width = type_words[2];
-  const bool is_signed = type_words[3] > 0;
+// Returns, as an int64_t, the literal value from an OpConstant or the
+// default value of an OpSpecConstant, assuming it is an integral type.
+// For signed integers, relies the rule that literal value is sign extended
+// to fill out to word granularity.  Assumes that the constant value
+// has
+int64_t ConstantLiteralAsInt64(uint32_t width,
+                               const std::vector<uint32_t>& const_words) {
   const uint32_t lo_word = const_words[3];
-  if (width > 32) {
-    // The spec currently doesn't allow integers wider than 64 bits.
-    const uint32_t hi_word = const_words[4];  // Must exist, per spec.
-    if (is_signed && (hi_word >> 31)) return false;
-    return (lo_word | hi_word) > 0;
-  } else {
-    if (is_signed && (lo_word >> 31)) return false;
-    return lo_word > 0;
-  }
+  if (width <= 32) return int32_t(lo_word);
+  assert(width <= 64);
+  assert(const_words.size() > 4);
+  const uint32_t hi_word = const_words[4];  // Must exist, per spec.
+  return static_cast<int64_t>(uint64_t(lo_word) | uint64_t(hi_word) << 32);
+}
+
+// Returns, as an uint64_t, the literal value from an OpConstant or the
+// default value of an OpSpecConstant, assuming it is an integral type.
+// For signed integers, relies the rule that literal value is sign extended
+// to fill out to word granularity.  Assumes that the constant value
+// has
+int64_t ConstantLiteralAsUint64(uint32_t width,
+                                const std::vector<uint32_t>& const_words) {
+  const uint32_t lo_word = const_words[3];
+  if (width <= 32) return lo_word;
+  assert(width <= 64);
+  assert(const_words.size() > 4);
+  const uint32_t hi_word = const_words[4];  // Must exist, per spec.
+  return (uint64_t(lo_word) | uint64_t(hi_word) << 32);
 }
 
 // Validates that type declarations are unique, unless multiple declarations
@@ -258,14 +269,33 @@ spv_result_t ValidateTypeArray(ValidationState_t& _, const Instruction* inst) {
 
   switch (length->opcode()) {
     case SpvOpSpecConstant:
-    case SpvOpConstant:
-      if (AboveZero(length->words(), const_result_type->words())) break;
-    // Else fall through!
-    case SpvOpConstantNull: {
+    case SpvOpConstant: {
+      auto& type_words = const_result_type->words();
+      const bool is_signed = type_words[3] > 0;
+      const uint32_t width = type_words[2];
+      const int64_t ivalue = ConstantLiteralAsInt64(width, length->words());
+      if (ivalue == 0 || (ivalue < 0 && is_signed)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "OpTypeArray Length <id> '" << _.getIdName(length_id)
+               << "' default value must be at least 1: found " << ivalue;
+      }
+      if (spvIsWebGPUEnv(_.context()->target_env)) {
+        // WebGPU has maximum integer width of 32 bits, and max array size
+        // is one more than the max signed integer representation.
+        const uint64_t max_permitted = (uint64_t(1) << 31);
+        const uint64_t uvalue = ConstantLiteralAsUint64(width, length->words());
+        if (uvalue > max_permitted) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "OpTypeArray Length <id> '" << _.getIdName(length_id)
+                 << "' size exceeds max value " << max_permitted
+                 << " permitted by WebGPU: got " << uvalue;
+        }
+      }
+    } break;
+    case SpvOpConstantNull:
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "OpTypeArray Length <id> '" << _.getIdName(length_id)
              << "' default value must be at least 1.";
-    }
     case SpvOpSpecConstantOp:
       // Assume it's OK, rather than try to evaluate the operation.
       break;

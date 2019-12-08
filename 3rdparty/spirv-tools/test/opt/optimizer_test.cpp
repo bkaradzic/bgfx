@@ -234,7 +234,6 @@ TEST(Optimizer, VulkanToWebGPUSetsCorrectPasses) {
                                               "eliminate-dead-code-aggressive",
                                               "eliminate-dead-const",
                                               "flatten-decorations",
-                                              "strip-debug",
                                               "strip-atomic-counter-memory",
                                               "generate-webgpu-initializers",
                                               "legalize-vector-shuffle",
@@ -330,35 +329,6 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // pass
          "flatten-decorations"},
-        // Strip Debug
-        {// input
-         "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModel\n"
-         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical Vulkan\n"
-         "OpEntryPoint Vertex %func \"shader\"\n"
-         "OpName %main \"main\"\n"
-         "OpName %void_fn \"void_fn\"\n"
-         "%void = OpTypeVoid\n"
-         "%void_f = OpTypeFunction %void\n"
-         "%func = OpFunction %void None %void_f\n"
-         "%label = OpLabel\n"
-         "OpReturn\n"
-         "OpFunctionEnd\n",
-         // expected
-         "OpCapability Shader\n"
-         "OpCapability VulkanMemoryModel\n"
-         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
-         "OpMemoryModel Logical Vulkan\n"
-         "OpEntryPoint Vertex %1 \"shader\"\n"
-         "%void = OpTypeVoid\n"
-         "%3 = OpTypeFunction %void\n"
-         "%1 = OpFunction %void None %3\n"
-         "%4 = OpLabel\n"
-         "OpReturn\n"
-         "OpFunctionEnd\n",
-         // pass
-         "strip-debug"},
         // Eliminate Dead Constants
         {// input
          "OpCapability Shader\n"

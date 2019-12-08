@@ -1514,11 +1514,8 @@ TEST(TransformationAddDeadContinueTest, Miscellaneous5) {
   ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
 }
 
-TEST(TransformationAddDeadContinueTest, DISABLED_Miscellaneous6) {
-  // A miscellaneous test that exposing a known bug in spirv-fuzz.
-
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2919): re-enable
-  //  this test as an when the known issue is fixed.
+TEST(TransformationAddDeadContinueTest, Miscellaneous6) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
 
   std::string shader = R"(
                OpCapability Shader
@@ -1536,7 +1533,7 @@ TEST(TransformationAddDeadContinueTest, DISABLED_Miscellaneous6) {
                OpBranch %10
          %10 = OpLabel
                OpLoopMerge %13 %12 None
-               OpBranchConditional %9 %13 %11
+               OpBranch %11
          %11 = OpLabel
          %20 = OpCopyObject %6 %9
                OpBranch %12

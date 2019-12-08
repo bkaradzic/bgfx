@@ -749,20 +749,40 @@ TEST_F(ValidateIdWithMessage, OpTypeArrayElementTypeBad) {
 // Signed or unsigned.
 enum Signed { kSigned, kUnsigned };
 
-// Creates an assembly snippet declaring OpTypeArray with the given length.
-std::string MakeArrayLength(const std::string& len, Signed isSigned,
-                            int width) {
+// Creates an assembly module declaring OpTypeArray with the given length.
+std::string MakeArrayLength(const std::string& len, Signed isSigned, int width,
+                            int max_int_width = 64,
+                            bool use_vulkan_memory_model = false) {
   std::ostringstream ss;
   ss << R"(
     OpCapability Shader
-    OpCapability Linkage
-    OpCapability Int16
-    OpCapability Int64
   )";
-  ss << "OpMemoryModel Logical GLSL450\n";
+  if (use_vulkan_memory_model) {
+    ss << " OpCapability VulkanMemoryModel\n";
+  }
+  if (width == 16) {
+    ss << " OpCapability Int16\n";
+  }
+  if (max_int_width > 32) {
+    ss << "\n  OpCapability Int64\n";
+  }
+  if (use_vulkan_memory_model) {
+    ss << " OpExtension \"SPV_KHR_vulkan_memory_model\"\n";
+    ss << "OpMemoryModel Logical Vulkan\n";
+  } else {
+    ss << "OpMemoryModel Logical GLSL450\n";
+  }
+  ss << "OpEntryPoint GLCompute %main \"main\"\n";
+  ss << "OpExecutionMode %main LocalSize 1 1 1\n";
   ss << " %t = OpTypeInt " << width << (isSigned == kSigned ? " 1" : " 0");
   ss << " %l = OpConstant %t " << len;
   ss << " %a = OpTypeArray %t %l";
+  ss << " %void = OpTypeVoid \n"
+        " %voidfn = OpTypeFunction %void \n"
+        " %main = OpFunction %void None %voidfn \n"
+        " %entry = OpLabel\n"
+        " OpReturn\n"
+        " OpFunctionEnd\n";
   return ss.str();
 }
 
@@ -772,7 +792,8 @@ class OpTypeArrayLengthTest
     : public spvtest::TextToBinaryTestBase<::testing::TestWithParam<int>> {
  protected:
   OpTypeArrayLengthTest()
-      : position_(spv_position_t{0, 0, 0}),
+      : env_(SPV_ENV_UNIVERSAL_1_0),
+        position_(spv_position_t{0, 0, 0}),
         diagnostic_(spvDiagnosticCreate(&position_, "")) {}
 
   ~OpTypeArrayLengthTest() { spvDiagnosticDestroy(diagnostic_); }
@@ -783,7 +804,7 @@ class OpTypeArrayLengthTest
     spvDiagnosticDestroy(diagnostic_);
     diagnostic_ = nullptr;
     const auto status =
-        spvValidate(ScopedContext().context, &cbinary, &diagnostic_);
+        spvValidate(ScopedContext(env_).context, &cbinary, &diagnostic_);
     if (status != SPV_SUCCESS) {
       spvDiagnosticPrint(diagnostic_);
       EXPECT_THAT(std::string(diagnostic_->error),
@@ -792,12 +813,15 @@ class OpTypeArrayLengthTest
     return status;
   }
 
+ protected:
+  spv_target_env env_;
+
  private:
   spv_position_t position_;  // For creating diagnostic_.
   spv_diagnostic diagnostic_;
 };
 
-TEST_P(OpTypeArrayLengthTest, LengthPositive) {
+TEST_P(OpTypeArrayLengthTest, LengthPositiveSmall) {
   const int width = GetParam();
   EXPECT_EQ(SPV_SUCCESS,
             Val(CompileSuccessfully(MakeArrayLength("1", kSigned, width))));
@@ -814,20 +838,19 @@ TEST_P(OpTypeArrayLengthTest, LengthPositive) {
   const std::string fpad(width / 4 - 1, 'F');
   EXPECT_EQ(
       SPV_SUCCESS,
-      Val(CompileSuccessfully(MakeArrayLength("0x7" + fpad, kSigned, width))));
-  EXPECT_EQ(SPV_SUCCESS, Val(CompileSuccessfully(
-                             MakeArrayLength("0xF" + fpad, kUnsigned, width))));
+      Val(CompileSuccessfully(MakeArrayLength("0x7" + fpad, kSigned, width))))
+      << MakeArrayLength("0x7" + fpad, kSigned, width);
 }
 
 TEST_P(OpTypeArrayLengthTest, LengthZero) {
   const int width = GetParam();
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             Val(CompileSuccessfully(MakeArrayLength("0", kSigned, width)),
-                "OpTypeArray Length <id> '2\\[%.*\\]' default value must be at "
+                "OpTypeArray Length <id> '3\\[%.*\\]' default value must be at "
                 "least 1."));
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             Val(CompileSuccessfully(MakeArrayLength("0", kUnsigned, width)),
-                "OpTypeArray Length <id> '2\\[%.*\\]' default value must be at "
+                "OpTypeArray Length <id> '3\\[%.*\\]' default value must be at "
                 "least 1."));
 }
 
@@ -835,21 +858,86 @@ TEST_P(OpTypeArrayLengthTest, LengthNegative) {
   const int width = GetParam();
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             Val(CompileSuccessfully(MakeArrayLength("-1", kSigned, width)),
-                "OpTypeArray Length <id> '2\\[%.*\\]' default value must be at "
+                "OpTypeArray Length <id> '3\\[%.*\\]' default value must be at "
                 "least 1."));
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             Val(CompileSuccessfully(MakeArrayLength("-2", kSigned, width)),
-                "OpTypeArray Length <id> '2\\[%.*\\]' default value must be at "
+                "OpTypeArray Length <id> '3\\[%.*\\]' default value must be at "
                 "least 1."));
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             Val(CompileSuccessfully(MakeArrayLength("-123", kSigned, width)),
-                "OpTypeArray Length <id> '2\\[%.*\\]' default value must be at "
+                "OpTypeArray Length <id> '3\\[%.*\\]' default value must be at "
                 "least 1."));
   const std::string neg_max = "0x8" + std::string(width / 4 - 1, '0');
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             Val(CompileSuccessfully(MakeArrayLength(neg_max, kSigned, width)),
-                "OpTypeArray Length <id> '2\\[%.*\\]' default value must be at "
+                "OpTypeArray Length <id> '3\\[%.*\\]' default value must be at "
                 "least 1."));
+}
+
+// Returns the string form of an integer of the form 0x80....0 of the
+// given bit width.
+std::string big_num_ending_0(int bit_width) {
+  return "0x8" + std::string(bit_width / 4 - 1, '0');
+}
+
+// Returns the string form of an integer of the form 0x80..001 of the
+// given bit width.
+std::string big_num_ending_1(int bit_width) {
+  return "0x8" + std::string(bit_width / 4 - 2, '0') + "1";
+}
+
+TEST_P(OpTypeArrayLengthTest, LengthPositiveHugeEnding0InVulkan) {
+  env_ = SPV_ENV_VULKAN_1_0;
+  const int width = GetParam();
+  for (int max_int_width : {32, 64}) {
+    if (width > max_int_width) {
+      // Not valid to even make the OpConstant in this case.
+      continue;
+    }
+    const auto module = CompileSuccessfully(MakeArrayLength(
+        big_num_ending_0(width), kUnsigned, width, max_int_width));
+    EXPECT_EQ(SPV_SUCCESS, Val(module));
+  }
+}
+
+TEST_P(OpTypeArrayLengthTest, LengthPositiveHugeEnding1InVulkan) {
+  env_ = SPV_ENV_VULKAN_1_0;
+  const int width = GetParam();
+  for (int max_int_width : {32, 64}) {
+    if (width > max_int_width) {
+      // Not valid to even make the OpConstant in this case.
+      continue;
+    }
+    const auto module = CompileSuccessfully(MakeArrayLength(
+        big_num_ending_1(width), kUnsigned, width, max_int_width));
+    EXPECT_EQ(SPV_SUCCESS, Val(module));
+  }
+}
+
+TEST_P(OpTypeArrayLengthTest, LengthPositiveHugeEnding0InWebGPU) {
+  env_ = SPV_ENV_WEBGPU_0;
+  const int width = GetParam();
+  // WebGPU only has 32 bit integers.
+  if (width != 32) return;
+  const int max_int_width = 32;
+  const auto module = CompileSuccessfully(MakeArrayLength(
+      big_num_ending_0(width), kUnsigned, width, max_int_width, true));
+  EXPECT_EQ(SPV_SUCCESS, Val(module));
+}
+
+TEST_P(OpTypeArrayLengthTest, LengthPositiveHugeEnding1InWebGPU) {
+  env_ = SPV_ENV_WEBGPU_0;
+  const int width = GetParam();
+  // WebGPU only has 32 bit integers.
+  if (width != 32) return;
+  const int max_int_width = 32;
+  const auto module = CompileSuccessfully(MakeArrayLength(
+      big_num_ending_1(width), kUnsigned, width, max_int_width, true));
+  EXPECT_EQ(SPV_ERROR_INVALID_ID,
+            Val(module,
+                "OpTypeArray Length <id> '3\\[%.*\\]' size exceeds max value "
+                "2147483648 permitted by WebGPU: got 2147483649"));
 }
 
 // The only valid widths for integers are 8, 16, 32, and 64.

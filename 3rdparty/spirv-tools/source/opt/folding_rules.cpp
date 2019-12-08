@@ -553,7 +553,6 @@ uint32_t PerformOperation(analysis::ConstantManager* const_mgr, SpvOp opcode,
                           const analysis::Constant* input1,
                           const analysis::Constant* input2) {
   assert(input1 && input2);
-  assert(input1->type() == input2->type());
   const analysis::Type* type = input1->type();
   std::vector<uint32_t> words;
   if (const analysis::Vector* vector_type = type->AsVector()) {

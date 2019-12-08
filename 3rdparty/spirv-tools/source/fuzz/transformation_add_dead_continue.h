@@ -64,6 +64,14 @@ class TransformationAddDeadContinue : public Transformation {
   protobufs::Transformation ToMessage() const override;
 
  private:
+  // Used by 'Apply' to actually apply the transformation to the module of
+  // interest, and by 'IsApplicable' to do a dry-run of the transformation on a
+  // cloned module, in order to check that the transformation leads to a valid
+  // module.  This is only invoked by 'IsApplicable' after certain basic
+  // applicability checks have been made, ensuring that the invocation of this
+  // method is legal.
+  void ApplyImpl(opt::IRContext* context) const;
+
   protobufs::TransformationAddDeadContinue message_;
 };
 

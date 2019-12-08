@@ -69,14 +69,6 @@ bool BlockIsInLoopContinueConstruct(opt::IRContext* context, uint32_t block_id,
 opt::BasicBlock::iterator GetIteratorForInstruction(
     opt::BasicBlock* block, const opt::Instruction* inst);
 
-// The function determines whether adding an edge from |bb_from| to |bb_to| -
-// is legitimate with respect to the SPIR-V rule that a definition must
-// dominate all of its uses.  This is because adding such an edge can change
-// dominance in the control flow graph, potentially making the module invalid.
-bool NewEdgeRespectsUseDefDominance(opt::IRContext* context,
-                                    opt::BasicBlock* bb_from,
-                                    opt::BasicBlock* bb_to);
-
 // Returns true if and only if there is a path to |bb| from the entry block of
 // the function that contains |bb|.
 bool BlockIsReachableInItsFunction(opt::IRContext* context,
@@ -116,6 +108,13 @@ uint32_t GetNumberOfStructMembers(
 // 0 if there is not a static size.
 uint32_t GetArraySize(const opt::Instruction& array_type_instruction,
                       opt::IRContext* context);
+
+// Returns true if and only if |context| is valid, according to the validator.
+bool IsValid(opt::IRContext* context);
+
+// Returns a clone of |context|, by writing |context| to a binary and then
+// parsing it again.
+std::unique_ptr<opt::IRContext> CloneIRContext(opt::IRContext* context);
 
 }  // namespace fuzzerutil
 

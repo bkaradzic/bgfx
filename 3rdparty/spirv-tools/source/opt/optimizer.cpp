@@ -230,8 +230,7 @@ Optimizer& Optimizer::RegisterSizePasses() {
 }
 
 Optimizer& Optimizer::RegisterVulkanToWebGPUPasses() {
-  return RegisterPass(CreateStripDebugInfoPass())
-      .RegisterPass(CreateStripAtomicCounterMemoryPass())
+  return RegisterPass(CreateStripAtomicCounterMemoryPass())
       .RegisterPass(CreateGenerateWebGPUInitializersPass())
       .RegisterPass(CreateLegalizeVectorShufflePass())
       .RegisterPass(CreateSplitInvalidUnreachablePass())

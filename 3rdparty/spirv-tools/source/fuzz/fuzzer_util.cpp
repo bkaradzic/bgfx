@@ -14,6 +14,8 @@
 
 #include "source/fuzz/fuzzer_util.h"
 
+#include "source/opt/build_module.h"
+
 namespace spvtools {
 namespace fuzz {
 
@@ -180,108 +182,6 @@ opt::BasicBlock::iterator GetIteratorForInstruction(
   return block->end();
 }
 
-bool NewEdgeRespectsUseDefDominance(opt::IRContext* context,
-                                    opt::BasicBlock* bb_from,
-                                    opt::BasicBlock* bb_to) {
-  assert(bb_from->terminator()->opcode() == SpvOpBranch);
-
-  // If there is *already* an edge from |bb_from| to |bb_to|, then adding
-  // another edge is fine from a dominance point of view.
-  if (bb_from->terminator()->GetSingleWordInOperand(0) == bb_to->id()) {
-    return true;
-  }
-
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2919): the
-  //  solution below to determining whether a new edge respects dominance
-  //  rules is incomplete.  Test
-  //  TransformationAddDeadContinueTest::DISABLED_Miscellaneous6 exposes the
-  //  problem.  In practice, this limitation does not bite too often, and the
-  //  worst it does is leads to SPIR-V that spirv-val rejects.
-
-  // Let us assume that the module being manipulated is valid according to the
-  // rules of the SPIR-V language.
-  //
-  // Suppose that some block Y is dominated by |bb_to| (which includes the case
-  // where Y = |bb_to|).
-  //
-  // Suppose that Y uses an id i that is defined in some other block X.
-  //
-  // Because the module is valid, X must dominate Y.  We are concerned about
-  // whether an edge from |bb_from| to |bb_to| could *stop* X from dominating
-  // Y.
-  //
-  // Because |bb_to| dominates Y, a new edge from |bb_from| to |bb_to| can
-  // only affect whether X dominates Y if X dominates |bb_to|.
-  //
-  // So let us assume that X does dominate |bb_to|, so that we have:
-  //
-  //   (X defines i) dominates |bb_to| dominates (Y uses i)
-  //
-  // The new edge from |bb_from| to |bb_to| will stop the definition of i in X
-  // from dominating the use of i in Y exactly when the new edge will stop X
-  // from dominating |bb_to|.
-  //
-  // Now, the block X that we are worried about cannot dominate |bb_from|,
-  // because in that case X would still dominate |bb_to| after we add an edge
-  // from |bb_from| to |bb_to|.
-  //
-  // Also, it cannot be that X = |bb_to|, because nothing can stop a block
-  // from dominating itself.
-  //
-  // So we are looking for a block X such that:
-  //
-  // - X strictly dominates |bb_to|
-  // - X does not dominate |bb_from|
-  // - X defines an id i
-  // - i is used in some block Y
-  // - |bb_to| dominates Y
-
-  // Walk the dominator tree backwards, starting from the immediate dominator
-  // of |bb_to|.  We can stop when we find a block that also dominates
-  // |bb_from|.
-  auto dominator_analysis = context->GetDominatorAnalysis(bb_from->GetParent());
-  for (auto dominator = dominator_analysis->ImmediateDominator(bb_to);
-       dominator != nullptr &&
-       !dominator_analysis->Dominates(dominator, bb_from);
-       dominator = dominator_analysis->ImmediateDominator(dominator)) {
-    // |dominator| is a candidate for block X in the above description.
-    // We now look through the instructions for a candidate instruction i.
-    for (auto& inst : *dominator) {
-      // Consider all the uses of this instruction.
-      if (!context->get_def_use_mgr()->WhileEachUse(
-              &inst,
-              [bb_to, context, dominator_analysis](
-                  opt::Instruction* user, uint32_t operand_index) -> bool {
-                // If this use is in an OpPhi, we need to check that dominance
-                // of the relevant *parent* block is not spoiled.  Otherwise we
-                // need to check that dominance of the block containing the use
-                // is not spoiled.
-                opt::BasicBlock* use_block_or_phi_parent =
-                    user->opcode() == SpvOpPhi
-                        ? context->cfg()->block(
-                              user->GetSingleWordOperand(operand_index + 1))
-                        : context->get_instr_block(user);
-
-                // There might not be any relevant block, e.g. if the use is in
-                // a decoration; in this case the new edge is unproblematic.
-                if (use_block_or_phi_parent == nullptr) {
-                  return true;
-                }
-
-                // With reference to the above discussion,
-                // |use_block_or_phi_parent| is a candidate for the block Y.
-                // If |bb_to| dominates this block, the new edge would be
-                // problematic.
-                return !dominator_analysis->Dominates(bb_to,
-                                                      use_block_or_phi_parent);
-              })) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
 bool BlockIsReachableInItsFunction(opt::IRContext* context,
                                    opt::BasicBlock* bb) {
   auto enclosing_function = bb->GetParent();
@@ -397,6 +297,19 @@ uint32_t GetArraySize(const opt::Instruction& array_type_instruction,
     return 0;
   }
   return array_length_constant->GetU32();
+}
+
+bool IsValid(opt::IRContext* context) {
+  std::vector<uint32_t> binary;
+  context->module()->ToBinary(&binary, false);
+  return SpirvTools(context->grammar().target_env()).Validate(binary);
+}
+
+std::unique_ptr<opt::IRContext> CloneIRContext(opt::IRContext* context) {
+  std::vector<uint32_t> binary;
+  context->module()->ToBinary(&binary, false);
+  return BuildModule(context->grammar().target_env(), nullptr, binary.data(),
+                     binary.size());
 }
 
 }  // namespace fuzzerutil

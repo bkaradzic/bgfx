@@ -528,8 +528,8 @@ TEST(FuzzerShrinkerTest, Miscellaneous2) {
          %86 = OpLabel
         %184 = OpPhi %26 %27 %78 %126 %89
          %92 = OpSLessThan %8 %184 %56
-               OpLoopMerge %88 %89 None
-               OpBranchConditional %92 %87 %88
+               OpLoopMerge %1000 %89 None
+               OpBranchConditional %92 %87 %1000
          %87 = OpLabel
          %95 = OpIAdd %26 %183 %74
          %96 = OpSLessThan %8 %184 %95
@@ -571,6 +571,8 @@ TEST(FuzzerShrinkerTest, Miscellaneous2) {
          %89 = OpLabel
         %126 = OpIAdd %26 %184 %74
                OpBranch %86
+       %1000 = OpLabel
+               OpBranch %88
          %88 = OpLabel
         %128 = OpIAdd %26 %183 %74
                OpBranch %77
@@ -829,7 +831,6 @@ TEST(FuzzerShrinkerTest, Miscellaneous3) {
          %37 = OpSDiv %6 %302 %35
          %38 = OpIMul %6 %35 %37
          %40 = OpIEqual %17 %38 %302
-               OpSelectionMerge %42 None
                OpBranchConditional %40 %41 %42
          %41 = OpLabel
          %50 = OpConvertSToF %20 %302
@@ -857,7 +858,6 @@ TEST(FuzzerShrinkerTest, Miscellaneous3) {
                OpBranch %59
          %75 = OpLabel
          %78 = OpSGreaterThan %17 %304 %9
-               OpSelectionMerge %80 None
                OpBranchConditional %78 %79 %80
          %79 = OpLabel
          %83 = OpISub %6 %304 %54

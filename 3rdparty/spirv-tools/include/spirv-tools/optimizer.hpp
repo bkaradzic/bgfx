@@ -827,6 +827,16 @@ Optimizer::PassToken CreateSplitInvalidUnreachablePass();
 //   of range. (The module is already invalid if that is the case.)
 // - TODO(dneto): The OpImageTexelPointer coordinate component is not 32-bits
 // wide.
+//
+// NOTE: Access chain indices are always treated as signed integers.  So
+//   if an array has a fixed size of more than 2^31 elements, then elements
+//   from 2^31 and above are never accessible with a 32-bit index,
+//   signed or unsigned.  For this case, this pass will clamp the index
+//   between 0 and at 2^31-1, inclusive.
+//   Similarly, if an array has more then 2^15 element and is accessed with
+//   a 16-bit index, then elements from 2^15 and above are not accessible.
+//   In this case, the pass will clamp the index between 0 and 2^15-1
+//   inclusive.
 Optimizer::PassToken CreateGraphicsRobustAccessPass();
 
 // Create descriptor scalar replacement pass.
