@@ -206,6 +206,8 @@ const char* const E_GL_AMD_shader_image_load_store_lod          = "GL_AMD_shader
 const char* const E_GL_AMD_shader_fragment_mask                 = "GL_AMD_shader_fragment_mask";
 const char* const E_GL_AMD_gpu_shader_half_float_fetch          = "GL_AMD_gpu_shader_half_float_fetch";
 
+const char* const E_GL_INTEL_shader_integer_functions2          = "GL_INTEL_shader_integer_functions2";
+
 const char* const E_GL_NV_sample_mask_override_coverage         = "GL_NV_sample_mask_override_coverage";
 const char* const E_SPV_NV_geometry_shader_passthrough          = "GL_NV_geometry_shader_passthrough";
 const char* const E_GL_NV_viewport_array2                       = "GL_NV_viewport_array2";

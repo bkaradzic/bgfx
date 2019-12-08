@@ -931,6 +931,8 @@ const char* CapabilityString(int info)
     case CapabilityDemoteToHelperInvocationEXT:             return "DemoteToHelperInvocationEXT";
     case CapabilityShaderClockKHR:                          return "ShaderClockKHR";
 
+    case CapabilityIntegerFunctions2INTEL:              return "CapabilityIntegerFunctions2INTEL";
+
     default: return "Bad";
     }
 }

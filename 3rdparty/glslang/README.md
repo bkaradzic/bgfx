@@ -103,8 +103,8 @@ cd ../..
 ```
 
 If you wish to assure that SPIR-V generated from HLSL is legal for Vulkan,
-or wish to invoke -Os to reduce SPIR-V size from HLSL or GLSL, install
-spirv-tools with this:
+wish to invoke -Os to reduce SPIR-V size from HLSL or GLSL, or wish to run the
+integrated test suite, install spirv-tools with this:
 
 ```bash
 ./update_glslang_sources.py
@@ -235,6 +235,11 @@ Running `runtests` script-backed tests:
 ```bash
 cd $SOURCE_DIR/Test && ./runtests
 ```
+
+If some tests fail with validation errors, there may be a mismatch between the
+version of `spirv-val` on the system and the version of glslang.  In this
+case, it is necessary to run `update_glslang_sources.py`.  See "Check-Out
+External Projects" above for more details.
 
 ### Contributing tests
 

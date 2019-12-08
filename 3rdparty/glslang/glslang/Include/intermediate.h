@@ -899,6 +899,15 @@ enum TOperator {
     EOpFindLSB,
     EOpFindMSB,
 
+    EOpCountLeadingZeros,
+    EOpCountTrailingZeros,
+    EOpAbsDifference,
+    EOpAddSaturate,
+    EOpSubSaturate,
+    EOpAverage,
+    EOpAverageRounded,
+    EOpMul32x16,
+
     EOpTraceNV,
     EOpReportIntersectionNV,
     EOpIgnoreIntersectionNV,

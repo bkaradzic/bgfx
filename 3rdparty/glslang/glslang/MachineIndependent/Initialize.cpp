@@ -2854,6 +2854,181 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+    if ((profile != EEsProfile && version >= 130) ||
+        (profile == EEsProfile && version >= 300)) {
+        commonBuiltins.append(
+            "uint countLeadingZeros(uint);"
+            "uvec2 countLeadingZeros(uvec2);"
+            "uvec3 countLeadingZeros(uvec3);"
+            "uvec4 countLeadingZeros(uvec4);"
+
+            "uint countTrailingZeros(uint);"
+            "uvec2 countTrailingZeros(uvec2);"
+            "uvec3 countTrailingZeros(uvec3);"
+            "uvec4 countTrailingZeros(uvec4);"
+
+            "uint absoluteDifference(int, int);"
+            "uvec2 absoluteDifference(ivec2, ivec2);"
+            "uvec3 absoluteDifference(ivec3, ivec3);"
+            "uvec4 absoluteDifference(ivec4, ivec4);"
+
+            "uint16_t absoluteDifference(int16_t, int16_t);"
+            "u16vec2 absoluteDifference(i16vec2, i16vec2);"
+            "u16vec3 absoluteDifference(i16vec3, i16vec3);"
+            "u16vec4 absoluteDifference(i16vec4, i16vec4);"
+
+            "uint64_t absoluteDifference(int64_t, int64_t);"
+            "u64vec2 absoluteDifference(i64vec2, i64vec2);"
+            "u64vec3 absoluteDifference(i64vec3, i64vec3);"
+            "u64vec4 absoluteDifference(i64vec4, i64vec4);"
+
+            "uint absoluteDifference(uint, uint);"
+            "uvec2 absoluteDifference(uvec2, uvec2);"
+            "uvec3 absoluteDifference(uvec3, uvec3);"
+            "uvec4 absoluteDifference(uvec4, uvec4);"
+
+            "uint16_t absoluteDifference(uint16_t, uint16_t);"
+            "u16vec2 absoluteDifference(u16vec2, u16vec2);"
+            "u16vec3 absoluteDifference(u16vec3, u16vec3);"
+            "u16vec4 absoluteDifference(u16vec4, u16vec4);"
+
+            "uint64_t absoluteDifference(uint64_t, uint64_t);"
+            "u64vec2 absoluteDifference(u64vec2, u64vec2);"
+            "u64vec3 absoluteDifference(u64vec3, u64vec3);"
+            "u64vec4 absoluteDifference(u64vec4, u64vec4);"
+
+            "int addSaturate(int, int);"
+            "ivec2 addSaturate(ivec2, ivec2);"
+            "ivec3 addSaturate(ivec3, ivec3);"
+            "ivec4 addSaturate(ivec4, ivec4);"
+
+            "int16_t addSaturate(int16_t, int16_t);"
+            "i16vec2 addSaturate(i16vec2, i16vec2);"
+            "i16vec3 addSaturate(i16vec3, i16vec3);"
+            "i16vec4 addSaturate(i16vec4, i16vec4);"
+
+            "int64_t addSaturate(int64_t, int64_t);"
+            "i64vec2 addSaturate(i64vec2, i64vec2);"
+            "i64vec3 addSaturate(i64vec3, i64vec3);"
+            "i64vec4 addSaturate(i64vec4, i64vec4);"
+
+            "uint addSaturate(uint, uint);"
+            "uvec2 addSaturate(uvec2, uvec2);"
+            "uvec3 addSaturate(uvec3, uvec3);"
+            "uvec4 addSaturate(uvec4, uvec4);"
+
+            "uint16_t addSaturate(uint16_t, uint16_t);"
+            "u16vec2 addSaturate(u16vec2, u16vec2);"
+            "u16vec3 addSaturate(u16vec3, u16vec3);"
+            "u16vec4 addSaturate(u16vec4, u16vec4);"
+
+            "uint64_t addSaturate(uint64_t, uint64_t);"
+            "u64vec2 addSaturate(u64vec2, u64vec2);"
+            "u64vec3 addSaturate(u64vec3, u64vec3);"
+            "u64vec4 addSaturate(u64vec4, u64vec4);"
+
+            "int subtractSaturate(int, int);"
+            "ivec2 subtractSaturate(ivec2, ivec2);"
+            "ivec3 subtractSaturate(ivec3, ivec3);"
+            "ivec4 subtractSaturate(ivec4, ivec4);"
+
+            "int16_t subtractSaturate(int16_t, int16_t);"
+            "i16vec2 subtractSaturate(i16vec2, i16vec2);"
+            "i16vec3 subtractSaturate(i16vec3, i16vec3);"
+            "i16vec4 subtractSaturate(i16vec4, i16vec4);"
+
+            "int64_t subtractSaturate(int64_t, int64_t);"
+            "i64vec2 subtractSaturate(i64vec2, i64vec2);"
+            "i64vec3 subtractSaturate(i64vec3, i64vec3);"
+            "i64vec4 subtractSaturate(i64vec4, i64vec4);"
+
+            "uint subtractSaturate(uint, uint);"
+            "uvec2 subtractSaturate(uvec2, uvec2);"
+            "uvec3 subtractSaturate(uvec3, uvec3);"
+            "uvec4 subtractSaturate(uvec4, uvec4);"
+
+            "uint16_t subtractSaturate(uint16_t, uint16_t);"
+            "u16vec2 subtractSaturate(u16vec2, u16vec2);"
+            "u16vec3 subtractSaturate(u16vec3, u16vec3);"
+            "u16vec4 subtractSaturate(u16vec4, u16vec4);"
+
+            "uint64_t subtractSaturate(uint64_t, uint64_t);"
+            "u64vec2 subtractSaturate(u64vec2, u64vec2);"
+            "u64vec3 subtractSaturate(u64vec3, u64vec3);"
+            "u64vec4 subtractSaturate(u64vec4, u64vec4);"
+
+            "int average(int, int);"
+            "ivec2 average(ivec2, ivec2);"
+            "ivec3 average(ivec3, ivec3);"
+            "ivec4 average(ivec4, ivec4);"
+
+            "int16_t average(int16_t, int16_t);"
+            "i16vec2 average(i16vec2, i16vec2);"
+            "i16vec3 average(i16vec3, i16vec3);"
+            "i16vec4 average(i16vec4, i16vec4);"
+
+            "int64_t average(int64_t, int64_t);"
+            "i64vec2 average(i64vec2, i64vec2);"
+            "i64vec3 average(i64vec3, i64vec3);"
+            "i64vec4 average(i64vec4, i64vec4);"
+
+            "uint average(uint, uint);"
+            "uvec2 average(uvec2, uvec2);"
+            "uvec3 average(uvec3, uvec3);"
+            "uvec4 average(uvec4, uvec4);"
+
+            "uint16_t average(uint16_t, uint16_t);"
+            "u16vec2 average(u16vec2, u16vec2);"
+            "u16vec3 average(u16vec3, u16vec3);"
+            "u16vec4 average(u16vec4, u16vec4);"
+
+            "uint64_t average(uint64_t, uint64_t);"
+            "u64vec2 average(u64vec2, u64vec2);"
+            "u64vec3 average(u64vec3, u64vec3);"
+            "u64vec4 average(u64vec4, u64vec4);"
+
+            "int averageRounded(int, int);"
+            "ivec2 averageRounded(ivec2, ivec2);"
+            "ivec3 averageRounded(ivec3, ivec3);"
+            "ivec4 averageRounded(ivec4, ivec4);"
+
+            "int16_t averageRounded(int16_t, int16_t);"
+            "i16vec2 averageRounded(i16vec2, i16vec2);"
+            "i16vec3 averageRounded(i16vec3, i16vec3);"
+            "i16vec4 averageRounded(i16vec4, i16vec4);"
+
+            "int64_t averageRounded(int64_t, int64_t);"
+            "i64vec2 averageRounded(i64vec2, i64vec2);"
+            "i64vec3 averageRounded(i64vec3, i64vec3);"
+            "i64vec4 averageRounded(i64vec4, i64vec4);"
+
+            "uint averageRounded(uint, uint);"
+            "uvec2 averageRounded(uvec2, uvec2);"
+            "uvec3 averageRounded(uvec3, uvec3);"
+            "uvec4 averageRounded(uvec4, uvec4);"
+
+            "uint16_t averageRounded(uint16_t, uint16_t);"
+            "u16vec2 averageRounded(u16vec2, u16vec2);"
+            "u16vec3 averageRounded(u16vec3, u16vec3);"
+            "u16vec4 averageRounded(u16vec4, u16vec4);"
+
+            "uint64_t averageRounded(uint64_t, uint64_t);"
+            "u64vec2 averageRounded(u64vec2, u64vec2);"
+            "u64vec3 averageRounded(u64vec3, u64vec3);"
+            "u64vec4 averageRounded(u64vec4, u64vec4);"
+
+            "int multiply32x16(int, int);"
+            "ivec2 multiply32x16(ivec2, ivec2);"
+            "ivec3 multiply32x16(ivec3, ivec3);"
+            "ivec4 multiply32x16(ivec4, ivec4);"
+
+            "uint multiply32x16(uint, uint);"
+            "uvec2 multiply32x16(uvec2, uvec2);"
+            "uvec3 multiply32x16(uvec3, uvec3);"
+            "uvec4 multiply32x16(uvec4, uvec4);"
+            "\n");
+    }
+
     if ((profile != EEsProfile && version >= 450) ||
         (profile == EEsProfile && version >= 320)) {
         commonBuiltins.append(
@@ -6974,6 +7149,15 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("fragmentFetchAMD",     1, &E_GL_AMD_shader_fragment_mask);
         }
 
+        symbolTable.setFunctionExtensions("countLeadingZeros",  1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("countTrailingZeros", 1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("absoluteDifference", 1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("addSaturate",        1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("subtractSaturate",   1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("average",            1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("averageRounded",     1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("multiply32x16",      1, &E_GL_INTEL_shader_integer_functions2);
+
         symbolTable.setFunctionExtensions("textureFootprintNV",          1, &E_GL_NV_shader_texture_footprint);
         symbolTable.setFunctionExtensions("textureFootprintClampNV",     1, &E_GL_NV_shader_texture_footprint);
         symbolTable.setFunctionExtensions("textureFootprintLodNV",       1, &E_GL_NV_shader_texture_footprint);
@@ -8216,6 +8400,15 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("findMSB",           EOpFindMSB);
 
     symbolTable.relateToOperator("helperInvocationEXT",  EOpIsHelperInvocation);
+
+    symbolTable.relateToOperator("countLeadingZeros",  EOpCountLeadingZeros);
+    symbolTable.relateToOperator("countTrailingZeros", EOpCountTrailingZeros);
+    symbolTable.relateToOperator("absoluteDifference", EOpAbsDifference);
+    symbolTable.relateToOperator("addSaturate",        EOpAddSaturate);
+    symbolTable.relateToOperator("subtractSaturate",   EOpSubSaturate);
+    symbolTable.relateToOperator("average",            EOpAverage);
+    symbolTable.relateToOperator("averageRounded",     EOpAverageRounded);
+    symbolTable.relateToOperator("multiply32x16",      EOpMul32x16);
 
     if (PureOperatorBuiltins) {
         symbolTable.relateToOperator("imageSize",               EOpImageQuerySize);
