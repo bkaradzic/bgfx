@@ -82,8 +82,8 @@ fragment main0_out main0(main0_in in [[stage_in]], constant uint* spvBufferSizeC
     float3 _102 = float3(_100.x, _100.y, _70.z);
     _102.z = 1.0;
     uint _103 = in.in_var_TEXCOORD0 * 5u;
-    uint _186 = clamp(_103 + 1u, 0u, ((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u);
-    if (all(CulledObjectBoxBounds._m0[_186].xy > _96.xy) && all(CulledObjectBoxBounds._m0[clamp(_103, 0u, ((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u)].xyz < _102))
+    uint _189 = uint(clamp(int(_103 + 1u), int(0u), int(min((((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u), 2147483647u))));
+    if (all(CulledObjectBoxBounds._m0[_189].xy > _96.xy) && all(CulledObjectBoxBounds._m0[uint(clamp(int(_103), int(0u), int(min((((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u), 2147483647u))))].xyz < _102))
     {
         float _122 = _96.x;
         float _123 = _96.y;
@@ -104,8 +104,8 @@ fragment main0_out main0(main0_in in [[stage_in]], constant uint* spvBufferSizeC
         _158 = float3(500000.0);
         for (int _160 = 0; _160 < 8; )
         {
-            float3 _166 = _73[int(clamp(uint(_160), uint(0), uint(7)))] - (float3(0.5) * (CulledObjectBoxBounds._m0[clamp(_103, 0u, ((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u)].xyz + CulledObjectBoxBounds._m0[_186].xyz));
-            float3 _170 = float3(dot(_166, CulledObjectBoxBounds._m0[clamp(_103 + 2u, 0u, ((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u)].xyz), dot(_166, CulledObjectBoxBounds._m0[clamp(_103 + 3u, 0u, ((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u)].xyz), dot(_166, CulledObjectBoxBounds._m0[clamp(_103 + 4u, 0u, ((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u)].xyz));
+            float3 _166 = _73[clamp(_160, 0, 7)] - (float3(0.5) * (CulledObjectBoxBounds._m0[uint(clamp(int(_103), int(0u), int(min((((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u), 2147483647u))))].xyz + CulledObjectBoxBounds._m0[_189].xyz));
+            float3 _170 = float3(dot(_166, CulledObjectBoxBounds._m0[uint(clamp(int(_103 + 2u), int(0u), int(min((((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u), 2147483647u))))].xyz), dot(_166, CulledObjectBoxBounds._m0[uint(clamp(int(_103 + 3u), int(0u), int(min((((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u), 2147483647u))))].xyz), dot(_166, CulledObjectBoxBounds._m0[uint(clamp(int(_103 + 4u), int(0u), int(min((((CulledObjectBoxBoundsBufferSize - 0) / 16) - 1u), 2147483647u))))].xyz));
             _155 = fast::max(_155, _170);
             _158 = fast::min(_158, _170);
             _160++;

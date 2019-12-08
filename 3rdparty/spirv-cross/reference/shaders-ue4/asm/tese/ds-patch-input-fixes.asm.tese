@@ -247,6 +247,7 @@ struct main0_out
     float4 out_var_TEXCOORD10_centroid [[user(locn2)]];
     float4 out_var_TEXCOORD11_centroid [[user(locn3)]];
     float gl_ClipDistance [[clip_distance]] [1];
+    float gl_ClipDistance_0 [[user(clip0)]];
     float4 gl_Position [[position]];
 };
 
@@ -410,6 +411,7 @@ struct main0_patchIn
     out.out_var_TEXCOORD10_centroid = float4(_256.x, _256.y, _256.z, _118.w);
     out.out_var_TEXCOORD11_centroid = _259;
     out.gl_ClipDistance[0u] = dot(View.View_GlobalClippingPlane, float4(_565.xyz - float3(View.View_PreViewTranslation), 1.0));
+    out.gl_ClipDistance_0 = out.gl_ClipDistance[0];
     return out;
 }
 

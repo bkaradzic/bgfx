@@ -35,6 +35,8 @@ namespace SPIRV_CROSS_NAMESPACE
 #ifdef SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
 #if !defined(_MSC_VER) || defined(__clang__)
 [[noreturn]]
+#elif defined(_MSC_VER)
+__declspec(noreturn)
 #endif
 inline void
 report_and_abort(const std::string &msg)

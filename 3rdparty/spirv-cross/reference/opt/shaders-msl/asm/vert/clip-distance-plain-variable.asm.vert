@@ -11,12 +11,17 @@ struct main0_out
     float gl_ClipDistance_1 [[user(clip1)]];
 };
 
-vertex main0_out main0()
+struct main0_in
+{
+    float4 pos [[attribute(0)]];
+};
+
+vertex main0_out main0(main0_in in [[stage_in]])
 {
     main0_out out = {};
-    out.gl_Position = float4(10.0);
-    out.gl_ClipDistance[0] = 1.0;
-    out.gl_ClipDistance[1] = 4.0;
+    out.gl_Position = in.pos;
+    out.gl_ClipDistance[0] = in.pos.x;
+    out.gl_ClipDistance[1] = in.pos.y;
     out.gl_ClipDistance_0 = out.gl_ClipDistance[0];
     out.gl_ClipDistance_1 = out.gl_ClipDistance[1];
     return out;

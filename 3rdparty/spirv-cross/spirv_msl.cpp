@@ -1611,9 +1611,23 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 	if (is_builtin)
 		set_name(var.self, builtin_to_glsl(builtin, StorageClassFunction));
 
-	// Only flatten/unflatten IO composites for non-tessellation cases where arrays are not stripped.
-	if (!strip_array)
+	bool flatten_from_ib_var = false;
+
+	if (storage == StorageClassOutput && is_builtin && builtin == BuiltInClipDistance)
 	{
+		// Also declare [[clip_distance]] attribute here.
+		uint32_t clip_array_mbr_idx = uint32_t(ib_type.member_types.size());
+		ib_type.member_types.push_back(get_variable_data_type_id(var));
+		set_member_decoration(ib_type.self, clip_array_mbr_idx, DecorationBuiltIn, BuiltInClipDistance);
+		set_member_name(ib_type.self, clip_array_mbr_idx, builtin_to_glsl(BuiltInClipDistance, StorageClassOutput));
+
+		// When we flatten, we flatten directly from the "out" struct,
+		// not from a function variable.
+		flatten_from_ib_var = true;
+	}
+	else if (!strip_array)
+	{
+		// Only flatten/unflatten IO composites for non-tessellation cases where arrays are not stripped.
 		entry_func.add_local_variable(var.self);
 		// We need to declare the variable early and at entry-point scope.
 		vars_needing_early_declaration.push_back(var.self);
@@ -1668,6 +1682,12 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, storage);
 		}
+		else if (is_builtin && builtin == BuiltInClipDistance)
+		{
+			// Declare the ClipDistance as [[user(clipN)]].
+			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationBuiltIn, BuiltInClipDistance);
+			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, i);
+		}
 
 		if (get_decoration_bitset(var.self).get(DecorationIndex))
 		{
@@ -1707,6 +1727,8 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 						    remap_swizzle(padded_type, usable_type->vecsize, join(to_name(var.self), "[", i, "]")),
 						    ";");
 					}
+					else if (flatten_from_ib_var)
+						statement(ib_var_ref, ".", mbr_name, " = ", ib_var_ref, ".", to_name(var.self), "[", i, "];");
 					else
 						statement(ib_var_ref, ".", mbr_name, " = ", to_name(var.self), "[", i, "];");
 				});
@@ -1754,7 +1776,7 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 	auto &entry_func = get<SPIRFunction>(ir.default_entry_point);
 	auto &var_type = strip_array ? get_variable_element_type(var) : get_variable_data_type(var);
 
-	BuiltIn builtin;
+	BuiltIn builtin = BuiltInMax;
 	bool is_builtin = is_member_builtin(var_type, mbr_idx, &builtin);
 	bool is_flat =
 	    has_member_decoration(var_type.self, mbr_idx, DecorationFlat) || has_decoration(var.self, DecorationFlat);
@@ -1790,6 +1812,21 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 	while (is_array(*usable_type) || is_matrix(*usable_type))
 		usable_type = &get<SPIRType>(usable_type->parent_type);
 
+	bool flatten_from_ib_var = false;
+
+	if (storage == StorageClassOutput && is_builtin && builtin == BuiltInClipDistance)
+	{
+		// Also declare [[clip_distance]] attribute here.
+		uint32_t clip_array_mbr_idx = uint32_t(ib_type.member_types.size());
+		ib_type.member_types.push_back(mbr_type_id);
+		set_member_decoration(ib_type.self, clip_array_mbr_idx, DecorationBuiltIn, BuiltInClipDistance);
+		set_member_name(ib_type.self, clip_array_mbr_idx, builtin_to_glsl(BuiltInClipDistance, StorageClassOutput));
+
+		// When we flatten, we flatten directly from the "out" struct,
+		// not from a function variable.
+		flatten_from_ib_var = true;
+	}
+
 	for (uint32_t i = 0; i < elem_cnt; i++)
 	{
 		// Add a reference to the variable type to the interface struct.
@@ -1817,6 +1854,12 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 			uint32_t locn = vtx_attrs_by_builtin[builtin].location + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, storage);
+		}
+		else if (is_builtin && builtin == BuiltInClipDistance)
+		{
+			// Declare the ClipDistance as [[user(clipN)]].
+			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationBuiltIn, BuiltInClipDistance);
+			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, i);
 		}
 
 		if (has_member_decoration(var_type.self, mbr_idx, DecorationComponent))
@@ -1849,8 +1892,16 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 
 			case StorageClassOutput:
 				entry_func.fixup_hooks_out.push_back([=, &var, &var_type]() {
-					statement(ib_var_ref, ".", mbr_name, " = ", to_name(var.self), ".",
-					          to_member_name(var_type, mbr_idx), "[", i, "];");
+					if (flatten_from_ib_var)
+					{
+						statement(ib_var_ref, ".", mbr_name, " = ", ib_var_ref, ".",
+						          to_member_name(var_type, mbr_idx), "[", i, "];");
+					}
+					else
+					{
+						statement(ib_var_ref, ".", mbr_name, " = ", to_name(var.self), ".",
+						          to_member_name(var_type, mbr_idx), "[", i, "];");
+					}
 				});
 				break;
 
@@ -2148,10 +2199,15 @@ void CompilerMSL::add_variable_to_interface_block(StorageClass storage, const st
 
 				if (!is_builtin || has_active_builtin(builtin, storage))
 				{
-					if ((!is_builtin ||
-					     (storage == StorageClassInput && get_execution_model() != ExecutionModelFragment)) &&
-					    (storage == StorageClassInput || storage == StorageClassOutput) &&
-					    (is_matrix(mbr_type) || is_array(mbr_type)))
+					bool is_composite_type = is_matrix(mbr_type) || is_array(mbr_type);
+					bool attribute_load_store = storage == StorageClassInput && get_execution_model() != ExecutionModelFragment;
+					bool storage_is_stage_io = storage == StorageClassInput || storage == StorageClassOutput;
+
+					// ClipDistance always needs to be declared as user attributes.
+					if (builtin == BuiltInClipDistance)
+						is_builtin = false;
+
+					if ((!is_builtin || attribute_load_store) && storage_is_stage_io && is_composite_type)
 					{
 						add_composite_member_variable_to_interface_block(storage, ib_var_ref, ib_type, var, mbr_idx,
 						                                                 strip_array);
@@ -2175,10 +2231,17 @@ void CompilerMSL::add_variable_to_interface_block(StorageClass storage, const st
 	{
 		if (!is_builtin || has_active_builtin(builtin, storage))
 		{
+			bool is_composite_type = is_matrix(var_type) || is_array(var_type);
+			bool storage_is_stage_io =
+					storage == StorageClassInput || (storage == StorageClassOutput && !capture_output_to_buffer);
+			bool attribute_load_store = storage == StorageClassInput && get_execution_model() != ExecutionModelFragment;
+
+			// ClipDistance always needs to be declared as user attributes.
+			if (builtin == BuiltInClipDistance)
+				is_builtin = false;
+
 			// MSL does not allow matrices or arrays in input or output variables, so need to handle it specially.
-			if ((!is_builtin || (storage == StorageClassInput && get_execution_model() != ExecutionModelFragment)) &&
-			    (storage == StorageClassInput || (storage == StorageClassOutput && !capture_output_to_buffer)) &&
-			    (is_matrix(var_type) || is_array(var_type)))
+			if ((!is_builtin || attribute_load_store) && storage_is_stage_io && is_composite_type)
 			{
 				add_composite_variable_to_interface_block(storage, ib_var_ref, ib_type, var, strip_array);
 			}
@@ -2266,6 +2329,11 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 		bool filter_patch_decoration = (has_decoration(var_id, DecorationPatch) || is_patch_block(type)) == patch;
 
 		bool hidden = is_hidden_variable(var, incl_builtins);
+
+		// ClipDistance is never hidden, we need to emulate it when used as an input.
+		if (bi_type == BuiltInClipDistance)
+			hidden = false;
+
 		// Barycentric inputs must be emitted in stage-in, because they can have interpolation arguments.
 		if (is_active && (bi_type == BuiltInBaryCoordNV || bi_type == BuiltInBaryCoordNoPerspNV))
 		{
@@ -6445,8 +6513,7 @@ void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uin
 
 		// Fix tessellation patch function processing
 		if (get_execution_model() == ExecutionModelTessellationControl ||
-		    (mem_sem & (MemorySemanticsSubgroupMemoryMask | MemorySemanticsWorkgroupMemoryMask |
-		                MemorySemanticsAtomicCounterMemoryMask)))
+		    (mem_sem & (MemorySemanticsSubgroupMemoryMask | MemorySemanticsWorkgroupMemoryMask)))
 		{
 			if (!mem_flags.empty())
 				mem_flags += " | ";
@@ -6467,13 +6534,11 @@ void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uin
 	else
 	{
 		if ((mem_sem & (MemorySemanticsUniformMemoryMask | MemorySemanticsCrossWorkgroupMemoryMask)) &&
-		    (mem_sem & (MemorySemanticsSubgroupMemoryMask | MemorySemanticsWorkgroupMemoryMask |
-		                MemorySemanticsAtomicCounterMemoryMask)))
+		    (mem_sem & (MemorySemanticsSubgroupMemoryMask | MemorySemanticsWorkgroupMemoryMask)))
 			bar_stmt += "mem_flags::mem_device_and_threadgroup";
 		else if (mem_sem & (MemorySemanticsUniformMemoryMask | MemorySemanticsCrossWorkgroupMemoryMask))
 			bar_stmt += "mem_flags::mem_device";
-		else if (mem_sem & (MemorySemanticsSubgroupMemoryMask | MemorySemanticsWorkgroupMemoryMask |
-		                    MemorySemanticsAtomicCounterMemoryMask))
+		else if (mem_sem & (MemorySemanticsSubgroupMemoryMask | MemorySemanticsWorkgroupMemoryMask))
 			bar_stmt += "mem_flags::mem_threadgroup";
 		else if (mem_sem & MemorySemanticsImageMemoryMask)
 			bar_stmt += "mem_flags::mem_texture";
@@ -8421,8 +8486,13 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 				/* fallthrough */
 			case BuiltInPosition:
 			case BuiltInLayer:
-			case BuiltInClipDistance:
 				return string(" [[") + builtin_qualifier(builtin) + "]]" + (mbr_type.array.empty() ? "" : " ");
+
+			case BuiltInClipDistance:
+				if (has_member_decoration(type.self, index, DecorationLocation))
+					return join(" [[user(clip", get_member_decoration(type.self, index, DecorationLocation), ")]]");
+				else
+					return string(" [[") + builtin_qualifier(builtin) + "]]" + (mbr_type.array.empty() ? "" : " ");
 
 			default:
 				return "";
@@ -8520,6 +8590,9 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 			case BuiltInBaryCoordNoPerspNV:
 				quals = builtin_qualifier(builtin);
 				break;
+
+			case BuiltInClipDistance:
+				return join(" [[user(clip", get_member_decoration(type.self, index, DecorationLocation), ")]]");
 
 			default:
 				break;
@@ -11958,7 +12031,7 @@ void CompilerMSL::MemberSorter::sort()
 	size_t mbr_cnt = type.member_types.size();
 	SmallVector<uint32_t> mbr_idxs(mbr_cnt);
 	iota(mbr_idxs.begin(), mbr_idxs.end(), 0); // Fill with consecutive indices
-	std::sort(mbr_idxs.begin(), mbr_idxs.end(), *this); // Sort member indices based on sorting aspect
+	std::stable_sort(mbr_idxs.begin(), mbr_idxs.end(), *this); // Sort member indices based on sorting aspect
 
 	// Move type and meta member info to the order defined by the sorted member indices.
 	// This is done by creating temporary copies of both member types and meta, and then
