@@ -125,7 +125,12 @@ static void createDfd(std::vector<uint32_t>& result, int channels, bool srgb)
 
 	for (int i = 0; i < channels; ++i)
 	{
+		uint32_t qualifiers = (srgb && i == 3) ? KHR_DF_SAMPLE_DATATYPE_LINEAR : 0;
+
 		KHR_DFDSETSVAL(dfd, i, CHANNELID, channel_enums[i]);
+		KHR_DFDSETSVAL(dfd, i, QUALIFIERS, qualifiers);
+		KHR_DFDSETSVAL(dfd, i, SAMPLELOWER, 0);
+		KHR_DFDSETSVAL(dfd, i, SAMPLEUPPER, ~0u);
 	}
 }
 

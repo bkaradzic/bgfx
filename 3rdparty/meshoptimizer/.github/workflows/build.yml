@@ -37,7 +37,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: cmake configure
-      run: cmake . -DBUILD_DEMO=ON -DBUILD_TOOLS=ON -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>" -A ${{matrix.arch}}
+      run: cmake . -DMESHOPT_BUILD_DEMO=ON -DMESHOPT_BUILD_TOOLS=ON -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>" -A ${{matrix.arch}}
     - name: cmake test
       shell: bash # necessary for fail-fast
       run: |

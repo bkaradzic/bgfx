@@ -26,7 +26,7 @@ script:
   - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then make -j2 config=debug test; fi
   - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then make -j2 config=release test; fi
   - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then make -j2 config=release gltfpack; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then cmake -G "$TARGET" -DBUILD_DEMO=ON -DBUILD_TOOLS=ON; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then cmake -G "$TARGET" -DMESHOPT_BUILD_DEMO=ON -DMESHOPT_BUILD_TOOLS=ON; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then cmake --build . -- -property:Configuration=Debug -verbosity:minimal; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./Debug/demo.exe demo/pirate.obj; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then cmake --build . -- -property:Configuration=Release -verbosity:minimal; fi

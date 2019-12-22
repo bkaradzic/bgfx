@@ -76,6 +76,31 @@ struct Mesh
 	std::vector<const char*> target_names;
 };
 
+struct Track
+{
+	cgltf_node* node;
+	cgltf_animation_path_type path;
+
+	bool dummy;
+
+	size_t components; // 1 unless path is cgltf_animation_path_type_weights
+
+	cgltf_interpolation_type interpolation;
+
+	std::vector<float> time; // empty for resampled or constant animations
+	std::vector<Attr> data;
+};
+
+struct Animation
+{
+	const char* name;
+
+	float start;
+	int frames;
+
+	std::vector<Track> tracks;
+};
+
 struct Settings
 {
 	int pos_bits;
@@ -290,7 +315,7 @@ void transformMesh(Mesh& mesh, const cgltf_node* node)
 	}
 }
 
-void parseMeshesGltf(cgltf_data* data, std::vector<Mesh>& meshes)
+void parseMeshes(cgltf_data* data, std::vector<Mesh>& meshes)
 {
 	for (size_t ni = 0; ni < data->nodes_count; ++ni)
 	{
@@ -318,7 +343,7 @@ void parseMeshesGltf(cgltf_data* data, std::vector<Mesh>& meshes)
 				continue;
 			}
 
-			Mesh result;
+			Mesh result = {};
 
 			result.node = &node;
 
@@ -560,6 +585,49 @@ void parseMeshesObj(fastObjMesh* obj, cgltf_data* data, std::vector<Mesh>& meshe
 		vertex_offset[mi] += obj->face_vertices[fi];
 		index_offset[mi] += (obj->face_vertices[fi] - 2) * 3;
 		group_offset += obj->face_vertices[fi];
+	}
+}
+
+void parseAnimations(cgltf_data* data, std::vector<Animation>& animations)
+{
+	for (size_t i = 0; i < data->animations_count; ++i)
+	{
+		const cgltf_animation& animation = data->animations[i];
+
+		Animation result = {};
+		result.name = animation.name;
+
+		for (size_t j = 0; j < animation.channels_count; ++j)
+		{
+			const cgltf_animation_channel& channel = animation.channels[j];
+
+			if (!channel.target_node)
+			{
+				fprintf(stderr, "Warning: ignoring channel %d of animation %d because it has no target node\n", int(j), int(i));
+				continue;
+			}
+
+			Track track = {};
+			track.node = channel.target_node;
+			track.path = channel.target_path;
+
+			track.components = (channel.target_path == cgltf_animation_path_type_weights) ? track.node->mesh->primitives[0].targets_count : 1;
+
+			track.interpolation = channel.sampler->interpolation;
+
+			readAccessor(track.time, channel.sampler->input);
+			readAccessor(track.data, channel.sampler->output);
+
+			result.tracks.push_back(track);
+		}
+
+		if (result.tracks.empty())
+		{
+			fprintf(stderr, "Warning: ignoring animation %d because it has no valid tracks\n", int(i));
+			continue;
+		}
+
+		animations.push_back(result);
 	}
 }
 
@@ -2300,69 +2368,46 @@ void writeAccessor(std::string& json, size_t view, size_t offset, cgltf_type typ
 
 float getDelta(const Attr& l, const Attr& r, cgltf_animation_path_type type)
 {
-	if (type == cgltf_animation_path_type_rotation)
+	switch (type)
 	{
-		float error = 1.f - fabsf(l.f[0] * r.f[0] + l.f[1] * r.f[1] + l.f[2] * r.f[2] + l.f[3] * r.f[3]);
+	case cgltf_animation_path_type_translation:
+		return std::max(std::max(fabsf(l.f[0] - r.f[0]), fabsf(l.f[1] - r.f[1])), fabsf(l.f[2] - r.f[2]));
 
-		return error;
-	}
-	else
-	{
-		float error = 0;
-		for (int k = 0; k < 4; ++k)
-			error += fabsf(r.f[k] - l.f[k]);
+	case cgltf_animation_path_type_rotation:
+		return acosf(std::min(1.f, fabsf(l.f[0] * r.f[0] + l.f[1] * r.f[1] + l.f[2] * r.f[2] + l.f[3] * r.f[3])));
 
-		return error;
+	case cgltf_animation_path_type_scale:
+		return std::max(std::max(fabsf(l.f[0] / r.f[0] - 1), fabsf(l.f[1] / r.f[1] - 1)), fabsf(l.f[2] / r.f[2] - 1));
+
+	case cgltf_animation_path_type_weights:
+		return fabsf(l.f[0] - r.f[0]);
+
+	default:
+		assert(!"Uknown animation path");
+		return 0;
 	}
 }
 
-bool isTrackConstant(const cgltf_animation_sampler& sampler, cgltf_animation_path_type type, cgltf_node* target_node, Attr* out_first = 0)
+float getDeltaTolerance(cgltf_animation_path_type type)
 {
-	const float tolerance = 1e-3f;
-
-	size_t value_stride = (sampler.interpolation == cgltf_interpolation_type_cubic_spline) ? 3 : 1;
-	size_t value_offset = (sampler.interpolation == cgltf_interpolation_type_cubic_spline) ? 1 : 0;
-
-	size_t components = (type == cgltf_animation_path_type_weights) ? target_node->mesh->primitives[0].targets_count : 1;
-
-	assert(sampler.input->count * value_stride * components == sampler.output->count);
-
-	std::vector<Attr> output;
-	readAccessor(output, sampler.output);
-
-	for (size_t j = 0; j < components; ++j)
+	switch (type)
 	{
-		Attr first = output[j * value_stride + value_offset];
+	case cgltf_animation_path_type_translation:
+		return 0.001f; // linear
 
-		for (size_t i = 1; i < sampler.input->count; ++i)
-		{
-			const Attr& attr = output[(i * components + j) * value_stride + value_offset];
+	case cgltf_animation_path_type_rotation:
+		return 0.001f; // radians
 
-			if (getDelta(first, attr, type) > tolerance)
-				return false;
-		}
+	case cgltf_animation_path_type_scale:
+		return 0.001f; // ratio
 
-		if (sampler.interpolation == cgltf_interpolation_type_cubic_spline)
-		{
-			for (size_t i = 0; i < sampler.input->count; ++i)
-			{
-				for (int k = 0; k < 2; ++k)
-				{
-					const Attr& t = output[(i * components + j) * 3 + k * 2];
+	case cgltf_animation_path_type_weights:
+		return 0.001f; // linear
 
-					float error = fabsf(t.f[0]) + fabsf(t.f[1]) + fabsf(t.f[2]) + fabsf(t.f[3]);
-
-					if (error > tolerance)
-						return false;
-				}
-			}
-		}
+	default:
+		assert(!"Uknown animation path");
+		return 0;
 	}
-
-	if (out_first)
-		*out_first = output[value_offset];
-
-	return true;
 }
 
 Attr interpolateLinear(const Attr& l, const Attr& r, float t, cgltf_animation_path_type type)
@@ -2447,22 +2492,15 @@ Attr interpolateHermite(const Attr& v0, const Attr& t0, const Attr& v1, const At
 	return lerp;
 }
 
-void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& sampler, cgltf_animation_path_type type, cgltf_node* target_node, int frames, float mint, int freq)
+void resampleKeyframes(std::vector<Attr>& data, const std::vector<float>& input, const std::vector<Attr>& output, cgltf_animation_path_type type, cgltf_interpolation_type interpolation, size_t components, int frames, float mint, int freq)
 {
-	size_t components = (type == cgltf_animation_path_type_weights) ? target_node->mesh->primitives[0].targets_count : 1;
-
-	std::vector<float> input;
-	readAccessor(input, sampler.input);
-	std::vector<Attr> output;
-	readAccessor(output, sampler.output);
-
 	size_t cursor = 0;
 
 	for (int i = 0; i < frames; ++i)
 	{
 		float time = mint + float(i) / freq;
 
-		while (cursor + 1 < sampler.input->count)
+		while (cursor + 1 < input.size())
 		{
 			float next_time = input[cursor + 1];
 
@@ -2472,7 +2510,7 @@ void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& s
 			cursor++;
 		}
 
-		if (cursor + 1 < sampler.input->count)
+		if (cursor + 1 < input.size())
 		{
 			float cursor_time = input[cursor + 0];
 			float next_time = input[cursor + 1];
@@ -2483,7 +2521,7 @@ void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& s
 
 			for (size_t j = 0; j < components; ++j)
 			{
-				switch (sampler.interpolation)
+				switch (interpolation)
 				{
 				case cgltf_interpolation_type_linear:
 				{
@@ -2517,7 +2555,7 @@ void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& s
 		}
 		else
 		{
-			size_t offset = (sampler.interpolation == cgltf_interpolation_type_cubic_spline) ? cursor * 3 + 1 : cursor;
+			size_t offset = (interpolation == cgltf_interpolation_type_cubic_spline) ? cursor * 3 + 1 : cursor;
 
 			for (size_t j = 0; j < components; ++j)
 			{
@@ -2528,59 +2566,123 @@ void resampleKeyframes(std::vector<Attr>& data, const cgltf_animation_sampler& s
 	}
 }
 
-void markAnimated(cgltf_data* data, std::vector<NodeInfo>& nodes)
+bool isTrackEqual(const std::vector<Attr>& data, cgltf_animation_path_type type, int frames, const Attr* value, size_t components)
 {
-	for (size_t i = 0; i < data->animations_count; ++i)
+	assert(data.size() == frames * components);
+
+	float tolerance = getDeltaTolerance(type);
+
+	for (int i = 0; i < frames; ++i)
 	{
-		const cgltf_animation& animation = data->animations[i];
-
-		for (size_t j = 0; j < animation.channels_count; ++j)
+		for (size_t j = 0; j < components; ++j)
 		{
-			const cgltf_animation_channel& channel = animation.channels[j];
-			const cgltf_animation_sampler& sampler = *channel.sampler;
+			float delta = getDelta(value[j], data[i * components + j], type);
 
-			if (!channel.target_node)
-				continue;
+			if (delta > tolerance)
+				return false;
+		}
+	}
 
-			NodeInfo& ni = nodes[channel.target_node - data->nodes];
+	return true;
+}
+
+void getBaseTransform(Attr* result, size_t components, cgltf_animation_path_type type, cgltf_node* node)
+{
+	switch (type)
+	{
+	case cgltf_animation_path_type_translation:
+		memcpy(result->f, node->translation, 3 * sizeof(float));
+		break;
+
+	case cgltf_animation_path_type_rotation:
+		memcpy(result->f, node->rotation, 4 * sizeof(float));
+		break;
+
+	case cgltf_animation_path_type_scale:
+		memcpy(result->f, node->scale, 3 * sizeof(float));
+		break;
+
+	case cgltf_animation_path_type_weights:
+		if (node->weights_count)
+		{
+			assert(node->weights_count == components);
+			memcpy(result->f, node->weights, components * sizeof(float));
+		}
+		else if (node->mesh && node->mesh->weights_count)
+		{
+			assert(node->mesh->weights_count == components);
+			memcpy(result->f, node->mesh->weights, components * sizeof(float));
+		}
+		break;
+
+	default:
+		assert(!"Unknown animation path");
+	}
+}
+
+void processAnimation(Animation& animation, const Settings& settings)
+{
+	float mint = 0, maxt = 0;
+
+	for (size_t i = 0; i < animation.tracks.size(); ++i)
+	{
+		const Track& track = animation.tracks[i];
+		assert(!track.time.empty());
+
+		mint = std::min(mint, track.time.front());
+		maxt = std::max(maxt, track.time.back());
+	}
+
+	// round the number of frames to nearest but favor the "up" direction
+	// this means that at 10 Hz resampling, we will try to preserve the last frame <10ms
+	// but if the last frame is <2ms we favor just removing this data
+	int frames = 1 + int((maxt - mint) * settings.anim_freq + 0.8f);
+
+	animation.start = mint;
+	animation.frames = frames;
+
+	std::vector<Attr> base;
+
+	for (size_t i = 0; i < animation.tracks.size(); ++i)
+	{
+		Track& track = animation.tracks[i];
+
+		std::vector<Attr> result;
+		resampleKeyframes(result, track.time, track.data, track.path, track.interpolation, track.components, frames, mint, settings.anim_freq);
+
+		track.time.clear();
+		track.data.swap(result);
+
+		if (isTrackEqual(track.data, track.path, frames, &track.data[0], track.components))
+		{
+			// track is constant (equal to first keyframe), we only need the first keyframe
+			track.data.resize(track.components);
+
+			// track.dummy is true iff track redundantly sets up the value to be equal to default node transform
+			base.resize(track.components);
+			getBaseTransform(&base[0], track.components, track.path, track.node);
+
+			track.dummy = isTrackEqual(track.data, track.path, 1, &base[0], track.components);
+		}
+	}
+}
+
+void markAnimated(cgltf_data* data, std::vector<NodeInfo>& nodes, const std::vector<Animation>& animations)
+{
+	for (size_t i = 0; i < animations.size(); ++i)
+	{
+		const Animation& animation = animations[i];
+
+		for (size_t j = 0; j < animation.tracks.size(); ++j)
+		{
+			const Track& track = animation.tracks[j];
 
 			// mark nodes that have animation tracks that change their base transform as animated
-			Attr first = {};
-			if (!isTrackConstant(sampler, channel.target_path, channel.target_node, &first))
+			if (!track.dummy)
 			{
-				ni.animated_paths |= (1 << channel.target_path);
-			}
-			else if (channel.target_path == cgltf_animation_path_type_weights)
-			{
-				// we currently preserve constant weight tracks because the usecase is very rare and
-				// isTrackConstant doesn't return the full set of weights to compare against
-				ni.animated_paths |= (1 << channel.target_path);
-			}
-			else
-			{
-				Attr base = {};
+				NodeInfo& ni = nodes[track.node - data->nodes];
 
-				switch (channel.target_path)
-				{
-				case cgltf_animation_path_type_translation:
-					memcpy(base.f, channel.target_node->translation, 3 * sizeof(float));
-					break;
-				case cgltf_animation_path_type_rotation:
-					memcpy(base.f, channel.target_node->rotation, 4 * sizeof(float));
-					break;
-				case cgltf_animation_path_type_scale:
-					memcpy(base.f, channel.target_node->scale, 3 * sizeof(float));
-					break;
-				default:
-					assert(!"Unknown target path");
-				}
-
-				const float tolerance = 1e-3f;
-
-				if (getDelta(base, first, channel.target_path) > tolerance)
-				{
-					ni.animated_paths |= (1 << channel.target_path);
-				}
+				ni.animated_paths |= (1 << track.path);
 			}
 		}
 	}
@@ -2594,7 +2696,7 @@ void markAnimated(cgltf_data* data, std::vector<NodeInfo>& nodes)
 	}
 }
 
-void markNeededNodes(cgltf_data* data, std::vector<NodeInfo>& nodes, const std::vector<Mesh>& meshes, const Settings& settings)
+void markNeededNodes(cgltf_data* data, std::vector<NodeInfo>& nodes, const std::vector<Mesh>& meshes, const std::vector<Animation>& animations, const Settings& settings)
 {
 	// mark all joints as kept
 	for (size_t i = 0; i < data->skins_count; ++i)
@@ -2611,17 +2713,17 @@ void markNeededNodes(cgltf_data* data, std::vector<NodeInfo>& nodes, const std::
 	}
 
 	// mark all animated nodes as kept
-	for (size_t i = 0; i < data->animations_count; ++i)
+	for (size_t i = 0; i < animations.size(); ++i)
 	{
-		const cgltf_animation& animation = data->animations[i];
+		const Animation& animation = animations[i];
 
-		for (size_t j = 0; j < animation.channels_count; ++j)
+		for (size_t j = 0; j < animation.tracks.size(); ++j)
 		{
-			const cgltf_animation_channel& channel = animation.channels[j];
+			const Track& track = animation.tracks[j];
 
-			if (channel.target_node)
+			if (settings.anim_const || !track.dummy)
 			{
-				NodeInfo& ni = nodes[channel.target_node - data->nodes];
+				NodeInfo& ni = nodes[track.node - data->nodes];
 
 				ni.keep = true;
 			}
@@ -3355,62 +3457,46 @@ void writeNode(std::string& json, const cgltf_node& node, const std::vector<Node
 	append(json, "}");
 }
 
-void writeAnimation(std::string& json, std::vector<BufferView>& views, std::string& json_accessors, size_t& accr_offset, const cgltf_animation& animation, cgltf_data* data, const std::vector<NodeInfo>& nodes, const Settings& settings)
+void writeAnimation(std::string& json, std::vector<BufferView>& views, std::string& json_accessors, size_t& accr_offset, const Animation& animation, size_t i, cgltf_data* data, const std::vector<NodeInfo>& nodes, const Settings& settings)
 {
-	std::vector<const cgltf_animation_channel*> tracks;
+	std::vector<const Track*> tracks;
 
-	for (size_t j = 0; j < animation.channels_count; ++j)
+	for (size_t j = 0; j < animation.tracks.size(); ++j)
 	{
-		const cgltf_animation_channel& channel = animation.channels[j];
+		const Track& track = animation.tracks[j];
 
-		if (!channel.target_node)
-		{
-			fprintf(stderr, "Warning: ignoring channel %d of animation %d because it has no target node\n", int(j), int(&animation - data->animations));
-			continue;
-		}
-
-		const NodeInfo& ni = nodes[channel.target_node - data->nodes];
+		const NodeInfo& ni = nodes[track.node - data->nodes];
 
 		if (!ni.keep)
 			continue;
 
-		if (!settings.anim_const && (ni.animated_paths & (1 << channel.target_path)) == 0)
+		if (!settings.anim_const && (ni.animated_paths & (1 << track.path)) == 0)
 			continue;
 
-		tracks.push_back(&channel);
+		tracks.push_back(&track);
 	}
 
 	if (tracks.empty())
 	{
-		fprintf(stderr, "Warning: ignoring animation %d because it has no valid tracks\n", int(&animation - data->animations));
+		fprintf(stderr, "Warning: ignoring animation %d because it has no valid tracks\n", int(i));
 		return;
 	}
 
-	float mint = 0, maxt = 0;
 	bool needs_time = false;
 	bool needs_pose = false;
 
 	for (size_t j = 0; j < tracks.size(); ++j)
 	{
-		const cgltf_animation_channel& channel = *tracks[j];
-		const cgltf_animation_sampler& sampler = *channel.sampler;
+		const Track& track = *tracks[j];
 
-		mint = std::min(mint, sampler.input->min[0]);
-		maxt = std::max(maxt, sampler.input->max[0]);
-
-		bool tc = isTrackConstant(sampler, channel.target_path, channel.target_node);
+		bool tc = track.data.size() == track.components;
 
 		needs_time = needs_time || !tc;
 		needs_pose = needs_pose || tc;
 	}
 
-	// round the number of frames to nearest but favor the "up" direction
-	// this means that at 10 Hz resampling, we will try to preserve the last frame <10ms
-	// but if the last frame is <2ms we favor just removing this data
-	int frames = 1 + int((maxt - mint) * settings.anim_freq + 0.8f);
-
-	size_t time_accr = needs_time ? writeAnimationTime(views, json_accessors, accr_offset, mint, frames, settings) : 0;
-	size_t pose_accr = needs_pose ? writeAnimationTime(views, json_accessors, accr_offset, mint, 1, settings) : 0;
+	size_t time_accr = needs_time ? writeAnimationTime(views, json_accessors, accr_offset, animation.start, animation.frames, settings) : 0;
+	size_t pose_accr = needs_pose ? writeAnimationTime(views, json_accessors, accr_offset, animation.start, 1, settings) : 0;
 
 	std::string json_samplers;
 	std::string json_channels;
@@ -3419,23 +3505,19 @@ void writeAnimation(std::string& json, std::vector<BufferView>& views, std::stri
 
 	for (size_t j = 0; j < tracks.size(); ++j)
 	{
-		const cgltf_animation_channel& channel = *tracks[j];
-		const cgltf_animation_sampler& sampler = *channel.sampler;
+		const Track& track = *tracks[j];
 
-		bool tc = isTrackConstant(sampler, channel.target_path, channel.target_node);
-
-		std::vector<Attr> track;
-		resampleKeyframes(track, sampler, channel.target_path, channel.target_node, tc ? 1 : frames, mint, settings.anim_freq);
+		bool tc = track.data.size() == track.components;
 
 		std::string scratch;
-		StreamFormat format = writeKeyframeStream(scratch, channel.target_path, track);
+		StreamFormat format = writeKeyframeStream(scratch, track.path, track.data);
 
-		size_t view = getBufferView(views, BufferView::Kind_Keyframe, channel.target_path, format.stride, settings.compress && channel.target_path != cgltf_animation_path_type_weights);
+		size_t view = getBufferView(views, BufferView::Kind_Keyframe, track.path, format.stride, settings.compress && track.path != cgltf_animation_path_type_weights);
 		size_t offset = views[view].data.size();
 		views[view].data += scratch;
 
 		comma(json_accessors);
-		writeAccessor(json_accessors, view, offset, format.type, format.component_type, format.normalized, track.size());
+		writeAccessor(json_accessors, view, offset, format.type, format.component_type, format.normalized, track.data.size());
 
 		size_t data_accr = accr_offset++;
 
@@ -3446,10 +3528,10 @@ void writeAnimation(std::string& json, std::vector<BufferView>& views, std::stri
 		append(json_samplers, data_accr);
 		append(json_samplers, "}");
 
-		const NodeInfo& tni = nodes[channel.target_node - data->nodes];
+		const NodeInfo& tni = nodes[track.node - data->nodes];
 		size_t target_node = size_t(tni.remap);
 
-		if (channel.target_path == cgltf_animation_path_type_weights)
+		if (track.path == cgltf_animation_path_type_weights)
 		{
 			assert(tni.meshes.size() == 1);
 			target_node = tni.meshes[0];
@@ -3461,7 +3543,7 @@ void writeAnimation(std::string& json, std::vector<BufferView>& views, std::stri
 		append(json_channels, ",\"target\":{\"node\":");
 		append(json_channels, target_node);
 		append(json_channels, ",\"path\":\"");
-		append(json_channels, animationPath(channel.target_path));
+		append(json_channels, animationPath(track.path));
 		append(json_channels, "\"}}");
 
 		track_offset++;
@@ -3732,17 +3814,23 @@ void printAttributeStats(const std::vector<BufferView>& views, BufferView::Kind 
 	}
 }
 
-void process(cgltf_data* data, const char* input_path, const char* output_path, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin, std::string& fallback)
+void process(cgltf_data* data, const char* input_path, const char* output_path, std::vector<Mesh>& meshes, std::vector<Animation>& animations, const Settings& settings, std::string& json, std::string& bin, std::string& fallback)
 {
 	if (settings.verbose)
 	{
 		printf("input: %d nodes, %d meshes (%d primitives), %d materials, %d skins, %d animations\n",
-		       int(data->nodes_count), int(data->meshes_count), int(meshes.size()), int(data->materials_count), int(data->skins_count), int(data->animations_count));
+		       int(data->nodes_count), int(data->meshes_count), int(meshes.size()), int(data->materials_count), int(data->skins_count), int(animations.size()));
+		printMeshStats(meshes, "input");
+	}
+
+	for (size_t i = 0; i < animations.size(); ++i)
+	{
+		processAnimation(animations[i], settings);
 	}
 
 	std::vector<NodeInfo> nodes(data->nodes_count);
 
-	markAnimated(data, nodes);
+	markAnimated(data, nodes, animations);
 
 	for (size_t i = 0; i < meshes.size(); ++i)
 	{
@@ -3771,16 +3859,11 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 	mergeMeshes(meshes, settings);
 	filterEmptyMeshes(meshes);
 
-	markNeededNodes(data, nodes, meshes, settings);
+	markNeededNodes(data, nodes, meshes, animations, settings);
 
 	std::vector<MaterialInfo> materials(data->materials_count);
 
 	markNeededMaterials(data, materials, meshes);
-
-	if (settings.verbose)
-	{
-		printMeshStats(meshes, "input");
-	}
 
 	for (size_t i = 0; i < meshes.size(); ++i)
 	{
@@ -3788,11 +3871,6 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 	}
 
 	filterEmptyMeshes(meshes); // some meshes may become empty after processing
-
-	if (settings.verbose)
-	{
-		printMeshStats(meshes, "output");
-	}
 
 	std::vector<ImageInfo> images(data->images_count);
 
@@ -4026,11 +4104,11 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 		append(json_skins, "}");
 	}
 
-	for (size_t i = 0; i < data->animations_count; ++i)
+	for (size_t i = 0; i < animations.size(); ++i)
 	{
-		const cgltf_animation& animation = data->animations[i];
+		const Animation& animation = animations[i];
 
-		writeAnimation(json_animations, views, json_accessors, accr_offset, animation, data, nodes, settings);
+		writeAnimation(json_animations, views, json_accessors, accr_offset, animation, i, data, nodes, settings);
 	}
 
 	for (size_t i = 0; i < data->cameras_count; ++i)
@@ -4110,6 +4188,7 @@ void process(cgltf_data* data, const char* input_path, const char* output_path, 
 
 	if (settings.verbose)
 	{
+		printMeshStats(meshes, "output");
 		printSceneStats(views, meshes, node_offset, mesh_offset, material_offset, json.size(), bin.size());
 	}
 
@@ -4212,6 +4291,7 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 {
 	cgltf_data* data = 0;
 	std::vector<Mesh> meshes;
+	std::vector<Animation> animations;
 
 	const char* iext = strrchr(input, '.');
 
@@ -4240,7 +4320,8 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 			return 2;
 		}
 
-		parseMeshesGltf(data, meshes);
+		parseMeshes(data, meshes);
+		parseAnimations(data, animations);
 	}
 	else if (iext && (strcmp(iext, ".obj") == 0 || strcmp(iext, ".OBJ") == 0))
 	{
@@ -4274,7 +4355,7 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 	}
 
 	std::string json, bin, fallback;
-	process(data, input, output, meshes, settings, json, bin, fallback);
+	process(data, input, output, meshes, animations, settings, json, bin, fallback);
 
 	cgltf_free(data);
 

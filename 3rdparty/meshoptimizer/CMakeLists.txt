@@ -1,15 +1,16 @@
 cmake_minimum_required(VERSION 3.0)
 
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.15)
+if (CMAKE_VERSION VERSION_GREATER 3.15 OR CMAKE_VERSION VERSION_EQUAL 3.15)
     cmake_policy(SET CMP0091 NEW) # Enables use of MSVC_RUNTIME_LIBRARY
     cmake_policy(SET CMP0092 NEW) # Enables clean /W4 override for MSVC
 endif()
 
 project(meshoptimizer VERSION 0.13 LANGUAGES CXX)
 
-option(BUILD_DEMO "Build demo" OFF)
-option(BUILD_TOOLS "Build tools" OFF)
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+option(MESHOPT_BUILD_DEMO "Build demo" OFF)
+option(MESHOPT_BUILD_TOOLS "Build tools" OFF)
+option(MESHOPT_BUILD_SHARED_LIBS "Build shared libraries" OFF)
+set(MESHOPT_BUILD_TOOLS_GLFW_FOLDER_NAME "" CACHE STRING "Custom folder to look for GLFW")
 
 set(SOURCES
     src/meshoptimizer.h
@@ -38,7 +39,7 @@ endif()
 add_library(meshoptimizer ${SOURCES})
 target_include_directories(meshoptimizer INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>")
 
-if(BUILD_SHARED_LIBS)
+if(MESHOPT_BUILD_SHARED_LIBS)
     set_target_properties(meshoptimizer PROPERTIES CXX_VISIBILITY_PRESET hidden)
     set_target_properties(meshoptimizer PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
@@ -52,19 +53,37 @@ endif()
 
 set(TARGETS meshoptimizer)
 
-if(BUILD_DEMO)
+if(MESHOPT_BUILD_DEMO)
     add_executable(demo demo/main.cpp demo/miniz.cpp demo/tests.cpp tools/meshloader.cpp)
     target_link_libraries(demo meshoptimizer)
 endif()
 
-if(BUILD_TOOLS)
+if(MESHOPT_BUILD_TOOLS)
     add_executable(gltfpack tools/gltfpack.cpp tools/meshloader.cpp tools/basistoktx.cpp)
     target_link_libraries(gltfpack meshoptimizer)
     list(APPEND TARGETS gltfpack)
 
-    if(BUILD_SHARED_LIBS)
+    if(MESHOPT_BUILD_SHARED_LIBS)
         string(CONCAT RPATH "$ORIGIN/../" ${CMAKE_INSTALL_LIBDIR})
         set_target_properties(gltfpack PROPERTIES INSTALL_RPATH ${RPATH})
+    endif()
+
+    if(NOT (MESHOPT_BUILD_TOOLS_GLFW_FOLDER_NAME STREQUAL ""))
+        message(STATUS "Using GLFW3 from: ${MESHOPT_BUILD_TOOLS_GLFW_FOLDER_NAME}")
+        set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")
+        set(GLFW_BUILD_TESTS OFF CACHE BOOL "")
+        set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
+        set(GLFW_INSTALL OFF CACHE BOOL "")
+        add_subdirectory(${MESHOPT_BUILD_TOOLS_GLFW_FOLDER_NAME})
+        set(glfw3_FOUND TRUE)
+        set(glfw3_LIBRARY glfw)
+    else()
+        find_package(glfw3 3.3 QUIET)
+    endif()
+
+    if (glfw3_FOUND)
+        add_executable(lodviewer tools/lodviewer.cpp tools/meshloader.cpp)
+        target_link_libraries(lodviewer ${glfw3_LIBRARY} meshoptimizer)
     endif()
 endif()
 
