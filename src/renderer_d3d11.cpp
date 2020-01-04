@@ -8,6 +8,10 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
 
+#ifdef BGFX_CONFIG_D3D11_CREATE_DEVICE_MULTITHREADED
+#	include <d3d10.h>
+#endif
+
 namespace bgfx { namespace d3d11
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -413,6 +417,9 @@ namespace bgfx { namespace d3d11
 	static const GUID IID_ID3D11InfoQueue           = { 0x6543dbb6, 0x1b48, 0x42f5, { 0xab, 0x82, 0xe9, 0x7e, 0xc7, 0x43, 0x26, 0xf6 } };
 	static const GUID IID_IDXGIDeviceRenderDoc      = { 0xa7aa6116, 0x9c8d, 0x4bba, { 0x90, 0x83, 0xb4, 0xd8, 0x16, 0xb7, 0x1b, 0x78 } };
 	static const GUID IID_ID3DUserDefinedAnnotation = { 0xb2daad8b, 0x03d4, 0x4dbf, { 0x95, 0xeb, 0x32, 0xab, 0x4b, 0x63, 0xd0, 0xab } };
+#ifdef BGFX_CONFIG_D3D11_CREATE_DEVICE_MULTITHREADED
+	static const GUID IID_ID3D10Multithread			= { 0x9B7E4E00, 0x342C, 0x4106, { 0xA1, 0x9F, 0x4F, 0x27, 0x04, 0xF6, 0x89, 0xF0 } };
+#endif
 
 	enum D3D11_FORMAT_SUPPORT2
 	{
@@ -885,7 +892,9 @@ namespace bgfx { namespace d3d11
 				for (;;)
 				{
 					uint32_t flags = 0
+#ifndef BGFX_CONFIG_D3D11_CREATE_DEVICE_MULTITHREADED
 						| D3D11_CREATE_DEVICE_SINGLETHREADED
+#endif
 						| D3D11_CREATE_DEVICE_BGRA_SUPPORT
 //						| D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS
 						| (_init.debug ? D3D11_CREATE_DEVICE_DEBUG : 0)
@@ -939,6 +948,16 @@ namespace bgfx { namespace d3d11
 					BX_TRACE("Init error: Unable to create Direct3D11 device.");
 					goto error;
 				}
+				
+#ifdef BGFX_CONFIG_D3D11_CREATE_DEVICE_MULTITHREADED
+				ID3D10Multithread* multithread;
+				hr = m_device->QueryInterface(IID_ID3D10Multithread, (void**)&multithread);
+				if (SUCCEEDED(hr) )
+				{
+					multithread->SetMultithreadProtected(TRUE);
+					multithread->Release();
+				}
+#endif
 			}
 			else
 			{
