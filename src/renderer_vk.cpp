@@ -2418,9 +2418,9 @@ VK_IMPORT_DEVICE
 		{
 		}
 
-		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
+		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr) override
 		{
-			m_textures[_handle.idx].update(m_commandPool, _side, _mip, _rect, _z, _depth, _pitch, _mem);
+			m_textures[_handle.idx].update(m_commandPool, _side, _mip, _rect, _z, _depth, _pitch, _mem, _internal_ptr);
 		}
 
 		void updateTextureEnd() override
@@ -5461,8 +5461,15 @@ VK_DESTROY
 		}
 	}
 
-	void TextureVK::update(VkCommandPool _commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
+	void TextureVK::update(VkCommandPool _commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr)
 	{
+		if (_internal_ptr)
+		{
+			overrideInternal(_internal_ptr);
+
+			return;
+		}
+
 		BX_UNUSED(_commandPool);
 
 		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;

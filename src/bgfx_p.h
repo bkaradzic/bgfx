@@ -2787,7 +2787,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		virtual void destroyProgram(ProgramHandle _handle) = 0;
 		virtual void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) = 0;
 		virtual void updateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip) = 0;
-		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
+		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr) = 0;
 		virtual void updateTextureEnd() = 0;
 		virtual void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) = 0;
 		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) = 0;
@@ -4312,6 +4312,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			, uint16_t _depth
 			, uint16_t _pitch
 			, const Memory* _mem
+			, uintptr_t _internal_ptr
 		) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
@@ -4338,6 +4339,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			cmdbuf.write(_depth);
 			cmdbuf.write(_pitch);
 			cmdbuf.write(_mem);
+			cmdbuf.write(_internal_ptr);
 		}
 
 		bool checkFrameBuffer(uint8_t _num, const Attachment* _attachment) const

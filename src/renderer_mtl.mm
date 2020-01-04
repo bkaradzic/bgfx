@@ -827,9 +827,9 @@ namespace bgfx { namespace mtl
 		{
 		}
 
-		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
+		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr) override
 		{
-			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
+			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem, _internal_ptr);
 		}
 
 		void updateTextureEnd() override
@@ -2832,8 +2832,15 @@ namespace bgfx { namespace mtl
 		}
 	}
 
-	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
+	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr)
 	{
+		if (_internal_ptr)
+		{
+			overrideInternal(_internal_ptr);
+
+			return;
+		}
+
 		const uint32_t bpp       = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;

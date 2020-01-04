@@ -1082,9 +1082,9 @@ namespace bgfx { namespace d3d9
 			m_updateTexture->updateBegin(_side, _mip);
 		}
 
-		void updateTexture(TextureHandle /*_handle*/, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
+		void updateTexture(TextureHandle /*_handle*/, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr) override
 		{
-			m_updateTexture->update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
+			m_updateTexture->update(_side, _mip, _rect, _z, _depth, _pitch, _mem, _internal_ptr);
 		}
 
 		void updateTextureEnd() override
@@ -3055,8 +3055,15 @@ namespace bgfx { namespace d3d9
 		s_renderD3D9->m_updateTextureBits = lock(_side, _mip, s_renderD3D9->m_updateTexturePitch, slicePitch);
 	}
 
-	void TextureD3D9::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
+	void TextureD3D9::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr)
 	{
+		if (_internal_ptr)
+		{
+			overrideInternal(_internal_ptr);
+
+			return;
+		}
+
 		const bimg::ImageBlockInfo & blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint16_t blockHeight = blockInfo.blockHeight;
 		const uint16_t bpp         = blockInfo.bitsPerPixel;

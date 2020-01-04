@@ -2783,6 +2783,7 @@ namespace bgfx
 		, uint16_t _height
 		, const Memory* _mem
 		, uint16_t _pitch = UINT16_MAX
+		, uintptr_t _internal_ptr = 0
 		);
 
 	/// Update 3D texture.

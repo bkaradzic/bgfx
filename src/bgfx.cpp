@@ -2401,6 +2401,9 @@ namespace bgfx
 				const Memory* mem;
 				_cmdbuf.read(mem);
 
+				uintptr_t internal_ptr;
+				_cmdbuf.read(internal_ptr);
+
 				uint32_t key = m_textureUpdateBatch.m_keys[ii];
 				if (key != currentKey)
 				{
@@ -2412,9 +2415,12 @@ namespace bgfx
 					m_renderCtx->updateTextureBegin(handle, side, mip);
 				}
 
-				m_renderCtx->updateTexture(handle, side, mip, rect, zz, depth, pitch, mem);
+				m_renderCtx->updateTexture(handle, side, mip, rect, zz, depth, pitch, mem, internal_ptr);
 
-				release(mem);
+				if (mem)
+				{
+					release(mem);
+				}
 			}
 
 			if (currentKey != UINT32_MAX)
@@ -2999,6 +3005,7 @@ namespace bgfx
 					_cmdbuf.skip<uint16_t>();
 					_cmdbuf.skip<uint16_t>();
 					_cmdbuf.skip<Memory*>();
+					_cmdbuf.skip<uintptr_t>();
 
 					uint32_t key = (handle.idx<<16)
 						| (side<<8)
@@ -4464,17 +4471,20 @@ namespace bgfx
 		s_ctx->destroyTexture(_handle);
 	}
 
-	void updateTexture2D(TextureHandle _handle, uint16_t _layer, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem, uint16_t _pitch)
+	void updateTexture2D(TextureHandle _handle, uint16_t _layer, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const Memory* _mem, uint16_t _pitch, uintptr_t _internal_ptr)
 	{
-		BX_CHECK(NULL != _mem, "_mem can't be NULL");
+		BX_CHECK(NULL != _mem || 0 != _internal_ptr, "both _mem and _internal_ptr can't be NULL");
 		if (_width  == 0
 		||  _height == 0)
 		{
-			release(_mem);
+			if (_mem)
+			{
+				release(_mem);
+			}
 		}
 		else
 		{
-			s_ctx->updateTexture(_handle, 0, _mip, _x, _y, _layer, _width, _height, 1, _pitch, _mem);
+			s_ctx->updateTexture(_handle, 0, _mip, _x, _y, _layer, _width, _height, 1, _pitch, _mem, _internal_ptr);
 		}
 	}
 
@@ -4491,7 +4501,7 @@ namespace bgfx
 		}
 		else
 		{
-			s_ctx->updateTexture(_handle, 0, _mip, _x, _y, _z, _width, _height, _depth, UINT16_MAX, _mem);
+			s_ctx->updateTexture(_handle, 0, _mip, _x, _y, _z, _width, _height, _depth, UINT16_MAX, _mem, 0);
 		}
 	}
 
@@ -4506,7 +4516,7 @@ namespace bgfx
 		}
 		else
 		{
-			s_ctx->updateTexture(_handle, _side, _mip, _x, _y, _layer, _width, _height, 1, _pitch, _mem);
+			s_ctx->updateTexture(_handle, _side, _mip, _x, _y, _layer, _width, _height, 1, _pitch, _mem, 0);
 		}
 	}
 

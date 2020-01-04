@@ -1611,9 +1611,9 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
-		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
+		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr) override
 		{
-			m_textures[_handle.idx].update(m_commandList, _side, _mip, _rect, _z, _depth, _pitch, _mem);
+			m_textures[_handle.idx].update(m_commandList, _side, _mip, _rect, _z, _depth, _pitch, _mem, _internal_ptr);
 		}
 
 		void updateTextureEnd() override
@@ -4975,8 +4975,15 @@ namespace bgfx { namespace d3d12
 		}
 	}
 
-	void TextureD3D12::update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
+	void TextureD3D12::update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr)
 	{
+		if (_internal_ptr)
+		{
+			overrideInternal(_internal_ptr);
+
+			return;
+		}
+
 		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
 		const uint32_t subres = _mip + (_side * m_numMips);

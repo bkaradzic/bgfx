@@ -994,6 +994,7 @@ namespace bgfx { namespace mtl
 			, uint16_t _depth
 			, uint16_t _pitch
 			, const Memory* _mem
+			, uintptr_t _internal_ptr
 			);
 
 		void commit(

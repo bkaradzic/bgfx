@@ -483,7 +483,8 @@ VK_DESTROY
 
 		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 		void destroy();
-		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
+		void overrideInternal(uintptr_t /*_ptr*/) {}
+		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr);
 
 		void copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy);
 		void setImageMemoryBarrier(VkCommandBuffer commandBuffer, VkImageLayout newImageLayout);

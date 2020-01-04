@@ -1789,9 +1789,9 @@ namespace bgfx { namespace d3d11
 		{
 		}
 
-		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
+		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr) override
 		{
-			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
+			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem, _internal_ptr);
 		}
 
 		void updateTextureEnd() override
@@ -4504,8 +4504,15 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	void TextureD3D11::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
+	void TextureD3D11::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem, uintptr_t _internal_ptr)
 	{
+		if (_internal_ptr)
+		{
+			overrideInternal(_internal_ptr);
+
+			return;
+		}
+
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 
 		D3D11_BOX box;
