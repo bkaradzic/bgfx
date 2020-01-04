@@ -417,6 +417,7 @@ namespace bgfx { namespace d3d11
 	static const GUID IID_ID3D11InfoQueue           = { 0x6543dbb6, 0x1b48, 0x42f5, { 0xab, 0x82, 0xe9, 0x7e, 0xc7, 0x43, 0x26, 0xf6 } };
 	static const GUID IID_IDXGIDeviceRenderDoc      = { 0xa7aa6116, 0x9c8d, 0x4bba, { 0x90, 0x83, 0xb4, 0xd8, 0x16, 0xb7, 0x1b, 0x78 } };
 	static const GUID IID_ID3DUserDefinedAnnotation = { 0xb2daad8b, 0x03d4, 0x4dbf, { 0x95, 0xeb, 0x32, 0xab, 0x4b, 0x63, 0xd0, 0xab } };
+	static const GUID IID_ID3D11ShaderResourceView	= { 0xb0e06fe0, 0x8192, 0x4e1a, { 0xb1, 0xca, 0x36, 0xd7, 0x41, 0x47, 0x10, 0xb2 } };
 #ifdef BGFX_CONFIG_D3D11_CREATE_DEVICE_MULTITHREADED
 	static const GUID IID_ID3D10Multithread			= { 0x9B7E4E00, 0x342C, 0x4106, { 0xA1, 0x9F, 0x4F, 0x27, 0x04, 0xF6, 0x89, 0xF0 } };
 #endif
@@ -4473,7 +4474,10 @@ namespace bgfx { namespace d3d11
 
 		s_renderD3D11->m_srvUavLru.invalidateWithParent(getHandle().idx);
 		DX_RELEASE(m_rt, 0);
-		DX_RELEASE(m_srv, 0);
+		if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED_SRV) )
+		{
+			DX_RELEASE(m_srv, 0);
+		}
 		DX_RELEASE(m_uav, 0);
 		if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
 		{
@@ -4487,7 +4491,17 @@ namespace bgfx { namespace d3d11
 		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 		m_ptr = (ID3D11Resource*)_ptr;
 
-		s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, NULL, &m_srv);
+		HRESULT hr = m_ptr->QueryInterface(IID_ID3D11ShaderResourceView, (void**)&m_srv);
+		if (SUCCEEDED(hr) )
+		{
+			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED_SRV;
+			m_srv->GetResource(&m_ptr);
+			m_ptr->Release();
+		}
+		else
+		{
+			s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, NULL, &m_srv);
+		}
 	}
 
 	void TextureD3D11::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
