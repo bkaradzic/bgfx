@@ -9,6 +9,7 @@
 #if BGFX_USE_GLX
 
 #	include <X11/Xlib.h>
+#	define GLX_GLXEXT_LEGACY
 #	include <GL/glx.h>
 
 namespace bgfx { namespace gl
