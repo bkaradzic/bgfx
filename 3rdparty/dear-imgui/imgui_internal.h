@@ -418,20 +418,22 @@ enum ImGuiButtonFlags_
 {
     ImGuiButtonFlags_None                   = 0,
     ImGuiButtonFlags_Repeat                 = 1 << 0,   // hold to repeat
-    ImGuiButtonFlags_PressedOnClickRelease  = 1 << 1,   // [Default] return true on click + release on same item
-    ImGuiButtonFlags_PressedOnClick         = 1 << 2,   // return true on click (default requires click+release)
-    ImGuiButtonFlags_PressedOnRelease       = 1 << 3,   // return true on release (default requires click+release)
-    ImGuiButtonFlags_PressedOnDoubleClick   = 1 << 4,   // return true on double-click (default requires click+release)
-    ImGuiButtonFlags_FlattenChildren        = 1 << 5,   // allow interactions even if a child window is overlapping
-    ImGuiButtonFlags_AllowItemOverlap       = 1 << 6,   // require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap()
-    ImGuiButtonFlags_DontClosePopups        = 1 << 7,   // disable automatically closing parent popup on press // [UNUSED]
-    ImGuiButtonFlags_Disabled               = 1 << 8,   // disable interactions
-    ImGuiButtonFlags_AlignTextBaseLine      = 1 << 9,   // vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine
-    ImGuiButtonFlags_NoKeyModifiers         = 1 << 10,  // disable mouse interaction if a key modifier is held
-    ImGuiButtonFlags_NoHoldingActiveID      = 1 << 11,  // don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only)
-    ImGuiButtonFlags_PressedOnDragDropHold  = 1 << 12,  // press when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers)
-    ImGuiButtonFlags_NoNavFocus             = 1 << 13,  // don't override navigation focus when activated
-    ImGuiButtonFlags_NoHoveredOnNav         = 1 << 14   // don't report as hovered when navigated on
+    ImGuiButtonFlags_PressedOnClick         = 1 << 1,   // return true on click (mouse down event)
+    ImGuiButtonFlags_PressedOnClickRelease  = 1 << 2,   // [Default] return true on click + release on same item <-- this is what the majority of Button are using
+    ImGuiButtonFlags_PressedOnClickReleaseAnywhere = 1 << 3, // return true on click + release even if the release event is not done while hovering the item
+    ImGuiButtonFlags_PressedOnRelease       = 1 << 4,   // return true on release (default requires click+release)
+    ImGuiButtonFlags_PressedOnDoubleClick   = 1 << 5,   // return true on double-click (default requires click+release)
+    ImGuiButtonFlags_PressedOnDragDropHold  = 1 << 6,   // return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers)
+    ImGuiButtonFlags_FlattenChildren        = 1 << 7,   // allow interactions even if a child window is overlapping
+    ImGuiButtonFlags_AllowItemOverlap       = 1 << 8,   // require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap()
+    ImGuiButtonFlags_DontClosePopups        = 1 << 9,   // disable automatically closing parent popup on press // [UNUSED]
+    ImGuiButtonFlags_Disabled               = 1 << 10,  // disable interactions
+    ImGuiButtonFlags_AlignTextBaseLine      = 1 << 11,  // vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine
+    ImGuiButtonFlags_NoKeyModifiers         = 1 << 12,  // disable mouse interaction if a key modifier is held
+    ImGuiButtonFlags_NoHoldingActiveID      = 1 << 13,  // don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only)
+    ImGuiButtonFlags_NoNavFocus             = 1 << 14,  // don't override navigation focus when activated
+    ImGuiButtonFlags_NoHoveredOnNav         = 1 << 15,  // don't report as hovered when navigated on
+    ImGuiButtonFlags_PressedOnMask_         = ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_PressedOnClickRelease | ImGuiButtonFlags_PressedOnClickReleaseAnywhere | ImGuiButtonFlags_PressedOnRelease | ImGuiButtonFlags_PressedOnDoubleClick | ImGuiButtonFlags_PressedOnDragDropHold
 };
 
 enum ImGuiSliderFlags_
@@ -918,7 +920,7 @@ struct ImGuiNextWindowData
     ImVec2                      MenuBarOffsetMinVal;    // *Always on* This is not exposed publicly, so we don't clear it.
 
     ImGuiNextWindowData()       { memset(this, 0, sizeof(*this)); }
-    inline void ClearFlags()    { Flags = ImGuiNextWindowDataFlags_None; }
+    inline void ClearFlags()    { Flags = ImGuiNextWindowDataFlags_None; } // Also cleared by ItemAdd()
 };
 
 enum ImGuiNextItemDataFlags_
@@ -1033,7 +1035,7 @@ struct ImGuiContext
     ImVector<ImGuiPopupData>OpenPopupStack;                     // Which popups are open (persistent)
     ImVector<ImGuiPopupData>BeginPopupStack;                    // Which level of BeginPopup() we are in (reset every frame)
 
-    // Navigation data (for gamepad/keyboard)
+    // Gamepad/keyboard Navigation
     ImGuiWindow*            NavWindow;                          // Focused window for navigation. Could be called 'FocusWindow'
     ImGuiID                 NavId;                              // Focused item for navigation
     ImGuiID                 NavActivateId;                      // ~~ (g.ActiveId == 0) && IsNavInputPressed(ImGuiNavInput_Activate) ? NavId : 0, also set when calling ActivateItem()
@@ -1074,7 +1076,7 @@ struct ImGuiContext
     ImGuiNavMoveResult      NavMoveResultLocalVisibleSet;       // Best move request candidate within NavWindow that are mostly visible (when using ImGuiNavMoveFlags_AlsoScoreVisibleSet flag)
     ImGuiNavMoveResult      NavMoveResultOther;                 // Best move request candidate within NavWindow's flattened hierarchy (when using ImGuiWindowFlags_NavFlattened flag)
 
-    // Tabbing system (older than Nav, active even if Nav is disabled. FIXME-NAV: This needs a redesign!)
+    // Legacy Tabbing system (older than Nav, active even if Nav is disabled, misnamed. FIXME-NAV: This needs a redesign!)
     ImGuiWindow*            FocusRequestCurrWindow;             //
     ImGuiWindow*            FocusRequestNextWindow;             //
     int                     FocusRequestCurrCounterAll;         // Any item being requested for focus, stored as an index (we on layout to be stable between the frame pressing TAB and the next frame, semi-ouch)
@@ -1082,6 +1084,10 @@ struct ImGuiContext
     int                     FocusRequestNextCounterAll;         // Stored for next frame
     int                     FocusRequestNextCounterTab;         // "
     bool                    FocusTabPressed;                    //
+
+    // Range-Select/Multi-Select
+    // [This is unused in this branch, but left here to facilitate merging/syncing multiple branches]
+    ImGuiID                 MultiSelectScopeId;
 
     // Render
     ImDrawData              DrawData;                           // Main ImDrawData instance to pass render information to the user
@@ -1130,10 +1136,6 @@ struct ImGuiContext
     float                   ScrollbarClickDeltaToGrabCenter;    // Distance between mouse and center of grab box, normalized in parent space. Use storage?
     int                     TooltipOverrideCount;
     ImVector<char>          PrivateClipboard;                   // If no custom clipboard handler is defined
-
-    // Range-Select/Multi-Select
-    // [This is unused in this branch, but left here to facilitate merging/syncing multiple branches]
-    ImGuiID                 MultiSelectScopeId;
 
     // Platform support
     ImVec2                  PlatformImePos;                     // Cursor position request & last passed to the OS Input Method Editor
@@ -1245,6 +1247,8 @@ struct ImGuiContext
         FocusRequestNextCounterAll = FocusRequestNextCounterTab = INT_MAX;
         FocusTabPressed = false;
 
+        MultiSelectScopeId = 0;
+
         DimBgRatio = 0.0f;
         BackgroundDrawList._OwnerName = "##Background"; // Give it a name for debugging
         ForegroundDrawList._OwnerName = "##Foreground"; // Give it a name for debugging
@@ -1273,8 +1277,6 @@ struct ImGuiContext
         DragSpeedDefaultRatio = 1.0f / 100.0f;
         ScrollbarClickDeltaToGrabCenter = 0.0f;
         TooltipOverrideCount = 0;
-
-        MultiSelectScopeId = 0;
 
         PlatformImePos = PlatformImeLastPos = ImVec2(FLT_MAX, FLT_MAX);
 
@@ -1308,6 +1310,7 @@ struct ImGuiContext
 // FIXME: That's theory, in practice the delimitation between ImGuiWindow and ImGuiWindowTempData is quite tenuous and could be reconsidered.
 struct IMGUI_API ImGuiWindowTempData
 {
+    // Layout
     ImVec2                  CursorPos;              // Current emitting position, in absolute coordinates.
     ImVec2                  CursorPosPrevLine;
     ImVec2                  CursorStartPos;         // Initial position after Begin(), generally ~ window position + WindowPadding.
@@ -1316,27 +1319,38 @@ struct IMGUI_API ImGuiWindowTempData
     ImVec2                  PrevLineSize;
     float                   CurrLineTextBaseOffset; // Baseline offset (0.0f by default on a new line, generally == style.FramePadding.y when a framed item has been added).
     float                   PrevLineTextBaseOffset;
-    int                     TreeDepth;                      // Current tree depth.
-    ImU32                   TreeMayJumpToParentOnPopMask;   // Store a copy of !g.NavIdIsAlive for TreeDepth 0..31.. Could be turned into a ImU64 if necessary.
+    ImVec1                  Indent;                 // Indentation / start position from left of window (increased by TreePush/TreePop, etc.)
+    ImVec1                  ColumnsOffset;          // Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use cases like Tree->Column->Tree. Need revamp columns API.
+    ImVec1                  GroupOffset;
+
+    // Last item status
     ImGuiID                 LastItemId;             // ID for last item
     ImGuiItemStatusFlags    LastItemStatusFlags;    // Status flags for last item (see ImGuiItemStatusFlags_)
     ImRect                  LastItemRect;           // Interaction rect for last item
     ImRect                  LastItemDisplayRect;    // End-user display rect for last item (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect)
+
+    // Keyboard/Gamepad navigation
     ImGuiNavLayer           NavLayerCurrent;        // Current layer, 0..31 (we currently only use 0..1)
     int                     NavLayerCurrentMask;    // = (1 << NavLayerCurrent) used by ItemAdd prior to clipping.
     int                     NavLayerActiveMask;     // Which layer have been written to (result from previous frame)
     int                     NavLayerActiveMaskNext; // Which layer have been written to (buffer for current frame)
     bool                    NavHideHighlightOneFrame;
     bool                    NavHasScroll;           // Set when scrolling can be used (ScrollMax > 0.0f)
+
+    // Miscellaneous
     bool                    MenuBarAppending;       // FIXME: Remove this
     ImVec2                  MenuBarOffset;          // MenuBarOffset.x is sort of equivalent of a per-layer CursorPos.x, saved/restored as we switch to the menu bar. The only situation when MenuBarOffset.y is > 0 if when (SafeAreaPadding.y > FramePadding.y), often used on TVs.
+    int                     TreeDepth;              // Current tree depth.
+    ImU32                   TreeJumpToParentOnPopMask; // Store a copy of !g.NavIdIsAlive for TreeDepth 0..31.. Could be turned into a ImU64 if necessary.
     ImVector<ImGuiWindow*>  ChildWindows;
     ImGuiStorage*           StateStorage;           // Current persistent per-window storage (store e.g. tree node open/close state)
+    ImGuiColumns*           CurrentColumns;         // Current columns set
     ImGuiLayoutType         LayoutType;
     ImGuiLayoutType         ParentLayoutType;       // Layout type of parent window at the time of Begin()
     int                     FocusCounterAll;        // Counter for focus/tabbing system. Start at -1 and increase as assigned via FocusableItemRegister() (FIXME-NAV: Needs redesign)
     int                     FocusCounterTab;        // (same, but only count widgets which you can Tab through)
 
+    // Local parameters stacks
     // We store the current settings outside of the vectors to increase memory locality (reduce cache misses). The vectors are rarely modified. Also it allows us to not heap allocate for short-lived windows which are not using those settings.
     ImGuiItemFlags          ItemFlags;              // == ItemFlagsStack.back() [empty == ImGuiItemFlags_Default]
     float                   ItemWidth;              // == ItemWidthStack.back(). 0.0: default, >0.0: width in pixels, <0.0: align xx pixels to the right of window
@@ -1347,29 +1361,31 @@ struct IMGUI_API ImGuiWindowTempData
     ImVector<ImGuiGroupData>GroupStack;
     short                   StackSizesBackup[6];    // Store size of various stacks for asserting
 
-    ImVec1                  Indent;                 // Indentation / start position from left of window (increased by TreePush/TreePop, etc.)
-    ImVec1                  GroupOffset;
-    ImVec1                  ColumnsOffset;          // Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use cases like Tree->Column->Tree. Need revamp columns API.
-    ImGuiColumns*           CurrentColumns;         // Current columns set
-
     ImGuiWindowTempData()
     {
         CursorPos = CursorPosPrevLine = CursorStartPos = CursorMaxPos = ImVec2(0.0f, 0.0f);
         CurrLineSize = PrevLineSize = ImVec2(0.0f, 0.0f);
         CurrLineTextBaseOffset = PrevLineTextBaseOffset = 0.0f;
-        TreeDepth = 0;
-        TreeMayJumpToParentOnPopMask = 0x00;
+        Indent = ImVec1(0.0f);
+        ColumnsOffset = ImVec1(0.0f);
+        GroupOffset = ImVec1(0.0f);
+
         LastItemId = 0;
         LastItemStatusFlags = 0;
         LastItemRect = LastItemDisplayRect = ImRect();
+
         NavLayerActiveMask = NavLayerActiveMaskNext = 0x00;
         NavLayerCurrent = ImGuiNavLayer_Main;
         NavLayerCurrentMask = (1 << ImGuiNavLayer_Main);
         NavHideHighlightOneFrame = false;
         NavHasScroll = false;
+
         MenuBarAppending = false;
         MenuBarOffset = ImVec2(0.0f, 0.0f);
+        TreeDepth = 0;
+        TreeJumpToParentOnPopMask = 0x00;
         StateStorage = NULL;
+        CurrentColumns = NULL;
         LayoutType = ParentLayoutType = ImGuiLayoutType_Vertical;
         FocusCounterAll = FocusCounterTab = -1;
 
@@ -1377,11 +1393,6 @@ struct IMGUI_API ImGuiWindowTempData
         ItemWidth = 0.0f;
         TextWrapPos = -1.0f;
         memset(StackSizesBackup, 0, sizeof(StackSizesBackup));
-
-        Indent = ImVec1(0.0f);
-        GroupOffset = ImVec1(0.0f);
-        ColumnsOffset = ImVec1(0.0f);
-        CurrentColumns = NULL;
     }
 };
 
