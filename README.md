@@ -372,7 +372,7 @@ An open source reimplementation of the game Black & White (2001).
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 </a>
 
-	Copyright 2010-2019 Branimir Karadzic
+	Copyright 2010-2020 Branimir Karadzic
 	
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:

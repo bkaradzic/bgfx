@@ -3,7 +3,7 @@ local idl = codegen.idl "bgfx.idl"
 
 local csharp_template = [[
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
