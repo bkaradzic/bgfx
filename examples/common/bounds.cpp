@@ -50,9 +50,9 @@ void toAabb(Aabb& _outAabb, const Cylinder& _cylinder)
 
 	const Vec3 extent =
 	{
-		_cylinder.radius * tmp.x * sqrt( (nsq.x + nsq.y * nsq.z) * inv),
-		_cylinder.radius * tmp.y * sqrt( (nsq.y + nsq.z * nsq.x) * inv),
-		_cylinder.radius * tmp.z * sqrt( (nsq.z + nsq.x * nsq.y) * inv),
+		_cylinder.radius * tmp.x * bx::sqrt( (nsq.x + nsq.y * nsq.z) * inv),
+		_cylinder.radius * tmp.y * bx::sqrt( (nsq.y + nsq.z * nsq.x) * inv),
+		_cylinder.radius * tmp.z * bx::sqrt( (nsq.z + nsq.x * nsq.y) * inv),
 	};
 
 	const Vec3 minP = sub(_cylinder.pos, extent);
@@ -76,9 +76,9 @@ void toAabb(Aabb& _outAabb, const Disk& _disk)
 
 	const Vec3 extent =
 	{
-		_disk.radius * tmp.x * sqrt( (nsq.x + nsq.y * nsq.z) * inv),
-		_disk.radius * tmp.y * sqrt( (nsq.y + nsq.z * nsq.x) * inv),
-		_disk.radius * tmp.z * sqrt( (nsq.z + nsq.x * nsq.y) * inv),
+		_disk.radius * tmp.x * bx::sqrt( (nsq.x + nsq.y * nsq.z) * inv),
+		_disk.radius * tmp.y * bx::sqrt( (nsq.y + nsq.z * nsq.x) * inv),
+		_disk.radius * tmp.z * bx::sqrt( (nsq.z + nsq.x * nsq.y) * inv),
 	};
 
 	_outAabb.min = sub(_disk.center, extent);
@@ -273,7 +273,7 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	}
 
 	_sphere.center = center;
-	_sphere.radius = sqrt(maxDistSq);
+	_sphere.radius = bx::sqrt(maxDistSq);
 }
 
 void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step)
@@ -333,7 +333,7 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	} while (!done);
 
 	_sphere.center = center;
-	_sphere.radius = sqrt(maxDistSq);
+	_sphere.radius = bx::sqrt(maxDistSq);
 }
 
 void buildFrustumPlanes(Plane* _result, const float* _viewProj)
@@ -538,7 +538,7 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 
 	const float rsq   = square(_cylinder.radius);
 	const float ddoto = dot(_ray.dir, vo);
-	const float ss    = t0 - bx::abs(sqrt(rsq - square(dist) ) / ddoto);
+	const float ss    = t0 - bx::abs(bx::sqrt(rsq - square(dist) ) / ddoto);
 
 	if (0.0f > ss)
 	{
@@ -654,7 +654,7 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 
 	const Vec3 ro = sub(_ray.pos, _cone.end);
 
-	const float hyp    = sqrt(square(_cone.radius) + square(len) );
+	const float hyp    = bx::sqrt(square(_cone.radius) + square(len) );
 	const float cosaSq = square(len/hyp);
 	const float ndoto  = dot(normal, ro);
 	const float ndotd  = dot(normal, _ray.dir);
@@ -670,7 +670,7 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 		return hit;
 	}
 
-	det = sqrt(det);
+	det = bx::sqrt(det);
 	const float invA2 = 1.0f / (2.0f*aa);
 	const float t1 = (-bb - det) * invA2;
 	const float t2 = (-bb + det) * invA2;
@@ -763,7 +763,7 @@ bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit)
 		return false;
 	}
 
-	const float sqrtDiscriminant = sqrt(discriminant);
+	const float sqrtDiscriminant = bx::sqrt(discriminant);
 	const float invA = 1.0f / aa;
 	const float tt = -(bb + sqrtDiscriminant)*invA;
 
@@ -932,9 +932,9 @@ Srt toSrt(const void* _mtx)
 
 	result.scale =
 	{
-		sqrt(xx*xx + xy*xy + xz*xz),
-		sqrt(yx*yx + yy*yy + yz*yz),
-		sqrt(zx*zx + zy*zy + zz*zz),
+		bx::sqrt(xx*xx + xy*xy + xz*xz),
+		bx::sqrt(yx*yx + yy*yy + yz*yz),
+		bx::sqrt(zx*zx + zy*zy + zz*zz),
 	};
 
 	const Vec3 invScale = rcp(result.scale);
@@ -967,7 +967,7 @@ Srt toSrt(const void* _mtx)
 		if (xx > yy
 		&&  xx > zz)
 		{
-			const float invS = 0.5f * sqrt(max(1.0f + xx - yy - zz, 1e-8f) );
+			const float invS = 0.5f * bx::sqrt(max(1.0f + xx - yy - zz, 1e-8f) );
 			result.rotation =
 			{
 				0.25f     / invS,
@@ -978,7 +978,7 @@ Srt toSrt(const void* _mtx)
 		}
 		else if (yy > zz)
 		{
-			const float invS = 0.5f * sqrt(max(1.0f + yy - xx - zz, 1e-8f) );
+			const float invS = 0.5f * bx::sqrt(max(1.0f + yy - xx - zz, 1e-8f) );
 			result.rotation =
 			{
 				(xy + yx) * invS,
@@ -989,7 +989,7 @@ Srt toSrt(const void* _mtx)
 		}
 		else
 		{
-			const float invS = 0.5f * sqrt(max(1.0f + zz - xx - yy, 1e-8f) );
+			const float invS = 0.5f * bx::sqrt(max(1.0f + zz - xx - yy, 1e-8f) );
 			result.rotation =
 			{
 				(xz + zx) * invS,
@@ -1662,8 +1662,8 @@ bool overlap(const Disk& _diskA, const Disk& _diskB)
 	const float lenA = distance(pa, _diskA.center);
 	const float lenB = distance(pb, _diskB.center);
 
-	return sqrt(square(_diskA.radius) - square(lenA) )
-		+  sqrt(square(_diskB.radius) - square(lenB) )
+	return bx::sqrt(square(_diskA.radius) - square(lenA) )
+		+  bx::sqrt(square(_diskB.radius) - square(lenB) )
 		>= distance(pa, pb)
 		;
 }
