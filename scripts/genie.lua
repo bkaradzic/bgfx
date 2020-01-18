@@ -306,7 +306,19 @@ function exampleProjectDefaults()
 
 	configuration { "asmjs" }
 		kind "ConsoleApp"
-		targetextension ".bc"
+
+		linkoptions {
+			"-s TOTAL_MEMORY=256MB",
+			"--memory-init-file 1",
+		}
+
+		removeflags {
+			"OptimizeSpeed",
+		}
+
+		flags {
+			"Optimize"
+		}
 
 	configuration { "linux-* or freebsd", "not linux-steamlink" }
 		links {
