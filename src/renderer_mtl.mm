@@ -3687,12 +3687,12 @@ namespace bgfx { namespace mtl
 		_render->sort();
 
 		RenderDraw currentState;
-		currentState.clear();
+		currentState.clear(BGFX_STATE_DISCARD_ALL);
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		RenderBind currentBind;
-		currentBind.clear();
+		currentBind.clear(BGFX_STATE_DISCARD_ALL);
 
 		static ViewState viewState;
 		viewState.reset(_render);
@@ -4136,9 +4136,9 @@ namespace bgfx { namespace mtl
 					{
 						if (resetState)
 						{
-							currentState.clear();
+							currentState.clear(BGFX_STATE_DISCARD_ALL);
 							currentState.m_scissor = !draw.m_scissor;
-							currentBind.clear();
+							currentBind.clear(BGFX_STATE_DISCARD_ALL);
 						}
 
 						continue;
@@ -4155,14 +4155,14 @@ namespace bgfx { namespace mtl
 
 				if (resetState)
 				{
-					currentState.clear();
+					currentState.clear(BGFX_STATE_DISCARD_ALL);
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_stateFlags = newFlags;
 					currentState.m_stencil    = newStencil;
 
-					currentBind.clear();
+					currentBind.clear(BGFX_STATE_DISCARD_ALL);
 
 					currentProgram = BGFX_INVALID_HANDLE;
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );

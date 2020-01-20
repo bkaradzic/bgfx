@@ -3746,12 +3746,12 @@ namespace bgfx { namespace d3d9
 		_render->sort();
 
 		RenderDraw currentState;
-		currentState.clear();
+		currentState.clear(BGFX_STATE_DISCARD_ALL);
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		RenderBind currentBind;
-		currentBind.clear();
+		currentBind.clear(BGFX_STATE_DISCARD_ALL);
 
 		static ViewState viewState;
 		viewState.reset(_render);
@@ -3839,7 +3839,7 @@ namespace bgfx { namespace d3d9
 
 				if (key.m_view != view)
 				{
-					currentState.clear();
+					currentState.clear(BGFX_STATE_DISCARD_ALL);
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);

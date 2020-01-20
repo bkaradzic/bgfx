@@ -5733,7 +5733,7 @@ VK_DESTROY
 		_render->sort();
 
 		RenderDraw currentState;
-		currentState.clear();
+		currentState.clear(BGFX_STATE_DISCARD_ALL);
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
@@ -6138,7 +6138,7 @@ VK_DESTROY
 					currentDslHash         = 0;
 					currentSamplerStateIdx = kInvalidHandle;
 					currentProgram         = BGFX_INVALID_HANDLE;
-					currentState.clear();
+					currentState.clear(BGFX_STATE_DISCARD_ALL);
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);

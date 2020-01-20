@@ -100,6 +100,19 @@
 #define BGFX_STATE_CULL_MASK                UINT64_C(0x0000003000000000) //!< Culling mode bit mask
 
 /**
+ * Rendering state discard. When state is preserved in submit, rendering states can be discarded on a finer grain.
+ *
+ */
+#define BGFX_STATE_DISCARD_INDEX_BUFFER     UINT64_C(0x0000000000000001) //!< Discard only Index Buffer
+#define BGFX_STATE_DISCARD_VERTEX_STREAMS   UINT64_C(0x0000000000000002) //!< Discard only Vertex Streams
+#define BGFX_STATE_DISCARD_TEXTURE_SAMPLERS UINT64_C(0x0000000000000003) //!< Discard only texture samplers
+#define BGFX_STATE_DISCARD_COMPUTE          UINT64_C(0x0000000000000004) //!< Discard only Compute shader related state
+#define BGFX_STATE_DISCARD_STATE            UINT64_C(0x0000000000000005) //!< Discard only state
+#define BGFX_STATE_DISCARD_ALL              UINT64_C(0xffffffffffffffff) //!< Discard every rendering states
+#define BGFX_STATE_DISCARD_SHIFT            0                            //!< Discard flags bit shift
+#define BGFX_STATE_DISCARD_MASK             UINT64_C(0x0000000000000007) //!< Discard flags bit mask
+
+/**
  * Alpha reference value.
  *
  */
