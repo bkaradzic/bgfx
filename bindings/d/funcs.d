@@ -1571,9 +1571,11 @@ version(BindBgfx_Static)
 	void bgfx_encoder_dispatch_indirect(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num);
 	
 	/**
-	 * Discard all previously set state for draw or compute call.
+	 * Discard previously set state for draw or compute call.
+	 * Params:
+	 * _flags = rendering states to discard
 	 */
-	void bgfx_encoder_discard(bgfx_encoder_t* _this);
+	void bgfx_encoder_discard(bgfx_encoder_t* _this, ulong _flags);
 	
 	/**
 	 * Blit 2D texture region between two 2D textures.
@@ -2028,9 +2030,11 @@ version(BindBgfx_Static)
 	void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num);
 	
 	/**
-	 * Discard all previously set state for draw or compute call.
+	 * Discard previously set state for draw or compute call.
+	 * Params:
+	 * _flags = rendering states to discard
 	 */
-	void bgfx_discard();
+	void bgfx_discard(ulong _flags);
 	
 	/**
 	 * Blit 2D texture region between two 2D textures.
@@ -3763,9 +3767,11 @@ else
 		da_bgfx_encoder_dispatch_indirect bgfx_encoder_dispatch_indirect;
 		
 		/**
-		 * Discard all previously set state for draw or compute call.
+		 * Discard previously set state for draw or compute call.
+		 * Params:
+		 * _flags = rendering states to discard
 		 */
-		alias da_bgfx_encoder_discard = void function(bgfx_encoder_t* _this);
+		alias da_bgfx_encoder_discard = void function(bgfx_encoder_t* _this, ulong _flags);
 		da_bgfx_encoder_discard bgfx_encoder_discard;
 		
 		/**
@@ -4262,9 +4268,11 @@ else
 		da_bgfx_dispatch_indirect bgfx_dispatch_indirect;
 		
 		/**
-		 * Discard all previously set state for draw or compute call.
+		 * Discard previously set state for draw or compute call.
+		 * Params:
+		 * _flags = rendering states to discard
 		 */
-		alias da_bgfx_discard = void function();
+		alias da_bgfx_discard = void function(ulong _flags);
 		da_bgfx_discard bgfx_discard;
 		
 		/**

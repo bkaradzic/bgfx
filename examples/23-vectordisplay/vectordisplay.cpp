@@ -272,7 +272,7 @@ void VectorDisplay::endFrame()
 		}
 	}
 
-	bgfx::discard();
+	bgfx::discard(BGFX_STATE_DISCARD_ALL);
 
 	//now do last pass, combination of blur and normal buffer to screen
 	bgfx::setViewTransform(viewCounter, NULL, proj);

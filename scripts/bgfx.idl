@@ -83,6 +83,16 @@ flag.StateCull { bits = 64, shift = 36, range = 2, base = 1, desc = "Culling mod
 	.Ccw --- Cull counter-clockwise triangles.
 	()
 
+--- Rendering state discard. When state is preserved in submit, rendering states can be discarded on a finer grain.
+flag.StateDiscard { bits = 64, shift = 0, range = 3, base = 1, desc = "Discard flags" }
+	.IndexBuffer                --- Discard only Index Buffer
+	.VertexStreams              --- Discard only Vertex Streams
+    .TextureSamplers            --- Discard only texture samplers
+    .Compute                    --- Discard only Compute shader related state
+    .State                      --- Discard only state
+	.All (0xffffffffffffffff)   --- Discard every rendering states
+	()
+
 --- Alpha reference value.
 flag.StateAlphaRef { bits = 64, shift = 40, range = 8, desc = "Alpha reference", "helper" }
 
@@ -2421,11 +2431,11 @@ func.Encoder.dispatch
 	.id      "ViewId"        --- View id.
 	.program "ProgramHandle" --- Compute program.
 	.numX    "uint32_t"      --- Number of groups X.
-	 { deafult = 1 }
+	 { default = 1 }
 	.numY    "uint32_t"      --- Number of groups Y.
-	 { deafult = 1 }
+	 { default = 1 }
 	.numZ    "uint32_t"      --- Number of groups Z.
-	 { deafult = 1 }
+	 { default = 1 }
 
 --- Dispatch compute indirect.
 func.Encoder.dispatch { cname = "dispatch_indirect" }
@@ -2434,13 +2444,14 @@ func.Encoder.dispatch { cname = "dispatch_indirect" }
 	.program        "ProgramHandle"        --- Compute program.
 	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
 	.start          "uint16_t"             --- First element in indirect buffer.
-	 { deafult = 0 }
+	 { default = 0 }
 	.num            "uint16_t"             --- Number of dispatches.
-	 { deafult = 1 }
+	 { default = 1 }
 
---- Discard all previously set state for draw or compute call.
+--- Discard previously set state for draw or compute call.
 func.Encoder.discard
 	"void"
+	.flags   "uint64_t"     --- rendering states to discard
 
 --- Blit 2D texture region between two 2D textures.
 ---
@@ -2931,11 +2942,11 @@ func.dispatch
 	.id      "ViewId"        --- View id.
 	.program "ProgramHandle" --- Compute program.
 	.numX    "uint32_t"      --- Number of groups X.
-	 { deafult = 1 }
+	 { default = 1 }
 	.numY    "uint32_t"      --- Number of groups Y.
-	 { deafult = 1 }
+	 { default = 1 }
 	.numZ    "uint32_t"      --- Number of groups Z.
-	 { deafult = 1 }
+	 { default = 1 }
 
 --- Dispatch compute indirect.
 func.dispatch { cname = "dispatch_indirect" }
@@ -2944,13 +2955,14 @@ func.dispatch { cname = "dispatch_indirect" }
 	.program        "ProgramHandle"        --- Compute program.
 	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
 	.start          "uint16_t"             --- First element in indirect buffer.
-	 { deafult = 0 }
+	 { default = 0 }
 	.num            "uint16_t"             --- Number of dispatches.
-	 { deafult = 1 }
+	 { default = 1 }
 
---- Discard all previously set state for draw or compute call.
+--- Discard previously set state for draw or compute call.
 func.discard
 	"void"
+	.flags   "uint64_t"     --- rendering states to discard
 
 --- Blit 2D texture region between two 2D textures.
 ---
