@@ -103,18 +103,18 @@
  * Rendering state discard. When state is preserved in submit, rendering states can be discarded on a finer grain.
  *
  */
-#define BGFX_STATE_DISCARD_INDEX_BUFFER     UINT8_C(0x01) //!< Discard only Index Buffer
-#define BGFX_STATE_DISCARD_VERTEX_STREAMS   UINT8_C(0x02) //!< Discard only Vertex Streams
-#define BGFX_STATE_DISCARD_TEXTURE_SAMPLERS UINT8_C(0x04) //!< Discard only texture samplers
-#define BGFX_STATE_DISCARD_COMPUTE          UINT8_C(0x08) //!< Discard only Compute shader related state
-#define BGFX_STATE_DISCARD_STATE            UINT8_C(0x10) //!< Discard only state
+#define BGFX_DISCARD_FLAGS_INDEX_BUFFER     UINT8_C(0x01) //!< Discard only Index Buffer
+#define BGFX_DISCARD_FLAGS_VERTEX_STREAMS   UINT8_C(0x02) //!< Discard only Vertex Streams
+#define BGFX_DISCARD_FLAGS_TEXTURE_SAMPLERS UINT8_C(0x04) //!< Discard only texture samplers
+#define BGFX_DISCARD_FLAGS_COMPUTE          UINT8_C(0x08) //!< Discard only Compute shader related state
+#define BGFX_DISCARD_FLAGS_STATE            UINT8_C(0x10) //!< Discard only state
 /// Discard every rendering states
-#define BGFX_STATE_DISCARD_DEFAULT (0 \
-	| BGFX_STATE_DISCARD_INDEX_BUFFER \
-	| BGFX_STATE_DISCARD_VERTEX_STREAMS \
-	| BGFX_STATE_DISCARD_TEXTURE_SAMPLERS \
-	| BGFX_STATE_DISCARD_COMPUTE \
-	| BGFX_STATE_DISCARD_STATE \
+#define BGFX_DISCARD_FLAGS_ALL (0 \
+	| BGFX_DISCARD_FLAGS_INDEX_BUFFER \
+	| BGFX_DISCARD_FLAGS_VERTEX_STREAMS \
+	| BGFX_DISCARD_FLAGS_TEXTURE_SAMPLERS \
+	| BGFX_DISCARD_FLAGS_COMPUTE \
+	| BGFX_DISCARD_FLAGS_STATE \
 	)
 
 
