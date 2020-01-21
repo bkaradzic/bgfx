@@ -90,7 +90,7 @@ flag.DiscardFlags { bits = 8, base = 1, desc = "Discard flags" }
 	.TextureSamplers                                                                    --- Discard only texture samplers
 	.Compute                                                                            --- Discard only Compute shader related state
 	.State                                                                              --- Discard only state
-	.All { "IndexBuffer", "VertexStreams", "TextureSamplers", "Compute", "State" }  --- Discard every rendering states
+	.All { "IndexBuffer", "VertexStreams", "TextureSamplers", "Compute", "State" }      --- Discard every rendering states
 	()
 
 --- Alpha reference value.
