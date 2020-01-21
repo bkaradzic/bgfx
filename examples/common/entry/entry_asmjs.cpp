@@ -94,11 +94,11 @@ namespace entry
 
 			emscripten_set_wheel_callback("#canvas", this, true, wheelCb);
 
-			emscripten_set_keypress_callback(NULL, this, true, keyCb);
-			emscripten_set_keydown_callback(NULL, this, true, keyCb);
-			emscripten_set_keyup_callback(NULL, this, true, keyCb);
+			emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
+			emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
+			emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
 
-			emscripten_set_resize_callback(0, this, true, resizeCb);
+			emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, resizeCb);
 
 			EmscriptenFullscreenStrategy fullscreenStrategy = {};
 			fullscreenStrategy.scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_DEFAULT;
@@ -109,9 +109,9 @@ namespace entry
 
 			emscripten_request_fullscreen_strategy("#canvas", false, &fullscreenStrategy);
 
-			emscripten_set_focus_callback(NULL, this, true, focusCb);
-			emscripten_set_focusin_callback(NULL, this, true, focusCb);
-			emscripten_set_focusout_callback(NULL, this, true, focusCb);
+			emscripten_set_focus_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
+			emscripten_set_focusin_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
+			emscripten_set_focusout_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
 
 			int32_t result = main(_argc, _argv);
 			return result;
@@ -144,8 +144,8 @@ namespace entry
 			{
 				case EMSCRIPTEN_EVENT_MOUSEMOVE:
 				{
-					s_ctx.m_mx = event->canvasX;
-					s_ctx.m_my = event->canvasY;
+					s_ctx.m_mx = event->targetX;
+					s_ctx.m_my = event->targetY;
 					s_ctx.m_eventQueue.postMouseEvent(s_defaultWindow, s_ctx.m_mx, s_ctx.m_my, s_ctx.m_scroll);
 					return true;
 				}
@@ -153,8 +153,8 @@ namespace entry
 				case EMSCRIPTEN_EVENT_MOUSEUP:
 				case EMSCRIPTEN_EVENT_DBLCLICK:
 				{
-					s_ctx.m_mx = event->canvasX;
-					s_ctx.m_my = event->canvasY;
+					s_ctx.m_mx = event->targetX;
+					s_ctx.m_my = event->targetY;
 					MouseButton::Enum mb = (event->button == 2) ? MouseButton::Right : ((event->button == 1) ? MouseButton::Middle : MouseButton::Left);
 					s_ctx.m_eventQueue.postMouseEvent(s_defaultWindow, s_ctx.m_mx, s_ctx.m_my, s_ctx.m_scroll, mb, (eventType != EMSCRIPTEN_EVENT_MOUSEUP));
 					return true;
