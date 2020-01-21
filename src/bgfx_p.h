@@ -1543,7 +1543,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderBind
 	{
-		void clear(uint64_t flags)
+		void clear(uint8_t flags = BGFX_STATE_DISCARD_DEFAULT)
 		{
 			if (flags & BGFX_STATE_DISCARD_TEXTURE_SAMPLERS)
 			{
@@ -1562,7 +1562,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderDraw
 	{
-		void clear(uint64_t flags)
+		void clear(uint8_t flags = BGFX_STATE_DISCARD_DEFAULT)
 		{
 			if (flags & BGFX_STATE_DISCARD_STATE)
 			{
@@ -1638,7 +1638,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderCompute
 	{
-		void clear(uint64_t flags)
+		void clear(uint8_t flags = BGFX_STATE_DISCARD_DEFAULT)
 		{
 			if (flags & BGFX_STATE_DISCARD_COMPUTE)
 			{
@@ -2199,7 +2199,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 	{
 		EncoderImpl()
 		{
-			discard(BGFX_STATE_DISCARD_ALL);
+			discard();
 		}
 
 		void begin(Frame* _frame, uint8_t _idx)
@@ -2494,7 +2494,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			bind.m_mip    = _mip;
 		}
 
-		void discard(uint64_t flags)
+		void discard(uint8_t flags = BGFX_STATE_DISCARD_DEFAULT)
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 			{

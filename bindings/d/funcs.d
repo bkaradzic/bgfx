@@ -1575,7 +1575,7 @@ version(BindBgfx_Static)
 	 * Params:
 	 * _flags = rendering states to discard
 	 */
-	void bgfx_encoder_discard(bgfx_encoder_t* _this, ulong _flags);
+	void bgfx_encoder_discard(bgfx_encoder_t* _this, byte _flags);
 	
 	/**
 	 * Blit 2D texture region between two 2D textures.
@@ -2034,7 +2034,7 @@ version(BindBgfx_Static)
 	 * Params:
 	 * _flags = rendering states to discard
 	 */
-	void bgfx_discard(ulong _flags);
+	void bgfx_discard(byte _flags);
 	
 	/**
 	 * Blit 2D texture region between two 2D textures.
@@ -3771,7 +3771,7 @@ else
 		 * Params:
 		 * _flags = rendering states to discard
 		 */
-		alias da_bgfx_encoder_discard = void function(bgfx_encoder_t* _this, ulong _flags);
+		alias da_bgfx_encoder_discard = void function(bgfx_encoder_t* _this, byte _flags);
 		da_bgfx_encoder_discard bgfx_encoder_discard;
 		
 		/**
@@ -4272,7 +4272,7 @@ else
 		 * Params:
 		 * _flags = rendering states to discard
 		 */
-		alias da_bgfx_discard = void function(ulong _flags);
+		alias da_bgfx_discard = void function(byte _flags);
 		da_bgfx_discard bgfx_discard;
 		
 		/**

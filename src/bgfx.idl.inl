@@ -912,7 +912,7 @@ BGFX_C_API void bgfx_encoder_dispatch_indirect(bgfx_encoder_t* _this, bgfx_view_
 	This->dispatch((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num);
 }
 
-BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_t* _this, uint64_t _flags)
+BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_t* _this, uint8_t _flags)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	This->discard(_flags);
@@ -1154,7 +1154,7 @@ BGFX_C_API void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t
 	bgfx::dispatch((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num);
 }
 
-BGFX_C_API void bgfx_discard(uint64_t _flags)
+BGFX_C_API void bgfx_discard(uint8_t _flags)
 {
 	bgfx::discard(_flags);
 }

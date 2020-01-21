@@ -84,13 +84,13 @@ flag.StateCull { bits = 64, shift = 36, range = 2, base = 1, desc = "Culling mod
 	()
 
 --- Rendering state discard. When state is preserved in submit, rendering states can be discarded on a finer grain.
-flag.StateDiscard { bits = 64, shift = 0, range = 3, base = 1, desc = "Discard flags" }
-	.IndexBuffer                --- Discard only Index Buffer
-	.VertexStreams              --- Discard only Vertex Streams
-    .TextureSamplers            --- Discard only texture samplers
-    .Compute                    --- Discard only Compute shader related state
-    .State                      --- Discard only state
-	.All (0xffffffffffffffff)   --- Discard every rendering states
+flag.StateDiscard { bits = 8, base = 1, desc = "Discard flags" }
+	.IndexBuffer                                                                        --- Discard only Index Buffer
+	.VertexStreams                                                                      --- Discard only Vertex Streams
+	.TextureSamplers                                                                    --- Discard only texture samplers
+	.Compute                                                                            --- Discard only Compute shader related state
+	.State                                                                              --- Discard only state
+	.Default { "IndexBuffer", "VertexStreams", "TextureSamplers", "Compute", "State" }  --- Discard every rendering states
 	()
 
 --- Alpha reference value.
@@ -2451,7 +2451,8 @@ func.Encoder.dispatch { cname = "dispatch_indirect" }
 --- Discard previously set state for draw or compute call.
 func.Encoder.discard
 	"void"
-	.flags   "uint64_t"     --- rendering states to discard
+	.flags   "uint8_t"     --- rendering states to discard
+	 { default = "Default" }
 
 --- Blit 2D texture region between two 2D textures.
 ---
@@ -2962,7 +2963,8 @@ func.dispatch { cname = "dispatch_indirect" }
 --- Discard previously set state for draw or compute call.
 func.discard
 	"void"
-	.flags   "uint64_t"     --- rendering states to discard
+	.flags   "uint8_t"     --- rendering states to discard
+	 { default = "Default" }
 
 --- Blit 2D texture region between two 2D textures.
 ---
