@@ -57,8 +57,8 @@ Languages:
  * [Lightweight Java Game Library 3 bindings](https://github.com/LWJGL/lwjgl3)
  * [Lua language API bindings](https://github.com/cloudwu/lua-bgfx)
  * [Nim language API bindings](https://github.com/Halsys/nim-bgfx)
- * [Python language API bindings](https://github.com/jnadro/pybgfx#pybgf)
- * [Python language API bindings (alternative)](https://github.com/fbertola/bgfx-python#-----bgfx-python--)
+ * [Python language API bindings #1](https://github.com/fbertola/bgfx-python#-----bgfx-python--)
+ * [Python language API bindings #2](https://github.com/jnadro/pybgfx#pybgfx)
  * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
 
