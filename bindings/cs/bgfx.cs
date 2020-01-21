@@ -204,7 +204,7 @@ public static partial class bgfx
 	}
 	
 	[Flags]
-	public enum DiscardFlagsFlags : uint
+	public enum DiscardFlags : uint
 	{
 		/// <summary>
 		/// Discard only Index Buffer

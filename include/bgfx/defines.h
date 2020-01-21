@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(102)
+#define BGFX_API_VERSION UINT32_C(103)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -100,21 +100,22 @@
 #define BGFX_STATE_CULL_MASK                UINT64_C(0x0000003000000000) //!< Culling mode bit mask
 
 /**
- * Rendering state discard. When state is preserved in submit, rendering states can be discarded on a finer grain.
+ * Rendering state discard. When state is preserved in submit, rendering states can be discarded
+ * on a finer grain.
  *
  */
-#define BGFX_DISCARD_FLAGS_INDEX_BUFFER     UINT8_C(0x01) //!< Discard only Index Buffer
-#define BGFX_DISCARD_FLAGS_VERTEX_STREAMS   UINT8_C(0x02) //!< Discard only Vertex Streams
-#define BGFX_DISCARD_FLAGS_TEXTURE_SAMPLERS UINT8_C(0x04) //!< Discard only texture samplers
-#define BGFX_DISCARD_FLAGS_COMPUTE          UINT8_C(0x08) //!< Discard only Compute shader related state
-#define BGFX_DISCARD_FLAGS_STATE            UINT8_C(0x10) //!< Discard only state
+#define BGFX_DISCARD_INDEX_BUFFER           UINT8_C(0x01) //!< Discard only Index Buffer
+#define BGFX_DISCARD_VERTEX_STREAMS         UINT8_C(0x02) //!< Discard only Vertex Streams
+#define BGFX_DISCARD_TEXTURE_SAMPLERS       UINT8_C(0x04) //!< Discard only texture samplers
+#define BGFX_DISCARD_COMPUTE                UINT8_C(0x08) //!< Discard only Compute shader related state
+#define BGFX_DISCARD_STATE                  UINT8_C(0x10) //!< Discard only state
 /// Discard every rendering states
-#define BGFX_DISCARD_FLAGS_ALL (0 \
-	| BGFX_DISCARD_FLAGS_INDEX_BUFFER \
-	| BGFX_DISCARD_FLAGS_VERTEX_STREAMS \
-	| BGFX_DISCARD_FLAGS_TEXTURE_SAMPLERS \
-	| BGFX_DISCARD_FLAGS_COMPUTE \
-	| BGFX_DISCARD_FLAGS_STATE \
+#define BGFX_DISCARD_ALL (0 \
+	| BGFX_DISCARD_INDEX_BUFFER \
+	| BGFX_DISCARD_VERTEX_STREAMS \
+	| BGFX_DISCARD_TEXTURE_SAMPLERS \
+	| BGFX_DISCARD_COMPUTE \
+	| BGFX_DISCARD_STATE \
 	)
 
 
