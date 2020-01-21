@@ -76,14 +76,12 @@ enum ulong BGFX_STATE_CULL_SHIFT = 36; /// Culling mode bit shift
 enum ulong BGFX_STATE_CULL_MASK = 0x0000003000000000; /// Culling mode bit mask
 
 /// Rendering state discard. When state is preserved in submit, rendering states can be discarded on a finer grain.
-enum ulong BGFX_STATE_DISCARD_INDEX_BUFFER = 0x0000000000000001; /// Discard only Index Buffer
-enum ulong BGFX_STATE_DISCARD_VERTEX_STREAMS = 0x0000000000000002; /// Discard only Vertex Streams
-enum ulong BGFX_STATE_DISCARD_TEXTURE_SAMPLERS = 0x0000000000000003; /// Discard only texture samplers
-enum ulong BGFX_STATE_DISCARD_COMPUTE = 0x0000000000000004; /// Discard only Compute shader related state
-enum ulong BGFX_STATE_DISCARD_STATE = 0x0000000000000005; /// Discard only state
-enum ulong BGFX_STATE_DISCARD_ALL = 0xffffffffffffffff; /// Discard every rendering states
-enum ulong BGFX_STATE_DISCARD_SHIFT = 0; /// Discard flags bit shift
-enum ulong BGFX_STATE_DISCARD_MASK = 0x0000000000000007; /// Discard flags bit mask
+enum ubyte BGFX_STATE_DISCARD_INDEX_BUFFER = 0x01; /// Discard only Index Buffer
+enum ubyte BGFX_STATE_DISCARD_VERTEX_STREAMS = 0x02; /// Discard only Vertex Streams
+enum ubyte BGFX_STATE_DISCARD_TEXTURE_SAMPLERS = 0x04; /// Discard only texture samplers
+enum ubyte BGFX_STATE_DISCARD_COMPUTE = 0x08; /// Discard only Compute shader related state
+enum ubyte BGFX_STATE_DISCARD_STATE = 0x10; /// Discard only state
+enum ubyte BGFX_STATE_DISCARD_DEFAULT = 0x1f; /// Discard every rendering states
 
 /// Alpha reference value.
 enum ulong BGFX_STATE_ALPHA_REF_SHIFT = 40; /// Alpha reference bit shift

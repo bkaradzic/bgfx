@@ -1590,7 +1590,7 @@ namespace bgfx
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_discard`.
 		///
-		void discard(uint64_t flags);
+		void discard(uint8_t flags);
 
 		/// Blit texture 2D region between two 2D textures.
 		///
@@ -3985,7 +3985,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_discard`.
 	///
-	void discard(uint64_t flags);
+	void discard(uint8_t flags = BGFX_STATE_DISCARD_DEFAULT);
 
 	/// Blit 2D texture region between two 2D textures.
 	///

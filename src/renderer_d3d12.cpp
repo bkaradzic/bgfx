@@ -5753,12 +5753,12 @@ namespace bgfx { namespace d3d12
 		_render->sort();
 
 		RenderDraw currentState;
-		currentState.clear(BGFX_STATE_DISCARD_ALL);
+		currentState.clear();
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		RenderBind currentBind;
-		currentBind.clear(BGFX_STATE_DISCARD_ALL);
+		currentBind.clear();
 
 		static ViewState viewState;
 		viewState.reset(_render);
@@ -6174,9 +6174,9 @@ namespace bgfx { namespace d3d12
 					{
 						if (resetState)
 						{
-							currentState.clear(BGFX_STATE_DISCARD_ALL);
+							currentState.clear();
 							currentState.m_scissor = !draw.m_scissor;
-							currentBind.clear(BGFX_STATE_DISCARD_ALL);
+							currentBind.clear();
 							commandListChanged = true;
 						}
 
@@ -6196,14 +6196,14 @@ namespace bgfx { namespace d3d12
 				{
 					wasCompute = false;
 
-					currentState.clear(BGFX_STATE_DISCARD_ALL);
+					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_stateFlags = newFlags;
 					currentState.m_stencil    = newStencil;
 
-					currentBind.clear(BGFX_STATE_DISCARD_ALL);
+					currentBind.clear();
 
 					commandListChanged = true;
 				}
@@ -6223,14 +6223,14 @@ namespace bgfx { namespace d3d12
 					currentBindHash        = 0;
 					currentSamplerStateIdx = kInvalidHandle;
 					currentProgram         = BGFX_INVALID_HANDLE;
-					currentState.clear(BGFX_STATE_DISCARD_ALL);
+					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 					currentState.m_stateFlags = newFlags;
 					currentState.m_stencil    = newStencil;
 
-					currentBind.clear(BGFX_STATE_DISCARD_ALL);
+					currentBind.clear();
 
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
 					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);

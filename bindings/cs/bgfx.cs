@@ -215,24 +215,22 @@ public static partial class bgfx
 		/// <summary>
 		/// Discard only texture samplers
 		/// </summary>
-		DiscardTextureSamplers = 0x0000000000000003,
+		DiscardTextureSamplers = 0x0000000000000004,
 	
 		/// <summary>
 		/// Discard only Compute shader related state
 		/// </summary>
-		DiscardCompute         = 0x0000000000000004,
+		DiscardCompute         = 0x0000000000000008,
 	
 		/// <summary>
 		/// Discard only state
 		/// </summary>
-		DiscardState           = 0x0000000000000005,
+		DiscardState           = 0x0000000000000010,
 	
 		/// <summary>
 		/// Discard every rendering states
 		/// </summary>
-		DiscardAll             = 0xffffffffffffffff,
-		DiscardShift           = 0,
-		DiscardMask            = 0x0000000000000007,
+		DiscardDefault         = 0x000000000000001f,
 		AlphaRefShift          = 40,
 		AlphaRefMask           = 0x0000ff0000000000,
 	
@@ -3825,7 +3823,7 @@ public static partial class bgfx
 	/// <param name="_flags">rendering states to discard</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_discard", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void encoder_discard(Encoder* _this, ulong _flags);
+	public static extern unsafe void encoder_discard(Encoder* _this, byte _flags);
 	
 	/// <summary>
 	/// Blit 2D texture region between two 2D textures.
@@ -4340,7 +4338,7 @@ public static partial class bgfx
 	/// <param name="_flags">rendering states to discard</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_discard", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void discard(ulong _flags);
+	public static extern unsafe void discard(byte _flags);
 	
 	/// <summary>
 	/// Blit 2D texture region between two 2D textures.

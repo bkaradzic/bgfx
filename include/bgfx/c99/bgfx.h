@@ -2675,7 +2675,7 @@ BGFX_C_API void bgfx_encoder_dispatch_indirect(bgfx_encoder_t* _this, bgfx_view_
  * @param[in] _flags rendering states to discard
  *
  */
-BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_t* _this, uint64_t _flags);
+BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_t* _this, uint8_t _flags);
 
 /**
  * Blit 2D texture region between two 2D textures.
@@ -3193,7 +3193,7 @@ BGFX_C_API void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t
  * @param[in] _flags rendering states to discard
  *
  */
-BGFX_C_API void bgfx_discard(uint64_t _flags);
+BGFX_C_API void bgfx_discard(uint8_t _flags);
 
 /**
  * Blit 2D texture region between two 2D textures.
@@ -3558,7 +3558,7 @@ struct bgfx_interface_vtbl
     void (*encoder_set_image)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*encoder_dispatch)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ);
     void (*encoder_dispatch_indirect)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num);
-    void (*encoder_discard)(bgfx_encoder_t* _this, uint64_t _flags);
+    void (*encoder_discard)(bgfx_encoder_t* _this, uint8_t _flags);
     void (*encoder_blit)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
     void (*request_screen_shot)(bgfx_frame_buffer_handle_t _handle, const char* _filePath);
     bgfx_render_frame_t (*render_frame)(int32_t _msecs);
@@ -3600,7 +3600,7 @@ struct bgfx_interface_vtbl
     void (*set_image)(uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*dispatch)(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ);
     void (*dispatch_indirect)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num);
-    void (*discard)(uint64_t _flags);
+    void (*discard)(uint8_t _flags);
     void (*blit)(bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
 };
 

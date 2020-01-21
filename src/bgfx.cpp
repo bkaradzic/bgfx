@@ -1184,14 +1184,14 @@ namespace bgfx
 
 		if (m_discard)
 		{
-			discard(BGFX_STATE_DISCARD_ALL);
+			discard();
 			return;
 		}
 
 		if (0 == m_draw.m_numVertices
 		&&  0 == m_draw.m_numIndices)
 		{
-			discard(BGFX_STATE_DISCARD_ALL);
+			discard();
 			++m_numDropped;
 			return;
 		}
@@ -1199,7 +1199,7 @@ namespace bgfx
 		const uint32_t renderItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderItems, 1, BGFX_CONFIG_MAX_DRAW_CALLS);
 		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= renderItemIdx)
 		{
-			discard(BGFX_STATE_DISCARD_ALL);
+			discard();
 			++m_numDropped;
 			return;
 		}
@@ -1266,8 +1266,8 @@ namespace bgfx
 
 		if (!_preserveState)
 		{
-			m_draw.clear(BGFX_STATE_DISCARD_ALL);
-			m_bind.clear(BGFX_STATE_DISCARD_ALL);
+			m_draw.clear();
+			m_bind.clear();
 			m_uniformBegin = m_uniformEnd;
 		}
 	}
@@ -1281,14 +1281,14 @@ namespace bgfx
 
 		if (m_discard)
 		{
-			discard(BGFX_STATE_DISCARD_ALL);
+			discard();
 			return;
 		}
 
 		const uint32_t renderItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderItems, 1, BGFX_CONFIG_MAX_DRAW_CALLS);
 		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= renderItemIdx)
 		{
-			discard(BGFX_STATE_DISCARD_ALL);
+			discard();
 			++m_numDropped;
 			return;
 		}
@@ -1319,8 +1319,8 @@ namespace bgfx
 		m_frame->m_renderItem[renderItemIdx].compute = m_compute;
 		m_frame->m_renderItemBind[renderItemIdx]     = m_bind;
 
-		m_compute.clear(BGFX_STATE_DISCARD_ALL);
-		m_bind.clear(BGFX_STATE_DISCARD_ALL);
+		m_compute.clear();
+		m_bind.clear();
 		m_uniformBegin = m_uniformEnd;
 	}
 
@@ -3780,7 +3780,7 @@ namespace bgfx
 		BGFX_ENCODER(dispatch(_id, _program, _indirectHandle, _start, _num) );
 	}
 
-	void Encoder::discard(uint64_t flags)
+	void Encoder::discard(uint8_t flags)
 	{
 		BGFX_ENCODER(discard(flags) );
 	}
@@ -4992,7 +4992,7 @@ namespace bgfx
 		s_ctx->m_encoder0->dispatch(_id, _handle, _indirectHandle, _start, _num);
 	}
 
-	void discard(uint64_t flags)
+	void discard(uint8_t flags)
 	{
 		BGFX_CHECK_API_THREAD();
 		s_ctx->m_encoder0->discard(flags);
