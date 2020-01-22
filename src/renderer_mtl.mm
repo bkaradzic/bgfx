@@ -3036,16 +3036,36 @@ namespace bgfx { namespace mtl
 						return;
 					}
 
-					CALayer* layer = contentView.layer;
-					if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
+					void (^setLayer)(void) = ^{
+						CALayer* layer = contentView.layer;
+						if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
+						{
+							m_metalLayer = (CAMetalLayer*)layer;
+						}
+						else
+						{
+							[contentView setWantsLayer:YES];
+							m_metalLayer = [CAMetalLayer layer];
+							[contentView setLayer:m_metalLayer];
+						}
+					};
+					
+					if ([NSThread isMainThread])
 					{
-						m_metalLayer = (CAMetalLayer*)layer;
+						setLayer();
 					}
 					else
 					{
-						[contentView setWantsLayer:YES];
-						m_metalLayer = [CAMetalLayer layer];
-						[contentView setLayer:m_metalLayer];
+						bx::Semaphore semaphore;
+						bx::Semaphore* psemaphore = &semaphore;
+						
+						CFRunLoopPerformBlock([[NSRunLoop mainRunLoop] getCFRunLoop],
+											  kCFRunLoopCommonModes,
+											  ^{
+												  setLayer();
+												  psemaphore->post();
+											  });
+						semaphore.wait();
 					}
 				}
 			}
