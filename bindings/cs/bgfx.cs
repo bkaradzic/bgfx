@@ -4011,7 +4011,7 @@ public static partial class bgfx
 	/// Discard previously set state for draw or compute call.
 	/// </summary>
 	///
-	/// <param name="_flags">rendering states to discard</param>
+	/// <param name="_flags">Draw/compute states to discard.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_discard", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void encoder_discard(Encoder* _this, byte _flags);
@@ -4526,7 +4526,7 @@ public static partial class bgfx
 	/// Discard previously set state for draw or compute call.
 	/// </summary>
 	///
-	/// <param name="_flags">rendering states to discard</param>
+	/// <param name="_flags">Draw/compute states to discard.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_discard", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void discard(byte _flags);

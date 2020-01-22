@@ -2452,8 +2452,8 @@ func.Encoder.dispatch { cname = "dispatch_indirect" }
 --- Discard previously set state for draw or compute call.
 func.Encoder.discard
 	"void"
-	.flags   "uint8_t"     --- rendering states to discard
-	 { default = "Default" }
+	.flags   "uint8_t"     --- Draw/compute states to discard.
+	 { default = "BGFX_DISCARD_ALL" }
 
 --- Blit 2D texture region between two 2D textures.
 ---
@@ -2964,8 +2964,8 @@ func.dispatch { cname = "dispatch_indirect" }
 --- Discard previously set state for draw or compute call.
 func.discard
 	"void"
-	.flags   "uint8_t"     --- rendering states to discard
-	 { default = "Default" }
+	.flags   "uint8_t"     --- Draw/compute states to discard.
+	 { default = "BGFX_DISCARD_ALL" }
 
 --- Blit 2D texture region between two 2D textures.
 ---

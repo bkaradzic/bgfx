@@ -2672,7 +2672,7 @@ BGFX_C_API void bgfx_encoder_dispatch_indirect(bgfx_encoder_t* _this, bgfx_view_
 /**
  * Discard previously set state for draw or compute call.
  *
- * @param[in] _flags rendering states to discard
+ * @param[in] _flags Draw/compute states to discard.
  *
  */
 BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_t* _this, uint8_t _flags);
@@ -3190,7 +3190,7 @@ BGFX_C_API void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t
 /**
  * Discard previously set state for draw or compute call.
  *
- * @param[in] _flags rendering states to discard
+ * @param[in] _flags Draw/compute states to discard.
  *
  */
 BGFX_C_API void bgfx_discard(uint8_t _flags);

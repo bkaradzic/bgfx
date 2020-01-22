@@ -1588,9 +1588,11 @@ namespace bgfx
 
 		/// Discard all previously set state for draw or compute call.
 		///
+		/// @param[in] _flags Draw/compute states to discard.
+		///
 		/// @attention C99 equivalent is `bgfx_encoder_discard`.
 		///
-		void discard(uint8_t flags);
+		void discard(uint8_t _flags = BGFX_DISCARD_ALL);
 
 		/// Blit texture 2D region between two 2D textures.
 		///
@@ -3983,9 +3985,11 @@ namespace bgfx
 
 	/// Discard all previously set state for draw or compute call.
 	///
+	/// @param[in] _flags Draw/compute states to discard.
+	///
 	/// @attention C99 equivalent is `bgfx_discard`.
 	///
-	void discard(uint8_t flags = BGFX_DISCARD_ALL);
+	void discard(uint8_t _flags = BGFX_DISCARD_ALL);
 
 	/// Blit 2D texture region between two 2D textures.
 	///

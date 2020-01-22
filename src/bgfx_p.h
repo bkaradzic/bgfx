@@ -1543,9 +1543,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderBind
 	{
-		void clear(uint8_t flags = BGFX_DISCARD_ALL)
+		void clear(uint8_t _flags = BGFX_DISCARD_ALL)
 		{
-			if (flags & BGFX_DISCARD_TEXTURE_SAMPLERS)
+			if (0 != (_flags & BGFX_DISCARD_TEXTURE_SAMPLERS) )
 			{
 				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 				{
@@ -1562,9 +1562,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderDraw
 	{
-		void clear(uint8_t flags = BGFX_DISCARD_ALL)
+		void clear(uint8_t _flags = BGFX_DISCARD_ALL)
 		{
-			if (flags & BGFX_DISCARD_STATE)
+			if (0 != (_flags & BGFX_DISCARD_STATE) )
 			{
 				m_uniformBegin = 0;
 				m_uniformEnd   = 0;
@@ -1589,12 +1589,14 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				m_occlusionQuery.idx     = kInvalidHandle;
 				m_uniformIdx = UINT8_MAX;
 			}
-			if (flags & BGFX_DISCARD_VERTEX_STREAMS)
+
+			if (0 != (_flags & BGFX_DISCARD_VERTEX_STREAMS) )
 			{
 				m_streamMask = 0;
 				m_stream[0].clear();
 			}
-			if (flags & BGFX_DISCARD_INDEX_BUFFER)
+
+			if (0 != (_flags & BGFX_DISCARD_INDEX_BUFFER) )
 			{
 				m_indexBuffer.idx = kInvalidHandle;
 			}
@@ -1638,9 +1640,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderCompute
 	{
-		void clear(uint8_t flags = BGFX_DISCARD_ALL)
+		void clear(uint8_t _flags = BGFX_DISCARD_ALL)
 		{
-			if (flags & BGFX_DISCARD_COMPUTE)
+			if (0 != (_flags & BGFX_DISCARD_COMPUTE) )
 			{
 				m_uniformBegin = 0;
 				m_uniformEnd   = 0;
@@ -2494,7 +2496,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			bind.m_mip    = _mip;
 		}
 
-		void discard(uint8_t flags = BGFX_DISCARD_ALL)
+		void discard(uint8_t _flags = BGFX_DISCARD_ALL)
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 			{
@@ -2502,9 +2504,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			}
 
 			m_discard = false;
-			m_draw.clear(flags);
-			m_compute.clear(flags);
-			m_bind.clear(flags);
+			m_draw.clear(_flags);
+			m_compute.clear(_flags);
+			m_bind.clear(_flags);
 		}
 
 		void submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, bool _preserveState);

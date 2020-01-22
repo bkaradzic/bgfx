@@ -1573,7 +1573,7 @@ version(BindBgfx_Static)
 	/**
 	 * Discard previously set state for draw or compute call.
 	 * Params:
-	 * _flags = rendering states to discard
+	 * _flags = Draw/compute states to discard.
 	 */
 	void bgfx_encoder_discard(bgfx_encoder_t* _this, byte _flags);
 	
@@ -2032,7 +2032,7 @@ version(BindBgfx_Static)
 	/**
 	 * Discard previously set state for draw or compute call.
 	 * Params:
-	 * _flags = rendering states to discard
+	 * _flags = Draw/compute states to discard.
 	 */
 	void bgfx_discard(byte _flags);
 	
@@ -3769,7 +3769,7 @@ else
 		/**
 		 * Discard previously set state for draw or compute call.
 		 * Params:
-		 * _flags = rendering states to discard
+		 * _flags = Draw/compute states to discard.
 		 */
 		alias da_bgfx_encoder_discard = void function(bgfx_encoder_t* _this, byte _flags);
 		da_bgfx_encoder_discard bgfx_encoder_discard;
@@ -4270,7 +4270,7 @@ else
 		/**
 		 * Discard previously set state for draw or compute call.
 		 * Params:
-		 * _flags = rendering states to discard
+		 * _flags = Draw/compute states to discard.
 		 */
 		alias da_bgfx_discard = void function(byte _flags);
 		da_bgfx_discard bgfx_discard;
