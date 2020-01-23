@@ -1514,8 +1514,6 @@ namespace bgfx { namespace gl
 			return false;
 		}
 
-BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
-
 		const GLenum target = _array
 			? GL_TEXTURE_2D_ARRAY
 			: GL_TEXTURE_2D
@@ -5758,7 +5756,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					{
 						bx::write(&writer, code);
 					}
-					
+
 					bx::write(&writer, '\0');
 				}
 				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 31)
