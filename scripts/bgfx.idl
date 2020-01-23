@@ -83,17 +83,6 @@ flag.StateCull { bits = 64, shift = 36, range = 2, base = 1, desc = "Culling mod
 	.Ccw --- Cull counter-clockwise triangles.
 	()
 
---- Rendering state discard. When state is preserved in submit, rendering states can be discarded
---- on a finer grain.
-flag.Discard { bits = 8, base = 1, desc = "Discard flags" }
-	.IndexBuffer                                                                        --- Discard only Index Buffer
-	.VertexStreams                                                                      --- Discard only Vertex Streams
-	.TextureSamplers                                                                    --- Discard only texture samplers
-	.Compute                                                                            --- Discard only Compute shader related state
-	.State                                                                              --- Discard only state
-	.All { "IndexBuffer", "VertexStreams", "TextureSamplers", "Compute", "State" }      --- Discard every rendering states
-	()
-
 --- Alpha reference value.
 flag.StateAlphaRef { bits = 64, shift = 40, range = 8, desc = "Alpha reference", "helper" }
 
@@ -209,6 +198,17 @@ flag.Clear { bits = 16 }
 		"DiscardDepth",
 		"DiscardStencil"
 	}
+
+--- Rendering state discard. When state is preserved in submit, rendering states can be discarded
+--- on a finer grain.
+flag.Discard { bits = 8, base = 1, desc = "Discard flags" }
+	.IndexBuffer                                                                        --- Discard only Index Buffer
+	.VertexStreams                                                                      --- Discard only Vertex Streams
+	.TextureSamplers                                                                    --- Discard only texture samplers
+	.Compute                                                                            --- Discard only Compute shader related state
+	.State                                                                              --- Discard only state
+	.All { "IndexBuffer", "VertexStreams", "TextureSamplers", "Compute", "State" }      --- Discard every rendering states
+	()
 
 flag.Debug { bits = 32 }
 	.None      --- No debug.

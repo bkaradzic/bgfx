@@ -201,227 +201,6 @@ public static partial class bgfx
 		CullCcw                = 0x0000002000000000,
 		CullShift              = 36,
 		CullMask               = 0x0000003000000000,
-	}
-	
-	[Flags]
-	public enum DiscardFlags : uint
-	{
-		/// <summary>
-		/// Discard only Index Buffer
-		/// </summary>
-		IndexBuffer            = 0x00000001,
-	
-		/// <summary>
-		/// Discard only Vertex Streams
-		/// </summary>
-		VertexStreams          = 0x00000002,
-	
-		/// <summary>
-		/// Discard only texture samplers
-		/// </summary>
-		TextureSamplers        = 0x00000004,
-	
-		/// <summary>
-		/// Discard only Compute shader related state
-		/// </summary>
-		Compute                = 0x00000008,
-	
-		/// <summary>
-		/// Discard only state
-		/// </summary>
-		State                  = 0x00000010,
-	
-		/// <summary>
-		/// Discard every rendering states
-		/// </summary>
-		All                    = 0x0000001f,
-	}
-	
-	[Flags]
-	public enum StateFlags : ulong
-	{
-		/// <summary>
-		/// Enable R write.
-		/// </summary>
-		WriteR                 = 0x0000000000000001,
-	
-		/// <summary>
-		/// Enable G write.
-		/// </summary>
-		WriteG                 = 0x0000000000000002,
-	
-		/// <summary>
-		/// Enable B write.
-		/// </summary>
-		WriteB                 = 0x0000000000000004,
-	
-		/// <summary>
-		/// Enable alpha write.
-		/// </summary>
-		WriteA                 = 0x0000000000000008,
-	
-		/// <summary>
-		/// Enable depth write.
-		/// </summary>
-		WriteZ                 = 0x0000004000000000,
-	
-		/// <summary>
-		/// Enable RGB write.
-		/// </summary>
-		WriteRgb               = 0x0000000000000007,
-	
-		/// <summary>
-		/// Write all channels mask.
-		/// </summary>
-		WriteMask              = 0x000000400000000f,
-	
-		/// <summary>
-		/// Enable depth test, less.
-		/// </summary>
-		DepthTestLess          = 0x0000000000000010,
-	
-		/// <summary>
-		/// Enable depth test, less or equal.
-		/// </summary>
-		DepthTestLequal        = 0x0000000000000020,
-	
-		/// <summary>
-		/// Enable depth test, equal.
-		/// </summary>
-		DepthTestEqual         = 0x0000000000000030,
-	
-		/// <summary>
-		/// Enable depth test, greater or equal.
-		/// </summary>
-		DepthTestGequal        = 0x0000000000000040,
-	
-		/// <summary>
-		/// Enable depth test, greater.
-		/// </summary>
-		DepthTestGreater       = 0x0000000000000050,
-	
-		/// <summary>
-		/// Enable depth test, not equal.
-		/// </summary>
-		DepthTestNotequal      = 0x0000000000000060,
-	
-		/// <summary>
-		/// Enable depth test, never.
-		/// </summary>
-		DepthTestNever         = 0x0000000000000070,
-	
-		/// <summary>
-		/// Enable depth test, always.
-		/// </summary>
-		DepthTestAlways        = 0x0000000000000080,
-		DepthTestShift         = 4,
-		DepthTestMask          = 0x00000000000000f0,
-	
-		/// <summary>
-		/// 0, 0, 0, 0
-		/// </summary>
-		BlendZero              = 0x0000000000001000,
-	
-		/// <summary>
-		/// 1, 1, 1, 1
-		/// </summary>
-		BlendOne               = 0x0000000000002000,
-	
-		/// <summary>
-		/// Rs, Gs, Bs, As
-		/// </summary>
-		BlendSrcColor          = 0x0000000000003000,
-	
-		/// <summary>
-		/// 1-Rs, 1-Gs, 1-Bs, 1-As
-		/// </summary>
-		BlendInvSrcColor       = 0x0000000000004000,
-	
-		/// <summary>
-		/// As, As, As, As
-		/// </summary>
-		BlendSrcAlpha          = 0x0000000000005000,
-	
-		/// <summary>
-		/// 1-As, 1-As, 1-As, 1-As
-		/// </summary>
-		BlendInvSrcAlpha       = 0x0000000000006000,
-	
-		/// <summary>
-		/// Ad, Ad, Ad, Ad
-		/// </summary>
-		BlendDstAlpha          = 0x0000000000007000,
-	
-		/// <summary>
-		/// 1-Ad, 1-Ad, 1-Ad ,1-Ad
-		/// </summary>
-		BlendInvDstAlpha       = 0x0000000000008000,
-	
-		/// <summary>
-		/// Rd, Gd, Bd, Ad
-		/// </summary>
-		BlendDstColor          = 0x0000000000009000,
-	
-		/// <summary>
-		/// 1-Rd, 1-Gd, 1-Bd, 1-Ad
-		/// </summary>
-		BlendInvDstColor       = 0x000000000000a000,
-	
-		/// <summary>
-		/// f, f, f, 1; f = min(As, 1-Ad)
-		/// </summary>
-		BlendSrcAlphaSat       = 0x000000000000b000,
-	
-		/// <summary>
-		/// Blend factor
-		/// </summary>
-		BlendFactor            = 0x000000000000c000,
-	
-		/// <summary>
-		/// 1-Blend factor
-		/// </summary>
-		BlendInvFactor         = 0x000000000000d000,
-		BlendShift             = 12,
-		BlendMask              = 0x000000000ffff000,
-	
-		/// <summary>
-		/// Blend add: src + dst.
-		/// </summary>
-		BlendEquationAdd       = 0x0000000000000000,
-	
-		/// <summary>
-		/// Blend subtract: src - dst.
-		/// </summary>
-		BlendEquationSub       = 0x0000000010000000,
-	
-		/// <summary>
-		/// Blend reverse subtract: dst - src.
-		/// </summary>
-		BlendEquationRevsub    = 0x0000000020000000,
-	
-		/// <summary>
-		/// Blend min: min(src, dst).
-		/// </summary>
-		BlendEquationMin       = 0x0000000030000000,
-	
-		/// <summary>
-		/// Blend max: max(src, dst).
-		/// </summary>
-		BlendEquationMax       = 0x0000000040000000,
-		BlendEquationShift     = 28,
-		BlendEquationMask      = 0x00000003f0000000,
-	
-		/// <summary>
-		/// Cull clockwise triangles.
-		/// </summary>
-		CullCw                 = 0x0000001000000000,
-	
-		/// <summary>
-		/// Cull counter-clockwise triangles.
-		/// </summary>
-		CullCcw                = 0x0000002000000000,
-		CullShift              = 36,
-		CullMask               = 0x0000003000000000,
 		AlphaRefShift          = 40,
 		AlphaRefMask           = 0x0000ff0000000000,
 	
@@ -748,6 +527,40 @@ public static partial class bgfx
 		DiscardStencil         = 0x1000,
 		DiscardColorMask       = 0x07f8,
 		DiscardMask            = 0x1ff8,
+	}
+	
+	[Flags]
+	public enum DiscardFlags : uint
+	{
+		/// <summary>
+		/// Discard only Index Buffer
+		/// </summary>
+		IndexBuffer            = 0x00000001,
+	
+		/// <summary>
+		/// Discard only Vertex Streams
+		/// </summary>
+		VertexStreams          = 0x00000002,
+	
+		/// <summary>
+		/// Discard only texture samplers
+		/// </summary>
+		TextureSamplers        = 0x00000004,
+	
+		/// <summary>
+		/// Discard only Compute shader related state
+		/// </summary>
+		Compute                = 0x00000008,
+	
+		/// <summary>
+		/// Discard only state
+		/// </summary>
+		State                  = 0x00000010,
+	
+		/// <summary>
+		/// Discard every rendering states
+		/// </summary>
+		All                    = 0x0000001f,
 	}
 	
 	[Flags]

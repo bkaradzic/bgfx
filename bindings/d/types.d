@@ -75,17 +75,6 @@ enum ulong BGFX_STATE_CULL_CCW = 0x0000002000000000; /// Cull counter-clockwise 
 enum ulong BGFX_STATE_CULL_SHIFT = 36; /// Culling mode bit shift
 enum ulong BGFX_STATE_CULL_MASK = 0x0000003000000000; /// Culling mode bit mask
 
-/**
- * Rendering state discard. When state is preserved in submit, rendering states can be discarded
- * on a finer grain.
- */
-enum ubyte BGFX_DISCARD_INDEX_BUFFER = 0x01; /// Discard only Index Buffer
-enum ubyte BGFX_DISCARD_VERTEX_STREAMS = 0x02; /// Discard only Vertex Streams
-enum ubyte BGFX_DISCARD_TEXTURE_SAMPLERS = 0x04; /// Discard only texture samplers
-enum ubyte BGFX_DISCARD_COMPUTE = 0x08; /// Discard only Compute shader related state
-enum ubyte BGFX_DISCARD_STATE = 0x10; /// Discard only state
-enum ubyte BGFX_DISCARD_ALL = 0x1f; /// Discard every rendering states
-
 /// Alpha reference value.
 enum ulong BGFX_STATE_ALPHA_REF_SHIFT = 40; /// Alpha reference bit shift
 enum ulong BGFX_STATE_ALPHA_REF_MASK = 0x0000ff0000000000; /// Alpha reference bit mask
@@ -199,6 +188,17 @@ enum ushort BGFX_CLEAR_DISCARD_DEPTH = 0x0800; /// Discard frame buffer depth at
 enum ushort BGFX_CLEAR_DISCARD_STENCIL = 0x1000; /// Discard frame buffer stencil attachment.
 enum ushort BGFX_CLEAR_DISCARD_COLOR_MASK = 0x07f8;
 enum ushort BGFX_CLEAR_DISCARD_MASK = 0x1ff8;
+
+/**
+ * Rendering state discard. When state is preserved in submit, rendering states can be discarded
+ * on a finer grain.
+ */
+enum ubyte BGFX_DISCARD_INDEX_BUFFER = 0x01; /// Discard only Index Buffer
+enum ubyte BGFX_DISCARD_VERTEX_STREAMS = 0x02; /// Discard only Vertex Streams
+enum ubyte BGFX_DISCARD_TEXTURE_SAMPLERS = 0x04; /// Discard only texture samplers
+enum ubyte BGFX_DISCARD_COMPUTE = 0x08; /// Discard only Compute shader related state
+enum ubyte BGFX_DISCARD_STATE = 0x10; /// Discard only state
+enum ubyte BGFX_DISCARD_ALL = 0x1f; /// Discard every rendering states
 
 enum uint BGFX_DEBUG_NONE = 0x00000000; /// No debug.
 enum uint BGFX_DEBUG_WIREFRAME = 0x00000001; /// Enable wireframe for all primitives.
