@@ -4407,7 +4407,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				for (uint32_t ii = 0; ii < _num; ++ii)
 				{
 					TextureHandle texHandle = _attachment[ii].handle;
-					BGFX_CHECK_HANDLE("createFrameBuffer texture handle", m_textureHandle, texHandle);
+					BGFX_CHECK_HANDLE("createFrameBuffer texture", m_textureHandle, texHandle);
 					BX_CHECK(bbRatio == m_textureRef[texHandle.idx].m_bbRatio, "Mismatch in texture back-buffer ratio.");
 					BX_UNUSED(bbRatio);
 
