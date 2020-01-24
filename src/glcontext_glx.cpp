@@ -57,6 +57,32 @@ namespace bgfx { namespace gl
 		GLXContext m_context;
 	};
 
+	static bool haveGlxExtension(const char* _ext, const char* _extList)
+	{
+		// _extList is assumed to be a space-separated, null-terminated list of
+		// extension names, and no extension name ever contains a space.
+		const char* end = _extList + bx::strLen(_extList);
+		const char* searchStart = _extList;
+		for(;;)
+		{
+			bx::StringView found = bx::strFind(searchStart, _ext);
+			if (found.isEmpty())
+			{
+				return false;
+			}
+
+			// We found the substring, but need an exact match, with a word
+			// boundary at both the front and back of the found spot.
+			if ((found.getPtr() == _extList || *(found.getPtr() - 1) == ' ')
+			&&  (found.getTerm() == end || *found.getTerm() == ' '))
+			{
+				return true;
+			}
+			// else, keep searching
+			searchStart = found.getTerm();
+		}
+	}
+
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		BX_UNUSED(_width, _height);
@@ -196,27 +222,35 @@ namespace bgfx { namespace gl
 		glXMakeCurrent(m_display, (::Window)g_platformData.nwh, m_context);
 		m_current = NULL;
 
-		glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
-		if (NULL != glXSwapIntervalEXT)
+		const char* extensions = glXQueryExtensionsString(m_display, DefaultScreen(m_display));
+		if (NULL != extensions)
 		{
-			BX_TRACE("Using glXSwapIntervalEXT.");
-			glXSwapIntervalEXT(m_display, (::Window)g_platformData.nwh, 0);
-		}
-		else
-		{
-			glXSwapIntervalMESA = (PFNGLXSWAPINTERVALMESAPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalMESA");
-			if (NULL != glXSwapIntervalMESA)
-			{
-				BX_TRACE("Using glXSwapIntervalMESA.");
-				glXSwapIntervalMESA(0);
+			bool foundSwapControl = false;
+			if (haveGlxExtension("GLX_EXT_swap_control", extensions)) {
+				glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
+				if (NULL != glXSwapIntervalEXT)
+				{
+					BX_TRACE("Using glXSwapIntervalEXT.");
+					glXSwapIntervalEXT(m_display, (::Window)g_platformData.nwh, 0);
+					foundSwapControl = true;
+				}
 			}
-			else
-			{
+			if (!foundSwapControl && haveGlxExtension("GLX_MESA_swap_control", extensions)) {
+				glXSwapIntervalMESA = (PFNGLXSWAPINTERVALMESAPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalMESA");
+				if (NULL != glXSwapIntervalMESA)
+				{
+					BX_TRACE("Using glXSwapIntervalMESA.");
+					glXSwapIntervalMESA(0);
+					foundSwapControl = true;
+				}
+			}
+			if (!foundSwapControl && haveGlxExtension("GLX_SGI_swap_control", extensions)) {
 				glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalSGI");
 				if (NULL != glXSwapIntervalSGI)
 				{
 					BX_TRACE("Using glXSwapIntervalSGI.");
 					glXSwapIntervalSGI(0);
+					foundSwapControl = true;
 				}
 			}
 		}
