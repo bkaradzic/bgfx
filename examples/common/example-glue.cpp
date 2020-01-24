@@ -125,7 +125,7 @@ static bool s_showStats = false;
 void showExampleDialog(entry::AppI* _app, const char* _errorText)
 {
 	char temp[1024];
-	bx::snprintf(temp, BX_COUNTOF(temp), "Example: %s", _app->getName() );
+	bx::snprintf(temp, BX_COUNTOF(temp), "Example: %s (%s)", _app->getName(), bgfx::getRendererName(bgfx::getRendererType()));
 
 	ImGui::SetNextWindowPos(
 		  ImVec2(10.0f, 50.0f)
