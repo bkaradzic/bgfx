@@ -103,6 +103,15 @@ MESHOPTIMIZER_API void meshopt_generateShadowIndexBufferMulti(unsigned int* dest
 MESHOPTIMIZER_API void meshopt_optimizeVertexCache(unsigned int* destination, const unsigned int* indices, size_t index_count, size_t vertex_count);
 
 /**
+ * Vertex transform cache optimizer for strip-like caches
+ * Produces inferior results to meshopt_optimizeVertexCache from the GPU vertex cache perspective
+ * However, the resulting index order is more optimal if the goal is to reduce the triangle strip length or improve compression efficiency
+ *
+ * destination must contain enough space for the resulting index buffer (index_count elements)
+ */
+MESHOPTIMIZER_API void meshopt_optimizeVertexCacheStrip(unsigned int* destination, const unsigned int* indices, size_t index_count, size_t vertex_count);
+
+/**
  * Vertex transform cache optimizer for FIFO caches
  * Reorders indices to reduce the number of GPU vertex shader invocations
  * Generally takes ~3x less time to optimize meshes but produces inferior results compared to meshopt_optimizeVertexCache
@@ -156,6 +165,12 @@ MESHOPTIMIZER_API size_t meshopt_optimizeVertexFetchRemap(unsigned int* destinat
  */
 MESHOPTIMIZER_API size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, const unsigned int* indices, size_t index_count);
 MESHOPTIMIZER_API size_t meshopt_encodeIndexBufferBound(size_t index_count, size_t vertex_count);
+
+/**
+ * Experimental: Set index buffer encoder format version
+ * version must specify the data format version to encode; valid values are 0 (decodable by all library versions) and 1 (decodable by 0.14+)
+ */
+MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeIndexVersion(int version);
 
 /**
  * Index buffer decoder
@@ -368,7 +383,6 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_spatialSortRemap(unsigned int* destinati
  * Reorders triangles for spatial locality, and generates a new index buffer. The resulting index buffer can be used with other functions like optimizeVertexCache.
  *
  * destination must contain enough space for the resulting index buffer (index_count elements)
- * indices must contain index data that is the result of meshopt_optimizeVertexCache (*not* the original mesh indices!)
  * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
  */
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_spatialSortTriangles(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride);
@@ -438,6 +452,8 @@ template <typename T>
 inline void meshopt_generateShadowIndexBufferMulti(T* destination, const T* indices, size_t index_count, size_t vertex_count, const meshopt_Stream* streams, size_t stream_count);
 template <typename T>
 inline void meshopt_optimizeVertexCache(T* destination, const T* indices, size_t index_count, size_t vertex_count);
+template <typename T>
+inline void meshopt_optimizeVertexCacheStrip(T* destination, const T* indices, size_t index_count, size_t vertex_count);
 template <typename T>
 inline void meshopt_optimizeVertexCacheFifo(T* destination, const T* indices, size_t index_count, size_t vertex_count, unsigned int cache_size);
 template <typename T>
@@ -686,6 +702,15 @@ inline void meshopt_optimizeVertexCache(T* destination, const T* indices, size_t
 	meshopt_IndexAdapter<T> out(destination, 0, index_count);
 
 	meshopt_optimizeVertexCache(out.data, in.data, index_count, vertex_count);
+}
+
+template <typename T>
+inline void meshopt_optimizeVertexCacheStrip(T* destination, const T* indices, size_t index_count, size_t vertex_count)
+{
+	meshopt_IndexAdapter<T> in(0, indices, index_count);
+	meshopt_IndexAdapter<T> out(destination, 0, index_count);
+
+	meshopt_optimizeVertexCacheStrip(out.data, in.data, index_count, vertex_count);
 }
 
 template <typename T>

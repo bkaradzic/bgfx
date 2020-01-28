@@ -20,6 +20,8 @@ namespace meshopt
 
 const unsigned char kIndexHeader = 0xe0;
 
+static int gEncodeIndexVersion = 0;
+
 typedef unsigned int VertexFifo[16];
 typedef unsigned int EdgeFifo[16][2];
 
@@ -217,7 +219,9 @@ size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, cons
 	if (buffer_size < 1 + index_count / 3 + 16)
 		return 0;
 
-	buffer[0] = kIndexHeader;
+	int version = gEncodeIndexVersion;
+
+	buffer[0] = (unsigned char)(kIndexHeader | version);
 
 	EdgeFifo edgefifo;
 	memset(edgefifo, -1, sizeof(edgefifo));
@@ -234,6 +238,8 @@ size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, cons
 	unsigned char* code = buffer + 1;
 	unsigned char* data = code + index_count / 3;
 	unsigned char* data_safe_end = buffer + buffer_size - 16;
+
+	int fecmax = version >= 1 ? 14 : 15;
 
 	// use static encoding table; it's possible to pack the result and then build an optimal table and repack
 	// for now we keep it simple and use the table that has been generated based on symbol frequency on a training mesh set
@@ -259,7 +265,7 @@ size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, cons
 			int fe = fer >> 2;
 			int fc = getVertexFifo(vertexfifo, c, vertexfifooffset);
 
-			int fec = (fc >= 1 && fc < 15) ? fc : (c == next) ? (next++, 0) : 15;
+			int fec = (fc >= 1 && fc < fecmax) ? fc : (c == next) ? (next++, 0) : (c + 1 == last && version >= 1) ? (--last, 14) : 15;
 
 			*code++ = (unsigned char)((fe << 4) | fec);
 
@@ -272,7 +278,7 @@ size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, cons
 				encodeIndex(data, c, next, last), last = c;
 
 			// we only need to push third vertex since first two are likely already in the vertex fifo
-			if (fec == 0 || fec == 15)
+			if (fec == 0 || fec == 15 || (fec == 14 && version >= 1))
 				pushVertexFifo(vertexfifo, c, vertexfifooffset);
 
 			// we only need to push two new edges to edge fifo since the third one is already there
@@ -285,6 +291,19 @@ size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, cons
 			const unsigned int* order = kTriangleIndexOrder[rotation];
 
 			unsigned int a = indices[i + order[0]], b = indices[i + order[1]], c = indices[i + order[2]];
+
+			// if a/b/c are 0/1/2, we emit a reset code
+			bool reset = false;
+
+			if (a == 0 && b == 1 && c == 2 && next > 0 && version >= 1)
+			{
+				reset = true;
+				next = 0;
+
+				// reset vertex fifo to make sure we don't accidentally reference vertices from that in the future
+				// this makes sure next continues to get incremented instead of being stuck
+				memset(vertexfifo, -1, sizeof(vertexfifo));
+			}
 
 			int fb = getVertexFifo(vertexfifo, b, vertexfifooffset);
 			int fc = getVertexFifo(vertexfifo, c, vertexfifooffset);
@@ -299,7 +318,7 @@ size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, cons
 			int codeauxindex = getCodeAuxIndex(codeaux, codeaux_table);
 
 			// <14 encodes an index into codeaux table, 14 encodes fea=0, 15 encodes fea=15
-			if (fea == 0 && codeauxindex >= 0 && codeauxindex < 14)
+			if (fea == 0 && codeauxindex >= 0 && codeauxindex < 14 && !reset)
 			{
 				*code++ = (unsigned char)((15 << 4) | codeauxindex);
 			}
@@ -356,6 +375,9 @@ size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, cons
 		*data++ = codeaux_table[i];
 	}
 
+	// since we encode restarts as codeaux without a table reference, we need to make sure 00 is encoded as a table reference
+	assert(codeaux_table[0] == 0);
+
 	assert(data >= buffer + index_count / 3 + 16);
 	assert(data <= buffer + buffer_size);
 
@@ -402,6 +424,13 @@ size_t meshopt_encodeIndexBufferBound(size_t index_count, size_t vertex_count)
 	return 1 + (index_count / 3) * (2 + 3 * vertex_groups) + 16;
 }
 
+void meshopt_encodeIndexVersion(int version)
+{
+	assert(unsigned(version) <= 1);
+
+	meshopt::gEncodeIndexVersion = version;
+}
+
 int meshopt_decodeIndexBuffer(void* destination, size_t index_count, size_t index_size, const unsigned char* buffer, size_t buffer_size)
 {
 	using namespace meshopt;
@@ -413,7 +442,11 @@ int meshopt_decodeIndexBuffer(void* destination, size_t index_count, size_t inde
 	if (buffer_size < 1 + index_count / 3 + 16)
 		return -2;
 
-	if (buffer[0] != kIndexHeader)
+	if ((buffer[0] & 0xf0) != kIndexHeader)
+		return -1;
+
+	int version = buffer[0] & 0x0f;
+	if (version > 1)
 		return -1;
 
 	EdgeFifo edgefifo;
@@ -427,6 +460,8 @@ int meshopt_decodeIndexBuffer(void* destination, size_t index_count, size_t inde
 
 	unsigned int next = 0;
 	unsigned int last = 0;
+
+	int fecmax = version >= 1 ? 14 : 15;
 
 	// since we store 16-byte codeaux table at the end, triangle data has to begin before data_safe_end
 	const unsigned char* code = buffer + 1;
@@ -457,7 +492,7 @@ int meshopt_decodeIndexBuffer(void* destination, size_t index_count, size_t inde
 
 			// note: this is the most common path in the entire decoder
 			// inside this if we try to stay branchless (by using cmov/etc.) since these aren't predictable
-			if (fec != 15)
+			if (fec < fecmax)
 			{
 				// fifo reads are wrapped around 16 entry buffer
 				unsigned int cf = vertexfifo[(vertexfifooffset - 1 - fec) & 15];
@@ -480,7 +515,7 @@ int meshopt_decodeIndexBuffer(void* destination, size_t index_count, size_t inde
 				unsigned int c = 0;
 
 				// note that we need to update the last index since free indices are delta-encoded
-				last = c = decodeIndex(data, next, last);
+				last = c = (fec == 14) ? last - 1 : decodeIndex(data, next, last);
 
 				// output triangle
 				writeTriangle(destination, i, index_size, a, b, c);
@@ -539,6 +574,10 @@ int meshopt_decodeIndexBuffer(void* destination, size_t index_count, size_t inde
 				int fea = codetri == 0xfe ? 0 : 15;
 				int feb = codeaux >> 4;
 				int fec = codeaux & 15;
+
+				// reset: codeaux is 0 but encoded as not-a-table
+				if (codeaux == 0)
+					next = 0;
 
 				// fifo reads are wrapped around 16 entry buffer
 				// also note that we increment next for all three vertices before decoding indices - this matches encoder behavior
