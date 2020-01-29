@@ -5375,7 +5375,8 @@ namespace bgfx { namespace gl
 
 		if (0 != m_id)
 		{
-			if (GL_COMPUTE_SHADER != m_type)
+			if (GL_COMPUTE_SHADER != m_type
+			&&  0 != bx::strCmp(code, "#version 430", 12) ) // #2000
 			{
 				int32_t tempLen = code.getLength() + (4<<10);
 				char* temp = (char*)alloca(tempLen);
@@ -5873,7 +5874,7 @@ namespace bgfx { namespace gl
 
 				code.set(temp);
 			}
-			else // GL_COMPUTE_SHADER
+			else if (GL_COMPUTE_SHADER == m_type)
 			{
 				int32_t codeLen = (int32_t)bx::strLen(code);
 				int32_t tempLen = codeLen + (4<<10);
