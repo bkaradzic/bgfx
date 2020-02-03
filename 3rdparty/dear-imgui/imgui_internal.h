@@ -270,9 +270,6 @@ static inline ImVec4 operator*(const ImVec4& lhs, const ImVec4& rhs)            
 #endif
 
 // Helpers: File System
-#if defined(__EMSCRIPTEN__) && !defined(IMGUI_DISABLE_FILE_FUNCTIONS)
-#define IMGUI_DISABLE_FILE_FUNCTIONS
-#endif
 #ifdef IMGUI_DISABLE_FILE_FUNCTIONS
 #define IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS
 typedef void* ImFileHandle;
@@ -846,6 +843,7 @@ struct ImGuiColumns
     ImRect              HostClipRect;           // Backup of ClipRect at the time of BeginColumns()
     ImRect              HostWorkRect;           // Backup of WorkRect at the time of BeginColumns()
     ImVector<ImGuiColumnData> Columns;
+    ImDrawListSplitter  Splitter;
 
     ImGuiColumns()      { Clear(); }
     void Clear()
@@ -939,7 +937,7 @@ struct ImGuiNextWindowData
     ImRect                      SizeConstraintRect;
     ImGuiSizeCallback           SizeCallback;
     void*                       SizeCallbackUserData;
-    float                       BgAlphaVal;
+    float                       BgAlphaVal;             // Override background alpha
     ImVec2                      MenuBarOffsetMinVal;    // *Always on* This is not exposed publicly, so we don't clear it.
 
     ImGuiNextWindowData()       { memset(this, 0, sizeof(*this)); }
@@ -1008,8 +1006,8 @@ struct ImGuiContext
 
     // Windows state
     ImVector<ImGuiWindow*>  Windows;                            // Windows, sorted in display order, back to front
-    ImVector<ImGuiWindow*>  WindowsFocusOrder;                  // Windows, sorted in focus order, back to front
-    ImVector<ImGuiWindow*>  WindowsSortBuffer;
+    ImVector<ImGuiWindow*>  WindowsFocusOrder;                  // Windows, sorted in focus order, back to front. (FIXME: We could only store root windows here! Need to sort out the Docking equivalent which is RootWindowDockStop and is unfortunately a little more dynamic)
+    ImVector<ImGuiWindow*>  WindowsTempSortBuffer;              // Temporary buffer used in EndFrame() to reorder windows so parents are kept before their child
     ImVector<ImGuiWindow*>  CurrentWindowStack;
     ImGuiStorage            WindowsById;                        // Map window's ImGuiID to ImGuiWindow*
     int                     WindowsActiveCount;                 // Number of unique windows submitted by frame
@@ -1426,7 +1424,7 @@ struct IMGUI_API ImGuiWindowTempData
 // Storage for one window
 struct IMGUI_API ImGuiWindow
 {
-    char*                   Name;
+    char*                   Name;                               // Window name, owned by the window.
     ImGuiID                 ID;                                 // == ImHashStr(Name)
     ImGuiWindowFlags        Flags;                              // See enum ImGuiWindowFlags_
     ImVec2                  Pos;                                // Position (always rounded-up to nearest pixel)

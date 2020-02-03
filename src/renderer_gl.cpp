@@ -7195,6 +7195,8 @@ namespace bgfx { namespace gl
 
 					{
 						bool diffStreamHandles = false;
+						bool diffIndexBuffer = false;
+
 						for (uint32_t idx = 0, streamMask = draw.m_streamMask
 							; 0 != streamMask
 							; streamMask >>= 1, idx += 1
@@ -7252,6 +7254,8 @@ namespace bgfx { namespace gl
 							{
 								GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
 							}
+
+							diffIndexBuffer = true;
 						}
 
 						if (0 != currentState.m_streamMask)
@@ -7308,7 +7312,10 @@ namespace bgfx { namespace gl
 								}
 
 								program.bindAttributesEnd();
+							}
 
+							if (bindAttribs || diffStartVertex || diffIndexBuffer)
+							{
 								if (isValid(draw.m_instanceDataBuffer) )
 								{
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffers[draw.m_instanceDataBuffer.idx].m_id) );
