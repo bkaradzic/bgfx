@@ -70,82 +70,112 @@ namespace bgfx { namespace gl
 		NSObject* nwh = (NSObject*)g_platformData.nwh;
 		m_context = g_platformData.context;
 
-		NSWindow* nsWindow = nil;
-		NSView* contentView = nil;
-		if ([nwh isKindOfClass:[NSView class]])
-		{
-			contentView = (NSView*)nwh;
-		}
-		else if ([nwh isKindOfClass:[NSWindow class]])
-		{
-			nsWindow = (NSWindow*)nwh;
-			contentView = [nsWindow contentView];
-		}
-
 		if (NULL == g_platformData.context)
 		{
-#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
-			NSOpenGLPixelFormatAttribute profile =
-#if BGFX_CONFIG_RENDERER_OPENGL >= 31
-				NSOpenGLProfileVersion3_2Core
-#else
-				NSOpenGLProfileVersionLegacy
-#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
-				;
-#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+			void (^createContext)(NSOpenGLView**, NSOpenGLContext**) = ^(NSOpenGLView** glViewOut, NSOpenGLContext** glContextOut) {
+				NSWindow* nsWindow = nil;
+				NSView* contentView = nil;
 
-			NSOpenGLPixelFormatAttribute pixelFormatAttributes[] = {
-#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
-				NSOpenGLPFAOpenGLProfile, profile,
-#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
-				NSOpenGLPFAColorSize,     24,
-				NSOpenGLPFAAlphaSize,     8,
-				NSOpenGLPFADepthSize,     24,
-				NSOpenGLPFAStencilSize,   8,
-				NSOpenGLPFADoubleBuffer,  true,
-				NSOpenGLPFAAccelerated,   true,
-				NSOpenGLPFANoRecovery,    true,
-				0,                        0,
+				if ([nwh isKindOfClass:[NSView class]])
+				{
+					contentView = (NSView*)nwh;
+				}
+				else if ([nwh isKindOfClass:[NSWindow class]])
+				{
+					nsWindow = (NSWindow*)nwh;
+					contentView = [nsWindow contentView];
+				}
+
+	#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+				NSOpenGLPixelFormatAttribute profile =
+	#if BGFX_CONFIG_RENDERER_OPENGL >= 31
+					NSOpenGLProfileVersion3_2Core
+	#else
+					NSOpenGLProfileVersionLegacy
+	#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
+					;
+	#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+
+				NSOpenGLPixelFormatAttribute pixelFormatAttributes[] = {
+	#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+					NSOpenGLPFAOpenGLProfile, profile,
+	#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+					NSOpenGLPFAColorSize,     24,
+					NSOpenGLPFAAlphaSize,     8,
+					NSOpenGLPFADepthSize,     24,
+					NSOpenGLPFAStencilSize,   8,
+					NSOpenGLPFADoubleBuffer,  true,
+					NSOpenGLPFAAccelerated,   true,
+					NSOpenGLPFANoRecovery,    true,
+					0,                        0,
+				};
+
+				NSOpenGLPixelFormat* pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:pixelFormatAttributes];
+				BGFX_FATAL(NULL != pixelFormat, Fatal::UnableToInitialize, "Failed to initialize pixel format.");
+
+				NSRect glViewRect = [contentView bounds];
+				NSOpenGLView* glView = [[NSOpenGLView alloc] initWithFrame:glViewRect pixelFormat:pixelFormat];
+
+				[pixelFormat release];
+				// GLFW creates a helper contentView that handles things like keyboard and drag and
+				// drop events. We don't want to clobber that view if it exists. Instead we just
+				// add ourselves as a subview and make the view resize automatically.
+				if (nil != contentView)
+				{
+					[glView setAutoresizingMask:( NSViewHeightSizable |
+							NSViewWidthSizable |
+							NSViewMinXMargin |
+							NSViewMaxXMargin |
+							NSViewMinYMargin |
+							NSViewMaxYMargin )];
+					[contentView addSubview:glView];
+				}
+				else
+				{
+					if (nil != nsWindow)
+						[nsWindow setContentView:glView];
+				}
+
+				NSOpenGLContext* glContext = [glView openGLContext];
+				BGFX_FATAL(NULL != glContext, Fatal::UnableToInitialize, "Failed to initialize GL context.");
+
+				[glContext makeCurrentContext];
+				GLint interval = 0;
+				[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
+
+				// When initializing NSOpenGLView programatically (as we are), this sometimes doesn't
+				// get hooked up properly (especially when there are existing window elements). This ensures
+				// we are valid. Otherwise, you'll probably get a GL_INVALID_FRAMEBUFFER_OPERATION when
+				// trying to glClear() for the first time.
+				[glContext setView:glView];
+
+				*glContextOut = glContext;
+				*glViewOut = glView;
 			};
 
-			NSOpenGLPixelFormat* pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:pixelFormatAttributes];
-			BGFX_FATAL(NULL != pixelFormat, Fatal::UnableToInitialize, "Failed to initialize pixel format.");
+			NSOpenGLContext* glContext = nil;
+			NSOpenGLView* glView = nil;
 
-			NSRect glViewRect = [contentView bounds];
-			NSOpenGLView* glView = [[NSOpenGLView alloc] initWithFrame:glViewRect pixelFormat:pixelFormat];
-
-			[pixelFormat release];
-			// GLFW creates a helper contentView that handles things like keyboard and drag and
-			// drop events. We don't want to clobber that view if it exists. Instead we just
-			// add ourselves as a subview and make the view resize automatically.
-			if (nil != contentView)
+			if ([NSThread isMainThread])
 			{
-				[glView setAutoresizingMask:( NSViewHeightSizable |
-						NSViewWidthSizable |
-						NSViewMinXMargin |
-						NSViewMaxXMargin |
-						NSViewMinYMargin |
-						NSViewMaxYMargin )];
-				[contentView addSubview:glView];
+				createContext(&glView, &glContext);
 			}
 			else
 			{
-				if (nil != nsWindow)
-					[nsWindow setContentView:glView];
+				bx::Semaphore semaphore;
+				bx::Semaphore* psemaphore = &semaphore;
+
+				CFRunLoopPerformBlock([[NSRunLoop mainRunLoop] getCFRunLoop],
+										kCFRunLoopCommonModes,
+										^{
+											// cast our const away because we're immediately coming back to this thread
+											createContext((NSOpenGLView**)&glView, (NSOpenGLContext**)&glContext);
+											psemaphore->post();
+										});
+				semaphore.wait();
 			}
 
-			NSOpenGLContext* glContext = [glView openGLContext];
-			BGFX_FATAL(NULL != glContext, Fatal::UnableToInitialize, "Failed to initialize GL context.");
-
 			[glContext makeCurrentContext];
-			GLint interval = 0;
-			[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
-
-			// When initializing NSOpenGLView programatically (as we are), this sometimes doesn't
-			// get hooked up properly (especially when there are existing window elements). This ensures
-			// we are valid. Otherwise, you'll probably get a GL_INVALID_FRAMEBUFFER_OPERATION when
-			// trying to glClear() for the first time.
-			[glContext setView:glView];
 
 			m_view    = glView;
 			m_context = glContext;
