@@ -7258,6 +7258,11 @@ namespace bgfx { namespace gl
 							diffIndexBuffer = true;
 						}
 
+						if (currentState.m_startIndex != draw.m_startIndex)
+						{
+							diffIndexBuffer = true;
+						}
+
 						if (0 != currentState.m_streamMask)
 						{
 							bool diffStartVertex = false;
