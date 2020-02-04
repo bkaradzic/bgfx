@@ -7260,6 +7260,7 @@ namespace bgfx { namespace gl
 
 						if (currentState.m_startIndex != draw.m_startIndex)
 						{
+							currentState.m_startIndex = draw.m_startIndex;
 							diffIndexBuffer = true;
 						}
 
