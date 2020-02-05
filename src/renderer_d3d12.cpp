@@ -1799,7 +1799,7 @@ namespace bgfx { namespace d3d12
 			m_uniformReg.remove(_handle);
 		}
 
-		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath, void* _userData) override
 		{
 			BX_UNUSED(_handle);
 
@@ -1861,6 +1861,7 @@ namespace bgfx { namespace d3d12
 				, data
 				, (uint32_t)total
 				, false
+				, _userData
 				);
 			readback->Unmap(0, NULL);
 

@@ -549,6 +549,7 @@ namespace bgfx
 		/// @param[in] _data Image data.
 		/// @param[in] _size Image size.
 		/// @param[in] _yflip If true, image origin is bottom left.
+		/// @param[in] _userData user data 
 		///
 		/// @attention C99 equivalent is `bgfx_callback_vtbl.screen_shot`.
 		///
@@ -560,6 +561,7 @@ namespace bgfx
 			, const void* _data
 			, uint32_t _size
 			, bool _yflip
+			, void* _userData
 			) = 0;
 
 		/// Called when a video capture begins.
@@ -4067,6 +4069,7 @@ namespace bgfx
 	/// @param[in] _handle Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
 	///   made for main window back buffer.
 	/// @param[in] _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.
+	/// @param[in] _userData Will be passed to `bgfx::CallbackI::screenShot` callback.
 	///
 	/// @remarks
 	///   `bgfx::CallbackI::screenShot` must be implemented.
@@ -4077,6 +4080,7 @@ namespace bgfx
 	void requestScreenShot(
 		  FrameBufferHandle _handle
 		, const char* _filePath
+		, void* _userData = NULL
 		);
 
 } // namespace bgfx

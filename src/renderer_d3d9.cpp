@@ -1227,7 +1227,7 @@ namespace bgfx { namespace d3d9
 			m_uniformReg.remove(_handle);
 		}
 
-		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath, void* _userData) override
 		{
 			IDirect3DSwapChain9* swapChain = isValid(_handle)
 				? m_frameBuffers[_handle.idx].m_swapChain
@@ -1288,6 +1288,7 @@ namespace bgfx { namespace d3d9
 				, &data[point.y*rect.Pitch+point.x*bytesPerPixel]
 				, params.BackBufferHeight*rect.Pitch
 				, false
+				, _userData
 				);
 
 			DX_CHECK(surface->UnlockRect() );

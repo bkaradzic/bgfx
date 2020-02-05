@@ -1613,8 +1613,9 @@ version(BindBgfx_Static)
 	 * _handle = Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
 	 * made for main window back buffer.
 	 * _filePath = Will be passed to `bgfx::CallbackI::screenShot` callback.
+	 * _userData = User defined data if needed.
 	 */
-	void bgfx_request_screen_shot(bgfx_frame_buffer_handle_t _handle, const(char)* _filePath);
+	void bgfx_request_screen_shot(bgfx_frame_buffer_handle_t _handle, const(char)* _filePath, void* _userData);
 	
 	/**
 	 * Render frame.
@@ -3811,8 +3812,9 @@ else
 		 * _handle = Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
 		 * made for main window back buffer.
 		 * _filePath = Will be passed to `bgfx::CallbackI::screenShot` callback.
+		 * _userData = User defined data if needed.
 		 */
-		alias da_bgfx_request_screen_shot = void function(bgfx_frame_buffer_handle_t _handle, const(char)* _filePath);
+		alias da_bgfx_request_screen_shot = void function(bgfx_frame_buffer_handle_t _handle, const(char)* _filePath, void* _userData);
 		da_bgfx_request_screen_shot bgfx_request_screen_shot;
 		
 		/**

@@ -1917,7 +1917,7 @@ namespace bgfx { namespace d3d11
 			m_uniformReg.remove(_handle);
 		}
 
-		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath, void* _userData) override
 		{
 			IDXGISwapChain* swapChain = isValid(_handle)
 				? m_frameBuffers[_handle.idx].m_swapChain
@@ -1983,6 +1983,7 @@ namespace bgfx { namespace d3d11
 					, mapped.pData
 					, backBufferDesc.Height*mapped.RowPitch
 					, false
+					, _userData
 					);
 				m_deviceCtx->Unmap(texture, 0);
 

@@ -3862,9 +3862,10 @@ public static partial class bgfx
 	///
 	/// <param name="_handle">Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be made for main window back buffer.</param>
 	/// <param name="_filePath">Will be passed to `bgfx::CallbackI::screenShot` callback.</param>
+	/// <param name="_userData">User defined data if needed.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_request_screen_shot", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void request_screen_shot(FrameBufferHandle _handle, [MarshalAs(UnmanagedType.LPStr)] string _filePath);
+	public static extern unsafe void request_screen_shot(FrameBufferHandle _handle, [MarshalAs(UnmanagedType.LPStr)] string _filePath, void* _userData);
 	
 	/// <summary>
 	/// Render frame.

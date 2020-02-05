@@ -981,7 +981,7 @@ namespace bgfx { namespace mtl
 			m_saveScreenshot = true;
 		}
 
-		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath, void* _userData) override
 		{
 			BX_UNUSED(_handle);
 

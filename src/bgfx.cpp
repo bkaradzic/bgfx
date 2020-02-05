@@ -121,7 +121,7 @@ namespace bgfx
 		{
 		}
 
-		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override
+		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip, void* /*_userData*/) override
 		{
 			BX_UNUSED(_filePath, _width, _height, _pitch, _data, _size, _yflip);
 
@@ -3158,7 +3158,10 @@ namespace bgfx
 
 					const char* filePath = (const char*)_cmdbuf.skip(len);
 
-					m_renderCtx->requestScreenShot(handle, filePath);
+					void* userData;
+					_cmdbuf.read(userData);
+
+					m_renderCtx->requestScreenShot(handle, filePath, userData);
 				}
 				break;
 
@@ -5009,10 +5012,10 @@ namespace bgfx
 		s_ctx->m_encoder0->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 	}
 
-	void requestScreenShot(FrameBufferHandle _handle, const char* _filePath)
+	void requestScreenShot(FrameBufferHandle _handle, const char* _filePath, void* _userData)
 	{
 		BGFX_CHECK_API_THREAD();
-		s_ctx->requestScreenShot(_handle, _filePath);
+		s_ctx->requestScreenShot(_handle, _filePath, _userData);
 	}
 } // namespace bgfx
 
@@ -5290,9 +5293,9 @@ namespace bgfx
 			m_interface->vtbl->cache_write(m_interface, _id, _data, _size);
 		}
 
-		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override
+		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip, void* _userData) override
 		{
-			m_interface->vtbl->screen_shot(m_interface, _filePath, _width, _height, _pitch, _data, _size, _yflip);
+			m_interface->vtbl->screen_shot(m_interface, _filePath, _width, _height, _pitch, _data, _size, _yflip, _userData);
 		}
 
 		virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format, bool _yflip) override

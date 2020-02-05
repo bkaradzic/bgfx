@@ -432,7 +432,7 @@ typedef struct bgfx_callback_vtbl_s
     uint32_t (*cache_read_size)(bgfx_callback_interface_t* _this, uint64_t _id);
     bool (*cache_read)(bgfx_callback_interface_t* _this, uint64_t _id, void* _data, uint32_t _size);
     void (*cache_write)(bgfx_callback_interface_t* _this, uint64_t _id, const void* _data, uint32_t _size);
-    void (*screen_shot)(bgfx_callback_interface_t* _this, const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip);
+    void (*screen_shot)(bgfx_callback_interface_t* _this, const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip, void* _userData);
     void (*capture_begin)(bgfx_callback_interface_t* _this, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx_texture_format_t _format, bool _yflip);
     void (*capture_end)(bgfx_callback_interface_t* _this);
     void (*capture_frame)(bgfx_callback_interface_t* _this, const void* _data, uint32_t _size);
@@ -2714,9 +2714,10 @@ BGFX_C_API void bgfx_encoder_blit(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgf
  * @param[in] _handle Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
  *  made for main window back buffer.
  * @param[in] _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.
+ * @param[in] _userData User defined data if needed.
  *
  */
-BGFX_C_API void bgfx_request_screen_shot(bgfx_frame_buffer_handle_t _handle, const char* _filePath);
+BGFX_C_API void bgfx_request_screen_shot(bgfx_frame_buffer_handle_t _handle, const char* _filePath, void* _userData);
 
 /**
  * Render frame.
@@ -3560,7 +3561,7 @@ struct bgfx_interface_vtbl
     void (*encoder_dispatch_indirect)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num);
     void (*encoder_discard)(bgfx_encoder_t* _this, uint8_t _flags);
     void (*encoder_blit)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
-    void (*request_screen_shot)(bgfx_frame_buffer_handle_t _handle, const char* _filePath);
+    void (*request_screen_shot)(bgfx_frame_buffer_handle_t _handle, const char* _filePath, void* _userData);
     bgfx_render_frame_t (*render_frame)(int32_t _msecs);
     void (*set_platform_data)(const bgfx_platform_data_t * _data);
     const bgfx_internal_data_t* (*get_internal_data)(void);

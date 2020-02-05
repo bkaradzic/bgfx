@@ -2521,6 +2521,7 @@ func.requestScreenShot
 	.handle   "FrameBufferHandle" --- Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
 	                              --- made for main window back buffer.
 	.filePath "const char*"       --- Will be passed to `bgfx::CallbackI::screenShot` callback.
+	.userData "void*"             --- User defined data if needed.
 
 --- Render frame.
 ---

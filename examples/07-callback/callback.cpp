@@ -184,7 +184,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		}
 	}
 
-	virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) override
+	virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip, void* /*_userData*/) override
 	{
 		char temp[1024];
 

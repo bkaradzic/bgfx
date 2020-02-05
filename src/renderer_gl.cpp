@@ -2965,7 +2965,7 @@ namespace bgfx { namespace gl
 			m_uniformReg.remove(_handle);
 		}
 
-		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath, void* _userData) override
 		{
 			SwapChainGL* swapChain = NULL;
 			uint32_t width  = m_resolution.width;
@@ -3005,6 +3005,7 @@ namespace bgfx { namespace gl
 				, data
 				, length
 				, true
+				, _userData
 				);
 			BX_FREE(g_allocator, data);
 		}

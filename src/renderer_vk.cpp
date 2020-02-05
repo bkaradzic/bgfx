@@ -2483,7 +2483,7 @@ VK_IMPORT_DEVICE
 			m_uniforms[_handle.idx] = NULL;
 		}
 
-		void requestScreenShot(FrameBufferHandle /*_handle*/, const char* /*_filePath*/) override
+		void requestScreenShot(FrameBufferHandle /*_handle*/, const char* /*_filePath*/, void* /*_userData*/) override
 		{
 		}
 
