@@ -3651,8 +3651,9 @@ VK_IMPORT_DEVICE
 
 			VkDescriptorImageInfo imageInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 			VkDescriptorBufferInfo bufferInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-			VkWriteDescriptorSet wds[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS+2];
-			bx::memSet(wds, 0, sizeof(VkWriteDescriptorSet) * (BGFX_CONFIG_MAX_TEXTURE_SAMPLERS+2));
+			const int MAX_DESCRIPTOR_SETS = 2 * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS + 2;
+			VkWriteDescriptorSet wds[MAX_DESCRIPTOR_SETS];
+			bx::memSet(wds, 0, sizeof(wds));
 			uint32_t wdsCount    = 0;
 			uint32_t bufferCount = 0;
 			uint32_t imageCount  = 0;
