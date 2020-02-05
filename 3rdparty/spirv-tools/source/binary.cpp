@@ -477,9 +477,22 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
       assert(SpvOpExtInst == opcode);
       assert(inst->ext_inst_type != SPV_EXT_INST_TYPE_NONE);
       spv_ext_inst_desc ext_inst;
-      if (grammar_.lookupExtInst(inst->ext_inst_type, word, &ext_inst))
-        return diagnostic() << "Invalid extended instruction number: " << word;
-      spvPushOperandTypes(ext_inst->operandTypes, expected_operands);
+      if (grammar_.lookupExtInst(inst->ext_inst_type, word, &ext_inst) ==
+          SPV_SUCCESS) {
+        // if we know about this ext inst, push the expected operands
+        spvPushOperandTypes(ext_inst->operandTypes, expected_operands);
+      } else {
+        // if we don't know this extended instruction and the set isn't
+        // non-semantic, we cannot process further
+        if (!spvExtInstIsNonSemantic(inst->ext_inst_type)) {
+          return diagnostic()
+                 << "Invalid extended instruction number: " << word;
+        } else {
+          // for non-semantic instruction sets, we know the form of all such
+          // extended instructions contains a series of IDs as parameters
+          expected_operands->push_back(SPV_OPERAND_TYPE_VARIABLE_ID);
+        }
+      }
     } break;
 
     case SPV_OPERAND_TYPE_SPEC_CONSTANT_OP_NUMBER: {
@@ -623,7 +636,12 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
     case SPV_OPERAND_TYPE_DEBUG_BASE_TYPE_ATTRIBUTE_ENCODING:
     case SPV_OPERAND_TYPE_DEBUG_COMPOSITE_TYPE:
     case SPV_OPERAND_TYPE_DEBUG_TYPE_QUALIFIER:
-    case SPV_OPERAND_TYPE_DEBUG_OPERATION: {
+    case SPV_OPERAND_TYPE_DEBUG_OPERATION:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_BASE_TYPE_ATTRIBUTE_ENCODING:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_COMPOSITE_TYPE:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY: {
       // A single word that is a plain enum value.
 
       // Map an optional operand type to its corresponding concrete type.
@@ -647,6 +665,7 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
     case SPV_OPERAND_TYPE_OPTIONAL_IMAGE:
     case SPV_OPERAND_TYPE_OPTIONAL_MEMORY_ACCESS:
     case SPV_OPERAND_TYPE_SELECTION_CONTROL:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS:
     case SPV_OPERAND_TYPE_DEBUG_INFO_FLAGS: {
       // This operand is a mask.
 

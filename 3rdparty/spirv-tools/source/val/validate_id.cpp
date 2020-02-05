@@ -131,7 +131,11 @@ spv_result_t CheckIdDefinitionDominateUse(ValidationState_t& _) {
 // instruction operand's ID can be forward referenced.
 spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
   auto can_have_forward_declared_ids =
-      spvOperandCanBeForwardDeclaredFunction(inst->opcode());
+      inst->opcode() == SpvOpExtInst &&
+              spvExtInstIsDebugInfo(inst->ext_inst_type())
+          ? spvDbgInfoExtOperandCanBeForwardDeclaredFunction(
+                inst->ext_inst_type(), inst->word(4))
+          : spvOperandCanBeForwardDeclaredFunction(inst->opcode());
 
   // Keep track of a result id defined by this instruction.  0 means it
   // does not define an id.
@@ -167,7 +171,8 @@ spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
           const auto opcode = inst->opcode();
           if (spvOpcodeGeneratesType(def->opcode()) &&
               !spvOpcodeGeneratesType(opcode) && !spvOpcodeIsDebug(opcode) &&
-              !spvOpcodeIsDecoration(opcode) && opcode != SpvOpFunction &&
+              !inst->IsNonSemantic() && !spvOpcodeIsDecoration(opcode) &&
+              opcode != SpvOpFunction &&
               opcode != SpvOpCooperativeMatrixLengthNV &&
               !(opcode == SpvOpSpecConstantOp &&
                 inst->word(3) == SpvOpCooperativeMatrixLengthNV)) {
@@ -175,7 +180,7 @@ spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
                    << "Operand " << _.getIdName(operand_word)
                    << " cannot be a type";
           } else if (def->type_id() == 0 && !spvOpcodeGeneratesType(opcode) &&
-                     !spvOpcodeIsDebug(opcode) &&
+                     !spvOpcodeIsDebug(opcode) && !inst->IsNonSemantic() &&
                      !spvOpcodeIsDecoration(opcode) &&
                      !spvOpcodeIsBranch(opcode) && opcode != SpvOpPhi &&
                      opcode != SpvOpExtInst && opcode != SpvOpExtInstImport &&
@@ -187,6 +192,11 @@ spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
             return _.diag(SPV_ERROR_INVALID_ID, inst)
                    << "Operand " << _.getIdName(operand_word)
                    << " requires a type";
+          } else if (def->IsNonSemantic() && !inst->IsNonSemantic()) {
+            return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << "Operand " << _.getIdName(operand_word)
+                   << " in semantic instruction cannot be a non-semantic "
+                      "instruction";
           } else {
             ret = SPV_SUCCESS;
           }

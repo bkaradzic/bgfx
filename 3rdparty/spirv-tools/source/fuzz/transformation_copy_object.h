@@ -47,6 +47,8 @@ class TransformationCopyObject : public Transformation {
   // - It must be legal to insert an OpCopyObject instruction directly
   //   before 'inst'.
   // - |message_.object| must be available directly before 'inst'.
+  // - |message_.object| must not be a null pointer or undefined pointer (so as
+  //   to make it legal to load from copied pointers).
   bool IsApplicable(opt::IRContext* context,
                     const FactManager& fact_manager) const override;
 

@@ -48,6 +48,7 @@ class TransformationSplitBlock : public Transformation {
   // - All instructions of 'blk' from 'inst' onwards are moved into the new
   //   block.
   // - 'blk' is made to jump unconditionally to the new block.
+  // - If 'blk' was dead, the new block is also dead.
   void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
 
   protobufs::Transformation ToMessage() const override;

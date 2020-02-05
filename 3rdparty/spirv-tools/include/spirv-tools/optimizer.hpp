@@ -65,9 +65,9 @@ class Optimizer {
   // Constructs an instance with the given target |env|, which is used to decode
   // the binaries to be optimized later.
   //
-  // The constructed instance will have an empty message consumer, which just
-  // ignores all messages from the library. Use SetMessageConsumer() to supply
-  // one if messages are of concern.
+  // The instance will have an empty message consumer, which ignores all
+  // messages from the library. Use SetMessageConsumer() to supply a consumer
+  // if messages are of concern.
   //
   // For collections of passes that are meant to transform the input into
   // another execution environment, then the source environment should be
@@ -164,16 +164,25 @@ class Optimizer {
   bool FlagHasValidForm(const std::string& flag) const;
 
   // Allows changing, after creation time, the target environment to be
-  // optimized for.  Should be called before calling Run().
+  // optimized for and validated.  Should be called before calling Run().
   void SetTargetEnv(const spv_target_env env);
 
   // Optimizes the given SPIR-V module |original_binary| and writes the
-  // optimized binary into |optimized_binary|.
+  // optimized binary into |optimized_binary|. The optimized binary uses
+  // the same SPIR-V version as the original binary.
+  //
   // Returns true on successful optimization, whether or not the module is
   // modified. Returns false if |original_binary| fails to validate or if errors
   // occur when processing |original_binary| using any of the registered passes.
   // In that case, no further passes are executed and the contents in
   // |optimized_binary| may be invalid.
+  //
+  // By default, the binary is validated before any transforms are performed,
+  // and optionally after each transform.  Validation uses SPIR-V spec rules
+  // for the SPIR-V version named in the binary's header (at word offset 1).
+  // Additionally, if the target environment is a client API (such as
+  // Vulkan 1.1), then validate for that client API version, to the extent
+  // that it is verifiable from data in the binary itself.
   //
   // It's allowed to alias |original_binary| to the start of |optimized_binary|.
   bool Run(const uint32_t* original_binary, size_t original_binary_size,
@@ -190,6 +199,14 @@ class Optimizer {
 
   // Same as above, except it takes an options object.  See the documentation
   // for |OptimizerOptions| to see which options can be set.
+  //
+  // By default, the binary is validated before any transforms are performed,
+  // and optionally after each transform.  Validation uses SPIR-V spec rules
+  // for the SPIR-V version named in the binary's header (at word offset 1).
+  // Additionally, if the target environment is a client API (such as
+  // Vulkan 1.1), then validate for that client API version, to the extent
+  // that it is verifiable from data in the binary itself, or from the
+  // validator options set on the optimizer options.
   bool Run(const uint32_t* original_binary, const size_t original_binary_size,
            std::vector<uint32_t>* optimized_binary,
            const spv_optimizer_options opt_options) const;
@@ -685,9 +702,9 @@ Optimizer::PassToken CreateSSARewritePass();
 // any resulting half precision values back to float32 as needed. No variables
 // are changed. No image operations are changed.
 //
-// Best if run late since it will generate better code with unneeded function
-// scope loads and stores and composite inserts and extracts removed. Also best
-// if followed by instruction simplification, redundancy elimination and DCE.
+// Best if run after function scope store/load and composite operation
+// eliminations are run. Also best if followed by instruction simplification,
+// redundancy elimination and DCE.
 Optimizer::PassToken CreateConvertRelaxedToHalfPass();
 
 // Create relax float ops pass.
@@ -748,7 +765,7 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // |version| specifies the buffer record format.
 Optimizer::PassToken CreateInstBindlessCheckPass(
     uint32_t desc_set, uint32_t shader_id, bool input_length_enable = false,
-    bool input_init_enable = false, uint32_t version = 1);
+    bool input_init_enable = false, uint32_t version = 2);
 
 // Create a pass to instrument physical buffer address checking
 // This pass instruments all physical buffer address references to check that

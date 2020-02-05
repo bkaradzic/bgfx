@@ -156,7 +156,7 @@ Type* ConstantManager::GetType(const Instruction* inst) const {
 }
 
 std::vector<const Constant*> ConstantManager::GetOperandConstants(
-    Instruction* inst) const {
+    const Instruction* inst) const {
   std::vector<const Constant*> constants;
   for (uint32_t i = 0; i < inst->NumInOperands(); i++) {
     const Operand* operand = &inst->GetInOperand(i);

@@ -80,7 +80,7 @@ bool TransformationSplitBlock::IsApplicable(
 }
 
 void TransformationSplitBlock::Apply(opt::IRContext* context,
-                                     FactManager* /*unused*/) const {
+                                     FactManager* fact_manager) const {
   opt::Instruction* instruction_to_split_before =
       FindInstruction(message_.instruction_to_split_before(), context);
   opt::BasicBlock* block_to_split =
@@ -114,6 +114,13 @@ void TransformationSplitBlock::Apply(opt::IRContext* context,
            "one predecessor.");
     phi_inst->SetInOperand(1, {block_to_split->id()});
   });
+
+  // If the block being split was dead, the new block arising from the split is
+  // also dead.
+  if (fact_manager->BlockIsDead(block_to_split->id())) {
+    fact_manager->AddFactBlockIsDead(message_.fresh_id());
+  }
+
   // Invalidate all analyses
   context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
 }

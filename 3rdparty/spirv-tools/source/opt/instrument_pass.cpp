@@ -185,32 +185,12 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
           GetUintId(), SpvOpCompositeExtract, load_id, 1);
       Instruction* z_inst = builder->AddIdLiteralOp(
           GetUintId(), SpvOpCompositeExtract, load_id, 2);
-      if (version_ == 1) {
-        // For version 1 format, as a stopgap, pack uvec3 into first word:
-        // x << 21 | y << 10 | z. Second word is unused. (DEPRECATED)
-        Instruction* x_shft_inst = builder->AddBinaryOp(
-            GetUintId(), SpvOpShiftLeftLogical, x_inst->result_id(),
-            builder->GetUintConstantId(21));
-        Instruction* y_shft_inst = builder->AddBinaryOp(
-            GetUintId(), SpvOpShiftLeftLogical, y_inst->result_id(),
-            builder->GetUintConstantId(10));
-        Instruction* x_or_y_inst = builder->AddBinaryOp(
-            GetUintId(), SpvOpBitwiseOr, x_shft_inst->result_id(),
-            y_shft_inst->result_id());
-        Instruction* x_or_y_or_z_inst =
-            builder->AddBinaryOp(GetUintId(), SpvOpBitwiseOr,
-                                 x_or_y_inst->result_id(), z_inst->result_id());
-        GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationId,
-                                x_or_y_or_z_inst->result_id(), builder);
-      } else {
-        // For version 2 format, write all three words
-        GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdX,
-                                x_inst->result_id(), builder);
-        GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdY,
-                                y_inst->result_id(), builder);
-        GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdZ,
-                                z_inst->result_id(), builder);
-      }
+      GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdX,
+                              x_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdY,
+                              y_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdZ,
+                              z_inst->result_id(), builder);
     } break;
     case SpvExecutionModelGeometry: {
       // Load and store PrimitiveId and InvocationId.
@@ -231,30 +211,23 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
           kInstTessCtlOutPrimitiveId, base_offset_id, builder);
     } break;
     case SpvExecutionModelTessellationEvaluation: {
-      if (version_ == 1) {
-        // For format version 1, load and store InvocationId.
-        GenBuiltinOutputCode(
-            context()->GetBuiltinInputVarId(SpvBuiltInInvocationId),
-            kInstTessOutInvocationId, base_offset_id, builder);
-      } else {
-        // For format version 2, load and store PrimitiveId and TessCoord.uv
-        GenBuiltinOutputCode(
-            context()->GetBuiltinInputVarId(SpvBuiltInPrimitiveId),
-            kInstTessEvalOutPrimitiveId, base_offset_id, builder);
-        uint32_t load_id = GenVarLoad(
-            context()->GetBuiltinInputVarId(SpvBuiltInTessCoord), builder);
-        Instruction* uvec3_cast_inst =
-            builder->AddUnaryOp(GetVec3UintId(), SpvOpBitcast, load_id);
-        uint32_t uvec3_cast_id = uvec3_cast_inst->result_id();
-        Instruction* u_inst = builder->AddIdLiteralOp(
-            GetUintId(), SpvOpCompositeExtract, uvec3_cast_id, 0);
-        Instruction* v_inst = builder->AddIdLiteralOp(
-            GetUintId(), SpvOpCompositeExtract, uvec3_cast_id, 1);
-        GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordU,
-                                u_inst->result_id(), builder);
-        GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordV,
-                                v_inst->result_id(), builder);
-      }
+      // Load and store PrimitiveId and TessCoord.uv
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInPrimitiveId),
+          kInstTessEvalOutPrimitiveId, base_offset_id, builder);
+      uint32_t load_id = GenVarLoad(
+          context()->GetBuiltinInputVarId(SpvBuiltInTessCoord), builder);
+      Instruction* uvec3_cast_inst =
+          builder->AddUnaryOp(GetVec3UintId(), SpvOpBitcast, load_id);
+      uint32_t uvec3_cast_id = uvec3_cast_inst->result_id();
+      Instruction* u_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, uvec3_cast_id, 0);
+      Instruction* v_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, uvec3_cast_id, 1);
+      GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordU,
+                              u_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordV,
+                              v_inst->result_id(), builder);
     } break;
     case SpvExecutionModelFragment: {
       // Load FragCoord and convert to Uint
@@ -671,8 +644,7 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
         context(), &*new_blk_ptr,
         IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
     // Gen test if debug output buffer size will not be exceeded.
-    uint32_t val_spec_offset =
-        (version_ == 1) ? kInstStageOutCnt : kInst2StageOutCnt;
+    uint32_t val_spec_offset = kInstStageOutCnt;
     uint32_t obuf_record_sz = val_spec_offset + val_spec_param_cnt;
     uint32_t buf_id = GetOutputBufferId();
     uint32_t buf_uint_ptr_id = GetOutputBufferPtrId();
@@ -892,6 +864,14 @@ bool InstrumentPass::InstProcessCallTreeFromRoots(InstProcessFunction& pfn,
 }
 
 bool InstrumentPass::InstProcessEntryPointCallTree(InstProcessFunction& pfn) {
+  // Check that format version 2 requested
+  if (version_ != 2u) {
+    if (consumer()) {
+      std::string message = "Unsupported instrumentation format requested";
+      consumer()(SPV_MSG_ERROR, 0, {0, 0, 0}, message.c_str());
+    }
+    return false;
+  }
   // Make sure all entry points have the same execution model. Do not
   // instrument if they do not.
   // TODO(greg-lunarg): Handle mixed stages. Technically, a shader module
@@ -905,12 +885,17 @@ bool InstrumentPass::InstProcessEntryPointCallTree(InstProcessFunction& pfn) {
   for (auto& e : get_module()->entry_points()) {
     if (ecnt == 0)
       stage = e.GetSingleWordInOperand(kEntryPointExecutionModelInIdx);
-    else if (e.GetSingleWordInOperand(kEntryPointExecutionModelInIdx) != stage)
+    else if (e.GetSingleWordInOperand(kEntryPointExecutionModelInIdx) !=
+             stage) {
+      if (consumer()) {
+        std::string message = "Mixed stage shader module not supported";
+        consumer()(SPV_MSG_ERROR, 0, {0, 0, 0}, message.c_str());
+      }
       return false;
+    }
     ++ecnt;
   }
-  // Only supporting vertex, fragment and compute shaders at the moment.
-  // TODO(greg-lunarg): Handle all stages.
+  // Check for supported stages
   if (stage != SpvExecutionModelVertex && stage != SpvExecutionModelFragment &&
       stage != SpvExecutionModelGeometry &&
       stage != SpvExecutionModelGLCompute &&
@@ -920,8 +905,14 @@ bool InstrumentPass::InstProcessEntryPointCallTree(InstProcessFunction& pfn) {
       stage != SpvExecutionModelIntersectionNV &&
       stage != SpvExecutionModelAnyHitNV &&
       stage != SpvExecutionModelClosestHitNV &&
-      stage != SpvExecutionModelMissNV && stage != SpvExecutionModelCallableNV)
+      stage != SpvExecutionModelMissNV &&
+      stage != SpvExecutionModelCallableNV) {
+    if (consumer()) {
+      std::string message = "Stage not supported by instrumentation";
+      consumer()(SPV_MSG_ERROR, 0, {0, 0, 0}, message.c_str());
+    }
     return false;
+  }
   // Add together the roots of all entry points
   std::queue<uint32_t> roots;
   for (auto& e : get_module()->entry_points()) {
@@ -994,6 +985,10 @@ void InstrumentPass::InitializeInstrument() {
     ++module_offset;
   }
   for (auto& i : module->debugs3()) {
+    (void)i;
+    ++module_offset;
+  }
+  for (auto& i : module->ext_inst_debuginfo()) {
     (void)i;
     ++module_offset;
   }

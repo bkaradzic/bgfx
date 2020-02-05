@@ -83,6 +83,15 @@ class Transformation {
   // representation of a transformation given by |message|.
   static std::unique_ptr<Transformation> FromMessage(
       const protobufs::Transformation& message);
+
+  // Helper that returns true if and only if (a) |id| is a fresh id for the
+  // module, and (b) |id| is not in |ids_used_by_this_transformation|, a set of
+  // ids already known to be in use by a transformation.  This is useful when
+  // checking id freshness for a transformation that uses many ids, all of which
+  // must be distinct.
+  static bool CheckIdIsFreshAndNotUsedByThisTransformation(
+      uint32_t id, opt::IRContext* context,
+      std::set<uint32_t>* ids_used_by_this_transformation);
 };
 
 }  // namespace fuzz

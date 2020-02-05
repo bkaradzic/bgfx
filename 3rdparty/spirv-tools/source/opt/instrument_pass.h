@@ -81,7 +81,16 @@ class InstrumentPass : public Pass {
  protected:
   // Create instrumentation pass for |validation_id| which utilizes descriptor
   // set |desc_set| for debug input and output buffers and writes |shader_id|
-  // into debug output records with format |version|.
+  // into debug output records.
+  InstrumentPass(uint32_t desc_set, uint32_t shader_id, uint32_t validation_id)
+      : Pass(),
+        desc_set_(desc_set),
+        shader_id_(shader_id),
+        validation_id_(validation_id),
+        version_(2u) {}
+  // Create instrumentation pass for |validation_id| which utilizes descriptor
+  // set |desc_set| for debug input and output buffers and writes |shader_id|
+  // into debug output records with format |version|. Deprecated.
   InstrumentPass(uint32_t desc_set, uint32_t shader_id, uint32_t validation_id,
                  uint32_t version)
       : Pass(),

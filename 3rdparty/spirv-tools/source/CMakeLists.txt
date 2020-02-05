@@ -20,6 +20,7 @@ set(LANG_HEADER_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_lang
 # For now, assume the DebugInfo grammar file is in the current directory.
 # It might migrate to SPIRV-Headers.
 set(DEBUGINFO_GRAMMAR_JSON_FILE "${CMAKE_CURRENT_SOURCE_DIR}/extinst.debuginfo.grammar.json")
+set(CLDEBUGINFO100_GRAMMAR_JSON_FILE "${CMAKE_CURRENT_SOURCE_DIR}/extinst.opencl.debuginfo.100.grammar.json")
 
 # macro() definitions are used in the following because we need to append .inc
 # file paths into some global lists (*_CPP_DEPENDS). And those global lists are
@@ -33,9 +34,13 @@ macro(spvtools_core_tables CONFIG_VERSION)
     COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
       --spirv-core-grammar=${GRAMMAR_JSON_FILE}
       --extinst-debuginfo-grammar=${DEBUGINFO_GRAMMAR_JSON_FILE}
+      --extinst-cldebuginfo100-grammar=${CLDEBUGINFO100_GRAMMAR_JSON_FILE}
       --core-insts-output=${GRAMMAR_INSTS_INC_FILE}
       --operand-kinds-output=${GRAMMAR_KINDS_INC_FILE}
-    DEPENDS ${GRAMMAR_PROCESSING_SCRIPT} ${GRAMMAR_JSON_FILE} ${DEBUGINFO_GRAMMAR_JSON_FILE}
+    DEPENDS ${GRAMMAR_PROCESSING_SCRIPT}
+            ${GRAMMAR_JSON_FILE}
+            ${DEBUGINFO_GRAMMAR_JSON_FILE}
+            ${CLDEBUGINFO100_GRAMMAR_JSON_FILE}
     COMMENT "Generate info tables for SPIR-V v${CONFIG_VERSION} core instructions and operands.")
   list(APPEND OPCODE_CPP_DEPENDS ${GRAMMAR_INSTS_INC_FILE})
   list(APPEND OPERAND_CPP_DEPENDS ${GRAMMAR_KINDS_INC_FILE})
@@ -50,9 +55,13 @@ macro(spvtools_enum_string_mapping CONFIG_VERSION)
     COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
       --spirv-core-grammar=${GRAMMAR_JSON_FILE}
       --extinst-debuginfo-grammar=${DEBUGINFO_GRAMMAR_JSON_FILE}
+      --extinst-cldebuginfo100-grammar=${CLDEBUGINFO100_GRAMMAR_JSON_FILE}
       --extension-enum-output=${GRAMMAR_EXTENSION_ENUM_INC_FILE}
       --enum-string-mapping-output=${GRAMMAR_ENUM_STRING_MAPPING_INC_FILE}
-    DEPENDS ${GRAMMAR_PROCESSING_SCRIPT} ${GRAMMAR_JSON_FILE} ${DEBUGINFO_GRAMMAR_JSON_FILE}
+    DEPENDS ${GRAMMAR_PROCESSING_SCRIPT}
+            ${GRAMMAR_JSON_FILE}
+            ${DEBUGINFO_GRAMMAR_JSON_FILE}
+            ${CLDEBUGINFO100_GRAMMAR_JSON_FILE}
     COMMENT "Generate enum-string mapping for SPIR-V v${CONFIG_VERSION}.")
   list(APPEND EXTENSION_H_DEPENDS ${GRAMMAR_EXTENSION_ENUM_INC_FILE})
   list(APPEND ENUM_STRING_MAPPING_CPP_DEPENDS ${GRAMMAR_ENUM_STRING_MAPPING_INC_FILE})
@@ -101,13 +110,14 @@ macro(spvtools_opencl_tables CONFIG_VERSION)
   list(APPEND EXTINST_CPP_DEPENDS ${GRAMMAR_INC_FILE})
 endmacro(spvtools_opencl_tables)
 
-macro(spvtools_vendor_tables VENDOR_TABLE SHORT_NAME)
+macro(spvtools_vendor_tables VENDOR_TABLE SHORT_NAME OPERAND_KIND_PREFIX)
   set(INSTS_FILE "${spirv-tools_BINARY_DIR}/${VENDOR_TABLE}.insts.inc")
   set(GRAMMAR_FILE "${spirv-tools_SOURCE_DIR}/source/extinst.${VENDOR_TABLE}.grammar.json")
   add_custom_command(OUTPUT ${INSTS_FILE}
     COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
       --extinst-vendor-grammar=${GRAMMAR_FILE}
       --vendor-insts-output=${INSTS_FILE}
+      --vendor-operand-kind-prefix=${OPERAND_KIND_PREFIX}
     DEPENDS ${GRAMMAR_PROCESSING_SCRIPT} ${GRAMMAR_FILE}
     COMMENT "Generate extended instruction tables for ${VENDOR_TABLE}.")
   add_custom_target(spv-tools-${SHORT_NAME} DEPENDS ${INSTS_FILE})
@@ -134,12 +144,14 @@ spvtools_core_tables("unified1")
 spvtools_enum_string_mapping("unified1")
 spvtools_opencl_tables("unified1")
 spvtools_glsl_tables("unified1")
-spvtools_vendor_tables("spv-amd-shader-explicit-vertex-parameter" "spv-amd-sevp")
-spvtools_vendor_tables("spv-amd-shader-trinary-minmax" "spv-amd-stm")
-spvtools_vendor_tables("spv-amd-gcn-shader" "spv-amd-gs")
-spvtools_vendor_tables("spv-amd-shader-ballot" "spv-amd-sb")
-spvtools_vendor_tables("debuginfo" "debuginfo")
+spvtools_vendor_tables("spv-amd-shader-explicit-vertex-parameter" "spv-amd-sevp" "")
+spvtools_vendor_tables("spv-amd-shader-trinary-minmax" "spv-amd-stm" "")
+spvtools_vendor_tables("spv-amd-gcn-shader" "spv-amd-gs" "")
+spvtools_vendor_tables("spv-amd-shader-ballot" "spv-amd-sb" "")
+spvtools_vendor_tables("debuginfo" "debuginfo" "")
+spvtools_vendor_tables("opencl.debuginfo.100" "cldi100" "CLDEBUG100_")
 spvtools_extinst_lang_headers("DebugInfo" ${DEBUGINFO_GRAMMAR_JSON_FILE})
+spvtools_extinst_lang_headers("OpenCLDebugInfo100" ${CLDEBUGINFO100_GRAMMAR_JSON_FILE})
 
 spvtools_vimsyntax("unified1" "1.0")
 add_custom_target(spirv-tools-vimsyntax DEPENDS ${VIMSYNTAX_FILE})

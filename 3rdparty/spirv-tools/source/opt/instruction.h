@@ -172,6 +172,9 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
     return dbg_line_insts_;
   }
 
+  // Clear line-related debug instructions attached to this instruction.
+  void clear_dbg_line_insts() { dbg_line_insts_.clear(); }
+
   // Same semantics as in the base class except the list the InstructionList
   // containing |pos| will now assume ownership of |this|.
   // inline void MoveBefore(Instruction* pos);

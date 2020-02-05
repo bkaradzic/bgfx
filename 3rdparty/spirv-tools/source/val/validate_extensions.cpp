@@ -61,14 +61,24 @@ spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
 
 spv_result_t ValidateExtInstImport(ValidationState_t& _,
                                    const Instruction* inst) {
+  const auto name_id = 1;
   if (spvIsWebGPUEnv(_.context()->target_env)) {
-    const auto name_id = 1;
     const std::string name(reinterpret_cast<const char*>(
         inst->words().data() + inst->operands()[name_id].offset));
     if (name != "GLSL.std.450") {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "For WebGPU, the only valid parameter to OpExtInstImport is "
                 "\"GLSL.std.450\".";
+    }
+  }
+
+  if (!_.HasExtension(kSPV_KHR_non_semantic_info)) {
+    const std::string name(reinterpret_cast<const char*>(
+        inst->words().data() + inst->operands()[name_id].offset));
+    if (name.find("NonSemantic.") == 0) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "NonSemantic extended instruction sets cannot be declared "
+                "without SPV_KHR_non_semantic_info.";
     }
   }
 

@@ -918,6 +918,69 @@ static const spv_operand_desc_t pygen_variable_DebugOperationEntries[] = {
   {"Constu", 8, 0, nullptr, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
 };
 
+static const spv_operand_desc_t pygen_variable_CLDEBUG100_DebugInfoFlagsEntries[] = {
+  {"FlagIsProtected", 0x01, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagIsPrivate", 0x02, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagIsPublic", 0x03, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagIsLocal", 0x04, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagIsDefinition", 0x08, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagFwdDecl", 0x10, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagArtificial", 0x20, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagExplicit", 0x40, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagPrototyped", 0x80, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagObjectPointer", 0x100, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagStaticMember", 0x200, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagIndirectVariable", 0x400, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagLValueReference", 0x800, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagRValueReference", 0x1000, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagIsOptimized", 0x2000, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagIsEnumClass", 0x4000, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagTypePassByValue", 0x8000, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"FlagTypePassByReference", 0x10000, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+};
+
+static const spv_operand_desc_t pygen_variable_CLDEBUG100_DebugBaseTypeAttributeEncodingEntries[] = {
+  {"Unspecified", 0, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Address", 1, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Boolean", 2, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Float", 3, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Signed", 4, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"SignedChar", 5, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Unsigned", 6, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"UnsignedChar", 7, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+};
+
+static const spv_operand_desc_t pygen_variable_CLDEBUG100_DebugCompositeTypeEntries[] = {
+  {"Class", 0, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Structure", 1, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Union", 2, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+};
+
+static const spv_operand_desc_t pygen_variable_CLDEBUG100_DebugTypeQualifierEntries[] = {
+  {"ConstType", 0, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"VolatileType", 1, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"RestrictType", 2, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"AtomicType", 3, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+};
+
+static const spv_operand_desc_t pygen_variable_CLDEBUG100_DebugOperationEntries[] = {
+  {"Deref", 0, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Plus", 1, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Minus", 2, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"PlusUconst", 3, 0, nullptr, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"BitPiece", 4, 0, nullptr, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Swap", 5, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Xderef", 6, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"StackValue", 7, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Constu", 8, 0, nullptr, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Fragment", 9, 0, nullptr, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+};
+
+static const spv_operand_desc_t pygen_variable_CLDEBUG100_DebugImportedEntityEntries[] = {
+  {"ImportedModule", 0, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"ImportedDeclaration", 1, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+};
+
 static const spv_operand_desc_group_t pygen_variable_OperandInfoTable[] = {
   {SPV_OPERAND_TYPE_IMAGE, ARRAY_SIZE(pygen_variable_ImageOperandsEntries), pygen_variable_ImageOperandsEntries},
   {SPV_OPERAND_TYPE_FP_FAST_MATH_MODE, ARRAY_SIZE(pygen_variable_FPFastMathModeEntries), pygen_variable_FPFastMathModeEntries},
@@ -954,6 +1017,12 @@ static const spv_operand_desc_group_t pygen_variable_OperandInfoTable[] = {
   {SPV_OPERAND_TYPE_DEBUG_COMPOSITE_TYPE, ARRAY_SIZE(pygen_variable_DebugCompositeTypeEntries), pygen_variable_DebugCompositeTypeEntries},
   {SPV_OPERAND_TYPE_DEBUG_TYPE_QUALIFIER, ARRAY_SIZE(pygen_variable_DebugTypeQualifierEntries), pygen_variable_DebugTypeQualifierEntries},
   {SPV_OPERAND_TYPE_DEBUG_OPERATION, ARRAY_SIZE(pygen_variable_DebugOperationEntries), pygen_variable_DebugOperationEntries},
+  {SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS, ARRAY_SIZE(pygen_variable_CLDEBUG100_DebugInfoFlagsEntries), pygen_variable_CLDEBUG100_DebugInfoFlagsEntries},
+  {SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_BASE_TYPE_ATTRIBUTE_ENCODING, ARRAY_SIZE(pygen_variable_CLDEBUG100_DebugBaseTypeAttributeEncodingEntries), pygen_variable_CLDEBUG100_DebugBaseTypeAttributeEncodingEntries},
+  {SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_COMPOSITE_TYPE, ARRAY_SIZE(pygen_variable_CLDEBUG100_DebugCompositeTypeEntries), pygen_variable_CLDEBUG100_DebugCompositeTypeEntries},
+  {SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER, ARRAY_SIZE(pygen_variable_CLDEBUG100_DebugTypeQualifierEntries), pygen_variable_CLDEBUG100_DebugTypeQualifierEntries},
+  {SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION, ARRAY_SIZE(pygen_variable_CLDEBUG100_DebugOperationEntries), pygen_variable_CLDEBUG100_DebugOperationEntries},
+  {SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY, ARRAY_SIZE(pygen_variable_CLDEBUG100_DebugImportedEntityEntries), pygen_variable_CLDEBUG100_DebugImportedEntityEntries},
   {SPV_OPERAND_TYPE_OPTIONAL_IMAGE, ARRAY_SIZE(pygen_variable_ImageOperandsEntries), pygen_variable_ImageOperandsEntries},
   {SPV_OPERAND_TYPE_OPTIONAL_MEMORY_ACCESS, ARRAY_SIZE(pygen_variable_MemoryAccessEntries), pygen_variable_MemoryAccessEntries},
   {SPV_OPERAND_TYPE_OPTIONAL_ACCESS_QUALIFIER, ARRAY_SIZE(pygen_variable_AccessQualifierEntries), pygen_variable_AccessQualifierEntries}

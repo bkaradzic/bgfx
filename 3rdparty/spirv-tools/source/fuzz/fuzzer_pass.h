@@ -89,6 +89,60 @@ class FuzzerPass {
                const protobufs::InstructionDescriptor& instruction_descriptor)>
           maybe_apply_transformation);
 
+  // A generic helper for applying a transformation that should be applicable
+  // by construction, and adding it to the sequence of applied transformations.
+  template <typename TransformationType>
+  void ApplyTransformation(const TransformationType& transformation) {
+    assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
+           "Transformation should be applicable by construction.");
+    transformation.Apply(GetIRContext(), GetFactManager());
+    *GetTransformations()->add_transformation() = transformation.ToMessage();
+  }
+
+  // Returns the id of an OpTypeBool instruction.  If such an instruction does
+  // not exist, a transformation is applied to add it.
+  uint32_t FindOrCreateBoolType();
+
+  // Returns the id of an OpTypeInt instruction, with width 32 and signedness
+  // specified by |is_signed|.  If such an instruction does not exist, a
+  // transformation is applied to add it.
+  uint32_t FindOrCreate32BitIntegerType(bool is_signed);
+
+  // Returns the id of an OpTypeFloat instruction, with width 32.  If such an
+  // instruction does not exist, a transformation is applied to add it.
+  uint32_t FindOrCreate32BitFloatType();
+
+  // Returns the id of an OpTypeVector instruction, with |component_type_id|
+  // (which must already exist) as its base type, and |component_count|
+  // elements (which must be in the range [2, 4]).  If such an instruction does
+  // not exist, a transformation is applied to add it.
+  uint32_t FindOrCreateVectorType(uint32_t component_type_id,
+                                  uint32_t component_count);
+
+  // Returns the id of an OpTypeMatrix instruction, with |column_count| columns
+  // and |row_count| rows (each of which must be in the range [2, 4]).  If the
+  // float and vector types required to build this matrix type or the matrix
+  // type itself do not exist, transformations are applied to add them.
+  uint32_t FindOrCreateMatrixType(uint32_t column_count, uint32_t row_count);
+
+  // Returns the id of an OpTypePointer instruction, with a 32-bit integer base
+  // type of signedness specified by |is_signed|.  If the pointer type or
+  // required integer base type do not exist, transformations are applied to add
+  // them.
+  uint32_t FindOrCreatePointerTo32BitIntegerType(bool is_signed,
+                                                 SpvStorageClass storage_class);
+
+  // Returns the id of an OpConstant instruction, with 32-bit integer type of
+  // signedness specified by |is_signed|, with |word| as its value.  If either
+  // the required integer type or the constant do not exist, transformations are
+  // applied to add them.
+  uint32_t FindOrCreate32BitIntegerConstant(uint32_t word, bool is_signed);
+
+  // Returns the result id of an instruction of the form:
+  //   %id = OpUndef %|type_id|
+  // If no such instruction exists, a transformation is applied to add it.
+  uint32_t FindOrCreateGlobalUndef(uint32_t type_id);
+
  private:
   opt::IRContext* ir_context_;
   FactManager* fact_manager_;

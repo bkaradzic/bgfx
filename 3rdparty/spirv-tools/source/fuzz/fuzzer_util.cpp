@@ -103,10 +103,23 @@ bool PhiIdsOkForNewEdge(
     }
     phi_index++;
   }
-  // Return false if not all of the ids for extending OpPhi instructions are
-  // needed. This might turn out to be stricter than necessary; perhaps it would
-  // be OK just to not use the ids in this case.
-  return phi_index == static_cast<uint32_t>(phi_ids.size());
+  // We allow some of the ids provided for extending OpPhi instructions to be
+  // unused.  Their presence does no harm, and requiring a perfect match may
+  // make transformations less likely to cleanly apply.
+  return true;
+}
+
+uint32_t MaybeGetBoolConstantId(opt::IRContext* context, bool value) {
+  opt::analysis::Bool bool_type;
+  auto registered_bool_type =
+      context->get_type_mgr()->GetRegisteredType(&bool_type);
+  if (!registered_bool_type) {
+    return 0;
+  }
+  opt::analysis::BoolConstant bool_constant(registered_bool_type->AsBool(),
+                                            value);
+  return context->get_constant_mgr()->FindDeclaredConstant(
+      &bool_constant, context->get_type_mgr()->GetId(&bool_type));
 }
 
 void AddUnreachableEdgeAndUpdateOpPhis(
@@ -119,12 +132,10 @@ void AddUnreachableEdgeAndUpdateOpPhis(
          "Precondition on terminator of bb_from is not satisfied");
 
   // Get the id of the boolean constant to be used as the condition.
-  opt::analysis::Bool bool_type;
-  opt::analysis::BoolConstant bool_constant(
-      context->get_type_mgr()->GetRegisteredType(&bool_type)->AsBool(),
-      condition_value);
-  uint32_t bool_id = context->get_constant_mgr()->FindDeclaredConstant(
-      &bool_constant, context->get_type_mgr()->GetId(&bool_type));
+  uint32_t bool_id = MaybeGetBoolConstantId(context, condition_value);
+  assert(
+      bool_id &&
+      "Precondition that condition value must be available is not satisfied");
 
   const bool from_to_edge_already_exists = bb_from->IsSuccessor(bb_to);
   auto successor = bb_from->terminator()->GetSingleWordInOperand(0);
@@ -147,13 +158,11 @@ void AddUnreachableEdgeAndUpdateOpPhis(
         break;
       }
       assert(phi_index < static_cast<uint32_t>(phi_ids.size()) &&
-             "There should be exactly one phi id per OpPhi instruction.");
+             "There should be at least one phi id per OpPhi instruction.");
       inst.AddOperand({SPV_OPERAND_TYPE_ID, {phi_ids[phi_index]}});
       inst.AddOperand({SPV_OPERAND_TYPE_ID, {bb_from->id()}});
       phi_index++;
     }
-    assert(phi_index == static_cast<uint32_t>(phi_ids.size()) &&
-           "There should be exactly one phi id per OpPhi instruction.");
   }
 }
 
@@ -217,6 +226,20 @@ bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst) {
     // We can only make a synonym of an instruction that has a type.
     return false;
   }
+  auto type_inst = ir_context->get_def_use_mgr()->GetDef(inst->type_id());
+  if (type_inst->opcode() == SpvOpTypePointer) {
+    switch (inst->opcode()) {
+      case SpvOpConstantNull:
+      case SpvOpUndef:
+        // We disallow making synonyms of null or undefined pointers.  This is
+        // to provide the property that if the original shader exhibited no bad
+        // pointer accesses, the transformed shader will not either.
+        return false;
+      default:
+        break;
+    }
+  }
+
   // We do not make synonyms of objects that have decorations: if the synonym is
   // not decorated analogously, using the original object vs. its synonymous
   // form may not be equivalent.
@@ -247,33 +270,36 @@ uint32_t WalkCompositeTypeIndices(
     auto should_be_composite_type =
         context->get_def_use_mgr()->GetDef(sub_object_type_id);
     assert(should_be_composite_type && "The type should exist.");
-    if (SpvOpTypeArray == should_be_composite_type->opcode()) {
-      auto array_length = GetArraySize(*should_be_composite_type, context);
-      if (array_length == 0 || index >= array_length) {
-        return 0;
+    switch (should_be_composite_type->opcode()) {
+      case SpvOpTypeArray: {
+        auto array_length = GetArraySize(*should_be_composite_type, context);
+        if (array_length == 0 || index >= array_length) {
+          return 0;
+        }
+        sub_object_type_id =
+            should_be_composite_type->GetSingleWordInOperand(0);
+        break;
       }
-      sub_object_type_id = should_be_composite_type->GetSingleWordInOperand(0);
-    } else if (SpvOpTypeMatrix == should_be_composite_type->opcode()) {
-      auto matrix_column_count =
-          should_be_composite_type->GetSingleWordInOperand(1);
-      if (index >= matrix_column_count) {
-        return 0;
+      case SpvOpTypeMatrix:
+      case SpvOpTypeVector: {
+        auto count = should_be_composite_type->GetSingleWordInOperand(1);
+        if (index >= count) {
+          return 0;
+        }
+        sub_object_type_id =
+            should_be_composite_type->GetSingleWordInOperand(0);
+        break;
       }
-      sub_object_type_id = should_be_composite_type->GetSingleWordInOperand(0);
-    } else if (SpvOpTypeStruct == should_be_composite_type->opcode()) {
-      if (index >= GetNumberOfStructMembers(*should_be_composite_type)) {
-        return 0;
+      case SpvOpTypeStruct: {
+        if (index >= GetNumberOfStructMembers(*should_be_composite_type)) {
+          return 0;
+        }
+        sub_object_type_id =
+            should_be_composite_type->GetSingleWordInOperand(index);
+        break;
       }
-      sub_object_type_id =
-          should_be_composite_type->GetSingleWordInOperand(index);
-    } else if (SpvOpTypeVector == should_be_composite_type->opcode()) {
-      auto vector_length = should_be_composite_type->GetSingleWordInOperand(1);
-      if (index >= vector_length) {
+      default:
         return 0;
-      }
-      sub_object_type_id = should_be_composite_type->GetSingleWordInOperand(0);
-    } else {
-      return 0;
     }
   }
   return sub_object_type_id;
@@ -302,7 +328,8 @@ uint32_t GetArraySize(const opt::Instruction& array_type_instruction,
 bool IsValid(opt::IRContext* context) {
   std::vector<uint32_t> binary;
   context->module()->ToBinary(&binary, false);
-  return SpirvTools(context->grammar().target_env()).Validate(binary);
+  SpirvTools tools(context->grammar().target_env());
+  return tools.Validate(binary);
 }
 
 std::unique_ptr<opt::IRContext> CloneIRContext(opt::IRContext* context) {
@@ -310,6 +337,58 @@ std::unique_ptr<opt::IRContext> CloneIRContext(opt::IRContext* context) {
   context->module()->ToBinary(&binary, false);
   return BuildModule(context->grammar().target_env(), nullptr, binary.data(),
                      binary.size());
+}
+
+bool IsNonFunctionTypeId(opt::IRContext* ir_context, uint32_t id) {
+  auto type = ir_context->get_type_mgr()->GetType(id);
+  return type && !type->AsFunction();
+}
+
+bool IsMergeOrContinue(opt::IRContext* ir_context, uint32_t block_id) {
+  bool result = false;
+  ir_context->get_def_use_mgr()->WhileEachUse(
+      block_id,
+      [&result](const opt::Instruction* use_instruction,
+                uint32_t /*unused*/) -> bool {
+        switch (use_instruction->opcode()) {
+          case SpvOpLoopMerge:
+          case SpvOpSelectionMerge:
+            result = true;
+            return false;
+          default:
+            return true;
+        }
+      });
+  return result;
+}
+
+uint32_t FindFunctionType(opt::IRContext* ir_context,
+                          const std::vector<uint32_t>& type_ids) {
+  // Look through the existing types for a match.
+  for (auto& type_or_value : ir_context->types_values()) {
+    if (type_or_value.opcode() != SpvOpTypeFunction) {
+      // We are only interested in function types.
+      continue;
+    }
+    if (type_or_value.NumInOperands() != type_ids.size()) {
+      // Not a match: different numbers of arguments.
+      continue;
+    }
+    // Check whether the return type and argument types match.
+    bool input_operands_match = true;
+    for (uint32_t i = 0; i < type_or_value.NumInOperands(); i++) {
+      if (type_ids[i] != type_or_value.GetSingleWordInOperand(i)) {
+        input_operands_match = false;
+        break;
+      }
+    }
+    if (input_operands_match) {
+      // Everything matches.
+      return type_or_value.result_id();
+    }
+  }
+  // No match was found.
+  return 0;
 }
 
 }  // namespace fuzzerutil

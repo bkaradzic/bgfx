@@ -536,7 +536,7 @@ spv_result_t ValidateTypeFunction(ValidationState_t& _,
   for (auto& pair : inst->uses()) {
     const auto* use = pair.first;
     if (use->opcode() != SpvOpFunction && !spvOpcodeIsDebug(use->opcode()) &&
-        !spvOpcodeIsDecoration(use->opcode())) {
+        !use->IsNonSemantic() && !spvOpcodeIsDecoration(use->opcode())) {
       return _.diag(SPV_ERROR_INVALID_ID, use)
              << "Invalid use of function type result id "
              << _.getIdName(inst->id()) << ".";

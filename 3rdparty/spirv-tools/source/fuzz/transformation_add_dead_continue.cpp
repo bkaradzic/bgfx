@@ -37,15 +37,8 @@ bool TransformationAddDeadContinue::IsApplicable(
     opt::IRContext* context, const FactManager& /*unused*/) const {
   // First, we check that a constant with the same value as
   // |message_.continue_condition_value| is present.
-  opt::analysis::Bool bool_type;
-  auto registered_bool_type =
-      context->get_type_mgr()->GetRegisteredType(&bool_type);
-  if (!registered_bool_type) {
-    return false;
-  }
-  opt::analysis::BoolConstant bool_constant(
-      registered_bool_type->AsBool(), message_.continue_condition_value());
-  if (!context->get_constant_mgr()->FindConstant(&bool_constant)) {
+  if (!fuzzerutil::MaybeGetBoolConstantId(
+          context, message_.continue_condition_value())) {
     // The required constant is not present, so the transformation cannot be
     // applied.
     return false;

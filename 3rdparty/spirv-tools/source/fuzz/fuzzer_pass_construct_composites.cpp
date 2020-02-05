@@ -148,7 +148,6 @@ void FuzzerPassConstructComposites::Apply() {
         transformation.Apply(GetIRContext(), GetFactManager());
         *GetTransformations()->add_transformation() =
             transformation.ToMessage();
-        // Indicate that one instruction was added.
       });
 }
 

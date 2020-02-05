@@ -187,6 +187,14 @@ class IRContext {
   inline IteratorRange<Module::inst_iterator> debugs3();
   inline IteratorRange<Module::const_inst_iterator> debugs3() const;
 
+  // Iterators for debug info instructions (excluding OpLine & OpNoLine)
+  // contained in this module.  These are OpExtInst for OpenCL.DebugInfo.100
+  // or DebugInfo extension placed between section 9 and 10.
+  inline Module::inst_iterator ext_inst_debuginfo_begin();
+  inline Module::inst_iterator ext_inst_debuginfo_end();
+  inline IteratorRange<Module::inst_iterator> ext_inst_debuginfo();
+  inline IteratorRange<Module::const_inst_iterator> ext_inst_debuginfo() const;
+
   // Add |capability| to the module, if it is not already enabled.
   inline void AddCapability(SpvCapability capability);
 
@@ -215,6 +223,8 @@ class IRContext {
   // Appends a debug 3 instruction (OpModuleProcessed) to this module.
   // This is due to decision by the SPIR Working Group, pending publication.
   inline void AddDebug3Inst(std::unique_ptr<Instruction>&& d);
+  // Appends a OpExtInst for DebugInfo to this module.
+  inline void AddExtInstDebugInfo(std::unique_ptr<Instruction>&& d);
   // Appends an annotation instruction to this module.
   inline void AddAnnotationInst(std::unique_ptr<Instruction>&& a);
   // Appends a type-declaration instruction to this module.
@@ -925,6 +935,23 @@ IteratorRange<Module::const_inst_iterator> IRContext::debugs3() const {
   return ((const Module*)module_.get())->debugs3();
 }
 
+Module::inst_iterator IRContext::ext_inst_debuginfo_begin() {
+  return module()->ext_inst_debuginfo_begin();
+}
+
+Module::inst_iterator IRContext::ext_inst_debuginfo_end() {
+  return module()->ext_inst_debuginfo_end();
+}
+
+IteratorRange<Module::inst_iterator> IRContext::ext_inst_debuginfo() {
+  return module()->ext_inst_debuginfo();
+}
+
+IteratorRange<Module::const_inst_iterator> IRContext::ext_inst_debuginfo()
+    const {
+  return ((const Module*)module_.get())->ext_inst_debuginfo();
+}
+
 void IRContext::AddCapability(SpvCapability capability) {
   if (!get_feature_mgr()->HasCapability(capability)) {
     std::unique_ptr<Instruction> capability_inst(new Instruction(
@@ -1016,6 +1043,10 @@ void IRContext::AddDebug2Inst(std::unique_ptr<Instruction>&& d) {
 
 void IRContext::AddDebug3Inst(std::unique_ptr<Instruction>&& d) {
   module()->AddDebug3Inst(std::move(d));
+}
+
+void IRContext::AddExtInstDebugInfo(std::unique_ptr<Instruction>&& d) {
+  module()->AddExtInstDebugInfo(std::move(d));
 }
 
 void IRContext::AddAnnotationInst(std::unique_ptr<Instruction>&& a) {

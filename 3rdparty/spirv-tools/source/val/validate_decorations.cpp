@@ -1275,6 +1275,7 @@ spv_result_t CheckFPRoundingModeForShaders(ValidationState_t& vstate,
     const auto store = use.first;
     if (store->opcode() == SpvOpFConvert) continue;
     if (spvOpcodeIsDebug(store->opcode())) continue;
+    if (store->IsNonSemantic()) continue;
     if (spvOpcodeIsDecoration(store->opcode())) continue;
     if (store->opcode() != SpvOpStore) {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)

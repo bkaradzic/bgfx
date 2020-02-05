@@ -19,6 +19,8 @@
 
 #include <algorithm>
 
+#include "DebugInfo.h"
+#include "OpenCLDebugInfo100.h"
 #include "source/macro.h"
 #include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
@@ -29,6 +31,7 @@
 // per-item basis. https://github.com/KhronosGroup/SPIRV-Tools/issues/1195
 
 #include "operand.kinds-unified1.inc"
+#include "spirv-tools/libspirv.h"
 
 static const spv_operand_table_t kOperandTable = {
     ARRAY_SIZE(pygen_variable_OperandInfoTable),
@@ -228,6 +231,18 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "debug type qualifier";
     case SPV_OPERAND_TYPE_DEBUG_OPERATION:
       return "debug operation";
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS:
+      return "OpenCL.DebugInfo.100 debug info flags";
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_BASE_TYPE_ATTRIBUTE_ENCODING:
+      return "OpenCL.DebugInfo.100 debug base type encoding";
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_COMPOSITE_TYPE:
+      return "OpenCL.DebugInfo.100 debug composite type";
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER:
+      return "OpenCL.DebugInfo.100 debug type qualifier";
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION:
+      return "OpenCL.DebugInfo.100 debug operation";
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY:
+      return "OpenCL.DebugInfo.100 debug imported entity";
 
     // The next values are for values returned from an instruction, not actually
     // an operand.  So the specific strings don't matter.  But let's add them
@@ -312,6 +327,11 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_DEBUG_COMPOSITE_TYPE:
     case SPV_OPERAND_TYPE_DEBUG_TYPE_QUALIFIER:
     case SPV_OPERAND_TYPE_DEBUG_OPERATION:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_BASE_TYPE_ATTRIBUTE_ENCODING:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_COMPOSITE_TYPE:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY:
       return true;
     default:
       break;
@@ -328,6 +348,7 @@ bool spvOperandIsConcreteMask(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_FUNCTION_CONTROL:
     case SPV_OPERAND_TYPE_MEMORY_ACCESS:
     case SPV_OPERAND_TYPE_DEBUG_INFO_FLAGS:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS:
       return true;
     default:
       break;
@@ -490,6 +511,40 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
     default:
       out = [](unsigned) { return false; };
       break;
+  }
+  return out;
+}
+
+std::function<bool(unsigned)> spvDbgInfoExtOperandCanBeForwardDeclaredFunction(
+    spv_ext_inst_type_t ext_type, uint32_t key) {
+  // TODO(https://gitlab.khronos.org/spirv/SPIR-V/issues/532): Forward
+  // references for debug info instructions are still in discussion. We must
+  // update the following lines of code when we conclude the spec.
+  std::function<bool(unsigned index)> out;
+  if (ext_type == SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100) {
+    switch (OpenCLDebugInfo100Instructions(key)) {
+      case OpenCLDebugInfo100DebugFunction:
+        out = [](unsigned index) { return index == 13; };
+        break;
+      case OpenCLDebugInfo100DebugTypeComposite:
+        out = [](unsigned index) { return index >= 13; };
+        break;
+      default:
+        out = [](unsigned) { return false; };
+        break;
+    }
+  } else {
+    switch (DebugInfoInstructions(key)) {
+      case DebugInfoDebugFunction:
+        out = [](unsigned index) { return index == 13; };
+        break;
+      case DebugInfoDebugTypeComposite:
+        out = [](unsigned index) { return index >= 12; };
+        break;
+      default:
+        out = [](unsigned) { return false; };
+        break;
+    }
   }
   return out;
 }

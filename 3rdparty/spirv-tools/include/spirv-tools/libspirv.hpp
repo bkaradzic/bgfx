@@ -36,6 +36,9 @@ class Context {
  public:
   // Constructs a context targeting the given environment |env|.
   //
+  // See specific API calls for how the target environment is interpeted
+  // (particularly assembly and validation).
+  //
   // The constructed instance will have an empty message consumer, which just
   // ignores all messages from the library. Use SetMessageConsumer() to supply
   // one if messages are of concern.
@@ -279,16 +282,20 @@ class SpirvTools {
   // Assembles the given assembly |text| and writes the result to |binary|.
   // Returns true on successful assembling. |binary| will be kept untouched if
   // assembling is unsuccessful.
+  // The SPIR-V binary version is set to the highest version of SPIR-V supported
+  // by the target environment with which this SpirvTools object was created.
   bool Assemble(const std::string& text, std::vector<uint32_t>* binary,
                 uint32_t options = kDefaultAssembleOption) const;
   // |text_size| specifies the number of bytes in |text|. A terminating null
   // character is not required to present in |text| as long as |text| is valid.
+  // The SPIR-V binary version is set to the highest version of SPIR-V supported
+  // by the target environment with which this SpirvTools object was created.
   bool Assemble(const char* text, size_t text_size,
                 std::vector<uint32_t>* binary,
                 uint32_t options = kDefaultAssembleOption) const;
 
   // Disassembles the given SPIR-V |binary| with the given |options| and writes
-  // the assembly to |text|. Returns ture on successful disassembling. |text|
+  // the assembly to |text|. Returns true on successful disassembling. |text|
   // will be kept untouched if diassembling is unsuccessful.
   bool Disassemble(const std::vector<uint32_t>& binary, std::string* text,
                    uint32_t options = kDefaultDisassembleOption) const;
@@ -300,10 +307,26 @@ class SpirvTools {
   // Validates the given SPIR-V |binary|. Returns true if no issues are found.
   // Otherwise, returns false and communicates issues via the message consumer
   // registered.
+  // Validates for SPIR-V spec rules for the SPIR-V version named in the
+  // binary's header (at word offset 1).  Additionally, if the target
+  // environment is a client API (such as Vulkan 1.1), then validate for that
+  // client API version, to the extent that it is verifiable from data in the
+  // binary itself.
   bool Validate(const std::vector<uint32_t>& binary) const;
+  // Like the previous overload, but provides the binary as a pointer and size:
   // |binary_size| specifies the number of words in |binary|.
+  // Validates for SPIR-V spec rules for the SPIR-V version named in the
+  // binary's header (at word offset 1).  Additionally, if the target
+  // environment is a client API (such as Vulkan 1.1), then validate for that
+  // client API version, to the extent that it is verifiable from data in the
+  // binary itself.
   bool Validate(const uint32_t* binary, size_t binary_size) const;
   // Like the previous overload, but takes an options object.
+  // Validates for SPIR-V spec rules for the SPIR-V version named in the
+  // binary's header (at word offset 1).  Additionally, if the target
+  // environment is a client API (such as Vulkan 1.1), then validate for that
+  // client API version, to the extent that it is verifiable from data in the
+  // binary itself, or in the validator options.
   bool Validate(const uint32_t* binary, size_t binary_size,
                 spv_validator_options options) const;
 

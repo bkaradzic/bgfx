@@ -15,6 +15,14 @@
 #include "source/fuzz/fuzzer_pass.h"
 
 #include "source/fuzz/instruction_descriptor.h"
+#include "source/fuzz/transformation_add_constant_scalar.h"
+#include "source/fuzz/transformation_add_global_undef.h"
+#include "source/fuzz/transformation_add_type_boolean.h"
+#include "source/fuzz/transformation_add_type_float.h"
+#include "source/fuzz/transformation_add_type_int.h"
+#include "source/fuzz/transformation_add_type_matrix.h"
+#include "source/fuzz/transformation_add_type_pointer.h"
+#include "source/fuzz/transformation_add_type_vector.h"
 
 namespace spvtools {
 namespace fuzz {
@@ -126,6 +134,124 @@ void FuzzerPass::MaybeAddTransformationBeforeEachInstruction(
       }
     }
   }
+}
+
+uint32_t FuzzerPass::FindOrCreateBoolType() {
+  opt::analysis::Bool bool_type;
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&bool_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddTypeBoolean(result));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreate32BitIntegerType(bool is_signed) {
+  opt::analysis::Integer int_type(32, is_signed);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&int_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddTypeInt(result, 32, is_signed));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreate32BitFloatType() {
+  opt::analysis::Float float_type(32);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&float_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddTypeFloat(result, 32));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateVectorType(uint32_t component_type_id,
+                                            uint32_t component_count) {
+  assert(component_count >= 2 && component_count <= 4 &&
+         "Precondition: component count must be in range [2, 4].");
+  opt::analysis::Type* component_type =
+      GetIRContext()->get_type_mgr()->GetType(component_type_id);
+  assert(component_type && "Precondition: the component type must exist.");
+  opt::analysis::Vector vector_type(component_type, component_count);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&vector_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(
+      TransformationAddTypeVector(result, component_type_id, component_count));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateMatrixType(uint32_t column_count,
+                                            uint32_t row_count) {
+  assert(column_count >= 2 && column_count <= 4 &&
+         "Precondition: column count must be in range [2, 4].");
+  assert(row_count >= 2 && row_count <= 4 &&
+         "Precondition: row count must be in range [2, 4].");
+  uint32_t column_type_id =
+      FindOrCreateVectorType(FindOrCreate32BitFloatType(), row_count);
+  opt::analysis::Type* column_type =
+      GetIRContext()->get_type_mgr()->GetType(column_type_id);
+  opt::analysis::Matrix matrix_type(column_type, column_count);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&matrix_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(
+      TransformationAddTypeMatrix(result, column_type_id, column_count));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreatePointerTo32BitIntegerType(
+    bool is_signed, SpvStorageClass storage_class) {
+  auto uint32_type_id = FindOrCreate32BitIntegerType(is_signed);
+  opt::analysis::Pointer pointer_type(
+      GetIRContext()->get_type_mgr()->GetType(uint32_type_id), storage_class);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&pointer_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(
+      TransformationAddTypePointer(result, storage_class, uint32_type_id));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreate32BitIntegerConstant(uint32_t word,
+                                                      bool is_signed) {
+  auto uint32_type_id = FindOrCreate32BitIntegerType(is_signed);
+  opt::analysis::IntConstant int_constant(
+      GetIRContext()->get_type_mgr()->GetType(uint32_type_id)->AsInteger(),
+      {word});
+  auto existing_constant =
+      GetIRContext()->get_constant_mgr()->FindConstant(&int_constant);
+  if (existing_constant) {
+    return GetIRContext()
+        ->get_constant_mgr()
+        ->GetDefiningInstruction(existing_constant)
+        ->result_id();
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(
+      TransformationAddConstantScalar(result, uint32_type_id, {word}));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateGlobalUndef(uint32_t type_id) {
+  for (auto& inst : GetIRContext()->types_values()) {
+    if (inst.opcode() == SpvOpUndef && inst.type_id() == type_id) {
+      return inst.result_id();
+    }
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddGlobalUndef(result, type_id));
+  return result;
 }
 
 }  // namespace fuzz

@@ -212,13 +212,14 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
              << "Device, Workgroup and Invocation";
     }
     // Vulkan 1.1 specifc rules
-    if (_.context()->target_env == SPV_ENV_VULKAN_1_1 &&
+    if ((_.context()->target_env == SPV_ENV_VULKAN_1_1 ||
+         _.context()->target_env == SPV_ENV_VULKAN_1_2) &&
         value != SpvScopeDevice && value != SpvScopeWorkgroup &&
         value != SpvScopeSubgroup && value != SpvScopeInvocation) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << spvOpcodeString(opcode)
-             << ": in Vulkan 1.1 environment Memory Scope is limited to "
-             << "Device, Workgroup and Invocation";
+             << ": in Vulkan 1.1 and 1.2 environment Memory Scope is limited "
+             << "to Device, Workgroup and Invocation";
     }
   }
 

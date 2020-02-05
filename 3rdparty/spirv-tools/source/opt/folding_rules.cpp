@@ -1501,60 +1501,64 @@ FoldingRule CompositeConstructFeedingExtract() {
   };
 }
 
-FoldingRule CompositeExtractFeedingConstruct() {
-  // If the OpCompositeConstruct is simply putting back together elements that
-  // where extracted from the same souce, we can simlpy reuse the source.
-  //
-  // This is a common code pattern because of the way that scalar replacement
-  // works.
-  return [](IRContext* context, Instruction* inst,
-            const std::vector<const analysis::Constant*>&) {
-    assert(inst->opcode() == SpvOpCompositeConstruct &&
-           "Wrong opcode.  Should be OpCompositeConstruct.");
-    analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
-    uint32_t original_id = 0;
+// If the OpCompositeConstruct is simply putting back together elements that
+// where extracted from the same source, we can simply reuse the source.
+//
+// This is a common code pattern because of the way that scalar replacement
+// works.
+bool CompositeExtractFeedingConstruct(
+    IRContext* context, Instruction* inst,
+    const std::vector<const analysis::Constant*>&) {
+  assert(inst->opcode() == SpvOpCompositeConstruct &&
+         "Wrong opcode.  Should be OpCompositeConstruct.");
+  analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
+  uint32_t original_id = 0;
 
-    // Check each element to make sure they are:
-    // - extractions
-    // - extracting the same position they are inserting
-    // - all extract from the same id.
-    for (uint32_t i = 0; i < inst->NumInOperands(); ++i) {
-      uint32_t element_id = inst->GetSingleWordInOperand(i);
-      Instruction* element_inst = def_use_mgr->GetDef(element_id);
+  if (inst->NumInOperands() == 0) {
+    // The struct being constructed has no members.
+    return false;
+  }
 
-      if (element_inst->opcode() != SpvOpCompositeExtract) {
-        return false;
-      }
+  // Check each element to make sure they are:
+  // - extractions
+  // - extracting the same position they are inserting
+  // - all extract from the same id.
+  for (uint32_t i = 0; i < inst->NumInOperands(); ++i) {
+    const uint32_t element_id = inst->GetSingleWordInOperand(i);
+    Instruction* element_inst = def_use_mgr->GetDef(element_id);
 
-      if (element_inst->NumInOperands() != 2) {
-        return false;
-      }
-
-      if (element_inst->GetSingleWordInOperand(1) != i) {
-        return false;
-      }
-
-      if (i == 0) {
-        original_id =
-            element_inst->GetSingleWordInOperand(kExtractCompositeIdInIdx);
-      } else if (original_id != element_inst->GetSingleWordInOperand(
-                                    kExtractCompositeIdInIdx)) {
-        return false;
-      }
-    }
-
-    // The last check it to see that the object being extracted from is the
-    // correct type.
-    Instruction* original_inst = def_use_mgr->GetDef(original_id);
-    if (original_inst->type_id() != inst->type_id()) {
+    if (element_inst->opcode() != SpvOpCompositeExtract) {
       return false;
     }
 
-    // Simplify by using the original object.
-    inst->SetOpcode(SpvOpCopyObject);
-    inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {original_id}}});
-    return true;
-  };
+    if (element_inst->NumInOperands() != 2) {
+      return false;
+    }
+
+    if (element_inst->GetSingleWordInOperand(1) != i) {
+      return false;
+    }
+
+    if (i == 0) {
+      original_id =
+          element_inst->GetSingleWordInOperand(kExtractCompositeIdInIdx);
+    } else if (original_id !=
+               element_inst->GetSingleWordInOperand(kExtractCompositeIdInIdx)) {
+      return false;
+    }
+  }
+
+  // The last check it to see that the object being extracted from is the
+  // correct type.
+  Instruction* original_inst = def_use_mgr->GetDef(original_id);
+  if (original_inst->type_id() != inst->type_id()) {
+    return false;
+  }
+
+  // Simplify by using the original object.
+  inst->SetOpcode(SpvOpCopyObject);
+  inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {original_id}}});
+  return true;
 }
 
 FoldingRule InsertFeedingExtract() {
@@ -2419,7 +2423,7 @@ void FoldingRules::AddFoldingRules() {
   // Note that the order in which rules are added to the list matters. If a rule
   // applies to the instruction, the rest of the rules will not be attempted.
   // Take that into consideration.
-  rules_[SpvOpCompositeConstruct].push_back(CompositeExtractFeedingConstruct());
+  rules_[SpvOpCompositeConstruct].push_back(CompositeExtractFeedingConstruct);
 
   rules_[SpvOpCompositeExtract].push_back(InsertFeedingExtract());
   rules_[SpvOpCompositeExtract].push_back(CompositeConstructFeedingExtract());

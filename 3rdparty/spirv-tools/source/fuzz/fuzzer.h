@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "spirv-tools/libspirv.hpp"
 
@@ -57,11 +58,14 @@ class Fuzzer {
 
   // Transforms |binary_in| to |binary_out| by running a number of randomized
   // fuzzer passes.  Initial facts about the input binary and the context in
-  // which it will execute are provided via |initial_facts|.  The transformation
-  // sequence that was applied is returned via |transformation_sequence_out|.
+  // which it will execute are provided via |initial_facts|.  A source of donor
+  // modules to be used by transformations is provided via |donor_suppliers|.
+  // The transformation sequence that was applied is returned via
+  // |transformation_sequence_out|.
   FuzzerResultStatus Run(
       const std::vector<uint32_t>& binary_in,
       const protobufs::FactSequence& initial_facts,
+      const std::vector<fuzzerutil::ModuleSupplier>& donor_suppliers,
       std::vector<uint32_t>* binary_out,
       protobufs::TransformationSequence* transformation_sequence_out) const;
 

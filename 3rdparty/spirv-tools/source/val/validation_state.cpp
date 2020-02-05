@@ -93,6 +93,9 @@ bool IsInstructionInLayoutSection(ModuleLayoutSection layout, SpvOp op) {
         case SpvOpLine:
         case SpvOpNoLine:
         case SpvOpUndef:
+        // SpvOpExtInst is only allowed here for certain extended instruction
+        // sets. This will be checked separately
+        case SpvOpExtInst:
           out = true;
           break;
         default: break;

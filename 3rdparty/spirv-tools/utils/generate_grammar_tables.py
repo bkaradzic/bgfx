@@ -30,6 +30,7 @@ SPV_AMD_gcn_shader
 SPV_AMD_gpu_shader_half_float
 SPV_AMD_gpu_shader_int16
 SPV_AMD_shader_trinary_minmax
+SPV_KHR_non_semantic_info
 """
 
 
@@ -359,14 +360,22 @@ def generate_instruction_table(inst_table):
     return '{}\n\n{}\n\n{}'.format(caps_arrays, exts_arrays, '\n'.join(insts))
 
 
-def generate_extended_instruction_table(inst_table, set_name):
+def generate_extended_instruction_table(json_grammar, set_name, operand_kind_prefix=""):
     """Returns the info table containing all SPIR-V extended instructions,
     sorted by opcode, and prefixed by capability arrays.
 
     Arguments:
       - inst_table: a list containing all SPIR-V instructions.
       - set_name: the name of the extended instruction set.
+      - operand_kind_prefix: the prefix, if any, to add to the front
+        of operand kind names.
     """
+    if operand_kind_prefix:
+        prefix_operand_kind_names(operand_kind_prefix, json_grammar)
+
+    inst_table = json_grammar["instructions"]
+    set_name = set_name.replace(".", "_")
+
     inst_table = sorted(inst_table, key=lambda k: k['opcode'])
     caps = [inst.get('capabilities', []) for inst in inst_table]
     caps_arrays = generate_capability_arrays(caps)
@@ -451,6 +460,7 @@ def generate_enum_operand_kind_entry(entry, extension_map):
 
 def generate_enum_operand_kind(enum, synthetic_exts_list):
     """Returns the C definition for the given operand kind.
+    It's a static const named array of spv_operand_desc_t.
 
     Also appends to |synthetic_exts_list| a list of extension lists
     used.
@@ -680,6 +690,26 @@ def precondition_operand_kinds(operand_kinds):
     return operand_kinds
 
 
+def prefix_operand_kind_names(prefix, json_dict):
+    """Modifies json_dict, by prefixing all the operand kind names
+    with the given prefix.  Also modifies their uses in the instructions
+    to match.
+    """
+
+    old_to_new = {}
+    for operand_kind in json_dict["operand_kinds"]:
+        old_name = operand_kind["kind"]
+        new_name = prefix + old_name
+        operand_kind["kind"] = new_name
+        old_to_new[old_name] = new_name
+
+    for instruction in json_dict["instructions"]:
+        for operand in instruction.get("operands", []):
+            replacement = old_to_new.get(operand["kind"])
+            if replacement is not None:
+                operand["kind"] = replacement
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Generate SPIR-V info tables')
@@ -692,6 +722,10 @@ def main():
                         type=str, required=False, default=None,
                         help='input JSON grammar file for DebugInfo extended '
                         'instruction set')
+    parser.add_argument('--extinst-cldebuginfo100-grammar', metavar='<path>',
+                        type=str, required=False, default=None,
+                        help='input JSON grammar file for OpenCL.DebugInfo.100 '
+                        'extended instruction set')
     parser.add_argument('--extinst-glsl-grammar', metavar='<path>',
                         type=str, required=False, default=None,
                         help='input JSON grammar file for GLSL extended '
@@ -726,16 +760,27 @@ def main():
     parser.add_argument('--vendor-insts-output', metavar='<path>',
                         type=str, required=False, default=None,
                         help='output file for vendor extended instruction set')
+    parser.add_argument('--vendor-operand-kind-prefix', metavar='<string>',
+                        type=str, required=False, default=None,
+                        help='prefix for operand kinds (to disambiguate operand type enums)')
     args = parser.parse_args()
+
+    # The GN build system needs this because it doesn't handle quoting
+    # empty string arguments well.
+    if args.vendor_operand_kind_prefix == "...nil...":
+        args.vendor_operand_kind_prefix = ""
 
     if (args.core_insts_output is None) != \
             (args.operand_kinds_output is None):
         print('error: --core-insts-output and --operand-kinds-output '
               'should be specified together.')
         exit(1)
-    if args.operand_kinds_output and not (args.spirv_core_grammar and args.extinst_debuginfo_grammar):
+    if args.operand_kinds_output and not (args.spirv_core_grammar and
+         args.extinst_debuginfo_grammar and
+         args.extinst_cldebuginfo100_grammar):
         print('error: --operand-kinds-output requires --spirv-core-grammar '
-              'and --exinst-debuginfo-grammar')
+              'and --extinst-debuginfo-grammar '
+              'and --extinst-cldebuginfo100-grammar')
         exit(1)
     if (args.glsl_insts_output is None) != \
             (args.extinst_glsl_grammar is None):
@@ -766,14 +811,19 @@ def main():
             core_grammar = json.loads(json_file.read())
             with open(args.extinst_debuginfo_grammar) as debuginfo_json_file:
                 debuginfo_grammar = json.loads(debuginfo_json_file.read())
-                instructions = []
-                instructions.extend(core_grammar['instructions'])
-                instructions.extend(debuginfo_grammar['instructions'])
-                operand_kinds = []
-                operand_kinds.extend(core_grammar['operand_kinds'])
-                operand_kinds.extend(debuginfo_grammar['operand_kinds'])
-                extensions = get_extension_list(instructions, operand_kinds)
-                operand_kinds = precondition_operand_kinds(operand_kinds)
+                with open(args.extinst_cldebuginfo100_grammar) as cldebuginfo100_json_file:
+                    cldebuginfo100_grammar = json.loads(cldebuginfo100_json_file.read())
+                    prefix_operand_kind_names("CLDEBUG100_", cldebuginfo100_grammar)
+                    instructions = []
+                    instructions.extend(core_grammar['instructions'])
+                    instructions.extend(debuginfo_grammar['instructions'])
+                    instructions.extend(cldebuginfo100_grammar['instructions'])
+                    operand_kinds = []
+                    operand_kinds.extend(core_grammar['operand_kinds'])
+                    operand_kinds.extend(debuginfo_grammar['operand_kinds'])
+                    operand_kinds.extend(cldebuginfo100_grammar['operand_kinds'])
+                    extensions = get_extension_list(instructions, operand_kinds)
+                    operand_kinds = precondition_operand_kinds(operand_kinds)
         if args.core_insts_output is not None:
             make_path_to_file(args.core_insts_output)
             make_path_to_file(args.operand_kinds_output)
@@ -798,7 +848,7 @@ def main():
             make_path_to_file(args.glsl_insts_output)
             with open(args.glsl_insts_output, 'w') as f:
                 f.write(generate_extended_instruction_table(
-                    grammar['instructions'], 'glsl'))
+                    grammar, 'glsl'))
 
     if args.extinst_opencl_grammar is not None:
         with open(args.extinst_opencl_grammar) as json_file:
@@ -806,7 +856,7 @@ def main():
             make_path_to_file(args.opencl_insts_output)
             with open(args.opencl_insts_output, 'w') as f:
                 f.write(generate_extended_instruction_table(
-                    grammar['instructions'], 'opencl'))
+                    grammar, 'opencl'))
 
     if args.extinst_vendor_grammar is not None:
         with open(args.extinst_vendor_grammar) as json_file:
@@ -817,7 +867,7 @@ def main():
             name = name[start:-len('.grammar.json')].replace('-', '_')
             with open(args.vendor_insts_output, 'w') as f:
                 f.write(generate_extended_instruction_table(
-                    grammar['instructions'], name))
+                    grammar, name, args.vendor_operand_kind_prefix))
 
 
 if __name__ == '__main__':
