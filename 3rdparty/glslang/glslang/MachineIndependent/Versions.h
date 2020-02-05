@@ -38,6 +38,8 @@
 #ifndef _VERSIONS_INCLUDED_
 #define _VERSIONS_INCLUDED_
 
+#define LAST_ELEMENT_MARKER(x) x
+
 //
 // Help manage multiple profiles, versions, extensions etc.
 //
@@ -54,7 +56,8 @@ typedef enum {
     ENoProfile            = (1 << 0), // only for desktop, before profiles showed up
     ECoreProfile          = (1 << 1),
     ECompatibilityProfile = (1 << 2),
-    EEsProfile            = (1 << 3)
+    EEsProfile            = (1 << 3),
+    LAST_ELEMENT_MARKER(EProfileCount),
 } EProfile;
 
 namespace glslang {
@@ -124,6 +127,7 @@ const char* const E_GL_ARB_compute_shader               = "GL_ARB_compute_shader
 const char* const E_GL_ARB_tessellation_shader          = "GL_ARB_tessellation_shader";
 const char* const E_GL_ARB_enhanced_layouts             = "GL_ARB_enhanced_layouts";
 const char* const E_GL_ARB_texture_cube_map_array       = "GL_ARB_texture_cube_map_array";
+const char* const E_GL_ARB_texture_multisample          = "GL_ARB_texture_multisample";
 const char* const E_GL_ARB_shader_texture_lod           = "GL_ARB_shader_texture_lod";
 const char* const E_GL_ARB_explicit_attrib_location     = "GL_ARB_explicit_attrib_location";
 const char* const E_GL_ARB_explicit_uniform_location    = "GL_ARB_explicit_uniform_location";
@@ -135,6 +139,7 @@ const char* const E_GL_ARB_derivative_control           = "GL_ARB_derivative_con
 const char* const E_GL_ARB_shader_texture_image_samples = "GL_ARB_shader_texture_image_samples";
 const char* const E_GL_ARB_viewport_array               = "GL_ARB_viewport_array";
 const char* const E_GL_ARB_gpu_shader_int64             = "GL_ARB_gpu_shader_int64";
+const char* const E_GL_ARB_gpu_shader_fp64              = "GL_ARB_gpu_shader_fp64";
 const char* const E_GL_ARB_shader_ballot                = "GL_ARB_shader_ballot";
 const char* const E_GL_ARB_sparse_texture2              = "GL_ARB_sparse_texture2";
 const char* const E_GL_ARB_sparse_texture_clamp         = "GL_ARB_sparse_texture_clamp";
@@ -144,6 +149,8 @@ const char* const E_GL_ARB_post_depth_coverage          = "GL_ARB_post_depth_cov
 const char* const E_GL_ARB_shader_viewport_layer_array  = "GL_ARB_shader_viewport_layer_array";
 const char* const E_GL_ARB_fragment_shader_interlock    = "GL_ARB_fragment_shader_interlock";
 const char* const E_GL_ARB_shader_clock                 = "GL_ARB_shader_clock";
+const char* const E_GL_ARB_uniform_buffer_object        = "GL_ARB_uniform_buffer_object";
+const char* const E_GL_ARB_sample_shading               = "GL_ARB_sample_shading";
 
 const char* const E_GL_KHR_shader_subgroup_basic            = "GL_KHR_shader_subgroup_basic";
 const char* const E_GL_KHR_shader_subgroup_vote             = "GL_KHR_shader_subgroup_vote";

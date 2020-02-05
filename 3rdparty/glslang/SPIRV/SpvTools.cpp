@@ -67,6 +67,8 @@ spv_target_env MapToSpirvToolsEnv(const SpvVersion& spvVersion, spv::SpvBuildLog
             logger->missingFunctionality("Target version for SPIRV-Tools validator");
             return spv_target_env::SPV_ENV_VULKAN_1_1;
         }
+    case glslang::EShTargetVulkan_1_2:
+        return spv_target_env::SPV_ENV_VULKAN_1_2;
     default:
         break;
     }

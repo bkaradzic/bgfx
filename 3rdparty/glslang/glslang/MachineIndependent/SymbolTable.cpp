@@ -114,6 +114,7 @@ void TType::buildMangledName(TString& mangledName) const
         default: break; // some compilers want this
         }
 
+#ifdef ENABLE_HLSL
         if (sampler.hasReturnStruct()) {
             // Name mangle for sampler return struct uses struct table index.
             mangledName += "-tx-struct";
@@ -129,6 +130,7 @@ void TType::buildMangledName(TString& mangledName) const
             case 4: break; // default to prior name mangle behavior
             }
         }
+#endif
 
         if (sampler.isMultiSample())
             mangledName += "M";

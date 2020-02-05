@@ -402,7 +402,9 @@ GLSLANG_WEB_EXCLUDE_ON
         $$ = parseContext.intermediate.addConstantUnion((unsigned short)$1.u, $1.loc, true);
     }
     | DOUBLECONSTANT {
-        parseContext.doubleCheck($1.loc, "double literal");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double literal");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double literal");
         $$ = parseContext.intermediate.addConstantUnion($1.d, EbtDouble, $1.loc, true);
     }
     | FLOAT16CONSTANT {
@@ -1751,7 +1753,9 @@ type_specifier_nonarray
     }
 GLSLANG_WEB_EXCLUDE_ON
     | DOUBLE {
-        parseContext.doubleCheck($1.loc, "double");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
     }
@@ -1811,19 +1815,25 @@ GLSLANG_WEB_EXCLUDE_ON
         $$.basicType = EbtUint64;
     }
     | DVEC2 {
-        parseContext.doubleCheck($1.loc, "double vector");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double vector");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double vector");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setVector(2);
     }
     | DVEC3 {
-        parseContext.doubleCheck($1.loc, "double vector");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double vector");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double vector");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setVector(3);
     }
     | DVEC4 {
-        parseContext.doubleCheck($1.loc, "double vector");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double vector");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double vector");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setVector(4);
@@ -2027,73 +2037,97 @@ GLSLANG_WEB_EXCLUDE_ON
         $$.setVector(4);
     }
     | DMAT2 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(2, 2);
     }
     | DMAT3 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(3, 3);
     }
     | DMAT4 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(4, 4);
     }
     | DMAT2X2 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(2, 2);
     }
     | DMAT2X3 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(2, 3);
     }
     | DMAT2X4 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(2, 4);
     }
     | DMAT3X2 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(3, 2);
     }
     | DMAT3X3 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(3, 3);
     }
     | DMAT3X4 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(3, 4);
     }
     | DMAT4X2 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(4, 2);
     }
     | DMAT4X3 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(4, 3);
     }
     | DMAT4X4 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(4, 4);

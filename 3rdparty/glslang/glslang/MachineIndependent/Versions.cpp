@@ -172,6 +172,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_tessellation_shader]          = EBhDisable;
     extensionBehavior[E_GL_ARB_enhanced_layouts]             = EBhDisable;
     extensionBehavior[E_GL_ARB_texture_cube_map_array]       = EBhDisable;
+    extensionBehavior[E_GL_ARB_texture_multisample]          = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_texture_lod]           = EBhDisable;
     extensionBehavior[E_GL_ARB_explicit_attrib_location]     = EBhDisable;
     extensionBehavior[E_GL_ARB_explicit_uniform_location]    = EBhDisable;
@@ -183,6 +184,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_shader_texture_image_samples] = EBhDisable;
     extensionBehavior[E_GL_ARB_viewport_array]               = EBhDisable;
     extensionBehavior[E_GL_ARB_gpu_shader_int64]             = EBhDisable;
+    extensionBehavior[E_GL_ARB_gpu_shader_fp64]              = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_ballot]                = EBhDisable;
     extensionBehavior[E_GL_ARB_sparse_texture2]              = EBhDisable;
     extensionBehavior[E_GL_ARB_sparse_texture_clamp]         = EBhDisable;
@@ -192,6 +194,8 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_shader_viewport_layer_array]  = EBhDisable;
     extensionBehavior[E_GL_ARB_fragment_shader_interlock]    = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_clock]                 = EBhDisable;
+    extensionBehavior[E_GL_ARB_uniform_buffer_object]        = EBhDisable;
+    extensionBehavior[E_GL_ARB_sample_shading]               = EBhDisable;
 
     extensionBehavior[E_GL_KHR_shader_subgroup_basic]            = EBhDisable;
     extensionBehavior[E_GL_KHR_shader_subgroup_vote]             = EBhDisable;
@@ -335,7 +339,6 @@ void TParseVersions::getPreamble(std::string& preamble)
 
             // AEP
             "#define GL_ANDROID_extension_pack_es31a 1\n"
-            "#define GL_KHR_blend_equation_advanced 1\n"
             "#define GL_OES_sample_variables 1\n"
             "#define GL_OES_shader_image_atomic 1\n"
             "#define GL_OES_shader_multisample_interpolation 1\n"
@@ -379,6 +382,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_tessellation_shader 1\n"
             "#define GL_ARB_enhanced_layouts 1\n"
             "#define GL_ARB_texture_cube_map_array 1\n"
+            "#define GL_ARB_texture_multisample 1\n"
             "#define GL_ARB_shader_texture_lod 1\n"
             "#define GL_ARB_explicit_attrib_location 1\n"
             "#define GL_ARB_explicit_uniform_location 1\n"
@@ -390,13 +394,16 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_shader_texture_image_samples 1\n"
             "#define GL_ARB_viewport_array 1\n"
             "#define GL_ARB_gpu_shader_int64 1\n"
+            "#define GL_ARB_gpu_shader_fp64 1\n"
             "#define GL_ARB_shader_ballot 1\n"
             "#define GL_ARB_sparse_texture2 1\n"
             "#define GL_ARB_sparse_texture_clamp 1\n"
             "#define GL_ARB_shader_stencil_export 1\n"
+            "#define GL_ARB_sample_shading 1\n"
 //            "#define GL_ARB_cull_distance 1\n"    // present for 4.5, but need extension control over block members
             "#define GL_ARB_post_depth_coverage 1\n"
             "#define GL_ARB_fragment_shader_interlock 1\n"
+            "#define GL_ARB_uniform_buffer_object 1\n"
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             "#define GL_EXT_shader_image_load_formatted 1\n"
             "#define GL_EXT_post_depth_coverage 1\n"
@@ -499,6 +506,7 @@ void TParseVersions::getPreamble(std::string& preamble)
     preamble +=
             "#define GL_GOOGLE_cpp_style_line_directive 1\n"
             "#define GL_GOOGLE_include_directive 1\n"
+            "#define GL_KHR_blend_equation_advanced 1\n"
             ;
 #endif
 
@@ -919,8 +927,8 @@ void TParseVersions::fullIntegerCheck(const TSourceLoc& loc, const char* op)
 // Call for any operation needing GLSL double data-type support.
 void TParseVersions::doubleCheck(const TSourceLoc& loc, const char* op)
 {
-    requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
-    profileRequires(loc, ECoreProfile | ECompatibilityProfile, 400, nullptr, op);
+    //requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
+    profileRequires(loc, ECoreProfile | ECompatibilityProfile, 400, E_GL_ARB_gpu_shader_fp64, op);
 }
 
 // Call for any operation needing GLSL float16 data-type support.

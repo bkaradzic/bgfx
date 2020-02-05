@@ -69,7 +69,8 @@ HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& int
     clipDistanceOutput(nullptr),
     cullDistanceOutput(nullptr),
     clipDistanceInput(nullptr),
-    cullDistanceInput(nullptr)
+    cullDistanceInput(nullptr),
+    parsingEntrypointParameters(false)
 {
     globalUniformDefaults.clear();
     globalUniformDefaults.layoutMatrix = ElmRowMajor;
@@ -2049,7 +2050,7 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
     };
 
     // if we aren't in the entry point, fix the IO as such and exit
-    if (userFunction.getName().compare(intermediate.getEntryPointName().c_str()) != 0) {
+    if (! isEntrypointName(userFunction.getName())) {
         remapNonEntryPointIO(userFunction);
         return nullptr;
     }
@@ -8884,6 +8885,10 @@ void HlslParseContext::addQualifierToExisting(const TSourceLoc& loc, TQualifier 
 //
 bool HlslParseContext::handleInputGeometry(const TSourceLoc& loc, const TLayoutGeometry& geometry)
 {
+    // these can be declared on non-entry-points, in which case they lose their meaning
+    if (! parsingEntrypointParameters)
+        return true;
+
     switch (geometry) {
     case ElgPoints:             // fall through
     case ElgLines:              // ...
@@ -8912,6 +8917,10 @@ bool HlslParseContext::handleOutputGeometry(const TSourceLoc& loc, const TLayout
     // If this is not a geometry shader, ignore.  It might be a mixed shader including several stages.
     // Since that's an OK situation, return true for success.
     if (language != EShLangGeometry)
+        return true;
+
+    // these can be declared on non-entry-points, in which case they lose their meaning
+    if (! parsingEntrypointParameters)
         return true;
 
     switch (geometry) {

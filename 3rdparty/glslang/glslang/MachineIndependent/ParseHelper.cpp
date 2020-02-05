@@ -6035,6 +6035,10 @@ void TParseContext::fixOffset(const TSourceLoc& loc, TSymbol& symbol)
                 offset = qualifier.layoutOffset;
             else
                 offset = atomicUintOffsets[qualifier.layoutBinding];
+
+            if (offset % 4 != 0)
+                error(loc, "atomic counters offset should align based on 4:", "offset", "%d", offset);
+
             symbol.getWritableType().getQualifier().layoutOffset = offset;
 
             // Check for overlap
@@ -6087,7 +6091,7 @@ const TFunction* TParseContext::findFunction(const TSourceLoc& loc, const TFunct
     if (isEsProfile() || version < 120)
         function = findFunctionExact(loc, call, builtIn);
     else if (version < 400)
-        function = findFunction120(loc, call, builtIn);
+        function = extensionTurnedOn(E_GL_ARB_gpu_shader_fp64) ? findFunction400(loc, call, builtIn) : findFunction120(loc, call, builtIn);
     else if (explicitTypesEnabled)
         function = findFunctionExplicitTypes(loc, call, builtIn);
     else
@@ -6380,13 +6384,15 @@ const TFunction* TParseContext::findFunctionExplicitTypes(const TSourceLoc& loc,
 void TParseContext::declareTypeDefaults(const TSourceLoc& loc, const TPublicType& publicType)
 {
 #ifndef GLSLANG_WEB
-    if (publicType.basicType == EbtAtomicUint && publicType.qualifier.hasBinding() &&
-        publicType.qualifier.hasOffset()) {
+    if (publicType.basicType == EbtAtomicUint && publicType.qualifier.hasBinding()) {
         if (publicType.qualifier.layoutBinding >= (unsigned int)resources.maxAtomicCounterBindings) {
             error(loc, "atomic_uint binding is too large", "binding", "");
             return;
         }
-        atomicUintOffsets[publicType.qualifier.layoutBinding] = publicType.qualifier.layoutOffset;
+
+        if(publicType.qualifier.hasOffset()) {
+            atomicUintOffsets[publicType.qualifier.layoutBinding] = publicType.qualifier.layoutOffset;
+        }
         return;
     }
 
@@ -7609,7 +7615,7 @@ void TParseContext::blockStageIoCheck(const TSourceLoc& loc, const TQualifier& q
     switch (qualifier.storage) {
     case EvqUniform:
         profileRequires(loc, EEsProfile, 300, nullptr, "uniform block");
-        profileRequires(loc, ENoProfile, 140, nullptr, "uniform block");
+        profileRequires(loc, ENoProfile, 140, E_GL_ARB_uniform_buffer_object, "uniform block");
         if (currentBlockQualifier.layoutPacking == ElpStd430 && ! currentBlockQualifier.isPushConstant())
             requireExtensions(loc, 1, &E_GL_EXT_scalar_block_layout, "std430 requires the buffer storage qualifier");
         break;

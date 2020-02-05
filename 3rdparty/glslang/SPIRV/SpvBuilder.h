@@ -512,7 +512,7 @@ public:
         Block &head, &body, &merge, &continue_target;
     private:
         LoopBlocks();
-        LoopBlocks& operator=(const LoopBlocks&);
+        LoopBlocks& operator=(const LoopBlocks&) = delete;
     };
 
     // Start a new loop and prepare the builder to generate code for it.  Until

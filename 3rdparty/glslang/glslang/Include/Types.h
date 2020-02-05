@@ -82,11 +82,6 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
     bool    sampler : 1;  // true means a pure sampler, other fields should be clear()
 
 #ifdef GLSLANG_WEB
-    unsigned int getVectorSize() const { return 4; }
-    void clearReturnStruct() const { }
-    bool hasReturnStruct() const { return false; }
-    unsigned getStructReturnIndex() const { return 0; }
-
     bool is1D()          const { return false; }
     bool isBuffer()      const { return false; }
     bool isRect()        const { return false; }
@@ -111,10 +106,12 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
     bool   external : 1;  // GL_OES_EGL_image_external
     bool        yuv : 1;  // GL_EXT_YUV_target
 
+#ifdef ENABLE_HLSL
     unsigned int getVectorSize() const { return vectorSize; }
     void clearReturnStruct() { structReturnIndex = noReturnStruct; }
     bool hasReturnStruct() const { return structReturnIndex != noReturnStruct; }
     unsigned getStructReturnIndex() const { return structReturnIndex; }
+#endif
 
     bool is1D()          const { return dim == Esd1D; }
     bool isBuffer()      const { return dim == EsdBuffer; }
@@ -225,9 +222,12 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
             isCombined() == right.isCombined() &&
          isPureSampler() == right.isPureSampler() &&
             isExternal() == right.isExternal() &&
-                 isYuv() == right.isYuv() &&
-         getVectorSize() == right.getVectorSize() &&
-  getStructReturnIndex() == right.getStructReturnIndex();
+                 isYuv() == right.isYuv()
+#ifdef ENABLE_HLSL
+      && getVectorSize() == right.getVectorSize() &&
+  getStructReturnIndex() == right.getStructReturnIndex()
+#endif
+        ;
     }
 
     bool operator!=(const TSampler& right) const

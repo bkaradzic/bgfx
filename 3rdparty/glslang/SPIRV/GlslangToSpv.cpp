@@ -245,7 +245,9 @@ protected:
     std::unordered_map<std::string, spv::Function*> functionMap;
     std::unordered_map<const glslang::TTypeList*, spv::Id> structMap[glslang::ElpCount][glslang::ElmCount];
     // for mapping glslang block indices to spv indices (e.g., due to hidden members):
-    std::unordered_map<const glslang::TTypeList*, std::vector<int> > memberRemapper;
+    std::unordered_map<int, std::vector<int>> memberRemapper;
+    // for mapping glslang symbol struct to symbol Id
+    std::unordered_map<const glslang::TTypeList*, int> glslangTypeToIdMap;
     std::stack<bool> breakForLoop;  // false means break for switch
     std::unordered_map<std::string, const glslang::TIntermSymbol*> counterOriginator;
     // Map pointee types for EbtReference to their forward pointers
@@ -1661,6 +1663,9 @@ void TGlslangToSpvTraverser::dumpSpv(std::vector<unsigned int>& out)
 void TGlslangToSpvTraverser::visitSymbol(glslang::TIntermSymbol* symbol)
 {
     SpecConstantOpModeGuard spec_constant_op_mode_setter(&builder);
+    if (symbol->getType().isStruct())
+        glslangTypeToIdMap[symbol->getType().getStruct()] = symbol->getId();
+
     if (symbol->getType().getQualifier().isSpecConstant())
         spec_constant_op_mode_setter.turnOnSpecConstantOpMode();
 
@@ -1753,6 +1758,12 @@ void TGlslangToSpvTraverser::visitSymbol(glslang::TIntermSymbol* symbol)
 bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::TIntermBinary* node)
 {
     builder.setLine(node->getLoc().line, node->getLoc().getFilename());
+    if (node->getLeft()->getAsSymbolNode() != nullptr && node->getLeft()->getType().isStruct()) {
+        glslangTypeToIdMap[node->getLeft()->getType().getStruct()] = node->getLeft()->getAsSymbolNode()->getId();
+    }
+    if (node->getRight()->getAsSymbolNode() != nullptr && node->getRight()->getType().isStruct()) {
+        glslangTypeToIdMap[node->getRight()->getType().getStruct()] = node->getRight()->getAsSymbolNode()->getId();
+    }
 
     SpecConstantOpModeGuard spec_constant_op_mode_setter(&builder);
     if (node->getType().getQualifier().isSpecConstant())
@@ -1857,9 +1868,12 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
                 {
                     // This may be, e.g., an anonymous block-member selection, which generally need
                     // index remapping due to hidden members in anonymous blocks.
-                    std::vector<int>& remapper = memberRemapper[node->getLeft()->getType().getStruct()];
-                    assert(remapper.size() > 0);
-                    spvIndex = remapper[glslangIndex];
+                    int glslangId = glslangTypeToIdMap[node->getLeft()->getType().getStruct()];
+                    if (memberRemapper.find(glslangId) != memberRemapper.end()) {
+                        std::vector<int>& remapper = memberRemapper[glslangId];
+                        assert(remapper.size() > 0);
+                        spvIndex = remapper[glslangIndex];
+                    }
                 }
 
                 // normal case for indexing array or structure or block
@@ -3483,7 +3497,7 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
 
             // else, we haven't seen it...
             if (type.getBasicType() == glslang::EbtBlock)
-                memberRemapper[glslangMembers].resize(glslangMembers->size());
+                memberRemapper[glslangTypeToIdMap[glslangMembers]].resize(glslangMembers->size());
             spvType = convertGlslangStructToSpvType(type, glslangMembers, explicitLayout, qualifier);
         }
         break;
@@ -3619,15 +3633,15 @@ spv::Id TGlslangToSpvTraverser::convertGlslangStructToSpvType(const glslang::TTy
         if (glslangMember.hiddenMember()) {
             ++memberDelta;
             if (type.getBasicType() == glslang::EbtBlock)
-                memberRemapper[glslangMembers][i] = -1;
+                memberRemapper[glslangTypeToIdMap[glslangMembers]][i] = -1;
         } else {
             if (type.getBasicType() == glslang::EbtBlock) {
                 if (filterMember(glslangMember)) {
                     memberDelta++;
-                    memberRemapper[glslangMembers][i] = -1;
+                    memberRemapper[glslangTypeToIdMap[glslangMembers]][i] = -1;
                     continue;
                 }
-                memberRemapper[glslangMembers][i] = i - memberDelta;
+                memberRemapper[glslangTypeToIdMap[glslangMembers]][i] = i - memberDelta;
             }
             // modify just this child's view of the qualifier
             glslang::TQualifier memberQualifier = glslangMember.getQualifier();
@@ -3685,7 +3699,7 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
         glslang::TType& glslangMember = *(*glslangMembers)[i].type;
         int member = i;
         if (type.getBasicType() == glslang::EbtBlock) {
-            member = memberRemapper[glslangMembers][i];
+            member = memberRemapper[glslangTypeToIdMap[glslangMembers]][i];
             if (filterMember(glslangMember))
                 continue;
         }
@@ -7482,7 +7496,7 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
         id = builder.createCompositeExtract(mulOp, typeId, 0);
         for (int i = 1; i < componentCount; ++i) {
             builder.setPrecision(id, precision);
-            id = builder.createBinOp(spv::OpIAdd, typeId, id, builder.createCompositeExtract(operands[0], typeId, i));
+            id = builder.createBinOp(spv::OpIAdd, typeId, id, builder.createCompositeExtract(mulOp, typeId, i));
         }
     } else {
         switch (consumedOperands) {

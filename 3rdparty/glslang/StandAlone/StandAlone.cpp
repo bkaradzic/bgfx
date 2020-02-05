@@ -204,7 +204,7 @@ public:
         text.append("#define ");
         fixLine(def);
 
-        Processes.push_back("D");
+        Processes.push_back("define-macro ");
         Processes.back().append(def);
 
         // The first "=" needs to turn into a space
@@ -222,7 +222,7 @@ public:
         text.append("#undef ");
         fixLine(undef);
 
-        Processes.push_back("U");
+        Processes.push_back("undef-macro ");
         Processes.back().append(undef);
 
         text.append(undef);
@@ -292,9 +292,12 @@ bool SetConfigFile(const std::string& name)
 //
 // Give error and exit with failure code.
 //
-void Error(const char* message)
+void Error(const char* message, const char* detail = nullptr)
 {
-    fprintf(stderr, "%s: Error %s (use -h for usage)\n", ExecutableName, message);
+    fprintf(stderr, "%s: Error: ", ExecutableName);
+    if (detail != nullptr)
+        fprintf(stderr, "%s: ", detail);
+    fprintf(stderr, "%s (use -h for usage)\n", message);
     exit(EFailUsage);
 }
 
@@ -482,7 +485,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         Options |= EOptionAutoMapLocations;
                     } else if (lowerword == "uniform-base") {
                         if (argc <= 1)
-                            Error("no <base> provided for --uniform-base");
+                            Error("no <base> provided", lowerword.c_str());
                         uniformBase = ::strtol(argv[1], NULL, 10);
                         bumpArg();
                         break;
@@ -493,15 +496,23 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                             else if (strcmp(argv[1], "opengl100") == 0)
                                 setOpenGlSpv();
                             else
-                                Error("--client expects vulkan100 or opengl100");
-                        }
+                                Error("expects vulkan100 or opengl100", lowerword.c_str());
+                        } else
+                            Error("expects vulkan100 or opengl100", lowerword.c_str());
+                        bumpArg();
+                    } else if (lowerword == "define-macro" ||
+                               lowerword == "d") {
+                        if (argc > 1)
+                            UserPreamble.addDef(argv[1]);
+                        else
+                            Error("expects <name[=def]>", argv[0]);
                         bumpArg();
                     } else if (lowerword == "dump-builtin-symbols") {
                         DumpBuiltinSymbols = true;
                     } else if (lowerword == "entry-point") {
                         entryPointName = argv[1];
                         if (argc <= 1)
-                            Error("no <name> provided for --entry-point");
+                            Error("no <name> provided", lowerword.c_str());
                         bumpArg();
                     } else if (lowerword == "flatten-uniform-arrays" || // synonyms
                                lowerword == "flatten-uniform-array"  ||
@@ -576,7 +587,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     } else if (lowerword == "source-entrypoint" || // synonyms
                                lowerword == "sep") {
                         if (argc <= 1)
-                            Error("no <entry-point> provided for --source-entrypoint");
+                            Error("no <entry-point> provided", lowerword.c_str());
                         sourceEntryPointName = argv[1];
                         bumpArg();
                         break;
@@ -597,6 +608,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                             } else if (strcmp(argv[1], "vulkan1.1") == 0) {
                                 setVulkanSpv();
                                 ClientVersion = glslang::EShTargetVulkan_1_1;
+                            } else if (strcmp(argv[1], "vulkan1.2") == 0) {
+                                setVulkanSpv();
+                                ClientVersion = glslang::EShTargetVulkan_1_2;
                             } else if (strcmp(argv[1], "opengl") == 0) {
                                 setOpenGlSpv();
                                 ClientVersion = glslang::EShTargetOpenGL_450;
@@ -619,22 +633,32 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                                 TargetLanguage = glslang::EShTargetSpv;
                                 TargetVersion = glslang::EShTargetSpv_1_5;
                             } else
-                                Error("--target-env expected one of: vulkan1.0, vulkan1.1, opengl,\n"
+                                Error("--target-env expected one of: vulkan1.0, vulkan1.1, vulkan1.2, opengl,\n"
                                       "spirv1.0, spirv1.1, spirv1.2, spirv1.3, spirv1.4, or spirv1.5");
                         }
+                        bumpArg();
+                    } else if (lowerword == "undef-macro" ||
+                               lowerword == "u") {
+                        if (argc > 1)
+                            UserPreamble.addUndef(argv[1]);
+                        else
+                            Error("expects <name>", argv[0]);
                         bumpArg();
                     } else if (lowerword == "variable-name" || // synonyms
                                lowerword == "vn") {
                         Options |= EOptionOutputHexadecimal;
                         if (argc <= 1)
-                            Error("no <C-variable-name> provided for --variable-name");
+                            Error("no <C-variable-name> provided", lowerword.c_str());
                         variableName = argv[1];
                         bumpArg();
                         break;
                     } else if (lowerword == "version") {
                         Options |= EOptionDumpVersions;
-                    } else {
+                    } else if (lowerword == "help") {
                         usage();
+                        break;
+                    } else {
+                        Error("unrecognized command-line option", argv[0]);
                     }
                 }
                 break;
@@ -645,7 +669,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 if (argv[0][2] == 0)
                     Options |= EOptionReadHlsl;
                 else
-                    UserPreamble.addDef(getStringOperand("-D<macro> macro name"));
+                    UserPreamble.addDef(getStringOperand("-D<name[=def]>"));
                 break;
             case 'u':
                 uniformLocationOverrides.push_back(getUniformOverride());
@@ -688,7 +712,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 bumpArg();
                 break;
             case 'U':
-                UserPreamble.addUndef(getStringOperand("-U<macro>: macro name"));
+                UserPreamble.addUndef(getStringOperand("-U<name>"));
                 break;
             case 'V':
                 setVulkanSpv();
@@ -760,7 +784,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 Options |= EOptionOutputHexadecimal;
                 break;
             default:
-                usage();
+                Error("unrecognized command-line option", argv[0]);
                 break;
             }
         } else {
@@ -806,6 +830,10 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
         case glslang::EShTargetVulkan_1_1:
             TargetLanguage = glslang::EShTargetSpv;
             TargetVersion = glslang::EShTargetSpv_1_3;
+            break;
+        case glslang::EShTargetVulkan_1_2:
+            TargetLanguage = glslang::EShTargetSpv;
+            TargetVersion = glslang::EShTargetSpv_1_5;
             break;
         case glslang::EShTargetOpenGL_450:
             TargetLanguage = glslang::EShTargetSpv;
@@ -1263,7 +1291,7 @@ int singleMain()
     ProcessConfigFile();
 
     if ((Options & EOptionReadHlsl) && !((Options & EOptionOutputPreprocessed) || (Options & EOptionSpv)))
-        Error("ERROR: HLSL requires SPIR-V code generation (or preprocessing only)");
+        Error("HLSL requires SPIR-V code generation (or preprocessing only)");
 
     //
     // Two modes:
@@ -1498,8 +1526,8 @@ void usage()
            "Options:\n"
            "  -C          cascading errors; risk crash from accumulation of error recoveries\n"
            "  -D          input is HLSL (this is the default when any suffix is .hlsl)\n"
-           "  -D<macro=def>\n"
-           "  -D<macro>   define a pre-processor macro\n"
+           "  -D<name[=def]> | --define-macro <name[=def]> | --D <name[=def]>\n"
+           "              define a pre-processor macro\n"
            "  -E          print pre-processed GLSL; cannot be used with -l;\n"
            "              errors will appear on stderr\n"
            "  -G[ver]     create SPIR-V binary, under OpenGL semantics; turns on -l;\n"
@@ -1515,7 +1543,8 @@ void usage()
            "  -Os         optimizes SPIR-V to minimize size\n"
            "  -S <stage>  uses specified stage rather than parsing the file extension\n"
            "              choices for <stage> are vert, tesc, tese, geom, frag, or comp\n"
-           "  -U<macro>   undefine a pre-processor macro\n"
+           "  -U<name> | --undef-macro <name> | --U <name>\n"
+           "              undefine a pre-processor macro\n"
            "  -V[ver]     create SPIR-V binary, under Vulkan semantics; turns on -l;\n"
            "              default file name is <stage>.spv (-o overrides this)\n"
            "              'ver', when present, is the version of the input semantics,\n"
@@ -1621,16 +1650,17 @@ void usage()
            "  --sep                             synonym for --source-entrypoint\n"
            "  --stdin                           read from stdin instead of from a file;\n"
            "                                    requires providing the shader stage using -S\n"
-           "  --target-env {vulkan1.0 | vulkan1.1 | opengl | \n"
+           "  --target-env {vulkan1.0 | vulkan1.1 | vulkan1.2 | opengl | \n"
            "                spirv1.0 | spirv1.1 | spirv1.2 | spirv1.3 | spirv1.4 | spirv1.5}\n"
-           "                                    set execution environment that emitted code\n"
-           "                                    will execute in (versus source language\n"
-           "                                    semantics selected by --client) defaults:\n"
-           "                                     * 'vulkan1.0' under '--client vulkan<ver>'\n"
-           "                                     * 'opengl' under '--client opengl<ver>'\n"
-           "                                     * 'spirv1.0' under --target-env vulkan1.0\n"
-           "                                     * 'spirv1.3' under --target-env vulkan1.1\n"
-           "                                    multiple --targen-env can be specified.\n"
+           "                                    Set the execution environment that the\n"
+           "                                    generated code will be executed in.\n"
+           "                                    Defaults to:\n"
+           "                                     * vulkan1.0 under --client vulkan<ver>\n"
+           "                                     * opengl    under --client opengl<ver>\n"
+           "                                     * spirv1.0  under --target-env vulkan1.0\n"
+           "                                     * spirv1.3  under --target-env vulkan1.1\n"
+           "                                     * spirv1.5  under --target-env vulkan1.2\n"
+           "                                    Multiple --target-env can be specified.\n"
            "  --variable-name <name>\n"
            "  --vn <name>                       creates a C header file that contains a\n"
            "                                    uint32_t array named <name>\n"

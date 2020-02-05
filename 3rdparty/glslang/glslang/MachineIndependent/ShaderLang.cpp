@@ -716,6 +716,9 @@ void TranslateEnvironment(const TEnvironment* environment, EShMessages& messages
             case EShClientOpenGL:
                 spvVersion.openGl = environment->input.dialectVersion;
                 break;
+            case EShClientCount:
+                assert(0);
+                break;
             }
             switch (environment->input.languageFamily) {
             case EShSourceNone:
@@ -727,6 +730,9 @@ void TranslateEnvironment(const TEnvironment* environment, EShMessages& messages
             case EShSourceHlsl:
                 source = EShSourceHlsl;
                 messages = static_cast<EShMessages>(messages | EShMsgReadHlsl);
+                break;
+            case EShSourceCount:
+                assert(0);
                 break;
             }
         }
