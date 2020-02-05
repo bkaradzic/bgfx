@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Arm Limited
+ * Copyright 2018-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,6 +128,17 @@ void ParsedIR::set_id_bounds(uint32_t bounds)
 	block_meta.resize(bounds);
 }
 
+// Roll our own versions of these functions to avoid potential locale shenanigans.
+static bool is_alpha(char c)
+{
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+static bool is_alphanumeric(char c)
+{
+	return is_alpha(c) || (c >= '0' && c <= '9');
+}
+
 static string ensure_valid_identifier(const string &name, bool member)
 {
 	// Functions in glslangValidator are mangled with name(<mangled> stuff.
@@ -143,20 +154,20 @@ static string ensure_valid_identifier(const string &name, bool member)
 			// _m<num> variables are reserved by the internal implementation,
 			// otherwise, make sure the name is a valid identifier.
 			if (i == 0)
-				c = isalpha(c) ? c : '_';
+				c = is_alpha(c) ? c : '_';
 			else if (i == 2 && str[0] == '_' && str[1] == 'm')
-				c = isalpha(c) ? c : '_';
+				c = is_alpha(c) ? c : '_';
 			else
-				c = isalnum(c) ? c : '_';
+				c = is_alphanumeric(c) ? c : '_';
 		}
 		else
 		{
 			// _<num> variables are reserved by the internal implementation,
 			// otherwise, make sure the name is a valid identifier.
 			if (i == 0 || (str[0] == '_' && i == 1))
-				c = isalpha(c) ? c : '_';
+				c = is_alpha(c) ? c : '_';
 			else
-				c = isalnum(c) ? c : '_';
+				c = is_alphanumeric(c) ? c : '_';
 		}
 	}
 	return str;
@@ -255,6 +266,14 @@ void ParsedIR::set_decoration(ID id, Decoration decoration, uint32_t argument)
 		dec.offset = argument;
 		break;
 
+	case DecorationXfbBuffer:
+		dec.xfb_buffer = argument;
+		break;
+
+	case DecorationXfbStride:
+		dec.xfb_stride = argument;
+		break;
+
 	case DecorationArrayStride:
 		dec.array_stride = argument;
 		break;
@@ -324,6 +343,14 @@ void ParsedIR::set_member_decoration(TypeID id, uint32_t index, Decoration decor
 
 	case DecorationOffset:
 		dec.offset = argument;
+		break;
+
+	case DecorationXfbBuffer:
+		dec.xfb_buffer = argument;
+		break;
+
+	case DecorationXfbStride:
+		dec.xfb_stride = argument;
 		break;
 
 	case DecorationSpecId:
@@ -439,6 +466,10 @@ uint32_t ParsedIR::get_decoration(ID id, Decoration decoration) const
 		return dec.component;
 	case DecorationOffset:
 		return dec.offset;
+	case DecorationXfbBuffer:
+		return dec.xfb_buffer;
+	case DecorationXfbStride:
+		return dec.xfb_stride;
 	case DecorationBinding:
 		return dec.binding;
 	case DecorationDescriptorSet:
@@ -501,6 +532,14 @@ void ParsedIR::unset_decoration(ID id, Decoration decoration)
 
 	case DecorationOffset:
 		dec.offset = 0;
+		break;
+
+	case DecorationXfbBuffer:
+		dec.xfb_buffer = 0;
+		break;
+
+	case DecorationXfbStride:
+		dec.xfb_stride = 0;
 		break;
 
 	case DecorationBinding:
@@ -573,6 +612,10 @@ uint32_t ParsedIR::get_member_decoration(TypeID id, uint32_t index, Decoration d
 		return dec.binding;
 	case DecorationOffset:
 		return dec.offset;
+	case DecorationXfbBuffer:
+		return dec.xfb_buffer;
+	case DecorationXfbStride:
+		return dec.xfb_stride;
 	case DecorationSpecId:
 		return dec.spec_id;
 	case DecorationIndex:
@@ -659,6 +702,14 @@ void ParsedIR::unset_member_decoration(TypeID id, uint32_t index, Decoration dec
 
 	case DecorationOffset:
 		dec.offset = 0;
+		break;
+
+	case DecorationXfbBuffer:
+		dec.xfb_buffer = 0;
+		break;
+
+	case DecorationXfbStride:
+		dec.xfb_stride = 0;
 		break;
 
 	case DecorationSpecId:

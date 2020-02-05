@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Arm Limited
+ * Copyright 2015-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,8 @@ enum AccessChainFlagBits
 	ACCESS_CHAIN_INDEX_IS_LITERAL_BIT = 1 << 0,
 	ACCESS_CHAIN_CHAIN_ONLY_BIT = 1 << 1,
 	ACCESS_CHAIN_PTR_CHAIN_BIT = 1 << 2,
-	ACCESS_CHAIN_SKIP_REGISTER_EXPRESSION_READ_BIT = 1 << 3
+	ACCESS_CHAIN_SKIP_REGISTER_EXPRESSION_READ_BIT = 1 << 3,
+	ACCESS_CHAIN_LITERAL_MSB_FORCE_ID = 1 << 4
 };
 typedef uint32_t AccessChainFlags;
 
@@ -275,6 +276,9 @@ protected:
 
 	virtual bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const;
 
+	void emit_copy_logical_type(uint32_t lhs_id, uint32_t lhs_type_id, uint32_t rhs_id, uint32_t rhs_type_id,
+	                            SmallVector<uint32_t> chain);
+
 	StringStream<> buffer;
 
 	template <typename T>
@@ -427,6 +431,7 @@ protected:
 	void emit_buffer_block_legacy(const SPIRVariable &var);
 	void emit_buffer_block_flattened(const SPIRVariable &type);
 	void emit_declared_builtin_block(spv::StorageClass storage, spv::ExecutionModel model);
+	bool should_force_emit_builtin_block(spv::StorageClass storage);
 	void emit_push_constant_block_vulkan(const SPIRVariable &var);
 	void emit_push_constant_block_glsl(const SPIRVariable &var);
 	void emit_interface_block(const SPIRVariable &type);
@@ -463,6 +468,8 @@ protected:
 	                             SPIRType::BaseType input_type, SPIRType::BaseType expected_result_type);
 	void emit_binary_func_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op,
 	                              SPIRType::BaseType input_type, bool skip_cast_if_equal_type);
+	void emit_binary_func_op_cast_clustered(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1,
+	                                        const char *op, SPIRType::BaseType input_type);
 	void emit_trinary_func_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, uint32_t op2,
 	                               const char *op, SPIRType::BaseType input_type);
 	void emit_trinary_func_op_bitextract(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1,
@@ -503,7 +510,7 @@ protected:
 
 	std::string flattened_access_chain(uint32_t base, const uint32_t *indices, uint32_t count,
 	                                   const SPIRType &target_type, uint32_t offset, uint32_t matrix_stride,
-	                                   bool need_transpose);
+	                                   uint32_t array_stride, bool need_transpose);
 	std::string flattened_access_chain_struct(uint32_t base, const uint32_t *indices, uint32_t count,
 	                                          const SPIRType &target_type, uint32_t offset);
 	std::string flattened_access_chain_matrix(uint32_t base, const uint32_t *indices, uint32_t count,
@@ -516,6 +523,7 @@ protected:
 	                                                               uint32_t count, uint32_t offset,
 	                                                               uint32_t word_stride, bool *need_transpose = nullptr,
 	                                                               uint32_t *matrix_stride = nullptr,
+	                                                               uint32_t *array_stride = nullptr,
 	                                                               bool ptr_chain = false);
 
 	const char *index_to_swizzle(uint32_t index);
@@ -583,6 +591,7 @@ protected:
 	bool check_atomic_image(uint32_t id);
 
 	virtual void replace_illegal_names();
+	void replace_illegal_names(const std::unordered_set<std::string> &keywords);
 	virtual void emit_entry_point_declarations();
 
 	void replace_fragment_output(SPIRVariable &var);
@@ -704,6 +713,8 @@ protected:
 	void reorder_type_alias();
 
 	void propagate_nonuniform_qualifier(uint32_t id);
+
+	static const char *vector_swizzle(int vecsize, int index);
 
 private:
 	void init();
