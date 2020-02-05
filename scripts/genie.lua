@@ -69,6 +69,7 @@ newaction {
 		do
 			local csgen = require "bindings-cs"
 			csgen.write(csgen.gen(), "../bindings/cs/bgfx.cs")
+			csgen.write(csgen.gen_dllname(), "../bindings/cs/bgfx_dllname.cs")
 			
 			local dgen = require "bindings-d"
 			dgen.write(dgen.gen_types(), "../bindings/d/types.d")

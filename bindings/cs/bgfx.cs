@@ -4368,13 +4368,5 @@ public static partial class bgfx
 	[DllImport(DllName, EntryPoint="bgfx_blit", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void blit(ushort _id, TextureHandle _dst, byte _dstMip, ushort _dstX, ushort _dstY, ushort _dstZ, TextureHandle _src, byte _srcMip, ushort _srcX, ushort _srcY, ushort _srcZ, ushort _width, ushort _height, ushort _depth);
 	
-
-#if !BGFX_CSHARP_CUSTOM_DLLNAME
-#if DEBUG
-	const string DllName = "bgfx_debug.dll";
-#else
-	const string DllName = "bgfx.dll";
-#endif
-#endif
 }
 }
