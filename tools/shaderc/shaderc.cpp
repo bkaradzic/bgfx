@@ -83,6 +83,12 @@ namespace bgfx
 		NULL
 	};
 
+	static const char* s_OES_EGL_image_external[] =
+	{
+		"samplerExternalOES",
+		NULL
+	};
+
 	static const char* s_EXT_gpu_shader4[] =
 	{
 		"gl_VertexID",
@@ -2179,6 +2185,11 @@ namespace bgfx
 									if (!bx::findIdentifierMatch(input, s_OES_texture_3D).isEmpty() )
 									{
 										bx::stringPrintf(code, "#extension GL_OES_texture_3D : enable\n");
+									}
+
+									if (!bx::findIdentifierMatch(input, s_OES_EGL_image_external).isEmpty() )
+									{
+										bx::stringPrintf(code, "#extension GL_OES_EGL_image_external : enable\n");
 									}
 
 									if (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty() )
