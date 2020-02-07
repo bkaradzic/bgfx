@@ -3019,30 +3019,24 @@ namespace bgfx { namespace mtl
 				}
 				else
 				{
-					if (![nvh isKindOfClass:[NSView class]] &&
-					    ![nvh isKindOfClass:[NSWindow class]])
+					NSView *contentView;
+
+					if ([nvh isKindOfClass:[NSView class]])
+					{
+						contentView = (NSView*)nvh;
+					}
+					else if ([nvh isKindOfClass:[NSWindow class]])
+					{
+						NSWindow* nsWindow = (NSWindow*)nvh;
+						contentView = [nsWindow contentView];
+					}
+					else
 					{
 						BX_WARN(0, "Unable to create Metal device. Please set platform data window to an NSWindow, NSView, or CAMetalLayer");
 						return;
 					}
 
 					void (^setLayer)(void) = ^{
-						NSView *contentView;
-
-						if ([nvh isKindOfClass:[NSView class]])
-						{
-							contentView = (NSView*)nvh;
-						}
-						else if ([nvh isKindOfClass:[NSWindow class]])
-						{
-							NSWindow* nsWindow = (NSWindow*)nvh;
-							contentView = [nsWindow contentView];
-						}
-						else
-						{
-							BX_CHECK(0, "Should never have gotten here.");
-						}
-
 						CALayer* layer = contentView.layer;
 						if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
 						{
