@@ -500,6 +500,7 @@ VK_DESTROY
 		uint8_t m_textureFormat;
 		uint8_t m_numMips;
 		VkFormat m_vkTextureFormat;
+		VkComponentMapping m_vkComponentMapping;
 		VkImageAspectFlags  m_vkTextureAspect;
 
 		VkImage m_textureImage;
