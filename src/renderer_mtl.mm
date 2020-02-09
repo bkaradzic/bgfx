@@ -640,7 +640,7 @@ namespace bgfx { namespace mtl
 
 			for (uint32_t ii = 1, last = 0; ii < BX_COUNTOF(s_msaa); ++ii)
 			{
-				const int32_t sampleCount = 1; //1<<ii;
+				const int32_t sampleCount = 1<<ii;
 				if (m_device.supportsTextureSampleCount(sampleCount) )
 				{
 					s_msaa[ii] = sampleCount;
