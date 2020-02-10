@@ -1689,7 +1689,7 @@ namespace bgfx { namespace gl
 		const uint32_t min = (_flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT;
 		const uint32_t mip = (_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT;
 		_magFilter = s_textureFilterMag[mag];
-		_minFilter = s_textureFilterMin[min][_hasMips ? mip+1 : 0];
+		_minFilter = s_textureFilterMin[min][_hasMips ? mip+1 : mip];
 	}
 
 	void updateExtension(const bx::StringView& _name)
