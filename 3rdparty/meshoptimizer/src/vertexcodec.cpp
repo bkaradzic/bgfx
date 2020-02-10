@@ -73,8 +73,8 @@
 #endif
 
 #ifdef SIMD_WASM
-#define wasmx_shuffle_v32x4(v, i, j, k, l) wasm_v8x16_shuffle(v, v, 4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3, 4 * j, 4 * j + 1, 4 * j + 2, 4 * j + 3, 4 * k, 4 * k + 1, 4 * k + 2, 4 * k + 3, 4 * l, 4 * l + 1, 4 * l + 2, 4 * l + 3)
-#define wasmx_splat_v32x4(v, i) wasmx_shuffle_v32x4(v, i, i, i, i)
+#define wasmx_swizzle_v32x4(v, i, j, k, l) wasm_v8x16_shuffle(v, v, 4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3, 4 * j, 4 * j + 1, 4 * j + 2, 4 * j + 3, 4 * k, 4 * k + 1, 4 * k + 2, 4 * k + 3, 4 * l, 4 * l + 1, 4 * l + 2, 4 * l + 3)
+#define wasmx_splat_v32x4(v, i) wasmx_swizzle_v32x4(v, i, i, i, i)
 #define wasmx_unpacklo_v8x16(a, b) wasm_v8x16_shuffle(a, b, 0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23)
 #define wasmx_unpackhi_v8x16(a, b) wasm_v8x16_shuffle(a, b, 8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31)
 #define wasmx_unpacklo_v16x8(a, b) wasm_v8x16_shuffle(a, b, 0, 1, 16, 17, 2, 3, 18, 19, 4, 5, 20, 21, 6, 7, 22, 23)
@@ -732,7 +732,7 @@ static v128_t decodeShuffleMask(unsigned char mask0, unsigned char mask1)
 
 static void wasmMoveMask(v128_t mask, unsigned char& mask0, unsigned char& mask1)
 {
-	v128_t mask_0 = wasmx_shuffle_v32x4(mask, 0, 2, 1, 3);
+	v128_t mask_0 = wasmx_swizzle_v32x4(mask, 0, 2, 1, 3);
 
 	// TODO: when Chrome supports v128.const we can try doing vectorized and?
 	uint64_t mask_1a = wasm_i64x2_extract_lane(mask_0, 0) & 0x0804020108040201ull;
@@ -1221,3 +1221,10 @@ int meshopt_decodeVertexBuffer(void* destination, size_t vertex_count, size_t ve
 
 	return 0;
 }
+
+#undef SIMD_NEON
+#undef SIMD_SSE
+#undef SIMD_AVX
+#undef SIMD_WASM
+#undef SIMD_FALLBACK
+#undef SIMD_TARGET
