@@ -927,6 +927,7 @@ namespace bgfx { namespace d3d12
 			initHeapProperties(m_device);
 
 			m_cmd.init(m_device);
+			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, m_cmd.m_commandQueue);
 			errorState = ErrorState::CreatedCommandQueue;
 
 			if (NULL == g_platformData.backBuffer)
@@ -1360,6 +1361,7 @@ namespace bgfx { namespace d3d12
 			switch (errorState)
 			{
 			case ErrorState::CreatedCommandQueue:
+				m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, NULL);
 				m_cmd.shutdown();
 				BX_FALLTHROUGH;
 
@@ -1447,6 +1449,7 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_msaaRt, 0);
 			DX_RELEASE(m_swapChain, 0);
 
+			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, NULL);
 			m_cmd.shutdown();
 
 			DX_RELEASE(m_device, 0);
