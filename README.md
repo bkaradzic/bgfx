@@ -365,6 +365,15 @@ An open source reimplementation of the game Black & White (2001).
 
 ![openblack](https://user-images.githubusercontent.com/1388267/67631321-93c85380-f88c-11e9-9103-804807844af2.png)
 
+## Cluster
+
+Implementation of Clustered Shading and Physically Based Rendering with the bgfx rendering library.
+
+[Cluster](https://github.com/pezcode/Cluster#cluster)
+
+![cluster](https://raw.githubusercontent.com/pezcode/Cluster/master/images/sponza.jpg)
+
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
