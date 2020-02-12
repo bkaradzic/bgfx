@@ -787,7 +787,7 @@ namespace bgfx { namespace d3d12
 					{
 						if (_init.debug)
 						{
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 							debug0->EnableDebugLayer();
 
 							{
@@ -1714,13 +1714,16 @@ namespace bgfx { namespace d3d12
 
 		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
 		{
-			BX_UNUSED(_handle, _ptr);
+			// Resource ref. counts might be messed up outside of bgfx.
+			// Disabling ref. count check once texture is overridden.
+			setGraphicsDebuggerPresent(true);
+			m_textures[_handle.idx].overrideInternal(_ptr);
 		}
 
 		uintptr_t getInternal(TextureHandle _handle) override
 		{
-			BX_UNUSED(_handle);
-			return 0;
+			setGraphicsDebuggerPresent(true);
+			return uintptr_t(m_textures[_handle.idx].m_ptr);
 		}
 
 		void destroyTexture(TextureHandle _handle) override
@@ -4969,10 +4972,20 @@ namespace bgfx { namespace d3d12
 				m_directAccessPtr = NULL;
 			}
 
-			s_renderD3D12->m_cmd.release(m_ptr);
-			m_ptr   = NULL;
-			m_state = D3D12_RESOURCE_STATE_COMMON;
+			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED))
+			{
+				s_renderD3D12->m_cmd.release(m_ptr);
+				m_ptr   = NULL;
+				m_state = D3D12_RESOURCE_STATE_COMMON;
+			}
 		}
+	}
+
+	void TextureD3D12::overrideInternal(uintptr_t _ptr)
+	{
+		destroy();
+		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
+		m_ptr = (ID3D12Resource*)_ptr;
 	}
 
 	void TextureD3D12::update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
