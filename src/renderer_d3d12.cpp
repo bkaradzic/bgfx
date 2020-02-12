@@ -934,10 +934,7 @@ namespace bgfx { namespace d3d12
 				bx::memSet(&m_scd, 0, sizeof(m_scd) );
 				m_scd.width  = _init.resolution.width;
 				m_scd.height = _init.resolution.height;
-				m_scd.format = (_init.resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
-					? s_textureFormat[_init.resolution.format].m_fmtSrgb
-					: s_textureFormat[_init.resolution.format].m_fmt
-					;
+				m_scd.format = s_textureFormat[_init.resolution.format].m_fmt;
 				m_scd.stereo  = false;
 
 				updateMsaa(m_scd.format);
@@ -2073,11 +2070,32 @@ namespace bgfx { namespace d3d12
 						, IID_ID3D12Resource
 						, (void**)&m_backBufferColor[ii]
 						) );
+
+					D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
+					rtvDesc.Format = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
+						? s_textureFormat[m_resolution.format].m_fmtSrgb
+						: s_textureFormat[m_resolution.format].m_fmt;
+
+					if (1 < m_backBufferColor[ii]->GetDesc().DepthOrArraySize)
+					{
+						rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+						rtvDesc.Texture2DArray.FirstArraySlice = 0;
+						rtvDesc.Texture2DArray.ArraySize = m_backBufferColor[ii]->GetDesc().DepthOrArraySize;
+						rtvDesc.Texture2DArray.MipSlice = 0;
+						rtvDesc.Texture2DArray.PlaneSlice = 0;
+					}
+					else
+					{
+						rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+						rtvDesc.Texture2D.MipSlice = 0;
+						rtvDesc.Texture2D.PlaneSlice = 0;
+					}
+
 					m_device->CreateRenderTargetView(
 						  NULL == m_msaaRt
 						? m_backBufferColor[ii]
 						: m_msaaRt
-						, NULL
+						, &rtvDesc
 						, handle
 						);
 
@@ -4746,15 +4764,15 @@ namespace bgfx { namespace d3d12
 
 			bx::memSet(&m_srvd, 0, sizeof(m_srvd) );
 			m_srvd.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-			m_srvd.Format = s_textureFormat[m_textureFormat].m_fmtSrv;
+			m_srvd.Format = (m_flags & BGFX_TEXTURE_SRGB) ? s_textureFormat[m_textureFormat].m_fmtSrgb : s_textureFormat[m_textureFormat].m_fmtSrv;
+			m_uavd.Format = s_textureFormat[m_textureFormat].m_fmtSrv;
 			DXGI_FORMAT format = s_textureFormat[m_textureFormat].m_fmt;
 			if (swizzle)
 			{
 				format        = DXGI_FORMAT_R8G8B8A8_UNORM;
 				m_srvd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				m_uavd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			}
-
-			m_uavd.Format = m_srvd.Format;
 
 			ID3D12Device* device = s_renderD3D12->m_device;
 			ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
