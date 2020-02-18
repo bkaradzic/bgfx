@@ -267,7 +267,10 @@ function converter.types(typ)
 	if typ.handle then
 		lastCombinedFlagBlock()
 
-		yield("public struct " .. typ.name .. "{ public ushort idx; }")
+		yield("public struct " .. typ.name .. " {")
+        yield("    public ushort idx;")
+        yield("    public bool Valid => idx != UInt16.MaxValue;")
+        yield("}")
 	elseif hasSuffix(typ.name, "::Enum") then
 		lastCombinedFlagBlock()
 

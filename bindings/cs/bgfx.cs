@@ -2157,29 +2157,65 @@ public static partial class bgfx
 	{
 	}
 	
-	public struct DynamicIndexBufferHandle{ public ushort idx; }
+	public struct DynamicIndexBufferHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct DynamicVertexBufferHandle{ public ushort idx; }
+	public struct DynamicVertexBufferHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct FrameBufferHandle{ public ushort idx; }
+	public struct FrameBufferHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct IndexBufferHandle{ public ushort idx; }
+	public struct IndexBufferHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct IndirectBufferHandle{ public ushort idx; }
+	public struct IndirectBufferHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct OcclusionQueryHandle{ public ushort idx; }
+	public struct OcclusionQueryHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct ProgramHandle{ public ushort idx; }
+	public struct ProgramHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct ShaderHandle{ public ushort idx; }
+	public struct ShaderHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct TextureHandle{ public ushort idx; }
+	public struct TextureHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct UniformHandle{ public ushort idx; }
+	public struct UniformHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct VertexBufferHandle{ public ushort idx; }
+	public struct VertexBufferHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
-	public struct VertexLayoutHandle{ public ushort idx; }
+	public struct VertexLayoutHandle {
+	    public ushort idx;
+	    public bool Valid => idx != UInt16.MaxValue;
+	}
 	
 
 	/// <summary>
