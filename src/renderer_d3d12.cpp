@@ -5208,6 +5208,9 @@ namespace bgfx { namespace d3d12
 						m_height = uint32_t(desc.Height);
 					}
 
+					const uint32_t msaaQuality = bx::uint32_satsub((texture.m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+					const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+
 					if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 					{
 						BX_CHECK(!isValid(m_depth), "");
@@ -5222,24 +5225,65 @@ namespace bgfx { namespace d3d12
 						D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 						bx::memSet(&dsvDesc, 0, sizeof(dsvDesc) );
 						dsvDesc.Format        = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
-						dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 						dsvDesc.Flags         = D3D12_DSV_FLAG_NONE
 // 							| (blockInfo.depthBits   > 0 ? D3D12_DSV_FLAG_READ_ONLY_DEPTH   : D3D12_DSV_FLAG_NONE)
 // 							| (blockInfo.stencilBits > 0 ? D3D12_DSV_FLAG_READ_ONLY_STENCIL : D3D12_DSV_FLAG_NONE)
 							;
 
+						switch (texture.m_type)
+						{
+						default:
+						case TextureD3D12::Texture2D:
+							if (1 < msaa.Count)
+							{
+								if (1 < texture.m_numLayers)
+								{
+									dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+									dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
+									dsvDesc.Texture2DMSArray.ArraySize       = 1;
+								}
+								else
+								{
+									dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
+								}
+							}
+							else
+							{
+								if (1 < texture.m_numLayers)
+								{
+									dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+									dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
+									dsvDesc.Texture2DArray.ArraySize       = 1;
+									dsvDesc.Texture2DArray.MipSlice        = at.mip;
+								}
+								else
+								{
+									dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+									dsvDesc.Texture2D.MipSlice   = at.mip;
+								}
+							}
+							break;
+
+						case TextureD3D12::TextureCube:
+							if (1 < msaa.Count)
+							{
+								dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+								dsvDesc.Texture2DMSArray.ArraySize       = 1;
+								dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
+							}
+							else
+							{
+								dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+								dsvDesc.Texture2DArray.ArraySize       = 1;
+								dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
+								dsvDesc.Texture2DArray.MipSlice        = at.mip;
+							}
+							break;
+						}
+
 						device->CreateDepthStencilView(texture.m_ptr
 							, &dsvDesc
 							, dsvDescriptor
-							);
-
-						s_renderD3D12->m_commandList->ClearDepthStencilView(
-							  dsvDescriptor
-							, D3D12_CLEAR_FLAG_DEPTH|D3D12_CLEAR_FLAG_STENCIL
-							, 0.0f
-							, 0
-							, 0
-							, NULL
 							);
 					}
 					else if (Access::Write == at.access)
@@ -5254,11 +5298,20 @@ namespace bgfx { namespace d3d12
 						{
 						default:
 						case TextureD3D12::Texture2D:
-//							if (1 < msaa.Count)
-//							{
-//								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
-//							}
-//							else
+							if (1 < msaa.Count)
+							{
+								if (1 < texture.m_numLayers)
+								{
+									desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+									desc.Texture2DMSArray.FirstArraySlice = at.layer;
+									desc.Texture2DMSArray.ArraySize       = 1;
+								}
+								else
+								{
+									desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
+								}
+							}
+							else
 							{
 								if (1 < texture.m_numLayers)
 								{
@@ -5278,13 +5331,13 @@ namespace bgfx { namespace d3d12
 							break;
 
 						case TextureD3D12::TextureCube:
-//							if (1 < msaa.Count)
-//							{
-//								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-//								desc.Texture2DMSArray.ArraySize       = 1;
-//								desc.Texture2DMSArray.FirstArraySlice = at.layer;
-//							}
-//							else
+							if (1 < msaa.Count)
+							{
+								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+								desc.Texture2DMSArray.ArraySize       = 1;
+								desc.Texture2DMSArray.FirstArraySlice = at.layer;
+							}
+							else
 							{
 								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 								desc.Texture2DArray.ArraySize       = 1;
@@ -5305,14 +5358,6 @@ namespace bgfx { namespace d3d12
 						device->CreateRenderTargetView(texture.m_ptr
 							, &desc
 							, rtv
-							);
-
-						float rgba[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-						s_renderD3D12->m_commandList->ClearRenderTargetView(
-							  rtv
-							, rgba
-							, 0
-							, NULL
 							);
 
 						m_num++;

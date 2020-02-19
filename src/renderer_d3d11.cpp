@@ -4766,19 +4766,43 @@ namespace bgfx { namespace d3d11
 					{
 						BX_CHECK(NULL == m_dsv, "Frame buffer already has depth-stencil attached.");
 
+						D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+						dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
+						dsvDesc.Flags = 0;
+
 						switch (texture.m_type)
 						{
 						default:
 						case TextureD3D11::Texture2D:
 							{
-								D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-								dsvDesc.Format        = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
-								dsvDesc.ViewDimension = 1 < msaa.Count
-									? D3D11_DSV_DIMENSION_TEXTURE2DMS
-									: D3D11_DSV_DIMENSION_TEXTURE2D
-									;
-								dsvDesc.Flags = 0;
-								dsvDesc.Texture2D.MipSlice = at.mip;
+								if (1 < msaa.Count)
+								{
+									if (1 < texture.m_numLayers)
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+										dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
+										dsvDesc.Texture2DMSArray.ArraySize       = 1;
+									}
+									else
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+									}
+								}
+								else
+								{
+									if (1 < texture.m_numLayers)
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+										dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
+										dsvDesc.Texture2DArray.ArraySize       = 1;
+										dsvDesc.Texture2DArray.MipSlice        = at.mip;
+									}
+									else
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+										dsvDesc.Texture2D.MipSlice = at.mip;
+									}
+								}
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(
 									  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
 									, &dsvDesc
@@ -4789,8 +4813,6 @@ namespace bgfx { namespace d3d11
 
 						case TextureD3D11::TextureCube:
 							{
-								D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-								dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
 								if (1 < msaa.Count)
 								{
 									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
@@ -4804,7 +4826,6 @@ namespace bgfx { namespace d3d11
 									dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
 									dsvDesc.Texture2DArray.MipSlice        = at.mip;
 								}
-								dsvDesc.Flags = 0;
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
 							}
 							break;
