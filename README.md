@@ -61,6 +61,7 @@ Languages:
  * [Python language API bindings #2](https://github.com/jnadro/pybgfx#pybgfx)
  * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
+ * [Pascal language API bindings](https://github.com/Akira13641/PasBGFX)
 
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 ----------------------------------------------------
