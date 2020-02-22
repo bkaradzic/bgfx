@@ -35,9 +35,9 @@
 #define SIMD_NEON
 #endif
 
-// WebAssembly SIMD implementation requires a few bleeding edge intrinsics that are only available in Chrome Canary
-#if defined(__wasm_simd128__) && defined(__wasm_unimplemented_simd128__)
+#if defined(__wasm_simd128__)
 #define SIMD_WASM
+#define SIMD_TARGET __attribute__((target("unimplemented-simd128")))
 #endif
 
 #ifndef SIMD_TARGET
@@ -81,6 +81,15 @@
 #define wasmx_unpackhi_v16x8(a, b) wasm_v8x16_shuffle(a, b, 8, 9, 24, 25, 10, 11, 26, 27, 12, 13, 28, 29, 14, 15, 30, 31)
 #define wasmx_unpacklo_v64x2(a, b) wasm_v8x16_shuffle(a, b, 0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23)
 #define wasmx_unpackhi_v64x2(a, b) wasm_v8x16_shuffle(a, b, 8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 29, 30, 31)
+#endif
+
+#if defined(SIMD_WASM)
+// v128_t wasm_v8x16_swizzle(v128_t a, v128_t b)
+SIMD_TARGET
+static __inline__ v128_t __DEFAULT_FN_ATTRS wasm_v8x16_swizzle(v128_t a, v128_t b)
+{
+	return (v128_t)__builtin_wasm_swizzle_v8x16((__i8x16)a, (__i8x16)b);
+}
 #endif
 
 namespace meshopt
@@ -715,6 +724,7 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 #endif
 
 #ifdef SIMD_WASM
+SIMD_TARGET
 static v128_t decodeShuffleMask(unsigned char mask0, unsigned char mask1)
 {
 	// TODO: 8b buffer overrun - should we use splat or extend buffers?
@@ -730,6 +740,7 @@ static v128_t decodeShuffleMask(unsigned char mask0, unsigned char mask1)
 	return wasmx_unpacklo_v64x2(sm0, sm1r);
 }
 
+SIMD_TARGET
 static void wasmMoveMask(v128_t mask, unsigned char& mask0, unsigned char& mask1)
 {
 	v128_t mask_0 = wasmx_swizzle_v32x4(mask, 0, 2, 1, 3);
@@ -746,6 +757,7 @@ static void wasmMoveMask(v128_t mask, unsigned char& mask0, unsigned char& mask1
 	mask1 = uint8_t(mask_8 >> 32);
 }
 
+SIMD_TARGET
 static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsigned char* buffer, int bitslog2)
 {
 	unsigned char byte, enc, encv;
@@ -877,6 +889,7 @@ static uint8x16_t unzigzag8(uint8x16_t v)
 #endif
 
 #ifdef SIMD_WASM
+SIMD_TARGET
 static void transpose8(v128_t& x0, v128_t& x1, v128_t& x2, v128_t& x3)
 {
 	v128_t t0 = wasmx_unpacklo_v8x16(x0, x1);
@@ -890,6 +903,7 @@ static void transpose8(v128_t& x0, v128_t& x1, v128_t& x2, v128_t& x3)
 	x3 = wasmx_unpackhi_v16x8(t1, t3);
 }
 
+SIMD_TARGET
 static v128_t unzigzag8(v128_t v)
 {
 	v128_t xl = wasm_i8x16_neg(wasm_v128_and(v, wasm_i8x16_splat(1)));
@@ -1083,9 +1097,12 @@ size_t meshopt_encodeVertexBuffer(unsigned char* buffer, size_t buffer_size, con
 
 	*data++ = kVertexHeader;
 
-	unsigned char last_vertex[256] = {};
+	unsigned char first_vertex[256] = {};
 	if (vertex_count > 0)
-		memcpy(last_vertex, vertex_data, vertex_size);
+		memcpy(first_vertex, vertex_data, vertex_size);
+
+	unsigned char last_vertex[256] = {};
+	memcpy(last_vertex, first_vertex, vertex_size);
 
 	size_t vertex_block_size = getVertexBlockSize(vertex_size);
 
@@ -1114,7 +1131,7 @@ size_t meshopt_encodeVertexBuffer(unsigned char* buffer, size_t buffer_size, con
 		data += kTailMaxSize - vertex_size;
 	}
 
-	memcpy(data, vertex_data, vertex_size);
+	memcpy(data, first_vertex, vertex_size);
 	data += vertex_size;
 
 	assert(data >= buffer + tail_size);
