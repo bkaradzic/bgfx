@@ -3385,7 +3385,7 @@ static void ImGui::UpdateMouseInputs()
                 ImVec2 delta_from_click_pos = IsMousePosValid(&g.IO.MousePos) ? (g.IO.MousePos - g.IO.MouseClickedPos[i]) : ImVec2(0.0f, 0.0f);
                 if (ImLengthSqr(delta_from_click_pos) < g.IO.MouseDoubleClickMaxDist * g.IO.MouseDoubleClickMaxDist)
                     g.IO.MouseDoubleClicked[i] = true;
-                g.IO.MouseClickedTime[i] = -FLT_MAX;    // so the third click isn't turned into a double-click
+                g.IO.MouseClickedTime[i] = -DBL_MAX;    // so the third click isn't turned into a double-click
             }
             else
             {
@@ -3680,8 +3680,8 @@ void ImGui::NewFrame()
     g.ActiveIdHasBeenEditedThisFrame = false;
     g.ActiveIdPreviousFrameIsAlive = false;
     g.ActiveIdIsJustActivated = false;
-    if (g.TempInputTextId != 0 && g.ActiveId != g.TempInputTextId)
-        g.TempInputTextId = 0;
+    if (g.TempInputId != 0 && g.ActiveId != g.TempInputId)
+        g.TempInputId = 0;
     if (g.ActiveId == 0)
     {
         g.ActiveIdUsingNavDirMask = g.ActiveIdUsingNavInputMask = 0;
