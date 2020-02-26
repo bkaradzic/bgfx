@@ -2437,14 +2437,17 @@ namespace bgfx { namespace d3d12
 
 			if (!isValid(_fbh) )
 			{
-				m_rtvHandle = getCPUHandleHeapStart(m_rtvDescriptorHeap);
-				uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-				m_rtvHandle.ptr += m_backBufferColorIdx * rtvDescriptorSize;
-				m_dsvHandle = getCPUHandleHeapStart(m_dsvDescriptorHeap);
+				if (NULL != m_swapChain)
+				{
+					m_rtvHandle = getCPUHandleHeapStart(m_rtvDescriptorHeap);
+					uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+					m_rtvHandle.ptr += m_backBufferColorIdx * rtvDescriptorSize;
+					m_dsvHandle = getCPUHandleHeapStart(m_dsvDescriptorHeap);
 
-				m_currentColor        = &m_rtvHandle;
-				m_currentDepthStencil = &m_dsvHandle;
-				m_commandList->OMSetRenderTargets(1, m_currentColor, true, m_currentDepthStencil);
+					m_currentColor        = &m_rtvHandle;
+					m_currentDepthStencil = &m_dsvHandle;
+					m_commandList->OMSetRenderTargets(1, m_currentColor, true, m_currentDepthStencil);
+				}
 			}
 			else
 			{
