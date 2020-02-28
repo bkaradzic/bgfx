@@ -12,9 +12,10 @@
 #endif
 
 #ifdef SIMD_WASM
-#define wasmx_shuffle_v32x4(v, w, i, j, k, l) wasm_v8x16_shuffle(v, w, 4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3, 4 * j, 4 * j + 1, 4 * j + 2, 4 * j + 3, 16 + 4 * k, 16 + 4 * k + 1, 16 + 4 * k + 2, 16 + 4 * k + 3, 16 + 4 * l, 16 + 4 * l + 1, 16 + 4 * l + 2, 16 + 4 * l + 3)
 #define wasmx_unpacklo_v16x8(a, b) wasm_v8x16_shuffle(a, b, 0, 1, 16, 17, 2, 3, 18, 19, 4, 5, 20, 21, 6, 7, 22, 23)
 #define wasmx_unpackhi_v16x8(a, b) wasm_v8x16_shuffle(a, b, 8, 9, 24, 25, 10, 11, 26, 27, 12, 13, 28, 29, 14, 15, 30, 31)
+#define wasmx_unziplo_v32x4(a, b) wasm_v8x16_shuffle(a, b, 0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27)
+#define wasmx_unziphi_v32x4(a, b) wasm_v8x16_shuffle(a, b, 4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31)
 #endif
 
 namespace meshopt
@@ -112,10 +113,12 @@ static void decodeFilterOctSimd(signed char* data, size_t count)
 		// convert x and y to floats and reconstruct z; this assumes zf encodes 1.f at the same bit count
 		v128_t x = wasm_f32x4_convert_i32x4(xf);
 		v128_t y = wasm_f32x4_convert_i32x4(yf);
+		// TODO: when i32x4_abs is available it might be faster, f32x4_abs is 3 instructions in v8
 		v128_t z = wasm_f32x4_sub(wasm_f32x4_convert_i32x4(zf), wasm_f32x4_add(wasm_f32x4_abs(x), wasm_f32x4_abs(y)));
 
 		// fixup octahedral coordinates for z<0
-		v128_t t = wasm_v128_and(z, wasm_f32x4_lt(z, wasm_f32x4_splat(0.f)));
+		// note: i32x4_min_s with 0 is equvalent to f32x4_min
+		v128_t t = wasm_i32x4_min_s(z, wasm_i32x4_splat(0));
 
 		x = wasm_f32x4_add(x, wasm_v128_xor(t, wasm_v128_and(x, sign)));
 		y = wasm_f32x4_add(y, wasm_v128_xor(t, wasm_v128_and(y, sign)));
@@ -125,13 +128,12 @@ static void decodeFilterOctSimd(signed char* data, size_t count)
 		v128_t s = wasm_f32x4_div(wasm_f32x4_splat(127.f), l);
 
 		// fast rounded signed float->int: addition triggers renormalization after which mantissa stores the integer value
+		// note: the result is offset by 0x4B40_0000, but we only need the low 8 bits so we can omit the subtraction
 		const v128_t fsnap = wasm_f32x4_splat(3 << 22);
-		const v128_t fmask = wasm_i32x4_splat(0x7fffff);
-		const v128_t fbase = wasm_i32x4_splat(0x400000);
 
-		v128_t xr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(x, s), fsnap), fmask), fbase);
-		v128_t yr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(y, s), fsnap), fmask), fbase);
-		v128_t zr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(z, s), fsnap), fmask), fbase);
+		v128_t xr = wasm_f32x4_add(wasm_f32x4_mul(x, s), fsnap);
+		v128_t yr = wasm_f32x4_add(wasm_f32x4_mul(y, s), fsnap);
+		v128_t zr = wasm_f32x4_add(wasm_f32x4_mul(z, s), fsnap);
 
 		// combine xr/yr/zr into final value
 		v128_t res = wasm_v128_and(n4, wasm_i32x4_splat(0xff000000));
@@ -146,7 +148,7 @@ static void decodeFilterOctSimd(signed char* data, size_t count)
 static void decodeFilterOctSimd(short* data, size_t count)
 {
 	const v128_t sign = wasm_f32x4_splat(-0.f);
-	volatile v128_t zmask = wasm_i32x4_splat(0x7fff); // volatile works around LLVM shuffle "optimizations"
+	volatile v128_t zmask = wasm_i32x4_splat(0x7fff); // TODO: volatile works around LLVM shuffle "optimizations"
 
 	for (size_t i = 0; i < count; i += 4)
 	{
@@ -154,23 +156,25 @@ static void decodeFilterOctSimd(short* data, size_t count)
 		v128_t n4_1 = wasm_v128_load(&data[(i + 2) * 4]);
 
 		// gather both x/y 16-bit pairs in each 32-bit lane
-		v128_t n4 = wasmx_shuffle_v32x4(n4_0, n4_1, 0, 2, 0, 2);
+		v128_t n4 = wasmx_unziplo_v32x4(n4_0, n4_1);
 
 		// sign-extends each of x,y in [x y] with arithmetic shifts
 		v128_t xf = wasm_i32x4_shr(wasm_i32x4_shl(n4, 16), 16);
 		v128_t yf = wasm_i32x4_shr(n4, 16);
 
 		// unpack z; note that z is unsigned so we don't need to sign extend it
-		v128_t z4 = wasmx_shuffle_v32x4(n4_0, n4_1, 1, 3, 1, 3);
+		v128_t z4 = wasmx_unziphi_v32x4(n4_0, n4_1);
 		v128_t zf = wasm_v128_and(z4, zmask);
 
 		// convert x and y to floats and reconstruct z; this assumes zf encodes 1.f at the same bit count
 		v128_t x = wasm_f32x4_convert_i32x4(xf);
 		v128_t y = wasm_f32x4_convert_i32x4(yf);
+		// TODO: when i32x4_abs is available it might be faster, f32x4_abs is 3 instructions in v8
 		v128_t z = wasm_f32x4_sub(wasm_f32x4_convert_i32x4(zf), wasm_f32x4_add(wasm_f32x4_abs(x), wasm_f32x4_abs(y)));
 
 		// fixup octahedral coordinates for z<0
-		v128_t t = wasm_v128_and(z, wasm_f32x4_lt(z, wasm_f32x4_splat(0.f)));
+		// note: i32x4_min_s with 0 is equvalent to f32x4_min
+		v128_t t = wasm_i32x4_min_s(z, wasm_i32x4_splat(0));
 
 		x = wasm_f32x4_add(x, wasm_v128_xor(t, wasm_v128_and(x, sign)));
 		y = wasm_f32x4_add(y, wasm_v128_xor(t, wasm_v128_and(y, sign)));
@@ -180,13 +184,12 @@ static void decodeFilterOctSimd(short* data, size_t count)
 		v128_t s = wasm_f32x4_div(wasm_f32x4_splat(32767.f), l);
 
 		// fast rounded signed float->int: addition triggers renormalization after which mantissa stores the integer value
+		// note: the result is offset by 0x4B40_0000, but we only need the low 16 bits so we can omit the subtraction
 		const v128_t fsnap = wasm_f32x4_splat(3 << 22);
-		const v128_t fmask = wasm_i32x4_splat(0x7fffff);
-		const v128_t fbase = wasm_i32x4_splat(0x400000);
 
-		v128_t xr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(x, s), fsnap), fmask), fbase);
-		v128_t yr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(y, s), fsnap), fmask), fbase);
-		v128_t zr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(z, s), fsnap), fmask), fbase);
+		v128_t xr = wasm_f32x4_add(wasm_f32x4_mul(x, s), fsnap);
+		v128_t yr = wasm_f32x4_add(wasm_f32x4_mul(y, s), fsnap);
+		v128_t zr = wasm_f32x4_add(wasm_f32x4_mul(z, s), fsnap);
 
 		// mix x/z and y/0 to make 16-bit unpack easier
 		v128_t xzr = wasm_v128_or(wasm_v128_and(xr, wasm_i32x4_splat(0xffff)), wasm_i32x4_shl(zr, 16));
@@ -197,6 +200,7 @@ static void decodeFilterOctSimd(short* data, size_t count)
 		v128_t res_1 = wasmx_unpackhi_v16x8(xzr, y0r);
 
 		// patch in .w
+		// TODO: this can use pblendw-like shuffles and we can remove y0r - once LLVM fixes shuffle merging
 		res_0 = wasm_v128_or(res_0, wasm_v128_and(n4_0, wasm_i64x2_splat(0xffff000000000000)));
 		res_1 = wasm_v128_or(res_1, wasm_v128_and(n4_1, wasm_i64x2_splat(0xffff000000000000)));
 
@@ -215,8 +219,8 @@ static void decodeFilterQuatSimd(short* data, size_t count)
 		v128_t q4_1 = wasm_v128_load(&data[(i + 2) * 4]);
 
 		// gather both x/y 16-bit pairs in each 32-bit lane
-		v128_t q4_xy = wasmx_shuffle_v32x4(q4_0, q4_1, 0, 2, 0, 2);
-		v128_t q4_zc = wasmx_shuffle_v32x4(q4_0, q4_1, 1, 3, 1, 3);
+		v128_t q4_xy = wasmx_unziplo_v32x4(q4_0, q4_1);
+		v128_t q4_zc = wasmx_unziphi_v32x4(q4_0, q4_1);
 
 		// sign-extends each of x,y in [x y] with arithmetic shifts
 		v128_t xf = wasm_i32x4_shr(wasm_i32x4_shl(q4_xy, 16), 16);
@@ -229,20 +233,20 @@ static void decodeFilterQuatSimd(short* data, size_t count)
 		v128_t z = wasm_f32x4_mul(wasm_f32x4_convert_i32x4(zf), wasm_f32x4_splat(scale));
 
 		// reconstruct w as a square root; we clamp to 0.f to avoid NaN due to precision errors
+		// note: i32x4_max_s with 0 is equivalent to f32x4_max
 		v128_t ww = wasm_f32x4_sub(wasm_f32x4_splat(1.f), wasm_f32x4_add(wasm_f32x4_mul(x, x), wasm_f32x4_add(wasm_f32x4_mul(y, y), wasm_f32x4_mul(z, z))));
-		v128_t w = wasm_f32x4_sqrt(wasm_v128_and(ww, wasm_f32x4_ge(ww, wasm_f32x4_splat(0.f))));
+		v128_t w = wasm_f32x4_sqrt(wasm_i32x4_max_s(ww, wasm_i32x4_splat(0)));
 
 		v128_t s = wasm_f32x4_splat(32767.f);
 
 		// fast rounded signed float->int: addition triggers renormalization after which mantissa stores the integer value
+		// note: the result is offset by 0x4B40_0000, but we only need the low 16 bits so we can omit the subtraction
 		const v128_t fsnap = wasm_f32x4_splat(3 << 22);
-		const v128_t fmask = wasm_i32x4_splat(0x7fffff);
-		const v128_t fbase = wasm_i32x4_splat(0x400000);
 
-		v128_t xr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(x, s), fsnap), fmask), fbase);
-		v128_t yr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(y, s), fsnap), fmask), fbase);
-		v128_t zr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(z, s), fsnap), fmask), fbase);
-		v128_t wr = wasm_i32x4_sub(wasm_v128_and(wasm_f32x4_add(wasm_f32x4_mul(w, s), fsnap), fmask), fbase);
+		v128_t xr = wasm_f32x4_add(wasm_f32x4_mul(x, s), fsnap);
+		v128_t yr = wasm_f32x4_add(wasm_f32x4_mul(y, s), fsnap);
+		v128_t zr = wasm_f32x4_add(wasm_f32x4_mul(z, s), fsnap);
+		v128_t wr = wasm_f32x4_add(wasm_f32x4_mul(w, s), fsnap);
 
 		// mix x/z and w/y to make 16-bit unpack easier
 		v128_t xzr = wasm_v128_or(wasm_v128_and(xr, wasm_i32x4_splat(0xffff)), wasm_i32x4_shl(zr, 16));

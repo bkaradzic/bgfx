@@ -74,7 +74,7 @@
 
 #ifdef SIMD_WASM
 #define wasmx_swizzle_v32x4(v, i, j, k, l) wasm_v8x16_shuffle(v, v, 4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3, 4 * j, 4 * j + 1, 4 * j + 2, 4 * j + 3, 4 * k, 4 * k + 1, 4 * k + 2, 4 * k + 3, 4 * l, 4 * l + 1, 4 * l + 2, 4 * l + 3)
-#define wasmx_splat_v32x4(v, i) wasmx_swizzle_v32x4(v, i, i, i, i)
+#define wasmx_splat_v32x4(v, i) wasm_v8x16_shuffle(v, v, 4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3, 4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3, 4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3, 4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3)
 #define wasmx_unpacklo_v8x16(a, b) wasm_v8x16_shuffle(a, b, 0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23)
 #define wasmx_unpackhi_v8x16(a, b) wasm_v8x16_shuffle(a, b, 8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31)
 #define wasmx_unpacklo_v16x8(a, b) wasm_v8x16_shuffle(a, b, 0, 1, 16, 17, 2, 3, 18, 19, 4, 5, 20, 21, 6, 7, 22, 23)
