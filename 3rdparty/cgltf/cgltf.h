@@ -362,13 +362,25 @@ typedef struct cgltf_pbr_specular_glossiness
 	cgltf_float glossiness_factor;
 } cgltf_pbr_specular_glossiness;
 
+typedef struct cgltf_clearcoat
+{
+	cgltf_texture_view clearcoat_texture;
+	cgltf_texture_view clearcoat_roughness_texture;
+	cgltf_texture_view clearcoat_normal_texture;
+
+	cgltf_float clearcoat_factor;
+	cgltf_float clearcoat_roughness_factor;
+} cgltf_clearcoat;
+
 typedef struct cgltf_material
 {
 	char* name;
 	cgltf_bool has_pbr_metallic_roughness;
 	cgltf_bool has_pbr_specular_glossiness;
+	cgltf_bool has_clearcoat;
 	cgltf_pbr_metallic_roughness pbr_metallic_roughness;
 	cgltf_pbr_specular_glossiness pbr_specular_glossiness;
+	cgltf_clearcoat clearcoat;
 	cgltf_texture_view normal_texture;
 	cgltf_texture_view occlusion_texture;
 	cgltf_texture_view emissive_texture;
@@ -385,6 +397,12 @@ typedef struct cgltf_morph_target {
 	cgltf_size attributes_count;
 } cgltf_morph_target;
 
+typedef struct cgltf_draco_mesh_compression {
+	cgltf_buffer_view* buffer_view;
+	cgltf_attribute* attributes;
+	cgltf_size attributes_count;
+} cgltf_draco_mesh_compression;
+
 typedef struct cgltf_primitive {
 	cgltf_primitive_type type;
 	cgltf_accessor* indices;
@@ -394,6 +412,8 @@ typedef struct cgltf_primitive {
 	cgltf_morph_target* targets;
 	cgltf_size targets_count;
 	cgltf_extras extras;
+	cgltf_bool has_draco_mesh_compression;
+	cgltf_draco_mesh_compression draco_mesh_compression;
 } cgltf_primitive;
 
 typedef struct cgltf_mesh {
@@ -632,8 +652,8 @@ cgltf_result cgltf_copy_extras_json(const cgltf_data* data, const cgltf_extras* 
  *
  */
 
-#ifdef __INTELLISENSE__
-/* This makes MSVC intellisense work. */
+#if defined(__INTELLISENSE__) || defined(__JETBRAINS_IDE__)
+/* This makes MSVC/CLion intellisense work. */
 #define CGLTF_IMPLEMENTATION
 #endif
 
@@ -1850,8 +1870,6 @@ static cgltf_uint cgltf_component_read_uint(const void* in, cgltf_component_type
 		default:
 			return 0;
 	}
-
-	return 0;
 }
 
 static cgltf_bool cgltf_element_read_uint(const uint8_t* element, cgltf_type type, cgltf_component_type component_type, cgltf_uint* out, cgltf_size element_size)
@@ -2171,6 +2189,32 @@ static int cgltf_parse_json_extras(jsmntok_t const* tokens, int i, const uint8_t
 	return i;
 }
 
+static int cgltf_parse_json_draco_mesh_compression(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_draco_mesh_compression* out_draco_mesh_compression)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "attributes") == 0)
+		{
+			i = cgltf_parse_json_attribute_list(options, tokens, i + 1, json_chunk, &out_draco_mesh_compression->attributes, &out_draco_mesh_compression->attributes_count);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "bufferView") == 0)
+		{
+			++i;
+			out_draco_mesh_compression->buffer_view = CGLTF_PTRINDEX(cgltf_buffer_view, cgltf_json_to_int(tokens + i, json_chunk));
+			++i;
+		}
+	}
+
+	return i;
+}
+
 static int cgltf_parse_json_primitive(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_primitive* out_prim)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
@@ -2228,6 +2272,35 @@ static int cgltf_parse_json_primitive(cgltf_options* options, jsmntok_t const* t
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
 		{
 			i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_prim->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			++i;
+
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+			int extensions_size = tokens[i].size;
+			++i;
+
+			for (int k = 0; k < extensions_size; ++k)
+			{
+				CGLTF_CHECK_KEY(tokens[i]);
+
+				if (cgltf_json_strcmp(tokens+i, json_chunk, "KHR_draco_mesh_compression") == 0)
+				{
+					out_prim->has_draco_mesh_compression = 1;
+					i = cgltf_parse_json_draco_mesh_compression(options, tokens, i + 1, json_chunk, &out_prim->draco_mesh_compression);
+				}
+				else
+				{
+					i = cgltf_skip_json(tokens, i+1);
+				}
+
+				if (i < 0)
+				{
+					return i;
+				}
+			}
 		}
 		else
 		{
@@ -2844,6 +2917,54 @@ static int cgltf_parse_json_pbr_specular_glossiness(jsmntok_t const* tokens, int
 	return i;
 }
 
+static int cgltf_parse_json_clearcoat(jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_clearcoat* out_clearcoat)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens+i, json_chunk, "clearcoatFactor") == 0)
+		{
+			++i;
+			out_clearcoat->clearcoat_factor = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens+i, json_chunk, "clearcoatRoughnessFactor") == 0)
+		{
+			++i;
+			out_clearcoat->clearcoat_roughness_factor = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens+i, json_chunk, "clearcoatTexture") == 0)
+		{
+			i = cgltf_parse_json_texture_view(tokens, i + 1, json_chunk, &out_clearcoat->clearcoat_texture);
+		}
+		else if (cgltf_json_strcmp(tokens+i, json_chunk, "clearcoatRoughnessTexture") == 0)
+		{
+			i = cgltf_parse_json_texture_view(tokens, i + 1, json_chunk, &out_clearcoat->clearcoat_roughness_texture);
+		}
+		else if (cgltf_json_strcmp(tokens+i, json_chunk, "clearcoatNormalTexture") == 0)
+		{
+			i = cgltf_parse_json_texture_view(tokens, i + 1, json_chunk, &out_clearcoat->clearcoat_normal_texture);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i+1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
 static int cgltf_parse_json_image(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_image* out_image)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
@@ -3103,6 +3224,11 @@ static int cgltf_parse_json_material(cgltf_options* options, jsmntok_t const* to
 				{
 					out_material->unlit = 1;
 					i = cgltf_skip_json(tokens, i+1);
+				}
+				else if (cgltf_json_strcmp(tokens+i, json_chunk, "KHR_materials_clearcoat") == 0)
+				{
+					out_material->has_clearcoat = 1;
+					i = cgltf_parse_json_clearcoat(tokens, i + 1, json_chunk, &out_material->clearcoat);
 				}
 				else
 				{
@@ -4583,6 +4709,14 @@ static int cgltf_fixup_pointers(cgltf_data* data)
 					CGLTF_PTRFIXUP_REQ(data->meshes[i].primitives[j].targets[k].attributes[m].data, data->accessors, data->accessors_count);
 				}
 			}
+
+			if (data->meshes[i].primitives[j].has_draco_mesh_compression) {
+				CGLTF_PTRFIXUP_REQ(data->meshes[i].primitives[j].draco_mesh_compression.buffer_view, data->buffer_views, data->buffer_views_count);
+				for (cgltf_size m = 0; m < data->meshes[i].primitives[j].draco_mesh_compression.attributes_count; ++m)
+				{
+					CGLTF_PTRFIXUP_REQ(data->meshes[i].primitives[j].draco_mesh_compression.attributes[m].data, data->accessors, data->accessors_count);
+				}
+			}
 		}
 	}
 
@@ -4629,6 +4763,10 @@ static int cgltf_fixup_pointers(cgltf_data* data)
 
 		CGLTF_PTRFIXUP(data->materials[i].pbr_specular_glossiness.diffuse_texture.texture, data->textures, data->textures_count);
 		CGLTF_PTRFIXUP(data->materials[i].pbr_specular_glossiness.specular_glossiness_texture.texture, data->textures, data->textures_count);
+
+		CGLTF_PTRFIXUP(data->materials[i].clearcoat.clearcoat_texture.texture, data->textures, data->textures_count);
+		CGLTF_PTRFIXUP(data->materials[i].clearcoat.clearcoat_roughness_texture.texture, data->textures, data->textures_count);
+		CGLTF_PTRFIXUP(data->materials[i].clearcoat.clearcoat_normal_texture.texture, data->textures, data->textures_count);
 	}
 
 	for (cgltf_size i = 0; i < data->buffer_views_count; ++i)
