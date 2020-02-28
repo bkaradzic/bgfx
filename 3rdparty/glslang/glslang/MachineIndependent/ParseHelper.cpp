@@ -1672,6 +1672,9 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
     unsigned int semantics = 0, storageClassSemantics = 0;
     unsigned int semantics2 = 0, storageClassSemantics2 = 0;
 
+    const TIntermTyped* arg0 = (*argp)[0]->getAsTyped();
+    const bool isMS = arg0->getBasicType() == EbtSampler && arg0->getType().getSampler().isMultiSample();
+
     // Grab the semantics and storage class semantics from the operands, based on opcode
     switch (callNode.getOp()) {
     case EOpAtomicAdd:
@@ -1704,18 +1707,18 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
     case EOpImageAtomicXor:
     case EOpImageAtomicExchange:
     case EOpImageAtomicStore:
-        storageClassSemantics = (*argp)[4]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        semantics = (*argp)[5]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics = (*argp)[isMS ? 5 : 4]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[isMS ? 6 : 5]->getAsConstantUnion()->getConstArray()[0].getIConst();
         break;
     case EOpImageAtomicLoad:
-        storageClassSemantics = (*argp)[3]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        semantics = (*argp)[4]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics = (*argp)[isMS ? 4 : 3]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[isMS ? 5 : 4]->getAsConstantUnion()->getConstArray()[0].getIConst();
         break;
     case EOpImageAtomicCompSwap:
-        storageClassSemantics = (*argp)[5]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        semantics = (*argp)[6]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        storageClassSemantics2 = (*argp)[7]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        semantics2 = (*argp)[8]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics = (*argp)[isMS ? 6 : 5]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[isMS ? 7 : 6]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics2 = (*argp)[isMS ? 8 : 7]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics2 = (*argp)[isMS ? 9 : 8]->getAsConstantUnion()->getConstArray()[0].getIConst();
         break;
 
     case EOpBarrier:

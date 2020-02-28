@@ -7572,7 +7572,7 @@ const TFunction* HlslParseContext::findFunction(const TSourceLoc& loc, TFunction
 
         if (args->getAsAggregate()) {
             // Handle aggregates: put all args into the new function call
-            for (int arg=0; arg<int(args->getAsAggregate()->getSequence().size()); ++arg) {
+            for (int arg = 0; arg < int(args->getAsAggregate()->getSequence().size()); ++arg) {
                 // TODO: But for constness, we could avoid the new & shallowCopy, and use the pointer directly.
                 TParameter param = { 0, new TType, nullptr };
                 param.type->shallowCopy(args->getAsAggregate()->getSequence()[arg]->getAsTyped()->getType());

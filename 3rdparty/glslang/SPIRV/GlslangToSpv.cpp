@@ -4731,7 +4731,7 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
             // imageAtomicStore has a void return type so base the pointer type on
             // the type of the value operand.
             if (node->getOp() == glslang::EOpImageAtomicStore) {
-                resultTypeId = builder.makePointer(spv::StorageClassImage, builder.getTypeId(operands[2].word));                
+                resultTypeId = builder.makePointer(spv::StorageClassImage, builder.getTypeId(*opIt));
             } else {
                 resultTypeId = builder.makePointer(spv::StorageClassImage, resultType());
             }

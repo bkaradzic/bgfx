@@ -1012,6 +1012,7 @@ TIntermTyped* TIntermediate::fold(TIntermAggregate* aggrNode)
     case EOpMin:
     case EOpMax:
     case EOpMix:
+    case EOpMod:
     case EOpClamp:
     case EOpLessThan:
     case EOpGreaterThan:
@@ -1074,6 +1075,15 @@ TIntermTyped* TIntermediate::fold(TIntermAggregate* aggrNode)
             case EOpPow:
                 newConstArray[comp].setDConst(pow(childConstUnions[0][arg0comp].getDConst(), childConstUnions[1][arg1comp].getDConst()));
                 break;
+            case EOpMod:
+            {
+                double arg0 = childConstUnions[0][arg0comp].getDConst();
+                double arg1 = childConstUnions[1][arg1comp].getDConst();
+                assert(arg1 != 0.0);
+                double result = arg0 - arg1 * floor(arg0 / arg1);
+                newConstArray[comp].setDConst(result);
+                break;
+            }
             case EOpMin:
                 switch(children[0]->getAsTyped()->getBasicType()) {
                 case EbtFloat16:

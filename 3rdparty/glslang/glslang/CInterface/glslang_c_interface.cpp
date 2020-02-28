@@ -42,18 +42,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "glslang/Include/ResourceLimits.h"
 #include "glslang/MachineIndependent/Versions.h"
 
-static_assert(GLSLANG_STAGE_COUNT == EShLangCount, "");
-static_assert(GLSLANG_STAGE_MASK_COUNT == EShLanguageMaskCount, "");
-static_assert(GLSLANG_SOURCE_COUNT == glslang::EShSourceCount, "");
-static_assert(GLSLANG_CLIENT_COUNT == glslang::EShClientCount, "");
-static_assert(GLSLANG_TARGET_COUNT == glslang::EShTargetCount, "");
-static_assert(GLSLANG_TARGET_CLIENT_VERSION_COUNT == glslang::EShTargetClientVersionCount, "");
-static_assert(GLSLANG_TARGET_LANGUAGE_VERSION_COUNT == glslang::EShTargetLanguageVersionCount, "");
-static_assert(GLSLANG_OPT_LEVEL_COUNT == EshOptLevelCount, "");
-static_assert(GLSLANG_TEX_SAMP_TRANS_COUNT == EShTexSampTransCount, "");
-static_assert(GLSLANG_MSG_COUNT == EShMsgCount, "");
-static_assert(GLSLANG_REFLECTION_COUNT == EShReflectionCount, "");
-static_assert(GLSLANG_PROFILE_COUNT == EProfileCount, "");
+static_assert(int(GLSLANG_STAGE_COUNT) == EShLangCount, "");
+static_assert(int(GLSLANG_STAGE_MASK_COUNT) == EShLanguageMaskCount, "");
+static_assert(int(GLSLANG_SOURCE_COUNT) == glslang::EShSourceCount, "");
+static_assert(int(GLSLANG_CLIENT_COUNT) == glslang::EShClientCount, "");
+static_assert(int(GLSLANG_TARGET_COUNT) == glslang::EShTargetCount, "");
+static_assert(int(GLSLANG_TARGET_CLIENT_VERSION_COUNT) == glslang::EShTargetClientVersionCount, "");
+static_assert(int(GLSLANG_TARGET_LANGUAGE_VERSION_COUNT) == glslang::EShTargetLanguageVersionCount, "");
+static_assert(int(GLSLANG_OPT_LEVEL_COUNT) == EshOptLevelCount, "");
+static_assert(int(GLSLANG_TEX_SAMP_TRANS_COUNT) == EShTexSampTransCount, "");
+static_assert(int(GLSLANG_MSG_COUNT) == EShMsgCount, "");
+static_assert(int(GLSLANG_REFLECTION_COUNT) == EShReflectionCount, "");
+static_assert(int(GLSLANG_PROFILE_COUNT) == EProfileCount, "");
 
 typedef struct glslang_shader_s {
     glslang::TShader* shader;
@@ -314,6 +314,8 @@ static EProfile c_shader_profile(glslang_profile_t profile)
         return ECompatibilityProfile;
     case GLSLANG_ES_PROFILE:
         return EEsProfile;
+    case GLSLANG_PROFILE_COUNT: // Should not use this
+        break;
     }
 
     return EProfile();

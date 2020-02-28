@@ -3237,10 +3237,17 @@ bool TIntermediate::promoteUnary(TIntermUnary& node)
 
             return false;
         break;
-
     default:
-        if (operand->getBasicType() != EbtFloat)
+        // HLSL uses this path for initial function signature finding for built-ins
+        // taking a single argument, which generally don't participate in
+        // operator-based type promotion (type conversion will occur later).
+        // For now, scalar argument cases are relying on the setType() call below.
+        if (getSource() == EShSourceHlsl)
+            break;
 
+        // GLSL only allows integer arguments for the cases identified above in the
+        // case statements.
+        if (operand->getBasicType() != EbtFloat)
             return false;
     }
 
