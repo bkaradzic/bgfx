@@ -235,7 +235,7 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ATC
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ATCE
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ATCI
-#if BX_PLATFORM_IOS && !defined(TARGET_OS_MACCATALYST)
+#if BX_PLATFORM_IOS && !TARGET_OS_MACCATALYST
 		{ MTLPixelFormatASTC_4x4_LDR,                   MTLPixelFormatASTC_4x4_sRGB                 }, // ASTC4x4
 		{ MTLPixelFormatASTC_5x5_LDR,                   MTLPixelFormatASTC_5x5_sRGB                 }, // ASTC5x5
 		{ MTLPixelFormatASTC_6x6_LDR,                   MTLPixelFormatASTC_6x6_sRGB                 }, // ASTC6x6
@@ -249,7 +249,7 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC8x5
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC8x6
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC10x5
-#endif // BX_PLATFORM_IOS && !defined(TARGET_OS_MACCATALYST)
+#endif // BX_PLATFORM_IOS && !TARGET_OS_MACCATALYST
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // Unknown
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // R1
 		{ MTLPixelFormatA8Unorm,                        MTLPixelFormatInvalid                       }, // A8
