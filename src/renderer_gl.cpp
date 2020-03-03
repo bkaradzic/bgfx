@@ -264,8 +264,8 @@ namespace bgfx { namespace gl
 		{ GL_RGBA32UI,                                 GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_INT,                 false }, // RGBA32U
 		{ GL_RGBA32F,                                  GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_FLOAT,                        false }, // RGBA32F
 		{ GL_RGB565,                                   GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false }, // R5G6B5
-		{ GL_RGBA4,                                    GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false }, // RGBA4
-		{ GL_RGB5_A1,                                  GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT_1_5_5_5_REV,   false }, // RGB5A1
+		{ GL_RGBA4,                                    GL_ZERO,                                       GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false }, // RGBA4
+		{ GL_RGB5_A1,                                  GL_ZERO,                                       GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_SHORT_1_5_5_5_REV,   false }, // RGB5A1
 		{ GL_RGB10_A2,                                 GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_INT_2_10_10_10_REV,  false }, // RGB10A2
 		{ GL_R11F_G11F_B10F,                           GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_INT_10F_11F_11F_REV, false }, // RG11B10F
 		{ GL_ZERO,                                     GL_ZERO,                                       GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         false }, // UnknownDepth
@@ -2168,6 +2168,8 @@ namespace bgfx { namespace gl
 
 				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 				{
+					setTextureFormat(TextureFormat::RGBA4,  GL_ZERO, GL_ZERO, GL_ZERO);
+					setTextureFormat(TextureFormat::RGB5A1, GL_ZERO, GL_ZERO, GL_ZERO);
 
 					if (!isTextureFormatValid(TextureFormat::R8) )
 					{
