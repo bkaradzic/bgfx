@@ -10,6 +10,10 @@
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
 
+#if BX_PLATFORM_EMSCRIPTEN
+#	include <emscripten/html5.h>
+#endif
+
 namespace bgfx { namespace gl
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -222,46 +226,46 @@ namespace bgfx { namespace gl
 		{ GL_ZERO,                                     GL_ZERO,                                       GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         false }, // R1
 		{ GL_ALPHA,                                    GL_ZERO,                                       GL_ALPHA,                                    GL_ALPHA,                                    GL_UNSIGNED_BYTE,                false }, // A8
 		{ GL_R8,                                       GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_UNSIGNED_BYTE,                false }, // R8
-		{ GL_R8I,                                      GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_BYTE,                         false }, // R8I
-		{ GL_R8UI,                                     GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_UNSIGNED_BYTE,                false }, // R8U
+		{ GL_R8I,                                      GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_BYTE,                         false }, // R8I
+		{ GL_R8UI,                                     GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_UNSIGNED_BYTE,                false }, // R8U
 		{ GL_R8_SNORM,                                 GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_BYTE,                         false }, // R8S
 		{ GL_R16,                                      GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_UNSIGNED_SHORT,               false }, // R16
-		{ GL_R16I,                                     GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_SHORT,                        false }, // R16I
-		{ GL_R16UI,                                    GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_UNSIGNED_SHORT,               false }, // R16U
+		{ GL_R16I,                                     GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_SHORT,                        false }, // R16I
+		{ GL_R16UI,                                    GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_UNSIGNED_SHORT,               false }, // R16U
 		{ GL_R16F,                                     GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_HALF_FLOAT,                   false }, // R16F
 		{ GL_R16_SNORM,                                GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_SHORT,                        false }, // R16S
-		{ GL_R32I,                                     GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_INT,                          false }, // R32I
-		{ GL_R32UI,                                    GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_UNSIGNED_INT,                 false }, // R32U
+		{ GL_R32I,                                     GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_INT,                          false }, // R32I
+		{ GL_R32UI,                                    GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_UNSIGNED_INT,                 false }, // R32U
 		{ GL_R32F,                                     GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_FLOAT,                        false }, // R32F
 		{ GL_RG8,                                      GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_UNSIGNED_BYTE,                false }, // RG8
-		{ GL_RG8I,                                     GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_BYTE,                         false }, // RG8I
-		{ GL_RG8UI,                                    GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_UNSIGNED_BYTE,                false }, // RG8U
+		{ GL_RG8I,                                     GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_BYTE,                         false }, // RG8I
+		{ GL_RG8UI,                                    GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_UNSIGNED_BYTE,                false }, // RG8U
 		{ GL_RG8_SNORM,                                GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_BYTE,                         false }, // RG8S
 		{ GL_RG16,                                     GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_UNSIGNED_SHORT,               false }, // RG16
-		{ GL_RG16I,                                    GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_SHORT,                        false }, // RG16I
-		{ GL_RG16UI,                                   GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_UNSIGNED_SHORT,               false }, // RG16U
+		{ GL_RG16I,                                    GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_SHORT,                        false }, // RG16I
+		{ GL_RG16UI,                                   GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_UNSIGNED_SHORT,               false }, // RG16U
 		{ GL_RG16F,                                    GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_FLOAT,                        false }, // RG16F
 		{ GL_RG16_SNORM,                               GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_SHORT,                        false }, // RG16S
-		{ GL_RG32I,                                    GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_INT,                          false }, // RG32I
-		{ GL_RG32UI,                                   GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_UNSIGNED_INT,                 false }, // RG32U
+		{ GL_RG32I,                                    GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_INT,                          false }, // RG32I
+		{ GL_RG32UI,                                   GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_UNSIGNED_INT,                 false }, // RG32U
 		{ GL_RG32F,                                    GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_FLOAT,                        false }, // RG32F
 		{ GL_RGB8,                                     GL_SRGB8,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_BYTE,                false }, // RGB8
-		{ GL_RGB8I,                                    GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_BYTE,                         false }, // RGB8I
-		{ GL_RGB8UI,                                   GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_BYTE,                false }, // RGB8U
+		{ GL_RGB8I,                                    GL_ZERO,                                       GL_RGB_INTEGER,                              GL_RGB_INTEGER,                              GL_BYTE,                         false }, // RGB8I
+		{ GL_RGB8UI,                                   GL_ZERO,                                       GL_RGB_INTEGER,                              GL_RGB_INTEGER,                              GL_UNSIGNED_BYTE,                false }, // RGB8U
 		{ GL_RGB8_SNORM,                               GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_BYTE,                         false }, // RGB8S
 		{ GL_RGB9_E5,                                  GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_INT_5_9_9_9_REV,     false }, // RGB9E5F
 		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                               GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_BYTE,                false }, // BGRA8
 		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                               GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA8
-		{ GL_RGBA8I,                                   GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_BYTE,                         false }, // RGBA8I
-		{ GL_RGBA8UI,                                  GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA8U
+		{ GL_RGBA8I,                                   GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_BYTE,                         false }, // RGBA8I
+		{ GL_RGBA8UI,                                  GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_BYTE,                false }, // RGBA8U
 		{ GL_RGBA8_SNORM,                              GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_BYTE,                         false }, // RGBA8S
 		{ GL_RGBA16,                                   GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT,               false }, // RGBA16
-		{ GL_RGBA16I,                                  GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_SHORT,                        false }, // RGBA16I
-		{ GL_RGBA16UI,                                 GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT,               false }, // RGBA16U
+		{ GL_RGBA16I,                                  GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_SHORT,                        false }, // RGBA16I
+		{ GL_RGBA16UI,                                 GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_SHORT,               false }, // RGBA16U
 		{ GL_RGBA16F,                                  GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_HALF_FLOAT,                   false }, // RGBA16F
 		{ GL_RGBA16_SNORM,                             GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_SHORT,                        false }, // RGBA16S
-		{ GL_RGBA32I,                                  GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_INT,                          false }, // RGBA32I
-		{ GL_RGBA32UI,                                 GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_INT,                 false }, // RGBA32U
+		{ GL_RGBA32I,                                  GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_INT,                          false }, // RGBA32I
+		{ GL_RGBA32UI,                                 GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_INT,                 false }, // RGBA32U
 		{ GL_RGBA32F,                                  GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_FLOAT,                        false }, // RGBA32F
 		{ GL_RGB565,                                   GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false }, // R5G6B5
 		{ GL_RGBA4,                                    GL_ZERO,                                       GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false }, // RGBA4
@@ -1568,6 +1572,107 @@ namespace bgfx { namespace gl
 		return err;
 	}
 
+#if BX_PLATFORM_EMSCRIPTEN
+	static bool isTextureFormatValidPerSpec(
+		  TextureFormat::Enum _format
+		, bool _srgb = false
+		, bool _mipAutogen = false
+		, bool _array = false
+		, GLsizei _dim = 16
+		)
+	{
+		// Avoid creating test textures for WebGL, that causes error noise in the browser console; instead examine the supported texture formats from the spec.
+		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
+		EmscriptenWebGLContextAttributes attrs;
+		emscripten_webgl_get_context_attributes(ctx, &attrs);
+		int glesVersion = attrs.majorVersion + 1;
+		switch(_format)
+		{
+			case TextureFormat::A8:
+			case TextureFormat::R8: // Luminance
+			case TextureFormat::R5G6B5:
+			case TextureFormat::RGBA4:
+			case TextureFormat::RGB5A1:
+				return !_srgb; // GLES2 formats without sRGB.
+			case TextureFormat::D16:
+				return !_srgb && !_mipAutogen; // GLES2 formats without sRGB, depth textures do not support mipmaps.
+			case TextureFormat::R16F:
+			case TextureFormat::R32F:
+			case TextureFormat::RG8:
+			case TextureFormat::RG16F:
+			case TextureFormat::RG32F:
+			case TextureFormat::RGB10A2:
+			case TextureFormat::RG11B10F:
+				return !_srgb && glesVersion >= 3; // GLES3 formats without sRGB
+			case TextureFormat::R8I:
+			case TextureFormat::R8U:
+			case TextureFormat::R16I:
+			case TextureFormat::R16U:
+			case TextureFormat::R32I:
+			case TextureFormat::R32U:
+			case TextureFormat::RG8I:
+			case TextureFormat::RG8U:
+			case TextureFormat::RG16I:
+			case TextureFormat::RG16U:
+			case TextureFormat::RG32I:
+			case TextureFormat::RG32U:
+			case TextureFormat::RGB8I:
+			case TextureFormat::RGB8U:
+			case TextureFormat::RGBA8I:
+			case TextureFormat::RGBA8U:
+			case TextureFormat::RGBA16I:
+			case TextureFormat::RGBA16U:
+			case TextureFormat::RGBA32I:
+			case TextureFormat::RGBA32U:
+			case TextureFormat::D32F:
+			case TextureFormat::R8S:
+			case TextureFormat::RG8S:
+			case TextureFormat::RGB8S:
+			case TextureFormat::RGBA8S:
+			case TextureFormat::RGB9E5F:
+				return !_srgb && glesVersion >= 3 && !_mipAutogen; // GLES3 formats without sRGB that are not texture filterable or color renderable.
+			case TextureFormat::D24:
+			case TextureFormat::D24S8:
+			case TextureFormat::D32:
+				return !_srgb && !_mipAutogen && (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture")); // GLES3 formats without sRGB, depth textures do not support mipmaps.
+			case TextureFormat::D16F:
+			case TextureFormat::D24F:
+				return !_srgb && !_mipAutogen && glesVersion >= 3; // GLES3 depth formats without sRGB, depth textures do not support mipmaps.
+			case TextureFormat::RGBA16F:
+			case TextureFormat::RGBA32F:
+				return !_srgb && (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "OES_texture_half_float")); // GLES3 formats without sRGB
+			case TextureFormat::RGB8:
+			case TextureFormat::RGBA8:
+				return !_srgb || glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "EXT_sRGB"); // sRGB formats
+			case TextureFormat::BC1:
+			case TextureFormat::BC2:
+			case TextureFormat::BC3:
+				return emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_s3tc")
+					&& (!_srgb || emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_s3tc_srgb"));
+			case TextureFormat::PTC12:
+			case TextureFormat::PTC14:
+			case TextureFormat::PTC12A:
+			case TextureFormat::PTC14A:
+				return !_srgb && emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_pvrtc");
+			case TextureFormat::ETC1:
+				return !_srgb && emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_etc1");
+			case TextureFormat::ETC2:
+			case TextureFormat::ETC2A:
+			case TextureFormat::ETC2A1:
+				return emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_etc");
+			case TextureFormat::ASTC4x4:
+			case TextureFormat::ASTC5x5:
+			case TextureFormat::ASTC6x6:
+			case TextureFormat::ASTC8x5:
+			case TextureFormat::ASTC8x6:
+			case TextureFormat::ASTC10x5:
+				return emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_astc");
+			default:
+				return false;
+		}
+	}
+#endif
+
 	static bool isTextureFormatValid(
 		  TextureFormat::Enum _format
 		, bool _srgb = false
@@ -1576,6 +1681,12 @@ namespace bgfx { namespace gl
 		, GLsizei _dim = 16
 		)
 	{
+#if BX_PLATFORM_EMSCRIPTEN
+		// On web platform read the validity of textures based on the available GL context and extensions
+		// to avoid developer unfriendly console error noise that would come from probing.
+		return isTextureFormatValidPerSpec(_format, _srgb, _mipAutogen, _array, _dim);
+#else
+		// On other platforms probe the supported textures.
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
 		GLenum internalFmt = _srgb
 			? tfi.m_internalFmtSrgb
@@ -1631,6 +1742,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glDeleteTextures(1, &id) );
 
 		return 0 == err;
+#endif
 	}
 
 	static bool isImageFormatValid(TextureFormat::Enum _format, GLsizei _dim = 16)
@@ -1667,6 +1779,91 @@ namespace bgfx { namespace gl
 		return 0 == err;
 	}
 
+#if BX_PLATFORM_EMSCRIPTEN
+	static bool isFramebufferFormatValidPerSpec(
+		  TextureFormat::Enum _format
+		, bool _srgb = false
+		, bool _writeOnly = false
+		, GLsizei _dim = 16
+		)
+	{
+		// Avoid creating test textures for WebGL, that causes error noise in the browser console; instead examine the supported texture formats from the spec.
+		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
+		EmscriptenWebGLContextAttributes attrs;
+		emscripten_webgl_get_context_attributes(ctx, &attrs);
+		int glesVersion = attrs.majorVersion + 1;
+		switch(_format)
+		{
+			// GLES2 textures
+			case TextureFormat::R5G6B5:
+			case TextureFormat::RGBA4:
+			case TextureFormat::RGB5A1:
+			case TextureFormat::D16:
+				return !_srgb;
+			// GLES2 renderbuffers not a texture in GLES3
+			case TextureFormat::D0S8:
+				return !_srgb && _writeOnly;
+			// GLES2 textures that are not renderbuffers
+			case TextureFormat::RGB8:
+			case TextureFormat::RGBA8:
+				return !_srgb && (!_writeOnly || glesVersion >= 3);
+			// GLES3 EXT_color_buffer_float renderbuffer formats
+			case TextureFormat::R16F:
+			case TextureFormat::RG16F:
+			case TextureFormat::R32F:
+			case TextureFormat::RG32F:
+			case TextureFormat::RG11B10F:
+				if (_writeOnly)
+					return emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_float");
+				else
+					return !_srgb && glesVersion >= 3;
+			// GLES2 float extension:
+			case TextureFormat::RGBA16F:
+				if (_writeOnly && emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_half_float"))
+					return true;
+			case TextureFormat::RGBA32F:
+				if (_writeOnly)
+					return emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_float") || emscripten_webgl_enable_extension(ctx, "WEBGL_color_buffer_float");
+				return !_srgb && (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "OES_texture_half_float")); // GLES3 formats without sRGB
+			case TextureFormat::D24:
+			case TextureFormat::D24S8:
+				return !_srgb && (glesVersion >= 3 || (!_writeOnly && emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture"))); // GLES3 formats without sRGB, depth textures do not support mipmaps.
+			case TextureFormat::D32:
+				return !_srgb && !_writeOnly && (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture")); // GLES3 formats without sRGB, depth textures do not support mipmaps.
+			// GLES3 textures
+			case TextureFormat::R8:
+			case TextureFormat::RG8:
+			case TextureFormat::R8I:
+			case TextureFormat::R8U:
+			case TextureFormat::R16I:
+			case TextureFormat::R16U:
+			case TextureFormat::R32I:
+			case TextureFormat::R32U:
+			case TextureFormat::RG8I:
+			case TextureFormat::RG8U:
+			case TextureFormat::RGBA8I:
+			case TextureFormat::RGBA8U:
+			case TextureFormat::RG16I:
+			case TextureFormat::RG16U:
+			case TextureFormat::RG32I:
+			case TextureFormat::RG32U:
+			case TextureFormat::RGBA16I:
+			case TextureFormat::RGBA16U:
+			case TextureFormat::RGBA32I:
+			case TextureFormat::RGBA32U:
+			case TextureFormat::RGB10A2:
+			case TextureFormat::D16F:
+			case TextureFormat::D24F:
+			case TextureFormat::D32F:
+				return !_srgb && glesVersion >= 3;
+			case TextureFormat::BGRA8:
+				return !_srgb && _writeOnly && glesVersion >= 3;
+			default:
+				return false;
+		}
+	}
+#endif
+
 	static bool isFramebufferFormatValid(
 		  TextureFormat::Enum _format
 		, bool _srgb = false
@@ -1674,6 +1871,12 @@ namespace bgfx { namespace gl
 		, GLsizei _dim = 16
 		)
 	{
+#if BX_PLATFORM_EMSCRIPTEN
+		// On web platform read the validity of framebuffers based on the available GL context and extensions
+		// to avoid developer unfriendly console error noise that would come from probing.
+		return isFramebufferFormatValidPerSpec(_format, _srgb, _writeOnly, _dim);
+#else
+		// On other platforms probe the supported textures.
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
 		GLenum internalFmt = _srgb
 			? tfi.m_internalFmtSrgb
@@ -1753,6 +1956,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glDeleteTextures(1, &id) );
 
 		return GL_FRAMEBUFFER_COMPLETE == err;
+#endif
 	}
 
 	static void getFilters(uint32_t _flags, bool _hasMips, GLenum& _magFilter, GLenum& _minFilter)
@@ -2130,9 +2334,9 @@ namespace bgfx { namespace gl
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 				{
-					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
+					if (glVersion < 30)
 					{
-						setTextureFormat(TextureFormat::RGBA16F, GL_RGBA, GL_RGBA, GL_HALF_FLOAT);
+						setTextureFormat(TextureFormat::RGBA16F, GL_RGBA, GL_RGBA, GL_HALF_FLOAT_OES);
 						setTextureFormat(TextureFormat::RGBA32F, GL_RGBA, GL_RGBA, GL_FLOAT);
 						// internalFormat and format must match:
 						// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexImage2D.xml
@@ -2163,6 +2367,12 @@ namespace bgfx { namespace gl
 							s_textureFilter[TextureFormat::RG32F]   = linear32F;
 							s_textureFilter[TextureFormat::RGBA32F] = linear32F;
 						}
+					}
+					else
+					{
+						setTextureFormat(TextureFormat::R16F, GL_R16F, GL_RED, 0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
+						setTextureFormat(TextureFormat::RG16F, GL_RG16F, GL_RG, 0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
+						setTextureFormat(TextureFormat::RGBA16F, GL_RGBA16F, GL_RGBA, 0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
 					}
 
 					if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
@@ -2240,14 +2450,23 @@ namespace bgfx { namespace gl
 
 				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 				{
-					setTextureFormat(TextureFormat::RGBA4,  GL_ZERO, GL_ZERO, GL_ZERO);
-					setTextureFormat(TextureFormat::RGB5A1, GL_ZERO, GL_ZERO, GL_ZERO);
+					// OpenGL ES does not have reversed BGRA4 and BGR5A1 support.
+					setTextureFormat(TextureFormat::RGBA4,  GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4);
+					setTextureFormat(TextureFormat::RGB5A1, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1);
+					setTextureFormat(TextureFormat::R5G6B5, GL_RGB, GL_RGB, GL_UNSIGNED_SHORT_5_6_5);
 
-					if (!isTextureFormatValid(TextureFormat::R8) )
+					if (glVersion < 30)
 					{
-						// GL core has to use GL_R8 Issue#208, GLES2 has to use GL_LUMINANCE issue#226
-						s_textureFormat[TextureFormat::R8].m_internalFmt = GL_LUMINANCE;
-						s_textureFormat[TextureFormat::R8].m_fmt         = GL_LUMINANCE;
+						// OpenGL ES 2.0 uses unsized internal formats.
+						s_textureFormat[TextureFormat::RGB8].m_internalFmt = GL_RGB;
+
+						// OpenGL ES 2.0 does not have R8 texture format, only L8. Open GL ES 2.0 extension https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_rg.txt
+						// adds support for R8 to GLES 2.0 core contexts. For those use L8 instead.
+						if (!s_extension[Extension::EXT_texture_rg].m_supported)
+						{
+							s_textureFormat[TextureFormat::R8].m_internalFmt = GL_LUMINANCE;
+							s_textureFormat[TextureFormat::R8].m_fmt         = GL_LUMINANCE;
+						}
 					}
 				}
 
