@@ -711,7 +711,7 @@ namespace bgfx
 			float m_v;
 		};
 
-		static uint32_t palette[] =
+		static uint32_t paletteSrgb[] =
 		{
 			0x0,        // Black
 			0xffa46534, // Blue
@@ -730,7 +730,28 @@ namespace bgfx
 			0xff4fe9fc, // Yellow
 			0xffeceeee, // White
 		};
-		BX_STATIC_ASSERT(BX_COUNTOF(palette) == 16);
+		BX_STATIC_ASSERT(BX_COUNTOF(paletteSrgb) == 16);
+
+		static uint32_t paletteLinear[] =
+		{
+			0x0,        // Black
+			0xff5e2108, // Blue
+			0xff005213, // Green
+			0xff525000, // Cyan
+			0xff000099, // Red
+			0xff32142d, // Magenta
+			0xff00598c, // Brown
+			0xff9fada6, // Light Gray
+			0xff161817, // Dark Gray
+			0xff9f582a, // Light Blue
+			0xff08c140, // Light Green
+			0xffc1c108, // Light Cyan
+			0xff0505dc, // Light Red
+			0xff63366a, // Light Magenta
+			0xff13cff8, // Yellow
+			0xffd5dada  // White
+		};
+		BX_STATIC_ASSERT(BX_COUNTOF(paletteLinear) == 16);
 
 		uint32_t yy = 0;
 		uint32_t xx = 0;
@@ -744,6 +765,11 @@ namespace bgfx
 		const float fontHeight = (_mem.m_small ? 8.0f : 16.0f);
 
 		_renderCtx->blitSetup(_blitter);
+
+		uint32_t *palette = paletteSrgb;
+		if (s_ctx->m_init.resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) {
+			palette = paletteLinear;
+		}
 
 		for (;yy < _mem.m_height;)
 		{
