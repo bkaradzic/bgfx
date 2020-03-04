@@ -4155,9 +4155,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				return BGFX_INVALID_HANDLE;
 			}
 
-			if (imageContainer.m_srgb) {
-				_flags |= BGFX_TEXTURE_SRGB;
-			}
+			_flags |= imageContainer.m_srgb ? BGFX_TEXTURE_SRGB : 0;
 
 			TextureHandle handle = { m_textureHandle.alloc() };
 			BX_WARN(isValid(handle), "Failed to allocate texture handle.");
