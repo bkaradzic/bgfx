@@ -355,10 +355,10 @@ ImDrawListSharedData::ImDrawListSharedData()
     InitialFlags = ImDrawListFlags_None;
 
     // Lookup tables
-    for (int i = 0; i < IM_ARRAYSIZE(CircleVtx12); i++)
+    for (int i = 0; i < IM_ARRAYSIZE(ArcFastVtx); i++)
     {
-        const float a = ((float)i * 2 * IM_PI) / (float)IM_ARRAYSIZE(CircleVtx12);
-        CircleVtx12[i] = ImVec2(ImCos(a), ImSin(a));
+        const float a = ((float)i * 2 * IM_PI) / (float)IM_ARRAYSIZE(ArcFastVtx);
+        ArcFastVtx[i] = ImVec2(ImCos(a), ImSin(a));
     }
     memset(CircleSegmentCounts, 0, sizeof(CircleSegmentCounts)); // This will be set by SetCircleSegmentMaxError()
 }
@@ -898,10 +898,18 @@ void ImDrawList::PathArcToFast(const ImVec2& center, float radius, int a_min_of_
         _Path.push_back(center);
         return;
     }
+
+    // For legacy reason the PathArcToFast() always takes angles where 2*PI is represented by 12,
+    // but it is possible to set IM_DRAWLIST_ARCFAST_TESSELATION_MULTIPLIER to a higher value. This should compile to a no-op otherwise.
+#if IM_DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER != 1
+    a_min_of_12 *= IM_DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER;
+    a_max_of_12 *= IM_DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER;
+#endif
+
     _Path.reserve(_Path.Size + (a_max_of_12 - a_min_of_12 + 1));
     for (int a = a_min_of_12; a <= a_max_of_12; a++)
     {
-        const ImVec2& c = _Data->CircleVtx12[a % IM_ARRAYSIZE(_Data->CircleVtx12)];
+        const ImVec2& c = _Data->ArcFastVtx[a % IM_ARRAYSIZE(_Data->ArcFastVtx)];
         _Path.push_back(ImVec2(center.x + c.x * radius, center.y + c.y * radius));
     }
 }
@@ -2550,8 +2558,7 @@ void ImFontGlyphRangesBuilder::AddText(const char* text, const char* text_end)
         text += c_len;
         if (c_len == 0)
             break;
-        if (c <= IM_UNICODE_CODEPOINT_MAX)
-            AddChar((ImWchar)c);
+        AddChar((ImWchar)c);
     }
 }
 
@@ -2595,6 +2602,7 @@ ImFont::ImFont()
     Scale = 1.0f;
     Ascent = Descent = 0.0f;
     MetricsTotalSurface = 0;
+    memset(Used4kPagesMap, 0, sizeof(Used4kPagesMap));
 }
 
 ImFont::~ImFont()
@@ -2627,12 +2635,17 @@ void ImFont::BuildLookupTable()
     IndexAdvanceX.clear();
     IndexLookup.clear();
     DirtyLookupTables = false;
+    memset(Used4kPagesMap, 0, sizeof(Used4kPagesMap));
     GrowIndex(max_codepoint + 1);
     for (int i = 0; i < Glyphs.Size; i++)
     {
         int codepoint = (int)Glyphs[i].Codepoint;
         IndexAdvanceX[codepoint] = Glyphs[i].AdvanceX;
         IndexLookup[codepoint] = (ImWchar)i;
+
+        // Mark 4K page as used
+        const int page_n = codepoint / 4096;
+        Used4kPagesMap[page_n >> 3] |= 1 << (page_n & 7);
     }
 
     // Create a glyph to handle TAB
@@ -2659,6 +2672,19 @@ void ImFont::BuildLookupTable()
     for (int i = 0; i < max_codepoint + 1; i++)
         if (IndexAdvanceX[i] < 0.0f)
             IndexAdvanceX[i] = FallbackAdvanceX;
+}
+
+// API is designed this way to avoid exposing the 4K page size
+// e.g. use with IsGlyphRangeUnused(0, 255)
+bool ImFont::IsGlyphRangeUnused(unsigned int c_begin, unsigned int c_last)
+{
+    unsigned int page_begin = (c_begin / 4096);
+    unsigned int page_last = (c_last / 4096);
+    for (unsigned int page_n = page_begin; page_n <= page_last; page_n++)
+        if ((page_n >> 3) < sizeof(Used4kPagesMap))
+            if (Used4kPagesMap[page_n >> 3] & (1 << (page_n & 7)))
+                return false;
+    return true;
 }
 
 void ImFont::SetGlyphVisible(ImWchar c, bool visible)
@@ -2725,7 +2751,7 @@ void ImFont::AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst)
 
 const ImFontGlyph* ImFont::FindGlyph(ImWchar c) const
 {
-    if (c >= IndexLookup.Size)
+    if (c >= (size_t)IndexLookup.Size)
         return FallbackGlyph;
     const ImWchar i = IndexLookup.Data[c];
     if (i == (ImWchar)-1)
@@ -2735,7 +2761,7 @@ const ImFontGlyph* ImFont::FindGlyph(ImWchar c) const
 
 const ImFontGlyph* ImFont::FindGlyphNoFallback(ImWchar c) const
 {
-    if (c >= IndexLookup.Size)
+    if (c >= (size_t)IndexLookup.Size)
         return NULL;
     const ImWchar i = IndexLookup.Data[c];
     if (i == (ImWchar)-1)
