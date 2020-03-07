@@ -49,6 +49,7 @@ DOCUMENTATION
 CODE
 (search for "[SECTION]" in the code to find them)
 
+// [SECTION] INCLUDES
 // [SECTION] FORWARD DECLARATIONS
 // [SECTION] CONTEXT AND MEMORY ALLOCATORS
 // [SECTION] USER FACING STRUCTURES (ImGuiStyle, ImGuiIO)
@@ -788,6 +789,10 @@ CODE
 
 */
 
+//-------------------------------------------------------------------------
+// [SECTION] INCLUDES
+//-------------------------------------------------------------------------
+
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -800,6 +805,7 @@ CODE
 #endif
 #include "imgui_internal.h"
 
+// System includes
 #include <ctype.h>      // toupper
 #include <stdio.h>      // vsnprintf, sscanf, printf
 #if defined(_MSC_VER) && _MSC_VER <= 1500 // MSVC 2008 or earlier
@@ -808,10 +814,33 @@ CODE
 #include <stdint.h>     // intptr_t
 #endif
 
-// Debug options
-#define IMGUI_DEBUG_NAV_SCORING     0   // Display navigation scoring preview when hovering items. Display last moving direction matches when holding CTRL
-#define IMGUI_DEBUG_NAV_RECTS       0   // Display the reference navigation rectangle for each window
-#define IMGUI_DEBUG_INI_SETTINGS    0   // Save additional comments in .ini file (particularly helps for Docking, but makes saving slower)
+// [Windows] OS specific includes (optional)
+#if defined(_WIN32) && defined(IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS) && defined(IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS) && defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
+#define IMGUI_DISABLE_WIN32_FUNCTIONS
+#endif
+#if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef __MINGW32__
+#include <Windows.h>        // _wfopen, OpenClipboard
+#else
+#include <windows.h>
+#endif
+#include <stringapiset.h>   // MultiByteToWideChar, WideCharToMultiByte
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP) // UWP doesn't have all Win32 functions
+#define IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS
+#define IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS
+#endif
+#endif
+
+// [Apple] OS specific includes
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
 
 // Visual Studio warnings
 #ifdef _MSC_VER
@@ -853,6 +882,11 @@ CODE
 #pragma GCC diagnostic ignored "-Wstrict-overflow"          // warning: assuming signed overflow does not occur when assuming that (X - c) > X is always false
 #pragma GCC diagnostic ignored "-Wclass-memaccess"          // [__GNUC__ >= 8] warning: 'memset/memcpy' clearing/writing an object of type 'xxxx' with no trivial copy-assignment; use assignment or value-initialization instead
 #endif
+
+// Debug options
+#define IMGUI_DEBUG_NAV_SCORING     0   // Display navigation scoring preview when hovering items. Display last moving direction matches when holding CTRL
+#define IMGUI_DEBUG_NAV_RECTS       0   // Display the reference navigation rectangle for each window
+#define IMGUI_DEBUG_INI_SETTINGS    0   // Save additional comments in .ini file (particularly helps for Docking, but makes saving slower)
 
 // When using CTRL+TAB (or Gamepad Square+L/R) we delay the visual a little in order to reduce visual noise doing a fast switch.
 static const float NAV_WINDOWING_HIGHLIGHT_DELAY            = 0.20f;    // Time before the highlight and screen dimming starts fading in
@@ -1512,18 +1546,6 @@ ImU32 ImHashStr(const char* data_p, size_t data_size, ImU32 seed)
 // Default file functions
 #ifndef IMGUI_DISABLE_DEFAULT_FILE_FUNCTIONS
 
-#if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS) && !defined(__CYGWIN__) && !defined(__GNUC__)
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#define NOMINMAX
-#ifndef __MINGW32__
-#include <Windows.h>
-#else
-#include <windows.h>
-#endif
-#endif
-
 ImFileHandle ImFileOpen(const char* filename, const char* mode)
 {
 #if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS) && !defined(__CYGWIN__) && !defined(__GNUC__)
@@ -1535,7 +1557,7 @@ ImFileHandle ImFileOpen(const char* filename, const char* mode)
     buf.resize(filename_wsize + mode_wsize);
     ::MultiByteToWideChar(CP_UTF8, 0, filename, -1, (wchar_t*)&buf[0], filename_wsize);
     ::MultiByteToWideChar(CP_UTF8, 0, mode, -1, (wchar_t*)&buf[filename_wsize], mode_wsize);
-    return _wfopen((const wchar_t*)&buf[0], (const wchar_t*)&buf[filename_wsize]);
+    return ::_wfopen((const wchar_t*)&buf[0], (const wchar_t*)&buf[filename_wsize]);
 #else
     return fopen(filename, mode);
 #endif
@@ -1550,6 +1572,7 @@ ImU64   ImFileWrite(const void* data, ImU64 sz, ImU64 count, ImFileHandle f)    
 
 // Helper: Load file content into memory
 // Memory allocated with IM_ALLOC(), must be freed by user using IM_FREE() == ImGui::MemFree()
+// This can't really be used with "rt" because fseek size won't match read size.
 void*   ImFileLoadToMemory(const char* filename, const char* mode, size_t* out_file_size, int padding_bytes)
 {
     IM_ASSERT(filename && mode);
@@ -9777,24 +9800,6 @@ static void WindowSettingsHandler_WriteAll(ImGuiContext* ctx, ImGuiSettingsHandl
 //-----------------------------------------------------------------------------
 // [SECTION] PLATFORM DEPENDENT HELPERS
 //-----------------------------------------------------------------------------
-
-#if defined(_WIN32) && !defined(_WINDOWS_) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS) && (!defined(IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS) || !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS))
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef __MINGW32__
-#include <Windows.h>
-#else
-#include <windows.h>
-#endif
-#include <stringapiset.h>
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP) // UWP doesn't have Win32 functions
-#define IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS
-#define IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS
-#endif
-#elif defined(__APPLE__)
-#include <TargetConditionals.h>
-#endif
 
 #if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS)
 
