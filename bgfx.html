@@ -2303,11 +2303,15 @@ creating windows.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv4N4bgfx7discardEv">
-<span id="_CPPv3N4bgfx7discardEv"></span><span id="_CPPv2N4bgfx7discardEv"></span><span id="bgfx::discard"></span><span class="target" id="namespacebgfx_1a0c43481c7f94a51e14842b3971e21c54"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">discard</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7discardEv" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx7discardE7uint8_t">
+<span id="_CPPv3N4bgfx7discardE7uint8_t"></span><span id="_CPPv2N4bgfx7discardE7uint8_t"></span><span id="bgfx::discard__uint8_t"></span><span class="target" id="namespacebgfx_1aa0ab8d198672917b2f7e92c39589ea57"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">discard</code><span class="sig-paren">(</span>uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7discardE7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Discard all previously set state for draw or compute call. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_discard</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Draw/compute states to discard.</p></li>
+</ul>
 </dd>
 </dl>
 </p>
@@ -2465,7 +2469,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <span id="_CPPv3N4bgfx11setViewRectE6ViewId8uint16_t8uint16_tN15BackbufferRatio4EnumE"></span><span id="_CPPv2N4bgfx11setViewRectE6ViewId8uint16_t8uint16_tN15BackbufferRatio4EnumE"></span><span id="bgfx::setViewRect__ViewId.uint16_t.uint16_t.BackbufferRatio::Enum"></span><span class="target" id="namespacebgfx_1a97266f78aaaea47de5245eae918e49f8"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setViewRect</code><span class="sig-paren">(</span>ViewId <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, BackbufferRatio::Enum <em>_ratio</em><span class="sig-paren">)</span><br /></dt>
 <dd><p>Set view rectangle. Draw primitive outside view will be clipped. </p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_set_view_rect_auto</span></code>. </p>
+<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_set_view_rect_ratio</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_id</span></code>: View id. </p></li>
@@ -3433,11 +3437,15 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv4N4bgfx7Encoder7discardEv">
-<span id="_CPPv3N4bgfx7Encoder7discardEv"></span><span id="_CPPv2N4bgfx7Encoder7discardEv"></span><span id="bgfx::Encoder::discard"></span><span class="target" id="structbgfx_1_1_encoder_1adc633c7153e2da26c9449b2f37b3d60f"></span>void <code class="sig-name descname">discard</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder7discardEv" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx7Encoder7discardE7uint8_t">
+<span id="_CPPv3N4bgfx7Encoder7discardE7uint8_t"></span><span id="_CPPv2N4bgfx7Encoder7discardE7uint8_t"></span><span id="bgfx::Encoder::discard__uint8_t"></span><span class="target" id="structbgfx_1_1_encoder_1ace2445411468c04fe35c617ade2a98b7"></span>void <code class="sig-name descname">discard</code><span class="sig-paren">(</span>uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder7discardE7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Discard all previously set state for draw or compute call. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_discard</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Draw/compute states to discard.</p></li>
+</ul>
 </dd>
 </dl>
 </p>
