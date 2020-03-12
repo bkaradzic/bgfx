@@ -77,11 +77,6 @@ project ("example-common")
 		}
 	end
 
-	configuration { "linux-steamlink" }
-		defines {
-			"EGL_API_FB",
-		}
-
 	configuration { "osx or ios* or tvos*" }
 		files {
 			path.join(BGFX_DIR, "examples/common/**.mm"),
