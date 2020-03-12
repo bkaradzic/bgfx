@@ -36,7 +36,6 @@
 		|| BX_PLATFORM_LINUX            \
 		|| BX_PLATFORM_OSX              \
 		|| BX_PLATFORM_RPI              \
-		|| BX_PLATFORM_STEAMLINK        \
 		|| BX_PLATFORM_WINDOWS          \
 		)
 #define BGFX_PLATFORM_SUPPORTS_GLSL (0  \

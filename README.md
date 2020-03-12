@@ -36,7 +36,6 @@ Supported platforms:
  * MIPS Creator CI20
  * OSX (10.12+)
  * RaspberryPi
- * SteamLink
  * Windows (XP, Vista, 7, 8, 10)
  * UWP (Universal Windows, Xbox One)
 

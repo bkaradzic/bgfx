@@ -10,7 +10,7 @@
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #	if ENTRY_CONFIG_USE_WAYLAND
 #		include <wayland-egl.h>
-#	endif 
+#	endif
 #elif BX_PLATFORM_WINDOWS
 #	define SDL_MAIN_HANDLED
 #endif
@@ -69,8 +69,6 @@ namespace entry
 		return wmi.info.cocoa.window;
 #	elif BX_PLATFORM_WINDOWS
 		return wmi.info.win.window;
-#	elif BX_PLATFORM_STEAMLINK
-		return wmi.info.vivante.window;
 #	endif // BX_PLATFORM_
 	}
 
@@ -94,8 +92,6 @@ namespace entry
 		pd.ndt          = NULL;
 #	elif BX_PLATFORM_WINDOWS
 		pd.ndt          = NULL;
-#	elif BX_PLATFORM_STEAMLINK
-		pd.ndt          = wmi.info.vivante.display;
 #	endif // BX_PLATFORM_
 		pd.nwh          = sdlNativeWindowHandle(_window);
 
@@ -109,7 +105,7 @@ namespace entry
 
 	static void sdlDestroyWindow(SDL_Window* _window)
 	{
-		if(!_window) 
+		if(!_window)
 			return;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #		if ENTRY_CONFIG_USE_WAYLAND

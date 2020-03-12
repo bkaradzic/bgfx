@@ -87,7 +87,6 @@
 					|| BX_PLATFORM_EMSCRIPTEN   \
 					|| BX_PLATFORM_IOS          \
 					|| BX_PLATFORM_RPI          \
-					|| BX_PLATFORM_STEAMLINK    \
 					|| BX_PLATFORM_NX           \
 					? BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION : 0)
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES
