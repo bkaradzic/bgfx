@@ -832,27 +832,27 @@ BGFX_C_API void bgfx_encoder_touch(bgfx_encoder_t* _this, bgfx_view_id_t _id)
 	This->touch((bgfx::ViewId)_id);
 }
 
-BGFX_C_API void bgfx_encoder_submit(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_encoder_submit(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _depth, uint8_t _flags)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
-	This->submit((bgfx::ViewId)_id, program.cpp, _depth, _preserveState);
+	This->submit((bgfx::ViewId)_id, program.cpp, _depth, _flags);
 }
 
-BGFX_C_API void bgfx_encoder_submit_occlusion_query(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_encoder_submit_occlusion_query(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, uint8_t _flags)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
 	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } occlusionQuery = { _occlusionQuery };
-	This->submit((bgfx::ViewId)_id, program.cpp, occlusionQuery.cpp, _depth, _preserveState);
+	This->submit((bgfx::ViewId)_id, program.cpp, occlusionQuery.cpp, _depth, _flags);
 }
 
-BGFX_C_API void bgfx_encoder_submit_indirect(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_encoder_submit_indirect(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
-	This->submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num, _depth, _preserveState);
+	This->submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num, _depth, _flags);
 }
 
 BGFX_C_API void bgfx_encoder_set_compute_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access)
@@ -1085,24 +1085,24 @@ BGFX_C_API void bgfx_touch(bgfx_view_id_t _id)
 	bgfx::touch((bgfx::ViewId)_id);
 }
 
-BGFX_C_API void bgfx_submit(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_submit(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _depth, uint8_t _flags)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
-	bgfx::submit((bgfx::ViewId)_id, program.cpp, _depth, _preserveState);
+	bgfx::submit((bgfx::ViewId)_id, program.cpp, _depth, _flags);
 }
 
-BGFX_C_API void bgfx_submit_occlusion_query(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_submit_occlusion_query(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, uint8_t _flags)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
 	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } occlusionQuery = { _occlusionQuery };
-	bgfx::submit((bgfx::ViewId)_id, program.cpp, occlusionQuery.cpp, _depth, _preserveState);
+	bgfx::submit((bgfx::ViewId)_id, program.cpp, occlusionQuery.cpp, _depth, _flags);
 }
 
-BGFX_C_API void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
-	bgfx::submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num, _depth, _preserveState);
+	bgfx::submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num, _depth, _flags);
 }
 
 BGFX_C_API void bgfx_set_compute_index_buffer(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access)

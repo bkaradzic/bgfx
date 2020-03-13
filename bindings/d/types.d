@@ -193,6 +193,7 @@ enum ushort BGFX_CLEAR_DISCARD_MASK = 0x1ff8;
  * Rendering state discard. When state is preserved in submit, rendering states can be discarded
  * on a finer grain.
  */
+enum ubyte BGFX_DISCARD_NONE = 0x00; /// Discard nothing
 enum ubyte BGFX_DISCARD_INDEX_BUFFER = 0x01; /// Discard only Index Buffer
 enum ubyte BGFX_DISCARD_VERTEX_STREAMS = 0x02; /// Discard only Vertex Streams
 enum ubyte BGFX_DISCARD_TEXTURE_SAMPLERS = 0x04; /// Discard only texture samplers

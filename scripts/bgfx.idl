@@ -201,7 +201,8 @@ flag.Clear { bits = 16 }
 
 --- Rendering state discard. When state is preserved in submit, rendering states can be discarded
 --- on a finer grain.
-flag.Discard { bits = 8, base = 1, desc = "Discard flags" }
+flag.Discard { bits = 8, desc = "Discard flags" }
+	.None(0)                                                                            --- Discard nothing
 	.IndexBuffer                                                                        --- Discard only Index Buffer
 	.VertexStreams                                                                      --- Discard only Vertex Streams
 	.TextureSamplers                                                                    --- Discard only texture samplers
@@ -2351,8 +2352,8 @@ func.Encoder.submit
 	.program       "ProgramHandle" --- Program.
 	.depth         "uint32_t"      --- Depth for sorting.
 	 { default = 0 }
-	.preserveState "bool"          --- Preserve internal draw state for next draw call submit.
-	 { default = false }
+	.flags         "uint8_t"       --- Which states to discard for next draw. See BGFX_DISCARD_
+	 { default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive with occlusion query for rendering.
 func.Encoder.submit { cname = "submit_occlusion_query" }
@@ -2362,8 +2363,8 @@ func.Encoder.submit { cname = "submit_occlusion_query" }
 	.occlusionQuery "OcclusionQueryHandle" --- Occlusion query.
 	.depth          "uint32_t"             --- Depth for sorting.
 	 { default = 0 }
-	.preserveState  "bool"                 --- Preserve internal draw state for next draw call submit.
-	 { default = false }
+	.flags          "uint8_t"              --- Which states to discard for next draw. See BGFX_DISCARD_
+	 { default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive for rendering with index and instance data info from
 --- indirect buffer.
@@ -2378,8 +2379,8 @@ func.Encoder.submit { cname = "submit_indirect" }
 	 { default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
 	 { default = 0 }
-	.preserveState  "bool"                 --- Preserve internal draw state for next draw call submit.
-	 { default = false }
+	.flags          "uint8_t"              --- Which states to discard for next draw. See BGFX_DISCARD_
+	 { default = "BGFX_DISCARD_ALL" }
 
 --- Set compute index buffer.
 func.Encoder.setBuffer { cname = "set_compute_index_buffer" }
@@ -2863,8 +2864,8 @@ func.submit
 	.program       "ProgramHandle" --- Program.
 	.depth         "uint32_t"      --- Depth for sorting.
 	{ default = 0 }
-	.preserveState "bool"          --- Preserve internal draw state for next draw call submit.
-	{ default = false }
+	.flags         "uint8_t"       --- Which states to discard for next draw. See BGFX_DISCARD_
+	{ default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive with occlusion query for rendering.
 func.submit { cname = "submit_occlusion_query" }
@@ -2874,8 +2875,8 @@ func.submit { cname = "submit_occlusion_query" }
 	.occlusionQuery "OcclusionQueryHandle" --- Occlusion query.
 	.depth          "uint32_t"             --- Depth for sorting.
 	{ default = 0 }
-	.preserveState  "bool"                 --- Preserve internal draw state for next draw call submit.
-	{ default = false }
+	.flags          "uint8_t"              --- Which states to discard for next draw. See BGFX_DISCARD_
+	{ default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive for rendering with index and instance data info from
 --- indirect buffer.
@@ -2890,8 +2891,8 @@ func.submit { cname = "submit_indirect" }
 	{ default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
 	{ default = 0 }
-	.preserveState  "bool"                 --- Preserve internal draw state for next draw call submit.
-	{ default = false }
+	.flags "uint8_t"                       --- Which states to discard for next draw. See BGFX_DISCARD_
+	{ default = "BGFX_DISCARD_ALL" }
 
 --- Set compute index buffer.
 func.setBuffer { cname = "set_compute_index_buffer" }

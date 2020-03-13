@@ -258,6 +258,7 @@
  * on a finer grain.
  *
  */
+#define BGFX_DISCARD_NONE                   UINT8_C(0x00) //!< Discard nothing
 #define BGFX_DISCARD_INDEX_BUFFER           UINT8_C(0x01) //!< Discard only Index Buffer
 #define BGFX_DISCARD_VERTEX_STREAMS         UINT8_C(0x02) //!< Discard only Vertex Streams
 #define BGFX_DISCARD_TEXTURE_SAMPLERS       UINT8_C(0x04) //!< Discard only texture samplers
