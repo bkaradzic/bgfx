@@ -610,7 +610,7 @@ namespace
 
 				m_uniforms.submit();
 
-				bgfx::submit(1, m_programsDraw[m_shading], m_dispatchIndirect, 0, 1, 0, BGFX_DISCARD_NONE);
+				bgfx::submit(1, m_programsDraw[m_shading], m_dispatchIndirect);
 
 				m_pingPong = 1 - m_pingPong;
 
