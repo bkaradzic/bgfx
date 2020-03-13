@@ -592,7 +592,7 @@ void Mesh::submit(bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _
 		
 		bgfx::setIndexBuffer(group.m_ibh);
 		bgfx::setVertexBuffer(0, group.m_vbh);
-		bgfx::submit(_id, _program, 0, it != itEnd-1);
+		bgfx::submit(_id, _program, 0, (it == itEnd-1)?BGFX_DISCARD_ALL:BGFX_DISCARD_NONE);
 	}
 }
 
@@ -623,7 +623,7 @@ void Mesh::submit(const MeshState*const* _state, uint8_t _numPasses, const float
 			
 			bgfx::setIndexBuffer(group.m_ibh);
 			bgfx::setVertexBuffer(0, group.m_vbh);
-			bgfx::submit(state.m_viewId, state.m_program, 0, it != itEnd-1);
+			bgfx::submit(state.m_viewId, state.m_program, 0, (it == itEnd - 1) ? BGFX_DISCARD_ALL : BGFX_DISCARD_NONE);
 		}
 	}
 }
