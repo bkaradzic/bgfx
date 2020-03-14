@@ -73,7 +73,7 @@ Index of this file:
 // Forward declarations
 //-----------------------------------------------------------------------------
 
-struct ImBoolVector;                // Store 1-bit per value
+struct ImBitVector;                 // Store 1-bit per value
 struct ImRect;                      // An axis-aligned rectangle (2 points)
 struct ImDrawDataBuilder;           // Helper to build a ImDrawData instance
 struct ImDrawListSharedData;        // Data shared between all ImDrawList instances
@@ -204,7 +204,8 @@ extern IMGUI_API ImGuiContext* GImGui;  // Current implicit context pointer
 // - Helpers: ImVec2/ImVec4 operators
 // - Helpers: Maths
 // - Helpers: Geometry
-// - Helper: ImBoolVector
+// - Helpers: Bit arrays
+// - Helper: ImBitVector
 // - Helper: ImPool<>
 // - Helper: ImChunkStream<>
 //-----------------------------------------------------------------------------
@@ -261,10 +262,12 @@ static inline ImVec2 operator+(const ImVec2& lhs, const ImVec2& rhs)            
 static inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x-rhs.x, lhs.y-rhs.y); }
 static inline ImVec2 operator*(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x*rhs.x, lhs.y*rhs.y); }
 static inline ImVec2 operator/(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x/rhs.x, lhs.y/rhs.y); }
-static inline ImVec2& operator+=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x += rhs.x; lhs.y += rhs.y; return lhs; }
-static inline ImVec2& operator-=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x -= rhs.x; lhs.y -= rhs.y; return lhs; }
 static inline ImVec2& operator*=(ImVec2& lhs, const float rhs)                  { lhs.x *= rhs; lhs.y *= rhs; return lhs; }
 static inline ImVec2& operator/=(ImVec2& lhs, const float rhs)                  { lhs.x /= rhs; lhs.y /= rhs; return lhs; }
+static inline ImVec2& operator+=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x += rhs.x; lhs.y += rhs.y; return lhs; }
+static inline ImVec2& operator-=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x -= rhs.x; lhs.y -= rhs.y; return lhs; }
+static inline ImVec2& operator*=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x *= rhs.x; lhs.y *= rhs.y; return lhs; }
+static inline ImVec2& operator/=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x /= rhs.x; lhs.y /= rhs.y; return lhs; }
 static inline ImVec4 operator+(const ImVec4& lhs, const ImVec4& rhs)            { return ImVec4(lhs.x+rhs.x, lhs.y+rhs.y, lhs.z+rhs.z, lhs.w+rhs.w); }
 static inline ImVec4 operator-(const ImVec4& lhs, const ImVec4& rhs)            { return ImVec4(lhs.x-rhs.x, lhs.y-rhs.y, lhs.z-rhs.z, lhs.w-rhs.w); }
 static inline ImVec4 operator*(const ImVec4& lhs, const ImVec4& rhs)            { return ImVec4(lhs.x*rhs.x, lhs.y*rhs.y, lhs.z*rhs.z, lhs.w*rhs.w); }
@@ -348,16 +351,32 @@ IMGUI_API void       ImTriangleBarycentricCoords(const ImVec2& a, const ImVec2& 
 inline float         ImTriangleArea(const ImVec2& a, const ImVec2& b, const ImVec2& c) { return ImFabs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y))) * 0.5f; }
 IMGUI_API ImGuiDir   ImGetDirQuadrantFromDelta(float dx, float dy);
 
-// Helper: ImBoolVector
-// Store 1-bit per value. Note that Resize() currently clears the whole vector.
-struct IMGUI_API ImBoolVector
+// Helpers: Bit arrays
+inline bool          ImBitArrayTestBit(const ImU32* arr, int n)         { ImU32 mask = (ImU32)1 << (n & 31); return (arr[n >> 5] & mask) != 0; }
+inline void          ImBitArrayClearBit(ImU32* arr, int n)              { ImU32 mask = (ImU32)1 << (n & 31); arr[n >> 5] &= ~mask; }
+inline void          ImBitArraySetBit(ImU32* arr, int n)                { ImU32 mask = (ImU32)1 << (n & 31); arr[n >> 5] |= mask; }
+inline void          ImBitArraySetBitRange(ImU32* arr, int n, int n2)
 {
-    ImVector<int>   Storage;
-    ImBoolVector()  { }
-    void            Resize(int sz)          { Storage.resize((sz + 31) >> 5); memset(Storage.Data, 0, (size_t)Storage.Size * sizeof(Storage.Data[0])); }
-    void            Clear()                 { Storage.clear(); }
-    bool            GetBit(int n) const     { int off = (n >> 5); int mask = 1 << (n & 31); return (Storage[off] & mask) != 0; }
-    void            SetBit(int n, bool v)   { int off = (n >> 5); int mask = 1 << (n & 31); if (v) Storage[off] |= mask; else Storage[off] &= ~mask; }
+    while (n <= n2)
+    {
+        int a_mod = (n & 31);
+        int b_mod = ((n2 >= n + 31) ? 31 : (n2 & 31)) + 1;
+        ImU32 mask = (ImU32)(((ImU64)1 << b_mod) - 1) & ~(ImU32)(((ImU64)1 << a_mod) - 1);
+        arr[n >> 5] |= mask;
+        n = (n + 32) & ~31;
+    }
+}
+
+// Helper: ImBitVector
+// Store 1-bit per value.
+struct IMGUI_API ImBitVector
+{
+    ImVector<ImU32> Storage;
+    void            Create(int sz)              { Storage.resize((sz + 31) >> 5); memset(Storage.Data, 0, (size_t)Storage.Size * sizeof(Storage.Data[0])); }
+    void            Clear()                     { Storage.clear(); }
+    bool            TestBit(int n) const        { IM_ASSERT(n < (Storage.Size << 5)); return ImBitArrayTestBit(Storage.Data, n); }
+    void            SetBit(int n)               { IM_ASSERT(n < (Storage.Size << 5)); ImBitArraySetBit(Storage.Data, n); }
+    void            ClearBit(int n)             { IM_ASSERT(n < (Storage.Size << 5)); ImBitArrayClearBit(Storage.Data, n); }
 };
 
 // Helper: ImPool<>
@@ -430,7 +449,7 @@ enum ImGuiButtonFlags_
     ImGuiButtonFlags_NoKeyModifiers         = 1 << 12,  // disable mouse interaction if a key modifier is held
     ImGuiButtonFlags_NoHoldingActiveId      = 1 << 13,  // don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only)
     ImGuiButtonFlags_NoNavFocus             = 1 << 14,  // don't override navigation focus when activated
-    ImGuiButtonFlags_NoHoveredOnNav         = 1 << 15,  // don't report as hovered when navigated on
+    ImGuiButtonFlags_NoHoveredOnFocus       = 1 << 15,  // don't report as hovered when nav focus is on this item
     ImGuiButtonFlags_MouseButtonLeft        = 1 << 16,  // [Default] react on left mouse button
     ImGuiButtonFlags_MouseButtonRight       = 1 << 17,  // react on right mouse button
     ImGuiButtonFlags_MouseButtonMiddle      = 1 << 18,  // react on center mouse button
@@ -470,8 +489,8 @@ enum ImGuiSelectableFlagsPrivate_
 {
     // NB: need to be in sync with last value of ImGuiSelectableFlags_
     ImGuiSelectableFlags_NoHoldingActiveID  = 1 << 20,
-    ImGuiSelectableFlags_PressedOnClick     = 1 << 21,
-    ImGuiSelectableFlags_PressedOnRelease   = 1 << 22,
+    ImGuiSelectableFlags_SelectOnClick      = 1 << 21,  // Override button behavior to react on Click (default is Click+Release)
+    ImGuiSelectableFlags_SelectOnRelease    = 1 << 22,  // Override button behavior to react on Release (default is Click+Release)
     ImGuiSelectableFlags_DrawFillAvailWidth = 1 << 23,  // FIXME: We may be able to remove this (added in 6251d379 for menus)
     ImGuiSelectableFlags_DrawHoveredWhenHeld= 1 << 24,  // Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow.
     ImGuiSelectableFlags_SetNavIdOnHover    = 1 << 25
@@ -1128,7 +1147,8 @@ struct ImGuiContext
 
     // Drag and Drop
     bool                    DragDropActive;
-    bool                    DragDropWithinSourceOrTarget;       // Set when within a BeginDragDropXXX/EndDragDropXXX block.
+    bool                    DragDropWithinSource;               // Set when within a BeginDragDropXXX/EndDragDropXXX block for a drag source.
+    bool                    DragDropWithinTarget;               // Set when within a BeginDragDropXXX/EndDragDropXXX block for a drag target.
     ImGuiDragDropFlags      DragDropSourceFlags;
     int                     DragDropSourceFrameCount;
     int                     DragDropMouseButton;
@@ -1284,7 +1304,7 @@ struct ImGuiContext
         ForegroundDrawList._OwnerName = "##Foreground"; // Give it a name for debugging
         MouseCursor = ImGuiMouseCursor_Arrow;
 
-        DragDropActive = DragDropWithinSourceOrTarget = false;
+        DragDropActive = DragDropWithinSource = DragDropWithinTarget = false;
         DragDropSourceFlags = ImGuiDragDropFlags_None;
         DragDropSourceFrameCount = -1;
         DragDropMouseButton = -1;
