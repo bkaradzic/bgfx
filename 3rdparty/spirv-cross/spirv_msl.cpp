@@ -890,7 +890,7 @@ void CompilerMSL::emit_entry_point_declarations()
 				SPIRV_CROSS_THROW("Runtime arrays with dynamic offsets are not supported yet.");
 			else
 			{
-				use_builtin_array = true;
+				is_using_builtin_array = true;
 				statement(get_argument_address_space(var), " ", type_to_glsl(type), "* ", to_restrict(var_id), name,
 				          type_to_array_glsl(type), " =");
 
@@ -921,7 +921,7 @@ void CompilerMSL::emit_entry_point_declarations()
 				}
 				end_scope_decl();
 				statement_no_indent("");
-				use_builtin_array = false;
+				is_using_builtin_array = false;
 			}
 		}
 		else
@@ -979,14 +979,16 @@ string CompilerMSL::compile()
 	backend.native_row_major_matrix = false;
 	backend.unsized_array_supported = false;
 	backend.can_declare_arrays_inline = false;
-	backend.can_return_array = true; // <-- Allow Metal to use the array<T> template
 	backend.allow_truncated_access_chain = true;
-	backend.array_is_value_type = true; // <-- Allow Metal to use the array<T> template to make arrays a value type
 	backend.comparison_image_samples_scalar = true;
 	backend.native_pointers = true;
 	backend.nonuniform_qualifier = "";
 	backend.support_small_type_sampling_result = true;
 	backend.supports_empty_struct = true;
+
+	// Allow Metal to use the array<T> template unless we force it off.
+	backend.can_return_array = !msl_options.force_native_arrays;
+	backend.array_is_value_type = !msl_options.force_native_arrays;
 
 	capture_output_to_buffer = msl_options.capture_output_to_buffer;
 	is_rasterization_disabled = msl_options.disable_rasterization || capture_output_to_buffer;
@@ -6707,29 +6709,6 @@ void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uin
 			bar_stmt += "mem_flags::mem_none";
 	}
 
-	if (msl_options.is_ios() && (msl_options.supports_msl_version(2) && !msl_options.supports_msl_version(2, 1)))
-	{
-		bar_stmt += ", ";
-
-		switch (mem_scope)
-		{
-		case ScopeCrossDevice:
-		case ScopeDevice:
-			bar_stmt += "memory_scope_device";
-			break;
-
-		case ScopeSubgroup:
-		case ScopeInvocation:
-			bar_stmt += "memory_scope_simdgroup";
-			break;
-
-		case ScopeWorkgroup:
-		default:
-			bar_stmt += "memory_scope_threadgroup";
-			break;
-		}
-	}
-
 	bar_stmt += ");";
 
 	statement(bar_stmt);
@@ -6751,7 +6730,7 @@ void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id, StorageCla
 
 	// If threadgroup storage qualifiers are *not* used:
 	// Avoid spvCopy* wrapper functions; Otherwise, spvUnsafeArray<> template cannot be used with that storage qualifier.
-	if (lhs_thread && rhs_thread && !use_builtin_array)
+	if (lhs_thread && rhs_thread && !using_builtin_array())
 	{
 		statement(lhs, " = ", to_expression(rhs_id), ";");
 	}
@@ -6805,9 +6784,9 @@ void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id, StorageCla
 			SPIRV_CROSS_THROW("Unknown storage class used for copying arrays.");
 
 		// Pass internal array of spvUnsafeArray<> into wrapper functions
-		if (lhs_thread)
+		if (lhs_thread && !msl_options.force_native_arrays)
 			statement("spvArrayCopy", tag, type.array.size(), "(", lhs, ".elements, ", to_expression(rhs_id), ");");
-		else if (rhs_thread)
+		else if (rhs_thread && !msl_options.force_native_arrays)
 			statement("spvArrayCopy", tag, type.array.size(), "(", lhs, ", ", to_expression(rhs_id), ".elements);");
 		else
 			statement("spvArrayCopy", tag, type.array.size(), "(", lhs, ", ", to_expression(rhs_id), ");");
@@ -7257,10 +7236,30 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 
 	auto &type = get<SPIRType>(func.return_type);
 
-	decl += func_type_decl(type);
+	if (!type.array.empty() && msl_options.force_native_arrays)
+	{
+		// We cannot return native arrays in MSL, so "return" through an out variable.
+		decl += "void";
+	}
+	else
+	{
+		decl += func_type_decl(type);
+	}
+
 	decl += " ";
 	decl += to_name(func.self);
 	decl += "(";
+
+	if (!type.array.empty() && msl_options.force_native_arrays)
+	{
+		// Fake arrays returns by writing to an out array instead.
+		decl += "thread ";
+		decl += type_to_glsl(type);
+		decl += " (&SPIRV_Cross_return_value)";
+		decl += type_to_array_glsl(type);
+		if (!func.arguments.empty())
+			decl += ", ";
+	}
 
 	if (processing_entry_point)
 	{
@@ -8206,7 +8205,29 @@ string CompilerMSL::to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_
 	if (is_dynamic_img_sampler && !arg_is_dynamic_img_sampler)
 		arg_str = join("spvDynamicImageSampler<", type_to_glsl(get<SPIRType>(type.image.type)), ">(");
 
-	arg_str += CompilerGLSL::to_func_call_arg(arg, id);
+	auto *c = maybe_get<SPIRConstant>(id);
+	if (msl_options.force_native_arrays && c && !get<SPIRType>(c->constant_type).array.empty())
+	{
+		// If we are passing a constant array directly to a function for some reason,
+		// the callee will expect an argument in thread const address space
+		// (since we can only bind to arrays with references in MSL).
+		// To resolve this, we must emit a copy in this address space.
+		// This kind of code gen should be rare enough that performance is not a real concern.
+		// Inline the SPIR-V to avoid this kind of suboptimal codegen.
+		//
+		// We risk calling this inside a continue block (invalid code),
+		// so just create a thread local copy in the current function.
+		arg_str = join("_", id, "_array_copy");
+		auto &constants = current_function->constant_arrays_needed_on_stack;
+		auto itr = find(begin(constants), end(constants), ID(id));
+		if (itr == end(constants))
+		{
+			force_recompile();
+			constants.push_back(id);
+		}
+	}
+	else
+		arg_str += CompilerGLSL::to_func_call_arg(arg, id);
 
 	// Need to check the base variable in case we need to apply a qualified alias.
 	uint32_t var_id = 0;
@@ -8481,9 +8502,9 @@ string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_
 	// address space.
 	// Array of resources should also be declared as builtin arrays.
 	if (has_member_decoration(type.self, index, DecorationOffset))
-		use_builtin_array = true;
+		is_using_builtin_array = true;
 	else if (has_extended_member_decoration(type.self, index, SPIRVCrossDecorationResourceIndexPrimary))
-		use_builtin_array = true;
+		is_using_builtin_array = true;
 
 	if (member_is_packed_physical_type(type, index))
 	{
@@ -8539,14 +8560,14 @@ string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_
 	{
 		BuiltIn builtin = BuiltInMax;
 		if (is_member_builtin(type, index, &builtin))
-			use_builtin_array = true;
+			is_using_builtin_array = true;
 		array_type = type_to_array_glsl(physical_type);
 	}
 
 	auto result = join(pack_pfx, type_to_glsl(*declared_type, orig_id), " ", qualifier, to_member_name(type, index),
 	                   member_attribute_qualifier(type, index), array_type, ";");
 
-	use_builtin_array = false;
+	is_using_builtin_array = false;
 	return result;
 }
 
@@ -9423,7 +9444,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 					SPIRV_CROSS_THROW("Unsized arrays of buffers are not supported in MSL.");
 
 				// Allow Metal to use the array<T> template to make arrays a value type
-				use_builtin_array = true;
+				is_using_builtin_array = true;
 				buffer_arrays.push_back(var_id);
 				for (uint32_t i = 0; i < array_size; ++i)
 				{
@@ -9436,7 +9457,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 						ep_args += ", raster_order_group(0)";
 					ep_args += "]]";
 				}
-				use_builtin_array = false;
+				is_using_builtin_array = false;
 			}
 			else
 			{
@@ -10002,9 +10023,9 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 	// Allow Metal to use the array<T> template to make arrays a value type
 	string address_space = get_argument_address_space(var);
 	bool builtin = is_builtin_variable(var);
-	use_builtin_array = builtin;
+	is_using_builtin_array = builtin;
 	if (address_space == "threadgroup")
-		use_builtin_array = true;
+		is_using_builtin_array = true;
 
 	if (var.basevariable && (var.basevariable == stage_in_ptr_var_id || var.basevariable == stage_out_ptr_var_id))
 		decl += type_to_glsl(type, arg.id);
@@ -10012,7 +10033,7 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 		decl += builtin_type_decl(static_cast<BuiltIn>(get_decoration(arg.id, DecorationBuiltIn)), arg.id);
 	else if ((storage == StorageClassUniform || storage == StorageClassStorageBuffer) && is_array(type))
 	{
-		use_builtin_array = true;
+		is_using_builtin_array = true;
 		decl += join(type_to_glsl(type, arg.id), "*");
 	}
 	else if (is_dynamic_img_sampler)
@@ -10030,10 +10051,34 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 	    (storage == StorageClassFunction || storage == StorageClassGeneric))
 	{
 		// If the argument is a pure value and not an opaque type, we will pass by value.
-		if (!address_space.empty())
-			decl = join(address_space, " ", decl);
-		decl += " ";
-		decl += to_expression(name_id);
+		if (msl_options.force_native_arrays && is_array(type))
+		{
+			// We are receiving an array by value. This is problematic.
+			// We cannot be sure of the target address space since we are supposed to receive a copy,
+			// but this is not possible with MSL without some extra work.
+			// We will have to assume we're getting a reference in thread address space.
+			// If we happen to get a reference in constant address space, the caller must emit a copy and pass that.
+			// Thread const therefore becomes the only logical choice, since we cannot "create" a constant array from
+			// non-constant arrays, but we can create thread const from constant.
+			decl = string("thread const ") + decl;
+			decl += " (&";
+			const char *restrict_kw = to_restrict(name_id);
+			if (*restrict_kw)
+			{
+				decl += " ";
+				decl += restrict_kw;
+			}
+			decl += to_expression(name_id);
+			decl += ")";
+			decl += type_to_array_glsl(type);
+		}
+		else
+		{
+			if (!address_space.empty())
+				decl = join(address_space, " ", decl);
+			decl += " ";
+			decl += to_expression(name_id);
+		}
 	}
 	else if (is_array(type) && !type_is_image)
 	{
@@ -10109,7 +10154,7 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 		decl += "* " + to_expression(name_id) + "_atomic";
 	}
 
-	use_builtin_array = false;
+	is_using_builtin_array = false;
 
 	return decl;
 }
@@ -10594,7 +10639,7 @@ string CompilerMSL::type_to_glsl(const SPIRType &type, uint32_t id)
 	if (type.vecsize > 1)
 		type_name += to_string(type.vecsize);
 
-	if (type.array.empty() || use_builtin_array)
+	if (type.array.empty() || using_builtin_array())
 	{
 		return type_name;
 	}
@@ -10630,7 +10675,7 @@ string CompilerMSL::type_to_array_glsl(const SPIRType &type)
 	}
 	default:
 	{
-		if (use_builtin_array)
+		if (using_builtin_array())
 			return CompilerGLSL::type_to_array_glsl(type);
 		else
 			return "";
@@ -10643,12 +10688,12 @@ std::string CompilerMSL::variable_decl(const SPIRVariable &variable)
 {
 	if (variable.storage == StorageClassWorkgroup)
 	{
-		use_builtin_array = true;
+		is_using_builtin_array = true;
 	}
 	std::string expr = CompilerGLSL::variable_decl(variable);
 	if (variable.storage == StorageClassWorkgroup)
 	{
-		use_builtin_array = false;
+		is_using_builtin_array = false;
 	}
 	return expr;
 }
@@ -12732,4 +12777,9 @@ void CompilerMSL::activate_argument_buffer_resources()
 		if (descriptor_set_is_argument_buffer(desc_set))
 			active_interface_variables.insert(self);
 	});
+}
+
+bool CompilerMSL::using_builtin_array() const
+{
+	return msl_options.force_native_arrays || is_using_builtin_array;
 }

@@ -108,6 +108,13 @@ public:
 		// May not correspond exactly to original source, but should be a good approximation.
 		bool emit_line_directives = false;
 
+		// In cases where readonly/writeonly decoration are not used at all,
+		// we try to deduce which qualifier(s) we should actually used, since actually emitting
+		// read-write decoration is very rare, and older glslang/HLSL compilers tend to just emit readwrite as a matter of fact.
+		// The default (true) is to enable automatic deduction for these cases, but if you trust the decorations set
+		// by the SPIR-V, it's recommended to set this to false.
+		bool enable_storage_image_qualifier_deduction = true;
+
 		enum Precision
 		{
 			DontCare,

@@ -2504,11 +2504,14 @@ void CompilerGLSL::emit_pls()
 
 void CompilerGLSL::fixup_image_load_store_access()
 {
+	if (!options.enable_storage_image_qualifier_deduction)
+		return;
+
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t var, const SPIRVariable &) {
 		auto &vartype = expression_type(var);
 		if (vartype.basetype == SPIRType::Image)
 		{
-			// Older glslangValidator does not emit required qualifiers here.
+			// Very old glslangValidator and HLSL compilers do not emit required qualifiers here.
 			// Solve this by making the image access as restricted as possible and loosen up if we need to.
 			// If any no-read/no-write flags are actually set, assume that the compiler knows what it's doing.
 
@@ -3697,7 +3700,7 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c)
 		{
 			res = type_to_glsl_constructor(type) + "{ ";
 		}
-		else if (backend.use_initializer_list && backend.use_typed_initializer_list && !type.array.empty())
+		else if (backend.use_initializer_list && backend.use_typed_initializer_list && backend.array_is_value_type && !type.array.empty())
 		{
 			res = type_to_glsl_constructor(type) + "({ ";
 			needs_trailing_tracket = true;
@@ -8686,7 +8689,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			// This path cannot be used for arithmetic.
 			if (backend.use_typed_initializer_list && out_type.basetype == SPIRType::Struct && out_type.array.empty())
 				constructor_op += type_to_glsl_constructor(get<SPIRType>(result_type));
-			else if (backend.use_typed_initializer_list && !out_type.array.empty())
+			else if (backend.use_typed_initializer_list && backend.array_is_value_type && !out_type.array.empty())
 			{
 				// MSL path. Array constructor is baked into type here, do not use _constructor variant.
 				constructor_op += type_to_glsl_constructor(get<SPIRType>(result_type)) + "(";
@@ -11750,6 +11753,14 @@ void CompilerGLSL::emit_function(SPIRFunction &func, const Bitset &return_flags)
 
 	current_function = &func;
 	auto &entry_block = get<SPIRBlock>(func.entry_block);
+
+	sort(begin(func.constant_arrays_needed_on_stack), end(func.constant_arrays_needed_on_stack));
+	for (auto &array : func.constant_arrays_needed_on_stack)
+	{
+		auto &c = get<SPIRConstant>(array);
+		auto &type = get<SPIRType>(c.constant_type);
+		statement(variable_decl(type, join("_", array, "_array_copy")), " = ", constant_expression(c), ";");
+	}
 
 	for (auto &v : func.local_variables)
 	{

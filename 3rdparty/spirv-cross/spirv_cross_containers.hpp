@@ -21,8 +21,10 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <stack>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -316,6 +318,13 @@ public:
 
 	void reserve(size_t count) SPIRV_CROSS_NOEXCEPT
 	{
+		if ((count > std::numeric_limits<size_t>::max() / sizeof(T)) ||
+		    (count > std::numeric_limits<size_t>::max() / 2))
+		{
+			// Only way this should ever happen is with garbage input, terminate.
+			std::terminate();
+		}
+
 		if (count > buffer_capacity)
 		{
 			size_t target_capacity = buffer_capacity;
@@ -324,6 +333,8 @@ public:
 			if (target_capacity < N)
 				target_capacity = N;
 
+			// Need to ensure there is a POT value of target capacity which is larger than count,
+			// otherwise this will overflow.
 			while (target_capacity < count)
 				target_capacity <<= 1u;
 

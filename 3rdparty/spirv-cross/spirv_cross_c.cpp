@@ -420,6 +420,9 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_EMIT_LINE_DIRECTIVES:
 		options->glsl.emit_line_directives = value != 0;
 		break;
+	case SPVC_COMPILER_OPTION_ENABLE_STORAGE_IMAGE_QUALIFIER_DEDUCTION:
+		options->glsl.enable_storage_image_qualifier_deduction = value != 0;
+		break;
 
 	case SPVC_COMPILER_OPTION_GLSL_SUPPORT_NONZERO_BASE_INSTANCE:
 		options->glsl.vertex.support_nonzero_base_instance = value != 0;
@@ -470,6 +473,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_HLSL_SUPPORT_NONZERO_BASE_VERTEX_BASE_INSTANCE:
 		options->hlsl.support_nonzero_base_vertex_base_instance = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_HLSL_FORCE_STORAGE_BUFFER_AS_UAV:
+		options->hlsl.force_storage_buffer_as_uav = value != 0;
 		break;
 #endif
 
@@ -596,6 +603,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_MSL_FORCE_ACTIVE_ARGUMENT_BUFFER_RESOURCES:
 		options->msl.force_active_argument_buffer_resources = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_FORCE_NATIVE_ARRAYS:
+		options->msl.force_native_arrays = value != 0;
 		break;
 #endif
 

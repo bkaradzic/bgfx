@@ -312,6 +312,11 @@ public:
 		// and would otherwise declare a different IAB.
 		bool force_active_argument_buffer_resources = false;
 
+		// Forces the use of plain arrays, which works around certain driver bugs on certain versions
+		// of Intel Macbooks. See https://github.com/KhronosGroup/SPIRV-Cross/issues/1210.
+		// May reduce performance in scenarios where arrays are copied around as value-types.
+		bool force_native_arrays = false;
+
 		bool is_ios()
 		{
 			return platform == iOS;
@@ -827,7 +832,10 @@ protected:
 
 	bool has_sampled_images = false;
 	bool builtin_declaration = false; // Handle HLSL-style 0-based vertex/instance index.
-	bool use_builtin_array = false; // Force the use of C style array declaration.
+
+	bool is_using_builtin_array = false; // Force the use of C style array declaration.
+	bool using_builtin_array() const;
+
 	bool is_rasterization_disabled = false;
 	bool capture_output_to_buffer = false;
 	bool needs_swizzle_buffer_def = false;
