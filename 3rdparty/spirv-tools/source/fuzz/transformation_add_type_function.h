@@ -37,7 +37,7 @@ class TransformationAddTypeFunction : public Transformation {
   // - |message_.return_type_id| and each element of |message_.argument_type_id|
   //   must be the ids of non-function types
   // - The module must not contain an OpTypeFunction instruction defining a
-  //   function type with the signature provided by teh given return and
+  //   function type with the signature provided by the given return and
   //   argument types
   bool IsApplicable(opt::IRContext* context,
                     const FactManager& fact_manager) const override;

@@ -97,12 +97,7 @@ void FuzzerPassAdjustMemoryOperandsMasks::Apply() {
 
           TransformationSetMemoryOperandsMask transformation(
               MakeInstructionDescriptor(block, inst_it), new_mask, mask_index);
-          assert(
-              transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
-              "Transformation should be applicable by construction.");
-          transformation.Apply(GetIRContext(), GetFactManager());
-          *GetTransformations()->add_transformation() =
-              transformation.ToMessage();
+          ApplyTransformation(transformation);
         }
       }
     }

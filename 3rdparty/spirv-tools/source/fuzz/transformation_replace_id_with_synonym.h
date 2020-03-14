@@ -51,14 +51,6 @@ class TransformationReplaceIdWithSynonym : public Transformation {
 
   protobufs::Transformation ToMessage() const override;
 
-  // Checks whether the |id| is available (according to dominance rules) at the
-  // use point defined by input operand |use_input_operand_index| of
-  // |use_instruction|.
-  static bool IdsIsAvailableAtUse(opt::IRContext* context,
-                                  opt::Instruction* use_instruction,
-                                  uint32_t use_input_operand_index,
-                                  uint32_t id);
-
   // Checks whether various conditions hold related to the acceptability of
   // replacing the id use at |use_in_operand_index| of |use_instruction| with
   // a synonym.  In particular, this checks that:

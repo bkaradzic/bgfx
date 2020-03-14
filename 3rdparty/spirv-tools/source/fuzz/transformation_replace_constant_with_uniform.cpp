@@ -154,6 +154,12 @@ bool TransformationReplaceConstantWithUniform::IsApplicable(
     return false;
   }
 
+  // The use must not be a variable initializer; these are required to be
+  // constants, so it would be illegal to replace one with a uniform access.
+  if (instruction_using_constant->opcode() == SpvOpVariable) {
+    return false;
+  }
+
   // The module needs to have a uniform pointer type suitable for indexing into
   // the uniform variable, i.e. matching the type of the constant we wish to
   // replace with a uniform.

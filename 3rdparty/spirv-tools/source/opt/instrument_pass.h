@@ -61,6 +61,7 @@ namespace opt {
 // its output buffers.
 static const uint32_t kInstValidationIdBindless = 0;
 static const uint32_t kInstValidationIdBuffAddr = 1;
+static const uint32_t kInstValidationIdDebugPrintf = 2;
 
 class InstrumentPass : public Pass {
   using cbb_ptr = const BasicBlock*;
@@ -227,8 +228,11 @@ class InstrumentPass : public Pass {
   // Return id for 32-bit unsigned type
   uint32_t GetUintId();
 
-  // Return id for 32-bit unsigned type
+  // Return id for 64-bit unsigned type
   uint32_t GetUint64Id();
+
+  // Return id for 8-bit unsigned type
+  uint32_t GetUint8Id();
 
   // Return id for 32-bit unsigned type
   uint32_t GetBoolId();
@@ -266,6 +270,9 @@ class InstrumentPass : public Pass {
 
   // Return id for debug input buffer
   uint32_t GetInputBufferId();
+
+  // Return id for 32-bit float type
+  uint32_t GetFloatId();
 
   // Return id for v4float type
   uint32_t GetVec4FloatId();
@@ -383,16 +390,16 @@ class InstrumentPass : public Pass {
   uint32_t input_buffer_ptr_id_;
 
   // id for debug output function
-  uint32_t output_func_id_;
+  std::unordered_map<uint32_t, uint32_t> param2output_func_id_;
 
   // ids for debug input functions
   std::unordered_map<uint32_t, uint32_t> param2input_func_id_;
 
-  // param count for output function
-  uint32_t output_func_param_cnt_;
-
   // id for input buffer variable
   uint32_t input_buffer_id_;
+
+  // id for 32-bit float type
+  uint32_t float_id_;
 
   // id for v4float type
   uint32_t v4float_id_;
@@ -406,8 +413,11 @@ class InstrumentPass : public Pass {
   // id for 32-bit unsigned type
   uint32_t uint_id_;
 
-  // id for 32-bit unsigned type
+  // id for 64-bit unsigned type
   uint32_t uint64_id_;
+
+  // id for 8-bit unsigned type
+  uint32_t uint8_id_;
 
   // id for bool type
   uint32_t bool_id_;

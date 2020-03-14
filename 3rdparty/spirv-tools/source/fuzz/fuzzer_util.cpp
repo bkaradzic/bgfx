@@ -262,44 +262,48 @@ std::vector<uint32_t> RepeatedFieldToVector(
   return result;
 }
 
+uint32_t WalkOneCompositeTypeIndex(opt::IRContext* context,
+                                   uint32_t base_object_type_id,
+                                   uint32_t index) {
+  auto should_be_composite_type =
+      context->get_def_use_mgr()->GetDef(base_object_type_id);
+  assert(should_be_composite_type && "The type should exist.");
+  switch (should_be_composite_type->opcode()) {
+    case SpvOpTypeArray: {
+      auto array_length = GetArraySize(*should_be_composite_type, context);
+      if (array_length == 0 || index >= array_length) {
+        return 0;
+      }
+      return should_be_composite_type->GetSingleWordInOperand(0);
+    }
+    case SpvOpTypeMatrix:
+    case SpvOpTypeVector: {
+      auto count = should_be_composite_type->GetSingleWordInOperand(1);
+      if (index >= count) {
+        return 0;
+      }
+      return should_be_composite_type->GetSingleWordInOperand(0);
+    }
+    case SpvOpTypeStruct: {
+      if (index >= GetNumberOfStructMembers(*should_be_composite_type)) {
+        return 0;
+      }
+      return should_be_composite_type->GetSingleWordInOperand(index);
+    }
+    default:
+      return 0;
+  }
+}
+
 uint32_t WalkCompositeTypeIndices(
     opt::IRContext* context, uint32_t base_object_type_id,
     const google::protobuf::RepeatedField<google::protobuf::uint32>& indices) {
   uint32_t sub_object_type_id = base_object_type_id;
   for (auto index : indices) {
-    auto should_be_composite_type =
-        context->get_def_use_mgr()->GetDef(sub_object_type_id);
-    assert(should_be_composite_type && "The type should exist.");
-    switch (should_be_composite_type->opcode()) {
-      case SpvOpTypeArray: {
-        auto array_length = GetArraySize(*should_be_composite_type, context);
-        if (array_length == 0 || index >= array_length) {
-          return 0;
-        }
-        sub_object_type_id =
-            should_be_composite_type->GetSingleWordInOperand(0);
-        break;
-      }
-      case SpvOpTypeMatrix:
-      case SpvOpTypeVector: {
-        auto count = should_be_composite_type->GetSingleWordInOperand(1);
-        if (index >= count) {
-          return 0;
-        }
-        sub_object_type_id =
-            should_be_composite_type->GetSingleWordInOperand(0);
-        break;
-      }
-      case SpvOpTypeStruct: {
-        if (index >= GetNumberOfStructMembers(*should_be_composite_type)) {
-          return 0;
-        }
-        sub_object_type_id =
-            should_be_composite_type->GetSingleWordInOperand(index);
-        break;
-      }
-      default:
-        return 0;
+    sub_object_type_id =
+        WalkOneCompositeTypeIndex(context, sub_object_type_id, index);
+    if (!sub_object_type_id) {
+      return 0;
     }
   }
   return sub_object_type_id;
@@ -388,6 +392,148 @@ uint32_t FindFunctionType(opt::IRContext* ir_context,
     }
   }
   // No match was found.
+  return 0;
+}
+
+opt::Instruction* GetFunctionType(opt::IRContext* context,
+                                  const opt::Function* function) {
+  uint32_t type_id = function->DefInst().GetSingleWordInOperand(1);
+  return context->get_def_use_mgr()->GetDef(type_id);
+}
+
+opt::Function* FindFunction(opt::IRContext* ir_context, uint32_t function_id) {
+  for (auto& function : *ir_context->module()) {
+    if (function.result_id() == function_id) {
+      return &function;
+    }
+  }
+  return nullptr;
+}
+
+bool FunctionIsEntryPoint(opt::IRContext* context, uint32_t function_id) {
+  for (auto& entry_point : context->module()->entry_points()) {
+    if (entry_point.GetSingleWordInOperand(1) == function_id) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IdIsAvailableAtUse(opt::IRContext* context,
+                        opt::Instruction* use_instruction,
+                        uint32_t use_input_operand_index, uint32_t id) {
+  auto defining_instruction = context->get_def_use_mgr()->GetDef(id);
+  auto enclosing_function =
+      context->get_instr_block(use_instruction)->GetParent();
+  // If the id a function parameter, it needs to be associated with the
+  // function containing the use.
+  if (defining_instruction->opcode() == SpvOpFunctionParameter) {
+    return InstructionIsFunctionParameter(defining_instruction,
+                                          enclosing_function);
+  }
+  if (!context->get_instr_block(id)) {
+    // The id must be at global scope.
+    return true;
+  }
+  if (defining_instruction == use_instruction) {
+    // It is not OK for a definition to use itself.
+    return false;
+  }
+  auto dominator_analysis = context->GetDominatorAnalysis(enclosing_function);
+  if (use_instruction->opcode() == SpvOpPhi) {
+    // In the case where the use is an operand to OpPhi, it is actually the
+    // *parent* block associated with the operand that must be dominated by
+    // the synonym.
+    auto parent_block =
+        use_instruction->GetSingleWordInOperand(use_input_operand_index + 1);
+    return dominator_analysis->Dominates(
+        context->get_instr_block(defining_instruction)->id(), parent_block);
+  }
+  return dominator_analysis->Dominates(defining_instruction, use_instruction);
+}
+
+bool IdIsAvailableBeforeInstruction(opt::IRContext* context,
+                                    opt::Instruction* instruction,
+                                    uint32_t id) {
+  auto defining_instruction = context->get_def_use_mgr()->GetDef(id);
+  auto enclosing_function = context->get_instr_block(instruction)->GetParent();
+  // If the id a function parameter, it needs to be associated with the
+  // function containing the instruction.
+  if (defining_instruction->opcode() == SpvOpFunctionParameter) {
+    return InstructionIsFunctionParameter(defining_instruction,
+                                          enclosing_function);
+  }
+  if (!context->get_instr_block(id)) {
+    // The id is at global scope.
+    return true;
+  }
+  if (defining_instruction == instruction) {
+    // The instruction is not available right before its own definition.
+    return false;
+  }
+  return context->GetDominatorAnalysis(enclosing_function)
+      ->Dominates(defining_instruction, instruction);
+}
+
+bool InstructionIsFunctionParameter(opt::Instruction* instruction,
+                                    opt::Function* function) {
+  if (instruction->opcode() != SpvOpFunctionParameter) {
+    return false;
+  }
+  bool found_parameter = false;
+  function->ForEachParam(
+      [instruction, &found_parameter](opt::Instruction* param) {
+        if (param == instruction) {
+          found_parameter = true;
+        }
+      });
+  return found_parameter;
+}
+
+uint32_t GetTypeId(opt::IRContext* context, uint32_t result_id) {
+  return context->get_def_use_mgr()->GetDef(result_id)->type_id();
+}
+
+uint32_t GetPointeeTypeIdFromPointerType(opt::Instruction* pointer_type_inst) {
+  assert(pointer_type_inst && pointer_type_inst->opcode() == SpvOpTypePointer &&
+         "Precondition: |pointer_type_inst| must be OpTypePointer.");
+  return pointer_type_inst->GetSingleWordInOperand(1);
+}
+
+uint32_t GetPointeeTypeIdFromPointerType(opt::IRContext* context,
+                                         uint32_t pointer_type_id) {
+  return GetPointeeTypeIdFromPointerType(
+      context->get_def_use_mgr()->GetDef(pointer_type_id));
+}
+
+SpvStorageClass GetStorageClassFromPointerType(
+    opt::Instruction* pointer_type_inst) {
+  assert(pointer_type_inst && pointer_type_inst->opcode() == SpvOpTypePointer &&
+         "Precondition: |pointer_type_inst| must be OpTypePointer.");
+  return static_cast<SpvStorageClass>(
+      pointer_type_inst->GetSingleWordInOperand(0));
+}
+
+SpvStorageClass GetStorageClassFromPointerType(opt::IRContext* context,
+                                               uint32_t pointer_type_id) {
+  return GetStorageClassFromPointerType(
+      context->get_def_use_mgr()->GetDef(pointer_type_id));
+}
+
+uint32_t MaybeGetPointerType(opt::IRContext* context, uint32_t pointee_type_id,
+                             SpvStorageClass storage_class) {
+  for (auto& inst : context->types_values()) {
+    switch (inst.opcode()) {
+      case SpvOpTypePointer:
+        if (inst.GetSingleWordInOperand(0) == storage_class &&
+            inst.GetSingleWordInOperand(1) == pointee_type_id) {
+          return inst.result_id();
+        }
+        break;
+      default:
+        break;
+    }
+  }
   return 0;
 }
 

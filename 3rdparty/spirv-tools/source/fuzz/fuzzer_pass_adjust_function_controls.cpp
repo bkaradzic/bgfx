@@ -61,10 +61,7 @@ void FuzzerPassAdjustFunctionControls::Apply() {
       // Create and add a transformation.
       TransformationSetFunctionControl transformation(
           function.DefInst().result_id(), new_function_control_mask);
-      assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
-             "Transformation should be applicable by construction.");
-      transformation.Apply(GetIRContext(), GetFactManager());
-      *GetTransformations()->add_transformation() = transformation.ToMessage();
+      ApplyTransformation(transformation);
     }
   }
 }

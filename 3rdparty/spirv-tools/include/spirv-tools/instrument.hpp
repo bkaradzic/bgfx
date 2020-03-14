@@ -208,6 +208,9 @@ static const int kDebugInputBindingBindless = 1;
 // The binding for the input buffer read by InstBuffAddrCheckPass.
 static const int kDebugInputBindingBuffAddr = 2;
 
+// This is the output buffer written by InstDebugPrintfPass.
+static const int kDebugOutputPrintfStream = 3;
+
 // Bindless Validation Input Buffer Format
 //
 // An input buffer for bindless validation consists of a single array of

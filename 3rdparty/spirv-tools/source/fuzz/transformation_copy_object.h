@@ -57,7 +57,10 @@ class TransformationCopyObject : public Transformation {
   //   is added directly before the instruction at |message_.insert_after_id| +
   //   |message_|.offset, where %ty is the type of |message_.object|.
   // - The fact that |message_.fresh_id| and |message_.object| are synonyms
-  //   is added to the fact manager.
+  //   is added to |fact_manager|.
+  // - If |message_.object| is a pointer whose pointee value is known to be
+  //   irrelevant, the analogous fact is added to |fact_manager| about
+  //   |message_.fresh_id|.
   void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
 
   protobufs::Transformation ToMessage() const override;

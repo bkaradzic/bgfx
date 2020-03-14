@@ -243,11 +243,22 @@ bool TransformationReplaceBooleanConstantWithConstantBinary::IsApplicable(
     return false;
   }
 
-  // The instruction must not be an OpPhi, as we cannot insert a binary
-  // operator instruction before an OpPhi.
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2902): there is
-  //  scope for being less conservative.
-  return instruction->opcode() != SpvOpPhi;
+  switch (instruction->opcode()) {
+    case SpvOpPhi:
+      // The instruction must not be an OpPhi, as we cannot insert a binary
+      // operator instruction before an OpPhi.
+      // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2902): there is
+      //  scope for being less conservative.
+      return false;
+    case SpvOpVariable:
+      // The instruction must not be an OpVariable, because (a) we cannot insert
+      // a binary operator before an OpVariable, but in any case (b) the
+      // constant we would be replacing is the initializer constant of the
+      // OpVariable, and this cannot be the result of a binary operation.
+      return false;
+    default:
+      return true;
+  }
 }
 
 void TransformationReplaceBooleanConstantWithConstantBinary::Apply(

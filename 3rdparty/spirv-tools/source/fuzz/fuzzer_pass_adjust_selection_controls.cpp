@@ -62,11 +62,7 @@ void FuzzerPassAdjustSelectionControls::Apply() {
         // sequence.
         TransformationSetSelectionControl transformation(
             block.id(), choices[GetFuzzerContext()->RandomIndex(choices)]);
-        assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
-               "Transformation should be applicable by construction.");
-        transformation.Apply(GetIRContext(), GetFactManager());
-        *GetTransformations()->add_transformation() =
-            transformation.ToMessage();
+        ApplyTransformation(transformation);
       }
     }
   }

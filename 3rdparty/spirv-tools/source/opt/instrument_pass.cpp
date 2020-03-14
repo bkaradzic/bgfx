@@ -380,6 +380,8 @@ uint32_t InstrumentPass::GetOutputBufferBinding() {
       return kDebugOutputBindingStream;
     case kInstValidationIdBuffAddr:
       return kDebugOutputBindingStream;
+    case kInstValidationIdDebugPrintf:
+      return kDebugOutputPrintfStream;
     default:
       assert(false && "unexpected validation id");
   }
@@ -529,6 +531,16 @@ uint32_t InstrumentPass::GetInputBufferId() {
   return input_buffer_id_;
 }
 
+uint32_t InstrumentPass::GetFloatId() {
+  if (float_id_ == 0) {
+    analysis::TypeManager* type_mgr = context()->get_type_mgr();
+    analysis::Float float_ty(32);
+    analysis::Type* reg_float_ty = type_mgr->GetRegisteredType(&float_ty);
+    float_id_ = type_mgr->GetTypeInstruction(reg_float_ty);
+  }
+  return float_id_;
+}
+
 uint32_t InstrumentPass::GetVec4FloatId() {
   if (v4float_id_ == 0) {
     analysis::TypeManager* type_mgr = context()->get_type_mgr();
@@ -559,6 +571,16 @@ uint32_t InstrumentPass::GetUint64Id() {
     uint64_id_ = type_mgr->GetTypeInstruction(reg_uint64_ty);
   }
   return uint64_id_;
+}
+
+uint32_t InstrumentPass::GetUint8Id() {
+  if (uint8_id_ == 0) {
+    analysis::TypeManager* type_mgr = context()->get_type_mgr();
+    analysis::Integer uint8_ty(8, false);
+    analysis::Type* reg_uint8_ty = type_mgr->GetRegisteredType(&uint8_ty);
+    uint8_id_ = type_mgr->GetTypeInstruction(reg_uint8_ty);
+  }
+  return uint8_id_;
 }
 
 uint32_t InstrumentPass::GetVecUintId(uint32_t len) {
@@ -606,21 +628,22 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
   // Total param count is common params plus validation-specific
   // params
   uint32_t param_cnt = kInstCommonParamCnt + val_spec_param_cnt;
-  if (output_func_id_ == 0) {
+  if (param2output_func_id_[param_cnt] == 0) {
     // Create function
-    output_func_id_ = TakeNextId();
+    param2output_func_id_[param_cnt] = TakeNextId();
     analysis::TypeManager* type_mgr = context()->get_type_mgr();
     std::vector<const analysis::Type*> param_types;
     for (uint32_t c = 0; c < param_cnt; ++c)
       param_types.push_back(type_mgr->GetType(GetUintId()));
     analysis::Function func_ty(type_mgr->GetType(GetVoidId()), param_types);
     analysis::Type* reg_func_ty = type_mgr->GetRegisteredType(&func_ty);
-    std::unique_ptr<Instruction> func_inst(new Instruction(
-        get_module()->context(), SpvOpFunction, GetVoidId(), output_func_id_,
-        {{spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
-          {SpvFunctionControlMaskNone}},
-         {spv_operand_type_t::SPV_OPERAND_TYPE_ID,
-          {type_mgr->GetTypeInstruction(reg_func_ty)}}}));
+    std::unique_ptr<Instruction> func_inst(
+        new Instruction(get_module()->context(), SpvOpFunction, GetVoidId(),
+                        param2output_func_id_[param_cnt],
+                        {{spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
+                          {SpvFunctionControlMaskNone}},
+                         {spv_operand_type_t::SPV_OPERAND_TYPE_ID,
+                          {type_mgr->GetTypeInstruction(reg_func_ty)}}}));
     get_def_use_mgr()->AnalyzeInstDefUse(&*func_inst);
     std::unique_ptr<Function> output_func =
         MakeUnique<Function>(std::move(func_inst));
@@ -709,10 +732,8 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
     get_def_use_mgr()->AnalyzeInstDefUse(&*func_end_inst);
     output_func->SetFunctionEnd(std::move(func_end_inst));
     context()->AddFunction(std::move(output_func));
-    output_func_param_cnt_ = param_cnt;
   }
-  assert(param_cnt == output_func_param_cnt_ && "bad arg count");
-  return output_func_id_;
+  return param2output_func_id_[param_cnt];
 }
 
 uint32_t InstrumentPass::GetDirectReadFunctionId(uint32_t param_cnt) {
@@ -848,7 +869,7 @@ bool InstrumentPass::InstProcessCallTreeFromRoots(InstProcessFunction& pfn,
   std::unordered_set<uint32_t> done;
   // Don't process input and output functions
   for (auto& ifn : param2input_func_id_) done.insert(ifn.second);
-  if (output_func_id_ != 0) done.insert(output_func_id_);
+  for (auto& ofn : param2output_func_id_) done.insert(ofn.second);
   // Process all functions from roots
   while (!roots->empty()) {
     const uint32_t fi = roots->front();
@@ -926,12 +947,12 @@ void InstrumentPass::InitializeInstrument() {
   output_buffer_id_ = 0;
   output_buffer_ptr_id_ = 0;
   input_buffer_ptr_id_ = 0;
-  output_func_id_ = 0;
-  output_func_param_cnt_ = 0;
   input_buffer_id_ = 0;
+  float_id_ = 0;
   v4float_id_ = 0;
   uint_id_ = 0;
   uint64_id_ = 0;
+  uint8_id_ = 0;
   v4uint_id_ = 0;
   v3uint_id_ = 0;
   bool_id_ = 0;
@@ -943,6 +964,10 @@ void InstrumentPass::InitializeInstrument() {
   // clear collections
   id2function_.clear();
   id2block_.clear();
+
+  // clear maps
+  param2input_func_id_.clear();
+  param2output_func_id_.clear();
 
   // Initialize function and block maps.
   for (auto& fn : *get_module()) {

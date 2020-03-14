@@ -232,6 +232,7 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_DEBUG_COMPOSITE_TYPE,                // DebugInfo Sec 3.4
   SPV_OPERAND_TYPE_DEBUG_TYPE_QUALIFIER,                // DebugInfo Sec 3.5
   SPV_OPERAND_TYPE_DEBUG_OPERATION,                     // DebugInfo Sec 3.6
+  SPV_OPERAND_TYPE_DEBUG_IMPORTED_ENTITY,
 
   // The following are concrete enum types from the OpenCL.DebugInfo.100
   // extended instruction set.
@@ -765,6 +766,9 @@ SPIRV_TOOLS_EXPORT void spvDiagnosticDestroy(spv_diagnostic diagnostic);
 // Prints the diagnostic to stderr.
 SPIRV_TOOLS_EXPORT spv_result_t
 spvDiagnosticPrint(const spv_diagnostic diagnostic);
+
+// Gets the name of an instruction, without the "Op" prefix.
+SPIRV_TOOLS_EXPORT const char* spvOpcodeString(const uint32_t opcode);
 
 // The binary parser interface.
 

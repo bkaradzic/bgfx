@@ -67,6 +67,7 @@ enum OpenCLDebugInfo100Instructions {
     OpenCLDebugInfo100DebugExpression = 31,
     OpenCLDebugInfo100DebugMacroDef = 32,
     OpenCLDebugInfo100DebugMacroUndef = 33,
+    OpenCLDebugInfo100DebugImportedEntity = 34,
     OpenCLDebugInfo100DebugSource = 35,
     OpenCLDebugInfo100InstructionsMax = 0x7ffffff
 };

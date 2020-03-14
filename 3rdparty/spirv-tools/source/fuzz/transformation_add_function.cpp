@@ -132,17 +132,27 @@ bool TransformationAddFunction::IsApplicable(
     return false;
   }
 
+  // Check whether the cloned module is still valid after adding the function.
+  // If it is not, the transformation is not applicable.
+  if (!fuzzerutil::IsValid(cloned_module.get())) {
+    return false;
+  }
+
   if (message_.is_livesafe()) {
-    // We make the cloned module livesafe.
     if (!TryToMakeFunctionLivesafe(cloned_module.get(), fact_manager)) {
       return false;
     }
+    // After making the function livesafe, we check validity of the module
+    // again.  This is because the turning of OpKill, OpUnreachable and OpReturn
+    // instructions into branches changes control flow graph reachability, which
+    // has the potential to make the module invalid when it was otherwise valid.
+    // It is simpler to rely on the validator to guard against this than to
+    // consider all scenarios when making a function livesafe.
+    if (!fuzzerutil::IsValid(cloned_module.get())) {
+      return false;
+    }
   }
-
-  // Having managed to add the new function to the cloned module, and
-  // potentially also made it livesafe, we ascertain whether the cloned module
-  // is still valid.  If it is, the transformation is applicable.
-  return fuzzerutil::IsValid(cloned_module.get());
+  return true;
 }
 
 void TransformationAddFunction::Apply(
@@ -155,7 +165,7 @@ void TransformationAddFunction::Apply(
                     // that |success| is not used).
 
   // Record the fact that all pointer parameters and variables declared in the
-  // function should be regarded as having arbitrary values.  This allows other
+  // function should be regarded as having irrelevant values.  This allows other
   // passes to store arbitrarily to such variables, and to pass them freely as
   // parameters to other functions knowing that it is OK if they get
   // over-written.
@@ -165,12 +175,12 @@ void TransformationAddFunction::Apply(
         if (context->get_def_use_mgr()
                 ->GetDef(instruction.result_type_id())
                 ->opcode() == SpvOpTypePointer) {
-          fact_manager->AddFactValueOfVariableIsArbitrary(
+          fact_manager->AddFactValueOfPointeeIsIrrelevant(
               instruction.result_id());
         }
         break;
       case SpvOpVariable:
-        fact_manager->AddFactValueOfVariableIsArbitrary(
+        fact_manager->AddFactValueOfPointeeIsIrrelevant(
             instruction.result_id());
         break;
       default:

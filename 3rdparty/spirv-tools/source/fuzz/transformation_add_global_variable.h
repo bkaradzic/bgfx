@@ -30,7 +30,7 @@ class TransformationAddGlobalVariable : public Transformation {
 
   TransformationAddGlobalVariable(uint32_t fresh_id, uint32_t type_id,
                                   uint32_t initializer_id,
-                                  bool value_is_arbitrary);
+                                  bool value_is_irrelevant);
 
   // - |message_.fresh_id| must be fresh
   // - |message_.type_id| must be the id of a pointer type with Private storage
@@ -44,6 +44,9 @@ class TransformationAddGlobalVariable : public Transformation {
   // |message_.type_id| and either no initializer or |message_.initializer_id|
   // as an initializer, depending on whether |message_.initializer_id| is 0.
   // The global variable has result id |message_.fresh_id|.
+  //
+  // If |message_.value_is_irrelevant| holds, adds a corresponding fact to
+  // |fact_manager|.
   void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
 
   protobufs::Transformation ToMessage() const override;

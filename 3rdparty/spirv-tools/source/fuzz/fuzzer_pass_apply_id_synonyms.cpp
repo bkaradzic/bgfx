@@ -81,62 +81,65 @@ void FuzzerPassApplyIdSynonyms::Apply() {
         synonyms_to_try.push_back(data_descriptor);
       }
       while (!synonyms_to_try.empty()) {
-        auto synonym_index = GetFuzzerContext()->RandomIndex(synonyms_to_try);
-        auto synonym_to_try = synonyms_to_try[synonym_index];
-        synonyms_to_try.erase(synonyms_to_try.begin() + synonym_index);
+        auto synonym_to_try =
+            GetFuzzerContext()->RemoveAtRandomIndex(&synonyms_to_try);
 
+        // If the synonym's |index_size| is zero, the synonym represents an id.
+        // Otherwise it represents some element of a composite structure, in
+        // which case we need to be able to add an extract instruction to get
+        // that element out.
         if (synonym_to_try->index_size() > 0 &&
-            use_inst->opcode() == SpvOpPhi) {
-          // We are trying to replace an operand to an OpPhi.  This means
-          // we cannot use a composite synonym, because that requires
-          // extracting a component from a composite and we cannot insert
-          // an extract instruction before an OpPhi.
-          //
-          // TODO(afd): We could consider inserting the extract instruction
-          //  into the relevant parent block of the OpPhi.
+            !fuzzerutil::CanInsertOpcodeBeforeInstruction(SpvOpCompositeExtract,
+                                                          use_inst) &&
+            use_inst->opcode() != SpvOpPhi) {
+          // We cannot insert an extract before this instruction, so this
+          // synonym is no good.
           continue;
         }
 
-        if (!TransformationReplaceIdWithSynonym::IdsIsAvailableAtUse(
-                GetIRContext(), use_inst, use_in_operand_index,
-                synonym_to_try->object())) {
+        if (!fuzzerutil::IdIsAvailableAtUse(GetIRContext(), use_inst,
+                                            use_in_operand_index,
+                                            synonym_to_try->object())) {
           continue;
         }
 
-        // We either replace the use with an id known to be synonymous, or
-        // an id that will hold the result of extracting a synonym from a
-        // composite.
+        // We either replace the use with an id known to be synonymous (when
+        // the synonym's |index_size| is 0), or an id that will hold the result
+        // of extracting a synonym from a composite (when the synonym's
+        // |index_size| is > 0).
         uint32_t id_with_which_to_replace_use;
         if (synonym_to_try->index_size() == 0) {
           id_with_which_to_replace_use = synonym_to_try->object();
         } else {
           id_with_which_to_replace_use = GetFuzzerContext()->GetFreshId();
-          protobufs::InstructionDescriptor instruction_to_insert_before =
-              MakeInstructionDescriptor(GetIRContext(), use_inst);
-          TransformationCompositeExtract composite_extract_transformation(
-              instruction_to_insert_before, id_with_which_to_replace_use,
-              synonym_to_try->object(),
-              fuzzerutil::RepeatedFieldToVector(synonym_to_try->index()));
-          assert(composite_extract_transformation.IsApplicable(
-                     GetIRContext(), *GetFactManager()) &&
-                 "Transformation should be applicable by construction.");
-          composite_extract_transformation.Apply(GetIRContext(),
-                                                 GetFactManager());
-          *GetTransformations()->add_transformation() =
-              composite_extract_transformation.ToMessage();
+          opt::Instruction* instruction_to_insert_before = nullptr;
+
+          if (use_inst->opcode() != SpvOpPhi) {
+            instruction_to_insert_before = use_inst;
+          } else {
+            auto parent_block_id =
+                use_inst->GetSingleWordInOperand(use_in_operand_index + 1);
+            auto parent_block_instruction =
+                GetIRContext()->get_def_use_mgr()->GetDef(parent_block_id);
+            auto parent_block =
+                GetIRContext()->get_instr_block(parent_block_instruction);
+
+            instruction_to_insert_before = parent_block->GetMergeInst()
+                                               ? parent_block->GetMergeInst()
+                                               : parent_block->terminator();
+          }
+
+          ApplyTransformation(TransformationCompositeExtract(
+              MakeInstructionDescriptor(GetIRContext(),
+                                        instruction_to_insert_before),
+              id_with_which_to_replace_use, synonym_to_try->object(),
+              fuzzerutil::RepeatedFieldToVector(synonym_to_try->index())));
         }
 
-        TransformationReplaceIdWithSynonym replace_id_transformation(
+        ApplyTransformation(TransformationReplaceIdWithSynonym(
             MakeIdUseDescriptorFromUse(GetIRContext(), use_inst,
                                        use_in_operand_index),
-            id_with_which_to_replace_use);
-
-        // The transformation should be applicable by construction.
-        assert(replace_id_transformation.IsApplicable(GetIRContext(),
-                                                      *GetFactManager()));
-        replace_id_transformation.Apply(GetIRContext(), GetFactManager());
-        *GetTransformations()->add_transformation() =
-            replace_id_transformation.ToMessage();
+            id_with_which_to_replace_use));
         break;
       }
     }

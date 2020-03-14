@@ -84,27 +84,8 @@ bool TransformationCompositeConstruct::IsApplicable(
   // Now check whether every component being used to initialize the composite is
   // available at the desired program point.
   for (auto& component : message_.component()) {
-    auto component_inst = context->get_def_use_mgr()->GetDef(component);
-    if (!context->get_instr_block(component)) {
-      // The component does not have a block; that means it is in global scope,
-      // which is OK. (Whether the component actually corresponds to an
-      // instruction is checked above when determining whether types are
-      // suitable.)
-      continue;
-    }
-    // Check whether the component is available.
-    if (insert_before->HasResultId() &&
-        insert_before->result_id() == component) {
-      // This constitutes trying to use an id right before it is defined.  The
-      // special case is needed due to an instruction always dominating itself.
-      return false;
-    }
-    if (!context
-             ->GetDominatorAnalysis(
-                 context->get_instr_block(&*insert_before)->GetParent())
-             ->Dominates(component_inst, &*insert_before)) {
-      // The instruction defining the component must dominate the instruction we
-      // wish to insert the composite before.
+    if (!fuzzerutil::IdIsAvailableBeforeInstruction(context, insert_before,
+                                                    component)) {
       return false;
     }
   }

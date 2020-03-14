@@ -107,11 +107,7 @@ void FuzzerPassAdjustLoopControls::Apply() {
         // sequence.
         TransformationSetLoopControl transformation(block.id(), new_mask,
                                                     peel_count, partial_count);
-        assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
-               "Transformation should be applicable by construction.");
-        transformation.Apply(GetIRContext(), GetFactManager());
-        *GetTransformations()->add_transformation() =
-            transformation.ToMessage();
+        ApplyTransformation(transformation);
       }
     }
   }

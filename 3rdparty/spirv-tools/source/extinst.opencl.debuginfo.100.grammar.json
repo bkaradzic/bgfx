@@ -376,6 +376,19 @@
       ]
     },
     {
+      "opname" : "DebugImportedEntity",
+      "opcode" : 34,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "'Name'" },
+        { "kind" : "DebugImportedEntity", "name" : "'Tag'" },
+        { "kind" : "IdRef", "name" : "'Source'" },
+        { "kind" : "IdRef", "name" : "'Entity'" },
+        { "kind" : "LiteralInteger", "name" : "'Line'" },
+        { "kind" : "LiteralInteger", "name" : "'Column'" },
+        { "kind" : "IdRef", "name" : "'Parent'" }
+      ]
+    },
+    {
       "opname" : "DebugSource",
       "opcode" : 35,
       "operands" : [

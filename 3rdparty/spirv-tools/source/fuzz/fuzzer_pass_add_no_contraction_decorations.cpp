@@ -44,12 +44,7 @@ void FuzzerPassAddNoContractionDecorations::Apply() {
                       ->GetChanceOfAddingNoContractionDecoration())) {
             TransformationAddNoContractionDecoration transformation(
                 inst.result_id());
-            assert(transformation.IsApplicable(GetIRContext(),
-                                               *GetFactManager()) &&
-                   "Transformation should be applicable by construction.");
-            transformation.Apply(GetIRContext(), GetFactManager());
-            *GetTransformations()->add_transformation() =
-                transformation.ToMessage();
+            ApplyTransformation(transformation);
           }
         }
       }

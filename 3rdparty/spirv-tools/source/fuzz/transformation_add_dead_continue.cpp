@@ -112,7 +112,7 @@ bool TransformationAddDeadContinue::IsApplicable(
   // clone, and check whether the transformed clone is valid.
   //
   // In principle some of the above checks could be removed, with more reliance
-  // being places on the validator.  This should be revisited if we are sure
+  // being placed on the validator.  This should be revisited if we are sure
   // the validator is complete with respect to checking structured control flow
   // rules.
   auto cloned_context = fuzzerutil::CloneIRContext(context);

@@ -18,6 +18,7 @@
 #include <queue>
 #include <set>
 
+#include "source/fuzz/call_graph.h"
 #include "source/fuzz/instruction_message.h"
 #include "source/fuzz/transformation_add_constant_boolean.h"
 #include "source/fuzz/transformation_add_constant_composite.h"
@@ -61,6 +62,8 @@ void FuzzerPassDonateModules::Apply() {
     std::unique_ptr<opt::IRContext> donor_ir_context = donor_suppliers_.at(
         GetFuzzerContext()->RandomIndex(donor_suppliers_))();
     assert(donor_ir_context != nullptr && "Supplying of donor failed");
+    assert(fuzzerutil::IsValid(donor_ir_context.get()) &&
+           "The donor module must be valid");
     // Donate the supplied module.
     //
     // Randomly decide whether to make the module livesafe (see
@@ -397,19 +400,27 @@ void FuzzerPassDonateModules::HandleTypesAndValues(
         // storage class global variable, using remapped versions of the result
         // type and initializer ids for the global variable in the donor.
         //
-        // We regard the added variable as having an arbitrary value.  This
+        // We regard the added variable as having an irrelevant value.  This
         // means that future passes can add stores to the variable in any
         // way they wish, and pass them as pointer parameters to functions
         // without worrying about whether their data might get modified.
         new_result_id = GetFuzzerContext()->GetFreshId();
+        uint32_t remapped_pointer_type =
+            original_id_to_donated_id->at(type_or_value.type_id());
+        uint32_t initializer_id;
+        if (type_or_value.NumInOperands() == 1) {
+          // The variable did not have an initializer; initialize it to zero.
+          // This is to limit problems associated with uninitialized data.
+          initializer_id = FindOrCreateZeroConstant(
+              fuzzerutil::GetPointeeTypeIdFromPointerType(
+                  GetIRContext(), remapped_pointer_type));
+        } else {
+          // The variable already had an initializer; use its remapped id.
+          initializer_id = original_id_to_donated_id->at(
+              type_or_value.GetSingleWordInOperand(1));
+        }
         ApplyTransformation(TransformationAddGlobalVariable(
-            new_result_id,
-            original_id_to_donated_id->at(type_or_value.type_id()),
-            type_or_value.NumInOperands() == 1
-                ? 0
-                : original_id_to_donated_id->at(
-                      type_or_value.GetSingleWordInOperand(1)),
-            true));
+            new_result_id, remapped_pointer_type, initializer_id, true));
       } break;
       case SpvOpUndef: {
         // It is fine to have multiple Undef instructions of the same type, so
@@ -473,53 +484,65 @@ void FuzzerPassDonateModules::HandleFunctions(
     });
 
     // Consider every instruction of the donor function.
-    function_to_donate->ForEachInst(
-        [&donated_instructions,
-         &original_id_to_donated_id](const opt::Instruction* instruction) {
-          // Get the instruction's input operands into donation-ready form,
-          // remapping any id uses in the process.
-          opt::Instruction::OperandList input_operands;
+    function_to_donate->ForEachInst([this, &donated_instructions,
+                                     &original_id_to_donated_id](
+                                        const opt::Instruction* instruction) {
+      // Get the instruction's input operands into donation-ready form,
+      // remapping any id uses in the process.
+      opt::Instruction::OperandList input_operands;
 
-          // Consider each input operand in turn.
-          for (uint32_t in_operand_index = 0;
-               in_operand_index < instruction->NumInOperands();
-               in_operand_index++) {
-            std::vector<uint32_t> operand_data;
-            const opt::Operand& in_operand =
-                instruction->GetInOperand(in_operand_index);
-            switch (in_operand.type) {
-              case SPV_OPERAND_TYPE_ID:
-              case SPV_OPERAND_TYPE_TYPE_ID:
-              case SPV_OPERAND_TYPE_RESULT_ID:
-              case SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID:
-              case SPV_OPERAND_TYPE_SCOPE_ID:
-                // This is an id operand - it consists of a single word of data,
-                // which needs to be remapped so that it is replaced with the
-                // donated form of the id.
-                operand_data.push_back(
-                    original_id_to_donated_id->at(in_operand.words[0]));
-                break;
-              default:
-                // For non-id operands, we just add each of the data words.
-                for (auto word : in_operand.words) {
-                  operand_data.push_back(word);
-                }
-                break;
+      // Consider each input operand in turn.
+      for (uint32_t in_operand_index = 0;
+           in_operand_index < instruction->NumInOperands();
+           in_operand_index++) {
+        std::vector<uint32_t> operand_data;
+        const opt::Operand& in_operand =
+            instruction->GetInOperand(in_operand_index);
+        switch (in_operand.type) {
+          case SPV_OPERAND_TYPE_ID:
+          case SPV_OPERAND_TYPE_TYPE_ID:
+          case SPV_OPERAND_TYPE_RESULT_ID:
+          case SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID:
+          case SPV_OPERAND_TYPE_SCOPE_ID:
+            // This is an id operand - it consists of a single word of data,
+            // which needs to be remapped so that it is replaced with the
+            // donated form of the id.
+            operand_data.push_back(
+                original_id_to_donated_id->at(in_operand.words[0]));
+            break;
+          default:
+            // For non-id operands, we just add each of the data words.
+            for (auto word : in_operand.words) {
+              operand_data.push_back(word);
             }
-            input_operands.push_back({in_operand.type, operand_data});
-          }
-          // Remap the result type and result id (if present) of the
-          // instruction, and turn it into a protobuf message.
-          donated_instructions.push_back(MakeInstructionMessage(
-              instruction->opcode(),
-              instruction->type_id()
-                  ? original_id_to_donated_id->at(instruction->type_id())
-                  : 0,
-              instruction->result_id()
-                  ? original_id_to_donated_id->at(instruction->result_id())
-                  : 0,
-              input_operands));
-        });
+            break;
+        }
+        input_operands.push_back({in_operand.type, operand_data});
+      }
+
+      if (instruction->opcode() == SpvOpVariable &&
+          instruction->NumInOperands() == 1) {
+        // This is an uninitialized local variable.  Initialize it to zero.
+        input_operands.push_back(
+            {SPV_OPERAND_TYPE_ID,
+             {FindOrCreateZeroConstant(
+                 fuzzerutil::GetPointeeTypeIdFromPointerType(
+                     GetIRContext(),
+                     original_id_to_donated_id->at(instruction->type_id())))}});
+      }
+
+      // Remap the result type and result id (if present) of the
+      // instruction, and turn it into a protobuf message.
+      donated_instructions.push_back(MakeInstructionMessage(
+          instruction->opcode(),
+          instruction->type_id()
+              ? original_id_to_donated_id->at(instruction->type_id())
+              : 0,
+          instruction->result_id()
+              ? original_id_to_donated_id->at(instruction->result_id())
+              : 0,
+          input_operands));
+    });
 
     if (make_livesafe) {
       // Various types and constants must be in place for a function to be made
@@ -647,9 +670,12 @@ void FuzzerPassDonateModules::HandleFunctions(
         // The return type is void, so we don't need a return value.
         kill_unreachable_return_value_id = 0;
       } else {
-        // We do need a return value; we use OpUndef.
+        // We do need a return value; we use zero.
+        assert(function_return_type_inst->opcode() != SpvOpTypePointer &&
+               "Function return type must not be a pointer.");
         kill_unreachable_return_value_id =
-            FindOrCreateGlobalUndef(function_return_type_inst->type_id());
+            FindOrCreateZeroConstant(original_id_to_donated_id->at(
+                function_return_type_inst->result_id()));
       }
       // Add the function in a livesafe manner.
       ApplyTransformation(TransformationAddFunction(
@@ -666,52 +692,17 @@ void FuzzerPassDonateModules::HandleFunctions(
 std::vector<uint32_t>
 FuzzerPassDonateModules::GetFunctionsInCallGraphTopologicalOrder(
     opt::IRContext* context) {
+  CallGraph call_graph(context);
+
   // This is an implementation of Kahn’s algorithm for topological sorting.
-
-  // For each function id, stores the number of distinct functions that call
-  // the function.
-  std::map<uint32_t, uint32_t> function_in_degree;
-
-  // We first build a call graph for the module, and compute the in-degree for
-  // each function in the process.
-  // TODO(afd): If there is functionality elsewhere in the SPIR-V tools
-  //  framework to construct call graphs it could be nice to re-use it here.
-  std::map<uint32_t, std::set<uint32_t>> call_graph_edges;
-
-  // Initialize function in-degree and call graph edges to 0 and empty.
-  for (auto& function : *context->module()) {
-    function_in_degree[function.result_id()] = 0;
-    call_graph_edges[function.result_id()] = std::set<uint32_t>();
-  }
-
-  // Consider every function.
-  for (auto& function : *context->module()) {
-    // Avoid considering the same callee of this function multiple times by
-    // recording known callees.
-    std::set<uint32_t> known_callees;
-    // Consider every function call instruction in every block.
-    for (auto& block : function) {
-      for (auto& instruction : block) {
-        if (instruction.opcode() != SpvOpFunctionCall) {
-          continue;
-        }
-        // Get the id of the function being called.
-        uint32_t callee = instruction.GetSingleWordInOperand(0);
-        if (known_callees.count(callee)) {
-          // We have already considered a call to this function - ignore it.
-          continue;
-        }
-        // Increase the callee's in-degree and add an edge to the call graph.
-        function_in_degree[callee]++;
-        call_graph_edges[function.result_id()].insert(callee);
-        // Mark the callee as 'known'.
-        known_callees.insert(callee);
-      }
-    }
-  }
 
   // This is the sorted order of function ids that we will eventually return.
   std::vector<uint32_t> result;
+
+  // Get a copy of the initial in-degrees of all functions.  The algorithm
+  // involves decrementing these values, hence why we work on a copy.
+  std::map<uint32_t, uint32_t> function_in_degree =
+      call_graph.GetFunctionInDegree();
 
   // Populate a queue with all those function ids with in-degree zero.
   std::queue<uint32_t> queue;
@@ -728,7 +719,7 @@ FuzzerPassDonateModules::GetFunctionsInCallGraphTopologicalOrder(
     auto next = queue.front();
     queue.pop();
     result.push_back(next);
-    for (auto successor : call_graph_edges.at(next)) {
+    for (auto successor : call_graph.GetDirectCallees(next)) {
       assert(function_in_degree.at(successor) > 0 &&
              "The in-degree cannot be zero if the function is a successor.");
       function_in_degree[successor] = function_in_degree.at(successor) - 1;

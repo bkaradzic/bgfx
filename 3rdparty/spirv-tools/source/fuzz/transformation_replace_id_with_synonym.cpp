@@ -65,9 +65,9 @@ bool TransformationReplaceIdWithSynonym::IsApplicable(
 
   // The transformation is applicable if the synonymous id is available at the
   // use point.
-  return IdsIsAvailableAtUse(context, use_instruction,
-                             message_.id_use_descriptor().in_operand_index(),
-                             message_.synonymous_id());
+  return fuzzerutil::IdIsAvailableAtUse(
+      context, use_instruction, message_.id_use_descriptor().in_operand_index(),
+      message_.synonymous_id());
 }
 
 void TransformationReplaceIdWithSynonym::Apply(
@@ -86,30 +86,6 @@ protobufs::Transformation TransformationReplaceIdWithSynonym::ToMessage()
   protobufs::Transformation result;
   *result.mutable_replace_id_with_synonym() = message_;
   return result;
-}
-
-bool TransformationReplaceIdWithSynonym::IdsIsAvailableAtUse(
-    opt::IRContext* context, opt::Instruction* use_instruction,
-    uint32_t use_input_operand_index, uint32_t id) {
-  if (!context->get_instr_block(id)) {
-    return true;
-  }
-  auto defining_instruction = context->get_def_use_mgr()->GetDef(id);
-  if (defining_instruction == use_instruction) {
-    return false;
-  }
-  auto dominator_analysis = context->GetDominatorAnalysis(
-      context->get_instr_block(use_instruction)->GetParent());
-  if (use_instruction->opcode() == SpvOpPhi) {
-    // In the case where the use is an operand to OpPhi, it is actually the
-    // *parent* block associated with the operand that must be dominated by
-    // the synonym.
-    auto parent_block =
-        use_instruction->GetSingleWordInOperand(use_input_operand_index + 1);
-    return dominator_analysis->Dominates(
-        context->get_instr_block(defining_instruction)->id(), parent_block);
-  }
-  return dominator_analysis->Dominates(defining_instruction, use_instruction);
 }
 
 bool TransformationReplaceIdWithSynonym::UseCanBeReplacedWithSynonym(

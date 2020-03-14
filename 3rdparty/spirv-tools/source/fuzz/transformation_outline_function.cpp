@@ -617,10 +617,10 @@ TransformationOutlineFunction::PrepareFunctionPrototype(
         context, SpvOpFunctionParameter,
         context->get_def_use_mgr()->GetDef(id)->type_id(),
         input_id_to_fresh_id_map.at(id), opt::Instruction::OperandList()));
-    // If the input id is an arbitrary-valued variable, the same should be true
+    // If the input id is an irrelevant-valued variable, the same should be true
     // of the corresponding parameter.
-    if (fact_manager->VariableValueIsArbitrary(id)) {
-      fact_manager->AddFactValueOfVariableIsArbitrary(
+    if (fact_manager->PointeeValueIsIrrelevant(id)) {
+      fact_manager->AddFactValueOfPointeeIsIrrelevant(
           input_id_to_fresh_id_map.at(id));
     }
   }

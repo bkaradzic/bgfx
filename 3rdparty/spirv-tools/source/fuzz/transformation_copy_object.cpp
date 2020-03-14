@@ -64,20 +64,10 @@ bool TransformationCopyObject::IsApplicable(
     return false;
   }
 
-  // |message_object| must be available at the point where we want to add the
-  // copy. It is available if it is at global scope (in which case it has no
-  // block), or if it dominates the point of insertion but is different from the
-  // point of insertion.
-  //
-  // The reason why the object needs to be different from the insertion point is
-  // that the copy will be added *before* this point, and we do not want to
-  // insert it before the object's defining instruction.
-  return !context->get_instr_block(object_inst) ||
-         (object_inst != &*insert_before &&
-          context
-              ->GetDominatorAnalysis(
-                  context->get_instr_block(insert_before)->GetParent())
-              ->Dominates(object_inst, &*insert_before));
+  // |message_object| must be available directly before the point where we want
+  // to add the copy.
+  return fuzzerutil::IdIsAvailableBeforeInstruction(context, insert_before,
+                                                    message_.object());
 }
 
 void TransformationCopyObject::Apply(opt::IRContext* context,
@@ -105,6 +95,10 @@ void TransformationCopyObject::Apply(opt::IRContext* context,
   fact_manager->AddFactDataSynonym(MakeDataDescriptor(message_.object(), {}),
                                    MakeDataDescriptor(message_.fresh_id(), {}),
                                    context);
+
+  if (fact_manager->PointeeValueIsIrrelevant(message_.object())) {
+    fact_manager->AddFactValueOfPointeeIsIrrelevant(message_.fresh_id());
+  }
 }
 
 protobufs::Transformation TransformationCopyObject::ToMessage() const {

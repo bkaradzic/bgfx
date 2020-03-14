@@ -791,6 +791,18 @@ Optimizer::PassToken CreateInstBuffAddrCheckPass(uint32_t desc_set,
                                                  uint32_t shader_id,
                                                  uint32_t version = 2);
 
+// Create a pass to instrument OpDebugPrintf instructions.
+// This pass replaces all OpDebugPrintf instructions with instructions to write
+// a record containing the string id and the all specified values into a special
+// printf output buffer (if space allows). This pass is designed to support
+// the printf validation in the Vulkan validation layers.
+//
+// The instrumentation will write buffers in debug descriptor set |desc_set|.
+// It will write |shader_id| in each output record to identify the shader
+// module which generated the record.
+Optimizer::PassToken CreateInstDebugPrintfPass(uint32_t desc_set,
+                                               uint32_t shader_id);
+
 // Create a pass to upgrade to the VulkanKHR memory model.
 // This pass upgrades the Logical GLSL450 memory model to Logical VulkanKHR.
 // Additionally, it modifies memory, image, atomic and barrier operations to
