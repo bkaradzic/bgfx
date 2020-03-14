@@ -621,6 +621,8 @@ enum TOperator {
 
     EOpIsHelperInvocation,
 
+    EOpDebugPrintf,
+
     //
     // Branch
     //

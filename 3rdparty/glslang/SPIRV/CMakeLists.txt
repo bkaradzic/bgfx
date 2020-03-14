@@ -27,7 +27,8 @@ set(HEADERS
     SpvTools.h
     disassemble.h
     GLSL.ext.AMD.h
-    GLSL.ext.NV.h)
+    GLSL.ext.NV.h
+    NonSemanticDebugPrintf.h)
 
 set(SPVREMAP_HEADERS
     SPVRemapper.h

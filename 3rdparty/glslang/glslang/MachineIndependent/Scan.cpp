@@ -2,6 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2020 Google, Inc.
 //
 // All rights reserved.
 //
@@ -187,17 +188,15 @@ bool TInputScanner::scanVersion(int& version, EProfile& profile, bool& notFirstT
         if (lookingInMiddle) {
             notFirstToken = true;
             // make forward progress by finishing off the current line plus extra new lines
-            if (peek() == '\n' || peek() == '\r') {
-                while (peek() == '\n' || peek() == '\r')
-                    get();
-            } else
+            if (peek() != '\n' && peek() != '\r') {
                 do {
                     c = get();
                 } while (c != EndOfInput && c != '\n' && c != '\r');
-                while (peek() == '\n' || peek() == '\r')
-                    get();
-                if (peek() == EndOfInput)
-                    return true;
+            }
+            while (peek() == '\n' || peek() == '\r')
+                get();
+            if (peek() == EndOfInput)
+                return true;
         }
         lookingInMiddle = true;
 
@@ -843,6 +842,7 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
             parseContext.error(loc, "not supported", "::", "");
             break;
 
+        case PpAtomConstString:        parserToken->sType.lex.string = NewPoolTString(tokenText);     return STRING_LITERAL;
         case PpAtomConstInt:           parserToken->sType.lex.i    = ppToken.ival;       return INTCONSTANT;
         case PpAtomConstUint:          parserToken->sType.lex.i    = ppToken.ival;       return UINTCONSTANT;
         case PpAtomConstFloat:         parserToken->sType.lex.d    = ppToken.dval;       return FLOATCONSTANT;

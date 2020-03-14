@@ -1090,6 +1090,7 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpCooperativeMatrixMulAdd: out.debug << "MulAdd cooperative matrices"; break;
 
     case EOpIsHelperInvocation: out.debug << "IsHelperInvocation"; break;
+    case EOpDebugPrintf:  out.debug << "Debug printf";  break;
 
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }

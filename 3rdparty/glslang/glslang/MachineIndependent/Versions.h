@@ -185,6 +185,7 @@ const char* const E_GL_EXT_buffer_reference2                = "GL_EXT_buffer_ref
 const char* const E_GL_EXT_buffer_reference_uvec2           = "GL_EXT_buffer_reference_uvec2";
 const char* const E_GL_EXT_demote_to_helper_invocation      = "GL_EXT_demote_to_helper_invocation";
 const char* const E_GL_EXT_shader_realtime_clock            = "GL_EXT_shader_realtime_clock";
+const char* const E_GL_EXT_debug_printf                     = "GL_EXT_debug_printf";
 
 // Arrays of extensions for the above viewportEXTs duplications
 

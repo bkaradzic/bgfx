@@ -1353,6 +1353,9 @@ void TParseContext::computeBuiltinPrecisions(TIntermTyped& node, const TFunction
         case EOpInterpolateAtSample:
             numArgs = 1;
             break;
+        case EOpDebugPrintf:
+            numArgs = 0;
+            break;
         default:
             break;
         }
@@ -3086,7 +3089,7 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
         error(loc, "constructor argument does not have a type", "constructor", "");
         return true;
     }
-    if (op != EOpConstructStruct && typed->getBasicType() == EbtSampler) {
+    if (op != EOpConstructStruct && op != EOpConstructNonuniform && typed->getBasicType() == EbtSampler) {
         error(loc, "cannot convert a sampler", "constructor", "");
         return true;
     }
@@ -5138,6 +5141,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
             profileRequires(loc, EEsProfile, 310, nullptr, feature);
         }
         publicType.qualifier.layoutOffset = value;
+        publicType.qualifier.explicitOffset = true;
         if (nonLiteral)
             error(loc, "needs a literal integer", "offset", "");
         return;
@@ -6082,6 +6086,15 @@ const TFunction* TParseContext::findFunction(const TSourceLoc& loc, const TFunct
 #endif
 
     const TFunction* function = nullptr;
+
+    // debugPrintfEXT has var args and is in the symbol table as "debugPrintfEXT()",
+    // mangled to "debugPrintfEXT("
+    if (call.getName() == "debugPrintfEXT") {
+        TSymbol* symbol = symbolTable.find("debugPrintfEXT(", &builtIn);
+        if (symbol)
+            return symbol->getAsFunction();
+    }
+
     bool explicitTypesEnabled = extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
                                 extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int8) ||
                                 extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int16) ||

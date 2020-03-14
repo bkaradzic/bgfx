@@ -17,7 +17,7 @@ if(ENABLE_GLSLANG_JS)
         target_link_options(glslang.js PRIVATE "SHELL: -s FILESYSTEM=0")
 
         if(ENABLE_EMSCRIPTEN_SINGLE_FILE)
-            target_link_options(glslang.js "SHELL: -s SINGLE_FILE=1")
+            target_link_options(glslang.js PRIVATE "SHELL: -s SINGLE_FILE=1")
         endif(ENABLE_EMSCRIPTEN_SINGLE_FILE)
 
         if(ENABLE_EMSCRIPTEN_ENVIRONMENT_NODE)

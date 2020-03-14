@@ -553,6 +553,7 @@ public:
     // having a constant_id is not sufficient: expressions have no id, but are still specConstant
     bool specConstant : 1;
     bool nonUniform   : 1;
+    bool explicitOffset   : 1;
 
 #ifdef GLSLANG_WEB
     bool isWriteOnly() const { return false; }

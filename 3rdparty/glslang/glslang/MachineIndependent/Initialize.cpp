@@ -1,7 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2016 LunarG, Inc.
-// Copyright (C) 2015-2018 Google, Inc.
+// Copyright (C) 2015-2020 Google, Inc.
 // Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
@@ -4086,6 +4086,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     commonBuiltins.append("void controlBarrier(int, int, int, int);\n"
                           "void memoryBarrier(int, int, int);\n");
 
+    commonBuiltins.append("void debugPrintfEXT();\n");
+
     if (profile != EEsProfile && version >= 450) {
         // coopMatStoreNV perhaps ought to have "out" on the buf parameter, but
         // adding it introduces undesirable tempArgs on the stack. What we want
@@ -7903,6 +7905,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         symbolTable.setFunctionExtensions("controlBarrier",                 1, &E_GL_KHR_memory_scope_semantics);
+        symbolTable.setFunctionExtensions("debugPrintfEXT",                 1, &E_GL_EXT_debug_printf);
 
         // GL_ARB_shader_ballot
         if (profile != EEsProfile) {
@@ -8451,6 +8454,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("average",            EOpAverage);
     symbolTable.relateToOperator("averageRounded",     EOpAverageRounded);
     symbolTable.relateToOperator("multiply32x16",      EOpMul32x16);
+    symbolTable.relateToOperator("debugPrintfEXT",     EOpDebugPrintf);
+
 
     if (PureOperatorBuiltins) {
         symbolTable.relateToOperator("imageSize",               EOpImageQuerySize);

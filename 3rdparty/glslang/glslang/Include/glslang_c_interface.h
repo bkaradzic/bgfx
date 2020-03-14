@@ -33,12 +33,124 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef GLSLANG_C_IFACE_H_INCLUDED
 #define GLSLANG_C_IFACE_H_INCLUDED
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "glslang_c_shader_types.h"
 
 typedef struct glslang_shader_s glslang_shader_t;
 typedef struct glslang_program_s glslang_program_t;
+
+/* TLimits counterpart */
+typedef struct glslang_limits_s {
+    bool non_inductive_for_loops;
+    bool while_loops;
+    bool do_while_loops;
+    bool general_uniform_indexing;
+    bool general_attribute_matrix_vector_indexing;
+    bool general_varying_indexing;
+    bool general_sampler_indexing;
+    bool general_variable_indexing;
+    bool general_constant_matrix_vector_indexing;
+} glslang_limits_t;
+
+/* TBuiltInResource counterpart */
+typedef struct glslang_resource_s {
+    int max_lights;
+    int max_clip_planes;
+    int max_texture_units;
+    int max_texture_coords;
+    int max_vertex_attribs;
+    int max_vertex_uniform_components;
+    int max_varying_floats;
+    int max_vertex_texture_image_units;
+    int max_combined_texture_image_units;
+    int max_texture_image_units;
+    int max_fragment_uniform_components;
+    int max_draw_buffers;
+    int max_vertex_uniform_vectors;
+    int max_varying_vectors;
+    int max_fragment_uniform_vectors;
+    int max_vertex_output_vectors;
+    int max_fragment_input_vectors;
+    int min_program_texel_offset;
+    int max_program_texel_offset;
+    int max_clip_distances;
+    int max_compute_work_group_count_x;
+    int max_compute_work_group_count_y;
+    int max_compute_work_group_count_z;
+    int max_compute_work_group_size_x;
+    int max_compute_work_group_size_y;
+    int max_compute_work_group_size_z;
+    int max_compute_uniform_components;
+    int max_compute_texture_image_units;
+    int max_compute_image_uniforms;
+    int max_compute_atomic_counters;
+    int max_compute_atomic_counter_buffers;
+    int max_varying_components;
+    int max_vertex_output_components;
+    int max_geometry_input_components;
+    int max_geometry_output_components;
+    int max_fragment_input_components;
+    int max_image_units;
+    int max_combined_image_units_and_fragment_outputs;
+    int max_combined_shader_output_resources;
+    int max_image_samples;
+    int max_vertex_image_uniforms;
+    int max_tess_control_image_uniforms;
+    int max_tess_evaluation_image_uniforms;
+    int max_geometry_image_uniforms;
+    int max_fragment_image_uniforms;
+    int max_combined_image_uniforms;
+    int max_geometry_texture_image_units;
+    int max_geometry_output_vertices;
+    int max_geometry_total_output_components;
+    int max_geometry_uniform_components;
+    int max_geometry_varying_components;
+    int max_tess_control_input_components;
+    int max_tess_control_output_components;
+    int max_tess_control_texture_image_units;
+    int max_tess_control_uniform_components;
+    int max_tess_control_total_output_components;
+    int max_tess_evaluation_input_components;
+    int max_tess_evaluation_output_components;
+    int max_tess_evaluation_texture_image_units;
+    int max_tess_evaluation_uniform_components;
+    int max_tess_patch_components;
+    int max_patch_vertices;
+    int max_tess_gen_level;
+    int max_viewports;
+    int max_vertex_atomic_counters;
+    int max_tess_control_atomic_counters;
+    int max_tess_evaluation_atomic_counters;
+    int max_geometry_atomic_counters;
+    int max_fragment_atomic_counters;
+    int max_combined_atomic_counters;
+    int max_atomic_counter_bindings;
+    int max_vertex_atomic_counter_buffers;
+    int max_tess_control_atomic_counter_buffers;
+    int max_tess_evaluation_atomic_counter_buffers;
+    int max_geometry_atomic_counter_buffers;
+    int max_fragment_atomic_counter_buffers;
+    int max_combined_atomic_counter_buffers;
+    int max_atomic_counter_buffer_size;
+    int max_transform_feedback_buffers;
+    int max_transform_feedback_interleaved_components;
+    int max_cull_distances;
+    int max_combined_clip_and_cull_distances;
+    int max_samples;
+    int max_mesh_output_vertices_nv;
+    int max_mesh_output_primitives_nv;
+    int max_mesh_work_group_size_x_nv;
+    int max_mesh_work_group_size_y_nv;
+    int max_mesh_work_group_size_z_nv;
+    int max_task_work_group_size_x_nv;
+    int max_task_work_group_size_y_nv;
+    int max_task_work_group_size_z_nv;
+    int max_mesh_view_count_nv;
+
+    glslang_limits_t limits;
+} glslang_resource_t;
 
 typedef struct glslang_input_s {
     glslang_source_t language;
@@ -54,6 +166,7 @@ typedef struct glslang_input_s {
     int force_default_version_and_profile;
     int forward_compatible;
     glslang_messages_t messages;
+    const glslang_resource_t* resource;
 } glslang_input_t;
 
 /* Inclusion result structure allocated by C include_local/include_system callbacks */

@@ -2,7 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
-// Copyright (C) 2015-2018 Google, Inc.
+// Copyright (C) 2015-2019 Google, Inc.
 //
 // All rights reserved.
 //
@@ -263,6 +263,7 @@ GLSLANG_WEB_EXCLUDE_OFF
 %token <lex> AND_OP OR_OP XOR_OP MUL_ASSIGN DIV_ASSIGN ADD_ASSIGN
 %token <lex> MOD_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 %token <lex> SUB_ASSIGN
+%token <lex> STRING_LITERAL
 
 %token <lex> LEFT_PAREN RIGHT_PAREN LEFT_BRACKET RIGHT_BRACKET LEFT_BRACE RIGHT_BRACE DOT
 %token <lex> COMMA COLON EQUAL SEMICOLON BANG DASH TILDE PLUS STAR SLASH PERCENT
@@ -377,6 +378,9 @@ primary_expression
         $$ = parseContext.intermediate.addConstantUnion($1.b, $1.loc, true);
     }
 GLSLANG_WEB_EXCLUDE_ON
+    | STRING_LITERAL {
+        $$ = parseContext.intermediate.addConstantUnion($1.string, $1.loc, true);
+    }
     | INT32CONSTANT {
         parseContext.explicitInt32Check($1.loc, "32-bit signed literal");
         $$ = parseContext.intermediate.addConstantUnion($1.i, $1.loc, true);
