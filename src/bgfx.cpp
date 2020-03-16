@@ -1194,7 +1194,7 @@ namespace bgfx
 	void EncoderImpl::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags)
 	{
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM)
-		&& (_flags == BGFX_DISCARD_ALL))
+		&& (_flags & BGFX_DISCARD_STATE))
 		{
 			m_uniformSet.clear();
 		}
@@ -1293,7 +1293,7 @@ namespace bgfx
 
 		m_draw.clear(_flags);
 		m_bind.clear(_flags);
-		if (_flags == BGFX_DISCARD_ALL)
+		if (_flags & BGFX_DISCARD_STATE)
 		{
 			m_uniformBegin = m_uniformEnd;
 		}
