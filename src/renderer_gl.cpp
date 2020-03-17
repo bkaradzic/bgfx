@@ -1175,6 +1175,69 @@ namespace bgfx { namespace gl
 		return 0 == err ? result : 0;
 	}
 
+	static uint64_t currentlyEnabledVertexAttribArrays = 0;
+	static uint64_t vertexAttribArraysPendingDisable = 0;
+	static uint64_t vertexAttribArraysPendingEnable = 0;
+
+	void lazyEnableVertexAttribArray(GLuint index)
+	{
+#if BX_PLATFORM_EMSCRIPTEN
+		// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
+		// out redundant API calls to glEnable/DisableVertexAttribArray.
+		if (index >= 64)
+		{
+			glEnableVertexAttribArray(index);
+			return;
+		}
+		uint64_t mask = 1ULL << index;
+		vertexAttribArraysPendingEnable |= mask & (~currentlyEnabledVertexAttribArrays);
+		vertexAttribArraysPendingDisable &= ~mask;
+#else
+		glEnableVertexAttribArray(index);
+#endif		
+	}
+
+	void lazyDisableVertexAttribArray(GLuint index)
+	{
+#if BX_PLATFORM_EMSCRIPTEN
+		// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
+		// out redundant API calls to glEnable/DisableVertexAttribArray.
+		if (index >= 64)
+		{
+			glDisableVertexAttribArray(index);
+			return;
+		}
+		uint64_t mask = 1ULL << index;
+		vertexAttribArraysPendingDisable |= mask & currentlyEnabledVertexAttribArrays;
+		vertexAttribArraysPendingEnable &= ~mask;
+#else
+		glDisableVertexAttribArray(index);
+#endif
+	}
+
+	void applyLazyEnabledVertexAttributes()
+	{
+#if BX_PLATFORM_EMSCRIPTEN
+		while(vertexAttribArraysPendingDisable)
+		{
+			int index = __builtin_ctzll(vertexAttribArraysPendingDisable);
+			uint64_t mask = ~(1ULL << index);
+			vertexAttribArraysPendingDisable &= mask;
+			currentlyEnabledVertexAttribArrays &= mask;
+			glDisableVertexAttribArray(index);
+		}
+
+		while(vertexAttribArraysPendingEnable)
+		{
+			int index = __builtin_ctzll(vertexAttribArraysPendingEnable);
+			uint64_t mask = 1ULL << index;
+			vertexAttribArraysPendingEnable &= ~mask;
+			currentlyEnabledVertexAttribArrays |= mask;
+			glEnableVertexAttribArray(index);
+		}
+#endif
+	}
+
 	void setTextureFormat(TextureFormat::Enum _format, GLenum _internalFmt, GLenum _fmt, GLenum _type = GL_ZERO)
 	{
 		TextureFormatInfo& tfi = s_textureFormat[_format];
@@ -4570,7 +4633,7 @@ namespace bgfx { namespace gl
 			{
 				if (UINT16_MAX != _layout.m_attributes[attr])
 				{
-					GL_CHECK(glEnableVertexAttribArray(loc) );
+					GL_CHECK(lazyEnableVertexAttribArray(loc) );
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );
 
 					uint32_t baseVertex = _baseVertex*_layout.m_stride + _layout.m_offset[attr];
@@ -4600,6 +4663,7 @@ namespace bgfx { namespace gl
 				}
 			}
 		}
+		applyLazyEnabledVertexAttributes();
 	}
 
 	void ProgramGL::unbindAttributes()
@@ -4610,7 +4674,7 @@ namespace bgfx { namespace gl
 			{
 				Attrib::Enum attr = Attrib::Enum(m_used[ii]);
 				GLint loc = m_attributes[attr];
-				GL_CHECK(glDisableVertexAttribArray(loc));
+				GL_CHECK(lazyDisableVertexAttribArray(loc));
 			}
 		}
 	}
@@ -4621,7 +4685,7 @@ namespace bgfx { namespace gl
 		for (uint32_t ii = 0; 0xffff != m_instanceData[ii]; ++ii)
 		{
 			GLint loc = m_instanceData[ii];
-			GL_CHECK(glEnableVertexAttribArray(loc) );
+			GL_CHECK(lazyEnableVertexAttribArray(loc) );
 			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex) );
 			GL_CHECK(glVertexAttribDivisor(loc, 1) );
 			baseVertex += 16;
@@ -4633,7 +4697,7 @@ namespace bgfx { namespace gl
 		for(uint32_t ii = 0; 0xffff != m_instanceData[ii]; ++ii)
 		{
 			GLint loc = m_instanceData[ii];
-			GL_CHECK(glDisableVertexAttribArray(loc));
+			GL_CHECK(lazyDisableVertexAttribArray(loc));
 		}
 	}
 
