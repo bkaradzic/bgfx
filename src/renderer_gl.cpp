@@ -3786,8 +3786,22 @@ namespace bgfx { namespace gl
 
 				switch (type)
 				{
+#if BX_PLATFORM_EMSCRIPTEN
+				// For WebAssembly the array forms glUniform1iv/glUniform4fv are much slower compared to glUniform1i/glUniform4f
+				// since they need to marshal an array over from Wasm to JS, so optimize the case when there is exactly one
+				// uniform to upload.
+				case UniformType::Sampler:
+					if (num > 1) glUniform1iv(loc, num, (int*)data);
+					else glUniform1i(loc, *(int*)data);
+					break;
+				case UniformType::Vec4:
+					if (num > 1) glUniform4fv(loc, num, (float*)data);
+					else glUniform4f(loc, ((float*)data)[0], ((float*)data)[1], ((float*)data)[2], ((float*)data)[3]);
+					break;
+#else
 				CASE_IMPLEMENT_UNIFORM(Sampler, 1iv, I, int);
 				CASE_IMPLEMENT_UNIFORM(Vec4,    4fv, F, float);
+#endif
 				CASE_IMPLEMENT_UNIFORM_T(Mat3, Matrix3fv, F, float);
 				CASE_IMPLEMENT_UNIFORM_T(Mat4, Matrix4fv, F, float);
 
