@@ -1094,6 +1094,9 @@ namespace bgfx { namespace gl
 {
 	void dumpExtensions(const char* _extensions);
 
+	void lazyEnableVertexAttribArray(GLuint index);
+	void lazyDisableVertexAttribArray(GLuint index);
+
 	const char* glEnumName(GLenum _enum);
 
 #define _GL_CHECK(_check, _call) \
@@ -1392,7 +1395,7 @@ namespace bgfx { namespace gl
 				{
 					Attrib::Enum attr = Attrib::Enum(m_unboundUsedAttrib[ii]);
 					GLint loc = m_attributes[attr];
-					GL_CHECK(glDisableVertexAttribArray(loc) );
+					GL_CHECK(lazyDisableVertexAttribArray(loc) );
 				}
 			}
 		}
