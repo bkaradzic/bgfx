@@ -1085,6 +1085,189 @@ namespace bgfx { namespace gl
 	{
 	}
 
+	static GLuint currentProgram = 0;
+	static void GlUseProgram(GLuint program)
+	{
+		currentProgram = program;
+		GL_CHECK(glUseProgram(program) );
+	}
+
+	template<typename T>
+	class TinyHashMap
+	{
+		struct KeyVal
+		{
+			uint64_t key;
+			T value;
+		};
+		KeyVal *table;
+		uint32_t capacityMask;
+		uint32_t size;
+
+	public:
+		TinyHashMap()
+		:table(0), capacityMask(0), size(0)
+		{
+			Reserve();
+		}
+
+		~TinyHashMap()
+		{
+			delete[] table;
+		}
+
+		void Reserve()
+		{
+			uint32_t oldCapacity = capacityMask > 0 ? capacityMask + 1 : 0;
+			KeyVal *oldTable = table;
+
+			capacityMask = capacityMask >= 15 ? (capacityMask + 1) * 2 - 1 : 15;
+			table = new KeyVal[capacityMask+1];
+			memset(table, 0, sizeof(KeyVal)*(capacityMask+1));
+			size = 0;
+
+			for(uint32_t i = 0; i < oldCapacity; ++i)
+			{
+				if (oldTable[i].key)
+					Insert(oldTable[i].key, oldTable[i].value);
+			}
+			delete[] oldTable;
+		}
+
+		uint32_t Hash(uint64_t key)
+		{
+			return (uint32_t)((key * 7974849978084966079ull/*prime*/) & capacityMask);
+		}
+
+		bool Insert(uint64_t key, const T &val)
+		{
+			uint32_t index = Hash(key);
+			for(int i = 0; i <= capacityMask; ++i)
+			{
+				// Linear probing
+				uint32_t probeIndex = (index + i) & capacityMask;
+
+				if (table[probeIndex].key == key)
+				{
+					bool identical = (table[probeIndex].value == val);
+					if (identical)
+						return false;
+					table[probeIndex].value = val;
+					return true;
+				}
+				else if (!table[probeIndex].key)
+				{
+					table[probeIndex].key = key;
+					table[probeIndex].value = val;
+					++size;
+					// Keep 25% occupancy
+					if ((size + 1) << 2 > capacityMask)
+						Reserve();
+					return true;
+				}
+			}
+			BX_CHECK(false, "This code location should be unreachable!");
+			return false;
+		}
+private:
+		TinyHashMap(const TinyHashMap &) = delete;
+		void operator =(const TinyHashMap &) = delete;
+	};
+
+	static TinyHashMap<int> uniform1iCacheMap;
+	static bool uniform1iCache(uint32_t loc, int value)
+	{
+		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
+		return uniform1iCacheMap.Insert(key, value);
+	}
+	static void GlUniform1i(uint32_t loc, int value)
+	{
+		if (uniform1iCache(loc, value)) GL_CHECK(glUniform1i(loc, value) );
+	}
+	static void GlUniform1iv(uint32_t loc, int num, const int *data)
+	{
+		bool changed = false;
+		for(int i = 0; i < num; ++i)
+		{
+			if (uniform1iCache(loc+i, data[i]))
+			{
+				changed = true;
+			}
+		}
+		if (changed)
+			GL_CHECK(glUniform1iv(loc, num, data) );
+	}
+
+	struct f4 { float val[4]; bool operator ==(const f4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1]; }};
+	static TinyHashMap<f4> uniform4fCacheMap;
+	static bool uniform4fCache(uint32_t loc, const f4 &value)
+	{
+		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
+		return uniform4fCacheMap.Insert(key, value);
+	}
+	static void GlUniform4f(uint32_t loc, float x, float y, float z, float w)
+	{
+		f4 f = (f4){ x, y, z, w };
+		if (uniform4fCache(loc, f)) GL_CHECK(glUniform4f(loc, x, y, z, w) );
+	}
+	static void GlUniform4fv(uint32_t loc, int num, const float *data)
+	{
+		bool changed = false;
+		for(int i = 0; i < num; ++i)
+		{
+			if (uniform4fCache(loc+i, *(const f4*)&data[4*i]))
+			{
+				changed = true;
+			}
+		}
+		if (changed)
+			GL_CHECK(glUniform4fv(loc, num, data) );
+	}
+
+	struct f3x3 { float val[9]; bool operator ==(const f3x3 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && ((const uint32_t*)a)[8] == ((const uint32_t*)b)[8]; }};
+	static TinyHashMap<f3x3> uniformMatrix3fCacheMap;
+	static bool uniformMatrix3fvCache(uint32_t loc, const f3x3 &value)
+	{
+		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
+		return uniformMatrix3fCacheMap.Insert(key, value);
+	}
+
+	static void GlUniformMatrix3fv(uint32_t loc, int num, GLboolean transpose, const float *data)
+	{
+		bool changed = false;
+		for(int i = 0; i < num; ++i)
+		{
+			if (uniformMatrix3fvCache(loc+i, *(const f3x3*)&data[9*i]))
+			{
+				changed = true;
+			}
+		}
+		if (changed)
+			GL_CHECK(glUniformMatrix3fv(loc, num, transpose, data) );
+	}
+
+	struct f4x4 { float val[16]; bool operator ==(const f4x4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && a[4] == b[4] && a[5] == b[5] && a[6] == b[6] && a[7] == b[7]; }};
+	static TinyHashMap<f4x4> uniformMatrix4fCacheMap;
+	static bool uniformMatrix4fvCache(uint32_t loc, const f4x4 &value)
+	{
+		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
+		return uniformMatrix4fCacheMap.Insert(key, value);
+	}
+
+	static void GlUniformMatrix4fv(uint32_t loc, int num, GLboolean transpose, const float *data)
+	{
+		bool changed = false;
+		for(int i = 0; i < num; ++i)
+		{
+			if (uniformMatrix4fvCache(loc+i, *(const f4x4*)&data[16*i]))
+			{
+				changed = true;
+			}
+		}
+		if (changed)
+			GL_CHECK(glUniformMatrix4fv(loc, num, transpose, data) );
+	}
+
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 	void flushGlError()
@@ -2735,7 +2918,7 @@ namespace bgfx { namespace gl
 				}
 
 				m_vaoSupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&& (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				   && (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 						|| s_extension[Extension::ARB_vertex_array_object].m_supported
 						|| s_extension[Extension::OES_vertex_array_object].m_supported
 						);
@@ -3442,17 +3625,18 @@ namespace bgfx { namespace gl
 			GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
 
 			ProgramGL& program = m_program[_blitter.m_program.idx];
-			GL_CHECK(glUseProgram(program.m_id) );
-			GL_CHECK(glUniform1i(program.m_sampler[0].loc, 0) );
+
+			GlUseProgram(program.m_id);
+			GlUniform1i(program.m_sampler[0].loc, 0);
 
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, g_caps.homogeneousDepth);
 
-			GL_CHECK(glUniformMatrix4fv(program.m_predefined[0].m_loc
+			GlUniformMatrix4fv(program.m_predefined[0].m_loc
 				, 1
 				, GL_FALSE
 				, proj
-				) );
+				);
 
 			GL_CHECK(glActiveTexture(GL_TEXTURE0) );
 			GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_textures[_blitter.m_texture.idx].m_id) );
@@ -3553,19 +3737,19 @@ namespace bgfx { namespace gl
 
 		void setShaderUniform4f(uint8_t /*_flags*/, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			GL_CHECK(glUniform4fv(_regIndex
+			GlUniform4fv(_regIndex
 				, _numRegs
 				, (const GLfloat*)_val
-				) );
+				);
 		}
 
 		void setShaderUniform4x4f(uint8_t /*_flags*/, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			GL_CHECK(glUniformMatrix4fv(_regIndex
+			GlUniformMatrix4fv(_regIndex
 				, _numRegs
 				, GL_FALSE
 				, (const GLfloat*)_val
-				) );
+				);
 		}
 
 		uint32_t setFrameBuffer(FrameBufferHandle _fbh, uint32_t _height, uint16_t _discard = BGFX_CLEAR_NONE, bool _msaa = true)
@@ -4029,7 +4213,7 @@ namespace bgfx { namespace gl
 		case UniformType::_uniform: \
 				{ \
 					_type* value = (_type*)data; \
-					GL_CHECK(glUniform##_glsuffix(loc, num, value) ); \
+					GlUniform##_glsuffix(loc, num, value); \
 				} \
 				break;
 
@@ -4037,7 +4221,7 @@ namespace bgfx { namespace gl
 		case UniformType::_uniform: \
 				{ \
 					_type* value = (_type*)data; \
-					GL_CHECK(glUniform##_glsuffix(loc, num, GL_FALSE, value) ); \
+					GlUniform##_glsuffix(loc, num, GL_FALSE, value); \
 				} \
 				break;
 
@@ -4048,12 +4232,12 @@ namespace bgfx { namespace gl
 				// since they need to marshal an array over from Wasm to JS, so optimize the case when there is exactly one
 				// uniform to upload.
 				case UniformType::Sampler:
-					if (num > 1) glUniform1iv(loc, num, (int*)data);
-					else glUniform1i(loc, *(int*)data);
+					if (num > 1) GlUniform1iv(loc, num, (int*)data);
+					else GlUniform1i(loc, *(int*)data);
 					break;
 				case UniformType::Vec4:
-					if (num > 1) glUniform4fv(loc, num, (float*)data);
-					else glUniform4f(loc, ((float*)data)[0], ((float*)data)[1], ((float*)data)[2], ((float*)data)[3]);
+					if (num > 1) GlUniform4fv(loc, num, (float*)data);
+					else GlUniform4f(loc, ((float*)data)[0], ((float*)data)[1], ((float*)data)[2], ((float*)data)[3]);
 					break;
 #else
 				CASE_IMPLEMENT_UNIFORM(Sampler, 1iv, I, int);
@@ -4178,7 +4362,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
 				ProgramGL& program = m_program[_clearQuad.m_program[numMrt-1].idx];
-				GL_CHECK(glUseProgram(program.m_id) );
+				GlUseProgram(program.m_id);
 				program.bindAttributesBegin();
 				program.bindAttributes(layout, 0);
 				program.bindAttributesEnd();
@@ -4664,7 +4848,7 @@ namespace bgfx { namespace gl
 
 		if (0 != m_id)
 		{
-			GL_CHECK(glUseProgram(0) );
+			GlUseProgram(0);
 			GL_CHECK(glDeleteProgram(m_id) );
 			m_id = 0;
 		}
@@ -7155,7 +7339,7 @@ namespace bgfx { namespace gl
 						const RenderCompute& compute = renderItem.compute;
 
 						ProgramGL& program = m_program[key.m_program.idx];
-						GL_CHECK(glUseProgram(program.m_id) );
+						GlUseProgram(program.m_id);
 
 						GLbitfield barrier = 0;
 						for (uint32_t ii = 0; ii < maxComputeBindings; ++ii)
@@ -7653,7 +7837,7 @@ namespace bgfx { namespace gl
 					// Skip rendering if program index is valid, but program is invalid.
 					currentProgram = 0 == id ? ProgramHandle{kInvalidHandle} : currentProgram;
 
-					GL_CHECK(glUseProgram(id) );
+					GlUseProgram(id);
 					programChanged =
 						constantsChanged =
 						bindAttribs = true;
