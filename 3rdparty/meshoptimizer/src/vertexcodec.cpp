@@ -96,9 +96,12 @@ namespace meshopt
 
 const unsigned char kVertexHeader = 0xa0;
 
+static int gEncodeVertexVersion = 0;
+
 const size_t kVertexBlockSizeBytes = 8192;
 const size_t kVertexBlockMaxSize = 256;
 const size_t kByteGroupSize = 16;
+const size_t kByteGroupDecodeLimit = 24;
 const size_t kTailMaxSize = 32;
 
 static size_t getVertexBlockSize(size_t vertex_size)
@@ -229,7 +232,7 @@ static unsigned char* encodeBytes(unsigned char* data, unsigned char* data_end, 
 
 	for (size_t i = 0; i < buffer_size; i += kByteGroupSize)
 	{
-		if (size_t(data_end - data) < kTailMaxSize)
+		if (size_t(data_end - data) < kByteGroupDecodeLimit)
 			return 0;
 
 		int best_bits = 8;
@@ -382,7 +385,7 @@ static const unsigned char* decodeBytes(const unsigned char* data, const unsigne
 
 	for (size_t i = 0; i < buffer_size; i += kByteGroupSize)
 	{
-		if (size_t(data_end - data) < kTailMaxSize)
+		if (size_t(data_end - data) < kByteGroupDecodeLimit)
 			return 0;
 
 		size_t header_offset = i / kByteGroupSize;
@@ -932,8 +935,8 @@ static const unsigned char* decodeBytesSimd(const unsigned char* data, const uns
 
 	size_t i = 0;
 
-	// fast-path: process 4 groups at a time, do a shared bounds check - each group reads <=32b
-	for (; i + kByteGroupSize * 4 <= buffer_size && size_t(data_end - data) >= kTailMaxSize * 4; i += kByteGroupSize * 4)
+	// fast-path: process 4 groups at a time, do a shared bounds check - each group reads <=24b
+	for (; i + kByteGroupSize * 4 <= buffer_size && size_t(data_end - data) >= kByteGroupDecodeLimit * 4; i += kByteGroupSize * 4)
 	{
 		size_t header_offset = i / kByteGroupSize;
 		unsigned char header_byte = header[header_offset / 4];
@@ -947,7 +950,7 @@ static const unsigned char* decodeBytesSimd(const unsigned char* data, const uns
 	// slow-path: process remaining groups
 	for (; i < buffer_size; i += kByteGroupSize)
 	{
-		if (size_t(data_end - data) < kTailMaxSize)
+		if (size_t(data_end - data) < kByteGroupDecodeLimit)
 			return 0;
 
 		size_t header_offset = i / kByteGroupSize;
@@ -1095,7 +1098,9 @@ size_t meshopt_encodeVertexBuffer(unsigned char* buffer, size_t buffer_size, con
 	if (size_t(data_end - data) < 1 + vertex_size)
 		return 0;
 
-	*data++ = kVertexHeader;
+	int version = gEncodeVertexVersion;
+
+	*data++ = (unsigned char)(kVertexHeader | version);
 
 	unsigned char first_vertex[256] = {};
 	if (vertex_count > 0)
@@ -1180,6 +1185,13 @@ size_t meshopt_encodeVertexBufferBound(size_t vertex_count, size_t vertex_size)
 	return 1 + vertex_block_count * vertex_size * (vertex_block_header_size + vertex_block_data_size) + tail_size;
 }
 
+void meshopt_encodeVertexVersion(int version)
+{
+	assert(unsigned(version) <= 0);
+
+	meshopt::gEncodeVertexVersion = version;
+}
+
 int meshopt_decodeVertexBuffer(void* destination, size_t vertex_count, size_t vertex_size, const unsigned char* buffer, size_t buffer_size)
 {
 	using namespace meshopt;
@@ -1210,7 +1222,13 @@ int meshopt_decodeVertexBuffer(void* destination, size_t vertex_count, size_t ve
 	if (size_t(data_end - data) < 1 + vertex_size)
 		return -2;
 
-	if (*data++ != kVertexHeader)
+	unsigned char data_header = *data++;
+
+	if ((data_header & 0xf0) != kVertexHeader)
+		return -1;
+
+	int version = data_header & 0x0f;
+	if (version > 0)
 		return -1;
 
 	unsigned char last_vertex[256];
