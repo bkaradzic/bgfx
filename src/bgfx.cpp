@@ -3421,7 +3421,7 @@ namespace bgfx
 
 		errorState = ErrorState::ContextAllocated;
 
-		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, 64);
+		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, Context::kAlignment);
 		if (s_ctx->init(_init) )
 		{
 			BX_TRACE("Init complete.");
@@ -3434,7 +3434,7 @@ namespace bgfx
 		switch (errorState)
 		{
 		case ErrorState::ContextAllocated:
-			BX_ALIGNED_DELETE(g_allocator, s_ctx, 64);
+			BX_ALIGNED_DELETE(g_allocator, s_ctx, Context::kAlignment);
 			s_ctx = NULL;
 			BX_FALLTHROUGH;
 
@@ -3470,7 +3470,7 @@ namespace bgfx
 		ctx->shutdown();
 		BX_CHECK(NULL == s_ctx, "bgfx is should be uninitialized here.");
 
-		BX_ALIGNED_DELETE(g_allocator, ctx, 64);
+		BX_ALIGNED_DELETE(g_allocator, ctx, Context::kAlignment);
 
 		BX_TRACE("Shutdown complete.");
 
