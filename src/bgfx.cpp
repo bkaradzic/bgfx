@@ -3470,7 +3470,7 @@ namespace bgfx
 		ctx->shutdown();
 		BX_CHECK(NULL == s_ctx, "bgfx is should be uninitialized here.");
 
-		BX_ALIGNED_DELETE(g_allocator, ctx, 16);
+		BX_ALIGNED_DELETE(g_allocator, ctx, 64);
 
 		BX_TRACE("Shutdown complete.");
 
