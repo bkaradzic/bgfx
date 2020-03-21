@@ -385,6 +385,8 @@ void IRContext::AddCombinatorsForCapability(uint32_t capability) {
                                SpvOpTypeSampler,
                                SpvOpTypeSampledImage,
                                SpvOpTypeAccelerationStructureNV,
+                               SpvOpTypeAccelerationStructureKHR,
+                               SpvOpTypeRayQueryProvisionalKHR,
                                SpvOpTypeArray,
                                SpvOpTypeRuntimeArray,
                                SpvOpTypeStruct,

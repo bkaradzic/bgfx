@@ -80,6 +80,15 @@ struct Operand {
   spv_operand_type_t type;  // Type of this logical operand.
   OperandData words;        // Binary segments of this logical operand.
 
+  // Returns a string operand as a C-style string.
+  const char* AsCString() const {
+    assert(type == SPV_OPERAND_TYPE_LITERAL_STRING);
+    return reinterpret_cast<const char*>(words.data());
+  }
+
+  // Returns a string operand as a std::string.
+  std::string AsString() const { return AsCString(); }
+
   friend bool operator==(const Operand& o1, const Operand& o2) {
     return o1.type == o2.type && o1.words == o2.words;
   }

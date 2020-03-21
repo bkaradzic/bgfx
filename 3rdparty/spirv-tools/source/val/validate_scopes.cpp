@@ -32,6 +32,7 @@ bool IsValidScope(uint32_t scope) {
     case SpvScopeSubgroup:
     case SpvScopeInvocation:
     case SpvScopeQueueFamilyKHR:
+    case SpvScopeShaderCallKHR:
       return true;
     case SpvScopeMax:
       break;

@@ -1,4 +1,6 @@
-// Copyright (c) 2015-2016 The Khronos Group Inc.
+// Copyright (c) 2015-2020 The Khronos Group Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -333,6 +335,9 @@ int32_t spvOpcodeGeneratesType(SpvOp op) {
     case SpvOpTypeNamedBarrier:
     case SpvOpTypeAccelerationStructureNV:
     case SpvOpTypeCooperativeMatrixNV:
+    // case SpvOpTypeAccelerationStructureKHR: covered by
+    // SpvOpTypeAccelerationStructureNV
+    case SpvOpTypeRayQueryProvisionalKHR:
       return true;
     default:
       // In particular, OpTypeForwardPointer does not generate a type,

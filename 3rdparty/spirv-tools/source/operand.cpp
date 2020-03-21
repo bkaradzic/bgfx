@@ -1,4 +1,6 @@
-// Copyright (c) 2015-2016 The Khronos Group Inc.
+// Copyright (c) 2015-2020 The Khronos Group Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -216,6 +218,14 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "kernel profiling info";
     case SPV_OPERAND_TYPE_CAPABILITY:
       return "capability";
+    case SPV_OPERAND_TYPE_RAY_FLAGS:
+      return "ray flags";
+    case SPV_OPERAND_TYPE_RAY_QUERY_INTERSECTION:
+      return "ray query intersection";
+    case SPV_OPERAND_TYPE_RAY_QUERY_COMMITTED_INTERSECTION_TYPE:
+      return "ray query committed intersection type";
+    case SPV_OPERAND_TYPE_RAY_QUERY_CANDIDATE_INTERSECTION_TYPE:
+      return "ray query candidate intersection type";
     case SPV_OPERAND_TYPE_IMAGE:
     case SPV_OPERAND_TYPE_OPTIONAL_IMAGE:
       return "image";
@@ -323,6 +333,10 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_KERNEL_ENQ_FLAGS:
     case SPV_OPERAND_TYPE_KERNEL_PROFILING_INFO:
     case SPV_OPERAND_TYPE_CAPABILITY:
+    case SPV_OPERAND_TYPE_RAY_FLAGS:
+    case SPV_OPERAND_TYPE_RAY_QUERY_INTERSECTION:
+    case SPV_OPERAND_TYPE_RAY_QUERY_COMMITTED_INTERSECTION_TYPE:
+    case SPV_OPERAND_TYPE_RAY_QUERY_CANDIDATE_INTERSECTION_TYPE:
     case SPV_OPERAND_TYPE_DEBUG_BASE_TYPE_ATTRIBUTE_ENCODING:
     case SPV_OPERAND_TYPE_DEBUG_COMPOSITE_TYPE:
     case SPV_OPERAND_TYPE_DEBUG_TYPE_QUALIFIER:

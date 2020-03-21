@@ -2263,8 +2263,11 @@ spv_result_t BuiltInsValidator::ValidateVertexIndexAtDefinition(
 spv_result_t BuiltInsValidator::ValidateVertexIdOrInstanceIdAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   const SpvBuiltIn label = SpvBuiltIn(decoration.params()[0]);
-  bool allow_instance_id = _.HasCapability(SpvCapabilityRayTracingNV) &&
-                           label == SpvBuiltInInstanceId;
+  bool allow_instance_id =
+      (_.HasCapability(SpvCapabilityRayTracingNV) ||
+       _.HasCapability(SpvCapabilityRayTracingProvisionalKHR)) &&
+      label == SpvBuiltInInstanceId;
+
   if (spvIsVulkanEnv(_.context()->target_env) && !allow_instance_id) {
     return _.diag(SPV_ERROR_INVALID_DATA, &inst)
            << "Vulkan spec doesn't allow BuiltIn VertexId/InstanceId "
@@ -3085,7 +3088,8 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInWorldToObjectNV:
     case SpvBuiltInHitTNV:
     case SpvBuiltInHitKindNV:
-    case SpvBuiltInIncomingRayFlagsNV: {
+    case SpvBuiltInIncomingRayFlagsNV:
+    case SpvBuiltInRayGeometryIndexKHR: {
       // No validation rules (for the moment).
       break;
     }
