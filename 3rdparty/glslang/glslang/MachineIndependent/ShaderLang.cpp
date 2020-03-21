@@ -361,17 +361,17 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
 
     // check for ray tracing stages
     if (profile != EEsProfile && version >= 450) {
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangRayGenNV, source,
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangRayGen, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangIntersectNV, source,
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangIntersect, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangAnyHitNV, source,
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangAnyHit, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangClosestHitNV, source,
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangClosestHit, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMissNV, source,
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMiss, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangCallableNV, source,
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangCallable, source,
             infoSink, commonTable, symbolTables);
     }
 
@@ -623,12 +623,12 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
             version = profile == EEsProfile ? 310 : 420;
         }
         break;
-    case EShLangRayGenNV:
-    case EShLangIntersectNV:
-    case EShLangAnyHitNV:
-    case EShLangClosestHitNV:
-    case EShLangMissNV:
-    case EShLangCallableNV:
+    case EShLangRayGen:
+    case EShLangIntersect:
+    case EShLangAnyHit:
+    case EShLangClosestHit:
+    case EShLangMiss:
+    case EShLangCallable:
         if (profile == EEsProfile || version < 460) {
             correct = false;
             infoSink.info.message(EPrefixError, "#version: ray tracing shaders require non-es profile with version 460 or above");

@@ -910,11 +910,11 @@ enum TOperator {
     EOpAverageRounded,
     EOpMul32x16,
 
-    EOpTraceNV,
-    EOpReportIntersectionNV,
-    EOpIgnoreIntersectionNV,
-    EOpTerminateRayNV,
-    EOpExecuteCallableNV,
+    EOpTrace,
+    EOpReportIntersection,
+    EOpIgnoreIntersection,
+    EOpTerminateRay,
+    EOpExecuteCallable,
     EOpWritePackedPrimitiveIndices4x8NV,
     //
     // HLSL operations

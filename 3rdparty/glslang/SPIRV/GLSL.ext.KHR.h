@@ -45,5 +45,5 @@ static const char* const E_SPV_KHR_physical_storage_buffer      = "SPV_KHR_physi
 static const char* const E_SPV_EXT_fragment_shader_interlock    = "SPV_EXT_fragment_shader_interlock";
 static const char* const E_SPV_KHR_shader_clock                 = "SPV_KHR_shader_clock";
 static const char* const E_SPV_KHR_non_semantic_info            = "SPV_KHR_non_semantic_info";
-
+static const char* const E_SPV_KHR_ray_tracing                  = "SPV_KHR_ray_tracing";
 #endif  // #ifndef GLSLextKHR_H

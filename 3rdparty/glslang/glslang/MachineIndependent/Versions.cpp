@@ -295,6 +295,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_device_group]             = EBhDisable;
     extensionBehavior[E_GL_EXT_multiview]                = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_realtime_clock]    = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_tracing]              = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -433,6 +434,7 @@ void TParseVersions::getPreamble(std::string& preamble)
 
             "#define E_GL_EXT_shader_atomic_int64 1\n"
             "#define E_GL_EXT_shader_realtime_clock 1\n"
+            "#define E_GL_EXT_ray_tracing 1\n"
 
             "#define GL_AMD_shader_ballot 1\n"
             "#define GL_AMD_shader_trinary_minmax 1\n"
@@ -546,12 +548,12 @@ const char* StageName(EShLanguage stage)
     case EShLangTessControl:    return "tessellation control";
     case EShLangTessEvaluation: return "tessellation evaluation";
     case EShLangGeometry:       return "geometry";
-    case EShLangRayGenNV:       return "ray-generation";
-    case EShLangIntersectNV:    return "intersection";
-    case EShLangAnyHitNV:       return "any-hit";
-    case EShLangClosestHitNV:   return "closest-hit";
-    case EShLangMissNV:         return "miss";
-    case EShLangCallableNV:     return "callable";
+    case EShLangRayGen:         return "ray-generation";
+    case EShLangIntersect:      return "intersection";
+    case EShLangAnyHit:         return "any-hit";
+    case EShLangClosestHit:     return "closest-hit";
+    case EShLangMiss:           return "miss";
+    case EShLangCallable:       return "callable";
     case EShLangMeshNV:         return "mesh";
     case EShLangTaskNV:         return "task";
 #endif

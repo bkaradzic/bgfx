@@ -258,12 +258,12 @@ const char* GetBinaryName(EShLanguage stage)
         case EShLangGeometry:        name = "geom.spv";    break;
         case EShLangFragment:        name = "frag.spv";    break;
         case EShLangCompute:         name = "comp.spv";    break;
-        case EShLangRayGenNV:        name = "rgen.spv";    break;
-        case EShLangIntersectNV:     name = "rint.spv";    break;
-        case EShLangAnyHitNV:        name = "rahit.spv";   break;
-        case EShLangClosestHitNV:    name = "rchit.spv";   break;
-        case EShLangMissNV:          name = "rmiss.spv";   break;
-        case EShLangCallableNV:      name = "rcall.spv";   break;
+        case EShLangRayGen:          name = "rgen.spv";    break;
+        case EShLangIntersect:       name = "rint.spv";    break;
+        case EShLangAnyHit:          name = "rahit.spv";   break;
+        case EShLangClosestHit:      name = "rchit.spv";   break;
+        case EShLangMiss:            name = "rmiss.spv";   break;
+        case EShLangCallable:        name = "rcall.spv";   break;
         case EShLangMeshNV:          name = "mesh.spv";    break;
         case EShLangTaskNV:          name = "task.spv";    break;
         default:                     name = "unknown";     break;
@@ -1429,17 +1429,17 @@ EShLanguage FindLanguage(const std::string& name, bool parseStageName)
     else if (stageName == "comp")
         return EShLangCompute;
     else if (stageName == "rgen")
-        return EShLangRayGenNV;
+        return EShLangRayGen;
     else if (stageName == "rint")
-        return EShLangIntersectNV;
+        return EShLangIntersect;
     else if (stageName == "rahit")
-        return EShLangAnyHitNV;
+        return EShLangAnyHit;
     else if (stageName == "rchit")
-        return EShLangClosestHitNV;
+        return EShLangClosestHit;
     else if (stageName == "rmiss")
-        return EShLangMissNV;
+        return EShLangMiss;
     else if (stageName == "rcall")
-        return EShLangCallableNV;
+        return EShLangCallable;
     else if (stageName == "mesh")
         return EShLangMeshNV;
     else if (stageName == "task")

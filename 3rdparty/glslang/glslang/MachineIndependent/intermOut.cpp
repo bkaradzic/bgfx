@@ -1078,11 +1078,11 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpSubpassLoad:   out.debug << "subpassLoad";   break;
     case EOpSubpassLoadMS: out.debug << "subpassLoadMS"; break;
 
-    case EOpTraceNV:                          out.debug << "traceNV"; break;
-    case EOpReportIntersectionNV:             out.debug << "reportIntersectionNV"; break;
-    case EOpIgnoreIntersectionNV:             out.debug << "ignoreIntersectionNV"; break;
-    case EOpTerminateRayNV:                   out.debug << "terminateRayNV"; break;
-    case EOpExecuteCallableNV:                out.debug << "executeCallableNV"; break;
+    case EOpTrace:                            out.debug << "traceNV"; break;
+    case EOpReportIntersection:               out.debug << "reportIntersectionNV"; break;
+    case EOpIgnoreIntersection:               out.debug << "ignoreIntersectionNV"; break;
+    case EOpTerminateRay:                     out.debug << "terminateRayNV"; break;
+    case EOpExecuteCallable:                  out.debug << "executeCallableNV"; break;
     case EOpWritePackedPrimitiveIndices4x8NV: out.debug << "writePackedPrimitiveIndices4x8NV"; break;
 
     case EOpCooperativeMatrixLoad:  out.debug << "Load cooperative matrix";  break;

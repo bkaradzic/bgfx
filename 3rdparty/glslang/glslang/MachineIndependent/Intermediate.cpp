@@ -538,7 +538,7 @@ bool TIntermediate::isConversionAllowed(TOperator op, TIntermTyped* node) const
         return false;
     case EbtAtomicUint:
     case EbtSampler:
-    case EbtAccStructNV:
+    case EbtAccStruct:
         // opaque types can be passed to functions
         if (op == EOpFunction)
             break;

@@ -183,17 +183,17 @@ static EShLanguage c_shader_stage(glslang_stage_t stage)
     case GLSLANG_STAGE_COMPUTE:
         return EShLangCompute;
     case GLSLANG_STAGE_RAYGEN_NV:
-        return EShLangRayGenNV;
+        return EShLangRayGen;
     case GLSLANG_STAGE_INTERSECT_NV:
-        return EShLangIntersectNV;
+        return EShLangIntersect;
     case GLSLANG_STAGE_ANYHIT_NV:
-        return EShLangAnyHitNV;
+        return EShLangAnyHit;
     case GLSLANG_STAGE_CLOSESTHIT_NV:
-        return EShLangClosestHitNV;
+        return EShLangClosestHit;
     case GLSLANG_STAGE_MISS_NV:
-        return EShLangMissNV;
+        return EShLangMiss;
     case GLSLANG_STAGE_CALLABLE_NV:
-        return EShLangCallableNV;
+        return EShLangCallable;
     case GLSLANG_STAGE_TASK_NV:
         return EShLangTaskNV;
     case GLSLANG_STAGE_MESH_NV:

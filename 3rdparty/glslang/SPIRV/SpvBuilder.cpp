@@ -602,16 +602,16 @@ Id Builder::makeSampledImageType(Id imageType)
 }
 
 #ifndef GLSLANG_WEB
-Id Builder::makeAccelerationStructureNVType()
+Id Builder::makeAccelerationStructureType()
 {
     Instruction *type;
-    if (groupedTypes[OpTypeAccelerationStructureNV].size() == 0) {
-        type = new Instruction(getUniqueId(), NoType, OpTypeAccelerationStructureNV);
-        groupedTypes[OpTypeAccelerationStructureNV].push_back(type);
+    if (groupedTypes[OpTypeAccelerationStructureKHR].size() == 0) {
+        type = new Instruction(getUniqueId(), NoType, OpTypeAccelerationStructureKHR);
+        groupedTypes[OpTypeAccelerationStructureKHR].push_back(type);
         constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
         module.mapInstruction(type);
     } else {
-        type = groupedTypes[OpTypeAccelerationStructureNV].back();
+        type = groupedTypes[OpTypeAccelerationStructureKHR].back();
     }
 
     return type->getResultId();

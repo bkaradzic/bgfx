@@ -138,7 +138,11 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
     MERGE_MAX(spvVersion.openGl);
 
     numErrors += unit.getNumErrors();
-    numPushConstants += unit.numPushConstants;
+    // Only one push_constant is allowed, mergeLinkerObjects() will ensure the push_constant
+    // is the same for all units.
+    if (numPushConstants > 1 || unit.numPushConstants > 1)
+        error(infoSink, "Only one push_constant block is allowed per stage");
+    numPushConstants = std::min(numPushConstants + unit.numPushConstants, 1);
 
     if (unit.invocations != TQualifier::layoutNotSet) {
         if (invocations == TQualifier::layoutNotSet)
@@ -286,7 +290,7 @@ void TIntermediate::mergeTrees(TInfoSink& infoSink, TIntermediate& unit)
     }
 
     // Getting this far means we have two existing trees to merge...
-    numShaderRecordNVBlocks += unit.numShaderRecordNVBlocks;
+    numShaderRecordBlocks += unit.numShaderRecordBlocks;
     numTaskNVBlocks += unit.numTaskNVBlocks;
 
     // Get the top-level globals of each unit
@@ -462,6 +466,9 @@ void TIntermediate::mergeLinkerObjects(TInfoSink& infoSink, TIntermSequence& lin
                 // Check for consistent types/qualification/initializers etc.
                 mergeErrorCheck(infoSink, *symbol, *unitSymbol, false);
             }
+            // If different symbols, verify they arn't push_constant since there can only be one per stage
+            else if (symbol->getQualifier().isPushConstant() && unitSymbol->getQualifier().isPushConstant())
+                error(infoSink, "Only one push_constant block is allowed per stage");
         }
         if (merge)
             linkerObjects.push_back(unitLinkerObjects[unitLinkObj]);
@@ -555,6 +562,7 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
         symbol.getQualifier().queuefamilycoherent  != unitSymbol.getQualifier().queuefamilycoherent ||
         symbol.getQualifier().workgroupcoherent != unitSymbol.getQualifier().workgroupcoherent ||
         symbol.getQualifier().subgroupcoherent  != unitSymbol.getQualifier().subgroupcoherent ||
+        symbol.getQualifier().shadercallcoherent!= unitSymbol.getQualifier().shadercallcoherent ||
         symbol.getQualifier().nonprivate        != unitSymbol.getQualifier().nonprivate ||
         symbol.getQualifier().volatil           != unitSymbol.getQualifier().volatil ||
         symbol.getQualifier().restrict          != unitSymbol.getQualifier().restrict ||
@@ -721,13 +729,13 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
         break;
     case EShLangCompute:
         break;
-    case EShLangRayGenNV:
-    case EShLangIntersectNV:
-    case EShLangAnyHitNV:
-    case EShLangClosestHitNV:
-    case EShLangMissNV:
-    case EShLangCallableNV:
-        if (numShaderRecordNVBlocks > 1)
+    case EShLangRayGen:
+    case EShLangIntersect:
+    case EShLangAnyHit:
+    case EShLangClosestHit:
+    case EShLangMiss:
+    case EShLangCallable:
+        if (numShaderRecordBlocks > 1)
             error(infoSink, "Only one shaderRecordNV buffer block is allowed per stage");
         break;
     case EShLangMeshNV:

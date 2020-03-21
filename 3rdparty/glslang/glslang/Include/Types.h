@@ -532,6 +532,7 @@ public:
         queuefamilycoherent = false;
         workgroupcoherent = false;
         subgroupcoherent  = false;
+        shadercallcoherent = false;
         nonprivate = false;
         volatil      = false;
         restrict     = false;
@@ -591,6 +592,7 @@ public:
     bool queuefamilycoherent : 1;
     bool workgroupcoherent : 1;
     bool subgroupcoherent  : 1;
+    bool shadercallcoherent : 1;
     bool nonprivate   : 1;
     bool isWriteOnly() const { return writeonly; }
     bool isReadOnly() const { return readonly; }
@@ -600,11 +602,11 @@ public:
     bool isSample() const { return sample; }
     bool isMemory() const
     {
-        return subgroupcoherent || workgroupcoherent || queuefamilycoherent || devicecoherent || coherent || volatil || restrict || readonly || writeonly || nonprivate;
+        return shadercallcoherent || subgroupcoherent || workgroupcoherent || queuefamilycoherent || devicecoherent || coherent || volatil || restrict || readonly || writeonly || nonprivate;
     }
     bool isMemoryQualifierImageAndSSBOOnly() const
     {
-        return subgroupcoherent || workgroupcoherent || queuefamilycoherent || devicecoherent || coherent || volatil || restrict || readonly || writeonly;
+        return shadercallcoherent || subgroupcoherent || workgroupcoherent || queuefamilycoherent || devicecoherent || coherent || volatil || restrict || readonly || writeonly;
     }
     bool bufferReferenceNeedsVulkanMemoryModel() const
     {
@@ -774,7 +776,7 @@ public:
         layoutViewportRelative = false;
         // -2048 as the default value indicating layoutSecondaryViewportRelative is not set
         layoutSecondaryViewportRelativeOffset = -2048;
-        layoutShaderRecordNV = false;
+        layoutShaderRecord = false;
         layoutBufferReferenceAlign = layoutBufferReferenceAlignEnd;
         layoutFormat = ElfNone;
 #endif
@@ -813,7 +815,7 @@ public:
                hasAnyLocation() ||
                hasStream() ||
                hasFormat() ||
-               isShaderRecordNV() ||
+               isShaderRecord() ||
                isPushConstant() ||
                hasBufferReference();
     }
@@ -872,7 +874,7 @@ public:
     bool layoutPassthrough;
     bool layoutViewportRelative;
     int layoutSecondaryViewportRelativeOffset;
-    bool layoutShaderRecordNV;
+    bool layoutShaderRecord;
 #endif
 
     bool hasUniformLayout() const
@@ -994,7 +996,7 @@ public:
     }
     TLayoutFormat getFormat() const { return layoutFormat; }
     bool isPushConstant() const { return layoutPushConstant; }
-    bool isShaderRecordNV() const { return layoutShaderRecordNV; }
+    bool isShaderRecord() const { return layoutShaderRecord; }
     bool hasBufferReference() const { return layoutBufferReference; }
     bool hasBufferReferenceAlign() const
     {
@@ -1671,7 +1673,7 @@ public:
     }
     virtual bool isOpaque() const { return basicType == EbtSampler
 #ifndef GLSLANG_WEB
-         || basicType == EbtAtomicUint || basicType == EbtAccStructNV
+         || basicType == EbtAtomicUint || basicType == EbtAccStruct
 #endif
         ; }
     virtual bool isBuiltIn() const { return getQualifier().builtIn != EbvNone; }
@@ -1947,7 +1949,7 @@ public:
         case EbtAtomicUint:        return "atomic_uint";
         case EbtStruct:            return "structure";
         case EbtBlock:             return "block";
-        case EbtAccStructNV:       return "accelerationStructureNV";
+        case EbtAccStruct:         return "accelerationStructureNV";
         case EbtReference:         return "reference";
 #endif
         default:                   return "unknown type";
@@ -2057,7 +2059,7 @@ public:
                     appendStr(" layoutSecondaryViewportRelativeOffset=");
                     appendInt(qualifier.layoutSecondaryViewportRelativeOffset);
                 }
-                if (qualifier.layoutShaderRecordNV)
+                if (qualifier.layoutShaderRecord)
                     appendStr(" shaderRecordNV");
 
                 appendStr(")");
@@ -2100,6 +2102,8 @@ public:
             appendStr(" workgroupcoherent");
         if (qualifier.subgroupcoherent)
             appendStr(" subgroupcoherent");
+        if (qualifier.shadercallcoherent)
+            appendStr(" shadercallcoherent");
         if (qualifier.nonprivate)
             appendStr(" nonprivate");
         if (qualifier.volatil)

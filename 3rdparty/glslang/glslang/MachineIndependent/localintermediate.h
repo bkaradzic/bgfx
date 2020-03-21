@@ -249,7 +249,7 @@ public:
         blendEquations(0), xfbMode(false), multiStream(false),
         layoutOverrideCoverage(false),
         geoPassthroughEXT(false),
-        numShaderRecordNVBlocks(0),
+        numShaderRecordBlocks(0),
         computeDerivativeMode(LayoutDerivativeNone),
         primitives(TQualifier::layoutNotSet),
         numTaskNVBlocks(0),
@@ -620,7 +620,7 @@ public:
 
     void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode) { textureSamplerTransformMode = mode; }
     int getNumPushConstants() const { return numPushConstants; }
-    void addShaderRecordNVCount() { ++numShaderRecordNVBlocks; }
+    void addShaderRecordCount() { ++numShaderRecordBlocks; }
     void addTaskNVCount() { ++numTaskNVBlocks; }
 
     bool setInvocations(int i)
@@ -945,7 +945,7 @@ protected:
     bool multiStream;
     bool layoutOverrideCoverage;
     bool geoPassthroughEXT;
-    int numShaderRecordNVBlocks;
+    int numShaderRecordBlocks;
     ComputeDerivativeMode computeDerivativeMode;
     int primitives;
     int numTaskNVBlocks;
