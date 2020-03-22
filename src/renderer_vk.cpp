@@ -6383,10 +6383,10 @@ VK_DESTROY
 					if (!isValid(draw.m_indexBuffer) )
 					{
 						const VertexBufferVK& vertexBuffer = m_vertexBuffers[draw.m_stream[0].m_handle.idx];
-						const VertexLayout& layout = m_vertexLayouts[draw.m_stream[0].m_layoutHandle.idx];
+						const VertexLayout* layout = layouts[0];
 
 						const uint32_t numVertices = UINT32_MAX == draw.m_numVertices
-							? vertexBuffer.m_size / layout.m_stride
+							? vertexBuffer.m_size / layout->m_stride
 							: draw.m_numVertices
 							;
 						vkCmdDraw(m_commandBuffer
