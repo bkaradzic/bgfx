@@ -1139,6 +1139,7 @@ namespace bgfx { namespace d3d12
 				g_caps.supported |= ( 0
 					| BGFX_CAPS_TEXTURE_3D
 					| BGFX_CAPS_TEXTURE_COMPARE_ALL
+					| BGFX_CAPS_INDEX32
 					| BGFX_CAPS_INSTANCING
 					| BGFX_CAPS_DRAW_INDIRECT
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
