@@ -3636,7 +3636,7 @@ VK_IMPORT_DEVICE
 			return pipeline;
 		}
 
-		void allocDescriptorSet(ProgramVK& program, const RenderBind& renderBind, ScratchBufferVK& scratchBuffer)
+		void allocDescriptorSet(const ProgramVK& program, const RenderBind& renderBind, ScratchBufferVK& scratchBuffer)
 		{
 			VkDescriptorSetLayout dsl = m_descriptorSetLayoutCache.find(program.m_descriptorSetLayoutHash);
 			VkDescriptorSetAllocateInfo dsai;
@@ -5877,9 +5877,9 @@ VK_DESTROY
 					view = key.m_view;
 					currentPipeline = VK_NULL_HANDLE;
 					currentSamplerStateIdx = kInvalidHandle;
-					BX_UNUSED(currentSamplerStateIdx);
 					currentProgram         = BGFX_INVALID_HANDLE;
 					hasPredefined          = false;
+					BX_UNUSED(currentSamplerStateIdx);
 
 					VK_CHECK(vkBeginCommandBuffer(m_commandBuffer, &cbbi) );
 					fbh = _render->m_view[view].m_fbh;
@@ -5965,6 +5965,7 @@ VK_DESTROY
 					const RenderCompute& compute = renderItem.compute;
 
 					VkPipeline pipeline = getPipeline(key.m_program);
+
 					if (pipeline != currentPipeline)
 					{
 						currentPipeline = pipeline;
@@ -5974,6 +5975,7 @@ VK_DESTROY
 					}
 
 					bool constantsChanged = false;
+
 					if (compute.m_uniformBegin < compute.m_uniformEnd
 					||  currentProgram.idx != key.m_program.idx)
 					{
@@ -5983,6 +5985,7 @@ VK_DESTROY
 						ProgramVK& program = m_program[currentProgram.idx];
 
 						UniformBuffer* vcb = program.m_vsh->m_constantBuffer;
+
 						if (NULL != vcb)
 						{
 							commit(*vcb);
@@ -5992,7 +5995,8 @@ VK_DESTROY
 						constantsChanged = true;
 					}
 
-					ProgramVK& program = m_program[currentProgram.idx];
+					const ProgramVK& program = m_program[currentProgram.idx];
+
 					if (constantsChanged
 					||  hasPredefined)
 					{
@@ -6002,11 +6006,12 @@ VK_DESTROY
 					}
 
 					uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+
 					if (currentBindHash != bindHash
-					||  currentDslHash != program.m_descriptorSetLayoutHash)
+					||  currentDslHash  != program.m_descriptorSetLayoutHash)
 					{
 						currentBindHash = bindHash;
-						currentDslHash = program.m_descriptorSetLayoutHash;
+						currentDslHash  = program.m_descriptorSetLayoutHash;
 
 						allocDescriptorSet(program, renderBind, scratchBuffer);
 					}
@@ -6147,7 +6152,7 @@ VK_DESTROY
 
 				if (0 != draw.m_streamMask)
 				{
-					currentState.m_streamMask			= draw.m_streamMask;
+					currentState.m_streamMask = draw.m_streamMask;
 
 					const uint64_t state = draw.m_stateFlags;
 					bool hasFactor = 0
@@ -6177,8 +6182,9 @@ VK_DESTROY
 							uint16_t handle = draw.m_stream[idx].m_handle.idx;
 							const VertexBufferVK& vb = m_vertexBuffers[handle];
 							const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
-												  ? draw.m_stream[idx].m_layoutHandle.idx
-												  : vb.m_layoutHandle.idx;
+								? draw.m_stream[idx].m_layoutHandle.idx
+								: vb.m_layoutHandle.idx
+								;
 							const VertexLayout& layout = m_vertexLayouts[decl];
 
 							layouts[numStreams] = &layout;
@@ -6290,7 +6296,8 @@ VK_DESTROY
 						constantsChanged = true;
 					}
 
-					ProgramVK& program = m_program[currentProgram.idx];
+					const ProgramVK& program = m_program[currentProgram.idx];
+
 					if (hasPredefined)
 					{
 						uint32_t ref = (newFlags & BGFX_STATE_ALPHA_REF_MASK) >> BGFX_STATE_ALPHA_REF_SHIFT;
@@ -6299,16 +6306,17 @@ VK_DESTROY
 					}
 
 					if (currentBindHash != bindHash
-					||  currentDslHash != program.m_descriptorSetLayoutHash)
+					||  currentDslHash  != program.m_descriptorSetLayoutHash)
 					{
 						currentBindHash = bindHash;
-						currentDslHash = program.m_descriptorSetLayoutHash;
+						currentDslHash  = program.m_descriptorSetLayoutHash;
 
 						allocDescriptorSet(program, renderBind, scratchBuffer);
 					}
 
 					uint32_t numOffset = 0;
-					uint32_t offsets[2] = {0, 0};
+					uint32_t offsets[2] = { 0, 0 };
+
 					if (constantsChanged
 					||  hasPredefined)
 					{
@@ -6316,11 +6324,13 @@ VK_DESTROY
 						const uint32_t vsize = bx::strideAlign(program.m_vsh->m_size, align);
 						const uint32_t fsize = bx::strideAlign((NULL != program.m_fsh ? program.m_fsh->m_size : 0), align);
 						const uint32_t total = vsize + fsize;
+
 						if (vsize > 0)
 						{
 							offsets[numOffset++] = scratchBuffer.m_pos;
 							bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos], m_vsScratch, program.m_vsh->m_size);
 						}
+
 						if (fsize > 0)
 						{
 							offsets[numOffset++] = scratchBuffer.m_pos + vsize;
@@ -6342,7 +6352,6 @@ VK_DESTROY
 						, numOffset
 						, offsets
 						);
-
 
 //					if (constantsChanged
 //					||  hasPredefined)
