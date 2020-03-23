@@ -50,13 +50,11 @@
 #	define bvec3 bool3
 #	define bvec4 bool4
 
-#	define CONCAT_(_a, _b) _a ## _b
-#	define CONCAT(_a, _b) CONCAT_(_a, _b)
 
 #	if BGFX_SHADER_LANGUAGE_HLSL > 4
 #		define REGISTER(_type, _reg) register(_type[_reg])
 #	else
-#		define REGISTER(_type, _reg) register(CONCAT(CONCAT(_type, 0), _reg))
+#		define REGISTER(_type, _reg) register(_type ## _reg)
 #	endif // BGFX_SHADER_LANGUAGE_HLSL
 
 #	if BGFX_SHADER_LANGUAGE_HLSL > 3 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
