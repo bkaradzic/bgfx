@@ -1184,16 +1184,7 @@ VK_IMPORT
 				const char* enabledLayerNames[] =
 				{
 #if BGFX_CONFIG_DEBUG
-//					"VK_LAYER_GOOGLE_threading",
-//					"VK_LAYER_GOOGLE_unique_objects",
-//					"VK_LAYER_LUNARG_device_limits",
-					"VK_LAYER_LUNARG_standard_validation",
-//					"VK_LAYER_LUNARG_image",
-//					"VK_LAYER_LUNARG_mem_tracker",
-//					"VK_LAYER_LUNARG_core_validation",
-//					"VK_LAYER_LUNARG_object_tracker",
-//					"VK_LAYER_LUNARG_parameter_validation",
-//					"VK_LAYER_LUNARG_swapchain",
+					"VK_LAYER_KHRONOS_validation",
 //					"VK_LAYER_LUNARG_vktrace",
 //					"VK_LAYER_RENDERDOC_Capture",
 #endif // BGFX_CONFIG_DEBUG
@@ -5665,9 +5656,9 @@ VK_DESTROY
 			blitInfo.srcOffsets[0].x = blit.m_srcX;
 			blitInfo.srcOffsets[0].y = blit.m_srcY;
 			blitInfo.srcOffsets[0].z = srcZ;
-			blitInfo.srcOffsets[1].x = blit.m_srcX + blit.m_width;
-			blitInfo.srcOffsets[1].y = blit.m_srcY + blit.m_height;
-			blitInfo.srcOffsets[1].z = srcZ + depth;
+			blitInfo.srcOffsets[1].x = bx::min<int32_t>(blit.m_srcX + blit.m_width, src.m_width);
+			blitInfo.srcOffsets[1].y = bx::min<int32_t>(blit.m_srcY + blit.m_height, src.m_height);
+			blitInfo.srcOffsets[1].z = bx::max<int32_t>(bx::min(srcZ + depth, src.m_depth), 1);
 			blitInfo.dstSubresource.aspectMask     = dst.m_vkTextureAspect;
 			blitInfo.dstSubresource.mipLevel       = blit.m_dstMip;
 			blitInfo.dstSubresource.baseArrayLayer = dstLayer;
@@ -5675,9 +5666,10 @@ VK_DESTROY
 			blitInfo.dstOffsets[0].x = blit.m_dstX;
 			blitInfo.dstOffsets[0].y = blit.m_dstY;
 			blitInfo.dstOffsets[0].z = dstZ;
-			blitInfo.dstOffsets[1].x = blit.m_dstX + blit.m_width;
-			blitInfo.dstOffsets[1].y = blit.m_dstY + blit.m_height;
-			blitInfo.dstOffsets[1].z = dstZ + depth;
+			blitInfo.dstOffsets[1].x = bx::min<int32_t>(blit.m_dstX + blit.m_width, dst.m_width);
+			blitInfo.dstOffsets[1].y = bx::min<int32_t>(blit.m_dstY + blit.m_height, dst.m_height);
+			blitInfo.dstOffsets[1].z = bx::max<int32_t>(bx::min(dstZ + depth, dst.m_depth), 1);
+			VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat)) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
 			vkCmdBlitImage(
 				  commandBuffer
 				, src.m_textureImage
@@ -5686,7 +5678,7 @@ VK_DESTROY
 				, dst.m_currentImageLayout
 				, 1
 				, &blitInfo
-				, VK_FILTER_LINEAR
+				, filter
 				);
 		}
 
@@ -6665,12 +6657,14 @@ BX_UNUSED(presentMin, presentMax);
 //			PIX_ENDEVENT();
 		}
 
+		const uint32_t align = uint32_t(m_deviceProperties.limits.nonCoherentAtomSize);
+		const uint32_t size = bx::min(bx::strideAlign(scratchBuffer.m_pos, align), scratchBuffer.m_size);
 		VkMappedMemoryRange range;
 		range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 		range.pNext  = NULL;
 		range.memory = scratchBuffer.m_deviceMem;
 		range.offset = 0;
-		range.size   = scratchBuffer.m_pos;
+		range.size   = size;
 		vkFlushMappedMemoryRanges(m_device, 1, &range);
 
 		if (beginRenderPass)
