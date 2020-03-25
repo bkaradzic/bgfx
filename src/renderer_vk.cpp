@@ -1851,7 +1851,7 @@ VK_IMPORT_DEVICE
 				BX_WARN(surfaceFormatSrgbIdx < numSurfaceFormats, "Cannot find preferred sRGB surface format from supported surface formats");
 
 				m_backBufferColorFormat = surfaceFormats[surfaceFormatIdx];
-                m_backBufferColorFormatSrgb = surfaceFormatSrgbIdx < numSurfaceFormats ? surfaceFormats[surfaceFormatSrgbIdx] : m_backBufferColorFormat;
+				m_backBufferColorFormatSrgb = surfaceFormatSrgbIdx < numSurfaceFormats ? surfaceFormats[surfaceFormatSrgbIdx] : m_backBufferColorFormat;
 
 				uint32_t numPresentModes;
 				result = vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, NULL);
@@ -4127,8 +4127,8 @@ VK_IMPORT_DEVICE
 		VkSurfaceKHR       m_surface;
 		VkSwapchainKHR     m_swapchain;
 		uint32_t           m_numSwapchainImages;
-        VkSurfaceFormatKHR m_backBufferColorFormat;
-        VkSurfaceFormatKHR m_backBufferColorFormatSrgb;
+		VkSurfaceFormatKHR m_backBufferColorFormat;
+		VkSurfaceFormatKHR m_backBufferColorFormatSrgb;
 		VkImageLayout      m_backBufferColorImageLayout[NUM_SWAPCHAIN_IMAGE];
 		VkImage            m_backBufferColorImage[NUM_SWAPCHAIN_IMAGE];
 		VkImageView        m_backBufferColorImageView[NUM_SWAPCHAIN_IMAGE];
