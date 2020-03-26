@@ -3717,10 +3717,10 @@ VK_IMPORT_DEVICE
 
 						if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER == descriptorType)
 						{
-							VertexBufferVK& vb = m_vertexBuffers[bind.m_idx];
-							bufferInfo[bufferCount].buffer = vb.m_buffer;
+							BufferVK& sb = bind.m_type == Binding::VertexBuffer ? m_vertexBuffers[bind.m_idx] : m_indexBuffers[bind.m_idx];
+							bufferInfo[bufferCount].buffer = sb.m_buffer;
 							bufferInfo[bufferCount].offset = 0;
-							bufferInfo[bufferCount].range  = vb.m_size;
+							bufferInfo[bufferCount].range  = sb.m_size;
 							wds[wdsCount].pBufferInfo = &bufferInfo[bufferCount];
 							++bufferCount;
 						}
