@@ -1249,11 +1249,17 @@ VK_IMPORT
 				const char* enabledLayerNames[] =
 				{
 #if BGFX_CONFIG_DEBUG
-					"VK_LAYER_KHRONOS_validation",
-//					"VK_LAYER_LUNARG_vktrace",
-//					"VK_LAYER_RENDERDOC_Capture",
+					"VK_LAYER_KHRONOS_validations",
 #endif // BGFX_CONFIG_DEBUG
 					/*not used*/ ""
+				};
+
+				const char* fallbackLayerNames[] =
+				{
+#if BGFX_CONFIG_DEBUG
+					"VK_LAYER_LUNARG_standard_validation", // deprecated
+#endif // BGFX_CONFIG_DEBUG
+					""
 				};
 
 				uint32_t numEnabledExtensions = 2;
@@ -1297,6 +1303,17 @@ VK_IMPORT
 						, m_allocatorCb
 						, &m_instance
 						);
+
+				if (result == VK_ERROR_LAYER_NOT_PRESENT)
+                {
+					ici.enabledLayerCount   = BX_COUNTOF(fallbackLayerNames) - 1;
+					ici.ppEnabledLayerNames = fallbackLayerNames;
+
+					result = vkCreateInstance(&ici
+							, m_allocatorCb
+							, &m_instance
+							);
+				}
 			}
 
 			if (VK_SUCCESS != result)
