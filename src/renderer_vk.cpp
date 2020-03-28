@@ -898,6 +898,15 @@ VK_IMPORT_DEVICE
 				return VK_ERROR_INITIALIZATION_FAILED;
 			}
 
+			if (m_numSwapchainImages > BX_COUNTOF(m_backBufferColorImage))
+			{
+				BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR: numSwapchainImages %d > countof(m_backBufferColorImage) %d."
+					, m_numSwapchainImages
+					, BX_COUNTOF(m_backBufferColorImage)
+				);
+				return VK_ERROR_INITIALIZATION_FAILED;
+			}
+
 			result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_numSwapchainImages, &m_backBufferColorImage[0]);
 			if (VK_SUCCESS != result && VK_INCOMPLETE != result)
 			{
@@ -937,18 +946,7 @@ VK_IMPORT_DEVICE
 			VkMemoryRequirements mr;
 			vkGetImageMemoryRequirements(m_device, m_backBufferDepthStencilImage, &mr);
 
-			VkMemoryAllocateInfo ma;
-			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			ma.pNext = NULL;
-			ma.allocationSize = mr.size;
-			ma.memoryTypeIndex = selectMemoryType(mr.memoryTypeBits
-				, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-			);
-			result = vkAllocateMemory(m_device
-				, &ma
-				, m_allocatorCb
-				, &m_backBufferDepthStencilMemory
-			);
+			result = allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_backBufferDepthStencilMemory);
 
 			if (VK_SUCCESS != result)
 			{
@@ -1299,21 +1297,17 @@ VK_IMPORT
 					BX_UNUSED(s_allocationCb);
 				}
 
-				result = vkCreateInstance(&ici
-						, m_allocatorCb
-						, &m_instance
-						);
-
-				if (result == VK_ERROR_LAYER_NOT_PRESENT)
-                {
-					ici.enabledLayerCount   = BX_COUNTOF(fallbackLayerNames) - 1;
-					ici.ppEnabledLayerNames = fallbackLayerNames;
-
+				do
+				{
 					result = vkCreateInstance(&ici
 							, m_allocatorCb
 							, &m_instance
 							);
+
+					ici.enabledLayerCount   = ici.ppEnabledLayerNames != fallbackLayerNames ? BX_COUNTOF(fallbackLayerNames) - 1 : 0;
+					ici.ppEnabledLayerNames = ici.ppEnabledLayerNames != fallbackLayerNames ? fallbackLayerNames : NULL;
 				}
+				while (result == VK_ERROR_LAYER_NOT_PRESENT);
 			}
 
 			if (VK_SUCCESS != result)
@@ -1939,7 +1933,7 @@ VK_IMPORT_DEVICE
 				m_sci.pNext = NULL;
 				m_sci.flags = 0;
 				m_sci.surface = m_surface;
-				m_sci.minImageCount   = 2;
+				m_sci.minImageCount   = surfaceCapabilities.minImageCount;
 				m_sci.imageFormat     = m_backBufferColorFormat.format;
 				m_sci.imageColorSpace = m_backBufferColorFormat.colorSpace;
 				m_sci.imageExtent.width  = width;
@@ -4071,9 +4065,9 @@ VK_IMPORT_DEVICE
 //			VK_CHECK(vkWaitForFences(m_device, 1, &m_fence, true, INT64_MAX) );
 		}
 
-		uint32_t selectMemoryType(uint32_t _memoryTypeBits, uint32_t _propertyFlags) const
+		int32_t selectMemoryType(uint32_t _memoryTypeBits, uint32_t _propertyFlags, int32_t _startIndex = 0) const
 		{
-			for (uint32_t ii = 0, num = m_memoryProperties.memoryTypeCount; ii < num; ++ii)
+			for (int32_t ii = _startIndex, num = m_memoryProperties.memoryTypeCount; ii < num; ++ii)
 			{
 				const VkMemoryType& memType = m_memoryProperties.memoryTypes[ii];
 				if ( (0 != ( (1<<ii) & _memoryTypeBits) )
@@ -4084,7 +4078,35 @@ VK_IMPORT_DEVICE
 			}
 
 			BX_TRACE("Failed to find memory that supports flags 0x%08x.", _propertyFlags);
-			return 0;
+			return -1;
+		}
+
+		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, VkDeviceMemory* memory) const
+		{
+			VkMemoryAllocateInfo ma;
+			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			ma.pNext = NULL;
+			ma.allocationSize = requirements->size;
+
+			VkResult result = VK_ERROR_UNKNOWN;
+			int32_t searchIndex = -1;
+			do
+			{
+				searchIndex++;
+				searchIndex = selectMemoryType(requirements->memoryTypeBits, propertyFlags, searchIndex);
+				if (searchIndex >= 0)
+				{
+					ma.memoryTypeIndex = searchIndex;
+					result = vkAllocateMemory(m_device
+						, &ma
+						, m_allocatorCb
+						, memory
+					);
+				}
+			}
+			while ((result == VK_ERROR_OUT_OF_HOST_MEMORY || result == VK_ERROR_OUT_OF_DEVICE_MEMORY) && searchIndex >= 0);
+
+			return result;
 		}
 
 		VkCommandBuffer beginNewCommand(VkCommandBufferUsageFlagBits commandBufferUsageFlag = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
@@ -4277,25 +4299,14 @@ VK_DESTROY
 			, &mr
 			);
 
-		VkMemoryAllocateInfo ma;
-		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		ma.pNext = NULL;
-		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
-			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-			);
-		VK_CHECK(vkAllocateMemory(device
-			, &ma
-			, allocatorCb
-			, &m_deviceMem
-			) );
+		VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_deviceMem) );
 
 		m_size = (uint32_t)mr.size;
 		m_pos  = 0;
 
 		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem, 0) );
 
-		VK_CHECK(vkMapMemory(device, m_deviceMem, 0, ma.allocationSize, 0, (void**)&m_data) );
+		VK_CHECK(vkMapMemory(device, m_deviceMem, 0, m_size, 0, (void**)&m_data) );
 	}
 
 	void ScratchBufferVK::destroy()
@@ -4368,15 +4379,7 @@ VK_DESTROY
 		VkMemoryRequirements mr;
 		vkGetImageMemoryRequirements(device, m_image, &mr);
 
-		VkMemoryAllocateInfo ma;
-		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		ma.pNext = NULL;
-		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(
-			  mr.memoryTypeBits
-			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-			);
-		result = vkAllocateMemory(device, &ma, allocatorCb, &m_memory);
+		result = s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_memory);
 
 		if (VK_SUCCESS != result)
 		{
@@ -4473,15 +4476,7 @@ VK_DESTROY
 		VkMemoryRequirements mr;
 		vkGetBufferMemoryRequirements(device, m_buffer, &mr);
 
-		VkMemoryAllocateInfo ma;
-		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		ma.pNext = NULL;
-		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(
-			  mr.memoryTypeBits
-			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-			);
-		VK_CHECK(vkAllocateMemory(device, &ma, allocatorCb, &m_deviceMem) );
+		VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_deviceMem));
 
 		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem, 0));
 
@@ -4512,22 +4507,12 @@ VK_DESTROY
 
 			vkGetBufferMemoryRequirements(device, stagingBuffer, &mr);
 
-			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			ma.pNext = NULL;
-			ma.allocationSize = mr.size;
-			ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
-				, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-			);
-			VK_CHECK(vkAllocateMemory(device
-				, &ma
-				, allocatorCb
-				, &stagingMem
-			));
+			VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingMem));
 
 			VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingMem, 0));
 
 			void* dst;
-			VK_CHECK(vkMapMemory(device, stagingMem, 0, ma.allocationSize, 0, &dst));
+			VK_CHECK(vkMapMemory(device, stagingMem, 0, mr.size, 0, &dst));
 			bx::memCopy(dst, _data, _size);
 			vkUnmapMemory(device, stagingMem);
 
@@ -4584,23 +4569,12 @@ VK_DESTROY
 			, &mr
 		);
 
-		VkMemoryAllocateInfo ma;
-		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		ma.pNext = NULL;
-		ma.allocationSize = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
-			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-		);
-		VK_CHECK(vkAllocateMemory(device
-			, &ma
-			, allocatorCb
-			, &stagingMem
-		));
+		VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingMem));
 
 		VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingMem, 0));
 
 		void* dst;
-		VK_CHECK(vkMapMemory(device, stagingMem, 0, ma.allocationSize, 0, &dst));
+		VK_CHECK(vkMapMemory(device, stagingMem, 0, mr.size, 0, &dst));
 		bx::memCopy(dst, _data, _size);
 		vkUnmapMemory(device, stagingMem);
 
@@ -5276,20 +5250,7 @@ VK_DESTROY
 					, &mr
 					);
 
-				VkMemoryAllocateInfo ma;
-				ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-				ma.pNext = NULL;
-				ma.allocationSize = mr.size;
-				ma.memoryTypeIndex = s_renderVK->selectMemoryType(
-					  mr.memoryTypeBits
-					, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-					);
-				VK_CHECK(vkAllocateMemory(
-					  device
-					, &ma
-					, allocatorCb
-					, &stagingDeviceMem
-					));
+				VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingDeviceMem));
 
 				VK_CHECK(vkBindBufferMemory(
 					  device
@@ -5301,7 +5262,7 @@ VK_DESTROY
 					  device
 					, stagingDeviceMem
 					, 0
-					, ma.allocationSize
+					, mr.size
 					, 0
 					, (void**)& m_directAccessPtr
 					));
@@ -5360,16 +5321,7 @@ VK_DESTROY
 			VkMemoryRequirements imageMemReq;
 			vkGetImageMemoryRequirements(device, m_textureImage, &imageMemReq);
 
-			VkMemoryAllocateInfo imai;
-			imai.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			imai.pNext = NULL;
-			imai.allocationSize = imageMemReq.size;
-			imai.memoryTypeIndex = s_renderVK->selectMemoryType(
-				  imageMemReq.memoryTypeBits
-				, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-				);
-
-			VK_CHECK(vkAllocateMemory(device, &imai, allocatorCb, &m_textureDeviceMem));
+			VK_CHECK(s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem));
 
 			vkBindImageMemory(device, m_textureImage, m_textureDeviceMem, 0);
 
@@ -5527,24 +5479,11 @@ VK_DESTROY
 			, &mr
 			);
 
-		VkMemoryAllocateInfo ma;
-		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		ma.pNext = NULL;
-		ma.allocationSize = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(
-			  mr.memoryTypeBits
-			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-			);
-		VK_CHECK(vkAllocateMemory(
-			  device
-			, &ma
-			, allocatorCb
-			, &stagingDeviceMem
-			));
+		VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingDeviceMem));
 
 		void* directAccessPtr = NULL;
 		VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingDeviceMem, 0));
-		VK_CHECK(vkMapMemory(device, stagingDeviceMem, 0, ma.allocationSize, 0, (void**)&directAccessPtr));
+		VK_CHECK(vkMapMemory(device, stagingDeviceMem, 0, mr.size, 0, (void**)&directAccessPtr));
 		bx::memCopy(directAccessPtr, _mem->data, size_t(bci.size));
 		vkUnmapMemory(device, stagingDeviceMem);
 
