@@ -1023,7 +1023,9 @@ namespace entry
 
 		void setMouseLock(HWND _hwnd, bool _lock)
 		{
-			if (_hwnd != m_mouseLock)
+			HWND newMouseLock = _lock ? _hwnd : 0;
+
+			if (newMouseLock != m_mouseLock)
 			{
 				if (_lock)
 				{
@@ -1038,7 +1040,7 @@ namespace entry
 					ShowCursor(true);
 				}
 
-				m_mouseLock = _hwnd;
+				m_mouseLock = newMouseLock;
 			}
 		}
 
