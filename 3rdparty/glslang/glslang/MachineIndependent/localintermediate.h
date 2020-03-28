@@ -503,7 +503,7 @@ public:
     bool getAutoMapBindings() const { return false; }
     bool getAutoMapLocations() const { return false; }
     int getNumPushConstants() const { return 0; }
-    void addShaderRecordNVCount() { }
+    void addShaderRecordCount() { }
     void addTaskNVCount() { }
     void setUseVulkanMemoryModel() { }
     bool usingVulkanMemoryModel() const { return false; }

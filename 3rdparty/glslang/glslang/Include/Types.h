@@ -3,6 +3,7 @@
 // Copyright (C) 2012-2016 LunarG, Inc.
 // Copyright (C) 2015-2016 Google, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -945,7 +946,7 @@ public:
     bool hasAttachment() const { return false; }
     TLayoutFormat getFormat() const { return ElfNone; }
     bool isPushConstant() const { return false; }
-    bool isShaderRecordNV() const { return false; }
+    bool isShaderRecord() const { return false; }
     bool hasBufferReference() const { return false; }
     bool hasBufferReferenceAlign() const { return false; }
     bool isNonUniform() const { return false; }
@@ -1673,7 +1674,7 @@ public:
     }
     virtual bool isOpaque() const { return basicType == EbtSampler
 #ifndef GLSLANG_WEB
-         || basicType == EbtAtomicUint || basicType == EbtAccStruct
+         || basicType == EbtAtomicUint || basicType == EbtAccStruct || basicType == EbtRayQuery
 #endif
         ; }
     virtual bool isBuiltIn() const { return getQualifier().builtIn != EbvNone; }
@@ -1950,6 +1951,7 @@ public:
         case EbtStruct:            return "structure";
         case EbtBlock:             return "block";
         case EbtAccStruct:         return "accelerationStructureNV";
+        case EbtRayQuery:          return "rayQueryEXT";
         case EbtReference:         return "reference";
 #endif
         default:                   return "unknown type";

@@ -3,6 +3,7 @@
 // Copyright (C) 2012-2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
 // Copyright (C) 2015-2018 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -75,6 +76,7 @@ void TType::buildMangledName(TString& mangledName) const
     case EbtUint64:             mangledName += "u64";    break;
     case EbtAtomicUint:         mangledName += "au";     break;
     case EbtAccStruct:          mangledName += "as";     break;
+    case EbtRayQuery:           mangledName += "rq";     break;
 #endif
     case EbtSampler:
         switch (sampler.type) {

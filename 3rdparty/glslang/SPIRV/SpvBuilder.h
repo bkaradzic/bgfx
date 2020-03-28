@@ -2,6 +2,7 @@
 // Copyright (C) 2014-2015 LunarG, Inc.
 // Copyright (C) 2015-2020 Google, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -183,6 +184,8 @@ public:
 
     // accelerationStructureNV type
     Id makeAccelerationStructureType();
+    // rayQueryEXT type
+    Id makeRayQueryType();
 
     // For querying about types.
     Id getTypeId(Id resultId) const { return module.getTypeId(resultId); }

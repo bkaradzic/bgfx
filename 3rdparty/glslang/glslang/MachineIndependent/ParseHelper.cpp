@@ -3,6 +3,7 @@
 // Copyright (C) 2012-2015 LunarG, Inc.
 // Copyright (C) 2015-2018 Google, Inc.
 // Copyright (C) 2017, 2019 ARM Limited.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -2041,6 +2042,23 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             error(loc, "argument must be compile-time constant", "callable data number", "");
         break;
 
+    case EOpRayQueryGetIntersectionType:
+    case EOpRayQueryGetIntersectionT:
+    case EOpRayQueryGetIntersectionInstanceCustomIndex:
+    case EOpRayQueryGetIntersectionInstanceId:
+    case EOpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffset:
+    case EOpRayQueryGetIntersectionGeometryIndex:
+    case EOpRayQueryGetIntersectionPrimitiveIndex:
+    case EOpRayQueryGetIntersectionBarycentrics:
+    case EOpRayQueryGetIntersectionFrontFace:
+    case EOpRayQueryGetIntersectionObjectRayDirection:
+    case EOpRayQueryGetIntersectionObjectRayOrigin:
+    case EOpRayQueryGetIntersectionObjectToWorld:
+    case EOpRayQueryGetIntersectionWorldToObject:
+        if (!(*argp)[1]->getAsConstantUnion())
+            error(loc, "argument must be compile-time constant", "committed", "");
+        break;
+
     case EOpTextureQuerySamples:
     case EOpImageQuerySamples:
         // GL_ARB_shader_texture_image_samples
@@ -3992,7 +4010,7 @@ void TParseContext::checkRuntimeSizable(const TSourceLoc& loc, const TIntermType
     }
 
     // check for additional things allowed by GL_EXT_nonuniform_qualifier
-    if (base.getBasicType() == EbtSampler || base.getBasicType() == EbtAccStruct ||
+    if (base.getBasicType() == EbtSampler || base.getBasicType() == EbtAccStruct || base.getBasicType() == EbtRayQuery ||
         (base.getBasicType() == EbtBlock && base.getType().getQualifier().isUniformOrBuffer()))
         requireExtensions(loc, 1, &E_GL_EXT_nonuniform_qualifier, "variable index");
     else

@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2014-2015 LunarG, Inc.
 // Copyright (C) 2015-2018 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -612,6 +613,21 @@ Id Builder::makeAccelerationStructureType()
         module.mapInstruction(type);
     } else {
         type = groupedTypes[OpTypeAccelerationStructureKHR].back();
+    }
+
+    return type->getResultId();
+}
+
+Id Builder::makeRayQueryType()
+{
+    Instruction *type;
+    if (groupedTypes[OpTypeRayQueryProvisionalKHR].size() == 0) {
+        type = new Instruction(getUniqueId(), NoType, OpTypeRayQueryProvisionalKHR);
+        groupedTypes[OpTypeRayQueryProvisionalKHR].push_back(type);
+        constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
+        module.mapInstruction(type);
+    } else {
+        type = groupedTypes[OpTypeRayQueryProvisionalKHR].back();
     }
 
     return type->getResultId();

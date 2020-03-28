@@ -2,6 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2016 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -1084,6 +1085,30 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpTerminateRay:                     out.debug << "terminateRayNV"; break;
     case EOpExecuteCallable:                  out.debug << "executeCallableNV"; break;
     case EOpWritePackedPrimitiveIndices4x8NV: out.debug << "writePackedPrimitiveIndices4x8NV"; break;
+
+    case EOpRayQueryInitialize:                                            out.debug << "rayQueryInitializeEXT"; break;
+    case EOpRayQueryTerminate:                                             out.debug << "rayQueryTerminateEXT"; break;
+    case EOpRayQueryGenerateIntersection:                                  out.debug << "rayQueryGenerateIntersectionEXT"; break;
+    case EOpRayQueryConfirmIntersection:                                   out.debug << "rayQueryConfirmIntersectionEXT"; break;
+    case EOpRayQueryProceed:                                               out.debug << "rayQueryProceedEXT"; break;
+    case EOpRayQueryGetIntersectionType:                                   out.debug << "rayQueryGetIntersectionTypeEXT"; break;
+    case EOpRayQueryGetRayTMin:                                            out.debug << "rayQueryGetRayTMinEXT"; break;
+    case EOpRayQueryGetRayFlags:                                           out.debug << "rayQueryGetRayFlagsEXT"; break;
+    case EOpRayQueryGetIntersectionT:                                      out.debug << "rayQueryGetIntersectionTEXT"; break;
+    case EOpRayQueryGetIntersectionInstanceCustomIndex:                    out.debug << "rayQueryGetIntersectionInstanceCustomIndexEXT"; break;
+    case EOpRayQueryGetIntersectionInstanceId:                             out.debug << "rayQueryGetIntersectionInstanceIdEXT"; break;
+    case EOpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffset: out.debug << "rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT"; break;
+    case EOpRayQueryGetIntersectionGeometryIndex:                          out.debug << "rayQueryGetIntersectionGeometryIndexEXT"; break;
+    case EOpRayQueryGetIntersectionPrimitiveIndex:                         out.debug << "rayQueryGetIntersectionPrimitiveIndexEXT"; break;
+    case EOpRayQueryGetIntersectionBarycentrics:                           out.debug << "rayQueryGetIntersectionBarycentricsEXT"; break;
+    case EOpRayQueryGetIntersectionFrontFace:                              out.debug << "rayQueryGetIntersectionFrontFaceEXT"; break;
+    case EOpRayQueryGetIntersectionCandidateAABBOpaque:                    out.debug << "rayQueryGetIntersectionCandidateAABBOpaqueEXT"; break;
+    case EOpRayQueryGetIntersectionObjectRayDirection:                     out.debug << "rayQueryGetIntersectionObjectRayDirectionEXT"; break;
+    case EOpRayQueryGetIntersectionObjectRayOrigin:                        out.debug << "rayQueryGetIntersectionObjectRayOriginEXT"; break;
+    case EOpRayQueryGetWorldRayDirection:                                  out.debug << "rayQueryGetWorldRayDirectionEXT"; break;
+    case EOpRayQueryGetWorldRayOrigin:                                     out.debug << "rayQueryGetWorldRayOriginEXT"; break;
+    case EOpRayQueryGetIntersectionObjectToWorld:                          out.debug << "rayQueryGetIntersectionObjectToWorldEXT"; break;
+    case EOpRayQueryGetIntersectionWorldToObject:                          out.debug << "rayQueryGetIntersectionWorldToObjectEXT"; break;
 
     case EOpCooperativeMatrixLoad:  out.debug << "Load cooperative matrix";  break;
     case EOpCooperativeMatrixStore:  out.debug << "Store cooperative matrix";  break;

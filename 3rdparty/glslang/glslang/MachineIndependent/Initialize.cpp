@@ -3,6 +3,7 @@
 // Copyright (C) 2012-2016 LunarG, Inc.
 // Copyright (C) 2015-2020 Google, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -4322,8 +4323,33 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
         }
 
-    // Builtins for GL_NV_ray_tracing/GL_EXT_ray_tracing
+    // Builtins for GL_NV_ray_tracing/GL_EXT_ray_tracing/GL_EXT_ray_query
     if (profile != EEsProfile && version >= 460) {
+         commonBuiltins.append("void rayQueryInitializeEXT(rayQueryEXT, accelerationStructureEXT, uint, uint, vec3, float, vec3, float);"
+            "void rayQueryTerminateEXT(rayQueryEXT);"
+            "void rayQueryGenerateIntersectionEXT(rayQueryEXT, float);"
+            "void rayQueryConfirmIntersectionEXT(rayQueryEXT);"
+            "bool rayQueryProceedEXT(rayQueryEXT);"
+            "uint rayQueryGetIntersectionTypeEXT(rayQueryEXT, bool);"
+            "float rayQueryGetRayTMinEXT(rayQueryEXT);"
+            "uint rayQueryGetRayFlagsEXT(rayQueryEXT);"
+            "vec3 rayQueryGetWorldRayOriginEXT(rayQueryEXT);"
+            "vec3 rayQueryGetWorldRayDirectionEXT(rayQueryEXT);"
+            "float rayQueryGetIntersectionTEXT(rayQueryEXT, bool);"
+            "int rayQueryGetIntersectionInstanceCustomIndexEXT(rayQueryEXT, bool);"
+            "int rayQueryGetIntersectionInstanceIdEXT(rayQueryEXT, bool);"
+            "uint rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(rayQueryEXT, bool);"
+            "int rayQueryGetIntersectionGeometryIndexEXT(rayQueryEXT, bool);"
+            "int rayQueryGetIntersectionPrimitiveIndexEXT(rayQueryEXT, bool);"
+            "vec2 rayQueryGetIntersectionBarycentricsEXT(rayQueryEXT, bool);"
+            "bool rayQueryGetIntersectionFrontFaceEXT(rayQueryEXT, bool);"
+            "bool rayQueryGetIntersectionCandidateAABBOpaqueEXT(rayQueryEXT);"
+            "vec3 rayQueryGetIntersectionObjectRayDirectionEXT(rayQueryEXT, bool);"
+            "vec3 rayQueryGetIntersectionObjectRayOriginEXT(rayQueryEXT, bool);"
+            "mat4x3 rayQueryGetIntersectionObjectToWorldEXT(rayQueryEXT, bool);"
+            "mat4x3 rayQueryGetIntersectionWorldToObjectEXT(rayQueryEXT, bool);"
+            "\n");
+
         stageBuiltins[EShLangRayGen].append(
             "void traceNV(accelerationStructureNV,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
             "void traceRayEXT(accelerationStructureEXT,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
@@ -5436,6 +5462,17 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "const uint gl_HitKindFrontFacingTriangleEXT = 254U;"
             "const uint gl_HitKindBackFacingTriangleEXT = 255U;"
             "\n";
+
+        const char *constRayQueryIntersection =
+            "const uint gl_RayQueryCandidateIntersectionEXT = 0U;"
+            "const uint gl_RayQueryCommittedIntersectionEXT = 1U;"
+            "const uint gl_RayQueryCommittedIntersectionNoneEXT = 0U;"
+            "const uint gl_RayQueryCommittedIntersectionTriangleEXT = 1U;"
+            "const uint gl_RayQueryCommittedIntersectionGeneratedEXT = 2U;"
+            "const uint gl_RayQueryCandidateIntersectionTriangleEXT = 0U;"
+            "const uint gl_RayQueryCandidateIntersectionAABBEXT = 1U;"
+            "\n";
+
         const char *rayGenDecls =
             "in    uvec3  gl_LaunchIDNV;"
             "in    uvec3  gl_LaunchIDEXT;"
@@ -5535,24 +5572,15 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n";
 
 
+        commonBuiltins.append(constRayQueryIntersection);
+        commonBuiltins.append(constRayFlags);
 
         stageBuiltins[EShLangRayGen].append(rayGenDecls);
-        stageBuiltins[EShLangRayGen].append(constRayFlags);
-
         stageBuiltins[EShLangIntersect].append(intersectDecls);
-        stageBuiltins[EShLangIntersect].append(constRayFlags);
-
         stageBuiltins[EShLangAnyHit].append(hitDecls);
-        stageBuiltins[EShLangAnyHit].append(constRayFlags);
-
         stageBuiltins[EShLangClosestHit].append(hitDecls);
-        stageBuiltins[EShLangClosestHit].append(constRayFlags);
-
         stageBuiltins[EShLangMiss].append(missDecls);
-        stageBuiltins[EShLangMiss].append(constRayFlags);
-
         stageBuiltins[EShLangCallable].append(callableDecls);
-        stageBuiltins[EShLangCallable].append(constRayFlags);
 
     }
     if ((profile != EEsProfile && version >= 140)) {
@@ -7522,6 +7550,32 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_FragStencilRefARB", EbvFragStencilRef, symbolTable);
         }
 
+        if (profile != EEsProfile && version >= 460) {
+            symbolTable.setFunctionExtensions("rayQueryInitializeEXT",                                            1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryTerminateEXT",                                             1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGenerateIntersectionEXT",                                  1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryConfirmIntersectionEXT",                                   1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryProceedEXT",                                               1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionTypeEXT",                                   1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionTEXT",                                      1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetRayFlagsEXT",                                           1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetRayTMinEXT",                                            1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionInstanceCustomIndexEXT",                    1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionInstanceIdEXT",                             1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT", 1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionGeometryIndexEXT",                          1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionPrimitiveIndexEXT",                         1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionBarycentricsEXT",                           1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionFrontFaceEXT",                              1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionCandidateAABBOpaqueEXT",                    1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionObjectRayDirectionEXT",                     1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionObjectRayOriginEXT",                        1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionObjectToWorldEXT",                          1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionWorldToObjectEXT",                          1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetWorldRayOriginEXT",                                     1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetWorldRayDirectionEXT",                                  1, &E_GL_EXT_ray_query);
+        }
+
         if ((profile != EEsProfile && version >= 130) ||
             (profile == EEsProfile && version >= 310)) {
             BuiltInVariable("gl_SampleID",           EbvSampleId,       symbolTable);
@@ -8860,6 +8914,33 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("dFdyCoarse",   EOpDPdyCoarse);
             symbolTable.relateToOperator("fwidthCoarse", EOpFwidthCoarse);
         }
+
+        if (profile != EEsProfile && version >= 460) {
+            symbolTable.relateToOperator("rayQueryInitializeEXT",                                             EOpRayQueryInitialize);
+            symbolTable.relateToOperator("rayQueryTerminateEXT",                                              EOpRayQueryTerminate);
+            symbolTable.relateToOperator("rayQueryGenerateIntersectionEXT",                                   EOpRayQueryGenerateIntersection);
+            symbolTable.relateToOperator("rayQueryConfirmIntersectionEXT",                                    EOpRayQueryConfirmIntersection);
+            symbolTable.relateToOperator("rayQueryProceedEXT",                                                EOpRayQueryProceed);
+            symbolTable.relateToOperator("rayQueryGetIntersectionTypeEXT",                                    EOpRayQueryGetIntersectionType);
+            symbolTable.relateToOperator("rayQueryGetRayTMinEXT",                                             EOpRayQueryGetRayTMin);
+            symbolTable.relateToOperator("rayQueryGetRayFlagsEXT",                                            EOpRayQueryGetRayFlags);
+            symbolTable.relateToOperator("rayQueryGetIntersectionTEXT",                                       EOpRayQueryGetIntersectionT);
+            symbolTable.relateToOperator("rayQueryGetIntersectionInstanceCustomIndexEXT",                     EOpRayQueryGetIntersectionInstanceCustomIndex);
+            symbolTable.relateToOperator("rayQueryGetIntersectionInstanceIdEXT",                              EOpRayQueryGetIntersectionInstanceId);
+            symbolTable.relateToOperator("rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT",  EOpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffset);
+            symbolTable.relateToOperator("rayQueryGetIntersectionGeometryIndexEXT",                           EOpRayQueryGetIntersectionGeometryIndex);
+            symbolTable.relateToOperator("rayQueryGetIntersectionPrimitiveIndexEXT",                          EOpRayQueryGetIntersectionPrimitiveIndex);
+            symbolTable.relateToOperator("rayQueryGetIntersectionBarycentricsEXT",                            EOpRayQueryGetIntersectionBarycentrics);
+            symbolTable.relateToOperator("rayQueryGetIntersectionFrontFaceEXT",                               EOpRayQueryGetIntersectionFrontFace);
+            symbolTable.relateToOperator("rayQueryGetIntersectionCandidateAABBOpaqueEXT",                     EOpRayQueryGetIntersectionCandidateAABBOpaque);
+            symbolTable.relateToOperator("rayQueryGetIntersectionObjectRayDirectionEXT",                      EOpRayQueryGetIntersectionObjectRayDirection);
+            symbolTable.relateToOperator("rayQueryGetIntersectionObjectRayOriginEXT",                         EOpRayQueryGetIntersectionObjectRayOrigin);
+            symbolTable.relateToOperator("rayQueryGetWorldRayDirectionEXT",                                   EOpRayQueryGetWorldRayDirection);
+            symbolTable.relateToOperator("rayQueryGetWorldRayOriginEXT",                                      EOpRayQueryGetWorldRayOrigin);
+            symbolTable.relateToOperator("rayQueryGetIntersectionObjectToWorldEXT",                           EOpRayQueryGetIntersectionObjectToWorld);
+            symbolTable.relateToOperator("rayQueryGetIntersectionWorldToObjectEXT",                           EOpRayQueryGetIntersectionWorldToObject);
+        }
+
         symbolTable.relateToOperator("interpolateAtCentroid", EOpInterpolateAtCentroid);
         symbolTable.relateToOperator("interpolateAtSample",   EOpInterpolateAtSample);
         symbolTable.relateToOperator("interpolateAtOffset",   EOpInterpolateAtOffset);
@@ -8902,9 +8983,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
         break;
     case EShLangIntersect:
-        if (profile != EEsProfile && version >= 460)
+        if (profile != EEsProfile && version >= 460) {
             symbolTable.relateToOperator("reportIntersectionNV", EOpReportIntersection);
             symbolTable.relateToOperator("reportIntersectionEXT", EOpReportIntersection);
+	}
         break;
     case EShLangAnyHit:
         if (profile != EEsProfile && version >= 460) {

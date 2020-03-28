@@ -3,6 +3,7 @@
 // Copyright (C) 2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
 // Copyright (C) 2020 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -715,6 +716,7 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["callableDataInEXT"] =       CALLDATAINEXT;
     (*KeywordMap)["accelerationStructureNV"] = ACCSTRUCTNV;
     (*KeywordMap)["accelerationStructureEXT"]   = ACCSTRUCTEXT;
+    (*KeywordMap)["rayQueryEXT"] =              RAYQUERYEXT;
     (*KeywordMap)["perprimitiveNV"] =          PERPRIMITIVENV;
     (*KeywordMap)["perviewNV"] =               PERVIEWNV;
     (*KeywordMap)["taskNV"] =                  PERTASKNV;
@@ -1028,7 +1030,14 @@ int TScanContext::tokenizeIdentifier()
     case CALLDATAINEXT:
     case ACCSTRUCTEXT:
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            parseContext.extensionTurnedOn(E_GL_EXT_ray_tracing))
+            parseContext.extensionTurnedOn(E_GL_EXT_ray_tracing) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_ray_query))
+            return keyword;
+        return identifierOrType();
+    case RAYQUERYEXT:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (!parseContext.isEsProfile() && parseContext.version >= 460
+                 && parseContext.extensionTurnedOn(E_GL_EXT_ray_query)))
             return keyword;
         return identifierOrType();
     case ATOMIC_UINT:

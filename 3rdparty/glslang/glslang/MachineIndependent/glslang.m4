@@ -3,6 +3,7 @@
 // Copyright (C) 2012-2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
 // Copyright (C) 2015-2019 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -205,6 +206,7 @@ GLSLANG_WEB_EXCLUDE_ON
 %token <lex> ATOMIC_UINT
 %token <lex> ACCSTRUCTNV
 %token <lex> ACCSTRUCTEXT
+%token <lex> RAYQUERYEXT
 %token <lex> FCOOPMATNV ICOOPMATNV UCOOPMATNV
 
 // combined image/sampler
@@ -2405,6 +2407,10 @@ GLSLANG_WEB_EXCLUDE_ON
     | ACCSTRUCTEXT {
        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
        $$.basicType = EbtAccStruct;
+    }
+    | RAYQUERYEXT {
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtRayQuery;
     }
     | ATOMIC_UINT {
         parseContext.vulkanRemoved($1.loc, "atomic counter types");

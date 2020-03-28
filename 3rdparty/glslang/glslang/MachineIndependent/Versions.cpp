@@ -3,6 +3,7 @@
 // Copyright (C) 2012-2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
 // Copyright (C) 2015-2020 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -296,6 +297,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_multiview]                = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_realtime_clock]    = EBhDisable;
     extensionBehavior[E_GL_EXT_ray_tracing]              = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_query]                = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -435,6 +437,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define E_GL_EXT_shader_atomic_int64 1\n"
             "#define E_GL_EXT_shader_realtime_clock 1\n"
             "#define E_GL_EXT_ray_tracing 1\n"
+            "#define E_GL_EXT_ray_query 1\n"
 
             "#define GL_AMD_shader_ballot 1\n"
             "#define GL_AMD_shader_trinary_minmax 1\n"
