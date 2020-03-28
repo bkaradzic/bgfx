@@ -137,10 +137,27 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
   binary->push_back(header_.bound);
   binary->push_back(header_.reserved);
 
-  auto write_inst = [binary, skip_nop](const Instruction* i) {
-    if (!(skip_nop && i->IsNop())) i->ToBinaryWithoutAttachedDebugInsts(binary);
+  size_t bound_idx = binary->size() - 2;
+  DebugScope last_scope(kNoDebugScope, kNoInlinedAt);
+  auto write_inst = [binary, skip_nop, &last_scope,
+                     this](const Instruction* i) {
+    if (!(skip_nop && i->IsNop())) {
+      const auto& scope = i->GetDebugScope();
+      if (scope != last_scope) {
+        // Emit DebugScope |scope| to |binary|.
+        auto dbg_inst = ext_inst_debuginfo_.begin();
+        scope.ToBinary(dbg_inst->type_id(), context()->TakeNextId(),
+                       dbg_inst->GetSingleWordOperand(2), binary);
+        last_scope = scope;
+      }
+
+      i->ToBinaryWithoutAttachedDebugInsts(binary);
+    }
   };
   ForEachInst(write_inst, true);
+
+  // We create new instructions for DebugScope. The bound must be updated.
+  binary->data()[bound_idx] = header_.bound;
 }
 
 uint32_t Module::ComputeIdBound() const {

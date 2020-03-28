@@ -1,7 +1,34 @@
 Revision history for SPIRV-Tools
 
-v2020.2-dev 2020-02-03
- - Start v2020.2-dev
+v2020.3-dev 2020-03-26
+ - Start v2020.3-dev
+
+v2020.2 2020-03-26
+ - General:
+   - Support extended instructions in the vscode language server
+   - Make spvOpcodeString part of the public API (#3174)
+   - Added guide to writing a spirv-fuzz fuzzer pass (#3190)
+   - Add support for KHR_ray_{query,tracing} extensions (#3235)
+ - Optimizer
+   - Debug Printf support (#3215)
+   - Add data structure for DebugScope, DebugDeclare in spirv-opt (#3183)
+   - Fix identification of Vulkan images and buffers (#3253)
+ - Validator
+   - Add support for SPV_AMD_shader_image_load_store_lod (#3186)
+   - Add validation rules for OpenCL.DebugInfo.100 extension (#3133)
+   - Adding WebGPU specific Workgroup scope rule (#3204)
+   - Disallow phis of images, samplers and sampled images (#3246)
+ - Reduce
+ - Fuzz
+   - Fuzzer passes to add local and global variables (#3175)
+   - Add fuzzer passes to add loads/stores (#3176)
+   - Fuzzer pass to add function calls (#3178)
+   - Fuzzer pass that adds access chains (#3182)
+   - Fuzzer pass to add equation instructions (#3202)
+   - Add swap commutable operands transformation (#3205)
+   - Add fuzzer pass to permute function parameters (#3212)
+   - Allow OpPhi operand to be replaced with a composite synonym (#3221)
+ - Linker
 
 v2020.1 2020-02-03
  - General:

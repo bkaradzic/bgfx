@@ -17,6 +17,7 @@
 
 #include <functional>
 #include <memory>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -48,7 +49,7 @@ class Module {
   using const_inst_iterator = InstructionList::const_iterator;
 
   // Creates an empty module with zero'd header.
-  Module() : header_({}) {}
+  Module() : header_({}), contains_debug_scope_(false) {}
 
   // Sets the header to the given |header|.
   void SetHeader(const ModuleHeader& header) { header_ = header; }
@@ -117,6 +118,10 @@ class Module {
 
   // Appends a function to this module.
   inline void AddFunction(std::unique_ptr<Function> f);
+
+  // Sets |contains_debug_scope_| as true.
+  inline void SetContainsDebugScope();
+  inline bool ContainsDebugScope() { return contains_debug_scope_; }
 
   // Returns a vector of pointers to type-declaration instructions in this
   // module.
@@ -295,6 +300,9 @@ class Module {
   // If the module ends with Op*Line instruction, they will not be attached to
   // any instruction.  We record them here, so they will not be lost.
   std::vector<Instruction> trailing_dbg_line_info_;
+
+  // This module contains DebugScope or DebugNoScope.
+  bool contains_debug_scope_;
 };
 
 // Pretty-prints |module| to |str|. Returns |str|.
@@ -355,6 +363,8 @@ inline void Module::AddGlobalValue(std::unique_ptr<Instruction> v) {
 inline void Module::AddFunction(std::unique_ptr<Function> f) {
   functions_.emplace_back(std::move(f));
 }
+
+inline void Module::SetContainsDebugScope() { contains_debug_scope_ = true; }
 
 inline Module::inst_iterator Module::capability_begin() {
   return capabilities_.begin();
