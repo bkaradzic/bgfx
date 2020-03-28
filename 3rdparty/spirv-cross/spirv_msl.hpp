@@ -619,6 +619,7 @@ protected:
 	                             uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset, uint32_t bias,
 	                             uint32_t comp, uint32_t sample, uint32_t minlod, bool *p_forward) override;
 	std::string to_initializer_expression(const SPIRVariable &var) override;
+	std::string to_zero_initialized_expression(uint32_t type_id) override;
 
 	std::string unpack_expression_type(std::string expr_str, const SPIRType &type, uint32_t physical_type_id,
 	                                   bool is_packed, bool row_major) override;

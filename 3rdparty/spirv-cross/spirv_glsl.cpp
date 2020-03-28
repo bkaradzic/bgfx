@@ -2806,7 +2806,12 @@ void CompilerGLSL::declare_undefined_values()
 {
 	bool emitted = false;
 	ir.for_each_typed_id<SPIRUndef>([&](uint32_t, const SPIRUndef &undef) {
-		statement(variable_decl(this->get<SPIRType>(undef.basetype), to_name(undef.self), undef.self), ";");
+		string initializer;
+		if (options.force_zero_initialized_variables && type_can_zero_initialize(this->get<SPIRType>(undef.basetype)))
+			initializer = join(" = ", to_zero_initialized_expression(undef.basetype));
+
+		statement(variable_decl(this->get<SPIRType>(undef.basetype), to_name(undef.self), undef.self), initializer,
+		          ";");
 		emitted = true;
 	});
 
@@ -3097,7 +3102,15 @@ void CompilerGLSL::emit_resources()
 			if (!variable_is_lut(var))
 			{
 				add_resource_name(var.self);
-				statement(variable_decl(var), ";");
+
+				string initializer;
+				if (options.force_zero_initialized_variables && var.storage == StorageClassPrivate &&
+				    !var.initializer && !var.static_expression && type_can_zero_initialize(get_variable_data_type(var)))
+				{
+					initializer = join(" = ", to_zero_initialized_expression(get_variable_data_type_id(var)));
+				}
+
+				statement(variable_decl(var), initializer, ";");
 				emitted = true;
 			}
 		}
@@ -4415,7 +4428,12 @@ void CompilerGLSL::emit_uninitialized_temporary(uint32_t result_type, uint32_t r
 
 		// The result_id has not been made into an expression yet, so use flags interface.
 		add_local_variable_name(result_id);
-		statement(flags_to_qualifiers_glsl(type, flags), variable_decl(type, to_name(result_id)), ";");
+
+		string initializer;
+		if (options.force_zero_initialized_variables && type_can_zero_initialize(type))
+			initializer = join(" = ", to_zero_initialized_expression(result_type));
+
+		statement(flags_to_qualifiers_glsl(type, flags), variable_decl(type, to_name(result_id)), initializer, ";");
 	}
 }
 
@@ -7947,7 +7965,16 @@ void CompilerGLSL::flush_variable_declaration(uint32_t id)
 	auto *var = maybe_get<SPIRVariable>(id);
 	if (var && var->deferred_declaration)
 	{
-		statement(variable_decl_function_local(*var), ";");
+		string initializer;
+		if (options.force_zero_initialized_variables &&
+		    (var->storage == StorageClassFunction || var->storage == StorageClassGeneric ||
+		     var->storage == StorageClassPrivate) &&
+		    !var->initializer && type_can_zero_initialize(get_variable_data_type(*var)))
+		{
+			initializer = join(" = ", to_zero_initialized_expression(get_variable_data_type_id(*var)));
+		}
+
+		statement(variable_decl_function_local(*var), initializer, ";");
 		var->deferred_declaration = false;
 	}
 	if (var)
@@ -11113,6 +11140,37 @@ string CompilerGLSL::to_initializer_expression(const SPIRVariable &var)
 	return to_expression(var.initializer);
 }
 
+string CompilerGLSL::to_zero_initialized_expression(uint32_t type_id)
+{
+#ifndef NDEBUG
+	auto &type = get<SPIRType>(type_id);
+	assert(type.storage == StorageClassPrivate || type.storage == StorageClassFunction ||
+	       type.storage == StorageClassGeneric);
+#endif
+	uint32_t id = ir.increase_bound_by(1);
+	ir.make_constant_null(id, type_id, false);
+	return constant_expression(get<SPIRConstant>(id));
+}
+
+bool CompilerGLSL::type_can_zero_initialize(const SPIRType &type) const
+{
+	if (type.pointer)
+		return false;
+
+	if (!type.array.empty() && options.flatten_multidimensional_arrays)
+		return false;
+
+	for (auto &literal : type.array_size_literal)
+		if (!literal)
+			return false;
+
+	for (auto &memb : type.member_types)
+		if (!type_can_zero_initialize(get<SPIRType>(memb)))
+			return false;
+
+	return true;
+}
+
 string CompilerGLSL::variable_decl(const SPIRVariable &variable)
 {
 	// Ignore the pointer type since GLSL doesn't have pointers.
@@ -11128,13 +11186,18 @@ string CompilerGLSL::variable_decl(const SPIRVariable &variable)
 		uint32_t expr = variable.static_expression;
 		if (ir.ids[expr].get_type() != TypeUndef)
 			res += join(" = ", to_expression(variable.static_expression));
+		else if (options.force_zero_initialized_variables && type_can_zero_initialize(type))
+			res += join(" = ", to_zero_initialized_expression(get_variable_data_type_id(variable)));
 	}
 	else if (variable.initializer)
 	{
 		uint32_t expr = variable.initializer;
 		if (ir.ids[expr].get_type() != TypeUndef)
 			res += join(" = ", to_initializer_expression(variable));
+		else if (options.force_zero_initialized_variables && type_can_zero_initialize(type))
+			res += join(" = ", to_zero_initialized_expression(get_variable_data_type_id(variable)));
 	}
+
 	return res;
 }
 
@@ -12523,7 +12586,13 @@ void CompilerGLSL::emit_hoisted_temporaries(SmallVector<pair<TypeID, ID>> &tempo
 		add_local_variable_name(tmp.second);
 		auto &flags = ir.meta[tmp.second].decoration.decoration_flags;
 		auto &type = get<SPIRType>(tmp.first);
-		statement(flags_to_qualifiers_glsl(type, flags), variable_decl(type, to_name(tmp.second)), ";");
+
+		// Not all targets support pointer literals, so don't bother with that case.
+		string initializer;
+		if (options.force_zero_initialized_variables && type_can_zero_initialize(type))
+			initializer = join(" = ", to_zero_initialized_expression(tmp.first));
+
+		statement(flags_to_qualifiers_glsl(type, flags), variable_decl(type, to_name(tmp.second)), initializer, ";");
 
 		hoisted_temporaries.insert(tmp.second);
 		forced_temporaries.insert(tmp.second);

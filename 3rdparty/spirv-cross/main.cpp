@@ -529,6 +529,7 @@ struct CLIArguments
 	bool vulkan_glsl_disable_ext_samplerless_texture_functions = false;
 	bool emit_line_directives = false;
 	bool enable_storage_image_qualifier_deduction = true;
+	bool force_zero_initialized_variables = false;
 	SmallVector<uint32_t> msl_discrete_descriptor_sets;
 	SmallVector<uint32_t> msl_device_argument_buffers;
 	SmallVector<pair<uint32_t, uint32_t>> msl_dynamic_buffers;
@@ -598,6 +599,7 @@ static void print_help()
 	                "\t[--cpp]\n"
 	                "\t[--cpp-interface-name <name>]\n"
 	                "\t[--disable-storage-image-qualifier-deduction]\n"
+	                "\t[--force-zero-initialized-variables]\n"
 	                "\t[--glsl-emit-push-constant-as-ubo]\n"
 	                "\t[--glsl-emit-ubo-as-plain-uniforms]\n"
 	                "\t[--glsl-remap-ext-framebuffer-fetch input-attachment color-location]\n"
@@ -949,6 +951,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 	opts.emit_uniform_buffer_as_plain_uniforms = args.glsl_emit_ubo_as_plain_uniforms;
 	opts.emit_line_directives = args.emit_line_directives;
 	opts.enable_storage_image_qualifier_deduction = args.enable_storage_image_qualifier_deduction;
+	opts.force_zero_initialized_variables = args.force_zero_initialized_variables;
 	compiler->set_common_options(opts);
 
 	for (auto &fetch : args.glsl_ext_framebuffer_fetch)
@@ -1139,6 +1142,8 @@ static int main_inner(int argc, char *argv[])
 	        [&args](CLIParser &) { args.vulkan_glsl_disable_ext_samplerless_texture_functions = true; });
 	cbs.add("--disable-storage-image-qualifier-deduction",
 	        [&args](CLIParser &) { args.enable_storage_image_qualifier_deduction = false; });
+	cbs.add("--force-zero-initialized-variables",
+	        [&args](CLIParser &) { args.force_zero_initialized_variables = true; });
 	cbs.add("--msl", [&args](CLIParser &) { args.msl = true; });
 	cbs.add("--hlsl", [&args](CLIParser &) { args.hlsl = true; });
 	cbs.add("--hlsl-enable-compat", [&args](CLIParser &) { args.hlsl_compat = true; });

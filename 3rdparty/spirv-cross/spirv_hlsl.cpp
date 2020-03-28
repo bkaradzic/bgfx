@@ -1121,7 +1121,12 @@ void CompilerHLSL::declare_undefined_values()
 {
 	bool emitted = false;
 	ir.for_each_typed_id<SPIRUndef>([&](uint32_t, const SPIRUndef &undef) {
-		statement("static ", variable_decl(this->get<SPIRType>(undef.basetype), to_name(undef.self), undef.self), ";");
+		string initializer;
+		if (options.force_zero_initialized_variables && type_can_zero_initialize(this->get<SPIRType>(undef.basetype)))
+			initializer = join(" = ", to_zero_initialized_expression(undef.basetype));
+
+		statement("static ", variable_decl(this->get<SPIRType>(undef.basetype), to_name(undef.self), undef.self),
+		          initializer, ";");
 		emitted = true;
 	});
 
@@ -1362,7 +1367,15 @@ void CompilerHLSL::emit_resources()
 					storage = "static";
 					break;
 				}
-				statement(storage, " ", variable_decl(var), ";");
+
+				string initializer;
+				if (options.force_zero_initialized_variables && var.storage == StorageClassPrivate &&
+				    !var.initializer && !var.static_expression && type_can_zero_initialize(get_variable_data_type(var)))
+				{
+					initializer = join(" = ", to_zero_initialized_expression(get_variable_data_type_id(var)));
+				}
+				statement(storage, " ", variable_decl(var), initializer, ";");
+
 				emitted = true;
 			}
 		}

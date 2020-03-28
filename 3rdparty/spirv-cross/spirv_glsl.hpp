@@ -115,6 +115,11 @@ public:
 		// by the SPIR-V, it's recommended to set this to false.
 		bool enable_storage_image_qualifier_deduction = true;
 
+		// On some targets (WebGPU), uninitialized variables are banned.
+		// If this is enabled, all variables (temporaries, Private, Function)
+		// which would otherwise be uninitialized will now be initialized to 0 instead.
+		bool force_zero_initialized_variables = false;
+
 		enum Precision
 		{
 			DontCare,
@@ -576,6 +581,8 @@ protected:
 	                             spv::StorageClass rhs_storage);
 	virtual void emit_block_hints(const SPIRBlock &block);
 	virtual std::string to_initializer_expression(const SPIRVariable &var);
+	virtual std::string to_zero_initialized_expression(uint32_t type_id);
+	bool type_can_zero_initialize(const SPIRType &type) const;
 
 	bool buffer_is_packing_standard(const SPIRType &type, BufferPackingStandard packing,
 	                                uint32_t *failed_index = nullptr, uint32_t start_offset = 0,

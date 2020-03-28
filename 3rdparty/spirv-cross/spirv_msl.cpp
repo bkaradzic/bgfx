@@ -12450,7 +12450,7 @@ void CompilerMSL::bitcast_to_builtin_store(uint32_t target_id, std::string &expr
 	}
 }
 
-std::string CompilerMSL::to_initializer_expression(const SPIRVariable &var)
+string CompilerMSL::to_initializer_expression(const SPIRVariable &var)
 {
 	// We risk getting an array initializer here with MSL. If we have an array.
 	// FIXME: We cannot handle non-constant arrays being initialized.
@@ -12461,6 +12461,11 @@ std::string CompilerMSL::to_initializer_expression(const SPIRVariable &var)
 		return constant_expression(get<SPIRConstant>(var.initializer));
 	else
 		return CompilerGLSL::to_initializer_expression(var);
+}
+
+string CompilerMSL::to_zero_initialized_expression(uint32_t)
+{
+	return "{}";
 }
 
 bool CompilerMSL::descriptor_set_is_argument_buffer(uint32_t desc_set) const

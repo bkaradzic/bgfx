@@ -87,7 +87,6 @@ private:
 
 	bool types_are_logically_equivalent(const SPIRType &a, const SPIRType &b) const;
 	bool variable_storage_is_aliased(const SPIRVariable &v) const;
-	void make_constant_null(uint32_t id, uint32_t type);
 };
 } // namespace SPIRV_CROSS_NAMESPACE
 
