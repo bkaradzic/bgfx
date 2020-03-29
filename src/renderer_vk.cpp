@@ -4104,7 +4104,7 @@ VK_IMPORT_DEVICE
 					);
 				}
 			}
-			while ((result == VK_ERROR_OUT_OF_HOST_MEMORY || result == VK_ERROR_OUT_OF_DEVICE_MEMORY) && searchIndex >= 0);
+			while (result != VK_SUCCESS && searchIndex >= 0);
 
 			return result;
 		}
