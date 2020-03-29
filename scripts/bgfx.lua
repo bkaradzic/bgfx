@@ -170,7 +170,7 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "src/renderer_**.cpp"),
 			path.join(BGFX_DIR, "src/shader**.cpp"),
 			path.join(BGFX_DIR, "src/topology.cpp"),
-			path.join(BGFX_DIR, "src/vertexdecl.cpp"),
+			path.join(BGFX_DIR, "src/vertexlayout.cpp"),
 		}
 
 		configuration { "xcode* or osx or ios*" }

@@ -17,7 +17,7 @@ project "geometryc"
 	files {
 		path.join(BGFX_DIR, "3rdparty/meshoptimizer/src/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/meshoptimizer/src/**.h"),
-		path.join(BGFX_DIR, "src/vertexdecl.**"),
+		path.join(BGFX_DIR, "src/vertexlayout.**"),
 		path.join(BGFX_DIR, "tools/geometryc/**.cpp"),
 		path.join(BGFX_DIR, "tools/geometryc/**.h"),
 		path.join(BGFX_DIR, "examples/common/bounds.**"),

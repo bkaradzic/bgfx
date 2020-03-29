@@ -23,4 +23,4 @@
 #include "shader_dxbc.cpp"
 #include "shader_spirv.cpp"
 #include "topology.cpp"
-#include "vertexdecl.cpp"
+#include "vertexlayout.cpp"
