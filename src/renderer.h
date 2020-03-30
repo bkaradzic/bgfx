@@ -232,7 +232,7 @@ namespace bgfx
 					{
 						Matrix4 modelView;
 						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
-						bx::float4x4_mul(&modelView.un.f4x4
+						bx::model4x4_mul(&modelView.un.f4x4
 							, &model.un.f4x4
 							, &m_view[_view].un.f4x4
 							);
@@ -248,7 +248,7 @@ namespace bgfx
 					{
 						Matrix4 modelViewProj;
 						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
-						bx::float4x4_mul(&modelViewProj.un.f4x4
+						bx::model4x4_mul_viewproj4x4(&modelViewProj.un.f4x4
 							, &model.un.f4x4
 							, &m_viewProj[_view].un.f4x4
 							);
