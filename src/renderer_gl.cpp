@@ -198,15 +198,15 @@ namespace bgfx { namespace gl
 // For older desktop OpenGL contexts, GL names without _INTEGER suffix were used.
 // See http://docs.gl/gl4/glTexImage2D, http://docs.gl/gl3/glTexImage2D, http://docs.gl/es3/glTexImage2D
 #if BGFX_CONFIG_RENDERER_OPENGL >= 40 || BGFX_CONFIG_RENDERER_OPENGLES
-#define RED_INTEGER GL_RED_INTEGER
-#define RG_INTEGER GL_RG_INTEGER
-#define RGB_INTEGER GL_RGB_INTEGER
-#define RGBA_INTEGER GL_RGBA_INTEGER
+#	define RED_INTEGER  GL_RED_INTEGER
+#	define RG_INTEGER   GL_RG_INTEGER
+#	define RGB_INTEGER  GL_RGB_INTEGER
+#	define RGBA_INTEGER GL_RGBA_INTEGER
 #else
-#define RED_INTEGER GL_RED
-#define RG_INTEGER GL_RG
-#define RGB_INTEGER GL_RGB
-#define RGBA_INTEGER GL_RGBA
+#	define RED_INTEGER  GL_RED
+#	define RG_INTEGER   GL_RG
+#	define RGB_INTEGER  GL_RGB
+#	define RGBA_INTEGER GL_RGBA
 #endif
 
 	static TextureFormatInfo s_textureFormat[] =
@@ -2108,8 +2108,12 @@ namespace bgfx { namespace gl
 			int majorGlVersion = 0;
 			int minorGlVersion = 0;
 			const char *version = m_version;
-			while(*version && (*version < '0' || *version > '9'))
+
+			while(*version && (*version < '0' || *version > '9') )
+			{
 				++version;
+			}
+
 			majorGlVersion = atoi(version);
 			minorGlVersion = atoi(version + 2);
 			glVersion = majorGlVersion*10 + minorGlVersion;
