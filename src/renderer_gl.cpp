@@ -1175,67 +1175,76 @@ namespace bgfx { namespace gl
 		return 0 == err ? result : 0;
 	}
 
-	static uint64_t currentlyEnabledVertexAttribArrays = 0;
-	static uint64_t vertexAttribArraysPendingDisable = 0;
-	static uint64_t vertexAttribArraysPendingEnable = 0;
+	static uint64_t s_currentlyEnabledVertexAttribArrays = 0;
+	static uint64_t s_vertexAttribArraysPendingDisable   = 0;
+	static uint64_t s_vertexAttribArraysPendingEnable    = 0;
 
 	void lazyEnableVertexAttribArray(GLuint index)
 	{
-#if BX_PLATFORM_EMSCRIPTEN
-		// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
-		// out redundant API calls to glEnable/DisableVertexAttribArray.
-		if (index >= 64)
+		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+		{
+			// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
+			// out redundant API calls to glEnable/DisableVertexAttribArray.
+			if (index >= 64)
+			{
+				glEnableVertexAttribArray(index);
+				return;
+			}
+
+			uint64_t mask = UINT64_C(1) << index;
+			s_vertexAttribArraysPendingEnable  |=  mask & (~s_currentlyEnabledVertexAttribArrays);
+			s_vertexAttribArraysPendingDisable &= ~mask;
+		}
+		else
 		{
 			glEnableVertexAttribArray(index);
-			return;
 		}
-		uint64_t mask = 1ULL << index;
-		vertexAttribArraysPendingEnable |= mask & (~currentlyEnabledVertexAttribArrays);
-		vertexAttribArraysPendingDisable &= ~mask;
-#else
-		glEnableVertexAttribArray(index);
-#endif		
 	}
 
 	void lazyDisableVertexAttribArray(GLuint index)
 	{
-#if BX_PLATFORM_EMSCRIPTEN
-		// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
-		// out redundant API calls to glEnable/DisableVertexAttribArray.
-		if (index >= 64)
+		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+		{
+			// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
+			// out redundant API calls to glEnable/DisableVertexAttribArray.
+			if (index >= 64)
+			{
+				glDisableVertexAttribArray(index);
+				return;
+			}
+
+			uint64_t mask = UINT64_C(1) << index;
+			s_vertexAttribArraysPendingDisable |=  mask & s_currentlyEnabledVertexAttribArrays;
+			s_vertexAttribArraysPendingEnable  &= ~mask;
+		}
+		else
 		{
 			glDisableVertexAttribArray(index);
-			return;
 		}
-		uint64_t mask = 1ULL << index;
-		vertexAttribArraysPendingDisable |= mask & currentlyEnabledVertexAttribArrays;
-		vertexAttribArraysPendingEnable &= ~mask;
-#else
-		glDisableVertexAttribArray(index);
-#endif
 	}
 
 	void applyLazyEnabledVertexAttributes()
 	{
-#if BX_PLATFORM_EMSCRIPTEN
-		while(vertexAttribArraysPendingDisable)
+		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 		{
-			int index = __builtin_ctzll(vertexAttribArraysPendingDisable);
-			uint64_t mask = ~(1ULL << index);
-			vertexAttribArraysPendingDisable &= mask;
-			currentlyEnabledVertexAttribArrays &= mask;
-			glDisableVertexAttribArray(index);
-		}
+			while (s_vertexAttribArraysPendingDisable)
+			{
+				uint32_t index = bx::uint32_cnttz(s_vertexAttribArraysPendingDisable);
+				uint64_t mask  = ~(UINT64_C(1) << index);
+				s_vertexAttribArraysPendingDisable   &= mask;
+				s_currentlyEnabledVertexAttribArrays &= mask;
+				glDisableVertexAttribArray(index);
+			}
 
-		while(vertexAttribArraysPendingEnable)
-		{
-			int index = __builtin_ctzll(vertexAttribArraysPendingEnable);
-			uint64_t mask = 1ULL << index;
-			vertexAttribArraysPendingEnable &= ~mask;
-			currentlyEnabledVertexAttribArrays |= mask;
-			glEnableVertexAttribArray(index);
+			while (s_vertexAttribArraysPendingEnable)
+			{
+				uint32_t index = bx::uint32_cnttz(s_vertexAttribArraysPendingEnable);
+				uint64_t mask  = UINT64_C(1) << index;
+				s_vertexAttribArraysPendingEnable    &= ~mask;
+				s_currentlyEnabledVertexAttribArrays |= mask;
+				glEnableVertexAttribArray(index);
+			}
 		}
-#endif
 	}
 
 	void setTextureFormat(TextureFormat::Enum _format, GLenum _internalFmt, GLenum _fmt, GLenum _type = GL_ZERO)
