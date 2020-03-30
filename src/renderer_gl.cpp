@@ -6473,23 +6473,40 @@ namespace bgfx { namespace gl
 
 						if (0 != texture.m_id)
 						{
-							GLenum attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
-							if (!bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
+
+							GLenum attachment = GL_INVALID_ENUM;
+							bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
+							if (bimg::isDepth(format) )
 							{
+								const bimg::ImageBlockInfo& info = bimg::getBlockInfo(format);
+								if (0 < info.stencilBits)
+								{
+									attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+								}
+								else if (0 == info.depthBits)
+								{
+									attachment = GL_STENCIL_ATTACHMENT;
+								}
+								else
+								{
+									attachment = GL_DEPTH_ATTACHMENT;
+								}
+							} else {
+								attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
 								++colorIdx;
-
-								GLenum target = texture.isCubeMap()
-									? GL_TEXTURE_CUBE_MAP_POSITIVE_X + at.layer
-									: texture.m_target
-									;
-
-								GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
-									, attachment
-									, target
-									, texture.m_id
-									, at.mip
-									) );
 							}
+
+							GLenum target = texture.isCubeMap()
+								? GL_TEXTURE_CUBE_MAP_POSITIVE_X + at.layer
+								: texture.m_target
+								;
+
+							GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
+								, attachment
+								, target
+								, texture.m_id
+								, at.mip
+								) );
 						}
 					}
 				}
@@ -6548,7 +6565,9 @@ namespace bgfx { namespace gl
 				{
 					const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];
 
+					const bool writeOnly = 0 != (texture.m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 					bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
+
 					if (!bimg::isDepth(format) )
 					{
 						GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
@@ -6566,6 +6585,29 @@ namespace bgfx { namespace gl
 							, m_height
 							, GL_COLOR_BUFFER_BIT
 							, GL_LINEAR
+							) );
+
+					} else if (!writeOnly) {
+
+						// blit depth attachment as well if it doesn't have
+						// BGFX_TEXTURE_RT_WRITE_ONLY render target flag. In most cases it's
+						// not necessary to blit the depth buffer.
+						GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
+						GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
+						// OpenGL complains about missing buffer if set
+						// attachment. not sure what I'm missing...
+						// GL_CHECK(glReadBuffer(GL_DEPTH_ATTACHMENT) );
+						// GL_CHECK(glDrawBuffer(GL_DEPTH_ATTACHMENT) );
+						GL_CHECK(glBlitFramebuffer(0
+							, 0
+							, m_width
+							, m_height
+							, 0
+							, 0
+							, m_width
+							, m_height
+							, GL_DEPTH_BUFFER_BIT
+							, GL_NEAREST
 							) );
 					}
 				}
