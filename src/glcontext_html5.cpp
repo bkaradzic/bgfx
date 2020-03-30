@@ -108,37 +108,35 @@ namespace bgfx { namespace gl
 	{
 		emscripten_webgl_init_context_attributes(&s_attrs);
 
-		s_attrs.alpha = false;
+		// Work around bug https://bugs.chromium.org/p/chromium/issues/detail?id=1045643 in Chrome
+		// by having alpha always enabled.
+		s_attrs.alpha = true;
+		s_attrs.premultipliedAlpha = false;
 		s_attrs.depth = true;
 		s_attrs.stencil = true;
 		s_attrs.enableExtensionsByDefault = true;
+		s_attrs.antialias = false;
 
-		// let emscripten figure out the best WebGL context to create
-		s_attrs.majorVersion = 0;
-		s_attrs.majorVersion = 0;
-
+		s_attrs.minorVersion = 0;
 		const char* canvas = (const char*) _nwh;
 
-		int context = emscripten_webgl_create_context(canvas, &s_attrs);
-
-		if (context <= 0)
+		for(int version = 2; version >= 1; --version)
 		{
-			BX_TRACE("Failed to create WebGL context.  (Canvas handle: '%s', error %d)", canvas, (int)context);
-			return NULL;
+			s_attrs.majorVersion = version;
+			EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = emscripten_webgl_create_context(canvas, &s_attrs);
+			if (context > 0)
+			{
+				emscripten_webgl_make_context_current(context);
+
+				SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
+
+				import(1);
+
+				return swapChain;
+			}
 		}
-
-		int result = emscripten_webgl_make_context_current(context);
-		if (EMSCRIPTEN_RESULT_SUCCESS != result)
-		{
-			BX_TRACE("emscripten_webgl_make_context_current failed (%d)", result);
-			return NULL;
-		}
-
-		SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
-
-		import(1);
-
-		return swapChain;
+		BX_TRACE("Failed to create WebGL context.  (Canvas handle: '%s', error %d)", canvas, (int)context);
+		return NULL;
 	}
 
 	uint64_t GlContext::getCaps() const
