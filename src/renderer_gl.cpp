@@ -194,6 +194,21 @@ namespace bgfx { namespace gl
 		bool m_supported;
 	};
 
+// In desktop OpenGL 4+ and OpenGL ES 3.0+, specific GL formats GL_x_INTEGER are used for integer textures.
+// For older desktop OpenGL contexts, GL names without _INTEGER suffix were used.
+// See http://docs.gl/gl4/glTexImage2D, http://docs.gl/gl3/glTexImage2D, http://docs.gl/es3/glTexImage2D
+#if BGFX_CONFIG_RENDERER_OPENGL >= 40 || BGFX_CONFIG_RENDERER_OPENGLES
+#define RED_INTEGER GL_RED_INTEGER
+#define RG_INTEGER GL_RG_INTEGER
+#define RGB_INTEGER GL_RGB_INTEGER
+#define RGBA_INTEGER GL_RGBA_INTEGER
+#else
+#define RED_INTEGER GL_RED
+#define RG_INTEGER GL_RG
+#define RGB_INTEGER GL_RGB
+#define RGBA_INTEGER GL_RGBA
+#endif
+
 	static TextureFormatInfo s_textureFormat[] =
 	{
 		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,        GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_ZERO,                         false }, // BC1
@@ -226,46 +241,46 @@ namespace bgfx { namespace gl
 		{ GL_ZERO,                                     GL_ZERO,                                       GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         false }, // R1
 		{ GL_ALPHA,                                    GL_ZERO,                                       GL_ALPHA,                                    GL_ALPHA,                                    GL_UNSIGNED_BYTE,                false }, // A8
 		{ GL_R8,                                       GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_UNSIGNED_BYTE,                false }, // R8
-		{ GL_R8I,                                      GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_BYTE,                         false }, // R8I
-		{ GL_R8UI,                                     GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_UNSIGNED_BYTE,                false }, // R8U
+		{ GL_R8I,                                      GL_ZERO,                                       RED_INTEGER,                              GL_RED_INTEGER,                              GL_BYTE,                         false }, // R8I
+		{ GL_R8UI,                                     GL_ZERO,                                       RED_INTEGER,                              GL_RED_INTEGER,                              GL_UNSIGNED_BYTE,                false }, // R8U
 		{ GL_R8_SNORM,                                 GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_BYTE,                         false }, // R8S
 		{ GL_R16,                                      GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_UNSIGNED_SHORT,               false }, // R16
-		{ GL_R16I,                                     GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_SHORT,                        false }, // R16I
-		{ GL_R16UI,                                    GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_UNSIGNED_SHORT,               false }, // R16U
+		{ GL_R16I,                                     GL_ZERO,                                       RED_INTEGER,                              GL_RED_INTEGER,                              GL_SHORT,                        false }, // R16I
+		{ GL_R16UI,                                    GL_ZERO,                                       RED_INTEGER,                              GL_RED_INTEGER,                              GL_UNSIGNED_SHORT,               false }, // R16U
 		{ GL_R16F,                                     GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_HALF_FLOAT,                   false }, // R16F
 		{ GL_R16_SNORM,                                GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_SHORT,                        false }, // R16S
-		{ GL_R32I,                                     GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_INT,                          false }, // R32I
-		{ GL_R32UI,                                    GL_ZERO,                                       GL_RED_INTEGER,                              GL_RED_INTEGER,                              GL_UNSIGNED_INT,                 false }, // R32U
+		{ GL_R32I,                                     GL_ZERO,                                       RED_INTEGER,                              GL_RED_INTEGER,                              GL_INT,                          false }, // R32I
+		{ GL_R32UI,                                    GL_ZERO,                                       RED_INTEGER,                              GL_RED_INTEGER,                              GL_UNSIGNED_INT,                 false }, // R32U
 		{ GL_R32F,                                     GL_ZERO,                                       GL_RED,                                      GL_RED,                                      GL_FLOAT,                        false }, // R32F
 		{ GL_RG8,                                      GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_UNSIGNED_BYTE,                false }, // RG8
-		{ GL_RG8I,                                     GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_BYTE,                         false }, // RG8I
-		{ GL_RG8UI,                                    GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_UNSIGNED_BYTE,                false }, // RG8U
+		{ GL_RG8I,                                     GL_ZERO,                                       RG_INTEGER,                               GL_RG_INTEGER,                               GL_BYTE,                         false }, // RG8I
+		{ GL_RG8UI,                                    GL_ZERO,                                       RG_INTEGER,                               GL_RG_INTEGER,                               GL_UNSIGNED_BYTE,                false }, // RG8U
 		{ GL_RG8_SNORM,                                GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_BYTE,                         false }, // RG8S
 		{ GL_RG16,                                     GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_UNSIGNED_SHORT,               false }, // RG16
-		{ GL_RG16I,                                    GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_SHORT,                        false }, // RG16I
-		{ GL_RG16UI,                                   GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_UNSIGNED_SHORT,               false }, // RG16U
+		{ GL_RG16I,                                    GL_ZERO,                                       RG_INTEGER,                               GL_RG_INTEGER,                               GL_SHORT,                        false }, // RG16I
+		{ GL_RG16UI,                                   GL_ZERO,                                       RG_INTEGER,                               GL_RG_INTEGER,                               GL_UNSIGNED_SHORT,               false }, // RG16U
 		{ GL_RG16F,                                    GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_FLOAT,                        false }, // RG16F
 		{ GL_RG16_SNORM,                               GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_SHORT,                        false }, // RG16S
-		{ GL_RG32I,                                    GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_INT,                          false }, // RG32I
-		{ GL_RG32UI,                                   GL_ZERO,                                       GL_RG_INTEGER,                               GL_RG_INTEGER,                               GL_UNSIGNED_INT,                 false }, // RG32U
+		{ GL_RG32I,                                    GL_ZERO,                                       RG_INTEGER,                               GL_RG_INTEGER,                               GL_INT,                          false }, // RG32I
+		{ GL_RG32UI,                                   GL_ZERO,                                       RG_INTEGER,                               GL_RG_INTEGER,                               GL_UNSIGNED_INT,                 false }, // RG32U
 		{ GL_RG32F,                                    GL_ZERO,                                       GL_RG,                                       GL_RG,                                       GL_FLOAT,                        false }, // RG32F
 		{ GL_RGB8,                                     GL_SRGB8,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_BYTE,                false }, // RGB8
-		{ GL_RGB8I,                                    GL_ZERO,                                       GL_RGB_INTEGER,                              GL_RGB_INTEGER,                              GL_BYTE,                         false }, // RGB8I
-		{ GL_RGB8UI,                                   GL_ZERO,                                       GL_RGB_INTEGER,                              GL_RGB_INTEGER,                              GL_UNSIGNED_BYTE,                false }, // RGB8U
+		{ GL_RGB8I,                                    GL_ZERO,                                       RGB_INTEGER,                              GL_RGB_INTEGER,                              GL_BYTE,                         false }, // RGB8I
+		{ GL_RGB8UI,                                   GL_ZERO,                                       RGB_INTEGER,                              GL_RGB_INTEGER,                              GL_UNSIGNED_BYTE,                false }, // RGB8U
 		{ GL_RGB8_SNORM,                               GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_BYTE,                         false }, // RGB8S
 		{ GL_RGB9_E5,                                  GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_INT_5_9_9_9_REV,     false }, // RGB9E5F
 		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                               GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_BYTE,                false }, // BGRA8
 		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                               GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,                false }, // RGBA8
-		{ GL_RGBA8I,                                   GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_BYTE,                         false }, // RGBA8I
-		{ GL_RGBA8UI,                                  GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_BYTE,                false }, // RGBA8U
+		{ GL_RGBA8I,                                   GL_ZERO,                                       RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_BYTE,                         false }, // RGBA8I
+		{ GL_RGBA8UI,                                  GL_ZERO,                                       RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_BYTE,                false }, // RGBA8U
 		{ GL_RGBA8_SNORM,                              GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_BYTE,                         false }, // RGBA8S
 		{ GL_RGBA16,                                   GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT,               false }, // RGBA16
-		{ GL_RGBA16I,                                  GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_SHORT,                        false }, // RGBA16I
-		{ GL_RGBA16UI,                                 GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_SHORT,               false }, // RGBA16U
+		{ GL_RGBA16I,                                  GL_ZERO,                                       RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_SHORT,                        false }, // RGBA16I
+		{ GL_RGBA16UI,                                 GL_ZERO,                                       RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_SHORT,               false }, // RGBA16U
 		{ GL_RGBA16F,                                  GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_HALF_FLOAT,                   false }, // RGBA16F
 		{ GL_RGBA16_SNORM,                             GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_SHORT,                        false }, // RGBA16S
-		{ GL_RGBA32I,                                  GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_INT,                          false }, // RGBA32I
-		{ GL_RGBA32UI,                                 GL_ZERO,                                       GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_INT,                 false }, // RGBA32U
+		{ GL_RGBA32I,                                  GL_ZERO,                                       RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_INT,                          false }, // RGBA32I
+		{ GL_RGBA32UI,                                 GL_ZERO,                                       RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_INT,                 false }, // RGBA32U
 		{ GL_RGBA32F,                                  GL_ZERO,                                       GL_RGBA,                                     GL_RGBA,                                     GL_FLOAT,                        false }, // RGBA32F
 		{ GL_RGB565,                                   GL_ZERO,                                       GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false }, // R5G6B5
 		{ GL_RGBA4,                                    GL_ZERO,                                       GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false }, // RGBA4
