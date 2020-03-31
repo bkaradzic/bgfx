@@ -2601,7 +2601,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <span id="_CPPv3N4bgfx11setViewModeE6ViewIdN8ViewMode4EnumE"></span><span id="_CPPv2N4bgfx11setViewModeE6ViewIdN8ViewMode4EnumE"></span><span id="bgfx::setViewMode__ViewId.ViewMode::Enum"></span><span class="target" id="namespacebgfx_1ac351af2c0188891568b9c5ec09122d9b"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setViewMode</code><span class="sig-paren">(</span>ViewId <em>_id</em>, <a class="reference internal" href="#_CPPv4N4bgfx8ViewModeE" title="bgfx::ViewMode">ViewMode</a>::<a class="reference internal" href="#_CPPv4N4bgfx8ViewMode4EnumE" title="bgfx::ViewMode::Enum">Enum</a> <em>_mode</em> = <a class="reference internal" href="#_CPPv4N4bgfx8ViewModeE" title="bgfx::ViewMode">ViewMode</a>::<a class="reference internal" href="#_CPPv4N4bgfx8ViewMode7DefaultE" title="bgfx::ViewMode::Default">Default</a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx11setViewModeE6ViewIdN8ViewMode4EnumE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Set view sorting mode. </p>
 <p><dl class="simple">
-<dt><strong>Remark</strong></dt><dd><p>View mode must be set prior calling <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a7cf173234b32e983f412055bb29e0512"><span class="std std-ref"><span class="pre">bgfx::submit</span></span></a></code> for the view.</p>
+<dt><strong>Remark</strong></dt><dd><p>View mode must be set prior calling <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aac8f69b1ff11ad6c8a95db9f9e46d019"><span class="std std-ref"><span class="pre">bgfx::submit</span></span></a></code> for the view.</p>
 </dd>
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_set_view_mode</span></code>. </p>
 </dd>
@@ -3237,8 +3237,8 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_tb">
-<span id="_CPPv3N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_tb"></span><span id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_tb"></span><span id="bgfx::Encoder::submit__ViewId.ProgramHandle.uint32_t.b"></span><span class="target" id="structbgfx_1_1_encoder_1aebca0fd0e7043ee1448098c6ffb8c005"></span>void <code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_tb" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_t7uint8_t"></span><span id="bgfx::Encoder::submit__ViewId.ProgramHandle.uint32_t.uint8_t"></span><span class="target" id="structbgfx_1_1_encoder_1a1708b62838d2213c50197c5ece829344"></span>void <code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, uint32_t <em>_depth</em> = 0, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_t7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Submit primitive for rendering. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_submit</span></code>. </p>
@@ -3247,7 +3247,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_id</span></code>: View id. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_program</span></code>: Program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3255,8 +3255,8 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb">
-<span id="_CPPv3N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb"></span><span id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb"></span><span id="bgfx::Encoder::submit__ViewId.ProgramHandle.OcclusionQueryHandle.uint32_t.b"></span><span class="target" id="structbgfx_1_1_encoder_1a3a34ee67df21dc3e319ee10d380cf658"></span>void <code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_t7uint8_t"></span><span id="bgfx::Encoder::submit__ViewId.ProgramHandle.OcclusionQueryHandle.uint32_t.uint8_t"></span><span class="target" id="structbgfx_1_1_encoder_1a54d8ad0fccee2039389d7665b2e7f21d"></span>void <code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, uint32_t <em>_depth</em> = 0, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_t7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Submit primitive with occlusion query for rendering. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_submit_occlusion_query</span></code>. </p>
@@ -3266,7 +3266,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_program</span></code>: Program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_occlusionQuery</span></code>: Occlusion query. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3274,8 +3274,8 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb">
-<span id="_CPPv3N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb"></span><span id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb"></span><span id="bgfx::Encoder::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint32_t.b"></span><span class="target" id="structbgfx_1_1_encoder_1a623269186c6f60577e7f5ea48040a9ef"></span>void <code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_t7uint8_t"></span><span id="bgfx::Encoder::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint32_t.uint8_t"></span><span class="target" id="structbgfx_1_1_encoder_1a7d59c0c289f18f176602f2aa4115b151"></span>void <code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint32_t <em>_depth</em> = 0, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_submit_indirect</span></code>. </p>
@@ -3287,7 +3287,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_start</span></code>: First element in indirect buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of dispatches. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4485,8 +4485,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h4>Submit<a class="headerlink" href="#submit" title="Permalink to this headline">¶</a></h4>
 <p>Within view all draw commands are executed after blit and compute commands.</p>
 <dl class="function">
-<dt id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle8uint32_tb">
-<span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle8uint32_tb"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle8uint32_tb"></span><span id="bgfx::submit__ViewId.ProgramHandle.uint32_t.b"></span><span class="target" id="namespacebgfx_1a7cf173234b32e983f412055bb29e0512"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><br /></dt>
+<dt id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle8uint32_t7uint8_t"></span><span id="bgfx::submit__ViewId.ProgramHandle.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1aac8f69b1ff11ad6c8a95db9f9e46d019"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, uint32_t <em>_depth</em> = 0, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><br /></dt>
 <dd><p>Submit primitive for rendering. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_submit</span></code>. </p>
@@ -4495,7 +4495,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_id</span></code>: View id. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_program</span></code>: Program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4503,8 +4503,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb">
-<span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb"></span><span id="bgfx::submit__ViewId.ProgramHandle.OcclusionQueryHandle.uint32_t.b"></span><span class="target" id="namespacebgfx_1a331fdb17a610d89b38d1e3ea18b7b06b"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><br /></dt>
+<dt id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_t7uint8_t"></span><span id="bgfx::submit__ViewId.ProgramHandle.OcclusionQueryHandle.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1a469d2c9d5eae99e063a091d9b1816d26"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, uint32_t <em>_depth</em> = 0, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><br /></dt>
 <dd><p>Submit primitive with occlusion query for rendering. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_submit_occlusion_query</span></code>. </p>
@@ -4514,7 +4514,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_program</span></code>: Program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_occlusionQuery</span></code>: Occlusion query. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4522,8 +4522,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb">
-<span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb"></span><span id="bgfx::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint32_t.b"></span><span class="target" id="namespacebgfx_1ac8b8cd8b363188812bb68afdbac7959e"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><br /></dt>
+<dt id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_t7uint8_t"></span><span id="bgfx::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1ab1dc0005156e66966d04e4978e9f84d3"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint32_t <em>_depth</em> = 0, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><br /></dt>
 <dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_submit_indirect</span></code>. </p>
@@ -4535,7 +4535,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_start</span></code>: First element in indirect buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of dispatches. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
 </ul>
 </dd>
 </dl>
