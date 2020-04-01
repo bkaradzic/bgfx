@@ -7273,22 +7273,22 @@ namespace bgfx { namespace gl
 				}
 
 				if ( (0
-					 | BGFX_STATE_CULL_MASK
-					 | BGFX_STATE_WRITE_Z
-					 | BGFX_STATE_DEPTH_TEST_MASK
-					 | BGFX_STATE_WRITE_RGB
-					 | BGFX_STATE_WRITE_A
-					 | BGFX_STATE_BLEND_MASK
-					 | BGFX_STATE_BLEND_EQUATION_MASK
 					 | BGFX_STATE_ALPHA_REF_MASK
 					 | BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
+					 | BGFX_STATE_BLEND_EQUATION_MASK
 					 | BGFX_STATE_BLEND_INDEPENDENT
-					 | BGFX_STATE_PT_MASK
-					 | BGFX_STATE_POINT_SIZE_MASK
-					 | BGFX_STATE_MSAA
-					 | BGFX_STATE_LINEAA
+					 | BGFX_STATE_BLEND_MASK
 					 | BGFX_STATE_CONSERVATIVE_RASTER
+					 | BGFX_STATE_CULL_MASK
+					 | BGFX_STATE_DEPTH_TEST_MASK
 					 | BGFX_STATE_FRONT_CCW
+					 | BGFX_STATE_LINEAA
+					 | BGFX_STATE_MSAA
+					 | BGFX_STATE_POINT_SIZE_MASK
+					 | BGFX_STATE_PT_MASK
+					 | BGFX_STATE_WRITE_A
+					 | BGFX_STATE_WRITE_RGB
+					 | BGFX_STATE_WRITE_Z
 					 ) & changedFlags)
 				{
 					if (BGFX_STATE_FRONT_CCW & changedFlags)
@@ -7392,10 +7392,10 @@ namespace bgfx { namespace gl
 					}
 
 					if ( ( (0
-						| BGFX_STATE_BLEND_MASK
+						| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 						| BGFX_STATE_BLEND_EQUATION_MASK
 						| BGFX_STATE_BLEND_INDEPENDENT
-						| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
+						| BGFX_STATE_BLEND_MASK
 						) & changedFlags)
 					||  blendFactor != draw.m_rgba)
 					{
@@ -7412,9 +7412,10 @@ namespace bgfx { namespace gl
 						}
 
 						if ( ( (0
-							| BGFX_STATE_BLEND_MASK
 							| BGFX_STATE_BLEND_EQUATION_MASK
-							| BGFX_STATE_BLEND_INDEPENDENT) & newFlags)
+							| BGFX_STATE_BLEND_INDEPENDENT
+							| BGFX_STATE_BLEND_MASK
+							) & newFlags)
 						||  blendFactor != draw.m_rgba)
 						{
 							const bool enabled = !!(BGFX_STATE_BLEND_MASK & newFlags);
