@@ -11,6 +11,7 @@
 #include <bx/mutex.h>
 
 #include "topology.h"
+#include "version.h"
 
 #if BX_PLATFORM_OSX || BX_PLATFORM_IOS
 #	include <objc/message.h>
@@ -3419,6 +3420,13 @@ namespace bgfx
 
 		BX_TRACE("Init...");
 
+		// bgfx 1.104.7082
+		//      ^ ^^^ ^^^^
+		//      | |   +--- Commit number  (https://github.com/bkaradzic/bgfx / git rev-list --count HEAD)
+		//      | +------- API version    (from https://github.com/bkaradzic/bgfx/blob/master/scripts/bgfx.idl#L4)
+		//      +--------- Major revision (always 1)
+		BX_TRACE("Version 1.%d.%d (commit: " BGFX_REV_SHA1 ")", BGFX_API_VERSION, BGFX_REV_NUMBER);
+
 		errorState = ErrorState::ContextAllocated;
 
 		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, Context::kAlignment);
@@ -3428,7 +3436,6 @@ namespace bgfx
 			return true;
 		}
 
-//error:
 		BX_TRACE("Init failed.");
 
 		switch (errorState)

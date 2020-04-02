@@ -80,6 +80,37 @@ newaction {
 	end
 }
 
+newaction {
+	trigger = "version",
+	description = "Generate bgfx version.h",
+	execute = function ()
+
+		local f = io.popen("git rev-list --count HEAD")
+		local rev = string.match(f:read("*a"), ".*%S")
+		f:close()
+		f = io.popen("git log --format=format:%H -1")
+		local sha1 = f:read("*a")
+		f:close()
+		io.output("../src/version.h")
+		io.write("/*\n")
+		io.write(" * Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n")
+		io.write(" * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n")
+		io.write(" */\n")
+		io.write("\n")
+		io.write("/*\n")
+		io.write(" *\n")
+		io.write(" * AUTO GENERATED! DO NOT EDIT!\n")
+		io.write(" *\n")
+		io.write(" */\n")
+		io.write("\n")
+		io.write("#define BGFX_REV_NUMBER " .. rev .. "\n")
+		io.write("#define BGFX_REV_SHA1   \"" .. sha1 .. "\"\n")
+		io.close()
+
+		os.exit()
+	end
+}
+
 solution "bgfx"
 	configurations {
 		"Debug",
