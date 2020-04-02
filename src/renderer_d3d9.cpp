@@ -3716,7 +3716,7 @@ namespace bgfx { namespace d3d9
 
 		updateResolution(_render->m_resolution);
 
-		BGFX_D3D9_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
+		BGFX_D3D9_PROFILER_BEGIN_LITERAL(rendererSubmit, kColorView);
 
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
@@ -4427,7 +4427,7 @@ namespace bgfx { namespace d3d9
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			BGFX_D3D9_PROFILER_BEGIN_LITERAL("debugstats", kColorFrame);
+			BGFX_D3D9_PROFILER_BEGIN_LITERAL(debugstats, kColorFrame);
 
 			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
@@ -4529,7 +4529,7 @@ namespace bgfx { namespace d3d9
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			BGFX_D3D9_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
+			BGFX_D3D9_PROFILER_BEGIN_LITERAL(debugtext, kColorFrame);
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
