@@ -90,8 +90,8 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(bool _g
 
 #define BGFX_D3D12_PROFILER_BEGIN_LITERAL(_name, _abgr)           \
 	BX_MACRO_BLOCK_BEGIN                                          \
-		PIX3_BEGINEVENT(m_commandList, _abgr, "" # _name);        \
-		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr);           \
+		PIX3_BEGINEVENT(m_commandList, _abgr, "" _name);          \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);             \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_D3D12_PROFILER_END()     \

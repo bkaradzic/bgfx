@@ -5690,7 +5690,7 @@ VK_DESTROY
 		BX_UNUSED(_render, _clearQuad, _textVideoMemBlitter);
 
 		m_commandBuffer = beginNewCommand();
-		BGFX_VK_PROFILER_BEGIN_LITERAL(rendererSubmit, kColorView);
+		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
 		submitCommandAndWait(m_commandBuffer);
 		m_commandBuffer = VK_NULL_HANDLE;
 
@@ -6490,7 +6490,7 @@ BX_UNUSED(presentMin, presentMax);
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			BGFX_VK_PROFILER_BEGIN_LITERAL(debugstats, kColorFrame);
+			BGFX_VK_PROFILER_BEGIN_LITERAL("debugstats", kColorFrame);
 
 //			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
@@ -6643,7 +6643,7 @@ BX_UNUSED(presentMin, presentMax);
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			BGFX_VK_PROFILER_BEGIN_LITERAL(debugtext, kColorFrame);
+			BGFX_VK_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
