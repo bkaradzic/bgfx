@@ -17,7 +17,15 @@
 
 namespace bgfx { namespace vk
 {
-	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][256];
+	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
+
+	inline void setViewType(ViewId _view, const bx::StringView _str)
+	{
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
+		{
+			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), _str.getLength() );
+		}
+	}
 
 	struct PrimInfo
 	{
@@ -5681,6 +5689,11 @@ VK_DESTROY
 	{
 		BX_UNUSED(_render, _clearQuad, _textVideoMemBlitter);
 
+		m_commandBuffer = beginNewCommand();
+		BGFX_VK_PROFILER_BEGIN_LITERAL(rendererSubmit, kColorView);
+        submitCommandAndWait(m_commandBuffer);
+        m_commandBuffer = VK_NULL_HANDLE;
+
 		updateResolution(_render->m_resolution);
 
 		int64_t timeBegin = bx::getHPCounter();
@@ -5784,7 +5797,6 @@ VK_DESTROY
 //			| VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT
 			;
 		cbbi.pInheritanceInfo = NULL;
-
 		m_commandBuffer = m_commandBuffers[m_backBufferColorIdx];
 		VK_CHECK(vkBeginCommandBuffer(m_commandBuffer, &cbbi) );
 
@@ -5838,11 +5850,6 @@ VK_DESTROY
 					{
 						vkCmdEndRenderPass(m_commandBuffer);
 						beginRenderPass = false;
-
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) && s_extension[Extension::EXT_debug_utils].m_supported )
-						{
-							vkCmdEndDebugUtilsLabelEXT(m_commandBuffer);
-						}
 					}
 
 					VK_CHECK(vkEndCommandBuffer(m_commandBuffer) );
@@ -5876,18 +5883,9 @@ VK_DESTROY
 					rpbi.renderArea.extent.width  = rect.m_width;
 					rpbi.renderArea.extent.height = rect.m_height;
 
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) && s_extension[Extension::EXT_debug_utils].m_supported )
-					{
-						VkDebugUtilsLabelEXT dul;
-						dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-						dul.pNext = NULL;
-						dul.pLabelName = s_viewName[view];
-						dul.color[0] = 1.0f;
-						dul.color[1] = 1.0f;
-						dul.color[2] = 1.0f;
-						dul.color[3] = 1.0f;
-						vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);
-					}
+					BGFX_VK_PROFILER_END();
+					setViewType(view, " ");
+					BGFX_VK_PROFILER_BEGIN(view, kColorView);
 
 					if (!isCompute && !beginRenderPass)
 					{
@@ -5931,6 +5929,10 @@ VK_DESTROY
 					if (!wasCompute)
 					{
 						wasCompute = true;
+
+						BGFX_VK_PROFILER_END();
+						setViewType(view, "C");
+						BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
 
 //						m_commandList->SetComputeRootSignature(m_rootSignature);
 //						ID3D12DescriptorHeap* heaps[] = {
@@ -6087,13 +6089,11 @@ VK_DESTROY
 						wasCompute = false;
 					}
 
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
-					{
-						BX_UNUSED(s_viewName);
-// 						wchar_t* viewNameW = s_viewNameW[view];
-// 						viewNameW[3] = L' ';
-// 						PIX_ENDEVENT();
-// 						PIX_BEGINEVENT(toRgba8(0xff, 0x00, 0x00, 0xff), viewNameW);
+					if (viewChanged)
+                    {
+						BGFX_VK_PROFILER_END();
+						setViewType(view, " ");
+						BGFX_VK_PROFILER_BEGIN(view, kColorDraw);
 					}
 
 					commandListChanged = true;
@@ -6428,10 +6428,19 @@ VK_DESTROY
 				}
 			}
 
+			if (wasCompute)
+			{
+				setViewType(view, "C");
+				BGFX_VK_PROFILER_END();
+				BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
+			}
+
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 //			m_batch.end(m_commandList);
 		}
+
+		BGFX_VK_PROFILER_END();
 
 		int64_t timeEnd = bx::getHPCounter();
 		int64_t frameTime = timeEnd - timeBegin;
@@ -6481,7 +6490,7 @@ BX_UNUSED(presentMin, presentMax);
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-//			PIX_BEGINEVENT(toRgba8(0x40, 0x40, 0x40, 0xff), L"debugstats");
+			BGFX_VK_PROFILER_BEGIN_LITERAL(debugstats, kColorFrame);
 
 //			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
@@ -6630,15 +6639,15 @@ BX_UNUSED(presentMin, presentMax);
 
 			blit(this, _textVideoMemBlitter, tvm);
 
-//			PIX_ENDEVENT();
+			BGFX_VK_PROFILER_END();
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-//			PIX_BEGINEVENT(toRgba8(0x40, 0x40, 0x40, 0xff), L"debugtext");
+			BGFX_VK_PROFILER_BEGIN_LITERAL(debugtext, kColorFrame);
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
-//			PIX_ENDEVENT();
+			BGFX_VK_PROFILER_END();
 		}
 
 		const uint32_t align = uint32_t(m_deviceProperties.limits.nonCoherentAtomSize);
@@ -6655,11 +6664,6 @@ BX_UNUSED(presentMin, presentMax);
 		{
 			vkCmdEndRenderPass(m_commandBuffer);
 			beginRenderPass = false;
-
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) && s_extension[Extension::EXT_debug_utils].m_supported )
-			{
-				vkCmdEndDebugUtilsLabelEXT(m_commandBuffer);
-			}
 		}
 
 		setImageMemoryBarrier(m_commandBuffer
