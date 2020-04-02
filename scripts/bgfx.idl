@@ -201,14 +201,14 @@ flag.Clear { bits = 16 }
 
 --- Rendering state discard. When state is preserved in submit, rendering states can be discarded
 --- on a finer grain.
-flag.Discard { bits = 8, desc = "Discard flags" }
-	.None(0)                                                                            --- Discard nothing
-	.IndexBuffer                                                                        --- Discard only Index Buffer
-	.VertexStreams                                                                      --- Discard only Vertex Streams
-	.TextureSamplers                                                                    --- Discard only texture samplers
-	.Compute                                                                            --- Discard only Compute shader related state
-	.State                                                                              --- Discard only state
-	.All { "IndexBuffer", "VertexStreams", "TextureSamplers", "Compute", "State" }      --- Discard every rendering states
+flag.Discard { bits = 8, const, desc = "Discard flags" }
+	.None            (0x00) --- Discard nothing
+	.IndexBuffer     (0x01) --- Discard only Index Buffer
+	.VertexStreams   (0x02) --- Discard only Vertex Streams
+	.TextureSamplers (0x04) --- Discard only texture samplers
+	.Compute         (0x08) --- Discard only Compute shader related state
+	.State           (0x10) --- Discard only state
+	.All             (0xff) --- Discard every rendering states
 	()
 
 flag.Debug { bits = 32 }

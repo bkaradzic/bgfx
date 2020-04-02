@@ -565,7 +565,7 @@ public static partial class bgfx
 		/// <summary>
 		/// Discard every rendering states
 		/// </summary>
-		All                    = 0x0000001f,
+		All                    = 0x000000ff,
 	}
 	
 	[Flags]

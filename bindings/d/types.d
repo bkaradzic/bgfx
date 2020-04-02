@@ -199,7 +199,7 @@ enum ubyte BGFX_DISCARD_VERTEX_STREAMS = 0x02; /// Discard only Vertex Streams
 enum ubyte BGFX_DISCARD_TEXTURE_SAMPLERS = 0x04; /// Discard only texture samplers
 enum ubyte BGFX_DISCARD_COMPUTE = 0x08; /// Discard only Compute shader related state
 enum ubyte BGFX_DISCARD_STATE = 0x10; /// Discard only state
-enum ubyte BGFX_DISCARD_ALL = 0x1f; /// Discard every rendering states
+enum ubyte BGFX_DISCARD_ALL = 0xff; /// Discard every rendering states
 
 enum uint BGFX_DEBUG_NONE = 0x00000000; /// No debug.
 enum uint BGFX_DEBUG_WIREFRAME = 0x00000001; /// Enable wireframe for all primitives.

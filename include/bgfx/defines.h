@@ -264,15 +264,7 @@
 #define BGFX_DISCARD_TEXTURE_SAMPLERS       UINT8_C(0x04) //!< Discard only texture samplers
 #define BGFX_DISCARD_COMPUTE                UINT8_C(0x08) //!< Discard only Compute shader related state
 #define BGFX_DISCARD_STATE                  UINT8_C(0x10) //!< Discard only state
-/// Discard every rendering states
-#define BGFX_DISCARD_ALL (0 \
-	| BGFX_DISCARD_INDEX_BUFFER \
-	| BGFX_DISCARD_VERTEX_STREAMS \
-	| BGFX_DISCARD_TEXTURE_SAMPLERS \
-	| BGFX_DISCARD_COMPUTE \
-	| BGFX_DISCARD_STATE \
-	)
-
+#define BGFX_DISCARD_ALL                    UINT8_C(0xff) //!< Discard every rendering states
 
 #define BGFX_DEBUG_NONE                     UINT32_C(0x00000000) //!< No debug.
 #define BGFX_DEBUG_WIREFRAME                UINT32_C(0x00000001) //!< Enable wireframe for all primitives.
