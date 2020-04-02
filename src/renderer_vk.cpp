@@ -5691,8 +5691,8 @@ VK_DESTROY
 
 		m_commandBuffer = beginNewCommand();
 		BGFX_VK_PROFILER_BEGIN_LITERAL(rendererSubmit, kColorView);
-        submitCommandAndWait(m_commandBuffer);
-        m_commandBuffer = VK_NULL_HANDLE;
+		submitCommandAndWait(m_commandBuffer);
+		m_commandBuffer = VK_NULL_HANDLE;
 
 		updateResolution(_render->m_resolution);
 
@@ -6090,7 +6090,7 @@ VK_DESTROY
 					}
 
 					if (viewChanged)
-                    {
+					{
 						BGFX_VK_PROFILER_END();
 						setViewType(view, " ");
 						BGFX_VK_PROFILER_BEGIN(view, kColorDraw);
