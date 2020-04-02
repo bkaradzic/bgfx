@@ -3654,7 +3654,7 @@ namespace bgfx { namespace mtl
 			m_commandBuffer = m_cmd.alloc();
 		}
 
-		BGFX_MTL_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
+		BGFX_MTL_PROFILER_BEGIN_LITERAL(rendererSubmit, kColorFrame);
 
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
