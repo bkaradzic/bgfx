@@ -40,8 +40,8 @@
 
 #define BGFX_GL_PROFILER_BEGIN_LITERAL(_name, _abgr)                                       \
 	BX_MACRO_BLOCK_BEGIN                                                                   \
-		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "" # _name) );       \
-		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr);                                    \
+		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "" _name) );         \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);                                      \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_GL_PROFILER_END()        \
