@@ -6826,7 +6826,7 @@ namespace bgfx { namespace gl
 
 		m_glctx.makeCurrent(NULL);
 
-		BGFX_GL_PROFILER_BEGIN_LITERAL(rendererSubmit, kColorView);
+		BGFX_GL_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
 
 		if (1 < m_numWindows
 		&&  m_vaoSupport)
@@ -7970,7 +7970,7 @@ namespace bgfx { namespace gl
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			BGFX_GL_PROFILER_BEGIN_LITERAL(debugstats, kColorFrame);
+			BGFX_GL_PROFILER_BEGIN_LITERAL("debugstats", kColorFrame);
 
 			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
@@ -8145,7 +8145,7 @@ namespace bgfx { namespace gl
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			BGFX_GL_PROFILER_BEGIN_LITERAL(debugtext, kColorFrame);
+			BGFX_GL_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
