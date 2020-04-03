@@ -3247,7 +3247,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_id</span></code>: View id. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_program</span></code>: Program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3266,7 +3266,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_program</span></code>: Program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_occlusionQuery</span></code>: Occlusion query. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3287,7 +3287,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_start</span></code>: First element in indirect buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of dispatches. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3399,8 +3399,8 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t">
-<span id="_CPPv3N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t"></span><span id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t"></span><span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1ab1427bd12ce035ce0be59bde6a886bc7"></span>void <code class="sig-name descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t"></span><span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="structbgfx_1_1_encoder_1ab3840b6c16e8fa53dd64d474ac9a49c1"></span>void <code class="sig-name descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Dispatch compute. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_dispatch</span></code>. </p>
@@ -3410,7 +3410,8 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Compute program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numX</span></code>: Number of groups X. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numY</span></code>: Number of groups Y. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numZ</span></code>: Number of groups Z.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numZ</span></code>: Number of groups Z. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3418,8 +3419,8 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t">
-<span id="_CPPv3N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t"></span><span id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t"></span><span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t"></span><span class="target" id="structbgfx_1_1_encoder_1a26353fd863002e69370cec965543a07f"></span>void <code class="sig-name descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
+<span id="_CPPv3N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t"></span><span id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t"></span><span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="structbgfx_1_1_encoder_1aa968c235cfb56103dd913950ae6d385b"></span>void <code class="sig-name descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Dispatch compute indirect. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_dispatch_indirect</span></code>. </p>
@@ -3429,7 +3430,8 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Compute program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_indirectHandle</span></code>: Indirect buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_start</span></code>: First element in indirect buffer. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of dispatches.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of dispatches. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4495,7 +4497,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_id</span></code>: View id. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_program</span></code>: Program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4514,7 +4516,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_program</span></code>: Program. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_occlusionQuery</span></code>: Occlusion query. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4535,7 +4537,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_start</span></code>: First element in indirect buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of dispatches. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_depth</span></code>: Depth for sorting. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">&lt;em&gt;flags</span></code>: Which states to discard for next draw. See BGFX_DISCARD call submit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4705,44 +4707,26 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <div class="section" id="dispatch">
 <h4>Dispatch<a class="headerlink" href="#dispatch" title="Permalink to this headline">¶</a></h4>
 <p>Within view all compute commands are dispatched after blit commands, and before draw commands.</p>
-<dl class="function">
-<dt id="_CPPv4N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t">
-<span id="_CPPv3N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t"></span><span id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t"></span><span id="bgfx::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t"></span><span class="target" id="namespacebgfx_1a9f6bd8e2823a16aa9a3631cd41195bba"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1<span class="sig-paren">)</span><br /></dt>
-<dd><p>Dispatch compute. </p>
-<p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_dispatch</span></code>. </p>
-</dd>
-<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_id</span></code>: View id. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Compute program. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numX</span></code>: Number of groups X. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numY</span></code>: Number of groups Y. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numZ</span></code>: Number of groups Z.</p></li>
-</ul>
-</dd>
-</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function “bgfx::dispatch” with arguments (ViewId, ProgramHandle, uint32_t, uint32_t, uint32_t) in doxygen xml output for project “bgfx” from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv4N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t">
-<span id="_CPPv3N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t"></span><span id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t"></span><span id="bgfx::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t"></span><span class="target" id="namespacebgfx_1ac1f473d951bfef9bced6c25b60991368"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1<span class="sig-paren">)</span><br /></dt>
-<dd><p>Dispatch compute indirect. </p>
-<p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_dispatch_indirect</span></code>. </p>
-</dd>
-<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_id</span></code>: View id. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Compute program. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_indirectHandle</span></code>: Indirect buffer. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_start</span></code>: First element in indirect buffer. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of dispatches.</p></li>
-</ul>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span> <span class="n">void</span> <span class="n">bgfx</span><span class="p">::</span><span class="n">dispatch</span><span class="p">(</span><span class="n">ViewId</span><span class="p">,</span> <span class="n">ProgramHandle</span><span class="p">,</span> <span class="n">IndirectBufferHandle</span><span class="p">,</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint8_t</span><span class="p">)</span>
+<span class="o">-</span> <span class="n">void</span> <span class="n">bgfx</span><span class="p">::</span><span class="n">dispatch</span><span class="p">(</span><span class="n">ViewId</span><span class="p">,</span> <span class="n">ProgramHandle</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint8_t</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function “bgfx::dispatch” with arguments (ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t) in doxygen xml output for project “bgfx” from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span> <span class="n">void</span> <span class="n">bgfx</span><span class="p">::</span><span class="n">dispatch</span><span class="p">(</span><span class="n">ViewId</span><span class="p">,</span> <span class="n">ProgramHandle</span><span class="p">,</span> <span class="n">IndirectBufferHandle</span><span class="p">,</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint8_t</span><span class="p">)</span>
+<span class="o">-</span> <span class="n">void</span> <span class="n">bgfx</span><span class="p">::</span><span class="n">dispatch</span><span class="p">(</span><span class="n">ViewId</span><span class="p">,</span> <span class="n">ProgramHandle</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint8_t</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 <div class="section" id="blit">
