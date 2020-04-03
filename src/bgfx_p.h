@@ -1545,7 +1545,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 	{
 		void clear(uint8_t _flags = BGFX_DISCARD_ALL)
 		{
-			if (0 != (_flags & BGFX_DISCARD_TEXTURE_SAMPLERS) )
+			if (0 != (_flags & BGFX_DISCARD_BINDINGS) )
 			{
 				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 				{
@@ -1566,40 +1566,49 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		{
 			if (0 != (_flags & BGFX_DISCARD_STATE) )
 			{
-				m_uniformBegin = 0;
-				m_uniformEnd   = 0;
-				m_stateFlags   = BGFX_STATE_DEFAULT;
-				m_stencil      = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
-				m_rgba         = 0;
-				m_startMatrix  = 0;
-				m_startIndex   = 0;
-				m_numIndices   = UINT32_MAX;
-				m_numVertices  = UINT32_MAX;
+				m_uniformBegin  = 0;
+				m_uniformEnd    = 0;
+				m_uniformIdx    = UINT8_MAX;
+
+				m_stateFlags    = BGFX_STATE_DEFAULT;
+				m_stencil       = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
+				m_rgba          = 0;
+				m_scissor       = UINT16_MAX;
+			}
+
+			if (0 != (_flags & BGFX_DISCARD_TRANSFORM) )
+			{
+				m_startMatrix = 0;
+				m_numMatrices = 1;
+			}
+
+			if (0 != (_flags & BGFX_DISCARD_INSTANCE_DATA) )
+			{
 				m_instanceDataOffset = 0;
 				m_instanceDataStride = 0;
 				m_numInstances       = 1;
-				m_startIndirect = 0;
-				m_numIndirect   = UINT16_MAX;
-				m_numMatrices   = 1;
-				m_submitFlags   = 0;
-				m_scissor       = UINT16_MAX;
-
 				m_instanceDataBuffer.idx = kInvalidHandle;
-				m_indirectBuffer.idx     = kInvalidHandle;
-				m_occlusionQuery.idx     = kInvalidHandle;
-				m_uniformIdx = UINT8_MAX;
 			}
 
 			if (0 != (_flags & BGFX_DISCARD_VERTEX_STREAMS) )
 			{
-				m_streamMask = 0;
+				m_numVertices = UINT32_MAX;
+				m_streamMask  = 0;
 				m_stream[0].clear();
 			}
 
 			if (0 != (_flags & BGFX_DISCARD_INDEX_BUFFER) )
 			{
+				m_startIndex      = 0;
+				m_numIndices      = UINT32_MAX;
 				m_indexBuffer.idx = kInvalidHandle;
 			}
+
+			m_submitFlags   = 0;
+			m_startIndirect = 0;
+			m_numIndirect   = UINT16_MAX;
+			m_indirectBuffer.idx = kInvalidHandle;
+			m_occlusionQuery.idx = kInvalidHandle;
 		}
 
 		bool setStreamBit(uint8_t _stream, VertexBufferHandle _handle)
@@ -1640,24 +1649,28 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderCompute
 	{
-		void clear(uint8_t _flags = BGFX_DISCARD_ALL)
+		void clear(uint8_t _flags)
 		{
-			if (0 != (_flags & BGFX_DISCARD_COMPUTE) )
+			if (0 != (_flags & BGFX_DISCARD_STATE) )
 			{
 				m_uniformBegin = 0;
 				m_uniformEnd   = 0;
-				m_startMatrix  = 0;
-				m_numX         = 0;
-				m_numY         = 0;
-				m_numZ         = 0;
-				m_numMatrices  = 0;
-				m_submitFlags  = 0;
 				m_uniformIdx   = UINT8_MAX;
-
-				m_indirectBuffer.idx = kInvalidHandle;
-				m_startIndirect      = 0;
-				m_numIndirect        = UINT16_MAX;
 			}
+
+			if (0 != (_flags & BGFX_DISCARD_TRANSFORM) )
+			{
+				m_startMatrix = 0;
+				m_numMatrices = 0;
+			}
+
+			m_numX               = 0;
+			m_numY               = 0;
+			m_numZ               = 0;
+			m_submitFlags        = 0;
+			m_indirectBuffer.idx = kInvalidHandle;
+			m_startIndirect      = 0;
+			m_numIndirect        = UINT16_MAX;
 		}
 
 		uint32_t m_uniformBegin;
@@ -2201,7 +2214,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 	{
 		EncoderImpl()
 		{
-			discard();
+			discard(BGFX_DISCARD_ALL);
 		}
 
 		void begin(Frame* _frame, uint8_t _idx)
@@ -2496,7 +2509,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			bind.m_mip    = _mip;
 		}
 
-		void discard(uint8_t _flags = BGFX_DISCARD_ALL)
+		void discard(uint8_t _flags)
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 			{
@@ -2509,9 +2522,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			m_bind.clear(_flags);
 		}
 
-		void submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags = BGFX_DISCARD_ALL);
+		void submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags);
 
-		void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags = BGFX_DISCARD_ALL)
+		void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags)
 		{
 			m_draw.m_startIndirect  = _start;
 			m_draw.m_numIndirect    = _num;
@@ -2520,14 +2533,14 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			submit(_id, _program, handle, _depth, _flags);
 		}
 
-		void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _ngx, uint32_t _ngy, uint32_t _ngz);
+		void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _ngx, uint32_t _ngy, uint32_t _ngz, uint8_t _flags);
 
-		void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num)
+		void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
 		{
 			m_compute.m_indirectBuffer = _indirectHandle;
 			m_compute.m_startIndirect  = _start;
 			m_compute.m_numIndirect    = _num;
-			dispatch(_id, _handle, 0, 0, 0);
+			dispatch(_id, _handle, 0, 0, 0, _flags);
 		}
 
 		void blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);

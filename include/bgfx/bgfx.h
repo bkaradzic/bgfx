@@ -1407,8 +1407,7 @@ namespace bgfx
 		/// @param[in] _id View id.
 		/// @param[in] _program Program.
 		/// @param[in] _depth Depth for sorting.
-		/// @param[in] _flags Which states to discard for next draw. See BGFX_DISCARD_
-		///   call submit.
+		/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_submit`.
 		///
@@ -1416,7 +1415,7 @@ namespace bgfx
 			  ViewId _id
 			, ProgramHandle _program
 			, uint32_t _depth = 0
-			, uint8_t _flags = BGFX_DISCARD_ALL
+			, uint8_t _flags  = BGFX_DISCARD_ALL
 			);
 
 		/// Submit primitive with occlusion query for rendering.
@@ -1425,8 +1424,7 @@ namespace bgfx
 		/// @param[in] _program Program.
 		/// @param[in] _occlusionQuery Occlusion query.
 		/// @param[in] _depth Depth for sorting.
-		/// @param[in] _flags Which states to discard for next draw. See BGFX_DISCARD_
-		///   call submit.
+		/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_submit_occlusion_query`.
 		///
@@ -1435,7 +1433,7 @@ namespace bgfx
 			, ProgramHandle _program
 			, OcclusionQueryHandle _occlusionQuery
 			, uint32_t _depth = 0
-			, uint8_t _flags = BGFX_DISCARD_ALL
+			, uint8_t _flags  = BGFX_DISCARD_ALL
 			);
 
 		/// Submit primitive for rendering with index and instance data info from
@@ -1447,8 +1445,7 @@ namespace bgfx
 		/// @param[in] _start First element in indirect buffer.
 		/// @param[in] _num Number of dispatches.
 		/// @param[in] _depth Depth for sorting.
-		/// @param[in] _flags Which states to discard for next draw. See BGFX_DISCARD_
-		///   call submit.
+		/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_submit_indirect`.
 		///
@@ -1557,6 +1554,7 @@ namespace bgfx
 		/// @param[in] _numX Number of groups X.
 		/// @param[in] _numY Number of groups Y.
 		/// @param[in] _numZ Number of groups Z.
+		/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_dispatch`.
 		///
@@ -1566,6 +1564,7 @@ namespace bgfx
 			, uint32_t _numX = 1
 			, uint32_t _numY = 1
 			, uint32_t _numZ = 1
+			, uint8_t _flags = BGFX_DISCARD_ALL
 			);
 
 		/// Dispatch compute indirect.
@@ -1575,6 +1574,7 @@ namespace bgfx
 		/// @param[in] _indirectHandle Indirect buffer.
 		/// @param[in] _start First element in indirect buffer.
 		/// @param[in] _num Number of dispatches.
+		/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_dispatch_indirect`.
 		///
@@ -1583,7 +1583,8 @@ namespace bgfx
 			, ProgramHandle _handle
 			, IndirectBufferHandle _indirectHandle
 			, uint16_t _start = 0
-			, uint16_t _num = 1
+			, uint16_t _num   = 1
+			, uint8_t _flags  = BGFX_DISCARD_ALL
 			);
 
 		/// Discard all previously set state for draw or compute call.
@@ -3804,8 +3805,7 @@ namespace bgfx
 	/// @param[in] _id View id.
 	/// @param[in] _program Program.
 	/// @param[in] _depth Depth for sorting.
-	/// @param[in] _flags Which states to discard for next draw. See BGFX_DISCARD_
-	///   call submit.
+	/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 	///
 	/// @attention C99 equivalent is `bgfx_submit`.
 	///
@@ -3813,7 +3813,7 @@ namespace bgfx
 		  ViewId _id
 		, ProgramHandle _program
 		, uint32_t _depth = 0
-		, uint8_t _flags = BGFX_DISCARD_ALL
+		, uint8_t _flags  = BGFX_DISCARD_ALL
 		);
 
 	/// Submit primitive with occlusion query for rendering.
@@ -3822,8 +3822,7 @@ namespace bgfx
 	/// @param[in] _program Program.
 	/// @param[in] _occlusionQuery Occlusion query.
 	/// @param[in] _depth Depth for sorting.
-	/// @param[in] _flags Which states to discard for next draw. See BGFX_DISCARD_
-	///   call submit.
+	/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 	///
 	/// @attention C99 equivalent is `bgfx_submit_occlusion_query`.
 	///
@@ -3832,7 +3831,7 @@ namespace bgfx
 		, ProgramHandle _program
 		, OcclusionQueryHandle _occlusionQuery
 		, uint32_t _depth = 0
-		, uint8_t _flags = BGFX_DISCARD_ALL
+		, uint8_t _flags  = BGFX_DISCARD_ALL
 		);
 
 	/// Submit primitive for rendering with index and instance data info from
@@ -3844,8 +3843,7 @@ namespace bgfx
 	/// @param[in] _start First element in indirect buffer.
 	/// @param[in] _num Number of dispatches.
 	/// @param[in] _depth Depth for sorting.
-	/// @param[in] _flags Which states to discard for next draw. See BGFX_DISCARD_
-	///   call submit.
+	/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 	///
 	/// @attention C99 equivalent is `bgfx_submit_indirect`.
 	///
@@ -3854,9 +3852,9 @@ namespace bgfx
 		, ProgramHandle _program
 		, IndirectBufferHandle _indirectHandle
 		, uint16_t _start = 0
-		, uint16_t _num = 1
+		, uint16_t _num   = 1
 		, uint32_t _depth = 0
-		, uint8_t _flags = BGFX_DISCARD_ALL
+		, uint8_t _flags  = BGFX_DISCARD_ALL
 		);
 
 	/// Set compute index buffer.
@@ -3954,6 +3952,7 @@ namespace bgfx
 	/// @param[in] _numX Number of groups X.
 	/// @param[in] _numY Number of groups Y.
 	/// @param[in] _numZ Number of groups Z.
+	/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 	///
 	/// @attention C99 equivalent is `bgfx_dispatch`.
 	///
@@ -3963,6 +3962,7 @@ namespace bgfx
 		, uint32_t _numX = 1
 		, uint32_t _numY = 1
 		, uint32_t _numZ = 1
+		, uint8_t _flags = BGFX_DISCARD_ALL
 		);
 
 	/// Dispatch compute indirect.
@@ -3972,6 +3972,7 @@ namespace bgfx
 	/// @param[in] _indirectHandle Indirect buffer.
 	/// @param[in] _start First element in indirect buffer.
 	/// @param[in] _num Number of dispatches.
+	/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 	///
 	/// @attention C99 equivalent is `bgfx_dispatch_indirect`.
 	///
@@ -3980,7 +3981,8 @@ namespace bgfx
 		, ProgramHandle _handle
 		, IndirectBufferHandle _indirectHandle
 		, uint16_t _start = 0
-		, uint16_t _num = 1
+		, uint16_t _num   = 1
+		, uint8_t _flags  = BGFX_DISCARD_ALL
 		);
 
 	/// Discard all previously set state for draw or compute call.

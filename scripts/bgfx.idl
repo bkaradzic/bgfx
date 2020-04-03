@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(104)
+version(105)
 
 typedef "bool"
 typedef "char"
@@ -202,13 +202,14 @@ flag.Clear { bits = 16 }
 --- Rendering state discard. When state is preserved in submit, rendering states can be discarded
 --- on a finer grain.
 flag.Discard { bits = 8, const, desc = "Discard flags" }
-	.None            (0x00) --- Discard nothing
-	.IndexBuffer     (0x01) --- Discard only Index Buffer
-	.VertexStreams   (0x02) --- Discard only Vertex Streams
-	.TextureSamplers (0x04) --- Discard only texture samplers
-	.Compute         (0x08) --- Discard only Compute shader related state
-	.State           (0x10) --- Discard only state
-	.All             (0xff) --- Discard every rendering states
+	.None            (0x00) --- Preserve everything.
+	.Bindings        (0x01) --- Discard texture sampler and buffer bindings.
+	.IndexBuffer     (0x02) --- Discard index buffer.
+	.InstanceData    (0x04) --- Discard instance data.
+	.State           (0x08) --- Discard state.
+	.Transform       (0x10) --- Discard transform.
+	.VertexStreams   (0x20) --- Discard vertex streams.
+	.All             (0xff) --- Discard all states.
 	()
 
 flag.Debug { bits = 32 }
@@ -2352,7 +2353,7 @@ func.Encoder.submit
 	.program       "ProgramHandle" --- Program.
 	.depth         "uint32_t"      --- Depth for sorting.
 	 { default = 0 }
-	.flags         "uint8_t"       --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags         "uint8_t"       --- Discard or preserve states. See `BGFX_DISCARD_*`.
 	 { default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive with occlusion query for rendering.
@@ -2363,7 +2364,7 @@ func.Encoder.submit { cname = "submit_occlusion_query" }
 	.occlusionQuery "OcclusionQueryHandle" --- Occlusion query.
 	.depth          "uint32_t"             --- Depth for sorting.
 	 { default = 0 }
-	.flags          "uint8_t"              --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags          "uint8_t"              --- Discard or preserve states. See `BGFX_DISCARD_*`.
 	 { default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive for rendering with index and instance data info from
@@ -2379,7 +2380,7 @@ func.Encoder.submit { cname = "submit_indirect" }
 	 { default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
 	 { default = 0 }
-	.flags          "uint8_t"              --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags          "uint8_t"              --- Discard or preserve states. See `BGFX_DISCARD_*`.
 	 { default = "BGFX_DISCARD_ALL" }
 
 --- Set compute index buffer.
@@ -2438,6 +2439,8 @@ func.Encoder.dispatch
 	 { default = 1 }
 	.numZ    "uint32_t"      --- Number of groups Z.
 	 { default = 1 }
+	.flags   "uint8_t"       --- Discard or preserve states. See `BGFX_DISCARD_*`.
+	 { default = "BGFX_DISCARD_ALL" }
 
 --- Dispatch compute indirect.
 func.Encoder.dispatch { cname = "dispatch_indirect" }
@@ -2449,11 +2452,13 @@ func.Encoder.dispatch { cname = "dispatch_indirect" }
 	 { default = 0 }
 	.num            "uint16_t"             --- Number of dispatches.
 	 { default = 1 }
+	.flags   "uint8_t"                     --- Discard or preserve states. See `BGFX_DISCARD_*`.
+	 { default = "BGFX_DISCARD_ALL" }
 
 --- Discard previously set state for draw or compute call.
 func.Encoder.discard
 	"void"
-	.flags   "uint8_t"     --- Draw/compute states to discard.
+	.flags   "uint8_t" --- Discard or preserve states. See `BGFX_DISCARD_*`.
 	 { default = "BGFX_DISCARD_ALL" }
 
 --- Blit 2D texture region between two 2D textures.
@@ -2950,6 +2955,8 @@ func.dispatch
 	 { default = 1 }
 	.numZ    "uint32_t"      --- Number of groups Z.
 	 { default = 1 }
+	.flags   "uint8_t"       --- Discard or preserve states. See `BGFX_DISCARD_*`.
+	 { default = "BGFX_DISCARD_ALL" }
 
 --- Dispatch compute indirect.
 func.dispatch { cname = "dispatch_indirect" }
@@ -2961,6 +2968,8 @@ func.dispatch { cname = "dispatch_indirect" }
 	 { default = 0 }
 	.num            "uint16_t"             --- Number of dispatches.
 	 { default = 1 }
+	.flags   "uint8_t"                     --- Discard or preserve states. See `BGFX_DISCARD_*`.
+	 { default = "BGFX_DISCARD_ALL" }
 
 --- Discard previously set state for draw or compute call.
 func.discard

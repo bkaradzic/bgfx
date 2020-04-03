@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 104;
+enum uint BGFX_API_VERSION = 105;
 
 alias bgfx_view_id_t = ushort;
 
@@ -193,13 +193,14 @@ enum ushort BGFX_CLEAR_DISCARD_MASK = 0x1ff8;
  * Rendering state discard. When state is preserved in submit, rendering states can be discarded
  * on a finer grain.
  */
-enum ubyte BGFX_DISCARD_NONE = 0x00; /// Discard nothing
-enum ubyte BGFX_DISCARD_INDEX_BUFFER = 0x01; /// Discard only Index Buffer
-enum ubyte BGFX_DISCARD_VERTEX_STREAMS = 0x02; /// Discard only Vertex Streams
-enum ubyte BGFX_DISCARD_TEXTURE_SAMPLERS = 0x04; /// Discard only texture samplers
-enum ubyte BGFX_DISCARD_COMPUTE = 0x08; /// Discard only Compute shader related state
-enum ubyte BGFX_DISCARD_STATE = 0x10; /// Discard only state
-enum ubyte BGFX_DISCARD_ALL = 0xff; /// Discard every rendering states
+enum ubyte BGFX_DISCARD_NONE = 0x00; /// Preserve everything.
+enum ubyte BGFX_DISCARD_BINDINGS = 0x01; /// Discard texture sampler and buffer bindings.
+enum ubyte BGFX_DISCARD_INDEX_BUFFER = 0x02; /// Discard index buffer.
+enum ubyte BGFX_DISCARD_INSTANCE_DATA = 0x04; /// Discard instance data.
+enum ubyte BGFX_DISCARD_STATE = 0x08; /// Discard state.
+enum ubyte BGFX_DISCARD_TRANSFORM = 0x10; /// Discard transform.
+enum ubyte BGFX_DISCARD_VERTEX_STREAMS = 0x20; /// Discard vertex streams.
+enum ubyte BGFX_DISCARD_ALL = 0xff; /// Discard all states.
 
 enum uint BGFX_DEBUG_NONE = 0x00000000; /// No debug.
 enum uint BGFX_DEBUG_WIREFRAME = 0x00000001; /// Enable wireframe for all primitives.

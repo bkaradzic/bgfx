@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(104)
+#define BGFX_API_VERSION UINT32_C(105)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -258,13 +258,14 @@
  * on a finer grain.
  *
  */
-#define BGFX_DISCARD_NONE                   UINT8_C(0x00) //!< Discard nothing
-#define BGFX_DISCARD_INDEX_BUFFER           UINT8_C(0x01) //!< Discard only Index Buffer
-#define BGFX_DISCARD_VERTEX_STREAMS         UINT8_C(0x02) //!< Discard only Vertex Streams
-#define BGFX_DISCARD_TEXTURE_SAMPLERS       UINT8_C(0x04) //!< Discard only texture samplers
-#define BGFX_DISCARD_COMPUTE                UINT8_C(0x08) //!< Discard only Compute shader related state
-#define BGFX_DISCARD_STATE                  UINT8_C(0x10) //!< Discard only state
-#define BGFX_DISCARD_ALL                    UINT8_C(0xff) //!< Discard every rendering states
+#define BGFX_DISCARD_NONE                   UINT8_C(0x00) //!< Preserve everything.
+#define BGFX_DISCARD_BINDINGS               UINT8_C(0x01) //!< Discard texture sampler and buffer bindings.
+#define BGFX_DISCARD_INDEX_BUFFER           UINT8_C(0x02) //!< Discard index buffer.
+#define BGFX_DISCARD_INSTANCE_DATA          UINT8_C(0x04) //!< Discard instance data.
+#define BGFX_DISCARD_STATE                  UINT8_C(0x08) //!< Discard state.
+#define BGFX_DISCARD_TRANSFORM              UINT8_C(0x10) //!< Discard transform.
+#define BGFX_DISCARD_VERTEX_STREAMS         UINT8_C(0x20) //!< Discard vertex streams.
+#define BGFX_DISCARD_ALL                    UINT8_C(0xff) //!< Discard all states.
 
 #define BGFX_DEBUG_NONE                     UINT32_C(0x00000000) //!< No debug.
 #define BGFX_DEBUG_WIREFRAME                UINT32_C(0x00000001) //!< Enable wireframe for all primitives.
