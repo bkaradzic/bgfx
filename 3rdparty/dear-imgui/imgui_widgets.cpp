@@ -3743,14 +3743,16 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     if (g.ActiveId == id && !g.ActiveIdIsJustActivated && !clear_active_id)
     {
         IM_ASSERT(state != NULL);
+        IM_ASSERT(io.KeyMods == GetMergedKeyModFlags() && "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods"); // We rarely do this check, but if anything let's do it here.
+
         const int k_mask = (io.KeyShift ? STB_TEXTEDIT_K_SHIFT : 0);
         const bool is_osx = io.ConfigMacOSXBehaviors;
-        const bool is_shortcut_key = (is_osx ? (io.KeySuper && !io.KeyCtrl) : (io.KeyCtrl && !io.KeySuper)) && !io.KeyAlt && !io.KeyShift; // OS X style: Shortcuts using Cmd/Super instead of Ctrl
-        const bool is_osx_shift_shortcut = is_osx && io.KeySuper && io.KeyShift && !io.KeyCtrl && !io.KeyAlt;
+        const bool is_osx_shift_shortcut = is_osx && (io.KeyMods == (ImGuiKeyModFlags_Super | ImGuiKeyModFlags_Shift));
         const bool is_wordmove_key_down = is_osx ? io.KeyAlt : io.KeyCtrl;                     // OS X style: Text editing cursor movement using Alt instead of Ctrl
         const bool is_startend_key_down = is_osx && io.KeySuper && !io.KeyCtrl && !io.KeyAlt;  // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
-        const bool is_ctrl_key_only = io.KeyCtrl && !io.KeyShift && !io.KeyAlt && !io.KeySuper;
-        const bool is_shift_key_only = io.KeyShift && !io.KeyCtrl && !io.KeyAlt && !io.KeySuper;
+        const bool is_ctrl_key_only = (io.KeyMods == ImGuiKeyModFlags_Ctrl);
+        const bool is_shift_key_only = (io.KeyMods == ImGuiKeyModFlags_Shift);
+        const bool is_shortcut_key = g.IO.ConfigMacOSXBehaviors ? (io.KeyMods == ImGuiKeyModFlags_Super) : (io.KeyMods == ImGuiKeyModFlags_Ctrl);
 
         const bool is_cut   = ((is_shortcut_key && IsKeyPressedMap(ImGuiKey_X)) || (is_shift_key_only && IsKeyPressedMap(ImGuiKey_Delete))) && !is_readonly && !is_password && (!is_multiline || state->HasSelection());
         const bool is_copy  = ((is_shortcut_key && IsKeyPressedMap(ImGuiKey_C)) || (is_ctrl_key_only  && IsKeyPressedMap(ImGuiKey_Insert))) && !is_password && (!is_multiline || state->HasSelection());
@@ -5334,29 +5336,38 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
         return is_open;
     }
 
-    // Flags that affects opening behavior:
-    // - 0 (default) .................... single-click anywhere to open
-    // - OpenOnDoubleClick .............. double-click anywhere to open
-    // - OpenOnArrow .................... single-click on arrow to open
-    // - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open
-    ImGuiButtonFlags button_flags = 0;
+    ImGuiButtonFlags button_flags = ImGuiTreeNodeFlags_None;
     if (flags & ImGuiTreeNodeFlags_AllowItemOverlap)
         button_flags |= ImGuiButtonFlags_AllowItemOverlap;
-    if (flags & ImGuiTreeNodeFlags_OpenOnDoubleClick)
-        button_flags |= ImGuiButtonFlags_PressedOnDoubleClick | ((flags & ImGuiTreeNodeFlags_OpenOnArrow) ? ImGuiButtonFlags_PressedOnClickRelease : 0);
-    else
-        button_flags |= ImGuiButtonFlags_PressedOnClickRelease;
     if (!is_leaf)
         button_flags |= ImGuiButtonFlags_PressedOnDragDropHold;
 
     // We allow clicking on the arrow section with keyboard modifiers held, in order to easily
     // allow browsing a tree while preserving selection with code implementing multi-selection patterns.
     // When clicking on the rest of the tree node we always disallow keyboard modifiers.
-    const float hit_padding_x = style.TouchExtraPadding.x;
-    const float arrow_hit_x1 = (text_pos.x - text_offset_x) - hit_padding_x;
-    const float arrow_hit_x2 = (text_pos.x - text_offset_x) + (g.FontSize + padding.x * 2.0f) + hit_padding_x;
-    if (window != g.HoveredWindow || !(g.IO.MousePos.x >= arrow_hit_x1 && g.IO.MousePos.x < arrow_hit_x2))
+    const float arrow_hit_x1 = (text_pos.x - text_offset_x) - style.TouchExtraPadding.x;
+    const float arrow_hit_x2 = (text_pos.x - text_offset_x) + (g.FontSize + padding.x * 2.0f) + style.TouchExtraPadding.x;
+    const bool is_mouse_x_over_arrow = (g.IO.MousePos.x >= arrow_hit_x1 && g.IO.MousePos.x < arrow_hit_x2);
+    if (window != g.HoveredWindow || !is_mouse_x_over_arrow)
         button_flags |= ImGuiButtonFlags_NoKeyModifiers;
+
+    // Open behaviors can be altered with the _OpenOnArrow and _OnOnDoubleClick flags.
+    // Some alteration have subtle effects (e.g. toggle on MouseUp vs MouseDown events) due to requirements for multi-selection and drag and drop support.
+    // - Single-click on label = Toggle on MouseUp (default)
+    // - Single-click on arrow = Toggle on MouseUp (when _OpenOnArrow=0)
+    // - Single-click on arrow = Toggle on MouseDown (when _OpenOnArrow=1)
+    // - Double-click on label = Toggle on MouseDoubleClick (when _OpenOnDoubleClick=1)
+    // - Double-click on arrow = Toggle on MouseDoubleClick (when _OpenOnDoubleClick=1 and _OpenOnArrow=0)
+    // This makes _OpenOnArrow have a subtle effect on _OpenOnDoubleClick: arrow click reacts on Down rather than Up.
+    // It is rather standard that arrow click react on Down rather than Up and we'd be tempted to make it the default 
+    // (by removing the _OpenOnArrow test below), however this would have a perhaps surprising effect on CollapsingHeader()? 
+    // So right now we are making this optional. May evolve later.
+    if (is_mouse_x_over_arrow && (flags & ImGuiTreeNodeFlags_OpenOnArrow))
+        button_flags |= ImGuiButtonFlags_PressedOnClick;
+    else if (flags & ImGuiTreeNodeFlags_OpenOnDoubleClick)
+        button_flags |= ImGuiButtonFlags_PressedOnDoubleClick;
+    else
+        button_flags |= ImGuiButtonFlags_PressedOnClickRelease;
 
     bool selected = (flags & ImGuiTreeNodeFlags_Selected) != 0;
     const bool was_selected = selected;
@@ -5371,7 +5382,7 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
             if ((flags & (ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick)) == 0 || (g.NavActivateId == id))
                 toggled = true;
             if (flags & ImGuiTreeNodeFlags_OpenOnArrow)
-                toggled |= (g.IO.MousePos.x >= arrow_hit_x1 && g.IO.MousePos.x < arrow_hit_x2) && (!g.NavDisableMouseHover); // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
+                toggled |= is_mouse_x_over_arrow && !g.NavDisableMouseHover; // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
             if ((flags & ImGuiTreeNodeFlags_OpenOnDoubleClick) && g.IO.MouseDoubleClicked[0])
                 toggled = true;
             if (g.DragDropActive && is_open) // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
@@ -7502,8 +7513,8 @@ void ImGui::BeginColumns(const char* str_id, int columns_count, ImGuiColumnsFlag
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
 
-    IM_ASSERT(columns_count >= 1 && columns_count <= 64);   // Maximum 64 columns
-    IM_ASSERT(window->DC.CurrentColumns == NULL);           // Nested columns are currently not supported
+    IM_ASSERT(columns_count >= 1);
+    IM_ASSERT(window->DC.CurrentColumns == NULL);   // Nested columns are currently not supported
 
     // Acquire storage for the columns set
     ImGuiID id = GetColumnsID(str_id, columns_count);
