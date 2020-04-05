@@ -2543,7 +2543,7 @@ void CompilerGLSL::fixup_image_load_store_access()
 
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t var, const SPIRVariable &) {
 		auto &vartype = expression_type(var);
-		if (vartype.basetype == SPIRType::Image)
+		if (vartype.basetype == SPIRType::Image && vartype.image.sampled == 2)
 		{
 			// Very old glslangValidator and HLSL compilers do not emit required qualifiers here.
 			// Solve this by making the image access as restricted as possible and loosen up if we need to.
@@ -13701,4 +13701,9 @@ void CompilerGLSL::emit_inout_fragment_outputs_copy_to_subpass_inputs()
 			}
 		});
 	}
+}
+
+bool CompilerGLSL::variable_is_depth_or_compare(VariableID id) const
+{
+	return image_is_comparison(get<SPIRType>(get<SPIRVariable>(id).basetype), id);
 }

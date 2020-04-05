@@ -113,6 +113,11 @@ public:
 		// Forces a storage buffer to always be declared as UAV, even if the readonly decoration is used.
 		// By default, a readonly storage buffer will be declared as ByteAddressBuffer (SRV) instead.
 		bool force_storage_buffer_as_uav = false;
+
+		// Forces any storage image type marked as NonWritable to be considered an SRV instead.
+		// For this to work with function call parameters, NonWritable must be considered to be part of the type system
+		// so that NonWritable image arguments are also translated to Texture rather than RWTexture.
+		bool nonwritable_uav_texture_as_srv = false;
 	};
 
 	explicit CompilerHLSL(std::vector<uint32_t> spirv_)

@@ -228,6 +228,14 @@ public:
 	// The name of the uniform array will be the same as the interface block name.
 	void flatten_buffer_block(VariableID id);
 
+	// After compilation, query if a variable ID was used as a depth resource.
+	// This is meaningful for MSL since descriptor types depend on this knowledge.
+	// Cases which return true:
+	// - Images which are declared with depth = 1 image type.
+	// - Samplers which are statically used at least once with Dref opcodes.
+	// - Images which are statically used at least once with Dref opcodes.
+	bool variable_is_depth_or_compare(VariableID id) const;
+
 protected:
 	void reset();
 	void emit_function(SPIRFunction &func, const Bitset &return_flags);
