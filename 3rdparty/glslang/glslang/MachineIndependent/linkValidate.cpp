@@ -303,10 +303,10 @@ void TIntermediate::mergeTrees(TInfoSink& infoSink, TIntermediate& unit)
 
     // Map by global name to unique ID to rationalize the same object having
     // differing IDs in different trees.
-    TMap<TString, int> idMap;
+    TIdMaps idMaps;
     int maxId;
-    seedIdMap(idMap, maxId);
-    remapIds(idMap, maxId + 1, unit);
+    seedIdMap(idMaps, maxId);
+    remapIds(idMaps, maxId + 1, unit);
 
     mergeBodies(infoSink, globals, unitGlobals);
     mergeLinkerObjects(infoSink, linkerObjects, unitLinkerObjects);
@@ -315,27 +315,40 @@ void TIntermediate::mergeTrees(TInfoSink& infoSink, TIntermediate& unit)
 
 #endif
 
+static const TString& getNameForIdMap(TIntermSymbol* symbol)
+{
+    TShaderInterface si = symbol->getType().getShaderInterface();
+    if (si == EsiNone)
+        return symbol->getName();
+    else
+        return symbol->getType().getTypeName();
+}
+
+
+
 // Traverser that seeds an ID map with all built-ins, and tracks the
 // maximum ID used.
 // (It would be nice to put this in a function, but that causes warnings
 // on having no bodies for the copy-constructor/operator=.)
 class TBuiltInIdTraverser : public TIntermTraverser {
 public:
-    TBuiltInIdTraverser(TMap<TString, int>& idMap) : idMap(idMap), maxId(0) { }
+    TBuiltInIdTraverser(TIdMaps& idMaps) : idMaps(idMaps), maxId(0) { }
     // If it's a built in, add it to the map.
     // Track the max ID.
     virtual void visitSymbol(TIntermSymbol* symbol)
     {
         const TQualifier& qualifier = symbol->getType().getQualifier();
-        if (qualifier.builtIn != EbvNone)
-            idMap[symbol->getName()] = symbol->getId();
+        if (qualifier.builtIn != EbvNone) {
+            TShaderInterface si = symbol->getType().getShaderInterface();
+            idMaps[si][getNameForIdMap(symbol)] = symbol->getId();
+        }
         maxId = std::max(maxId, symbol->getId());
     }
     int getMaxId() const { return maxId; }
 protected:
     TBuiltInIdTraverser(TBuiltInIdTraverser&);
     TBuiltInIdTraverser& operator=(TBuiltInIdTraverser&);
-    TMap<TString, int>& idMap;
+    TIdMaps& idMaps;
     int maxId;
 };
 
@@ -344,31 +357,33 @@ protected:
 // on having no bodies for the copy-constructor/operator=.)
 class TUserIdTraverser : public TIntermTraverser {
 public:
-    TUserIdTraverser(TMap<TString, int>& idMap) : idMap(idMap) { }
+    TUserIdTraverser(TIdMaps& idMaps) : idMaps(idMaps) { }
     // If its a non-built-in global, add it to the map.
     virtual void visitSymbol(TIntermSymbol* symbol)
     {
         const TQualifier& qualifier = symbol->getType().getQualifier();
-        if (qualifier.builtIn == EbvNone)
-            idMap[symbol->getName()] = symbol->getId();
+        if (qualifier.builtIn == EbvNone) {
+            TShaderInterface si = symbol->getType().getShaderInterface();
+            idMaps[si][getNameForIdMap(symbol)] = symbol->getId();
+        }
     }
 
 protected:
     TUserIdTraverser(TUserIdTraverser&);
     TUserIdTraverser& operator=(TUserIdTraverser&);
-    TMap<TString, int>& idMap; // over biggest id
+    TIdMaps& idMaps; // over biggest id
 };
 
 // Initialize the the ID map with what we know of 'this' AST.
-void TIntermediate::seedIdMap(TMap<TString, int>& idMap, int& maxId)
+void TIntermediate::seedIdMap(TIdMaps& idMaps, int& maxId)
 {
     // all built-ins everywhere need to align on IDs and contribute to the max ID
-    TBuiltInIdTraverser builtInIdTraverser(idMap);
+    TBuiltInIdTraverser builtInIdTraverser(idMaps);
     treeRoot->traverse(&builtInIdTraverser);
     maxId = builtInIdTraverser.getMaxId();
 
     // user variables in the linker object list need to align on ids
-    TUserIdTraverser userIdTraverser(idMap);
+    TUserIdTraverser userIdTraverser(idMaps);
     findLinkerObjects()->traverse(&userIdTraverser);
 }
 
@@ -377,7 +392,7 @@ void TIntermediate::seedIdMap(TMap<TString, int>& idMap, int& maxId)
 // on having no bodies for the copy-constructor/operator=.)
 class TRemapIdTraverser : public TIntermTraverser {
 public:
-    TRemapIdTraverser(const TMap<TString, int>& idMap, int idShift) : idMap(idMap), idShift(idShift) { }
+    TRemapIdTraverser(const TIdMaps& idMaps, int idShift) : idMaps(idMaps), idShift(idShift) { }
     // Do the mapping:
     //  - if the same symbol, adopt the 'this' ID
     //  - otherwise, ensure a unique ID by shifting to a new space
@@ -386,8 +401,9 @@ public:
         const TQualifier& qualifier = symbol->getType().getQualifier();
         bool remapped = false;
         if (qualifier.isLinkable() || qualifier.builtIn != EbvNone) {
-            auto it = idMap.find(symbol->getName());
-            if (it != idMap.end()) {
+            TShaderInterface si = symbol->getType().getShaderInterface();
+            auto it = idMaps[si].find(getNameForIdMap(symbol));
+            if (it != idMaps[si].end()) {
                 symbol->changeId(it->second);
                 remapped = true;
             }
@@ -398,14 +414,14 @@ public:
 protected:
     TRemapIdTraverser(TRemapIdTraverser&);
     TRemapIdTraverser& operator=(TRemapIdTraverser&);
-    const TMap<TString, int>& idMap;
+    const TIdMaps& idMaps;
     int idShift;
 };
 
-void TIntermediate::remapIds(const TMap<TString, int>& idMap, int idShift, TIntermediate& unit)
+void TIntermediate::remapIds(const TIdMaps& idMaps, int idShift, TIntermediate& unit)
 {
     // Remap all IDs to either share or be unique, as dictated by the idMap and idShift.
-    TRemapIdTraverser idTraverser(idMap, idShift);
+    TRemapIdTraverser idTraverser(idMaps, idShift);
     unit.getTreeRoot()->traverse(&idTraverser);
 }
 
@@ -447,7 +463,19 @@ void TIntermediate::mergeLinkerObjects(TInfoSink& infoSink, TIntermSequence& lin
             TIntermSymbol* symbol = linkerObjects[linkObj]->getAsSymbolNode();
             TIntermSymbol* unitSymbol = unitLinkerObjects[unitLinkObj]->getAsSymbolNode();
             assert(symbol && unitSymbol);
-            if (symbol->getName() == unitSymbol->getName()) {
+
+            bool isSameSymbol = false;
+            // If they are both blocks in the same shader interface,
+            // match by the block-name, not the identifier name.
+            if (symbol->getType().getBasicType() == EbtBlock && unitSymbol->getType().getBasicType() == EbtBlock) {
+                if (symbol->getType().getShaderInterface() == unitSymbol->getType().getShaderInterface()) {
+                    isSameSymbol = symbol->getType().getTypeName() == unitSymbol->getType().getTypeName();
+                }
+            }
+            else if (symbol->getName() == unitSymbol->getName())
+                isSameSymbol = true;
+
+            if (isSameSymbol) {
                 // filter out copy
                 merge = false;
 
@@ -527,6 +555,22 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
         writeTypeComparison = true;
     }
 
+    // Uniform and buffer blocks must either both have an instance name, or
+    // must both be anonymous. The names don't need to match though.
+    if (symbol.getQualifier().isUniformOrBuffer() &&
+        (IsAnonymous(symbol.getName()) != IsAnonymous(unitSymbol.getName()))) {
+        error(infoSink, "Matched Uniform or Storage blocks must all be anonymous,"
+                        " or all be named:");
+        writeTypeComparison = true;
+    }
+
+    if (symbol.getQualifier().storage == unitSymbol.getQualifier().storage &&
+        (IsAnonymous(symbol.getName()) != IsAnonymous(unitSymbol.getName()) ||
+         (!IsAnonymous(symbol.getName()) && symbol.getName() != unitSymbol.getName()))) {
+        warn(infoSink, "Matched shader interfaces are using different instance names.");
+        writeTypeComparison = true;
+    }
+
     // Precision...
     if (symbol.getQualifier().precision != unitSymbol.getQualifier().precision) {
         error(infoSink, "Precision qualifiers must match:");
@@ -597,9 +641,13 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
         }
     }
 
-    if (writeTypeComparison)
-        infoSink.info << "    " << symbol.getName() << ": \"" << symbol.getType().getCompleteString() << "\" versus \"" <<
-                                                             unitSymbol.getType().getCompleteString() << "\"\n";
+    if (writeTypeComparison) {
+        infoSink.info << "    " << symbol.getName() << ": \"" << symbol.getType().getCompleteString() << "\" versus ";
+        if (symbol.getName() != unitSymbol.getName())
+            infoSink.info << unitSymbol.getName() << ": ";
+
+        infoSink.info << "\"" << unitSymbol.getType().getCompleteString() << "\"\n";
+    }
 #endif
 }
 

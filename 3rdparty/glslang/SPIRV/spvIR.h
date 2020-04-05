@@ -235,8 +235,7 @@ public:
         assert(instructions.size() > 0);
         instructions.resize(1);
         successors.clear();
-        Instruction* unreachable = new Instruction(OpUnreachable);
-        addInstruction(std::unique_ptr<Instruction>(unreachable));
+        addInstruction(std::unique_ptr<Instruction>(new Instruction(OpUnreachable)));
     }
     // Change this block into a canonical dead continue target branching to the
     // given header ID.  Delete instructions as necessary.  A canonical dead continue

@@ -122,7 +122,7 @@ void TType::buildMangledName(TString& mangledName) const
             mangledName += "-tx-struct";
 
             char text[16]; // plenty enough space for the small integers.
-            snprintf(text, sizeof(text), "%d-", sampler.getStructReturnIndex());
+            snprintf(text, sizeof(text), "%u-", sampler.getStructReturnIndex());
             mangledName += text;
         } else {
             switch (sampler.getVectorSize()) {

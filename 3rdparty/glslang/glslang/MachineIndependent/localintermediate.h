@@ -162,7 +162,10 @@ struct TXfbBuffer {
 #endif
 
 // Track a set of strings describing how the module was processed.
-// Using the form:
+// This includes command line options, transforms, etc., ideally inclusive enough
+// to reproduce the steps used to transform the input source to the output.
+// E.g., see SPIR-V OpModuleProcessed.
+// Each "process" or "transform" uses is expressed in the form:
 //   process arg0 arg1 arg2 ...
 //   process arg0 arg1 arg2 ...
 // where everything is textual, and there can be zero or more arguments
@@ -222,6 +225,15 @@ enum ComputeDerivativeMode {
     LayoutDerivativeGroupLinear,  // derivative_group_linearNV
 };
 
+class TIdMaps {
+public:
+    TMap<TString, int>& operator[](int i) { return maps[i]; }
+    const TMap<TString, int>& operator[](int i) const { return maps[i]; }
+private:
+    TMap<TString, int> maps[EsiCount];
+};
+
+
 //
 // Set of helper functions to help parse and build the tree.
 //
@@ -244,7 +256,7 @@ public:
         inputPrimitive(ElgNone), outputPrimitive(ElgNone),
         pixelCenterInteger(false), originUpperLeft(false),
         vertexSpacing(EvsNone), vertexOrder(EvoNone), interlockOrdering(EioNone), pointMode(false), earlyFragmentTests(false),
-        postDepthCoverage(false), depthLayout(EldNone), 
+        postDepthCoverage(false), depthLayout(EldNone),
         hlslFunctionality1(false),
         blendEquations(0), xfbMode(false), multiStream(false),
         layoutOverrideCoverage(false),
@@ -583,7 +595,7 @@ public:
             processes.addProcess("flatten-uniform-arrays");
     }
     bool getFlattenUniformArrays() const { return flattenUniformArrays; }
-#endif 
+#endif
     void setNoStorageFormat(bool b)
     {
         useUnknownFormat = b;
@@ -859,8 +871,8 @@ protected:
     void mergeCallGraphs(TInfoSink&, TIntermediate&);
     void mergeModes(TInfoSink&, TIntermediate&);
     void mergeTrees(TInfoSink&, TIntermediate&);
-    void seedIdMap(TMap<TString, int>& idMap, int& maxId);
-    void remapIds(const TMap<TString, int>& idMap, int idShift, TIntermediate&);
+    void seedIdMap(TIdMaps& idMaps, int& maxId);
+    void remapIds(const TIdMaps& idMaps, int idShift, TIntermediate&);
     void mergeBodies(TInfoSink&, TIntermSequence& globals, const TIntermSequence& unitGlobals);
     void mergeLinkerObjects(TInfoSink&, TIntermSequence& linkerObjects, const TIntermSequence& unitLinkerObjects);
     void mergeImplicitArraySizes(TType&, const TType&);

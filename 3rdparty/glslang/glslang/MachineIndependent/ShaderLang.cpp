@@ -1777,6 +1777,8 @@ void TShader::setSourceEntryPoint(const char* name)
     sourceEntryPointName = name;
 }
 
+// Log initial settings and transforms.
+// See comment for class TProcesses.
 void TShader::addProcesses(const std::vector<std::string>& p)
 {
     intermediate->addProcesses(p);

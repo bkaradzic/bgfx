@@ -473,6 +473,18 @@ enum TInterlockOrdering {
     EioCount,
 };
 
+enum TShaderInterface
+{
+    // Includes both uniform blocks and buffer blocks
+    EsiUniform = 0,
+    EsiInput,
+    EsiOutput,
+    EsiNone,
+
+    EsiCount
+};
+
+
 class TQualifier {
 public:
     static const int layoutNotSet = -1;
@@ -1615,6 +1627,23 @@ public:
     {
         assert(fieldName);
         return *fieldName;
+    }
+    TShaderInterface getShaderInterface() const
+    {
+        if (basicType != EbtBlock)
+            return EsiNone;
+
+        switch (qualifier.storage) {
+        default:
+            return EsiNone;
+        case EvqVaryingIn:
+            return EsiInput;
+        case EvqVaryingOut:
+            return EsiOutput;
+        case EvqUniform:
+        case EvqBuffer:
+            return EsiUniform;
+        }
     }
 
     virtual TBasicType getBasicType() const { return basicType; }

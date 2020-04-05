@@ -184,6 +184,9 @@ bool TParseContextBase::lValueErrorCheck(const TSourceLoc& loc, const char* op, 
         case EbtAccStruct:
             message = "can't modify accelerationStructureNV";
             break;
+        case EbtRayQuery:
+            message = "can't modify rayQueryEXT";
+            break;
 #endif
         default:
             break;

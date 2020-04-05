@@ -757,9 +757,6 @@ TIntermTyped* HlslParseContext::handleBracketOperator(const TSourceLoc& loc, TIn
     // indexStructBufferContent returns nullptr if it isn't a structuredbuffer (SSBO).
     TIntermTyped* sbArray = indexStructBufferContent(loc, base);
     if (sbArray != nullptr) {
-        if (sbArray == nullptr)
-            return nullptr;
-
         // Now we'll apply the [] index to that array
         const TOperator idxOp = (index->getQualifier().storage == EvqConst) ? EOpIndexDirect : EOpIndexIndirect;
 

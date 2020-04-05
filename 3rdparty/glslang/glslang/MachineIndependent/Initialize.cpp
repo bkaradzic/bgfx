@@ -126,8 +126,6 @@ enum ArgClass {
 };
 // Mixtures of the above, to help the function tables
 const ArgClass ClassV1FIOCV = (ArgClass)(ClassV1 | ClassFIO | ClassCV);
-const ArgClass ClassV1FOCV  = (ArgClass)(ClassV1 | ClassFO  | ClassCV);
-const ArgClass ClassV1CV    = (ArgClass)(ClassV1 | ClassCV);
 const ArgClass ClassBNS     = (ArgClass)(ClassB  | ClassNS);
 const ArgClass ClassRSNS    = (ArgClass)(ClassRS | ClassNS);
 

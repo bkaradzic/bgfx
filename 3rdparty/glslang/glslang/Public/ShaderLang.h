@@ -417,6 +417,8 @@ enum TResourceType {
 //  - optionally call setEnv*(), see below for more detail
 //  - optionally use setPreamble() to set a special shader string that will be
 //    processed before all others but won't affect the validity of #version
+//  - optionally call addProcesses() for each setting/transform,
+//    see comment for class TProcesses
 //  - call parse(): source language and target environment must be selected
 //    either by correct setting of EShMessages sent to parse(), or by
 //    explicitly calling setEnv*()
@@ -651,11 +653,11 @@ protected:
     // stringNames is the optional names for all the strings. If stringNames
     // is null, then none of the strings has name. If a certain element in
     // stringNames is null, then the corresponding string does not have name.
-    const char* const* strings;
+    const char* const* strings;      // explicit code to compile, see previous comment
     const int* lengths;
     const char* const* stringNames;
-    const char* preamble;
-    int numStrings;
+    int numStrings;                  // size of the above arrays
+    const char* preamble;            // string of implicit code to compile before the explicitly provided code
 
     // a function in the source string can be renamed FROM this TO the name given in setEntryPoint.
     std::string sourceEntryPointName;
