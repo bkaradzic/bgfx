@@ -21,10 +21,11 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassAddStores::FuzzerPassAddStores(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassAddStores::~FuzzerPassAddStores() = default;
 
@@ -82,9 +83,13 @@ void FuzzerPassAddStores::Apply() {
                     default:
                       break;
                   }
-                  return GetFactManager()->BlockIsDead(block->id()) ||
-                         GetFactManager()->PointeeValueIsIrrelevant(
-                             instruction->result_id());
+                  return GetTransformationContext()
+                             ->GetFactManager()
+                             ->BlockIsDead(block->id()) ||
+                         GetTransformationContext()
+                             ->GetFactManager()
+                             ->PointeeValueIsIrrelevant(
+                                 instruction->result_id());
                 });
 
         // At this point, |relevant_pointers| contains all the pointers we might

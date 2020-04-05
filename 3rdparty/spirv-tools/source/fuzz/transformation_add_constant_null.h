@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Google LLC
+// Copyright (c) 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_FUZZ_TRANSFORMATION_MERGE_BLOCKS_H_
-#define SOURCE_FUZZ_TRANSFORMATION_MERGE_BLOCKS_H_
+#ifndef SOURCE_FUZZ_TRANSFORMATION_ADD_CONSTANT_NULL_H_
+#define SOURCE_FUZZ_TRANSFORMATION_ADD_CONSTANT_NULL_H_
 
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
@@ -23,34 +23,32 @@
 namespace spvtools {
 namespace fuzz {
 
-class TransformationMergeBlocks : public Transformation {
+class TransformationAddConstantNull : public Transformation {
  public:
-  explicit TransformationMergeBlocks(
-      const protobufs::TransformationMergeBlocks& message);
+  explicit TransformationAddConstantNull(
+      const protobufs::TransformationAddConstantNull& message);
 
-  TransformationMergeBlocks(uint32_t block_id);
+  TransformationAddConstantNull(uint32_t fresh_id, uint32_t type_id);
 
-  // - |message_.block_id| must be the id of a block, b
-  // - b must have a single predecessor, a
-  // - b must be the sole successor of a
-  // - Replacing a with the merge of a and b (and removing b) must lead to a
-  //   valid module
+  // - |message_.fresh_id| must be fresh
+  // - |message_.type_id| must be the id of a type for which it is acceptable
+  //   to create a null constant
   bool IsApplicable(
-      opt::IRContext* ir_context,
+      opt::IRContext* context,
       const TransformationContext& transformation_context) const override;
 
-  // The contents of b are merged into a, and a's terminator is replaced with
-  // the terminator of b.  Block b is removed from the module.
-  void Apply(opt::IRContext* ir_context,
+  // Adds an OpConstantNull instruction to the module, with |message_.type_id|
+  // as its type.  The instruction has result id |message_.fresh_id|.
+  void Apply(opt::IRContext* context,
              TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 
  private:
-  protobufs::TransformationMergeBlocks message_;
+  protobufs::TransformationAddConstantNull message_;
 };
 
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // SOURCE_FUZZ_TRANSFORMATION_MERGE_BLOCKS_H_
+#endif  // SOURCE_FUZZ_TRANSFORMATION_ADD_CONSTANT_NULL_H_

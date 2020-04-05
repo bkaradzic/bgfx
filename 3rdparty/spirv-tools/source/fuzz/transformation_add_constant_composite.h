@@ -17,9 +17,9 @@
 
 #include <vector>
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -38,13 +38,15 @@ class TransformationAddConstantComposite : public Transformation {
   // - |message_.type_id| must be the id of a composite type
   // - |message_.constituent_id| must refer to ids that match the constituent
   //   types of this composite type
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // Adds an OpConstantComposite instruction defining a constant of type
   // |message_.type_id|, using |message_.constituent_id| as constituents, with
   // result id |message_.fresh_id|.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 

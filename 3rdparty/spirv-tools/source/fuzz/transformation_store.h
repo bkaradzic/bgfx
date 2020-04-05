@@ -15,9 +15,9 @@
 #ifndef SOURCE_FUZZ_TRANSFORMATION_STORE_H_
 #define SOURCE_FUZZ_TRANSFORMATION_STORE_H_
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -42,14 +42,16 @@ class TransformationStore : public Transformation {
   //   to dominance rules)
   // - Either the insertion point must be in a dead block, or it must be known
   //   that the pointee value of |message_.pointer_id| is irrelevant
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // Adds an instruction of the form:
   //   OpStore |pointer_id| |value_id|
   // before the instruction identified by
   // |message_.instruction_to_insert_before|.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 

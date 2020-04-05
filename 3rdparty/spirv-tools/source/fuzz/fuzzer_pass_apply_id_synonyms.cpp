@@ -25,26 +25,33 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassApplyIdSynonyms::FuzzerPassApplyIdSynonyms(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassApplyIdSynonyms::~FuzzerPassApplyIdSynonyms() = default;
 
 void FuzzerPassApplyIdSynonyms::Apply() {
   for (auto id_with_known_synonyms :
-       GetFactManager()->GetIdsForWhichSynonymsAreKnown(GetIRContext())) {
-    // Gather up all uses of |id_with_known_synonym|, and then subsequently
-    // iterate over these uses.  We use this separation because, when
-    // considering a given use, we might apply a transformation that will
+       GetTransformationContext()
+           ->GetFactManager()
+           ->GetIdsForWhichSynonymsAreKnown(GetIRContext())) {
+    // Gather up all uses of |id_with_known_synonym| as a regular id, and
+    // subsequently iterate over these uses.  We use this separation because,
+    // when considering a given use, we might apply a transformation that will
     // invalidate the def-use manager.
     std::vector<std::pair<opt::Instruction*, uint32_t>> uses;
     GetIRContext()->get_def_use_mgr()->ForEachUse(
         id_with_known_synonyms,
         [&uses](opt::Instruction* use_inst, uint32_t use_index) -> void {
-          uses.emplace_back(
-              std::pair<opt::Instruction*, uint32_t>(use_inst, use_index));
+          // We only gather up regular id uses; e.g. we do not include a use of
+          // the id as the scope for an atomic operation.
+          if (use_inst->GetOperand(use_index).type == SPV_OPERAND_TYPE_ID) {
+            uses.emplace_back(
+                std::pair<opt::Instruction*, uint32_t>(use_inst, use_index));
+          }
         });
 
     for (auto& use : uses) {
@@ -70,7 +77,8 @@ void FuzzerPassApplyIdSynonyms::Apply() {
       }
 
       std::vector<const protobufs::DataDescriptor*> synonyms_to_try;
-      for (auto& data_descriptor : GetFactManager()->GetSynonymsForId(
+      for (auto& data_descriptor :
+           GetTransformationContext()->GetFactManager()->GetSynonymsForId(
                id_with_known_synonyms, GetIRContext())) {
         protobufs::DataDescriptor descriptor_for_this_id =
             MakeDataDescriptor(id_with_known_synonyms, {});

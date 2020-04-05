@@ -25,10 +25,11 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassAddUsefulConstructs::FuzzerPassAddUsefulConstructs(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassAddUsefulConstructs::~FuzzerPassAddUsefulConstructs() = default;
 
@@ -49,9 +50,10 @@ void FuzzerPassAddUsefulConstructs::MaybeAddIntConstant(
     TransformationAddConstantScalar add_constant_int =
         TransformationAddConstantScalar(GetFuzzerContext()->GetFreshId(),
                                         int_type_id, data);
-    assert(add_constant_int.IsApplicable(GetIRContext(), *GetFactManager()) &&
+    assert(add_constant_int.IsApplicable(GetIRContext(),
+                                         *GetTransformationContext()) &&
            "Should be applicable by construction.");
-    add_constant_int.Apply(GetIRContext(), GetFactManager());
+    add_constant_int.Apply(GetIRContext(), GetTransformationContext());
     *GetTransformations()->add_transformation() = add_constant_int.ToMessage();
   }
 }
@@ -75,9 +77,10 @@ void FuzzerPassAddUsefulConstructs::MaybeAddFloatConstant(
     TransformationAddConstantScalar add_constant_float =
         TransformationAddConstantScalar(GetFuzzerContext()->GetFreshId(),
                                         float_type_id, data);
-    assert(add_constant_float.IsApplicable(GetIRContext(), *GetFactManager()) &&
+    assert(add_constant_float.IsApplicable(GetIRContext(),
+                                           *GetTransformationContext()) &&
            "Should be applicable by construction.");
-    add_constant_float.Apply(GetIRContext(), GetFactManager());
+    add_constant_float.Apply(GetIRContext(), GetTransformationContext());
     *GetTransformations()->add_transformation() =
         add_constant_float.ToMessage();
   }
@@ -90,9 +93,10 @@ void FuzzerPassAddUsefulConstructs::Apply() {
     if (!GetIRContext()->get_type_mgr()->GetId(&temp_bool_type)) {
       auto add_type_boolean =
           TransformationAddTypeBoolean(GetFuzzerContext()->GetFreshId());
-      assert(add_type_boolean.IsApplicable(GetIRContext(), *GetFactManager()) &&
+      assert(add_type_boolean.IsApplicable(GetIRContext(),
+                                           *GetTransformationContext()) &&
              "Should be applicable by construction.");
-      add_type_boolean.Apply(GetIRContext(), GetFactManager());
+      add_type_boolean.Apply(GetIRContext(), GetTransformationContext());
       *GetTransformations()->add_transformation() =
           add_type_boolean.ToMessage();
     }
@@ -105,9 +109,10 @@ void FuzzerPassAddUsefulConstructs::Apply() {
       if (!GetIRContext()->get_type_mgr()->GetId(&temp_int_type)) {
         TransformationAddTypeInt add_type_int = TransformationAddTypeInt(
             GetFuzzerContext()->GetFreshId(), 32, is_signed);
-        assert(add_type_int.IsApplicable(GetIRContext(), *GetFactManager()) &&
+        assert(add_type_int.IsApplicable(GetIRContext(),
+                                         *GetTransformationContext()) &&
                "Should be applicable by construction.");
-        add_type_int.Apply(GetIRContext(), GetFactManager());
+        add_type_int.Apply(GetIRContext(), GetTransformationContext());
         *GetTransformations()->add_transformation() = add_type_int.ToMessage();
       }
     }
@@ -119,9 +124,10 @@ void FuzzerPassAddUsefulConstructs::Apply() {
     if (!GetIRContext()->get_type_mgr()->GetId(&temp_float_type)) {
       TransformationAddTypeFloat add_type_float =
           TransformationAddTypeFloat(GetFuzzerContext()->GetFreshId(), 32);
-      assert(add_type_float.IsApplicable(GetIRContext(), *GetFactManager()) &&
+      assert(add_type_float.IsApplicable(GetIRContext(),
+                                         *GetTransformationContext()) &&
              "Should be applicable by construction.");
-      add_type_float.Apply(GetIRContext(), GetFactManager());
+      add_type_float.Apply(GetIRContext(), GetTransformationContext());
       *GetTransformations()->add_transformation() = add_type_float.ToMessage();
     }
   }
@@ -139,9 +145,9 @@ void FuzzerPassAddUsefulConstructs::Apply() {
       TransformationAddConstantBoolean add_constant_boolean(
           GetFuzzerContext()->GetFreshId(), boolean_value);
       assert(add_constant_boolean.IsApplicable(GetIRContext(),
-                                               *GetFactManager()) &&
+                                               *GetTransformationContext()) &&
              "Should be applicable by construction.");
-      add_constant_boolean.Apply(GetIRContext(), GetFactManager());
+      add_constant_boolean.Apply(GetIRContext(), GetTransformationContext());
       *GetTransformations()->add_transformation() =
           add_constant_boolean.ToMessage();
     }
@@ -168,8 +174,9 @@ void FuzzerPassAddUsefulConstructs::Apply() {
   //   of the element
   // - a signed integer constant for each index required to access the element
   // - a constant for the constant value itself
-  for (auto& fact_and_type_id :
-       GetFactManager()->GetConstantUniformFactsAndTypes()) {
+  for (auto& fact_and_type_id : GetTransformationContext()
+                                    ->GetFactManager()
+                                    ->GetConstantUniformFactsAndTypes()) {
     uint32_t element_type_id = fact_and_type_id.second;
     assert(element_type_id);
     auto element_type =
@@ -183,9 +190,10 @@ void FuzzerPassAddUsefulConstructs::Apply() {
       auto add_pointer =
           TransformationAddTypePointer(GetFuzzerContext()->GetFreshId(),
                                        SpvStorageClassUniform, element_type_id);
-      assert(add_pointer.IsApplicable(GetIRContext(), *GetFactManager()) &&
+      assert(add_pointer.IsApplicable(GetIRContext(),
+                                      *GetTransformationContext()) &&
              "Should be applicable by construction.");
-      add_pointer.Apply(GetIRContext(), GetFactManager());
+      add_pointer.Apply(GetIRContext(), GetTransformationContext());
       *GetTransformations()->add_transformation() = add_pointer.ToMessage();
     }
     std::vector<uint32_t> words;

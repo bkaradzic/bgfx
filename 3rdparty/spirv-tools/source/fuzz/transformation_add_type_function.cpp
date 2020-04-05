@@ -36,19 +36,18 @@ TransformationAddTypeFunction::TransformationAddTypeFunction(
 }
 
 bool TransformationAddTypeFunction::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // The result id must be fresh.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
   // The return and argument types must be type ids but not not be function
   // type ids.
-  if (!fuzzerutil::IsNonFunctionTypeId(context, message_.return_type_id())) {
+  if (!fuzzerutil::IsNonFunctionTypeId(ir_context, message_.return_type_id())) {
     return false;
   }
   for (auto argument_type_id : message_.argument_type_id()) {
-    if (!fuzzerutil::IsNonFunctionTypeId(context, argument_type_id)) {
+    if (!fuzzerutil::IsNonFunctionTypeId(ir_context, argument_type_id)) {
       return false;
     }
   }
@@ -56,7 +55,7 @@ bool TransformationAddTypeFunction::IsApplicable(
   // exactly the same return and argument type ids.  (Note that the type manager
   // does not allow us to check this, as it does not distinguish between
   // function types with different but isomorphic pointer argument types.)
-  for (auto& inst : context->module()->types_values()) {
+  for (auto& inst : ir_context->module()->types_values()) {
     if (inst.opcode() != SpvOpTypeFunction) {
       // Consider only OpTypeFunction instructions.
       continue;
@@ -89,18 +88,19 @@ bool TransformationAddTypeFunction::IsApplicable(
 }
 
 void TransformationAddTypeFunction::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* /*unused*/) const {
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
   opt::Instruction::OperandList in_operands;
   in_operands.push_back({SPV_OPERAND_TYPE_ID, {message_.return_type_id()}});
   for (auto argument_type_id : message_.argument_type_id()) {
     in_operands.push_back({SPV_OPERAND_TYPE_ID, {argument_type_id}});
   }
-  context->module()->AddType(MakeUnique<opt::Instruction>(
-      context, SpvOpTypeFunction, 0, message_.fresh_id(), in_operands));
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  ir_context->module()->AddType(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpTypeFunction, 0, message_.fresh_id(), in_operands));
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationAddTypeFunction::ToMessage() const {

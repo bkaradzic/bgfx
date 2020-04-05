@@ -15,9 +15,9 @@
 #ifndef SOURCE_FUZZ_TRANSFORMATION_REPLACE_ID_WITH_SYNONYM_H_
 #define SOURCE_FUZZ_TRANSFORMATION_REPLACE_ID_WITH_SYNONYM_H_
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -42,12 +42,14 @@ class TransformationReplaceIdWithSynonym : public Transformation {
   // - The id must not be a pointer argument to a function call (because the
   //   synonym might not be a memory object declaration).
   // - |fresh_id_for_temporary| must be 0.
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // Replaces the use identified by |message_.id_use_descriptor| with the
   // synonymous id identified by |message_.synonymous_id|.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 
@@ -58,7 +60,7 @@ class TransformationReplaceIdWithSynonym : public Transformation {
   //   indices must be constants, so it is dangerous to replace them.
   // - the id use is not a pointer function call argument, on which there are
   //   restrictions that make replacement problematic.
-  static bool UseCanBeReplacedWithSynonym(opt::IRContext* context,
+  static bool UseCanBeReplacedWithSynonym(opt::IRContext* ir_context,
                                           opt::Instruction* use_instruction,
                                           uint32_t use_in_operand_index);
 

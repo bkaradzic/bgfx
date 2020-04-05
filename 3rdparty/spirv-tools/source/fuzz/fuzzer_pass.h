@@ -18,9 +18,9 @@
 #include <functional>
 #include <vector>
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/fuzzer_context.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -29,22 +29,25 @@ namespace fuzz {
 // Interface for applying a pass of transformations to a module.
 class FuzzerPass {
  public:
-  FuzzerPass(opt::IRContext* ir_context, FactManager* fact_manager,
+  FuzzerPass(opt::IRContext* ir_context,
+             TransformationContext* transformation_context,
              FuzzerContext* fuzzer_context,
              protobufs::TransformationSequence* transformations);
 
   virtual ~FuzzerPass();
 
   // Applies the pass to the module |ir_context_|, assuming and updating
-  // facts from |fact_manager_|, and using |fuzzer_context_| to guide the
-  // process.  Appends to |transformations_| all transformations that were
-  // applied during the pass.
+  // information from |transformation_context_|, and using |fuzzer_context_| to
+  // guide the process.  Appends to |transformations_| all transformations that
+  // were applied during the pass.
   virtual void Apply() = 0;
 
  protected:
   opt::IRContext* GetIRContext() const { return ir_context_; }
 
-  FactManager* GetFactManager() const { return fact_manager_; }
+  TransformationContext* GetTransformationContext() const {
+    return transformation_context_;
+  }
 
   FuzzerContext* GetFuzzerContext() const { return fuzzer_context_; }
 
@@ -93,9 +96,10 @@ class FuzzerPass {
   // by construction, and adding it to the sequence of applied transformations.
   template <typename TransformationType>
   void ApplyTransformation(const TransformationType& transformation) {
-    assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
+    assert(transformation.IsApplicable(GetIRContext(),
+                                       *GetTransformationContext()) &&
            "Transformation should be applicable by construction.");
-    transformation.Apply(GetIRContext(), GetFactManager());
+    transformation.Apply(GetIRContext(), GetTransformationContext());
     *GetTransformations()->add_transformation() = transformation.ToMessage();
   }
 
@@ -165,18 +169,21 @@ class FuzzerPass {
   // If no such instruction exists, a transformation is applied to add it.
   uint32_t FindOrCreateGlobalUndef(uint32_t type_id);
 
-  // Yields a pair, (base_type_ids, base_type_ids_to_pointers), such that:
-  // - base_type_ids captures every scalar or composite type declared in the
-  //   module (i.e., all int, bool, float, vector, matrix, struct and array
-  //   types
-  // - base_type_ids_to_pointers maps every such base type to the sequence
+  // Define a *basic type* to be an integer, boolean or floating-point type,
+  // or a matrix, vector, struct or fixed-size array built from basic types.  In
+  // particular, a basic type cannot contain an opaque type (such as an image),
+  // or a runtime-sized array.
+  //
+  // Yields a pair, (basic_type_ids, basic_type_ids_to_pointers), such that:
+  // - basic_type_ids captures every basic type declared in the module.
+  // - basic_type_ids_to_pointers maps every such basic type to the sequence
   //   of all pointer types that have storage class |storage_class| and the
-  //   given base type as their pointee type.  The sequence may be empty for
-  //   some base types if no pointers to those types are defined for the given
+  //   given basic type as their pointee type.  The sequence may be empty for
+  //   some basic types if no pointers to those types are defined for the given
   //   storage class, and the sequence will have multiple elements if there are
-  //   repeated pointer declarations for the same base type and storage class.
+  //   repeated pointer declarations for the same basic type and storage class.
   std::pair<std::vector<uint32_t>, std::map<uint32_t, std::vector<uint32_t>>>
-  GetAvailableBaseTypesAndPointers(SpvStorageClass storage_class) const;
+  GetAvailableBasicTypesAndPointers(SpvStorageClass storage_class) const;
 
   // Given a type id, |scalar_or_composite_type_id|, which must correspond to
   // some scalar or composite type, returns the result id of an instruction
@@ -230,7 +237,7 @@ class FuzzerPass {
       const std::vector<uint32_t>& constant_ids);
 
   opt::IRContext* ir_context_;
-  FactManager* fact_manager_;
+  TransformationContext* transformation_context_;
   FuzzerContext* fuzzer_context_;
   protobufs::TransformationSequence* transformations_;
 };

@@ -24,10 +24,11 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassAddFunctionCalls::FuzzerPassAddFunctionCalls(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassAddFunctionCalls::~FuzzerPassAddFunctionCalls() = default;
 
@@ -74,8 +75,9 @@ void FuzzerPassAddFunctionCalls::Apply() {
         while (!candidate_functions.empty()) {
           opt::Function* candidate_function =
               GetFuzzerContext()->RemoveAtRandomIndex(&candidate_functions);
-          if (!GetFactManager()->BlockIsDead(block->id()) &&
-              !GetFactManager()->FunctionIsLivesafe(
+          if (!GetTransformationContext()->GetFactManager()->BlockIsDead(
+                  block->id()) &&
+              !GetTransformationContext()->GetFactManager()->FunctionIsLivesafe(
                   candidate_function->result_id())) {
             // Unless in a dead block, only livesafe functions can be invoked
             continue;
@@ -132,9 +134,11 @@ FuzzerPassAddFunctionCalls::GetAvailableInstructionsSuitableForActualParameters(
                 default:
                   return false;
               }
-              if (!GetFactManager()->BlockIsDead(block->id()) &&
-                  !GetFactManager()->PointeeValueIsIrrelevant(
-                      inst->result_id())) {
+              if (!GetTransformationContext()->GetFactManager()->BlockIsDead(
+                      block->id()) &&
+                  !GetTransformationContext()
+                       ->GetFactManager()
+                       ->PointeeValueIsIrrelevant(inst->result_id())) {
                 // We can only pass a pointer as an actual parameter
                 // if the pointee value for the pointer is irrelevant,
                 // or if the block from which we would make the

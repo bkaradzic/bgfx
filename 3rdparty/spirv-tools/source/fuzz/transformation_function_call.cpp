@@ -39,25 +39,26 @@ TransformationFunctionCall::TransformationFunctionCall(
 }
 
 bool TransformationFunctionCall::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& fact_manager) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   // The result id must be fresh
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
 
   // The function must exist
-  auto callee_inst = context->get_def_use_mgr()->GetDef(message_.callee_id());
+  auto callee_inst =
+      ir_context->get_def_use_mgr()->GetDef(message_.callee_id());
   if (!callee_inst || callee_inst->opcode() != SpvOpFunction) {
     return false;
   }
 
   // The function must not be an entry point
-  if (fuzzerutil::FunctionIsEntryPoint(context, message_.callee_id())) {
+  if (fuzzerutil::FunctionIsEntryPoint(ir_context, message_.callee_id())) {
     return false;
   }
 
-  auto callee_type_inst = context->get_def_use_mgr()->GetDef(
+  auto callee_type_inst = ir_context->get_def_use_mgr()->GetDef(
       callee_inst->GetSingleWordInOperand(1));
   assert(callee_type_inst->opcode() == SpvOpTypeFunction &&
          "Bad function type.");
@@ -73,7 +74,7 @@ bool TransformationFunctionCall::IsApplicable(
   // The instruction descriptor must refer to a position where it is valid to
   // insert the call
   auto insert_before =
-      FindInstruction(message_.instruction_to_insert_before(), context);
+      FindInstruction(message_.instruction_to_insert_before(), ir_context);
   if (!insert_before) {
     return false;
   }
@@ -82,13 +83,15 @@ bool TransformationFunctionCall::IsApplicable(
     return false;
   }
 
-  auto block = context->get_instr_block(insert_before);
+  auto block = ir_context->get_instr_block(insert_before);
   auto enclosing_function = block->GetParent();
 
   // If the block is not dead, the function must be livesafe
-  bool block_is_dead = fact_manager.BlockIsDead(block->id());
+  bool block_is_dead =
+      transformation_context.GetFactManager()->BlockIsDead(block->id());
   if (!block_is_dead &&
-      !fact_manager.FunctionIsLivesafe(message_.callee_id())) {
+      !transformation_context.GetFactManager()->FunctionIsLivesafe(
+          message_.callee_id())) {
     return false;
   }
 
@@ -98,7 +101,7 @@ bool TransformationFunctionCall::IsApplicable(
        arg_index < static_cast<uint32_t>(message_.argument_id().size());
        arg_index++) {
     opt::Instruction* arg_inst =
-        context->get_def_use_mgr()->GetDef(message_.argument_id(arg_index));
+        ir_context->get_def_use_mgr()->GetDef(message_.argument_id(arg_index));
     if (!arg_inst) {
       // The given argument does not correspond to an instruction.
       return false;
@@ -112,7 +115,7 @@ bool TransformationFunctionCall::IsApplicable(
       return false;
     }
     opt::Instruction* arg_type_inst =
-        context->get_def_use_mgr()->GetDef(arg_inst->type_id());
+        ir_context->get_def_use_mgr()->GetDef(arg_inst->type_id());
     if (arg_type_inst->opcode() == SpvOpTypePointer) {
       switch (arg_inst->opcode()) {
         case SpvOpFunctionParameter:
@@ -124,7 +127,8 @@ bool TransformationFunctionCall::IsApplicable(
           return false;
       }
       if (!block_is_dead &&
-          !fact_manager.PointeeValueIsIrrelevant(arg_inst->result_id())) {
+          !transformation_context.GetFactManager()->PointeeValueIsIrrelevant(
+              arg_inst->result_id())) {
         // This is not a dead block, so pointer parameters passed to the called
         // function might really have their contents modified. We thus require
         // such pointers to be to arbitrary-valued variables, which this is not.
@@ -134,7 +138,7 @@ bool TransformationFunctionCall::IsApplicable(
 
     // The argument id needs to be available (according to dominance rules) at
     // the point where the call will occur.
-    if (!fuzzerutil::IdIsAvailableBeforeInstruction(context, insert_before,
+    if (!fuzzerutil::IdIsAvailableBeforeInstruction(ir_context, insert_before,
                                                     arg_inst->result_id())) {
       return false;
     }
@@ -146,19 +150,19 @@ bool TransformationFunctionCall::IsApplicable(
     return false;
   }
   // Ensure the call would not lead to indirect recursion.
-  return !CallGraph(context)
+  return !CallGraph(ir_context)
               .GetIndirectCallees(message_.callee_id())
               .count(block->GetParent()->result_id());
 }
 
 void TransformationFunctionCall::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* /*unused*/) const {
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
   // Update the module's bound to reflect the fresh id for the result of the
   // function call.
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
   // Get the return type of the function being called.
   uint32_t return_type =
-      context->get_def_use_mgr()->GetDef(message_.callee_id())->type_id();
+      ir_context->get_def_use_mgr()->GetDef(message_.callee_id())->type_id();
   // Populate the operands to the call instruction, with the function id and the
   // arguments.
   opt::Instruction::OperandList operands;
@@ -167,12 +171,12 @@ void TransformationFunctionCall::Apply(
     operands.push_back({SPV_OPERAND_TYPE_ID, {arg}});
   }
   // Insert the function call before the instruction specified in the message.
-  FindInstruction(message_.instruction_to_insert_before(), context)
-      ->InsertBefore(
-          MakeUnique<opt::Instruction>(context, SpvOpFunctionCall, return_type,
-                                       message_.fresh_id(), operands));
+  FindInstruction(message_.instruction_to_insert_before(), ir_context)
+      ->InsertBefore(MakeUnique<opt::Instruction>(
+          ir_context, SpvOpFunctionCall, return_type, message_.fresh_id(),
+          operands));
   // Invalidate all analyses since we have changed the module.
-  context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationFunctionCall::ToMessage() const {

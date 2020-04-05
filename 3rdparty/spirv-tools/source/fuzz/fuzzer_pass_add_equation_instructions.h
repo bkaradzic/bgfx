@@ -27,7 +27,7 @@ namespace fuzz {
 class FuzzerPassAddEquationInstructions : public FuzzerPass {
  public:
   FuzzerPassAddEquationInstructions(
-      opt::IRContext* ir_context, FactManager* fact_manager,
+      opt::IRContext* ir_context, TransformationContext* transformation_context,
       FuzzerContext* fuzzer_context,
       protobufs::TransformationSequence* transformations);
 

@@ -15,9 +15,9 @@
 #ifndef SOURCE_FUZZ_TRANSFORMATION_ADD_LOCAL_VARIABLE_H_
 #define SOURCE_FUZZ_TRANSFORMATION_ADD_LOCAL_VARIABLE_H_
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -38,15 +38,17 @@ class TransformationAddLocalVariable : public Transformation {
   // - |message_.initializer_id| must be the id of a constant with the same
   //   type as the pointer's pointee type
   // - |message_.function_id| must be the id of a function
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // Adds an instruction to the start of |message_.function_id|, of the form:
   //   |message_.fresh_id| = OpVariable |message_.type_id| Function
   //                         |message_.initializer_id|
-  // If |message_.value_is_irrelevant| holds, adds a corresponding fact to
-  // |fact_manager|.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  // If |message_.value_is_irrelevant| holds, adds a corresponding fact to the
+  // fact manager in |transformation_context|.
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 

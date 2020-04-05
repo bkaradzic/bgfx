@@ -372,6 +372,7 @@ message Transformation {
     TransformationSwapCommutableOperands swap_commutable_operands = 41;
     TransformationPermuteFunctionParameters permute_function_parameters = 42;
     TransformationToggleAccessChainInstruction toggle_access_chain_instruction = 43;
+    TransformationAddConstantNull add_constant_null = 44;
     // Add additional option using the next available number.
   }
 }
@@ -419,6 +420,18 @@ message TransformationAddConstantComposite {
 
   // Constituent ids for the composite
   repeated uint32 constituent_id = 3;
+
+}
+
+message TransformationAddConstantNull {
+
+  // Adds a null constant.
+
+  // Id for the constant
+  uint32 fresh_id = 1;
+
+  // Type of the constant
+  uint32 type_id = 2;
 
 }
 

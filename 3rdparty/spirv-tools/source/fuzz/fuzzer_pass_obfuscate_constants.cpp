@@ -25,10 +25,11 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassObfuscateConstants::FuzzerPassObfuscateConstants(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassObfuscateConstants::~FuzzerPassObfuscateConstants() = default;
 
@@ -83,12 +84,13 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstantViaConstantPair(
       bool_constant_use, lhs_id, rhs_id, comparison_opcode,
       GetFuzzerContext()->GetFreshId());
   // The transformation should be applicable by construction.
-  assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()));
+  assert(
+      transformation.IsApplicable(GetIRContext(), *GetTransformationContext()));
 
   // Applying this transformation yields a pointer to the new instruction that
   // computes the result of the binary expression.
-  auto binary_operator_instruction =
-      transformation.ApplyWithResult(GetIRContext(), GetFactManager());
+  auto binary_operator_instruction = transformation.ApplyWithResult(
+      GetIRContext(), GetTransformationContext());
 
   // Add this transformation to the sequence of transformations that have been
   // applied.
@@ -245,7 +247,9 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstant(
   // with uniforms of the same value.
 
   auto available_types_with_uniforms =
-      GetFactManager()->GetTypesForWhichUniformValuesAreKnown();
+      GetTransformationContext()
+          ->GetFactManager()
+          ->GetTypesForWhichUniformValuesAreKnown();
   if (available_types_with_uniforms.empty()) {
     // Do not try to obfuscate if we do not have access to any uniform
     // elements with known values.
@@ -254,9 +258,10 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstant(
   auto chosen_type_id =
       available_types_with_uniforms[GetFuzzerContext()->RandomIndex(
           available_types_with_uniforms)];
-  auto available_constants =
-      GetFactManager()->GetConstantsAvailableFromUniformsForType(
-          GetIRContext(), chosen_type_id);
+  auto available_constants = GetTransformationContext()
+                                 ->GetFactManager()
+                                 ->GetConstantsAvailableFromUniformsForType(
+                                     GetIRContext(), chosen_type_id);
   if (available_constants.size() == 1) {
     // TODO(afd): for now we only obfuscate a boolean if there are at least
     //  two constants available from uniforms, so that we can do a
@@ -308,8 +313,11 @@ void FuzzerPassObfuscateConstants::ObfuscateScalarConstant(
 
   // Check whether we know that any uniforms are guaranteed to be equal to the
   // scalar constant associated with |constant_use|.
-  auto uniform_descriptors = GetFactManager()->GetUniformDescriptorsForConstant(
-      GetIRContext(), constant_use.id_of_interest());
+  auto uniform_descriptors =
+      GetTransformationContext()
+          ->GetFactManager()
+          ->GetUniformDescriptorsForConstant(GetIRContext(),
+                                             constant_use.id_of_interest());
   if (uniform_descriptors.empty()) {
     // No relevant uniforms, so do not obfuscate.
     return;
@@ -324,8 +332,9 @@ void FuzzerPassObfuscateConstants::ObfuscateScalarConstant(
       constant_use, uniform_descriptor, GetFuzzerContext()->GetFreshId(),
       GetFuzzerContext()->GetFreshId());
   // Transformation should be applicable by construction.
-  assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()));
-  transformation.Apply(GetIRContext(), GetFactManager());
+  assert(
+      transformation.IsApplicable(GetIRContext(), *GetTransformationContext()));
+  transformation.Apply(GetIRContext(), GetTransformationContext());
   *GetTransformations()->add_transformation() = transformation.ToMessage();
 }
 

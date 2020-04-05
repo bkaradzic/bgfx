@@ -15,9 +15,9 @@
 #ifndef SOURCE_FUZZ_TRANSFORMATION_FUNCTION_CALL_H_
 #define SOURCE_FUZZ_TRANSFORMATION_FUNCTION_CALL_H_
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -44,14 +44,16 @@ class TransformationFunctionCall : public Transformation {
   // - If the insertion point is not in a dead block then |message_function_id|
   //   must refer to a livesafe function, and every pointer argument in
   //   |message_.arg_id| must refer to an arbitrary-valued variable
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // Adds an instruction of the form:
   //   |fresh_id| = OpFunctionCall %type |callee_id| |arg_id...|
   // before |instruction_to_insert_before|, where %type is the return type of
   // |callee_id|.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 

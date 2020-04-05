@@ -33,14 +33,13 @@ TransformationAddConstantScalar::TransformationAddConstantScalar(
 }
 
 bool TransformationAddConstantScalar::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // The id needs to be fresh.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
   // The type id for the scalar must exist and be a type.
-  auto type = context->get_type_mgr()->GetType(message_.type_id());
+  auto type = ir_context->get_type_mgr()->GetType(message_.type_id());
   if (!type) {
     return false;
   }
@@ -61,20 +60,21 @@ bool TransformationAddConstantScalar::IsApplicable(
 }
 
 void TransformationAddConstantScalar::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* /*unused*/) const {
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
   opt::Instruction::OperandList operand_list;
   for (auto word : message_.word()) {
     operand_list.push_back({SPV_OPERAND_TYPE_LITERAL_INTEGER, {word}});
   }
-  context->module()->AddGlobalValue(
-      MakeUnique<opt::Instruction>(context, SpvOpConstant, message_.type_id(),
-                                   message_.fresh_id(), operand_list));
+  ir_context->module()->AddGlobalValue(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpConstant, message_.type_id(), message_.fresh_id(),
+      operand_list));
 
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
 
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationAddConstantScalar::ToMessage() const {

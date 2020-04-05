@@ -14,6 +14,8 @@
 
 #include "source/fuzz/fuzzer_pass.h"
 
+#include <set>
+
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/transformation_add_constant_boolean.h"
@@ -31,11 +33,12 @@
 namespace spvtools {
 namespace fuzz {
 
-FuzzerPass::FuzzerPass(opt::IRContext* ir_context, FactManager* fact_manager,
+FuzzerPass::FuzzerPass(opt::IRContext* ir_context,
+                       TransformationContext* transformation_context,
                        FuzzerContext* fuzzer_context,
                        protobufs::TransformationSequence* transformations)
     : ir_context_(ir_context),
-      fact_manager_(fact_manager),
+      transformation_context_(transformation_context),
       fuzzer_context_(fuzzer_context),
       transformations_(transformations) {}
 
@@ -328,43 +331,72 @@ uint32_t FuzzerPass::FindOrCreateGlobalUndef(uint32_t type_id) {
 }
 
 std::pair<std::vector<uint32_t>, std::map<uint32_t, std::vector<uint32_t>>>
-FuzzerPass::GetAvailableBaseTypesAndPointers(
+FuzzerPass::GetAvailableBasicTypesAndPointers(
     SpvStorageClass storage_class) const {
-  // Records all of the base types available in the module.
-  std::vector<uint32_t> base_types;
+  // Records all of the basic types available in the module.
+  std::set<uint32_t> basic_types;
 
-  // For each base type, records all the associated pointer types that target
-  // that base type and that have |storage_class| as their storage class.
-  std::map<uint32_t, std::vector<uint32_t>> base_type_to_pointers;
+  // For each basic type, records all the associated pointer types that target
+  // the basic type and that have |storage_class| as their storage class.
+  std::map<uint32_t, std::vector<uint32_t>> basic_type_to_pointers;
 
   for (auto& inst : GetIRContext()->types_values()) {
+    // For each basic type that we come across, record type, and the fact that
+    // we cannot yet have seen any pointers that use the basic type as its
+    // pointee type.
+    //
+    // For pointer types with basic pointee types, associate the pointer type
+    // with the basic type.
     switch (inst.opcode()) {
-      case SpvOpTypeArray:
       case SpvOpTypeBool:
       case SpvOpTypeFloat:
       case SpvOpTypeInt:
       case SpvOpTypeMatrix:
-      case SpvOpTypeStruct:
       case SpvOpTypeVector:
-        // These types are suitable as pointer base types.  Record the type,
-        // and the fact that we cannot yet have seen any pointers that use this
-        // as its base type.
-        base_types.push_back(inst.result_id());
-        base_type_to_pointers.insert({inst.result_id(), {}});
+        // These are all basic types.
+        basic_types.insert(inst.result_id());
+        basic_type_to_pointers.insert({inst.result_id(), {}});
         break;
-      case SpvOpTypePointer:
-        if (inst.GetSingleWordInOperand(0) == storage_class) {
-          // The pointer has the desired storage class, so we are interested in
-          // it.  Associate it with its base type.
-          base_type_to_pointers.at(inst.GetSingleWordInOperand(1))
-              .push_back(inst.result_id());
+      case SpvOpTypeArray:
+        // An array type is basic if its base type is basic.
+        if (basic_types.count(inst.GetSingleWordInOperand(0))) {
+          basic_types.insert(inst.result_id());
+          basic_type_to_pointers.insert({inst.result_id(), {}});
         }
         break;
+      case SpvOpTypeStruct: {
+        // A struct type is basic if all of its members are basic.
+        bool all_members_are_basic_types = true;
+        for (uint32_t i = 0; i < inst.NumInOperands(); i++) {
+          if (!basic_types.count(inst.GetSingleWordInOperand(i))) {
+            all_members_are_basic_types = false;
+            break;
+          }
+        }
+        if (all_members_are_basic_types) {
+          basic_types.insert(inst.result_id());
+          basic_type_to_pointers.insert({inst.result_id(), {}});
+        }
+        break;
+      }
+      case SpvOpTypePointer: {
+        // We are interested in the pointer if its pointee type is basic and it
+        // has the right storage class.
+        auto pointee_type = inst.GetSingleWordInOperand(1);
+        if (inst.GetSingleWordInOperand(0) == storage_class &&
+            basic_types.count(pointee_type)) {
+          // The pointer has the desired storage class, and its pointee type is
+          // a basic type, so we are interested in it.  Associate it with its
+          // basic type.
+          basic_type_to_pointers.at(pointee_type).push_back(inst.result_id());
+        }
+        break;
+      }
       default:
         break;
     }
   }
-  return {base_types, base_type_to_pointers};
+  return {{basic_types.begin(), basic_types.end()}, basic_type_to_pointers};
 }
 
 uint32_t FuzzerPass::FindOrCreateZeroConstant(

@@ -17,9 +17,9 @@
 
 #include <vector>
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -44,8 +44,9 @@ class TransformationEquationInstruction : public Transformation {
   //   equations, the types of the ids in |message_.in_operand_id| must be
   //   suitable for use with this opcode, and the module must contain an
   //   appropriate result type id.
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // Adds an instruction to the module, right before
   // |message_.instruction_to_insert_before|, of the form:
@@ -56,7 +57,8 @@ class TransformationEquationInstruction : public Transformation {
   // compatible with the opcode and input operands.
   //
   // The fact manager is also updated to inform it of this equation fact.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 
@@ -65,7 +67,7 @@ class TransformationEquationInstruction : public Transformation {
   // in |message_.in_operand_id| are compatible, and that the module contains
   // an appropriate result type id.  If all is well, the result type id is
   // returned.  Otherwise, 0 is returned.
-  uint32_t MaybeGetResultType(opt::IRContext* context) const;
+  uint32_t MaybeGetResultType(opt::IRContext* ir_context) const;
 
   protobufs::TransformationEquationInstruction message_;
 };

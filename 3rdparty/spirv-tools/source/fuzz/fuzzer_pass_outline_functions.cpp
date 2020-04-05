@@ -23,10 +23,11 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassOutlineFunctions::FuzzerPassOutlineFunctions(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassOutlineFunctions::~FuzzerPassOutlineFunctions() = default;
 
@@ -88,8 +89,9 @@ void FuzzerPassOutlineFunctions::Apply() {
         /*new_callee_result_id*/ GetFuzzerContext()->GetFreshId(),
         /*input_id_to_fresh_id*/ std::move(input_id_to_fresh_id),
         /*output_id_to_fresh_id*/ std::move(output_id_to_fresh_id));
-    if (transformation.IsApplicable(GetIRContext(), *GetFactManager())) {
-      transformation.Apply(GetIRContext(), GetFactManager());
+    if (transformation.IsApplicable(GetIRContext(),
+                                    *GetTransformationContext())) {
+      transformation.Apply(GetIRContext(), GetTransformationContext());
       *GetTransformations()->add_transformation() = transformation.ToMessage();
     }
   }

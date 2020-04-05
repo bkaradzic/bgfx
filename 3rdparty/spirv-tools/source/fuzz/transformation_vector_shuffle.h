@@ -15,10 +15,11 @@
 #ifndef SOURCE_FUZZ_TRANSFORMATION_VECTOR_SHUFFLE_H_
 #define SOURCE_FUZZ_TRANSFORMATION_VECTOR_SHUFFLE_H_
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
+
 #include "source/opt/types.h"
 
 namespace spvtools {
@@ -45,8 +46,9 @@ class TransformationVectorShuffle : public Transformation {
   // - The module must already contain a vector type with the same element type
   //   as |message_.vector1| and |message_.vector2|, and with the size of
   //   |message_component| as its element count
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // Inserts an OpVectorShuffle instruction before
   // |message_.instruction_to_insert_before|, shuffles vectors
@@ -58,19 +60,20 @@ class TransformationVectorShuffle : public Transformation {
   // result vector is a contiguous sub-range of one of the input vectors, a
   // fact is added to record that |message_.fresh_id| is synonymous with this
   // sub-range.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 
  private:
-  // Returns a type id that already exists in |context| suitable for
+  // Returns a type id that already exists in |ir_context| suitable for
   // representing the result of the shuffle, where |element_type| is known to
   // be the common element type of the vectors to which the shuffle is being
   // applied.  Returns 0 if no such id exists.
-  uint32_t GetResultTypeId(opt::IRContext* context,
+  uint32_t GetResultTypeId(opt::IRContext* ir_context,
                            const opt::analysis::Type& element_type) const;
 
-  static opt::analysis::Vector* GetVectorType(opt::IRContext* context,
+  static opt::analysis::Vector* GetVectorType(opt::IRContext* ir_context,
                                               uint32_t id_of_vector);
 
   protobufs::TransformationVectorShuffle message_;

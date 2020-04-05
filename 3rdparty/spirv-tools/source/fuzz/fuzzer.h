@@ -41,8 +41,9 @@ class Fuzzer {
   // seed for pseudo-random number generation.
   // |validate_after_each_fuzzer_pass| controls whether the validator will be
   // invoked after every fuzzer pass is applied.
-  explicit Fuzzer(spv_target_env env, uint32_t seed,
-                  bool validate_after_each_fuzzer_pass);
+  Fuzzer(spv_target_env env, uint32_t seed,
+         bool validate_after_each_fuzzer_pass,
+         spv_validator_options validator_options);
 
   // Disables copy/move constructor/assignment operations.
   Fuzzer(const Fuzzer&) = delete;

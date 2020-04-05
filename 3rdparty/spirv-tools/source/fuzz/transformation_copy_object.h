@@ -15,9 +15,9 @@
 #ifndef SOURCE_FUZZ_TRANSFORMATION_COPY_OBJECT_H_
 #define SOURCE_FUZZ_TRANSFORMATION_COPY_OBJECT_H_
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -49,19 +49,21 @@ class TransformationCopyObject : public Transformation {
   // - |message_.object| must be available directly before 'inst'.
   // - |message_.object| must not be a null pointer or undefined pointer (so as
   //   to make it legal to load from copied pointers).
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // - A new instruction,
   //     %|message_.fresh_id| = OpCopyObject %ty %|message_.object|
   //   is added directly before the instruction at |message_.insert_after_id| +
   //   |message_|.offset, where %ty is the type of |message_.object|.
   // - The fact that |message_.fresh_id| and |message_.object| are synonyms
-  //   is added to |fact_manager|.
+  //   is added to the fact manager in |transformation_context|.
   // - If |message_.object| is a pointer whose pointee value is known to be
-  //   irrelevant, the analogous fact is added to |fact_manager| about
-  //   |message_.fresh_id|.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  //   irrelevant, the analogous fact is added to the fact manager in
+  //   |transformation_context| about |message_.fresh_id|.
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 

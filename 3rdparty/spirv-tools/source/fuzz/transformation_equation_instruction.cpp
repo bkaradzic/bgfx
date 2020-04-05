@@ -37,40 +37,40 @@ TransformationEquationInstruction::TransformationEquationInstruction(
 }
 
 bool TransformationEquationInstruction::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // The result id must be fresh.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
   // The instruction to insert before must exist.
   auto insert_before =
-      FindInstruction(message_.instruction_to_insert_before(), context);
+      FindInstruction(message_.instruction_to_insert_before(), ir_context);
   if (!insert_before) {
     return false;
   }
   // The input ids must all exist, not be OpUndef, and be available before this
   // instruction.
   for (auto id : message_.in_operand_id()) {
-    auto inst = context->get_def_use_mgr()->GetDef(id);
+    auto inst = ir_context->get_def_use_mgr()->GetDef(id);
     if (!inst) {
       return false;
     }
     if (inst->opcode() == SpvOpUndef) {
       return false;
     }
-    if (!fuzzerutil::IdIsAvailableBeforeInstruction(context, insert_before,
+    if (!fuzzerutil::IdIsAvailableBeforeInstruction(ir_context, insert_before,
                                                     id)) {
       return false;
     }
   }
 
-  return MaybeGetResultType(context) != 0;
+  return MaybeGetResultType(ir_context) != 0;
 }
 
 void TransformationEquationInstruction::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* fact_manager) const {
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
 
   opt::Instruction::OperandList in_operands;
   std::vector<uint32_t> rhs_id;
@@ -79,16 +79,16 @@ void TransformationEquationInstruction::Apply(
     rhs_id.push_back(id);
   }
 
-  FindInstruction(message_.instruction_to_insert_before(), context)
+  FindInstruction(message_.instruction_to_insert_before(), ir_context)
       ->InsertBefore(MakeUnique<opt::Instruction>(
-          context, static_cast<SpvOp>(message_.opcode()),
-          MaybeGetResultType(context), message_.fresh_id(), in_operands));
+          ir_context, static_cast<SpvOp>(message_.opcode()),
+          MaybeGetResultType(ir_context), message_.fresh_id(), in_operands));
 
-  context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
 
-  fact_manager->AddFactIdEquation(message_.fresh_id(),
-                                  static_cast<SpvOp>(message_.opcode()), rhs_id,
-                                  context);
+  transformation_context->GetFactManager()->AddFactIdEquation(
+      message_.fresh_id(), static_cast<SpvOp>(message_.opcode()), rhs_id,
+      ir_context);
 }
 
 protobufs::Transformation TransformationEquationInstruction::ToMessage() const {
@@ -98,7 +98,7 @@ protobufs::Transformation TransformationEquationInstruction::ToMessage() const {
 }
 
 uint32_t TransformationEquationInstruction::MaybeGetResultType(
-    opt::IRContext* context) const {
+    opt::IRContext* ir_context) const {
   switch (static_cast<SpvOp>(message_.opcode())) {
     case SpvOpIAdd:
     case SpvOpISub: {
@@ -108,13 +108,13 @@ uint32_t TransformationEquationInstruction::MaybeGetResultType(
       uint32_t first_operand_width = 0;
       uint32_t first_operand_type_id = 0;
       for (uint32_t index = 0; index < 2; index++) {
-        auto operand_inst =
-            context->get_def_use_mgr()->GetDef(message_.in_operand_id(index));
+        auto operand_inst = ir_context->get_def_use_mgr()->GetDef(
+            message_.in_operand_id(index));
         if (!operand_inst || !operand_inst->type_id()) {
           return 0;
         }
         auto operand_type =
-            context->get_type_mgr()->GetType(operand_inst->type_id());
+            ir_context->get_type_mgr()->GetType(operand_inst->type_id());
         if (!(operand_type->AsInteger() ||
               (operand_type->AsVector() &&
                operand_type->AsVector()->element_type()->AsInteger()))) {
@@ -144,12 +144,12 @@ uint32_t TransformationEquationInstruction::MaybeGetResultType(
         return 0;
       }
       auto operand_inst =
-          context->get_def_use_mgr()->GetDef(message_.in_operand_id(0));
+          ir_context->get_def_use_mgr()->GetDef(message_.in_operand_id(0));
       if (!operand_inst || !operand_inst->type_id()) {
         return 0;
       }
       auto operand_type =
-          context->get_type_mgr()->GetType(operand_inst->type_id());
+          ir_context->get_type_mgr()->GetType(operand_inst->type_id());
       if (!(operand_type->AsBool() ||
             (operand_type->AsVector() &&
              operand_type->AsVector()->element_type()->AsBool()))) {
@@ -162,12 +162,12 @@ uint32_t TransformationEquationInstruction::MaybeGetResultType(
         return 0;
       }
       auto operand_inst =
-          context->get_def_use_mgr()->GetDef(message_.in_operand_id(0));
+          ir_context->get_def_use_mgr()->GetDef(message_.in_operand_id(0));
       if (!operand_inst || !operand_inst->type_id()) {
         return 0;
       }
       auto operand_type =
-          context->get_type_mgr()->GetType(operand_inst->type_id());
+          ir_context->get_type_mgr()->GetType(operand_inst->type_id());
       if (!(operand_type->AsInteger() ||
             (operand_type->AsVector() &&
              operand_type->AsVector()->element_type()->AsInteger()))) {

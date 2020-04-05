@@ -28,7 +28,7 @@ namespace fuzz {
 class FuzzerPassDonateModules : public FuzzerPass {
  public:
   FuzzerPassDonateModules(
-      opt::IRContext* ir_context, FactManager* fact_manager,
+      opt::IRContext* ir_context, TransformationContext* transformation_context,
       FuzzerContext* fuzzer_context,
       protobufs::TransformationSequence* transformations,
       const std::vector<fuzzerutil::ModuleSupplier>& donor_suppliers);

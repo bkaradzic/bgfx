@@ -21,10 +21,11 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassAddDeadBreaks::FuzzerPassAddDeadBreaks(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassAddDeadBreaks::~FuzzerPassAddDeadBreaks() = default;
 
@@ -79,8 +80,8 @@ void FuzzerPassAddDeadBreaks::Apply() {
         auto candidate_transformation = TransformationAddDeadBreak(
             block.id(), merge_block->id(), GetFuzzerContext()->ChooseEven(),
             std::move(phi_ids));
-        if (candidate_transformation.IsApplicable(GetIRContext(),
-                                                  *GetFactManager())) {
+        if (candidate_transformation.IsApplicable(
+                GetIRContext(), *GetTransformationContext())) {
           // Only consider a transformation as a candidate if it is applicable.
           candidate_transformations.push_back(
               std::move(candidate_transformation));
@@ -109,10 +110,11 @@ void FuzzerPassAddDeadBreaks::Apply() {
     candidate_transformations.erase(candidate_transformations.begin() + index);
     // Probabilistically decide whether to try to apply it vs. ignore it, in the
     // case that it is applicable.
-    if (transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
+    if (transformation.IsApplicable(GetIRContext(),
+                                    *GetTransformationContext()) &&
         GetFuzzerContext()->ChoosePercentage(
             GetFuzzerContext()->GetChanceOfAddingDeadBreak())) {
-      transformation.Apply(GetIRContext(), GetFactManager());
+      transformation.Apply(GetIRContext(), GetTransformationContext());
       *GetTransformations()->add_transformation() = transformation.ToMessage();
     }
   }

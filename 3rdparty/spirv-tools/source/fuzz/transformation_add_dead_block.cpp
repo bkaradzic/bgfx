@@ -32,16 +32,15 @@ TransformationAddDeadBlock::TransformationAddDeadBlock(uint32_t fresh_id,
 }
 
 bool TransformationAddDeadBlock::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // The new block's id must be fresh.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
 
   // First, we check that a constant with the same value as
   // |message_.condition_value| is present.
-  if (!fuzzerutil::MaybeGetBoolConstantId(context,
+  if (!fuzzerutil::MaybeGetBoolConstantId(ir_context,
                                           message_.condition_value())) {
     // The required constant is not present, so the transformation cannot be
     // applied.
@@ -50,7 +49,7 @@ bool TransformationAddDeadBlock::IsApplicable(
 
   // The existing block must indeed exist.
   auto existing_block =
-      fuzzerutil::MaybeFindBlock(context, message_.existing_block());
+      fuzzerutil::MaybeFindBlock(ir_context, message_.existing_block());
   if (!existing_block) {
     return false;
   }
@@ -68,13 +67,13 @@ bool TransformationAddDeadBlock::IsApplicable(
   // Its successor must not be a merge block nor continue target.
   auto successor_block_id =
       existing_block->terminator()->GetSingleWordInOperand(0);
-  if (fuzzerutil::IsMergeOrContinue(context, successor_block_id)) {
+  if (fuzzerutil::IsMergeOrContinue(ir_context, successor_block_id)) {
     return false;
   }
 
   // The successor must not be a loop header (i.e., |message_.existing_block|
   // must not be a back-edge block.
-  if (context->cfg()->block(successor_block_id)->IsLoopHeader()) {
+  if (ir_context->cfg()->block(successor_block_id)->IsLoopHeader()) {
     return false;
   }
 
@@ -82,34 +81,36 @@ bool TransformationAddDeadBlock::IsApplicable(
 }
 
 void TransformationAddDeadBlock::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* fact_manager) const {
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
   // Update the module id bound so that it is at least the id of the new block.
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
 
   // Get the existing block and its successor.
-  auto existing_block = context->cfg()->block(message_.existing_block());
+  auto existing_block = ir_context->cfg()->block(message_.existing_block());
   auto successor_block_id =
       existing_block->terminator()->GetSingleWordInOperand(0);
 
   // Get the id of the boolean value that will be used as the branch condition.
-  auto bool_id =
-      fuzzerutil::MaybeGetBoolConstantId(context, message_.condition_value());
+  auto bool_id = fuzzerutil::MaybeGetBoolConstantId(ir_context,
+                                                    message_.condition_value());
 
   // Make a new block that unconditionally branches to the original successor
   // block.
   auto enclosing_function = existing_block->GetParent();
-  std::unique_ptr<opt::BasicBlock> new_block = MakeUnique<opt::BasicBlock>(
-      MakeUnique<opt::Instruction>(context, SpvOpLabel, 0, message_.fresh_id(),
-                                   opt::Instruction::OperandList()));
+  std::unique_ptr<opt::BasicBlock> new_block =
+      MakeUnique<opt::BasicBlock>(MakeUnique<opt::Instruction>(
+          ir_context, SpvOpLabel, 0, message_.fresh_id(),
+          opt::Instruction::OperandList()));
   new_block->AddInstruction(MakeUnique<opt::Instruction>(
-      context, SpvOpBranch, 0, 0,
+      ir_context, SpvOpBranch, 0, 0,
       opt::Instruction::OperandList(
           {{SPV_OPERAND_TYPE_ID, {successor_block_id}}})));
 
   // Turn the original block into a selection merge, with its original successor
   // as the merge block.
   existing_block->terminator()->InsertBefore(MakeUnique<opt::Instruction>(
-      context, SpvOpSelectionMerge, 0, 0,
+      ir_context, SpvOpSelectionMerge, 0, 0,
       opt::Instruction::OperandList(
           {{SPV_OPERAND_TYPE_ID, {successor_block_id}},
            {SPV_OPERAND_TYPE_SELECTION_CONTROL,
@@ -135,7 +136,8 @@ void TransformationAddDeadBlock::Apply(
                                             existing_block);
 
   // Record the fact that the new block is dead.
-  fact_manager->AddFactBlockIsDead(message_.fresh_id());
+  transformation_context->GetFactManager()->AddFactBlockIsDead(
+      message_.fresh_id());
 
   // Fix up OpPhi instructions in the successor block, so that the values they
   // yield when control has transferred from the new block are the same as if
@@ -143,7 +145,7 @@ void TransformationAddDeadBlock::Apply(
   // to be valid since |message_.existing_block| dominates the new block by
   // construction.  Other transformations can change these phi operands to more
   // interesting values.
-  context->cfg()
+  ir_context->cfg()
       ->block(successor_block_id)
       ->ForEachPhiInst([this](opt::Instruction* phi_inst) {
         // Copy the operand that provides the phi value for the first of any
@@ -156,7 +158,7 @@ void TransformationAddDeadBlock::Apply(
 
   // Do not rely on any existing analysis results since the control flow graph
   // of the module has changed.
-  context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationAddDeadBlock::ToMessage() const {

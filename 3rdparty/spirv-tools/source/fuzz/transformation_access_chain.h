@@ -17,9 +17,9 @@
 
 #include <utility>
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -47,8 +47,9 @@ class TransformationAccessChain : public Transformation {
   // - If type t is the final type reached by walking these indices, the module
   //   must include an instruction "OpTypePointer SC %t" where SC is the storage
   //   class associated with |message_.pointer_id|
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // Adds an instruction of the form:
   //   |message_.fresh_id| = OpAccessChain %ptr |message_.index_id|
@@ -57,10 +58,12 @@ class TransformationAccessChain : public Transformation {
   // the indices in |message_.index_id|, and with the same storage class as
   // |message_.pointer_id|.
   //
-  // If |fact_manager| reports that |message_.pointer_id| has an irrelevant
-  // pointee value, then the fact that |message_.fresh_id| (the result of the
-  // access chain) also has an irrelevant pointee value is also recorded.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  // If the fact manager in |transformation_context| reports that
+  // |message_.pointer_id| has an irrelevant pointee value, then the fact that
+  // |message_.fresh_id| (the result of the access chain) also has an irrelevant
+  // pointee value is also recorded.
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 
@@ -68,7 +71,7 @@ class TransformationAccessChain : public Transformation {
   // Returns {false, 0} if |index_id| does not correspond to a 32-bit integer
   // constant.  Otherwise, returns {true, value}, where value is the value of
   // the 32-bit integer constant to which |index_id| corresponds.
-  std::pair<bool, uint32_t> GetIndexValue(opt::IRContext* context,
+  std::pair<bool, uint32_t> GetIndexValue(opt::IRContext* ir_context,
                                           uint32_t index_id) const;
 
   protobufs::TransformationAccessChain message_;

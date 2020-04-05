@@ -37,15 +37,14 @@ TransformationAddConstantComposite::TransformationAddConstantComposite(
 }
 
 bool TransformationAddConstantComposite::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // Check that the given id is fresh.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
   // Check that the composite type id is an instruction id.
   auto composite_type_instruction =
-      context->get_def_use_mgr()->GetDef(message_.type_id());
+      ir_context->get_def_use_mgr()->GetDef(message_.type_id());
   if (!composite_type_instruction) {
     return false;
   }
@@ -56,7 +55,7 @@ bool TransformationAddConstantComposite::IsApplicable(
     case SpvOpTypeArray:
       for (uint32_t index = 0;
            index <
-           fuzzerutil::GetArraySize(*composite_type_instruction, context);
+           fuzzerutil::GetArraySize(*composite_type_instruction, ir_context);
            index++) {
         constituent_type_ids.push_back(
             composite_type_instruction->GetSingleWordInOperand(0));
@@ -93,7 +92,7 @@ bool TransformationAddConstantComposite::IsApplicable(
   // corresponding constituent type.
   for (uint32_t index = 0; index < constituent_type_ids.size(); index++) {
     auto constituent_instruction =
-        context->get_def_use_mgr()->GetDef(message_.constituent_id(index));
+        ir_context->get_def_use_mgr()->GetDef(message_.constituent_id(index));
     if (!constituent_instruction) {
       return false;
     }
@@ -105,18 +104,19 @@ bool TransformationAddConstantComposite::IsApplicable(
 }
 
 void TransformationAddConstantComposite::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* /*unused*/) const {
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
   opt::Instruction::OperandList in_operands;
   for (auto constituent_id : message_.constituent_id()) {
     in_operands.push_back({SPV_OPERAND_TYPE_ID, {constituent_id}});
   }
-  context->module()->AddGlobalValue(MakeUnique<opt::Instruction>(
-      context, SpvOpConstantComposite, message_.type_id(), message_.fresh_id(),
-      in_operands));
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  ir_context->module()->AddGlobalValue(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpConstantComposite, message_.type_id(),
+      message_.fresh_id(), in_operands));
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationAddConstantComposite::ToMessage()

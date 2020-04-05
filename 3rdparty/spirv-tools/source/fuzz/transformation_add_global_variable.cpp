@@ -33,14 +33,13 @@ TransformationAddGlobalVariable::TransformationAddGlobalVariable(
 }
 
 bool TransformationAddGlobalVariable::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // The result id must be fresh.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
   // The type id must correspond to a type.
-  auto type = context->get_type_mgr()->GetType(message_.type_id());
+  auto type = ir_context->get_type_mgr()->GetType(message_.type_id());
   if (!type) {
     return false;
   }
@@ -55,7 +54,7 @@ bool TransformationAddGlobalVariable::IsApplicable(
   }
   // The initializer id must be the id of a constant.  Check this with the
   // constant manager.
-  auto constant_id = context->get_constant_mgr()->GetConstantsFromIds(
+  auto constant_id = ir_context->get_constant_mgr()->GetConstantsFromIds(
       {message_.initializer_id()});
   if (constant_id.empty()) {
     return false;
@@ -71,7 +70,8 @@ bool TransformationAddGlobalVariable::IsApplicable(
 }
 
 void TransformationAddGlobalVariable::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* fact_manager) const {
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
   opt::Instruction::OperandList input_operands;
   input_operands.push_back(
       {SPV_OPERAND_TYPE_STORAGE_CLASS, {SpvStorageClassPrivate}});
@@ -79,12 +79,12 @@ void TransformationAddGlobalVariable::Apply(
     input_operands.push_back(
         {SPV_OPERAND_TYPE_ID, {message_.initializer_id()}});
   }
-  context->module()->AddGlobalValue(
-      MakeUnique<opt::Instruction>(context, SpvOpVariable, message_.type_id(),
-                                   message_.fresh_id(), input_operands));
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  ir_context->module()->AddGlobalValue(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpVariable, message_.type_id(), message_.fresh_id(),
+      input_operands));
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
 
-  if (PrivateGlobalsMustBeDeclaredInEntryPointInterfaces(context)) {
+  if (PrivateGlobalsMustBeDeclaredInEntryPointInterfaces(ir_context)) {
     // Conservatively add this global to the interface of every entry point in
     // the module.  This means that the global is available for other
     // transformations to use.
@@ -94,18 +94,20 @@ void TransformationAddGlobalVariable::Apply(
     //
     // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3111) revisit
     //  this if a more thorough approach to entry point interfaces is taken.
-    for (auto& entry_point : context->module()->entry_points()) {
+    for (auto& entry_point : ir_context->module()->entry_points()) {
       entry_point.AddOperand({SPV_OPERAND_TYPE_ID, {message_.fresh_id()}});
     }
   }
 
   if (message_.value_is_irrelevant()) {
-    fact_manager->AddFactValueOfPointeeIsIrrelevant(message_.fresh_id());
+    transformation_context->GetFactManager()->AddFactValueOfPointeeIsIrrelevant(
+        message_.fresh_id());
   }
 
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationAddGlobalVariable::ToMessage() const {
@@ -116,11 +118,11 @@ protobufs::Transformation TransformationAddGlobalVariable::ToMessage() const {
 
 bool TransformationAddGlobalVariable::
     PrivateGlobalsMustBeDeclaredInEntryPointInterfaces(
-        opt::IRContext* context) {
+        opt::IRContext* ir_context) {
   // TODO(afd): We capture the universal environments for which this requirement
   //  holds.  The check should be refined on demand for other target
   //  environments.
-  switch (context->grammar().target_env()) {
+  switch (ir_context->grammar().target_env()) {
     case SPV_ENV_UNIVERSAL_1_0:
     case SPV_ENV_UNIVERSAL_1_1:
     case SPV_ENV_UNIVERSAL_1_2:

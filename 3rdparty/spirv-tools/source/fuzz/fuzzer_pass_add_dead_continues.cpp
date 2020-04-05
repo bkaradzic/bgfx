@@ -21,10 +21,11 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassAddDeadContinues::FuzzerPassAddDeadContinues(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassAddDeadContinues::~FuzzerPassAddDeadContinues() = default;
 
@@ -75,10 +76,11 @@ void FuzzerPassAddDeadContinues::Apply() {
       // Probabilistically decide whether to apply the transformation in the
       // case that it is applicable.
       if (candidate_transformation.IsApplicable(GetIRContext(),
-                                                *GetFactManager()) &&
+                                                *GetTransformationContext()) &&
           GetFuzzerContext()->ChoosePercentage(
               GetFuzzerContext()->GetChanceOfAddingDeadContinue())) {
-        candidate_transformation.Apply(GetIRContext(), GetFactManager());
+        candidate_transformation.Apply(GetIRContext(),
+                                       GetTransformationContext());
         *GetTransformations()->add_transformation() =
             candidate_transformation.ToMessage();
       }

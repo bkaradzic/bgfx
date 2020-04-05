@@ -22,6 +22,7 @@
 #include "source/fuzz/instruction_message.h"
 #include "source/fuzz/transformation_add_constant_boolean.h"
 #include "source/fuzz/transformation_add_constant_composite.h"
+#include "source/fuzz/transformation_add_constant_null.h"
 #include "source/fuzz/transformation_add_constant_scalar.h"
 #include "source/fuzz/transformation_add_function.h"
 #include "source/fuzz/transformation_add_global_undef.h"
@@ -40,11 +41,12 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassDonateModules::FuzzerPassDonateModules(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations,
     const std::vector<fuzzerutil::ModuleSupplier>& donor_suppliers)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations),
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations),
       donor_suppliers_(donor_suppliers) {}
 
 FuzzerPassDonateModules::~FuzzerPassDonateModules() = default;
@@ -62,7 +64,9 @@ void FuzzerPassDonateModules::Apply() {
     std::unique_ptr<opt::IRContext> donor_ir_context = donor_suppliers_.at(
         GetFuzzerContext()->RandomIndex(donor_suppliers_))();
     assert(donor_ir_context != nullptr && "Supplying of donor failed");
-    assert(fuzzerutil::IsValid(donor_ir_context.get()) &&
+    assert(fuzzerutil::IsValid(
+               donor_ir_context.get(),
+               GetTransformationContext()->GetValidatorOptions()) &&
            "The donor module must be valid");
     // Donate the supplied module.
     //
@@ -390,6 +394,20 @@ void FuzzerPassDonateModules::HandleTypesAndValues(
             new_result_id,
             original_id_to_donated_id->at(type_or_value.type_id()),
             constituent_ids));
+      } break;
+      case SpvOpConstantNull: {
+        if (!original_id_to_donated_id->count(type_or_value.type_id())) {
+          // We did not donate the type associated with this null constant, so
+          // we cannot donate the null constant.
+          continue;
+        }
+
+        // It is fine to have multiple OpConstantNull instructions of the same
+        // type, so we just add this to the recipient module.
+        new_result_id = GetFuzzerContext()->GetFreshId();
+        ApplyTransformation(TransformationAddConstantNull(
+            new_result_id,
+            original_id_to_donated_id->at(type_or_value.type_id())));
       } break;
       case SpvOpVariable: {
         // This is a global variable that could have one of various storage

@@ -39,12 +39,12 @@ TransformationReplaceConstantWithUniform::
 
 std::unique_ptr<opt::Instruction>
 TransformationReplaceConstantWithUniform::MakeAccessChainInstruction(
-    spvtools::opt::IRContext* context, uint32_t constant_type_id) const {
+    spvtools::opt::IRContext* ir_context, uint32_t constant_type_id) const {
   // The input operands for the access chain.
   opt::Instruction::OperandList operands_for_access_chain;
 
   opt::Instruction* uniform_variable =
-      FindUniformVariable(message_.uniform_descriptor(), context, false);
+      FindUniformVariable(message_.uniform_descriptor(), ir_context, false);
 
   // The first input operand is the id of the uniform variable.
   operands_for_access_chain.push_back(
@@ -56,42 +56,43 @@ TransformationReplaceConstantWithUniform::MakeAccessChainInstruction(
   // instruction ids as operands.
   opt::analysis::Integer int_type(32, true);
   auto registered_int_type =
-      context->get_type_mgr()->GetRegisteredType(&int_type)->AsInteger();
-  auto int_type_id = context->get_type_mgr()->GetId(&int_type);
+      ir_context->get_type_mgr()->GetRegisteredType(&int_type)->AsInteger();
+  auto int_type_id = ir_context->get_type_mgr()->GetId(&int_type);
   for (auto index : message_.uniform_descriptor().index()) {
     opt::analysis::IntConstant int_constant(registered_int_type, {index});
-    auto constant_id = context->get_constant_mgr()->FindDeclaredConstant(
+    auto constant_id = ir_context->get_constant_mgr()->FindDeclaredConstant(
         &int_constant, int_type_id);
     operands_for_access_chain.push_back({SPV_OPERAND_TYPE_ID, {constant_id}});
   }
 
   // The type id for the access chain is a uniform pointer with base type
   // matching the given constant id type.
-  auto type_and_pointer_type = context->get_type_mgr()->GetTypeAndPointerType(
-      constant_type_id, SpvStorageClassUniform);
+  auto type_and_pointer_type =
+      ir_context->get_type_mgr()->GetTypeAndPointerType(constant_type_id,
+                                                        SpvStorageClassUniform);
   assert(type_and_pointer_type.first != nullptr);
   assert(type_and_pointer_type.second != nullptr);
   auto pointer_to_uniform_constant_type_id =
-      context->get_type_mgr()->GetId(type_and_pointer_type.second.get());
+      ir_context->get_type_mgr()->GetId(type_and_pointer_type.second.get());
 
   return MakeUnique<opt::Instruction>(
-      context, SpvOpAccessChain, pointer_to_uniform_constant_type_id,
+      ir_context, SpvOpAccessChain, pointer_to_uniform_constant_type_id,
       message_.fresh_id_for_access_chain(), operands_for_access_chain);
 }
 
 std::unique_ptr<opt::Instruction>
 TransformationReplaceConstantWithUniform::MakeLoadInstruction(
-    spvtools::opt::IRContext* context, uint32_t constant_type_id) const {
+    spvtools::opt::IRContext* ir_context, uint32_t constant_type_id) const {
   opt::Instruction::OperandList operands_for_load = {
       {SPV_OPERAND_TYPE_ID, {message_.fresh_id_for_access_chain()}}};
-  return MakeUnique<opt::Instruction>(context, SpvOpLoad, constant_type_id,
+  return MakeUnique<opt::Instruction>(ir_context, SpvOpLoad, constant_type_id,
                                       message_.fresh_id_for_load(),
                                       operands_for_load);
 }
 
 bool TransformationReplaceConstantWithUniform::IsApplicable(
-    spvtools::opt::IRContext* context,
-    const spvtools::fuzz::FactManager& fact_manager) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   // The following is really an invariant of the transformation rather than
   // merely a requirement of the precondition.  We check it here since we cannot
   // check it in the message_ constructor.
@@ -99,16 +100,17 @@ bool TransformationReplaceConstantWithUniform::IsApplicable(
          "Fresh ids for access chain and load result cannot be the same.");
 
   // The ids for the access chain and load instructions must both be fresh.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id_for_access_chain())) {
+  if (!fuzzerutil::IsFreshId(ir_context,
+                             message_.fresh_id_for_access_chain())) {
     return false;
   }
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id_for_load())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id_for_load())) {
     return false;
   }
 
   // The id specified in the id use descriptor must be that of a declared scalar
   // constant.
-  auto declared_constant = context->get_constant_mgr()->FindDeclaredConstant(
+  auto declared_constant = ir_context->get_constant_mgr()->FindDeclaredConstant(
       message_.id_use_descriptor().id_of_interest());
   if (!declared_constant) {
     return false;
@@ -120,13 +122,13 @@ bool TransformationReplaceConstantWithUniform::IsApplicable(
   // The fact manager needs to believe that the uniform data element described
   // by the uniform buffer element descriptor will hold a scalar value.
   auto constant_id_associated_with_uniform =
-      fact_manager.GetConstantFromUniformDescriptor(
-          context, message_.uniform_descriptor());
+      transformation_context.GetFactManager()->GetConstantFromUniformDescriptor(
+          ir_context, message_.uniform_descriptor());
   if (!constant_id_associated_with_uniform) {
     return false;
   }
   auto constant_associated_with_uniform =
-      context->get_constant_mgr()->FindDeclaredConstant(
+      ir_context->get_constant_mgr()->FindDeclaredConstant(
           constant_id_associated_with_uniform);
   assert(constant_associated_with_uniform &&
          "The constant should be present in the module.");
@@ -149,7 +151,7 @@ bool TransformationReplaceConstantWithUniform::IsApplicable(
   // The id use descriptor must identify some instruction with respect to the
   // module.
   auto instruction_using_constant =
-      FindInstructionContainingUse(message_.id_use_descriptor(), context);
+      FindInstructionContainingUse(message_.id_use_descriptor(), ir_context);
   if (!instruction_using_constant) {
     return false;
   }
@@ -165,23 +167,23 @@ bool TransformationReplaceConstantWithUniform::IsApplicable(
   // replace with a uniform.
   opt::analysis::Pointer pointer_to_type_of_constant(declared_constant->type(),
                                                      SpvStorageClassUniform);
-  if (!context->get_type_mgr()->GetId(&pointer_to_type_of_constant)) {
+  if (!ir_context->get_type_mgr()->GetId(&pointer_to_type_of_constant)) {
     return false;
   }
 
   // In order to index into the uniform, the module has got to contain the int32
   // type, plus an OpConstant for each of the indices of interest.
   opt::analysis::Integer int_type(32, true);
-  if (!context->get_type_mgr()->GetId(&int_type)) {
+  if (!ir_context->get_type_mgr()->GetId(&int_type)) {
     return false;
   }
   auto registered_int_type =
-      context->get_type_mgr()->GetRegisteredType(&int_type)->AsInteger();
-  auto int_type_id = context->get_type_mgr()->GetId(&int_type);
+      ir_context->get_type_mgr()->GetRegisteredType(&int_type)->AsInteger();
+  auto int_type_id = ir_context->get_type_mgr()->GetId(&int_type);
   for (auto index : message_.uniform_descriptor().index()) {
     opt::analysis::IntConstant int_constant(registered_int_type, {index});
-    if (!context->get_constant_mgr()->FindDeclaredConstant(&int_constant,
-                                                           int_type_id)) {
+    if (!ir_context->get_constant_mgr()->FindDeclaredConstant(&int_constant,
+                                                              int_type_id)) {
       return false;
     }
   }
@@ -190,11 +192,11 @@ bool TransformationReplaceConstantWithUniform::IsApplicable(
 }
 
 void TransformationReplaceConstantWithUniform::Apply(
-    spvtools::opt::IRContext* context,
-    spvtools::fuzz::FactManager* /*unused*/) const {
+    spvtools::opt::IRContext* ir_context,
+    TransformationContext* /*unused*/) const {
   // Get the instruction that contains the id use we wish to replace.
   auto instruction_containing_constant_use =
-      FindInstructionContainingUse(message_.id_use_descriptor(), context);
+      FindInstructionContainingUse(message_.id_use_descriptor(), ir_context);
   assert(instruction_containing_constant_use &&
          "Precondition requires that the id use can be found.");
   assert(instruction_containing_constant_use->GetSingleWordInOperand(
@@ -204,17 +206,17 @@ void TransformationReplaceConstantWithUniform::Apply(
 
   // The id of the type for the constant whose use we wish to replace.
   auto constant_type_id =
-      context->get_def_use_mgr()
+      ir_context->get_def_use_mgr()
           ->GetDef(message_.id_use_descriptor().id_of_interest())
           ->type_id();
 
   // Add an access chain instruction to target the uniform element.
   instruction_containing_constant_use->InsertBefore(
-      MakeAccessChainInstruction(context, constant_type_id));
+      MakeAccessChainInstruction(ir_context, constant_type_id));
 
   // Add a load from this access chain.
   instruction_containing_constant_use->InsertBefore(
-      MakeLoadInstruction(context, constant_type_id));
+      MakeLoadInstruction(ir_context, constant_type_id));
 
   // Adjust the instruction containing the usage of the constant so that this
   // usage refers instead to the result of the load.
@@ -223,11 +225,12 @@ void TransformationReplaceConstantWithUniform::Apply(
       {message_.fresh_id_for_load()});
 
   // Update the module id bound to reflect the new instructions.
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id_for_load());
-  fuzzerutil::UpdateModuleIdBound(context,
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id_for_load());
+  fuzzerutil::UpdateModuleIdBound(ir_context,
                                   message_.fresh_id_for_access_chain());
 
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationReplaceConstantWithUniform::ToMessage()

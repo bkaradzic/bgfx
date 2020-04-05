@@ -32,14 +32,13 @@ TransformationAddTypeStruct::TransformationAddTypeStruct(
 }
 
 bool TransformationAddTypeStruct::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // A fresh id is required.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
   for (auto member_type : message_.member_type_id()) {
-    auto type = context->get_type_mgr()->GetType(member_type);
+    auto type = ir_context->get_type_mgr()->GetType(member_type);
     if (!type || type->AsFunction()) {
       // The member type id either does not refer to a type, or refers to a
       // function type; both are illegal.
@@ -50,17 +49,18 @@ bool TransformationAddTypeStruct::IsApplicable(
 }
 
 void TransformationAddTypeStruct::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* /*unused*/) const {
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
   opt::Instruction::OperandList in_operands;
   for (auto member_type : message_.member_type_id()) {
     in_operands.push_back({SPV_OPERAND_TYPE_ID, {member_type}});
   }
-  context->module()->AddType(MakeUnique<opt::Instruction>(
-      context, SpvOpTypeStruct, 0, message_.fresh_id(), in_operands));
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  ir_context->module()->AddType(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpTypeStruct, 0, message_.fresh_id(), in_operands));
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationAddTypeStruct::ToMessage() const {

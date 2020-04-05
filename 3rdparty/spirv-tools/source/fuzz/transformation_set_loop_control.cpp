@@ -31,9 +31,9 @@ TransformationSetLoopControl::TransformationSetLoopControl(
 }
 
 bool TransformationSetLoopControl::IsApplicable(
-    opt::IRContext* context, const FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // |message_.block_id| must identify a block that ends with OpLoopMerge.
-  auto block = context->get_instr_block(message_.block_id());
+  auto block = ir_context->get_instr_block(message_.block_id());
   if (!block) {
     return false;
   }
@@ -79,7 +79,8 @@ bool TransformationSetLoopControl::IsApplicable(
 
   if ((message_.loop_control() &
        (SpvLoopControlPeelCountMask | SpvLoopControlPartialCountMask)) &&
-      !(PeelCountIsSupported(context) && PartialCountIsSupported(context))) {
+      !(PeelCountIsSupported(ir_context) &&
+        PartialCountIsSupported(ir_context))) {
     // At least one of PeelCount or PartialCount is used, but the SPIR-V version
     // in question does not support these loop controls.
     return false;
@@ -104,11 +105,11 @@ bool TransformationSetLoopControl::IsApplicable(
             (SpvLoopControlPeelCountMask | SpvLoopControlPartialCountMask)));
 }
 
-void TransformationSetLoopControl::Apply(opt::IRContext* context,
-                                         FactManager* /*unused*/) const {
+void TransformationSetLoopControl::Apply(
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
   // Grab the loop merge instruction and its associated loop control mask.
   auto merge_inst =
-      context->get_instr_block(message_.block_id())->GetMergeInst();
+      ir_context->get_instr_block(message_.block_id())->GetMergeInst();
   auto existing_loop_control_mask =
       merge_inst->GetSingleWordInOperand(kLoopControlMaskInOperandIndex);
 
@@ -181,11 +182,11 @@ bool TransformationSetLoopControl::LoopControlBitIsAddedByTransformation(
 }
 
 bool TransformationSetLoopControl::PartialCountIsSupported(
-    opt::IRContext* context) {
+    opt::IRContext* ir_context) {
   // TODO(afd): We capture the universal environments for which this loop
   //  control is definitely not supported.  The check should be refined on
   //  demand for other target environments.
-  switch (context->grammar().target_env()) {
+  switch (ir_context->grammar().target_env()) {
     case SPV_ENV_UNIVERSAL_1_0:
     case SPV_ENV_UNIVERSAL_1_1:
     case SPV_ENV_UNIVERSAL_1_2:
@@ -197,11 +198,11 @@ bool TransformationSetLoopControl::PartialCountIsSupported(
 }
 
 bool TransformationSetLoopControl::PeelCountIsSupported(
-    opt::IRContext* context) {
+    opt::IRContext* ir_context) {
   // TODO(afd): We capture the universal environments for which this loop
   //  control is definitely not supported.  The check should be refined on
   //  demand for other target environments.
-  switch (context->grammar().target_env()) {
+  switch (ir_context->grammar().target_env()) {
     case SPV_ENV_UNIVERSAL_1_0:
     case SPV_ENV_UNIVERSAL_1_1:
     case SPV_ENV_UNIVERSAL_1_2:

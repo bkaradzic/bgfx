@@ -79,6 +79,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_access_chain.h
         transformation_add_constant_boolean.h
         transformation_add_constant_composite.h
+        transformation_add_constant_null.h
         transformation_add_constant_scalar.h
         transformation_add_dead_block.h
         transformation_add_dead_break.h
@@ -99,6 +100,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_type_vector.h
         transformation_composite_construct.h
         transformation_composite_extract.h
+        transformation_context.h
         transformation_copy_object.h
         transformation_equation_instruction.h
         transformation_function_call.h
@@ -170,6 +172,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_access_chain.cpp
         transformation_add_constant_boolean.cpp
         transformation_add_constant_composite.cpp
+        transformation_add_constant_null.cpp
         transformation_add_constant_scalar.cpp
         transformation_add_dead_block.cpp
         transformation_add_dead_break.cpp
@@ -190,6 +193,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_type_vector.cpp
         transformation_composite_construct.cpp
         transformation_composite_extract.cpp
+        transformation_context.cpp
         transformation_copy_object.cpp
         transformation_equation_instruction.cpp
         transformation_function_call.cpp

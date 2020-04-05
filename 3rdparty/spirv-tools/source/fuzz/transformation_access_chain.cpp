@@ -40,19 +40,18 @@ TransformationAccessChain::TransformationAccessChain(
 }
 
 bool TransformationAccessChain::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // The result id must be fresh
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
   // The pointer id must exist and have a type.
-  auto pointer = context->get_def_use_mgr()->GetDef(message_.pointer_id());
+  auto pointer = ir_context->get_def_use_mgr()->GetDef(message_.pointer_id());
   if (!pointer || !pointer->type_id()) {
     return false;
   }
   // The type must indeed be a pointer
-  auto pointer_type = context->get_def_use_mgr()->GetDef(pointer->type_id());
+  auto pointer_type = ir_context->get_def_use_mgr()->GetDef(pointer->type_id());
   if (pointer_type->opcode() != SpvOpTypePointer) {
     return false;
   }
@@ -60,7 +59,7 @@ bool TransformationAccessChain::IsApplicable(
   // The described instruction to insert before must exist and be a suitable
   // point where an OpAccessChain instruction could be inserted.
   auto instruction_to_insert_before =
-      FindInstruction(message_.instruction_to_insert_before(), context);
+      FindInstruction(message_.instruction_to_insert_before(), ir_context);
   if (!instruction_to_insert_before) {
     return false;
   }
@@ -86,7 +85,7 @@ bool TransformationAccessChain::IsApplicable(
   // The pointer on which the access chain is to be based needs to be available
   // (according to dominance rules) at the insertion point.
   if (!fuzzerutil::IdIsAvailableBeforeInstruction(
-          context, instruction_to_insert_before, message_.pointer_id())) {
+          ir_context, instruction_to_insert_before, message_.pointer_id())) {
     return false;
   }
 
@@ -104,7 +103,7 @@ bool TransformationAccessChain::IsApplicable(
     // integer.  Otherwise, the integer with which the id is associated is the
     // second component.
     std::pair<bool, uint32_t> maybe_index_value =
-        GetIndexValue(context, index_id);
+        GetIndexValue(ir_context, index_id);
     if (!maybe_index_value.first) {
       // There was no integer: this index is no good.
       return false;
@@ -113,7 +112,7 @@ bool TransformationAccessChain::IsApplicable(
     // type is not a composite or the index is out of bounds, and the id of
     // the next type otherwise.
     subobject_type_id = fuzzerutil::WalkOneCompositeTypeIndex(
-        context, subobject_type_id, maybe_index_value.second);
+        ir_context, subobject_type_id, maybe_index_value.second);
     if (!subobject_type_id) {
       // Either the type was not a composite (so that too many indices were
       // provided), or the index was out of bounds.
@@ -128,13 +127,14 @@ bool TransformationAccessChain::IsApplicable(
   // We do not use the type manager to look up this type, due to problems
   // associated with pointers to isomorphic structs being regarded as the same.
   return fuzzerutil::MaybeGetPointerType(
-             context, subobject_type_id,
+             ir_context, subobject_type_id,
              static_cast<SpvStorageClass>(
                  pointer_type->GetSingleWordInOperand(0))) != 0;
 }
 
 void TransformationAccessChain::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* fact_manager) const {
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
   // The operands to the access chain are the pointer followed by the indices.
   // The result type of the access chain is determined by where the indices
   // lead.  We thus push the pointer to a sequence of operands, and then follow
@@ -148,8 +148,8 @@ void TransformationAccessChain::Apply(
   operands.push_back({SPV_OPERAND_TYPE_ID, {message_.pointer_id()}});
 
   // Start walking the indices, starting with the pointer's base type.
-  auto pointer_type = context->get_def_use_mgr()->GetDef(
-      context->get_def_use_mgr()->GetDef(message_.pointer_id())->type_id());
+  auto pointer_type = ir_context->get_def_use_mgr()->GetDef(
+      ir_context->get_def_use_mgr()->GetDef(message_.pointer_id())->type_id());
   uint32_t subobject_type_id = pointer_type->GetSingleWordInOperand(1);
 
   // Go through the index ids in turn.
@@ -157,33 +157,35 @@ void TransformationAccessChain::Apply(
     // Add the index id to the operands.
     operands.push_back({SPV_OPERAND_TYPE_ID, {index_id}});
     // Get the integer value associated with the index id.
-    uint32_t index_value = GetIndexValue(context, index_id).second;
+    uint32_t index_value = GetIndexValue(ir_context, index_id).second;
     // Walk to the next type in the composite object using this index.
     subobject_type_id = fuzzerutil::WalkOneCompositeTypeIndex(
-        context, subobject_type_id, index_value);
+        ir_context, subobject_type_id, index_value);
   }
   // The access chain's result type is a pointer to the composite component that
   // was reached after following all indices.  The storage class is that of the
   // original pointer.
   uint32_t result_type = fuzzerutil::MaybeGetPointerType(
-      context, subobject_type_id,
+      ir_context, subobject_type_id,
       static_cast<SpvStorageClass>(pointer_type->GetSingleWordInOperand(0)));
 
   // Add the access chain instruction to the module, and update the module's id
   // bound.
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
-  FindInstruction(message_.instruction_to_insert_before(), context)
-      ->InsertBefore(
-          MakeUnique<opt::Instruction>(context, SpvOpAccessChain, result_type,
-                                       message_.fresh_id(), operands));
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
+  FindInstruction(message_.instruction_to_insert_before(), ir_context)
+      ->InsertBefore(MakeUnique<opt::Instruction>(
+          ir_context, SpvOpAccessChain, result_type, message_.fresh_id(),
+          operands));
 
   // Conservatively invalidate all analyses.
-  context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
 
   // If the base pointer's pointee value was irrelevant, the same is true of the
   // pointee value of the result of this access chain.
-  if (fact_manager->PointeeValueIsIrrelevant(message_.pointer_id())) {
-    fact_manager->AddFactValueOfPointeeIsIrrelevant(message_.fresh_id());
+  if (transformation_context->GetFactManager()->PointeeValueIsIrrelevant(
+          message_.pointer_id())) {
+    transformation_context->GetFactManager()->AddFactValueOfPointeeIsIrrelevant(
+        message_.fresh_id());
   }
 }
 
@@ -194,8 +196,8 @@ protobufs::Transformation TransformationAccessChain::ToMessage() const {
 }
 
 std::pair<bool, uint32_t> TransformationAccessChain::GetIndexValue(
-    opt::IRContext* context, uint32_t index_id) const {
-  auto index_instruction = context->get_def_use_mgr()->GetDef(index_id);
+    opt::IRContext* ir_context, uint32_t index_id) const {
+  auto index_instruction = ir_context->get_def_use_mgr()->GetDef(index_id);
   if (!index_instruction || !spvOpcodeIsConstant(index_instruction->opcode())) {
     // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3179) We could
     //  allow non-constant indices when looking up non-structs, using clamping
@@ -203,7 +205,7 @@ std::pair<bool, uint32_t> TransformationAccessChain::GetIndexValue(
     return {false, 0};
   }
   auto index_type =
-      context->get_def_use_mgr()->GetDef(index_instruction->type_id());
+      ir_context->get_def_use_mgr()->GetDef(index_instruction->type_id());
   if (index_type->opcode() != SpvOpTypeInt ||
       index_type->GetSingleWordInOperand(0) != 32) {
     return {false, 0};

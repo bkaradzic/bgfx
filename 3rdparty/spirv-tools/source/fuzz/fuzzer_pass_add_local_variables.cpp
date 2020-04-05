@@ -22,55 +22,56 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassAddLocalVariables::FuzzerPassAddLocalVariables(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassAddLocalVariables::~FuzzerPassAddLocalVariables() = default;
 
 void FuzzerPassAddLocalVariables::Apply() {
-  auto base_type_ids_and_pointers =
-      GetAvailableBaseTypesAndPointers(SpvStorageClassFunction);
+  auto basic_type_ids_and_pointers =
+      GetAvailableBasicTypesAndPointers(SpvStorageClassFunction);
 
-  // These are the base types that are available to this fuzzer pass.
-  auto& base_types = base_type_ids_and_pointers.first;
+  // These are the basic types that are available to this fuzzer pass.
+  auto& basic_types = basic_type_ids_and_pointers.first;
 
-  // These are the pointers to those base types that are *initially* available
+  // These are the pointers to those basic types that are *initially* available
   // to the fuzzer pass.  The fuzzer pass might add pointer types in cases where
-  // none are available for a given base type.
-  auto& base_type_to_pointers = base_type_ids_and_pointers.second;
+  // none are available for a given basic type.
+  auto& basic_type_to_pointers = basic_type_ids_and_pointers.second;
 
   // Consider every function in the module.
   for (auto& function : *GetIRContext()->module()) {
     // Probabilistically keep adding random variables to this function.
     while (GetFuzzerContext()->ChoosePercentage(
         GetFuzzerContext()->GetChanceOfAddingLocalVariable())) {
-      // Choose a random base type; the new variable's type will be a pointer to
-      // this base type.
-      uint32_t base_type =
-          base_types[GetFuzzerContext()->RandomIndex(base_types)];
+      // Choose a random basic type; the new variable's type will be a pointer
+      // to this basic type.
+      uint32_t basic_type =
+          basic_types[GetFuzzerContext()->RandomIndex(basic_types)];
       uint32_t pointer_type;
-      std::vector<uint32_t>& available_pointers_to_base_type =
-          base_type_to_pointers.at(base_type);
-      // Determine whether there is at least one pointer to this base type.
-      if (available_pointers_to_base_type.empty()) {
+      std::vector<uint32_t>& available_pointers_to_basic_type =
+          basic_type_to_pointers.at(basic_type);
+      // Determine whether there is at least one pointer to this basic type.
+      if (available_pointers_to_basic_type.empty()) {
         // There is not.  Make one, to use here, and add it to the available
-        // pointers for the base type so that future variables can potentially
+        // pointers for the basic type so that future variables can potentially
         // use it.
         pointer_type = GetFuzzerContext()->GetFreshId();
         ApplyTransformation(TransformationAddTypePointer(
-            pointer_type, SpvStorageClassFunction, base_type));
-        available_pointers_to_base_type.push_back(pointer_type);
+            pointer_type, SpvStorageClassFunction, basic_type));
+        available_pointers_to_basic_type.push_back(pointer_type);
       } else {
         // There is - grab one.
         pointer_type =
-            available_pointers_to_base_type[GetFuzzerContext()->RandomIndex(
-                available_pointers_to_base_type)];
+            available_pointers_to_basic_type[GetFuzzerContext()->RandomIndex(
+                available_pointers_to_basic_type)];
       }
       ApplyTransformation(TransformationAddLocalVariable(
           GetFuzzerContext()->GetFreshId(), pointer_type, function.result_id(),
-          FindOrCreateZeroConstant(base_type), true));
+          FindOrCreateZeroConstant(basic_type), true));
     }
   }
 }

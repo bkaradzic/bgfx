@@ -35,18 +35,19 @@ TransformationSplitBlock::TransformationSplitBlock(
 }
 
 bool TransformationSplitBlock::IsApplicable(
-    opt::IRContext* context, const FactManager& /*unused*/) const {
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     // We require the id for the new block to be unused.
     return false;
   }
   auto instruction_to_split_before =
-      FindInstruction(message_.instruction_to_split_before(), context);
+      FindInstruction(message_.instruction_to_split_before(), ir_context);
   if (!instruction_to_split_before) {
     // The instruction describing the block we should split does not exist.
     return false;
   }
-  auto block_to_split = context->get_instr_block(instruction_to_split_before);
+  auto block_to_split =
+      ir_context->get_instr_block(instruction_to_split_before);
   assert(block_to_split &&
          "We should not have managed to find the "
          "instruction if it was not contained in a block.");
@@ -79,12 +80,13 @@ bool TransformationSplitBlock::IsApplicable(
            split_before->NumInOperands() != 2);
 }
 
-void TransformationSplitBlock::Apply(opt::IRContext* context,
-                                     FactManager* fact_manager) const {
+void TransformationSplitBlock::Apply(
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
   opt::Instruction* instruction_to_split_before =
-      FindInstruction(message_.instruction_to_split_before(), context);
+      FindInstruction(message_.instruction_to_split_before(), ir_context);
   opt::BasicBlock* block_to_split =
-      context->get_instr_block(instruction_to_split_before);
+      ir_context->get_instr_block(instruction_to_split_before);
   auto split_before = fuzzerutil::GetIteratorForInstruction(
       block_to_split, instruction_to_split_before);
   assert(split_before != block_to_split->end() &&
@@ -93,14 +95,14 @@ void TransformationSplitBlock::Apply(opt::IRContext* context,
 
   // We need to make sure the module's id bound is large enough to add the
   // fresh id.
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
   // Split the block.
-  auto new_bb = block_to_split->SplitBasicBlock(context, message_.fresh_id(),
+  auto new_bb = block_to_split->SplitBasicBlock(ir_context, message_.fresh_id(),
                                                 split_before);
   // The split does not automatically add a branch between the two parts of
   // the original block, so we add one.
   block_to_split->AddInstruction(MakeUnique<opt::Instruction>(
-      context, SpvOpBranch, 0, 0,
+      ir_context, SpvOpBranch, 0, 0,
       std::initializer_list<opt::Operand>{opt::Operand(
           spv_operand_type_t::SPV_OPERAND_TYPE_ID, {message_.fresh_id()})}));
   // If we split before OpPhi instructions, we need to update their
@@ -117,12 +119,15 @@ void TransformationSplitBlock::Apply(opt::IRContext* context,
 
   // If the block being split was dead, the new block arising from the split is
   // also dead.
-  if (fact_manager->BlockIsDead(block_to_split->id())) {
-    fact_manager->AddFactBlockIsDead(message_.fresh_id());
+  if (transformation_context->GetFactManager()->BlockIsDead(
+          block_to_split->id())) {
+    transformation_context->GetFactManager()->AddFactBlockIsDead(
+        message_.fresh_id());
   }
 
   // Invalidate all analyses
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationSplitBlock::ToMessage() const {

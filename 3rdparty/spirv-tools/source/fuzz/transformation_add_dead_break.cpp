@@ -14,8 +14,8 @@
 
 #include "source/fuzz/transformation_add_dead_break.h"
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/fuzzer_util.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/basic_block.h"
 #include "source/opt/ir_context.h"
 #include "source/opt/struct_cfg_analysis.h"
@@ -39,7 +39,7 @@ TransformationAddDeadBreak::TransformationAddDeadBreak(
 }
 
 bool TransformationAddDeadBreak::AddingBreakRespectsStructuredControlFlow(
-    opt::IRContext* context, opt::BasicBlock* bb_from) const {
+    opt::IRContext* ir_context, opt::BasicBlock* bb_from) const {
   // Look at the structured control flow associated with |from_block| and
   // check whether it is contained in an appropriate construct with merge id
   // |to_block| such that a break from |from_block| to |to_block| is legal.
@@ -70,7 +70,7 @@ bool TransformationAddDeadBreak::AddingBreakRespectsStructuredControlFlow(
   // structured control flow construct.
 
   auto containing_construct =
-      context->GetStructuredCFGAnalysis()->ContainingConstruct(
+      ir_context->GetStructuredCFGAnalysis()->ContainingConstruct(
           message_.from_block());
   if (!containing_construct) {
     // |from_block| is not in a construct from which we can break.
@@ -79,7 +79,7 @@ bool TransformationAddDeadBreak::AddingBreakRespectsStructuredControlFlow(
 
   // Consider case (2)
   if (message_.to_block() ==
-      context->cfg()->block(containing_construct)->MergeBlockId()) {
+      ir_context->cfg()->block(containing_construct)->MergeBlockId()) {
     // This looks like an instance of case (2).
     // However, the structured CFG analysis regards the continue construct of a
     // loop as part of the loop, but it is not legal to jump from a loop's
@@ -90,28 +90,29 @@ bool TransformationAddDeadBreak::AddingBreakRespectsStructuredControlFlow(
     //  currently allow a dead break from a back edge block, but we could and
     //  ultimately should.
     return !fuzzerutil::BlockIsInLoopContinueConstruct(
-        context, message_.from_block(), containing_construct);
+        ir_context, message_.from_block(), containing_construct);
   }
 
   // Case (3) holds if and only if |to_block| is the merge block for this
   // innermost loop that contains |from_block|
   auto containing_loop_header =
-      context->GetStructuredCFGAnalysis()->ContainingLoop(
+      ir_context->GetStructuredCFGAnalysis()->ContainingLoop(
           message_.from_block());
   if (containing_loop_header &&
       message_.to_block() ==
-          context->cfg()->block(containing_loop_header)->MergeBlockId()) {
+          ir_context->cfg()->block(containing_loop_header)->MergeBlockId()) {
     return !fuzzerutil::BlockIsInLoopContinueConstruct(
-        context, message_.from_block(), containing_loop_header);
+        ir_context, message_.from_block(), containing_loop_header);
   }
   return false;
 }
 
 bool TransformationAddDeadBreak::IsApplicable(
-    opt::IRContext* context, const FactManager& /*unused*/) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   // First, we check that a constant with the same value as
   // |message_.break_condition_value| is present.
-  if (!fuzzerutil::MaybeGetBoolConstantId(context,
+  if (!fuzzerutil::MaybeGetBoolConstantId(ir_context,
                                           message_.break_condition_value())) {
     // The required constant is not present, so the transformation cannot be
     // applied.
@@ -121,17 +122,17 @@ bool TransformationAddDeadBreak::IsApplicable(
   // Check that |message_.from_block| and |message_.to_block| really are block
   // ids
   opt::BasicBlock* bb_from =
-      fuzzerutil::MaybeFindBlock(context, message_.from_block());
+      fuzzerutil::MaybeFindBlock(ir_context, message_.from_block());
   if (bb_from == nullptr) {
     return false;
   }
   opt::BasicBlock* bb_to =
-      fuzzerutil::MaybeFindBlock(context, message_.to_block());
+      fuzzerutil::MaybeFindBlock(ir_context, message_.to_block());
   if (bb_to == nullptr) {
     return false;
   }
 
-  if (!fuzzerutil::BlockIsReachableInItsFunction(context, bb_to)) {
+  if (!fuzzerutil::BlockIsReachableInItsFunction(ir_context, bb_to)) {
     // If the target of the break is unreachable, we conservatively do not
     // allow adding a dead break, to avoid the compilations that arise due to
     // the lack of sensible dominance information for unreachable blocks.
@@ -157,14 +158,14 @@ bool TransformationAddDeadBreak::IsApplicable(
       "The id of the block we found should match the target id for the break.");
 
   // Check whether the data passed to extend OpPhi instructions is appropriate.
-  if (!fuzzerutil::PhiIdsOkForNewEdge(context, bb_from, bb_to,
+  if (!fuzzerutil::PhiIdsOkForNewEdge(ir_context, bb_from, bb_to,
                                       message_.phi_id())) {
     return false;
   }
 
   // Check that adding the break would respect the rules of structured
   // control flow.
-  if (!AddingBreakRespectsStructuredControlFlow(context, bb_from)) {
+  if (!AddingBreakRespectsStructuredControlFlow(ir_context, bb_from)) {
     return false;
   }
 
@@ -177,16 +178,18 @@ bool TransformationAddDeadBreak::IsApplicable(
   // being places on the validator.  This should be revisited if we are sure
   // the validator is complete with respect to checking structured control flow
   // rules.
-  auto cloned_context = fuzzerutil::CloneIRContext(context);
+  auto cloned_context = fuzzerutil::CloneIRContext(ir_context);
   ApplyImpl(cloned_context.get());
-  return fuzzerutil::IsValid(cloned_context.get());
+  return fuzzerutil::IsValid(cloned_context.get(),
+                             transformation_context.GetValidatorOptions());
 }
 
-void TransformationAddDeadBreak::Apply(opt::IRContext* context,
-                                       FactManager* /*unused*/) const {
-  ApplyImpl(context);
+void TransformationAddDeadBreak::Apply(
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
+  ApplyImpl(ir_context);
   // Invalidate all analyses
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationAddDeadBreak::ToMessage() const {
@@ -196,10 +199,10 @@ protobufs::Transformation TransformationAddDeadBreak::ToMessage() const {
 }
 
 void TransformationAddDeadBreak::ApplyImpl(
-    spvtools::opt::IRContext* context) const {
+    spvtools::opt::IRContext* ir_context) const {
   fuzzerutil::AddUnreachableEdgeAndUpdateOpPhis(
-      context, context->cfg()->block(message_.from_block()),
-      context->cfg()->block(message_.to_block()),
+      ir_context, ir_context->cfg()->block(message_.from_block()),
+      ir_context->cfg()->block(message_.to_block()),
       message_.break_condition_value(), message_.phi_id());
 }
 

@@ -40,17 +40,17 @@ TransformationPermuteFunctionParameters::
 }
 
 bool TransformationPermuteFunctionParameters::IsApplicable(
-    opt::IRContext* context, const FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // Check that function exists
   const auto* function =
-      fuzzerutil::FindFunction(context, message_.function_id());
+      fuzzerutil::FindFunction(ir_context, message_.function_id());
   if (!function || function->DefInst().opcode() != SpvOpFunction ||
-      fuzzerutil::FunctionIsEntryPoint(context, function->result_id())) {
+      fuzzerutil::FunctionIsEntryPoint(ir_context, function->result_id())) {
     return false;
   }
 
   // Check that permutation has valid indices
-  const auto* function_type = fuzzerutil::GetFunctionType(context, function);
+  const auto* function_type = fuzzerutil::GetFunctionType(ir_context, function);
   assert(function_type && "Function type is null");
 
   const auto& permutation = message_.permutation();
@@ -83,7 +83,7 @@ bool TransformationPermuteFunctionParameters::IsApplicable(
   //   - Has the same result type as the old one
   //   - Order of arguments is permuted
   auto new_type_id = message_.new_type_id();
-  const auto* new_type = context->get_def_use_mgr()->GetDef(new_type_id);
+  const auto* new_type = ir_context->get_def_use_mgr()->GetDef(new_type_id);
 
   if (!new_type || new_type->opcode() != SpvOpTypeFunction ||
       new_type->NumInOperands() != function_type->NumInOperands()) {
@@ -109,14 +109,14 @@ bool TransformationPermuteFunctionParameters::IsApplicable(
 }
 
 void TransformationPermuteFunctionParameters::Apply(
-    opt::IRContext* context, FactManager* /*unused*/) const {
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
   // Retrieve all data from the message
   uint32_t function_id = message_.function_id();
   uint32_t new_type_id = message_.new_type_id();
   const auto& permutation = message_.permutation();
 
   // Find the function that will be transformed
-  auto* function = fuzzerutil::FindFunction(context, function_id);
+  auto* function = fuzzerutil::FindFunction(ir_context, function_id);
   assert(function && "Can't find the function");
 
   // Change function's type
@@ -149,7 +149,7 @@ void TransformationPermuteFunctionParameters::Apply(
       });
 
   // Fix all OpFunctionCall instructions
-  context->get_def_use_mgr()->ForEachUser(
+  ir_context->get_def_use_mgr()->ForEachUser(
       &function->DefInst(),
       [function_id, &permutation](opt::Instruction* call) {
         if (call->opcode() != SpvOpFunctionCall ||
@@ -170,7 +170,8 @@ void TransformationPermuteFunctionParameters::Apply(
       });
 
   // Make sure our changes are analyzed
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationPermuteFunctionParameters::ToMessage()

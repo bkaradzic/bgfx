@@ -38,22 +38,22 @@ TransformationCopyObject::TransformationCopyObject(
 }
 
 bool TransformationCopyObject::IsApplicable(
-    opt::IRContext* context, const FactManager& /*fact_manager*/) const {
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     // We require the id for the object copy to be unused.
     return false;
   }
   // The id of the object to be copied must exist
-  auto object_inst = context->get_def_use_mgr()->GetDef(message_.object());
+  auto object_inst = ir_context->get_def_use_mgr()->GetDef(message_.object());
   if (!object_inst) {
     return false;
   }
-  if (!fuzzerutil::CanMakeSynonymOf(context, object_inst)) {
+  if (!fuzzerutil::CanMakeSynonymOf(ir_context, object_inst)) {
     return false;
   }
 
   auto insert_before =
-      FindInstruction(message_.instruction_to_insert_before(), context);
+      FindInstruction(message_.instruction_to_insert_before(), ir_context);
   if (!insert_before) {
     // The instruction before which the copy should be inserted was not found.
     return false;
@@ -66,17 +66,18 @@ bool TransformationCopyObject::IsApplicable(
 
   // |message_object| must be available directly before the point where we want
   // to add the copy.
-  return fuzzerutil::IdIsAvailableBeforeInstruction(context, insert_before,
+  return fuzzerutil::IdIsAvailableBeforeInstruction(ir_context, insert_before,
                                                     message_.object());
 }
 
-void TransformationCopyObject::Apply(opt::IRContext* context,
-                                     FactManager* fact_manager) const {
-  auto object_inst = context->get_def_use_mgr()->GetDef(message_.object());
+void TransformationCopyObject::Apply(
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
+  auto object_inst = ir_context->get_def_use_mgr()->GetDef(message_.object());
   assert(object_inst && "The object to be copied must exist.");
   auto insert_before_inst =
-      FindInstruction(message_.instruction_to_insert_before(), context);
-  auto destination_block = context->get_instr_block(insert_before_inst);
+      FindInstruction(message_.instruction_to_insert_before(), ir_context);
+  auto destination_block = ir_context->get_instr_block(insert_before_inst);
   assert(destination_block && "The base instruction must be in a block.");
   auto insert_before = fuzzerutil::GetIteratorForInstruction(
       destination_block, insert_before_inst);
@@ -86,18 +87,21 @@ void TransformationCopyObject::Apply(opt::IRContext* context,
   opt::Instruction::OperandList operands = {
       {SPV_OPERAND_TYPE_ID, {message_.object()}}};
   insert_before->InsertBefore(MakeUnique<opt::Instruction>(
-      context, SpvOp::SpvOpCopyObject, object_inst->type_id(),
+      ir_context, SpvOp::SpvOpCopyObject, object_inst->type_id(),
       message_.fresh_id(), operands));
 
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 
-  fact_manager->AddFactDataSynonym(MakeDataDescriptor(message_.object(), {}),
-                                   MakeDataDescriptor(message_.fresh_id(), {}),
-                                   context);
+  transformation_context->GetFactManager()->AddFactDataSynonym(
+      MakeDataDescriptor(message_.object(), {}),
+      MakeDataDescriptor(message_.fresh_id(), {}), ir_context);
 
-  if (fact_manager->PointeeValueIsIrrelevant(message_.object())) {
-    fact_manager->AddFactValueOfPointeeIsIrrelevant(message_.fresh_id());
+  if (transformation_context->GetFactManager()->PointeeValueIsIrrelevant(
+          message_.object())) {
+    transformation_context->GetFactManager()->AddFactValueOfPointeeIsIrrelevant(
+        message_.fresh_id());
   }
 }
 
