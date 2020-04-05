@@ -219,9 +219,13 @@ MESHOPTIMIZER_API int meshopt_decodeVertexBuffer(void* destination, size_t verte
  *
  * meshopt_decodeFilterQuat decodes 3-component quaternion encoding with K-bit (4 <= K <= 16) component encoding and a 2-bit component index indicating which component to reconstruct.
  * Each component is stored as an 16-bit integer; stride must be equal to 8.
+ *
+ * meshopt_decodeFilterExp decodes exponential encoding of floating-point data with 8-bit exponent and 24-bit integer mantissa as 2^E*M.
+ * Each 32-bit component is decoded in isolation; stride must be divisible by 4.
  */
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_decodeFilterOct(void* buffer, size_t vertex_count, size_t vertex_size);
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_decodeFilterQuat(void* buffer, size_t vertex_count, size_t vertex_size);
+MESHOPTIMIZER_EXPERIMENTAL void meshopt_decodeFilterExp(void* buffer, size_t vertex_count, size_t vertex_size);
 
 /**
  * Experimental: Mesh simplifier

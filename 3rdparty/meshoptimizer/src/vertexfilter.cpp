@@ -96,6 +96,29 @@ static void decodeFilterQuat(short* data, size_t count)
 		data[i * 4 + order[qc][3]] = short(wf);
 	}
 }
+
+static void decodeFilterExp(unsigned int* data, size_t count)
+{
+	for (size_t i = 0; i < count; ++i)
+	{
+		unsigned int v = data[i];
+
+		// decode mantissa and exponent
+		int m = int(v << 8) >> 8;
+		int e = int(v) >> 24;
+
+		union {
+			float f;
+			unsigned int ui;
+		} u;
+
+		// optimized version of ldexp(float(m), e)
+		u.ui = unsigned(e + 127) << 23;
+		u.f = u.f * float(m);
+
+		data[i] = u.ui;
+	}
+}
 #endif
 
 #ifdef SIMD_WASM
@@ -277,6 +300,26 @@ static void decodeFilterQuatSimd(short* data, size_t count)
 		out[3] = __builtin_rotateleft64(wasm_i64x2_extract_lane(res_1, 1), wasm_i32x4_extract_lane(cm, 3));
 	}
 }
+
+static void decodeFilterExpSimd(unsigned int* data, size_t count)
+{
+	for (size_t i = 0; i < count; i += 4)
+	{
+		v128_t v = wasm_v128_load(&data[i]);
+
+		// decode exponent into 2^x directly
+		v128_t ef = wasm_i32x4_shr(v, 24);
+		v128_t es = wasm_i32x4_shl(wasm_i32x4_add(ef, wasm_i32x4_splat(127)), 23);
+
+		// decode 24-bit mantissa into floating-point value
+		v128_t mf = wasm_i32x4_shr(wasm_i32x4_shl(v, 8), 8);
+		v128_t m = wasm_f32x4_convert_i32x4(mf);
+
+		v128_t r = wasm_f32x4_mul(es, m);
+
+		wasm_v128_store(&data[i], r);
+	}
+}
 #endif
 
 } // namespace meshopt
@@ -313,6 +356,20 @@ void meshopt_decodeFilterQuat(void* buffer, size_t vertex_count, size_t vertex_s
 	decodeFilterQuatSimd(static_cast<short*>(buffer), vertex_count);
 #else
 	decodeFilterQuat(static_cast<short*>(buffer), vertex_count);
+#endif
+}
+
+void meshopt_decodeFilterExp(void* buffer, size_t vertex_count, size_t vertex_size)
+{
+	using namespace meshopt;
+
+	assert(vertex_count % 4 == 0);
+	assert(vertex_size % 4 == 0);
+
+#if defined(SIMD_WASM)
+	decodeFilterExpSimd(static_cast<unsigned int*>(buffer), vertex_count * (vertex_size / 4));
+#else
+	decodeFilterExp(static_cast<unsigned int*>(buffer), vertex_count * (vertex_size / 4));
 #endif
 }
 
