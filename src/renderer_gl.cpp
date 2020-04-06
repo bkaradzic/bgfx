@@ -1207,7 +1207,7 @@ private:
 	}
 	static void GlUniform4f(uint32_t loc, float x, float y, float z, float w)
 	{
-		f4 f; f4.x = x; f4.y = y; f4.z = z; f4.w = w;
+		f4 f; f.val[0] = x; f.val[1] = y; f.val[2] = z; f.val[3] = w;
 		if (uniform4fCache(loc, f)) GL_CHECK(glUniform4f(loc, x, y, z, w));
 	}
 	static void GlUniform4fv(uint32_t loc, int num, const float *data)
