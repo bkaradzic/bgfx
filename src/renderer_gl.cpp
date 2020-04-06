@@ -1207,8 +1207,8 @@ private:
 	}
 	static void GlUniform4f(uint32_t loc, float x, float y, float z, float w)
 	{
-		f4 f = (f4){ x, y, z, w };
-		if (uniform4fCache(loc, f)) GL_CHECK(glUniform4f(loc, x, y, z, w) );
+		f4 f; f4.x = x; f4.y = y; f4.z = z; f4.w = w;
+		if (uniform4fCache(loc, f)) GL_CHECK(glUniform4f(loc, x, y, z, w));
 	}
 	static void GlUniform4fv(uint32_t loc, int num, const float *data)
 	{
@@ -3625,7 +3625,6 @@ private:
 			GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
 
 			ProgramGL& program = m_program[_blitter.m_program.idx];
-
 			GlUseProgram(program.m_id);
 			GlUniform1i(program.m_sampler[0].loc, 0);
 

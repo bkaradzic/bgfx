@@ -205,6 +205,7 @@ typedef void           (GL_APIENTRYP PFNGLUNIFORM1IVPROC) (GLint location, GLsiz
 typedef void           (GL_APIENTRYP PFNGLUNIFORM2FVPROC) (GLint location, GLsizei count, const GLfloat *value);
 typedef void           (GL_APIENTRYP PFNGLUNIFORM3FVPROC) (GLint location, GLsizei count, const GLfloat *value);
 typedef void           (GL_APIENTRYP PFNGLUNIFORM4FVPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void           (GL_APIENTRYP PFNGLUNIFORM4FPROC) (GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 typedef void           (GL_APIENTRYP PFNGLUNIFORMMATRIX3FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 typedef void           (GL_APIENTRYP PFNGLUNIFORMMATRIX4FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 typedef void           (GL_APIENTRYP PFNGLUSEPROGRAMPROC) (GLuint program);
@@ -402,6 +403,7 @@ GL_IMPORT______(false, PFNGLUNIFORM1FVPROC,                        glUniform1fv)
 GL_IMPORT______(false, PFNGLUNIFORM2FVPROC,                        glUniform2fv);
 GL_IMPORT______(false, PFNGLUNIFORM3FVPROC,                        glUniform3fv);
 GL_IMPORT______(false, PFNGLUNIFORM4FVPROC,                        glUniform4fv);
+GL_IMPORT______(false, PFNGLUNIFORM4FPROC,                         glUniform4f);
 GL_IMPORT______(false, PFNGLUNIFORMMATRIX3FVPROC,                  glUniformMatrix3fv);
 GL_IMPORT______(false, PFNGLUNIFORMMATRIX4FVPROC,                  glUniformMatrix4fv);
 GL_IMPORT______(false, PFNGLUSEPROGRAMPROC,                        glUseProgram);
