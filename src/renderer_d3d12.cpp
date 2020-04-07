@@ -5107,7 +5107,7 @@ namespace bgfx { namespace d3d12
 
 #if BX_PLATFORM_WINDOWS
 		SwapChainDesc scd;
-		bx::memCopy(&scd, &s_renderD3D12->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
+		bx::memCopy(&scd, &s_renderD3D12->m_scd, sizeof(SwapChainDesc) );
 		scd.format     = TextureFormat::Count == _format ? scd.format : s_textureFormat[_format].m_fmt;
 		scd.width      = _width;
 		scd.height     = _height;
