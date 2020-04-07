@@ -83,7 +83,9 @@ namespace bgfx
 		};
 	};
 
-	/// Vertex attribute enum.
+	/// Vertex attribute enum. 
+	///
+	/// Colors are ordered ABGR.
 	///
 	/// @attention C99 equivalent is `bgfx_attrib_t`.
 	///
