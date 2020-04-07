@@ -1092,144 +1092,84 @@ namespace bgfx { namespace gl
 		GL_CHECK(glUseProgram(program) );
 	}
 
+	struct f4 { float val[4]; bool operator ==(const f4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1]; }};
+	struct f3x3 { float val[9]; bool operator ==(const f3x3 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && ((const uint32_t*)a)[8] == ((const uint32_t*)b)[8]; }};
+	struct f4x4 { float val[16]; bool operator ==(const f4x4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && a[4] == b[4] && a[5] == b[5] && a[6] == b[6] && a[7] == b[7]; }};
+
+	// Inserts the new value into the uniform cache, and returns true
+	// if the old value was different than the new one.
 	template<typename T>
-	class TinyHashMap
+	static bool updateUniformCache(uint32_t loc, const T &value)
 	{
-		struct KeyVal
-		{
-			uint64_t key;
-			T value;
-		};
-		KeyVal *table;
-		uint32_t capacityMask;
-		uint32_t size;
+		// Uniform state cache for various types.
+		static tinystl::unordered_map<uint64_t, T> uniformCacheMap;
 
-	public:
-		TinyHashMap()
-		:table(0), capacityMask(0), size(0)
+		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
+
+		auto iter = uniformCacheMap.find(key);
+		// Not found in the cache? Add it.
+		if (iter == uniformCacheMap.end())
 		{
-			Reserve();
+			uniformCacheMap[key] = value;
+			return true;
 		}
-
-		~TinyHashMap()
+		// Value in the cache was the same as new state? Skip reuploading this state.
+		if (iter->second == value)
 		{
-			delete[] table;
-		}
-
-		void Reserve()
-		{
-			uint32_t oldCapacity = capacityMask > 0 ? capacityMask + 1 : 0;
-			KeyVal *oldTable = table;
-
-			capacityMask = capacityMask >= 15 ? (capacityMask + 1) * 2 - 1 : 15;
-			table = new KeyVal[capacityMask+1];
-			memset(table, 0, sizeof(KeyVal)*(capacityMask+1));
-			size = 0;
-
-			for(uint32_t i = 0; i < oldCapacity; ++i)
-			{
-				if (oldTable[i].key)
-					Insert(oldTable[i].key, oldTable[i].value);
-			}
-			delete[] oldTable;
-		}
-
-		uint32_t Hash(uint64_t key)
-		{
-			return (uint32_t)((key * 7974849978084966079ull/*prime*/) & capacityMask);
-		}
-
-		bool Insert(uint64_t key, const T &val)
-		{
-			uint32_t index = Hash(key);
-			for(int i = 0; i <= capacityMask; ++i)
-			{
-				// Linear probing
-				uint32_t probeIndex = (index + i) & capacityMask;
-
-				if (table[probeIndex].key == key)
-				{
-					bool identical = (table[probeIndex].value == val);
-					if (identical)
-						return false;
-					table[probeIndex].value = val;
-					return true;
-				}
-				else if (!table[probeIndex].key)
-				{
-					table[probeIndex].key = key;
-					table[probeIndex].value = val;
-					++size;
-					// Keep 25% occupancy
-					if ((size + 1) << 2 > capacityMask)
-						Reserve();
-					return true;
-				}
-			}
-			BX_CHECK(false, "This code location should be unreachable!");
 			return false;
 		}
-private:
-		TinyHashMap(const TinyHashMap &) = delete;
-		void operator =(const TinyHashMap &) = delete;
-	};
-
-	static TinyHashMap<int> uniform1iCacheMap;
-	static bool uniform1iCache(uint32_t loc, int value)
-	{
-		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
-		return uniform1iCacheMap.Insert(key, value);
+		iter->second = value;
+		return true;
 	}
+
+	// Cache uniform uploads to avoid redundant uploading of state that is
+	// already set to a shader program
 	static void GlUniform1i(uint32_t loc, int value)
 	{
-		if (uniform1iCache(loc, value)) GL_CHECK(glUniform1i(loc, value) );
+		if (updateUniformCache(loc, value))
+		{
+			GL_CHECK(glUniform1i(loc, value) );
+		}
 	}
 	static void GlUniform1iv(uint32_t loc, int num, const int *data)
 	{
 		bool changed = false;
 		for(int i = 0; i < num; ++i)
 		{
-			if (uniform1iCache(loc+i, data[i]))
+			if (updateUniformCache(loc+i, data[i]))
 			{
 				changed = true;
 			}
 		}
 		if (changed)
+		{
 			GL_CHECK(glUniform1iv(loc, num, data) );
+		}
 	}
 
-	struct f4 { float val[4]; bool operator ==(const f4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1]; }};
-	static TinyHashMap<f4> uniform4fCacheMap;
-	static bool uniform4fCache(uint32_t loc, const f4 &value)
-	{
-		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
-		return uniform4fCacheMap.Insert(key, value);
-	}
 	static void GlUniform4f(uint32_t loc, float x, float y, float z, float w)
 	{
 		f4 f; f.val[0] = x; f.val[1] = y; f.val[2] = z; f.val[3] = w;
-		if (uniform4fCache(loc, f)) GL_CHECK(glUniform4f(loc, x, y, z, w));
+		if (updateUniformCache(loc, f))
+		{
+			GL_CHECK(glUniform4f(loc, x, y, z, w));
+		}
 	}
+
 	static void GlUniform4fv(uint32_t loc, int num, const float *data)
 	{
 		bool changed = false;
 		for(int i = 0; i < num; ++i)
 		{
-			if (uniform4fCache(loc+i, *(const f4*)&data[4*i]))
+			if (updateUniformCache(loc+i, *(const f4*)&data[4*i]))
 			{
 				changed = true;
 			}
 		}
 		if (changed)
+		{
 			GL_CHECK(glUniform4fv(loc, num, data) );
-	}
-
-	struct f3x3 { float val[9]; bool operator ==(const f3x3 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && ((const uint32_t*)a)[8] == ((const uint32_t*)b)[8]; }};
-	static TinyHashMap<f3x3> uniformMatrix3fCacheMap;
-	static bool uniformMatrix3fvCache(uint32_t loc, const f3x3 &value)
-	{
-		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
-		return uniformMatrix3fCacheMap.Insert(key, value);
+		}
 	}
 
 	static void GlUniformMatrix3fv(uint32_t loc, int num, GLboolean transpose, const float *data)
@@ -1237,21 +1177,15 @@ private:
 		bool changed = false;
 		for(int i = 0; i < num; ++i)
 		{
-			if (uniformMatrix3fvCache(loc+i, *(const f3x3*)&data[9*i]))
+			if (updateUniformCache(loc+i, *(const f3x3*)&data[9*i]))
 			{
 				changed = true;
 			}
 		}
 		if (changed)
+		{
 			GL_CHECK(glUniformMatrix3fv(loc, num, transpose, data) );
-	}
-
-	struct f4x4 { float val[16]; bool operator ==(const f4x4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && a[4] == b[4] && a[5] == b[5] && a[6] == b[6] && a[7] == b[7]; }};
-	static TinyHashMap<f4x4> uniformMatrix4fCacheMap;
-	static bool uniformMatrix4fvCache(uint32_t loc, const f4x4 &value)
-	{
-		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
-		return uniformMatrix4fCacheMap.Insert(key, value);
+		}
 	}
 
 	static void GlUniformMatrix4fv(uint32_t loc, int num, GLboolean transpose, const float *data)
@@ -1259,13 +1193,15 @@ private:
 		bool changed = false;
 		for(int i = 0; i < num; ++i)
 		{
-			if (uniformMatrix4fvCache(loc+i, *(const f4x4*)&data[16*i]))
+			if (updateUniformCache(loc+i, *(const f4x4*)&data[16*i]))
 			{
 				changed = true;
 			}
 		}
 		if (changed)
+		{
 			GL_CHECK(glUniformMatrix4fv(loc, num, transpose, data) );
+		}
 	}
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
