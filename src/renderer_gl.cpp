@@ -1085,48 +1085,21 @@ namespace bgfx { namespace gl
 	{
 	}
 
-	static GLuint currentProgram = 0;
+	// Keep a global access to the currently active uniform state cache so that
+	// individual GL functions can stay at global scope.
+	static UniformStateCache *s_currentUniformStateCache = 0;
+
 	static void GlUseProgram(GLuint program)
 	{
-		currentProgram = program;
+		s_currentUniformStateCache->saveCurrentProgram(program);
 		GL_CHECK(glUseProgram(program) );
-	}
-
-	struct f4 { float val[4]; bool operator ==(const f4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1]; }};
-	struct f3x3 { float val[9]; bool operator ==(const f3x3 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && ((const uint32_t*)a)[8] == ((const uint32_t*)b)[8]; }};
-	struct f4x4 { float val[16]; bool operator ==(const f4x4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && a[4] == b[4] && a[5] == b[5] && a[6] == b[6] && a[7] == b[7]; }};
-
-	// Inserts the new value into the uniform cache, and returns true
-	// if the old value was different than the new one.
-	template<typename T>
-	static bool updateUniformCache(uint32_t loc, const T &value)
-	{
-		// Uniform state cache for various types.
-		static tinystl::unordered_map<uint64_t, T> uniformCacheMap;
-
-		uint64_t key = ((uint64_t)currentProgram << 32) | loc;
-
-		auto iter = uniformCacheMap.find(key);
-		// Not found in the cache? Add it.
-		if (iter == uniformCacheMap.end())
-		{
-			uniformCacheMap[key] = value;
-			return true;
-		}
-		// Value in the cache was the same as new state? Skip reuploading this state.
-		if (iter->second == value)
-		{
-			return false;
-		}
-		iter->second = value;
-		return true;
 	}
 
 	// Cache uniform uploads to avoid redundant uploading of state that is
 	// already set to a shader program
 	static void GlUniform1i(uint32_t loc, int value)
 	{
-		if (updateUniformCache(loc, value))
+		if (s_currentUniformStateCache->updateUniformCache(loc, value))
 		{
 			GL_CHECK(glUniform1i(loc, value) );
 		}
@@ -1136,7 +1109,7 @@ namespace bgfx { namespace gl
 		bool changed = false;
 		for(int i = 0; i < num; ++i)
 		{
-			if (updateUniformCache(loc+i, data[i]))
+			if (s_currentUniformStateCache->updateUniformCache(loc+i, data[i]))
 			{
 				changed = true;
 			}
@@ -1149,8 +1122,8 @@ namespace bgfx { namespace gl
 
 	static void GlUniform4f(uint32_t loc, float x, float y, float z, float w)
 	{
-		f4 f; f.val[0] = x; f.val[1] = y; f.val[2] = z; f.val[3] = w;
-		if (updateUniformCache(loc, f))
+		UniformStateCache::f4 f; f.val[0] = x; f.val[1] = y; f.val[2] = z; f.val[3] = w;
+		if (s_currentUniformStateCache->updateUniformCache(loc, f))
 		{
 			GL_CHECK(glUniform4f(loc, x, y, z, w));
 		}
@@ -1161,7 +1134,7 @@ namespace bgfx { namespace gl
 		bool changed = false;
 		for(int i = 0; i < num; ++i)
 		{
-			if (updateUniformCache(loc+i, *(const f4*)&data[4*i]))
+			if (s_currentUniformStateCache->updateUniformCache(loc+i, *(const UniformStateCache::f4*)&data[4*i]))
 			{
 				changed = true;
 			}
@@ -1177,7 +1150,7 @@ namespace bgfx { namespace gl
 		bool changed = false;
 		for(int i = 0; i < num; ++i)
 		{
-			if (updateUniformCache(loc+i, *(const f3x3*)&data[9*i]))
+			if (s_currentUniformStateCache->updateUniformCache(loc+i, *(const UniformStateCache::f3x3*)&data[9*i]))
 			{
 				changed = true;
 			}
@@ -1193,7 +1166,7 @@ namespace bgfx { namespace gl
 		bool changed = false;
 		for(int i = 0; i < num; ++i)
 		{
-			if (updateUniformCache(loc+i, *(const f4x4*)&data[16*i]))
+			if (s_currentUniformStateCache->updateUniformCache(loc+i, *(const UniformStateCache::f4x4*)&data[16*i]))
 			{
 				changed = true;
 			}
@@ -2198,10 +2171,14 @@ namespace bgfx { namespace gl
 			, m_clearQuadDepth(BGFX_INVALID_HANDLE)
 		{
 			bx::memSet(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
+
+			s_currentUniformStateCache = &m_uniformStateCache;
 		}
 
 		~RendererContextGL()
 		{
+			if (s_currentUniformStateCache == &m_uniformStateCache)
+				s_currentUniformStateCache = 0;
 		}
 
 		bool init(const Init& _init)
@@ -4375,6 +4352,7 @@ namespace bgfx { namespace gl
 		OcclusionQueryGL m_occlusionQuery;
 
 		SamplerStateCache m_samplerStateCache;
+		UniformStateCache m_uniformStateCache;
 
 		TextVideoMem m_textVideoMem;
 		bool m_rtMsaa;
