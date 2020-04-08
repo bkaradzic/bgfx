@@ -32,6 +32,10 @@
 			|| BX_PLATFORM_WINDOWS \
 			)
 
+// Keep a state cache of GL uniform values to avoid redundant uploads
+// on the following platforms.
+#define BGFX_GL_CONFIG_UNIFORM_CACHE BX_PLATFORM_EMSCRIPTEN
+
 #define BGFX_GL_PROFILER_BEGIN(_view, _abgr)                                               \
 	BX_MACRO_BLOCK_BEGIN                                                                   \
 		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, s_viewName[view]) ); \
@@ -1221,6 +1225,69 @@ namespace bgfx { namespace gl
 #define GL_IMPORT_TYPEDEFS 1
 #define GL_IMPORT(_optional, _proto, _func, _import) extern _proto _func
 #include "glimports.h"
+
+	class UniformStateCache
+	{
+	public:
+		struct f4 { float val[4]; bool operator ==(const f4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1]; }};
+		struct f3x3 { float val[9]; bool operator ==(const f3x3 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && ((const uint32_t*)a)[8] == ((const uint32_t*)b)[8]; }};
+		struct f4x4 { float val[16]; bool operator ==(const f4x4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && a[4] == b[4] && a[5] == b[5] && a[6] == b[6] && a[7] == b[7]; }};
+
+		UniformStateCache()
+		:currentProgram(0)
+		{}
+
+		// Inserts the new value into the uniform cache, and returns true
+		// if the old value was different than the new one.
+		template<typename T>
+		bool updateUniformCache(uint32_t loc, const T &value)
+		{
+#if BGFX_GL_CONFIG_UNIFORM_CACHE
+			// Uniform state cache for various types.
+			stl::unordered_map<uint64_t, T> &uniformCacheMap = getUniformCache<T>();
+
+			uint64_t key = ((uint64_t)currentProgram << 32) | loc;
+
+			auto iter = uniformCacheMap.find(key);
+			// Not found in the cache? Add it.
+			if (iter == uniformCacheMap.end())
+			{
+				uniformCacheMap[key] = value;
+				return true;
+			}
+			// Value in the cache was the same as new state? Skip reuploading this state.
+			if (iter->second == value)
+			{
+				return false;
+			}
+			iter->second = value;
+#endif
+			return true;
+		}
+
+		void saveCurrentProgram(GLuint program)
+		{
+#if BGFX_GL_CONFIG_UNIFORM_CACHE
+			currentProgram = program;
+#endif
+		}
+
+	private:
+		GLuint currentProgram;
+
+		stl::unordered_map<uint64_t, int> uniformiCacheMap;
+		stl::unordered_map<uint64_t, f4> uniformf4CacheMap;
+		stl::unordered_map<uint64_t, f3x3> uniformf3x3CacheMap;
+		stl::unordered_map<uint64_t, f4x4> uniformf4x4CacheMap;
+
+		template<typename T>
+		stl::unordered_map<uint64_t, T> &getUniformCache();
+	};
+
+	template<> stl::unordered_map<uint64_t, int> &UniformStateCache::getUniformCache() { return uniformiCacheMap; }
+	template<> stl::unordered_map<uint64_t, UniformStateCache::f4> &UniformStateCache::getUniformCache() { return uniformf4CacheMap; }
+	template<> stl::unordered_map<uint64_t, UniformStateCache::f3x3> &UniformStateCache::getUniformCache() { return uniformf3x3CacheMap; }
+	template<> stl::unordered_map<uint64_t, UniformStateCache::f4x4> &UniformStateCache::getUniformCache() { return uniformf4x4CacheMap; }
 
 	class SamplerStateCache
 	{
