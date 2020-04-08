@@ -1281,13 +1281,13 @@ namespace bgfx { namespace gl
 		stl::unordered_map<uint64_t, f4x4> uniformf4x4CacheMap;
 
 		template<typename T>
-		stl::unordered_map<uint64_t, T> &getUniformCache();
+		inline stl::unordered_map<uint64_t, T> &getUniformCache();
 	};
 
-	template<> stl::unordered_map<uint64_t, int> &UniformStateCache::getUniformCache() { return uniformiCacheMap; }
-	template<> stl::unordered_map<uint64_t, UniformStateCache::f4> &UniformStateCache::getUniformCache() { return uniformf4CacheMap; }
-	template<> stl::unordered_map<uint64_t, UniformStateCache::f3x3> &UniformStateCache::getUniformCache() { return uniformf3x3CacheMap; }
-	template<> stl::unordered_map<uint64_t, UniformStateCache::f4x4> &UniformStateCache::getUniformCache() { return uniformf4x4CacheMap; }
+	template<> inline stl::unordered_map<uint64_t, int> &UniformStateCache::getUniformCache() { return uniformiCacheMap; }
+	template<> inline stl::unordered_map<uint64_t, UniformStateCache::f4> &UniformStateCache::getUniformCache() { return uniformf4CacheMap; }
+	template<> inline stl::unordered_map<uint64_t, UniformStateCache::f3x3> &UniformStateCache::getUniformCache() { return uniformf3x3CacheMap; }
+	template<> inline stl::unordered_map<uint64_t, UniformStateCache::f4x4> &UniformStateCache::getUniformCache() { return uniformf4x4CacheMap; }
 
 	class SamplerStateCache
 	{
