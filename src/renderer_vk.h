@@ -32,7 +32,7 @@
 
 #define VK_NO_STDINT_H
 #define VK_NO_PROTOTYPES
-#include <vulkan/vulkan.h>
+#include <vulkan-local/vulkan.h>
 #include "renderer.h"
 #include "debug_renderdoc.h"
 
