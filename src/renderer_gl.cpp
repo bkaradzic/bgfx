@@ -1085,98 +1085,6 @@ namespace bgfx { namespace gl
 	{
 	}
 
-	// Keep a global access to the currently active uniform state cache so that
-	// individual GL functions can stay at global scope.
-	static UniformStateCache *s_currentUniformStateCache = 0;
-
-	static void GlUseProgram(GLuint program)
-	{
-		s_currentUniformStateCache->saveCurrentProgram(program);
-		GL_CHECK(glUseProgram(program) );
-	}
-
-	// Cache uniform uploads to avoid redundant uploading of state that is
-	// already set to a shader program
-	static void GlUniform1i(uint32_t loc, int value)
-	{
-		if (s_currentUniformStateCache->updateUniformCache(loc, value))
-		{
-			GL_CHECK(glUniform1i(loc, value) );
-		}
-	}
-	static void GlUniform1iv(uint32_t loc, int num, const int *data)
-	{
-		bool changed = false;
-		for(int i = 0; i < num; ++i)
-		{
-			if (s_currentUniformStateCache->updateUniformCache(loc+i, data[i]))
-			{
-				changed = true;
-			}
-		}
-		if (changed)
-		{
-			GL_CHECK(glUniform1iv(loc, num, data) );
-		}
-	}
-
-	static void GlUniform4f(uint32_t loc, float x, float y, float z, float w)
-	{
-		UniformStateCache::f4 f; f.val[0] = x; f.val[1] = y; f.val[2] = z; f.val[3] = w;
-		if (s_currentUniformStateCache->updateUniformCache(loc, f))
-		{
-			GL_CHECK(glUniform4f(loc, x, y, z, w));
-		}
-	}
-
-	static void GlUniform4fv(uint32_t loc, int num, const float *data)
-	{
-		bool changed = false;
-		for(int i = 0; i < num; ++i)
-		{
-			if (s_currentUniformStateCache->updateUniformCache(loc+i, *(const UniformStateCache::f4*)&data[4*i]))
-			{
-				changed = true;
-			}
-		}
-		if (changed)
-		{
-			GL_CHECK(glUniform4fv(loc, num, data) );
-		}
-	}
-
-	static void GlUniformMatrix3fv(uint32_t loc, int num, GLboolean transpose, const float *data)
-	{
-		bool changed = false;
-		for(int i = 0; i < num; ++i)
-		{
-			if (s_currentUniformStateCache->updateUniformCache(loc+i, *(const UniformStateCache::f3x3*)&data[9*i]))
-			{
-				changed = true;
-			}
-		}
-		if (changed)
-		{
-			GL_CHECK(glUniformMatrix3fv(loc, num, transpose, data) );
-		}
-	}
-
-	static void GlUniformMatrix4fv(uint32_t loc, int num, GLboolean transpose, const float *data)
-	{
-		bool changed = false;
-		for(int i = 0; i < num; ++i)
-		{
-			if (s_currentUniformStateCache->updateUniformCache(loc+i, *(const UniformStateCache::f4x4*)&data[16*i]))
-			{
-				changed = true;
-			}
-		}
-		if (changed)
-		{
-			GL_CHECK(glUniformMatrix4fv(loc, num, transpose, data) );
-		}
-	}
-
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 	void flushGlError()
@@ -2171,14 +2079,10 @@ namespace bgfx { namespace gl
 			, m_clearQuadDepth(BGFX_INVALID_HANDLE)
 		{
 			bx::memSet(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
-
-			s_currentUniformStateCache = &m_uniformStateCache;
 		}
 
 		~RendererContextGL()
 		{
-			if (s_currentUniformStateCache == &m_uniformStateCache)
-				s_currentUniformStateCache = 0;
 		}
 
 		bool init(const Init& _init)
@@ -4333,6 +4237,95 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		void GlUseProgram(GLuint program)
+		{
+			m_uniformStateCache.saveCurrentProgram(program);
+			GL_CHECK(glUseProgram(program) );
+		}
+
+		// Cache uniform uploads to avoid redundant uploading of state that is
+		// already set to a shader program
+		void GlUniform1i(uint32_t loc, int value)
+		{
+			if (m_uniformStateCache.updateUniformCache(loc, value))
+			{
+				GL_CHECK(glUniform1i(loc, value) );
+			}
+		}
+
+		void GlUniform1iv(uint32_t loc, int num, const int *data)
+		{
+			bool changed = false;
+			for(int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc+i, data[i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniform1iv(loc, num, data) );
+			}
+		}
+
+		void GlUniform4f(uint32_t loc, float x, float y, float z, float w)
+		{
+			UniformStateCache::f4 f; f.val[0] = x; f.val[1] = y; f.val[2] = z; f.val[3] = w;
+			if (m_uniformStateCache.updateUniformCache(loc, f))
+			{
+				GL_CHECK(glUniform4f(loc, x, y, z, w));
+			}
+		}
+
+		void GlUniform4fv(uint32_t loc, int num, const float *data)
+		{
+			bool changed = false;
+			for(int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc+i, *(const UniformStateCache::f4*)&data[4*i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniform4fv(loc, num, data) );
+			}
+		}
+
+		void GlUniformMatrix3fv(uint32_t loc, int num, GLboolean transpose, const float *data)
+		{
+			bool changed = false;
+			for(int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc+i, *(const UniformStateCache::f3x3*)&data[9*i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniformMatrix3fv(loc, num, transpose, data) );
+			}
+		}
+
+		void GlUniformMatrix4fv(uint32_t loc, int num, GLboolean transpose, const float *data)
+		{
+			bool changed = false;
+			for(int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc+i, *(const UniformStateCache::f4x4*)&data[16*i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniformMatrix4fv(loc, num, transpose, data) );
+			}
+		}
+
 		void* m_renderdocdll;
 
 		uint16_t m_numWindows;
@@ -4761,7 +4754,7 @@ namespace bgfx { namespace gl
 
 		if (0 != m_id)
 		{
-			GlUseProgram(0);
+			s_renderGL->GlUseProgram(0);
 			GL_CHECK(glDeleteProgram(m_id) );
 			m_id = 0;
 		}

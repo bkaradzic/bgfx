@@ -1282,12 +1282,12 @@ namespace bgfx { namespace gl
 
 		template<typename T>
 		stl::unordered_map<uint64_t, T> &getUniformCache();
-
-		template<> stl::unordered_map<uint64_t, int> &getUniformCache() { return uniformiCacheMap; }
-		template<> stl::unordered_map<uint64_t, f4> &getUniformCache() { return uniformf4CacheMap; }
-		template<> stl::unordered_map<uint64_t, f3x3> &getUniformCache() { return uniformf3x3CacheMap; }
-		template<> stl::unordered_map<uint64_t, f4x4> &getUniformCache() { return uniformf4x4CacheMap; }
 	};
+
+	template<> stl::unordered_map<uint64_t, int> &UniformStateCache::getUniformCache() { return uniformiCacheMap; }
+	template<> stl::unordered_map<uint64_t, UniformStateCache::f4> &UniformStateCache::getUniformCache() { return uniformf4CacheMap; }
+	template<> stl::unordered_map<uint64_t, UniformStateCache::f3x3> &UniformStateCache::getUniformCache() { return uniformf3x3CacheMap; }
+	template<> stl::unordered_map<uint64_t, UniformStateCache::f4x4> &UniformStateCache::getUniformCache() { return uniformf4x4CacheMap; }
 
 	class SamplerStateCache
 	{
