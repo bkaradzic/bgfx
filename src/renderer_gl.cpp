@@ -2735,7 +2735,7 @@ namespace bgfx { namespace gl
 				}
 
 				m_vaoSupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&& (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				   && (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 						|| s_extension[Extension::ARB_vertex_array_object].m_supported
 						|| s_extension[Extension::OES_vertex_array_object].m_supported
 						);
@@ -3442,17 +3442,17 @@ namespace bgfx { namespace gl
 			GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
 
 			ProgramGL& program = m_program[_blitter.m_program.idx];
-			GL_CHECK(glUseProgram(program.m_id) );
-			GL_CHECK(glUniform1i(program.m_sampler[0].loc, 0) );
+			GlUseProgram(program.m_id);
+			GlUniform1i(program.m_sampler[0].loc, 0);
 
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, g_caps.homogeneousDepth);
 
-			GL_CHECK(glUniformMatrix4fv(program.m_predefined[0].m_loc
+			GlUniformMatrix4fv(program.m_predefined[0].m_loc
 				, 1
 				, GL_FALSE
 				, proj
-				) );
+				);
 
 			GL_CHECK(glActiveTexture(GL_TEXTURE0) );
 			GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_textures[_blitter.m_texture.idx].m_id) );
@@ -3553,19 +3553,19 @@ namespace bgfx { namespace gl
 
 		void setShaderUniform4f(uint8_t /*_flags*/, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			GL_CHECK(glUniform4fv(_regIndex
+			GlUniform4fv(_regIndex
 				, _numRegs
 				, (const GLfloat*)_val
-				) );
+				);
 		}
 
 		void setShaderUniform4x4f(uint8_t /*_flags*/, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			GL_CHECK(glUniformMatrix4fv(_regIndex
+			GlUniformMatrix4fv(_regIndex
 				, _numRegs
 				, GL_FALSE
 				, (const GLfloat*)_val
-				) );
+				);
 		}
 
 		uint32_t setFrameBuffer(FrameBufferHandle _fbh, uint32_t _height, uint16_t _discard = BGFX_CLEAR_NONE, bool _msaa = true)
@@ -4029,7 +4029,7 @@ namespace bgfx { namespace gl
 		case UniformType::_uniform: \
 				{ \
 					_type* value = (_type*)data; \
-					GL_CHECK(glUniform##_glsuffix(loc, num, value) ); \
+					GlUniform##_glsuffix(loc, num, value); \
 				} \
 				break;
 
@@ -4037,7 +4037,7 @@ namespace bgfx { namespace gl
 		case UniformType::_uniform: \
 				{ \
 					_type* value = (_type*)data; \
-					GL_CHECK(glUniform##_glsuffix(loc, num, GL_FALSE, value) ); \
+					GlUniform##_glsuffix(loc, num, GL_FALSE, value); \
 				} \
 				break;
 
@@ -4048,12 +4048,12 @@ namespace bgfx { namespace gl
 				// since they need to marshal an array over from Wasm to JS, so optimize the case when there is exactly one
 				// uniform to upload.
 				case UniformType::Sampler:
-					if (num > 1) glUniform1iv(loc, num, (int*)data);
-					else glUniform1i(loc, *(int*)data);
+					if (num > 1) GlUniform1iv(loc, num, (int*)data);
+					else GlUniform1i(loc, *(int*)data);
 					break;
 				case UniformType::Vec4:
-					if (num > 1) glUniform4fv(loc, num, (float*)data);
-					else glUniform4f(loc, ((float*)data)[0], ((float*)data)[1], ((float*)data)[2], ((float*)data)[3]);
+					if (num > 1) GlUniform4fv(loc, num, (float*)data);
+					else GlUniform4f(loc, ((float*)data)[0], ((float*)data)[1], ((float*)data)[2], ((float*)data)[3]);
 					break;
 #else
 				CASE_IMPLEMENT_UNIFORM(Sampler, 1iv, I, int);
@@ -4178,7 +4178,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
 				ProgramGL& program = m_program[_clearQuad.m_program[numMrt-1].idx];
-				GL_CHECK(glUseProgram(program.m_id) );
+				GlUseProgram(program.m_id);
 				program.bindAttributesBegin();
 				program.bindAttributes(layout, 0);
 				program.bindAttributesEnd();
@@ -4237,6 +4237,95 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		void GlUseProgram(GLuint program)
+		{
+			m_uniformStateCache.saveCurrentProgram(program);
+			GL_CHECK(glUseProgram(program) );
+		}
+
+		// Cache uniform uploads to avoid redundant uploading of state that is
+		// already set to a shader program
+		void GlUniform1i(uint32_t loc, int value)
+		{
+			if (m_uniformStateCache.updateUniformCache(loc, value))
+			{
+				GL_CHECK(glUniform1i(loc, value) );
+			}
+		}
+
+		void GlUniform1iv(uint32_t loc, int num, const int *data)
+		{
+			bool changed = false;
+			for(int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc+i, data[i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniform1iv(loc, num, data) );
+			}
+		}
+
+		void GlUniform4f(uint32_t loc, float x, float y, float z, float w)
+		{
+			UniformStateCache::f4 f; f.val[0] = x; f.val[1] = y; f.val[2] = z; f.val[3] = w;
+			if (m_uniformStateCache.updateUniformCache(loc, f))
+			{
+				GL_CHECK(glUniform4f(loc, x, y, z, w));
+			}
+		}
+
+		void GlUniform4fv(uint32_t loc, int num, const float *data)
+		{
+			bool changed = false;
+			for(int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc+i, *(const UniformStateCache::f4*)&data[4*i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniform4fv(loc, num, data) );
+			}
+		}
+
+		void GlUniformMatrix3fv(uint32_t loc, int num, GLboolean transpose, const float *data)
+		{
+			bool changed = false;
+			for(int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc+i, *(const UniformStateCache::f3x3*)&data[9*i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniformMatrix3fv(loc, num, transpose, data) );
+			}
+		}
+
+		void GlUniformMatrix4fv(uint32_t loc, int num, GLboolean transpose, const float *data)
+		{
+			bool changed = false;
+			for(int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc+i, *(const UniformStateCache::f4x4*)&data[16*i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniformMatrix4fv(loc, num, transpose, data) );
+			}
+		}
+
 		void* m_renderdocdll;
 
 		uint16_t m_numWindows;
@@ -4256,6 +4345,7 @@ namespace bgfx { namespace gl
 		OcclusionQueryGL m_occlusionQuery;
 
 		SamplerStateCache m_samplerStateCache;
+		UniformStateCache m_uniformStateCache;
 
 		TextVideoMem m_textVideoMem;
 		bool m_rtMsaa;
@@ -4664,7 +4754,7 @@ namespace bgfx { namespace gl
 
 		if (0 != m_id)
 		{
-			GL_CHECK(glUseProgram(0) );
+			s_renderGL->GlUseProgram(0);
 			GL_CHECK(glDeleteProgram(m_id) );
 			m_id = 0;
 		}
@@ -7155,7 +7245,7 @@ namespace bgfx { namespace gl
 						const RenderCompute& compute = renderItem.compute;
 
 						ProgramGL& program = m_program[key.m_program.idx];
-						GL_CHECK(glUseProgram(program.m_id) );
+						GlUseProgram(program.m_id);
 
 						GLbitfield barrier = 0;
 						for (uint32_t ii = 0; ii < maxComputeBindings; ++ii)
@@ -7653,7 +7743,7 @@ namespace bgfx { namespace gl
 					// Skip rendering if program index is valid, but program is invalid.
 					currentProgram = 0 == id ? ProgramHandle{kInvalidHandle} : currentProgram;
 
-					GL_CHECK(glUseProgram(id) );
+					GlUseProgram(id);
 					programChanged =
 						constantsChanged =
 						bindAttribs = true;
