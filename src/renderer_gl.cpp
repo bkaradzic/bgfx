@@ -4247,7 +4247,7 @@ namespace bgfx { namespace gl
 		// already set to a shader program
 		void GlUniform1i(uint32_t loc, int value)
 		{
-			if (m_uniformStateCache.updateUniformCache(loc, value))
+			if (m_uniformStateCache.updateUniformCachei(loc, value))
 			{
 				GL_CHECK(glUniform1i(loc, value) );
 			}
@@ -4258,7 +4258,7 @@ namespace bgfx { namespace gl
 			bool changed = false;
 			for(int i = 0; i < num; ++i)
 			{
-				if (m_uniformStateCache.updateUniformCache(loc+i, data[i]))
+				if (m_uniformStateCache.updateUniformCachei(loc+i, data[i]))
 				{
 					changed = true;
 				}
@@ -4272,7 +4272,7 @@ namespace bgfx { namespace gl
 		void GlUniform4f(uint32_t loc, float x, float y, float z, float w)
 		{
 			UniformStateCache::f4 f; f.val[0] = x; f.val[1] = y; f.val[2] = z; f.val[3] = w;
-			if (m_uniformStateCache.updateUniformCache(loc, f))
+			if (m_uniformStateCache.updateUniformCachef4(loc, f))
 			{
 				GL_CHECK(glUniform4f(loc, x, y, z, w));
 			}
@@ -4283,7 +4283,7 @@ namespace bgfx { namespace gl
 			bool changed = false;
 			for(int i = 0; i < num; ++i)
 			{
-				if (m_uniformStateCache.updateUniformCache(loc+i, *(const UniformStateCache::f4*)&data[4*i]))
+				if (m_uniformStateCache.updateUniformCachef4(loc+i, *(const UniformStateCache::f4*)&data[4*i]))
 				{
 					changed = true;
 				}
@@ -4299,7 +4299,7 @@ namespace bgfx { namespace gl
 			bool changed = false;
 			for(int i = 0; i < num; ++i)
 			{
-				if (m_uniformStateCache.updateUniformCache(loc+i, *(const UniformStateCache::f3x3*)&data[9*i]))
+				if (m_uniformStateCache.updateUniformCachef3x3(loc+i, *(const UniformStateCache::f3x3*)&data[9*i]))
 				{
 					changed = true;
 				}
@@ -4315,7 +4315,7 @@ namespace bgfx { namespace gl
 			bool changed = false;
 			for(int i = 0; i < num; ++i)
 			{
-				if (m_uniformStateCache.updateUniformCache(loc+i, *(const UniformStateCache::f4x4*)&data[16*i]))
+				if (m_uniformStateCache.updateUniformCachef4x4(loc+i, *(const UniformStateCache::f4x4*)&data[16*i]))
 				{
 					changed = true;
 				}
