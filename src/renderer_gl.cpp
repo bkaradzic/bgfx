@@ -3443,12 +3443,12 @@ namespace bgfx { namespace gl
 
 			ProgramGL& program = m_program[_blitter.m_program.idx];
 			setProgram(program.m_id);
-			setUnifom1i(program.m_sampler[0].loc, 0);
+			setUniform1i(program.m_sampler[0].loc, 0);
 
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, g_caps.homogeneousDepth);
 
-			setUnifomMatrix4fv(program.m_predefined[0].m_loc
+			setUniformMatrix4fv(program.m_predefined[0].m_loc
 				, 1
 				, GL_FALSE
 				, proj
@@ -3553,7 +3553,7 @@ namespace bgfx { namespace gl
 
 		void setShaderUniform4f(uint8_t /*_flags*/, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			setUnifom4fv(_regIndex
+			setUniform4fv(_regIndex
 				, _numRegs
 				, (const GLfloat*)_val
 				);
@@ -3561,7 +3561,7 @@ namespace bgfx { namespace gl
 
 		void setShaderUniform4x4f(uint8_t /*_flags*/, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			setUnifomMatrix4fv(_regIndex
+			setUniformMatrix4fv(_regIndex
 				, _numRegs
 				, GL_FALSE
 				, (const GLfloat*)_val
@@ -4029,7 +4029,7 @@ namespace bgfx { namespace gl
 		case UniformType::_uniform: \
 				{ \
 					_type* value = (_type*)data; \
-					setUnifom##_glsuffix(loc, num, value); \
+					setUniform##_glsuffix(loc, num, value); \
 				} \
 				break;
 
@@ -4037,7 +4037,7 @@ namespace bgfx { namespace gl
 		case UniformType::_uniform: \
 				{ \
 					_type* value = (_type*)data; \
-					setUnifom##_glsuffix(loc, num, GL_FALSE, value); \
+					setUniform##_glsuffix(loc, num, GL_FALSE, value); \
 				} \
 				break;
 
@@ -4048,12 +4048,12 @@ namespace bgfx { namespace gl
 				// since they need to marshal an array over from Wasm to JS, so optimize the case when there is exactly one
 				// uniform to upload.
 				case UniformType::Sampler:
-					if (num > 1) setUnifom1iv(loc, num, (int*)data);
-					else setUnifom1i(loc, *(int*)data);
+					if (num > 1) setUniform1iv(loc, num, (int*)data);
+					else setUniform1i(loc, *(int*)data);
 					break;
 				case UniformType::Vec4:
-					if (num > 1) setUnifom4fv(loc, num, (float*)data);
-					else setUnifom4f(loc, ((float*)data)[0], ((float*)data)[1], ((float*)data)[2], ((float*)data)[3]);
+					if (num > 1) setUniform4fv(loc, num, (float*)data);
+					else setUniform4f(loc, ((float*)data)[0], ((float*)data)[1], ((float*)data)[2], ((float*)data)[3]);
 					break;
 #else
 				CASE_IMPLEMENT_UNIFORM(Sampler, 1iv, I, int);
@@ -4245,7 +4245,7 @@ namespace bgfx { namespace gl
 
 		// Cache uniform uploads to avoid redundant uploading of state that is
 		// already set to a shader program
-		void setUnifom1i(uint32_t loc, int value)
+		void setUniform1i(uint32_t loc, int value)
 		{
 			if (m_uniformStateCache.updateUniformCache(loc, value))
 			{
@@ -4253,7 +4253,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void setUnifom1iv(uint32_t loc, int num, const int *data)
+		void setUniform1iv(uint32_t loc, int num, const int *data)
 		{
 			bool changed = false;
 			for(int i = 0; i < num; ++i)
@@ -4269,7 +4269,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void setUnifom4f(uint32_t loc, float x, float y, float z, float w)
+		void setUniform4f(uint32_t loc, float x, float y, float z, float w)
 		{
 			UniformStateCache::f4 f; f.val[0] = x; f.val[1] = y; f.val[2] = z; f.val[3] = w;
 			if (m_uniformStateCache.updateUniformCache(loc, f))
@@ -4278,7 +4278,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void setUnifom4fv(uint32_t loc, int num, const float *data)
+		void setUniform4fv(uint32_t loc, int num, const float *data)
 		{
 			bool changed = false;
 			for(int i = 0; i < num; ++i)
@@ -4294,7 +4294,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void setUnifomMatrix3fv(uint32_t loc, int num, GLboolean transpose, const float *data)
+		void setUniformMatrix3fv(uint32_t loc, int num, GLboolean transpose, const float *data)
 		{
 			bool changed = false;
 			for(int i = 0; i < num; ++i)
@@ -4310,7 +4310,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void setUnifomMatrix4fv(uint32_t loc, int num, GLboolean transpose, const float *data)
+		void setUniformMatrix4fv(uint32_t loc, int num, GLboolean transpose, const float *data)
 		{
 			bool changed = false;
 			for(int i = 0; i < num; ++i)
