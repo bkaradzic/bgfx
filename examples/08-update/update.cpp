@@ -262,7 +262,7 @@ public:
 			, 0
 			);
 
-		m_showDescriptions = false;
+		m_showDescriptions = true;
 
 		// Create vertex stream declaration.
 		PosTexcoordVertex::init();
@@ -543,13 +543,12 @@ public:
 				, ImGuiWindowFlags_NoResize
 				);
 
-			if (ImGui::Button(m_showDescriptions ? "ON" : "OFF"))
+			if (ImGui::Button(m_showDescriptions ? "On" : "Off"))
 			{
 				m_showDescriptions = !m_showDescriptions;
 			}
 
 			ImGui::End();
-
 
 			float borderColor[4] =
 			{
@@ -682,10 +681,11 @@ public:
 				bgfx::setViewFrameBuffer(viewId, m_textureCubeFaceFb[ii]);
 
 				bx::Vec3 color = bx::add(s_faceColors[ii], bx::sin(time*4.0f)*0.25f);
-				uint32_t colorRGB8 =
-						  uint32_t(bx::toUnorm(color.x, 255.0f) ) << 24
-						| uint32_t(bx::toUnorm(color.y, 255.0f) ) << 16
-						| uint32_t(bx::toUnorm(color.z, 255.0f) ) << 8;
+				uint32_t colorRGB8 = 0
+					| uint32_t(bx::toUnorm(color.x, 255.0f) ) << 24
+					| uint32_t(bx::toUnorm(color.y, 255.0f) ) << 16
+					| uint32_t(bx::toUnorm(color.z, 255.0f) ) <<  8
+					;
 
 				bgfx::setViewClear(viewId, BGFX_CLEAR_COLOR, colorRGB8);
 				bgfx::setViewRect(viewId, 0,0,512,512);
@@ -693,7 +693,8 @@ public:
 				bgfx::touch(viewId);
 			}
 
-			const char* descTextureCube[BX_COUNTOF(m_textureCube)] = {
+			static const char* descTextureCube[BX_COUNTOF(m_textureCube)] =
+			{
 					"updateTextureCube",
 					"blit",
 					"compute",
@@ -765,7 +766,8 @@ public:
 
 			const float xpos = -sizeX + margin + 1.0f;
 
-			const char* descTextures[] = {
+			static const char* descTextures[] =
+			{
 				"create\nbc1",
 				"create\nbc2",
 				"create\nbc3",
@@ -816,7 +818,8 @@ public:
 				ImGuiDescription(mtx[12], mtx[13], mtx[14], worldToScreen, descTextures[ii]);
 			}
 
-			const char* descTextures3d[] = {
+			static const char* descTextures3d[] =
+			{
 					"Tex3D R8",
 					"Tex3D R16F",
 					"Tex3D R32F",
@@ -846,7 +849,8 @@ public:
 				ImGuiDescription(mtx[12], mtx[13], mtx[14], worldToScreen, descTextures3d[ii]);
 			}
 
-			const char* descSampler[] = {
+			static const char* descSampler[] =
+			{
 					"U_CLAMP\nV_CLAMP",
 					"U_CLAMP\nV_WRAP",
 					"U_WRAP\nV_CLAMP",
