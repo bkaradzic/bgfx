@@ -293,11 +293,12 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_OES_texture_cube_map_array]   = EBhDisable;
 
     // EXT extensions
-    extensionBehavior[E_GL_EXT_device_group]             = EBhDisable;
-    extensionBehavior[E_GL_EXT_multiview]                = EBhDisable;
-    extensionBehavior[E_GL_EXT_shader_realtime_clock]    = EBhDisable;
-    extensionBehavior[E_GL_EXT_ray_tracing]              = EBhDisable;
-    extensionBehavior[E_GL_EXT_ray_query]                = EBhDisable;
+    extensionBehavior[E_GL_EXT_device_group]                = EBhDisable;
+    extensionBehavior[E_GL_EXT_multiview]                   = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_realtime_clock]       = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_tracing]                 = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_query]                   = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_flags_primitive_culling] = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -438,6 +439,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define E_GL_EXT_shader_realtime_clock 1\n"
             "#define E_GL_EXT_ray_tracing 1\n"
             "#define E_GL_EXT_ray_query 1\n"
+            "#define E_GL_EXT_ray_flags_primitive_culling 1\n"
 
             "#define GL_AMD_shader_ballot 1\n"
             "#define GL_AMD_shader_trinary_minmax 1\n"

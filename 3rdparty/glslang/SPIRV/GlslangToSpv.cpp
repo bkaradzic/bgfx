@@ -1448,6 +1448,10 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
         builder.addExecutionMode(shaderEntry, spv::ExecutionModeXfb);
     }
 
+    if (sourceExtensions.find("GL_EXT_ray_flags_primitive_culling") != sourceExtensions.end()) {
+        builder.addCapability(spv::CapabilityRayTraversalPrimitiveCullingProvisionalKHR);
+    }
+
     unsigned int mode;
     switch (glslangIntermediate->getStage()) {
     case EShLangVertex:

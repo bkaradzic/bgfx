@@ -3152,7 +3152,7 @@ bool TParseContext::constructorTextureSamplerError(const TSourceLoc& loc, const 
     if (function[0].type->getBasicType() != EbtSampler ||
         ! function[0].type->getSampler().isTexture() ||
         function[0].type->isArray()) {
-        error(loc, "sampler-constructor first argument must be a scalar textureXXX type", token, "");
+        error(loc, "sampler-constructor first argument must be a scalar *texture* type", token, "");
         return true;
     }
     // simulate the first argument's impact on the result type, so it can be compared with the encapsulated operator!=()
@@ -3160,7 +3160,8 @@ bool TParseContext::constructorTextureSamplerError(const TSourceLoc& loc, const 
     texture.setCombined(false);
     texture.shadow = false;
     if (texture != function[0].type->getSampler()) {
-        error(loc, "sampler-constructor first argument must match type and dimensionality of constructor type", token, "");
+        error(loc, "sampler-constructor first argument must be a *texture* type"
+                   " matching the dimensionality and sampled type of the constructor", token, "");
         return true;
     }
 
@@ -3170,7 +3171,7 @@ bool TParseContext::constructorTextureSamplerError(const TSourceLoc& loc, const 
     if (  function[1].type->getBasicType() != EbtSampler ||
         ! function[1].type->getSampler().isPureSampler() ||
           function[1].type->isArray()) {
-        error(loc, "sampler-constructor second argument must be a scalar type 'sampler'", token, "");
+        error(loc, "sampler-constructor second argument must be a scalar sampler or samplerShadow", token, "");
         return true;
     }
 
