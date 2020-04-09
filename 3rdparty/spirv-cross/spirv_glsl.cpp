@@ -8849,8 +8849,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		if (composite_type.basetype == SPIRType::Struct || !composite_type.array.empty())
 			allow_base_expression = false;
 
-		// Packed expressions cannot be split up.
-		if (has_extended_decoration(ops[2], SPIRVCrossDecorationPhysicalTypePacked))
+		// Packed expressions or physical ID mapped expressions cannot be split up.
+		if (has_extended_decoration(ops[2], SPIRVCrossDecorationPhysicalTypePacked) ||
+		    has_extended_decoration(ops[2], SPIRVCrossDecorationPhysicalTypeID))
 			allow_base_expression = false;
 
 		// Cannot use base expression for row-major matrix row-extraction since we need to interleave access pattern

@@ -35,10 +35,6 @@
 #include "gitversion.h"
 #endif
 
-#ifdef _MSC_VER
-#pragma warning(disable : 4996)
-#endif
-
 using namespace spv;
 using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
@@ -190,6 +186,14 @@ struct CLIParser
 	bool ended_state = false;
 };
 
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#endif
+
 static vector<uint32_t> read_spirv_file(const char *path)
 {
 	FILE *file = fopen(path, "rb");
@@ -224,6 +228,12 @@ static bool write_string_to_file(const char *path, const char *string)
 	fclose(file);
 	return true;
 }
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 static void print_resources(const Compiler &compiler, const char *tag, const SmallVector<Resource> &resources)
 {
