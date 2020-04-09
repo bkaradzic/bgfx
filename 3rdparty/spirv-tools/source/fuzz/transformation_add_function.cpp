@@ -897,6 +897,11 @@ uint32_t TransformationAddFunction::GetBoundForCompositeIndex(
     case SpvOpTypeStruct: {
       return fuzzerutil::GetNumberOfStructMembers(composite_type_inst);
     }
+    case SpvOpTypeRuntimeArray:
+      assert(false &&
+             "GetBoundForCompositeIndex should not be invoked with an "
+             "OpTypeRuntimeArray, which does not have a static bound.");
+      return 0;
     default:
       assert(false && "Unknown composite type.");
       return 0;
@@ -909,6 +914,7 @@ opt::Instruction* TransformationAddFunction::FollowCompositeIndex(
   uint32_t sub_object_type_id;
   switch (composite_type_inst.opcode()) {
     case SpvOpTypeArray:
+    case SpvOpTypeRuntimeArray:
       sub_object_type_id = composite_type_inst.GetSingleWordInOperand(0);
       break;
     case SpvOpTypeMatrix:

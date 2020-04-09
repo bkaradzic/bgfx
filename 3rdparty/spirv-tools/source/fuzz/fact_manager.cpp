@@ -445,6 +445,15 @@ class FactManager::DataSynonymAndIdEquationFacts {
   // compute the closure only when a data synonym fact is *queried*.
   void ComputeClosureOfFacts(opt::IRContext* context) const;
 
+  // Records the fact that |dd1| and |dd2| are equivalent, and merges the sets
+  // of equations that are known about them.
+  //
+  // This is a const method, despite the fact that it mutates the (mutable)
+  // set of facts about data descriptors because it is invoked in a lazy fashion
+  // when querying facts.
+  void MakeEquivalent(const protobufs::DataDescriptor& dd1,
+                      const protobufs::DataDescriptor& dd2) const;
+
   // Returns true if and only if |dd1| and |dd2| are valid data descriptors
   // whose associated data have the same type (modulo integer signedness).
   bool DataDescriptorsAreWellFormedAndComparable(
@@ -452,10 +461,11 @@ class FactManager::DataSynonymAndIdEquationFacts {
       const protobufs::DataDescriptor& dd2) const;
 
   // Requires that |lhs_dd| and every element of |rhs_dds| is present in the
-  // |synonymous_| equivalence relation and is its own representative.  Records
-  // the fact that the equation "|lhs_dd| |opcode| |rhs_dds|" holds, and adds
-  // any corollaries, in the form of data synonym or equation facts, that
-  // follow from this and other known facts.
+  // |synonymous_| equivalence relation, but is not necessarily its own
+  // representative.  Records the fact that the equation
+  // "|lhs_dd| |opcode| |rhs_dds_non_canonical|" holds, and adds any
+  // corollaries, in the form of data synonym or equation facts, that follow
+  // from this and other known facts.
   void AddEquationFactRecursive(
       const protobufs::DataDescriptor& lhs_dd, SpvOp opcode,
       const std::vector<const protobufs::DataDescriptor*>& rhs_dds,
@@ -493,7 +503,12 @@ class FactManager::DataSynonymAndIdEquationFacts {
   // All data descriptors occurring in equations are required to be present in
   // the |synonymous_| equivalence relation, and to be their own representatives
   // in that relation.
-  std::unordered_map<
+  //
+  // It is mutable because a closure computation can be triggered from a const
+  // method, and when a closure computation detects that two data descriptors
+  // are equivalent it is necessary to merge the equation facts for those data
+  // descriptors.
+  mutable std::unordered_map<
       const protobufs::DataDescriptor*,
       std::unordered_set<Operation, OperationHash, OperationEquals>>
       id_equations_;
@@ -510,12 +525,10 @@ void FactManager::DataSynonymAndIdEquationFacts::AddFact(
     const protobufs::FactIdEquation& fact, opt::IRContext* context) {
   protobufs::DataDescriptor lhs_dd = MakeDataDescriptor(fact.lhs_id(), {});
 
-  // Register the LHS in the equivalence relation if needed, and get a pointer
-  // to its representative.
+  // Register the LHS in the equivalence relation if needed.
   if (!synonymous_.Exists(lhs_dd)) {
     synonymous_.Register(lhs_dd);
   }
-  const protobufs::DataDescriptor* lhs_dd_ptr = synonymous_.Find(&lhs_dd);
 
   // Get equivalence class representatives for all ids used on the RHS of the
   // equation.
@@ -529,10 +542,9 @@ void FactManager::DataSynonymAndIdEquationFacts::AddFact(
     }
     rhs_dd_ptrs.push_back(synonymous_.Find(&rhs_dd));
   }
-  // We now have the equation in a form where it refers exclusively to
-  // equivalence class representatives.  Add it to our set of facts and work
-  // out any follow-on facts.
-  AddEquationFactRecursive(*lhs_dd_ptr, static_cast<SpvOp>(fact.opcode()),
+
+  // Now add the fact.
+  AddEquationFactRecursive(lhs_dd, static_cast<SpvOp>(fact.opcode()),
                            rhs_dd_ptrs, context);
 }
 
@@ -540,27 +552,27 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
     const protobufs::DataDescriptor& lhs_dd, SpvOp opcode,
     const std::vector<const protobufs::DataDescriptor*>& rhs_dds,
     opt::IRContext* context) {
-  // Precondition: all data descriptors referenced in this equation must be
-  // equivalence class representatives - i.e. the equation must be in canonical
-  // form.
-  assert(synonymous_.Exists(lhs_dd));
-  assert(synonymous_.Find(&lhs_dd) == &lhs_dd);
+  assert(synonymous_.Exists(lhs_dd) &&
+         "The LHS must be known to the equivalence relation.");
   for (auto rhs_dd : rhs_dds) {
-    (void)(rhs_dd);  // Keep compilers happy in release mode.
-    assert(synonymous_.Exists(*rhs_dd));
-    assert(synonymous_.Find(rhs_dd) == rhs_dd);
+    // Keep release compilers happy.
+    (void)(rhs_dd);
+    assert(synonymous_.Exists(*rhs_dd) &&
+           "The RHS operands must be known to the equivalence relation.");
   }
 
-  if (id_equations_.count(&lhs_dd) == 0) {
+  auto lhs_dd_representative = synonymous_.Find(&lhs_dd);
+
+  if (id_equations_.count(lhs_dd_representative) == 0) {
     // We have not seen an equation with this LHS before, so associate the LHS
     // with an initially empty set.
     id_equations_.insert(
-        {&lhs_dd,
+        {lhs_dd_representative,
          std::unordered_set<Operation, OperationHash, OperationEquals>()});
   }
 
   {
-    auto existing_equations = id_equations_.find(&lhs_dd);
+    auto existing_equations = id_equations_.find(lhs_dd_representative);
     assert(existing_equations != id_equations_.end() &&
            "A set of operations should be present, even if empty.");
 
@@ -584,13 +596,15 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
           for (auto equation : existing_first_operand_equations->second) {
             if (equation.opcode == SpvOpISub) {
               // Equation form: "a = (d - e) + c"
-              if (equation.operands[1] == rhs_dds[1]) {
+              if (synonymous_.IsEquivalent(*equation.operands[1],
+                                           *rhs_dds[1])) {
                 // Equation form: "a = (d - c) + c"
                 // We can thus infer "a = d"
                 AddDataSynonymFactRecursive(lhs_dd, *equation.operands[0],
                                             context);
               }
-              if (equation.operands[0] == rhs_dds[1]) {
+              if (synonymous_.IsEquivalent(*equation.operands[0],
+                                           *rhs_dds[1])) {
                 // Equation form: "a = (c - e) + c"
                 // We can thus infer "a = -e"
                 AddEquationFactRecursive(lhs_dd, SpvOpSNegate,
@@ -606,7 +620,8 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
           for (auto equation : existing_second_operand_equations->second) {
             if (equation.opcode == SpvOpISub) {
               // Equation form: "a = b + (d - e)"
-              if (equation.operands[1] == rhs_dds[0]) {
+              if (synonymous_.IsEquivalent(*equation.operands[1],
+                                           *rhs_dds[0])) {
                 // Equation form: "a = b + (d - b)"
                 // We can thus infer "a = d"
                 AddDataSynonymFactRecursive(lhs_dd, *equation.operands[0],
@@ -626,13 +641,15 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
           for (auto equation : existing_first_operand_equations->second) {
             if (equation.opcode == SpvOpIAdd) {
               // Equation form: "a = (d + e) - c"
-              if (equation.operands[0] == rhs_dds[1]) {
+              if (synonymous_.IsEquivalent(*equation.operands[0],
+                                           *rhs_dds[1])) {
                 // Equation form: "a = (c + e) - c"
                 // We can thus infer "a = e"
                 AddDataSynonymFactRecursive(lhs_dd, *equation.operands[1],
                                             context);
               }
-              if (equation.operands[1] == rhs_dds[1]) {
+              if (synonymous_.IsEquivalent(*equation.operands[1],
+                                           *rhs_dds[1])) {
                 // Equation form: "a = (d + c) - c"
                 // We can thus infer "a = d"
                 AddDataSynonymFactRecursive(lhs_dd, *equation.operands[0],
@@ -642,7 +659,8 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
 
             if (equation.opcode == SpvOpISub) {
               // Equation form: "a = (d - e) - c"
-              if (equation.operands[0] == rhs_dds[1]) {
+              if (synonymous_.IsEquivalent(*equation.operands[0],
+                                           *rhs_dds[1])) {
                 // Equation form: "a = (c - e) - c"
                 // We can thus infer "a = -e"
                 AddEquationFactRecursive(lhs_dd, SpvOpSNegate,
@@ -659,13 +677,15 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
           for (auto equation : existing_second_operand_equations->second) {
             if (equation.opcode == SpvOpIAdd) {
               // Equation form: "a = b - (d + e)"
-              if (equation.operands[0] == rhs_dds[0]) {
+              if (synonymous_.IsEquivalent(*equation.operands[0],
+                                           *rhs_dds[0])) {
                 // Equation form: "a = b - (b + e)"
                 // We can thus infer "a = -e"
                 AddEquationFactRecursive(lhs_dd, SpvOpSNegate,
                                          {equation.operands[1]}, context);
               }
-              if (equation.operands[1] == rhs_dds[0]) {
+              if (synonymous_.IsEquivalent(*equation.operands[1],
+                                           *rhs_dds[0])) {
                 // Equation form: "a = b - (d + b)"
                 // We can thus infer "a = -d"
                 AddEquationFactRecursive(lhs_dd, SpvOpSNegate,
@@ -674,7 +694,8 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
             }
             if (equation.opcode == SpvOpISub) {
               // Equation form: "a = b - (d - e)"
-              if (equation.operands[0] == rhs_dds[0]) {
+              if (synonymous_.IsEquivalent(*equation.operands[0],
+                                           *rhs_dds[0])) {
                 // Equation form: "a = b - (b - e)"
                 // We can thus infer "a = e"
                 AddDataSynonymFactRecursive(lhs_dd, *equation.operands[1],
@@ -712,12 +733,7 @@ void FactManager::DataSynonymAndIdEquationFacts::AddDataSynonymFactRecursive(
   assert(DataDescriptorsAreWellFormedAndComparable(context, dd1, dd2));
 
   // Record that the data descriptors provided in the fact are equivalent.
-  synonymous_.MakeEquivalent(dd1, dd2);
-  // As we have updated the equivalence relation, we might be able to deduce
-  // more facts by performing a closure computation, so we record that such a
-  // computation is required; it will be performed next time a method answering
-  // a data synonym fact-related question is invoked.
-  closure_computation_required_ = true;
+  MakeEquivalent(dd1, dd2);
 
   // We now check whether this is a synonym about composite objects.  If it is,
   // we can recursively add synonym facts about their associated sub-components.
@@ -1029,10 +1045,7 @@ void FactManager::DataSynonymAndIdEquationFacts::ComputeClosureOfFacts(
             // synonymous.
             assert(DataDescriptorsAreWellFormedAndComparable(
                 context, dd1_prefix, dd2_prefix));
-            synonymous_.MakeEquivalent(dd1_prefix, dd2_prefix);
-            // As we have added a new synonym fact, we might benefit from doing
-            // another pass over the equivalence relation.
-            closure_computation_required_ = true;
+            MakeEquivalent(dd1_prefix, dd2_prefix);
             // Now that we know this pair of data descriptors are synonymous,
             // there is no point recording how close they are to being
             // synonymous.
@@ -1042,6 +1055,84 @@ void FactManager::DataSynonymAndIdEquationFacts::ComputeClosureOfFacts(
       }
     }
   }
+}
+
+void FactManager::DataSynonymAndIdEquationFacts::MakeEquivalent(
+    const protobufs::DataDescriptor& dd1,
+    const protobufs::DataDescriptor& dd2) const {
+  // Register the data descriptors if they are not already known to the
+  // equivalence relation.
+  for (const auto& dd : {dd1, dd2}) {
+    if (!synonymous_.Exists(dd)) {
+      synonymous_.Register(dd);
+    }
+  }
+
+  if (synonymous_.IsEquivalent(dd1, dd2)) {
+    // The data descriptors are already known to be equivalent, so there is
+    // nothing to do.
+    return;
+  }
+
+  // We must make the data descriptors equivalent, and also make sure any
+  // equation facts known about their representatives are merged.
+
+  // Record the original equivalence class representatives of the data
+  // descriptors.
+  auto dd1_original_representative = synonymous_.Find(&dd1);
+  auto dd2_original_representative = synonymous_.Find(&dd2);
+
+  // Make the data descriptors equivalent.
+  synonymous_.MakeEquivalent(dd1, dd2);
+  // As we have updated the equivalence relation, we might be able to deduce
+  // more facts by performing a closure computation, so we record that such a
+  // computation is required.
+  closure_computation_required_ = true;
+
+  // At this point, exactly one of |dd1_original_representative| and
+  // |dd2_original_representative| will be the representative of the combined
+  // equivalence class.  We work out which one of them is still the class
+  // representative and which one is no longer the class representative.
+
+  auto still_representative = synonymous_.Find(dd1_original_representative) ==
+                                      dd1_original_representative
+                                  ? dd1_original_representative
+                                  : dd2_original_representative;
+  auto no_longer_representative =
+      still_representative == dd1_original_representative
+          ? dd2_original_representative
+          : dd1_original_representative;
+
+  assert(no_longer_representative != still_representative &&
+         "The current and former representatives cannot be the same.");
+
+  // We now need to add all equations about |no_longer_representative| to the
+  // set of equations known about |still_representative|.
+
+  // Get the equations associated with |no_longer_representative|.
+  auto no_longer_representative_id_equations =
+      id_equations_.find(no_longer_representative);
+  if (no_longer_representative_id_equations != id_equations_.end()) {
+    // There are some equations to transfer.  There might not yet be any
+    // equations about |still_representative|; create an empty set of equations
+    // if this is the case.
+    if (!id_equations_.count(still_representative)) {
+      id_equations_.insert(
+          {still_representative,
+           std::unordered_set<Operation, OperationHash, OperationEquals>()});
+    }
+    auto still_representative_id_equations =
+        id_equations_.find(still_representative);
+    assert(still_representative_id_equations != id_equations_.end() &&
+           "At this point there must be a set of equations.");
+    // Add all the equations known about |no_longer_representative| to the set
+    // of equations known about |still_representative|.
+    still_representative_id_equations->second.insert(
+        no_longer_representative_id_equations->second.begin(),
+        no_longer_representative_id_equations->second.end());
+  }
+  // Delete the no longer-relevant equations about |no_longer_representative|.
+  id_equations_.erase(no_longer_representative);
 }
 
 bool FactManager::DataSynonymAndIdEquationFacts::

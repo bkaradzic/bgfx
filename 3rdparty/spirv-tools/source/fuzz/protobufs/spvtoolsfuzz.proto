@@ -560,8 +560,9 @@ message TransformationAddGlobalUndef {
 
 message TransformationAddGlobalVariable {
 
-  // Adds a global variable of the given type to the module, with Private
-  // storage class and optionally with an initializer.
+  // Adds a global variable of the given type to the module, with Private or
+  // Workgroup storage class, and optionally (for the Private case) with an
+  // initializer.
 
   // Fresh id for the global variable
   uint32 fresh_id = 1;
@@ -569,13 +570,15 @@ message TransformationAddGlobalVariable {
   // The type of the global variable
   uint32 type_id = 2;
 
+  uint32 storage_class = 3;
+
   // Initial value of the variable
-  uint32 initializer_id = 3;
+  uint32 initializer_id = 4;
 
   // True if and only if the behaviour of the module should not depend on the
   // value of the variable, in which case stores to the variable can be
   // performed in an arbitrary fashion.
-  bool value_is_irrelevant = 4;
+  bool value_is_irrelevant = 5;
 
 }
 
