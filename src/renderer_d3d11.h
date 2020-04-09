@@ -1,12 +1,12 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #ifndef BGFX_RENDERER_D3D11_H_HEADER_GUARD
 #define BGFX_RENDERER_D3D11_H_HEADER_GUARD
 
-#define USE_D3D11_DYNAMIC_LIB    BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
+#define USE_D3D11_DYNAMIC_LIB    (BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS)
 #define USE_D3D11_STAGING_BUFFER 0
 
 #if !USE_D3D11_DYNAMIC_LIB
@@ -54,22 +54,22 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 	| BGFX_STATE_DEPTH_TEST_MASK         \
 	)
 
-#define BGFX_D3D11_PROFILER_BEGIN(_view, _abgr)          \
-	BX_MACRO_BLOCK_BEGIN                                 \
-		PIX_BEGINEVENT(_abgr, s_viewNameW[_view]);       \
-		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);    \
+#define BGFX_D3D11_PROFILER_BEGIN(_view, _abgr)         \
+	BX_MACRO_BLOCK_BEGIN                                \
+		PIX_BEGINEVENT(_abgr, s_viewNameW[_view]);      \
+		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);   \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_D3D11_PROFILER_BEGIN_LITERAL(_name, _abgr)  \
-	BX_MACRO_BLOCK_BEGIN                                 \
-		PIX_BEGINEVENT(_abgr, L"" # _name);              \
-		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr);  \
+#define BGFX_D3D11_PROFILER_BEGIN_LITERAL(_name, _abgr) \
+	BX_MACRO_BLOCK_BEGIN                                \
+		PIX_BEGINEVENT(_abgr, L"" _name);               \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);   \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_D3D11_PROFILER_END()                        \
-	BX_MACRO_BLOCK_BEGIN                                 \
-		BGFX_PROFILER_END();                             \
-		PIX_ENDEVENT();                                  \
+#define BGFX_D3D11_PROFILER_END()                       \
+	BX_MACRO_BLOCK_BEGIN                                \
+		BGFX_PROFILER_END();                            \
+		PIX_ENDEVENT();                                 \
 	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace d3d11

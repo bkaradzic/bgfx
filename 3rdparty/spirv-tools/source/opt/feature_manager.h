@@ -30,10 +30,16 @@ class FeatureManager {
   // Returns true if |ext| is an enabled extension in the module.
   bool HasExtension(Extension ext) const { return extensions_.Contains(ext); }
 
+  // Removes the given |extension| from the current FeatureManager.
+  void RemoveExtension(Extension extension);
+
   // Returns true if |cap| is an enabled capability in the module.
   bool HasCapability(SpvCapability cap) const {
     return capabilities_.Contains(cap);
   }
+
+  // Removes the given |capability| from the current FeatureManager.
+  void RemoveCapability(SpvCapability capability);
 
   // Analyzes |module| and records enabled extensions and capabilities.
   void Analyze(Module* module);

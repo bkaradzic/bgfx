@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2019 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2020 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
@@ -625,7 +625,7 @@ project "shaderc"
 	files {
 		path.join(BGFX_DIR, "tools/shaderc/**.cpp"),
 		path.join(BGFX_DIR, "tools/shaderc/**.h"),
-		path.join(BGFX_DIR, "src/vertexdecl.**"),
+		path.join(BGFX_DIR, "src/vertexlayout.**"),
 		path.join(BGFX_DIR, "src/shader_spirv.**"),
 	}
 

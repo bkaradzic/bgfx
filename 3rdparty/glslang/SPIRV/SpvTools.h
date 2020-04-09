@@ -46,7 +46,7 @@
 #include <ostream>
 #endif
 
-#include "../glslang/MachineIndependent/localintermediate.h"
+#include "glslang/MachineIndependent/localintermediate.h"
 #include "Logger.h"
 
 namespace glslang {

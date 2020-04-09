@@ -36,7 +36,6 @@ Supported platforms:
  * MIPS Creator CI20
  * OSX (10.12+)
  * RaspberryPi
- * SteamLink
  * Windows (XP, Vista, 7, 8, 10)
  * UWP (Universal Windows, Xbox One)
 
@@ -57,10 +56,11 @@ Languages:
  * [Lightweight Java Game Library 3 bindings](https://github.com/LWJGL/lwjgl3)
  * [Lua language API bindings](https://github.com/cloudwu/lua-bgfx)
  * [Nim language API bindings](https://github.com/Halsys/nim-bgfx)
- * [Python language API bindings](https://github.com/jnadro/pybgfx#pybgf)
- * [Python language API bindings (alternative)](https://github.com/fbertola/bgfx-python#-----bgfx-python--)
+ * [Python language API bindings #1](https://github.com/fbertola/bgfx-python#-----bgfx-python--)
+ * [Python language API bindings #2](https://github.com/jnadro/pybgfx#pybgfx)
  * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
+ * [Pascal language API bindings](https://github.com/Akira13641/PasBGFX)
 
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 ----------------------------------------------------
@@ -365,6 +365,23 @@ An open source reimplementation of the game Black & White (2001).
 
 ![openblack](https://user-images.githubusercontent.com/1388267/67631321-93c85380-f88c-11e9-9103-804807844af2.png)
 
+## Cluster
+
+Implementation of Clustered Shading and Physically Based Rendering with the bgfx rendering library.
+
+[Cluster](https://github.com/pezcode/Cluster#cluster)
+
+![cluster](https://raw.githubusercontent.com/pezcode/Cluster/master/images/sponza.jpg)
+
+## NIMBY Rails
+
+NIMBY Rails is a management and design sandbox game for railways you build in the real world.
+
+[NIMBY Rails](https://store.steampowered.com/app/1134710/NIMBY_Rails/)
+
+![NIMBY Rails](https://user-images.githubusercontent.com/28320/78472283-03d5e200-7727-11ea-8bd4-db8754f52dc3.jpg)
+
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
@@ -372,7 +389,7 @@ An open source reimplementation of the game Black & White (2001).
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 </a>
 
-	Copyright 2010-2019 Branimir Karadzic
+	Copyright 2010-2020 Branimir Karadzic
 	
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:

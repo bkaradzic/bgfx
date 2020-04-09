@@ -1188,7 +1188,7 @@ void TReflection::dump()
 
         for (int dim=0; dim<3; ++dim)
             if (getLocalSize(dim) > 1)
-                printf("Local size %s: %d\n", axis[dim], getLocalSize(dim));
+                printf("Local size %s: %u\n", axis[dim], getLocalSize(dim));
 
         printf("\n");
     }

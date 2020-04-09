@@ -286,7 +286,8 @@ spv_result_t ValidateDecorationGroup(ValidationState_t& _,
     auto use = pair.first;
     if (use->opcode() != SpvOpDecorate && use->opcode() != SpvOpGroupDecorate &&
         use->opcode() != SpvOpGroupMemberDecorate &&
-        use->opcode() != SpvOpName && use->opcode() != SpvOpDecorateId) {
+        use->opcode() != SpvOpName && use->opcode() != SpvOpDecorateId &&
+        !use->IsNonSemantic()) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "Result id of OpDecorationGroup can only "
              << "be targeted by OpName, OpGroupDecorate, "

@@ -149,6 +149,17 @@ bool IsExplicitLod(SpvOp opcode) {
   return false;
 }
 
+bool IsValidLodOperand(const ValidationState_t& _, SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpImageRead:
+    case SpvOpImageWrite:
+    case SpvOpImageSparseRead:
+      return _.HasCapability(SpvCapabilityImageReadWriteLodAMD);
+    default:
+      return IsExplicitLod(opcode);
+  }
+}
+
 // Returns true if the opcode is a Image instruction which applies
 // homogenous projection to the coordinates.
 bool IsProj(SpvOp opcode) {
@@ -248,6 +259,7 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
 
   const bool is_implicit_lod = IsImplicitLod(opcode);
   const bool is_explicit_lod = IsExplicitLod(opcode);
+  const bool is_valid_lod_operand = IsValidLodOperand(_, opcode);
 
   // The checks should be done in the order of definition of OperandImage.
 
@@ -277,7 +289,7 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
   }
 
   if (mask & SpvImageOperandsLodMask) {
-    if (!is_explicit_lod && opcode != SpvOpImageFetch &&
+    if (!is_valid_lod_operand && opcode != SpvOpImageFetch &&
         opcode != SpvOpImageSparseFetch) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Image Operand Lod can only be used with ExplicitLod opcodes "
@@ -835,6 +847,7 @@ bool IsAllowedSampledImageOperand(SpvOp opcode) {
     case SpvOpImageSparseSampleDrefExplicitLod:
     case SpvOpImageSparseGather:
     case SpvOpImageSparseDrefGather:
+    case SpvOpCopyObject:
       return true;
     default:
       return false;

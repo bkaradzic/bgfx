@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -1065,6 +1065,8 @@ namespace bgfx
 		// +-------------------------------- extended
 
 		_instruction.opcode = DxbcOpcode::Enum( (token & UINT32_C(0x000007ff) )      );
+		BX_CHECK(_instruction.opcode < DxbcOpcode::Enum::Count, "unknown opcode");
+		
 		_instruction.length =          uint8_t( (token & UINT32_C(0x7f000000) ) >> 24);
 		bool extended       =              0 != (token & UINT32_C(0x80000000) );
 

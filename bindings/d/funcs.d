@@ -1463,9 +1463,9 @@ version(BindBgfx_Static)
 	 * _id = View id.
 	 * _program = Program.
 	 * _depth = Depth for sorting.
-	 * _preserveState = Preserve internal draw state for next draw call submit.
+	 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 	 */
-	void bgfx_encoder_submit(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, bool _preserveState);
+	void bgfx_encoder_submit(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, byte _flags);
 	
 	/**
 	 * Submit primitive with occlusion query for rendering.
@@ -1474,9 +1474,9 @@ version(BindBgfx_Static)
 	 * _program = Program.
 	 * _occlusionQuery = Occlusion query.
 	 * _depth = Depth for sorting.
-	 * _preserveState = Preserve internal draw state for next draw call submit.
+	 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 	 */
-	void bgfx_encoder_submit_occlusion_query(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, bool _preserveState);
+	void bgfx_encoder_submit_occlusion_query(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, byte _flags);
 	
 	/**
 	 * Submit primitive for rendering with index and instance data info from
@@ -1488,9 +1488,9 @@ version(BindBgfx_Static)
 	 * _start = First element in indirect buffer.
 	 * _num = Number of dispatches.
 	 * _depth = Depth for sorting.
-	 * _preserveState = Preserve internal draw state for next draw call submit.
+	 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 	 */
-	void bgfx_encoder_submit_indirect(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, bool _preserveState);
+	void bgfx_encoder_submit_indirect(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, byte _flags);
 	
 	/**
 	 * Set compute index buffer.
@@ -1556,8 +1556,9 @@ version(BindBgfx_Static)
 	 * _numX = Number of groups X.
 	 * _numY = Number of groups Y.
 	 * _numZ = Number of groups Z.
+	 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 	 */
-	void bgfx_encoder_dispatch(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _numX, uint _numY, uint _numZ);
+	void bgfx_encoder_dispatch(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _numX, uint _numY, uint _numZ, byte _flags);
 	
 	/**
 	 * Dispatch compute indirect.
@@ -1567,13 +1568,16 @@ version(BindBgfx_Static)
 	 * _indirectHandle = Indirect buffer.
 	 * _start = First element in indirect buffer.
 	 * _num = Number of dispatches.
+	 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 	 */
-	void bgfx_encoder_dispatch_indirect(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num);
+	void bgfx_encoder_dispatch_indirect(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, byte _flags);
 	
 	/**
-	 * Discard all previously set state for draw or compute call.
+	 * Discard previously set state for draw or compute call.
+	 * Params:
+	 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 	 */
-	void bgfx_encoder_discard(bgfx_encoder_t* _this);
+	void bgfx_encoder_discard(bgfx_encoder_t* _this, byte _flags);
 	
 	/**
 	 * Blit 2D texture region between two 2D textures.
@@ -1920,9 +1924,9 @@ version(BindBgfx_Static)
 	 * _id = View id.
 	 * _program = Program.
 	 * _depth = Depth for sorting.
-	 * _preserveState = Preserve internal draw state for next draw call submit.
+	 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
 	 */
-	void bgfx_submit(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, bool _preserveState);
+	void bgfx_submit(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, byte _flags);
 	
 	/**
 	 * Submit primitive with occlusion query for rendering.
@@ -1931,9 +1935,9 @@ version(BindBgfx_Static)
 	 * _program = Program.
 	 * _occlusionQuery = Occlusion query.
 	 * _depth = Depth for sorting.
-	 * _preserveState = Preserve internal draw state for next draw call submit.
+	 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
 	 */
-	void bgfx_submit_occlusion_query(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, bool _preserveState);
+	void bgfx_submit_occlusion_query(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, byte _flags);
 	
 	/**
 	 * Submit primitive for rendering with index and instance data info from
@@ -1945,9 +1949,9 @@ version(BindBgfx_Static)
 	 * _start = First element in indirect buffer.
 	 * _num = Number of dispatches.
 	 * _depth = Depth for sorting.
-	 * _preserveState = Preserve internal draw state for next draw call submit.
+	 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
 	 */
-	void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, bool _preserveState);
+	void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, byte _flags);
 	
 	/**
 	 * Set compute index buffer.
@@ -2013,8 +2017,9 @@ version(BindBgfx_Static)
 	 * _numX = Number of groups X.
 	 * _numY = Number of groups Y.
 	 * _numZ = Number of groups Z.
+	 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 	 */
-	void bgfx_dispatch(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _numX, uint _numY, uint _numZ);
+	void bgfx_dispatch(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _numX, uint _numY, uint _numZ, byte _flags);
 	
 	/**
 	 * Dispatch compute indirect.
@@ -2024,13 +2029,16 @@ version(BindBgfx_Static)
 	 * _indirectHandle = Indirect buffer.
 	 * _start = First element in indirect buffer.
 	 * _num = Number of dispatches.
+	 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 	 */
-	void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num);
+	void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, byte _flags);
 	
 	/**
-	 * Discard all previously set state for draw or compute call.
+	 * Discard previously set state for draw or compute call.
+	 * Params:
+	 * _flags = Draw/compute states to discard.
 	 */
-	void bgfx_discard();
+	void bgfx_discard(byte _flags);
 	
 	/**
 	 * Blit 2D texture region between two 2D textures.
@@ -3644,9 +3652,9 @@ else
 		 * _id = View id.
 		 * _program = Program.
 		 * _depth = Depth for sorting.
-		 * _preserveState = Preserve internal draw state for next draw call submit.
+		 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 		 */
-		alias da_bgfx_encoder_submit = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, bool _preserveState);
+		alias da_bgfx_encoder_submit = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, byte _flags);
 		da_bgfx_encoder_submit bgfx_encoder_submit;
 		
 		/**
@@ -3656,9 +3664,9 @@ else
 		 * _program = Program.
 		 * _occlusionQuery = Occlusion query.
 		 * _depth = Depth for sorting.
-		 * _preserveState = Preserve internal draw state for next draw call submit.
+		 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 		 */
-		alias da_bgfx_encoder_submit_occlusion_query = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, bool _preserveState);
+		alias da_bgfx_encoder_submit_occlusion_query = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, byte _flags);
 		da_bgfx_encoder_submit_occlusion_query bgfx_encoder_submit_occlusion_query;
 		
 		/**
@@ -3671,9 +3679,9 @@ else
 		 * _start = First element in indirect buffer.
 		 * _num = Number of dispatches.
 		 * _depth = Depth for sorting.
-		 * _preserveState = Preserve internal draw state for next draw call submit.
+		 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 		 */
-		alias da_bgfx_encoder_submit_indirect = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, bool _preserveState);
+		alias da_bgfx_encoder_submit_indirect = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, byte _flags);
 		da_bgfx_encoder_submit_indirect bgfx_encoder_submit_indirect;
 		
 		/**
@@ -3746,8 +3754,9 @@ else
 		 * _numX = Number of groups X.
 		 * _numY = Number of groups Y.
 		 * _numZ = Number of groups Z.
+		 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 		 */
-		alias da_bgfx_encoder_dispatch = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _numX, uint _numY, uint _numZ);
+		alias da_bgfx_encoder_dispatch = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _numX, uint _numY, uint _numZ, byte _flags);
 		da_bgfx_encoder_dispatch bgfx_encoder_dispatch;
 		
 		/**
@@ -3758,14 +3767,17 @@ else
 		 * _indirectHandle = Indirect buffer.
 		 * _start = First element in indirect buffer.
 		 * _num = Number of dispatches.
+		 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 		 */
-		alias da_bgfx_encoder_dispatch_indirect = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num);
+		alias da_bgfx_encoder_dispatch_indirect = void function(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, byte _flags);
 		da_bgfx_encoder_dispatch_indirect bgfx_encoder_dispatch_indirect;
 		
 		/**
-		 * Discard all previously set state for draw or compute call.
+		 * Discard previously set state for draw or compute call.
+		 * Params:
+		 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 		 */
-		alias da_bgfx_encoder_discard = void function(bgfx_encoder_t* _this);
+		alias da_bgfx_encoder_discard = void function(bgfx_encoder_t* _this, byte _flags);
 		da_bgfx_encoder_discard bgfx_encoder_discard;
 		
 		/**
@@ -4143,9 +4155,9 @@ else
 		 * _id = View id.
 		 * _program = Program.
 		 * _depth = Depth for sorting.
-		 * _preserveState = Preserve internal draw state for next draw call submit.
+		 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
 		 */
-		alias da_bgfx_submit = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, bool _preserveState);
+		alias da_bgfx_submit = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, byte _flags);
 		da_bgfx_submit bgfx_submit;
 		
 		/**
@@ -4155,9 +4167,9 @@ else
 		 * _program = Program.
 		 * _occlusionQuery = Occlusion query.
 		 * _depth = Depth for sorting.
-		 * _preserveState = Preserve internal draw state for next draw call submit.
+		 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
 		 */
-		alias da_bgfx_submit_occlusion_query = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, bool _preserveState);
+		alias da_bgfx_submit_occlusion_query = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, byte _flags);
 		da_bgfx_submit_occlusion_query bgfx_submit_occlusion_query;
 		
 		/**
@@ -4170,9 +4182,9 @@ else
 		 * _start = First element in indirect buffer.
 		 * _num = Number of dispatches.
 		 * _depth = Depth for sorting.
-		 * _preserveState = Preserve internal draw state for next draw call submit.
+		 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
 		 */
-		alias da_bgfx_submit_indirect = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, bool _preserveState);
+		alias da_bgfx_submit_indirect = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, byte _flags);
 		da_bgfx_submit_indirect bgfx_submit_indirect;
 		
 		/**
@@ -4245,8 +4257,9 @@ else
 		 * _numX = Number of groups X.
 		 * _numY = Number of groups Y.
 		 * _numZ = Number of groups Z.
+		 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 		 */
-		alias da_bgfx_dispatch = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _numX, uint _numY, uint _numZ);
+		alias da_bgfx_dispatch = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _numX, uint _numY, uint _numZ, byte _flags);
 		da_bgfx_dispatch bgfx_dispatch;
 		
 		/**
@@ -4257,14 +4270,17 @@ else
 		 * _indirectHandle = Indirect buffer.
 		 * _start = First element in indirect buffer.
 		 * _num = Number of dispatches.
+		 * _flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 		 */
-		alias da_bgfx_dispatch_indirect = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num);
+		alias da_bgfx_dispatch_indirect = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, byte _flags);
 		da_bgfx_dispatch_indirect bgfx_dispatch_indirect;
 		
 		/**
-		 * Discard all previously set state for draw or compute call.
+		 * Discard previously set state for draw or compute call.
+		 * Params:
+		 * _flags = Draw/compute states to discard.
 		 */
-		alias da_bgfx_discard = void function();
+		alias da_bgfx_discard = void function(byte _flags);
 		da_bgfx_discard bgfx_discard;
 		
 		/**

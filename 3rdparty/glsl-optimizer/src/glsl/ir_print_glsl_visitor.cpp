@@ -50,7 +50,7 @@ static inline const char* get_precision_string (glsl_precision p)
 static const int tex_sampler_type_count = 7;
 // [glsl_sampler_dim]
 static const char* tex_sampler_dim_name[tex_sampler_type_count] = {
-	"1D", "2D", "3D", "Cube", "Rect", "Buf", "External",
+	"1D", "2D", "3D", "Cube", "Rect", "Buf", "2D",
 };
 static int tex_sampler_dim_size[tex_sampler_type_count] = {
 	1, 2, 3, 3, 2, 2, 2,
@@ -256,6 +256,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			str.asprintf_append("#extension GL_ARB_shader_bit_encoding : enable\n");
 		if (state->EXT_texture_array_enable)
 			str.asprintf_append ("#extension GL_EXT_texture_array : enable\n");
+		if (state->OES_EGL_image_external_enable)
+			str.asprintf_append ("#extension GL_OES_EGL_image_external : enable\n");
 	}
 	
 	// remove unused struct declarations

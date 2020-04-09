@@ -23,9 +23,9 @@
 		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr); \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_MTL_PROFILER_BEGIN_LITERAL(_name, _abgr)   \
-	BX_MACRO_BLOCK_BEGIN                                \
-		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr); \
+#define BGFX_MTL_PROFILER_BEGIN_LITERAL(_name, _abgr) \
+	BX_MACRO_BLOCK_BEGIN                              \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr); \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_MTL_PROFILER_END() \
@@ -968,12 +968,22 @@ namespace bgfx { namespace mtl
 
 		void destroy()
 		{
-			MTL_RELEASE(m_ptr);
+			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED))
+			{
+				MTL_RELEASE(m_ptr);
+			}
 			MTL_RELEASE(m_ptrStencil);
 			for (uint32_t ii = 0; ii < m_numMips; ++ii)
 			{
 				MTL_RELEASE(m_ptrMips[ii]);
 			}
+		}
+
+		void overrideInternal(uintptr_t _ptr)
+		{
+			destroy();
+			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
+			m_ptr = id<MTLTexture>(_ptr);
 		}
 
 		void update(

@@ -58,6 +58,24 @@ class FactManager {
                           const protobufs::DataDescriptor& data2,
                           opt::IRContext* context);
 
+  // Records the fact that |block_id| is dead.
+  void AddFactBlockIsDead(uint32_t block_id);
+
+  // Records the fact that |function_id| is livesafe.
+  void AddFactFunctionIsLivesafe(uint32_t function_id);
+
+  // Records the fact that the value of the pointee associated with |pointer_id|
+  // is irrelevant: it does not affect the observable behaviour of the module.
+  void AddFactValueOfPointeeIsIrrelevant(uint32_t pointer_id);
+
+  // Records the fact that |lhs_id| is defined by the equation:
+  //
+  //   |lhs_id| = |opcode| |rhs_id[0]| ... |rhs_id[N-1]|
+  //
+  void AddFactIdEquation(uint32_t lhs_id, SpvOp opcode,
+                         const std::vector<uint32_t>& rhs_id,
+                         opt::IRContext* context);
+
   // The fact manager is responsible for managing a few distinct categories of
   // facts. In principle there could be different fact managers for each kind
   // of fact, but in practice providing one 'go to' place for facts is
@@ -130,6 +148,36 @@ class FactManager {
   // End of id synonym facts
   //==============================
 
+  //==============================
+  // Querying facts about dead blocks
+
+  // Returns true if and ony if |block_id| is the id of a block known to be
+  // dynamically unreachable.
+  bool BlockIsDead(uint32_t block_id) const;
+
+  // End of dead block facts
+  //==============================
+
+  //==============================
+  // Querying facts about livesafe function
+
+  // Returns true if and ony if |function_id| is the id of a function known
+  // to be livesafe.
+  bool FunctionIsLivesafe(uint32_t function_id) const;
+
+  // End of dead livesafe function facts
+  //==============================
+
+  //==============================
+  // Querying facts about pointers with irrelevant pointee values
+
+  // Returns true if and ony if the value of the pointee associated with
+  // |pointer_id| is irrelevant.
+  bool PointeeValueIsIrrelevant(uint32_t pointer_id) const;
+
+  // End of irrelevant pointee value facts
+  //==============================
+
  private:
   // For each distinct kind of fact to be managed, we use a separate opaque
   // class type.
@@ -139,9 +187,24 @@ class FactManager {
   std::unique_ptr<ConstantUniformFacts>
       uniform_constant_facts_;  // Unique pointer to internal data.
 
-  class DataSynonymFacts;  // Opaque class for management of data synonym facts.
-  std::unique_ptr<DataSynonymFacts>
-      data_synonym_facts_;  // Unique pointer to internal data.
+  class DataSynonymAndIdEquationFacts;  // Opaque class for management of data
+                                        // synonym and id equation facts.
+  std::unique_ptr<DataSynonymAndIdEquationFacts>
+      data_synonym_and_id_equation_facts_;  // Unique pointer to internal data.
+
+  class DeadBlockFacts;  // Opaque class for management of dead block facts.
+  std::unique_ptr<DeadBlockFacts>
+      dead_block_facts_;  // Unique pointer to internal data.
+
+  class LivesafeFunctionFacts;  // Opaque class for management of livesafe
+                                // function facts.
+  std::unique_ptr<LivesafeFunctionFacts>
+      livesafe_function_facts_;  // Unique pointer to internal data.
+
+  class IrrelevantPointeeValueFacts;  // Opaque class for management of
+  // facts about pointers whose pointee values do not matter.
+  std::unique_ptr<IrrelevantPointeeValueFacts>
+      irrelevant_pointee_value_facts_;  // Unique pointer to internal data.
 };
 
 }  // namespace fuzz

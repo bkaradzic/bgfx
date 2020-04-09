@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Arm Limited
+ * Copyright 2015-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ namespace SPIRV_CROSS_NAMESPACE
 #ifdef SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
 #if !defined(_MSC_VER) || defined(__clang__)
 [[noreturn]]
+#elif defined(_MSC_VER)
+__declspec(noreturn)
 #endif
 inline void
 report_and_abort(const std::string &msg)

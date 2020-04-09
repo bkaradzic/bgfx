@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Arm Limited
+ * Copyright 2015-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,6 +317,8 @@ void Compiler::register_write(uint32_t chain)
 			var = maybe_get<SPIRVariable>(access_chain->loaded_from);
 	}
 
+	auto &chain_type = expression_type(chain);
+
 	if (var)
 	{
 		bool check_argument_storage_qualifier = true;
@@ -359,7 +361,7 @@ void Compiler::register_write(uint32_t chain)
 			force_recompile();
 		}
 	}
-	else
+	else if (chain_type.pointer)
 	{
 		// If we stored through a variable pointer, then we don't know which
 		// variable we stored to. So *all* expressions after this point need to
@@ -368,6 +370,9 @@ void Compiler::register_write(uint32_t chain)
 		// only certain variables, we can invalidate only those.
 		flush_all_active_variables();
 	}
+
+	// If chain_type.pointer is false, we're not writing to memory backed variables, but temporaries instead.
+	// This can happen in copy_logical_type where we unroll complex reads and writes to temporaries.
 }
 
 void Compiler::flush_dependees(SPIRVariable &var)

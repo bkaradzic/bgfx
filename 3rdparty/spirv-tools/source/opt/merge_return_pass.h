@@ -33,7 +33,8 @@ namespace opt {
  * Structured control flow guarantees that the CFG will converge at a given
  * point (the merge block). Within structured control flow, all blocks must be
  * post-dominated by the merge block, except return blocks and break blocks.
- * A break block is a block that branches to the innermost loop's merge block.
+ * A break block is a block that branches to a containing construct's merge
+ * block.
  *
  * Beyond this, we further assume that all unreachable blocks have been
  * cleaned up.  This means that the only unreachable blocks are those necessary
@@ -46,13 +47,14 @@ namespace opt {
  * with a branch. If current block is not within structured control flow, this
  * is the final return. This block should branch to the new return block (its
  * direct successor). If the current block is within structured control flow,
- * the branch destination should be the innermost loop's merge.  This loop will
- * always exist because a dummy loop is added around the entire function.
- * If the merge block produces any live values it will need to be predicated.
- * While the merge is nested in structured control flow, the predication path
- *should branch to the merge block of the inner-most loop it is contained in.
- *Once structured control flow has been exited, it will be at the merge of the
- *dummy loop, with will simply return.
+ * the branch destination should be the innermost construct's merge.  This
+ * merge will always exist because a dummy switch is added around the
+ * entire function. If the merge block produces any live values it will need to
+ * be predicated. While the merge is nested in structured control flow, the
+ * predication path should branch to the merge block of the inner-most loop
+ * (or switch if no loop) it is contained in. Once structured control flow has
+ * been exited, it will be at the merge of the dummy switch, which will simply
+ * return.
  *
  * In the final return block, the return value should be loaded and returned.
  * Memory promotion passes should be able to promote the newly introduced
@@ -71,7 +73,7 @@ namespace opt {
  *         ||
  *         \/
  *
- *          0 (dummy loop header)
+ *          0 (dummy switch header)
  *          |
  *          1 (loop header)
  *         / \
@@ -81,11 +83,11 @@ namespace opt {
  *        / \
  *        |  3 (original code in 3)
  *        \ /
- *   (ret) 4 (dummy loop merge)
+ *   (ret) 4 (dummy switch merge)
  *
  * In the above (simple) example, the return originally in |2| is passed through
- * the merge. That merge is predicated such that the old body of the block is
- * the else branch. The branch condition is based on the value of the "has
+ * the loop merge. That merge is predicated such that the old body of the block
+ * is the else branch. The branch condition is based on the value of the "has
  * returned" variable.
  *
  ******************************************************************************/
@@ -108,17 +110,17 @@ class MergeReturnPass : public MemPass {
   }
 
  private:
-  // This class is used to store the a loop merge instruction and a selection
-  // merge instruction.  The intended use is that is represent the inner most
-  // contain selection construct and the inner most loop construct.
+  // This class is used to store the a break merge instruction and a current
+  // merge instruction.  The intended use is to keep track of the block to
+  // break to and the current innermost control flow construct merge block.
   class StructuredControlState {
    public:
-    StructuredControlState(Instruction* loop, Instruction* merge)
-        : loop_merge_(loop), current_merge_(merge) {}
+    StructuredControlState(Instruction* break_merge, Instruction* merge)
+        : break_merge_(break_merge), current_merge_(merge) {}
 
     StructuredControlState(const StructuredControlState&) = default;
 
-    bool InLoop() const { return loop_merge_; }
+    bool InBreakable() const { return break_merge_; }
     bool InStructuredFlow() const { return CurrentMergeId() != 0; }
 
     uint32_t CurrentMergeId() const {
@@ -132,20 +134,14 @@ class MergeReturnPass : public MemPass {
                             : 0;
     }
 
-    uint32_t LoopMergeId() const {
-      return loop_merge_ ? loop_merge_->GetSingleWordInOperand(0u) : 0u;
+    uint32_t BreakMergeId() const {
+      return break_merge_ ? break_merge_->GetSingleWordInOperand(0u) : 0u;
     }
 
-    uint32_t CurrentLoopHeader() const {
-      return loop_merge_
-                 ? loop_merge_->context()->get_instr_block(loop_merge_)->id()
-                 : 0;
-    }
-
-    Instruction* LoopMergeInst() const { return loop_merge_; }
+    Instruction* BreakMergeInst() const { return break_merge_; }
 
    private:
-    Instruction* loop_merge_;
+    Instruction* break_merge_;
     Instruction* current_merge_;
   };
 
@@ -158,6 +154,9 @@ class MergeReturnPass : public MemPass {
   // Replaces old returns with an unconditional branch to the new block.
   void MergeReturnBlocks(Function* function,
                          const std::vector<BasicBlock*>& returnBlocks);
+
+  // Generate and push new control flow state if |block| contains a merge.
+  void GenerateState(BasicBlock* block);
 
   // Merges the return instruction in |function| so that it has a single return
   // statement.  It is assumed that |function| has structured control flow, and
@@ -219,9 +218,9 @@ class MergeReturnPass : public MemPass {
                        std::list<BasicBlock*>* order);
 
   // Add a conditional branch at the start of |block| that either jumps to
-  // the merge block of |loop_merge_inst| or the original code in |block|
+  // the merge block of |break_merge_inst| or the original code in |block|
   // depending on the value in |return_flag_|.  The continue target in
-  // |loop_merge_inst| will be updated if needed.
+  // |break_merge_inst| will be updated if needed.
   //
   // If new blocks that are created will be added to |order|.  This way a call
   // can traverse these new block in structured order.
@@ -230,7 +229,7 @@ class MergeReturnPass : public MemPass {
   bool BreakFromConstruct(BasicBlock* block,
                           std::unordered_set<BasicBlock*>* predicated,
                           std::list<BasicBlock*>* order,
-                          Instruction* loop_merge_inst);
+                          Instruction* break_merge_inst);
 
   // Add an |OpReturn| or |OpReturnValue| to the end of |block|.  If an
   // |OpReturnValue| is needed, the return value is loaded from |return_value_|.
@@ -274,27 +273,28 @@ class MergeReturnPass : public MemPass {
   void InsertAfterElement(BasicBlock* element, BasicBlock* new_element,
                           std::list<BasicBlock*>* list);
 
-  // Creates a single iteration loop around all of the exectuable code of the
-  // current function and returns after the loop is done. Sets
+  // Creates a single case switch around all of the exectuable code of the
+  // current function where the switch and case value are both zero and the
+  // default is the merge block. Returns after the switch is executed. Sets
   // |final_return_block_|.
-  void AddDummyLoopAroundFunction();
+  void AddDummySwitchAroundFunction();
 
   // Creates a new basic block that branches to |header_label_id|.  Returns the
   // new basic block.  The block will be the second last basic block in the
   // function.
   BasicBlock* CreateContinueTarget(uint32_t header_label_id);
 
-  // Creates a loop around the executable code of the function with
+  // Creates a one case switch around the executable code of the function with
   // |merge_target| as the merge node.
-  void CreateDummyLoop(BasicBlock* merge_target);
+  void CreateDummySwitch(BasicBlock* merge_target);
 
   // Returns true if |function| has an unreachable block that is not a continue
   // target that simply branches back to the header, or a merge block containing
   // 1 instruction which is OpUnreachable.
   bool HasNontrivialUnreachableBlocks(Function* function);
 
-  // A stack used to keep track of the innermost contain loop and selection
-  // constructs.
+  // A stack used to keep track of the break and current control flow construct
+  // merge blocks.
   std::vector<StructuredControlState> state_;
 
   // The current function being transformed.

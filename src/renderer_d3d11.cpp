@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -4465,13 +4465,18 @@ namespace bgfx { namespace d3d11
 	void TextureD3D11::overrideInternal(uintptr_t _ptr)
 	{
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-		m_srv->GetDesc(&srvDesc);
+		const bool readable = (m_srv != NULL);
+		if (readable) {
+			m_srv->GetDesc(&srvDesc);
+		}
 
 		destroy();
 		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 		m_ptr = (ID3D11Resource*)_ptr;
 
-		s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, &srvDesc, &m_srv);
+		if (readable) {
+			s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, &srvDesc, &m_srv);
+		}
 	}
 
 	void TextureD3D11::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
@@ -4501,7 +4506,12 @@ namespace bgfx { namespace d3d11
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
 		const bool     depth  = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
-		const uint32_t rectpitch  = _rect.m_width*bpp/8;
+		uint32_t rectpitch  = _rect.m_width*bpp/8;
+		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
+		{
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+			rectpitch = (_rect.m_width / blockInfo.blockWidth)*blockInfo.blockSize;
+		}
 		const uint32_t srcpitch   = UINT16_MAX == _pitch ? rectpitch : _pitch;
 		const uint32_t slicepitch = rectpitch*_rect.m_height;
 
@@ -4761,19 +4771,43 @@ namespace bgfx { namespace d3d11
 					{
 						BX_CHECK(NULL == m_dsv, "Frame buffer already has depth-stencil attached.");
 
+						D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+						dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
+						dsvDesc.Flags = 0;
+
 						switch (texture.m_type)
 						{
 						default:
 						case TextureD3D11::Texture2D:
 							{
-								D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-								dsvDesc.Format        = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
-								dsvDesc.ViewDimension = 1 < msaa.Count
-									? D3D11_DSV_DIMENSION_TEXTURE2DMS
-									: D3D11_DSV_DIMENSION_TEXTURE2D
-									;
-								dsvDesc.Flags = 0;
-								dsvDesc.Texture2D.MipSlice = at.mip;
+								if (1 < msaa.Count)
+								{
+									if (1 < texture.m_numLayers)
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+										dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
+										dsvDesc.Texture2DMSArray.ArraySize       = 1;
+									}
+									else
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+									}
+								}
+								else
+								{
+									if (1 < texture.m_numLayers)
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+										dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
+										dsvDesc.Texture2DArray.ArraySize       = 1;
+										dsvDesc.Texture2DArray.MipSlice        = at.mip;
+									}
+									else
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+										dsvDesc.Texture2D.MipSlice = at.mip;
+									}
+								}
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(
 									  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
 									, &dsvDesc
@@ -4784,8 +4818,6 @@ namespace bgfx { namespace d3d11
 
 						case TextureD3D11::TextureCube:
 							{
-								D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-								dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
 								if (1 < msaa.Count)
 								{
 									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
@@ -4799,7 +4831,6 @@ namespace bgfx { namespace d3d11
 									dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
 									dsvDesc.Texture2DArray.MipSlice        = at.mip;
 								}
-								dsvDesc.Flags = 0;
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
 							}
 							break;

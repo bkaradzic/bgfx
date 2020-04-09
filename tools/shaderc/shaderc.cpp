@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -80,6 +80,12 @@ namespace bgfx
 		"texture3DProj",
 		"texture3DLod",
 		"texture3DProjLod",
+		NULL
+	};
+
+	static const char* s_OES_EGL_image_external[] =
+	{
+		"samplerExternalOES",
 		NULL
 	};
 
@@ -865,7 +871,7 @@ namespace bgfx
 
 		bx::printf(
 			  "shaderc, bgfx shader compiler tool, version %d.%d.%d.\n"
-			  "Copyright 2011-2019 Branimir Karadzic. All rights reserved.\n"
+			  "Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n"
 			  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 			, BGFX_SHADERC_VERSION_MAJOR
 			, BGFX_SHADERC_VERSION_MINOR
@@ -2179,6 +2185,11 @@ namespace bgfx
 									if (!bx::findIdentifierMatch(input, s_OES_texture_3D).isEmpty() )
 									{
 										bx::stringPrintf(code, "#extension GL_OES_texture_3D : enable\n");
+									}
+
+									if (!bx::findIdentifierMatch(input, s_OES_EGL_image_external).isEmpty() )
+									{
+										bx::stringPrintf(code, "#extension GL_OES_EGL_image_external : enable\n");
 									}
 
 									if (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty() )

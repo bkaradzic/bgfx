@@ -32,6 +32,9 @@
 #include "source/opt/reflect.h"
 #include "spirv-tools/libspirv.h"
 
+const uint32_t kNoDebugScope = 0;
+const uint32_t kNoInlinedAt = 0;
+
 namespace spvtools {
 namespace opt {
 
@@ -80,6 +83,15 @@ struct Operand {
   spv_operand_type_t type;  // Type of this logical operand.
   OperandData words;        // Binary segments of this logical operand.
 
+  // Returns a string operand as a C-style string.
+  const char* AsCString() const {
+    assert(type == SPV_OPERAND_TYPE_LITERAL_STRING);
+    return reinterpret_cast<const char*>(words.data());
+  }
+
+  // Returns a string operand as a std::string.
+  std::string AsString() const { return AsCString(); }
+
   friend bool operator==(const Operand& o1, const Operand& o2) {
     return o1.type == o2.type && o1.words == o2.words;
   }
@@ -90,6 +102,44 @@ struct Operand {
 inline bool operator!=(const Operand& o1, const Operand& o2) {
   return !(o1 == o2);
 }
+
+// This structure is used to represent a DebugScope instruction from
+// the OpenCL.100.DebugInfo extened instruction set. Note that we can
+// ignore the result id of DebugScope instruction because it is not
+// used for anything. We do not keep it to reduce the size of
+// structure.
+// TODO: Let validator check that the result id is not used anywhere.
+class DebugScope {
+ public:
+  DebugScope(uint32_t lexical_scope, uint32_t inlined_at)
+      : lexical_scope_(lexical_scope), inlined_at_(inlined_at) {}
+
+  inline bool operator!=(const DebugScope& d) const {
+    return lexical_scope_ != d.lexical_scope_ || inlined_at_ != d.inlined_at_;
+  }
+
+  // Accessor functions for |lexical_scope_|.
+  uint32_t GetLexicalScope() const { return lexical_scope_; }
+  void SetLexicalScope(uint32_t scope) { lexical_scope_ = scope; }
+
+  // Accessor functions for |inlined_at_|.
+  uint32_t GetInlinedAt() const { return inlined_at_; }
+  void SetInlinedAt(uint32_t at) { inlined_at_ = at; }
+
+  // Pushes the binary segments for this DebugScope instruction into
+  // the back of *|binary|.
+  void ToBinary(uint32_t type_id, uint32_t result_id, uint32_t ext_set,
+                std::vector<uint32_t>* binary) const;
+
+ private:
+  // The result id of the lexical scope in which this debug scope is
+  // contained. The value is kNoDebugScope if there is no scope.
+  uint32_t lexical_scope_;
+
+  // The result id of DebugInlinedAt if instruction in this debug scope
+  // is inlined. The value is kNoInlinedAt if it is not inlined.
+  uint32_t inlined_at_;
+};
 
 // A SPIR-V instruction. It contains the opcode and any additional logical
 // operand, including the result id (if any) and result type id (if any). It
@@ -111,7 +161,8 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
         opcode_(SpvOpNop),
         has_type_id_(false),
         has_result_id_(false),
-        unique_id_(0) {}
+        unique_id_(0),
+        dbg_scope_(kNoDebugScope, kNoInlinedAt) {}
 
   // Creates a default OpNop instruction.
   Instruction(IRContext*);
@@ -124,6 +175,9 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // instruction, if any.
   Instruction(IRContext* c, const spv_parsed_instruction_t& inst,
               std::vector<Instruction>&& dbg_line = {});
+
+  Instruction(IRContext* c, const spv_parsed_instruction_t& inst,
+              const DebugScope& dbg_scope);
 
   // Creates an instruction with the given opcode |op|, type id: |ty_id|,
   // result id: |res_id| and input operands: |in_operands|.
@@ -172,6 +226,9 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
     return dbg_line_insts_;
   }
 
+  // Clear line-related debug instructions attached to this instruction.
+  void clear_dbg_line_insts() { dbg_line_insts_.clear(); }
+
   // Same semantics as in the base class except the list the InstructionList
   // containing |pos| will now assume ownership of |this|.
   // inline void MoveBefore(Instruction* pos);
@@ -218,6 +275,9 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // Sets the result id
   inline void SetResultId(uint32_t res_id);
   inline bool HasResultId() const { return has_result_id_; }
+  // Sets DebugScope.
+  inline void SetDebugScope(const DebugScope& scope);
+  inline const DebugScope& GetDebugScope() const { return dbg_scope_; }
   // Remove the |index|-th operand
   void RemoveOperand(uint32_t index) {
     operands_.erase(operands_.begin() + index);
@@ -470,6 +530,9 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // empty.
   std::vector<Instruction> dbg_line_insts_;
 
+  // DebugScope that wraps this instruction.
+  DebugScope dbg_scope_;
+
   friend InstructionList;
 };
 
@@ -539,6 +602,13 @@ inline void Instruction::SetResultId(uint32_t res_id) {
 
   auto ridx = has_type_id_ ? 1 : 0;
   operands_[ridx].words = {res_id};
+}
+
+inline void Instruction::SetDebugScope(const DebugScope& scope) {
+  dbg_scope_ = scope;
+  for (auto& i : dbg_line_insts_) {
+    i.dbg_scope_ = scope;
+  }
 }
 
 inline void Instruction::SetResultType(uint32_t ty_id) {

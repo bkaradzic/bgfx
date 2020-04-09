@@ -273,6 +273,14 @@ bool IRContext::IsConsistent() {
     }
   }
 
+  if (AreAnalysesValid(kAnalysisIdToFuncMapping)) {
+    for (auto& fn : *module_) {
+      if (id_to_func_[fn.result_id()] != &fn) {
+        return false;
+      }
+    }
+  }
+
   if (AreAnalysesValid(kAnalysisInstrToBlockMapping)) {
     for (auto& func : *module()) {
       for (auto& block : func) {
@@ -377,6 +385,8 @@ void IRContext::AddCombinatorsForCapability(uint32_t capability) {
                                SpvOpTypeSampler,
                                SpvOpTypeSampledImage,
                                SpvOpTypeAccelerationStructureNV,
+                               SpvOpTypeAccelerationStructureKHR,
+                               SpvOpTypeRayQueryProvisionalKHR,
                                SpvOpTypeArray,
                                SpvOpTypeRuntimeArray,
                                SpvOpTypeStruct,
@@ -818,6 +828,7 @@ bool IRContext::ProcessCallTreeFromRoots(ProcessFunction& pfn,
     roots->pop();
     if (done.insert(fi).second) {
       Function* fn = GetFunction(fi);
+      assert(fn && "Trying to process a function that does not exist.");
       modified = pfn(fn) || modified;
       AddCalls(fn, roots);
     }

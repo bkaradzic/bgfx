@@ -55,6 +55,15 @@ bool IsSupportGuaranteedVulkan_1_1(uint32_t capability) {
   return false;
 }
 
+bool IsSupportGuaranteedVulkan_1_2(uint32_t capability) {
+  if (IsSupportGuaranteedVulkan_1_1(capability)) return true;
+  switch (capability) {
+    case SpvCapabilityShaderNonUniform:
+      return true;
+  }
+  return false;
+}
+
 bool IsSupportOptionalVulkan_1_0(uint32_t capability) {
   switch (capability) {
     case SpvCapabilityGeometry:
@@ -116,6 +125,38 @@ bool IsSupportOptionalVulkan_1_1(uint32_t capability) {
     case SpvCapabilityMultiView:
     case SpvCapabilityVariablePointersStorageBuffer:
     case SpvCapabilityVariablePointers:
+      return true;
+  }
+  return false;
+}
+
+bool IsSupportOptionalVulkan_1_2(uint32_t capability) {
+  if (IsSupportOptionalVulkan_1_1(capability)) return true;
+
+  switch (capability) {
+    case SpvCapabilityDenormPreserve:
+    case SpvCapabilityDenormFlushToZero:
+    case SpvCapabilitySignedZeroInfNanPreserve:
+    case SpvCapabilityRoundingModeRTE:
+    case SpvCapabilityRoundingModeRTZ:
+    case SpvCapabilityVulkanMemoryModel:
+    case SpvCapabilityVulkanMemoryModelDeviceScope:
+    case SpvCapabilityStorageBuffer8BitAccess:
+    case SpvCapabilityUniformAndStorageBuffer8BitAccess:
+    case SpvCapabilityStoragePushConstant8:
+    case SpvCapabilityShaderViewportIndex:
+    case SpvCapabilityShaderLayer:
+    case SpvCapabilityPhysicalStorageBufferAddresses:
+    case SpvCapabilityRuntimeDescriptorArray:
+    case SpvCapabilityUniformTexelBufferArrayDynamicIndexing:
+    case SpvCapabilityStorageTexelBufferArrayDynamicIndexing:
+    case SpvCapabilityUniformBufferArrayNonUniformIndexing:
+    case SpvCapabilitySampledImageArrayNonUniformIndexing:
+    case SpvCapabilityStorageBufferArrayNonUniformIndexing:
+    case SpvCapabilityStorageImageArrayNonUniformIndexing:
+    case SpvCapabilityInputAttachmentArrayNonUniformIndexing:
+    case SpvCapabilityUniformTexelBufferArrayNonUniformIndexing:
+    case SpvCapabilityStorageTexelBufferArrayNonUniformIndexing:
       return true;
   }
   return false;
@@ -282,6 +323,15 @@ spv_result_t CapabilityPass(ValidationState_t& _, const Instruction* inst) {
       return _.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
              << "Capability " << capability_str()
              << " is not allowed by Vulkan 1.1 specification"
+             << " (or requires extension)";
+    }
+  } else if (env == SPV_ENV_VULKAN_1_2) {
+    if (!IsSupportGuaranteedVulkan_1_2(capability) &&
+        !IsSupportOptionalVulkan_1_2(capability) &&
+        !IsEnabledByExtension(_, capability)) {
+      return _.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
+             << "Capability " << capability_str()
+             << " is not allowed by Vulkan 1.2 specification"
              << " (or requires extension)";
     }
   } else if (env == SPV_ENV_OPENCL_1_2 || env == SPV_ENV_OPENCL_EMBEDDED_1_2) {
