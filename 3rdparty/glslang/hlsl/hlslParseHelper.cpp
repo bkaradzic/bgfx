@@ -69,7 +69,8 @@ HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& int
     clipDistanceOutput(nullptr),
     cullDistanceOutput(nullptr),
     clipDistanceInput(nullptr),
-    cullDistanceInput(nullptr)
+    cullDistanceInput(nullptr),
+    parsingEntrypointParameters(false)
 {
     globalUniformDefaults.clear();
     globalUniformDefaults.layoutMatrix = ElmRowMajor;
@@ -756,9 +757,6 @@ TIntermTyped* HlslParseContext::handleBracketOperator(const TSourceLoc& loc, TIn
     // indexStructBufferContent returns nullptr if it isn't a structuredbuffer (SSBO).
     TIntermTyped* sbArray = indexStructBufferContent(loc, base);
     if (sbArray != nullptr) {
-        if (sbArray == nullptr)
-            return nullptr;
-
         // Now we'll apply the [] index to that array
         const TOperator idxOp = (index->getQualifier().storage == EvqConst) ? EOpIndexDirect : EOpIndexIndirect;
 
@@ -2049,7 +2047,7 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
     };
 
     // if we aren't in the entry point, fix the IO as such and exit
-    if (userFunction.getName().compare(intermediate.getEntryPointName().c_str()) != 0) {
+    if (! isEntrypointName(userFunction.getName())) {
         remapNonEntryPointIO(userFunction);
         return nullptr;
     }
@@ -7571,7 +7569,7 @@ const TFunction* HlslParseContext::findFunction(const TSourceLoc& loc, TFunction
 
         if (args->getAsAggregate()) {
             // Handle aggregates: put all args into the new function call
-            for (int arg=0; arg<int(args->getAsAggregate()->getSequence().size()); ++arg) {
+            for (int arg = 0; arg < int(args->getAsAggregate()->getSequence().size()); ++arg) {
                 // TODO: But for constness, we could avoid the new & shallowCopy, and use the pointer directly.
                 TParameter param = { 0, new TType, nullptr };
                 param.type->shallowCopy(args->getAsAggregate()->getSequence()[arg]->getAsTyped()->getType());
@@ -8884,6 +8882,10 @@ void HlslParseContext::addQualifierToExisting(const TSourceLoc& loc, TQualifier 
 //
 bool HlslParseContext::handleInputGeometry(const TSourceLoc& loc, const TLayoutGeometry& geometry)
 {
+    // these can be declared on non-entry-points, in which case they lose their meaning
+    if (! parsingEntrypointParameters)
+        return true;
+
     switch (geometry) {
     case ElgPoints:             // fall through
     case ElgLines:              // ...
@@ -8912,6 +8914,10 @@ bool HlslParseContext::handleOutputGeometry(const TSourceLoc& loc, const TLayout
     // If this is not a geometry shader, ignore.  It might be a mixed shader including several stages.
     // Since that's an OK situation, return true for success.
     if (language != EShLangGeometry)
+        return true;
+
+    // these can be declared on non-entry-points, in which case they lose their meaning
+    if (! parsingEntrypointParameters)
         return true;
 
     switch (geometry) {

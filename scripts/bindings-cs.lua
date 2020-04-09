@@ -3,7 +3,7 @@ local idl = codegen.idl "bgfx.idl"
 
 local csharp_template = [[
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -23,13 +23,34 @@ public static partial class bgfx
 	$types
 
 	$funcs
+}
+}
+]]
 
-#if !BGFX_CSHARP_CUSTOM_DLLNAME
+local csharp_dllname_template = [[
+/*
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+ */
+
+/*
+ *
+ * AUTO GENERATED! DO NOT EDIT!
+ *
+ * Include this file in your build if you want to use the default DllImport
+ * names of bgfx.dll and bgfx_debug.dll.  Otherwise, define your own
+ * partial class like the below with a const DllName for your use.
+ *
+ */
+
+namespace Bgfx
+{
+public static partial class bgfx
+{
 #if DEBUG
-	const string DllName = "bgfx_debug.dll";
+       const string DllName = "bgfx_debug.dll";
 #else
-	const string DllName = "bgfx.dll";
-#endif
+       const string DllName = "bgfx.dll";
 #endif
 }
 }
@@ -138,6 +159,10 @@ function gen.gen()
 	return r
 end
 
+function gen.gen_dllname()
+	return csharp_dllname_template
+end
+
 local combined = { "State", "Stencil", "Buffer", "Texture", "Sampler", "Reset" }
 
 for _, v in ipairs(combined) do
@@ -242,7 +267,10 @@ function converter.types(typ)
 	if typ.handle then
 		lastCombinedFlagBlock()
 
-		yield("public struct " .. typ.name .. "{ public ushort idx; }")
+		yield("public struct " .. typ.name .. " {")
+        yield("    public ushort idx;")
+        yield("    public bool Valid => idx != UInt16.MaxValue;")
+        yield("}")
 	elseif hasSuffix(typ.name, "::Enum") then
 		lastCombinedFlagBlock()
 

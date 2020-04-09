@@ -56,6 +56,8 @@ class Function {
 
   // Appends a parameter to this function.
   inline void AddParameter(std::unique_ptr<Instruction> p);
+  // Appends a debug instruction in function header to this function.
+  inline void AddDebugInstructionInHeader(std::unique_ptr<Instruction> p);
   // Appends a basic block to this function.
   inline void AddBasicBlock(std::unique_ptr<BasicBlock> b);
   // Appends a basic block to this function at the position |ip|.
@@ -151,6 +153,8 @@ class Function {
   std::unique_ptr<Instruction> def_inst_;
   // All parameters to this function.
   std::vector<std::unique_ptr<Instruction>> params_;
+  // All debug instructions in this function's header.
+  InstructionList debug_insts_in_header_;
   // All basic blocks inside this function in specification order
   std::vector<std::unique_ptr<BasicBlock>> blocks_;
   // The OpFunctionEnd instruction.
@@ -165,6 +169,11 @@ inline Function::Function(std::unique_ptr<Instruction> def_inst)
 
 inline void Function::AddParameter(std::unique_ptr<Instruction> p) {
   params_.emplace_back(std::move(p));
+}
+
+inline void Function::AddDebugInstructionInHeader(
+    std::unique_ptr<Instruction> p) {
+  debug_insts_in_header_.push_back(std::move(p));
 }
 
 inline void Function::AddBasicBlock(std::unique_ptr<BasicBlock> b) {

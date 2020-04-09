@@ -52,6 +52,13 @@ RemoveUnreferencedInstructionReductionOpportunityFinder::
     result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
   }
 
+  for (auto& inst : context->module()->ext_inst_debuginfo()) {
+    if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
+      continue;
+    }
+    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+  }
+
   for (auto& inst : context->module()->types_values()) {
     if (context->get_def_use_mgr()->NumUsers(&inst) > 0) {
       continue;

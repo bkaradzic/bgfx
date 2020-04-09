@@ -2,7 +2,8 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2015 LunarG, Inc.
 // Copyright (C) 2015-2018 Google, Inc.
-// Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2017, 2019 ARM Limited.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -1353,6 +1354,9 @@ void TParseContext::computeBuiltinPrecisions(TIntermTyped& node, const TFunction
         case EOpInterpolateAtSample:
             numArgs = 1;
             break;
+        case EOpDebugPrintf:
+            numArgs = 0;
+            break;
         default:
             break;
         }
@@ -1672,6 +1676,9 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
     unsigned int semantics = 0, storageClassSemantics = 0;
     unsigned int semantics2 = 0, storageClassSemantics2 = 0;
 
+    const TIntermTyped* arg0 = (*argp)[0]->getAsTyped();
+    const bool isMS = arg0->getBasicType() == EbtSampler && arg0->getType().getSampler().isMultiSample();
+
     // Grab the semantics and storage class semantics from the operands, based on opcode
     switch (callNode.getOp()) {
     case EOpAtomicAdd:
@@ -1704,18 +1711,18 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
     case EOpImageAtomicXor:
     case EOpImageAtomicExchange:
     case EOpImageAtomicStore:
-        storageClassSemantics = (*argp)[4]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        semantics = (*argp)[5]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics = (*argp)[isMS ? 5 : 4]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[isMS ? 6 : 5]->getAsConstantUnion()->getConstArray()[0].getIConst();
         break;
     case EOpImageAtomicLoad:
-        storageClassSemantics = (*argp)[3]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        semantics = (*argp)[4]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics = (*argp)[isMS ? 4 : 3]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[isMS ? 5 : 4]->getAsConstantUnion()->getConstArray()[0].getIConst();
         break;
     case EOpImageAtomicCompSwap:
-        storageClassSemantics = (*argp)[5]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        semantics = (*argp)[6]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        storageClassSemantics2 = (*argp)[7]->getAsConstantUnion()->getConstArray()[0].getIConst();
-        semantics2 = (*argp)[8]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics = (*argp)[isMS ? 6 : 5]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[isMS ? 7 : 6]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics2 = (*argp)[isMS ? 8 : 7]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics2 = (*argp)[isMS ? 9 : 8]->getAsConstantUnion()->getConstArray()[0].getIConst();
         break;
 
     case EOpBarrier:
@@ -2026,13 +2033,30 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     }
 
 #ifndef GLSLANG_WEB
-    case EOpTraceNV:
+    case EOpTrace:
         if (!(*argp)[10]->getAsConstantUnion())
             error(loc, "argument must be compile-time constant", "payload number", "");
         break;
-    case EOpExecuteCallableNV:
+    case EOpExecuteCallable:
         if (!(*argp)[1]->getAsConstantUnion())
             error(loc, "argument must be compile-time constant", "callable data number", "");
+        break;
+
+    case EOpRayQueryGetIntersectionType:
+    case EOpRayQueryGetIntersectionT:
+    case EOpRayQueryGetIntersectionInstanceCustomIndex:
+    case EOpRayQueryGetIntersectionInstanceId:
+    case EOpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffset:
+    case EOpRayQueryGetIntersectionGeometryIndex:
+    case EOpRayQueryGetIntersectionPrimitiveIndex:
+    case EOpRayQueryGetIntersectionBarycentrics:
+    case EOpRayQueryGetIntersectionFrontFace:
+    case EOpRayQueryGetIntersectionObjectRayDirection:
+    case EOpRayQueryGetIntersectionObjectRayOrigin:
+    case EOpRayQueryGetIntersectionObjectToWorld:
+    case EOpRayQueryGetIntersectionWorldToObject:
+        if (!(*argp)[1]->getAsConstantUnion())
+            error(loc, "argument must be compile-time constant", "committed", "");
         break;
 
     case EOpTextureQuerySamples:
@@ -2669,14 +2693,14 @@ void TParseContext::reservedErrorCheck(const TSourceLoc& loc, const TString& ide
         if (builtInName(identifier))
             error(loc, "identifiers starting with \"gl_\" are reserved", identifier.c_str(), "");
 
-        // "__" are not supposed to be an error.  ES 310 (and desktop) added the clarification:
+        // "__" are not supposed to be an error.  ES 300 (and desktop) added the clarification:
         // "In addition, all identifiers containing two consecutive underscores (__) are
         // reserved; using such a name does not itself result in an error, but may result
         // in undefined behavior."
         // however, before that, ES tests required an error.
         if (identifier.find("__") != TString::npos) {
-            if (isEsProfile() && version <= 300)
-                error(loc, "identifiers containing consecutive underscores (\"__\") are reserved, and an error if version <= 300", identifier.c_str(), "");
+            if (isEsProfile() && version < 300)
+                error(loc, "identifiers containing consecutive underscores (\"__\") are reserved, and an error if version < 300", identifier.c_str(), "");
             else
                 warn(loc, "identifiers containing consecutive underscores (\"__\") are reserved", identifier.c_str(), "");
         }
@@ -2688,7 +2712,7 @@ void TParseContext::reservedErrorCheck(const TSourceLoc& loc, const TString& ide
 //
 void TParseContext::reservedPpErrorCheck(const TSourceLoc& loc, const char* identifier, const char* op)
 {
-    // "__" are not supposed to be an error.  ES 310 (and desktop) added the clarification:
+    // "__" are not supposed to be an error.  ES 300 (and desktop) added the clarification:
     // "All macro names containing two consecutive underscores ( __ ) are reserved;
     // defining such a name does not itself result in an error, but may result in
     // undefined behavior.  All macro names prefixed with "GL_" ("GL" followed by a
@@ -2706,8 +2730,8 @@ void TParseContext::reservedPpErrorCheck(const TSourceLoc& loc, const char* iden
              strcmp(identifier, "__VERSION__") == 0))
             ppError(loc, "predefined names can't be (un)defined:", op,  identifier);
         else {
-            if (isEsProfile() && version <= 300)
-                ppError(loc, "names containing consecutive underscores are reserved, and an error if version <= 300:", op, identifier);
+            if (isEsProfile() && version < 300)
+                ppError(loc, "names containing consecutive underscores are reserved, and an error if version < 300:", op, identifier);
             else
                 ppWarn(loc, "names containing consecutive underscores are reserved:", op, identifier);
         }
@@ -3083,7 +3107,7 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
         error(loc, "constructor argument does not have a type", "constructor", "");
         return true;
     }
-    if (op != EOpConstructStruct && typed->getBasicType() == EbtSampler) {
+    if (op != EOpConstructStruct && op != EOpConstructNonuniform && typed->getBasicType() == EbtSampler) {
         error(loc, "cannot convert a sampler", "constructor", "");
         return true;
     }
@@ -3222,14 +3246,14 @@ void TParseContext::atomicUintCheck(const TSourceLoc& loc, const TType& type, co
         error(loc, "atomic_uints can only be used in uniform variables or function parameters:", type.getBasicTypeString().c_str(), identifier.c_str());
 }
 
-void TParseContext::accStructNVCheck(const TSourceLoc& loc, const TType& type, const TString& identifier)
+void TParseContext::accStructCheck(const TSourceLoc& loc, const TType& type, const TString& identifier)
 {
     if (type.getQualifier().storage == EvqUniform)
         return;
 
-    if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtAccStructNV))
+    if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtAccStruct))
         error(loc, "non-uniform struct contains an accelerationStructureNV:", type.getBasicTypeString().c_str(), identifier.c_str());
-    else if (type.getBasicType() == EbtAccStructNV && type.getQualifier().storage != EvqUniform)
+    else if (type.getBasicType() == EbtAccStruct && type.getQualifier().storage != EvqUniform)
         error(loc, "accelerationStructureNV can only be used in uniform variables or function parameters:",
             type.getBasicTypeString().c_str(), identifier.c_str());
 
@@ -3513,12 +3537,14 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
         dst.precision = src.precision;
 
 #ifndef GLSLANG_WEB
-    if (!force && ((src.coherent && (dst.devicecoherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.subgroupcoherent)) ||
-                   (src.devicecoherent && (dst.coherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.subgroupcoherent)) ||
-                   (src.queuefamilycoherent && (dst.coherent || dst.devicecoherent || dst.workgroupcoherent || dst.subgroupcoherent)) ||
-                   (src.workgroupcoherent && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.subgroupcoherent)) ||
-                   (src.subgroupcoherent  && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.workgroupcoherent)))) {
-        error(loc, "only one coherent/devicecoherent/queuefamilycoherent/workgroupcoherent/subgroupcoherent qualifier allowed", GetPrecisionQualifierString(src.precision), "");
+    if (!force && ((src.coherent && (dst.devicecoherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.subgroupcoherent || dst.shadercallcoherent)) ||
+                   (src.devicecoherent && (dst.coherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.subgroupcoherent || dst.shadercallcoherent)) ||
+                   (src.queuefamilycoherent && (dst.coherent || dst.devicecoherent || dst.workgroupcoherent || dst.subgroupcoherent || dst.shadercallcoherent)) ||
+                   (src.workgroupcoherent && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.subgroupcoherent || dst.shadercallcoherent)) ||
+                   (src.subgroupcoherent  && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.shadercallcoherent)) ||
+                   (src.shadercallcoherent && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.subgroupcoherent)))) {
+        error(loc, "only one coherent/devicecoherent/queuefamilycoherent/workgroupcoherent/subgroupcoherent/shadercallcoherent qualifier allowed", 
+            GetPrecisionQualifierString(src.precision), "");
     }
 #endif
     // Layout qualifiers
@@ -3546,6 +3572,7 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
     MERGE_SINGLETON(queuefamilycoherent);
     MERGE_SINGLETON(workgroupcoherent);
     MERGE_SINGLETON(subgroupcoherent);
+    MERGE_SINGLETON(shadercallcoherent);
     MERGE_SINGLETON(nonprivate);
     MERGE_SINGLETON(volatil);
     MERGE_SINGLETON(restrict);
@@ -3983,7 +4010,7 @@ void TParseContext::checkRuntimeSizable(const TSourceLoc& loc, const TIntermType
     }
 
     // check for additional things allowed by GL_EXT_nonuniform_qualifier
-    if (base.getBasicType() == EbtSampler || base.getBasicType() == EbtAccStructNV ||
+    if (base.getBasicType() == EbtSampler || base.getBasicType() == EbtAccStruct || base.getBasicType() == EbtRayQuery ||
         (base.getBasicType() == EbtBlock && base.getType().getQualifier().isUniformOrBuffer()))
         requireExtensions(loc, 1, &E_GL_EXT_nonuniform_qualifier, "variable index");
     else
@@ -4487,6 +4514,7 @@ void TParseContext::paramCheckFix(const TSourceLoc& loc, const TQualifier& quali
         type.getQualifier().queuefamilycoherent  = qualifier.queuefamilycoherent;
         type.getQualifier().workgroupcoherent  = qualifier.workgroupcoherent;
         type.getQualifier().subgroupcoherent  = qualifier.subgroupcoherent;
+        type.getQualifier().shadercallcoherent = qualifier.shadercallcoherent;
         type.getQualifier().nonprivate = qualifier.nonprivate;
         type.getQualifier().readonly  = qualifier.readonly;
         type.getQualifier().writeonly = qualifier.writeonly;
@@ -5067,13 +5095,19 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
             return;
         }
     } else {
-        if (language == EShLangRayGenNV || language == EShLangIntersectNV ||
-        language == EShLangAnyHitNV || language == EShLangClosestHitNV ||
-        language == EShLangMissNV || language == EShLangCallableNV) {
-            if (id == "shaderrecordnv") {
-                publicType.qualifier.layoutShaderRecordNV = true;
+        if (language == EShLangRayGen || language == EShLangIntersect ||
+        language == EShLangAnyHit || language == EShLangClosestHit ||
+        language == EShLangMiss || language == EShLangCallable) {
+            if (id == "shaderrecordnv" || id == "shaderrecordext") {
+                if (id == "shaderrecordnv") {
+                    requireExtensions(loc, 1, &E_GL_NV_ray_tracing, "shader record NV");
+                } else {
+                    requireExtensions(loc, 1, &E_GL_EXT_ray_tracing, "shader record EXT");
+                }
+                publicType.qualifier.layoutShaderRecord = true;
                 return;
             }
+
         }
     }
     if (language == EShLangCompute) {
@@ -5135,6 +5169,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
             profileRequires(loc, EEsProfile, 310, nullptr, feature);
         }
         publicType.qualifier.layoutOffset = value;
+        publicType.qualifier.explicitOffset = true;
         if (nonLiteral)
             error(loc, "needs a literal integer", "offset", "");
         return;
@@ -5514,8 +5549,8 @@ void TParseContext::mergeObjectLayoutQualifiers(TQualifier& dst, const TQualifie
             dst.layoutViewportRelative = true;
         if (src.layoutSecondaryViewportRelativeOffset != -2048)
             dst.layoutSecondaryViewportRelativeOffset = src.layoutSecondaryViewportRelativeOffset;
-        if (src.layoutShaderRecordNV)
-            dst.layoutShaderRecordNV = true;
+        if (src.layoutShaderRecord)
+            dst.layoutShaderRecord = true;
         if (src.pervertexNV)
             dst.pervertexNV = true;
 #endif
@@ -5583,7 +5618,7 @@ void TParseContext::layoutObjectCheck(const TSourceLoc& loc, const TSymbol& symb
                     error(loc, "cannot specify on a variable declaration", "align", "");
                 if (qualifier.isPushConstant())
                     error(loc, "can only specify on a uniform block", "push_constant", "");
-                if (qualifier.isShaderRecordNV())
+                if (qualifier.isShaderRecord())
                     error(loc, "can only specify on a buffer block", "shaderRecordNV", "");
             }
             break;
@@ -5657,11 +5692,11 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
                 error(loc, "cannot apply to uniform or buffer block", "location", "");
             break;
 #ifndef GLSLANG_WEB
-        case EvqPayloadNV:
-        case EvqPayloadInNV:
-        case EvqHitAttrNV:
-        case EvqCallableDataNV:
-        case EvqCallableDataInNV:
+        case EvqPayload:
+        case EvqPayloadIn:
+        case EvqHitAttr:
+        case EvqCallableData:
+        case EvqCallableDataIn:
             break;
 #endif
         default:
@@ -5756,7 +5791,7 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         if (spvVersion.spv > 0) {
             if (qualifier.isUniformOrBuffer()) {
                 if (type.getBasicType() == EbtBlock && !qualifier.isPushConstant() &&
-                       !qualifier.isShaderRecordNV() &&
+                       !qualifier.isShaderRecord() &&
                        !qualifier.hasAttachment() &&
                        !qualifier.hasBufferReference())
                     error(loc, "uniform/buffer blocks require layout(binding=X)", "binding", "");
@@ -5813,7 +5848,7 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
     if (qualifier.hasBufferReference() && type.getBasicType() != EbtBlock)
         error(loc, "can only be used with a block", "buffer_reference", "");
 
-    if (qualifier.isShaderRecordNV() && type.getBasicType() != EbtBlock)
+    if (qualifier.isShaderRecord() && type.getBasicType() != EbtBlock)
         error(loc, "can only be used with a block", "shaderRecordNV", "");
 
     // input attachment
@@ -5958,7 +5993,7 @@ void TParseContext::layoutQualifierCheck(const TSourceLoc& loc, const TQualifier
         if (qualifier.storage != EvqBuffer)
             error(loc, "can only be used with buffer", "buffer_reference", "");
     }
-    if (qualifier.isShaderRecordNV()) {
+    if (qualifier.isShaderRecord()) {
         if (qualifier.storage != EvqBuffer)
             error(loc, "can only be used with a buffer", "shaderRecordNV", "");
         if (qualifier.hasBinding())
@@ -5967,7 +6002,7 @@ void TParseContext::layoutQualifierCheck(const TSourceLoc& loc, const TQualifier
             error(loc, "cannot be used with shaderRecordNV", "set", "");
 
     }
-    if (qualifier.storage == EvqHitAttrNV && qualifier.hasLayout()) {
+    if (qualifier.storage == EvqHitAttr && qualifier.hasLayout()) {
         error(loc, "cannot apply layout qualifiers to hitAttributeNV variable", "hitAttributeNV", "");
     }
 }
@@ -6035,6 +6070,10 @@ void TParseContext::fixOffset(const TSourceLoc& loc, TSymbol& symbol)
                 offset = qualifier.layoutOffset;
             else
                 offset = atomicUintOffsets[qualifier.layoutBinding];
+
+            if (offset % 4 != 0)
+                error(loc, "atomic counters offset should align based on 4:", "offset", "%d", offset);
+
             symbol.getWritableType().getQualifier().layoutOffset = offset;
 
             // Check for overlap
@@ -6075,6 +6114,15 @@ const TFunction* TParseContext::findFunction(const TSourceLoc& loc, const TFunct
 #endif
 
     const TFunction* function = nullptr;
+
+    // debugPrintfEXT has var args and is in the symbol table as "debugPrintfEXT()",
+    // mangled to "debugPrintfEXT("
+    if (call.getName() == "debugPrintfEXT") {
+        TSymbol* symbol = symbolTable.find("debugPrintfEXT(", &builtIn);
+        if (symbol)
+            return symbol->getAsFunction();
+    }
+
     bool explicitTypesEnabled = extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
                                 extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int8) ||
                                 extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int16) ||
@@ -6087,7 +6135,7 @@ const TFunction* TParseContext::findFunction(const TSourceLoc& loc, const TFunct
     if (isEsProfile() || version < 120)
         function = findFunctionExact(loc, call, builtIn);
     else if (version < 400)
-        function = findFunction120(loc, call, builtIn);
+        function = extensionTurnedOn(E_GL_ARB_gpu_shader_fp64) ? findFunction400(loc, call, builtIn) : findFunction120(loc, call, builtIn);
     else if (explicitTypesEnabled)
         function = findFunctionExplicitTypes(loc, call, builtIn);
     else
@@ -6380,13 +6428,15 @@ const TFunction* TParseContext::findFunctionExplicitTypes(const TSourceLoc& loc,
 void TParseContext::declareTypeDefaults(const TSourceLoc& loc, const TPublicType& publicType)
 {
 #ifndef GLSLANG_WEB
-    if (publicType.basicType == EbtAtomicUint && publicType.qualifier.hasBinding() &&
-        publicType.qualifier.hasOffset()) {
+    if (publicType.basicType == EbtAtomicUint && publicType.qualifier.hasBinding()) {
         if (publicType.qualifier.layoutBinding >= (unsigned int)resources.maxAtomicCounterBindings) {
             error(loc, "atomic_uint binding is too large", "binding", "");
             return;
         }
-        atomicUintOffsets[publicType.qualifier.layoutBinding] = publicType.qualifier.layoutOffset;
+
+        if(publicType.qualifier.hasOffset()) {
+            atomicUintOffsets[publicType.qualifier.layoutBinding] = publicType.qualifier.layoutOffset;
+        }
         return;
     }
 
@@ -6455,7 +6505,7 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
     transparentOpaqueCheck(loc, type, identifier);
 #ifndef GLSLANG_WEB
     atomicUintCheck(loc, type, identifier);
-    accStructNVCheck(loc, type, identifier);
+    accStructCheck(loc, type, identifier);
     checkAndResizeMeshViewDim(loc, type, /*isBlockMember*/ false);
 #endif
     if (type.getQualifier().storage == EvqConst && type.containsReference()) {
@@ -6922,7 +6972,7 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     // This avoids requesting a matrix of a new type that is going to be discarded anyway.
     // TODO: This could be generalized to more type combinations, but that would require
     // more extensive testing and full algorithm rework. For now, the need to do two changes makes
-    // the recursive call work, and avoids the most aggregious case of creating integer matrices.
+    // the recursive call work, and avoids the most egregious case of creating integer matrices.
     if (node->getType().isMatrix() && (type.isScalar() || type.isVector()) &&
             type.isFloatingDomain() != node->getType().isFloatingDomain()) {
         TType transitionType(node->getBasicType(), glslang::EvqTemporary, type.getVectorSize(), 0, 0, node->isVector());
@@ -7017,8 +7067,14 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
         if (!intermediate.getArithemeticFloat16Enabled()) {
             TType tempType(EbtFloat, EvqTemporary, type.getVectorSize());
             newNode = node;
-            if (tempType != newNode->getType())
-                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructVec2 + op - EOpConstructF16Vec2), tempType, node->getLoc());
+            if (tempType != newNode->getType()) {
+                TOperator aggregateOp;
+                if (op == EOpConstructFloat16)
+                    aggregateOp = EOpConstructFloat;
+                else
+                    aggregateOp = (TOperator)(EOpConstructVec2 + op - EOpConstructF16Vec2);
+                newNode = intermediate.setAggregateOperator(newNode, aggregateOp, tempType, node->getLoc());
+            }
             newNode = intermediate.addConversion(EbtFloat16, newNode);
             return newNode;
         }
@@ -7034,8 +7090,14 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
         if (!intermediate.getArithemeticInt8Enabled()) {
             TType tempType(EbtInt, EvqTemporary, type.getVectorSize());
             newNode = node;
-            if (tempType != newNode->getType())
-                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructIVec2 + op - EOpConstructI8Vec2), tempType, node->getLoc());
+            if (tempType != newNode->getType()) {
+                TOperator aggregateOp;
+                if (op == EOpConstructInt8)
+                    aggregateOp = EOpConstructInt;
+                else
+                    aggregateOp = (TOperator)(EOpConstructIVec2 + op - EOpConstructI8Vec2);
+                newNode = intermediate.setAggregateOperator(newNode, aggregateOp, tempType, node->getLoc());
+            }
             newNode = intermediate.addConversion(EbtInt8, newNode);
             return newNode;
         }
@@ -7051,8 +7113,14 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
         if (!intermediate.getArithemeticInt8Enabled()) {
             TType tempType(EbtUint, EvqTemporary, type.getVectorSize());
             newNode = node;
-            if (tempType != newNode->getType())
-                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructUVec2 + op - EOpConstructU8Vec2), tempType, node->getLoc());
+            if (tempType != newNode->getType()) {
+                TOperator aggregateOp;
+                if (op == EOpConstructUint8)
+                    aggregateOp = EOpConstructUint;
+                else
+                    aggregateOp = (TOperator)(EOpConstructUVec2 + op - EOpConstructU8Vec2);
+                newNode = intermediate.setAggregateOperator(newNode, aggregateOp, tempType, node->getLoc());
+            }
             newNode = intermediate.addConversion(EbtUint8, newNode);
             return newNode;
         }
@@ -7068,8 +7136,14 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
         if (!intermediate.getArithemeticInt16Enabled()) {
             TType tempType(EbtInt, EvqTemporary, type.getVectorSize());
             newNode = node;
-            if (tempType != newNode->getType())
-                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructIVec2 + op - EOpConstructI16Vec2), tempType, node->getLoc());
+            if (tempType != newNode->getType()) {
+                TOperator aggregateOp;
+                if (op == EOpConstructInt16)
+                    aggregateOp = EOpConstructInt;
+                else
+                    aggregateOp = (TOperator)(EOpConstructIVec2 + op - EOpConstructI16Vec2);
+                newNode = intermediate.setAggregateOperator(newNode, aggregateOp, tempType, node->getLoc());
+            }
             newNode = intermediate.addConversion(EbtInt16, newNode);
             return newNode;
         }
@@ -7085,8 +7159,14 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
         if (!intermediate.getArithemeticInt16Enabled()) {
             TType tempType(EbtUint, EvqTemporary, type.getVectorSize());
             newNode = node;
-            if (tempType != newNode->getType())
-                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructUVec2 + op - EOpConstructU16Vec2), tempType, node->getLoc());
+            if (tempType != newNode->getType()) {
+                TOperator aggregateOp;
+                if (op == EOpConstructUint16)
+                    aggregateOp = EOpConstructUint;
+                else
+                    aggregateOp = (TOperator)(EOpConstructUVec2 + op - EOpConstructU16Vec2);
+                newNode = intermediate.setAggregateOperator(newNode, aggregateOp, tempType, node->getLoc());
+            }
             newNode = intermediate.addConversion(EbtUint16, newNode);
             return newNode;
         }
@@ -7359,7 +7439,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
     // Special case for "push_constant uniform", which has a default of std430,
     // contrary to normal uniform defaults, and can't have a default tracked for it.
     if ((currentBlockQualifier.isPushConstant() && !currentBlockQualifier.hasPacking()) ||
-        (currentBlockQualifier.isShaderRecordNV() && !currentBlockQualifier.hasPacking()))
+        (currentBlockQualifier.isShaderRecord() && !currentBlockQualifier.hasPacking()))
         currentBlockQualifier.layoutPacking = ElpStd430;
 
     // Special case for "taskNV in/out", which has a default of std430,
@@ -7576,10 +7656,11 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
 // with a particular stage.
 void TParseContext::blockStageIoCheck(const TSourceLoc& loc, const TQualifier& qualifier)
 {
+    const char *extsrt[2] = { E_GL_NV_ray_tracing, E_GL_EXT_ray_tracing };
     switch (qualifier.storage) {
     case EvqUniform:
         profileRequires(loc, EEsProfile, 300, nullptr, "uniform block");
-        profileRequires(loc, ENoProfile, 140, nullptr, "uniform block");
+        profileRequires(loc, ENoProfile, 140, E_GL_ARB_uniform_buffer_object, "uniform block");
         if (currentBlockQualifier.layoutPacking == ElpStd430 && ! currentBlockQualifier.isPushConstant())
             requireExtensions(loc, 1, &E_GL_EXT_scalar_block_layout, "std430 requires the buffer storage qualifier");
         break;
@@ -7614,28 +7695,28 @@ void TParseContext::blockStageIoCheck(const TSourceLoc& loc, const TQualifier& q
         }
         break;
 #ifndef GLSLANG_WEB
-    case EvqPayloadNV:
-        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "rayPayloadNV block");
-        requireStage(loc, (EShLanguageMask)(EShLangRayGenNVMask | EShLangAnyHitNVMask | EShLangClosestHitNVMask | EShLangMissNVMask),
+    case EvqPayload:
+        profileRequires(loc, ~EEsProfile, 460, 2, extsrt, "rayPayloadNV block");
+        requireStage(loc, (EShLanguageMask)(EShLangRayGenMask | EShLangAnyHitMask | EShLangClosestHitMask | EShLangMissMask),
             "rayPayloadNV block");
         break;
-    case EvqPayloadInNV:
-        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "rayPayloadInNV block");
-        requireStage(loc, (EShLanguageMask)(EShLangAnyHitNVMask | EShLangClosestHitNVMask | EShLangMissNVMask),
+    case EvqPayloadIn:
+        profileRequires(loc, ~EEsProfile, 460, 2, extsrt, "rayPayloadInNV block");
+        requireStage(loc, (EShLanguageMask)(EShLangAnyHitMask | EShLangClosestHitMask | EShLangMissMask),
             "rayPayloadInNV block");
         break;
-    case EvqHitAttrNV:
-        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "hitAttributeNV block");
-        requireStage(loc, (EShLanguageMask)(EShLangIntersectNVMask | EShLangAnyHitNVMask | EShLangClosestHitNVMask), "hitAttributeNV block");
+    case EvqHitAttr:
+        profileRequires(loc, ~EEsProfile, 460, 2, extsrt, "hitAttributeNV block");
+        requireStage(loc, (EShLanguageMask)(EShLangIntersectMask | EShLangAnyHitMask | EShLangClosestHitMask), "hitAttributeNV block");
         break;
-    case EvqCallableDataNV:
-        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "callableDataNV block");
-        requireStage(loc, (EShLanguageMask)(EShLangRayGenNVMask | EShLangClosestHitNVMask | EShLangMissNVMask | EShLangCallableNVMask),
+    case EvqCallableData:
+        profileRequires(loc, ~EEsProfile, 460, 2, extsrt, "callableDataNV block");
+        requireStage(loc, (EShLanguageMask)(EShLangRayGenMask | EShLangClosestHitMask | EShLangMissMask | EShLangCallableMask),
             "callableDataNV block");
         break;
-    case EvqCallableDataInNV:
-        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "callableDataInNV block");
-        requireStage(loc, (EShLanguageMask)(EShLangCallableNVMask), "callableDataInNV block");
+    case EvqCallableDataIn:
+        profileRequires(loc, ~EEsProfile, 460, 2, extsrt, "callableDataInNV block");
+        requireStage(loc, (EShLanguageMask)(EShLangCallableMask), "callableDataInNV block");
         break;
 #endif
     default:
@@ -7674,8 +7755,8 @@ void TParseContext::blockQualifierCheck(const TSourceLoc& loc, const TQualifier&
         error(loc, "cannot use invariant qualifier on an interface block", "invariant", "");
     if (qualifier.isPushConstant())
         intermediate.addPushConstantCount();
-    if (qualifier.isShaderRecordNV())
-        intermediate.addShaderRecordNVCount();
+    if (qualifier.isShaderRecord())
+        intermediate.addShaderRecordCount();
     if (qualifier.isTaskMemory())
         intermediate.addTaskNVCount();
 }
@@ -8197,7 +8278,7 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
         error(loc, "cannot declare a default, can only be used on a block", "buffer_reference", "");
     if (qualifier.hasSpecConstantId())
         error(loc, "cannot declare a default, can only be used on a scalar", "constant_id", "");
-    if (qualifier.isShaderRecordNV())
+    if (qualifier.isShaderRecord())
         error(loc, "cannot declare a default, can only be used on a block", "shaderRecordNV", "");
 }
 

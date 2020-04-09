@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Arm Limited
+ * Copyright 2015-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,8 @@ enum AccessChainFlagBits
 	ACCESS_CHAIN_INDEX_IS_LITERAL_BIT = 1 << 0,
 	ACCESS_CHAIN_CHAIN_ONLY_BIT = 1 << 1,
 	ACCESS_CHAIN_PTR_CHAIN_BIT = 1 << 2,
-	ACCESS_CHAIN_SKIP_REGISTER_EXPRESSION_READ_BIT = 1 << 3
+	ACCESS_CHAIN_SKIP_REGISTER_EXPRESSION_READ_BIT = 1 << 3,
+	ACCESS_CHAIN_LITERAL_MSB_FORCE_ID = 1 << 4
 };
 typedef uint32_t AccessChainFlags;
 
@@ -107,6 +108,18 @@ public:
 		// May not correspond exactly to original source, but should be a good approximation.
 		bool emit_line_directives = false;
 
+		// In cases where readonly/writeonly decoration are not used at all,
+		// we try to deduce which qualifier(s) we should actually used, since actually emitting
+		// read-write decoration is very rare, and older glslang/HLSL compilers tend to just emit readwrite as a matter of fact.
+		// The default (true) is to enable automatic deduction for these cases, but if you trust the decorations set
+		// by the SPIR-V, it's recommended to set this to false.
+		bool enable_storage_image_qualifier_deduction = true;
+
+		// On some targets (WebGPU), uninitialized variables are banned.
+		// If this is enabled, all variables (temporaries, Private, Function)
+		// which would otherwise be uninitialized will now be initialized to 0 instead.
+		bool force_zero_initialized_variables = false;
+
 		enum Precision
 		{
 			DontCare,
@@ -147,6 +160,10 @@ public:
 		pls_outputs = std::move(outputs);
 		remap_pls_variables();
 	}
+
+	// Redirect a subpassInput reading from input_attachment_index to instead load its value from
+	// the color attachment at location = color_location. Requires ESSL.
+	void remap_ext_framebuffer_fetch(uint32_t input_attachment_index, uint32_t color_location);
 
 	explicit CompilerGLSL(std::vector<uint32_t> spirv_)
 	    : Compiler(std::move(spirv_))
@@ -211,6 +228,14 @@ public:
 	// The name of the uniform array will be the same as the interface block name.
 	void flatten_buffer_block(VariableID id);
 
+	// After compilation, query if a variable ID was used as a depth resource.
+	// This is meaningful for MSL since descriptor types depend on this knowledge.
+	// Cases which return true:
+	// - Images which are declared with depth = 1 image type.
+	// - Samplers which are statically used at least once with Dref opcodes.
+	// - Images which are statically used at least once with Dref opcodes.
+	bool variable_is_depth_or_compare(VariableID id) const;
+
 protected:
 	void reset();
 	void emit_function(SPIRFunction &func, const Bitset &return_flags);
@@ -274,6 +299,9 @@ protected:
 	                                           bool packed_type, bool row_major);
 
 	virtual bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const;
+
+	void emit_copy_logical_type(uint32_t lhs_id, uint32_t lhs_type_id, uint32_t rhs_id, uint32_t rhs_type_id,
+	                            SmallVector<uint32_t> chain);
 
 	StringStream<> buffer;
 
@@ -427,6 +455,7 @@ protected:
 	void emit_buffer_block_legacy(const SPIRVariable &var);
 	void emit_buffer_block_flattened(const SPIRVariable &type);
 	void emit_declared_builtin_block(spv::StorageClass storage, spv::ExecutionModel model);
+	bool should_force_emit_builtin_block(spv::StorageClass storage);
 	void emit_push_constant_block_vulkan(const SPIRVariable &var);
 	void emit_push_constant_block_glsl(const SPIRVariable &var);
 	void emit_interface_block(const SPIRVariable &type);
@@ -463,6 +492,8 @@ protected:
 	                             SPIRType::BaseType input_type, SPIRType::BaseType expected_result_type);
 	void emit_binary_func_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op,
 	                              SPIRType::BaseType input_type, bool skip_cast_if_equal_type);
+	void emit_binary_func_op_cast_clustered(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1,
+	                                        const char *op, SPIRType::BaseType input_type);
 	void emit_trinary_func_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, uint32_t op2,
 	                               const char *op, SPIRType::BaseType input_type);
 	void emit_trinary_func_op_bitextract(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1,
@@ -503,7 +534,7 @@ protected:
 
 	std::string flattened_access_chain(uint32_t base, const uint32_t *indices, uint32_t count,
 	                                   const SPIRType &target_type, uint32_t offset, uint32_t matrix_stride,
-	                                   bool need_transpose);
+	                                   uint32_t array_stride, bool need_transpose);
 	std::string flattened_access_chain_struct(uint32_t base, const uint32_t *indices, uint32_t count,
 	                                          const SPIRType &target_type, uint32_t offset);
 	std::string flattened_access_chain_matrix(uint32_t base, const uint32_t *indices, uint32_t count,
@@ -516,6 +547,7 @@ protected:
 	                                                               uint32_t count, uint32_t offset,
 	                                                               uint32_t word_stride, bool *need_transpose = nullptr,
 	                                                               uint32_t *matrix_stride = nullptr,
+	                                                               uint32_t *array_stride = nullptr,
 	                                                               bool ptr_chain = false);
 
 	const char *index_to_swizzle(uint32_t index);
@@ -557,6 +589,8 @@ protected:
 	                             spv::StorageClass rhs_storage);
 	virtual void emit_block_hints(const SPIRBlock &block);
 	virtual std::string to_initializer_expression(const SPIRVariable &var);
+	virtual std::string to_zero_initialized_expression(uint32_t type_id);
+	bool type_can_zero_initialize(const SPIRType &type) const;
 
 	bool buffer_is_packing_standard(const SPIRType &type, BufferPackingStandard packing,
 	                                uint32_t *failed_index = nullptr, uint32_t start_offset = 0,
@@ -583,6 +617,7 @@ protected:
 	bool check_atomic_image(uint32_t id);
 
 	virtual void replace_illegal_names();
+	void replace_illegal_names(const std::unordered_set<std::string> &keywords);
 	virtual void emit_entry_point_declarations();
 
 	void replace_fragment_output(SPIRVariable &var);
@@ -647,6 +682,14 @@ protected:
 	void emit_pls();
 	void remap_pls_variables();
 
+	// GL_EXT_shader_framebuffer_fetch support.
+	std::vector<std::pair<uint32_t, uint32_t>> subpass_to_framebuffer_fetch_attachment;
+	std::unordered_set<uint32_t> inout_color_attachments;
+	bool subpass_input_is_framebuffer_fetch(uint32_t id) const;
+	void emit_inout_fragment_outputs_copy_to_subpass_inputs();
+	const SPIRVariable *find_subpass_input_by_attachment_index(uint32_t index) const;
+	const SPIRVariable *find_color_output_by_location(uint32_t location) const;
+
 	// A variant which takes two sets of name. The secondary is only used to verify there are no collisions,
 	// but the set is not updated when we have found a new name.
 	// Used primarily when adding block interface names.
@@ -704,6 +747,8 @@ protected:
 	void reorder_type_alias();
 
 	void propagate_nonuniform_qualifier(uint32_t id);
+
+	static const char *vector_swizzle(int vecsize, int index);
 
 private:
 	void init();

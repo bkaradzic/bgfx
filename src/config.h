@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -53,6 +53,7 @@
 #	ifndef BGFX_CONFIG_RENDERER_METAL
 #		define BGFX_CONFIG_RENDERER_METAL (0           \
 					|| (BX_PLATFORM_IOS && BX_CPU_ARM) \
+					|| (BX_PLATFORM_IOS && BX_CPU_X86) \
 					|| (BX_PLATFORM_OSX >= 101100)     \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_METAL
@@ -86,7 +87,6 @@
 					|| BX_PLATFORM_EMSCRIPTEN   \
 					|| BX_PLATFORM_IOS          \
 					|| BX_PLATFORM_RPI          \
-					|| BX_PLATFORM_STEAMLINK    \
 					|| BX_PLATFORM_NX           \
 					? BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION : 0)
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES

@@ -93,6 +93,9 @@ bool IsInstructionInLayoutSection(ModuleLayoutSection layout, SpvOp op) {
         case SpvOpLine:
         case SpvOpNoLine:
         case SpvOpUndef:
+        // SpvOpExtInst is only allowed here for certain extended instruction
+        // sets. This will be checked separately
+        case SpvOpExtInst:
           out = true;
           break;
         default: break;
@@ -1049,7 +1052,7 @@ void ValidationState_t::ComputeFunctionToEntryPointMapping() {
 }
 
 void ValidationState_t::ComputeRecursiveEntryPoints() {
-  for (const Function func : functions()) {
+  for (const Function& func : functions()) {
     std::stack<uint32_t> call_stack;
     std::set<uint32_t> visited;
 

@@ -147,6 +147,7 @@ uint32_t WrapOpKill::GetOpKillFuncId() {
   bb->AddInstruction(std::move(kill_inst));
 
   // Add the bb to the function
+  bb->SetParent(opkill_function_.get());
   opkill_function_->AddBasicBlock(std::move(bb));
 
   // Add the function to the module.

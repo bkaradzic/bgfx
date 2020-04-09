@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/val/validate.h"
-
 #include <algorithm>
 #include <cassert>
 #include <functional>
@@ -34,6 +32,7 @@
 #include "source/val/basic_block.h"
 #include "source/val/construct.h"
 #include "source/val/function.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -60,6 +59,15 @@ spv_result_t ValidatePhi(ValidationState_t& _, const Instruction* inst) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Using pointers with OpPhi requires capability "
              << "VariablePointers or VariablePointersStorageBuffer";
+    }
+  }
+
+  if (!_.options()->before_hlsl_legalization) {
+    if (type_opcode == SpvOpTypeSampledImage ||
+        (_.HasCapability(SpvCapabilityShader) &&
+         (type_opcode == SpvOpTypeImage || type_opcode == SpvOpTypeSampler))) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Result type cannot be Op" << spvOpcodeString(type_opcode);
     }
   }
 
@@ -729,10 +737,10 @@ spv_result_t StructuredControlFlowChecks(
     }
 
     Construct::ConstructBlockSet construct_blocks = construct.blocks(function);
+    std::string construct_name, header_name, exit_name;
+    std::tie(construct_name, header_name, exit_name) =
+        ConstructNames(construct.type());
     for (auto block : construct_blocks) {
-      std::string construct_name, header_name, exit_name;
-      std::tie(construct_name, header_name, exit_name) =
-          ConstructNames(construct.type());
       // Check that all exits from the construct are via structured exits.
       for (auto succ : *block->successors()) {
         if (block->reachable() && !construct_blocks.count(succ) &&
@@ -753,6 +761,26 @@ spv_result_t StructuredControlFlowChecks(
                  << "block <ID> " << pred->id() << " branches to the "
                  << construct_name << " construct, but not to the "
                  << header_name << " <ID> " << header->id();
+        }
+      }
+
+      if (block->is_type(BlockType::kBlockTypeSelection) ||
+          block->is_type(BlockType::kBlockTypeLoop)) {
+        size_t index = (block->terminator() - &_.ordered_instructions()[0]) - 1;
+        const auto& merge_inst = _.ordered_instructions()[index];
+        if (merge_inst.opcode() == SpvOpSelectionMerge ||
+            merge_inst.opcode() == SpvOpLoopMerge) {
+          uint32_t merge_id = merge_inst.GetOperandAs<uint32_t>(0);
+          auto merge_block = function->GetBlock(merge_id).first;
+          if (merge_block->reachable() &&
+              !construct_blocks.count(merge_block)) {
+            return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
+                   << "Header block " << _.getIdName(block->id())
+                   << " is contained in the " << construct_name
+                   << " construct headed by " << _.getIdName(header->id())
+                   << ", but its merge block " << _.getIdName(merge_id)
+                   << " is not";
+          }
         }
       }
     }

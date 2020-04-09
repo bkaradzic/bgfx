@@ -17,6 +17,7 @@
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/fuzz/transformation_replace_constant_with_uniform.h"
 #include "source/fuzz/uniform_buffer_element_descriptor.h"
 #include "source/opt/build_module.h"
@@ -159,7 +160,8 @@ MakeConstantUniformReplacement(opt::IRContext* ir_context,
 }  // namespace
 
 bool ForceRenderRed(
-    const spv_target_env& target_env, const std::vector<uint32_t>& binary_in,
+    const spv_target_env& target_env, spv_validator_options validator_options,
+    const std::vector<uint32_t>& binary_in,
     const spvtools::fuzz::protobufs::FactSequence& initial_facts,
     std::vector<uint32_t>* binary_out) {
   auto message_consumer = spvtools::utils::CLIMessageConsumer;
@@ -171,7 +173,7 @@ bool ForceRenderRed(
   }
 
   // Initial binary should be valid.
-  if (!tools.Validate(&binary_in[0], binary_in.size())) {
+  if (!tools.Validate(&binary_in[0], binary_in.size(), validator_options)) {
     message_consumer(SPV_MSG_ERROR, nullptr, {},
                      "Initial binary is invalid; stopping.");
     return false;
@@ -187,6 +189,8 @@ bool ForceRenderRed(
   for (auto& fact : initial_facts.fact()) {
     fact_manager.AddFact(fact, ir_context.get());
   }
+  TransformationContext transformation_context(&fact_manager,
+                                               validator_options);
 
   auto entry_point_function =
       FindFragmentShaderEntryPoint(ir_context.get(), message_consumer);
@@ -355,8 +359,9 @@ bool ForceRenderRed(
     for (auto& replacement : {first_greater_then_operand_replacement.get(),
                               second_greater_then_operand_replacement.get()}) {
       if (replacement) {
-        assert(replacement->IsApplicable(ir_context.get(), fact_manager));
-        replacement->Apply(ir_context.get(), &fact_manager);
+        assert(replacement->IsApplicable(ir_context.get(),
+                                         transformation_context));
+        replacement->Apply(ir_context.get(), &transformation_context);
       }
     }
   }

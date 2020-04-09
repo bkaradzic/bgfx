@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -32,7 +32,7 @@
 
 #define VK_NO_STDINT_H
 #define VK_NO_PROTOTYPES
-#include <vulkan/vulkan.h>
+#include <vulkan-local/vulkan.h>
 #include "renderer.h"
 #include "debug_renderdoc.h"
 
@@ -227,6 +227,46 @@
 #else
 #	define VK_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
+
+#define BGFX_VK_PROFILER_BEGIN(_view, _abgr)                      \
+	BX_MACRO_BLOCK_BEGIN                                          \
+		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
+		{                                                         \
+			VkDebugUtilsLabelEXT dul;                             \
+			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
+			dul.pNext = NULL;                                     \
+			dul.pLabelName = s_viewName[view];                    \
+			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;       \
+			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;       \
+			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;       \
+			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;       \
+			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);  \
+		}                                                         \
+		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);             \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr)              \
+	BX_MACRO_BLOCK_BEGIN                                          \
+		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
+		{                                                         \
+			VkDebugUtilsLabelEXT dul;                             \
+			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
+			dul.pNext = NULL;                                     \
+			dul.pLabelName = "" _name;                            \
+			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;       \
+			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;       \
+			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;       \
+			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;       \
+			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);  \
+		}                                                         \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);             \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_VK_PROFILER_END()                       \
+	BX_MACRO_BLOCK_BEGIN                             \
+		BGFX_PROFILER_END();                         \
+		vkCmdEndDebugUtilsLabelEXT(m_commandBuffer); \
+	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace vk
 {
@@ -500,6 +540,7 @@ VK_DESTROY
 		uint8_t m_textureFormat;
 		uint8_t m_numMips;
 		VkFormat m_vkTextureFormat;
+		VkComponentMapping m_vkComponentMapping;
 		VkImageAspectFlags  m_vkTextureAspect;
 
 		VkImage m_textureImage;

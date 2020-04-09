@@ -161,7 +161,7 @@ struct TNotifyUniformAdaptor
     }
 
 private:
-    TNotifyUniformAdaptor& operator=(TNotifyUniformAdaptor&);
+    TNotifyUniformAdaptor& operator=(TNotifyUniformAdaptor&) = delete;
 };
 
 struct TNotifyInOutAdaptor
@@ -180,7 +180,7 @@ struct TNotifyInOutAdaptor
     }
 
 private:
-    TNotifyInOutAdaptor& operator=(TNotifyInOutAdaptor&);
+    TNotifyInOutAdaptor& operator=(TNotifyInOutAdaptor&) = delete;
 };
 
 struct TResolverUniformAdaptor {
@@ -236,7 +236,7 @@ struct TResolverUniformAdaptor {
     bool&           error;
 
 private:
-    TResolverUniformAdaptor& operator=(TResolverUniformAdaptor&);
+    TResolverUniformAdaptor& operator=(TResolverUniformAdaptor&) = delete;
 };
 
 struct TResolverInOutAdaptor {
@@ -283,7 +283,7 @@ struct TResolverInOutAdaptor {
     bool&           error;
 
 private:
-    TResolverInOutAdaptor& operator=(TResolverInOutAdaptor&);
+    TResolverInOutAdaptor& operator=(TResolverInOutAdaptor&) = delete;
 };
 
 // The class is used for reserving explicit uniform locations and ubo/ssbo/opaque bindings
@@ -384,7 +384,7 @@ struct TSymbolValidater
     bool& hadError;
 
 private:
-    TSymbolValidater& operator=(TSymbolValidater&);
+    TSymbolValidater& operator=(TSymbolValidater&) = delete;
 };
 
 struct TSlotCollector {
@@ -398,7 +398,7 @@ struct TSlotCollector {
     TInfoSink& infoSink;
 
 private:
-    TSlotCollector& operator=(TSlotCollector&);
+    TSlotCollector& operator=(TSlotCollector&) = delete;
 };
 
 TDefaultIoResolverBase::TDefaultIoResolverBase(const TIntermediate& intermediate)
@@ -579,7 +579,10 @@ TDefaultGlslIoResolver::TDefaultGlslIoResolver(const TIntermediate& intermediate
 
 int TDefaultGlslIoResolver::resolveInOutLocation(EShLanguage stage, TVarEntryInfo& ent) {
     const TType& type = ent.symbol->getType();
-    const TString& name = ent.symbol->getName();
+    const TString& name = IsAnonymous(ent.symbol->getName()) ?
+                            ent.symbol->getType().getTypeName()
+                            :
+                            ent.symbol->getName();
     if (currentStage != stage) {
         preStage = currentStage;
         currentStage = stage;
@@ -663,7 +666,10 @@ int TDefaultGlslIoResolver::resolveInOutLocation(EShLanguage stage, TVarEntryInf
 
 int TDefaultGlslIoResolver::resolveUniformLocation(EShLanguage /*stage*/, TVarEntryInfo& ent) {
     const TType& type = ent.symbol->getType();
-    const TString& name = ent.symbol->getName();
+    const TString& name = IsAnonymous(ent.symbol->getName()) ?
+                            ent.symbol->getType().getTypeName()
+                            :
+                            ent.symbol->getName();
     // kick out of not doing this
     if (! doAutoLocationMapping()) {
         return ent.newLocation = -1;
@@ -734,7 +740,10 @@ int TDefaultGlslIoResolver::resolveUniformLocation(EShLanguage /*stage*/, TVarEn
 
 int TDefaultGlslIoResolver::resolveBinding(EShLanguage /*stage*/, TVarEntryInfo& ent) {
     const TType& type = ent.symbol->getType();
-    const TString& name = ent.symbol->getName();
+    const TString& name = IsAnonymous(ent.symbol->getName()) ?
+                            ent.symbol->getType().getTypeName()
+                            :
+                            ent.symbol->getName();
     // On OpenGL arrays of opaque types take a seperate binding for each element
     int numBindings = intermediate.getSpv().openGl != 0 && type.isSizedArray() ? type.getCumulativeArraySize() : 1;
     TResourceType resource = getResourceType(type);
@@ -809,7 +818,10 @@ void TDefaultGlslIoResolver::endCollect(EShLanguage /*stage*/) {
 
 void TDefaultGlslIoResolver::reserverStorageSlot(TVarEntryInfo& ent, TInfoSink& infoSink) {
     const TType& type = ent.symbol->getType();
-    const TString& name = ent.symbol->getName();
+    const TString& name = IsAnonymous(ent.symbol->getName()) ?
+                            ent.symbol->getType().getTypeName()
+                            :
+                            ent.symbol->getName();
     TStorageQualifier storage = type.getQualifier().storage;
     EShLanguage stage(EShLangCount);
     switch (storage) {
@@ -831,6 +843,7 @@ void TDefaultGlslIoResolver::reserverStorageSlot(TVarEntryInfo& ent, TInfoSink& 
                 if (iter->second != location) {
                     TString errorMsg = "Invalid location: " + name;
                     infoSink.info.message(EPrefixInternalError, errorMsg.c_str());
+                    hasError = true;
                 }
             }
         }
@@ -856,6 +869,7 @@ void TDefaultGlslIoResolver::reserverStorageSlot(TVarEntryInfo& ent, TInfoSink& 
                 if (iter->second != location) {
                     TString errorMsg = "Invalid location: " + name;
                     infoSink.info.message(EPrefixInternalError, errorMsg.c_str());
+                    hasError = true;
                 }
             }
         }
@@ -867,7 +881,10 @@ void TDefaultGlslIoResolver::reserverStorageSlot(TVarEntryInfo& ent, TInfoSink& 
 
 void TDefaultGlslIoResolver::reserverResourceSlot(TVarEntryInfo& ent, TInfoSink& infoSink) {
     const TType& type = ent.symbol->getType();
-    const TString& name = ent.symbol->getName();
+    const TString& name = IsAnonymous(ent.symbol->getName()) ?
+                            ent.symbol->getType().getTypeName()
+                            :
+                            ent.symbol->getName();
     int resource = getResourceType(type);
     if (type.getQualifier().hasBinding()) {
         TVarSlotMap& varSlotMap = resourceSlotMap[resource];
@@ -884,6 +901,7 @@ void TDefaultGlslIoResolver::reserverResourceSlot(TVarEntryInfo& ent, TInfoSink&
             if (iter->second != binding) {
                 TString errorMsg = "Invalid binding: " + name;
                 infoSink.info.message(EPrefixInternalError, errorMsg.c_str());
+                hasError = true;
             }
         }
     }

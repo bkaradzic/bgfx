@@ -47,6 +47,11 @@ void FeatureManager::AddExtension(Instruction* ext) {
   }
 }
 
+void FeatureManager::RemoveExtension(Extension ext) {
+  if (!extensions_.Contains(ext)) return;
+  extensions_.Remove(ext);
+}
+
 void FeatureManager::AddCapability(SpvCapability cap) {
   if (capabilities_.Contains(cap)) return;
 
@@ -58,6 +63,11 @@ void FeatureManager::AddCapability(SpvCapability cap) {
     CapabilitySet(desc->numCapabilities, desc->capabilities)
         .ForEach([this](SpvCapability c) { AddCapability(c); });
   }
+}
+
+void FeatureManager::RemoveCapability(SpvCapability cap) {
+  if (!capabilities_.Contains(cap)) return;
+  capabilities_.Remove(cap);
 }
 
 void FeatureManager::AddCapabilities(Module* module) {

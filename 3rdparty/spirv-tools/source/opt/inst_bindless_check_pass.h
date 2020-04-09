@@ -28,16 +28,17 @@ namespace opt {
 // external design may change as the layer evolves.
 class InstBindlessCheckPass : public InstrumentPass {
  public:
-  // For test harness only
-  InstBindlessCheckPass()
-      : InstrumentPass(7, 23, kInstValidationIdBindless, 1),
-        input_length_enabled_(true),
-        input_init_enabled_(true) {}
-  // For all other interfaces
+  // Deprecated interface
   InstBindlessCheckPass(uint32_t desc_set, uint32_t shader_id,
                         bool input_length_enable, bool input_init_enable,
                         uint32_t version)
       : InstrumentPass(desc_set, shader_id, kInstValidationIdBindless, version),
+        input_length_enabled_(input_length_enable),
+        input_init_enabled_(input_init_enable) {}
+  // Preferred Interface
+  InstBindlessCheckPass(uint32_t desc_set, uint32_t shader_id,
+                        bool input_length_enable, bool input_init_enable)
+      : InstrumentPass(desc_set, shader_id, kInstValidationIdBindless),
         input_length_enabled_(input_length_enable),
         input_init_enabled_(input_init_enable) {}
 

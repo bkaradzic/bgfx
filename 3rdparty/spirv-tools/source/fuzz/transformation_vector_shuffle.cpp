@@ -39,38 +39,37 @@ TransformationVectorShuffle::TransformationVectorShuffle(
 }
 
 bool TransformationVectorShuffle::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // The fresh id must not already be in use.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
   // The instruction before which the shuffle will be inserted must exist.
   auto instruction_to_insert_before =
-      FindInstruction(message_.instruction_to_insert_before(), context);
+      FindInstruction(message_.instruction_to_insert_before(), ir_context);
   if (!instruction_to_insert_before) {
     return false;
   }
   // The first vector must be an instruction with a type id
   auto vector1_instruction =
-      context->get_def_use_mgr()->GetDef(message_.vector1());
+      ir_context->get_def_use_mgr()->GetDef(message_.vector1());
   if (!vector1_instruction || !vector1_instruction->type_id()) {
     return false;
   }
   // The second vector must be an instruction with a type id
   auto vector2_instruction =
-      context->get_def_use_mgr()->GetDef(message_.vector2());
+      ir_context->get_def_use_mgr()->GetDef(message_.vector2());
   if (!vector2_instruction || !vector2_instruction->type_id()) {
     return false;
   }
   auto vector1_type =
-      context->get_type_mgr()->GetType(vector1_instruction->type_id());
+      ir_context->get_type_mgr()->GetType(vector1_instruction->type_id());
   // The first vector instruction's type must actually be a vector type.
   if (!vector1_type->AsVector()) {
     return false;
   }
   auto vector2_type =
-      context->get_type_mgr()->GetType(vector2_instruction->type_id());
+      ir_context->get_type_mgr()->GetType(vector2_instruction->type_id());
   // The second vector instruction's type must actually be a vector type.
   if (!vector2_type->AsVector()) {
     return false;
@@ -92,14 +91,14 @@ bool TransformationVectorShuffle::IsApplicable(
   }
   // The module must already declare an appropriate type in which to store the
   // result of the shuffle.
-  if (!GetResultTypeId(context, *vector1_type->AsVector()->element_type())) {
+  if (!GetResultTypeId(ir_context, *vector1_type->AsVector()->element_type())) {
     return false;
   }
   // Each of the vectors used in the shuffle must be available at the insertion
   // point.
   for (auto used_instruction : {vector1_instruction, vector2_instruction}) {
-    if (auto block = context->get_instr_block(used_instruction)) {
-      if (!context->GetDominatorAnalysis(block->GetParent())
+    if (auto block = ir_context->get_instr_block(used_instruction)) {
+      if (!ir_context->GetDominatorAnalysis(block->GetParent())
                ->Dominates(used_instruction, instruction_to_insert_before)) {
         return false;
       }
@@ -113,7 +112,8 @@ bool TransformationVectorShuffle::IsApplicable(
 }
 
 void TransformationVectorShuffle::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* fact_manager) const {
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
   // Make input operands for a shuffle instruction - these comprise the two
   // vectors being shuffled, followed by the integer literal components.
   opt::Instruction::OperandList shuffle_operands = {
@@ -125,16 +125,18 @@ void TransformationVectorShuffle::Apply(
   }
 
   uint32_t result_type_id = GetResultTypeId(
-      context, *GetVectorType(context, message_.vector1())->element_type());
+      ir_context,
+      *GetVectorType(ir_context, message_.vector1())->element_type());
 
   // Add a shuffle instruction right before the instruction identified by
   // |message_.instruction_to_insert_before|.
-  FindInstruction(message_.instruction_to_insert_before(), context)
+  FindInstruction(message_.instruction_to_insert_before(), ir_context)
       ->InsertBefore(MakeUnique<opt::Instruction>(
-          context, SpvOpVectorShuffle, result_type_id, message_.fresh_id(),
+          ir_context, SpvOpVectorShuffle, result_type_id, message_.fresh_id(),
           shuffle_operands));
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 
   // Add synonym facts relating the defined elements of the shuffle result to
   // the vector components that they come from.
@@ -158,24 +160,26 @@ void TransformationVectorShuffle::Apply(
     // Get a data descriptor for the component of the input vector to which
     // |component| refers.
     if (component <
-        GetVectorType(context, message_.vector1())->element_count()) {
+        GetVectorType(ir_context, message_.vector1())->element_count()) {
       descriptor_for_source_component =
           MakeDataDescriptor(message_.vector1(), {component});
     } else {
       auto index_into_vector_2 =
           component -
-          GetVectorType(context, message_.vector1())->element_count();
-      assert(index_into_vector_2 <
-                 GetVectorType(context, message_.vector2())->element_count() &&
-             "Vector shuffle index is out of bounds.");
+          GetVectorType(ir_context, message_.vector1())->element_count();
+      assert(
+          index_into_vector_2 <
+              GetVectorType(ir_context, message_.vector2())->element_count() &&
+          "Vector shuffle index is out of bounds.");
       descriptor_for_source_component =
           MakeDataDescriptor(message_.vector2(), {index_into_vector_2});
     }
 
     // Add a fact relating this input vector component with the associated
     // result component.
-    fact_manager->AddFactDataSynonym(descriptor_for_result_component,
-                                     descriptor_for_source_component, context);
+    transformation_context->GetFactManager()->AddFactDataSynonym(
+        descriptor_for_result_component, descriptor_for_source_component,
+        ir_context);
   }
 }
 
@@ -186,16 +190,16 @@ protobufs::Transformation TransformationVectorShuffle::ToMessage() const {
 }
 
 uint32_t TransformationVectorShuffle::GetResultTypeId(
-    opt::IRContext* context, const opt::analysis::Type& element_type) const {
+    opt::IRContext* ir_context, const opt::analysis::Type& element_type) const {
   opt::analysis::Vector result_type(
       &element_type, static_cast<uint32_t>(message_.component_size()));
-  return context->get_type_mgr()->GetId(&result_type);
+  return ir_context->get_type_mgr()->GetId(&result_type);
 }
 
 opt::analysis::Vector* TransformationVectorShuffle::GetVectorType(
-    opt::IRContext* context, uint32_t id_of_vector) {
-  return context->get_type_mgr()
-      ->GetType(context->get_def_use_mgr()->GetDef(id_of_vector)->type_id())
+    opt::IRContext* ir_context, uint32_t id_of_vector) {
+  return ir_context->get_type_mgr()
+      ->GetType(ir_context->get_def_use_mgr()->GetDef(id_of_vector)->type_id())
       ->AsVector();
 }
 

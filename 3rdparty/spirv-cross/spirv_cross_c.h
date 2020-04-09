@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Hans-Kristian Arntzen
+ * Copyright 2019-2020 Hans-Kristian Arntzen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 21
+#define SPVC_C_API_VERSION_MINOR 30
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -469,6 +469,7 @@ SPVC_PUBLIC_API void spvc_msl_sampler_ycbcr_conversion_init(spvc_msl_sampler_ycb
 /* Maps to C++ API. */
 typedef enum spvc_hlsl_binding_flag_bits
 {
+	SPVC_HLSL_BINDING_AUTO_NONE_BIT = 0,
 	SPVC_HLSL_BINDING_AUTO_PUSH_CONSTANT_BIT = 1 << 0,
 	SPVC_HLSL_BINDING_AUTO_CBV_BIT = 1 << 1,
 	SPVC_HLSL_BINDING_AUTO_SRV_BIT = 1 << 2,
@@ -477,6 +478,31 @@ typedef enum spvc_hlsl_binding_flag_bits
 	SPVC_HLSL_BINDING_AUTO_ALL = 0x7fffffff
 } spvc_hlsl_binding_flag_bits;
 typedef unsigned spvc_hlsl_binding_flags;
+
+#define SPVC_HLSL_PUSH_CONSTANT_DESC_SET (~(0u))
+#define SPVC_HLSL_PUSH_CONSTANT_BINDING (0)
+
+/* Maps to C++ API. */
+typedef struct spvc_hlsl_resource_binding_mapping
+{
+	unsigned register_space;
+	unsigned register_binding;
+} spvc_hlsl_resource_binding_mapping;
+
+typedef struct spvc_hlsl_resource_binding
+{
+	SpvExecutionModel stage;
+	unsigned desc_set;
+	unsigned binding;
+
+	spvc_hlsl_resource_binding_mapping cbv, uav, srv, sampler;
+} spvc_hlsl_resource_binding;
+
+/*
+ * Initializes the resource binding struct.
+ * The defaults are non-zero.
+ */
+SPVC_PUBLIC_API void spvc_hlsl_resource_binding_init(spvc_hlsl_resource_binding *binding);
 
 /* Maps to the various spirv_cross::Compiler*::Option structures. See C++ API for defaults and details. */
 typedef enum spvc_compiler_option
@@ -545,6 +571,16 @@ typedef enum spvc_compiler_option
 	SPVC_COMPILER_OPTION_MSL_INVARIANT_FP_MATH = 47 | SPVC_COMPILER_OPTION_MSL_BIT,
 	SPVC_COMPILER_OPTION_MSL_EMULATE_CUBEMAP_ARRAY = 48 | SPVC_COMPILER_OPTION_MSL_BIT,
 	SPVC_COMPILER_OPTION_MSL_ENABLE_DECORATION_BINDING = 49 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_FORCE_ACTIVE_ARGUMENT_BUFFER_RESOURCES = 50 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_FORCE_NATIVE_ARRAYS = 51 | SPVC_COMPILER_OPTION_MSL_BIT,
+
+	SPVC_COMPILER_OPTION_ENABLE_STORAGE_IMAGE_QUALIFIER_DEDUCTION = 52 | SPVC_COMPILER_OPTION_COMMON_BIT,
+
+	SPVC_COMPILER_OPTION_HLSL_FORCE_STORAGE_BUFFER_AS_UAV = 53 | SPVC_COMPILER_OPTION_HLSL_BIT,
+
+	SPVC_COMPILER_OPTION_FORCE_ZERO_INITIALIZED_VARIABLES = 54 | SPVC_COMPILER_OPTION_COMMON_BIT,
+
+	SPVC_COMPILER_OPTION_HLSL_NONWRITABLE_UAV_TEXTURE_AS_SRV = 55 | SPVC_COMPILER_OPTION_HLSL_BIT,
 
 	SPVC_COMPILER_OPTION_INT_MAX = 0x7fffffff
 } spvc_compiler_option;
@@ -606,6 +642,8 @@ SPVC_PUBLIC_API spvc_result spvc_compiler_add_header_line(spvc_compiler compiler
 SPVC_PUBLIC_API spvc_result spvc_compiler_require_extension(spvc_compiler compiler, const char *ext);
 SPVC_PUBLIC_API spvc_result spvc_compiler_flatten_buffer_block(spvc_compiler compiler, spvc_variable_id id);
 
+SPVC_PUBLIC_API spvc_bool spvc_compiler_variable_is_depth_or_compare(spvc_compiler compiler, spvc_variable_id id);
+
 /*
  * HLSL specifics.
  * Maps to C++ API.
@@ -620,6 +658,13 @@ SPVC_PUBLIC_API spvc_variable_id spvc_compiler_hlsl_remap_num_workgroups_builtin
 
 SPVC_PUBLIC_API spvc_result spvc_compiler_hlsl_set_resource_binding_flags(spvc_compiler compiler,
                                                                           spvc_hlsl_binding_flags flags);
+
+SPVC_PUBLIC_API spvc_result spvc_compiler_hlsl_add_resource_binding(spvc_compiler compiler,
+                                                                    const spvc_hlsl_resource_binding *binding);
+SPVC_PUBLIC_API spvc_bool spvc_compiler_hlsl_is_resource_used(spvc_compiler compiler,
+                                                              SpvExecutionModel model,
+                                                              unsigned set,
+                                                              unsigned binding);
 
 /*
  * MSL specifics.
@@ -656,6 +701,8 @@ SPVC_PUBLIC_API unsigned spvc_compiler_msl_get_automatic_resource_binding(spvc_c
 SPVC_PUBLIC_API unsigned spvc_compiler_msl_get_automatic_resource_binding_secondary(spvc_compiler compiler, spvc_variable_id id);
 
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_dynamic_buffer(spvc_compiler compiler, unsigned desc_set, unsigned binding, unsigned index);
+
+SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_inline_uniform_block(spvc_compiler compiler, unsigned desc_set, unsigned binding);
 
 /*
  * Reflect resources.

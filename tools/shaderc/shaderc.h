@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -60,7 +60,7 @@ namespace bgfx
 #include <bx/string.h>
 #include <bx/hash.h>
 #include <bx/file.h>
-#include "../../src/vertexdecl.h"
+#include "../../src/vertexlayout.h"
 
 namespace bgfx
 {

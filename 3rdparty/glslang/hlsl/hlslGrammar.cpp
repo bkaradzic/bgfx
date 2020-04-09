@@ -2516,6 +2516,8 @@ bool HlslGrammar::acceptMemberFunctionDefinition(TIntermNode*& nodeList, const T
 //
 bool HlslGrammar::acceptFunctionParameters(TFunction& function)
 {
+    parseContext.beginParameterParsing(function);
+
     // LEFT_PAREN
     if (! acceptTokenClass(EHTokLeftParen))
         return false;

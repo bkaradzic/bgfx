@@ -111,6 +111,7 @@
     <ids type="opcode" start="5696" end="5823" vendor="Intel" comment="Contact ben.ashbaugh@intel.com"/>
     <ids type="opcode" start="5824" end="5951" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
     <ids type="opcode" start="5952" end="6015" vendor="Codeplay" comment="Contact victor@codeplay.com"/>
+    <ids type="opcode" start="6016" end="6079" vendor="Khronos" comment="Contact @tobski"/>
     <!-- Opcodes & enumerants reservable for future use. To get a block, allocate
          multiples of 64 starting at the lowest available point in this
          block and add a corresponding <ids> tag immediately above. Make
@@ -119,7 +120,7 @@
 
     <!-- Example new block: <ids type="opcode" start="XXXX" end="XXXX+64n-1" vendor="Add vendor" comment="Contact TBD"/> -->
 
-    <ids type="opcode" start="6016" end="4294967295" comment="Opcode range reservable for future use by vendors"/>
+    <ids type="opcode" start="6080" end="4294967295" comment="Opcode range reservable for future use by vendors"/>
 
 
     <!-- SECTION: SPIR-V Loop Control Bit Reservations -->
@@ -138,8 +139,8 @@
 
     <!-- Reserved loop control bits -->
     <ids type="LoopControl" start="0" end="15" vendor="Khronos" comment="Reserved LoopControl bits, not available to vendors - see the SPIR-V Specification"/>
-    <ids type="LoopControl" start="16" end="19" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
-    <ids type="LoopControl" start="20" end="30" comment="Unreserved bits reservable for use by vendors"/>
+    <ids type="LoopControl" start="16" end="22" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
+    <ids type="LoopControl" start="23" end="30" comment="Unreserved bits reservable for use by vendors"/>
     <ids type="LoopControl" start="31" end="31" vendor="Khronos" comment="Reserved LoopControl bit, not available to vendors"/>
 
 </registry>

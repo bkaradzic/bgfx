@@ -11,5 +11,5 @@ endif(WIN32)
 if(ENABLE_GLSLANG_INSTALL)
     install(TARGETS OGLCompiler EXPORT OGLCompilerTargets
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-	install(EXPORT OGLCompilerTargets DESTINATION lib/cmake)
+	install(EXPORT OGLCompilerTargets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
 endif(ENABLE_GLSLANG_INSTALL)

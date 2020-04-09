@@ -54,6 +54,16 @@ spv_result_t ValidateAdjacency(ValidationState_t& _) {
         adjacency_status =
             adjacency_status == IN_NEW_FUNCTION ? IN_ENTRY_BLOCK : PHI_VALID;
         break;
+      case SpvOpExtInst:
+        // If it is a debug info instruction, we do not change the status to
+        // allow debug info instructions before OpVariable in a function.
+        // TODO(https://gitlab.khronos.org/spirv/SPIR-V/issues/533): We need
+        // to discuss the location of DebugScope, DebugNoScope, DebugDeclare,
+        // and DebugValue.
+        if (!spvExtInstIsDebugInfo(inst.ext_inst_type())) {
+          adjacency_status = PHI_AND_VAR_INVALID;
+        }
+        break;
       case SpvOpPhi:
         if (adjacency_status != PHI_VALID) {
           return _.diag(SPV_ERROR_INVALID_DATA, &inst)

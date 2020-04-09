@@ -56,13 +56,6 @@ spv_result_t ValidateLine(ValidationState_t& _, const Instruction* inst) {
 }  // namespace
 
 spv_result_t DebugPass(ValidationState_t& _, const Instruction* inst) {
-  if (spvIsWebGPUEnv(_.context()->target_env) &&
-      spvOpcodeIsDebug(inst->opcode())) {
-    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
-           << "Debugging instructions are not allowed in the WebGPU execution "
-           << "environment.";
-  }
-
   switch (inst->opcode()) {
     case SpvOpMemberName:
       if (auto error = ValidateMemberName(_, inst)) return error;

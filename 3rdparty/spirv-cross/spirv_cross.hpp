@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Arm Limited
+ * Copyright 2015-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,6 +314,10 @@ public:
 	SPIREntryPoint &get_entry_point(const std::string &name, spv::ExecutionModel execution_model);
 	const std::string &get_cleansed_entry_point_name(const std::string &name,
 	                                                 spv::ExecutionModel execution_model) const;
+
+	// Traverses all reachable opcodes and sets active_builtins to a bitmask of all builtin variables which are accessed in the shader.
+	void update_active_builtins();
+	bool has_active_builtin(spv::BuiltIn builtin, spv::StorageClass storage);
 
 	// Query and modify OpExecutionMode.
 	const Bitset &get_execution_mode_bitset() const;
@@ -832,10 +836,6 @@ protected:
 	uint32_t clip_distance_count = 0;
 	uint32_t cull_distance_count = 0;
 	bool position_invariant = false;
-
-	// Traverses all reachable opcodes and sets active_builtins to a bitmask of all builtin variables which are accessed in the shader.
-	void update_active_builtins();
-	bool has_active_builtin(spv::BuiltIn builtin, spv::StorageClass storage);
 
 	void analyze_parameter_preservation(
 	    SPIRFunction &entry, const CFG &cfg,

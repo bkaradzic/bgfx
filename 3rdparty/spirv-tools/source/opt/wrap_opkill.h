@@ -34,8 +34,7 @@ class WrapOpKill : public Pass {
            IRContext::kAnalysisInstrToBlockMapping |
            IRContext::kAnalysisDecorations | IRContext::kAnalysisCombinators |
            IRContext::kAnalysisNameMap | IRContext::kAnalysisBuiltinVarId |
-           IRContext::kAnalysisIdToFuncMapping | IRContext::kAnalysisConstants |
-           IRContext::kAnalysisTypes;
+           IRContext::kAnalysisConstants | IRContext::kAnalysisTypes;
   }
 
  private:

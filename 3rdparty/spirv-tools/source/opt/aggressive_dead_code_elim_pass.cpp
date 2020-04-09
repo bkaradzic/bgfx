@@ -923,6 +923,7 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_GOOGLE_hlsl_functionality1",
       "SPV_GOOGLE_user_type",
       "SPV_NV_shader_subgroup_partitioned",
+      "SPV_EXT_demote_to_helper_invocation",
       "SPV_EXT_descriptor_indexing",
       "SPV_NV_fragment_shader_barycentric",
       "SPV_NV_compute_shader_derivatives",
@@ -930,6 +931,7 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_NV_shading_rate",
       "SPV_NV_mesh_shader",
       "SPV_NV_ray_tracing",
+      "SPV_KHR_ray_tracing",
       "SPV_EXT_fragment_invocation_density",
       "SPV_EXT_physical_storage_buffer",
   });

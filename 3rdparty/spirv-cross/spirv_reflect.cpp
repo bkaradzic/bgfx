@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Bradley Austin Davis
+ * Copyright 2018-2020 Bradley Austin Davis
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -358,15 +358,16 @@ void CompilerReflection::emit_type_array(const SPIRType &type)
 		for (const auto &value : type.array)
 			json_stream->emit_json_array_value(value);
 		json_stream->end_json_array();
+
+		json_stream->emit_json_key_array("array_size_is_literal");
+		for (const auto &value : type.array_size_literal)
+			json_stream->emit_json_array_value(value);
+		json_stream->end_json_array();
 	}
 }
 
 void CompilerReflection::emit_type_member_qualifiers(const SPIRType &type, uint32_t index)
 {
-	auto flags = combined_decoration_for_member(type, index);
-	if (flags.get(DecorationRowMajor))
-		json_stream->emit_json_key_value("row_major", true);
-
 	auto &membertype = get<SPIRType>(type.member_types[index]);
 	emit_type_array(membertype);
 	auto &memb = ir.meta[type.self].members;
@@ -377,6 +378,16 @@ void CompilerReflection::emit_type_member_qualifiers(const SPIRType &type, uint3
 			json_stream->emit_json_key_value("location", dec.location);
 		if (dec.decoration_flags.get(DecorationOffset))
 			json_stream->emit_json_key_value("offset", dec.offset);
+
+		// Array stride is a property of the array type, not the struct.
+		if (has_decoration(type.member_types[index], DecorationArrayStride))
+			json_stream->emit_json_key_value("array_stride",
+			                                 get_decoration(type.member_types[index], DecorationArrayStride));
+
+		if (dec.decoration_flags.get(DecorationMatrixStride))
+			json_stream->emit_json_key_value("matrix_stride", dec.matrix_stride);
+		if (dec.decoration_flags.get(DecorationRowMajor))
+			json_stream->emit_json_key_value("row_major", true);
 	}
 }
 
@@ -592,6 +603,7 @@ void CompilerReflection::emit_specialization_constants()
 		json_stream->begin_json_object();
 		json_stream->emit_json_key_value("id", spec_const.constant_id);
 		json_stream->emit_json_key_value("type", type_to_glsl(type));
+		json_stream->emit_json_key_value("variable_id", spec_const.id);
 		switch (type.basetype)
 		{
 		case SPIRType::UInt:
