@@ -3,7 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <bx/macros.h>
+#include <bx/bx.h>
 
 #if BX_COMPILER_MSVC
 #	define generic GenericFromFreeType // WinRT language extensions see "generic" as a keyword... this is stupid
