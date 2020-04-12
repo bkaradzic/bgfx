@@ -2007,7 +2007,7 @@ bool overlap(const Triangle& _triangle, const Ty& _ty)
 	const LineSegment bc = LineSegment{_triangle.v1, _triangle.v2};
 	const LineSegment ca = LineSegment{_triangle.v2, _triangle.v0};
 
-	float ta0, tb0;
+	float ta0 = 0.0f, tb0 = 0.0f;
 	const bool i0 = intersect(ta0, tb0, ab, line);
 
 	float ta1, tb1;
