@@ -145,7 +145,7 @@ static void decodeFilterOctSimd(signed char* data, size_t count)
 
 		// fixup octahedral coordinates for z<0
 		// note: i32x4_min_s with 0 is equvalent to f32x4_min
-		v128_t t = wasm_i32x4_min_s(z, wasm_i32x4_splat(0));
+		v128_t t = wasm_i32x4_min(z, wasm_i32x4_splat(0));
 
 		x = wasm_f32x4_add(x, wasm_v128_xor(t, wasm_v128_and(x, sign)));
 		y = wasm_f32x4_add(y, wasm_v128_xor(t, wasm_v128_and(y, sign)));
@@ -201,7 +201,7 @@ static void decodeFilterOctSimd(short* data, size_t count)
 
 		// fixup octahedral coordinates for z<0
 		// note: i32x4_min_s with 0 is equvalent to f32x4_min
-		v128_t t = wasm_i32x4_min_s(z, wasm_i32x4_splat(0));
+		v128_t t = wasm_i32x4_min(z, wasm_i32x4_splat(0));
 
 		x = wasm_f32x4_add(x, wasm_v128_xor(t, wasm_v128_and(x, sign)));
 		y = wasm_f32x4_add(y, wasm_v128_xor(t, wasm_v128_and(y, sign)));
@@ -267,7 +267,7 @@ static void decodeFilterQuatSimd(short* data, size_t count)
 		// reconstruct w as a square root; we clamp to 0.f to avoid NaN due to precision errors
 		// note: i32x4_max_s with 0 is equivalent to f32x4_max
 		v128_t ww = wasm_f32x4_sub(wasm_f32x4_splat(1.f), wasm_f32x4_add(wasm_f32x4_mul(x, x), wasm_f32x4_add(wasm_f32x4_mul(y, y), wasm_f32x4_mul(z, z))));
-		v128_t w = wasm_f32x4_sqrt(wasm_i32x4_max_s(ww, wasm_i32x4_splat(0)));
+		v128_t w = wasm_f32x4_sqrt(wasm_i32x4_max(ww, wasm_i32x4_splat(0)));
 
 		v128_t s = wasm_f32x4_splat(32767.f);
 

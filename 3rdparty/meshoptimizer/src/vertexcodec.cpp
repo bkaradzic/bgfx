@@ -85,7 +85,7 @@
 #if defined(SIMD_WASM)
 // v128_t wasm_v8x16_swizzle(v128_t a, v128_t b)
 SIMD_TARGET
-static __inline__ v128_t __DEFAULT_FN_ATTRS wasm_v8x16_swizzle(v128_t a, v128_t b)
+static __inline__ v128_t wasm_v8x16_swizzle(v128_t a, v128_t b)
 {
 	return (v128_t)__builtin_wasm_swizzle_v8x16((__i8x16)a, (__i8x16)b);
 }

@@ -19,6 +19,7 @@ namespace meshopt
 {
 
 const unsigned char kIndexHeader = 0xe0;
+const unsigned char kSequenceHeader = 0xd0;
 
 static int gEncodeIndexVersion = 0;
 
@@ -125,20 +126,16 @@ static unsigned int decodeVByte(const unsigned char*& data)
 	return result;
 }
 
-static void encodeIndex(unsigned char*& data, unsigned int index, unsigned int next, unsigned int last)
+static void encodeIndex(unsigned char*& data, unsigned int index, unsigned int last)
 {
-	(void)next;
-
 	unsigned int d = index - last;
 	unsigned int v = (d << 1) ^ (int(d) >> 31);
 
 	encodeVByte(data, v);
 }
 
-static unsigned int decodeIndex(const unsigned char*& data, unsigned int next, unsigned int last)
+static unsigned int decodeIndex(const unsigned char*& data, unsigned int last)
 {
-	(void)next;
-
 	unsigned int v = decodeVByte(data);
 	unsigned int d = (v >> 1) ^ -int(v & 1);
 
@@ -284,7 +281,7 @@ size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, cons
 
 			// note that we need to update the last index since free indices are delta-encoded
 			if (fec == 15)
-				encodeIndex(data, c, next, last), last = c;
+				encodeIndex(data, c, last), last = c;
 
 			// we only need to push third vertex since first two are likely already in the vertex fifo
 			if (fec == 0 || fec >= fecmax)
@@ -344,13 +341,13 @@ size_t meshopt_encodeIndexBuffer(unsigned char* buffer, size_t buffer_size, cons
 
 			// note that we need to update the last index since free indices are delta-encoded
 			if (fea == 15)
-				encodeIndex(data, a, next, last), last = a;
+				encodeIndex(data, a, last), last = a;
 
 			if (feb == 15)
-				encodeIndex(data, b, next, last), last = b;
+				encodeIndex(data, b, last), last = b;
 
 			if (fec == 15)
-				encodeIndex(data, c, next, last), last = c;
+				encodeIndex(data, c, last), last = c;
 
 			// only push vertices that weren't already in fifo
 			if (fea == 0 || fea == 15)
@@ -525,7 +522,7 @@ int meshopt_decodeIndexBuffer(void* destination, size_t index_count, size_t inde
 
 				// fec - (fec ^ 3) decodes 13, 14 into -1, 1
 				// note that we need to update the last index since free indices are delta-encoded
-				last = c = (fec != 15) ? last + (fec - (fec ^ 3)) : decodeIndex(data, next, last);
+				last = c = (fec != 15) ? last + (fec - (fec ^ 3)) : decodeIndex(data, last);
 
 				// output triangle
 				writeTriangle(destination, i, index_size, a, b, c);
@@ -597,13 +594,13 @@ int meshopt_decodeIndexBuffer(void* destination, size_t index_count, size_t inde
 
 				// note that we need to update the last index since free indices are delta-encoded
 				if (fea == 15)
-					last = a = decodeIndex(data, next, last);
+					last = a = decodeIndex(data, last);
 
 				if (feb == 15)
-					last = b = decodeIndex(data, next, last);
+					last = b = decodeIndex(data, last);
 
 				if (fec == 15)
-					last = c = decodeIndex(data, next, last);
+					last = c = decodeIndex(data, last);
 
 				// output triangle
 				writeTriangle(destination, i, index_size, a, b, c);
@@ -621,6 +618,133 @@ int meshopt_decodeIndexBuffer(void* destination, size_t index_count, size_t inde
 	}
 
 	// we should've read all data bytes and stopped at the boundary between data and codeaux table
+	if (data != data_safe_end)
+		return -3;
+
+	return 0;
+}
+
+size_t meshopt_encodeIndexSequence(unsigned char* buffer, size_t buffer_size, const unsigned int* indices, size_t index_count)
+{
+	using namespace meshopt;
+
+	// the minimum valid encoding is header, 1 byte per index and a 4-byte tail
+	if (buffer_size < 1 + index_count + 4)
+		return 0;
+
+	int version = gEncodeIndexVersion;
+
+	buffer[0] = (unsigned char)(kSequenceHeader | version);
+
+	unsigned int last[2] = {};
+	unsigned int current = 0;
+
+	unsigned char* data = buffer + 1;
+	unsigned char* data_safe_end = buffer + buffer_size - 4;
+
+	for (size_t i = 0; i < index_count; ++i)
+	{
+		// make sure we have enough data to write
+		// each index writes at most 5 bytes of data; there's a 4 byte tail after data_safe_end
+		// after this we can be sure we can write without extra bounds checks
+		if (data >= data_safe_end)
+			return 0;
+
+		unsigned int index = indices[i];
+
+		// this is a heuristic that switches between baselines when the delta grows too large
+		// we want the encoded delta to fit into one byte (7 bits), but 2 bits are used for sign and baseline index
+		// for now we immediately switch the baseline when delta grows too large - this can be adjusted arbitrarily
+		int cd = int(index - last[current]);
+		current ^= ((cd < 0 ? -cd : cd) >= 30);
+
+		// encode delta from the last index
+		unsigned int d = index - last[current];
+		unsigned int v = (d << 1) ^ (int(d) >> 31);
+
+		// note: low bit encodes the index of the last baseline which will be used for reconstruction
+		encodeVByte(data, (v << 1) | current);
+
+		// update last for the next iteration that uses it
+		last[current] = index;
+	}
+
+	// make sure we have enough space to write tail
+	if (data > data_safe_end)
+		return 0;
+
+	for (int k = 0; k < 4; ++k)
+		*data++ = 0;
+
+	return data - buffer;
+}
+
+size_t meshopt_encodeIndexSequenceBound(size_t index_count, size_t vertex_count)
+{
+	// compute number of bits required for each index
+	unsigned int vertex_bits = 1;
+
+	while (vertex_bits < 32 && vertex_count > size_t(1) << vertex_bits)
+		vertex_bits++;
+
+	// worst-case encoding is 1 varint-7 encoded index delta for a K bit value and an extra bit
+	unsigned int vertex_groups = (vertex_bits + 1 + 1 + 6) / 7;
+
+	return 1 + index_count * vertex_groups + 4;
+}
+
+int meshopt_decodeIndexSequence(void* destination, size_t index_count, size_t index_size, const unsigned char* buffer, size_t buffer_size)
+{
+	using namespace meshopt;
+
+	// the minimum valid encoding is header, 1 byte per index and a 4-byte tail
+	if (buffer_size < 1 + index_count + 4)
+		return -2;
+
+	if ((buffer[0] & 0xf0) != kSequenceHeader)
+		return -1;
+
+	int version = buffer[0] & 0x0f;
+	if (version > 1)
+		return -1;
+
+	const unsigned char* data = buffer + 1;
+	const unsigned char* data_safe_end = buffer + buffer_size - 4;
+
+	unsigned int last[2] = {};
+
+	for (size_t i = 0; i < index_count; ++i)
+	{
+		// make sure we have enough data to read
+		// each index reads at most 5 bytes of data; there's a 4 byte tail after data_safe_end
+		// after this we can be sure we can read without extra bounds checks
+		if (data >= data_safe_end)
+			return -2;
+
+		unsigned int v = decodeVByte(data);
+
+		// decode the index of the last baseline
+		unsigned int current = v & 1;
+		v >>= 1;
+
+		// reconstruct index as a delta
+		unsigned int d = (v >> 1) ^ -int(v & 1);
+		unsigned int index = last[current] + d;
+
+		// update last for the next iteration that uses it
+		last[current] = index;
+
+		if (index_size == 2)
+		{
+			static_cast<unsigned short*>(destination)[i] = (unsigned short)(index);
+		}
+		else
+		{
+			static_cast<unsigned int*>(destination)[i] = index;
+		}
+	}
+
+	// we should've read all data bytes and stopped at the boundary between data and tail
 	if (data != data_safe_end)
 		return -3;
 
