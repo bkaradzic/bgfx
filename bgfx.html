@@ -1909,31 +1909,31 @@ creating windows.</p>
 <dl class="member">
 <dt id="_CPPv4N4bgfx12PlatformData3ndtE">
 <span id="_CPPv3N4bgfx12PlatformData3ndtE"></span><span id="_CPPv2N4bgfx12PlatformData3ndtE"></span><span id="bgfx::PlatformData::ndt__voidP"></span><span class="target" id="structbgfx_1_1_platform_data_1a4d7268028c9e8626ac3627f36e6331af"></span>void *<code class="sig-name descname">ndt</code><a class="headerlink" href="#_CPPv4N4bgfx12PlatformData3ndtE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Native display type. </p>
+<dd><p>Native display type (*nix specific). </p>
 </dd></dl>
 
 <dl class="member">
 <dt id="_CPPv4N4bgfx12PlatformData3nwhE">
 <span id="_CPPv3N4bgfx12PlatformData3nwhE"></span><span id="_CPPv2N4bgfx12PlatformData3nwhE"></span><span id="bgfx::PlatformData::nwh__voidP"></span><span class="target" id="structbgfx_1_1_platform_data_1a1469498f2e4159ab742666b46aaa38b7"></span>void *<code class="sig-name descname">nwh</code><a class="headerlink" href="#_CPPv4N4bgfx12PlatformData3nwhE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Native window handle. </p>
+<dd><p>Native window handle. If <code class="docutils literal notranslate"><span class="pre">NULL</span></code> bgfx will create headless context/device if renderer API supports it. </p>
 </dd></dl>
 
 <dl class="member">
 <dt id="_CPPv4N4bgfx12PlatformData7contextE">
 <span id="_CPPv3N4bgfx12PlatformData7contextE"></span><span id="_CPPv2N4bgfx12PlatformData7contextE"></span><span id="bgfx::PlatformData::context__voidP"></span><span class="target" id="structbgfx_1_1_platform_data_1a8ebc31e06aae3ee5a7d18e3cac0adf9b"></span>void *<code class="sig-name descname">context</code><a class="headerlink" href="#_CPPv4N4bgfx12PlatformData7contextE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>GL context, or D3D device. </p>
+<dd><p>GL context, or D3D device. If <code class="docutils literal notranslate"><span class="pre">NULL</span></code>, bgfx will create context/device. </p>
 </dd></dl>
 
 <dl class="member">
 <dt id="_CPPv4N4bgfx12PlatformData10backBufferE">
 <span id="_CPPv3N4bgfx12PlatformData10backBufferE"></span><span id="_CPPv2N4bgfx12PlatformData10backBufferE"></span><span id="bgfx::PlatformData::backBuffer__voidP"></span><span class="target" id="structbgfx_1_1_platform_data_1afe014138f2108ace1a4f72aaad1b0d4f"></span>void *<code class="sig-name descname">backBuffer</code><a class="headerlink" href="#_CPPv4N4bgfx12PlatformData10backBufferE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>GL backbuffer, or D3D render target view. </p>
+<dd><p>GL back-buffer, or D3D render target view. If <code class="docutils literal notranslate"><span class="pre">NULL</span></code> bgfx will create back-buffer color surface. </p>
 </dd></dl>
 
 <dl class="member">
 <dt id="_CPPv4N4bgfx12PlatformData12backBufferDSE">
 <span id="_CPPv3N4bgfx12PlatformData12backBufferDSE"></span><span id="_CPPv2N4bgfx12PlatformData12backBufferDSE"></span><span id="bgfx::PlatformData::backBufferDS__voidP"></span><span class="target" id="structbgfx_1_1_platform_data_1ae1dce3718ab484415ac7b8377aec5dab"></span>void *<code class="sig-name descname">backBufferDS</code><a class="headerlink" href="#_CPPv4N4bgfx12PlatformData12backBufferDSE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Backbuffer depth/stencil. </p>
+<dd><p>Backbuffer depth/stencil. If <code class="docutils literal notranslate"><span class="pre">NULL</span></code> bgfx will create back-buffer depth/stencil surface. </p>
 </dd></dl>
 
 </div>
