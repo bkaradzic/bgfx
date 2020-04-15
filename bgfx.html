@@ -3223,7 +3223,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <dl class="function">
 <dt id="_CPPv4N4bgfx7Encoder5touchE6ViewId">
 <span id="_CPPv3N4bgfx7Encoder5touchE6ViewId"></span><span id="_CPPv2N4bgfx7Encoder5touchE6ViewId"></span><span id="bgfx::Encoder::touch__ViewId"></span><span class="target" id="structbgfx_1_1_encoder_1a57dd7836d684ce252f915fda652dd4d9"></span>void <code class="sig-name descname">touch</code><span class="sig-paren">(</span>ViewId <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder5touchE6ViewId" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Submit an empty primitive for rendering. Uniforms and draw state will be applied but no geometry will be submitted. </p>
+<dd><p>Submit an empty primitive for rendering. Uniforms and draw state will be applied but no geometry will be submitted. Useful in cases when no other draw/compute primitive is submitted to view, but it’s desired to execute clear view. </p>
 <p>These empty draw calls will sort before ordinary draw calls.</p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_touch</span></code>. </p>
