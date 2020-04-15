@@ -1449,7 +1449,9 @@ version(BindBgfx_Static)
 	
 	/**
 	 * Submit an empty primitive for rendering. Uniforms and draw state
-	 * will be applied but no geometry will be submitted.
+	 * will be applied but no geometry will be submitted. Useful in cases
+	 * when no other draw/compute primitive is submitted to view, but it's
+	 * desired to execute clear view.
 	 * Remarks:
 	 *   These empty draw calls will sort before ordinary draw calls.
 	 * Params:
@@ -3637,7 +3639,9 @@ else
 		
 		/**
 		 * Submit an empty primitive for rendering. Uniforms and draw state
-		 * will be applied but no geometry will be submitted.
+		 * will be applied but no geometry will be submitted. Useful in cases
+		 * when no other draw/compute primitive is submitted to view, but it's
+		 * desired to execute clear view.
 		 * Remarks:
 		 *   These empty draw calls will sort before ordinary draw calls.
 		 * Params:
