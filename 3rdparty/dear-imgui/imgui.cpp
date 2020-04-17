@@ -5490,6 +5490,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         UpdateWindowParentAndRootLinks(window, flags, parent_window);
 
     // Process SetNextWindow***() calls
+    // (FIXME: Consider splitting the HasXXX flags into X/Y components
     bool window_pos_set_by_api = false;
     bool window_size_x_set_by_api = false, window_size_y_set_by_api = false;
     if (g.NextWindowData.Flags & ImGuiNextWindowDataFlags_HasPos)
@@ -5513,6 +5514,19 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window_size_x_set_by_api = (window->SetWindowSizeAllowFlags & g.NextWindowData.SizeCond) != 0 && (g.NextWindowData.SizeVal.x > 0.0f);
         window_size_y_set_by_api = (window->SetWindowSizeAllowFlags & g.NextWindowData.SizeCond) != 0 && (g.NextWindowData.SizeVal.y > 0.0f);
         SetWindowSize(window, g.NextWindowData.SizeVal, g.NextWindowData.SizeCond);
+    }
+    if (g.NextWindowData.Flags & ImGuiNextWindowDataFlags_HasScroll)
+    {
+        if (g.NextWindowData.ScrollVal.x >= 0.0f)
+        {
+            window->ScrollTarget.x = g.NextWindowData.ScrollVal.x;
+            window->ScrollTargetCenterRatio.x = 0.0f;
+        }
+        if (g.NextWindowData.ScrollVal.y >= 0.0f)
+        {
+            window->ScrollTarget.y = g.NextWindowData.ScrollVal.y;
+            window->ScrollTargetCenterRatio.y = 0.0f;
+        }
     }
     if (g.NextWindowData.Flags & ImGuiNextWindowDataFlags_HasContentSize)
         window->ContentSizeExplicit = g.NextWindowData.ContentSizeVal;
@@ -6515,6 +6529,13 @@ void ImGui::SetNextWindowContentSize(const ImVec2& size)
     g.NextWindowData.ContentSizeVal = size;
 }
 
+void ImGui::SetNextWindowScroll(const ImVec2& scroll)
+{
+    ImGuiContext& g = *GImGui;
+    g.NextWindowData.Flags |= ImGuiNextWindowDataFlags_HasScroll;
+    g.NextWindowData.ScrollVal = scroll;
+}
+
 void ImGui::SetNextWindowCollapsed(bool collapsed, ImGuiCond cond)
 {
     ImGuiContext& g = *GImGui;
@@ -6578,6 +6599,7 @@ void ImGui::PushFocusScope(ImGuiID id)
     ImGuiWindow* window = g.CurrentWindow;
     window->IDStack.push_back(window->DC.NavFocusScopeIdCurrent);
     window->DC.NavFocusScopeIdCurrent = id;
+    IMGUI_TEST_ENGINE_PUSH_ID(id, ImGuiDataType_ID, NULL);
 }
 
 void ImGui::PopFocusScope()
@@ -6629,33 +6651,47 @@ ImGuiStorage* ImGui::GetStateStorage()
 
 void ImGui::PushID(const char* str_id)
 {
-    ImGuiWindow* window = GImGui->CurrentWindow;
-    window->IDStack.push_back(window->GetIDNoKeepAlive(str_id));
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    ImGuiID id = window->GetIDNoKeepAlive(str_id);
+    window->IDStack.push_back(id);
+    IMGUI_TEST_ENGINE_PUSH_ID(id, ImGuiDataType_String, str_id);
 }
 
 void ImGui::PushID(const char* str_id_begin, const char* str_id_end)
 {
-    ImGuiWindow* window = GImGui->CurrentWindow;
-    window->IDStack.push_back(window->GetIDNoKeepAlive(str_id_begin, str_id_end));
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    ImGuiID id = window->GetIDNoKeepAlive(str_id_begin, str_id_end);
+    window->IDStack.push_back(id);
+    IMGUI_TEST_ENGINE_PUSH_ID2(id, ImGuiDataType_String, str_id_begin, str_id_end);
 }
 
 void ImGui::PushID(const void* ptr_id)
 {
-    ImGuiWindow* window = GImGui->CurrentWindow;
-    window->IDStack.push_back(window->GetIDNoKeepAlive(ptr_id));
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    ImGuiID id = window->GetIDNoKeepAlive(ptr_id);
+    window->IDStack.push_back(id);
+    IMGUI_TEST_ENGINE_PUSH_ID(id, ImGuiDataType_Pointer, ptr_id);
 }
 
 void ImGui::PushID(int int_id)
 {
-    ImGuiWindow* window = GImGui->CurrentWindow;
-    window->IDStack.push_back(window->GetIDNoKeepAlive(int_id));
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    ImGuiID id = window->GetIDNoKeepAlive(int_id);
+    window->IDStack.push_back(id);
+    IMGUI_TEST_ENGINE_PUSH_ID(id, ImGuiDataType_S32, (intptr_t)int_id);
 }
 
 // Push a given id value ignoring the ID stack as a seed.
 void ImGui::PushOverrideID(ImGuiID id)
 {
-    ImGuiWindow* window = GImGui->CurrentWindow;
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
     window->IDStack.push_back(id);
+    IMGUI_TEST_ENGINE_PUSH_ID(id, ImGuiDataType_ID, NULL);
 }
 
 void ImGui::PopID()
