@@ -3021,7 +3021,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3056,7 +3056,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Dynamic vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3091,7 +3091,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_tvb</span></code>: Transient vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4180,7 +4180,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4215,7 +4215,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Dynamic vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4300,7 +4300,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_tvb</span></code>: Transient vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</p></li>
 </ul>
 </dd>
 </dl>
