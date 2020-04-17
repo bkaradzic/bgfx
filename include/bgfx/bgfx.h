@@ -1230,7 +1230,8 @@ namespace bgfx
 		/// @param[in] _handle Vertex buffer.
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
-		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
+		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
+		///   used, vertex layout used for creation of vertex buffer will be used.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_set_vertex_buffer`.
 		///
@@ -1260,7 +1261,8 @@ namespace bgfx
 		/// @param[in] _handle Dynamic vertex buffer.
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
-		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
+		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
+		///   used, vertex layout used for creation of vertex buffer will be used.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_set_dynamic_vertex_buffer`.
 		///
@@ -1290,7 +1292,8 @@ namespace bgfx
 		/// @param[in] _tvb Transient vertex buffer.
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
-		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
+		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
+		///   used, vertex layout used for creation of vertex buffer will be used.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_set_transient_vertex_buffer`.
 		///
@@ -3630,7 +3633,8 @@ namespace bgfx
 	/// @param[in] _handle Vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
-	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
+	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
+	///   used, vertex layout used for creation of vertex buffer will be used.
 	///
 	/// @attention C99 equivalent is `bgfx_set_vertex_buffer`.
 	///
@@ -3660,7 +3664,8 @@ namespace bgfx
 	/// @param[in] _handle Dynamic vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
-	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
+	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
+	///   used, vertex layout used for creation of vertex buffer will be used.
 	///
 	/// @attention C99 equivalent is `bgfx_set_dynamic_vertex_buffer`.
 	///
@@ -3690,7 +3695,8 @@ namespace bgfx
 	/// @param[in] _tvb Transient vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
-	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
+	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
+	///   used, vertex layout used for creation of vertex buffer will be used.
 	///
 	/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 	///

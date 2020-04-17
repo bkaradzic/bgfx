@@ -2237,7 +2237,9 @@ func.Encoder.setVertexBuffer
 	.handle       "VertexBufferHandle" --- Vertex buffer.
 	.startVertex  "uint32_t"           --- First vertex to render.
 	.numVertices  "uint32_t"           --- Number of vertices to render.
-	.layoutHandle "VertexLayoutHandle" --- Vertex layout for aliasing vertex buffer.
+	.layoutHandle "VertexLayoutHandle" --- Vertex layout for aliasing vertex buffer. If invalid
+	                                   --- handle is used, vertex layout used for creation
+	                                   --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
@@ -2253,7 +2255,9 @@ func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
 	.handle       "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 	.startVertex  "uint32_t"                  --- First vertex to render.
 	.numVertices  "uint32_t"                  --- Number of vertices to render.
-	.layoutHandle "VertexLayoutHandle"        --- Vertex layout for aliasing vertex buffer.
+	.layoutHandle "VertexLayoutHandle"        --- Vertex layout for aliasing vertex buffer. If invalid
+	                                          --- handle is used, vertex layout used for creation
+	                                          --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
@@ -2269,7 +2273,9 @@ func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer" }
 	.tvb          "const TransientVertexBuffer*" --- Transient vertex buffer.
 	.startVertex  "uint32_t"                     --- First vertex to render.
 	.numVertices  "uint32_t"                     --- Number of vertices to render.
-	.layoutHandle "VertexLayoutHandle"           --- Vertex layout for aliasing vertex buffer.
+	.layoutHandle "VertexLayoutHandle"           --- Vertex layout for aliasing vertex buffer. If invalid
+	                                             --- handle is used, vertex layout used for creation
+	                                             --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set number of vertices for auto generated vertices use in conjuction
