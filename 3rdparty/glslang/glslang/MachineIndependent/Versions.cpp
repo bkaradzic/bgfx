@@ -197,6 +197,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_shader_clock]                 = EBhDisable;
     extensionBehavior[E_GL_ARB_uniform_buffer_object]        = EBhDisable;
     extensionBehavior[E_GL_ARB_sample_shading]               = EBhDisable;
+    extensionBehavior[E_GL_ARB_shader_bit_encoding]          = EBhDisable;
 
     extensionBehavior[E_GL_KHR_shader_subgroup_basic]            = EBhDisable;
     extensionBehavior[E_GL_KHR_shader_subgroup_vote]             = EBhDisable;
@@ -409,6 +410,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_post_depth_coverage 1\n"
             "#define GL_ARB_fragment_shader_interlock 1\n"
             "#define GL_ARB_uniform_buffer_object 1\n"
+            "#define GL_ARB_shader_bit_encoding 1\n"
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             "#define GL_EXT_shader_image_load_formatted 1\n"
             "#define GL_EXT_post_depth_coverage 1\n"

@@ -2013,18 +2013,20 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         if (arg > 0) {
 
 #ifndef GLSLANG_WEB
-            bool f16ShadowCompare = (*argp)[1]->getAsTyped()->getBasicType() == EbtFloat16 && arg0->getType().getSampler().shadow;
+            bool f16ShadowCompare = (*argp)[1]->getAsTyped()->getBasicType() == EbtFloat16 &&
+                                    arg0->getType().getSampler().shadow;
             if (f16ShadowCompare)
                 ++arg;
 #endif
-            if (! (*argp)[arg]->getAsConstantUnion())
+            if (! (*argp)[arg]->getAsTyped()->getQualifier().isConstant())
                 error(loc, "argument must be compile-time constant", "texel offset", "");
-            else {
+            else if ((*argp)[arg]->getAsConstantUnion()) {
                 const TType& type = (*argp)[arg]->getAsTyped()->getType();
                 for (int c = 0; c < type.getVectorSize(); ++c) {
                     int offset = (*argp)[arg]->getAsConstantUnion()->getConstArray()[c].getIConst();
                     if (offset > resources.maxProgramTexelOffset || offset < resources.minProgramTexelOffset)
-                        error(loc, "value is out of range:", "texel offset", "[gl_MinProgramTexelOffset, gl_MaxProgramTexelOffset]");
+                        error(loc, "value is out of range:", "texel offset",
+                              "[gl_MinProgramTexelOffset, gl_MaxProgramTexelOffset]");
                 }
             }
         }
