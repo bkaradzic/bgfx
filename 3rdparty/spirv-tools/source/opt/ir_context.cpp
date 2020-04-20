@@ -16,6 +16,7 @@
 
 #include <cstring>
 
+#include "OpenCLDebugInfo100.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/opt/log.h"
 #include "source/opt/mem_pass.h"
@@ -28,6 +29,10 @@ static const int kSpvDecorateDecorationInIdx = 1;
 static const int kSpvDecorateBuiltinInIdx = 2;
 static const int kEntryPointInterfaceInIdx = 3;
 static const int kEntryPointFunctionIdInIdx = 1;
+
+// Constants for OpenCL.DebugInfo.100 extension instructions.
+static const uint32_t kDebugFunctionOperandFunctionIndex = 13;
+static const uint32_t kDebugGlobalVariableOperandVariableIndex = 11;
 
 }  // anonymous namespace
 
@@ -153,6 +158,8 @@ Instruction* IRContext::KillInst(Instruction* inst) {
 
   KillNamesAndDecorates(inst);
 
+  KillOperandFromDebugInstructions(inst);
+
   if (AreAnalysesValid(kAnalysisDefUse)) {
     get_def_use_mgr()->ClearInst(inst);
   }
@@ -265,7 +272,7 @@ bool IRContext::ReplaceAllUsesWithPredicate(
 bool IRContext::IsConsistent() {
 #ifndef SPIRV_CHECK_CONTEXT
   return true;
-#endif
+#else
   if (AreAnalysesValid(kAnalysisDefUse)) {
     analysis::DefUseManager new_def_use(module());
     if (*get_def_use_mgr() != new_def_use) {
@@ -317,6 +324,7 @@ bool IRContext::IsConsistent() {
     }
   }
   return true;
+#endif
 }
 
 void IRContext::ForgetUses(Instruction* inst) {
@@ -363,6 +371,61 @@ void IRContext::KillNamesAndDecorates(Instruction* inst) {
   const uint32_t rId = inst->result_id();
   if (rId == 0) return;
   KillNamesAndDecorates(rId);
+}
+
+Instruction* IRContext::GetOpenCL100DebugInfoNone() {
+  if (debug_info_none_inst_) return debug_info_none_inst_;
+  assert(get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo() &&
+         "Module does not include debug info extension instruction.");
+
+  // Create a new DebugInfoNone.
+  std::unique_ptr<Instruction> dbg_info_none(new Instruction(
+      this, SpvOpExtInst, get_type_mgr()->GetVoidTypeId(), TakeNextId(),
+      {
+          {SPV_OPERAND_TYPE_RESULT_ID,
+           {get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo()}},
+          {SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER,
+           {static_cast<uint32_t>(OpenCLDebugInfo100DebugInfoNone)}},
+      }));
+
+  // Add to the front of |ext_inst_debuginfo_|.
+  debug_info_none_inst_ = module()->ext_inst_debuginfo_begin()->InsertBefore(
+      std::move(dbg_info_none));
+  return debug_info_none_inst_;
+}
+
+void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
+  const auto opcode = inst->opcode();
+  const uint32_t id = inst->result_id();
+  // Kill id of OpFunction from DebugFunction.
+  if (opcode == SpvOpFunction) {
+    for (auto it = module()->ext_inst_debuginfo_begin();
+         it != module()->ext_inst_debuginfo_end(); ++it) {
+      if (it->GetOpenCL100DebugOpcode() != OpenCLDebugInfo100DebugFunction)
+        continue;
+      auto& operand = it->GetOperand(kDebugFunctionOperandFunctionIndex);
+      if (operand.words[0] == id) {
+        operand.words[0] = GetOpenCL100DebugInfoNone()->result_id();
+      }
+    }
+  }
+  // Kill id of OpVariable for global variable from DebugGlobalVariable.
+  if (opcode == SpvOpVariable || IsConstantInst(opcode)) {
+    for (auto it = module()->ext_inst_debuginfo_begin();
+         it != module()->ext_inst_debuginfo_end(); ++it) {
+      if (it->GetOpenCL100DebugOpcode() !=
+          OpenCLDebugInfo100DebugGlobalVariable)
+        continue;
+      auto& operand = it->GetOperand(kDebugGlobalVariableOperandVariableIndex);
+      if (operand.words[0] == id) {
+        operand.words[0] = GetOpenCL100DebugInfoNone()->result_id();
+      }
+    }
+  }
+  // Notice that we do not need anythings to do for local variables.
+  // DebugLocalVariable does not have an OpVariable operand. Instead,
+  // DebugDeclare/DebugValue has an OpVariable operand for a local
+  // variable. The function inlining pass handles it properly.
 }
 
 void IRContext::AddCombinatorsForCapability(uint32_t capability) {

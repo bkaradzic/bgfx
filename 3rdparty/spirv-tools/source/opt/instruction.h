@@ -22,14 +22,14 @@
 #include <utility>
 #include <vector>
 
-#include "source/opcode.h"
-#include "source/operand.h"
-#include "source/util/ilist_node.h"
-#include "source/util/small_vector.h"
-
+#include "OpenCLDebugInfo100.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/latest_version_spirv_header.h"
+#include "source/opcode.h"
+#include "source/operand.h"
 #include "source/opt/reflect.h"
+#include "source/util/ilist_node.h"
+#include "source/util/small_vector.h"
 #include "spirv-tools/libspirv.h"
 
 const uint32_t kNoDebugScope = 0;
@@ -495,6 +495,11 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // logical addressing rules when using logical addressing.  Normal validation
   // rules for physical addressing.
   bool IsValidBasePointer() const;
+
+  // Returns debug opcode of an OpenCL.100.DebugInfo instruction. If
+  // it is not an OpenCL.100.DebugInfo instruction, just returns
+  // OpenCLDebugInfo100InstructionsMax.
+  OpenCLDebugInfo100Instructions GetOpenCL100DebugOpcode() const;
 
   // Dump this instruction on stderr.  Useful when running interactive
   // debuggers.

@@ -33,6 +33,8 @@ const uint32_t kVariableStorageClassIndex = 0;
 const uint32_t kTypeImageSampledIndex = 5;
 
 // Constants for OpenCL.DebugInfo.100 extension instructions.
+const uint32_t kExtInstSetIdInIdx = 0;
+const uint32_t kExtInstInstructionInIdx = 1;
 const uint32_t kDebugScopeNumWords = 7;
 const uint32_t kDebugScopeNumWordsWithoutInlinedAt = 6;
 const uint32_t kDebugNoScopeNumWords = 5;
@@ -180,10 +182,27 @@ void Instruction::ReplaceOperands(const OperandList& new_operands) {
 bool Instruction::IsReadOnlyLoad() const {
   if (IsLoad()) {
     Instruction* address_def = GetBaseAddress();
-    if (!address_def || address_def->opcode() != SpvOpVariable) {
+    if (!address_def) {
       return false;
     }
-    return address_def->IsReadOnlyVariable();
+
+    if (address_def->opcode() == SpvOpVariable) {
+      if (address_def->IsReadOnlyVariable()) {
+        return true;
+      }
+    }
+
+    if (address_def->opcode() == SpvOpLoad) {
+      const analysis::Type* address_type =
+          context()->get_type_mgr()->GetType(address_def->type_id());
+      if (address_type->AsSampledImage() != nullptr) {
+        const auto* image_type =
+            address_type->AsSampledImage()->image_type()->AsImage();
+        if (image_type->sampled() == 1) {
+          return true;
+        }
+      }
+    }
   }
   return false;
 }
@@ -510,6 +529,21 @@ bool Instruction::IsValidBasePointer() const {
   return false;
 }
 
+OpenCLDebugInfo100Instructions Instruction::GetOpenCL100DebugOpcode() const {
+  if (opcode() != SpvOpExtInst) return OpenCLDebugInfo100InstructionsMax;
+
+  if (!context()->get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo())
+    return OpenCLDebugInfo100InstructionsMax;
+
+  if (GetSingleWordInOperand(kExtInstSetIdInIdx) !=
+      context()->get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo()) {
+    return OpenCLDebugInfo100InstructionsMax;
+  }
+
+  return OpenCLDebugInfo100Instructions(
+      GetSingleWordInOperand(kExtInstInstructionInIdx));
+}
+
 bool Instruction::IsValidBaseImage() const {
   uint32_t tid = type_id();
   if (tid == 0) {
@@ -713,9 +747,6 @@ bool Instruction::IsScalarizable() const {
   if (spvOpcodeIsScalarizable(opcode())) {
     return true;
   }
-
-  const uint32_t kExtInstSetIdInIdx = 0;
-  const uint32_t kExtInstInstructionInIdx = 1;
 
   if (opcode() == SpvOpExtInst) {
     uint32_t instSetId =

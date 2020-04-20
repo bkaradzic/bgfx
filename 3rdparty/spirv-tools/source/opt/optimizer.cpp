@@ -498,7 +498,7 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
   } else if (pass_name == "legalize-vector-shuffle") {
     RegisterPass(CreateLegalizeVectorShufflePass());
   } else if (pass_name == "split-invalid-unreachable") {
-    RegisterPass(CreateLegalizeVectorShufflePass());
+    RegisterPass(CreateSplitInvalidUnreachablePass());
   } else if (pass_name == "decompose-initialized-variables") {
     RegisterPass(CreateDecomposeInitializedVariablesPass());
   } else if (pass_name == "graphics-robust-access") {

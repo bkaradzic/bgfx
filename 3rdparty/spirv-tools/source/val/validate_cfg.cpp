@@ -1090,8 +1090,9 @@ spv_result_t CfgPass(ValidationState_t& _, const Instruction* inst) {
         return _.diag(SPV_ERROR_INVALID_CFG, inst)
                << "OpReturn can only be called from a function with void "
                << "return type.";
+      _.current_function().RegisterBlockEnd(std::vector<uint32_t>(), opcode);
+      break;
     }
-    // Fallthrough.
     case SpvOpKill:
     case SpvOpReturnValue:
     case SpvOpUnreachable:

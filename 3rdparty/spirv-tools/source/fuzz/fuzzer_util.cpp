@@ -218,6 +218,12 @@ bool CanInsertOpcodeBeforeInstruction(
 }
 
 bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst) {
+  if (inst->opcode() == SpvOpSampledImage) {
+    // The SPIR-V data rules say that only very specific instructions may
+    // may consume the result id of an OpSampledImage, and this excludes the
+    // instructions that are used for making synonyms.
+    return false;
+  }
   if (!inst->HasResultId()) {
     // We can only make a synonym of an instruction that generates an id.
     return false;

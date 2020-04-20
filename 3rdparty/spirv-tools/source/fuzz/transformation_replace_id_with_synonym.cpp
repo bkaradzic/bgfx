@@ -125,6 +125,9 @@ bool TransformationReplaceIdWithSynonym::UseCanBeReplacedWithSynonym(
       } else if (composite_type_being_accessed->AsArray()) {
         composite_type_being_accessed =
             composite_type_being_accessed->AsArray()->element_type();
+      } else if (composite_type_being_accessed->AsRuntimeArray()) {
+        composite_type_being_accessed =
+            composite_type_being_accessed->AsRuntimeArray()->element_type();
       } else {
         assert(composite_type_being_accessed->AsStruct());
         auto constant_index_instruction = ir_context->get_def_use_mgr()->GetDef(

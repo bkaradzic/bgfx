@@ -66,7 +66,7 @@ class FuzzerPassDonateModules : public FuzzerPass {
       opt::IRContext* donor_ir_context,
       std::map<uint32_t, uint32_t>* original_id_to_donated_id);
 
-  // TODO comment
+  // Helper method for HandleTypesAndValues, to handle a single type/value.
   void HandleTypeOrValue(
       const opt::Instruction& type_or_value,
       std::map<uint32_t, uint32_t>* original_id_to_donated_id);

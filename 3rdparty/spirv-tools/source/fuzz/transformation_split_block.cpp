@@ -76,8 +76,34 @@ bool TransformationSplitBlock::IsApplicable(
   }
   // We cannot split before an OpPhi unless the OpPhi has exactly one
   // associated incoming edge.
-  return !(split_before->opcode() == SpvOpPhi &&
-           split_before->NumInOperands() != 2);
+  if (split_before->opcode() == SpvOpPhi &&
+      split_before->NumInOperands() != 2) {
+    return false;
+  }
+
+  // Splitting the block must not separate the definition of an OpSampledImage
+  // from its use: the SPIR-V data rules require them to be in the same block.
+  std::set<uint32_t> sampled_image_result_ids;
+  bool before_split = true;
+  for (auto& instruction : *block_to_split) {
+    if (&instruction == &*split_before) {
+      before_split = false;
+    }
+    if (before_split) {
+      if (instruction.opcode() == SpvOpSampledImage) {
+        sampled_image_result_ids.insert(instruction.result_id());
+      }
+    } else {
+      if (!instruction.WhileEachInId(
+              [&sampled_image_result_ids](uint32_t* id) -> bool {
+                return !sampled_image_result_ids.count(*id);
+              })) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 void TransformationSplitBlock::Apply(

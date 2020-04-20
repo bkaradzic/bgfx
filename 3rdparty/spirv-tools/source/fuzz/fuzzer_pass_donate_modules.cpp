@@ -124,6 +124,7 @@ SpvStorageClass FuzzerPassDonateModules::AdaptStorageClass(
     case SpvStorageClassUniform:
     case SpvStorageClassUniformConstant:
     case SpvStorageClassPushConstant:
+    case SpvStorageClassImage:
       // We change these to Private
       return SpvStorageClassPrivate;
     default:
@@ -721,11 +722,12 @@ bool FuzzerPassDonateModules::CanDonateInstruction(
           // We do not have a mapped result id for this id operand.  That either
           // means that it is a forward reference (which is OK), that we skipped
           // the instruction that generated it (which is not OK), or that it is
-          // the id of a function that we did not donate (which is not OK).  We
-          // check for the latter two cases.
+          // the id of a function or global value that we did not donate (which
+          // is not OK).  We check for the latter two cases.
           if (skipped_instructions.count(*in_id) ||
-              donor_ir_context->get_def_use_mgr()->GetDef(*in_id)->opcode() ==
-                  SpvOpFunction) {
+              // A function or global value does not have an associated basic
+              // block.
+              !donor_ir_context->get_instr_block(*in_id)) {
             result = false;
             return false;
           }
