@@ -119,8 +119,9 @@ namespace bgfx { namespace gl
 
 		s_attrs.minorVersion = 0;
 		const char* canvas = (const char*) _nwh;
+		int error = 0;
 
-		for(int version = 2; version >= 1; --version)
+		for (int version = 2; version >= 1; --version)
 		{
 			s_attrs.majorVersion = version;
 			EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = emscripten_webgl_create_context(canvas, &s_attrs);
@@ -134,8 +135,9 @@ namespace bgfx { namespace gl
 
 				return swapChain;
 			}
+			error = (int) context;
 		}
-		BX_TRACE("Failed to create WebGL context.  (Canvas handle: '%s', error %d)", canvas, (int)context);
+		BX_TRACE("Failed to create WebGL context.  (Canvas handle: '%s', last attempt error %d)", canvas, error);
 		return NULL;
 	}
 
