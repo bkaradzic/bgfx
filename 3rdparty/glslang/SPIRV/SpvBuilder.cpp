@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2014-2015 LunarG, Inc.
 // Copyright (C) 2015-2018 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -496,7 +497,8 @@ Id Builder::makeFunctionType(Id returnType, const std::vector<Id>& paramTypes)
     return type->getResultId();
 }
 
-Id Builder::makeImageType(Id sampledType, Dim dim, bool depth, bool arrayed, bool ms, unsigned sampled, ImageFormat format)
+Id Builder::makeImageType(Id sampledType, Dim dim, bool depth, bool arrayed, bool ms, unsigned sampled,
+    ImageFormat format)
 {
     assert(sampled == 1 || sampled == 2);
 
@@ -601,16 +603,31 @@ Id Builder::makeSampledImageType(Id imageType)
 }
 
 #ifndef GLSLANG_WEB
-Id Builder::makeAccelerationStructureNVType()
+Id Builder::makeAccelerationStructureType()
 {
     Instruction *type;
-    if (groupedTypes[OpTypeAccelerationStructureNV].size() == 0) {
-        type = new Instruction(getUniqueId(), NoType, OpTypeAccelerationStructureNV);
-        groupedTypes[OpTypeAccelerationStructureNV].push_back(type);
+    if (groupedTypes[OpTypeAccelerationStructureKHR].size() == 0) {
+        type = new Instruction(getUniqueId(), NoType, OpTypeAccelerationStructureKHR);
+        groupedTypes[OpTypeAccelerationStructureKHR].push_back(type);
         constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
         module.mapInstruction(type);
     } else {
-        type = groupedTypes[OpTypeAccelerationStructureNV].back();
+        type = groupedTypes[OpTypeAccelerationStructureKHR].back();
+    }
+
+    return type->getResultId();
+}
+
+Id Builder::makeRayQueryType()
+{
+    Instruction *type;
+    if (groupedTypes[OpTypeRayQueryProvisionalKHR].size() == 0) {
+        type = new Instruction(getUniqueId(), NoType, OpTypeRayQueryProvisionalKHR);
+        groupedTypes[OpTypeRayQueryProvisionalKHR].push_back(type);
+        constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
+        module.mapInstruction(type);
+    } else {
+        type = groupedTypes[OpTypeRayQueryProvisionalKHR].back();
     }
 
     return type->getResultId();
@@ -1270,7 +1287,8 @@ Function* Builder::makeEntryPoint(const char* entryPoint)
 
 // Comments in header
 Function* Builder::makeFunctionEntry(Decoration precision, Id returnType, const char* name,
-                                     const std::vector<Id>& paramTypes, const std::vector<std::vector<Decoration>>& decorations, Block **entry)
+                                     const std::vector<Id>& paramTypes,
+                                     const std::vector<std::vector<Decoration>>& decorations, Block **entry)
 {
     // Make the function and initial instructions in it
     Id typeId = makeFunctionType(returnType, paramTypes);
@@ -1373,7 +1391,8 @@ Id Builder::createUndefined(Id type)
 }
 
 // av/vis/nonprivate are unnecessary and illegal for some storage classes.
-spv::MemoryAccessMask Builder::sanitizeMemoryAccessForStorageClass(spv::MemoryAccessMask memoryAccess, StorageClass sc) const
+spv::MemoryAccessMask Builder::sanitizeMemoryAccessForStorageClass(spv::MemoryAccessMask memoryAccess, StorageClass sc)
+    const
 {
     switch (sc) {
     case spv::StorageClassUniform:
@@ -1392,7 +1411,8 @@ spv::MemoryAccessMask Builder::sanitizeMemoryAccessForStorageClass(spv::MemoryAc
 }
 
 // Comments in header
-void Builder::createStore(Id rValue, Id lValue, spv::MemoryAccessMask memoryAccess, spv::Scope scope, unsigned int alignment)
+void Builder::createStore(Id rValue, Id lValue, spv::MemoryAccessMask memoryAccess, spv::Scope scope,
+    unsigned int alignment)
 {
     Instruction* store = new Instruction(OpStore);
     store->addIdOperand(lValue);
@@ -1495,7 +1515,8 @@ Id Builder::createCompositeExtract(Id composite, Id typeId, unsigned index)
     // Generate code for spec constants if in spec constant operation
     // generation mode.
     if (generatingOpCodeForSpecConst) {
-        return createSpecConstantOp(OpCompositeExtract, typeId, std::vector<Id>(1, composite), std::vector<Id>(1, index));
+        return createSpecConstantOp(OpCompositeExtract, typeId, std::vector<Id>(1, composite),
+            std::vector<Id>(1, index));
     }
     Instruction* extract = new Instruction(getUniqueId(), typeId, OpCompositeExtract);
     extract->addIdOperand(composite);
@@ -1697,7 +1718,8 @@ Id Builder::createOp(Op opCode, Id typeId, const std::vector<IdImmediate>& opera
     return op->getResultId();
 }
 
-Id Builder::createSpecConstantOp(Op opCode, Id typeId, const std::vector<Id>& operands, const std::vector<unsigned>& literals)
+Id Builder::createSpecConstantOp(Op opCode, Id typeId, const std::vector<Id>& operands,
+    const std::vector<unsigned>& literals)
 {
     Instruction* op = new Instruction(getUniqueId(), typeId, OpSpecConstantOp);
     op->addImmediateOperand((unsigned) opCode);
@@ -2187,7 +2209,8 @@ Id Builder::createCompositeCompare(Decoration precision, Id value1, Id value2, b
         if (constituent == 0)
             resultId = subResultId;
         else
-            resultId = setPrecision(createBinOp(equal ? OpLogicalAnd : OpLogicalOr, boolType, resultId, subResultId), precision);
+            resultId = setPrecision(createBinOp(equal ? OpLogicalAnd : OpLogicalOr, boolType, resultId, subResultId),
+                                    precision);
     }
 
     return resultId;
@@ -2196,7 +2219,8 @@ Id Builder::createCompositeCompare(Decoration precision, Id value1, Id value2, b
 // OpCompositeConstruct
 Id Builder::createCompositeConstruct(Id typeId, const std::vector<Id>& constituents)
 {
-    assert(isAggregateType(typeId) || (getNumTypeConstituents(typeId) > 1 && getNumTypeConstituents(typeId) == (int)constituents.size()));
+    assert(isAggregateType(typeId) || (getNumTypeConstituents(typeId) > 1 &&
+           getNumTypeConstituents(typeId) == (int)constituents.size()));
 
     if (generatingOpCodeForSpecConst) {
         // Sometime, even in spec-constant-op mode, the constant composite to be
@@ -2609,7 +2633,8 @@ void Builder::clearAccessChain()
 }
 
 // Comments in header
-void Builder::accessChainPushSwizzle(std::vector<unsigned>& swizzle, Id preSwizzleBaseType, AccessChain::CoherentFlags coherentFlags, unsigned int alignment)
+void Builder::accessChainPushSwizzle(std::vector<unsigned>& swizzle, Id preSwizzleBaseType,
+    AccessChain::CoherentFlags coherentFlags, unsigned int alignment)
 {
     accessChain.coherentFlags |= coherentFlags;
     accessChain.alignment |= alignment;
@@ -2663,7 +2688,8 @@ void Builder::accessChainStore(Id rvalue, spv::MemoryAccessMask memoryAccess, sp
 }
 
 // Comments in header
-Id Builder::accessChainLoad(Decoration precision, Decoration nonUniform, Id resultType, spv::MemoryAccessMask memoryAccess, spv::Scope scope, unsigned int alignment)
+Id Builder::accessChainLoad(Decoration precision, Decoration nonUniform, Id resultType,
+    spv::MemoryAccessMask memoryAccess, spv::Scope scope, unsigned int alignment)
 {
     Id id;
 
@@ -2721,7 +2747,13 @@ Id Builder::accessChainLoad(Decoration precision, Decoration nonUniform, Id resu
         }
 
         // load through the access chain
-        id = createLoad(collapseAccessChain(), memoryAccess, scope, alignment);
+        id = collapseAccessChain();
+        // Apply nonuniform both to the access chain and the loaded value.
+        // Buffer accesses need the access chain decorated, and this is where
+        // loaded image types get decorated. TODO: This should maybe move to
+        // createImageTextureFunctionCall.
+        addDecoration(id, nonUniform);
+        id = createLoad(id, memoryAccess, scope, alignment);
         setPrecision(id, precision);
         addDecoration(id, nonUniform);
     }
@@ -3075,7 +3107,8 @@ void Builder::dumpSourceInstructions(std::vector<unsigned int>& out) const
         dumpSourceInstructions(iItr->first, *iItr->second, out);
 }
 
-void Builder::dumpInstructions(std::vector<unsigned int>& out, const std::vector<std::unique_ptr<Instruction> >& instructions) const
+void Builder::dumpInstructions(std::vector<unsigned int>& out,
+    const std::vector<std::unique_ptr<Instruction> >& instructions) const
 {
     for (int i = 0; i < (int)instructions.size(); ++i) {
         instructions[i]->dump(out);

@@ -230,8 +230,7 @@ Optimizer& Optimizer::RegisterSizePasses() {
 }
 
 Optimizer& Optimizer::RegisterVulkanToWebGPUPasses() {
-  return RegisterPass(CreateStripDebugInfoPass())
-      .RegisterPass(CreateStripAtomicCounterMemoryPass())
+  return RegisterPass(CreateStripAtomicCounterMemoryPass())
       .RegisterPass(CreateGenerateWebGPUInitializersPass())
       .RegisterPass(CreateLegalizeVectorShufflePass())
       .RegisterPass(CreateSplitInvalidUnreachablePass())
@@ -426,6 +425,8 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterPass(CreateConvertRelaxedToHalfPass());
   } else if (pass_name == "relax-float-ops") {
     RegisterPass(CreateRelaxFloatOpsPass());
+  } else if (pass_name == "inst-debug-printf") {
+    RegisterPass(CreateInstDebugPrintfPass(7, 23));
   } else if (pass_name == "simplify-instructions") {
     RegisterPass(CreateSimplificationPass());
   } else if (pass_name == "ssa-rewrite") {
@@ -497,7 +498,7 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
   } else if (pass_name == "legalize-vector-shuffle") {
     RegisterPass(CreateLegalizeVectorShufflePass());
   } else if (pass_name == "split-invalid-unreachable") {
-    RegisterPass(CreateLegalizeVectorShufflePass());
+    RegisterPass(CreateSplitInvalidUnreachablePass());
   } else if (pass_name == "decompose-initialized-variables") {
     RegisterPass(CreateDecomposeInitializedVariablesPass());
   } else if (pass_name == "graphics-robust-access") {
@@ -568,7 +569,12 @@ bool Optimizer::Run(const uint32_t* original_binary,
   }
 
 #ifndef NDEBUG
-  if (status == opt::Pass::Status::SuccessWithoutChange) {
+  // We do not keep the result id of DebugScope in struct DebugScope.
+  // Instead, we assign random ids for them, which results in sanity
+  // check failures. We want to skip the sanity check when the module
+  // contains DebugScope instructions.
+  if (status == opt::Pass::Status::SuccessWithoutChange &&
+      !context->module()->ContainsDebugScope()) {
     std::vector<uint32_t> optimized_binary_with_nop;
     context->module()->ToBinary(&optimized_binary_with_nop,
                                 /* skip_nop = */ false);
@@ -885,6 +891,12 @@ Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t desc_set,
       MakeUnique<opt::InstBindlessCheckPass>(desc_set, shader_id,
                                              input_length_enable,
                                              input_init_enable, version));
+}
+
+Optimizer::PassToken CreateInstDebugPrintfPass(uint32_t desc_set,
+                                               uint32_t shader_id) {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::InstDebugPrintfPass>(desc_set, shader_id));
 }
 
 Optimizer::PassToken CreateInstBuffAddrCheckPass(uint32_t desc_set,

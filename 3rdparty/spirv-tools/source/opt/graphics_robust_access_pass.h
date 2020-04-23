@@ -18,13 +18,13 @@
 #include <map>
 #include <unordered_map>
 
-#include "source/diagnostic.h"
-
 #include "constants.h"
 #include "def_use_manager.h"
 #include "instruction.h"
 #include "module.h"
 #include "pass.h"
+#include "source/diagnostic.h"
+#include "type_manager.h"
 
 namespace spvtools {
 namespace opt {
@@ -49,7 +49,8 @@ class GraphicsRobustAccessPass : public Pass {
   // consumer.
   spvtools::DiagnosticStream Fail();
 
-  // Returns SPV_SUCCESS if this pass can correctly process the module.
+  // Returns SPV_SUCCESS if this pass can correctly process the module,
+  // as far as we can tell from capabilities and the memory model.
   // Otherwise logs a message and returns a failure code.
   spv_result_t IsCompatibleModule();
 
@@ -59,12 +60,12 @@ class GraphicsRobustAccessPass : public Pass {
   spv_result_t ProcessCurrentModule();
 
   // Process the given function.  Updates the state value |_|.  Returns true
-  // if the module was modified.
+  // if the module was modified.  This can log a failure.
   bool ProcessAFunction(opt::Function*);
 
   // Clamps indices in the OpAccessChain or OpInBoundsAccessChain instruction
   // |access_chain|. Inserts instructions before the given instruction.  Updates
-  // analyses and records that the module is modified.
+  // analyses and records that the module is modified.  This can log a failure.
   void ClampIndicesForAccessChain(Instruction* access_chain);
 
   // Returns the id of the instruction importing the "GLSL.std.450" extended
@@ -85,17 +86,29 @@ class GraphicsRobustAccessPass : public Pass {
   Instruction* WidenInteger(bool sign_extend, uint32_t bit_width,
                             Instruction* value, Instruction* before_inst);
 
-  // Returns a new instruction that invokes the UClamp GLSL.std.450 extended
+  // Returns a new instruction that invokes the UMin GLSL.std.450 extended
+  // instruction with the two given operands.  That is, the result of the
+  // instruction is:
+  //  - |x| if |x| is unsigned-less than |y|
+  //  - |y| otherwise
+  // We assume that |x| and |y| are scalar integer types with the same
+  // width.  The instruction is inserted before |where|.
+  opt::Instruction* MakeUMinInst(const analysis::TypeManager& tm,
+                                 Instruction* x, Instruction* y,
+                                 Instruction* where);
+
+  // Returns a new instruction that invokes the SClamp GLSL.std.450 extended
   // instruction with the three given operands.  That is, the result of the
   // instruction is:
-  //  - |min| if |x| is unsigned-less than |min|
-  //  - |max| if |x| is unsigned-more than |max|
+  //  - |min| if |x| is signed-less than |min|
+  //  - |max| if |x| is signed-more than |max|
   //  - |x| otherwise.
-  // We assume that |min| is unsigned-less-or-equal to |max|, and that the
+  // We assume that |min| is signed-less-or-equal to |max|, and that the
   // operands all have the same scalar integer type.  The instruction is
   // inserted before |where|.
-  opt::Instruction* MakeClampInst(Instruction* x, Instruction* min,
-                                  Instruction* max, Instruction* where);
+  opt::Instruction* MakeSClampInst(const analysis::TypeManager& tm,
+                                   Instruction* x, Instruction* min,
+                                   Instruction* max, Instruction* where);
 
   // Returns a new instruction which evaluates to the length the runtime array
   // referenced by the access chain at the specfied index.  The instruction is

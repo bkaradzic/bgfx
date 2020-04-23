@@ -1,8 +1,9 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2016 LunarG, Inc.
-// Copyright (C) 2015-2018 Google, Inc.
+// Copyright (C) 2015-2020 Google, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -125,8 +126,6 @@ enum ArgClass {
 };
 // Mixtures of the above, to help the function tables
 const ArgClass ClassV1FIOCV = (ArgClass)(ClassV1 | ClassFIO | ClassCV);
-const ArgClass ClassV1FOCV  = (ArgClass)(ClassV1 | ClassFO  | ClassCV);
-const ArgClass ClassV1CV    = (ArgClass)(ClassV1 | ClassCV);
 const ArgClass ClassBNS     = (ArgClass)(ClassB  | ClassNS);
 const ArgClass ClassRSNS    = (ArgClass)(ClassRS | ClassNS);
 
@@ -690,7 +689,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     //
     // double functions added to desktop 4.00, but not fma, frexp, ldexp, or pack/unpack
     //
-    if (profile != EEsProfile && version >= 400) {
+    if (profile != EEsProfile && version >= 150) {  // ARB_gpu_shader_fp64
         commonBuiltins.append(
 
             "double sqrt(double);"
@@ -1263,7 +1262,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 #endif
 
     if ((profile == EEsProfile && version >= 300) ||
-        (profile != EEsProfile && version >= 330)) {
+        (profile != EEsProfile && version >= 150)) { // GL_ARB_shader_bit_encoding
         commonBuiltins.append(
             "int   floatBitsToInt(highp float value);"
             "ivec2 floatBitsToInt(highp vec2  value);"
@@ -1298,15 +1297,15 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "vec3   fma(vec3,   vec3,   vec3  );"
             "vec4   fma(vec4,   vec4,   vec4  );"
             "\n");
+    }
 
-        if (profile != EEsProfile) {
+    if (profile != EEsProfile && version >= 150) {  // ARB_gpu_shader_fp64
             commonBuiltins.append(
                 "double fma(double, double, double);"
                 "dvec2  fma(dvec2,  dvec2,  dvec2 );"
                 "dvec3  fma(dvec3,  dvec3,  dvec3 );"
                 "dvec4  fma(dvec4,  dvec4,  dvec4 );"
                 "\n");
-        }
     }
 
     if ((profile == EEsProfile && version >= 310) ||
@@ -1325,7 +1324,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-    if (profile != EEsProfile && version >= 400) {
+    if (profile != EEsProfile && version >= 150) { // ARB_gpu_shader_fp64
         commonBuiltins.append(
             "double frexp(double, out int);"
             "dvec2  frexp( dvec2, out ivec2);"
@@ -2854,6 +2853,181 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+    if ((profile != EEsProfile && version >= 130) ||
+        (profile == EEsProfile && version >= 300)) {
+        commonBuiltins.append(
+            "uint countLeadingZeros(uint);"
+            "uvec2 countLeadingZeros(uvec2);"
+            "uvec3 countLeadingZeros(uvec3);"
+            "uvec4 countLeadingZeros(uvec4);"
+
+            "uint countTrailingZeros(uint);"
+            "uvec2 countTrailingZeros(uvec2);"
+            "uvec3 countTrailingZeros(uvec3);"
+            "uvec4 countTrailingZeros(uvec4);"
+
+            "uint absoluteDifference(int, int);"
+            "uvec2 absoluteDifference(ivec2, ivec2);"
+            "uvec3 absoluteDifference(ivec3, ivec3);"
+            "uvec4 absoluteDifference(ivec4, ivec4);"
+
+            "uint16_t absoluteDifference(int16_t, int16_t);"
+            "u16vec2 absoluteDifference(i16vec2, i16vec2);"
+            "u16vec3 absoluteDifference(i16vec3, i16vec3);"
+            "u16vec4 absoluteDifference(i16vec4, i16vec4);"
+
+            "uint64_t absoluteDifference(int64_t, int64_t);"
+            "u64vec2 absoluteDifference(i64vec2, i64vec2);"
+            "u64vec3 absoluteDifference(i64vec3, i64vec3);"
+            "u64vec4 absoluteDifference(i64vec4, i64vec4);"
+
+            "uint absoluteDifference(uint, uint);"
+            "uvec2 absoluteDifference(uvec2, uvec2);"
+            "uvec3 absoluteDifference(uvec3, uvec3);"
+            "uvec4 absoluteDifference(uvec4, uvec4);"
+
+            "uint16_t absoluteDifference(uint16_t, uint16_t);"
+            "u16vec2 absoluteDifference(u16vec2, u16vec2);"
+            "u16vec3 absoluteDifference(u16vec3, u16vec3);"
+            "u16vec4 absoluteDifference(u16vec4, u16vec4);"
+
+            "uint64_t absoluteDifference(uint64_t, uint64_t);"
+            "u64vec2 absoluteDifference(u64vec2, u64vec2);"
+            "u64vec3 absoluteDifference(u64vec3, u64vec3);"
+            "u64vec4 absoluteDifference(u64vec4, u64vec4);"
+
+            "int addSaturate(int, int);"
+            "ivec2 addSaturate(ivec2, ivec2);"
+            "ivec3 addSaturate(ivec3, ivec3);"
+            "ivec4 addSaturate(ivec4, ivec4);"
+
+            "int16_t addSaturate(int16_t, int16_t);"
+            "i16vec2 addSaturate(i16vec2, i16vec2);"
+            "i16vec3 addSaturate(i16vec3, i16vec3);"
+            "i16vec4 addSaturate(i16vec4, i16vec4);"
+
+            "int64_t addSaturate(int64_t, int64_t);"
+            "i64vec2 addSaturate(i64vec2, i64vec2);"
+            "i64vec3 addSaturate(i64vec3, i64vec3);"
+            "i64vec4 addSaturate(i64vec4, i64vec4);"
+
+            "uint addSaturate(uint, uint);"
+            "uvec2 addSaturate(uvec2, uvec2);"
+            "uvec3 addSaturate(uvec3, uvec3);"
+            "uvec4 addSaturate(uvec4, uvec4);"
+
+            "uint16_t addSaturate(uint16_t, uint16_t);"
+            "u16vec2 addSaturate(u16vec2, u16vec2);"
+            "u16vec3 addSaturate(u16vec3, u16vec3);"
+            "u16vec4 addSaturate(u16vec4, u16vec4);"
+
+            "uint64_t addSaturate(uint64_t, uint64_t);"
+            "u64vec2 addSaturate(u64vec2, u64vec2);"
+            "u64vec3 addSaturate(u64vec3, u64vec3);"
+            "u64vec4 addSaturate(u64vec4, u64vec4);"
+
+            "int subtractSaturate(int, int);"
+            "ivec2 subtractSaturate(ivec2, ivec2);"
+            "ivec3 subtractSaturate(ivec3, ivec3);"
+            "ivec4 subtractSaturate(ivec4, ivec4);"
+
+            "int16_t subtractSaturate(int16_t, int16_t);"
+            "i16vec2 subtractSaturate(i16vec2, i16vec2);"
+            "i16vec3 subtractSaturate(i16vec3, i16vec3);"
+            "i16vec4 subtractSaturate(i16vec4, i16vec4);"
+
+            "int64_t subtractSaturate(int64_t, int64_t);"
+            "i64vec2 subtractSaturate(i64vec2, i64vec2);"
+            "i64vec3 subtractSaturate(i64vec3, i64vec3);"
+            "i64vec4 subtractSaturate(i64vec4, i64vec4);"
+
+            "uint subtractSaturate(uint, uint);"
+            "uvec2 subtractSaturate(uvec2, uvec2);"
+            "uvec3 subtractSaturate(uvec3, uvec3);"
+            "uvec4 subtractSaturate(uvec4, uvec4);"
+
+            "uint16_t subtractSaturate(uint16_t, uint16_t);"
+            "u16vec2 subtractSaturate(u16vec2, u16vec2);"
+            "u16vec3 subtractSaturate(u16vec3, u16vec3);"
+            "u16vec4 subtractSaturate(u16vec4, u16vec4);"
+
+            "uint64_t subtractSaturate(uint64_t, uint64_t);"
+            "u64vec2 subtractSaturate(u64vec2, u64vec2);"
+            "u64vec3 subtractSaturate(u64vec3, u64vec3);"
+            "u64vec4 subtractSaturate(u64vec4, u64vec4);"
+
+            "int average(int, int);"
+            "ivec2 average(ivec2, ivec2);"
+            "ivec3 average(ivec3, ivec3);"
+            "ivec4 average(ivec4, ivec4);"
+
+            "int16_t average(int16_t, int16_t);"
+            "i16vec2 average(i16vec2, i16vec2);"
+            "i16vec3 average(i16vec3, i16vec3);"
+            "i16vec4 average(i16vec4, i16vec4);"
+
+            "int64_t average(int64_t, int64_t);"
+            "i64vec2 average(i64vec2, i64vec2);"
+            "i64vec3 average(i64vec3, i64vec3);"
+            "i64vec4 average(i64vec4, i64vec4);"
+
+            "uint average(uint, uint);"
+            "uvec2 average(uvec2, uvec2);"
+            "uvec3 average(uvec3, uvec3);"
+            "uvec4 average(uvec4, uvec4);"
+
+            "uint16_t average(uint16_t, uint16_t);"
+            "u16vec2 average(u16vec2, u16vec2);"
+            "u16vec3 average(u16vec3, u16vec3);"
+            "u16vec4 average(u16vec4, u16vec4);"
+
+            "uint64_t average(uint64_t, uint64_t);"
+            "u64vec2 average(u64vec2, u64vec2);"
+            "u64vec3 average(u64vec3, u64vec3);"
+            "u64vec4 average(u64vec4, u64vec4);"
+
+            "int averageRounded(int, int);"
+            "ivec2 averageRounded(ivec2, ivec2);"
+            "ivec3 averageRounded(ivec3, ivec3);"
+            "ivec4 averageRounded(ivec4, ivec4);"
+
+            "int16_t averageRounded(int16_t, int16_t);"
+            "i16vec2 averageRounded(i16vec2, i16vec2);"
+            "i16vec3 averageRounded(i16vec3, i16vec3);"
+            "i16vec4 averageRounded(i16vec4, i16vec4);"
+
+            "int64_t averageRounded(int64_t, int64_t);"
+            "i64vec2 averageRounded(i64vec2, i64vec2);"
+            "i64vec3 averageRounded(i64vec3, i64vec3);"
+            "i64vec4 averageRounded(i64vec4, i64vec4);"
+
+            "uint averageRounded(uint, uint);"
+            "uvec2 averageRounded(uvec2, uvec2);"
+            "uvec3 averageRounded(uvec3, uvec3);"
+            "uvec4 averageRounded(uvec4, uvec4);"
+
+            "uint16_t averageRounded(uint16_t, uint16_t);"
+            "u16vec2 averageRounded(u16vec2, u16vec2);"
+            "u16vec3 averageRounded(u16vec3, u16vec3);"
+            "u16vec4 averageRounded(u16vec4, u16vec4);"
+
+            "uint64_t averageRounded(uint64_t, uint64_t);"
+            "u64vec2 averageRounded(u64vec2, u64vec2);"
+            "u64vec3 averageRounded(u64vec3, u64vec3);"
+            "u64vec4 averageRounded(u64vec4, u64vec4);"
+
+            "int multiply32x16(int, int);"
+            "ivec2 multiply32x16(ivec2, ivec2);"
+            "ivec3 multiply32x16(ivec3, ivec3);"
+            "ivec4 multiply32x16(ivec4, ivec4);"
+
+            "uint multiply32x16(uint, uint);"
+            "uvec2 multiply32x16(uvec2, uvec2);"
+            "uvec3 multiply32x16(uvec3, uvec3);"
+            "uvec4 multiply32x16(uvec4, uvec4);"
+            "\n");
+    }
+
     if ((profile != EEsProfile && version >= 450) ||
         (profile == EEsProfile && version >= 320)) {
         commonBuiltins.append(
@@ -3771,7 +3945,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     //
     // Geometric Functions.
     //
-    if (IncludeLegacy(version, profile, spvVersion))
+    if (spvVersion.vulkan == 0 && IncludeLegacy(version, profile, spvVersion))
         stageBuiltins[EShLangVertex].append("vec4 ftransform();");
 
     //
@@ -3892,10 +4066,10 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 #ifndef GLSLANG_WEB
     if ((profile != EEsProfile && version >= 420) || esBarrier) {
-        commonBuiltins.append(
-            "void memoryBarrierAtomicCounter();"
-            "void memoryBarrierImage();"
-            );
+        if (spvVersion.vulkan == 0) {
+            commonBuiltins.append("void memoryBarrierAtomicCounter();");
+        }
+        commonBuiltins.append("void memoryBarrierImage();");
     }
     if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         stageBuiltins[EShLangMeshNV].append(
@@ -3910,6 +4084,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
     commonBuiltins.append("void controlBarrier(int, int, int, int);\n"
                           "void memoryBarrier(int, int, int);\n");
+
+    commonBuiltins.append("void debugPrintfEXT();\n");
 
     if (profile != EEsProfile && version >= 450) {
         // coopMatStoreNV perhaps ought to have "out" on the buf parameter, but
@@ -4145,29 +4321,64 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
         }
 
-    // Builtins for GL_NV_ray_tracing
+    // Builtins for GL_NV_ray_tracing/GL_EXT_ray_tracing/GL_EXT_ray_query
     if (profile != EEsProfile && version >= 460) {
-        stageBuiltins[EShLangRayGenNV].append(
-            "void traceNV(accelerationStructureNV,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
-            "void executeCallableNV(uint, int);"
+         commonBuiltins.append("void rayQueryInitializeEXT(rayQueryEXT, accelerationStructureEXT, uint, uint, vec3, float, vec3, float);"
+            "void rayQueryTerminateEXT(rayQueryEXT);"
+            "void rayQueryGenerateIntersectionEXT(rayQueryEXT, float);"
+            "void rayQueryConfirmIntersectionEXT(rayQueryEXT);"
+            "bool rayQueryProceedEXT(rayQueryEXT);"
+            "uint rayQueryGetIntersectionTypeEXT(rayQueryEXT, bool);"
+            "float rayQueryGetRayTMinEXT(rayQueryEXT);"
+            "uint rayQueryGetRayFlagsEXT(rayQueryEXT);"
+            "vec3 rayQueryGetWorldRayOriginEXT(rayQueryEXT);"
+            "vec3 rayQueryGetWorldRayDirectionEXT(rayQueryEXT);"
+            "float rayQueryGetIntersectionTEXT(rayQueryEXT, bool);"
+            "int rayQueryGetIntersectionInstanceCustomIndexEXT(rayQueryEXT, bool);"
+            "int rayQueryGetIntersectionInstanceIdEXT(rayQueryEXT, bool);"
+            "uint rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(rayQueryEXT, bool);"
+            "int rayQueryGetIntersectionGeometryIndexEXT(rayQueryEXT, bool);"
+            "int rayQueryGetIntersectionPrimitiveIndexEXT(rayQueryEXT, bool);"
+            "vec2 rayQueryGetIntersectionBarycentricsEXT(rayQueryEXT, bool);"
+            "bool rayQueryGetIntersectionFrontFaceEXT(rayQueryEXT, bool);"
+            "bool rayQueryGetIntersectionCandidateAABBOpaqueEXT(rayQueryEXT);"
+            "vec3 rayQueryGetIntersectionObjectRayDirectionEXT(rayQueryEXT, bool);"
+            "vec3 rayQueryGetIntersectionObjectRayOriginEXT(rayQueryEXT, bool);"
+            "mat4x3 rayQueryGetIntersectionObjectToWorldEXT(rayQueryEXT, bool);"
+            "mat4x3 rayQueryGetIntersectionWorldToObjectEXT(rayQueryEXT, bool);"
             "\n");
-        stageBuiltins[EShLangIntersectNV].append(
+
+        stageBuiltins[EShLangRayGen].append(
+            "void traceNV(accelerationStructureNV,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void traceRayEXT(accelerationStructureEXT,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void executeCallableNV(uint, int);"
+            "void executeCallableEXT(uint, int);"
+            "\n");
+        stageBuiltins[EShLangIntersect].append(
             "bool reportIntersectionNV(float, uint);"
+            "bool reportIntersectionEXT(float, uint);"
             "\n");
-        stageBuiltins[EShLangAnyHitNV].append(
+        stageBuiltins[EShLangAnyHit].append(
             "void ignoreIntersectionNV();"
+            "void ignoreIntersectionEXT();"
             "void terminateRayNV();"
+            "void terminateRayEXT();"
             "\n");
-        stageBuiltins[EShLangClosestHitNV].append(
+        stageBuiltins[EShLangClosestHit].append(
             "void traceNV(accelerationStructureNV,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void traceRayEXT(accelerationStructureEXT,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
             "void executeCallableNV(uint, int);"
+            "void executeCallableEXT(uint, int);"
             "\n");
-        stageBuiltins[EShLangMissNV].append(
+        stageBuiltins[EShLangMiss].append(
             "void traceNV(accelerationStructureNV,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void traceRayEXT(accelerationStructureEXT,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
             "void executeCallableNV(uint, int);"
+            "void executeCallableEXT(uint, int);"
             "\n");
-        stageBuiltins[EShLangCallableNV].append(
+        stageBuiltins[EShLangCallable].append(
             "void executeCallableNV(uint, int);"
+            "void executeCallableEXT(uint, int);"
             "\n");
     }
 
@@ -5003,18 +5214,24 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "flat in int gl_PrimitiveID;"
                 );
 
-        if (version >= 400) {
+        if (version >= 130) { // ARB_sample_shading
             stageBuiltins[EShLangFragment].append(
                 "flat in  int  gl_SampleID;"
                 "     in  vec2 gl_SamplePosition;"
-                "flat in  int  gl_SampleMaskIn[];"
                 "     out int  gl_SampleMask[];"
                 );
-            if (spvVersion.spv == 0)
+
+            if (spvVersion.spv == 0) {
                 stageBuiltins[EShLangFragment].append(
                     "uniform int gl_NumSamples;"
-                    );
+                );
+            }
         }
+
+        if (version >= 400)
+            stageBuiltins[EShLangFragment].append(
+                "flat in  int  gl_SampleMaskIn[];"
+            );
 
         if (version >= 430)
             stageBuiltins[EShLangFragment].append(
@@ -5210,100 +5427,160 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangMeshNV]        .append(computeSubgroupDecls);
         stageBuiltins[EShLangTaskNV]        .append(subgroupDecls);
         stageBuiltins[EShLangTaskNV]        .append(computeSubgroupDecls);
-        stageBuiltins[EShLangRayGenNV]      .append(subgroupDecls);
-        stageBuiltins[EShLangIntersectNV]   .append(subgroupDecls);
-        stageBuiltins[EShLangAnyHitNV]      .append(subgroupDecls);
-        stageBuiltins[EShLangClosestHitNV]  .append(subgroupDecls);
-        stageBuiltins[EShLangMissNV]        .append(subgroupDecls);
-        stageBuiltins[EShLangCallableNV]    .append(subgroupDecls);
+        stageBuiltins[EShLangRayGen]        .append(subgroupDecls);
+        stageBuiltins[EShLangIntersect]     .append(subgroupDecls);
+        stageBuiltins[EShLangAnyHit]        .append(subgroupDecls);
+        stageBuiltins[EShLangClosestHit]    .append(subgroupDecls);
+        stageBuiltins[EShLangMiss]          .append(subgroupDecls);
+        stageBuiltins[EShLangCallable]      .append(subgroupDecls);
     }
 
-    // GL_NV_ray_tracing
+    // GL_NV_ray_tracing/GL_EXT_ray_tracing
     if (profile != EEsProfile && version >= 460) {
 
         const char *constRayFlags =
             "const uint gl_RayFlagsNoneNV = 0U;"
+            "const uint gl_RayFlagsNoneEXT = 0U;"
             "const uint gl_RayFlagsOpaqueNV = 1U;"
+            "const uint gl_RayFlagsOpaqueEXT = 1U;"
             "const uint gl_RayFlagsNoOpaqueNV = 2U;"
+            "const uint gl_RayFlagsNoOpaqueEXT = 2U;"
             "const uint gl_RayFlagsTerminateOnFirstHitNV = 4U;"
+            "const uint gl_RayFlagsTerminateOnFirstHitEXT = 4U;"
             "const uint gl_RayFlagsSkipClosestHitShaderNV = 8U;"
+            "const uint gl_RayFlagsSkipClosestHitShaderEXT = 8U;"
             "const uint gl_RayFlagsCullBackFacingTrianglesNV = 16U;"
+            "const uint gl_RayFlagsCullBackFacingTrianglesEXT = 16U;"
             "const uint gl_RayFlagsCullFrontFacingTrianglesNV = 32U;"
+            "const uint gl_RayFlagsCullFrontFacingTrianglesEXT = 32U;"
             "const uint gl_RayFlagsCullOpaqueNV = 64U;"
+            "const uint gl_RayFlagsCullOpaqueEXT = 64U;"
             "const uint gl_RayFlagsCullNoOpaqueNV = 128U;"
+            "const uint gl_RayFlagsCullNoOpaqueEXT = 128U;"
+            "const uint gl_RayFlagsSkipTrianglesEXT = 256U;"
+            "const uint gl_RayFlagsSkipAABBEXT = 512U;"
+            "const uint gl_HitKindFrontFacingTriangleEXT = 254U;"
+            "const uint gl_HitKindBackFacingTriangleEXT = 255U;"
             "\n";
+
+        const char *constRayQueryIntersection =
+            "const uint gl_RayQueryCandidateIntersectionEXT = 0U;"
+            "const uint gl_RayQueryCommittedIntersectionEXT = 1U;"
+            "const uint gl_RayQueryCommittedIntersectionNoneEXT = 0U;"
+            "const uint gl_RayQueryCommittedIntersectionTriangleEXT = 1U;"
+            "const uint gl_RayQueryCommittedIntersectionGeneratedEXT = 2U;"
+            "const uint gl_RayQueryCandidateIntersectionTriangleEXT = 0U;"
+            "const uint gl_RayQueryCandidateIntersectionAABBEXT = 1U;"
+            "\n";
+
         const char *rayGenDecls =
             "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchIDEXT;"
             "in    uvec3  gl_LaunchSizeNV;"
+            "in    uvec3  gl_LaunchSizeEXT;"
             "\n";
         const char *intersectDecls =
             "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchIDEXT;"
             "in    uvec3  gl_LaunchSizeNV;"
+            "in    uvec3  gl_LaunchSizeEXT;"
             "in     int   gl_PrimitiveID;"
             "in     int   gl_InstanceID;"
             "in     int   gl_InstanceCustomIndexNV;"
+            "in     int   gl_InstanceCustomIndexEXT;"
+            "in     int   gl_GeometryIndexEXT;"
             "in    vec3   gl_WorldRayOriginNV;"
+            "in    vec3   gl_WorldRayOriginEXT;"
             "in    vec3   gl_WorldRayDirectionNV;"
+            "in    vec3   gl_WorldRayDirectionEXT;"
             "in    vec3   gl_ObjectRayOriginNV;"
+            "in    vec3   gl_ObjectRayOriginEXT;"
             "in    vec3   gl_ObjectRayDirectionNV;"
+            "in    vec3   gl_ObjectRayDirectionEXT;"
             "in    float  gl_RayTminNV;"
+            "in    float  gl_RayTminEXT;"
             "in    float  gl_RayTmaxNV;"
+            "in    float  gl_RayTmaxEXT;"
             "in    mat4x3 gl_ObjectToWorldNV;"
+            "in    mat4x3 gl_ObjectToWorldEXT;"
+            "in    mat3x4 gl_ObjectToWorld3x4EXT;"
             "in    mat4x3 gl_WorldToObjectNV;"
+            "in    mat4x3 gl_WorldToObjectEXT;"
+            "in    mat3x4 gl_WorldToObject3x4EXT;"
             "in    uint   gl_IncomingRayFlagsNV;"
+            "in    uint   gl_IncomingRayFlagsEXT;"
             "\n";
         const char *hitDecls =
             "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchIDEXT;"
             "in    uvec3  gl_LaunchSizeNV;"
+            "in    uvec3  gl_LaunchSizeEXT;"
             "in     int   gl_PrimitiveID;"
             "in     int   gl_InstanceID;"
             "in     int   gl_InstanceCustomIndexNV;"
+            "in     int   gl_InstanceCustomIndexEXT;"
+            "in     int   gl_GeometryIndexEXT;"
             "in    vec3   gl_WorldRayOriginNV;"
+            "in    vec3   gl_WorldRayOriginEXT;"
             "in    vec3   gl_WorldRayDirectionNV;"
+            "in    vec3   gl_WorldRayDirectionEXT;"
             "in    vec3   gl_ObjectRayOriginNV;"
+            "in    vec3   gl_ObjectRayOriginEXT;"
             "in    vec3   gl_ObjectRayDirectionNV;"
+            "in    vec3   gl_ObjectRayDirectionEXT;"
             "in    float  gl_RayTminNV;"
+            "in    float  gl_RayTminEXT;"
             "in    float  gl_RayTmaxNV;"
+            "in    float  gl_RayTmaxEXT;"
             "in    float  gl_HitTNV;"
+            "in    float  gl_HitTEXT;"
             "in    uint   gl_HitKindNV;"
+            "in    uint   gl_HitKindEXT;"
             "in    mat4x3 gl_ObjectToWorldNV;"
+            "in    mat4x3 gl_ObjectToWorldEXT;"
+            "in    mat3x4 gl_ObjectToWorld3x4EXT;"
             "in    mat4x3 gl_WorldToObjectNV;"
+            "in    mat4x3 gl_WorldToObjectEXT;"
+            "in    mat3x4 gl_WorldToObject3x4EXT;"
             "in    uint   gl_IncomingRayFlagsNV;"
+            "in    uint   gl_IncomingRayFlagsEXT;"
             "\n";
         const char *missDecls =
             "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchIDEXT;"
             "in    uvec3  gl_LaunchSizeNV;"
+            "in    uvec3  gl_LaunchSizeEXT;"
             "in    vec3   gl_WorldRayOriginNV;"
+            "in    vec3   gl_WorldRayOriginEXT;"
             "in    vec3   gl_WorldRayDirectionNV;"
+            "in    vec3   gl_WorldRayDirectionEXT;"
             "in    vec3   gl_ObjectRayOriginNV;"
             "in    vec3   gl_ObjectRayDirectionNV;"
             "in    float  gl_RayTminNV;"
+            "in    float  gl_RayTminEXT;"
             "in    float  gl_RayTmaxNV;"
+            "in    float  gl_RayTmaxEXT;"
             "in    uint   gl_IncomingRayFlagsNV;"
+            "in    uint   gl_IncomingRayFlagsEXT;"
             "\n";
 
         const char *callableDecls =
             "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchIDEXT;"
             "in    uvec3  gl_LaunchSizeNV;"
+            "in    uvec3  gl_LaunchSizeEXT;"
             "\n";
 
-        stageBuiltins[EShLangRayGenNV].append(rayGenDecls);
-        stageBuiltins[EShLangRayGenNV].append(constRayFlags);
 
-        stageBuiltins[EShLangIntersectNV].append(intersectDecls);
-        stageBuiltins[EShLangIntersectNV].append(constRayFlags);
+        commonBuiltins.append(constRayQueryIntersection);
+        commonBuiltins.append(constRayFlags);
 
-        stageBuiltins[EShLangAnyHitNV].append(hitDecls);
-        stageBuiltins[EShLangAnyHitNV].append(constRayFlags);
-
-        stageBuiltins[EShLangClosestHitNV].append(hitDecls);
-        stageBuiltins[EShLangClosestHitNV].append(constRayFlags);
-
-        stageBuiltins[EShLangMissNV].append(missDecls);
-        stageBuiltins[EShLangMissNV].append(constRayFlags);
-
-        stageBuiltins[EShLangCallableNV].append(callableDecls);
-        stageBuiltins[EShLangCallableNV].append(constRayFlags);
+        stageBuiltins[EShLangRayGen].append(rayGenDecls);
+        stageBuiltins[EShLangIntersect].append(intersectDecls);
+        stageBuiltins[EShLangAnyHit].append(hitDecls);
+        stageBuiltins[EShLangClosestHit].append(hitDecls);
+        stageBuiltins[EShLangMiss].append(missDecls);
+        stageBuiltins[EShLangCallable].append(callableDecls);
 
     }
     if ((profile != EEsProfile && version >= 140)) {
@@ -5311,11 +5588,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
             "\n";
 
-        stageBuiltins[EShLangRayGenNV].append(deviceIndex);
-        stageBuiltins[EShLangIntersectNV].append(deviceIndex);
-        stageBuiltins[EShLangAnyHitNV].append(deviceIndex);
-        stageBuiltins[EShLangClosestHitNV].append(deviceIndex);
-        stageBuiltins[EShLangMissNV].append(deviceIndex);
+        stageBuiltins[EShLangRayGen].append(deviceIndex);
+        stageBuiltins[EShLangIntersect].append(deviceIndex);
+        stageBuiltins[EShLangAnyHit].append(deviceIndex);
+        stageBuiltins[EShLangClosestHit].append(deviceIndex);
+        stageBuiltins[EShLangMiss].append(deviceIndex);
     }
 
     if (version >= 300 /* both ES and non-ES */) {
@@ -5331,6 +5608,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append("const int gl_ScopeSubgroup    = 3;\n");
         commonBuiltins.append("const int gl_ScopeInvocation  = 4;\n");
         commonBuiltins.append("const int gl_ScopeQueueFamily = 5;\n");
+        commonBuiltins.append("const int gl_ScopeShaderCallEXT = 6;\n");
 
         commonBuiltins.append("const int gl_SemanticsRelaxed         = 0x0;\n");
         commonBuiltins.append("const int gl_SemanticsAcquire         = 0x2;\n");
@@ -6443,8 +6721,33 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
             }
         }
 
+        if (version >= 320) {
+            // tessellation
+
+            snprintf(builtInConstant, maxSize, "const int gl_MaxTessControlImageUniforms = %d;", resources.maxTessControlImageUniforms);
+            s.append(builtInConstant);
+            snprintf(builtInConstant, maxSize, "const int gl_MaxTessEvaluationImageUniforms = %d;", resources.maxTessEvaluationImageUniforms);
+            s.append(builtInConstant);
+            snprintf(builtInConstant, maxSize, "const int gl_MaxTessControlAtomicCounters = %d;", resources.maxTessControlAtomicCounters);
+            s.append(builtInConstant);
+            snprintf(builtInConstant, maxSize, "const int gl_MaxTessEvaluationAtomicCounters = %d;", resources.maxTessEvaluationAtomicCounters);
+            s.append(builtInConstant);
+            snprintf(builtInConstant, maxSize, "const int gl_MaxTessControlAtomicCounterBuffers = %d;", resources.maxTessControlAtomicCounterBuffers);
+            s.append(builtInConstant);
+            snprintf(builtInConstant, maxSize, "const int gl_MaxTessEvaluationAtomicCounterBuffers = %d;", resources.maxTessEvaluationAtomicCounterBuffers);
+            s.append(builtInConstant);
+        }
+
     } else {
         // non-ES profile
+
+        if (version > 400) {
+            snprintf(builtInConstant, maxSize, "const int  gl_MaxVertexUniformVectors = %d;", resources.maxVertexUniformVectors);
+            s.append(builtInConstant);
+
+            snprintf(builtInConstant, maxSize, "const int  gl_MaxFragmentUniformVectors = %d;", resources.maxFragmentUniformVectors);
+            s.append(builtInConstant);
+        }
 
         snprintf(builtInConstant, maxSize, "const int  gl_MaxVertexAttribs = %d;", resources.maxVertexAttribs);
         s.append(builtInConstant);
@@ -6974,6 +7277,15 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("fragmentFetchAMD",     1, &E_GL_AMD_shader_fragment_mask);
         }
 
+        symbolTable.setFunctionExtensions("countLeadingZeros",  1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("countTrailingZeros", 1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("absoluteDifference", 1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("addSaturate",        1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("subtractSaturate",   1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("average",            1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("averageRounded",     1, &E_GL_INTEL_shader_integer_functions2);
+        symbolTable.setFunctionExtensions("multiply32x16",      1, &E_GL_INTEL_shader_integer_functions2);
+
         symbolTable.setFunctionExtensions("textureFootprintNV",          1, &E_GL_NV_shader_texture_footprint);
         symbolTable.setFunctionExtensions("textureFootprintClampNV",     1, &E_GL_NV_shader_texture_footprint);
         symbolTable.setFunctionExtensions("textureFootprintLodNV",       1, &E_GL_NV_shader_texture_footprint);
@@ -7238,18 +7550,57 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_FragStencilRefARB", EbvFragStencilRef, symbolTable);
         }
 
-        if ((profile != EEsProfile && version >= 400) ||
+        if (profile != EEsProfile && version >= 460) {
+            symbolTable.setFunctionExtensions("rayQueryInitializeEXT",                                            1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryTerminateEXT",                                             1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGenerateIntersectionEXT",                                  1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryConfirmIntersectionEXT",                                   1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryProceedEXT",                                               1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionTypeEXT",                                   1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionTEXT",                                      1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetRayFlagsEXT",                                           1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetRayTMinEXT",                                            1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionInstanceCustomIndexEXT",                    1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionInstanceIdEXT",                             1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT", 1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionGeometryIndexEXT",                          1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionPrimitiveIndexEXT",                         1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionBarycentricsEXT",                           1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionFrontFaceEXT",                              1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionCandidateAABBOpaqueEXT",                    1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionObjectRayDirectionEXT",                     1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionObjectRayOriginEXT",                        1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionObjectToWorldEXT",                          1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetIntersectionWorldToObjectEXT",                          1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetWorldRayOriginEXT",                                     1, &E_GL_EXT_ray_query);
+            symbolTable.setFunctionExtensions("rayQueryGetWorldRayDirectionEXT",                                  1, &E_GL_EXT_ray_query);
+            symbolTable.setVariableExtensions("gl_RayFlagsSkipAABBEXT",                         1, &E_GL_EXT_ray_flags_primitive_culling);
+            symbolTable.setVariableExtensions("gl_RayFlagsSkipTrianglesEXT",                    1, &E_GL_EXT_ray_flags_primitive_culling);
+        }
+
+        if ((profile != EEsProfile && version >= 130) ||
             (profile == EEsProfile && version >= 310)) {
-            BuiltInVariable("gl_SampleID",        EbvSampleId,       symbolTable);
-            BuiltInVariable("gl_SamplePosition",  EbvSamplePosition, symbolTable);
-            BuiltInVariable("gl_SampleMaskIn",    EbvSampleMask,     symbolTable);
-            BuiltInVariable("gl_SampleMask",      EbvSampleMask,     symbolTable);
-            if (profile == EEsProfile && version < 320) {
-                symbolTable.setVariableExtensions("gl_SampleID",       1, &E_GL_OES_sample_variables);
-                symbolTable.setVariableExtensions("gl_SamplePosition", 1, &E_GL_OES_sample_variables);
-                symbolTable.setVariableExtensions("gl_SampleMaskIn",   1, &E_GL_OES_sample_variables);
-                symbolTable.setVariableExtensions("gl_SampleMask",     1, &E_GL_OES_sample_variables);
-                symbolTable.setVariableExtensions("gl_NumSamples",     1, &E_GL_OES_sample_variables);
+            BuiltInVariable("gl_SampleID",           EbvSampleId,       symbolTable);
+            BuiltInVariable("gl_SamplePosition",     EbvSamplePosition, symbolTable);
+            BuiltInVariable("gl_SampleMask",         EbvSampleMask,     symbolTable);
+
+            if (profile != EEsProfile && version < 400) {
+                BuiltInVariable("gl_NumSamples",     EbvSampleMask,     symbolTable);
+
+                symbolTable.setVariableExtensions("gl_SampleMask",     1, &E_GL_ARB_sample_shading);
+                symbolTable.setVariableExtensions("gl_SampleID",       1, &E_GL_ARB_sample_shading);
+                symbolTable.setVariableExtensions("gl_SamplePosition", 1, &E_GL_ARB_sample_shading);
+                symbolTable.setVariableExtensions("gl_NumSamples",     1, &E_GL_ARB_sample_shading);
+            } else {
+                BuiltInVariable("gl_SampleMaskIn",    EbvSampleMask,     symbolTable);
+
+                if (profile == EEsProfile && version < 320) {
+                    symbolTable.setVariableExtensions("gl_SampleID", 1, &E_GL_OES_sample_variables);
+                    symbolTable.setVariableExtensions("gl_SamplePosition", 1, &E_GL_OES_sample_variables);
+                    symbolTable.setVariableExtensions("gl_SampleMaskIn", 1, &E_GL_OES_sample_variables);
+                    symbolTable.setVariableExtensions("gl_SampleMask", 1, &E_GL_OES_sample_variables);
+                    symbolTable.setVariableExtensions("gl_NumSamples", 1, &E_GL_OES_sample_variables);
+                }
             }
         }
 
@@ -7465,6 +7816,13 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("imageAtomicCompSwap", 1, &E_GL_OES_shader_image_atomic);
         }
 
+        if (profile != EEsProfile && version < 330 ) {
+            symbolTable.setFunctionExtensions("floatBitsToInt", 1, &E_GL_ARB_shader_bit_encoding);
+            symbolTable.setFunctionExtensions("floatBitsToUint", 1, &E_GL_ARB_shader_bit_encoding);
+            symbolTable.setFunctionExtensions("intBitsToFloat", 1, &E_GL_ARB_shader_bit_encoding);
+            symbolTable.setFunctionExtensions("uintBitsToFloat", 1, &E_GL_ARB_shader_bit_encoding);
+        }
+
         symbolTable.setVariableExtensions("gl_DeviceIndex",  1, &E_GL_EXT_device_group);
         BuiltInVariable("gl_DeviceIndex", EbvDeviceIndex, symbolTable);
         symbolTable.setVariableExtensions("gl_ViewIndex", 1, &E_GL_EXT_multiview);
@@ -7677,6 +8035,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         symbolTable.setFunctionExtensions("controlBarrier",                 1, &E_GL_KHR_memory_scope_semantics);
+        symbolTable.setFunctionExtensions("debugPrintfEXT",                 1, &E_GL_EXT_debug_printf);
 
         // GL_ARB_shader_ballot
         if (profile != EEsProfile) {
@@ -7766,49 +8125,97 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         break;
 
 #ifndef GLSLANG_WEB
-    case EShLangRayGenNV:
-    case EShLangIntersectNV:
-    case EShLangAnyHitNV:
-    case EShLangClosestHitNV:
-    case EShLangMissNV:
-    case EShLangCallableNV:
+    case EShLangRayGen:
+    case EShLangIntersect:
+    case EShLangAnyHit:
+    case EShLangClosestHit:
+    case EShLangMiss:
+    case EShLangCallable:
         if (profile != EEsProfile && version >= 460) {
+            const char *rtexts[] = { E_GL_NV_ray_tracing, E_GL_EXT_ray_tracing };
             symbolTable.setVariableExtensions("gl_LaunchIDNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_LaunchIDEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_LaunchSizeNV", 1, &E_GL_NV_ray_tracing);
-            symbolTable.setVariableExtensions("gl_PrimitiveID", 1, &E_GL_NV_ray_tracing);
-            symbolTable.setVariableExtensions("gl_InstanceID", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_LaunchSizeEXT", 1, &E_GL_EXT_ray_tracing);
+            symbolTable.setVariableExtensions("gl_PrimitiveID", 2, rtexts);
+            symbolTable.setVariableExtensions("gl_InstanceID", 2, rtexts);
             symbolTable.setVariableExtensions("gl_InstanceCustomIndexNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_InstanceCustomIndexEXT", 1, &E_GL_EXT_ray_tracing);
+            symbolTable.setVariableExtensions("gl_GeometryIndexEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_WorldRayOriginNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_WorldRayOriginEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_WorldRayDirectionNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_WorldRayDirectionEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_ObjectRayOriginNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_ObjectRayOriginEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_ObjectRayDirectionNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_ObjectRayDirectionEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_RayTminNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_RayTminEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_RayTmaxNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_RayTmaxEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_HitTNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_HitTEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_HitKindNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_HitKindEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_ObjectToWorldNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_ObjectToWorldEXT", 1, &E_GL_EXT_ray_tracing);
+            symbolTable.setVariableExtensions("gl_ObjectToWorld3x4EXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_WorldToObjectNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_WorldToObjectEXT", 1, &E_GL_EXT_ray_tracing);
+            symbolTable.setVariableExtensions("gl_WorldToObject3x4EXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setVariableExtensions("gl_IncomingRayFlagsNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_IncomingRayFlagsEXT", 1, &E_GL_EXT_ray_tracing);
 
             symbolTable.setVariableExtensions("gl_DeviceIndex", 1, &E_GL_EXT_device_group);
 
-            BuiltInVariable("gl_LaunchIDNV",            EbvLaunchIdNV,           symbolTable);
-            BuiltInVariable("gl_LaunchSizeNV",          EbvLaunchSizeNV,         symbolTable);
-            BuiltInVariable("gl_PrimitiveID",           EbvPrimitiveId,          symbolTable);
-            BuiltInVariable("gl_InstanceID",            EbvInstanceId,           symbolTable);
-            BuiltInVariable("gl_InstanceCustomIndexNV", EbvInstanceCustomIndexNV,symbolTable);
-            BuiltInVariable("gl_WorldRayOriginNV",      EbvWorldRayOriginNV,     symbolTable);
-            BuiltInVariable("gl_WorldRayDirectionNV",   EbvWorldRayDirectionNV,  symbolTable);
-            BuiltInVariable("gl_ObjectRayOriginNV",     EbvObjectRayOriginNV,    symbolTable);
-            BuiltInVariable("gl_ObjectRayDirectionNV",  EbvObjectRayDirectionNV, symbolTable);
-            BuiltInVariable("gl_RayTminNV",             EbvRayTminNV,            symbolTable);
-            BuiltInVariable("gl_RayTmaxNV",             EbvRayTmaxNV,            symbolTable);
-            BuiltInVariable("gl_HitTNV",                EbvHitTNV,               symbolTable);
-            BuiltInVariable("gl_HitKindNV",             EbvHitKindNV,            symbolTable);
-            BuiltInVariable("gl_ObjectToWorldNV",       EbvObjectToWorldNV,      symbolTable);
-            BuiltInVariable("gl_WorldToObjectNV",       EbvWorldToObjectNV,      symbolTable);
-            BuiltInVariable("gl_IncomingRayFlagsNV",    EbvIncomingRayFlagsNV,   symbolTable);
-            BuiltInVariable("gl_DeviceIndex",           EbvDeviceIndex,          symbolTable);
+
+            symbolTable.setFunctionExtensions("traceNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setFunctionExtensions("traceRayEXT", 1, &E_GL_EXT_ray_tracing);
+            symbolTable.setFunctionExtensions("reportIntersectionNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setFunctionExtensions("reportIntersectionEXT", 1, &E_GL_EXT_ray_tracing);
+            symbolTable.setFunctionExtensions("ignoreIntersectionNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setFunctionExtensions("ignoreIntersectionEXT", 1, &E_GL_EXT_ray_tracing);
+            symbolTable.setFunctionExtensions("terminateRayNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setFunctionExtensions("terminateRayEXT", 1, &E_GL_EXT_ray_tracing);
+            symbolTable.setFunctionExtensions("executeCallableNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setFunctionExtensions("executeCallableEXT", 1, &E_GL_EXT_ray_tracing);
+
+
+            BuiltInVariable("gl_LaunchIDNV",             EbvLaunchId,           symbolTable);
+            BuiltInVariable("gl_LaunchIDEXT",            EbvLaunchId,           symbolTable);
+            BuiltInVariable("gl_LaunchSizeNV",           EbvLaunchSize,         symbolTable);
+            BuiltInVariable("gl_LaunchSizeEXT",          EbvLaunchSize,         symbolTable);
+            BuiltInVariable("gl_PrimitiveID",            EbvPrimitiveId,        symbolTable);
+            BuiltInVariable("gl_InstanceID",             EbvInstanceId,         symbolTable);
+            BuiltInVariable("gl_InstanceCustomIndexNV",  EbvInstanceCustomIndex,symbolTable);
+            BuiltInVariable("gl_InstanceCustomIndexEXT", EbvInstanceCustomIndex,symbolTable);
+            BuiltInVariable("gl_GeometryIndexEXT",       EbvGeometryIndex,      symbolTable);
+            BuiltInVariable("gl_WorldRayOriginNV",       EbvWorldRayOrigin,     symbolTable);
+            BuiltInVariable("gl_WorldRayOriginEXT",      EbvWorldRayOrigin,     symbolTable);
+            BuiltInVariable("gl_WorldRayDirectionNV",    EbvWorldRayDirection,  symbolTable);
+            BuiltInVariable("gl_WorldRayDirectionEXT",   EbvWorldRayDirection,  symbolTable);
+            BuiltInVariable("gl_ObjectRayOriginNV",      EbvObjectRayOrigin,    symbolTable);
+            BuiltInVariable("gl_ObjectRayOriginEXT",     EbvObjectRayOrigin,    symbolTable);
+            BuiltInVariable("gl_ObjectRayDirectionNV",   EbvObjectRayDirection, symbolTable);
+            BuiltInVariable("gl_ObjectRayDirectionEXT",  EbvObjectRayDirection, symbolTable);
+            BuiltInVariable("gl_RayTminNV",              EbvRayTmin,            symbolTable);
+            BuiltInVariable("gl_RayTminEXT",             EbvRayTmin,            symbolTable);
+            BuiltInVariable("gl_RayTmaxNV",              EbvRayTmax,            symbolTable);
+            BuiltInVariable("gl_RayTmaxEXT",             EbvRayTmax,            symbolTable);
+            BuiltInVariable("gl_HitTNV",                 EbvHitT,               symbolTable);
+            BuiltInVariable("gl_HitTEXT",                EbvHitT,               symbolTable);
+            BuiltInVariable("gl_HitKindNV",              EbvHitKind,            symbolTable);
+            BuiltInVariable("gl_HitKindEXT",             EbvHitKind,            symbolTable);
+            BuiltInVariable("gl_ObjectToWorldNV",        EbvObjectToWorld,      symbolTable);
+            BuiltInVariable("gl_ObjectToWorldEXT",       EbvObjectToWorld,      symbolTable);
+            BuiltInVariable("gl_ObjectToWorld3x4EXT",    EbvObjectToWorld3x4,   symbolTable);
+            BuiltInVariable("gl_WorldToObjectNV",        EbvWorldToObject,      symbolTable);
+            BuiltInVariable("gl_WorldToObjectEXT",       EbvWorldToObject,      symbolTable);
+            BuiltInVariable("gl_WorldToObject3x4EXT",    EbvWorldToObject3x4,   symbolTable);
+            BuiltInVariable("gl_IncomingRayFlagsNV",     EbvIncomingRayFlags,   symbolTable);
+            BuiltInVariable("gl_IncomingRayFlagsEXT",    EbvIncomingRayFlags,   symbolTable);
+            BuiltInVariable("gl_DeviceIndex",            EbvDeviceIndex,        symbolTable);
 
             // GL_ARB_shader_ballot
             symbolTable.setVariableExtensions("gl_SubGroupSizeARB",       1, &E_GL_ARB_shader_ballot);
@@ -8217,6 +8624,17 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
     symbolTable.relateToOperator("helperInvocationEXT",  EOpIsHelperInvocation);
 
+    symbolTable.relateToOperator("countLeadingZeros",  EOpCountLeadingZeros);
+    symbolTable.relateToOperator("countTrailingZeros", EOpCountTrailingZeros);
+    symbolTable.relateToOperator("absoluteDifference", EOpAbsDifference);
+    symbolTable.relateToOperator("addSaturate",        EOpAddSaturate);
+    symbolTable.relateToOperator("subtractSaturate",   EOpSubSaturate);
+    symbolTable.relateToOperator("average",            EOpAverage);
+    symbolTable.relateToOperator("averageRounded",     EOpAverageRounded);
+    symbolTable.relateToOperator("multiply32x16",      EOpMul32x16);
+    symbolTable.relateToOperator("debugPrintfEXT",     EOpDebugPrintf);
+
+
     if (PureOperatorBuiltins) {
         symbolTable.relateToOperator("imageSize",               EOpImageQuerySize);
         symbolTable.relateToOperator("imageSamples",            EOpImageQuerySamples);
@@ -8251,9 +8669,11 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("textureFootprintGradNV",      EOpImageSampleFootprintGradNV);
         symbolTable.relateToOperator("textureFootprintGradClampNV", EOpImageSampleFootprintGradClampNV);
 
+        if (spvVersion.spv == 0 && IncludeLegacy(version, profile, spvVersion))
+            symbolTable.relateToOperator("ftransform", EOpFtransform);
+
         if (spvVersion.spv == 0 && (IncludeLegacy(version, profile, spvVersion) ||
             (profile == EEsProfile && version == 100))) {
-            symbolTable.relateToOperator("ftransform",               EOpFtransform);
 
             symbolTable.relateToOperator("texture1D",                EOpTexture);
             symbolTable.relateToOperator("texture1DGradARB",         EOpTextureGrad);
@@ -8503,6 +8923,33 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("dFdyCoarse",   EOpDPdyCoarse);
             symbolTable.relateToOperator("fwidthCoarse", EOpFwidthCoarse);
         }
+
+        if (profile != EEsProfile && version >= 460) {
+            symbolTable.relateToOperator("rayQueryInitializeEXT",                                             EOpRayQueryInitialize);
+            symbolTable.relateToOperator("rayQueryTerminateEXT",                                              EOpRayQueryTerminate);
+            symbolTable.relateToOperator("rayQueryGenerateIntersectionEXT",                                   EOpRayQueryGenerateIntersection);
+            symbolTable.relateToOperator("rayQueryConfirmIntersectionEXT",                                    EOpRayQueryConfirmIntersection);
+            symbolTable.relateToOperator("rayQueryProceedEXT",                                                EOpRayQueryProceed);
+            symbolTable.relateToOperator("rayQueryGetIntersectionTypeEXT",                                    EOpRayQueryGetIntersectionType);
+            symbolTable.relateToOperator("rayQueryGetRayTMinEXT",                                             EOpRayQueryGetRayTMin);
+            symbolTable.relateToOperator("rayQueryGetRayFlagsEXT",                                            EOpRayQueryGetRayFlags);
+            symbolTable.relateToOperator("rayQueryGetIntersectionTEXT",                                       EOpRayQueryGetIntersectionT);
+            symbolTable.relateToOperator("rayQueryGetIntersectionInstanceCustomIndexEXT",                     EOpRayQueryGetIntersectionInstanceCustomIndex);
+            symbolTable.relateToOperator("rayQueryGetIntersectionInstanceIdEXT",                              EOpRayQueryGetIntersectionInstanceId);
+            symbolTable.relateToOperator("rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT",  EOpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffset);
+            symbolTable.relateToOperator("rayQueryGetIntersectionGeometryIndexEXT",                           EOpRayQueryGetIntersectionGeometryIndex);
+            symbolTable.relateToOperator("rayQueryGetIntersectionPrimitiveIndexEXT",                          EOpRayQueryGetIntersectionPrimitiveIndex);
+            symbolTable.relateToOperator("rayQueryGetIntersectionBarycentricsEXT",                            EOpRayQueryGetIntersectionBarycentrics);
+            symbolTable.relateToOperator("rayQueryGetIntersectionFrontFaceEXT",                               EOpRayQueryGetIntersectionFrontFace);
+            symbolTable.relateToOperator("rayQueryGetIntersectionCandidateAABBOpaqueEXT",                     EOpRayQueryGetIntersectionCandidateAABBOpaque);
+            symbolTable.relateToOperator("rayQueryGetIntersectionObjectRayDirectionEXT",                      EOpRayQueryGetIntersectionObjectRayDirection);
+            symbolTable.relateToOperator("rayQueryGetIntersectionObjectRayOriginEXT",                         EOpRayQueryGetIntersectionObjectRayOrigin);
+            symbolTable.relateToOperator("rayQueryGetWorldRayDirectionEXT",                                   EOpRayQueryGetWorldRayDirection);
+            symbolTable.relateToOperator("rayQueryGetWorldRayOriginEXT",                                      EOpRayQueryGetWorldRayOrigin);
+            symbolTable.relateToOperator("rayQueryGetIntersectionObjectToWorldEXT",                           EOpRayQueryGetIntersectionObjectToWorld);
+            symbolTable.relateToOperator("rayQueryGetIntersectionWorldToObjectEXT",                           EOpRayQueryGetIntersectionWorldToObject);
+        }
+
         symbolTable.relateToOperator("interpolateAtCentroid", EOpInterpolateAtCentroid);
         symbolTable.relateToOperator("interpolateAtSample",   EOpInterpolateAtSample);
         symbolTable.relateToOperator("interpolateAtOffset",   EOpInterpolateAtOffset);
@@ -8534,27 +8981,34 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("coopMatMulAddNV",            EOpCooperativeMatrixMulAdd);
         break;
 
-    case EShLangRayGenNV:
-    case EShLangClosestHitNV:
-    case EShLangMissNV:
+    case EShLangRayGen:
+    case EShLangClosestHit:
+    case EShLangMiss:
         if (profile != EEsProfile && version >= 460) {
-            symbolTable.relateToOperator("traceNV", EOpTraceNV);
-            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallableNV);
+            symbolTable.relateToOperator("traceNV", EOpTrace);
+            symbolTable.relateToOperator("traceRayEXT", EOpTrace);
+            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallable);
+            symbolTable.relateToOperator("executeCallableEXT", EOpExecuteCallable);
         }
         break;
-    case EShLangIntersectNV:
-        if (profile != EEsProfile && version >= 460)
-            symbolTable.relateToOperator("reportIntersectionNV", EOpReportIntersectionNV);
-        break;
-    case EShLangAnyHitNV:
+    case EShLangIntersect:
         if (profile != EEsProfile && version >= 460) {
-            symbolTable.relateToOperator("ignoreIntersectionNV", EOpIgnoreIntersectionNV);
-            symbolTable.relateToOperator("terminateRayNV", EOpTerminateRayNV);
+            symbolTable.relateToOperator("reportIntersectionNV", EOpReportIntersection);
+            symbolTable.relateToOperator("reportIntersectionEXT", EOpReportIntersection);
+	}
+        break;
+    case EShLangAnyHit:
+        if (profile != EEsProfile && version >= 460) {
+            symbolTable.relateToOperator("ignoreIntersectionNV", EOpIgnoreIntersection);
+            symbolTable.relateToOperator("ignoreIntersectionEXT", EOpIgnoreIntersection);
+            symbolTable.relateToOperator("terminateRayNV", EOpTerminateRay);
+            symbolTable.relateToOperator("terminateRayEXT", EOpTerminateRay);
         }
         break;
-    case EShLangCallableNV:
+    case EShLangCallable:
         if (profile != EEsProfile && version >= 460) {
-            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallableNV);
+            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallable);
+            symbolTable.relateToOperator("executeCallableEXT", EOpExecuteCallable);
         }
         break;
     case EShLangMeshNV:

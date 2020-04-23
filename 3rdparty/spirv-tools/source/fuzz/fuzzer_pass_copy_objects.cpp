@@ -21,16 +21,17 @@ namespace spvtools {
 namespace fuzz {
 
 FuzzerPassCopyObjects::FuzzerPassCopyObjects(
-    opt::IRContext* ir_context, FactManager* fact_manager,
+    opt::IRContext* ir_context, TransformationContext* transformation_context,
     FuzzerContext* fuzzer_context,
     protobufs::TransformationSequence* transformations)
-    : FuzzerPass(ir_context, fact_manager, fuzzer_context, transformations) {}
+    : FuzzerPass(ir_context, transformation_context, fuzzer_context,
+                 transformations) {}
 
 FuzzerPassCopyObjects::~FuzzerPassCopyObjects() = default;
 
 void FuzzerPassCopyObjects::Apply() {
-  MaybeAddTransformationBeforeEachInstruction(
-      [this](const opt::Function& function, opt::BasicBlock* block,
+  ForEachInstructionWithInstructionDescriptor(
+      [this](opt::Function* function, opt::BasicBlock* block,
              opt::BasicBlock::iterator inst_it,
              const protobufs::InstructionDescriptor& instruction_descriptor)
           -> void {
@@ -64,15 +65,11 @@ void FuzzerPassCopyObjects::Apply() {
 
         // Choose a copyable instruction at random, and create and apply an
         // object copying transformation based on it.
-        uint32_t index = GetFuzzerContext()->RandomIndex(relevant_instructions);
-        TransformationCopyObject transformation(
-            relevant_instructions[index]->result_id(), instruction_descriptor,
-            GetFuzzerContext()->GetFreshId());
-        assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
-               "This transformation should be applicable by construction.");
-        transformation.Apply(GetIRContext(), GetFactManager());
-        *GetTransformations()->add_transformation() =
-            transformation.ToMessage();
+        ApplyTransformation(TransformationCopyObject(
+            relevant_instructions[GetFuzzerContext()->RandomIndex(
+                                      relevant_instructions)]
+                ->result_id(),
+            instruction_descriptor, GetFuzzerContext()->GetFreshId()));
       });
 }
 

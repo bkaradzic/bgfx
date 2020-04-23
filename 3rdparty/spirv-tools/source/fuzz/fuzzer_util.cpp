@@ -14,6 +14,8 @@
 
 #include "source/fuzz/fuzzer_util.h"
 
+#include "source/opt/build_module.h"
+
 namespace spvtools {
 namespace fuzz {
 
@@ -101,10 +103,23 @@ bool PhiIdsOkForNewEdge(
     }
     phi_index++;
   }
-  // Return false if not all of the ids for extending OpPhi instructions are
-  // needed. This might turn out to be stricter than necessary; perhaps it would
-  // be OK just to not use the ids in this case.
-  return phi_index == static_cast<uint32_t>(phi_ids.size());
+  // We allow some of the ids provided for extending OpPhi instructions to be
+  // unused.  Their presence does no harm, and requiring a perfect match may
+  // make transformations less likely to cleanly apply.
+  return true;
+}
+
+uint32_t MaybeGetBoolConstantId(opt::IRContext* context, bool value) {
+  opt::analysis::Bool bool_type;
+  auto registered_bool_type =
+      context->get_type_mgr()->GetRegisteredType(&bool_type);
+  if (!registered_bool_type) {
+    return 0;
+  }
+  opt::analysis::BoolConstant bool_constant(registered_bool_type->AsBool(),
+                                            value);
+  return context->get_constant_mgr()->FindDeclaredConstant(
+      &bool_constant, context->get_type_mgr()->GetId(&bool_type));
 }
 
 void AddUnreachableEdgeAndUpdateOpPhis(
@@ -117,12 +132,10 @@ void AddUnreachableEdgeAndUpdateOpPhis(
          "Precondition on terminator of bb_from is not satisfied");
 
   // Get the id of the boolean constant to be used as the condition.
-  opt::analysis::Bool bool_type;
-  opt::analysis::BoolConstant bool_constant(
-      context->get_type_mgr()->GetRegisteredType(&bool_type)->AsBool(),
-      condition_value);
-  uint32_t bool_id = context->get_constant_mgr()->FindDeclaredConstant(
-      &bool_constant, context->get_type_mgr()->GetId(&bool_type));
+  uint32_t bool_id = MaybeGetBoolConstantId(context, condition_value);
+  assert(
+      bool_id &&
+      "Precondition that condition value must be available is not satisfied");
 
   const bool from_to_edge_already_exists = bb_from->IsSuccessor(bb_to);
   auto successor = bb_from->terminator()->GetSingleWordInOperand(0);
@@ -145,13 +158,11 @@ void AddUnreachableEdgeAndUpdateOpPhis(
         break;
       }
       assert(phi_index < static_cast<uint32_t>(phi_ids.size()) &&
-             "There should be exactly one phi id per OpPhi instruction.");
+             "There should be at least one phi id per OpPhi instruction.");
       inst.AddOperand({SPV_OPERAND_TYPE_ID, {phi_ids[phi_index]}});
       inst.AddOperand({SPV_OPERAND_TYPE_ID, {bb_from->id()}});
       phi_index++;
     }
-    assert(phi_index == static_cast<uint32_t>(phi_ids.size()) &&
-           "There should be exactly one phi id per OpPhi instruction.");
   }
 }
 
@@ -178,108 +189,6 @@ opt::BasicBlock::iterator GetIteratorForInstruction(
     }
   }
   return block->end();
-}
-
-bool NewEdgeRespectsUseDefDominance(opt::IRContext* context,
-                                    opt::BasicBlock* bb_from,
-                                    opt::BasicBlock* bb_to) {
-  assert(bb_from->terminator()->opcode() == SpvOpBranch);
-
-  // If there is *already* an edge from |bb_from| to |bb_to|, then adding
-  // another edge is fine from a dominance point of view.
-  if (bb_from->terminator()->GetSingleWordInOperand(0) == bb_to->id()) {
-    return true;
-  }
-
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2919): the
-  //  solution below to determining whether a new edge respects dominance
-  //  rules is incomplete.  Test
-  //  TransformationAddDeadContinueTest::DISABLED_Miscellaneous6 exposes the
-  //  problem.  In practice, this limitation does not bite too often, and the
-  //  worst it does is leads to SPIR-V that spirv-val rejects.
-
-  // Let us assume that the module being manipulated is valid according to the
-  // rules of the SPIR-V language.
-  //
-  // Suppose that some block Y is dominated by |bb_to| (which includes the case
-  // where Y = |bb_to|).
-  //
-  // Suppose that Y uses an id i that is defined in some other block X.
-  //
-  // Because the module is valid, X must dominate Y.  We are concerned about
-  // whether an edge from |bb_from| to |bb_to| could *stop* X from dominating
-  // Y.
-  //
-  // Because |bb_to| dominates Y, a new edge from |bb_from| to |bb_to| can
-  // only affect whether X dominates Y if X dominates |bb_to|.
-  //
-  // So let us assume that X does dominate |bb_to|, so that we have:
-  //
-  //   (X defines i) dominates |bb_to| dominates (Y uses i)
-  //
-  // The new edge from |bb_from| to |bb_to| will stop the definition of i in X
-  // from dominating the use of i in Y exactly when the new edge will stop X
-  // from dominating |bb_to|.
-  //
-  // Now, the block X that we are worried about cannot dominate |bb_from|,
-  // because in that case X would still dominate |bb_to| after we add an edge
-  // from |bb_from| to |bb_to|.
-  //
-  // Also, it cannot be that X = |bb_to|, because nothing can stop a block
-  // from dominating itself.
-  //
-  // So we are looking for a block X such that:
-  //
-  // - X strictly dominates |bb_to|
-  // - X does not dominate |bb_from|
-  // - X defines an id i
-  // - i is used in some block Y
-  // - |bb_to| dominates Y
-
-  // Walk the dominator tree backwards, starting from the immediate dominator
-  // of |bb_to|.  We can stop when we find a block that also dominates
-  // |bb_from|.
-  auto dominator_analysis = context->GetDominatorAnalysis(bb_from->GetParent());
-  for (auto dominator = dominator_analysis->ImmediateDominator(bb_to);
-       dominator != nullptr &&
-       !dominator_analysis->Dominates(dominator, bb_from);
-       dominator = dominator_analysis->ImmediateDominator(dominator)) {
-    // |dominator| is a candidate for block X in the above description.
-    // We now look through the instructions for a candidate instruction i.
-    for (auto& inst : *dominator) {
-      // Consider all the uses of this instruction.
-      if (!context->get_def_use_mgr()->WhileEachUse(
-              &inst,
-              [bb_to, context, dominator_analysis](
-                  opt::Instruction* user, uint32_t operand_index) -> bool {
-                // If this use is in an OpPhi, we need to check that dominance
-                // of the relevant *parent* block is not spoiled.  Otherwise we
-                // need to check that dominance of the block containing the use
-                // is not spoiled.
-                opt::BasicBlock* use_block_or_phi_parent =
-                    user->opcode() == SpvOpPhi
-                        ? context->cfg()->block(
-                              user->GetSingleWordOperand(operand_index + 1))
-                        : context->get_instr_block(user);
-
-                // There might not be any relevant block, e.g. if the use is in
-                // a decoration; in this case the new edge is unproblematic.
-                if (use_block_or_phi_parent == nullptr) {
-                  return true;
-                }
-
-                // With reference to the above discussion,
-                // |use_block_or_phi_parent| is a candidate for the block Y.
-                // If |bb_to| dominates this block, the new edge would be
-                // problematic.
-                return !dominator_analysis->Dominates(bb_to,
-                                                      use_block_or_phi_parent);
-              })) {
-        return false;
-      }
-    }
-  }
-  return true;
 }
 
 bool BlockIsReachableInItsFunction(opt::IRContext* context,
@@ -309,6 +218,12 @@ bool CanInsertOpcodeBeforeInstruction(
 }
 
 bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst) {
+  if (inst->opcode() == SpvOpSampledImage) {
+    // The SPIR-V data rules say that only very specific instructions may
+    // may consume the result id of an OpSampledImage, and this excludes the
+    // instructions that are used for making synonyms.
+    return false;
+  }
   if (!inst->HasResultId()) {
     // We can only make a synonym of an instruction that generates an id.
     return false;
@@ -317,6 +232,20 @@ bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst) {
     // We can only make a synonym of an instruction that has a type.
     return false;
   }
+  auto type_inst = ir_context->get_def_use_mgr()->GetDef(inst->type_id());
+  if (type_inst->opcode() == SpvOpTypePointer) {
+    switch (inst->opcode()) {
+      case SpvOpConstantNull:
+      case SpvOpUndef:
+        // We disallow making synonyms of null or undefined pointers.  This is
+        // to provide the property that if the original shader exhibited no bad
+        // pointer accesses, the transformed shader will not either.
+        return false;
+      default:
+        break;
+    }
+  }
+
   // We do not make synonyms of objects that have decorations: if the synonym is
   // not decorated analogously, using the original object vs. its synonymous
   // form may not be equivalent.
@@ -339,40 +268,47 @@ std::vector<uint32_t> RepeatedFieldToVector(
   return result;
 }
 
+uint32_t WalkOneCompositeTypeIndex(opt::IRContext* context,
+                                   uint32_t base_object_type_id,
+                                   uint32_t index) {
+  auto should_be_composite_type =
+      context->get_def_use_mgr()->GetDef(base_object_type_id);
+  assert(should_be_composite_type && "The type should exist.");
+  switch (should_be_composite_type->opcode()) {
+    case SpvOpTypeArray: {
+      auto array_length = GetArraySize(*should_be_composite_type, context);
+      if (array_length == 0 || index >= array_length) {
+        return 0;
+      }
+      return should_be_composite_type->GetSingleWordInOperand(0);
+    }
+    case SpvOpTypeMatrix:
+    case SpvOpTypeVector: {
+      auto count = should_be_composite_type->GetSingleWordInOperand(1);
+      if (index >= count) {
+        return 0;
+      }
+      return should_be_composite_type->GetSingleWordInOperand(0);
+    }
+    case SpvOpTypeStruct: {
+      if (index >= GetNumberOfStructMembers(*should_be_composite_type)) {
+        return 0;
+      }
+      return should_be_composite_type->GetSingleWordInOperand(index);
+    }
+    default:
+      return 0;
+  }
+}
+
 uint32_t WalkCompositeTypeIndices(
     opt::IRContext* context, uint32_t base_object_type_id,
     const google::protobuf::RepeatedField<google::protobuf::uint32>& indices) {
   uint32_t sub_object_type_id = base_object_type_id;
   for (auto index : indices) {
-    auto should_be_composite_type =
-        context->get_def_use_mgr()->GetDef(sub_object_type_id);
-    assert(should_be_composite_type && "The type should exist.");
-    if (SpvOpTypeArray == should_be_composite_type->opcode()) {
-      auto array_length = GetArraySize(*should_be_composite_type, context);
-      if (array_length == 0 || index >= array_length) {
-        return 0;
-      }
-      sub_object_type_id = should_be_composite_type->GetSingleWordInOperand(0);
-    } else if (SpvOpTypeMatrix == should_be_composite_type->opcode()) {
-      auto matrix_column_count =
-          should_be_composite_type->GetSingleWordInOperand(1);
-      if (index >= matrix_column_count) {
-        return 0;
-      }
-      sub_object_type_id = should_be_composite_type->GetSingleWordInOperand(0);
-    } else if (SpvOpTypeStruct == should_be_composite_type->opcode()) {
-      if (index >= GetNumberOfStructMembers(*should_be_composite_type)) {
-        return 0;
-      }
-      sub_object_type_id =
-          should_be_composite_type->GetSingleWordInOperand(index);
-    } else if (SpvOpTypeVector == should_be_composite_type->opcode()) {
-      auto vector_length = should_be_composite_type->GetSingleWordInOperand(1);
-      if (index >= vector_length) {
-        return 0;
-      }
-      sub_object_type_id = should_be_composite_type->GetSingleWordInOperand(0);
-    } else {
+    sub_object_type_id =
+        WalkOneCompositeTypeIndex(context, sub_object_type_id, index);
+    if (!sub_object_type_id) {
       return 0;
     }
   }
@@ -397,6 +333,221 @@ uint32_t GetArraySize(const opt::Instruction& array_type_instruction,
     return 0;
   }
   return array_length_constant->GetU32();
+}
+
+bool IsValid(opt::IRContext* context, spv_validator_options validator_options) {
+  std::vector<uint32_t> binary;
+  context->module()->ToBinary(&binary, false);
+  SpirvTools tools(context->grammar().target_env());
+  return tools.Validate(binary.data(), binary.size(), validator_options);
+}
+
+std::unique_ptr<opt::IRContext> CloneIRContext(opt::IRContext* context) {
+  std::vector<uint32_t> binary;
+  context->module()->ToBinary(&binary, false);
+  return BuildModule(context->grammar().target_env(), nullptr, binary.data(),
+                     binary.size());
+}
+
+bool IsNonFunctionTypeId(opt::IRContext* ir_context, uint32_t id) {
+  auto type = ir_context->get_type_mgr()->GetType(id);
+  return type && !type->AsFunction();
+}
+
+bool IsMergeOrContinue(opt::IRContext* ir_context, uint32_t block_id) {
+  bool result = false;
+  ir_context->get_def_use_mgr()->WhileEachUse(
+      block_id,
+      [&result](const opt::Instruction* use_instruction,
+                uint32_t /*unused*/) -> bool {
+        switch (use_instruction->opcode()) {
+          case SpvOpLoopMerge:
+          case SpvOpSelectionMerge:
+            result = true;
+            return false;
+          default:
+            return true;
+        }
+      });
+  return result;
+}
+
+uint32_t FindFunctionType(opt::IRContext* ir_context,
+                          const std::vector<uint32_t>& type_ids) {
+  // Look through the existing types for a match.
+  for (auto& type_or_value : ir_context->types_values()) {
+    if (type_or_value.opcode() != SpvOpTypeFunction) {
+      // We are only interested in function types.
+      continue;
+    }
+    if (type_or_value.NumInOperands() != type_ids.size()) {
+      // Not a match: different numbers of arguments.
+      continue;
+    }
+    // Check whether the return type and argument types match.
+    bool input_operands_match = true;
+    for (uint32_t i = 0; i < type_or_value.NumInOperands(); i++) {
+      if (type_ids[i] != type_or_value.GetSingleWordInOperand(i)) {
+        input_operands_match = false;
+        break;
+      }
+    }
+    if (input_operands_match) {
+      // Everything matches.
+      return type_or_value.result_id();
+    }
+  }
+  // No match was found.
+  return 0;
+}
+
+opt::Instruction* GetFunctionType(opt::IRContext* context,
+                                  const opt::Function* function) {
+  uint32_t type_id = function->DefInst().GetSingleWordInOperand(1);
+  return context->get_def_use_mgr()->GetDef(type_id);
+}
+
+opt::Function* FindFunction(opt::IRContext* ir_context, uint32_t function_id) {
+  for (auto& function : *ir_context->module()) {
+    if (function.result_id() == function_id) {
+      return &function;
+    }
+  }
+  return nullptr;
+}
+
+bool FunctionIsEntryPoint(opt::IRContext* context, uint32_t function_id) {
+  for (auto& entry_point : context->module()->entry_points()) {
+    if (entry_point.GetSingleWordInOperand(1) == function_id) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IdIsAvailableAtUse(opt::IRContext* context,
+                        opt::Instruction* use_instruction,
+                        uint32_t use_input_operand_index, uint32_t id) {
+  auto defining_instruction = context->get_def_use_mgr()->GetDef(id);
+  auto enclosing_function =
+      context->get_instr_block(use_instruction)->GetParent();
+  // If the id a function parameter, it needs to be associated with the
+  // function containing the use.
+  if (defining_instruction->opcode() == SpvOpFunctionParameter) {
+    return InstructionIsFunctionParameter(defining_instruction,
+                                          enclosing_function);
+  }
+  if (!context->get_instr_block(id)) {
+    // The id must be at global scope.
+    return true;
+  }
+  if (defining_instruction == use_instruction) {
+    // It is not OK for a definition to use itself.
+    return false;
+  }
+  auto dominator_analysis = context->GetDominatorAnalysis(enclosing_function);
+  if (use_instruction->opcode() == SpvOpPhi) {
+    // In the case where the use is an operand to OpPhi, it is actually the
+    // *parent* block associated with the operand that must be dominated by
+    // the synonym.
+    auto parent_block =
+        use_instruction->GetSingleWordInOperand(use_input_operand_index + 1);
+    return dominator_analysis->Dominates(
+        context->get_instr_block(defining_instruction)->id(), parent_block);
+  }
+  return dominator_analysis->Dominates(defining_instruction, use_instruction);
+}
+
+bool IdIsAvailableBeforeInstruction(opt::IRContext* context,
+                                    opt::Instruction* instruction,
+                                    uint32_t id) {
+  auto defining_instruction = context->get_def_use_mgr()->GetDef(id);
+  auto enclosing_function = context->get_instr_block(instruction)->GetParent();
+  // If the id a function parameter, it needs to be associated with the
+  // function containing the instruction.
+  if (defining_instruction->opcode() == SpvOpFunctionParameter) {
+    return InstructionIsFunctionParameter(defining_instruction,
+                                          enclosing_function);
+  }
+  if (!context->get_instr_block(id)) {
+    // The id is at global scope.
+    return true;
+  }
+  if (defining_instruction == instruction) {
+    // The instruction is not available right before its own definition.
+    return false;
+  }
+  return context->GetDominatorAnalysis(enclosing_function)
+      ->Dominates(defining_instruction, instruction);
+}
+
+bool InstructionIsFunctionParameter(opt::Instruction* instruction,
+                                    opt::Function* function) {
+  if (instruction->opcode() != SpvOpFunctionParameter) {
+    return false;
+  }
+  bool found_parameter = false;
+  function->ForEachParam(
+      [instruction, &found_parameter](opt::Instruction* param) {
+        if (param == instruction) {
+          found_parameter = true;
+        }
+      });
+  return found_parameter;
+}
+
+uint32_t GetTypeId(opt::IRContext* context, uint32_t result_id) {
+  return context->get_def_use_mgr()->GetDef(result_id)->type_id();
+}
+
+uint32_t GetPointeeTypeIdFromPointerType(opt::Instruction* pointer_type_inst) {
+  assert(pointer_type_inst && pointer_type_inst->opcode() == SpvOpTypePointer &&
+         "Precondition: |pointer_type_inst| must be OpTypePointer.");
+  return pointer_type_inst->GetSingleWordInOperand(1);
+}
+
+uint32_t GetPointeeTypeIdFromPointerType(opt::IRContext* context,
+                                         uint32_t pointer_type_id) {
+  return GetPointeeTypeIdFromPointerType(
+      context->get_def_use_mgr()->GetDef(pointer_type_id));
+}
+
+SpvStorageClass GetStorageClassFromPointerType(
+    opt::Instruction* pointer_type_inst) {
+  assert(pointer_type_inst && pointer_type_inst->opcode() == SpvOpTypePointer &&
+         "Precondition: |pointer_type_inst| must be OpTypePointer.");
+  return static_cast<SpvStorageClass>(
+      pointer_type_inst->GetSingleWordInOperand(0));
+}
+
+SpvStorageClass GetStorageClassFromPointerType(opt::IRContext* context,
+                                               uint32_t pointer_type_id) {
+  return GetStorageClassFromPointerType(
+      context->get_def_use_mgr()->GetDef(pointer_type_id));
+}
+
+uint32_t MaybeGetPointerType(opt::IRContext* context, uint32_t pointee_type_id,
+                             SpvStorageClass storage_class) {
+  for (auto& inst : context->types_values()) {
+    switch (inst.opcode()) {
+      case SpvOpTypePointer:
+        if (inst.GetSingleWordInOperand(0) == storage_class &&
+            inst.GetSingleWordInOperand(1) == pointee_type_id) {
+          return inst.result_id();
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return 0;
+}
+
+bool IsNullConstantSupported(const opt::analysis::Type& type) {
+  return type.AsBool() || type.AsInteger() || type.AsFloat() ||
+         type.AsMatrix() || type.AsVector() || type.AsArray() ||
+         type.AsStruct() || type.AsPointer() || type.AsEvent() ||
+         type.AsDeviceEvent() || type.AsReserveId() || type.AsQueue();
 }
 
 }  // namespace fuzzerutil

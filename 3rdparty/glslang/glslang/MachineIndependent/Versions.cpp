@@ -2,7 +2,8 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
-// Copyright (C) 2015-2018 Google, Inc.
+// Copyright (C) 2015-2020 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -172,6 +173,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_tessellation_shader]          = EBhDisable;
     extensionBehavior[E_GL_ARB_enhanced_layouts]             = EBhDisable;
     extensionBehavior[E_GL_ARB_texture_cube_map_array]       = EBhDisable;
+    extensionBehavior[E_GL_ARB_texture_multisample]          = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_texture_lod]           = EBhDisable;
     extensionBehavior[E_GL_ARB_explicit_attrib_location]     = EBhDisable;
     extensionBehavior[E_GL_ARB_explicit_uniform_location]    = EBhDisable;
@@ -183,6 +185,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_shader_texture_image_samples] = EBhDisable;
     extensionBehavior[E_GL_ARB_viewport_array]               = EBhDisable;
     extensionBehavior[E_GL_ARB_gpu_shader_int64]             = EBhDisable;
+    extensionBehavior[E_GL_ARB_gpu_shader_fp64]              = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_ballot]                = EBhDisable;
     extensionBehavior[E_GL_ARB_sparse_texture2]              = EBhDisable;
     extensionBehavior[E_GL_ARB_sparse_texture_clamp]         = EBhDisable;
@@ -192,6 +195,9 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_shader_viewport_layer_array]  = EBhDisable;
     extensionBehavior[E_GL_ARB_fragment_shader_interlock]    = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_clock]                 = EBhDisable;
+    extensionBehavior[E_GL_ARB_uniform_buffer_object]        = EBhDisable;
+    extensionBehavior[E_GL_ARB_sample_shading]               = EBhDisable;
+    extensionBehavior[E_GL_ARB_shader_bit_encoding]          = EBhDisable;
 
     extensionBehavior[E_GL_KHR_shader_subgroup_basic]            = EBhDisable;
     extensionBehavior[E_GL_KHR_shader_subgroup_vote]             = EBhDisable;
@@ -217,6 +223,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_buffer_reference2]                       = EBhDisable;
     extensionBehavior[E_GL_EXT_buffer_reference_uvec2]                  = EBhDisable;
     extensionBehavior[E_GL_EXT_demote_to_helper_invocation]             = EBhDisable;
+    extensionBehavior[E_GL_EXT_debug_printf]                            = EBhDisable;
 
     extensionBehavior[E_GL_EXT_shader_16bit_storage]                    = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_8bit_storage]                     = EBhDisable;
@@ -235,6 +242,8 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_AMD_shader_image_load_store_lod]          = EBhDisable;
     extensionBehavior[E_GL_AMD_shader_fragment_mask]                 = EBhDisable;
     extensionBehavior[E_GL_AMD_gpu_shader_half_float_fetch]          = EBhDisable;
+
+    extensionBehavior[E_GL_INTEL_shader_integer_functions2]          = EBhDisable;
 
     extensionBehavior[E_GL_NV_sample_mask_override_coverage]         = EBhDisable;
     extensionBehavior[E_SPV_NV_geometry_shader_passthrough]          = EBhDisable;
@@ -285,9 +294,12 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_OES_texture_cube_map_array]   = EBhDisable;
 
     // EXT extensions
-    extensionBehavior[E_GL_EXT_device_group]             = EBhDisable;
-    extensionBehavior[E_GL_EXT_multiview]                = EBhDisable;
-    extensionBehavior[E_GL_EXT_shader_realtime_clock]    = EBhDisable;
+    extensionBehavior[E_GL_EXT_device_group]                = EBhDisable;
+    extensionBehavior[E_GL_EXT_multiview]                   = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_realtime_clock]       = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_tracing]                 = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_query]                   = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_flags_primitive_culling] = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -333,7 +345,6 @@ void TParseVersions::getPreamble(std::string& preamble)
 
             // AEP
             "#define GL_ANDROID_extension_pack_es31a 1\n"
-            "#define GL_KHR_blend_equation_advanced 1\n"
             "#define GL_OES_sample_variables 1\n"
             "#define GL_OES_shader_image_atomic 1\n"
             "#define GL_OES_shader_multisample_interpolation 1\n"
@@ -377,6 +388,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_tessellation_shader 1\n"
             "#define GL_ARB_enhanced_layouts 1\n"
             "#define GL_ARB_texture_cube_map_array 1\n"
+            "#define GL_ARB_texture_multisample 1\n"
             "#define GL_ARB_shader_texture_lod 1\n"
             "#define GL_ARB_explicit_attrib_location 1\n"
             "#define GL_ARB_explicit_uniform_location 1\n"
@@ -388,13 +400,17 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_shader_texture_image_samples 1\n"
             "#define GL_ARB_viewport_array 1\n"
             "#define GL_ARB_gpu_shader_int64 1\n"
+            "#define GL_ARB_gpu_shader_fp64 1\n"
             "#define GL_ARB_shader_ballot 1\n"
             "#define GL_ARB_sparse_texture2 1\n"
             "#define GL_ARB_sparse_texture_clamp 1\n"
             "#define GL_ARB_shader_stencil_export 1\n"
+            "#define GL_ARB_sample_shading 1\n"
 //            "#define GL_ARB_cull_distance 1\n"    // present for 4.5, but need extension control over block members
             "#define GL_ARB_post_depth_coverage 1\n"
             "#define GL_ARB_fragment_shader_interlock 1\n"
+            "#define GL_ARB_uniform_buffer_object 1\n"
+            "#define GL_ARB_shader_bit_encoding 1\n"
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             "#define GL_EXT_shader_image_load_formatted 1\n"
             "#define GL_EXT_post_depth_coverage 1\n"
@@ -409,6 +425,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_buffer_reference2 1\n"
             "#define GL_EXT_buffer_reference_uvec2 1\n"
             "#define GL_EXT_demote_to_helper_invocation 1\n"
+            "#define GL_EXT_debug_printf 1\n"
 
             // GL_KHR_shader_subgroup
             "#define GL_KHR_shader_subgroup_basic 1\n"
@@ -422,6 +439,9 @@ void TParseVersions::getPreamble(std::string& preamble)
 
             "#define E_GL_EXT_shader_atomic_int64 1\n"
             "#define E_GL_EXT_shader_realtime_clock 1\n"
+            "#define E_GL_EXT_ray_tracing 1\n"
+            "#define E_GL_EXT_ray_query 1\n"
+            "#define E_GL_EXT_ray_flags_primitive_culling 1\n"
 
             "#define GL_AMD_shader_ballot 1\n"
             "#define GL_AMD_shader_trinary_minmax 1\n"
@@ -433,6 +453,8 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_AMD_shader_image_load_store_lod 1\n"
             "#define GL_AMD_shader_fragment_mask 1\n"
             "#define GL_AMD_gpu_shader_half_float_fetch 1\n"
+
+            "#define GL_INTEL_shader_integer_functions2 1\n"
 
             "#define GL_NV_sample_mask_override_coverage 1\n"
             "#define GL_NV_geometry_shader_passthrough 1\n"
@@ -495,6 +517,7 @@ void TParseVersions::getPreamble(std::string& preamble)
     preamble +=
             "#define GL_GOOGLE_cpp_style_line_directive 1\n"
             "#define GL_GOOGLE_include_directive 1\n"
+            "#define GL_KHR_blend_equation_advanced 1\n"
             ;
 #endif
 
@@ -532,12 +555,12 @@ const char* StageName(EShLanguage stage)
     case EShLangTessControl:    return "tessellation control";
     case EShLangTessEvaluation: return "tessellation evaluation";
     case EShLangGeometry:       return "geometry";
-    case EShLangRayGenNV:       return "ray-generation";
-    case EShLangIntersectNV:    return "intersection";
-    case EShLangAnyHitNV:       return "any-hit";
-    case EShLangClosestHitNV:   return "closest-hit";
-    case EShLangMissNV:         return "miss";
-    case EShLangCallableNV:     return "callable";
+    case EShLangRayGen:         return "ray-generation";
+    case EShLangIntersect:      return "intersection";
+    case EShLangAnyHit:         return "any-hit";
+    case EShLangClosestHit:     return "closest-hit";
+    case EShLangMiss:           return "miss";
+    case EShLangCallable:       return "callable";
     case EShLangMeshNV:         return "mesh";
     case EShLangTaskNV:         return "task";
 #endif
@@ -915,8 +938,8 @@ void TParseVersions::fullIntegerCheck(const TSourceLoc& loc, const char* op)
 // Call for any operation needing GLSL double data-type support.
 void TParseVersions::doubleCheck(const TSourceLoc& loc, const char* op)
 {
-    requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
-    profileRequires(loc, ECoreProfile | ECompatibilityProfile, 400, nullptr, op);
+    //requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
+    profileRequires(loc, ECoreProfile | ECompatibilityProfile, 400, E_GL_ARB_gpu_shader_fp64, op);
 }
 
 // Call for any operation needing GLSL float16 data-type support.

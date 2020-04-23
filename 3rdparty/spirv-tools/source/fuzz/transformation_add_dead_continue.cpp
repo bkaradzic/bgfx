@@ -34,18 +34,12 @@ TransformationAddDeadContinue::TransformationAddDeadContinue(
 }
 
 bool TransformationAddDeadContinue::IsApplicable(
-    opt::IRContext* context, const FactManager& /*unused*/) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   // First, we check that a constant with the same value as
   // |message_.continue_condition_value| is present.
-  opt::analysis::Bool bool_type;
-  auto registered_bool_type =
-      context->get_type_mgr()->GetRegisteredType(&bool_type);
-  if (!registered_bool_type) {
-    return false;
-  }
-  opt::analysis::BoolConstant bool_constant(
-      registered_bool_type->AsBool(), message_.continue_condition_value());
-  if (!context->get_constant_mgr()->FindConstant(&bool_constant)) {
+  if (!fuzzerutil::MaybeGetBoolConstantId(
+          ir_context, message_.continue_condition_value())) {
     // The required constant is not present, so the transformation cannot be
     // applied.
     return false;
@@ -53,7 +47,7 @@ bool TransformationAddDeadContinue::IsApplicable(
 
   // Check that |message_.from_block| really is a block id.
   opt::BasicBlock* bb_from =
-      fuzzerutil::MaybeFindBlock(context, message_.from_block());
+      fuzzerutil::MaybeFindBlock(ir_context, message_.from_block());
   if (bb_from == nullptr) {
     return false;
   }
@@ -75,73 +69,87 @@ bool TransformationAddDeadContinue::IsApplicable(
   // Because the structured CFG analysis does not regard a loop header as part
   // of the loop it heads, we check first whether bb_from is a loop header
   // before using the structured CFG analysis.
-  auto loop_header = bb_from->IsLoopHeader()
-                         ? message_.from_block()
-                         : context->GetStructuredCFGAnalysis()->ContainingLoop(
-                               message_.from_block());
+  auto loop_header =
+      bb_from->IsLoopHeader()
+          ? message_.from_block()
+          : ir_context->GetStructuredCFGAnalysis()->ContainingLoop(
+                message_.from_block());
   if (!loop_header) {
     return false;
   }
 
-  auto continue_block = context->cfg()->block(loop_header)->ContinueBlockId();
+  auto continue_block =
+      ir_context->cfg()->block(loop_header)->ContinueBlockId();
 
   if (!fuzzerutil::BlockIsReachableInItsFunction(
-          context, context->cfg()->block(continue_block))) {
+          ir_context, ir_context->cfg()->block(continue_block))) {
     // If the loop's continue block is unreachable, we conservatively do not
     // allow adding a dead continue, to avoid the compilations that arise due to
     // the lack of sensible dominance information for unreachable blocks.
     return false;
   }
 
-  if (fuzzerutil::BlockIsInLoopContinueConstruct(context, message_.from_block(),
-                                                 loop_header)) {
+  if (fuzzerutil::BlockIsInLoopContinueConstruct(
+          ir_context, message_.from_block(), loop_header)) {
     // We cannot jump to the continue target from the continue construct.
     return false;
   }
 
-  if (context->GetStructuredCFGAnalysis()->IsMergeBlock(continue_block)) {
+  if (ir_context->GetStructuredCFGAnalysis()->IsMergeBlock(continue_block)) {
     // A branch straight to the continue target that is also a merge block might
     // break the property that a construct header must dominate its merge block
     // (if the merge block is reachable).
     return false;
   }
 
-  // Check that adding the continue would not violate the property that a
-  // definition must dominate all of its uses.
-  if (!fuzzerutil::NewEdgeRespectsUseDefDominance(
-          context, bb_from, context->cfg()->block(continue_block))) {
+  // Check whether the data passed to extend OpPhi instructions is appropriate.
+  if (!fuzzerutil::PhiIdsOkForNewEdge(ir_context, bb_from,
+                                      ir_context->cfg()->block(continue_block),
+                                      message_.phi_id())) {
     return false;
   }
 
-  // The transformation is good if and only if the given phi ids are sufficient
-  // to extend relevant OpPhi instructions in the continue block.
-  return fuzzerutil::PhiIdsOkForNewEdge(context, bb_from,
-                                        context->cfg()->block(continue_block),
-                                        message_.phi_id());
+  // Adding the dead break is only valid if SPIR-V rules related to dominance
+  // hold.  Rather than checking these rules explicitly, we defer to the
+  // validator.  We make a clone of the module, apply the transformation to the
+  // clone, and check whether the transformed clone is valid.
+  //
+  // In principle some of the above checks could be removed, with more reliance
+  // being placed on the validator.  This should be revisited if we are sure
+  // the validator is complete with respect to checking structured control flow
+  // rules.
+  auto cloned_context = fuzzerutil::CloneIRContext(ir_context);
+  ApplyImpl(cloned_context.get());
+  return fuzzerutil::IsValid(cloned_context.get(),
+                             transformation_context.GetValidatorOptions());
 }
 
-void TransformationAddDeadContinue::Apply(opt::IRContext* context,
-                                          FactManager* /*unused*/) const {
-  auto bb_from = context->cfg()->block(message_.from_block());
-  auto continue_block =
-      bb_from->IsLoopHeader()
-          ? bb_from->ContinueBlockId()
-          : context->GetStructuredCFGAnalysis()->LoopContinueBlock(
-                message_.from_block());
-  assert(continue_block &&
-         "Precondition for this transformation requires that "
-         "message_.from_block must be in a loop.");
-  fuzzerutil::AddUnreachableEdgeAndUpdateOpPhis(
-      context, bb_from, context->cfg()->block(continue_block),
-      message_.continue_condition_value(), message_.phi_id());
+void TransformationAddDeadContinue::Apply(
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
+  ApplyImpl(ir_context);
   // Invalidate all analyses
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationAddDeadContinue::ToMessage() const {
   protobufs::Transformation result;
   *result.mutable_add_dead_continue() = message_;
   return result;
+}
+
+void TransformationAddDeadContinue::ApplyImpl(
+    spvtools::opt::IRContext* ir_context) const {
+  auto bb_from = ir_context->cfg()->block(message_.from_block());
+  auto continue_block =
+      bb_from->IsLoopHeader()
+          ? bb_from->ContinueBlockId()
+          : ir_context->GetStructuredCFGAnalysis()->LoopContinueBlock(
+                message_.from_block());
+  assert(continue_block && "message_.from_block must be in a loop.");
+  fuzzerutil::AddUnreachableEdgeAndUpdateOpPhis(
+      ir_context, bb_from, ir_context->cfg()->block(continue_block),
+      message_.continue_condition_value(), message_.phi_id());
 }
 
 }  // namespace fuzz

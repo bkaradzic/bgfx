@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Arm Limited
+ * Copyright 2015-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,9 +209,12 @@ inline std::string convert_to_string(const T &t)
 #define SPIRV_CROSS_FLT_FMT "%.32g"
 #endif
 
-#ifdef _MSC_VER
-// sprintf warning.
-// We cannot rely on snprintf existing because, ..., MSVC.
+// Disable sprintf and strcat warnings.
+// We cannot rely on snprintf and family existing because, ..., MSVC.
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4996)
 #endif
@@ -259,7 +262,9 @@ inline std::string convert_to_string(double t, char locale_radix_point)
 	return buf;
 }
 
-#ifdef _MSC_VER
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 
@@ -638,6 +643,7 @@ struct SPIREntryPoint
 	uint32_t invocations = 0;
 	uint32_t output_vertices = 0;
 	spv::ExecutionModel model = spv::ExecutionModelMax;
+	bool geometry_passthrough = false;
 };
 
 struct SPIRExpression : IVariant
@@ -938,6 +944,11 @@ struct SPIRFunction : IVariant
 	// Intentionally not a small vector, this one is rare, and std::function can be large.
 	Vector<std::function<void()>> fixup_hooks_in;
 
+	// On function entry, make sure to copy a constant array into thread addr space to work around
+	// the case where we are passing a constant array by value to a function on backends which do not
+	// consider arrays value types.
+	SmallVector<ID> constant_arrays_needed_on_stack;
+
 	bool active = false;
 	bool flush_undeclared = true;
 	bool do_combined_parameters = true;
@@ -975,6 +986,7 @@ struct SPIRAccessChain : IVariant
 
 	VariableID loaded_from = 0;
 	uint32_t matrix_stride = 0;
+	uint32_t array_stride = 0;
 	bool row_major_matrix = false;
 	bool immutable = false;
 
@@ -1051,8 +1063,7 @@ struct SPIRConstant : IVariant
 		type = TypeConstant
 	};
 
-	union Constant
-	{
+	union Constant {
 		uint32_t u32;
 		int32_t i32;
 		float f32;
@@ -1090,8 +1101,7 @@ struct SPIRConstant : IVariant
 		int e = (u16_value >> 10) & 0x1f;
 		int m = (u16_value >> 0) & 0x3ff;
 
-		union
-		{
+		union {
 			float f32;
 			uint32_t u32;
 		} u;
@@ -1571,6 +1581,8 @@ struct Meta
 		uint32_t set = 0;
 		uint32_t binding = 0;
 		uint32_t offset = 0;
+		uint32_t xfb_buffer = 0;
+		uint32_t xfb_stride = 0;
 		uint32_t array_stride = 0;
 		uint32_t matrix_stride = 0;
 		uint32_t input_attachment = 0;
@@ -1695,6 +1707,62 @@ static inline bool opcode_is_sign_invariant(spv::Op opcode)
 		return false;
 	}
 }
+
+struct SetBindingPair
+{
+	uint32_t desc_set;
+	uint32_t binding;
+
+	inline bool operator==(const SetBindingPair &other) const
+	{
+		return desc_set == other.desc_set && binding == other.binding;
+	}
+
+	inline bool operator<(const SetBindingPair &other) const
+	{
+		return desc_set < other.desc_set || (desc_set == other.desc_set && binding < other.binding);
+	}
+};
+
+struct StageSetBinding
+{
+	spv::ExecutionModel model;
+	uint32_t desc_set;
+	uint32_t binding;
+
+	inline bool operator==(const StageSetBinding &other) const
+	{
+		return model == other.model && desc_set == other.desc_set && binding == other.binding;
+	}
+};
+
+struct InternalHasher
+{
+	inline size_t operator()(const SetBindingPair &value) const
+	{
+		// Quality of hash doesn't really matter here.
+		auto hash_set = std::hash<uint32_t>()(value.desc_set);
+		auto hash_binding = std::hash<uint32_t>()(value.binding);
+		return (hash_set * 0x10001b31) ^ hash_binding;
+	}
+
+	inline size_t operator()(const StageSetBinding &value) const
+	{
+		// Quality of hash doesn't really matter here.
+		auto hash_model = std::hash<uint32_t>()(value.model);
+		auto hash_set = std::hash<uint32_t>()(value.desc_set);
+		auto tmp_hash = (hash_model * 0x10001b31) ^ hash_set;
+		return (tmp_hash * 0x10001b31) ^ value.binding;
+	}
+};
+
+// Special constant used in a {MSL,HLSL}ResourceBinding desc_set
+// element to indicate the bindings for the push constants.
+static const uint32_t ResourceBindingPushConstantDescriptorSet = ~(0u);
+
+// Special constant used in a {MSL,HLSL}ResourceBinding binding
+// element to indicate the bindings for the push constants.
+static const uint32_t ResourceBindingPushConstantBinding = 0;
 } // namespace SPIRV_CROSS_NAMESPACE
 
 namespace std

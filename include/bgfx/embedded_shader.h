@@ -1,12 +1,12 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_EMBEDDED_SHADER_H_HEADER_GUARD
 #define BGFX_EMBEDDED_SHADER_H_HEADER_GUARD
 
-#include <bx/macros.h>
+#include <bx/bx.h>
 #include "bgfx.h"
 
 #define BGFX_EMBEDDED_SHADER_DXBC(...)
@@ -36,7 +36,6 @@
 		|| BX_PLATFORM_LINUX            \
 		|| BX_PLATFORM_OSX              \
 		|| BX_PLATFORM_RPI              \
-		|| BX_PLATFORM_STEAMLINK        \
 		|| BX_PLATFORM_WINDOWS          \
 		)
 #define BGFX_PLATFORM_SUPPORTS_GLSL (0  \

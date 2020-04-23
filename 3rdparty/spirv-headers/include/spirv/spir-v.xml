@@ -139,8 +139,8 @@
 
     <!-- Reserved loop control bits -->
     <ids type="LoopControl" start="0" end="15" vendor="Khronos" comment="Reserved LoopControl bits, not available to vendors - see the SPIR-V Specification"/>
-    <ids type="LoopControl" start="16" end="19" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
-    <ids type="LoopControl" start="20" end="30" comment="Unreserved bits reservable for use by vendors"/>
+    <ids type="LoopControl" start="16" end="22" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
+    <ids type="LoopControl" start="23" end="30" comment="Unreserved bits reservable for use by vendors"/>
     <ids type="LoopControl" start="31" end="31" vendor="Khronos" comment="Reserved LoopControl bit, not available to vendors"/>
 
 </registry>

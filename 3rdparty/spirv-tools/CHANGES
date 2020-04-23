@@ -1,6 +1,61 @@
 Revision history for SPIRV-Tools
 
-v2019.5-dev 2019-10-21
+v2020.3-dev 2020-03-26
+ - Start v2020.3-dev
+
+v2020.2 2020-03-26
+ - General:
+   - Support extended instructions in the vscode language server
+   - Make spvOpcodeString part of the public API (#3174)
+   - Added guide to writing a spirv-fuzz fuzzer pass (#3190)
+   - Add support for KHR_ray_{query,tracing} extensions (#3235)
+ - Optimizer
+   - Debug Printf support (#3215)
+   - Add data structure for DebugScope, DebugDeclare in spirv-opt (#3183)
+   - Fix identification of Vulkan images and buffers (#3253)
+ - Validator
+   - Add support for SPV_AMD_shader_image_load_store_lod (#3186)
+   - Add validation rules for OpenCL.DebugInfo.100 extension (#3133)
+   - Adding WebGPU specific Workgroup scope rule (#3204)
+   - Disallow phis of images, samplers and sampled images (#3246)
+ - Reduce
+ - Fuzz
+   - Fuzzer passes to add local and global variables (#3175)
+   - Add fuzzer passes to add loads/stores (#3176)
+   - Fuzzer pass to add function calls (#3178)
+   - Fuzzer pass that adds access chains (#3182)
+   - Fuzzer pass to add equation instructions (#3202)
+   - Add swap commutable operands transformation (#3205)
+   - Add fuzzer pass to permute function parameters (#3212)
+   - Allow OpPhi operand to be replaced with a composite synonym (#3221)
+ - Linker
+
+v2020.1 2020-02-03
+ - General:
+   - Add support for SPV_KHR_non_semantic_info (#3110)
+   - Support OpenCL.DebugInfo.100 extended instruction set (#3080)
+   - Added support for Vulkan 1.2
+   - Add API function to better handle getting the necessary environment (#3142)
+   - Clarify mapping of target env to SPIR-V version (#3150)
+   - Implement constant folding for many transcendentals (#3166)
+ - Optimizer
+   - Change default version for CreatInstBindlessCheckPass to 2 (#3096, #3119)
+   - Better handling of OpLine on merge blocks (#3130)
+   - Use dummy switch instead of dummy loop in MergeReturn pass. (#3151)
+   - Handle TimeAMD in AmdExtensionToKhrPass. (#3168)
+ - Validator
+   - Fix structured exit validation (#3141)
+ - Reduce
+ - Fuzz
+   - Fuzzer pass to merge blocks (#3097)
+   - Transformation to add a new function to a module (#3114)
+   - Add fuzzer pass to perform module donation (#3117)
+   - Fuzzer passes to create and branch to new dead blocks (#3135)
+   - Fuzzer pass to add composite types (#3171)
+ - Linker:
+   - Remove names and decorations of imported symbols (#3081)
+
+v2019.5 2019-12-11
  - General:
    - Export SPIRV-Tools targets on installation
    - SPIRV-Tools support for SPIR-V 1.5 (#2865)
@@ -12,6 +67,12 @@ v2019.5-dev 2019-10-21
    - Improved CMake install step. (#2963)
    - Add fuzzer for spirv-dis call path (#2977)
    - Ensure timestamp does not vary with timezone. (#2982)
+   - Add a vscode extension for SPIR-V disassembly files (#2987)
+   - Add iOS as a supported platform (#3001)
+   - utils/vscode: Add SPIR-V language server support
+   - Respect CMAKE_INSTALL_LIBDIR in installed CMake files (#3054)
+   - Permit the debug instructions in WebGPU SPIR-V (#3063)
+   - Add support for Fuchsia. (#3062)
  - Optimizer
    - Add descriptor array scalar replacement (#2742)
    - Add pass to wrap OpKill in a function call (#2790)
@@ -24,6 +85,10 @@ v2019.5-dev 2019-10-21
    - Better handling of OpKill in continues (#2842,#2922,#2933)
    - Enable OpTypeCooperativeMatrix specialization (#2927)
    - Support constant-folding UConvert and SConvert (#2960)
+   - Update Offset to ConstOffset bitmask if operand is constant. (#3024)
+   - Improve RegisterSizePasses (#3059)
+   - Folding: perform add and sub on mismatched integer types (#3084)
+   - Graphics robust access: use signed clamp (#3073)
    Fixes:
    - Instrument: Fix version 2 output record write for tess eval shaders. (#2782)
    - Instrument: Add support for Buffer Device Address extension (#2792)
@@ -37,10 +102,12 @@ v2019.5-dev 2019-10-21
    - Adding valilidation checks for OpEntryPoint duplicate names and execution mode (#2862)
    - Relaxed bitcast with pointers (#2878)
    - Validate physical storage buffer restrictions (#2930)
-   - Add SPV_KHR_shader_clock validation (#2879)
+   - Add SPV_KHR_shader_clock validation (#2879, #3013)
    - Validate that selections are structured (#2962)
    - Disallow use of OpCompositeExtract/OpCompositeInsert with no indices (#2980)
    - Check that derivatives operate on 32-bit values (#2983)
+   - Validate array stride does not cause overlap (#3028)
+   - Validate nested constructs (#3068)
    Fixes:
    - Fix validation of constant matrices (#2794)
    - Update "remquor" validation
@@ -63,6 +130,12 @@ v2019.5-dev 2019-10-21
    - Add fuzzer pass to change loop controls (#2949)
    - Add fuzzer pass to change function controls (#2951)
    - Add fuzzer pass to add NoContraction decorations (#2950)
+   - Add missing functionality for matrix composites (#2974)
+   - Fuzzer pass to adjust memory access operands (#2968)
+   - Transformation to extract from a composite object (#2991)
+   - Vector shuffle transformation (#3015)
+   - Improve debugging facilities (#3074)
+   - Function outlining fuzzer pass (#3078)
 
 
 v2019.4 2019-08-08

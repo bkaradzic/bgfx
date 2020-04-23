@@ -695,6 +695,7 @@ protected:
     std::string currentSourceFile;
 
     std::istringstream strtodStream;
+    bool disableEscapeSequences;
 };
 
 } // end namespace glslang

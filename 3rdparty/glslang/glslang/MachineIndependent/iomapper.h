@@ -129,6 +129,7 @@ public:
     uint32_t computeTypeLocationSize(const TType& type, EShLanguage stage);
 
     TSlotSetMap slots;
+    bool hasError = false;
 
 protected:
     TDefaultIoResolverBase(TDefaultIoResolverBase&);
@@ -260,10 +261,10 @@ public:
 class TGlslIoMapper : public TIoMapper {
 public:
     TGlslIoMapper() {
-        memset(inVarMaps,     0, sizeof(TVarLiveMap*)   * (EShLangCount + 1));
-        memset(outVarMaps,    0, sizeof(TVarLiveMap*)   * (EShLangCount + 1));
-        memset(uniformVarMap, 0, sizeof(TVarLiveMap*)   * (EShLangCount + 1));
-        memset(intermediates, 0, sizeof(TIntermediate*) * (EShLangCount + 1));
+        memset(inVarMaps,     0, sizeof(TVarLiveMap*)   * EShLangCount);
+        memset(outVarMaps,    0, sizeof(TVarLiveMap*)   * EShLangCount);
+        memset(uniformVarMap, 0, sizeof(TVarLiveMap*)   * EShLangCount);
+        memset(intermediates, 0, sizeof(TIntermediate*) * EShLangCount);
     }
     virtual ~TGlslIoMapper() {
         for (size_t stage = 0; stage < EShLangCount; stage++) {

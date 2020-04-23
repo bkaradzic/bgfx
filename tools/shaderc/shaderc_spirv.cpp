@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -53,7 +53,7 @@ namespace bgfx
 namespace stl = tinystl;
 
 #include "../../src/shader_spirv.h"
-#include "../../3rdparty/khronos/vulkan/vulkan.h"
+#include "../../3rdparty/khronos/vulkan-local/vulkan.h"
 
 namespace bgfx { namespace spirv
 {

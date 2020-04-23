@@ -15,9 +15,9 @@
 #ifndef SOURCE_FUZZ_TRANSFORMATION_ADD_BOOLEAN_CONSTANT_H_
 #define SOURCE_FUZZ_TRANSFORMATION_ADD_BOOLEAN_CONSTANT_H_
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -32,12 +32,14 @@ class TransformationAddConstantBoolean : public Transformation {
 
   // - |message_.fresh_id| must not be used by the module.
   // - The module must already contain OpTypeBool.
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // - Adds OpConstantTrue (OpConstantFalse) to the module with id
   //   |message_.fresh_id| if |message_.is_true| holds (does not hold).
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 
