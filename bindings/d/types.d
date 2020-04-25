@@ -698,7 +698,7 @@ struct bgfx_caps_gpu_t
 	ushort deviceId; /// Device id.
 }
 
-/// Renderer capabilities limits.
+/// Renderer runtime limits.
 struct bgfx_caps_limits_t
 {
 	uint maxDrawCalls; /// Maximum number of draw calls.
@@ -742,7 +742,7 @@ struct bgfx_caps_t
 	bool originBottomLeft; /// True when NDC origin is at bottom left.
 	byte numGPUs; /// Number of enumerated GPUs.
 	bgfx_caps_gpu_t[4] gpu; /// Enumerated GPUs.
-	bgfx_caps_limits_t limits;
+	bgfx_caps_limits_t limits; /// Renderer runtime limits.
 
 	/**
 	 * Supported texture format capabilities flags:
@@ -813,6 +813,7 @@ struct bgfx_resolution_t
 	byte maxFrameLatency; /// Maximum frame latency.
 }
 
+/// Configurable runtime limits parameters.
 struct bgfx_init_limits_t
 {
 	ushort maxEncoders; /// Maximum number of encoder threads.
@@ -851,7 +852,7 @@ struct bgfx_init_t
 	bool profile; /// Enable device for profiling.
 	bgfx_platform_data_t platformData; /// Platform data.
 	bgfx_resolution_t resolution; /// Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
-	bgfx_init_limits_t limits;
+	bgfx_init_limits_t limits; /// Configurable runtime limits parameters.
 
 	/**
 	 * Provide application specific callback interface.

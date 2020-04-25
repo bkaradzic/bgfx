@@ -670,14 +670,20 @@ namespace bgfx
 		/// Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
 		Resolution resolution;
 
+		/// Configurable runtime limits parameters.
+		///
+		/// @attention C99 equivalent is `bgfx_init_limits_t`.
+		///
 		struct Limits
 		{
+			Limits();
+
 			uint16_t maxEncoders;     //!< Maximum number of encoder threads.
 			uint32_t transientVbSize; //!< Maximum transient vertex buffer size.
 			uint32_t transientIbSize; //!< Maximum transient index buffer size.
 		};
 
-		Limits limits;
+		Limits limits; // Configurable runtime limits.
 
 		/// Provide application specific callback interface.
 		/// See: `bgfx::CallbackI`
@@ -706,6 +712,8 @@ namespace bgfx
 	///
 	struct Memory
 	{
+		Memory() = delete;
+
 		uint8_t* data; //!< Pointer to data.
 		uint32_t size; //!< Data size.
 	};
@@ -743,6 +751,10 @@ namespace bgfx
 
 		GPU gpu[4]; //!< Enumerated GPUs.
 
+		/// Renderer runtime limits.
+		///
+		/// @attention C99 equivalent is `bgfx_caps_limits_t`.
+		///
 		struct Limits
 		{
 			uint32_t maxDrawCalls;            //!< Maximum number of draw calls.
@@ -770,7 +782,7 @@ namespace bgfx
 			uint32_t transientIbSize;         //!< Maximum transient index buffer size.
 		};
 
-		Limits limits;
+		Limits limits; //!< Renderer runtime limits.
 
 		/// Supported texture format capabilities flags:
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.

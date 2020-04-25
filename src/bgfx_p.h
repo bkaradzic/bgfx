@@ -2578,7 +2578,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void init()
 		{
-			bx::memSet(m_layoutRef,          0,    sizeof(m_layoutRef)          );
+			bx::memSet(m_vertexLayoutRef,           0, sizeof(m_vertexLayoutRef)        );
 			bx::memSet(m_vertexBufferRef,        0xff, sizeof(m_vertexBufferRef)        );
 			bx::memSet(m_dynamicVertexBufferRef, 0xff, sizeof(m_dynamicVertexBufferRef) );
 		}
@@ -2589,51 +2589,51 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii)
 			{
 				VertexLayoutHandle handle = { _handleAlloc.getHandleAt(ii) };
-				m_layoutRef[handle.idx] = 0;
-				m_layoutMap.removeByHandle(handle.idx);
+				m_vertexLayoutRef[handle.idx] = 0;
+				m_vertexLayoutMap.removeByHandle(handle.idx);
 				_handleAlloc.free(handle.idx);
 			}
 
-			m_layoutMap.reset();
+			m_vertexLayoutMap.reset();
 		}
 
 		VertexLayoutHandle find(uint32_t _hash)
 		{
-			VertexLayoutHandle handle = { m_layoutMap.find(_hash) };
+			VertexLayoutHandle handle = { m_vertexLayoutMap.find(_hash) };
 			return handle;
 		}
 
 		void add(VertexLayoutHandle _layoutHandle, uint32_t _hash)
 		{
-			m_layoutRef[_layoutHandle.idx]++;
-			m_layoutMap.insert(_hash, _layoutHandle.idx);
+			m_vertexLayoutRef[_layoutHandle.idx]++;
+			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
 		}
 
 		void add(VertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _hash)
 		{
 			BX_CHECK(m_vertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_vertexBufferRef[_handle.idx] = _layoutHandle;
-			m_layoutRef[_layoutHandle.idx]++;
-			m_layoutMap.insert(_hash, _layoutHandle.idx);
+			m_vertexLayoutRef[_layoutHandle.idx]++;
+			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
 		}
 
 		void add(DynamicVertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _hash)
 		{
 			BX_CHECK(m_dynamicVertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_dynamicVertexBufferRef[_handle.idx] = _layoutHandle;
-			m_layoutRef[_layoutHandle.idx]++;
-			m_layoutMap.insert(_hash, _layoutHandle.idx);
+			m_vertexLayoutRef[_layoutHandle.idx]++;
+			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
 		}
 
 		VertexLayoutHandle release(VertexLayoutHandle _layoutHandle)
 		{
 			if (isValid(_layoutHandle) )
 			{
-				m_layoutRef[_layoutHandle.idx]--;
+				m_vertexLayoutRef[_layoutHandle.idx]--;
 
-				if (0 == m_layoutRef[_layoutHandle.idx])
+				if (0 == m_vertexLayoutRef[_layoutHandle.idx])
 				{
-					m_layoutMap.removeByHandle(_layoutHandle.idx);
+					m_vertexLayoutMap.removeByHandle(_layoutHandle.idx);
 					return _layoutHandle;
 				}
 			}
@@ -2660,9 +2660,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		}
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_VERTEX_LAYOUTS*2> VertexLayoutMap;
-		VertexLayoutMap m_layoutMap;
+		VertexLayoutMap m_vertexLayoutMap;
 
-		uint16_t m_layoutRef[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
+		uint16_t m_vertexLayoutRef[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 		VertexLayoutHandle m_vertexBufferRef[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 		VertexLayoutHandle m_dynamicVertexBufferRef[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 	};
