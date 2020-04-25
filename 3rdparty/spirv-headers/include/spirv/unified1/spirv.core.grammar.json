@@ -27,7 +27,7 @@
   "magic_number" : "0x07230203",
   "major_version" : 1,
   "minor_version" : 5,
-  "revision" : 1,
+  "revision" : 3,
   "instruction_printing_class" : [
     {
       "tag"     : "@exclude"
@@ -4187,6 +4187,142 @@
       "version" : "None"
     },
     {
+        "opname" : "OpTypeRayQueryProvisionalKHR",
+        "class" : "Reserved",
+        "opcode" : 4472,
+        "operands" : [
+            { "kind" : "IdResult" }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryInitializeKHR",
+        "class" : "Reserved",
+        "opcode" : 4473,
+        "operands" : [
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Accel'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayFlags'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'CullMask'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayOrigin'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayTMin'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayDirection'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayTMax'"
+            }
+
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryTerminateKHR",
+        "class" : "Reserved",
+        "opcode" : 4474,
+        "operands" : [
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGenerateIntersectionKHR",
+        "class" : "Reserved",
+        "opcode" : 4475,
+        "operands" : [
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'HitT'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryConfirmIntersectionKHR",
+        "class" : "Reserved",
+        "opcode" : 4476,
+        "operands" : [
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryProceedKHR",
+        "class" : "Reserved",
+        "opcode" : 4477,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionTypeKHR",
+        "class" : "Reserved",
+        "opcode" : 4479,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
       "opname" : "OpGroupIAddNonUniformAMD",
       "class"  : "Group",
       "opcode" : 5000,
@@ -4515,463 +4651,6 @@
       "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR", "RayQueryProvisionalKHR" ],
       "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing", "SPV_KHR_ray_query" ],
       "version" : "None"
-    },
-    {
-        "opname" : "OpTypeRayQueryProvisionalKHR",
-        "class" : "Reserved",
-        "opcode" : 4472,
-        "operands" : [
-            { "kind" : "IdResult" }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryInitializeKHR",
-        "class" : "Reserved",
-        "opcode" : 4473,
-        "operands" : [
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Accel'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayFlags'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'CullMask'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayOrigin'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayTMin'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayDirection'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayTMax'"
-            }
-
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryTerminateKHR",
-        "class" : "Reserved",
-        "opcode" : 4474,
-        "operands" : [
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGenerateIntersectionKHR",
-        "class" : "Reserved",
-        "opcode" : 4475,
-        "operands" : [
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'HitT'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryConfirmIntersectionKHR",
-        "class" : "Reserved",
-        "opcode" : 4476,
-        "operands" : [
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryProceedKHR",
-        "class" : "Reserved",
-        "opcode" : 4477,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionTypeKHR",
-        "class" : "Reserved",
-        "opcode" : 4479,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetRayTMinKHR",
-        "class" : "Reserved",
-        "opcode" : 6016,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetRayFlagsKHR",
-        "class" : "Reserved",
-        "opcode" : 6017,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionTKHR",
-        "class" : "Reserved",
-        "opcode" : 6018,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionInstanceCustomIndexKHR",
-        "class" : "Reserved",
-        "opcode" : 6019,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionInstanceIdKHR",
-        "class" : "Reserved",
-        "opcode" : 6020,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR",
-        "class" : "Reserved",
-        "opcode" : 6021,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionGeometryIndexKHR",
-        "class" : "Reserved",
-        "opcode" : 6022,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionPrimitiveIndexKHR",
-        "class" : "Reserved",
-        "opcode" : 6023,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionBarycentricsKHR",
-        "class" : "Reserved",
-        "opcode" : 6024,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionFrontFaceKHR",
-        "class" : "Reserved",
-        "opcode" : 6025,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionCandidateAABBOpaqueKHR",
-        "class" : "Reserved",
-        "opcode" : 6026,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionObjectRayDirectionKHR",
-        "class" : "Reserved",
-        "opcode" : 6027,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionObjectRayOriginKHR",
-        "class" : "Reserved",
-        "opcode" : 6028,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetWorldRayDirectionKHR",
-        "class" : "Reserved",
-        "opcode" : 6029,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-
-    {
-        "opname" : "OpRayQueryGetWorldRayOriginKHR",
-        "class" : "Reserved",
-        "opcode" : 6030,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionObjectToWorldKHR",
-        "class" : "Reserved",
-        "opcode" : 6031,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-            {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
-    },
-    {
-        "opname" : "OpRayQueryGetIntersectionWorldToObjectKHR",
-        "class" : "Reserved",
-        "opcode" : 6032,
-        "operands" : [
-            { "kind" : "IdResultType" },
-            { "kind" : "IdResult" },
-            {
-                "kind" : "IdRef",
-                "name" : "'RayQuery'"
-            },
-             {
-                "kind" : "IdRef",
-                "name" : "'Intersection'"
-            }
-        ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
-        "extensions" : [ "SPV_KHR_ray_query" ],
-        "version" : "None"
     },
     {
       "opname" : "OpExecuteCallableNV",
@@ -6982,6 +6661,326 @@
       ],
       "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
       "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetRayTMinKHR",
+        "class" : "Reserved",
+        "opcode" : 6016,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetRayFlagsKHR",
+        "class" : "Reserved",
+        "opcode" : 6017,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionTKHR",
+        "class" : "Reserved",
+        "opcode" : 6018,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionInstanceCustomIndexKHR",
+        "class" : "Reserved",
+        "opcode" : 6019,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionInstanceIdKHR",
+        "class" : "Reserved",
+        "opcode" : 6020,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR",
+        "class" : "Reserved",
+        "opcode" : 6021,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionGeometryIndexKHR",
+        "class" : "Reserved",
+        "opcode" : 6022,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionPrimitiveIndexKHR",
+        "class" : "Reserved",
+        "opcode" : 6023,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionBarycentricsKHR",
+        "class" : "Reserved",
+        "opcode" : 6024,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionFrontFaceKHR",
+        "class" : "Reserved",
+        "opcode" : 6025,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionCandidateAABBOpaqueKHR",
+        "class" : "Reserved",
+        "opcode" : 6026,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionObjectRayDirectionKHR",
+        "class" : "Reserved",
+        "opcode" : 6027,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionObjectRayOriginKHR",
+        "class" : "Reserved",
+        "opcode" : 6028,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetWorldRayDirectionKHR",
+        "class" : "Reserved",
+        "opcode" : 6029,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetWorldRayOriginKHR",
+        "class" : "Reserved",
+        "opcode" : 6030,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionObjectToWorldKHR",
+        "class" : "Reserved",
+        "opcode" : 6031,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
+    },
+    {
+        "opname" : "OpRayQueryGetIntersectionWorldToObjectKHR",
+        "class" : "Reserved",
+        "opcode" : 6032,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+             {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "extensions" : [ "SPV_KHR_ray_query" ],
+        "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -7480,57 +7479,68 @@
         {
           "enumerant" : "NoneKHR",
           "value" : "0x0000",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "OpaqueKHR",
           "value" : "0x0001",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "NoOpaqueKHR",
           "value" : "0x0002",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "TerminateOnFirstHitKHR",
           "value" : "0x0004",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "SkipClosestHitShaderKHR",
           "value" : "0x0008",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "CullBackFacingTrianglesKHR",
           "value" : "0x0010",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "CullFrontFacingTrianglesKHR",
           "value" : "0x0020",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "CullOpaqueKHR",
           "value" : "0x0040",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "CullNoOpaqueKHR",
           "value" : "0x0080",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "SkipTrianglesKHR",
           "value" : "0x0100",
-          "capabilities" : [ "RayTraversalPrimitiveCullingProvisionalKHR" ]
+          "capabilities" : [ "RayTraversalPrimitiveCullingProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "SkipAABBsKHR",
           "value" : "0x0200",
-          "capabilities" : [ "RayTraversalPrimitiveCullingProvisionalKHR" ]
+          "capabilities" : [ "RayTraversalPrimitiveCullingProvisionalKHR" ],
+          "version" : "None"
         }
       ]
     },
@@ -10132,7 +10142,8 @@
         {
           "enumerant" : "ShaderCallKHR",
           "value" : 6,
-          "capabilities" : [ "RayTracingProvisionalKHR" ]
+          "capabilities" : [ "RayTracingProvisionalKHR" ],
+          "version" : "None"
         }
       ]
     },
@@ -11173,12 +11184,14 @@
         {
           "enumerant" : "RayQueryCandidateIntersectionKHR",
           "value" : 0,
-          "capabilities" : [ "RayQueryProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "RayQueryCommittedIntersectionKHR",
           "value" : 1,
-          "capabilities" : [ "RayQueryProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "version" : "None"
         }
       ]
     },
@@ -11189,17 +11202,20 @@
         {
           "enumerant" : "RayQueryCommittedIntersectionNoneKHR",
           "value" : 0,
-          "capabilities" : [ "RayQueryProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "RayQueryCommittedIntersectionTriangleKHR",
           "value" : 1,
-          "capabilities" : [ "RayQueryProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "RayQueryCommittedIntersectionGeneratedKHR",
           "value" : 2,
-          "capabilities" : [ "RayQueryProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "version" : "None"
         }
       ]
     },
@@ -11210,12 +11226,14 @@
         {
           "enumerant" : "RayQueryCandidateIntersectionTriangleKHR",
           "value" : 0,
-          "capabilities" : [ "RayQueryProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "RayQueryCandidateIntersectionAABBKHR",
           "value" : 1,
-          "capabilities" : [ "RayQueryProvisionalKHR" ]
+          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "version" : "None"
         }
       ]
     },
