@@ -268,7 +268,10 @@ public:
 		uint32_t dynamic_offsets_buffer_index = 23;
 		uint32_t shader_input_wg_index = 0;
 		uint32_t device_index = 0;
+		uint32_t enable_frag_output_mask = 0xffffffff;
 		bool enable_point_size_builtin = true;
+		bool enable_frag_depth_builtin = true;
+		bool enable_frag_stencil_ref_builtin = true;
 		bool disable_rasterization = false;
 		bool capture_output_to_buffer = false;
 		bool swizzle_texture_samples = false;
@@ -316,6 +319,10 @@ public:
 		// of Intel Macbooks. See https://github.com/KhronosGroup/SPIRV-Cross/issues/1210.
 		// May reduce performance in scenarios where arrays are copied around as value-types.
 		bool force_native_arrays = false;
+
+		// If a shader writes clip distance, also emit user varyings which
+		// can be read in subsequent stages.
+		bool enable_clip_distance_user_varying = true;
 
 		bool is_ios()
 		{
@@ -628,6 +635,7 @@ protected:
 	bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const override;
 
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
+	bool emit_complex_bitcast(uint32_t result_id, uint32_t id, uint32_t op0) override;
 	bool skip_argument(uint32_t id) const override;
 	std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain) override;
 	std::string to_qualifiers_glsl(uint32_t id) override;
@@ -869,6 +877,8 @@ protected:
 
 	// Must be ordered since array is in a specific order.
 	std::map<SetBindingPair, std::pair<uint32_t, uint32_t>> buffers_requiring_dynamic_offset;
+
+	SmallVector<uint32_t> disabled_frag_outputs;
 
 	std::unordered_set<SetBindingPair, InternalHasher> inline_uniform_blocks;
 

@@ -216,6 +216,7 @@ private:
 	std::string layout_for_member(const SPIRType &type, uint32_t index) override;
 	std::string to_interpolation_qualifiers(const Bitset &flags) override;
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
+	bool emit_complex_bitcast(uint32_t result_type, uint32_t id, uint32_t op0) override;
 	std::string to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id) override;
 	std::string to_sampler_expression(uint32_t id);
 	std::string to_resource_binding(const SPIRVariable &var);
@@ -249,6 +250,7 @@ private:
 	// TODO: Refactor this to be more similar to MSL, maybe have some common system in place?
 	bool requires_op_fmod = false;
 	bool requires_fp16_packing = false;
+	bool requires_uint2_packing = false;
 	bool requires_explicit_fp16_packing = false;
 	bool requires_unorm8_packing = false;
 	bool requires_snorm8_packing = false;
@@ -287,6 +289,15 @@ private:
 		QueryTypeUInt = 32,
 		QueryTypeCount = 3
 	};
+
+	enum BitcastType
+	{
+		TypeNormal,
+		TypePackUint2x32,
+		TypeUnpackUint64
+	};
+
+	BitcastType get_bitcast_type(uint32_t result_type, uint32_t op0);
 
 	void emit_builtin_variables();
 	bool require_output = false;

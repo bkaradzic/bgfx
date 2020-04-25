@@ -136,6 +136,25 @@ struct CLIParser
 		return uint32_t(val);
 	}
 
+	uint32_t next_hex_uint()
+	{
+		if (!argc)
+		{
+			THROW("Tried to parse uint, but nothing left in arguments");
+		}
+
+		uint64_t val = stoul(*argv, nullptr, 16);
+		if (val > numeric_limits<uint32_t>::max())
+		{
+			THROW("next_uint() out of range");
+		}
+
+		argc--;
+		argv++;
+
+		return uint32_t(val);
+	}
+
 	double next_double()
 	{
 		if (!argc)
@@ -535,6 +554,10 @@ struct CLIArguments
 	bool msl_decoration_binding = false;
 	bool msl_force_active_argument_buffer_resources = false;
 	bool msl_force_native_arrays = false;
+	bool msl_enable_frag_depth_builtin = true;
+	bool msl_enable_frag_stencil_ref_builtin = true;
+	uint32_t msl_enable_frag_output_mask = 0xffffffff;
+	bool msl_enable_clip_distance_user_varying = true;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
 	SmallVector<pair<uint32_t, uint32_t>> glsl_ext_framebuffer_fetch;
@@ -638,6 +661,10 @@ static void print_help()
 	                "\t[--msl-decoration-binding]\n"
 	                "\t[--msl-force-active-argument-buffer-resources]\n"
 	                "\t[--msl-force-native-arrays]\n"
+	                "\t[--msl-disable-frag-depth-builtin]\n"
+	                "\t[--msl-disable-frag-stencil-ref-builtin]\n"
+	                "\t[--msl-enable-frag-output-mask <mask>]\n"
+	                "\t[--msl-no-clip-distance-user-varying]\n"
 	                "\t[--hlsl]\n"
 	                "\t[--reflect]\n"
 	                "\t[--shader-model]\n"
@@ -831,6 +858,10 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.enable_decoration_binding = args.msl_decoration_binding;
 		msl_opts.force_active_argument_buffer_resources = args.msl_force_active_argument_buffer_resources;
 		msl_opts.force_native_arrays = args.msl_force_native_arrays;
+		msl_opts.enable_frag_depth_builtin = args.msl_enable_frag_depth_builtin;
+		msl_opts.enable_frag_stencil_ref_builtin = args.msl_enable_frag_stencil_ref_builtin;
+		msl_opts.enable_frag_output_mask = args.msl_enable_frag_output_mask;
+		msl_opts.enable_clip_distance_user_varying = args.msl_enable_clip_distance_user_varying;
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
 			msl_comp->add_discrete_descriptor_set(v);
@@ -1213,6 +1244,13 @@ static int main_inner(int argc, char *argv[])
 		args.msl_inline_uniform_blocks.push_back(make_pair(desc_set, binding));
 	});
 	cbs.add("--msl-force-native-arrays", [&args](CLIParser &) { args.msl_force_native_arrays = true; });
+	cbs.add("--msl-disable-frag-depth-builtin", [&args](CLIParser &) { args.msl_enable_frag_depth_builtin = false; });
+	cbs.add("--msl-disable-frag-stencil-ref-builtin",
+	        [&args](CLIParser &) { args.msl_enable_frag_stencil_ref_builtin = false; });
+	cbs.add("--msl-enable-frag-output-mask",
+	        [&args](CLIParser &parser) { args.msl_enable_frag_output_mask = parser.next_hex_uint(); });
+	cbs.add("--msl-no-clip-distance-user-varying",
+	        [&args](CLIParser &) { args.msl_enable_clip_distance_user_varying = false; });
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();

@@ -514,6 +514,8 @@ protected:
 	SPIRType binary_op_bitcast_helper(std::string &cast_op0, std::string &cast_op1, SPIRType::BaseType &input_type,
 	                                  uint32_t op0, uint32_t op1, bool skip_cast_if_equal_type);
 
+	virtual bool emit_complex_bitcast(uint32_t result_type, uint32_t id, uint32_t op0);
+
 	std::string to_ternary_expression(const SPIRType &result_type, uint32_t select, uint32_t true_value,
 	                                  uint32_t false_value);
 
