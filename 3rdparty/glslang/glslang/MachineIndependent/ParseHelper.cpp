@@ -4899,7 +4899,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
 #ifndef GLSLANG_WEB
     if (id == TQualifier::getLayoutPackingString(ElpStd430)) {
         requireProfile(loc, EEsProfile | ECoreProfile | ECompatibilityProfile, "std430");
-        profileRequires(loc, ECoreProfile | ECompatibilityProfile, 430, nullptr, "std430");
+        profileRequires(loc, ECoreProfile | ECompatibilityProfile, 430, E_GL_ARB_shader_storage_buffer_object, "std430");
         profileRequires(loc, EEsProfile, 310, nullptr, "std430");
         publicType.qualifier.layoutPacking = ElpStd430;
         return;
@@ -7669,7 +7669,7 @@ void TParseContext::blockStageIoCheck(const TSourceLoc& loc, const TQualifier& q
         break;
     case EvqBuffer:
         requireProfile(loc, EEsProfile | ECoreProfile | ECompatibilityProfile, "buffer block");
-        profileRequires(loc, ECoreProfile | ECompatibilityProfile, 430, nullptr, "buffer block");
+        profileRequires(loc, ECoreProfile | ECompatibilityProfile, 430, E_GL_ARB_shader_storage_buffer_object, "buffer block");
         profileRequires(loc, EEsProfile, 310, nullptr, "buffer block");
         break;
     case EvqVaryingIn:

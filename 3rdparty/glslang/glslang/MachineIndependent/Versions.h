@@ -153,6 +153,8 @@ const char* const E_GL_ARB_shader_clock                 = "GL_ARB_shader_clock";
 const char* const E_GL_ARB_uniform_buffer_object        = "GL_ARB_uniform_buffer_object";
 const char* const E_GL_ARB_sample_shading               = "GL_ARB_sample_shading";
 const char* const E_GL_ARB_shader_bit_encoding          = "GL_ARB_shader_bit_encoding";
+const char* const E_GL_ARB_shader_image_size            = "GL_ARB_shader_image_size";
+const char* const E_GL_ARB_shader_storage_buffer_object = "GL_ARB_shader_storage_buffer_object";
 
 const char* const E_GL_KHR_shader_subgroup_basic            = "GL_KHR_shader_subgroup_basic";
 const char* const E_GL_KHR_shader_subgroup_vote             = "GL_KHR_shader_subgroup_vote";
