@@ -480,7 +480,7 @@ assembly and binary files with suffix `.spvasm` and `.spv`, respectively.
 
 The assembler reads the assembly language text, and emits the binary form.
 
-The standalone assembler is the exectuable called `spirv-as`, and is located in
+The standalone assembler is the executable called `spirv-as`, and is located in
 `<spirv-build-dir>/tools/spirv-as`.  The functionality of the assembler is implemented
 by the `spvTextToBinary` library function.
 

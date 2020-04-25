@@ -245,17 +245,17 @@ static const spv_operand_desc_t pygen_variable_KernelProfilingInfoEntries[] = {
 };
 
 static const spv_operand_desc_t pygen_variable_RayFlagsEntries[] = {
-  {"NoneKHR", 0x0000, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"OpaqueKHR", 0x0001, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"NoOpaqueKHR", 0x0002, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"TerminateOnFirstHitKHR", 0x0004, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"SkipClosestHitShaderKHR", 0x0008, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"CullBackFacingTrianglesKHR", 0x0010, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"CullFrontFacingTrianglesKHR", 0x0020, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"CullOpaqueKHR", 0x0040, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"CullNoOpaqueKHR", 0x0080, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"SkipTrianglesKHR", 0x0100, 1, pygen_variable_caps_RayTraversalPrimitiveCullingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"SkipAABBsKHR", 0x0200, 1, pygen_variable_caps_RayTraversalPrimitiveCullingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"NoneKHR", 0x0000, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"OpaqueKHR", 0x0001, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"NoOpaqueKHR", 0x0002, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"TerminateOnFirstHitKHR", 0x0004, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"SkipClosestHitShaderKHR", 0x0008, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"CullBackFacingTrianglesKHR", 0x0010, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"CullFrontFacingTrianglesKHR", 0x0020, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"CullOpaqueKHR", 0x0040, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"CullNoOpaqueKHR", 0x0080, 2, pygen_variable_caps_RayQueryProvisionalKHRRayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"SkipTrianglesKHR", 0x0100, 1, pygen_variable_caps_RayTraversalPrimitiveCullingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"SkipAABBsKHR", 0x0200, 1, pygen_variable_caps_RayTraversalPrimitiveCullingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_SourceLanguageEntries[] = {
@@ -734,7 +734,7 @@ static const spv_operand_desc_t pygen_variable_ScopeEntries[] = {
   {"Invocation", 4, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"QueueFamily", 5, 1, pygen_variable_caps_VulkanMemoryModel, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
   {"QueueFamilyKHR", 5, 1, pygen_variable_caps_VulkanMemoryModel, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"ShaderCallKHR", 6, 1, pygen_variable_caps_RayTracingProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"ShaderCallKHR", 6, 1, pygen_variable_caps_RayTracingProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_GroupOperationEntries[] = {
@@ -919,19 +919,19 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
 };
 
 static const spv_operand_desc_t pygen_variable_RayQueryIntersectionEntries[] = {
-  {"RayQueryCandidateIntersectionKHR", 0, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"RayQueryCommittedIntersectionKHR", 1, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"RayQueryCandidateIntersectionKHR", 0, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"RayQueryCommittedIntersectionKHR", 1, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_RayQueryCommittedIntersectionTypeEntries[] = {
-  {"RayQueryCommittedIntersectionNoneKHR", 0, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"RayQueryCommittedIntersectionTriangleKHR", 1, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"RayQueryCommittedIntersectionGeneratedKHR", 2, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"RayQueryCommittedIntersectionNoneKHR", 0, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"RayQueryCommittedIntersectionTriangleKHR", 1, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"RayQueryCommittedIntersectionGeneratedKHR", 2, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_RayQueryCandidateIntersectionTypeEntries[] = {
-  {"RayQueryCandidateIntersectionTriangleKHR", 0, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"RayQueryCandidateIntersectionAABBKHR", 1, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"RayQueryCandidateIntersectionTriangleKHR", 0, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"RayQueryCandidateIntersectionAABBKHR", 1, 1, pygen_variable_caps_RayQueryProvisionalKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_DebugInfoFlagsEntries[] = {

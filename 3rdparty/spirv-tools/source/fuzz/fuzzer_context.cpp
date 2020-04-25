@@ -68,6 +68,7 @@ const std::pair<uint32_t, uint32_t> kChanceOfTogglingAccessChainInstruction = {
 
 // Default limits for various quantities that are chosen during fuzzing.
 // Keep them in alphabetical order.
+const uint32_t kDefaultMaxEquivalenceClassSizeForDataSynonymFactClosure = 1000;
 const uint32_t kDefaultMaxLoopControlPartialCount = 100;
 const uint32_t kDefaultMaxLoopControlPeelCount = 100;
 const uint32_t kDefaultMaxLoopLimit = 20;
@@ -89,6 +90,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
                              uint32_t min_fresh_id)
     : random_generator_(random_generator),
       next_fresh_id_(min_fresh_id),
+      max_equivalence_class_size_for_data_synonym_fact_closure_(
+          kDefaultMaxEquivalenceClassSizeForDataSynonymFactClosure),
       max_loop_control_partial_count_(kDefaultMaxLoopControlPartialCount),
       max_loop_control_peel_count_(kDefaultMaxLoopControlPeelCount),
       max_loop_limit_(kDefaultMaxLoopLimit),

@@ -183,11 +183,20 @@ class FuzzerContext {
   uint32_t GetChanceOfTogglingAccessChainInstruction() {
     return chance_of_toggling_access_chain_instruction_;
   }
-  uint32_t GetRandomLoopControlPeelCount() {
-    return random_generator_->RandomUint32(max_loop_control_peel_count_);
+
+  // Other functions to control transformations. Keep them in alphabetical
+  // order.
+  uint32_t GetMaximumEquivalenceClassSizeForDataSynonymFactClosure() {
+    return max_equivalence_class_size_for_data_synonym_fact_closure_;
+  }
+  uint32_t GetRandomIndexForAccessChain(uint32_t composite_size_bound) {
+    return random_generator_->RandomUint32(composite_size_bound);
   }
   uint32_t GetRandomLoopControlPartialCount() {
     return random_generator_->RandomUint32(max_loop_control_partial_count_);
+  }
+  uint32_t GetRandomLoopControlPeelCount() {
+    return random_generator_->RandomUint32(max_loop_control_peel_count_);
   }
   uint32_t GetRandomLoopLimit() {
     return random_generator_->RandomUint32(max_loop_limit_);
@@ -195,12 +204,6 @@ class FuzzerContext {
   uint32_t GetRandomSizeForNewArray() {
     // Ensure that the array size is non-zero.
     return random_generator_->RandomUint32(max_new_array_size_limit_ - 1) + 1;
-  }
-
-  // Other functions to control transformations. Keep them in alphabetical
-  // order.
-  uint32_t GetRandomIndexForAccessChain(uint32_t composite_size_bound) {
-    return random_generator_->RandomUint32(composite_size_bound);
   }
   bool GoDeeperInConstantObfuscation(uint32_t depth) {
     return go_deeper_in_constant_obfuscation_(depth, random_generator_);
@@ -251,6 +254,7 @@ class FuzzerContext {
   // Limits associated with various quantities for which random values are
   // chosen during fuzzing.
   // Keep them in alphabetical order.
+  uint32_t max_equivalence_class_size_for_data_synonym_fact_closure_;
   uint32_t max_loop_control_partial_count_;
   uint32_t max_loop_control_peel_count_;
   uint32_t max_loop_limit_;

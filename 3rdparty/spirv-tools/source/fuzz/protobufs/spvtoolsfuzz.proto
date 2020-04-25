@@ -373,6 +373,7 @@ message Transformation {
     TransformationPermuteFunctionParameters permute_function_parameters = 42;
     TransformationToggleAccessChainInstruction toggle_access_chain_instruction = 43;
     TransformationAddConstantNull add_constant_null = 44;
+    TransformationComputeDataSynonymFactClosure compute_data_synonym_fact_closure = 45;
     // Add additional option using the next available number.
   }
 }
@@ -778,6 +779,19 @@ message TransformationCompositeExtract {
 
   // Indices that indicate which part of the composite should be extracted.
   repeated uint32 index = 4;
+
+}
+
+message TransformationComputeDataSynonymFactClosure {
+
+  // A transformation that impacts the fact manager only, forcing a computation
+  // of the closure of data synonym facts, so that e.g. if the components of
+  // vectors v and w are known to be pairwise synonymous, it is deduced that v
+  // and w are themselves synonymous.
+
+  // When searching equivalence classes for implied facts, equivalence classes
+  // larger than this size will be skipped.
+  uint32 maximum_equivalence_class_size = 1;
 
 }
 
