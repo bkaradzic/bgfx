@@ -1637,7 +1637,7 @@ namespace bgfx
 		BX_TRACE("\t ||||+------------ Cube: x = supported / * = emulated");
 		BX_TRACE("\t |||||+----------- Cube: sRGB format");
 		BX_TRACE("\t ||||||+---------- vertex format");
-		BX_TRACE("\t |||||||+--------- image");
+		BX_TRACE("\t |||||||+--------- image: i = read-write / r = read / w = write");
 		BX_TRACE("\t ||||||||+-------- framebuffer");
 		BX_TRACE("\t |||||||||+------- MSAA framebuffer");
 		BX_TRACE("\t ||||||||||+------ MSAA texture");
@@ -1648,7 +1648,7 @@ namespace bgfx
 			if (TextureFormat::Unknown != ii
 			&&  TextureFormat::UnknownDepth != ii)
 			{
-				uint16_t flags = g_caps.formats[ii];
+				uint32_t flags = g_caps.formats[ii];
 				BX_TRACE("\t[%c%c%c%c%c%c%c%c%c%c%c%c] %s"
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_2D               ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED ? '*' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB          ? 'l' : ' '
@@ -1657,7 +1657,8 @@ namespace bgfx
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_CUBE             ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED ? '*' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB        ? 'l' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_VERTEX           ? 'v' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE            ? 'i' : ' '
+					, (flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) &&
+					  (flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)    ? 'i' : flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ ? 'r' : flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE ? 'w' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      ? 'f' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA ? '+' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_MSAA             ? 'm' : ' '

@@ -1440,7 +1440,6 @@ namespace bgfx { namespace gl
 		uint16_t destroy();
 		void resolve();
 		void discard(uint16_t _flags);
-		void set();
 
 		SwapChainGL* m_swapChain;
 		GLuint m_fbo[2];
