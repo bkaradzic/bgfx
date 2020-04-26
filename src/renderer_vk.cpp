@@ -5875,6 +5875,11 @@ VK_DESTROY
 		if (m_swapchain == VK_NULL_HANDLE)
 			return;
 
+		if (m_needToRefreshSwapchain == true)
+		{
+			return;
+		}
+
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
