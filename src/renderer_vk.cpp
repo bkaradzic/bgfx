@@ -5566,6 +5566,7 @@ VK_DESTROY
 		TextureVK& firstTexture = s_renderVK->m_textures[m_attachment[0].handle.idx];
 		::VkImageView textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 
+		m_depth.idx = bx::kInvalidHandle;
 		m_num = 0;
 		for (uint8_t ii = 0; ii < m_numAttachment; ++ii)
 		{
