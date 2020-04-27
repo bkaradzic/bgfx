@@ -6135,7 +6135,12 @@ namespace bgfx { namespace gl
 						&& !bx::findIdentifierMatch(code, s_EXT_gpu_shader4).isEmpty()
 						;
 
-					const bool usesGpuShader5   = !bx::findIdentifierMatch(code, s_ARB_gpu_shader5).isEmpty();
+					// GpuShader5 extension is not supported on the fragment shader!
+					const bool usesGpuShader5 = true
+						&& m_type != GL_FRAGMENT_SHADER
+						&& !bx::findIdentifierMatch(code, s_ARB_gpu_shader5).isEmpty()
+						;
+
 					const bool usesIUsamplers   = !bx::findIdentifierMatch(code, s_uisamplers).isEmpty();
 					const bool usesUint         = !bx::findIdentifierMatch(code, s_uint).isEmpty();
 					const bool usesTexelFetch   = !bx::findIdentifierMatch(code, s_texelFetch).isEmpty();

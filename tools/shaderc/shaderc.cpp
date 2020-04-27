@@ -1965,7 +1965,14 @@ namespace bgfx
 							const bx::StringView preprocessedInput(preprocessor.m_preprocessed.c_str() );
 
 							if (!bx::strFind(preprocessedInput, "layout(std430").isEmpty()
-							||  !bx::strFind(preprocessedInput, "image2D").isEmpty() )
+							||  !bx::strFind(preprocessedInput, "image2D").isEmpty()
+							|| (_options.shaderType == 'f'
+								&&  (!bx::strFind(preprocessedInput, "floatBitsToUint").isEmpty() ||
+									 !bx::strFind(preprocessedInput, "floatBitsToInt").isEmpty() ||
+									 !bx::strFind(preprocessedInput, "intBitsToFloat").isEmpty() ||
+									 !bx::strFind(preprocessedInput, "uintBitsToFloat").isEmpty()
+									) )  
+								)
 							{
 								glsl = 430;
 							}
@@ -1976,9 +1983,14 @@ namespace bgfx
 									|| !bx::findIdentifierMatch(input, s_ARB_shader_texture_lod).isEmpty()
 									|| !bx::findIdentifierMatch(input, s_EXT_shader_texture_lod).isEmpty()
 									;
+
+								const bool usesGpuShader5 = true
+									&& _options.shaderType != 'f'
+									&& !bx::findIdentifierMatch(input, s_ARB_gpu_shader5).isEmpty()
+									;
+
 								const bool usesInstanceID   = !bx::findIdentifierMatch(input, "gl_InstanceID").isEmpty();
 								const bool usesGpuShader4   = !bx::findIdentifierMatch(input, s_EXT_gpu_shader4).isEmpty();
-								const bool usesGpuShader5   = !bx::findIdentifierMatch(input, s_ARB_gpu_shader5).isEmpty();
 								const bool usesTexelFetch   = !bx::findIdentifierMatch(input, s_texelFetch).isEmpty();
 								const bool usesTextureMS    = !bx::findIdentifierMatch(input, s_ARB_texture_multisample).isEmpty();
 								const bool usesTextureArray = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
