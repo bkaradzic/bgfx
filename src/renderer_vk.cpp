@@ -1707,7 +1707,7 @@ VK_IMPORT_DEVICE
 				if (NULL != vkCreateXlibSurfaceKHR)
 				{
 					VkXlibSurfaceCreateInfoKHR sci;
-					sci.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
 					sci.pNext = NULL;
 					sci.flags  = 0;
 					sci.dpy    = (Display*)g_platformData.ndt;
