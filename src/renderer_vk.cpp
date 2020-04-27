@@ -2146,10 +2146,14 @@ VK_IMPORT_DEVICE
 				}
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
 			{
-				BX_TRACE("Create scratch buffer %d", ii);
-				m_scratchBuffer[ii].create(BGFX_CONFIG_MAX_DRAW_CALLS * 128, 1024);
+				const uint32_t align = uint32_t(m_deviceProperties.limits.nonCoherentAtomSize);
+				const uint32_t size = bx::strideAlign(BGFX_CONFIG_MAX_DRAW_CALLS * 128, align);
+				for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
+				{
+					BX_TRACE("Create scratch buffer %d", ii);
+					m_scratchBuffer[ii].create(size, 1024);
+				}
 			}
 
 			errorState = ErrorState::DescriptorCreated;
