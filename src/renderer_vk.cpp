@@ -240,6 +240,62 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
+	struct LayerInfo
+	{
+		bool m_supported;
+		bool m_initialize;
+	};
+
+	struct Layer
+	{
+		enum Enum
+		{
+			VK_LAYER_LUNARG_standard_validation,
+			VK_LAYER_LUNARG_vktrace,
+			VK_LAYER_RENDERDOC_Capture,
+			VK_LAYER_KHRONOS_validation,
+
+			Count
+		};
+
+		const char* m_name;
+		uint32_t m_minVersion;
+		LayerInfo m_instance;
+		LayerInfo m_device;
+	};
+
+
+	// Layer registry
+	//
+	static Layer s_layer[] =
+	{
+		{ "VK_LAYER_LUNARG_standard_validation",  1, { false, BGFX_CONFIG_DEBUG }, { false, false             } },
+		{ "VK_LAYER_LUNARG_vktrace",              1, { false, false             }, { false, false             } },
+		{ "VK_LAYER_RENDERDOC_Capture",           1, { false, BGFX_CONFIG_DEBUG }, { false, false             } },
+		{ "VK_LAYER_KHRONOS_validation",          1, { false, BGFX_CONFIG_DEBUG }, { false, BGFX_CONFIG_DEBUG } },
+	};
+	BX_STATIC_ASSERT(Layer::Count == BX_COUNTOF(s_layer) );
+
+	void updateLayer(const char* _name, uint32_t _version, bool _instanceLayer)
+	{
+		bx::StringView lyr(_name);
+
+		for (uint32_t ii = 0; ii < Layer::Count; ++ii)
+		{
+			Layer& layer = s_layer[ii];
+			LayerInfo& layerInfo = _instanceLayer ? layer.m_instance : layer.m_device;
+			if (!layerInfo.m_supported && layerInfo.m_initialize)
+			{
+				if (       0 == bx::strCmp(lyr, layer.m_name)
+				&&  _version >= layer.m_minVersion)
+				{
+					layerInfo.m_supported = true;
+					break;
+				}
+			}
+		}
+	}
+
 	struct Extension
 	{
 		enum Enum
@@ -257,20 +313,21 @@ VK_IMPORT_DEVICE
 		bool m_instanceExt;
 		bool m_supported;
 		bool m_initialize;
+		Layer::Enum m_layer;
 	};
 
 	// Extension registry
 	//
 	static Extension s_extension[] =
 	{
-		{ "VK_EXT_debug_utils",                     1, false, false, BGFX_CONFIG_DEBUG_OBJECT_NAME },
-		{ "VK_EXT_debug_report",                    1, false, false, BGFX_CONFIG_DEBUG             },
-		{ "VK_EXT_memory_budget",                   1, false, false, true                          },
-		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                          },
+		{ "VK_EXT_debug_utils",                     1, false, false, BGFX_CONFIG_DEBUG_OBJECT_NAME, Layer::Count },
+		{ "VK_EXT_debug_report",                    1, false, false, BGFX_CONFIG_DEBUG            , Layer::Count },
+		{ "VK_EXT_memory_budget",                   1, false, false, true                         , Layer::Count },
+		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                         , Layer::Count },
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
-	void updateExtension(const char* _name, uint32_t _version, bool _instanceExt)
+	bool updateExtension(const char* _name, uint32_t _version, bool _instanceExt)
 	{
 		bx::StringView ext(_name);
 
@@ -278,8 +335,14 @@ VK_IMPORT_DEVICE
 		for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 		{
 			Extension& extension = s_extension[ii];
+			LayerInfo& layerInfo = _instanceExt
+				? s_layer[extension.m_layer].m_instance
+				: s_layer[extension.m_layer].m_device
+				;
+
 			if (!extension.m_supported
-			&&   extension.m_initialize)
+			&&   extension.m_initialize
+			&&  (extension.m_layer == Layer::Count || layerInfo.m_supported))
 			{
 				if (       0 == bx::strCmp(ext, extension.m_name)
 				&&  _version >= extension.m_minVersion)
@@ -292,13 +355,7 @@ VK_IMPORT_DEVICE
 			}
 		}
 
-		BX_TRACE("\tv%-3d %s%s"
-			, _version
-			, _name
-			, supported ? " (supported)" : "", _name
-			);
-
-		BX_UNUSED(supported);
+		return supported;
 	}
 
 	static const VkFormat s_attribType[][4][2] =
@@ -607,11 +664,19 @@ VK_IMPORT_DEVICE
 
 				for (uint32_t extension = 0; extension < numExtensionProperties; ++extension)
 				{
-					updateExtension(
+					bool supported = updateExtension(
 						  extensionProperties[extension].extensionName
 						, extensionProperties[extension].specVersion
 						, VK_NULL_HANDLE == _physicalDevice
 						);
+
+					BX_TRACE("\tv%-3d %s%s"
+						, extensionProperties[extension].specVersion
+						, extensionProperties[extension].extensionName
+						, supported ? " (supported)" : "", extensionProperties[extension].extensionName // FIXME: maybe include here the layer name?
+						);
+
+					BX_UNUSED(supported);
 				}
 			}
 		}
@@ -636,6 +701,12 @@ VK_IMPORT_DEVICE
 				);
 			for (uint32_t layer = 0; layer < numLayerProperties; ++layer)
 			{
+				updateLayer(
+					layerProperties[layer].layerName
+					, layerProperties[layer].implementationVersion
+					, VK_NULL_HANDLE == _physicalDevice
+					);
+
 				BX_TRACE("%c\t%s (s: 0x%08x, i: 0x%08x), %s"
 					, indent
 					, layerProperties[layer].layerName
@@ -663,11 +734,20 @@ VK_IMPORT_DEVICE
 
 					for (uint32_t extension = 0; extension < numExtensionProperties; ++extension)
 					{
+						bool supported = updateExtension(
+											  extensionProperties[extension].extensionName
+											, extensionProperties[extension].specVersion
+											, VK_NULL_HANDLE == _physicalDevice
+											);
+
 						BX_TRACE("%c\t\t%s (s: 0x%08x)"
 							, indent
 							, extensionProperties[extension].extensionName
 							, extensionProperties[extension].specVersion
+							, supported ? " (supported)" : "", extensionProperties[extension].extensionName
 							);
+
+						BX_UNUSED(supported);
 					}
 				}
 			}
@@ -1252,21 +1332,21 @@ VK_IMPORT
 				appInfo.engineVersion = BGFX_API_VERSION;
 				appInfo.apiVersion    = VK_MAKE_VERSION(1, 0, 0); //VK_HEADER_VERSION);
 
-				const char* enabledLayerNames[] =
-				{
-#if BGFX_CONFIG_DEBUG
-					"VK_LAYER_KHRONOS_validation",
-#endif // BGFX_CONFIG_DEBUG
-					/*not used*/ ""
-				};
+				uint32_t numEnabledLayers = 0;
 
-				const char* fallbackLayerNames[] =
+				const char* enabledLayer[Layer::Count];
+
+				for (uint32_t ii = 0; ii < Layer::Count; ++ii)
 				{
-#if BGFX_CONFIG_DEBUG
-					"VK_LAYER_LUNARG_standard_validation", // deprecated
-#endif // BGFX_CONFIG_DEBUG
-					""
-				};
+					const Layer& layer = s_layer[ii];
+
+					if (layer.m_instance.m_supported
+					&&  layer.m_instance.m_initialize)
+					{
+						enabledLayer[numEnabledLayers++] = layer.m_name;
+						BX_TRACE("%d: %s", numEnabledLayers, layer.m_name);
+					}
+				}
 
 				uint32_t numEnabledExtensions = 2;
 
@@ -1280,9 +1360,14 @@ VK_IMPORT
 				{
 					const Extension& extension = s_extension[ii];
 
+					bool layerEnabled = extension.m_layer == Layer::Count ||
+										(s_layer[extension.m_layer].m_instance.m_supported &&
+										 s_layer[extension.m_layer].m_instance.m_initialize);
+
 					if (extension.m_supported
 					&&  extension.m_initialize
-					&&  extension.m_instanceExt)
+					&&  extension.m_instanceExt
+					&&  layerEnabled)
 					{
 						enabledExtension[numEnabledExtensions++] = extension.m_name;
 						BX_TRACE("%d: %s", numEnabledExtensions, extension.m_name);
@@ -1294,8 +1379,8 @@ VK_IMPORT
 				ici.pNext = NULL;
 				ici.flags = 0;
 				ici.pApplicationInfo = &appInfo;
-				ici.enabledLayerCount   = BX_COUNTOF(enabledLayerNames) - 1;
-				ici.ppEnabledLayerNames = enabledLayerNames;
+				ici.enabledLayerCount   = numEnabledLayers;
+				ici.ppEnabledLayerNames = enabledLayer;
 				ici.enabledExtensionCount   = numEnabledExtensions;
 				ici.ppEnabledExtensionNames = enabledExtension;
 
@@ -1305,17 +1390,10 @@ VK_IMPORT
 					BX_UNUSED(s_allocationCb);
 				}
 
-				do
-				{
-					result = vkCreateInstance(&ici
-							, m_allocatorCb
-							, &m_instance
-							);
-
-					ici.enabledLayerCount   = ici.ppEnabledLayerNames != fallbackLayerNames ? BX_COUNTOF(fallbackLayerNames) - 1 : 0;
-					ici.ppEnabledLayerNames = ici.ppEnabledLayerNames != fallbackLayerNames ? fallbackLayerNames : NULL;
-				}
-				while (result == VK_ERROR_LAYER_NOT_PRESENT);
+				result = vkCreateInstance(&ici
+						, m_allocatorCb
+						, &m_instance
+						);
 			}
 
 			if (VK_SUCCESS != result)
@@ -1609,6 +1687,23 @@ VK_IMPORT_INSTANCE
 			}
 
 			{
+				uint32_t numEnabledLayers = 0;
+
+				const char* enabledLayer[Layer::Count];
+
+				for (uint32_t ii = 0; ii < Layer::Count; ++ii)
+				{
+					const Layer& layer = s_layer[ii];
+
+					if (layer.m_device.m_supported
+					&&  layer.m_device.m_initialize)
+					{
+						enabledLayer[numEnabledLayers++] = layer.m_name;
+						BX_TRACE("%d: %s", numEnabledLayers, layer.m_name);
+					}
+				}
+
+
 				uint32_t numEnabledExtensions = 1;
 
 				const char* enabledExtension[Extension::Count + 1] =
@@ -1620,9 +1715,14 @@ VK_IMPORT_INSTANCE
 				{
 					const Extension& extension = s_extension[ii];
 
+					bool layerEnabled = extension.m_layer == Layer::Count ||
+										(s_layer[extension.m_layer].m_device.m_supported &&
+										 s_layer[extension.m_layer].m_device.m_initialize);
+
 					if (extension.m_supported
 					&&  extension.m_initialize
-					&& !extension.m_instanceExt)
+					&& !extension.m_instanceExt
+					&&  layerEnabled)
 					{
 						enabledExtension[numEnabledExtensions++] = extension.m_name;
 						BX_TRACE("%d: %s", numEnabledExtensions, extension.m_name);
@@ -1644,8 +1744,8 @@ VK_IMPORT_INSTANCE
 				dci.flags = 0;
 				dci.queueCreateInfoCount = 1;
 				dci.pQueueCreateInfos    = &dcqi;
-				dci.enabledLayerCount    = 0;
-				dci.ppEnabledLayerNames  = NULL;
+				dci.enabledLayerCount    = numEnabledLayers;
+				dci.ppEnabledLayerNames  = enabledLayer;
 				dci.enabledExtensionCount   = numEnabledExtensions;
 				dci.ppEnabledExtensionNames = enabledExtension;
 				dci.pEnabledFeatures = &m_deviceFeatures;
