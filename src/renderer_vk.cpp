@@ -6090,45 +6090,48 @@ VK_DESTROY
 //						m_commandList->SetComputeRootConstantBufferView(Rdt::CBV, gpuAddress);
 					}
 
-					uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
-
-					if (currentBindHash != bindHash
-					||  currentDslHash  != program.m_descriptorSetLayoutHash)
+					if (program.m_descriptorSetLayoutHash != 0)
 					{
-						currentBindHash = bindHash;
-						currentDslHash  = program.m_descriptorSetLayoutHash;
+						uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
 
-						allocDescriptorSet(program, renderBind, scratchBuffer);
+						if (currentBindHash != bindHash
+						||  currentDslHash  != program.m_descriptorSetLayoutHash)
+						{
+							currentBindHash = bindHash;
+							currentDslHash  = program.m_descriptorSetLayoutHash;
+
+							allocDescriptorSet(program, renderBind, scratchBuffer);
+						}
+
+						uint32_t offset = 0;
+
+						if (constantsChanged
+						||  hasPredefined)
+						{
+							const uint32_t align = uint32_t(m_deviceProperties.limits.minUniformBufferOffsetAlignment);
+							const uint32_t vsize = bx::strideAlign(program.m_vsh->m_size, align);
+
+							offset = scratchBuffer.m_pos;
+
+							m_vsChanges = 0;
+							m_fsChanges = 0;
+
+							bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos], m_vsScratch, program.m_vsh->m_size);
+
+							scratchBuffer.m_pos += vsize;
+						}
+
+						vkCmdBindDescriptorSets(
+							m_commandBuffer
+							, VK_PIPELINE_BIND_POINT_COMPUTE
+							, program.m_pipelineLayout
+							, 0
+							, 1
+							, &scratchBuffer.getCurrentDS()
+							, constantsChanged || hasPredefined ? 1 : 0
+							, &offset
+							);
 					}
-
-					uint32_t offset = 0;
-
-					if (constantsChanged
-					||  hasPredefined)
-					{
-						const uint32_t align = uint32_t(m_deviceProperties.limits.minUniformBufferOffsetAlignment);
-						const uint32_t vsize = bx::strideAlign(program.m_vsh->m_size, align);
-
-						offset = scratchBuffer.m_pos;
-
-						m_vsChanges = 0;
-						m_fsChanges = 0;
-
-						bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos], m_vsScratch, program.m_vsh->m_size);
-
-						scratchBuffer.m_pos += vsize;
-					}
-
-					vkCmdBindDescriptorSets(
-						m_commandBuffer
-						, VK_PIPELINE_BIND_POINT_COMPUTE
-						, program.m_pipelineLayout
-						, 0
-						, 1
-						, &scratchBuffer.getCurrentDS()
-						, constantsChanged || hasPredefined ? 1 : 0
-						, &offset
-						);
 
 					if (isValid(compute.m_indirectBuffer) )
 					{
@@ -6284,7 +6287,6 @@ VK_DESTROY
 							);
 
 					uint16_t scissor = draw.m_scissor;
-					uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
 
 					if (pipeline != currentPipeline
 					||  0 != changedStencil)
@@ -6388,53 +6390,57 @@ VK_DESTROY
 						viewState.setPredefined<4>(this, view, program, _render, draw);
 					}
 
-					if (currentBindHash != bindHash
-					||  currentDslHash  != program.m_descriptorSetLayoutHash)
+					if (program.m_descriptorSetLayoutHash != 0)
 					{
-						currentBindHash = bindHash;
-						currentDslHash  = program.m_descriptorSetLayoutHash;
-
-						allocDescriptorSet(program, renderBind, scratchBuffer);
-					}
-
-					uint32_t numOffset = 0;
-					uint32_t offsets[2] = { 0, 0 };
-
-					if (constantsChanged
-					||  hasPredefined)
-					{
-						const uint32_t align = uint32_t(m_deviceProperties.limits.minUniformBufferOffsetAlignment);
-						const uint32_t vsize = bx::strideAlign(program.m_vsh->m_size, align);
-						const uint32_t fsize = bx::strideAlign((NULL != program.m_fsh ? program.m_fsh->m_size : 0), align);
-						const uint32_t total = vsize + fsize;
-
-						if (vsize > 0)
+						uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+						if (currentBindHash != bindHash
+						||  currentDslHash  != program.m_descriptorSetLayoutHash)
 						{
-							offsets[numOffset++] = scratchBuffer.m_pos;
-							bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos], m_vsScratch, program.m_vsh->m_size);
+							currentBindHash = bindHash;
+							currentDslHash  = program.m_descriptorSetLayoutHash;
+
+							allocDescriptorSet(program, renderBind, scratchBuffer);
 						}
 
-						if (fsize > 0)
+						uint32_t numOffset = 0;
+						uint32_t offsets[2] = { 0, 0 };
+
+						if (constantsChanged
+						||  hasPredefined)
 						{
-							offsets[numOffset++] = scratchBuffer.m_pos + vsize;
-							bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos + vsize], m_fsScratch, program.m_fsh->m_size);
+							const uint32_t align = uint32_t(m_deviceProperties.limits.minUniformBufferOffsetAlignment);
+							const uint32_t vsize = bx::strideAlign(program.m_vsh->m_size, align);
+							const uint32_t fsize = bx::strideAlign((NULL != program.m_fsh ? program.m_fsh->m_size : 0), align);
+							const uint32_t total = vsize + fsize;
+
+							if (vsize > 0)
+							{
+								offsets[numOffset++] = scratchBuffer.m_pos;
+								bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos], m_vsScratch, program.m_vsh->m_size);
+							}
+
+							if (fsize > 0)
+							{
+								offsets[numOffset++] = scratchBuffer.m_pos + vsize;
+								bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos + vsize], m_fsScratch, program.m_fsh->m_size);
+							}
+
+							m_vsChanges = 0;
+							m_fsChanges = 0;
+							scratchBuffer.m_pos += total;
 						}
 
-						m_vsChanges = 0;
-						m_fsChanges = 0;
-						scratchBuffer.m_pos += total;
+						vkCmdBindDescriptorSets(
+							m_commandBuffer
+							, VK_PIPELINE_BIND_POINT_GRAPHICS
+							, program.m_pipelineLayout
+							, 0
+							, 1
+							, &scratchBuffer.getCurrentDS()
+							, numOffset
+							, offsets
+							);
 					}
-
-					vkCmdBindDescriptorSets(
-						m_commandBuffer
-						, VK_PIPELINE_BIND_POINT_GRAPHICS
-						, program.m_pipelineLayout
-						, 0
-						, 1
-						, &scratchBuffer.getCurrentDS()
-						, numOffset
-						, offsets
-						);
 
 //					if (constantsChanged
 //					||  hasPredefined)
