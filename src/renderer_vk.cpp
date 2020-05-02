@@ -3576,26 +3576,11 @@ VK_IMPORT_DEVICE
 
 			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
 
-			VertexLayout layout;
-			if (0 < _numStreams)
-			{
-				bx::memCopy(&layout, _layouts[0], sizeof(VertexLayout) );
-				const uint16_t* attrMask = program.m_vsh->m_attrMask;
-
-				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
-				{
-					uint16_t mask = attrMask[ii];
-					uint16_t attr = (layout.m_attributes[ii] & mask);
-					layout.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
-				}
-			}
-
 			bx::HashMurmur2A murmur;
 			murmur.begin();
 			murmur.add(_state);
 			murmur.add(_stencil);
 			murmur.add(program.m_vsh->m_hash);
-			murmur.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask) );
 			if (NULL != program.m_fsh)
 			{
 				murmur.add(program.m_fsh->m_hash);
@@ -3604,7 +3589,6 @@ VK_IMPORT_DEVICE
 			{
 				murmur.add(_layouts[ii]->m_hash);
 			}
-			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
 			murmur.add(m_fbh.idx);
 			murmur.add(_numInstanceData);
 			const uint32_t hash = murmur.end();
