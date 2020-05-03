@@ -1704,11 +1704,12 @@ VK_IMPORT_INSTANCE
 				}
 
 
-				uint32_t numEnabledExtensions = 1;
+				uint32_t numEnabledExtensions = 2;
 
-				const char* enabledExtension[Extension::Count + 1] =
+				const char* enabledExtension[Extension::Count + 2] =
 				{
 					VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+					VK_KHR_MAINTENANCE1_EXTENSION_NAME
 				};
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -2698,9 +2699,9 @@ VK_IMPORT_DEVICE
 
 			VkViewport vp;
 			vp.x        = 0;
-			vp.y        = 0;
+			vp.y        = (float)height;
 			vp.width    = (float)width;
-			vp.height   = (float)height;
+			vp.height   = -(float)height;
 			vp.minDepth = 0.0f;
 			vp.maxDepth = 1.0f;
 			vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
@@ -5999,9 +6000,9 @@ VK_DESTROY
 
 						VkViewport vp;
 						vp.x        = rect.m_x;
-						vp.y        = rect.m_y;
+						vp.y        = rect.m_y + rect.m_height;
 						vp.width    = rect.m_width;
-						vp.height   = rect.m_height;
+						vp.height   = -(float)rect.m_height;
 						vp.minDepth = 0.0f;
 						vp.maxDepth = 1.0f;
 						vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
