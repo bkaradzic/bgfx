@@ -514,7 +514,8 @@ VK_DESTROY
 	struct TextureVK
 	{
 		TextureVK()
-			: m_vkTextureFormat(VK_FORMAT_UNDEFINED)
+			: m_directAccessPtr(NULL)
+			, m_vkTextureFormat(VK_FORMAT_UNDEFINED)
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem(VK_NULL_HANDLE)
 			, m_textureImageView(VK_NULL_HANDLE)
@@ -539,8 +540,8 @@ VK_DESTROY
 		uint32_t m_numLayers;
 		uint32_t m_numSides;
 		VkImageViewType m_type;
-		uint8_t m_requestedFormat;
-		uint8_t m_textureFormat;
+		bgfx::TextureFormat::Enum m_requestedFormat;
+		bgfx::TextureFormat::Enum m_textureFormat;
 		uint8_t m_numMips;
 		VkFormat m_vkTextureFormat;
 		VkComponentMapping m_vkComponentMapping;

@@ -5176,8 +5176,8 @@ VK_DESTROY
 			m_height    = ti.height;
 			m_depth     = ti.depth;
 			m_numLayers = ti.numLayers;
-			m_requestedFormat = uint8_t(imageContainer.m_format);
-			m_textureFormat = uint8_t(getViableTextureFormat(imageContainer));
+			m_requestedFormat = bgfx::TextureFormat::Enum(imageContainer.m_format);
+			m_textureFormat = getViableTextureFormat(imageContainer);
 			m_vkTextureFormat = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 				? s_textureFormat[m_textureFormat].m_fmtDsv
 				: (m_flags & BGFX_TEXTURE_SRGB) ? s_textureFormat[m_textureFormat].m_fmtSrgb : s_textureFormat[m_textureFormat].m_fmt
@@ -5230,12 +5230,13 @@ VK_DESTROY
 			BX_UNUSED(swizzle, writeOnly, computeWrite, renderTarget, blit);
 
 			BX_TRACE(
-				  "Texture %3d: %s (requested: %s), %dx%d%s RT[%c], BO[%c], CW[%c]%s."
+				  "Texture %3d: %s (requested: %s), %dx%dx%d%s RT[%c], BO[%c], CW[%c]%s."
 				, (int)(this - s_renderVK->m_textures)
 				, getName((TextureFormat::Enum)m_textureFormat)
 				, getName((TextureFormat::Enum)m_requestedFormat)
 				, ti.width
 				, ti.height
+				, ti.depth
 				, imageContainer.m_cubeMap ? "x6" : ""
 				, renderTarget ? 'x' : ' '
 				, writeOnly ? 'x' : ' '
@@ -5324,8 +5325,9 @@ VK_DESTROY
 						{
 							const uint32_t pitch = bx::strideAlign(mip.m_width * mip.m_bpp / 8, alignment);
 							const uint32_t slice = bx::strideAlign(mip.m_height * pitch, alignment);
+							const uint32_t size = slice * mip.m_depth;
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice);
+							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
 							bimg::imageCopy(temp
 								, mip.m_height
 								, mip.m_width * mip.m_bpp / 8
@@ -5340,7 +5342,7 @@ VK_DESTROY
 							imageInfos[kk].depth = mip.m_depth;
 							imageInfos[kk].pitch = pitch;
 							imageInfos[kk].slice = slice;
-							imageInfos[kk].size = slice;
+							imageInfos[kk].size = size;
 							imageInfos[kk].mipLevel = lod;
 							imageInfos[kk].layer = side;
 						}
@@ -5594,6 +5596,29 @@ VK_DESTROY
 	{
 		BX_UNUSED(_commandPool);
 
+		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat));
+		uint32_t rectpitch = _rect.m_width * bpp / 8;
+		uint32_t slicepitch = rectpitch * _rect.m_height;
+		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
+		{
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+			rectpitch = (_rect.m_width / blockInfo.blockWidth) * blockInfo.blockSize;
+			slicepitch = (_rect.m_height / blockInfo.blockHeight) * rectpitch;
+		}
+		const uint32_t srcpitch = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		const uint32_t size     = UINT16_MAX == _pitch ? slicepitch  * _depth: _rect.m_height * _pitch * _depth;
+		const bool convert = m_textureFormat != m_requestedFormat;
+
+		uint8_t* data = _mem->data;
+		uint8_t* temp = NULL;
+
+		if (convert)
+		{
+			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
+			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat));
+			data = temp;
+		}
+
 		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 		VkDevice device = s_renderVK->m_device;
 
@@ -5605,7 +5630,7 @@ VK_DESTROY
 		bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		bci.pNext = NULL;
 		bci.flags = 0;
-		bci.size = (_pitch == UINT16_MAX ? _mem->size :_rect.m_height * _pitch * _depth);
+		bci.size = size;
 		bci.queueFamilyIndexCount = 0;
 		bci.pQueueFamilyIndices = NULL;
 		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -5628,11 +5653,10 @@ VK_DESTROY
 
 		void* directAccessPtr = NULL;
 		VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingDeviceMem, 0));
-		VK_CHECK(vkMapMemory(device, stagingDeviceMem, 0, mr.size, 0, (void**)&directAccessPtr));
-		bx::memCopy(directAccessPtr, _mem->data, size_t(bci.size));
+		VK_CHECK(vkMapMemory(device, stagingDeviceMem, 0, size, 0, (void**)&directAccessPtr));
+		bx::memCopy(directAccessPtr, data, size);
 		vkUnmapMemory(device, stagingDeviceMem);
 
-		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		VkBufferImageCopy region;
 		region.bufferOffset      = 0;
 		region.bufferRowLength   = (_pitch == UINT16_MAX ? 0 : _pitch * 8 / bpp);
@@ -5648,6 +5672,11 @@ VK_DESTROY
 
 		vkFreeMemory(device, stagingDeviceMem, allocatorCb);
 		vkDestroy(stagingBuffer);
+
+		if (NULL != temp)
+		{
+			BX_FREE(g_allocator, temp);
+		}
 	}
 
 	void TextureVK::copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy)
