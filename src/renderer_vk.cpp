@@ -1704,11 +1704,12 @@ VK_IMPORT_INSTANCE
 				}
 
 
-				uint32_t numEnabledExtensions = 1;
+				uint32_t numEnabledExtensions = 2;
 
-				const char* enabledExtension[Extension::Count + 1] =
+				const char* enabledExtension[Extension::Count + 2] =
 				{
 					VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+					VK_KHR_MAINTENANCE1_EXTENSION_NAME
 				};
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -2698,9 +2699,9 @@ VK_IMPORT_DEVICE
 
 			VkViewport vp;
 			vp.x        = 0;
-			vp.y        = 0;
+			vp.y        = (float)height;
 			vp.width    = (float)width;
-			vp.height   = (float)height;
+			vp.height   = -(float)height;
 			vp.minDepth = 0.0f;
 			vp.maxDepth = 1.0f;
 			vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
@@ -3805,75 +3806,81 @@ VK_IMPORT_DEVICE
 			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 			{
 				const Binding& bind = renderBind.m_bind[stage];
+				const BindInfo& bindInfo = program.m_bindInfo[stage];
+
+				// bgfx does not seem to forbid setting a texture to a stage that a program does not use
+				if (bind.m_type == Binding::Texture
+				&& !isValid(program.m_bindInfo[stage].uniformHandle))
+					continue;
+
 				if (kInvalidHandle != bind.m_idx)
 				{
-					const ShaderVK::BindInfo* bindInfo = NULL;
-					if (isValid(program.m_vsh->m_bindInfo[stage].uniformHandle))
+                    switch (bind.m_type)
+                    {
+                    case Binding::Image:
 					{
-						bindInfo = &(program.m_vsh->m_bindInfo[stage]);
-					}
-					else if (NULL != program.m_fsh && isValid(program.m_fsh->m_bindInfo[stage].uniformHandle))
-					{
-						bindInfo = &(program.m_fsh->m_bindInfo[stage]);
-					}
-
-					if (NULL == bindInfo)
-					{
-						continue;
-					}
-
-					if (ShaderVK::BindType::Storage == bindInfo->type)
-					{
-						VkDescriptorType descriptorType = (VkDescriptorType)bindInfo->samplerBinding;
 						wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 						wds[wdsCount].pNext            = NULL;
 						wds[wdsCount].dstSet           = descriptorSet;
-						wds[wdsCount].dstBinding       = bindInfo->binding;
+						wds[wdsCount].dstBinding       = bindInfo.binding;
 						wds[wdsCount].dstArrayElement  = 0;
 						wds[wdsCount].descriptorCount  = 1;
-						wds[wdsCount].descriptorType   = descriptorType;
+						wds[wdsCount].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 						wds[wdsCount].pImageInfo       = NULL;
 						wds[wdsCount].pBufferInfo      = NULL;
 						wds[wdsCount].pTexelBufferView = NULL;
+						
+						TextureVK& texture = m_textures[bind.m_idx];
+						VkSampler sampler = getSampler(
+							(0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+								? bind.m_samplerFlags
+								: (uint32_t)texture.m_flags
+							) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK)
+							, (uint32_t)texture.m_numMips);
 
-						if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER == descriptorType)
+						if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout
+						&&  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL != texture.m_currentImageLayout)
 						{
-							BufferVK& sb = bind.m_type == Binding::VertexBuffer ? m_vertexBuffers[bind.m_idx] : m_indexBuffers[bind.m_idx];
-							bufferInfo[bufferCount].buffer = sb.m_buffer;
-							bufferInfo[bufferCount].offset = 0;
-							bufferInfo[bufferCount].range  = sb.m_size;
-							wds[wdsCount].pBufferInfo = &bufferInfo[bufferCount];
-							++bufferCount;
+							texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 						}
-						else if (VK_DESCRIPTOR_TYPE_STORAGE_IMAGE == descriptorType)
-						{
-							TextureVK& texture = m_textures[bind.m_idx];
-							VkSampler sampler = getSampler(
-								(0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
-									? bind.m_samplerFlags
-									: (uint32_t)texture.m_flags
-								) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK)
-								, (uint32_t)texture.m_numMips);
 
-							if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout
-							&&  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL != texture.m_currentImageLayout)
-							{
-								texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-							}
-
-							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
-							imageInfo[imageCount].imageView   = VK_NULL_HANDLE != texture.m_textureImageStorageView
-								? texture.m_textureImageStorageView
-								: texture.m_textureImageView
-								;
-							imageInfo[imageCount].sampler     = sampler;
-							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
-							++imageCount;
-						}
+						imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
+						imageInfo[imageCount].imageView   = VK_NULL_HANDLE != texture.m_textureImageStorageView
+							? texture.m_textureImageStorageView
+							: texture.m_textureImageView
+							;
+						imageInfo[imageCount].sampler     = sampler;
+						wds[wdsCount].pImageInfo = &imageInfo[imageCount];
+						++imageCount;
 
 						++wdsCount;
 					}
-					else if (ShaderVK::BindType::Sampler == bindInfo->type)
+					break;
+					case Binding::VertexBuffer:
+					case Binding::IndexBuffer:
+					{
+						wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+						wds[wdsCount].pNext            = NULL;
+						wds[wdsCount].dstSet           = descriptorSet;
+						wds[wdsCount].dstBinding       = bindInfo.binding;
+						wds[wdsCount].dstArrayElement  = 0;
+						wds[wdsCount].descriptorCount  = 1;
+						wds[wdsCount].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+						wds[wdsCount].pImageInfo       = NULL;
+						wds[wdsCount].pBufferInfo      = NULL;
+						wds[wdsCount].pTexelBufferView = NULL;
+						
+						BufferVK& sb = bind.m_type == Binding::VertexBuffer ? m_vertexBuffers[bind.m_idx] : m_indexBuffers[bind.m_idx];
+						bufferInfo[bufferCount].buffer = sb.m_buffer;
+						bufferInfo[bufferCount].offset = 0;
+						bufferInfo[bufferCount].range  = sb.m_size;
+						wds[wdsCount].pBufferInfo = &bufferInfo[bufferCount];
+						++bufferCount;
+
+						++wdsCount;
+					}
+					break;
+					case Binding::Texture:
 					{
 						TextureVK& texture = m_textures[bind.m_idx];
 						VkSampler sampler = getSampler(
@@ -3899,7 +3906,7 @@ VK_IMPORT_DEVICE
 						wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 						wds[wdsCount].pNext            = NULL;
 						wds[wdsCount].dstSet           = descriptorSet;
-						wds[wdsCount].dstBinding       = bindInfo->binding;
+						wds[wdsCount].dstBinding       = bindInfo.binding;
 						wds[wdsCount].dstArrayElement  = 0;
 						wds[wdsCount].descriptorCount  = 1;
 						wds[wdsCount].descriptorType   = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
@@ -3911,7 +3918,7 @@ VK_IMPORT_DEVICE
 						wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 						wds[wdsCount].pNext            = NULL;
 						wds[wdsCount].dstSet           = descriptorSet;
-						wds[wdsCount].dstBinding       = bindInfo->samplerBinding;
+						wds[wdsCount].dstBinding       = bindInfo.samplerBinding;
 						wds[wdsCount].dstArrayElement  = 0;
 						wds[wdsCount].descriptorCount  = 1;
 						wds[wdsCount].descriptorType   = VK_DESCRIPTOR_TYPE_SAMPLER;
@@ -3921,6 +3928,8 @@ VK_IMPORT_DEVICE
 						++wdsCount;
 
 						++imageCount;
+					}
+					break;
 					}
 				}
 			}
@@ -4820,22 +4829,30 @@ VK_DESTROY
 				}
 				else if (UniformType::End == (~BGFX_UNIFORM_MASK & type))
 				{
-					m_bindInfo[num].uniformHandle  = { 0 };
-					m_bindInfo[num].type           = BindType::Storage;
-					m_bindInfo[num].binding        = regCount; // regCount is used for buffer binding index
-					m_bindInfo[num].samplerBinding = regIndex; // regIndex is used for descriptor type
+					// regCount is used for descriptor type
+					bool buffer = regCount == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+
+					const uint8_t stage = regIndex - (buffer ? 16 : 32) - (fragment ? 48 : 0);  // regIndex is used for buffer binding index
+
+					m_bindInfo[stage].type = buffer
+						? BindType::Buffer
+						: BindType::Image;
+					m_bindInfo[stage].uniformHandle  = { 0 };
+					m_bindInfo[stage].binding        = regIndex;
 
 					kind = "storage";
 				}
 				else if (UniformType::Sampler == (~BGFX_UNIFORM_MASK & type) )
 				{
+					const uint8_t stage = regIndex - 16 - (fragment ? 48 : 0); // regIndex is used for image/sampler binding index
+
 					const UniformRegInfo* info = s_renderVK->m_uniformReg.find(name);
 					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
-					m_bindInfo[num].uniformHandle  = info->m_handle;
-					m_bindInfo[num].type           = BindType::Sampler;
-					m_bindInfo[num].binding        = regIndex; // regIndex is used for image binding index
-					m_bindInfo[num].samplerBinding = regCount; // regCount is used for sampler binding index
+					m_bindInfo[stage].uniformHandle    = info->m_handle;
+					m_bindInfo[stage].type             = BindType::Sampler;
+					m_bindInfo[stage].binding          = regIndex;
+					m_bindInfo[stage].samplerBinding   = regIndex + 16;
 
 					kind = "sampler";
 				}
@@ -4931,55 +4948,65 @@ VK_DESTROY
 		bx::read(&reader, m_size);
 
 		// fill binding description with uniform informations
+		uint16_t bidx = 0;
+		if (m_size > 0)
 		{
-			uint16_t bidx = 0;
-			if (m_size > 0)
-			{
-				m_uniformBinding = fragment ? 48 : 0;
-				m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
-				m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				m_bindings[bidx].binding = m_uniformBinding;
-				m_bindings[bidx].pImmutableSamplers = NULL;
-				m_bindings[bidx].descriptorCount = 1;
-				bidx++;
-			}
+			m_uniformBinding = fragment ? 48 : 0;
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_bindInfo); ++ii)
-			{
-				switch (m_bindInfo[ii].type)
-				{
-					case BindType::Storage:
-						m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
-						m_bindings[bidx].descriptorType = (VkDescriptorType)m_bindInfo[ii].samplerBinding;
-						m_bindings[bidx].binding = m_bindInfo[ii].binding;
-						m_bindings[bidx].pImmutableSamplers = NULL;
-						m_bindings[bidx].descriptorCount = 1;
-						bidx++;
-						break;
-
-					case BindType::Sampler:
-						m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
-						m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-						m_bindings[bidx].binding = m_bindInfo[ii].binding;
-						m_bindings[bidx].pImmutableSamplers = NULL;
-						m_bindings[bidx].descriptorCount = 1;
-						bidx++;
-
-						m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
-						m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-						m_bindings[bidx].binding = m_bindInfo[ii].samplerBinding;
-						m_bindings[bidx].pImmutableSamplers = NULL;
-						m_bindings[bidx].descriptorCount = 1;
-						bidx++;
-						break;
-
-					default:
-						break;
-				}
-			}
-
-			m_numBindings = bidx;
+			VkDescriptorSetLayoutBinding& binding = m_bindings[bidx];
+			binding.stageFlags = VK_SHADER_STAGE_ALL;
+			binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			binding.binding = m_uniformBinding;
+			binding.pImmutableSamplers = NULL;
+			binding.descriptorCount = 1;
+			bidx++;
 		}
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_bindInfo); ++ii)
+		{
+			switch (m_bindInfo[ii].type)
+			{
+				case BindType::Buffer:
+				case BindType::Image:
+				{
+					VkDescriptorSetLayoutBinding& binding = m_bindings[bidx];
+					binding.stageFlags = VK_SHADER_STAGE_ALL;
+					binding.descriptorType = BindType::Buffer == m_bindInfo[ii].type
+						? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+						: VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+					binding.binding = m_bindInfo[ii].binding;
+					binding.pImmutableSamplers = NULL;
+					binding.descriptorCount = 1;
+					bidx++;
+				}
+				break;
+
+				case BindType::Sampler:
+				{
+					VkDescriptorSetLayoutBinding& textureBinding = m_bindings[bidx];
+					textureBinding.stageFlags = VK_SHADER_STAGE_ALL;
+					textureBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+					textureBinding.binding = m_bindInfo[ii].binding;
+					textureBinding.pImmutableSamplers = NULL;
+					textureBinding.descriptorCount = 1;
+					bidx++;
+
+					VkDescriptorSetLayoutBinding& samplerBinding = m_bindings[bidx];
+					samplerBinding.stageFlags = VK_SHADER_STAGE_ALL;
+					samplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+					samplerBinding.binding = m_bindInfo[ii].samplerBinding;
+					samplerBinding.pImmutableSamplers = NULL;
+					samplerBinding.descriptorCount = 1;
+					bidx++;
+				}
+				break;
+
+				default:
+					break;
+			}
+		}
+
+		m_numBindings = bidx;
 	}
 
 	void ShaderVK::destroy()
@@ -5026,6 +5053,18 @@ VK_DESTROY
 				, _fsh->m_numPredefined * sizeof(PredefinedUniform)
 				);
 			m_numPredefined += _fsh->m_numPredefined;
+		}
+
+		for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+		{
+			if (isValid(m_vsh->m_bindInfo[stage].uniformHandle))
+			{
+				m_bindInfo[stage] = m_vsh->m_bindInfo[stage];
+			}
+			else if (NULL != m_fsh && isValid(m_fsh->m_bindInfo[stage].uniformHandle))
+			{
+				m_bindInfo[stage] = m_fsh->m_bindInfo[stage];
+			}
 		}
 
 		// create exact pipeline layout
@@ -5993,9 +6032,9 @@ VK_DESTROY
 
 						VkViewport vp;
 						vp.x        = rect.m_x;
-						vp.y        = rect.m_y;
+						vp.y        = rect.m_y + rect.m_height;
 						vp.width    = rect.m_width;
-						vp.height   = rect.m_height;
+						vp.height   = -(float)rect.m_height;
 						vp.minDepth = 0.0f;
 						vp.maxDepth = 1.0f;
 						vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
