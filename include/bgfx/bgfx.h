@@ -61,6 +61,7 @@ namespace bgfx
 			OpenGLES,     //!< OpenGL ES 2.0+
 			OpenGL,       //!< OpenGL 2.1+
 			Vulkan,       //!< Vulkan
+			WebGPU,       //!< WebGPU
 
 			Count
 		};

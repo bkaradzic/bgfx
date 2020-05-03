@@ -483,7 +483,11 @@ public:
 						gbufferAt[1].init(m_gbufferTex[1]);
 					}
 
-					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT | tsFlags);
+					bgfx::TextureFormat::Enum depthFormat = bgfx::getRendererType() == bgfx::RendererType::WebGPU
+						? bgfx::TextureFormat::D32F   // WebGPU only supports sampling those for now
+						: bgfx::TextureFormat::D24S8;
+
+					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, depthFormat, BGFX_TEXTURE_RT | tsFlags);
 					gbufferAt[2].init(m_gbufferTex[2]);
 
 					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAt), gbufferAt, true);

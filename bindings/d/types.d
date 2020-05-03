@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 105;
+enum uint BGFX_API_VERSION = 106;
 
 alias bgfx_view_id_t = ushort;
 
@@ -435,6 +435,7 @@ enum bgfx_renderer_type_t
 	BGFX_RENDERER_TYPE_OPENGLES, /// OpenGL ES 2.0+
 	BGFX_RENDERER_TYPE_OPENGL, /// OpenGL 2.1+
 	BGFX_RENDERER_TYPE_VULKAN, /// Vulkan
+	BGFX_RENDERER_TYPE_WEBGPU, /// WebGPU
 
 	BGFX_RENDERER_TYPE_COUNT
 }

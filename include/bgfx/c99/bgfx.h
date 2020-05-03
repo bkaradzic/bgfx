@@ -90,6 +90,7 @@ typedef enum bgfx_renderer_type
     BGFX_RENDERER_TYPE_OPENGLES,              /** ( 7) OpenGL ES 2.0+                 */
     BGFX_RENDERER_TYPE_OPENGL,                /** ( 8) OpenGL 2.1+                    */
     BGFX_RENDERER_TYPE_VULKAN,                /** ( 9) Vulkan                         */
+    BGFX_RENDERER_TYPE_WEBGPU,                /** (10) WebGPU                         */
 
     BGFX_RENDERER_TYPE_COUNT
 
