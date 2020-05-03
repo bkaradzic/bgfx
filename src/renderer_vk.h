@@ -429,6 +429,26 @@ VK_DESTROY
 		VertexLayoutHandle m_layoutHandle;
 	};
 
+	struct BindType
+	{
+		enum Enum
+		{
+			Buffer,
+			Image,
+			Sampler,
+
+			Count
+		};
+	};
+
+	struct BindInfo
+	{
+		UniformHandle uniformHandle = BGFX_INVALID_HANDLE;
+		BindType::Enum type;
+		uint32_t binding;
+		uint32_t samplerBinding;
+	};
+
 	struct ShaderVK
 	{
 		ShaderVK()
@@ -460,25 +480,6 @@ VK_DESTROY
 		uint8_t m_numPredefined;
 		uint8_t m_numAttrs;
 
-		struct BindType
-		{
-			enum Enum
-			{
-				Storage,
-				Sampler,
-
-				Count
-			};
-		};
-
-		struct BindInfo
-		{
-			UniformHandle uniformHandle;
-			BindType::Enum type;
-			uint32_t binding;
-			uint32_t samplerBinding;
-		};
-
 		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t m_uniformBinding;
 		uint16_t m_numBindings;
@@ -500,6 +501,8 @@ VK_DESTROY
 
 		const ShaderVK* m_vsh;
 		const ShaderVK* m_fsh;
+
+		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
