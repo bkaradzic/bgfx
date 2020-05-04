@@ -64,6 +64,11 @@ function bgfxProjectBase(_kind, _defines)
 			buildoptions {
 				"-fPIC",
 			}
+			links {
+				"X11",
+				"GL",
+				"pthread",
+			}
 
 		configuration {}
 	end
