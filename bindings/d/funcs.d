@@ -1206,6 +1206,11 @@ version(BindBgfx_Static)
 	void bgfx_set_view_order(bgfx_view_id_t _id, ushort _num, const(bgfx_view_id_t)* _order);
 	
 	/**
+	 * Reset all view settings to default.
+	 */
+	void bgfx_reset_view(bgfx_view_id_t _id);
+	
+	/**
 	 * Begin submitting draw calls from thread.
 	 * Params:
 	 * _forThread = Explicitly request an encoder for a worker thread.
@@ -3376,6 +3381,12 @@ else
 		 */
 		alias da_bgfx_set_view_order = void function(bgfx_view_id_t _id, ushort _num, const(bgfx_view_id_t)* _order);
 		da_bgfx_set_view_order bgfx_set_view_order;
+		
+		/**
+		 * Reset all view settings to default.
+		 */
+		alias da_bgfx_reset_view = void function(bgfx_view_id_t _id);
+		da_bgfx_reset_view bgfx_reset_view;
 		
 		/**
 		 * Begin submitting draw calls from thread.

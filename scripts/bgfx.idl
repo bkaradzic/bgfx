@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(105)
+version(106)
 
 typedef "bool"
 typedef "char"
@@ -2075,6 +2075,11 @@ func.setViewOrder
 	.order "const ViewId*" --- View remap id table. Passing `NULL` will reset view ids
 	                       --- to default state.
 	 { default = NULL }
+
+--- Reset all view settings to default.
+func.resetView
+	"void"
+	.id "ViewId" -- _id View id.
 
 --- Begin submitting draw calls from thread.
 func.begin { cname = "encoder_begin" }

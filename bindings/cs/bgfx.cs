@@ -3447,6 +3447,13 @@ public static partial class bgfx
 	public static extern unsafe void set_view_order(ushort _id, ushort _num, ushort* _order);
 	
 	/// <summary>
+	/// Reset all view settings to default.
+	/// </summary>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_reset_view", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void reset_view(ushort _id);
+	
+	/// <summary>
 	/// Begin submitting draw calls from thread.
 	/// </summary>
 	///
