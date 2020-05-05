@@ -29,6 +29,7 @@
 #include "source/assembly_grammar.h"
 #include "source/opt/cfg.h"
 #include "source/opt/constants.h"
+#include "source/opt/debug_info_manager.h"
 #include "source/opt/decoration_manager.h"
 #include "source/opt/def_use_manager.h"
 #include "source/opt/dominator_analysis.h"
@@ -78,7 +79,8 @@ class IRContext {
     kAnalysisIdToFuncMapping = 1 << 13,
     kAnalysisConstants = 1 << 14,
     kAnalysisTypes = 1 << 15,
-    kAnalysisEnd = 1 << 16
+    kAnalysisDebugInfo = 1 << 16,
+    kAnalysisEnd = 1 << 17
   };
 
   using ProcessFunction = std::function<bool(Function*)>;
@@ -102,8 +104,7 @@ class IRContext {
         id_to_name_(nullptr),
         max_id_bound_(kDefaultMaxIdBound),
         preserve_bindings_(false),
-        preserve_spec_constants_(false),
-        debug_info_none_inst_(nullptr) {
+        preserve_spec_constants_(false) {
     SetContextMessageConsumer(syntax_context_, consumer_);
     module_->SetContext(this);
   }
@@ -120,8 +121,7 @@ class IRContext {
         id_to_name_(nullptr),
         max_id_bound_(kDefaultMaxIdBound),
         preserve_bindings_(false),
-        preserve_spec_constants_(false),
-        debug_info_none_inst_(nullptr) {
+        preserve_spec_constants_(false) {
     SetContextMessageConsumer(syntax_context_, consumer_);
     module_->SetContext(this);
     InitializeCombinators();
@@ -326,6 +326,17 @@ class IRContext {
       BuildTypeManager();
     }
     return type_mgr_.get();
+  }
+
+  // Returns a pointer to the debug information manager.  If no debug
+  // information manager has been created yet, it creates one.
+  // NOTE: Once created, the debug information manager remains active
+  // it is never re-built.
+  analysis::DebugInfoManager* get_debug_info_mgr() {
+    if (!AreAnalysesValid(kAnalysisDebugInfo)) {
+      BuildDebugInfoManager();
+    }
+    return debug_info_mgr_.get();
   }
 
   // Returns a pointer to the scalar evolution analysis. If it is invalid it
@@ -657,6 +668,13 @@ class IRContext {
     valid_analyses_ = valid_analyses_ | kAnalysisTypes;
   }
 
+  // Builds the debug information manager from scratch, even if it was
+  // already valid.
+  void BuildDebugInfoManager() {
+    debug_info_mgr_ = MakeUnique<analysis::DebugInfoManager>(this);
+    valid_analyses_ = valid_analyses_ | kAnalysisDebugInfo;
+  }
+
   // Removes all computed dominator and post-dominator trees. This will force
   // the context to rebuild the trees on demand.
   void ResetDominatorAnalysis() {
@@ -709,9 +727,6 @@ class IRContext {
 
   // Add |var_id| to all entry points in module.
   void AddVarToEntryPoints(uint32_t var_id);
-
-  // Get the existing DebugInfoNone. If it is null, create one and keep it.
-  Instruction* GetOpenCL100DebugInfoNone();
 
   // The SPIR-V syntax context containing grammar tables for opcodes and
   // operands.
@@ -782,6 +797,9 @@ class IRContext {
   // Type manager for |module_|.
   std::unique_ptr<analysis::TypeManager> type_mgr_;
 
+  // Debug information manager for |module_|.
+  std::unique_ptr<analysis::DebugInfoManager> debug_info_mgr_;
+
   // A map from an id to its corresponding OpName and OpMemberName instructions.
   std::unique_ptr<std::multimap<uint32_t, Instruction*>> id_to_name_;
 
@@ -806,10 +824,6 @@ class IRContext {
   // Whether all specialization constants within |module_|
   // should be preserved.
   bool preserve_spec_constants_;
-
-  // DebugInfoNone instruction. We need only a single DebugInfoNone.
-  // To reuse the existing one, we keep it using this member variable.
-  Instruction* debug_info_none_inst_;
 };
 
 inline IRContext::Analysis operator|(IRContext::Analysis lhs,

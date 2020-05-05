@@ -107,7 +107,8 @@ Shrinker::ShrinkerResultStatus Shrinker::Run(
   }
 
   // Initial binary should be valid.
-  if (!tools.Validate(&binary_in[0], binary_in.size())) {
+  if (!tools.Validate(&binary_in[0], binary_in.size(),
+                      impl_->validator_options)) {
     impl_->consumer(SPV_MSG_INFO, nullptr, {},
                     "Initial binary is invalid; stopping.");
     return Shrinker::ShrinkerResultStatus::kInitialBinaryInvalid;

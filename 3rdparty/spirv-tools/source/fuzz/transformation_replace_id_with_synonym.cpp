@@ -170,6 +170,15 @@ bool TransformationReplaceIdWithSynonym::UseCanBeReplacedWithSynonym(
       return false;
     }
   }
+
+  if (use_instruction->opcode() == SpvOpImageTexelPointer &&
+      use_in_operand_index == 2) {
+    // The OpImageTexelPointer instruction has a Sample parameter that in some
+    // situations must be an id for the value 0.  To guard against disrupting
+    // that requirement, we do not replace this argument to that instruction.
+    return false;
+  }
+
   return true;
 }
 

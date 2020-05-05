@@ -92,6 +92,19 @@ struct Operand {
   // Returns a string operand as a std::string.
   std::string AsString() const { return AsCString(); }
 
+  // Returns a literal integer operand as a uint64_t
+  uint64_t AsLiteralUint64() const {
+    assert(type == SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER);
+    assert(1 <= words.size());
+    assert(words.size() <= 2);
+    // Load the low word.
+    uint64_t result = uint64_t(words[0]);
+    if (words.size() > 1) {
+      result = result | (uint64_t(words[1]) << 32);
+    }
+    return result;
+  }
+
   friend bool operator==(const Operand& o1, const Operand& o2) {
     return o1.type == o2.type && o1.words == o2.words;
   }
@@ -383,8 +396,14 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // Memory-to-memory instructions are not considered loads.
   inline bool IsLoad() const;
 
-  // Returns true if the instruction declares a variable that is read-only.
-  bool IsReadOnlyVariable() const;
+  // Returns true if the instruction generates a pointer that is definitely
+  // read-only.  This is determined by analysing the pointer type's storage
+  // class and decorations that target the pointer's id.  It does not analyse
+  // other instructions that the pointer may be derived from.  Thus if 'true' is
+  // returned, the pointer is definitely read-only, while if 'false' is returned
+  // it is possible that the pointer may actually be read-only if it is derived
+  // from another pointer that is decorated as read-only.
+  bool IsReadOnlyPointer() const;
 
   // The following functions check for the various descriptor types defined in
   // the Vulkan specification section 13.1.
@@ -513,11 +532,12 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
     return 0;
   }
 
-  // Returns true if the instruction declares a variable that is read-only.  The
-  // first version assumes the module is a shader module.  The second assumes a
+  // Returns true if the instruction generates a read-only pointer, with the
+  // same caveats documented in the comment for IsReadOnlyPointer.  The first
+  // version assumes the module is a shader module.  The second assumes a
   // kernel.
-  bool IsReadOnlyVariableShaders() const;
-  bool IsReadOnlyVariableKernel() const;
+  bool IsReadOnlyPointerShaders() const;
+  bool IsReadOnlyPointerKernel() const;
 
   // Returns true if the result of |inst| can be used as the base image for an
   // instruction that samples a image, reads an image, or writes to an image.

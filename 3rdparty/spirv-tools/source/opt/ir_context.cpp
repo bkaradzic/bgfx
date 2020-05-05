@@ -85,6 +85,9 @@ void IRContext::BuildInvalidAnalyses(IRContext::Analysis set) {
   if (set & kAnalysisTypes) {
     BuildTypeManager();
   }
+  if (set & kAnalysisDebugInfo) {
+    BuildDebugInfoManager();
+  }
 }
 
 void IRContext::InvalidateAnalysesExceptFor(
@@ -98,6 +101,7 @@ void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
   // away, the ConstantManager has to go away.
   if (analyses_to_invalidate & kAnalysisTypes) {
     analyses_to_invalidate |= kAnalysisConstants;
+    analyses_to_invalidate |= kAnalysisDebugInfo;
   }
 
   // The dominator analysis hold the psuedo entry and exit nodes from the CFG.
@@ -146,6 +150,10 @@ void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
   }
   if (analyses_to_invalidate & kAnalysisTypes) {
     type_mgr_.reset(nullptr);
+  }
+
+  if (analyses_to_invalidate & kAnalysisDebugInfo) {
+    debug_info_mgr_.reset(nullptr);
   }
 
   valid_analyses_ = Analysis(valid_analyses_ & ~analyses_to_invalidate);
@@ -373,27 +381,6 @@ void IRContext::KillNamesAndDecorates(Instruction* inst) {
   KillNamesAndDecorates(rId);
 }
 
-Instruction* IRContext::GetOpenCL100DebugInfoNone() {
-  if (debug_info_none_inst_) return debug_info_none_inst_;
-  assert(get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo() &&
-         "Module does not include debug info extension instruction.");
-
-  // Create a new DebugInfoNone.
-  std::unique_ptr<Instruction> dbg_info_none(new Instruction(
-      this, SpvOpExtInst, get_type_mgr()->GetVoidTypeId(), TakeNextId(),
-      {
-          {SPV_OPERAND_TYPE_RESULT_ID,
-           {get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo()}},
-          {SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER,
-           {static_cast<uint32_t>(OpenCLDebugInfo100DebugInfoNone)}},
-      }));
-
-  // Add to the front of |ext_inst_debuginfo_|.
-  debug_info_none_inst_ = module()->ext_inst_debuginfo_begin()->InsertBefore(
-      std::move(dbg_info_none));
-  return debug_info_none_inst_;
-}
-
 void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
   const auto opcode = inst->opcode();
   const uint32_t id = inst->result_id();
@@ -405,7 +392,8 @@ void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
         continue;
       auto& operand = it->GetOperand(kDebugFunctionOperandFunctionIndex);
       if (operand.words[0] == id) {
-        operand.words[0] = GetOpenCL100DebugInfoNone()->result_id();
+        operand.words[0] =
+            get_debug_info_mgr()->GetDebugInfoNone()->result_id();
       }
     }
   }
@@ -418,7 +406,8 @@ void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
         continue;
       auto& operand = it->GetOperand(kDebugGlobalVariableOperandVariableIndex);
       if (operand.words[0] == id) {
-        operand.words[0] = GetOpenCL100DebugInfoNone()->result_id();
+        operand.words[0] =
+            get_debug_info_mgr()->GetDebugInfoNone()->result_id();
       }
     }
   }
