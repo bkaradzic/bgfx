@@ -4204,19 +4204,22 @@ Bitset Compiler::combined_decoration_for_member(const SPIRType &type, uint32_t i
 
 	if (type_meta)
 	{
-		auto &memb = type_meta->members;
-		if (index >= memb.size())
+		auto &members = type_meta->members;
+		if (index >= members.size())
 			return flags;
-		auto &dec = memb[index];
+		auto &dec = members[index];
 
-		// If our type is a struct, traverse all the members as well recursively.
 		flags.merge_or(dec.decoration_flags);
 
-		for (uint32_t i = 0; i < type.member_types.size(); i++)
+		auto &member_type = get<SPIRType>(type.member_types[index]);
+
+		// If our member type is a struct, traverse all the child members as well recursively.
+		auto &member_childs = member_type.member_types;
+		for (uint32_t i = 0; i < member_childs.size(); i++)
 		{
-			auto &memb_type = get<SPIRType>(type.member_types[i]);
-			if (!memb_type.pointer)
-				flags.merge_or(combined_decoration_for_member(memb_type, i));
+			auto &child_member_type = get<SPIRType>(member_childs[i]);
+			if (!child_member_type.pointer)
+				flags.merge_or(combined_decoration_for_member(member_type, i));
 		}
 	}
 

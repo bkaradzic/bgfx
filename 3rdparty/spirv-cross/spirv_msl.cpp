@@ -7038,7 +7038,11 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
 			exp += string(", ") + get_memory_order(mem_order_2);
 
 		exp += ")";
-		emit_op(result_type, result_id, exp, false);
+
+		if (strcmp(op, "atomic_store_explicit") != 0)
+			emit_op(result_type, result_id, exp, false);
+		else
+			statement(exp, ";");
 	}
 
 	flush_all_atomic_capable_variables();
@@ -9185,7 +9189,14 @@ string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id, bo
 				addr_space = "constant";
 		}
 		else if (!argument)
+		{
 			addr_space = "constant";
+		}
+		else if (type_is_msl_framebuffer_fetch(type))
+		{
+			// Subpass inputs are passed around by value.
+			addr_space = "";
+		}
 		break;
 
 	case StorageClassFunction:
@@ -9626,8 +9637,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 
 			// Use Metal's native frame-buffer fetch API for subpass inputs.
 			const auto &basetype = get<SPIRType>(var.basetype);
-			if (basetype.image.dim != DimSubpassData || !msl_options.is_ios() ||
-			    !msl_options.ios_use_framebuffer_fetch_subpasses)
+			if (!type_is_msl_framebuffer_fetch(basetype))
 			{
 				ep_args += image_type_glsl(type, var_id) + " " + r.name;
 				if (r.plane > 0)
@@ -9639,7 +9649,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 			}
 			else
 			{
-				ep_args += image_type_glsl(type, var_id) + "4 " + r.name;
+				ep_args += image_type_glsl(type, var_id) + " " + r.name;
 				ep_args += " [[color(" + convert_to_string(r.index) + ")]]";
 			}
 
@@ -10125,6 +10135,12 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	return resource_index;
 }
 
+bool CompilerMSL::type_is_msl_framebuffer_fetch(const SPIRType &type) const
+{
+	return type.basetype == SPIRType::Image && type.image.dim == DimSubpassData &&
+	       msl_options.is_ios() && msl_options.ios_use_framebuffer_fetch_subpasses;
+}
+
 string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 {
 	auto &var = get<SPIRVariable>(arg.id);
@@ -10140,6 +10156,9 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 		name_id = var.basevariable;
 
 	bool constref = !arg.alias_global_variable && is_pointer && arg.write_count == 0;
+	// Framebuffer fetch is plain value, const looks out of place, but it is not wrong.
+	if (type_is_msl_framebuffer_fetch(type))
+		constref = false;
 
 	bool type_is_image = type.basetype == SPIRType::Image || type.basetype == SPIRType::SampledImage ||
 	                     type.basetype == SPIRType::Sampler;
@@ -10638,6 +10657,9 @@ void CompilerMSL::replace_illegal_names()
 
 string CompilerMSL::to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain)
 {
+	if (index < uint32_t(type.member_type_index_redirection.size()))
+		index = type.member_type_index_redirection[index];
+
 	auto *var = maybe_get<SPIRVariable>(base);
 	// If this is a buffer array, we have to dereference the buffer pointers.
 	// Otherwise, if this is a pointer expression, dereference it.
@@ -10983,10 +11005,11 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 			}
 
 			// Use Metal's native frame-buffer fetch API for subpass inputs.
-			if (img_type.dim == DimSubpassData && msl_options.is_ios() &&
-			    msl_options.ios_use_framebuffer_fetch_subpasses)
+			if (type_is_msl_framebuffer_fetch(type))
 			{
-				return type_to_glsl(get<SPIRType>(img_type.type));
+				auto img_type_4 = get<SPIRType>(img_type.type);
+				img_type_4.vecsize = 4;
+				return type_to_glsl(img_type_4);
 			}
 			if (img_type.ms && img_type.arrayed)
 			{
@@ -12437,8 +12460,27 @@ void CompilerMSL::MemberSorter::sort()
 	// the members should be reordered, based on builtin and sorting aspect meta info.
 	size_t mbr_cnt = type.member_types.size();
 	SmallVector<uint32_t> mbr_idxs(mbr_cnt);
-	iota(mbr_idxs.begin(), mbr_idxs.end(), 0); // Fill with consecutive indices
+	std::iota(mbr_idxs.begin(), mbr_idxs.end(), 0); // Fill with consecutive indices
 	std::stable_sort(mbr_idxs.begin(), mbr_idxs.end(), *this); // Sort member indices based on sorting aspect
+
+	bool sort_is_identity = true;
+	for (uint32_t mbr_idx = 0; mbr_idx < mbr_cnt; mbr_idx++)
+	{
+		if (mbr_idx != mbr_idxs[mbr_idx])
+		{
+			sort_is_identity = false;
+			break;
+		}
+	}
+
+	if (sort_is_identity)
+		return;
+
+	if (meta.members.size() < type.member_types.size())
+	{
+		// This should never trigger in normal circumstances, but to be safe.
+		meta.members.resize(type.member_types.size());
+	}
 
 	// Move type and meta member info to the order defined by the sorted member indices.
 	// This is done by creating temporary copies of both member types and meta, and then
@@ -12449,6 +12491,13 @@ void CompilerMSL::MemberSorter::sort()
 	{
 		type.member_types[mbr_idx] = mbr_types_cpy[mbr_idxs[mbr_idx]];
 		meta.members[mbr_idx] = mbr_meta_cpy[mbr_idxs[mbr_idx]];
+	}
+
+	if (sort_aspect == SortAspect::Offset)
+	{
+		// If we're sorting by Offset, this might affect user code which accesses a buffer block.
+		// We will need to redirect member indices from one index to sorted index.
+		type.member_type_index_redirection = std::move(mbr_idxs);
 	}
 }
 

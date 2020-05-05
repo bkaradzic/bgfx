@@ -9794,15 +9794,33 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	}
 
 	case OpAtomicLoad:
-		flush_all_atomic_capable_variables();
-		// FIXME: Image?
-		// OpAtomicLoad seems to only be relevant for atomic counters.
+	{
+		// In plain GLSL, we have no atomic loads, so emulate this by fetch adding by 0 and hope compiler figures it out.
+		// Alternatively, we could rely on KHR_memory_model, but that's not very helpful for GL.
+		auto &type = expression_type(ops[2]);
 		forced_temporaries.insert(ops[1]);
-		GLSL_UFOP(atomicCounter);
+		bool atomic_image = check_atomic_image(ops[2]);
+		bool unsigned_type = (type.basetype == SPIRType::UInt) ||
+		                     (atomic_image && get<SPIRType>(type.image.type).basetype == SPIRType::UInt);
+		const char *op = atomic_image ? "imageAtomicAdd" : "atomicAdd";
+		const char *increment = unsigned_type ? "0u" : "0";
+		emit_op(ops[0], ops[1], join(op, "(", to_expression(ops[2]), ", ", increment, ")"), false);
+		flush_all_atomic_capable_variables();
 		break;
+	}
 
 	case OpAtomicStore:
-		SPIRV_CROSS_THROW("Unsupported opcode OpAtomicStore.");
+	{
+		// In plain GLSL, we have no atomic stores, so emulate this with an atomic exchange where we don't consume the result.
+		// Alternatively, we could rely on KHR_memory_model, but that's not very helpful for GL.
+		uint32_t ptr = ops[0];
+		// Ignore semantics for now, probably only relevant to CL.
+		uint32_t val = ops[3];
+		const char *op = check_atomic_image(ptr) ? "imageAtomicExchange" : "atomicExchange";
+		statement(op, "(", to_expression(ptr), ", ", to_expression(val), ");");
+		flush_all_atomic_capable_variables();
+		break;
+	}
 
 	case OpAtomicIIncrement:
 	case OpAtomicIDecrement:

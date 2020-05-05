@@ -4087,8 +4087,10 @@ void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op)
 	const char *atomic_op = nullptr;
 
 	string value_expr;
-	if (op != OpAtomicIDecrement && op != OpAtomicIIncrement)
+	if (op != OpAtomicIDecrement && op != OpAtomicIIncrement && op != OpAtomicLoad && op != OpAtomicStore)
 		value_expr = to_expression(ops[op == OpAtomicCompareExchange ? 6 : 5]);
+
+	bool is_atomic_store = false;
 
 	switch (op)
 	{
@@ -4100,6 +4102,11 @@ void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op)
 	case OpAtomicIDecrement:
 		atomic_op = "InterlockedAdd";
 		value_expr = "-1";
+		break;
+
+	case OpAtomicLoad:
+		atomic_op = "InterlockedAdd";
+		value_expr = "0";
 		break;
 
 	case OpAtomicISub:
@@ -4137,6 +4144,11 @@ void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op)
 		atomic_op = "InterlockedExchange";
 		break;
 
+	case OpAtomicStore:
+		atomic_op = "InterlockedExchange";
+		is_atomic_store = true;
+		break;
+
 	case OpAtomicCompareExchange:
 		if (length < 8)
 			SPIRV_CROSS_THROW("Not enough data for opcode.");
@@ -4148,31 +4160,57 @@ void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op)
 		SPIRV_CROSS_THROW("Unknown atomic opcode.");
 	}
 
-	uint32_t result_type = ops[0];
-	uint32_t id = ops[1];
-	forced_temporaries.insert(ops[1]);
-
-	auto &type = get<SPIRType>(result_type);
-	statement(variable_decl(type, to_name(id)), ";");
-
-	auto &data_type = expression_type(ops[2]);
-	auto *chain = maybe_get<SPIRAccessChain>(ops[2]);
-	SPIRType::BaseType expr_type;
-	if (data_type.storage == StorageClassImage || !chain)
+	if (is_atomic_store)
 	{
-		statement(atomic_op, "(", to_expression(ops[2]), ", ", value_expr, ", ", to_name(id), ");");
-		expr_type = data_type.basetype;
+		auto &data_type = expression_type(ops[0]);
+		auto *chain = maybe_get<SPIRAccessChain>(ops[0]);
+
+		auto &tmp_id = extra_sub_expressions[ops[0]];
+		if (!tmp_id)
+		{
+			tmp_id = ir.increase_bound_by(1);
+			emit_uninitialized_temporary_expression(get_pointee_type(data_type).self, tmp_id);
+		}
+
+		if (data_type.storage == StorageClassImage || !chain)
+		{
+			statement(atomic_op, "(", to_expression(ops[0]), ", ", to_expression(ops[3]), ", ", to_expression(tmp_id), ");");
+		}
+		else
+		{
+			// RWByteAddress buffer is always uint in its underlying type.
+			statement(chain->base, ".", atomic_op, "(", chain->dynamic_index, chain->static_index, ", ", to_expression(ops[3]),
+			          ", ", to_expression(tmp_id), ");");
+		}
 	}
 	else
 	{
-		// RWByteAddress buffer is always uint in its underlying type.
-		expr_type = SPIRType::UInt;
-		statement(chain->base, ".", atomic_op, "(", chain->dynamic_index, chain->static_index, ", ", value_expr, ", ",
-		          to_name(id), ");");
-	}
+		uint32_t result_type = ops[0];
+		uint32_t id = ops[1];
+		forced_temporaries.insert(ops[1]);
 
-	auto expr = bitcast_expression(type, expr_type, to_name(id));
-	set<SPIRExpression>(id, expr, result_type, true);
+		auto &type = get<SPIRType>(result_type);
+		statement(variable_decl(type, to_name(id)), ";");
+
+		auto &data_type = expression_type(ops[2]);
+		auto *chain = maybe_get<SPIRAccessChain>(ops[2]);
+		SPIRType::BaseType expr_type;
+		if (data_type.storage == StorageClassImage || !chain)
+		{
+			statement(atomic_op, "(", to_expression(ops[2]), ", ", value_expr, ", ", to_name(id), ");");
+			expr_type = data_type.basetype;
+		}
+		else
+		{
+			// RWByteAddress buffer is always uint in its underlying type.
+			expr_type = SPIRType::UInt;
+			statement(chain->base, ".", atomic_op, "(", chain->dynamic_index, chain->static_index, ", ", value_expr,
+			          ", ", to_name(id), ");");
+		}
+
+		auto expr = bitcast_expression(type, expr_type, to_name(id));
+		set<SPIRExpression>(id, expr, result_type, true);
+	}
 	flush_all_atomic_capable_variables();
 }
 
@@ -4967,6 +5005,8 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 	case OpAtomicIAdd:
 	case OpAtomicIIncrement:
 	case OpAtomicIDecrement:
+	case OpAtomicLoad:
+	case OpAtomicStore:
 	{
 		emit_atomic(ops, instruction.length, opcode);
 		break;
