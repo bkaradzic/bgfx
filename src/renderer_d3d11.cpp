@@ -1006,9 +1006,9 @@ namespace bgfx { namespace d3d11
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.width  = _init.resolution.width;
 					m_scd.height = _init.resolution.height;
-					m_scd.format = (_init.resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
+					m_scd.format = /*(_init.resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
 						? s_textureFormat[_init.resolution.format].m_fmtSrgb
-						: s_textureFormat[_init.resolution.format].m_fmt
+						:*/ s_textureFormat[_init.resolution.format].m_fmt
 						;
 
 					updateMsaa(m_scd.format);
@@ -1022,7 +1022,7 @@ namespace bgfx { namespace d3d11
 						;
 					m_scd.swapEffect = m_swapEffect;
 					m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
-					m_scd.flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+					m_scd.flags = 0;//DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 					m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, 3);
 					m_scd.nwh             = g_platformData.nwh;
@@ -2177,6 +2177,7 @@ namespace bgfx { namespace d3d11
 					: D3D11_RTV_DIMENSION_TEXTURE2D
 					;
 				desc.Texture2D.MipSlice = 0;
+				m_scd.format == DXGI_FORMAT_R8G8B8A8_UNORM;
 				desc.Format = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
 					? m_scd.format == DXGI_FORMAT_R8G8B8A8_UNORM ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : m_scd.format
 					: m_scd.format

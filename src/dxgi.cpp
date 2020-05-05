@@ -376,14 +376,17 @@ namespace bgfx
 			//      will crash on pre Windows 8. Issue #1356.
 			hr = m_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
-		}
-
-		DXGI_SWAP_CHAIN_DESC scd;
+		}	
+		allowTearing = true;
+		DXGI_SWAP_CHAIN_DESC scd = {};
 		scd.BufferDesc.Width  = _scd.width;
 		scd.BufferDesc.Height = _scd.height;
 		scd.BufferDesc.RefreshRate.Numerator   = 1;
 		scd.BufferDesc.RefreshRate.Denominator = 60;
-		scd.BufferDesc.Format = _scd.format;
+		/*
+		* MUST FIX: CREATING SWAPCHAIN WITH SRGB BACKBUFFER FORMAT DOES NOT WORK WITH FLIP
+		*/
+		scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//_scd.format; 
 		scd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		scd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 		scd.SampleDesc.Count   = 1;
@@ -396,7 +399,13 @@ namespace bgfx
 		scd.Flags        = 0
 			| _scd.flags
 			| (allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
+			| DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
 			;
+
+		/*RECT windowClientRect;
+		auto result = GetClientRect(scd.OutputWindow, &windowClientRect);
+		scd.BufferDesc.Width = windowClientRect.right - windowClientRect.left;
+		scd.BufferDesc.Height = windowClientRect.bottom - windowClientRect.top;*/
 
 		hr = m_factory->CreateSwapChain(
 			  _device

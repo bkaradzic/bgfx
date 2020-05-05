@@ -2,7 +2,7 @@
  * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
-
+#define BGFX_RENDERER_D3D12_H_HEADER_GUARD
 #ifndef BGFX_RENDERER_D3D12_H_HEADER_GUARD
 #define BGFX_RENDERER_D3D12_H_HEADER_GUARD
 
