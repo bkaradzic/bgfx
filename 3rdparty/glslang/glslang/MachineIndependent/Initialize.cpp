@@ -146,7 +146,6 @@ EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECo
 // Declare pointers to put into the table for versioning.
 #ifdef GLSLANG_WEB
     const Versioning* Es300Desktop130 = nullptr;
-    const Versioning* Es310Desktop430 = nullptr;
 #else
     const Versioning Es300Desktop130Version[] = { { EEsProfile,      0, 300, 0, nullptr },
                                                   { EDesktopProfile, 0, 130, 0, nullptr },
@@ -157,11 +156,6 @@ EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECo
                                                   { EDesktopProfile, 0, 420, 0, nullptr },
                                                   { EBadProfile } };
     const Versioning* Es310Desktop420 = &Es310Desktop420Version[0];
-
-    const Versioning Es310Desktop430Version[] = { { EEsProfile,      0, 310, 0, nullptr },
-                                                  { EDesktopProfile, 0, 430, 0, nullptr },
-                                                  { EBadProfile } };
-    const Versioning* Es310Desktop430 = &Es310Desktop430Version[0];
 
     const Versioning Es310Desktop450Version[] = { { EEsProfile,      0, 310, 0, nullptr },
                                                   { EDesktopProfile, 0, 450, 0, nullptr },
@@ -1349,7 +1343,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 #endif
 
     if ((profile == EEsProfile && version >= 300) ||
-        (profile != EEsProfile && version >= 400)) {
+        (profile != EEsProfile && version >= 150)) {
         commonBuiltins.append(
             "highp uint packUnorm2x16(vec2);"
                   "vec2 unpackUnorm2x16(highp uint);"
@@ -1357,7 +1351,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
     if ((profile == EEsProfile && version >= 300) ||
-        (profile != EEsProfile && version >= 420)) {
+        (profile != EEsProfile && version >= 150)) {
         commonBuiltins.append(
             "highp uint packSnorm2x16(vec2);"
             "      vec2 unpackSnorm2x16(highp uint);"
@@ -1369,7 +1363,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append(
             "mediump vec2 unpackHalf2x16(highp uint);"
             "\n");
-    } else if (profile != EEsProfile && version >= 420) {
+    } else if (profile != EEsProfile && version >= 150) {
         commonBuiltins.append(
             "        vec2 unpackHalf2x16(highp uint);"
             "\n");
@@ -1377,7 +1371,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
 #ifndef GLSLANG_WEB
     if ((profile == EEsProfile && version >= 310) ||
-        (profile != EEsProfile && version >= 400)) {
+        (profile != EEsProfile && version >= 150)) {
         commonBuiltins.append(
             "highp uint packSnorm4x8(vec4);"
             "highp uint packUnorm4x8(vec4);"
@@ -1389,7 +1383,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "mediump vec4 unpackSnorm4x8(highp uint);"
             "mediump vec4 unpackUnorm4x8(highp uint);"
             "\n");
-    } else if (profile != EEsProfile && version >= 400) {
+    } else if (profile != EEsProfile && version >= 150) {
         commonBuiltins.append(
                     "vec4 unpackSnorm4x8(highp uint);"
                     "vec4 unpackUnorm4x8(highp uint);"
@@ -3064,6 +3058,24 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "bool textureFootprintGradNV(sampler2D, vec2, vec2, vec2, int, bool, out gl_TextureFootprint2DNV);"
             "bool textureFootprintGradClampNV(sampler2D, vec2, vec2, vec2, float, int, bool, out gl_TextureFootprint2DNV);"
             "\n");
+    }
+
+    if ((profile == EEsProfile && version >= 300 && version < 310) ||
+        (profile != EEsProfile && version >= 150 && version < 450)) { // GL_EXT_shader_integer_mix
+        commonBuiltins.append("int mix(int, int, bool);"
+                              "ivec2 mix(ivec2, ivec2, bvec2);"
+                              "ivec3 mix(ivec3, ivec3, bvec3);"
+                              "ivec4 mix(ivec4, ivec4, bvec4);"
+                              "uint  mix(uint,  uint,  bool );"
+                              "uvec2 mix(uvec2, uvec2, bvec2);"
+                              "uvec3 mix(uvec3, uvec3, bvec3);"
+                              "uvec4 mix(uvec4, uvec4, bvec4);"
+                              "bool  mix(bool,  bool,  bool );"
+                              "bvec2 mix(bvec2, bvec2, bvec2);"
+                              "bvec3 mix(bvec3, bvec3, bvec3);"
+                              "bvec4 mix(bvec4, bvec4, bvec4);"
+
+                              "\n");
     }
 
     // GL_AMD_gpu_shader_half_float/Explicit types
@@ -5849,9 +5861,9 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int
 
     //
     // textureQueryLod(), fragment stage only
-    //
+    // Also enabled with extension GL_ARB_texture_query_lod
 
-    if (profile != EEsProfile && version >= 400 && sampler.isCombined() && sampler.dim != EsdRect &&
+    if (profile != EEsProfile && version >= 150 && sampler.isCombined() && sampler.dim != EsdRect &&
         ! sampler.isMultiSample() && ! sampler.isBuffer()) {
         for (int f16TexAddr = 0; f16TexAddr < 2; ++f16TexAddr) {
             if (f16TexAddr && sampler.type != EbtFloat16)
@@ -6743,6 +6755,18 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
             s.append(builtInConstant);
         }
 
+        if (version >= 100) {
+            // GL_EXT_blend_func_extended
+            snprintf(builtInConstant, maxSize, "const mediump int gl_MaxDualSourceDrawBuffersEXT = %d;", resources.maxDualSourceDrawBuffersEXT);
+            s.append(builtInConstant);
+            // this is here instead of with the others in initialize(version, profile) due to the dependence on gl_MaxDualSourceDrawBuffersEXT
+            if (language == EShLangFragment) {
+                s.append(
+                    "mediump vec4 gl_SecondaryFragColorEXT;"
+                    "mediump vec4 gl_SecondaryFragDataEXT[gl_MaxDualSourceDrawBuffersEXT];"
+                    "\n");
+            }
+        }
     } else {
         // non-ES profile
 
@@ -7555,6 +7579,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_FragStencilRefARB", EbvFragStencilRef, symbolTable);
         }
 
+        if (profile != EEsProfile && version < 400) {
+            symbolTable.setFunctionExtensions("textureQueryLod", 1, &E_GL_ARB_texture_query_lod);
+        }
+
         if (profile != EEsProfile && version >= 460) {
             symbolTable.setFunctionExtensions("rayQueryInitializeEXT",                                            1, &E_GL_EXT_ray_query);
             symbolTable.setFunctionExtensions("rayQueryTerminateEXT",                                             1, &E_GL_EXT_ray_query);
@@ -7844,6 +7872,22 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("atomicCompSwap", 1, &E_GL_ARB_shader_storage_buffer_object);
         }
 
+        // GL_ARB_shading_language_packing
+        if (profile != EEsProfile && version < 400 ) {
+            symbolTable.setFunctionExtensions("packUnorm2x16", 1, &E_GL_ARB_shading_language_packing);
+            symbolTable.setFunctionExtensions("unpackUnorm2x16", 1, &E_GL_ARB_shading_language_packing);
+            symbolTable.setFunctionExtensions("packSnorm4x8", 1, &E_GL_ARB_shading_language_packing);
+            symbolTable.setFunctionExtensions("packUnorm4x8", 1, &E_GL_ARB_shading_language_packing);
+            symbolTable.setFunctionExtensions("unpackSnorm4x8", 1, &E_GL_ARB_shading_language_packing);
+            symbolTable.setFunctionExtensions("unpackUnorm4x8", 1, &E_GL_ARB_shading_language_packing);
+        }
+        if (profile != EEsProfile && version < 420 ) {
+            symbolTable.setFunctionExtensions("packSnorm2x16", 1, &E_GL_ARB_shading_language_packing);
+            symbolTable.setFunctionExtensions("unpackSnorm2x16", 1, &E_GL_ARB_shading_language_packing);
+            symbolTable.setFunctionExtensions("unpackHalf2x16", 1, &E_GL_ARB_shading_language_packing);
+            symbolTable.setFunctionExtensions("packHalf2x16", 1, &E_GL_ARB_shading_language_packing);
+        }
+
         symbolTable.setVariableExtensions("gl_DeviceIndex",  1, &E_GL_EXT_device_group);
         BuiltInVariable("gl_DeviceIndex", EbvDeviceIndex, symbolTable);
         symbolTable.setVariableExtensions("gl_ViewIndex", 1, &E_GL_EXT_multiview);
@@ -8054,6 +8098,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("memoryBarrierShared",        1, &E_GL_ARB_compute_shader);
             symbolTable.setFunctionExtensions("groupMemoryBarrier",         1, &E_GL_ARB_compute_shader);
         }
+
 
         symbolTable.setFunctionExtensions("controlBarrier",                 1, &E_GL_KHR_memory_scope_semantics);
         symbolTable.setFunctionExtensions("debugPrintfEXT",                 1, &E_GL_EXT_debug_printf);
@@ -9086,6 +9131,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.insert(*new TVariable(NewPoolTString("gl_FragData"), fragData));
             SpecialQualifier("gl_FragData", EvqFragColor, EbvFragData, symbolTable);
         }
+
+        // GL_EXT_blend_func_extended
+        if (profile == EEsProfile && version >= 100) {
+           symbolTable.setVariableExtensions("gl_MaxDualSourceDrawBuffersEXT",    1, &E_GL_EXT_blend_func_extended);
+           symbolTable.setVariableExtensions("gl_SecondaryFragColorEXT",    1, &E_GL_EXT_blend_func_extended);
+           symbolTable.setVariableExtensions("gl_SecondaryFragDataEXT",    1, &E_GL_EXT_blend_func_extended);
+           SpecialQualifier("gl_SecondaryFragColorEXT", EvqVaryingOut, EbvSecondaryFragColorEXT, symbolTable);
+           SpecialQualifier("gl_SecondaryFragDataEXT", EvqVaryingOut, EbvSecondaryFragDataEXT, symbolTable);
+        }
+
         break;
 
     case EShLangTessControl:

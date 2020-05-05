@@ -238,12 +238,13 @@ typedef std::map<TString, TVarEntryInfo> TVarLiveMap;
 // In the future, if the vc++ compiler can handle such a situation,
 // this part of the code will be removed.
 struct TVarLivePair : std::pair<const TString, TVarEntryInfo> {
-    TVarLivePair(std::pair<const TString, TVarEntryInfo>& _Right) : pair(_Right.first, _Right.second) {}
+    TVarLivePair(const std::pair<const TString, TVarEntryInfo>& _Right) : pair(_Right.first, _Right.second) {}
     TVarLivePair& operator=(const TVarLivePair& _Right) {
         const_cast<TString&>(first) = _Right.first;
         second = _Right.second;
         return (*this);
     }
+    TVarLivePair(const TVarLivePair& src) { *this = src; }
 };
 typedef std::vector<TVarLivePair> TVarLiveVector;
 

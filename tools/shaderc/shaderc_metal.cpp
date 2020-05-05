@@ -126,15 +126,16 @@ namespace bgfx { namespace metal
 		8,     // MaxCullDistances
 		8,     // MaxCombinedClipAndCullDistances
 		4,     // MaxSamples
-		0,     // maxMeshOutputVerticesNV;
-		0,     // maxMeshOutputPrimitivesNV;
-		0,     // maxMeshWorkGroupSizeX_NV;
-		0,     // maxMeshWorkGroupSizeY_NV;
-		0,     // maxMeshWorkGroupSizeZ_NV;
-		0,     // maxTaskWorkGroupSizeX_NV;
-		0,     // maxTaskWorkGroupSizeY_NV;
-		0,     // maxTaskWorkGroupSizeZ_NV;
+		0,     // maxMeshOutputVerticesNV
+		0,     // maxMeshOutputPrimitivesNV
+		0,     // maxMeshWorkGroupSizeX_NV
+		0,     // maxMeshWorkGroupSizeY_NV
+		0,     // maxMeshWorkGroupSizeZ_NV
+		0,     // maxTaskWorkGroupSizeX_NV
+		0,     // maxTaskWorkGroupSizeY_NV
+		0,     // maxTaskWorkGroupSizeZ_NV
 		0,     // maxMeshViewCountNV
+		0,     // maxDualSourceDrawBuffersEXT
 
 		{ // limits
 			true, // nonInductiveForLoops

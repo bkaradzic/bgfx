@@ -1196,8 +1196,8 @@ int TScanContext::tokenizeIdentifier()
         afterType = true;
         if (parseContext.isEsProfile() || parseContext.version < 150 ||
             (!parseContext.symbolTable.atBuiltInLevel() &&
-              parseContext.version < 400 &&
-             !parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_fp64)))
+              (parseContext.version < 400 && !parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_fp64) &&
+              (parseContext.version < 410 && !parseContext.extensionTurnedOn(E_GL_ARB_vertex_attrib_64bit)))))
             reservedWord();
         return keyword;
 
@@ -1774,7 +1774,9 @@ int TScanContext::dMat()
 
     if (!parseContext.isEsProfile() && (parseContext.version >= 400 ||
         parseContext.symbolTable.atBuiltInLevel() ||
-        (parseContext.version >= 150 && parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_fp64))))
+        (parseContext.version >= 150 && parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_fp64)) ||
+        (parseContext.version >= 150 && parseContext.extensionTurnedOn(E_GL_ARB_vertex_attrib_64bit)
+         && parseContext.language == EShLangVertex)))
         return keyword;
 
     if (parseContext.isForwardCompatible())
