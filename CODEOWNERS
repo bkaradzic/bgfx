@@ -1,0 +1,7 @@
+*                            @bkaradzic
+
+# Metal
+src/renderer_mtl.*           @attilaz
+
+# Vulkan
+src/renderer_vk.*            @rinthel @pezcode
