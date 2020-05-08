@@ -37,6 +37,7 @@ Supported platforms:
  * Linux
  * MIPS Creator CI20
  * OSX (10.12+)
+ * PlayStation 4
  * RaspberryPi
  * Windows (XP, Vista, 7, 8, 10)
  * UWP (Universal Windows, Xbox One)
