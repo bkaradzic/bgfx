@@ -14,6 +14,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #include <ResourceLimits.h>
 #include <SPIRV/SPVRemapper.h>
 #include <SPIRV/GlslangToSpv.h>
+#include <webgpu/webgpu_cpp.h>
 #define SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
 #include <spirv_msl.hpp>
 #include <spirv_reflect.hpp>
@@ -173,6 +174,42 @@ namespace bgfx { namespace spirv
 		toString(temp, sizeof(temp), _instruction);
 		BX_TRACE("%5d: %s", _offset, temp);
 		return true;
+	}
+
+	wgpu::TextureComponentType SpirvCrossBaseTypeToFormatType(spirv_cross::SPIRType::BaseType spirvBaseType)
+	{
+		switch (spirvBaseType)
+		{
+		case spirv_cross::SPIRType::Float:
+			return wgpu::TextureComponentType::Float;
+		case spirv_cross::SPIRType::Int:
+			return wgpu::TextureComponentType::Sint;
+		case spirv_cross::SPIRType::UInt:
+			return wgpu::TextureComponentType::Uint;
+		default:
+		    return wgpu::TextureComponentType::Float;
+		}
+	}
+
+	wgpu::TextureViewDimension SpirvDimToTextureViewDimension(spv::Dim dim, bool arrayed)
+	{
+		switch (dim)
+		{
+		case spv::Dim::Dim1D:
+			return wgpu::TextureViewDimension::e1D;
+		case spv::Dim::Dim2D:
+			return arrayed
+				? wgpu::TextureViewDimension::e2DArray
+				: wgpu::TextureViewDimension::e2D;
+		case spv::Dim::Dim3D:
+			return wgpu::TextureViewDimension::e3D;
+		case spv::Dim::DimCube:
+			return arrayed
+				? wgpu::TextureViewDimension::CubeArray
+				: wgpu::TextureViewDimension::Cube;
+		default:
+			return wgpu::TextureViewDimension::Undefined;
+		}
 	}
 
 	struct SpvReflection
@@ -619,6 +656,8 @@ namespace bgfx { namespace spirv
 			bx::write(_writer, un.num);
 			bx::write(_writer, un.regIndex);
 			bx::write(_writer, un.regCount);
+			bx::write(_writer, un.texComponent);
+			bx::write(_writer, un.texDimension);
 
 			BX_TRACE("%s, %s, %d, %d, %d"
 				, un.name.c_str()
@@ -938,15 +977,32 @@ namespace bgfx { namespace spirv
 						if (name.size() > 7
 						&&  0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
 						{
-							auto uniform_name = name.substr(0, name.length() - 7);
+							std::string uniform_name = name.substr(0, name.length() - 7);
+							uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
+
+							auto imageType = refl.get_type(resource.base_type_id).image;
+							auto componentType = refl.get_type(imageType.type).basetype;
+
+							bool isCompareSampler = false;
+							for (auto& sampler : resourcesrefl.separate_samplers)
+							{
+								if (binding_index + 16 == refl.get_decoration(sampler.id, spv::Decoration::DecorationBinding))
+								{
+									std::string samplerName = refl.get_name(sampler.id);
+									isCompareSampler = refl.variable_is_depth_or_compare(sampler.id) || samplerName.find("Comparison") != std::string::npos;
+									break;
+								}
+							}
 
 							Uniform un;
 							un.name = uniform_name;
-							un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Sampler);
+							if (isCompareSampler)
+								un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | BGFX_UNIFORM_COMPAREBIT | UniformType::Sampler);
+							else
+								un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Sampler);
 
-							const uint32_t binding = refl.get_decoration(resource.id, spv::DecorationBinding);
-
-							uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
+							un.texComponent = uint8_t(SpirvCrossBaseTypeToFormatType(componentType));
+							un.texDimension = uint8_t(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed));
 
 							un.regIndex = binding_index;
 							un.regCount = 0; // unused
@@ -963,13 +1019,24 @@ namespace bgfx { namespace spirv
 						if (name.size() > 7
 						&&  0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
 						{
-							auto uniform_name = name.substr(0, name.length() - 7);
+							std::string  uniform_name = name.substr(0, name.length() - 7);
 							uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
-							std::string sampler_name = uniform_name + "Sampler";
+
+							auto imageType = refl.get_type(resource.base_type_id).image;
+							auto componentType = refl.get_type(imageType.type).basetype;
+
+							spirv_cross::Bitset flags = refl.get_buffer_block_flags(resource.id);
+							UniformType::Enum type = flags.get(spv::DecorationNonWritable)
+								? UniformType::Enum(BGFX_UNIFORM_READONLYBIT | UniformType::End)
+								: UniformType::End;
 
 							Uniform un;
 							un.name = uniform_name;
-							un.type = UniformType::End;
+							un.type = type;
+							
+							un.texComponent = uint8_t(SpirvCrossBaseTypeToFormatType(componentType));
+							un.texDimension = uint8_t(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed));
+
 							un.regIndex = binding_index;
 							un.regCount = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;	// for descriptor type
 
@@ -986,6 +1053,11 @@ namespace bgfx { namespace spirv
 						{
 							if (!bx::strFind(uniform.name.c_str(), name.c_str()).isEmpty())
 							{
+								spirv_cross::Bitset flags = refl.get_buffer_block_flags(resource.id);
+								UniformType::Enum type = flags.get(spv::DecorationNonWritable)
+									? UniformType::Enum(BGFX_UNIFORM_READONLYBIT | UniformType::End)
+									: UniformType::End;
+
 								uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
 								uniform.name = name;
 								uniform.type = UniformType::End;

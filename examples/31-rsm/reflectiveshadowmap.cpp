@@ -312,9 +312,13 @@ public:
 			;
 
 		// Make gbuffer and related textures
+		bgfx::TextureFormat::Enum depthFormat = bgfx::getRendererType() == bgfx::RendererType::WebGPU
+			? bgfx::TextureFormat::D32F
+			: bgfx::TextureFormat::D24;
+
 		m_gbufferTex[GBUFFER_RT_NORMAL] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
 		m_gbufferTex[GBUFFER_RT_COLOR]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
-		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::D24,   tsFlags);
+		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat,                tsFlags);
 		m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
 
 		// Make light buffer

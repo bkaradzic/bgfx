@@ -4816,6 +4816,11 @@ VK_DESTROY
 				uint16_t regCount;
 				bx::read(&reader, regCount);
 
+				if (!isShaderVerLess(magic, 8) )
+				{
+					uint16_t texInfo = 0;
+					bx::read(&reader, texInfo);
+				}
 				const char* kind = "invalid";
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);

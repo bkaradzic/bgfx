@@ -163,6 +163,43 @@ function bgfxProjectBase(_kind, _defines)
 		path.join(BGFX_DIR, "src/renderer_nvn.h"),
 	})
 
+	if _OPTIONS["webgpu"] then
+		defines {
+			"BGFX_CONFIG_RENDERER_WEBGPU=1",
+		}
+
+		configuration { "asmjs" }
+			defines {
+				"BGFX_CONFIG_RENDERER_OPENGL=0",
+				"BGFX_CONFIG_RENDERER_OPENGLES=0",
+			}
+
+		configuration { "not asmjs" }
+			--local generator = "out/Default"
+			local generator = "out/VS2019"
+
+			includedirs {
+				path.join(DAWN_DIR, "src"),
+				path.join(DAWN_DIR, "src/include"),
+				path.join(DAWN_DIR, "third_party/vulkan-headers/include"),
+				path.join(DAWN_DIR, generator, "gen/src"),
+				path.join(DAWN_DIR, generator, "gen/src/include"),
+			}
+
+			configuration { "vs*" }
+				defines {
+					"NTDDI_VERSION=NTDDI_WIN10_RS2",
+
+					-- We can't say `=_WIN32_WINNT_WIN10` here because some files do
+					-- `#if WINVER < 0x0600` without including windows.h before,
+					-- and then _WIN32_WINNT_WIN10 isn't yet known to be 0x0A00.
+					"_WIN32_WINNT=0x0A00",
+					"WINVER=0x0A00",
+				}
+
+		configuration {}
+    end
+    
 	if _OPTIONS["with-amalgamated"] then
 		excludes {
 			path.join(BGFX_DIR, "src/bgfx.cpp"),
@@ -233,4 +270,60 @@ function bgfxProject(_name, _kind, _defines)
 		bgfxProjectBase(_kind, _defines)
 
 		copyLib()
+end
+
+if _OPTIONS["webgpu"] then
+	function usesWebGPU()
+		configuration { "asmjs" }
+			linkoptions {
+				"-s USE_WEBGPU=1",
+			}
+
+		configuration { "not asmjs" }
+			--local generator = "out/Default"
+			local generator = "out/VS2019"
+
+			includedirs {
+				path.join(DAWN_DIR, "src"),
+				path.join(DAWN_DIR, "src/include"),
+				path.join(DAWN_DIR, generator, "gen/src"),
+				path.join(DAWN_DIR, generator, "gen/src/include"),
+			}
+
+			libdirs {
+				path.join(DAWN_DIR, generator),
+				path.join(DAWN_DIR, generator, "lib/Debug"),
+			}
+
+			files {
+				path.join(DAWN_DIR, generator, "gen/src/dawn/webgpu_cpp.cpp"),
+			}
+
+			links {
+				-- shared
+				"dawn_proc_shared",
+				"dawn_native_shared",
+				"shaderc_spvc_shared",
+				-- static
+				--"dawn_common",
+				--"dawn_proc",
+				--"dawn_native",
+				--"dawn_platform",
+				------"shaderc",
+				--"shaderc_spvc",
+				--"SPIRV-tools",
+				--"SPIRV-tools-opt",
+				--"spirv-cross-cored",
+				--"spirv-cross-hlsld",
+				--"spirv-cross-glsld",
+				--"spirv-cross-msld",
+				--"spirv-cross-reflectd",
+			}
+
+			removeflags {
+				"FatalWarnings",
+			}
+
+		configuration {}
+	end
 end

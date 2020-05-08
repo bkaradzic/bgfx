@@ -5905,6 +5905,12 @@ namespace bgfx { namespace gl
 
 			uint16_t regCount;
 			bx::read(&reader, regCount);
+
+			if (!isShaderVerLess(magic, 8) )
+			{
+				uint16_t texInfo = 0;
+				bx::read(&reader, texInfo);
+			}
 		}
 
 		uint32_t shaderSize;

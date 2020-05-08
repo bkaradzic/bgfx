@@ -225,6 +225,7 @@ namespace stl = std;
 #define BGFX_RENDERER_METAL_NAME      "Metal"
 #define BGFX_RENDERER_NVN_NAME        "NVN"
 #define BGFX_RENDERER_VULKAN_NAME     "Vulkan"
+#define BGFX_RENDERER_WEBGPU_NAME     "WebGPU"
 #define BGFX_RENDERER_NOOP_NAME       "Noop"
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -491,6 +492,7 @@ namespace bgfx
 	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer);
 	const char* getName(TextureFormat::Enum _fmt);
 	const char* getName(UniformHandle _handle);
+	const char* getName(ShaderHandle _handle);
 	const char* getName(Topology::Enum _topology);
 
 	template<typename Ty>
@@ -1326,7 +1328,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 #define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
 #define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
-#define BGFX_UNIFORM_MASK (BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT)
+#define BGFX_UNIFORM_READONLYBIT UINT8_C(0x40)
+#define BGFX_UNIFORM_COMPAREBIT  UINT8_C(0x80)
+#define BGFX_UNIFORM_MASK (BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT|BGFX_UNIFORM_READONLYBIT|BGFX_UNIFORM_COMPAREBIT)
 
 	class UniformBuffer
 	{
@@ -3871,6 +3875,12 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 				uint16_t regCount;
 				bx::read(&reader, regCount, &err);
+
+				if (!isShaderVerLess(magic, 8))
+				{
+					uint16_t texInfo;
+					bx::read(&reader, texInfo);
+				}
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 				if (PredefinedUniform::Count == predefined && UniformType::End != UniformType::Enum(type))
