@@ -41,15 +41,15 @@ namespace bgfx { namespace webgpu
 	T defaultDescriptor() { return T(); }
 
 	template <> wgpu::BlendDescriptor              defaultDescriptor() { return { wgpu::BlendOperation::Add, wgpu::BlendFactor::One, wgpu::BlendFactor::Zero }; }
-	template <> wgpu::ColorStateDescriptor         defaultDescriptor() { return { nullptr, wgpu::TextureFormat::RGBA8Unorm, defaultDescriptor<wgpu::BlendDescriptor>(), defaultDescriptor<wgpu::BlendDescriptor>(), wgpu::ColorWriteMask::All }; }
+	template <> wgpu::ColorStateDescriptor         defaultDescriptor() { return { NULL, wgpu::TextureFormat::RGBA8Unorm, defaultDescriptor<wgpu::BlendDescriptor>(), defaultDescriptor<wgpu::BlendDescriptor>(), wgpu::ColorWriteMask::All }; }
 	template <> wgpu::StencilStateFaceDescriptor   defaultDescriptor() { return { wgpu::CompareFunction::Always, wgpu::StencilOperation::Keep, wgpu::StencilOperation::Keep, wgpu::StencilOperation::Keep }; }
-	template <> wgpu::VertexStateDescriptor        defaultDescriptor() { return { nullptr, wgpu::IndexFormat::Uint32, 0, nullptr }; }
-	template <> wgpu::VertexBufferLayoutDescriptor defaultDescriptor() { return { 0, wgpu::InputStepMode::Vertex, 0, nullptr }; }
+	template <> wgpu::VertexStateDescriptor        defaultDescriptor() { return { NULL, wgpu::IndexFormat::Uint32, 0, NULL }; }
+	template <> wgpu::VertexBufferLayoutDescriptor defaultDescriptor() { return { 0, wgpu::InputStepMode::Vertex, 0, NULL }; }
 	template <> wgpu::VertexAttributeDescriptor    defaultDescriptor() { return { wgpu::VertexFormat::Float, 0, 0 }; }
-	template <> wgpu::RasterizationStateDescriptor defaultDescriptor() { return { nullptr, wgpu::FrontFace::CCW, wgpu::CullMode::None, 0, 0.f, 0.f }; }
-	template <> wgpu::ProgrammableStageDescriptor  defaultDescriptor() { return { nullptr, {}, "main" }; }
-	template <> wgpu::DepthStencilStateDescriptor  defaultDescriptor() { return { nullptr, wgpu::TextureFormat::Depth24PlusStencil8, false, wgpu::CompareFunction::Always, defaultDescriptor<wgpu::StencilStateFaceDescriptor>(), defaultDescriptor<wgpu::StencilStateFaceDescriptor>(), 0xff, 0xff }; }
-	template <> wgpu::PipelineLayoutDescriptor     defaultDescriptor() { return { nullptr, "", 0, nullptr }; }
+	template <> wgpu::RasterizationStateDescriptor defaultDescriptor() { return { NULL, wgpu::FrontFace::CCW, wgpu::CullMode::None, 0, 0.f, 0.f }; }
+	template <> wgpu::ProgrammableStageDescriptor  defaultDescriptor() { return { NULL, {}, "main" }; }
+	template <> wgpu::DepthStencilStateDescriptor  defaultDescriptor() { return { NULL, wgpu::TextureFormat::Depth24PlusStencil8, false, wgpu::CompareFunction::Always, defaultDescriptor<wgpu::StencilStateFaceDescriptor>(), defaultDescriptor<wgpu::StencilStateFaceDescriptor>(), 0xff, 0xff }; }
+	template <> wgpu::PipelineLayoutDescriptor     defaultDescriptor() { return { NULL, "", 0, NULL }; }
 	template <> wgpu::TextureViewDescriptor        defaultDescriptor() { return {}; }
 
 	template <> wgpu::RenderPassColorAttachmentDescriptor defaultDescriptor() { return { {}, {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, { 0.0f, 0.0f, 0.0f, 0.0f } }; }
@@ -115,7 +115,7 @@ namespace bgfx { namespace webgpu
 		desc.fragmentStage = &fragmentStage;
 		//desc.vertexState = &inputState;
 		desc.rasterizationState = &rasterizationState;
-		desc.depthStencilState = nullptr;
+		desc.depthStencilState = NULL;
 		desc.colorStates = colorStates;
 	}
 	// TODO (hugoam) cleanup (end)
@@ -520,7 +520,7 @@ namespace bgfx { namespace webgpu
 				s_ignoreError = false;
 			};
 
-			m_device.SetUncapturedErrorCallback(PrintDeviceError, nullptr);
+			m_device.SetUncapturedErrorCallback(PrintDeviceError, NULL);
 
 			if (!m_device)
 			{
@@ -1209,7 +1209,7 @@ namespace bgfx { namespace webgpu
 				}
 			}
 
-			m_cmd.m_encoder = nullptr;
+			m_cmd.m_encoder = NULL;
 		}
 
 		void updateResolution(const Resolution& _resolution)
@@ -2164,7 +2164,7 @@ namespace bgfx { namespace webgpu
 
 				wgpu::ComputePipelineDescriptor desc;
 				desc.layout = pso->m_layout;
-				desc.computeStage = { nullptr, program.m_vsh->m_module, "main" };
+				desc.computeStage = { NULL, program.m_vsh->m_module, "main" };
 
 				pso->m_cps = m_device.CreateComputePipeline(&desc);
 			}
@@ -2321,13 +2321,13 @@ namespace bgfx { namespace webgpu
 			if (m_renderEncoder)
 			{
 				m_renderEncoder.EndPass();
-				m_renderEncoder = nullptr;
+				m_renderEncoder = NULL;
 			}
 
 			if (m_computeEncoder)
 			{
 				m_computeEncoder.EndPass();
-				m_computeEncoder = nullptr;
+				m_computeEncoder = NULL;
 			}
 		}
 
@@ -3361,7 +3361,7 @@ namespace bgfx { namespace webgpu
 
 	void BindStateWgpu::clear()
 	{
-		m_bindGroup = nullptr;
+		m_bindGroup = NULL;
 	}
 
 	void StagingBufferWgpu::create(uint32_t _size, bool mapped)
@@ -3397,14 +3397,14 @@ namespace bgfx { namespace webgpu
 
 	void StagingBufferWgpu::unmap()
 	{
-		m_data = nullptr;
+		m_data = NULL;
 		m_size = 0;
 		m_buffer.Unmap();
 	}
 
 	void StagingBufferWgpu::destroy()
 	{
-		m_buffer = nullptr;
+		m_buffer = NULL;
 	}
 
 	void StagingBufferWgpu::mapped(void* _data, uint64_t _size)
@@ -3433,14 +3433,14 @@ namespace bgfx { namespace webgpu
 	{
 		for (uint8_t ii = 0; ii < WEBGPU_NUM_UNIFORM_BUFFERS; ++ii)
 		{
-			if (nullptr != s_renderWgpu->m_uniformBuffers[ii].m_data)
+			if (NULL != s_renderWgpu->m_uniformBuffers[ii].m_data)
 			{
 				m_staging = &s_renderWgpu->m_uniformBuffers[ii];
 				break;
 			}
 		}
 
-		BX_CHECK(nullptr != m_staging, "No available mapped uniform buffer");
+		BX_CHECK(NULL != m_staging, "No available mapped uniform buffer");
 	}
 
 	uint32_t ScratchBufferWgpu::write(void* data, uint64_t _size, uint64_t _offset)
@@ -3470,7 +3470,7 @@ namespace bgfx { namespace webgpu
 	void ScratchBufferWgpu::release()
 	{
 		m_staging->map();
-		m_staging = nullptr;
+		m_staging = NULL;
 		m_offset = 0;
 	}
 
@@ -3545,7 +3545,7 @@ namespace bgfx { namespace webgpu
 		desc.presentMode = wgpu::PresentMode::Immediate;
 		desc.format = wgpu::TextureFormat::RGBA8Unorm;
 		desc.implementation = reinterpret_cast<uint64_t>(&m_impl);
-		m_swapChain = _device.CreateSwapChain(nullptr, &desc);
+		m_swapChain = _device.CreateSwapChain(NULL, &desc);
 #else
 		wgpu::SurfaceDescriptorFromHTMLCanvasId canvasDesc{};
 		canvasDesc.id = "canvas";
@@ -3716,7 +3716,7 @@ namespace bgfx { namespace webgpu
 		m_swapChain->init(s_renderWgpu->m_device, _nwh, _width, _height);
 		m_swapChain->resize(*this, _width, _height, 0);
 
-		return m_swapChain->m_swapChain != nullptr;
+		return m_swapChain->m_swapChain != NULL;
 	}
 
 	void FrameBufferWgpu::postReset()
@@ -3792,7 +3792,7 @@ namespace bgfx { namespace webgpu
 #endif
 			}
 
-			m_encoder = nullptr;
+			m_encoder = NULL;
 		}
 	}
 
@@ -4029,7 +4029,7 @@ namespace bgfx { namespace webgpu
 		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
 		uint32_t currentBindHash = 0;
 		uint32_t currentBindLayoutHash = 0;
-		BindStateWgpu* previousBindState = nullptr;
+		BindStateWgpu* previousBindState = NULL;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };

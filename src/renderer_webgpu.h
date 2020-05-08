@@ -142,7 +142,7 @@ namespace bgfx
 					m_constantBuffer = NULL;
 				}
 
-				m_module = nullptr;
+				m_module = NULL;
 			}
 
 			const char* name() const { return getName(m_handle); }
@@ -153,10 +153,10 @@ namespace bgfx
 			wgpu::ShaderStage m_stage;
 			wgpu::ShaderModule m_module;
 
-			uint32_t* m_code = nullptr;
+			uint32_t* m_code = NULL;
 			size_t m_codeSize = 0;
 
-			UniformBuffer* m_constantBuffer = nullptr;
+			UniformBuffer* m_constantBuffer = NULL;
 
 			PredefinedUniform m_predefined[PredefinedUniform::Count];
 			uint16_t m_attrMask[Attrib::Count];
@@ -298,7 +298,7 @@ namespace bgfx
 			void mapped(void* _data, uint64_t _size);
 
 			wgpu::Buffer m_buffer;
-			void* m_data = nullptr;
+			void* m_data = NULL;
 			uint64_t m_size = 0;
 		};
 
@@ -313,7 +313,7 @@ namespace bgfx
 			void submit();
 			void release();
 
-			StagingBufferWgpu* m_staging = nullptr;
+			StagingBufferWgpu* m_staging = NULL;
 			wgpu::Buffer m_stagingAlloc;
 			wgpu::Buffer m_buffer;
 			uint32_t m_offset;
@@ -450,13 +450,13 @@ namespace bgfx
 		{
 			void create(uint8_t _num, const Attachment* _attachment);
 			bool create(
-				uint16_t _denseIdx
+				  uint16_t _denseIdx
 				, void* _nwh
 				, uint32_t _width
 				, uint32_t _height
 				, TextureFormat::Enum _format
 				, TextureFormat::Enum _depthFormat
-			);
+				);
 			void postReset();
 			uint16_t destroy();
 
