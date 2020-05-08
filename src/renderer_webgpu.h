@@ -314,10 +314,10 @@ namespace bgfx
 			void release();
 
 			StagingBufferWgpu* m_staging = NULL;
-			wgpu::Buffer m_stagingAlloc;
 			wgpu::Buffer m_buffer;
 			uint32_t m_offset;
 			uint32_t m_size;
+			uint8_t m_stagingIndex = 0;
 		};
 
 		class BindStateCacheWgpu
@@ -479,7 +479,8 @@ namespace bgfx
 		{
 			void init(wgpu::Queue _queue);
 			void shutdown();
-			void begin();
+			void beginRender();
+			void beginStaging();
 			void kick(bool _endFrame, bool _waitForFinish = false);
 			void finish(bool _finishAll = false);
 			void release(wgpu::Buffer _buffer);
@@ -490,7 +491,8 @@ namespace bgfx
 #endif
 
 			wgpu::Queue		     m_queue;
-			wgpu::CommandEncoder m_encoder;
+			wgpu::CommandEncoder m_stagingEncoder;
+			wgpu::CommandEncoder m_renderEncoder;
 
 			int m_releaseWriteIndex = 0;
 			int m_releaseReadIndex = 0;
