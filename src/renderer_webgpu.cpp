@@ -29,11 +29,10 @@
 #		include <dawn_native/DawnNative.h>
 #		include <dawn/dawn_wsi.h>
 #		include <dawn/dawn_proc.h>
+#	else
+#		include <emscripten/emscripten.h>
+#		include <emscripten/html5.h>
 #	endif // !BX_PLATFORM_EMSCRIPTEN
-#else
-#	include <emscripten/emscripten.h>
-#	include <emscripten/html5.h>
-#endif // BGFX_CONFIG_RENDERER_WEBGPU
 
 namespace bgfx { namespace webgpu
 {
