@@ -17,6 +17,7 @@ Supported rendering backends:
  * Direct3D 9
  * Direct3D 11
  * Direct3D 12
+ * GNM (only for licensed PS4 developers, search DevNet forums for source)
  * Metal
  * OpenGL 2.1
  * OpenGL 3.1+
@@ -25,6 +26,7 @@ Supported rendering backends:
  * Vulkan
  * WebGL 1.0
  * WebGL 2.0
+ * WebGPU/Dawn (experimental)
 
 Supported platforms:
 

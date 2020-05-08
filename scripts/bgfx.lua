@@ -199,7 +199,7 @@ function bgfxProjectBase(_kind, _defines)
 
 		configuration {}
     end
-    
+
 	if _OPTIONS["with-amalgamated"] then
 		excludes {
 			path.join(BGFX_DIR, "src/bgfx.cpp"),

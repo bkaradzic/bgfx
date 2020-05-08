@@ -8,37 +8,29 @@
 //#define DAWN_ENABLE_BACKEND_D3D12
 #define DAWN_ENABLE_BACKEND_VULKAN
 
-#define BGFX_CONFIG_DEBUG_ANNOTATION 0
-
 #if BGFX_CONFIG_RENDERER_WEBGPU
-#include "renderer_webgpu.h"
-#include "renderer.h"
-#include "debug_renderdoc.h"
+#	include "renderer_webgpu.h"
+#	include "renderer.h"
+#	include "debug_renderdoc.h"
 
 #ifdef DAWN_ENABLE_BACKEND_VULKAN
-#include "renderer_vk.h"
+#	include "renderer_vk.h"
 #endif
-
-#include <cfloat>
-#include <new>
 
 #if !BX_PLATFORM_EMSCRIPTEN
-#ifdef DAWN_ENABLE_BACKEND_D3D12
-#include <dawn_native/D3D12Backend.h>
-#endif
-#ifdef DAWN_ENABLE_BACKEND_VULKAN
-#include <dawn_native/VulkanBackend.h>
-#endif
-#include <dawn_native/DawnNative.h>
-#include <dawn/dawn_wsi.h>
-#include <dawn/dawn_proc.h>
+#	ifdef DAWN_ENABLE_BACKEND_D3D12
+#		include <dawn_native/D3D12Backend.h>
+#	endif
+#	ifdef DAWN_ENABLE_BACKEND_VULKAN
+#		include <dawn_native/VulkanBackend.h>
+#	endif
+#	include <dawn_native/DawnNative.h>
+#	include <dawn/dawn_wsi.h>
+#	include <dawn/dawn_proc.h>
 #else
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
+#	include <emscripten/emscripten.h>
+#	include <emscripten/html5.h>
 #endif
-
-#define UNIFORM_BUFFER_SIZE (8*1024*1024)
-
 
 namespace bgfx { namespace webgpu
 {
@@ -143,7 +135,7 @@ namespace bgfx { namespace webgpu
 		uint32_t m_div;
 		uint32_t m_sub;
 	};
-	
+
 	static const PrimInfo s_primInfo[] =
 	{
 		{ wgpu::PrimitiveTopology::TriangleList,  3, 3, 0 },
@@ -153,7 +145,7 @@ namespace bgfx { namespace webgpu
 		{ wgpu::PrimitiveTopology::PointList,     1, 1, 0 },
 	};
 	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_primInfo) );
-	
+
 	static const wgpu::VertexFormat s_attribType[][4][2] =
 	{
 		{ // Uint8
@@ -1333,7 +1325,7 @@ namespace bgfx { namespace webgpu
 			BX_CHECK(bindState.numOffset == numOffset, "We're obviously doing something wrong");
 			encoder.SetBindGroup(0, bindState.m_bindGroup, numOffset, offsets);
 		}
-		
+
 		BindStateWgpu& allocAndFillBindState(const ProgramWgpu& program, BindStateCacheWgpu& bindStates, ScratchBufferWgpu& scratchBuffer, const RenderBind& renderBind)
 		{
 			BindingsWgpu b;
@@ -1944,7 +1936,7 @@ namespace bgfx { namespace webgpu
 						const uint32_t src           = (rgba   )&0xf;
 						const uint32_t dst           = (rgba>>4)&0xf;
 						const uint32_t equationIndex = (rgba>>8)&0x7;
-						
+
 						drt.colorBlend.srcFactor  = s_blendFactor[src][0];
 						drt.colorBlend.dstFactor  = s_blendFactor[dst][0];
 						drt.colorBlend.operation  = s_blendEquation[equationIndex];
@@ -2677,7 +2669,7 @@ namespace bgfx { namespace webgpu
 		desc.codeSize = shaderSize/4;
 
 		m_module = s_renderWgpu->m_device.CreateShaderModule(&desc);
-		
+
 		BGFX_FATAL(m_module
 			, bgfx::Fatal::InvalidShader
 			, "Failed to create %s shader."
@@ -2946,7 +2938,7 @@ namespace bgfx { namespace webgpu
 			m_numSides  = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 			m_requestedFormat  = TextureFormat::Enum(imageContainer.m_format);
 			m_textureFormat    = getViableTextureFormat(imageContainer);
-			
+
 			if (m_requestedFormat == bgfx::TextureFormat::D16)
 				m_textureFormat = bgfx::TextureFormat::D32F;
 
@@ -3015,7 +3007,7 @@ namespace bgfx { namespace webgpu
 			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const int32_t  sampleCount = s_msaa[msaaQuality];
 
-			
+
 			wgpu::TextureFormat format = wgpu::TextureFormat::Undefined;
 			if (srgb)
 			{
@@ -3211,7 +3203,7 @@ namespace bgfx { namespace webgpu
 
 				mapped.buffer.Unmap();
 			}
-			
+
 			wgpu::BufferCopyView* bufferCopyView = (wgpu::BufferCopyView*)BX_ALLOC(g_allocator, sizeof(wgpu::BufferCopyView) * numSrd);
 			wgpu::TextureCopyView* textureCopyView = (wgpu::TextureCopyView*)BX_ALLOC(g_allocator, sizeof(wgpu::TextureCopyView) * numSrd);
 			wgpu::Extent3D* textureCopySize = (wgpu::Extent3D*)BX_ALLOC(g_allocator, sizeof(wgpu::Extent3D) * numSrd);
@@ -3224,18 +3216,18 @@ namespace bgfx { namespace webgpu
 
 				uint32_t idealWidth  = bx::max<uint32_t>(1, m_width  >> imageInfos[ii].mipLevel);
 				uint32_t idealHeight = bx::max<uint32_t>(1, m_height >> imageInfos[ii].mipLevel);
-				new (&bufferCopyView[ii]) wgpu::BufferCopyView();
-				new (&textureCopyView[ii]) wgpu::TextureCopyView();
-				new (&textureCopySize[ii]) wgpu::Extent3D();
-			    bufferCopyView[ii].buffer      = stagingBuffer;
+				BX_PLACEMENT_NEW(&bufferCopyView[ii], wgpu::BufferCopyView)();
+				BX_PLACEMENT_NEW(&textureCopyView[ii], wgpu::TextureCopyView)();
+				BX_PLACEMENT_NEW(&textureCopySize[ii], wgpu::Extent3D)();
+				bufferCopyView[ii].buffer      = stagingBuffer;
 				bufferCopyView[ii].offset      = offset;
 				bufferCopyView[ii].bytesPerRow = dstpitch; // assume that image data are tightly aligned
 				bufferCopyView[ii].rowsPerImage = 0; // assume that image data are tightly aligned
 				textureCopyView[ii].texture        = m_ptr;
-			  //textureCopyView[ii].imageSubresource.aspectMask     = m_vkTextureAspect;
+				//textureCopyView[ii].imageSubresource.aspectMask     = m_vkTextureAspect;
 				textureCopyView[ii].mipLevel       = imageInfos[ii].mipLevel;
 				textureCopyView[ii].arrayLayer     = imageInfos[ii].layer;
-			  //textureCopyView[ii].layerCount     = 1;
+				//textureCopyView[ii].layerCount     = 1;
 				textureCopyView[ii].origin = { 0, 0, 0 };
 				textureCopySize[ii] = { idealWidth, idealHeight, imageInfos[ii].depth };
 
@@ -3373,7 +3365,7 @@ namespace bgfx { namespace webgpu
 	void StagingBufferWgpu::create(uint32_t _size, bool mapped)
 	{
 		wgpu::BufferDescriptor desc;
-		desc.size = BGFX_CONFIG_MAX_DRAW_CALLS * 128;  // UNIFORM_BUFFER_SIZE
+		desc.size = BGFX_CONFIG_MAX_DRAW_CALLS * 128;
 		desc.usage = wgpu::BufferUsage::MapWrite | wgpu::BufferUsage::CopySrc;
 
 		if (mapped)
@@ -3425,7 +3417,7 @@ namespace bgfx { namespace webgpu
 		m_size = _size;
 
 		wgpu::BufferDescriptor desc;
-		desc.size = BGFX_CONFIG_MAX_DRAW_CALLS * 128;  // UNIFORM_BUFFER_SIZE
+		desc.size = BGFX_CONFIG_MAX_DRAW_CALLS * 128;
 		desc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform;
 
 		m_buffer = s_renderWgpu->m_device.CreateBuffer(&desc);
@@ -3572,7 +3564,7 @@ namespace bgfx { namespace webgpu
 	void SwapChainWgpu::resize(FrameBufferWgpu& _frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
 		BX_TRACE("SwapChainWgpu::resize");
-		
+
 		const int32_t sampleCount = s_msaa[(_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 		wgpu::TextureFormat format = (_flags & BGFX_RESET_SRGB_BACKBUFFER)
@@ -3843,7 +3835,7 @@ namespace bgfx { namespace webgpu
 		{
 			buffer.Destroy();
 		}
-		
+
 		m_release[m_releaseReadIndex].clear();
 	}
 
@@ -4049,7 +4041,7 @@ namespace bgfx { namespace webgpu
 
 		// TODO store this
 		static wgpu::RenderPassEncoder rce;
-		
+
 		PipelineStateWgpu* currentPso = NULL;
 
 		bool wasCompute     = false;
@@ -4266,12 +4258,12 @@ namespace bgfx { namespace webgpu
 					if (isValid(compute.m_indirectBuffer))
 					{
 						const VertexBufferWgpu& vb = m_vertexBuffers[compute.m_indirectBuffer.idx];
-						
+
 						uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
 						? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 						: compute.m_numIndirect
 						;
-						
+
 						uint32_t args = compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 						for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 						{
