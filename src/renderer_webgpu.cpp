@@ -826,7 +826,7 @@ namespace bgfx { namespace webgpu
 		void readback(ReadbackWgpu& readback,  const TextureWgpu& texture, void* _data)
 		{
 			m_cmd.kick(false, true);
-			m_cmd.begin();
+			m_cmd.beginRender();
 
 			if (readback.m_mapped)
 				return;
@@ -861,7 +861,7 @@ namespace bgfx { namespace webgpu
 			bufferCopyView.rowsPerImage = srcHeight;
 
 			wgpu::Extent3D extent3D = { srcWidth, srcHeight, 1 };
-			m_cmd.m_encoder.CopyTextureToBuffer(&textureCopyView, &bufferCopyView, &extent3D);
+			getBlitCommandEncoder().CopyTextureToBuffer(&textureCopyView, &bufferCopyView, &extent3D);
 
 			auto finish = [](WGPUBufferMapAsyncStatus status, void const* data, uint64_t dataLength, void* userdata)
 			{
@@ -1135,7 +1135,7 @@ namespace bgfx { namespace webgpu
 				//	: wgpu::StoreOp::Store
 				//;
 
-				wgpu::RenderPassEncoder rce = m_cmd.m_encoder.BeginRenderPass(&renderPassDescriptor.desc);
+				wgpu::RenderPassEncoder rce = m_cmd.m_renderEncoder.BeginRenderPass(&renderPassDescriptor.desc);
 				m_renderEncoder = rce;
 
 				rce.SetViewport(0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f);
@@ -1209,7 +1209,8 @@ namespace bgfx { namespace webgpu
 				}
 			}
 
-			m_cmd.m_encoder = NULL;
+			m_cmd.m_stagingEncoder = NULL;
+			m_cmd.m_renderEncoder = NULL;
 		}
 
 		void updateResolution(const Resolution& _resolution)
@@ -1429,13 +1430,13 @@ namespace bgfx { namespace webgpu
 
 		void commitShaderConstants(ScratchBufferWgpu& _scratchBuffer, const ProgramWgpu& _program, uint32_t _vertexOffset, uint32_t _fragmentOffset)
 		{
-			const uint32_t size = _program.m_vsh->m_size;
+			const uint32_t size = _program.m_vsh->m_gpuSize;
 			if (0 != size)
 				_scratchBuffer.write(m_vsScratch, size);
 
 			if(NULL != _program.m_fsh)
 			{
-				const uint32_t size = _program.m_fsh->m_size;
+				const uint32_t size = _program.m_fsh->m_gpuSize;
 				if(0 != size)
 					_scratchBuffer.write(m_fsScratch, size);
 			}
@@ -2205,15 +2206,28 @@ namespace bgfx { namespace webgpu
 			return sampler->m_sampler;
 		}
 
+		wgpu::CommandEncoder& getRenderEncoder()
+		{
+			if (!m_cmd.m_renderEncoder)
+				m_cmd.beginRender();
+
+			return m_cmd.m_renderEncoder;
+		}
+
+		wgpu::CommandEncoder& getStagingEncoder()
+		{
+			if (!m_cmd.m_stagingEncoder)
+				m_cmd.beginStaging();
+
+			return m_cmd.m_stagingEncoder;
+		}
+
 		wgpu::CommandEncoder& getBlitCommandEncoder()
 		{
-			if (!m_cmd.m_encoder)
-				m_cmd.begin();
-
 			if (m_renderEncoder || m_computeEncoder)
 				endEncoding();
 
-			return m_cmd.m_encoder;
+			return getRenderEncoder();
 		}
 
 		wgpu::RenderPassEncoder renderPass(bgfx::Frame* _render, bgfx::FrameBufferHandle fbh, bool clear, Clear clr, const char* name = NULL)
@@ -2311,7 +2325,7 @@ namespace bgfx { namespace webgpu
 				}
 			}
 
-			wgpu::RenderPassEncoder rce = m_cmd.m_encoder.BeginRenderPass(&renderPassDescriptor.desc);
+			wgpu::RenderPassEncoder rce = m_cmd.m_renderEncoder.BeginRenderPass(&renderPassDescriptor.desc);
 			m_renderEncoder = rce;
 			return rce;
 		}
@@ -3445,6 +3459,7 @@ namespace bgfx { namespace webgpu
 
 	uint32_t ScratchBufferWgpu::write(void* data, uint64_t _size, uint64_t _offset)
 	{
+		BX_CHECK(nullptr != m_staging, "Cannot write uniforms outside of begin()/submit() calls");
 		uint32_t offset = m_offset;
 		bx::memCopy((void*)((uint8_t*)m_staging->m_data + offset), data, _size);
 		m_offset += _offset;
@@ -3453,6 +3468,7 @@ namespace bgfx { namespace webgpu
 
 	uint32_t ScratchBufferWgpu::write(void* data, uint64_t _size)
 	{
+		BX_CHECK(nullptr != m_staging, "Cannot write uniforms outside of begin()/submit() calls");
 		uint32_t offset = m_offset;
 		bx::memCopy((void*)((uint8_t*)m_staging->m_data + offset), data, _size);
 		m_offset += _size;
@@ -3463,8 +3479,8 @@ namespace bgfx { namespace webgpu
 	{
 		m_staging->unmap();
 
-		wgpu::CommandEncoder& bce = s_renderWgpu->getBlitCommandEncoder();
-		bce.CopyBufferToBuffer(m_staging->m_buffer, 0, m_buffer, 0, m_size);
+		wgpu::CommandEncoder& bce = s_renderWgpu->getStagingEncoder();
+		bce.CopyBufferToBuffer(m_staging->m_buffer, 0, m_buffer, 0, m_offset);
 	}
 
 	void ScratchBufferWgpu::release()
@@ -3754,9 +3770,14 @@ namespace bgfx { namespace webgpu
 		finish(true);
 	}
 
-	void CommandQueueWgpu::begin()
+	void CommandQueueWgpu::beginRender()
 	{
-		m_encoder = s_renderWgpu->m_device.CreateCommandEncoder();
+		m_renderEncoder = s_renderWgpu->m_device.CreateCommandEncoder();
+	}
+
+	void CommandQueueWgpu::beginStaging()
+	{
+		m_stagingEncoder = s_renderWgpu->m_device.CreateCommandEncoder();
 	}
 
 	inline void commandBufferFinishedCallback(void* _data)
@@ -3774,7 +3795,7 @@ namespace bgfx { namespace webgpu
 
 	void CommandQueueWgpu::kick(bool _endFrame, bool _waitForFinish)
 	{
-		if (m_encoder)
+		if (m_renderEncoder)
 		{
 			if (_endFrame)
 			{
@@ -3782,7 +3803,13 @@ namespace bgfx { namespace webgpu
 				//m_encoder.addCompletedHandler(commandBufferFinishedCallback, this);
 			}
 
-			wgpu::CommandBuffer commands = m_encoder.Finish();
+			if (m_stagingEncoder)
+			{
+				wgpu::CommandBuffer commands = m_stagingEncoder.Finish();
+				m_queue.Submit(1, &commands);
+			}
+
+			wgpu::CommandBuffer commands = m_renderEncoder.Finish();
 			m_queue.Submit(1, &commands);
 
 			if (_waitForFinish)
@@ -3792,7 +3819,8 @@ namespace bgfx { namespace webgpu
 #endif
 			}
 
-			m_encoder = NULL;
+			m_stagingEncoder = NULL;
+			m_renderEncoder = NULL;
 		}
 	}
 
@@ -3800,7 +3828,7 @@ namespace bgfx { namespace webgpu
 	{
 		if (_finishAll)
 		{
-			uint32_t count = m_encoder
+			uint32_t count = m_renderEncoder
 				? 2
 				: 3
 				;
@@ -3974,9 +4002,9 @@ namespace bgfx { namespace webgpu
 
 		m_cmd.finish(false);
 
-		if (!m_cmd.m_encoder)
+		if (!m_cmd.m_renderEncoder)
 		{
-			m_cmd.begin();
+			m_cmd.beginRender();
 		}
 
 		BGFX_WEBGPU_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
@@ -4163,7 +4191,7 @@ namespace bgfx { namespace webgpu
 
 
 						if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK)
-							&& !clearWithRenderPass)
+						&&  !clearWithRenderPass)
 						{
 							clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_colorPalette);
 						}
@@ -4183,7 +4211,7 @@ namespace bgfx { namespace webgpu
 						BGFX_WEBGPU_PROFILER_END();
 						BGFX_WEBGPU_PROFILER_BEGIN(view, kColorCompute);
 
-						m_computeEncoder = m_cmd.m_encoder.BeginComputePass();
+						m_computeEncoder = m_cmd.m_renderEncoder.BeginComputePass();
 					}
 					else if (viewChanged)
 					{
@@ -4193,7 +4221,7 @@ namespace bgfx { namespace webgpu
 						}
 
 						endEncoding();
-						m_computeEncoder = m_cmd.m_encoder.BeginComputePass();
+						m_computeEncoder = m_cmd.m_renderEncoder.BeginComputePass();
 					}
 
 					if (viewChanged)
@@ -4540,7 +4568,7 @@ namespace bgfx { namespace webgpu
 					uint32_t numOffset = 0;
 					uint32_t offsets[2] = { 0, 0 };
 					if (constantsChanged
-						|| hasPredefined)
+					||  hasPredefined)
 					{
 						//viewState.setPredefined<4>(this, view, program, _render, draw, programChanged || viewChanged);
 						//commitShaderConstants(scratchBuffer, program, voffset, foffset);
@@ -4850,9 +4878,9 @@ namespace bgfx { namespace webgpu
 			}
 		}
 
-		scratchBuffer.submit();
-
 		endEncoding();
+
+		scratchBuffer.submit();
 
 		m_cmd.kick(true);
 
