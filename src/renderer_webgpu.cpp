@@ -13,24 +13,27 @@
 #	include "renderer.h"
 #	include "debug_renderdoc.h"
 
-#ifdef DAWN_ENABLE_BACKEND_VULKAN
-#	include "renderer_vk.h"
-#endif
-
-#if !BX_PLATFORM_EMSCRIPTEN
-#	ifdef DAWN_ENABLE_BACKEND_D3D12
-#		include <dawn_native/D3D12Backend.h>
-#	endif
 #	ifdef DAWN_ENABLE_BACKEND_VULKAN
-#		include <dawn_native/VulkanBackend.h>
-#	endif
-#	include <dawn_native/DawnNative.h>
-#	include <dawn/dawn_wsi.h>
-#	include <dawn/dawn_proc.h>
+#		include "renderer_vk.h"
+#	endif // DAWN_ENABLE_BACKEND_VULKAN
+
+#	if !BX_PLATFORM_EMSCRIPTEN
+#		ifdef DAWN_ENABLE_BACKEND_D3D12
+#			include <dawn_native/D3D12Backend.h>
+#		endif // !BX_PLATFORM_EMSCRIPTEN
+
+#		ifdef DAWN_ENABLE_BACKEND_VULKAN
+#			include <dawn_native/VulkanBackend.h>
+#		endif // DAWN_ENABLE_BACKEND_VULKAN
+
+#		include <dawn_native/DawnNative.h>
+#		include <dawn/dawn_wsi.h>
+#		include <dawn/dawn_proc.h>
+#	endif // !BX_PLATFORM_EMSCRIPTEN
 #else
 #	include <emscripten/emscripten.h>
 #	include <emscripten/html5.h>
-#endif
+#endif // BGFX_CONFIG_RENDERER_WEBGPU
 
 namespace bgfx { namespace webgpu
 {

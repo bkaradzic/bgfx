@@ -11,34 +11,34 @@
 #if BGFX_CONFIG_RENDERER_WEBGPU
 
 #if !BX_PLATFORM_EMSCRIPTEN
-#include <dawn/webgpu_cpp.h>
-#include <dawn/dawn_wsi.h>
+#	include <dawn/webgpu_cpp.h>
+#	include <dawn/dawn_wsi.h>
 #else
-#include <webgpu/webgpu_cpp.h>
-#endif
+#	include <webgpu/webgpu_cpp.h>
+#endif // !BX_PLATFORM_EMSCRIPTEN
 
-#define BGFX_WEBGPU_PROFILER_BEGIN(_view, _abgr)         \
+#define BGFX_WEBGPU_PROFILER_BEGIN(_view, _abgr)      \
 	BX_MACRO_BLOCK_BEGIN                              \
 		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr); \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_WEBGPU_PROFILER_BEGIN_LITERAL(_name, _abgr)   \
-	BX_MACRO_BLOCK_BEGIN                                \
-		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr); \
+#define BGFX_WEBGPU_PROFILER_BEGIN_LITERAL(_name, _abgr) \
+	BX_MACRO_BLOCK_BEGIN                                 \
+		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr);  \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_WEBGPU_PROFILER_END() \
-	BX_MACRO_BLOCK_BEGIN        \
-		BGFX_PROFILER_END();    \
+	BX_MACRO_BLOCK_BEGIN           \
+		BGFX_PROFILER_END();       \
 	BX_MACRO_BLOCK_END
 
 #define WEBGPU_MAX_FRAMES_IN_FLIGHT 3
-#define WEBGPU_NUM_UNIFORM_BUFFERS 8
+#define WEBGPU_NUM_UNIFORM_BUFFERS  8
 
-namespace bgfx {
+namespace bgfx
+{
 	namespace webgpu
 	{
-
 		template <typename Ty>
 		class StateCacheT
 		{
@@ -560,7 +560,8 @@ namespace bgfx {
 			bx::RingBufferControl m_control;
 		};
 
-	} /* namespace metal */
+	} // namespace webgpu
+
 } // namespace bgfx
 
 #endif // BGFX_CONFIG_RENDERER_WEBGPU
