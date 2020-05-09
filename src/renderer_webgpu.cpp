@@ -272,91 +272,91 @@ namespace bgfx { namespace webgpu
 
 	static TextureFormatInfo s_textureFormat[] =
 	{
-		{ wgpu::TextureFormat::BC1RGBAUnorm,            wgpu::TextureFormat::BC1RGBAUnormSrgb },  // BC1
-		{ wgpu::TextureFormat::BC2RGBAUnorm,            wgpu::TextureFormat::BC2RGBAUnormSrgb },  // BC2
-		{ wgpu::TextureFormat::BC3RGBAUnorm,            wgpu::TextureFormat::BC3RGBAUnormSrgb },  // BC3
-		{ wgpu::TextureFormat::BC4RUnorm,               wgpu::TextureFormat::Undefined                },  // BC4  //  BC4RSnorm ??
-		{ wgpu::TextureFormat::BC5RGUnorm,              wgpu::TextureFormat::Undefined                },  // BC5  //  BC5RGSnorm ??
-		{ wgpu::TextureFormat::BC6HRGBUfloat,           wgpu::TextureFormat::Undefined                },  // BC6H //  BC6HRGBSfloat ??
-		{ wgpu::TextureFormat::BC7RGBAUnorm,            wgpu::TextureFormat::BC7RGBAUnormSrgb },  // BC7
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ETC1
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ETC2
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ETC2A
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ETC2A1
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // PTC12
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // PTC14
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // PTC12A
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // PTC14A
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // PTC22
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // PTC24
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ATC
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ATCE
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ATCI
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ASTC4x4
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ASTC5x5
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ASTC6x6
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ASTC8x5
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ASTC8x6
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // ASTC10x5
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // Unknown
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // R1
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // A8
-		{ wgpu::TextureFormat::R8Unorm,                 wgpu::TextureFormat::Undefined                },  // R8
-		{ wgpu::TextureFormat::R8Sint,                  wgpu::TextureFormat::Undefined                },  // R8I
-		{ wgpu::TextureFormat::R8Uint,                  wgpu::TextureFormat::Undefined                },  // R8U
-		{ wgpu::TextureFormat::R8Snorm,                 wgpu::TextureFormat::Undefined                },  // R8S
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // R16
-		{ wgpu::TextureFormat::R16Sint,                 wgpu::TextureFormat::Undefined                },  // R16I
-		{ wgpu::TextureFormat::R16Uint,                 wgpu::TextureFormat::Undefined                },  // R16U
-		{ wgpu::TextureFormat::R16Float,                wgpu::TextureFormat::Undefined                },  // R16F
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // R16S
-		{ wgpu::TextureFormat::R32Sint,                 wgpu::TextureFormat::Undefined                },  // R32I
-		{ wgpu::TextureFormat::R32Uint,                 wgpu::TextureFormat::Undefined                },  // R32U
-		{ wgpu::TextureFormat::R32Float,                wgpu::TextureFormat::Undefined                },  // R32F
-		{ wgpu::TextureFormat::RG8Unorm,                wgpu::TextureFormat::Undefined                },  // RG8
-		{ wgpu::TextureFormat::RG8Sint,                 wgpu::TextureFormat::Undefined                },  // RG8I
-		{ wgpu::TextureFormat::RG8Uint,                 wgpu::TextureFormat::Undefined                },  // RG8U
-		{ wgpu::TextureFormat::RG8Snorm,                wgpu::TextureFormat::Undefined                },  // RG8S
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RG16
-		{ wgpu::TextureFormat::RG16Sint,                wgpu::TextureFormat::Undefined                },  // RG16I
-		{ wgpu::TextureFormat::RG16Uint,                wgpu::TextureFormat::Undefined                },  // RG16U
-		{ wgpu::TextureFormat::RG16Float,               wgpu::TextureFormat::Undefined                },  // RG16F
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RG16S
-		{ wgpu::TextureFormat::RG32Sint,                wgpu::TextureFormat::Undefined                },  // RG32I
-		{ wgpu::TextureFormat::RG32Uint,                wgpu::TextureFormat::Undefined                },  // RG32U
-		{ wgpu::TextureFormat::RG32Float,               wgpu::TextureFormat::Undefined                },  // RG32F
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RGB8
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RGB8I
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RGB8U
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RGB8S
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RGB9E5F
-		{ wgpu::TextureFormat::BGRA8Unorm,              wgpu::TextureFormat::BGRA8UnormSrgb   },  // BGRA8
-		{ wgpu::TextureFormat::RGBA8Unorm,              wgpu::TextureFormat::RGBA8UnormSrgb   },  // RGBA8
-		{ wgpu::TextureFormat::RGBA8Sint,               wgpu::TextureFormat::Undefined                },  // RGBA8I
-		{ wgpu::TextureFormat::RGBA8Uint,               wgpu::TextureFormat::Undefined                },  // RGBA8U
-		{ wgpu::TextureFormat::RGBA8Snorm,              wgpu::TextureFormat::Undefined                },  // RGBA8S
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RGBA16
-		{ wgpu::TextureFormat::RGBA16Sint,              wgpu::TextureFormat::Undefined                },  // RGBA16I
-		{ wgpu::TextureFormat::RGBA16Uint,              wgpu::TextureFormat::Undefined                },  // RGBA16U
-		{ wgpu::TextureFormat::RGBA16Float,             wgpu::TextureFormat::Undefined                },  // RGBA16F
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RGBA16S
-		{ wgpu::TextureFormat::RGBA32Sint,              wgpu::TextureFormat::Undefined                },  // RGBA32I
-		{ wgpu::TextureFormat::RGBA32Uint,              wgpu::TextureFormat::Undefined                },  // RGBA32U
-		{ wgpu::TextureFormat::RGBA32Float,             wgpu::TextureFormat::Undefined                },  // RGBA32F
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // R5G6B5
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RGBA4
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // RGB5A1
-		{ wgpu::TextureFormat::RGB10A2Unorm,            wgpu::TextureFormat::Undefined                },  // RGB10A2
-		{ wgpu::TextureFormat::RG11B10Float,            wgpu::TextureFormat::Undefined                },  // RG11B10F
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // UnknownDepth
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // D16
-		{ wgpu::TextureFormat::Depth24Plus,             wgpu::TextureFormat::Undefined                },  // D24
-		{ wgpu::TextureFormat::Depth24PlusStencil8,     wgpu::TextureFormat::Undefined                },  // D24S8
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // D32
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // D16F
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // D24F
-		{ wgpu::TextureFormat::Depth32Float,            wgpu::TextureFormat::Undefined                },  // D32F
-		{ wgpu::TextureFormat::Undefined,                       wgpu::TextureFormat::Undefined                },  // D0S8
+		{ wgpu::TextureFormat::BC1RGBAUnorm,        wgpu::TextureFormat::BC1RGBAUnormSrgb },  // BC1
+		{ wgpu::TextureFormat::BC2RGBAUnorm,        wgpu::TextureFormat::BC2RGBAUnormSrgb },  // BC2
+		{ wgpu::TextureFormat::BC3RGBAUnorm,        wgpu::TextureFormat::BC3RGBAUnormSrgb },  // BC3
+		{ wgpu::TextureFormat::BC4RUnorm,           wgpu::TextureFormat::Undefined        },  // BC4  //  BC4RSnorm ??
+		{ wgpu::TextureFormat::BC5RGUnorm,          wgpu::TextureFormat::Undefined        },  // BC5  //  BC5RGSnorm ??
+		{ wgpu::TextureFormat::BC6HRGBUfloat,       wgpu::TextureFormat::Undefined        },  // BC6H //  BC6HRGBSfloat ??
+		{ wgpu::TextureFormat::BC7RGBAUnorm,        wgpu::TextureFormat::BC7RGBAUnormSrgb },  // BC7
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ETC1
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ETC2
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ETC2A
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ETC2A1
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // PTC12
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // PTC14
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // PTC12A
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // PTC14A
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // PTC22
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // PTC24
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ATC
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ATCE
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ATCI
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC4x4
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC5x5
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC6x6
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC8x5
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC8x6
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC10x5
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // Unknown
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // R1
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // A8
+		{ wgpu::TextureFormat::R8Unorm,             wgpu::TextureFormat::Undefined        },  // R8
+		{ wgpu::TextureFormat::R8Sint,              wgpu::TextureFormat::Undefined        },  // R8I
+		{ wgpu::TextureFormat::R8Uint,              wgpu::TextureFormat::Undefined        },  // R8U
+		{ wgpu::TextureFormat::R8Snorm,             wgpu::TextureFormat::Undefined        },  // R8S
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // R16
+		{ wgpu::TextureFormat::R16Sint,             wgpu::TextureFormat::Undefined        },  // R16I
+		{ wgpu::TextureFormat::R16Uint,             wgpu::TextureFormat::Undefined        },  // R16U
+		{ wgpu::TextureFormat::R16Float,            wgpu::TextureFormat::Undefined        },  // R16F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // R16S
+		{ wgpu::TextureFormat::R32Sint,             wgpu::TextureFormat::Undefined        },  // R32I
+		{ wgpu::TextureFormat::R32Uint,             wgpu::TextureFormat::Undefined        },  // R32U
+		{ wgpu::TextureFormat::R32Float,            wgpu::TextureFormat::Undefined        },  // R32F
+		{ wgpu::TextureFormat::RG8Unorm,            wgpu::TextureFormat::Undefined        },  // RG8
+		{ wgpu::TextureFormat::RG8Sint,             wgpu::TextureFormat::Undefined        },  // RG8I
+		{ wgpu::TextureFormat::RG8Uint,             wgpu::TextureFormat::Undefined        },  // RG8U
+		{ wgpu::TextureFormat::RG8Snorm,            wgpu::TextureFormat::Undefined        },  // RG8S
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RG16
+		{ wgpu::TextureFormat::RG16Sint,            wgpu::TextureFormat::Undefined        },  // RG16I
+		{ wgpu::TextureFormat::RG16Uint,            wgpu::TextureFormat::Undefined        },  // RG16U
+		{ wgpu::TextureFormat::RG16Float,           wgpu::TextureFormat::Undefined        },  // RG16F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RG16S
+		{ wgpu::TextureFormat::RG32Sint,            wgpu::TextureFormat::Undefined        },  // RG32I
+		{ wgpu::TextureFormat::RG32Uint,            wgpu::TextureFormat::Undefined        },  // RG32U
+		{ wgpu::TextureFormat::RG32Float,           wgpu::TextureFormat::Undefined        },  // RG32F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGB8
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGB8I
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGB8U
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGB8S
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGB9E5F
+		{ wgpu::TextureFormat::BGRA8Unorm,          wgpu::TextureFormat::BGRA8UnormSrgb   },  // BGRA8
+		{ wgpu::TextureFormat::RGBA8Unorm,          wgpu::TextureFormat::RGBA8UnormSrgb   },  // RGBA8
+		{ wgpu::TextureFormat::RGBA8Sint,           wgpu::TextureFormat::Undefined        },  // RGBA8I
+		{ wgpu::TextureFormat::RGBA8Uint,           wgpu::TextureFormat::Undefined        },  // RGBA8U
+		{ wgpu::TextureFormat::RGBA8Snorm,          wgpu::TextureFormat::Undefined        },  // RGBA8S
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGBA16
+		{ wgpu::TextureFormat::RGBA16Sint,          wgpu::TextureFormat::Undefined        },  // RGBA16I
+		{ wgpu::TextureFormat::RGBA16Uint,          wgpu::TextureFormat::Undefined        },  // RGBA16U
+		{ wgpu::TextureFormat::RGBA16Float,         wgpu::TextureFormat::Undefined        },  // RGBA16F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGBA16S
+		{ wgpu::TextureFormat::RGBA32Sint,          wgpu::TextureFormat::Undefined        },  // RGBA32I
+		{ wgpu::TextureFormat::RGBA32Uint,          wgpu::TextureFormat::Undefined        },  // RGBA32U
+		{ wgpu::TextureFormat::RGBA32Float,         wgpu::TextureFormat::Undefined        },  // RGBA32F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // R5G6B5
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGBA4
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGB5A1
+		{ wgpu::TextureFormat::RGB10A2Unorm,        wgpu::TextureFormat::Undefined        },  // RGB10A2
+		{ wgpu::TextureFormat::RG11B10Float,        wgpu::TextureFormat::Undefined        },  // RG11B10F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // UnknownDepth
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D16
+		{ wgpu::TextureFormat::Depth24Plus,         wgpu::TextureFormat::Undefined        },  // D24
+		{ wgpu::TextureFormat::Depth24PlusStencil8, wgpu::TextureFormat::Undefined        },  // D24S8
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D32
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D16F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D24F
+		{ wgpu::TextureFormat::Depth32Float,        wgpu::TextureFormat::Undefined        },  // D32F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat));
 
@@ -377,15 +377,15 @@ namespace bgfx { namespace webgpu
 #if !BX_PLATFORM_EMSCRIPTEN
 	DawnSwapChainImplementation(*createSwapChain)(wgpu::Device device, void* nwh);
 
-#ifdef DAWN_ENABLE_BACKEND_D3D12
+#	if defined(DAWN_ENABLE_BACKEND_D3D12)
 	DawnSwapChainImplementation CreateSwapChainD3D12(wgpu::Device device, void* nwh)
 	{
 		HWND win32Window = (HWND)nwh;
 		return dawn_native::d3d12::CreateNativeSwapChainImpl(device.Get(), win32Window);
 	}
-#endif
+#	endif // defined(DAWN_ENABLE_BACKEND_D3D12)
 
-#ifdef DAWN_ENABLE_BACKEND_VULKAN
+#	if defined(DAWN_ENABLE_BACKEND_VULKAN)
 	DawnSwapChainImplementation CreateSwapChainVulkan(wgpu::Device device, void* nwh)
 	{
 		VkInstance instance = dawn_native::vulkan::GetInstance(device.Get());
@@ -393,7 +393,7 @@ namespace bgfx { namespace webgpu
 		PFN_vkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR = (PFN_vkCreateWin32SurfaceKHR)dawn_native::vulkan::GetInstanceProcAddr(device.Get(), "vkCreateWin32SurfaceKHR");
 
 		VkSurfaceKHR surface;
-#if BX_PLATFORM_WINDOWS
+#		if BX_PLATFORM_WINDOWS
 		// Copied from renderer_vk.cpp -> needs refactor
 		{
 			VkWin32SurfaceCreateInfoKHR sci;
@@ -404,12 +404,12 @@ namespace bgfx { namespace webgpu
 			sci.hwnd = (HWND)nwh;
 			VkResult result = vkCreateWin32SurfaceKHR(instance, &sci, NULL, &surface);
 		}
-#endif
+#		endif // BX_PLATFORM_WINDOWS
 		return dawn_native::vulkan::CreateNativeSwapChainImpl(device.Get(), surface);
 	}
-#endif
+#	endif // defined(DAWN_ENABLE_BACKEND_VULKAN)
 
-#endif
+#endif // !BX_PLATFORM_EMSCRIPTEN
 
 	struct RendererContextWgpu : public RendererContextI
 	{
@@ -447,17 +447,17 @@ namespace bgfx { namespace webgpu
 #if !BX_PLATFORM_EMSCRIPTEN
 			// Default to D3D12, Metal, Vulkan, OpenGL in that order as D3D12 and Metal are the preferred on
 			// their respective platforms, and Vulkan is preferred to OpenGL
-#if defined(DAWN_ENABLE_BACKEND_D3D12)
+#	if defined(DAWN_ENABLE_BACKEND_D3D12)
 			static dawn_native::BackendType backendType = dawn_native::BackendType::D3D12;
-#elif defined(DAWN_ENABLE_BACKEND_METAL)
+#	elif defined(DAWN_ENABLE_BACKEND_METAL)
 			static dawn_native::BackendType backendType = dawn_native::BackendType::Metal;
-#elif defined(DAWN_ENABLE_BACKEND_OPENGL)
+#	elif defined(DAWN_ENABLE_BACKEND_OPENGL)
 			static dawn_native::BackendType backendType = dawn_native::BackendType::OpenGL;
-#elif defined(DAWN_ENABLE_BACKEND_VULKAN)
+#	elif defined(DAWN_ENABLE_BACKEND_VULKAN)
 			static dawn_native::BackendType backendType = dawn_native::BackendType::Vulkan;
-#else
-#error
-#endif
+#	else
+#		error "Unknown platform."
+#	endif // defined(DAWN_ENABLE_BACKEND_*)
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG))
 			{
@@ -484,17 +484,17 @@ namespace bgfx { namespace webgpu
 
 			using CreateSwapChain = DawnSwapChainImplementation (*)(wgpu::Device device, void* nwh);
 
-#if defined(DAWN_ENABLE_BACKEND_D3D12)
+#	if defined(DAWN_ENABLE_BACKEND_D3D12)
 			createSwapChain = CreateSwapChainD3D12;
-#elif defined(DAWN_ENABLE_BACKEND_METAL)
+#	elif defined(DAWN_ENABLE_BACKEND_METAL)
 			createSwapChain = CreateSwapChainMetal;
-#elif defined(DAWN_ENABLE_BACKEND_NULL)
+#	elif defined(DAWN_ENABLE_BACKEND_NULL)
 			createSwapChain = CreateSwapChainNull;
-#elif defined(DAWN_ENABLE_BACKEND_OPENGL)
+#	elif defined(DAWN_ENABLE_BACKEND_OPENGL)
 			createSwapChain = CreateSwapChainOpenGL;
-#elif defined(DAWN_ENABLE_BACKEND_VULKAN)
+#	elif defined(DAWN_ENABLE_BACKEND_VULKAN)
 			createSwapChain = CreateSwapChainVulkan;
-#endif
+#	endif // defined(DAWN_ENABLE_BACKEND_*)
 
 			// Choose whether to use the backend procs and devices directly, or set up the wire.
 			WGPUDevice cDevice = backendDevice;
@@ -504,7 +504,7 @@ namespace bgfx { namespace webgpu
 			m_device = wgpu::Device::Acquire(cDevice);
 #else
 			m_device = wgpu::Device(emscripten_webgpu_get_device());
-#endif
+#endif // !BX_PLATFORM_EMSCRIPTEN
 
 			auto PrintDeviceError = [](WGPUErrorType errorType, const char* message, void*) {
 				BX_UNUSED(errorType);
@@ -517,6 +517,7 @@ namespace bgfx { namespace webgpu
 				{
 					BX_CHECK(false, "Device error: %s", message);
 				}
+
 				s_ignoreError = false;
 			};
 
