@@ -70,7 +70,8 @@ public:
 			, 0
 			);
 
-		// Imgui.
+		// Initialize Imgui
+		// This initializes the same allocator used by stb_truetype, so must do that before creating the font manager
 		imguiCreate();
 
 		uint32_t size;
