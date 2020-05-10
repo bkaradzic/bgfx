@@ -9,7 +9,9 @@
 #include "../bgfx_utils.h"
 #include "../packrect.h"
 
+#ifdef BGFX_CONFIG_MULTITHREADED
 #include <bx/mutex.h>
+#endif
 #include <bx/math.h>
 #include <bx/sort.h>
 #include <bx/uint32_t.h>
@@ -364,7 +366,9 @@ struct SpriteT
 
 	SpriteHandle create(uint16_t _width, uint16_t _height)
 	{
+#ifdef BGFX_CONFIG_MULTITHREADED
 		bx::MutexScope lock(m_lock);
+#endif
 
 		SpriteHandle handle = { bx::kInvalidHandle };
 
@@ -401,7 +405,9 @@ struct SpriteT
 		return m_pack[_sprite.idx];
 	}
 
+#ifdef BGFX_CONFIG_MULTITHREADED
 	bx::Mutex                     m_lock;
+#endif
 	bx::HandleAllocT<MaxHandlesT> m_handleAlloc;
 	Pack2D                        m_pack[MaxHandlesT];
 	RectPack2DT<256>              m_ra;
@@ -420,7 +426,9 @@ struct GeometryT
 
 		GeometryHandle handle;
 		{
+#ifdef BGFX_CONFIG_MULTITHREADED
 			bx::MutexScope lock(m_lock);
+#endif
 			handle = { m_handleAlloc.alloc() };
 		}
 
@@ -472,7 +480,9 @@ struct GeometryT
 
 	void destroy(GeometryHandle _handle)
 	{
+#ifdef BGFX_CONFIG_MULTITHREADED
 		bx::MutexScope lock(m_lock);
+#endif
 		Geometry& geometry = m_geometry[_handle.idx];
 		bgfx::destroy(geometry.m_vbh);
 		bgfx::destroy(geometry.m_ibh);
@@ -495,7 +505,9 @@ struct GeometryT
 		uint32_t m_topologyNumIndices[2];
 	};
 
+#ifdef BGFX_CONFIG_MULTITHREADED
 	bx::Mutex m_lock;
+#endif
 	bx::HandleAllocT<MaxHandlesT> m_handleAlloc;
 	Geometry m_geometry[MaxHandlesT];
 };
