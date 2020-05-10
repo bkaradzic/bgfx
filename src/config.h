@@ -8,6 +8,13 @@
 
 #include <bx/bx.h>
 
+// # Configuration options for bgfx.
+//
+// Any of `BGFX_CONFIG_*` options that's inside `#ifndef` block can be configured externally
+// via compiler options.
+//
+// When selecting rendering backends select all backends you want to include in the build.
+
 #ifndef BGFX_CONFIG_DEBUG
 #	define BGFX_CONFIG_DEBUG 0
 #endif // BGFX_CONFIG_DEBUG
