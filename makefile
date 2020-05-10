@@ -23,15 +23,8 @@ endif
 
 # $(info $(OS))
 
-WITH_WINDOWING_LIB=
-ifeq ($(WINDOWING_LIB),sdl)
-	WITH_WINDOWING_LIB=--with-sdl
-else ifeq ($(WINDOWING_LIB),glfw)
-	WITH_WINDOWING_LIB=--with-glfw
-endif
-
 BX_DIR?=../bx
-GENIE?=$(BX_DIR)/tools/bin/$(OS)/genie $(WITH_WINDOWING_LIB)
+GENIE?=$(BX_DIR)/tools/bin/$(OS)/genie $(EXTRA_GENIE_ARGS)
 NINJA?=$(BX_DIR)/tools/bin/$(OS)/ninja
 
 .PHONY: help
