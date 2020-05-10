@@ -395,6 +395,15 @@ https://www.minecraft.net/zh-hant/attribution/
 ![home-hero-1200x600](https://user-images.githubusercontent.com/814772/79185288-57050000-7dcb-11ea-87b4-2126fcd1545b.jpg)
 
 
+## FFNx
+
+Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with native Steam 2013 release support! )
+
+[FFNx](https://github.com/julianxhokaxhiu/FFNx#ffnx)
+
+![FFVIII](https://raw.githubusercontent.com/julianxhokaxhiu/FFNx/master/.screens/ff8.png)
+
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
