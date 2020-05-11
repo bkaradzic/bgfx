@@ -970,6 +970,11 @@ namespace bgfx { namespace spirv
 					spirv_cross::CompilerReflection refl(spirv);
 					spirv_cross::ShaderResources resourcesrefl = refl.get_shader_resources();
 
+					if (g_verbose)
+					{
+						glslang::SpirvToolsDisassemble(std::cout, spirv);
+					}
+
 					// Loop through the separate_images, and extract the uniform names:
 					for (auto &resource : resourcesrefl.separate_images)
 					{
@@ -1060,7 +1065,7 @@ namespace bgfx { namespace spirv
 
 								uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
 								uniform.name = name;
-								uniform.type = UniformType::End;
+								uniform.type = type;
 								uniform.regIndex = binding_index;
 								uniform.regCount = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 								break;
@@ -1072,11 +1077,6 @@ namespace bgfx { namespace spirv
 
 					if (_version == BX_MAKEFOURCC('M', 'T', 'L', 0) )
 					{
-						if (g_verbose)
-						{
-							glslang::SpirvToolsDisassemble(std::cout, spirv);
-						}
-
 						spirv_cross::CompilerMSL msl(std::move(spirv));
 
 						spirv_cross::ShaderResources resources = msl.get_shader_resources();

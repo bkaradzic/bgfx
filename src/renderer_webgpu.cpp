@@ -8,14 +8,13 @@
 //#define DAWN_ENABLE_BACKEND_D3D12
 #define DAWN_ENABLE_BACKEND_VULKAN
 
+#define BGFX_CONFIG_DEBUG_ANNOTATION 0
+
 #if BGFX_CONFIG_RENDERER_WEBGPU
 #	include "renderer_webgpu.h"
+#	include "renderer_vk.h"
 #	include "renderer.h"
 #	include "debug_renderdoc.h"
-
-#	ifdef DAWN_ENABLE_BACKEND_VULKAN
-#		include "renderer_vk.h"
-#	endif // DAWN_ENABLE_BACKEND_VULKAN
 
 #	if !BX_PLATFORM_EMSCRIPTEN
 #		ifdef DAWN_ENABLE_BACKEND_D3D12
@@ -1140,6 +1139,7 @@ namespace bgfx { namespace webgpu
 				m_renderEncoder = rce;
 
 				rce.SetViewport(0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f);
+				rce.SetScissorRect(0.0f, 0.0f, (float)width, (float)height);
 
 				rce.SetPipeline(pso->m_rps);
 
@@ -1520,7 +1520,7 @@ namespace bgfx { namespace webgpu
 			}
 		}
 
-		void clearQuad(ClearQuad& _clearQuad, const Rect& /*_rect*/, const Clear& _clear, const float _palette[][4])
+		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
 			uint32_t width;
 			uint32_t height;
@@ -1627,6 +1627,9 @@ namespace bgfx { namespace webgpu
 			const VertexBufferWgpu& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
 
 			bindProgram(rce, program, bindState, numOffset, offsets);
+
+			rce.SetViewport(_rect.m_x, _rect.m_y, _rect.m_width, _rect.m_height, 0.0f, 1.0f);
+			rce.SetScissorRect(_rect.m_x, _rect.m_y, _rect.m_width, _rect.m_height);
 
 			rce.SetVertexBuffer(0, vb.m_ptr);
 			rce.Draw(4, 1, 0, 0);
@@ -1971,6 +1974,7 @@ namespace bgfx { namespace webgpu
 				layout.bindGroupLayouts = &program.m_bindGroupLayout;
 				layout.bindGroupLayoutCount = 1;
 
+				BX_TRACE("Creating WebGPU render pipeline layout for program %s", program.m_vsh->name());
 				pd.desc.layout = m_device.CreatePipelineLayout(&layout);
 				// TODO (hugoam) this should be cached too ?
 
@@ -2110,7 +2114,6 @@ namespace bgfx { namespace webgpu
 					input.vertexBuffers[stream].attributes = &input.attributes[firstAttrib];
 				}
 
-
 				input.desc.indexFormat = _index32 ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16;
 
 				pd.desc.vertexState = &input.desc;
@@ -2162,12 +2165,14 @@ namespace bgfx { namespace webgpu
 				layout.bindGroupLayouts = &program.m_bindGroupLayout;
 				layout.bindGroupLayoutCount = 1;
 
+				BX_TRACE("Creating WebGPU render pipeline layout for program %s", program.m_vsh->name());
 				pso->m_layout = m_device.CreatePipelineLayout(&layout);
 
 				wgpu::ComputePipelineDescriptor desc;
 				desc.layout = pso->m_layout;
 				desc.computeStage = { NULL, program.m_vsh->m_module, "main" };
 
+				BX_TRACE("Creating WebGPU render pipeline state for program %s", program.m_vsh->name());
 				pso->m_cps = m_device.CreateComputePipeline(&desc);
 			}
 
@@ -2192,7 +2197,7 @@ namespace bgfx { namespace webgpu
 				desc.magFilter    = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
 				desc.mipmapFilter = s_textureFilterMip[(_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
 				desc.lodMinClamp  = 0;
-				desc.lodMaxClamp  = FLT_MAX;
+				desc.lodMaxClamp  = bx::kFloatMax;
 
 				const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
 				desc.compare = 0 == cmpFunc
@@ -2680,10 +2685,13 @@ namespace bgfx { namespace webgpu
 			}
 		}
 
+		wgpu::ShaderModuleSPIRVDescriptor spirv;
+		spirv.code = m_code;
+		spirv.codeSize = shaderSize / 4;
+
 		wgpu::ShaderModuleDescriptor desc;
 		desc.label = getName(_handle);
-		desc.code = m_code;
-		desc.codeSize = shaderSize/4;
+		desc.nextInChain = &spirv;
 
 		m_module = s_renderWgpu->m_device.CreateShaderModule(&desc);
 
@@ -2886,7 +2894,7 @@ namespace bgfx { namespace webgpu
 
 			wgpu::CreateBufferMappedResult mapped = s_renderWgpu->m_device.CreateBufferMapped(&desc);
 			wgpu::Buffer staging = mapped.buffer;
-			bx::memCopy(mapped.data, m_dynamic, _size);
+			bx::memCopy(mapped.data, m_dynamic, end - start);
 			mapped.buffer.Unmap();
 
 			// TODO pad to 4 bytes
@@ -3461,6 +3469,7 @@ namespace bgfx { namespace webgpu
 	uint32_t ScratchBufferWgpu::write(void* data, uint64_t _size, uint64_t _offset)
 	{
 		BX_CHECK(nullptr != m_staging, "Cannot write uniforms outside of begin()/submit() calls");
+		BX_CHECK(m_size > m_offset + _offset, "Out-of-bounds scratch buffer write");
 		uint32_t offset = m_offset;
 		bx::memCopy((void*)((uint8_t*)m_staging->m_data + offset), data, _size);
 		m_offset += _offset;
@@ -3470,6 +3479,7 @@ namespace bgfx { namespace webgpu
 	uint32_t ScratchBufferWgpu::write(void* data, uint64_t _size)
 	{
 		BX_CHECK(nullptr != m_staging, "Cannot write uniforms outside of begin()/submit() calls");
+		BX_CHECK(m_size > m_offset + _size, "Out-of-bounds scratch buffer write");
 		uint32_t offset = m_offset;
 		bx::memCopy((void*)((uint8_t*)m_staging->m_data + offset), data, _size);
 		m_offset += _size;
@@ -3480,8 +3490,11 @@ namespace bgfx { namespace webgpu
 	{
 		m_staging->unmap();
 
-		wgpu::CommandEncoder& bce = s_renderWgpu->getStagingEncoder();
-		bce.CopyBufferToBuffer(m_staging->m_buffer, 0, m_buffer, 0, m_offset);
+		if (m_offset != 0)
+		{
+			wgpu::CommandEncoder& bce = s_renderWgpu->getStagingEncoder();
+			bce.CopyBufferToBuffer(m_staging->m_buffer, 0, m_buffer, 0, m_offset);
+		}
 	}
 
 	void ScratchBufferWgpu::release()
@@ -3562,7 +3575,7 @@ namespace bgfx { namespace webgpu
 		desc.presentMode = wgpu::PresentMode::Immediate;
 		desc.format = wgpu::TextureFormat::RGBA8Unorm;
 		desc.implementation = reinterpret_cast<uint64_t>(&m_impl);
-		m_swapChain = _device.CreateSwapChain(NULL, &desc);
+		m_swapChain = _device.CreateSwapChain(nullptr, &desc);
 #else
 		wgpu::SurfaceDescriptorFromHTMLCanvasId canvasDesc{};
 		canvasDesc.id = "canvas";
@@ -3571,7 +3584,7 @@ namespace bgfx { namespace webgpu
 		surfDesc.nextInChain = &canvasDesc;
 		wgpu::Surface surface = wgpu::Instance().CreateSurface(&surfDesc);
 
-		desc.presentMode = wgpu::PresentMode::Immediate;
+		desc.presentMode = wgpu::PresentMode::Fifo;
 		desc.format = wgpu::TextureFormat::BGRA8Unorm;
 		m_swapChain = _device.CreateSwapChain(surface, &desc);
 #endif
@@ -4183,11 +4196,8 @@ namespace bgfx { namespace webgpu
 
 						//rce.setTriangleFillMode(wireframe ? MTLTriangleFillModeLines : MTLTriangleFillModeFill);
 
-						// TODO (webgpu) check other renderers
 						const Rect& rect = viewState.m_rect;
 						rce.SetViewport(rect.m_x, rect.m_y, rect.m_width, rect.m_height, 0.0f, 1.0f);
-
-						 // can't disable: set to view rect
 						rce.SetScissorRect(rect.m_x, rect.m_y, rect.m_width, rect.m_height);
 
 
