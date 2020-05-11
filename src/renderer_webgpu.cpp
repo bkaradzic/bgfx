@@ -12,7 +12,6 @@
 
 #if BGFX_CONFIG_RENDERER_WEBGPU
 #	include "renderer_webgpu.h"
-#	include "renderer_vk.h"
 #	include "renderer.h"
 #	include "debug_renderdoc.h"
 
