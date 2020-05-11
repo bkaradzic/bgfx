@@ -122,7 +122,7 @@ solution "bgfx"
 		"Release",
 	}
 
-	if _ACTION:match "xcode*" then
+	if _ACTION ~= nil and _ACTION:match "xcode*" then
 		platforms {
 			"Universal",
 		}
