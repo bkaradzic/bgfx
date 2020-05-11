@@ -170,14 +170,6 @@ function bgfxProjectBase(_kind, _defines)
 
 		local generator = "out/VS2019"
 
-		includedirs {
-			path.join(DAWN_DIR, "src"),
-			path.join(DAWN_DIR, "src/include"),
-			path.join(DAWN_DIR, "third_party/vulkan-headers/include"),
-			path.join(DAWN_DIR, generator, "gen/src"),
-			path.join(DAWN_DIR, generator, "gen/src/include"),
-		}
-
 		configuration { "asmjs" }
 			defines {
 				"BGFX_CONFIG_RENDERER_OPENGL=0",
@@ -185,7 +177,13 @@ function bgfxProjectBase(_kind, _defines)
 			}
 
 		configuration { "not asmjs" }
-			--local generator = "out/Default"
+			includedirs {
+				path.join(DAWN_DIR, "src"),
+				path.join(DAWN_DIR, "src/include"),
+				path.join(DAWN_DIR, "third_party/vulkan-headers/include"),
+				path.join(DAWN_DIR, generator, "gen/src"),
+				path.join(DAWN_DIR, generator, "gen/src/include"),
+			}
 
 		configuration { "vs*" }
 			defines {
