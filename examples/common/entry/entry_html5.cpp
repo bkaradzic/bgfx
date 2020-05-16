@@ -7,6 +7,8 @@
 
 #if BX_PLATFORM_EMSCRIPTEN
 
+#include <bgfx/platform.h>
+
 #include <emscripten.h>
 #include <emscripten/html5.h>
 
@@ -88,11 +90,15 @@ namespace entry
 
 		int32_t run(int _argc, const char* const* _argv)
 		{
-			emscripten_set_mousedown_callback("#canvas", this, true, mouseCb);
-			emscripten_set_mouseup_callback("#canvas", this, true, mouseCb);
-			emscripten_set_mousemove_callback("#canvas", this, true, mouseCb);
+// TODO: Make this somehow configurable to the developer building a HTML5 page. Currently #canvas
+// will take the first canvas element found on the web page.
+#define HTML5_TARGET_CANVAS_SELECTOR "#canvas"
 
-			emscripten_set_wheel_callback("#canvas", this, true, wheelCb);
+			emscripten_set_mousedown_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb);
+			emscripten_set_mouseup_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb);
+			emscripten_set_mousemove_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb);
+
+			emscripten_set_wheel_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, wheelCb);
 
 			emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
 			emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
@@ -107,11 +113,16 @@ namespace entry
 			fullscreenStrategy.canvasResizedCallback = canvasResizeCb;
 			fullscreenStrategy.canvasResizedCallbackUserData = this;
 
-			emscripten_request_fullscreen_strategy("#canvas", false, &fullscreenStrategy);
+			emscripten_request_fullscreen_strategy(HTML5_TARGET_CANVAS_SELECTOR, false, &fullscreenStrategy);
 
 			emscripten_set_focus_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
 			emscripten_set_focusin_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
 			emscripten_set_focusout_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
+
+			bgfx::PlatformData pd;
+			bx::memSet(&pd, 0, sizeof(pd) );
+			pd.nwh = (void*)HTML5_TARGET_CANVAS_SELECTOR;
+			bgfx::setPlatformData(pd);
 
 			int32_t result = main(_argc, _argv);
 			return result;
