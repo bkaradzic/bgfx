@@ -8,8 +8,6 @@
 //#define DAWN_ENABLE_BACKEND_D3D12
 #define DAWN_ENABLE_BACKEND_VULKAN
 
-#define BGFX_CONFIG_DEBUG_ANNOTATION 0
-
 #if BGFX_CONFIG_RENDERER_WEBGPU
 #	include "renderer_webgpu.h"
 #	include "renderer.h"
