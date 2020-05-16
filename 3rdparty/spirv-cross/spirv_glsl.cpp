@@ -6792,8 +6792,21 @@ string CompilerGLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 		return "gl_VertexID";
 	case BuiltInInstanceId:
 		if (options.vulkan_semantics)
-			SPIRV_CROSS_THROW(
-			    "Cannot implement gl_InstanceID in Vulkan GLSL. This shader was created with GL semantics.");
+		{
+			auto model = get_entry_point().model;
+			switch (model)
+			{
+			case spv::ExecutionModelIntersectionKHR:
+			case spv::ExecutionModelAnyHitKHR:
+			case spv::ExecutionModelClosestHitKHR:
+				// gl_InstanceID is allowed in these shaders.
+				break;
+
+			default:
+				SPIRV_CROSS_THROW(
+					"Cannot implement gl_InstanceID in Vulkan GLSL. This shader was created with GL semantics.");
+			}
+		}
 		return "gl_InstanceID";
 	case BuiltInVertexIndex:
 		if (options.vulkan_semantics)

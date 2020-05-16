@@ -3087,11 +3087,11 @@ bool CompilerMSL::validate_member_packing_rules_msl(const SPIRType &type, uint32
 	{
 		// If we have an array type, array stride must match exactly with SPIR-V.
 
-		// An exception to this requirement is if we have one array element and a packed decoration.
+		// An exception to this requirement is if we have one array element.
 		// This comes from DX scalar layout workaround.
 		// If app tries to be cheeky and access the member out of bounds, this will not work, but this is the best we can do.
-		bool relax_array_stride = has_extended_member_decoration(type.self, index, SPIRVCrossDecorationPhysicalTypePacked) &&
-		                          mbr_type.array.back() == 1 && mbr_type.array_size_literal.back();
+		// In OpAccessChain with logical memory models, access chains must be in-bounds in SPIR-V specification.
+		bool relax_array_stride = mbr_type.array.back() == 1 && mbr_type.array_size_literal.back();
 
 		if (!relax_array_stride)
 		{
@@ -3137,7 +3137,9 @@ void CompilerMSL::ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t in
 		SPIRV_CROSS_THROW("Cannot perform any repacking for structs when it is used as a member of another struct.");
 
 	// Perform remapping here.
-	set_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
+	// There is nothing to be gained by using packed scalars, so don't attempt it.
+	if (!is_scalar(ib_type))
+		set_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
 
 	// Try validating again, now with packed.
 	if (validate_member_packing_rules_msl(ib_type, index))
@@ -8666,7 +8668,7 @@ string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_
 			td_line += ";";
 			add_typedef_line(td_line);
 		}
-		else
+		else if (!is_scalar(physical_type)) // scalar type is already packed.
 			pack_pfx = "packed_";
 	}
 	else if (row_major)
