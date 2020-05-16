@@ -2931,6 +2931,7 @@ namespace bgfx { namespace d3d9
 				, 1 < imageContainer.m_numMips
 				, imageContainer.m_numLayers
 				, imageContainer.m_format
+				, imageContainer.m_hasAlpha
 				);
 			ti.numMips = bx::min<uint8_t>(imageContainer.m_numMips-startLod, ti.numMips);
 

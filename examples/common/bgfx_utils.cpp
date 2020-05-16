@@ -230,7 +230,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 			if (NULL != _info)
 			{
 				bgfx::calcTextureSize(
-					  *_info
+					*_info
 					, uint16_t(imageContainer->m_width)
 					, uint16_t(imageContainer->m_height)
 					, uint16_t(imageContainer->m_depth)
@@ -238,6 +238,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 					, 1 < imageContainer->m_numMips
 					, imageContainer->m_numLayers
 					, bgfx::TextureFormat::Enum(imageContainer->m_format)
+					, imageContainer->m_hasAlpha
 					);
 			}
 		}
