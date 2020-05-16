@@ -146,6 +146,7 @@ EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECo
 // Declare pointers to put into the table for versioning.
 #ifdef GLSLANG_WEB
     const Versioning* Es300Desktop130 = nullptr;
+    const Versioning* Es310Desktop420 = nullptr;
 #else
     const Versioning Es300Desktop130Version[] = { { EEsProfile,      0, 300, 0, nullptr },
                                                   { EDesktopProfile, 0, 130, 0, nullptr },

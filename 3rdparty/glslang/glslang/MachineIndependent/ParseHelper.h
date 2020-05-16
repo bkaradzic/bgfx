@@ -68,6 +68,7 @@ class TScanContext;
 class TPpContext;
 
 typedef std::set<int> TIdSetType;
+typedef std::map<const TTypeList*, std::map<size_t, const TTypeList*>> TStructRecord;
 
 //
 // Sharable code (as well as what's in TParseVersions) across
@@ -418,12 +419,15 @@ public:
     void fixBlockLocations(const TSourceLoc&, TQualifier&, TTypeList&, bool memberWithLocation, bool memberWithoutLocation);
     void fixXfbOffsets(TQualifier&, TTypeList&);
     void fixBlockUniformOffsets(TQualifier&, TTypeList&);
+    void fixBlockUniformLayoutMatrix(TQualifier&, TTypeList*, TTypeList*);
+    void fixBlockUniformLayoutPacking(TQualifier&, TTypeList*, TTypeList*);
     void addQualifierToExisting(const TSourceLoc&, TQualifier, const TString& identifier);
     void addQualifierToExisting(const TSourceLoc&, TQualifier, TIdentifierList&);
     void invariantCheck(const TSourceLoc&, const TQualifier&);
     void updateStandaloneQualifierDefaults(const TSourceLoc&, const TPublicType&);
     void wrapupSwitchSubsequence(TIntermAggregate* statements, TIntermNode* branchNode);
     TIntermNode* addSwitch(const TSourceLoc&, TIntermTyped* expression, TIntermAggregate* body);
+    const TTypeList* recordStructCopy(TStructRecord&, const TType*, const TType*);
 
 #ifndef GLSLANG_WEB
     TAttributeType attributeFromName(const TString& name) const;
@@ -484,6 +488,8 @@ protected:
     bool anyIndexLimits;
     TIdSetType inductiveLoopIds;
     TVector<TIntermTyped*> needsIndexLimitationChecking;
+    TStructRecord matrixFixRecord;
+    TStructRecord packingFixRecord;
 
     //
     // Geometry shader input arrays:

@@ -52,7 +52,7 @@
 // Don't maintain an ordinal set of enums (0,1,2,3...) to avoid all possible
 // defects from mixing the two different forms.
 //
-typedef enum {
+typedef enum : unsigned {
     EBadProfile           = 0,
     ENoProfile            = (1 << 0), // only for desktop, before profiles showed up
     ECoreProfile          = (1 << 1),

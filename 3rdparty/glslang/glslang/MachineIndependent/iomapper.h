@@ -244,7 +244,7 @@ struct TVarLivePair : std::pair<const TString, TVarEntryInfo> {
         second = _Right.second;
         return (*this);
     }
-    TVarLivePair(const TVarLivePair& src) { *this = src; }
+    TVarLivePair(const TVarLivePair& src) : pair(src) { }
 };
 typedef std::vector<TVarLivePair> TVarLiveVector;
 

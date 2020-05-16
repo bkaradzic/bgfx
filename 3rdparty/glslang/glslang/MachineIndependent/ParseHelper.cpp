@@ -7593,6 +7593,8 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
     fixBlockLocations(loc, currentBlockQualifier, typeList, memberWithLocation, memberWithoutLocation);
     fixXfbOffsets(currentBlockQualifier, typeList);
     fixBlockUniformOffsets(currentBlockQualifier, typeList);
+    fixBlockUniformLayoutMatrix(currentBlockQualifier, &typeList, nullptr);
+    fixBlockUniformLayoutPacking(currentBlockQualifier, &typeList, nullptr);
     for (unsigned int member = 0; member < typeList.size(); ++member)
         layoutTypeCheck(typeList[member].loc, *typeList[member].type);
 
@@ -7960,6 +7962,101 @@ void TParseContext::fixBlockUniformOffsets(TQualifier& qualifier, TTypeList& typ
         RoundToPow2(offset, memberAlignment);
         typeList[member].type->getQualifier().layoutOffset = offset;
         offset += memberSize;
+    }
+}
+
+//
+// Spread LayoutMatrix to uniform block member, if a uniform block member is a struct,
+// we need spread LayoutMatrix to this struct member too. and keep this rule for recursive.
+//
+void TParseContext::fixBlockUniformLayoutMatrix(TQualifier& qualifier, TTypeList* originTypeList,
+                                                TTypeList* tmpTypeList)
+{
+    assert(tmpTypeList == nullptr || originTypeList->size() == tmpTypeList->size());
+    for (unsigned int member = 0; member < originTypeList->size(); ++member) {
+        if (qualifier.layoutPacking != ElpNone) {
+            if (tmpTypeList == nullptr) {
+                if (((*originTypeList)[member].type->isMatrix() ||
+                     (*originTypeList)[member].type->getBasicType() == EbtStruct) &&
+                    (*originTypeList)[member].type->getQualifier().layoutMatrix == ElmNone) {
+                    (*originTypeList)[member].type->getQualifier().layoutMatrix = qualifier.layoutMatrix;
+                }
+            } else {
+                if (((*tmpTypeList)[member].type->isMatrix() ||
+                     (*tmpTypeList)[member].type->getBasicType() == EbtStruct) &&
+                    (*tmpTypeList)[member].type->getQualifier().layoutMatrix == ElmNone) {
+                    (*tmpTypeList)[member].type->getQualifier().layoutMatrix = qualifier.layoutMatrix;
+                }
+            }
+        }
+
+        if ((*originTypeList)[member].type->getBasicType() == EbtStruct) {
+            TQualifier* memberQualifier = nullptr;
+            // block member can be declare a matrix style, so it should be update to the member's style
+            if ((*originTypeList)[member].type->getQualifier().layoutMatrix == ElmNone) {
+                memberQualifier = &qualifier;
+            } else {
+                memberQualifier = &((*originTypeList)[member].type->getQualifier());
+            }
+
+            const TType* tmpType = tmpTypeList == nullptr ?
+                (*originTypeList)[member].type->clone() : (*tmpTypeList)[member].type;
+
+            fixBlockUniformLayoutMatrix(*memberQualifier, (*originTypeList)[member].type->getWritableStruct(),
+                                        tmpType->getWritableStruct());
+
+            const TTypeList* structure = recordStructCopy(matrixFixRecord, (*originTypeList)[member].type, tmpType);
+
+            if (tmpTypeList == nullptr) {
+                (*originTypeList)[member].type->setStruct(const_cast<TTypeList*>(structure));
+            }
+            if (tmpTypeList != nullptr) {
+                (*tmpTypeList)[member].type->setStruct(const_cast<TTypeList*>(structure));
+            }
+        }
+    }
+}
+
+//
+// Spread LayoutPacking to block member, if a  block member is a struct, we need spread LayoutPacking to
+// this struct member too. and keep this rule for recursive.
+//
+void TParseContext::fixBlockUniformLayoutPacking(TQualifier& qualifier, TTypeList* originTypeList,
+                                                 TTypeList* tmpTypeList)
+{
+    assert(tmpTypeList == nullptr || originTypeList->size() == tmpTypeList->size());
+    for (unsigned int member = 0; member < originTypeList->size(); ++member) {
+        if (qualifier.layoutPacking != ElpNone) {
+            if (tmpTypeList == nullptr) {
+                if ((*originTypeList)[member].type->getQualifier().layoutPacking == ElpNone) {
+                    (*originTypeList)[member].type->getQualifier().layoutPacking = qualifier.layoutPacking;
+                }
+            } else {
+                if ((*tmpTypeList)[member].type->getQualifier().layoutPacking == ElpNone) {
+                    (*tmpTypeList)[member].type->getQualifier().layoutPacking = qualifier.layoutPacking;
+                }
+            }
+        }
+
+        if ((*originTypeList)[member].type->getBasicType() == EbtStruct) {
+            // Deep copy the type in pool.
+            // Because, struct use in different block may have different layout qualifier.
+            // We have to new a object to distinguish between them.
+            const TType* tmpType = tmpTypeList == nullptr ?
+                (*originTypeList)[member].type->clone() : (*tmpTypeList)[member].type;
+
+            fixBlockUniformLayoutPacking(qualifier, (*originTypeList)[member].type->getWritableStruct(),
+                                         tmpType->getWritableStruct());
+
+            const TTypeList* structure = recordStructCopy(packingFixRecord, (*originTypeList)[member].type, tmpType);
+
+            if (tmpTypeList == nullptr) {
+                (*originTypeList)[member].type->setStruct(const_cast<TTypeList*>(structure));
+            }
+            if (tmpTypeList != nullptr) {
+                (*tmpTypeList)[member].type->setStruct(const_cast<TTypeList*>(structure));
+            }
+        }
     }
 }
 
@@ -8419,6 +8516,44 @@ TIntermNode* TParseContext::addSwitch(const TSourceLoc& loc, TIntermTyped* expre
     switchNode->setLoc(loc);
 
     return switchNode;
+}
+
+//
+// When a struct used in block, and has it's own layout packing, layout matrix,
+// record the origin structure of a struct to map, and Record the structure copy to the copy table,
+//
+const TTypeList* TParseContext::recordStructCopy(TStructRecord& record, const TType* originType, const TType* tmpType)
+{
+    size_t memberCount = tmpType->getStruct()->size();
+    size_t originHash = 0, tmpHash = 0;
+    std::hash<size_t> hasher;
+    for (uint32_t i = 0; i < memberCount; i++) {
+        size_t originMemberHash = hasher(originType->getStruct()->at(i).type->getQualifier().layoutPacking +
+                                         originType->getStruct()->at(i).type->getQualifier().layoutMatrix);
+        size_t tmpMemberHash = hasher(tmpType->getStruct()->at(i).type->getQualifier().layoutPacking +
+                                      tmpType->getStruct()->at(i).type->getQualifier().layoutMatrix);
+        originHash = hasher((originHash ^ originMemberHash) << 1);
+        tmpHash = hasher((tmpHash ^ tmpMemberHash) << 1);
+    }
+    const TTypeList* originStruct = originType->getStruct();
+    const TTypeList* tmpStruct = tmpType->getStruct();
+    if (originHash != tmpHash) {
+        auto fixRecords = record.find(originStruct);
+        if (fixRecords != record.end()) {
+            auto fixRecord = fixRecords->second.find(tmpHash);
+            if (fixRecord != fixRecords->second.end()) {
+                return fixRecord->second;
+            } else {
+                record[originStruct][tmpHash] = tmpStruct;
+                return tmpStruct;
+            }
+        } else {
+            record[originStruct] = std::map<size_t, const TTypeList*>();
+            record[originStruct][tmpHash] = tmpStruct;
+            return tmpStruct;
+        }
+    }
+    return originStruct;
 }
 
 } // end namespace glslang
