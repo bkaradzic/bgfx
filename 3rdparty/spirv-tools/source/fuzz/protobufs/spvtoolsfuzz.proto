@@ -374,6 +374,7 @@ message Transformation {
     TransformationToggleAccessChainInstruction toggle_access_chain_instruction = 43;
     TransformationAddConstantNull add_constant_null = 44;
     TransformationComputeDataSynonymFactClosure compute_data_synonym_fact_closure = 45;
+    TransformationAdjustBranchWeights adjust_branch_weights = 46;
     // Add additional option using the next available number.
   }
 }
@@ -739,6 +740,19 @@ message TransformationAddTypeVector {
 
   // The vector's component count
   uint32 component_count = 3;
+
+}
+
+message TransformationAdjustBranchWeights {
+
+  // A transformation that adjusts the branch weights
+  // of a branch conditional instruction.
+
+  // A descriptor for a branch conditional instruction.
+  InstructionDescriptor instruction_descriptor = 1;
+
+  // Branch weights of a branch conditional instruction.
+  UInt32Pair branch_weights = 2;
 
 }
 

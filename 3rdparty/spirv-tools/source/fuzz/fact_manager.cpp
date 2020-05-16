@@ -159,9 +159,26 @@ uint32_t FactManager::ConstantUniformFacts::GetConstantId(
     uint32_t type_id) const {
   auto type = context->get_type_mgr()->GetType(type_id);
   assert(type != nullptr && "Unknown type id.");
-  auto constant = context->get_constant_mgr()->GetConstant(
-      type, GetConstantWords(constant_uniform_fact));
-  return context->get_constant_mgr()->FindDeclaredConstant(constant, type_id);
+  const opt::analysis::Constant* known_constant;
+  if (type->AsInteger()) {
+    opt::analysis::IntConstant candidate_constant(
+        type->AsInteger(), GetConstantWords(constant_uniform_fact));
+    known_constant =
+        context->get_constant_mgr()->FindConstant(&candidate_constant);
+  } else {
+    assert(
+        type->AsFloat() &&
+        "Uniform constant facts are only supported for int and float types.");
+    opt::analysis::FloatConstant candidate_constant(
+        type->AsFloat(), GetConstantWords(constant_uniform_fact));
+    known_constant =
+        context->get_constant_mgr()->FindConstant(&candidate_constant);
+  }
+  if (!known_constant) {
+    return 0;
+  }
+  return context->get_constant_mgr()->FindDeclaredConstant(known_constant,
+                                                           type_id);
 }
 
 std::vector<uint32_t> FactManager::ConstantUniformFacts::GetConstantWords(

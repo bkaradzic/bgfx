@@ -124,10 +124,6 @@ class InlinePass : public Pass {
   // Return true if |inst| is a function call that can be inlined.
   bool IsInlinableFunctionCall(const Instruction* inst);
 
-  // Return true if |func| does not have a return that is
-  // nested in a structured if, switch or loop.
-  bool HasNoReturnInStructuredConstruct(Function* func);
-
   // Return true if |func| has no return in a loop. The current analysis
   // requires structured control flow, so return false if control flow not
   // structured ie. module is not a shader.
@@ -171,6 +167,64 @@ class InlinePass : public Pass {
   // Set of functions that are originally called directly or indirectly from a
   // continue construct.
   std::unordered_set<uint32_t> funcs_called_from_continue_;
+
+ private:
+  // Moves instructions of the caller function up to the call instruction
+  // to |new_blk_ptr|.
+  void MoveInstsBeforeEntryBlock(
+      std::unordered_map<uint32_t, Instruction*>* preCallSB,
+      BasicBlock* new_blk_ptr, BasicBlock::iterator call_inst_itr,
+      UptrVectorIterator<BasicBlock> call_block_itr);
+
+  // Returns a new guard block after adding a branch to the end of
+  // |new_blocks|.
+  std::unique_ptr<BasicBlock> AddGuardBlock(
+      std::vector<std::unique_ptr<BasicBlock>>* new_blocks,
+      std::unordered_map<uint32_t, uint32_t>* callee2caller,
+      std::unique_ptr<BasicBlock> new_blk_ptr, uint32_t entry_blk_label_id);
+
+  // Add store instructions for initializers of variables.
+  InstructionList::iterator AddStoresForVariableInitializers(
+      const std::unordered_map<uint32_t, uint32_t>& callee2caller,
+      std::unique_ptr<BasicBlock>* new_blk_ptr,
+      UptrVectorIterator<BasicBlock> callee_block_itr);
+
+  // Inlines a single instruction of the callee function.
+  bool InlineInstructionInBB(
+      const std::unordered_map<uint32_t, uint32_t>& callee2caller,
+      BasicBlock* new_blk_ptr, const Instruction* inst);
+
+  // Inlines the return instruction of the callee function.
+  std::unique_ptr<BasicBlock> InlineReturn(
+      const std::unordered_map<uint32_t, uint32_t>& callee2caller,
+      std::vector<std::unique_ptr<BasicBlock>>* new_blocks,
+      std::unique_ptr<BasicBlock> new_blk_ptr, Function* calleeFn,
+      const Instruction* inst, uint32_t returnVarId);
+
+  // Inlines the entry block of the callee function.
+  bool InlineEntryBlock(
+      const std::unordered_map<uint32_t, uint32_t>& callee2caller,
+      std::unique_ptr<BasicBlock>* new_blk_ptr,
+      UptrVectorIterator<BasicBlock> callee_first_block);
+
+  // Inlines basic blocks of the callee function other than the entry basic
+  // block.
+  std::unique_ptr<BasicBlock> InlineBasicBlocks(
+      std::vector<std::unique_ptr<BasicBlock>>* new_blocks,
+      const std::unordered_map<uint32_t, uint32_t>& callee2caller,
+      std::unique_ptr<BasicBlock> new_blk_ptr, Function* calleeFn);
+
+  // Moves instructions of the caller function after the call instruction
+  // to |new_blk_ptr|.
+  bool MoveCallerInstsAfterFunctionCall(
+      std::unordered_map<uint32_t, Instruction*>* preCallSB,
+      std::unordered_map<uint32_t, uint32_t>* postCallSB,
+      std::unique_ptr<BasicBlock>* new_blk_ptr,
+      BasicBlock::iterator call_inst_itr, bool multiBlocks);
+
+  // Move the OpLoopMerge from the last block back to the first.
+  void MoveLoopMergeInstToFirstBlock(
+      std::vector<std::unique_ptr<BasicBlock>>* new_blocks);
 };
 
 }  // namespace opt

@@ -20,6 +20,7 @@
 
 #include "source/fuzz/fuzzer_context.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
@@ -94,8 +95,7 @@ class FuzzerPass {
 
   // A generic helper for applying a transformation that should be applicable
   // by construction, and adding it to the sequence of applied transformations.
-  template <typename TransformationType>
-  void ApplyTransformation(const TransformationType& transformation) {
+  void ApplyTransformation(const Transformation& transformation) {
     assert(transformation.IsApplicable(GetIRContext(),
                                        *GetTransformationContext()) &&
            "Transformation should be applicable by construction.");

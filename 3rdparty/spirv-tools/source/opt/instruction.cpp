@@ -38,6 +38,10 @@ const uint32_t kExtInstInstructionInIdx = 1;
 const uint32_t kDebugScopeNumWords = 7;
 const uint32_t kDebugScopeNumWordsWithoutInlinedAt = 6;
 const uint32_t kDebugNoScopeNumWords = 5;
+
+// Number of operands of an OpBranchConditional instruction
+// with weights.
+const uint32_t kOpBranchConditionalWithWeightsNumOperands = 5;
 }  // namespace
 
 Instruction::Instruction(IRContext* c)
@@ -164,6 +168,15 @@ uint32_t Instruction::NumInOperandWords() const {
   for (uint32_t i = TypeResultIdCount(); i < operands_.size(); ++i)
     size += static_cast<uint32_t>(operands_[i].words.size());
   return size;
+}
+
+bool Instruction::HasBranchWeights() const {
+  if (opcode_ == SpvOpBranchConditional &&
+      NumOperands() == kOpBranchConditionalWithWeightsNumOperands) {
+    return true;
+  }
+
+  return false;
 }
 
 void Instruction::ToBinaryWithoutAttachedDebugInsts(

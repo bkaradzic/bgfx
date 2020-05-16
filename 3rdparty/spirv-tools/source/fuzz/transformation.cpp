@@ -39,6 +39,7 @@
 #include "source/fuzz/transformation_add_type_pointer.h"
 #include "source/fuzz/transformation_add_type_struct.h"
 #include "source/fuzz/transformation_add_type_vector.h"
+#include "source/fuzz/transformation_adjust_branch_weights.h"
 #include "source/fuzz/transformation_composite_construct.h"
 #include "source/fuzz/transformation_composite_extract.h"
 #include "source/fuzz/transformation_compute_data_synonym_fact_closure.h"
@@ -129,6 +130,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
       return MakeUnique<TransformationAddTypeStruct>(message.add_type_struct());
     case protobufs::Transformation::TransformationCase::kAddTypeVector:
       return MakeUnique<TransformationAddTypeVector>(message.add_type_vector());
+    case protobufs::Transformation::TransformationCase::kAdjustBranchWeights:
+      return MakeUnique<TransformationAdjustBranchWeights>(
+          message.adjust_branch_weights());
     case protobufs::Transformation::TransformationCase::kCompositeConstruct:
       return MakeUnique<TransformationCompositeConstruct>(
           message.composite_construct());

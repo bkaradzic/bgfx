@@ -88,6 +88,10 @@ class Function {
   // Returns the entry basic block for this function.
   const std::unique_ptr<BasicBlock>& entry() const { return blocks_.front(); }
 
+  // Returns the last basic block in this function.
+  BasicBlock* tail() { return blocks_.back().get(); }
+  const BasicBlock* tail() const { return blocks_.back().get(); }
+
   iterator begin() { return iterator(&blocks_, blocks_.begin()); }
   iterator end() { return iterator(&blocks_, blocks_.end()); }
   const_iterator begin() const { return cbegin(); }

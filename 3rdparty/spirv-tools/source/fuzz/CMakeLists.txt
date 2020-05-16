@@ -50,6 +50,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_no_contraction_decorations.h
         fuzzer_pass_add_stores.h
         fuzzer_pass_add_useful_constructs.h
+        fuzzer_pass_adjust_branch_weights.h
         fuzzer_pass_adjust_function_controls.h
         fuzzer_pass_adjust_loop_controls.h
         fuzzer_pass_adjust_memory_operands_masks.h
@@ -98,6 +99,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_type_pointer.h
         transformation_add_type_struct.h
         transformation_add_type_vector.h
+        transformation_adjust_branch_weights.h
         transformation_composite_construct.h
         transformation_composite_extract.h
         transformation_compute_data_synonym_fact_closure.h
@@ -145,6 +147,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_no_contraction_decorations.cpp
         fuzzer_pass_add_stores.cpp
         fuzzer_pass_add_useful_constructs.cpp
+        fuzzer_pass_adjust_branch_weights.cpp
         fuzzer_pass_adjust_function_controls.cpp
         fuzzer_pass_adjust_loop_controls.cpp
         fuzzer_pass_adjust_memory_operands_masks.cpp
@@ -192,6 +195,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_type_pointer.cpp
         transformation_add_type_struct.cpp
         transformation_add_type_vector.cpp
+        transformation_adjust_branch_weights.cpp
         transformation_composite_construct.cpp
         transformation_composite_extract.cpp
         transformation_compute_data_synonym_fact_closure.cpp

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/reduce/remove_unreferenced_instruction_reduction_opportunity_finder.h"
+#include "source/reduce/remove_unused_instruction_reduction_opportunity_finder.h"
 
 #include "source/opcode.h"
 #include "source/opt/instruction.h"
@@ -21,14 +21,14 @@
 namespace spvtools {
 namespace reduce {
 
-RemoveUnreferencedInstructionReductionOpportunityFinder::
-    RemoveUnreferencedInstructionReductionOpportunityFinder(
+RemoveUnusedInstructionReductionOpportunityFinder::
+    RemoveUnusedInstructionReductionOpportunityFinder(
         bool remove_constants_and_undefs)
     : remove_constants_and_undefs_(remove_constants_and_undefs) {}
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
-RemoveUnreferencedInstructionReductionOpportunityFinder::
-    GetAvailableOpportunities(opt::IRContext* context) const {
+RemoveUnusedInstructionReductionOpportunityFinder::GetAvailableOpportunities(
+    opt::IRContext* context) const {
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
 
   for (auto& inst : context->module()->debugs1()) {
@@ -60,11 +60,12 @@ RemoveUnreferencedInstructionReductionOpportunityFinder::
   }
 
   for (auto& inst : context->module()->types_values()) {
-    if (context->get_def_use_mgr()->NumUsers(&inst) > 0) {
-      continue;
-    }
     if (!remove_constants_and_undefs_ &&
         spvOpcodeIsConstantOrUndef(inst.opcode())) {
+      continue;
+    }
+    if (!OnlyReferencedByIntimateDecorationOrEntryPointInterface(context,
+                                                                 inst)) {
       continue;
     }
     result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
@@ -74,38 +75,9 @@ RemoveUnreferencedInstructionReductionOpportunityFinder::
     if (context->get_def_use_mgr()->NumUsers(&inst) > 0) {
       continue;
     }
-
-    uint32_t decoration = SpvDecorationMax;
-    switch (inst.opcode()) {
-      case SpvOpDecorate:
-      case SpvOpDecorateId:
-      case SpvOpDecorateString:
-        decoration = inst.GetSingleWordInOperand(1u);
-        break;
-      case SpvOpMemberDecorate:
-      case SpvOpMemberDecorateString:
-        decoration = inst.GetSingleWordInOperand(2u);
-        break;
-      default:
-        break;
+    if (!IsIndependentlyRemovableDecoration(inst)) {
+      continue;
     }
-
-    // We conservatively only remove specific decorations that we believe will
-    // not change the shader interface, will not make the shader invalid, will
-    // actually be found in practice, etc.
-
-    switch (decoration) {
-      case SpvDecorationRelaxedPrecision:
-      case SpvDecorationNoSignedWrap:
-      case SpvDecorationNoContraction:
-      case SpvDecorationNoUnsignedWrap:
-      case SpvDecorationUserSemantic:
-        break;
-      default:
-        // Give up.
-        continue;
-    }
-
     result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
   }
 
@@ -139,9 +111,54 @@ RemoveUnreferencedInstructionReductionOpportunityFinder::
   return result;
 }
 
-std::string RemoveUnreferencedInstructionReductionOpportunityFinder::GetName()
-    const {
-  return "RemoveUnreferencedInstructionReductionOpportunityFinder";
+std::string RemoveUnusedInstructionReductionOpportunityFinder::GetName() const {
+  return "RemoveUnusedInstructionReductionOpportunityFinder";
+}
+
+bool RemoveUnusedInstructionReductionOpportunityFinder::
+    OnlyReferencedByIntimateDecorationOrEntryPointInterface(
+        opt::IRContext* context, const opt::Instruction& inst) const {
+  return context->get_def_use_mgr()->WhileEachUse(
+      &inst, [this](opt::Instruction* user, uint32_t use_index) -> bool {
+        return (user->IsDecoration() &&
+                !IsIndependentlyRemovableDecoration(*user)) ||
+               (user->opcode() == SpvOpEntryPoint && use_index > 2);
+      });
+}
+
+bool RemoveUnusedInstructionReductionOpportunityFinder::
+    IsIndependentlyRemovableDecoration(const opt::Instruction& inst) const {
+  uint32_t decoration;
+  switch (inst.opcode()) {
+    case SpvOpDecorate:
+    case SpvOpDecorateId:
+    case SpvOpDecorateString:
+      decoration = inst.GetSingleWordInOperand(1u);
+      break;
+    case SpvOpMemberDecorate:
+    case SpvOpMemberDecorateString:
+      decoration = inst.GetSingleWordInOperand(2u);
+      break;
+    default:
+      // The instruction is not a decoration.  It is legitimate for this to be
+      // reached: it allows the method to be invoked on arbitrary instructions.
+      return false;
+  }
+
+  // We conservatively only remove specific decorations that we believe will
+  // not change the shader interface, will not make the shader invalid, will
+  // actually be found in practice, etc.
+
+  switch (decoration) {
+    case SpvDecorationRelaxedPrecision:
+    case SpvDecorationNoSignedWrap:
+    case SpvDecorationNoContraction:
+    case SpvDecorationNoUnsignedWrap:
+    case SpvDecorationUserSemantic:
+      return true;
+    default:
+      return false;
+  }
 }
 
 }  // namespace reduce
