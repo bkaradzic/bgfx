@@ -658,8 +658,6 @@ namespace bgfx { namespace d3d12
 			, m_lost(false)
 			, m_maxAnisotropy(1)
 			, m_depthClamp(false)
-			, m_fsChanges(0)
-			, m_vsChanges(0)
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
