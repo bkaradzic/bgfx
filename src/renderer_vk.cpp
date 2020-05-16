@@ -480,7 +480,7 @@ VK_IMPORT_DEVICE
 		"vkDevice",
 		"vkInstance",
 	};
-	BX_STATIC_ASSERT(VK_SYSTEM_ALLOCATION_SCOPE_RANGE_SIZE == BX_COUNTOF(s_allocScopeName) );
+	BX_STATIC_ASSERT(VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE == BX_COUNTOF(s_allocScopeName)-1);
 
 	static void* VKAPI_PTR allocationFunction(void* _userData, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
@@ -3829,7 +3829,7 @@ VK_IMPORT_DEVICE
 						wds[wdsCount].pImageInfo       = NULL;
 						wds[wdsCount].pBufferInfo      = NULL;
 						wds[wdsCount].pTexelBufferView = NULL;
-						
+
 						TextureVK& texture = m_textures[bind.m_idx];
 						VkSampler sampler = getSampler(
 							(0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
@@ -3869,7 +3869,7 @@ VK_IMPORT_DEVICE
 						wds[wdsCount].pImageInfo       = NULL;
 						wds[wdsCount].pBufferInfo      = NULL;
 						wds[wdsCount].pTexelBufferView = NULL;
-						
+
 						BufferVK& sb = bind.m_type == Binding::VertexBuffer ? m_vertexBuffers[bind.m_idx] : m_indexBuffers[bind.m_idx];
 						bufferInfo[bufferCount].buffer = sb.m_buffer;
 						bufferInfo[bufferCount].offset = 0;
