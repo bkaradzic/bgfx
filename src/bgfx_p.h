@@ -2885,6 +2885,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		{
 		}
 
+#if BX_CONFIG_SUPPORTS_THREADING
 		static int32_t renderThread(bx::Thread* /*_self*/, void* /*_userData*/)
 		{
 			BX_TRACE("render thread start");
@@ -2893,6 +2894,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			BX_TRACE("render thread exit");
 			return bx::kExitSuccess;
 		}
+#endif
 
 		// game thread
 		bool init(const Init& _init);

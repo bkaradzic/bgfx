@@ -362,12 +362,12 @@ function exampleProjectDefaults()
 			"GLESv2",
 		}
 
-	configuration { "asmjs" }
+	configuration { "wasm*" }
 		kind "ConsoleApp"
 
 		linkoptions {
-			"-s TOTAL_MEMORY=256MB",
-			"--memory-init-file 1",
+			"-s TOTAL_MEMORY=32MB",
+			"-s ALLOW_MEMORY_GROWTH=1"
 		}
 
 		removeflags {
@@ -537,7 +537,6 @@ or _OPTIONS["with-combined-examples"] then
 		, "14-shadowvolumes"
 		, "15-shadowmaps-simple"
 		, "16-shadowmaps"
-		, "17-drawstress"
 		, "18-ibl"
 		, "19-oit"
 		, "20-nanovg"
@@ -562,6 +561,11 @@ or _OPTIONS["with-combined-examples"] then
 		, "40-svt"
 		, "41-tess"
 		)
+
+	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm
+--	if platform is not single-threaded then
+		exampleProject(false, "17-drawstress")
+--	end
 
 	-- C99 source doesn't compile under WinRT settings
 	if not premake.vstudio.iswinrt() then

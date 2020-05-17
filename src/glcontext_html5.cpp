@@ -70,7 +70,7 @@ namespace bgfx { namespace gl
 		if (m_primary != NULL)
 			return;
 
-		const char* canvas = (const char*) g_platformData.nwh; // if 0, Module.canvas is used
+		const char* canvas = (const char*) g_platformData.nwh;
 
 		m_primary = createSwapChain((void*)canvas);
 
