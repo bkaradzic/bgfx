@@ -4170,7 +4170,6 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 					, imageContainer.m_numMips > 1
 					, imageContainer.m_numLayers
 					, TextureFormat::Enum(imageContainer.m_format)
-					, imageContainer.m_hasAlpha
 					);
 			}
 			else

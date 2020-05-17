@@ -238,8 +238,8 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 					, 1 < imageContainer->m_numMips
 					, imageContainer->m_numLayers
 					, bgfx::TextureFormat::Enum(imageContainer->m_format)
-					, imageContainer->m_hasAlpha
 					);
+				_info->hasAlpha = imageContainer->m_hasAlpha;
 			}
 		}
 	}

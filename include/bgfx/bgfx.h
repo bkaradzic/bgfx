@@ -864,7 +864,6 @@ namespace bgfx
 		uint8_t numMips;            //!< Number of MIP maps.
 		uint8_t bitsPerPixel;       //!< Format bits per pixel.
 		bool    cubeMap;            //!< Texture is cubemap.
-		bool	hasAlpha;			//!< Texture utilizes alpha channel.
 	};
 
 	/// Uniform info.
@@ -2632,7 +2631,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_calc_texture_size`.
 	///
 	void calcTextureSize(
-		TextureInfo& _info
+		  TextureInfo& _info
 		, uint16_t _width
 		, uint16_t _height
 		, uint16_t _depth
@@ -2640,7 +2639,6 @@ namespace bgfx
 		, bool _hasMips
 		, uint16_t _numLayers
 		, TextureFormat::Enum _format
-		, bool _hasAlpha = false
 		);
 
 	/// Create texture from memory buffer.
