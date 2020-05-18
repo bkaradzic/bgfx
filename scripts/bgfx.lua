@@ -79,9 +79,7 @@ function bgfxProjectBase(_kind, _defines)
 		path.join(BIMG_DIR, "include"),
 	}
 
-	defines {
-		_defines,
-	}
+	defines (_defines)
 
 	links {
 		"bx",

@@ -498,7 +498,22 @@ end
 dofile "bgfx.lua"
 
 group "libs"
-bgfxProject("", "StaticLib", {})
+
+local function userdefines()
+	local defines = {}
+	local BGFX_CONFIG = os.getenv("BGFX_CONFIG")
+	if BGFX_CONFIG then
+		for def in BGFX_CONFIG:gmatch "[^%s:]+" do
+			table.insert(defines, "BGFX_CONFIG_" .. def)
+		end
+	end
+
+	return defines
+end
+
+BGFX_CONFIG = userdefines()
+
+bgfxProject("", "StaticLib", BGFX_CONFIG)
 
 dofile(path.join(BX_DIR,   "scripts/bx.lua"))
 dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
@@ -575,7 +590,7 @@ end
 
 if _OPTIONS["with-shared-lib"] then
 	group "libs"
-	bgfxProject("-shared-lib", "SharedLib", {})
+	bgfxProject("-shared-lib", "SharedLib", BGFX_CONFIG)
 end
 
 if _OPTIONS["with-tools"] then
