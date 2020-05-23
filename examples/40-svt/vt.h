@@ -24,6 +24,8 @@
 #include "common.h"
 #include "bgfx_utils.h"
 
+#include <stdio.h> // FILE
+
 namespace vt
 {
 

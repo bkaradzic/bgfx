@@ -19,7 +19,7 @@
 
 namespace {
 // The default maximum number of steps the reducer will take before giving up.
-const uint32_t kDefaultStepLimit = 250;
+const uint32_t kDefaultStepLimit = 2500;
 }  // namespace
 
 spv_reducer_options_t::spv_reducer_options_t()

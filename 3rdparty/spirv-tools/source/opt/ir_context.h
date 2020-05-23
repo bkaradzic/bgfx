@@ -29,6 +29,7 @@
 #include "source/assembly_grammar.h"
 #include "source/opt/cfg.h"
 #include "source/opt/constants.h"
+#include "source/opt/debug_info_manager.h"
 #include "source/opt/decoration_manager.h"
 #include "source/opt/def_use_manager.h"
 #include "source/opt/dominator_analysis.h"
@@ -78,7 +79,8 @@ class IRContext {
     kAnalysisIdToFuncMapping = 1 << 13,
     kAnalysisConstants = 1 << 14,
     kAnalysisTypes = 1 << 15,
-    kAnalysisEnd = 1 << 16
+    kAnalysisDebugInfo = 1 << 16,
+    kAnalysisEnd = 1 << 17
   };
 
   using ProcessFunction = std::function<bool(Function*)>;
@@ -326,6 +328,17 @@ class IRContext {
     return type_mgr_.get();
   }
 
+  // Returns a pointer to the debug information manager.  If no debug
+  // information manager has been created yet, it creates one.
+  // NOTE: Once created, the debug information manager remains active
+  // it is never re-built.
+  analysis::DebugInfoManager* get_debug_info_mgr() {
+    if (!AreAnalysesValid(kAnalysisDebugInfo)) {
+      BuildDebugInfoManager();
+    }
+    return debug_info_mgr_.get();
+  }
+
   // Returns a pointer to the scalar evolution analysis. If it is invalid it
   // will be rebuilt first.
   ScalarEvolutionAnalysis* GetScalarEvolutionAnalysis() {
@@ -425,6 +438,9 @@ class IRContext {
 
   // Kill all name and decorate ops targeting the result id of |inst|.
   void KillNamesAndDecorates(Instruction* inst);
+
+  // Change operands of debug instruction to DebugInfoNone.
+  void KillOperandFromDebugInstructions(Instruction* inst);
 
   // Returns the next unique id for use by an instruction.
   inline uint32_t TakeNextUniqueId() {
@@ -652,6 +668,13 @@ class IRContext {
     valid_analyses_ = valid_analyses_ | kAnalysisTypes;
   }
 
+  // Builds the debug information manager from scratch, even if it was
+  // already valid.
+  void BuildDebugInfoManager() {
+    debug_info_mgr_ = MakeUnique<analysis::DebugInfoManager>(this);
+    valid_analyses_ = valid_analyses_ | kAnalysisDebugInfo;
+  }
+
   // Removes all computed dominator and post-dominator trees. This will force
   // the context to rebuild the trees on demand.
   void ResetDominatorAnalysis() {
@@ -773,6 +796,9 @@ class IRContext {
 
   // Type manager for |module_|.
   std::unique_ptr<analysis::TypeManager> type_mgr_;
+
+  // Debug information manager for |module_|.
+  std::unique_ptr<analysis::DebugInfoManager> debug_info_mgr_;
 
   // A map from an id to its corresponding OpName and OpMemberName instructions.
   std::unique_ptr<std::multimap<uint32_t, Instruction*>> id_to_name_;

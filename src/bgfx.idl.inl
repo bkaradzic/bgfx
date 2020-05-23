@@ -671,6 +671,11 @@ BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint16_t _num, const bgf
 	bgfx::setViewOrder((bgfx::ViewId)_id, _num, (const bgfx::ViewId*)_order);
 }
 
+BGFX_C_API void bgfx_reset_view(bgfx_view_id_t _id)
+{
+	bgfx::resetView((bgfx::ViewId)_id);
+}
+
 BGFX_C_API bgfx_encoder_t* bgfx_encoder_begin(bool _forThread)
 {
 	return (bgfx_encoder_t*)bgfx::begin(_forThread);
@@ -1310,6 +1315,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_set_view_frame_buffer,
 			bgfx_set_view_transform,
 			bgfx_set_view_order,
+			bgfx_reset_view,
 			bgfx_encoder_begin,
 			bgfx_encoder_end,
 			bgfx_encoder_set_marker,

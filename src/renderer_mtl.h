@@ -877,9 +877,9 @@ namespace bgfx { namespace mtl
 			: m_vshConstantBuffer(NULL)
 			, m_fshConstantBuffer(NULL)
 			, m_vshConstantBufferSize(0)
-			, m_vshConstantBufferAlignmentMask(0)
+			, m_vshConstantBufferAlignment(0)
 			, m_fshConstantBufferSize(0)
-			, m_fshConstantBufferAlignmentMask(0)
+			, m_fshConstantBufferAlignment(0)
 			, m_numPredefined(0)
 			, m_rps(NULL)
 			, m_cps(NULL)
@@ -913,9 +913,9 @@ namespace bgfx { namespace mtl
 		UniformBuffer* m_fshConstantBuffer;
 
 		uint32_t m_vshConstantBufferSize;
-		uint32_t m_vshConstantBufferAlignmentMask;
+		uint32_t m_vshConstantBufferAlignment;
 		uint32_t m_fshConstantBufferSize;
-		uint32_t m_fshConstantBufferAlignmentMask;
+		uint32_t m_fshConstantBufferAlignment;
 
 		enum
 		{

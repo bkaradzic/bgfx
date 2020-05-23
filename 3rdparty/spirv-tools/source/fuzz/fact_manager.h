@@ -76,6 +76,21 @@ class FactManager {
                          const std::vector<uint32_t>& rhs_id,
                          opt::IRContext* context);
 
+  // Inspects all known facts and adds corollary facts; e.g. if we know that
+  // a.x == b.x and a.y == b.y, where a and b have vec2 type, we can record
+  // that a == b holds.
+  //
+  // This method is expensive, and should only be called (by applying a
+  // transformation) at the start of a fuzzer pass that depends on data
+  // synonym facts, rather than calling it every time a new data synonym fact
+  // is added.
+  //
+  // The parameter |maximum_equivalence_class_size| specifies the size beyond
+  // which equivalence classes should not be mined for new facts, to avoid
+  // excessively-long closure computations.
+  void ComputeClosureOfFacts(opt::IRContext* ir_context,
+                             uint32_t maximum_equivalence_class_size);
+
   // The fact manager is responsible for managing a few distinct categories of
   // facts. In principle there could be different fact managers for each kind
   // of fact, but in practice providing one 'go to' place for facts is
@@ -125,25 +140,22 @@ class FactManager {
 
   // Returns every id for which a fact of the form "this id is synonymous with
   // this piece of data" is known.
-  std::vector<uint32_t> GetIdsForWhichSynonymsAreKnown(
-      opt::IRContext* context) const;
+  std::vector<uint32_t> GetIdsForWhichSynonymsAreKnown() const;
 
   // Returns the equivalence class of all known synonyms of |id|, or an empty
   // set if no synonyms are known.
   std::vector<const protobufs::DataDescriptor*> GetSynonymsForId(
-      uint32_t id, opt::IRContext* context) const;
+      uint32_t id) const;
 
   // Returns the equivalence class of all known synonyms of |data_descriptor|,
   // or empty if no synonyms are known.
   std::vector<const protobufs::DataDescriptor*> GetSynonymsForDataDescriptor(
-      const protobufs::DataDescriptor& data_descriptor,
-      opt::IRContext* context) const;
+      const protobufs::DataDescriptor& data_descriptor) const;
 
   // Returns true if and ony if |data_descriptor1| and |data_descriptor2| are
   // known to be synonymous.
   bool IsSynonymous(const protobufs::DataDescriptor& data_descriptor1,
-                    const protobufs::DataDescriptor& data_descriptor2,
-                    opt::IRContext* context) const;
+                    const protobufs::DataDescriptor& data_descriptor2) const;
 
   // End of id synonym facts
   //==============================

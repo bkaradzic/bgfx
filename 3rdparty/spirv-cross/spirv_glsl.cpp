@@ -501,6 +501,11 @@ void CompilerGLSL::find_static_extensions()
 		switch (cap)
 		{
 		case CapabilityShaderNonUniformEXT:
+			if (!options.vulkan_semantics)
+				require_extension_internal("GL_NV_gpu_shader5");
+			else
+				require_extension_internal("GL_EXT_nonuniform_qualifier");
+			break;
 		case CapabilityRuntimeDescriptorArrayEXT:
 			if (!options.vulkan_semantics)
 				SPIRV_CROSS_THROW("GL_EXT_nonuniform_qualifier is only supported in Vulkan GLSL.");
@@ -525,6 +530,11 @@ string CompilerGLSL::compile()
 {
 	if (options.vulkan_semantics)
 		backend.allow_precision_qualifiers = true;
+	else
+	{
+		// only NV_gpu_shader5 supports divergent indexing on OpenGL, and it does so without extra qualifiers
+		backend.nonuniform_qualifier = "";
+	}
 	backend.force_gl_in_out_block = true;
 	backend.supports_extensions = true;
 	backend.use_array_constructor = true;
@@ -720,6 +730,13 @@ void CompilerGLSL::emit_header()
 				statement("#extension GL_EXT_post_depth_coverage : require");
 				statement("#endif");
 			}
+		}
+		else if (!options.vulkan_semantics && ext == "GL_ARB_shader_draw_parameters")
+		{
+			// Soft-enable this extension on plain GLSL.
+			statement("#ifdef ", ext);
+			statement("#extension ", ext, " : enable");
+			statement("#endif");
 		}
 		else
 			statement("#extension ", ext, " : require");
@@ -2933,16 +2950,28 @@ void CompilerGLSL::emit_resources()
 			}
 			else if (id.get_type() == TypeType)
 			{
-				auto &type = id.get<SPIRType>();
-				if (type.basetype == SPIRType::Struct && type.array.empty() && !type.pointer &&
-				    (!ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock) &&
-				     !ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock)))
+				auto *type = &id.get<SPIRType>();
+
+				bool is_natural_struct =
+					type->basetype == SPIRType::Struct && type->array.empty() && !type->pointer &&
+					(!has_decoration(type->self, DecorationBlock) && !has_decoration(type->self, DecorationBufferBlock));
+
+				// Special case, ray payload and hit attribute blocks are not really blocks, just regular structs.
+				if (type->basetype == SPIRType::Struct && type->pointer && has_decoration(type->self, DecorationBlock) &&
+				    (type->storage == StorageClassRayPayloadNV || type->storage == StorageClassIncomingRayPayloadNV ||
+				     type->storage == StorageClassHitAttributeNV))
+				{
+					type = &get<SPIRType>(type->parent_type);
+					is_natural_struct = true;
+				}
+
+				if (is_natural_struct)
 				{
 					if (emitted)
 						statement("");
 					emitted = false;
 
-					emit_struct(type);
+					emit_struct(*type);
 				}
 			}
 		}
@@ -3060,6 +3089,8 @@ void CompilerGLSL::emit_resources()
 		statement("");
 	emitted = false;
 
+	bool emitted_base_instance = false;
+
 	// Output in/out interfaces.
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
 		auto &type = this->get<SPIRType>(var.basetype);
@@ -3082,13 +3113,42 @@ void CompilerGLSL::emit_resources()
 		}
 		else if (is_builtin_variable(var))
 		{
+			auto builtin = BuiltIn(get_decoration(var.self, DecorationBuiltIn));
 			// For gl_InstanceIndex emulation on GLES, the API user needs to
 			// supply this uniform.
-			if (options.vertex.support_nonzero_base_instance &&
-			    ir.meta[var.self].decoration.builtin_type == BuiltInInstanceIndex && !options.vulkan_semantics)
+
+			// The draw parameter extension is soft-enabled on GL with some fallbacks.
+			if (!options.vulkan_semantics)
 			{
-				statement("uniform int SPIRV_Cross_BaseInstance;");
-				emitted = true;
+				if (!emitted_base_instance &&
+				    ((options.vertex.support_nonzero_base_instance && builtin == BuiltInInstanceIndex) ||
+				     (builtin == BuiltInBaseInstance)))
+				{
+					statement("#ifdef GL_ARB_shader_draw_parameters");
+					statement("#define SPIRV_Cross_BaseInstance gl_BaseInstanceARB");
+					statement("#else");
+					// A crude, but simple workaround which should be good enough for non-indirect draws.
+					statement("uniform int SPIRV_Cross_BaseInstance;");
+					statement("#endif");
+					emitted = true;
+					emitted_base_instance = true;
+				}
+				else if (builtin == BuiltInBaseVertex)
+				{
+					statement("#ifdef GL_ARB_shader_draw_parameters");
+					statement("#define SPIRV_Cross_BaseVertex gl_BaseVertexARB");
+					statement("#else");
+					// A crude, but simple workaround which should be good enough for non-indirect draws.
+					statement("uniform int SPIRV_Cross_BaseVertex;");
+					statement("#endif");
+				}
+				else if (builtin == BuiltInDrawIndex)
+				{
+					statement("#ifndef GL_ARB_shader_draw_parameters");
+					// Cannot really be worked around.
+					statement("#error GL_ARB_shader_draw_parameters is not supported.");
+					statement("#endif");
+				}
 			}
 		}
 	});
@@ -4624,6 +4684,26 @@ SPIRType CompilerGLSL::binary_op_bitcast_helper(string &cast_op0, string &cast_o
 	}
 
 	return expected_type;
+}
+
+bool CompilerGLSL::emit_complex_bitcast(uint32_t result_type, uint32_t id, uint32_t op0)
+{
+	// Some bitcasts may require complex casting sequences, and are implemented here.
+	// Otherwise a simply unary function will do with bitcast_glsl_op.
+
+	auto &output_type = get<SPIRType>(result_type);
+	auto &input_type = expression_type(op0);
+	string expr;
+
+	if (output_type.basetype == SPIRType::Half && input_type.basetype == SPIRType::Float && input_type.vecsize == 1)
+		expr = join("unpackFloat2x16(floatBitsToUint(", to_unpacked_expression(op0), "))");
+	else if (output_type.basetype == SPIRType::Float && input_type.basetype == SPIRType::Half && input_type.vecsize == 2)
+		expr = join("uintBitsToFloat(packFloat2x16(", to_unpacked_expression(op0), "))");
+	else
+		return false;
+
+	emit_op(result_type, id, expr, should_forward(op0));
+	return true;
 }
 
 void CompilerGLSL::emit_binary_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1,
@@ -6683,6 +6763,8 @@ string CompilerGLSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &i
 	// And finally, some even more special purpose casts.
 	if (out_type.basetype == SPIRType::UInt64 && in_type.basetype == SPIRType::UInt && in_type.vecsize == 2)
 		return "packUint2x32";
+	else if (out_type.basetype == SPIRType::UInt && in_type.basetype == SPIRType::UInt64 && out_type.vecsize == 2)
+		return "unpackUint2x32";
 	else if (out_type.basetype == SPIRType::Half && in_type.basetype == SPIRType::UInt && in_type.vecsize == 1)
 		return "unpackFloat2x16";
 	else if (out_type.basetype == SPIRType::UInt && in_type.basetype == SPIRType::Half && in_type.vecsize == 2)
@@ -6760,8 +6842,21 @@ string CompilerGLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 		return "gl_VertexID";
 	case BuiltInInstanceId:
 		if (options.vulkan_semantics)
-			SPIRV_CROSS_THROW(
-			    "Cannot implement gl_InstanceID in Vulkan GLSL. This shader was created with GL semantics.");
+		{
+			auto model = get_entry_point().model;
+			switch (model)
+			{
+			case spv::ExecutionModelIntersectionKHR:
+			case spv::ExecutionModelAnyHitKHR:
+			case spv::ExecutionModelClosestHitKHR:
+				// gl_InstanceID is allowed in these shaders.
+				break;
+
+			default:
+				SPIRV_CROSS_THROW(
+					"Cannot implement gl_InstanceID in Vulkan GLSL. This shader was created with GL semantics.");
+			}
+		}
 		return "gl_InstanceID";
 	case BuiltInVertexIndex:
 		if (options.vulkan_semantics)
@@ -6772,7 +6867,14 @@ string CompilerGLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 		if (options.vulkan_semantics)
 			return "gl_InstanceIndex";
 		else if (options.vertex.support_nonzero_base_instance)
+		{
+			if (!options.vulkan_semantics)
+			{
+				// This is a soft-enable. We will opt-in to using gl_BaseInstanceARB if supported.
+				require_extension_internal("GL_ARB_shader_draw_parameters");
+			}
 			return "(gl_InstanceID + SPIRV_Cross_BaseInstance)"; // ... but not gl_InstanceID.
+		}
 		else
 			return "gl_InstanceID";
 	case BuiltInPrimitiveId:
@@ -6814,33 +6916,69 @@ string CompilerGLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 		return "gl_LocalInvocationIndex";
 	case BuiltInHelperInvocation:
 		return "gl_HelperInvocation";
+
 	case BuiltInBaseVertex:
 		if (options.es)
 			SPIRV_CROSS_THROW("BaseVertex not supported in ES profile.");
-		if (options.version < 460)
+
+		if (options.vulkan_semantics)
 		{
-			require_extension_internal("GL_ARB_shader_draw_parameters");
-			return "gl_BaseVertexARB";
+			if (options.version < 460)
+			{
+				require_extension_internal("GL_ARB_shader_draw_parameters");
+				return "gl_BaseVertexARB";
+			}
+			return "gl_BaseVertex";
 		}
-		return "gl_BaseVertex";
+		else
+		{
+			// On regular GL, this is soft-enabled and we emit ifdefs in code.
+			require_extension_internal("GL_ARB_shader_draw_parameters");
+			return "SPIRV_Cross_BaseVertex";
+		}
+		break;
+
 	case BuiltInBaseInstance:
 		if (options.es)
 			SPIRV_CROSS_THROW("BaseInstance not supported in ES profile.");
-		if (options.version < 460)
+
+		if (options.vulkan_semantics)
 		{
-			require_extension_internal("GL_ARB_shader_draw_parameters");
-			return "gl_BaseInstanceARB";
+			if (options.version < 460)
+			{
+				require_extension_internal("GL_ARB_shader_draw_parameters");
+				return "gl_BaseInstanceARB";
+			}
+			return "gl_BaseInstance";
 		}
-		return "gl_BaseInstance";
+		else
+		{
+			// On regular GL, this is soft-enabled and we emit ifdefs in code.
+			require_extension_internal("GL_ARB_shader_draw_parameters");
+			return "SPIRV_Cross_BaseInstance";
+		}
+		break;
+
 	case BuiltInDrawIndex:
 		if (options.es)
 			SPIRV_CROSS_THROW("DrawIndex not supported in ES profile.");
-		if (options.version < 460)
+
+		if (options.vulkan_semantics)
 		{
+			if (options.version < 460)
+			{
+				require_extension_internal("GL_ARB_shader_draw_parameters");
+				return "gl_DrawIDARB";
+			}
+			return "gl_DrawID";
+		}
+		else
+		{
+			// On regular GL, this is soft-enabled and we emit ifdefs in code.
 			require_extension_internal("GL_ARB_shader_draw_parameters");
 			return "gl_DrawIDARB";
 		}
-		return "gl_DrawID";
+		break;
 
 	case BuiltInSampleId:
 		if (options.es && options.version < 320)
@@ -8545,7 +8683,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		if (expr.expression_dependencies.empty())
 			forwarded_temporaries.erase(ops[1]);
 
-		if (has_decoration(ops[1], DecorationNonUniformEXT) || has_decoration(ops[2], DecorationNonUniformEXT))
+		if (has_decoration(ops[1], DecorationNonUniformEXT))
 			propagate_nonuniform_qualifier(ops[1]);
 
 		break;
@@ -8849,8 +8987,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		if (composite_type.basetype == SPIRType::Struct || !composite_type.array.empty())
 			allow_base_expression = false;
 
-		// Packed expressions cannot be split up.
-		if (has_extended_decoration(ops[2], SPIRVCrossDecorationPhysicalTypePacked))
+		// Packed expressions or physical ID mapped expressions cannot be split up.
+		if (has_extended_decoration(ops[2], SPIRVCrossDecorationPhysicalTypePacked) ||
+		    has_extended_decoration(ops[2], SPIRVCrossDecorationPhysicalTypeID))
 			allow_base_expression = false;
 
 		// Cannot use base expression for row-major matrix row-extraction since we need to interleave access pattern
@@ -9561,8 +9700,11 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		uint32_t id = ops[1];
 		uint32_t arg = ops[2];
 
-		auto op = bitcast_glsl_op(get<SPIRType>(result_type), expression_type(arg));
-		emit_unary_func_op(result_type, id, arg, op.c_str());
+		if (!emit_complex_bitcast(result_type, id, arg))
+		{
+			auto op = bitcast_glsl_op(get<SPIRType>(result_type), expression_type(arg));
+			emit_unary_func_op(result_type, id, arg, op.c_str());
+		}
 		break;
 	}
 
@@ -9758,15 +9900,33 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	}
 
 	case OpAtomicLoad:
-		flush_all_atomic_capable_variables();
-		// FIXME: Image?
-		// OpAtomicLoad seems to only be relevant for atomic counters.
+	{
+		// In plain GLSL, we have no atomic loads, so emulate this by fetch adding by 0 and hope compiler figures it out.
+		// Alternatively, we could rely on KHR_memory_model, but that's not very helpful for GL.
+		auto &type = expression_type(ops[2]);
 		forced_temporaries.insert(ops[1]);
-		GLSL_UFOP(atomicCounter);
+		bool atomic_image = check_atomic_image(ops[2]);
+		bool unsigned_type = (type.basetype == SPIRType::UInt) ||
+		                     (atomic_image && get<SPIRType>(type.image.type).basetype == SPIRType::UInt);
+		const char *op = atomic_image ? "imageAtomicAdd" : "atomicAdd";
+		const char *increment = unsigned_type ? "0u" : "0";
+		emit_op(ops[0], ops[1], join(op, "(", to_expression(ops[2]), ", ", increment, ")"), false);
+		flush_all_atomic_capable_variables();
 		break;
+	}
 
 	case OpAtomicStore:
-		SPIRV_CROSS_THROW("Unsupported opcode OpAtomicStore.");
+	{
+		// In plain GLSL, we have no atomic stores, so emulate this with an atomic exchange where we don't consume the result.
+		// Alternatively, we could rely on KHR_memory_model, but that's not very helpful for GL.
+		uint32_t ptr = ops[0];
+		// Ignore semantics for now, probably only relevant to CL.
+		uint32_t val = ops[3];
+		const char *op = check_atomic_image(ptr) ? "imageAtomicExchange" : "atomicExchange";
+		statement(op, "(", to_expression(ptr), ", ", to_expression(val), ");");
+		flush_all_atomic_capable_variables();
+		break;
+	}
 
 	case OpAtomicIIncrement:
 	case OpAtomicIDecrement:
@@ -10725,21 +10885,26 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 
 	case OpReportIntersectionNV:
 		statement("reportIntersectionNV(", to_expression(ops[0]), ", ", to_expression(ops[1]), ");");
+		flush_control_dependent_expressions(current_emitting_block->self);
 		break;
 	case OpIgnoreIntersectionNV:
 		statement("ignoreIntersectionNV();");
+		flush_control_dependent_expressions(current_emitting_block->self);
 		break;
 	case OpTerminateRayNV:
 		statement("terminateRayNV();");
+		flush_control_dependent_expressions(current_emitting_block->self);
 		break;
 	case OpTraceNV:
 		statement("traceNV(", to_expression(ops[0]), ", ", to_expression(ops[1]), ", ", to_expression(ops[2]), ", ",
 		          to_expression(ops[3]), ", ", to_expression(ops[4]), ", ", to_expression(ops[5]), ", ",
 		          to_expression(ops[6]), ", ", to_expression(ops[7]), ", ", to_expression(ops[8]), ", ",
 		          to_expression(ops[9]), ", ", to_expression(ops[10]), ");");
+		flush_control_dependent_expressions(current_emitting_block->self);
 		break;
 	case OpExecuteCallableNV:
 		statement("executeCallableNV(", to_expression(ops[0]), ", ", to_expression(ops[1]), ");");
+		flush_control_dependent_expressions(current_emitting_block->self);
 		break;
 
 	case OpConvertUToPtr:
@@ -11485,7 +11650,7 @@ string CompilerGLSL::type_to_glsl(const SPIRType &type, uint32_t id)
 		// this distinction into the type system.
 		return comparison_ids.count(id) ? "samplerShadow" : "sampler";
 
-	case SPIRType::AccelerationStructureNV:
+	case SPIRType::AccelerationStructure:
 		return "accelerationStructureNV";
 
 	case SPIRType::Void:
@@ -11907,10 +12072,19 @@ void CompilerGLSL::emit_function(SPIRFunction &func, const Bitset &return_flags)
 			// If we don't declare the variable when it is assigned we're forced to go through a helper function
 			// which copies elements one by one.
 			add_local_variable_name(var.self);
-			auto &dominated = entry_block.dominated_variables;
-			if (find(begin(dominated), end(dominated), var.self) == end(dominated))
-				entry_block.dominated_variables.push_back(var.self);
-			var.deferred_declaration = true;
+
+			if (var.initializer)
+			{
+				statement(variable_decl(var), ";");
+				var.deferred_declaration = false;
+			}
+			else
+			{
+				auto &dominated = entry_block.dominated_variables;
+				if (find(begin(dominated), end(dominated), var.self) == end(dominated))
+					entry_block.dominated_variables.push_back(var.self);
+				var.deferred_declaration = true;
+			}
 		}
 		else if (var.storage == StorageClassFunction && var.remapped_variable && var.static_expression)
 		{
@@ -13331,6 +13505,7 @@ void CompilerGLSL::bitcast_from_builtin_load(uint32_t source_id, std::string &ex
 	case BuiltInBaseInstance:
 	case BuiltInDrawIndex:
 	case BuiltInFragStencilRefEXT:
+	case BuiltInInstanceCustomIndexNV:
 		expected_type = SPIRType::Int;
 		break;
 
@@ -13340,6 +13515,9 @@ void CompilerGLSL::bitcast_from_builtin_load(uint32_t source_id, std::string &ex
 	case BuiltInLocalInvocationIndex:
 	case BuiltInWorkgroupSize:
 	case BuiltInNumWorkgroups:
+	case BuiltInIncomingRayFlagsNV:
+	case BuiltInLaunchIdNV:
+	case BuiltInLaunchSizeNV:
 		expected_type = SPIRType::UInt;
 		break;
 

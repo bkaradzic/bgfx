@@ -86,26 +86,10 @@ struct PositionHasher
 
 	size_t hash(unsigned int index) const
 	{
-		// MurmurHash2
-		const unsigned int m = 0x5bd1e995;
-		const int r = 24;
-
-		unsigned int h = 0;
 		const unsigned int* key = reinterpret_cast<const unsigned int*>(vertex_positions + index * vertex_stride_float);
 
-		for (size_t i = 0; i < 3; ++i)
-		{
-			unsigned int k = key[i];
-
-			k *= m;
-			k ^= k >> r;
-			k *= m;
-
-			h *= m;
-			h ^= k;
-		}
-
-		return h;
+		// Optimized Spatial Hashing for Collision Detection of Deformable Objects
+		return (key[0] * 73856093) ^ (key[1] * 19349663) ^ (key[2] * 83492791);
 	}
 
 	bool equal(unsigned int lhs, unsigned int rhs) const
@@ -421,7 +405,8 @@ struct Collapse
 	unsigned int v0;
 	unsigned int v1;
 
-	union {
+	union
+	{
 		unsigned int bidi;
 		float error;
 		unsigned int errorui;
@@ -1160,7 +1145,7 @@ static float interpolate(float y, float x0, float y0, float x1, float y1, float 
 
 } // namespace meshopt
 
-#if TRACE
+#ifndef NDEBUG
 unsigned char* meshopt_simplifyDebugKind = 0;
 unsigned int* meshopt_simplifyDebugLoop = 0;
 #endif
@@ -1304,7 +1289,7 @@ size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, 
 	dumpLockedCollapses(result, result_count, vertex_kind);
 #endif
 
-#if TRACE
+#ifndef NDEBUG
 	if (meshopt_simplifyDebugKind)
 		memcpy(meshopt_simplifyDebugKind, vertex_kind, vertex_count);
 

@@ -153,7 +153,7 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
 
     if (vertices == TQualifier::layoutNotSet)
         vertices = unit.vertices;
-    else if (vertices != unit.vertices) {
+    else if (unit.vertices != TQualifier::layoutNotSet && vertices != unit.vertices) {
         if (language == EShLangGeometry || language == EShLangMeshNV)
             error(infoSink, "Contradictory layout max_vertices values");
         else if (language == EShLangTessControl)
@@ -172,12 +172,12 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
 
     if (inputPrimitive == ElgNone)
         inputPrimitive = unit.inputPrimitive;
-    else if (inputPrimitive != unit.inputPrimitive)
+    else if (unit.inputPrimitive != ElgNone && inputPrimitive != unit.inputPrimitive)
         error(infoSink, "Contradictory input layout primitives");
 
     if (outputPrimitive == ElgNone)
         outputPrimitive = unit.outputPrimitive;
-    else if (outputPrimitive != unit.outputPrimitive)
+    else if (unit.outputPrimitive != ElgNone && outputPrimitive != unit.outputPrimitive)
         error(infoSink, "Contradictory output layout primitives");
 
     if (originUpperLeft != unit.originUpperLeft || pixelCenterInteger != unit.pixelCenterInteger)

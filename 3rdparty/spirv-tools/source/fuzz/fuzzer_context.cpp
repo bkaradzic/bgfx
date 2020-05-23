@@ -40,6 +40,7 @@ const std::pair<uint32_t, uint32_t> kChanceOfAddingNoContractionDecoration = {
     5, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingStore = {5, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingVectorType = {20, 70};
+const std::pair<uint32_t, uint32_t> kChanceOfAdjustingBranchWeights = {20, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfAdjustingFunctionControl = {20,
                                                                          70};
 const std::pair<uint32_t, uint32_t> kChanceOfAdjustingLoopControl = {20, 90};
@@ -68,6 +69,7 @@ const std::pair<uint32_t, uint32_t> kChanceOfTogglingAccessChainInstruction = {
 
 // Default limits for various quantities that are chosen during fuzzing.
 // Keep them in alphabetical order.
+const uint32_t kDefaultMaxEquivalenceClassSizeForDataSynonymFactClosure = 1000;
 const uint32_t kDefaultMaxLoopControlPartialCount = 100;
 const uint32_t kDefaultMaxLoopControlPeelCount = 100;
 const uint32_t kDefaultMaxLoopLimit = 20;
@@ -89,6 +91,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
                              uint32_t min_fresh_id)
     : random_generator_(random_generator),
       next_fresh_id_(min_fresh_id),
+      max_equivalence_class_size_for_data_synonym_fact_closure_(
+          kDefaultMaxEquivalenceClassSizeForDataSynonymFactClosure),
       max_loop_control_partial_count_(kDefaultMaxLoopControlPartialCount),
       max_loop_control_peel_count_(kDefaultMaxLoopControlPeelCount),
       max_loop_limit_(kDefaultMaxLoopLimit),
@@ -121,6 +125,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
   chance_of_adding_store_ = ChooseBetweenMinAndMax(kChanceOfAddingStore);
   chance_of_adding_vector_type_ =
       ChooseBetweenMinAndMax(kChanceOfAddingVectorType);
+  chance_of_adjusting_branch_weights_ =
+      ChooseBetweenMinAndMax(kChanceOfAdjustingBranchWeights);
   chance_of_adjusting_function_control_ =
       ChooseBetweenMinAndMax(kChanceOfAdjustingFunctionControl);
   chance_of_adjusting_loop_control_ =

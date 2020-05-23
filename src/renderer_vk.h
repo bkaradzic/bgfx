@@ -429,6 +429,26 @@ VK_DESTROY
 		VertexLayoutHandle m_layoutHandle;
 	};
 
+	struct BindType
+	{
+		enum Enum
+		{
+			Buffer,
+			Image,
+			Sampler,
+
+			Count
+		};
+	};
+
+	struct BindInfo
+	{
+		UniformHandle uniformHandle = BGFX_INVALID_HANDLE;
+		BindType::Enum type;
+		uint32_t binding;
+		uint32_t samplerBinding;
+	};
+
 	struct ShaderVK
 	{
 		ShaderVK()
@@ -460,25 +480,6 @@ VK_DESTROY
 		uint8_t m_numPredefined;
 		uint8_t m_numAttrs;
 
-		struct BindType
-		{
-			enum Enum
-			{
-				Storage,
-				Sampler,
-
-				Count
-			};
-		};
-
-		struct BindInfo
-		{
-			UniformHandle uniformHandle;
-			BindType::Enum type;
-			uint32_t binding;
-			uint32_t samplerBinding;
-		};
-
 		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t m_uniformBinding;
 		uint16_t m_numBindings;
@@ -501,6 +502,8 @@ VK_DESTROY
 		const ShaderVK* m_vsh;
 		const ShaderVK* m_fsh;
 
+		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
 
@@ -511,7 +514,8 @@ VK_DESTROY
 	struct TextureVK
 	{
 		TextureVK()
-			: m_vkTextureFormat(VK_FORMAT_UNDEFINED)
+			: m_directAccessPtr(NULL)
+			, m_vkTextureFormat(VK_FORMAT_UNDEFINED)
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem(VK_NULL_HANDLE)
 			, m_textureImageView(VK_NULL_HANDLE)
@@ -536,8 +540,8 @@ VK_DESTROY
 		uint32_t m_numLayers;
 		uint32_t m_numSides;
 		VkImageViewType m_type;
-		uint8_t m_requestedFormat;
-		uint8_t m_textureFormat;
+		bgfx::TextureFormat::Enum m_requestedFormat;
+		bgfx::TextureFormat::Enum m_textureFormat;
 		uint8_t m_numMips;
 		VkFormat m_vkTextureFormat;
 		VkComponentMapping m_vkComponentMapping;

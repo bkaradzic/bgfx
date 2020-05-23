@@ -658,8 +658,6 @@ namespace bgfx { namespace d3d12
 			, m_lost(false)
 			, m_maxAnisotropy(1)
 			, m_depthClamp(false)
-			, m_fsChanges(0)
-			, m_vsChanges(0)
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
@@ -1789,7 +1787,7 @@ namespace bgfx { namespace d3d12
 				BX_FREE(g_allocator, m_uniforms[_handle.idx]);
 			}
 
-			uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type] * _num);
+			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type] * _num, 16);
 			void* data = BX_ALLOC(g_allocator, size);
 			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
@@ -2329,12 +2327,10 @@ namespace bgfx { namespace d3d12
 			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
 			{
 				bx::memCopy(&m_fsScratch[_regIndex], _val, _numRegs*16);
-				m_fsChanges += _numRegs;
 			}
 			else
 			{
 				bx::memCopy(&m_vsScratch[_regIndex], _val, _numRegs*16);
-				m_vsChanges += _numRegs;
 			}
 		}
 
@@ -2362,15 +2358,11 @@ namespace bgfx { namespace d3d12
 				uint32_t size = program.m_vsh->m_size;
 				bx::memCopy(data, m_vsScratch, size);
 				data += size;
-
-				m_vsChanges = 0;
 			}
 
 			if (NULL != program.m_fsh)
 			{
 				bx::memCopy(data, m_fsScratch, program.m_fsh->m_size);
-
-				m_fsChanges = 0;
 			}
 		}
 
@@ -3397,8 +3389,6 @@ namespace bgfx { namespace d3d12
 
 		uint8_t m_fsScratch[64<<10];
 		uint8_t m_vsScratch[64<<10];
-		uint32_t m_fsChanges;
-		uint32_t m_vsChanges;
 
 		FrameBufferHandle m_fbh;
 		uint32_t m_backBufferColorIdx;
@@ -3481,7 +3471,7 @@ namespace bgfx { namespace d3d12
 		_gpuAddress = m_gpuVA + m_pos;
 		void* data = &m_data[m_pos];
 
-		m_pos += BX_ALIGN_256(_size);
+		m_pos += bx::alignUp(_size, 256);
 
 //		D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
 //		desc.BufferLocation = _gpuAddress;
@@ -4534,6 +4524,12 @@ namespace bgfx { namespace d3d12
 
 				uint16_t regCount = 0;
 				bx::read(&reader, regCount);
+
+				if (!isShaderVerLess(magic, 8) )
+				{
+					uint16_t texInfo = 0;
+					bx::read(&reader, texInfo);
+				}
 
 				const char* kind = "invalid";
 

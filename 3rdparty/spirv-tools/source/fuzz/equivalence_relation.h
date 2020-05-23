@@ -68,17 +68,14 @@ namespace fuzz {
 template <typename T, typename PointerHashT, typename PointerEqualsT>
 class EquivalenceRelation {
  public:
-  // Merges the equivalence classes associated with |value1| and |value2|.
-  // If any of these values was not previously in the equivalence relation, it
-  // is added to the pool of values known to be in the relation.
+  // Requires that |value1| and |value2| are already registered in the
+  // equivalence relation.  Merges the equivalence classes associated with
+  // |value1| and |value2|.
   void MakeEquivalent(const T& value1, const T& value2) {
-    // Register each value if necessary.
-    for (auto value : {value1, value2}) {
-      if (!Exists(value)) {
-        // Register the value in the equivalence relation.
-        Register(value);
-      }
-    }
+    assert(Exists(value1) &&
+           "Precondition: value1 must already be registered.");
+    assert(Exists(value2) &&
+           "Precondition: value2 must already be registered.");
 
     // Look up canonical pointers to each of the values in the value pool.
     const T* value1_ptr = *value_set_.find(&value1);
@@ -105,7 +102,7 @@ class EquivalenceRelation {
   // Requires that |value| is not known to the equivalence relation. Registers
   // it in its own equivalence class and returns a pointer to the equivalence
   // class representative.
-  const T* Register(T& value) {
+  const T* Register(const T& value) {
     assert(!Exists(value));
 
     // This relies on T having a copy constructor.

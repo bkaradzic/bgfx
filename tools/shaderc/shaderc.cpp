@@ -13,7 +13,7 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
-#define BGFX_SHADER_BIN_VERSION 6
+#define BGFX_SHADER_BIN_VERSION 8
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', BGFX_SHADER_BIN_VERSION)
@@ -80,12 +80,6 @@ namespace bgfx
 		"texture3DProj",
 		"texture3DLod",
 		"texture3DProjLod",
-		NULL
-	};
-
-	static const char* s_OES_EGL_image_external[] =
-	{
-		"samplerExternalOES",
 		NULL
 	};
 
@@ -1311,22 +1305,22 @@ namespace bgfx
 			if ('f' == _options.shaderType)
 			{
 				bx::write(_writer, BGFX_CHUNK_MAGIC_FSH);
-				bx::write(_writer, inputHash);
-				bx::write(_writer, uint32_t(0) );
 			}
 			else if ('v' == _options.shaderType)
 			{
 				bx::write(_writer, BGFX_CHUNK_MAGIC_VSH);
-				bx::write(_writer, uint32_t(0) );
-				bx::write(_writer, outputHash);
 			}
 			else
 			{
 				bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
-				bx::write(_writer, uint32_t(0) );
-				bx::write(_writer, outputHash);
 			}
 
+			bx::write(_writer, inputHash);
+			bx::write(_writer, outputHash);
+		}
+
+		if (raw)
+		{
 			if (0 != glsl)
 			{
 				bx::write(_writer, uint16_t(0) );
@@ -1893,21 +1887,6 @@ namespace bgfx
 							"\t} \\\n"
 							);
 
-						if (hlsl != 0
-						&&  hlsl <= 3)
-						{
-//								preprocessor.writef(
-//									"\tgl_Position.xy += u_viewTexel.xy * gl_Position.w; \\\n"
-//									);
-						}
-
-						if (0 != spirv)
-						{
-							preprocessor.writef(
-								"\tgl_Position.y = -gl_Position.y; \\\n"
-								);
-						}
-
 						preprocessor.writef(
 							"\treturn _varying_"
 							);
@@ -1965,7 +1944,14 @@ namespace bgfx
 							const bx::StringView preprocessedInput(preprocessor.m_preprocessed.c_str() );
 
 							if (!bx::strFind(preprocessedInput, "layout(std430").isEmpty()
-							||  !bx::strFind(preprocessedInput, "image2D").isEmpty() )
+							||  !bx::strFind(preprocessedInput, "image2D").isEmpty()
+							|| (_options.shaderType == 'f'
+								&&  (!bx::strFind(preprocessedInput, "floatBitsToUint").isEmpty() ||
+									 !bx::strFind(preprocessedInput, "floatBitsToInt").isEmpty() ||
+									 !bx::strFind(preprocessedInput, "intBitsToFloat").isEmpty() ||
+									 !bx::strFind(preprocessedInput, "uintBitsToFloat").isEmpty()
+									) )  
+								)
 							{
 								glsl = 430;
 							}
@@ -1976,9 +1962,14 @@ namespace bgfx
 									|| !bx::findIdentifierMatch(input, s_ARB_shader_texture_lod).isEmpty()
 									|| !bx::findIdentifierMatch(input, s_EXT_shader_texture_lod).isEmpty()
 									;
+
+								const bool usesGpuShader5 = true
+									&& _options.shaderType != 'f'
+									&& !bx::findIdentifierMatch(input, s_ARB_gpu_shader5).isEmpty()
+									;
+
 								const bool usesInstanceID   = !bx::findIdentifierMatch(input, "gl_InstanceID").isEmpty();
 								const bool usesGpuShader4   = !bx::findIdentifierMatch(input, s_EXT_gpu_shader4).isEmpty();
-								const bool usesGpuShader5   = !bx::findIdentifierMatch(input, s_ARB_gpu_shader5).isEmpty();
 								const bool usesTexelFetch   = !bx::findIdentifierMatch(input, s_texelFetch).isEmpty();
 								const bool usesTextureMS    = !bx::findIdentifierMatch(input, s_ARB_texture_multisample).isEmpty();
 								const bool usesTextureArray = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
@@ -2185,11 +2176,6 @@ namespace bgfx
 									if (!bx::findIdentifierMatch(input, s_OES_texture_3D).isEmpty() )
 									{
 										bx::stringPrintf(code, "#extension GL_OES_texture_3D : enable\n");
-									}
-
-									if (!bx::findIdentifierMatch(input, s_OES_EGL_image_external).isEmpty() )
-									{
-										bx::stringPrintf(code, "#extension GL_OES_EGL_image_external : enable\n");
 									}
 
 									if (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty() )

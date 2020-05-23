@@ -965,6 +965,16 @@ void CompilerMSL::emit_entry_point_declarations()
 	}
 	// For some reason, without this, we end up emitting the arrays twice.
 	buffer_arrays.clear();
+
+	// Emit disabled fragment outputs.
+	std::sort(disabled_frag_outputs.begin(), disabled_frag_outputs.end());
+	for (uint32_t var_id : disabled_frag_outputs)
+	{
+		auto &var = get<SPIRVariable>(var_id);
+		add_local_variable_name(var_id);
+		statement(variable_decl(var), ";");
+		var.deferred_declaration = false;
+	}
 }
 
 string CompilerMSL::compile()
@@ -1742,6 +1752,9 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 		// When we flatten, we flatten directly from the "out" struct,
 		// not from a function variable.
 		flatten_from_ib_var = true;
+
+		if (!msl_options.enable_clip_distance_user_varying)
+			return;
 	}
 	else if (!meta.strip_array)
 	{
@@ -1947,6 +1960,9 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 		// When we flatten, we flatten directly from the "out" struct,
 		// not from a function variable.
 		flatten_from_ib_var = true;
+
+		if (!msl_options.enable_clip_distance_user_varying)
+			return;
 	}
 
 	for (uint32_t i = 0; i < elem_cnt; i++)
@@ -2442,6 +2458,7 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 
 		bool is_builtin = is_builtin_variable(var);
 		auto bi_type = BuiltIn(get_decoration(var_id, DecorationBuiltIn));
+		uint32_t location = get_decoration(var_id, DecorationLocation);
 
 		// These builtins are part of the stage in/out structs.
 		bool is_interface_block_builtin =
@@ -2466,6 +2483,21 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 		// ClipDistance is never hidden, we need to emulate it when used as an input.
 		if (bi_type == BuiltInClipDistance)
 			hidden = false;
+
+		// It's not enough to simply avoid marking fragment outputs if the pipeline won't
+		// accept them. We can't put them in the struct at all, or otherwise the compiler
+		// complains that the outputs weren't explicitly marked.
+		if (get_execution_model() == ExecutionModelFragment && storage == StorageClassOutput && !patch &&
+			((is_builtin && ((bi_type == BuiltInFragDepth && !msl_options.enable_frag_depth_builtin) ||
+		                    (bi_type == BuiltInFragStencilRefEXT && !msl_options.enable_frag_stencil_ref_builtin))) ||
+		     (!is_builtin && !(msl_options.enable_frag_output_mask & (1 << location)))))
+		{
+			hidden = true;
+			disabled_frag_outputs.push_back(var_id);
+			// If a builtin, force it to have the proper name.
+			if (is_builtin)
+				set_name(var_id, builtin_to_glsl(bi_type, StorageClassFunction));
+		}
 
 		// Barycentric inputs must be emitted in stage-in, because they can have interpolation arguments.
 		if (is_active && (bi_type == BuiltInBaryCoordNV || bi_type == BuiltInBaryCoordNoPerspNV))
@@ -2496,7 +2528,6 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 						SPIRV_CROSS_THROW("Component decoration is not supported in tessellation shaders.");
 					else if (pack_components)
 					{
-						uint32_t location = get_decoration(var_id, DecorationLocation);
 						auto &location_meta = meta.location_meta[location];
 						location_meta.num_components = std::max(location_meta.num_components, component + type.vecsize);
 					}
@@ -3055,10 +3086,20 @@ bool CompilerMSL::validate_member_packing_rules_msl(const SPIRType &type, uint32
 	if (!mbr_type.array.empty())
 	{
 		// If we have an array type, array stride must match exactly with SPIR-V.
-		uint32_t spirv_array_stride = type_struct_member_array_stride(type, index);
-		uint32_t msl_array_stride = get_declared_struct_member_array_stride_msl(type, index);
-		if (spirv_array_stride != msl_array_stride)
-			return false;
+
+		// An exception to this requirement is if we have one array element.
+		// This comes from DX scalar layout workaround.
+		// If app tries to be cheeky and access the member out of bounds, this will not work, but this is the best we can do.
+		// In OpAccessChain with logical memory models, access chains must be in-bounds in SPIR-V specification.
+		bool relax_array_stride = mbr_type.array.back() == 1 && mbr_type.array_size_literal.back();
+
+		if (!relax_array_stride)
+		{
+			uint32_t spirv_array_stride = type_struct_member_array_stride(type, index);
+			uint32_t msl_array_stride = get_declared_struct_member_array_stride_msl(type, index);
+			if (spirv_array_stride != msl_array_stride)
+				return false;
+		}
 	}
 
 	if (is_matrix(mbr_type))
@@ -3096,7 +3137,9 @@ void CompilerMSL::ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t in
 		SPIRV_CROSS_THROW("Cannot perform any repacking for structs when it is used as a member of another struct.");
 
 	// Perform remapping here.
-	set_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
+	// There is nothing to be gained by using packed scalars, so don't attempt it.
+	if (!is_scalar(ib_type))
+		set_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
 
 	// Try validating again, now with packed.
 	if (validate_member_packing_rules_msl(ib_type, index))
@@ -3169,6 +3212,77 @@ void CompilerMSL::ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t in
 			                  "scalar and std140 layout rules.");
 		else
 			unset_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
+	}
+	else
+		SPIRV_CROSS_THROW("Found a buffer packing case which we cannot represent in MSL.");
+
+	// Try validating again, now with physical type remapping.
+	if (validate_member_packing_rules_msl(ib_type, index))
+		return;
+
+	// We might have a particular odd scalar layout case where the last element of an array
+	// does not take up as much space as the ArrayStride or MatrixStride. This can happen with DX cbuffers.
+	// The "proper" workaround for this is extremely painful and essentially impossible in the edge case of float3[],
+	// so we hack around it by declaring the offending array or matrix with one less array size/col/row,
+	// and rely on padding to get the correct value. We will technically access arrays out of bounds into the padding region,
+	// but it should spill over gracefully without too much trouble. We rely on behavior like this for unsized arrays anyways.
+
+	// E.g. we might observe a physical layout of:
+	// { float2 a[2]; float b; } in cbuffer layout where ArrayStride of a is 16, but offset of b is 24, packed right after a[1] ...
+	uint32_t type_id = get_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypeID);
+	auto &type = get<SPIRType>(type_id);
+
+	// Modify the physical type in-place. This is safe since each physical type workaround is a copy.
+	if (is_array(type))
+	{
+		if (type.array.back() > 1)
+		{
+			if (!type.array_size_literal.back())
+				SPIRV_CROSS_THROW("Cannot apply scalar layout workaround with spec constant array size.");
+			type.array.back() -= 1;
+		}
+		else
+		{
+			// We have an array of size 1, so we cannot decrement that. Our only option now is to
+			// force a packed layout instead, and drop the physical type remap since ArrayStride is meaningless now.
+			unset_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypeID);
+			set_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
+		}
+	}
+	else if (is_matrix(type))
+	{
+		bool row_major = has_member_decoration(ib_type.self, index, DecorationRowMajor);
+		if (!row_major)
+		{
+			// Slice off one column. If we only have 2 columns, this might turn the matrix into a vector with one array element instead.
+			if (type.columns > 2)
+			{
+				type.columns--;
+			}
+			else if (type.columns == 2)
+			{
+				type.columns = 1;
+				assert(type.array.empty());
+				type.array.push_back(1);
+				type.array_size_literal.push_back(true);
+			}
+		}
+		else
+		{
+			// Slice off one row. If we only have 2 rows, this might turn the matrix into a vector with one array element instead.
+			if (type.vecsize > 2)
+			{
+				type.vecsize--;
+			}
+			else if (type.vecsize == 2)
+			{
+				type.vecsize = type.columns;
+				type.columns = 1;
+				assert(type.array.empty());
+				type.array.push_back(1);
+				type.array_size_literal.push_back(true);
+			}
+		}
 	}
 
 	// This better validate now, or we must fail gracefully.
@@ -6926,7 +7040,11 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
 			exp += string(", ") + get_memory_order(mem_order_2);
 
 		exp += ")";
-		emit_op(result_type, result_id, exp, false);
+
+		if (strcmp(op, "atomic_store_explicit") != 0)
+			emit_op(result_type, result_id, exp, false);
+		else
+			statement(exp, ";");
 	}
 
 	flush_all_atomic_capable_variables();
@@ -8550,7 +8668,7 @@ string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_
 			td_line += ";";
 			add_typedef_line(td_line);
 		}
-		else
+		else if (!is_scalar(physical_type)) // scalar type is already packed.
 			pack_pfx = "packed_";
 	}
 	else if (row_major)
@@ -8877,12 +8995,23 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 			switch (builtin)
 			{
 			case BuiltInFragStencilRefEXT:
+				// Similar to PointSize, only mark FragStencilRef if there's a stencil buffer.
+				// Some shaders may include a FragStencilRef builtin even when used to render
+				// without a stencil attachment, and Metal will reject this builtin
+				// when compiling the shader into a render pipeline that does not set
+				// stencilAttachmentPixelFormat.
+				if (!msl_options.enable_frag_stencil_ref_builtin)
+					return "";
 				if (!msl_options.supports_msl_version(2, 1))
 					SPIRV_CROSS_THROW("Stencil export only supported in MSL 2.1 and up.");
 				return string(" [[") + builtin_qualifier(builtin) + "]]";
 
-			case BuiltInSampleMask:
 			case BuiltInFragDepth:
+				// Ditto FragDepth.
+				if (!msl_options.enable_frag_depth_builtin)
+					return "";
+				/* fallthrough */
+			case BuiltInSampleMask:
 				return string(" [[") + builtin_qualifier(builtin) + "]]";
 
 			default:
@@ -8890,6 +9019,9 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 			}
 		}
 		uint32_t locn = get_ordered_member_location(type.self, index);
+		// Metal will likely complain about missing color attachments, too.
+		if (locn != k_unknown_location && !(msl_options.enable_frag_output_mask & (1 << locn)))
+			return "";
 		if (locn != k_unknown_location && has_member_decoration(type.self, index, DecorationIndex))
 			return join(" [[color(", locn, "), index(", get_member_decoration(type.self, index, DecorationIndex),
 			            ")]]");
@@ -9059,7 +9191,14 @@ string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id, bo
 				addr_space = "constant";
 		}
 		else if (!argument)
+		{
 			addr_space = "constant";
+		}
+		else if (type_is_msl_framebuffer_fetch(type))
+		{
+			// Subpass inputs are passed around by value.
+			addr_space = "";
+		}
 		break;
 
 	case StorageClassFunction:
@@ -9500,8 +9639,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 
 			// Use Metal's native frame-buffer fetch API for subpass inputs.
 			const auto &basetype = get<SPIRType>(var.basetype);
-			if (basetype.image.dim != DimSubpassData || !msl_options.is_ios() ||
-			    !msl_options.ios_use_framebuffer_fetch_subpasses)
+			if (!type_is_msl_framebuffer_fetch(basetype))
 			{
 				ep_args += image_type_glsl(type, var_id) + " " + r.name;
 				if (r.plane > 0)
@@ -9513,7 +9651,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 			}
 			else
 			{
-				ep_args += image_type_glsl(type, var_id) + "4 " + r.name;
+				ep_args += image_type_glsl(type, var_id) + " " + r.name;
 				ep_args += " [[color(" + convert_to_string(r.index) + ")]]";
 			}
 
@@ -9999,6 +10137,12 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	return resource_index;
 }
 
+bool CompilerMSL::type_is_msl_framebuffer_fetch(const SPIRType &type) const
+{
+	return type.basetype == SPIRType::Image && type.image.dim == DimSubpassData &&
+	       msl_options.is_ios() && msl_options.ios_use_framebuffer_fetch_subpasses;
+}
+
 string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 {
 	auto &var = get<SPIRVariable>(arg.id);
@@ -10014,6 +10158,9 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 		name_id = var.basevariable;
 
 	bool constref = !arg.alias_global_variable && is_pointer && arg.write_count == 0;
+	// Framebuffer fetch is plain value, const looks out of place, but it is not wrong.
+	if (type_is_msl_framebuffer_fetch(type))
+		constref = false;
 
 	bool type_is_image = type.basetype == SPIRType::Image || type.basetype == SPIRType::SampledImage ||
 	                     type.basetype == SPIRType::Sampler;
@@ -10512,6 +10659,9 @@ void CompilerMSL::replace_illegal_names()
 
 string CompilerMSL::to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain)
 {
+	if (index < uint32_t(type.member_type_index_redirection.size()))
+		index = type.member_type_index_redirection[index];
+
 	auto *var = maybe_get<SPIRVariable>(base);
 	// If this is a buffer array, we have to dereference the buffer pointers.
 	// Otherwise, if this is a pointer expression, dereference it.
@@ -10857,10 +11007,11 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 			}
 
 			// Use Metal's native frame-buffer fetch API for subpass inputs.
-			if (img_type.dim == DimSubpassData && msl_options.is_ios() &&
-			    msl_options.ios_use_framebuffer_fetch_subpasses)
+			if (type_is_msl_framebuffer_fetch(type))
 			{
-				return type_to_glsl(get<SPIRType>(img_type.type));
+				auto img_type_4 = get<SPIRType>(img_type.type);
+				img_type_4.vecsize = 4;
+				return type_to_glsl(img_type_4);
 			}
 			if (img_type.ms && img_type.arrayed)
 			{
@@ -11220,6 +11371,11 @@ string CompilerMSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &in
 	}
 }
 
+bool CompilerMSL::emit_complex_bitcast(uint32_t, uint32_t, uint32_t)
+{
+	return false;
+}
+
 // Returns an MSL string identifying the name of a SPIR-V builtin.
 // Output builtins are qualified with the name of the stage out structure.
 string CompilerMSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
@@ -11345,13 +11501,17 @@ string CompilerMSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 		if (!msl_options.supports_msl_version(2, 0))
 			SPIRV_CROSS_THROW("ViewportIndex requires Metal 2.0.");
 		/* fallthrough */
+	case BuiltInFragDepth:
+	case BuiltInFragStencilRefEXT:
+		if ((builtin == BuiltInFragDepth && !msl_options.enable_frag_depth_builtin) ||
+		    (builtin == BuiltInFragStencilRefEXT && !msl_options.enable_frag_stencil_ref_builtin))
+			break;
+		/* fallthrough */
 	case BuiltInPosition:
 	case BuiltInPointSize:
 	case BuiltInClipDistance:
 	case BuiltInCullDistance:
 	case BuiltInLayer:
-	case BuiltInFragDepth:
-	case BuiltInFragStencilRefEXT:
 	case BuiltInSampleMask:
 		if (get_execution_model() == ExecutionModelTessellationControl)
 			break;
@@ -11775,7 +11935,7 @@ uint32_t CompilerMSL::get_declared_type_matrix_stride_msl(const SPIRType &type, 
 	// For packed matrices, we just use the size of the vector type.
 	// Otherwise, MatrixStride == alignment, which is the size of the underlying vector type.
 	if (packed)
-		return (type.width / 8) * (row_major ? type.columns : type.vecsize);
+		return (type.width / 8) * ((row_major && type.columns > 1) ? type.columns : type.vecsize);
 	else
 		return get_declared_type_alignment_msl(type, false, row_major);
 }
@@ -11853,7 +12013,7 @@ uint32_t CompilerMSL::get_declared_type_size_msl(const SPIRType &type, bool is_p
 			uint32_t vecsize = type.vecsize;
 			uint32_t columns = type.columns;
 
-			if (row_major)
+			if (row_major && columns > 1)
 				swap(vecsize, columns);
 
 			if (vecsize == 3)
@@ -11914,7 +12074,7 @@ uint32_t CompilerMSL::get_declared_type_alignment_msl(const SPIRType &type, bool
 		else
 		{
 			// This is the general rule for MSL. Size == alignment.
-			uint32_t vecsize = row_major ? type.columns : type.vecsize;
+			uint32_t vecsize = (row_major && type.columns > 1) ? type.columns : type.vecsize;
 			return (type.width / 8) * (vecsize == 3 ? 4 : vecsize);
 		}
 	}
@@ -12302,8 +12462,27 @@ void CompilerMSL::MemberSorter::sort()
 	// the members should be reordered, based on builtin and sorting aspect meta info.
 	size_t mbr_cnt = type.member_types.size();
 	SmallVector<uint32_t> mbr_idxs(mbr_cnt);
-	iota(mbr_idxs.begin(), mbr_idxs.end(), 0); // Fill with consecutive indices
+	std::iota(mbr_idxs.begin(), mbr_idxs.end(), 0); // Fill with consecutive indices
 	std::stable_sort(mbr_idxs.begin(), mbr_idxs.end(), *this); // Sort member indices based on sorting aspect
+
+	bool sort_is_identity = true;
+	for (uint32_t mbr_idx = 0; mbr_idx < mbr_cnt; mbr_idx++)
+	{
+		if (mbr_idx != mbr_idxs[mbr_idx])
+		{
+			sort_is_identity = false;
+			break;
+		}
+	}
+
+	if (sort_is_identity)
+		return;
+
+	if (meta.members.size() < type.member_types.size())
+	{
+		// This should never trigger in normal circumstances, but to be safe.
+		meta.members.resize(type.member_types.size());
+	}
 
 	// Move type and meta member info to the order defined by the sorted member indices.
 	// This is done by creating temporary copies of both member types and meta, and then
@@ -12314,6 +12493,13 @@ void CompilerMSL::MemberSorter::sort()
 	{
 		type.member_types[mbr_idx] = mbr_types_cpy[mbr_idxs[mbr_idx]];
 		meta.members[mbr_idx] = mbr_meta_cpy[mbr_idxs[mbr_idx]];
+	}
+
+	if (sort_aspect == SortAspect::Offset)
+	{
+		// If we're sorting by Offset, this might affect user code which accesses a buffer block.
+		// We will need to redirect member indices from one index to sorted index.
+		type.member_type_index_redirection = std::move(mbr_idxs);
 	}
 }
 

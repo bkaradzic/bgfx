@@ -77,10 +77,10 @@ namespace glslang {
 // This is in the glslang namespace directly so it can be a friend of TReflection.
 //
 
-class TReflectionTraverser : public TLiveTraverser {
+class TReflectionTraverser : public TIntermTraverser {
 public:
     TReflectionTraverser(const TIntermediate& i, TReflection& r) :
-         TLiveTraverser(i), reflection(r) { }
+	                     TIntermTraverser(), intermediate(i), reflection(r), updateStageMasks(true) { }
 
     virtual bool visitBinary(TVisit, TIntermBinary* node);
     virtual void visitSymbol(TIntermSymbol* base);
@@ -92,11 +92,37 @@ public:
         if (processedDerefs.find(&base) == processedDerefs.end()) {
             processedDerefs.insert(&base);
 
+            int blockIndex = -1;
+            int offset     = -1;
+            TList<TIntermBinary*> derefs;
+            TString baseName = base.getName();
+
+            if (base.getType().getBasicType() == EbtBlock) {
+                offset = 0;
+                bool anonymous = IsAnonymous(baseName);
+                const TString& blockName = base.getType().getTypeName();
+
+                if (!anonymous)
+                    baseName = blockName;
+                else
+                    baseName = "";
+
+                if (base.getType().isArray()) {
+                    TType derefType(base.getType(), 0);
+
+                    assert(!anonymous);
+                    for (int e = 0; e < base.getType().getCumulativeArraySize(); ++e)
+                        blockIndex = addBlockName(blockName + "[" + String(e) + "]", derefType,
+                            intermediate.getBlockSize(base.getType()));
+                }
+                else
+                    blockIndex = addBlockName(blockName, base.getType(), intermediate.getBlockSize(base.getType()));
+            }
+
             // Use a degenerate (empty) set of dereferences to immediately put as at the end of
             // the dereference change expected by blowUpActiveAggregate.
-            TList<TIntermBinary*> derefs;
-            blowUpActiveAggregate(base.getType(), base.getName(), derefs, derefs.end(), -1, -1, 0, 0,
-                                  base.getQualifier().storage, true);
+            blowUpActiveAggregate(base.getType(), baseName, derefs, derefs.end(), offset, blockIndex, 0, 0,
+                                  base.getQualifier().storage, updateStageMasks);
         }
     }
 
@@ -155,9 +181,9 @@ public:
     void getOffsets(const TType& type, TVector<int>& offsets)
     {
         const TTypeList& memberList = *type.getStruct();
-
         int memberSize = 0;
         int offset = 0;
+
         for (size_t m = 0; m < offsets.size(); ++m) {
             // if the user supplied an offset, snap to it now
             if (memberList[m].type->getQualifier().hasOffset())
@@ -334,7 +360,8 @@ public:
 
                 for (int i = 0; i < arrayIterateSize; ++i) {
                     TString newBaseName = name;
-                    newBaseName.append(TString("[") + String(i) + "]");
+                    if (terminalType->getBasicType() != EbtBlock)
+                        newBaseName.append(TString("[") + String(i) + "]");
                     TType derefType(*terminalType, 0);
                     if (offset >= 0)
                         offset = baseOffset + stride * i;
@@ -643,13 +670,17 @@ public:
 
             blocks.back().numMembers = countAggregateMembers(type);
 
-            EShLanguageMask& stages = blocks.back().stages;
-            stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
+            if (updateStageMasks) {
+                EShLanguageMask& stages = blocks.back().stages;
+                stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
+            }
         } else {
             blockIndex = it->second;
 
-            EShLanguageMask& stages = blocks[blockIndex].stages;
-            stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
+            if (updateStageMasks) {
+                EShLanguageMask& stages = blocks[blockIndex].stages;
+                stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
+            }
         }
 
         return blockIndex;
@@ -995,8 +1026,10 @@ public:
         return type.isArray() ? type.getOuterArraySize() : 1;
     }
 
+    const TIntermediate& intermediate;
     TReflection& reflection;
     std::set<const TIntermNode*> processedDerefs;
+    bool updateStageMasks;
 
 protected:
     TReflectionTraverser(TReflectionTraverser&);
@@ -1029,8 +1062,15 @@ bool TReflectionTraverser::visitBinary(TVisit /* visit */, TIntermBinary* node)
 // To reflect non-dereferenced objects.
 void TReflectionTraverser::visitSymbol(TIntermSymbol* base)
 {
-    if (base->getQualifier().storage == EvqUniform)
-        addUniform(*base);
+    if (base->getQualifier().storage == EvqUniform) {
+        if (base->getBasicType() == EbtBlock) {
+            if (reflection.options & EShReflectionSharedStd140Blocks) {
+                addUniform(*base);
+            }
+        } else {
+            addUniform(*base);
+        }
+    }
 
     if ((intermediate.getStage() == reflection.firstStage && base->getQualifier().isPipeInput()) ||
         (intermediate.getStage() == reflection.lastStage && base->getQualifier().isPipeOutput()))
@@ -1135,15 +1175,39 @@ bool TReflection::addStage(EShLanguage stage, const TIntermediate& intermediate)
 
     TReflectionTraverser it(intermediate, *this);
 
-    // put the entry point on the list of functions to process
-    it.pushFunction(intermediate.getEntryPointMangledName().c_str());
-
-    // process all the functions
-    while (! it.functions.empty()) {
-        TIntermNode* function = it.functions.back();
-        it.functions.pop_back();
-        function->traverse(&it);
+    for (auto& sequnence : intermediate.getTreeRoot()->getAsAggregate()->getSequence()) {
+        if (sequnence->getAsAggregate() != nullptr) {
+            if (sequnence->getAsAggregate()->getOp() == glslang::EOpLinkerObjects) {
+                it.updateStageMasks = false;
+                TIntermAggregate* linkerObjects = sequnence->getAsAggregate();
+                for (auto& sequnence : linkerObjects->getSequence()) {
+                    auto pNode = sequnence->getAsSymbolNode();
+                    if (pNode != nullptr && pNode->getQualifier().storage == EvqUniform &&
+                        (options & EShReflectionSharedStd140Blocks)) {
+                        if (pNode->getBasicType() == EbtBlock) {
+                            // collect std140 and shared uniform block form AST
+                            if (pNode->getQualifier().layoutPacking == ElpStd140 ||
+                                pNode->getQualifier().layoutPacking == ElpShared) {
+                                pNode->traverse(&it);
+                            }
+                        }
+                    }
+                }
+            } else {
+                // This traverser will travers all function in AST.
+                // If we want reflect uncalled function, we need set linke message EShMsgKeepUncalled.
+                // When EShMsgKeepUncalled been set to true, all function will be keep in AST, even it is a uncalled function.
+                // This will keep some uniform variables in reflection, if those uniform variables is used in these uncalled function.
+                //
+                // If we just want reflect only live node, we can use a default link message or set EShMsgKeepUncalled false.
+                // When linke message not been set EShMsgKeepUncalled, linker won't keep uncalled function in AST.
+                // So, travers all function node can equivalent to travers live function.
+                it.updateStageMasks = true;
+                sequnence->getAsAggregate()->traverse(&it);
+            }
+        }
     }
+    it.updateStageMasks = true;
 
     buildCounterIndices(intermediate);
     buildUniformStageMask(intermediate);
