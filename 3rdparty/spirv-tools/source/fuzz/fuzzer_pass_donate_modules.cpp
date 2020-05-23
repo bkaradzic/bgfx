@@ -125,6 +125,7 @@ SpvStorageClass FuzzerPassDonateModules::AdaptStorageClass(
     case SpvStorageClassUniformConstant:
     case SpvStorageClassPushConstant:
     case SpvStorageClassImage:
+    case SpvStorageClassStorageBuffer:
       // We change these to Private
       return SpvStorageClassPrivate;
     default:

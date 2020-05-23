@@ -424,7 +424,6 @@ bool MergeReturnPass::BreakFromConstruct(
   auto old_body_id = TakeNextId();
   BasicBlock* old_body = block->SplitBasicBlock(context(), old_body_id, iter);
   predicated->insert(old_body);
-  cfg()->AddEdges(old_body);
 
   // If a return block is being split, mark the new body block also as a return
   // block.

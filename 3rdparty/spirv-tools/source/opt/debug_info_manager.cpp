@@ -24,10 +24,36 @@ static const uint32_t kOpLineOperandLineIndex = 1;
 static const uint32_t kLineOperandIndexDebugFunction = 7;
 static const uint32_t kLineOperandIndexDebugLexicalBlock = 5;
 static const uint32_t kDebugFunctionOperandFunctionIndex = 13;
+static const uint32_t kDebugInlinedAtOperandInlinedIndex = 6;
 
 namespace spvtools {
 namespace opt {
 namespace analysis {
+namespace {
+
+void SetInlinedOperand(Instruction* dbg_inlined_at, uint32_t inlined_operand) {
+  assert(dbg_inlined_at);
+  assert(dbg_inlined_at->GetOpenCL100DebugOpcode() ==
+         OpenCLDebugInfo100DebugInlinedAt);
+  if (dbg_inlined_at->NumOperands() <= kDebugInlinedAtOperandInlinedIndex) {
+    dbg_inlined_at->AddOperand({SPV_OPERAND_TYPE_RESULT_ID, {inlined_operand}});
+  } else {
+    dbg_inlined_at->SetOperand(kDebugInlinedAtOperandInlinedIndex,
+                               {inlined_operand});
+  }
+}
+
+uint32_t GetInlinedOperand(Instruction* dbg_inlined_at) {
+  assert(dbg_inlined_at);
+  assert(dbg_inlined_at->GetOpenCL100DebugOpcode() ==
+         OpenCLDebugInfo100DebugInlinedAt);
+  if (dbg_inlined_at->NumOperands() <= kDebugInlinedAtOperandInlinedIndex)
+    return kNoInlinedAt;
+  return dbg_inlined_at->GetSingleWordOperand(
+      kDebugInlinedAtOperandInlinedIndex);
+}
+
+}  // namespace
 
 DebugInfoManager::DebugInfoManager(IRContext* c) : context_(c) {
   AnalyzeDebugInsts(*c->module());
@@ -119,6 +145,69 @@ uint32_t DebugInfoManager::CreateDebugInlinedAt(const Instruction* line,
   RegisterDbgInst(inlined_at.get());
   context()->module()->AddExtInstDebugInfo(std::move(inlined_at));
   return result_id;
+}
+
+DebugScope DebugInfoManager::BuildDebugScope(
+    const DebugScope& callee_instr_scope,
+    DebugInlinedAtContext* inlined_at_ctx) {
+  return DebugScope(callee_instr_scope.GetLexicalScope(),
+                    BuildDebugInlinedAtChain(callee_instr_scope.GetInlinedAt(),
+                                             inlined_at_ctx));
+}
+
+uint32_t DebugInfoManager::BuildDebugInlinedAtChain(
+    uint32_t callee_inlined_at, DebugInlinedAtContext* inlined_at_ctx) {
+  if (inlined_at_ctx->GetScopeOfCallInstruction().GetLexicalScope() ==
+      kNoDebugScope)
+    return kNoInlinedAt;
+
+  // Reuse the already generated DebugInlinedAt chain if exists.
+  uint32_t already_generated_chain_head_id =
+      inlined_at_ctx->GetDebugInlinedAtChain(callee_inlined_at);
+  if (already_generated_chain_head_id != kNoInlinedAt) {
+    return already_generated_chain_head_id;
+  }
+
+  const uint32_t new_dbg_inlined_at_id =
+      CreateDebugInlinedAt(inlined_at_ctx->GetLineOfCallInstruction(),
+                           inlined_at_ctx->GetScopeOfCallInstruction());
+  if (new_dbg_inlined_at_id == kNoInlinedAt) return kNoInlinedAt;
+
+  if (callee_inlined_at == kNoInlinedAt) {
+    inlined_at_ctx->SetDebugInlinedAtChain(kNoInlinedAt, new_dbg_inlined_at_id);
+    return new_dbg_inlined_at_id;
+  }
+
+  uint32_t chain_head_id = kNoInlinedAt;
+  uint32_t chain_iter_id = callee_inlined_at;
+  Instruction* last_inlined_at_in_chain = nullptr;
+  do {
+    Instruction* new_inlined_at_in_chain = CloneDebugInlinedAt(
+        chain_iter_id, /* insert_before */ last_inlined_at_in_chain);
+    assert(new_inlined_at_in_chain != nullptr);
+
+    // Set DebugInlinedAt of the new scope as the head of the chain.
+    if (chain_head_id == kNoInlinedAt)
+      chain_head_id = new_inlined_at_in_chain->result_id();
+
+    // Previous DebugInlinedAt of the chain must point to the new
+    // DebugInlinedAt as its Inlined operand to build a recursive
+    // chain.
+    if (last_inlined_at_in_chain != nullptr) {
+      SetInlinedOperand(last_inlined_at_in_chain,
+                        new_inlined_at_in_chain->result_id());
+    }
+    last_inlined_at_in_chain = new_inlined_at_in_chain;
+
+    chain_iter_id = GetInlinedOperand(new_inlined_at_in_chain);
+  } while (chain_iter_id != kNoInlinedAt);
+
+  // Put |new_dbg_inlined_at_id| into the end of the chain.
+  SetInlinedOperand(last_inlined_at_in_chain, new_dbg_inlined_at_id);
+
+  // Keep the new chain information that will be reused it.
+  inlined_at_ctx->SetDebugInlinedAtChain(callee_inlined_at, chain_head_id);
+  return chain_head_id;
 }
 
 Instruction* DebugInfoManager::GetDebugInfoNone() {

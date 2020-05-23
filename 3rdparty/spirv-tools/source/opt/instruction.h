@@ -239,6 +239,10 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
     return dbg_line_insts_;
   }
 
+  const Instruction* dbg_line_inst() const {
+    return dbg_line_insts_.empty() ? nullptr : &dbg_line_insts_[0];
+  }
+
   // Clear line-related debug instructions attached to this instruction.
   void clear_dbg_line_insts() { dbg_line_insts_.clear(); }
 
@@ -291,6 +295,11 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // Sets DebugScope.
   inline void SetDebugScope(const DebugScope& scope);
   inline const DebugScope& GetDebugScope() const { return dbg_scope_; }
+  // Updates DebugInlinedAt of DebugScope and OpLine.
+  inline void UpdateDebugInlinedAt(uint32_t new_inlined_at);
+  inline uint32_t GetDebugInlinedAt() const {
+    return dbg_scope_.GetInlinedAt();
+  }
   // Updates OpLine and DebugScope based on the information of |from|.
   inline void UpdateDebugInfo(const Instruction* from);
   // Remove the |index|-th operand
@@ -639,6 +648,13 @@ inline void Instruction::SetDebugScope(const DebugScope& scope) {
   dbg_scope_ = scope;
   for (auto& i : dbg_line_insts_) {
     i.dbg_scope_ = scope;
+  }
+}
+
+inline void Instruction::UpdateDebugInlinedAt(uint32_t new_inlined_at) {
+  dbg_scope_.SetInlinedAt(new_inlined_at);
+  for (auto& i : dbg_line_insts_) {
+    i.dbg_scope_.SetInlinedAt(new_inlined_at);
   }
 }
 

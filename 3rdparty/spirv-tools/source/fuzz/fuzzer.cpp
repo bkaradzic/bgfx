@@ -33,7 +33,6 @@
 #include "source/fuzz/fuzzer_pass_add_local_variables.h"
 #include "source/fuzz/fuzzer_pass_add_no_contraction_decorations.h"
 #include "source/fuzz/fuzzer_pass_add_stores.h"
-#include "source/fuzz/fuzzer_pass_add_useful_constructs.h"
 #include "source/fuzz/fuzzer_pass_adjust_branch_weights.h"
 #include "source/fuzz/fuzzer_pass_adjust_function_controls.h"
 #include "source/fuzz/fuzzer_pass_adjust_loop_controls.h"
@@ -186,16 +185,6 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
   fact_manager.AddFacts(impl_->consumer, initial_facts, ir_context.get());
   TransformationContext transformation_context(&fact_manager,
                                                impl_->validator_options);
-
-  // Add some essential ingredients to the module if they are not already
-  // present, such as boolean constants.
-  FuzzerPassAddUsefulConstructs add_useful_constructs(
-      ir_context.get(), &transformation_context, &fuzzer_context,
-      transformation_sequence_out);
-  if (!impl_->ApplyPassAndCheckValidity(&add_useful_constructs, *ir_context,
-                                        tools)) {
-    return Fuzzer::FuzzerResultStatus::kFuzzerPassLedToInvalidModule;
-  }
 
   // Apply some semantics-preserving passes.
   std::vector<std::unique_ptr<FuzzerPass>> passes;

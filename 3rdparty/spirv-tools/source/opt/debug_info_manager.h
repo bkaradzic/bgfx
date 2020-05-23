@@ -24,6 +24,48 @@ namespace spvtools {
 namespace opt {
 namespace analysis {
 
+// When an instruction of a callee function is inlined to its caller function,
+// we need the line and the scope information of the function call instruction
+// to generate DebugInlinedAt. This class keeps the data. For multiple inlining
+// of a single instruction, we have to create multiple DebugInlinedAt
+// instructions as a chain. This class keeps the information of the generated
+// DebugInlinedAt chains to reduce the number of chains.
+class DebugInlinedAtContext {
+ public:
+  explicit DebugInlinedAtContext(Instruction* call_inst)
+      : call_inst_line_(call_inst->dbg_line_inst()),
+        call_inst_scope_(call_inst->GetDebugScope()) {}
+
+  const Instruction* GetLineOfCallInstruction() { return call_inst_line_; }
+  const DebugScope& GetScopeOfCallInstruction() { return call_inst_scope_; }
+  // Puts the DebugInlinedAt chain that is generated for the callee instruction
+  // whose DebugInlinedAt of DebugScope is |callee_instr_inlined_at| into
+  // |callee_inlined_at2chain_|.
+  void SetDebugInlinedAtChain(uint32_t callee_instr_inlined_at,
+                              uint32_t chain_head_id) {
+    callee_inlined_at2chain_[callee_instr_inlined_at] = chain_head_id;
+  }
+  // Gets the DebugInlinedAt chain from |callee_inlined_at2chain_|.
+  uint32_t GetDebugInlinedAtChain(uint32_t callee_instr_inlined_at) {
+    auto chain_itr = callee_inlined_at2chain_.find(callee_instr_inlined_at);
+    if (chain_itr != callee_inlined_at2chain_.end()) return chain_itr->second;
+    return kNoInlinedAt;
+  }
+
+ private:
+  // The line information of the function call instruction that will be
+  // replaced by the callee function.
+  const Instruction* call_inst_line_;
+
+  // The scope information of the function call instruction that will be
+  // replaced by the callee function.
+  const DebugScope call_inst_scope_;
+
+  // Map from DebugInlinedAt ids of callee to head ids of new generated
+  // DebugInlinedAt chain.
+  std::unordered_map<uint32_t, uint32_t> callee_inlined_at2chain_;
+};
+
 // A class for analyzing, managing, and creating OpenCL.DebugInfo.100 extension
 // instructions.
 class DebugInfoManager {
@@ -73,6 +115,18 @@ class DebugInfoManager {
   // section of the module.
   Instruction* CloneDebugInlinedAt(uint32_t clone_inlined_at_id,
                                    Instruction* insert_before = nullptr);
+
+  // Returns the debug scope corresponding to an inlining instruction in the
+  // scope |callee_instr_scope| into |inlined_at_ctx|. Generates all new
+  // debug instructions needed to represent the scope.
+  DebugScope BuildDebugScope(const DebugScope& callee_instr_scope,
+                             DebugInlinedAtContext* inlined_at_ctx);
+
+  // Returns DebugInlinedAt corresponding to inlining an instruction, which
+  // was inlined at |callee_inlined_at|, into |inlined_at_ctx|. Generates all
+  // new debug instructions needed to represent the DebugInlinedAt.
+  uint32_t BuildDebugInlinedAtChain(uint32_t callee_inlined_at,
+                                    DebugInlinedAtContext* inlined_at_ctx);
 
  private:
   IRContext* context() { return context_; }

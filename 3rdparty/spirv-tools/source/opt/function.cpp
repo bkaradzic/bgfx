@@ -154,6 +154,18 @@ void Function::ForEachParam(const std::function<void(const Instruction*)>& f,
         ->ForEachInst(f, run_on_debug_line_insts);
 }
 
+void Function::ForEachDebugInstructionsInHeader(
+    const std::function<void(Instruction*)>& f) {
+  if (debug_insts_in_header_.empty()) return;
+
+  Instruction* di = &debug_insts_in_header_.front();
+  while (di != nullptr) {
+    Instruction* next_instruction = di->NextNode();
+    di->ForEachInst(f);
+    di = next_instruction;
+  }
+}
+
 BasicBlock* Function::InsertBasicBlockAfter(
     std::unique_ptr<BasicBlock>&& new_block, BasicBlock* position) {
   for (auto bb_iter = begin(); bb_iter != end(); ++bb_iter) {

@@ -164,6 +164,14 @@ class FuzzerPass {
   // type do not exist, transformations are applied to add them.
   uint32_t FindOrCreateBoolConstant(bool value);
 
+  // Returns the id of an OpConstant instruction of type with |type_id|
+  // that consists of |words|. If that instruction doesn't exist,
+  // transformations are applied to add it. |type_id| must be a valid
+  // result id of either scalar or boolean OpType* instruction that exists
+  // in the module.
+  uint32_t FindOrCreateConstant(const std::vector<uint32_t>& words,
+                                uint32_t type_id);
+
   // Returns the result id of an instruction of the form:
   //   %id = OpUndef %|type_id|
   // If no such instruction exists, a transformation is applied to add it.

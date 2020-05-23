@@ -885,14 +885,6 @@ bool InstrumentPass::InstProcessCallTreeFromRoots(InstProcessFunction& pfn,
 }
 
 bool InstrumentPass::InstProcessEntryPointCallTree(InstProcessFunction& pfn) {
-  // Check that format version 2 requested
-  if (version_ != 2u) {
-    if (consumer()) {
-      std::string message = "Unsupported instrumentation format requested";
-      consumer()(SPV_MSG_ERROR, 0, {0, 0, 0}, message.c_str());
-    }
-    return false;
-  }
   // Make sure all entry points have the same execution model. Do not
   // instrument if they do not.
   // TODO(greg-lunarg): Handle mixed stages. Technically, a shader module
