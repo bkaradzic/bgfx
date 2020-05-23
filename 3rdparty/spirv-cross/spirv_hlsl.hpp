@@ -264,8 +264,23 @@ private:
 	bool requires_scalar_reflect = false;
 	bool requires_scalar_refract = false;
 	bool requires_scalar_faceforward = false;
-	uint64_t required_textureSizeVariants = 0;
-	void require_texture_query_variant(const SPIRType &type);
+
+	struct TextureSizeVariants
+	{
+		// MSVC 2013 workaround.
+		TextureSizeVariants()
+		{
+			srv = 0;
+			for (auto &unorm : uav)
+				for (auto &u : unorm)
+					u = 0;
+		}
+		uint64_t srv;
+		uint64_t uav[3][4];
+	} required_texture_size_variants;
+
+	void require_texture_query_variant(uint32_t var_id);
+	void emit_texture_size_variants(uint64_t variant_mask, const char *vecsize_qualifier, bool uav, const char *type_qualifier);
 
 	enum TextureQueryVariantDim
 	{

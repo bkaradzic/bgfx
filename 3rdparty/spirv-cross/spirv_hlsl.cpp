@@ -23,6 +23,41 @@ using namespace spv;
 using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
 
+enum class ImageFormatNormalizedState
+{
+	None = 0,
+	Unorm = 1,
+	Snorm = 2
+};
+
+static ImageFormatNormalizedState image_format_to_normalized_state(ImageFormat fmt)
+{
+	switch (fmt)
+	{
+	case ImageFormatR8:
+	case ImageFormatR16:
+	case ImageFormatRg8:
+	case ImageFormatRg16:
+	case ImageFormatRgba8:
+	case ImageFormatRgba16:
+	case ImageFormatRgb10A2:
+		return ImageFormatNormalizedState::Unorm;
+
+	case ImageFormatR8Snorm:
+	case ImageFormatR16Snorm:
+	case ImageFormatRg8Snorm:
+	case ImageFormatRg16Snorm:
+	case ImageFormatRgba8Snorm:
+	case ImageFormatRgba16Snorm:
+		return ImageFormatNormalizedState::Snorm;
+
+	default:
+		break;
+	}
+
+	return ImageFormatNormalizedState::None;
+}
+
 static unsigned image_format_to_components(ImageFormat fmt)
 {
 	switch (fmt)
@@ -1423,66 +1458,14 @@ void CompilerHLSL::emit_resources()
 		}
 	}
 
-	if (required_textureSizeVariants != 0)
+	emit_texture_size_variants(required_texture_size_variants.srv, "4", false, "");
+	for (uint32_t norm = 0; norm < 3; norm++)
 	{
-		static const char *types[QueryTypeCount] = { "float4", "int4", "uint4" };
-		static const char *dims[QueryDimCount] = { "Texture1D",   "Texture1DArray",  "Texture2D",   "Texture2DArray",
-			                                       "Texture3D",   "Buffer",          "TextureCube", "TextureCubeArray",
-			                                       "Texture2DMS", "Texture2DMSArray" };
-
-		static const bool has_lod[QueryDimCount] = { true, true, true, true, true, false, true, true, false, false };
-
-		static const char *ret_types[QueryDimCount] = {
-			"uint", "uint2", "uint2", "uint3", "uint3", "uint", "uint2", "uint3", "uint2", "uint3",
-		};
-
-		static const uint32_t return_arguments[QueryDimCount] = {
-			1, 2, 2, 3, 3, 1, 2, 3, 2, 3,
-		};
-
-		for (uint32_t index = 0; index < QueryDimCount; index++)
+		for (uint32_t comp = 0; comp < 4; comp++)
 		{
-			for (uint32_t type_index = 0; type_index < QueryTypeCount; type_index++)
-			{
-				uint32_t bit = 16 * type_index + index;
-				uint64_t mask = 1ull << bit;
-
-				if ((required_textureSizeVariants & mask) == 0)
-					continue;
-
-				statement(ret_types[index], " SPIRV_Cross_textureSize(", dims[index], "<", types[type_index],
-				          "> Tex, uint Level, out uint Param)");
-				begin_scope();
-				statement(ret_types[index], " ret;");
-				switch (return_arguments[index])
-				{
-				case 1:
-					if (has_lod[index])
-						statement("Tex.GetDimensions(Level, ret.x, Param);");
-					else
-					{
-						statement("Tex.GetDimensions(ret.x);");
-						statement("Param = 0u;");
-					}
-					break;
-				case 2:
-					if (has_lod[index])
-						statement("Tex.GetDimensions(Level, ret.x, ret.y, Param);");
-					else
-						statement("Tex.GetDimensions(ret.x, ret.y, Param);");
-					break;
-				case 3:
-					if (has_lod[index])
-						statement("Tex.GetDimensions(Level, ret.x, ret.y, ret.z, Param);");
-					else
-						statement("Tex.GetDimensions(ret.x, ret.y, ret.z, Param);");
-					break;
-				}
-
-				statement("return ret;");
-				end_scope();
-				statement("");
-			}
+			static const char *qualifiers[] = { "", "unorm ", "snorm " };
+			static const char *vecsizes[] = { "", "2", "3", "4" };
+			emit_texture_size_variants(required_texture_size_variants.uav[norm][comp], vecsizes[comp], true, qualifiers[norm]);
 		}
 	}
 
@@ -1842,6 +1825,83 @@ void CompilerHLSL::emit_resources()
 		statement("return i * nref < 0.0 ? n : -n;");
 		end_scope();
 		statement("");
+	}
+}
+
+void CompilerHLSL::emit_texture_size_variants(uint64_t variant_mask, const char *vecsize_qualifier, bool uav, const char *type_qualifier)
+{
+	if (variant_mask == 0)
+		return;
+
+	static const char *types[QueryTypeCount] = { "float", "int", "uint" };
+	static const char *dims[QueryDimCount] = { "Texture1D",   "Texture1DArray",  "Texture2D",   "Texture2DArray",
+	                                           "Texture3D",   "Buffer",          "TextureCube", "TextureCubeArray",
+	                                           "Texture2DMS", "Texture2DMSArray" };
+
+	static const bool has_lod[QueryDimCount] = { true, true, true, true, true, false, true, true, false, false };
+
+	static const char *ret_types[QueryDimCount] = {
+		"uint", "uint2", "uint2", "uint3", "uint3", "uint", "uint2", "uint3", "uint2", "uint3",
+	};
+
+	static const uint32_t return_arguments[QueryDimCount] = {
+		1, 2, 2, 3, 3, 1, 2, 3, 2, 3,
+	};
+
+	for (uint32_t index = 0; index < QueryDimCount; index++)
+	{
+		for (uint32_t type_index = 0; type_index < QueryTypeCount; type_index++)
+		{
+			uint32_t bit = 16 * type_index + index;
+			uint64_t mask = 1ull << bit;
+
+			if ((variant_mask & mask) == 0)
+				continue;
+
+			statement(ret_types[index], " SPIRV_Cross_", (uav ? "image" : "texture"), "Size(", (uav ? "RW" : ""),
+			          dims[index], "<", type_qualifier, types[type_index], vecsize_qualifier,
+					  "> Tex, ", (uav ? "" : "uint Level, "), "out uint Param)");
+			begin_scope();
+			statement(ret_types[index], " ret;");
+			switch (return_arguments[index])
+			{
+			case 1:
+				if (has_lod[index] && !uav)
+					statement("Tex.GetDimensions(Level, ret.x, Param);");
+				else
+				{
+					statement("Tex.GetDimensions(ret.x);");
+					statement("Param = 0u;");
+				}
+				break;
+			case 2:
+				if (has_lod[index] && !uav)
+					statement("Tex.GetDimensions(Level, ret.x, ret.y, Param);");
+				else if (!uav)
+					statement("Tex.GetDimensions(ret.x, ret.y, Param);");
+				else
+				{
+					statement("Tex.GetDimensions(ret.x, ret.y);");
+					statement("Param = 0u;");
+				}
+				break;
+			case 3:
+				if (has_lod[index] && !uav)
+					statement("Tex.GetDimensions(Level, ret.x, ret.y, ret.z, Param);");
+				else if (!uav)
+					statement("Tex.GetDimensions(ret.x, ret.y, ret.z, Param);");
+				else
+				{
+					statement("Tex.GetDimensions(ret.x, ret.y, ret.z);");
+					statement("Param = 0u;");
+				}
+				break;
+			}
+
+			statement("return ret;");
+			end_scope();
+			statement("");
+		}
 	}
 }
 
@@ -4834,8 +4894,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		auto result_type = ops[0];
 		auto id = ops[1];
 
-		require_texture_query_variant(expression_type(ops[2]));
-
+		require_texture_query_variant(ops[2]);
 		auto dummy_samples_levels = join(get_fallback_name(id), "_dummy_parameter");
 		statement("uint ", dummy_samples_levels, ";");
 
@@ -4853,12 +4912,22 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		auto result_type = ops[0];
 		auto id = ops[1];
 
-		require_texture_query_variant(expression_type(ops[2]));
+		require_texture_query_variant(ops[2]);
+		bool uav = expression_type(ops[2]).image.sampled == 2;
+
+		if (const auto *var = maybe_get_backing_variable(ops[2]))
+			if (hlsl_options.nonwritable_uav_texture_as_srv && has_decoration(var->self, DecorationNonWritable))
+				uav = false;
 
 		auto dummy_samples_levels = join(get_fallback_name(id), "_dummy_parameter");
 		statement("uint ", dummy_samples_levels, ";");
 
-		auto expr = join("SPIRV_Cross_textureSize(", to_expression(ops[2]), ", 0u, ", dummy_samples_levels, ")");
+		string expr;
+		if (uav)
+			expr = join("SPIRV_Cross_imageSize(", to_expression(ops[2]), ", ", dummy_samples_levels, ")");
+		else
+			expr = join("SPIRV_Cross_textureSize(", to_expression(ops[2]), ", 0u, ", dummy_samples_levels, ")");
+
 		auto &restype = get<SPIRType>(ops[0]);
 		expr = bitcast_expression(restype, SPIRType::UInt, expr);
 		emit_op(result_type, id, expr, true);
@@ -4871,14 +4940,25 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		auto result_type = ops[0];
 		auto id = ops[1];
 
-		require_texture_query_variant(expression_type(ops[2]));
+		require_texture_query_variant(ops[2]);
+		bool uav = expression_type(ops[2]).image.sampled == 2;
+		if (opcode == OpImageQueryLevels && uav)
+			SPIRV_CROSS_THROW("Cannot query levels for UAV images.");
+
+		if (const auto *var = maybe_get_backing_variable(ops[2]))
+			if (hlsl_options.nonwritable_uav_texture_as_srv && has_decoration(var->self, DecorationNonWritable))
+				uav = false;
 
 		// Keep it simple and do not emit special variants to make this look nicer ...
 		// This stuff is barely, if ever, used.
 		forced_temporaries.insert(id);
 		auto &type = get<SPIRType>(result_type);
 		statement(variable_decl(type, to_name(id)), ";");
-		statement("SPIRV_Cross_textureSize(", to_expression(ops[2]), ", 0u, ", to_name(id), ");");
+
+		if (uav)
+			statement("SPIRV_Cross_imageSize(", to_expression(ops[2]), ", ", to_name(id), ");");
+		else
+			statement("SPIRV_Cross_textureSize(", to_expression(ops[2]), ", 0u, ", to_name(id), ");");
 
 		auto &restype = get<SPIRType>(ops[0]);
 		auto expr = bitcast_expression(restype, SPIRType::UInt, to_name(id));
@@ -5192,8 +5272,16 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 	}
 }
 
-void CompilerHLSL::require_texture_query_variant(const SPIRType &type)
+void CompilerHLSL::require_texture_query_variant(uint32_t var_id)
 {
+	if (const auto *var = maybe_get_backing_variable(var_id))
+		var_id = var->self;
+
+	auto &type = expression_type(var_id);
+	bool uav = type.image.sampled == 2;
+	if (hlsl_options.nonwritable_uav_texture_as_srv && has_decoration(var_id, DecorationNonWritable))
+		uav = false;
+
 	uint32_t bit = 0;
 	switch (type.image.dim)
 	{
@@ -5242,11 +5330,15 @@ void CompilerHLSL::require_texture_query_variant(const SPIRType &type)
 		SPIRV_CROSS_THROW("Unsupported query type.");
 	}
 
+	auto norm_state = image_format_to_normalized_state(type.image.format);
+	auto &variant = uav ? required_texture_size_variants.uav[uint32_t(norm_state)][image_format_to_components(type.image.format) - 1] :
+	                required_texture_size_variants.srv;
+
 	uint64_t mask = 1ull << bit;
-	if ((required_textureSizeVariants & mask) == 0)
+	if ((variant & mask) == 0)
 	{
 		force_recompile();
-		required_textureSizeVariants |= mask;
+		variant |= mask;
 	}
 }
 
