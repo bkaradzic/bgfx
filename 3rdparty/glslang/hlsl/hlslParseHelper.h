@@ -276,7 +276,7 @@ protected:
 
     void fixBuiltInIoType(TType&);
 
-    void flatten(const TVariable& variable, bool linkage);
+    void flatten(const TVariable& variable, bool linkage, bool arrayed = false);
     int flatten(const TVariable& variable, const TType&, TFlattenData&, TString name, bool linkage,
                 const TQualifier& outerQualifier, const TArraySizes* builtInArraySizes);
     int flattenStruct(const TVariable& variable, const TType&, TFlattenData&, TString name, bool linkage,

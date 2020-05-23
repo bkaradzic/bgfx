@@ -1733,12 +1733,14 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtUint64:
             case EbtFloat:
             case EbtDouble:
-                return true;
+                return version >= 400 || extensionRequested(E_GL_ARB_gpu_shader_fp64);
             case EbtInt16:
             case EbtUint16:
-                return extensionRequested(E_GL_AMD_gpu_shader_int16);
+                return (version >= 400 || extensionRequested(E_GL_ARB_gpu_shader_fp64)) &&
+                       extensionRequested(E_GL_AMD_gpu_shader_int16);
             case EbtFloat16:
-                return extensionRequested(E_GL_AMD_gpu_shader_half_float);
+                return (version >= 400 || extensionRequested(E_GL_ARB_gpu_shader_fp64)) &&
+                       extensionRequested(E_GL_AMD_gpu_shader_half_float);
             default:
                 return false;
            }

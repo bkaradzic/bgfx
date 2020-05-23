@@ -265,6 +265,7 @@ public:
         computeDerivativeMode(LayoutDerivativeNone),
         primitives(TQualifier::layoutNotSet),
         numTaskNVBlocks(0),
+        layoutPrimitiveCulling(false),
         autoMapBindings(false),
         autoMapLocations(false),
         flattenUniformArrays(false),
@@ -742,6 +743,8 @@ public:
     void setLayoutDerivativeMode(ComputeDerivativeMode mode) { computeDerivativeMode = mode; }
     bool hasLayoutDerivativeModeNone() const { return computeDerivativeMode != LayoutDerivativeNone; }
     ComputeDerivativeMode getLayoutDerivativeModeNone() const { return computeDerivativeMode; }
+    void setLayoutPrimitiveCulling() { layoutPrimitiveCulling = true; }
+    bool getLayoutPrimitiveCulling() const { return layoutPrimitiveCulling; }
     bool setPrimitives(int m)
     {
         if (primitives != TQualifier::layoutNotSet)
@@ -974,6 +977,7 @@ protected:
     ComputeDerivativeMode computeDerivativeMode;
     int primitives;
     int numTaskNVBlocks;
+    bool layoutPrimitiveCulling;
 
     // Base shift values
     std::array<unsigned int, EResCount> shiftBinding;

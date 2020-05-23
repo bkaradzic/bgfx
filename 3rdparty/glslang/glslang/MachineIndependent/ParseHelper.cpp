@@ -5173,6 +5173,12 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
             }
         }
     }
+
+    if (id == "primitive_culling") {
+        requireExtensions(loc, 1, &E_GL_EXT_ray_flags_primitive_culling, "primitive culling");
+        publicType.shaderQualifiers.layoutPrimitiveCulling = true;
+        return;
+    }
 #endif
 
     error(loc, "unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4)", id.c_str(), "");
@@ -6104,6 +6110,8 @@ void TParseContext::checkNoShaderLayouts(const TSourceLoc& loc, const TShaderQua
         error(loc, message, "num_views", "");
     if (shaderQualifiers.interlockOrdering != EioNone)
         error(loc, message, TQualifier::getInterlockOrderingString(shaderQualifiers.interlockOrdering), "");
+    if (shaderQualifiers.layoutPrimitiveCulling)
+        error(loc, "can only be applied as standalone", "primitive_culling", "");
 #endif
 }
 
@@ -8368,6 +8376,16 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
     {
         checkIoArraysConsistency(loc);
     }
+
+    if (publicType.shaderQualifiers.layoutPrimitiveCulling) {
+        if (publicType.qualifier.storage != EvqTemporary)
+            error(loc, "layout qualifier can not have storage qualifiers", "primitive_culling","", "");
+        else {
+            intermediate.setLayoutPrimitiveCulling();
+        }
+        // Exit early as further checks are not valid
+        return;
+    }
 #endif 
     const TQualifier& qualifier = publicType.qualifier;
 
@@ -8527,7 +8545,7 @@ const TTypeList* TParseContext::recordStructCopy(TStructRecord& record, const TT
     size_t memberCount = tmpType->getStruct()->size();
     size_t originHash = 0, tmpHash = 0;
     std::hash<size_t> hasher;
-    for (uint32_t i = 0; i < memberCount; i++) {
+    for (size_t i = 0; i < memberCount; i++) {
         size_t originMemberHash = hasher(originType->getStruct()->at(i).type->getQualifier().layoutPacking +
                                          originType->getStruct()->at(i).type->getQualifier().layoutMatrix);
         size_t tmpMemberHash = hasher(tmpType->getStruct()->at(i).type->getQualifier().layoutPacking +

@@ -92,8 +92,8 @@ public:
         if (processedDerefs.find(&base) == processedDerefs.end()) {
             processedDerefs.insert(&base);
 
-            uint32_t blockIndex = -1;
-            uint32_t offset     = -1;
+            int blockIndex = -1;
+            int offset     = -1;
             TList<TIntermBinary*> derefs;
             TString baseName = base.getName();
 

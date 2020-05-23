@@ -1448,7 +1448,7 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
         builder.addExecutionMode(shaderEntry, spv::ExecutionModeXfb);
     }
 
-    if (sourceExtensions.find("GL_EXT_ray_flags_primitive_culling") != sourceExtensions.end()) {
+    if (glslangIntermediate->getLayoutPrimitiveCulling()) {
         builder.addCapability(spv::CapabilityRayTraversalPrimitiveCullingProvisionalKHR);
     }
 

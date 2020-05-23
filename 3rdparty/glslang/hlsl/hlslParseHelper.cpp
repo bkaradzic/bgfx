@@ -1169,7 +1169,7 @@ bool HlslParseContext::shouldFlatten(const TType& type, TStorageQualifier qualif
 }
 
 // Top level variable flattening: construct data
-void HlslParseContext::flatten(const TVariable& variable, bool linkage)
+void HlslParseContext::flatten(const TVariable& variable, bool linkage, bool arrayed)
 {
     const TType& type = variable.getType();
 
@@ -1181,8 +1181,15 @@ void HlslParseContext::flatten(const TVariable& variable, bool linkage)
                                                   TFlattenData(type.getQualifier().layoutBinding,
                                                                type.getQualifier().layoutLocation)));
 
-    // the item is a map pair, so first->second is the TFlattenData itself.
-    flatten(variable, type, entry.first->second, variable.getName(), linkage, type.getQualifier(), nullptr);
+    // if flattening arrayed io struct, array each member of dereferenced type
+    if (arrayed) {
+        const TType dereferencedType(type, 0);
+        flatten(variable, dereferencedType, entry.first->second, variable.getName(), linkage,
+                type.getQualifier(), type.getArraySizes());
+    } else {
+        flatten(variable, type, entry.first->second, variable.getName(), linkage,
+                type.getQualifier(), nullptr);
+    }
 }
 
 // Recursively flatten the given variable at the provided type, building the flattenData as we go.
@@ -1255,6 +1262,10 @@ int HlslParseContext::addFlattenedMember(const TVariable& variable, const TType&
                 nextOutLocation = std::max(nextOutLocation, flattenData.nextLocation);
             }
         }
+
+        // Only propagate arraysizes here for arrayed io
+        if (variable.getType().getQualifier().isArrayedIo(language) && builtInArraySizes != nullptr)
+            memberVariable->getWritableType().copyArraySizes(*builtInArraySizes);
 
         flattenData.offsets.push_back(static_cast<int>(flattenData.members.size()));
         flattenData.members.push_back(memberVariable);
@@ -2068,11 +2079,8 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
     // Further this return/in/out transform by flattening, splitting, and assigning locations
     const auto makeVariableInOut = [&](TVariable& variable) {
         if (variable.getType().isStruct()) {
-            if (variable.getType().getQualifier().isArrayedIo(language)) {
-                if (variable.getType().containsBuiltIn())
-                    split(variable);
-            } else if (shouldFlatten(variable.getType(), EvqVaryingIn /* not assigned yet, but close enough */, true))
-                flatten(variable, false /* don't track linkage here, it will be tracked in assignToInterface() */);
+            bool arrayed = variable.getType().getQualifier().isArrayedIo(language);
+            flatten(variable, false /* don't track linkage here, it will be tracked in assignToInterface() */, arrayed);
         }
         // TODO: flatten arrays too
         // TODO: flatten everything in I/O
@@ -2733,17 +2741,33 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
                wasSplit(binaryNode->getLeft());
     };
 
+    // Return symbol if node is symbol or index ref
+    const auto getSymbol = [](const TIntermTyped* node) -> const TIntermSymbol* {
+        const TIntermSymbol* symbolNode = node->getAsSymbolNode();
+        if (symbolNode != nullptr)
+            return symbolNode;
+
+        const TIntermBinary* binaryNode = node->getAsBinaryNode();
+        if (binaryNode != nullptr && (binaryNode->getOp() == EOpIndexDirect || binaryNode->getOp() == EOpIndexIndirect))
+            return binaryNode->getLeft()->getAsSymbolNode();
+
+        return nullptr;
+    };
+
     // Return true if this stage assigns clip position with potentially inverted Y
     const auto assignsClipPos = [this](const TIntermTyped* node) -> bool {
         return node->getType().getQualifier().builtIn == EbvPosition &&
                (language == EShLangVertex || language == EShLangGeometry || language == EShLangTessEvaluation);
     };
 
+    const TIntermSymbol* leftSymbol = getSymbol(left);
+    const TIntermSymbol* rightSymbol = getSymbol(right);
+
     const bool isSplitLeft    = wasSplit(left) || indexesSplit(left);
     const bool isSplitRight   = wasSplit(right) || indexesSplit(right);
 
-    const bool isFlattenLeft  = wasFlattened(left);
-    const bool isFlattenRight = wasFlattened(right);
+    const bool isFlattenLeft  = wasFlattened(leftSymbol);
+    const bool isFlattenRight = wasFlattened(rightSymbol);
 
     // OK to do a single assign if neither side is split or flattened.  Otherwise, 
     // fall through to a member-wise copy.
@@ -2791,10 +2815,10 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
         memberCount = left->getType().getCumulativeArraySize();
 
     if (isFlattenLeft)
-        leftVariables = &flattenMap.find(left->getAsSymbolNode()->getId())->second.members;
+        leftVariables = &flattenMap.find(leftSymbol->getId())->second.members;
 
     if (isFlattenRight) {
-        rightVariables = &flattenMap.find(right->getAsSymbolNode()->getId())->second.members;
+        rightVariables = &flattenMap.find(rightSymbol->getId())->second.members;
     } else {
         // The RHS is not flattened.  There are several cases:
         // 1. 1 item to copy:  Use the RHS directly.
@@ -2828,8 +2852,10 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
     TStorageQualifier leftStorage = left->getType().getQualifier().storage;
     TStorageQualifier rightStorage = right->getType().getQualifier().storage;
 
-    int leftOffset = findSubtreeOffset(*left);
-    int rightOffset = findSubtreeOffset(*right);
+    int leftOffsetStart = findSubtreeOffset(*left);
+    int rightOffsetStart = findSubtreeOffset(*right);
+    int leftOffset = leftOffsetStart;
+    int rightOffset = rightOffsetStart;
 
     const auto getMember = [&](bool isLeft, const TType& type, int member, TIntermTyped* splitNode, int splitMember,
                                bool flattened)
@@ -2869,10 +2895,35 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
                 }
             }
         } else if (flattened && !shouldFlatten(derefType, isLeft ? leftStorage : rightStorage, false)) {
-            if (isLeft)
+            if (isLeft) {
+                // offset will cycle through variables for arrayed io
+                if (leftOffset >= static_cast<int>(leftVariables->size()))
+                    leftOffset = leftOffsetStart;
                 subTree = intermediate.addSymbol(*(*leftVariables)[leftOffset++]);
-            else
+            } else {
+                // offset will cycle through variables for arrayed io
+                if (rightOffset >= static_cast<int>(rightVariables->size()))
+                    rightOffset = rightOffsetStart;
                 subTree = intermediate.addSymbol(*(*rightVariables)[rightOffset++]);
+            }
+
+            // arrayed io
+            if (subTree->getType().isArray()) {
+                if (!arrayElement.empty()) {
+                    const TType derefType(subTree->getType(), arrayElement.front());
+                    subTree = intermediate.addIndex(EOpIndexDirect, subTree,
+                                                    intermediate.addConstantUnion(arrayElement.front(), loc), loc);
+                    subTree->setType(derefType);
+                } else {
+                    // There's an index operation we should transfer to the output builtin.
+                    assert(splitNode->getAsOperator() != nullptr &&
+                           splitNode->getAsOperator()->getOp() == EOpIndexIndirect);
+                    const TType splitDerefType(subTree->getType(), 0);
+                    subTree = intermediate.addIndex(splitNode->getAsOperator()->getOp(), subTree,
+                                                    splitNode->getAsBinaryNode()->getRight(), loc);
+                    subTree->setType(splitDerefType);
+                }
+            }
         } else {
             // Index operator if it's an aggregate, else EOpNull
             const TOperator accessOp = type.isArray()  ? EOpIndexDirect
@@ -9911,8 +9962,8 @@ void HlslParseContext::addPatchConstantInvocation()
         TVariable* pcfOutput = makeInternalVariable("@patchConstantOutput", outType);
         pcfOutput->getWritableType().getQualifier().storage = EvqVaryingOut;
 
-        if (pcfOutput->getType().containsBuiltIn())
-            split(*pcfOutput);
+        if (pcfOutput->getType().isStruct())
+            flatten(*pcfOutput, false);
 
         assignToInterface(*pcfOutput);
 
