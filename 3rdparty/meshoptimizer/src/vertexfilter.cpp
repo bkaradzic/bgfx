@@ -143,7 +143,8 @@ static void decodeFilterExp(unsigned int* data, size_t count)
 		int m = int(v << 8) >> 8;
 		int e = int(v) >> 24;
 
-		union {
+		union
+		{
 			float f;
 			unsigned int ui;
 		} u;
