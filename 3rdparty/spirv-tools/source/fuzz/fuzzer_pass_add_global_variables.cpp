@@ -66,9 +66,11 @@ void FuzzerPassAddGlobalVariables::Apply() {
           available_pointers_to_basic_type[GetFuzzerContext()->RandomIndex(
               available_pointers_to_basic_type)];
     }
+    // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3274):  We could
+    //  add new variables with Workgroup storage class in compute shaders.
     ApplyTransformation(TransformationAddGlobalVariable(
         GetFuzzerContext()->GetFreshId(), pointer_type_id,
-        FindOrCreateZeroConstant(basic_type), true));
+        SpvStorageClassPrivate, FindOrCreateZeroConstant(basic_type), true));
   }
 }
 

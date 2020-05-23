@@ -198,10 +198,15 @@ bool TransformationOutlineFunction::IsApplicable(
   for (auto& block : *entry_block->GetParent()) {
     if (&block == exit_block) {
       // It is OK (and typically expected) for the exit block of the region to
-      // have successors outside the region.  It is also OK for the exit block
-      // to head a structured control flow construct - the block containing the
-      // call to the outlined function will end up heading this construct if
-      // outlining takes place.
+      // have successors outside the region.
+      //
+      // It is also OK for the exit block to head a selection construct: the
+      // block containing the call to the outlined function will end up heading
+      // this construct if outlining takes place.  However, it is not OK for
+      // the exit block to head a loop construct.
+      if (block.GetLoopMergeInst()) {
+        return false;
+      }
       continue;
     }
 
@@ -274,12 +279,20 @@ bool TransformationOutlineFunction::IsApplicable(
   }
 
   // For each region output id -- i.e. every id defined inside the region but
-  // used outside the region -- there needs to be a corresponding fresh id that
-  // can hold the value for this id computed in the outlined function.
+  // used outside the region, ...
   std::map<uint32_t, uint32_t> output_id_to_fresh_id_map =
       PairSequenceToMap(message_.output_id_to_fresh_id());
   for (auto id : GetRegionOutputIds(ir_context, region_set, exit_block)) {
-    if (output_id_to_fresh_id_map.count(id) == 0) {
+    if (
+        // ... there needs to be a corresponding fresh id that can hold the
+        // value for this id computed in the outlined function, and ...
+        output_id_to_fresh_id_map.count(id) == 0
+        // ... the output id must not have pointer type (to avoid creating a
+        // struct with pointer members to pass data out of the outlined
+        // function)
+        || ir_context->get_def_use_mgr()
+                   ->GetDef(fuzzerutil::GetTypeId(ir_context, id))
+                   ->opcode() == SpvOpTypePointer) {
       return false;
     }
   }

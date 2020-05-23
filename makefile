@@ -24,7 +24,7 @@ endif
 # $(info $(OS))
 
 BX_DIR?=../bx
-GENIE?=$(BX_DIR)/tools/bin/$(OS)/genie
+GENIE?=$(BX_DIR)/tools/bin/$(OS)/genie $(EXTRA_GENIE_ARGS)
 NINJA?=$(BX_DIR)/tools/bin/$(OS)/ninja
 
 .PHONY: help
@@ -85,13 +85,21 @@ android-x86-release: .build/projects/gmake-android-x86 ## Build - Android x86 De
 	$(MAKE) -R -C .build/projects/gmake-android-x86 config=release
 android-x86: android-x86-debug android-x86-release ## Build - Android x86 Debug and Release
 
-.build/projects/gmake-asmjs:
-	$(GENIE) --gcc=asmjs gmake
-asmjs-debug: .build/projects/gmake-asmjs ## Build - Emscripten Debug
-	$(MAKE) -R -C .build/projects/gmake-asmjs config=debug
-asmjs-release: .build/projects/gmake-asmjs ## Build - Emscripten Release
-	$(MAKE) -R -C .build/projects/gmake-asmjs config=release
-asmjs: asmjs-debug asmjs-release ## Build - Emscripten Debug and Release
+.build/projects/gmake-wasm2js: # Wasm2JS: The JavaScript fallback for web builds when Wasm is not supported by browser
+	$(GENIE) --gcc=wasm2js --with-combined-examples gmake
+wasm2js-debug: .build/projects/gmake-wasm2js ## Build - Emscripten Debug
+	$(MAKE) -R -C .build/projects/gmake-wasm2js config=debug
+wasm2js-release: .build/projects/gmake-wasm2js ## Build - Emscripten Release
+	$(MAKE) -R -C .build/projects/gmake-wasm2js config=release
+wasm2js: wasm2js-debug wasm2js-release ## Build - Emscripten Debug and Release
+
+.build/projects/gmake-wasm:
+	$(GENIE) --gcc=wasm --with-combined-examples gmake
+wasm-debug: .build/projects/gmake-wasm ## Build - Emscripten Debug
+	$(MAKE) -R -C .build/projects/gmake-wasm config=debug
+wasm-release: .build/projects/gmake-wasm ## Build - Emscripten Release
+	$(MAKE) -R -C .build/projects/gmake-wasm config=release
+wasm: wasm-debug wasm-release ## Build - Emscripten Debug and Release
 
 .build/projects/gmake-linux:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc gmake

@@ -3,24 +3,9 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <bx/macros.h>
+#include <bx/bx.h>
 
-#if BX_COMPILER_MSVC
-#	define generic GenericFromFreeType // WinRT language extensions see "generic" as a keyword... this is stupid
-#endif // BX_COMPILER_MSVC
-
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4245) // error C4245: '=' : conversion from 'int' to 'FT_UInt', signed/unsigned mismatch
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4611) // warning C4611 : interaction between '_setjmp' and C++ object destruction is non - portable
-#if BX_COMPILER_MSVC || BX_COMPILER_GCC >= 40300
-#pragma push_macro("interface")
-#endif
-#undef interface
-#include <freetype/freetype.h>
-#if BX_COMPILER_MSVC || BX_COMPILER_GCC >= 40300
-#pragma pop_macro("interface")
-#endif
-BX_PRAGMA_DIAGNOSTIC_POP();
+#include <stb/stb_truetype.h>
 
 #include "../common.h"
 
@@ -38,11 +23,6 @@ namespace stl = tinystl;
 #include "font_manager.h"
 #include "../cube_atlas.h"
 
-struct FTHolder
-{
-	FT_Library library;
-	FT_Face face;
-};
 
 class TrueTypeFont
 {
@@ -63,33 +43,22 @@ public:
 	/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(char)
 	bool bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
 
-	/// raster a glyph as 32bit subpixel rgba to a memory buffer
-	/// update the GlyphInfo according to the raster strategy
-	/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(uint32_t)
-	bool bakeGlyphSubpixel(CodePoint _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
-
 	/// raster a glyph as 8bit signed distance to a memory buffer
 	/// update the GlyphInfo according to the raster strategy
 	/// @ remark buffer min size: glyphInfo.m_width * glyphInfo * height * sizeof(char)
 	bool bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
 
 private:
-	FTHolder* m_font;
+	stbtt_fontinfo m_font;
+	float m_scale;
 };
 
-TrueTypeFont::TrueTypeFont() : m_font(NULL)
+TrueTypeFont::TrueTypeFont() : m_font()
 {
 }
 
 TrueTypeFont::~TrueTypeFont()
 {
-	if (NULL != m_font)
-	{
-		FT_Done_Face(m_font->face);
-		FT_Done_FreeType(m_font->library);
-		delete m_font;
-		m_font = NULL;
-	}
 }
 
 bool TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight)
@@ -97,171 +66,74 @@ bool TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _f
 	BX_CHECK(m_font == NULL, "TrueTypeFont already initialized");
 	BX_CHECK( (_bufferSize > 256 && _bufferSize < 100000000), "TrueType buffer size is suspicious");
 	BX_CHECK( (_pixelHeight > 4 && _pixelHeight < 128), "TrueType buffer size is suspicious");
+	BX_UNUSED(_bufferSize);
 
-	FTHolder* holder = new FTHolder;
+	int offset = stbtt_GetFontOffsetForIndex(_buffer, _fontIndex);
 
-	FT_Error error = FT_Init_FreeType(&holder->library);
-	BX_WARN(!error, "FT_Init_FreeType failed.");
+	stbtt_InitFont(&m_font, _buffer, offset);
 
-	if (error)
-	{
-		goto err0;
-	}
+	m_scale = stbtt_ScaleForMappingEmToPixels(&m_font, (float)_pixelHeight);
 
-	error = FT_New_Memory_Face(holder->library, _buffer, _bufferSize, _fontIndex, &holder->face);
-	BX_WARN(!error, "FT_Init_FreeType failed.");
-
-	if (error)
-	{
-		if (FT_Err_Unknown_File_Format == error)
-		{
-			goto err0;
-		}
-
-		goto err1;
-	}
-
-	error = FT_Select_Charmap(holder->face, FT_ENCODING_UNICODE);
-	BX_WARN(!error, "FT_Init_FreeType failed.");
-
-	if (error)
-	{
-		goto err2;
-	}
-
-	error = FT_Set_Pixel_Sizes(holder->face, 0, _pixelHeight);
-	BX_WARN(!error, "FT_Init_FreeType failed.");
-
-	if (error)
-	{
-		goto err2;
-	}
-
-	m_font = holder;
 	return true;
-
-err2:
-	FT_Done_Face(holder->face);
-
-err1:
-	FT_Done_FreeType(holder->library);
-
-err0:
-	delete holder;
-	return false;
 }
 
 FontInfo TrueTypeFont::getFontInfo()
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
-	BX_CHECK(FT_IS_SCALABLE(m_font->face), "Font is unscalable");
 
-	FT_Size_Metrics metrics = m_font->face->size->metrics;
+	int ascent;
+	int descent;
+	int lineGap;
+	stbtt_GetFontVMetrics(&m_font, &ascent, &descent, &lineGap);
+
+	float scale = m_scale;
+
+	int x0, y0, x1, y1;
+	stbtt_GetFontBoundingBox(&m_font, &x0, &y0, &x1, &y1);
 
 	FontInfo outFontInfo;
 	outFontInfo.scale = 1.0f;
-	outFontInfo.ascender = metrics.ascender / 64.0f;
-	outFontInfo.descender = metrics.descender / 64.0f;
-	outFontInfo.lineGap = (metrics.height - metrics.ascender + metrics.descender) / 64.0f;
-	outFontInfo.maxAdvanceWidth = metrics.max_advance/ 64.0f;
+	outFontInfo.ascender = bx::round(ascent * scale);
+	outFontInfo.descender = bx::round(descent * scale);
+	outFontInfo.lineGap = bx::round(lineGap * scale);
+	outFontInfo.maxAdvanceWidth = bx::round((y1 - y0) * scale);
 
-	outFontInfo.underlinePosition = FT_MulFix(m_font->face->underline_position, metrics.y_scale) / 64.0f;
-	outFontInfo.underlineThickness = FT_MulFix(m_font->face->underline_thickness, metrics.y_scale) / 64.0f;
+	outFontInfo.underlinePosition = (x1 - x0) * scale - ascent;
+	outFontInfo.underlineThickness = (x1 - x0) * scale / 24.f;
 	return outFontInfo;
-}
-
-static void glyphInfoInit(GlyphInfo& _glyphInfo, FT_BitmapGlyph _bitmap, FT_GlyphSlot _slot, uint8_t* _dst, uint32_t _bpp)
-{
-	int32_t xx = _bitmap->left;
-	int32_t yy = -_bitmap->top;
-	int32_t ww = _bitmap->bitmap.width;
-	int32_t hh = _bitmap->bitmap.rows;
-
-	_glyphInfo.offset_x = (float)xx;
-	_glyphInfo.offset_y = (float)yy;
-	_glyphInfo.width = (float)ww;
-	_glyphInfo.height = (float)hh;
-	_glyphInfo.advance_x = (float)_slot->advance.x / 64.0f;
-	_glyphInfo.advance_y = (float)_slot->advance.y / 64.0f;
-
-	uint32_t dstPitch = ww * _bpp;
-
-	uint8_t* src = _bitmap->bitmap.buffer;
-	uint32_t srcPitch = _bitmap->bitmap.pitch;
-
-	for (int32_t ii = 0; ii < hh; ++ii)
-	{
-		bx::memCopy(_dst, src, dstPitch);
-
-		_dst += dstPitch;
-		src += srcPitch;
-	}
 }
 
 bool TrueTypeFont::bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
 
-	_glyphInfo.glyphIndex = FT_Get_Char_Index(m_font->face, _codePoint);
+	int xx;
+	int yy;
+	int ww;
+	int hh;
+	int advance;
+	int ascent;
+	int descent;
+	int lineGap;
+	int lsb;
 
-	FT_GlyphSlot slot = m_font->face->glyph;
-	FT_Error error = FT_Load_Glyph(m_font->face, _glyphInfo.glyphIndex, FT_LOAD_DEFAULT);
-	if (error)
-	{
-		return false;
-	}
+	float scale = m_scale;
 
-	FT_Glyph glyph;
-	error = FT_Get_Glyph(slot, &glyph);
-	if (error)
-	{
-		return false;
-	}
+	stbtt_GetFontVMetrics(&m_font, &ascent, &descent, &lineGap);
+	stbtt_GetCodepointHMetrics(&m_font, _codePoint, &advance, &lsb);
+	stbtt_GetCodepointBitmap(&m_font, scale, scale, _codePoint, &ww, &hh, &xx, &yy);
 
-	error = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, 0, 1);
-	if (error)
-	{
-		return false;
-	}
+	_glyphInfo.offset_x = (float)xx;
+	_glyphInfo.offset_y = (float)yy;
+	_glyphInfo.width = (float)ww;
+	_glyphInfo.height = (float)hh;
+	_glyphInfo.advance_x = bx::round(((float)advance) * scale);
+	_glyphInfo.advance_y = bx::round(((float)(ascent + descent + lineGap)) * scale);
 
-	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
+	uint32_t bpp = 1;
+	uint32_t dstPitch = ww * bpp;
 
-	glyphInfoInit(_glyphInfo, bitmap, slot, _outBuffer, 1);
-
-	FT_Done_Glyph(glyph);
-	return true;
-}
-
-bool TrueTypeFont::bakeGlyphSubpixel(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
-{
-	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
-
-	_glyphInfo.glyphIndex = FT_Get_Char_Index(m_font->face, _codePoint);
-
-	FT_GlyphSlot slot = m_font->face->glyph;
-	FT_Error error = FT_Load_Glyph(m_font->face, _glyphInfo.glyphIndex, FT_LOAD_DEFAULT);
-	if (error)
-	{
-		return false;
-	}
-
-	FT_Glyph glyph;
-	error = FT_Get_Glyph(slot, &glyph);
-	if (error)
-	{
-		return false;
-	}
-
-	error = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_LCD, 0, 1);
-	if (error)
-	{
-		return false;
-	}
-
-	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
-
-	glyphInfoInit(_glyphInfo, bitmap, slot, _outBuffer, 3);
-	FT_Done_Glyph(glyph);
+	stbtt_MakeCodepointBitmap(&m_font, _outBuffer, ww, hh, dstPitch, scale, scale, _codePoint);
 
 	return true;
 }
@@ -270,39 +142,33 @@ bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo
 {
 	BX_CHECK(m_font != NULL, "TrueTypeFont not initialized");
 
-	_glyphInfo.glyphIndex = FT_Get_Char_Index(m_font->face, _codePoint);
+	int32_t xx;
+	int32_t yy;
+	int32_t ww;
+	int32_t hh;
+	int advance;
+	int ascent;
+	int descent;
+	int lineGap;
+	int lsb;
 
-	FT_Int32 loadMode = FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING;
-	FT_Render_Mode renderMode = FT_RENDER_MODE_NORMAL;
+	float scale = m_scale;
 
-	FT_GlyphSlot slot = m_font->face->glyph;
-	FT_Error error = FT_Load_Glyph(m_font->face, _glyphInfo.glyphIndex, loadMode);
-	if (error)
-	{
-		return false;
-	}
+	stbtt_GetFontVMetrics(&m_font, &ascent, &descent, &lineGap);
+	stbtt_GetCodepointHMetrics(&m_font, _codePoint, &advance, &lsb);
+	stbtt_GetCodepointBitmap(&m_font, scale, scale, _codePoint, &ww, &hh, &xx, &yy);
 
-	FT_Glyph glyph;
-	error = FT_Get_Glyph(slot, &glyph);
-	if (error)
-	{
-		return false;
-	}
+	_glyphInfo.offset_x = (float)xx;
+	_glyphInfo.offset_y = (float)yy;
+	_glyphInfo.width = (float)ww;
+	_glyphInfo.height = (float)hh;
+	_glyphInfo.advance_x = bx::round(((float)advance) * scale);
+	_glyphInfo.advance_y = bx::round(((float)(ascent + descent + lineGap)) * scale);
 
-	error = FT_Glyph_To_Bitmap(&glyph, renderMode, 0, 1);
-	if (error)
-	{
-		return false;
-	}
+	uint32_t bpp = 1;
+	uint32_t dstPitch = ww * bpp;
 
-	FT_BitmapGlyph bitmap = (FT_BitmapGlyph)glyph;
-
-	int32_t ww = bitmap->bitmap.width;
-	int32_t hh = bitmap->bitmap.rows;
-
-	glyphInfoInit(_glyphInfo, bitmap, slot, _outBuffer, 1);
-
-	FT_Done_Glyph(glyph);
+	stbtt_MakeCodepointBitmap(&m_font, _outBuffer, ww, hh, dstPitch, scale, scale, _codePoint);
 
 	if (ww * hh > 0)
 	{
@@ -324,6 +190,7 @@ bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo
 			bx::memCopy(alphaImg + ii * nw + dw, _outBuffer + (ii - dh) * ww, ww);
 		}
 
+		// stb_truetype has some builtin sdf functionality, we can investigate using that too
 		sdfBuild(_outBuffer, nw, 8.0f, alphaImg, nw, nh, nw);
 		free(alphaImg);
 

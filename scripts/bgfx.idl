@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(105)
+version(106)
 
 typedef "bool"
 typedef "char"
@@ -458,6 +458,7 @@ enum.RendererType { comment = "Renderer types:" }
 	.OpenGLES   --- OpenGL ES 2.0+
 	.OpenGL     --- OpenGL 2.1+
 	.Vulkan     --- Vulkan
+	.WebGPU     --- WebGPU
 	()
 
 --- Access mode enum.
@@ -676,7 +677,7 @@ struct.GPU  { namespace = "Caps" }
 	.vendorId    "uint16_t"                --- Vendor PCI id. See `BGFX_PCI_ID_*`.
 	.deviceId    "uint16_t"                --- Device id.
 
---- Renderer capabilities limits.
+--- Renderer runtime limits.
 struct.Limits  { namespace = "Caps" }
 	.maxDrawCalls            "uint32_t"    --- Maximum number of draw calls.
 	.maxBlits                "uint32_t"    --- Maximum number of blit calls.
@@ -713,7 +714,7 @@ struct.Caps
 	.originBottomLeft "bool"           --- True when NDC origin is at bottom left.
 	.numGPUs      "uint8_t"            --- Number of enumerated GPUs.
 	.gpu          "GPU[4]"             --- Enumerated GPUs.
-	.limits       "Limits"
+	.limits       "Limits"             --- Renderer runtime limits.
 	.formats      "uint16_t[TextureFormat::Count]"
 		--- Supported texture format capabilities flags:
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.
@@ -744,11 +745,14 @@ struct.InternalData
 
 --- Platform data.
 struct.PlatformData { ctor }
-	.ndt          "void*" --- Native display type.
-	.nwh          "void*" --- Native window handle.
-	.context      "void*" --- GL context, or D3D device.
-	.backBuffer   "void*" --- GL backbuffer, or D3D render target view.
-	.backBufferDS "void*" --- Backbuffer depth/stencil.
+	.ndt          "void*" --- Native display type (*nix specific).
+	.nwh          "void*" --- Native window handle. If `NULL` bgfx will create headless
+	                      --- context/device if renderer API supports it.
+	.context      "void*" --- GL context, or D3D device. If `NULL`, bgfx will create context/device.
+	.backBuffer   "void*" --- GL back-buffer, or D3D render target view. If `NULL` bgfx will
+	                      --- create back-buffer color surface.
+	.backBufferDS "void*" --- Backbuffer depth/stencil. If `NULL` bgfx will create back-buffer
+	                      --- depth/stencil surface.
 
 --- Backbuffer resolution and reset parameters.
 struct.Resolution { ctor }
@@ -759,6 +763,7 @@ struct.Resolution { ctor }
 	.numBackBuffers  "uint8_t"             --- Number of back buffers.
 	.maxFrameLatency "uint8_t"             --- Maximum frame latency.
 
+--- Configurable runtime limits parameters.
 struct.Limits { namespace = "Init" }
 	.maxEncoders    "uint16_t"             --- Maximum number of encoder threads.
 	.transientVbSize "uint32_t"            --- Maximum transient vertex buffer size.
@@ -785,7 +790,7 @@ struct.Init { ctor }
 	.profile        "bool"                 --- Enable device for profiling.
 	.platformData   "PlatformData"         --- Platform data.
 	.resolution     "Resolution"           --- Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
-	.limits         "Limits"
+	.limits         "Limits"               --- Configurable runtime limits parameters.
 	.callback       "CallbackI*"           --- Provide application specific callback interface.
 	                                       --- See: `bgfx::CallbackI`
 
@@ -2072,6 +2077,11 @@ func.setViewOrder
 	                       --- to default state.
 	 { default = NULL }
 
+--- Reset all view settings to default.
+func.resetView
+	"void"
+	.id "ViewId" -- _id View id.
+
 --- Begin submitting draw calls from thread.
 func.begin { cname = "encoder_begin" }
 	"Encoder*"        --- Encoder.
@@ -2234,7 +2244,9 @@ func.Encoder.setVertexBuffer
 	.handle       "VertexBufferHandle" --- Vertex buffer.
 	.startVertex  "uint32_t"           --- First vertex to render.
 	.numVertices  "uint32_t"           --- Number of vertices to render.
-	.layoutHandle "VertexLayoutHandle" --- Vertex layout for aliasing vertex buffer.
+	.layoutHandle "VertexLayoutHandle" --- Vertex layout for aliasing vertex buffer. If invalid
+	                                   --- handle is used, vertex layout used for creation
+	                                   --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
@@ -2250,7 +2262,9 @@ func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
 	.handle       "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 	.startVertex  "uint32_t"                  --- First vertex to render.
 	.numVertices  "uint32_t"                  --- Number of vertices to render.
-	.layoutHandle "VertexLayoutHandle"        --- Vertex layout for aliasing vertex buffer.
+	.layoutHandle "VertexLayoutHandle"        --- Vertex layout for aliasing vertex buffer. If invalid
+	                                          --- handle is used, vertex layout used for creation
+	                                          --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
@@ -2266,7 +2280,9 @@ func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer" }
 	.tvb          "const TransientVertexBuffer*" --- Transient vertex buffer.
 	.startVertex  "uint32_t"                     --- First vertex to render.
 	.numVertices  "uint32_t"                     --- Number of vertices to render.
-	.layoutHandle "VertexLayoutHandle"           --- Vertex layout for aliasing vertex buffer.
+	.layoutHandle "VertexLayoutHandle"           --- Vertex layout for aliasing vertex buffer. If invalid
+	                                             --- handle is used, vertex layout used for creation
+	                                             --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set number of vertices for auto generated vertices use in conjuction
@@ -2337,7 +2353,9 @@ func.Encoder.setTexture
 	                          ---     sampling.
 
 --- Submit an empty primitive for rendering. Uniforms and draw state
---- will be applied but no geometry will be submitted.
+--- will be applied but no geometry will be submitted. Useful in cases
+--- when no other draw/compute primitive is submitted to view, but it's
+--- desired to execute clear view.
 ---
 --- @remark
 ---   These empty draw calls will sort before ordinary draw calls.

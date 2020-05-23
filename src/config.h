@@ -8,6 +8,13 @@
 
 #include <bx/bx.h>
 
+// # Configuration options for bgfx.
+//
+// Any of `BGFX_CONFIG_*` options that's inside `#ifndef` block can be configured externally
+// via compiler options.
+//
+// When selecting rendering backends select all backends you want to include in the build.
+
 #ifndef BGFX_CONFIG_DEBUG
 #	define BGFX_CONFIG_DEBUG 0
 #endif // BGFX_CONFIG_DEBUG
@@ -20,7 +27,8 @@
  && !defined(BGFX_CONFIG_RENDERER_NVN)        \
  && !defined(BGFX_CONFIG_RENDERER_OPENGL)     \
  && !defined(BGFX_CONFIG_RENDERER_OPENGLES)   \
- && !defined(BGFX_CONFIG_RENDERER_VULKAN)
+ && !defined(BGFX_CONFIG_RENDERER_VULKAN)     \
+ && !defined(BGFX_CONFIG_RENDERER_WEBGPU)
 
 #	ifndef BGFX_CONFIG_RENDERER_DIRECT3D9
 #		define BGFX_CONFIG_RENDERER_DIRECT3D9 (0 \
@@ -101,6 +109,10 @@
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_VULKAN
 
+#	ifndef BGFX_CONFIG_RENDERER_WEBGPU
+#		define BGFX_CONFIG_RENDERER_WEBGPU 0
+#	endif // BGFX_CONFIG_RENDERER_WEBGPU
+
 #else
 #	ifndef BGFX_CONFIG_RENDERER_DIRECT3D9
 #		define BGFX_CONFIG_RENDERER_DIRECT3D9 0
@@ -136,6 +148,10 @@
 
 #	ifndef BGFX_CONFIG_RENDERER_VULKAN
 #		define BGFX_CONFIG_RENDERER_VULKAN 0
+#	endif // BGFX_CONFIG_RENDERER_VULKAN
+
+#	ifndef BGFX_CONFIG_RENDERER_WEBGPU
+#		define BGFX_CONFIG_RENDERER_WEBGPU 0
 #	endif // BGFX_CONFIG_RENDERER_VULKAN
 #endif // !defined...
 

@@ -265,6 +265,7 @@ public:
         computeDerivativeMode(LayoutDerivativeNone),
         primitives(TQualifier::layoutNotSet),
         numTaskNVBlocks(0),
+        layoutPrimitiveCulling(false),
         autoMapBindings(false),
         autoMapLocations(false),
         flattenUniformArrays(false),
@@ -356,8 +357,15 @@ public:
     }
     const SpvVersion& getSpv() const { return spvVersion; }
     EShLanguage getStage() const { return language; }
-    void addRequestedExtension(const char* extension) { requestedExtensions.insert(extension); }
-    const std::set<std::string>& getRequestedExtensions() const { return requestedExtensions; }
+    void updateRequestedExtension(const char* extension, TExtensionBehavior behavior) { 
+        if(requestedExtensions.find(extension) != requestedExtensions.end()) {
+            requestedExtensions[extension] = behavior; 
+        } else {
+            requestedExtensions.insert(std::make_pair(extension, behavior)); 
+        }
+    }
+
+    const std::map<std::string, TExtensionBehavior>& getRequestedExtensions() const { return requestedExtensions; }
 
     void setTreeRoot(TIntermNode* r) { treeRoot = r; }
     TIntermNode* getTreeRoot() const { return treeRoot; }
@@ -735,6 +743,8 @@ public:
     void setLayoutDerivativeMode(ComputeDerivativeMode mode) { computeDerivativeMode = mode; }
     bool hasLayoutDerivativeModeNone() const { return computeDerivativeMode != LayoutDerivativeNone; }
     ComputeDerivativeMode getLayoutDerivativeModeNone() const { return computeDerivativeMode; }
+    void setLayoutPrimitiveCulling() { layoutPrimitiveCulling = true; }
+    bool getLayoutPrimitiveCulling() const { return layoutPrimitiveCulling; }
     bool setPrimitives(int m)
     {
         if (primitives != TQualifier::layoutNotSet)
@@ -902,7 +912,13 @@ protected:
 #ifdef GLSLANG_WEB
     bool extensionRequested(const char *extension) const { return false; }
 #else
-    bool extensionRequested(const char *extension) const {return requestedExtensions.find(extension) != requestedExtensions.end();}
+    bool extensionRequested(const char *extension) const {
+        auto it = requestedExtensions.find(extension);
+        if (it != requestedExtensions.end()) {
+            return (it->second == EBhDisable) ? false : true;
+        }
+        return false;
+    }
 #endif
 
     static const char* getResourceName(TResourceType);
@@ -917,7 +933,7 @@ protected:
     int version;                                // source version
     SpvVersion spvVersion;
     TIntermNode* treeRoot;
-    std::set<std::string> requestedExtensions;  // cumulation of all enabled or required extensions; not connected to what subset of the shader used them
+    std::map<std::string, TExtensionBehavior> requestedExtensions;  // cumulation of all enabled or required extensions; not connected to what subset of the shader used them
     TBuiltInResource resources;
     int numEntryPoints;
     int numErrors;
@@ -961,6 +977,7 @@ protected:
     ComputeDerivativeMode computeDerivativeMode;
     int primitives;
     int numTaskNVBlocks;
+    bool layoutPrimitiveCulling;
 
     // Base shift values
     std::array<unsigned int, EResCount> shiftBinding;

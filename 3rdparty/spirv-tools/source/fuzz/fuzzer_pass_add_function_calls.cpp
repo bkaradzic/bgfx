@@ -214,8 +214,9 @@ std::vector<uint32_t> FuzzerPassAddFunctionCalls::ChooseFunctionCallArguments(
         result.push_back(fresh_variable_id);
 
         // Now bring the variable into existence.
-        if (type_instruction->GetSingleWordInOperand(0) ==
-            SpvStorageClassFunction) {
+        auto storage_class = static_cast<SpvStorageClass>(
+            type_instruction->GetSingleWordInOperand(0));
+        if (storage_class == SpvStorageClassFunction) {
           // Add a new zero-initialized local variable to the current
           // function, noting that its pointee value is irrelevant.
           ApplyTransformation(TransformationAddLocalVariable(
@@ -224,16 +225,19 @@ std::vector<uint32_t> FuzzerPassAddFunctionCalls::ChooseFunctionCallArguments(
                   type_instruction->GetSingleWordInOperand(1)),
               true));
         } else {
-          assert(type_instruction->GetSingleWordInOperand(0) ==
-                     SpvStorageClassPrivate &&
-                 "Only Function and Private storage classes are "
+          assert((storage_class == SpvStorageClassPrivate ||
+                  storage_class == SpvStorageClassWorkgroup) &&
+                 "Only Function, Private and Workgroup storage classes are "
                  "supported at present.");
-          // Add a new zero-initialized global variable to the module,
-          // noting that its pointee value is irrelevant.
+          // Add a new global variable to the module, zero-initializing it if
+          // it has Private storage class, and noting that its pointee value is
+          // irrelevant.
           ApplyTransformation(TransformationAddGlobalVariable(
-              fresh_variable_id, arg_type_id,
-              FindOrCreateZeroConstant(
-                  type_instruction->GetSingleWordInOperand(1)),
+              fresh_variable_id, arg_type_id, storage_class,
+              storage_class == SpvStorageClassPrivate
+                  ? FindOrCreateZeroConstant(
+                        type_instruction->GetSingleWordInOperand(1))
+                  : 0,
               true));
         }
       } else {

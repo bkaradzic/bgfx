@@ -24,10 +24,11 @@ TransformationAddGlobalVariable::TransformationAddGlobalVariable(
     : message_(message) {}
 
 TransformationAddGlobalVariable::TransformationAddGlobalVariable(
-    uint32_t fresh_id, uint32_t type_id, uint32_t initializer_id,
-    bool value_is_irrelevant) {
+    uint32_t fresh_id, uint32_t type_id, SpvStorageClass storage_class,
+    uint32_t initializer_id, bool value_is_irrelevant) {
   message_.set_fresh_id(fresh_id);
   message_.set_type_id(type_id);
+  message_.set_storage_class(storage_class);
   message_.set_initializer_id(initializer_id);
   message_.set_value_is_irrelevant(value_is_irrelevant);
 }
@@ -37,6 +38,17 @@ bool TransformationAddGlobalVariable::IsApplicable(
   // The result id must be fresh.
   if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
+  }
+
+  // The storage class must be Private or Workgroup.
+  auto storage_class = static_cast<SpvStorageClass>(message_.storage_class());
+  switch (storage_class) {
+    case SpvStorageClassPrivate:
+    case SpvStorageClassWorkgroup:
+      break;
+    default:
+      assert(false && "Unsupported storage class.");
+      return false;
   }
   // The type id must correspond to a type.
   auto type = ir_context->get_type_mgr()->GetType(message_.type_id());
@@ -48,23 +60,32 @@ bool TransformationAddGlobalVariable::IsApplicable(
   if (!pointer_type) {
     return false;
   }
-  // ... with Private storage class.
-  if (pointer_type->storage_class() != SpvStorageClassPrivate) {
+  // ... with the right storage class.
+  if (pointer_type->storage_class() != storage_class) {
     return false;
   }
-  // The initializer id must be the id of a constant.  Check this with the
-  // constant manager.
-  auto constant_id = ir_context->get_constant_mgr()->GetConstantsFromIds(
-      {message_.initializer_id()});
-  if (constant_id.empty()) {
-    return false;
-  }
-  assert(constant_id.size() == 1 &&
-         "We asked for the constant associated with a single id; we should "
-         "get a single constant.");
-  // The type of the constant must match the pointee type of the pointer.
-  if (pointer_type->pointee_type() != constant_id[0]->type()) {
-    return false;
+  if (message_.initializer_id()) {
+    // An initializer is not allowed if the storage class is Workgroup.
+    if (storage_class == SpvStorageClassWorkgroup) {
+      assert(false &&
+             "By construction this transformation should not have an "
+             "initializer when Workgroup storage class is used.");
+      return false;
+    }
+    // The initializer id must be the id of a constant.  Check this with the
+    // constant manager.
+    auto constant_id = ir_context->get_constant_mgr()->GetConstantsFromIds(
+        {message_.initializer_id()});
+    if (constant_id.empty()) {
+      return false;
+    }
+    assert(constant_id.size() == 1 &&
+           "We asked for the constant associated with a single id; we should "
+           "get a single constant.");
+    // The type of the constant must match the pointee type of the pointer.
+    if (pointer_type->pointee_type() != constant_id[0]->type()) {
+      return false;
+    }
   }
   return true;
 }
@@ -74,7 +95,7 @@ void TransformationAddGlobalVariable::Apply(
     TransformationContext* transformation_context) const {
   opt::Instruction::OperandList input_operands;
   input_operands.push_back(
-      {SPV_OPERAND_TYPE_STORAGE_CLASS, {SpvStorageClassPrivate}});
+      {SPV_OPERAND_TYPE_STORAGE_CLASS, {message_.storage_class()}});
   if (message_.initializer_id()) {
     input_operands.push_back(
         {SPV_OPERAND_TYPE_ID, {message_.initializer_id()}});
@@ -84,7 +105,7 @@ void TransformationAddGlobalVariable::Apply(
       input_operands));
   fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
 
-  if (PrivateGlobalsMustBeDeclaredInEntryPointInterfaces(ir_context)) {
+  if (GlobalVariablesMustBeDeclaredInEntryPointInterfaces(ir_context)) {
     // Conservatively add this global to the interface of every entry point in
     // the module.  This means that the global is available for other
     // transformations to use.
@@ -117,7 +138,7 @@ protobufs::Transformation TransformationAddGlobalVariable::ToMessage() const {
 }
 
 bool TransformationAddGlobalVariable::
-    PrivateGlobalsMustBeDeclaredInEntryPointInterfaces(
+    GlobalVariablesMustBeDeclaredInEntryPointInterfaces(
         opt::IRContext* ir_context) {
   // TODO(afd): We capture the universal environments for which this requirement
   //  holds.  The check should be refined on demand for other target

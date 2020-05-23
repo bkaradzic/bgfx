@@ -84,9 +84,12 @@ bool Function::WhileEachInst(const std::function<bool(Instruction*)>& f,
     }
   }
 
-  for (auto& di : debug_insts_in_header_) {
-    if (!di.WhileEachInst(f, run_on_debug_line_insts)) {
-      return false;
+  if (!debug_insts_in_header_.empty()) {
+    Instruction* di = &debug_insts_in_header_.front();
+    while (di != nullptr) {
+      Instruction* next_instruction = di->NextNode();
+      if (!di->WhileEachInst(f, run_on_debug_line_insts)) return false;
+      di = next_instruction;
     }
   }
 
@@ -118,9 +121,9 @@ bool Function::WhileEachInst(const std::function<bool(const Instruction*)>& f,
   }
 
   for (const auto& di : debug_insts_in_header_) {
-    if (!di.WhileEachInst(f, run_on_debug_line_insts)) {
+    if (!static_cast<const Instruction*>(&di)->WhileEachInst(
+            f, run_on_debug_line_insts))
       return false;
-    }
   }
 
   for (const auto& bb : blocks_) {
@@ -149,6 +152,18 @@ void Function::ForEachParam(const std::function<void(const Instruction*)>& f,
   for (const auto& param : params_)
     static_cast<const Instruction*>(param.get())
         ->ForEachInst(f, run_on_debug_line_insts);
+}
+
+void Function::ForEachDebugInstructionsInHeader(
+    const std::function<void(Instruction*)>& f) {
+  if (debug_insts_in_header_.empty()) return;
+
+  Instruction* di = &debug_insts_in_header_.front();
+  while (di != nullptr) {
+    Instruction* next_instruction = di->NextNode();
+    di->ForEachInst(f);
+    di = next_instruction;
+  }
 }
 
 BasicBlock* Function::InsertBasicBlockAfter(

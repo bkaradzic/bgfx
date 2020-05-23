@@ -126,15 +126,16 @@ namespace bgfx { namespace metal
 		8,     // MaxCullDistances
 		8,     // MaxCombinedClipAndCullDistances
 		4,     // MaxSamples
-		0,     // maxMeshOutputVerticesNV;
-		0,     // maxMeshOutputPrimitivesNV;
-		0,     // maxMeshWorkGroupSizeX_NV;
-		0,     // maxMeshWorkGroupSizeY_NV;
-		0,     // maxMeshWorkGroupSizeZ_NV;
-		0,     // maxTaskWorkGroupSizeX_NV;
-		0,     // maxTaskWorkGroupSizeY_NV;
-		0,     // maxTaskWorkGroupSizeZ_NV;
+		0,     // maxMeshOutputVerticesNV
+		0,     // maxMeshOutputPrimitivesNV
+		0,     // maxMeshWorkGroupSizeX_NV
+		0,     // maxMeshWorkGroupSizeY_NV
+		0,     // maxMeshWorkGroupSizeZ_NV
+		0,     // maxTaskWorkGroupSizeX_NV
+		0,     // maxTaskWorkGroupSizeY_NV
+		0,     // maxTaskWorkGroupSizeZ_NV
 		0,     // maxMeshViewCountNV
+		0,     // maxDualSourceDrawBuffersEXT
 
 		{ // limits
 			true, // nonInductiveForLoops
@@ -601,6 +602,8 @@ namespace bgfx { namespace metal
 			bx::write(_writer, un.num);
 			bx::write(_writer, un.regIndex);
 			bx::write(_writer, un.regCount);
+			bx::write(_writer, un.texComponent);
+			bx::write(_writer, un.texDimension);
 
 			BX_TRACE("%s, %s, %d, %d, %d"
 				, un.name.c_str()

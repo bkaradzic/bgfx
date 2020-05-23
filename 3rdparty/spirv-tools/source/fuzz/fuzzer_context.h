@@ -136,6 +136,9 @@ class FuzzerContext {
   uint32_t GetChanceOfAddingVectorType() {
     return chance_of_adding_vector_type_;
   }
+  uint32_t GetChanceOfAdjustingBranchWeights() {
+    return chance_of_adjusting_branch_weights_;
+  }
   uint32_t GetChanceOfAdjustingFunctionControl() {
     return chance_of_adjusting_function_control_;
   }
@@ -183,24 +186,39 @@ class FuzzerContext {
   uint32_t GetChanceOfTogglingAccessChainInstruction() {
     return chance_of_toggling_access_chain_instruction_;
   }
-  uint32_t GetRandomLoopControlPeelCount() {
-    return random_generator_->RandomUint32(max_loop_control_peel_count_);
+
+  // Other functions to control transformations. Keep them in alphabetical
+  // order.
+  uint32_t GetMaximumEquivalenceClassSizeForDataSynonymFactClosure() {
+    return max_equivalence_class_size_for_data_synonym_fact_closure_;
+  }
+  uint32_t GetRandomIndexForAccessChain(uint32_t composite_size_bound) {
+    return random_generator_->RandomUint32(composite_size_bound);
   }
   uint32_t GetRandomLoopControlPartialCount() {
     return random_generator_->RandomUint32(max_loop_control_partial_count_);
   }
+  uint32_t GetRandomLoopControlPeelCount() {
+    return random_generator_->RandomUint32(max_loop_control_peel_count_);
+  }
   uint32_t GetRandomLoopLimit() {
     return random_generator_->RandomUint32(max_loop_limit_);
+  }
+  std::pair<uint32_t, uint32_t> GetRandomBranchWeights() {
+    std::pair<uint32_t, uint32_t> branch_weights = {0, 0};
+
+    while (branch_weights.first == 0 && branch_weights.second == 0) {
+      // Using INT32_MAX to do not overflow UINT32_MAX when the branch weights
+      // are added together.
+      branch_weights.first = random_generator_->RandomUint32(INT32_MAX);
+      branch_weights.second = random_generator_->RandomUint32(INT32_MAX);
+    }
+
+    return branch_weights;
   }
   uint32_t GetRandomSizeForNewArray() {
     // Ensure that the array size is non-zero.
     return random_generator_->RandomUint32(max_new_array_size_limit_ - 1) + 1;
-  }
-
-  // Other functions to control transformations. Keep them in alphabetical
-  // order.
-  uint32_t GetRandomIndexForAccessChain(uint32_t composite_size_bound) {
-    return random_generator_->RandomUint32(composite_size_bound);
   }
   bool GoDeeperInConstantObfuscation(uint32_t depth) {
     return go_deeper_in_constant_obfuscation_(depth, random_generator_);
@@ -228,6 +246,7 @@ class FuzzerContext {
   uint32_t chance_of_adding_no_contraction_decoration_;
   uint32_t chance_of_adding_store_;
   uint32_t chance_of_adding_vector_type_;
+  uint32_t chance_of_adjusting_branch_weights_;
   uint32_t chance_of_adjusting_function_control_;
   uint32_t chance_of_adjusting_loop_control_;
   uint32_t chance_of_adjusting_memory_operands_mask_;
@@ -251,6 +270,7 @@ class FuzzerContext {
   // Limits associated with various quantities for which random values are
   // chosen during fuzzing.
   // Keep them in alphabetical order.
+  uint32_t max_equivalence_class_size_for_data_synonym_fact_closure_;
   uint32_t max_loop_control_partial_count_;
   uint32_t max_loop_control_peel_count_;
   uint32_t max_loop_limit_;

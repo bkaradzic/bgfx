@@ -87,7 +87,7 @@ namespace bgfx
 
 			uint32_t pos = m_pos;
 			const char* str = &m_str[pos];
-			const char* nl = bx::strFindNl(str).getPtr();
+			const char* nl = bx::strFindNl(bx::StringView(str, str + (m_size - pos))).getPtr();
 			pos += (uint32_t)(nl - str);
 
 			const char* eol = &m_str[pos];
@@ -109,6 +109,9 @@ namespace bgfx
 
 #define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
 #define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
+#define BGFX_UNIFORM_READONLYBIT UINT8_C(0x40)
+#define BGFX_UNIFORM_COMPAREBIT  UINT8_C(0x80)
+#define BGFX_UNIFORM_MASK (BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT|BGFX_UNIFORM_READONLYBIT|BGFX_UNIFORM_COMPAREBIT)
 
 	const char* getUniformTypeName(UniformType::Enum _enum);
 	UniformType::Enum nameToUniformTypeEnum(const char* _name);
@@ -120,6 +123,8 @@ namespace bgfx
 		uint8_t num;
 		uint16_t regIndex;
 		uint16_t regCount;
+		uint8_t texComponent;
+		uint8_t texDimension;
 	};
 
 	struct Options

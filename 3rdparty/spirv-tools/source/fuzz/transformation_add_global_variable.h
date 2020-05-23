@@ -29,22 +29,26 @@ class TransformationAddGlobalVariable : public Transformation {
       const protobufs::TransformationAddGlobalVariable& message);
 
   TransformationAddGlobalVariable(uint32_t fresh_id, uint32_t type_id,
+                                  SpvStorageClass storage_class,
                                   uint32_t initializer_id,
                                   bool value_is_irrelevant);
 
   // - |message_.fresh_id| must be fresh
-  // - |message_.type_id| must be the id of a pointer type with Private storage
-  //   class
-  // - |message_.initializer_id| must either be 0 or the id of a constant whose
+  // - |message_.type_id| must be the id of a pointer type with the same storage
+  //   class as |message_.storage_class|
+  // - |message_.storage_class| must be Private or Workgroup
+  // - |message_.initializer_id| must be 0 if |message_.storage_class| is
+  //   Workgroup, and otherwise may either be 0 or the id of a constant whose
   //   type is the pointee type of |message_.type_id|
   bool IsApplicable(
       opt::IRContext* ir_context,
       const TransformationContext& transformation_context) const override;
 
-  // Adds a global variable with Private storage class to the module, with type
-  // |message_.type_id| and either no initializer or |message_.initializer_id|
-  // as an initializer, depending on whether |message_.initializer_id| is 0.
-  // The global variable has result id |message_.fresh_id|.
+  // Adds a global variable with storage class |message_.storage_class| to the
+  // module, with type |message_.type_id| and either no initializer or
+  // |message_.initializer_id| as an initializer, depending on whether
+  // |message_.initializer_id| is 0.  The global variable has result id
+  // |message_.fresh_id|.
   //
   // If |message_.value_is_irrelevant| holds, adds a corresponding fact to the
   // fact manager in |transformation_context|.
@@ -54,7 +58,10 @@ class TransformationAddGlobalVariable : public Transformation {
   protobufs::Transformation ToMessage() const override;
 
  private:
-  static bool PrivateGlobalsMustBeDeclaredInEntryPointInterfaces(
+  // Returns true if and only if the SPIR-V version being used requires that
+  // global variables accessed in the static call graph of an entry point need
+  // to be listed in that entry point's interface.
+  static bool GlobalVariablesMustBeDeclaredInEntryPointInterfaces(
       opt::IRContext* ir_context);
 
   protobufs::TransformationAddGlobalVariable message_;

@@ -19,6 +19,7 @@
 #include "source/fuzz/id_use_descriptor.h"
 #include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/transformation_composite_extract.h"
+#include "source/fuzz/transformation_compute_data_synonym_fact_closure.h"
 #include "source/fuzz/transformation_replace_id_with_synonym.h"
 
 namespace spvtools {
@@ -34,10 +35,15 @@ FuzzerPassApplyIdSynonyms::FuzzerPassApplyIdSynonyms(
 FuzzerPassApplyIdSynonyms::~FuzzerPassApplyIdSynonyms() = default;
 
 void FuzzerPassApplyIdSynonyms::Apply() {
-  for (auto id_with_known_synonyms :
-       GetTransformationContext()
-           ->GetFactManager()
-           ->GetIdsForWhichSynonymsAreKnown(GetIRContext())) {
+  // Compute a closure of data synonym facts, to enrich the pool of synonyms
+  // that are available.
+  ApplyTransformation(TransformationComputeDataSynonymFactClosure(
+      GetFuzzerContext()
+          ->GetMaximumEquivalenceClassSizeForDataSynonymFactClosure()));
+
+  for (auto id_with_known_synonyms : GetTransformationContext()
+                                         ->GetFactManager()
+                                         ->GetIdsForWhichSynonymsAreKnown()) {
     // Gather up all uses of |id_with_known_synonym| as a regular id, and
     // subsequently iterate over these uses.  We use this separation because,
     // when considering a given use, we might apply a transformation that will
@@ -79,7 +85,7 @@ void FuzzerPassApplyIdSynonyms::Apply() {
       std::vector<const protobufs::DataDescriptor*> synonyms_to_try;
       for (auto& data_descriptor :
            GetTransformationContext()->GetFactManager()->GetSynonymsForId(
-               id_with_known_synonyms, GetIRContext())) {
+               id_with_known_synonyms)) {
         protobufs::DataDescriptor descriptor_for_this_id =
             MakeDataDescriptor(id_with_known_synonyms, {});
         if (DataDescriptorEquals()(data_descriptor, &descriptor_for_this_id)) {

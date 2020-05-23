@@ -26,7 +26,8 @@ static const int s_channelCount = 4;
 static const int s_tileFileDataOffset = sizeof(VirtualTextureInfo);
 
 // Page
-Page::operator size_t() const {
+Page::operator size_t() const
+{
 	return size_t((uint32_t(m_mip) << 16) | uint32_t((uint16_t(m_x) << 8) | uint16_t(m_y)));
 }
 
@@ -39,13 +40,12 @@ PageCount::PageCount(Page _page, int _count)
 
 int PageCount::compareTo(const PageCount& other) const
 {
-	#define Comparer(a, b) bx::clamp<int>(a - b, -1, 1)
 	if (other.m_page.m_mip != m_page.m_mip)
 	{
-		return Comparer(other.m_page.m_mip, m_page.m_mip);
+		return bx::clamp<int>(other.m_page.m_mip - m_page.m_mip, -1, 1);
 	}
-	return Comparer(other.m_count, m_count);
-	#undef Comparer
+
+	return bx::clamp<int>(other.m_count - m_count, -1, 1);
 }
 
 // VirtualTextureInfo
@@ -55,6 +55,7 @@ VirtualTextureInfo::VirtualTextureInfo()
 	, m_borderSize(0)
 {
 }
+
 int VirtualTextureInfo::GetPageSize() const
 {
 	return m_tileSize + 2 * m_borderSize;
@@ -65,7 +66,6 @@ int VirtualTextureInfo::GetPageTableSize() const
 	return m_virtualTextureSize / m_tileSize;
 }
 
-// StagingPool
 StagingPool::StagingPool(int _width, int _height, int _count, bool _readBack)
 	: m_stagingTextureIndex(0)
 	, m_width(_width)
@@ -107,7 +107,6 @@ void StagingPool::next()
 	m_stagingTextureIndex = (m_stagingTextureIndex + 1) % (int)m_stagingTextures.size();
 }
 
-// PageIndexer
 PageIndexer::PageIndexer(VirtualTextureInfo* _info)
 	: m_info(_info)
 {
@@ -121,6 +120,7 @@ PageIndexer::PageIndexer(VirtualTextureInfo* _info)
 
 	m_offsets.resize(m_mipcount);
 	m_count = 0;
+
 	for (int i = 0; i < m_mipcount; ++i)
 	{
 		m_offsets[i] = m_count;
@@ -129,6 +129,7 @@ PageIndexer::PageIndexer(VirtualTextureInfo* _info)
 
 	// Calculate reverse mapping
 	m_reverse.resize(m_count);
+
 	for (int i = 0; i < m_mipcount; ++i)
 	{
 		int size = m_sizes[i];
@@ -163,7 +164,7 @@ bool PageIndexer::isValid(Page page)
 		return false;
 	}
 
-	else if (page.m_mip >= m_mipcount)
+	if (page.m_mip >= m_mipcount)
 	{
 		return false;
 	}
@@ -172,7 +173,8 @@ bool PageIndexer::isValid(Page page)
 	{
 		return false;
 	}
-	else if (page.m_x >= m_sizes[page.m_mip])
+
+	if (page.m_x >= m_sizes[page.m_mip])
 	{
 		return false;
 	}
@@ -181,7 +183,8 @@ bool PageIndexer::isValid(Page page)
 	{
 		return false;
 	}
-	else if (page.m_y >= m_sizes[page.m_mip])
+
+	if (page.m_y >= m_sizes[page.m_mip])
 	{
 		return false;
 	}
@@ -194,11 +197,11 @@ int PageIndexer::getCount() const
 	return m_count;
 }
 
-int PageIndexer::getMipCount() const {
+int PageIndexer::getMipCount() const
+{
 	return m_mipcount;
 }
 
-// SimpleImage
 SimpleImage::SimpleImage(int _width, int _height, int _channelCount, uint8_t _clearValue)
 	: m_width(_width)
 	, m_height(_height)
@@ -277,7 +280,6 @@ void SimpleImage::mipmap(uint8_t* source, int size, int channels, uint8_t* dest)
 	}
 }
 
-// Quadtree
 Quadtree::Quadtree(Rect _rect, int _level)
 	: m_rectangle(_rect)
 	, m_level(_level)
@@ -352,7 +354,6 @@ void Quadtree::write(SimpleImage& image, int miplevel)
 	write(this, image, miplevel);
 }
 
-// Static Functions
 Rect Quadtree::getRectangle(int index)
 {
 	int x = m_rectangle.m_x;
@@ -362,16 +363,14 @@ Rect Quadtree::getRectangle(int index)
 
 	switch (index)
 	{
-	case 0:
-	return { x, y, w, h };
-	case 1:
-	return { x + w, y, w, h };
-	case 2:
-	return { x + w, y + h, w, h };
-	case 3:
-	return { x, y + h, w, h };
+	case 0: return { x    , y    , w, h };
+	case 1: return { x + w, y    , w, h };
+	case 2: return { x + w, y + h, w, h };
+	case 3: return { x    , y + h, w, h };
+	default: break;
 	}
-	return { 0,0,0,0 };
+
+	return { 0, 0, 0, 0 };
 }
 
 void Quadtree::write(Quadtree* node, SimpleImage& image, int miplevel)
@@ -462,10 +461,12 @@ PageTable::~PageTable()
 {
 	BX_DELETE(VirtualTexture::getAllocator(), m_quadtree);
 	bgfx::destroy(m_texture);
+
 	for (int i = 0; i < (int)m_images.size(); ++i)
 	{
 		BX_DELETE(VirtualTexture::getAllocator(), m_images[i]);
 	}
+
 	for (int i = 0; i < (int)m_stagingTextures.size(); ++i)
 	{
 		bgfx::destroy(m_stagingTextures[i]);
@@ -478,8 +479,10 @@ void PageTable::update(bgfx::ViewId blitViewId)
 	{
 		return;
 	}
+
 	m_quadtreeDirty = false;
 	auto PageTableSizeLog2 = m_indexer->getMipCount();
+
 	for (int i = 0; i < PageTableSizeLog2; ++i)
 	{
 		m_quadtree->write(*m_images[i], i);
@@ -517,6 +520,7 @@ void PageLoader::loadPage(ReadState& state)
 {
 	int size = m_info->GetPageSize() * m_info->GetPageSize() * s_channelCount;
 	state.m_data.resize(size);
+
 	if (m_colorMipLevels)
 	{
 		copyColor(&state.m_data[0], state.m_page);
@@ -525,6 +529,7 @@ void PageLoader::loadPage(ReadState& state)
 	{
 		m_tileDataFile->readPage(m_indexer->getIndexFromPage(state.m_page), &state.m_data[0]);
 	}
+
 	if (m_showBorders)
 	{
 		copyBorder(&state.m_data[0]);
@@ -561,18 +566,18 @@ void PageLoader::copyColor(uint8_t* image, Page request)
 {
 	static const Color colors[] =
 	{
-		{0, 0, 255, 255},
-		{0, 255, 255, 255},
-		{255, 0, 0, 255},
-		{255, 0, 255, 255},
-		{255, 255, 0, 255},
-		{64, 64, 192, 255},
-		{64, 192, 64, 255},
-		{64, 192, 192, 255},
-		{192, 64, 64, 255},
-		{192, 64, 192, 255},
-		{192, 192, 64, 255},
-		{0, 255, 0, 255}
+		{   0,   0, 255, 255 },
+		{   0, 255, 255, 255 },
+		{ 255,   0,   0, 255 },
+		{ 255,   0, 255, 255 },
+		{ 255, 255,   0, 255 },
+		{  64,  64, 192, 255 },
+		{  64, 192,  64, 255 },
+		{  64, 192, 192, 255 },
+		{ 192,  64,  64, 255 },
+		{ 192,  64, 192, 255 },
+		{ 192, 192,  64, 255 },
+		{   0, 255,   0, 255 },
 	};
 
 	int pagesize = m_info->GetPageSize();
@@ -700,7 +705,15 @@ TextureAtlas::TextureAtlas(VirtualTextureInfo* _info, int _count, int _uploadspe
 	// Create atlas texture
 	int pagesize = m_info->GetPageSize();
 	int size = _count * pagesize;
-	m_texture = bgfx::createTexture2D((uint16_t)size, (uint16_t)size, false, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_UVW_CLAMP);
+
+	m_texture = bgfx::createTexture2D(
+		  (uint16_t)size
+		, (uint16_t)size
+		, false
+		, 1
+		, bgfx::TextureFormat::BGRA8
+		, BGFX_SAMPLER_UVW_CLAMP
+		);
 }
 
 TextureAtlas::~TextureAtlas()
@@ -721,7 +734,16 @@ void TextureAtlas::uploadPage(Point pt, uint8_t* data, bgfx::ViewId blitViewId)
 
 	// Update texture with new atlas data
 	auto   pagesize = uint16_t(m_info->GetPageSize());
-	bgfx::updateTexture2D(writer, 0, 0, 0, 0, pagesize, pagesize, bgfx::copy(data, pagesize * pagesize * s_channelCount));
+	bgfx::updateTexture2D(
+		  writer
+		, 0
+		, 0
+		, 0
+		, 0
+		, pagesize
+		, pagesize
+		, bgfx::copy(data, pagesize * pagesize * s_channelCount)
+		);
 
 	// Copy the texture part to the actual atlas texture
 	auto xpos = uint16_t(pt.m_x * pagesize);
@@ -744,16 +766,19 @@ FeedbackBuffer::FeedbackBuffer(VirtualTextureInfo* _info, int _width, int _heigh
 	// Setup classes
 	m_indexer = BX_NEW(VirtualTexture::getAllocator(), PageIndexer)(m_info);
 	m_requests.resize(m_indexer->getCount());
+
 	// Initialize and clear buffers
 	m_downloadBuffer.resize(m_width * m_height * s_channelCount);
 	bx::memSet(&m_downloadBuffer[0], 0, m_width * m_height * s_channelCount);
 	clear();
+
 	// Initialize feedback frame buffer
 	bgfx::TextureHandle feedbackFrameBufferTextures[] =
 	{
 		bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
 		bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
 	};
+
 	m_feedbackFrameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(feedbackFrameBufferTextures), feedbackFrameBufferTextures, true);
 	m_lastStagingTexture = { bgfx::kInvalidHandle };
 }
@@ -785,12 +810,14 @@ void FeedbackBuffer::download()
 	{
 		return;
 	}
+
 	// Read the texture
 	bgfx::readTexture(m_lastStagingTexture, &m_downloadBuffer[0]);
 	// Loop through pixels and check if anything was written
 	auto data = &m_downloadBuffer[0];
 	auto colors = (Color*)data;
 	auto dataSize = m_width * m_height;
+
 	for (int i = 0; i < dataSize; ++i)
 	{
 		auto& color = colors[i];
@@ -903,7 +930,6 @@ void VirtualTexture::setMipBias(int value)
 
 void VirtualTexture::setUniforms()
 {
-	// Set uniforms
 	struct
 	{
 		struct
@@ -913,6 +939,7 @@ void VirtualTexture::setUniforms()
 			float BorderScale;
 			float BorderOffset;
 		} m_settings_1;
+
 		struct
 		{
 			float MipBias;
@@ -920,8 +947,9 @@ void VirtualTexture::setUniforms()
 			float unused1;
 			float unused2;
 		} m_settings_2;
+
 	} uniforms;
-	// Fill uniforms
+
 	int pagesize = m_info->GetPageSize();
 	uniforms.m_settings_1.VirtualTextureSize = (float)m_info->m_virtualTextureSize;
 	uniforms.m_settings_1.ooAtlasScale = 1.0f / (float)m_atlasCount;
@@ -930,10 +958,10 @@ void VirtualTexture::setUniforms()
 	uniforms.m_settings_2.MipBias = (float)m_mipBias;
 	uniforms.m_settings_2.PageTableSize = (float)m_info->GetPageTableSize();
 	uniforms.m_settings_2.unused1 = uniforms.m_settings_2.unused2 = 0.0f;
-	// Set uniforms
+
 	bgfx::setUniform(u_vt_settings_1, &uniforms.m_settings_1);
 	bgfx::setUniform(u_vt_settings_2, &uniforms.m_settings_2);
-	// Set textures
+
 	bgfx::setTexture(0, s_vt_page_table, m_pageTable->getTexture());
 	bgfx::setTexture(1, s_vt_texture_atlas, m_atlas->getTexture());
 }
@@ -956,6 +984,7 @@ void VirtualTexture::enableShowBoarders(bool enable)
 	{
 		return;
 	}
+
 	m_loader->m_showBorders = enable;
 	clear();
 }
@@ -971,6 +1000,7 @@ void VirtualTexture::enableColorMipLevels(bool enable)
 	{
 		return;
 	}
+
 	m_loader->m_colorMipLevels = enable;
 	clear();
 }
@@ -1232,6 +1262,7 @@ bool TileGenerator::generate(const bx::FilePath& _filePath)
 			}
 		}
 	}
+
 	bx::debugPrintf("Finising\n");
 	// Write header
 	m_tileDataFile->writeInfo();

@@ -46,7 +46,7 @@ bool TransformationReplaceIdWithSynonym::IsApplicable(
       MakeDataDescriptor(message_.synonymous_id(), {});
   if (!transformation_context.GetFactManager()->IsSynonymous(
           MakeDataDescriptor(id_of_interest, {}),
-          data_descriptor_for_synonymous_id, ir_context)) {
+          data_descriptor_for_synonymous_id)) {
     return false;
   }
 
@@ -125,6 +125,9 @@ bool TransformationReplaceIdWithSynonym::UseCanBeReplacedWithSynonym(
       } else if (composite_type_being_accessed->AsArray()) {
         composite_type_being_accessed =
             composite_type_being_accessed->AsArray()->element_type();
+      } else if (composite_type_being_accessed->AsRuntimeArray()) {
+        composite_type_being_accessed =
+            composite_type_being_accessed->AsRuntimeArray()->element_type();
       } else {
         assert(composite_type_being_accessed->AsStruct());
         auto constant_index_instruction = ir_context->get_def_use_mgr()->GetDef(
@@ -167,6 +170,15 @@ bool TransformationReplaceIdWithSynonym::UseCanBeReplacedWithSynonym(
       return false;
     }
   }
+
+  if (use_instruction->opcode() == SpvOpImageTexelPointer &&
+      use_in_operand_index == 2) {
+    // The OpImageTexelPointer instruction has a Sample parameter that in some
+    // situations must be an id for the value 0.  To guard against disrupting
+    // that requirement, we do not replace this argument to that instruction.
+    return false;
+  }
+
   return true;
 }
 

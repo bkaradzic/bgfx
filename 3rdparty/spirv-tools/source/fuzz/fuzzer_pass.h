@@ -20,6 +20,7 @@
 
 #include "source/fuzz/fuzzer_context.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
@@ -94,8 +95,7 @@ class FuzzerPass {
 
   // A generic helper for applying a transformation that should be applicable
   // by construction, and adding it to the sequence of applied transformations.
-  template <typename TransformationType>
-  void ApplyTransformation(const TransformationType& transformation) {
+  void ApplyTransformation(const Transformation& transformation) {
     assert(transformation.IsApplicable(GetIRContext(),
                                        *GetTransformationContext()) &&
            "Transformation should be applicable by construction.");
@@ -163,6 +163,14 @@ class FuzzerPass {
   // according to |value|.  If either the required instruction or the bool
   // type do not exist, transformations are applied to add them.
   uint32_t FindOrCreateBoolConstant(bool value);
+
+  // Returns the id of an OpConstant instruction of type with |type_id|
+  // that consists of |words|. If that instruction doesn't exist,
+  // transformations are applied to add it. |type_id| must be a valid
+  // result id of either scalar or boolean OpType* instruction that exists
+  // in the module.
+  uint32_t FindOrCreateConstant(const std::vector<uint32_t>& words,
+                                uint32_t type_id);
 
   // Returns the result id of an instruction of the form:
   //   %id = OpUndef %|type_id|

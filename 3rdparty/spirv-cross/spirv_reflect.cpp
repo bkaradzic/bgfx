@@ -601,6 +601,7 @@ void CompilerReflection::emit_specialization_constants()
 		auto &c = get<SPIRConstant>(spec_const.id);
 		auto type = get<SPIRType>(c.constant_type);
 		json_stream->begin_json_object();
+		json_stream->emit_json_key_value("name", get_name(spec_const.id));
 		json_stream->emit_json_key_value("id", spec_const.constant_id);
 		json_stream->emit_json_key_value("type", type_to_glsl(type));
 		json_stream->emit_json_key_value("variable_id", spec_const.id);
