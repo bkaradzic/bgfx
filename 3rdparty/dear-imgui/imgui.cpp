@@ -5066,6 +5066,21 @@ static const ImGuiResizeGripDef resize_grip_def[4] =
     { ImVec2(1,0), ImVec2(-1,+1), 9,12 }, // Upper-right (Unused)
 };
 
+struct ImGuiResizeBorderDef
+{
+    ImVec2 InnerDir;
+    ImVec2 CornerPosN1, CornerPosN2;
+    float  OuterAngle;
+};
+
+static const ImGuiResizeBorderDef resize_border_def[4] =
+{
+    { ImVec2(0,+1), ImVec2(0,0), ImVec2(1,0), IM_PI*1.50f }, // Top
+    { ImVec2(-1,0), ImVec2(1,0), ImVec2(1,1), IM_PI*0.00f }, // Right
+    { ImVec2(0,-1), ImVec2(1,1), ImVec2(0,1), IM_PI*0.50f }, // Bottom
+    { ImVec2(+1,0), ImVec2(0,1), ImVec2(0,0), IM_PI*1.00f }  // Left
+};
+
 static ImRect GetResizeBorderRect(ImGuiWindow* window, int border_n, float perp_padding, float thickness)
 {
     ImRect rect = window->Rect();
@@ -5231,19 +5246,6 @@ static void ImGui::RenderWindowOuterBorders(ImGuiWindow* window)
     int border_held = window->ResizeBorderHeld;
     if (border_held != -1)
     {
-        struct ImGuiResizeBorderDef
-        {
-            ImVec2 InnerDir;
-            ImVec2 CornerPosN1, CornerPosN2;
-            float  OuterAngle;
-        };
-        static const ImGuiResizeBorderDef resize_border_def[4] =
-        {
-            { ImVec2(0,+1), ImVec2(0,0), ImVec2(1,0), IM_PI*1.50f }, // Top
-            { ImVec2(-1,0), ImVec2(1,0), ImVec2(1,1), IM_PI*0.00f }, // Right
-            { ImVec2(0,-1), ImVec2(1,1), ImVec2(0,1), IM_PI*0.50f }, // Bottom
-            { ImVec2(+1,0), ImVec2(0,1), ImVec2(0,0), IM_PI*1.00f }  // Left
-        };
         const ImGuiResizeBorderDef& def = resize_border_def[border_held];
         ImRect border_r = GetResizeBorderRect(window, border_held, rounding, 0.0f);
         window->DrawList->PathArcTo(ImLerp(border_r.Min, border_r.Max, def.CornerPosN1) + ImVec2(0.5f, 0.5f) + def.InnerDir * rounding, rounding, def.OuterAngle - IM_PI*0.25f, def.OuterAngle);
@@ -10158,8 +10160,8 @@ void ImGui::ShowMetricsWindow(bool* p_open)
     // Debugging enums
     enum { WRT_OuterRect, WRT_OuterRectClipped, WRT_InnerRect, WRT_InnerClipRect, WRT_WorkRect, WRT_Content, WRT_ContentRegionRect, WRT_Count }; // Windows Rect Type
     const char* wrt_rects_names[WRT_Count] = { "OuterRect", "OuterRectClipped", "InnerRect", "InnerClipRect", "WorkRect", "Content", "ContentRegionRect" };
-    enum { TRT_OuterRect, TRT_WorkRect, TRT_HostClipRect, TRT_InnerClipRect, TRT_BackgroundClipRect, TRT_ColumnsRect, TRT_ColumnsClipRect, TRT_ColumnsContentHeadersUsed, TRT_ColumnsContentHeadersDesired, TRT_ColumnsContentRowsFrozen, TRT_ColumnsContentRowsUnfrozen, TRT_Count }; // Tables Rect Type
-    const char* trt_rects_names[TRT_Count] = { "OuterRect", "WorkRect", "HostClipRect", "InnerClipRect", "BackgroundClipRect", "ColumnsRect", "ColumnsClipRect", "ColumnsContentHeadersUsed", "ColumnsContentHeadersDesired", "ColumnsContentRowsFrozen", "ColumnsContentRowsUnfrozen" };
+    enum { TRT_OuterRect, TRT_WorkRect, TRT_HostClipRect, TRT_InnerClipRect, TRT_BackgroundClipRect, TRT_ColumnsRect, TRT_ColumnsClipRect, TRT_ColumnsContentHeadersUsed, TRT_ColumnsContentHeadersIdeal, TRT_ColumnsContentRowsFrozen, TRT_ColumnsContentRowsUnfrozen, TRT_Count }; // Tables Rect Type
+    const char* trt_rects_names[TRT_Count] = { "OuterRect", "WorkRect", "HostClipRect", "InnerClipRect", "BackgroundClipRect", "ColumnsRect", "ColumnsClipRect", "ColumnsContentHeadersUsed", "ColumnsContentHeadersIdeal", "ColumnsContentRowsFrozen", "ColumnsContentRowsUnfrozen" };
 
     // State
     static bool show_windows_rects = false;
@@ -10433,7 +10435,6 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         }
     };
 
-
     // Tools
     if (ImGui::TreeNode("Tools"))
     {
@@ -10504,7 +10505,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             Funcs::NodeTable(g.Tables.GetByIndex(n));
         ImGui::TreePop();
     }
-#endif // #define IMGUI_HAS_TABLE
+#endif // #ifdef IMGUI_HAS_TABLE
 
     // Details for Docking
 #ifdef IMGUI_HAS_DOCK
@@ -10512,7 +10513,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
     {
         ImGui::TreePop();
     }
-#endif // #define IMGUI_HAS_DOCK
+#endif // #ifdef IMGUI_HAS_DOCK
 
     // Settings
     if (ImGui::TreeNode("Settings"))
@@ -10548,10 +10549,10 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                 Funcs::NodeTableSettings(settings);
             ImGui::TreePop();
         }
-#endif
+#endif // #ifdef IMGUI_HAS_TABLE
 
 #ifdef IMGUI_HAS_DOCK
-#endif
+#endif // #ifdef IMGUI_HAS_DOCK
 
         if (ImGui::TreeNode("SettingsIniData", "Settings unpacked data (.ini): %d bytes", g.SettingsIniData.size()))
         {
@@ -10617,14 +10618,14 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             ImGuiTable* table = g.Tables.GetByIndex(table_n);
         }
     }
-#endif // #define IMGUI_HAS_TABLE
+#endif // #ifdef IMGUI_HAS_TABLE
 
 #ifdef IMGUI_HAS_DOCK
     // Overlay: Display Docking info
     if (show_docking_nodes && g.IO.KeyCtrl)
     {
     }
-#endif // #define IMGUI_HAS_DOCK
+#endif // #ifdef IMGUI_HAS_DOCK
 
     ImGui::End();
 }
