@@ -167,6 +167,10 @@ enum ExecutionMode : uint
     SampleInterlockUnorderedEXT = 5369,
     ShadingRateInterlockOrderedEXT = 5370,
     ShadingRateInterlockUnorderedEXT = 5371,
+    MaxWorkgroupSizeINTEL = 5893,
+    MaxWorkDimINTEL = 5894,
+    NoGlobalOffsetINTEL = 5895,
+    NumSIMDWorkitemsINTEL = 5896,
 }
 
 enum StorageClass : uint
@@ -198,6 +202,7 @@ enum StorageClass : uint
     ShaderRecordBufferNV = 5343,
     PhysicalStorageBuffer = 5349,
     PhysicalStorageBufferEXT = 5349,
+    CodeSectionINTEL = 5605,
 }
 
 enum Dim : uint
@@ -478,11 +483,24 @@ enum Decoration : uint
     RestrictPointerEXT = 5355,
     AliasedPointer = 5356,
     AliasedPointerEXT = 5356,
+    ReferencedIndirectlyINTEL = 5602,
     CounterBuffer = 5634,
     HlslCounterBufferGOOGLE = 5634,
     HlslSemanticGOOGLE = 5635,
     UserSemantic = 5635,
     UserTypeGOOGLE = 5636,
+    RegisterINTEL = 5825,
+    MemoryINTEL = 5826,
+    NumbanksINTEL = 5827,
+    BankwidthINTEL = 5828,
+    MaxPrivateCopiesINTEL = 5829,
+    SinglepumpINTEL = 5830,
+    DoublepumpINTEL = 5831,
+    MaxReplicatesINTEL = 5832,
+    SimpleDualPortINTEL = 5833,
+    MergeINTEL = 5834,
+    BankBitsINTEL = 5835,
+    ForcePow2DepthINTEL = 5836,
 }
 
 enum BuiltIn : uint
@@ -630,6 +648,13 @@ enum LoopControlShift : uint
     IterationMultiple = 6,
     PeelCount = 7,
     PartialCount = 8,
+    InitiationIntervalINTEL = 16,
+    MaxConcurrencyINTEL = 17,
+    DependencyArrayINTEL = 18,
+    PipelineEnableINTEL = 19,
+    LoopCoalesceINTEL = 20,
+    MaxInterleavingINTEL = 21,
+    SpeculatedIterationsINTEL = 22,
 }
 
 enum LoopControlMask : uint
@@ -644,6 +669,13 @@ enum LoopControlMask : uint
     IterationMultiple = 0x00000040,
     PeelCount = 0x00000080,
     PartialCount = 0x00000100,
+    InitiationIntervalINTEL = 0x00010000,
+    MaxConcurrencyINTEL = 0x00020000,
+    DependencyArrayINTEL = 0x00040000,
+    PipelineEnableINTEL = 0x00080000,
+    LoopCoalesceINTEL = 0x00100000,
+    MaxInterleavingINTEL = 0x00200000,
+    SpeculatedIterationsINTEL = 0x00400000,
 }
 
 enum FunctionControlShift : uint
@@ -935,9 +967,18 @@ enum Capability : uint
     SubgroupImageBlockIOINTEL = 5570,
     SubgroupImageMediaBlockIOINTEL = 5579,
     IntegerFunctions2INTEL = 5584,
+    FunctionPointersINTEL = 5603,
+    IndirectReferencesINTEL = 5604,
     SubgroupAvcMotionEstimationINTEL = 5696,
     SubgroupAvcMotionEstimationIntraINTEL = 5697,
     SubgroupAvcMotionEstimationChromaINTEL = 5698,
+    FPGAMemoryAttributesINTEL = 5824,
+    UnstructuredLoopControlsINTEL = 5886,
+    FPGALoopControlsINTEL = 5888,
+    KernelAttributesINTEL = 5892,
+    FPGAKernelAttributesINTEL = 5897,
+    BlockingPipesINTEL = 5945,
+    FPGARegINTEL = 5948,
 }
 
 enum RayFlagsShift : uint
@@ -1406,6 +1447,8 @@ enum Op : uint
     OpUSubSatINTEL = 5596,
     OpIMul32x16INTEL = 5597,
     OpUMul32x16INTEL = 5598,
+    OpFunctionPointerINTEL = 5600,
+    OpFunctionPointerCallINTEL = 5601,
     OpDecorateString = 5632,
     OpDecorateStringGOOGLE = 5632,
     OpMemberDecorateString = 5633,
@@ -1528,6 +1571,10 @@ enum Op : uint
     OpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL = 5814,
     OpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL = 5815,
     OpSubgroupAvcSicGetInterRawSadsINTEL = 5816,
+    OpLoopControlINTEL = 5887,
+    OpReadPipeBlockingINTEL = 5946,
+    OpWritePipeBlockingINTEL = 5947,
+    OpFPGARegINTEL = 5949,
     OpRayQueryGetRayTMinKHR = 6016,
     OpRayQueryGetRayFlagsKHR = 6017,
     OpRayQueryGetIntersectionTKHR = 6018,
