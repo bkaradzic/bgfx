@@ -361,7 +361,7 @@ void FuzzerPassObfuscateConstants::ObfuscateScalarConstant(
   // Make sure the module has OpConstant instructions for each index used to
   // access a uniform.
   for (auto index : uniform_descriptor.index()) {
-    FindOrCreate32BitIntegerConstant(index, true);
+    FindOrCreateIntegerConstant({index}, 32, true);
   }
 
   // Make sure the module has OpTypePointer that points to the element type of

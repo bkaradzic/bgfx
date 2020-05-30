@@ -375,6 +375,7 @@ message Transformation {
     TransformationAddConstantNull add_constant_null = 44;
     TransformationComputeDataSynonymFactClosure compute_data_synonym_fact_closure = 45;
     TransformationAdjustBranchWeights adjust_branch_weights = 46;
+    TransformationPushIdThroughVariable push_id_through_variable = 47;
     // Add additional option using the next available number.
   }
 }
@@ -980,6 +981,30 @@ message TransformationPermuteFunctionParameters {
   // function's argument (i.e. i-th argument will be permutation[i]-th
   // after running this transformation)
   repeated uint32 permutation = 3;
+
+}
+
+message TransformationPushIdThroughVariable {
+
+  // A transformation that makes |value_synonym_id| and |value_id| to be
+  // synonymous by storing |value_id| into |variable_id| and
+  // loading |variable_id| to |value_synonym_id|.
+
+  // The value to be stored.
+  uint32 value_id = 1;
+
+  // A fresh id for the result of the load instruction.
+  uint32 value_synonym_id = 2;
+
+  // A fresh id for the variable to be stored to.
+  uint32 variable_id = 3;
+
+  // The variable storage class (global or local).
+  uint32 variable_storage_class = 4;
+
+  // A descriptor for an instruction which the new OpStore
+  // and OpLoad instructions might be inserted before.
+  InstructionDescriptor instruction_descriptor = 5;
 
 }
 

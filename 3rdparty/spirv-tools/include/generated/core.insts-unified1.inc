@@ -2,12 +2,15 @@ static const SpvCapability pygen_variable_caps_Addresses[] = {SpvCapabilityAddre
 static const SpvCapability pygen_variable_caps_AddressesPhysicalStorageBufferAddresses[] = {SpvCapabilityAddresses, SpvCapabilityPhysicalStorageBufferAddresses};
 static const SpvCapability pygen_variable_caps_AddressesVariablePointersVariablePointersStorageBuffer[] = {SpvCapabilityAddresses, SpvCapabilityVariablePointers, SpvCapabilityVariablePointersStorageBuffer};
 static const SpvCapability pygen_variable_caps_AddressesVariablePointersVariablePointersStorageBufferPhysicalStorageBufferAddresses[] = {SpvCapabilityAddresses, SpvCapabilityVariablePointers, SpvCapabilityVariablePointersStorageBuffer, SpvCapabilityPhysicalStorageBufferAddresses};
+static const SpvCapability pygen_variable_caps_BlockingPipesINTEL[] = {SpvCapabilityBlockingPipesINTEL};
 static const SpvCapability pygen_variable_caps_CooperativeMatrixNV[] = {SpvCapabilityCooperativeMatrixNV};
 static const SpvCapability pygen_variable_caps_DemoteToHelperInvocationEXT[] = {SpvCapabilityDemoteToHelperInvocationEXT};
 static const SpvCapability pygen_variable_caps_DerivativeControl[] = {SpvCapabilityDerivativeControl};
 static const SpvCapability pygen_variable_caps_DeviceEnqueue[] = {SpvCapabilityDeviceEnqueue};
+static const SpvCapability pygen_variable_caps_FPGARegINTEL[] = {SpvCapabilityFPGARegINTEL};
 static const SpvCapability pygen_variable_caps_FragmentMaskAMD[] = {SpvCapabilityFragmentMaskAMD};
 static const SpvCapability pygen_variable_caps_FragmentShaderSampleInterlockEXTFragmentShaderPixelInterlockEXTFragmentShaderShadingRateInterlockEXT[] = {SpvCapabilityFragmentShaderSampleInterlockEXT, SpvCapabilityFragmentShaderPixelInterlockEXT, SpvCapabilityFragmentShaderShadingRateInterlockEXT};
+static const SpvCapability pygen_variable_caps_FunctionPointersINTEL[] = {SpvCapabilityFunctionPointersINTEL};
 static const SpvCapability pygen_variable_caps_Geometry[] = {SpvCapabilityGeometry};
 static const SpvCapability pygen_variable_caps_GeometryStreams[] = {SpvCapabilityGeometryStreams};
 static const SpvCapability pygen_variable_caps_GroupNonUniform[] = {SpvCapabilityGroupNonUniform};
@@ -46,6 +49,7 @@ static const SpvCapability pygen_variable_caps_SubgroupImageBlockIOINTEL[] = {Sp
 static const SpvCapability pygen_variable_caps_SubgroupImageMediaBlockIOINTEL[] = {SpvCapabilitySubgroupImageMediaBlockIOINTEL};
 static const SpvCapability pygen_variable_caps_SubgroupShuffleINTEL[] = {SpvCapabilitySubgroupShuffleINTEL};
 static const SpvCapability pygen_variable_caps_SubgroupVoteKHR[] = {SpvCapabilitySubgroupVoteKHR};
+static const SpvCapability pygen_variable_caps_UnstructuredLoopControlsINTEL[] = {SpvCapabilityUnstructuredLoopControlsINTEL};
 
 static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_ballot[] = {spvtools::Extension::kSPV_AMD_shader_ballot};
 static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_fragment_mask[] = {spvtools::Extension::kSPV_AMD_shader_fragment_mask};
@@ -53,6 +57,10 @@ static const spvtools::Extension pygen_variable_exts_SPV_EXT_demote_to_helper_in
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_shader_interlock[] = {spvtools::Extension::kSPV_EXT_fragment_shader_interlock};
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_decorate_stringSPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_decorate_string, spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
+static const spvtools::Extension pygen_variable_exts_SPV_INTEL_blocking_pipes[] = {spvtools::Extension::kSPV_INTEL_blocking_pipes};
+static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fpga_reg[] = {spvtools::Extension::kSPV_INTEL_fpga_reg};
+static const spvtools::Extension pygen_variable_exts_SPV_INTEL_function_pointers[] = {spvtools::Extension::kSPV_INTEL_function_pointers};
+static const spvtools::Extension pygen_variable_exts_SPV_INTEL_unstructured_loop_controls[] = {spvtools::Extension::kSPV_INTEL_unstructured_loop_controls};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_ray_query[] = {spvtools::Extension::kSPV_KHR_ray_query};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_ballot[] = {spvtools::Extension::kSPV_KHR_shader_ballot};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_clock[] = {spvtools::Extension::kSPV_KHR_shader_clock};
@@ -481,6 +489,8 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"USubSatINTEL", SpvOpUSubSatINTEL, 1, pygen_variable_caps_IntegerFunctions2INTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"IMul32x16INTEL", SpvOpIMul32x16INTEL, 1, pygen_variable_caps_IntegerFunctions2INTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"UMul32x16INTEL", SpvOpUMul32x16INTEL, 1, pygen_variable_caps_IntegerFunctions2INTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"FunctionPointerINTEL", SpvOpFunctionPointerINTEL, 1, pygen_variable_caps_FunctionPointersINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_INTEL_function_pointers, 0xffffffffu, 0xffffffffu},
+  {"FunctionPointerCallINTEL", SpvOpFunctionPointerCallINTEL, 1, pygen_variable_caps_FunctionPointersINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_VARIABLE_ID}, 1, 1, 1, pygen_variable_exts_SPV_INTEL_function_pointers, 0xffffffffu, 0xffffffffu},
   {"DecorateString", SpvOpDecorateString, 0, nullptr, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_DECORATION}, 0, 0, 2, pygen_variable_exts_SPV_GOOGLE_decorate_stringSPV_GOOGLE_hlsl_functionality1, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
   {"DecorateStringGOOGLE", SpvOpDecorateStringGOOGLE, 0, nullptr, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_DECORATION}, 0, 0, 2, pygen_variable_exts_SPV_GOOGLE_decorate_stringSPV_GOOGLE_hlsl_functionality1, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
   {"MemberDecorateString", SpvOpMemberDecorateString, 0, nullptr, 3, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_DECORATION}, 0, 0, 2, pygen_variable_exts_SPV_GOOGLE_decorate_stringSPV_GOOGLE_hlsl_functionality1, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
@@ -603,6 +613,10 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"SubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL", SpvOpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL, 2, pygen_variable_caps_SubgroupAvcMotionEstimationINTELSubgroupAvcMotionEstimationIntraINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL", SpvOpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL, 2, pygen_variable_caps_SubgroupAvcMotionEstimationINTELSubgroupAvcMotionEstimationIntraINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupAvcSicGetInterRawSadsINTEL", SpvOpSubgroupAvcSicGetInterRawSadsINTEL, 1, pygen_variable_caps_SubgroupAvcMotionEstimationINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"LoopControlINTEL", SpvOpLoopControlINTEL, 1, pygen_variable_caps_UnstructuredLoopControlsINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_LITERAL_INTEGER}, 0, 0, 1, pygen_variable_exts_SPV_INTEL_unstructured_loop_controls, 0xffffffffu, 0xffffffffu},
+  {"ReadPipeBlockingINTEL", SpvOpReadPipeBlockingINTEL, 1, pygen_variable_caps_BlockingPipesINTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_INTEL_blocking_pipes, 0xffffffffu, 0xffffffffu},
+  {"WritePipeBlockingINTEL", SpvOpWritePipeBlockingINTEL, 1, pygen_variable_caps_BlockingPipesINTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_INTEL_blocking_pipes, 0xffffffffu, 0xffffffffu},
+  {"FPGARegINTEL", SpvOpFPGARegINTEL, 1, pygen_variable_caps_FPGARegINTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_INTEL_fpga_reg, 0xffffffffu, 0xffffffffu},
   {"RayQueryGetRayTMinKHR", SpvOpRayQueryGetRayTMinKHR, 1, pygen_variable_caps_RayQueryProvisionalKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},
   {"RayQueryGetRayFlagsKHR", SpvOpRayQueryGetRayFlagsKHR, 1, pygen_variable_caps_RayQueryProvisionalKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},
   {"RayQueryGetIntersectionTKHR", SpvOpRayQueryGetIntersectionTKHR, 1, pygen_variable_caps_RayQueryProvisionalKHR, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},

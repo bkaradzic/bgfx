@@ -107,14 +107,15 @@ class FuzzerPass {
   // not exist, a transformation is applied to add it.
   uint32_t FindOrCreateBoolType();
 
-  // Returns the id of an OpTypeInt instruction, with width 32 and signedness
-  // specified by |is_signed|.  If such an instruction does not exist, a
-  // transformation is applied to add it.
-  uint32_t FindOrCreate32BitIntegerType(bool is_signed);
+  // Returns the id of an OpTypeInt instruction, with width and signedness
+  // specified by |width| and |is_signed|, respectively.  If such an instruction
+  // does not exist, a transformation is applied to add it.
+  uint32_t FindOrCreateIntegerType(uint32_t width, bool is_signed);
 
-  // Returns the id of an OpTypeFloat instruction, with width 32.  If such an
-  // instruction does not exist, a transformation is applied to add it.
-  uint32_t FindOrCreate32BitFloatType();
+  // Returns the id of an OpTypeFloat instruction, with width specified by
+  // |width|.  If such an instruction does not exist, a transformation is
+  // applied to add it.
+  uint32_t FindOrCreateFloatType(uint32_t width);
 
   // Returns the id of an OpTypeFunction %<return_type_id> %<...argument_id>
   // instruction. If such an instruction doesn't exist, a transformation
@@ -141,23 +142,26 @@ class FuzzerPass {
   uint32_t FindOrCreatePointerType(uint32_t base_type_id,
                                    SpvStorageClass storage_class);
 
-  // Returns the id of an OpTypePointer instruction, with a 32-bit integer base
-  // type of signedness specified by |is_signed|.  If the pointer type or
-  // required integer base type do not exist, transformations are applied to add
-  // them.
-  uint32_t FindOrCreatePointerTo32BitIntegerType(bool is_signed,
-                                                 SpvStorageClass storage_class);
+  // Returns the id of an OpTypePointer instruction, with a integer base
+  // type of width and signedness specified by |width| and |is_signed|,
+  // respectively.  If the pointer type or required integer base type do not
+  // exist, transformations are applied to add them.
+  uint32_t FindOrCreatePointerToIntegerType(uint32_t width, bool is_signed,
+                                            SpvStorageClass storage_class);
 
-  // Returns the id of an OpConstant instruction, with 32-bit integer type of
-  // signedness specified by |is_signed|, with |word| as its value.  If either
-  // the required integer type or the constant do not exist, transformations are
-  // applied to add them.
-  uint32_t FindOrCreate32BitIntegerConstant(uint32_t word, bool is_signed);
+  // Returns the id of an OpConstant instruction, with a integer type of
+  // width and signedness specified by |width| and |is_signed|, respectively,
+  // with |words| as its value.  If either the required integer type or the
+  // constant do not exist, transformations are applied to add them.
+  uint32_t FindOrCreateIntegerConstant(const std::vector<uint32_t>& words,
+                                       uint32_t width, bool is_signed);
 
-  // Returns the id of an OpConstant instruction, with 32-bit floating-point
-  // type, with |word| as its value.  If either the required floating-point type
-  // or the constant do not exist, transformations are applied to add them.
-  uint32_t FindOrCreate32BitFloatConstant(uint32_t word);
+  // Returns the id of an OpConstant instruction, with a floating-point
+  // type of width specified by |width|, with |words| as its value.  If either
+  // the required floating-point type or the constant do not exist,
+  // transformations are applied to add them.
+  uint32_t FindOrCreateFloatConstant(const std::vector<uint32_t>& words,
+                                     uint32_t width);
 
   // Returns the id of an OpConstantTrue or OpConstantFalse instruction,
   // according to |value|.  If either the required instruction or the bool

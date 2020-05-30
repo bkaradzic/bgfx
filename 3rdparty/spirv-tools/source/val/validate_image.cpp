@@ -160,6 +160,17 @@ bool IsValidLodOperand(const ValidationState_t& _, SpvOp opcode) {
   }
 }
 
+bool IsValidGatherLodBiasAMD(const ValidationState_t& _, SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpImageGather:
+    case SpvOpImageSparseGather:
+      return _.HasCapability(SpvCapabilityImageGatherBiasLodAMD);
+    default:
+      break;
+  }
+  return false;
+}
+
 // Returns true if the opcode is a Image instruction which applies
 // homogenous projection to the coordinates.
 bool IsProj(SpvOp opcode) {
@@ -260,11 +271,12 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
   const bool is_implicit_lod = IsImplicitLod(opcode);
   const bool is_explicit_lod = IsExplicitLod(opcode);
   const bool is_valid_lod_operand = IsValidLodOperand(_, opcode);
+  const bool is_valid_gather_lod_bias_amd = IsValidGatherLodBiasAMD(_, opcode);
 
   // The checks should be done in the order of definition of OperandImage.
 
   if (mask & SpvImageOperandsBiasMask) {
-    if (!is_implicit_lod) {
+    if (!is_implicit_lod && !is_valid_gather_lod_bias_amd) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Image Operand Bias can only be used with ImplicitLod opcodes";
     }
@@ -290,7 +302,7 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
 
   if (mask & SpvImageOperandsLodMask) {
     if (!is_valid_lod_operand && opcode != SpvOpImageFetch &&
-        opcode != SpvOpImageSparseFetch) {
+        opcode != SpvOpImageSparseFetch && !is_valid_gather_lod_bias_amd) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Image Operand Lod can only be used with ExplicitLod opcodes "
              << "and OpImageFetch";
@@ -303,7 +315,7 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
     }
 
     const uint32_t type_id = _.GetTypeId(inst->word(word_index++));
-    if (is_explicit_lod) {
+    if (is_explicit_lod || is_valid_gather_lod_bias_amd) {
       if (!_.IsFloatScalarType(type_id)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Expected Image Operand Lod to be float scalar when used "

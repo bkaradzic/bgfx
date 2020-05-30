@@ -326,8 +326,8 @@ void FuzzerPassDonateModules::HandleTypeOrValue(
       new_result_id = GetFuzzerContext()->GetFreshId();
       ApplyTransformation(TransformationAddTypeArray(
           new_result_id, original_id_to_donated_id->at(component_type_id),
-          FindOrCreate32BitIntegerConstant(
-              GetFuzzerContext()->GetRandomSizeForNewArray(), false)));
+          FindOrCreateIntegerConstant(
+              {GetFuzzerContext()->GetRandomSizeForNewArray()}, 32, false)));
     } break;
     case SpvOpTypeStruct: {
       // Similar to SpvOpTypeArray.
@@ -982,19 +982,19 @@ void FuzzerPassDonateModules::AddLivesafeFunction(
   // Various types and constants must be in place for a function to be made
   // live-safe.  Add them if not already present.
   FindOrCreateBoolType();  // Needed for comparisons
-  FindOrCreatePointerTo32BitIntegerType(
-      false, SpvStorageClassFunction);  // Needed for adding loop limiters
-  FindOrCreate32BitIntegerConstant(
-      0, false);  // Needed for initializing loop limiters
-  FindOrCreate32BitIntegerConstant(
-      1, false);  // Needed for incrementing loop limiters
+  FindOrCreatePointerToIntegerType(
+      32, false, SpvStorageClassFunction);  // Needed for adding loop limiters
+  FindOrCreateIntegerConstant({0}, 32,
+                              false);  // Needed for initializing loop limiters
+  FindOrCreateIntegerConstant({1}, 32,
+                              false);  // Needed for incrementing loop limiters
 
   // Get a fresh id for the variable that will be used as a loop limiter.
   const uint32_t loop_limiter_variable_id = GetFuzzerContext()->GetFreshId();
   // Choose a random loop limit, and add the required constant to the
   // module if not already there.
-  const uint32_t loop_limit = FindOrCreate32BitIntegerConstant(
-      GetFuzzerContext()->GetRandomLoopLimit(), false);
+  const uint32_t loop_limit = FindOrCreateIntegerConstant(
+      {GetFuzzerContext()->GetRandomLoopLimit()}, 32, false);
 
   // Consider every loop header in the function to donate, and create a
   // structure capturing the ids to be used for manipulating the loop
@@ -1080,7 +1080,6 @@ void FuzzerPassDonateModules::AddLivesafeFunction(
             auto index_type_inst = donor_ir_context->get_def_use_mgr()->GetDef(
                 index_inst->type_id());
             assert(index_type_inst->opcode() == SpvOpTypeInt);
-            assert(index_type_inst->GetSingleWordInOperand(0) == 32);
             opt::analysis::Integer* index_int_type =
                 donor_ir_context->get_type_mgr()
                     ->GetType(index_type_inst->result_id())
@@ -1089,8 +1088,8 @@ void FuzzerPassDonateModules::AddLivesafeFunction(
               // We will have to clamp this index, so we need a constant
               // whose value is one less than the bound, to compare
               // against and to use as the clamped value.
-              FindOrCreate32BitIntegerConstant(bound - 1,
-                                               index_int_type->IsSigned());
+              FindOrCreateIntegerConstant({bound - 1}, 32,
+                                          index_int_type->IsSigned());
             }
             should_be_composite_type =
                 TransformationAddFunction::FollowCompositeIndex(

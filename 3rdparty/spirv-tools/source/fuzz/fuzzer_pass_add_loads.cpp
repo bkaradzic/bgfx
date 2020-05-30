@@ -60,7 +60,7 @@ void FuzzerPassAddLoads::Apply() {
                   if (!instruction->result_id() || !instruction->type_id()) {
                     return false;
                   }
-                  switch (instruction->result_id()) {
+                  switch (instruction->opcode()) {
                     case SpvOpConstantNull:
                     case SpvOpUndef:
                       // Do not allow loading from a null or undefined pointer;

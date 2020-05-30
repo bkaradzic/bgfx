@@ -51,6 +51,7 @@
 #include "source/fuzz/transformation_move_block_down.h"
 #include "source/fuzz/transformation_outline_function.h"
 #include "source/fuzz/transformation_permute_function_parameters.h"
+#include "source/fuzz/transformation_push_id_through_variable.h"
 #include "source/fuzz/transformation_replace_boolean_constant_with_constant_binary.h"
 #include "source/fuzz/transformation_replace_constant_with_uniform.h"
 #include "source/fuzz/transformation_replace_id_with_synonym.h"
@@ -163,6 +164,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
         kPermuteFunctionParameters:
       return MakeUnique<TransformationPermuteFunctionParameters>(
           message.permute_function_parameters());
+    case protobufs::Transformation::TransformationCase::kPushIdThroughVariable:
+      return MakeUnique<TransformationPushIdThroughVariable>(
+          message.push_id_through_variable());
     case protobufs::Transformation::TransformationCase::
         kReplaceBooleanConstantWithConstantBinary:
       return MakeUnique<TransformationReplaceBooleanConstantWithConstantBinary>(
