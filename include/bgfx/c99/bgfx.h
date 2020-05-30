@@ -1111,7 +1111,7 @@ BGFX_C_API void bgfx_shutdown(void);
  *    - `BGFX_RESET_CAPTURE` - Begin screen capture.
  *    - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.
  *    - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
- *      occurs. Default behavior is that flip occurs before rendering new
+ *      occurs. Default behaviour is that flip occurs before rendering new
  *      frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
  *    - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
  * @param[in] _format Texture format. See: `TextureFormat::Enum`.

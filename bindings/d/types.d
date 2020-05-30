@@ -331,7 +331,7 @@ enum uint BGFX_RESET_MAXANISOTROPY = 0x00000100; /// Turn on/off max anisotropy.
 enum uint BGFX_RESET_CAPTURE = 0x00000200; /// Begin screen capture.
 enum uint BGFX_RESET_FLUSH_AFTER_RENDER = 0x00002000; /// Flush rendering after submitting to GPU.
 /**
- * This flag specifies where flip occurs. Default behavior is that flip occurs
+ * This flag specifies where flip occurs. Default behaviour is that flip occurs
  * before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
  */
 enum uint BGFX_RESET_FLIP_AFTER_RENDER = 0x00004000;

@@ -443,7 +443,7 @@
 #define BGFX_RESET_MAXANISOTROPY            UINT32_C(0x00000100) //!< Turn on/off max anisotropy.
 #define BGFX_RESET_CAPTURE                  UINT32_C(0x00000200) //!< Begin screen capture.
 #define BGFX_RESET_FLUSH_AFTER_RENDER       UINT32_C(0x00002000) //!< Flush rendering after submitting to GPU.
-/// This flag specifies where flip occurs. Default behavior is that flip occurs
+/// This flag specifies where flip occurs. Default behaviour is that flip occurs
 /// before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 #define BGFX_RESET_FLIP_AFTER_RENDER        UINT32_C(0x00004000)
 #define BGFX_RESET_SRGB_BACKBUFFER          UINT32_C(0x00008000) //!< Enable sRGB backbuffer.

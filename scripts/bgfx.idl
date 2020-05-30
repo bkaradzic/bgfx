@@ -342,7 +342,6 @@ flag.ResetMsaa { bits = 32, shift = 4, range = 3, base = 1 }
 	.X16 --- Enable 16x MSAA.
 	()
 
-
 flag.Reset { bits = 32 }
 	.None             ( 0) --- No reset flags.
 	.Fullscreen       ( 1) --- Not supported yet.
@@ -350,7 +349,7 @@ flag.Reset { bits = 32 }
 	.Maxanisotropy    ( 9) --- Turn on/off max anisotropy.
 	.Capture          (10) --- Begin screen capture.
 	.FlushAfterRender (14) --- Flush rendering after submitting to GPU.
-	.FlipAfterRender  (15) --- This flag specifies where flip occurs. Default behavior is that flip occurs
+	.FlipAfterRender  (15) --- This flag specifies where flip occurs. Default behaviour is that flip occurs
 	                       --- before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 	.SrgbBackbuffer   (16) --- Enable sRGB backbuffer.
 	.Hdr10            (17) --- Enable HDR10 rendering.
@@ -1145,7 +1144,7 @@ func.reset
 	                                 ---   - `BGFX_RESET_CAPTURE` - Begin screen capture.
 	                                 ---   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.
 	                                 ---   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
-	                                 ---     occurs. Default behavior is that flip occurs before rendering new
+	                                 ---     occurs. Default behaviour is that flip occurs before rendering new
 	                                 ---     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 	                                 ---   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
 	.format "TextureFormat::Enum"    --- Texture format. See: `TextureFormat::Enum`.
