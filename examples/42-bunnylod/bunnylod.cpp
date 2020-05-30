@@ -185,7 +185,7 @@ public:
 		// Create program from shaders.
 		m_program = loadProgram("vs_picking_shaded", "fs_picking_shaded");
 
-		Mesh *mesh = meshLoad("meshes/bunny.bin", true);	// load into memory
+		Mesh *mesh = meshLoad("meshes/bunny_patched.bin", true);
 		loadMesh(mesh);
 		meshUnload(mesh);
 
