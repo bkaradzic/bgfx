@@ -1966,7 +1966,7 @@ void CompilerHLSL::emit_buffer_block(const SPIRVariable &var)
 	if (is_uav)
 	{
 		Bitset flags = ir.get_buffer_block_flags(var);
-		bool is_readonly = flags.get(DecorationNonWritable) && !hlsl_options.force_storage_buffer_as_uav;
+		bool is_readonly = flags.get(DecorationNonWritable) && !is_hlsl_force_storage_buffer_as_uav(var.self);
 		bool is_coherent = flags.get(DecorationCoherent) && !is_readonly;
 		bool is_interlocked = interlocked_resources.count(var.self) > 0;
 		const char *type_name = "ByteAddressBuffer ";
@@ -3098,7 +3098,7 @@ string CompilerHLSL::to_resource_binding(const SPIRVariable &var)
 			if (has_decoration(type.self, DecorationBufferBlock))
 			{
 				Bitset flags = ir.get_buffer_block_flags(var);
-				bool is_readonly = flags.get(DecorationNonWritable) && !hlsl_options.force_storage_buffer_as_uav;
+				bool is_readonly = flags.get(DecorationNonWritable) && !is_hlsl_force_storage_buffer_as_uav(var.self);
 				space = is_readonly ? 't' : 'u'; // UAV
 				resource_flags = is_readonly ? HLSL_BINDING_AUTO_SRV_BIT : HLSL_BINDING_AUTO_UAV_BIT;
 			}
@@ -3117,7 +3117,7 @@ string CompilerHLSL::to_resource_binding(const SPIRVariable &var)
 		{
 			// UAV or SRV depending on readonly flag.
 			Bitset flags = ir.get_buffer_block_flags(var);
-			bool is_readonly = flags.get(DecorationNonWritable) && !hlsl_options.force_storage_buffer_as_uav;
+			bool is_readonly = flags.get(DecorationNonWritable) && !is_hlsl_force_storage_buffer_as_uav(var.self);
 			space = is_readonly ? 't' : 'u';
 			resource_flags = is_readonly ? HLSL_BINDING_AUTO_SRV_BIT : HLSL_BINDING_AUTO_UAV_BIT;
 		}
@@ -5544,4 +5544,23 @@ CompilerHLSL::BitcastType CompilerHLSL::get_bitcast_type(uint32_t result_type, u
 		return BitcastType::TypeUnpackUint64;
 
 	return BitcastType::TypeNormal;
+}
+
+bool CompilerHLSL::is_hlsl_force_storage_buffer_as_uav(ID id) const
+{
+	if (hlsl_options.force_storage_buffer_as_uav)
+	{
+		return true;
+	}
+
+	const uint32_t desc_set = get_decoration(id, spv::DecorationDescriptorSet);
+	const uint32_t binding = get_decoration(id, spv::DecorationBinding);
+	
+	return (force_uav_buffer_bindings.find({desc_set, binding}) != force_uav_buffer_bindings.end());
+}
+
+void CompilerHLSL::set_hlsl_force_storage_buffer_as_uav(uint32_t desc_set, uint32_t binding)
+{
+	SetBindingPair pair = { desc_set, binding };
+	force_uav_buffer_bindings.insert(pair);
 }

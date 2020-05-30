@@ -8697,7 +8697,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			var->static_expression = ops[1];
 		else if (var && var->loop_variable && !var->loop_variable_enable)
 			var->static_expression = ops[1];
-		else if (var && var->remapped_variable)
+		else if (var && var->remapped_variable && var->static_expression)
 		{
 			// Skip the write.
 		}

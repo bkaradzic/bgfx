@@ -558,6 +558,7 @@ struct SPIRType : IVariant
 	// Keep track of how many pointer layers we have.
 	uint32_t pointer_depth = 0;
 	bool pointer = false;
+	bool forward_pointer = false;
 
 	spv::StorageClass storage = spv::StorageClassGeneric;
 

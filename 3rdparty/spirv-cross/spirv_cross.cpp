@@ -1659,6 +1659,13 @@ size_t Compiler::get_declared_struct_member_size(const SPIRType &struct_type, ui
 		break;
 	}
 
+	if (type.pointer && type.storage == StorageClassPhysicalStorageBuffer)
+	{
+		// Check if this is a top-level pointer type, and not an array of pointers.
+		if (type.pointer_depth > get<SPIRType>(type.parent_type).pointer_depth)
+			return 8;
+	}
+
 	if (!type.array.empty())
 	{
 		// For arrays, we can use ArrayStride to get an easy check.
@@ -4635,6 +4642,12 @@ bool Compiler::type_is_array_of_pointers(const SPIRType &type) const
 
 	// If parent type has same pointer depth, we must have an array of pointers.
 	return type.pointer_depth == get<SPIRType>(type.parent_type).pointer_depth;
+}
+
+bool Compiler::type_is_top_level_physical_pointer(const SPIRType &type) const
+{
+	return type.pointer && type.storage == StorageClassPhysicalStorageBuffer &&
+	       type.pointer_depth > get<SPIRType>(type.parent_type).pointer_depth;
 }
 
 bool Compiler::flush_phi_required(BlockID from, BlockID to) const
