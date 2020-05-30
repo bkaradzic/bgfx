@@ -3,6 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+#include <bx/easing.h>
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
@@ -216,7 +217,7 @@ public:
 	}
 
 	void updateIndexBuffer() {
-		int verts = m_LOD * m_totalVertices;
+		int verts = bx::easeInQuad(m_LOD) * m_totalVertices;
 		if (verts <= 0)
 			return;
 
@@ -297,6 +298,7 @@ public:
 
 			ImGui::Text("Vertices: %d", m_numVertices);
 			ImGui::Text("Triangles: %d", m_numTriangles);
+
 			ImGui::SliderFloat("LOD Level", &m_LOD, 0.0f, 1.0f);
 
 			ImGui::End();
