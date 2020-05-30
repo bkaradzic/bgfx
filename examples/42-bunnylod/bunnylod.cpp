@@ -40,14 +40,14 @@ public:
 		// It will takes long time if there are too many vertices.
 		ProgressiveMesh(vertices, stride, (const float *)(vb->data + offset), triangles, (const int *)ib->data, m_map, permutation);
 
-		// rearrange the vertex Array 
+		// rearrange the vertex Array
 		char * temp = (char *)Alloc(vertices * stride);
 		bx::memCopy(temp, vb->data, vb->size);
 		for (i = 0; i<vertices; i++) {
 			bx::memCopy(vb->data + permutation[i] * stride , temp + i * stride, stride);
 		}
 		Free(temp);
-	
+
 		// update the changes in the entries in the triangle Array
 		for (i = 0; i<triangles * 3; i++) {
 			int *indices = (int *)(ib->data + i * sizeof(uint32_t));
@@ -145,7 +145,7 @@ public:
 
 		m_vb = bgfx::createVertexBuffer(vb, mesh->m_layout);
 		m_ib = bgfx::createDynamicIndexBuffer(ib, BGFX_BUFFER_INDEX32);
-		
+
 		m_numVertices = vertices;
 		m_numTriangles = indices/3;
 		m_totalVertices = m_numVertices;
@@ -377,6 +377,6 @@ public:
 ENTRY_IMPLEMENT_MAIN(
 	  ExampleBunnyLOD
 	, "42-bunnylod"
-	, "Bunny LOD"
+	, "Progressive Mesh LOD"
 	, "https://bkaradzic.github.io/bgfx/examples.html#bunnylod"
 	);
