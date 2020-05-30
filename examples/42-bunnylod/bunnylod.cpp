@@ -299,7 +299,7 @@ public:
 			ImGui::Text("Vertices: %d", m_numVertices);
 			ImGui::Text("Triangles: %d", m_numTriangles);
 
-			ImGui::SliderFloat("LOD Level", &m_LOD, 0.0f, 1.0f);
+			ImGui::SliderFloat("LOD Level", &m_LOD, 0.05f, 1.0f);
 
 			ImGui::End();
 
