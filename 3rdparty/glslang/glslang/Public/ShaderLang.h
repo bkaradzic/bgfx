@@ -413,6 +413,7 @@ enum TResourceType {
     EResCount
 };
 
+
 // Make one TShader per shader that you will link into a program. Then
 //  - provide the shader through setStrings() or setStringsWithLengths()
 //  - optionally call setEnv*(), see below for more detail

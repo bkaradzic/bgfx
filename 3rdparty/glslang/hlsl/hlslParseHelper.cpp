@@ -9791,6 +9791,8 @@ void HlslParseContext::addPatchConstantInvocation()
                 } else {
                     // Use the original declaration type for the linkage
                     paramType->getQualifier().builtIn = biType;
+                    if (biType == EbvTessLevelInner || biType == EbvTessLevelInner)
+                        paramType->getQualifier().patch = true;
 
                     if (notInEntryPoint.count(tInterstageIoData(biType, storage)) == 1)
                         addToLinkage(*paramType, patchConstantFunction[p].name, nullptr);

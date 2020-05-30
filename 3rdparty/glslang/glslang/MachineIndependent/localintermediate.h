@@ -400,7 +400,7 @@ public:
     void setSource(EShSource s) { source = s; }
     EShSource getSource() const { return source; }
 #else
-    void setSource(EShSource s) { assert(s == EShSourceGlsl); }
+    void setSource(EShSource s) { assert(s == EShSourceGlsl); (void)s; }
     EShSource getSource() const { return EShSourceGlsl; }
 #endif
 
