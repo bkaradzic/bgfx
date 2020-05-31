@@ -103,14 +103,19 @@ public:
 		bool cacheInvalid = false;
 		loadCache();
 
-		if (m_originalVertices != vertices || m_cacheWeld == NULL) {
-			cacheInvalid = true;
+		if (m_originalVertices != vertices
+		||  m_cacheWeld == NULL)
+		{
+			cacheInvalid       = true;
 			m_originalVertices = vertices;
-			Free(m_cacheWeld);
+
 			Free(m_cachePermutation);
 			m_cachePermutation = NULL;
-			m_cacheWeld = (int *)Alloc(vertices * sizeof(int));
-			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, mesh->m_layout, vb_data, vertices, 0.00001f);
+
+			Free(m_cacheWeld);
+			m_cacheWeld = (int*)Alloc(vertices * sizeof(uint32_t));
+
+			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, mesh->m_layout, vb_data, vertices, true, 0.00001f);
 		}
 
 		const bgfx::Memory *vb = mergeVertices(vb_data, mesh->m_layout.getStride(), m_cacheWeld, vertices, m_totalVertices);
