@@ -3590,7 +3590,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				cmdbuf.write(flags);
 
 				const uint32_t size = 0
-					+ bx::alignUp(sizeof(TransientIndexBuffer), 16)
+					+ bx::alignUp<uint32_t>(sizeof(TransientIndexBuffer), 16)
 					+ bx::alignUp(_size, 16)
 					;
 				tib = (TransientIndexBuffer*)BX_ALIGNED_ALLOC(g_allocator, size, 16);
@@ -3654,7 +3654,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				cmdbuf.write(flags);
 
 				const uint32_t size = 0
-					+ bx::alignUp(sizeof(TransientVertexBuffer), 16)
+					+ bx::alignUp<uint32_t>(sizeof(TransientVertexBuffer), 16)
 					+ bx::alignUp(_size, 16)
 					;
 				tvb = (TransientVertexBuffer*)BX_ALIGNED_ALLOC(g_allocator, size, 16);
