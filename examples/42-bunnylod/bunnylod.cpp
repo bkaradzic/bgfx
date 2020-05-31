@@ -11,14 +11,6 @@
 
 extern "C" void ProgressiveMesh(int vert_n, int vert_stride, const float *v, int tri_n, const int *tri, int *map, int *permutation);
 
-static void * Alloc(size_t sz) {
-	return BX_ALLOC(entry::getAllocator(), sz);
-}
-
-static void Free(void *p) {
-	BX_FREE(entry::getAllocator(), p);
-}
-
 namespace
 {
 
@@ -30,154 +22,215 @@ public:
 	{
 	}
 
-	void PermuteMesh(const bgfx::Memory *vb, const bgfx::Memory *ib, const bgfx::VertexLayout &layout) {
-		int i;
-		int stride = layout.getStride();
-		int offset = layout.getOffset(bgfx::Attrib::Position);
-		int vertices = vb->size / stride;
-		int triangles = ib->size / ( 3 * sizeof(uint32_t) );
+	void PermuteMesh(const bgfx::Memory* _vb, const bgfx::Memory* _ib, const bgfx::VertexLayout& _layout)
+	{
+		const uint32_t stride       = _layout.getStride();
+		const uint32_t offset       = _layout.getOffset(bgfx::Attrib::Position);
+		const uint32_t numVertices  = _vb->size / stride;
+		const uint32_t numTriangles = _ib->size / (3 * sizeof(uint32_t) );
 
-		if (m_cachePermutation == NULL) {
-			m_cachePermutation = (int*)Alloc(vertices * sizeof(int));
-			m_map = (int *)Alloc(vertices * sizeof(int));
+		if (m_cachePermutation == NULL)
+		{
+			m_cachePermutation = (uint32_t*)BX_ALLOC(entry::getAllocator(), numVertices * sizeof(uint32_t) );
+			m_map = (uint32_t*)BX_ALLOC(entry::getAllocator(), numVertices * sizeof(uint32_t) );
 
 			// It will takes long time if there are too many vertices.
-			ProgressiveMesh(vertices, stride, (const float *)(vb->data + offset), triangles, (const int *)ib->data, m_map, m_cachePermutation);
+			ProgressiveMesh(
+				  numVertices
+				, stride
+				, (const float*)(_vb->data + offset)
+				, numTriangles
+				, (const int*)_ib->data
+				, (int*)m_map
+				, (int*)m_cachePermutation
+				);
 		}
 
 		// rearrange the vertex Array
-		char * temp = (char *)Alloc(vertices * stride);
-		bx::memCopy(temp, vb->data, vb->size);
-		for (i = 0; i<vertices; i++) {
-			bx::memCopy(vb->data + m_cachePermutation[i] * stride , temp + i * stride, stride);
+		char* temp = (char*)BX_ALLOC(entry::getAllocator(), numVertices * stride);
+		bx::memCopy(temp, _vb->data, _vb->size);
+
+		for (uint32_t ii = 0; ii < numVertices; ++ii)
+		{
+			bx::memCopy(_vb->data + m_cachePermutation[ii] * stride , temp + ii * stride, stride);
 		}
-		Free(temp);
+
+		BX_FREE(entry::getAllocator(), temp);
 
 		// update the changes in the entries in the triangle Array
-		for (i = 0; i<triangles * 3; i++) {
-			int *indices = (int *)(ib->data + i * sizeof(uint32_t));
+		for (uint32_t ii = 0, num = numTriangles*3; ii < num; ++ii)
+		{
+			uint32_t* indices = (uint32_t*)(_ib->data + ii * sizeof(uint32_t) );
 			*indices = m_cachePermutation[*indices];
 		}
 	}
 
-	const bgfx::Memory * mergeVertices(const char *vb, int stride, const int *map, int n, int merged) {
-		const bgfx::Memory * buffer = bgfx::alloc(stride * merged);
-		int i;
-		int target = 0;
-		for (i=0;i<n;i++) {
-			if (map[i] == target) {
-				bx::memCopy(buffer->data + target*stride, vb + i*stride, stride);
+	static const bgfx::Memory* mergeVertices(const uint8_t* _vb, uint16_t _stride, const uint32_t* _indices, uint32_t _num, uint32_t _numMerged)
+	{
+		const bgfx::Memory* mem = bgfx::alloc(_stride * _numMerged);
+
+		uint32_t target = 0;
+
+		for (uint32_t ii = 0; ii < _num; ++ii)
+		{
+			if (_indices[ii] == target)
+			{
+				bx::memCopy(mem->data + target*_stride, _vb + ii*_stride, _stride);
 				++target;
 			}
 		}
-		return buffer;
+
+		return mem;
 	}
 
-	void loadMesh(Mesh *mesh) {
+	void loadMesh(Mesh* _mesh)
+	{
 		// merge sub mesh
-		uint32_t vertices = 0;
-		int indices = 0;
-		for (GroupArray::const_iterator it = mesh->m_groups.begin(), itEnd = mesh->m_groups.end(); it != itEnd; ++it) {
-			vertices += it->m_numVertices;
-			indices += it->m_numIndices;
+		uint32_t numVertices = 0;
+		uint32_t numIndices  = 0;
+
+		for (GroupArray::const_iterator it = _mesh->m_groups.begin(), itEnd = _mesh->m_groups.end()
+			; it != itEnd
+			; ++it
+			)
+		{
+			numVertices += it->m_numVertices;
+			numIndices  += it->m_numIndices;
 		}
 
-		const bgfx::Memory *ib = bgfx::alloc(indices * sizeof(uint32_t));
-		char * vb_data = (char *)Alloc(mesh->m_layout.getSize(vertices));
+		const bgfx::Memory* ib = bgfx::alloc(numIndices * sizeof(uint32_t) );
+		uint8_t* vbData = (uint8_t*)BX_ALLOC(entry::getAllocator(), _mesh->m_layout.getSize(numVertices) );
 
-		size_t voffset = 0;
-		size_t ioffset = 0;
-		int index = 0;
-		for (GroupArray::const_iterator it = mesh->m_groups.begin(), itEnd = mesh->m_groups.end(); it != itEnd; ++it) {
-			size_t vsize = mesh->m_layout.getSize(it->m_numVertices);
-			bx::memCopy(vb_data + voffset, it->m_vertices, vsize);
-			uint32_t *ibptr = (uint32_t *)(ib->data + ioffset);
-			for (uint32_t i = 0; i<it->m_numIndices; i++) {
-				ibptr[i] = it->m_indices[i] + index;
+		{
+			uint32_t voffset = 0;
+			uint32_t ioffset = 0;
+			uint32_t index   = 0;
+
+			for (GroupArray::const_iterator it = _mesh->m_groups.begin(), itEnd = _mesh->m_groups.end()
+				; it != itEnd
+				; ++it
+				)
+			{
+				const uint32_t vsize = _mesh->m_layout.getSize(it->m_numVertices);
+				bx::memCopy(vbData + voffset, it->m_vertices, vsize);
+
+				uint32_t* ibptr = (uint32_t*)(ib->data + ioffset);
+
+				for (uint32_t ii = 0, num = it->m_numIndices; ii < num; ++ii)
+				{
+					ibptr[ii] = it->m_indices[ii] + index;
+				}
+
+				voffset += vsize;
+				ioffset += uint32_t(it->m_numIndices * sizeof(uint32_t) );
+				index   += uint32_t(it->m_numVertices);
 			}
-			voffset+=vsize;
-			ioffset+=it->m_numIndices * sizeof(uint32_t);
-			index+=it->m_numVertices;
 		}
 
 		bool cacheInvalid = false;
 		loadCache();
 
-		if (m_originalVertices != vertices
+		if (m_originalVertices != numVertices
 		||  m_cacheWeld == NULL)
 		{
 			cacheInvalid       = true;
-			m_originalVertices = vertices;
+			m_originalVertices = numVertices;
 
-			Free(m_cachePermutation);
+			BX_FREE(entry::getAllocator(), m_cachePermutation);
 			m_cachePermutation = NULL;
 
-			Free(m_cacheWeld);
-			m_cacheWeld = (int*)Alloc(vertices * sizeof(uint32_t));
+			BX_FREE(entry::getAllocator(), m_cacheWeld);
+			m_cacheWeld = (uint32_t*)BX_ALLOC(entry::getAllocator(), numVertices * sizeof(uint32_t) );
 
-			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, mesh->m_layout, vb_data, vertices, true, 0.00001f);
+			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, _mesh->m_layout, vbData, numVertices, true, 0.00001f);
 		}
 
-		const bgfx::Memory *vb = mergeVertices(vb_data, mesh->m_layout.getStride(), m_cacheWeld, vertices, m_totalVertices);
-		Free(vb_data);
+		const bgfx::Memory* vb = mergeVertices(
+			  vbData
+			, _mesh->m_layout.getStride()
+			, m_cacheWeld
+			, numVertices
+			, m_totalVertices
+			);
+		BX_FREE(entry::getAllocator(), vbData);
 
-		int i;
-		int *ib_data = (int *)ib->data;
-		for (i=0; i<indices; i++) {
-			ib_data[i] = m_cacheWeld[ib_data[i]];
+		{
+			uint32_t* ibData = (uint32_t*)ib->data;
+			for (uint32_t ii = 0; ii < numIndices; ++ii)
+			{
+				ibData[ii] = m_cacheWeld[ibData[ii] ];
+			}
 		}
 
-		PermuteMesh(vb, ib, mesh->m_layout);
+		PermuteMesh(vb, ib, _mesh->m_layout);
 
-		if (cacheInvalid) {
+		if (cacheInvalid)
+		{
 			saveCache();
 		}
 
-		m_triangle = (int *)Alloc(ib->size);
+		m_triangle = (uint32_t*)BX_ALLOC(entry::getAllocator(), ib->size);
 		bx::memCopy(m_triangle, ib->data, ib->size);
 
-		m_vb = bgfx::createVertexBuffer(vb, mesh->m_layout);
+		m_vb = bgfx::createVertexBuffer(vb, _mesh->m_layout);
 		m_ib = bgfx::createDynamicIndexBuffer(ib, BGFX_BUFFER_INDEX32);
 
-		m_numVertices = m_totalVertices;
-		m_numTriangles = indices/3;
+		m_numVertices    = m_totalVertices;
+		m_numTriangles   = numIndices/3;
 		m_totalTriangles = m_numTriangles;
 	}
 
-#define CACHEFILENAME "temp/bunnylod.cache"
+	const bx::FilePath kCacheFilePath = bx::FilePath("temp/bunnylod.cache");
 
-	void loadCache() {
+	void loadCache()
+	{
 		m_cacheWeld = NULL;
 		m_cachePermutation = NULL;
 		m_originalVertices = 0;
-		bx::FileReader f;
-		if (bx::open(&f, CACHEFILENAME)) {
-			bx::read(&f, m_originalVertices);
-			bx::read(&f, m_totalVertices);
-			m_cacheWeld = (int *)Alloc(m_originalVertices * sizeof(int));
-			bx::read(&f, m_cacheWeld, m_originalVertices * sizeof(int));
-			m_cachePermutation = (int *)Alloc(m_totalVertices * sizeof(int));
-			bx::read(&f, m_cachePermutation, m_totalVertices * sizeof(int));
-			m_map = (int *)Alloc(m_totalVertices * sizeof(int));
-			if (bx::read(&f, m_map, m_totalVertices * sizeof(int)) != (int32_t)(m_totalVertices * sizeof(int))) {
+
+		bx::FileReader reader;
+
+		if (bx::open(&reader, kCacheFilePath) )
+		{
+			bx::read(&reader, m_originalVertices);
+			bx::read(&reader, m_totalVertices);
+			m_cacheWeld = (uint32_t*)BX_ALLOC(entry::getAllocator(), m_originalVertices * sizeof(uint32_t) );
+
+			bx::read(&reader, m_cacheWeld, m_originalVertices * sizeof(uint32_t) );
+			m_cachePermutation = (uint32_t*)BX_ALLOC(entry::getAllocator(), m_totalVertices * sizeof(uint32_t) );
+
+			bx::read(&reader, m_cachePermutation, m_totalVertices * sizeof(uint32_t) );
+			m_map = (uint32_t*)BX_ALLOC(entry::getAllocator(), m_totalVertices * sizeof(uint32_t) );
+
+			if (bx::read(&reader, m_map, m_totalVertices * sizeof(uint32_t) ) != int32_t(m_totalVertices * sizeof(uint32_t) ) )
+			{
 				// read fail
-				Free(m_cacheWeld); m_cacheWeld = NULL;
-				Free(m_cachePermutation); m_cachePermutation = NULL;
-				Free(m_map); m_map = NULL;
+				BX_FREE(entry::getAllocator(), m_cacheWeld);
+				m_cacheWeld = NULL;
+
+				BX_FREE(entry::getAllocator(), m_cachePermutation);
+				m_cachePermutation = NULL;
+
+				BX_FREE(entry::getAllocator(), m_map);
+				m_map = NULL;
 			}
-			bx::close(&f);
+
+			bx::close(&reader);
 		}
 	}
 
-	void saveCache() {
-		bx::FileWriter f;
-		if (bx::open(&f, CACHEFILENAME)) {
-			bx::write(&f, m_originalVertices);
-			bx::write(&f, m_totalVertices);
-			bx::write(&f, m_cacheWeld, m_originalVertices * sizeof(int));
-			bx::write(&f, m_cachePermutation, m_totalVertices * sizeof(int));
-			bx::write(&f, m_map, m_totalVertices * sizeof(int));
-			bx::close(&f);
+	void saveCache()
+	{
+		bx::FileWriter writer;
+
+		if (bx::open(&writer, kCacheFilePath) )
+		{
+			bx::write(&writer, m_originalVertices);
+			bx::write(&writer, m_totalVertices);
+			bx::write(&writer, m_cacheWeld, m_originalVertices * sizeof(uint32_t) );
+			bx::write(&writer, m_cachePermutation, m_totalVertices * sizeof(uint32_t) );
+			bx::write(&writer, m_map, m_totalVertices * sizeof(uint32_t) );
+			bx::close(&writer);
 		}
 	}
 
@@ -203,18 +256,18 @@ public:
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0x303030ff
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		u_tint = bgfx::createUniform("u_tint", bgfx::UniformType::Vec4);
 
 		// Create program from shaders.
 		m_program = loadProgram("vs_picking_shaded", "fs_picking_shaded");
 
-		Mesh *mesh = meshLoad("meshes/bunny_patched.bin", true);
+		Mesh* mesh = meshLoad("meshes/bunny_patched.bin", true);
 		loadMesh(mesh);
 		meshUnload(mesh);
 
@@ -235,10 +288,10 @@ public:
 		bgfx::destroy(m_ib);
 		bgfx::destroy(u_tint);
 
-		Free(m_map);
-		Free(m_triangle);
-		Free(m_cacheWeld);
-		Free(m_cachePermutation);
+		BX_FREE(entry::getAllocator(), m_map);
+		BX_FREE(entry::getAllocator(), m_triangle);
+		BX_FREE(entry::getAllocator(), m_cacheWeld);
+		BX_FREE(entry::getAllocator(), m_cachePermutation);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -246,38 +299,50 @@ public:
 		return 0;
 	}
 
-	void updateIndexBuffer() {
+	void updateIndexBuffer()
+	{
 		int verts = int(bx::easeInQuad(m_LOD) * m_totalVertices);
 		if (verts <= 0)
+		{
 			return;
+		}
 
-		int i,j;
 		int tris = 0;
-		const bgfx::Memory * ib = bgfx::alloc(m_totalTriangles * 3 * sizeof(uint32_t));
+		const bgfx::Memory* ib = bgfx::alloc(m_totalTriangles * 3 * sizeof(uint32_t) );
 
-		for (i = 0; i < (int)m_totalTriangles; i++) {
+		for (uint32_t ii = 0; ii < m_totalTriangles; ++ii)
+		{
 			int v[3];
-			for (j=0;j<3;j++) {
-				int idx = m_triangle[i*3+j];
-				while (idx >= verts) {
+
+			for (uint32_t jj = 0; jj < 3; ++jj)
+			{
+				int idx = m_triangle[ii*3+jj];
+				while (idx >= verts)
+				{
 					idx = m_map[idx];
 				}
-				v[j] = idx;
+
+				v[jj] = idx;
 			}
-			if (v[0] != v[1] && v[0] != v[2] && v[1] != v[2]) {
-				bx::memCopy(ib->data + tris * 3 * sizeof(uint32_t), v, 3 * sizeof(int));
+
+			if (v[0] != v[1]
+			&&  v[0] != v[2]
+			&&  v[1] != v[2])
+			{
+				bx::memCopy(ib->data + tris * 3 * sizeof(uint32_t), v, 3 * sizeof(int) );
 				++tris;
 			}
 		}
+
 		m_numTriangles = tris;
 		m_numVertices = verts;
 
 		bgfx::update(m_ib, 0, ib);
-
 	}
 
-	void submitLOD(bgfx::ViewId viewid, const float *mtx) {
-		bgfx::setTransform(mtx);
+	void submitLod(bgfx::ViewId _viewid, const float* _mtx)
+	{
+		bgfx::setTransform(_mtx);
 		bgfx::setState(0
 			| BGFX_STATE_WRITE_RGB
 			| BGFX_STATE_WRITE_A
@@ -285,16 +350,17 @@ public:
 			| BGFX_STATE_DEPTH_TEST_LESS
 			| BGFX_STATE_CULL_CCW
 			| BGFX_STATE_MSAA
-		);
+			);
 
-		if (m_LOD != m_lastLOD) {
+		if (m_LOD != m_lastLOD)
+		{
 			updateIndexBuffer();
 			m_lastLOD = m_LOD;
 		}
 
 		bgfx::setIndexBuffer(m_ib, 0, m_numTriangles*3);
 		bgfx::setVertexBuffer(0, m_vb, 0, m_numVertices);
-		bgfx::submit(viewid, m_program);
+		bgfx::submit(_viewid, m_program);
 	}
 
 	bool update() override
@@ -368,7 +434,7 @@ public:
 				, time*0.37f
 				);
 
-			submitLOD(0, mtx);
+			submitLod(0, mtx);
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
@@ -395,10 +461,10 @@ public:
 	uint32_t m_totalTriangles;
 	uint32_t m_originalVertices;
 
-	int *m_map;
-	int *m_triangle;
-	int *m_cacheWeld;
-	int *m_cachePermutation;
+	uint32_t* m_map;
+	uint32_t* m_triangle;
+	uint32_t* m_cacheWeld;
+	uint32_t* m_cachePermutation;
 
 	int64_t m_timeOffset;
 	bgfx::VertexBufferHandle m_vb;
