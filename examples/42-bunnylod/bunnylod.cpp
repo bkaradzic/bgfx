@@ -58,7 +58,7 @@ public:
 		Free(permutation);
 	}
 
-	int findDuplicateVertices(const char *vb, int n, const bgfx::VertexLayout &layout, int *map) {
+	int weldVertices(int *map, const bgfx::VertexLayout &layout, const char *vb, int n) {
 		int i,j;
 		int stride = layout.getStride();
 		int poffset = layout.getOffset(bgfx::Attrib::Position);
@@ -125,7 +125,7 @@ public:
 		}
 
 		int * map = (int *)Alloc(vertices * sizeof(int));
-		int	merged	= findDuplicateVertices(vb_data, vertices, mesh->m_layout, map);
+		int	merged	= weldVertices(map, mesh->m_layout, vb_data, vertices);
 
 		const bgfx::Memory *vb = mergeVertices(vb_data, mesh->m_layout.getStride(), map, vertices, merged);
 		Free(vb_data);
