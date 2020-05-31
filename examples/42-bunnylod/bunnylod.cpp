@@ -60,32 +60,6 @@ public:
 		}
 	}
 
-	int weldVertices(int *map, const bgfx::VertexLayout &layout, const char *vb, int n) {
-		int i,j;
-		int stride = layout.getStride();
-		int poffset = layout.getOffset(bgfx::Attrib::Position);
-		for (i=0;i<n;i++) {
-			map[i] = i;
-		}
-		int merge = 0;
-		for (i=merge;i<n;i++) {
-			if (map[i] == i) {
-				float *p1 = (float *)(vb + i*stride + poffset);
-				map[i] = merge;
-				for (j=i+1;j<n;j++) {
-					if (map[j] == j) {
-						float *p2 = (float *)(vb + j*stride + poffset);
-						if (p1[0] == p2[0] && p1[1] == p2[1] && p1[2] == p2[2]) {
-							map[j] = merge;
-						}
-					}
-				}
-				++merge;
-			}
-		}
-		return merge;
-	}
-
 	const bgfx::Memory * mergeVertices(const char *vb, int stride, const int *map, int n, int merged) {
 		const bgfx::Memory * buffer = bgfx::alloc(stride * merged);
 		int i;
@@ -136,7 +110,7 @@ public:
 			Free(m_cachePermutation);
 			m_cachePermutation = NULL;
 			m_cacheWeld = (int *)Alloc(vertices * sizeof(int));
-			m_totalVertices	= weldVertices(m_cacheWeld, mesh->m_layout, vb_data, vertices);
+			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, mesh->m_layout, vb_data, vertices, 0.00001f);
 		}
 
 		const bgfx::Memory *vb = mergeVertices(vb_data, mesh->m_layout.getStride(), m_cacheWeld, vertices, m_totalVertices);
