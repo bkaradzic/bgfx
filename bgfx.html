@@ -2120,8 +2120,8 @@ creating windows.</p>
 </dd></dl>
 
 <dl class="cpp function">
-<dt id="_CPPv4N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf">
-<span id="_CPPv3N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf"></span><span id="_CPPv2N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf"></span><span id="bgfx::weldVertices__uint16_tP.VertexLayoutCR.voidCP.uint16_t.float"></span><span class="target" id="namespacebgfx_1a420fcb4891cce3c5b1ba8622b6d93e92"></span>uint16_t <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">weldVertices</code><span class="sig-paren">(</span>uint16_t *<em>_output</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em>, <em class="property">const</em> void *<em>_data</em>, uint16_t <em>_num</em>, float <em>_epsilon</em> = 0.001f<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx12weldVerticesEPvRK12VertexLayoutPKv8uint32_tbf">
+<span id="_CPPv3N4bgfx12weldVerticesEPvRK12VertexLayoutPKv8uint32_tbf"></span><span id="_CPPv2N4bgfx12weldVerticesEPvRK12VertexLayoutPKv8uint32_tbf"></span><span id="bgfx::weldVertices__voidP.VertexLayoutCR.voidCP.uint32_t.b.float"></span><span class="target" id="namespacebgfx_1a9242a9ab0e66291a8952ec3222519bce"></span>uint32_t <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">weldVertices</code><span class="sig-paren">(</span>void *<em>_output</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em>, <em class="property">const</em> void *<em>_data</em>, uint32_t <em>_num</em>, bool <em>_index32</em>, float <em>_epsilon</em> = 0.001f<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12weldVerticesEPvRK12VertexLayoutPKv8uint32_tbf" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Weld vertices. </p>
 <p><dl class="simple">
 <dt><strong>Return</strong></dt><dd><p>Number of unique vertices after vertex welding.</p>
@@ -2133,6 +2133,7 @@ creating windows.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex stream layout. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_data</span></code>: Vertex stream. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of vertices in vertex stream. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_index32</span></code>: Set to <code class="docutils literal notranslate"><span class="pre">true</span></code> if input indices are 32-bit. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_epsilon</span></code>: Error tolerance for vertex position comparison. </p></li>
 </ul>
 </dd>
@@ -7149,7 +7150,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2010-2019, Branimir Karadžić
+        &copy; Copyright 2010-2020, Branimir Karadžić
 
     </p>
   </div> 
