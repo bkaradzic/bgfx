@@ -3254,6 +3254,11 @@ namespace bgfx
 		flushTextureUpdateBatch(_cmdbuf);
 	}
 
+	uint32_t weldVertices(void* _output, const VertexLayout& _layout, const void* _data, uint32_t _num, bool _index32, float _epsilon)
+	{
+		return weldVertices(_output, _layout, _data, _num, _index32, _epsilon, g_allocator);
+	}
+
 	uint32_t topologyConvert(TopologyConvert::Enum _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32)
 	{
 		return topologyConvert(_conversion, _dst, _dstSize, _indices, _numIndices, _index32, g_allocator);
