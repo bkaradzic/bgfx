@@ -2698,10 +2698,10 @@ VK_IMPORT_DEVICE
 			setFrameBuffer(BGFX_INVALID_HANDLE, false);
 
 			VkViewport vp;
-			vp.x        = 0;
-			vp.y        = (float)height;
-			vp.width    = (float)width;
-			vp.height   = -(float)height;
+			vp.x        = 0.0f;
+			vp.y        =  float(height);
+			vp.width    =  float(width);
+			vp.height   = -float(height);
 			vp.minDepth = 0.0f;
 			vp.maxDepth = 1.0f;
 			vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
@@ -4835,13 +4835,10 @@ VK_DESTROY
 				else if (UniformType::End == (~BGFX_UNIFORM_MASK & type))
 				{
 					// regCount is used for descriptor type
-					bool buffer = regCount == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+					const bool  isBuffer = regCount == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+					const uint16_t stage = regIndex - (isBuffer ? 16 : 32) - (fragment ? 48 : 0);  // regIndex is used for buffer binding index
 
-					const uint8_t stage = regIndex - (buffer ? 16 : 32) - (fragment ? 48 : 0);  // regIndex is used for buffer binding index
-
-					m_bindInfo[stage].type = buffer
-						? BindType::Buffer
-						: BindType::Image;
+					m_bindInfo[stage].type = isBuffer ? BindType::Buffer : BindType::Image;
 					m_bindInfo[stage].uniformHandle  = { 0 };
 					m_bindInfo[stage].binding        = regIndex;
 
@@ -4849,7 +4846,7 @@ VK_DESTROY
 				}
 				else if (UniformType::Sampler == (~BGFX_UNIFORM_MASK & type) )
 				{
-					const uint8_t stage = regIndex - 16 - (fragment ? 48 : 0); // regIndex is used for image/sampler binding index
+					const uint16_t stage = regIndex - 16 - (fragment ? 48 : 0); // regIndex is used for image/sampler binding index
 
 					const UniformRegInfo* info = s_renderVK->m_uniformReg.find(name);
 					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -6065,10 +6062,10 @@ VK_DESTROY
 						beginRenderPass = true;
 
 						VkViewport vp;
-						vp.x        = rect.m_x;
-						vp.y        = rect.m_y + rect.m_height;
-						vp.width    = rect.m_width;
-						vp.height   = -(float)rect.m_height;
+						vp.x        =  float(rect.m_x);
+						vp.y        =  float(rect.m_y + rect.m_height);
+						vp.width    =  float(rect.m_width);
+						vp.height   = -float(rect.m_height);
 						vp.minDepth = 0.0f;
 						vp.maxDepth = 1.0f;
 						vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
