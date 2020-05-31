@@ -217,7 +217,7 @@ public:
 	}
 
 	void updateIndexBuffer() {
-		int verts = bx::easeInQuad(m_LOD) * m_totalVertices;
+		int verts = int(bx::easeInQuad(m_LOD) * m_totalVertices);
 		if (verts <= 0)
 			return;
 
