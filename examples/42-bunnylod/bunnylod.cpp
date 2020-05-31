@@ -4,6 +4,7 @@
  */
 
 #include <bx/easing.h>
+#include <bx/file.h>
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
@@ -35,53 +36,28 @@ public:
 		int offset = layout.getOffset(bgfx::Attrib::Position);
 		int vertices = vb->size / stride;
 		int triangles = ib->size / ( 3 * sizeof(uint32_t) );
-		int *permutation = (int*)Alloc(vertices * sizeof(int));
-		m_map = (int *)Alloc(vertices * sizeof(int));
 
-		// It will takes long time if there are too many vertices.
-		ProgressiveMesh(vertices, stride, (const float *)(vb->data + offset), triangles, (const int *)ib->data, m_map, permutation);
+		if (m_cachePermutation == NULL) {
+			m_cachePermutation = (int*)Alloc(vertices * sizeof(int));
+			m_map = (int *)Alloc(vertices * sizeof(int));
+
+			// It will takes long time if there are too many vertices.
+			ProgressiveMesh(vertices, stride, (const float *)(vb->data + offset), triangles, (const int *)ib->data, m_map, m_cachePermutation);
+		}
 
 		// rearrange the vertex Array
 		char * temp = (char *)Alloc(vertices * stride);
 		bx::memCopy(temp, vb->data, vb->size);
 		for (i = 0; i<vertices; i++) {
-			bx::memCopy(vb->data + permutation[i] * stride , temp + i * stride, stride);
+			bx::memCopy(vb->data + m_cachePermutation[i] * stride , temp + i * stride, stride);
 		}
 		Free(temp);
 
 		// update the changes in the entries in the triangle Array
 		for (i = 0; i<triangles * 3; i++) {
 			int *indices = (int *)(ib->data + i * sizeof(uint32_t));
-			*indices = permutation[*indices];
+			*indices = m_cachePermutation[*indices];
 		}
-
-		Free(permutation);
-	}
-
-	int findDuplicateVertices(const char *vb, int n, const bgfx::VertexLayout &layout, int *map) {
-		int i,j;
-		int stride = layout.getStride();
-		int poffset = layout.getOffset(bgfx::Attrib::Position);
-		for (i=0;i<n;i++) {
-			map[i] = i;
-		}
-		int merge = 0;
-		for (i=merge;i<n;i++) {
-			if (map[i] == i) {
-				float *p1 = (float *)(vb + i*stride + poffset);
-				map[i] = merge;
-				for (j=i+1;j<n;j++) {
-					if (map[j] == j) {
-						float *p2 = (float *)(vb + j*stride + poffset);
-						if (p1[0] == p2[0] && p1[1] == p2[1] && p1[2] == p2[2]) {
-							map[j] = merge;
-						}
-					}
-				}
-				++merge;
-			}
-		}
-		return merge;
 	}
 
 	const bgfx::Memory * mergeVertices(const char *vb, int stride, const int *map, int n, int merged) {
@@ -99,7 +75,7 @@ public:
 
 	void loadMesh(Mesh *mesh) {
 		// merge sub mesh
-		int vertices = 0;
+		uint32_t vertices = 0;
 		int indices = 0;
 		for (GroupArray::const_iterator it = mesh->m_groups.begin(), itEnd = mesh->m_groups.end(); it != itEnd; ++it) {
 			vertices += it->m_numVertices;
@@ -124,22 +100,33 @@ public:
 			index+=it->m_numVertices;
 		}
 
-		int * map = (int *)Alloc(vertices * sizeof(int));
-		int	merged	= findDuplicateVertices(vb_data, vertices, mesh->m_layout, map);
+		bool cacheInvalid = false;
+		loadCache();
 
-		const bgfx::Memory *vb = mergeVertices(vb_data, mesh->m_layout.getStride(), map, vertices, merged);
+		if (m_originalVertices != vertices || m_cacheWeld == NULL) {
+			cacheInvalid = true;
+			m_originalVertices = vertices;
+			Free(m_cacheWeld);
+			Free(m_cachePermutation);
+			m_cachePermutation = NULL;
+			m_cacheWeld = (int *)Alloc(vertices * sizeof(int));
+			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, mesh->m_layout, vb_data, vertices, 0.00001f);
+		}
+
+		const bgfx::Memory *vb = mergeVertices(vb_data, mesh->m_layout.getStride(), m_cacheWeld, vertices, m_totalVertices);
 		Free(vb_data);
-		vertices = merged;
 
 		int i;
 		int *ib_data = (int *)ib->data;
 		for (i=0; i<indices; i++) {
-			ib_data[i] = map[ib_data[i]];
+			ib_data[i] = m_cacheWeld[ib_data[i]];
 		}
 
-		Free(map);
-
 		PermuteMesh(vb, ib, mesh->m_layout);
+
+		if (cacheInvalid) {
+			saveCache();
+		}
 
 		m_triangle = (int *)Alloc(ib->size);
 		bx::memCopy(m_triangle, ib->data, ib->size);
@@ -147,10 +134,46 @@ public:
 		m_vb = bgfx::createVertexBuffer(vb, mesh->m_layout);
 		m_ib = bgfx::createDynamicIndexBuffer(ib, BGFX_BUFFER_INDEX32);
 
-		m_numVertices = vertices;
+		m_numVertices = m_totalVertices;
 		m_numTriangles = indices/3;
-		m_totalVertices = m_numVertices;
 		m_totalTriangles = m_numTriangles;
+	}
+
+#define CACHEFILENAME "temp/bunnylod.cache"
+
+	void loadCache() {
+		m_cacheWeld = NULL;
+		m_cachePermutation = NULL;
+		m_originalVertices = 0;
+		bx::FileReader f;
+		if (bx::open(&f, CACHEFILENAME)) {
+			bx::read(&f, m_originalVertices);
+			bx::read(&f, m_totalVertices);
+			m_cacheWeld = (int *)Alloc(m_originalVertices * sizeof(int));
+			bx::read(&f, m_cacheWeld, m_originalVertices * sizeof(int));
+			m_cachePermutation = (int *)Alloc(m_totalVertices * sizeof(int));
+			bx::read(&f, m_cachePermutation, m_totalVertices * sizeof(int));
+			m_map = (int *)Alloc(m_totalVertices * sizeof(int));
+			if (bx::read(&f, m_map, m_totalVertices * sizeof(int)) != (int32_t)(m_totalVertices * sizeof(int))) {
+				// read fail
+				Free(m_cacheWeld); m_cacheWeld = NULL;
+				Free(m_cachePermutation); m_cachePermutation = NULL;
+				Free(m_map); m_map = NULL;
+			}
+			bx::close(&f);
+		}
+	}
+
+	void saveCache() {
+		bx::FileWriter f;
+		if (bx::open(&f, CACHEFILENAME)) {
+			bx::write(&f, m_originalVertices);
+			bx::write(&f, m_totalVertices);
+			bx::write(&f, m_cacheWeld, m_originalVertices * sizeof(int));
+			bx::write(&f, m_cachePermutation, m_totalVertices * sizeof(int));
+			bx::write(&f, m_map, m_totalVertices * sizeof(int));
+			bx::close(&f);
+		}
 	}
 
 	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
@@ -209,6 +232,8 @@ public:
 
 		Free(m_map);
 		Free(m_triangle);
+		Free(m_cacheWeld);
+		Free(m_cachePermutation);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -363,9 +388,12 @@ public:
 	uint32_t m_numTriangles;
 	uint32_t m_totalVertices;
 	uint32_t m_totalTriangles;
+	uint32_t m_originalVertices;
 
 	int *m_map;
 	int *m_triangle;
+	int *m_cacheWeld;
+	int *m_cachePermutation;
 
 	int64_t m_timeOffset;
 	bgfx::VertexBufferHandle m_vb;
