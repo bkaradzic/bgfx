@@ -115,9 +115,10 @@ version(BindBgfx_Static)
 	 * _layout = Vertex stream layout.
 	 * _data = Vertex stream.
 	 * _num = Number of vertices in vertex stream.
+	 * _index32 = Set to `true` if input indices are 32-bit.
 	 * _epsilon = Error tolerance for vertex position comparison.
 	 */
-	ushort bgfx_weld_vertices(ushort* _output, const(bgfx_vertex_layout_t)* _layout, const(void)* _data, ushort _num, float _epsilon);
+	uint bgfx_weld_vertices(void* _output, const(bgfx_vertex_layout_t)* _layout, const(void)* _data, uint _num, bool _index32, float _epsilon);
 	
 	/**
 	 * Convert index buffer for use with different primitive topologies.
@@ -2198,9 +2199,10 @@ else
 		 * _layout = Vertex stream layout.
 		 * _data = Vertex stream.
 		 * _num = Number of vertices in vertex stream.
+		 * _index32 = Set to `true` if input indices are 32-bit.
 		 * _epsilon = Error tolerance for vertex position comparison.
 		 */
-		alias da_bgfx_weld_vertices = ushort function(ushort* _output, const(bgfx_vertex_layout_t)* _layout, const(void)* _data, ushort _num, float _epsilon);
+		alias da_bgfx_weld_vertices = uint function(void* _output, const(bgfx_vertex_layout_t)* _layout, const(void)* _data, uint _num, bool _index32, float _epsilon);
 		da_bgfx_weld_vertices bgfx_weld_vertices;
 		
 		/**

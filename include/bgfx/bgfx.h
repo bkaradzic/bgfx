@@ -1835,16 +1835,18 @@ namespace bgfx
 	/// @param[in] _layout Vertex stream layout.
 	/// @param[in] _data Vertex stream.
 	/// @param[in] _num Number of vertices in vertex stream.
+	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
 	/// @param[in] _epsilon Error tolerance for vertex position comparison.
 	/// @returns Number of unique vertices after vertex welding.
 	///
 	/// @attention C99 equivalent is `bgfx_weld_vertices`.
 	///
-	uint16_t weldVertices(
-		  uint16_t* _output
+	uint32_t weldVertices(
+		  void* _output
 		, const VertexLayout& _layout
 		, const void* _data
-		, uint16_t _num
+		, uint32_t _num
+		, bool _index32
 		, float _epsilon = 0.001f
 		);
 
