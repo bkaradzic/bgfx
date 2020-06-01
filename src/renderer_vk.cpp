@@ -252,7 +252,6 @@ VK_IMPORT_DEVICE
 		{
 			VK_LAYER_LUNARG_standard_validation,
 			VK_LAYER_LUNARG_vktrace,
-			VK_LAYER_RENDERDOC_Capture,
 			VK_LAYER_KHRONOS_validation,
 
 			Count
@@ -271,7 +270,6 @@ VK_IMPORT_DEVICE
 	{
 		{ "VK_LAYER_LUNARG_standard_validation",  1, { false, BGFX_CONFIG_DEBUG }, { false, false             } },
 		{ "VK_LAYER_LUNARG_vktrace",              1, { false, false             }, { false, false             } },
-		{ "VK_LAYER_RENDERDOC_Capture",           1, { false, BGFX_CONFIG_DEBUG }, { false, false             } },
 		{ "VK_LAYER_KHRONOS_validation",          1, { false, BGFX_CONFIG_DEBUG }, { false, BGFX_CONFIG_DEBUG } },
 	};
 	BX_STATIC_ASSERT(Layer::Count == BX_COUNTOF(s_layer) );
