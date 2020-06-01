@@ -1579,17 +1579,17 @@ namespace bgfx
 		BX_TRACE("\t C Program  %016" PRIx64, kSortKeyComputeProgramMask);
 
 		BX_TRACE("");
-		BX_TRACE("Supported capabilities (renderer %s, vendor 0x%04x, device 0x%04x):"
+		BX_TRACE("Capabilities (renderer %s, vendor 0x%04x, device 0x%04x):"
 				, s_ctx->m_renderCtx->getRendererName()
 				, g_caps.vendorId
 				, g_caps.deviceId
 				);
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_capsFlags); ++ii)
 		{
-			if (0 != (g_caps.supported & s_capsFlags[ii].m_flag) )
-			{
-				BX_TRACE("\t%s", s_capsFlags[ii].m_str);
-			}
+			BX_TRACE("\t[%c] %s"
+				, 0 != (g_caps.supported & s_capsFlags[ii].m_flag) ? 'x' : ' '
+				, s_capsFlags[ii].m_str
+				);
 		}
 
 		BX_TRACE("");
