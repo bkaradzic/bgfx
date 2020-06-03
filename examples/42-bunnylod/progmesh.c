@@ -4,7 +4,7 @@
  *    Original version by Stan Melax (c) 1998
  *    C version by Cloud Wu (c) 2020
  *
- *  The function ProgressiveMesh() takes a model in an "indexed face 
+ *  The function ProgressiveMesh() takes a model in an "indexed face
  *  set" sort of way.  i.e. Array of vertices and Array of triangles.
  *  The function then does the polygon reduction algorithm
  *  internally and reduces the model all the way down to 0
@@ -12,9 +12,34 @@
  *  vertices are collapsed and to which neighbor each vertex
  *  is collapsed to.  More specifically the returned "permutation"
  *  indicates how to reorder your vertices so you can render
- *  an object by using the first n vertices (for the n 
+ *  an object by using the first n vertices (for the n
  *  vertex version).  After permuting your vertices, the
  *  map Array indicates to which vertex each vertex is collapsed to.
+ */
+
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Stan Melax
+ * Copyright (c) 2020 Cloud Wu
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 #include <assert.h>
@@ -338,11 +363,11 @@ mesh_deinit(struct mesh *M) {
 
 static float
 ComputeEdgeCollapseCost(struct mesh *M, struct vertex *u, int vid) {
-	// if we collapse edge uv by moving u to v then how 
+	// if we collapse edge uv by moving u to v then how
 	// much different will the model change, i.e. how much "error".
 	// Texture, vertex normal, and border vertex code was removed
 	// to keep this demo as simple as possible.
-	// The method of determining cost was designed in order 
+	// The method of determining cost was designed in order
 	// to exploit small and coplanar regions for
 	// effective polygon reduction.
 	// Is is possible to add some checks here to see if "folds"
@@ -364,13 +389,13 @@ ComputeEdgeCollapseCost(struct mesh *M, struct vertex *u, int vid) {
 			array_push(&sides, array_index(&u->face, i));
 		}
 	}
-	// use the triangle facing most away from the sides 
+	// use the triangle facing most away from the sides
 	// to determine our curvature term
 	for (i = 0; i<u->face.n; i++) {
 		float mincurv=1; // curve for face i and closer side to it
 		for (j = 0; j<sides.n; j++) {
 			float dotprod = vec3_dot(Triangle(M, array_index(&u->face, i))->normal,
-				Triangle(M, array_index(&sides,j))->normal);	  // use dot product of face normals. 
+				Triangle(M, array_index(&sides,j))->normal);	  // use dot product of face normals.
 			float t = (1-dotprod)/2.0f;
 			if (t < mincurv) {
 				mincurv = t;
@@ -390,7 +415,7 @@ ComputeEdgeCostAtVertex(struct mesh *M, struct vertex *v) {
 	// from vertex v.  Since we are only interested in reducing
 	// the object by selecting the min cost edge at each step, we
 	// only cache the cost of the least cost edge at this vertex
-	// (in member variable collapse) as well as the value of the 
+	// (in member variable collapse) as well as the value of the
 	// cost (in member variable objdist).
 	if (v->neighbor.n == 0) {
 		// v doesn't have neighbors so it costs nothing to collapse
