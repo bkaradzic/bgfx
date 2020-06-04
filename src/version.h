@@ -9,5 +9,5 @@
  *
  */
 
-#define BGFX_REV_NUMBER 7224
-#define BGFX_REV_SHA1   "dfaf8168227fedde5a8ad2503ed6e33013bdf49f"
+#define BGFX_REV_NUMBER 7238
+#define BGFX_REV_SHA1   "8065659e90a2673dd2ac4b12f193604a631833e3"
