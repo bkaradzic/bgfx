@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(107)
+version(108)
 
 typedef "bool"
 typedef "char"
@@ -699,6 +699,7 @@ struct.Limits  { namespace = "Caps" }
 	.maxUniforms             "uint32_t"    --- Maximum number of uniform handles.
 	.maxOcclusionQueries     "uint32_t"    --- Maximum number of occlusion query handles.
 	.maxEncoders             "uint32_t"    --- Maximum number of encoder threads.
+	.minResourceCbSize       "uint32_t"    --- Minimum resource command buffer size.
 	.transientVbSize         "uint32_t"    --- Maximum transient vertex buffer size.
 	.transientIbSize         "uint32_t"    --- Maximum transient index buffer size.
 
@@ -764,9 +765,10 @@ struct.Resolution { ctor }
 
 --- Configurable runtime limits parameters.
 struct.Limits { namespace = "Init" }
-	.maxEncoders    "uint16_t"             --- Maximum number of encoder threads.
-	.transientVbSize "uint32_t"            --- Maximum transient vertex buffer size.
-	.transientIbSize "uint32_t"            --- Maximum transient index buffer size.
+	.maxEncoders       "uint16_t" --- Maximum number of encoder threads.
+	.minResourceCbSize "uint32_t" --- Minimum resource command buffer size.
+	.transientVbSize   "uint32_t" --- Maximum transient vertex buffer size.
+	.transientIbSize   "uint32_t" --- Maximum transient index buffer size.
 
 --- Initialization parameters used by `bgfx::init`.
 struct.Init { ctor }

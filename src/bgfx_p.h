@@ -771,10 +771,24 @@ namespace bgfx
 
 	public:
 		CommandBuffer()
-			: m_pos(0)
-			, m_size(BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE)
+			: m_buffer(NULL)
+			, m_pos(0)
+			, m_size(0)
+			, m_minCapacity(0)
 		{
+			resize();
 			finish();
+		}
+
+		~CommandBuffer()
+		{
+			BX_FREE(g_allocator, m_buffer);
+		}
+
+		void init(uint32_t _minCapacity)
+		{
+			m_minCapacity = bx::alignUp(_minCapacity, 1024);
+			resize();
 		}
 
 		enum Enum
@@ -814,15 +828,20 @@ namespace bgfx
 			RequestScreenShot,
 		};
 
+		void resize(uint32_t _capacity = 0)
+		{
+			m_capacity = bx::alignUp(bx::max(_capacity, m_minCapacity), 1024);
+			m_buffer = (uint8_t*)BX_REALLOC(g_allocator, m_buffer, m_capacity);
+		}
+
 		void write(const void* _data, uint32_t _size)
 		{
-			BX_CHECK(m_size == BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE, "Called write outside start/finish?");
-			BX_CHECK(m_pos + _size <= m_size
-				, "CommandBuffer::write error (pos: %d-%d, size: %d)."
-				, m_pos
-				, m_pos + _size
-				, m_size
-				);
+			BX_CHECK(m_size == 0, "Called write outside start/finish (m_size: %d)?", m_size);
+			if (m_pos + _size > m_capacity)
+			{
+				resize(m_capacity + (16<<10) );
+			}
+
 			bx::memCopy(&m_buffer[m_pos], _data, _size);
 			m_pos += _size;
 		}
@@ -888,7 +907,7 @@ namespace bgfx
 		void start()
 		{
 			m_pos = 0;
-			m_size = BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE;
+			m_size = 0;
 		}
 
 		void finish()
@@ -897,11 +916,19 @@ namespace bgfx
 			write(cmd);
 			m_size = m_pos;
 			m_pos = 0;
+
+			if (m_size < m_minCapacity
+			&&  m_capacity != m_minCapacity)
+			{
+				resize();
+			}
 		}
 
+		uint8_t* m_buffer;
 		uint32_t m_pos;
 		uint32_t m_size;
-		uint8_t m_buffer[BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE];
+		uint32_t m_capacity;
+		uint32_t m_minCapacity;
 	};
 
 //
@@ -1948,8 +1975,11 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		{
 		}
 
-		void create()
+		void create(uint32_t _minResourceCbSize)
 		{
+			m_cmdPre.init(_minResourceCbSize);
+			m_cmdPost.init(_minResourceCbSize);
+
 			{
 				const uint32_t num = g_caps.limits.maxEncoders;
 

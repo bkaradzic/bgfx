@@ -1970,6 +1970,7 @@ public static partial class bgfx
 			public uint maxUniforms;
 			public uint maxOcclusionQueries;
 			public uint maxEncoders;
+			public uint minResourceCbSize;
 			public uint transientVbSize;
 			public uint transientIbSize;
 		}
@@ -2016,6 +2017,7 @@ public static partial class bgfx
 		public unsafe struct Limits
 		{
 			public ushort maxEncoders;
+			public uint minResourceCbSize;
 			public uint transientVbSize;
 			public uint transientIbSize;
 		}

@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 107;
+enum uint BGFX_API_VERSION = 108;
 
 alias bgfx_view_id_t = ushort;
 
@@ -723,6 +723,7 @@ struct bgfx_caps_limits_t
 	uint maxUniforms; /// Maximum number of uniform handles.
 	uint maxOcclusionQueries; /// Maximum number of occlusion query handles.
 	uint maxEncoders; /// Maximum number of encoder threads.
+	uint minResourceCbSize; /// Minimum resource command buffer size.
 	uint transientVbSize; /// Maximum transient vertex buffer size.
 	uint transientIbSize; /// Maximum transient index buffer size.
 }
@@ -818,6 +819,7 @@ struct bgfx_resolution_t
 struct bgfx_init_limits_t
 {
 	ushort maxEncoders; /// Maximum number of encoder threads.
+	uint minResourceCbSize; /// Minimum resource command buffer size.
 	uint transientVbSize; /// Maximum transient vertex buffer size.
 	uint transientIbSize; /// Maximum transient index buffer size.
 }
