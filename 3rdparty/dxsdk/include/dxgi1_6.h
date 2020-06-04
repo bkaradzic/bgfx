@@ -79,9 +79,6 @@ extern "C"{
 /* [local] */ 
 
 // Copyright (c) Microsoft Corporation.  All Rights Reserved
-#include <winapifamily.h>
-// BK - pragma region App Family
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 HRESULT WINAPI DXGIDeclareAdapterRemovalSupport();
 typedef 
 enum DXGI_ADAPTER_FLAG3
@@ -1492,8 +1489,6 @@ EXTERN_C const IID IID_IDXGIFactory7;
 /* interface __MIDL_itf_dxgi1_6_0000_0004 */
 /* [local] */ 
 
-#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
-// BK - pragma endregion
 DEFINE_GUID(IID_IDXGIAdapter4,0x3c8d99d1,0x4fbf,0x4181,0xa8,0x2c,0xaf,0x66,0xbf,0x7b,0xd2,0x4e);
 DEFINE_GUID(IID_IDXGIOutput6,0x068346e8,0xaaec,0x4b84,0xad,0xd7,0x13,0x7f,0x51,0x3f,0x77,0xa1);
 DEFINE_GUID(IID_IDXGIFactory6,0xc1b6694f,0xff09,0x44a9,0xb0,0x3c,0x77,0x90,0x0a,0x0a,0x1d,0x17);
