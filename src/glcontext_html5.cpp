@@ -51,7 +51,7 @@ namespace bgfx { namespace gl
 
 		void makeCurrent()
 		{
-			emscripten_webgl_make_context_current(m_context);
+			BX_CHECK(emscripten_webgl_make_context_current(m_context) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_webgl_make_context_current() failed!");
 		}
 
 		void swapBuffers()
@@ -75,7 +75,7 @@ namespace bgfx { namespace gl
 		m_primary = createSwapChain((void*)canvas);
 
 		if (_width && _height)
-			emscripten_set_canvas_element_size(canvas, (int)_width, (int)_height);
+			BX_CHECK(emscripten_set_canvas_element_size(canvas, (int)_width, (int)_height) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_canvas_element_size() failed in GlContext::create()!");
 
 		makeCurrent(m_primary);
 	}
@@ -101,7 +101,7 @@ namespace bgfx { namespace gl
 			return;
 		}
 
-		emscripten_set_canvas_element_size(m_primary->m_canvas, (int) _width, (int) _height);
+		BX_CHECK(emscripten_set_canvas_element_size(m_primary->m_canvas, (int) _width, (int) _height) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_canvas_element_size() failed in GlContext::resize()!");
 	}
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh)
@@ -127,7 +127,7 @@ namespace bgfx { namespace gl
 			EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = emscripten_webgl_create_context(canvas, &s_attrs);
 			if (context > 0)
 			{
-				emscripten_webgl_make_context_current(context);
+				BX_CHECK(emscripten_webgl_make_context_current(context) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_webgl_make_context_current() failed in GlContext::createSwapChain()!");
 
 				SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
 

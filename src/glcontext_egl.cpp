@@ -370,7 +370,11 @@ EGL_IMPORT
 			ANativeWindow_setBuffersGeometry( (ANativeWindow*)g_platformData.nwh, _width, _height, format);
 		}
 #	elif BX_PLATFORM_EMSCRIPTEN
-		emscripten_set_canvas_size(_width, _height);
+// TODO: Make this somehow configurable to the developer building a HTML5 page. Currently #canvas
+// will take the first canvas element found on the web page.
+#define HTML5_TARGET_CANVAS_SELECTOR "#canvas"
+
+		BX_CHECK(emscripten_set_canvas_element_size(HTML5_TARGET_CANVAS_SELECTOR, _width, _height) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_canvas_element_size() failed in GlContext::resize()!");
 #	else
 		BX_UNUSED(_width, _height);
 #	endif // BX_PLATFORM_*

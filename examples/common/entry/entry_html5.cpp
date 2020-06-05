@@ -94,17 +94,17 @@ namespace entry
 // will take the first canvas element found on the web page.
 #define HTML5_TARGET_CANVAS_SELECTOR "#canvas"
 
-			emscripten_set_mousedown_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb);
-			emscripten_set_mouseup_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb);
-			emscripten_set_mousemove_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb);
+			BX_CHECK(emscripten_set_mousedown_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_mousedown_callback() failed!");
+			BX_CHECK(emscripten_set_mouseup_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_mouseup_callback() failed!");
+			BX_CHECK(emscripten_set_mousemove_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_mousemove_callback() failed!");
 
-			emscripten_set_wheel_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, wheelCb);
+			BX_CHECK(emscripten_set_wheel_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, wheelCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_wheel_callback() failed!");
 
-			emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
-			emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
-			emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
+			BX_CHECK(emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_keypress_callback() failed!");
+			BX_CHECK(emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_keydown_callback() failed!");
+			BX_CHECK(emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_keyup_callback() failed!");
 
-			emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, resizeCb);
+			BX_CHECK(emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, resizeCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_resize_callback() failed!");
 
 			EmscriptenFullscreenStrategy fullscreenStrategy = {};
 			fullscreenStrategy.scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_DEFAULT;
@@ -115,9 +115,9 @@ namespace entry
 
 			emscripten_request_fullscreen_strategy(HTML5_TARGET_CANVAS_SELECTOR, false, &fullscreenStrategy);
 
-			emscripten_set_focus_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
-			emscripten_set_focusin_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
-			emscripten_set_focusout_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
+			BX_CHECK(emscripten_set_focus_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_focus_callback() failed!");
+			BX_CHECK(emscripten_set_focusin_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_focusin_callback() failed!");
+			BX_CHECK(emscripten_set_focusout_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_focusout_callback() failed!");
 
 			bgfx::PlatformData pd;
 			bx::memSet(&pd, 0, sizeof(pd) );
