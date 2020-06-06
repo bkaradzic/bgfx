@@ -2347,7 +2347,6 @@ VK_IMPORT_DEVICE
 				break;
 			};
 
-			BX_CHECK(false, "Failed to initialize Vulkan.");
 			return false;
 		}
 
