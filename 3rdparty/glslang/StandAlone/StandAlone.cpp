@@ -555,6 +555,12 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         ReflectOptions |= EShReflectionAllBlockVariables;
                     } else if (lowerword == "reflect-unwrap-io-blocks") {
                         ReflectOptions |= EShReflectionUnwrapIOBlocks;
+                    } else if (lowerword == "reflect-all-io-variables") {
+                        ReflectOptions |= EShReflectionAllIOVariables;
+                    } else if (lowerword == "reflect-shared-std140-ubo") {
+                        ReflectOptions |= EShReflectionSharedStd140UBO;
+                    } else if (lowerword == "reflect-shared-std140-ssbo") {
+                        ReflectOptions |= EShReflectionSharedStd140SSBO;
                     } else if (lowerword == "resource-set-bindings" ||  // synonyms
                                lowerword == "resource-set-binding"  ||
                                lowerword == "rsb") {
@@ -1593,7 +1599,8 @@ void usage()
            "  --hlsl-iomap                      perform IO mapping in HLSL register space\n"
            "  --hlsl-enable-16bit-types         allow 16-bit types in SPIR-V for HLSL\n"
            "  --hlsl-dx9-compatible             interprets sampler declarations as a\n"
-           "                                    texture/sampler combo like DirectX9 would.\n"
+           "                                    texture/sampler combo like DirectX9 would,\n"
+           "                                    and recognizes DirectX9-specific semantics\n"
            "  --invert-y | --iy                 invert position.Y output in vertex shader\n"
            "  --keep-uncalled | --ku            don't eliminate uncalled functions\n"
            "  --nan-clamp                       favor non-NaN operand in min, max, and clamp\n"

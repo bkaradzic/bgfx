@@ -1292,7 +1292,8 @@ bool IsDescriptorResource(const glslang::TType& type)
     // basically samplerXXX/subpass/sampler/texture are all included
     // if they are the global-scope-class, not the function parameter
     // (or local, if they ever exist) class.
-    if (type.getBasicType() == glslang::EbtSampler)
+    if (type.getBasicType() == glslang::EbtSampler ||
+        type.getBasicType() == glslang::EbtAccStruct)
         return type.getQualifier().isUniformOrBuffer();
 
     // None of the above.
@@ -1710,16 +1711,19 @@ void TGlslangToSpvTraverser::visitSymbol(glslang::TIntermSymbol* symbol)
     spv::Id id = getSymbolId(symbol);
 
     if (builder.isPointer(id)) {
-        // Include all "static use" and "linkage only" interface variables on the OpEntryPoint instruction
-        // Consider adding to the OpEntryPoint interface list.
-        // Only looking at structures if they have at least one member.
-        if (!symbol->getType().isStruct() || symbol->getType().getStruct()->size() > 0) {
-            spv::StorageClass sc = builder.getStorageClass(id);
-            // Before SPIR-V 1.4, we only want to include Input and Output.
-            // Starting with SPIR-V 1.4, we want all globals.
-            if ((glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_4 && sc != spv::StorageClassFunction) ||
-                (sc == spv::StorageClassInput || sc == spv::StorageClassOutput)) {
-                iOSet.insert(id);
+        if (!symbol->getType().getQualifier().isParamInput() &&
+            !symbol->getType().getQualifier().isParamOutput()) {
+            // Include all "static use" and "linkage only" interface variables on the OpEntryPoint instruction
+            // Consider adding to the OpEntryPoint interface list.
+            // Only looking at structures if they have at least one member.
+            if (!symbol->getType().isStruct() || symbol->getType().getStruct()->size() > 0) {
+                spv::StorageClass sc = builder.getStorageClass(id);
+                // Before SPIR-V 1.4, we only want to include Input and Output.
+                // Starting with SPIR-V 1.4, we want all globals.
+                if ((glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_4 && sc != spv::StorageClassFunction) ||
+                    (sc == spv::StorageClassInput || sc == spv::StorageClassOutput)) {
+                    iOSet.insert(id);
+                }
             }
         }
 
@@ -3524,7 +3528,18 @@ spv::Id TGlslangToSpvTraverser::createSpvVariable(const glslang::TIntermSymbol* 
     if (glslang::IsAnonymous(name))
         name = "";
 
-    return builder.createVariable(storageClass, spvType, name);
+    spv::Id initializer = spv::NoResult;
+
+    if (node->getType().getQualifier().storage == glslang::EvqUniform &&
+        !node->getConstArray().empty()) {
+            int nextConst = 0;
+            initializer = createSpvConstantFromConstUnionArray(node->getType(),
+                                                               node->getConstArray(),
+                                                               nextConst,
+                                                               false /* specConst */);
+    }
+
+    return builder.createVariable(storageClass, spvType, name, initializer);
 }
 
 // Return type Id of the sampled type.
@@ -4388,8 +4403,10 @@ bool TGlslangToSpvTraverser::writableParam(glslang::TStorageQualifier qualifier)
     assert(qualifier == glslang::EvqIn ||
            qualifier == glslang::EvqOut ||
            qualifier == glslang::EvqInOut ||
+           qualifier == glslang::EvqUniform ||
            qualifier == glslang::EvqConstReadOnly);
-    return qualifier != glslang::EvqConstReadOnly;
+    return qualifier != glslang::EvqConstReadOnly &&
+           qualifier != glslang::EvqUniform;
 }
 
 // Is parameter pass-by-original?
@@ -8270,6 +8287,18 @@ spv::Id TGlslangToSpvTraverser::createSpvConstant(const glslang::TIntermTyped& n
 
     // We now know we have a specialization constant to build
 
+    // Extra capabilities may be needed.
+    if (node.getType().contains8BitInt())
+        builder.addCapability(spv::CapabilityInt8);
+    if (node.getType().contains16BitFloat())
+        builder.addCapability(spv::CapabilityFloat16);
+    if (node.getType().contains16BitInt())
+        builder.addCapability(spv::CapabilityInt16);
+    if (node.getType().contains64BitInt())
+        builder.addCapability(spv::CapabilityInt64);
+    if (node.getType().containsDouble())
+        builder.addCapability(spv::CapabilityFloat64);
+
     // gl_WorkGroupSize is a special case until the front-end handles hierarchical specialization constants,
     // even then, it's specialization ids are handled by special case syntax in GLSL: layout(local_size_x = ...
     if (node.getType().getQualifier().builtIn == glslang::EbvWorkGroupSize) {
@@ -8625,7 +8654,8 @@ int GetSpirvGeneratorVersion()
     // return 6; // revert version 5 change, which makes a different (new) kind of incorrect code,
                  // versions 4 and 6 each generate OpArrayLength as it has long been done
     // return 7; // GLSL volatile keyword maps to both SPIR-V decorations Volatile and Coherent
-    return 8; // switch to new dead block eliminator; use OpUnreachable
+    // return 8; // switch to new dead block eliminator; use OpUnreachable
+    return 9; // don't include opaque function parameters in OpEntryPoint global's operand list
 }
 
 // Write SPIR-V out to a binary file

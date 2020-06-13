@@ -2111,6 +2111,23 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
                 makeVariableInOut(*(*it));
     }
 
+    // Add uniform parameters to the $Global uniform block.
+    TVector<TVariable*> opaque_uniforms;
+    for (int i = 0; i < userFunction.getParamCount(); i++) {
+        TType& paramType = *userFunction[i].type;
+        TString& paramName = *userFunction[i].name;
+        if (paramType.getQualifier().storage == EvqUniform) {
+            if (!paramType.containsOpaque()) {
+                // Add it to the global uniform block.
+                growGlobalUniformBlock(loc, paramType, paramName);
+            } else {
+                // Declare it as a separate variable.
+                TVariable *var = makeInternalVariable(paramName.c_str(), paramType);
+                opaque_uniforms.push_back(var);
+            }
+        }
+    }
+
     // Synthesize the call
 
     pushScope(); // matches the one in handleFunctionBody()
@@ -2131,6 +2148,7 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
     TVector<TVariable*> argVars;
     TIntermAggregate* synthBody = new TIntermAggregate();
     auto inputIt = inputs.begin();
+    auto opaqueUniformIt = opaque_uniforms.begin();
     TIntermTyped* callingArgs = nullptr;
 
     for (int i = 0; i < userFunction.getParamCount(); i++) {
@@ -2148,6 +2166,17 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
             intermediate.growAggregate(synthBody, handleAssign(loc, EOpAssign, arg,
                                                                intermediate.addSymbol(**inputIt)));
             inputIt++;
+        }
+        if (param.type->getQualifier().storage == EvqUniform) {
+            if (!param.type->containsOpaque()) {
+                // Look it up in the $Global uniform block.
+                intermediate.growAggregate(synthBody, handleAssign(loc, EOpAssign, arg,
+                                                                   handleVariable(loc, param.name)));
+            } else {
+                intermediate.growAggregate(synthBody, handleAssign(loc, EOpAssign, arg,
+                                                                   intermediate.addSymbol(**opaqueUniformIt)));
+                ++opaqueUniformIt;
+            }
         }
     }
 
@@ -6100,6 +6129,32 @@ void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBu
         return semanticNum;
     };
 
+    if (builtIn == EbvNone && hlslDX9Compatible()) {
+        if (language == EShLangVertex) {
+            if (qualifier.isParamOutput()) {
+                if (upperCase == "POSITION") {
+                    builtIn = EbvPosition;
+                }
+                if (upperCase == "PSIZE") {
+                    builtIn = EbvPointSize;
+                }
+            }
+        } else if (language == EShLangFragment) {
+            if (qualifier.isParamInput() && upperCase == "VPOS") {
+                builtIn = EbvFragCoord;
+            }
+            if (qualifier.isParamOutput()) {
+                if (upperCase.compare(0, 5, "COLOR") == 0) {
+                    qualifier.layoutLocation = getSemanticNumber(upperCase, 0, nullptr);
+                    nextOutLocation = std::max(nextOutLocation, qualifier.layoutLocation + 1u);
+                }
+                if (upperCase == "DEPTH") {
+                    builtIn = EbvFragDepth;
+                }
+            }
+        }
+    }
+
     switch(builtIn) {
     case EbvNone:
         // Get location numbers from fragment outputs, instead of
@@ -6914,7 +6969,6 @@ void HlslParseContext::paramFix(TType& type)
         type.getQualifier().storage = EvqConstReadOnly;
         break;
     case EvqGlobal:
-    case EvqUniform:
     case EvqTemporary:
         type.getQualifier().storage = EvqIn;
         break;

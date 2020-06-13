@@ -167,7 +167,7 @@ void TParseVersions::initializeExtensionBehavior()
 
     const extensionData exts[] = { {E_GL_EXT_ray_tracing, EShTargetSpv_1_4} };
 
-    for (int ii = 0; ii < sizeof(exts) / sizeof(exts[0]); ii++) {
+    for (size_t ii = 0; ii < sizeof(exts) / sizeof(exts[0]); ii++) {
         // Add only extensions which require > spv1.0 to save space in map
         if (exts[ii].minSpvVersion > EShTargetSpv_1_0) {
             extensionMinSpv[E_GL_EXT_ray_tracing] = exts[ii].minSpvVersion;

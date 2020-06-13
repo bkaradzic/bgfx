@@ -255,7 +255,7 @@ enum EShMessages : unsigned {
     EShMsgDebugInfo        = (1 << 10), // save debug information
     EShMsgHlslEnable16BitTypes  = (1 << 11), // enable use of 16-bit types in SPIR-V for HLSL
     EShMsgHlslLegalization  = (1 << 12), // enable HLSL Legalization messages
-    EShMsgHlslDX9Compatible = (1 << 13), // enable HLSL DX9 compatible mode (right now only for samplers)
+    EShMsgHlslDX9Compatible = (1 << 13), // enable HLSL DX9 compatible mode (for samplers and semantics)
     EShMsgBuiltinSymbolTable = (1 << 14), // print the builtin symbol table
     LAST_ELEMENT_MARKER(EShMsgCount),
 };
@@ -271,7 +271,9 @@ typedef enum {
     EShReflectionSeparateBuffers    = (1 << 3), // buffer variables and buffer blocks are reflected separately
     EShReflectionAllBlockVariables  = (1 << 4), // reflect all variables in blocks, even if they are inactive
     EShReflectionUnwrapIOBlocks     = (1 << 5), // unwrap input/output blocks the same as with uniform blocks
-    EShReflectionSharedStd140Blocks = (1 << 6), // Apply std140/shared rules for ubo to ssbo
+    EShReflectionAllIOVariables     = (1 << 6), // reflect all input/output variables, even if they are inactive
+    EShReflectionSharedStd140SSBO   = (1 << 7), // Apply std140/shared rules for ubo to ssbo
+    EShReflectionSharedStd140UBO    = (1 << 8), // Apply std140/shared rules for ubo to ssbo
     LAST_ELEMENT_MARKER(EShReflectionCount),
 } EShReflectionOptions;
 
@@ -696,6 +698,7 @@ public:
     int counterIndex;
     int numMembers;
     int arrayStride;            // stride of an array variable
+    int topLevelArraySize;      // size of the top-level variable in a storage buffer member
     int topLevelArrayStride;    // stride of the top-level variable in a storage buffer member
     EShLanguageMask stages;
 
