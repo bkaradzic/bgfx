@@ -596,6 +596,7 @@ struct CLIArguments
 	bool hlsl_support_nonzero_base = false;
 	bool hlsl_force_storage_buffer_as_uav = false;
 	bool hlsl_nonwritable_uav_texture_as_srv = false;
+	bool hlsl_enable_16bit_types = false;
 	HLSLBindingFlags hlsl_binding_flags = 0;
 	bool vulkan_semantics = false;
 	bool flatten_multidimensional_arrays = false;
@@ -687,6 +688,7 @@ static void print_help_hlsl()
 	                "\t\tShader must ensure that read/write state is consistent at all call sites.\n"
 	                "\t[--set-hlsl-vertex-input-semantic <location> <semantic>]:\n\t\tEmits a specific vertex input semantic for a given location.\n"
 	                "\t\tOtherwise, TEXCOORD# is used as semantics, where # is location.\n"
+	                "\t[--hlsl-enable-16bit-types]:\n\t\tEnables native use of half/int16_t/uint16_t and ByteAddressBuffer interaction with these types. Requires SM 6.2.\n"
 	);
 }
 
@@ -1135,6 +1137,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		hlsl_opts.support_nonzero_base_vertex_base_instance = args.hlsl_support_nonzero_base;
 		hlsl_opts.force_storage_buffer_as_uav = args.hlsl_force_storage_buffer_as_uav;
 		hlsl_opts.nonwritable_uav_texture_as_srv = args.hlsl_nonwritable_uav_texture_as_srv;
+		hlsl_opts.enable_16bit_types = args.hlsl_enable_16bit_types;
 		hlsl->set_hlsl_options(hlsl_opts);
 		hlsl->set_resource_binding_flags(args.hlsl_binding_flags);
 	}
@@ -1305,6 +1308,7 @@ static int main_inner(int argc, char *argv[])
 	        [&args](CLIParser &) { args.hlsl_force_storage_buffer_as_uav = true; });
 	cbs.add("--hlsl-nonwritable-uav-texture-as-srv",
 	        [&args](CLIParser &) { args.hlsl_nonwritable_uav_texture_as_srv = true; });
+	cbs.add("--hlsl-enable-16bit-types", [&args](CLIParser &) { args.hlsl_enable_16bit_types = true; });
 	cbs.add("--vulkan-semantics", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("-V", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("--flatten-multidimensional-arrays", [&args](CLIParser &) { args.flatten_multidimensional_arrays = true; });

@@ -43,10 +43,6 @@ enum MSLVertexFormat
 struct MSLVertexAttr
 {
 	uint32_t location = 0;
-	uint32_t msl_buffer = 0;
-	uint32_t msl_offset = 0;
-	uint32_t msl_stride = 0;
-	bool per_instance = false;
 	MSLVertexFormat format = MSL_VERTEX_FORMAT_OTHER;
 	spv::BuiltIn builtin = spv::BuiltInMax;
 };
@@ -583,7 +579,7 @@ protected:
 
 	// If the underlying resource has been used for comparison then duplicate loads of that resource must be too
 	// Use Metal's native frame-buffer fetch API for subpass inputs.
-	void emit_texture_op(const Instruction &i) override;
+	void emit_texture_op(const Instruction &i, bool sparse) override;
 	void emit_binary_unord_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
 	void emit_instruction(const Instruction &instr) override;
 	void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
@@ -594,7 +590,7 @@ protected:
 	void emit_function_prototype(SPIRFunction &func, const Bitset &return_flags) override;
 	void emit_sampled_image_op(uint32_t result_type, uint32_t result_id, uint32_t image_id, uint32_t samp_id) override;
 	void emit_subgroup_op(const Instruction &i) override;
-	std::string to_texture_op(const Instruction &i, bool *forward,
+	std::string to_texture_op(const Instruction &i, bool sparse, bool *forward,
 	                          SmallVector<uint32_t> &inherited_expressions) override;
 	void emit_fixup() override;
 	std::string to_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index,
@@ -618,13 +614,8 @@ protected:
 	std::string builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage) override;
 	std::string to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id) override;
 	std::string to_name(uint32_t id, bool allow_alias = true) const override;
-	std::string to_function_name(VariableID img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool is_proj,
-	                             bool has_array_offsets, bool has_offset, bool has_grad, bool has_dref, uint32_t lod,
-	                             uint32_t minlod) override;
-	std::string to_function_args(VariableID img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool is_proj,
-	                             uint32_t coord, uint32_t coord_components, uint32_t dref, uint32_t grad_x,
-	                             uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset, uint32_t bias,
-	                             uint32_t comp, uint32_t sample, uint32_t minlod, bool *p_forward) override;
+	std::string to_function_name(const TextureFunctionNameArguments &args) override;
+	std::string to_function_args(const TextureFunctionArguments &args, bool *p_forward) override;
 	std::string to_initializer_expression(const SPIRVariable &var) override;
 	std::string to_zero_initialized_expression(uint32_t type_id) override;
 

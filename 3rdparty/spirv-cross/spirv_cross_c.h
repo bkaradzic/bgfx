@@ -33,7 +33,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 33
+#define SPVC_C_API_VERSION_MINOR 34
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -270,10 +270,16 @@ typedef enum spvc_msl_vertex_format
 typedef struct spvc_msl_vertex_attribute
 {
 	unsigned location;
+
+	/* Obsolete, do not use. Only lingers on for ABI compatibility. */
 	unsigned msl_buffer;
+	/* Obsolete, do not use. Only lingers on for ABI compatibility. */
 	unsigned msl_offset;
+	/* Obsolete, do not use. Only lingers on for ABI compatibility. */
 	unsigned msl_stride;
+	/* Obsolete, do not use. Only lingers on for ABI compatibility. */
 	spvc_bool per_instance;
+
 	spvc_msl_vertex_format format;
 	SpvBuiltIn builtin;
 } spvc_msl_vertex_attribute;
@@ -587,6 +593,8 @@ typedef enum spvc_compiler_option
 	SPVC_COMPILER_OPTION_MSL_ENABLE_FRAG_DEPTH_BUILTIN = 57 | SPVC_COMPILER_OPTION_MSL_BIT,
 	SPVC_COMPILER_OPTION_MSL_ENABLE_FRAG_STENCIL_REF_BUILTIN = 58 | SPVC_COMPILER_OPTION_MSL_BIT,
 	SPVC_COMPILER_OPTION_MSL_ENABLE_CLIP_DISTANCE_USER_VARYING = 59 | SPVC_COMPILER_OPTION_MSL_BIT,
+
+	SPVC_COMPILER_OPTION_HLSL_ENABLE_16BIT_TYPES = 60 | SPVC_COMPILER_OPTION_HLSL_BIT,
 
 	SPVC_COMPILER_OPTION_INT_MAX = 0x7fffffff
 } spvc_compiler_option;

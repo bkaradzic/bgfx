@@ -6215,7 +6215,7 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 			}
 		}
 
-		emit_texture_op(instruction);
+		emit_texture_op(instruction, false);
 		break;
 	}
 
@@ -6301,10 +6301,15 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		auto store_type = texel_type;
 		store_type.vecsize = 4;
 
+		TextureFunctionArguments args = {};
+		args.base.img = img_id;
+		args.base.imgtype = &img_type;
+		args.base.is_fetch = true;
+		args.coord = coord_id;
+		args.lod = lod;
 		statement(join(to_expression(img_id), ".write(",
 		               remap_swizzle(store_type, texel_type.vecsize, to_expression(texel_id)), ", ",
-		               to_function_args(img_id, img_type, true, false, false, coord_id, 0, 0, 0, 0, lod, 0, 0, 0, 0, 0,
-		                                0, &forward),
+		               CompilerMSL::to_function_args(args, &forward),
 		               ");"));
 
 		if (p_var && variable_storage_is_aliased(*p_var))
@@ -6746,8 +6751,11 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 	previous_instruction_opcode = opcode;
 }
 
-void CompilerMSL::emit_texture_op(const Instruction &i)
+void CompilerMSL::emit_texture_op(const Instruction &i, bool sparse)
 {
+	if (sparse)
+		SPIRV_CROSS_THROW("Sparse feedback not yet supported in MSL.");
+
 	if (msl_options.is_ios() && msl_options.ios_use_framebuffer_fetch_subpasses)
 	{
 		auto *ops = stream(i);
@@ -6771,7 +6779,7 @@ void CompilerMSL::emit_texture_op(const Instruction &i)
 	}
 
 	// Fallback to default implementation
-	CompilerGLSL::emit_texture_op(i);
+	CompilerGLSL::emit_texture_op(i, sparse);
 }
 
 void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uint32_t id_mem_sem)
@@ -7485,9 +7493,11 @@ static bool needs_chroma_reconstruction(const MSLConstexprSampler *constexpr_sam
 }
 
 // Returns the texture sampling function string for the specified image and sampling characteristics.
-string CompilerMSL::to_function_name(VariableID img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool, bool,
-                                     bool, bool, bool has_dref, uint32_t, uint32_t)
+string CompilerMSL::to_function_name(const TextureFunctionNameArguments &args)
 {
+	VariableID img = args.base.img;
+	auto &imgtype = *args.base.imgtype;
+
 	const MSLConstexprSampler *constexpr_sampler = nullptr;
 	bool is_dynamic_img_sampler = false;
 	if (auto *var = maybe_get_backing_variable(img))
@@ -7498,7 +7508,7 @@ string CompilerMSL::to_function_name(VariableID img, const SPIRType &imgtype, bo
 
 	// Special-case gather. We have to alter the component being looked up
 	// in the swizzle case.
-	if (msl_options.swizzle_texture_samples && is_gather && !is_dynamic_img_sampler &&
+	if (msl_options.swizzle_texture_samples && args.base.is_gather && !is_dynamic_img_sampler &&
 	    (!constexpr_sampler || !constexpr_sampler->ycbcr_conversion_enable))
 	{
 		add_spv_func_and_recompile(imgtype.image.depth ? SPVFuncImplGatherCompareSwizzle : SPVFuncImplGatherSwizzle);
@@ -7618,14 +7628,14 @@ string CompilerMSL::to_function_name(VariableID img, const SPIRType &imgtype, bo
 		fname = to_expression(combined ? combined->image : img) + ".";
 
 		// Texture function and sampler
-		if (is_fetch)
+		if (args.base.is_fetch)
 			fname += "read";
-		else if (is_gather)
+		else if (args.base.is_gather)
 			fname += "gather";
 		else
 			fname += "sample";
 
-		if (has_dref)
+		if (args.has_dref)
 			fname += "_compare";
 	}
 
@@ -7648,11 +7658,15 @@ static inline bool sampling_type_needs_f32_conversion(const SPIRType &type)
 }
 
 // Returns the function args for a texture sampling function for the specified image and sampling characteristics.
-string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
-                                     bool is_proj, uint32_t coord, uint32_t, uint32_t dref, uint32_t grad_x,
-                                     uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset, uint32_t bias,
-                                     uint32_t comp, uint32_t sample, uint32_t minlod, bool *p_forward)
+string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool *p_forward)
 {
+	VariableID img = args.base.img;
+	auto &imgtype = *args.base.imgtype;
+	uint32_t lod = args.lod;
+	uint32_t grad_x = args.grad_x;
+	uint32_t grad_y = args.grad_y;
+	uint32_t bias = args.bias;
+
 	const MSLConstexprSampler *constexpr_sampler = nullptr;
 	bool is_dynamic_img_sampler = false;
 	if (auto *var = maybe_get_backing_variable(img))
@@ -7675,14 +7689,14 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 				farg_str += join(", ", to_expression(img), plane_name_suffix, i);
 		}
 		else if ((!constexpr_sampler || !constexpr_sampler->ycbcr_conversion_enable) &&
-		         msl_options.swizzle_texture_samples && is_gather)
+		         msl_options.swizzle_texture_samples && args.base.is_gather)
 		{
 			auto *combined = maybe_get<SPIRCombinedImageSampler>(img);
 			farg_str += to_expression(combined ? combined->image : img);
 		}
 
 		// Sampler reference
-		if (!is_fetch)
+		if (!args.base.is_fetch)
 		{
 			if (!farg_str.empty())
 				farg_str += ", ";
@@ -7690,7 +7704,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		}
 
 		if ((!constexpr_sampler || !constexpr_sampler->ycbcr_conversion_enable) &&
-		    msl_options.swizzle_texture_samples && is_gather)
+		    msl_options.swizzle_texture_samples && args.base.is_gather)
 		{
 			// Add the swizzle constant from the swizzle buffer.
 			farg_str += ", " + to_swizzle_expression(img);
@@ -7699,17 +7713,17 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 
 		// Swizzled gather puts the component before the other args, to allow template
 		// deduction to work.
-		if (comp && msl_options.swizzle_texture_samples)
+		if (args.component && msl_options.swizzle_texture_samples)
 		{
-			forward = should_forward(comp);
-			farg_str += ", " + to_component_argument(comp);
+			forward = should_forward(args.component);
+			farg_str += ", " + to_component_argument(args.component);
 		}
 	}
 
 	// Texture coordinates
-	forward = forward && should_forward(coord);
-	auto coord_expr = to_enclosed_expression(coord);
-	auto &coord_type = expression_type(coord);
+	forward = forward && should_forward(args.coord);
+	auto coord_expr = to_enclosed_expression(args.coord);
+	auto &coord_type = expression_type(args.coord);
 	bool coord_is_fp = type_is_floating_point(coord_type);
 	bool is_cube_fetch = false;
 
@@ -7723,14 +7737,14 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		if (coord_type.vecsize > 1)
 			tex_coords = enclose_expression(tex_coords) + ".x";
 
-		if (is_fetch)
+		if (args.base.is_fetch)
 			tex_coords = "uint(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
 		else if (sampling_type_needs_f32_conversion(coord_type))
 			tex_coords = convert_to_f32(tex_coords, 1);
 
 		if (msl_options.texture_1D_as_2D)
 		{
-			if (is_fetch)
+			if (args.base.is_fetch)
 				tex_coords = "uint2(" + tex_coords + ", 0)";
 			else
 				tex_coords = "float2(" + tex_coords + ", 0.5)";
@@ -7751,7 +7765,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		{
 			// Metal texel buffer textures are 2D, so convert 1D coord to 2D.
 			// Support for Metal 2.1's new texture_buffer type.
-			if (is_fetch)
+			if (args.base.is_fetch)
 			{
 				if (msl_options.texel_buffer_texture_width > 0)
 				{
@@ -7781,7 +7795,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		if (coord_type.vecsize > 2)
 			tex_coords = enclose_expression(tex_coords) + ".xy";
 
-		if (is_fetch)
+		if (args.base.is_fetch)
 			tex_coords = "uint2(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
 		else if (sampling_type_needs_f32_conversion(coord_type))
 			tex_coords = convert_to_f32(tex_coords, 2);
@@ -7793,7 +7807,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		if (coord_type.vecsize > 3)
 			tex_coords = enclose_expression(tex_coords) + ".xyz";
 
-		if (is_fetch)
+		if (args.base.is_fetch)
 			tex_coords = "uint3(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
 		else if (sampling_type_needs_f32_conversion(coord_type))
 			tex_coords = convert_to_f32(tex_coords, 3);
@@ -7802,7 +7816,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		break;
 
 	case DimCube:
-		if (is_fetch)
+		if (args.base.is_fetch)
 		{
 			is_cube_fetch = true;
 			tex_coords += ".xy";
@@ -7824,34 +7838,34 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		break;
 	}
 
-	if (is_fetch && offset)
+	if (args.base.is_fetch && args.offset)
 	{
 		// Fetch offsets must be applied directly to the coordinate.
-		forward = forward && should_forward(offset);
-		auto &type = expression_type(offset);
+		forward = forward && should_forward(args.offset);
+		auto &type = expression_type(args.offset);
 		if (type.basetype != SPIRType::UInt)
-			tex_coords += " + " + bitcast_expression(SPIRType::UInt, offset);
+			tex_coords += " + " + bitcast_expression(SPIRType::UInt, args.offset);
 		else
-			tex_coords += " + " + to_enclosed_expression(offset);
+			tex_coords += " + " + to_enclosed_expression(args.offset);
 	}
-	else if (is_fetch && coffset)
+	else if (args.base.is_fetch && args.coffset)
 	{
 		// Fetch offsets must be applied directly to the coordinate.
-		forward = forward && should_forward(coffset);
-		auto &type = expression_type(coffset);
+		forward = forward && should_forward(args.coffset);
+		auto &type = expression_type(args.coffset);
 		if (type.basetype != SPIRType::UInt)
-			tex_coords += " + " + bitcast_expression(SPIRType::UInt, coffset);
+			tex_coords += " + " + bitcast_expression(SPIRType::UInt, args.coffset);
 		else
-			tex_coords += " + " + to_enclosed_expression(coffset);
+			tex_coords += " + " + to_enclosed_expression(args.coffset);
 	}
 
 	// If projection, use alt coord as divisor
-	if (is_proj)
+	if (args.base.is_proj)
 	{
 		if (sampling_type_needs_f32_conversion(coord_type))
-			tex_coords += " / " + convert_to_f32(to_extract_component_expression(coord, alt_coord_component), 1);
+			tex_coords += " / " + convert_to_f32(to_extract_component_expression(args.coord, alt_coord_component), 1);
 		else
-			tex_coords += " / " + to_extract_component_expression(coord, alt_coord_component);
+			tex_coords += " / " + to_extract_component_expression(args.coord, alt_coord_component);
 	}
 
 	if (!farg_str.empty())
@@ -7862,10 +7876,10 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		farg_str += "spvCubemapTo2DArrayFace(" + tex_coords + ").xy";
 
 		if (is_cube_fetch)
-			farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ")";
+			farg_str += ", uint(" + to_extract_component_expression(args.coord, 2) + ")";
 		else
 			farg_str += ", uint(spvCubemapTo2DArrayFace(" + tex_coords + ").z) + (uint(" +
-			            round_fp_tex_coords(to_extract_component_expression(coord, alt_coord_component), coord_is_fp) +
+			            round_fp_tex_coords(to_extract_component_expression(args.coord, alt_coord_component), coord_is_fp) +
 			            ") * 6u)";
 
 		add_spv_func_and_recompile(SPVFuncImplCubemapTo2DArrayFace);
@@ -7879,39 +7893,39 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		{
 			// Special case for cube arrays, face and layer are packed in one dimension.
 			if (imgtype.image.arrayed)
-				farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ") % 6u";
+				farg_str += ", uint(" + to_extract_component_expression(args.coord, 2) + ") % 6u";
 			else
 				farg_str +=
-				    ", uint(" + round_fp_tex_coords(to_extract_component_expression(coord, 2), coord_is_fp) + ")";
+				    ", uint(" + round_fp_tex_coords(to_extract_component_expression(args.coord, 2), coord_is_fp) + ")";
 		}
 
 		// If array, use alt coord
 		if (imgtype.image.arrayed)
 		{
 			// Special case for cube arrays, face and layer are packed in one dimension.
-			if (imgtype.image.dim == DimCube && is_fetch)
-				farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ") / 6u";
+			if (imgtype.image.dim == DimCube && args.base.is_fetch)
+				farg_str += ", uint(" + to_extract_component_expression(args.coord, 2) + ") / 6u";
 			else
 				farg_str +=
 				    ", uint(" +
-				    round_fp_tex_coords(to_extract_component_expression(coord, alt_coord_component), coord_is_fp) + ")";
+				    round_fp_tex_coords(to_extract_component_expression(args.coord, alt_coord_component), coord_is_fp) + ")";
 		}
 	}
 
 	// Depth compare reference value
-	if (dref)
+	if (args.dref)
 	{
-		forward = forward && should_forward(dref);
+		forward = forward && should_forward(args.dref);
 		farg_str += ", ";
 
-		auto &dref_type = expression_type(dref);
+		auto &dref_type = expression_type(args.dref);
 
 		string dref_expr;
-		if (is_proj)
+		if (args.base.is_proj)
 			dref_expr =
-			    join(to_enclosed_expression(dref), " / ", to_extract_component_expression(coord, alt_coord_component));
+			    join(to_enclosed_expression(args.dref), " / ", to_extract_component_expression(args.coord, alt_coord_component));
 		else
-			dref_expr = to_expression(dref);
+			dref_expr = to_expression(args.dref);
 
 		if (sampling_type_needs_f32_conversion(dref_type))
 			dref_expr = convert_to_f32(dref_expr, 1);
@@ -7968,7 +7982,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 	if (lod && (imgtype.image.dim != Dim1D || msl_options.texture_1D_as_2D))
 	{
 		forward = forward && should_forward(lod);
-		if (is_fetch)
+		if (args.base.is_fetch)
 		{
 			farg_str += ", " + to_expression(lod);
 		}
@@ -7977,7 +7991,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 			farg_str += ", level(" + to_expression(lod) + ")";
 		}
 	}
-	else if (is_fetch && !lod && (imgtype.image.dim != Dim1D || msl_options.texture_1D_as_2D) &&
+	else if (args.base.is_fetch && !lod && (imgtype.image.dim != Dim1D || msl_options.texture_1D_as_2D) &&
 	         imgtype.image.dim != DimBuffer && !imgtype.image.ms && imgtype.image.sampled != 2)
 	{
 		// Lod argument is optional in OpImageFetch, but we require a LOD value, pick 0 as the default.
@@ -8012,7 +8026,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		farg_str += ", gradient" + grad_opt + "(" + to_expression(grad_x) + ", " + to_expression(grad_y) + ")";
 	}
 
-	if (minlod)
+	if (args.min_lod)
 	{
 		if (msl_options.is_macos())
 		{
@@ -8022,21 +8036,21 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		else if (msl_options.is_ios())
 			SPIRV_CROSS_THROW("min_lod_clamp() is not supported on iOS.");
 
-		forward = forward && should_forward(minlod);
-		farg_str += ", min_lod_clamp(" + to_expression(minlod) + ")";
+		forward = forward && should_forward(args.min_lod);
+		farg_str += ", min_lod_clamp(" + to_expression(args.min_lod) + ")";
 	}
 
 	// Add offsets
 	string offset_expr;
-	if (coffset && !is_fetch)
+	if (args.coffset && !args.base.is_fetch)
 	{
-		forward = forward && should_forward(coffset);
-		offset_expr = to_expression(coffset);
+		forward = forward && should_forward(args.coffset);
+		offset_expr = to_expression(args.coffset);
 	}
-	else if (offset && !is_fetch)
+	else if (args.offset && !args.base.is_fetch)
 	{
-		forward = forward && should_forward(offset);
-		offset_expr = to_expression(offset);
+		forward = forward && should_forward(args.offset);
+		offset_expr = to_expression(args.offset);
 	}
 
 	if (!offset_expr.empty())
@@ -8062,7 +8076,7 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 		}
 	}
 
-	if (comp)
+	if (args.component)
 	{
 		// If 2D has gather component, ensure it also has an offset arg
 		if (imgtype.image.dim == Dim2D && offset_expr.empty())
@@ -8070,16 +8084,16 @@ string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bo
 
 		if (!msl_options.swizzle_texture_samples || is_dynamic_img_sampler)
 		{
-			forward = forward && should_forward(comp);
-			farg_str += ", " + to_component_argument(comp);
+			forward = forward && should_forward(args.component);
+			farg_str += ", " + to_component_argument(args.component);
 		}
 	}
 
-	if (sample)
+	if (args.sample)
 	{
-		forward = forward && should_forward(sample);
+		forward = forward && should_forward(args.sample);
 		farg_str += ", ";
-		farg_str += to_expression(sample);
+		farg_str += to_expression(args.sample);
 	}
 
 	*p_forward = forward;
@@ -8128,7 +8142,7 @@ void CompilerMSL::emit_sampled_image_op(uint32_t result_type, uint32_t result_id
 	set<SPIRCombinedImageSampler>(result_id, result_type, image_id, samp_id);
 }
 
-string CompilerMSL::to_texture_op(const Instruction &i, bool *forward, SmallVector<uint32_t> &inherited_expressions)
+string CompilerMSL::to_texture_op(const Instruction &i, bool sparse, bool *forward, SmallVector<uint32_t> &inherited_expressions)
 {
 	auto *ops = stream(i);
 	uint32_t result_type_id = ops[0];
@@ -8156,6 +8170,10 @@ string CompilerMSL::to_texture_op(const Instruction &i, bool *forward, SmallVect
 		// processing.
 		switch (constexpr_sampler->ycbcr_model)
 		{
+		case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY:
+		case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_IDENTITY:
+			// Default
+			break;
 		case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_BT_709:
 			add_spv_func_and_recompile(SPVFuncImplConvertYCbCrBT709);
 			expr += "spvConvertYCbCrBT709(";
@@ -8196,7 +8214,7 @@ string CompilerMSL::to_texture_op(const Instruction &i, bool *forward, SmallVect
 		expr += "spvTextureSwizzle(";
 	}
 
-	string inner_expr = CompilerGLSL::to_texture_op(i, forward, inherited_expressions);
+	string inner_expr = CompilerGLSL::to_texture_op(i, sparse, forward, inherited_expressions);
 
 	if (constexpr_sampler && constexpr_sampler->ycbcr_conversion_enable && !is_dynamic_img_sampler)
 	{

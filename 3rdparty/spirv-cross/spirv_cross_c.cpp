@@ -485,6 +485,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_HLSL_NONWRITABLE_UAV_TEXTURE_AS_SRV:
 		options->hlsl.nonwritable_uav_texture_as_srv = value != 0;
 		break;
+
+	case SPVC_COMPILER_OPTION_HLSL_ENABLE_16BIT_TYPES:
+		options->hlsl.enable_16bit_types = value != 0;
+		break;
 #endif
 
 #if SPIRV_CROSS_C_API_MSL
@@ -1017,12 +1021,8 @@ spvc_result spvc_compiler_msl_add_vertex_attribute(spvc_compiler compiler, const
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	MSLVertexAttr attr;
 	attr.location = va->location;
-	attr.msl_buffer = va->msl_buffer;
-	attr.msl_offset = va->msl_offset;
-	attr.msl_stride = va->msl_stride;
 	attr.format = static_cast<MSLVertexFormat>(va->format);
 	attr.builtin = static_cast<spv::BuiltIn>(va->builtin);
-	attr.per_instance = va->per_instance != 0;
 	msl.add_msl_vertex_attribute(attr);
 	return SPVC_SUCCESS;
 #else
@@ -2260,12 +2260,8 @@ void spvc_msl_vertex_attribute_init(spvc_msl_vertex_attribute *attr)
 	// Crude, but works.
 	MSLVertexAttr attr_default;
 	attr->location = attr_default.location;
-	attr->per_instance = attr_default.per_instance ? SPVC_TRUE : SPVC_FALSE;
 	attr->format = static_cast<spvc_msl_vertex_format>(attr_default.format);
 	attr->builtin = static_cast<SpvBuiltIn>(attr_default.builtin);
-	attr->msl_buffer = attr_default.msl_buffer;
-	attr->msl_offset = attr_default.msl_offset;
-	attr->msl_stride = attr_default.msl_stride;
 #else
 	memset(attr, 0, sizeof(*attr));
 #endif

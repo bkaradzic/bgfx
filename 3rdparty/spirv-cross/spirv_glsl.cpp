@@ -5363,7 +5363,38 @@ static inline bool image_opcode_is_sample_no_dref(Op op)
 	}
 }
 
-void CompilerGLSL::emit_texture_op(const Instruction &i)
+void CompilerGLSL::emit_sparse_feedback_temporaries(uint32_t result_type_id, uint32_t id,
+                                                    uint32_t &feedback_id, uint32_t &texel_id)
+{
+	// Need to allocate two temporaries.
+	if (options.es)
+		SPIRV_CROSS_THROW("Sparse texture feedback is not supported on ESSL.");
+	require_extension_internal("GL_ARB_sparse_texture2");
+
+	auto &temps = extra_sub_expressions[id];
+	if (temps == 0)
+		temps = ir.increase_bound_by(2);
+
+	feedback_id = temps + 0;
+	texel_id = temps + 1;
+
+	auto &return_type = get<SPIRType>(result_type_id);
+	if (return_type.basetype != SPIRType::Struct || return_type.member_types.size() != 2)
+		SPIRV_CROSS_THROW("Invalid return type for sparse feedback.");
+	emit_uninitialized_temporary(return_type.member_types[0], feedback_id);
+	emit_uninitialized_temporary(return_type.member_types[1], texel_id);
+}
+
+uint32_t CompilerGLSL::get_sparse_feedback_texel_id(uint32_t id) const
+{
+	auto itr = extra_sub_expressions.find(id);
+	if (itr == extra_sub_expressions.end())
+		return 0;
+	else
+		return itr->second + 1;
+}
+
+void CompilerGLSL::emit_texture_op(const Instruction &i, bool sparse)
 {
 	auto *ops = stream(i);
 	auto op = static_cast<Op>(i.op);
@@ -5372,13 +5403,29 @@ void CompilerGLSL::emit_texture_op(const Instruction &i)
 
 	uint32_t result_type_id = ops[0];
 	uint32_t id = ops[1];
+	auto &return_type = get<SPIRType>(result_type_id);
+
+	uint32_t sparse_code_id = 0;
+	uint32_t sparse_texel_id = 0;
+	if (sparse)
+		emit_sparse_feedback_temporaries(result_type_id, id, sparse_code_id, sparse_texel_id);
 
 	bool forward = false;
-	string expr = to_texture_op(i, &forward, inherited_expressions);
+	string expr = to_texture_op(i, sparse, &forward, inherited_expressions);
+
+	if (sparse)
+	{
+		statement(to_expression(sparse_code_id), " = ", expr, ";");
+		expr = join(type_to_glsl(return_type), "(", to_expression(sparse_code_id), ", ", to_expression(sparse_texel_id), ")");
+		forward = true;
+		inherited_expressions.clear();
+	}
+
 	emit_op(result_type_id, id, expr, forward);
 	for (auto &inherit : inherited_expressions)
 		inherit_expression_dependencies(id, inherit);
 
+	// Do not register sparse ops as control dependent as they are always lowered to a temporary.
 	switch (op)
 	{
 	case OpImageSampleDrefImplicitLod:
@@ -5393,7 +5440,7 @@ void CompilerGLSL::emit_texture_op(const Instruction &i)
 	}
 }
 
-std::string CompilerGLSL::to_texture_op(const Instruction &i, bool *forward,
+std::string CompilerGLSL::to_texture_op(const Instruction &i, bool sparse, bool *forward,
                                         SmallVector<uint32_t> &inherited_expressions)
 {
 	auto *ops = stream(i);
@@ -5422,6 +5469,8 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool *forward,
 	{
 	case OpImageSampleDrefImplicitLod:
 	case OpImageSampleDrefExplicitLod:
+	case OpImageSparseSampleDrefImplicitLod:
+	case OpImageSparseSampleDrefExplicitLod:
 		dref = ops[4];
 		opt = &ops[5];
 		length -= 5;
@@ -5429,6 +5478,8 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool *forward,
 
 	case OpImageSampleProjDrefImplicitLod:
 	case OpImageSampleProjDrefExplicitLod:
+	case OpImageSparseSampleProjDrefImplicitLod:
+	case OpImageSparseSampleProjDrefExplicitLod:
 		dref = ops[4];
 		opt = &ops[5];
 		length -= 5;
@@ -5436,6 +5487,7 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool *forward,
 		break;
 
 	case OpImageDrefGather:
+	case OpImageSparseDrefGather:
 		dref = ops[4];
 		opt = &ops[5];
 		length -= 5;
@@ -5443,6 +5495,7 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool *forward,
 		break;
 
 	case OpImageGather:
+	case OpImageSparseGather:
 		comp = ops[4];
 		opt = &ops[5];
 		length -= 5;
@@ -5450,6 +5503,7 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool *forward,
 		break;
 
 	case OpImageFetch:
+	case OpImageSparseFetch:
 	case OpImageRead: // Reads == fetches in Metal (other langs will not get here)
 		opt = &ops[4];
 		length -= 4;
@@ -5458,6 +5512,8 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool *forward,
 
 	case OpImageSampleProjImplicitLod:
 	case OpImageSampleProjExplicitLod:
+	case OpImageSparseSampleProjImplicitLod:
+	case OpImageSparseSampleProjExplicitLod:
 		opt = &ops[4];
 		length -= 4;
 		proj = true;
@@ -5540,12 +5596,47 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool *forward,
 	test(sample, ImageOperandsSampleMask);
 	test(minlod, ImageOperandsMinLodMask);
 
+	TextureFunctionBaseArguments base_args = {};
+	base_args.img = img;
+	base_args.imgtype = &imgtype;
+	base_args.is_fetch = fetch != 0;
+	base_args.is_gather = gather != 0;
+	base_args.is_proj = proj != 0;
+
 	string expr;
-	expr += to_function_name(img, imgtype, !!fetch, !!gather, !!proj, !!coffsets, (!!coffset || !!offset),
-	                         (!!grad_x || !!grad_y), !!dref, lod, minlod);
+	TextureFunctionNameArguments name_args = {};
+
+	name_args.base = base_args;
+	name_args.has_array_offsets = coffsets != 0;
+	name_args.has_offset = coffset != 0 || offset != 0;
+	name_args.has_grad = grad_x != 0 || grad_y != 0;
+	name_args.has_dref = dref != 0;
+	name_args.is_sparse_feedback = sparse;
+	name_args.has_min_lod = minlod != 0;
+	name_args.lod = lod;
+	expr += to_function_name(name_args);
 	expr += "(";
-	expr += to_function_args(img, imgtype, fetch, gather, proj, coord, coord_components, dref, grad_x, grad_y, lod,
-	                         coffset, offset, bias, comp, sample, minlod, forward);
+
+	uint32_t sparse_texel_id = 0;
+	if (sparse)
+		sparse_texel_id = get_sparse_feedback_texel_id(ops[1]);
+
+	TextureFunctionArguments args = {};
+	args.base = base_args;
+	args.coord = coord;
+	args.coord_components = coord_components;
+	args.dref = dref;
+	args.grad_x = grad_x;
+	args.grad_y = grad_y;
+	args.lod = lod;
+	args.coffset = coffset;
+	args.offset = offset;
+	args.bias = bias;
+	args.component = comp;
+	args.sample = sample;
+	args.sparse_texel = sparse_texel_id;
+	args.min_lod = minlod;
+	expr += to_function_args(args, forward);
 	expr += ")";
 
 	// texture(samplerXShadow) returns float. shadowX() returns vec4. Swizzle here.
@@ -5576,7 +5667,7 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool *forward,
 			expr = remap_swizzle(result_type, 1, expr);
 	}
 
-	if (!backend.support_small_type_sampling_result && result_type.width < 32)
+	if (!sparse && !backend.support_small_type_sampling_result && result_type.width < 32)
 	{
 		// Just value cast (narrowing) to expected type since we cannot rely on narrowing to work automatically.
 		// Hopefully compiler picks this up and converts the texturing instruction to the appropriate precision.
@@ -5600,14 +5691,18 @@ bool CompilerGLSL::expression_is_constant_null(uint32_t id) const
 
 // Returns the function name for a texture sampling function for the specified image and sampling characteristics.
 // For some subclasses, the function is a method on the specified image.
-string CompilerGLSL::to_function_name(VariableID tex, const SPIRType &imgtype, bool is_fetch, bool is_gather,
-                                      bool is_proj, bool has_array_offsets, bool has_offset, bool has_grad, bool,
-                                      uint32_t lod, uint32_t minlod)
+string CompilerGLSL::to_function_name(const TextureFunctionNameArguments &args)
 {
-	if (minlod != 0)
-		SPIRV_CROSS_THROW("Sparse texturing not yet supported.");
+	if (args.has_min_lod)
+	{
+		if (options.es)
+			SPIRV_CROSS_THROW("Sparse residency is not supported in ESSL.");
+		require_extension_internal("GL_ARB_sparse_texture_clamp");
+	}
 
 	string fname;
+	auto &imgtype = *args.base.imgtype;
+	VariableID tex = args.base.img;
 
 	// textureLod on sampler2DArrayShadow and samplerCubeShadow does not exist in GLSL for some reason.
 	// To emulate this, we will have to use textureGrad with a constant gradient of 0.
@@ -5615,9 +5710,9 @@ string CompilerGLSL::to_function_name(VariableID tex, const SPIRType &imgtype, b
 	// This happens for HLSL SampleCmpLevelZero on Texture2DArray and TextureCube.
 	bool workaround_lod_array_shadow_as_grad = false;
 	if (((imgtype.image.arrayed && imgtype.image.dim == Dim2D) || imgtype.image.dim == DimCube) &&
-	    image_is_comparison(imgtype, tex) && lod)
+	    image_is_comparison(imgtype, tex) && args.lod)
 	{
-		if (!expression_is_constant_null(lod))
+		if (!expression_is_constant_null(args.lod))
 		{
 			SPIRV_CROSS_THROW(
 			    "textureLod on sampler2DArrayShadow is not constant 0.0. This cannot be expressed in GLSL.");
@@ -5625,28 +5720,37 @@ string CompilerGLSL::to_function_name(VariableID tex, const SPIRType &imgtype, b
 		workaround_lod_array_shadow_as_grad = true;
 	}
 
-	if (is_fetch)
-		fname += "texelFetch";
+	if (args.is_sparse_feedback)
+		fname += "sparse";
+
+	if (args.base.is_fetch)
+		fname += args.is_sparse_feedback ? "TexelFetch" : "texelFetch";
 	else
 	{
-		fname += "texture";
+		fname += args.is_sparse_feedback ? "Texture" : "texture";
 
-		if (is_gather)
+		if (args.base.is_gather)
 			fname += "Gather";
-		if (has_array_offsets)
+		if (args.has_array_offsets)
 			fname += "Offsets";
-		if (is_proj)
+		if (args.base.is_proj)
 			fname += "Proj";
-		if (has_grad || workaround_lod_array_shadow_as_grad)
+		if (args.has_grad || workaround_lod_array_shadow_as_grad)
 			fname += "Grad";
-		if (!!lod && !workaround_lod_array_shadow_as_grad)
+		if (args.lod != 0 && !workaround_lod_array_shadow_as_grad)
 			fname += "Lod";
 	}
 
-	if (has_offset)
+	if (args.has_offset)
 		fname += "Offset";
 
-	return is_legacy() ? legacy_tex_op(fname, imgtype, lod, tex) : fname;
+	if (args.has_min_lod)
+		fname += "Clamp";
+
+	if (args.is_sparse_feedback || args.has_min_lod)
+		fname += "ARB";
+
+	return is_legacy() ? legacy_tex_op(fname, imgtype, args.lod, tex) : fname;
 }
 
 std::string CompilerGLSL::convert_separate_image_to_expression(uint32_t id)
@@ -5691,14 +5795,13 @@ std::string CompilerGLSL::convert_separate_image_to_expression(uint32_t id)
 }
 
 // Returns the function args for a texture sampling function for the specified image and sampling characteristics.
-string CompilerGLSL::to_function_args(VariableID img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
-                                      bool is_proj, uint32_t coord, uint32_t coord_components, uint32_t dref,
-                                      uint32_t grad_x, uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset,
-                                      uint32_t bias, uint32_t comp, uint32_t sample, uint32_t /*minlod*/,
-                                      bool *p_forward)
+string CompilerGLSL::to_function_args(const TextureFunctionArguments &args, bool *p_forward)
 {
+	VariableID img = args.base.img;
+	auto &imgtype = *args.base.imgtype;
+
 	string farg_str;
-	if (is_fetch)
+	if (args.base.is_fetch)
 		farg_str = convert_separate_image_to_expression(img);
 	else
 		farg_str = to_expression(img);
@@ -5721,19 +5824,19 @@ string CompilerGLSL::to_function_args(VariableID img, const SPIRType &imgtype, b
 		}
 	};
 
-	bool forward = should_forward(coord);
+	bool forward = should_forward(args.coord);
 
 	// The IR can give us more components than we need, so chop them off as needed.
-	auto swizzle_expr = swizzle(coord_components, expression_type(coord).vecsize);
+	auto swizzle_expr = swizzle(args.coord_components, expression_type(args.coord).vecsize);
 	// Only enclose the UV expression if needed.
-	auto coord_expr = (*swizzle_expr == '\0') ? to_expression(coord) : (to_enclosed_expression(coord) + swizzle_expr);
+	auto coord_expr = (*swizzle_expr == '\0') ? to_expression(args.coord) : (to_enclosed_expression(args.coord) + swizzle_expr);
 
 	// texelFetch only takes int, not uint.
-	auto &coord_type = expression_type(coord);
+	auto &coord_type = expression_type(args.coord);
 	if (coord_type.basetype == SPIRType::UInt)
 	{
 		auto expected_type = coord_type;
-		expected_type.vecsize = coord_components;
+		expected_type.vecsize = args.coord_components;
 		expected_type.basetype = SPIRType::Int;
 		coord_expr = bitcast_expression(expected_type, coord_type.basetype, coord_expr);
 	}
@@ -5744,21 +5847,21 @@ string CompilerGLSL::to_function_args(VariableID img, const SPIRType &imgtype, b
 	// This happens for HLSL SampleCmpLevelZero on Texture2DArray and TextureCube.
 	bool workaround_lod_array_shadow_as_grad =
 	    ((imgtype.image.arrayed && imgtype.image.dim == Dim2D) || imgtype.image.dim == DimCube) &&
-	    image_is_comparison(imgtype, img) && lod;
+	    image_is_comparison(imgtype, img) && args.lod != 0;
 
-	if (dref)
+	if (args.dref)
 	{
-		forward = forward && should_forward(dref);
+		forward = forward && should_forward(args.dref);
 
 		// SPIR-V splits dref and coordinate.
-		if (is_gather || coord_components == 4) // GLSL also splits the arguments in two. Same for textureGather.
+		if (args.base.is_gather || args.coord_components == 4) // GLSL also splits the arguments in two. Same for textureGather.
 		{
 			farg_str += ", ";
-			farg_str += to_expression(coord);
+			farg_str += to_expression(args.coord);
 			farg_str += ", ";
-			farg_str += to_expression(dref);
+			farg_str += to_expression(args.dref);
 		}
-		else if (is_proj)
+		else if (args.base.is_proj)
 		{
 			// Have to reshuffle so we get vec4(coord, dref, proj), special case.
 			// Other shading languages splits up the arguments for coord and compare value like SPIR-V.
@@ -5768,21 +5871,21 @@ string CompilerGLSL::to_function_args(VariableID img, const SPIRType &imgtype, b
 			if (imgtype.image.dim == Dim1D)
 			{
 				// Could reuse coord_expr, but we will mess up the temporary usage checking.
-				farg_str += to_enclosed_expression(coord) + ".x";
+				farg_str += to_enclosed_expression(args.coord) + ".x";
 				farg_str += ", ";
 				farg_str += "0.0, ";
-				farg_str += to_expression(dref);
+				farg_str += to_expression(args.dref);
 				farg_str += ", ";
-				farg_str += to_enclosed_expression(coord) + ".y)";
+				farg_str += to_enclosed_expression(args.coord) + ".y)";
 			}
 			else if (imgtype.image.dim == Dim2D)
 			{
 				// Could reuse coord_expr, but we will mess up the temporary usage checking.
-				farg_str += to_enclosed_expression(coord) + (swizz_func ? ".xy()" : ".xy");
+				farg_str += to_enclosed_expression(args.coord) + (swizz_func ? ".xy()" : ".xy");
 				farg_str += ", ";
-				farg_str += to_expression(dref);
+				farg_str += to_expression(args.dref);
 				farg_str += ", ";
-				farg_str += to_enclosed_expression(coord) + ".z)";
+				farg_str += to_enclosed_expression(args.coord) + ".z)";
 			}
 			else
 				SPIRV_CROSS_THROW("Invalid type for textureProj with shadow.");
@@ -5790,14 +5893,14 @@ string CompilerGLSL::to_function_args(VariableID img, const SPIRType &imgtype, b
 		else
 		{
 			// Create a composite which merges coord/dref into a single vector.
-			auto type = expression_type(coord);
-			type.vecsize = coord_components + 1;
+			auto type = expression_type(args.coord);
+			type.vecsize = args.coord_components + 1;
 			farg_str += ", ";
 			farg_str += type_to_glsl_constructor(type);
 			farg_str += "(";
 			farg_str += coord_expr;
 			farg_str += ", ";
-			farg_str += to_expression(dref);
+			farg_str += to_expression(args.dref);
 			farg_str += ")";
 		}
 	}
@@ -5807,17 +5910,17 @@ string CompilerGLSL::to_function_args(VariableID img, const SPIRType &imgtype, b
 		farg_str += coord_expr;
 	}
 
-	if (grad_x || grad_y)
+	if (args.grad_x || args.grad_y)
 	{
-		forward = forward && should_forward(grad_x);
-		forward = forward && should_forward(grad_y);
+		forward = forward && should_forward(args.grad_x);
+		forward = forward && should_forward(args.grad_y);
 		farg_str += ", ";
-		farg_str += to_expression(grad_x);
+		farg_str += to_expression(args.grad_x);
 		farg_str += ", ";
-		farg_str += to_expression(grad_y);
+		farg_str += to_expression(args.grad_y);
 	}
 
-	if (lod)
+	if (args.lod)
 	{
 		if (workaround_lod_array_shadow_as_grad)
 		{
@@ -5830,63 +5933,76 @@ string CompilerGLSL::to_function_args(VariableID img, const SPIRType &imgtype, b
 		}
 		else
 		{
-			if (check_explicit_lod_allowed(lod))
+			if (check_explicit_lod_allowed(args.lod))
 			{
-				forward = forward && should_forward(lod);
+				forward = forward && should_forward(args.lod);
 				farg_str += ", ";
 
-				auto &lod_expr_type = expression_type(lod);
+				auto &lod_expr_type = expression_type(args.lod);
 
 				// Lod expression for TexelFetch in GLSL must be int, and only int.
-				if (is_fetch && imgtype.image.dim != DimBuffer && !imgtype.image.ms &&
+				if (args.base.is_fetch && imgtype.image.dim != DimBuffer && !imgtype.image.ms &&
 				    lod_expr_type.basetype != SPIRType::Int)
 				{
-					farg_str += join("int(", to_expression(lod), ")");
+					farg_str += join("int(", to_expression(args.lod), ")");
 				}
 				else
 				{
-					farg_str += to_expression(lod);
+					farg_str += to_expression(args.lod);
 				}
 			}
 		}
 	}
-	else if (is_fetch && imgtype.image.dim != DimBuffer && !imgtype.image.ms)
+	else if (args.base.is_fetch && imgtype.image.dim != DimBuffer && !imgtype.image.ms)
 	{
 		// Lod argument is optional in OpImageFetch, but we require a LOD value, pick 0 as the default.
 		farg_str += ", 0";
 	}
 
-	if (coffset)
+	if (args.coffset)
 	{
-		forward = forward && should_forward(coffset);
+		forward = forward && should_forward(args.coffset);
 		farg_str += ", ";
-		farg_str += to_expression(coffset);
+		farg_str += to_expression(args.coffset);
 	}
-	else if (offset)
+	else if (args.offset)
 	{
-		forward = forward && should_forward(offset);
+		forward = forward && should_forward(args.offset);
 		farg_str += ", ";
-		farg_str += to_expression(offset);
-	}
-
-	if (bias)
-	{
-		forward = forward && should_forward(bias);
-		farg_str += ", ";
-		farg_str += to_expression(bias);
+		farg_str += to_expression(args.offset);
 	}
 
-	if (comp)
+	if (args.sample)
 	{
-		forward = forward && should_forward(comp);
 		farg_str += ", ";
-		farg_str += to_expression(comp);
+		farg_str += to_expression(args.sample);
 	}
 
-	if (sample)
+	if (args.min_lod)
 	{
 		farg_str += ", ";
-		farg_str += to_expression(sample);
+		farg_str += to_expression(args.min_lod);
+	}
+
+	if (args.sparse_texel)
+	{
+		// Sparse texel output parameter comes after everything else, except it's before the optional, component/bias arguments.
+		farg_str += ", ";
+		farg_str += to_expression(args.sparse_texel);
+	}
+
+	if (args.bias)
+	{
+		forward = forward && should_forward(args.bias);
+		farg_str += ", ";
+		farg_str += to_expression(args.bias);
+	}
+
+	if (args.component)
+	{
+		forward = forward && should_forward(args.component);
+		farg_str += ", ";
+		farg_str += to_expression(args.component);
 	}
 
 	*p_forward = forward;
@@ -10081,7 +10197,29 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	case OpImageGather:
 	case OpImageDrefGather:
 		// Gets a bit hairy, so move this to a separate instruction.
-		emit_texture_op(instruction);
+		emit_texture_op(instruction, false);
+		break;
+
+	case OpImageSparseSampleExplicitLod:
+	case OpImageSparseSampleProjExplicitLod:
+	case OpImageSparseSampleDrefExplicitLod:
+	case OpImageSparseSampleProjDrefExplicitLod:
+	case OpImageSparseSampleImplicitLod:
+	case OpImageSparseSampleProjImplicitLod:
+	case OpImageSparseSampleDrefImplicitLod:
+	case OpImageSparseSampleProjDrefImplicitLod:
+	case OpImageSparseFetch:
+	case OpImageSparseGather:
+	case OpImageSparseDrefGather:
+		// Gets a bit hairy, so move this to a separate instruction.
+		emit_texture_op(instruction, true);
+		break;
+
+	case OpImageSparseTexelsResident:
+		if (options.es)
+			SPIRV_CROSS_THROW("Sparse feedback is not supported in GLSL.");
+		require_extension_internal("GL_ARB_sparse_texture2");
+		emit_unary_func_op_cast(ops[0], ops[1], ops[2], "sparseTexelsResidentARB", int_type, SPIRType::Boolean);
 		break;
 
 	case OpImage:
@@ -10174,6 +10312,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 
 	// Image load/store
 	case OpImageRead:
+	case OpImageSparseRead:
 	{
 		// We added Nonreadable speculatively to the OpImage variable due to glslangValidator
 		// not adding the proper qualifiers.
@@ -10267,6 +10406,12 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		}
 		else
 		{
+			bool sparse = opcode == OpImageSparseRead;
+			uint32_t sparse_code_id = 0;
+			uint32_t sparse_texel_id = 0;
+			if (sparse)
+				emit_sparse_feedback_temporaries(ops[0], ops[1], sparse_code_id, sparse_texel_id);
+
 			// imageLoad only accepts int coords, not uint.
 			auto coord_expr = to_expression(ops[3]);
 			auto target_coord_type = expression_type(ops[3]);
@@ -10274,20 +10419,46 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			coord_expr = bitcast_expression(target_coord_type, expression_type(ops[3]).basetype, coord_expr);
 
 			// Plain image load/store.
-			if (type.image.ms)
+			if (sparse)
 			{
-				uint32_t operands = ops[4];
-				if (operands != ImageOperandsSampleMask || length != 6)
-					SPIRV_CROSS_THROW("Multisampled image used in OpImageRead, but unexpected operand mask was used.");
+				if (type.image.ms)
+				{
+					uint32_t operands = ops[4];
+					if (operands != ImageOperandsSampleMask || length != 6)
+						SPIRV_CROSS_THROW(
+							"Multisampled image used in OpImageRead, but unexpected operand mask was used.");
 
-				uint32_t samples = ops[5];
-				imgexpr =
-				    join("imageLoad(", to_expression(ops[2]), ", ", coord_expr, ", ", to_expression(samples), ")");
+					uint32_t samples = ops[5];
+					statement(to_expression(sparse_code_id), " = sparseImageLoadARB(", to_expression(ops[2]), ", ",
+					          coord_expr, ", ", to_expression(samples), ", ", to_expression(sparse_texel_id), ");");
+				}
+				else
+				{
+					statement(to_expression(sparse_code_id), " = sparseImageLoadARB(", to_expression(ops[2]), ", ",
+					          coord_expr, ", ", to_expression(sparse_texel_id), ");");
+				}
+				imgexpr = join(type_to_glsl(get<SPIRType>(result_type)), "(",
+				               to_expression(sparse_code_id), ", ", to_expression(sparse_texel_id), ")");
 			}
 			else
-				imgexpr = join("imageLoad(", to_expression(ops[2]), ", ", coord_expr, ")");
+			{
+				if (type.image.ms)
+				{
+					uint32_t operands = ops[4];
+					if (operands != ImageOperandsSampleMask || length != 6)
+						SPIRV_CROSS_THROW(
+						    "Multisampled image used in OpImageRead, but unexpected operand mask was used.");
 
-			imgexpr = remap_swizzle(get<SPIRType>(result_type), 4, imgexpr);
+					uint32_t samples = ops[5];
+					imgexpr =
+					    join("imageLoad(", to_expression(ops[2]), ", ", coord_expr, ", ", to_expression(samples), ")");
+				}
+				else
+					imgexpr = join("imageLoad(", to_expression(ops[2]), ", ", coord_expr, ")");
+			}
+
+			if (!sparse)
+				imgexpr = remap_swizzle(get<SPIRType>(result_type), 4, imgexpr);
 			pure = false;
 		}
 
