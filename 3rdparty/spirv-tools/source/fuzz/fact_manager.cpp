@@ -813,8 +813,10 @@ void FactManager::DataSynonymAndIdEquationFacts::ComputeClosureOfFacts(
   struct DataDescriptorPairEquals {
     bool operator()(const DataDescriptorPair& first,
                     const DataDescriptorPair& second) const {
-      return DataDescriptorEquals()(&first.first, &second.first) &&
-             DataDescriptorEquals()(&first.second, &second.second);
+      return (DataDescriptorEquals()(&first.first, &second.first) &&
+              DataDescriptorEquals()(&first.second, &second.second)) ||
+             (DataDescriptorEquals()(&first.first, &second.second) &&
+              DataDescriptorEquals()(&first.second, &second.first));
     }
   };
 

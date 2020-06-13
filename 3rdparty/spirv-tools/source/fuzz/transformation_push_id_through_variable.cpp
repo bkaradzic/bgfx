@@ -109,6 +109,9 @@ void TransformationPushIdThroughVariable::Apply(
         ir_context, SpvOpVariable, pointer_type_id, message_.variable_id(),
         opt::Instruction::OperandList(
             {{SPV_OPERAND_TYPE_STORAGE_CLASS, {SpvStorageClassPrivate}}})));
+
+    fuzzerutil::AddVariableIdToEntryPointInterfaces(ir_context,
+                                                    message_.variable_id());
   } else {
     ir_context
         ->get_instr_block(

@@ -80,12 +80,21 @@ void FuzzerPassPushIdsThroughVariables::Apply() {
         std::vector<opt::Instruction*> value_instructions =
             FindAvailableInstructions(
                 function, block, instruction_iterator,
-                [basic_type_id](opt::IRContext* /*unused*/,
-                                opt::Instruction* instruction) -> bool {
+                [basic_type_id, instruction_descriptor](
+                    opt::IRContext* ir_context,
+                    opt::Instruction* instruction) -> bool {
                   if (!instruction->result_id() || !instruction->type_id()) {
                     return false;
                   }
-                  return instruction->type_id() == basic_type_id;
+
+                  if (instruction->type_id() != basic_type_id) {
+                    return false;
+                  }
+
+                  return fuzzerutil::IdIsAvailableBeforeInstruction(
+                      ir_context,
+                      FindInstruction(instruction_descriptor, ir_context),
+                      instruction->result_id());
                 });
 
         if (value_instructions.empty()) {

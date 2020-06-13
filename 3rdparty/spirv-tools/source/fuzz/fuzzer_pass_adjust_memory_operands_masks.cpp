@@ -75,7 +75,7 @@ void FuzzerPassAdjustMemoryOperandsMasks::Apply() {
                   *inst_it, mask_index);
           auto existing_mask =
               existing_mask_in_operand_index < inst_it->NumInOperands()
-                  ? inst_it->GetSingleWordOperand(
+                  ? inst_it->GetSingleWordInOperand(
                         existing_mask_in_operand_index)
                   : static_cast<uint32_t>(SpvMemoryAccessMaskNone);
 
