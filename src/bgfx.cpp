@@ -3369,7 +3369,7 @@ namespace bgfx
 
 		Init init = _userInit;
 
-		init.limits.maxEncoders       = bx::clamp<uint16_t>(init.limits.maxEncoders, 1, 128);
+		init.limits.maxEncoders       = bx::clamp<uint16_t>(init.limits.maxEncoders, 1, (0 != BGFX_CONFIG_MULTITHREADED) ? 128 : 1);
 		init.limits.minResourceCbSize = bx::min<uint32_t>(init.limits.minResourceCbSize, BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE);
 
 		struct ErrorState
@@ -3438,7 +3438,7 @@ namespace bgfx
 		g_caps.limits.maxUniforms             = BGFX_CONFIG_MAX_UNIFORMS;
 		g_caps.limits.maxOcclusionQueries     = BGFX_CONFIG_MAX_OCCLUSION_QUERIES;
 		g_caps.limits.maxFBAttachments        = 1;
-		g_caps.limits.maxEncoders             = (0 != BGFX_CONFIG_MULTITHREADED) ? init.limits.maxEncoders : 1;
+		g_caps.limits.maxEncoders             = init.limits.maxEncoders;
 		g_caps.limits.minResourceCbSize       = init.limits.minResourceCbSize;
 		g_caps.limits.transientVbSize         = init.limits.transientVbSize;
 		g_caps.limits.transientIbSize         = init.limits.transientIbSize;
