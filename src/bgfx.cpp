@@ -3438,7 +3438,7 @@ namespace bgfx
 		g_caps.limits.maxUniforms             = BGFX_CONFIG_MAX_UNIFORMS;
 		g_caps.limits.maxOcclusionQueries     = BGFX_CONFIG_MAX_OCCLUSION_QUERIES;
 		g_caps.limits.maxFBAttachments        = 1;
-		g_caps.limits.maxEncoders             = (0 != BGFX_CONFIG_MULTITHREADED) ? init.limits.maxEncoders : 0;
+		g_caps.limits.maxEncoders             = (0 != BGFX_CONFIG_MULTITHREADED) ? init.limits.maxEncoders : 1;
 		g_caps.limits.minResourceCbSize       = init.limits.minResourceCbSize;
 		g_caps.limits.transientVbSize         = init.limits.transientVbSize;
 		g_caps.limits.transientIbSize         = init.limits.transientIbSize;
