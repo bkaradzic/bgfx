@@ -2181,7 +2181,6 @@ namespace bgfx { namespace gl
 				GL_GET(GL_MAX_RENDERBUFFER_SIZE, 1);
 				GL_GET(GL_MAX_COLOR_ATTACHMENTS, 1);
 				GL_GET(GL_MAX_DRAW_BUFFERS, 1);
-				GL_GET(GL_MAX_LABEL_LENGTH, 0);
 
 #undef GL_GET
 
