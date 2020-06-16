@@ -36,7 +36,7 @@ namespace stl = tinystl;
 			} \
 		} while(0)
 
-#	define BX_CHECK(_condition, _format, ...) \
+#	define BX_ASSERT(_condition, _format, ...) \
 		do { \
 			if (!(_condition) ) \
 			{ \
@@ -741,7 +741,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 				cgltf_accessor* accessor = attribute->data;
 				cgltf_size accessorCount = accessor->count;
 
-				BX_CHECK(numVertex == accessorCount, "Invalid attribute count");
+				BX_ASSERT(numVertex == accessorCount, "Invalid attribute count");
 
 				cgltf_size floatCount = cgltf_accessor_unpack_floats(accessor, NULL, 0);
 				float* accessorData = (float*)malloc(floatCount * sizeof(float));
@@ -1395,7 +1395,7 @@ int main(int _argc, const char* _argv[])
 			);
 	}
 
-	BX_CHECK(0 == primitives.size(), "Not all primitives are written");
+	BX_ASSERT(0 == primitives.size(), "Not all primitives are written");
 
 	bx::printf("size: %d\n", uint32_t(bx::seek(&writer) ) );
 	bx::close(&writer);

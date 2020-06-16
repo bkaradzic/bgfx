@@ -1599,7 +1599,7 @@ namespace bgfx { namespace gl
 		// Avoid creating test textures for WebGL, that causes error noise in the browser console; instead examine the supported texture formats from the spec.
 		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
 		EmscriptenWebGLContextAttributes attrs;
-		BX_CHECK(emscripten_webgl_get_context_attributes(ctx, &attrs) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_webgl_get_context_attributes() failed in isTextureFormatValidPerSpec()!");
+		BX_ASSERT(emscripten_webgl_get_context_attributes(ctx, &attrs) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_webgl_get_context_attributes() failed in isTextureFormatValidPerSpec()!");
 		int glesVersion = attrs.majorVersion + 1;
 		switch(_format)
 		{
@@ -3400,7 +3400,7 @@ namespace bgfx { namespace gl
 				break;
 
 			default:
-				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				BX_ASSERT(false, "Invalid handle type?! %d", _handle.type);
 				break;
 			}
 		}
@@ -3658,7 +3658,7 @@ namespace bgfx { namespace gl
 					;
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
 
-				BX_CHECK(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
+				BX_ASSERT(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
 					, "glCheckFramebufferStatus failed 0x%08x"
 					, glCheckFramebufferStatus(GL_FRAMEBUFFER)
 					);
@@ -4412,7 +4412,7 @@ namespace bgfx { namespace gl
 	static void frameBufferValidate()
 	{
 		GLenum complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		BX_CHECK(GL_FRAMEBUFFER_COMPLETE == complete
+		BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == complete
 			, "glCheckFramebufferStatus failed 0x%08x: %s"
 			, complete
 			, glEnumName(complete)
@@ -4486,7 +4486,7 @@ namespace bgfx { namespace gl
 
 #undef GLSL_TYPE
 
-		BX_CHECK(false, "Unknown GLSL type? %x", _type);
+		BX_ASSERT(false, "Unknown GLSL type? %x", _type);
 		return "UNKNOWN GLSL TYPE!";
 	}
 
@@ -4583,7 +4583,7 @@ namespace bgfx { namespace gl
 			return UniformType::Sampler;
 		};
 
-		BX_CHECK(false, "Unrecognized GL type 0x%04x.", _type);
+		BX_ASSERT(false, "Unrecognized GL type 0x%04x.", _type);
 		return UniformType::End;
 	}
 
@@ -4946,7 +4946,7 @@ namespace bgfx { namespace gl
 				m_used[used++] = ii;
 			}
 		}
-		BX_CHECK(used < BX_COUNTOF(m_used), "Out of bounds %d > array size %d.", used, Attrib::Count);
+		BX_ASSERT(used < BX_COUNTOF(m_used), "Out of bounds %d > array size %d.", used, Attrib::Count);
 		m_usedCount = (uint8_t)used;
 
 		used = 0;
@@ -4959,7 +4959,7 @@ namespace bgfx { namespace gl
 				m_instanceData[used++] = loc;
 			}
 		}
-		BX_CHECK(used < BX_COUNTOF(m_instanceData), "Out of bounds %d > array size %d."
+		BX_ASSERT(used < BX_COUNTOF(m_instanceData), "Out of bounds %d > array size %d."
 				, used
 				, BX_COUNTOF(m_instanceData)
 				);
@@ -5085,7 +5085,7 @@ namespace bgfx { namespace gl
 		if (!writeOnly)
 		{
 			GL_CHECK(glGenTextures(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate texture id.");
+			BX_ASSERT(0 != m_id, "Failed to generate texture id.");
 			GL_CHECK(glBindTexture(_target, m_id) );
 			GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
 
@@ -5180,7 +5180,7 @@ namespace bgfx { namespace gl
 			&& (0 != msaaQuality || writeOnly) )
 			{
 				GL_CHECK(glGenRenderbuffers(1, &m_rbo) );
-				BX_CHECK(0 != m_rbo, "Failed to generate renderbuffer id.");
+				BX_ASSERT(0 != m_rbo, "Failed to generate renderbuffer id.");
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_rbo) );
 
 				if (0 == msaaQuality)

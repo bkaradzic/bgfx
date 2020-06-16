@@ -2051,7 +2051,7 @@ namespace bgfx { namespace d3d11
 				break;
 
 			default:
-				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				BX_ASSERT(false, "Invalid handle type?! %d", _handle.type);
 				break;
 			}
 		}
@@ -3753,7 +3753,7 @@ namespace bgfx { namespace d3d11
 	void BufferD3D11::update(uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
-		BX_CHECK(m_dynamic, "Must be dynamic!");
+		BX_ASSERT(m_dynamic, "Must be dynamic!");
 
 #if USE_D3D11_STAGING_BUFFER
 		BX_UNUSED(_discard);
@@ -4775,7 +4775,7 @@ namespace bgfx { namespace d3d11
 
 					if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 					{
-						BX_CHECK(NULL == m_dsv, "Frame buffer already has depth-stencil attached.");
+						BX_ASSERT(NULL == m_dsv, "Frame buffer already has depth-stencil attached.");
 
 						D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 						dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
@@ -5278,7 +5278,7 @@ namespace bgfx { namespace d3d11
 			else
 			{
 				bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
-				BX_CHECK(!depthStencil
+				BX_ASSERT(!depthStencil
 					||  (width == src.m_width && height == src.m_height)
 					, "When blitting depthstencil surface, source resolution must match destination."
 					);

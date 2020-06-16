@@ -1050,7 +1050,7 @@ struct DebugDrawEncoderImpl
 
 	void begin(bgfx::ViewId _viewId, bool _depthTestLess, bgfx::Encoder* _encoder)
 	{
-		BX_CHECK(State::Count == m_state);
+		BX_ASSERT(State::Count == m_state);
 
 		m_viewId        = _viewId;
 		m_encoder       = _encoder == NULL ? m_defaultEncoder : _encoder;
@@ -1084,7 +1084,7 @@ struct DebugDrawEncoderImpl
 
 	void end()
 	{
-		BX_CHECK(0 == m_stack, "Invalid stack %d.", m_stack);
+		BX_ASSERT(0 == m_stack, "Invalid stack %d.", m_stack);
 
 		flushQuad();
 		flush();
@@ -1095,14 +1095,14 @@ struct DebugDrawEncoderImpl
 
 	void push()
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		++m_stack;
 		m_attrib[m_stack] = m_attrib[m_stack-1];
 	}
 
 	void pop()
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		const Attrib& curr = m_attrib[m_stack];
 		const Attrib& prev = m_attrib[m_stack-1];
 		if (curr.m_stipple != prev.m_stipple
@@ -1115,7 +1115,7 @@ struct DebugDrawEncoderImpl
 
 	void setDepthTestLess(bool _depthTestLess)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		if (m_depthTestLess != _depthTestLess)
 		{
 			m_depthTestLess = _depthTestLess;
@@ -1131,7 +1131,7 @@ struct DebugDrawEncoderImpl
 
 	void setTransform(const void* _mtx, uint16_t _num = 1, bool _flush = true)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		if (_flush)
 		{
 			flush();
@@ -1166,8 +1166,8 @@ struct DebugDrawEncoderImpl
 
 	void pushTransform(const void* _mtx, uint16_t _num, bool _flush = true)
 	{
-		BX_CHECK(m_mtxStackCurrent < BX_COUNTOF(m_mtxStack), "Out of matrix stack!");
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(m_mtxStackCurrent < BX_COUNTOF(m_mtxStack), "Out of matrix stack!");
+		BX_ASSERT(State::Count != m_state);
 		if (_flush)
 		{
 			flush();
@@ -1197,7 +1197,7 @@ struct DebugDrawEncoderImpl
 
 	void popTransform(bool _flush = true)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		if (_flush)
 		{
 			flush();
@@ -1257,25 +1257,25 @@ struct DebugDrawEncoderImpl
 
 	void setColor(uint32_t _abgr)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		m_attrib[m_stack].m_abgr = _abgr;
 	}
 
 	void setLod(uint8_t _lod)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		m_attrib[m_stack].m_lod = _lod;
 	}
 
 	void setWireframe(bool _wireframe)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		m_attrib[m_stack].m_wireframe = _wireframe;
 	}
 
 	void setStipple(bool _stipple, float _scale = 1.0f, float _offset = 0.0f)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 
 		Attrib& attrib = m_attrib[m_stack];
 
@@ -1297,7 +1297,7 @@ struct DebugDrawEncoderImpl
 
 	void moveTo(float _x, float _y, float _z = 0.0f)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 
 		softFlush();
 
@@ -1317,7 +1317,7 @@ struct DebugDrawEncoderImpl
 
 	void moveTo(const bx::Vec3& _pos)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		moveTo(_pos.x, _pos.y, _pos.z);
 	}
 
@@ -1328,7 +1328,7 @@ struct DebugDrawEncoderImpl
 
 	void lineTo(float _x, float _y, float _z = 0.0f)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		if (State::None == m_state)
 		{
 			moveTo(_x, _y, _z);
@@ -1381,7 +1381,7 @@ struct DebugDrawEncoderImpl
 
 	void lineTo(const bx::Vec3& _pos)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		lineTo(_pos.x, _pos.y, _pos.z);
 	}
 
@@ -1392,7 +1392,7 @@ struct DebugDrawEncoderImpl
 
 	void close()
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		DebugVertex& vertex = m_cache[m_vertexPos];
 		lineTo(vertex.m_x, vertex.m_y, vertex.m_z);
 

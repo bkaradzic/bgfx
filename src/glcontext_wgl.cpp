@@ -316,7 +316,7 @@ namespace bgfx { namespace gl
 		BX_WARN(result, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() ); BX_UNUSED(result);
 
 		swapChain->m_context = wglCreateContextAttribsARB(swapChain->m_hdc, m_context, m_contextAttrs);
-		BX_CHECK(NULL != swapChain->m_context, "Create swap chain failed: %x", glGetError() );
+		BX_ASSERT(NULL != swapChain->m_context, "Create swap chain failed: %x", glGetError() );
 		return swapChain;
 	}
 

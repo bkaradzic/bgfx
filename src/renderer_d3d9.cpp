@@ -1737,7 +1737,7 @@ namespace bgfx { namespace d3d9
 		void setSamplerState(uint8_t _stage, uint64_t _flags, const float _rgba[4])
 		{
 			const uint64_t flags = _flags&( (~BGFX_SAMPLER_RESERVED_MASK) | BGFX_SAMPLER_BITS_MASK | BGFX_TEXTURE_SRGB);
-			BX_CHECK(_stage < BX_COUNTOF(m_samplerFlags), "");
+			BX_ASSERT(_stage < BX_COUNTOF(m_samplerFlags), "");
 			if (m_samplerFlags[_stage] != flags)
 			{
 				m_samplerFlags[_stage] = flags;
@@ -2809,7 +2809,7 @@ namespace bgfx { namespace d3d9
 			}
 		}
 
-		BX_CHECK(false, "You should not be here.");
+		BX_ASSERT(false, "You should not be here.");
 		_pitch      = 0;
 		_slicePitch = 0;
 		return NULL;
@@ -2843,7 +2843,7 @@ namespace bgfx { namespace d3d9
 			return;
 		}
 
-		BX_CHECK(false, "You should not be here.");
+		BX_ASSERT(false, "You should not be here.");
 	}
 
 	void TextureD3D9::dirty(uint8_t _side, const Rect& _rect, uint16_t _z, uint16_t _depth)
@@ -2886,7 +2886,7 @@ namespace bgfx { namespace d3d9
 			return;
 		}
 
-		BX_CHECK(false, "You should not be here.");
+		BX_ASSERT(false, "You should not be here.");
 	}
 
 	IDirect3DSurface9* TextureD3D9::getSurface(uint8_t _side, uint8_t _mip) const
@@ -2900,7 +2900,7 @@ namespace bgfx { namespace d3d9
 			break;
 
 		case Texture3D:
-			BX_CHECK(false, "");
+			BX_ASSERT(false, "");
 			break;
 
 		case TextureCube:
@@ -3416,7 +3416,7 @@ namespace bgfx { namespace d3d9
 					}
 					else
 					{
-						BX_CHECK(false, "");
+						BX_ASSERT(false, "");
 					}
 				}
 			}
@@ -3812,7 +3812,7 @@ namespace bgfx { namespace d3d9
 
 				if (isCompute)
 				{
-					BX_CHECK(false, "Compute is not supported on DirectX 9.");
+					BX_ASSERT(false, "Compute is not supported on DirectX 9.");
 					continue;
 				}
 

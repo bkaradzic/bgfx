@@ -1918,7 +1918,7 @@ namespace bgfx { namespace d3d12
 				break;
 
 			default:
-				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				BX_ASSERT(false, "Invalid handle type?! %d", _handle.type);
 				break;
 			}
 		}
@@ -2105,7 +2105,7 @@ namespace bgfx { namespace d3d12
 					{
 						ID3D12Resource* resource = m_backBufferColor[ii];
 
-						BX_CHECK(DXGI_FORMAT_R8G8B8A8_UNORM == m_scd.format, "");
+						BX_ASSERT(DXGI_FORMAT_R8G8B8A8_UNORM == m_scd.format, "");
 						const uint32_t size = m_scd.width*m_scd.height*4;
 
 						void* ptr;
@@ -2912,7 +2912,7 @@ namespace bgfx { namespace d3d12
 					dxbcHash(temp->data + 20, size - 20, temp->data + 4);
 
 					patchShader = 0 == bx::memCmp(program.m_fsh->m_code->data, temp->data, 16);
-					BX_CHECK(patchShader, "DXBC fragment shader patching error (ShaderHandle: %d).", program.m_fsh - m_shaders);
+					BX_ASSERT(patchShader, "DXBC fragment shader patching error (ShaderHandle: %d).", program.m_fsh - m_shaders);
 
 					if (!patchShader)
 					{
@@ -3818,7 +3818,7 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		BX_CHECK(0 == m_control.available(), "");
+		BX_ASSERT(0 == m_control.available(), "");
 	}
 
 	bool CommandQueueD3D12::tryFinish(uint64_t _waitFence)
@@ -3960,7 +3960,7 @@ namespace bgfx { namespace d3d12
 	Ty& BatchD3D12::getCmd(Enum _type)
 	{
 		uint32_t index = m_num[_type];
-		BX_CHECK(index < m_maxDrawPerBatch, "Memory corruption...");
+		BX_ASSERT(index < m_maxDrawPerBatch, "Memory corruption...");
 		m_num[_type]++;
 		Ty* cmd = &reinterpret_cast<Ty*>(m_cmds[_type])[index];
 		return *cmd;
@@ -4953,7 +4953,7 @@ namespace bgfx { namespace d3d12
 					, numSrd
 					, srd
 					);
-				BX_CHECK(0 != result, "Invalid size"); BX_UNUSED(result);
+				BX_ASSERT(0 != result, "Invalid size"); BX_UNUSED(result);
 				BX_TRACE("Update subresource %" PRId64, result);
 
 				setState(commandList, state);
@@ -5216,7 +5216,7 @@ namespace bgfx { namespace d3d12
 
 					if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 					{
-						BX_CHECK(!isValid(m_depth), "");
+						BX_ASSERT(!isValid(m_depth), "");
 						m_depth = at.handle;
 						D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = getCPUHandleHeapStart(s_renderD3D12->m_dsvDescriptorHeap);
 						uint32_t dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
@@ -5367,7 +5367,7 @@ namespace bgfx { namespace d3d12
 					}
 					else
 					{
-						BX_CHECK(false, "");
+						BX_ASSERT(false, "");
 					}
 				}
 			}

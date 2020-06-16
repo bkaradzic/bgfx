@@ -1119,7 +1119,7 @@ namespace bgfx { namespace gl
 #define IGNORE_GL_ERROR_CHECK(...) BX_NOOP()
 
 #if BGFX_CONFIG_DEBUG
-#	define GL_CHECK(_call)   _GL_CHECK(BX_CHECK, _call)
+#	define GL_CHECK(_call)   _GL_CHECK(BX_ASSERT, _call)
 #	define GL_CHECK_I(_call) _GL_CHECK(IGNORE_GL_ERROR_CHECK, _call)
 #else
 #	define GL_CHECK(_call)   _call
@@ -1275,7 +1275,7 @@ namespace bgfx { namespace gl
 			m_flags = _flags;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
+			BX_ASSERT(0 != m_id, "Failed to generate buffer id.");
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id) );
 			GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER
 				, _size
@@ -1287,7 +1287,7 @@ namespace bgfx { namespace gl
 
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
-			BX_CHECK(0 != m_id, "Updating invalid index buffer.");
+			BX_ASSERT(0 != m_id, "Updating invalid index buffer.");
 
 			if (_discard)
 			{
@@ -1323,7 +1323,7 @@ namespace bgfx { namespace gl
 			m_target = drawIndirect ? GL_DRAW_INDIRECT_BUFFER : GL_ARRAY_BUFFER;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
+			BX_ASSERT(0 != m_id, "Failed to generate buffer id.");
 			GL_CHECK(glBindBuffer(m_target, m_id) );
 			GL_CHECK(glBufferData(m_target
 				, _size
@@ -1335,7 +1335,7 @@ namespace bgfx { namespace gl
 
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
-			BX_CHECK(0 != m_id, "Updating invalid vertex buffer.");
+			BX_ASSERT(0 != m_id, "Updating invalid vertex buffer.");
 
 			if (_discard)
 			{

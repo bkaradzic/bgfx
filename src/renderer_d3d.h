@@ -73,7 +73,7 @@ namespace bgfx
 #define _DX_CHECK(_call) \
 			BX_MACRO_BLOCK_BEGIN \
 				HRESULT __hr__ = _call; \
-				BX_CHECK(SUCCEEDED(__hr__), #_call " FAILED 0x%08x" DX_CHECK_EXTRA_F "\n" \
+				BX_ASSERT(SUCCEEDED(__hr__), #_call " FAILED 0x%08x" DX_CHECK_EXTRA_F "\n" \
 					, (uint32_t)__hr__ \
 					DX_CHECK_EXTRA_ARGS \
 					); \
@@ -92,7 +92,7 @@ namespace bgfx
 #define _DX_CHECK_REFCOUNT(_ptr, _expected) \
 			BX_MACRO_BLOCK_BEGIN \
 				ULONG count = getRefCount(_ptr); \
-				BX_CHECK(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
+				BX_ASSERT(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
 			BX_MACRO_BLOCK_END
 
 #define _DX_NAME(_ptr, _format, ...) setDebugObjectName(_ptr, _format, ##__VA_ARGS__)
@@ -111,7 +111,7 @@ namespace bgfx
 #	define DX_NAME(_ptr, _format, ...)
 #endif // BGFX_CONFIG_DEBUG_OBJECT_NAME
 
-#define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
+#define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_ASSERT)
 #define DX_RELEASE_W(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
 #define DX_RELEASE_I(_ptr) _DX_RELEASE(_ptr, 0, BX_NOOP)
 
@@ -164,7 +164,7 @@ namespace bgfx
 		{
 			invalidate(_key);
 			m_hashMap.insert(stl::make_pair(_key, _value) );
-			BX_CHECK(isGraphicsDebuggerPresent()
+			BX_ASSERT(isGraphicsDebuggerPresent()
 				|| 1 == getRefCount(_value), "Interface ref count %d, hash %" PRIx64 "."
 				, getRefCount(_value)
 				, _key

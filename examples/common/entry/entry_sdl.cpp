@@ -157,7 +157,7 @@ namespace entry
 
 	static void initTranslateKey(uint16_t _sdl, Key::Enum _key)
 	{
-		BX_CHECK(_sdl < BX_COUNTOF(s_translateKey), "Out of bounds %d.", _sdl);
+		BX_ASSERT(_sdl < BX_COUNTOF(s_translateKey), "Out of bounds %d.", _sdl);
 		s_translateKey[_sdl&0xff] = (uint8_t)_key;
 	}
 

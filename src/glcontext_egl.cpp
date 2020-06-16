@@ -113,7 +113,7 @@ EGL_IMPORT
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
 			m_context = eglCreateContext(m_display, _config, _context, s_contextAttrs);
-			BX_CHECK(NULL != m_context, "Create swap chain failed: %x", eglGetError() );
+			BX_ASSERT(NULL != m_context, "Create swap chain failed: %x", eglGetError() );
 
 			makeCurrent();
 			GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 0.0f) );
@@ -374,7 +374,7 @@ EGL_IMPORT
 // will take the first canvas element found on the web page.
 #define HTML5_TARGET_CANVAS_SELECTOR "#canvas"
 
-		BX_CHECK(emscripten_set_canvas_element_size(HTML5_TARGET_CANVAS_SELECTOR, _width, _height) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_canvas_element_size() failed in GlContext::resize()!");
+		BX_ASSERT(emscripten_set_canvas_element_size(HTML5_TARGET_CANVAS_SELECTOR, _width, _height) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_canvas_element_size() failed in GlContext::resize()!");
 #	else
 		BX_UNUSED(_width, _height);
 #	endif // BX_PLATFORM_*

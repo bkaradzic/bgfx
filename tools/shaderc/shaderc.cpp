@@ -509,7 +509,7 @@ namespace bgfx
 		}
 		replace[len] = '\0';
 
-		BX_CHECK(len >= bx::strLen(_replace), "");
+		BX_ASSERT(len >= bx::strLen(_replace), "");
 		for (bx::StringView ptr = bx::strFind(_str, _find)
 			; !ptr.isEmpty()
 			; ptr = bx::strFind(ptr.getPtr() + len, _find)

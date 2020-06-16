@@ -15,7 +15,7 @@
 #if BGFX_CONFIG_DEBUG || BX_COMPILER_CLANG_ANALYZER
 #	define BX_TRACE _BX_TRACE
 #	define BX_WARN  _BX_WARN
-#	define BX_CHECK _BX_CHECK
+#	define BX_ASSERT _BX_ASSERT
 #	define BX_CONFIG_ALLOCATOR_DEBUG 1
 #endif // BGFX_CONFIG_DEBUG
 
@@ -26,7 +26,7 @@
 
 // Check handle, cannot be bgfx::kInvalidHandle and must be valid.
 #define BGFX_CHECK_HANDLE(_desc, _handleAlloc, _handle) \
-	BX_CHECK(isValid(_handle)                           \
+	BX_ASSERT(isValid(_handle)                           \
 		&& _handleAlloc.isValid(_handle.idx)            \
 		, "Invalid handle. %s handle: %d (max %d)"      \
 		, _desc                                         \
@@ -36,7 +36,7 @@
 
 // Check handle, it's ok to be bgfx::kInvalidHandle or must be valid.
 #define BGFX_CHECK_HANDLE_INVALID_OK(_desc, _handleAlloc, _handle) \
-	BX_CHECK(!isValid(_handle)                                     \
+	BX_ASSERT(!isValid(_handle)                                     \
 		|| _handleAlloc.isValid(_handle.idx)                       \
 		, "Invalid handle. %s handle: %d (max %d)"                 \
 		, _desc                                                    \
@@ -91,7 +91,7 @@ namespace bgfx
 					}                                             \
 				BX_MACRO_BLOCK_END
 
-#define _BX_CHECK(_condition, _format, ...)                                                                         \
+#define _BX_ASSERT(_condition, _format, ...)                                                                         \
 				BX_MACRO_BLOCK_BEGIN                                                                                \
 					if (!BX_IGNORE_C4127(_condition) )                                                              \
 					{                                                                                               \
@@ -836,7 +836,7 @@ namespace bgfx
 
 		void write(const void* _data, uint32_t _size)
 		{
-			BX_CHECK(m_size == 0, "Called write outside start/finish (m_size: %d)?", m_size);
+			BX_ASSERT(m_size == 0, "Called write outside start/finish (m_size: %d)?", m_size);
 			if (m_pos + _size > m_capacity)
 			{
 				resize(m_capacity + (16<<10) );
@@ -855,7 +855,7 @@ namespace bgfx
 
 		void read(void* _data, uint32_t _size)
 		{
-			BX_CHECK(m_pos + _size <= m_size
+			BX_ASSERT(m_pos + _size <= m_size
 				, "CommandBuffer::read error (pos: %d-%d, size: %d)."
 				, m_pos
 				, m_pos + _size
@@ -874,7 +874,7 @@ namespace bgfx
 
 		const uint8_t* skip(uint32_t _size)
 		{
-			BX_CHECK(m_pos + _size <= m_size
+			BX_ASSERT(m_pos + _size <= m_size
 				, "CommandBuffer::skip error (pos: %d-%d, size: %d)."
 				, m_pos
 				, m_pos + _size
@@ -1123,7 +1123,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 					const uint64_t view    = (uint64_t(m_view       ) << kSortKeyViewBitShift     ) & kSortKeyViewMask;
 					const uint64_t key     = view|kSortKeyDrawBit|kSortKeyDrawTypeSequence|seq|blend|program;
 
-					BX_CHECK(seq == (uint64_t(m_seq) << kSortKeyDraw2SeqShift)
+					BX_ASSERT(seq == (uint64_t(m_seq) << kSortKeyDraw2SeqShift)
 						, "SortKey error, sequence is truncated (m_seq: %d)."
 						, m_seq
 						);
@@ -1133,7 +1133,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				break;
 			}
 
-			BX_CHECK(false, "You should not be here.");
+			BX_ASSERT(false, "You should not be here.");
 			return 0;
 		}
 
@@ -1144,7 +1144,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			const uint64_t view    = (uint64_t(m_view       ) << kSortKeyViewBitShift       ) & kSortKeyViewMask;
 			const uint64_t key     = program|seq|view;
 
-			BX_CHECK(seq == (uint64_t(m_seq) << kSortKeyComputeSeqShift)
+			BX_ASSERT(seq == (uint64_t(m_seq) << kSortKeyComputeSeqShift)
 				, "SortKey error, sequence is truncated (m_seq: %d)."
 				, m_seq
 				);
@@ -1297,7 +1297,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		float* toPtr(uint32_t _cacheIdx)
 		{
-			BX_CHECK(_cacheIdx < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache out of bounds index %d (max: %d)"
+			BX_ASSERT(_cacheIdx < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache out of bounds index %d (max: %d)"
 				, _cacheIdx
 				, BGFX_CONFIG_MAX_MATRIX_CACHE
 				);
@@ -1328,7 +1328,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		uint32_t add(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
 			const uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, 1, BGFX_CONFIG_MAX_RECT_CACHE-1);
-			BX_CHECK(first+1 < BGFX_CONFIG_MAX_RECT_CACHE, "Rect cache overflow. %d (max: %d)", first, BGFX_CONFIG_MAX_RECT_CACHE);
+			BX_ASSERT(first+1 < BGFX_CONFIG_MAX_RECT_CACHE, "Rect cache overflow. %d (max: %d)", first, BGFX_CONFIG_MAX_RECT_CACHE);
 
 			Rect& rect = m_cache[first];
 
@@ -1416,7 +1416,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void write(const void* _data, uint32_t _size)
 		{
-			BX_CHECK(m_pos + _size < m_size, "Write would go out of bounds. pos %d + size %d > max size: %d).", m_pos, _size, m_size);
+			BX_ASSERT(m_pos + _size < m_size, "Write would go out of bounds. pos %d + size %d > max size: %d).", m_pos, _size, m_size);
 
 			if (m_pos + _size < m_size)
 			{
@@ -1432,7 +1432,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		const char* read(uint32_t _size)
 		{
-			BX_CHECK(m_pos < m_size, "Out of bounds %d (size: %d).", m_pos, m_size);
+			BX_ASSERT(m_pos < m_size, "Out of bounds %d (size: %d).", m_pos, m_size);
 			const char* result = &m_buffer[m_pos];
 			m_pos += _size;
 			return result;
@@ -1516,7 +1516,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		const UniformRegInfo& add(UniformHandle _handle, const char* _name)
 		{
-			BX_CHECK(isValid(_handle), "Uniform handle is invalid (name: %s)!", _name);
+			BX_ASSERT(isValid(_handle), "Uniform handle is invalid (name: %s)!", _name);
 			const uint32_t key = bx::hash<bx::HashMurmur2A>(_name);
 			m_uniforms.removeByKey(key);
 			m_uniforms.insert(key, _handle.idx);
@@ -2299,7 +2299,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 			{
-				BX_CHECK(m_uniformSet.end() == m_uniformSet.find(_handle.idx)
+				BX_ASSERT(m_uniformSet.end() == m_uniformSet.find(_handle.idx)
 					, "Uniform %d (%s) was already set for this draw call."
 					, _handle.idx
 					, getName(_handle)
@@ -2364,7 +2364,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void setTransform(uint32_t _cache, uint16_t _num)
 		{
-			BX_CHECK(_cache < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache out of bounds index %d (max: %d)"
+			BX_ASSERT(_cache < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache out of bounds index %d (max: %d)"
 				, _cache
 				, BGFX_CONFIG_MAX_MATRIX_CACHE
 				);
@@ -2374,7 +2374,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 		{
-			BX_CHECK(UINT8_MAX != m_draw.m_streamMask, "");
+			BX_ASSERT(UINT8_MAX != m_draw.m_streamMask, "");
 			m_draw.m_startIndex  = _firstIndex;
 			m_draw.m_numIndices  = _numIndices;
 			m_draw.m_indexBuffer = _handle;
@@ -2382,7 +2382,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void setIndexBuffer(const DynamicIndexBuffer& _dib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
-			BX_CHECK(UINT8_MAX != m_draw.m_streamMask, "");
+			BX_ASSERT(UINT8_MAX != m_draw.m_streamMask, "");
 			const uint32_t indexSize = 0 == (_dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 			m_draw.m_startIndex  = _dib.m_startIndex + _firstIndex;
 			m_draw.m_numIndices  = bx::min(_numIndices, _dib.m_size/indexSize);
@@ -2391,7 +2391,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
-			BX_CHECK(UINT8_MAX != m_draw.m_streamMask, "");
+			BX_ASSERT(UINT8_MAX != m_draw.m_streamMask, "");
 			const uint32_t numIndices = bx::min(_numIndices, _tib->size/2);
 			m_draw.m_indexBuffer = _tib->handle;
 			m_draw.m_startIndex  = _tib->startIndex + _firstIndex;
@@ -2407,8 +2407,8 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			, VertexLayoutHandle _layoutHandle
 			)
 		{
-			BX_CHECK(UINT8_MAX != m_draw.m_streamMask, "");
-			BX_CHECK(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			BX_ASSERT(UINT8_MAX != m_draw.m_streamMask, "");
+			BX_ASSERT(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
 			if (m_draw.setStreamBit(_stream, _handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
@@ -2427,8 +2427,8 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			, VertexLayoutHandle _layoutHandle
 			)
 		{
-			BX_CHECK(UINT8_MAX != m_draw.m_streamMask, "");
-			BX_CHECK(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			BX_ASSERT(UINT8_MAX != m_draw.m_streamMask, "");
+			BX_ASSERT(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
 			if (m_draw.setStreamBit(_stream, _dvb.m_handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
@@ -2449,8 +2449,8 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			, VertexLayoutHandle _layoutHandle
 			)
 		{
-			BX_CHECK(UINT8_MAX != m_draw.m_streamMask, "");
-			BX_CHECK(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			BX_ASSERT(UINT8_MAX != m_draw.m_streamMask, "");
+			BX_ASSERT(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
 			if (m_draw.setStreamBit(_stream, _tvb->handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
@@ -2463,7 +2463,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void setVertexCount(uint32_t _numVertices)
 		{
-			BX_CHECK(0 == m_draw.m_streamMask, "Vertex buffer already set.");
+			BX_ASSERT(0 == m_draw.m_streamMask, "Vertex buffer already set.");
 			m_draw.m_streamMask  = UINT8_MAX;
 			Stream& stream = m_draw.m_stream[0];
 			stream.m_startVertex        = 0;
@@ -2492,7 +2492,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void setInstanceCount(uint32_t _numInstances)
 		{
-			BX_CHECK(!isValid(m_draw.m_instanceDataBuffer), "Instance buffer already set.");
+			BX_ASSERT(!isValid(m_draw.m_instanceDataBuffer), "Instance buffer already set.");
 			m_draw.m_numInstances = _numInstances;
 		}
 
@@ -2645,7 +2645,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void add(VertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _hash)
 		{
-			BX_CHECK(m_vertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
+			BX_ASSERT(m_vertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_vertexBufferRef[_handle.idx] = _layoutHandle;
 			m_vertexLayoutRef[_layoutHandle.idx]++;
 			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
@@ -2653,7 +2653,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void add(DynamicVertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _hash)
 		{
-			BX_CHECK(m_dynamicVertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
+			BX_ASSERT(m_dynamicVertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_dynamicVertexBufferRef[_handle.idx] = _layoutHandle;
 			m_vertexLayoutRef[_layoutHandle.idx]++;
 			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
@@ -2728,7 +2728,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		uint64_t remove()
 		{
-			BX_CHECK(0 == m_used.size(), "");
+			BX_ASSERT(0 == m_used.size(), "");
 
 			if (0 < m_free.size() )
 			{
@@ -3084,7 +3084,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 			BGFX_CHECK_HANDLE("destroyIndexBuffer", m_indexBufferHandle, _handle);
 			bool ok = m_submit->free(_handle); BX_UNUSED(ok);
-			BX_CHECK(ok, "Index buffer handle %d is already destroyed!", _handle.idx);
+			BX_ASSERT(ok, "Index buffer handle %d is already destroyed!", _handle.idx);
 
 			IndexBuffer& ref = m_indexBuffers[_handle.idx];
 			ref.m_name.clear();
@@ -3192,7 +3192,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 			BGFX_CHECK_HANDLE("destroyVertexBuffer", m_vertexBufferHandle, _handle);
 			bool ok = m_submit->free(_handle); BX_UNUSED(ok);
-			BX_CHECK(ok, "Vertex buffer handle %d is already destroyed!", _handle.idx);
+			BX_ASSERT(ok, "Vertex buffer handle %d is already destroyed!", _handle.idx);
 
 			VertexBuffer& ref = m_vertexBuffers[_handle.idx];
 			ref.m_name.clear();
@@ -3303,7 +3303,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			BX_CHECK(0 == (_flags &  BGFX_BUFFER_COMPUTE_READ_WRITE), "Cannot initialize compute buffer from CPU.");
+			BX_ASSERT(0 == (_flags &  BGFX_BUFFER_COMPUTE_READ_WRITE), "Cannot initialize compute buffer from CPU.");
 			const uint32_t indexSize = 0 == (_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 			DynamicIndexBufferHandle handle = createDynamicIndexBuffer(_mem->size/indexSize, _flags);
 
@@ -3325,7 +3325,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			BGFX_CHECK_HANDLE("updateDynamicIndexBuffer", m_dynamicIndexBufferHandle, _handle);
 
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
-			BX_CHECK(0 == (dib.m_flags &  BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU buffer from CPU.");
+			BX_ASSERT(0 == (dib.m_flags &  BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU buffer from CPU.");
 			const uint32_t indexSize = 0 == (dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 
 			if (dib.m_size < _mem->size
@@ -3346,7 +3346,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				+ bx::min(bx::uint32_satsub(dib.m_size, _startIndex*indexSize), _mem->size)
 				, m_indexBuffers[dib.m_handle.idx].m_size) - offset
 				;
-			BX_CHECK(_mem->size <= size, "Truncating dynamic index buffer update (size %d, mem size %d)."
+			BX_ASSERT(_mem->size <= size, "Truncating dynamic index buffer update (size %d, mem size %d)."
 				, size
 				, _mem->size
 				);
@@ -3513,7 +3513,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			BGFX_CHECK_HANDLE("updateDynamicVertexBuffer", m_dynamicVertexBufferHandle, _handle);
 
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
-			BX_CHECK(0 == (dvb.m_flags &  BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU write buffer from CPU.");
+			BX_ASSERT(0 == (dvb.m_flags &  BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU write buffer from CPU.");
 
 			if (dvb.m_size < _mem->size
 			&&  0 != (dvb.m_flags & BGFX_BUFFER_ALLOW_RESIZE) )
@@ -3536,7 +3536,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				+ bx::min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size)
 				, m_vertexBuffers[dvb.m_handle.idx].m_size) - offset
 				;
-			BX_CHECK(_mem->size <= size, "Truncating dynamic vertex buffer update (size %d, mem size %d)."
+			BX_ASSERT(_mem->size <= size, "Truncating dynamic vertex buffer update (size %d, mem size %d)."
 				, size
 				, _mem->size
 				);
@@ -3875,7 +3875,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			}
 
 			bool ok = m_shaderHashMap.insert(shaderHash, handle.idx);
-			BX_CHECK(ok, "Shader already exists!"); BX_UNUSED(ok);
+			BX_ASSERT(ok, "Shader already exists!"); BX_UNUSED(ok);
 
 			ShaderRef& sr = m_shaderRef[handle.idx];
 			sr.m_refCount = 1;
@@ -4021,7 +4021,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			if (0 == refs)
 			{
 				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
-				BX_CHECK(ok, "Shader handle %d is already destroyed!", _handle.idx);
+				BX_ASSERT(ok, "Shader handle %d is already destroyed!", _handle.idx);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyShader);
 				cmdbuf.write(_handle);
@@ -4085,7 +4085,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 					const uint32_t key = uint32_t(_fsh.idx<<16)|_vsh.idx;
 					bool ok = m_programHashMap.insert(key, handle.idx);
-					BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
+					BX_ASSERT(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
 
 					CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 					cmdbuf.write(handle);
@@ -4137,7 +4137,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 					const uint32_t key = uint32_t(_vsh.idx);
 					bool ok = m_programHashMap.insert(key, handle.idx);
-					BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
+					BX_ASSERT(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
 
 					CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 					cmdbuf.write(handle);
@@ -4172,7 +4172,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			if (0 == refs)
 			{
 				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
-				BX_CHECK(ok, "Program handle %d is already destroyed!", _handle.idx);
+				BX_ASSERT(ok, "Program handle %d is already destroyed!", _handle.idx);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyProgram);
 				cmdbuf.write(_handle);
@@ -4309,7 +4309,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			BGFX_CHECK_HANDLE("readTexture", m_textureHandle, _handle);
 
 			const TextureRef& ref = m_textureRef[_handle.idx];
-			BX_CHECK(_mip < ref.m_numMips, "Invalid mip: %d num mips:", _mip, ref.m_numMips); BX_UNUSED(ref);
+			BX_ASSERT(_mip < ref.m_numMips, "Invalid mip: %d num mips:", _mip, ref.m_numMips); BX_UNUSED(ref);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ReadTexture);
 			cmdbuf.write(_handle);
@@ -4321,7 +4321,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers)
 		{
 			const TextureRef& textureRef = m_textureRef[_handle.idx];
-			BX_CHECK(BackbufferRatio::Count != textureRef.m_bbRatio, "");
+			BX_ASSERT(BackbufferRatio::Count != textureRef.m_bbRatio, "");
 
 			getTextureSizeFromRatio(BackbufferRatio::Enum(textureRef.m_bbRatio), _width, _height);
 			_numMips = calcNumMips(1 < _numMips, _width, _height);
@@ -4375,7 +4375,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				}
 
 				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
-				BX_CHECK(ok, "Texture handle %d is already destroyed!", _handle.idx);
+				BX_ASSERT(ok, "Texture handle %d is already destroyed!", _handle.idx);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyTexture);
 				cmdbuf.write(_handle);
@@ -4449,7 +4449,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			BX_CHECK(checkFrameBuffer(_num, _attachment)
+			BX_ASSERT(checkFrameBuffer(_num, _attachment)
 				, "Too many frame buffer attachments (num attachments: %d, max color attachments %d)!"
 				, _num
 				, g_caps.limits.maxFBAttachments
@@ -4473,7 +4473,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				{
 					TextureHandle texHandle = _attachment[ii].handle;
 					BGFX_CHECK_HANDLE("createFrameBuffer texture", m_textureHandle, texHandle);
-					BX_CHECK(bbRatio == m_textureRef[texHandle.idx].m_bbRatio, "Mismatch in texture back-buffer ratio.");
+					BX_ASSERT(bbRatio == m_textureRef[texHandle.idx].m_bbRatio, "Mismatch in texture back-buffer ratio.");
 					BX_UNUSED(bbRatio);
 
 					ref.un.m_th[ii] = texHandle;
@@ -4554,7 +4554,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 			BGFX_CHECK_HANDLE("destroyFrameBuffer", m_frameBufferHandle, _handle);
 			bool ok = m_submit->free(_handle); BX_UNUSED(ok);
-			BX_CHECK(ok, "Frame buffer handle %d is already destroyed!", _handle.idx);
+			BX_ASSERT(ok, "Frame buffer handle %d is already destroyed!", _handle.idx);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyFrameBuffer);
 			cmdbuf.write(_handle);
@@ -4592,7 +4592,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			{
 				UniformHandle handle = { idx };
 				UniformRef& uniform = m_uniformRef[handle.idx];
-				BX_CHECK(uniform.m_type == _type
+				BX_ASSERT(uniform.m_type == _type
 					, "Uniform type mismatch (type: %d, expected %d)."
 					, _type
 					, uniform.m_type
@@ -4637,7 +4637,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			uniform.m_num  = _num;
 
 			bool ok = m_uniformHashMap.insert(bx::hash<bx::HashMurmur2A>(_name), handle.idx);
-			BX_CHECK(ok, "Uniform already exists (name: %s)!", _name); BX_UNUSED(ok);
+			BX_ASSERT(ok, "Uniform already exists (name: %s)!", _name); BX_UNUSED(ok);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
 			cmdbuf.write(handle);
@@ -4669,13 +4669,13 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			BGFX_CHECK_HANDLE("destroyUniform", m_uniformHandle, _handle);
 
 			UniformRef& uniform = m_uniformRef[_handle.idx];
-			BX_CHECK(uniform.m_refCount > 0, "Destroying already destroyed uniform %d.", _handle.idx);
+			BX_ASSERT(uniform.m_refCount > 0, "Destroying already destroyed uniform %d.", _handle.idx);
 			int32_t refs = --uniform.m_refCount;
 
 			if (0 == refs)
 			{
 				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
-				BX_CHECK(ok, "Uniform handle %d is already destroyed!", _handle.idx);
+				BX_ASSERT(ok, "Uniform handle %d is already destroyed!", _handle.idx);
 
 				uniform.m_name.clear();
 				m_uniformHashMap.removeByHandle(_handle.idx);
@@ -4758,7 +4758,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			BX_CHECK(_index < BGFX_CONFIG_MAX_COLOR_PALETTE, "Color palette index out of bounds %d (max: %d)."
+			BX_ASSERT(_index < BGFX_CONFIG_MAX_COLOR_PALETTE, "Color palette index out of bounds %d (max: %d)."
 				, _index
 				, BGFX_CONFIG_MAX_COLOR_PALETTE
 				);
@@ -4789,7 +4789,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		BGFX_API_FUNC(void setViewClear(ViewId _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
 		{
-			BX_CHECK(bx::equal(_depth, bx::clamp(_depth, 0.0f, 1.0f), 0.0001f)
+			BX_ASSERT(bx::equal(_depth, bx::clamp(_depth, 0.0f, 1.0f), 0.0001f)
 				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
 				, _depth
 				);
@@ -4799,7 +4799,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		BGFX_API_FUNC(void setViewClear(ViewId _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
 		{
-			BX_CHECK(bx::equal(_depth, bx::clamp(_depth, 0.0f, 1.0f), 0.0001f)
+			BX_ASSERT(bx::equal(_depth, bx::clamp(_depth, 0.0f, 1.0f), 0.0001f)
 				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
 				, _depth
 				);
@@ -4912,7 +4912,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				BGFX_PROFILER_SCOPE("bgfx/Render thread wait", 0xff2040ff);
 				int64_t start = bx::getHPCounter();
 				bool ok = m_renderSem.wait();
-				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
+				BX_ASSERT(ok, "Semaphore wait failed."); BX_UNUSED(ok);
 				m_submit->m_waitRender = bx::getHPCounter() - start;
 				m_submit->m_perfStats.waitRender = m_submit->m_waitRender;
 			}
@@ -4938,7 +4938,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 			m_encoderHandle->reset();
 			uint16_t idx = m_encoderHandle->alloc();
-			BX_CHECK(0 == idx, "Internal encoder handle is not 0 (idx %d).", idx); BX_UNUSED(idx);
+			BX_ASSERT(0 == idx, "Internal encoder handle is not 0 (idx %d).", idx); BX_UNUSED(idx);
 		}
 
 		bx::Semaphore m_renderSem;

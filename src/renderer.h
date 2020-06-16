@@ -271,7 +271,7 @@ namespace bgfx
 					break;
 
 				default:
-					BX_CHECK(false, "predefined %d not handled", predefined.m_type);
+					BX_ASSERT(false, "predefined %d not handled", predefined.m_type);
 					break;
 				}
 			}
@@ -304,7 +304,7 @@ namespace bgfx
 				handle = m_alloc.alloc();
 			}
 
-			BX_CHECK(UINT16_MAX != handle, "Failed to find handle.");
+			BX_ASSERT(UINT16_MAX != handle, "Failed to find handle.");
 
 			Data& data = m_data[handle];
 			data.m_hash   = _key;

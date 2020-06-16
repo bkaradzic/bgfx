@@ -1067,7 +1067,7 @@ struct Model
 			::setRenderState(_renderState);
 
 			// Submit
-			BX_CHECK(bgfx::kInvalidHandle != m_program, "Error, program is not set.");
+			BX_ASSERT(bgfx::kInvalidHandle != m_program, "Error, program is not set.");
 			::submit(_viewId, m_program);
 		}
 	}
@@ -1104,7 +1104,7 @@ struct Instance
 			, m_pos[2]
 			);
 
-		BX_CHECK(NULL != m_model, "Instance model cannot be NULL!");
+		BX_ASSERT(NULL != m_model, "Instance model cannot be NULL!");
 		m_model->submit(_viewId, mtx, _renderState);
 	}
 
@@ -1140,7 +1140,7 @@ struct ShadowVolumeAllocator
 	{
 		void* ret = (void*)m_ptr;
 		m_ptr += _size;
-		BX_CHECK(m_ptr - m_mem < (m_firstPage ? SV_PAGE_SIZE : 2 * SV_PAGE_SIZE), "Buffer overflow!");
+		BX_ASSERT(m_ptr - m_mem < (m_firstPage ? SV_PAGE_SIZE : 2 * SV_PAGE_SIZE), "Buffer overflow!");
 		return ret;
 	}
 

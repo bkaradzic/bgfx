@@ -819,7 +819,7 @@ VK_IMPORT_DEVICE
 
 	void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImage _image, VkImageAspectFlags _aspectMask, VkImageLayout _oldLayout, VkImageLayout _newLayout, uint32_t _levelCount, uint32_t _layerCount)
 	{
-		BX_CHECK(true
+		BX_ASSERT(true
 			&& _newLayout != VK_IMAGE_LAYOUT_UNDEFINED
 			&& _newLayout != VK_IMAGE_LAYOUT_PREINITIALIZED
 			, "_newLayout cannot use VK_IMAGE_LAYOUT_UNDEFINED or VK_IMAGE_LAYOUT_PREINITIALIZED."
@@ -1968,7 +1968,7 @@ VK_IMPORT_DEVICE
 					}
 				}
 
-				BX_CHECK(surfaceFormatIdx < numSurfaceFormats, "Cannot find preferred surface format from supported surface formats");
+				BX_ASSERT(surfaceFormatIdx < numSurfaceFormats, "Cannot find preferred surface format from supported surface formats");
 				BX_WARN(surfaceFormatSrgbIdx < numSurfaceFormats, "Cannot find preferred sRGB surface format from supported surface formats");
 
 				m_backBufferColorFormat = surfaceFormats[surfaceFormatIdx];
@@ -2681,7 +2681,7 @@ VK_IMPORT_DEVICE
 				break;
 
 			default:
-				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				BX_ASSERT(false, "Invalid handle type?! %d", _handle.type);
 				break;
 			}
 		}
@@ -4849,7 +4849,7 @@ VK_DESTROY
 					const uint16_t stage = regIndex - 16 - (fragment ? 48 : 0); // regIndex is used for image/sampler binding index
 
 					const UniformRegInfo* info = s_renderVK->m_uniformReg.find(name);
-					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+					BX_ASSERT(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
 					m_bindInfo[stage].uniformHandle    = info->m_handle;
 					m_bindInfo[stage].type             = BindType::Sampler;
@@ -4861,7 +4861,7 @@ VK_DESTROY
 				else
 				{
 					const UniformRegInfo* info = s_renderVK->m_uniformReg.find(name);
-					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+					BX_ASSERT(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
 					if (NULL != info)
 					{
@@ -5036,7 +5036,7 @@ VK_DESTROY
 
 	void ProgramVK::create(const ShaderVK* _vsh, const ShaderVK* _fsh)
 	{
-		BX_CHECK(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
+		BX_ASSERT(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
 		m_vsh = _vsh;
 		bx::memCopy(
 			  &m_predefined[0]
@@ -5047,7 +5047,7 @@ VK_DESTROY
 
 		if (NULL != _fsh)
 		{
-			BX_CHECK(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
+			BX_ASSERT(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
 			m_fsh = _fsh;
 			bx::memCopy(
 				  &m_predefined[m_numPredefined]

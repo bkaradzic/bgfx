@@ -153,9 +153,9 @@ bgfx::TextureHandle loadTextureWithUpdate(const char* _filePath, uint64_t _flags
 
 		if (NULL != imageContainer)
 		{
-			BX_CHECK(!imageContainer->m_cubeMap, "Cubemap Texture loading not supported");
-			BX_CHECK(1 >= imageContainer->m_depth, "3D Texture loading not supported");
-			BX_CHECK(1 == imageContainer->m_numLayers, "Texture Layer loading not supported");
+			BX_ASSERT(!imageContainer->m_cubeMap, "Cubemap Texture loading not supported");
+			BX_ASSERT(1 >= imageContainer->m_depth, "3D Texture loading not supported");
+			BX_ASSERT(1 == imageContainer->m_numLayers, "Texture Layer loading not supported");
 
 			if (!imageContainer->m_cubeMap
 			&&  1 >= imageContainer->m_depth

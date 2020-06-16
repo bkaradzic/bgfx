@@ -223,7 +223,7 @@
 				BX_MACRO_BLOCK_END
 
 #if BGFX_CONFIG_DEBUG
-#	define VK_CHECK(_call) _VK_CHECK(BX_CHECK, _call)
+#	define VK_CHECK(_call) _VK_CHECK(BX_ASSERT, _call)
 #else
 #	define VK_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
