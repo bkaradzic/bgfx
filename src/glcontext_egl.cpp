@@ -374,7 +374,9 @@ EGL_IMPORT
 // will take the first canvas element found on the web page.
 #define HTML5_TARGET_CANVAS_SELECTOR "#canvas"
 
-		BX_ASSERT(emscripten_set_canvas_element_size(HTML5_TARGET_CANVAS_SELECTOR, _width, _height) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_canvas_element_size() failed in GlContext::resize()!");
+		EMSCRIPTEN_RESULT res = emscripten_set_canvas_element_size(HTML5_TARGET_CANVAS_SELECTOR, _width, _height);
+		BX_ASSERT(res == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_set_canvas_element_size() failed in GlContext::resize()!");
+		BX_UNUSED(res);
 #	else
 		BX_UNUSED(_width, _height);
 #	endif // BX_PLATFORM_*

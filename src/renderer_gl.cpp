@@ -1599,7 +1599,9 @@ namespace bgfx { namespace gl
 		// Avoid creating test textures for WebGL, that causes error noise in the browser console; instead examine the supported texture formats from the spec.
 		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
 		EmscriptenWebGLContextAttributes attrs;
-		BX_ASSERT(emscripten_webgl_get_context_attributes(ctx, &attrs) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_webgl_get_context_attributes() failed in isTextureFormatValidPerSpec()!");
+		EMSCRIPTEN_RESULT res = emscripten_webgl_get_context_attributes(ctx, &attrs);
+		BX_ASSERT(res == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_webgl_get_context_attributes() failed in isTextureFormatValidPerSpec()!");
+		BX_UNUSED(res);
 		int glesVersion = attrs.majorVersion + 1;
 		switch(_format)
 		{
