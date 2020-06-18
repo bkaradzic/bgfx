@@ -367,7 +367,8 @@ function exampleProjectDefaults()
 
 		linkoptions {
 			"-s TOTAL_MEMORY=32MB",
-			"-s ALLOW_MEMORY_GROWTH=1"
+			"-s ALLOW_MEMORY_GROWTH=1",
+			"--preload-file ../../../examples/runtime@/"
 		}
 
 		removeflags {
