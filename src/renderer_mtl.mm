@@ -345,7 +345,7 @@ namespace bgfx { namespace mtl
 			break;
 		};
 
-		BX_CHECK(false, "Unrecognized Mtl Data type 0x%04x.", _type);
+		BX_ASSERT(false, "Unrecognized Mtl Data type 0x%04x.", _type);
 		return UniformType::End;
 	}
 
@@ -855,7 +855,7 @@ namespace bgfx { namespace mtl
 			m_cmd.kick(false, true);
 			m_commandBuffer = m_cmd.alloc();
 
-			BX_CHECK(_mip<texture.m_numMips,"Invalid mip: %d num mips:",_mip,texture.m_numMips);
+			BX_ASSERT(_mip<texture.m_numMips,"Invalid mip: %d num mips:",_mip,texture.m_numMips);
 
 			uint32_t srcWidth  = bx::uint32_max(1, texture.m_ptr.width()  >> _mip);
 			uint32_t srcHeight = bx::uint32_max(1, texture.m_ptr.height() >> _mip);
@@ -1075,7 +1075,7 @@ namespace bgfx { namespace mtl
 				break;
 
 			default:
-				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				BX_ASSERT(false, "Invalid handle type?! %d", _handle.type);
 				break;
 			}
 		}
@@ -1807,8 +1807,8 @@ namespace bgfx { namespace mtl
 						if (arg.type == MTLArgumentTypeBuffer
 						&&  0 == bx::strCmp(utf8String(arg.name), SHADER_UNIFORM_NAME) )
 						{
-							BX_CHECK( arg.index == 0, "Uniform buffer must be in the buffer slot 0.");
-							BX_CHECK( MTLDataTypeStruct == arg.bufferDataType, "%s's type must be a struct",SHADER_UNIFORM_NAME );
+							BX_ASSERT( arg.index == 0, "Uniform buffer must be in the buffer slot 0.");
+							BX_ASSERT( MTLDataTypeStruct == arg.bufferDataType, "%s's type must be a struct",SHADER_UNIFORM_NAME );
 
 							if (MTLDataTypeStruct == arg.bufferDataType)
 							{
@@ -2120,7 +2120,7 @@ namespace bgfx { namespace mtl
 						bool normalized;
 						bool asInt;
 						layout.decode(attr, num, type, normalized, asInt);
-						BX_CHECK(num <= 4, "num must be <= 4");
+						BX_ASSERT(num <= 4, "num must be <= 4");
 
 						if (UINT16_MAX != layout.m_attributes[attr])
 						{
@@ -2507,7 +2507,7 @@ namespace bgfx { namespace mtl
 
 	void ProgramMtl::create(const ShaderMtl* _vsh, const ShaderMtl* _fsh)
 	{
-		BX_CHECK(NULL != _vsh->m_function.m_obj, "Vertex shader doesn't exist.");
+		BX_ASSERT(NULL != _vsh->m_function.m_obj, "Vertex shader doesn't exist.");
 		m_vsh = _vsh;
 		m_fsh = _fsh;
 
