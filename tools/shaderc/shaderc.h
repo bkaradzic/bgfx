@@ -107,11 +107,16 @@ namespace bgfx
 
 	bx::StringView nextWord(bx::StringView& _parse);
 
-#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
-#define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
-#define BGFX_UNIFORM_READONLYBIT UINT8_C(0x40)
-#define BGFX_UNIFORM_COMPAREBIT  UINT8_C(0x80)
-#define BGFX_UNIFORM_MASK (BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT|BGFX_UNIFORM_READONLYBIT|BGFX_UNIFORM_COMPAREBIT)
+	constexpr uint8_t kUniformFragmentBit  = 0x10;
+	constexpr uint8_t kUniformSamplerBit   = 0x20;
+	constexpr uint8_t kUniformReadOnlyBit  = 0x40;
+	constexpr uint8_t kUniformCompareBit   = 0x80;
+	constexpr uint8_t kUniformMask = 0
+		| kUniformFragmentBit
+		| kUniformSamplerBit
+		| kUniformReadOnlyBit
+		| kUniformCompareBit
+		;
 
 	const char* getUniformTypeName(UniformType::Enum _enum);
 	UniformType::Enum nameToUniformTypeEnum(const char* _name);

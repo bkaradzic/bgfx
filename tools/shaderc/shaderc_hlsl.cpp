@@ -366,7 +366,7 @@ namespace bgfx { namespace hlsl
 				Uniform un;
 				un.name = '$' == name[0] ? name + 1 : name;
 				un.type = isSampler(desc.Type)
-					? UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | type)
+					? UniformType::Enum(kUniformSamplerBit | type)
 					: type
 					;
 				un.num = (uint8_t)ctType.Elements;
@@ -527,7 +527,7 @@ namespace bgfx { namespace hlsl
 					{
 						Uniform un;
 						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );
-						un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Sampler);
+						un.type = UniformType::Enum(kUniformSamplerBit | UniformType::Sampler);
 						un.num = 1;
 						un.regIndex = uint16_t(bindDesc.BindPoint);
 						un.regCount = uint16_t(bindDesc.BindCount);
@@ -724,7 +724,7 @@ namespace bgfx { namespace hlsl
 			uint16_t count = (uint16_t)uniforms.size();
 			bx::write(_writer, count);
 
-			uint32_t fragmentBit = profile[0] == 'p' ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+			uint32_t fragmentBit = profile[0] == 'p' ? kUniformFragmentBit : 0;
 			for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
 			{
 				const Uniform& un = *it;

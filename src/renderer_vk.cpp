@@ -3011,7 +3011,7 @@ VK_IMPORT_DEVICE
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			if (_flags & BGFX_UNIFORM_FRAGMENTBIT)
+			if (_flags & kUniformFragmentBit)
 			{
 				bx::memCopy(&m_fsScratch[_regIndex], _val, _numRegs*16);
 			}
@@ -4021,7 +4021,7 @@ VK_IMPORT_DEVICE
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type)                   \
 				case UniformType::_uniform:                                  \
-				case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT:         \
+				case UniformType::_uniform|kUniformFragmentBit:         \
 						{                                                    \
 							setShaderUniform(uint8_t(type), loc, data, num); \
 						}                                                    \
@@ -4030,7 +4030,7 @@ VK_IMPORT_DEVICE
 				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3|BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Mat3|kUniformFragmentBit:
 					 {
 						 float* value = (float*)data;
 						 for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
@@ -4054,7 +4054,7 @@ VK_IMPORT_DEVICE
 					break;
 
 				case UniformType::Sampler:
-				case UniformType::Sampler|BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Sampler|kUniformFragmentBit:
 					// do nothing, but VkDescriptorSetImageInfo would be set before drawing
 					break;
 //				CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
@@ -4783,7 +4783,7 @@ VK_DESTROY
 			, count
 			);
 
-		uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		uint8_t fragmentBit = fragment ? kUniformFragmentBit : 0;
 
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 		{
@@ -4832,7 +4832,7 @@ VK_DESTROY
 					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
-				else if (UniformType::End == (~BGFX_UNIFORM_MASK & type))
+				else if (UniformType::End == (~kUniformMask & type))
 				{
 					// regCount is used for descriptor type
 					const bool  isBuffer = regCount == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -4844,7 +4844,7 @@ VK_DESTROY
 
 					kind = "storage";
 				}
-				else if (UniformType::Sampler == (~BGFX_UNIFORM_MASK & type) )
+				else if (UniformType::Sampler == (~kUniformMask & type) )
 				{
 					const uint16_t stage = regIndex - 16 - (fragment ? 48 : 0); // regIndex is used for image/sampler binding index
 
@@ -4879,7 +4879,7 @@ VK_DESTROY
 				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
 					, kind
 					, name
-					, getUniformTypeName(UniformType::Enum(type&~BGFX_UNIFORM_MASK) )
+					, getUniformTypeName(UniformType::Enum(type&~kUniformMask) )
 					, num
 					, regIndex
 					, regCount

@@ -588,7 +588,7 @@ namespace bgfx { namespace metal
 		uint16_t count = static_cast<uint16_t>(uniforms.size());
 		bx::write(_writer, count);
 
-		uint32_t fragmentBit = isFragmentShader ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		uint32_t fragmentBit = isFragmentShader ? kUniformFragmentBit : 0;
 		for (uint16_t ii = 0; ii < count; ++ii)
 		{
 			const Uniform& un = uniforms[ii];

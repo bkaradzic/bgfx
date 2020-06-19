@@ -641,12 +641,12 @@ namespace bgfx { namespace spirv
 		uint16_t count = static_cast<uint16_t>(uniforms.size());
 		bx::write(_writer, count);
 
-		uint32_t fragmentBit = isFragmentShader ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		uint32_t fragmentBit = isFragmentShader ? kUniformFragmentBit : 0;
 		for (uint16_t ii = 0; ii < count; ++ii)
 		{
 			const Uniform& un = uniforms[ii];
 
-			if ((un.type & ~BGFX_UNIFORM_MASK) > UniformType::End)
+			if ((un.type & ~kUniformMask) > UniformType::End)
 				size = bx::max(size, (uint16_t)(un.regIndex + un.regCount*16));
 
 			uint8_t nameSize = (uint8_t)un.name.size();
@@ -1001,10 +1001,10 @@ namespace bgfx { namespace spirv
 
 							Uniform un;
 							un.name = uniform_name;
-							if (isCompareSampler)
-								un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | BGFX_UNIFORM_COMPAREBIT | UniformType::Sampler);
-							else
-								un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Sampler);
+							un.type = UniformType::Enum(UniformType::Sampler
+									| kUniformSamplerBit
+									| (isCompareSampler ? kUniformCompareBit : 0)
+									);
 
 							un.texComponent = uint8_t(SpirvCrossBaseTypeToFormatType(componentType));
 							un.texDimension = uint8_t(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed));
@@ -1032,13 +1032,13 @@ namespace bgfx { namespace spirv
 
 							spirv_cross::Bitset flags = refl.get_buffer_block_flags(resource.id);
 							UniformType::Enum type = flags.get(spv::DecorationNonWritable)
-								? UniformType::Enum(BGFX_UNIFORM_READONLYBIT | UniformType::End)
+								? UniformType::Enum(kUniformReadOnlyBit | UniformType::End)
 								: UniformType::End;
 
 							Uniform un;
 							un.name = uniform_name;
 							un.type = type;
-							
+
 							un.texComponent = uint8_t(SpirvCrossBaseTypeToFormatType(componentType));
 							un.texDimension = uint8_t(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed));
 
@@ -1060,7 +1060,7 @@ namespace bgfx { namespace spirv
 							{
 								spirv_cross::Bitset flags = refl.get_buffer_block_flags(resource.id);
 								UniformType::Enum type = flags.get(spv::DecorationNonWritable)
-									? UniformType::Enum(BGFX_UNIFORM_READONLYBIT | UniformType::End)
+									? UniformType::Enum(kUniformReadOnlyBit | UniformType::End)
 									: UniformType::End;
 
 								uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);

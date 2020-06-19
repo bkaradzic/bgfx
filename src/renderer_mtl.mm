@@ -1388,7 +1388,7 @@ namespace bgfx { namespace mtl
 
 		void setShaderUniform(uint8_t _flags, uint32_t _loc, const void* _val, uint32_t _numRegs)
 		{
-			uint32_t offset = 0 != (_flags&BGFX_UNIFORM_FRAGMENTBIT)
+			uint32_t offset = 0 != (_flags&kUniformFragmentBit)
 				? m_uniformBufferFragmentOffset
 				: m_uniformBufferVertexOffset
 				;
@@ -1439,7 +1439,7 @@ namespace bgfx { namespace mtl
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
 	case UniformType::_uniform:                            \
-	case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT:   \
+	case UniformType::_uniform|kUniformFragmentBit:   \
 	{                                                      \
 		setShaderUniform(uint8_t(type), loc, data, num);   \
 	}                                                      \
@@ -1448,7 +1448,7 @@ namespace bgfx { namespace mtl
 				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3|BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Mat3|kUniformFragmentBit:
 					{
 						float* value = (float*)data;
 						for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
@@ -1796,7 +1796,7 @@ namespace bgfx { namespace mtl
 					? ps->m_vshConstantBuffer
 					: ps->m_fshConstantBuffer
 					;
-				const int8_t fragmentBit = (1 == shaderType ? BGFX_UNIFORM_FRAGMENTBIT : 0);
+				const int8_t fragmentBit = (1 == shaderType ? kUniformFragmentBit : 0);
 
 				for (MTLArgument* arg in (shaderType == 0 ? _vertexArgs : _fragmentArgs) )
 				{

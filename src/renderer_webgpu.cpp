@@ -1406,7 +1406,7 @@ namespace bgfx { namespace webgpu
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			if(_flags&BGFX_UNIFORM_FRAGMENTBIT)
+			if(_flags&kUniformFragmentBit)
 			{
 				bx::memCopy(&m_fsScratch[_regIndex], _val, _numRegs * 16);
 			}
@@ -1474,7 +1474,7 @@ namespace bgfx { namespace webgpu
 				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3|BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Mat3|kUniformFragmentBit:
 					{
 						float* value = (float*)data;
 						for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
@@ -1498,11 +1498,11 @@ namespace bgfx { namespace webgpu
 					break;
 
 				case UniformType::Sampler:
-				case UniformType::Sampler | BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Sampler | kUniformFragmentBit:
 				case UniformType::Vec4:
-				case UniformType::Vec4 | BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Vec4 | kUniformFragmentBit:
 				case UniformType::Mat4:
-				case UniformType::Mat4 | BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Mat4 | kUniformFragmentBit:
 					{
 						setShaderUniform(uint8_t(type), loc, data, num);
 					}
@@ -2482,7 +2482,7 @@ namespace bgfx { namespace webgpu
 			);
 
 		const bool fragment = isShaderType(magic, 'F');
-		uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		uint8_t fragmentBit = fragment ? kUniformFragmentBit : 0;
 
 		BX_ASSERT(!isShaderVerLess(magic, 7), "WebGPU backend supports only shader binary version >= 7");
 
@@ -2526,11 +2526,11 @@ namespace bgfx { namespace webgpu
 					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
-				else if (UniformType::End == (~BGFX_UNIFORM_MASK & type))
+				else if (UniformType::End == (~kUniformMask & type))
 				{
 					// regCount is used for descriptor type
 					const bool buffer = regCount == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-					const bool readonly = (type & BGFX_UNIFORM_READONLYBIT) != 0;
+					const bool readonly = (type & kUniformReadOnlyBit) != 0;
 
 					const uint8_t stage = regIndex - (buffer ? 16 : 32) - (fragment ? 48 : 0);
 
@@ -2559,7 +2559,7 @@ namespace bgfx { namespace webgpu
 
 					kind = "storage";
 				}
-				else if (UniformType::Sampler == (~BGFX_UNIFORM_MASK & type))
+				else if (UniformType::Sampler == (~kUniformMask & type))
 				{
 					const UniformRegInfo* info = s_renderWgpu->m_uniformReg.find(name);
 					BX_ASSERT(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -2577,7 +2577,7 @@ namespace bgfx { namespace webgpu
 					m_textures[m_numSamplers].viewDimension = wgpu::TextureViewDimension(texDimension);
 					m_textures[m_numSamplers].textureComponentType = wgpu::TextureComponentType(texComponent);
 
-					const bool comparisonSampler = (type & BGFX_UNIFORM_COMPAREBIT) != 0;
+					const bool comparisonSampler = (type & kUniformCompareBit) != 0;
 
 					m_samplers[m_numSamplers] = wgpu::BindGroupLayoutBinding();
 					m_samplers[m_numSamplers].binding = regIndex + 16;
@@ -2607,7 +2607,7 @@ namespace bgfx { namespace webgpu
 				BX_TRACE("\t%s: %s (%s), r.index %3d, r.count %2d"
 					, kind
 					, name
-					, getUniformTypeName(UniformType::Enum(type&~BGFX_UNIFORM_MASK) )
+					, getUniformTypeName(UniformType::Enum(type&~kUniformMask) )
 					, regIndex
 					, regCount
 					);

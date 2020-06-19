@@ -2454,7 +2454,7 @@ namespace bgfx { namespace d3d11
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
+			if (_flags&kUniformFragmentBit)
 			{
 				bx::memCopy(&m_fsScratch[_regIndex], _val, _numRegs*16);
 				m_fsChanges += _numRegs;
@@ -3263,7 +3263,7 @@ namespace bgfx { namespace d3d11
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
 		case UniformType::_uniform: \
-		case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
+		case UniformType::_uniform|kUniformFragmentBit: \
 				{ \
 					setShaderUniform(uint8_t(type), loc, data, num); \
 				} \
@@ -3272,7 +3272,7 @@ namespace bgfx { namespace d3d11
 				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3|BGFX_UNIFORM_FRAGMENTBIT: \
+				case UniformType::Mat3|kUniformFragmentBit: \
 					 {
 						 float* value = (float*)data;
 						 for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
@@ -3913,7 +3913,7 @@ namespace bgfx { namespace d3d11
 			, count
 			);
 
-		const uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		const uint8_t fragmentBit = fragment ? kUniformFragmentBit : 0;
 
 		if (0 < count)
 		{
@@ -3955,7 +3955,7 @@ namespace bgfx { namespace d3d11
 					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
-				else if (0 == (BGFX_UNIFORM_SAMPLERBIT & type) )
+				else if (0 == (kUniformSamplerBit & type) )
 				{
 					const UniformRegInfo* info = s_renderD3D11->m_uniformReg.find(name);
 					BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -3979,7 +3979,7 @@ namespace bgfx { namespace d3d11
 				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
 					, kind
 					, name
-					, getUniformTypeName(UniformType::Enum(type&~BGFX_UNIFORM_MASK) )
+					, getUniformTypeName(UniformType::Enum(type&~kUniformMask) )
 					, num
 					, regIndex
 					, regCount

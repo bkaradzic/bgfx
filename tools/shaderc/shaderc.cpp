@@ -279,7 +279,7 @@ namespace bgfx
 
 	const char* getUniformTypeName(UniformType::Enum _enum)
 	{
-		uint32_t idx = _enum & ~(BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT);
+		uint32_t idx = _enum & ~(kUniformFragmentBit|kUniformSamplerBit);
 		if (idx < UniformType::Count)
 		{
 			return s_uniformTypeName[idx];
