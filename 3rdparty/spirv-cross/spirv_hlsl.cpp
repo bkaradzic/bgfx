@@ -2946,24 +2946,37 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 	if (proj && hlsl_options.shader_model >= 40) // Legacy HLSL has "proj" operations which do this for us.
 		coord_expr = coord_expr + " / " + to_extract_component_expression(coord, coord_components);
 
-	if (hlsl_options.shader_model < 40 && lod)
+	if (hlsl_options.shader_model < 40)
 	{
 		string coord_filler;
-		for (uint32_t size = coord_components; size < 3; ++size)
-		{
-			coord_filler += ", 0.0";
-		}
-		coord_expr = "float4(" + coord_expr + coord_filler + ", " + to_expression(lod) + ")";
-	}
+		uint32_t modifier_count = 0;
 
-	if (hlsl_options.shader_model < 40 && bias)
-	{
-		string coord_filler;
-		for (uint32_t size = coord_components; size < 3; ++size)
+		if (lod)
 		{
-			coord_filler += ", 0.0";
+			for (uint32_t size = coord_components; size < 3; ++size)
+				coord_filler += ", 0.0";
+			coord_expr = "float4(" + coord_expr + coord_filler + ", " + to_expression(lod) + ")";
+			modifier_count++;
 		}
-		coord_expr = "float4(" + coord_expr + coord_filler + ", " + to_expression(bias) + ")";
+
+		if (bias)
+		{
+			for (uint32_t size = coord_components; size < 3; ++size)
+				coord_filler += ", 0.0";
+			coord_expr = "float4(" + coord_expr + coord_filler + ", " + to_expression(bias) + ")";
+			modifier_count++;
+		}
+
+		if (proj)
+		{
+			for (uint32_t size = coord_components; size < 3; ++size)
+				coord_filler += ", 0.0";
+			coord_expr = "float4(" + coord_expr + coord_filler + ", " + to_extract_component_expression(coord, coord_components) + ")";
+			modifier_count++;
+		}
+
+		if (modifier_count > 1)
+			SPIRV_CROSS_THROW("Legacy HLSL can only use one of lod/bias/proj modifiers.");
 	}
 
 	if (op == OpImageFetch)

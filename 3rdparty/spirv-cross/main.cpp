@@ -569,6 +569,7 @@ struct CLIArguments
 	SmallVector<uint32_t> msl_device_argument_buffers;
 	SmallVector<pair<uint32_t, uint32_t>> msl_dynamic_buffers;
 	SmallVector<pair<uint32_t, uint32_t>> msl_inline_uniform_blocks;
+	SmallVector<MSLShaderInput> msl_shader_inputs;
 	SmallVector<PLSArg> pls_in;
 	SmallVector<PLSArg> pls_out;
 	SmallVector<Remap> remaps;
@@ -738,7 +739,10 @@ static void print_help_msl()
 	                "\t[--msl-disable-frag-stencil-ref-builtin]:\n\t\tDisable FragStencilRef output. Useful if pipeline does not enable stencil output, as pipeline creation might otherwise fail.\n"
 	                "\t[--msl-enable-frag-output-mask <mask>]:\n\t\tOnly selectively enable fragment outputs. Useful if pipeline does not enable fragment output for certain locations, as pipeline creation might otherwise fail.\n"
 	                "\t[--msl-no-clip-distance-user-varying]:\n\t\tDo not emit user varyings to emulate gl_ClipDistance in fragment shaders.\n"
-	);
+	                "\t[--msl-shader-input <index> <format> <size>]:\n\t\tSpecify the format of the shader input at <index>.\n"
+	                "\t\t<format> can be 'u16', 'u8', or 'other', to indicate a 16-bit unsigned integer, 8-bit unsigned integer, "
+	                "or other-typed variable. <size> is the vector length of the variable, which must be greater than or equal to that declared in the shader.\n"
+	                "\t\tUseful if shader stage interfaces don't match up, as pipeline creation might otherwise fail.\n");
 }
 
 static void print_help_common()
@@ -975,6 +979,8 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 			msl_comp->add_dynamic_buffer(v.first, v.second, i++);
 		for (auto &v : args.msl_inline_uniform_blocks)
 			msl_comp->add_inline_uniform_block(v.first, v.second);
+		for (auto &v : args.msl_shader_inputs)
+			msl_comp->add_msl_shader_input(v);
 	}
 	else if (args.hlsl)
 		compiler.reset(new CompilerHLSL(move(spirv_parser.get_parsed_ir())));
@@ -1356,6 +1362,20 @@ static int main_inner(int argc, char *argv[])
 	        [&args](CLIParser &parser) { args.msl_enable_frag_output_mask = parser.next_hex_uint(); });
 	cbs.add("--msl-no-clip-distance-user-varying",
 	        [&args](CLIParser &) { args.msl_enable_clip_distance_user_varying = false; });
+	cbs.add("--msl-shader-input", [&args](CLIParser &parser) {
+		MSLShaderInput input;
+		// Make sure next_uint() is called in-order.
+		input.location = parser.next_uint();
+		const char *format = parser.next_value_string("other");
+		if (strcmp(format, "u16") == 0)
+			input.format = MSL_VERTEX_FORMAT_UINT16;
+		else if (strcmp(format, "u8") == 0)
+			input.format = MSL_VERTEX_FORMAT_UINT8;
+		else
+			input.format = MSL_VERTEX_FORMAT_OTHER;
+		input.vecsize = parser.next_uint();
+		args.msl_shader_inputs.push_back(input);
+	});
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();

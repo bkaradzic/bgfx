@@ -273,11 +273,27 @@ SPIRVariable *Compiler::maybe_get_backing_variable(uint32_t chain)
 	return var;
 }
 
-StorageClass Compiler::get_backing_variable_storage(uint32_t ptr)
+StorageClass Compiler::get_expression_effective_storage_class(uint32_t ptr)
 {
 	auto *var = maybe_get_backing_variable(ptr);
-	if (var)
-		return var->storage;
+
+	// If the expression has been lowered to a temporary, we need to use the Generic storage class.
+	// We're looking for the effective storage class of a given expression.
+	// An access chain or forwarded OpLoads from such access chains
+	// will generally have the storage class of the underlying variable, but if the load was not forwarded
+	// we have lost any address space qualifiers.
+	bool forced_temporary = ir.ids[ptr].get_type() == TypeExpression &&
+	                        !get<SPIRExpression>(ptr).access_chain &&
+	                        (forced_temporaries.count(ptr) != 0 || forwarded_temporaries.count(ptr) == 0);
+
+	if (var && !forced_temporary)
+	{
+		// Normalize SSBOs to StorageBuffer here.
+		if (var->storage == StorageClassUniform && has_decoration(get<SPIRType>(var->basetype).self, DecorationBufferBlock))
+			return StorageClassStorageBuffer;
+		else
+			return var->storage;
+	}
 	else
 		return expression_type(ptr).storage;
 }

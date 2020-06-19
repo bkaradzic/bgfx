@@ -49,11 +49,20 @@ CompilerMSL::CompilerMSL(ParsedIR &&ir_)
 {
 }
 
+void CompilerMSL::add_msl_shader_input(const MSLShaderInput &si)
+{
+	inputs_by_location[si.location] = si;
+	if (si.builtin != BuiltInMax && !inputs_by_builtin.count(si.builtin))
+		inputs_by_builtin[si.builtin] = si;
+}
+
 void CompilerMSL::add_msl_vertex_attribute(const MSLVertexAttr &va)
 {
-	vtx_attrs_by_location[va.location] = va;
-	if (va.builtin != BuiltInMax && !vtx_attrs_by_builtin.count(va.builtin))
-		vtx_attrs_by_builtin[va.builtin] = va;
+	MSLShaderInput si;
+	si.location = va.location;
+	si.format = va.format;
+	si.builtin = va.builtin;
+	add_msl_shader_input(si);
 }
 
 void CompilerMSL::add_msl_resource_binding(const MSLResourceBinding &binding)
@@ -93,7 +102,12 @@ void CompilerMSL::set_argument_buffer_device_address_space(uint32_t desc_set, bo
 
 bool CompilerMSL::is_msl_vertex_attribute_used(uint32_t location)
 {
-	return vtx_attrs_in_use.count(location) != 0;
+	return is_msl_shader_input_used(location);
+}
+
+bool CompilerMSL::is_msl_shader_input_used(uint32_t location)
+{
+	return inputs_in_use.count(location) != 0;
 }
 
 bool CompilerMSL::is_msl_resource_binding_used(ExecutionModel model, uint32_t desc_set, uint32_t binding) const
@@ -1014,6 +1028,8 @@ string CompilerMSL::compile()
 	// Allow Metal to use the array<T> template unless we force it off.
 	backend.can_return_array = !msl_options.force_native_arrays;
 	backend.array_is_value_type = !msl_options.force_native_arrays;
+	// Arrays which are part of buffer objects are never considered to be native arrays.
+	backend.buffer_offset_array_is_value_type = false;
 
 	capture_output_to_buffer = msl_options.capture_output_to_buffer;
 	is_rasterization_disabled = msl_options.disable_rasterization || capture_output_to_buffer;
@@ -1458,11 +1474,11 @@ void CompilerMSL::mark_as_packable(SPIRType &type)
 	}
 }
 
-// If a vertex attribute exists at the location, it is marked as being used by this shader
+// If a shader input exists at the location, it is marked as being used by this shader
 void CompilerMSL::mark_location_as_used_by_shader(uint32_t location, StorageClass storage)
 {
-	if ((get_execution_model() == ExecutionModelVertex || is_tessellation_shader()) && (storage == StorageClassInput))
-		vtx_attrs_in_use.insert(location);
+	if (storage == StorageClassInput)
+		inputs_in_use.insert(location);
 }
 
 uint32_t CompilerMSL::get_target_components_for_fragment_location(uint32_t location) const
@@ -1474,11 +1490,13 @@ uint32_t CompilerMSL::get_target_components_for_fragment_location(uint32_t locat
 		return itr->second;
 }
 
-uint32_t CompilerMSL::build_extended_vector_type(uint32_t type_id, uint32_t components)
+uint32_t CompilerMSL::build_extended_vector_type(uint32_t type_id, uint32_t components, SPIRType::BaseType basetype)
 {
 	uint32_t new_type_id = ir.increase_bound_by(1);
 	auto &type = set<SPIRType>(new_type_id, get<SPIRType>(type_id));
 	type.vecsize = components;
+	if (basetype != SPIRType::Unknown)
+		type.basetype = basetype;
 	type.self = new_type_id;
 	type.parent_type = type_id;
 	type.pointer = false;
@@ -1634,11 +1652,9 @@ void CompilerMSL::add_plain_variable_to_interface_block(StorageClass storage, co
 	if (get_decoration_bitset(var.self).get(DecorationLocation))
 	{
 		uint32_t locn = get_decoration(var.self, DecorationLocation);
-		if (storage == StorageClassInput && (get_execution_model() == ExecutionModelVertex || is_tessellation_shader()))
+		if (storage == StorageClassInput)
 		{
-			type_id = ensure_correct_attribute_type(var.basetype, locn,
-			                                        location_meta ? location_meta->num_components : type.vecsize);
-
+			type_id = ensure_correct_input_type(var.basetype, locn, location_meta ? location_meta->num_components : 0);
 			if (!location_meta)
 				var.basetype = type_id;
 
@@ -1650,9 +1666,9 @@ void CompilerMSL::add_plain_variable_to_interface_block(StorageClass storage, co
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 		mark_location_as_used_by_shader(locn, storage);
 	}
-	else if (is_builtin && is_tessellation_shader() && vtx_attrs_by_builtin.count(builtin))
+	else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
 	{
-		uint32_t locn = vtx_attrs_by_builtin[builtin].location;
+		uint32_t locn = inputs_by_builtin[builtin].location;
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 		mark_location_as_used_by_shader(locn, storage);
 	}
@@ -1797,19 +1813,18 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 		if (get_decoration_bitset(var.self).get(DecorationLocation))
 		{
 			uint32_t locn = get_decoration(var.self, DecorationLocation) + i;
-			if (storage == StorageClassInput &&
-			    (get_execution_model() == ExecutionModelVertex || is_tessellation_shader()))
+			if (storage == StorageClassInput)
 			{
-				var.basetype = ensure_correct_attribute_type(var.basetype, locn);
-				uint32_t mbr_type_id = ensure_correct_attribute_type(usable_type->self, locn);
+				var.basetype = ensure_correct_input_type(var.basetype, locn);
+				uint32_t mbr_type_id = ensure_correct_input_type(usable_type->self, locn);
 				ib_type.member_types[ib_mbr_idx] = mbr_type_id;
 			}
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, storage);
 		}
-		else if (is_builtin && is_tessellation_shader() && vtx_attrs_by_builtin.count(builtin))
+		else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
 		{
-			uint32_t locn = vtx_attrs_by_builtin[builtin].location + i;
+			uint32_t locn = inputs_by_builtin[builtin].location + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, storage);
 		}
@@ -1987,9 +2002,9 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, storage);
 		}
-		else if (is_builtin && is_tessellation_shader() && vtx_attrs_by_builtin.count(builtin))
+		else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
 		{
-			uint32_t locn = vtx_attrs_by_builtin[builtin].location + i;
+			uint32_t locn = inputs_by_builtin[builtin].location + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, storage);
 		}
@@ -2114,9 +2129,9 @@ void CompilerMSL::add_plain_member_variable_to_interface_block(StorageClass stor
 	if (has_member_decoration(var_type.self, mbr_idx, DecorationLocation))
 	{
 		uint32_t locn = get_member_decoration(var_type.self, mbr_idx, DecorationLocation);
-		if (storage == StorageClassInput && (get_execution_model() == ExecutionModelVertex || is_tessellation_shader()))
+		if (storage == StorageClassInput)
 		{
-			mbr_type_id = ensure_correct_attribute_type(mbr_type_id, locn);
+			mbr_type_id = ensure_correct_input_type(mbr_type_id, locn);
 			var_type.member_types[mbr_idx] = mbr_type_id;
 			ib_type.member_types[ib_mbr_idx] = mbr_type_id;
 		}
@@ -2128,20 +2143,20 @@ void CompilerMSL::add_plain_member_variable_to_interface_block(StorageClass stor
 		// The block itself might have a location and in this case, all members of the block
 		// receive incrementing locations.
 		uint32_t locn = get_accumulated_member_location(var, mbr_idx, meta.strip_array);
-		if (storage == StorageClassInput && (get_execution_model() == ExecutionModelVertex || is_tessellation_shader()))
+		if (storage == StorageClassInput)
 		{
-			mbr_type_id = ensure_correct_attribute_type(mbr_type_id, locn);
+			mbr_type_id = ensure_correct_input_type(mbr_type_id, locn);
 			var_type.member_types[mbr_idx] = mbr_type_id;
 			ib_type.member_types[ib_mbr_idx] = mbr_type_id;
 		}
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 		mark_location_as_used_by_shader(locn, storage);
 	}
-	else if (is_builtin && is_tessellation_shader() && vtx_attrs_by_builtin.count(builtin))
+	else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
 	{
 		uint32_t locn = 0;
-		auto builtin_itr = vtx_attrs_by_builtin.find(builtin);
-		if (builtin_itr != end(vtx_attrs_by_builtin))
+		auto builtin_itr = inputs_by_builtin.find(builtin);
+		if (builtin_itr != end(inputs_by_builtin))
 			locn = builtin_itr->second.location;
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 		mark_location_as_used_by_shader(locn, storage);
@@ -2222,9 +2237,9 @@ void CompilerMSL::add_tess_level_input_to_interface_block(const std::string &ib_
 				set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 				mark_location_as_used_by_shader(locn, StorageClassInput);
 			}
-			else if (vtx_attrs_by_builtin.count(builtin))
+			else if (inputs_by_builtin.count(builtin))
 			{
-				uint32_t locn = vtx_attrs_by_builtin[builtin].location;
+				uint32_t locn = inputs_by_builtin[builtin].location;
 				set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 				mark_location_as_used_by_shader(locn, StorageClassInput);
 			}
@@ -2283,9 +2298,9 @@ void CompilerMSL::add_tess_level_input_to_interface_block(const std::string &ib_
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, StorageClassInput);
 		}
-		else if (vtx_attrs_by_builtin.count(builtin))
+		else if (inputs_by_builtin.count(builtin))
 		{
-			uint32_t locn = vtx_attrs_by_builtin[builtin].location;
+			uint32_t locn = inputs_by_builtin[builtin].location;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, StorageClassInput);
 		}
@@ -2488,8 +2503,8 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 		// accept them. We can't put them in the struct at all, or otherwise the compiler
 		// complains that the outputs weren't explicitly marked.
 		if (get_execution_model() == ExecutionModelFragment && storage == StorageClassOutput && !patch &&
-			((is_builtin && ((bi_type == BuiltInFragDepth && !msl_options.enable_frag_depth_builtin) ||
-		                    (bi_type == BuiltInFragStencilRefEXT && !msl_options.enable_frag_stencil_ref_builtin))) ||
+		    ((is_builtin && ((bi_type == BuiltInFragDepth && !msl_options.enable_frag_depth_builtin) ||
+		                     (bi_type == BuiltInFragStencilRefEXT && !msl_options.enable_frag_stencil_ref_builtin))) ||
 		     (!is_builtin && !(msl_options.enable_frag_output_mask & (1 << location)))))
 		{
 			hidden = true;
@@ -2784,63 +2799,49 @@ uint32_t CompilerMSL::ensure_correct_builtin_type(uint32_t type_id, BuiltIn buil
 	return type_id;
 }
 
-// Ensure that the type is compatible with the vertex attribute.
+// Ensure that the type is compatible with the shader input.
 // If it is, simply return the given type ID.
 // Otherwise, create a new type, and return its ID.
-uint32_t CompilerMSL::ensure_correct_attribute_type(uint32_t type_id, uint32_t location, uint32_t num_components)
+uint32_t CompilerMSL::ensure_correct_input_type(uint32_t type_id, uint32_t location, uint32_t num_components)
 {
 	auto &type = get<SPIRType>(type_id);
 
-	auto p_va = vtx_attrs_by_location.find(location);
-	if (p_va == end(vtx_attrs_by_location))
+	auto p_va = inputs_by_location.find(location);
+	if (p_va == end(inputs_by_location))
 	{
-		if (num_components != 0 && type.vecsize != num_components)
+		if (num_components > type.vecsize)
 			return build_extended_vector_type(type_id, num_components);
 		else
 			return type_id;
 	}
 
+	if (num_components == 0)
+		num_components = p_va->second.vecsize;
+
 	switch (p_va->second.format)
 	{
-	case MSL_VERTEX_FORMAT_UINT8:
+	case MSL_SHADER_INPUT_FORMAT_UINT8:
 	{
 		switch (type.basetype)
 		{
 		case SPIRType::UByte:
 		case SPIRType::UShort:
 		case SPIRType::UInt:
-			if (num_components != 0 && type.vecsize != num_components)
+			if (num_components > type.vecsize)
 				return build_extended_vector_type(type_id, num_components);
 			else
 				return type_id;
 
 		case SPIRType::Short:
+			return build_extended_vector_type(type_id, num_components > type.vecsize ? num_components : type.vecsize,
+			                                  SPIRType::UShort);
 		case SPIRType::Int:
-			break;
+			return build_extended_vector_type(type_id, num_components > type.vecsize ? num_components : type.vecsize,
+			                                  SPIRType::UInt);
 
 		default:
 			SPIRV_CROSS_THROW("Vertex attribute type mismatch between host and shader");
 		}
-
-		uint32_t next_id = ir.increase_bound_by(type.pointer ? 2 : 1);
-		uint32_t base_type_id = next_id++;
-		auto &base_type = set<SPIRType>(base_type_id);
-		base_type = type;
-		base_type.basetype = type.basetype == SPIRType::Short ? SPIRType::UShort : SPIRType::UInt;
-		base_type.pointer = false;
-		if (num_components != 0)
-			base_type.vecsize = num_components;
-
-		if (!type.pointer)
-			return base_type_id;
-
-		uint32_t ptr_type_id = next_id++;
-		auto &ptr_type = set<SPIRType>(ptr_type_id);
-		ptr_type = base_type;
-		ptr_type.pointer = true;
-		ptr_type.storage = type.storage;
-		ptr_type.parent_type = base_type_id;
-		return ptr_type_id;
 	}
 
 	case MSL_VERTEX_FORMAT_UINT16:
@@ -2849,41 +2850,22 @@ uint32_t CompilerMSL::ensure_correct_attribute_type(uint32_t type_id, uint32_t l
 		{
 		case SPIRType::UShort:
 		case SPIRType::UInt:
-			if (num_components != 0 && type.vecsize != num_components)
+			if (num_components > type.vecsize)
 				return build_extended_vector_type(type_id, num_components);
 			else
 				return type_id;
 
 		case SPIRType::Int:
-			break;
+			return build_extended_vector_type(type_id, num_components > type.vecsize ? num_components : type.vecsize,
+			                                  SPIRType::UInt);
 
 		default:
 			SPIRV_CROSS_THROW("Vertex attribute type mismatch between host and shader");
 		}
-
-		uint32_t next_id = ir.increase_bound_by(type.pointer ? 2 : 1);
-		uint32_t base_type_id = next_id++;
-		auto &base_type = set<SPIRType>(base_type_id);
-		base_type = type;
-		base_type.basetype = SPIRType::UInt;
-		base_type.pointer = false;
-		if (num_components != 0)
-			base_type.vecsize = num_components;
-
-		if (!type.pointer)
-			return base_type_id;
-
-		uint32_t ptr_type_id = next_id++;
-		auto &ptr_type = set<SPIRType>(ptr_type_id);
-		ptr_type = base_type;
-		ptr_type.pointer = true;
-		ptr_type.storage = type.storage;
-		ptr_type.parent_type = base_type_id;
-		return ptr_type_id;
 	}
 
 	default:
-		if (num_components != 0 && type.vecsize != num_components)
+		if (num_components > type.vecsize)
 			type_id = build_extended_vector_type(type_id, num_components);
 		break;
 	}
@@ -3840,17 +3822,21 @@ void CompilerMSL::emit_custom_functions()
 			static const char *function_name_tags[] = {
 				"FromConstantToStack",    "FromConstantToThreadGroup", "FromStackToStack",
 				"FromStackToThreadGroup", "FromThreadGroupToStack",    "FromThreadGroupToThreadGroup",
+				"FromDeviceToDevice", "FromConstantToDevice", "FromStackToDevice",
+				"FromThreadGroupToDevice", "FromDeviceToStack", "FromDeviceToThreadGroup",
 			};
 
 			static const char *src_address_space[] = {
 				"constant", "constant", "thread const", "thread const", "threadgroup const", "threadgroup const",
+				"device const", "constant", "thread const", "threadgroup const", "device const", "device const",
 			};
 
 			static const char *dst_address_space[] = {
 				"thread", "threadgroup", "thread", "threadgroup", "thread", "threadgroup",
+				"device", "device", "device", "device", "thread", "threadgroup",
 			};
 
-			for (uint32_t variant = 0; variant < 6; variant++)
+			for (uint32_t variant = 0; variant < 12; variant++)
 			{
 				uint32_t dimensions = spv_func - SPVFuncImplArrayCopyMultidimBase;
 				string tmp = "template<typename T";
@@ -6889,6 +6875,10 @@ void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id, StorageCla
 		{
 			is_constant = true;
 		}
+		else if (rhs_storage == StorageClassUniform)
+		{
+			is_constant = true;
+		}
 
 		// For the case where we have OpLoad triggering an array copy,
 		// we cannot easily detect this case ahead of time since it's
@@ -6917,6 +6907,18 @@ void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id, StorageCla
 			tag = "FromThreadGroupToStack";
 		else if (lhs_storage == StorageClassWorkgroup && rhs_storage == StorageClassWorkgroup)
 			tag = "FromThreadGroupToThreadGroup";
+		else if (lhs_storage == StorageClassStorageBuffer && rhs_storage == StorageClassStorageBuffer)
+			tag = "FromDeviceToDevice";
+		else if (lhs_storage == StorageClassStorageBuffer && is_constant)
+			tag = "FromConstantToDevice";
+		else if (lhs_storage == StorageClassStorageBuffer && rhs_storage == StorageClassWorkgroup)
+			tag = "FromThreadGroupToDevice";
+		else if (lhs_storage == StorageClassStorageBuffer && rhs_thread)
+			tag = "FromStackToDevice";
+		else if (lhs_storage == StorageClassWorkgroup && rhs_storage == StorageClassStorageBuffer)
+			tag = "FromDeviceToThreadGroup";
+		else if (lhs_thread && rhs_storage == StorageClassStorageBuffer)
+			tag = "FromDeviceToStack";
 		else
 			SPIRV_CROSS_THROW("Unknown storage class used for copying arrays.");
 
@@ -6963,8 +6965,8 @@ bool CompilerMSL::maybe_emit_array_assignment(uint32_t id_lhs, uint32_t id_rhs)
 	if (p_v_lhs)
 		flush_variable_declaration(p_v_lhs->self);
 
-	emit_array_copy(to_expression(id_lhs), id_rhs, get_backing_variable_storage(id_lhs),
-	                get_backing_variable_storage(id_rhs));
+	emit_array_copy(to_expression(id_lhs), id_rhs, get_expression_effective_storage_class(id_lhs),
+	                get_expression_effective_storage_class(id_rhs));
 	register_write(id_lhs);
 
 	return true;

@@ -27,24 +27,43 @@
 namespace SPIRV_CROSS_NAMESPACE
 {
 
-// Indicates the format of the vertex attribute. Currently limited to specifying
-// if the attribute is an 8-bit unsigned integer, 16-bit unsigned integer, or
+// Indicates the format of a shader input. Currently limited to specifying
+// if the input is an 8-bit unsigned integer, 16-bit unsigned integer, or
 // some other format.
-enum MSLVertexFormat
+enum MSLShaderInputFormat
 {
-	MSL_VERTEX_FORMAT_OTHER = 0,
-	MSL_VERTEX_FORMAT_UINT8 = 1,
-	MSL_VERTEX_FORMAT_UINT16 = 2,
-	MSL_VERTEX_FORMAT_INT_MAX = 0x7fffffff
+	MSL_SHADER_INPUT_FORMAT_OTHER = 0,
+	MSL_SHADER_INPUT_FORMAT_UINT8 = 1,
+	MSL_SHADER_INPUT_FORMAT_UINT16 = 2,
+
+	// Deprecated aliases.
+	MSL_VERTEX_FORMAT_OTHER = MSL_SHADER_INPUT_FORMAT_OTHER,
+	MSL_VERTEX_FORMAT_UINT8 = MSL_SHADER_INPUT_FORMAT_UINT8,
+	MSL_VERTEX_FORMAT_UINT16 = MSL_SHADER_INPUT_FORMAT_UINT16,
+
+	MSL_SHADER_INPUT_FORMAT_INT_MAX = 0x7fffffff
 };
+typedef SPIRV_CROSS_DEPRECATED("Use MSLShaderInputFormat.") MSLShaderInputFormat MSLVertexFormat;
 
 // Defines MSL characteristics of a vertex attribute at a particular location.
 // After compilation, it is possible to query whether or not this location was used.
-struct MSLVertexAttr
+struct SPIRV_CROSS_DEPRECATED("Use MSLShaderInput.") MSLVertexAttr
 {
 	uint32_t location = 0;
-	MSLVertexFormat format = MSL_VERTEX_FORMAT_OTHER;
+	MSLShaderInputFormat format = MSL_SHADER_INPUT_FORMAT_OTHER;
 	spv::BuiltIn builtin = spv::BuiltInMax;
+};
+
+// Defines MSL characteristics of an input variable at a particular location.
+// After compilation, it is possible to query whether or not this location was used.
+// If vecsize is nonzero, it must be greater than or equal to the vecsize declared in the shader,
+// or behavior is undefined.
+struct MSLShaderInput
+{
+	uint32_t location = 0;
+	MSLShaderInputFormat format = MSL_SHADER_INPUT_FORMAT_OTHER;
+	spv::BuiltIn builtin = spv::BuiltInMax;
+	uint32_t vecsize = 0;
 };
 
 // Matches the binding index of a MSL resource for a binding within a descriptor set.
@@ -423,7 +442,13 @@ public:
 	// vertex content locations to MSL attributes. If vertex attributes are provided,
 	// is_msl_vertex_attribute_used() will return true after calling ::compile() if
 	// the location was used by the MSL code.
+	SPIRV_CROSS_DEPRECATED("Use add_msl_shader_input().")
 	void add_msl_vertex_attribute(const MSLVertexAttr &attr);
+
+	// input is a shader input description used to fix up shader input variables.
+	// If shader inputs are provided, is_msl_shader_input_used() will return true after
+	// calling ::compile() if the location was used by the MSL code.
+	void add_msl_shader_input(const MSLShaderInput &attr);
 
 	// resource is a resource binding to indicate the MSL buffer,
 	// texture or sampler index to use for a particular SPIR-V description set
@@ -456,7 +481,11 @@ public:
 	void set_argument_buffer_device_address_space(uint32_t desc_set, bool device_storage);
 
 	// Query after compilation is done. This allows you to check if a location or set/binding combination was used by the shader.
+	SPIRV_CROSS_DEPRECATED("Use is_msl_shader_input_used().")
 	bool is_msl_vertex_attribute_used(uint32_t location);
+
+	// Query after compilation is done. This allows you to check if an input location was used by the shader.
+	bool is_msl_shader_input_used(uint32_t location);
 
 	// NOTE: Only resources which are remapped using add_msl_resource_binding will be reported here.
 	// Constexpr samplers are always assumed to be emitted.
@@ -686,7 +715,7 @@ protected:
 
 	void mark_location_as_used_by_shader(uint32_t location, spv::StorageClass storage);
 	uint32_t ensure_correct_builtin_type(uint32_t type_id, spv::BuiltIn builtin);
-	uint32_t ensure_correct_attribute_type(uint32_t type_id, uint32_t location, uint32_t num_components = 0);
+	uint32_t ensure_correct_input_type(uint32_t type_id, uint32_t location, uint32_t num_components = 0);
 
 	void emit_custom_templates();
 	void emit_custom_functions();
@@ -797,9 +826,9 @@ protected:
 
 	Options msl_options;
 	std::set<SPVFuncImpl> spv_function_implementations;
-	std::unordered_map<uint32_t, MSLVertexAttr> vtx_attrs_by_location;
-	std::unordered_map<uint32_t, MSLVertexAttr> vtx_attrs_by_builtin;
-	std::unordered_set<uint32_t> vtx_attrs_in_use;
+	std::unordered_map<uint32_t, MSLShaderInput> inputs_by_location;
+	std::unordered_map<uint32_t, MSLShaderInput> inputs_by_builtin;
+	std::unordered_set<uint32_t> inputs_in_use;
 	std::unordered_map<uint32_t, uint32_t> fragment_output_components;
 	std::set<std::string> pragma_lines;
 	std::set<std::string> typedef_lines;
@@ -881,7 +910,7 @@ protected:
 	bool descriptor_set_is_argument_buffer(uint32_t desc_set) const;
 
 	uint32_t get_target_components_for_fragment_location(uint32_t location) const;
-	uint32_t build_extended_vector_type(uint32_t type_id, uint32_t components);
+	uint32_t build_extended_vector_type(uint32_t type_id, uint32_t components, SPIRType::BaseType basetype = SPIRType::Unknown);
 
 	bool suppress_missing_prototypes = false;
 
