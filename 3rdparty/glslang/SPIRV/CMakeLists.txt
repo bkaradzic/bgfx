@@ -6,7 +6,8 @@ set(SOURCES
     SpvPostProcess.cpp
     doc.cpp
     SpvTools.cpp
-    disassemble.cpp)
+    disassemble.cpp
+    CInterface/spirv_c_interface.cpp)
 
 set(SPVREMAP_SOURCES
     SPVRemapper.cpp

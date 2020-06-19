@@ -51,9 +51,9 @@
 #include "ScanContext.h"
 
 #ifdef ENABLE_HLSL
-#include "../../hlsl/hlslParseHelper.h"
-#include "../../hlsl/hlslParseables.h"
-#include "../../hlsl/hlslScanContext.h"
+#include "../HLSL/hlslParseHelper.h"
+#include "../HLSL/hlslParseables.h"
+#include "../HLSL/hlslScanContext.h"
 #endif
 
 #include "../Include/ShHandle.h"

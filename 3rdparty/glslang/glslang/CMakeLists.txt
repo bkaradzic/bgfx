@@ -82,20 +82,37 @@ set(HEADERS
 
 glslang_pch(SOURCES MachineIndependent/pch.cpp)
 
+if(ENABLE_HLSL)
+    list(APPEND SOURCES
+        HLSL/hlslAttributes.cpp
+        HLSL/hlslParseHelper.cpp
+        HLSL/hlslScanContext.cpp
+        HLSL/hlslOpMap.cpp
+        HLSL/hlslTokenStream.cpp
+        HLSL/hlslGrammar.cpp
+        HLSL/hlslParseables.cpp)
+
+    list(APPEND HEADERS
+        HLSL/hlslAttributes.h
+        HLSL/hlslParseHelper.h
+        HLSL/hlslTokens.h
+        HLSL/hlslScanContext.h
+        HLSL/hlslOpMap.h
+        HLSL/hlslTokenStream.h
+        HLSL/hlslGrammar.h
+        HLSL/hlslParseables.h)
+endif(ENABLE_HLSL)
+
 add_library(glslang ${LIB_TYPE} ${BISON_GLSLParser_OUTPUT_SOURCE} ${SOURCES} ${HEADERS})
 set_property(TARGET glslang PROPERTY FOLDER glslang)
 set_property(TARGET glslang PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(glslang OGLCompiler OSDependent)
-target_include_directories(glslang PUBLIC 
+target_include_directories(glslang PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
     set_target_properties(glslang PROPERTIES PREFIX "")
-endif()
-
-if(ENABLE_HLSL)
-    target_link_libraries(glslang HLSL)
 endif()
 
 if(WIN32)
@@ -104,6 +121,8 @@ if(WIN32)
     source_group("Include" REGULAR_EXPRESSION "Include/[^/]*")
     source_group("GenericCodeGen" REGULAR_EXPRESSION "GenericCodeGen/*")
     source_group("MachineIndependent\\Preprocessor" REGULAR_EXPRESSION "MachineIndependent/preprocessor/*")
+    source_group("HLSL" REGULAR_EXPRESSION "HLSL/*")
+    source_group("CInterface" REGULAR_EXPRESSION "CInterface/*")
 endif(WIN32)
 
 if(ENABLE_GLSLANG_INSTALL)

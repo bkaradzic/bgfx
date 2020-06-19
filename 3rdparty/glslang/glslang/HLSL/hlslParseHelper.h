@@ -36,9 +36,9 @@
 #ifndef HLSL_PARSE_INCLUDED_
 #define HLSL_PARSE_INCLUDED_
 
-#include "../glslang/MachineIndependent/parseVersions.h"
-#include "../glslang/MachineIndependent/ParseHelper.h"
-#include "../glslang/MachineIndependent/attribute.h"
+#include "../MachineIndependent/parseVersions.h"
+#include "../MachineIndependent/ParseHelper.h"
+#include "../MachineIndependent/attribute.h"
 
 #include <array>
 
@@ -320,7 +320,7 @@ protected:
     // Finalization step: remove unused buffer blocks from linkage (we don't know until the
     // shader is entirely compiled)
     void removeUnusedStructBufferCounters();
- 
+
     static bool isClipOrCullDistance(TBuiltInVariable);
     static bool isClipOrCullDistance(const TQualifier& qual) { return isClipOrCullDistance(qual.builtIn); }
     static bool isClipOrCullDistance(const TType& type) { return isClipOrCullDistance(type.getQualifier()); }
@@ -407,7 +407,7 @@ protected:
     // This tracks texture sample user structure return types.  Only a limited number are supported, as
     // may fit in TSampler::structReturnIndex.
     TVector<TTypeList*> textureReturnStruct;
-    
+
     TMap<TString, bool> structBufferCounter;  // true if counter buffer is in use
 
     // The built-in interstage IO map considers e.g, EvqPosition on input and output separately, so that we
@@ -456,7 +456,7 @@ protected:
     std::array<int, maxClipCullRegs> cullSemanticNSizeOut; // vector, indexed by cull semantic ID
 
     // This tracks the first (mip level) argument to the .mips[][] operator.  Since this can be nested as
-    // in tx.mips[tx.mips[0][1].x][2], we need a stack.  We also track the TSourceLoc for error reporting 
+    // in tx.mips[tx.mips[0][1].x][2], we need a stack.  We also track the TSourceLoc for error reporting
     // purposes.
     struct tMipsOperatorData {
         tMipsOperatorData(TSourceLoc l, TIntermTyped* m) : loc(l), mipLevel(m) { }
