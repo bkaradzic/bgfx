@@ -70,28 +70,28 @@ namespace bgfx
 	typedef ::IGraphicsUnknown IUnknown;
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 
-#define _DX_CHECK(_call) \
-			BX_MACRO_BLOCK_BEGIN \
-				HRESULT __hr__ = _call; \
+#define _DX_CHECK(_call)                                                                   \
+			BX_MACRO_BLOCK_BEGIN                                                           \
+				HRESULT __hr__ = _call;                                                    \
 				BX_ASSERT(SUCCEEDED(__hr__), #_call " FAILED 0x%08x" DX_CHECK_EXTRA_F "\n" \
-					, (uint32_t)__hr__ \
-					DX_CHECK_EXTRA_ARGS \
-					); \
+					, (uint32_t)__hr__                                                     \
+					DX_CHECK_EXTRA_ARGS                                                    \
+					);                                                                     \
 			BX_MACRO_BLOCK_END
 
-#define _DX_RELEASE(_ptr, _expected, _check) \
-			BX_MACRO_BLOCK_BEGIN \
-				if (NULL != (_ptr) ) \
-				{ \
-					ULONG count = (_ptr)->Release(); \
+#define _DX_RELEASE(_ptr, _expected, _check)                                                                                                                 \
+			BX_MACRO_BLOCK_BEGIN                                                                                                                             \
+				if (NULL != (_ptr) )                                                                                                                         \
+				{                                                                                                                                            \
+					ULONG count = (_ptr)->Release();                                                                                                         \
 					_check(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); BX_UNUSED(count); \
-					_ptr = NULL; \
-				} \
+					_ptr = NULL;                                                                                                                             \
+				}                                                                                                                                            \
 			BX_MACRO_BLOCK_END
 
-#define _DX_CHECK_REFCOUNT(_ptr, _expected) \
-			BX_MACRO_BLOCK_BEGIN \
-				ULONG count = getRefCount(_ptr); \
+#define _DX_CHECK_REFCOUNT(_ptr, _expected)                                                                                               \
+			BX_MACRO_BLOCK_BEGIN                                                                                                          \
+				ULONG count = getRefCount(_ptr);                                                                                          \
 				BX_ASSERT(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
 			BX_MACRO_BLOCK_END
 
