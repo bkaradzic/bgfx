@@ -377,6 +377,7 @@ message Transformation {
     TransformationAdjustBranchWeights adjust_branch_weights = 46;
     TransformationPushIdThroughVariable push_id_through_variable = 47;
     TransformationAddSpecConstantOp add_spec_constant_op = 48;
+    TransformationReplaceLinearAlgebraInstruction replace_linear_algebra_instruction = 49;
     // Add additional option using the next available number.
   }
 }
@@ -1078,6 +1079,33 @@ message TransformationReplaceIdWithSynonym {
 
   // The synonymous id
   uint32 synonymous_id = 2;
+
+}
+
+message TransformationReplaceLinearAlgebraInstruction {
+
+  // Replaces a linear algebra instruction with its
+  // mathematical definition.
+
+  // The fresh ids needed to apply the transformation.
+  repeated uint32 fresh_ids = 1;
+
+  // A descriptor for a linear algebra instruction.
+  // This transformation is only applicable if the described instruction has one of the following opcodes.
+  // Supported:
+  //   OpVectorTimesScalar
+  //   OpDot
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3354):
+  // Right now we only support certain operations. When this issue is addressed
+  // the supporting comments can be removed.
+  // To be supported in the future:
+  //   OpTranspose
+  //   OpMatrixTimesScalar
+  //   OpVectorTimesMatrix
+  //   OpMatrixTimesVector
+  //   OpMatrixTimesMatrix
+  //   OpOuterProduct
+  InstructionDescriptor instruction_descriptor = 2;
 
 }
 

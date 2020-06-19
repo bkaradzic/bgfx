@@ -33,6 +33,7 @@
 #include "source/fuzz/fuzzer_pass_add_local_variables.h"
 #include "source/fuzz/fuzzer_pass_add_no_contraction_decorations.h"
 #include "source/fuzz/fuzzer_pass_add_stores.h"
+#include "source/fuzz/fuzzer_pass_add_vector_shuffle_instructions.h"
 #include "source/fuzz/fuzzer_pass_adjust_branch_weights.h"
 #include "source/fuzz/fuzzer_pass_adjust_function_controls.h"
 #include "source/fuzz/fuzzer_pass_adjust_loop_controls.h"
@@ -47,6 +48,7 @@
 #include "source/fuzz/fuzzer_pass_permute_blocks.h"
 #include "source/fuzz/fuzzer_pass_permute_function_parameters.h"
 #include "source/fuzz/fuzzer_pass_push_ids_through_variables.h"
+#include "source/fuzz/fuzzer_pass_replace_linear_algebra_instructions.h"
 #include "source/fuzz/fuzzer_pass_split_blocks.h"
 #include "source/fuzz/fuzzer_pass_swap_commutable_operands.h"
 #include "source/fuzz/fuzzer_pass_toggle_access_chain_instruction.h"
@@ -223,6 +225,9 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
     MaybeAddPass<FuzzerPassAddStores>(&passes, ir_context.get(),
                                       &transformation_context, &fuzzer_context,
                                       transformation_sequence_out);
+    MaybeAddPass<FuzzerPassAddVectorShuffleInstructions>(
+        &passes, ir_context.get(), &transformation_context, &fuzzer_context,
+        transformation_sequence_out);
     MaybeAddPass<FuzzerPassApplyIdSynonyms>(
         &passes, ir_context.get(), &transformation_context, &fuzzer_context,
         transformation_sequence_out);
@@ -251,6 +256,9 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
         &passes, ir_context.get(), &transformation_context, &fuzzer_context,
         transformation_sequence_out);
     MaybeAddPass<FuzzerPassPushIdsThroughVariables>(
+        &passes, ir_context.get(), &transformation_context, &fuzzer_context,
+        transformation_sequence_out);
+    MaybeAddPass<FuzzerPassReplaceLinearAlgebraInstructions>(
         &passes, ir_context.get(), &transformation_context, &fuzzer_context,
         transformation_sequence_out);
     MaybeAddPass<FuzzerPassSplitBlocks>(

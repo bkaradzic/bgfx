@@ -40,6 +40,7 @@ const std::pair<uint32_t, uint32_t> kChanceOfAddingNoContractionDecoration = {
     5, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingStore = {5, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingVectorType = {20, 70};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingVectorShuffle = {20, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAdjustingBranchWeights = {20, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfAdjustingFunctionControl = {20,
                                                                          70};
@@ -64,6 +65,8 @@ const std::pair<uint32_t, uint32_t> kChanceOfOutliningFunction = {10, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfPermutingParameters = {30, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfPushingIdThroughVariable = {5, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfReplacingIdWithSynonym = {10, 90};
+const std::pair<uint32_t, uint32_t>
+    kChanceOfReplacingLinearAlgebraInstructions = {10, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfSplittingBlock = {40, 95};
 const std::pair<uint32_t, uint32_t> kChanceOfTogglingAccessChainInstruction = {
     20, 90};
@@ -124,6 +127,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
   chance_of_adding_no_contraction_decoration_ =
       ChooseBetweenMinAndMax(kChanceOfAddingNoContractionDecoration);
   chance_of_adding_store_ = ChooseBetweenMinAndMax(kChanceOfAddingStore);
+  chance_of_adding_vector_shuffle_ =
+      ChooseBetweenMinAndMax(kChanceOfAddingVectorShuffle);
   chance_of_adding_vector_type_ =
       ChooseBetweenMinAndMax(kChanceOfAddingVectorType);
   chance_of_adjusting_branch_weights_ =
@@ -162,6 +167,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfPushingIdThroughVariable);
   chance_of_replacing_id_with_synonym_ =
       ChooseBetweenMinAndMax(kChanceOfReplacingIdWithSynonym);
+  chance_of_replacing_linear_algebra_instructions_ =
+      ChooseBetweenMinAndMax(kChanceOfReplacingLinearAlgebraInstructions);
   chance_of_splitting_block_ = ChooseBetweenMinAndMax(kChanceOfSplittingBlock);
   chance_of_toggling_access_chain_instruction_ =
       ChooseBetweenMinAndMax(kChanceOfTogglingAccessChainInstruction);
@@ -170,6 +177,16 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
 FuzzerContext::~FuzzerContext() = default;
 
 uint32_t FuzzerContext::GetFreshId() { return next_fresh_id_++; }
+
+std::vector<uint32_t> FuzzerContext::GetFreshIds(const uint32_t count) {
+  std::vector<uint32_t> fresh_ids(count);
+
+  for (uint32_t& fresh_id : fresh_ids) {
+    fresh_id = next_fresh_id_++;
+  }
+
+  return fresh_ids;
+}
 
 bool FuzzerContext::ChooseEven() { return random_generator_->RandomBool(); }
 

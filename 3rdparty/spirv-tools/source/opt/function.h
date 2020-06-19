@@ -72,6 +72,10 @@ class Function {
   // Delete all basic blocks that contain no instructions.
   inline void RemoveEmptyBlocks();
 
+  // Removes a parameter from the function with result id equal to |id|.
+  // Does nothing if the function doesn't have such a parameter.
+  inline void RemoveParameter(uint32_t id);
+
   // Saves the given function end instruction.
   inline void SetFunctionEnd(std::unique_ptr<Instruction> end_inst);
 
@@ -217,6 +221,14 @@ inline void Function::RemoveEmptyBlocks() {
                        return bb->GetLabelInst()->opcode() == SpvOpNop;
                      });
   blocks_.erase(first_empty, std::end(blocks_));
+}
+
+inline void Function::RemoveParameter(uint32_t id) {
+  params_.erase(std::remove_if(params_.begin(), params_.end(),
+                               [id](const std::unique_ptr<Instruction>& param) {
+                                 return param->result_id() == id;
+                               }),
+                params_.end());
 }
 
 inline void Function::SetFunctionEnd(std::unique_ptr<Instruction> end_inst) {

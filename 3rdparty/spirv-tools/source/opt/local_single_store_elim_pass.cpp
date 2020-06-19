@@ -46,11 +46,11 @@ bool LocalSingleStoreElimPass::LocalSingleStoreElim(Function* func) {
 }
 
 bool LocalSingleStoreElimPass::AllExtensionsSupported() const {
-  // If any extension not in whitelist, return false
+  // If any extension not in allowlist, return false
   for (auto& ei : get_module()->extensions()) {
     const char* extName =
         reinterpret_cast<const char*>(&ei.GetInOperand(0).words[0]);
-    if (extensions_whitelist_.find(extName) == extensions_whitelist_.end())
+    if (extensions_allowlist_.find(extName) == extensions_allowlist_.end())
       return false;
   }
   return true;
@@ -74,12 +74,12 @@ Pass::Status LocalSingleStoreElimPass::ProcessImpl() {
 LocalSingleStoreElimPass::LocalSingleStoreElimPass() = default;
 
 Pass::Status LocalSingleStoreElimPass::Process() {
-  InitExtensionWhiteList();
+  InitExtensionAllowList();
   return ProcessImpl();
 }
 
-void LocalSingleStoreElimPass::InitExtensionWhiteList() {
-  extensions_whitelist_.insert({
+void LocalSingleStoreElimPass::InitExtensionAllowList() {
+  extensions_allowlist_.insert({
       "SPV_AMD_shader_explicit_vertex_parameter",
       "SPV_AMD_shader_trinary_minmax",
       "SPV_AMD_gcn_shader",

@@ -57,8 +57,8 @@ class LocalSingleStoreElimPass : public Pass {
   // any resulting dead code.
   bool LocalSingleStoreElim(Function* func);
 
-  // Initialize extensions whitelist
-  void InitExtensionWhiteList();
+  // Initialize extensions allowlist
+  void InitExtensionAllowList();
 
   // Return true if all extensions in this module are allowed by this pass.
   bool AllExtensionsSupported() const;
@@ -94,7 +94,7 @@ class LocalSingleStoreElimPass : public Pass {
                     const std::vector<Instruction*>& uses);
 
   // Extensions supported by this pass.
-  std::unordered_set<std::string> extensions_whitelist_;
+  std::unordered_set<std::string> extensions_allowlist_;
 };
 
 }  // namespace opt

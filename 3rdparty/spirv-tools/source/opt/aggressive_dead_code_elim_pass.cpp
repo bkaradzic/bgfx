@@ -131,11 +131,11 @@ void AggressiveDCEPass::AddStores(uint32_t ptrId) {
 }
 
 bool AggressiveDCEPass::AllExtensionsSupported() const {
-  // If any extension not in whitelist, return false
+  // If any extension not in allowlist, return false
   for (auto& ei : get_module()->extensions()) {
     const char* extName =
         reinterpret_cast<const char*>(&ei.GetInOperand(0).words[0]);
-    if (extensions_whitelist_.find(extName) == extensions_whitelist_.end())
+    if (extensions_allowlist_.find(extName) == extensions_allowlist_.end())
       return false;
   }
   return true;
@@ -882,14 +882,14 @@ bool AggressiveDCEPass::ProcessGlobalValues() {
 AggressiveDCEPass::AggressiveDCEPass() = default;
 
 Pass::Status AggressiveDCEPass::Process() {
-  // Initialize extensions whitelist
+  // Initialize extensions allowlist
   InitExtensions();
   return ProcessImpl();
 }
 
 void AggressiveDCEPass::InitExtensions() {
-  extensions_whitelist_.clear();
-  extensions_whitelist_.insert({
+  extensions_allowlist_.clear();
+  extensions_allowlist_.insert({
       "SPV_AMD_shader_explicit_vertex_parameter",
       "SPV_AMD_shader_trinary_minmax",
       "SPV_AMD_gcn_shader",
