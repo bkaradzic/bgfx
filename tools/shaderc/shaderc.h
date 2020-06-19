@@ -118,6 +118,16 @@ namespace bgfx
 
 	struct Uniform
 	{
+		Uniform()
+			: type(UniformType::Count)
+			, num(0)
+			, regIndex(0)
+			, regCount(0)
+			, texComponent(0)
+			, texDimension(0)
+		{
+		}
+
 		std::string name;
 		UniformType::Enum type;
 		uint8_t num;
