@@ -12,6 +12,7 @@
 #	include "renderer_webgpu.h"
 #	include "renderer.h"
 #	include "debug_renderdoc.h"
+#	include "emscripten.h"
 
 #	if !BX_PLATFORM_EMSCRIPTEN
 #		ifdef DAWN_ENABLE_BACKEND_D3D12
@@ -25,9 +26,6 @@
 #		include <dawn_native/DawnNative.h>
 #		include <dawn/dawn_wsi.h>
 #		include <dawn/dawn_proc.h>
-#	else
-#		include <emscripten/emscripten.h>
-#		include <emscripten/html5.h>
 #	endif // !BX_PLATFORM_EMSCRIPTEN
 
 namespace bgfx { namespace webgpu

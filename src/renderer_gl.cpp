@@ -9,10 +9,7 @@
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
-
-#if BX_PLATFORM_EMSCRIPTEN
-#	include <emscripten/html5.h>
-#endif
+#	include "emscripten.h"
 
 namespace bgfx { namespace gl
 {
@@ -1596,11 +1593,14 @@ namespace bgfx { namespace gl
 		, GLsizei _dim = 16
 		)
 	{
-		// Avoid creating test textures for WebGL, that causes error noise in the browser console; instead examine the supported texture formats from the spec.
+		// Avoid creating test textures for WebGL, that causes error noise in the browser
+		// console; instead examine the supported texture formats from the spec.
 		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
 		EmscriptenWebGLContextAttributes attrs;
-		BX_ASSERT(emscripten_webgl_get_context_attributes(ctx, &attrs) == EMSCRIPTEN_RESULT_SUCCESS, "emscripten_webgl_get_context_attributes() failed in isTextureFormatValidPerSpec()!");
+
+		EMSCRIPTEN_CHECK(emscripten_webgl_get_context_attributes(ctx, &attrs) );
 		int glesVersion = attrs.majorVersion + 1;
+
 		switch(_format)
 		{
 			case TextureFormat::A8:
@@ -1608,9 +1608,15 @@ namespace bgfx { namespace gl
 			case TextureFormat::R5G6B5:
 			case TextureFormat::RGBA4:
 			case TextureFormat::RGB5A1:
-				return !_srgb; // GLES2 formats without sRGB.
+				// GLES2 formats without sRGB.
+				return !_srgb;
+
 			case TextureFormat::D16:
-				return !_srgb && !_mipAutogen; // GLES2 formats without sRGB, depth textures do not support mipmaps.
+				// GLES2 formats without sRGB, depth textures do not support mipmaps.
+				return !_srgb
+					&& !_mipAutogen
+					;
+
 			case TextureFormat::R16F:
 			case TextureFormat::R32F:
 			case TextureFormat::RG8:
@@ -1618,7 +1624,11 @@ namespace bgfx { namespace gl
 			case TextureFormat::RG32F:
 			case TextureFormat::RGB10A2:
 			case TextureFormat::RG11B10F:
-				return !_srgb && glesVersion >= 3; // GLES3 formats without sRGB
+				// GLES3 formats without sRGB
+				return !_srgb
+					&& glesVersion >= 3
+					;
+
 			case TextureFormat::R8I:
 			case TextureFormat::R8U:
 			case TextureFormat::R16I:
@@ -1645,36 +1655,67 @@ namespace bgfx { namespace gl
 			case TextureFormat::RGB8S:
 			case TextureFormat::RGBA8S:
 			case TextureFormat::RGB9E5F:
-				return !_srgb && glesVersion >= 3 && !_mipAutogen; // GLES3 formats without sRGB that are not texture filterable or color renderable.
+				// GLES3 formats without sRGB that are not texture filterable or color renderable.
+				return !_srgb && glesVersion >= 3
+					&& !_mipAutogen
+					;
+
 			case TextureFormat::D24:
 			case TextureFormat::D24S8:
 			case TextureFormat::D32:
-				return !_srgb && !_mipAutogen && (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture")); // GLES3 formats without sRGB, depth textures do not support mipmaps.
+				// GLES3 formats without sRGB, depth textures do not support mipmaps.
+				return !_srgb && !_mipAutogen
+					&& (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture"))
+					;
+
 			case TextureFormat::D16F:
 			case TextureFormat::D24F:
-				return !_srgb && !_mipAutogen && glesVersion >= 3; // GLES3 depth formats without sRGB, depth textures do not support mipmaps.
+				// GLES3 depth formats without sRGB, depth textures do not support mipmaps.
+				return !_srgb
+					&& !_mipAutogen
+					&& glesVersion >= 3
+					;
+
 			case TextureFormat::RGBA16F:
 			case TextureFormat::RGBA32F:
-				return !_srgb && (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "OES_texture_half_float")); // GLES3 formats without sRGB
+				// GLES3 formats without sRGB
+				return !_srgb
+					&& (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "OES_texture_half_float") )
+					;
+
 			case TextureFormat::RGB8:
 			case TextureFormat::RGBA8:
-				return !_srgb || glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "EXT_sRGB"); // sRGB formats
+				// sRGB formats
+				return !_srgb
+					|| glesVersion >= 3
+					|| emscripten_webgl_enable_extension(ctx, "EXT_sRGB")
+					;
+
 			case TextureFormat::BC1:
 			case TextureFormat::BC2:
 			case TextureFormat::BC3:
-				return emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_s3tc")
-					&& (!_srgb || emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_s3tc_srgb"));
+				return            emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_s3tc")
+					&& (!_srgb || emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_s3tc_srgb") )
+					;
+
 			case TextureFormat::PTC12:
 			case TextureFormat::PTC14:
 			case TextureFormat::PTC12A:
 			case TextureFormat::PTC14A:
-				return !_srgb && emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_pvrtc");
+				return !_srgb
+					&& emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_pvrtc")
+					;
+
 			case TextureFormat::ETC1:
-				return !_srgb && emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_etc1");
+				return !_srgb
+					&& emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_etc1")
+					;
+
 			case TextureFormat::ETC2:
 			case TextureFormat::ETC2A:
 			case TextureFormat::ETC2A1:
 				return emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_etc");
+
 			case TextureFormat::ASTC4x4:
 			case TextureFormat::ASTC5x5:
 			case TextureFormat::ASTC6x6:
@@ -1682,11 +1723,14 @@ namespace bgfx { namespace gl
 			case TextureFormat::ASTC8x6:
 			case TextureFormat::ASTC10x5:
 				return emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_astc");
+
 			default:
-				return false;
+				break;
 		}
+
+		return false;
 	}
-#endif
+#endif // BX_PLATFORM_EMSCRIPTEN
 
 	static bool isTextureFormatValid(
 		  TextureFormat::Enum _format

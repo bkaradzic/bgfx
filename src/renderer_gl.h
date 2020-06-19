@@ -135,13 +135,11 @@ typedef uint64_t GLuint64;
 #		include "glcontext_html5.h"
 #	endif // BGFX_USE_EGL
 
-#	if BX_PLATFORM_EMSCRIPTEN
-#		include <emscripten/emscripten.h>
-#	endif // BX_PLATFORM_EMSCRIPTEN
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #include "renderer.h"
 #include "debug_renderdoc.h"
+#include "emscripten.h"
 
 #ifndef GL_LUMINANCE
 #	define GL_LUMINANCE 0x1909
