@@ -69,6 +69,8 @@ function bgfxProjectBase(_kind, _defines)
 				"GL",
 				"pthread",
 			}
+		configuration { "android*" }
+			targetextension ".so"
 
 		configuration {}
 	end
