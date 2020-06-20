@@ -69,9 +69,10 @@ function bgfxProjectBase(_kind, _defines)
 				"GL",
 				"pthread",
 			}
+
 		configuration { "android*" }
 			targetextension ".so"
-		
+
 		configuration { "android*" ,"Debug"}
 			linkoptions{"-soname libbgfx-shared-libDebug.so"  }
 
