@@ -45,6 +45,7 @@ function bgfxProjectBase(_kind, _defines)
 		}
 
 		links {
+			"bimg_decode"
 			"bimg",
 			"bx",
 		}
