@@ -89,6 +89,8 @@ function bgfxProjectBase(_kind, _defines)
 			linkoptions {
 				"-Wl,--fix-cortex-a8",
 			}
+
+		configuration {}
 	end
 
 	includedirs {
