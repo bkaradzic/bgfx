@@ -6448,22 +6448,14 @@ namespace bgfx { namespace gl
 
 			if (0 == compiled)
 			{
-				LineReader lineReader(code);
-				bx::Error err;
-				for (int32_t line = 1; err.isOk(); ++line)
+				bx::LineReader lineReader(code);
+				for (int32_t line = 1; !lineReader.isDone(); ++line)
 				{
-					char str[4096];
-					int32_t len = bx::read(&lineReader, str, BX_COUNTOF(str)-1, &err);
+					bx::StringView str = lineReader.next();
 
-					if (err.isOk() )
+					if (!lineReader.isDone() )
 					{
-						str[len] = '\0';
-						bx::StringView eol = bx::strFindEol(str);
-						if (eol.getPtr() != str)
-						{
-							*const_cast<char*>(eol.getPtr() ) = '\0';
-						}
-						BX_TRACE("%3d %s", line, str);
+						BX_TRACE("%3d %.*s", line, str.getLength(), str.getPtr() );
 					}
 				}
 

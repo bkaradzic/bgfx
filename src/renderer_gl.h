@@ -1671,52 +1671,6 @@ namespace bgfx { namespace gl
 		bx::RingBufferControl m_control;
 	};
 
-	class LineReader : public bx::ReaderI
-	{
-	public:
-		LineReader(const void* _str)
-			: m_str( (const char*)_str)
-			, m_pos(0)
-			, m_size(bx::strLen( (const char*)_str) )
-		{
-		}
-
-		LineReader(const bx::StringView& _str)
-			: m_str(_str.getPtr() )
-			, m_pos(0)
-			, m_size(_str.getLength() )
-		{
-		}
-
-		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) override
-		{
-			if (m_str[m_pos] == '\0'
-			||  m_pos == m_size)
-			{
-				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_EOF, "LineReader: EOF.");
-				return 0;
-			}
-
-			uint32_t pos = m_pos;
-			const char* str = &m_str[pos];
-			const char* nl = bx::strFindNl(str).getPtr();
-			pos += (uint32_t)(nl - str);
-
-			const char* eol = &m_str[pos];
-
-			uint32_t size = bx::uint32_min(uint32_t(eol - str), _size);
-
-			bx::memCopy(_data, str, size);
-			m_pos += size;
-
-			return size;
-		}
-
-		const char* m_str;
-		uint32_t m_pos;
-		uint32_t m_size;
-	};
-
 } /* namespace gl */ } // namespace bgfx
 
 #endif // BGFX_RENDERER_GL_H_HEADER_GUARD
