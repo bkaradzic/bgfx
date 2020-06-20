@@ -680,38 +680,42 @@ namespace bgfx { namespace hlsl
 
 				// first time through, we just find unused uniforms and get rid of them
 				std::string output;
-				bx::Error err;
-				LineReader reader(_code.c_str() );
-				while (err.isOk() )
+				bx::LineReader reader(_code.c_str() );
+				while (!reader.isDone() )
 				{
-					char str[4096];
-					int32_t len = bx::read(&reader, str, BX_COUNTOF(str), &err);
-					if (err.isOk() )
+					bx::StringView strLine = reader.next();
+					bool found = false;
+
+					for (UniformNameList::iterator it = unusedUniforms.begin(), itEnd = unusedUniforms.end(); it != itEnd; ++it)
 					{
-						std::string strLine(str, len);
-
-						for (UniformNameList::iterator it = unusedUniforms.begin(), itEnd = unusedUniforms.end(); it != itEnd; ++it)
+						bx::StringView str = strFind(strLine, "uniform ");
+						if (str.isEmpty() )
 						{
-							size_t index = strLine.find("uniform ");
-							if (index == std::string::npos)
-							{
-								continue;
-							}
-
-							// matching lines like:  uniform u_name;
-							// we want to replace "uniform" with "static" so that it's no longer
-							// included in the uniform blob that the application must upload
-							// we can't just remove them, because unused functions might still reference
-							// them and cause a compile error when they're gone
-							if (!bx::findIdentifierMatch(strLine.c_str(), it->c_str() ).isEmpty() )
-							{
-								strLine = strLine.replace(index, strLength, "static");
-								unusedUniforms.erase(it);
-								break;
-							}
+							continue;
 						}
 
-						output += strLine;
+						// matching lines like:  uniform u_name;
+						// we want to replace "uniform" with "static" so that it's no longer
+						// included in the uniform blob that the application must upload
+						// we can't just remove them, because unused functions might still reference
+						// them and cause a compile error when they're gone
+						if (!bx::findIdentifierMatch(strLine, it->c_str() ).isEmpty() )
+						{
+							output.append(strLine.getPtr(), str.getPtr() );
+							output += "static ";
+							output.append(str.getTerm(), strLine.getTerm() );
+							output += "\n";
+							found = true;
+
+							unusedUniforms.erase(it);
+							break;
+						}
+					}
+
+					if (!found)
+					{
+						output.append(strLine.getPtr(), strLine.getTerm() );
+						output += "\n";
 					}
 				}
 

@@ -6452,11 +6452,8 @@ namespace bgfx { namespace gl
 				for (int32_t line = 1; !lineReader.isDone(); ++line)
 				{
 					bx::StringView str = lineReader.next();
-
-					if (!lineReader.isDone() )
-					{
-						BX_TRACE("%3d %.*s", line, str.getLength(), str.getPtr() );
-					}
+					BX_TRACE("%3d %.*s", line, str.getLength(), str.getPtr() );
+					BX_UNUSED(str);
 				}
 
 				GLsizei len;

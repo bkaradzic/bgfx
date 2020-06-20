@@ -11,33 +11,33 @@ namespace bgfx
 	extern bool g_verbose;
 }
 
-#define _BX_TRACE(_format, ...) \
-				BX_MACRO_BLOCK_BEGIN \
-					if (bgfx::g_verbose) \
-					{ \
+#define _BX_TRACE(_format, ...)                                                               \
+				BX_MACRO_BLOCK_BEGIN                                                          \
+					if (bgfx::g_verbose)                                                      \
+					{                                                                         \
 						fprintf(stdout, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
-					} \
+					}                                                                         \
 				BX_MACRO_BLOCK_END
 
-#define _BX_WARN(_condition, _format, ...) \
-				BX_MACRO_BLOCK_BEGIN \
-					if (!(_condition) ) \
-					{ \
+#define _BX_WARN(_condition, _format, ...)                        \
+				BX_MACRO_BLOCK_BEGIN                              \
+					if (!(_condition) )                           \
+					{                                             \
 						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
-					} \
+					}                                             \
 				BX_MACRO_BLOCK_END
 
-#define _BX_ASSERT(_condition, _format, ...) \
-				BX_MACRO_BLOCK_BEGIN \
-					if (!(_condition) ) \
-					{ \
+#define _BX_ASSERT(_condition, _format, ...)                       \
+				BX_MACRO_BLOCK_BEGIN                               \
+					if (!(_condition) )                            \
+					{                                              \
 						BX_TRACE("CHECK " _format, ##__VA_ARGS__); \
-						bx::debugBreak(); \
-					} \
+						bx::debugBreak();                          \
+					}                                              \
 				BX_MACRO_BLOCK_END
 
-#define BX_TRACE _BX_TRACE
-#define BX_WARN  _BX_WARN
+#define BX_TRACE  _BX_TRACE
+#define BX_WARN   _BX_WARN
 #define BX_ASSERT _BX_ASSERT
 
 #ifndef SHADERC_CONFIG_HLSL
@@ -65,45 +65,6 @@ namespace bgfx
 namespace bgfx
 {
 	extern bool g_verbose;
-
-	class LineReader : public bx::ReaderI
-	{
-	public:
-		LineReader(const char* _str)
-			: m_str(_str)
-			, m_pos(0)
-			, m_size(bx::strLen(_str) )
-		{
-		}
-
-		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) override
-		{
-			if (m_str[m_pos] == '\0'
-			||  m_pos == m_size)
-			{
-				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_EOF, "LineReader: EOF.");
-				return 0;
-			}
-
-			uint32_t pos = m_pos;
-			const char* str = &m_str[pos];
-			const char* nl = bx::strFindNl(bx::StringView(str, str + (m_size - pos))).getPtr();
-			pos += (uint32_t)(nl - str);
-
-			const char* eol = &m_str[pos];
-
-			uint32_t size = bx::uint32_min(uint32_t(eol - str), _size);
-
-			bx::memCopy(_data, str, size);
-			m_pos += size;
-
-			return size;
-		}
-
-		const char* m_str;
-		uint32_t m_pos;
-		uint32_t m_size;
-	};
 
 	bx::StringView nextWord(bx::StringView& _parse);
 
