@@ -74,12 +74,21 @@ function bgfxProjectBase(_kind, _defines)
 			targetextension ".so"
 
 		configuration { "android*" ,"Debug"}
-			linkoptions{"-soname libbgfx-shared-libDebug.so"  }
+			linkoptions {
+				"-soname libbgfx-shared-libDebug.so",
+			}
 
 		configuration { "android*" ,"Release"}
-			linkoptions{"-soname libbgfx-shared-libRelease.so"  }
+			linkoptions {
+				"-soname libbgfx-shared-libRelease.so",
+			}
 
 		configuration {}
+	else
+		configuration { "android*" }
+			linkoptions {
+				"-Wl,--fix-cortex-a8",
+			}
 	end
 
 	includedirs {
