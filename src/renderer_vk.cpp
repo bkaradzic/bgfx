@@ -1993,25 +1993,13 @@ VK_IMPORT_DEVICE
 				m_backBufferColorFormat = surfaceFormats[surfaceFormatIdx];
 				m_backBufferColorFormatSrgb = surfaceFormatSrgbIdx < numSurfaceFormats ? surfaceFormats[surfaceFormatSrgbIdx] : m_backBufferColorFormat;
 
-				uint32_t numPresentModes;
-				result = vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, NULL);
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s.", result, getName(result) );
-					goto error;
-				}
-
-				VkPresentModeKHR presentModes[10];
-				numPresentModes = bx::min<uint32_t>(numPresentModes, BX_COUNTOF(presentModes) );
-				result = vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s.", result, getName(result) );
-					goto error;
-				}
-
 				// find the best match...
 				uint32_t presentModeIdx = findPresentMode(false);
+				if (UINT32_MAX == presentModeIdx)
+				{
+					BX_TRACE("Unable to find present mode.");
+					goto error;
+				}
 
 				m_backBufferDepthStencilFormat = 0 != (g_caps.formats[TextureFormat::D24S8] & BGFX_CAPS_FORMAT_TEXTURE_2D)
 					? VK_FORMAT_D24_UNORM_S8_UINT
@@ -2052,7 +2040,7 @@ VK_IMPORT_DEVICE
 				m_sci.pQueueFamilyIndices   = NULL;
 				m_sci.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 				m_sci.compositeAlpha = compositeAlpha;
-				m_sci.presentMode    = presentModes[presentModeIdx];
+				m_sci.presentMode    = s_presentMode[presentModeIdx].mode;
 				m_sci.clipped        = VK_TRUE;
 				m_sci.oldSwapchain   = VK_NULL_HANDLE;
 
@@ -2853,12 +2841,23 @@ VK_IMPORT_DEVICE
 
 		uint32_t findPresentMode(bool _vsync)
 		{
+			VkResult result;
 			uint32_t numPresentModes;
-			VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, NULL) );
+			result = vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, NULL);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("findPresentMode error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s.", result, getName(result) );
+				return UINT32_MAX;
+			}
 
 			VkPresentModeKHR presentModes[16];
 			numPresentModes = bx::min<uint32_t>(numPresentModes, BX_COUNTOF(presentModes) );
-			VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes) );
+			result = vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Init error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s.", result, getName(result) );
+				return UINT32_MAX;
+			}
 
 			uint32_t idx = UINT32_MAX;
 
@@ -2940,6 +2939,10 @@ VK_IMPORT_DEVICE
 
 					const bool vsync = !!(flags & BGFX_RESET_VSYNC);
 					const uint32_t presentModeIdx = findPresentMode(vsync);
+					BGFX_FATAL(UINT32_MAX != presentModeIdx
+						, bgfx::Fatal::DeviceLost
+						, "Unable to find present mode."
+						);
 
 					m_sci.presentMode = s_presentMode[presentModeIdx].mode;
 
