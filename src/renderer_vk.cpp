@@ -131,6 +131,21 @@ namespace bgfx { namespace vk
 		VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
 	};
 
+	struct PresentMode
+	{
+		VkPresentModeKHR mode;
+		bool             vsync;
+		const char*      name;
+	};
+
+	static const PresentMode s_presentMode[] =
+	{
+		{ VK_PRESENT_MODE_FIFO_KHR,         true,  "VK_PRESENT_MODE_FIFO_KHR"         },
+		{ VK_PRESENT_MODE_FIFO_RELAXED_KHR, true,  "VK_PRESENT_MODE_FIFO_RELAXED_KHR" },
+		{ VK_PRESENT_MODE_MAILBOX_KHR,      true,  "VK_PRESENT_MODE_MAILBOX_KHR"      },
+		{ VK_PRESENT_MODE_IMMEDIATE_KHR,    false, "VK_PRESENT_MODE_IMMEDIATE_KHR"    },
+	};
+
 #define VK_IMPORT_FUNC(_optional, _func) PFN_##_func _func
 #define VK_IMPORT_INSTANCE_FUNC VK_IMPORT_FUNC
 #define VK_IMPORT_DEVICE_FUNC   VK_IMPORT_FUNC
@@ -980,7 +995,7 @@ VK_IMPORT_DEVICE
 				BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR: numSwapchainImages %d < minImageCount %d."
 					, m_numSwapchainImages
 					, m_sci.minImageCount
-				);
+					);
 				return VK_ERROR_INITIALIZATION_FAILED;
 			}
 
@@ -989,14 +1004,17 @@ VK_IMPORT_DEVICE
 				BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR: numSwapchainImages %d > countof(m_backBufferColorImage) %d."
 					, m_numSwapchainImages
 					, BX_COUNTOF(m_backBufferColorImage)
-				);
+					);
 				return VK_ERROR_INITIALIZATION_FAILED;
 			}
 
 			result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_numSwapchainImages, &m_backBufferColorImage[0]);
 			if (VK_SUCCESS != result && VK_INCOMPLETE != result)
 			{
-				BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result));
+				BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR failed %d: %s."
+					, result
+					, getName(result)
+					);
 				return result;
 			}
 
@@ -1893,12 +1911,12 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				uint32_t width = bx::clamp<uint32_t>(
+				const uint32_t width = bx::clamp<uint32_t>(
 					  _init.resolution.width
 					, surfaceCapabilities.minImageExtent.width
 					, surfaceCapabilities.maxImageExtent.width
 					);
-				uint32_t height = bx::clamp<uint32_t>(
+				const uint32_t height = bx::clamp<uint32_t>(
 					  _init.resolution.height
 					, surfaceCapabilities.minImageExtent.height
 					, surfaceCapabilities.maxImageExtent.height
@@ -1918,13 +1936,13 @@ VK_IMPORT_DEVICE
 				vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &numSurfaceFormats, surfaceFormats);
 
 				// find the best match...
-				VkFormat preferredSurfaceFormat[2] =
+				static const VkFormat preferredSurfaceFormat[] =
 				{
 					VK_FORMAT_R8G8B8A8_UNORM,
 					VK_FORMAT_B8G8R8A8_UNORM
 				};
 
-				VkFormat preferredSurfaceFormatSrgb[2] =
+				static const VkFormat preferredSurfaceFormatSrgb[] =
 				{
 					VK_FORMAT_R8G8B8A8_SRGB,
 					VK_FORMAT_B8G8R8A8_SRGB
@@ -1961,7 +1979,8 @@ VK_IMPORT_DEVICE
 							}
 						}
 
-						if (surfaceFormatIdx < numSurfaceFormats && surfaceFormatSrgbIdx < numSurfaceFormats)
+						if (surfaceFormatIdx     < numSurfaceFormats
+						&&  surfaceFormatSrgbIdx < numSurfaceFormats)
 						{ // found
 							break;
 						}
@@ -1984,37 +2003,15 @@ VK_IMPORT_DEVICE
 
 				VkPresentModeKHR presentModes[10];
 				numPresentModes = bx::min<uint32_t>(numPresentModes, BX_COUNTOF(presentModes) );
-				vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
+				result = vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Init error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s.", result, getName(result) );
+					goto error;
+				}
 
 				// find the best match...
-				uint32_t presentModeIdx = numPresentModes;
-				VkPresentModeKHR preferredPresentMode[] =
-				{
-					VK_PRESENT_MODE_FIFO_KHR,
-					VK_PRESENT_MODE_FIFO_RELAXED_KHR,
-					VK_PRESENT_MODE_MAILBOX_KHR,
-					VK_PRESENT_MODE_IMMEDIATE_KHR,
-				};
-				for (uint32_t ii = 0; ii < BX_COUNTOF(preferredPresentMode); ++ii)
-				{
-					for (uint32_t jj = 0; jj < numPresentModes; ++jj)
-					{
-						if (presentModes[jj] == preferredPresentMode[ii])
-						{
-							presentModeIdx = jj;
-							BX_TRACE("present mode: %d", (int)preferredPresentMode[ii]);
-							break;
-						}
-					}
-					if (presentModeIdx < numPresentModes)
-					{
-						break;
-					}
-				}
-				if (presentModeIdx == numPresentModes)
-				{
-					presentModeIdx = 0;
-				}
+				uint32_t presentModeIdx = findPresentMode(false);
 
 				m_backBufferDepthStencilFormat = 0 != (g_caps.formats[TextureFormat::D24S8] & BGFX_CAPS_FORMAT_TEXTURE_2D)
 					? VK_FORMAT_D24_UNORM_S8_UINT
@@ -2854,6 +2851,41 @@ VK_IMPORT_DEVICE
 			}
 		}
 
+		uint32_t findPresentMode(bool _vsync)
+		{
+			uint32_t numPresentModes;
+			VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, NULL) );
+
+			VkPresentModeKHR presentModes[16];
+			numPresentModes = bx::min<uint32_t>(numPresentModes, BX_COUNTOF(presentModes) );
+			VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes) );
+
+			uint32_t idx = UINT32_MAX;
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_presentMode) && UINT32_MAX == idx; ++ii)
+			{
+				for (uint32_t jj = 0; jj < numPresentModes; ++jj)
+				{
+					const PresentMode& pm = s_presentMode[ii];
+
+					if (pm.mode  == presentModes[jj]
+					&&  pm.vsync == _vsync)
+					{
+						idx = ii;
+						break;
+					}
+				}
+			}
+
+			if (UINT32_MAX == idx)
+			{
+				idx = 0;
+				BX_TRACE("Present mode not found! Defaulting to %s.", s_presentMode[idx].name);
+			}
+
+			return idx;
+		}
+
 		void updateResolution(const Resolution& _resolution)
 		{
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
@@ -2881,8 +2913,8 @@ VK_IMPORT_DEVICE
 			{
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				bool resize = (m_resolution.reset & BGFX_RESET_MSAA_MASK) == (_resolution.reset & BGFX_RESET_MSAA_MASK);
-				bool formatChanged = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) == (_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER);
+				const bool resize        = (m_resolution.reset & BGFX_RESET_MSAA_MASK      ) == (_resolution.reset & BGFX_RESET_MSAA_MASK      );
+				const bool formatChanged = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) == (_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER);
 
 				m_resolution = _resolution;
 				m_resolution.reset = flags;
@@ -2890,7 +2922,9 @@ VK_IMPORT_DEVICE
 				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
 				m_textVideoMem.clear();
 
-				if (resize || formatChanged || m_needToRefreshSwapchain)
+				if (resize
+				||  formatChanged
+				||  m_needToRefreshSwapchain)
 				{
 					VK_CHECK(vkDeviceWaitIdle(m_device) );
 					releaseSwapchainFramebuffer();
@@ -2904,48 +2938,10 @@ VK_IMPORT_DEVICE
 					m_sci.imageFormat = surfaceFormat.format;
 					m_sci.imageColorSpace = surfaceFormat.colorSpace;
 
-					uint32_t numPresentModes(10);
-					VkPresentModeKHR presentModes[10];
-					vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
-
-					uint32_t presentModeIdx = numPresentModes;
-					static const VkPresentModeKHR preferredPresentMode[] =
-					{
-						VK_PRESENT_MODE_FIFO_KHR,
-						VK_PRESENT_MODE_FIFO_RELAXED_KHR,
-						VK_PRESENT_MODE_MAILBOX_KHR,
-						VK_PRESENT_MODE_IMMEDIATE_KHR,
-					};
-					static const bool hasVsync[] = { true, true, true, false };
-					BX_STATIC_ASSERT(BX_COUNTOF(preferredPresentMode) == BX_COUNTOF(hasVsync) );
-
 					const bool vsync = !!(flags & BGFX_RESET_VSYNC);
+					const uint32_t presentModeIdx = findPresentMode(vsync);
 
-					for (uint32_t ii = 0; ii < BX_COUNTOF(preferredPresentMode); ++ii)
-					{
-						for (uint32_t jj = 0; jj < numPresentModes; ++jj)
-						{
-							if (presentModes[jj] == preferredPresentMode[ii]
-							&&  vsync == hasVsync[ii])
-							{
-								presentModeIdx = jj;
-								BX_TRACE("present mode: %d", preferredPresentMode[ii]);
-								break;
-							}
-						}
-
-						if (presentModeIdx < numPresentModes)
-						{
-							break;
-						}
-					}
-
-					if (presentModeIdx == numPresentModes)
-					{
-						presentModeIdx = 0;
-					}
-
-					m_sci.presentMode = presentModes[presentModeIdx];
+					m_sci.presentMode = s_presentMode[presentModeIdx].mode;
 
 					VkSurfaceCapabilitiesKHR surfaceCapabilities;
 					VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities) );
@@ -2963,49 +2959,14 @@ VK_IMPORT_DEVICE
 					VK_CHECK(createSwapchainRenderPass() );
 					VK_CHECK(createSwapchainFramebuffer() );
 					initSwapchainImageLayout();
-					BX_TRACE("refreshed swapchain: %d x %d", m_sci.imageExtent.width, m_sci.imageExtent.height);
+
+					BX_TRACE("Swapchain (%s): %dx%d%s"
+						, s_presentMode[presentModeIdx].name
+						, m_sci.imageExtent.width
+						, m_sci.imageExtent.height
+						, vsync ? " + vsync" : ""
+						);
 				}
-#if 1
-				BX_UNUSED(resize);
-#else
-				m_scd.BufferDesc.Width  = _resolution.m_width;
-				m_scd.BufferDesc.Height = _resolution.m_height;
-
-				preReset();
-
-				if (resize)
-				{
-					uint32_t nodeMask[] = { 1, 1, 1, 1 };
-					BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(nodeMask) );
-					IUnknown* presentQueue[] ={ m_cmd.m_commandQueue, m_cmd.m_commandQueue, m_cmd.m_commandQueue, m_cmd.m_commandQueue };
-					BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(presentQueue) );
-
-					DX_CHECK(m_swapChain->ResizeBuffers1(m_scd.BufferCount
-							, m_scd.BufferDesc.Width
-							, m_scd.BufferDesc.Height
-							, m_scd.BufferDesc.Format
-							, m_scd.Flags
-							, nodeMask
-							, presentQueue
-							) );
-				}
-				else
-				{
-					updateMsaa();
-					m_scd.SampleDesc = s_msaa[(m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
-
-					DX_RELEASE(m_swapChain, 0);
-
-					HRESULT hr;
-					hr = m_factory->CreateSwapChain(m_cmd.m_commandQueue
-							, &m_scd
-							, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
-							);
-					BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
-				}
-
-				postReset();
-#endif // 0
 			}
 		}
 

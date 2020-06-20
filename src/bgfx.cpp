@@ -521,7 +521,7 @@ namespace bgfx
 	{
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-			BX_TRACE("vertexlayout %08x (%08x), stride %d"
+			BX_TRACE("VertexLayout %08x (%08x), stride %d"
 				, _layout.m_hash
 				, bx::hash<bx::HashMurmur2A>(_layout.m_attributes)
 				, _layout.m_stride
@@ -537,13 +537,13 @@ namespace bgfx
 					bool asInt;
 					_layout.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 
-					BX_TRACE("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d"
+					BX_TRACE("\tattr %2d: %-20s num %d, type %d, norm [%c], asint [%c], offset %2d"
 						, attr
 						, getAttribName(Attrib::Enum(attr) )
 						, num
 						, type
-						, normalized
-						, asInt
+						, normalized ? 'x' : ' '
+						, asInt      ? 'x' : ' '
 						, _layout.m_offset[attr]
 						);
 				}
