@@ -75,12 +75,12 @@ function bgfxProjectBase(_kind, _defines)
 
 		configuration { "android*" ,"Debug"}
 			linkoptions {
-				"-soname libbgfx-shared-libDebug.so",
+				"-Wl,-soname,libbgfx-shared-libDebug.so",
 			}
 
 		configuration { "android*" ,"Release"}
 			linkoptions {
-				"-soname libbgfx-shared-libRelease.so",
+				"-Wl,-soname,libbgfx-shared-libRelease.so",
 			}
 
 		configuration {}
