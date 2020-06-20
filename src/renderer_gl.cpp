@@ -1587,19 +1587,18 @@ namespace bgfx { namespace gl
 #if BX_PLATFORM_EMSCRIPTEN
 	static bool isTextureFormatValidPerSpec(
 		  TextureFormat::Enum _format
-		, bool _srgb = false
-		, bool _mipAutogen = false
-		, bool _array = false
-		, GLsizei _dim = 16
+		, bool _srgb
+		, bool _mipAutogen
 		)
 	{
 		// Avoid creating test textures for WebGL, that causes error noise in the browser
 		// console; instead examine the supported texture formats from the spec.
 		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
-		EmscriptenWebGLContextAttributes attrs;
 
+		EmscriptenWebGLContextAttributes attrs;
 		EMSCRIPTEN_CHECK(emscripten_webgl_get_context_attributes(ctx, &attrs) );
-		int glesVersion = attrs.majorVersion + 1;
+
+		const int glesVersion = attrs.majorVersion + 1;
 
 		switch(_format)
 		{
@@ -1743,7 +1742,8 @@ namespace bgfx { namespace gl
 #if BX_PLATFORM_EMSCRIPTEN
 		// On web platform read the validity of textures based on the available GL context and extensions
 		// to avoid developer unfriendly console error noise that would come from probing.
-		return isTextureFormatValidPerSpec(_format, _srgb, _mipAutogen, _array, _dim);
+		BX_UNUSED(_array, _dim);
+		return isTextureFormatValidPerSpec(_format, _srgb, _mipAutogen);
 #else
 		// On other platforms probe the supported textures.
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
@@ -1841,16 +1841,18 @@ namespace bgfx { namespace gl
 #if BX_PLATFORM_EMSCRIPTEN
 	static bool isFramebufferFormatValidPerSpec(
 		  TextureFormat::Enum _format
-		, bool _srgb = false
-		, bool _writeOnly = false
-		, GLsizei _dim = 16
+		, bool _srgb
+		, bool _writeOnly
 		)
 	{
 		// Avoid creating test textures for WebGL, that causes error noise in the browser console; instead examine the supported texture formats from the spec.
 		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
+
 		EmscriptenWebGLContextAttributes attrs;
-		emscripten_webgl_get_context_attributes(ctx, &attrs);
-		int glesVersion = attrs.majorVersion + 1;
+		EMSCRIPTEN_CHECK(emscripten_webgl_get_context_attributes(ctx, &attrs) );
+
+		const int glesVersion = attrs.majorVersion + 1;
+
 		switch(_format)
 		{
 			// GLES2 textures
@@ -1859,13 +1861,20 @@ namespace bgfx { namespace gl
 			case TextureFormat::RGB5A1:
 			case TextureFormat::D16:
 				return !_srgb;
+
 			// GLES2 renderbuffers not a texture in GLES3
 			case TextureFormat::D0S8:
-				return !_srgb && _writeOnly;
+				return !_srgb
+					&& _writeOnly
+					;
+
 			// GLES2 textures that are not renderbuffers
 			case TextureFormat::RGB8:
 			case TextureFormat::RGBA8:
-				return !_srgb && (!_writeOnly || glesVersion >= 3);
+				return !_srgb
+					&& (!_writeOnly || glesVersion >= 3)
+					;
+
 			// GLES3 EXT_color_buffer_float renderbuffer formats
 			case TextureFormat::R16F:
 			case TextureFormat::RG16F:
@@ -1873,22 +1882,45 @@ namespace bgfx { namespace gl
 			case TextureFormat::RG32F:
 			case TextureFormat::RG11B10F:
 				if (_writeOnly)
+				{
 					return emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_float");
-				else
-					return !_srgb && glesVersion >= 3;
+				}
+
+				return !_srgb && glesVersion >= 3;
+
 			// GLES2 float extension:
 			case TextureFormat::RGBA16F:
 				if (_writeOnly && emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_half_float"))
+				{
 					return true;
+				}
+				BX_FALLTHROUGH;
+
 			case TextureFormat::RGBA32F:
 				if (_writeOnly)
+				{
 					return emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_float") || emscripten_webgl_enable_extension(ctx, "WEBGL_color_buffer_float");
-				return !_srgb && (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "OES_texture_half_float")); // GLES3 formats without sRGB
+				}
+
+				// GLES3 formats without sRGB
+				return !_srgb
+					&& (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "OES_texture_half_float"))
+					;
+
 			case TextureFormat::D24:
 			case TextureFormat::D24S8:
-				return !_srgb && (glesVersion >= 3 || (!_writeOnly && emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture"))); // GLES3 formats without sRGB, depth textures do not support mipmaps.
+				// GLES3 formats without sRGB, depth textures do not support mipmaps.
+				return !_srgb
+					&& (glesVersion >= 3 || (!_writeOnly && emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture")))
+					;
+
 			case TextureFormat::D32:
-				return !_srgb && !_writeOnly && (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture")); // GLES3 formats without sRGB, depth textures do not support mipmaps.
+				// GLES3 formats without sRGB, depth textures do not support mipmaps.
+				return !_srgb
+					&& !_writeOnly
+					&& (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture"))
+					;
+
 			// GLES3 textures
 			case TextureFormat::R8:
 			case TextureFormat::RG8:
@@ -1914,12 +1946,21 @@ namespace bgfx { namespace gl
 			case TextureFormat::D16F:
 			case TextureFormat::D24F:
 			case TextureFormat::D32F:
-				return !_srgb && glesVersion >= 3;
+				return !_srgb
+					&& glesVersion >= 3
+					;
+
 			case TextureFormat::BGRA8:
-				return !_srgb && _writeOnly && glesVersion >= 3;
+				return !_srgb
+					&& _writeOnly
+					&& glesVersion >= 3
+					;
+
 			default:
-				return false;
+				break;
 		}
+
+		return false;
 	}
 #endif
 
@@ -1933,7 +1974,8 @@ namespace bgfx { namespace gl
 #if BX_PLATFORM_EMSCRIPTEN
 		// On web platform read the validity of framebuffers based on the available GL context and extensions
 		// to avoid developer unfriendly console error noise that would come from probing.
-		return isFramebufferFormatValidPerSpec(_format, _srgb, _writeOnly, _dim);
+		BX_UNUSED(_dim);
+		return isFramebufferFormatValidPerSpec(_format, _srgb, _writeOnly);
 #else
 		// On other platforms probe the supported textures.
 		const TextureFormatInfo& tfi = s_textureFormat[_format];

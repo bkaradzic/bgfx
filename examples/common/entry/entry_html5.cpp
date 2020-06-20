@@ -17,17 +17,14 @@ extern "C" void entry_emscripten_yield()
 //	emscripten_sleep(0);
 }
 
-#define _EMSCRIPTEN_CHECK(_check, _call)                                                                     \
-	BX_MACRO_BLOCK_BEGIN                                                                                     \
-		EMSCRIPTEN_RESULT __result__ = _call;                                                                \
-		BX_ASSERT(EMSCRIPTEN_RESULT_SUCCESS == __result__, #_call " FAILED 0x%08x\n", (uint32_t)__result__); \
+#define _EMSCRIPTEN_CHECK(_check, _call)                                                                  \
+	BX_MACRO_BLOCK_BEGIN                                                                                  \
+		EMSCRIPTEN_RESULT __result__ = _call;                                                             \
+		_check(EMSCRIPTEN_RESULT_SUCCESS == __result__, #_call " FAILED 0x%08x\n", (uint32_t)__result__); \
+		BX_UNUSED(__result__);                                                                            \
 	BX_MACRO_BLOCK_END
 
-#if BGFX_CONFIG_DEBUG
-#	define EMSCRIPTEN_CHECK(_call) _EMSCRIPTEN_CHECK(BX_ASSERT, _call)
-#else
-#	define EMSCRIPTEN_CHECK(_call) _call
-#endif // BGFX_CONFIG_DEBUG
+#define EMSCRIPTEN_CHECK(_call) _EMSCRIPTEN_CHECK(BX_ASSERT, _call)
 
 namespace entry
 {

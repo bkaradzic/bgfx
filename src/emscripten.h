@@ -11,10 +11,11 @@
 #	include <emscripten/emscripten.h>
 #	include <emscripten/html5.h>
 
-#	define _EMSCRIPTEN_CHECK(_check, _call)                                                                      \
-		BX_MACRO_BLOCK_BEGIN                                                                                     \
-			EMSCRIPTEN_RESULT __result__ = _call;                                                                \
-			BX_ASSERT(EMSCRIPTEN_RESULT_SUCCESS == __result__, #_call " FAILED 0x%08x\n", (uint32_t)__result__); \
+#	define _EMSCRIPTEN_CHECK(_check, _call)                                                                   \
+		BX_MACRO_BLOCK_BEGIN                                                                                  \
+			EMSCRIPTEN_RESULT __result__ = _call;                                                             \
+			_check(EMSCRIPTEN_RESULT_SUCCESS == __result__, #_call " FAILED 0x%08x\n", (uint32_t)__result__); \
+			BX_UNUSED(__result__);                                                                            \
 		BX_MACRO_BLOCK_END
 
 #	if BGFX_CONFIG_DEBUG
