@@ -43,7 +43,7 @@ enum MSLShaderInputFormat
 
 	MSL_SHADER_INPUT_FORMAT_INT_MAX = 0x7fffffff
 };
-typedef SPIRV_CROSS_DEPRECATED("Use MSLShaderInputFormat.") MSLShaderInputFormat MSLVertexFormat;
+//typedef SPIRV_CROSS_DEPRECATED("Use MSLShaderInputFormat.") MSLShaderInputFormat MSLVertexFormat;
 
 // Defines MSL characteristics of a vertex attribute at a particular location.
 // After compilation, it is possible to query whether or not this location was used.
