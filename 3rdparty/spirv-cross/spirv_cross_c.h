@@ -268,7 +268,9 @@ typedef enum spvc_msl_shader_input_format
 	/* Deprecated names. */
 	SPVC_MSL_VERTEX_FORMAT_OTHER = SPVC_MSL_SHADER_INPUT_FORMAT_OTHER,
 	SPVC_MSL_VERTEX_FORMAT_UINT8 = SPVC_MSL_SHADER_INPUT_FORMAT_UINT8,
-	SPVC_MSL_VERTEX_FORMAT_UINT16 = SPVC_MSL_SHADER_INPUT_FORMAT_UINT16
+	SPVC_MSL_VERTEX_FORMAT_UINT16 = SPVC_MSL_SHADER_INPUT_FORMAT_UINT16,
+
+	SPVC_MSL_SHADER_INPUT_FORMAT_INT_MAX = 0x7fffffff
 } spvc_msl_shader_input_format, spvc_msl_vertex_format;
 
 /* Maps to C++ API. Deprecated; use spvc_msl_shader_input. */
@@ -721,7 +723,11 @@ SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_shader_input(spvc_compiler com
                                                                const spvc_msl_shader_input *input);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_discrete_descriptor_set(spvc_compiler compiler, unsigned desc_set);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_set_argument_buffer_device_address_space(spvc_compiler compiler, unsigned desc_set, spvc_bool device_address);
+
+/* Obsolete, use is_shader_input_used. */
 SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_vertex_attribute_used(spvc_compiler compiler, unsigned location);
+SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_shader_input_used(spvc_compiler compiler, unsigned location);
+
 SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_resource_used(spvc_compiler compiler,
                                                              SpvExecutionModel model,
                                                              unsigned set,

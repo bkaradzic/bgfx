@@ -1019,11 +1019,11 @@ spvc_result spvc_compiler_msl_add_vertex_attribute(spvc_compiler compiler, const
 	}
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
-	MSLVertexAttr attr;
+	MSLShaderInput attr;
 	attr.location = va->location;
-	attr.format = static_cast<MSLVertexFormat>(va->format);
+	attr.format = static_cast<MSLShaderInputFormat>(va->format);
 	attr.builtin = static_cast<spv::BuiltIn>(va->builtin);
-	msl.add_msl_vertex_attribute(attr);
+	msl.add_msl_shader_input(attr);
 	return SPVC_SUCCESS;
 #else
 	(void)va;
@@ -1163,7 +1163,7 @@ spvc_result spvc_compiler_msl_set_argument_buffer_device_address_space(spvc_comp
 #endif
 }
 
-spvc_bool spvc_compiler_msl_is_vertex_attribute_used(spvc_compiler compiler, unsigned location)
+spvc_bool spvc_compiler_msl_is_shader_input_used(spvc_compiler compiler, unsigned location)
 {
 #if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
@@ -1173,12 +1173,17 @@ spvc_bool spvc_compiler_msl_is_vertex_attribute_used(spvc_compiler compiler, uns
 	}
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
-	return msl.is_msl_vertex_attribute_used(location) ? SPVC_TRUE : SPVC_FALSE;
+	return msl.is_msl_shader_input_used(location) ? SPVC_TRUE : SPVC_FALSE;
 #else
 	(void)location;
 	compiler->context->report_error("MSL function used on a non-MSL backend.");
 	return SPVC_FALSE;
 #endif
+}
+
+spvc_bool spvc_compiler_msl_is_vertex_attribute_used(spvc_compiler compiler, unsigned location)
+{
+	return spvc_compiler_msl_is_shader_input_used(compiler, location);
 }
 
 spvc_bool spvc_compiler_msl_is_resource_used(spvc_compiler compiler, SpvExecutionModel model, unsigned set,
@@ -2282,7 +2287,7 @@ void spvc_msl_vertex_attribute_init(spvc_msl_vertex_attribute *attr)
 {
 #if SPIRV_CROSS_C_API_MSL
 	// Crude, but works.
-	MSLVertexAttr attr_default;
+	MSLShaderInput attr_default;
 	attr->location = attr_default.location;
 	attr->format = static_cast<spvc_msl_vertex_format>(attr_default.format);
 	attr->builtin = static_cast<SpvBuiltIn>(attr_default.builtin);

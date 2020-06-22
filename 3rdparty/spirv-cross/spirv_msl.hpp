@@ -43,16 +43,6 @@ enum MSLShaderInputFormat
 
 	MSL_SHADER_INPUT_FORMAT_INT_MAX = 0x7fffffff
 };
-//typedef SPIRV_CROSS_DEPRECATED("Use MSLShaderInputFormat.") MSLShaderInputFormat MSLVertexFormat;
-
-// Defines MSL characteristics of a vertex attribute at a particular location.
-// After compilation, it is possible to query whether or not this location was used.
-struct SPIRV_CROSS_DEPRECATED("Use MSLShaderInput.") MSLVertexAttr
-{
-	uint32_t location = 0;
-	MSLShaderInputFormat format = MSL_SHADER_INPUT_FORMAT_OTHER;
-	spv::BuiltIn builtin = spv::BuiltInMax;
-};
 
 // Defines MSL characteristics of an input variable at a particular location.
 // After compilation, it is possible to query whether or not this location was used.
@@ -438,13 +428,6 @@ public:
 	explicit CompilerMSL(const ParsedIR &ir);
 	explicit CompilerMSL(ParsedIR &&ir);
 
-	// attr is a vertex attribute binding used to match
-	// vertex content locations to MSL attributes. If vertex attributes are provided,
-	// is_msl_vertex_attribute_used() will return true after calling ::compile() if
-	// the location was used by the MSL code.
-	SPIRV_CROSS_DEPRECATED("Use add_msl_shader_input().")
-	void add_msl_vertex_attribute(const MSLVertexAttr &attr);
-
 	// input is a shader input description used to fix up shader input variables.
 	// If shader inputs are provided, is_msl_shader_input_used() will return true after
 	// calling ::compile() if the location was used by the MSL code.
@@ -479,10 +462,6 @@ public:
 	// If an argument buffer is large enough, it may need to be in the device storage space rather than
 	// constant. Opt-in to this behavior here on a per set basis.
 	void set_argument_buffer_device_address_space(uint32_t desc_set, bool device_storage);
-
-	// Query after compilation is done. This allows you to check if a location or set/binding combination was used by the shader.
-	SPIRV_CROSS_DEPRECATED("Use is_msl_shader_input_used().")
-	bool is_msl_vertex_attribute_used(uint32_t location);
 
 	// Query after compilation is done. This allows you to check if an input location was used by the shader.
 	bool is_msl_shader_input_used(uint32_t location);

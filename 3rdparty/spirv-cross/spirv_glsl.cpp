@@ -12311,7 +12311,8 @@ void CompilerGLSL::emit_function(SPIRFunction &func, const Bitset &return_flags)
 		{
 			add_local_variable_name(var.self);
 
-			if (var.initializer)
+			// Loop variables should never be declared early, they are explicitly emitted in a loop.
+			if (var.initializer && !var.loop_variable)
 				statement(variable_decl_function_local(var), ";");
 			else
 			{

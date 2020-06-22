@@ -56,15 +56,6 @@ void CompilerMSL::add_msl_shader_input(const MSLShaderInput &si)
 		inputs_by_builtin[si.builtin] = si;
 }
 
-void CompilerMSL::add_msl_vertex_attribute(const MSLVertexAttr &va)
-{
-	MSLShaderInput si;
-	si.location = va.location;
-	si.format = va.format;
-	si.builtin = va.builtin;
-	add_msl_shader_input(si);
-}
-
 void CompilerMSL::add_msl_resource_binding(const MSLResourceBinding &binding)
 {
 	StageSetBinding tuple = { binding.stage, binding.desc_set, binding.binding };
@@ -98,11 +89,6 @@ void CompilerMSL::set_argument_buffer_device_address_space(uint32_t desc_set, bo
 		else
 			argument_buffer_device_storage_mask &= ~(1u << desc_set);
 	}
-}
-
-bool CompilerMSL::is_msl_vertex_attribute_used(uint32_t location)
-{
-	return is_msl_shader_input_used(location);
 }
 
 bool CompilerMSL::is_msl_shader_input_used(uint32_t location)
