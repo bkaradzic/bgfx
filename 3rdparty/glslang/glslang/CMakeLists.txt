@@ -6,7 +6,13 @@ else(WIN32)
     message("unknown platform")
 endif(WIN32)
 
+if(EMSCRIPTEN OR ENABLE_GLSLANG_JS)
+    # May be enabled on non-Emscripten builds for binary-size testing.
+    add_subdirectory(OSDependent/Web)
+endif(EMSCRIPTEN OR ENABLE_GLSLANG_JS)
+
 set(SOURCES
+    MachineIndependent/glslang.m4
     MachineIndependent/glslang.y
     MachineIndependent/glslang_tab.cpp
     MachineIndependent/attribute.cpp
@@ -36,7 +42,8 @@ set(SOURCES
     MachineIndependent/preprocessor/PpTokens.cpp
     MachineIndependent/propagateNoContraction.cpp
     GenericCodeGen/CodeGen.cpp
-    GenericCodeGen/Link.cpp)
+    GenericCodeGen/Link.cpp
+    CInterface/glslang_c_interface.cpp)
 
 set(HEADERS
     Public/ShaderLang.h
@@ -44,6 +51,8 @@ set(HEADERS
     Include/BaseTypes.h
     Include/Common.h
     Include/ConstantUnion.h
+    Include/glslang_c_interface.h
+    Include/glslang_c_shader_types.h
     Include/InfoSink.h
     Include/InitializeGlobals.h
     Include/intermediate.h
@@ -71,29 +80,39 @@ set(HEADERS
     MachineIndependent/preprocessor/PpContext.h
     MachineIndependent/preprocessor/PpTokens.h)
 
-# This might be useful for making grammar changes:
-#
-# find_package(BISON)
-# add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp.h
-#                    COMMAND ${BISON_EXECUTABLE} --defines=${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp.h -t ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang.y -o ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp
-#                    MAIN_DEPENDENCY MachineIndependent/glslang.y
-#                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-# set(BISON_GLSLParser_OUTPUT_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp)
-
 glslang_pch(SOURCES MachineIndependent/pch.cpp)
+
+if(ENABLE_HLSL)
+    list(APPEND SOURCES
+        HLSL/hlslAttributes.cpp
+        HLSL/hlslParseHelper.cpp
+        HLSL/hlslScanContext.cpp
+        HLSL/hlslOpMap.cpp
+        HLSL/hlslTokenStream.cpp
+        HLSL/hlslGrammar.cpp
+        HLSL/hlslParseables.cpp)
+
+    list(APPEND HEADERS
+        HLSL/hlslAttributes.h
+        HLSL/hlslParseHelper.h
+        HLSL/hlslTokens.h
+        HLSL/hlslScanContext.h
+        HLSL/hlslOpMap.h
+        HLSL/hlslTokenStream.h
+        HLSL/hlslGrammar.h
+        HLSL/hlslParseables.h)
+endif(ENABLE_HLSL)
 
 add_library(glslang ${LIB_TYPE} ${BISON_GLSLParser_OUTPUT_SOURCE} ${SOURCES} ${HEADERS})
 set_property(TARGET glslang PROPERTY FOLDER glslang)
 set_property(TARGET glslang PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(glslang OGLCompiler OSDependent)
-target_include_directories(glslang PUBLIC ..)
+target_include_directories(glslang PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
     set_target_properties(glslang PROPERTIES PREFIX "")
-endif()
-
-if(ENABLE_HLSL)
-    target_link_libraries(glslang HLSL)
 endif()
 
 if(WIN32)
@@ -102,17 +121,21 @@ if(WIN32)
     source_group("Include" REGULAR_EXPRESSION "Include/[^/]*")
     source_group("GenericCodeGen" REGULAR_EXPRESSION "GenericCodeGen/*")
     source_group("MachineIndependent\\Preprocessor" REGULAR_EXPRESSION "MachineIndependent/preprocessor/*")
+    source_group("HLSL" REGULAR_EXPRESSION "HLSL/*")
+    source_group("CInterface" REGULAR_EXPRESSION "CInterface/*")
 endif(WIN32)
 
 if(ENABLE_GLSLANG_INSTALL)
     if(BUILD_SHARED_LIBS)
-        install(TARGETS glslang
+        install(TARGETS glslang EXPORT glslangTargets
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     else()
-        install(TARGETS glslang
+        install(TARGETS glslang EXPORT glslangTargets
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
+    install(EXPORT glslangTargets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
 endif(ENABLE_GLSLANG_INSTALL)
 
 if(ENABLE_GLSLANG_INSTALL)

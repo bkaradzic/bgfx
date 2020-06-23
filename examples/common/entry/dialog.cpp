@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -12,9 +12,6 @@
 #include "dialog.h"
 
 #if BX_PLATFORM_WINDOWS
-extern "C" void*    __stdcall GetModuleHandleA(const char* _moduleName);
-extern "C" uint32_t __stdcall GetModuleFileNameA(void* _module, char* _outFilePath, uint32_t _size);
-
 typedef uintptr_t (__stdcall *LPOFNHOOKPROC)(void*, uint32_t, uintptr_t, uint64_t);
 
 struct OPENFILENAMEA
@@ -44,9 +41,37 @@ struct OPENFILENAMEA
 	uint32_t      flagsEx;
 };
 
-extern "C" bool __stdcall GetOpenFileNameA(OPENFILENAMEA* _ofn);
+extern "C" bool     __stdcall GetOpenFileNameA(OPENFILENAMEA* _ofn);
+extern "C" void*    __stdcall GetModuleHandleA(const char* _moduleName);
+extern "C" uint32_t __stdcall GetModuleFileNameA(void* _module, char* _outFilePath, uint32_t _size);
+extern "C" void*    __stdcall ShellExecuteA(void* _hwnd, void* _operation, void* _file, void* _parameters, void* _directory, int32_t _showCmd);
 
 #endif // BX_PLATFORM_WINDOWS
+
+void openUrl(const bx::StringView& _url)
+{
+	char tmp[4096];
+
+#if BX_PLATFORM_WINDOWS
+#	define OPEN ""
+#elif BX_PLATFORM_OSX
+#	define OPEN "open "
+#else
+#	define OPEN "xdg-open "
+#endif // BX_PLATFORM_OSX
+
+	bx::snprintf(tmp, BX_COUNTOF(tmp), OPEN "%.*s", _url.getLength(), _url.getPtr() );
+
+#undef OPEN
+
+#if BX_PLATFORM_WINDOWS
+	void* result = ShellExecuteA(NULL, NULL, tmp, NULL, NULL, false);
+	BX_UNUSED(result);
+#elif !BX_PLATFORM_IOS
+	int32_t result = system(tmp);
+	BX_UNUSED(result);
+#endif // BX_PLATFORM_*
+}
 
 class Split
 {
@@ -110,6 +135,8 @@ bool openFileSelectionDialog(
 			, line.getPtr()
 			);
 	}
+
+	bx::write(&writer, '\0', &err);
 
 	if (err.isOk() )
 	{

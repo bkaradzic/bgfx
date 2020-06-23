@@ -1,5 +1,5 @@
 /+
- + Copyright (c) 2014-2019 The Khronos Group Inc.
+ + Copyright (c) 2014-2020 The Khronos Group Inc.
  + 
  + Permission is hereby granted, free of charge, to any person obtaining a copy
  + of this software and/or associated documentation files (the "Materials"),
@@ -51,8 +51,8 @@
 module spv;
 
 enum uint MagicNumber = 0x07230203;
-enum uint Version = 0x00010300;
-enum uint Revision = 7;
+enum uint Version = 0x00010500;
+enum uint Revision = 3;
 enum uint OpCodeMask = 0xffff;
 enum uint WordCountShift = 16;
 
@@ -77,11 +77,17 @@ enum ExecutionModel : uint
     Kernel = 6,
     TaskNV = 5267,
     MeshNV = 5268,
+    RayGenerationKHR = 5313,
     RayGenerationNV = 5313,
+    IntersectionKHR = 5314,
     IntersectionNV = 5314,
+    AnyHitKHR = 5315,
     AnyHitNV = 5315,
+    ClosestHitKHR = 5316,
     ClosestHitNV = 5316,
+    MissKHR = 5317,
     MissNV = 5317,
+    CallableKHR = 5318,
     CallableNV = 5318,
 }
 
@@ -90,6 +96,7 @@ enum AddressingModel : uint
     Logical = 0,
     Physical32 = 1,
     Physical64 = 2,
+    PhysicalStorageBuffer64 = 5348,
     PhysicalStorageBuffer64EXT = 5348,
 }
 
@@ -98,6 +105,7 @@ enum MemoryModel : uint
     Simple = 0,
     GLSL450 = 1,
     OpenCL = 2,
+    Vulkan = 3,
     VulkanKHR = 3,
 }
 
@@ -153,6 +161,16 @@ enum ExecutionMode : uint
     DerivativeGroupQuadsNV = 5289,
     DerivativeGroupLinearNV = 5290,
     OutputTrianglesNV = 5298,
+    PixelInterlockOrderedEXT = 5366,
+    PixelInterlockUnorderedEXT = 5367,
+    SampleInterlockOrderedEXT = 5368,
+    SampleInterlockUnorderedEXT = 5369,
+    ShadingRateInterlockOrderedEXT = 5370,
+    ShadingRateInterlockUnorderedEXT = 5371,
+    MaxWorkgroupSizeINTEL = 5893,
+    MaxWorkDimINTEL = 5894,
+    NoGlobalOffsetINTEL = 5895,
+    NumSIMDWorkitemsINTEL = 5896,
 }
 
 enum StorageClass : uint
@@ -170,13 +188,21 @@ enum StorageClass : uint
     AtomicCounter = 10,
     Image = 11,
     StorageBuffer = 12,
+    CallableDataKHR = 5328,
     CallableDataNV = 5328,
+    IncomingCallableDataKHR = 5329,
     IncomingCallableDataNV = 5329,
+    RayPayloadKHR = 5338,
     RayPayloadNV = 5338,
+    HitAttributeKHR = 5339,
     HitAttributeNV = 5339,
+    IncomingRayPayloadKHR = 5342,
     IncomingRayPayloadNV = 5342,
+    ShaderRecordBufferKHR = 5343,
     ShaderRecordBufferNV = 5343,
+    PhysicalStorageBuffer = 5349,
     PhysicalStorageBufferEXT = 5349,
+    CodeSectionINTEL = 5605,
 }
 
 enum Dim : uint
@@ -304,10 +330,16 @@ enum ImageOperandsShift : uint
     ConstOffsets = 5,
     Sample = 6,
     MinLod = 7,
+    MakeTexelAvailable = 8,
     MakeTexelAvailableKHR = 8,
+    MakeTexelVisible = 9,
     MakeTexelVisibleKHR = 9,
+    NonPrivateTexel = 10,
     NonPrivateTexelKHR = 10,
+    VolatileTexel = 11,
     VolatileTexelKHR = 11,
+    SignExtend = 12,
+    ZeroExtend = 13,
 }
 
 enum ImageOperandsMask : uint
@@ -321,10 +353,16 @@ enum ImageOperandsMask : uint
     ConstOffsets = 0x00000020,
     Sample = 0x00000040,
     MinLod = 0x00000080,
+    MakeTexelAvailable = 0x00000100,
     MakeTexelAvailableKHR = 0x00000100,
+    MakeTexelVisible = 0x00000200,
     MakeTexelVisibleKHR = 0x00000200,
+    NonPrivateTexel = 0x00000400,
     NonPrivateTexelKHR = 0x00000400,
+    VolatileTexel = 0x00000800,
     VolatileTexelKHR = 0x00000800,
+    SignExtend = 0x00001000,
+    ZeroExtend = 0x00002000,
 }
 
 enum FPFastMathModeShift : uint
@@ -407,6 +445,7 @@ enum Decoration : uint
     NonWritable = 24,
     NonReadable = 25,
     Uniform = 26,
+    UniformId = 27,
     SaturatedConversion = 28,
     Stream = 29,
     Location = 30,
@@ -438,11 +477,30 @@ enum Decoration : uint
     PerViewNV = 5272,
     PerTaskNV = 5273,
     PerVertexNV = 5285,
+    NonUniform = 5300,
     NonUniformEXT = 5300,
+    RestrictPointer = 5355,
     RestrictPointerEXT = 5355,
+    AliasedPointer = 5356,
     AliasedPointerEXT = 5356,
+    ReferencedIndirectlyINTEL = 5602,
+    CounterBuffer = 5634,
     HlslCounterBufferGOOGLE = 5634,
     HlslSemanticGOOGLE = 5635,
+    UserSemantic = 5635,
+    UserTypeGOOGLE = 5636,
+    RegisterINTEL = 5825,
+    MemoryINTEL = 5826,
+    NumbanksINTEL = 5827,
+    BankwidthINTEL = 5828,
+    MaxPrivateCopiesINTEL = 5829,
+    SinglepumpINTEL = 5830,
+    DoublepumpINTEL = 5831,
+    MaxReplicatesINTEL = 5832,
+    SimpleDualPortINTEL = 5833,
+    MergeINTEL = 5834,
+    BankBitsINTEL = 5835,
+    ForcePow2DepthINTEL = 5836,
 }
 
 enum BuiltIn : uint
@@ -531,20 +589,39 @@ enum BuiltIn : uint
     FragmentSizeNV = 5292,
     FragInvocationCountEXT = 5293,
     InvocationsPerPixelNV = 5293,
+    LaunchIdKHR = 5319,
     LaunchIdNV = 5319,
+    LaunchSizeKHR = 5320,
     LaunchSizeNV = 5320,
+    WorldRayOriginKHR = 5321,
     WorldRayOriginNV = 5321,
+    WorldRayDirectionKHR = 5322,
     WorldRayDirectionNV = 5322,
+    ObjectRayOriginKHR = 5323,
     ObjectRayOriginNV = 5323,
+    ObjectRayDirectionKHR = 5324,
     ObjectRayDirectionNV = 5324,
+    RayTminKHR = 5325,
     RayTminNV = 5325,
+    RayTmaxKHR = 5326,
     RayTmaxNV = 5326,
+    InstanceCustomIndexKHR = 5327,
     InstanceCustomIndexNV = 5327,
+    ObjectToWorldKHR = 5330,
     ObjectToWorldNV = 5330,
+    WorldToObjectKHR = 5331,
     WorldToObjectNV = 5331,
+    HitTKHR = 5332,
     HitTNV = 5332,
+    HitKindKHR = 5333,
     HitKindNV = 5333,
+    IncomingRayFlagsKHR = 5351,
     IncomingRayFlagsNV = 5351,
+    RayGeometryIndexKHR = 5352,
+    WarpsPerSMNV = 5374,
+    SMCountNV = 5375,
+    WarpIDNV = 5376,
+    SMIDNV = 5377,
 }
 
 enum SelectionControlShift : uint
@@ -566,6 +643,18 @@ enum LoopControlShift : uint
     DontUnroll = 1,
     DependencyInfinite = 2,
     DependencyLength = 3,
+    MinIterations = 4,
+    MaxIterations = 5,
+    IterationMultiple = 6,
+    PeelCount = 7,
+    PartialCount = 8,
+    InitiationIntervalINTEL = 16,
+    MaxConcurrencyINTEL = 17,
+    DependencyArrayINTEL = 18,
+    PipelineEnableINTEL = 19,
+    LoopCoalesceINTEL = 20,
+    MaxInterleavingINTEL = 21,
+    SpeculatedIterationsINTEL = 22,
 }
 
 enum LoopControlMask : uint
@@ -575,6 +664,18 @@ enum LoopControlMask : uint
     DontUnroll = 0x00000002,
     DependencyInfinite = 0x00000004,
     DependencyLength = 0x00000008,
+    MinIterations = 0x00000010,
+    MaxIterations = 0x00000020,
+    IterationMultiple = 0x00000040,
+    PeelCount = 0x00000080,
+    PartialCount = 0x00000100,
+    InitiationIntervalINTEL = 0x00010000,
+    MaxConcurrencyINTEL = 0x00020000,
+    DependencyArrayINTEL = 0x00040000,
+    PipelineEnableINTEL = 0x00080000,
+    LoopCoalesceINTEL = 0x00100000,
+    MaxInterleavingINTEL = 0x00200000,
+    SpeculatedIterationsINTEL = 0x00400000,
 }
 
 enum FunctionControlShift : uint
@@ -606,9 +707,13 @@ enum MemorySemanticsShift : uint
     CrossWorkgroupMemory = 9,
     AtomicCounterMemory = 10,
     ImageMemory = 11,
+    OutputMemory = 12,
     OutputMemoryKHR = 12,
+    MakeAvailable = 13,
     MakeAvailableKHR = 13,
+    MakeVisible = 14,
     MakeVisibleKHR = 14,
+    Volatile = 15,
 }
 
 enum MemorySemanticsMask : uint
@@ -624,9 +729,13 @@ enum MemorySemanticsMask : uint
     CrossWorkgroupMemory = 0x00000200,
     AtomicCounterMemory = 0x00000400,
     ImageMemory = 0x00000800,
+    OutputMemory = 0x00001000,
     OutputMemoryKHR = 0x00001000,
+    MakeAvailable = 0x00002000,
     MakeAvailableKHR = 0x00002000,
+    MakeVisible = 0x00004000,
     MakeVisibleKHR = 0x00004000,
+    Volatile = 0x00008000,
 }
 
 enum MemoryAccessShift : uint
@@ -634,8 +743,11 @@ enum MemoryAccessShift : uint
     Volatile = 0,
     Aligned = 1,
     Nontemporal = 2,
+    MakePointerAvailable = 3,
     MakePointerAvailableKHR = 3,
+    MakePointerVisible = 4,
     MakePointerVisibleKHR = 4,
+    NonPrivatePointer = 5,
     NonPrivatePointerKHR = 5,
 }
 
@@ -645,8 +757,11 @@ enum MemoryAccessMask : uint
     Volatile = 0x00000001,
     Aligned = 0x00000002,
     Nontemporal = 0x00000004,
+    MakePointerAvailable = 0x00000008,
     MakePointerAvailableKHR = 0x00000008,
+    MakePointerVisible = 0x00000010,
     MakePointerVisibleKHR = 0x00000010,
+    NonPrivatePointer = 0x00000020,
     NonPrivatePointerKHR = 0x00000020,
 }
 
@@ -657,7 +772,9 @@ enum Scope : uint
     Workgroup = 2,
     Subgroup = 3,
     Invocation = 4,
+    QueueFamily = 5,
     QueueFamilyKHR = 5,
+    ShaderCallKHR = 6,
 }
 
 enum GroupOperation : uint
@@ -758,6 +875,8 @@ enum Capability : uint
     GroupNonUniformShuffleRelative = 66,
     GroupNonUniformClustered = 67,
     GroupNonUniformQuad = 68,
+    ShaderLayer = 69,
+    ShaderViewportIndex = 70,
     SubgroupBallotKHR = 4423,
     DrawParameters = 4427,
     SubgroupVoteKHR = 4431,
@@ -781,11 +900,14 @@ enum Capability : uint
     SignedZeroInfNanPreserve = 4466,
     RoundingModeRTE = 4467,
     RoundingModeRTZ = 4468,
+    RayQueryProvisionalKHR = 4471,
+    RayTraversalPrimitiveCullingProvisionalKHR = 4478,
     Float16ImageAMD = 5008,
     ImageGatherBiasLodAMD = 5009,
     FragmentMaskAMD = 5010,
     StencilExportEXT = 5013,
     ImageReadWriteLodAMD = 5015,
+    ShaderClockKHR = 5055,
     SampleMaskOverrideCoverageNV = 5249,
     GeometryShaderPassthroughNV = 5251,
     ShaderViewportIndexLayerEXT = 5254,
@@ -801,31 +923,110 @@ enum Capability : uint
     FragmentDensityEXT = 5291,
     ShadingRateNV = 5291,
     GroupNonUniformPartitionedNV = 5297,
+    ShaderNonUniform = 5301,
     ShaderNonUniformEXT = 5301,
+    RuntimeDescriptorArray = 5302,
     RuntimeDescriptorArrayEXT = 5302,
+    InputAttachmentArrayDynamicIndexing = 5303,
     InputAttachmentArrayDynamicIndexingEXT = 5303,
+    UniformTexelBufferArrayDynamicIndexing = 5304,
     UniformTexelBufferArrayDynamicIndexingEXT = 5304,
+    StorageTexelBufferArrayDynamicIndexing = 5305,
     StorageTexelBufferArrayDynamicIndexingEXT = 5305,
+    UniformBufferArrayNonUniformIndexing = 5306,
     UniformBufferArrayNonUniformIndexingEXT = 5306,
+    SampledImageArrayNonUniformIndexing = 5307,
     SampledImageArrayNonUniformIndexingEXT = 5307,
+    StorageBufferArrayNonUniformIndexing = 5308,
     StorageBufferArrayNonUniformIndexingEXT = 5308,
+    StorageImageArrayNonUniformIndexing = 5309,
     StorageImageArrayNonUniformIndexingEXT = 5309,
+    InputAttachmentArrayNonUniformIndexing = 5310,
     InputAttachmentArrayNonUniformIndexingEXT = 5310,
+    UniformTexelBufferArrayNonUniformIndexing = 5311,
     UniformTexelBufferArrayNonUniformIndexingEXT = 5311,
+    StorageTexelBufferArrayNonUniformIndexing = 5312,
     StorageTexelBufferArrayNonUniformIndexingEXT = 5312,
     RayTracingNV = 5340,
+    VulkanMemoryModel = 5345,
     VulkanMemoryModelKHR = 5345,
+    VulkanMemoryModelDeviceScope = 5346,
     VulkanMemoryModelDeviceScopeKHR = 5346,
+    PhysicalStorageBufferAddresses = 5347,
     PhysicalStorageBufferAddressesEXT = 5347,
     ComputeDerivativeGroupLinearNV = 5350,
+    RayTracingProvisionalKHR = 5353,
     CooperativeMatrixNV = 5357,
+    FragmentShaderSampleInterlockEXT = 5363,
+    FragmentShaderShadingRateInterlockEXT = 5372,
+    ShaderSMBuiltinsNV = 5373,
+    FragmentShaderPixelInterlockEXT = 5378,
+    DemoteToHelperInvocationEXT = 5379,
     SubgroupShuffleINTEL = 5568,
     SubgroupBufferBlockIOINTEL = 5569,
     SubgroupImageBlockIOINTEL = 5570,
     SubgroupImageMediaBlockIOINTEL = 5579,
+    IntegerFunctions2INTEL = 5584,
+    FunctionPointersINTEL = 5603,
+    IndirectReferencesINTEL = 5604,
     SubgroupAvcMotionEstimationINTEL = 5696,
     SubgroupAvcMotionEstimationIntraINTEL = 5697,
     SubgroupAvcMotionEstimationChromaINTEL = 5698,
+    FPGAMemoryAttributesINTEL = 5824,
+    UnstructuredLoopControlsINTEL = 5886,
+    FPGALoopControlsINTEL = 5888,
+    KernelAttributesINTEL = 5892,
+    FPGAKernelAttributesINTEL = 5897,
+    BlockingPipesINTEL = 5945,
+    FPGARegINTEL = 5948,
+}
+
+enum RayFlagsShift : uint
+{
+    OpaqueKHR = 0,
+    NoOpaqueKHR = 1,
+    TerminateOnFirstHitKHR = 2,
+    SkipClosestHitShaderKHR = 3,
+    CullBackFacingTrianglesKHR = 4,
+    CullFrontFacingTrianglesKHR = 5,
+    CullOpaqueKHR = 6,
+    CullNoOpaqueKHR = 7,
+    SkipTrianglesKHR = 8,
+    SkipAABBsKHR = 9,
+}
+
+enum RayFlagsMask : uint
+{
+    MaskNone = 0,
+    OpaqueKHR = 0x00000001,
+    NoOpaqueKHR = 0x00000002,
+    TerminateOnFirstHitKHR = 0x00000004,
+    SkipClosestHitShaderKHR = 0x00000008,
+    CullBackFacingTrianglesKHR = 0x00000010,
+    CullFrontFacingTrianglesKHR = 0x00000020,
+    CullOpaqueKHR = 0x00000040,
+    CullNoOpaqueKHR = 0x00000080,
+    SkipTrianglesKHR = 0x00000100,
+    SkipAABBsKHR = 0x00000200,
+}
+
+enum RayQueryIntersection : uint
+{
+    RayQueryCandidateIntersectionKHR = 0,
+    RayQueryCommittedIntersectionKHR = 1,
+}
+
+enum RayQueryCommittedIntersectionType : uint
+{
+    RayQueryCommittedIntersectionNoneKHR = 0,
+    RayQueryCommittedIntersectionTriangleKHR = 1,
+    RayQueryCommittedIntersectionGeneratedKHR = 2,
+}
+
+enum RayQueryCandidateIntersectionType : uint
+{
+    RayQueryCandidateIntersectionTriangleKHR = 0,
+    RayQueryCandidateIntersectionAABBKHR = 1,
 }
 
 enum Op : uint
@@ -1170,12 +1371,23 @@ enum Op : uint
     OpGroupNonUniformLogicalXor = 364,
     OpGroupNonUniformQuadBroadcast = 365,
     OpGroupNonUniformQuadSwap = 366,
+    OpCopyLogical = 400,
+    OpPtrEqual = 401,
+    OpPtrNotEqual = 402,
+    OpPtrDiff = 403,
     OpSubgroupBallotKHR = 4421,
     OpSubgroupFirstInvocationKHR = 4422,
     OpSubgroupAllKHR = 4428,
     OpSubgroupAnyKHR = 4429,
     OpSubgroupAllEqualKHR = 4430,
     OpSubgroupReadInvocationKHR = 4432,
+    OpTypeRayQueryProvisionalKHR = 4472,
+    OpRayQueryInitializeKHR = 4473,
+    OpRayQueryTerminateKHR = 4474,
+    OpRayQueryGenerateIntersectionKHR = 4475,
+    OpRayQueryConfirmIntersectionKHR = 4476,
+    OpRayQueryProceedKHR = 4477,
+    OpRayQueryGetIntersectionTypeKHR = 4479,
     OpGroupIAddNonUniformAMD = 5000,
     OpGroupFAddNonUniformAMD = 5001,
     OpGroupFMinNonUniformAMD = 5002,
@@ -1186,20 +1398,31 @@ enum Op : uint
     OpGroupSMaxNonUniformAMD = 5007,
     OpFragmentMaskFetchAMD = 5011,
     OpFragmentFetchAMD = 5012,
+    OpReadClockKHR = 5056,
     OpImageSampleFootprintNV = 5283,
     OpGroupNonUniformPartitionNV = 5296,
     OpWritePackedPrimitiveIndices4x8NV = 5299,
+    OpReportIntersectionKHR = 5334,
     OpReportIntersectionNV = 5334,
+    OpIgnoreIntersectionKHR = 5335,
     OpIgnoreIntersectionNV = 5335,
+    OpTerminateRayKHR = 5336,
     OpTerminateRayNV = 5336,
     OpTraceNV = 5337,
+    OpTraceRayKHR = 5337,
+    OpTypeAccelerationStructureKHR = 5341,
     OpTypeAccelerationStructureNV = 5341,
+    OpExecuteCallableKHR = 5344,
     OpExecuteCallableNV = 5344,
     OpTypeCooperativeMatrixNV = 5358,
     OpCooperativeMatrixLoadNV = 5359,
     OpCooperativeMatrixStoreNV = 5360,
     OpCooperativeMatrixMulAddNV = 5361,
     OpCooperativeMatrixLengthNV = 5362,
+    OpBeginInvocationInterlockEXT = 5364,
+    OpEndInvocationInterlockEXT = 5365,
+    OpDemoteToHelperInvocationEXT = 5380,
+    OpIsHelperInvocationEXT = 5381,
     OpSubgroupShuffleINTEL = 5571,
     OpSubgroupShuffleDownINTEL = 5572,
     OpSubgroupShuffleUpINTEL = 5573,
@@ -1210,7 +1433,25 @@ enum Op : uint
     OpSubgroupImageBlockWriteINTEL = 5578,
     OpSubgroupImageMediaBlockReadINTEL = 5580,
     OpSubgroupImageMediaBlockWriteINTEL = 5581,
+    OpUCountLeadingZerosINTEL = 5585,
+    OpUCountTrailingZerosINTEL = 5586,
+    OpAbsISubINTEL = 5587,
+    OpAbsUSubINTEL = 5588,
+    OpIAddSatINTEL = 5589,
+    OpUAddSatINTEL = 5590,
+    OpIAverageINTEL = 5591,
+    OpUAverageINTEL = 5592,
+    OpIAverageRoundedINTEL = 5593,
+    OpUAverageRoundedINTEL = 5594,
+    OpISubSatINTEL = 5595,
+    OpUSubSatINTEL = 5596,
+    OpIMul32x16INTEL = 5597,
+    OpUMul32x16INTEL = 5598,
+    OpFunctionPointerINTEL = 5600,
+    OpFunctionPointerCallINTEL = 5601,
+    OpDecorateString = 5632,
     OpDecorateStringGOOGLE = 5632,
+    OpMemberDecorateString = 5633,
     OpMemberDecorateStringGOOGLE = 5633,
     OpVmeImageINTEL = 5699,
     OpTypeVmeImageINTEL = 5700,
@@ -1330,6 +1571,27 @@ enum Op : uint
     OpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL = 5814,
     OpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL = 5815,
     OpSubgroupAvcSicGetInterRawSadsINTEL = 5816,
+    OpLoopControlINTEL = 5887,
+    OpReadPipeBlockingINTEL = 5946,
+    OpWritePipeBlockingINTEL = 5947,
+    OpFPGARegINTEL = 5949,
+    OpRayQueryGetRayTMinKHR = 6016,
+    OpRayQueryGetRayFlagsKHR = 6017,
+    OpRayQueryGetIntersectionTKHR = 6018,
+    OpRayQueryGetIntersectionInstanceCustomIndexKHR = 6019,
+    OpRayQueryGetIntersectionInstanceIdKHR = 6020,
+    OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR = 6021,
+    OpRayQueryGetIntersectionGeometryIndexKHR = 6022,
+    OpRayQueryGetIntersectionPrimitiveIndexKHR = 6023,
+    OpRayQueryGetIntersectionBarycentricsKHR = 6024,
+    OpRayQueryGetIntersectionFrontFaceKHR = 6025,
+    OpRayQueryGetIntersectionCandidateAABBOpaqueKHR = 6026,
+    OpRayQueryGetIntersectionObjectRayDirectionKHR = 6027,
+    OpRayQueryGetIntersectionObjectRayOriginKHR = 6028,
+    OpRayQueryGetWorldRayDirectionKHR = 6029,
+    OpRayQueryGetWorldRayOriginKHR = 6030,
+    OpRayQueryGetIntersectionObjectToWorldKHR = 6031,
+    OpRayQueryGetIntersectionWorldToObjectKHR = 6032,
 }
 
 

@@ -1,4 +1,6 @@
 // Copyright (c) 2018 Google LLC.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/val/validate.h"
-
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -21,6 +21,7 @@
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validate_scopes.h"
 #include "source/val/validation_state.h"
 
@@ -263,59 +264,40 @@ std::pair<SpvStorageClass, SpvStorageClass> GetStorageClass(
   return std::make_pair(dst_sc, src_sc);
 }
 
+// Returns the number of instruction words taken up by a memory access
+// argument and its implied operands.
+int MemoryAccessNumWords(uint32_t mask) {
+  int result = 1;  // Count the mask
+  if (mask & SpvMemoryAccessAlignedMask) ++result;
+  if (mask & SpvMemoryAccessMakePointerAvailableKHRMask) ++result;
+  if (mask & SpvMemoryAccessMakePointerVisibleKHRMask) ++result;
+  return result;
+}
+
+// Returns the scope ID operand for MakeAvailable memory access with mask
+// at the given operand index.
 // This function is only called for OpLoad, OpStore, OpCopyMemory and
 // OpCopyMemorySized, OpCooperativeMatrixLoadNV, and
 // OpCooperativeMatrixStoreNV.
-uint32_t GetMakeAvailableScope(const Instruction* inst, uint32_t mask) {
-  uint32_t offset = 1;
-  if (mask & SpvMemoryAccessAlignedMask) ++offset;
-
-  uint32_t scope_id = 0;
-  switch (inst->opcode()) {
-    case SpvOpLoad:
-    case SpvOpCopyMemorySized:
-      return inst->GetOperandAs<uint32_t>(3 + offset);
-    case SpvOpStore:
-    case SpvOpCopyMemory:
-      return inst->GetOperandAs<uint32_t>(2 + offset);
-    case SpvOpCooperativeMatrixLoadNV:
-      return inst->GetOperandAs<uint32_t>(5 + offset);
-    case SpvOpCooperativeMatrixStoreNV:
-      return inst->GetOperandAs<uint32_t>(4 + offset);
-    default:
-      assert(false && "unexpected opcode");
-      break;
-  }
-
-  return scope_id;
+uint32_t GetMakeAvailableScope(const Instruction* inst, uint32_t mask,
+                               uint32_t mask_index) {
+  assert(mask & SpvMemoryAccessMakePointerAvailableKHRMask);
+  uint32_t this_bit = uint32_t(SpvMemoryAccessMakePointerAvailableKHRMask);
+  uint32_t index =
+      mask_index - 1 + MemoryAccessNumWords(mask & (this_bit | (this_bit - 1)));
+  return inst->GetOperandAs<uint32_t>(index);
 }
 
 // This function is only called for OpLoad, OpStore, OpCopyMemory,
 // OpCopyMemorySized, OpCooperativeMatrixLoadNV, and
 // OpCooperativeMatrixStoreNV.
-uint32_t GetMakeVisibleScope(const Instruction* inst, uint32_t mask) {
-  uint32_t offset = 1;
-  if (mask & SpvMemoryAccessAlignedMask) ++offset;
-  if (mask & SpvMemoryAccessMakePointerAvailableKHRMask) ++offset;
-
-  uint32_t scope_id = 0;
-  switch (inst->opcode()) {
-    case SpvOpLoad:
-    case SpvOpCopyMemorySized:
-      return inst->GetOperandAs<uint32_t>(3 + offset);
-    case SpvOpStore:
-    case SpvOpCopyMemory:
-      return inst->GetOperandAs<uint32_t>(2 + offset);
-    case SpvOpCooperativeMatrixLoadNV:
-      return inst->GetOperandAs<uint32_t>(5 + offset);
-    case SpvOpCooperativeMatrixStoreNV:
-      return inst->GetOperandAs<uint32_t>(4 + offset);
-    default:
-      assert(false && "unexpected opcode");
-      break;
-  }
-
-  return scope_id;
+uint32_t GetMakeVisibleScope(const Instruction* inst, uint32_t mask,
+                             uint32_t mask_index) {
+  assert(mask & SpvMemoryAccessMakePointerVisibleKHRMask);
+  uint32_t this_bit = uint32_t(SpvMemoryAccessMakePointerVisibleKHRMask);
+  uint32_t index =
+      mask_index - 1 + MemoryAccessNumWords(mask & (this_bit | (this_bit - 1)));
+  return inst->GetOperandAs<uint32_t>(index);
 }
 
 bool DoesStructContainRTA(const ValidationState_t& _, const Instruction* inst) {
@@ -342,7 +324,7 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
     return SPV_SUCCESS;
   }
 
-  uint32_t mask = inst->GetOperandAs<uint32_t>(index);
+  const uint32_t mask = inst->GetOperandAs<uint32_t>(index);
   if (mask & SpvMemoryAccessMakePointerAvailableKHRMask) {
     if (inst->opcode() == SpvOpLoad ||
         inst->opcode() == SpvOpCooperativeMatrixLoadNV) {
@@ -357,7 +339,7 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
     }
 
     // Check the associated scope for MakeAvailableKHR.
-    const auto available_scope = GetMakeAvailableScope(inst, mask);
+    const auto available_scope = GetMakeAvailableScope(inst, mask, index);
     if (auto error = ValidateMemoryScope(_, inst, available_scope))
       return error;
   }
@@ -376,7 +358,7 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
     }
 
     // Check the associated scope for MakeVisibleKHR.
-    const auto visible_scope = GetMakeVisibleScope(inst, mask);
+    const auto visible_scope = GetMakeVisibleScope(inst, mask, index);
     if (auto error = ValidateMemoryScope(_, inst, visible_scope)) return error;
   }
 
@@ -441,10 +423,14 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
              << "OpVariable Initializer <id> '" << _.getIdName(initializer_id)
              << "' is not a constant or module-scope variable.";
     }
+    if (initializer->type_id() != result_type->GetOperandAs<uint32_t>(2u)) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Initializer type must match the type pointed to by the Result "
+                "Type";
+    }
   }
 
-  const auto storage_class =
-      inst->GetOperandAs<SpvStorageClass>(storage_class_index);
+  auto storage_class = inst->GetOperandAs<SpvStorageClass>(storage_class_index);
   if (storage_class != SpvStorageClassWorkgroup &&
       storage_class != SpvStorageClassCrossWorkgroup &&
       storage_class != SpvStorageClassPrivate &&
@@ -475,6 +461,28 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
              << "can only be used with non-externally visible shader Storage "
              << "Classes: Workgroup, CrossWorkgroup, Private, and Function";
     }
+  }
+
+  if (!_.IsValidStorageClass(storage_class)) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << "Invalid storage class for target environment";
+  }
+
+  if (storage_class == SpvStorageClassGeneric) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << "OpVariable storage class cannot be Generic";
+  }
+
+  if (inst->function() && storage_class != SpvStorageClassFunction) {
+    return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
+           << "Variables must have a function[7] storage class inside"
+              " of a function";
+  }
+
+  if (!inst->function() && storage_class == SpvStorageClassFunction) {
+    return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
+           << "Variables can not have a function[7] storage class "
+              "outside of a function";
   }
 
   // SPIR-V 3.32.8: Check that pointer type and variable type have the same
@@ -527,7 +535,9 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
       if (!IsAllowedTypeOrArrayOfSame(
               _, pointee,
               {SpvOpTypeImage, SpvOpTypeSampler, SpvOpTypeSampledImage,
-               SpvOpTypeAccelerationStructureNV})) {
+               SpvOpTypeAccelerationStructureNV,
+               SpvOpTypeAccelerationStructureKHR,
+               SpvOpTypeRayQueryProvisionalKHR})) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << "UniformConstant OpVariable <id> '" << _.getIdName(inst->id())
                << "' has illegal type.\n"
@@ -536,6 +546,8 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
                << "are used only as handles to refer to opaque resources. Such "
                << "variables must be typed as OpTypeImage, OpTypeSampler, "
                << "OpTypeSampledImage, OpTypeAccelerationStructureNV, "
+                  "OpTypeAccelerationStructureKHR, "
+                  "OpTypeRayQueryProvisionalKHR, "
                << "or an array of one of these types.";
       }
     }
@@ -550,6 +562,19 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
                << "used to access transparent buffer backed resources. Such "
                << "variables must be typed as OpTypeStruct, or an array of "
                << "this type";
+      }
+    }
+
+    if (storage_class == SpvStorageClassStorageBuffer) {
+      if (!IsAllowedTypeOrArrayOfSame(_, pointee, {SpvOpTypeStruct})) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "StorageBuffer OpVariable <id> '" << _.getIdName(inst->id())
+               << "' has illegal type.\n"
+               << "From Vulkan spec, section 14.5.2:\n"
+               << "Variables identified with the StorageBuffer storage class "
+                  "are used to access transparent buffer backed resources. "
+                  "Such variables must be typed as OpTypeStruct, or an array "
+                  "of this type";
       }
     }
   }
@@ -619,10 +644,10 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
   }
 
   // Vulkan specific validation rules for OpTypeRuntimeArray
+  const auto type_index = 2;
+  const auto value_id = result_type->GetOperandAs<uint32_t>(type_index);
+  auto value_type = _.FindDef(value_id);
   if (spvIsVulkanEnv(_.context()->target_env)) {
-    const auto type_index = 2;
-    const auto value_id = result_type->GetOperandAs<uint32_t>(type_index);
-    auto value_type = _.FindDef(value_id);
     // OpTypeRuntimeArray should only ever be in a container like OpTypeStruct,
     // so should never appear as a bare variable.
     // Unless the module has the RuntimeDescriptorArrayEXT capability.
@@ -680,9 +705,6 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
 
   // WebGPU specific validation rules for OpTypeRuntimeArray
   if (spvIsWebGPUEnv(_.context()->target_env)) {
-    const auto type_index = 2;
-    const auto value_id = result_type->GetOperandAs<uint32_t>(type_index);
-    auto value_type = _.FindDef(value_id);
     // OpTypeRuntimeArray should only ever be in an OpTypeStruct,
     // so should never appear as a bare variable.
     if (value_type && value_type->opcode() == SpvOpTypeRuntimeArray) {
@@ -725,6 +747,119 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
               "allocated "
            << "in Function or Private storage classes or as function "
               "parameters";
+  }
+
+  if (_.HasCapability(SpvCapabilityShader)) {
+    // Don't allow variables containing 16-bit elements without the appropriate
+    // capabilities.
+    if ((!_.HasCapability(SpvCapabilityInt16) &&
+         _.ContainsSizedIntOrFloatType(value_id, SpvOpTypeInt, 16)) ||
+        (!_.HasCapability(SpvCapabilityFloat16) &&
+         _.ContainsSizedIntOrFloatType(value_id, SpvOpTypeFloat, 16))) {
+      auto underlying_type = value_type;
+      while (underlying_type->opcode() == SpvOpTypePointer) {
+        storage_class = underlying_type->GetOperandAs<SpvStorageClass>(1u);
+        underlying_type =
+            _.FindDef(underlying_type->GetOperandAs<uint32_t>(2u));
+      }
+      bool storage_class_ok = true;
+      std::string sc_name = _.grammar().lookupOperandName(
+          SPV_OPERAND_TYPE_STORAGE_CLASS, storage_class);
+      switch (storage_class) {
+        case SpvStorageClassStorageBuffer:
+        case SpvStorageClassPhysicalStorageBufferEXT:
+          if (!_.HasCapability(SpvCapabilityStorageBuffer16BitAccess)) {
+            storage_class_ok = false;
+          }
+          break;
+        case SpvStorageClassUniform:
+          if (!_.HasCapability(
+                  SpvCapabilityUniformAndStorageBuffer16BitAccess)) {
+            if (underlying_type->opcode() == SpvOpTypeArray ||
+                underlying_type->opcode() == SpvOpTypeRuntimeArray) {
+              underlying_type =
+                  _.FindDef(underlying_type->GetOperandAs<uint32_t>(1u));
+            }
+            if (!_.HasCapability(SpvCapabilityStorageBuffer16BitAccess) ||
+                !_.HasDecoration(underlying_type->id(),
+                                 SpvDecorationBufferBlock)) {
+              storage_class_ok = false;
+            }
+          }
+          break;
+        case SpvStorageClassPushConstant:
+          if (!_.HasCapability(SpvCapabilityStoragePushConstant16)) {
+            storage_class_ok = false;
+          }
+          break;
+        case SpvStorageClassInput:
+        case SpvStorageClassOutput:
+          if (!_.HasCapability(SpvCapabilityStorageInputOutput16)) {
+            storage_class_ok = false;
+          }
+          break;
+        default:
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "Cannot allocate a variable containing a 16-bit type in "
+                 << sc_name << " storage class";
+      }
+      if (!storage_class_ok) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "Allocating a variable containing a 16-bit element in "
+               << sc_name << " storage class requires an additional capability";
+      }
+    }
+    // Don't allow variables containing 8-bit elements without the appropriate
+    // capabilities.
+    if (!_.HasCapability(SpvCapabilityInt8) &&
+        _.ContainsSizedIntOrFloatType(value_id, SpvOpTypeInt, 8)) {
+      auto underlying_type = value_type;
+      while (underlying_type->opcode() == SpvOpTypePointer) {
+        storage_class = underlying_type->GetOperandAs<SpvStorageClass>(1u);
+        underlying_type =
+            _.FindDef(underlying_type->GetOperandAs<uint32_t>(2u));
+      }
+      bool storage_class_ok = true;
+      std::string sc_name = _.grammar().lookupOperandName(
+          SPV_OPERAND_TYPE_STORAGE_CLASS, storage_class);
+      switch (storage_class) {
+        case SpvStorageClassStorageBuffer:
+        case SpvStorageClassPhysicalStorageBufferEXT:
+          if (!_.HasCapability(SpvCapabilityStorageBuffer8BitAccess)) {
+            storage_class_ok = false;
+          }
+          break;
+        case SpvStorageClassUniform:
+          if (!_.HasCapability(
+                  SpvCapabilityUniformAndStorageBuffer8BitAccess)) {
+            if (underlying_type->opcode() == SpvOpTypeArray ||
+                underlying_type->opcode() == SpvOpTypeRuntimeArray) {
+              underlying_type =
+                  _.FindDef(underlying_type->GetOperandAs<uint32_t>(1u));
+            }
+            if (!_.HasCapability(SpvCapabilityStorageBuffer8BitAccess) ||
+                !_.HasDecoration(underlying_type->id(),
+                                 SpvDecorationBufferBlock)) {
+              storage_class_ok = false;
+            }
+          }
+          break;
+        case SpvStorageClassPushConstant:
+          if (!_.HasCapability(SpvCapabilityStoragePushConstant8)) {
+            storage_class_ok = false;
+          }
+          break;
+        default:
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "Cannot allocate a variable containing a 8-bit type in "
+                 << sc_name << " storage class";
+      }
+      if (!storage_class_ok) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "Allocating a variable containing a 8-bit element in "
+               << sc_name << " storage class requires an additional capability";
+      }
+    }
   }
 
   return SPV_SUCCESS;
@@ -771,6 +906,18 @@ spv_result_t ValidateLoad(ValidationState_t& _, const Instruction* inst) {
   }
 
   if (auto error = CheckMemoryAccess(_, inst, 3)) return error;
+
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id()) &&
+      result_type->opcode() != SpvOpTypePointer) {
+    if (result_type->opcode() != SpvOpTypeInt &&
+        result_type->opcode() != SpvOpTypeFloat &&
+        result_type->opcode() != SpvOpTypeVector &&
+        result_type->opcode() != SpvOpTypeMatrix) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "8- or 16-bit loads must be a scalar, vector or matrix type";
+    }
+  }
 
   return SPV_SUCCESS;
 }
@@ -823,6 +970,25 @@ spv_result_t ValidateStore(ValidationState_t& _, const Instruction* inst) {
              << "OpStore Pointer <id> '" << _.getIdName(pointer_id)
              << "' storage class is read-only";
     }
+
+    if (spvIsVulkanEnv(_.context()->target_env) &&
+        storage_class == SpvStorageClassUniform) {
+      auto base_ptr = _.TracePointer(pointer);
+      if (base_ptr->opcode() == SpvOpVariable) {
+        // If it's not a variable a different check should catch the problem.
+        auto base_type = _.FindDef(base_ptr->GetOperandAs<uint32_t>(0));
+        // Get the pointed-to type.
+        base_type = _.FindDef(base_type->GetOperandAs<uint32_t>(2u));
+        if (base_type->opcode() == SpvOpTypeArray ||
+            base_type->opcode() == SpvOpTypeRuntimeArray) {
+          base_type = _.FindDef(base_type->GetOperandAs<uint32_t>(1u));
+        }
+        if (_.HasDecoration(base_type->id(), SpvDecorationBlock)) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "In the Vulkan environment, cannot store to Uniform Blocks";
+        }
+      }
+    }
   }
 
   const auto object_index = 1;
@@ -860,6 +1026,63 @@ spv_result_t ValidateStore(ValidationState_t& _, const Instruction* inst) {
 
   if (auto error = CheckMemoryAccess(_, inst, 2)) return error;
 
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id()) &&
+      object_type->opcode() != SpvOpTypePointer) {
+    if (object_type->opcode() != SpvOpTypeInt &&
+        object_type->opcode() != SpvOpTypeFloat &&
+        object_type->opcode() != SpvOpTypeVector &&
+        object_type->opcode() != SpvOpTypeMatrix) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "8- or 16-bit stores must be a scalar, vector or matrix type";
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateCopyMemoryMemoryAccess(ValidationState_t& _,
+                                            const Instruction* inst) {
+  assert(inst->opcode() == SpvOpCopyMemory ||
+         inst->opcode() == SpvOpCopyMemorySized);
+  const uint32_t first_access_index = inst->opcode() == SpvOpCopyMemory ? 2 : 3;
+  if (inst->operands().size() > first_access_index) {
+    if (auto error = CheckMemoryAccess(_, inst, first_access_index))
+      return error;
+
+    const auto first_access = inst->GetOperandAs<uint32_t>(first_access_index);
+    const uint32_t second_access_index =
+        first_access_index + MemoryAccessNumWords(first_access);
+    if (inst->operands().size() > second_access_index) {
+      if (_.features().copy_memory_permits_two_memory_accesses) {
+        if (auto error = CheckMemoryAccess(_, inst, second_access_index))
+          return error;
+
+        // In the two-access form in SPIR-V 1.4 and later:
+        //  - the first is the target (write) access and it can't have
+        //  make-visible.
+        //  - the second is the source (read) access and it can't have
+        //  make-available.
+        if (first_access & SpvMemoryAccessMakePointerVisibleKHRMask) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Target memory access must not include "
+                    "MakePointerVisibleKHR";
+        }
+        const auto second_access =
+            inst->GetOperandAs<uint32_t>(second_access_index);
+        if (second_access & SpvMemoryAccessMakePointerAvailableKHRMask) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Source memory access must not include "
+                    "MakePointerAvailableKHR";
+        }
+      } else {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << spvOpcodeString(static_cast<SpvOp>(inst->opcode()))
+               << " with two memory access operands requires SPIR-V 1.4 or "
+                  "later";
+      }
+    }
+  }
   return SPV_SUCCESS;
 }
 
@@ -968,6 +1191,19 @@ spv_result_t ValidateCopyMemory(ValidationState_t& _, const Instruction* inst) {
 
     if (auto error = CheckMemoryAccess(_, inst, 3)) return error;
   }
+  if (auto error = ValidateCopyMemoryMemoryAccess(_, inst)) return error;
+
+  // Get past the pointers to avoid checking a pointer copy.
+  auto sub_type = _.FindDef(target_pointer_type->GetOperandAs<uint32_t>(2));
+  while (sub_type->opcode() == SpvOpTypePointer) {
+    sub_type = _.FindDef(sub_type->GetOperandAs<uint32_t>(2));
+  }
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(sub_type->id())) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Cannot copy memory of objects containing 8- or 16-bit types";
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -1326,6 +1562,60 @@ spv_result_t ValidateCooperativeMatrixLoadStoreNV(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidatePtrComparison(ValidationState_t& _,
+                                   const Instruction* inst) {
+  if (_.addressing_model() == SpvAddressingModelLogical &&
+      !_.features().variable_pointers_storage_buffer) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Instruction cannot be used without a variable pointers "
+              "capability";
+  }
+
+  const auto result_type = _.FindDef(inst->type_id());
+  if (inst->opcode() == SpvOpPtrDiff) {
+    if (!result_type || result_type->opcode() != SpvOpTypeInt) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Result Type must be an integer scalar";
+    }
+  } else {
+    if (!result_type || result_type->opcode() != SpvOpTypeBool) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Result Type must be OpTypeBool";
+    }
+  }
+
+  const auto op1 = _.FindDef(inst->GetOperandAs<uint32_t>(2u));
+  const auto op2 = _.FindDef(inst->GetOperandAs<uint32_t>(3u));
+  if (!op1 || !op2 || op1->type_id() != op2->type_id()) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "The types of Operand 1 and Operand 2 must match";
+  }
+  const auto op1_type = _.FindDef(op1->type_id());
+  if (!op1_type || op1_type->opcode() != SpvOpTypePointer) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Operand type must be a pointer";
+  }
+
+  SpvStorageClass sc = op1_type->GetOperandAs<SpvStorageClass>(1u);
+  if (_.addressing_model() == SpvAddressingModelLogical) {
+    if (sc != SpvStorageClassWorkgroup && sc != SpvStorageClassStorageBuffer) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Invalid pointer storage class";
+    }
+
+    if (sc == SpvStorageClassWorkgroup && !_.features().variable_pointers) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Workgroup storage class pointer requires VariablePointers "
+                "capability to be specified";
+    }
+  } else if (sc == SpvStorageClassPhysicalStorageBuffer) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Cannot use a pointer in the PhysicalStorageBuffer storage class";
+  }
+
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 spv_result_t MemoryPass(ValidationState_t& _, const Instruction* inst) {
@@ -1361,6 +1651,11 @@ spv_result_t MemoryPass(ValidationState_t& _, const Instruction* inst) {
       break;
     case SpvOpCooperativeMatrixLengthNV:
       if (auto error = ValidateCooperativeMatrixLengthNV(_, inst)) return error;
+      break;
+    case SpvOpPtrEqual:
+    case SpvOpPtrNotEqual:
+    case SpvOpPtrDiff:
+      if (auto error = ValidatePtrComparison(_, inst)) return error;
       break;
     case SpvOpImageTexelPointer:
     case SpvOpGenericPtrMemSemantics:

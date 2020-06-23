@@ -1,9 +1,8 @@
 -- Copyright 2019 云风 https://github.com/cloudwu . All rights reserved.
 -- License (the same with bgfx) : https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 
-local idl     = require "idl"
 local codegen = require "codegen"
-local doxygen = require "doxygen"
+local idl = codegen.idl "bgfx.idl"
 
 local func_actions = {
 
@@ -20,6 +19,7 @@ local func_actions = {
 
 local type_actions = {
 
+	cflags    = "\n",
 	enums     = "\n",
 	cenums    = "\n",
 	structs   = "\n",
@@ -29,14 +29,6 @@ local type_actions = {
 	funcptrs  = "\n",
 	cfuncptrs = "\n",
 }
-
-do
-	local source = doxygen.load "bgfx.idl"
-	local f = assert(load(source, "bgfx.idl" , "t", idl))
-	f()
-end
-
-codegen.nameconversion(idl.types, idl.funcs)
 
 local function cfunc(f)
 	return function(func)
@@ -173,6 +165,12 @@ function typegen.cenums(typedef)
 	end
 end
 
+function typegen.cflags(typedef)
+	if typedef.flag then
+		return add_doxygen(typedef, codegen.gen_flag_cdefine(typedef), true)
+	end
+end
+
 function typegen.structs(typedef)
 	if typedef.struct and not typedef.namespace then
 		local methods = typedef.methods
@@ -254,6 +252,8 @@ local function codes()
 	for k, indent in pairs(type_actions) do
 		temp[k] = table.concat(temp[k], indent)
 	end
+
+	temp.version = string.format("#define BGFX_API_VERSION UINT32_C(%d)", idl._version or 0)
 
 	return temp
 end

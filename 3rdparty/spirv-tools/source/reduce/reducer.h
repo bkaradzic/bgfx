@@ -50,7 +50,7 @@ class Reducer {
   using InterestingnessFunction =
       std::function<bool(const std::vector<uint32_t>&, uint32_t)>;
 
-  // Constructs an instance with the given target |env|, which is used to
+  // Constructs an instance with the given target |target_env|, which is used to
   // decode the binary to be reduced later.
   //
   // The constructed instance will have an empty message consumer, which just
@@ -59,7 +59,7 @@ class Reducer {
   //
   // The constructed instance also needs to have an interestingness function
   // set and some reduction passes added to it in order to be useful.
-  explicit Reducer(spv_target_env env);
+  explicit Reducer(spv_target_env target_env);
 
   // Disables copy/move constructor/assignment operations.
   Reducer(const Reducer&) = delete;
@@ -86,17 +86,34 @@ class Reducer {
   // that will be iterated over.
   void AddReductionPass(std::unique_ptr<ReductionOpportunityFinder>&& finder);
 
+  // Adds a cleanup reduction pass based on the given finder to the sequence of
+  // passes that will run after other passes.
+  void AddCleanupReductionPass(
+      std::unique_ptr<ReductionOpportunityFinder>&& finder);
+
   // Reduces the given SPIR-V module |binary_out|.
   // The reduced binary ends up in |binary_out|.
   // A status is returned.
   ReductionResultStatus Run(std::vector<uint32_t>&& binary_in,
                             std::vector<uint32_t>* binary_out,
                             spv_const_reducer_options options,
-                            spv_validator_options validator_options) const;
+                            spv_validator_options validator_options);
 
  private:
-  struct Impl;                  // Opaque struct for holding internal data.
-  std::unique_ptr<Impl> impl_;  // Unique pointer to internal data.
+  static bool ReachedStepLimit(uint32_t current_step,
+                               spv_const_reducer_options options);
+
+  ReductionResultStatus RunPasses(
+      std::vector<std::unique_ptr<ReductionPass>>* passes,
+      spv_const_reducer_options options,
+      spv_validator_options validator_options, const SpirvTools& tools,
+      std::vector<uint32_t>* current_binary, uint32_t* reductions_applied);
+
+  const spv_target_env target_env_;
+  MessageConsumer consumer_;
+  InterestingnessFunction interestingness_function_;
+  std::vector<std::unique_ptr<ReductionPass>> passes_;
+  std::vector<std::unique_ptr<ReductionPass>> cleanup_passes_;
 };
 
 }  // namespace reduce

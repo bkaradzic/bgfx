@@ -28,12 +28,7 @@ namespace opt {
 // external design may change as the layer evolves.
 class InstBindlessCheckPass : public InstrumentPass {
  public:
-  // For test harness only
-  InstBindlessCheckPass()
-      : InstrumentPass(7, 23, kInstValidationIdBindless),
-        input_length_enabled_(true),
-        input_init_enabled_(true) {}
-  // For all other interfaces
+  // Preferred Interface
   InstBindlessCheckPass(uint32_t desc_set, uint32_t shader_id,
                         bool input_length_enable, bool input_init_enable)
       : InstrumentPass(desc_set, shader_id, kInstValidationIdBindless),
@@ -118,6 +113,7 @@ class InstBindlessCheckPass : public InstrumentPass {
   // AnalyzeDescriptorReference. It is necessary and sufficient for further
   // analysis and regeneration of the reference.
   typedef struct ref_analysis {
+    uint32_t desc_load_id;
     uint32_t image_id;
     uint32_t load_id;
     uint32_t ptr_id;
@@ -131,9 +127,12 @@ class InstBindlessCheckPass : public InstrumentPass {
   uint32_t CloneOriginalReference(ref_analysis* ref,
                                   InstructionBuilder* builder);
 
-  // If |inst| references through a descriptor, (ie references into an image
-  // or buffer), return the id of the value it references. Else return 0.
-  uint32_t GetDescriptorValueId(Instruction* inst);
+  // If |inst| references through an image, return the id of the image it
+  // references through. Else return 0.
+  uint32_t GetImageId(Instruction* inst);
+
+  // Get descriptor type inst of variable |var_inst|.
+  Instruction* GetDescriptorTypeInst(Instruction* var_inst);
 
   // Analyze descriptor reference |ref_inst| and save components into |ref|.
   // Return true if |ref_inst| is a descriptor reference, false otherwise.
@@ -156,9 +155,6 @@ class InstBindlessCheckPass : public InstrumentPass {
   // Apply GenBoundsCheckCode to every instruction in module. Then apply
   // GenInitCheckCode to every instruction in module.
   Pass::Status ProcessImpl();
-
-  // True if VK_EXT_descriptor_indexing is defined
-  bool ext_descriptor_indexing_defined_;
 
   // Enable instrumentation of runtime array length checking
   bool input_length_enabled_;

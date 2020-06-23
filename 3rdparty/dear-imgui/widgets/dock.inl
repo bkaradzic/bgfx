@@ -691,7 +691,7 @@ namespace ImGui
 				ImU32 text_color = GetColorU32(ImGuiCol_Text);
 				ImU32 text_color_disabled = GetColorU32(ImGuiCol_TextDisabled);
 				float line_height = GetTextLineHeightWithSpacing();
-				float tab_base;
+				float tab_base = 0.0f;
 
 				drawTabbarListButton(dock);
 
@@ -706,7 +706,7 @@ namespace ImGui
 						dock_tab->setActive();
 					}
 
-					if (IsItemActive() && IsMouseDragging())
+					if (IsItemActive() && IsMouseDragging(0))
 					{
 						m_drag_offset = GetMousePos() - dock_tab->pos;
 						doUndock(*dock_tab);

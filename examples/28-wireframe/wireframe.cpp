@@ -271,8 +271,8 @@ struct Uniforms
 class ExampleWireframe : public entry::AppI
 {
 public:
-	ExampleWireframe(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleWireframe(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -521,4 +521,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleWireframe, "28-wirefame", "Drawing wireframe mesh.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleWireframe
+	, "28-wirefame"
+	, "Drawing wireframe mesh."
+	, "https://bkaradzic.github.io/bgfx/examples.html#wireframe"
+	);

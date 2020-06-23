@@ -17,6 +17,7 @@
 #include "instrument_pass.h"
 
 #include "source/cfa.h"
+#include "source/spirv_constant.h"
 
 namespace {
 
@@ -106,7 +107,7 @@ void InstrumentPass::GenDebugOutputFieldCode(uint32_t base_offset_id,
       builder->AddBinaryOp(GetUintId(), SpvOpIAdd, base_offset_id,
                            builder->GetUintConstantId(field_offset));
   uint32_t buf_id = GetOutputBufferId();
-  uint32_t buf_uint_ptr_id = GetBufferUintPtrId();
+  uint32_t buf_uint_ptr_id = GetOutputBufferPtrId();
   Instruction* achain_inst =
       builder->AddTernaryOp(buf_uint_ptr_id, SpvOpAccessChain, buf_id,
                             builder->GetUintConstantId(kDebugOutputDataOffset),
@@ -142,22 +143,21 @@ void InstrumentPass::GenFragCoordEltDebugOutputCode(
                           element_val_inst->result_id(), builder);
 }
 
+uint32_t InstrumentPass::GenVarLoad(uint32_t var_id,
+                                    InstructionBuilder* builder) {
+  Instruction* var_inst = get_def_use_mgr()->GetDef(var_id);
+  uint32_t type_id = GetPointeeTypeId(var_inst);
+  Instruction* load_inst = builder->AddUnaryOp(type_id, SpvOpLoad, var_id);
+  return load_inst->result_id();
+}
+
 void InstrumentPass::GenBuiltinOutputCode(uint32_t builtin_id,
                                           uint32_t builtin_off,
                                           uint32_t base_offset_id,
                                           InstructionBuilder* builder) {
   // Load and store builtin
-  Instruction* load_inst =
-      builder->AddUnaryOp(GetUintId(), SpvOpLoad, builtin_id);
-  GenDebugOutputFieldCode(base_offset_id, builtin_off, load_inst->result_id(),
-                          builder);
-}
-
-void InstrumentPass::GenUintNullOutputCode(uint32_t field_off,
-                                           uint32_t base_offset_id,
-                                           InstructionBuilder* builder) {
-  GenDebugOutputFieldCode(base_offset_id, field_off,
-                          builder->GetNullId(GetUintId()), builder);
+  uint32_t load_id = GenVarLoad(builtin_id, builder);
+  GenDebugOutputFieldCode(base_offset_id, builtin_off, load_id, builder);
 }
 
 void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
@@ -167,42 +167,100 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
   switch (stage_idx) {
     case SpvExecutionModelVertex: {
       // Load and store VertexId and InstanceId
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInVertexIndex),
-                           kInstVertOutVertexIndex, base_offset_id, builder);
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInInstanceIndex),
-                           kInstVertOutInstanceIndex, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInVertexIndex),
+          kInstVertOutVertexIndex, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInInstanceIndex),
+          kInstVertOutInstanceIndex, base_offset_id, builder);
     } break;
     case SpvExecutionModelGLCompute: {
-      // Load and store GlobalInvocationId. Second word is unused; store zero.
-      GenBuiltinOutputCode(
-          context()->GetBuiltinVarId(SpvBuiltInGlobalInvocationId),
-          kInstCompOutGlobalInvocationId, base_offset_id, builder);
-      GenUintNullOutputCode(kInstCompOutUnused, base_offset_id, builder);
+      // Load and store GlobalInvocationId.
+      uint32_t load_id = GenVarLoad(
+          context()->GetBuiltinInputVarId(SpvBuiltInGlobalInvocationId),
+          builder);
+      Instruction* x_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, load_id, 0);
+      Instruction* y_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, load_id, 1);
+      Instruction* z_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, load_id, 2);
+      GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdX,
+                              x_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdY,
+                              y_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdZ,
+                              z_inst->result_id(), builder);
     } break;
     case SpvExecutionModelGeometry: {
       // Load and store PrimitiveId and InvocationId.
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInPrimitiveId),
-                           kInstGeomOutPrimitiveId, base_offset_id, builder);
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInInvocationId),
-                           kInstGeomOutInvocationId, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInPrimitiveId),
+          kInstGeomOutPrimitiveId, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInInvocationId),
+          kInstGeomOutInvocationId, base_offset_id, builder);
     } break;
-    case SpvExecutionModelTessellationControl:
+    case SpvExecutionModelTessellationControl: {
+      // Load and store InvocationId and PrimitiveId
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInInvocationId),
+          kInstTessCtlOutInvocationId, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInPrimitiveId),
+          kInstTessCtlOutPrimitiveId, base_offset_id, builder);
+    } break;
     case SpvExecutionModelTessellationEvaluation: {
-      // Load and store InvocationId. Second word is unused; store zero.
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInInvocationId),
-                           kInstTessOutInvocationId, base_offset_id, builder);
-      GenUintNullOutputCode(kInstTessOutUnused, base_offset_id, builder);
+      // Load and store PrimitiveId and TessCoord.uv
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInPrimitiveId),
+          kInstTessEvalOutPrimitiveId, base_offset_id, builder);
+      uint32_t load_id = GenVarLoad(
+          context()->GetBuiltinInputVarId(SpvBuiltInTessCoord), builder);
+      Instruction* uvec3_cast_inst =
+          builder->AddUnaryOp(GetVec3UintId(), SpvOpBitcast, load_id);
+      uint32_t uvec3_cast_id = uvec3_cast_inst->result_id();
+      Instruction* u_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, uvec3_cast_id, 0);
+      Instruction* v_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, uvec3_cast_id, 1);
+      GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordU,
+                              u_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordV,
+                              v_inst->result_id(), builder);
     } break;
     case SpvExecutionModelFragment: {
       // Load FragCoord and convert to Uint
-      Instruction* frag_coord_inst =
-          builder->AddUnaryOp(GetVec4FloatId(), SpvOpLoad,
-                              context()->GetBuiltinVarId(SpvBuiltInFragCoord));
+      Instruction* frag_coord_inst = builder->AddUnaryOp(
+          GetVec4FloatId(), SpvOpLoad,
+          context()->GetBuiltinInputVarId(SpvBuiltInFragCoord));
       Instruction* uint_frag_coord_inst = builder->AddUnaryOp(
           GetVec4UintId(), SpvOpBitcast, frag_coord_inst->result_id());
       for (uint32_t u = 0; u < 2u; ++u)
         GenFragCoordEltDebugOutputCode(
             base_offset_id, uint_frag_coord_inst->result_id(), u, builder);
+    } break;
+    case SpvExecutionModelRayGenerationNV:
+    case SpvExecutionModelIntersectionNV:
+    case SpvExecutionModelAnyHitNV:
+    case SpvExecutionModelClosestHitNV:
+    case SpvExecutionModelMissNV:
+    case SpvExecutionModelCallableNV: {
+      // Load and store LaunchIdNV.
+      uint32_t launch_id = GenVarLoad(
+          context()->GetBuiltinInputVarId(SpvBuiltInLaunchIdNV), builder);
+      Instruction* x_launch_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, launch_id, 0);
+      Instruction* y_launch_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, launch_id, 1);
+      Instruction* z_launch_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, launch_id, 2);
+      GenDebugOutputFieldCode(base_offset_id, kInstRayTracingOutLaunchIdX,
+                              x_launch_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstRayTracingOutLaunchIdY,
+                              y_launch_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstRayTracingOutLaunchIdZ,
+                              z_launch_inst->result_id(), builder);
     } break;
     default: { assert(false && "unsupported stage"); } break;
   }
@@ -240,29 +298,36 @@ void InstrumentPass::CloneSameBlockOps(
     std::unordered_map<uint32_t, uint32_t>* same_blk_post,
     std::unordered_map<uint32_t, Instruction*>* same_blk_pre,
     BasicBlock* block_ptr) {
-  (*inst)->ForEachInId(
-      [&same_blk_post, &same_blk_pre, &block_ptr, this](uint32_t* iid) {
-        const auto map_itr = (*same_blk_post).find(*iid);
-        if (map_itr == (*same_blk_post).end()) {
-          const auto map_itr2 = (*same_blk_pre).find(*iid);
-          if (map_itr2 != (*same_blk_pre).end()) {
-            // Clone pre-call same-block ops, map result id.
-            const Instruction* in_inst = map_itr2->second;
-            std::unique_ptr<Instruction> sb_inst(in_inst->Clone(context()));
-            CloneSameBlockOps(&sb_inst, same_blk_post, same_blk_pre, block_ptr);
-            const uint32_t rid = sb_inst->result_id();
-            const uint32_t nid = this->TakeNextId();
-            get_decoration_mgr()->CloneDecorations(rid, nid);
-            sb_inst->SetResultId(nid);
-            (*same_blk_post)[rid] = nid;
-            *iid = nid;
-            block_ptr->AddInstruction(std::move(sb_inst));
-          }
-        } else {
-          // Reset same-block op operand.
-          *iid = map_itr->second;
-        }
-      });
+  bool changed = false;
+  (*inst)->ForEachInId([&same_blk_post, &same_blk_pre, &block_ptr, &changed,
+                        this](uint32_t* iid) {
+    const auto map_itr = (*same_blk_post).find(*iid);
+    if (map_itr == (*same_blk_post).end()) {
+      const auto map_itr2 = (*same_blk_pre).find(*iid);
+      if (map_itr2 != (*same_blk_pre).end()) {
+        // Clone pre-call same-block ops, map result id.
+        const Instruction* in_inst = map_itr2->second;
+        std::unique_ptr<Instruction> sb_inst(in_inst->Clone(context()));
+        const uint32_t rid = sb_inst->result_id();
+        const uint32_t nid = this->TakeNextId();
+        get_decoration_mgr()->CloneDecorations(rid, nid);
+        sb_inst->SetResultId(nid);
+        get_def_use_mgr()->AnalyzeInstDefUse(&*sb_inst);
+        (*same_blk_post)[rid] = nid;
+        *iid = nid;
+        changed = true;
+        CloneSameBlockOps(&sb_inst, same_blk_post, same_blk_pre, block_ptr);
+        block_ptr->AddInstruction(std::move(sb_inst));
+      }
+    } else {
+      // Reset same-block op operand if necessary
+      if (*iid != map_itr->second) {
+        *iid = map_itr->second;
+        changed = true;
+      }
+    }
+  });
+  if (changed) get_def_use_mgr()->AnalyzeInstUse(&**inst);
 }
 
 void InstrumentPass::UpdateSucceedingPhis(
@@ -288,19 +353,35 @@ void InstrumentPass::UpdateSucceedingPhis(
       });
 }
 
-// Return id for output buffer uint ptr type
-uint32_t InstrumentPass::GetBufferUintPtrId() {
-  if (buffer_uint_ptr_id_ == 0) {
-    buffer_uint_ptr_id_ = context()->get_type_mgr()->FindPointerToType(
+uint32_t InstrumentPass::GetOutputBufferPtrId() {
+  if (output_buffer_ptr_id_ == 0) {
+    output_buffer_ptr_id_ = context()->get_type_mgr()->FindPointerToType(
         GetUintId(), SpvStorageClassStorageBuffer);
   }
-  return buffer_uint_ptr_id_;
+  return output_buffer_ptr_id_;
+}
+
+uint32_t InstrumentPass::GetInputBufferTypeId() {
+  return (validation_id_ == kInstValidationIdBuffAddr) ? GetUint64Id()
+                                                       : GetUintId();
+}
+
+uint32_t InstrumentPass::GetInputBufferPtrId() {
+  if (input_buffer_ptr_id_ == 0) {
+    input_buffer_ptr_id_ = context()->get_type_mgr()->FindPointerToType(
+        GetInputBufferTypeId(), SpvStorageClassStorageBuffer);
+  }
+  return input_buffer_ptr_id_;
 }
 
 uint32_t InstrumentPass::GetOutputBufferBinding() {
   switch (validation_id_) {
     case kInstValidationIdBindless:
       return kDebugOutputBindingStream;
+    case kInstValidationIdBuffAddr:
+      return kDebugOutputBindingStream;
+    case kInstValidationIdDebugPrintf:
+      return kDebugOutputPrintfStream;
     default:
       assert(false && "unexpected validation id");
   }
@@ -311,20 +392,24 @@ uint32_t InstrumentPass::GetInputBufferBinding() {
   switch (validation_id_) {
     case kInstValidationIdBindless:
       return kDebugInputBindingBindless;
+    case kInstValidationIdBuffAddr:
+      return kDebugInputBindingBuffAddr;
     default:
       assert(false && "unexpected validation id");
   }
   return 0;
 }
 
-analysis::Type* InstrumentPass::GetUintRuntimeArrayType(
-    analysis::DecorationManager* deco_mgr, analysis::TypeManager* type_mgr) {
-  if (uint_rarr_ty_ == nullptr) {
-    analysis::Integer uint_ty(32, false);
+analysis::Type* InstrumentPass::GetUintXRuntimeArrayType(
+    uint32_t width, analysis::Type** rarr_ty) {
+  if (*rarr_ty == nullptr) {
+    analysis::DecorationManager* deco_mgr = get_decoration_mgr();
+    analysis::TypeManager* type_mgr = context()->get_type_mgr();
+    analysis::Integer uint_ty(width, false);
     analysis::Type* reg_uint_ty = type_mgr->GetRegisteredType(&uint_ty);
     analysis::RuntimeArray uint_rarr_ty_tmp(reg_uint_ty);
-    uint_rarr_ty_ = type_mgr->GetRegisteredType(&uint_rarr_ty_tmp);
-    uint32_t uint_arr_ty_id = type_mgr->GetTypeInstruction(uint_rarr_ty_);
+    *rarr_ty = type_mgr->GetRegisteredType(&uint_rarr_ty_tmp);
+    uint32_t uint_arr_ty_id = type_mgr->GetTypeInstruction(*rarr_ty);
     // By the Vulkan spec, a pre-existing RuntimeArray of uint must be part of
     // a block, and will therefore be decorated with an ArrayStride. Therefore
     // the undecorated type returned here will not be pre-existing and can
@@ -333,23 +418,22 @@ analysis::Type* InstrumentPass::GetUintRuntimeArrayType(
     // invalidated after this pass.
     assert(context()->get_def_use_mgr()->NumUses(uint_arr_ty_id) == 0 &&
            "used RuntimeArray type returned");
-    deco_mgr->AddDecorationVal(uint_arr_ty_id, SpvDecorationArrayStride, 4u);
+    deco_mgr->AddDecorationVal(uint_arr_ty_id, SpvDecorationArrayStride,
+                               width / 8u);
   }
-  return uint_rarr_ty_;
+  return *rarr_ty;
+}
+
+analysis::Type* InstrumentPass::GetUintRuntimeArrayType(uint32_t width) {
+  analysis::Type** rarr_ty =
+      (width == 64) ? &uint64_rarr_ty_ : &uint32_rarr_ty_;
+  return GetUintXRuntimeArrayType(width, rarr_ty);
 }
 
 void InstrumentPass::AddStorageBufferExt() {
   if (storage_buffer_ext_defined_) return;
   if (!get_feature_mgr()->HasExtension(kSPV_KHR_storage_buffer_storage_class)) {
-    const std::string ext_name("SPV_KHR_storage_buffer_storage_class");
-    const auto num_chars = ext_name.size();
-    // Compute num words, accommodate the terminating null character.
-    const auto num_words = (num_chars + 1 + 3) / 4;
-    std::vector<uint32_t> ext_words(num_words, 0u);
-    std::memcpy(ext_words.data(), ext_name.data(), num_chars);
-    context()->AddExtension(std::unique_ptr<Instruction>(
-        new Instruction(context(), SpvOpExtension, 0u, 0u,
-                        {{SPV_OPERAND_TYPE_LITERAL_STRING, ext_words}})));
+    context()->AddExtension("SPV_KHR_storage_buffer_storage_class");
   }
   storage_buffer_ext_defined_ = true;
 }
@@ -360,8 +444,7 @@ uint32_t InstrumentPass::GetOutputBufferId() {
     // If not created yet, create one
     analysis::DecorationManager* deco_mgr = get_decoration_mgr();
     analysis::TypeManager* type_mgr = context()->get_type_mgr();
-    analysis::Type* reg_uint_rarr_ty =
-        GetUintRuntimeArrayType(deco_mgr, type_mgr);
+    analysis::Type* reg_uint_rarr_ty = GetUintRuntimeArrayType(32);
     analysis::Integer uint_ty(32, false);
     analysis::Type* reg_uint_ty = type_mgr->GetRegisteredType(&uint_ty);
     analysis::Struct buf_ty({reg_uint_ty, reg_uint_rarr_ty});
@@ -393,6 +476,13 @@ uint32_t InstrumentPass::GetOutputBufferId() {
     deco_mgr->AddDecorationVal(output_buffer_id_, SpvDecorationBinding,
                                GetOutputBufferBinding());
     AddStorageBufferExt();
+    if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+      // Add the new buffer to all entry points.
+      for (auto& entry : get_module()->entry_points()) {
+        entry.AddOperand({SPV_OPERAND_TYPE_ID, {output_buffer_id_}});
+        context()->AnalyzeUses(&entry);
+      }
+    }
   }
   return output_buffer_id_;
 }
@@ -402,8 +492,8 @@ uint32_t InstrumentPass::GetInputBufferId() {
     // If not created yet, create one
     analysis::DecorationManager* deco_mgr = get_decoration_mgr();
     analysis::TypeManager* type_mgr = context()->get_type_mgr();
-    analysis::Type* reg_uint_rarr_ty =
-        GetUintRuntimeArrayType(deco_mgr, type_mgr);
+    uint32_t width = (validation_id_ == kInstValidationIdBuffAddr) ? 64u : 32u;
+    analysis::Type* reg_uint_rarr_ty = GetUintRuntimeArrayType(width);
     analysis::Struct buf_ty({reg_uint_rarr_ty});
     analysis::Type* reg_buf_ty = type_mgr->GetRegisteredType(&buf_ty);
     uint32_t ibufTyId = type_mgr->GetTypeInstruction(reg_buf_ty);
@@ -430,8 +520,25 @@ uint32_t InstrumentPass::GetInputBufferId() {
     deco_mgr->AddDecorationVal(input_buffer_id_, SpvDecorationBinding,
                                GetInputBufferBinding());
     AddStorageBufferExt();
+    if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+      // Add the new buffer to all entry points.
+      for (auto& entry : get_module()->entry_points()) {
+        entry.AddOperand({SPV_OPERAND_TYPE_ID, {input_buffer_id_}});
+        context()->AnalyzeUses(&entry);
+      }
+    }
   }
   return input_buffer_id_;
+}
+
+uint32_t InstrumentPass::GetFloatId() {
+  if (float_id_ == 0) {
+    analysis::TypeManager* type_mgr = context()->get_type_mgr();
+    analysis::Float float_ty(32);
+    analysis::Type* reg_float_ty = type_mgr->GetRegisteredType(&float_ty);
+    float_id_ = type_mgr->GetTypeInstruction(reg_float_ty);
+  }
+  return float_id_;
 }
 
 uint32_t InstrumentPass::GetVec4FloatId() {
@@ -456,16 +563,44 @@ uint32_t InstrumentPass::GetUintId() {
   return uint_id_;
 }
 
-uint32_t InstrumentPass::GetVec4UintId() {
-  if (v4uint_id_ == 0) {
+uint32_t InstrumentPass::GetUint64Id() {
+  if (uint64_id_ == 0) {
     analysis::TypeManager* type_mgr = context()->get_type_mgr();
-    analysis::Integer uint_ty(32, false);
-    analysis::Type* reg_uint_ty = type_mgr->GetRegisteredType(&uint_ty);
-    analysis::Vector v4uint_ty(reg_uint_ty, 4);
-    analysis::Type* reg_v4uint_ty = type_mgr->GetRegisteredType(&v4uint_ty);
-    v4uint_id_ = type_mgr->GetTypeInstruction(reg_v4uint_ty);
+    analysis::Integer uint64_ty(64, false);
+    analysis::Type* reg_uint64_ty = type_mgr->GetRegisteredType(&uint64_ty);
+    uint64_id_ = type_mgr->GetTypeInstruction(reg_uint64_ty);
   }
+  return uint64_id_;
+}
+
+uint32_t InstrumentPass::GetUint8Id() {
+  if (uint8_id_ == 0) {
+    analysis::TypeManager* type_mgr = context()->get_type_mgr();
+    analysis::Integer uint8_ty(8, false);
+    analysis::Type* reg_uint8_ty = type_mgr->GetRegisteredType(&uint8_ty);
+    uint8_id_ = type_mgr->GetTypeInstruction(reg_uint8_ty);
+  }
+  return uint8_id_;
+}
+
+uint32_t InstrumentPass::GetVecUintId(uint32_t len) {
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  analysis::Integer uint_ty(32, false);
+  analysis::Type* reg_uint_ty = type_mgr->GetRegisteredType(&uint_ty);
+  analysis::Vector v_uint_ty(reg_uint_ty, len);
+  analysis::Type* reg_v_uint_ty = type_mgr->GetRegisteredType(&v_uint_ty);
+  uint32_t v_uint_id = type_mgr->GetTypeInstruction(reg_v_uint_ty);
+  return v_uint_id;
+}
+
+uint32_t InstrumentPass::GetVec4UintId() {
+  if (v4uint_id_ == 0) v4uint_id_ = GetVecUintId(4u);
   return v4uint_id_;
+}
+
+uint32_t InstrumentPass::GetVec3UintId() {
+  if (v3uint_id_ == 0) v3uint_id_ = GetVecUintId(3u);
+  return v3uint_id_;
 }
 
 uint32_t InstrumentPass::GetBoolId() {
@@ -493,21 +628,22 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
   // Total param count is common params plus validation-specific
   // params
   uint32_t param_cnt = kInstCommonParamCnt + val_spec_param_cnt;
-  if (output_func_id_ == 0) {
+  if (param2output_func_id_[param_cnt] == 0) {
     // Create function
-    output_func_id_ = TakeNextId();
+    param2output_func_id_[param_cnt] = TakeNextId();
     analysis::TypeManager* type_mgr = context()->get_type_mgr();
     std::vector<const analysis::Type*> param_types;
     for (uint32_t c = 0; c < param_cnt; ++c)
       param_types.push_back(type_mgr->GetType(GetUintId()));
     analysis::Function func_ty(type_mgr->GetType(GetVoidId()), param_types);
     analysis::Type* reg_func_ty = type_mgr->GetRegisteredType(&func_ty);
-    std::unique_ptr<Instruction> func_inst(new Instruction(
-        get_module()->context(), SpvOpFunction, GetVoidId(), output_func_id_,
-        {{spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
-          {SpvFunctionControlMaskNone}},
-         {spv_operand_type_t::SPV_OPERAND_TYPE_ID,
-          {type_mgr->GetTypeInstruction(reg_func_ty)}}}));
+    std::unique_ptr<Instruction> func_inst(
+        new Instruction(get_module()->context(), SpvOpFunction, GetVoidId(),
+                        param2output_func_id_[param_cnt],
+                        {{spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
+                          {SpvFunctionControlMaskNone}},
+                         {spv_operand_type_t::SPV_OPERAND_TYPE_ID,
+                          {type_mgr->GetTypeInstruction(reg_func_ty)}}}));
     get_def_use_mgr()->AnalyzeInstDefUse(&*func_inst);
     std::unique_ptr<Function> output_func =
         MakeUnique<Function>(std::move(func_inst));
@@ -531,9 +667,10 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
         context(), &*new_blk_ptr,
         IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
     // Gen test if debug output buffer size will not be exceeded.
-    uint32_t obuf_record_sz = kInstStageOutCnt + val_spec_param_cnt;
+    uint32_t val_spec_offset = kInstStageOutCnt;
+    uint32_t obuf_record_sz = val_spec_offset + val_spec_param_cnt;
     uint32_t buf_id = GetOutputBufferId();
-    uint32_t buf_uint_ptr_id = GetBufferUintPtrId();
+    uint32_t buf_uint_ptr_id = GetOutputBufferPtrId();
     Instruction* obuf_curr_sz_ac_inst =
         builder.AddBinaryOp(buf_uint_ptr_id, SpvOpAccessChain, buf_id,
                             builder.GetUintConstantId(kDebugOutputSizeOffset));
@@ -577,7 +714,7 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
     GenStageStreamWriteCode(stage_idx, obuf_curr_sz_id, &builder);
     // Gen writes of validation specific data
     for (uint32_t i = 0; i < val_spec_param_cnt; ++i) {
-      GenDebugOutputFieldCode(obuf_curr_sz_id, kInstStageOutCnt + i,
+      GenDebugOutputFieldCode(obuf_curr_sz_id, val_spec_offset + i,
                               param_vec[kInstCommonParamCnt + i], &builder);
     }
     // Close write block and gen merge block
@@ -595,25 +732,24 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
     get_def_use_mgr()->AnalyzeInstDefUse(&*func_end_inst);
     output_func->SetFunctionEnd(std::move(func_end_inst));
     context()->AddFunction(std::move(output_func));
-    output_func_param_cnt_ = param_cnt;
   }
-  assert(param_cnt == output_func_param_cnt_ && "bad arg count");
-  return output_func_id_;
+  return param2output_func_id_[param_cnt];
 }
 
 uint32_t InstrumentPass::GetDirectReadFunctionId(uint32_t param_cnt) {
   uint32_t func_id = param2input_func_id_[param_cnt];
   if (func_id != 0) return func_id;
-  // Create input function for param_cnt
+  // Create input function for param_cnt.
   func_id = TakeNextId();
   analysis::TypeManager* type_mgr = context()->get_type_mgr();
   std::vector<const analysis::Type*> param_types;
   for (uint32_t c = 0; c < param_cnt; ++c)
     param_types.push_back(type_mgr->GetType(GetUintId()));
-  analysis::Function func_ty(type_mgr->GetType(GetUintId()), param_types);
+  uint32_t ibuf_type_id = GetInputBufferTypeId();
+  analysis::Function func_ty(type_mgr->GetType(ibuf_type_id), param_types);
   analysis::Type* reg_func_ty = type_mgr->GetRegisteredType(&func_ty);
   std::unique_ptr<Instruction> func_inst(new Instruction(
-      get_module()->context(), SpvOpFunction, GetUintId(), func_id,
+      get_module()->context(), SpvOpFunction, ibuf_type_id, func_id,
       {{spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
         {SpvFunctionControlMaskNone}},
        {spv_operand_type_t::SPV_OPERAND_TYPE_ID,
@@ -643,22 +779,27 @@ uint32_t InstrumentPass::GetDirectReadFunctionId(uint32_t param_cnt) {
   // loaded value if it exists, and load value from input buffer at new offset.
   // Return last loaded value.
   uint32_t buf_id = GetInputBufferId();
-  uint32_t buf_uint_ptr_id = GetBufferUintPtrId();
+  uint32_t buf_ptr_id = GetInputBufferPtrId();
   uint32_t last_value_id = 0;
   for (uint32_t p = 0; p < param_cnt; ++p) {
     uint32_t offset_id;
     if (p == 0) {
       offset_id = param_vec[0];
     } else {
+      if (ibuf_type_id != GetUintId()) {
+        Instruction* ucvt_inst =
+            builder.AddUnaryOp(GetUintId(), SpvOpUConvert, last_value_id);
+        last_value_id = ucvt_inst->result_id();
+      }
       Instruction* offset_inst = builder.AddBinaryOp(
           GetUintId(), SpvOpIAdd, last_value_id, param_vec[p]);
       offset_id = offset_inst->result_id();
     }
     Instruction* ac_inst = builder.AddTernaryOp(
-        buf_uint_ptr_id, SpvOpAccessChain, buf_id,
+        buf_ptr_id, SpvOpAccessChain, buf_id,
         builder.GetUintConstantId(kDebugInputDataOffset), offset_id);
     Instruction* load_inst =
-        builder.AddUnaryOp(GetUintId(), SpvOpLoad, ac_inst->result_id());
+        builder.AddUnaryOp(ibuf_type_id, SpvOpLoad, ac_inst->result_id());
     last_value_id = load_inst->result_id();
   }
   (void)builder.AddInstruction(MakeUnique<Instruction>(
@@ -728,7 +869,7 @@ bool InstrumentPass::InstProcessCallTreeFromRoots(InstProcessFunction& pfn,
   std::unordered_set<uint32_t> done;
   // Don't process input and output functions
   for (auto& ifn : param2input_func_id_) done.insert(ifn.second);
-  if (output_func_id_ != 0) done.insert(output_func_id_);
+  for (auto& ofn : param2output_func_id_) done.insert(ofn.second);
   // Process all functions from roots
   while (!roots->empty()) {
     const uint32_t fi = roots->front();
@@ -757,18 +898,34 @@ bool InstrumentPass::InstProcessEntryPointCallTree(InstProcessFunction& pfn) {
   for (auto& e : get_module()->entry_points()) {
     if (ecnt == 0)
       stage = e.GetSingleWordInOperand(kEntryPointExecutionModelInIdx);
-    else if (e.GetSingleWordInOperand(kEntryPointExecutionModelInIdx) != stage)
+    else if (e.GetSingleWordInOperand(kEntryPointExecutionModelInIdx) !=
+             stage) {
+      if (consumer()) {
+        std::string message = "Mixed stage shader module not supported";
+        consumer()(SPV_MSG_ERROR, 0, {0, 0, 0}, message.c_str());
+      }
       return false;
+    }
     ++ecnt;
   }
-  // Only supporting vertex, fragment and compute shaders at the moment.
-  // TODO(greg-lunarg): Handle all stages.
+  // Check for supported stages
   if (stage != SpvExecutionModelVertex && stage != SpvExecutionModelFragment &&
       stage != SpvExecutionModelGeometry &&
       stage != SpvExecutionModelGLCompute &&
       stage != SpvExecutionModelTessellationControl &&
-      stage != SpvExecutionModelTessellationEvaluation)
+      stage != SpvExecutionModelTessellationEvaluation &&
+      stage != SpvExecutionModelRayGenerationNV &&
+      stage != SpvExecutionModelIntersectionNV &&
+      stage != SpvExecutionModelAnyHitNV &&
+      stage != SpvExecutionModelClosestHitNV &&
+      stage != SpvExecutionModelMissNV &&
+      stage != SpvExecutionModelCallableNV) {
+    if (consumer()) {
+      std::string message = "Stage not supported by instrumentation";
+      consumer()(SPV_MSG_ERROR, 0, {0, 0, 0}, message.c_str());
+    }
     return false;
+  }
   // Add together the roots of all entry points
   std::queue<uint32_t> roots;
   for (auto& e : get_module()->entry_points()) {
@@ -780,21 +937,29 @@ bool InstrumentPass::InstProcessEntryPointCallTree(InstProcessFunction& pfn) {
 
 void InstrumentPass::InitializeInstrument() {
   output_buffer_id_ = 0;
-  buffer_uint_ptr_id_ = 0;
-  output_func_id_ = 0;
-  output_func_param_cnt_ = 0;
+  output_buffer_ptr_id_ = 0;
+  input_buffer_ptr_id_ = 0;
   input_buffer_id_ = 0;
+  float_id_ = 0;
   v4float_id_ = 0;
   uint_id_ = 0;
+  uint64_id_ = 0;
+  uint8_id_ = 0;
   v4uint_id_ = 0;
+  v3uint_id_ = 0;
   bool_id_ = 0;
   void_id_ = 0;
   storage_buffer_ext_defined_ = false;
-  uint_rarr_ty_ = nullptr;
+  uint32_rarr_ty_ = nullptr;
+  uint64_rarr_ty_ = nullptr;
 
   // clear collections
   id2function_.clear();
   id2block_.clear();
+
+  // clear maps
+  param2input_func_id_.clear();
+  param2output_func_id_.clear();
 
   // Initialize function and block maps.
   for (auto& fn : *get_module()) {
@@ -837,6 +1002,10 @@ void InstrumentPass::InitializeInstrument() {
     ++module_offset;
   }
   for (auto& i : module->debugs3()) {
+    (void)i;
+    ++module_offset;
+  }
+  for (auto& i : module->ext_inst_debuginfo()) {
     (void)i;
     ++module_offset;
   }

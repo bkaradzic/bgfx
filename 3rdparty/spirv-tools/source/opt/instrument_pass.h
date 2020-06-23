@@ -60,6 +60,8 @@ namespace opt {
 // These are used to identify the general validation being done and map to
 // its output buffers.
 static const uint32_t kInstValidationIdBindless = 0;
+static const uint32_t kInstValidationIdBuffAddr = 1;
+static const uint32_t kInstValidationIdDebugPrintf = 2;
 
 class InstrumentPass : public Pass {
   using cbb_ptr = const BasicBlock*;
@@ -78,16 +80,16 @@ class InstrumentPass : public Pass {
   }
 
  protected:
-  // Create instrumentation pass which utilizes descriptor set |desc_set|
-  // for debug input and output buffers and writes |shader_id| into debug
-  // output records.
+  // Create instrumentation pass for |validation_id| which utilizes descriptor
+  // set |desc_set| for debug input and output buffers and writes |shader_id|
+  // into debug output records.
   InstrumentPass(uint32_t desc_set, uint32_t shader_id, uint32_t validation_id)
       : Pass(),
         desc_set_(desc_set),
         shader_id_(shader_id),
         validation_id_(validation_id) {}
 
-  // Initialize state for instrumentation of module by |validation_id|.
+  // Initialize state for instrumentation of module.
   void InitializeInstrument();
 
   // Call |pfn| on all instructions in all functions in the call tree of the
@@ -146,6 +148,7 @@ class InstrumentPass : public Pass {
   //     Stage
   //     Stage-specific Word 0
   //     Stage-specific Word 1
+  //     ...
   //     Validation Error Code
   //     Validation-specific Word 0
   //     Validation-specific Word 1
@@ -170,12 +173,12 @@ class InstrumentPass : public Pass {
   // following Stage-specific words.
   //
   // The Stage-specific Words identify which invocation of the shader generated
-  // the error. Every stage will write two words, although in some cases the
-  // second word is unused and so zero is written. Vertex shaders will write
-  // the Vertex and Instance ID. Fragment shaders will write FragCoord.xy.
-  // Compute shaders will write the Global Invocation ID and zero (unused).
-  // Both tesselation shaders will write the Invocation Id and zero (unused).
-  // The geometry shader will write the Primitive ID and Invocation ID.
+  // the error. Every stage will write a fixed number of words. Vertex shaders
+  // will write the Vertex and Instance ID. Fragment shaders will write
+  // FragCoord.xy. Compute shaders will write the GlobalInvocation ID.
+  // The tesselation eval shader will write the Primitive ID and TessCoords.uv.
+  // The tesselation control shader and geometry shader will write the
+  // Primitive ID and Invocation ID.
   //
   // The Validation Error Code specifies the exact error which has occurred.
   // These are enumerated with the kInstError* static consts. This allows
@@ -214,6 +217,12 @@ class InstrumentPass : public Pass {
   // Return id for 32-bit unsigned type
   uint32_t GetUintId();
 
+  // Return id for 64-bit unsigned type
+  uint32_t GetUint64Id();
+
+  // Return id for 8-bit unsigned type
+  uint32_t GetUint8Id();
+
   // Return id for 32-bit unsigned type
   uint32_t GetBoolId();
 
@@ -221,11 +230,20 @@ class InstrumentPass : public Pass {
   uint32_t GetVoidId();
 
   // Return pointer to type for runtime array of uint
-  analysis::Type* GetUintRuntimeArrayType(analysis::DecorationManager* deco_mgr,
-                                          analysis::TypeManager* type_mgr);
+  analysis::Type* GetUintXRuntimeArrayType(uint32_t width,
+                                           analysis::Type** rarr_ty);
+
+  // Return pointer to type for runtime array of uint
+  analysis::Type* GetUintRuntimeArrayType(uint32_t width);
 
   // Return id for buffer uint type
-  uint32_t GetBufferUintPtrId();
+  uint32_t GetOutputBufferPtrId();
+
+  // Return id for buffer uint type
+  uint32_t GetInputBufferTypeId();
+
+  // Return id for buffer uint type
+  uint32_t GetInputBufferPtrId();
 
   // Return binding for output buffer for current validation.
   uint32_t GetOutputBufferBinding();
@@ -242,11 +260,20 @@ class InstrumentPass : public Pass {
   // Return id for debug input buffer
   uint32_t GetInputBufferId();
 
+  // Return id for 32-bit float type
+  uint32_t GetFloatId();
+
   // Return id for v4float type
   uint32_t GetVec4FloatId();
 
+  // Return id for uint vector type of |length|
+  uint32_t GetVecUintId(uint32_t length);
+
   // Return id for v4uint type
   uint32_t GetVec4UintId();
+
+  // Return id for v3uint type
+  uint32_t GetVec3UintId();
 
   // Return id for output function. Define if it doesn't exist with
   // |val_spec_param_cnt| validation-specific uint32 parameters.
@@ -291,15 +318,14 @@ class InstrumentPass : public Pass {
                                       uint32_t component,
                                       InstructionBuilder* builder);
 
+  // Generate instructions into |builder| which will load |var_id| and return
+  // its result id.
+  uint32_t GenVarLoad(uint32_t var_id, InstructionBuilder* builder);
+
   // Generate instructions into |builder| which will load the uint |builtin_id|
   // and write it into the debug output buffer at |base_off| + |builtin_off|.
   void GenBuiltinOutputCode(uint32_t builtin_id, uint32_t builtin_off,
                             uint32_t base_off, InstructionBuilder* builder);
-
-  // Generate instructions into |builder| which will write a uint null into
-  // the debug output buffer at |base_off| + |builtin_off|.
-  void GenUintNullOutputCode(uint32_t field_off, uint32_t base_off,
-                             InstructionBuilder* builder);
 
   // Generate instructions into |builder| which will write the |stage_idx|-
   // specific members of the debug output stream at |base_off|.
@@ -346,29 +372,41 @@ class InstrumentPass : public Pass {
   // id for output buffer variable
   uint32_t output_buffer_id_;
 
-  // type id for output buffer element
-  uint32_t buffer_uint_ptr_id_;
+  // ptr type id for output buffer element
+  uint32_t output_buffer_ptr_id_;
+
+  // ptr type id for input buffer element
+  uint32_t input_buffer_ptr_id_;
 
   // id for debug output function
-  uint32_t output_func_id_;
+  std::unordered_map<uint32_t, uint32_t> param2output_func_id_;
 
   // ids for debug input functions
   std::unordered_map<uint32_t, uint32_t> param2input_func_id_;
 
-  // param count for output function
-  uint32_t output_func_param_cnt_;
-
   // id for input buffer variable
   uint32_t input_buffer_id_;
+
+  // id for 32-bit float type
+  uint32_t float_id_;
 
   // id for v4float type
   uint32_t v4float_id_;
 
-  // id for v4float type
+  // id for v4uint type
   uint32_t v4uint_id_;
+
+  // id for v3uint type
+  uint32_t v3uint_id_;
 
   // id for 32-bit unsigned type
   uint32_t uint_id_;
+
+  // id for 64-bit unsigned type
+  uint32_t uint64_id_;
+
+  // id for 8-bit unsigned type
+  uint32_t uint8_id_;
 
   // id for bool type
   uint32_t bool_id_;
@@ -380,7 +418,10 @@ class InstrumentPass : public Pass {
   bool storage_buffer_ext_defined_;
 
   // runtime array of uint type
-  analysis::Type* uint_rarr_ty_;
+  analysis::Type* uint64_rarr_ty_;
+
+  // runtime array of uint type
+  analysis::Type* uint32_rarr_ty_;
 
   // Pre-instrumentation same-block insts
   std::unordered_map<uint32_t, Instruction*> same_block_pre_;

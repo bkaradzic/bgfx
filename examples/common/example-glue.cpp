@@ -1,11 +1,12 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "imgui/imgui.h"
 #include "entry/entry.h"
 #include "entry/cmd.h"
+#include "entry/dialog.h"
 #include <bx/string.h>
 #include <bx/timer.h>
 #include <bx/math.h>
@@ -138,6 +139,23 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 	ImGui::Begin(temp);
 
 	ImGui::TextWrapped("%s", _app->getDescription() );
+
+	bx::StringView url = _app->getUrl();
+	if (!url.isEmpty() )
+	{
+		ImGui::SameLine();
+		if (ImGui::SmallButton(ICON_FA_LINK) )
+		{
+			openUrl(url);
+		}
+		else if (ImGui::IsItemHovered() )
+		{
+			char tmp[1024];
+			bx::snprintf(tmp, BX_COUNTOF(tmp), "Documentation: %.*s", url.getLength(), url.getPtr() );
+			ImGui::SetTooltip(tmp);
+		}
+	}
+
 	ImGui::Separator();
 
 	if (NULL != _errorText)
@@ -350,7 +368,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				resourceBar("  T", "Textures",               stats->numTextures,             caps->limits.maxTextures,             maxWidth, itemHeight);
 				resourceBar("  U", "Uniforms",               stats->numUniforms,             caps->limits.maxUniforms,             maxWidth, itemHeight);
 				resourceBar(" VB", "Vertex buffers",         stats->numVertexBuffers,        caps->limits.maxVertexBuffers,        maxWidth, itemHeight);
-				resourceBar(" VD", "Vertex declarations",    stats->numVertexDecls,          caps->limits.maxVertexDecls,          maxWidth, itemHeight);
+				resourceBar(" VL", "Vertex layouts",         stats->numVertexLayouts,        caps->limits.maxVertexLayouts,        maxWidth, itemHeight);
 				ImGui::PopFont();
 			}
 
@@ -420,8 +438,10 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 									ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
 
 									const float maxWidth = 30.0f*scale;
-									const float cpuWidth = bx::clamp(float(viewStats.cpuTimeElapsed*toCpuMs)*scale, 1.0f, maxWidth);
-									const float gpuWidth = bx::clamp(float(viewStats.gpuTimeElapsed*toGpuMs)*scale, 1.0f, maxWidth);
+									const float cpuTimeElapsed = float((viewStats.cpuTimeEnd - viewStats.cpuTimeBegin) * toCpuMs);
+									const float gpuTimeElapsed = float((viewStats.gpuTimeEnd - viewStats.gpuTimeBegin) * toGpuMs);
+									const float cpuWidth = bx::clamp(cpuTimeElapsed*scale, 1.0f, maxWidth);
+									const float gpuWidth = bx::clamp(gpuTimeElapsed*scale, 1.0f, maxWidth);
 
 									ImGui::SameLine(64.0f);
 
@@ -430,7 +450,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 										ImGui::SetTooltip("View %d \"%s\", CPU: %f [ms]"
 											, pos
 											, viewStats.name
-											, viewStats.cpuTimeElapsed*toCpuMs
+											, cpuTimeElapsed
 											);
 									}
 
@@ -440,7 +460,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 										ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]"
 											, pos
 											, viewStats.name
-											, viewStats.gpuTimeElapsed*toGpuMs
+											, gpuTimeElapsed
 											);
 									}
 								}

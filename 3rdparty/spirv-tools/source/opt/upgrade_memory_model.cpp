@@ -18,12 +18,19 @@
 
 #include "source/opt/ir_builder.h"
 #include "source/opt/ir_context.h"
+#include "source/spirv_constant.h"
 #include "source/util/make_unique.h"
 
 namespace spvtools {
 namespace opt {
 
 Pass::Status UpgradeMemoryModel::Process() {
+  // TODO: This pass needs changes to support cooperative matrices.
+  if (context()->get_feature_mgr()->HasCapability(
+          SpvCapabilityCooperativeMatrixNV)) {
+    return Pass::Status::SuccessWithoutChange;
+  }
+
   // Only update Logical GLSL450 to Logical VulkanKHR.
   Instruction* memory_model = get_module()->GetMemoryModel();
   if (memory_model->GetSingleWordInOperand(0u) != SpvAddressingModelLogical ||
@@ -46,7 +53,7 @@ void UpgradeMemoryModel::UpgradeMemoryModelInstruction() {
   // 2. Add the OpCapability.
   // 3. Modify the memory model.
   Instruction* memory_model = get_module()->GetMemoryModel();
-  get_module()->AddCapability(MakeUnique<Instruction>(
+  context()->AddCapability(MakeUnique<Instruction>(
       context(), SpvOpCapability, 0, 0,
       std::initializer_list<Operand>{
           {SPV_OPERAND_TYPE_CAPABILITY, {SpvCapabilityVulkanMemoryModelKHR}}}));
@@ -54,7 +61,7 @@ void UpgradeMemoryModel::UpgradeMemoryModelInstruction() {
   std::vector<uint32_t> words(extension.size() / 4 + 1, 0);
   char* dst = reinterpret_cast<char*>(words.data());
   strncpy(dst, extension.c_str(), extension.size());
-  get_module()->AddExtension(
+  context()->AddExtension(
       MakeUnique<Instruction>(context(), SpvOpExtension, 0, 0,
                               std::initializer_list<Operand>{
                                   {SPV_OPERAND_TYPE_LITERAL_STRING, words}}));
@@ -70,6 +77,7 @@ void UpgradeMemoryModel::UpgradeInstructions() {
   // parameters are implicitly coherent in GLSL450.
 
   // Upgrade modf and frexp first since they generate new stores.
+  // In SPIR-V 1.4 or later, normalize OpCopyMemory* access operands.
   for (auto& func : *get_module()) {
     func.ForEachInst([this](Instruction* inst) {
       if (inst->opcode() == SpvOpExtInst) {
@@ -82,9 +90,38 @@ void UpgradeMemoryModel::UpgradeInstructions() {
             UpgradeExtInst(inst);
           }
         }
+      } else if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+        if (inst->opcode() == SpvOpCopyMemory ||
+            inst->opcode() == SpvOpCopyMemorySized) {
+          uint32_t start_operand = inst->opcode() == SpvOpCopyMemory ? 2u : 3u;
+          if (inst->NumInOperands() > start_operand) {
+            auto num_access_words = MemoryAccessNumWords(
+                inst->GetSingleWordInOperand(start_operand));
+            if ((num_access_words + start_operand) == inst->NumInOperands()) {
+              // There is a single memory access operand. Duplicate it to have a
+              // separate operand for both source and target.
+              for (uint32_t i = 0; i < num_access_words; ++i) {
+                auto operand = inst->GetInOperand(start_operand + i);
+                inst->AddOperand(std::move(operand));
+              }
+            }
+          } else {
+            // Add two memory access operands.
+            inst->AddOperand(
+                {SPV_OPERAND_TYPE_MEMORY_ACCESS, {SpvMemoryAccessMaskNone}});
+            inst->AddOperand(
+                {SPV_OPERAND_TYPE_MEMORY_ACCESS, {SpvMemoryAccessMaskNone}});
+          }
+        }
       }
     });
   }
+
+  UpgradeMemoryAndImages();
+  UpgradeAtomics();
+}
+
+void UpgradeMemoryModel::UpgradeMemoryAndImages() {
   for (auto& func : *get_module()) {
     func.ForEachInst([this](Instruction* inst) {
       bool is_coherent = false;
@@ -93,6 +130,7 @@ void UpgradeMemoryModel::UpgradeInstructions() {
       bool src_volatile = false;
       bool dst_coherent = false;
       bool dst_volatile = false;
+      uint32_t start_operand = 0u;
       SpvScope scope = SpvScopeQueueFamilyKHR;
       SpvScope src_scope = SpvScopeQueueFamilyKHR;
       SpvScope dst_scope = SpvScopeQueueFamilyKHR;
@@ -129,16 +167,23 @@ void UpgradeMemoryModel::UpgradeInstructions() {
                        kMemory);
           break;
         case SpvOpCopyMemory:
-          UpgradeFlags(inst, 2u, dst_coherent, dst_volatile, kAvailability,
-                       kMemory);
-          UpgradeFlags(inst, 2u, src_coherent, src_volatile, kVisibility,
-                       kMemory);
-          break;
         case SpvOpCopyMemorySized:
-          UpgradeFlags(inst, 3u, dst_coherent, dst_volatile, kAvailability,
-                       kMemory);
-          UpgradeFlags(inst, 3u, src_coherent, src_volatile, kVisibility,
-                       kMemory);
+          start_operand = inst->opcode() == SpvOpCopyMemory ? 2u : 3u;
+          if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+            // There are guaranteed to be two memory access operands at this
+            // point so treat source and target separately.
+            uint32_t num_access_words = MemoryAccessNumWords(
+                inst->GetSingleWordInOperand(start_operand));
+            UpgradeFlags(inst, start_operand, dst_coherent, dst_volatile,
+                         kAvailability, kMemory);
+            UpgradeFlags(inst, start_operand + num_access_words, src_coherent,
+                         src_volatile, kVisibility, kMemory);
+          } else {
+            UpgradeFlags(inst, start_operand, dst_coherent, dst_volatile,
+                         kAvailability, kMemory);
+            UpgradeFlags(inst, start_operand, src_coherent, src_volatile,
+                         kVisibility, kMemory);
+          }
           break;
         case SpvOpImageRead:
         case SpvOpImageSparseRead:
@@ -158,19 +203,96 @@ void UpgradeMemoryModel::UpgradeInstructions() {
         inst->AddOperand(
             {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(scope)}});
       }
-      // According to SPV_KHR_vulkan_memory_model, if both available and
-      // visible flags are used the first scope operand is for availability
-      // (writes) and the second is for visibility (reads).
-      if (dst_coherent) {
-        inst->AddOperand(
-            {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(dst_scope)}});
-      }
-      if (src_coherent) {
-        inst->AddOperand(
-            {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(src_scope)}});
+      if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+        // There are two memory access operands. The first is for the target and
+        // the second is for the source.
+        if (dst_coherent || src_coherent) {
+          start_operand = inst->opcode() == SpvOpCopyMemory ? 2u : 3u;
+          std::vector<Operand> new_operands;
+          uint32_t num_access_words =
+              MemoryAccessNumWords(inst->GetSingleWordInOperand(start_operand));
+          // The flags were already updated so subtract if we're adding a
+          // scope.
+          if (dst_coherent) --num_access_words;
+          for (uint32_t i = 0; i < start_operand + num_access_words; ++i) {
+            new_operands.push_back(inst->GetInOperand(i));
+          }
+          // Add the target scope if necessary.
+          if (dst_coherent) {
+            new_operands.push_back(
+                {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(dst_scope)}});
+          }
+          // Copy the remaining current operands.
+          for (uint32_t i = start_operand + num_access_words;
+               i < inst->NumInOperands(); ++i) {
+            new_operands.push_back(inst->GetInOperand(i));
+          }
+          // Add the source scope if necessary.
+          if (src_coherent) {
+            new_operands.push_back(
+                {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(src_scope)}});
+          }
+          inst->SetInOperands(std::move(new_operands));
+        }
+      } else {
+        // According to SPV_KHR_vulkan_memory_model, if both available and
+        // visible flags are used the first scope operand is for availability
+        // (writes) and the second is for visibility (reads).
+        if (dst_coherent) {
+          inst->AddOperand(
+              {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(dst_scope)}});
+        }
+        if (src_coherent) {
+          inst->AddOperand(
+              {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(src_scope)}});
+        }
       }
     });
   }
+}
+
+void UpgradeMemoryModel::UpgradeAtomics() {
+  for (auto& func : *get_module()) {
+    func.ForEachInst([this](Instruction* inst) {
+      if (spvOpcodeIsAtomicOp(inst->opcode())) {
+        bool unused_coherent = false;
+        bool is_volatile = false;
+        SpvScope unused_scope = SpvScopeQueueFamilyKHR;
+        std::tie(unused_coherent, is_volatile, unused_scope) =
+            GetInstructionAttributes(inst->GetSingleWordInOperand(0));
+
+        UpgradeSemantics(inst, 2u, is_volatile);
+        if (inst->opcode() == SpvOpAtomicCompareExchange ||
+            inst->opcode() == SpvOpAtomicCompareExchangeWeak) {
+          UpgradeSemantics(inst, 3u, is_volatile);
+        }
+      }
+    });
+  }
+}
+
+void UpgradeMemoryModel::UpgradeSemantics(Instruction* inst,
+                                          uint32_t in_operand,
+                                          bool is_volatile) {
+  if (!is_volatile) return;
+
+  uint32_t semantics_id = inst->GetSingleWordInOperand(in_operand);
+  const analysis::Constant* constant =
+      context()->get_constant_mgr()->FindDeclaredConstant(semantics_id);
+  const analysis::Integer* type = constant->type()->AsInteger();
+  assert(type && type->width() == 32);
+  uint32_t value = 0;
+  if (type->IsSigned()) {
+    value = static_cast<uint32_t>(constant->GetS32());
+  } else {
+    value = constant->GetU32();
+  }
+
+  value |= SpvMemorySemanticsVolatileMask;
+  auto new_constant = context()->get_constant_mgr()->GetConstant(type, {value});
+  auto new_semantics =
+      context()->get_constant_mgr()->GetDefiningInstruction(new_constant);
+  inst->SetInOperand(in_operand, {new_semantics->result_id()});
 }
 
 std::tuple<bool, bool, SpvScope> UpgradeMemoryModel::GetInstructionAttributes(
@@ -307,7 +429,7 @@ std::pair<bool, bool> UpgradeMemoryModel::CheckType(
     } else {
       assert(spvOpcodeIsComposite(element_inst->opcode()));
       element_inst = context()->get_def_use_mgr()->GetDef(
-          element_inst->GetSingleWordInOperand(1u));
+          element_inst->GetSingleWordInOperand(0u));
     }
   }
 
@@ -634,6 +756,14 @@ void UpgradeMemoryModel::UpgradeExtInst(Instruction* ext_inst) {
   auto extract_1 =
       builder.AddCompositeExtract(pointee_type_id, ext_inst->result_id(), {1});
   builder.AddStore(ptr_id, extract_1->result_id());
+}
+
+uint32_t UpgradeMemoryModel::MemoryAccessNumWords(uint32_t mask) {
+  uint32_t result = 1;
+  if (mask & SpvMemoryAccessAlignedMask) ++result;
+  if (mask & SpvMemoryAccessMakePointerAvailableKHRMask) ++result;
+  if (mask & SpvMemoryAccessMakePointerVisibleKHRMask) ++result;
+  return result;
 }
 
 }  // namespace opt

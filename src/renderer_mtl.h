@@ -23,9 +23,9 @@
 		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr); \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_MTL_PROFILER_BEGIN_LITERAL(_name, _abgr)   \
-	BX_MACRO_BLOCK_BEGIN                                \
-		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr); \
+#define BGFX_MTL_PROFILER_BEGIN_LITERAL(_name, _abgr) \
+	BX_MACRO_BLOCK_BEGIN                              \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr); \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_MTL_PROFILER_END() \
@@ -822,9 +822,9 @@ namespace bgfx { namespace mtl
 		{
 		}
 
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags);
+		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags);
 
-		VertexDeclHandle m_decl;
+		VertexLayoutHandle m_layoutHandle;
 	};
 
 
@@ -845,13 +845,6 @@ namespace bgfx { namespace mtl
 		Function m_function;
 		uint32_t m_hash;
 		uint16_t m_numThreads[3];
-	};
-
-	struct SamplerInfo
-	{
-		uint32_t      m_index;
-		UniformHandle m_uniform;
-		bool          m_fragment;
 	};
 
 	struct PipelineStateMtl;
@@ -884,10 +877,9 @@ namespace bgfx { namespace mtl
 			: m_vshConstantBuffer(NULL)
 			, m_fshConstantBuffer(NULL)
 			, m_vshConstantBufferSize(0)
-			, m_vshConstantBufferAlignmentMask(0)
+			, m_vshConstantBufferAlignment(0)
 			, m_fshConstantBufferSize(0)
-			, m_fshConstantBufferAlignmentMask(0)
-			, m_samplerCount(0)
+			, m_fshConstantBufferAlignment(0)
 			, m_numPredefined(0)
 			, m_rps(NULL)
 			, m_cps(NULL)
@@ -895,6 +887,8 @@ namespace bgfx { namespace mtl
 				m_numThreads[0] = 1;
 				m_numThreads[1] = 1;
 				m_numThreads[2] = 1;
+				for(uint32_t i=0; i<BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++i)
+					m_bindingTypes[i] = 0;
 			}
 
 		~PipelineStateMtl()
@@ -919,12 +913,16 @@ namespace bgfx { namespace mtl
 		UniformBuffer* m_fshConstantBuffer;
 
 		uint32_t m_vshConstantBufferSize;
-		uint32_t m_vshConstantBufferAlignmentMask;
+		uint32_t m_vshConstantBufferAlignment;
 		uint32_t m_fshConstantBufferSize;
-		uint32_t m_fshConstantBufferAlignmentMask;
+		uint32_t m_fshConstantBufferAlignment;
 
-		SamplerInfo m_samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-		uint32_t	m_samplerCount;
+		enum
+		{
+			BindToVertexShader   = 1 << 0,
+			BindToFragmentShader = 1 << 1,
+		};
+		uint8_t m_bindingTypes[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 
 		uint16_t 	m_numThreads[3];
 
@@ -970,12 +968,22 @@ namespace bgfx { namespace mtl
 
 		void destroy()
 		{
-			MTL_RELEASE(m_ptr);
+			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED))
+			{
+				MTL_RELEASE(m_ptr);
+			}
 			MTL_RELEASE(m_ptrStencil);
 			for (uint32_t ii = 0; ii < m_numMips; ++ii)
 			{
 				MTL_RELEASE(m_ptrMips[ii]);
 			}
+		}
+
+		void overrideInternal(uintptr_t _ptr)
+		{
+			destroy();
+			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
+			m_ptr = id<MTLTexture>(_ptr);
 		}
 
 		void update(

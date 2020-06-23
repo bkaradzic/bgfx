@@ -87,7 +87,7 @@ class AggressiveDCEPass : public MemPass {
   // to the live instruction worklist.
   void AddStores(uint32_t ptrId);
 
-  // Initialize extensions whitelist
+  // Initialize extensions allowlist
   void InitExtensions();
 
   // Return true if all extensions in this module are supported by this pass.
@@ -191,7 +191,7 @@ class AggressiveDCEPass : public MemPass {
   std::vector<Instruction*> to_kill_;
 
   // Extensions supported by this pass.
-  std::unordered_set<std::string> extensions_whitelist_;
+  std::unordered_set<std::string> extensions_allowlist_;
 };
 
 }  // namespace opt

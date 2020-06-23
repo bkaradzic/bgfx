@@ -241,6 +241,7 @@ bool DominatorTree::Dominates(uint32_t a, uint32_t b) const {
 
 bool DominatorTree::Dominates(const DominatorTreeNode* a,
                               const DominatorTreeNode* b) const {
+  if (!a || !b) return false;
   // Node A dominates node B if they are the same.
   if (a == b) return true;
 

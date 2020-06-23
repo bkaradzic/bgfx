@@ -79,9 +79,6 @@ class ValidationState_t {
     // Permit group oerations Reduce, InclusiveScan, ExclusiveScan
     bool group_ops_reduce_and_scans = false;
 
-    // Disallows the use of OpUndef
-    bool bans_op_undef = false;
-
     // Allow OpTypeInt with 8 bit width?
     bool declare_int8_type = false;
 
@@ -106,9 +103,20 @@ class ValidationState_t {
     // Members need not be listed in offset order
     bool scalar_block_layout = false;
 
-    // Permit UConvert as an OpSpecConstantOp operation.
+    // SPIR-V 1.4 allows us to select between any two composite values
+    // of the same type.
+    bool select_between_composites = false;
+
+    // SPIR-V 1.4 allows two memory access operands for OpCopyMemory and
+    // OpCopyMemorySized.
+    bool copy_memory_permits_two_memory_accesses = false;
+
+    // SPIR-V 1.4 allows UConvert as a spec constant op in any environment.
     // The Kernel capability already enables it, separately from this flag.
     bool uconvert_spec_constant_op = false;
+
+    // SPIR-V 1.4 allows Function and Private variables to be NonWritable
+    bool nonwritable_var_in_function_or_private = false;
   };
 
   ValidationState_t(const spv_const_context context,
@@ -319,6 +327,12 @@ class ValidationState_t {
     return module_capabilities_.Contains(cap);
   }
 
+  /// Returns a reference to the set of capabilities in the module.
+  /// This is provided for debuggability.
+  const CapabilitySet& module_capabilities() const {
+    return module_capabilities_;
+  }
+
   /// Returns true if the extension is enabled in the module.
   bool HasExtension(Extension ext) const {
     return module_extensions_.Contains(ext);
@@ -369,7 +383,11 @@ class ValidationState_t {
 
   /// Registers the decoration for the given <id>
   void RegisterDecorationForId(uint32_t id, const Decoration& dec) {
-    id_decorations_[id].push_back(dec);
+    auto& dec_list = id_decorations_[id];
+    auto lb = std::find(dec_list.begin(), dec_list.end(), dec);
+    if (lb == dec_list.end()) {
+      dec_list.push_back(dec);
+    }
   }
 
   /// Registers the list of decorations for the given <id>
@@ -537,6 +555,7 @@ class ValidationState_t {
 
   // Returns true iff |id| is a type corresponding to the name of the function.
   // Only works for types not for objects.
+  bool IsVoidType(uint32_t id) const;
   bool IsFloatScalarType(uint32_t id) const;
   bool IsFloatVectorType(uint32_t id) const;
   bool IsFloatScalarOrVectorType(uint32_t id) const;
@@ -556,6 +575,14 @@ class ValidationState_t {
   bool IsFloatCooperativeMatrixType(uint32_t id) const;
   bool IsIntCooperativeMatrixType(uint32_t id) const;
   bool IsUnsignedIntCooperativeMatrixType(uint32_t id) const;
+
+  // Returns true if |id| is a type id that contains |type| (or integer or
+  // floating point type) of |width| bits.
+  bool ContainsSizedIntOrFloatType(uint32_t id, SpvOp type,
+                                   uint32_t width) const;
+  // Returns true if |id| is a type id that contains a 8- or 16-bit int or
+  // 16-bit float that is not generally enabled for use.
+  bool ContainsLimitedUseIntOrFloatType(uint32_t id) const;
 
   // Gets value from OpConstant and OpSpecConstant as uint64.
   // Returns false on failure (no instruction, wrong instruction, not int).
@@ -652,6 +679,33 @@ class ValidationState_t {
   // constants, we assume they can match because we can't prove they don't.
   spv_result_t CooperativeMatrixShapesMatch(const Instruction* inst,
                                             uint32_t m1, uint32_t m2);
+
+  // Returns true if |lhs| and |rhs| logically match and, if the decorations of
+  // |rhs| are a subset of |lhs|.
+  //
+  // 1. Must both be either OpTypeArray or OpTypeStruct
+  // 2. If OpTypeArray, then
+  //  * Length must be the same
+  //  * Element type must match or logically match
+  // 3. If OpTypeStruct, then
+  //  * Both have same number of elements
+  //  * Element N for both structs must match or logically match
+  //
+  // If |check_decorations| is false, then the decorations are not checked.
+  bool LogicallyMatch(const Instruction* lhs, const Instruction* rhs,
+                      bool check_decorations);
+
+  // Traces |inst| to find a single base pointer. Returns the base pointer.
+  // Will trace through the following instructions:
+  // * OpAccessChain
+  // * OpInBoundsAccessChain
+  // * OpPtrAccessChain
+  // * OpInBoundsPtrAccessChain
+  // * OpCopyObject
+  const Instruction* TracePointer(const Instruction* inst) const;
+
+  // Validates the storage class for the target environment.
+  bool IsValidStorageClass(SpvStorageClass storage_class) const;
 
  private:
   ValidationState_t(const ValidationState_t&);

@@ -1,5 +1,3 @@
-local idl = require "idl"
-
 local doxygen = {}
 
 function doxygen.load(filename)

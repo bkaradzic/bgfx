@@ -23,8 +23,9 @@
 // communicate with shaders instrumented by passes created by:
 //
 //   CreateInstBindlessCheckPass
+//   CreateInstBuffAddrCheckPass
 //
-// More detailed documentation of this routine can be found in optimizer.hpp
+// More detailed documentation of these routines can be found in optimizer.hpp
 
 namespace spvtools {
 
@@ -70,34 +71,49 @@ static const int kInstCommonOutCnt = 4;
 
 // Stage-specific Stream Record Offsets
 //
-// Each stage will contain different values in the next two words of the record
-// used to identify which instantiation of the shader generated the validation
-// error.
+// Each stage will contain different values in the next set of words of the
+// record used to identify which instantiation of the shader generated the
+// validation error.
 //
 // Vertex Shader Output Record Offsets
 static const int kInstVertOutVertexIndex = kInstCommonOutCnt;
 static const int kInstVertOutInstanceIndex = kInstCommonOutCnt + 1;
+static const int kInstVertOutUnused = kInstCommonOutCnt + 2;
 
 // Frag Shader Output Record Offsets
 static const int kInstFragOutFragCoordX = kInstCommonOutCnt;
 static const int kInstFragOutFragCoordY = kInstCommonOutCnt + 1;
+static const int kInstFragOutUnused = kInstCommonOutCnt + 2;
 
 // Compute Shader Output Record Offsets
-static const int kInstCompOutGlobalInvocationId = kInstCommonOutCnt;
-static const int kInstCompOutUnused = kInstCommonOutCnt + 1;
+static const int kInstCompOutGlobalInvocationIdX = kInstCommonOutCnt;
+static const int kInstCompOutGlobalInvocationIdY = kInstCommonOutCnt + 1;
+static const int kInstCompOutGlobalInvocationIdZ = kInstCommonOutCnt + 2;
 
-// Tessellation Shader Output Record Offsets
-static const int kInstTessOutInvocationId = kInstCommonOutCnt;
-static const int kInstTessOutUnused = kInstCommonOutCnt + 1;
+// Tessellation Control Shader Output Record Offsets
+static const int kInstTessCtlOutInvocationId = kInstCommonOutCnt;
+static const int kInstTessCtlOutPrimitiveId = kInstCommonOutCnt + 1;
+static const int kInstTessCtlOutUnused = kInstCommonOutCnt + 2;
+
+// Tessellation Eval Shader Output Record Offsets
+static const int kInstTessEvalOutPrimitiveId = kInstCommonOutCnt;
+static const int kInstTessEvalOutTessCoordU = kInstCommonOutCnt + 1;
+static const int kInstTessEvalOutTessCoordV = kInstCommonOutCnt + 2;
 
 // Geometry Shader Output Record Offsets
 static const int kInstGeomOutPrimitiveId = kInstCommonOutCnt;
 static const int kInstGeomOutInvocationId = kInstCommonOutCnt + 1;
+static const int kInstGeomOutUnused = kInstCommonOutCnt + 2;
+
+// Ray Tracing Shader Output Record Offsets
+static const int kInstRayTracingOutLaunchIdX = kInstCommonOutCnt;
+static const int kInstRayTracingOutLaunchIdY = kInstCommonOutCnt + 1;
+static const int kInstRayTracingOutLaunchIdZ = kInstCommonOutCnt + 2;
 
 // Size of Common and Stage-specific Members
-static const int kInstStageOutCnt = kInstCommonOutCnt + 2;
+static const int kInstStageOutCnt = kInstCommonOutCnt + 3;
 
-// Validation Error Code
+// Validation Error Code Offset
 //
 // This identifies the validation error. It also helps to identify
 // how many words follow in the record and their meaning.
@@ -119,10 +135,11 @@ static const int kInstBindlessUninitOutDescIndex = kInstStageOutCnt + 1;
 static const int kInstBindlessUninitOutUnused = kInstStageOutCnt + 2;
 static const int kInstBindlessUninitOutCnt = kInstStageOutCnt + 3;
 
-// DEPRECATED
-static const int kInstBindlessOutDescIndex = kInstStageOutCnt + 1;
-static const int kInstBindlessOutDescBound = kInstStageOutCnt + 2;
-static const int kInstBindlessOutCnt = kInstStageOutCnt + 3;
+// A buffer address unalloc error will output the 64-bit pointer in
+// two 32-bit pieces, lower bits first.
+static const int kInstBuffAddrUnallocOutDescPtrLo = kInstStageOutCnt + 1;
+static const int kInstBuffAddrUnallocOutDescPtrHi = kInstStageOutCnt + 2;
+static const int kInstBuffAddrUnallocOutCnt = kInstStageOutCnt + 3;
 
 // Maximum Output Record Member Count
 static const int kInstMaxOutCnt = kInstStageOutCnt + 3;
@@ -132,6 +149,7 @@ static const int kInstMaxOutCnt = kInstStageOutCnt + 3;
 // These are the possible validation error codes.
 static const int kInstErrorBindlessBounds = 0;
 static const int kInstErrorBindlessUninit = 1;
+static const int kInstErrorBuffAddrUnallocRef = 2;
 
 // Direct Input Buffer Offsets
 //
@@ -148,13 +166,18 @@ static const int kDebugInputDataOffset = 0;
 // These are the bindings for the different buffers which are
 // read or written by the instrumentation passes.
 //
-// This is the output buffer written by InstBindlessCheckPass
-// and possibly other future validations.
+// This is the output buffer written by InstBindlessCheckPass,
+// InstBuffAddrCheckPass, and possibly other future validations.
 static const int kDebugOutputBindingStream = 0;
 
-// The binding for the input buffer read by InstBindlessCheckPass and
-// possibly other future validations.
+// The binding for the input buffer read by InstBindlessCheckPass.
 static const int kDebugInputBindingBindless = 1;
+
+// The binding for the input buffer read by InstBuffAddrCheckPass.
+static const int kDebugInputBindingBuffAddr = 2;
+
+// This is the output buffer written by InstDebugPrintfPass.
+static const int kDebugOutputPrintfStream = 3;
 
 // Bindless Validation Input Buffer Format
 //
@@ -168,14 +191,36 @@ static const int kDebugInputBindingBindless = 1;
 // Data[ i + Data[ b + Data[ s + Data[ kDebugInputBindlessInitOffset ] ] ] ]
 static const int kDebugInputBindlessInitOffset = 0;
 
-// DEPRECATED
-static const int kDebugInputBindlessOffsetReserved = 0;
-
 // At offset kDebugInputBindlessOffsetLengths is some number of uints which
 // provide the bindless length data. More specifically, the number of
 // descriptors at (set=s, binding=b) is:
 // Data[ Data[ s + kDebugInputBindlessOffsetLengths ] + b ]
 static const int kDebugInputBindlessOffsetLengths = 1;
+
+// Buffer Device Address Input Buffer Format
+//
+// An input buffer for buffer device address validation consists of a single
+// array of unsigned 64-bit integers we will call Data[]. This array is
+// formatted as follows:
+//
+// At offset kDebugInputBuffAddrPtrOffset is a list of sorted valid buffer
+// addresses. The list is terminated with the address 0xffffffffffffffff.
+// If 0x0 is not a valid buffer address, this address is inserted at the
+// start of the list.
+//
+static const int kDebugInputBuffAddrPtrOffset = 1;
+//
+// At offset kDebugInputBuffAddrLengthOffset in Data[] is a single uint64 which
+// gives an offset to the start of the buffer length data. More
+// specifically, for a buffer whose pointer is located at input buffer offset
+// i, the length is located at:
+//
+// Data[ i - kDebugInputBuffAddrPtrOffset
+//         + Data[ kDebugInputBuffAddrLengthOffset ] ]
+//
+// The length associated with the 0xffffffffffffffff address is zero. If
+// not a valid buffer, the length associated with the 0x0 address is zero.
+static const int kDebugInputBuffAddrLengthOffset = 0;
 
 }  // namespace spvtools
 

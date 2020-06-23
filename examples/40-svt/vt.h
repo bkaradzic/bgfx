@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Aleš Mlakar. All rights reserved.
+ * Copyright 2018 Ales Mlakar. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -23,6 +23,8 @@
 
 #include "common.h"
 #include "bgfx_utils.h"
+
+#include <stdio.h> // FILE
 
 namespace vt
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -37,7 +37,7 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
@@ -45,10 +45,10 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 void EmitterUniforms::reset()
 {
@@ -535,7 +535,7 @@ namespace ps
 				bgfx::TransientVertexBuffer tvb;
 				bgfx::TransientIndexBuffer tib;
 
-				const uint32_t numVertices = bgfx::getAvailTransientVertexBuffer(m_num*4, PosColorTexCoord0Vertex::ms_decl);
+				const uint32_t numVertices = bgfx::getAvailTransientVertexBuffer(m_num*4, PosColorTexCoord0Vertex::ms_layout);
 				const uint32_t numIndices  = bgfx::getAvailTransientIndexBuffer(m_num*6);
 				const uint32_t max = bx::uint32_min(numVertices/4, numIndices/6);
 				BX_WARN(m_num == max
@@ -547,7 +547,7 @@ namespace ps
 				if (0 < max)
 				{
 					bgfx::allocTransientBuffers(&tvb
-						, PosColorTexCoord0Vertex::ms_decl
+						, PosColorTexCoord0Vertex::ms_layout
 						, max*4
 						, &tib
 						, max*6
@@ -626,7 +626,7 @@ namespace ps
 
 		void updateEmitter(EmitterHandle _handle, const EmitterUniforms* _uniforms)
 		{
-			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
 				, "destroyEmitter handle %d is not valid."
 				, _handle.idx
 				);
@@ -645,7 +645,7 @@ namespace ps
 
 		void getAabb(EmitterHandle _handle, Aabb& _outAabb)
 		{
-			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
 				, "getAabb handle %d is not valid."
 				, _handle.idx
 				);
@@ -654,7 +654,7 @@ namespace ps
 
 		void destroyEmitter(EmitterHandle _handle)
 		{
-			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
 				, "destroyEmitter handle %d is not valid."
 				, _handle.idx
 				);

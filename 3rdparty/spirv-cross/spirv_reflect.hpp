@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Bradley Austin Davis
+ * Copyright 2018-2020 Bradley Austin Davis
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,11 +67,12 @@ private:
 	void emit_resources();
 	void emit_specialization_constants();
 
-	void emit_type(const SPIRType &type, bool &emitted_open_tag);
+	void emit_type(uint32_t type_id, bool &emitted_open_tag);
 	void emit_type_member(const SPIRType &type, uint32_t index);
 	void emit_type_member_qualifiers(const SPIRType &type, uint32_t index);
 	void emit_type_array(const SPIRType &type);
 	void emit_resources(const char *tag, const SmallVector<Resource> &resources);
+	bool type_is_reference(const SPIRType &type) const;
 
 	std::string to_member_name(const SPIRType &type, uint32_t index) const;
 

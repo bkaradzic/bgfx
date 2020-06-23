@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -29,7 +29,7 @@ struct DebugVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 1, bgfx::AttribType::Float)
@@ -37,10 +37,10 @@ struct DebugVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl DebugVertex::ms_decl;
+bgfx::VertexLayout DebugVertex::ms_layout;
 
 struct DebugUvVertex
 {
@@ -53,7 +53,7 @@ struct DebugUvVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
@@ -61,10 +61,10 @@ struct DebugUvVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl DebugUvVertex::ms_decl;
+bgfx::VertexLayout DebugUvVertex::ms_layout;
 
 struct DebugShapeVertex
 {
@@ -75,17 +75,17 @@ struct DebugShapeVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Indices,  4, bgfx::AttribType::Uint8)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl DebugShapeVertex::ms_decl;
+bgfx::VertexLayout DebugShapeVertex::ms_layout;
 
 struct DebugMeshVertex
 {
@@ -95,16 +95,16 @@ struct DebugMeshVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl DebugMeshVertex::ms_decl;
+bgfx::VertexLayout DebugMeshVertex::ms_layout;
 
 static DebugShapeVertex s_quadVertices[4] =
 {
@@ -429,7 +429,7 @@ struct GeometryT
 			Geometry& geometry = m_geometry[handle.idx];
 			geometry.m_vbh = bgfx::createVertexBuffer(
 				  bgfx::copy(_vertices, _numVertices*sizeof(DdVertex) )
-				, DebugMeshVertex::ms_decl
+				, DebugMeshVertex::ms_layout
 				);
 
 			geometry.m_topologyNumIndices[0] = _numIndices;
@@ -642,7 +642,7 @@ struct DebugDrawShared
 
 		void* vertices[DebugMesh::Count] = {};
 		uint16_t* indices[DebugMesh::Count] = {};
-		uint16_t stride = DebugShapeVertex::ms_decl.getStride();
+		uint16_t stride = DebugShapeVertex::ms_layout.getStride();
 
 		uint32_t startVertex = 0;
 		uint32_t startIndex  = 0;
@@ -958,7 +958,7 @@ struct DebugDrawShared
 			, sizeof(s_cubeIndices)
 			);
 
-		m_vbh = bgfx::createVertexBuffer(vb, DebugShapeVertex::ms_decl);
+		m_vbh = bgfx::createVertexBuffer(vb, DebugShapeVertex::ms_layout);
 		m_ibh = bgfx::createIndexBuffer(ib);
 	}
 
@@ -1050,7 +1050,7 @@ struct DebugDrawEncoderImpl
 
 	void begin(bgfx::ViewId _viewId, bool _depthTestLess, bgfx::Encoder* _encoder)
 	{
-		BX_CHECK(State::Count == m_state);
+		BX_ASSERT(State::Count == m_state);
 
 		m_viewId        = _viewId;
 		m_encoder       = _encoder == NULL ? m_defaultEncoder : _encoder;
@@ -1084,7 +1084,7 @@ struct DebugDrawEncoderImpl
 
 	void end()
 	{
-		BX_CHECK(0 == m_stack, "Invalid stack %d.", m_stack);
+		BX_ASSERT(0 == m_stack, "Invalid stack %d.", m_stack);
 
 		flushQuad();
 		flush();
@@ -1095,14 +1095,14 @@ struct DebugDrawEncoderImpl
 
 	void push()
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		++m_stack;
 		m_attrib[m_stack] = m_attrib[m_stack-1];
 	}
 
 	void pop()
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		const Attrib& curr = m_attrib[m_stack];
 		const Attrib& prev = m_attrib[m_stack-1];
 		if (curr.m_stipple != prev.m_stipple
@@ -1115,7 +1115,7 @@ struct DebugDrawEncoderImpl
 
 	void setDepthTestLess(bool _depthTestLess)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		if (m_depthTestLess != _depthTestLess)
 		{
 			m_depthTestLess = _depthTestLess;
@@ -1131,7 +1131,7 @@ struct DebugDrawEncoderImpl
 
 	void setTransform(const void* _mtx, uint16_t _num = 1, bool _flush = true)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		if (_flush)
 		{
 			flush();
@@ -1166,8 +1166,8 @@ struct DebugDrawEncoderImpl
 
 	void pushTransform(const void* _mtx, uint16_t _num, bool _flush = true)
 	{
-		BX_CHECK(m_mtxStackCurrent < BX_COUNTOF(m_mtxStack), "Out of matrix stack!");
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(m_mtxStackCurrent < BX_COUNTOF(m_mtxStack), "Out of matrix stack!");
+		BX_ASSERT(State::Count != m_state);
 		if (_flush)
 		{
 			flush();
@@ -1197,7 +1197,7 @@ struct DebugDrawEncoderImpl
 
 	void popTransform(bool _flush = true)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		if (_flush)
 		{
 			flush();
@@ -1257,25 +1257,25 @@ struct DebugDrawEncoderImpl
 
 	void setColor(uint32_t _abgr)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		m_attrib[m_stack].m_abgr = _abgr;
 	}
 
 	void setLod(uint8_t _lod)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		m_attrib[m_stack].m_lod = _lod;
 	}
 
 	void setWireframe(bool _wireframe)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		m_attrib[m_stack].m_wireframe = _wireframe;
 	}
 
 	void setStipple(bool _stipple, float _scale = 1.0f, float _offset = 0.0f)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 
 		Attrib& attrib = m_attrib[m_stack];
 
@@ -1297,7 +1297,7 @@ struct DebugDrawEncoderImpl
 
 	void moveTo(float _x, float _y, float _z = 0.0f)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 
 		softFlush();
 
@@ -1317,7 +1317,7 @@ struct DebugDrawEncoderImpl
 
 	void moveTo(const bx::Vec3& _pos)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		moveTo(_pos.x, _pos.y, _pos.z);
 	}
 
@@ -1328,7 +1328,7 @@ struct DebugDrawEncoderImpl
 
 	void lineTo(float _x, float _y, float _z = 0.0f)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		if (State::None == m_state)
 		{
 			moveTo(_x, _y, _z);
@@ -1381,7 +1381,7 @@ struct DebugDrawEncoderImpl
 
 	void lineTo(const bx::Vec3& _pos)
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		lineTo(_pos.x, _pos.y, _pos.z);
 	}
 
@@ -1392,7 +1392,7 @@ struct DebugDrawEncoderImpl
 
 	void close()
 	{
-		BX_CHECK(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state);
 		DebugVertex& vertex = m_cache[m_vertexPos];
 		lineTo(vertex.m_x, vertex.m_y, vertex.m_z);
 
@@ -1608,11 +1608,11 @@ struct DebugDrawEncoderImpl
 	{
 		flush();
 
-		if (_numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, DebugMeshVertex::ms_decl) )
+		if (_numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, DebugMeshVertex::ms_layout) )
 		{
 			bgfx::TransientVertexBuffer tvb;
-			bgfx::allocTransientVertexBuffer(&tvb, _numVertices, DebugMeshVertex::ms_decl);
-			bx::memCopy(tvb.data, _vertices, _numVertices * DebugMeshVertex::ms_decl.m_stride);
+			bgfx::allocTransientVertexBuffer(&tvb, _numVertices, DebugMeshVertex::ms_layout);
+			bx::memCopy(tvb.data, _vertices, _numVertices * DebugMeshVertex::ms_layout.m_stride);
 			m_encoder->setVertexBuffer(0, &tvb);
 
 			const Attrib& attrib = m_attrib[m_stack];
@@ -2163,11 +2163,11 @@ struct DebugDrawEncoderImpl
 	{
 		if (0 != m_pos)
 		{
-			if (checkAvailTransientBuffers(m_pos, DebugVertex::ms_decl, m_indexPos) )
+			if (checkAvailTransientBuffers(m_pos, DebugVertex::ms_layout, m_indexPos) )
 			{
 				bgfx::TransientVertexBuffer tvb;
-				bgfx::allocTransientVertexBuffer(&tvb, m_pos, DebugVertex::ms_decl);
-				bx::memCopy(tvb.data, m_cache, m_pos * DebugVertex::ms_decl.m_stride);
+				bgfx::allocTransientVertexBuffer(&tvb, m_pos, DebugVertex::ms_layout);
+				bx::memCopy(tvb.data, m_cache, m_pos * DebugVertex::ms_layout.m_stride);
 
 				bgfx::TransientIndexBuffer tib;
 				bgfx::allocTransientIndexBuffer(&tib, m_indexPos);
@@ -2201,11 +2201,11 @@ struct DebugDrawEncoderImpl
 		if (0 != m_posQuad)
 		{
 			const uint32_t numIndices = m_posQuad/4*6;
-			if (checkAvailTransientBuffers(m_posQuad, DebugUvVertex::ms_decl, numIndices) )
+			if (checkAvailTransientBuffers(m_posQuad, DebugUvVertex::ms_layout, numIndices) )
 			{
 				bgfx::TransientVertexBuffer tvb;
-				bgfx::allocTransientVertexBuffer(&tvb, m_posQuad, DebugUvVertex::ms_decl);
-				bx::memCopy(tvb.data, m_cacheQuad, m_posQuad * DebugUvVertex::ms_decl.m_stride);
+				bgfx::allocTransientVertexBuffer(&tvb, m_posQuad, DebugUvVertex::ms_layout);
+				bx::memCopy(tvb.data, m_cacheQuad, m_posQuad * DebugUvVertex::ms_layout.m_stride);
 
 				bgfx::TransientIndexBuffer tib;
 				bgfx::allocTransientIndexBuffer(&tib, numIndices);

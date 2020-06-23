@@ -95,6 +95,7 @@ void Module::ForEachInst(const std::function<void(Instruction*)>& f,
   DELEGATE(debugs1_);
   DELEGATE(debugs2_);
   DELEGATE(debugs3_);
+  DELEGATE(ext_inst_debuginfo_);
   DELEGATE(annotations_);
   DELEGATE(types_values_);
   for (auto& i : functions_) i->ForEachInst(f, run_on_debug_line_insts);
@@ -117,9 +118,13 @@ void Module::ForEachInst(const std::function<void(const Instruction*)>& f,
   for (auto& i : debugs3_) DELEGATE(i);
   for (auto& i : annotations_) DELEGATE(i);
   for (auto& i : types_values_) DELEGATE(i);
+  for (auto& i : ext_inst_debuginfo_) DELEGATE(i);
   for (auto& i : functions_) {
     static_cast<const Function*>(i.get())->ForEachInst(f,
                                                        run_on_debug_line_insts);
+  }
+  if (run_on_debug_line_insts) {
+    for (auto& i : trailing_dbg_line_info_) DELEGATE(i);
   }
 #undef DELEGATE
 }
@@ -132,10 +137,27 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
   binary->push_back(header_.bound);
   binary->push_back(header_.reserved);
 
-  auto write_inst = [binary, skip_nop](const Instruction* i) {
-    if (!(skip_nop && i->IsNop())) i->ToBinaryWithoutAttachedDebugInsts(binary);
+  size_t bound_idx = binary->size() - 2;
+  DebugScope last_scope(kNoDebugScope, kNoInlinedAt);
+  auto write_inst = [binary, skip_nop, &last_scope,
+                     this](const Instruction* i) {
+    if (!(skip_nop && i->IsNop())) {
+      const auto& scope = i->GetDebugScope();
+      if (scope != last_scope) {
+        // Emit DebugScope |scope| to |binary|.
+        auto dbg_inst = ext_inst_debuginfo_.begin();
+        scope.ToBinary(dbg_inst->type_id(), context()->TakeNextId(),
+                       dbg_inst->GetSingleWordOperand(2), binary);
+        last_scope = scope;
+      }
+
+      i->ToBinaryWithoutAttachedDebugInsts(binary);
+    }
   };
   ForEachInst(write_inst, true);
+
+  // We create new instructions for DebugScope. The bound must be updated.
+  binary->data()[bound_idx] = header_.bound;
 }
 
 uint32_t Module::ComputeIdBound() const {

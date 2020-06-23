@@ -2,6 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2016 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -34,6 +35,8 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+
+#ifndef GLSLANG_WEB
 
 #include "localintermediate.h"
 #include "../Include/InfoSink.h"
@@ -174,7 +177,7 @@ bool TOutputTraverser::visitBinary(TVisit /* visit */, TIntermBinary* node)
     case EOpIndexIndirect: out.debug << "indirect index"; break;
     case EOpIndexDirectStruct:
         {
-            bool reference = node->getLeft()->getType().getBasicType() == EbtReference;
+            bool reference = node->getLeft()->getType().isReference();
             const TTypeList *members = reference ? node->getLeft()->getType().getReferentType()->getStruct() : node->getLeft()->getType().getStruct();
             out.debug << (*members)[node->getRight()->getAsConstantUnion()->getConstArray()[0].getIConst()].type->getFieldName();
             out.debug << ": direct index for structure";      break;
@@ -211,6 +214,13 @@ bool TOutputTraverser::visitBinary(TVisit /* visit */, TIntermBinary* node)
     case EOpLogicalXor: out.debug << "logical-xor"; break;
     case EOpLogicalAnd: out.debug << "logical-and"; break;
 
+    case EOpAbsDifference:          out.debug << "absoluteDifference";    break;
+    case EOpAddSaturate:            out.debug << "addSaturate";           break;
+    case EOpSubSaturate:            out.debug << "subtractSaturate";      break;
+    case EOpAverage:                out.debug << "average";               break;
+    case EOpAverageRounded:         out.debug << "averageRounded";        break;
+    case EOpMul32x16:               out.debug << "multiply32x16";         break;
+
     default: out.debug << "<unknown op>";
     }
 
@@ -237,6 +247,7 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpPostDecrement:  out.debug << "Post-Decrement";       break;
     case EOpPreIncrement:   out.debug << "Pre-Increment";        break;
     case EOpPreDecrement:   out.debug << "Pre-Decrement";        break;
+    case EOpCopyObject:     out.debug << "copy object";          break;
 
     // * -> bool
     case EOpConvInt8ToBool:    out.debug << "Convert int8_t to bool";  break;
@@ -554,6 +565,9 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpFindLSB:                out.debug << "findLSB";               break;
     case EOpFindMSB:                out.debug << "findMSB";               break;
 
+    case EOpCountLeadingZeros:      out.debug << "countLeadingZeros";     break;
+    case EOpCountTrailingZeros:     out.debug << "countTrailingZeros";    break;
+
     case EOpNoise:                  out.debug << "noise";                 break;
 
     case EOpBallot:                 out.debug << "ballot";                break;
@@ -614,7 +628,6 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpSubgroupQuadSwapVertical:        out.debug << "subgroupQuadSwapVertical";        break;
     case EOpSubgroupQuadSwapDiagonal:        out.debug << "subgroupQuadSwapDiagonal";        break;
 
-#ifdef NV_EXTENSIONS
     case EOpSubgroupPartition:                          out.debug << "subgroupPartitionNV";                          break;
     case EOpSubgroupPartitionedAdd:                     out.debug << "subgroupPartitionedAddNV";                     break;
     case EOpSubgroupPartitionedMul:                     out.debug << "subgroupPartitionedMulNV";                     break;
@@ -637,7 +650,6 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpSubgroupPartitionedExclusiveAnd:            out.debug << "subgroupPartitionedExclusiveAndNV";            break;
     case EOpSubgroupPartitionedExclusiveOr:             out.debug << "subgroupPartitionedExclusiveOrNV";             break;
     case EOpSubgroupPartitionedExclusiveXor:            out.debug << "subgroupPartitionedExclusiveXorNV";            break;
-#endif
 
     case EOpClip:                   out.debug << "clip";                  break;
     case EOpIsFinite:               out.debug << "isfinite";              break;
@@ -647,7 +659,6 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
 
     case EOpSparseTexelsResident:   out.debug << "sparseTexelsResident";  break;
 
-#ifdef AMD_EXTENSIONS
     case EOpMinInvocations:             out.debug << "minInvocations";              break;
     case EOpMaxInvocations:             out.debug << "maxInvocations";              break;
     case EOpAddInvocations:             out.debug << "addInvocations";              break;
@@ -676,7 +687,6 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
 
     case EOpCubeFaceIndex:          out.debug << "cubeFaceIndex";               break;
     case EOpCubeFaceCoord:          out.debug << "cubeFaceCoord";               break;
-#endif
 
     case EOpSubpassLoad:   out.debug << "subpassLoad";   break;
     case EOpSubpassLoadMS: out.debug << "subpassLoadMS"; break;
@@ -862,7 +872,6 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
 
     case EOpReadInvocation:             out.debug << "readInvocation";        break;
 
-#ifdef AMD_EXTENSIONS
     case EOpSwizzleInvocations:         out.debug << "swizzleInvocations";       break;
     case EOpSwizzleInvocationsMasked:   out.debug << "swizzleInvocationsMasked"; break;
     case EOpWriteInvocation:            out.debug << "writeInvocation";          break;
@@ -870,9 +879,7 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpMin3:                       out.debug << "min3";                  break;
     case EOpMax3:                       out.debug << "max3";                  break;
     case EOpMid3:                       out.debug << "mid3";                  break;
-
     case EOpTime:                       out.debug << "time";                  break;
-#endif
 
     case EOpAtomicAdd:                  out.debug << "AtomicAdd";             break;
     case EOpAtomicMin:                  out.debug << "AtomicMin";             break;
@@ -909,10 +916,8 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpImageAtomicCompSwap:        out.debug << "imageAtomicCompSwap";   break;
     case EOpImageAtomicLoad:            out.debug << "imageAtomicLoad";       break;
     case EOpImageAtomicStore:           out.debug << "imageAtomicStore";      break;
-#ifdef AMD_EXTENSIONS
     case EOpImageLoadLod:               out.debug << "imageLoadLod";          break;
     case EOpImageStoreLod:              out.debug << "imageStoreLod";         break;
-#endif
 
     case EOpTextureQuerySize:           out.debug << "textureSize";           break;
     case EOpTextureQueryLod:            out.debug << "textureQueryLod";       break;
@@ -939,11 +944,9 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpTextureOffsetClamp:         out.debug << "textureOffsetClamp";    break;
     case EOpTextureGradClamp:           out.debug << "textureGradClamp";      break;
     case EOpTextureGradOffsetClamp:     out.debug << "textureGradOffsetClamp";  break;
-#ifdef AMD_EXTENSIONS
     case EOpTextureGatherLod:           out.debug << "textureGatherLod";        break;
     case EOpTextureGatherLodOffset:     out.debug << "textureGatherLodOffset";  break;
     case EOpTextureGatherLodOffsets:    out.debug << "textureGatherLodOffsets"; break;
-#endif
 
     case EOpSparseTexture:                  out.debug << "sparseTexture";                   break;
     case EOpSparseTextureOffset:            out.debug << "sparseTextureOffset";             break;
@@ -961,19 +964,15 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpSparseTextureOffsetClamp:       out.debug << "sparseTextureOffsetClamp";        break;
     case EOpSparseTextureGradClamp:         out.debug << "sparseTextureGradClamp";          break;
     case EOpSparseTextureGradOffsetClamp:   out.debug << "sparseTextureGradOffsetClam";     break;
-#ifdef AMD_EXTENSIONS
     case EOpSparseTextureGatherLod:         out.debug << "sparseTextureGatherLod";          break;
     case EOpSparseTextureGatherLodOffset:   out.debug << "sparseTextureGatherLodOffset";    break;
     case EOpSparseTextureGatherLodOffsets:  out.debug << "sparseTextureGatherLodOffsets";   break;
     case EOpSparseImageLoadLod:             out.debug << "sparseImageLoadLod";              break;
-#endif
-#ifdef NV_EXTENSIONS
     case EOpImageSampleFootprintNV:             out.debug << "imageSampleFootprintNV";          break;
     case EOpImageSampleFootprintClampNV:        out.debug << "imageSampleFootprintClampNV";     break;
     case EOpImageSampleFootprintLodNV:          out.debug << "imageSampleFootprintLodNV";       break;
     case EOpImageSampleFootprintGradNV:         out.debug << "imageSampleFootprintGradNV";      break;
     case EOpImageSampleFootprintGradClampNV:    out.debug << "mageSampleFootprintGradClampNV";  break;
-#endif
     case EOpAddCarry:                   out.debug << "addCarry";              break;
     case EOpSubBorrow:                  out.debug << "subBorrow";             break;
     case EOpUMulExtended:               out.debug << "uMulExtended";          break;
@@ -987,9 +986,7 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
 
     case EOpInterpolateAtSample:   out.debug << "interpolateAtSample";    break;
     case EOpInterpolateAtOffset:   out.debug << "interpolateAtOffset";    break;
-#ifdef AMD_EXTENSIONS
     case EOpInterpolateAtVertex:   out.debug << "interpolateAtVertex";    break;
-#endif
 
     case EOpSinCos:                     out.debug << "sincos";                break;
     case EOpGenMul:                     out.debug << "mul";                   break;
@@ -1056,21 +1053,69 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpSubgroupQuadSwapVertical:        out.debug << "subgroupQuadSwapVertical"; break;
     case EOpSubgroupQuadSwapDiagonal:        out.debug << "subgroupQuadSwapDiagonal"; break;
 
+    case EOpSubgroupPartition:                          out.debug << "subgroupPartitionNV";                          break;
+    case EOpSubgroupPartitionedAdd:                     out.debug << "subgroupPartitionedAddNV";                     break;
+    case EOpSubgroupPartitionedMul:                     out.debug << "subgroupPartitionedMulNV";                     break;
+    case EOpSubgroupPartitionedMin:                     out.debug << "subgroupPartitionedMinNV";                     break;
+    case EOpSubgroupPartitionedMax:                     out.debug << "subgroupPartitionedMaxNV";                     break;
+    case EOpSubgroupPartitionedAnd:                     out.debug << "subgroupPartitionedAndNV";                     break;
+    case EOpSubgroupPartitionedOr:                      out.debug << "subgroupPartitionedOrNV";                      break;
+    case EOpSubgroupPartitionedXor:                     out.debug << "subgroupPartitionedXorNV";                     break;
+    case EOpSubgroupPartitionedInclusiveAdd:            out.debug << "subgroupPartitionedInclusiveAddNV";            break;
+    case EOpSubgroupPartitionedInclusiveMul:            out.debug << "subgroupPartitionedInclusiveMulNV";            break;
+    case EOpSubgroupPartitionedInclusiveMin:            out.debug << "subgroupPartitionedInclusiveMinNV";            break;
+    case EOpSubgroupPartitionedInclusiveMax:            out.debug << "subgroupPartitionedInclusiveMaxNV";            break;
+    case EOpSubgroupPartitionedInclusiveAnd:            out.debug << "subgroupPartitionedInclusiveAndNV";            break;
+    case EOpSubgroupPartitionedInclusiveOr:             out.debug << "subgroupPartitionedInclusiveOrNV";             break;
+    case EOpSubgroupPartitionedInclusiveXor:            out.debug << "subgroupPartitionedInclusiveXorNV";            break;
+    case EOpSubgroupPartitionedExclusiveAdd:            out.debug << "subgroupPartitionedExclusiveAddNV";            break;
+    case EOpSubgroupPartitionedExclusiveMul:            out.debug << "subgroupPartitionedExclusiveMulNV";            break;
+    case EOpSubgroupPartitionedExclusiveMin:            out.debug << "subgroupPartitionedExclusiveMinNV";            break;
+    case EOpSubgroupPartitionedExclusiveMax:            out.debug << "subgroupPartitionedExclusiveMaxNV";            break;
+    case EOpSubgroupPartitionedExclusiveAnd:            out.debug << "subgroupPartitionedExclusiveAndNV";            break;
+    case EOpSubgroupPartitionedExclusiveOr:             out.debug << "subgroupPartitionedExclusiveOrNV";             break;
+    case EOpSubgroupPartitionedExclusiveXor:            out.debug << "subgroupPartitionedExclusiveXorNV";            break;
+
     case EOpSubpassLoad:   out.debug << "subpassLoad";   break;
     case EOpSubpassLoadMS: out.debug << "subpassLoadMS"; break;
 
-#ifdef NV_EXTENSIONS
-    case EOpTraceNV:                          out.debug << "traceNV"; break;
-    case EOpReportIntersectionNV:             out.debug << "reportIntersectionNV"; break;
-    case EOpIgnoreIntersectionNV:             out.debug << "ignoreIntersectionNV"; break;
-    case EOpTerminateRayNV:                   out.debug << "terminateRayNV"; break;
-    case EOpExecuteCallableNV:                out.debug << "executeCallableNV"; break;
+    case EOpTrace:                            out.debug << "traceNV"; break;
+    case EOpReportIntersection:               out.debug << "reportIntersectionNV"; break;
+    case EOpIgnoreIntersection:               out.debug << "ignoreIntersectionNV"; break;
+    case EOpTerminateRay:                     out.debug << "terminateRayNV"; break;
+    case EOpExecuteCallable:                  out.debug << "executeCallableNV"; break;
     case EOpWritePackedPrimitiveIndices4x8NV: out.debug << "writePackedPrimitiveIndices4x8NV"; break;
-#endif
+
+    case EOpRayQueryInitialize:                                            out.debug << "rayQueryInitializeEXT"; break;
+    case EOpRayQueryTerminate:                                             out.debug << "rayQueryTerminateEXT"; break;
+    case EOpRayQueryGenerateIntersection:                                  out.debug << "rayQueryGenerateIntersectionEXT"; break;
+    case EOpRayQueryConfirmIntersection:                                   out.debug << "rayQueryConfirmIntersectionEXT"; break;
+    case EOpRayQueryProceed:                                               out.debug << "rayQueryProceedEXT"; break;
+    case EOpRayQueryGetIntersectionType:                                   out.debug << "rayQueryGetIntersectionTypeEXT"; break;
+    case EOpRayQueryGetRayTMin:                                            out.debug << "rayQueryGetRayTMinEXT"; break;
+    case EOpRayQueryGetRayFlags:                                           out.debug << "rayQueryGetRayFlagsEXT"; break;
+    case EOpRayQueryGetIntersectionT:                                      out.debug << "rayQueryGetIntersectionTEXT"; break;
+    case EOpRayQueryGetIntersectionInstanceCustomIndex:                    out.debug << "rayQueryGetIntersectionInstanceCustomIndexEXT"; break;
+    case EOpRayQueryGetIntersectionInstanceId:                             out.debug << "rayQueryGetIntersectionInstanceIdEXT"; break;
+    case EOpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffset: out.debug << "rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT"; break;
+    case EOpRayQueryGetIntersectionGeometryIndex:                          out.debug << "rayQueryGetIntersectionGeometryIndexEXT"; break;
+    case EOpRayQueryGetIntersectionPrimitiveIndex:                         out.debug << "rayQueryGetIntersectionPrimitiveIndexEXT"; break;
+    case EOpRayQueryGetIntersectionBarycentrics:                           out.debug << "rayQueryGetIntersectionBarycentricsEXT"; break;
+    case EOpRayQueryGetIntersectionFrontFace:                              out.debug << "rayQueryGetIntersectionFrontFaceEXT"; break;
+    case EOpRayQueryGetIntersectionCandidateAABBOpaque:                    out.debug << "rayQueryGetIntersectionCandidateAABBOpaqueEXT"; break;
+    case EOpRayQueryGetIntersectionObjectRayDirection:                     out.debug << "rayQueryGetIntersectionObjectRayDirectionEXT"; break;
+    case EOpRayQueryGetIntersectionObjectRayOrigin:                        out.debug << "rayQueryGetIntersectionObjectRayOriginEXT"; break;
+    case EOpRayQueryGetWorldRayDirection:                                  out.debug << "rayQueryGetWorldRayDirectionEXT"; break;
+    case EOpRayQueryGetWorldRayOrigin:                                     out.debug << "rayQueryGetWorldRayOriginEXT"; break;
+    case EOpRayQueryGetIntersectionObjectToWorld:                          out.debug << "rayQueryGetIntersectionObjectToWorldEXT"; break;
+    case EOpRayQueryGetIntersectionWorldToObject:                          out.debug << "rayQueryGetIntersectionWorldToObjectEXT"; break;
 
     case EOpCooperativeMatrixLoad:  out.debug << "Load cooperative matrix";  break;
     case EOpCooperativeMatrixStore:  out.debug << "Store cooperative matrix";  break;
     case EOpCooperativeMatrixMulAdd: out.debug << "MulAdd cooperative matrices"; break;
+
+    case EOpIsHelperInvocation: out.debug << "IsHelperInvocation"; break;
+    case EOpDebugPrintf:  out.debug << "Debug printf";  break;
 
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }
@@ -1366,6 +1411,7 @@ bool TOutputTraverser::visitBranch(TVisit /* visit*/, TIntermBranch* node)
     case EOpContinue:  out.debug << "Branch: Continue";       break;
     case EOpReturn:    out.debug << "Branch: Return";         break;
     case EOpCase:      out.debug << "case: ";                 break;
+    case EOpDemote:    out.debug << "Demote";                 break;
     case EOpDefault:   out.debug << "default: ";              break;
     default:               out.debug << "Branch: Unknown Branch"; break;
     }
@@ -1420,7 +1466,7 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
     infoSink.debug << "Shader version: " << version << "\n";
     if (requestedExtensions.size() > 0) {
         for (auto extIt = requestedExtensions.begin(); extIt != requestedExtensions.end(); ++extIt)
-            infoSink.debug << "Requested " << *extIt << "\n";
+            infoSink.debug << "Requested " << extIt->first << "\n";
     }
 
     if (xfbMode)
@@ -1476,18 +1522,17 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
             }
             infoSink.debug << "\n";
         }
+        if (interlockOrdering != EioNone)
+            infoSink.debug << "interlock ordering = " << TQualifier::getInterlockOrderingString(interlockOrdering) << "\n";
         break;
 
-#ifdef NV_EXTENSIONS
     case EShLangMeshNV:
         infoSink.debug << "max_vertices = " << vertices << "\n";
         infoSink.debug << "max_primitives = " << primitives << "\n";
         infoSink.debug << "output primitive = " << TQualifier::getGeometryString(outputPrimitive) << "\n";
         // Fall through
-
     case EShLangTaskNV:
         // Fall through
-#endif
     case EShLangCompute:
         infoSink.debug << "local_size = (" << localSize[0] << ", " << localSize[1] << ", " << localSize[2] << ")\n";
         {
@@ -1516,3 +1561,5 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
 }
 
 } // end namespace glslang
+
+#endif // not GLSLANG_WEB

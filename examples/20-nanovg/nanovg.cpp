@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -67,7 +67,9 @@ static char* cpToUTF8(int cp, char* str)
 	else if (cp < 0x200000) n = 4;
 	else if (cp < 0x4000000) n = 5;
 	else if (cp <= 0x7fffffff) n = 6;
+
 	str[n] = '\0';
+
 	switch (n)
 	{
 		case 6: str[5] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0x4000000; BX_FALLTHROUGH;
@@ -75,8 +77,9 @@ static char* cpToUTF8(int cp, char* str)
 		case 4: str[3] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0x10000;   BX_FALLTHROUGH;
 		case 3: str[2] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0x800;     BX_FALLTHROUGH;
 		case 2: str[1] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0xc0;      BX_FALLTHROUGH;
-		case 1: str[0] = char(cp);                                          BX_FALLTHROUGH;
+		case 1: str[0] = char(cp); break;
 	}
+
 	return str;
 }
 
@@ -1382,8 +1385,8 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 class ExampleNanoVG : public entry::AppI
 {
 public:
-	ExampleNanoVG(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleNanoVG(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -1502,4 +1505,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleNanoVG, "20-nanovg", "NanoVG is small antialiased vector graphics rendering library.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleNanoVG
+	, "20-nanovg"
+	, "NanoVG is small antialiased vector graphics rendering library."
+	, "https://bkaradzic.github.io/bgfx/examples.html#nanovg"
+	);

@@ -123,11 +123,6 @@ spv_result_t ControlFlowPass(ValidationState_t& _, const Instruction* inst);
 /// Performs Id and SSA validation of a module
 spv_result_t IdPass(ValidationState_t& _, Instruction* inst);
 
-/// Performs validation of the Data Rules subsection of 2.16.1 Universal
-/// Validation Rules.
-/// TODO(ehsann): add more comments here as more validation code is added.
-spv_result_t DataRulesPass(ValidationState_t& _, const Instruction* inst);
-
 /// Performs instruction validation.
 spv_result_t InstructionPass(ValidationState_t& _, const Instruction* inst);
 
@@ -199,11 +194,21 @@ spv_result_t ModeSettingPass(ValidationState_t& _, const Instruction* inst);
 /// Validates correctness of function instructions.
 spv_result_t FunctionPass(ValidationState_t& _, const Instruction* inst);
 
+/// Validates correctness of miscellaneous instructions.
+spv_result_t MiscPass(ValidationState_t& _, const Instruction* inst);
+
 /// Validates execution limitations.
 ///
 /// Verifies execution models are allowed for all functionality they contain.
 spv_result_t ValidateExecutionLimitations(ValidationState_t& _,
                                           const Instruction* inst);
+
+/// Validates restricted uses of 8- and 16-bit types.
+///
+/// Validates shaders that uses 8- or 16-bit storage capabilities, but not full
+/// capabilities only have appropriate uses of those types.
+spv_result_t ValidateSmallTypeUses(ValidationState_t& _,
+                                   const Instruction* inst);
 
 /// @brief Validate the ID's within a SPIR-V binary
 ///

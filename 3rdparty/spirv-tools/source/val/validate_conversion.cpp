@@ -18,6 +18,7 @@
 
 #include "source/diagnostic.h"
 #include "source/opcode.h"
+#include "source/spirv_constant.h"
 #include "source/val/instruction.h"
 #include "source/val/validation_state.h"
 
@@ -58,11 +59,6 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                  << spvOpcodeString(opcode);
       }
 
-      if (!_.features().use_int8_type && (8 == _.GetBitWidth(result_type)))
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Invalid cast to 8-bit integer from a floating-point: "
-               << spvOpcodeString(opcode);
-
       break;
     }
 
@@ -92,11 +88,6 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                  << "Expected input to have the same dimension as Result Type: "
                  << spvOpcodeString(opcode);
       }
-
-      if (!_.features().use_int8_type && (8 == _.GetBitWidth(result_type)))
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Invalid cast to 8-bit integer from a floating-point: "
-               << spvOpcodeString(opcode);
 
       break;
     }
@@ -129,11 +120,6 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                  << "Expected input to have the same dimension as Result Type: "
                  << spvOpcodeString(opcode);
       }
-
-      if (!_.features().use_int8_type && (8 == _.GetBitWidth(input_type)))
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Invalid cast to floating-point from an 8-bit integer: "
-               << spvOpcodeString(opcode);
 
       break;
     }
@@ -482,15 +468,40 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                << "Expected input to be a pointer or int or float vector "
                << "or scalar: " << spvOpcodeString(opcode);
 
-      if (result_is_pointer && !input_is_pointer && !input_is_int_scalar)
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Expected input to be a pointer or int scalar if Result Type "
-               << "is pointer: " << spvOpcodeString(opcode);
+      if (_.version() >= SPV_SPIRV_VERSION_WORD(1, 5) ||
+          _.HasExtension(kSPV_KHR_physical_storage_buffer)) {
+        const bool result_is_int_vector = _.IsIntVectorType(result_type);
+        const bool result_has_int32 =
+            _.ContainsSizedIntOrFloatType(result_type, SpvOpTypeInt, 32);
+        const bool input_is_int_vector = _.IsIntVectorType(input_type);
+        const bool input_has_int32 =
+            _.ContainsSizedIntOrFloatType(input_type, SpvOpTypeInt, 32);
+        if (result_is_pointer && !input_is_pointer && !input_is_int_scalar &&
+            !(input_is_int_vector && input_has_int32))
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Expected input to be a pointer, int scalar or 32-bit int "
+                    "vector if Result Type is pointer: "
+                 << spvOpcodeString(opcode);
 
-      if (input_is_pointer && !result_is_pointer && !result_is_int_scalar)
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Pointer can only be converted to another pointer or int "
-               << "scalar: " << spvOpcodeString(opcode);
+        if (input_is_pointer && !result_is_pointer && !result_is_int_scalar &&
+            !(result_is_int_vector && result_has_int32))
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Pointer can only be converted to another pointer, int "
+                    "scalar or 32-bit int vector: "
+                 << spvOpcodeString(opcode);
+      } else {
+        if (result_is_pointer && !input_is_pointer && !input_is_int_scalar)
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Expected input to be a pointer or int scalar if Result "
+                    "Type is pointer: "
+                 << spvOpcodeString(opcode);
+
+        if (input_is_pointer && !result_is_pointer && !result_is_int_scalar)
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Pointer can only be converted to another pointer or int "
+                    "scalar: "
+                 << spvOpcodeString(opcode);
+      }
 
       if (!result_is_pointer && !input_is_pointer) {
         const uint32_t result_size =
@@ -507,6 +518,25 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
 
     default:
       break;
+  }
+
+  if (_.HasCapability(SpvCapabilityShader)) {
+    switch (inst->opcode()) {
+      case SpvOpConvertFToU:
+      case SpvOpConvertFToS:
+      case SpvOpConvertSToF:
+      case SpvOpConvertUToF:
+      case SpvOpBitcast:
+        if (_.ContainsLimitedUseIntOrFloatType(inst->type_id()) ||
+            _.ContainsLimitedUseIntOrFloatType(_.GetOperandTypeId(inst, 2u))) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "8- or 16-bit types can only be used with width-only "
+                    "conversions";
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   return SPV_SUCCESS;

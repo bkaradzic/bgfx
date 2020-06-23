@@ -60,7 +60,7 @@ namespace
 		0.25f
 	};
 
-	// Vertex decl for our screen space quad (used in deferred rendering)
+	// Vertex layout for our screen space quad (used in deferred rendering)
 	struct PosTexCoord0Vertex
 	{
 		float m_x;
@@ -71,25 +71,25 @@ namespace
 
 		static void init()
 		{
-			ms_decl
+			ms_layout
 				.begin()
 				.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 				.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 				.end();
 		}
 
-		static bgfx::VertexDecl ms_decl;
+		static bgfx::VertexLayout ms_layout;
 	};
 
-	bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+	bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 	// Utility function to draw a screen space quad for deferred rendering
 	void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 	{
-		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_decl))
+		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
 		{
 			bgfx::TransientVertexBuffer vb;
-			bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_decl);
+			bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 			PosTexCoord0Vertex* vertex = (PosTexCoord0Vertex*)vb.data;
 
 			const float minx = -_width;
@@ -247,8 +247,8 @@ namespace
 	class ExampleASSAO : public entry::AppI
 	{
 	public:
-		ExampleASSAO(const char* _name, const char* _description)
-			: entry::AppI(_name, _description)
+		ExampleASSAO(const char* _name, const char* _description, const char* _url)
+			: entry::AppI(_name, _description, _url)
 			, m_currFrame(UINT32_MAX)
 			, m_enableSSAO(true)
 			, m_enableTexturing(true)
@@ -365,7 +365,7 @@ namespace
 
 			m_loadCounter = bgfx::createDynamicIndexBuffer(1, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
 
-			// Vertex decl
+			// Vertex layout
 			PosTexCoord0Vertex::init();
 
 			// Init camera
@@ -1200,6 +1200,11 @@ namespace
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleASSAO, "39-assao", "Adaptive Screen Space Ambient Occlusion.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleASSAO
+	, "39-assao"
+	, "Adaptive Screen Space Ambient Occlusion."
+	, "https://bkaradzic.github.io/bgfx/examples.html#assao"
+	);
 
 

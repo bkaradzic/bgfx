@@ -16,6 +16,7 @@
 #define SOURCE_OPT_STRUCT_CFG_ANALYSIS_H_
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include "source/opt/function.h"
 #include "source/util/bit_vector.h"
@@ -41,6 +42,11 @@ class StructuredCFGAnalysis {
     }
     return it->second.containing_construct;
   }
+
+  // Returns the id of the header of the innermost merge construct
+  // that contains |inst|.  Returns |0| if |inst| is not contained in any
+  // merge construct.
+  uint32_t ContainingConstruct(Instruction* inst);
 
   // Returns the id of the merge block of the innermost merge construct
   // that contains |bb_id|.  Returns |0| if |bb_id| is not contained in any
@@ -68,20 +74,61 @@ class StructuredCFGAnalysis {
   // construct.
   uint32_t LoopContinueBlock(uint32_t bb_id);
 
+  // Returns the id of the header of the innermost switch construct
+  // that contains |bb_id| as long as there is no intervening loop.  Returns |0|
+  // if no such construct exists.
+  uint32_t ContainingSwitch(uint32_t bb_id) {
+    auto it = bb_to_construct_.find(bb_id);
+    if (it == bb_to_construct_.end()) {
+      return 0;
+    }
+    return it->second.containing_switch;
+  }
+  // Returns the id of the merge block of the innermost switch construct
+  // that contains |bb_id| as long as there is no intervening loop.  Return |0|
+  // if no such block exists.
+  uint32_t SwitchMergeBlock(uint32_t bb_id);
+
+  // Returns true if |bb_id| is the continue block for a loop.
   bool IsContinueBlock(uint32_t bb_id);
+
+  // Returns true if |bb_id| is in the continue construct for its inner most
+  // containing loop.
+  bool IsInContainingLoopsContinueConstruct(uint32_t bb_id);
+
+  // Returns true if |bb_id| is in the continue construct for any loop in its
+  // function.
+  bool IsInContinueConstruct(uint32_t bb_id);
+
+  // Return true if |bb_id| is the merge block for a construct.
   bool IsMergeBlock(uint32_t bb_id);
+
+  // Returns the set of function ids that are called directly or indirectly from
+  // a continue construct.
+  std::unordered_set<uint32_t> FindFuncsCalledFromContinue();
 
  private:
   // Struct used to hold the information for a basic block.
   // |containing_construct| is the header for the innermost containing
   // construct, or 0 if no such construct exists.  It could be a selection
-  // construct or a loop construct. |containing_loop| is the innermost
-  // containing loop construct, or 0 if the basic bloc is not in a loop.  If the
-  // basic block is in a selection construct that is contained in a loop
-  // construct, then these two values will not be the same.
+  // construct or a loop construct.
+  //
+  // |containing_loop| is the innermost containing loop construct, or 0 if the
+  // basic bloc is not in a loop.  If the basic block is in a selection
+  // construct that is contained in a loop construct, then these two values will
+  // not be the same.
+  //
+  // |containing_switch| is the innermost contain selection construct with an
+  // |OpSwitch| for the branch, as long as there is not intervening loop.  This
+  // is used to identify the selection construct from which it can break.
+  //
+  // |in_continue| is true of the block is in the continue construct for its
+  // innermost containing loop.
   struct ConstructInfo {
     uint32_t containing_construct;
     uint32_t containing_loop;
+    uint32_t containing_switch;
+    bool in_continue;
   };
 
   // Populates |bb_to_construct_| with the innermost containing merge and loop

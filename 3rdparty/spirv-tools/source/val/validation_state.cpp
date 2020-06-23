@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "source/opcode.h"
+#include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/val/basic_block.h"
 #include "source/val/construct.h"
@@ -92,6 +93,9 @@ bool IsInstructionInLayoutSection(ModuleLayoutSection layout, SpvOp op) {
         case SpvOpLine:
         case SpvOpNoLine:
         case SpvOpUndef:
+        // SpvOpExtInst is only allowed here for certain extended instruction
+        // sets. This will be checked separately
+        case SpvOpExtInst:
           out = true;
           break;
         default: break;
@@ -146,6 +150,30 @@ spv_result_t CountInstructions(void* user_data,
   return SPV_SUCCESS;
 }
 
+spv_result_t setHeader(void* user_data, spv_endianness_t, uint32_t,
+                       uint32_t version, uint32_t generator, uint32_t id_bound,
+                       uint32_t) {
+  ValidationState_t& vstate =
+      *(reinterpret_cast<ValidationState_t*>(user_data));
+  vstate.setIdBound(id_bound);
+  vstate.setGenerator(generator);
+  vstate.setVersion(version);
+
+  return SPV_SUCCESS;
+}
+
+// Add features based on SPIR-V core version number.
+void UpdateFeaturesBasedOnSpirvVersion(ValidationState_t::Feature* features,
+                                       uint32_t version) {
+  assert(features);
+  if (version >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+    features->select_between_composites = true;
+    features->copy_memory_permits_two_memory_accesses = true;
+    features->uconvert_spec_constant_op = true;
+    features->nonwritable_var_in_function_or_private = true;
+  }
+}
+
 }  // namespace
 
 ValidationState_t::ValidationState_t(const spv_const_context ctx,
@@ -187,14 +215,6 @@ ValidationState_t::ValidationState_t(const spv_const_context ctx,
     }
   }
 
-  switch (env) {
-    case SPV_ENV_WEBGPU_0:
-      features_.bans_op_undef = true;
-      break;
-    default:
-      break;
-  }
-
   // Only attempt to count if we have words, otherwise let the other validation
   // fail and generate an error.
   if (num_words > 0) {
@@ -205,11 +225,12 @@ ValidationState_t::ValidationState_t(const spv_const_context ctx,
     spv_context_t hijacked_context = *ctx;
     hijacked_context.consumer = [](spv_message_level_t, const char*,
                                    const spv_position_t&, const char*) {};
-    spvBinaryParse(&hijacked_context, this, words, num_words,
-                   /* parsed_header = */ nullptr, CountInstructions,
+    spvBinaryParse(&hijacked_context, this, words, num_words, setHeader,
+                   CountInstructions,
                    /* diagnostic = */ nullptr);
     preallocateStorage();
   }
+  UpdateFeaturesBasedOnSpirvVersion(&features_, version_);
 
   friendly_mapper_ = spvtools::MakeUnique<spvtools::FriendlyNameMapper>(
       context_, words_, num_words_);
@@ -447,7 +468,7 @@ void ValidationState_t::set_addressing_model(SpvAddressingModel am) {
       pointer_size_and_alignment_ = 4;
       break;
     default:
-      // fall through
+    // fall through
     case SpvAddressingModelPhysical64:
     case SpvAddressingModelPhysicalStorageBuffer64EXT:
       pointer_size_and_alignment_ = 8;
@@ -663,6 +684,12 @@ uint32_t ValidationState_t::GetBitWidth(uint32_t id) const {
 
   assert(0);
   return 0;
+}
+
+bool ValidationState_t::IsVoidType(uint32_t id) const {
+  const Instruction* inst = FindDef(id);
+  assert(inst);
+  return inst->opcode() == SpvOpTypeVoid;
 }
 
 bool ValidationState_t::IsFloatScalarType(uint32_t id) const {
@@ -1025,7 +1052,7 @@ void ValidationState_t::ComputeFunctionToEntryPointMapping() {
 }
 
 void ValidationState_t::ComputeRecursiveEntryPoints() {
-  for (const Function func : functions()) {
+  for (const Function& func : functions()) {
     std::stack<uint32_t> call_stack;
     std::set<uint32_t> visited;
 
@@ -1107,6 +1134,189 @@ std::string ValidationState_t::Disassemble(const uint32_t* words,
 
   return spvInstructionBinaryToText(context()->target_env, words, num_words,
                                     words_, num_words_, disassembly_options);
+}
+
+bool ValidationState_t::LogicallyMatch(const Instruction* lhs,
+                                       const Instruction* rhs,
+                                       bool check_decorations) {
+  if (lhs->opcode() != rhs->opcode()) {
+    return false;
+  }
+
+  if (check_decorations) {
+    const auto& dec_a = id_decorations(lhs->id());
+    const auto& dec_b = id_decorations(rhs->id());
+
+    for (const auto& dec : dec_b) {
+      if (std::find(dec_a.begin(), dec_a.end(), dec) == dec_a.end()) {
+        return false;
+      }
+    }
+  }
+
+  if (lhs->opcode() == SpvOpTypeArray) {
+    // Size operands must match.
+    if (lhs->GetOperandAs<uint32_t>(2u) != rhs->GetOperandAs<uint32_t>(2u)) {
+      return false;
+    }
+
+    // Elements must match or logically match.
+    const auto lhs_ele_id = lhs->GetOperandAs<uint32_t>(1u);
+    const auto rhs_ele_id = rhs->GetOperandAs<uint32_t>(1u);
+    if (lhs_ele_id == rhs_ele_id) {
+      return true;
+    }
+
+    const auto lhs_ele = FindDef(lhs_ele_id);
+    const auto rhs_ele = FindDef(rhs_ele_id);
+    if (!lhs_ele || !rhs_ele) {
+      return false;
+    }
+    return LogicallyMatch(lhs_ele, rhs_ele, check_decorations);
+  } else if (lhs->opcode() == SpvOpTypeStruct) {
+    // Number of elements must match.
+    if (lhs->operands().size() != rhs->operands().size()) {
+      return false;
+    }
+
+    for (size_t i = 1u; i < lhs->operands().size(); ++i) {
+      const auto lhs_ele_id = lhs->GetOperandAs<uint32_t>(i);
+      const auto rhs_ele_id = rhs->GetOperandAs<uint32_t>(i);
+      // Elements must match or logically match.
+      if (lhs_ele_id == rhs_ele_id) {
+        continue;
+      }
+
+      const auto lhs_ele = FindDef(lhs_ele_id);
+      const auto rhs_ele = FindDef(rhs_ele_id);
+      if (!lhs_ele || !rhs_ele) {
+        return false;
+      }
+
+      if (!LogicallyMatch(lhs_ele, rhs_ele, check_decorations)) {
+        return false;
+      }
+    }
+
+    // All checks passed.
+    return true;
+  }
+
+  // No other opcodes are acceptable at this point. Arrays and structs are
+  // caught above and if they're elements are not arrays or structs they are
+  // required to match exactly.
+  return false;
+}
+
+const Instruction* ValidationState_t::TracePointer(
+    const Instruction* inst) const {
+  auto base_ptr = inst;
+  while (base_ptr->opcode() == SpvOpAccessChain ||
+         base_ptr->opcode() == SpvOpInBoundsAccessChain ||
+         base_ptr->opcode() == SpvOpPtrAccessChain ||
+         base_ptr->opcode() == SpvOpInBoundsPtrAccessChain ||
+         base_ptr->opcode() == SpvOpCopyObject) {
+    base_ptr = FindDef(base_ptr->GetOperandAs<uint32_t>(2u));
+  }
+  return base_ptr;
+}
+
+bool ValidationState_t::ContainsSizedIntOrFloatType(uint32_t id, SpvOp type,
+                                                    uint32_t width) const {
+  if (type != SpvOpTypeInt && type != SpvOpTypeFloat) return false;
+
+  const auto inst = FindDef(id);
+  if (!inst) return false;
+
+  if (inst->opcode() == type) {
+    return inst->GetOperandAs<uint32_t>(1u) == width;
+  }
+
+  switch (inst->opcode()) {
+    case SpvOpTypeArray:
+    case SpvOpTypeRuntimeArray:
+    case SpvOpTypeVector:
+    case SpvOpTypeMatrix:
+    case SpvOpTypeImage:
+    case SpvOpTypeSampledImage:
+    case SpvOpTypeCooperativeMatrixNV:
+      return ContainsSizedIntOrFloatType(inst->GetOperandAs<uint32_t>(1u), type,
+                                         width);
+    case SpvOpTypePointer:
+      if (IsForwardPointer(id)) return false;
+      return ContainsSizedIntOrFloatType(inst->GetOperandAs<uint32_t>(2u), type,
+                                         width);
+    case SpvOpTypeFunction:
+    case SpvOpTypeStruct: {
+      for (uint32_t i = 1; i < inst->operands().size(); ++i) {
+        if (ContainsSizedIntOrFloatType(inst->GetOperandAs<uint32_t>(i), type,
+                                        width))
+          return true;
+      }
+      return false;
+    }
+    default:
+      return false;
+  }
+}
+
+bool ValidationState_t::ContainsLimitedUseIntOrFloatType(uint32_t id) const {
+  if ((!HasCapability(SpvCapabilityInt16) &&
+       ContainsSizedIntOrFloatType(id, SpvOpTypeInt, 16)) ||
+      (!HasCapability(SpvCapabilityInt8) &&
+       ContainsSizedIntOrFloatType(id, SpvOpTypeInt, 8)) ||
+      (!HasCapability(SpvCapabilityFloat16) &&
+       ContainsSizedIntOrFloatType(id, SpvOpTypeFloat, 16))) {
+    return true;
+  }
+  return false;
+}
+
+bool ValidationState_t::IsValidStorageClass(
+    SpvStorageClass storage_class) const {
+  if (spvIsWebGPUEnv(context()->target_env)) {
+    switch (storage_class) {
+      case SpvStorageClassUniformConstant:
+      case SpvStorageClassUniform:
+      case SpvStorageClassStorageBuffer:
+      case SpvStorageClassInput:
+      case SpvStorageClassOutput:
+      case SpvStorageClassImage:
+      case SpvStorageClassWorkgroup:
+      case SpvStorageClassPrivate:
+      case SpvStorageClassFunction:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  if (spvIsVulkanEnv(context()->target_env)) {
+    switch (storage_class) {
+      case SpvStorageClassUniformConstant:
+      case SpvStorageClassUniform:
+      case SpvStorageClassStorageBuffer:
+      case SpvStorageClassInput:
+      case SpvStorageClassOutput:
+      case SpvStorageClassImage:
+      case SpvStorageClassWorkgroup:
+      case SpvStorageClassPrivate:
+      case SpvStorageClassFunction:
+      case SpvStorageClassPushConstant:
+      case SpvStorageClassPhysicalStorageBuffer:
+      case SpvStorageClassRayPayloadNV:
+      case SpvStorageClassIncomingRayPayloadNV:
+      case SpvStorageClassHitAttributeNV:
+      case SpvStorageClassCallableDataNV:
+      case SpvStorageClassIncomingCallableDataNV:
+      case SpvStorageClassShaderRecordBufferNV:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  return true;
 }
 
 }  // namespace val

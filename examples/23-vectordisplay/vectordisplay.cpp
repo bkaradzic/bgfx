@@ -35,7 +35,7 @@ const int HALF_TEXTURE_SIZE = TEXTURE_SIZE / 2;
 
 void PosColorUvVertex::init()
 {
-	ms_decl
+	ms_layout
 		.begin()
 		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
@@ -43,7 +43,7 @@ void PosColorUvVertex::init()
 		.end();
 }
 
-bgfx::VertexDecl PosColorUvVertex::ms_decl;
+bgfx::VertexLayout PosColorUvVertex::ms_layout;
 
 inline float normalizef(float _a)
 {
@@ -161,7 +161,7 @@ void VectorDisplay::endFrame()
 	// advance step
 	m_currentDrawStep = (m_currentDrawStep + 1) % m_numberDecaySteps;
 
-	BX_CHECK(m_points.size() < MAX_NUMBER_VERTICES, "");
+	BX_ASSERT(m_points.size() < MAX_NUMBER_VERTICES, "");
 
 	bgfx::update(
 		  m_vertexBuffers[m_currentDrawStep]
@@ -315,7 +315,7 @@ void VectorDisplay::endFrame()
 
 void VectorDisplay::beginDraw(float _x, float _y)
 {
-	BX_CHECK(0 == m_pendingPoints.size(), "Begin draw on already filled buffer!");
+	BX_ASSERT(0 == m_pendingPoints.size(), "Begin draw on already filled buffer!");
 
 	PendingPoint point;
 	point.x = _x * m_drawScale + m_drawOffsetX;
@@ -737,7 +737,7 @@ bool VectorDisplay::setDecaySteps(int _steps)
 
 	for (int i = 0; i < m_numberDecaySteps; ++i)
 	{
-		m_vertexBuffers.push_back(bgfx::createDynamicVertexBuffer(MAX_NUMBER_VERTICES, PosColorUvVertex::ms_decl) );
+		m_vertexBuffers.push_back(bgfx::createDynamicVertexBuffer(MAX_NUMBER_VERTICES, PosColorUvVertex::ms_layout) );
 		m_vertexBuffersSize.push_back(0);
 	}
 
@@ -769,10 +769,10 @@ void VectorDisplay::getSize(float* _outWidth, float* _outHeight)
 
 void VectorDisplay::screenSpaceQuad(float _textureWidth, float _textureHeight, float _width, float _height)
 {
-	if (3 == getAvailTransientVertexBuffer(3, PosColorUvVertex::ms_decl) )
+	if (3 == getAvailTransientVertexBuffer(3, PosColorUvVertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorUvVertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorUvVertex::ms_layout);
 		PosColorUvVertex* vertex = (PosColorUvVertex*)vb.data;
 
 		const float zz = 0.0f;

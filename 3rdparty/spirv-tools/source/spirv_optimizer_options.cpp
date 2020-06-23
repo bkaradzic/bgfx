@@ -39,3 +39,13 @@ SPIRV_TOOLS_EXPORT void spvOptimizerOptionsSetMaxIdBound(
     spv_optimizer_options options, uint32_t val) {
   options->max_id_bound_ = val;
 }
+
+SPIRV_TOOLS_EXPORT void spvOptimizerOptionsSetPreserveBindings(
+    spv_optimizer_options options, bool val) {
+  options->preserve_bindings_ = val;
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerOptionsSetPreserveSpecConstants(
+    spv_optimizer_options options, bool val) {
+  options->preserve_spec_constants_ = val;
+}

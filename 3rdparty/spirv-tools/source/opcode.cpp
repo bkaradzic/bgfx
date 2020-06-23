@@ -1,4 +1,6 @@
-// Copyright (c) 2015-2016 The Khronos Group Inc.
+// Copyright (c) 2015-2020 The Khronos Group Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -97,6 +99,7 @@ spv_result_t spvOpcodeTableNameLookup(spv_target_env env,
   // preferable but the table requires sorting on the Opcode name, but it's
   // static const initialized and matches the order of the spec.
   const size_t nameLength = strlen(name);
+  const auto version = spvVersionForTargetEnv(env);
   for (uint64_t opcodeIndex = 0; opcodeIndex < table->count; ++opcodeIndex) {
     const spv_opcode_desc_t& entry = table->entries[opcodeIndex];
     // We considers the current opcode as available as long as
@@ -107,7 +110,7 @@ spv_result_t spvOpcodeTableNameLookup(spv_target_env env,
     // Note that the second rule assumes the extension enabling this instruction
     // is indeed requested in the SPIR-V code; checking that should be
     // validator's work.
-    if ((spvVersionForTargetEnv(env) >= entry.minVersion ||
+    if (((version >= entry.minVersion && version <= entry.lastVersion) ||
          entry.numExtensions > 0u || entry.numCapabilities > 0u) &&
         nameLength == strlen(entry.name) &&
         !strncmp(name, entry.name, nameLength)) {
@@ -130,8 +133,8 @@ spv_result_t spvOpcodeTableValueLookup(spv_target_env env,
   const auto beg = table->entries;
   const auto end = table->entries + table->count;
 
-  spv_opcode_desc_t needle = {"",    opcode, 0, nullptr, 0,  {},
-                              false, false,  0, nullptr, ~0u};
+  spv_opcode_desc_t needle = {"",    opcode, 0, nullptr, 0,   {},
+                              false, false,  0, nullptr, ~0u, ~0u};
 
   auto comp = [](const spv_opcode_desc_t& lhs, const spv_opcode_desc_t& rhs) {
     return lhs.opcode < rhs.opcode;
@@ -142,6 +145,7 @@ spv_result_t spvOpcodeTableValueLookup(spv_target_env env,
   // which means they can have different minimal version requirements.
   // Assumes the underlying table is already sorted ascendingly according to
   // opcode value.
+  const auto version = spvVersionForTargetEnv(env);
   for (auto it = std::lower_bound(beg, end, needle, comp);
        it != end && it->opcode == opcode; ++it) {
     // We considers the current opcode as available as long as
@@ -152,7 +156,7 @@ spv_result_t spvOpcodeTableValueLookup(spv_target_env env,
     // Note that the second rule assumes the extension enabling this instruction
     // is indeed requested in the SPIR-V code; checking that should be
     // validator's work.
-    if (spvVersionForTargetEnv(env) >= it->minVersion ||
+    if ((version >= it->minVersion && version <= it->lastVersion) ||
         it->numExtensions > 0u || it->numCapabilities > 0u) {
       *pEntry = it;
       return SPV_SUCCESS;
@@ -179,11 +183,15 @@ void spvInstructionCopy(const uint32_t* words, const SpvOp opcode,
   }
 }
 
-const char* spvOpcodeString(const SpvOp opcode) {
+const char* spvOpcodeString(const uint32_t opcode) {
   const auto beg = kOpcodeTableEntries;
   const auto end = kOpcodeTableEntries + ARRAY_SIZE(kOpcodeTableEntries);
-  spv_opcode_desc_t needle = {"",    opcode, 0, nullptr, 0,  {},
-                              false, false,  0, nullptr, ~0u};
+  spv_opcode_desc_t needle = {"",    static_cast<SpvOp>(opcode),
+                              0,     nullptr,
+                              0,     {},
+                              false, false,
+                              0,     nullptr,
+                              ~0u,   ~0u};
   auto comp = [](const spv_opcode_desc_t& lhs, const spv_opcode_desc_t& rhs) {
     return lhs.opcode < rhs.opcode;
   };
@@ -327,6 +335,9 @@ int32_t spvOpcodeGeneratesType(SpvOp op) {
     case SpvOpTypeNamedBarrier:
     case SpvOpTypeAccelerationStructureNV:
     case SpvOpTypeCooperativeMatrixNV:
+    // case SpvOpTypeAccelerationStructureKHR: covered by
+    // SpvOpTypeAccelerationStructureNV
+    case SpvOpTypeRayQueryProvisionalKHR:
       return true;
     default:
       // In particular, OpTypeForwardPointer does not generate a type,
@@ -600,6 +611,55 @@ bool spvOpcodeIsDebug(SpvOp opcode) {
     case SpvOpString:
     case SpvOpLine:
     case SpvOpNoLine:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool spvOpcodeIsCommutativeBinaryOperator(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpPtrEqual:
+    case SpvOpPtrNotEqual:
+    case SpvOpIAdd:
+    case SpvOpFAdd:
+    case SpvOpIMul:
+    case SpvOpFMul:
+    case SpvOpDot:
+    case SpvOpIAddCarry:
+    case SpvOpUMulExtended:
+    case SpvOpSMulExtended:
+    case SpvOpBitwiseOr:
+    case SpvOpBitwiseXor:
+    case SpvOpBitwiseAnd:
+    case SpvOpOrdered:
+    case SpvOpUnordered:
+    case SpvOpLogicalEqual:
+    case SpvOpLogicalNotEqual:
+    case SpvOpLogicalOr:
+    case SpvOpLogicalAnd:
+    case SpvOpIEqual:
+    case SpvOpINotEqual:
+    case SpvOpFOrdEqual:
+    case SpvOpFUnordEqual:
+    case SpvOpFOrdNotEqual:
+    case SpvOpFUnordNotEqual:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool spvOpcodeIsLinearAlgebra(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpTranspose:
+    case SpvOpVectorTimesScalar:
+    case SpvOpMatrixTimesScalar:
+    case SpvOpVectorTimesMatrix:
+    case SpvOpMatrixTimesVector:
+    case SpvOpMatrixTimesMatrix:
+    case SpvOpOuterProduct:
+    case SpvOpDot:
       return true;
     default:
       return false;

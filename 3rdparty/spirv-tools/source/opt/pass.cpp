@@ -43,7 +43,8 @@ Pass::Status Pass::Run(IRContext* ctx) {
   if (status == Status::SuccessWithChange) {
     ctx->InvalidateAnalysesExceptFor(GetPreservedAnalyses());
   }
-  assert(ctx->IsConsistent());
+  assert((status == Status::Failure || ctx->IsConsistent()) &&
+         "An analysis in the context is out of date.");
   return status;
 }
 
@@ -53,14 +54,44 @@ uint32_t Pass::GetPointeeTypeId(const Instruction* ptrInst) const {
   return ptrTypeInst->GetSingleWordInOperand(kTypePointerTypeIdInIdx);
 }
 
-uint32_t Pass::GenerateCopy(Instruction* object_inst, uint32_t new_type_id,
+Instruction* Pass::GetBaseType(uint32_t ty_id) {
+  Instruction* ty_inst = get_def_use_mgr()->GetDef(ty_id);
+  if (ty_inst->opcode() == SpvOpTypeMatrix) {
+    uint32_t vty_id = ty_inst->GetSingleWordInOperand(0);
+    ty_inst = get_def_use_mgr()->GetDef(vty_id);
+  }
+  if (ty_inst->opcode() == SpvOpTypeVector) {
+    uint32_t cty_id = ty_inst->GetSingleWordInOperand(0);
+    ty_inst = get_def_use_mgr()->GetDef(cty_id);
+  }
+  return ty_inst;
+}
+
+bool Pass::IsFloat(uint32_t ty_id, uint32_t width) {
+  Instruction* ty_inst = GetBaseType(ty_id);
+  if (ty_inst->opcode() != SpvOpTypeFloat) return false;
+  return ty_inst->GetSingleWordInOperand(0) == width;
+}
+
+uint32_t Pass::GetNullId(uint32_t type_id) {
+  if (IsFloat(type_id, 16)) context()->AddCapability(SpvCapabilityFloat16);
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
+  const analysis::Type* type = type_mgr->GetType(type_id);
+  const analysis::Constant* null_const = const_mgr->GetConstant(type, {});
+  Instruction* null_inst =
+      const_mgr->GetDefiningInstruction(null_const, type_id);
+  return null_inst->result_id();
+}
+
+uint32_t Pass::GenerateCopy(Instruction* object_to_copy, uint32_t new_type_id,
                             Instruction* insertion_position) {
   analysis::TypeManager* type_mgr = context()->get_type_mgr();
   analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
 
-  uint32_t original_type_id = object_inst->type_id();
+  uint32_t original_type_id = object_to_copy->type_id();
   if (original_type_id == new_type_id) {
-    return object_inst->result_id();
+    return object_to_copy->result_id();
   }
 
   InstructionBuilder ir_builder(
@@ -86,7 +117,7 @@ uint32_t Pass::GenerateCopy(Instruction* object_inst, uint32_t new_type_id,
     uint32_t array_length = length_const->AsIntConstant()->GetU32();
     for (uint32_t i = 0; i < array_length; i++) {
       Instruction* extract = ir_builder.AddCompositeExtract(
-          original_element_type_id, object_inst->result_id(), {i});
+          original_element_type_id, object_to_copy->result_id(), {i});
       element_ids.push_back(
           GenerateCopy(extract, new_element_type_id, insertion_position));
     }
@@ -104,7 +135,7 @@ uint32_t Pass::GenerateCopy(Instruction* object_inst, uint32_t new_type_id,
     std::vector<uint32_t> element_ids;
     for (uint32_t i = 0; i < original_types.size(); i++) {
       Instruction* extract = ir_builder.AddCompositeExtract(
-          type_mgr->GetId(original_types[i]), object_inst->result_id(), {i});
+          type_mgr->GetId(original_types[i]), object_to_copy->result_id(), {i});
       element_ids.push_back(GenerateCopy(extract, type_mgr->GetId(new_types[i]),
                                          insertion_position));
     }

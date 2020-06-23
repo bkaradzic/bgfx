@@ -545,7 +545,7 @@ int TPpContext::evalToToken(int token, bool shortCircuit, int& res, bool& err, T
         case MacroExpandStarted:
             break;
         case MacroExpandUndef:
-            if (! shortCircuit && parseContext.profile == EEsProfile) {
+            if (! shortCircuit && parseContext.isEsProfile()) {
                 const char* message = "undefined macro in expression not allowed in es profile";
                 if (parseContext.relaxedErrors())
                     parseContext.ppWarn(ppToken->loc, message, "preprocessor evaluation", ppToken->name);
@@ -621,14 +621,25 @@ int TPpContext::CPPinclude(TPpToken* ppToken)
 {
     const TSourceLoc directiveLoc = ppToken->loc;
     bool startWithLocalSearch = true; // to additionally include the extra "" paths
-    int token = scanToken(ppToken);
+    int token;
 
-    // handle <header-name>-style #include
-    if (token == '<') {
+    // Find the first non-whitespace char after #include
+    int ch = getChar();
+    while (ch == ' ' || ch == '\t') {
+        ch = getChar();
+    }
+    if (ch == '<') {
+        // <header-name> style
         startWithLocalSearch = false;
         token = scanHeaderName(ppToken, '>');
+    } else if (ch == '"') {
+        // "header-name" style
+        token = scanHeaderName(ppToken, '"');
+    } else {
+        // unexpected, get the full token to generate the error
+        ungetChar();
+        token = scanToken(ppToken);
     }
-    // otherwise ppToken already has the header name and it was "header-name" style
 
     if (token != PpAtomConstString) {
         parseContext.ppError(directiveLoc, "must be followed by a header name", "#include", "");
@@ -711,7 +722,9 @@ int TPpContext::CPPline(TPpToken* ppToken)
     const char* sourceName = nullptr; // Optional source file name.
     bool lineErr = false;
     bool fileErr = false;
+    disableEscapeSequences = true;
     token = eval(token, MIN_PRECEDENCE, false, lineRes, lineErr, ppToken);
+    disableEscapeSequences = false;
     if (! lineErr) {
         lineToken = lineRes;
         if (token == '\n')
@@ -722,6 +735,7 @@ int TPpContext::CPPline(TPpToken* ppToken)
         parseContext.setCurrentLine(lineRes);
 
         if (token != '\n') {
+#ifndef GLSLANG_WEB
             if (token == PpAtomConstString) {
                 parseContext.ppRequireExtensions(directiveLoc, 1, &E_GL_GOOGLE_cpp_style_line_directive, "filename-based #line");
                 // We need to save a copy of the string instead of pointing
@@ -731,7 +745,9 @@ int TPpContext::CPPline(TPpToken* ppToken)
                 parseContext.setCurrentSourceName(sourceName);
                 hasFile = true;
                 token = scanToken(ppToken);
-            } else {
+            } else
+#endif
+            {
                 token = eval(token, MIN_PRECEDENCE, false, fileRes, fileErr, ppToken);
                 if (! fileErr) {
                     parseContext.setCurrentString(fileRes);
@@ -751,7 +767,9 @@ int TPpContext::CPPline(TPpToken* ppToken)
 // Handle #error
 int TPpContext::CPPerror(TPpToken* ppToken)
 {
+    disableEscapeSequences = true;
     int token = scanToken(ppToken);
+    disableEscapeSequences = false;
     std::string message;
     TSourceLoc loc = ppToken->loc;
 
@@ -792,10 +810,8 @@ int TPpContext::CPPpragma(TPpToken* ppToken)
         case PpAtomConstUint:
         case PpAtomConstInt64:
         case PpAtomConstUint64:
-#ifdef AMD_EXTENSIONS
         case PpAtomConstInt16:
         case PpAtomConstUint16:
-#endif
         case PpAtomConstFloat:
         case PpAtomConstDouble:
         case PpAtomConstFloat16:
@@ -954,18 +970,20 @@ int TPpContext::readCPPline(TPpToken* ppToken)
         case PpAtomIfndef:
             token = CPPifdef(0, ppToken);
             break;
+        case PpAtomLine:
+            token = CPPline(ppToken);
+            break;
+#ifndef GLSLANG_WEB
         case PpAtomInclude:
             if(!parseContext.isReadingHLSL()) {
                 parseContext.ppRequireExtensions(ppToken->loc, 1, &E_GL_GOOGLE_include_directive, "#include");
             }
             token = CPPinclude(ppToken);
             break;
-        case PpAtomLine:
-            token = CPPline(ppToken);
-            break;
         case PpAtomPragma:
             token = CPPpragma(ppToken);
             break;
+#endif
         case PpAtomUndef:
             token = CPPundef(ppToken);
             break;

@@ -22,6 +22,33 @@
 
 #include "source/opt/ir_context.h"
 
+namespace {
+using InstructionVector = std::vector<const spvtools::opt::Instruction*>;
+using DecorationSet = std::set<std::u32string>;
+
+// Returns true if |a| is a subet of |b|.
+bool IsSubset(const DecorationSet& a, const DecorationSet& b) {
+  auto it1 = a.begin();
+  auto it2 = b.begin();
+
+  while (it1 != a.end()) {
+    if (it2 == b.end() || *it1 < *it2) {
+      // |*it1| is in |a|, but not in |b|.
+      return false;
+    }
+    if (*it1 == *it2) {
+      // Found the element move to the next one.
+      it1++;
+      it2++;
+    } else /* *it1 > *it2 */ {
+      // Did not find |*it1| yet, check the next element in |b|.
+      it2++;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 namespace spvtools {
 namespace opt {
 namespace analysis {
@@ -160,18 +187,15 @@ std::vector<const Instruction*> DecorationManager::GetDecorationsFor(
 
 bool DecorationManager::HaveTheSameDecorations(uint32_t id1,
                                                uint32_t id2) const {
-  using InstructionList = std::vector<const Instruction*>;
-  using DecorationSet = std::set<std::u32string>;
-
-  const InstructionList decorations_for1 = GetDecorationsFor(id1, false);
-  const InstructionList decorations_for2 = GetDecorationsFor(id2, false);
+  const InstructionVector decorations_for1 = GetDecorationsFor(id1, false);
+  const InstructionVector decorations_for2 = GetDecorationsFor(id2, false);
 
   // This function splits the decoration instructions into different sets,
   // based on their opcode; only OpDecorate, OpDecorateId,
   // OpDecorateStringGOOGLE, and OpMemberDecorate are considered, the other
   // opcodes are ignored.
   const auto fillDecorationSets =
-      [](const InstructionList& decoration_list, DecorationSet* decorate_set,
+      [](const InstructionVector& decoration_list, DecorationSet* decorate_set,
          DecorationSet* decorate_id_set, DecorationSet* decorate_string_set,
          DecorationSet* member_decorate_set) {
         for (const Instruction* inst : decoration_list) {
@@ -224,6 +248,73 @@ bool DecorationManager::HaveTheSameDecorations(uint32_t id1,
                       member_decorate_set_for1 == member_decorate_set_for2 &&
                       // Compare string sets last in case the strings are long.
                       decorate_string_set_for1 == decorate_string_set_for2;
+  return result;
+}
+
+bool DecorationManager::HaveSubsetOfDecorations(uint32_t id1,
+                                                uint32_t id2) const {
+  const InstructionVector decorations_for1 = GetDecorationsFor(id1, false);
+  const InstructionVector decorations_for2 = GetDecorationsFor(id2, false);
+
+  // This function splits the decoration instructions into different sets,
+  // based on their opcode; only OpDecorate, OpDecorateId,
+  // OpDecorateStringGOOGLE, and OpMemberDecorate are considered, the other
+  // opcodes are ignored.
+  const auto fillDecorationSets =
+      [](const InstructionVector& decoration_list, DecorationSet* decorate_set,
+         DecorationSet* decorate_id_set, DecorationSet* decorate_string_set,
+         DecorationSet* member_decorate_set) {
+        for (const Instruction* inst : decoration_list) {
+          std::u32string decoration_payload;
+          // Ignore the opcode and the target as we do not want them to be
+          // compared.
+          for (uint32_t i = 1u; i < inst->NumInOperands(); ++i) {
+            for (uint32_t word : inst->GetInOperand(i).words) {
+              decoration_payload.push_back(word);
+            }
+          }
+
+          switch (inst->opcode()) {
+            case SpvOpDecorate:
+              decorate_set->emplace(std::move(decoration_payload));
+              break;
+            case SpvOpMemberDecorate:
+              member_decorate_set->emplace(std::move(decoration_payload));
+              break;
+            case SpvOpDecorateId:
+              decorate_id_set->emplace(std::move(decoration_payload));
+              break;
+            case SpvOpDecorateStringGOOGLE:
+              decorate_string_set->emplace(std::move(decoration_payload));
+              break;
+            default:
+              break;
+          }
+        }
+      };
+
+  DecorationSet decorate_set_for1;
+  DecorationSet decorate_id_set_for1;
+  DecorationSet decorate_string_set_for1;
+  DecorationSet member_decorate_set_for1;
+  fillDecorationSets(decorations_for1, &decorate_set_for1,
+                     &decorate_id_set_for1, &decorate_string_set_for1,
+                     &member_decorate_set_for1);
+
+  DecorationSet decorate_set_for2;
+  DecorationSet decorate_id_set_for2;
+  DecorationSet decorate_string_set_for2;
+  DecorationSet member_decorate_set_for2;
+  fillDecorationSets(decorations_for2, &decorate_set_for2,
+                     &decorate_id_set_for2, &decorate_string_set_for2,
+                     &member_decorate_set_for2);
+
+  const bool result =
+      IsSubset(decorate_set_for1, decorate_set_for2) &&
+      IsSubset(decorate_id_set_for1, decorate_id_set_for2) &&
+      IsSubset(member_decorate_set_for1, member_decorate_set_for2) &&
+      // Compare string sets last in case the strings are long.
+      IsSubset(decorate_string_set_for1, decorate_string_set_for2);
   return result;
 }
 

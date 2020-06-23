@@ -90,6 +90,26 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
                     "one of DepthGreater, DepthLess or DepthUnchanged "
                     "execution modes.";
         }
+        if (execution_modes &&
+            1 < std::count_if(
+                    execution_modes->begin(), execution_modes->end(),
+                    [](const SpvExecutionMode& mode) {
+                      switch (mode) {
+                        case SpvExecutionModePixelInterlockOrderedEXT:
+                        case SpvExecutionModePixelInterlockUnorderedEXT:
+                        case SpvExecutionModeSampleInterlockOrderedEXT:
+                        case SpvExecutionModeSampleInterlockUnorderedEXT:
+                        case SpvExecutionModeShadingRateInterlockOrderedEXT:
+                        case SpvExecutionModeShadingRateInterlockUnorderedEXT:
+                          return true;
+                        default:
+                          return false;
+                      }
+                    })) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Fragment execution model entry points can specify at most "
+                    "one fragment shader interlock execution mode.";
+        }
         break;
       case SpvExecutionModelTessellationControl:
       case SpvExecutionModelTessellationEvaluation:
@@ -376,6 +396,12 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
     case SpvExecutionModeDepthGreater:
     case SpvExecutionModeDepthLess:
     case SpvExecutionModeDepthUnchanged:
+    case SpvExecutionModePixelInterlockOrderedEXT:
+    case SpvExecutionModePixelInterlockUnorderedEXT:
+    case SpvExecutionModeSampleInterlockOrderedEXT:
+    case SpvExecutionModeSampleInterlockUnorderedEXT:
+    case SpvExecutionModeShadingRateInterlockOrderedEXT:
+    case SpvExecutionModeShadingRateInterlockUnorderedEXT:
       if (!std::all_of(models->begin(), models->end(),
                        [](const SpvExecutionModel& model) {
                          return model == SpvExecutionModelFragment;
@@ -459,6 +485,44 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateMemoryModel(ValidationState_t& _,
+                                 const Instruction* inst) {
+  // Already produced an error if multiple memory model instructions are
+  // present.
+  if (_.memory_model() != SpvMemoryModelVulkanKHR &&
+      _.HasCapability(SpvCapabilityVulkanMemoryModelKHR)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "VulkanMemoryModelKHR capability must only be specified if "
+              "the VulkanKHR memory model is used.";
+  }
+
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    if (_.addressing_model() != SpvAddressingModelLogical) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Addressing model must be Logical for WebGPU environment.";
+    }
+    if (_.memory_model() != SpvMemoryModelVulkanKHR) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Memory model must be VulkanKHR for WebGPU environment.";
+    }
+  }
+
+  if (spvIsOpenCLEnv(_.context()->target_env)) {
+    if ((_.addressing_model() != SpvAddressingModelPhysical32) &&
+        (_.addressing_model() != SpvAddressingModelPhysical64)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Addressing model must be Physical32 or Physical64 "
+             << "in the OpenCL environment.";
+    }
+    if (_.memory_model() != SpvMemoryModelOpenCL) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Memory model must be OpenCL in the OpenCL environment.";
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 spv_result_t ModeSettingPass(ValidationState_t& _, const Instruction* inst) {
@@ -469,6 +533,9 @@ spv_result_t ModeSettingPass(ValidationState_t& _, const Instruction* inst) {
     case SpvOpExecutionMode:
     case SpvOpExecutionModeId:
       if (auto error = ValidateExecutionMode(_, inst)) return error;
+      break;
+    case SpvOpMemoryModel:
+      if (auto error = ValidateMemoryModel(_, inst)) return error;
       break;
     default:
       break;

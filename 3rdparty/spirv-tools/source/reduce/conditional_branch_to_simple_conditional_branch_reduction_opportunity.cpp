@@ -19,12 +19,15 @@
 namespace spvtools {
 namespace reduce {
 
+using opt::IRContext;
 using opt::Instruction;
 
 ConditionalBranchToSimpleConditionalBranchReductionOpportunity::
     ConditionalBranchToSimpleConditionalBranchReductionOpportunity(
-        Instruction* conditional_branch_instruction, bool redirect_to_true)
-    : conditional_branch_instruction_(conditional_branch_instruction),
+        IRContext* context, Instruction* conditional_branch_instruction,
+        bool redirect_to_true)
+    : context_(context),
+      conditional_branch_instruction_(conditional_branch_instruction),
       redirect_to_true_(redirect_to_true) {}
 
 bool ConditionalBranchToSimpleConditionalBranchReductionOpportunity::
@@ -43,11 +46,24 @@ void ConditionalBranchToSimpleConditionalBranchReductionOpportunity::Apply() {
   uint32_t operand_to_copy =
       redirect_to_true_ ? kTrueBranchOperandIndex : kFalseBranchOperandIndex;
 
+  auto old_successor_block_id =
+      conditional_branch_instruction_->GetSingleWordInOperand(
+          operand_to_modify);
+
   // Do the branch redirection.
   conditional_branch_instruction_->SetInOperand(
       operand_to_modify,
       {conditional_branch_instruction_->GetSingleWordInOperand(
           operand_to_copy)});
+
+  // The old successor block may have phi instructions; these will need to
+  // respect the change in edges.
+  AdaptPhiInstructionsForRemovedEdge(
+      context_->get_instr_block(conditional_branch_instruction_)->id(),
+      context_->cfg()->block(old_successor_block_id));
+
+  // We have changed the CFG.
+  context_->InvalidateAnalysesExceptFor(IRContext::Analysis::kAnalysisNone);
 }
 
 }  // namespace reduce

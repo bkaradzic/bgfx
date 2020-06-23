@@ -39,45 +39,69 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
   }
 
   if (!is_const_int32) {
-    if (_.HasCapability(SpvCapabilityShader)) {
+    if (_.HasCapability(SpvCapabilityShader) &&
+        !_.HasCapability(SpvCapabilityCooperativeMatrixNV)) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Memory Semantics ids must be OpConstant when Shader "
                 "capability is present";
+    }
+
+    if (_.HasCapability(SpvCapabilityShader) &&
+        _.HasCapability(SpvCapabilityCooperativeMatrixNV) &&
+        !spvOpcodeIsConstant(_.GetIdOpcode(id))) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Memory Semantics must be a constant instruction when "
+                "CooperativeMatrixNV capability is present";
     }
     return SPV_SUCCESS;
   }
 
   if (spvIsWebGPUEnv(_.context()->target_env)) {
-    uint32_t valid_bits = SpvMemorySemanticsUniformMemoryMask |
-                          SpvMemorySemanticsWorkgroupMemoryMask |
-                          SpvMemorySemanticsImageMemoryMask |
-                          SpvMemorySemanticsOutputMemoryKHRMask |
-                          SpvMemorySemanticsMakeAvailableKHRMask |
-                          SpvMemorySemanticsMakeVisibleKHRMask;
-    if (!spvOpcodeIsAtomicOp(inst->opcode())) {
-      valid_bits |= SpvMemorySemanticsAcquireReleaseMask;
-    }
+    uint32_t valid_bits;
+    switch (inst->opcode()) {
+      case SpvOpControlBarrier:
+        if (!(value & SpvMemorySemanticsAcquireReleaseMask)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "For WebGPU, AcquireRelease must be set for Memory "
+                    "Semantics of OpControlBarrier.";
+        }
 
-    if (value & ~valid_bits) {
-      if (spvOpcodeIsAtomicOp(inst->opcode())) {
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "WebGPU spec disallows, for OpAtomic*, any bit masks in "
-                  "Memory Semantics that are not UniformMemory, "
-                  "WorkgroupMemory, ImageMemory, or OutputMemoryKHR";
-      } else {
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "WebGPU spec disallows any bit masks in Memory Semantics "
-                  "that are not AcquireRelease, UniformMemory, "
-                  "WorkgroupMemory, ImageMemory, OutputMemoryKHR, "
-                  "MakeAvailableKHR, or MakeVisibleKHR";
-      }
-    }
+        if (!(value & SpvMemorySemanticsWorkgroupMemoryMask)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "For WebGPU, WorkgroupMemory must be set for Memory "
+                    "Semantics of OpControlBarrier.";
+        }
 
-    if (!spvOpcodeIsAtomicOp(inst->opcode()) &&
-        !(value & SpvMemorySemanticsAcquireReleaseMask)) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "WebGPU spec requires AcquireRelease to set in Memory "
-                "Semantics.";
+        valid_bits = SpvMemorySemanticsAcquireReleaseMask |
+                     SpvMemorySemanticsWorkgroupMemoryMask;
+        if (value & ~valid_bits) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "For WebGPU only WorkgroupMemory and AcquireRelease may be "
+                    "set for Memory Semantics of OpControlBarrier.";
+        }
+        break;
+      case SpvOpMemoryBarrier:
+        if (!(value & SpvMemorySemanticsImageMemoryMask)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "For WebGPU, ImageMemory must be set for Memory Semantics "
+                    "of OpMemoryBarrier.";
+        }
+        valid_bits = SpvMemorySemanticsImageMemoryMask;
+        if (value & ~valid_bits) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "For WebGPU only ImageMemory may be set for Memory "
+                    "Semantics of OpMemoryBarrier.";
+        }
+        break;
+      default:
+        if (spvOpcodeIsAtomicOp(inst->opcode())) {
+          if (value != 0) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << "For WebGPU Memory no bits may be set for Memory "
+                      "Semantics of OpAtomic* instructions.";
+          }
+        }
+        break;
     }
   }
 
@@ -125,6 +149,21 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
            << spvOpcodeString(opcode)
            << ": Memory Semantics OutputMemoryKHR requires capability "
            << "VulkanMemoryModelKHR";
+  }
+
+  if (value & SpvMemorySemanticsVolatileMask) {
+    if (!_.HasCapability(SpvCapabilityVulkanMemoryModelKHR)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << spvOpcodeString(opcode)
+             << ": Memory Semantics Volatile requires capability "
+                "VulkanMemoryModelKHR";
+    }
+
+    if (!spvOpcodeIsAtomicOp(inst->opcode())) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Memory Semantics Volatile can only be used with atomic "
+                "instructions";
+    }
   }
 
   if (value & SpvMemorySemanticsUniformMemoryMask &&

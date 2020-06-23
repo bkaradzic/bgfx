@@ -227,7 +227,7 @@ namespace {
                 }
             }
             else if (arg == "--version" || arg == "-V") {
-                std::cout << basename(argv[0]) << " version 0.97 " << __DATE__ << " " << __TIME__ << std::endl;
+                std::cout << basename(argv[0]) << " version 0.97" << std::endl;
                 exit(0);
             } else if (arg == "--input" || arg == "-i") {
                 // Collect input files
@@ -333,8 +333,6 @@ int main(int argc, char** argv)
 
     if (outputDir.empty())
         usage(argv[0], "Output directory required");
-
-    std::string errmsg;
 
     // Main operations: read, remap, and write.
     execute(inputFile, outputDir, opts, verbosity);

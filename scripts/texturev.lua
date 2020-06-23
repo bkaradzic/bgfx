@@ -117,9 +117,8 @@ project ("texturev")
 			"GLESv2",
 		}
 
-	configuration { "asmjs" }
+	configuration { "wasm*" }
 		kind "ConsoleApp"
-		targetextension ".bc"
 
 	configuration { "linux-* or freebsd" }
 		links {
@@ -157,7 +156,7 @@ project ("texturev")
 			"-framework QuartzCore",
 		}
 
-	configuration { "xcode4", "ios" }
+	configuration { "xcode*", "ios" }
 		kind "WindowedApp"
 
 	configuration { "qnx*" }

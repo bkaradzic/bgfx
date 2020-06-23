@@ -26,7 +26,7 @@ namespace stl = tinystl;
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _layout, bx::Error* _err = NULL);
 }
 
 namespace
@@ -52,7 +52,7 @@ struct PosNormalTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
@@ -60,10 +60,10 @@ struct PosNormalTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosNormalTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosNormalTexcoordVertex::ms_layout;
 
 static const float s_texcoord = 50.0f;
 static PosNormalTexcoordVertex s_hplaneVertices[] =
@@ -133,11 +133,12 @@ void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _wid
 	}
 }
 
-void mtxBillboard(float* __restrict _result
-				  , const float* __restrict _view
-				  , const float* __restrict _pos
-				  , const float* __restrict _scale
-				  )
+void mtxBillboard(
+	  float* _result
+	, const float* _view
+	, const float* _pos
+	, const float* _scale
+	)
 {
 	_result[ 0] = _view[0]  * _scale[0];
 	_result[ 1] = _view[4]  * _scale[0];
@@ -157,10 +158,11 @@ void mtxBillboard(float* __restrict _result
 	_result[15] = 1.0f;
 }
 
-void planeNormal(float* __restrict _result
-	, const float* __restrict _v0
-	, const float* __restrict _v1
-	, const float* __restrict _v2
+void planeNormal(
+	  float* _result
+	, const float* _v0
+	, const float* _v1
+	, const float* _v2
 	)
 {
 	const bx::Vec3 v0    = bx::load<bx::Vec3>(_v0);
@@ -697,7 +699,7 @@ inline float sqLength(const float _a[3], const float _b[3])
 	return xx*xx + yy*yy + zz*zz;
 }
 
-uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
+uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexLayout& _layout, const void* _data, uint16_t _num, float _epsilon)
 {
 	const uint32_t hashSize = bx::uint32_nextpow2(_num);
 	const uint32_t hashMask = hashSize-1;
@@ -714,14 +716,14 @@ uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexDecl& _decl, cons
 	for (uint16_t ii = 0; ii < _num; ++ii)
 	{
 		float pos[4];
-		vertexUnpack(pos, bgfx::Attrib::Position, _decl, _data, ii);
+		vertexUnpack(pos, bgfx::Attrib::Position, _layout, _data, ii);
 		uint32_t hashValue = bx::hash<bx::HashMurmur2A>(pos, 3*sizeof(float) ) & hashMask;
 
 		uint16_t offset = hashTable[hashValue];
 		for (; UINT16_MAX != offset; offset = next[offset])
 		{
 			float test[4];
-			vertexUnpack(test, bgfx::Attrib::Position, _decl, _data, _output[offset].m_v);
+			vertexUnpack(test, bgfx::Attrib::Position, _layout, _data, _output[offset].m_v);
 
 			if (sqLength(test, pos) < epsilonSq)
 			{
@@ -782,9 +784,9 @@ struct Group
 		Plane m_plane[2];
 	};
 
-	void fillStructures(const bgfx::VertexDecl& _decl)
+	void fillStructures(const bgfx::VertexLayout& _layout)
 	{
-		uint16_t stride = _decl.getStride();
+		uint16_t stride = _layout.getStride();
 		m_faces.clear();
 		m_halfEdges.destroy();
 
@@ -802,7 +804,7 @@ struct Group
 
 		//Get unique indices.
 		WeldedVertex* uniqueVertices = (WeldedVertex*)malloc(m_numVertices*sizeof(WeldedVertex) );
-		::weldVertices(uniqueVertices, _decl, m_vertices, m_numVertices, 0.0001f);
+		::weldVertices(uniqueVertices, _layout, m_vertices, m_numVertices, 0.0001f);
 		uint16_t* uniqueIndices = (uint16_t*)malloc(m_numIndices*sizeof(uint16_t) );
 		for (uint32_t ii = 0; ii < m_numIndices; ++ii)
 		{
@@ -933,7 +935,7 @@ typedef std::vector<Group> GroupArray;
 
 struct Mesh
 {
-	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		Group group;
 		const bgfx::Memory* mem;
@@ -941,13 +943,13 @@ struct Mesh
 
 		//vertices
 		group.m_numVertices = _numVertices;
-		size = _numVertices*_decl.getStride();
+		size = _numVertices*_layout.getStride();
 
 		group.m_vertices = (uint8_t*)malloc(size);
 		bx::memCopy(group.m_vertices, _vertices, size);
 
 		mem = bgfx::makeRef(group.m_vertices, size);
-		group.m_vbh = bgfx::createVertexBuffer(mem, _decl);
+		group.m_vbh = bgfx::createVertexBuffer(mem, _layout);
 
 		//indices
 		group.m_numIndices = _numIndices;
@@ -965,8 +967,8 @@ struct Mesh
 	void load(const char* _filePath)
 	{
 		::Mesh* mesh = ::meshLoad(_filePath, true);
-		m_decl = mesh->m_decl;
-		uint16_t stride = m_decl.getStride();
+		m_layout = mesh->m_layout;
+		uint16_t stride = m_layout.getStride();
 
 		for (::GroupArray::iterator it = mesh->m_groups.begin(), itEnd = mesh->m_groups.end(); it != itEnd; ++it)
 		{
@@ -977,13 +979,13 @@ struct Mesh
 			bx::memCopy(group.m_vertices, it->m_vertices, vertexSize);
 
 			const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, vertexSize);
-			group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
-			
+			group.m_vbh = bgfx::createVertexBuffer(mem, m_layout);
+
 			group.m_numIndices = it->m_numIndices;
 			const uint32_t indexSize = 2 * group.m_numIndices;
 			group.m_indices = (uint16_t*)malloc(indexSize);
 			bx::memCopy(group.m_indices, it->m_indices, indexSize);
-			
+
 			mem = bgfx::makeRef(group.m_indices, indexSize);
 			group.m_ibh = bgfx::createIndexBuffer(mem);
 
@@ -991,14 +993,14 @@ struct Mesh
 			group.m_aabb = it->m_aabb;
 			group.m_obb = it->m_obb;
 			group.m_prims = it->m_prims;
-			
+
 			m_groups.push_back(group);
 		}
 		::meshUnload(mesh);
 
 		for (GroupArray::iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
-			it->fillStructures(m_decl);
+			it->fillStructures(m_layout);
 		}
 	}
 
@@ -1011,7 +1013,7 @@ struct Mesh
 		m_groups.clear();
 	}
 
-	bgfx::VertexDecl m_decl;
+	bgfx::VertexLayout m_layout;
 	GroupArray m_groups;
 };
 
@@ -1023,9 +1025,9 @@ struct Model
 		m_texture.idx = bgfx::kInvalidHandle;
 	}
 
-	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices)
 	{
-		m_mesh.load(_vertices, _numVertices, _decl, _indices, _numIndices);
+		m_mesh.load(_vertices, _numVertices, _layout, _indices, _numIndices);
 	}
 
 	void load(const char* _meshFilePath)
@@ -1065,7 +1067,7 @@ struct Model
 			::setRenderState(_renderState);
 
 			// Submit
-			BX_CHECK(bgfx::kInvalidHandle != m_program, "Error, program is not set.");
+			BX_ASSERT(bgfx::kInvalidHandle != m_program, "Error, program is not set.");
 			::submit(_viewId, m_program);
 		}
 	}
@@ -1102,7 +1104,7 @@ struct Instance
 			, m_pos[2]
 			);
 
-		BX_CHECK(NULL != m_model, "Instance model cannot be NULL!");
+		BX_ASSERT(NULL != m_model, "Instance model cannot be NULL!");
 		m_model->submit(_viewId, mtx, _renderState);
 	}
 
@@ -1138,7 +1140,7 @@ struct ShadowVolumeAllocator
 	{
 		void* ret = (void*)m_ptr;
 		m_ptr += _size;
-		BX_CHECK(m_ptr - m_mem < (m_firstPage ? SV_PAGE_SIZE : 2 * SV_PAGE_SIZE), "Buffer overflow!");
+		BX_ASSERT(m_ptr - m_mem < (m_firstPage ? SV_PAGE_SIZE : 2 * SV_PAGE_SIZE), "Buffer overflow!");
 		return ret;
 	}
 
@@ -1189,11 +1191,11 @@ struct ShadowVolume
 };
 
 void shadowVolumeLightTransform(
-	  float* __restrict _outLightPos
-	, const float* __restrict _scale
-	, const float* __restrict _rotate
-	, const float* __restrict _translate
-	, const float* __restrict _lightPos // world pos
+	  float* _outLightPos
+	, const float* _scale
+	, const float* _rotate
+	, const float* _translate
+	, const float* _lightPos // world pos
 	)
 {
 	/**
@@ -1543,8 +1545,8 @@ void shadowVolumeCreate(
 		}
 	}
 
-	bgfx::VertexDecl decl;
-	decl.begin()
+	bgfx::VertexLayout layout;
+	layout.begin()
 		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 		.end();
@@ -1563,7 +1565,7 @@ void shadowVolumeCreate(
 	uint32_t isize = sideI * sizeof(uint16_t);
 
 	mem = bgfx::makeRef(verticesSide, vsize);
-	_shadowVolume.m_vbSides = bgfx::createVertexBuffer(mem, decl);
+	_shadowVolume.m_vbSides = bgfx::createVertexBuffer(mem, layout);
 
 	mem = bgfx::makeRef(indicesSide, isize);
 	_shadowVolume.m_ibSides = bgfx::createIndexBuffer(mem);
@@ -1593,13 +1595,14 @@ void shadowVolumeCreate(
 	}
 }
 
-void createNearClipVolume(float* __restrict _outPlanes24f
-						, float* __restrict _lightPos
-						, float* __restrict _view
-						, float _fovy
-						, float _aspect
-						, float _near
-						)
+void createNearClipVolume(
+	  float* _outPlanes24f
+	, float* _lightPos
+	, float* _view
+	, float _fovy
+	, float _aspect
+	, float _near
+	)
 {
 	float (*volumePlanes)[4] = (float(*)[4])_outPlanes24f;
 
@@ -1760,8 +1763,8 @@ enum Scene
 class ExampleShadowVolumes : public entry::AppI
 {
 public:
-	ExampleShadowVolumes(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleShadowVolumes(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -1859,7 +1862,7 @@ public:
 
 		m_hplaneFieldModel.load(s_hplaneVertices
 			, BX_COUNTOF(s_hplaneVertices)
-			, PosNormalTexcoordVertex::ms_decl
+			, PosNormalTexcoordVertex::ms_layout
 			, s_planeIndices
 			, BX_COUNTOF(s_planeIndices)
 			);
@@ -1868,7 +1871,7 @@ public:
 
 		m_hplaneFigureModel.load(s_hplaneVertices
 			, BX_COUNTOF(s_hplaneVertices)
-			, PosNormalTexcoordVertex::ms_decl
+			, PosNormalTexcoordVertex::ms_layout
 			, s_planeIndices
 			, BX_COUNTOF(s_planeIndices)
 			);
@@ -1877,7 +1880,7 @@ public:
 
 		m_vplaneModel.load(s_vplaneVertices
 			, BX_COUNTOF(s_vplaneVertices)
-			, PosNormalTexcoordVertex::ms_decl
+			, PosNormalTexcoordVertex::ms_layout
 			, s_planeIndices
 			, BX_COUNTOF(s_planeIndices)
 			);
@@ -2600,7 +2603,7 @@ public:
 						);
 
 					GroupArray& groups = model->m_mesh.m_groups;
-					const uint16_t stride = model->m_mesh.m_decl.getStride();
+					const uint16_t stride = model->m_mesh.m_layout.getStride();
 					for (GroupArray::iterator it = groups.begin(), itEnd = groups.end(); it != itEnd; ++it)
 					{
 						Group& group = *it;
@@ -2834,4 +2837,8 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleShadowVolumes, "14-shadowvolumes", "Shadow volumes.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleShadowVolumes
+	, "14-shadowvolumes"
+	, "Shadow volumes."
+	, "https://bkaradzic.github.io/bgfx/examples.html#shadowvolumes");

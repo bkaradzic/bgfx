@@ -29,8 +29,8 @@ static const KnightPos knightTour[8*4] =
 class ExampleLod : public entry::AppI
 {
 public:
-	ExampleLod(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleLod(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -311,4 +311,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleLod, "12-lod", "Mesh LOD transitions.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleLod
+	, "12-lod"
+	, "Mesh LOD transitions."
+	, "https://bkaradzic.github.io/bgfx/examples.html#lod"
+	);
