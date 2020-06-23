@@ -18,7 +18,7 @@
 
 // Developed by Omar Cornut and every direct or indirect contributors to the GitHub.
 // See LICENSE.txt for copyright and licensing details (standard MIT License).
-// This library is free but I need your support to sustain development and maintenance.
+// This library is free but needs your support to sustain development and maintenance.
 // Businesses: you can support continued development via invoiced technical support, maintenance and sponsoring contracts. Please reach out to "contact AT dearimgui.org".
 // Individuals: you can support continued development via donations. See docs/README or web page.
 
@@ -169,7 +169,7 @@ CODE
  ---------------------------------------------------------------
  - Run and study the examples and demo in imgui_demo.cpp to get acquainted with the library.
  - In the majority of cases you should be able to use unmodified back-ends files available in the examples/ folder.
- - Add the Dear ImGui source files to your projects or using your preferred build system.
+ - Add the Dear ImGui source files + selected back-end source files to your projects or using your preferred build system.
    It is recommended you build and statically link the .cpp files as part of your project and NOT as shared library (DLL).
  - You can later customize the imconfig.h file to tweak some compile-time behavior, such as integrating Dear ImGui types with your own maths types.
  - When using Dear ImGui, your programming IDE is your friend: follow the declaration of variables, functions and types to find comments about them.
@@ -622,10 +622,13 @@ CODE
  Q: What is this library called?
  Q: Which version should I get?
  >> This library is called "Dear ImGui", please don't call it "ImGui" :)
- >> See https://www.dearimgui.org/faq
+ >> See https://www.dearimgui.org/faq for details.
 
  Q&A: Integration
  ================
+
+ Q: How to get started?
+ A: Read 'PROGRAMMER GUIDE' above. Read examples/README.txt.
 
  Q: How can I tell whether to dispatch mouse/keyboard to Dear ImGui or to my application?
  A: You should read the 'io.WantCaptureMouse', 'io.WantCaptureKeyboard' and 'io.WantTextInput' flags!
@@ -633,7 +636,7 @@ CODE
 
  Q. How can I enable keyboard controls?
  Q: How can I use this without a mouse, without a keyboard or without a screen? (gamepad, input share, remote display)
- Q: I integrated Dear ImGui in my engine and the text or lines are blurry..
+ Q: I integrated Dear ImGui in my engine and little squares are showing instead of text..
  Q: I integrated Dear ImGui in my engine and some elements are clipping or disappearing when I move windows around..
  Q: I integrated Dear ImGui in my engine and some elements are displaying outside their expected windows boundaries..
 >> See https://www.dearimgui.org/faq
@@ -5241,11 +5244,13 @@ static bool ImGui::UpdateWindowManualResize(ImGuiWindow* window, const ImVec2& s
     return ret_auto_fit;
 }
 
-static inline void ClampWindowRect(ImGuiWindow* window, const ImRect& rect, const ImVec2& padding)
+static inline void ClampWindowRect(ImGuiWindow* window, const ImRect& viewport_rect, const ImVec2& padding)
 {
     ImGuiContext& g = *GImGui;
-    ImVec2 size_for_clamping = (g.IO.ConfigWindowsMoveFromTitleBarOnly && !(window->Flags & ImGuiWindowFlags_NoTitleBar)) ? ImVec2(window->Size.x, window->TitleBarHeight()) : window->Size;
-    window->Pos = ImMin(rect.Max - padding, ImMax(window->Pos + size_for_clamping, rect.Min + padding) - size_for_clamping);
+    ImVec2 size_for_clamping = window->Size;
+    if (g.IO.ConfigWindowsMoveFromTitleBarOnly && !(window->Flags & ImGuiWindowFlags_NoTitleBar))
+        size_for_clamping.y = window->TitleBarHeight();
+    window->Pos = ImClamp(window->Pos, viewport_rect.Min + padding - size_for_clamping, viewport_rect.Max - padding);
 }
 
 static void ImGui::RenderWindowOuterBorders(ImGuiWindow* window)
@@ -5603,6 +5608,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->HasCloseButton = (p_open != NULL);
         window->ClipRect = ImVec4(-FLT_MAX,-FLT_MAX,+FLT_MAX,+FLT_MAX);
         window->IDStack.resize(1);
+        window->DrawList->_ResetForNewFrame();
 
         // Restore buffer capacity when woken from a compacted state, to avoid
         if (window->MemoryCompacted)
@@ -5880,7 +5886,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         // DRAWING
 
         // Setup draw list and outer clipping rectangle
-        window->DrawList->_ResetForNewFrame();
+        IM_ASSERT(window->DrawList->CmdBuffer.Size == 1 && window->DrawList->CmdBuffer[0].ElemCount == 0);
         window->DrawList->PushTextureID(g.Font->ContainerAtlas->TexID);
         PushClipRect(host_rect.Min, host_rect.Max, false);
 
