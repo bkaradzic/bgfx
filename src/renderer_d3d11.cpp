@@ -686,6 +686,7 @@ namespace bgfx { namespace d3d11
 			, m_rtMsaa(false)
 			, m_timerQuerySupport(false)
 			, m_directAccessSupport(false)
+			, m_needPresent(false)
 		{
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(&m_scd, 0, sizeof(m_scd) );
@@ -989,6 +990,8 @@ namespace bgfx { namespace d3d11
 					m_nvapi.shutdown();
 				}
 
+				m_msaaRt = NULL;
+
 				if (NULL == g_platformData.backBuffer)
 				{
 					HRESULT hr = S_OK;
@@ -1028,8 +1031,6 @@ namespace bgfx { namespace d3d11
 					m_scd.nwh             = g_platformData.nwh;
 					m_scd.ndt             = g_platformData.ndt;
 					m_scd.windowed        = true;
-
-					m_msaaRt = NULL;
 
 					if (NULL != m_scd.nwh)
 					{
