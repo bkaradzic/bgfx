@@ -16,13 +16,21 @@
 //#define USE_ENTRY 1
 
 #ifndef USE_ENTRY
-#	define USE_ENTRY 0
+#	if defined(SCI_NAMESPACE)
+#		define USE_ENTRY 1
+#	else
+#		define USE_ENTRY 0
+#	endif // defined(SCI_NAMESPACE)
 #endif // USE_ENTRY
 
 #if USE_ENTRY
 #	include "../entry/entry.h"
 #	include "../entry/input.h"
 #endif // USE_ENTRY
+
+#if defined(SCI_NAMESPACE)
+#	include "scintilla.h"
+#endif // defined(SCI_NAMESPACE)
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
@@ -65,18 +73,22 @@ struct OcornutImguiContext
 	void render(ImDrawData* _drawData)
 	{
 		const ImGuiIO& io = ImGui::GetIO();
-		const float width  = io.DisplaySize.x;
-		const float height = io.DisplaySize.y;
+		const float width  = io.DisplaySize.x * io.DisplayFramebufferScale.x;
+		const float height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
 
 		bgfx::setViewName(m_viewId, "ImGui");
 		bgfx::setViewMode(m_viewId, bgfx::ViewMode::Sequential);
 
 		const bgfx::Caps* caps = bgfx::getCaps();
 		{
+            float L = _drawData->DisplayPos.x;
+            float R = _drawData->DisplayPos.x + _drawData->DisplaySize.x;
+            float T = _drawData->DisplayPos.y;
+            float B = _drawData->DisplayPos.y + _drawData->DisplaySize.y;
 			float ortho[16];
-			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
+			bx::mtxOrtho(ortho, L, R, B, T, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(m_viewId, NULL, ortho);
-			bgfx::setViewRect(m_viewId, 0, 0, uint16_t(width), uint16_t(height) );
+			bgfx::setViewRect(m_viewId, 0, 0, uint16_t(width), uint16_t(height));
 		}
 
 		// Render command lists
@@ -89,13 +101,13 @@ struct OcornutImguiContext
 			uint32_t numVertices = (uint32_t)drawList->VtxBuffer.size();
 			uint32_t numIndices  = (uint32_t)drawList->IdxBuffer.size();
 
-			if (!checkAvailTransientBuffers(numVertices, m_layout, numIndices) )
+			if (!checkAvailTransientBuffers(numVertices, m_decl, numIndices) )
 			{
 				// not enough space in transient buffer just quit drawing the rest...
 				break;
 			}
 
-			bgfx::allocTransientVertexBuffer(&tvb, numVertices, m_layout);
+			bgfx::allocTransientVertexBuffer(&tvb, numVertices, m_decl);
 			bgfx::allocTransientIndexBuffer(&tib, numIndices);
 
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
@@ -142,12 +154,12 @@ struct OcornutImguiContext
 						state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
 					}
 
-					const uint16_t xx = uint16_t(bx::max(cmd->ClipRect.x, 0.0f) );
-					const uint16_t yy = uint16_t(bx::max(cmd->ClipRect.y, 0.0f) );
+					const uint16_t xx = uint16_t(bx::max(cmd->ClipRect.x * io.DisplayFramebufferScale.x, 0.0f) );
+					const uint16_t yy = uint16_t(bx::max(cmd->ClipRect.y * io.DisplayFramebufferScale.y, 0.0f) );
 					bgfx::setScissor(xx, yy
-						, uint16_t(bx::min(cmd->ClipRect.z, 65535.0f)-xx)
-						, uint16_t(bx::min(cmd->ClipRect.w, 65535.0f)-yy)
-						);
+							, uint16_t(bx::min(cmd->ClipRect.z * io.DisplayFramebufferScale.x, 65535.0f)-xx)
+							, uint16_t(bx::min(cmd->ClipRect.w * io.DisplayFramebufferScale.y, 65535.0f)-yy)
+							);
 
 					bgfx::setState(state);
 					bgfx::setTexture(0, s_tex, th);
@@ -247,7 +259,7 @@ struct OcornutImguiContext
 			, true
 			);
 
-		m_layout
+		m_decl
 			.begin()
 			.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
@@ -340,16 +352,16 @@ struct OcornutImguiContext
 		, int32_t _scroll
 		, int _width
 		, int _height
-		, int _inputChar
+		, char _inputChar
 		, bgfx::ViewId _viewId
 		)
 	{
 		m_viewId = _viewId;
 
 		ImGuiIO& io = ImGui::GetIO();
-		if (_inputChar >= 0)
+		if (_inputChar < 0x7f)
 		{
-			io.AddInputCharacter(_inputChar);
+			io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
 		}
 
 		io.DisplaySize = ImVec2( (float)_width, (float)_height);
@@ -391,7 +403,7 @@ struct OcornutImguiContext
 
 	ImGuiContext*       m_imgui;
 	bx::AllocatorI*     m_allocator;
-	bgfx::VertexLayout  m_layout;
+	bgfx::VertexLayout    m_decl;
 	bgfx::ProgramHandle m_program;
 	bgfx::ProgramHandle m_imageProgram;
 	bgfx::TextureHandle m_texture;
@@ -427,7 +439,7 @@ void imguiDestroy()
 	s_ctx.destroy();
 }
 
-void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, int _inputChar, bgfx::ViewId _viewId)
+void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, bgfx::ViewId _viewId)
 {
 	s_ctx.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, _viewId);
 }
@@ -446,9 +458,10 @@ namespace ImGui
 } // namespace ImGui
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function"); // warning: 'int rect_width_compare(const void*, const void*)' defined but not used
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function"); // warning: ‘int rect_width_compare(const void*, const void*)’ defined but not used
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas")
+//BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-but-set-variable"); // warning: variable ‘L1’ set but not used
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits"); // warning: comparison is always true due to limited range of data type
 #define STBTT_malloc(_size, _userData) memAlloc(_size, _userData)
 #define STBTT_free(_ptr, _userData) memFree(_ptr, _userData)

@@ -330,8 +330,11 @@ namespace bgfx { namespace mtl
 			return UniformType::Sampler;
 
 		case MTLDataTypeFloat:
+            return UniformType::Float;
 		case MTLDataTypeFloat2:
+            return UniformType::Vec2;
 		case MTLDataTypeFloat3:
+            return UniformType::Vec3;
 		case MTLDataTypeFloat4:
 			return UniformType::Vec4;
 
@@ -493,6 +496,7 @@ namespace bgfx { namespace mtl
 				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				| BGFX_CAPS_COMPUTE
+                | BGFX_CAPS_VERTEX_ID
 				);
 
 			if (BX_ENABLED(BX_PLATFORM_IOS) )
@@ -1474,7 +1478,10 @@ namespace bgfx { namespace mtl
 					CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
 					CASE_IMPLEMENT_UNIFORM(Vec4,    F, float);
 					CASE_IMPLEMENT_UNIFORM(Mat4,    F, float);
-
+                    CASE_IMPLEMENT_UNIFORM(Float,    F, float);
+                    CASE_IMPLEMENT_UNIFORM(Vec2,    F, float);
+                    CASE_IMPLEMENT_UNIFORM(Vec3,    F, float);
+                        
 				case UniformType::End:
 					break;
 
@@ -1842,6 +1849,9 @@ namespace bgfx { namespace mtl
 										case MTLDataTypeFloat4:   num *= 1; break;
 										case MTLDataTypeFloat4x4: num *= 4; break;
 										case MTLDataTypeFloat3x3: num *= 3; break;
+                                        case MTLDataTypeFloat:    num *= 1; break;
+                                        case MTLDataTypeFloat2:    num *= 1; break;
+                                        case MTLDataTypeFloat3:    num *= 1; break;
 
 										default:
 											BX_WARN(0, "Unsupported uniform MTLDataType: %d", uniform.dataType);
@@ -2740,7 +2750,7 @@ namespace bgfx { namespace mtl
 					|| writeOnly
 					|| bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 					?     2 /* MTLStorageModePrivate */
-					: (BX_ENABLED(BX_PLATFORM_IOS)
+					: (BX_ENABLED(BX_PLATFORM_IOS) && !BX_ENABLED(TARGET_OS_MACCATALYST)
 						? 0 /* MTLStorageModeShared  */
 						: 1 /* MTLStorageModeManaged */
 					) );

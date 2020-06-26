@@ -926,6 +926,9 @@ namespace bgfx
 		"vec4",
 		"mat3",
 		"mat4",
+        "float",
+        "vec2",
+        "vec3"
 	};
 	BX_STATIC_ASSERT(UniformType::Count == BX_COUNTOF(s_uniformTypeName) );
 
@@ -1460,6 +1463,9 @@ namespace bgfx
 		4*sizeof(float),
 		3*3*sizeof(float),
 		4*4*sizeof(float),
+        sizeof(float),
+        2*sizeof(float),
+        3*sizeof(float),
 		1,
 	};
 

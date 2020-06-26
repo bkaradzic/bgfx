@@ -268,6 +268,10 @@ namespace bgfx
 			Mat3,    //!< 3x3 matrix.
 			Mat4,    //!< 4x4 matrix.
 
+            Float,
+            Vec2,
+            Vec3,
+            
 			Count
 		};
 	};
