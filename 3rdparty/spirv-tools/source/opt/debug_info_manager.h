@@ -16,6 +16,7 @@
 #define SOURCE_OPT_DEBUG_INFO_MANAGER_H_
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include "source/opt/instruction.h"
 #include "source/opt/module.h"
@@ -128,6 +129,15 @@ class DebugInfoManager {
   uint32_t BuildDebugInlinedAtChain(uint32_t callee_inlined_at,
                                     DebugInlinedAtContext* inlined_at_ctx);
 
+  // Generates a DebugValue instruction with value |value_id| for every local
+  // variable that is in the scope of |scope_and_line| and whose memory is
+  // |variable_id| and inserts it after the instruction |insert_pos|.
+  void AddDebugValue(Instruction* scope_and_line, uint32_t variable_id,
+                     uint32_t value_id, Instruction* insert_pos);
+
+  // Erases |instr| from data structures of this class.
+  void ClearDebugInfo(Instruction* instr);
+
  private:
   IRContext* context() { return context_; }
 
@@ -147,6 +157,31 @@ class DebugInfoManager {
   // in |inst| must not already be registered.
   void RegisterDbgFunction(Instruction* inst);
 
+  // Register the DebugDeclare or DebugValue with Deref operation
+  // |dbg_declare| into |var_id_to_dbg_decl_| using OpVariable id
+  // |var_id| as a key.
+  void RegisterDbgDeclare(uint32_t var_id, Instruction* dbg_declare);
+
+  // Returns a DebugExpression instruction without Operation operands.
+  Instruction* GetEmptyDebugExpression();
+
+  // Returns the id of Value operand if |inst| is DebugValue who has Deref
+  // operation and its Value operand is a result id of OpVariable with
+  // Function storage class. Otherwise, returns 0.
+  uint32_t GetVariableIdOfDebugValueUsedForDeclare(Instruction* inst);
+
+  // Returns true if a scope |ancestor| is |scope| or an ancestor scope
+  // of |scope|.
+  bool IsAncestorOfScope(uint32_t scope, uint32_t ancestor);
+
+  // Returns true if the declaration of a local variable |dbg_declare|
+  // is visible in the scope of an instruction |instr_scope_id|.
+  bool IsDeclareVisibleToInstr(Instruction* dbg_declare,
+                               uint32_t instr_scope_id);
+
+  // Returns the parent scope of the scope |child_scope|.
+  uint32_t GetParentScope(uint32_t child_scope);
+
   IRContext* context_;
 
   // Mapping from ids of OpenCL.DebugInfo.100 extension instructions
@@ -157,9 +192,19 @@ class DebugInfoManager {
   // operand is the function.
   std::unordered_map<uint32_t, Instruction*> fn_id_to_dbg_fn_;
 
+  // Mapping from variable or value ids to DebugDeclare or DebugValue
+  // instructions whose operand is the variable or value.
+  std::unordered_map<uint32_t, std::unordered_set<Instruction*>>
+      var_id_to_dbg_decl_;
+
   // DebugInfoNone instruction. We need only a single DebugInfoNone.
   // To reuse the existing one, we keep it using this member variable.
   Instruction* debug_info_none_inst_;
+
+  // DebugExpression instruction without Operation operands. We need only
+  // a single DebugExpression without Operation operands. To reuse the
+  // existing one, we keep it using this member variable.
+  Instruction* empty_debug_expr_inst_;
 };
 
 }  // namespace analysis

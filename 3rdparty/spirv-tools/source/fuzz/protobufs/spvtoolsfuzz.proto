@@ -378,6 +378,9 @@ message Transformation {
     TransformationPushIdThroughVariable push_id_through_variable = 47;
     TransformationAddSpecConstantOp add_spec_constant_op = 48;
     TransformationReplaceLinearAlgebraInstruction replace_linear_algebra_instruction = 49;
+    TransformationSwapConditionalBranchOperands swap_conditional_branch_operands = 50;
+    TransformationPermutePhiOperands permute_phi_operands = 51;
+    TransformationAddParameters add_parameters = 52;
     // Add additional option using the next available number.
   }
 }
@@ -618,6 +621,27 @@ message TransformationAddNoContractionDecoration {
 
   // Result id to be decorated
   uint32 result_id = 1;
+
+}
+
+message TransformationAddParameters {
+
+  // Adds new parameters into the function.
+
+  // Result id of the function to add parameters to.
+  uint32 function_id = 1;
+
+  // New type of the function.
+  uint32 new_type_id = 2;
+
+  // Type ids of parameters to add to the function.
+  repeated uint32 new_parameter_type = 3;
+
+  // Result ids for new parameters.
+  repeated uint32 new_parameter_id = 4;
+
+  // Constants to initialize new parameters from.
+  repeated uint32 constant_id = 5;
 
 }
 
@@ -1004,6 +1028,19 @@ message TransformationPermuteFunctionParameters {
 
 }
 
+message TransformationPermutePhiOperands {
+
+  // Permutes operands of some OpPhi instruction.
+
+  // Result id of the instruction to apply the transformation to.
+  uint32 result_id = 1;
+
+  // A sequence of numbers in the range [0, n/2 - 1] where |n| is the number
+  // of operands of the OpPhi instruction with |result_id|.
+  repeated uint32 permutation = 2;
+
+}
+
 message TransformationPushIdThroughVariable {
 
   // A transformation that makes |value_synonym_id| and |value_id| to be
@@ -1019,12 +1056,15 @@ message TransformationPushIdThroughVariable {
   // A fresh id for the variable to be stored to.
   uint32 variable_id = 3;
 
+  // Constant to initialize the variable from.
+  uint32 initializer_id = 4;
+
   // The variable storage class (global or local).
-  uint32 variable_storage_class = 4;
+  uint32 variable_storage_class = 5;
 
   // A descriptor for an instruction which the new OpStore
   // and OpLoad instructions might be inserted before.
-  InstructionDescriptor instruction_descriptor = 5;
+  InstructionDescriptor instruction_descriptor = 6;
 
 }
 
@@ -1094,13 +1134,13 @@ message TransformationReplaceLinearAlgebraInstruction {
   // This transformation is only applicable if the described instruction has one of the following opcodes.
   // Supported:
   //   OpVectorTimesScalar
+  //   OpMatrixTimesScalar
   //   OpDot
   // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3354):
   // Right now we only support certain operations. When this issue is addressed
   // the supporting comments can be removed.
   // To be supported in the future:
   //   OpTranspose
-  //   OpMatrixTimesScalar
   //   OpVectorTimesMatrix
   //   OpMatrixTimesVector
   //   OpMatrixTimesMatrix
@@ -1223,6 +1263,21 @@ message TransformationSwapCommutableOperands {
 
   // A descriptor for a commutative instruction
   InstructionDescriptor instruction_descriptor = 1;
+
+}
+
+message TransformationSwapConditionalBranchOperands {
+
+  // Swaps label ids in OpBranchConditional instruction.
+  // Additionally, inverts the guard and swaps branch weights
+  // if present.
+
+  // Descriptor of the instruction to swap operands of.
+  InstructionDescriptor instruction_descriptor = 1;
+
+  // Fresh result id for the OpLogicalNot instruction, used
+  // to invert the guard.
+  uint32 fresh_id = 2;
 
 }
 

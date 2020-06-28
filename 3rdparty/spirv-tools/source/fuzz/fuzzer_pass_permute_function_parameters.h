@@ -34,7 +34,7 @@ class FuzzerPassPermuteFunctionParameters : public FuzzerPass {
       FuzzerContext* fuzzer_context,
       protobufs::TransformationSequence* transformations);
 
-  ~FuzzerPassPermuteFunctionParameters();
+  ~FuzzerPassPermuteFunctionParameters() override;
 
   void Apply() override;
 };

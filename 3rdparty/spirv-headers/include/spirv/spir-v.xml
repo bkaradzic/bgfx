@@ -145,7 +145,7 @@
 
 
     <!-- SECTION: SPIR-V FP Fast Math Mode Bit Reservations -->
-    <!-- Reserve ranges of bits in the “FP Fast Math Mode” bitfield.
+    <!-- Reserve ranges of bits in the "FP Fast Math Mode" bitfield.
          Each vendor determines the use of values in their own ranges.
          Vendors are not required to disclose those uses.  If the use of a
          value is included in an extension that is adopted by a Khronos

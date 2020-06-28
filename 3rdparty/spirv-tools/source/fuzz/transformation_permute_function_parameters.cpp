@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <unordered_set>
 #include <vector>
 
 #include "source/fuzz/fuzzer_util.h"
@@ -53,7 +52,8 @@ bool TransformationPermuteFunctionParameters::IsApplicable(
   const auto* function_type = fuzzerutil::GetFunctionType(ir_context, function);
   assert(function_type && "Function type is null");
 
-  const auto& permutation = message_.permutation();
+  std::vector<uint32_t> permutation(message_.permutation().begin(),
+                                    message_.permutation().end());
 
   // Don't take return type into account
   auto arg_size = function_type->NumInOperands() - 1;
@@ -63,20 +63,19 @@ bool TransformationPermuteFunctionParameters::IsApplicable(
     return false;
   }
 
-  // Check that all indices are valid
-  // and unique integers from the [0, n-1] set
-  std::unordered_set<uint32_t> unique_indices;
-  for (auto index : permutation) {
-    // We don't compare |index| with 0 since it's an unsigned integer
-    if (index >= arg_size) {
-      return false;
-    }
+  // Check that permutation doesn't have duplicated values.
+  assert(!fuzzerutil::HasDuplicates(permutation) &&
+         "Permutation has duplicates");
 
-    unique_indices.insert(index);
+  // Check that elements in permutation are in range [0, arg_size - 1].
+  //
+  // We must check whether the permutation is empty first because in that case
+  // |arg_size - 1| will produce |std::numeric_limits<uint32_t>::max()| since
+  // it's an unsigned integer.
+  if (!permutation.empty() &&
+      !fuzzerutil::IsPermutationOfRange(permutation, 0, arg_size - 1)) {
+    return false;
   }
-
-  // Check that permutation doesn't have duplicated values
-  assert(unique_indices.size() == arg_size && "Permutation has duplicates");
 
   // Check that new function's type is valid:
   //   - Has the same number of operands

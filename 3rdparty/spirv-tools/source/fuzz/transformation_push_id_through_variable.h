@@ -31,6 +31,7 @@ class TransformationPushIdThroughVariable : public Transformation {
   TransformationPushIdThroughVariable(
       uint32_t value_id, uint32_t value_synonym_fresh_id,
       uint32_t variable_fresh_id, uint32_t variable_storage_class,
+      uint32_t initializer_id,
       const protobufs::InstructionDescriptor& instruction_descriptor);
 
   // - |message_.value_id| must be an instruction result id that has the same
@@ -39,6 +40,9 @@ class TransformationPushIdThroughVariable : public Transformation {
   // - |message_.variable_id| must be fresh
   // - |message_.variable_storage_class| must be either StorageClassPrivate or
   //   StorageClassFunction
+  // - |message_.initializer_id| must be a result id of some constant in the
+  //   module. Its type must be equal to the pointee type of the variable that
+  //   will be created.
   // - |message_.instruction_descriptor| must identify an instruction
   //   which it is valid to insert the OpStore and OpLoad instructions before it
   //   and must be belongs to a reachable block.

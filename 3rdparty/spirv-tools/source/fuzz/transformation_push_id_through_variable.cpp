@@ -27,12 +27,13 @@ TransformationPushIdThroughVariable::TransformationPushIdThroughVariable(
 
 TransformationPushIdThroughVariable::TransformationPushIdThroughVariable(
     uint32_t value_id, uint32_t value_synonym_id, uint32_t variable_id,
-    uint32_t variable_storage_class,
+    uint32_t variable_storage_class, uint32_t initializer_id,
     const protobufs::InstructionDescriptor& instruction_descriptor) {
   message_.set_value_id(value_id);
   message_.set_value_synonym_id(value_synonym_id);
   message_.set_variable_id(variable_id);
   message_.set_variable_storage_class(variable_storage_class);
+  message_.set_initializer_id(initializer_id);
   *message_.mutable_instruction_descriptor() = instruction_descriptor;
 }
 
@@ -85,6 +86,14 @@ bool TransformationPushIdThroughVariable::IsApplicable(
           message_.variable_storage_class() == SpvStorageClassFunction) &&
          "The variable storage class must be private or function.");
 
+  // Check that initializer is valid.
+  const auto* constant_inst =
+      ir_context->get_def_use_mgr()->GetDef(message_.initializer_id());
+  if (!constant_inst || !spvOpcodeIsConstant(constant_inst->opcode()) ||
+      value_instruction->type_id() != constant_inst->type_id()) {
+    return false;
+  }
+
   // |message_.value_id| must be available at the insertion point.
   return fuzzerutil::IdIsAvailableBeforeInstruction(
       ir_context, instruction_to_insert_before, message_.value_id());
@@ -103,27 +112,22 @@ void TransformationPushIdThroughVariable::Apply(
   assert(pointer_type_id && "The required pointer type must be available.");
 
   // Adds whether a global or local variable.
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.variable_id());
   if (message_.variable_storage_class() == SpvStorageClassPrivate) {
-    ir_context->module()->AddGlobalValue(MakeUnique<opt::Instruction>(
-        ir_context, SpvOpVariable, pointer_type_id, message_.variable_id(),
-        opt::Instruction::OperandList(
-            {{SPV_OPERAND_TYPE_STORAGE_CLASS, {SpvStorageClassPrivate}}})));
-
-    fuzzerutil::AddVariableIdToEntryPointInterfaces(ir_context,
-                                                    message_.variable_id());
+    fuzzerutil::AddGlobalVariable(ir_context, message_.variable_id(),
+                                  pointer_type_id, SpvStorageClassPrivate,
+                                  message_.initializer_id());
   } else {
-    ir_context
-        ->get_instr_block(
-            FindInstruction(message_.instruction_descriptor(), ir_context))
-        ->GetParent()
-        ->begin()
-        ->begin()
-        ->InsertBefore(MakeUnique<opt::Instruction>(
-            ir_context, SpvOpVariable, pointer_type_id, message_.variable_id(),
-            opt::Instruction::OperandList({{SPV_OPERAND_TYPE_STORAGE_CLASS,
-                                            {SpvStorageClassFunction}}})));
+    auto function_id = ir_context
+                           ->get_instr_block(FindInstruction(
+                               message_.instruction_descriptor(), ir_context))
+                           ->GetParent()
+                           ->result_id();
+    fuzzerutil::AddLocalVariable(ir_context, message_.variable_id(),
+                                 pointer_type_id, function_id,
+                                 message_.initializer_id());
   }
+
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.variable_id());
 
   // Stores value id to variable id.
   FindInstruction(message_.instruction_descriptor(), ir_context)

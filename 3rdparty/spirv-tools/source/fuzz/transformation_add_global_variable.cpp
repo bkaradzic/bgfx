@@ -93,20 +93,12 @@ bool TransformationAddGlobalVariable::IsApplicable(
 void TransformationAddGlobalVariable::Apply(
     opt::IRContext* ir_context,
     TransformationContext* transformation_context) const {
-  opt::Instruction::OperandList input_operands;
-  input_operands.push_back(
-      {SPV_OPERAND_TYPE_STORAGE_CLASS, {message_.storage_class()}});
-  if (message_.initializer_id()) {
-    input_operands.push_back(
-        {SPV_OPERAND_TYPE_ID, {message_.initializer_id()}});
-  }
-  ir_context->module()->AddGlobalValue(MakeUnique<opt::Instruction>(
-      ir_context, SpvOpVariable, message_.type_id(), message_.fresh_id(),
-      input_operands));
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
+  fuzzerutil::AddGlobalVariable(
+      ir_context, message_.fresh_id(), message_.type_id(),
+      static_cast<SpvStorageClass>(message_.storage_class()),
+      message_.initializer_id());
 
-  fuzzerutil::AddVariableIdToEntryPointInterfaces(ir_context,
-                                                  message_.fresh_id());
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
 
   if (message_.value_is_irrelevant()) {
     transformation_context->GetFactManager()->AddFactValueOfPointeeIsIrrelevant(

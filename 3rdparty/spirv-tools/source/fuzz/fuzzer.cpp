@@ -32,6 +32,7 @@
 #include "source/fuzz/fuzzer_pass_add_loads.h"
 #include "source/fuzz/fuzzer_pass_add_local_variables.h"
 #include "source/fuzz/fuzzer_pass_add_no_contraction_decorations.h"
+#include "source/fuzz/fuzzer_pass_add_parameters.h"
 #include "source/fuzz/fuzzer_pass_add_stores.h"
 #include "source/fuzz/fuzzer_pass_add_vector_shuffle_instructions.h"
 #include "source/fuzz/fuzzer_pass_adjust_branch_weights.h"
@@ -47,10 +48,12 @@
 #include "source/fuzz/fuzzer_pass_outline_functions.h"
 #include "source/fuzz/fuzzer_pass_permute_blocks.h"
 #include "source/fuzz/fuzzer_pass_permute_function_parameters.h"
+#include "source/fuzz/fuzzer_pass_permute_phi_operands.h"
 #include "source/fuzz/fuzzer_pass_push_ids_through_variables.h"
 #include "source/fuzz/fuzzer_pass_replace_linear_algebra_instructions.h"
 #include "source/fuzz/fuzzer_pass_split_blocks.h"
 #include "source/fuzz/fuzzer_pass_swap_commutable_operands.h"
+#include "source/fuzz/fuzzer_pass_swap_conditional_branch_operands.h"
 #include "source/fuzz/fuzzer_pass_toggle_access_chain_instruction.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/pseudo_random_generator.h"
@@ -222,6 +225,9 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
     MaybeAddPass<FuzzerPassAddLocalVariables>(
         &passes, ir_context.get(), &transformation_context, &fuzzer_context,
         transformation_sequence_out);
+    MaybeAddPass<FuzzerPassAddParameters>(
+        &passes, ir_context.get(), &transformation_context, &fuzzer_context,
+        transformation_sequence_out);
     MaybeAddPass<FuzzerPassAddStores>(&passes, ir_context.get(),
                                       &transformation_context, &fuzzer_context,
                                       transformation_sequence_out);
@@ -264,6 +270,9 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
     MaybeAddPass<FuzzerPassSplitBlocks>(
         &passes, ir_context.get(), &transformation_context, &fuzzer_context,
         transformation_sequence_out);
+    MaybeAddPass<FuzzerPassSwapBranchConditionalOperands>(
+        &passes, ir_context.get(), &transformation_context, &fuzzer_context,
+        transformation_sequence_out);
   }
 
   bool is_first = true;
@@ -299,6 +308,9 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
       &final_passes, ir_context.get(), &transformation_context, &fuzzer_context,
       transformation_sequence_out);
   MaybeAddPass<FuzzerPassAddNoContractionDecorations>(
+      &final_passes, ir_context.get(), &transformation_context, &fuzzer_context,
+      transformation_sequence_out);
+  MaybeAddPass<FuzzerPassPermutePhiOperands>(
       &final_passes, ir_context.get(), &transformation_context, &fuzzer_context,
       transformation_sequence_out);
   MaybeAddPass<FuzzerPassSwapCommutableOperands>(
