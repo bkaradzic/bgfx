@@ -13336,8 +13336,18 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			}
 		}
 
-		emit_block_hints(block);
-		statement("switch (", to_expression(block.condition), ")");
+		// If there is only one default block, and no cases, this is a case where SPIRV-opt decided to emulate
+		// non-structured exits with the help of a switch block.
+		// This is buggy on FXC, so just emit the logical equivalent of a do { } while(false), which is more idiomatic.
+		bool degenerate_switch = block.default_block != block.merge_block && block.cases.empty();
+
+		if (degenerate_switch)
+			statement("do");
+		else
+		{
+			emit_block_hints(block);
+			statement("switch (", to_expression(block.condition), ")");
+		}
 		begin_scope();
 
 		for (size_t i = 0; i < num_blocks; i++)
@@ -13348,7 +13358,8 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			if (literals.empty())
 			{
 				// Default case.
-				statement("default:");
+				if (!degenerate_switch)
+					statement("default:");
 			}
 			else
 			{
@@ -13372,9 +13383,11 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			else
 				current_emitting_switch_fallthrough = false;
 
-			begin_scope();
+			if (!degenerate_switch)
+				begin_scope();
 			branch(block.self, target_block);
-			end_scope();
+			if (!degenerate_switch)
+				end_scope();
 
 			current_emitting_switch_fallthrough = false;
 		}
@@ -13397,7 +13410,10 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			}
 		}
 
-		end_scope();
+		if (degenerate_switch)
+			end_scope_decl("while(false)");
+		else
+			end_scope();
 
 		if (block.need_ladder_break)
 		{
