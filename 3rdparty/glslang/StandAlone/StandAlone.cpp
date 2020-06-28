@@ -106,6 +106,7 @@ bool targetHlslFunctionality1 = false;
 bool SpvToolsDisassembler = false;
 bool SpvToolsValidate = false;
 bool NaNClamp = false;
+bool stripDebugInfo = false;
 
 //
 // Return codes from main/exit().
@@ -750,7 +751,13 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     Error("-f: expected hlsl_functionality1");
                 break;
             case 'g':
-                Options |= EOptionDebug;
+                // Override previous -g or -g0 argument
+                stripDebugInfo = false;
+                Options &= ~EOptionDebug;
+                if (argv[0][2] == '0')
+                    stripDebugInfo = true;
+                else
+                    Options |= EOptionDebug;
                 break;
             case 'h':
                 usage();
@@ -1150,6 +1157,8 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                     glslang::SpvOptions spvOptions;
                     if (Options & EOptionDebug)
                         spvOptions.generateDebugInfo = true;
+                    else if (stripDebugInfo)
+                        spvOptions.stripDebugInfo = true;
                     spvOptions.disableOptimizer = (Options & EOptionOptimizeDisable) != 0;
                     spvOptions.optimizeSize = (Options & EOptionOptimizeSize) != 0;
                     spvOptions.disassemble = SpvToolsDisassembler;
@@ -1568,6 +1577,7 @@ void usage()
            "              'hlsl_functionality1' enables use of the\n"
            "              SPV_GOOGLE_hlsl_functionality1 extension\n"
            "  -g          generate debug information\n"
+           "  -g0         strip debug information\n"
            "  -h          print this usage message\n"
            "  -i          intermediate tree (glslang AST) is printed out\n"
            "  -l          link all input files together to form a single module\n"

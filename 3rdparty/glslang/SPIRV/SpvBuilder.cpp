@@ -2166,7 +2166,7 @@ Id Builder::createCompositeCompare(Decoration precision, Id value1, Id value2, b
         Op op;
         switch (getMostBasicTypeClass(valueType)) {
         case OpTypeFloat:
-            op = equal ? OpFOrdEqual : OpFOrdNotEqual;
+            op = equal ? OpFOrdEqual : OpFUnordNotEqual;
             break;
         case OpTypeInt:
         default:
