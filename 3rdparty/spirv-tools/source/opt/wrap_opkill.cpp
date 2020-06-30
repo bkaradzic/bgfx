@@ -59,9 +59,12 @@ bool WrapOpKill::ReplaceWithFunctionCall(Instruction* inst) {
   if (func_id == 0) {
     return false;
   }
-  if (ir_builder.AddFunctionCall(GetVoidTypeId(), func_id, {}) == nullptr) {
+  Instruction* call_inst =
+      ir_builder.AddFunctionCall(GetVoidTypeId(), func_id, {});
+  if (call_inst == nullptr) {
     return false;
   }
+  call_inst->UpdateDebugInfo(inst);
 
   Instruction* return_inst = nullptr;
   uint32_t return_type_id = GetOwningFunctionsReturnType(inst);
@@ -147,6 +150,7 @@ uint32_t WrapOpKill::GetOpKillFuncId() {
   bb->AddInstruction(std::move(kill_inst));
 
   // Add the bb to the function
+  bb->SetParent(opkill_function_.get());
   opkill_function_->AddBasicBlock(std::move(bb));
 
   // Add the function to the module.

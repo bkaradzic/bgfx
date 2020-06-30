@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -18,7 +18,7 @@
 #endif // ENTRY_CONFIG_USE_NOOP
 
 #ifndef ENTRY_CONFIG_USE_SDL
-#	define ENTRY_CONFIG_USE_SDL BX_PLATFORM_STEAMLINK
+#	define ENTRY_CONFIG_USE_SDL 0
 #endif // ENTRY_CONFIG_USE_SDL
 
 #ifndef ENTRY_CONFIG_USE_GLFW

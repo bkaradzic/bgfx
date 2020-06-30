@@ -1,9 +1,3 @@
-// [DEAR IMGUI] 
-// This is a slightly modified version of stb_textedit.h 1.13. 
-// Those changes would need to be pushed into nothings/stb:
-// - Fix in stb_textedit_discard_redo (see https://github.com/nothings/stb/issues/321)
-// Grep for [DEAR IMGUI] to find the changes.
-
 // stb_textedit.h - v1.13  - public domain - Sean Barrett
 // Development of this library was sponsored by RAD Game Tools
 //
@@ -19,7 +13,7 @@
 // texts, as its performance does not scale and it has limited undo).
 //
 // Non-trivial behaviors are modelled after Windows text controls.
-// 
+//
 //
 // LICENSE
 //
@@ -177,7 +171,7 @@
 // Keyboard input must be encoded as a single integer value; e.g. a character code
 // and some bitflags that represent shift states. to simplify the interface, SHIFT must
 // be a bitflag, so we can test the shifted state of cursor movements to allow selection,
-// i.e. (STB_TEXTED_K_RIGHT|STB_TEXTEDIT_K_SHIFT) should be shifted right-arrow.
+// i.e. (STB_TEXTEDIT_K_RIGHT|STB_TEXTEDIT_K_SHIFT) should be shifted right-arrow.
 //
 // You can encode other things, such as CONTROL or ALT, in additional bits, and
 // then test for their presence in e.g. STB_TEXTEDIT_K_WORDLEFT. For example,
@@ -219,20 +213,20 @@
 //          call this with the mouse x,y on a mouse down; it will update the cursor
 //          and reset the selection start/end to the cursor point. the x,y must
 //          be relative to the text widget, with (0,0) being the top left.
-//     
+//
 //      drag:
 //          call this with the mouse x,y on a mouse drag/up; it will update the
 //          cursor and the selection end point
-//     
+//
 //      cut:
 //          call this to delete the current selection; returns true if there was
 //          one. you should FIRST copy the current selection to the system paste buffer.
 //          (To copy, just copy the current selection out of the string yourself.)
-//     
+//
 //      paste:
 //          call this to paste text at the current cursor point or over the current
 //          selection if there is one.
-//     
+//
 //      key:
 //          call this for keyboard inputs sent to the textfield. you can use it
 //          for "key down" events or for "translated" key events. if you need to
@@ -243,7 +237,7 @@
 //          clear. STB_TEXTEDIT_KEYTYPE defaults to int, but you can #define it to
 //          anything other type you wante before including.
 //
-//     
+//
 //   When rendering, you can read the cursor position and selection state from
 //   the STB_TexteditState.
 //
@@ -762,7 +756,7 @@ retry:
          state->insert_mode = !state->insert_mode;
          break;
 #endif
-         
+
       case STB_TEXTEDIT_K_UNDO:
          stb_text_undo(str, state);
          state->has_preferred_x = 0;
@@ -777,7 +771,7 @@ retry:
          // if currently there's a selection, move cursor to start of selection
          if (STB_TEXT_HAS_SELECTION(state))
             stb_textedit_move_to_first(state);
-         else 
+         else
             if (state->cursor > 0)
                --state->cursor;
          state->has_preferred_x = 0;
@@ -826,7 +820,7 @@ retry:
 
 #ifdef STB_TEXTEDIT_MOVEWORDRIGHT
       case STB_TEXTEDIT_K_WORDRIGHT:
-         if (STB_TEXT_HAS_SELECTION(state)) 
+         if (STB_TEXT_HAS_SELECTION(state))
             stb_textedit_move_to_last(str, state);
          else {
             state->cursor = STB_TEXTEDIT_MOVEWORDRIGHT(str, state->cursor);
@@ -904,7 +898,7 @@ retry:
          }
          break;
       }
-         
+
       case STB_TEXTEDIT_K_UP:
       case STB_TEXTEDIT_K_UP | STB_TEXTEDIT_K_SHIFT: {
          StbFindState find;
@@ -981,7 +975,7 @@ retry:
          }
          state->has_preferred_x = 0;
          break;
-         
+
 #ifdef STB_TEXTEDIT_K_TEXTSTART2
       case STB_TEXTEDIT_K_TEXTSTART2:
 #endif
@@ -998,7 +992,7 @@ retry:
          state->select_start = state->select_end = 0;
          state->has_preferred_x = 0;
          break;
-        
+
 #ifdef STB_TEXTEDIT_K_TEXTSTART2
       case STB_TEXTEDIT_K_TEXTSTART2 | STB_TEXTEDIT_K_SHIFT:
 #endif
@@ -1134,14 +1128,7 @@ static void stb_textedit_discard_redo(StbUndoState *state)
                state->undo_rec[i].char_storage += n;
       }
       // now move all the redo records towards the end of the buffer; the first one is at 'redo_point'
-      // {DEAR IMGUI]
-      size_t move_size = (size_t)((STB_TEXTEDIT_UNDOSTATECOUNT - state->redo_point - 1) * sizeof(state->undo_rec[0]));
-      const char* buf_begin = (char*)state->undo_rec; (void)buf_begin;
-      const char* buf_end   = (char*)state->undo_rec + sizeof(state->undo_rec); (void)buf_end;
-      IM_ASSERT(((char*)(state->undo_rec + state->redo_point)) >= buf_begin);
-      IM_ASSERT(((char*)(state->undo_rec + state->redo_point + 1) + move_size) <= buf_end);
-      STB_TEXTEDIT_memmove(state->undo_rec + state->redo_point+1, state->undo_rec + state->redo_point, move_size);
-
+      STB_TEXTEDIT_memmove(state->undo_rec + state->redo_point+1, state->undo_rec + state->redo_point, (size_t) ((STB_TEXTEDIT_UNDOSTATECOUNT - state->redo_point)*sizeof(state->undo_rec[0])));
       // now move redo_point to point to the new one
       ++state->redo_point;
    }
@@ -1380,38 +1367,38 @@ This software is available under 2 licenses -- choose whichever you prefer.
 ------------------------------------------------------------------------------
 ALTERNATIVE A - MIT License
 Copyright (c) 2017 Sean Barrett
-Permission is hereby granted, free of charge, to any person obtaining a copy of 
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ------------------------------------------------------------------------------
 ALTERNATIVE B - Public Domain (www.unlicense.org)
 This is free and unencumbered software released into the public domain.
-Anyone is free to copy, modify, publish, use, compile, sell, or distribute this 
-software, either in source code form or as a compiled binary, for any purpose, 
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
+software, either in source code form or as a compiled binary, for any purpose,
 commercial or non-commercial, and by any means.
-In jurisdictions that recognize copyright laws, the author or authors of this 
-software dedicate any and all copyright interest in the software to the public 
-domain. We make this dedication for the benefit of the public at large and to 
-the detriment of our heirs and successors. We intend this dedication to be an 
-overt act of relinquishment in perpetuity of all present and future rights to 
+In jurisdictions that recognize copyright laws, the author or authors of this
+software dedicate any and all copyright interest in the software to the public
+domain. We make this dedication for the benefit of the public at large and to
+the detriment of our heirs and successors. We intend this dedication to be an
+overt act of relinquishment in perpetuity of all present and future rights to
 this software under copyright law.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ------------------------------------------------------------------------------
 */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -208,7 +208,7 @@ namespace entry
 	static void initTranslateKey(uint16_t _xk, Key::Enum _key)
 	{
 		_xk += 256;
-		BX_CHECK(_xk < BX_COUNTOF(s_translateKey), "Out of bounds %d.", _xk);
+		BX_ASSERT(_xk < BX_COUNTOF(s_translateKey), "Out of bounds %d.", _xk);
 		s_translateKey[_xk&0x1ff] = (uint8_t)_key;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -686,6 +686,7 @@ namespace bgfx { namespace d3d11
 			, m_rtMsaa(false)
 			, m_timerQuerySupport(false)
 			, m_directAccessSupport(false)
+			, m_needPresent(false)
 		{
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(&m_scd, 0, sizeof(m_scd) );
@@ -989,6 +990,8 @@ namespace bgfx { namespace d3d11
 					m_nvapi.shutdown();
 				}
 
+				m_msaaRt = NULL;
+
 				if (NULL == g_platformData.backBuffer)
 				{
 					HRESULT hr = S_OK;
@@ -1028,8 +1031,6 @@ namespace bgfx { namespace d3d11
 					m_scd.nwh             = g_platformData.nwh;
 					m_scd.ndt             = g_platformData.ndt;
 					m_scd.windowed        = true;
-
-					m_msaaRt = NULL;
 
 					if (NULL != m_scd.nwh)
 					{
@@ -1903,7 +1904,7 @@ namespace bgfx { namespace d3d11
 				BX_FREE(g_allocator, m_uniforms[_handle.idx]);
 			}
 
-			uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
+			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
 			void* data = BX_ALLOC(g_allocator, size);
 			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
@@ -2051,7 +2052,7 @@ namespace bgfx { namespace d3d11
 				break;
 
 			default:
-				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				BX_ASSERT(false, "Invalid handle type?! %d", _handle.type);
 				break;
 			}
 		}
@@ -2454,7 +2455,7 @@ namespace bgfx { namespace d3d11
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
+			if (_flags&kUniformFragmentBit)
 			{
 				bx::memCopy(&m_fsScratch[_regIndex], _val, _numRegs*16);
 				m_fsChanges += _numRegs;
@@ -3263,7 +3264,7 @@ namespace bgfx { namespace d3d11
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
 		case UniformType::_uniform: \
-		case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
+		case UniformType::_uniform|kUniformFragmentBit: \
 				{ \
 					setShaderUniform(uint8_t(type), loc, data, num); \
 				} \
@@ -3272,7 +3273,7 @@ namespace bgfx { namespace d3d11
 				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3|BGFX_UNIFORM_FRAGMENTBIT: \
+				case UniformType::Mat3|kUniformFragmentBit: \
 					 {
 						 float* value = (float*)data;
 						 for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
@@ -3753,7 +3754,7 @@ namespace bgfx { namespace d3d11
 	void BufferD3D11::update(uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
-		BX_CHECK(m_dynamic, "Must be dynamic!");
+		BX_ASSERT(m_dynamic, "Must be dynamic!");
 
 #if USE_D3D11_STAGING_BUFFER
 		BX_UNUSED(_discard);
@@ -3913,7 +3914,7 @@ namespace bgfx { namespace d3d11
 			, count
 			);
 
-		const uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		const uint8_t fragmentBit = fragment ? kUniformFragmentBit : 0;
 
 		if (0 < count)
 		{
@@ -3938,6 +3939,12 @@ namespace bgfx { namespace d3d11
 				uint16_t regCount = 0;
 				bx::read(&reader, regCount);
 
+				if (!isShaderVerLess(magic, 8) )
+				{
+					uint16_t texInfo = 0;
+					bx::read(&reader, texInfo);
+				}
+
 				const char* kind = "invalid";
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
@@ -3949,7 +3956,7 @@ namespace bgfx { namespace d3d11
 					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
-				else if (0 == (BGFX_UNIFORM_SAMPLERBIT & type) )
+				else if (0 == (kUniformSamplerBit & type) )
 				{
 					const UniformRegInfo* info = s_renderD3D11->m_uniformReg.find(name);
 					BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -3973,7 +3980,7 @@ namespace bgfx { namespace d3d11
 				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
 					, kind
 					, name
-					, getUniformTypeName(UniformType::Enum(type&~BGFX_UNIFORM_MASK) )
+					, getUniformTypeName(UniformType::Enum(type&~kUniformMask) )
 					, num
 					, regIndex
 					, regCount
@@ -4464,11 +4471,19 @@ namespace bgfx { namespace d3d11
 
 	void TextureD3D11::overrideInternal(uintptr_t _ptr)
 	{
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+		const bool readable = (m_srv != NULL);
+		if (readable) {
+			m_srv->GetDesc(&srvDesc);
+		}
+
 		destroy();
 		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 		m_ptr = (ID3D11Resource*)_ptr;
 
-		s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, NULL, &m_srv);
+		if (readable) {
+			s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, &srvDesc, &m_srv);
+		}
 	}
 
 	void TextureD3D11::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
@@ -4498,7 +4513,12 @@ namespace bgfx { namespace d3d11
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
 		const bool     depth  = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
-		const uint32_t rectpitch  = _rect.m_width*bpp/8;
+		uint32_t rectpitch  = _rect.m_width*bpp/8;
+		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
+		{
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+			rectpitch = (_rect.m_width / blockInfo.blockWidth)*blockInfo.blockSize;
+		}
 		const uint32_t srcpitch   = UINT16_MAX == _pitch ? rectpitch : _pitch;
 		const uint32_t slicepitch = rectpitch*_rect.m_height;
 
@@ -4756,21 +4776,45 @@ namespace bgfx { namespace d3d11
 
 					if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 					{
-						BX_CHECK(NULL == m_dsv, "Frame buffer already has depth-stencil attached.");
+						BX_ASSERT(NULL == m_dsv, "Frame buffer already has depth-stencil attached.");
+
+						D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+						dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
+						dsvDesc.Flags = 0;
 
 						switch (texture.m_type)
 						{
 						default:
 						case TextureD3D11::Texture2D:
 							{
-								D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-								dsvDesc.Format        = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
-								dsvDesc.ViewDimension = 1 < msaa.Count
-									? D3D11_DSV_DIMENSION_TEXTURE2DMS
-									: D3D11_DSV_DIMENSION_TEXTURE2D
-									;
-								dsvDesc.Flags = 0;
-								dsvDesc.Texture2D.MipSlice = at.mip;
+								if (1 < msaa.Count)
+								{
+									if (1 < texture.m_numLayers)
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+										dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
+										dsvDesc.Texture2DMSArray.ArraySize       = 1;
+									}
+									else
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+									}
+								}
+								else
+								{
+									if (1 < texture.m_numLayers)
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+										dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
+										dsvDesc.Texture2DArray.ArraySize       = 1;
+										dsvDesc.Texture2DArray.MipSlice        = at.mip;
+									}
+									else
+									{
+										dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+										dsvDesc.Texture2D.MipSlice = at.mip;
+									}
+								}
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(
 									  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
 									, &dsvDesc
@@ -4781,8 +4825,6 @@ namespace bgfx { namespace d3d11
 
 						case TextureD3D11::TextureCube:
 							{
-								D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-								dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
 								if (1 < msaa.Count)
 								{
 									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
@@ -4796,7 +4838,6 @@ namespace bgfx { namespace d3d11
 									dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
 									dsvDesc.Texture2DArray.MipSlice        = at.mip;
 								}
-								dsvDesc.Flags = 0;
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
 							}
 							break;
@@ -4874,7 +4915,9 @@ namespace bgfx { namespace d3d11
 							break;
 						}
 
-						DX_CHECK(s_renderD3D11->m_device->CreateShaderResourceView(texture.m_ptr, NULL, &m_srv[m_num]) );
+						D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+						texture.m_srv->GetDesc(&srvDesc);
+						DX_CHECK(s_renderD3D11->m_device->CreateShaderResourceView(texture.m_ptr, &srvDesc, &m_srv[m_num]));
 						m_num++;
 					}
 					else
@@ -5236,7 +5279,7 @@ namespace bgfx { namespace d3d11
 			else
 			{
 				bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
-				BX_CHECK(!depthStencil
+				BX_ASSERT(!depthStencil
 					||  (width == src.m_width && height == src.m_height)
 					, "When blitting depthstencil surface, source resolution must match destination."
 					);

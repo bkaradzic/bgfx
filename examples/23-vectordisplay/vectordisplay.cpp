@@ -161,7 +161,7 @@ void VectorDisplay::endFrame()
 	// advance step
 	m_currentDrawStep = (m_currentDrawStep + 1) % m_numberDecaySteps;
 
-	BX_CHECK(m_points.size() < MAX_NUMBER_VERTICES, "");
+	BX_ASSERT(m_points.size() < MAX_NUMBER_VERTICES, "");
 
 	bgfx::update(
 		  m_vertexBuffers[m_currentDrawStep]
@@ -315,7 +315,7 @@ void VectorDisplay::endFrame()
 
 void VectorDisplay::beginDraw(float _x, float _y)
 {
-	BX_CHECK(0 == m_pendingPoints.size(), "Begin draw on already filled buffer!");
+	BX_ASSERT(0 == m_pendingPoints.size(), "Begin draw on already filled buffer!");
 
 	PendingPoint point;
 	point.x = _x * m_drawScale + m_drawOffsetX;

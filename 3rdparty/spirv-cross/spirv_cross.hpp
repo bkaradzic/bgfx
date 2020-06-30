@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Arm Limited
+ * Copyright 2015-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -611,7 +611,7 @@ protected:
 	bool expression_is_lvalue(uint32_t id) const;
 	bool variable_storage_is_aliased(const SPIRVariable &var);
 	SPIRVariable *maybe_get_backing_variable(uint32_t chain);
-	spv::StorageClass get_backing_variable_storage(uint32_t ptr);
+	spv::StorageClass get_expression_effective_storage_class(uint32_t ptr);
 
 	void register_read(uint32_t expr, uint32_t chain, bool forwarded);
 	void register_write(uint32_t chain);
@@ -1037,6 +1037,7 @@ protected:
 	void unset_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration);
 
 	bool type_is_array_of_pointers(const SPIRType &type) const;
+	bool type_is_top_level_physical_pointer(const SPIRType &type) const;
 	bool type_is_block_like(const SPIRType &type) const;
 	bool type_is_opaque_value(const SPIRType &type) const;
 

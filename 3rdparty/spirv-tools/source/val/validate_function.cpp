@@ -71,6 +71,7 @@ spv_result_t ValidateFunction(ValidationState_t& _, const Instruction* inst) {
   }
 
   const std::vector<SpvOp> acceptable = {
+      SpvOpGroupDecorate,
       SpvOpDecorate,
       SpvOpEnqueueKernel,
       SpvOpEntryPoint,
@@ -87,7 +88,8 @@ spv_result_t ValidateFunction(ValidationState_t& _, const Instruction* inst) {
   for (auto& pair : inst->uses()) {
     const auto* use = pair.first;
     if (std::find(acceptable.begin(), acceptable.end(), use->opcode()) ==
-        acceptable.end()) {
+            acceptable.end() &&
+        !use->IsNonSemantic() && !use->IsDebugInfo()) {
       return _.diag(SPV_ERROR_INVALID_ID, use)
              << "Invalid use of function result id " << _.getIdName(inst->id())
              << ".";

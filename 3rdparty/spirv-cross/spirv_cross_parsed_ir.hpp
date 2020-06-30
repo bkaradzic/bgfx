@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Arm Limited
+ * Copyright 2018-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,6 +205,8 @@ public:
 	{
 		return empty_string;
 	}
+
+	void make_constant_null(uint32_t id, uint32_t type, bool add_to_typed_id_set);
 
 private:
 	template <typename T>

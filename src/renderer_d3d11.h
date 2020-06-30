@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -54,22 +54,22 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 	| BGFX_STATE_DEPTH_TEST_MASK         \
 	)
 
-#define BGFX_D3D11_PROFILER_BEGIN(_view, _abgr)          \
-	BX_MACRO_BLOCK_BEGIN                                 \
-		PIX_BEGINEVENT(_abgr, s_viewNameW[_view]);       \
-		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);    \
+#define BGFX_D3D11_PROFILER_BEGIN(_view, _abgr)         \
+	BX_MACRO_BLOCK_BEGIN                                \
+		PIX_BEGINEVENT(_abgr, s_viewNameW[_view]);      \
+		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);   \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_D3D11_PROFILER_BEGIN_LITERAL(_name, _abgr)  \
-	BX_MACRO_BLOCK_BEGIN                                 \
-		PIX_BEGINEVENT(_abgr, L"" # _name);              \
-		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr);  \
+#define BGFX_D3D11_PROFILER_BEGIN_LITERAL(_name, _abgr) \
+	BX_MACRO_BLOCK_BEGIN                                \
+		PIX_BEGINEVENT(_abgr, L"" _name);               \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);   \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_D3D11_PROFILER_END()                        \
-	BX_MACRO_BLOCK_BEGIN                                 \
-		BGFX_PROFILER_END();                             \
-		PIX_ENDEVENT();                                  \
+#define BGFX_D3D11_PROFILER_END()                       \
+	BX_MACRO_BLOCK_BEGIN                                \
+		BGFX_PROFILER_END();                            \
+		PIX_ENDEVENT();                                 \
 	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace d3d11
@@ -204,14 +204,14 @@ namespace bgfx { namespace d3d11
 
 		void create(const ShaderD3D11* _vsh, const ShaderD3D11* _fsh)
 		{
-			BX_CHECK(NULL != _vsh->m_ptr, "Vertex shader doesn't exist.");
+			BX_ASSERT(NULL != _vsh->m_ptr, "Vertex shader doesn't exist.");
 			m_vsh = _vsh;
 			bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform) );
 			m_numPredefined = _vsh->m_numPredefined;
 
 			if (NULL != _fsh)
 			{
-				BX_CHECK(NULL != _fsh->m_ptr, "Fragment shader doesn't exist.");
+				BX_ASSERT(NULL != _fsh->m_ptr, "Fragment shader doesn't exist.");
 				m_fsh = _fsh;
 				bx::memCopy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform) );
 				m_numPredefined += _fsh->m_numPredefined;

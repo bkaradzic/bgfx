@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -19,8 +19,9 @@
 #include "renderer_noop.cpp"
 #include "renderer_nvn.cpp"
 #include "renderer_vk.cpp"
+#include "renderer_webgpu.cpp"
 #include "shader_dx9bc.cpp"
 #include "shader_dxbc.cpp"
 #include "shader_spirv.cpp"
 #include "topology.cpp"
-#include "vertexdecl.cpp"
+#include "vertexlayout.cpp"

@@ -6,7 +6,8 @@ set(SOURCES
     SpvPostProcess.cpp
     doc.cpp
     SpvTools.cpp
-    disassemble.cpp)
+    disassemble.cpp
+    CInterface/spirv_c_interface.cpp)
 
 set(SPVREMAP_SOURCES
     SPVRemapper.cpp
@@ -27,7 +28,8 @@ set(HEADERS
     SpvTools.h
     disassemble.h
     GLSL.ext.AMD.h
-    GLSL.ext.NV.h)
+    GLSL.ext.NV.h
+    NonSemanticDebugPrintf.h)
 
 set(SPVREMAP_HEADERS
     SPVRemapper.h
@@ -97,6 +99,5 @@ if(ENABLE_GLSLANG_INSTALL)
 
     install(EXPORT SPIRVTargets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
 
-    install(FILES ${HEADERS} ${SPVREMAP_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/SPIRV/)
     install(FILES ${HEADERS} ${SPVREMAP_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/glslang/SPIRV/)
 endif(ENABLE_GLSLANG_INSTALL)
