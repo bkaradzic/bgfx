@@ -1975,7 +1975,7 @@ namespace bgfx
 		{
 			m_encoder[ii].~EncoderImpl();
 		}
-		BX_FREE(g_allocator, m_encoder);
+		BX_ALIGNED_FREE(g_allocator, m_encoder, 16);
 		BX_FREE(g_allocator, m_encoderStats);
 
 		m_dynVertexBufferAllocator.compact();
