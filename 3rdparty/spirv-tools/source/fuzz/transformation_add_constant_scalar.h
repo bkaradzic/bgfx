@@ -17,9 +17,9 @@
 
 #include <vector>
 
-#include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -37,11 +37,13 @@ class TransformationAddConstantScalar : public Transformation {
   // - |message_.type_id| must be the id of a floating-point or integer type
   // - The size of |message_.word| must be compatible with the width of this
   //   type
-  bool IsApplicable(opt::IRContext* context,
-                    const FactManager& fact_manager) const override;
+  bool IsApplicable(
+      opt::IRContext* ir_context,
+      const TransformationContext& transformation_context) const override;
 
   // Adds a new OpConstant instruction with the given type and words.
-  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+  void Apply(opt::IRContext* ir_context,
+             TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
 

@@ -56,6 +56,8 @@ class Function {
 
   // Appends a parameter to this function.
   inline void AddParameter(std::unique_ptr<Instruction> p);
+  // Appends a debug instruction in function header to this function.
+  inline void AddDebugInstructionInHeader(std::unique_ptr<Instruction> p);
   // Appends a basic block to this function.
   inline void AddBasicBlock(std::unique_ptr<BasicBlock> b);
   // Appends a basic block to this function at the position |ip|.
@@ -69,6 +71,10 @@ class Function {
 
   // Delete all basic blocks that contain no instructions.
   inline void RemoveEmptyBlocks();
+
+  // Removes a parameter from the function with result id equal to |id|.
+  // Does nothing if the function doesn't have such a parameter.
+  inline void RemoveParameter(uint32_t id);
 
   // Saves the given function end instruction.
   inline void SetFunctionEnd(std::unique_ptr<Instruction> end_inst);
@@ -85,6 +91,10 @@ class Function {
 
   // Returns the entry basic block for this function.
   const std::unique_ptr<BasicBlock>& entry() const { return blocks_.front(); }
+
+  // Returns the last basic block in this function.
+  BasicBlock* tail() { return blocks_.back().get(); }
+  const BasicBlock* tail() const { return blocks_.back().get(); }
 
   iterator begin() { return iterator(&blocks_, blocks_.begin()); }
   iterator end() { return iterator(&blocks_, blocks_.end()); }
@@ -127,6 +137,11 @@ class Function {
   void ForEachParam(const std::function<void(Instruction*)>& f,
                     bool run_on_debug_line_insts = false);
 
+  // Runs the given function |f| on each debug instruction in this function's
+  // header in order.
+  void ForEachDebugInstructionsInHeader(
+      const std::function<void(Instruction*)>& f);
+
   BasicBlock* InsertBasicBlockAfter(std::unique_ptr<BasicBlock>&& new_block,
                                     BasicBlock* position);
 
@@ -151,6 +166,8 @@ class Function {
   std::unique_ptr<Instruction> def_inst_;
   // All parameters to this function.
   std::vector<std::unique_ptr<Instruction>> params_;
+  // All debug instructions in this function's header.
+  InstructionList debug_insts_in_header_;
   // All basic blocks inside this function in specification order
   std::vector<std::unique_ptr<BasicBlock>> blocks_;
   // The OpFunctionEnd instruction.
@@ -165,6 +182,11 @@ inline Function::Function(std::unique_ptr<Instruction> def_inst)
 
 inline void Function::AddParameter(std::unique_ptr<Instruction> p) {
   params_.emplace_back(std::move(p));
+}
+
+inline void Function::AddDebugInstructionInHeader(
+    std::unique_ptr<Instruction> p) {
+  debug_insts_in_header_.push_back(std::move(p));
 }
 
 inline void Function::AddBasicBlock(std::unique_ptr<BasicBlock> b) {
@@ -183,13 +205,13 @@ inline void Function::AddBasicBlocks(T src_begin, T src_end, iterator ip) {
 }
 
 inline void Function::MoveBasicBlockToAfter(uint32_t id, BasicBlock* ip) {
-  auto block_to_move = std::move(*FindBlock(id).Get());
+  std::unique_ptr<BasicBlock> block_to_move = std::move(*FindBlock(id).Get());
+  blocks_.erase(std::find(std::begin(blocks_), std::end(blocks_), nullptr));
 
   assert(block_to_move->GetParent() == ip->GetParent() &&
          "Both blocks have to be in the same function.");
 
   InsertBasicBlockAfter(std::move(block_to_move), ip);
-  blocks_.erase(std::find(std::begin(blocks_), std::end(blocks_), nullptr));
 }
 
 inline void Function::RemoveEmptyBlocks() {
@@ -199,6 +221,14 @@ inline void Function::RemoveEmptyBlocks() {
                        return bb->GetLabelInst()->opcode() == SpvOpNop;
                      });
   blocks_.erase(first_empty, std::end(blocks_));
+}
+
+inline void Function::RemoveParameter(uint32_t id) {
+  params_.erase(std::remove_if(params_.begin(), params_.end(),
+                               [id](const std::unique_ptr<Instruction>& param) {
+                                 return param->result_id() == id;
+                               }),
+                params_.end());
 }
 
 inline void Function::SetFunctionEnd(std::unique_ptr<Instruction> end_inst) {

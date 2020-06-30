@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Arm Limited
+ * Copyright 2015-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,11 +273,27 @@ SPIRVariable *Compiler::maybe_get_backing_variable(uint32_t chain)
 	return var;
 }
 
-StorageClass Compiler::get_backing_variable_storage(uint32_t ptr)
+StorageClass Compiler::get_expression_effective_storage_class(uint32_t ptr)
 {
 	auto *var = maybe_get_backing_variable(ptr);
-	if (var)
-		return var->storage;
+
+	// If the expression has been lowered to a temporary, we need to use the Generic storage class.
+	// We're looking for the effective storage class of a given expression.
+	// An access chain or forwarded OpLoads from such access chains
+	// will generally have the storage class of the underlying variable, but if the load was not forwarded
+	// we have lost any address space qualifiers.
+	bool forced_temporary = ir.ids[ptr].get_type() == TypeExpression &&
+	                        !get<SPIRExpression>(ptr).access_chain &&
+	                        (forced_temporaries.count(ptr) != 0 || forwarded_temporaries.count(ptr) == 0);
+
+	if (var && !forced_temporary)
+	{
+		// Normalize SSBOs to StorageBuffer here.
+		if (var->storage == StorageClassUniform && has_decoration(get<SPIRType>(var->basetype).self, DecorationBufferBlock))
+			return StorageClassStorageBuffer;
+		else
+			return var->storage;
+	}
 	else
 		return expression_type(ptr).storage;
 }
@@ -316,6 +332,8 @@ void Compiler::register_write(uint32_t chain)
 		if (access_chain && access_chain->loaded_from)
 			var = maybe_get<SPIRVariable>(access_chain->loaded_from);
 	}
+
+	auto &chain_type = expression_type(chain);
 
 	if (var)
 	{
@@ -359,7 +377,7 @@ void Compiler::register_write(uint32_t chain)
 			force_recompile();
 		}
 	}
-	else
+	else if (chain_type.pointer)
 	{
 		// If we stored through a variable pointer, then we don't know which
 		// variable we stored to. So *all* expressions after this point need to
@@ -368,6 +386,9 @@ void Compiler::register_write(uint32_t chain)
 		// only certain variables, we can invalidate only those.
 		flush_all_active_variables();
 	}
+
+	// If chain_type.pointer is false, we're not writing to memory backed variables, but temporaries instead.
+	// This can happen in copy_logical_type where we unroll complex reads and writes to temporaries.
 }
 
 void Compiler::flush_dependees(SPIRVariable &var)
@@ -866,7 +887,7 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 			res.atomic_counters.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
 		}
 		// Acceleration structures
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::AccelerationStructureNV)
+		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::AccelerationStructure)
 		{
 			res.acceleration_structures.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
 		}
@@ -1652,6 +1673,13 @@ size_t Compiler::get_declared_struct_member_size(const SPIRType &struct_type, ui
 
 	default:
 		break;
+	}
+
+	if (type.pointer && type.storage == StorageClassPhysicalStorageBuffer)
+	{
+		// Check if this is a top-level pointer type, and not an array of pointers.
+		if (type.pointer_depth > get<SPIRType>(type.parent_type).pointer_depth)
+			return 8;
 	}
 
 	if (!type.array.empty())
@@ -4199,19 +4227,22 @@ Bitset Compiler::combined_decoration_for_member(const SPIRType &type, uint32_t i
 
 	if (type_meta)
 	{
-		auto &memb = type_meta->members;
-		if (index >= memb.size())
+		auto &members = type_meta->members;
+		if (index >= members.size())
 			return flags;
-		auto &dec = memb[index];
+		auto &dec = members[index];
 
-		// If our type is a struct, traverse all the members as well recursively.
 		flags.merge_or(dec.decoration_flags);
 
-		for (uint32_t i = 0; i < type.member_types.size(); i++)
+		auto &member_type = get<SPIRType>(type.member_types[index]);
+
+		// If our member type is a struct, traverse all the child members as well recursively.
+		auto &member_childs = member_type.member_types;
+		for (uint32_t i = 0; i < member_childs.size(); i++)
 		{
-			auto &memb_type = get<SPIRType>(type.member_types[i]);
-			if (!memb_type.pointer)
-				flags.merge_or(combined_decoration_for_member(memb_type, i));
+			auto &child_member_type = get<SPIRType>(member_childs[i]);
+			if (!child_member_type.pointer)
+				flags.merge_or(combined_decoration_for_member(member_type, i));
 		}
 	}
 
@@ -4627,6 +4658,12 @@ bool Compiler::type_is_array_of_pointers(const SPIRType &type) const
 
 	// If parent type has same pointer depth, we must have an array of pointers.
 	return type.pointer_depth == get<SPIRType>(type.parent_type).pointer_depth;
+}
+
+bool Compiler::type_is_top_level_physical_pointer(const SPIRType &type) const
+{
+	return type.pointer && type.storage == StorageClassPhysicalStorageBuffer &&
+	       type.pointer_depth > get<SPIRType>(type.parent_type).pointer_depth;
 }
 
 bool Compiler::flush_phi_required(BlockID from, BlockID to) const

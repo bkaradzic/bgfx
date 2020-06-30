@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -32,7 +32,7 @@
 
 #define VK_NO_STDINT_H
 #define VK_NO_PROTOTYPES
-#include <vulkan/vulkan.h>
+#include <vulkan-local/vulkan.h>
 #include "renderer.h"
 #include "debug_renderdoc.h"
 
@@ -223,10 +223,50 @@
 				BX_MACRO_BLOCK_END
 
 #if BGFX_CONFIG_DEBUG
-#	define VK_CHECK(_call) _VK_CHECK(BX_CHECK, _call)
+#	define VK_CHECK(_call) _VK_CHECK(BX_ASSERT, _call)
 #else
 #	define VK_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
+
+#define BGFX_VK_PROFILER_BEGIN(_view, _abgr)                      \
+	BX_MACRO_BLOCK_BEGIN                                          \
+		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
+		{                                                         \
+			VkDebugUtilsLabelEXT dul;                             \
+			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
+			dul.pNext = NULL;                                     \
+			dul.pLabelName = s_viewName[view];                    \
+			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;       \
+			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;       \
+			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;       \
+			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;       \
+			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);  \
+		}                                                         \
+		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);             \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr)              \
+	BX_MACRO_BLOCK_BEGIN                                          \
+		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
+		{                                                         \
+			VkDebugUtilsLabelEXT dul;                             \
+			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
+			dul.pNext = NULL;                                     \
+			dul.pLabelName = "" _name;                            \
+			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;       \
+			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;       \
+			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;       \
+			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;       \
+			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);  \
+		}                                                         \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);             \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_VK_PROFILER_END()                       \
+	BX_MACRO_BLOCK_BEGIN                             \
+		BGFX_PROFILER_END();                         \
+		vkCmdEndDebugUtilsLabelEXT(m_commandBuffer); \
+	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace vk
 {
@@ -389,6 +429,26 @@ VK_DESTROY
 		VertexLayoutHandle m_layoutHandle;
 	};
 
+	struct BindType
+	{
+		enum Enum
+		{
+			Buffer,
+			Image,
+			Sampler,
+
+			Count
+		};
+	};
+
+	struct BindInfo
+	{
+		UniformHandle uniformHandle = BGFX_INVALID_HANDLE;
+		BindType::Enum type;
+		uint32_t binding;
+		uint32_t samplerBinding;
+	};
+
 	struct ShaderVK
 	{
 		ShaderVK()
@@ -420,25 +480,6 @@ VK_DESTROY
 		uint8_t m_numPredefined;
 		uint8_t m_numAttrs;
 
-		struct BindType
-		{
-			enum Enum
-			{
-				Storage,
-				Sampler,
-
-				Count
-			};
-		};
-
-		struct BindInfo
-		{
-			UniformHandle uniformHandle;
-			BindType::Enum type;
-			uint32_t binding;
-			uint32_t samplerBinding;
-		};
-
 		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t m_uniformBinding;
 		uint16_t m_numBindings;
@@ -461,6 +502,8 @@ VK_DESTROY
 		const ShaderVK* m_vsh;
 		const ShaderVK* m_fsh;
 
+		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
 
@@ -471,7 +514,8 @@ VK_DESTROY
 	struct TextureVK
 	{
 		TextureVK()
-			: m_vkTextureFormat(VK_FORMAT_UNDEFINED)
+			: m_directAccessPtr(NULL)
+			, m_format(VK_FORMAT_UNDEFINED)
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem(VK_NULL_HANDLE)
 			, m_textureImageView(VK_NULL_HANDLE)
@@ -488,19 +532,21 @@ VK_DESTROY
 		void copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy);
 		void setImageMemoryBarrier(VkCommandBuffer commandBuffer, VkImageLayout newImageLayout);
 
-		void* m_directAccessPtr;
+		void*    m_directAccessPtr;
 		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
 		uint32_t m_numLayers;
 		uint32_t m_numSides;
+		uint8_t  m_requestedFormat;
+		uint8_t  m_textureFormat;
+		uint8_t  m_numMips;
+
 		VkImageViewType m_type;
-		uint8_t m_requestedFormat;
-		uint8_t m_textureFormat;
-		uint8_t m_numMips;
-		VkFormat m_vkTextureFormat;
-		VkImageAspectFlags  m_vkTextureAspect;
+		VkFormat m_format;
+		VkComponentMapping m_components;
+		VkImageAspectFlags m_aspectMask;
 
 		VkImage m_textureImage;
 		VkDeviceMemory m_textureDeviceMem;

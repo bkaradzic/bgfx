@@ -41,6 +41,7 @@ bool DeadBranchElimPass::GetConstCondition(uint32_t condId, bool* condVal) {
   bool condIsConst;
   Instruction* cInst = get_def_use_mgr()->GetDef(condId);
   switch (cInst->opcode()) {
+    case SpvOpConstantNull:
     case SpvOpConstantFalse: {
       *condVal = false;
       condIsConst = true;
@@ -167,7 +168,6 @@ bool DeadBranchElimPass::MarkLiveBlocks(
     }
 
     if (simplify) {
-      modified = true;
       conditions_to_simplify.push_back({block, live_lab_id});
       stack.push_back(GetParentBlock(live_lab_id));
     } else {
@@ -179,24 +179,29 @@ bool DeadBranchElimPass::MarkLiveBlocks(
     }
   }
 
-  // Traverse |conditions_to_simplify in reverse order.  This is done so that we
-  // simplify nested constructs before simplifying the constructs that contain
-  // them.
+  // Traverse |conditions_to_simplify| in reverse order.  This is done so that
+  // we simplify nested constructs before simplifying the constructs that
+  // contain them.
   for (auto b = conditions_to_simplify.rbegin();
        b != conditions_to_simplify.rend(); ++b) {
-    SimplifyBranch(b->first, b->second);
+    modified |= SimplifyBranch(b->first, b->second);
   }
 
   return modified;
 }
 
-void DeadBranchElimPass::SimplifyBranch(BasicBlock* block,
+bool DeadBranchElimPass::SimplifyBranch(BasicBlock* block,
                                         uint32_t live_lab_id) {
   Instruction* merge_inst = block->GetMergeInst();
   Instruction* terminator = block->terminator();
   if (merge_inst && merge_inst->opcode() == SpvOpSelectionMerge) {
     if (merge_inst->NextNode()->opcode() == SpvOpSwitch &&
         SwitchHasNestedBreak(block->id())) {
+      if (terminator->NumInOperands() == 2) {
+        // We cannot remove the branch, and it already has a single case, so no
+        // work to do.
+        return false;
+      }
       // We have to keep the switch because it has a nest break, so we
       // remove all cases except for the live one.
       Instruction::OperandList new_operands;
@@ -231,6 +236,7 @@ void DeadBranchElimPass::SimplifyBranch(BasicBlock* block,
     AddBranch(live_lab_id, block);
     context()->KillInst(terminator);
   }
+  return true;
 }
 
 void DeadBranchElimPass::MarkUnreachableStructuredTargets(
@@ -643,7 +649,8 @@ bool DeadBranchElimPass::SwitchHasNestedBreak(uint32_t switch_header_id) {
         if (bb->id() == switch_header_id) {
           return true;
         }
-        return (cfg_analysis->ContainingConstruct(inst) == switch_header_id);
+        return (cfg_analysis->ContainingConstruct(inst) == switch_header_id &&
+                bb->GetMergeInst() == nullptr);
       });
 }
 

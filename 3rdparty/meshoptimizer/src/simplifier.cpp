@@ -86,26 +86,10 @@ struct PositionHasher
 
 	size_t hash(unsigned int index) const
 	{
-		// MurmurHash2
-		const unsigned int m = 0x5bd1e995;
-		const int r = 24;
-
-		unsigned int h = 0;
 		const unsigned int* key = reinterpret_cast<const unsigned int*>(vertex_positions + index * vertex_stride_float);
 
-		for (size_t i = 0; i < 3; ++i)
-		{
-			unsigned int k = key[i];
-
-			k *= m;
-			k ^= k >> r;
-			k *= m;
-
-			h *= m;
-			h ^= k;
-		}
-
-		return h;
+		// Optimized Spatial Hashing for Collision Detection of Deformable Objects
+		return (key[0] * 73856093) ^ (key[1] * 19349663) ^ (key[2] * 83492791);
 	}
 
 	bool equal(unsigned int lhs, unsigned int rhs) const
@@ -233,44 +217,35 @@ static bool hasEdge(const EdgeAdjacency& adjacency, unsigned int a, unsigned int
 	return false;
 }
 
-static unsigned int findWedgeEdge(const EdgeAdjacency& adjacency, const unsigned int* wedge, unsigned int a, unsigned int b)
+static void classifyVertices(unsigned char* result, unsigned int* loop, unsigned int* loopback, size_t vertex_count, const EdgeAdjacency& adjacency, const unsigned int* remap, const unsigned int* wedge)
 {
-	unsigned int v = a;
+	memset(loop, -1, vertex_count * sizeof(unsigned int));
+	memset(loopback, -1, vertex_count * sizeof(unsigned int));
 
-	do
-	{
-		if (hasEdge(adjacency, v, b))
-			return v;
+	// incoming & outgoing open edges: ~0u if no open edges, i if there are more than 1
+	// note that this is the same data as required in loop[] arrays; loop[] data is only valid for border/seam
+	// but here it's okay to fill the data out for other types of vertices as well
+	unsigned int* openinc = loopback;
+	unsigned int* openout = loop;
 
-		v = wedge[v];
-	} while (v != a);
-
-	return ~0u;
-}
-
-static size_t countOpenEdges(const EdgeAdjacency& adjacency, unsigned int vertex, unsigned int* last = 0)
-{
-	size_t result = 0;
-
-	unsigned int count = adjacency.counts[vertex];
-	const unsigned int* data = adjacency.data + adjacency.offsets[vertex];
-
-	for (size_t i = 0; i < count; ++i)
-		if (!hasEdge(adjacency, data[i], vertex))
-		{
-			result++;
-
-			if (last)
-				*last = data[i];
-		}
-
-	return result;
-}
-
-static void classifyVertices(unsigned char* result, unsigned int* loop, size_t vertex_count, const EdgeAdjacency& adjacency, const unsigned int* remap, const unsigned int* wedge)
-{
 	for (size_t i = 0; i < vertex_count; ++i)
-		loop[i] = ~0u;
+	{
+		unsigned int vertex = unsigned(i);
+
+		unsigned int count = adjacency.counts[vertex];
+		const unsigned int* data = adjacency.data + adjacency.offsets[vertex];
+
+		for (size_t j = 0; j < count; ++j)
+		{
+			unsigned int target = data[j];
+
+			if (!hasEdge(adjacency, target, vertex))
+			{
+				openinc[target] = (openinc[target] == ~0u) ? vertex : target;
+				openout[vertex] = (openout[vertex] == ~0u) ? target : vertex;
+			}
+		}
+	}
 
 #if TRACE
 	size_t lockedstats[4] = {};
@@ -286,22 +261,18 @@ static void classifyVertices(unsigned char* result, unsigned int* loop, size_t v
 			if (wedge[i] == i)
 			{
 				// no attribute seam, need to check if it's manifold
-				unsigned int v = 0;
-				size_t edges = countOpenEdges(adjacency, unsigned(i), &v);
+				unsigned int openi = openinc[i], openo = openout[i];
 
 				// note: we classify any vertices with no open edges as manifold
 				// this is technically incorrect - if 4 triangles share an edge, we'll classify vertices as manifold
 				// it's unclear if this is a problem in practice
-				// also note that we classify vertices as border if they have *one* open edge, not two
-				// this is because we only have half-edges - so a border vertex would have one incoming and one outgoing edge
-				if (edges == 0)
+				if (openi == ~0u && openo == ~0u)
 				{
 					result[i] = Kind_Manifold;
 				}
-				else if (edges == 1)
+				else if (openi != i && openo != i)
 				{
 					result[i] = Kind_Border;
-					loop[i] = v;
 				}
 				else
 				{
@@ -312,23 +283,18 @@ static void classifyVertices(unsigned char* result, unsigned int* loop, size_t v
 			else if (wedge[wedge[i]] == i)
 			{
 				// attribute seam; need to distinguish between Seam and Locked
-				unsigned int a = 0;
-				size_t a_count = countOpenEdges(adjacency, unsigned(i), &a);
-				unsigned int b = 0;
-				size_t b_count = countOpenEdges(adjacency, wedge[i], &b);
+				unsigned int w = wedge[i];
+				unsigned int openiv = openinc[i], openov = openout[i];
+				unsigned int openiw = openinc[w], openow = openout[w];
 
 				// seam should have one open half-edge for each vertex, and the edges need to "connect" - point to the same vertex post-remap
-				if (a_count == 1 && b_count == 1)
+				if (openiv != ~0u && openiv != i && openov != ~0u && openov != i &&
+				    openiw != ~0u && openiw != w && openow != ~0u && openow != w)
 				{
-					unsigned int ao = findWedgeEdge(adjacency, wedge, a, wedge[i]);
-					unsigned int bo = findWedgeEdge(adjacency, wedge, b, unsigned(i));
-
-					if (ao != ~0u && bo != ~0u)
+					if (remap[openiv] == remap[openow] && remap[openov] == remap[openiw] &&
+					    remap[openiw] == remap[openov] && remap[openow] == remap[openiv])
 					{
 						result[i] = Kind_Seam;
-
-						loop[i] = a;
-						loop[wedge[i]] = b;
 					}
 					else
 					{
@@ -421,7 +387,8 @@ struct Collapse
 	unsigned int v0;
 	unsigned int v1;
 
-	union {
+	union
+	{
 		unsigned int bidi;
 		float error;
 		unsigned int errorui;
@@ -572,7 +539,7 @@ static void fillFaceQuadrics(Quadric* vertex_quadrics, const unsigned int* indic
 	}
 }
 
-static void fillEdgeQuadrics(Quadric* vertex_quadrics, const unsigned int* indices, size_t index_count, const Vector3* vertex_positions, const unsigned int* remap, const unsigned char* vertex_kind, const unsigned int* loop)
+static void fillEdgeQuadrics(Quadric* vertex_quadrics, const unsigned int* indices, size_t index_count, const Vector3* vertex_positions, const unsigned int* remap, const unsigned char* vertex_kind, const unsigned int* loop, const unsigned int* loopback)
 {
 	for (size_t i = 0; i < index_count; i += 3)
 	{
@@ -586,9 +553,20 @@ static void fillEdgeQuadrics(Quadric* vertex_quadrics, const unsigned int* indic
 			unsigned char k0 = vertex_kind[i0];
 			unsigned char k1 = vertex_kind[i1];
 
-			// check that i0 and i1 are border/seam and are on the same edge loop
-			// loop[] tracks half edges so we only need to check i0->i1
-			if (k0 != k1 || (k0 != Kind_Border && k0 != Kind_Seam) || loop[i0] != i1)
+			// check that either i0 or i1 are border/seam and are on the same edge loop
+			// note that we need to add the error even for edged that connect e.g. border & locked
+			// if we don't do that, the adjacent border->border edge won't have correct errors for corners
+			if (k0 != Kind_Border && k0 != Kind_Seam && k1 != Kind_Border && k1 != Kind_Seam)
+				continue;
+
+			if ((k0 == Kind_Border || k0 == Kind_Seam) && loop[i0] != i1)
+				continue;
+
+			if ((k1 == Kind_Border || k1 == Kind_Seam) && loopback[i1] != i0)
+				continue;
+
+			// seam edges should occur twice (i0->i1 and i1->i0) - skip redundant edges
+			if (kHasOpposite[k0][k1] && remap[i1] > remap[i0])
 				continue;
 
 			unsigned int i2 = indices[i + next[next[e]]];
@@ -598,7 +576,7 @@ static void fillEdgeQuadrics(Quadric* vertex_quadrics, const unsigned int* indic
 			const float kEdgeWeightSeam = 1.f;
 			const float kEdgeWeightBorder = 10.f;
 
-			float edgeWeight = (k0 == Kind_Seam) ? kEdgeWeightSeam : kEdgeWeightBorder;
+			float edgeWeight = (k0 == Kind_Border || k1 == Kind_Border) ? kEdgeWeightBorder : kEdgeWeightSeam;
 
 			Quadric Q;
 			quadricFromTriangleEdge(Q, vertex_positions[i0], vertex_positions[i1], vertex_positions[i2], edgeWeight);
@@ -1160,9 +1138,10 @@ static float interpolate(float y, float x0, float y0, float x1, float y1, float 
 
 } // namespace meshopt
 
-#if TRACE
+#ifndef NDEBUG
 unsigned char* meshopt_simplifyDebugKind = 0;
 unsigned int* meshopt_simplifyDebugLoop = 0;
+unsigned int* meshopt_simplifyDebugLoopBack = 0;
 #endif
 
 size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions_data, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error)
@@ -1190,7 +1169,8 @@ size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, 
 	// classify vertices; vertex kind determines collapse rules, see kCanCollapse
 	unsigned char* vertex_kind = allocator.allocate<unsigned char>(vertex_count);
 	unsigned int* loop = allocator.allocate<unsigned int>(vertex_count);
-	classifyVertices(vertex_kind, loop, vertex_count, adjacency, remap, wedge);
+	unsigned int* loopback = allocator.allocate<unsigned int>(vertex_count);
+	classifyVertices(vertex_kind, loop, loopback, vertex_count, adjacency, remap, wedge);
 
 #if TRACE
 	size_t unique_positions = 0;
@@ -1214,7 +1194,7 @@ size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, 
 	memset(vertex_quadrics, 0, vertex_count * sizeof(Quadric));
 
 	fillFaceQuadrics(vertex_quadrics, indices, index_count, vertex_positions, remap);
-	fillEdgeQuadrics(vertex_quadrics, indices, index_count, vertex_positions, remap, vertex_kind, loop);
+	fillEdgeQuadrics(vertex_quadrics, indices, index_count, vertex_positions, remap, vertex_kind, loop, loopback);
 
 	if (result != indices)
 		memcpy(result, indices, index_count * sizeof(unsigned int));
@@ -1273,6 +1253,7 @@ size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, 
 			break;
 
 		remapEdgeLoops(loop, vertex_count, collapse_remap);
+		remapEdgeLoops(loopback, vertex_count, collapse_remap);
 
 		size_t new_count = remapIndexBuffer(result, result_count, collapse_remap);
 		assert(new_count < result_count);
@@ -1304,12 +1285,15 @@ size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, 
 	dumpLockedCollapses(result, result_count, vertex_kind);
 #endif
 
-#if TRACE
+#ifndef NDEBUG
 	if (meshopt_simplifyDebugKind)
 		memcpy(meshopt_simplifyDebugKind, vertex_kind, vertex_count);
 
 	if (meshopt_simplifyDebugLoop)
 		memcpy(meshopt_simplifyDebugLoop, loop, vertex_count * sizeof(unsigned int));
+
+	if (meshopt_simplifyDebugLoopBack)
+		memcpy(meshopt_simplifyDebugLoopBack, loopback, vertex_count * sizeof(unsigned int));
 #endif
 
 	return result_count;

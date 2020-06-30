@@ -2,6 +2,8 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2020 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -187,17 +189,15 @@ bool TInputScanner::scanVersion(int& version, EProfile& profile, bool& notFirstT
         if (lookingInMiddle) {
             notFirstToken = true;
             // make forward progress by finishing off the current line plus extra new lines
-            if (peek() == '\n' || peek() == '\r') {
-                while (peek() == '\n' || peek() == '\r')
-                    get();
-            } else
+            if (peek() != '\n' && peek() != '\r') {
                 do {
                     c = get();
                 } while (c != EndOfInput && c != '\n' && c != '\r');
-                while (peek() == '\n' || peek() == '\r')
-                    get();
-                if (peek() == EndOfInput)
-                    return true;
+            }
+            while (peek() == '\n' || peek() == '\r')
+                get();
+            if (peek() == EndOfInput)
+                return true;
         }
         lookingInMiddle = true;
 
@@ -416,6 +416,7 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["queuefamilycoherent"] =     QUEUEFAMILYCOHERENT;
     (*KeywordMap)["workgroupcoherent"] =       WORKGROUPCOHERENT;
     (*KeywordMap)["subgroupcoherent"] =        SUBGROUPCOHERENT;
+    (*KeywordMap)["shadercallcoherent"] =      SHADERCALLCOHERENT;
     (*KeywordMap)["nonprivate"] =              NONPRIVATE;
     (*KeywordMap)["restrict"] =                RESTRICT;
     (*KeywordMap)["readonly"] =                READONLY;
@@ -704,11 +705,18 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["precise"] =                 PRECISE;
 
     (*KeywordMap)["rayPayloadNV"] =            PAYLOADNV;
+    (*KeywordMap)["rayPayloadEXT"] =           PAYLOADEXT;
     (*KeywordMap)["rayPayloadInNV"] =          PAYLOADINNV;
+    (*KeywordMap)["rayPayloadInEXT"] =         PAYLOADINEXT;
     (*KeywordMap)["hitAttributeNV"] =          HITATTRNV;
+    (*KeywordMap)["hitAttributeEXT"] =         HITATTREXT;
     (*KeywordMap)["callableDataNV"] =          CALLDATANV;
+    (*KeywordMap)["callableDataEXT"] =         CALLDATAEXT;
     (*KeywordMap)["callableDataInNV"] =        CALLDATAINNV;
+    (*KeywordMap)["callableDataInEXT"] =       CALLDATAINEXT;
     (*KeywordMap)["accelerationStructureNV"] = ACCSTRUCTNV;
+    (*KeywordMap)["accelerationStructureEXT"]   = ACCSTRUCTEXT;
+    (*KeywordMap)["rayQueryEXT"] =              RAYQUERYEXT;
     (*KeywordMap)["perprimitiveNV"] =          PERPRIMITIVENV;
     (*KeywordMap)["perviewNV"] =               PERVIEWNV;
     (*KeywordMap)["taskNV"] =                  PERTASKNV;
@@ -843,6 +851,7 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
             parseContext.error(loc, "not supported", "::", "");
             break;
 
+        case PpAtomConstString:        parserToken->sType.lex.string = NewPoolTString(tokenText);     return STRING_LITERAL;
         case PpAtomConstInt:           parserToken->sType.lex.i    = ppToken.ival;       return INTCONSTANT;
         case PpAtomConstUint:          parserToken->sType.lex.i    = ppToken.ival;       return UINTCONSTANT;
         case PpAtomConstFloat:         parserToken->sType.lex.d    = ppToken.dval;       return FLOATCONSTANT;
@@ -908,7 +917,8 @@ int TScanContext::tokenizeIdentifier()
     case BUFFER:
         afterBuffer = true;
         if ((parseContext.isEsProfile() && parseContext.version < 310) ||
-            (!parseContext.isEsProfile() && parseContext.version < 430))
+            (!parseContext.isEsProfile() && (parseContext.version < 430 &&
+            !parseContext.extensionTurnedOn(E_GL_ARB_shader_storage_buffer_object))))
             return identifierOrType();
         return keyword;
 
@@ -990,8 +1000,7 @@ int TScanContext::tokenizeIdentifier()
 
 #ifndef GLSLANG_WEB
     case NOPERSPECTIVE:
-        if (parseContext.isEsProfile() && parseContext.version >= 300 &&
-            parseContext.extensionTurnedOn(E_GL_NV_shader_noperspective_interpolation))
+        if (parseContext.extensionTurnedOn(E_GL_NV_shader_noperspective_interpolation))
             return keyword;
         return es30ReservedFromGLSL(130);
 
@@ -1012,8 +1021,24 @@ int TScanContext::tokenizeIdentifier()
     case CALLDATAINNV:
     case ACCSTRUCTNV:
         if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_NV_ray_tracing))
+            return keyword;
+        return identifierOrType();
+    case PAYLOADEXT:
+    case PAYLOADINEXT:
+    case HITATTREXT:
+    case CALLDATAEXT:
+    case CALLDATAINEXT:
+    case ACCSTRUCTEXT:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_ray_tracing) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_ray_query))
+            return keyword;
+        return identifierOrType();
+    case RAYQUERYEXT:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
             (!parseContext.isEsProfile() && parseContext.version >= 460
-                 && parseContext.extensionTurnedOn(E_GL_NV_ray_tracing)))
+                 && parseContext.extensionTurnedOn(E_GL_EXT_ray_query)))
             return keyword;
         return identifierOrType();
     case ATOMIC_UINT:
@@ -1027,6 +1052,7 @@ int TScanContext::tokenizeIdentifier()
     case QUEUEFAMILYCOHERENT:
     case WORKGROUPCOHERENT:
     case SUBGROUPCOHERENT:
+    case SHADERCALLCOHERENT:
     case NONPRIVATE:
     case RESTRICT:
     case READONLY:
@@ -1168,7 +1194,10 @@ int TScanContext::tokenizeIdentifier()
     case DVEC3:
     case DVEC4:
         afterType = true;
-        if (parseContext.isEsProfile() || parseContext.version < 400)
+        if (parseContext.isEsProfile() || parseContext.version < 150 ||
+            (!parseContext.symbolTable.atBuiltInLevel() &&
+              (parseContext.version < 400 && !parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_fp64) &&
+              (parseContext.version < 410 && !parseContext.extensionTurnedOn(E_GL_ARB_vertex_attrib_64bit)))))
             reservedWord();
         return keyword;
 
@@ -1182,10 +1211,9 @@ int TScanContext::tokenizeIdentifier()
     case U64VEC4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            (!parseContext.isEsProfile() && parseContext.version >= 450 &&
-             (parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_int64) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int64))))
+            parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_int64) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int64))
             return keyword;
         return identifierOrType();
 
@@ -1199,10 +1227,9 @@ int TScanContext::tokenizeIdentifier()
     case U8VEC4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_8bit_storage) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int8)) &&
-              !parseContext.isEsProfile() && parseContext.version >= 450))
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_8bit_storage) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int8))
             return keyword;
         return identifierOrType();
 
@@ -1216,11 +1243,10 @@ int TScanContext::tokenizeIdentifier()
     case U16VEC4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            (!parseContext.isEsProfile() && parseContext.version >= 450 &&
-             (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_int16) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_16bit_storage) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int16))))
+            parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_int16) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_16bit_storage) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int16))
             return keyword;
         return identifierOrType();
     case INT32_T:
@@ -1233,9 +1259,8 @@ int TScanContext::tokenizeIdentifier()
     case U32VEC4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-           ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
-             parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int32)) &&
-             !parseContext.isEsProfile() && parseContext.version >= 450))
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int32))
             return keyword;
         return identifierOrType();
     case FLOAT32_T:
@@ -1256,9 +1281,8 @@ int TScanContext::tokenizeIdentifier()
     case F32MAT4X4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float32)) &&
-              !parseContext.isEsProfile() && parseContext.version >= 450))
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float32))
             return keyword;
         return identifierOrType();
 
@@ -1280,9 +1304,8 @@ int TScanContext::tokenizeIdentifier()
     case F64MAT4X4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float64)) &&
-              !parseContext.isEsProfile() && parseContext.version >= 450))
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float64))
             return keyword;
         return identifierOrType();
 
@@ -1292,11 +1315,10 @@ int TScanContext::tokenizeIdentifier()
     case F16VEC4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            (!parseContext.isEsProfile() && parseContext.version >= 450 &&
-             (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_16bit_storage) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float16))))
+            parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_16bit_storage) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float16))
             return keyword;
 
         return identifierOrType();
@@ -1315,10 +1337,9 @@ int TScanContext::tokenizeIdentifier()
     case F16MAT4X4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            (!parseContext.isEsProfile() && parseContext.version >= 450 &&
-             (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float16))))
+            parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float16))
             return keyword;
 
         return identifierOrType();
@@ -1431,6 +1452,9 @@ int TScanContext::tokenizeIdentifier()
         afterType = true;
         if (parseContext.isEsProfile() && parseContext.version >= 310)
             return keyword;
+        if (!parseContext.isEsProfile() && (parseContext.version > 140 ||
+            (parseContext.version == 140 && parseContext.extensionsTurnedOn(1, &E_GL_ARB_texture_multisample))))
+            return keyword;
         return es30ReservedFromGLSL(150);
 
     case SAMPLER2DMSARRAY:
@@ -1439,6 +1463,9 @@ int TScanContext::tokenizeIdentifier()
         afterType = true;
         if ((parseContext.isEsProfile() && parseContext.version >= 320) ||
             parseContext.extensionsTurnedOn(1, &E_GL_OES_texture_storage_multisample_2d_array))
+            return keyword;
+        if (!parseContext.isEsProfile() && (parseContext.version > 140 ||
+            (parseContext.version == 140 && parseContext.extensionsTurnedOn(1, &E_GL_ARB_texture_multisample))))
             return keyword;
         return es30ReservedFromGLSL(150);
 
@@ -1567,20 +1594,17 @@ int TScanContext::tokenizeIdentifier()
     case F16SUBPASSINPUTMS:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float_fetch) &&
-             !parseContext.isEsProfile() && parseContext.version >= 450))
+            parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float_fetch))
             return keyword;
         return identifierOrType();
 
     case EXPLICITINTERPAMD:
-        if (!parseContext.isEsProfile() && parseContext.version >= 450 &&
-            parseContext.extensionTurnedOn(E_GL_AMD_shader_explicit_vertex_parameter))
+        if (parseContext.extensionTurnedOn(E_GL_AMD_shader_explicit_vertex_parameter))
             return keyword;
         return identifierOrType();
 
     case PERVERTEXNV:
-        if (((!parseContext.isEsProfile() && parseContext.version >= 450) ||
-            (parseContext.isEsProfile() && parseContext.version >= 320)) &&
+        if ((!parseContext.isEsProfile() && parseContext.version >= 450) ||
             parseContext.extensionTurnedOn(E_GL_NV_fragment_shader_barycentric))
             return keyword;
         return identifierOrType();
@@ -1748,7 +1772,11 @@ int TScanContext::dMat()
         return keyword;
     }
 
-    if (!parseContext.isEsProfile() && parseContext.version >= 400)
+    if (!parseContext.isEsProfile() && (parseContext.version >= 400 ||
+        parseContext.symbolTable.atBuiltInLevel() ||
+        (parseContext.version >= 150 && parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_fp64)) ||
+        (parseContext.version >= 150 && parseContext.extensionTurnedOn(E_GL_ARB_vertex_attrib_64bit)
+         && parseContext.language == EShLangVertex)))
         return keyword;
 
     if (parseContext.isForwardCompatible())

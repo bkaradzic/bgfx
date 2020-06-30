@@ -171,8 +171,17 @@ void MergeWithSuccessor(IRContext* context, Function* func,
       // flow declaration.
       context->KillInst(merge_inst);
     } else {
+      // Move OpLine/OpNoLine information to merge_inst. This solves
+      // the validation error that OpLine is placed between OpLoopMerge
+      // and OpBranchConditional.
+      auto terminator = bi->terminator();
+      auto& vec = terminator->dbg_line_insts();
+      auto& new_vec = merge_inst->dbg_line_insts();
+      new_vec.insert(new_vec.end(), vec.begin(), vec.end());
+      terminator->clear_dbg_line_insts();
+
       // Move the merge instruction to just before the terminator.
-      merge_inst->InsertBefore(bi->terminator());
+      merge_inst->InsertBefore(terminator);
     }
   }
   context->ReplaceAllUsesWith(lab_id, bi->id());

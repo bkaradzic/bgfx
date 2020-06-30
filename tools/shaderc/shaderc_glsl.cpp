@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -121,6 +121,17 @@ namespace bgfx { namespace glsl
 					   )
 					{
 						// skip attributes and varyings.
+						parse.set(eol.getPtr() + 1, parse.getTerm() );
+						continue;
+					}
+
+					if (0 == bx::strCmp(qualifier, "flat", 4)
+					||  0 == bx::strCmp(qualifier, "smooth", 6)
+					||  0 == bx::strCmp(qualifier, "noperspective", 13)
+					||  0 == bx::strCmp(qualifier, "centroid", 8)
+					   )
+					{
+						// skip interpolation qualifiers
 						parse.set(eol.getPtr() + 1, parse.getTerm() );
 						continue;
 					}
@@ -328,6 +339,8 @@ namespace bgfx { namespace glsl
 			bx::write(_writer, un.num);
 			bx::write(_writer, un.regIndex);
 			bx::write(_writer, un.regCount);
+			bx::write(_writer, un.texComponent);
+			bx::write(_writer, un.texDimension);
 
 			BX_TRACE("%s, %s, %d, %d, %d"
 				, un.name.c_str()

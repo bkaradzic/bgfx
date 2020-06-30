@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -114,9 +114,10 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 	case bgfx::RendererType::OpenGL:     shaderPath = "shaders/glsl/";  break;
 	case bgfx::RendererType::OpenGLES:   shaderPath = "shaders/essl/";  break;
 	case bgfx::RendererType::Vulkan:     shaderPath = "shaders/spirv/"; break;
+	case bgfx::RendererType::WebGPU:     shaderPath = "shaders/spirv/"; break;
 
 	case bgfx::RendererType::Count:
-		BX_CHECK(false, "You should not be here!");
+		BX_ASSERT(false, "You should not be here!");
 		break;
 	}
 
@@ -592,7 +593,7 @@ void Mesh::submit(bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _
 		
 		bgfx::setIndexBuffer(group.m_ibh);
 		bgfx::setVertexBuffer(0, group.m_vbh);
-		bgfx::submit(_id, _program, 0, it != itEnd-1);
+		bgfx::submit(_id, _program, 0, (it == itEnd-1) ? (BGFX_DISCARD_INDEX_BUFFER | BGFX_DISCARD_VERTEX_STREAMS | BGFX_DISCARD_STATE) : BGFX_DISCARD_NONE);
 	}
 }
 
@@ -623,7 +624,7 @@ void Mesh::submit(const MeshState*const* _state, uint8_t _numPasses, const float
 			
 			bgfx::setIndexBuffer(group.m_ibh);
 			bgfx::setVertexBuffer(0, group.m_vbh);
-			bgfx::submit(state.m_viewId, state.m_program, 0, it != itEnd-1);
+			bgfx::submit(state.m_viewId, state.m_program, 0, (it == itEnd - 1) ? (BGFX_DISCARD_INDEX_BUFFER | BGFX_DISCARD_VERTEX_STREAMS | BGFX_DISCARD_STATE) : BGFX_DISCARD_NONE);
 		}
 	}
 }

@@ -59,12 +59,12 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 			}
 			else
 			{
-				BX_CHECK(false, "Glyph not found");
+				BX_ASSERT(false, "Glyph not found");
 			}
 		}
 	}
 
-	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
+	BX_ASSERT(state == UTF8_ACCEPT, "The string is not well-formed");
 }
 
 TextLineMetrics::TextLineMetrics(const FontInfo& _fontInfo)
@@ -88,7 +88,7 @@ uint32_t TextLineMetrics::getLineCount(const bx::StringView& _str) const
 		}
 	}
 
-	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
+	BX_ASSERT(state == UTF8_ACCEPT, "The string is not well-formed");
 	return lineCount;
 }
 
@@ -118,7 +118,7 @@ void TextLineMetrics::getSubText(const bx::StringView& _str, uint32_t _firstLine
 		}
 	}
 
-	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
+	BX_ASSERT(state == UTF8_ACCEPT, "The string is not well-formed");
 	_begin = ptr;
 
 	while (ptr != _str.getTerm()
@@ -138,6 +138,6 @@ void TextLineMetrics::getSubText(const bx::StringView& _str, uint32_t _firstLine
 		}
 	}
 
-	BX_CHECK(state == UTF8_ACCEPT, "The string is not well-formed");
+	BX_ASSERT(state == UTF8_ACCEPT, "The string is not well-formed");
 	_end = ptr;
 }

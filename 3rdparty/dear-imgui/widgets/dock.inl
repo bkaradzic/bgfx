@@ -706,7 +706,7 @@ namespace ImGui
 						dock_tab->setActive();
 					}
 
-					if (IsItemActive() && IsMouseDragging())
+					if (IsItemActive() && IsMouseDragging(0))
 					{
 						m_drag_offset = GetMousePos() - dock_tab->pos;
 						doUndock(*dock_tab);
