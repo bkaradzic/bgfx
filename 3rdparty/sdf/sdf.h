@@ -113,7 +113,7 @@ static float sdf__clamp01(float x)
 	return x < 0.0f ? 0.0f : (x > 1.0f ? 1.0f : x);
 }
 
-void sdfCoverageToDistance(unsigned char* out, int outstride,
+void sdfCoverageToDistance(unsigned char* out, int outstride, float maxdist,
 						   const unsigned char* img, int width, int height, int stride)
 {
 	int x, y;
