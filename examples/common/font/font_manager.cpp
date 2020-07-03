@@ -107,26 +107,23 @@ bool TrueTypeFont::bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _glyphInfo, u
 {
 	BX_ASSERT(m_font != NULL, "TrueTypeFont not initialized");
 
-	int xx;
-	int yy;
-	int ww;
-	int hh;
-	int advance;
-	int ascent;
-	int descent;
-	int lineGap;
-	int lsb;
-
-	float scale = m_scale;
-
+	int32_t ascent, descent, lineGap;
 	stbtt_GetFontVMetrics(&m_font, &ascent, &descent, &lineGap);
-	stbtt_GetCodepointHMetrics(&m_font, _codePoint, &advance, &lsb);
-	stbtt_GetCodepointBitmap(&m_font, scale, scale, _codePoint, &ww, &hh, &xx, &yy);
 
-	_glyphInfo.offset_x = (float)xx;
-	_glyphInfo.offset_y = (float)yy;
-	_glyphInfo.width = (float)ww;
-	_glyphInfo.height = (float)hh;
+	int32_t advance, lsb;
+	stbtt_GetCodepointHMetrics(&m_font, _codePoint, &advance, &lsb);
+
+	const float scale = m_scale;
+	int32_t x0, y0, x1, y1;
+	stbtt_GetCodepointBitmapBox(&m_font, _codePoint, scale, scale, &x0, &y0, &x1, &y1);
+
+	const int32_t ww = x1-x0;
+	const int32_t hh = y1-y0;
+
+	_glyphInfo.offset_x  = (float)x0;
+	_glyphInfo.offset_y  = (float)y0;
+	_glyphInfo.width     = (float)ww;
+	_glyphInfo.height    = (float)hh;
 	_glyphInfo.advance_x = bx::round(((float)advance) * scale);
 	_glyphInfo.advance_y = bx::round(((float)(ascent + descent + lineGap)) * scale);
 
@@ -142,26 +139,23 @@ bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo
 {
 	BX_ASSERT(m_font != NULL, "TrueTypeFont not initialized");
 
-	int32_t xx;
-	int32_t yy;
-	int32_t ww;
-	int32_t hh;
-	int advance;
-	int ascent;
-	int descent;
-	int lineGap;
-	int lsb;
-
-	float scale = m_scale;
-
+	int32_t ascent, descent, lineGap;
 	stbtt_GetFontVMetrics(&m_font, &ascent, &descent, &lineGap);
-	stbtt_GetCodepointHMetrics(&m_font, _codePoint, &advance, &lsb);
-	stbtt_GetCodepointBitmap(&m_font, scale, scale, _codePoint, &ww, &hh, &xx, &yy);
 
-	_glyphInfo.offset_x = (float)xx;
-	_glyphInfo.offset_y = (float)yy;
-	_glyphInfo.width = (float)ww;
-	_glyphInfo.height = (float)hh;
+	int32_t advance, lsb;
+	stbtt_GetCodepointHMetrics(&m_font, _codePoint, &advance, &lsb);
+
+	const float scale = m_scale;
+	int32_t x0, y0, x1, y1;
+	stbtt_GetCodepointBitmapBox(&m_font, _codePoint, scale, scale, &x0, &y0, &x1, &y1);
+
+	const int32_t ww = x1-x0;
+	const int32_t hh = y1-y0;
+
+	_glyphInfo.offset_x  = (float)x0;
+	_glyphInfo.offset_y  = (float)y0;
+	_glyphInfo.width     = (float)ww;
+	_glyphInfo.height    = (float)hh;
 	_glyphInfo.advance_x = bx::round(((float)advance) * scale);
 	_glyphInfo.advance_y = bx::round(((float)(ascent + descent + lineGap)) * scale);
 
