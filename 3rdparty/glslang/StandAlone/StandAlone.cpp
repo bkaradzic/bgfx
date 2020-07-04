@@ -63,7 +63,7 @@
 #include "../glslang/OSDependent/osinclude.h"
 
 extern "C" {
-    SH_IMPORT_EXPORT void ShOutputHtml();
+    GLSLANG_EXPORT void ShOutputHtml();
 }
 
 // Command-line options

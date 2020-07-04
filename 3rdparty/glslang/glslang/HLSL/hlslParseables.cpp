@@ -331,7 +331,7 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
 //
 // It is possible that this is not needed, but that would require some tweaking
 // of other rules to get the same results.
-inline bool IsValid(const char* cname, char retOrder, char retType, char argOrder, char argType, int dim0, int dim1)
+inline bool IsValid(const char* cname, char /* retOrder */, char /* retType */, char argOrder, char /* argType */, int dim0, int /* dim1 */)
 {
     const bool isVec = (argOrder == 'V');
 

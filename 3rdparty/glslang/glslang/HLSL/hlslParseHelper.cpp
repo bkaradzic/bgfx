@@ -3924,6 +3924,7 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             case Esd3D:   constructOp = EOpConstructVec3;  coordSize = 3; break; // 3D
             case EsdCube: constructOp = EOpConstructVec3;  coordSize = 3; break; // also 3D
             default:
+                error(loc, "unhandled DX9 texture LoD dimension", "", "");
                 break;
             }
 
@@ -3960,7 +3961,9 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             case Esd2D:   constructOp = EOpConstructVec2;  break; // 2D
             case Esd3D:   constructOp = EOpConstructVec3;  break; // 3D
             case EsdCube: constructOp = EOpConstructVec3;  break; // also 3D
-            default: break;
+            default:
+                error(loc, "unhandled DX9 texture bias dimension", "", "");
+                break;
             }
 
             TIntermAggregate* constructCoord = new TIntermAggregate(constructOp);
@@ -4084,7 +4087,8 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             case EsdBuffer: numDims = 1; break; // W (buffers)
             case EsdRect:   numDims = 2; break; // W, H (rect)
             default:
-                assert(0 && "unhandled texture dimension");
+                error(loc, "unhandled DX10 MethodGet dimension", "", "");
+                break;
             }
 
             // Arrayed adds another dimension for the number of array elements
@@ -4220,7 +4224,9 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             case 3: constructOp = EOpConstructVec3;  break;
             case 4: constructOp = EOpConstructVec4;  break;
             case 5: constructOp = EOpConstructVec4;  break; // cubeArrayShadow, cmp value is separate arg.
-            default: assert(0); break;
+            default:
+                error(loc, "unhandled DX10 MethodSample dimension", "", "");
+                break;
             }
 
             TIntermAggregate* coordWithCmp = new TIntermAggregate(constructOp);
