@@ -617,6 +617,7 @@ static void print_version()
 
 static void print_help_backend()
 {
+	// clang-format off
 	fprintf(stderr, "\nSelect backend:\n"
 	        "\tBy default, OpenGL-style GLSL is the target, with #version and GLSL/ESSL information inherited from the SPIR-V module if present.\n"
 	        "\t[--vulkan-semantics] or [-V]:\n\t\tEmit Vulkan GLSL instead of plain GLSL. Makes use of Vulkan-only features to match SPIR-V.\n"
@@ -625,10 +626,12 @@ static void print_help_backend()
 	        "\t[--reflect]:\n\t\tEmit JSON reflection.\n"
 	        "\t[--cpp]:\n\t\tDEPRECATED. Emits C++ code.\n"
 	);
+	// clang-format on
 }
 
 static void print_help_glsl()
 {
+	// clang-format off
 	fprintf(stderr, "\nGLSL options:\n"
 	                "\t[--es]:\n\t\tForce ESSL.\n"
 	                "\t[--no-es]:\n\t\tForce desktop GLSL.\n"
@@ -669,10 +672,12 @@ static void print_help_glsl()
 	                "\t[--remap-variable-type <variable_name> <new_variable_type>]:\n\t\tRemaps a variable type based on name.\n"
 	                "\t\tPrimary use case is supporting external samplers in ESSL for video rendering on Android where you could remap a texture to a YUV one.\n"
 	);
+	// clang-format on
 }
 
 static void print_help_hlsl()
 {
+	// clang-format off
 	fprintf(stderr, "\nHLSL options:\n"
 	                "\t[--shader-model]:\n\t\tEnables a specific shader model, e.g. --shader-model 50 for SM 5.0.\n"
 	                "\t[--hlsl-enable-compat]:\n\t\tAllow point size and point coord to be used, even if they won't work as expected.\n"
@@ -691,10 +696,12 @@ static void print_help_hlsl()
 	                "\t\tOtherwise, TEXCOORD# is used as semantics, where # is location.\n"
 	                "\t[--hlsl-enable-16bit-types]:\n\t\tEnables native use of half/int16_t/uint16_t and ByteAddressBuffer interaction with these types. Requires SM 6.2.\n"
 	);
+	// clang-format on
 }
 
 static void print_help_msl()
 {
+	// clang-format off
 	fprintf(stderr, "\nMSL options:\n"
 	                "\t[--msl-version <MMmmpp>]:\n\t\tUses a specific MSL version, e.g. --msl-version 20100 for MSL 2.1.\n"
 	                "\t[--msl-capture-output]:\n\t\tWrites geometry varyings to a buffer instead of as stage-outputs.\n"
@@ -743,10 +750,12 @@ static void print_help_msl()
 	                "\t\t<format> can be 'u16', 'u8', or 'other', to indicate a 16-bit unsigned integer, 8-bit unsigned integer, "
 	                "or other-typed variable. <size> is the vector length of the variable, which must be greater than or equal to that declared in the shader.\n"
 	                "\t\tUseful if shader stage interfaces don't match up, as pipeline creation might otherwise fail.\n");
+	// clang-format on
 }
 
 static void print_help_common()
 {
+	// clang-format off
 	fprintf(stderr, "\nCommon options:\n"
 	                "\t[--entry name]:\n\t\tUse a specific entry point. By default, the first entry point in the module is used.\n"
 	                "\t[--stage <stage (vert, frag, geom, tesc, tese comp)>]:\n\t\tForces use of a certain shader stage.\n"
@@ -763,10 +772,12 @@ static void print_help_common()
 	                "\t\tHLSL/MSL: Rewrites [-w, w] Z range (GL) to D3D/Metal/Vulkan-style [0, w].\n"
 	                "\t[--flip-vert-y]:\n\t\tInverts gl_Position.y (or equivalent) at the end of a vertex shader. This is equivalent to using negative viewport height.\n"
 	);
+	// clang-format on
 }
 
 static void print_help_obscure()
 {
+	// clang-format off
 	fprintf(stderr, "\nObscure options:\n"
 	                "\tThese options are not meant to be used on a regular basis. They have some occasional uses in the test suite.\n"
 
@@ -778,12 +789,14 @@ static void print_help_obscure()
 	                "\t[--flatten-multidimensional-arrays]:\n\t\tDo not support multi-dimensional arrays and flatten them to one dimension.\n"
 	                "\t[--cpp-interface-name <name>]:\n\t\tEmit a specific class name in C++ codegen.\n"
 	);
+	// clang-format on
 }
 
 static void print_help()
 {
 	print_version();
 
+	// clang-format off
 	fprintf(stderr, "Usage: spirv-cross <...>\n"
 	                "\nBasic:\n"
 	                "\t[SPIR-V file]\n"
@@ -791,6 +804,7 @@ static void print_help()
 	                "\t[--dump-resources]:\n\t\tPrints a basic reflection of the SPIR-V module along with other output.\n"
 	                "\t[--help]:\n\t\tPrints this help message.\n"
 	);
+	// clang-format on
 
 	print_help_backend();
 	print_help_common();

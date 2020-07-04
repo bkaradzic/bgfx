@@ -282,14 +282,14 @@ StorageClass Compiler::get_expression_effective_storage_class(uint32_t ptr)
 	// An access chain or forwarded OpLoads from such access chains
 	// will generally have the storage class of the underlying variable, but if the load was not forwarded
 	// we have lost any address space qualifiers.
-	bool forced_temporary = ir.ids[ptr].get_type() == TypeExpression &&
-	                        !get<SPIRExpression>(ptr).access_chain &&
+	bool forced_temporary = ir.ids[ptr].get_type() == TypeExpression && !get<SPIRExpression>(ptr).access_chain &&
 	                        (forced_temporaries.count(ptr) != 0 || forwarded_temporaries.count(ptr) == 0);
 
 	if (var && !forced_temporary)
 	{
 		// Normalize SSBOs to StorageBuffer here.
-		if (var->storage == StorageClassUniform && has_decoration(get<SPIRType>(var->basetype).self, DecorationBufferBlock))
+		if (var->storage == StorageClassUniform &&
+		    has_decoration(get<SPIRType>(var->basetype).self, DecorationBufferBlock))
 			return StorageClassStorageBuffer;
 		else
 			return var->storage;
@@ -4673,4 +4673,9 @@ bool Compiler::flush_phi_required(BlockID from, BlockID to) const
 		if (phi.parent == from)
 			return true;
 	return false;
+}
+
+void Compiler::add_loop_level()
+{
+	current_loop_level++;
 }

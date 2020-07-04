@@ -3806,20 +3806,21 @@ void CompilerMSL::emit_custom_functions()
 		{
 			// Unfortunately we cannot template on the address space, so combinatorial explosion it is.
 			static const char *function_name_tags[] = {
-				"FromConstantToStack",    "FromConstantToThreadGroup", "FromStackToStack",
-				"FromStackToThreadGroup", "FromThreadGroupToStack",    "FromThreadGroupToThreadGroup",
-				"FromDeviceToDevice", "FromConstantToDevice", "FromStackToDevice",
-				"FromThreadGroupToDevice", "FromDeviceToStack", "FromDeviceToThreadGroup",
+				"FromConstantToStack",     "FromConstantToThreadGroup", "FromStackToStack",
+				"FromStackToThreadGroup",  "FromThreadGroupToStack",    "FromThreadGroupToThreadGroup",
+				"FromDeviceToDevice",      "FromConstantToDevice",      "FromStackToDevice",
+				"FromThreadGroupToDevice", "FromDeviceToStack",         "FromDeviceToThreadGroup",
 			};
 
 			static const char *src_address_space[] = {
-				"constant", "constant", "thread const", "thread const", "threadgroup const", "threadgroup const",
-				"device const", "constant", "thread const", "threadgroup const", "device const", "device const",
+				"constant",          "constant",          "thread const", "thread const",
+				"threadgroup const", "threadgroup const", "device const", "constant",
+				"thread const",      "threadgroup const", "device const", "device const",
 			};
 
 			static const char *dst_address_space[] = {
 				"thread", "threadgroup", "thread", "threadgroup", "thread", "threadgroup",
-				"device", "device", "device", "device", "thread", "threadgroup",
+				"device", "device",      "device", "device",      "thread", "threadgroup",
 			};
 
 			for (uint32_t variant = 0; variant < 12; variant++)
@@ -6281,8 +6282,7 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		args.lod = lod;
 		statement(join(to_expression(img_id), ".write(",
 		               remap_swizzle(store_type, texel_type.vecsize, to_expression(texel_id)), ", ",
-		               CompilerMSL::to_function_args(args, &forward),
-		               ");"));
+		               CompilerMSL::to_function_args(args, &forward), ");"));
 
 		if (p_var && variable_storage_is_aliased(*p_var))
 			flush_all_aliased_variables();
@@ -7866,9 +7866,10 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 		if (is_cube_fetch)
 			farg_str += ", uint(" + to_extract_component_expression(args.coord, 2) + ")";
 		else
-			farg_str += ", uint(spvCubemapTo2DArrayFace(" + tex_coords + ").z) + (uint(" +
-			            round_fp_tex_coords(to_extract_component_expression(args.coord, alt_coord_component), coord_is_fp) +
-			            ") * 6u)";
+			farg_str +=
+			    ", uint(spvCubemapTo2DArrayFace(" + tex_coords + ").z) + (uint(" +
+			    round_fp_tex_coords(to_extract_component_expression(args.coord, alt_coord_component), coord_is_fp) +
+			    ") * 6u)";
 
 		add_spv_func_and_recompile(SPVFuncImplCubemapTo2DArrayFace);
 	}
@@ -7896,7 +7897,8 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 			else
 				farg_str +=
 				    ", uint(" +
-				    round_fp_tex_coords(to_extract_component_expression(args.coord, alt_coord_component), coord_is_fp) + ")";
+				    round_fp_tex_coords(to_extract_component_expression(args.coord, alt_coord_component), coord_is_fp) +
+				    ")";
 		}
 	}
 
@@ -7910,8 +7912,8 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 
 		string dref_expr;
 		if (args.base.is_proj)
-			dref_expr =
-			    join(to_enclosed_expression(args.dref), " / ", to_extract_component_expression(args.coord, alt_coord_component));
+			dref_expr = join(to_enclosed_expression(args.dref), " / ",
+			                 to_extract_component_expression(args.coord, alt_coord_component));
 		else
 			dref_expr = to_expression(args.dref);
 
@@ -8130,7 +8132,8 @@ void CompilerMSL::emit_sampled_image_op(uint32_t result_type, uint32_t result_id
 	set<SPIRCombinedImageSampler>(result_id, result_type, image_id, samp_id);
 }
 
-string CompilerMSL::to_texture_op(const Instruction &i, bool sparse, bool *forward, SmallVector<uint32_t> &inherited_expressions)
+string CompilerMSL::to_texture_op(const Instruction &i, bool sparse, bool *forward,
+                                  SmallVector<uint32_t> &inherited_expressions)
 {
 	auto *ops = stream(i);
 	uint32_t result_type_id = ops[0];
@@ -10145,8 +10148,8 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 
 bool CompilerMSL::type_is_msl_framebuffer_fetch(const SPIRType &type) const
 {
-	return type.basetype == SPIRType::Image && type.image.dim == DimSubpassData &&
-	       msl_options.is_ios() && msl_options.ios_use_framebuffer_fetch_subpasses;
+	return type.basetype == SPIRType::Image && type.image.dim == DimSubpassData && msl_options.is_ios() &&
+	       msl_options.ios_use_framebuffer_fetch_subpasses;
 }
 
 string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)

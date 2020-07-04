@@ -1486,7 +1486,8 @@ void CompilerHLSL::emit_resources()
 		{
 			static const char *qualifiers[] = { "", "unorm ", "snorm " };
 			static const char *vecsizes[] = { "", "2", "3", "4" };
-			emit_texture_size_variants(required_texture_size_variants.uav[norm][comp], vecsizes[comp], true, qualifiers[norm]);
+			emit_texture_size_variants(required_texture_size_variants.uav[norm][comp], vecsizes[comp], true,
+			                           qualifiers[norm]);
 		}
 	}
 
@@ -1849,15 +1850,16 @@ void CompilerHLSL::emit_resources()
 	}
 }
 
-void CompilerHLSL::emit_texture_size_variants(uint64_t variant_mask, const char *vecsize_qualifier, bool uav, const char *type_qualifier)
+void CompilerHLSL::emit_texture_size_variants(uint64_t variant_mask, const char *vecsize_qualifier, bool uav,
+                                              const char *type_qualifier)
 {
 	if (variant_mask == 0)
 		return;
 
 	static const char *types[QueryTypeCount] = { "float", "int", "uint" };
 	static const char *dims[QueryDimCount] = { "Texture1D",   "Texture1DArray",  "Texture2D",   "Texture2DArray",
-	                                           "Texture3D",   "Buffer",          "TextureCube", "TextureCubeArray",
-	                                           "Texture2DMS", "Texture2DMSArray" };
+		                                       "Texture3D",   "Buffer",          "TextureCube", "TextureCubeArray",
+		                                       "Texture2DMS", "Texture2DMSArray" };
 
 	static const bool has_lod[QueryDimCount] = { true, true, true, true, true, false, true, true, false, false };
 
@@ -1880,8 +1882,8 @@ void CompilerHLSL::emit_texture_size_variants(uint64_t variant_mask, const char 
 				continue;
 
 			statement(ret_types[index], " SPIRV_Cross_", (uav ? "image" : "texture"), "Size(", (uav ? "RW" : ""),
-			          dims[index], "<", type_qualifier, types[type_index], vecsize_qualifier,
-					  "> Tex, ", (uav ? "" : "uint Level, "), "out uint Param)");
+			          dims[index], "<", type_qualifier, types[type_index], vecsize_qualifier, "> Tex, ",
+			          (uav ? "" : "uint Level, "), "out uint Param)");
 			begin_scope();
 			statement(ret_types[index], " ret;");
 			switch (return_arguments[index])
@@ -2971,7 +2973,8 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 		{
 			for (uint32_t size = coord_components; size < 3; ++size)
 				coord_filler += ", 0.0";
-			coord_expr = "float4(" + coord_expr + coord_filler + ", " + to_extract_component_expression(coord, coord_components) + ")";
+			coord_expr = "float4(" + coord_expr + coord_filler + ", " +
+			             to_extract_component_expression(coord, coord_components) + ")";
 			modifier_count++;
 		}
 
@@ -3685,7 +3688,8 @@ void CompilerHLSL::read_access_chain(string *expr, const string &lhs, const SPIR
 		return;
 	}
 	else if (type.width != 32 && !hlsl_options.enable_16bit_types)
-		SPIRV_CROSS_THROW("Reading types other than 32-bit from ByteAddressBuffer not yet supported, unless SM 6.2 and native 16-bit types are enabled.");
+		SPIRV_CROSS_THROW("Reading types other than 32-bit from ByteAddressBuffer not yet supported, unless SM 6.2 and "
+		                  "native 16-bit types are enabled.");
 
 	bool templated_load = hlsl_options.shader_model >= 62;
 	string load_expr;
@@ -3741,8 +3745,8 @@ void CompilerHLSL::read_access_chain(string *expr, const string &lhs, const SPIR
 
 		for (uint32_t r = 0; r < type.vecsize; r++)
 		{
-			load_expr +=
-			    join(chain.base, ".Load", template_expr, "(", chain.dynamic_index, chain.static_index + r * chain.matrix_stride, ")");
+			load_expr += join(chain.base, ".Load", template_expr, "(", chain.dynamic_index,
+			                  chain.static_index + r * chain.matrix_stride, ")");
 			if (r + 1 < type.vecsize)
 				load_expr += ", ";
 		}
@@ -4018,7 +4022,8 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 		return;
 	}
 	else if (type.width != 32 && !hlsl_options.enable_16bit_types)
-		SPIRV_CROSS_THROW("Writing types other than 32-bit to RWByteAddressBuffer not yet supported, unless SM 6.2 and native 16-bit types are enabled.");
+		SPIRV_CROSS_THROW("Writing types other than 32-bit to RWByteAddressBuffer not yet supported, unless SM 6.2 and "
+		                  "native 16-bit types are enabled.");
 
 	bool templated_store = hlsl_options.shader_model >= 62;
 
@@ -4057,7 +4062,8 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 		}
 		else
 			store_op = "Store";
-		statement(chain.base, ".", store_op, template_expr, "(", chain.dynamic_index, chain.static_index, ", ", store_expr, ");");
+		statement(chain.base, ".", store_op, template_expr, "(", chain.dynamic_index, chain.static_index, ", ",
+		          store_expr, ");");
 	}
 	else if (type.columns == 1)
 	{
@@ -4087,8 +4093,8 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 					store_expr = join(bitcast_op, "(", store_expr, ")");
 			}
 
-			statement(chain.base, ".Store", template_expr, "(", chain.dynamic_index, chain.static_index + chain.matrix_stride * r, ", ",
-			          store_expr, ");");
+			statement(chain.base, ".Store", template_expr, "(", chain.dynamic_index,
+			          chain.static_index + chain.matrix_stride * r, ", ", store_expr, ");");
 		}
 	}
 	else if (!chain.row_major_matrix)
@@ -4131,8 +4137,8 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 					store_expr = join(bitcast_op, "(", store_expr, ")");
 			}
 
-			statement(chain.base, ".", store_op, template_expr, "(", chain.dynamic_index, chain.static_index + c * chain.matrix_stride,
-			          ", ", store_expr, ");");
+			statement(chain.base, ".", store_op, template_expr, "(", chain.dynamic_index,
+			          chain.static_index + c * chain.matrix_stride, ", ", store_expr, ");");
 		}
 	}
 	else
@@ -4359,13 +4365,14 @@ void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op)
 
 		if (data_type.storage == StorageClassImage || !chain)
 		{
-			statement(atomic_op, "(", to_expression(ops[0]), ", ", to_expression(ops[3]), ", ", to_expression(tmp_id), ");");
+			statement(atomic_op, "(", to_expression(ops[0]), ", ", to_expression(ops[3]), ", ", to_expression(tmp_id),
+			          ");");
 		}
 		else
 		{
 			// RWByteAddress buffer is always uint in its underlying type.
-			statement(chain->base, ".", atomic_op, "(", chain->dynamic_index, chain->static_index, ", ", to_expression(ops[3]),
-			          ", ", to_expression(tmp_id), ");");
+			statement(chain->base, ".", atomic_op, "(", chain->dynamic_index, chain->static_index, ", ",
+			          to_expression(ops[3]), ", ", to_expression(tmp_id), ");");
 		}
 	}
 	else
@@ -5456,8 +5463,9 @@ void CompilerHLSL::require_texture_query_variant(uint32_t var_id)
 	}
 
 	auto norm_state = image_format_to_normalized_state(type.image.format);
-	auto &variant = uav ? required_texture_size_variants.uav[uint32_t(norm_state)][image_format_to_components(type.image.format) - 1] :
-	                required_texture_size_variants.srv;
+	auto &variant = uav ? required_texture_size_variants
+	                          .uav[uint32_t(norm_state)][image_format_to_components(type.image.format) - 1] :
+	                      required_texture_size_variants.srv;
 
 	uint64_t mask = 1ull << bit;
 	if ((variant & mask) == 0)
@@ -5683,8 +5691,8 @@ bool CompilerHLSL::is_hlsl_force_storage_buffer_as_uav(ID id) const
 
 	const uint32_t desc_set = get_decoration(id, spv::DecorationDescriptorSet);
 	const uint32_t binding = get_decoration(id, spv::DecorationBinding);
-	
-	return (force_uav_buffer_bindings.find({desc_set, binding}) != force_uav_buffer_bindings.end());
+
+	return (force_uav_buffer_bindings.find({ desc_set, binding }) != force_uav_buffer_bindings.end());
 }
 
 void CompilerHLSL::set_hlsl_force_storage_buffer_as_uav(uint32_t desc_set, uint32_t binding)

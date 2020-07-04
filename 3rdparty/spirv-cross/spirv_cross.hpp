@@ -513,8 +513,21 @@ protected:
 
 	SPIRFunction *current_function = nullptr;
 	SPIRBlock *current_block = nullptr;
+	uint32_t current_loop_level = 0;
 	std::unordered_set<VariableID> active_interface_variables;
 	bool check_active_interface_variables = false;
+
+	void add_loop_level();
+
+	void set_initializers(SPIRExpression &e)
+	{
+		e.emitted_loop_level = current_loop_level;
+	}
+
+	template <typename T>
+	void set_initializers(const T &)
+	{
+	}
 
 	// If our IDs are out of range here as part of opcodes, throw instead of
 	// undefined behavior.
@@ -524,6 +537,7 @@ protected:
 		ir.add_typed_id(static_cast<Types>(T::type), id);
 		auto &var = variant_set<T>(ir.ids[id], std::forward<P>(args)...);
 		var.self = id;
+		set_initializers(var);
 		return var;
 	}
 

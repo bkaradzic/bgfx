@@ -291,7 +291,8 @@ private:
 	} required_texture_size_variants;
 
 	void require_texture_query_variant(uint32_t var_id);
-	void emit_texture_size_variants(uint64_t variant_mask, const char *vecsize_qualifier, bool uav, const char *type_qualifier);
+	void emit_texture_size_variants(uint64_t variant_mask, const char *vecsize_qualifier, bool uav,
+	                                const char *type_qualifier);
 
 	enum TextureQueryVariantDim
 	{

@@ -889,7 +889,8 @@ protected:
 	bool descriptor_set_is_argument_buffer(uint32_t desc_set) const;
 
 	uint32_t get_target_components_for_fragment_location(uint32_t location) const;
-	uint32_t build_extended_vector_type(uint32_t type_id, uint32_t components, SPIRType::BaseType basetype = SPIRType::Unknown);
+	uint32_t build_extended_vector_type(uint32_t type_id, uint32_t components,
+	                                    SPIRType::BaseType basetype = SPIRType::Unknown);
 
 	bool suppress_missing_prototypes = false;
 

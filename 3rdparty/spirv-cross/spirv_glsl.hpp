@@ -316,7 +316,8 @@ protected:
 	};
 	virtual std::string to_function_args(const TextureFunctionArguments &args, bool *p_forward);
 
-	void emit_sparse_feedback_temporaries(uint32_t result_type_id, uint32_t id, uint32_t &feedback_id, uint32_t &texel_id);
+	void emit_sparse_feedback_temporaries(uint32_t result_type_id, uint32_t id, uint32_t &feedback_id,
+	                                      uint32_t &texel_id);
 	uint32_t get_sparse_feedback_texel_id(uint32_t id) const;
 	virtual void emit_buffer_block(const SPIRVariable &type);
 	virtual void emit_push_constant_block(const SPIRVariable &var);
@@ -549,6 +550,7 @@ protected:
 	void emit_unary_op(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op);
 	bool expression_is_forwarded(uint32_t id) const;
 	bool expression_suppresses_usage_tracking(uint32_t id) const;
+	bool expression_read_implies_multiple_reads(uint32_t id) const;
 	SPIRExpression &emit_op(uint32_t result_type, uint32_t result_id, const std::string &rhs, bool forward_rhs,
 	                        bool suppress_usage_tracking = false);
 
