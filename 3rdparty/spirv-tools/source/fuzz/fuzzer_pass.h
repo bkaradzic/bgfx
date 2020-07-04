@@ -136,6 +136,13 @@ class FuzzerPass {
   // type itself do not exist, transformations are applied to add them.
   uint32_t FindOrCreateMatrixType(uint32_t column_count, uint32_t row_count);
 
+  // Returns the id of an OpTypeStruct instruction with |component_type_ids| as
+  // type ids for struct's components. If no such a struct type exists,
+  // transformations are applied to add it. |component_type_ids| may not contain
+  // a result id of an OpTypeFunction.
+  uint32_t FindOrCreateStructType(
+      const std::vector<uint32_t>& component_type_ids);
+
   // Returns the id of a pointer type with base type |base_type_id| (which must
   // already exist) and storage class |storage_class|.  A transformation is
   // applied to add the pointer if it does not already exist.

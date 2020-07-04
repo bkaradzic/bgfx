@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "source/fuzz/fuzzer_util.h"
+
 #include <algorithm>
 #include <unordered_set>
-
-#include "source/fuzz/fuzzer_util.h"
 
 #include "source/opt/build_module.h"
 
@@ -590,6 +590,8 @@ void AddGlobalVariable(opt::IRContext* context, uint32_t result_id,
                        uint32_t type_id, SpvStorageClass storage_class,
                        uint32_t initializer_id) {
   // Check various preconditions.
+  assert(result_id != 0 && "Result id can't be 0");
+
   assert((storage_class == SpvStorageClassPrivate ||
           storage_class == SpvStorageClassWorkgroup) &&
          "Variable's storage class must be either Private or Workgroup");
@@ -631,6 +633,8 @@ void AddLocalVariable(opt::IRContext* context, uint32_t result_id,
                       uint32_t type_id, uint32_t function_id,
                       uint32_t initializer_id) {
   // Check various preconditions.
+  assert(result_id != 0 && "Result id can't be 0");
+
   auto* type_inst = context->get_def_use_mgr()->GetDef(type_id);
   (void)type_inst;  // Variable becomes unused in release mode.
   assert(type_inst && type_inst->opcode() == SpvOpTypePointer &&
@@ -685,6 +689,184 @@ std::vector<opt::Instruction*> GetParameters(opt::IRContext* ir_context,
       [&result](opt::Instruction* inst) { result.push_back(inst); });
 
   return result;
+}
+
+void AddFunctionType(opt::IRContext* ir_context, uint32_t result_id,
+                     const std::vector<uint32_t>& type_ids) {
+  assert(result_id != 0 && "Result id can't be 0");
+  assert(!type_ids.empty() &&
+         "OpTypeFunction always has at least one operand - function's return "
+         "type");
+  assert(IsNonFunctionTypeId(ir_context, type_ids[0]) &&
+         "Return type must not be a function");
+
+  for (size_t i = 1; i < type_ids.size(); ++i) {
+    const auto* param_type = ir_context->get_type_mgr()->GetType(type_ids[i]);
+    (void)param_type;  // Make compiler happy in release mode.
+    assert(param_type && !param_type->AsVoid() && !param_type->AsFunction() &&
+           "Function parameter can't have a function or void type");
+  }
+
+  opt::Instruction::OperandList operands;
+  operands.reserve(type_ids.size());
+  for (auto id : type_ids) {
+    operands.push_back({SPV_OPERAND_TYPE_ID, {id}});
+  }
+
+  ir_context->AddType(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpTypeFunction, 0, result_id, std::move(operands)));
+
+  UpdateModuleIdBound(ir_context, result_id);
+}
+
+uint32_t FindOrCreateFunctionType(opt::IRContext* ir_context,
+                                  uint32_t result_id,
+                                  const std::vector<uint32_t>& type_ids) {
+  if (auto existing_id = FindFunctionType(ir_context, type_ids)) {
+    return existing_id;
+  }
+  AddFunctionType(ir_context, result_id, type_ids);
+  return result_id;
+}
+
+uint32_t MaybeGetIntegerType(opt::IRContext* ir_context, uint32_t width,
+                             bool is_signed) {
+  opt::analysis::Integer type(width, is_signed);
+  return ir_context->get_type_mgr()->GetId(&type);
+}
+
+uint32_t MaybeGetFloatType(opt::IRContext* ir_context, uint32_t width) {
+  opt::analysis::Float type(width);
+  return ir_context->get_type_mgr()->GetId(&type);
+}
+
+uint32_t MaybeGetVectorType(opt::IRContext* ir_context,
+                            uint32_t component_type_id,
+                            uint32_t element_count) {
+  const auto* component_type =
+      ir_context->get_type_mgr()->GetType(component_type_id);
+  assert(component_type &&
+         (component_type->AsInteger() || component_type->AsFloat() ||
+          component_type->AsBool()) &&
+         "|component_type_id| is invalid");
+  assert(element_count >= 2 && element_count <= 4 &&
+         "Precondition: component count must be in range [2, 4].");
+  opt::analysis::Vector type(component_type, element_count);
+  return ir_context->get_type_mgr()->GetId(&type);
+}
+
+uint32_t MaybeGetStructType(opt::IRContext* ir_context,
+                            const std::vector<uint32_t>& component_type_ids) {
+  std::vector<const opt::analysis::Type*> component_types;
+  component_types.reserve(component_type_ids.size());
+
+  for (auto type_id : component_type_ids) {
+    const auto* component_type = ir_context->get_type_mgr()->GetType(type_id);
+    assert(component_type && !component_type->AsFunction() &&
+           "Component type is invalid");
+    component_types.push_back(component_type);
+  }
+
+  opt::analysis::Struct type(component_types);
+  return ir_context->get_type_mgr()->GetId(&type);
+}
+
+void AddIntegerType(opt::IRContext* ir_context, uint32_t result_id,
+                    uint32_t width, bool is_signed) {
+  ir_context->module()->AddType(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpTypeInt, 0, result_id,
+      opt::Instruction::OperandList{
+          {SPV_OPERAND_TYPE_LITERAL_INTEGER, {width}},
+          {SPV_OPERAND_TYPE_LITERAL_INTEGER, {is_signed ? 1u : 0u}}}));
+
+  UpdateModuleIdBound(ir_context, result_id);
+}
+
+void AddFloatType(opt::IRContext* ir_context, uint32_t result_id,
+                  uint32_t width) {
+  ir_context->module()->AddType(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpTypeFloat, 0, result_id,
+      opt::Instruction::OperandList{
+          {SPV_OPERAND_TYPE_LITERAL_INTEGER, {width}}}));
+
+  UpdateModuleIdBound(ir_context, result_id);
+}
+
+void AddVectorType(opt::IRContext* ir_context, uint32_t result_id,
+                   uint32_t component_type_id, uint32_t element_count) {
+  const auto* component_type =
+      ir_context->get_type_mgr()->GetType(component_type_id);
+  (void)component_type;  // Make compiler happy in release mode.
+  assert(component_type &&
+         (component_type->AsInteger() || component_type->AsFloat() ||
+          component_type->AsBool()) &&
+         "|component_type_id| is invalid");
+  assert(element_count >= 2 && element_count <= 4 &&
+         "Precondition: component count must be in range [2, 4].");
+  ir_context->module()->AddType(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpTypeVector, 0, result_id,
+      opt::Instruction::OperandList{
+          {SPV_OPERAND_TYPE_ID, {component_type_id}},
+          {SPV_OPERAND_TYPE_LITERAL_INTEGER, {element_count}}}));
+
+  UpdateModuleIdBound(ir_context, result_id);
+}
+
+void AddStructType(opt::IRContext* ir_context, uint32_t result_id,
+                   const std::vector<uint32_t>& component_type_ids) {
+  opt::Instruction::OperandList operands;
+  operands.reserve(component_type_ids.size());
+
+  for (auto type_id : component_type_ids) {
+    const auto* type = ir_context->get_type_mgr()->GetType(type_id);
+    (void)type;  // Make compiler happy in release mode.
+    assert(type && !type->AsFunction() && "Component's type id is invalid");
+    operands.push_back({SPV_OPERAND_TYPE_ID, {type_id}});
+  }
+
+  ir_context->AddType(MakeUnique<opt::Instruction>(
+      ir_context, SpvOpTypeStruct, 0, result_id, std::move(operands)));
+
+  UpdateModuleIdBound(ir_context, result_id);
+}
+
+uint32_t FindOrCreateIntegerType(opt::IRContext* ir_context, uint32_t result_id,
+                                 uint32_t width, bool is_signed) {
+  if (auto existing_id = MaybeGetIntegerType(ir_context, width, is_signed)) {
+    return existing_id;
+  }
+  AddIntegerType(ir_context, result_id, width, is_signed);
+  return result_id;
+}
+
+uint32_t FindOrCreateFloatType(opt::IRContext* ir_context, uint32_t result_id,
+                               uint32_t width) {
+  if (auto existing_id = MaybeGetFloatType(ir_context, width)) {
+    return existing_id;
+  }
+  AddFloatType(ir_context, result_id, width);
+  return result_id;
+}
+
+uint32_t FindOrCreateVectorType(opt::IRContext* ir_context, uint32_t result_id,
+                                uint32_t component_type_id,
+                                uint32_t element_count) {
+  if (auto existing_id =
+          MaybeGetVectorType(ir_context, component_type_id, element_count)) {
+    return existing_id;
+  }
+  AddVectorType(ir_context, result_id, component_type_id, element_count);
+  return result_id;
+}
+
+uint32_t FindOrCreateStructType(
+    opt::IRContext* ir_context, uint32_t result_id,
+    const std::vector<uint32_t>& component_type_ids) {
+  if (auto existing_id = MaybeGetStructType(ir_context, component_type_ids)) {
+    return existing_id;
+  }
+  AddStructType(ir_context, result_id, component_type_ids);
+  return result_id;
 }
 
 }  // namespace fuzzerutil

@@ -114,6 +114,9 @@ class FuzzerContext {
   uint32_t GetChanceOfAddingArrayOrStructType() {
     return chance_of_adding_array_or_struct_type_;
   }
+  uint32_t GetChanceOfAddingCopyMemory() {
+    return chance_of_adding_copy_memory_;
+  }
   uint32_t GetChanceOfAddingDeadBlock() { return chance_of_adding_dead_block_; }
   uint32_t GetChanceOfAddingDeadBreak() { return chance_of_adding_dead_break_; }
   uint32_t GetChanceOfAddingDeadContinue() {
@@ -171,6 +174,9 @@ class FuzzerContext {
   }
   uint32_t GetChanceOfGoingDeeperWhenMakingAccessChain() {
     return chance_of_going_deeper_when_making_access_chain_;
+  }
+  uint32_t GetChanceOfInvertingComparisonOperators() {
+    return chance_of_inverting_comparison_operators_;
   }
   uint32_t ChanceOfMakingDonorLivesafe() {
     return chance_of_making_donor_livesafe_;
@@ -274,6 +280,7 @@ class FuzzerContext {
   uint32_t chance_of_adding_access_chain_;
   uint32_t chance_of_adding_another_struct_field_;
   uint32_t chance_of_adding_array_or_struct_type_;
+  uint32_t chance_of_adding_copy_memory_;
   uint32_t chance_of_adding_dead_block_;
   uint32_t chance_of_adding_dead_break_;
   uint32_t chance_of_adding_dead_continue_;
@@ -298,6 +305,7 @@ class FuzzerContext {
   uint32_t chance_of_copying_object_;
   uint32_t chance_of_donating_additional_module_;
   uint32_t chance_of_going_deeper_when_making_access_chain_;
+  uint32_t chance_of_inverting_comparison_operators_;
   uint32_t chance_of_making_donor_livesafe_;
   uint32_t chance_of_merging_blocks_;
   uint32_t chance_of_moving_block_down_;

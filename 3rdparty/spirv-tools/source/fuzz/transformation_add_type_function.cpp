@@ -55,48 +55,19 @@ bool TransformationAddTypeFunction::IsApplicable(
   // exactly the same return and argument type ids.  (Note that the type manager
   // does not allow us to check this, as it does not distinguish between
   // function types with different but isomorphic pointer argument types.)
-  for (auto& inst : ir_context->module()->types_values()) {
-    if (inst.opcode() != SpvOpTypeFunction) {
-      // Consider only OpTypeFunction instructions.
-      continue;
-    }
-    if (inst.GetSingleWordInOperand(0) != message_.return_type_id()) {
-      // Different return types - cannot be the same.
-      continue;
-    }
-    if (inst.NumInOperands() !=
-        1 + static_cast<uint32_t>(message_.argument_type_id().size())) {
-      // Different numbers of arguments - cannot be the same.
-      continue;
-    }
-    bool found_argument_mismatch = false;
-    for (uint32_t index = 1; index < inst.NumInOperands(); index++) {
-      if (message_.argument_type_id(index - 1) !=
-          inst.GetSingleWordInOperand(index)) {
-        // Argument mismatch - cannot be the same.
-        found_argument_mismatch = true;
-        break;
-      }
-    }
-    if (found_argument_mismatch) {
-      continue;
-    }
-    // Everything matches - the type is already declared.
-    return false;
-  }
-  return true;
+  std::vector<uint32_t> type_ids = {message_.return_type_id()};
+  type_ids.insert(type_ids.end(), message_.argument_type_id().begin(),
+                  message_.argument_type_id().end());
+  return fuzzerutil::FindFunctionType(ir_context, type_ids) == 0;
 }
 
 void TransformationAddTypeFunction::Apply(
     opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
-  opt::Instruction::OperandList in_operands;
-  in_operands.push_back({SPV_OPERAND_TYPE_ID, {message_.return_type_id()}});
-  for (auto argument_type_id : message_.argument_type_id()) {
-    in_operands.push_back({SPV_OPERAND_TYPE_ID, {argument_type_id}});
-  }
-  ir_context->module()->AddType(MakeUnique<opt::Instruction>(
-      ir_context, SpvOpTypeFunction, 0, message_.fresh_id(), in_operands));
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
+  std::vector<uint32_t> type_ids = {message_.return_type_id()};
+  type_ids.insert(type_ids.end(), message_.argument_type_id().begin(),
+                  message_.argument_type_id().end());
+
+  fuzzerutil::AddFunctionType(ir_context, message_.fresh_id(), type_ids);
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
   ir_context->InvalidateAnalysesExceptFor(

@@ -39,6 +39,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass.h
         fuzzer_pass_add_access_chains.h
         fuzzer_pass_add_composite_types.h
+        fuzzer_pass_add_copy_memory.h
         fuzzer_pass_add_dead_blocks.h
         fuzzer_pass_add_dead_breaks.h
         fuzzer_pass_add_dead_continues.h
@@ -60,6 +61,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_construct_composites.h
         fuzzer_pass_copy_objects.h
         fuzzer_pass_donate_modules.h
+        fuzzer_pass_invert_comparison_operators.h
         fuzzer_pass_merge_blocks.h
         fuzzer_pass_obfuscate_constants.h
         fuzzer_pass_outline_functions.h
@@ -87,6 +89,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_constant_composite.h
         transformation_add_constant_null.h
         transformation_add_constant_scalar.h
+        transformation_add_copy_memory.h
         transformation_add_dead_block.h
         transformation_add_dead_break.h
         transformation_add_dead_continue.h
@@ -95,7 +98,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_global_variable.h
         transformation_add_local_variable.h
         transformation_add_no_contraction_decoration.h
-        transformation_add_parameters.h
+        transformation_add_parameter.h
         transformation_add_spec_constant_op.h
         transformation_add_type_array.h
         transformation_add_type_boolean.h
@@ -114,6 +117,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_copy_object.h
         transformation_equation_instruction.h
         transformation_function_call.h
+        transformation_invert_comparison_operator.h
         transformation_load.h
         transformation_merge_blocks.h
         transformation_move_block_down.h
@@ -147,6 +151,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass.cpp
         fuzzer_pass_add_access_chains.cpp
         fuzzer_pass_add_composite_types.cpp
+        fuzzer_pass_add_copy_memory.cpp
         fuzzer_pass_add_dead_blocks.cpp
         fuzzer_pass_add_dead_breaks.cpp
         fuzzer_pass_add_dead_continues.cpp
@@ -168,6 +173,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_construct_composites.cpp
         fuzzer_pass_copy_objects.cpp
         fuzzer_pass_donate_modules.cpp
+        fuzzer_pass_invert_comparison_operators.cpp
         fuzzer_pass_merge_blocks.cpp
         fuzzer_pass_obfuscate_constants.cpp
         fuzzer_pass_outline_functions.cpp
@@ -194,6 +200,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_constant_composite.cpp
         transformation_add_constant_null.cpp
         transformation_add_constant_scalar.cpp
+        transformation_add_copy_memory.cpp
         transformation_add_dead_block.cpp
         transformation_add_dead_break.cpp
         transformation_add_dead_continue.cpp
@@ -202,7 +209,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_global_variable.cpp
         transformation_add_local_variable.cpp
         transformation_add_no_contraction_decoration.cpp
-        transformation_add_parameters.cpp
+        transformation_add_parameter.cpp
         transformation_add_spec_constant_op.cpp
         transformation_add_type_array.cpp
         transformation_add_type_boolean.cpp
@@ -221,6 +228,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_copy_object.cpp
         transformation_equation_instruction.cpp
         transformation_function_call.cpp
+        transformation_invert_comparison_operator.cpp
         transformation_load.cpp
         transformation_merge_blocks.cpp
         transformation_move_block_down.cpp

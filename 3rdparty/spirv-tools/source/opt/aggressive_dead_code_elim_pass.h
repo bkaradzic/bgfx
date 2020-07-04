@@ -85,7 +85,7 @@ class AggressiveDCEPass : public MemPass {
 
   // Add all store instruction which use |ptrId|, directly or indirectly,
   // to the live instruction worklist.
-  void AddStores(uint32_t ptrId);
+  void AddStores(Function* func, uint32_t ptrId);
 
   // Initialize extensions allowlist
   void InitExtensions();
@@ -99,7 +99,7 @@ class AggressiveDCEPass : public MemPass {
   bool IsTargetDead(Instruction* inst);
 
   // If |varId| is local, mark all stores of varId as live.
-  void ProcessLoad(uint32_t varId);
+  void ProcessLoad(Function* func, uint32_t varId);
 
   // If |bp| is structured header block, returns true and sets |mergeInst| to
   // the merge instruction, |branchInst| to the branch and |mergeBlockId| to the

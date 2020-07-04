@@ -22,6 +22,7 @@
 #include "source/fuzz/transformation_add_constant_composite.h"
 #include "source/fuzz/transformation_add_constant_null.h"
 #include "source/fuzz/transformation_add_constant_scalar.h"
+#include "source/fuzz/transformation_add_copy_memory.h"
 #include "source/fuzz/transformation_add_dead_block.h"
 #include "source/fuzz/transformation_add_dead_break.h"
 #include "source/fuzz/transformation_add_dead_continue.h"
@@ -30,7 +31,7 @@
 #include "source/fuzz/transformation_add_global_variable.h"
 #include "source/fuzz/transformation_add_local_variable.h"
 #include "source/fuzz/transformation_add_no_contraction_decoration.h"
-#include "source/fuzz/transformation_add_parameters.h"
+#include "source/fuzz/transformation_add_parameter.h"
 #include "source/fuzz/transformation_add_spec_constant_op.h"
 #include "source/fuzz/transformation_add_type_array.h"
 #include "source/fuzz/transformation_add_type_boolean.h"
@@ -48,6 +49,7 @@
 #include "source/fuzz/transformation_copy_object.h"
 #include "source/fuzz/transformation_equation_instruction.h"
 #include "source/fuzz/transformation_function_call.h"
+#include "source/fuzz/transformation_invert_comparison_operator.h"
 #include "source/fuzz/transformation_load.h"
 #include "source/fuzz/transformation_merge_blocks.h"
 #include "source/fuzz/transformation_move_block_down.h"
@@ -93,6 +95,8 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kAddConstantScalar:
       return MakeUnique<TransformationAddConstantScalar>(
           message.add_constant_scalar());
+    case protobufs::Transformation::TransformationCase::kAddCopyMemory:
+      return MakeUnique<TransformationAddCopyMemory>(message.add_copy_memory());
     case protobufs::Transformation::TransformationCase::kAddDeadBlock:
       return MakeUnique<TransformationAddDeadBlock>(message.add_dead_block());
     case protobufs::Transformation::TransformationCase::kAddDeadBreak:
@@ -115,8 +119,8 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
         kAddNoContractionDecoration:
       return MakeUnique<TransformationAddNoContractionDecoration>(
           message.add_no_contraction_decoration());
-    case protobufs::Transformation::TransformationCase::kAddParameters:
-      return MakeUnique<TransformationAddParameters>(message.add_parameters());
+    case protobufs::Transformation::TransformationCase::kAddParameter:
+      return MakeUnique<TransformationAddParameter>(message.add_parameter());
     case protobufs::Transformation::TransformationCase::kAddSpecConstantOp:
       return MakeUnique<TransformationAddSpecConstantOp>(
           message.add_spec_constant_op());
@@ -161,6 +165,10 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
           message.equation_instruction());
     case protobufs::Transformation::TransformationCase::kFunctionCall:
       return MakeUnique<TransformationFunctionCall>(message.function_call());
+    case protobufs::Transformation::TransformationCase::
+        kInvertComparisonOperator:
+      return MakeUnique<TransformationInvertComparisonOperator>(
+          message.invert_comparison_operator());
     case protobufs::Transformation::TransformationCase::kLoad:
       return MakeUnique<TransformationLoad>(message.load());
     case protobufs::Transformation::TransformationCase::kMergeBlocks:

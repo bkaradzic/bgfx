@@ -28,6 +28,7 @@
 #include "source/fuzz/transformation_add_type_int.h"
 #include "source/fuzz/transformation_add_type_matrix.h"
 #include "source/fuzz/transformation_add_type_pointer.h"
+#include "source/fuzz/transformation_add_type_struct.h"
 #include "source/fuzz/transformation_add_type_vector.h"
 
 namespace spvtools {
@@ -162,9 +163,8 @@ uint32_t FuzzerPass::FindOrCreateBoolType() {
 }
 
 uint32_t FuzzerPass::FindOrCreateIntegerType(uint32_t width, bool is_signed) {
-  opt::analysis::Integer int_type(width, is_signed);
-  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&int_type);
-  if (existing_id) {
+  if (auto existing_id =
+          fuzzerutil::MaybeGetIntegerType(GetIRContext(), width, is_signed)) {
     return existing_id;
   }
   auto result = GetFuzzerContext()->GetFreshId();
@@ -173,9 +173,7 @@ uint32_t FuzzerPass::FindOrCreateIntegerType(uint32_t width, bool is_signed) {
 }
 
 uint32_t FuzzerPass::FindOrCreateFloatType(uint32_t width) {
-  opt::analysis::Float float_type(width);
-  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&float_type);
-  if (existing_id) {
+  if (auto existing_id = fuzzerutil::MaybeGetFloatType(GetIRContext(), width)) {
     return existing_id;
   }
   auto result = GetFuzzerContext()->GetFreshId();
@@ -205,14 +203,8 @@ uint32_t FuzzerPass::FindOrCreateFunctionType(
 
 uint32_t FuzzerPass::FindOrCreateVectorType(uint32_t component_type_id,
                                             uint32_t component_count) {
-  assert(component_count >= 2 && component_count <= 4 &&
-         "Precondition: component count must be in range [2, 4].");
-  opt::analysis::Type* component_type =
-      GetIRContext()->get_type_mgr()->GetType(component_type_id);
-  assert(component_type && "Precondition: the component type must exist.");
-  opt::analysis::Vector vector_type(component_type, component_count);
-  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&vector_type);
-  if (existing_id) {
+  if (auto existing_id = fuzzerutil::MaybeGetVectorType(
+          GetIRContext(), component_type_id, component_count)) {
     return existing_id;
   }
   auto result = GetFuzzerContext()->GetFreshId();
@@ -240,6 +232,17 @@ uint32_t FuzzerPass::FindOrCreateMatrixType(uint32_t column_count,
   ApplyTransformation(
       TransformationAddTypeMatrix(result, column_type_id, column_count));
   return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateStructType(
+    const std::vector<uint32_t>& component_type_ids) {
+  if (auto existing_id =
+          fuzzerutil::MaybeGetStructType(GetIRContext(), component_type_ids)) {
+    return existing_id;
+  }
+  auto new_id = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddTypeStruct(new_id, component_type_ids));
+  return new_id;
 }
 
 uint32_t FuzzerPass::FindOrCreatePointerType(uint32_t base_type_id,

@@ -380,7 +380,9 @@ message Transformation {
     TransformationReplaceLinearAlgebraInstruction replace_linear_algebra_instruction = 49;
     TransformationSwapConditionalBranchOperands swap_conditional_branch_operands = 50;
     TransformationPermutePhiOperands permute_phi_operands = 51;
-    TransformationAddParameters add_parameters = 52;
+    TransformationAddParameter add_parameter = 52;
+    TransformationAddCopyMemory add_copy_memory = 53;
+    TransformationInvertComparisonOperator invert_comparison_operator = 54;
     // Add additional option using the next available number.
   }
 }
@@ -455,6 +457,30 @@ message TransformationAddConstantScalar {
 
   // Value of the constant
   repeated uint32 word = 3;
+
+}
+
+message TransformationAddCopyMemory {
+
+  // Adds an OpCopyMemory instruction into the module.
+  // Creates either a global or a local variable (based on
+  // |storage_class| field) to copy the target into.
+
+  // OpCopyMemory will be inserted before this instruction.
+  InstructionDescriptor instruction_descriptor = 1;
+
+  // Fresh id to copy memory into.
+  uint32 fresh_id = 2;
+
+  // Source to copy memory from.
+  uint32 source_id = 3;
+
+  // Storage class for the target variable. Can be either Function or Private.
+  uint32 storage_class = 4;
+
+  // Result id for the variable's initializer operand. Its type must be equal to
+  // variable's pointee type.
+  uint32 initializer_id = 5;
 
 }
 
@@ -624,24 +650,25 @@ message TransformationAddNoContractionDecoration {
 
 }
 
-message TransformationAddParameters {
+message TransformationAddParameter {
 
-  // Adds new parameters into the function.
+  // Adds a new parameter into the function.
 
   // Result id of the function to add parameters to.
   uint32 function_id = 1;
 
-  // New type of the function.
-  uint32 new_type_id = 2;
+  // Fresh id for a new parameter.
+  uint32 parameter_fresh_id = 2;
 
-  // Type ids of parameters to add to the function.
-  repeated uint32 new_parameter_type = 3;
+  // Result id of the instruction, used to initializer new parameter
+  // in function calls. Type id of that instruction is the type id of the parameter.
+  // It may not be OpTypeVoid.
+  uint32 initializer_id = 3;
 
-  // Result ids for new parameters.
-  repeated uint32 new_parameter_id = 4;
-
-  // Constants to initialize new parameters from.
-  repeated uint32 constant_id = 5;
+  // A fresh id for a new function type. This might not be used
+  // if a required function type already exists or if we can change
+  // the old function type.
+  uint32 function_type_fresh_id = 4;
 
 }
 
@@ -916,6 +943,22 @@ message TransformationFunctionCall {
 
 }
 
+message TransformationInvertComparisonOperator {
+
+  // For some instruction with result id |operator_id| that
+  // represents a binary comparison operator (e.g. <, >, <=), this transformation
+  // will replace that instruction's result id with |fresh_id|,
+  // invert the opcode (< will become >=) and insert OpLogicalNot
+  // instruction with result id |operator_id| below.
+
+  // Result id of the instruction to invert.
+  uint32 operator_id = 1;
+
+  // Fresh id that will be used by the operator after the inversion.
+  uint32 fresh_id = 2;
+
+}
+
 message TransformationLoad {
 
   // Transformation that adds an OpLoad instruction from a pointer into an id.
@@ -1011,12 +1054,10 @@ message TransformationPermuteFunctionParameters {
   // Function, whose parameters will be permuted
   uint32 function_id = 1;
 
-  // |new_type_id| is a result id of a valid OpTypeFunction instruction.
-  // New type is valid if:
-  //   - it has the same number of operands as the old one
-  //   - function's result type is the same as the old one
-  //   - function's arguments are permuted according to |permutation| vector
-  uint32 new_type_id = 2;
+  // Fresh id for a new type of the function. This might not be used
+  // if a required function type already exists or if we can change
+  // the old function type.
+  uint32 function_type_fresh_id = 2;
 
   // An array of size |n|, where |n| is a number of arguments to a function
   // with |function_id|. For each i: 0 <= permutation[i] < n.

@@ -17,7 +17,7 @@
 #include "source/fuzz/fuzzer_context.h"
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/instruction_descriptor.h"
-#include "source/fuzz/transformation_add_parameters.h"
+#include "source/fuzz/transformation_add_parameter.h"
 
 namespace spvtools {
 namespace fuzz {
@@ -57,50 +57,17 @@ void FuzzerPassAddParameters::Apply() {
       continue;
     }
 
-    const auto* type_inst =
-        fuzzerutil::GetFunctionType(GetIRContext(), &function);
-    assert(type_inst);
-
-    // -1 because we don't take return type into account.
-    auto num_old_parameters = type_inst->NumInOperands() - 1;
     auto num_new_parameters =
         GetFuzzerContext()->GetRandomNumberOfNewParameters(
             GetNumberOfParameters(function));
-
-    std::vector<uint32_t> all_types(num_old_parameters);
-    std::vector<uint32_t> new_types(num_new_parameters);
-    std::vector<uint32_t> parameter_ids(num_new_parameters);
-    std::vector<uint32_t> constant_ids(num_new_parameters);
-
-    // Get type ids for old parameters.
-    for (uint32_t i = 0; i < num_old_parameters; ++i) {
-      // +1 since we don't take return type into account.
-      all_types[i] = type_inst->GetSingleWordInOperand(i + 1);
-    }
-
     for (uint32_t i = 0; i < num_new_parameters; ++i) {
-      // Get type ids for new parameters.
-      new_types[i] =
-          type_candidates[GetFuzzerContext()->RandomIndex(type_candidates)];
-
-      // Create constants to initialize new parameters from.
-      constant_ids[i] = FindOrCreateZeroConstant(new_types[i]);
+      ApplyTransformation(TransformationAddParameter(
+          function.result_id(), GetFuzzerContext()->GetFreshId(),
+          FindOrCreateZeroConstant(
+              type_candidates[GetFuzzerContext()->RandomIndex(
+                  type_candidates)]),
+          GetFuzzerContext()->GetFreshId()));
     }
-
-    // Append new parameters to the old ones.
-    all_types.insert(all_types.end(), new_types.begin(), new_types.end());
-
-    // Generate result ids for new parameters.
-    for (auto& id : parameter_ids) {
-      id = GetFuzzerContext()->GetFreshId();
-    }
-
-    auto result_type_id = type_inst->GetSingleWordInOperand(0);
-    ApplyTransformation(TransformationAddParameters(
-        function.result_id(),
-        FindOrCreateFunctionType(result_type_id, all_types),
-        std::move(new_types), std::move(parameter_ids),
-        std::move(constant_ids)));
   }
 }
 
