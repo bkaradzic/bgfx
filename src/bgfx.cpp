@@ -5078,7 +5078,7 @@ namespace bgfx
 	}
 } // namespace bgfx
 
-#if BX_PLATFORM_WINDOWS
+#if BGFX_CONFIG_PREFER_DISCRETE_GPU
 extern "C"
 {
 	// When laptop setup has integrated and discrete GPU, following driver workarounds will
@@ -5094,7 +5094,7 @@ extern "C"
 	//
 	__declspec(dllexport) uint32_t AmdPowerXpressRequestHighPerformance = UINT32_C(1);
 }
-#endif // BX_PLATFORM_WINDOWS
+#endif // BGFX_CONFIG_PREFER_DISCRETE_GPU
 
 #define BGFX_TEXTURE_FORMAT_BIMG(_fmt) \
 	BX_STATIC_ASSERT(uint32_t(bgfx::TextureFormat::_fmt) == uint32_t(bimg::TextureFormat::_fmt) )
