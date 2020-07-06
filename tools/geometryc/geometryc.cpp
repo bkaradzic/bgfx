@@ -152,11 +152,11 @@ struct Mesh
 
 static uint32_t s_obbSteps = 17;
 
-#define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
-#define BGFX_CHUNK_MAGIC_VBC BX_MAKEFOURCC('V', 'B', 'C', 0x0)
-#define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x1)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
+constexpr uint32_t kChunkVertexBuffer           = BX_MAKEFOURCC('V', 'B', ' ', 0x1);
+constexpr uint32_t kChunkVertexBufferCompressed = BX_MAKEFOURCC('V', 'B', 'C', 0x0);
+constexpr uint32_t kChunkIndexBuffer            = BX_MAKEFOURCC('I', 'B', ' ', 0x0);
+constexpr uint32_t kChunkIndexBufferCompressed  = BX_MAKEFOURCC('I', 'B', 'C', 0x1);
+constexpr uint32_t kChunkPrimitive              = BX_MAKEFOURCC('P', 'R', 'I', 0x0);
 
 void optimizeVertexCache(uint16_t* _indices, uint32_t _numIndices, uint32_t _numVertices)
 {
@@ -349,7 +349,7 @@ void write(bx::WriterI* _writer
 
 	if (_compress)
 	{
-		write(_writer, BGFX_CHUNK_MAGIC_VBC);
+		write(_writer, kChunkVertexBufferCompressed);
 		write(_writer, _vertices, _numVertices, stride);
 
 		write(_writer, _layout);
@@ -359,7 +359,7 @@ void write(bx::WriterI* _writer
 	}
 	else
 	{
-		write(_writer, BGFX_CHUNK_MAGIC_VB);
+		write(_writer, kChunkVertexBuffer);
 		write(_writer, _vertices, _numVertices, stride);
 
 		write(_writer, _layout);
@@ -370,18 +370,18 @@ void write(bx::WriterI* _writer
 
 	if (_compress)
 	{
-		write(_writer, BGFX_CHUNK_MAGIC_IBC);
+		write(_writer, kChunkIndexBufferCompressed);
 		write(_writer, _numIndices);
 		writeCompressedIndices(_writer, _indices, _numIndices, _numVertices);
 	}
 	else
 	{
-		write(_writer, BGFX_CHUNK_MAGIC_IB);
+		write(_writer, kChunkIndexBuffer);
 		write(_writer, _numIndices);
 		write(_writer, _indices, _numIndices*2);
 	}
 
-	write(_writer, BGFX_CHUNK_MAGIC_PRI);
+	write(_writer, kChunkPrimitive);
 	uint16_t nameLen = uint16_t(_material.size() );
 	write(_writer, nameLen);
 	write(_writer, _material.c_str(), nameLen);
