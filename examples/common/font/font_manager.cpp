@@ -185,7 +185,7 @@ bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo
 		}
 
 		// stb_truetype has some builtin sdf functionality, we can investigate using that too
-		sdfBuild(_outBuffer, nw, 8.0f, alphaImg, nw, nh, nw);
+		sdfBuildDistanceField(_outBuffer, nw, 8.0f, alphaImg, nw, nh, nw);
 		free(alphaImg);
 
 		_glyphInfo.offset_x -= (float)dw;
