@@ -30,8 +30,22 @@ FuzzerPassAddGlobalVariables::FuzzerPassAddGlobalVariables(
 FuzzerPassAddGlobalVariables::~FuzzerPassAddGlobalVariables() = default;
 
 void FuzzerPassAddGlobalVariables::Apply() {
+  SpvStorageClass variable_storage_class = SpvStorageClassPrivate;
+  for (auto& entry_point : GetIRContext()->module()->entry_points()) {
+    // If the execution model of some entry point is GLCompute,
+    // then the variable storage class may be Workgroup.
+    if (entry_point.GetSingleWordInOperand(0) == SpvExecutionModelGLCompute) {
+      variable_storage_class =
+          GetFuzzerContext()->ChoosePercentage(
+              GetFuzzerContext()->GetChanceOfChoosingWorkgroupStorageClass())
+              ? SpvStorageClassWorkgroup
+              : SpvStorageClassPrivate;
+      break;
+    }
+  }
+
   auto basic_type_ids_and_pointers =
-      GetAvailableBasicTypesAndPointers(SpvStorageClassPrivate);
+      GetAvailableBasicTypesAndPointers(variable_storage_class);
 
   // These are the basic types that are available to this fuzzer pass.
   auto& basic_types = basic_type_ids_and_pointers.first;
@@ -59,18 +73,21 @@ void FuzzerPassAddGlobalVariables::Apply() {
       pointer_type_id = GetFuzzerContext()->GetFreshId();
       available_pointers_to_basic_type.push_back(pointer_type_id);
       ApplyTransformation(TransformationAddTypePointer(
-          pointer_type_id, SpvStorageClassPrivate, basic_type));
+          pointer_type_id, variable_storage_class, basic_type));
     } else {
       // There is - grab one.
       pointer_type_id =
           available_pointers_to_basic_type[GetFuzzerContext()->RandomIndex(
               available_pointers_to_basic_type)];
     }
-    // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3274):  We could
-    //  add new variables with Workgroup storage class in compute shaders.
+
     ApplyTransformation(TransformationAddGlobalVariable(
         GetFuzzerContext()->GetFreshId(), pointer_type_id,
-        SpvStorageClassPrivate, FindOrCreateZeroConstant(basic_type), true));
+        variable_storage_class,
+        variable_storage_class == SpvStorageClassPrivate
+            ? FindOrCreateZeroConstant(basic_type)
+            : 0,
+        true));
   }
 }
 

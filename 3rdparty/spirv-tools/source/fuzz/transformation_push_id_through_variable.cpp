@@ -127,8 +127,6 @@ void TransformationPushIdThroughVariable::Apply(
                                  message_.initializer_id());
   }
 
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.variable_id());
-
   // Stores value id to variable id.
   FindInstruction(message_.instruction_descriptor(), ir_context)
       ->InsertBefore(MakeUnique<opt::Instruction>(

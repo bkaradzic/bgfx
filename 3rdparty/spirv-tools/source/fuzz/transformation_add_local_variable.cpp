@@ -74,8 +74,6 @@ void TransformationAddLocalVariable::Apply(
                                message_.type_id(), message_.function_id(),
                                message_.initializer_id());
 
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
-
   if (message_.value_is_irrelevant()) {
     transformation_context->GetFactManager()->AddFactValueOfPointeeIsIrrelevant(
         message_.fresh_id());

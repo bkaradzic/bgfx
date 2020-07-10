@@ -29,6 +29,7 @@
 #include "source/fuzz/transformation_add_function.h"
 #include "source/fuzz/transformation_add_global_undef.h"
 #include "source/fuzz/transformation_add_global_variable.h"
+#include "source/fuzz/transformation_add_image_sample_unused_components.h"
 #include "source/fuzz/transformation_add_local_variable.h"
 #include "source/fuzz/transformation_add_no_contraction_decoration.h"
 #include "source/fuzz/transformation_add_parameter.h"
@@ -57,10 +58,12 @@
 #include "source/fuzz/transformation_permute_function_parameters.h"
 #include "source/fuzz/transformation_permute_phi_operands.h"
 #include "source/fuzz/transformation_push_id_through_variable.h"
+#include "source/fuzz/transformation_record_synonymous_constants.h"
 #include "source/fuzz/transformation_replace_boolean_constant_with_constant_binary.h"
 #include "source/fuzz/transformation_replace_constant_with_uniform.h"
 #include "source/fuzz/transformation_replace_id_with_synonym.h"
 #include "source/fuzz/transformation_replace_linear_algebra_instruction.h"
+#include "source/fuzz/transformation_replace_parameter_with_global.h"
 #include "source/fuzz/transformation_set_function_control.h"
 #include "source/fuzz/transformation_set_loop_control.h"
 #include "source/fuzz/transformation_set_memory_operands_mask.h"
@@ -112,6 +115,10 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kAddGlobalVariable:
       return MakeUnique<TransformationAddGlobalVariable>(
           message.add_global_variable());
+    case protobufs::Transformation::TransformationCase::
+        kAddImageSampleUnusedComponents:
+      return MakeUnique<TransformationAddImageSampleUnusedComponents>(
+          message.add_image_sample_unused_components());
     case protobufs::Transformation::TransformationCase::kAddLocalVariable:
       return MakeUnique<TransformationAddLocalVariable>(
           message.add_local_variable());
@@ -188,6 +195,14 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kPushIdThroughVariable:
       return MakeUnique<TransformationPushIdThroughVariable>(
           message.push_id_through_variable());
+    case protobufs::Transformation::TransformationCase::
+        kRecordSynonymousConstants:
+      return MakeUnique<TransformationRecordSynonymousConstants>(
+          message.record_synonymous_constants());
+    case protobufs::Transformation::TransformationCase::
+        kReplaceParameterWithGlobal:
+      return MakeUnique<TransformationReplaceParameterWithGlobal>(
+          message.replace_parameter_with_global());
     case protobufs::Transformation::TransformationCase::
         kReplaceBooleanConstantWithConstantBinary:
       return MakeUnique<TransformationReplaceBooleanConstantWithConstantBinary>(

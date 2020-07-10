@@ -128,6 +128,9 @@ class FuzzerContext {
   uint32_t GetChanceOfAddingGlobalVariable() {
     return chance_of_adding_global_variable_;
   }
+  uint32_t GetChanceOfAddingImageSampleUnusedComponents() {
+    return chance_of_adding_image_sample_unused_components_;
+  }
   uint32_t GetChanceOfAddingLoad() { return chance_of_adding_load_; }
   uint32_t GetChanceOfAddingLocalVariable() {
     return chance_of_adding_local_variable_;
@@ -164,6 +167,9 @@ class FuzzerContext {
   uint32_t GetChanceOfCallingFunction() { return chance_of_calling_function_; }
   uint32_t GetChanceOfChoosingStructTypeVsArrayType() {
     return chance_of_choosing_struct_type_vs_array_type_;
+  }
+  uint32_t GetChanceOfChoosingWorkgroupStorageClass() {
+    return chance_of_choosing_workgroup_storage_class_;
   }
   uint32_t GetChanceOfConstructingComposite() {
     return chance_of_constructing_composite_;
@@ -203,6 +209,9 @@ class FuzzerContext {
   }
   uint32_t GetChanceOfReplacingLinearAlgebraInstructions() {
     return chance_of_replacing_linear_algebra_instructions_;
+  }
+  uint32_t GetChanceOfReplacingParametersWithGlobals() {
+    return chance_of_replacing_parameters_with_globals_;
   }
   uint32_t GetChanceOfSplittingBlock() { return chance_of_splitting_block_; }
   uint32_t GetChanceOfSwappingConditionalBranchOperands() {
@@ -265,6 +274,11 @@ class FuzzerContext {
     // Ensure that the array size is non-zero.
     return random_generator_->RandomUint32(max_new_array_size_limit_ - 1) + 1;
   }
+  uint32_t GetRandomUnusedComponentCountForImageSample(
+      uint32_t max_unused_component_count) {
+    // Ensure that the number of unused components is non-zero.
+    return random_generator_->RandomUint32(max_unused_component_count) + 1;
+  }
   bool GoDeeperInConstantObfuscation(uint32_t depth) {
     return go_deeper_in_constant_obfuscation_(depth, random_generator_);
   }
@@ -286,6 +300,7 @@ class FuzzerContext {
   uint32_t chance_of_adding_dead_continue_;
   uint32_t chance_of_adding_equation_instruction_;
   uint32_t chance_of_adding_global_variable_;
+  uint32_t chance_of_adding_image_sample_unused_components_;
   uint32_t chance_of_adding_load_;
   uint32_t chance_of_adding_local_variable_;
   uint32_t chance_of_adding_matrix_type_;
@@ -301,6 +316,7 @@ class FuzzerContext {
   uint32_t chance_of_adjusting_selection_control_;
   uint32_t chance_of_calling_function_;
   uint32_t chance_of_choosing_struct_type_vs_array_type_;
+  uint32_t chance_of_choosing_workgroup_storage_class_;
   uint32_t chance_of_constructing_composite_;
   uint32_t chance_of_copying_object_;
   uint32_t chance_of_donating_additional_module_;
@@ -316,6 +332,7 @@ class FuzzerContext {
   uint32_t chance_of_pushing_id_through_variable_;
   uint32_t chance_of_replacing_id_with_synonym_;
   uint32_t chance_of_replacing_linear_algebra_instructions_;
+  uint32_t chance_of_replacing_parameters_with_globals_;
   uint32_t chance_of_splitting_block_;
   uint32_t chance_of_swapping_conditional_branch_operands_;
   uint32_t chance_of_toggling_access_chain_instruction_;

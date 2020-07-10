@@ -36,6 +36,7 @@ static const uint32_t kDebugValueOperandExpressionIndex = 6;
 static const uint32_t kDebugOperationOperandOperationIndex = 4;
 static const uint32_t kOpVariableOperandStorageClassIndex = 2;
 static const uint32_t kDebugLocalVariableOperandParentIndex = 9;
+static const uint32_t kDebugOperationOperandOpCodeIndex = 4;
 
 namespace spvtools {
 namespace opt {
@@ -244,6 +245,51 @@ uint32_t DebugInfoManager::BuildDebugInlinedAtChain(
   return chain_head_id;
 }
 
+Instruction* DebugInfoManager::GetDebugOperationWithDeref() {
+  if (deref_operation_ != nullptr) return deref_operation_;
+
+  uint32_t result_id = context()->TakeNextId();
+  std::unique_ptr<Instruction> deref_operation(new Instruction(
+      context(), SpvOpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
+      result_id,
+      {
+          {SPV_OPERAND_TYPE_ID,
+           {context()
+                ->get_feature_mgr()
+                ->GetExtInstImportId_OpenCL100DebugInfo()}},
+          {SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER,
+           {static_cast<uint32_t>(OpenCLDebugInfo100DebugOperation)}},
+          {SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION,
+           {static_cast<uint32_t>(OpenCLDebugInfo100Deref)}},
+      }));
+
+  // Add to the front of |ext_inst_debuginfo_|.
+  deref_operation_ =
+      context()->module()->ext_inst_debuginfo_begin()->InsertBefore(
+          std::move(deref_operation));
+
+  RegisterDbgInst(deref_operation_);
+  if (context()->AreAnalysesValid(IRContext::Analysis::kAnalysisDefUse))
+    context()->get_def_use_mgr()->AnalyzeInstDefUse(deref_operation_);
+  return deref_operation_;
+}
+
+Instruction* DebugInfoManager::DerefDebugExpression(Instruction* dbg_expr) {
+  assert(dbg_expr->GetOpenCL100DebugOpcode() ==
+         OpenCLDebugInfo100DebugExpression);
+  std::unique_ptr<Instruction> deref_expr(dbg_expr->Clone(context()));
+  deref_expr->SetResultId(context()->TakeNextId());
+  deref_expr->InsertOperand(
+      kDebugExpressOperandOperationIndex,
+      {SPV_OPERAND_TYPE_ID, {GetDebugOperationWithDeref()->result_id()}});
+  auto* deref_expr_instr =
+      context()->ext_inst_debuginfo_end()->InsertBefore(std::move(deref_expr));
+  AnalyzeDebugInst(deref_expr_instr);
+  if (context()->AreAnalysesValid(IRContext::Analysis::kAnalysisDefUse))
+    context()->get_def_use_mgr()->AnalyzeInstDefUse(deref_expr_instr);
+  return deref_expr_instr;
+}
+
 Instruction* DebugInfoManager::GetDebugInfoNone() {
   if (debug_info_none_inst_ != nullptr) return debug_info_none_inst_;
 
@@ -321,6 +367,29 @@ Instruction* DebugInfoManager::CloneDebugInlinedAt(uint32_t clone_inlined_at_id,
     return insert_before->InsertBefore(std::move(new_inlined_at));
   return context()->module()->ext_inst_debuginfo_end()->InsertBefore(
       std::move(new_inlined_at));
+}
+
+bool DebugInfoManager::IsDebugDeclared(uint32_t variable_id) {
+  auto dbg_decl_itr = var_id_to_dbg_decl_.find(variable_id);
+  return dbg_decl_itr != var_id_to_dbg_decl_.end();
+}
+
+void DebugInfoManager::KillDebugDeclares(uint32_t variable_id) {
+  bool done = false;
+  while (!done) {
+    Instruction* kill_inst = nullptr;
+    auto dbg_decl_itr = var_id_to_dbg_decl_.find(variable_id);
+    if (dbg_decl_itr != var_id_to_dbg_decl_.end()) {
+      for (auto dbg_decl : dbg_decl_itr->second) {
+        kill_inst = dbg_decl;
+        break;
+      }
+    }
+    if (kill_inst)
+      context()->KillInst(kill_inst);
+    else
+      done = true;
+  }
 }
 
 uint32_t DebugInfoManager::GetParentScope(uint32_t child_scope) {
@@ -434,6 +503,11 @@ void DebugInfoManager::AddDebugValue(Instruction* scope_and_line,
     AnalyzeDebugInst(added_dbg_value);
     if (context()->AreAnalysesValid(IRContext::Analysis::kAnalysisDefUse))
       context()->get_def_use_mgr()->AnalyzeInstDefUse(added_dbg_value);
+    if (context()->AreAnalysesValid(
+            IRContext::Analysis::kAnalysisInstrToBlockMapping)) {
+      auto insert_blk = context()->get_instr_block(insert_before);
+      context()->set_instr_block(added_dbg_value, insert_blk);
+    }
   }
 }
 
@@ -472,8 +546,7 @@ uint32_t DebugInfoManager::GetVariableIdOfDebugValueUsedForDeclare(
 }
 
 void DebugInfoManager::AnalyzeDebugInst(Instruction* dbg_inst) {
-  if (dbg_inst->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100InstructionsMax)
-    return;
+  if (!dbg_inst->IsOpenCL100DebugInstr()) return;
 
   RegisterDbgInst(dbg_inst);
 
@@ -482,6 +555,13 @@ void DebugInfoManager::AnalyzeDebugInst(Instruction* dbg_inst) {
                kDebugFunctionOperandFunctionIndex)) == nullptr &&
            "Two DebugFunction instruction exists for a single OpFunction.");
     RegisterDbgFunction(dbg_inst);
+  }
+
+  if (deref_operation_ == nullptr &&
+      dbg_inst->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugOperation &&
+      dbg_inst->GetSingleWordOperand(kDebugOperationOperandOpCodeIndex) ==
+          OpenCLDebugInfo100Deref) {
+    deref_operation_ = dbg_inst;
   }
 
   if (debug_info_none_inst_ == nullptr &&
@@ -505,6 +585,7 @@ void DebugInfoManager::AnalyzeDebugInst(Instruction* dbg_inst) {
 }
 
 void DebugInfoManager::AnalyzeDebugInsts(Module& module) {
+  deref_operation_ = nullptr;
   debug_info_none_inst_ = nullptr;
   empty_debug_expr_inst_ = nullptr;
   module.ForEachInst([this](Instruction* cpi) { AnalyzeDebugInst(cpi); });
@@ -513,8 +594,7 @@ void DebugInfoManager::AnalyzeDebugInsts(Module& module) {
   // list.
   if (empty_debug_expr_inst_ != nullptr &&
       empty_debug_expr_inst_->PreviousNode() != nullptr &&
-      empty_debug_expr_inst_->PreviousNode()->GetOpenCL100DebugOpcode() !=
-          OpenCLDebugInfo100InstructionsMax) {
+      empty_debug_expr_inst_->PreviousNode()->IsOpenCL100DebugInstr()) {
     empty_debug_expr_inst_->InsertBefore(
         &*context()->module()->ext_inst_debuginfo_begin());
   }
@@ -523,16 +603,14 @@ void DebugInfoManager::AnalyzeDebugInsts(Module& module) {
   // list.
   if (debug_info_none_inst_ != nullptr &&
       debug_info_none_inst_->PreviousNode() != nullptr &&
-      debug_info_none_inst_->PreviousNode()->GetOpenCL100DebugOpcode() !=
-          OpenCLDebugInfo100InstructionsMax) {
+      debug_info_none_inst_->PreviousNode()->IsOpenCL100DebugInstr()) {
     debug_info_none_inst_->InsertBefore(
         &*context()->module()->ext_inst_debuginfo_begin());
   }
 }
 
 void DebugInfoManager::ClearDebugInfo(Instruction* instr) {
-  if (instr == nullptr ||
-      instr->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100InstructionsMax) {
+  if (instr == nullptr || !instr->IsOpenCL100DebugInstr()) {
     return;
   }
 
@@ -554,6 +632,22 @@ void DebugInfoManager::ClearDebugInfo(Instruction* instr) {
     }
   }
 
+  if (deref_operation_ == instr) {
+    deref_operation_ = nullptr;
+    for (auto dbg_instr_itr = context()->module()->ext_inst_debuginfo_begin();
+         dbg_instr_itr != context()->module()->ext_inst_debuginfo_end();
+         ++dbg_instr_itr) {
+      if (instr != &*dbg_instr_itr &&
+          dbg_instr_itr->GetOpenCL100DebugOpcode() ==
+              OpenCLDebugInfo100DebugOperation &&
+          dbg_instr_itr->GetSingleWordOperand(
+              kDebugOperationOperandOpCodeIndex) == OpenCLDebugInfo100Deref) {
+        deref_operation_ = &*dbg_instr_itr;
+        break;
+      }
+    }
+  }
+
   if (debug_info_none_inst_ == instr) {
     debug_info_none_inst_ = nullptr;
     for (auto dbg_instr_itr = context()->module()->ext_inst_debuginfo_begin();
@@ -563,6 +657,7 @@ void DebugInfoManager::ClearDebugInfo(Instruction* instr) {
           dbg_instr_itr->GetOpenCL100DebugOpcode() ==
               OpenCLDebugInfo100DebugInfoNone) {
         debug_info_none_inst_ = &*dbg_instr_itr;
+        break;
       }
     }
   }
@@ -574,6 +669,7 @@ void DebugInfoManager::ClearDebugInfo(Instruction* instr) {
          ++dbg_instr_itr) {
       if (instr != &*dbg_instr_itr && IsEmptyDebugExpression(&*dbg_instr_itr)) {
         empty_debug_expr_inst_ = &*dbg_instr_itr;
+        break;
       }
     }
   }

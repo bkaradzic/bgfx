@@ -53,10 +53,6 @@ bool PhiIdsOkForNewEdge(
     opt::IRContext* context, opt::BasicBlock* bb_from, opt::BasicBlock* bb_to,
     const google::protobuf::RepeatedField<google::protobuf::uint32>& phi_ids);
 
-// Returns the id of a boolean constant with value |value| if it exists in the
-// module, or 0 otherwise.
-uint32_t MaybeGetBoolConstantId(opt::IRContext* context, bool value);
-
 // Requires that a boolean constant with value |condition_value| is available,
 // that PhiIdsOkForNewEdge(context, bb_from, bb_to, phi_ids) holds, and that
 // bb_from ends with "OpBranch %some_block".  Turns OpBranch into
@@ -229,7 +225,8 @@ void AddVariableIdToEntryPointInterfaces(opt::IRContext* context, uint32_t id);
 // Adds a global variable with storage class |storage_class| to the module, with
 // type |type_id| and either no initializer or |initializer_id| as an
 // initializer, depending on whether |initializer_id| is 0. The global variable
-// has result id |result_id|.
+// has result id |result_id|. Updates module's id bound to accommodate for
+// |result_id|.
 //
 // - |type_id| must be the id of a pointer type with the same storage class as
 //   |storage_class|.
@@ -243,6 +240,7 @@ void AddGlobalVariable(opt::IRContext* context, uint32_t result_id,
 
 // Adds an instruction to the start of |function_id|, of the form:
 //   |result_id| = OpVariable |type_id| Function |initializer_id|.
+// Updates module's id bound to accommodate for |result_id|.
 //
 // - |type_id| must be the id of a pointer type with Function storage class.
 // - |initializer_id| must be the id of a constant with the same type as the
@@ -305,6 +303,48 @@ uint32_t MaybeGetVectorType(opt::IRContext* ir_context,
 // OpTypeFunction.
 uint32_t MaybeGetStructType(opt::IRContext* ir_context,
                             const std::vector<uint32_t>& component_type_ids);
+
+// Recursive definition is the following:
+// - if |scalar_or_composite_type_id| is a result id of a scalar type - returns
+//   a result id of the following constants (depending on the type): int -> 0,
+//   float -> 0.0, bool -> false.
+// - otherwise, returns a result id of an OpConstantComposite instruction.
+//   Every component of the composite constant is looked up by calling this
+//   function with the type id of that component.
+// Returns 0 if no such instruction is present in the module.
+uint32_t MaybeGetZeroConstant(opt::IRContext* ir_context,
+                              uint32_t scalar_or_composite_type_id);
+
+// Returns the result id of an OpConstant instruction. |scalar_type_id| must be
+// a result id of a scalar type (i.e. int, float or bool). Returns 0 if no such
+// instruction is present in the module.
+uint32_t MaybeGetScalarConstant(opt::IRContext* ir_context,
+                                const std::vector<uint32_t>& words,
+                                uint32_t scalar_type_id);
+
+// Returns the result id of an OpConstantComposite instruction.
+// |composite_type_id| must be a result id of a composite type (i.e. vector,
+// matrix, struct or array). Returns 0 if no such instruction is present in the
+// module.
+uint32_t MaybeGetCompositeConstant(opt::IRContext* ir_context,
+                                   const std::vector<uint32_t>& component_ids,
+                                   uint32_t composite_type_id);
+
+// Returns the result id of an OpConstant instruction of integral type.
+// Returns 0 if no such instruction or type is present in the module.
+uint32_t MaybeGetIntegerConstant(opt::IRContext* ir_context,
+                                 const std::vector<uint32_t>& words,
+                                 uint32_t width, bool is_signed);
+
+// Returns the result id of an OpConstant instruction of floating-point type.
+// Returns 0 if no such instruction or type is present in the module.
+uint32_t MaybeGetFloatConstant(opt::IRContext* ir_context,
+                               const std::vector<uint32_t>& words,
+                               uint32_t width);
+
+// Returns the id of a boolean constant with value |value| if it exists in the
+// module, or 0 otherwise.
+uint32_t MaybeGetBoolConstant(opt::IRContext* context, bool value);
 
 // Creates a new OpTypeInt instruction in the module. Updates module's id bound
 // to accommodate for |result_id|.

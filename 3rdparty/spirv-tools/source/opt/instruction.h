@@ -306,6 +306,10 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   void RemoveOperand(uint32_t index) {
     operands_.erase(operands_.begin() + index);
   }
+  // Insert an operand before the |index|-th operand
+  void InsertOperand(uint32_t index, Operand&& operand) {
+    operands_.insert(operands_.begin() + index, operand);
+  }
 
   // The following methods are similar to the above, but are for in operands.
   uint32_t NumInOperands() const {
@@ -534,6 +538,11 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // it is not an OpenCL.100.DebugInfo instruction, just returns
   // OpenCLDebugInfo100InstructionsMax.
   OpenCLDebugInfo100Instructions GetOpenCL100DebugOpcode() const;
+
+  // Returns true if it is an OpenCL.DebugInfo.100 instruction.
+  bool IsOpenCL100DebugInstr() const {
+    return GetOpenCL100DebugOpcode() != OpenCLDebugInfo100InstructionsMax;
+  }
 
   // Dump this instruction on stderr.  Useful when running interactive
   // debuggers.

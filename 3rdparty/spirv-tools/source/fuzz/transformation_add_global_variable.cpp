@@ -98,8 +98,6 @@ void TransformationAddGlobalVariable::Apply(
       static_cast<SpvStorageClass>(message_.storage_class()),
       message_.initializer_id());
 
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
-
   if (message_.value_is_irrelevant()) {
     transformation_context->GetFactManager()->AddFactValueOfPointeeIsIrrelevant(
         message_.fresh_id());

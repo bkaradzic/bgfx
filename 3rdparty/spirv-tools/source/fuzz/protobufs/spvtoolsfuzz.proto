@@ -383,6 +383,9 @@ message Transformation {
     TransformationAddParameter add_parameter = 52;
     TransformationAddCopyMemory add_copy_memory = 53;
     TransformationInvertComparisonOperator invert_comparison_operator = 54;
+    TransformationAddImageSampleUnusedComponents add_image_sample_unused_components = 55;
+    TransformationReplaceParameterWithGlobal replace_parameter_with_global = 56;
+    TransformationRecordSynonymousConstants record_synonymous_constants = 57;
     // Add additional option using the next available number.
   }
 }
@@ -613,6 +616,18 @@ message TransformationAddGlobalVariable {
   // value of the variable, in which case stores to the variable can be
   // performed in an arbitrary fashion.
   bool value_is_irrelevant = 5;
+
+}
+
+message TransformationAddImageSampleUnusedComponents {
+
+  // A transformation that adds unused components to an image sample coordinate.
+
+  // An vector id with the original coordinate and the unused components.
+  uint32 coordinate_with_unused_components_id = 1;
+
+  // A descriptor for an image sample instruction.
+  InstructionDescriptor instruction_descriptor = 2;
 
 }
 
@@ -1109,6 +1124,43 @@ message TransformationPushIdThroughVariable {
 
 }
 
+message TransformationRecordSynonymousConstants {
+
+  // A transformation that, given the IDs to two synonymous constants,
+  // records the fact that they are synonymous. The module is not changed.
+  // Two constants are synonymous if:
+  // - they have the same type (ignoring the presence of integer sign)
+  // - they have the same opcode (one of OpConstant, OpConstantTrue,
+  //   OpConstantFalse, OpConstantNull)
+  // - they have the same value
+  // If the types are the same, OpConstantNull is equivalent to
+  // OpConstantFalse or OpConstant with value zero.
+
+  // The id of a constant
+  uint32 constant1_id = 1;
+
+  // The id of the synonym
+  uint32 constant2_id = 2;
+
+}
+
+message TransformationReplaceParameterWithGlobal {
+
+  // Removes parameter with result id |parameter_id| from its function
+  // and creates a global variable to pass its value to the function instead.
+
+  // Fresh id for a new function type. This might not be used if a required
+  // function type already exists or if we can change the old function type.
+  uint32 function_type_fresh_id = 2;
+
+  // Result id of the OpFunctionParameter instruction to remove.
+  uint32 parameter_id = 3;
+
+  // Fresh id of a global variable used to pass parameter's value to the function.
+  uint32 global_variable_fresh_id = 4;
+
+}
+
 message TransformationReplaceBooleanConstantWithConstantBinary {
 
   // A transformation to capture replacing a use of a boolean constant with
@@ -1176,14 +1228,14 @@ message TransformationReplaceLinearAlgebraInstruction {
   // Supported:
   //   OpVectorTimesScalar
   //   OpMatrixTimesScalar
+  //   OpVectorTimesMatrix
+  //   OpMatrixTimesVector
   //   OpDot
   // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3354):
   // Right now we only support certain operations. When this issue is addressed
   // the supporting comments can be removed.
   // To be supported in the future:
   //   OpTranspose
-  //   OpVectorTimesMatrix
-  //   OpMatrixTimesVector
   //   OpMatrixTimesMatrix
   //   OpOuterProduct
   InstructionDescriptor instruction_descriptor = 2;
