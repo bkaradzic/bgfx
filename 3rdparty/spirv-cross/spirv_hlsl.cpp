@@ -2005,7 +2005,7 @@ void CompilerHLSL::emit_buffer_block(const SPIRVariable &var)
 		{
 			// Flatten the top-level struct so we can use packoffset,
 			// this restriction is similar to GLSL where layout(offset) is not possible on sub-structs.
-			flattened_structs.insert(var.self);
+			flattened_structs[var.self] = false;
 
 			// Prefer the block name if possible.
 			auto buffer_name = to_name(type.self, false);
@@ -2110,7 +2110,7 @@ void CompilerHLSL::emit_push_constant_block(const SPIRVariable &var)
 				                       ") cannot be expressed with either HLSL packing layout or packoffset."));
 			}
 
-			flattened_structs.insert(var.self);
+			flattened_structs[var.self] = false;
 			type.member_name_cache.clear();
 			add_resource_name(var.self);
 			auto &memb = ir.meta[type.self].members;

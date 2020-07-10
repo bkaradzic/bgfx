@@ -1278,6 +1278,11 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 				uint32_t base_id = ops[0];
 				if (global_var_ids.find(base_id) != global_var_ids.end())
 					added_arg_ids.insert(base_id);
+				
+                		uint32_t rvalue_id = ops[1];
+                		if (global_var_ids.find(rvalue_id) != global_var_ids.end())
+                    			added_arg_ids.insert(rvalue_id);
+				
 				break;
 			}
 
@@ -3335,15 +3340,10 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 
 		auto &physical_type = get<SPIRType>(physical_type_id);
 
-		static const char *swizzle_lut[] = {
-			".x",
-			".xy",
-			".xyz",
-			"",
-		};
-
 		if (is_matrix(type))
 		{
+			const char *packed_pfx = lhs_packed_type ? "packed_" : "";
+
 			// Packed matrices are stored as arrays of packed vectors, so we need
 			// to assign the vectors one at a time.
 			// For row-major matrices, we need to transpose the *right-hand* side,
@@ -3352,6 +3352,8 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 			// Lots of cases to cover here ...
 
 			bool rhs_transpose = rhs_e && rhs_e->need_transpose;
+			SPIRType write_type = type;
+			string cast_expr;
 
 			// We're dealing with transpose manually.
 			if (rhs_transpose)
@@ -3361,17 +3363,18 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 			{
 				// We're dealing with transpose manually.
 				lhs_e->need_transpose = false;
+				write_type.vecsize = type.columns;
+				write_type.columns = 1;
 
-				const char *store_swiz = "";
 				if (physical_type.columns != type.columns)
-					store_swiz = swizzle_lut[type.columns - 1];
+					cast_expr = join("(device ", packed_pfx, type_to_glsl(write_type), "&)");
 
 				if (rhs_transpose)
 				{
 					// If RHS is also transposed, we can just copy row by row.
 					for (uint32_t i = 0; i < type.vecsize; i++)
 					{
-						statement(to_enclosed_expression(lhs_expression), "[", i, "]", store_swiz, " = ",
+						statement(cast_expr, to_enclosed_expression(lhs_expression), "[", i, "]", " = ",
 						          to_unpacked_row_major_matrix_expression(rhs_expression), "[", i, "];");
 					}
 				}
@@ -3394,7 +3397,7 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 						}
 						rhs_row += ")";
 
-						statement(to_enclosed_expression(lhs_expression), "[", i, "]", store_swiz, " = ", rhs_row, ";");
+						statement(cast_expr, to_enclosed_expression(lhs_expression), "[", i, "]", " = ", rhs_row, ";");
 					}
 				}
 
@@ -3403,9 +3406,10 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 			}
 			else
 			{
-				const char *store_swiz = "";
+				write_type.columns = 1;
+
 				if (physical_type.vecsize != type.vecsize)
-					store_swiz = swizzle_lut[type.vecsize - 1];
+					cast_expr = join("(device ", packed_pfx, type_to_glsl(write_type), "&)");
 
 				if (rhs_transpose)
 				{
@@ -3427,7 +3431,7 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 						}
 						rhs_row += ")";
 
-						statement(to_enclosed_expression(lhs_expression), "[", i, "]", store_swiz, " = ", rhs_row, ";");
+						statement(cast_expr, to_enclosed_expression(lhs_expression), "[", i, "]", " = ", rhs_row, ";");
 					}
 				}
 				else
@@ -3435,7 +3439,7 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 					// Copy column-by-column.
 					for (uint32_t i = 0; i < type.columns; i++)
 					{
-						statement(to_enclosed_expression(lhs_expression), "[", i, "]", store_swiz, " = ",
+						statement(cast_expr, to_enclosed_expression(lhs_expression), "[", i, "]", " = ",
 						          to_enclosed_unpacked_expression(rhs_expression), "[", i, "];");
 					}
 				}
@@ -3449,6 +3453,10 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 		{
 			lhs_e->need_transpose = false;
 
+			SPIRType write_type = type;
+			write_type.vecsize = 1;
+			write_type.columns = 1;
+
 			// Storing a column to a row-major matrix. Unroll the write.
 			for (uint32_t c = 0; c < type.vecsize; c++)
 			{
@@ -3456,7 +3464,8 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 				auto column_index = lhs_expr.find_last_of('[');
 				if (column_index != string::npos)
 				{
-					statement(lhs_expr.insert(column_index, join('[', c, ']')), " = ",
+					statement("((device ", type_to_glsl(write_type), "*)&",
+					          lhs_expr.insert(column_index, join('[', c, ']', ")")), " = ",
 					          to_extract_component_expression(rhs_expression, c), ";");
 				}
 			}
@@ -3478,7 +3487,7 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 
 			// Unpack the expression so we can store to it with a float or float2.
 			// It's still an l-value, so it's fine. Most other unpacking of expressions turn them into r-values instead.
-			lhs = enclose_expression(lhs) + swizzle_lut[type.vecsize - 1];
+			lhs = join("(device ", type_to_glsl(type), "&)", enclose_expression(lhs));
 			if (!optimize_read_modify_write(expression_type(rhs_expression), lhs, rhs))
 				statement(lhs, " = ", rhs, ";");
 		}
@@ -5857,6 +5866,23 @@ bool CompilerMSL::is_out_of_bounds_tessellation_level(uint32_t id_lhs)
 		return false;
 	return (builtin == BuiltInTessLevelInner && c->scalar() == 1) ||
 	       (builtin == BuiltInTessLevelOuter && c->scalar() == 3);
+}
+
+void CompilerMSL::prepare_access_chain_for_scalar_access(std::string &expr, const SPIRType &type,
+                                                         spv::StorageClass storage, bool &is_packed)
+{
+	// If there is any risk of writes happening with the access chain in question,
+	// and there is a risk of concurrent write access to other components,
+	// we must cast the access chain to a plain pointer to ensure we only access the exact scalars we expect.
+	// The MSL compiler refuses to allow component-level access for any non-packed vector types.
+	if (!is_packed && (storage == StorageClassStorageBuffer || storage == StorageClassWorkgroup))
+	{
+		const char *addr_space = storage == StorageClassWorkgroup ? "threadgroup" : "device";
+		expr = join("((", addr_space, " ", type_to_glsl(type), "*)&", enclose_expression(expr), ")");
+
+		// Further indexing should happen with packed rules (array index, not swizzle).
+		is_packed = true;
+	}
 }
 
 // Override for MSL-specific syntax instructions
@@ -10116,7 +10142,13 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	// If a binding has not been specified, revert to incrementing resource indices.
 	uint32_t resource_index;
 
-	if (allocate_argument_buffer_ids)
+	if (type_is_msl_framebuffer_fetch(type))
+	{
+		// Frame-buffer fetch gets its fallback resource index from the input attachment index,
+		// which is then treated as color index.
+		resource_index = get_decoration(var.self, DecorationInputAttachmentIndex);
+	}
+	else if (allocate_argument_buffer_ids)
 	{
 		// Allocate from a flat ID binding space.
 		resource_index = next_metal_resource_ids[var_desc_set];

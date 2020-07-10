@@ -1554,6 +1554,7 @@ struct AccessChainMeta
 	bool need_transpose = false;
 	bool storage_is_packed = false;
 	bool storage_is_invariant = false;
+	bool flattened_struct = false;
 };
 
 enum ExtendedDecorations

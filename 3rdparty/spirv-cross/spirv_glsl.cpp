@@ -2124,6 +2124,65 @@ const char *CompilerGLSL::to_storage_qualifiers_glsl(const SPIRVariable &var)
 	return "";
 }
 
+void CompilerGLSL::emit_flattened_io_block_member(const std::string &basename, const SPIRType &type, const char *qual,
+                                                  const SmallVector<uint32_t> &indices)
+{
+	uint32_t member_type_id = type.self;
+	const SPIRType *member_type = &type;
+	const SPIRType *parent_type = nullptr;
+	auto flattened_name = basename;
+	for (auto &index : indices)
+	{
+		flattened_name += "_";
+		flattened_name += to_member_name(*member_type, index);
+		parent_type = member_type;
+		member_type_id = member_type->member_types[index];
+		member_type = &get<SPIRType>(member_type_id);
+	}
+
+	assert(member_type->basetype != SPIRType::Struct);
+
+	// Sanitize underscores because joining the two identifiers might create more than 1 underscore in a row,
+	// which is not allowed.
+	flattened_name = sanitize_underscores(flattened_name);
+
+	uint32_t last_index = indices.back();
+
+	// Pass in the varying qualifier here so it will appear in the correct declaration order.
+	// Replace member name while emitting it so it encodes both struct name and member name.
+	auto backup_name = get_member_name(parent_type->self, last_index);
+	auto member_name = to_member_name(*parent_type, last_index);
+	set_member_name(parent_type->self, last_index, flattened_name);
+	emit_struct_member(*parent_type, member_type_id, last_index, qual);
+	// Restore member name.
+	set_member_name(parent_type->self, last_index, member_name);
+}
+
+void CompilerGLSL::emit_flattened_io_block_struct(const std::string &basename, const SPIRType &type, const char *qual,
+                                                  const SmallVector<uint32_t> &indices)
+{
+	auto sub_indices = indices;
+	sub_indices.push_back(0);
+
+	const SPIRType *member_type = &type;
+	for (auto &index : indices)
+		member_type = &get<SPIRType>(member_type->member_types[index]);
+
+	assert(member_type->basetype == SPIRType::Struct);
+
+	if (!member_type->array.empty())
+		SPIRV_CROSS_THROW("Cannot flatten array of structs in I/O blocks.");
+
+	for (uint32_t i = 0; i < uint32_t(member_type->member_types.size()); i++)
+	{
+		sub_indices.back() = i;
+		if (get<SPIRType>(member_type->member_types[i]).basetype == SPIRType::Struct)
+			emit_flattened_io_block_struct(basename, type, qual, sub_indices);
+		else
+			emit_flattened_io_block_member(basename, type, qual, sub_indices);
+	}
+}
+
 void CompilerGLSL::emit_flattened_io_block(const SPIRVariable &var, const char *qual)
 {
 	auto &type = get<SPIRType>(var.basetype);
@@ -2136,32 +2195,28 @@ void CompilerGLSL::emit_flattened_io_block(const SPIRVariable &var, const char *
 
 	type.member_name_cache.clear();
 
+	SmallVector<uint32_t> member_indices;
+	member_indices.push_back(0);
+	auto basename = to_name(var.self);
+
 	uint32_t i = 0;
 	for (auto &member : type.member_types)
 	{
 		add_member_name(type, i);
 		auto &membertype = get<SPIRType>(member);
 
+		member_indices.back() = i;
 		if (membertype.basetype == SPIRType::Struct)
-			SPIRV_CROSS_THROW("Cannot flatten struct inside structs in I/O variables.");
-
-		// Pass in the varying qualifier here so it will appear in the correct declaration order.
-		// Replace member name while emitting it so it encodes both struct name and member name.
-		// Sanitize underscores because joining the two identifiers might create more than 1 underscore in a row,
-		// which is not allowed.
-		auto backup_name = get_member_name(type.self, i);
-		auto member_name = to_member_name(type, i);
-		set_member_name(type.self, i, sanitize_underscores(join(to_name(var.self), "_", member_name)));
-		emit_struct_member(type, member, i, qual);
-		// Restore member name.
-		set_member_name(type.self, i, member_name);
+			emit_flattened_io_block_struct(basename, type, qual, member_indices);
+		else
+			emit_flattened_io_block_member(basename, type, qual, member_indices);
 		i++;
 	}
 
 	ir.meta[type.self].decoration.decoration_flags = old_flags;
 
-	// Treat this variable as flattened from now on.
-	flattened_structs.insert(var.self);
+	// Treat this variable as fully flattened from now on.
+	flattened_structs[var.self] = true;
 }
 
 void CompilerGLSL::emit_interface_block(const SPIRVariable &var)
@@ -3502,6 +3557,10 @@ string CompilerGLSL::to_expression(uint32_t id, bool register_expression_read)
 			return convert_row_major_matrix(e.expression, get<SPIRType>(e.expression_type), physical_type_id,
 			                                is_packed);
 		}
+		else if (flattened_structs.count(id))
+		{
+			return load_flattened_struct(e.expression, get<SPIRType>(e.expression_type));
+		}
 		else
 		{
 			if (is_forcing_recompilation())
@@ -3554,7 +3613,7 @@ string CompilerGLSL::to_expression(uint32_t id, bool register_expression_read)
 		}
 		else if (flattened_structs.count(id))
 		{
-			return load_flattened_struct(var);
+			return load_flattened_struct(to_name(id), get<SPIRType>(var.basetype));
 		}
 		else
 		{
@@ -7367,6 +7426,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	bool chain_only = (flags & ACCESS_CHAIN_CHAIN_ONLY_BIT) != 0;
 	bool ptr_chain = (flags & ACCESS_CHAIN_PTR_CHAIN_BIT) != 0;
 	bool register_expression_read = (flags & ACCESS_CHAIN_SKIP_REGISTER_EXPRESSION_READ_BIT) == 0;
+	bool flatten_member_reference = (flags & ACCESS_CHAIN_FLATTEN_ALL_MEMBERS_BIT) != 0;
 
 	if (!chain_only)
 	{
@@ -7581,6 +7641,8 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				string qual_mbr_name = get_member_qualified_name(type_id, index);
 				if (!qual_mbr_name.empty())
 					expr = qual_mbr_name;
+				else if (flatten_member_reference)
+					expr += join("_", to_member_name(*type, index));
 				else
 					expr += to_member_reference(base, *type, index, ptr_chain);
 			}
@@ -7629,6 +7691,23 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				}
 			}
 
+			// Internally, access chain implementation can also be used on composites,
+			// ignore scalar access workarounds in this case.
+			StorageClass effective_storage;
+			if (expression_type(base).pointer)
+				effective_storage = get_expression_effective_storage_class(base);
+			else
+				effective_storage = StorageClassGeneric;
+
+			if (!row_major_matrix_needs_conversion)
+			{
+				// On some backends, we might not be able to safely access individual scalars in a vector.
+				// To work around this, we might have to cast the access chain reference to something which can,
+				// like a pointer to scalar, which we can then index into.
+				prepare_access_chain_for_scalar_access(expr, get<SPIRType>(type->parent_type), effective_storage,
+				                                       is_packed);
+			}
+
 			if (is_literal && !is_packed && !row_major_matrix_needs_conversion)
 			{
 				expr += ".";
@@ -7658,6 +7737,12 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				expr += "[";
 				expr += to_expression(index, register_expression_read);
 				expr += "]";
+			}
+
+			if (row_major_matrix_needs_conversion)
+			{
+				prepare_access_chain_for_scalar_access(expr, get<SPIRType>(type->parent_type), effective_storage,
+				                                       is_packed);
 			}
 
 			expr += deferred_index;
@@ -7690,10 +7775,13 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	return expr;
 }
 
-string CompilerGLSL::to_flattened_struct_member(const SPIRVariable &var, uint32_t index)
+void CompilerGLSL::prepare_access_chain_for_scalar_access(std::string &, const SPIRType &, spv::StorageClass, bool &)
 {
-	auto &type = get<SPIRType>(var.basetype);
-	return sanitize_underscores(join(to_name(var.self), "_", to_member_name(type, index)));
+}
+
+string CompilerGLSL::to_flattened_struct_member(const string &basename, const SPIRType &type, uint32_t index)
+{
+	return sanitize_underscores(join(basename, "_", to_member_name(type, index)));
 }
 
 string CompilerGLSL::access_chain(uint32_t base, const uint32_t *indices, uint32_t count, const SPIRType &target_type,
@@ -7722,13 +7810,22 @@ string CompilerGLSL::access_chain(uint32_t base, const uint32_t *indices, uint32
 		if (ptr_chain)
 			flags |= ACCESS_CHAIN_PTR_CHAIN_BIT;
 
+		if (flattened_structs[base])
+		{
+			flags |= ACCESS_CHAIN_FLATTEN_ALL_MEMBERS_BIT;
+			if (meta)
+				meta->flattened_struct = target_type.basetype == SPIRType::Struct;
+		}
+
 		auto chain = access_chain_internal(base, indices, count, flags, nullptr).substr(1);
 		if (meta)
 		{
 			meta->need_transpose = false;
 			meta->storage_is_packed = false;
 		}
-		return sanitize_underscores(join(to_name(base), "_", chain));
+
+		auto basename = to_flattened_access_chain_expression(base);
+		return sanitize_underscores(join(basename, "_", chain));
 	}
 	else
 	{
@@ -7739,48 +7836,72 @@ string CompilerGLSL::access_chain(uint32_t base, const uint32_t *indices, uint32
 	}
 }
 
-string CompilerGLSL::load_flattened_struct(SPIRVariable &var)
+string CompilerGLSL::load_flattened_struct(const string &basename, const SPIRType &type)
 {
-	auto expr = type_to_glsl_constructor(get<SPIRType>(var.basetype));
+	auto expr = type_to_glsl_constructor(type);
 	expr += '(';
 
-	auto &type = get<SPIRType>(var.basetype);
 	for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
 	{
 		if (i)
 			expr += ", ";
 
-		// Flatten the varyings.
-		// Apply name transformation for flattened I/O blocks.
-		expr += to_flattened_struct_member(var, i);
+		auto &member_type = get<SPIRType>(type.member_types[i]);
+		if (member_type.basetype == SPIRType::Struct)
+			expr += load_flattened_struct(to_flattened_struct_member(basename, type, i), member_type);
+		else
+			expr += to_flattened_struct_member(basename, type, i);
 	}
 	expr += ')';
 	return expr;
 }
 
-void CompilerGLSL::store_flattened_struct(SPIRVariable &var, uint32_t value)
+std::string CompilerGLSL::to_flattened_access_chain_expression(uint32_t id)
 {
-	// We're trying to store a structure which has been flattened.
-	// Need to copy members one by one.
-	auto rhs = to_expression(value);
+	// Do not use to_expression as that will unflatten access chains.
+	string basename;
+	if (const auto *var = maybe_get<SPIRVariable>(id))
+		basename = to_name(var->self);
+	else if (const auto *expr = maybe_get<SPIRExpression>(id))
+		basename = expr->expression;
+	else
+		basename = to_expression(id);
 
-	// Store result locally.
-	// Since we're declaring a variable potentially multiple times here,
-	// store the variable in an isolated scope.
-	begin_scope();
-	statement(variable_decl_function_local(var), " = ", rhs, ";");
+	return basename;
+}
 
-	auto &type = get<SPIRType>(var.basetype);
-	for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
+void CompilerGLSL::store_flattened_struct(const string &basename, uint32_t rhs_id, const SPIRType &type,
+                                          const SmallVector<uint32_t> &indices)
+{
+	SmallVector<uint32_t> sub_indices = indices;
+	sub_indices.push_back(0);
+
+	auto *member_type = &type;
+	for (auto &index : indices)
+		member_type = &get<SPIRType>(member_type->member_types[index]);
+
+	for (uint32_t i = 0; i < uint32_t(member_type->member_types.size()); i++)
 	{
-		// Flatten the varyings.
-		// Apply name transformation for flattened I/O blocks.
+		sub_indices.back() = i;
+		auto lhs = sanitize_underscores(join(basename, "_", to_member_name(*member_type, i)));
 
-		auto lhs = sanitize_underscores(join(to_name(var.self), "_", to_member_name(type, i)));
-		rhs = join(to_name(var.self), ".", to_member_name(type, i));
-		statement(lhs, " = ", rhs, ";");
+		if (get<SPIRType>(member_type->member_types[i]).basetype == SPIRType::Struct)
+		{
+			store_flattened_struct(lhs, rhs_id, type, sub_indices);
+		}
+		else
+		{
+			auto rhs = to_expression(rhs_id) + to_multi_member_reference(type, sub_indices);
+			statement(lhs, " = ", rhs, ";");
+		}
 	}
-	end_scope();
+}
+
+void CompilerGLSL::store_flattened_struct(uint32_t lhs_id, uint32_t value)
+{
+	auto &type = expression_type(lhs_id);
+	auto basename = to_flattened_access_chain_expression(lhs_id);
+	store_flattened_struct(basename, value, type, {});
 }
 
 std::string CompilerGLSL::flattened_access_chain(uint32_t base, const uint32_t *indices, uint32_t count,
@@ -8850,6 +8971,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			set_extended_decoration(ops[1], SPIRVCrossDecorationPhysicalTypeID, meta.storage_physical_type);
 		if (meta.storage_is_invariant)
 			set_decoration(ops[1], DecorationInvariant);
+		if (meta.flattened_struct)
+			flattened_structs[ops[1]] = true;
 
 		// If we have some expression dependencies in our access chain, this access chain is technically a forwarded
 		// temporary which could be subject to invalidation.
@@ -8887,9 +9010,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		{
 			// Skip the write.
 		}
-		else if (var && flattened_structs.count(ops[0]))
+		else if (flattened_structs.count(ops[0]))
 		{
-			store_flattened_struct(*var, ops[1]);
+			store_flattened_struct(ops[0], ops[1]);
 			register_write(ops[0]);
 		}
 		else
@@ -11277,6 +11400,18 @@ string CompilerGLSL::to_member_name(const SPIRType &type, uint32_t index)
 string CompilerGLSL::to_member_reference(uint32_t, const SPIRType &type, uint32_t index, bool)
 {
 	return join(".", to_member_name(type, index));
+}
+
+string CompilerGLSL::to_multi_member_reference(const SPIRType &type, const SmallVector<uint32_t> &indices)
+{
+	string ret;
+	auto *member_type = &type;
+	for (auto &index : indices)
+	{
+		ret += join(".", to_member_name(*member_type, index));
+		member_type = &get<SPIRType>(member_type->member_types[index]);
+	}
+	return ret;
 }
 
 void CompilerGLSL::add_member_name(SPIRType &type, uint32_t index)
