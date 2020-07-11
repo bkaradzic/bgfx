@@ -74,11 +74,6 @@
     extern "C" {
 #endif
 
-// This should always increase, as some paths to do not consume
-// a more major number.
-// It should increment by one when new functionality is added.
-#define GLSLANG_MINOR_VERSION 15
-
 //
 // Call before doing any other compiler/linker operations.
 //
@@ -399,6 +394,14 @@ class TInfoSink;
 
 namespace glslang {
 
+struct Version {
+    int major;
+    int minor;
+    int patch;
+    const char* flavor;
+};
+
+GLSLANG_EXPORT Version GetVersion();
 GLSLANG_EXPORT const char* GetEsslVersionString();
 GLSLANG_EXPORT const char* GetGlslVersionString();
 GLSLANG_EXPORT int GetKhronosToolId();

@@ -214,6 +214,7 @@ project "glslang"
 
 	includedirs {
 		GLSLANG,
+		path.join(GLSLANG, ".."),
 		path.join(SPIRV_TOOLS, "include"),
 		path.join(SPIRV_TOOLS, "source"),
 	}

@@ -50,6 +50,8 @@ endif(EMSCRIPTEN OR ENABLE_GLSLANG_JS)
 add_library(GenericCodeGen STATIC
     GenericCodeGen/CodeGen.cpp
     GenericCodeGen/Link.cpp)
+set_property(TARGET GenericCodeGen PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET GenericCodeGen PROPERTY FOLDER glslang)
 
 ################################################################################
 # MachineIndependent
@@ -129,8 +131,12 @@ if(ENABLE_HLSL)
 endif(ENABLE_HLSL)
 
 add_library(MachineIndependent STATIC ${MACHINEINDEPENDENT_SOURCES} ${MACHINEINDEPENDENT_HEADERS})
+set_property(TARGET MachineIndependent PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET MachineIndependent PROPERTY FOLDER glslang)
 
-glslang_pch(SOURCES MachineIndependent/pch.cpp)
+glslang_add_build_info_dependency(MachineIndependent)
+
+glslang_pch(MachineIndependent MachineIndependent/pch.h)
 
 target_link_libraries(MachineIndependent PRIVATE OGLCompiler OSDependent GenericCodeGen)
 
@@ -153,17 +159,21 @@ set(GLSLANG_HEADERS
     Include/intermediate.h
     Include/PoolAlloc.h
     Include/ResourceLimits.h
-    Include/revision.h
     Include/ShHandle.h
     Include/Types.h)
 
 add_library(glslang ${LIB_TYPE} ${BISON_GLSLParser_OUTPUT_SOURCE} ${GLSLANG_SOURCES} ${GLSLANG_HEADERS})
-set_property(TARGET glslang PROPERTY FOLDER glslang)
-set_property(TARGET glslang PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_target_properties(glslang PROPERTIES
+    FOLDER glslang
+    POSITION_INDEPENDENT_CODE ON
+    VERSION   "${GLSLANG_VERSION}"
+    SOVERSION "${GLSLANG_VERSION_MAJOR}")
 target_link_libraries(glslang PRIVATE OGLCompiler OSDependent MachineIndependent)
 target_include_directories(glslang PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+glslang_add_build_info_dependency(glslang)
 
 glslang_only_export_explicit_symbols(glslang)
 
@@ -210,4 +220,7 @@ if(ENABLE_GLSLANG_INSTALL)
         get_filename_component(dir ${file} DIRECTORY)
         install(FILES ${file} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/glslang/${dir})
     endforeach()
+
+    install(FILES ${GLSLANG_BUILD_INFO_H} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/glslang)
+
 endif(ENABLE_GLSLANG_INSTALL)

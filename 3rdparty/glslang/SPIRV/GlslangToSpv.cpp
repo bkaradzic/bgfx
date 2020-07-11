@@ -56,7 +56,9 @@ namespace spv {
 #include "../glslang/MachineIndependent/localintermediate.h"
 #include "../glslang/MachineIndependent/SymbolTable.h"
 #include "../glslang/Include/Common.h"
-#include "../glslang/Include/revision.h"
+
+// Build-time generated includes
+#include "glslang/build_info.h"
 
 #include <fstream>
 #include <iomanip>
@@ -8689,9 +8691,10 @@ void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, 
     out.open(baseName, std::ios::binary | std::ios::out);
     if (out.fail())
         printf("ERROR: Failed to open file: %s\n", baseName);
-    out << "\t// " << 
-        GetSpirvGeneratorVersion() << "." << GLSLANG_MINOR_VERSION << "." << GLSLANG_PATCH_LEVEL <<
-        std::endl;
+    out << "\t// " <<
+        GetSpirvGeneratorVersion() <<
+        GLSLANG_VERSION_MAJOR << "." << GLSLANG_VERSION_MINOR << "." << GLSLANG_VERSION_PATCH <<
+        GLSLANG_VERSION_FLAVOR << std::endl;
     if (varName != nullptr) {
         out << "\t #pragma once" << std::endl;
         out << "const uint32_t " << varName << "[] = {" << std::endl;

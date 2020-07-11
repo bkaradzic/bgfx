@@ -72,6 +72,9 @@
 // token to print ", but none of that seems appropriate for this file.
 #include "preprocessor/PpTokens.h"
 
+// Build-time generated includes
+#include "glslang/build_info.h"
+
 namespace { // anonymous namespace for file-local functions and symbols
 
 // Total number of successful initializers of glslang: a refcount
@@ -1684,19 +1687,29 @@ int ShGetUniformLocation(const ShHandle handle, const char* name)
 
 namespace glslang {
 
-#include "../Include/revision.h"
+Version GetVersion()
+{
+    Version version;
+    version.major = GLSLANG_VERSION_MAJOR;
+    version.minor = GLSLANG_VERSION_MINOR;
+    version.patch = GLSLANG_VERSION_PATCH;
+    version.flavor = GLSLANG_VERSION_FLAVOR;
+    return version;
+}
 
 #define QUOTE(s) #s
 #define STR(n) QUOTE(n)
 
 const char* GetEsslVersionString()
 {
-    return "OpenGL ES GLSL 3.20 glslang Khronos. " STR(GLSLANG_MINOR_VERSION) "." STR(GLSLANG_PATCH_LEVEL);
+    return "OpenGL ES GLSL 3.20 glslang Khronos. " STR(GLSLANG_VERSION_MAJOR) "." STR(GLSLANG_VERSION_MINOR) "." STR(
+        GLSLANG_VERSION_PATCH) GLSLANG_VERSION_FLAVOR;
 }
 
 const char* GetGlslVersionString()
 {
-    return "4.60 glslang Khronos. " STR(GLSLANG_MINOR_VERSION) "." STR(GLSLANG_PATCH_LEVEL);
+    return "4.60 glslang Khronos. " STR(GLSLANG_VERSION_MAJOR) "." STR(GLSLANG_VERSION_MINOR) "." STR(
+        GLSLANG_VERSION_PATCH) GLSLANG_VERSION_FLAVOR;
 }
 
 int GetKhronosToolId()
