@@ -2944,7 +2944,7 @@ namespace bgfx { namespace mtl
 				||  s_renderMtl->m_macOS11Runtime)
 			{
 				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
-				desc.storageMode  = BX_ENABLED(BX_PLATFORM_IOS)
+				desc.storageMode  = BX_ENABLED(BX_PLATFORM_IOS) && !BX_ENABLED(TARGET_OS_MACCATALYST)
 				? (MTLStorageMode)0 // MTLStorageModeShared
 				: (MTLStorageMode)1 // MTLStorageModeManaged
 				;

@@ -324,7 +324,7 @@ NVGcontext* nvgCreateInternal(NVGparams* params)
 	memset(&fontParams, 0, sizeof(fontParams));
 	fontParams.width = NVG_INIT_FONTIMAGE_SIZE;
 	fontParams.height = NVG_INIT_FONTIMAGE_SIZE;
-	fontParams.flags = FONS_ZERO_TOPLEFT;
+	fontParams.flags = FONS_ZERO_BOTTOMLEFT;
 	fontParams.renderCreate = NULL;
 	fontParams.renderUpdate = NULL;
 	fontParams.renderDraw = NULL;

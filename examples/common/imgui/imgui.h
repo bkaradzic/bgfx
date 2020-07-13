@@ -15,6 +15,40 @@
 #define IMGUI_MBUT_RIGHT  0x02
 #define IMGUI_MBUT_MIDDLE 0x04
 
+struct OcornutImguiContext
+{
+    void create(float _fontSize, bx::AllocatorI* _allocator);
+    void destroy();
+    void beginFrame(
+          int32_t _mx
+        , int32_t _my
+        , uint8_t _button
+        , int32_t _scroll
+        , int _width
+        , int _height
+        , char _inputChar
+        , bgfx::ViewId _viewId);
+    void endFrame();
+    void render(ImDrawData* _drawData);
+    void setupStyle(bool _dark);
+    
+    ImGuiIO& io();
+    
+    ImGuiContext*       m_imgui;
+    ImGuizmo::Context* m_imguizmo;
+    bx::AllocatorI*     m_allocator;
+    bgfx::VertexLayout    m_decl;
+    bgfx::ProgramHandle m_program;
+    bgfx::ProgramHandle m_imageProgram;
+    bgfx::TextureHandle m_texture;
+    bgfx::UniformHandle s_tex;
+    bgfx::UniformHandle u_imageLodEnabled;
+    ImFont* m_font[ImGui::Font::Count];
+    int64_t m_last;
+    int32_t m_lastScroll;
+    bgfx::ViewId m_viewId;
+};
+
 inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 {
 	return 0

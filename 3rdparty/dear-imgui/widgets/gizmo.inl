@@ -30,7 +30,7 @@ namespace ImGuizmo
    static const float ZPI = 3.14159265358979323846f;
    static const float RAD2DEG = (180.f / ZPI);
    static const float DEG2RAD = (ZPI / 180.f);
-   static const float gGizmoSizeClipSpace = 0.1f;
+   static const float gGizmoSizeClipSpace = 0.2f;
    const float screenRotateSize = 0.06f;
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -574,7 +574,7 @@ namespace ImGuizmo
      bool mIsOrthographic = false;
    };
 
-   static Context gContext;
+   static Context* GImGuizmo = NULL;
 
    static const float angleLimit = 0.96f;
    static const float planeLimit = 0.2f;
@@ -607,6 +607,7 @@ namespace ImGuizmo
 
    static ImVec2 worldToPos(const vec_t& worldPos, const matrix_t& mat)
    {
+      Context& gContext = *GImGuizmo;
       vec_t trans;
       trans.TransformPoint(worldPos, mat);
       trans *= 0.5f / trans.w;
@@ -621,6 +622,7 @@ namespace ImGuizmo
 
    static void ComputeCameraRay(vec_t &rayOrigin, vec_t &rayDir)
    {
+      Context& gContext = *GImGuizmo;
       ImGuiIO& io = ImGui::GetIO();
 
       matrix_t mViewProjInverse;
@@ -639,6 +641,7 @@ namespace ImGuizmo
 
    static float GetSegmentLengthClipSpace(const vec_t& start, const vec_t& end)
    {
+      Context& gContext = *GImGuizmo;
       vec_t startOfSegment = start;
       startOfSegment.TransformPoint(gContext.mMVP);
       if (fabsf(startOfSegment.w)> FLT_EPSILON) // check for axis aligned with camera direction
@@ -657,6 +660,7 @@ namespace ImGuizmo
 
    static float GetParallelogram(const vec_t& ptO, const vec_t& ptA, const vec_t& ptB)
    {
+      Context& gContext = *GImGuizmo;
       vec_t pts[] = { ptO, ptA, ptB };
       for (unsigned int i = 0; i < 3; i++)
       {
@@ -706,11 +710,13 @@ namespace ImGuizmo
 
    static bool IsInContextRect( ImVec2 p )
    {
+      Context& gContext = *GImGuizmo;
        return IsWithin( p.x, gContext.mX, gContext.mXMax ) && IsWithin(p.y, gContext.mY, gContext.mYMax );
    }
 
    void SetRect(float x, float y, float width, float height)
    {
+      Context& gContext = *GImGuizmo;
        gContext.mX = x;
        gContext.mY = y;
        gContext.mWidth = width;
@@ -722,16 +728,41 @@ namespace ImGuizmo
 
    IMGUI_API void SetOrthographic(bool isOrthographic)
    {
+      Context& gContext = *GImGuizmo;
       gContext.mIsOrthographic = isOrthographic;
    }
 
+    void SetCurrentContext(Context* ctx)
+    {
+        GImGuizmo = ctx;
+    }
+
+    Context* CreateContext()
+    {
+        Context* ctx = IM_NEW(Context)();
+        if (GImGuizmo == NULL)
+            SetCurrentContext(ctx);
+        return ctx;
+    }
+
+    void DestroyContext(Context* ctx)
+    {
+        if (ctx == NULL)
+            ctx = GImGuizmo;
+        if (GImGuizmo == ctx)
+            SetCurrentContext(NULL);
+        IM_DELETE(ctx);
+    }
+
    void SetDrawlist()
    {
+      Context& gContext = *GImGuizmo;
       gContext.mDrawList = ImGui::GetWindowDrawList();
    }
 
    void BeginFrame()
    {
+      Context& gContext = *GImGuizmo;
       ImGuiIO& io = ImGui::GetIO();
 
       const ImU32 flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus;
@@ -751,6 +782,7 @@ namespace ImGuizmo
 
    bool IsUsing()
    {
+      Context& gContext = *GImGuizmo;
       return gContext.mbUsing||gContext.mbUsingBounds;
    }
 
@@ -761,6 +793,7 @@ namespace ImGuizmo
 
    void Enable(bool enable)
    {
+      Context& gContext = *GImGuizmo;
       gContext.mbEnable = enable;
       if (!enable)
       {
@@ -771,6 +804,7 @@ namespace ImGuizmo
 
    static void ComputeContext(const float *view, const float *projection, float *matrix, MODE mode)
    {
+      Context& gContext = *GImGuizmo;
       gContext.mMode = mode;
       gContext.mViewMat = *(matrix_t*)view;
       gContext.mProjectionMat = *(matrix_t*)projection;
@@ -819,6 +853,7 @@ namespace ImGuizmo
 
    static void ComputeColors(ImU32 *colors, int type, OPERATION operation)
    {
+      Context& gContext = *GImGuizmo;
       if (gContext.mbEnable)
       {
          switch (operation)
@@ -855,6 +890,7 @@ namespace ImGuizmo
 
    static void ComputeTripodAxisAndVisibility(int axisIndex, vec_t& dirAxis, vec_t& dirPlaneX, vec_t& dirPlaneY, bool& belowAxisLimit, bool& belowPlaneLimit)
    {
+      Context& gContext = *GImGuizmo;
       dirAxis = directionUnary[axisIndex];
       dirPlaneX = directionUnary[(axisIndex + 1) % 3];
       dirPlaneY = directionUnary[(axisIndex + 2) % 3];
@@ -925,6 +961,7 @@ namespace ImGuizmo
 
    static float ComputeAngleOnPlan()
    {
+      Context& gContext = *GImGuizmo;
       const float len = IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, gContext.mTranslationPlan);
       vec_t localPos = Normalized(gContext.mRayOrigin + gContext.mRayVector * len - gContext.mModel.v.position);
 
@@ -939,6 +976,7 @@ namespace ImGuizmo
 
    static void DrawRotationGizmo(int type)
    {
+      Context& gContext = *GImGuizmo;
       ImDrawList* drawList = gContext.mDrawList;
 
       // colors
@@ -1011,6 +1049,7 @@ namespace ImGuizmo
 
    static void DrawHatchedAxis(const vec_t& axis)
    {
+      Context& gContext = *GImGuizmo;
       for (int j = 1; j < 10; j++)
       {
          ImVec2 baseSSpace2 = worldToPos(axis * 0.05f * (float)(j * 2) * gContext.mScreenFactor, gContext.mMVP);
@@ -1021,6 +1060,7 @@ namespace ImGuizmo
 
    static void DrawScaleGizmo(int type)
    {
+      Context& gContext = *GImGuizmo;
       ImDrawList* drawList = gContext.mDrawList;
 
       // colors
@@ -1086,6 +1126,7 @@ namespace ImGuizmo
 
    static void DrawTranslationGizmo(int type)
    {
+      Context& gContext = *GImGuizmo;
       ImDrawList* drawList = gContext.mDrawList;
       if (!drawList)
           return;
@@ -1173,6 +1214,7 @@ namespace ImGuizmo
 
    static void HandleAndDrawLocalBounds(float *bounds, matrix_t *matrix, float *snapValues, OPERATION operation)
    {
+       Context& gContext = *GImGuizmo;
        ImGuiIO& io = ImGui::GetIO();
        ImDrawList* drawList = gContext.mDrawList;
 
@@ -1418,6 +1460,7 @@ namespace ImGuizmo
 
    static int GetScaleType()
    {
+      Context& gContext = *GImGuizmo;
       ImGuiIO& io = ImGui::GetIO();
       int type = NONE;
 
@@ -1451,6 +1494,7 @@ namespace ImGuizmo
 
    static int GetRotateType()
    {
+      Context& gContext = *GImGuizmo;
       ImGuiIO& io = ImGui::GetIO();
       int type = NONE;
 
@@ -1488,6 +1532,7 @@ namespace ImGuizmo
 
    static int GetMoveType(vec_t *gizmoHitProportion)
    {
+      Context& gContext = *GImGuizmo;
       ImGuiIO& io = ImGui::GetIO();
       int type = NONE;
 
@@ -1531,6 +1576,7 @@ namespace ImGuizmo
 
    static void HandleTranslation(float *matrix, float *deltaMatrix, int& type, float *snap)
    {
+      Context& gContext = *GImGuizmo;
       ImGuiIO& io = ImGui::GetIO();
       bool applyRotationLocaly = gContext.mMode == LOCAL || type == MOVE_SCREEN;
 
@@ -1630,6 +1676,7 @@ namespace ImGuizmo
 
    static void HandleScale(float *matrix, float *deltaMatrix, int& type, float *snap)
    {
+      Context& gContext = *GImGuizmo;
       ImGuiIO& io = ImGui::GetIO();
 
       if (!gContext.mbUsing)
@@ -1718,6 +1765,7 @@ namespace ImGuizmo
 
    static void HandleRotation(float *matrix, float *deltaMatrix, int& type, float *snap)
    {
+      Context& gContext = *GImGuizmo;
       ImGuiIO& io = ImGui::GetIO();
       bool applyRotationLocaly = gContext.mMode == LOCAL;
 
@@ -1849,6 +1897,7 @@ namespace ImGuizmo
 
    void Manipulate(const float *view, const float *projection, OPERATION operation, MODE mode, float *matrix, float *deltaMatrix, float *snap, float *localBounds, float *boundsSnap)
    {
+      Context& gContext = *GImGuizmo;
       ComputeContext(view, projection, matrix, mode);
 
       // set delta to identity
@@ -1908,6 +1957,7 @@ namespace ImGuizmo
 
    void DrawCube(const float *view, const float *projection, const float *matrix)
    {
+      Context& gContext = *GImGuizmo;
       matrix_t viewInverse;
       viewInverse.Inverse(*(matrix_t*)view);
       const matrix_t& model = *(matrix_t*)matrix;
@@ -1961,6 +2011,7 @@ namespace ImGuizmo
 
    void DrawGrid(const float *view, const float *projection, const float *matrix, const float gridSize)
    {
+      Context& gContext = *GImGuizmo;
       matrix_t res = *(matrix_t*)matrix * *(matrix_t*)view * *(matrix_t*)projection;
 
       for (float f = -gridSize; f <= gridSize; f += 1.f)
