@@ -6746,6 +6746,7 @@ namespace bgfx { namespace gl
 
 					if (!bimg::isDepth(format) )
 					{
+						GL_CHECK(glDisable(GL_SCISSOR_TEST));
 						GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
 						GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
 						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0 + colorIdx) );
@@ -6764,7 +6765,7 @@ namespace bgfx { namespace gl
 							) );
 
 					} else if (!writeOnly) {
-
+						GL_CHECK(glDisable(GL_SCISSOR_TEST));
 						// blit depth attachment as well if it doesn't have
 						// BGFX_TEXTURE_RT_WRITE_ONLY render target flag. In most cases it's
 						// not necessary to blit the depth buffer.
