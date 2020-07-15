@@ -58,12 +58,6 @@ class TransformationAddGlobalVariable : public Transformation {
   protobufs::Transformation ToMessage() const override;
 
  private:
-  // Returns true if and only if the SPIR-V version being used requires that
-  // global variables accessed in the static call graph of an entry point need
-  // to be listed in that entry point's interface.
-  static bool GlobalVariablesMustBeDeclaredInEntryPointInterfaces(
-      opt::IRContext* ir_context);
-
   protobufs::TransformationAddGlobalVariable message_;
 };
 

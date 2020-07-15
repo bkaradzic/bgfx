@@ -39,8 +39,11 @@ Pass::Status MergeReturnPass::Process() {
       if (!is_shader || return_blocks.size() == 0) {
         return false;
       }
-      if (context()->GetStructuredCFGAnalysis()->ContainingConstruct(
-              return_blocks[0]->id()) == 0) {
+      bool isInConstruct =
+          context()->GetStructuredCFGAnalysis()->ContainingConstruct(
+              return_blocks[0]->id()) != 0;
+      bool endsWithReturn = return_blocks[0] == function->tail();
+      if (!isInConstruct && endsWithReturn) {
         return false;
       }
     }
@@ -421,7 +424,6 @@ bool MergeReturnPass::BreakFromConstruct(
   auto old_body_id = TakeNextId();
   BasicBlock* old_body = block->SplitBasicBlock(context(), old_body_id, iter);
   predicated->insert(old_body);
-  cfg()->AddEdges(old_body);
 
   // If a return block is being split, mark the new body block also as a return
   // block.

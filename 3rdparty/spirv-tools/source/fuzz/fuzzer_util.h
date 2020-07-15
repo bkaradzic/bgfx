@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation_context.h"
 #include "source/opt/basic_block.h"
 #include "source/opt/instruction.h"
 #include "source/opt/ir_context.h"
@@ -51,10 +52,6 @@ opt::BasicBlock* MaybeFindBlock(opt::IRContext* context,
 bool PhiIdsOkForNewEdge(
     opt::IRContext* context, opt::BasicBlock* bb_from, opt::BasicBlock* bb_to,
     const google::protobuf::RepeatedField<google::protobuf::uint32>& phi_ids);
-
-// Returns the id of a boolean constant with value |value| if it exists in the
-// module, or 0 otherwise.
-uint32_t MaybeGetBoolConstantId(opt::IRContext* context, bool value);
 
 // Requires that a boolean constant with value |condition_value| is available,
 // that PhiIdsOkForNewEdge(context, bb_from, bb_to, phi_ids) holds, and that
@@ -213,6 +210,197 @@ uint32_t MaybeGetPointerType(opt::IRContext* context, uint32_t pointee_type_id,
 // Returns true if and only if |type| is one of the types for which it is legal
 // to have an OpConstantNull value.
 bool IsNullConstantSupported(const opt::analysis::Type& type);
+
+// Returns true if and only if the SPIR-V version being used requires that
+// global variables accessed in the static call graph of an entry point need
+// to be listed in that entry point's interface.
+bool GlobalVariablesMustBeDeclaredInEntryPointInterfaces(
+    const opt::IRContext* context);
+
+// Adds |id| into the interface of every entry point of the shader.
+// Does nothing if SPIR-V doesn't require global variables, that are accessed
+// from an entry point function, to be listed in that function's interface.
+void AddVariableIdToEntryPointInterfaces(opt::IRContext* context, uint32_t id);
+
+// Adds a global variable with storage class |storage_class| to the module, with
+// type |type_id| and either no initializer or |initializer_id| as an
+// initializer, depending on whether |initializer_id| is 0. The global variable
+// has result id |result_id|. Updates module's id bound to accommodate for
+// |result_id|.
+//
+// - |type_id| must be the id of a pointer type with the same storage class as
+//   |storage_class|.
+// - |storage_class| must be Private or Workgroup.
+// - |initializer_id| must be 0 if |storage_class| is Workgroup, and otherwise
+//   may either be 0 or the id of a constant whose type is the pointee type of
+//   |type_id|.
+void AddGlobalVariable(opt::IRContext* context, uint32_t result_id,
+                       uint32_t type_id, SpvStorageClass storage_class,
+                       uint32_t initializer_id);
+
+// Adds an instruction to the start of |function_id|, of the form:
+//   |result_id| = OpVariable |type_id| Function |initializer_id|.
+// Updates module's id bound to accommodate for |result_id|.
+//
+// - |type_id| must be the id of a pointer type with Function storage class.
+// - |initializer_id| must be the id of a constant with the same type as the
+//   pointer's pointee type.
+// - |function_id| must be the id of a function.
+void AddLocalVariable(opt::IRContext* context, uint32_t result_id,
+                      uint32_t type_id, uint32_t function_id,
+                      uint32_t initializer_id);
+
+// Returns true if the vector |arr| has duplicates.
+bool HasDuplicates(const std::vector<uint32_t>& arr);
+
+// Checks that the given vector |arr| contains a permutation of a range
+// [lo, hi]. That being said, all elements in the range are present without
+// duplicates. If |arr| is empty, returns true iff |lo > hi|.
+bool IsPermutationOfRange(const std::vector<uint32_t>& arr, uint32_t lo,
+                          uint32_t hi);
+
+// Returns OpFunctionParameter instructions corresponding to the function
+// with result id |function_id|.
+std::vector<opt::Instruction*> GetParameters(opt::IRContext* ir_context,
+                                             uint32_t function_id);
+
+// Creates new OpTypeFunction instruction in the module. |type_ids| may not be
+// empty. It may not contain result ids of OpTypeFunction instructions.
+// |type_ids[i]| may not be a result id of OpTypeVoid instruction for |i >= 1|.
+// |result_id| may not equal to 0. Updates module's id bound to accommodate for
+// |result_id|.
+void AddFunctionType(opt::IRContext* ir_context, uint32_t result_id,
+                     const std::vector<uint32_t>& type_ids);
+
+// Returns a result id of an OpTypeFunction instruction in the module. Creates a
+// new instruction if required and returns |result_id|. type_ids| may not be
+// empty. It may not contain result ids of OpTypeFunction instructions.
+// |type_ids[i]| may not be a result id of OpTypeVoid instruction for |i >= 1|.
+// |result_id| must not be equal to 0. Updates module's id bound to accommodate
+// for |result_id|.
+uint32_t FindOrCreateFunctionType(opt::IRContext* ir_context,
+                                  uint32_t result_id,
+                                  const std::vector<uint32_t>& type_ids);
+
+// Returns a result id of an OpTypeInt instruction if present. Returns 0
+// otherwise.
+uint32_t MaybeGetIntegerType(opt::IRContext* ir_context, uint32_t width,
+                             bool is_signed);
+
+// Returns a result id of an OpTypeFloat instruction if present. Returns 0
+// otherwise.
+uint32_t MaybeGetFloatType(opt::IRContext* ir_context, uint32_t width);
+
+// Returns a result id of an OpTypeVector instruction if present. Returns 0
+// otherwise. |component_type_id| must be a valid result id of an OpTypeInt,
+// OpTypeFloat or OpTypeBool instruction in the module. |element_count| must be
+// in the range [2, 4].
+uint32_t MaybeGetVectorType(opt::IRContext* ir_context,
+                            uint32_t component_type_id, uint32_t element_count);
+
+// Returns a result id of an OpTypeStruct instruction if present. Returns 0
+// otherwise. |component_type_ids| may not contain a result id of an
+// OpTypeFunction.
+uint32_t MaybeGetStructType(opt::IRContext* ir_context,
+                            const std::vector<uint32_t>& component_type_ids);
+
+// Recursive definition is the following:
+// - if |scalar_or_composite_type_id| is a result id of a scalar type - returns
+//   a result id of the following constants (depending on the type): int -> 0,
+//   float -> 0.0, bool -> false.
+// - otherwise, returns a result id of an OpConstantComposite instruction.
+//   Every component of the composite constant is looked up by calling this
+//   function with the type id of that component.
+// Returns 0 if no such instruction is present in the module.
+uint32_t MaybeGetZeroConstant(opt::IRContext* ir_context,
+                              uint32_t scalar_or_composite_type_id);
+
+// Returns the result id of an OpConstant instruction. |scalar_type_id| must be
+// a result id of a scalar type (i.e. int, float or bool). Returns 0 if no such
+// instruction is present in the module.
+uint32_t MaybeGetScalarConstant(opt::IRContext* ir_context,
+                                const std::vector<uint32_t>& words,
+                                uint32_t scalar_type_id);
+
+// Returns the result id of an OpConstantComposite instruction.
+// |composite_type_id| must be a result id of a composite type (i.e. vector,
+// matrix, struct or array). Returns 0 if no such instruction is present in the
+// module.
+uint32_t MaybeGetCompositeConstant(opt::IRContext* ir_context,
+                                   const std::vector<uint32_t>& component_ids,
+                                   uint32_t composite_type_id);
+
+// Returns the result id of an OpConstant instruction of integral type.
+// Returns 0 if no such instruction or type is present in the module.
+uint32_t MaybeGetIntegerConstant(opt::IRContext* ir_context,
+                                 const std::vector<uint32_t>& words,
+                                 uint32_t width, bool is_signed);
+
+// Returns the result id of an OpConstant instruction of floating-point type.
+// Returns 0 if no such instruction or type is present in the module.
+uint32_t MaybeGetFloatConstant(opt::IRContext* ir_context,
+                               const std::vector<uint32_t>& words,
+                               uint32_t width);
+
+// Returns the id of a boolean constant with value |value| if it exists in the
+// module, or 0 otherwise.
+uint32_t MaybeGetBoolConstant(opt::IRContext* context, bool value);
+
+// Creates a new OpTypeInt instruction in the module. Updates module's id bound
+// to accommodate for |result_id|.
+void AddIntegerType(opt::IRContext* ir_context, uint32_t result_id,
+                    uint32_t width, bool is_signed);
+
+// Creates a new OpTypeFloat instruction in the module. Updates module's id
+// bound to accommodate for |result_id|.
+void AddFloatType(opt::IRContext* ir_context, uint32_t result_id,
+                  uint32_t width);
+
+// Creates a new OpTypeVector instruction in the module. |component_type_id|
+// must be a valid result id of an OpTypeInt, OpTypeFloat or OpTypeBool
+// instruction in the module. |element_count| must be in the range [2, 4].
+// Updates module's id bound to accommodate for |result_id|.
+void AddVectorType(opt::IRContext* ir_context, uint32_t result_id,
+                   uint32_t component_type_id, uint32_t element_count);
+
+// Creates a new OpTypeStruct instruction in the module. Updates module's id
+// bound to accommodate for |result_id|. |component_type_ids| may not contain
+// a result id of an OpTypeFunction.
+void AddStructType(opt::IRContext* ir_context, uint32_t result_id,
+                   const std::vector<uint32_t>& component_type_ids);
+
+// Returns a result id of an OpTypeInt instruction in the module. Creates a new
+// instruction with |result_id|, if no required OpTypeInt is present in the
+// module, and returns |result_id|. Updates module's id bound to accommodate for
+// |result_id|.
+uint32_t FindOrCreateIntegerType(opt::IRContext* ir_context, uint32_t result_id,
+                                 uint32_t width, bool is_signed);
+
+// Returns a result id of an OpTypeFloat instruction in the module. Creates a
+// new instruction with |result_id|, if no required OpTypeFloat is present in
+// the module, and returns |result_id|. Updates module's id bound
+// to accommodate for |result_id|.
+uint32_t FindOrCreateFloatType(opt::IRContext* ir_context, uint32_t result_id,
+                               uint32_t width);
+
+// Returns a result id of an OpTypeVector instruction in the module. Creates a
+// new instruction with |result_id|, if no required OpTypeVector is present in
+// the module, and returns |result_id|. |component_type_id| must be a valid
+// result id of an OpTypeInt, OpTypeFloat or OpTypeBool instruction in the
+// module. |element_count| must be in the range [2, 4]. Updates module's id
+// bound to accommodate for |result_id|.
+uint32_t FindOrCreateVectorType(opt::IRContext* ir_context, uint32_t result_id,
+                                uint32_t component_type_id,
+                                uint32_t element_count);
+
+// Returns a result id of an OpTypeStruct instruction in the module. Creates a
+// new instruction with |result_id|, if no required OpTypeStruct is present in
+// the module, and returns |result_id|. Updates module's id bound
+// to accommodate for |result_id|. |component_type_ids| may not contain a result
+// id of an OpTypeFunction.
+uint32_t FindOrCreateStructType(
+    opt::IRContext* ir_context, uint32_t result_id,
+    const std::vector<uint32_t>& component_type_ids);
 
 }  // namespace fuzzerutil
 

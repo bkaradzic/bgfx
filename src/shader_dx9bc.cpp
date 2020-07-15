@@ -225,7 +225,7 @@ namespace bgfx
 
 	const char* getName(Dx9bcOpcode::Enum _opcode)
 	{
-		BX_CHECK(_opcode < Dx9bcOpcode::Count, "Unknown opcode id %d (%x).", _opcode, _opcode);
+		BX_ASSERT(_opcode < Dx9bcOpcode::Count, "Unknown opcode id %d (%x).", _opcode, _opcode);
 		return s_dx9bcOpcode[_opcode];
 	}
 
@@ -458,7 +458,7 @@ namespace bgfx
 			break;
 
 		default:
-			BX_CHECK(false, "Instruction %s with invalid number of operands %d (numValues %d)."
+			BX_ASSERT(false, "Instruction %s with invalid number of operands %d (numValues %d)."
 					, getName(_instruction.opcode)
 					, _instruction.numOperands
 					, info.numValues
@@ -642,7 +642,7 @@ namespace bgfx
 				char temp[512];
 				toString(temp, 512, instruction);
 
-				BX_CHECK(length/4 == instruction.length
+				BX_ASSERT(length/4 == instruction.length
 						, "%s\nread %d, expected %d"
 						, temp
 						, length/4
@@ -712,7 +712,7 @@ namespace bgfx
 		{
 			Dx9bcInstruction instruction;
 			uint32_t size = read(&reader, instruction, _err);
-			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
+			BX_ASSERT(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			bool cont = _fn(token * sizeof(uint32_t), instruction, _userData);
 			if (!cont)
@@ -737,7 +737,7 @@ namespace bgfx
 		{
 			Dx9bcInstruction instruction;
 			uint32_t size = read(&reader, instruction, _err);
-			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
+			BX_ASSERT(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			_fn(instruction, _userData);
 

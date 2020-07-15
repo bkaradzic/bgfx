@@ -485,10 +485,27 @@ void Loop::ComputeLoopStructuredOrder(
 
   if (include_pre_header && GetPreHeaderBlock())
     ordered_loop_blocks->push_back(loop_preheader_);
-  cfg.ForEachBlockInReversePostOrder(
-      loop_header_, [ordered_loop_blocks, this](BasicBlock* bb) {
-        if (IsInsideLoop(bb)) ordered_loop_blocks->push_back(bb);
-      });
+
+  bool is_shader =
+      context_->get_feature_mgr()->HasCapability(SpvCapabilityShader);
+  if (!is_shader) {
+    cfg.ForEachBlockInReversePostOrder(
+        loop_header_, [ordered_loop_blocks, this](BasicBlock* bb) {
+          if (IsInsideLoop(bb)) ordered_loop_blocks->push_back(bb);
+        });
+  } else {
+    // If this is a shader, it is possible that there are unreachable merge and
+    // continue blocks that must be copied to retain the structured order.
+    // The structured order will include these.
+    std::list<BasicBlock*> order;
+    cfg.ComputeStructuredOrder(loop_header_->GetParent(), loop_header_, &order);
+    for (BasicBlock* bb : order) {
+      if (bb == GetMergeBlock()) {
+        break;
+      }
+      ordered_loop_blocks->push_back(bb);
+    }
+  }
   if (include_merge && GetMergeBlock())
     ordered_loop_blocks->push_back(loop_merge_);
 }

@@ -231,6 +231,9 @@ enum TBuiltInVariable {
     EbvFragSizeEXT,
     EbvFragInvocationCountEXT,
 
+    EbvSecondaryFragDataEXT,
+    EbvSecondaryFragColorEXT,
+
     EbvViewportMaskNV,
     EbvSecondaryPositionNV,
     EbvSecondaryViewportMaskNV,
@@ -432,6 +435,9 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
 
     case EbvFragSizeEXT:                return "FragSizeEXT";
     case EbvFragInvocationCountEXT:     return "FragInvocationCountEXT";
+
+    case EbvSecondaryFragDataEXT:       return "SecondaryFragDataEXT";
+    case EbvSecondaryFragColorEXT:      return "SecondaryFragColorEXT";
 
     case EbvViewportMaskNV:             return "ViewportMaskNV";
     case EbvSecondaryPositionNV:        return "SecondaryPositionNV";

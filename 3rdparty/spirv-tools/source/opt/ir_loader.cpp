@@ -135,6 +135,8 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
       Error(consumer_, src, loc, "terminator instruction outside basic block");
       return false;
     }
+    if (last_dbg_scope_.GetLexicalScope() != kNoDebugScope)
+      spv_inst->SetDebugScope(last_dbg_scope_);
     block_->AddInstruction(std::move(spv_inst));
     function_->AddBasicBlock(std::move(block_));
     block_ = nullptr;

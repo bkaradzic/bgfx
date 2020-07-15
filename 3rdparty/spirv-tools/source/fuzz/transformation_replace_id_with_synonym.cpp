@@ -46,7 +46,7 @@ bool TransformationReplaceIdWithSynonym::IsApplicable(
       MakeDataDescriptor(message_.synonymous_id(), {});
   if (!transformation_context.GetFactManager()->IsSynonymous(
           MakeDataDescriptor(id_of_interest, {}),
-          data_descriptor_for_synonymous_id, ir_context)) {
+          data_descriptor_for_synonymous_id)) {
     return false;
   }
 
@@ -170,6 +170,15 @@ bool TransformationReplaceIdWithSynonym::UseCanBeReplacedWithSynonym(
       return false;
     }
   }
+
+  if (use_instruction->opcode() == SpvOpImageTexelPointer &&
+      use_in_operand_index == 2) {
+    // The OpImageTexelPointer instruction has a Sample parameter that in some
+    // situations must be an id for the value 0.  To guard against disrupting
+    // that requirement, we do not replace this argument to that instruction.
+    return false;
+  }
+
   return true;
 }
 

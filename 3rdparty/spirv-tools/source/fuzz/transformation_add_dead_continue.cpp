@@ -38,8 +38,8 @@ bool TransformationAddDeadContinue::IsApplicable(
     const TransformationContext& transformation_context) const {
   // First, we check that a constant with the same value as
   // |message_.continue_condition_value| is present.
-  if (!fuzzerutil::MaybeGetBoolConstantId(
-          ir_context, message_.continue_condition_value())) {
+  if (!fuzzerutil::MaybeGetBoolConstant(ir_context,
+                                        message_.continue_condition_value())) {
     // The required constant is not present, so the transformation cannot be
     // applied.
     return false;

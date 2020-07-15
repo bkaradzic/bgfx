@@ -1,10 +1,14 @@
+<p align="center">
+<img src="https://repository-images.githubusercontent.com/3925242/a4566200-912a-11ea-984f-c387546a3126">
+</p>
+
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
 [![Build Status](https://travis-ci.org/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.org/bkaradzic/bgfx)
 [![Build status](https://ci.appveyor.com/api/projects/status/ipa3ojgeaet1oko5?svg=true)](https://ci.appveyor.com/project/bkaradzic/bgfx)
 [![License](https://img.shields.io/badge/license-BSD--2%20clause-blue.svg)](https://bkaradzic.github.io/bgfx/license.html)
-[![Join the chat at https://gitter.im/bkaradzic/bgfx](https://badges.gitter.im/bkaradzic/bgfx.svg)](https://gitter.im/bkaradzic/bgfx)
+[![Join the chat at https://discord.gg/9eMbv7J](https://img.shields.io/discord/712512073522872352?color=%237289DA&label=bgfx&logo=discord&logoColor=white)](https://discord.gg/9eMbv7J)
 
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
 -------------------------------------------------------------
@@ -17,6 +21,7 @@ Supported rendering backends:
  * Direct3D 9
  * Direct3D 11
  * Direct3D 12
+ * GNM (only for licensed PS4 developers, search DevNet forums for source)
  * Metal
  * OpenGL 2.1
  * OpenGL 3.1+
@@ -25,6 +30,7 @@ Supported rendering backends:
  * Vulkan
  * WebGL 1.0
  * WebGL 2.0
+ * WebGPU/Dawn (experimental)
 
 Supported platforms:
 
@@ -35,6 +41,7 @@ Supported platforms:
  * Linux
  * MIPS Creator CI20
  * OSX (10.12+)
+ * PlayStation 4
  * RaspberryPi
  * Windows (XP, Vista, 7, 8, 10)
  * UWP (Universal Windows, Xbox One)
@@ -386,6 +393,15 @@ NIMBY Rails is a management and design sandbox game for railways you build in th
 https://www.minecraft.net/zh-hant/attribution/
 
 ![home-hero-1200x600](https://user-images.githubusercontent.com/814772/79185288-57050000-7dcb-11ea-87b4-2126fcd1545b.jpg)
+
+
+## FFNx
+
+Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with native Steam 2013 release support! )
+
+[FFNx](https://github.com/julianxhokaxhiu/FFNx#ffnx)
+
+![FFVIII](https://raw.githubusercontent.com/julianxhokaxhiu/FFNx/master/.screens/ff8.png)
 
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)

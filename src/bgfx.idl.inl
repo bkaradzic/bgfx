@@ -114,10 +114,10 @@ BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_layout_t * _dstLayout, voi
 	bgfx::vertexConvert(dstLayout, _dstData, srcLayout, _srcData, _num);
 }
 
-BGFX_C_API uint16_t bgfx_weld_vertices(uint16_t* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint16_t _num, float _epsilon)
+BGFX_C_API uint32_t bgfx_weld_vertices(void* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _num, bool _index32, float _epsilon)
 {
 	const bgfx::VertexLayout & layout = *(const bgfx::VertexLayout *)_layout;
-	return bgfx::weldVertices(_output, layout, _data, _num, _epsilon);
+	return bgfx::weldVertices(_output, layout, _data, _num, _index32, _epsilon);
 }
 
 BGFX_C_API uint32_t bgfx_topology_convert(bgfx_topology_convert_t _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32)
@@ -669,6 +669,11 @@ BGFX_C_API void bgfx_set_view_transform(bgfx_view_id_t _id, const void* _view, c
 BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint16_t _num, const bgfx_view_id_t* _order)
 {
 	bgfx::setViewOrder((bgfx::ViewId)_id, _num, (const bgfx::ViewId*)_order);
+}
+
+BGFX_C_API void bgfx_reset_view(bgfx_view_id_t _id)
+{
+	bgfx::resetView((bgfx::ViewId)_id);
 }
 
 BGFX_C_API bgfx_encoder_t* bgfx_encoder_begin(bool _forThread)
@@ -1310,6 +1315,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_set_view_frame_buffer,
 			bgfx_set_view_transform,
 			bgfx_set_view_order,
+			bgfx_reset_view,
 			bgfx_encoder_begin,
 			bgfx_encoder_end,
 			bgfx_encoder_set_marker,

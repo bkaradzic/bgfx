@@ -61,6 +61,7 @@ namespace bgfx
 			OpenGLES,     //!< OpenGL ES 2.0+
 			OpenGL,       //!< OpenGL 2.1+
 			Vulkan,       //!< Vulkan
+			WebGPU,       //!< WebGPU
 
 			Count
 		};
@@ -670,14 +671,21 @@ namespace bgfx
 		/// Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
 		Resolution resolution;
 
+		/// Configurable runtime limits parameters.
+		///
+		/// @attention C99 equivalent is `bgfx_init_limits_t`.
+		///
 		struct Limits
 		{
-			uint16_t maxEncoders;     //!< Maximum number of encoder threads.
-			uint32_t transientVbSize; //!< Maximum transient vertex buffer size.
-			uint32_t transientIbSize; //!< Maximum transient index buffer size.
+			Limits();
+
+			uint16_t maxEncoders;       //!< Maximum number of encoder threads.
+			uint32_t minResourceCbSize; //!< Minimum resource command buffer size.
+			uint32_t transientVbSize;   //!< Maximum transient vertex buffer size.
+			uint32_t transientIbSize;   //!< Maximum transient index buffer size.
 		};
 
-		Limits limits;
+		Limits limits; // Configurable runtime limits.
 
 		/// Provide application specific callback interface.
 		/// See: `bgfx::CallbackI`
@@ -706,6 +714,8 @@ namespace bgfx
 	///
 	struct Memory
 	{
+		Memory() = delete;
+
 		uint8_t* data; //!< Pointer to data.
 		uint32_t size; //!< Data size.
 	};
@@ -743,6 +753,10 @@ namespace bgfx
 
 		GPU gpu[4]; //!< Enumerated GPUs.
 
+		/// Renderer runtime limits.
+		///
+		/// @attention C99 equivalent is `bgfx_caps_limits_t`.
+		///
 		struct Limits
 		{
 			uint32_t maxDrawCalls;            //!< Maximum number of draw calls.
@@ -766,11 +780,12 @@ namespace bgfx
 			uint32_t maxUniforms;             //!< Maximum number of uniform handles.
 			uint32_t maxOcclusionQueries;     //!< Maximum number of occlusion query handles.
 			uint32_t maxEncoders;             //!< Maximum number of encoder threads.
+			uint32_t minResourceCbSize;       //!< Minimum resource command buffer size.
 			uint32_t transientVbSize;         //!< Maximum transient vertex buffer size.
 			uint32_t transientIbSize;         //!< Maximum transient index buffer size.
 		};
 
-		Limits limits;
+		Limits limits; //!< Renderer runtime limits.
 
 		/// Supported texture format capabilities flags:
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.
@@ -1822,16 +1837,18 @@ namespace bgfx
 	/// @param[in] _layout Vertex stream layout.
 	/// @param[in] _data Vertex stream.
 	/// @param[in] _num Number of vertices in vertex stream.
+	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
 	/// @param[in] _epsilon Error tolerance for vertex position comparison.
 	/// @returns Number of unique vertices after vertex welding.
 	///
 	/// @attention C99 equivalent is `bgfx_weld_vertices`.
 	///
-	uint16_t weldVertices(
-		  uint16_t* _output
+	uint32_t weldVertices(
+		  void* _output
 		, const VertexLayout& _layout
 		, const void* _data
-		, uint16_t _num
+		, uint32_t _num
+		, bool _index32
 		, float _epsilon = 0.001f
 		);
 

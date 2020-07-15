@@ -1466,7 +1466,7 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
     infoSink.debug << "Shader version: " << version << "\n";
     if (requestedExtensions.size() > 0) {
         for (auto extIt = requestedExtensions.begin(); extIt != requestedExtensions.end(); ++extIt)
-            infoSink.debug << "Requested " << *extIt << "\n";
+            infoSink.debug << "Requested " << extIt->first << "\n";
     }
 
     if (xfbMode)

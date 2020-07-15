@@ -2326,7 +2326,7 @@ public:
 
 				// Compute split distances.
 				const uint8_t maxNumSplits = 4;
-				BX_CHECK(maxNumSplits >= settings.m_numSplits, "Error! Max num splits.");
+				BX_ASSERT(maxNumSplits >= settings.m_numSplits, "Error! Max num splits.");
 
 				float splitSlices[maxNumSplits*2];
 				splitFrustum(splitSlices

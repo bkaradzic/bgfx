@@ -90,6 +90,7 @@ typedef enum bgfx_renderer_type
     BGFX_RENDERER_TYPE_OPENGLES,              /** ( 7) OpenGL ES 2.0+                 */
     BGFX_RENDERER_TYPE_OPENGL,                /** ( 8) OpenGL 2.1+                    */
     BGFX_RENDERER_TYPE_VULKAN,                /** ( 9) Vulkan                         */
+    BGFX_RENDERER_TYPE_WEBGPU,                /** (10) WebGPU                         */
 
     BGFX_RENDERER_TYPE_COUNT
 
@@ -487,7 +488,7 @@ typedef struct bgfx_caps_gpu_s
 } bgfx_caps_gpu_t;
 
 /**
- * Renderer capabilities limits.
+ * Renderer runtime limits.
  *
  */
 typedef struct bgfx_caps_limits_s
@@ -513,6 +514,7 @@ typedef struct bgfx_caps_limits_s
     uint32_t             maxUniforms;        /** Maximum number of uniform handles.       */
     uint32_t             maxOcclusionQueries; /** Maximum number of occlusion query handles. */
     uint32_t             maxEncoders;        /** Maximum number of encoder threads.       */
+    uint32_t             minResourceCbSize;  /** Minimum resource command buffer size.    */
     uint32_t             transientVbSize;    /** Maximum transient vertex buffer size.    */
     uint32_t             transientIbSize;    /** Maximum transient index buffer size.     */
 
@@ -537,7 +539,7 @@ typedef struct bgfx_caps_s
     bool                 originBottomLeft;   /** True when NDC origin is at bottom left.  */
     uint8_t              numGPUs;            /** Number of enumerated GPUs.               */
     bgfx_caps_gpu_t      gpu[4];             /** Enumerated GPUs.                         */
-    bgfx_caps_limits_t   limits;
+    bgfx_caps_limits_t   limits;             /** Renderer runtime limits.                 */
     
     /**
      * Supported texture format capabilities flags:
@@ -621,9 +623,14 @@ typedef struct bgfx_resolution_s
 
 } bgfx_resolution_t;
 
+/**
+ * Configurable runtime limits parameters.
+ *
+ */
 typedef struct bgfx_init_limits_s
 {
     uint16_t             maxEncoders;        /** Maximum number of encoder threads.       */
+    uint32_t             minResourceCbSize;  /** Minimum resource command buffer size.    */
     uint32_t             transientVbSize;    /** Maximum transient vertex buffer size.    */
     uint32_t             transientIbSize;    /** Maximum transient index buffer size.     */
 
@@ -663,7 +670,7 @@ typedef struct bgfx_init_s
     bool                 profile;            /** Enable device for profiling.             */
     bgfx_platform_data_t platformData;       /** Platform data.                           */
     bgfx_resolution_t    resolution;         /** Backbuffer resolution and reset parameters. See: `bgfx::Resolution`. */
-    bgfx_init_limits_t   limits;
+    bgfx_init_limits_t   limits;             /** Configurable runtime limits parameters.  */
     
     /**
      * Provide application specific callback interface.
@@ -1006,12 +1013,13 @@ BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_layout_t * _dstLayout, voi
  * @param[in] _layout Vertex stream layout.
  * @param[in] _data Vertex stream.
  * @param[in] _num Number of vertices in vertex stream.
+ * @param[in] _index32 Set to `true` if input indices are 32-bit.
  * @param[in] _epsilon Error tolerance for vertex position comparison.
  *
  * @returns Number of unique vertices after vertex welding.
  *
  */
-BGFX_C_API uint16_t bgfx_weld_vertices(uint16_t* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint16_t _num, float _epsilon);
+BGFX_C_API uint32_t bgfx_weld_vertices(void* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _num, bool _index32, float _epsilon);
 
 /**
  * Convert index buffer for use with different primitive topologies.
@@ -1106,7 +1114,7 @@ BGFX_C_API void bgfx_shutdown(void);
  *    - `BGFX_RESET_CAPTURE` - Begin screen capture.
  *    - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.
  *    - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
- *      occurs. Default behavior is that flip occurs before rendering new
+ *      occurs. Default behaviour is that flip occurs before rendering new
  *      frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
  *    - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
  * @param[in] _format Texture format. See: `TextureFormat::Enum`.
@@ -2273,6 +2281,14 @@ BGFX_C_API void bgfx_set_view_transform(bgfx_view_id_t _id, const void* _view, c
 BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint16_t _num, const bgfx_view_id_t* _order);
 
 /**
+ * Reset all view settings to default.
+ *
+ * @param[in] _id
+ *
+ */
+BGFX_C_API void bgfx_reset_view(bgfx_view_id_t _id);
+
+/**
  * Begin submitting draw calls from thread.
  *
  * @param[in] _forThread Explicitly request an encoder for a worker thread.
@@ -3357,6 +3373,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_SET_VIEW_FRAME_BUFFER,
     BGFX_FUNCTION_ID_SET_VIEW_TRANSFORM,
     BGFX_FUNCTION_ID_SET_VIEW_ORDER,
+    BGFX_FUNCTION_ID_RESET_VIEW,
     BGFX_FUNCTION_ID_ENCODER_BEGIN,
     BGFX_FUNCTION_ID_ENCODER_END,
     BGFX_FUNCTION_ID_ENCODER_SET_MARKER,
@@ -3455,7 +3472,7 @@ struct bgfx_interface_vtbl
     void (*vertex_pack)(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, void* _data, uint32_t _index);
     void (*vertex_unpack)(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _index);
     void (*vertex_convert)(const bgfx_vertex_layout_t * _dstLayout, void* _dstData, const bgfx_vertex_layout_t * _srcLayout, const void* _srcData, uint32_t _num);
-    uint16_t (*weld_vertices)(uint16_t* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint16_t _num, float _epsilon);
+    uint32_t (*weld_vertices)(void* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _num, bool _index32, float _epsilon);
     uint32_t (*topology_convert)(bgfx_topology_convert_t _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32);
     void (*topology_sort_tri_list)(bgfx_topology_sort_t _sort, void* _dst, uint32_t _dstSize, const float _dir[3], const float _pos[3], const void* _vertices, uint32_t _stride, const void* _indices, uint32_t _numIndices, bool _index32);
     uint8_t (*get_supported_renderers)(uint8_t _max, bgfx_renderer_type_t* _enum);
@@ -3549,6 +3566,7 @@ struct bgfx_interface_vtbl
     void (*set_view_frame_buffer)(bgfx_view_id_t _id, bgfx_frame_buffer_handle_t _handle);
     void (*set_view_transform)(bgfx_view_id_t _id, const void* _view, const void* _proj);
     void (*set_view_order)(bgfx_view_id_t _id, uint16_t _num, const bgfx_view_id_t* _order);
+    void (*reset_view)(bgfx_view_id_t _id);
     bgfx_encoder_t* (*encoder_begin)(bool _forThread);
     void (*encoder_end)(bgfx_encoder_t* _encoder);
     void (*encoder_set_marker)(bgfx_encoder_t* _this, const char* _marker);

@@ -928,6 +928,6 @@ namespace
 ENTRY_IMPLEMENT_MAIN(
 	  ExampleTessellation
 	, "41-tess"
-	, "Adaptive Gpu Tessellation."
+	, "Adaptive GPU Tessellation."
 	, "https://bkaradzic.github.io/bgfx/examples.html#tess"
 	);

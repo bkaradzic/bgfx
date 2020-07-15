@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 105;
+enum uint BGFX_API_VERSION = 108;
 
 alias bgfx_view_id_t = ushort;
 
@@ -331,7 +331,7 @@ enum uint BGFX_RESET_MAXANISOTROPY = 0x00000100; /// Turn on/off max anisotropy.
 enum uint BGFX_RESET_CAPTURE = 0x00000200; /// Begin screen capture.
 enum uint BGFX_RESET_FLUSH_AFTER_RENDER = 0x00002000; /// Flush rendering after submitting to GPU.
 /**
- * This flag specifies where flip occurs. Default behavior is that flip occurs
+ * This flag specifies where flip occurs. Default behaviour is that flip occurs
  * before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
  */
 enum uint BGFX_RESET_FLIP_AFTER_RENDER = 0x00004000;
@@ -435,6 +435,7 @@ enum bgfx_renderer_type_t
 	BGFX_RENDERER_TYPE_OPENGLES, /// OpenGL ES 2.0+
 	BGFX_RENDERER_TYPE_OPENGL, /// OpenGL 2.1+
 	BGFX_RENDERER_TYPE_VULKAN, /// Vulkan
+	BGFX_RENDERER_TYPE_WEBGPU, /// WebGPU
 
 	BGFX_RENDERER_TYPE_COUNT
 }
@@ -698,7 +699,7 @@ struct bgfx_caps_gpu_t
 	ushort deviceId; /// Device id.
 }
 
-/// Renderer capabilities limits.
+/// Renderer runtime limits.
 struct bgfx_caps_limits_t
 {
 	uint maxDrawCalls; /// Maximum number of draw calls.
@@ -722,6 +723,7 @@ struct bgfx_caps_limits_t
 	uint maxUniforms; /// Maximum number of uniform handles.
 	uint maxOcclusionQueries; /// Maximum number of occlusion query handles.
 	uint maxEncoders; /// Maximum number of encoder threads.
+	uint minResourceCbSize; /// Minimum resource command buffer size.
 	uint transientVbSize; /// Maximum transient vertex buffer size.
 	uint transientIbSize; /// Maximum transient index buffer size.
 }
@@ -742,7 +744,7 @@ struct bgfx_caps_t
 	bool originBottomLeft; /// True when NDC origin is at bottom left.
 	byte numGPUs; /// Number of enumerated GPUs.
 	bgfx_caps_gpu_t[4] gpu; /// Enumerated GPUs.
-	bgfx_caps_limits_t limits;
+	bgfx_caps_limits_t limits; /// Renderer runtime limits.
 
 	/**
 	 * Supported texture format capabilities flags:
@@ -813,9 +815,11 @@ struct bgfx_resolution_t
 	byte maxFrameLatency; /// Maximum frame latency.
 }
 
+/// Configurable runtime limits parameters.
 struct bgfx_init_limits_t
 {
 	ushort maxEncoders; /// Maximum number of encoder threads.
+	uint minResourceCbSize; /// Minimum resource command buffer size.
 	uint transientVbSize; /// Maximum transient vertex buffer size.
 	uint transientIbSize; /// Maximum transient index buffer size.
 }
@@ -851,7 +855,7 @@ struct bgfx_init_t
 	bool profile; /// Enable device for profiling.
 	bgfx_platform_data_t platformData; /// Platform data.
 	bgfx_resolution_t resolution; /// Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
-	bgfx_init_limits_t limits;
+	bgfx_init_limits_t limits; /// Configurable runtime limits parameters.
 
 	/**
 	 * Provide application specific callback interface.

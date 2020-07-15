@@ -119,6 +119,16 @@ void Parser::parse()
 	for (auto &i : instructions)
 		parse(i);
 
+	for (auto &fixup : forward_pointer_fixups)
+	{
+		auto &target = get<SPIRType>(fixup.first);
+		auto &source = get<SPIRType>(fixup.second);
+		target.member_types = source.member_types;
+		target.basetype = source.basetype;
+		target.self = source.self;
+	}
+	forward_pointer_fixups.clear();
+
 	if (current_function)
 		SPIRV_CROSS_THROW("Function was not terminated.");
 	if (current_block)
@@ -543,6 +553,11 @@ void Parser::parse(const Instruction &instruction)
 		auto *c = maybe_get<SPIRConstant>(cid);
 		bool literal = c && !c->specialization;
 
+		// We're copying type information into Array types, so we'll need a fixup for any physical pointer
+		// references.
+		if (base.forward_pointer)
+			forward_pointer_fixups.push_back({ id, tid });
+
 		arraybase.array_size_literal.push_back(literal);
 		arraybase.array.push_back(literal ? c->scalar() : cid);
 		// Do NOT set arraybase.self!
@@ -555,6 +570,11 @@ void Parser::parse(const Instruction &instruction)
 
 		auto &base = get<SPIRType>(ops[1]);
 		auto &arraybase = set<SPIRType>(id);
+
+		// We're copying type information into Array types, so we'll need a fixup for any physical pointer
+		// references.
+		if (base.forward_pointer)
+			forward_pointer_fixups.push_back({ id, ops[1] });
 
 		arraybase = base;
 		arraybase.array.push_back(0);
@@ -614,6 +634,9 @@ void Parser::parse(const Instruction &instruction)
 		if (ptrbase.storage == StorageClassAtomicCounter)
 			ptrbase.basetype = SPIRType::AtomicCounter;
 
+		if (base.forward_pointer)
+			forward_pointer_fixups.push_back({ id, ops[2] });
+
 		ptrbase.parent_type = ops[2];
 
 		// Do NOT set ptrbase.self!
@@ -627,6 +650,7 @@ void Parser::parse(const Instruction &instruction)
 		ptrbase.pointer = true;
 		ptrbase.pointer_depth++;
 		ptrbase.storage = static_cast<StorageClass>(ops[1]);
+		ptrbase.forward_pointer = true;
 
 		if (ptrbase.storage == StorageClassAtomicCounter)
 			ptrbase.basetype = SPIRType::AtomicCounter;
@@ -683,11 +707,19 @@ void Parser::parse(const Instruction &instruction)
 		break;
 	}
 
-	case OpTypeAccelerationStructureNV:
+	case OpTypeAccelerationStructureKHR:
 	{
 		uint32_t id = ops[0];
 		auto &type = set<SPIRType>(id);
-		type.basetype = SPIRType::AccelerationStructureNV;
+		type.basetype = SPIRType::AccelerationStructure;
+		break;
+	}
+
+	case OpTypeRayQueryProvisionalKHR:
+	{
+		uint32_t id = ops[0];
+		auto &type = set<SPIRType>(id);
+		type.basetype = SPIRType::RayQuery;
 		break;
 	}
 

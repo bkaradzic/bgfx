@@ -48,6 +48,11 @@ newoption {
 	description = "Enable building examples.",
 }
 
+newoption {
+	trigger = "with-webgpu",
+	description = "Enable webgpu experimental renderer.",
+}
+
 newaction {
 	trigger = "idl",
 	description = "Generate bgfx interface source code",
@@ -117,9 +122,9 @@ solution "bgfx"
 		"Release",
 	}
 
-	if _ACTION:match "xcode*" then
+	if _ACTION ~= nil and _ACTION:match "^xcode" then
 		platforms {
-			"Universal",
+			"Native", -- let xcode decide based on the target output
 		}
 	else
 		platforms {
@@ -151,15 +156,32 @@ end
 if not os.isdir(BX_DIR) or not os.isdir(BIMG_DIR) then
 
 	if not os.isdir(BX_DIR) then
-		print("bx not found at " .. BX_DIR)
+		print("bx not found at \"" .. BX_DIR .. "\". git clone https://github.com/bkaradzic/bx?")
 	end
 
 	if not os.isdir(BIMG_DIR) then
-		print("bimg not found at " .. BIMG_DIR)
+		print("bimg not found at \"" .. BIMG_DIR .. "\". git clone https://github.com/bkaradzic/bimg?")
 	end
 
 	print("For more info see: https://bkaradzic.github.io/bgfx/build.html")
 	os.exit()
+end
+
+if _OPTIONS["with-webgpu"] then
+	DAWN_DIR = os.getenv("DAWN_DIR")
+
+	if not DAWN_DIR then
+		DAWN_DIR = path.getabsolute(path.join(BGFX_DIR, "../dawn"))
+	end
+
+	if not os.isdir(DAWN_DIR) then
+		print("Dawn not found at \"" .. DAWN_DIR .. "\". git clone https://dawn.googlesource.com/dawn?")
+
+		print("For more info see: https://bkaradzic.github.io/bgfx/build.html")
+		os.exit()
+	end
+
+	_OPTIONS["with-windows"] = "10.0"
 end
 
 dofile (path.join(BX_DIR, "scripts/toolchain.lua"))
@@ -213,6 +235,10 @@ function exampleProjectDefaults()
 		"bimg",
 		"bx",
 	}
+
+	if _OPTIONS["with-webgpu"] then
+		usesWebGPU()
+	end
 
 	if _OPTIONS["with-sdl"] then
 		defines { "ENTRY_CONFIG_USE_SDL=1" }
@@ -336,12 +362,13 @@ function exampleProjectDefaults()
 			"GLESv2",
 		}
 
-	configuration { "asmjs" }
+	configuration { "wasm*" }
 		kind "ConsoleApp"
 
 		linkoptions {
-			"-s TOTAL_MEMORY=256MB",
-			"--memory-init-file 1",
+			"-s TOTAL_MEMORY=32MB",
+			"-s ALLOW_MEMORY_GROWTH=1",
+			"--preload-file ../../../examples/runtime@/"
 		}
 
 		removeflags {
@@ -472,7 +499,22 @@ end
 dofile "bgfx.lua"
 
 group "libs"
-bgfxProject("", "StaticLib", {})
+
+local function userdefines()
+	local defines = {}
+	local BGFX_CONFIG = os.getenv("BGFX_CONFIG")
+	if BGFX_CONFIG then
+		for def in BGFX_CONFIG:gmatch "[^%s:]+" do
+			table.insert(defines, "BGFX_CONFIG_" .. def)
+		end
+	end
+
+	return defines
+end
+
+BGFX_CONFIG = userdefines()
+
+bgfxProject("", "StaticLib", BGFX_CONFIG)
 
 dofile(path.join(BX_DIR,   "scripts/bx.lua"))
 dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
@@ -511,7 +553,6 @@ or _OPTIONS["with-combined-examples"] then
 		, "14-shadowvolumes"
 		, "15-shadowmaps-simple"
 		, "16-shadowmaps"
-		, "17-drawstress"
 		, "18-ibl"
 		, "19-oit"
 		, "20-nanovg"
@@ -535,7 +576,13 @@ or _OPTIONS["with-combined-examples"] then
 		, "39-assao"
 		, "40-svt"
 		, "41-tess"
+		, "42-bunnylod"
 		)
+
+	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm
+--	if platform is not single-threaded then
+		exampleProject(false, "17-drawstress")
+--	end
 
 	-- C99 source doesn't compile under WinRT settings
 	if not premake.vstudio.iswinrt() then
@@ -545,7 +592,7 @@ end
 
 if _OPTIONS["with-shared-lib"] then
 	group "libs"
-	bgfxProject("-shared-lib", "SharedLib", {})
+	bgfxProject("-shared-lib", "SharedLib", BGFX_CONFIG)
 end
 
 if _OPTIONS["with-tools"] then

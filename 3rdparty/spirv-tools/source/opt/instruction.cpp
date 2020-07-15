@@ -29,7 +29,7 @@ namespace {
 // Indices used to get particular operands out of instructions using InOperand.
 const uint32_t kTypeImageDimIndex = 1;
 const uint32_t kLoadBaseIndex = 0;
-const uint32_t kVariableStorageClassIndex = 0;
+const uint32_t kPointerTypeStorageClassIndex = 0;
 const uint32_t kTypeImageSampledIndex = 5;
 
 // Constants for OpenCL.DebugInfo.100 extension instructions.
@@ -38,6 +38,10 @@ const uint32_t kExtInstInstructionInIdx = 1;
 const uint32_t kDebugScopeNumWords = 7;
 const uint32_t kDebugScopeNumWordsWithoutInlinedAt = 6;
 const uint32_t kDebugNoScopeNumWords = 5;
+
+// Number of operands of an OpBranchConditional instruction
+// with weights.
+const uint32_t kOpBranchConditionalWithWeightsNumOperands = 5;
 }  // namespace
 
 Instruction::Instruction(IRContext* c)
@@ -166,6 +170,15 @@ uint32_t Instruction::NumInOperandWords() const {
   return size;
 }
 
+bool Instruction::HasBranchWeights() const {
+  if (opcode_ == SpvOpBranchConditional &&
+      NumOperands() == kOpBranchConditionalWithWeightsNumOperands) {
+    return true;
+  }
+
+  return false;
+}
+
 void Instruction::ToBinaryWithoutAttachedDebugInsts(
     std::vector<uint32_t>* binary) const {
   const uint32_t num_words = 1 + NumOperandWords();
@@ -187,7 +200,7 @@ bool Instruction::IsReadOnlyLoad() const {
     }
 
     if (address_def->opcode() == SpvOpVariable) {
-      if (address_def->IsReadOnlyVariable()) {
+      if (address_def->IsReadOnlyPointer()) {
         return true;
       }
     }
@@ -232,11 +245,11 @@ Instruction* Instruction::GetBaseAddress() const {
   return base_inst;
 }
 
-bool Instruction::IsReadOnlyVariable() const {
+bool Instruction::IsReadOnlyPointer() const {
   if (context()->get_feature_mgr()->HasCapability(SpvCapabilityShader))
-    return IsReadOnlyVariableShaders();
+    return IsReadOnlyPointerShaders();
   else
-    return IsReadOnlyVariableKernel();
+    return IsReadOnlyPointerKernel();
 }
 
 bool Instruction::IsVulkanStorageImage() const {
@@ -244,7 +257,8 @@ bool Instruction::IsVulkanStorageImage() const {
     return false;
   }
 
-  uint32_t storage_class = GetSingleWordInOperand(kVariableStorageClassIndex);
+  uint32_t storage_class =
+      GetSingleWordInOperand(kPointerTypeStorageClassIndex);
   if (storage_class != SpvStorageClassUniformConstant) {
     return false;
   }
@@ -278,7 +292,8 @@ bool Instruction::IsVulkanSampledImage() const {
     return false;
   }
 
-  uint32_t storage_class = GetSingleWordInOperand(kVariableStorageClassIndex);
+  uint32_t storage_class =
+      GetSingleWordInOperand(kPointerTypeStorageClassIndex);
   if (storage_class != SpvStorageClassUniformConstant) {
     return false;
   }
@@ -312,7 +327,8 @@ bool Instruction::IsVulkanStorageTexelBuffer() const {
     return false;
   }
 
-  uint32_t storage_class = GetSingleWordInOperand(kVariableStorageClassIndex);
+  uint32_t storage_class =
+      GetSingleWordInOperand(kPointerTypeStorageClassIndex);
   if (storage_class != SpvStorageClassUniformConstant) {
     return false;
   }
@@ -361,7 +377,8 @@ bool Instruction::IsVulkanStorageBuffer() const {
     return false;
   }
 
-  uint32_t storage_class = GetSingleWordInOperand(kVariableStorageClassIndex);
+  uint32_t storage_class =
+      GetSingleWordInOperand(kPointerTypeStorageClassIndex);
   if (storage_class == SpvStorageClassUniform) {
     bool is_buffer_block = false;
     context()->get_decoration_mgr()->ForEachDecoration(
@@ -383,7 +400,8 @@ bool Instruction::IsVulkanUniformBuffer() const {
     return false;
   }
 
-  uint32_t storage_class = GetSingleWordInOperand(kVariableStorageClassIndex);
+  uint32_t storage_class =
+      GetSingleWordInOperand(kPointerTypeStorageClassIndex);
   if (storage_class != SpvStorageClassUniform) {
     return false;
   }
@@ -409,9 +427,18 @@ bool Instruction::IsVulkanUniformBuffer() const {
   return is_block;
 }
 
-bool Instruction::IsReadOnlyVariableShaders() const {
-  uint32_t storage_class = GetSingleWordInOperand(kVariableStorageClassIndex);
+bool Instruction::IsReadOnlyPointerShaders() const {
+  if (type_id() == 0) {
+    return false;
+  }
+
   Instruction* type_def = context()->get_def_use_mgr()->GetDef(type_id());
+  if (type_def->opcode() != SpvOpTypePointer) {
+    return false;
+  }
+
+  uint32_t storage_class =
+      type_def->GetSingleWordInOperand(kPointerTypeStorageClassIndex);
 
   switch (storage_class) {
     case SpvStorageClassUniformConstant:
@@ -439,8 +466,19 @@ bool Instruction::IsReadOnlyVariableShaders() const {
   return is_nonwritable;
 }
 
-bool Instruction::IsReadOnlyVariableKernel() const {
-  uint32_t storage_class = GetSingleWordInOperand(kVariableStorageClassIndex);
+bool Instruction::IsReadOnlyPointerKernel() const {
+  if (type_id() == 0) {
+    return false;
+  }
+
+  Instruction* type_def = context()->get_def_use_mgr()->GetDef(type_id());
+  if (type_def->opcode() != SpvOpTypePointer) {
+    return false;
+  }
+
+  uint32_t storage_class =
+      type_def->GetSingleWordInOperand(kPointerTypeStorageClassIndex);
+
   return storage_class == SpvStorageClassUniformConstant;
 }
 
@@ -585,7 +623,19 @@ bool Instruction::IsFoldableByFoldScalar() const {
     return false;
   }
   Instruction* type = context()->get_def_use_mgr()->GetDef(type_id());
-  return folder.IsFoldableType(type);
+  if (!folder.IsFoldableType(type)) {
+    return false;
+  }
+
+  // Even if the type of the instruction is foldable, its operands may not be
+  // foldable (e.g., comparisons of 64bit types).  Check that all operand types
+  // are foldable before accepting the instruction.
+  return WhileEachInOperand([&folder, this](const uint32_t* op_id) {
+    Instruction* def_inst = context()->get_def_use_mgr()->GetDef(*op_id);
+    Instruction* def_inst_type =
+        context()->get_def_use_mgr()->GetDef(def_inst->type_id());
+    return folder.IsFoldableType(def_inst_type);
+  });
 }
 
 bool Instruction::IsFloatingPointFoldingAllowed() const {

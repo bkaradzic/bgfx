@@ -468,7 +468,7 @@ namespace bgfx
 
 	const char* getName(DxbcOpcode::Enum _opcode)
 	{
-		BX_CHECK(_opcode < DxbcOpcode::Count, "Unknown opcode id %d.", _opcode);
+		BX_ASSERT(_opcode < DxbcOpcode::Count, "Unknown opcode id %d.", _opcode);
 		return s_dxbcOpcode[_opcode];
 	}
 
@@ -825,7 +825,7 @@ namespace bgfx
 			break;
 
 		default:
-			BX_CHECK(false, "sub operand addressing mode %d", _subOperand.addrMode);
+			BX_ASSERT(false, "sub operand addressing mode %d", _subOperand.addrMode);
 			break;
 		}
 
@@ -878,7 +878,7 @@ namespace bgfx
 			break;
 
 		default:
-			BX_CHECK(false, "sub operand addressing mode %d", _subOperand.addrMode);
+			BX_ASSERT(false, "sub operand addressing mode %d", _subOperand.addrMode);
 			break;
 		}
 
@@ -967,7 +967,7 @@ namespace bgfx
 				break;
 
 			default:
-				BX_CHECK(false, "operand %d addressing mode %d", ii, _operand.addrMode[ii]);
+				BX_ASSERT(false, "operand %d addressing mode %d", ii, _operand.addrMode[ii]);
 				break;
 			}
 		}
@@ -1042,7 +1042,7 @@ namespace bgfx
 				break;
 
 			default:
-				BX_CHECK(false, "operand %d addressing mode %d", ii, _operand.addrMode[ii]);
+				BX_ASSERT(false, "operand %d addressing mode %d", ii, _operand.addrMode[ii]);
 				break;
 			}
 		}
@@ -1065,7 +1065,7 @@ namespace bgfx
 		// +-------------------------------- extended
 
 		_instruction.opcode = DxbcOpcode::Enum( (token & UINT32_C(0x000007ff) )      );
-		BX_CHECK(_instruction.opcode < DxbcOpcode::Enum::Count, "unknown opcode");
+		BX_ASSERT(_instruction.opcode < DxbcOpcode::Enum::Count, "unknown opcode");
 		
 		_instruction.length =          uint8_t( (token & UINT32_C(0x7f000000) ) >> 24);
 		bool extended       =              0 != (token & UINT32_C(0x80000000) );
@@ -1299,7 +1299,7 @@ namespace bgfx
 					uint32_t num;
 					size += read(_reader, num, _err);
 
-					BX_CHECK(false, "not implemented.");
+					BX_ASSERT(false, "not implemented.");
 				}
 				break;
 
@@ -1327,7 +1327,7 @@ namespace bgfx
 			break;
 
 		default:
-			BX_CHECK(false, "Instruction %s with invalid number of operands %d (numValues %d)."
+			BX_ASSERT(false, "Instruction %s with invalid number of operands %d (numValues %d)."
 					, getName(_instruction.opcode)
 					, info.numOperands
 					, info.numValues
@@ -1914,7 +1914,7 @@ namespace bgfx
 
 			default:
 				size += chunkSize;
-				BX_CHECK(false, "UNKNOWN FOURCC %c%c%c%c %d"
+				BX_ASSERT(false, "UNKNOWN FOURCC %c%c%c%c %d"
 					, ( (char*)&fourcc)[0]
 					, ( (char*)&fourcc)[1]
 					, ( (char*)&fourcc)[2]
@@ -2001,7 +2001,7 @@ namespace bgfx
 		{
 			DxbcInstruction instruction;
 			uint32_t size = read(&reader, instruction, _err);
-			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
+			BX_ASSERT(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			bool cont = _fn(token * sizeof(uint32_t), instruction, _userData);
 			if (!cont)
@@ -2028,7 +2028,7 @@ namespace bgfx
 		{
 			DxbcInstruction instruction;
 			uint32_t size = read(&reader, instruction, _err);
-			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
+			BX_ASSERT(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			_fn(instruction, _userData);
 

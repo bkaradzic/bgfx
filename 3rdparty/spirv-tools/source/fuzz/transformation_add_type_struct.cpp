@@ -50,13 +50,10 @@ bool TransformationAddTypeStruct::IsApplicable(
 
 void TransformationAddTypeStruct::Apply(
     opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
-  opt::Instruction::OperandList in_operands;
-  for (auto member_type : message_.member_type_id()) {
-    in_operands.push_back({SPV_OPERAND_TYPE_ID, {member_type}});
-  }
-  ir_context->module()->AddType(MakeUnique<opt::Instruction>(
-      ir_context, SpvOpTypeStruct, 0, message_.fresh_id(), in_operands));
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
+  fuzzerutil::AddStructType(
+      ir_context, message_.fresh_id(),
+      std::vector<uint32_t>(message_.member_type_id().begin(),
+                            message_.member_type_id().end()));
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
   ir_context->InvalidateAnalysesExceptFor(

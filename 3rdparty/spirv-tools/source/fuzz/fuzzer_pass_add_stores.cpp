@@ -68,12 +68,11 @@ void FuzzerPassAddStores::Apply() {
                     // Not a pointer.
                     return false;
                   }
-                  if (type_inst->GetSingleWordInOperand(0) ==
-                      SpvStorageClassInput) {
-                    // Read-only: cannot store to it.
+                  if (instruction->IsReadOnlyPointer()) {
+                    // Read only: cannot store to it.
                     return false;
                   }
-                  switch (instruction->result_id()) {
+                  switch (instruction->opcode()) {
                     case SpvOpConstantNull:
                     case SpvOpUndef:
                       // Do not allow storing to a null or undefined pointer;

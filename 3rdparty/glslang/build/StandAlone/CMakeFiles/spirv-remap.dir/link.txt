@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/spirv-remap.dir/spirv-remap.cpp.o  -o spirv-remap ../glslang/libglslang.a ../SPIRV/libSPIRV.a libglslang-default-resource-limits.a ../SPIRV/libSPVRemapper.a -lpthread ../glslang/libglslang.a ../OGLCompilersDLL/libOGLCompiler.a ../glslang/OSDependent/Unix/libOSDependent.a -pthread 

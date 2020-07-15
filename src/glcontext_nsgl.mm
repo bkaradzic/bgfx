@@ -64,7 +64,7 @@ namespace bgfx { namespace gl
 		BX_UNUSED(_width, _height);
 
 		s_opengl = bx::dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL");
-		BX_CHECK(NULL != s_opengl, "OpenGL dynamic library is not found!");
+		BX_ASSERT(NULL != s_opengl, "OpenGL dynamic library is not found!");
 
 		const AutoreleasePoolHolder pool;
 		NSObject* nwh = (NSObject*)g_platformData.nwh;

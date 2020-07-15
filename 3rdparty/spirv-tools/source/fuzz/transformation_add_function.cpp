@@ -810,8 +810,10 @@ bool TransformationAddFunction::TryToClampAccessChainIndices(
             ->GetType(index_type_inst->result_id())
             ->AsInteger();
 
-    if (index_inst->opcode() != SpvOpConstant) {
-      // The index is non-constant so we need to clamp it.
+    if (index_inst->opcode() != SpvOpConstant ||
+        index_inst->GetSingleWordInOperand(0) >= bound) {
+      // The index is either non-constant or an out-of-bounds constant, so we
+      // need to clamp it.
       assert(should_be_composite_type->opcode() != SpvOpTypeStruct &&
              "Access chain indices into structures are required to be "
              "constants.");
@@ -864,21 +866,6 @@ bool TransformationAddFunction::TryToClampAccessChainIndices(
       access_chain_inst->SetInOperand(index, {select_id});
       fuzzerutil::UpdateModuleIdBound(ir_context, compare_id);
       fuzzerutil::UpdateModuleIdBound(ir_context, select_id);
-    } else {
-      // TODO(afd): At present the SPIR-V spec is not clear on whether
-      //  statically out-of-bounds indices mean that a module is invalid (so
-      //  that it should be rejected by the validator), or that such accesses
-      //  yield undefined results.  Via the following assertion, we assume that
-      //  functions added to the module do not feature statically out-of-bounds
-      //  accesses.
-      // Assert that the index is smaller (unsigned) than this value.
-      // Return false if it is not (to keep compilers happy).
-      if (index_inst->GetSingleWordInOperand(0) >= bound) {
-        assert(false &&
-               "The function has a statically out-of-bounds access; "
-               "this should not occur.");
-        return false;
-      }
     }
     should_be_composite_type =
         FollowCompositeIndex(ir_context, *should_be_composite_type, index_id);

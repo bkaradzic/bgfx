@@ -1,7 +1,7 @@
 /**
  * cgltf - a single-file glTF 2.0 parser written in C99.
  *
- * Version: 1.5
+ * Version: 1.6
  *
  * Website: https://github.com/jkuhlmann/cgltf
  *
@@ -619,8 +619,9 @@ cgltf_result cgltf_load_buffers(
 		cgltf_data* data,
 		const char* gltf_path);
 
-
 cgltf_result cgltf_load_buffer_base64(const cgltf_options* options, cgltf_size size, const char* base64, void** out_data);
+
+void cgltf_decode_uri(char* uri);
 
 cgltf_result cgltf_validate(cgltf_data* data);
 
@@ -1014,6 +1015,7 @@ static void cgltf_combine_paths(char* path, const char* base, const char* uri)
 static cgltf_result cgltf_load_buffer_file(const cgltf_options* options, cgltf_size size, const char* uri, const char* gltf_path, void** out_data)
 {
 	void* (*memory_alloc)(void*, cgltf_size) = options->memory.alloc ? options->memory.alloc : &cgltf_default_alloc;
+	void (*memory_free)(void*, void*) = options->memory.free ? options->memory.free : &cgltf_default_free;
 	cgltf_result (*file_read)(const struct cgltf_memory_options*, const struct cgltf_file_options*, const char*, cgltf_size*, void**) = options->file.read ? options->file.read : &cgltf_default_file_read;
 
 	char* path = (char*)memory_alloc(options->memory.user_data, strlen(uri) + strlen(gltf_path) + 1);
@@ -1024,16 +1026,17 @@ static cgltf_result cgltf_load_buffer_file(const cgltf_options* options, cgltf_s
 
 	cgltf_combine_paths(path, gltf_path, uri);
 
+	// after combining, the tail of the resulting path is a uri; decode_uri converts it into path
+	cgltf_decode_uri(path + strlen(path) - strlen(uri));
+
 	void* file_data = NULL;
 	cgltf_result result = file_read(&options->memory, &options->file, path, &size, &file_data);
-	if (result != cgltf_result_success)
-	{
-		return result;
-	}
 
-	*out_data = file_data;
+	memory_free(options->memory.user_data, path);
 
-	return cgltf_result_success;
+	*out_data = (result == cgltf_result_success) ? file_data : NULL;
+
+	return result;
 }
 
 cgltf_result cgltf_load_buffer_base64(const cgltf_options* options, cgltf_size size, const char* base64, void** out_data)
@@ -1081,6 +1084,45 @@ cgltf_result cgltf_load_buffer_base64(const cgltf_options* options, cgltf_size s
 	*out_data = data;
 
 	return cgltf_result_success;
+}
+
+static int cgltf_unhex(char ch)
+{
+	return
+		(unsigned)(ch - '0') < 10 ? (ch - '0') :
+		(unsigned)(ch - 'A') < 6 ? (ch - 'A') + 10 :
+		(unsigned)(ch - 'a') < 6 ? (ch - 'a') + 10 :
+		-1;
+}
+
+void cgltf_decode_uri(char* uri)
+{
+	char* write = uri;
+	char* i = uri;
+
+	while (*i)
+	{
+		if (*i == '%')
+		{
+			int ch1 = cgltf_unhex(i[1]);
+
+			if (ch1 >= 0)
+			{
+				int ch2 = cgltf_unhex(i[2]);
+
+				if (ch2 >= 0)
+				{
+					*write++ = (char)(ch1 * 16 + ch2);
+					i += 3;
+					continue;
+				}
+			}
+		}
+
+		*write++ = *i++;
+	}
+
+	*write = 0;
 }
 
 cgltf_result cgltf_load_buffers(const cgltf_options* options, cgltf_data* data, const char* gltf_path)
@@ -1477,6 +1519,16 @@ void cgltf_free(cgltf_data* data)
 			}
 
 			data->memory.free(data->memory.user_data, data->meshes[i].primitives[j].targets);
+
+			if (data->meshes[i].primitives[j].has_draco_mesh_compression)
+			{
+				for (cgltf_size k = 0; k < data->meshes[i].primitives[j].draco_mesh_compression.attributes_count; ++k)
+				{
+					data->memory.free(data->memory.user_data, data->meshes[i].primitives[j].draco_mesh_compression.attributes[k].name);
+				}
+
+				data->memory.free(data->memory.user_data, data->meshes[i].primitives[j].draco_mesh_compression.attributes);
+			}
 		}
 
 		data->memory.free(data->memory.user_data, data->meshes[i].primitives);
@@ -4710,7 +4762,8 @@ static int cgltf_fixup_pointers(cgltf_data* data)
 				}
 			}
 
-			if (data->meshes[i].primitives[j].has_draco_mesh_compression) {
+			if (data->meshes[i].primitives[j].has_draco_mesh_compression)
+			{
 				CGLTF_PTRFIXUP_REQ(data->meshes[i].primitives[j].draco_mesh_compression.buffer_view, data->buffer_views, data->buffer_views_count);
 				for (cgltf_size m = 0; m < data->meshes[i].primitives[j].draco_mesh_compression.attributes_count; ++m)
 				{

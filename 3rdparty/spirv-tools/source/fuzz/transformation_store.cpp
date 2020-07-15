@@ -50,7 +50,7 @@ bool TransformationStore::IsApplicable(
   }
 
   // The pointer must not be read only.
-  if (pointer_type->GetSingleWordInOperand(0) == SpvStorageClassInput) {
+  if (pointer->IsReadOnlyPointer()) {
     return false;
   }
 

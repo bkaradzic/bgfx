@@ -46,13 +46,9 @@ bool TransformationAddTypeVector::IsApplicable(
 
 void TransformationAddTypeVector::Apply(
     opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
-  opt::Instruction::OperandList in_operands;
-  in_operands.push_back({SPV_OPERAND_TYPE_ID, {message_.component_type_id()}});
-  in_operands.push_back(
-      {SPV_OPERAND_TYPE_LITERAL_INTEGER, {message_.component_count()}});
-  ir_context->module()->AddType(MakeUnique<opt::Instruction>(
-      ir_context, SpvOpTypeVector, 0, message_.fresh_id(), in_operands));
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
+  fuzzerutil::AddVectorType(ir_context, message_.fresh_id(),
+                            message_.component_type_id(),
+                            message_.component_count());
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
   ir_context->InvalidateAnalysesExceptFor(

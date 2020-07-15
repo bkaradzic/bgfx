@@ -347,7 +347,8 @@ public:
     void makeDiscard();
 
     // Create a global or function local or IO variable.
-    Id createVariable(StorageClass, Id type, const char* name = 0, Id initializer = NoResult);
+    Id createVariable(Decoration precision, StorageClass, Id type, const char* name = nullptr,
+        Id initializer = NoResult);
 
     // Create an intermediate with an undefined value.
     Id createUndefined(Id type);
@@ -357,7 +358,8 @@ public:
         spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // Load from an Id and return it
-    Id createLoad(Id lValue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone,
+    Id createLoad(Id lValue, spv::Decoration precision,
+        spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone,
         spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // Create an OpAccessChain instruction

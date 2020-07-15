@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(105)
+#define BGFX_API_VERSION UINT32_C(108)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -269,6 +269,7 @@
 
 #define BGFX_DEBUG_NONE                     UINT32_C(0x00000000) //!< No debug.
 #define BGFX_DEBUG_WIREFRAME                UINT32_C(0x00000001) //!< Enable wireframe for all primitives.
+
 /// Enable infinitely fast hardware test. No draw calls will be submitted to driver.
 /// It's useful when profiling to quickly assess bottleneck between CPU and GPU.
 #define BGFX_DEBUG_IFH                      UINT32_C(0x00000002)
@@ -443,7 +444,8 @@
 #define BGFX_RESET_MAXANISOTROPY            UINT32_C(0x00000100) //!< Turn on/off max anisotropy.
 #define BGFX_RESET_CAPTURE                  UINT32_C(0x00000200) //!< Begin screen capture.
 #define BGFX_RESET_FLUSH_AFTER_RENDER       UINT32_C(0x00002000) //!< Flush rendering after submitting to GPU.
-/// This flag specifies where flip occurs. Default behavior is that flip occurs
+
+/// This flag specifies where flip occurs. Default behaviour is that flip occurs
 /// before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 #define BGFX_RESET_FLIP_AFTER_RENDER        UINT32_C(0x00004000)
 #define BGFX_RESET_SRGB_BACKBUFFER          UINT32_C(0x00008000) //!< Enable sRGB backbuffer.

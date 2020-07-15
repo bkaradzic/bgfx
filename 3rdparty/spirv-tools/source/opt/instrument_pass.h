@@ -87,18 +87,7 @@ class InstrumentPass : public Pass {
       : Pass(),
         desc_set_(desc_set),
         shader_id_(shader_id),
-        validation_id_(validation_id),
-        version_(2u) {}
-  // Create instrumentation pass for |validation_id| which utilizes descriptor
-  // set |desc_set| for debug input and output buffers and writes |shader_id|
-  // into debug output records with format |version|. Deprecated.
-  InstrumentPass(uint32_t desc_set, uint32_t shader_id, uint32_t validation_id,
-                 uint32_t version)
-      : Pass(),
-        desc_set_(desc_set),
-        shader_id_(shader_id),
-        validation_id_(validation_id),
-        version_(version) {}
+        validation_id_(validation_id) {}
 
   // Initialize state for instrumentation of module.
   void InitializeInstrument();
@@ -424,9 +413,6 @@ class InstrumentPass : public Pass {
 
   // id for void type
   uint32_t void_id_;
-
-  // Record format version
-  uint32_t version_;
 
   // boolean to remember storage buffer extension
   bool storage_buffer_ext_defined_;

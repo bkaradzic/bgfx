@@ -6,10 +6,10 @@
 #ifndef BGFX_RENDERER_D3D12_H_HEADER_GUARD
 #define BGFX_RENDERER_D3D12_H_HEADER_GUARD
 
-#define USE_D3D12_DYNAMIC_LIB BX_PLATFORM_WINDOWS
+#define USE_D3D12_DYNAMIC_LIB (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
 
 #include <sal.h>
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT || BX_PLATFORM_LINUX
 #   include <d3d12.h>
 #else
 #   if !BGFX_CONFIG_DEBUG
@@ -282,14 +282,14 @@ namespace bgfx { namespace d3d12
 
 		void create(const ShaderD3D12* _vsh, const ShaderD3D12* _fsh)
 		{
-			BX_CHECK(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
+			BX_ASSERT(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
 			m_vsh = _vsh;
 			bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform));
 			m_numPredefined = _vsh->m_numPredefined;
 
 			if (NULL != _fsh)
 			{
-				BX_CHECK(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
+				BX_ASSERT(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
 				m_fsh = _fsh;
 				bx::memCopy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform));
 				m_numPredefined += _fsh->m_numPredefined;

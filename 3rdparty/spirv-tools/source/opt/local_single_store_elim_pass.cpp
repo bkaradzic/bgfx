@@ -46,11 +46,11 @@ bool LocalSingleStoreElimPass::LocalSingleStoreElim(Function* func) {
 }
 
 bool LocalSingleStoreElimPass::AllExtensionsSupported() const {
-  // If any extension not in whitelist, return false
+  // If any extension not in allowlist, return false
   for (auto& ei : get_module()->extensions()) {
     const char* extName =
         reinterpret_cast<const char*>(&ei.GetInOperand(0).words[0]);
-    if (extensions_whitelist_.find(extName) == extensions_whitelist_.end())
+    if (extensions_allowlist_.find(extName) == extensions_allowlist_.end())
       return false;
   }
   return true;
@@ -74,12 +74,12 @@ Pass::Status LocalSingleStoreElimPass::ProcessImpl() {
 LocalSingleStoreElimPass::LocalSingleStoreElimPass() = default;
 
 Pass::Status LocalSingleStoreElimPass::Process() {
-  InitExtensionWhiteList();
+  InitExtensionAllowList();
   return ProcessImpl();
 }
 
-void LocalSingleStoreElimPass::InitExtensionWhiteList() {
-  extensions_whitelist_.insert({
+void LocalSingleStoreElimPass::InitExtensionAllowList() {
+  extensions_allowlist_.insert({
       "SPV_AMD_shader_explicit_vertex_parameter",
       "SPV_AMD_shader_trinary_minmax",
       "SPV_AMD_gcn_shader",
@@ -133,7 +133,27 @@ bool LocalSingleStoreElimPass::ProcessVariable(Instruction* var_inst) {
     return false;
   }
 
-  return RewriteLoads(store_inst, users);
+  bool all_rewritten;
+  bool modified = RewriteLoads(store_inst, users, &all_rewritten);
+
+  // If all uses are rewritten and the variable has a DebugDeclare and the
+  // variable is not an aggregate, add a DebugValue after the store and remove
+  // the DebugDeclare.
+  uint32_t var_id = var_inst->result_id();
+  if (all_rewritten &&
+      context()->get_debug_info_mgr()->IsDebugDeclared(var_id)) {
+    const analysis::Type* var_type =
+        context()->get_type_mgr()->GetType(var_inst->type_id());
+    const analysis::Type* store_type = var_type->AsPointer()->pointee_type();
+    if (!(store_type->AsStruct() || store_type->AsArray())) {
+      context()->get_debug_info_mgr()->AddDebugValue(
+          store_inst, var_id, store_inst->GetSingleWordInOperand(1),
+          store_inst);
+      context()->get_debug_info_mgr()->KillDebugDeclares(var_id);
+    }
+  }
+
+  return modified;
 }
 
 Instruction* LocalSingleStoreElimPass::FindSingleStoreAndCheckUses(
@@ -172,6 +192,14 @@ Instruction* LocalSingleStoreElimPass::FindSingleStoreAndCheckUses(
       case SpvOpName:
       case SpvOpCopyObject:
         break;
+      case SpvOpExtInst: {
+        auto dbg_op = user->GetOpenCL100DebugOpcode();
+        if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
+            dbg_op == OpenCLDebugInfo100DebugValue) {
+          break;
+        }
+        return nullptr;
+      }
       default:
         if (!user->IsDecoration()) {
           // Don't know if this instruction modifies the variable.
@@ -218,7 +246,8 @@ bool LocalSingleStoreElimPass::FeedsAStore(Instruction* inst) const {
 }
 
 bool LocalSingleStoreElimPass::RewriteLoads(
-    Instruction* store_inst, const std::vector<Instruction*>& uses) {
+    Instruction* store_inst, const std::vector<Instruction*>& uses,
+    bool* all_rewritten) {
   BasicBlock* store_block = context()->get_instr_block(store_inst);
   DominatorAnalysis* dominator_analysis =
       context()->GetDominatorAnalysis(store_block->GetParent());
@@ -229,16 +258,22 @@ bool LocalSingleStoreElimPass::RewriteLoads(
   else
     stored_id = store_inst->GetSingleWordInOperand(kVariableInitIdInIdx);
 
-  std::vector<Instruction*> uses_in_store_block;
+  *all_rewritten = true;
   bool modified = false;
   for (Instruction* use : uses) {
-    if (use->opcode() == SpvOpLoad) {
-      if (dominator_analysis->Dominates(store_inst, use)) {
-        modified = true;
-        context()->KillNamesAndDecorates(use->result_id());
-        context()->ReplaceAllUsesWith(use->result_id(), stored_id);
-        context()->KillInst(use);
-      }
+    if (use->opcode() == SpvOpStore) continue;
+    auto dbg_op = use->GetOpenCL100DebugOpcode();
+    if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
+        dbg_op == OpenCLDebugInfo100DebugValue)
+      continue;
+    if (use->opcode() == SpvOpLoad &&
+        dominator_analysis->Dominates(store_inst, use)) {
+      modified = true;
+      context()->KillNamesAndDecorates(use->result_id());
+      context()->ReplaceAllUsesWith(use->result_id(), stored_id);
+      context()->KillInst(use);
+    } else {
+      *all_rewritten = false;
     }
   }
 

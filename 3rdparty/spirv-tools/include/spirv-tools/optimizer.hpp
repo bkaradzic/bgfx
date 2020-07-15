@@ -762,10 +762,9 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // |input_length_enable| controls instrumentation of runtime descriptor array
 // references, and |input_init_enable| controls instrumentation of descriptor
 // initialization checking, both of which require input buffer support.
-// |version| specifies the buffer record format.
 Optimizer::PassToken CreateInstBindlessCheckPass(
     uint32_t desc_set, uint32_t shader_id, bool input_length_enable = false,
-    bool input_init_enable = false, uint32_t version = 2);
+    bool input_init_enable = false);
 
 // Create a pass to instrument physical buffer address checking
 // This pass instruments all physical buffer address references to check that
@@ -786,10 +785,8 @@ Optimizer::PassToken CreateInstBindlessCheckPass(
 // The instrumentation will read and write buffers in debug
 // descriptor set |desc_set|. It will write |shader_id| in each output record
 // to identify the shader module which generated the record.
-// |version| specifies the output buffer record format.
 Optimizer::PassToken CreateInstBuffAddrCheckPass(uint32_t desc_set,
-                                                 uint32_t shader_id,
-                                                 uint32_t version = 2);
+                                                 uint32_t shader_id);
 
 // Create a pass to instrument OpDebugPrintf instructions.
 // This pass replaces all OpDebugPrintf instructions with instructions to write

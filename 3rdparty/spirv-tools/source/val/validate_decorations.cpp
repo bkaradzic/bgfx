@@ -1540,6 +1540,21 @@ spv_result_t CheckBlockDecoration(ValidationState_t& vstate,
   return SPV_SUCCESS;
 }
 
+spv_result_t CheckLocationDecoration(ValidationState_t& vstate,
+                                     const Instruction& inst,
+                                     const Decoration& decoration) {
+  if (inst.opcode() == SpvOpVariable) return SPV_SUCCESS;
+
+  if (decoration.struct_member_index() != Decoration::kInvalidMember &&
+      inst.opcode() == SpvOpTypeStruct) {
+    return SPV_SUCCESS;
+  }
+
+  return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
+         << "Location decoration can only be applied to a variable or member "
+            "of a structure type";
+}
+
 #define PASS_OR_BAIL_AT_LINE(X, LINE)           \
   {                                             \
     spv_result_t e##LINE = (X);                 \
@@ -1589,6 +1604,9 @@ spv_result_t CheckDecorationsFromDecoration(ValidationState_t& vstate) {
         case SpvDecorationBlock:
         case SpvDecorationBufferBlock:
           PASS_OR_BAIL(CheckBlockDecoration(vstate, *inst, decoration));
+          break;
+        case SpvDecorationLocation:
+          PASS_OR_BAIL(CheckLocationDecoration(vstate, *inst, decoration));
           break;
         default:
           break;

@@ -1,7 +1,43 @@
 Revision history for SPIRV-Tools
 
-v2020.3-dev 2020-03-26
- - Start v2020.3-dev
+v2020.4-dev 2020-05-27
+ - Start v2020.4-dev
+
+v2020.3 2020-05-27
+ - General
+   - Prevent Effcee install his things when build spirv-tools with testing enabled (#3256)
+   - Update acorn version (#3294)
+   - If SPIRV-Headers is in our tree, include it as subproject (#3299)
+   - allow cross compiling for Windows Store, UWP, etc. (#3330)
+ - Optimizer
+   - Remove deprecated interfaces from instrument passes (#3361)
+   - Preserve debug info in inline pass (#3349)
+   - Handle more cases in dead member elim (#3289)
+   - Preserve debug info in eliminate-dead-functions (#3251)
+   - Fix Struct CFG analysis for single block loop (#3293)
+   - Add tests for recently added command line option (#3297)
+   - Consider sampled images as read-only storage (#3295)
+   - Allow various validation options to be passed to spirv-opt (#3314)
+   - Add debug information analysis (#3305)
+   - Preserve debug info for wrap-opkill (#3331)
+   - refactor inlining pass (#3328)
+   - Add unrolling to performance passes (#3082)
+ - Validator
+   - Add validation support for ImageGatherBiasLodAMD (#3363)
+   - Validate ShaderCallKHR memory scope (#3332)
+   - Validate Buffer and BufferBlock apply only to struct types (#3259)
+ - Reduce
+   - increase default step limit (#3327)
+   - Remove unused uniforms and similar (#3321)
+ - Fuzz
+   - Add support for StorageBuffer (#3348)
+   - Add validator options (#3254)
+   - Limit adding of new variables to 'basic' types (#3257)
+   - Transformation to add OpConstantNull (#3273)
+   - Handling of more fuzzing opportunities (#3277, #3280, #3281, #3290, #3292)
+   - Respect rules for OpSampledImage (#3287)
+   - Do not outline regions that produce pointer outputs (#3291)
+ - Linker
 
 v2020.2 2020-03-26
  - General:

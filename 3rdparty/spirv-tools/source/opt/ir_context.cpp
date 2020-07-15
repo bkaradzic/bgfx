@@ -85,6 +85,9 @@ void IRContext::BuildInvalidAnalyses(IRContext::Analysis set) {
   if (set & kAnalysisTypes) {
     BuildTypeManager();
   }
+  if (set & kAnalysisDebugInfo) {
+    BuildDebugInfoManager();
+  }
 }
 
 void IRContext::InvalidateAnalysesExceptFor(
@@ -94,10 +97,12 @@ void IRContext::InvalidateAnalysesExceptFor(
 }
 
 void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
-  // The ConstantManager contains Type pointers. If the TypeManager goes
-  // away, the ConstantManager has to go away.
+  // The ConstantManager and DebugInfoManager contain Type pointers. If the
+  // TypeManager goes away, the ConstantManager and DebugInfoManager have to
+  // go away.
   if (analyses_to_invalidate & kAnalysisTypes) {
     analyses_to_invalidate |= kAnalysisConstants;
+    analyses_to_invalidate |= kAnalysisDebugInfo;
   }
 
   // The dominator analysis hold the psuedo entry and exit nodes from the CFG.
@@ -148,6 +153,10 @@ void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
     type_mgr_.reset(nullptr);
   }
 
+  if (analyses_to_invalidate & kAnalysisDebugInfo) {
+    debug_info_mgr_.reset(nullptr);
+  }
+
   valid_analyses_ = Analysis(valid_analyses_ & ~analyses_to_invalidate);
 }
 
@@ -170,6 +179,9 @@ Instruction* IRContext::KillInst(Instruction* inst) {
     if (inst->IsDecoration()) {
       decoration_mgr_->RemoveDecoration(inst);
     }
+  }
+  if (AreAnalysesValid(kAnalysisDebugInfo)) {
+    get_debug_info_mgr()->ClearDebugInfo(inst);
   }
   if (type_mgr_ && IsTypeInst(inst->opcode())) {
     type_mgr_->RemoveId(inst->result_id());
@@ -208,6 +220,13 @@ bool IRContext::KillDef(uint32_t id) {
     return true;
   }
   return false;
+}
+
+void IRContext::KillDebugDeclareInsts(Function* fn) {
+  fn->ForEachInst([this](Instruction* inst) {
+    if (inst->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugDeclare)
+      KillInst(inst);
+  });
 }
 
 bool IRContext::ReplaceAllUsesWith(uint32_t before, uint32_t after) {
@@ -336,6 +355,9 @@ void IRContext::ForgetUses(Instruction* inst) {
       get_decoration_mgr()->RemoveDecoration(inst);
     }
   }
+  if (AreAnalysesValid(kAnalysisDebugInfo)) {
+    get_debug_info_mgr()->ClearDebugInfo(inst);
+  }
   RemoveFromIdToName(inst);
 }
 
@@ -347,6 +369,9 @@ void IRContext::AnalyzeUses(Instruction* inst) {
     if (inst->IsDecoration()) {
       get_decoration_mgr()->AddDecoration(inst);
     }
+  }
+  if (AreAnalysesValid(kAnalysisDebugInfo)) {
+    get_debug_info_mgr()->AnalyzeDebugInst(inst);
   }
   if (id_to_name_ &&
       (inst->opcode() == SpvOpName || inst->opcode() == SpvOpMemberName)) {
@@ -373,27 +398,6 @@ void IRContext::KillNamesAndDecorates(Instruction* inst) {
   KillNamesAndDecorates(rId);
 }
 
-Instruction* IRContext::GetOpenCL100DebugInfoNone() {
-  if (debug_info_none_inst_) return debug_info_none_inst_;
-  assert(get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo() &&
-         "Module does not include debug info extension instruction.");
-
-  // Create a new DebugInfoNone.
-  std::unique_ptr<Instruction> dbg_info_none(new Instruction(
-      this, SpvOpExtInst, get_type_mgr()->GetVoidTypeId(), TakeNextId(),
-      {
-          {SPV_OPERAND_TYPE_RESULT_ID,
-           {get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo()}},
-          {SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER,
-           {static_cast<uint32_t>(OpenCLDebugInfo100DebugInfoNone)}},
-      }));
-
-  // Add to the front of |ext_inst_debuginfo_|.
-  debug_info_none_inst_ = module()->ext_inst_debuginfo_begin()->InsertBefore(
-      std::move(dbg_info_none));
-  return debug_info_none_inst_;
-}
-
 void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
   const auto opcode = inst->opcode();
   const uint32_t id = inst->result_id();
@@ -405,7 +409,9 @@ void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
         continue;
       auto& operand = it->GetOperand(kDebugFunctionOperandFunctionIndex);
       if (operand.words[0] == id) {
-        operand.words[0] = GetOpenCL100DebugInfoNone()->result_id();
+        operand.words[0] =
+            get_debug_info_mgr()->GetDebugInfoNone()->result_id();
+        get_def_use_mgr()->AnalyzeInstUse(&*it);
       }
     }
   }
@@ -418,14 +424,12 @@ void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
         continue;
       auto& operand = it->GetOperand(kDebugGlobalVariableOperandVariableIndex);
       if (operand.words[0] == id) {
-        operand.words[0] = GetOpenCL100DebugInfoNone()->result_id();
+        operand.words[0] =
+            get_debug_info_mgr()->GetDebugInfoNone()->result_id();
+        get_def_use_mgr()->AnalyzeInstUse(&*it);
       }
     }
   }
-  // Notice that we do not need anythings to do for local variables.
-  // DebugLocalVariable does not have an OpVariable operand. Instead,
-  // DebugDeclare/DebugValue has an OpVariable operand for a local
-  // variable. The function inlining pass handles it properly.
 }
 
 void IRContext::AddCombinatorsForCapability(uint32_t capability) {

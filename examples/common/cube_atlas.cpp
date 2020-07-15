@@ -85,8 +85,8 @@ RectanglePacker::RectanglePacker(uint32_t _width, uint32_t _height)
 
 void RectanglePacker::init(uint32_t _width, uint32_t _height)
 {
-	BX_CHECK(_width > 2, "_width must be > 2");
-	BX_CHECK(_height > 2, "_height must be > 2");
+	BX_ASSERT(_width > 2, "_width must be > 2");
+	BX_ASSERT(_height > 2, "_height must be > 2");
 	m_width = _width;
 	m_height = _height;
 	m_usedSpace = 0;
@@ -256,8 +256,8 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 	, m_regionCount(0)
 	, m_maxRegionCount(_maxRegionsCount)
 {
-	BX_CHECK(_textureSize >= 64 && _textureSize <= 4096, "Invalid _textureSize %d.", _textureSize);
-	BX_CHECK(_maxRegionsCount >= 64 && _maxRegionsCount <= 32000, "Invalid _maxRegionsCount %d.", _maxRegionsCount);
+	BX_ASSERT(_textureSize >= 64 && _textureSize <= 4096, "Invalid _textureSize %d.", _textureSize);
+	BX_ASSERT(_maxRegionsCount >= 64 && _maxRegionsCount <= 32000, "Invalid _maxRegionsCount %d.", _maxRegionsCount);
 
 	init();
 
@@ -285,7 +285,7 @@ Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _reg
 	, m_regionCount(_regionCount)
 	, m_maxRegionCount(_regionCount < _maxRegionsCount ? _regionCount : _maxRegionsCount)
 {
-	BX_CHECK(_regionCount <= 64 && _maxRegionsCount <= 4096, "_regionCount %d, _maxRegionsCount %d", _regionCount, _maxRegionsCount);
+	BX_ASSERT(_regionCount <= 64 && _maxRegionsCount <= 4096, "_regionCount %d, _maxRegionsCount %d", _regionCount, _maxRegionsCount);
 
 	init();
 

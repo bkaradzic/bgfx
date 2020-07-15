@@ -7,5 +7,8 @@
 
 void main()
 {
+	// Vulkan does not like shader writing to a target that is not attached
+#ifndef BGFX_SHADER_LANGUAGE_SPIRV
 	gl_FragColor = vec4_splat(0.0);
+#endif
 }

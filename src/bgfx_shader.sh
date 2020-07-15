@@ -495,8 +495,6 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 
 #	endif // BGFX_SHADER_LANGUAGE_HLSL > 3
 
-#	define SAMPLEREXTERNAL(_name, _reg) SAMPLER2D(_name, _reg)
-
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_mtx, _vec); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_vec, _mtx); }
 vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_mtx, _vec); }
@@ -556,12 +554,6 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define USAMPLER2D(_name, _reg) uniform usampler2D _name
 #	define ISAMPLER3D(_name, _reg) uniform isampler3D _name
 #	define USAMPLER3D(_name, _reg) uniform usampler3D _name
-
-#	if BGFX_SHADER_LANGUAGE_GLSL == 1
-#		define SAMPLEREXTERNAL(_name, _reg) uniform samplerExternalOES _name
-#	else
-#		define SAMPLEREXTERNAL(_name, _reg) SAMPLER2D(_name, _req)
-#	endif
 
 #	define texture2DBias(_sampler, _coord, _bias)      texture2D(_sampler, _coord, _bias)
 #	define textureCubeBias(_sampler, _coord, _bias)    textureCube(_sampler, _coord, _bias)

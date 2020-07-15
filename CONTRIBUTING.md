@@ -5,7 +5,7 @@ different platforms, writing examples, improving documentation, profiling and
 optimizing, helping newcomers, telling others about bgfx, etc.
 
 If you have just quick oneliner question it's prefereable to ask it at chat
-https://gitter.im/bkaradzic/bgfx instead opening new issue.
+https://discord.gg/9eMbv7J instead opening new issue.
 
 ## Submitting bugs
 

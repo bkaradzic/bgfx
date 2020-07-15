@@ -135,13 +135,11 @@ typedef uint64_t GLuint64;
 #		include "glcontext_html5.h"
 #	endif // BGFX_USE_EGL
 
-#	if BX_PLATFORM_EMSCRIPTEN
-#		include <emscripten/emscripten.h>
-#	endif // BX_PLATFORM_EMSCRIPTEN
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #include "renderer.h"
 #include "debug_renderdoc.h"
+#include "emscripten.h"
 
 #ifndef GL_LUMINANCE
 #	define GL_LUMINANCE 0x1909
@@ -728,90 +726,6 @@ typedef uint64_t GLuint64;
 #	define GL_COMPARE_REF_TO_TEXTURE 0x884E
 #endif // GL_COMPARE_REF_TO_TEXTURE
 
-#ifndef GL_SAMPLER_1D
-#    define GL_SAMPLER_1D 0x8B5D
-#endif // GL_SAMPLER_1D
-
-#ifndef GL_INT_SAMPLER_1D
-#    define GL_INT_SAMPLER_1D 0x8DC9
-#endif // GL_INT_SAMPLER_1D
-
-#ifndef GL_UNSIGNED_INT_SAMPLER_1D
-#    define GL_UNSIGNED_INT_SAMPLER_1D 0x8DD1
-#endif // GL_UNSIGNED_INT_SAMPLER_1D
-
-#ifndef GL_SAMPLER_1D_SHADOW
-#    define GL_SAMPLER_1D_SHADOW 0x8B61
-#endif // GL_SAMPLER_1D_SHADOW
-
-#ifndef GL_TEXTURE_1D
-#    define GL_TEXTURE_1D 0x0DE0
-#endif // GL_TEXTURE_1D
-
-#ifndef GL_SAMPLER_1D_ARRAY
-#    define GL_SAMPLER_1D_ARRAY 0x8DC0
-#endif // GL_SAMPLER_1D_ARRAY
-
-#ifndef GL_INT_SAMPLER_1D_ARRAY
-#    define GL_INT_SAMPLER_1D_ARRAY 0x8DCE
-#endif // GL_INT_SAMPLER_1D_ARRAY
-
-#ifndef GL_UNSIGNED_INT_SAMPLER_1D_ARRAY
-#    define GL_UNSIGNED_INT_SAMPLER_1D_ARRAY 0x8DD6
-#endif // GL_UNSIGNED_INT_SAMPLER_1D_ARRAY
-
-#ifndef GL_SAMPLER_1D_ARRAY_SHADOW
-#    define GL_SAMPLER_1D_ARRAY_SHADOW 0x8DC3
-#endif // GL_SAMPLER_1D_ARRAY_SHADOW
-
-#ifndef GL_TEXTURE_1D_ARRAY
-#    define GL_TEXTURE_1D_ARRAY 0x8C18
-#endif // GL_TEXTURE_1D_ARRAY
-
-#ifndef GL_SAMPLER_2D_MULTISAMPLE_ARRAY
-#    define GL_SAMPLER_2D_MULTISAMPLE_ARRAY 0x910B
-#endif // GL_SAMPLER_2D_MULTISAMPLE_ARRAY
-
-#ifndef GL_SAMPLER_CUBE_MAP_ARRAY
-#    define GL_SAMPLER_CUBE_MAP_ARRAY 0x900C
-#endif // GL_SAMPLER_CUBE_MAP_ARRAY
-
-#ifndef GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW
-#    define GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW 0x900D
-#endif // GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW
-
-#ifndef GL_INT_SAMPLER_CUBE_MAP_ARRAY
-#    define GL_INT_SAMPLER_CUBE_MAP_ARRAY 0x900E
-#endif // GL_INT_SAMPLER_CUBE_MAP_ARRAY
-
-#ifndef GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY
-#    define GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY 0x900F
-#endif // GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY
-
-#ifndef GL_SAMPLER_2D_RECT
-#    define GL_SAMPLER_2D_RECT 0x8B63
-#endif // GL_SAMPLER_2D_RECT
-
-#ifndef GL_INT_SAMPLER_2D_RECT
-#    define GL_INT_SAMPLER_2D_RECT 0x8DCD
-#endif // GL_INT_SAMPLER_2D_RECT
-
-#ifndef GL_UNSIGNED_INT_SAMPLER_2D_RECT
-#    define GL_UNSIGNED_INT_SAMPLER_2D_RECT 0x8DD5
-#endif // GL_UNSIGNED_INT_SAMPLER_2D_RECT
-
-#ifndef GL_SAMPLER_2D_RECT_SHADOW
-#    define GL_SAMPLER_2D_RECT_SHADOW 0x8B64
-#endif // GL_SAMPLER_2D_RECT_SHADOW
-
-#ifndef GL_TEXTURE_RECTANGLE
-#    define GL_TEXTURE_RECTANGLE 0x84F5
-#endif // GL_TEXTURE_RECTANGLE
-
-#ifndef GL_SAMPLER_CUBE_SHADOW
-#    define GL_SAMPLER_CUBE_SHADOW 0x8DC5
-#endif // GL_SAMPLER_CUBE_SHADOW
-
 #ifndef GL_INT_SAMPLER_2D
 #	define GL_INT_SAMPLER_2D 0x8DCA
 #endif // GL_INT_SAMPLER_2D
@@ -838,7 +752,7 @@ typedef uint64_t GLuint64;
 
 #ifndef GL_INT_SAMPLER_CUBE
 #	define GL_INT_SAMPLER_CUBE 0x8DCC
-#endif // GL_INT_SAMPLER_CUBE
+#endif // GL_INT_SAMPLER_CUBEER_3D
 
 #ifndef GL_UNSIGNED_INT_SAMPLER_CUBE
 #	define GL_UNSIGNED_INT_SAMPLER_CUBE 0x8DD4
@@ -867,18 +781,6 @@ typedef uint64_t GLuint64;
 #ifndef GL_SAMPLER_2D_ARRAY_SHADOW
 #	define GL_SAMPLER_2D_ARRAY_SHADOW 0x8DC4
 #endif // GL_SAMPLER_2D_ARRAY_SHADOW
-
-#ifndef GL_SAMPLER_EXTERNAL_OES
-#    define GL_SAMPLER_EXTERNAL_OES 0x8D66
-#endif // GL_SAMPLER_EXTERNAL_OES
-
-#ifndef GL_TEXTURE_EXTERNAL_OES
-#    define GL_TEXTURE_EXTERNAL_OES 0x8D65
-#endif // GL_TEXTURE_EXTERNAL_OES
-
-#ifndef GL_TEXTURE_BINDING_EXTERNAL_OES
-#    define GL_TEXTURE_BINDING_EXTERNAL_OES 0x8D67
-#endif // GL_TEXTURE_BINDING_EXTERNAL_OES
 
 #ifndef GL_TEXTURE_MAX_LEVEL
 #	define GL_TEXTURE_MAX_LEVEL 0x813D
@@ -1215,7 +1117,7 @@ namespace bgfx { namespace gl
 #define IGNORE_GL_ERROR_CHECK(...) BX_NOOP()
 
 #if BGFX_CONFIG_DEBUG
-#	define GL_CHECK(_call)   _GL_CHECK(BX_CHECK, _call)
+#	define GL_CHECK(_call)   _GL_CHECK(BX_ASSERT, _call)
 #	define GL_CHECK_I(_call) _GL_CHECK(IGNORE_GL_ERROR_CHECK, _call)
 #else
 #	define GL_CHECK(_call)   _call
@@ -1371,7 +1273,7 @@ namespace bgfx { namespace gl
 			m_flags = _flags;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
+			BX_ASSERT(0 != m_id, "Failed to generate buffer id.");
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id) );
 			GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER
 				, _size
@@ -1383,7 +1285,7 @@ namespace bgfx { namespace gl
 
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
-			BX_CHECK(0 != m_id, "Updating invalid index buffer.");
+			BX_ASSERT(0 != m_id, "Updating invalid index buffer.");
 
 			if (_discard)
 			{
@@ -1419,7 +1321,7 @@ namespace bgfx { namespace gl
 			m_target = drawIndirect ? GL_DRAW_INDIRECT_BUFFER : GL_ARRAY_BUFFER;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
+			BX_ASSERT(0 != m_id, "Failed to generate buffer id.");
 			GL_CHECK(glBindBuffer(m_target, m_id) );
 			GL_CHECK(glBufferData(m_target
 				, _size
@@ -1431,7 +1333,7 @@ namespace bgfx { namespace gl
 
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
-			BX_CHECK(0 != m_id, "Updating invalid vertex buffer.");
+			BX_ASSERT(0 != m_id, "Updating invalid vertex buffer.");
 
 			if (_discard)
 			{
@@ -1477,7 +1379,7 @@ namespace bgfx { namespace gl
 		void overrideInternal(uintptr_t _ptr);
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void setSamplerState(uint32_t _flags, const float _rgba[4]);
-		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], GLenum _target);
+		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4]);
 		void resolve(uint8_t _resolve) const;
 
 		bool isCubeMap() const
@@ -1551,11 +1453,6 @@ namespace bgfx { namespace gl
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
-	struct SamplerGL {
-		GLint loc;
-		GLenum target;
-	};
-
 	struct ProgramGL
 	{
 		ProgramGL()
@@ -1601,7 +1498,7 @@ namespace bgfx { namespace gl
 		GLint m_attributes[Attrib::Count]; // Sparse.
 		GLint m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
 
-		SamplerGL m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint8_t m_numSamplers;
 
 		UniformBuffer* m_constantBuffer;
@@ -1772,52 +1669,6 @@ namespace bgfx { namespace gl
 
 		Query m_query[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 		bx::RingBufferControl m_control;
-	};
-
-	class LineReader : public bx::ReaderI
-	{
-	public:
-		LineReader(const void* _str)
-			: m_str( (const char*)_str)
-			, m_pos(0)
-			, m_size(bx::strLen( (const char*)_str) )
-		{
-		}
-
-		LineReader(const bx::StringView& _str)
-			: m_str(_str.getPtr() )
-			, m_pos(0)
-			, m_size(_str.getLength() )
-		{
-		}
-
-		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) override
-		{
-			if (m_str[m_pos] == '\0'
-			||  m_pos == m_size)
-			{
-				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_EOF, "LineReader: EOF.");
-				return 0;
-			}
-
-			uint32_t pos = m_pos;
-			const char* str = &m_str[pos];
-			const char* nl = bx::strFindNl(str).getPtr();
-			pos += (uint32_t)(nl - str);
-
-			const char* eol = &m_str[pos];
-
-			uint32_t size = bx::uint32_min(uint32_t(eol - str), _size);
-
-			bx::memCopy(_data, str, size);
-			m_pos += size;
-
-			return size;
-		}
-
-		const char* m_str;
-		uint32_t m_pos;
-		uint32_t m_size;
 	};
 
 } /* namespace gl */ } // namespace bgfx
