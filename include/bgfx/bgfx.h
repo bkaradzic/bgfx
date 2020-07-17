@@ -839,7 +839,7 @@ namespace bgfx
 
 	/// Instance data buffer info.
 	///
-	/// @attention C99 equivalent is `bgfx_texture_info_t`.
+	/// @attention C99 equivalent is `bgfx_instance_data_buffer_t`.
 	///
 	struct InstanceDataBuffer
 	{
