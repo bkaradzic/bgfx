@@ -35,7 +35,8 @@ class TransformationAddParameter : public Transformation {
   // - |function_id| must be a valid result id of some non-entry-point function
   //   in the module.
   // - |initializer_id| must be a valid result id of some instruction in the
-  //   module. Instruction's type may not be OpTypeVoid.
+  //   module. Instruction's type must be supported by this transformation
+  //   as specified by IsParameterTypeSupported function.
   // - |parameter_fresh_id| and |function_type_fresh_id| are fresh ids and are
   //   not equal.
   bool IsApplicable(
@@ -51,6 +52,10 @@ class TransformationAddParameter : public Transformation {
              TransformationContext* transformation_context) const override;
 
   protobufs::Transformation ToMessage() const override;
+
+  // Returns true if the type of the parameter is supported by this
+  // transformation.
+  static bool IsParameterTypeSupported(const opt::analysis::Type& type);
 
  private:
   protobufs::TransformationAddParameter message_;

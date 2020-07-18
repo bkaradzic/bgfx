@@ -227,6 +227,11 @@ class FuzzerOptions {
     spvFuzzerOptionsSetRandomSeed(options_, seed);
   }
 
+  // See spvFuzzerOptionsSetReplayRange.
+  void set_replay_range(int32_t replay_range) {
+    spvFuzzerOptionsSetReplayRange(options_, replay_range);
+  }
+
   // See spvFuzzerOptionsSetShrinkerStepLimit.
   void set_shrinker_step_limit(uint32_t shrinker_step_limit) {
     spvFuzzerOptionsSetShrinkerStepLimit(options_, shrinker_step_limit);

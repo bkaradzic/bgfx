@@ -76,7 +76,7 @@ bool TransformationReplaceParameterWithGlobal::IsApplicable(
   const auto* param_type =
       ir_context->get_type_mgr()->GetType(param_inst->type_id());
   assert(param_type && "Parameter has invalid type");
-  if (!CanReplaceFunctionParameterType(*param_type)) {
+  if (!IsParameterTypeSupported(*param_type)) {
     return false;
   }
 
@@ -217,7 +217,7 @@ protobufs::Transformation TransformationReplaceParameterWithGlobal::ToMessage()
   return result;
 }
 
-bool TransformationReplaceParameterWithGlobal::CanReplaceFunctionParameterType(
+bool TransformationReplaceParameterWithGlobal::IsParameterTypeSupported(
     const opt::analysis::Type& type) {
   // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3403):
   //  Think about other type instructions we can add here.
@@ -230,12 +230,11 @@ bool TransformationReplaceParameterWithGlobal::CanReplaceFunctionParameterType(
     case opt::analysis::Type::kVector:
       return true;
     case opt::analysis::Type::kStruct:
-      return std::all_of(
-          type.AsStruct()->element_types().begin(),
-          type.AsStruct()->element_types().end(),
-          [](const opt::analysis::Type* element_type) {
-            return CanReplaceFunctionParameterType(*element_type);
-          });
+      return std::all_of(type.AsStruct()->element_types().begin(),
+                         type.AsStruct()->element_types().end(),
+                         [](const opt::analysis::Type* element_type) {
+                           return IsParameterTypeSupported(*element_type);
+                         });
     default:
       return false;
   }

@@ -64,6 +64,12 @@ void AddUnreachableEdgeAndUpdateOpPhis(
     bool condition_value,
     const google::protobuf::RepeatedField<google::protobuf::uint32>& phi_ids);
 
+// Returns true if and only if |loop_header_id| is a loop header and
+// |block_id| is a reachable block branching to and dominated by
+// |loop_header_id|.
+bool BlockIsBackEdge(opt::IRContext* context, uint32_t block_id,
+                     uint32_t loop_header_id);
+
 // Returns true if and only if |maybe_loop_header_id| is a loop header and
 // |block_id| is in the continue construct of the associated loop.
 bool BlockIsInLoopContinueConstruct(opt::IRContext* context, uint32_t block_id,
@@ -206,6 +212,11 @@ SpvStorageClass GetStorageClassFromPointerType(opt::IRContext* context,
 // class |storage_class|, if it exists, and 0 otherwise.
 uint32_t MaybeGetPointerType(opt::IRContext* context, uint32_t pointee_type_id,
                              SpvStorageClass storage_class);
+
+// Given an instruction |inst| and an operand absolute index |absolute_index|,
+// returns the index of the operand restricted to the input operands.
+uint32_t InOperandIndexFromOperandIndex(const opt::Instruction& inst,
+                                        uint32_t absolute_index);
 
 // Returns true if and only if |type| is one of the types for which it is legal
 // to have an OpConstantNull value.
@@ -369,38 +380,12 @@ void AddVectorType(opt::IRContext* ir_context, uint32_t result_id,
 void AddStructType(opt::IRContext* ir_context, uint32_t result_id,
                    const std::vector<uint32_t>& component_type_ids);
 
-// Returns a result id of an OpTypeInt instruction in the module. Creates a new
-// instruction with |result_id|, if no required OpTypeInt is present in the
-// module, and returns |result_id|. Updates module's id bound to accommodate for
-// |result_id|.
-uint32_t FindOrCreateIntegerType(opt::IRContext* ir_context, uint32_t result_id,
-                                 uint32_t width, bool is_signed);
-
-// Returns a result id of an OpTypeFloat instruction in the module. Creates a
-// new instruction with |result_id|, if no required OpTypeFloat is present in
-// the module, and returns |result_id|. Updates module's id bound
-// to accommodate for |result_id|.
-uint32_t FindOrCreateFloatType(opt::IRContext* ir_context, uint32_t result_id,
-                               uint32_t width);
-
-// Returns a result id of an OpTypeVector instruction in the module. Creates a
-// new instruction with |result_id|, if no required OpTypeVector is present in
-// the module, and returns |result_id|. |component_type_id| must be a valid
-// result id of an OpTypeInt, OpTypeFloat or OpTypeBool instruction in the
-// module. |element_count| must be in the range [2, 4]. Updates module's id
-// bound to accommodate for |result_id|.
-uint32_t FindOrCreateVectorType(opt::IRContext* ir_context, uint32_t result_id,
-                                uint32_t component_type_id,
-                                uint32_t element_count);
-
-// Returns a result id of an OpTypeStruct instruction in the module. Creates a
-// new instruction with |result_id|, if no required OpTypeStruct is present in
-// the module, and returns |result_id|. Updates module's id bound
-// to accommodate for |result_id|. |component_type_ids| may not contain a result
-// id of an OpTypeFunction.
-uint32_t FindOrCreateStructType(
-    opt::IRContext* ir_context, uint32_t result_id,
-    const std::vector<uint32_t>& component_type_ids);
+// Returns a bit pattern that represents a floating-point |value|.
+inline uint32_t FloatToWord(float value) {
+  uint32_t result;
+  memcpy(&result, &value, sizeof(uint32_t));
+  return result;
+}
 
 }  // namespace fuzzerutil
 

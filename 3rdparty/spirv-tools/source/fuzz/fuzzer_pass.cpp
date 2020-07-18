@@ -20,6 +20,7 @@
 #include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/transformation_add_constant_boolean.h"
 #include "source/fuzz/transformation_add_constant_composite.h"
+#include "source/fuzz/transformation_add_constant_null.h"
 #include "source/fuzz/transformation_add_constant_scalar.h"
 #include "source/fuzz/transformation_add_global_undef.h"
 #include "source/fuzz/transformation_add_type_boolean.h"
@@ -163,8 +164,9 @@ uint32_t FuzzerPass::FindOrCreateBoolType() {
 }
 
 uint32_t FuzzerPass::FindOrCreateIntegerType(uint32_t width, bool is_signed) {
-  if (auto existing_id =
-          fuzzerutil::MaybeGetIntegerType(GetIRContext(), width, is_signed)) {
+  opt::analysis::Integer int_type(width, is_signed);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&int_type);
+  if (existing_id) {
     return existing_id;
   }
   auto result = GetFuzzerContext()->GetFreshId();
@@ -173,7 +175,9 @@ uint32_t FuzzerPass::FindOrCreateIntegerType(uint32_t width, bool is_signed) {
 }
 
 uint32_t FuzzerPass::FindOrCreateFloatType(uint32_t width) {
-  if (auto existing_id = fuzzerutil::MaybeGetFloatType(GetIRContext(), width)) {
+  opt::analysis::Float float_type(width);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&float_type);
+  if (existing_id) {
     return existing_id;
   }
   auto result = GetFuzzerContext()->GetFreshId();
@@ -203,8 +207,14 @@ uint32_t FuzzerPass::FindOrCreateFunctionType(
 
 uint32_t FuzzerPass::FindOrCreateVectorType(uint32_t component_type_id,
                                             uint32_t component_count) {
-  if (auto existing_id = fuzzerutil::MaybeGetVectorType(
-          GetIRContext(), component_type_id, component_count)) {
+  assert(component_count >= 2 && component_count <= 4 &&
+         "Precondition: component count must be in range [2, 4].");
+  opt::analysis::Type* component_type =
+      GetIRContext()->get_type_mgr()->GetType(component_type_id);
+  assert(component_type && "Precondition: the component type must exist.");
+  opt::analysis::Vector vector_type(component_type, component_count);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&vector_type);
+  if (existing_id) {
     return existing_id;
   }
   auto result = GetFuzzerContext()->GetFreshId();
@@ -344,6 +354,24 @@ uint32_t FuzzerPass::FindOrCreateConstant(const std::vector<uint32_t>& words,
   return 0;
 }
 
+uint32_t FuzzerPass::FindOrCreateCompositeConstant(
+    const std::vector<uint32_t>& component_ids, uint32_t type_id) {
+  assert(type_id && "|type_id| can't be 0");
+  const auto* type_inst = GetIRContext()->get_def_use_mgr()->GetDef(type_id);
+  assert(type_inst && "|type_id| is invalid");
+
+  std::vector<const opt::analysis::Constant*> constants;
+  for (auto id : component_ids) {
+    assert(id && "Component's id can't be 0");
+    const auto* constant =
+        GetIRContext()->get_constant_mgr()->FindDeclaredConstant(id);
+    assert(constant && "Component's id is invalid");
+    constants.push_back(constant);
+  }
+
+  return FindOrCreateCompositeConstant(*type_inst, constants, component_ids);
+}
+
 uint32_t FuzzerPass::FindOrCreateGlobalUndef(uint32_t type_id) {
   for (auto& inst : GetIRContext()->types_values()) {
     if (inst.opcode() == SpvOpUndef && inst.type_id() == type_id) {
@@ -352,6 +380,27 @@ uint32_t FuzzerPass::FindOrCreateGlobalUndef(uint32_t type_id) {
   }
   auto result = GetFuzzerContext()->GetFreshId();
   ApplyTransformation(TransformationAddGlobalUndef(result, type_id));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateNullConstant(uint32_t type_id) {
+  // Find existing declaration
+  opt::analysis::NullConstant null_constant(
+      GetIRContext()->get_type_mgr()->GetType(type_id));
+  auto existing_constant =
+      GetIRContext()->get_constant_mgr()->FindConstant(&null_constant);
+
+  // Return if found
+  if (existing_constant) {
+    return GetIRContext()
+        ->get_constant_mgr()
+        ->GetDefiningInstruction(existing_constant)
+        ->result_id();
+  }
+
+  // Create new if not found
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddConstantNull(result, type_id));
   return result;
 }
 

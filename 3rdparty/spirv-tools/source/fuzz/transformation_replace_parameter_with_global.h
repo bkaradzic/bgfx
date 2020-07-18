@@ -55,7 +55,7 @@ class TransformationReplaceParameterWithGlobal : public Transformation {
 
   // Returns true if the type of the parameter is supported by this
   // transformation.
-  static bool CanReplaceFunctionParameterType(const opt::analysis::Type& type);
+  static bool IsParameterTypeSupported(const opt::analysis::Type& type);
 
  private:
   protobufs::TransformationReplaceParameterWithGlobal message_;

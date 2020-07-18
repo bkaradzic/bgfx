@@ -477,28 +477,18 @@ void FuzzerPassObfuscateConstants::Apply() {
           skipped_opcode_count.clear();
         }
 
-        switch (inst.opcode()) {
-          case SpvOpPhi:
-            // The instruction must not be an OpPhi, as we cannot insert
-            // instructions before an OpPhi.
-            // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2902):
-            //  there is scope for being less conservative.
-            break;
-          case SpvOpVariable:
-            // The instruction must not be an OpVariable, the only id that an
-            // OpVariable uses is an initializer id, which has to remain
-            // constant.
-            break;
-          default:
-            // Consider each operand of the instruction, and add a constant id
-            // use for the operand if relevant.
-            for (uint32_t in_operand_index = 0;
-                 in_operand_index < inst.NumInOperands(); in_operand_index++) {
-              MaybeAddConstantIdUse(inst, in_operand_index,
-                                    base_instruction_result_id,
-                                    skipped_opcode_count, &constant_uses);
-            }
-            break;
+        // The instruction must not be an OpVariable, the only id that an
+        // OpVariable uses is an initializer id, which has to remain
+        // constant.
+        if (inst.opcode() != SpvOpVariable) {
+          // Consider each operand of the instruction, and add a constant id
+          // use for the operand if relevant.
+          for (uint32_t in_operand_index = 0;
+               in_operand_index < inst.NumInOperands(); in_operand_index++) {
+            MaybeAddConstantIdUse(inst, in_operand_index,
+                                  base_instruction_result_id,
+                                  skipped_opcode_count, &constant_uses);
+          }
         }
 
         if (!inst.HasResultId()) {

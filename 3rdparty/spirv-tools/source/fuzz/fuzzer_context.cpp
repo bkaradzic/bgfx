@@ -43,6 +43,7 @@ const std::pair<uint32_t, uint32_t> kChanceOfAddingNoContractionDecoration = {
     5, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingParameters = {5, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingStore = {5, 50};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingSynonyms = {20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingVectorType = {20, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingVectorShuffle = {20, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAdjustingBranchWeights = {20, 90};
@@ -63,6 +64,8 @@ const std::pair<uint32_t, uint32_t> kChanceOfCopyingObject = {20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfDonatingAdditionalModule = {5, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfGoingDeeperWhenMakingAccessChain =
     {50, 95};
+const std::pair<uint32_t, uint32_t> kChanceOfInterchangingZeroLikeConstants = {
+    10, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfInvertingComparisonOperators = {
     20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfMakingDonorLivesafe = {40, 60};
@@ -160,6 +163,7 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfAdjustingBranchWeights);
   chance_of_adjusting_function_control_ =
       ChooseBetweenMinAndMax(kChanceOfAdjustingFunctionControl);
+  chance_of_adding_synonyms_ = ChooseBetweenMinAndMax(kChanceOfAddingSynonyms);
   chance_of_adjusting_loop_control_ =
       ChooseBetweenMinAndMax(kChanceOfAdjustingLoopControl);
   chance_of_adjusting_memory_operands_mask_ =
@@ -179,6 +183,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfDonatingAdditionalModule);
   chance_of_going_deeper_when_making_access_chain_ =
       ChooseBetweenMinAndMax(kChanceOfGoingDeeperWhenMakingAccessChain);
+  chance_of_interchanging_zero_like_constants_ =
+      ChooseBetweenMinAndMax(kChanceOfInterchangingZeroLikeConstants);
   chance_of_inverting_comparison_operators_ =
       ChooseBetweenMinAndMax(kChanceOfInvertingComparisonOperators);
   chance_of_making_donor_livesafe_ =
@@ -235,6 +241,22 @@ uint32_t FuzzerContext::ChooseBetweenMinAndMax(
   assert(min_max.first <= min_max.second);
   return min_max.first +
          random_generator_->RandomUint32(min_max.second - min_max.first + 1);
+}
+
+protobufs::TransformationAddSynonym::SynonymType
+FuzzerContext::GetRandomSynonymType() {
+  // value_count method is guaranteed to return a value greater than 0.
+  auto result_index = ChooseBetweenMinAndMax(
+      {0, static_cast<uint32_t>(
+              protobufs::TransformationAddSynonym::SynonymType_descriptor()
+                  ->value_count() -
+              1)});
+  auto result = protobufs::TransformationAddSynonym::SynonymType_descriptor()
+                    ->value(result_index)
+                    ->number();
+  assert(protobufs::TransformationAddSynonym::SynonymType_IsValid(result) &&
+         "|result| is not a value of SynonymType");
+  return static_cast<protobufs::TransformationAddSynonym::SynonymType>(result);
 }
 
 }  // namespace fuzz

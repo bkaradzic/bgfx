@@ -375,20 +375,17 @@ bool DebugInfoManager::IsDebugDeclared(uint32_t variable_id) {
 }
 
 void DebugInfoManager::KillDebugDeclares(uint32_t variable_id) {
-  bool done = false;
-  while (!done) {
-    Instruction* kill_inst = nullptr;
-    auto dbg_decl_itr = var_id_to_dbg_decl_.find(variable_id);
-    if (dbg_decl_itr != var_id_to_dbg_decl_.end()) {
-      for (auto dbg_decl : dbg_decl_itr->second) {
-        kill_inst = dbg_decl;
-        break;
-      }
+  auto dbg_decl_itr = var_id_to_dbg_decl_.find(variable_id);
+  if (dbg_decl_itr != var_id_to_dbg_decl_.end()) {
+    // We intentionally copy the list of DebugDeclare instructions because
+    // context()->KillInst(dbg_decl) will update |var_id_to_dbg_decl_|. If we
+    // directly use |dbg_decl_itr->second|, it accesses a dangling pointer.
+    auto copy_dbg_decls = dbg_decl_itr->second;
+
+    for (auto* dbg_decl : copy_dbg_decls) {
+      context()->KillInst(dbg_decl);
     }
-    if (kill_inst)
-      context()->KillInst(kill_inst);
-    else
-      done = true;
+    var_id_to_dbg_decl_.erase(dbg_decl_itr);
   }
 }
 

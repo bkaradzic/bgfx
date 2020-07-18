@@ -94,6 +94,18 @@ bool TransformationInvertComparisonOperator::IsInversionSupported(
     case SpvOpULessThanEqual:
     case SpvOpIEqual:
     case SpvOpINotEqual:
+    case SpvOpFOrdEqual:
+    case SpvOpFUnordEqual:
+    case SpvOpFOrdNotEqual:
+    case SpvOpFUnordNotEqual:
+    case SpvOpFOrdLessThan:
+    case SpvOpFUnordLessThan:
+    case SpvOpFOrdLessThanEqual:
+    case SpvOpFUnordLessThanEqual:
+    case SpvOpFOrdGreaterThan:
+    case SpvOpFUnordGreaterThan:
+    case SpvOpFOrdGreaterThanEqual:
+    case SpvOpFUnordGreaterThanEqual:
       return true;
     default:
       return false;
@@ -124,6 +136,30 @@ SpvOp TransformationInvertComparisonOperator::InvertOpcode(SpvOp opcode) {
       return SpvOpINotEqual;
     case SpvOpINotEqual:
       return SpvOpIEqual;
+    case SpvOpFOrdEqual:
+      return SpvOpFUnordNotEqual;
+    case SpvOpFUnordEqual:
+      return SpvOpFOrdNotEqual;
+    case SpvOpFOrdNotEqual:
+      return SpvOpFUnordEqual;
+    case SpvOpFUnordNotEqual:
+      return SpvOpFOrdEqual;
+    case SpvOpFOrdLessThan:
+      return SpvOpFUnordGreaterThanEqual;
+    case SpvOpFUnordLessThan:
+      return SpvOpFOrdGreaterThanEqual;
+    case SpvOpFOrdLessThanEqual:
+      return SpvOpFUnordGreaterThan;
+    case SpvOpFUnordLessThanEqual:
+      return SpvOpFOrdGreaterThan;
+    case SpvOpFOrdGreaterThan:
+      return SpvOpFUnordLessThanEqual;
+    case SpvOpFUnordGreaterThan:
+      return SpvOpFOrdLessThanEqual;
+    case SpvOpFOrdGreaterThanEqual:
+      return SpvOpFUnordLessThan;
+    case SpvOpFUnordGreaterThanEqual:
+      return SpvOpFOrdLessThan;
     default:
       // The program will fail in the debug mode because of the assertion
       // at the beginning of the function.

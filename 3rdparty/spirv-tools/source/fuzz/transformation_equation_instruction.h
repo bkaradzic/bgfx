@@ -63,11 +63,9 @@ class TransformationEquationInstruction : public Transformation {
   protobufs::Transformation ToMessage() const override;
 
  private:
-  // A helper that, in one fell swoop, checks that |message_.opcode| and the ids
-  // in |message_.in_operand_id| are compatible, and that the module contains
-  // an appropriate result type id.  If all is well, the result type id is
-  // returned.  Otherwise, 0 is returned.
-  uint32_t MaybeGetResultType(opt::IRContext* ir_context) const;
+  // Returns type id for the equation instruction. Returns 0 if result type does
+  // not exist.
+  uint32_t MaybeGetResultTypeId(opt::IRContext* ir_context) const;
 
   protobufs::TransformationEquationInstruction message_;
 };

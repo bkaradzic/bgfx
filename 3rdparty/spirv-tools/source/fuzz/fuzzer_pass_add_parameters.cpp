@@ -32,7 +32,16 @@ FuzzerPassAddParameters::FuzzerPassAddParameters(
 FuzzerPassAddParameters::~FuzzerPassAddParameters() = default;
 
 void FuzzerPassAddParameters::Apply() {
-  const auto& type_candidates = ComputeTypeCandidates();
+  // Compute type candidates for the new parameter.
+  std::vector<uint32_t> type_candidates;
+  for (const auto& type_inst : GetIRContext()->module()->GetTypes()) {
+    const auto* type =
+        GetIRContext()->get_type_mgr()->GetType(type_inst->result_id());
+    assert(type && "Type instruction is not registered in the type manager");
+    if (TransformationAddParameter::IsParameterTypeSupported(*type)) {
+      type_candidates.push_back(type_inst->result_id());
+    }
+  }
 
   if (type_candidates.empty()) {
     // The module contains no suitable types to use in new parameters.
@@ -69,32 +78,6 @@ void FuzzerPassAddParameters::Apply() {
           GetFuzzerContext()->GetFreshId()));
     }
   }
-}
-
-std::vector<uint32_t> FuzzerPassAddParameters::ComputeTypeCandidates() const {
-  std::vector<uint32_t> result;
-
-  for (const auto* type_inst : GetIRContext()->module()->GetTypes()) {
-    // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3403):
-    //  the number of types we support here is limited by the number of types
-    //  supported by |FindOrCreateZeroConstant|.
-    switch (type_inst->opcode()) {
-      case SpvOpTypeBool:
-      case SpvOpTypeInt:
-      case SpvOpTypeFloat:
-      case SpvOpTypeArray:
-      case SpvOpTypeMatrix:
-      case SpvOpTypeVector:
-      case SpvOpTypeStruct: {
-        result.push_back(type_inst->result_id());
-      } break;
-      default:
-        // Ignore other types.
-        break;
-    }
-  }
-
-  return result;
 }
 
 uint32_t FuzzerPassAddParameters::GetNumberOfParameters(

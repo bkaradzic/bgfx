@@ -37,10 +37,6 @@ class FuzzerPassAddParameters : public FuzzerPass {
   void Apply() override;
 
  private:
-  // Uses types, defined in the module, to compute a vector of their ids, which
-  // will be used as type ids of new parameters.
-  std::vector<uint32_t> ComputeTypeCandidates() const;
-
   // Returns number of parameters of |function|.
   uint32_t GetNumberOfParameters(const opt::Function& function) const;
 };

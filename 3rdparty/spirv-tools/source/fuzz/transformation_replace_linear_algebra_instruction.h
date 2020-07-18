@@ -68,6 +68,10 @@ class TransformationReplaceLinearAlgebraInstruction : public Transformation {
   void ReplaceOpMatrixTimesVector(opt::IRContext* ir_context,
                                   opt::Instruction* instruction) const;
 
+  // Replaces an OpMatrixTimesMatrix instruction.
+  void ReplaceOpMatrixTimesMatrix(opt::IRContext* ir_context,
+                                  opt::Instruction* instruction) const;
+
   // Replaces an OpDot instruction.
   void ReplaceOpDot(opt::IRContext* ir_context,
                     opt::Instruction* instruction) const;

@@ -89,11 +89,7 @@ void FuzzerPassOutlineFunctions::Apply() {
         /*new_callee_result_id*/ GetFuzzerContext()->GetFreshId(),
         /*input_id_to_fresh_id*/ std::move(input_id_to_fresh_id),
         /*output_id_to_fresh_id*/ std::move(output_id_to_fresh_id));
-    if (transformation.IsApplicable(GetIRContext(),
-                                    *GetTransformationContext())) {
-      transformation.Apply(GetIRContext(), GetTransformationContext());
-      *GetTransformations()->add_transformation() = transformation.ToMessage();
-    }
+    MaybeApplyTransformation(transformation);
   }
 }
 

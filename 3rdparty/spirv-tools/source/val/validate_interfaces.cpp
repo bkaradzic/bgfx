@@ -208,8 +208,8 @@ uint32_t NumConsumedComponents(ValidationState_t& _, const Instruction* type) {
 // 4 * location + component.
 spv_result_t GetLocationsForVariable(
     ValidationState_t& _, const Instruction* entry_point,
-    const Instruction* variable, std::vector<bool>* locations,
-    std::vector<bool>* output_index1_locations) {
+    const Instruction* variable, std::unordered_set<uint32_t>* locations,
+    std::unordered_set<uint32_t>* output_index1_locations) {
   const bool is_fragment = entry_point->GetOperandAs<SpvExecutionModel>(0) ==
                            SpvExecutionModelFragment;
   const bool is_output =
@@ -356,17 +356,13 @@ spv_result_t GetLocationsForVariable(
       auto locs = locations;
       if (has_index && index == 1) locs = output_index1_locations;
 
-      if (end > locs->size()) {
-        locs->resize(end, false);
-      }
       for (uint32_t i = start; i < end; ++i) {
-        if (locs->at(i)) {
+        if (!locs->insert(i).second) {
           return _.diag(SPV_ERROR_INVALID_DATA, entry_point)
                  << "Entry-point has conflicting " << storage_class
                  << " location assignment at location " << i / 4
                  << ", component " << i % 4;
         }
-        (*locs)[i] = true;
       }
     }
   } else {
@@ -425,17 +421,13 @@ spv_result_t GetLocationsForVariable(
         start += component;
         end = location * 4 + component + num_components;
       }
-      if (end > locations->size()) {
-        locations->resize(end, false);
-      }
       for (uint32_t l = start; l < end; ++l) {
-        if (locations->at(l)) {
+        if (!locations->insert(l).second) {
           return _.diag(SPV_ERROR_INVALID_DATA, entry_point)
                  << "Entry-point has conflicting " << storage_class
                  << " location assignment at location " << l / 4
                  << ", component " << l % 4;
         }
-        (*locations)[l] = true;
       }
     }
   }
@@ -445,10 +437,10 @@ spv_result_t GetLocationsForVariable(
 
 spv_result_t ValidateLocations(ValidationState_t& _,
                                const Instruction* entry_point) {
-  // Reserve space for 16 locations with 4 components each.
-  std::vector<bool> input_locations(16 * 4, false);
-  std::vector<bool> output_locations_index0(16 * 4, false);
-  std::vector<bool> output_locations_index1(16 * 4, false);
+  // Locations are stored as a combined location and component values.
+  std::unordered_set<uint32_t> input_locations;
+  std::unordered_set<uint32_t> output_locations_index0;
+  std::unordered_set<uint32_t> output_locations_index1;
   for (uint32_t i = 3; i < entry_point->operands().size(); ++i) {
     auto interface_id = entry_point->GetOperandAs<uint32_t>(i);
     auto interface_var = _.FindDef(interface_id);

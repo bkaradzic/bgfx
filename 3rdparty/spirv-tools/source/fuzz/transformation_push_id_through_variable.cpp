@@ -127,22 +127,20 @@ void TransformationPushIdThroughVariable::Apply(
                                  message_.initializer_id());
   }
 
-  // Stores value id to variable id.
-  FindInstruction(message_.instruction_descriptor(), ir_context)
-      ->InsertBefore(MakeUnique<opt::Instruction>(
-          ir_context, SpvOpStore, 0, 0,
-          opt::Instruction::OperandList(
-              {{SPV_OPERAND_TYPE_ID, {message_.variable_id()}},
-               {SPV_OPERAND_TYPE_ID, {message_.value_id()}}})));
-
-  // Loads variable id to value synonym id.
+  // First, insert the OpLoad instruction before |instruction_descriptor| and
+  // then insert the OpStore instruction before the OpLoad instruction.
   fuzzerutil::UpdateModuleIdBound(ir_context, message_.value_synonym_id());
   FindInstruction(message_.instruction_descriptor(), ir_context)
       ->InsertBefore(MakeUnique<opt::Instruction>(
           ir_context, SpvOpLoad, value_instruction->type_id(),
           message_.value_synonym_id(),
           opt::Instruction::OperandList(
-              {{SPV_OPERAND_TYPE_ID, {message_.variable_id()}}})));
+              {{SPV_OPERAND_TYPE_ID, {message_.variable_id()}}})))
+      ->InsertBefore(MakeUnique<opt::Instruction>(
+          ir_context, SpvOpStore, 0, 0,
+          opt::Instruction::OperandList(
+              {{SPV_OPERAND_TYPE_ID, {message_.variable_id()}},
+               {SPV_OPERAND_TYPE_ID, {message_.value_id()}}})));
 
   ir_context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
 

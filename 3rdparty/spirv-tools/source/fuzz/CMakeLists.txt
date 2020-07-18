@@ -47,6 +47,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_function_calls.h
         fuzzer_pass_add_global_variables.h
         fuzzer_pass_add_image_sample_unused_components.h
+        fuzzer_pass_add_synonyms.h
         fuzzer_pass_add_loads.h
         fuzzer_pass_add_local_variables.h
         fuzzer_pass_add_no_contraction_decorations.h
@@ -63,6 +64,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_copy_objects.h
         fuzzer_pass_donate_modules.h
         fuzzer_pass_invert_comparison_operators.h
+        fuzzer_pass_interchange_zero_like_constants.h
         fuzzer_pass_merge_blocks.h
         fuzzer_pass_obfuscate_constants.h
         fuzzer_pass_outline_functions.h
@@ -103,6 +105,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_no_contraction_decoration.h
         transformation_add_parameter.h
         transformation_add_spec_constant_op.h
+        transformation_add_synonym.h
         transformation_add_type_array.h
         transformation_add_type_boolean.h
         transformation_add_type_float.h
@@ -117,7 +120,6 @@ if(SPIRV_BUILD_FUZZER)
         transformation_composite_extract.h
         transformation_compute_data_synonym_fact_closure.h
         transformation_context.h
-        transformation_copy_object.h
         transformation_equation_instruction.h
         transformation_function_call.h
         transformation_invert_comparison_operator.h
@@ -164,6 +166,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_function_calls.cpp
         fuzzer_pass_add_global_variables.cpp
         fuzzer_pass_add_image_sample_unused_components.cpp
+        fuzzer_pass_add_synonyms.cpp
         fuzzer_pass_add_loads.cpp
         fuzzer_pass_add_local_variables.cpp
         fuzzer_pass_add_no_contraction_decorations.cpp
@@ -180,6 +183,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_copy_objects.cpp
         fuzzer_pass_donate_modules.cpp
         fuzzer_pass_invert_comparison_operators.cpp
+        fuzzer_pass_interchange_zero_like_constants.cpp
         fuzzer_pass_merge_blocks.cpp
         fuzzer_pass_obfuscate_constants.cpp
         fuzzer_pass_outline_functions.cpp
@@ -219,6 +223,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_no_contraction_decoration.cpp
         transformation_add_parameter.cpp
         transformation_add_spec_constant_op.cpp
+        transformation_add_synonym.cpp
         transformation_add_type_array.cpp
         transformation_add_type_boolean.cpp
         transformation_add_type_float.cpp
@@ -233,7 +238,6 @@ if(SPIRV_BUILD_FUZZER)
         transformation_composite_extract.cpp
         transformation_compute_data_synonym_fact_closure.cpp
         transformation_context.cpp
-        transformation_copy_object.cpp
         transformation_equation_instruction.cpp
         transformation_function_call.cpp
         transformation_invert_comparison_operator.cpp

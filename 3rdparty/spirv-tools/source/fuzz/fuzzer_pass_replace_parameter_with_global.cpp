@@ -58,7 +58,7 @@ void FuzzerPassReplaceParameterWithGlobal::Apply() {
                                param->type_id());
                        assert(param_type && "Parameter has invalid type");
                        return TransformationReplaceParameterWithGlobal::
-                           CanReplaceFunctionParameterType(*param_type);
+                           IsParameterTypeSupported(*param_type);
                      })) {
       continue;
     }
@@ -71,8 +71,9 @@ void FuzzerPassReplaceParameterWithGlobal::Apply() {
       param_type =
           GetIRContext()->get_type_mgr()->GetType(replaced_param->type_id());
       assert(param_type && "Parameter has invalid type");
-    } while (!TransformationReplaceParameterWithGlobal::
-                 CanReplaceFunctionParameterType(*param_type));
+    } while (
+        !TransformationReplaceParameterWithGlobal::IsParameterTypeSupported(
+            *param_type));
 
     assert(replaced_param && "Unable to find a parameter to replace");
 

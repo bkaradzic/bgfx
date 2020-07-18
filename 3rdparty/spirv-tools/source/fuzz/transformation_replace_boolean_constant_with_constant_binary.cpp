@@ -243,22 +243,15 @@ bool TransformationReplaceBooleanConstantWithConstantBinary::IsApplicable(
     return false;
   }
 
-  switch (instruction->opcode()) {
-    case SpvOpPhi:
-      // The instruction must not be an OpPhi, as we cannot insert a binary
-      // operator instruction before an OpPhi.
-      // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2902): there is
-      //  scope for being less conservative.
-      return false;
-    case SpvOpVariable:
-      // The instruction must not be an OpVariable, because (a) we cannot insert
-      // a binary operator before an OpVariable, but in any case (b) the
-      // constant we would be replacing is the initializer constant of the
-      // OpVariable, and this cannot be the result of a binary operation.
-      return false;
-    default:
-      return true;
+  // The instruction must not be an OpVariable, because (a) we cannot insert
+  // a binary operator before an OpVariable, but in any case (b) the
+  // constant we would be replacing is the initializer constant of the
+  // OpVariable, and this cannot be the result of a binary operation.
+  if (instruction->opcode() == SpvOpVariable) {
+    return false;
   }
+
+  return true;
 }
 
 void TransformationReplaceBooleanConstantWithConstantBinary::Apply(
@@ -281,11 +274,22 @@ TransformationReplaceBooleanConstantWithConstantBinary::ApplyWithResult(
   opt::Instruction* result = binary_instruction.get();
   auto instruction_containing_constant_use =
       FindInstructionContainingUse(message_.id_use_descriptor(), ir_context);
+  auto instruction_before_which_to_insert = instruction_containing_constant_use;
+
+  // If |instruction_before_which_to_insert| is an OpPhi instruction,
+  // then |binary_instruction| will be inserted into the parent block associated
+  // with the OpPhi variable operand.
+  if (instruction_containing_constant_use->opcode() == SpvOpPhi) {
+    instruction_before_which_to_insert =
+        ir_context->cfg()
+            ->block(instruction_containing_constant_use->GetSingleWordInOperand(
+                message_.id_use_descriptor().in_operand_index() + 1))
+            ->terminator();
+  }
 
   // We want to insert the new instruction before the instruction that contains
   // the use of the boolean, but we need to go backwards one more instruction if
   // the using instruction is preceded by a merge instruction.
-  auto instruction_before_which_to_insert = instruction_containing_constant_use;
   {
     opt::Instruction* previous_node =
         instruction_before_which_to_insert->PreviousNode();
@@ -294,6 +298,7 @@ TransformationReplaceBooleanConstantWithConstantBinary::ApplyWithResult(
       instruction_before_which_to_insert = previous_node;
     }
   }
+
   instruction_before_which_to_insert->InsertBefore(
       std::move(binary_instruction));
   instruction_containing_constant_use->SetInOperand(
