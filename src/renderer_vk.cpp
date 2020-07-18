@@ -1131,6 +1131,7 @@ VK_IMPORT_DEVICE
 		{
 			VK_CHECK(vkDeviceWaitIdle(m_device) );
 			vkFreeMemory(m_device, m_backBufferDepthStencilMemory, m_allocatorCb);
+			m_backBufferDepthStencilMemory = VK_NULL_HANDLE;
 			vkDestroy(m_backBufferDepthStencilImageView);
 			vkDestroy(m_backBufferDepthStencilImage);
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
@@ -2937,6 +2938,12 @@ VK_IMPORT_DEVICE
 				||  formatChanged
 				||  m_needToRefreshSwapchain)
 				{
+					for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
+					{
+						vkDestroy(m_presentDone[ii]);
+						m_presentDone[ii] = VK_NULL_HANDLE;
+					}
+
 					VK_CHECK(vkDeviceWaitIdle(m_device) );
 					releaseSwapchainFramebuffer();
 					releaseSwapchainRenderPass();
@@ -2970,9 +2977,28 @@ VK_IMPORT_DEVICE
 						, surfaceCapabilities.maxImageExtent.height
 						);
 
+					// Prevent validation error when minimizing a window
+					if (m_sci.imageExtent.width == 0 || m_sci.imageExtent.height == 0)
+					{
+						m_resolution.width = 0;
+						m_resolution.height = 0;
+						return;
+					}
+
 					VK_CHECK(createSwapchain() );
 					VK_CHECK(createSwapchainRenderPass() );
 					VK_CHECK(createSwapchainFramebuffer() );
+
+					VkSemaphoreCreateInfo sci;
+					sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+					sci.pNext = NULL;
+					sci.flags = 0;
+
+					for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+					{
+						VK_CHECK(vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_presentDone[ii]));
+					}
+
 					initSwapchainImageLayout();
 
 					BX_TRACE("Swapchain (%s): %dx%d%s"
@@ -5845,6 +5871,9 @@ VK_DESTROY
 		m_commandBuffer = VK_NULL_HANDLE;
 
 		updateResolution(_render->m_resolution);
+
+		if (m_swapchain == VK_NULL_HANDLE)
+			return;
 
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
