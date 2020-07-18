@@ -248,6 +248,13 @@ public:
         { return module.getInstruction(resultId)->getImmediateOperand(0); }
     StorageClass getStorageClass(Id resultId) const { return getTypeStorageClass(getTypeId(resultId)); }
 
+    bool isVariableOpCode(Op opcode) const { return opcode == OpVariable; }
+    bool isVariable(Id resultId) const { return isVariableOpCode(getOpCode(resultId)); }
+    bool isGlobalStorage(Id resultId) const { return getStorageClass(resultId) != StorageClassFunction; }
+    bool isGlobalVariable(Id resultId) const { return isVariable(resultId) && isGlobalStorage(resultId); }
+    // See if a resultId is valid for use as an initializer.
+    bool isValidInitializer(Id resultId) const { return isConstant(resultId) || isGlobalVariable(resultId); }
+
     int getScalarTypeWidth(Id typeId) const
     {
         Id scalarTypeId = getScalarTypeId(typeId);
