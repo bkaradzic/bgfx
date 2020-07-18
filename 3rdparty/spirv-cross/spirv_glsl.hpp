@@ -129,7 +129,7 @@ public:
 			Highp
 		};
 
-		struct
+		struct VertexOptions
 		{
 			// GLSL: In vertex shaders, rewrite [0, w] depth (Vulkan/D3D style) to [-w, w] depth (GL style).
 			// MSL: In vertex shaders, rewrite [-w, w] depth (GL style) to [0, w] depth.
@@ -146,7 +146,7 @@ public:
 			bool support_nonzero_base_instance = true;
 		} vertex;
 
-		struct
+		struct FragmentOptions
 		{
 			// Add precision mediump float in ES targets when emitting GLES source.
 			// Add precision highp int in ES targets when emitting GLES source.
