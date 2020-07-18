@@ -2898,7 +2898,7 @@ VK_IMPORT_DEVICE
 			return idx;
 		}
 
-		void updateResolution(const Resolution& _resolution)
+		bool updateResolution(const Resolution& _resolution)
 		{
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
 			{
@@ -2982,7 +2982,7 @@ VK_IMPORT_DEVICE
 					{
 						m_resolution.width = 0;
 						m_resolution.height = 0;
-						return;
+						return true;
 					}
 
 					VK_CHECK(createSwapchain() );
@@ -3009,6 +3009,13 @@ VK_IMPORT_DEVICE
 						);
 				}
 			}
+
+			if (m_needToRefreshSwapchain)
+			{
+				return true;
+			}
+
+			return false;
 		}
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
@@ -5870,7 +5877,10 @@ VK_DESTROY
 		submitCommandAndWait(m_commandBuffer);
 		m_commandBuffer = VK_NULL_HANDLE;
 
-		updateResolution(_render->m_resolution);
+		if (updateResolution(_render->m_resolution) )
+		{
+			return;
+		}
 
 		if (m_swapchain == VK_NULL_HANDLE)
 			return;
