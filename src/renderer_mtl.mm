@@ -1252,6 +1252,12 @@ namespace bgfx { namespace mtl
 				MTLPixelFormat prevMetalLayerPixelFormat = m_mainFrameBuffer.m_swapChain->m_metalLayer.pixelFormat;
 
 				m_resolution = _resolution;
+
+				if (m_resolution.reset & BGFX_RESET_INTERNAL_FORCE
+				&& m_mainFrameBuffer.m_swapChain->m_nwh != g_platformData.nwh)
+				{
+					m_mainFrameBuffer.m_swapChain->init(g_platformData.nwh);
+				}
 				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
 				m_mainFrameBuffer.m_swapChain->resize(m_mainFrameBuffer, _resolution.width, _resolution.height, _resolution.reset);
@@ -3035,6 +3041,10 @@ namespace bgfx { namespace mtl
 
 	void SwapChainMtl::init(void* _nwh)
 	{
+		if (m_metalLayer)
+		{
+			release(m_metalLayer);
+		}
 		if (NULL != NSClassFromString(@"MTKView") )
 		{
 			MTKView *view = (MTKView *)_nwh;
@@ -3131,7 +3141,7 @@ namespace bgfx { namespace mtl
 		m_metalLayer.device      = s_renderMtl->m_device;
 		m_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
 		m_metalLayer.magnificationFilter = kCAFilterNearest;
-
+		m_nwh = _nwh;
 		retain(m_metalLayer);
 	}
 
