@@ -650,6 +650,42 @@ bool spvOpcodeIsCommutativeBinaryOperator(SpvOp opcode) {
   }
 }
 
+bool spvOpcodeIsLinearAlgebra(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpTranspose:
+    case SpvOpVectorTimesScalar:
+    case SpvOpMatrixTimesScalar:
+    case SpvOpVectorTimesMatrix:
+    case SpvOpMatrixTimesVector:
+    case SpvOpMatrixTimesMatrix:
+    case SpvOpOuterProduct:
+    case SpvOpDot:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool spvOpcodeIsImageSample(const SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpImageSampleImplicitLod:
+    case SpvOpImageSampleExplicitLod:
+    case SpvOpImageSampleDrefImplicitLod:
+    case SpvOpImageSampleDrefExplicitLod:
+    case SpvOpImageSampleProjImplicitLod:
+    case SpvOpImageSampleProjExplicitLod:
+    case SpvOpImageSampleProjDrefImplicitLod:
+    case SpvOpImageSampleProjDrefExplicitLod:
+    case SpvOpImageSparseSampleImplicitLod:
+    case SpvOpImageSparseSampleExplicitLod:
+    case SpvOpImageSparseSampleDrefImplicitLod:
+    case SpvOpImageSparseSampleDrefExplicitLod:
+      return true;
+    default:
+      return false;
+  }
+}
+
 std::vector<uint32_t> spvOpcodeMemorySemanticsOperandIndices(SpvOp opcode) {
   switch (opcode) {
     case SpvOpMemoryBarrier:

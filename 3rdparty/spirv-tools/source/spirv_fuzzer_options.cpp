@@ -22,6 +22,7 @@ const uint32_t kDefaultStepLimit = 250;
 spv_fuzzer_options_t::spv_fuzzer_options_t()
     : has_random_seed(false),
       random_seed(0),
+      replay_range(0),
       replay_validation_enabled(false),
       shrinker_step_limit(kDefaultStepLimit),
       fuzzer_pass_validation_enabled(false) {}
@@ -43,6 +44,11 @@ SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetRandomSeed(
     spv_fuzzer_options options, uint32_t seed) {
   options->has_random_seed = true;
   options->random_seed = seed;
+}
+
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetReplayRange(
+    spv_fuzzer_options options, int32_t replay_range) {
+  options->replay_range = replay_range;
 }
 
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetShrinkerStepLimit(

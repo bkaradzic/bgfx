@@ -368,6 +368,10 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
   // Catch undefined forward references before performing further checks.
   if (auto error = ValidateForwardDecls(*vstate)) return error;
 
+  // Calculate reachability after all the blocks are parsed, but early that it
+  // can be relied on in subsequent pases.
+  ReachabilityPass(*vstate);
+
   // ID usage needs be handled in its own iteration of the instructions,
   // between the two others. It depends on the first loop to have been
   // finished, so that all instructions have been registered. And the following

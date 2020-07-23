@@ -70,18 +70,10 @@ bool TransformationAddLocalVariable::IsApplicable(
 void TransformationAddLocalVariable::Apply(
     opt::IRContext* ir_context,
     TransformationContext* transformation_context) const {
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
-  fuzzerutil::FindFunction(ir_context, message_.function_id())
-      ->begin()
-      ->begin()
-      ->InsertBefore(MakeUnique<opt::Instruction>(
-          ir_context, SpvOpVariable, message_.type_id(), message_.fresh_id(),
-          opt::Instruction::OperandList(
-              {{SPV_OPERAND_TYPE_STORAGE_CLASS,
-                {
+  fuzzerutil::AddLocalVariable(ir_context, message_.fresh_id(),
+                               message_.type_id(), message_.function_id(),
+                               message_.initializer_id());
 
-                    SpvStorageClassFunction}},
-               {SPV_OPERAND_TYPE_ID, {message_.initializer_id()}}})));
   if (message_.value_is_irrelevant()) {
     transformation_context->GetFactManager()->AddFactValueOfPointeeIsIrrelevant(
         message_.fresh_id());

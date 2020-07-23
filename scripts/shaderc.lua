@@ -197,6 +197,11 @@ project "spirv-cross"
 			"/wd4715", -- warning C4715: '': not all control paths return a value
 		}
 
+	configuration { "mingw* or linux or osx" }
+		buildoptions {
+			"-Wno-type-limits",
+		}
+
 	configuration {}
 
 project "glslang"
@@ -209,6 +214,7 @@ project "glslang"
 
 	includedirs {
 		GLSLANG,
+		path.join(GLSLANG, ".."),
 		path.join(SPIRV_TOOLS, "include"),
 		path.join(SPIRV_TOOLS, "source"),
 	}
@@ -266,6 +272,8 @@ project "glslang"
 		buildoptions {
 			"-Wno-ignored-qualifiers",
 			"-Wno-implicit-fallthrough",
+			"-Wno-logical-op",
+			"-Wno-maybe-uninitialized",
 			"-Wno-missing-field-initializers",
 			"-Wno-reorder",
 			"-Wno-return-type",

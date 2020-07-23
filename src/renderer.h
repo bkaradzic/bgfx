@@ -100,8 +100,8 @@ namespace bgfx
 			for (uint32_t ii = 0, num = _program.m_numPredefined; ii < num; ++ii)
 			{
 				const PredefinedUniform& predefined = _program.m_predefined[ii];
-				uint8_t flags = predefined.m_type&BGFX_UNIFORM_FRAGMENTBIT;
-				switch (predefined.m_type&(~BGFX_UNIFORM_FRAGMENTBIT) )
+				uint8_t flags = predefined.m_type&kUniformFragmentBit;
+				switch (predefined.m_type&(~kUniformFragmentBit) )
 				{
 				case PredefinedUniform::ViewRect:
 					{
@@ -271,7 +271,7 @@ namespace bgfx
 					break;
 
 				default:
-					BX_CHECK(false, "predefined %d not handled", predefined.m_type);
+					BX_ASSERT(false, "predefined %d not handled", predefined.m_type);
 					break;
 				}
 			}
@@ -304,7 +304,7 @@ namespace bgfx
 				handle = m_alloc.alloc();
 			}
 
-			BX_CHECK(UINT16_MAX != handle, "Failed to find handle.");
+			BX_ASSERT(UINT16_MAX != handle, "Failed to find handle.");
 
 			Data& data = m_data[handle];
 			data.m_hash   = _key;

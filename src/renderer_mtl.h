@@ -1049,6 +1049,7 @@ namespace bgfx { namespace mtl
 		Texture m_backBufferDepth;
 		Texture m_backBufferStencil;
 		uint32_t m_maxAnisotropy;
+		void* m_nwh;
 	};
 
 	struct FrameBufferMtl

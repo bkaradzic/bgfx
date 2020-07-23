@@ -153,6 +153,7 @@ void FriendlyNameMapper::SaveBuiltInName(uint32_t target_id,
     CASE(SubgroupLocalInvocationId)
     GLCASE(VertexIndex)
     GLCASE(InstanceIndex)
+    GLCASE(BaseInstance)
     CASE(SubgroupEqMaskKHR)
     CASE(SubgroupGeMaskKHR)
     CASE(SubgroupGtMaskKHR)

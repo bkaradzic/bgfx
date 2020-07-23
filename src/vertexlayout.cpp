@@ -725,22 +725,23 @@ namespace bgfx
 		return xx*xx + yy*yy + zz*zz;
 	}
 
-	uint16_t weldVerticesRef(uint16_t* _output, const VertexLayout& _layout, const void* _data, uint16_t _num, float _epsilon)
+	template<typename IndexT>
+	static IndexT weldVerticesRef(IndexT* _output, const VertexLayout& _layout, const void* _data, uint32_t _num, float _epsilon)
 	{
 		// Brute force slow vertex welding...
 		const float epsilonSq = _epsilon*_epsilon;
 
 		uint32_t numVertices = 0;
-		bx::memSet(_output, 0xff, _num*sizeof(uint16_t) );
+		bx::memSet(_output, 0xff, _num*sizeof(IndexT) );
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
-			if (UINT16_MAX != _output[ii])
+			if (IndexT(-1) != _output[ii])
 			{
 				continue;
 			}
 
-			_output[ii] = (uint16_t)ii;
+			_output[ii] = (IndexT)ii;
 			++numVertices;
 
 			float pos[4];
@@ -748,7 +749,7 @@ namespace bgfx
 
 			for (uint32_t jj = 0; jj < _num; ++jj)
 			{
-				if (UINT16_MAX != _output[jj])
+				if (IndexT(-1) != _output[jj])
 				{
 					continue;
 				}
@@ -758,15 +759,16 @@ namespace bgfx
 
 				if (sqLength(test, pos) < epsilonSq)
 				{
-					_output[jj] = (uint16_t)ii;
+					_output[jj] = IndexT(ii);
 				}
 			}
 		}
 
-		return (uint16_t)numVertices;
+		return IndexT(numVertices);
 	}
 
-	uint16_t weldVertices(uint16_t* _output, const VertexLayout& _layout, const void* _data, uint16_t _num, float _epsilon)
+	template<typename IndexT>
+	static IndexT weldVertices(IndexT* _output, const VertexLayout& _layout, const void* _data, uint32_t _num, float _epsilon, bx::AllocatorI* _allocator)
 	{
 		const uint32_t hashSize = bx::uint32_nextpow2(_num);
 		const uint32_t hashMask = hashSize-1;
@@ -774,11 +776,11 @@ namespace bgfx
 
 		uint32_t numVertices = 0;
 
-		const uint32_t size = sizeof(uint16_t)*(hashSize + _num);
-		uint16_t* hashTable = (uint16_t*)alloca(size);
+		const uint32_t size = sizeof(IndexT)*(hashSize + _num);
+		IndexT* hashTable = (IndexT*)BX_ALLOC(_allocator, size);
 		bx::memSet(hashTable, 0xff, size);
 
-		uint16_t* next = hashTable + hashSize;
+		IndexT* next = hashTable + hashSize;
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
@@ -786,8 +788,8 @@ namespace bgfx
 			vertexUnpack(pos, Attrib::Position, _layout, _data, ii);
 			uint32_t hashValue = bx::hash<bx::HashMurmur2A>(pos, 3*sizeof(float) ) & hashMask;
 
-			uint16_t offset = hashTable[hashValue];
-			for (; UINT16_MAX != offset; offset = next[offset])
+			IndexT offset = hashTable[hashValue];
+			for (; IndexT(-1) != offset; offset = next[offset])
 			{
 				float test[4];
 				vertexUnpack(test, Attrib::Position, _layout, _data, _output[offset]);
@@ -799,16 +801,28 @@ namespace bgfx
 				}
 			}
 
-			if (UINT16_MAX == offset)
+			if (IndexT(-1) == offset)
 			{
-				_output[ii] = (uint16_t)ii;
+				_output[ii] = IndexT(ii);
 				next[ii] = hashTable[hashValue];
-				hashTable[hashValue] = (uint16_t)ii;
+				hashTable[hashValue] = IndexT(ii);
 				numVertices++;
 			}
 		}
 
-		return (uint16_t)numVertices;
+		BX_FREE(_allocator, hashTable);
+
+		return IndexT(numVertices);
+	}
+
+	uint32_t weldVertices(void* _output, const VertexLayout& _layout, const void* _data, uint32_t _num, bool _index32, float _epsilon, bx::AllocatorI* _allocator)
+	{
+		if (_index32)
+		{
+			return weldVertices( (uint32_t*)_output, _layout, _data, _num, _epsilon, _allocator);
+		}
+
+		return weldVertices( (uint16_t*)_output, _layout, _data, _num, _epsilon, _allocator);
 	}
 
 } // namespace bgfx

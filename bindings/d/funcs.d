@@ -115,9 +115,10 @@ version(BindBgfx_Static)
 	 * _layout = Vertex stream layout.
 	 * _data = Vertex stream.
 	 * _num = Number of vertices in vertex stream.
+	 * _index32 = Set to `true` if input indices are 32-bit.
 	 * _epsilon = Error tolerance for vertex position comparison.
 	 */
-	ushort bgfx_weld_vertices(ushort* _output, const(bgfx_vertex_layout_t)* _layout, const(void)* _data, ushort _num, float _epsilon);
+	uint bgfx_weld_vertices(void* _output, const(bgfx_vertex_layout_t)* _layout, const(void)* _data, uint _num, bool _index32, float _epsilon);
 	
 	/**
 	 * Convert index buffer for use with different primitive topologies.
@@ -199,7 +200,7 @@ version(BindBgfx_Static)
 	 *   - `BGFX_RESET_CAPTURE` - Begin screen capture.
 	 *   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.
 	 *   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
-	 *     occurs. Default behavior is that flip occurs before rendering new
+	 *     occurs. Default behaviour is that flip occurs before rendering new
 	 *     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 	 *   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
 	 * _format = Texture format. See: `TextureFormat::Enum`.
@@ -2198,9 +2199,10 @@ else
 		 * _layout = Vertex stream layout.
 		 * _data = Vertex stream.
 		 * _num = Number of vertices in vertex stream.
+		 * _index32 = Set to `true` if input indices are 32-bit.
 		 * _epsilon = Error tolerance for vertex position comparison.
 		 */
-		alias da_bgfx_weld_vertices = ushort function(ushort* _output, const(bgfx_vertex_layout_t)* _layout, const(void)* _data, ushort _num, float _epsilon);
+		alias da_bgfx_weld_vertices = uint function(void* _output, const(bgfx_vertex_layout_t)* _layout, const(void)* _data, uint _num, bool _index32, float _epsilon);
 		da_bgfx_weld_vertices bgfx_weld_vertices;
 		
 		/**
@@ -2290,7 +2292,7 @@ else
 		 *   - `BGFX_RESET_CAPTURE` - Begin screen capture.
 		 *   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.
 		 *   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
-		 *     occurs. Default behavior is that flip occurs before rendering new
+		 *     occurs. Default behaviour is that flip occurs before rendering new
 		 *     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 		 *   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
 		 * _format = Texture format. See: `TextureFormat::Enum`.

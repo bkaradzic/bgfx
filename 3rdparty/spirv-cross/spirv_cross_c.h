@@ -33,7 +33,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 33
+#define SPVC_C_API_VERSION_MINOR 35
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -259,21 +259,34 @@ typedef enum spvc_msl_platform
 } spvc_msl_platform;
 
 /* Maps to C++ API. */
-typedef enum spvc_msl_vertex_format
+typedef enum spvc_msl_shader_input_format
 {
-	SPVC_MSL_VERTEX_FORMAT_OTHER = 0,
-	SPVC_MSL_VERTEX_FORMAT_UINT8 = 1,
-	SPVC_MSL_VERTEX_FORMAT_UINT16 = 2
-} spvc_msl_vertex_format;
+	SPVC_MSL_SHADER_INPUT_FORMAT_OTHER = 0,
+	SPVC_MSL_SHADER_INPUT_FORMAT_UINT8 = 1,
+	SPVC_MSL_SHADER_INPUT_FORMAT_UINT16 = 2,
 
-/* Maps to C++ API. */
+	/* Deprecated names. */
+	SPVC_MSL_VERTEX_FORMAT_OTHER = SPVC_MSL_SHADER_INPUT_FORMAT_OTHER,
+	SPVC_MSL_VERTEX_FORMAT_UINT8 = SPVC_MSL_SHADER_INPUT_FORMAT_UINT8,
+	SPVC_MSL_VERTEX_FORMAT_UINT16 = SPVC_MSL_SHADER_INPUT_FORMAT_UINT16,
+
+	SPVC_MSL_SHADER_INPUT_FORMAT_INT_MAX = 0x7fffffff
+} spvc_msl_shader_input_format, spvc_msl_vertex_format;
+
+/* Maps to C++ API. Deprecated; use spvc_msl_shader_input. */
 typedef struct spvc_msl_vertex_attribute
 {
 	unsigned location;
+
+	/* Obsolete, do not use. Only lingers on for ABI compatibility. */
 	unsigned msl_buffer;
+	/* Obsolete, do not use. Only lingers on for ABI compatibility. */
 	unsigned msl_offset;
+	/* Obsolete, do not use. Only lingers on for ABI compatibility. */
 	unsigned msl_stride;
+	/* Obsolete, do not use. Only lingers on for ABI compatibility. */
 	spvc_bool per_instance;
+
 	spvc_msl_vertex_format format;
 	SpvBuiltIn builtin;
 } spvc_msl_vertex_attribute;
@@ -282,6 +295,20 @@ typedef struct spvc_msl_vertex_attribute
  * Initializes the vertex attribute struct.
  */
 SPVC_PUBLIC_API void spvc_msl_vertex_attribute_init(spvc_msl_vertex_attribute *attr);
+
+/* Maps to C++ API. */
+typedef struct spvc_msl_shader_input
+{
+	unsigned location;
+	spvc_msl_vertex_format format;
+	SpvBuiltIn builtin;
+	unsigned vecsize;
+} spvc_msl_shader_input;
+
+/*
+ * Initializes the shader input struct.
+ */
+SPVC_PUBLIC_API void spvc_msl_shader_input_init(spvc_msl_shader_input *input);
 
 /* Maps to C++ API. */
 typedef struct spvc_msl_resource_binding
@@ -588,6 +615,8 @@ typedef enum spvc_compiler_option
 	SPVC_COMPILER_OPTION_MSL_ENABLE_FRAG_STENCIL_REF_BUILTIN = 58 | SPVC_COMPILER_OPTION_MSL_BIT,
 	SPVC_COMPILER_OPTION_MSL_ENABLE_CLIP_DISTANCE_USER_VARYING = 59 | SPVC_COMPILER_OPTION_MSL_BIT,
 
+	SPVC_COMPILER_OPTION_HLSL_ENABLE_16BIT_TYPES = 60 | SPVC_COMPILER_OPTION_HLSL_BIT,
+
 	SPVC_COMPILER_OPTION_INT_MAX = 0x7fffffff
 } spvc_compiler_option;
 
@@ -690,9 +719,15 @@ SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_vertex_attribute(spvc_compiler
                                                                    const spvc_msl_vertex_attribute *attrs);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_resource_binding(spvc_compiler compiler,
                                                                    const spvc_msl_resource_binding *binding);
+SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_shader_input(spvc_compiler compiler,
+                                                               const spvc_msl_shader_input *input);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_discrete_descriptor_set(spvc_compiler compiler, unsigned desc_set);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_set_argument_buffer_device_address_space(spvc_compiler compiler, unsigned desc_set, spvc_bool device_address);
+
+/* Obsolete, use is_shader_input_used. */
 SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_vertex_attribute_used(spvc_compiler compiler, unsigned location);
+SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_shader_input_used(spvc_compiler compiler, unsigned location);
+
 SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_resource_used(spvc_compiler compiler,
                                                              SpvExecutionModel model,
                                                              unsigned set,

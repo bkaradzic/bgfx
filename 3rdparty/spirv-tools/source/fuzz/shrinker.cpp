@@ -124,6 +124,7 @@ Shrinker::ShrinkerResultStatus Shrinker::Run(
   if (Replayer(impl_->target_env, impl_->validate_during_replay,
                impl_->validator_options)
           .Run(binary_in, initial_facts, transformation_sequence_in,
+               transformation_sequence_in.transformation_size(),
                &current_best_binary, &current_best_transformations) !=
       Replayer::ReplayerResultStatus::kComplete) {
     return ShrinkerResultStatus::kReplayFailed;
@@ -196,6 +197,7 @@ Shrinker::ShrinkerResultStatus Shrinker::Run(
       if (Replayer(impl_->target_env, impl_->validate_during_replay,
                    impl_->validator_options)
               .Run(binary_in, initial_facts, transformations_with_chunk_removed,
+                   transformations_with_chunk_removed.transformation_size(),
                    &next_binary, &next_transformation_sequence) !=
           Replayer::ReplayerResultStatus::kComplete) {
         // Replay should not fail; if it does, we need to abort shrinking.

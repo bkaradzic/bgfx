@@ -11,34 +11,34 @@ namespace bgfx
 	extern bool g_verbose;
 }
 
-#define _BX_TRACE(_format, ...) \
-				BX_MACRO_BLOCK_BEGIN \
-					if (bgfx::g_verbose) \
-					{ \
-						fprintf(stdout, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
-					} \
+#define _BX_TRACE(_format, ...)                                                          \
+				BX_MACRO_BLOCK_BEGIN                                                     \
+					if (bgfx::g_verbose)                                                 \
+					{                                                                    \
+						bx::printf(BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
+					}                                                                    \
 				BX_MACRO_BLOCK_END
 
-#define _BX_WARN(_condition, _format, ...) \
-				BX_MACRO_BLOCK_BEGIN \
-					if (!(_condition) ) \
-					{ \
+#define _BX_WARN(_condition, _format, ...)                        \
+				BX_MACRO_BLOCK_BEGIN                              \
+					if (!(_condition) )                           \
+					{                                             \
 						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
-					} \
+					}                                             \
 				BX_MACRO_BLOCK_END
 
-#define _BX_CHECK(_condition, _format, ...) \
-				BX_MACRO_BLOCK_BEGIN \
-					if (!(_condition) ) \
-					{ \
+#define _BX_ASSERT(_condition, _format, ...)                       \
+				BX_MACRO_BLOCK_BEGIN                               \
+					if (!(_condition) )                            \
+					{                                              \
 						BX_TRACE("CHECK " _format, ##__VA_ARGS__); \
-						bx::debugBreak(); \
-					} \
+						bx::debugBreak();                          \
+					}                                              \
 				BX_MACRO_BLOCK_END
 
-#define BX_TRACE _BX_TRACE
-#define BX_WARN  _BX_WARN
-#define BX_CHECK _BX_CHECK
+#define BX_TRACE  _BX_TRACE
+#define BX_WARN   _BX_WARN
+#define BX_ASSERT _BX_ASSERT
 
 #ifndef SHADERC_CONFIG_HLSL
 #	define SHADERC_CONFIG_HLSL BX_PLATFORM_WINDOWS
@@ -66,58 +66,34 @@ namespace bgfx
 {
 	extern bool g_verbose;
 
-	class LineReader : public bx::ReaderI
-	{
-	public:
-		LineReader(const char* _str)
-			: m_str(_str)
-			, m_pos(0)
-			, m_size(bx::strLen(_str) )
-		{
-		}
-
-		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) override
-		{
-			if (m_str[m_pos] == '\0'
-			||  m_pos == m_size)
-			{
-				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_EOF, "LineReader: EOF.");
-				return 0;
-			}
-
-			uint32_t pos = m_pos;
-			const char* str = &m_str[pos];
-			const char* nl = bx::strFindNl(bx::StringView(str, str + (m_size - pos))).getPtr();
-			pos += (uint32_t)(nl - str);
-
-			const char* eol = &m_str[pos];
-
-			uint32_t size = bx::uint32_min(uint32_t(eol - str), _size);
-
-			bx::memCopy(_data, str, size);
-			m_pos += size;
-
-			return size;
-		}
-
-		const char* m_str;
-		uint32_t m_pos;
-		uint32_t m_size;
-	};
-
 	bx::StringView nextWord(bx::StringView& _parse);
 
-#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
-#define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
-#define BGFX_UNIFORM_READONLYBIT UINT8_C(0x40)
-#define BGFX_UNIFORM_COMPAREBIT  UINT8_C(0x80)
-#define BGFX_UNIFORM_MASK (BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT|BGFX_UNIFORM_READONLYBIT|BGFX_UNIFORM_COMPAREBIT)
+	constexpr uint8_t kUniformFragmentBit  = 0x10;
+	constexpr uint8_t kUniformSamplerBit   = 0x20;
+	constexpr uint8_t kUniformReadOnlyBit  = 0x40;
+	constexpr uint8_t kUniformCompareBit   = 0x80;
+	constexpr uint8_t kUniformMask = 0
+		| kUniformFragmentBit
+		| kUniformSamplerBit
+		| kUniformReadOnlyBit
+		| kUniformCompareBit
+		;
 
 	const char* getUniformTypeName(UniformType::Enum _enum);
 	UniformType::Enum nameToUniformTypeEnum(const char* _name);
 
 	struct Uniform
 	{
+		Uniform()
+			: type(UniformType::Count)
+			, num(0)
+			, regIndex(0)
+			, regCount(0)
+			, texComponent(0)
+			, texDimension(0)
+		{
+		}
+
 		std::string name;
 		UniformType::Enum type;
 		uint8_t num;

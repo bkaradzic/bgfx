@@ -677,6 +677,12 @@ SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableReplayValidation(
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetRandomSeed(
     spv_fuzzer_options options, uint32_t seed);
 
+// Sets the range of transformations that should be applied during replay: 0
+// means all transformations, +N means the first N transformations, -N means all
+// except the final N transformations.
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetReplayRange(
+    spv_fuzzer_options options, int32_t replay_range);
+
 // Sets the maximum number of steps that the shrinker should take before giving
 // up.
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetShrinkerStepLimit(

@@ -279,7 +279,7 @@ namespace bgfx
 
 	const char* getUniformTypeName(UniformType::Enum _enum)
 	{
-		uint32_t idx = _enum & ~(BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT);
+		uint32_t idx = _enum & ~(kUniformFragmentBit|kUniformSamplerBit);
 		if (idx < UniformType::Count)
 		{
 			return s_uniformTypeName[idx];
@@ -509,7 +509,7 @@ namespace bgfx
 		}
 		replace[len] = '\0';
 
-		BX_CHECK(len >= bx::strLen(_replace), "");
+		BX_ASSERT(len >= bx::strLen(_replace), "");
 		for (bx::StringView ptr = bx::strFind(_str, _find)
 			; !ptr.isEmpty()
 			; ptr = bx::strFind(ptr.getPtr() + len, _find)
@@ -529,22 +529,17 @@ namespace bgfx
 	{
 		bx::printf("Code:\n---\n");
 
-		bx::Error err;
-		LineReader reader(_code);
-		for (int32_t line = 1; err.isOk() && line < _end; ++line)
+		bx::LineReader reader(_code);
+		for (int32_t line = 1; !reader.isDone() && line < _end; ++line)
 		{
-			char str[4096];
-			int32_t len = bx::read(&reader, str, BX_COUNTOF(str), &err);
+			bx::StringView strLine = reader.next();
 
-			if (err.isOk()
-			&&  line >= _start)
+			if (line >= _start)
 			{
-				bx::StringView strLine(str, len);
-
 				if (_line == line)
 				{
 					bx::printf("\n");
-					bx::printf(">>> %3d: %.*s", line, strLine.getLength(), strLine.getPtr() );
+					bx::printf(">>> %3d: %.*s\n", line, strLine.getLength(), strLine.getPtr() );
 					if (-1 != _column)
 					{
 						bx::printf(">>> %3d: %*s\n", _column, _column, "^");
@@ -553,7 +548,7 @@ namespace bgfx
 				}
 				else
 				{
-					bx::printf("    %3d: %.*s", line, strLine.getLength(), strLine.getPtr() );
+					bx::printf("    %3d: %.*s\n", line, strLine.getLength(), strLine.getPtr() );
 				}
 			}
 		}
@@ -1950,7 +1945,7 @@ namespace bgfx
 									 !bx::strFind(preprocessedInput, "floatBitsToInt").isEmpty() ||
 									 !bx::strFind(preprocessedInput, "intBitsToFloat").isEmpty() ||
 									 !bx::strFind(preprocessedInput, "uintBitsToFloat").isEmpty()
-									) )  
+									) )
 								)
 							{
 								glsl = 430;

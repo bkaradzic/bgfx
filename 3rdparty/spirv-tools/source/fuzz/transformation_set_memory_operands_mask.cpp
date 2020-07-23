@@ -101,6 +101,14 @@ void TransformationSetMemoryOperandsMask::Apply(
   // Either add a new operand, if no mask operand was already present, or
   // replace an existing mask operand.
   if (original_mask_in_operand_index >= instruction->NumInOperands()) {
+    // Add first memory operand if it's missing.
+    if (message_.memory_operands_mask_index() == 1 &&
+        GetInOperandIndexForMask(*instruction, 0) >=
+            instruction->NumInOperands()) {
+      instruction->AddOperand(
+          {SPV_OPERAND_TYPE_MEMORY_ACCESS, {SpvMemoryAccessMaskNone}});
+    }
+
     instruction->AddOperand(
         {SPV_OPERAND_TYPE_MEMORY_ACCESS, {message_.memory_operands_mask()}});
 
@@ -154,10 +162,25 @@ uint32_t TransformationSetMemoryOperandsMask::GetInOperandIndexForMask(
       break;
   }
   // If we are looking for the input operand index of the first mask, return it.
+  // This will also return a correct value if the operand is missing.
   if (mask_index == 0) {
     return first_mask_in_operand_index;
   }
   assert(mask_index == 1 && "Memory operands mask index must be 0 or 1.");
+
+  // Memory mask operands are optional. Thus, if the second operand exists,
+  // its index will be >= |first_mask_in_operand_index + 1|. We can reason as
+  // follows to separate the cases where the index of the second operand is
+  // equal to |first_mask_in_operand_index + 1|:
+  // - If the first memory operand doesn't exist, its value is equal to None.
+  //   This means that it doesn't have additional operands following it and the
+  //   condition in the if statement below will be satisfied.
+  // - If the first memory operand exists and has no additional memory operands
+  //   following it, the condition in the if statement below will be satisfied
+  //   and we will return the correct value from the function.
+  if (first_mask_in_operand_index + 1 >= instruction.NumInOperands()) {
+    return first_mask_in_operand_index + 1;
+  }
 
   // We are looking for the input operand index of the second mask.  This is a
   // little complicated because, depending on the contents of the first mask,

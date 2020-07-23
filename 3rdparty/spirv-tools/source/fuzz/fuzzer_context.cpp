@@ -27,19 +27,25 @@ const std::pair<uint32_t, uint32_t> kChanceOfAddingAccessChain = {5, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingAnotherStructField = {20,
                                                                          90};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingArrayOrStructType = {20, 90};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingCopyMemory = {20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingDeadBlock = {20, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingDeadBreak = {5, 80};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingDeadContinue = {5, 80};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingEquationInstruction = {5,
                                                                           90};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingGlobalVariable = {20, 90};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingImageSampleUnusedComponents =
+    {20, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingLoad = {5, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingLocalVariable = {20, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingMatrixType = {20, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingNoContractionDecoration = {
     5, 70};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingParameters = {5, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingStore = {5, 50};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingSynonyms = {20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingVectorType = {20, 70};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingVectorShuffle = {20, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAdjustingBranchWeights = {20, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfAdjustingFunctionControl = {20,
                                                                          70};
@@ -51,19 +57,33 @@ const std::pair<uint32_t, uint32_t> kChanceOfAdjustingSelectionControl = {20,
 const std::pair<uint32_t, uint32_t> kChanceOfCallingFunction = {1, 10};
 const std::pair<uint32_t, uint32_t> kChanceOfChoosingStructTypeVsArrayType = {
     20, 80};
+const std::pair<uint32_t, uint32_t> kChanceOfChoosingWorkgroupStorageClass = {
+    50, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfConstructingComposite = {20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfCopyingObject = {20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfDonatingAdditionalModule = {5, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfGoingDeeperWhenMakingAccessChain =
     {50, 95};
+const std::pair<uint32_t, uint32_t> kChanceOfInterchangingZeroLikeConstants = {
+    10, 90};
+const std::pair<uint32_t, uint32_t> kChanceOfInvertingComparisonOperators = {
+    20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfMakingDonorLivesafe = {40, 60};
 const std::pair<uint32_t, uint32_t> kChanceOfMergingBlocks = {20, 95};
 const std::pair<uint32_t, uint32_t> kChanceOfMovingBlockDown = {20, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfObfuscatingConstant = {10, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfOutliningFunction = {10, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfPermutingParameters = {30, 90};
+const std::pair<uint32_t, uint32_t> kChanceOfPermutingPhiOperands = {30, 90};
+const std::pair<uint32_t, uint32_t> kChanceOfPushingIdThroughVariable = {5, 50};
 const std::pair<uint32_t, uint32_t> kChanceOfReplacingIdWithSynonym = {10, 90};
+const std::pair<uint32_t, uint32_t>
+    kChanceOfReplacingLinearAlgebraInstructions = {10, 90};
+const std::pair<uint32_t, uint32_t> kChanceOfReplacingParametersWithGlobals = {
+    30, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfSplittingBlock = {40, 95};
+const std::pair<uint32_t, uint32_t> kChanceOfSwappingConditionalBranchOperands =
+    {10, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfTogglingAccessChainInstruction = {
     20, 90};
 
@@ -74,6 +94,10 @@ const uint32_t kDefaultMaxLoopControlPartialCount = 100;
 const uint32_t kDefaultMaxLoopControlPeelCount = 100;
 const uint32_t kDefaultMaxLoopLimit = 20;
 const uint32_t kDefaultMaxNewArraySizeLimit = 100;
+// TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3424):
+//  think whether there is a better limit on the maximum number of parameters.
+const uint32_t kDefaultMaxNumberOfFunctionParameters = 128;
+const uint32_t kDefaultMaxNumberOfNewParameters = 15;
 
 // Default functions for controlling how deep to go during recursive
 // generation/transformation. Keep them in alphabetical order.
@@ -97,6 +121,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       max_loop_control_peel_count_(kDefaultMaxLoopControlPeelCount),
       max_loop_limit_(kDefaultMaxLoopLimit),
       max_new_array_size_limit_(kDefaultMaxNewArraySizeLimit),
+      max_number_of_function_parameters_(kDefaultMaxNumberOfFunctionParameters),
+      max_number_of_new_parameters_(kDefaultMaxNumberOfNewParameters),
       go_deeper_in_constant_obfuscation_(
           kDefaultGoDeeperInConstantObfuscation) {
   chance_of_adding_access_chain_ =
@@ -105,6 +131,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfAddingAnotherStructField);
   chance_of_adding_array_or_struct_type_ =
       ChooseBetweenMinAndMax(kChanceOfAddingArrayOrStructType);
+  chance_of_adding_copy_memory_ =
+      ChooseBetweenMinAndMax(kChanceOfAddingCopyMemory);
   chance_of_adding_dead_block_ =
       ChooseBetweenMinAndMax(kChanceOfAddingDeadBlock);
   chance_of_adding_dead_break_ =
@@ -116,19 +144,26 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
   chance_of_adding_global_variable_ =
       ChooseBetweenMinAndMax(kChanceOfAddingGlobalVariable);
   chance_of_adding_load_ = ChooseBetweenMinAndMax(kChanceOfAddingLoad);
+  chance_of_adding_image_sample_unused_components_ =
+      ChooseBetweenMinAndMax(kChanceOfAddingImageSampleUnusedComponents);
   chance_of_adding_local_variable_ =
       ChooseBetweenMinAndMax(kChanceOfAddingLocalVariable);
   chance_of_adding_matrix_type_ =
       ChooseBetweenMinAndMax(kChanceOfAddingMatrixType);
   chance_of_adding_no_contraction_decoration_ =
       ChooseBetweenMinAndMax(kChanceOfAddingNoContractionDecoration);
+  chance_of_adding_parameters =
+      ChooseBetweenMinAndMax(kChanceOfAddingParameters);
   chance_of_adding_store_ = ChooseBetweenMinAndMax(kChanceOfAddingStore);
+  chance_of_adding_vector_shuffle_ =
+      ChooseBetweenMinAndMax(kChanceOfAddingVectorShuffle);
   chance_of_adding_vector_type_ =
       ChooseBetweenMinAndMax(kChanceOfAddingVectorType);
   chance_of_adjusting_branch_weights_ =
       ChooseBetweenMinAndMax(kChanceOfAdjustingBranchWeights);
   chance_of_adjusting_function_control_ =
       ChooseBetweenMinAndMax(kChanceOfAdjustingFunctionControl);
+  chance_of_adding_synonyms_ = ChooseBetweenMinAndMax(kChanceOfAddingSynonyms);
   chance_of_adjusting_loop_control_ =
       ChooseBetweenMinAndMax(kChanceOfAdjustingLoopControl);
   chance_of_adjusting_memory_operands_mask_ =
@@ -139,6 +174,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfCallingFunction);
   chance_of_choosing_struct_type_vs_array_type_ =
       ChooseBetweenMinAndMax(kChanceOfChoosingStructTypeVsArrayType);
+  chance_of_choosing_workgroup_storage_class_ =
+      ChooseBetweenMinAndMax(kChanceOfChoosingWorkgroupStorageClass);
   chance_of_constructing_composite_ =
       ChooseBetweenMinAndMax(kChanceOfConstructingComposite);
   chance_of_copying_object_ = ChooseBetweenMinAndMax(kChanceOfCopyingObject);
@@ -146,6 +183,10 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfDonatingAdditionalModule);
   chance_of_going_deeper_when_making_access_chain_ =
       ChooseBetweenMinAndMax(kChanceOfGoingDeeperWhenMakingAccessChain);
+  chance_of_interchanging_zero_like_constants_ =
+      ChooseBetweenMinAndMax(kChanceOfInterchangingZeroLikeConstants);
+  chance_of_inverting_comparison_operators_ =
+      ChooseBetweenMinAndMax(kChanceOfInvertingComparisonOperators);
   chance_of_making_donor_livesafe_ =
       ChooseBetweenMinAndMax(kChanceOfMakingDonorLivesafe);
   chance_of_merging_blocks_ = ChooseBetweenMinAndMax(kChanceOfMergingBlocks);
@@ -157,9 +198,19 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfOutliningFunction);
   chance_of_permuting_parameters_ =
       ChooseBetweenMinAndMax(kChanceOfPermutingParameters);
+  chance_of_permuting_phi_operands_ =
+      ChooseBetweenMinAndMax(kChanceOfPermutingPhiOperands);
+  chance_of_pushing_id_through_variable_ =
+      ChooseBetweenMinAndMax(kChanceOfPushingIdThroughVariable);
   chance_of_replacing_id_with_synonym_ =
       ChooseBetweenMinAndMax(kChanceOfReplacingIdWithSynonym);
+  chance_of_replacing_linear_algebra_instructions_ =
+      ChooseBetweenMinAndMax(kChanceOfReplacingLinearAlgebraInstructions);
+  chance_of_replacing_parameters_with_globals_ =
+      ChooseBetweenMinAndMax(kChanceOfReplacingParametersWithGlobals);
   chance_of_splitting_block_ = ChooseBetweenMinAndMax(kChanceOfSplittingBlock);
+  chance_of_swapping_conditional_branch_operands_ =
+      ChooseBetweenMinAndMax(kChanceOfSwappingConditionalBranchOperands);
   chance_of_toggling_access_chain_instruction_ =
       ChooseBetweenMinAndMax(kChanceOfTogglingAccessChainInstruction);
 }
@@ -167,6 +218,16 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
 FuzzerContext::~FuzzerContext() = default;
 
 uint32_t FuzzerContext::GetFreshId() { return next_fresh_id_++; }
+
+std::vector<uint32_t> FuzzerContext::GetFreshIds(const uint32_t count) {
+  std::vector<uint32_t> fresh_ids(count);
+
+  for (uint32_t& fresh_id : fresh_ids) {
+    fresh_id = next_fresh_id_++;
+  }
+
+  return fresh_ids;
+}
 
 bool FuzzerContext::ChooseEven() { return random_generator_->RandomBool(); }
 
@@ -180,6 +241,22 @@ uint32_t FuzzerContext::ChooseBetweenMinAndMax(
   assert(min_max.first <= min_max.second);
   return min_max.first +
          random_generator_->RandomUint32(min_max.second - min_max.first + 1);
+}
+
+protobufs::TransformationAddSynonym::SynonymType
+FuzzerContext::GetRandomSynonymType() {
+  // value_count method is guaranteed to return a value greater than 0.
+  auto result_index = ChooseBetweenMinAndMax(
+      {0, static_cast<uint32_t>(
+              protobufs::TransformationAddSynonym::SynonymType_descriptor()
+                  ->value_count() -
+              1)});
+  auto result = protobufs::TransformationAddSynonym::SynonymType_descriptor()
+                    ->value(result_index)
+                    ->number();
+  assert(protobufs::TransformationAddSynonym::SynonymType_IsValid(result) &&
+         "|result| is not a value of SynonymType");
+  return static_cast<protobufs::TransformationAddSynonym::SynonymType>(result);
 }
 
 }  // namespace fuzz

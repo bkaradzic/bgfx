@@ -135,13 +135,11 @@ typedef uint64_t GLuint64;
 #		include "glcontext_html5.h"
 #	endif // BGFX_USE_EGL
 
-#	if BX_PLATFORM_EMSCRIPTEN
-#		include <emscripten/emscripten.h>
-#	endif // BX_PLATFORM_EMSCRIPTEN
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #include "renderer.h"
 #include "debug_renderdoc.h"
+#include "emscripten.h"
 
 #ifndef GL_LUMINANCE
 #	define GL_LUMINANCE 0x1909
@@ -1119,7 +1117,7 @@ namespace bgfx { namespace gl
 #define IGNORE_GL_ERROR_CHECK(...) BX_NOOP()
 
 #if BGFX_CONFIG_DEBUG
-#	define GL_CHECK(_call)   _GL_CHECK(BX_CHECK, _call)
+#	define GL_CHECK(_call)   _GL_CHECK(BX_ASSERT, _call)
 #	define GL_CHECK_I(_call) _GL_CHECK(IGNORE_GL_ERROR_CHECK, _call)
 #else
 #	define GL_CHECK(_call)   _call
@@ -1275,7 +1273,7 @@ namespace bgfx { namespace gl
 			m_flags = _flags;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
+			BX_ASSERT(0 != m_id, "Failed to generate buffer id.");
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id) );
 			GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER
 				, _size
@@ -1287,7 +1285,7 @@ namespace bgfx { namespace gl
 
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
-			BX_CHECK(0 != m_id, "Updating invalid index buffer.");
+			BX_ASSERT(0 != m_id, "Updating invalid index buffer.");
 
 			if (_discard)
 			{
@@ -1323,7 +1321,7 @@ namespace bgfx { namespace gl
 			m_target = drawIndirect ? GL_DRAW_INDIRECT_BUFFER : GL_ARRAY_BUFFER;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
+			BX_ASSERT(0 != m_id, "Failed to generate buffer id.");
 			GL_CHECK(glBindBuffer(m_target, m_id) );
 			GL_CHECK(glBufferData(m_target
 				, _size
@@ -1335,7 +1333,7 @@ namespace bgfx { namespace gl
 
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
-			BX_CHECK(0 != m_id, "Updating invalid vertex buffer.");
+			BX_ASSERT(0 != m_id, "Updating invalid vertex buffer.");
 
 			if (_discard)
 			{
@@ -1671,52 +1669,6 @@ namespace bgfx { namespace gl
 
 		Query m_query[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 		bx::RingBufferControl m_control;
-	};
-
-	class LineReader : public bx::ReaderI
-	{
-	public:
-		LineReader(const void* _str)
-			: m_str( (const char*)_str)
-			, m_pos(0)
-			, m_size(bx::strLen( (const char*)_str) )
-		{
-		}
-
-		LineReader(const bx::StringView& _str)
-			: m_str(_str.getPtr() )
-			, m_pos(0)
-			, m_size(_str.getLength() )
-		{
-		}
-
-		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) override
-		{
-			if (m_str[m_pos] == '\0'
-			||  m_pos == m_size)
-			{
-				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_EOF, "LineReader: EOF.");
-				return 0;
-			}
-
-			uint32_t pos = m_pos;
-			const char* str = &m_str[pos];
-			const char* nl = bx::strFindNl(str).getPtr();
-			pos += (uint32_t)(nl - str);
-
-			const char* eol = &m_str[pos];
-
-			uint32_t size = bx::uint32_min(uint32_t(eol - str), _size);
-
-			bx::memCopy(_data, str, size);
-			m_pos += size;
-
-			return size;
-		}
-
-		const char* m_str;
-		uint32_t m_pos;
-		uint32_t m_size;
 	};
 
 } /* namespace gl */ } // namespace bgfx

@@ -122,9 +122,9 @@ solution "bgfx"
 		"Release",
 	}
 
-	if _ACTION ~= nil and _ACTION:match "xcode*" then
+	if _ACTION ~= nil and _ACTION:match "^xcode" then
 		platforms {
-			"Universal",
+			"Native", -- let xcode decide based on the target output
 		}
 	else
 		platforms {
@@ -367,7 +367,8 @@ function exampleProjectDefaults()
 
 		linkoptions {
 			"-s TOTAL_MEMORY=32MB",
-			"-s ALLOW_MEMORY_GROWTH=1"
+			"-s ALLOW_MEMORY_GROWTH=1",
+			"--preload-file ../../../examples/runtime@/"
 		}
 
 		removeflags {
@@ -575,6 +576,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "39-assao"
 		, "40-svt"
 		, "41-tess"
+		, "42-bunnylod"
 		)
 
 	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm

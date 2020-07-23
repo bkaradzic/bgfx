@@ -85,12 +85,10 @@ bool TransformationAddDeadBreak::AddingBreakRespectsStructuredControlFlow(
     // loop as part of the loop, but it is not legal to jump from a loop's
     // continue construct to the loop's merge (except from the back-edge block),
     // so we need to check for this case.
-    //
-    // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2577): We do not
-    //  currently allow a dead break from a back edge block, but we could and
-    //  ultimately should.
     return !fuzzerutil::BlockIsInLoopContinueConstruct(
-        ir_context, message_.from_block(), containing_construct);
+               ir_context, message_.from_block(), containing_construct) ||
+           fuzzerutil::BlockIsBackEdge(ir_context, message_.from_block(),
+                                       containing_construct);
   }
 
   // Case (3) holds if and only if |to_block| is the merge block for this
@@ -102,7 +100,9 @@ bool TransformationAddDeadBreak::AddingBreakRespectsStructuredControlFlow(
       message_.to_block() ==
           ir_context->cfg()->block(containing_loop_header)->MergeBlockId()) {
     return !fuzzerutil::BlockIsInLoopContinueConstruct(
-        ir_context, message_.from_block(), containing_loop_header);
+               ir_context, message_.from_block(), containing_loop_header) ||
+           fuzzerutil::BlockIsBackEdge(ir_context, message_.from_block(),
+                                       containing_loop_header);
   }
   return false;
 }
@@ -112,8 +112,8 @@ bool TransformationAddDeadBreak::IsApplicable(
     const TransformationContext& transformation_context) const {
   // First, we check that a constant with the same value as
   // |message_.break_condition_value| is present.
-  if (!fuzzerutil::MaybeGetBoolConstantId(ir_context,
-                                          message_.break_condition_value())) {
+  if (!fuzzerutil::MaybeGetBoolConstant(ir_context,
+                                        message_.break_condition_value())) {
     // The required constant is not present, so the transformation cannot be
     // applied.
     return false;

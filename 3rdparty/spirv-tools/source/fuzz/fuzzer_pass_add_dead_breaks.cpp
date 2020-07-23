@@ -114,12 +114,9 @@ void FuzzerPassAddDeadBreaks::Apply() {
     candidate_transformations.erase(candidate_transformations.begin() + index);
     // Probabilistically decide whether to try to apply it vs. ignore it, in the
     // case that it is applicable.
-    if (transformation.IsApplicable(GetIRContext(),
-                                    *GetTransformationContext()) &&
-        GetFuzzerContext()->ChoosePercentage(
+    if (GetFuzzerContext()->ChoosePercentage(
             GetFuzzerContext()->GetChanceOfAddingDeadBreak())) {
-      transformation.Apply(GetIRContext(), GetTransformationContext());
-      *GetTransformations()->add_transformation() = transformation.ToMessage();
+      MaybeApplyTransformation(transformation);
     }
   }
 }

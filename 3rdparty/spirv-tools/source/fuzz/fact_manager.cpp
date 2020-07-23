@@ -457,6 +457,18 @@ class FactManager::DataSynonymAndIdEquationFacts {
                                    const protobufs::DataDescriptor& dd2,
                                    opt::IRContext* context);
 
+  // Computes various corollary facts from the data descriptor |dd| if members
+  // of its equivalence class participate in equation facts with OpConvert*
+  // opcodes. The descriptor should be registered in the equivalence relation.
+  void ComputeConversionDataSynonymFacts(const protobufs::DataDescriptor& dd,
+                                         opt::IRContext* context);
+
+  // Recurses into sub-components of the data descriptors, if they are
+  // composites, to record that their components are pairwise-synonymous.
+  void ComputeCompositeDataSynonymFacts(const protobufs::DataDescriptor& dd1,
+                                        const protobufs::DataDescriptor& dd2,
+                                        opt::IRContext* context);
+
   // Records the fact that |dd1| and |dd2| are equivalent, and merges the sets
   // of equations that are known about them.
   void MakeEquivalent(const protobufs::DataDescriptor& dd1,
@@ -588,9 +600,13 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
   // Now try to work out corollaries implied by the new equation and existing
   // facts.
   switch (opcode) {
+    case SpvOpConvertSToF:
+    case SpvOpConvertUToF:
+      ComputeConversionDataSynonymFacts(*rhs_dds[0], context);
+      break;
     case SpvOpIAdd: {
       // Equation form: "a = b + c"
-      for (auto equation : GetEquations(rhs_dds[0])) {
+      for (const auto& equation : GetEquations(rhs_dds[0])) {
         if (equation.opcode == SpvOpISub) {
           // Equation form: "a = (d - e) + c"
           if (synonymous_.IsEquivalent(*equation.operands[1], *rhs_dds[1])) {
@@ -606,7 +622,7 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
           }
         }
       }
-      for (auto equation : GetEquations(rhs_dds[1])) {
+      for (const auto& equation : GetEquations(rhs_dds[1])) {
         if (equation.opcode == SpvOpISub) {
           // Equation form: "a = b + (d - e)"
           if (synonymous_.IsEquivalent(*equation.operands[1], *rhs_dds[0])) {
@@ -620,7 +636,7 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
     }
     case SpvOpISub: {
       // Equation form: "a = b - c"
-      for (auto equation : GetEquations(rhs_dds[0])) {
+      for (const auto& equation : GetEquations(rhs_dds[0])) {
         if (equation.opcode == SpvOpIAdd) {
           // Equation form: "a = (d + e) - c"
           if (synonymous_.IsEquivalent(*equation.operands[0], *rhs_dds[1])) {
@@ -646,7 +662,7 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
         }
       }
 
-      for (auto equation : GetEquations(rhs_dds[1])) {
+      for (const auto& equation : GetEquations(rhs_dds[1])) {
         if (equation.opcode == SpvOpIAdd) {
           // Equation form: "a = b - (d + e)"
           if (synonymous_.IsEquivalent(*equation.operands[0], *rhs_dds[0])) {
@@ -676,7 +692,7 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
     case SpvOpLogicalNot:
     case SpvOpSNegate: {
       // Equation form: "a = !b" or "a = -b"
-      for (auto equation : GetEquations(rhs_dds[0])) {
+      for (const auto& equation : GetEquations(rhs_dds[0])) {
         if (equation.opcode == opcode) {
           // Equation form: "a = !!b" or "a = -(-b)"
           // We can thus infer "a = b"
@@ -698,7 +714,69 @@ void FactManager::DataSynonymAndIdEquationFacts::AddDataSynonymFactRecursive(
   // Record that the data descriptors provided in the fact are equivalent.
   MakeEquivalent(dd1, dd2);
 
-  // We now check whether this is a synonym about composite objects.  If it is,
+  // Compute various corollary facts.
+  ComputeConversionDataSynonymFacts(dd1, context);
+  ComputeCompositeDataSynonymFacts(dd1, dd2, context);
+}
+
+void FactManager::DataSynonymAndIdEquationFacts::
+    ComputeConversionDataSynonymFacts(const protobufs::DataDescriptor& dd,
+                                      opt::IRContext* context) {
+  assert(synonymous_.Exists(dd) &&
+         "|dd| should've been registered in the equivalence relation");
+
+  const auto* representative = synonymous_.Find(&dd);
+  assert(representative &&
+         "Representative can't be null for a registered descriptor");
+
+  const auto* type =
+      context->get_type_mgr()->GetType(fuzzerutil::WalkCompositeTypeIndices(
+          context, fuzzerutil::GetTypeId(context, representative->object()),
+          representative->index()));
+  assert(type && "Data descriptor has invalid type");
+
+  if ((type->AsVector() && type->AsVector()->element_type()->AsInteger()) ||
+      type->AsInteger()) {
+    // If there exist equation facts of the form |%a = opcode %representative|
+    // and |%b = opcode %representative| where |opcode| is either OpConvertSToF
+    // or OpConvertUToF, then |a| and |b| are synonymous.
+    std::vector<const protobufs::DataDescriptor*> convert_s_to_f_lhs;
+    std::vector<const protobufs::DataDescriptor*> convert_u_to_f_lhs;
+
+    for (const auto& fact : id_equations_) {
+      for (const auto& equation : fact.second) {
+        if (synonymous_.IsEquivalent(*equation.operands[0], *representative)) {
+          if (equation.opcode == SpvOpConvertSToF) {
+            convert_s_to_f_lhs.push_back(fact.first);
+          } else if (equation.opcode == SpvOpConvertUToF) {
+            convert_u_to_f_lhs.push_back(fact.first);
+          }
+        }
+      }
+    }
+
+    for (const auto& synonyms :
+         {std::move(convert_s_to_f_lhs), std::move(convert_u_to_f_lhs)}) {
+      for (const auto* synonym_a : synonyms) {
+        for (const auto* synonym_b : synonyms) {
+          if (!synonymous_.IsEquivalent(*synonym_a, *synonym_b) &&
+              DataDescriptorsAreWellFormedAndComparable(context, *synonym_a,
+                                                        *synonym_b)) {
+            // |synonym_a| and |synonym_b| have compatible types - they are
+            // synonymous.
+            AddDataSynonymFactRecursive(*synonym_a, *synonym_b, context);
+          }
+        }
+      }
+    }
+  }
+}
+
+void FactManager::DataSynonymAndIdEquationFacts::
+    ComputeCompositeDataSynonymFacts(const protobufs::DataDescriptor& dd1,
+                                     const protobufs::DataDescriptor& dd2,
+                                     opt::IRContext* context) {
+  // Check whether this is a synonym about composite objects.  If it is,
   // we can recursively add synonym facts about their associated sub-components.
 
   // Get the type of the object referred to by the first data descriptor in the
@@ -813,8 +891,10 @@ void FactManager::DataSynonymAndIdEquationFacts::ComputeClosureOfFacts(
   struct DataDescriptorPairEquals {
     bool operator()(const DataDescriptorPair& first,
                     const DataDescriptorPair& second) const {
-      return DataDescriptorEquals()(&first.first, &second.first) &&
-             DataDescriptorEquals()(&first.second, &second.second);
+      return (DataDescriptorEquals()(&first.first, &second.first) &&
+              DataDescriptorEquals()(&first.second, &second.second)) ||
+             (DataDescriptorEquals()(&first.first, &second.second) &&
+              DataDescriptorEquals()(&first.second, &second.first));
     }
   };
 

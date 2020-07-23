@@ -72,7 +72,7 @@ void FuzzerPassAddStores::Apply() {
                     // Read only: cannot store to it.
                     return false;
                   }
-                  switch (instruction->result_id()) {
+                  switch (instruction->opcode()) {
                     case SpvOpConstantNull:
                     case SpvOpUndef:
                       // Do not allow storing to a null or undefined pointer;

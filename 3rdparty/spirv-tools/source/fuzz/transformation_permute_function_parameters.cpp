@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <unordered_set>
+#include "source/fuzz/transformation_permute_function_parameters.h"
+
 #include <vector>
 
 #include "source/fuzz/fuzzer_util.h"
-#include "source/fuzz/transformation_permute_function_parameters.h"
 
 namespace spvtools {
 namespace fuzz {
@@ -29,10 +29,10 @@ TransformationPermuteFunctionParameters::
 
 TransformationPermuteFunctionParameters::
     TransformationPermuteFunctionParameters(
-        uint32_t function_id, uint32_t new_type_id,
+        uint32_t function_id, uint32_t function_type_fresh_id,
         const std::vector<uint32_t>& permutation) {
   message_.set_function_id(function_id);
-  message_.set_new_type_id(new_type_id);
+  message_.set_function_type_fresh_id(function_type_fresh_id);
 
   for (auto index : permutation) {
     message_.add_permutation(index);
@@ -53,7 +53,8 @@ bool TransformationPermuteFunctionParameters::IsApplicable(
   const auto* function_type = fuzzerutil::GetFunctionType(ir_context, function);
   assert(function_type && "Function type is null");
 
-  const auto& permutation = message_.permutation();
+  std::vector<uint32_t> permutation(message_.permutation().begin(),
+                                    message_.permutation().end());
 
   // Don't take return type into account
   auto arg_size = function_type->NumInOperands() - 1;
@@ -63,64 +64,60 @@ bool TransformationPermuteFunctionParameters::IsApplicable(
     return false;
   }
 
-  // Check that all indices are valid
-  // and unique integers from the [0, n-1] set
-  std::unordered_set<uint32_t> unique_indices;
-  for (auto index : permutation) {
-    // We don't compare |index| with 0 since it's an unsigned integer
-    if (index >= arg_size) {
-      return false;
-    }
+  // Check that permutation doesn't have duplicated values.
+  assert(!fuzzerutil::HasDuplicates(permutation) &&
+         "Permutation has duplicates");
 
-    unique_indices.insert(index);
-  }
-
-  // Check that permutation doesn't have duplicated values
-  assert(unique_indices.size() == arg_size && "Permutation has duplicates");
-
-  // Check that new function's type is valid:
-  //   - Has the same number of operands
-  //   - Has the same result type as the old one
-  //   - Order of arguments is permuted
-  auto new_type_id = message_.new_type_id();
-  const auto* new_type = ir_context->get_def_use_mgr()->GetDef(new_type_id);
-
-  if (!new_type || new_type->opcode() != SpvOpTypeFunction ||
-      new_type->NumInOperands() != function_type->NumInOperands()) {
+  // Check that elements in permutation are in range [0, arg_size - 1].
+  //
+  // We must check whether the permutation is empty first because in that case
+  // |arg_size - 1| will produce |std::numeric_limits<uint32_t>::max()| since
+  // it's an unsigned integer.
+  if (!permutation.empty() &&
+      !fuzzerutil::IsPermutationOfRange(permutation, 0, arg_size - 1)) {
     return false;
   }
 
-  // Check that both instructions have the same result type
-  if (new_type->GetSingleWordInOperand(0) !=
-      function_type->GetSingleWordInOperand(0)) {
-    return false;
-  }
-
-  // Check that new function type has its arguments permuted
-  for (int i = 0, n = static_cast<int>(permutation.size()); i < n; ++i) {
-    // +1 to take return type into account
-    if (new_type->GetSingleWordInOperand(i + 1) !=
-        function_type->GetSingleWordInOperand(permutation[i] + 1)) {
-      return false;
-    }
-  }
-
-  return true;
+  return fuzzerutil::IsFreshId(ir_context, message_.function_type_fresh_id());
 }
 
 void TransformationPermuteFunctionParameters::Apply(
     opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
-  // Retrieve all data from the message
-  uint32_t function_id = message_.function_id();
-  uint32_t new_type_id = message_.new_type_id();
-  const auto& permutation = message_.permutation();
-
   // Find the function that will be transformed
-  auto* function = fuzzerutil::FindFunction(ir_context, function_id);
+  auto* function = fuzzerutil::FindFunction(ir_context, message_.function_id());
   assert(function && "Can't find the function");
 
+  auto* old_function_type_inst =
+      fuzzerutil::GetFunctionType(ir_context, function);
+  assert(old_function_type_inst && "Function must have a valid type");
+
   // Change function's type
-  function->DefInst().SetInOperand(1, {new_type_id});
+  if (ir_context->get_def_use_mgr()->NumUsers(old_function_type_inst) == 1) {
+    // If only the current function uses |old_function_type_inst| - change it
+    // in-place.
+    opt::Instruction::OperandList permuted_operands = {
+        std::move(old_function_type_inst->GetInOperand(0))};
+    for (auto index : message_.permutation()) {
+      // +1 since the first operand to OpTypeFunction is a return type.
+      permuted_operands.push_back(
+          std::move(old_function_type_inst->GetInOperand(index + 1)));
+    }
+
+    old_function_type_inst->SetInOperands(std::move(permuted_operands));
+  } else {
+    // Either use an existing type or create a new one.
+    std::vector<uint32_t> type_ids = {
+        old_function_type_inst->GetSingleWordInOperand(0)};
+    for (auto index : message_.permutation()) {
+      // +1 since the first operand to OpTypeFunction is a return type.
+      type_ids.push_back(
+          old_function_type_inst->GetSingleWordInOperand(index + 1));
+    }
+
+    function->DefInst().SetInOperand(
+        1, {fuzzerutil::FindOrCreateFunctionType(
+               ir_context, message_.function_type_fresh_id(), type_ids)});
+  }
 
   // Adjust OpFunctionParameter instructions
 
@@ -134,7 +131,7 @@ void TransformationPermuteFunctionParameters::Apply(
 
   // Permute parameters' ids and types
   std::vector<uint32_t> permuted_param_id, permuted_param_type;
-  for (auto index : permutation) {
+  for (auto index : message_.permutation()) {
     permuted_param_id.push_back(param_id[index]);
     permuted_param_type.push_back(param_type[index]);
   }
@@ -150,10 +147,9 @@ void TransformationPermuteFunctionParameters::Apply(
 
   // Fix all OpFunctionCall instructions
   ir_context->get_def_use_mgr()->ForEachUser(
-      &function->DefInst(),
-      [function_id, &permutation](opt::Instruction* call) {
+      &function->DefInst(), [this](opt::Instruction* call) {
         if (call->opcode() != SpvOpFunctionCall ||
-            call->GetSingleWordInOperand(0) != function_id) {
+            call->GetSingleWordInOperand(0) != message_.function_id()) {
           return;
         }
 
@@ -161,7 +157,7 @@ void TransformationPermuteFunctionParameters::Apply(
             call->GetInOperand(0)  // Function id
         };
 
-        for (auto index : permutation) {
+        for (auto index : message_.permutation()) {
           // Take function id into account
           call_operands.push_back(call->GetInOperand(index + 1));
         }

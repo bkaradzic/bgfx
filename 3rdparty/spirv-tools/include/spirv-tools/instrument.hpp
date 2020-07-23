@@ -110,6 +110,16 @@ static const int kInstRayTracingOutLaunchIdX = kInstCommonOutCnt;
 static const int kInstRayTracingOutLaunchIdY = kInstCommonOutCnt + 1;
 static const int kInstRayTracingOutLaunchIdZ = kInstCommonOutCnt + 2;
 
+// Mesh Shader Output Record Offsets
+static const int kInstMeshOutGlobalInvocationIdX = kInstCommonOutCnt;
+static const int kInstMeshOutGlobalInvocationIdY = kInstCommonOutCnt + 1;
+static const int kInstMeshOutGlobalInvocationIdZ = kInstCommonOutCnt + 2;
+
+// Task Shader Output Record Offsets
+static const int kInstTaskOutGlobalInvocationIdX = kInstCommonOutCnt;
+static const int kInstTaskOutGlobalInvocationIdY = kInstCommonOutCnt + 1;
+static const int kInstTaskOutGlobalInvocationIdZ = kInstCommonOutCnt + 2;
+
 // Size of Common and Stage-specific Members
 static const int kInstStageOutCnt = kInstCommonOutCnt + 3;
 

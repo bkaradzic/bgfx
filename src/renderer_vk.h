@@ -223,7 +223,7 @@
 				BX_MACRO_BLOCK_END
 
 #if BGFX_CONFIG_DEBUG
-#	define VK_CHECK(_call) _VK_CHECK(BX_CHECK, _call)
+#	define VK_CHECK(_call) _VK_CHECK(BX_ASSERT, _call)
 #else
 #	define VK_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
@@ -515,7 +515,7 @@ VK_DESTROY
 	{
 		TextureVK()
 			: m_directAccessPtr(NULL)
-			, m_vkTextureFormat(VK_FORMAT_UNDEFINED)
+			, m_format(VK_FORMAT_UNDEFINED)
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem(VK_NULL_HANDLE)
 			, m_textureImageView(VK_NULL_HANDLE)
@@ -532,20 +532,21 @@ VK_DESTROY
 		void copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy);
 		void setImageMemoryBarrier(VkCommandBuffer commandBuffer, VkImageLayout newImageLayout);
 
-		void* m_directAccessPtr;
+		void*    m_directAccessPtr;
 		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
 		uint32_t m_numLayers;
 		uint32_t m_numSides;
+		uint8_t  m_requestedFormat;
+		uint8_t  m_textureFormat;
+		uint8_t  m_numMips;
+
 		VkImageViewType m_type;
-		bgfx::TextureFormat::Enum m_requestedFormat;
-		bgfx::TextureFormat::Enum m_textureFormat;
-		uint8_t m_numMips;
-		VkFormat m_vkTextureFormat;
-		VkComponentMapping m_vkComponentMapping;
-		VkImageAspectFlags  m_vkTextureAspect;
+		VkFormat m_format;
+		VkComponentMapping m_components;
+		VkImageAspectFlags m_aspectMask;
 
 		VkImage m_textureImage;
 		VkDeviceMemory m_textureDeviceMem;

@@ -2300,7 +2300,14 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
             ValidateOperandLexicalScope(_, "Parent", inst, 10, ext_inst_name);
         if (validate_parent != SPV_SUCCESS) return validate_parent;
         CHECK_OPERAND("Linkage Name", SpvOpString, 11);
-        CHECK_OPERAND("Size", SpvOpConstant, 12);
+        if (!DoesDebugInfoOperandMatchExpectation(
+                _,
+                [](OpenCLDebugInfo100Instructions dbg_inst) {
+                  return dbg_inst == OpenCLDebugInfo100DebugInfoNone;
+                },
+                inst, 12)) {
+          CHECK_OPERAND("Size", SpvOpConstant, 12);
+        }
         for (uint32_t word_index = 14; word_index < num_words; ++word_index) {
           if (!DoesDebugInfoOperandMatchExpectation(
                   _,

@@ -32,9 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "glslang/Include/glslang_c_interface.h"
 
-#include "SPIRV/GlslangToSpv.h"
-#include "SPIRV/Logger.h"
-#include "SPIRV/SpvTools.h"
 #include "StandAlone/DirStackFileIncluder.h"
 #include "StandAlone/ResourceLimits.h"
 #include "glslang/Include/ShHandle.h"
@@ -399,36 +396,6 @@ glslang_program_t* glslang_program_create()
     glslang_program_t* p = new glslang_program_t();
     p->program = new glslang::TProgram();
     return p;
-}
-
-void glslang_program_SPIRV_generate(glslang_program_t* program, glslang_stage_t stage)
-{
-    spv::SpvBuildLogger logger;
-    glslang::SpvOptions spvOptions;
-    spvOptions.validate = true;
-
-    const glslang::TIntermediate* intermediate = program->program->getIntermediate(c_shader_stage(stage));
-
-    glslang::GlslangToSpv(*intermediate, program->spirv, &logger, &spvOptions);
-
-    program->loggerMessages = logger.getAllMessages();
-}
-
-size_t glslang_program_SPIRV_get_size(glslang_program_t* program) { return program->spirv.size(); }
-
-void glslang_program_SPIRV_get(glslang_program_t* program, unsigned int* out)
-{
-    memcpy(out, program->spirv.data(), program->spirv.size() * sizeof(unsigned int));
-}
-
-unsigned int* glslang_program_SPIRV_get_ptr(glslang_program_t* program)
-{
-    return program->spirv.data();
-}
-
-const char* glslang_program_SPIRV_get_messages(glslang_program_t* program)
-{
-    return program->loggerMessages.empty() ? nullptr : program->loggerMessages.c_str();
 }
 
 void glslang_program_delete(glslang_program_t* program)

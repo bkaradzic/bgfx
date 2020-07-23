@@ -105,13 +105,17 @@ bool AggressiveDCEPass::IsLocalVar(uint32_t varId) {
          IsVarOfStorage(varId, SpvStorageClassWorkgroup);
 }
 
-void AggressiveDCEPass::AddStores(uint32_t ptrId) {
-  get_def_use_mgr()->ForEachUser(ptrId, [this, ptrId](Instruction* user) {
+void AggressiveDCEPass::AddStores(Function* func, uint32_t ptrId) {
+  get_def_use_mgr()->ForEachUser(ptrId, [this, ptrId, func](Instruction* user) {
+    // If the user is not a part of |func|, skip it.
+    BasicBlock* blk = context()->get_instr_block(user);
+    if (blk && blk->GetParent() != func) return;
+
     switch (user->opcode()) {
       case SpvOpAccessChain:
       case SpvOpInBoundsAccessChain:
       case SpvOpCopyObject:
-        this->AddStores(user->result_id());
+        this->AddStores(func, user->result_id());
         break;
       case SpvOpLoad:
         break;
@@ -131,11 +135,11 @@ void AggressiveDCEPass::AddStores(uint32_t ptrId) {
 }
 
 bool AggressiveDCEPass::AllExtensionsSupported() const {
-  // If any extension not in whitelist, return false
+  // If any extension not in allowlist, return false
   for (auto& ei : get_module()->extensions()) {
     const char* extName =
         reinterpret_cast<const char*>(&ei.GetInOperand(0).words[0]);
-    if (extensions_whitelist_.find(extName) == extensions_whitelist_.end())
+    if (extensions_allowlist_.find(extName) == extensions_allowlist_.end())
       return false;
   }
   return true;
@@ -169,13 +173,13 @@ bool AggressiveDCEPass::IsTargetDead(Instruction* inst) {
   return IsDead(tInst);
 }
 
-void AggressiveDCEPass::ProcessLoad(uint32_t varId) {
+void AggressiveDCEPass::ProcessLoad(Function* func, uint32_t varId) {
   // Only process locals
   if (!IsLocalVar(varId)) return;
   // Return if already processed
   if (live_local_vars_.find(varId) != live_local_vars_.end()) return;
   // Mark all stores to varId as live
-  AddStores(varId);
+  AddStores(func, varId);
   // Cache varId as processed
   live_local_vars_.insert(varId);
 }
@@ -332,6 +336,7 @@ bool AggressiveDCEPass::AggressiveDCE(Function* func) {
   call_in_func_ = false;
   func_is_entry_point_ = false;
   private_stores_.clear();
+  live_local_vars_.clear();
   // Stacks to keep track of when we are inside an if- or loop-construct.
   // When immediately inside an if- or loop-construct, we do not initially
   // mark branches live. All other branches must be marked live.
@@ -454,7 +459,7 @@ bool AggressiveDCEPass::AggressiveDCE(Function* func) {
       uint32_t varId;
       (void)GetPtr(liveInst, &varId);
       if (varId != 0) {
-        ProcessLoad(varId);
+        ProcessLoad(func, varId);
       }
       // Process memory copies like loads
     } else if (liveInst->opcode() == SpvOpCopyMemory ||
@@ -463,7 +468,7 @@ bool AggressiveDCEPass::AggressiveDCE(Function* func) {
       (void)GetPtr(liveInst->GetSingleWordInOperand(kCopyMemorySourceAddrInIdx),
                    &varId);
       if (varId != 0) {
-        ProcessLoad(varId);
+        ProcessLoad(func, varId);
       }
       // If merge, add other branches that are part of its control structure
     } else if (liveInst->opcode() == SpvOpLoopMerge ||
@@ -471,23 +476,23 @@ bool AggressiveDCEPass::AggressiveDCE(Function* func) {
       AddBreaksAndContinuesToWorklist(liveInst);
       // If function call, treat as if it loads from all pointer arguments
     } else if (liveInst->opcode() == SpvOpFunctionCall) {
-      liveInst->ForEachInId([this](const uint32_t* iid) {
+      liveInst->ForEachInId([this, func](const uint32_t* iid) {
         // Skip non-ptr args
         if (!IsPtr(*iid)) return;
         uint32_t varId;
         (void)GetPtr(*iid, &varId);
-        ProcessLoad(varId);
+        ProcessLoad(func, varId);
       });
       // If function parameter, treat as if it's result id is loaded from
     } else if (liveInst->opcode() == SpvOpFunctionParameter) {
-      ProcessLoad(liveInst->result_id());
+      ProcessLoad(func, liveInst->result_id());
       // We treat an OpImageTexelPointer as a load of the pointer, and
       // that value is manipulated to get the result.
     } else if (liveInst->opcode() == SpvOpImageTexelPointer) {
       uint32_t varId;
       (void)GetPtr(liveInst, &varId);
       if (varId != 0) {
-        ProcessLoad(varId);
+        ProcessLoad(func, varId);
       }
     }
 
@@ -882,14 +887,14 @@ bool AggressiveDCEPass::ProcessGlobalValues() {
 AggressiveDCEPass::AggressiveDCEPass() = default;
 
 Pass::Status AggressiveDCEPass::Process() {
-  // Initialize extensions whitelist
+  // Initialize extensions allowlist
   InitExtensions();
   return ProcessImpl();
 }
 
 void AggressiveDCEPass::InitExtensions() {
-  extensions_whitelist_.clear();
-  extensions_whitelist_.insert({
+  extensions_allowlist_.clear();
+  extensions_allowlist_.insert({
       "SPV_AMD_shader_explicit_vertex_parameter",
       "SPV_AMD_shader_trinary_minmax",
       "SPV_AMD_gcn_shader",

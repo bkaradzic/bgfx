@@ -341,40 +341,51 @@ message Transformation {
     TransformationAddTypePointer add_type_pointer = 10;
     TransformationReplaceConstantWithUniform replace_constant_with_uniform = 11;
     TransformationAddDeadContinue add_dead_continue = 12;
-    TransformationCopyObject copy_object = 13;
-    TransformationReplaceIdWithSynonym replace_id_with_synonym = 14;
-    TransformationSetSelectionControl set_selection_control = 15;
-    TransformationCompositeConstruct composite_construct = 16;
-    TransformationSetLoopControl set_loop_control = 17;
-    TransformationSetFunctionControl set_function_control = 18;
-    TransformationAddNoContractionDecoration add_no_contraction_decoration = 19;
-    TransformationSetMemoryOperandsMask set_memory_operands_mask = 20;
-    TransformationCompositeExtract composite_extract = 21;
-    TransformationVectorShuffle vector_shuffle = 22;
-    TransformationOutlineFunction outline_function = 23;
-    TransformationMergeBlocks merge_blocks = 24;
-    TransformationAddTypeVector add_type_vector = 25;
-    TransformationAddTypeArray add_type_array = 26;
-    TransformationAddTypeMatrix add_type_matrix = 27;
-    TransformationAddTypeStruct add_type_struct = 28;
-    TransformationAddTypeFunction add_type_function = 29;
-    TransformationAddConstantComposite add_constant_composite = 30;
-    TransformationAddGlobalVariable add_global_variable = 31;
-    TransformationAddGlobalUndef add_global_undef = 32;
-    TransformationAddFunction add_function = 33;
-    TransformationAddDeadBlock add_dead_block = 34;
-    TransformationAddLocalVariable add_local_variable = 35;
-    TransformationLoad load = 36;
-    TransformationStore store = 37;
-    TransformationFunctionCall function_call = 38;
-    TransformationAccessChain access_chain = 39;
-    TransformationEquationInstruction equation_instruction = 40;
-    TransformationSwapCommutableOperands swap_commutable_operands = 41;
-    TransformationPermuteFunctionParameters permute_function_parameters = 42;
-    TransformationToggleAccessChainInstruction toggle_access_chain_instruction = 43;
-    TransformationAddConstantNull add_constant_null = 44;
-    TransformationComputeDataSynonymFactClosure compute_data_synonym_fact_closure = 45;
-    TransformationAdjustBranchWeights adjust_branch_weights = 46;
+    TransformationReplaceIdWithSynonym replace_id_with_synonym = 13;
+    TransformationSetSelectionControl set_selection_control = 14;
+    TransformationCompositeConstruct composite_construct = 15;
+    TransformationSetLoopControl set_loop_control = 16;
+    TransformationSetFunctionControl set_function_control = 17;
+    TransformationAddNoContractionDecoration add_no_contraction_decoration = 18;
+    TransformationSetMemoryOperandsMask set_memory_operands_mask = 19;
+    TransformationCompositeExtract composite_extract = 20;
+    TransformationVectorShuffle vector_shuffle = 21;
+    TransformationOutlineFunction outline_function = 22;
+    TransformationMergeBlocks merge_blocks = 23;
+    TransformationAddTypeVector add_type_vector = 24;
+    TransformationAddTypeArray add_type_array = 25;
+    TransformationAddTypeMatrix add_type_matrix = 26;
+    TransformationAddTypeStruct add_type_struct = 27;
+    TransformationAddTypeFunction add_type_function = 28;
+    TransformationAddConstantComposite add_constant_composite = 29;
+    TransformationAddGlobalVariable add_global_variable = 30;
+    TransformationAddGlobalUndef add_global_undef = 31;
+    TransformationAddFunction add_function = 32;
+    TransformationAddDeadBlock add_dead_block = 33;
+    TransformationAddLocalVariable add_local_variable = 34;
+    TransformationLoad load = 35;
+    TransformationStore store = 36;
+    TransformationFunctionCall function_call = 37;
+    TransformationAccessChain access_chain = 38;
+    TransformationEquationInstruction equation_instruction = 39;
+    TransformationSwapCommutableOperands swap_commutable_operands = 40;
+    TransformationPermuteFunctionParameters permute_function_parameters = 41;
+    TransformationToggleAccessChainInstruction toggle_access_chain_instruction = 42;
+    TransformationAddConstantNull add_constant_null = 43;
+    TransformationComputeDataSynonymFactClosure compute_data_synonym_fact_closure = 44;
+    TransformationAdjustBranchWeights adjust_branch_weights = 45;
+    TransformationPushIdThroughVariable push_id_through_variable = 46;
+    TransformationAddSpecConstantOp add_spec_constant_op = 47;
+    TransformationReplaceLinearAlgebraInstruction replace_linear_algebra_instruction = 48;
+    TransformationSwapConditionalBranchOperands swap_conditional_branch_operands = 49;
+    TransformationPermutePhiOperands permute_phi_operands = 50;
+    TransformationAddParameter add_parameter = 51;
+    TransformationAddCopyMemory add_copy_memory = 52;
+    TransformationInvertComparisonOperator invert_comparison_operator = 53;
+    TransformationAddImageSampleUnusedComponents add_image_sample_unused_components = 54;
+    TransformationReplaceParameterWithGlobal replace_parameter_with_global = 55;
+    TransformationRecordSynonymousConstants record_synonymous_constants = 56;
+    TransformationAddSynonym add_synonym = 57;
     // Add additional option using the next available number.
   }
 }
@@ -449,6 +460,30 @@ message TransformationAddConstantScalar {
 
   // Value of the constant
   repeated uint32 word = 3;
+
+}
+
+message TransformationAddCopyMemory {
+
+  // Adds an OpCopyMemory instruction into the module.
+  // Creates either a global or a local variable (based on
+  // |storage_class| field) to copy the target into.
+
+  // OpCopyMemory will be inserted before this instruction.
+  InstructionDescriptor instruction_descriptor = 1;
+
+  // Fresh id to copy memory into.
+  uint32 fresh_id = 2;
+
+  // Source to copy memory from.
+  uint32 source_id = 3;
+
+  // Storage class for the target variable. Can be either Function or Private.
+  uint32 storage_class = 4;
+
+  // Result id for the variable's initializer operand. Its type must be equal to
+  // variable's pointee type.
+  uint32 initializer_id = 5;
 
 }
 
@@ -584,6 +619,18 @@ message TransformationAddGlobalVariable {
 
 }
 
+message TransformationAddImageSampleUnusedComponents {
+
+  // A transformation that adds unused components to an image sample coordinate.
+
+  // An vector id with the original coordinate and the unused components.
+  uint32 coordinate_with_unused_components_id = 1;
+
+  // A descriptor for an image sample instruction.
+  InstructionDescriptor instruction_descriptor = 2;
+
+}
+
 message TransformationAddLocalVariable {
 
   // Adds a local variable of the given type (which must be a pointer with
@@ -615,6 +662,94 @@ message TransformationAddNoContractionDecoration {
 
   // Result id to be decorated
   uint32 result_id = 1;
+
+}
+
+message TransformationAddParameter {
+
+  // Adds a new parameter into the function.
+
+  // Result id of the function to add parameters to.
+  uint32 function_id = 1;
+
+  // Fresh id for a new parameter.
+  uint32 parameter_fresh_id = 2;
+
+  // Result id of the instruction, used to initializer new parameter
+  // in function calls. Type id of that instruction is the type id of the parameter.
+  // It may not be OpTypeVoid.
+  uint32 initializer_id = 3;
+
+  // A fresh id for a new function type. This might not be used
+  // if a required function type already exists or if we can change
+  // the old function type.
+  uint32 function_type_fresh_id = 4;
+
+}
+
+message TransformationAddSpecConstantOp {
+
+  // Adds OpSpecConstantOp into the module.
+
+  // Result id for the new instruction.
+  uint32 fresh_id = 1;
+
+  // Type id for the new instruction.
+  uint32 type_id = 2;
+
+  // Opcode operand of the OpSpecConstantOp instruction.
+  uint32 opcode = 3;
+
+  // Operands of the |opcode| instruction.
+  repeated InstructionOperand operand = 4;
+
+}
+
+message TransformationAddSynonym {
+
+  // Adds a |synonymous_instruction| before |insert_before| instruction with
+  // and creates a fact that |result_id| and the result id of |synonymous_instruction|
+  // are synonymous.
+
+  // Result id of the first synonym.
+  uint32 result_id = 1;
+
+  // Type of the synonym to apply. Some types might produce instructions
+  // with commutative operands. Such types do not specify the order of the
+  // operands since we have a special transformation to swap commutable operands.
+  //
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3499):
+  //  Consider adding more types here.
+  enum SynonymType {
+    // New synonym is derived by adding zero to the |result_id|.
+    ADD_ZERO = 0;
+
+    // New synonym is derived by subtracting zero from the |result_id|.
+    SUB_ZERO = 1;
+
+    // New synonym is derived by multiplying |result_id| by one.
+    MUL_ONE = 2;
+
+    // New synonym is derived by applying OpCopyObject instruction to |result_id|.
+    COPY_OBJECT = 3;
+
+    // New synonym is derived by applying OpLogicalOr to |result_id| with the second
+    // operand being 'false'.
+    LOGICAL_OR = 4;
+
+    // New synonym is derived by applying OpLogicalAnd to |result_id| with the second
+    // operand being 'true'.
+    LOGICAL_AND = 5;
+  }
+
+  // Type of the synonym to create. See SynonymType for more details.
+  SynonymType synonym_type = 2;
+
+  // Fresh result id for a created synonym.
+  uint32 synonym_fresh_id = 3;
+
+  // An instruction to insert a new synonym before.
+  InstructionDescriptor insert_before = 4;
 
 }
 
@@ -809,23 +944,6 @@ message TransformationComputeDataSynonymFactClosure {
 
 }
 
-message TransformationCopyObject {
-
-  // A transformation that introduces an OpCopyObject instruction to make a
-  // copy of an object.
-
-  // Id of the object to be copied
-  uint32 object = 1;
-
-  // A descriptor for an instruction in a block before which the new
-  // OpCopyObject instruction should be inserted
-  InstructionDescriptor instruction_to_insert_before = 2;
-
-  // A fresh id for the copied object
-  uint32 fresh_id = 3;
-
-}
-
 message TransformationEquationInstruction {
 
   // A transformation that adds an instruction to the module that defines an
@@ -868,6 +986,22 @@ message TransformationFunctionCall {
   // A descriptor for an instruction in a block before which the new
   // OpFunctionCall instruction should be inserted
   InstructionDescriptor instruction_to_insert_before = 4;
+
+}
+
+message TransformationInvertComparisonOperator {
+
+  // For some instruction with result id |operator_id| that
+  // represents a binary comparison operator (e.g. <, >, <=), this transformation
+  // will replace that instruction's result id with |fresh_id|,
+  // invert the opcode (< will become >=) and insert OpLogicalNot
+  // instruction with result id |operator_id| below.
+
+  // Result id of the instruction to invert.
+  uint32 operator_id = 1;
+
+  // Fresh id that will be used by the operator after the inversion.
+  uint32 fresh_id = 2;
 
 }
 
@@ -966,12 +1100,10 @@ message TransformationPermuteFunctionParameters {
   // Function, whose parameters will be permuted
   uint32 function_id = 1;
 
-  // |new_type_id| is a result id of a valid OpTypeFunction instruction.
-  // New type is valid if:
-  //   - it has the same number of operands as the old one
-  //   - function's result type is the same as the old one
-  //   - function's arguments are permuted according to |permutation| vector
-  uint32 new_type_id = 2;
+  // Fresh id for a new type of the function. This might not be used
+  // if a required function type already exists or if we can change
+  // the old function type.
+  uint32 function_type_fresh_id = 2;
 
   // An array of size |n|, where |n| is a number of arguments to a function
   // with |function_id|. For each i: 0 <= permutation[i] < n.
@@ -980,6 +1112,83 @@ message TransformationPermuteFunctionParameters {
   // function's argument (i.e. i-th argument will be permutation[i]-th
   // after running this transformation)
   repeated uint32 permutation = 3;
+
+}
+
+message TransformationPermutePhiOperands {
+
+  // Permutes operands of some OpPhi instruction.
+
+  // Result id of the instruction to apply the transformation to.
+  uint32 result_id = 1;
+
+  // A sequence of numbers in the range [0, n/2 - 1] where |n| is the number
+  // of operands of the OpPhi instruction with |result_id|.
+  repeated uint32 permutation = 2;
+
+}
+
+message TransformationPushIdThroughVariable {
+
+  // A transformation that makes |value_synonym_id| and |value_id| to be
+  // synonymous by storing |value_id| into |variable_id| and
+  // loading |variable_id| to |value_synonym_id|.
+
+  // The value to be stored.
+  uint32 value_id = 1;
+
+  // A fresh id for the result of the load instruction.
+  uint32 value_synonym_id = 2;
+
+  // A fresh id for the variable to be stored to.
+  uint32 variable_id = 3;
+
+  // Constant to initialize the variable from.
+  uint32 initializer_id = 4;
+
+  // The variable storage class (global or local).
+  uint32 variable_storage_class = 5;
+
+  // A descriptor for an instruction which the new OpStore
+  // and OpLoad instructions might be inserted before.
+  InstructionDescriptor instruction_descriptor = 6;
+
+}
+
+message TransformationRecordSynonymousConstants {
+
+  // A transformation that, given the IDs to two synonymous constants,
+  // records the fact that they are synonymous. The module is not changed.
+  // Two constants are synonymous if:
+  // - they have the same type (ignoring the presence of integer sign)
+  // - they have the same opcode (one of OpConstant, OpConstantTrue,
+  //   OpConstantFalse, OpConstantNull)
+  // - they have the same value
+  // If the types are the same, OpConstantNull is equivalent to
+  // OpConstantFalse or OpConstant with value zero.
+
+  // The id of a constant
+  uint32 constant1_id = 1;
+
+  // The id of the synonym
+  uint32 constant2_id = 2;
+
+}
+
+message TransformationReplaceParameterWithGlobal {
+
+  // Removes parameter with result id |parameter_id| from its function
+  // and creates a global variable to pass its value to the function instead.
+
+  // Fresh id for a new function type. This might not be used if a required
+  // function type already exists or if we can change the old function type.
+  uint32 function_type_fresh_id = 2;
+
+  // Result id of the OpFunctionParameter instruction to remove.
+  uint32 parameter_id = 3;
+
+  // Fresh id of a global variable used to pass parameter's value to the function.
+  uint32 global_variable_fresh_id = 4;
 
 }
 
@@ -1034,6 +1243,33 @@ message TransformationReplaceIdWithSynonym {
 
   // The synonymous id
   uint32 synonymous_id = 2;
+
+}
+
+message TransformationReplaceLinearAlgebraInstruction {
+
+  // Replaces a linear algebra instruction with its
+  // mathematical definition.
+
+  // The fresh ids needed to apply the transformation.
+  repeated uint32 fresh_ids = 1;
+
+  // A descriptor for a linear algebra instruction.
+  // This transformation is only applicable if the described instruction has one of the following opcodes.
+  // Supported:
+  //   OpVectorTimesScalar
+  //   OpMatrixTimesScalar
+  //   OpVectorTimesMatrix
+  //   OpMatrixTimesVector
+  //   OpMatrixTimesMatrix
+  //   OpDot
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3354):
+  // Right now we only support certain operations. When this issue is addressed
+  // the supporting comments can be removed.
+  // To be supported in the future:
+  //   OpTranspose
+  //   OpOuterProduct
+  InstructionDescriptor instruction_descriptor = 2;
 
 }
 
@@ -1151,6 +1387,21 @@ message TransformationSwapCommutableOperands {
 
   // A descriptor for a commutative instruction
   InstructionDescriptor instruction_descriptor = 1;
+
+}
+
+message TransformationSwapConditionalBranchOperands {
+
+  // Swaps label ids in OpBranchConditional instruction.
+  // Additionally, inverts the guard and swaps branch weights
+  // if present.
+
+  // Descriptor of the instruction to swap operands of.
+  InstructionDescriptor instruction_descriptor = 1;
+
+  // Fresh result id for the OpLogicalNot instruction, used
+  // to invert the guard.
+  uint32 fresh_id = 2;
 
 }
 

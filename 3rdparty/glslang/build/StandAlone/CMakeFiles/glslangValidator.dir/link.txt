@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/glslangValidator.dir/StandAlone.cpp.o  -o glslangValidator ../glslang/libglslang.a ../SPIRV/libSPIRV.a libglslang-default-resource-limits.a ../SPIRV/libSPVRemapper.a -lpthread ../glslang/libglslang.a ../OGLCompilersDLL/libOGLCompiler.a ../glslang/OSDependent/Unix/libOSDependent.a -pthread 

@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 106;
+enum uint BGFX_API_VERSION = 108;
 
 alias bgfx_view_id_t = ushort;
 
@@ -331,7 +331,7 @@ enum uint BGFX_RESET_MAXANISOTROPY = 0x00000100; /// Turn on/off max anisotropy.
 enum uint BGFX_RESET_CAPTURE = 0x00000200; /// Begin screen capture.
 enum uint BGFX_RESET_FLUSH_AFTER_RENDER = 0x00002000; /// Flush rendering after submitting to GPU.
 /**
- * This flag specifies where flip occurs. Default behavior is that flip occurs
+ * This flag specifies where flip occurs. Default behaviour is that flip occurs
  * before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
  */
 enum uint BGFX_RESET_FLIP_AFTER_RENDER = 0x00004000;
@@ -723,6 +723,7 @@ struct bgfx_caps_limits_t
 	uint maxUniforms; /// Maximum number of uniform handles.
 	uint maxOcclusionQueries; /// Maximum number of occlusion query handles.
 	uint maxEncoders; /// Maximum number of encoder threads.
+	uint minResourceCbSize; /// Minimum resource command buffer size.
 	uint transientVbSize; /// Maximum transient vertex buffer size.
 	uint transientIbSize; /// Maximum transient index buffer size.
 }
@@ -818,6 +819,7 @@ struct bgfx_resolution_t
 struct bgfx_init_limits_t
 {
 	ushort maxEncoders; /// Maximum number of encoder threads.
+	uint minResourceCbSize; /// Minimum resource command buffer size.
 	uint transientVbSize; /// Maximum transient vertex buffer size.
 	uint transientIbSize; /// Maximum transient index buffer size.
 }

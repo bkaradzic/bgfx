@@ -626,7 +626,7 @@ namespace ps
 
 		void updateEmitter(EmitterHandle _handle, const EmitterUniforms* _uniforms)
 		{
-			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
 				, "destroyEmitter handle %d is not valid."
 				, _handle.idx
 				);
@@ -645,7 +645,7 @@ namespace ps
 
 		void getAabb(EmitterHandle _handle, Aabb& _outAabb)
 		{
-			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
 				, "getAabb handle %d is not valid."
 				, _handle.idx
 				);
@@ -654,7 +654,7 @@ namespace ps
 
 		void destroyEmitter(EmitterHandle _handle)
 		{
-			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
 				, "destroyEmitter handle %d is not valid."
 				, _handle.idx
 				);

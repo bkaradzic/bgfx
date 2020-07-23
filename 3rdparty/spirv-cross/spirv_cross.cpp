@@ -273,11 +273,27 @@ SPIRVariable *Compiler::maybe_get_backing_variable(uint32_t chain)
 	return var;
 }
 
-StorageClass Compiler::get_backing_variable_storage(uint32_t ptr)
+StorageClass Compiler::get_expression_effective_storage_class(uint32_t ptr)
 {
 	auto *var = maybe_get_backing_variable(ptr);
-	if (var)
-		return var->storage;
+
+	// If the expression has been lowered to a temporary, we need to use the Generic storage class.
+	// We're looking for the effective storage class of a given expression.
+	// An access chain or forwarded OpLoads from such access chains
+	// will generally have the storage class of the underlying variable, but if the load was not forwarded
+	// we have lost any address space qualifiers.
+	bool forced_temporary = ir.ids[ptr].get_type() == TypeExpression && !get<SPIRExpression>(ptr).access_chain &&
+	                        (forced_temporaries.count(ptr) != 0 || forwarded_temporaries.count(ptr) == 0);
+
+	if (var && !forced_temporary)
+	{
+		// Normalize SSBOs to StorageBuffer here.
+		if (var->storage == StorageClassUniform &&
+		    has_decoration(get<SPIRType>(var->basetype).self, DecorationBufferBlock))
+			return StorageClassStorageBuffer;
+		else
+			return var->storage;
+	}
 	else
 		return expression_type(ptr).storage;
 }
@@ -1657,6 +1673,13 @@ size_t Compiler::get_declared_struct_member_size(const SPIRType &struct_type, ui
 
 	default:
 		break;
+	}
+
+	if (type.pointer && type.storage == StorageClassPhysicalStorageBuffer)
+	{
+		// Check if this is a top-level pointer type, and not an array of pointers.
+		if (type.pointer_depth > get<SPIRType>(type.parent_type).pointer_depth)
+			return 8;
 	}
 
 	if (!type.array.empty())
@@ -4637,6 +4660,12 @@ bool Compiler::type_is_array_of_pointers(const SPIRType &type) const
 	return type.pointer_depth == get<SPIRType>(type.parent_type).pointer_depth;
 }
 
+bool Compiler::type_is_top_level_physical_pointer(const SPIRType &type) const
+{
+	return type.pointer && type.storage == StorageClassPhysicalStorageBuffer &&
+	       type.pointer_depth > get<SPIRType>(type.parent_type).pointer_depth;
+}
+
 bool Compiler::flush_phi_required(BlockID from, BlockID to) const
 {
 	auto &child = get<SPIRBlock>(to);
@@ -4644,4 +4673,9 @@ bool Compiler::flush_phi_required(BlockID from, BlockID to) const
 		if (phi.parent == from)
 			return true;
 	return false;
+}
+
+void Compiler::add_loop_level()
+{
+	current_loop_level++;
 }

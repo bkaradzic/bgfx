@@ -358,7 +358,7 @@ namespace bgfx
 #define NVA_CHECK(_call)                                                          \
 			BX_MACRO_BLOCK_BEGIN                                                  \
 				int32_t __result__ = _call;                                       \
-				BX_CHECK(1 == __result__, #_call " FAILED 0x%08x\n", __result__); \
+				BX_ASSERT(1 == __result__, #_call " FAILED 0x%08x\n", __result__); \
 				BX_UNUSED(__result__);                                            \
 			BX_MACRO_BLOCK_END
 

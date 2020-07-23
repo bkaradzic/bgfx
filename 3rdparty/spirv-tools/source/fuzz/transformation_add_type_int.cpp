@@ -40,18 +40,14 @@ bool TransformationAddTypeInt::IsApplicable(
 
   // Applicable if there is no int type with this width and signedness already
   // declared in the module.
-  opt::analysis::Integer int_type(message_.width(), message_.is_signed());
-  return ir_context->get_type_mgr()->GetId(&int_type) == 0;
+  return fuzzerutil::MaybeGetIntegerType(ir_context, message_.width(),
+                                         message_.is_signed()) == 0;
 }
 
 void TransformationAddTypeInt::Apply(opt::IRContext* ir_context,
                                      TransformationContext* /*unused*/) const {
-  opt::Instruction::OperandList in_operands = {
-      {SPV_OPERAND_TYPE_LITERAL_INTEGER, {message_.width()}},
-      {SPV_OPERAND_TYPE_LITERAL_INTEGER, {message_.is_signed() ? 1u : 0u}}};
-  ir_context->module()->AddType(MakeUnique<opt::Instruction>(
-      ir_context, SpvOpTypeInt, 0, message_.fresh_id(), in_operands));
-  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
+  fuzzerutil::AddIntegerType(ir_context, message_.fresh_id(), message_.width(),
+                             message_.is_signed());
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
   ir_context->InvalidateAnalysesExceptFor(

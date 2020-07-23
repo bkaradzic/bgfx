@@ -170,15 +170,20 @@ namespace bgfx { namespace gl
 			{
 				int32_t attrs[] =
 				{
-					WGL_SAMPLE_BUFFERS_ARB, 0,
-					WGL_SAMPLES_ARB, 0,
-					WGL_SUPPORT_OPENGL_ARB, true,
-					WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-					WGL_DRAW_TO_WINDOW_ARB, true,
-					WGL_DOUBLE_BUFFER_ARB, true,
-					WGL_COLOR_BITS_ARB, 32,
-					WGL_DEPTH_BITS_ARB, 24,
-					WGL_STENCIL_BITS_ARB, 8,
+					WGL_ACCELERATION_ARB,   WGL_FULL_ACCELERATION_ARB,
+					WGL_DOUBLE_BUFFER_ARB,  GL_TRUE,
+					WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+					WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+
+					WGL_ALPHA_BITS_ARB,     8,
+					WGL_COLOR_BITS_ARB,     32,
+					WGL_DEPTH_BITS_ARB,     24,
+					WGL_STENCIL_BITS_ARB,   0,
+
+					WGL_PIXEL_TYPE_ARB,     WGL_TYPE_RGBA_ARB,
+					WGL_SAMPLES_ARB,        0,
+					WGL_SAMPLE_BUFFERS_ARB, GL_FALSE,
+
 					0
 				};
 
@@ -311,7 +316,7 @@ namespace bgfx { namespace gl
 		BX_WARN(result, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() ); BX_UNUSED(result);
 
 		swapChain->m_context = wglCreateContextAttribsARB(swapChain->m_hdc, m_context, m_contextAttrs);
-		BX_CHECK(NULL != swapChain->m_context, "Create swap chain failed: %x", glGetError() );
+		BX_ASSERT(NULL != swapChain->m_context, "Create swap chain failed: %x", glGetError() );
 		return swapChain;
 	}
 

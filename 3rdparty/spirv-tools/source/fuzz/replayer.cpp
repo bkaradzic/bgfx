@@ -65,11 +65,19 @@ Replayer::ReplayerResultStatus Replayer::Run(
     const std::vector<uint32_t>& binary_in,
     const protobufs::FactSequence& initial_facts,
     const protobufs::TransformationSequence& transformation_sequence_in,
-    std::vector<uint32_t>* binary_out,
+    uint32_t num_transformations_to_apply, std::vector<uint32_t>* binary_out,
     protobufs::TransformationSequence* transformation_sequence_out) const {
   // Check compatibility between the library version being linked with and the
   // header files being used.
   GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  if (num_transformations_to_apply >
+      static_cast<uint32_t>(transformation_sequence_in.transformation_size())) {
+    impl_->consumer(SPV_MSG_ERROR, nullptr, {},
+                    "The number of transformations to be replayed must not "
+                    "exceed the size of the transformation sequence.");
+    return Replayer::ReplayerResultStatus::kTooManyTransformationsRequested;
+  }
 
   spvtools::SpirvTools tools(impl_->target_env);
   if (!tools.IsValid()) {
@@ -104,7 +112,13 @@ Replayer::ReplayerResultStatus Replayer::Run(
                                                impl_->validator_options);
 
   // Consider the transformation proto messages in turn.
+  uint32_t counter = 0;
   for (auto& message : transformation_sequence_in.transformation()) {
+    if (counter >= num_transformations_to_apply) {
+      break;
+    }
+    counter++;
+
     auto transformation = Transformation::FromMessage(message);
 
     // Check whether the transformation can be applied.

@@ -8,6 +8,9 @@
 BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: 'inclusionDepth' : unreferenced formal parameter
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4265) // error C4265: 'spv::spirvbin_t': class has virtual functions, but destructor is not virtual
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wattributes") // warning: attribute ignored
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wdeprecated-declarations") // warning: ‘MSLVertexAttr’ is deprecated
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits") // warning: comparison of unsigned expression in ‘< 0’ is always false
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'userData' shadows a member of 'glslang::TShader::Includer::IncludeResult'
 #define ENABLE_OPT 1
 #include <ShaderLang.h>
@@ -585,10 +588,10 @@ namespace bgfx { namespace metal
 	{
 		uint16_t size = 0;
 
-		uint16_t count = static_cast<uint16_t>(uniforms.size());
+		uint16_t count = static_cast<uint16_t>(uniforms.size() );
 		bx::write(_writer, count);
 
-		uint32_t fragmentBit = isFragmentShader ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		uint32_t fragmentBit = isFragmentShader ? kUniformFragmentBit : 0;
 		for (uint16_t ii = 0; ii < count; ++ii)
 		{
 			const Uniform& un = uniforms[ii];
@@ -598,7 +601,7 @@ namespace bgfx { namespace metal
 			uint8_t nameSize = (uint8_t)un.name.size();
 			bx::write(_writer, nameSize);
 			bx::write(_writer, un.name.c_str(), nameSize);
-			bx::write(_writer, uint8_t(un.type | fragmentBit));
+			bx::write(_writer, uint8_t(un.type | fragmentBit) );
 			bx::write(_writer, un.num);
 			bx::write(_writer, un.regIndex);
 			bx::write(_writer, un.regCount);
@@ -719,53 +722,59 @@ namespace bgfx { namespace metal
 					// first time through, we just find unused uniforms and get rid of them
 					std::string output;
 					bx::Error err;
-					LineReader reader(_code.c_str() );
-					while (err.isOk() )
+					bx::LineReader reader(_code.c_str() );
+					while (!reader.isDone() )
 					{
-						char str[4096];
-						int32_t len = bx::read(&reader, str, BX_COUNTOF(str), &err);
-						if (err.isOk() )
+						bx::StringView strLine = reader.next();
+						bx::StringView str = strFind(strLine, "uniform ");
+
+						if (!str.isEmpty() )
 						{
-							std::string strLine(str, len);
+							bool found = false;
 
-							size_t index = strLine.find("uniform ");
-							if (index != std::string::npos)
+							for (uint32_t ii = 0; ii < BX_COUNTOF(s_samplerTypes); ++ii)
 							{
-								bool found = false;
-
-								for (uint32_t ii = 0; ii < BX_COUNTOF(s_samplerTypes); ++ii)
+								if (!bx::findIdentifierMatch(strLine, s_samplerTypes[ii]).isEmpty() )
 								{
-									if (!bx::findIdentifierMatch(strLine.c_str(), s_samplerTypes[ii]).isEmpty())
+									found = true;
+									break;
+								}
+							}
+
+							if (!found)
+							{
+								for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
+								{
+									// matching lines like:  uniform u_name;
+									// we want to replace "uniform" with "static" so that it's no longer
+									// included in the uniform blob that the application must upload
+									// we can't just remove them, because unused functions might still reference
+									// them and cause a compile error when they're gone
+									if (!bx::findIdentifierMatch(strLine, program->getUniformName(ii) ).isEmpty() )
 									{
 										found = true;
 										break;
 									}
 								}
-
-								if (!found)
-								{
-									for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
-									{
-										// matching lines like:  uniform u_name;
-										// we want to replace "uniform" with "static" so that it's no longer
-										// included in the uniform blob that the application must upload
-										// we can't just remove them, because unused functions might still reference
-										// them and cause a compile error when they're gone
-										if (!bx::findIdentifierMatch(strLine.c_str(), program->getUniformName(ii)).isEmpty())
-										{
-											found = true;
-											break;
-										}
-									}
-								}
-
-								if (!found)
-								{
-									strLine = strLine.replace(index, 7 /* uniform */, "static");
-								}
 							}
 
-							output += strLine;
+							if (!found)
+							{
+								output.append(strLine.getPtr(), str.getPtr() );
+								output += "static ";
+								output.append(str.getTerm(), strLine.getTerm() );
+								output += "\n";
+							}
+							else
+							{
+								output.append(strLine.getPtr(), strLine.getTerm() );
+								output += "\n";
+							}
+						}
+						else
+						{
+							output.append(strLine.getPtr(), strLine.getTerm() );
+							output += "\n";
 						}
 					}
 
@@ -788,7 +797,7 @@ namespace bgfx { namespace metal
 						un.regIndex = uint16_t(offset);
 						un.regCount = un.num;
 
-						switch (program->getUniformType(ii))
+						switch (program->getUniformType(ii) )
 						{
 						case 0x1404: // GL_INT:
 							un.type = UniformType::Sampler;
@@ -887,14 +896,14 @@ namespace bgfx { namespace metal
 					}
 					uint16_t size = writeUniformArray( _writer, uniforms, _options.shaderType == 'f');
 
-					if (_version == BX_MAKEFOURCC('M', 'T', 'L', 0))
+					if (_version == BX_MAKEFOURCC('M', 'T', 'L', 0) )
 					{
 						if (g_verbose)
 						{
 							glslang::SpirvToolsDisassemble(std::cout, spirv);
 						}
 
-						spirv_cross::CompilerMSL msl(std::move(spirv));
+						spirv_cross::CompilerMSL msl(std::move(spirv) );
 
 						auto executionModel = msl.get_execution_model();
 						spirv_cross::MSLResourceBinding newBinding;
@@ -903,7 +912,7 @@ namespace bgfx { namespace metal
 						spirv_cross::ShaderResources resources = msl.get_shader_resources();
 
 						spirv_cross::SmallVector<spirv_cross::EntryPoint> entryPoints = msl.get_entry_points_and_stages();
-						if (!entryPoints.empty())
+						if (!entryPoints.empty() )
 							msl.rename_entry_point(entryPoints[0].name, "xlatMtlMain", entryPoints[0].execution_model);
 
 						for (auto &resource : resources.uniform_buffers)
@@ -943,7 +952,9 @@ namespace bgfx { namespace metal
 						{
 							std::string name = msl.get_name(resource.id);
 							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
-								msl.set_name(resource.id, name.substr(0, name.length() - 7));
+							{
+								msl.set_name(resource.id, name.substr(0, name.length() - 7) );
+							}
 
 							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
 							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
@@ -958,7 +969,9 @@ namespace bgfx { namespace metal
 						{
 							std::string name = msl.get_name(resource.id);
 							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
-								msl.set_name(resource.id, name.substr(0, name.length() - 7));
+							{
+								msl.set_name(resource.id, name.substr(0, name.length() - 7) );
+							}
 
 							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
 							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );

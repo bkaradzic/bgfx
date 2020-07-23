@@ -70,6 +70,26 @@ function bgfxProjectBase(_kind, _defines)
 				"pthread",
 			}
 
+		configuration { "android*" }
+			targetextension ".so"
+
+		configuration { "android*" ,"Debug"}
+			linkoptions {
+				"-Wl,-soname,libbgfx-shared-libDebug.so",
+			}
+
+		configuration { "android*" ,"Release"}
+			linkoptions {
+				"-Wl,-soname,libbgfx-shared-libRelease.so",
+			}
+
+		configuration {}
+	else
+		configuration { "android*" }
+			linkoptions {
+				"-Wl,--fix-cortex-a8",
+			}
+
 		configuration {}
 	end
 

@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(106)
+version(108)
 
 typedef "bool"
 typedef "char"
@@ -342,7 +342,6 @@ flag.ResetMsaa { bits = 32, shift = 4, range = 3, base = 1 }
 	.X16 --- Enable 16x MSAA.
 	()
 
-
 flag.Reset { bits = 32 }
 	.None             ( 0) --- No reset flags.
 	.Fullscreen       ( 1) --- Not supported yet.
@@ -350,7 +349,7 @@ flag.Reset { bits = 32 }
 	.Maxanisotropy    ( 9) --- Turn on/off max anisotropy.
 	.Capture          (10) --- Begin screen capture.
 	.FlushAfterRender (14) --- Flush rendering after submitting to GPU.
-	.FlipAfterRender  (15) --- This flag specifies where flip occurs. Default behavior is that flip occurs
+	.FlipAfterRender  (15) --- This flag specifies where flip occurs. Default behaviour is that flip occurs
 	                       --- before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 	.SrgbBackbuffer   (16) --- Enable sRGB backbuffer.
 	.Hdr10            (17) --- Enable HDR10 rendering.
@@ -700,6 +699,7 @@ struct.Limits  { namespace = "Caps" }
 	.maxUniforms             "uint32_t"    --- Maximum number of uniform handles.
 	.maxOcclusionQueries     "uint32_t"    --- Maximum number of occlusion query handles.
 	.maxEncoders             "uint32_t"    --- Maximum number of encoder threads.
+	.minResourceCbSize       "uint32_t"    --- Minimum resource command buffer size.
 	.transientVbSize         "uint32_t"    --- Maximum transient vertex buffer size.
 	.transientIbSize         "uint32_t"    --- Maximum transient index buffer size.
 
@@ -765,9 +765,10 @@ struct.Resolution { ctor }
 
 --- Configurable runtime limits parameters.
 struct.Limits { namespace = "Init" }
-	.maxEncoders    "uint16_t"             --- Maximum number of encoder threads.
-	.transientVbSize "uint32_t"            --- Maximum transient vertex buffer size.
-	.transientIbSize "uint32_t"            --- Maximum transient index buffer size.
+	.maxEncoders       "uint16_t" --- Maximum number of encoder threads.
+	.minResourceCbSize "uint32_t" --- Minimum resource command buffer size.
+	.transientVbSize   "uint32_t" --- Maximum transient vertex buffer size.
+	.transientIbSize   "uint32_t" --- Maximum transient index buffer size.
 
 --- Initialization parameters used by `bgfx::init`.
 struct.Init { ctor }
@@ -1061,14 +1062,15 @@ func.vertexConvert
 
 --- Weld vertices.
 func.weldVertices
-	"uint16_t"                     --- Number of unique vertices after vertex welding.
-	.output          "uint16_t*"    --- Welded vertices remapping table. The size of buffer
-	                               --- must be the same as number of vertices.
-	.layout			"const VertexLayout &"     --- Vertex stream layout.
-	.data            "const void*"            --- Vertex stream.
-	.num             "uint16_t"               --- Number of vertices in vertex stream.
-	.epsilon         "float"                  --- Error tolerance for vertex position comparison.
-	 { default = "0.001f" }
+	"uint32_t"                              --- Number of unique vertices after vertex welding.
+	.output          "void*"                --- Welded vertices remapping table. The size of buffer
+	                                        --- must be the same as number of vertices.
+	.layout          "const VertexLayout &" --- Vertex stream layout.
+	.data            "const void*"          --- Vertex stream.
+	.num             "uint32_t"             --- Number of vertices in vertex stream.
+	.index32         "bool"                 --- Set to `true` if input indices are 32-bit.
+	.epsilon         "float"                --- Error tolerance for vertex position comparison.
+	 { default = "0.001f"                   }
 
 --- Convert index buffer for use with different primitive topologies.
 func.topologyConvert
@@ -1145,7 +1147,7 @@ func.reset
 	                                 ---   - `BGFX_RESET_CAPTURE` - Begin screen capture.
 	                                 ---   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.
 	                                 ---   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
-	                                 ---     occurs. Default behavior is that flip occurs before rendering new
+	                                 ---     occurs. Default behaviour is that flip occurs before rendering new
 	                                 ---     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 	                                 ---   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
 	.format "TextureFormat::Enum"    --- Texture format. See: `TextureFormat::Enum`.

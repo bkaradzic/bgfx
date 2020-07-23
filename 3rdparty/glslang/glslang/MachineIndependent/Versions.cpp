@@ -64,6 +64,7 @@
 //        checkDeprecated()
 //        requireNotRemoved()
 //        requireExtensions()
+//        extensionRequires()
 //
 //    Typically, only the first two calls are needed.  They go into a code path that
 //    implements Feature F, and will log the proper error/warning messages.  Parsing
@@ -78,9 +79,11 @@
 //     const char* const XXX_extension_X = "XXX_extension_X";
 //
 // 2) Add extension initialization to TParseVersions::initializeExtensionBehavior(),
-//    the first function below:
+//    the first function below and optionally a entry to extensionData for additional
+//    error checks:
 //
 //     extensionBehavior[XXX_extension_X] = EBhDisable;
+//     (Optional) exts[] = {XXX_extension_X, EShTargetSpv_1_4}
 //
 // 3) Add any preprocessor directives etc. in the next function, TParseVersions::getPreamble():
 //
@@ -140,6 +143,8 @@
 //    set of extensions that both enable them and are necessary, given the version of the symbol
 //    table. (There is a different symbol table for each version.)
 //
+// 7) If the extension has additional requirements like minimum SPIR-V version required, add them
+//    to extensionRequires()
 
 #include "parseVersions.h"
 #include "localintermediate.h"
@@ -155,6 +160,20 @@ namespace glslang {
 //
 void TParseVersions::initializeExtensionBehavior()
 {
+    typedef struct {
+        const char *const extensionName;
+        EShTargetLanguageVersion minSpvVersion;
+    } extensionData;
+
+    const extensionData exts[] = { {E_GL_EXT_ray_tracing, EShTargetSpv_1_4} };
+
+    for (size_t ii = 0; ii < sizeof(exts) / sizeof(exts[0]); ii++) {
+        // Add only extensions which require > spv1.0 to save space in map
+        if (exts[ii].minSpvVersion > EShTargetSpv_1_0) {
+            extensionMinSpv[E_GL_EXT_ray_tracing] = exts[ii].minSpvVersion;
+        }
+    }
+
     extensionBehavior[E_GL_OES_texture_3D]                   = EBhDisable;
     extensionBehavior[E_GL_OES_standard_derivatives]         = EBhDisable;
     extensionBehavior[E_GL_EXT_frag_depth]                   = EBhDisable;
@@ -329,6 +348,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_shader_subgroup_extended_types_int64]   = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_subgroup_extended_types_float16] = EBhDisable;
 }
+
 #endif // GLSLANG_WEB
 
 // Get code that is not part of a shared symbol table, is specific to this shader,
@@ -828,6 +848,9 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
     // check if extension is used with correct shader stage
     checkExtensionStage(getCurrentLoc(), extension);
 
+    // check if extension has additional requirements
+    extensionRequires(getCurrentLoc(), extension ,behaviorString);
+
     // update the requested extension
     updateExtensionBehavior(extension, behavior);
 
@@ -941,6 +964,24 @@ void TParseVersions::checkExtensionStage(const TSourceLoc& loc, const char * con
                      "#extension GL_NV_mesh_shader");
         profileRequires(loc, ECoreProfile, 450, 0, "#extension GL_NV_mesh_shader");
         profileRequires(loc, EEsProfile, 320, 0, "#extension GL_NV_mesh_shader");
+    }
+}
+
+// Check if extension has additional requirements
+void TParseVersions::extensionRequires(const TSourceLoc &loc, const char * const extension, const char *behaviorString)
+{
+    bool isEnabled = false;
+    if (!strcmp("require", behaviorString))
+        isEnabled = true;
+    else if (!strcmp("enable", behaviorString))
+        isEnabled = true;
+
+    if (isEnabled) {
+        unsigned int minSpvVersion = 0;
+        auto iter = extensionMinSpv.find(TString(extension));
+        if (iter != extensionMinSpv.end())
+            minSpvVersion = iter->second;
+        requireSpv(loc, extension, minSpvVersion);
     }
 }
 
@@ -1199,6 +1240,13 @@ void TParseVersions::requireSpv(const TSourceLoc& loc, const char* op)
 #ifndef GLSLANG_WEB
     if (spvVersion.spv == 0)
         error(loc, "only allowed when generating SPIR-V", op, "");
+#endif
+}
+void TParseVersions::requireSpv(const TSourceLoc& loc, const char *op, unsigned int version)
+{
+#ifndef GLSLANG_WEB
+    if (spvVersion.spv < version)
+        error(loc, "not supported for current targeted SPIR-V version", op, "");
 #endif
 }
 

@@ -12,6 +12,7 @@
 #	include "renderer_webgpu.h"
 #	include "renderer.h"
 #	include "debug_renderdoc.h"
+#	include "emscripten.h"
 
 #	if !BX_PLATFORM_EMSCRIPTEN
 #		ifdef DAWN_ENABLE_BACKEND_D3D12
@@ -25,9 +26,6 @@
 #		include <dawn_native/DawnNative.h>
 #		include <dawn/dawn_wsi.h>
 #		include <dawn/dawn_proc.h>
-#	else
-#		include <emscripten/emscripten.h>
-#		include <emscripten/html5.h>
 #	endif // !BX_PLATFORM_EMSCRIPTEN
 
 namespace bgfx { namespace webgpu
@@ -511,7 +509,7 @@ namespace bgfx { namespace webgpu
 				}
 				else
 				{
-					BX_CHECK(false, "Device error: %s", message);
+					BX_ASSERT(false, "Device error: %s", message);
 				}
 
 				s_ignoreError = false;
@@ -828,7 +826,7 @@ namespace bgfx { namespace webgpu
 			if (readback.m_mapped)
 				return;
 
-			BX_CHECK(readback.m_mip<texture.m_numMips,"Invalid mip: %d num mips:", readback.m_mip,texture.m_numMips);
+			BX_ASSERT(readback.m_mip<texture.m_numMips,"Invalid mip: %d num mips:", readback.m_mip,texture.m_numMips);
 
 			uint32_t srcWidth  = bx::uint32_max(1, texture.m_width  >> readback.m_mip);
 			uint32_t srcHeight = bx::uint32_max(1, texture.m_height >> readback.m_mip);
@@ -1064,7 +1062,7 @@ namespace bgfx { namespace webgpu
 				break;
 
 			default:
-				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				BX_ASSERT(false, "Invalid handle type?! %d", _handle.type);
 				break;
 			}
 		}
@@ -1152,11 +1150,11 @@ namespace bgfx { namespace webgpu
 				uint8_t flags = predefined.m_type;
 				setShaderUniform(flags, predefined.m_loc, proj, 4);
 
-				BX_CHECK(program.m_vsh->m_size > 0, "Not supposed to happen");
+				BX_ASSERT(program.m_vsh->m_size > 0, "Not supposed to happen");
 				const uint32_t voffset = scratchBuffer.write(m_vsScratch, program.m_vsh->m_gpuSize);
 
 				const uint32_t fsize = (NULL != program.m_fsh ? program.m_fsh->m_gpuSize : 0);
-				BX_CHECK(fsize == 0, "Not supposed to happen");
+				BX_ASSERT(fsize == 0, "Not supposed to happen");
 
 				TextureWgpu& texture = m_textures[_blitter.m_texture.idx];
 
@@ -1323,7 +1321,7 @@ namespace bgfx { namespace webgpu
 		template <class Encoder>
 		void bindProgram(Encoder& encoder, const ProgramWgpu& program, BindStateWgpu& bindState, uint32_t numOffset, uint32_t* offsets)
 		{
-			BX_CHECK(bindState.numOffset == numOffset, "We're obviously doing something wrong");
+			BX_ASSERT(bindState.numOffset == numOffset, "We're obviously doing something wrong");
 			encoder.SetBindGroup(0, bindState.m_bindGroup, numOffset, offsets);
 		}
 
@@ -1340,7 +1338,7 @@ namespace bgfx { namespace webgpu
 
 				bool isUsed = isValid(program.m_bindInfo[stage].m_uniform);
 
-				BX_CHECK(!isUsed || kInvalidHandle != bind.m_idx, "All expected bindings must be bound with WebGPU");
+				BX_ASSERT(!isUsed || kInvalidHandle != bind.m_idx, "All expected bindings must be bound with WebGPU");
 
 				if (kInvalidHandle != bind.m_idx)
 				{
@@ -1406,7 +1404,7 @@ namespace bgfx { namespace webgpu
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
 		{
-			if(_flags&BGFX_UNIFORM_FRAGMENTBIT)
+			if(_flags&kUniformFragmentBit)
 			{
 				bx::memCopy(&m_fsScratch[_regIndex], _val, _numRegs * 16);
 			}
@@ -1474,7 +1472,7 @@ namespace bgfx { namespace webgpu
 				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3|BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Mat3|kUniformFragmentBit:
 					{
 						float* value = (float*)data;
 						for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
@@ -1498,11 +1496,11 @@ namespace bgfx { namespace webgpu
 					break;
 
 				case UniformType::Sampler:
-				case UniformType::Sampler | BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Sampler | kUniformFragmentBit:
 				case UniformType::Vec4:
-				case UniformType::Vec4 | BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Vec4 | kUniformFragmentBit:
 				case UniformType::Mat4:
-				case UniformType::Mat4 | BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Mat4 | kUniformFragmentBit:
 					{
 						setShaderUniform(uint8_t(type), loc, data, num);
 					}
@@ -2482,9 +2480,9 @@ namespace bgfx { namespace webgpu
 			);
 
 		const bool fragment = isShaderType(magic, 'F');
-		uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		uint8_t fragmentBit = fragment ? kUniformFragmentBit : 0;
 
-		BX_CHECK(!isShaderVerLess(magic, 7), "WebGPU backend supports only shader binary version >= 7");
+		BX_ASSERT(!isShaderVerLess(magic, 7), "WebGPU backend supports only shader binary version >= 7");
 
 		if (0 < count)
 		{
@@ -2526,11 +2524,11 @@ namespace bgfx { namespace webgpu
 					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
-				else if (UniformType::End == (~BGFX_UNIFORM_MASK & type))
+				else if (UniformType::End == (~kUniformMask & type))
 				{
 					// regCount is used for descriptor type
 					const bool buffer = regCount == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-					const bool readonly = (type & BGFX_UNIFORM_READONLYBIT) != 0;
+					const bool readonly = (type & kUniformReadOnlyBit) != 0;
 
 					const uint8_t stage = regIndex - (buffer ? 16 : 32) - (fragment ? 48 : 0);
 
@@ -2559,10 +2557,10 @@ namespace bgfx { namespace webgpu
 
 					kind = "storage";
 				}
-				else if (UniformType::Sampler == (~BGFX_UNIFORM_MASK & type))
+				else if (UniformType::Sampler == (~kUniformMask & type))
 				{
 					const UniformRegInfo* info = s_renderWgpu->m_uniformReg.find(name);
-					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+					BX_ASSERT(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
 					const uint8_t stage = regIndex - 16 - (fragment ? 48 : 0);
 
@@ -2577,7 +2575,7 @@ namespace bgfx { namespace webgpu
 					m_textures[m_numSamplers].viewDimension = wgpu::TextureViewDimension(texDimension);
 					m_textures[m_numSamplers].textureComponentType = wgpu::TextureComponentType(texComponent);
 
-					const bool comparisonSampler = (type & BGFX_UNIFORM_COMPAREBIT) != 0;
+					const bool comparisonSampler = (type & kUniformCompareBit) != 0;
 
 					m_samplers[m_numSamplers] = wgpu::BindGroupLayoutBinding();
 					m_samplers[m_numSamplers].binding = regIndex + 16;
@@ -2593,7 +2591,7 @@ namespace bgfx { namespace webgpu
 				else
 				{
 					const UniformRegInfo* info = s_renderWgpu->m_uniformReg.find(name);
-					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+					BX_ASSERT(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
 					if(NULL == m_constantBuffer)
 					{
@@ -2607,7 +2605,7 @@ namespace bgfx { namespace webgpu
 				BX_TRACE("\t%s: %s (%s), r.index %3d, r.count %2d"
 					, kind
 					, name
-					, getUniformTypeName(UniformType::Enum(type&~BGFX_UNIFORM_MASK) )
+					, getUniformTypeName(UniformType::Enum(type&~kUniformMask) )
 					, regIndex
 					, regCount
 					);
@@ -2722,19 +2720,19 @@ namespace bgfx { namespace webgpu
 
 	void ProgramWgpu::create(const ShaderWgpu* _vsh, const ShaderWgpu* _fsh)
 	{
-		BX_CHECK(_vsh->m_module, "Vertex shader doesn't exist.");
+		BX_ASSERT(_vsh->m_module, "Vertex shader doesn't exist.");
 		m_vsh = _vsh;
 		m_fsh = _fsh;
 		m_gpuSize = _vsh->m_gpuSize + (_fsh ? _fsh->m_gpuSize : 0);
 
-		//BX_CHECK(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
+		//BX_ASSERT(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
 		m_vsh = _vsh;
 		bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined * sizeof(PredefinedUniform));
 		m_numPredefined = _vsh->m_numPredefined;
 
 		if(NULL != _fsh)
 		{
-			//BX_CHECK(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
+			//BX_ASSERT(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
 			m_fsh = _fsh;
 			bx::memCopy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined * sizeof(PredefinedUniform));
 			m_numPredefined += _fsh->m_numPredefined;
@@ -2810,7 +2808,7 @@ namespace bgfx { namespace webgpu
 
 		m_numBuffers = _vsh->m_numBuffers;
 
-		BX_CHECK(m_numUniforms + m_numSamplers * 2 + m_numBuffers == numBindings, "");
+		BX_ASSERT(m_numUniforms + m_numSamplers * 2 + m_numBuffers == numBindings, "");
 
 		wgpu::BindGroupLayoutDescriptor bindGroupDesc;
 		bindGroupDesc.entryCount = numBindings;
@@ -3460,13 +3458,13 @@ namespace bgfx { namespace webgpu
 			}
 		}
 
-		BX_CHECK(NULL != m_staging, "No available mapped uniform buffer");
+		BX_ASSERT(NULL != m_staging, "No available mapped uniform buffer");
 	}
 
 	uint32_t ScratchBufferWgpu::write(void* data, uint64_t _size, uint64_t _offset)
 	{
-		BX_CHECK(nullptr != m_staging, "Cannot write uniforms outside of begin()/submit() calls");
-		BX_CHECK(m_size > m_offset + _offset, "Out-of-bounds scratch buffer write");
+		BX_ASSERT(nullptr != m_staging, "Cannot write uniforms outside of begin()/submit() calls");
+		BX_ASSERT(m_size > m_offset + _offset, "Out-of-bounds scratch buffer write");
 		uint32_t offset = m_offset;
 		bx::memCopy((void*)((uint8_t*)m_staging->m_data + offset), data, _size);
 		m_offset += _offset;
@@ -3475,8 +3473,8 @@ namespace bgfx { namespace webgpu
 
 	uint32_t ScratchBufferWgpu::write(void* data, uint64_t _size)
 	{
-		BX_CHECK(nullptr != m_staging, "Cannot write uniforms outside of begin()/submit() calls");
-		BX_CHECK(m_size > m_offset + _size, "Out-of-bounds scratch buffer write");
+		BX_ASSERT(nullptr != m_staging, "Cannot write uniforms outside of begin()/submit() calls");
+		BX_ASSERT(m_size > m_offset + _size, "Out-of-bounds scratch buffer write");
 		uint32_t offset = m_offset;
 		bx::memCopy((void*)((uint8_t*)m_staging->m_data + offset), data, _size);
 		m_offset += _size;

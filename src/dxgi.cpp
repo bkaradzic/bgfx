@@ -10,7 +10,7 @@
 #include "dxgi.h"
 #include "renderer_d3d.h"
 
-#if !BX_PLATFORM_WINDOWS
+#if !BX_PLATFORM_WINDOWS && !BX_PLATFORM_LINUX
 #	include <inspectable.h>
 #	if BX_PLATFORM_WINRT
 #		include <windows.ui.xaml.media.dxinterop.h>

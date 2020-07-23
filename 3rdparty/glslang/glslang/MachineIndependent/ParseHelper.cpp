@@ -1295,7 +1295,7 @@ TIntermTyped* TParseContext::handleBuiltInFunctionCall(TSourceLoc loc, TIntermNo
     TIntermTyped *result = intermediate.addBuiltInFunctionCall(loc, function.getBuiltInOp(),
                                                                function.getParamCount() == 1,
                                                                arguments, function.getType());
-    if (obeyPrecisionQualifiers())
+    if (result != nullptr && obeyPrecisionQualifiers())
         computeBuiltinPrecisions(*result, function);
 
     if (result == nullptr) {
@@ -1415,23 +1415,28 @@ TIntermNode* TParseContext::handleReturnValue(const TSourceLoc& loc, TIntermType
 #endif
 
     functionReturnsValue = true;
+    TIntermBranch* branch = nullptr;
     if (currentFunctionType->getBasicType() == EbtVoid) {
         error(loc, "void function cannot return a value", "return", "");
-        return intermediate.addBranch(EOpReturn, loc);
+        branch = intermediate.addBranch(EOpReturn, loc);
     } else if (*currentFunctionType != value->getType()) {
         TIntermTyped* converted = intermediate.addConversion(EOpReturn, *currentFunctionType, value);
         if (converted) {
             if (*currentFunctionType != converted->getType())
                 error(loc, "cannot convert return value to function return type", "return", "");
             if (version < 420)
-                warn(loc, "type conversion on return values was not explicitly allowed until version 420", "return", "");
-            return intermediate.addBranch(EOpReturn, converted, loc);
+                warn(loc, "type conversion on return values was not explicitly allowed until version 420",
+                     "return", "");
+            branch = intermediate.addBranch(EOpReturn, converted, loc);
         } else {
             error(loc, "type does not match, or is not convertible to, the function's return type", "return", "");
-            return intermediate.addBranch(EOpReturn, value, loc);
+            branch = intermediate.addBranch(EOpReturn, value, loc);
         }
     } else
-        return intermediate.addBranch(EOpReturn, value, loc);
+        branch = intermediate.addBranch(EOpReturn, value, loc);
+
+    branch->updatePrecision(currentFunctionType->getQualifier().precision);
+    return branch;
 }
 
 // See if the operation is being done in an illegal location.
@@ -5776,6 +5781,8 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         int repeated = intermediate.addXfbBufferOffset(type);
         if (repeated >= 0)
             error(loc, "overlapping offsets at", "xfb_offset", "offset %d in buffer %d", repeated, qualifier.layoutXfbBuffer);
+        if (type.isUnsizedArray())
+            error(loc, "unsized array", "xfb_offset", "in buffer %d", qualifier.layoutXfbBuffer);
 
         // "The offset must be a multiple of the size of the first component of the first
         // qualified variable or block member, or a compile-time error results. Further, if applied to an aggregate
@@ -7461,8 +7468,8 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
             arraySizesCheck(memberLoc, currentBlockQualifier, memberType.getArraySizes(), nullptr, member == typeList.size() - 1);
         if (memberQualifier.hasOffset()) {
             if (spvVersion.spv == 0) {
-                requireProfile(memberLoc, ~EEsProfile, "offset on block member");
-                profileRequires(memberLoc, ~EEsProfile, 440, E_GL_ARB_enhanced_layouts, "offset on block member");
+                profileRequires(memberLoc, ~EEsProfile, 440, E_GL_ARB_enhanced_layouts, "\"offset\" on block member");
+                profileRequires(memberLoc, EEsProfile, 300, E_GL_ARB_enhanced_layouts, "\"offset\" on block member");
             }
         }
 

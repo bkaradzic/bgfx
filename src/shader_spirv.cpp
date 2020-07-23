@@ -809,7 +809,7 @@ namespace bgfx
 	const char* getName(SpvDecoration::Enum _enum)
 	{
 		BX_UNUSED(s_spvDecorationInfo);
-		BX_CHECK(_enum <= SpvDecoration::Count, "Unknown decoration id %d.", _enum);
+		BX_ASSERT(_enum <= SpvDecoration::Count, "Unknown decoration id %d.", _enum);
 		return _enum <= SpvDecoration::Count
 			?  s_spvDecoration[_enum]
 			: "?SpvDecoration?"
@@ -839,7 +839,7 @@ namespace bgfx
 
 	const char* getName(SpvStorageClass::Enum _enum)
 	{
-		BX_CHECK(_enum <= SpvStorageClass::Count, "Unknown storage class id %d.", _enum);
+		BX_ASSERT(_enum <= SpvStorageClass::Count, "Unknown storage class id %d.", _enum);
 		return _enum <= SpvStorageClass::Count
 			?  s_spvStorageClass[_enum]
 			: "?SpvStorageClass?"
@@ -895,7 +895,7 @@ namespace bgfx
 
 	const char* getName(SpvBuiltin::Enum _enum)
 	{
-		BX_CHECK(_enum <= SpvBuiltin::Count, "Unknown builtin id %d.", _enum);
+		BX_ASSERT(_enum <= SpvBuiltin::Count, "Unknown builtin id %d.", _enum);
 		return _enum <= SpvBuiltin::Count
 			?  s_spvBuiltin[_enum]
 			: "?SpvBuiltin?"

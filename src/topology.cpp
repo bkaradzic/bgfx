@@ -81,7 +81,7 @@ namespace bgfx
 			if (i0 > i1) { bx::swap(i0, i1); }
 			if (i1 > i2) { bx::swap(i1, i2); }
 			if (i0 > i1) { bx::swap(i0, i1); }
-			BX_CHECK(i0 < i1 && i1 < i2, "");
+			BX_ASSERT(i0 < i1 && i1 < i2, "");
 
 			dst[1] = i0; dst[0] = i1;
 			dst[3] = i1; dst[2] = i2;

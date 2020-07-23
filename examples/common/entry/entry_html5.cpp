@@ -17,6 +17,15 @@ extern "C" void entry_emscripten_yield()
 //	emscripten_sleep(0);
 }
 
+#define _EMSCRIPTEN_CHECK(_check, _call)                                                                  \
+	BX_MACRO_BLOCK_BEGIN                                                                                  \
+		EMSCRIPTEN_RESULT __result__ = _call;                                                             \
+		_check(EMSCRIPTEN_RESULT_SUCCESS == __result__, #_call " FAILED 0x%08x\n", (uint32_t)__result__); \
+		BX_UNUSED(__result__);                                                                            \
+	BX_MACRO_BLOCK_END
+
+#define EMSCRIPTEN_CHECK(_call) _EMSCRIPTEN_CHECK(BX_ASSERT, _call)
+
 namespace entry
 {
 	static WindowHandle s_defaultWindow = { 0 };
@@ -90,21 +99,21 @@ namespace entry
 
 		int32_t run(int _argc, const char* const* _argv)
 		{
-// TODO: Make this somehow configurable to the developer building a HTML5 page. Currently #canvas
-// will take the first canvas element found on the web page.
-#define HTML5_TARGET_CANVAS_SELECTOR "#canvas"
+			static const char* canvas = "#canvas";
 
-			emscripten_set_mousedown_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb);
-			emscripten_set_mouseup_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb);
-			emscripten_set_mousemove_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, mouseCb);
+			EMSCRIPTEN_CHECK(emscripten_set_mousedown_callback(canvas, this, true, mouseCb) );
 
-			emscripten_set_wheel_callback(HTML5_TARGET_CANVAS_SELECTOR, this, true, wheelCb);
+			EMSCRIPTEN_CHECK(emscripten_set_mousedown_callback(canvas, this, true, mouseCb) );
+			EMSCRIPTEN_CHECK(emscripten_set_mouseup_callback(canvas, this, true, mouseCb) );
+			EMSCRIPTEN_CHECK(emscripten_set_mousemove_callback(canvas, this, true, mouseCb) );
 
-			emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
-			emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
-			emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb);
+			EMSCRIPTEN_CHECK(emscripten_set_wheel_callback(canvas, this, true, wheelCb) );
 
-			emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, resizeCb);
+			EMSCRIPTEN_CHECK(emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb) );
+			EMSCRIPTEN_CHECK(emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb) );
+			EMSCRIPTEN_CHECK(emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, keyCb) );
+
+			EMSCRIPTEN_CHECK(emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, resizeCb) );
 
 			EmscriptenFullscreenStrategy fullscreenStrategy = {};
 			fullscreenStrategy.scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_DEFAULT;
@@ -113,15 +122,15 @@ namespace entry
 			fullscreenStrategy.canvasResizedCallback = canvasResizeCb;
 			fullscreenStrategy.canvasResizedCallbackUserData = this;
 
-			emscripten_request_fullscreen_strategy(HTML5_TARGET_CANVAS_SELECTOR, false, &fullscreenStrategy);
+			EMSCRIPTEN_CHECK(emscripten_request_fullscreen_strategy(canvas, false, &fullscreenStrategy) );
 
-			emscripten_set_focus_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
-			emscripten_set_focusin_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
-			emscripten_set_focusout_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb);
+			EMSCRIPTEN_CHECK(emscripten_set_focus_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb) );
+			EMSCRIPTEN_CHECK(emscripten_set_focusin_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb) );
+			EMSCRIPTEN_CHECK(emscripten_set_focusout_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb) );
 
 			bgfx::PlatformData pd;
 			bx::memSet(&pd, 0, sizeof(pd) );
-			pd.nwh = (void*)HTML5_TARGET_CANVAS_SELECTOR;
+			pd.nwh = (void*)canvas;
 			bgfx::setPlatformData(pd);
 
 			int32_t result = main(_argc, _argv);
@@ -228,23 +237,23 @@ namespace entry
 		{
 			switch (keyCode)
 			{
-				case 112:  return Key::F1;
-				case 113:  return Key::F2;
-				case 114:  return Key::F3;
-				case 115:  return Key::F4;
-				case 116:  return Key::F5;
-				case 117:  return Key::F6;
-				case 118:  return Key::F7;
-				case 119:  return Key::F8;
-				case 120:  return Key::F9;
-				case 121:  return Key::F10;
-				case 122:  return Key::F11;
-				case 123:  return Key::F12;
+				case 112: return Key::F1;
+				case 113: return Key::F2;
+				case 114: return Key::F3;
+				case 115: return Key::F4;
+				case 116: return Key::F5;
+				case 117: return Key::F6;
+				case 118: return Key::F7;
+				case 119: return Key::F8;
+				case 120: return Key::F9;
+				case 121: return Key::F10;
+				case 122: return Key::F11;
+				case 123: return Key::F12;
 
-				case 37:   return Key::Left;
-				case 39:   return Key::Right;
-				case 38:   return Key::Up;
-				case 40:   return Key::Down;
+				case  37: return Key::Left;
+				case  39: return Key::Right;
+				case  38: return Key::Up;
+				case  40: return Key::Down;
 			}
 		}
 
