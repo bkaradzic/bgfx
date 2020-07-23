@@ -559,7 +559,7 @@ namespace bgfx
 						hr = output6->GetDesc1(&desc);
 						if (SUCCEEDED(hr) )
 						{
-							BX_TRACE("Display specs:")
+							BX_TRACE("Display specs:");
 							BX_TRACE("\t         BitsPerColor: %d", desc.BitsPerColor);
 							BX_TRACE("\t          Color space: %s (colorspace, range, gamma, sitting, primaries, transform)"
 								, s_colorSpaceStr[bx::min<uint32_t>(desc.ColorSpace, kDxgiLastColorSpace+1)]
