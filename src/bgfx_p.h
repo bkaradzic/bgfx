@@ -2379,7 +2379,7 @@ namespace bgfx
 
 		void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 		{
-			BX_ASSERT(UINT8_MAX != m_draw.m_streamMask, "");
+			BX_CHECK(UINT32_MAX != m_draw.m_streamMask, "");
 			m_draw.m_startIndex  = _firstIndex;
 			m_draw.m_numIndices  = _numIndices;
 			m_draw.m_indexBuffer = _handle;
