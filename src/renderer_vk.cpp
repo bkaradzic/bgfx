@@ -2263,8 +2263,10 @@ VK_IMPORT_DEVICE
 				vkSetDebugUtilsObjectNameEXT = stubSetDebugUtilsObjectNameEXT;
 			}
 
-			if (NULL == vkCmdBeginDebugUtilsLabelEXT
-			||  NULL == vkCmdEndDebugUtilsLabelEXT)
+			if (!s_extension[Extension::EXT_debug_utils].m_supported
+			||  NULL == vkCmdBeginDebugUtilsLabelEXT
+			||  NULL == vkCmdEndDebugUtilsLabelEXT
+			   )
 			{
 				vkCmdBeginDebugUtilsLabelEXT = stubCmdBeginDebugUtilsLabelEXT;
 				vkCmdEndDebugUtilsLabelEXT   = stubCmdEndDebugUtilsLabelEXT;

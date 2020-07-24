@@ -228,47 +228,45 @@
 #	define VK_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
 
+#if BGFX_CONFIG_DEBUG_ANNOTATION
+#	define BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(_name, _abgr)         \
+		BX_MACRO_BLOCK_BEGIN                                     \
+			VkDebugUtilsLabelEXT dul;                            \
+			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT; \
+			dul.pNext = NULL;                                    \
+			dul.pLabelName = _name;                              \
+			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;      \
+			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;      \
+			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;      \
+			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;      \
+			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul); \
+		BX_MACRO_BLOCK_END
+
+#	define BGFX_VK_END_DEBUG_UTILS_LABEL()               \
+		BX_MACRO_BLOCK_BEGIN                             \
+			vkCmdEndDebugUtilsLabelEXT(m_commandBuffer); \
+		BX_MACRO_BLOCK_END
+#else
+#	define BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(_view, _abgr) BX_UNUSED(_view, _abgr)
+#	define BGFX_VK_END_DEBUG_UTILS_LABEL() BX_NOOP
+#endif // BGFX_CONFIG_DEBUG_ANNOTATION
+
 #define BGFX_VK_PROFILER_BEGIN(_view, _abgr)                      \
 	BX_MACRO_BLOCK_BEGIN                                          \
-		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
-		{                                                         \
-			VkDebugUtilsLabelEXT dul;                             \
-			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
-			dul.pNext = NULL;                                     \
-			dul.pLabelName = s_viewName[view];                    \
-			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;       \
-			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;       \
-			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;       \
-			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;       \
-			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);  \
-		}                                                         \
+		BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(s_viewName[view], _abgr); \
 		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);             \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr)              \
-	BX_MACRO_BLOCK_BEGIN                                          \
-		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
-		{                                                         \
-			VkDebugUtilsLabelEXT dul;                             \
-			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
-			dul.pNext = NULL;                                     \
-			dul.pLabelName = "" _name;                            \
-			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;       \
-			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;       \
-			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;       \
-			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;       \
-			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);  \
-		}                                                         \
-		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);             \
+#define BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr)   \
+	BX_MACRO_BLOCK_BEGIN                               \
+		BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(_name, _abgr); \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);  \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_VK_PROFILER_END()                                    \
-	BX_MACRO_BLOCK_BEGIN                                          \
-		BGFX_PROFILER_END();                                      \
-		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
-		{                                                         \
-			vkCmdEndDebugUtilsLabelEXT(m_commandBuffer);          \
-		}                                                         \
+#define BGFX_VK_PROFILER_END()           \
+	BX_MACRO_BLOCK_BEGIN                 \
+		BGFX_PROFILER_END();             \
+		BGFX_VK_END_DEBUG_UTILS_LABEL(); \
 	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace vk
