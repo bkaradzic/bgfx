@@ -1782,7 +1782,7 @@ namespace bgfx { namespace d3d11
 		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
 		{
 			const TextureD3D11& texture = m_textures[_handle.idx];
-			BX_CHECK(0 != (texture.m_flags&BGFX_TEXTURE_READ_BACK), "texture must be created with BGFX_TEXTURE_READ_BACK");
+			BX_ASSERT(0 != (texture.m_flags&BGFX_TEXTURE_READ_BACK), "texture must be created with BGFX_TEXTURE_READ_BACK");
 
 			D3D11_MAPPED_SUBRESOURCE mapped;
 			DX_CHECK(m_deviceCtx->Map(texture.m_ptr, _mip, D3D11_MAP_READ, 0, &mapped) );
