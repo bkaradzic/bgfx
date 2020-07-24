@@ -1567,11 +1567,13 @@ namespace bgfx
 	{
 		void clear()
 		{
+			m_streamOffset      = 0;
 			m_startVertex       = 0;
 			m_handle.idx        = kInvalidHandle;
 			m_layoutHandle.idx  = kInvalidHandle;
 		}
 
+		uint32_t           m_streamOffset;
 		uint32_t           m_startVertex;
 		VertexBufferHandle m_handle;
 		VertexLayoutHandle   m_layoutHandle;
@@ -2417,6 +2419,7 @@ namespace bgfx
 			if (m_draw.setStreamBit(_stream, _handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
+				stream.m_streamOffset  = _startVertex;
 				stream.m_startVertex   = _startVertex;
 				stream.m_handle        = _handle;
 				stream.m_layoutHandle  = _layoutHandle;
@@ -2437,6 +2440,7 @@ namespace bgfx
 			if (m_draw.setStreamBit(_stream, _dvb.m_handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
+				stream.m_streamOffset  = _startVertex;
 				stream.m_startVertex   = _dvb.m_startVertex + _startVertex;
 				stream.m_handle        = _dvb.m_handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _dvb.m_layoutHandle;
@@ -2459,6 +2463,7 @@ namespace bgfx
 			if (m_draw.setStreamBit(_stream, _tvb->handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
+				stream.m_streamOffset  = _startVertex;
 				stream.m_startVertex   = _tvb->startVertex + _startVertex;
 				stream.m_handle        = _tvb->handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _tvb->layoutHandle;
@@ -2471,6 +2476,7 @@ namespace bgfx
 			BX_ASSERT(0 == m_draw.m_streamMask, "Vertex buffer already set.");
 			m_draw.m_streamMask  = UINT8_MAX;
 			Stream& stream = m_draw.m_stream[0];
+			stream.m_streamOffset       = 0;
 			stream.m_startVertex        = 0;
 			stream.m_handle.idx         = kInvalidHandle;
 			stream.m_layoutHandle.idx   = kInvalidHandle;

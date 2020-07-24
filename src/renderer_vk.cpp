@@ -6458,7 +6458,14 @@ VK_DESTROY
 					uint32_t numIndices = 0;
 					for (uint32_t ii = 0; ii < numStreams; ++ii)
 					{
-						VkDeviceSize offset = 0;
+						VertexBufferVK& vb = m_vertexBuffers[draw.m_stream[ii].m_handle.idx];
+						const uint16_t decl = isValid(draw.m_stream[ii].m_layoutHandle)
+							? draw.m_stream[ii].m_layoutHandle.idx
+							: vb.m_layoutHandle.idx
+							;
+						const VertexLayout& layout = m_vertexLayouts[decl];
+						VkDeviceSize offset = draw.m_stream[ii].m_streamOffset * layout.m_stride;
+
 						vkCmdBindVertexBuffers(m_commandBuffer
 							, ii
 							, 1
