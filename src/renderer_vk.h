@@ -262,10 +262,13 @@
 		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);             \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_VK_PROFILER_END()                       \
-	BX_MACRO_BLOCK_BEGIN                             \
-		BGFX_PROFILER_END();                         \
-		vkCmdEndDebugUtilsLabelEXT(m_commandBuffer); \
+#define BGFX_VK_PROFILER_END()                                    \
+	BX_MACRO_BLOCK_BEGIN                                          \
+		BGFX_PROFILER_END();                                      \
+		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
+		{                                                         \
+			vkCmdEndDebugUtilsLabelEXT(m_commandBuffer);          \
+		}                                                         \
 	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace vk
