@@ -458,25 +458,54 @@ namespace bgfx
 
 #	if BX_PLATFORM_WINRT
 			IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(_scd.nwh);
-			ISwapChainBackgroundPanelNative* panel = NULL;
-			hr = nativeWindow->QueryInterface(
-				  __uuidof(ISwapChainBackgroundPanelNative)
-				, (void **)&panel
-				);
-			if (FAILED(hr) )
-			{
-				return hr;
-			}
+			ISwapChainPanelNative* swapChainPanelNative;
 
-			if (NULL != panel)
+			hr = nativeWindow->QueryInterface(
+				__uuidof(ISwapChainPanelNative)
+				, (void**)&swapChainPanelNative);
+
+			if (!FAILED(hr))
 			{
-				hr = panel->SetSwapChain(*_swapChain);
-				if (FAILED(hr) )
+				// Swap Chain Panel
+				if (NULL != swapChainPanelNative)
+				{
+					hr = swapChainPanelNative->SetSwapChain(*_swapChain);
+
+					if (FAILED(hr))
+					{
+						return hr;
+					}
+
+					swapChainPanelNative->Release();
+				}
+			}
+			else
+			{
+				// Swap Chain Background Panel
+				
+				ISwapChainBackgroundPanelNative* swapChainBackgroundPanelNative = NULL;
+
+				hr = nativeWindow->QueryInterface(
+					__uuidof(ISwapChainBackgroundPanelNative)
+					, (void**)&swapChainBackgroundPanelNative
+				);
+
+				if (FAILED(hr))
 				{
 					return hr;
 				}
 
-				panel->Release();
+				if (NULL != swapChainBackgroundPanelNative)
+				{
+					hr = swapChainBackgroundPanelNative->SetSwapChain(*_swapChain);
+
+					if (FAILED(hr))
+					{
+						return hr;
+					}
+
+					swapChainBackgroundPanelNative->Release();
+				}
 			}
 #	endif // BX_PLATFORM_WINRT
 		}
