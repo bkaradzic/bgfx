@@ -246,12 +246,12 @@ namespace bgfx
 				{
 					DXGI_OUTPUT_DESC outputDesc;
 					hr = output->GetDesc(&outputDesc);
-					if (SUCCEEDED(hr))
+					if (SUCCEEDED(hr) )
 					{
 						BX_TRACE("\tOutput #%d", jj);
 
 						char deviceName[BX_COUNTOF(outputDesc.DeviceName)];
-						wcstombs(deviceName, outputDesc.DeviceName, BX_COUNTOF(outputDesc.DeviceName));
+						wcstombs(deviceName, outputDesc.DeviceName, BX_COUNTOF(outputDesc.DeviceName) );
 						BX_TRACE("\t\t           DeviceName: %s", deviceName);
 						BX_TRACE("\t\t   DesktopCoordinates: %d, %d, %d, %d"
 							, outputDesc.DesktopCoordinates.left
@@ -457,22 +457,24 @@ namespace bgfx
 			}
 
 #	if BX_PLATFORM_WINRT
-			IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(_scd.nwh);
+			IInspectable *nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
 			ISwapChainPanelNative* swapChainPanelNative;
 
 			hr = nativeWindow->QueryInterface(
-				__uuidof(ISwapChainPanelNative)
-				, (void**)&swapChainPanelNative);
+				  __uuidof(ISwapChainPanelNative)
+				, (void**)&swapChainPanelNative
+				);
 
-			if (!FAILED(hr))
+			if (!FAILED(hr) )
 			{
 				// Swap Chain Panel
 				if (NULL != swapChainPanelNative)
 				{
 					hr = swapChainPanelNative->SetSwapChain(*_swapChain);
 
-					if (FAILED(hr))
+					if (FAILED(hr) )
 					{
+						BX_TRACE("Failed to SetSwapChain, hr %x.");
 						return hr;
 					}
 
@@ -482,15 +484,14 @@ namespace bgfx
 			else
 			{
 				// Swap Chain Background Panel
-				
 				ISwapChainBackgroundPanelNative* swapChainBackgroundPanelNative = NULL;
 
 				hr = nativeWindow->QueryInterface(
-					__uuidof(ISwapChainBackgroundPanelNative)
+					  __uuidof(ISwapChainBackgroundPanelNative)
 					, (void**)&swapChainBackgroundPanelNative
-				);
+					);
 
-				if (FAILED(hr))
+				if (FAILED(hr) )
 				{
 					return hr;
 				}
@@ -499,8 +500,9 @@ namespace bgfx
 				{
 					hr = swapChainBackgroundPanelNative->SetSwapChain(*_swapChain);
 
-					if (FAILED(hr))
+					if (FAILED(hr) )
 					{
+						BX_TRACE("Failed to SetSwapChain, hr %x.");
 						return hr;
 					}
 
