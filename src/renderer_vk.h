@@ -248,7 +248,7 @@
 		BX_MACRO_BLOCK_END
 #else
 #	define BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(_view, _abgr) BX_UNUSED(_view, _abgr)
-#	define BGFX_VK_END_DEBUG_UTILS_LABEL() BX_NOOP
+#	define BGFX_VK_END_DEBUG_UTILS_LABEL() BX_NOOP()
 #endif // BGFX_CONFIG_DEBUG_ANNOTATION
 
 #define BGFX_VK_PROFILER_BEGIN(_view, _abgr)                      \
