@@ -1816,7 +1816,7 @@ namespace bgfx
 			, uint16_t _numLayers
 			, bool _ptrPending
 			, bool _immutable
-			, bool _rt
+			, uint64_t _flags
 			)
 		{
 			m_ptr         = _ptrPending ? (void*)UINTPTR_MAX : NULL;
@@ -1828,11 +1828,22 @@ namespace bgfx
 			m_numLayers   = _numLayers;
 			m_owned       = false;
 			m_immutable   = _immutable;
-			m_rt          = _rt;
+			m_flags       = _flags;
+		}
+
+		bool isRt() const
+		{
+			return 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
+		}
+
+		bool isReadBack() const
+		{
+			return 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
 		}
 
 		String   m_name;
 		void*    m_ptr;
+		uint64_t m_flags;
 		uint32_t m_storageSize;
 		int16_t  m_refCount;
 		uint8_t  m_bbRatio;
@@ -1841,7 +1852,6 @@ namespace bgfx
 		uint16_t m_numLayers;
 		bool     m_owned;
 		bool     m_immutable;
-		bool     m_rt;
 	};
 
 	struct FrameBufferRef
@@ -2971,15 +2981,15 @@ namespace bgfx
 			for (uint16_t ii = 0, num = m_textureHandle.getNumHandles(); ii < num; ++ii)
 			{
 				uint16_t textureIdx = m_textureHandle.getHandleAt(ii);
-				const TextureRef& textureRef = m_textureRef[textureIdx];
-				if (BackbufferRatio::Count != textureRef.m_bbRatio)
+				const TextureRef& ref = m_textureRef[textureIdx];
+				if (BackbufferRatio::Count != ref.m_bbRatio)
 				{
 					TextureHandle handle = { textureIdx };
 					resizeTexture(handle
 						, uint16_t(m_init.resolution.width)
 						, uint16_t(m_init.resolution.height)
-						, textureRef.m_numMips
-						, textureRef.m_numLayers
+						, ref.m_numMips
+						, ref.m_numLayers
 						);
 					m_init.resolution.reset |= BGFX_RESET_INTERNAL_FORCE;
 				}
@@ -4243,10 +4253,10 @@ namespace bgfx
 				, imageContainer.m_numLayers
 				, 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS)
 				, _immutable
-				, 0 != (_flags & BGFX_TEXTURE_RT_MASK)
+				, _flags
 				);
 
-			if (ref.m_rt)
+			if (ref.isRt() )
 			{
 				m_rtMemoryUsed += int64_t(ref.m_storageSize);
 			}
@@ -4314,7 +4324,9 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("readTexture", m_textureHandle, _handle);
 
 			const TextureRef& ref = m_textureRef[_handle.idx];
-			BX_ASSERT(_mip < ref.m_numMips, "Invalid mip: %d num mips:", _mip, ref.m_numMips); BX_UNUSED(ref);
+			BX_ASSERT(ref.isReadBack(), "Can't read from texture which was not created with BGFX_TEXTURE_READ_BACK.");
+			BX_ASSERT(_mip < ref.m_numMips, "Invalid mip: %d num mips:", _mip, ref.m_numMips);
+			BX_UNUSED(ref);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ReadTexture);
 			cmdbuf.write(_handle);
@@ -4325,17 +4337,17 @@ namespace bgfx
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers)
 		{
-			const TextureRef& textureRef = m_textureRef[_handle.idx];
-			BX_ASSERT(BackbufferRatio::Count != textureRef.m_bbRatio, "");
+			const TextureRef& ref = m_textureRef[_handle.idx];
+			BX_ASSERT(BackbufferRatio::Count != ref.m_bbRatio, "");
 
-			getTextureSizeFromRatio(BackbufferRatio::Enum(textureRef.m_bbRatio), _width, _height);
+			getTextureSizeFromRatio(BackbufferRatio::Enum(ref.m_bbRatio), _width, _height);
 			_numMips = calcNumMips(1 < _numMips, _width, _height);
 
 			BX_TRACE("Resize %3d: %4dx%d %s"
 				, _handle.idx
 				, _width
 				, _height
-				, bimg::getName(bimg::TextureFormat::Enum(textureRef.m_format) )
+				, bimg::getName(bimg::TextureFormat::Enum(ref.m_format) )
 				);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ResizeTexture);
@@ -4370,7 +4382,7 @@ namespace bgfx
 			{
 				ref.m_name.clear();
 
-				if (ref.m_rt)
+				if (ref.isRt() )
 				{
 					m_rtMemoryUsed -= int64_t(ref.m_storageSize);
 				}
@@ -4403,8 +4415,8 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			const TextureRef& textureRef = m_textureRef[_handle.idx];
-			if (textureRef.m_immutable)
+			const TextureRef& ref = m_textureRef[_handle.idx];
+			if (ref.m_immutable)
 			{
 				BX_WARN(false, "Can't update immutable texture.");
 				release(_mem);
