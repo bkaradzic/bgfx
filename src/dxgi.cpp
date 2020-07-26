@@ -472,13 +472,13 @@ namespace bgfx
 				{
 					hr = swapChainPanelNative->SetSwapChain(*_swapChain);
 
+					swapChainPanelNative->Release();
+					
 					if (FAILED(hr) )
 					{
 						BX_TRACE("Failed to SetSwapChain, hr %x.");
 						return hr;
 					}
-
-					swapChainPanelNative->Release();
 				}
 			}
 			else
@@ -500,13 +500,13 @@ namespace bgfx
 				{
 					hr = swapChainBackgroundPanelNative->SetSwapChain(*_swapChain);
 
+					swapChainBackgroundPanelNative->Release();
+					
 					if (FAILED(hr) )
 					{
 						BX_TRACE("Failed to SetSwapChain, hr %x.");
 						return hr;
 					}
-
-					swapChainBackgroundPanelNative->Release();
 				}
 			}
 #	endif // BX_PLATFORM_WINRT
