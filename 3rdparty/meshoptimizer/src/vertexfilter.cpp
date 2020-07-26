@@ -735,7 +735,8 @@ static void decodeFilterQuatSimd(short* data, size_t count)
 		v128_t res_1 = wasmx_unpackhi_v16x8(wyr, xzr);
 
 		// compute component index shifted left by 4 (and moved into i32x4 slot)
-		v128_t cm = wasm_i32x4_shl(cf, 4);
+		// TODO: volatile here works around LLVM mis-optimizing code; https://github.com/emscripten-core/emscripten/issues/11449
+		volatile v128_t cm = wasm_i32x4_shl(cf, 4);
 
 		// rotate and store
 		uint64_t* out = reinterpret_cast<uint64_t*>(&data[i * 4]);
