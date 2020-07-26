@@ -575,6 +575,7 @@ enum ImGuiItemFlags_
     ImGuiItemFlags_NoNavDefaultFocus        = 1 << 4,  // false
     ImGuiItemFlags_SelectableDontClosePopup = 1 << 5,  // false    // MenuItem/Selectable() automatically closes current Popup window
     ImGuiItemFlags_MixedValue               = 1 << 6,  // false    // [BETA] Represent a mixed/indeterminate value, generally multi-selection where values differ. Currently only supported by Checkbox() (later should support all sorts of widgets)
+    ImGuiItemFlags_ReadOnly                 = 1 << 7,  // false    // [ALPHA] Allow hovering interactions but underlying value is not changed.
     ImGuiItemFlags_Default_                 = 0
 };
 
@@ -2022,6 +2023,7 @@ IMGUI_API void              ImFontAtlasBuildInit(ImFontAtlas* atlas);
 IMGUI_API void              ImFontAtlasBuildSetupFont(ImFontAtlas* atlas, ImFont* font, ImFontConfig* font_config, float ascent, float descent);
 IMGUI_API void              ImFontAtlasBuildPackCustomRects(ImFontAtlas* atlas, void* stbrp_context_opaque);
 IMGUI_API void              ImFontAtlasBuildFinish(ImFontAtlas* atlas);
+IMGUI_API void              ImFontAtlasBuildRender1bppRectFromString(ImFontAtlas* atlas, int atlas_x, int atlas_y, int w, int h, const char* in_str, char in_marker_char, unsigned char in_marker_pixel_value);
 IMGUI_API void              ImFontAtlasBuildMultiplyCalcLookupTable(unsigned char out_table[256], float in_multiply_factor);
 IMGUI_API void              ImFontAtlasBuildMultiplyRectAlpha8(const unsigned char table[256], unsigned char* pixels, int x, int y, int w, int h, int stride);
 
