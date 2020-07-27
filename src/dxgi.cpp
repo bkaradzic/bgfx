@@ -370,12 +370,17 @@ namespace bgfx
 		bool allowTearing = false;
 
 #if BX_PLATFORM_WINDOWS
-		if (windowsVersionIs(Condition::GreaterEqual, 0x0604) )
+		IDXGIFactory5* factory5;
+		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
+
+		if (SUCCEEDED(hr) )
 		{
 			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
 			//      will crash on pre Windows 8. Issue #1356.
-			hr = m_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
+			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
+
+			DX_RELEASE_I(factory5);
 		}
 
 		DXGI_SWAP_CHAIN_DESC scd;
@@ -395,7 +400,7 @@ namespace bgfx
 		scd.SwapEffect   = _scd.swapEffect;
 		scd.Flags        = 0
 			| _scd.flags
-			| (allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
+			| (allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT : 0)
 			;
 
 		hr = m_factory->CreateSwapChain(
@@ -639,7 +644,25 @@ namespace bgfx
 	{
 		HRESULT hr;
 
+		uint32_t scdFlags = _scd.flags;
+
 #if BX_PLATFORM_WINDOWS
+		IDXGIFactory5* factory5;
+		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void **)&factory5);
+
+		if (SUCCEEDED(hr))
+		{
+			bool allowTearing = false;
+			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
+			//      will crash on pre Windows 8. Issue #1356.
+			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
+
+			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT : 0;
+
+			DX_RELEASE_I(factory5);
+		}
+
 		if (NULL != _nodeMask
 		&&  NULL != _presentQueue)
 		{
@@ -648,7 +671,7 @@ namespace bgfx
 				, _scd.width
 				, _scd.height
 				, _scd.format
-				, _scd.flags
+				, scdFlags
 				, _nodeMask
 				, _presentQueue
 				);
@@ -663,7 +686,7 @@ namespace bgfx
 				, _scd.width
 				, _scd.height
 				, _scd.format
-				, _scd.flags
+				, scdFlags
 				);
 		}
 
