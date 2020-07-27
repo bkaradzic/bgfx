@@ -471,7 +471,7 @@ namespace bgfx
 				if (NULL != swapChainPanelNative)
 				{
 					hr = swapChainPanelNative->SetSwapChain(*_swapChain);
-					
+
 					if (FAILED(hr) )
 					{
 						DX_RELEASE(swapChainPanelNative, 0);
@@ -500,7 +500,7 @@ namespace bgfx
 				if (NULL != swapChainBackgroundPanelNative)
 				{
 					hr = swapChainBackgroundPanelNative->SetSwapChain(*_swapChain);
-					
+
 					if (FAILED(hr) )
 					{
 						DX_RELEASE(swapChainBackgroundPanelNative, 0);
