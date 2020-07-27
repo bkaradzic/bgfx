@@ -1241,11 +1241,19 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             " int64_t atomicAdd(coherent volatile inout  int64_t,  int64_t);"
             "uint64_t atomicAdd(coherent volatile inout uint64_t, uint64_t, int, int, int);"
             " int64_t atomicAdd(coherent volatile inout  int64_t,  int64_t, int, int, int);"
+            "   float atomicAdd(coherent volatile inout float, float);"
+            "   float atomicAdd(coherent volatile inout float, float, int, int, int);"
+            "  double atomicAdd(coherent volatile inout double, double);"
+            "  double atomicAdd(coherent volatile inout double, double, int, int, int);"
 
             "uint64_t atomicExchange(coherent volatile inout uint64_t, uint64_t);"
             " int64_t atomicExchange(coherent volatile inout  int64_t,  int64_t);"
             "uint64_t atomicExchange(coherent volatile inout uint64_t, uint64_t, int, int, int);"
             " int64_t atomicExchange(coherent volatile inout  int64_t,  int64_t, int, int, int);"
+            "   float atomicExchange(coherent volatile inout float, float);"
+            "   float atomicExchange(coherent volatile inout float, float, int, int, int);"
+            "  double atomicExchange(coherent volatile inout double, double);"
+            "  double atomicExchange(coherent volatile inout double, double, int, int, int);"
 
             "uint64_t atomicCompSwap(coherent volatile inout uint64_t, uint64_t, uint64_t);"
             " int64_t atomicCompSwap(coherent volatile inout  int64_t,  int64_t,  int64_t);"
@@ -1254,9 +1262,13 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "uint64_t atomicLoad(coherent volatile in uint64_t, int, int, int);"
             " int64_t atomicLoad(coherent volatile in  int64_t, int, int, int);"
+            "   float atomicLoad(coherent volatile in float, int, int, int);"
+            "  double atomicLoad(coherent volatile in double, int, int, int);"
 
             "void atomicStore(coherent volatile out uint64_t, uint64_t, int, int, int);"
             "void atomicStore(coherent volatile out  int64_t,  int64_t, int, int, int);"
+            "void atomicStore(coherent volatile out float, float, int, int, int);"
+            "void atomicStore(coherent volatile out double, double, int, int, int);"
             "\n");
     }
 #endif
@@ -6013,11 +6025,38 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
             // not int or uint
             // GL_ARB_ES3_1_compatibility
             // TODO: spec issue: are there restrictions on the kind of layout() that can be used?  what about dropping memory qualifiers?
-            if ((profile != EEsProfile && version >= 450) ||
-                (profile == EEsProfile && version >= 310)) {
+            if (profile == EEsProfile && version >= 310) {
                 commonBuiltins.append("float imageAtomicExchange(volatile coherent ");
                 commonBuiltins.append(imageParams);
                 commonBuiltins.append(", float);\n");
+            }
+            if (profile != EEsProfile && version >= 450) {
+                commonBuiltins.append("float imageAtomicAdd(volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float);\n");
+
+                commonBuiltins.append("float imageAtomicAdd(volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float");
+                commonBuiltins.append(", int, int, int);\n");
+
+                commonBuiltins.append("float imageAtomicExchange(volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float);\n");
+
+                commonBuiltins.append("float imageAtomicExchange(volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float");
+                commonBuiltins.append(", int, int, int);\n");
+
+                commonBuiltins.append("float imageAtomicLoad(readonly volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", int, int, int);\n");
+
+                commonBuiltins.append("void imageAtomicStore(writeonly volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float");
+                commonBuiltins.append(", int, int, int);\n");
             }
         }
     }

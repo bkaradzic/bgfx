@@ -6682,6 +6682,14 @@ spv::Id TGlslangToSpvTraverser::createAtomicOperation(glslang::TOperator op, spv
     case glslang::EOpImageAtomicAdd:
     case glslang::EOpAtomicCounterAdd:
         opCode = spv::OpAtomicIAdd;
+        if (typeProxy == glslang::EbtFloat || typeProxy == glslang::EbtDouble) {
+            opCode = spv::OpAtomicFAddEXT;
+            builder.addExtension(spv::E_SPV_EXT_shader_atomic_float_add);
+            if (typeProxy == glslang::EbtFloat)
+                builder.addCapability(spv::CapabilityAtomicFloat32AddEXT);
+            else
+                builder.addCapability(spv::CapabilityAtomicFloat64AddEXT);
+        }
         break;
     case glslang::EOpAtomicCounterSubtract:
         opCode = spv::OpAtomicISub;
