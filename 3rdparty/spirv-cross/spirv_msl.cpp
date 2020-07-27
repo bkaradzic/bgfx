@@ -136,7 +136,8 @@ bool CompilerMSL::builtin_translates_to_nonarray(spv::BuiltIn builtin) const
 void CompilerMSL::build_implicit_builtins()
 {
 	bool need_sample_pos = active_input_builtins.get(BuiltInSamplePosition);
-	bool need_vertex_params = capture_output_to_buffer && get_execution_model() == ExecutionModelVertex;
+	bool need_vertex_params = capture_output_to_buffer && get_execution_model() == ExecutionModelVertex &&
+	                          !msl_options.vertex_for_tessellation;
 	bool need_tesc_params = get_execution_model() == ExecutionModelTessellationControl;
 	bool need_subgroup_mask =
 	    active_input_builtins.get(BuiltInSubgroupEqMask) || active_input_builtins.get(BuiltInSubgroupGeMask) ||
@@ -149,8 +150,16 @@ void CompilerMSL::build_implicit_builtins()
 	bool need_dispatch_base =
 	    msl_options.dispatch_base && get_execution_model() == ExecutionModelGLCompute &&
 	    (active_input_builtins.get(BuiltInWorkgroupId) || active_input_builtins.get(BuiltInGlobalInvocationId));
+	bool need_grid_params = get_execution_model() == ExecutionModelVertex && msl_options.vertex_for_tessellation;
+	bool need_vertex_base_params =
+	    need_grid_params &&
+	    (active_input_builtins.get(BuiltInVertexId) || active_input_builtins.get(BuiltInVertexIndex) ||
+	     active_input_builtins.get(BuiltInBaseVertex) || active_input_builtins.get(BuiltInInstanceId) ||
+	     active_input_builtins.get(BuiltInInstanceIndex) || active_input_builtins.get(BuiltInBaseInstance));
+	bool need_sample_mask = msl_options.additional_fixed_sample_mask != 0xffffffff;
 	if (need_subpass_input || need_sample_pos || need_subgroup_mask || need_vertex_params || need_tesc_params ||
-	    need_multiview || need_dispatch_base || needs_subgroup_invocation_id)
+	    need_multiview || need_dispatch_base || need_vertex_base_params || need_grid_params ||
+	    needs_subgroup_invocation_id || need_sample_mask)
 	{
 		bool has_frag_coord = false;
 		bool has_sample_id = false;
@@ -165,12 +174,27 @@ void CompilerMSL::build_implicit_builtins()
 		bool has_view_idx = false;
 		uint32_t workgroup_id_type = 0;
 
+		// FIXME: Investigate the fact that there are no checks for the entry point interface variables.
 		ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
-			if (var.storage != StorageClassInput || !ir.meta[var.self].decoration.builtin)
+			if (!ir.meta[var.self].decoration.builtin)
 				return;
 
 			// Use Metal's native frame-buffer fetch API for subpass inputs.
 			BuiltIn builtin = ir.meta[var.self].decoration.builtin_type;
+
+			if (var.storage == StorageClassOutput)
+			{
+				if (need_sample_mask && builtin == BuiltInSampleMask)
+				{
+					builtin_sample_mask_id = var.self;
+					mark_implicit_builtin(StorageClassOutput, BuiltInSampleMask, var.self);
+					does_shader_write_sample_mask = true;
+				}
+			}
+
+			if (var.storage != StorageClassInput)
+				return;
+
 			if (need_subpass_input && (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses) &&
 			    builtin == BuiltInFragCoord)
 			{
@@ -308,24 +332,18 @@ void CompilerMSL::build_implicit_builtins()
 
 		if (!has_sample_id && need_sample_pos)
 		{
-			uint32_t offset = ir.increase_bound_by(3);
-			uint32_t type_id = offset;
-			uint32_t type_ptr_id = offset + 1;
-			uint32_t var_id = offset + 2;
+			uint32_t offset = ir.increase_bound_by(2);
+			uint32_t type_ptr_id = offset;
+			uint32_t var_id = offset + 1;
 
 			// Create gl_SampleID.
-			SPIRType uint_type;
-			uint_type.basetype = SPIRType::UInt;
-			uint_type.width = 32;
-			set<SPIRType>(type_id, uint_type);
-
 			SPIRType uint_type_ptr;
-			uint_type_ptr = uint_type;
+			uint_type_ptr = get_uint_type();
 			uint_type_ptr.pointer = true;
-			uint_type_ptr.parent_type = type_id;
+			uint_type_ptr.parent_type = get_uint_type_id();
 			uint_type_ptr.storage = StorageClassInput;
 			auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
-			ptr_type.self = type_id;
+			ptr_type.self = get_uint_type_id();
 
 			set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
 			set_decoration(var_id, DecorationBuiltIn, BuiltInSampleId);
@@ -336,22 +354,15 @@ void CompilerMSL::build_implicit_builtins()
 		if ((need_vertex_params && (!has_vertex_idx || !has_base_vertex || !has_instance_idx || !has_base_instance)) ||
 		    (need_multiview && (!has_instance_idx || !has_view_idx)))
 		{
-			uint32_t offset = ir.increase_bound_by(2);
-			uint32_t type_id = offset;
-			uint32_t type_ptr_id = offset + 1;
-
-			SPIRType uint_type;
-			uint_type.basetype = SPIRType::UInt;
-			uint_type.width = 32;
-			set<SPIRType>(type_id, uint_type);
+			uint32_t type_ptr_id = ir.increase_bound_by(1);
 
 			SPIRType uint_type_ptr;
-			uint_type_ptr = uint_type;
+			uint_type_ptr = get_uint_type();
 			uint_type_ptr.pointer = true;
-			uint_type_ptr.parent_type = type_id;
+			uint_type_ptr.parent_type = get_uint_type_id();
 			uint_type_ptr.storage = StorageClassInput;
 			auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
-			ptr_type.self = type_id;
+			ptr_type.self = get_uint_type_id();
 
 			if (need_vertex_params && !has_vertex_idx)
 			{
@@ -405,12 +416,12 @@ void CompilerMSL::build_implicit_builtins()
 				// gl_Layer is an output in vertex-pipeline shaders.
 				uint32_t type_ptr_out_id = ir.increase_bound_by(2);
 				SPIRType uint_type_ptr_out;
-				uint_type_ptr_out = uint_type;
+				uint_type_ptr_out = get_uint_type();
 				uint_type_ptr_out.pointer = true;
-				uint_type_ptr_out.parent_type = type_id;
+				uint_type_ptr_out.parent_type = get_uint_type_id();
 				uint_type_ptr_out.storage = StorageClassOutput;
 				auto &ptr_out_type = set<SPIRType>(type_ptr_out_id, uint_type_ptr_out);
-				ptr_out_type.self = type_id;
+				ptr_out_type.self = get_uint_type_id();
 				uint32_t var_id = type_ptr_out_id + 1;
 				set<SPIRVariable>(var_id, type_ptr_out_id, StorageClassOutput);
 				set_decoration(var_id, DecorationBuiltIn, BuiltInLayer);
@@ -430,26 +441,30 @@ void CompilerMSL::build_implicit_builtins()
 			}
 		}
 
-		if (need_tesc_params && (!has_invocation_id || !has_primitive_id))
+		if ((need_tesc_params && (msl_options.multi_patch_workgroup || !has_invocation_id || !has_primitive_id)) ||
+		    need_grid_params)
 		{
-			uint32_t offset = ir.increase_bound_by(2);
-			uint32_t type_id = offset;
-			uint32_t type_ptr_id = offset + 1;
-
-			SPIRType uint_type;
-			uint_type.basetype = SPIRType::UInt;
-			uint_type.width = 32;
-			set<SPIRType>(type_id, uint_type);
+			uint32_t type_ptr_id = ir.increase_bound_by(1);
 
 			SPIRType uint_type_ptr;
-			uint_type_ptr = uint_type;
+			uint_type_ptr = get_uint_type();
 			uint_type_ptr.pointer = true;
-			uint_type_ptr.parent_type = type_id;
+			uint_type_ptr.parent_type = get_uint_type_id();
 			uint_type_ptr.storage = StorageClassInput;
 			auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
-			ptr_type.self = type_id;
+			ptr_type.self = get_uint_type_id();
 
-			if (!has_invocation_id)
+			if (msl_options.multi_patch_workgroup || need_grid_params)
+			{
+				uint32_t var_id = ir.increase_bound_by(1);
+
+				// Create gl_GlobalInvocationID.
+				set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+				set_decoration(var_id, DecorationBuiltIn, BuiltInGlobalInvocationId);
+				builtin_invocation_id_id = var_id;
+				mark_implicit_builtin(StorageClassInput, BuiltInGlobalInvocationId, var_id);
+			}
+			else if (need_tesc_params && !has_invocation_id)
 			{
 				uint32_t var_id = ir.increase_bound_by(1);
 
@@ -460,7 +475,7 @@ void CompilerMSL::build_implicit_builtins()
 				mark_implicit_builtin(StorageClassInput, BuiltInInvocationId, var_id);
 			}
 
-			if (!has_primitive_id)
+			if (need_tesc_params && !has_primitive_id)
 			{
 				uint32_t var_id = ir.increase_bound_by(1);
 
@@ -470,28 +485,33 @@ void CompilerMSL::build_implicit_builtins()
 				builtin_primitive_id_id = var_id;
 				mark_implicit_builtin(StorageClassInput, BuiltInPrimitiveId, var_id);
 			}
+
+			if (need_grid_params)
+			{
+				uint32_t var_id = ir.increase_bound_by(1);
+
+				set<SPIRVariable>(var_id, build_extended_vector_type(get_uint_type_id(), 3), StorageClassInput);
+				set_extended_decoration(var_id, SPIRVCrossDecorationBuiltInStageInputSize);
+				get_entry_point().interface_variables.push_back(var_id);
+				set_name(var_id, "spvStageInputSize");
+				builtin_stage_input_size_id = var_id;
+			}
 		}
 
 		if (!has_subgroup_invocation_id && (need_subgroup_mask || needs_subgroup_invocation_id))
 		{
-			uint32_t offset = ir.increase_bound_by(3);
-			uint32_t type_id = offset;
-			uint32_t type_ptr_id = offset + 1;
-			uint32_t var_id = offset + 2;
+			uint32_t offset = ir.increase_bound_by(2);
+			uint32_t type_ptr_id = offset;
+			uint32_t var_id = offset + 1;
 
 			// Create gl_SubgroupInvocationID.
-			SPIRType uint_type;
-			uint_type.basetype = SPIRType::UInt;
-			uint_type.width = 32;
-			set<SPIRType>(type_id, uint_type);
-
 			SPIRType uint_type_ptr;
-			uint_type_ptr = uint_type;
+			uint_type_ptr = get_uint_type();
 			uint_type_ptr.pointer = true;
-			uint_type_ptr.parent_type = type_id;
+			uint_type_ptr.parent_type = get_uint_type_id();
 			uint_type_ptr.storage = StorageClassInput;
 			auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
-			ptr_type.self = type_id;
+			ptr_type.self = get_uint_type_id();
 
 			set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
 			set_decoration(var_id, DecorationBuiltIn, BuiltInSubgroupLocalInvocationId);
@@ -501,24 +521,18 @@ void CompilerMSL::build_implicit_builtins()
 
 		if (!has_subgroup_size && need_subgroup_ge_mask)
 		{
-			uint32_t offset = ir.increase_bound_by(3);
-			uint32_t type_id = offset;
-			uint32_t type_ptr_id = offset + 1;
-			uint32_t var_id = offset + 2;
+			uint32_t offset = ir.increase_bound_by(2);
+			uint32_t type_ptr_id = offset;
+			uint32_t var_id = offset + 1;
 
 			// Create gl_SubgroupSize.
-			SPIRType uint_type;
-			uint_type.basetype = SPIRType::UInt;
-			uint_type.width = 32;
-			set<SPIRType>(type_id, uint_type);
-
 			SPIRType uint_type_ptr;
-			uint_type_ptr = uint_type;
+			uint_type_ptr = get_uint_type();
 			uint_type_ptr.pointer = true;
-			uint_type_ptr.parent_type = type_id;
+			uint_type_ptr.parent_type = get_uint_type_id();
 			uint_type_ptr.storage = StorageClassInput;
 			auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
-			ptr_type.self = type_id;
+			ptr_type.self = get_uint_type_id();
 
 			set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
 			set_decoration(var_id, DecorationBuiltIn, BuiltInSubgroupSize);
@@ -526,8 +540,10 @@ void CompilerMSL::build_implicit_builtins()
 			mark_implicit_builtin(StorageClassInput, BuiltInSubgroupSize, var_id);
 		}
 
-		if (need_dispatch_base)
+		if (need_dispatch_base || need_vertex_base_params)
 		{
+			if (workgroup_id_type == 0)
+				workgroup_id_type = build_extended_vector_type(get_uint_type_id(), 3);
 			uint32_t var_id;
 			if (msl_options.supports_msl_version(1, 2))
 			{
@@ -560,6 +576,26 @@ void CompilerMSL::build_implicit_builtins()
 			}
 			set_name(var_id, "spvDispatchBase");
 			builtin_dispatch_base_id = var_id;
+		}
+
+		if (need_sample_mask && !does_shader_write_sample_mask)
+		{
+			uint32_t offset = ir.increase_bound_by(2);
+			uint32_t var_id = offset + 1;
+
+			// Create gl_SampleMask.
+			SPIRType uint_type_ptr_out;
+			uint_type_ptr_out = get_uint_type();
+			uint_type_ptr_out.pointer = true;
+			uint_type_ptr_out.parent_type = get_uint_type_id();
+			uint_type_ptr_out.storage = StorageClassOutput;
+			
+			auto &ptr_out_type = set<SPIRType>(offset, uint_type_ptr_out);
+			ptr_out_type.self = get_uint_type_id();
+			set<SPIRVariable>(var_id, offset, StorageClassOutput);
+			set_decoration(var_id, DecorationBuiltIn, BuiltInSampleMask);
+			builtin_sample_mask_id = var_id;
+			mark_implicit_builtin(StorageClassOutput, BuiltInSampleMask, var_id);
 		}
 	}
 
@@ -665,22 +701,16 @@ void CompilerMSL::mark_implicit_builtin(StorageClass storage, BuiltIn builtin, u
 
 uint32_t CompilerMSL::build_constant_uint_array_pointer()
 {
-	uint32_t offset = ir.increase_bound_by(4);
-	uint32_t type_id = offset;
-	uint32_t type_ptr_id = offset + 1;
-	uint32_t type_ptr_ptr_id = offset + 2;
-	uint32_t var_id = offset + 3;
+	uint32_t offset = ir.increase_bound_by(3);
+	uint32_t type_ptr_id = offset;
+	uint32_t type_ptr_ptr_id = offset + 1;
+	uint32_t var_id = offset + 2;
 
 	// Create a buffer to hold extra data, including the swizzle constants.
-	SPIRType uint_type;
-	uint_type.basetype = SPIRType::UInt;
-	uint_type.width = 32;
-	set<SPIRType>(type_id, uint_type);
-
-	SPIRType uint_type_pointer = uint_type;
+	SPIRType uint_type_pointer = get_uint_type();
 	uint_type_pointer.pointer = true;
 	uint_type_pointer.pointer_depth = 1;
-	uint_type_pointer.parent_type = type_id;
+	uint_type_pointer.parent_type = get_uint_type_id();
 	uint_type_pointer.storage = StorageClassUniform;
 	set<SPIRType>(type_ptr_id, uint_type_pointer);
 	set_decoration(type_ptr_id, DecorationArrayStride, 4);
@@ -742,6 +772,25 @@ std::string CompilerMSL::get_tess_factor_struct_name()
 	if (get_entry_point().flags.get(ExecutionModeTriangles))
 		return "MTLTriangleTessellationFactorsHalf";
 	return "MTLQuadTessellationFactorsHalf";
+}
+
+SPIRType &CompilerMSL::get_uint_type()
+{
+	return get<SPIRType>(get_uint_type_id());
+}
+
+uint32_t CompilerMSL::get_uint_type_id()
+{
+	if (uint_type_id != 0)
+		return uint_type_id;
+
+	uint_type_id = ir.increase_bound_by(1);
+
+	SPIRType type;
+	type.basetype = SPIRType::UInt;
+	type.width = 32;
+	set<SPIRType>(uint_type_id, type);
+	return uint_type_id;
 }
 
 void CompilerMSL::emit_entry_point_declarations()
@@ -1053,6 +1102,8 @@ string CompilerMSL::compile()
 		active_interface_variables.insert(builtin_layer_id);
 	if (builtin_dispatch_base_id && !msl_options.supports_msl_version(1, 2))
 		active_interface_variables.insert(builtin_dispatch_base_id);
+	if (builtin_sample_mask_id)
+		active_interface_variables.insert(builtin_sample_mask_id);
 
 	// Create structs to hold input, output and uniform variables.
 	// Do output first to ensure out. is declared at top of entry function.
@@ -1144,7 +1195,8 @@ void CompilerMSL::preprocess_op_codes()
 
 	// Tessellation control shaders are run as compute functions in Metal, and so
 	// must capture their output to a buffer.
-	if (get_execution_model() == ExecutionModelTessellationControl)
+	if (get_execution_model() == ExecutionModelTessellationControl ||
+	    (get_execution_model() == ExecutionModelVertex && msl_options.vertex_for_tessellation))
 	{
 		is_rasterization_disabled = true;
 		capture_output_to_buffer = true;
@@ -1278,11 +1330,11 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 				uint32_t base_id = ops[0];
 				if (global_var_ids.find(base_id) != global_var_ids.end())
 					added_arg_ids.insert(base_id);
-				
-                		uint32_t rvalue_id = ops[1];
-                		if (global_var_ids.find(rvalue_id) != global_var_ids.end())
-                    			added_arg_ids.insert(rvalue_id);
-				
+
+				uint32_t rvalue_id = ops[1];
+				if (global_var_ids.find(rvalue_id) != global_var_ids.end())
+					added_arg_ids.insert(rvalue_id);
+
 				break;
 			}
 
@@ -1351,7 +1403,7 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 				{
 					if (added_in)
 						continue;
-					name = input_wg_var_name;
+					name = "gl_in";
 					arg_id = stage_in_ptr_var_id;
 					added_in = true;
 				}
@@ -1466,9 +1518,32 @@ void CompilerMSL::mark_as_packable(SPIRType &type)
 }
 
 // If a shader input exists at the location, it is marked as being used by this shader
-void CompilerMSL::mark_location_as_used_by_shader(uint32_t location, StorageClass storage)
+void CompilerMSL::mark_location_as_used_by_shader(uint32_t location, const SPIRType &type, StorageClass storage)
 {
-	if (storage == StorageClassInput)
+	if (storage != StorageClassInput)
+		return;
+	if (is_array(type))
+	{
+		uint32_t dim = 1;
+		for (uint32_t i = 0; i < type.array.size(); i++)
+			dim *= to_array_size_literal(type, i);
+		for (uint32_t i = 0; i < dim; i++)
+		{
+			if (is_matrix(type))
+			{
+				for (uint32_t j = 0; j < type.columns; j++)
+					inputs_in_use.insert(location++);
+			}
+			else
+				inputs_in_use.insert(location++);
+		}
+	}
+	else if (is_matrix(type))
+	{
+		for (uint32_t i = 0; i < type.columns; i++)
+			inputs_in_use.insert(location + i);
+	}
+	else
 		inputs_in_use.insert(location);
 }
 
@@ -1484,13 +1559,37 @@ uint32_t CompilerMSL::get_target_components_for_fragment_location(uint32_t locat
 uint32_t CompilerMSL::build_extended_vector_type(uint32_t type_id, uint32_t components, SPIRType::BaseType basetype)
 {
 	uint32_t new_type_id = ir.increase_bound_by(1);
-	auto &type = set<SPIRType>(new_type_id, get<SPIRType>(type_id));
-	type.vecsize = components;
+	auto &old_type = get<SPIRType>(type_id);
+	auto *type = &set<SPIRType>(new_type_id, old_type);
+	type->vecsize = components;
 	if (basetype != SPIRType::Unknown)
-		type.basetype = basetype;
-	type.self = new_type_id;
-	type.parent_type = type_id;
-	type.pointer = false;
+		type->basetype = basetype;
+	type->self = new_type_id;
+	type->parent_type = type_id;
+	type->array.clear();
+	type->array_size_literal.clear();
+	type->pointer = false;
+
+	if (is_array(old_type))
+	{
+		uint32_t array_type_id = ir.increase_bound_by(1);
+		type = &set<SPIRType>(array_type_id, *type);
+		type->parent_type = new_type_id;
+		type->array = old_type.array;
+		type->array_size_literal = old_type.array_size_literal;
+		new_type_id = array_type_id;
+	}
+
+	if (old_type.pointer)
+	{
+		uint32_t ptr_type_id = ir.increase_bound_by(1);
+		type = &set<SPIRType>(ptr_type_id, *type);
+		type->self = new_type_id;
+		type->parent_type = new_type_id;
+		type->storage = old_type.storage;
+		type->pointer = true;
+		new_type_id = ptr_type_id;
+	}
 
 	return new_type_id;
 }
@@ -1655,13 +1754,13 @@ void CompilerMSL::add_plain_variable_to_interface_block(StorageClass storage, co
 			ib_type.member_types[ib_mbr_idx] = type_id;
 		}
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-		mark_location_as_used_by_shader(locn, storage);
+		mark_location_as_used_by_shader(locn, get<SPIRType>(type_id), storage);
 	}
 	else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
 	{
 		uint32_t locn = inputs_by_builtin[builtin].location;
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-		mark_location_as_used_by_shader(locn, storage);
+		mark_location_as_used_by_shader(locn, type, storage);
 	}
 
 	if (!location_meta)
@@ -1811,13 +1910,13 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 				ib_type.member_types[ib_mbr_idx] = mbr_type_id;
 			}
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-			mark_location_as_used_by_shader(locn, storage);
+			mark_location_as_used_by_shader(locn, *usable_type, storage);
 		}
 		else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
 		{
 			uint32_t locn = inputs_by_builtin[builtin].location + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-			mark_location_as_used_by_shader(locn, storage);
+			mark_location_as_used_by_shader(locn, *usable_type, storage);
 		}
 		else if (is_builtin && builtin == BuiltInClipDistance)
 		{
@@ -1985,19 +2084,19 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 		{
 			uint32_t locn = get_member_decoration(var_type.self, mbr_idx, DecorationLocation) + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-			mark_location_as_used_by_shader(locn, storage);
+			mark_location_as_used_by_shader(locn, *usable_type, storage);
 		}
 		else if (has_decoration(var.self, DecorationLocation))
 		{
 			uint32_t locn = get_accumulated_member_location(var, mbr_idx, meta.strip_array) + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-			mark_location_as_used_by_shader(locn, storage);
+			mark_location_as_used_by_shader(locn, *usable_type, storage);
 		}
 		else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
 		{
 			uint32_t locn = inputs_by_builtin[builtin].location + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-			mark_location_as_used_by_shader(locn, storage);
+			mark_location_as_used_by_shader(locn, *usable_type, storage);
 		}
 		else if (is_builtin && builtin == BuiltInClipDistance)
 		{
@@ -2127,7 +2226,7 @@ void CompilerMSL::add_plain_member_variable_to_interface_block(StorageClass stor
 			ib_type.member_types[ib_mbr_idx] = mbr_type_id;
 		}
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-		mark_location_as_used_by_shader(locn, storage);
+		mark_location_as_used_by_shader(locn, get<SPIRType>(mbr_type_id), storage);
 	}
 	else if (has_decoration(var.self, DecorationLocation))
 	{
@@ -2141,7 +2240,7 @@ void CompilerMSL::add_plain_member_variable_to_interface_block(StorageClass stor
 			ib_type.member_types[ib_mbr_idx] = mbr_type_id;
 		}
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-		mark_location_as_used_by_shader(locn, storage);
+		mark_location_as_used_by_shader(locn, get<SPIRType>(mbr_type_id), storage);
 	}
 	else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
 	{
@@ -2150,7 +2249,7 @@ void CompilerMSL::add_plain_member_variable_to_interface_block(StorageClass stor
 		if (builtin_itr != end(inputs_by_builtin))
 			locn = builtin_itr->second.location;
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-		mark_location_as_used_by_shader(locn, storage);
+		mark_location_as_used_by_shader(locn, get<SPIRType>(mbr_type_id), storage);
 	}
 
 	// Copy the component location, if present.
@@ -2226,13 +2325,13 @@ void CompilerMSL::add_tess_level_input_to_interface_block(const std::string &ib_
 			{
 				uint32_t locn = get_decoration(var.self, DecorationLocation);
 				set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-				mark_location_as_used_by_shader(locn, StorageClassInput);
+				mark_location_as_used_by_shader(locn, var_type, StorageClassInput);
 			}
 			else if (inputs_by_builtin.count(builtin))
 			{
 				uint32_t locn = inputs_by_builtin[builtin].location;
 				set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-				mark_location_as_used_by_shader(locn, StorageClassInput);
+				mark_location_as_used_by_shader(locn, var_type, StorageClassInput);
 			}
 
 			added_builtin_tess_level = true;
@@ -2287,13 +2386,13 @@ void CompilerMSL::add_tess_level_input_to_interface_block(const std::string &ib_
 		{
 			uint32_t locn = get_decoration(var.self, DecorationLocation);
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-			mark_location_as_used_by_shader(locn, StorageClassInput);
+			mark_location_as_used_by_shader(locn, new_var_type, StorageClassInput);
 		}
 		else if (inputs_by_builtin.count(builtin))
 		{
 			uint32_t locn = inputs_by_builtin[builtin].location;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
-			mark_location_as_used_by_shader(locn, StorageClassInput);
+			mark_location_as_used_by_shader(locn, new_var_type, StorageClassInput);
 		}
 	}
 }
@@ -2347,7 +2446,10 @@ void CompilerMSL::add_variable_to_interface_block(StorageClass storage, const st
 					bool is_composite_type = is_matrix(mbr_type) || is_array(mbr_type);
 					bool attribute_load_store =
 					    storage == StorageClassInput && get_execution_model() != ExecutionModelFragment;
-					bool storage_is_stage_io = storage == StorageClassInput || storage == StorageClassOutput;
+					bool storage_is_stage_io =
+					    (storage == StorageClassInput && !(get_execution_model() == ExecutionModelTessellationControl &&
+					                                       msl_options.multi_patch_workgroup)) ||
+					    storage == StorageClassOutput;
 
 					// ClipDistance always needs to be declared as user attributes.
 					if (builtin == BuiltInClipDistance)
@@ -2378,7 +2480,9 @@ void CompilerMSL::add_variable_to_interface_block(StorageClass storage, const st
 		{
 			bool is_composite_type = is_matrix(var_type) || is_array(var_type);
 			bool storage_is_stage_io =
-			    storage == StorageClassInput || (storage == StorageClassOutput && !capture_output_to_buffer);
+			    (storage == StorageClassInput &&
+			     !(get_execution_model() == ExecutionModelTessellationControl && msl_options.multi_patch_workgroup)) ||
+			    (storage == StorageClassOutput && !capture_output_to_buffer);
 			bool attribute_load_store = storage == StorageClassInput && get_execution_model() != ExecutionModelFragment;
 
 			// ClipDistance always needs to be declared as user attributes.
@@ -2570,17 +2674,30 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 		ib_var_ref = patch ? patch_stage_in_var_name : stage_in_var_name;
 		if (get_execution_model() == ExecutionModelTessellationControl)
 		{
-			// Add a hook to populate the shared workgroup memory containing
-			// the gl_in array.
+			// Add a hook to populate the shared workgroup memory containing the gl_in array.
 			entry_func.fixup_hooks_in.push_back([=]() {
-				// Can't use PatchVertices yet; the hook for that may not have run yet.
-				statement("if (", to_expression(builtin_invocation_id_id), " < ", "spvIndirectParams[0])");
-				statement("    ", input_wg_var_name, "[", to_expression(builtin_invocation_id_id), "] = ", ib_var_ref,
-				          ";");
-				statement("threadgroup_barrier(mem_flags::mem_threadgroup);");
-				statement("if (", to_expression(builtin_invocation_id_id), " >= ", get_entry_point().output_vertices,
-				          ")");
-				statement("    return;");
+				// Can't use PatchVertices, PrimitiveId, or InvocationId yet; the hooks for those may not have run yet.
+				if (msl_options.multi_patch_workgroup)
+				{
+					// n.b. builtin_invocation_id_id here is the dispatch global invocation ID,
+					// not the TC invocation ID.
+					statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "* gl_in = &",
+					          input_buffer_var_name, "[min(", to_expression(builtin_invocation_id_id), ".x / ",
+					          get_entry_point().output_vertices,
+							  ", spvIndirectParams[1] - 1) * spvIndirectParams[0]];");
+				}
+				else
+				{
+					// It's safe to use InvocationId here because it's directly mapped to a
+					// Metal builtin, and therefore doesn't need a hook.
+					statement("if (", to_expression(builtin_invocation_id_id), " < spvIndirectParams[0])");
+					statement("    ", input_wg_var_name, "[", to_expression(builtin_invocation_id_id),
+					          "] = ", ib_var_ref, ";");
+					statement("threadgroup_barrier(mem_flags::mem_threadgroup);");
+					statement("if (", to_expression(builtin_invocation_id_id),
+					          " >= ", get_entry_point().output_vertices, ")");
+					statement("    return;");
+				}
 			});
 		}
 		break;
@@ -2622,7 +2739,14 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 						// The first member of the indirect buffer is always the number of vertices
 						// to draw.
 						// We zero-base the InstanceID & VertexID variables for HLSL emulation elsewhere, so don't do it twice
-						if (msl_options.enable_base_index_zero)
+						if (get_execution_model() == ExecutionModelVertex && msl_options.vertex_for_tessellation)
+						{
+							statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "& ", ib_var_ref,
+							          " = ", output_buffer_var_name, "[", to_expression(builtin_invocation_id_id),
+							          ".y * ", to_expression(builtin_stage_input_size_id), ".x + ",
+							          to_expression(builtin_invocation_id_id), ".x];");
+						}
+						else if (msl_options.enable_base_index_zero)
 						{
 							statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "& ", ib_var_ref,
 							          " = ", output_buffer_var_name, "[", to_expression(builtin_instance_idx_id),
@@ -2640,17 +2764,46 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 				});
 				break;
 			case ExecutionModelTessellationControl:
-				if (patch)
-					entry_func.fixup_hooks_in.push_back([=]() {
-						statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "& ", ib_var_ref, " = ",
-						          patch_output_buffer_var_name, "[", to_expression(builtin_primitive_id_id), "];");
-					});
+				if (msl_options.multi_patch_workgroup)
+				{
+					// We cannot use PrimitiveId here, because the hook may not have run yet.
+					if (patch)
+					{
+						entry_func.fixup_hooks_in.push_back([=]() {
+							statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "& ", ib_var_ref,
+							          " = ", patch_output_buffer_var_name, "[", to_expression(builtin_invocation_id_id),
+							          ".x / ", get_entry_point().output_vertices, "];");
+						});
+					}
+					else
+					{
+						entry_func.fixup_hooks_in.push_back([=]() {
+							statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "* gl_out = &",
+							          output_buffer_var_name, "[", to_expression(builtin_invocation_id_id), ".x - ",
+							          to_expression(builtin_invocation_id_id), ".x % ",
+							          get_entry_point().output_vertices, "];");
+						});
+					}
+				}
 				else
-					entry_func.fixup_hooks_in.push_back([=]() {
-						statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "* gl_out = &",
-						          output_buffer_var_name, "[", to_expression(builtin_primitive_id_id), " * ",
-						          get_entry_point().output_vertices, "];");
-					});
+				{
+					if (patch)
+					{
+						entry_func.fixup_hooks_in.push_back([=]() {
+							statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "& ", ib_var_ref,
+							          " = ", patch_output_buffer_var_name, "[", to_expression(builtin_primitive_id_id),
+							          "];");
+						});
+					}
+					else
+					{
+						entry_func.fixup_hooks_in.push_back([=]() {
+							statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "* gl_out = &",
+							          output_buffer_var_name, "[", to_expression(builtin_primitive_id_id), " * ",
+							          get_entry_point().output_vertices, "];");
+						});
+					}
+				}
 				break;
 			default:
 				break;
@@ -2675,6 +2828,58 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 
 		meta.strip_array = strip_array;
 		add_variable_to_interface_block(storage, ib_var_ref, ib_type, *p_var, meta);
+	}
+
+	if (get_execution_model() == ExecutionModelTessellationControl && msl_options.multi_patch_workgroup &&
+	    storage == StorageClassInput)
+	{
+		// For tessellation control inputs, add all outputs from the vertex shader to ensure
+		// the struct containing them is the correct size and layout.
+		for (auto &input : inputs_by_location)
+		{
+			if (is_msl_shader_input_used(input.first))
+				continue;
+
+			// Create a fake variable to put at the location.
+			uint32_t offset = ir.increase_bound_by(4);
+			uint32_t type_id = offset;
+			uint32_t array_type_id = offset + 1;
+			uint32_t ptr_type_id = offset + 2;
+			uint32_t var_id = offset + 3;
+
+			SPIRType type;
+			switch (input.second.format)
+			{
+			case MSL_SHADER_INPUT_FORMAT_UINT16:
+			case MSL_SHADER_INPUT_FORMAT_ANY16:
+				type.basetype = SPIRType::UShort;
+				type.width = 16;
+				break;
+			case MSL_SHADER_INPUT_FORMAT_ANY32:
+			default:
+				type.basetype = SPIRType::UInt;
+				type.width = 32;
+				break;
+			}
+			type.vecsize = input.second.vecsize;
+			set<SPIRType>(type_id, type);
+
+			type.array.push_back(0);
+			type.array_size_literal.push_back(true);
+			type.parent_type = type_id;
+			set<SPIRType>(array_type_id, type);
+
+			type.pointer = true;
+			type.parent_type = array_type_id;
+			type.storage = storage;
+			auto &ptr_type = set<SPIRType>(ptr_type_id, type);
+			ptr_type.self = array_type_id;
+
+			auto &fake_var = set<SPIRVariable>(var_id, ptr_type_id, storage);
+			set_decoration(var_id, DecorationLocation, input.first);
+			meta.strip_array = true;
+			add_variable_to_interface_block(storage, ib_var_ref, ib_type, fake_var, meta);
+		}
 	}
 
 	// Sort the members of the structure by their locations.
@@ -2720,7 +2925,10 @@ uint32_t CompilerMSL::add_interface_block_pointer(uint32_t ib_var_id, StorageCla
 		auto &ib_ptr_type = set<SPIRType>(ib_ptr_type_id, ib_type);
 		ib_ptr_type.parent_type = ib_ptr_type.type_alias = ib_type.self;
 		ib_ptr_type.pointer = true;
-		ib_ptr_type.storage = storage == StorageClassInput ? StorageClassWorkgroup : StorageClassStorageBuffer;
+		ib_ptr_type.storage =
+		    storage == StorageClassInput ?
+		        (msl_options.multi_patch_workgroup ? StorageClassStorageBuffer : StorageClassWorkgroup) :
+		        StorageClassStorageBuffer;
 		ir.meta[ib_ptr_type_id] = ir.meta[ib_type.self];
 		// To ensure that get_variable_data_type() doesn't strip off the pointer,
 		// which we need, use another pointer.
@@ -2733,7 +2941,7 @@ uint32_t CompilerMSL::add_interface_block_pointer(uint32_t ib_var_id, StorageCla
 
 		ib_ptr_var_id = next_id;
 		set<SPIRVariable>(ib_ptr_var_id, ib_ptr_ptr_type_id, StorageClassFunction, 0);
-		set_name(ib_ptr_var_id, storage == StorageClassInput ? input_wg_var_name : "gl_out");
+		set_name(ib_ptr_var_id, storage == StorageClassInput ? "gl_in" : "gl_out");
 	}
 	else
 	{
@@ -2835,7 +3043,7 @@ uint32_t CompilerMSL::ensure_correct_input_type(uint32_t type_id, uint32_t locat
 		}
 	}
 
-	case MSL_VERTEX_FORMAT_UINT16:
+	case MSL_SHADER_INPUT_FORMAT_UINT16:
 	{
 		switch (type.basetype)
 		{
@@ -5308,7 +5516,7 @@ void CompilerMSL::emit_specialization_constants_and_structs()
 			auto &type = id.get<SPIRType>();
 			TypeID type_id = type.self;
 
-			bool is_struct = (type.basetype == SPIRType::Struct) && type.array.empty();
+			bool is_struct = (type.basetype == SPIRType::Struct) && type.array.empty() && !type.pointer;
 			bool is_block =
 			    has_decoration(type.self, DecorationBlock) || has_decoration(type.self, DecorationBufferBlock);
 
@@ -5370,7 +5578,10 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 	if (ptr_type.storage == StorageClassOutput && get_execution_model() == ExecutionModelTessellationEvaluation)
 		return false;
 
-	bool flat_data_type = is_matrix(result_type) || is_array(result_type) || result_type.basetype == SPIRType::Struct;
+	bool multi_patch_tess_ctl = get_execution_model() == ExecutionModelTessellationControl &&
+	                            msl_options.multi_patch_workgroup && ptr_type.storage == StorageClassInput;
+	bool flat_matrix = is_matrix(result_type) && !multi_patch_tess_ctl;
+	bool flat_data_type = flat_matrix || is_array(result_type) || result_type.basetype == SPIRType::Struct;
 	if (!flat_data_type)
 		return false;
 
@@ -5385,6 +5596,7 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 	uint32_t interface_index = get_extended_decoration(ptr, SPIRVCrossDecorationInterfaceMemberIndex);
 	auto *var = maybe_get_backing_variable(ptr);
 	bool ptr_is_io_variable = ir.ids[ptr].get_type() == TypeVariable;
+	auto &expr_type = get_pointee_type(ptr_type.self);
 
 	const auto &iface_type = expression_type(stage_in_ptr_var_id);
 
@@ -5398,7 +5610,7 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 			SPIRV_CROSS_THROW("Loading an array-of-array must be loaded directly from an IO variable.");
 		if (interface_index == uint32_t(-1))
 			SPIRV_CROSS_THROW("Interface index is unknown. Cannot continue.");
-		if (result_type.basetype == SPIRType::Struct || is_matrix(result_type))
+		if (result_type.basetype == SPIRType::Struct || flat_matrix)
 			SPIRV_CROSS_THROW("Cannot load array-of-array of composite type in tessellation IO.");
 
 		expr += type_to_glsl(result_type) + "({ ";
@@ -5412,16 +5624,44 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 			expr += type_to_glsl(sub_type) + "({ ";
 			interface_index = base_interface_index;
 			uint32_t array_size = to_array_size_literal(result_type, 0);
-			for (uint32_t j = 0; j < array_size; j++, interface_index++)
+			if (multi_patch_tess_ctl)
 			{
-				const uint32_t indices[2] = { i, interface_index };
+				for (uint32_t j = 0; j < array_size; j++)
+				{
+					const uint32_t indices[3] = { i, interface_index, j };
 
-				AccessChainMeta meta;
-				expr += access_chain_internal(stage_in_ptr_var_id, indices, 2,
-				                              ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+					AccessChainMeta meta;
+					expr +=
+					    access_chain_internal(stage_in_ptr_var_id, indices, 3,
+					                          ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+					// If the expression has more vector components than the result type, insert
+					// a swizzle. This shouldn't happen normally on valid SPIR-V, but it might
+					// happen if we replace the type of an input variable.
+					if (!is_matrix(sub_type) && sub_type.basetype != SPIRType::Struct &&
+					    expr_type.vecsize > sub_type.vecsize)
+						expr += vector_swizzle(sub_type.vecsize, 0);
 
-				if (j + 1 < array_size)
-					expr += ", ";
+					if (j + 1 < array_size)
+						expr += ", ";
+				}
+			}
+			else
+			{
+				for (uint32_t j = 0; j < array_size; j++, interface_index++)
+				{
+					const uint32_t indices[2] = { i, interface_index };
+
+					AccessChainMeta meta;
+					expr +=
+					    access_chain_internal(stage_in_ptr_var_id, indices, 2,
+					                          ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+					if (!is_matrix(sub_type) && sub_type.basetype != SPIRType::Struct &&
+					    expr_type.vecsize > sub_type.vecsize)
+						expr += vector_swizzle(sub_type.vecsize, 0);
+
+					if (j + 1 < array_size)
+						expr += ", ";
+				}
 			}
 			expr += " })";
 			if (i + 1 < num_control_points)
@@ -5461,7 +5701,8 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 					SPIRV_CROSS_THROW("Interface index is unknown. Cannot continue.");
 
 				const auto &mbr_type = get<SPIRType>(struct_type.member_types[j]);
-				if (is_matrix(mbr_type))
+				const auto &expr_mbr_type = get<SPIRType>(expr_type.member_types[j]);
+				if (is_matrix(mbr_type) && !multi_patch_tess_ctl)
 				{
 					expr += type_to_glsl(mbr_type) + "(";
 					for (uint32_t k = 0; k < mbr_type.columns; k++, interface_index++)
@@ -5476,6 +5717,8 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 						}
 						else
 							expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+						if (expr_mbr_type.vecsize > mbr_type.vecsize)
+							expr += vector_swizzle(mbr_type.vecsize, 0);
 
 						if (k + 1 < mbr_type.columns)
 							expr += ", ";
@@ -5486,21 +5729,48 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 				{
 					expr += type_to_glsl(mbr_type) + "({ ";
 					uint32_t array_size = to_array_size_literal(mbr_type, 0);
-					for (uint32_t k = 0; k < array_size; k++, interface_index++)
+					if (multi_patch_tess_ctl)
 					{
-						if (is_array_of_struct)
+						for (uint32_t k = 0; k < array_size; k++)
 						{
-							const uint32_t indices[2] = { i, interface_index };
-							AccessChainMeta meta;
-							expr += access_chain_internal(
-							    stage_in_ptr_var_id, indices, 2,
-							    ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
-						}
-						else
-							expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+							if (is_array_of_struct)
+							{
+								const uint32_t indices[3] = { i, interface_index, k };
+								AccessChainMeta meta;
+								expr += access_chain_internal(
+								    stage_in_ptr_var_id, indices, 3,
+								    ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+							}
+							else
+								expr += join(to_expression(ptr), ".", to_member_name(iface_type, interface_index), "[",
+								             k, "]");
+							if (expr_mbr_type.vecsize > mbr_type.vecsize)
+								expr += vector_swizzle(mbr_type.vecsize, 0);
 
-						if (k + 1 < array_size)
-							expr += ", ";
+							if (k + 1 < array_size)
+								expr += ", ";
+						}
+					}
+					else
+					{
+						for (uint32_t k = 0; k < array_size; k++, interface_index++)
+						{
+							if (is_array_of_struct)
+							{
+								const uint32_t indices[2] = { i, interface_index };
+								AccessChainMeta meta;
+								expr += access_chain_internal(
+								    stage_in_ptr_var_id, indices, 2,
+								    ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+							}
+							else
+								expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+							if (expr_mbr_type.vecsize > mbr_type.vecsize)
+								expr += vector_swizzle(mbr_type.vecsize, 0);
+
+							if (k + 1 < array_size)
+								expr += ", ";
+						}
 					}
 					expr += " })";
 				}
@@ -5516,6 +5786,8 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 					}
 					else
 						expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+					if (expr_mbr_type.vecsize > mbr_type.vecsize)
+						expr += vector_swizzle(mbr_type.vecsize, 0);
 				}
 
 				if (j + 1 < struct_type.member_types.size())
@@ -5528,7 +5800,7 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 		if (is_array_of_struct)
 			expr += " })";
 	}
-	else if (is_matrix(result_type))
+	else if (flat_matrix)
 	{
 		bool is_array_of_matrix = is_array(result_type);
 		if (is_array_of_matrix && !ptr_is_io_variable)
@@ -5557,6 +5829,8 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 					expr +=
 					    access_chain_internal(stage_in_ptr_var_id, indices, 2,
 					                          ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+					if (expr_type.vecsize > result_type.vecsize)
+						expr += vector_swizzle(result_type.vecsize, 0);
 					if (j + 1 < result_type.columns)
 						expr += ", ";
 				}
@@ -5573,6 +5847,8 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 			for (uint32_t i = 0; i < result_type.columns; i++, interface_index++)
 			{
 				expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+				if (expr_type.vecsize > result_type.vecsize)
+					expr += vector_swizzle(result_type.vecsize, 0);
 				if (i + 1 < result_type.columns)
 					expr += ", ";
 			}
@@ -5598,6 +5874,8 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 			AccessChainMeta meta;
 			expr += access_chain_internal(stage_in_ptr_var_id, indices, 2,
 			                              ACCESS_CHAIN_INDEX_IS_LITERAL_BIT | ACCESS_CHAIN_PTR_CHAIN_BIT, &meta);
+			if (expr_type.vecsize > result_type.vecsize)
+				expr += vector_swizzle(result_type.vecsize, 0);
 
 			if (i + 1 < num_control_points)
 				expr += ", ";
@@ -5617,6 +5895,8 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 		for (uint32_t i = 0; i < array_size; i++, interface_index++)
 		{
 			expr += to_expression(ptr) + "." + to_member_name(iface_type, interface_index);
+			if (expr_type.vecsize > result_type.vecsize)
+				expr += vector_swizzle(result_type.vecsize, 0);
 			if (i + 1 < array_size)
 				expr += ", ";
 		}
@@ -5639,6 +5919,7 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 	bool patch = false;
 	bool flat_data = false;
 	bool ptr_is_chain = false;
+	bool multi_patch = get_execution_model() == ExecutionModelTessellationControl && msl_options.multi_patch_workgroup;
 
 	if (var)
 	{
@@ -5662,14 +5943,9 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 	{
 		AccessChainMeta meta;
 		SmallVector<uint32_t> indices;
-		uint32_t next_id = ir.increase_bound_by(2);
+		uint32_t next_id = ir.increase_bound_by(1);
 
 		indices.reserve(length - 3 + 1);
-		uint32_t type_id = next_id++;
-		SPIRType new_uint_type;
-		new_uint_type.basetype = SPIRType::UInt;
-		new_uint_type.width = 32;
-		set<SPIRType>(type_id, new_uint_type);
 
 		uint32_t first_non_array_index = ptr_is_chain ? 3 : 4;
 		VariableID stage_var_id = var->storage == StorageClassInput ? stage_in_ptr_var_id : stage_out_ptr_var_id;
@@ -5704,7 +5980,7 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 			// we're hosed.
 			for (; i < length; ++i)
 			{
-				if (!is_array(*type) && !is_matrix(*type) && type->basetype != SPIRType::Struct)
+				if ((multi_patch || (!is_array(*type) && !is_matrix(*type))) && type->basetype != SPIRType::Struct)
 					break;
 
 				auto *c = maybe_get<SPIRConstant>(ops[i]);
@@ -5723,7 +5999,8 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 					type = &get<SPIRType>(type->member_types[c->scalar()]);
 			}
 
-			if (is_matrix(result_ptr_type) || is_array(result_ptr_type) || result_ptr_type.basetype == SPIRType::Struct)
+			if ((!multi_patch && (is_matrix(result_ptr_type) || is_array(result_ptr_type))) ||
+			    result_ptr_type.basetype == SPIRType::Struct)
 			{
 				// We're not going to emit the actual member name, we let any further OpLoad take care of that.
 				// Tag the access chain with the member index we're referencing.
@@ -5732,7 +6009,7 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 			else
 			{
 				// Access the appropriate member of gl_in/gl_out.
-				set<SPIRConstant>(const_mbr_id, type_id, index, false);
+				set<SPIRConstant>(const_mbr_id, get_uint_type_id(), index, false);
 				indices.push_back(const_mbr_id);
 
 				// Append any straggling access chain indices.
@@ -5743,7 +6020,7 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 		else
 		{
 			assert(index != uint32_t(-1));
-			set<SPIRConstant>(const_mbr_id, type_id, index, false);
+			set<SPIRConstant>(const_mbr_id, get_uint_type_id(), index, false);
 			indices.push_back(const_mbr_id);
 
 			indices.insert(indices.end(), ops + 4, ops + length);
@@ -5784,6 +6061,24 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 			}
 		}
 
+		// Get the actual type of the object that was accessed. If it's a vector type and we changed it,
+		// then we'll need to add a swizzle.
+		// For this, we can't necessarily rely on the type of the base expression, because it might be
+		// another access chain, and it will therefore already have the "correct" type.
+		auto *expr_type = &get_variable_data_type(*var);
+		if (has_extended_decoration(ops[2], SPIRVCrossDecorationTessIOOriginalInputTypeID))
+			expr_type = &get<SPIRType>(get_extended_decoration(ops[2], SPIRVCrossDecorationTessIOOriginalInputTypeID));
+		for (uint32_t i = 3; i < length; i++)
+		{
+			if (!is_array(*expr_type) && expr_type->basetype == SPIRType::Struct)
+				expr_type = &get<SPIRType>(expr_type->member_types[get<SPIRConstant>(ops[i]).scalar()]);
+			else
+				expr_type = &get<SPIRType>(expr_type->parent_type);
+		}
+		if (!is_array(*expr_type) && !is_matrix(*expr_type) && expr_type->basetype != SPIRType::Struct &&
+		    expr_type->vecsize > result_ptr_type.vecsize)
+			e += vector_swizzle(result_ptr_type.vecsize, 0);
+
 		auto &expr = set<SPIRExpression>(ops[1], move(e), ops[0], should_forward(ops[2]));
 		expr.loaded_from = var->self;
 		expr.need_transpose = meta.need_transpose;
@@ -5796,6 +6091,8 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 			set_extended_decoration(ops[1], SPIRVCrossDecorationPhysicalTypeID, meta.storage_physical_type);
 		if (meta.storage_is_invariant)
 			set_decoration(ops[1], DecorationInvariant);
+		// Save the type we found in case the result is used in another access chain.
+		set_extended_decoration(ops[1], SPIRVCrossDecorationTessIOOriginalInputTypeID, expr_type->self);
 
 		// If we have some expression dependencies in our access chain, this access chain is technically a forwarded
 		// temporary which could be subject to invalidation.
@@ -8801,6 +9098,8 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 			case BuiltInInstanceId:
 			case BuiltInInstanceIndex:
 			case BuiltInBaseInstance:
+				if (msl_options.vertex_for_tessellation)
+					return "";
 				return string(" [[") + builtin_qualifier(builtin) + "]]";
 
 			case BuiltInDrawIndex:
@@ -8816,7 +9115,8 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 	}
 
 	// Vertex and tessellation evaluation function outputs
-	if ((execution.model == ExecutionModelVertex || execution.model == ExecutionModelTessellationEvaluation) &&
+	if (((execution.model == ExecutionModelVertex && !msl_options.vertex_for_tessellation) ||
+	     execution.model == ExecutionModelTessellationEvaluation) &&
 	    type.storage == StorageClassOutput)
 	{
 		if (is_builtin)
@@ -8868,6 +9168,9 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 			{
 			case BuiltInInvocationId:
 			case BuiltInPrimitiveId:
+				if (msl_options.multi_patch_workgroup)
+					return "";
+				/* fallthrough */
 			case BuiltInSubgroupLocalInvocationId: // FIXME: Should work in any stage
 			case BuiltInSubgroupSize: // FIXME: Should work in any stage
 				return string(" [[") + builtin_qualifier(builtin) + "]]" + (mbr_type.array.empty() ? "" : " ");
@@ -8878,6 +9181,8 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 				break;
 			}
 		}
+		if (msl_options.multi_patch_workgroup)
+			return "";
 		uint32_t locn = get_ordered_member_location(type.self, index);
 		if (locn != k_unknown_location)
 			return string(" [[attribute(") + convert_to_string(locn) + ")]]";
@@ -9139,7 +9444,9 @@ string CompilerMSL::func_type_decl(SPIRType &type)
 	switch (execution.model)
 	{
 	case ExecutionModelVertex:
-		entry_type = "vertex";
+		if (msl_options.vertex_for_tessellation && !msl_options.supports_msl_version(1, 2))
+			SPIRV_CROSS_THROW("Tessellation requires Metal 1.2.");
+		entry_type = msl_options.vertex_for_tessellation ? "kernel" : "vertex";
 		break;
 	case ExecutionModelTessellationEvaluation:
 		if (!msl_options.supports_msl_version(1, 2))
@@ -9243,7 +9550,7 @@ string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id, bo
 	case StorageClassInput:
 		if (get_execution_model() == ExecutionModelTessellationControl && var &&
 		    var->basevariable == stage_in_ptr_var_id)
-			addr_space = "threadgroup";
+			addr_space = msl_options.multi_patch_workgroup ? "constant" : "threadgroup";
 		break;
 
 	case StorageClassOutput:
@@ -9286,6 +9593,9 @@ string CompilerMSL::entry_point_arg_stage_in()
 {
 	string decl;
 
+	if (get_execution_model() == ExecutionModelTessellationControl && msl_options.multi_patch_workgroup)
+		return decl;
+
 	// Stage-in structure
 	uint32_t stage_in_id;
 	if (get_execution_model() == ExecutionModelTessellationEvaluation)
@@ -9303,6 +9613,59 @@ string CompilerMSL::entry_point_arg_stage_in()
 	}
 
 	return decl;
+}
+
+// Returns true if this input builtin should be a direct parameter on a shader function parameter list,
+// and false for builtins that should be passed or calculated some other way.
+bool CompilerMSL::is_direct_input_builtin(BuiltIn bi_type)
+{
+	switch (bi_type)
+	{
+	// Vertex function in
+	case BuiltInVertexId:
+	case BuiltInVertexIndex:
+	case BuiltInBaseVertex:
+	case BuiltInInstanceId:
+	case BuiltInInstanceIndex:
+	case BuiltInBaseInstance:
+		return get_execution_model() != ExecutionModelVertex || !msl_options.vertex_for_tessellation;
+	// Tess. control function in
+	case BuiltInPosition:
+	case BuiltInPointSize:
+	case BuiltInClipDistance:
+	case BuiltInCullDistance:
+	case BuiltInPatchVertices:
+		return false;
+	case BuiltInInvocationId:
+	case BuiltInPrimitiveId:
+		return get_execution_model() != ExecutionModelTessellationControl || !msl_options.multi_patch_workgroup;
+	// Tess. evaluation function in
+	case BuiltInTessLevelInner:
+	case BuiltInTessLevelOuter:
+		return false;
+	// Fragment function in
+	case BuiltInSamplePosition:
+	case BuiltInHelperInvocation:
+	case BuiltInBaryCoordNV:
+	case BuiltInBaryCoordNoPerspNV:
+		return false;
+	case BuiltInViewIndex:
+		return get_execution_model() == ExecutionModelFragment && msl_options.multiview;
+	// Any stage function in
+	case BuiltInDeviceIndex:
+	case BuiltInSubgroupEqMask:
+	case BuiltInSubgroupGeMask:
+	case BuiltInSubgroupGtMask:
+	case BuiltInSubgroupLeMask:
+	case BuiltInSubgroupLtMask:
+		return false;
+	case BuiltInSubgroupLocalInvocationId:
+	case BuiltInSubgroupSize:
+		return get_execution_model() == ExecutionModelGLCompute ||
+		       (get_execution_model() == ExecutionModelFragment && msl_options.supports_msl_version(2, 2));
+	default:
+		return true;
+	}
 }
 
 void CompilerMSL::entry_point_args_builtin(string &ep_args)
@@ -9326,20 +9689,7 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 			// Remember this variable. We may need to correct its type.
 			active_builtins.push_back(make_pair(&var, bi_type));
 
-			// These builtins are emitted specially. If we pass this branch, the builtin directly matches
-			// a MSL builtin.
-			if (bi_type != BuiltInSamplePosition && bi_type != BuiltInHelperInvocation &&
-			    bi_type != BuiltInPatchVertices && bi_type != BuiltInTessLevelInner &&
-			    bi_type != BuiltInTessLevelOuter && bi_type != BuiltInPosition && bi_type != BuiltInPointSize &&
-			    bi_type != BuiltInClipDistance && bi_type != BuiltInCullDistance && bi_type != BuiltInSubgroupEqMask &&
-			    bi_type != BuiltInBaryCoordNV && bi_type != BuiltInBaryCoordNoPerspNV &&
-			    bi_type != BuiltInSubgroupGeMask && bi_type != BuiltInSubgroupGtMask &&
-			    bi_type != BuiltInSubgroupLeMask && bi_type != BuiltInSubgroupLtMask && bi_type != BuiltInDeviceIndex &&
-			    ((get_execution_model() == ExecutionModelFragment && msl_options.multiview) ||
-			     bi_type != BuiltInViewIndex) &&
-			    (get_execution_model() == ExecutionModelGLCompute ||
-			     (get_execution_model() == ExecutionModelFragment && msl_options.supports_msl_version(2, 2)) ||
-			     (bi_type != BuiltInSubgroupLocalInvocationId && bi_type != BuiltInSubgroupSize)))
+			if (is_direct_input_builtin(bi_type))
 			{
 				if (!ep_args.empty())
 					ep_args += ", ";
@@ -9365,13 +9715,26 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 		    has_extended_decoration(var_id, SPIRVCrossDecorationBuiltInDispatchBase))
 		{
 			// This is a special implicit builtin, not corresponding to any SPIR-V builtin,
-			// which holds the base that was passed to vkCmdDispatchBase(). If it's present,
+			// which holds the base that was passed to vkCmdDispatchBase() or vkCmdDrawIndexed(). If it's present,
 			// assume we emitted it for a good reason.
 			assert(msl_options.supports_msl_version(1, 2));
 			if (!ep_args.empty())
 				ep_args += ", ";
 
 			ep_args += type_to_glsl(get_variable_data_type(var)) + " " + to_expression(var_id) + " [[grid_origin]]";
+		}
+
+		if (var.storage == StorageClassInput &&
+		    has_extended_decoration(var_id, SPIRVCrossDecorationBuiltInStageInputSize))
+		{
+			// This is another special implicit builtin, not corresponding to any SPIR-V builtin,
+			// which holds the number of vertices and instances to draw. If it's present,
+			// assume we emitted it for a good reason.
+			assert(msl_options.supports_msl_version(1, 2));
+			if (!ep_args.empty())
+				ep_args += ", ";
+
+			ep_args += type_to_glsl(get_variable_data_type(var)) + " " + to_expression(var_id) + " [[grid_size]]";
 		}
 	});
 
@@ -9407,12 +9770,35 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 			ep_args +=
 			    join("constant uint* spvIndirectParams [[buffer(", msl_options.indirect_params_buffer_index, ")]]");
 		}
-		else if (stage_out_var_id)
+		else if (stage_out_var_id &&
+		         !(get_execution_model() == ExecutionModelVertex && msl_options.vertex_for_tessellation))
 		{
 			if (!ep_args.empty())
 				ep_args += ", ";
 			ep_args +=
 			    join("device uint* spvIndirectParams [[buffer(", msl_options.indirect_params_buffer_index, ")]]");
+		}
+
+		if (get_execution_model() == ExecutionModelVertex && msl_options.vertex_for_tessellation &&
+		    (active_input_builtins.get(BuiltInVertexIndex) || active_input_builtins.get(BuiltInVertexId)) &&
+		    msl_options.vertex_index_type != Options::IndexType::None)
+		{
+			// Add the index buffer so we can set gl_VertexIndex correctly.
+			if (!ep_args.empty())
+				ep_args += ", ";
+			switch (msl_options.vertex_index_type)
+			{
+			case Options::IndexType::None:
+				break;
+			case Options::IndexType::UInt16:
+				ep_args += join("const device ushort* ", index_buffer_var_name, " [[buffer(",
+				                msl_options.shader_index_buffer_index, ")]]");
+				break;
+			case Options::IndexType::UInt32:
+				ep_args += join("const device uint* ", index_buffer_var_name, " [[buffer(",
+				                msl_options.shader_index_buffer_index, ")]]");
+				break;
+			}
 		}
 
 		// Tessellation control shaders get three additional parameters:
@@ -9437,8 +9823,16 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 			{
 				if (!ep_args.empty())
 					ep_args += ", ";
-				ep_args += join("threadgroup ", type_to_glsl(get_stage_in_struct_type()), "* ", input_wg_var_name,
-				                " [[threadgroup(", convert_to_string(msl_options.shader_input_wg_index), ")]]");
+				if (msl_options.multi_patch_workgroup)
+				{
+					ep_args += join("device ", type_to_glsl(get_stage_in_struct_type()), "* ", input_buffer_var_name,
+					                " [[buffer(", convert_to_string(msl_options.shader_input_buffer_index), ")]]");
+				}
+				else
+				{
+					ep_args += join("threadgroup ", type_to_glsl(get_stage_in_struct_type()), "* ", input_wg_var_name,
+					                " [[threadgroup(", convert_to_string(msl_options.shader_input_wg_index), ")]]");
+				}
 			}
 		}
 	}
@@ -9732,6 +10126,21 @@ string CompilerMSL::entry_point_args_classic(bool append_comma)
 
 void CompilerMSL::fix_up_shader_inputs_outputs()
 {
+	auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
+
+	// Emit a guard to ensure we don't execute beyond the last vertex.
+	// Vertex shaders shouldn't have the problems with barriers in non-uniform control flow that
+	// tessellation control shaders do, so early returns should be OK. We may need to revisit this
+	// if it ever becomes possible to use barriers from a vertex shader.
+	if (get_execution_model() == ExecutionModelVertex && msl_options.vertex_for_tessellation)
+	{
+		entry_func.fixup_hooks_in.push_back([this]() {
+			statement("if (any(", to_expression(builtin_invocation_id_id),
+			          " >= ", to_expression(builtin_stage_input_size_id), "))");
+			statement("    return;");
+		});
+	}
+
 	// Look for sampled images and buffer. Add hooks to set up the swizzle constants or array lengths.
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
 		auto &type = get_variable_data_type(var);
@@ -9742,7 +10151,6 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 		{
 			if (msl_options.swizzle_texture_samples && has_sampled_images && is_sampled_image_type(type))
 			{
-				auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
 				entry_func.fixup_hooks_in.push_back([this, &type, &var, var_id]() {
 					bool is_array_type = !type.array.empty();
 
@@ -9769,7 +10177,6 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 		{
 			if (buffers_requiring_array_length.count(var.self))
 			{
-				auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
 				entry_func.fixup_hooks_in.push_back([this, &type, &var, var_id]() {
 					bool is_array_type = !type.array.empty();
 
@@ -9794,13 +10201,12 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 	});
 
 	// Builtin variables
-	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+	ir.for_each_typed_id<SPIRVariable>([this, &entry_func](uint32_t, SPIRVariable &var) {
 		uint32_t var_id = var.self;
 		BuiltIn bi_type = ir.meta[var_id].decoration.builtin_type;
 
 		if (var.storage == StorageClassInput && is_builtin_variable(var))
 		{
-			auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
 			switch (bi_type)
 			{
 			case BuiltInSamplePosition:
@@ -9817,6 +10223,29 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 
 				entry_func.fixup_hooks_in.push_back([=]() {
 					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = simd_is_helper_thread();");
+				});
+				break;
+			case BuiltInInvocationId:
+				// This is direct-mapped without multi-patch workgroups.
+				if (get_execution_model() != ExecutionModelTessellationControl || !msl_options.multi_patch_workgroup)
+					break;
+
+				entry_func.fixup_hooks_in.push_back([=]() {
+					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
+					          to_expression(builtin_invocation_id_id), ".x % ", this->get_entry_point().output_vertices,
+					          ";");
+				});
+				break;
+			case BuiltInPrimitiveId:
+				// This is natively supported by fragment and tessellation evaluation shaders.
+				// In tessellation control shaders, this is direct-mapped without multi-patch workgroups.
+				if (get_execution_model() != ExecutionModelTessellationControl || !msl_options.multi_patch_workgroup)
+					break;
+
+				entry_func.fixup_hooks_in.push_back([=]() {
+					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = min(",
+					          to_expression(builtin_invocation_id_id), ".x / ", this->get_entry_point().output_vertices,
+					          ", spvIndirectParams[1]);");
 				});
 				break;
 			case BuiltInPatchVertices:
@@ -10058,8 +10487,91 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 						          execution.workgroup_size.z, ");");
 				});
 				break;
+			case BuiltInVertexId:
+			case BuiltInVertexIndex:
+				// This is direct-mapped normally.
+				if (!msl_options.vertex_for_tessellation)
+					break;
+
+				entry_func.fixup_hooks_in.push_back([=]() {
+					builtin_declaration = true;
+					switch (msl_options.vertex_index_type)
+					{
+					case Options::IndexType::None:
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
+						          to_expression(builtin_invocation_id_id), ".x + ",
+						          to_expression(builtin_dispatch_base_id), ".x;");
+						break;
+					case Options::IndexType::UInt16:
+					case Options::IndexType::UInt32:
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ", index_buffer_var_name,
+						          "[", to_expression(builtin_invocation_id_id), ".x] + ",
+						          to_expression(builtin_dispatch_base_id), ".x;");
+						break;
+					}
+					builtin_declaration = false;
+				});
+				break;
+			case BuiltInBaseVertex:
+				// This is direct-mapped normally.
+				if (!msl_options.vertex_for_tessellation)
+					break;
+
+				entry_func.fixup_hooks_in.push_back([=]() {
+					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
+					          to_expression(builtin_dispatch_base_id), ".x;");
+				});
+				break;
+			case BuiltInInstanceId:
+			case BuiltInInstanceIndex:
+				// This is direct-mapped normally.
+				if (!msl_options.vertex_for_tessellation)
+					break;
+
+				entry_func.fixup_hooks_in.push_back([=]() {
+					builtin_declaration = true;
+					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
+					          to_expression(builtin_invocation_id_id), ".y + ", to_expression(builtin_dispatch_base_id),
+					          ".y;");
+					builtin_declaration = false;
+				});
+				break;
+			case BuiltInBaseInstance:
+				// This is direct-mapped normally.
+				if (!msl_options.vertex_for_tessellation)
+					break;
+
+				entry_func.fixup_hooks_in.push_back([=]() {
+					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
+					          to_expression(builtin_dispatch_base_id), ".y;");
+				});
+				break;
 			default:
 				break;
+			}
+		}
+		else if (var.storage == StorageClassOutput && is_builtin_variable(var))
+		{
+			if (bi_type == BuiltInSampleMask && get_execution_model() == ExecutionModelFragment &&
+				msl_options.additional_fixed_sample_mask != 0xffffffff)
+			{
+				// If the additional fixed sample mask was set, we need to adjust the sample_mask
+				// output to reflect that. If the shader outputs the sample_mask itself too, we need
+				// to AND the two masks to get the final one.
+				if (does_shader_write_sample_mask)
+				{
+					entry_func.fixup_hooks_out.push_back([=]() {
+						statement(to_expression(builtin_sample_mask_id), " &= ",
+							      msl_options.additional_fixed_sample_mask, ";");
+					});
+				}
+				else
+				{
+					entry_func.fixup_hooks_out.push_back([=]() {
+						statement(to_expression(builtin_sample_mask_id), " = ",
+							      msl_options.additional_fixed_sample_mask, ";");
+					});
+				}
 			}
 		}
 	});
@@ -11648,6 +12160,11 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 
 	// Tess. control function in
 	case BuiltInInvocationId:
+		if (msl_options.multi_patch_workgroup)
+		{
+			// Shouldn't be reached.
+			SPIRV_CROSS_THROW("InvocationId is computed manually with multi-patch workgroups in MSL.");
+		}
 		return "thread_index_in_threadgroup";
 	case BuiltInPatchVertices:
 		// Shouldn't be reached.
@@ -11656,6 +12173,11 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 		switch (execution.model)
 		{
 		case ExecutionModelTessellationControl:
+			if (msl_options.multi_patch_workgroup)
+			{
+				// Shouldn't be reached.
+				SPIRV_CROSS_THROW("PrimitiveId is computed manually with multi-patch workgroups in MSL.");
+			}
 			return "threadgroup_position_in_grid";
 		case ExecutionModelTessellationEvaluation:
 			return "patch_id";
@@ -11936,6 +12458,18 @@ const SPIRType &CompilerMSL::get_physical_member_type(const SPIRType &type, uint
 		return get<SPIRType>(type.member_types[index]);
 }
 
+SPIRType CompilerMSL::get_presumed_input_type(const SPIRType &ib_type, uint32_t index) const
+{
+	SPIRType type = get_physical_member_type(ib_type, index);
+	uint32_t loc = get_member_decoration(ib_type.self, index, DecorationLocation);
+	if (inputs_by_location.count(loc))
+	{
+		if (inputs_by_location.at(loc).vecsize > type.vecsize)
+			type.vecsize = inputs_by_location.at(loc).vecsize;
+	}
+	return type;
+}
+
 uint32_t CompilerMSL::get_declared_type_array_stride_msl(const SPIRType &type, bool is_packed, bool row_major) const
 {
 	// Array stride in MSL is always size * array_size. sizeof(float3) == 16,
@@ -11971,6 +12505,12 @@ uint32_t CompilerMSL::get_declared_struct_member_array_stride_msl(const SPIRType
 	                                          has_member_decoration(type.self, index, DecorationRowMajor));
 }
 
+uint32_t CompilerMSL::get_declared_input_array_stride_msl(const SPIRType &type, uint32_t index) const
+{
+	return get_declared_type_array_stride_msl(get_presumed_input_type(type, index), false,
+	                                          has_member_decoration(type.self, index, DecorationRowMajor));
+}
+
 uint32_t CompilerMSL::get_declared_type_matrix_stride_msl(const SPIRType &type, bool packed, bool row_major) const
 {
 	// For packed matrices, we just use the size of the vector type.
@@ -11985,6 +12525,12 @@ uint32_t CompilerMSL::get_declared_struct_member_matrix_stride_msl(const SPIRTyp
 {
 	return get_declared_type_matrix_stride_msl(get_physical_member_type(type, index),
 	                                           member_is_packed_physical_type(type, index),
+	                                           has_member_decoration(type.self, index, DecorationRowMajor));
+}
+
+uint32_t CompilerMSL::get_declared_input_matrix_stride_msl(const SPIRType &type, uint32_t index) const
+{
+	return get_declared_type_matrix_stride_msl(get_presumed_input_type(type, index), false,
 	                                           has_member_decoration(type.self, index, DecorationRowMajor));
 }
 
@@ -12073,6 +12619,12 @@ uint32_t CompilerMSL::get_declared_struct_member_size_msl(const SPIRType &type, 
 	                                  has_member_decoration(type.self, index, DecorationRowMajor));
 }
 
+uint32_t CompilerMSL::get_declared_input_size_msl(const SPIRType &type, uint32_t index) const
+{
+	return get_declared_type_size_msl(get_presumed_input_type(type, index), false,
+	                                  has_member_decoration(type.self, index, DecorationRowMajor));
+}
+
 // Returns the byte alignment of a type.
 uint32_t CompilerMSL::get_declared_type_alignment_msl(const SPIRType &type, bool is_packed, bool row_major) const
 {
@@ -12126,6 +12678,12 @@ uint32_t CompilerMSL::get_declared_struct_member_alignment_msl(const SPIRType &t
 {
 	return get_declared_type_alignment_msl(get_physical_member_type(type, index),
 	                                       member_is_packed_physical_type(type, index),
+	                                       has_member_decoration(type.self, index, DecorationRowMajor));
+}
+
+uint32_t CompilerMSL::get_declared_input_alignment_msl(const SPIRType &type, uint32_t index) const
+{
+	return get_declared_type_alignment_msl(get_presumed_input_type(type, index), false,
 	                                       has_member_decoration(type.self, index, DecorationRowMajor));
 }
 
@@ -12703,11 +13261,18 @@ string CompilerMSL::to_initializer_expression(const SPIRVariable &var)
 	// FIXME: We cannot handle non-constant arrays being initialized.
 	// We will need to inject spvArrayCopy here somehow ...
 	auto &type = get<SPIRType>(var.basetype);
+	string expr;
 	if (ir.ids[var.initializer].get_type() == TypeConstant &&
 	    (!type.array.empty() || type.basetype == SPIRType::Struct))
-		return constant_expression(get<SPIRConstant>(var.initializer));
+		expr = constant_expression(get<SPIRConstant>(var.initializer));
 	else
-		return CompilerGLSL::to_initializer_expression(var);
+		expr = CompilerGLSL::to_initializer_expression(var);
+	// If the initializer has more vector components than the variable, add a swizzle.
+	// FIXME: This can't handle arrays or structs.
+	auto &init_type = expression_type(var.initializer);
+	if (type.array.empty() && type.basetype != SPIRType::Struct && init_type.vecsize > type.vecsize)
+		expr = enclose_expression(expr + vector_swizzle(type.vecsize, 0));
+	return expr;
 }
 
 string CompilerMSL::to_zero_initialized_expression(uint32_t)
@@ -12842,20 +13407,13 @@ void CompilerMSL::analyze_argument_buffers()
 
 			if (uint_ptr_type_id == 0)
 			{
-				uint32_t offset = ir.increase_bound_by(2);
-				uint32_t type_id = offset;
-				uint_ptr_type_id = offset + 1;
+				uint_ptr_type_id = ir.increase_bound_by(1);
 
 				// Create a buffer to hold extra data, including the swizzle constants.
-				SPIRType uint_type;
-				uint_type.basetype = SPIRType::UInt;
-				uint_type.width = 32;
-				set<SPIRType>(type_id, uint_type);
-
-				SPIRType uint_type_pointer = uint_type;
+				SPIRType uint_type_pointer = get_uint_type();
 				uint_type_pointer.pointer = true;
 				uint_type_pointer.pointer_depth = 1;
-				uint_type_pointer.parent_type = type_id;
+				uint_type_pointer.parent_type = get_uint_type_id();
 				uint_type_pointer.storage = StorageClassUniform;
 				set<SPIRType>(uint_ptr_type_id, uint_type_pointer);
 				set_decoration(uint_ptr_type_id, DecorationArrayStride, 4);
