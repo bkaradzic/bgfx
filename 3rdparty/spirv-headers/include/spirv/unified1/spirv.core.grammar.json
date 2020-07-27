@@ -4102,6 +4102,16 @@
       "version" : "1.4"
     },
     {
+      "opname" : "OpTerminateInvocation",
+      "class"  : "Control-Flow",
+      "opcode" : 4416,
+      "extensions" : [
+        "SPV_KHR_terminate_invocation"
+      ],
+      "capabilities" : [ "Shader" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpSubgroupBallotKHR",
       "class"  : "Group",
       "opcode" : 4421,
@@ -7060,6 +7070,22 @@
         "capabilities" : [ "RayQueryProvisionalKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
+    },
+    {
+      "opname" : "OpAtomicFAddEXT",
+      "class"  : "Atomic",
+      "opcode" : 6035,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
+        { "kind" : "IdRef",             "name" : "'Value'" }
+      ],
+      "capabilities" : [ "AtomicFloat32AddEXT", "AtomicFloat64AddEXT" ],
+      "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
+      "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -11538,6 +11564,20 @@
           "enumerant" : "FPGARegINTEL",
           "value" : 5948,
           "extensions" : [ "SPV_INTEL_fpga_reg" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat32AddEXT",
+          "value" : 6033,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat64AddEXT",
+          "value" : 6034,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
           "version" : "None"
         }
       ]
