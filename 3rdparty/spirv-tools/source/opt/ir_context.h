@@ -29,6 +29,7 @@
 #include "source/assembly_grammar.h"
 #include "source/opt/cfg.h"
 #include "source/opt/constants.h"
+#include "source/opt/debug_info_manager.h"
 #include "source/opt/decoration_manager.h"
 #include "source/opt/def_use_manager.h"
 #include "source/opt/dominator_analysis.h"
@@ -78,7 +79,8 @@ class IRContext {
     kAnalysisIdToFuncMapping = 1 << 13,
     kAnalysisConstants = 1 << 14,
     kAnalysisTypes = 1 << 15,
-    kAnalysisEnd = 1 << 16
+    kAnalysisDebugInfo = 1 << 16,
+    kAnalysisEnd = 1 << 17
   };
 
   using ProcessFunction = std::function<bool(Function*)>;
@@ -187,6 +189,14 @@ class IRContext {
   inline IteratorRange<Module::inst_iterator> debugs3();
   inline IteratorRange<Module::const_inst_iterator> debugs3() const;
 
+  // Iterators for debug info instructions (excluding OpLine & OpNoLine)
+  // contained in this module.  These are OpExtInst for OpenCL.DebugInfo.100
+  // or DebugInfo extension placed between section 9 and 10.
+  inline Module::inst_iterator ext_inst_debuginfo_begin();
+  inline Module::inst_iterator ext_inst_debuginfo_end();
+  inline IteratorRange<Module::inst_iterator> ext_inst_debuginfo();
+  inline IteratorRange<Module::const_inst_iterator> ext_inst_debuginfo() const;
+
   // Add |capability| to the module, if it is not already enabled.
   inline void AddCapability(SpvCapability capability);
 
@@ -215,6 +225,8 @@ class IRContext {
   // Appends a debug 3 instruction (OpModuleProcessed) to this module.
   // This is due to decision by the SPIR Working Group, pending publication.
   inline void AddDebug3Inst(std::unique_ptr<Instruction>&& d);
+  // Appends a OpExtInst for DebugInfo to this module.
+  inline void AddExtInstDebugInfo(std::unique_ptr<Instruction>&& d);
   // Appends an annotation instruction to this module.
   inline void AddAnnotationInst(std::unique_ptr<Instruction>&& a);
   // Appends a type-declaration instruction to this module.
@@ -316,6 +328,17 @@ class IRContext {
     return type_mgr_.get();
   }
 
+  // Returns a pointer to the debug information manager.  If no debug
+  // information manager has been created yet, it creates one.
+  // NOTE: Once created, the debug information manager remains active
+  // it is never re-built.
+  analysis::DebugInfoManager* get_debug_info_mgr() {
+    if (!AreAnalysesValid(kAnalysisDebugInfo)) {
+      BuildDebugInfoManager();
+    }
+    return debug_info_mgr_.get();
+  }
+
   // Returns a pointer to the scalar evolution analysis. If it is invalid it
   // will be rebuilt first.
   ScalarEvolutionAnalysis* GetScalarEvolutionAnalysis() {
@@ -333,6 +356,13 @@ class IRContext {
   // OpMemberNames associated with the given id.
   inline IteratorRange<std::multimap<uint32_t, Instruction*>::iterator>
   GetNames(uint32_t id);
+
+  // Returns an OpMemberName instruction that targets |struct_type_id| at
+  // index |index|. Returns nullptr if no such instruction exists.
+  // While the SPIR-V spec does not prohibit having multiple OpMemberName
+  // instructions for the same structure member, it is hard to imagine a member
+  // having more than one name. This method returns the first one it finds.
+  inline Instruction* GetMemberName(uint32_t struct_type_id, uint32_t index);
 
   // Sets the message consumer to the given |consumer|. |consumer| which will be
   // invoked every time there is a message to be communicated to the outside.
@@ -372,6 +402,9 @@ class IRContext {
   // Returns a pointer to the instruction after |inst| or |nullptr| if no such
   // instruction exists.
   Instruction* KillInst(Instruction* inst);
+
+  // Deletes DebugDeclare instructions in the given function |fn|.
+  void KillDebugDeclareInsts(Function* fn);
 
   // Returns true if all of the given analyses are valid.
   bool AreAnalysesValid(Analysis set) { return (set & valid_analyses_) == set; }
@@ -415,6 +448,9 @@ class IRContext {
 
   // Kill all name and decorate ops targeting the result id of |inst|.
   void KillNamesAndDecorates(Instruction* inst);
+
+  // Change operands of debug instruction to DebugInfoNone.
+  void KillOperandFromDebugInstructions(Instruction* inst);
 
   // Returns the next unique id for use by an instruction.
   inline uint32_t TakeNextUniqueId() {
@@ -642,6 +678,13 @@ class IRContext {
     valid_analyses_ = valid_analyses_ | kAnalysisTypes;
   }
 
+  // Builds the debug information manager from scratch, even if it was
+  // already valid.
+  void BuildDebugInfoManager() {
+    debug_info_mgr_ = MakeUnique<analysis::DebugInfoManager>(this);
+    valid_analyses_ = valid_analyses_ | kAnalysisDebugInfo;
+  }
+
   // Removes all computed dominator and post-dominator trees. This will force
   // the context to rebuild the trees on demand.
   void ResetDominatorAnalysis() {
@@ -763,6 +806,9 @@ class IRContext {
 
   // Type manager for |module_|.
   std::unique_ptr<analysis::TypeManager> type_mgr_;
+
+  // Debug information manager for |module_|.
+  std::unique_ptr<analysis::DebugInfoManager> debug_info_mgr_;
 
   // A map from an id to its corresponding OpName and OpMemberName instructions.
   std::unique_ptr<std::multimap<uint32_t, Instruction*>> id_to_name_;
@@ -925,6 +971,23 @@ IteratorRange<Module::const_inst_iterator> IRContext::debugs3() const {
   return ((const Module*)module_.get())->debugs3();
 }
 
+Module::inst_iterator IRContext::ext_inst_debuginfo_begin() {
+  return module()->ext_inst_debuginfo_begin();
+}
+
+Module::inst_iterator IRContext::ext_inst_debuginfo_end() {
+  return module()->ext_inst_debuginfo_end();
+}
+
+IteratorRange<Module::inst_iterator> IRContext::ext_inst_debuginfo() {
+  return module()->ext_inst_debuginfo();
+}
+
+IteratorRange<Module::const_inst_iterator> IRContext::ext_inst_debuginfo()
+    const {
+  return ((const Module*)module_.get())->ext_inst_debuginfo();
+}
+
 void IRContext::AddCapability(SpvCapability capability) {
   if (!get_feature_mgr()->HasCapability(capability)) {
     std::unique_ptr<Instruction> capability_inst(new Instruction(
@@ -1008,7 +1071,9 @@ void IRContext::AddDebug1Inst(std::unique_ptr<Instruction>&& d) {
 void IRContext::AddDebug2Inst(std::unique_ptr<Instruction>&& d) {
   if (AreAnalysesValid(kAnalysisNameMap)) {
     if (d->opcode() == SpvOpName || d->opcode() == SpvOpMemberName) {
-      id_to_name_->insert({d->result_id(), d.get()});
+      // OpName and OpMemberName do not have result-ids. The target of the
+      // instruction is at InOperand index 0.
+      id_to_name_->insert({d->GetSingleWordInOperand(0), d.get()});
     }
   }
   module()->AddDebug2Inst(std::move(d));
@@ -1016,6 +1081,10 @@ void IRContext::AddDebug2Inst(std::unique_ptr<Instruction>&& d) {
 
 void IRContext::AddDebug3Inst(std::unique_ptr<Instruction>&& d) {
   module()->AddDebug3Inst(std::move(d));
+}
+
+void IRContext::AddExtInstDebugInfo(std::unique_ptr<Instruction>&& d) {
+  module()->AddExtInstDebugInfo(std::move(d));
 }
 
 void IRContext::AddAnnotationInst(std::unique_ptr<Instruction>&& a) {
@@ -1076,6 +1145,21 @@ IRContext::GetNames(uint32_t id) {
   }
   auto result = id_to_name_->equal_range(id);
   return make_range(std::move(result.first), std::move(result.second));
+}
+
+Instruction* IRContext::GetMemberName(uint32_t struct_type_id, uint32_t index) {
+  if (!AreAnalysesValid(kAnalysisNameMap)) {
+    BuildIdToNameMap();
+  }
+  auto result = id_to_name_->equal_range(struct_type_id);
+  for (auto i = result.first; i != result.second; ++i) {
+    auto* name_instr = i->second;
+    if (name_instr->opcode() == SpvOpMemberName &&
+        name_instr->GetSingleWordInOperand(1) == index) {
+      return name_instr;
+    }
+  }
+  return nullptr;
 }
 
 }  // namespace opt

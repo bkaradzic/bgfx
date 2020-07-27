@@ -610,7 +610,7 @@ namespace
 
 				m_uniforms.submit();
 
-				bgfx::submit(1, m_programsDraw[m_shading], m_dispatchIndirect, 0, true);
+				bgfx::submit(1, m_programsDraw[m_shading], m_dispatchIndirect);
 
 				m_pingPong = 1 - m_pingPong;
 
@@ -928,6 +928,6 @@ namespace
 ENTRY_IMPLEMENT_MAIN(
 	  ExampleTessellation
 	, "41-tess"
-	, "Adaptive Gpu Tessellation."
+	, "Adaptive GPU Tessellation."
 	, "https://bkaradzic.github.io/bgfx/examples.html#tess"
 	);

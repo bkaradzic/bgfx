@@ -85,9 +85,14 @@ void StructuredCFGAnalysis::AddBlocksInFunction(Function* func) {
       if (merge_inst->opcode() == SpvOpLoopMerge) {
         new_state.cinfo.containing_loop = block->id();
         new_state.cinfo.containing_switch = 0;
-        new_state.cinfo.in_continue = false;
         new_state.continue_node =
             merge_inst->GetSingleWordInOperand(kContinueNodeIndex);
+        if (block->id() == new_state.continue_node) {
+          new_state.cinfo.in_continue = true;
+          bb_to_construct_[block->id()].in_continue = true;
+        } else {
+          new_state.cinfo.in_continue = false;
+        }
       } else {
         new_state.cinfo.containing_loop = state.back().cinfo.containing_loop;
         new_state.cinfo.in_continue = state.back().cinfo.in_continue;

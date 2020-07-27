@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -7,6 +7,13 @@
 #define BGFX_CONFIG_H_HEADER_GUARD
 
 #include <bx/bx.h>
+
+// # Configuration options for bgfx.
+//
+// Any of `BGFX_CONFIG_*` options that's inside `#ifndef` block can be configured externally
+// via compiler options.
+//
+// When selecting rendering backends select all backends you want to include in the build.
 
 #ifndef BGFX_CONFIG_DEBUG
 #	define BGFX_CONFIG_DEBUG 0
@@ -20,7 +27,8 @@
  && !defined(BGFX_CONFIG_RENDERER_NVN)        \
  && !defined(BGFX_CONFIG_RENDERER_OPENGL)     \
  && !defined(BGFX_CONFIG_RENDERER_OPENGLES)   \
- && !defined(BGFX_CONFIG_RENDERER_VULKAN)
+ && !defined(BGFX_CONFIG_RENDERER_VULKAN)     \
+ && !defined(BGFX_CONFIG_RENDERER_WEBGPU)
 
 #	ifndef BGFX_CONFIG_RENDERER_DIRECT3D9
 #		define BGFX_CONFIG_RENDERER_DIRECT3D9 (0 \
@@ -53,6 +61,7 @@
 #	ifndef BGFX_CONFIG_RENDERER_METAL
 #		define BGFX_CONFIG_RENDERER_METAL (0           \
 					|| (BX_PLATFORM_IOS && BX_CPU_ARM) \
+					|| (BX_PLATFORM_IOS && BX_CPU_X86) \
 					|| (BX_PLATFORM_OSX >= 101100)     \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_METAL
@@ -86,7 +95,6 @@
 					|| BX_PLATFORM_EMSCRIPTEN   \
 					|| BX_PLATFORM_IOS          \
 					|| BX_PLATFORM_RPI          \
-					|| BX_PLATFORM_STEAMLINK    \
 					|| BX_PLATFORM_NX           \
 					? BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION : 0)
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES
@@ -100,6 +108,10 @@
 					|| BX_PLATFORM_OSX        \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_VULKAN
+
+#	ifndef BGFX_CONFIG_RENDERER_WEBGPU
+#		define BGFX_CONFIG_RENDERER_WEBGPU 0
+#	endif // BGFX_CONFIG_RENDERER_WEBGPU
 
 #else
 #	ifndef BGFX_CONFIG_RENDERER_DIRECT3D9
@@ -136,6 +148,10 @@
 
 #	ifndef BGFX_CONFIG_RENDERER_VULKAN
 #		define BGFX_CONFIG_RENDERER_VULKAN 0
+#	endif // BGFX_CONFIG_RENDERER_VULKAN
+
+#	ifndef BGFX_CONFIG_RENDERER_WEBGPU
+#		define BGFX_CONFIG_RENDERER_WEBGPU 0
 #	endif // BGFX_CONFIG_RENDERER_VULKAN
 #endif // !defined...
 
@@ -295,9 +311,9 @@ BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS m
 #	define BGFX_CONFIG_MAX_OCCLUSION_QUERIES 256
 #endif // BGFX_CONFIG_MAX_OCCLUSION_QUERIES
 
-#ifndef BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE
-#	define BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE (64<<10)
-#endif // BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE
+#ifndef BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE
+#	define BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE (64<<10)
+#endif // BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE
 
 #ifndef BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE
 #	define BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE (6<<20)
@@ -344,5 +360,11 @@ BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS m
 #ifndef BGFX_CONFIG_MAX_BACK_BUFFERS
 #	define BGFX_CONFIG_MAX_BACK_BUFFERS 4
 #endif // BGFX_CONFIG_MAX_BACK_BUFFERS
+
+#ifndef BGFX_CONFIG_PREFER_DISCRETE_GPU
+// On laptops with integrated and discrete GPU, prefer selection of discrete GPU.
+// nVidia and AMD, on Windows only.
+#	define BGFX_CONFIG_PREFER_DISCRETE_GPU BX_PLATFORM_WINDOWS
+#endif // BGFX_CONFIG_PREFER_DISCRETE_GPU
 
 #endif // BGFX_CONFIG_H_HEADER_GUARD

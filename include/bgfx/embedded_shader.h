@@ -1,12 +1,12 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_EMBEDDED_SHADER_H_HEADER_GUARD
 #define BGFX_EMBEDDED_SHADER_H_HEADER_GUARD
 
-#include <bx/macros.h>
+#include <bx/bx.h>
 #include "bgfx.h"
 
 #define BGFX_EMBEDDED_SHADER_DXBC(...)
@@ -36,7 +36,6 @@
 		|| BX_PLATFORM_LINUX            \
 		|| BX_PLATFORM_OSX              \
 		|| BX_PLATFORM_RPI              \
-		|| BX_PLATFORM_STEAMLINK        \
 		|| BX_PLATFORM_WINDOWS          \
 		)
 #define BGFX_PLATFORM_SUPPORTS_GLSL (0  \
@@ -54,6 +53,7 @@
 		)
 #define BGFX_PLATFORM_SUPPORTS_SPIRV (0 \
 		|| BX_PLATFORM_ANDROID          \
+		|| BX_PLATFORM_EMSCRIPTEN       \
 		|| BX_PLATFORM_LINUX            \
 		|| BX_PLATFORM_WINDOWS          \
 		|| BX_PLATFORM_OSX              \
@@ -114,6 +114,7 @@
 					BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)              \
 					BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)              \
 					BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)              \
+					BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::WebGPU,     _name)              \
 					{ bgfx::RendererType::Noop,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 }, \
 					{ bgfx::RendererType::Count, NULL, 0 }                                         \
 				}                                                                                  \

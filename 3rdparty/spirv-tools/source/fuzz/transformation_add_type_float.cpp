@@ -30,29 +30,24 @@ TransformationAddTypeFloat::TransformationAddTypeFloat(
     : message_(message) {}
 
 bool TransformationAddTypeFloat::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
+    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // The id must be fresh.
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
 
   // Applicable if there is no float type with this width already declared in
   // the module.
-  opt::analysis::Float float_type(message_.width());
-  return context->get_type_mgr()->GetId(&float_type) == 0;
+  return fuzzerutil::MaybeGetFloatType(ir_context, message_.width()) == 0;
 }
 
 void TransformationAddTypeFloat::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* /*unused*/) const {
-  opt::Instruction::OperandList width = {
-      {SPV_OPERAND_TYPE_LITERAL_INTEGER, {message_.width()}}};
-  context->module()->AddType(MakeUnique<opt::Instruction>(
-      context, SpvOpTypeFloat, 0, message_.fresh_id(), width));
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
+  fuzzerutil::AddFloatType(ir_context, message_.fresh_id(), message_.width());
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 }
 
 protobufs::Transformation TransformationAddTypeFloat::ToMessage() const {

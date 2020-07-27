@@ -14,26 +14,43 @@
 
 #include "source/fuzz/fuzzer_pass.h"
 
+#include <set>
+
+#include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/instruction_descriptor.h"
+#include "source/fuzz/transformation_add_constant_boolean.h"
+#include "source/fuzz/transformation_add_constant_composite.h"
+#include "source/fuzz/transformation_add_constant_null.h"
+#include "source/fuzz/transformation_add_constant_scalar.h"
+#include "source/fuzz/transformation_add_global_undef.h"
+#include "source/fuzz/transformation_add_type_boolean.h"
+#include "source/fuzz/transformation_add_type_float.h"
+#include "source/fuzz/transformation_add_type_function.h"
+#include "source/fuzz/transformation_add_type_int.h"
+#include "source/fuzz/transformation_add_type_matrix.h"
+#include "source/fuzz/transformation_add_type_pointer.h"
+#include "source/fuzz/transformation_add_type_struct.h"
+#include "source/fuzz/transformation_add_type_vector.h"
 
 namespace spvtools {
 namespace fuzz {
 
-FuzzerPass::FuzzerPass(opt::IRContext* ir_context, FactManager* fact_manager,
+FuzzerPass::FuzzerPass(opt::IRContext* ir_context,
+                       TransformationContext* transformation_context,
                        FuzzerContext* fuzzer_context,
                        protobufs::TransformationSequence* transformations)
     : ir_context_(ir_context),
-      fact_manager_(fact_manager),
+      transformation_context_(transformation_context),
       fuzzer_context_(fuzzer_context),
       transformations_(transformations) {}
 
 FuzzerPass::~FuzzerPass() = default;
 
 std::vector<opt::Instruction*> FuzzerPass::FindAvailableInstructions(
-    const opt::Function& function, opt::BasicBlock* block,
-    opt::BasicBlock::iterator inst_it,
+    opt::Function* function, opt::BasicBlock* block,
+    const opt::BasicBlock::iterator& inst_it,
     std::function<bool(opt::IRContext*, opt::Instruction*)>
-        instruction_is_relevant) {
+        instruction_is_relevant) const {
   // TODO(afd) The following is (relatively) simple, but may end up being
   //  prohibitively inefficient, as it walks the whole dominator tree for
   //  every instruction that is considered.
@@ -46,6 +63,14 @@ std::vector<opt::Instruction*> FuzzerPass::FindAvailableInstructions(
     }
   }
 
+  // Consider all function parameters
+  function->ForEachParam(
+      [this, &instruction_is_relevant, &result](opt::Instruction* param) {
+        if (instruction_is_relevant(GetIRContext(), param)) {
+          result.push_back(param);
+        }
+      });
+
   // Consider all previous instructions in this block
   for (auto prev_inst_it = block->begin(); prev_inst_it != inst_it;
        ++prev_inst_it) {
@@ -56,7 +81,7 @@ std::vector<opt::Instruction*> FuzzerPass::FindAvailableInstructions(
 
   // Walk the dominator tree to consider all instructions from dominating
   // blocks
-  auto dominator_analysis = GetIRContext()->GetDominatorAnalysis(&function);
+  auto dominator_analysis = GetIRContext()->GetDominatorAnalysis(function);
   for (auto next_dominator = dominator_analysis->ImmediateDominator(block);
        next_dominator != nullptr;
        next_dominator =
@@ -70,12 +95,12 @@ std::vector<opt::Instruction*> FuzzerPass::FindAvailableInstructions(
   return result;
 }
 
-void FuzzerPass::MaybeAddTransformationBeforeEachInstruction(
+void FuzzerPass::ForEachInstructionWithInstructionDescriptor(
     std::function<
-        void(const opt::Function& function, opt::BasicBlock* block,
+        void(opt::Function* function, opt::BasicBlock* block,
              opt::BasicBlock::iterator inst_it,
              const protobufs::InstructionDescriptor& instruction_descriptor)>
-        maybe_apply_transformation) {
+        action) {
   // Consider every block in every function.
   for (auto& function : *GetIRContext()->module()) {
     for (auto& block : function) {
@@ -113,11 +138,10 @@ void FuzzerPass::MaybeAddTransformationBeforeEachInstruction(
         const SpvOp opcode = inst_it->opcode();
 
         // Invoke the provided function, which might apply a transformation.
-        maybe_apply_transformation(
-            function, &block, inst_it,
-            MakeInstructionDescriptor(
-                base, opcode,
-                skip_count.count(opcode) ? skip_count.at(opcode) : 0));
+        action(&function, &block, inst_it,
+               MakeInstructionDescriptor(
+                   base, opcode,
+                   skip_count.count(opcode) ? skip_count.at(opcode) : 0));
 
         if (!inst_it->HasResultId()) {
           skip_count[opcode] =
@@ -125,6 +149,368 @@ void FuzzerPass::MaybeAddTransformationBeforeEachInstruction(
         }
       }
     }
+  }
+}
+
+uint32_t FuzzerPass::FindOrCreateBoolType() {
+  if (auto existing_id = fuzzerutil::MaybeGetBoolType(GetIRContext())) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddTypeBoolean(result));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateIntegerType(uint32_t width, bool is_signed) {
+  opt::analysis::Integer int_type(width, is_signed);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&int_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddTypeInt(result, width, is_signed));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateFloatType(uint32_t width) {
+  opt::analysis::Float float_type(width);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&float_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddTypeFloat(result, width));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateFunctionType(
+    uint32_t return_type_id, const std::vector<uint32_t>& argument_id) {
+  // FindFunctionType has a sigle argument for OpTypeFunction operands
+  // so we will have to copy them all in this vector
+  std::vector<uint32_t> type_ids(argument_id.size() + 1);
+  type_ids[0] = return_type_id;
+  std::copy(argument_id.begin(), argument_id.end(), type_ids.begin() + 1);
+
+  // Check if type exists
+  auto existing_id = fuzzerutil::FindFunctionType(GetIRContext(), type_ids);
+  if (existing_id) {
+    return existing_id;
+  }
+
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(
+      TransformationAddTypeFunction(result, return_type_id, argument_id));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateVectorType(uint32_t component_type_id,
+                                            uint32_t component_count) {
+  assert(component_count >= 2 && component_count <= 4 &&
+         "Precondition: component count must be in range [2, 4].");
+  opt::analysis::Type* component_type =
+      GetIRContext()->get_type_mgr()->GetType(component_type_id);
+  assert(component_type && "Precondition: the component type must exist.");
+  opt::analysis::Vector vector_type(component_type, component_count);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&vector_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(
+      TransformationAddTypeVector(result, component_type_id, component_count));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateMatrixType(uint32_t column_count,
+                                            uint32_t row_count) {
+  assert(column_count >= 2 && column_count <= 4 &&
+         "Precondition: column count must be in range [2, 4].");
+  assert(row_count >= 2 && row_count <= 4 &&
+         "Precondition: row count must be in range [2, 4].");
+  uint32_t column_type_id =
+      FindOrCreateVectorType(FindOrCreateFloatType(32), row_count);
+  opt::analysis::Type* column_type =
+      GetIRContext()->get_type_mgr()->GetType(column_type_id);
+  opt::analysis::Matrix matrix_type(column_type, column_count);
+  auto existing_id = GetIRContext()->get_type_mgr()->GetId(&matrix_type);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(
+      TransformationAddTypeMatrix(result, column_type_id, column_count));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateStructType(
+    const std::vector<uint32_t>& component_type_ids) {
+  if (auto existing_id =
+          fuzzerutil::MaybeGetStructType(GetIRContext(), component_type_ids)) {
+    return existing_id;
+  }
+  auto new_id = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddTypeStruct(new_id, component_type_ids));
+  return new_id;
+}
+
+uint32_t FuzzerPass::FindOrCreatePointerType(uint32_t base_type_id,
+                                             SpvStorageClass storage_class) {
+  // We do not use the type manager here, due to problems related to isomorphic
+  // but distinct structs not being regarded as different.
+  auto existing_id = fuzzerutil::MaybeGetPointerType(
+      GetIRContext(), base_type_id, storage_class);
+  if (existing_id) {
+    return existing_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(
+      TransformationAddTypePointer(result, storage_class, base_type_id));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreatePointerToIntegerType(
+    uint32_t width, bool is_signed, SpvStorageClass storage_class) {
+  return FindOrCreatePointerType(FindOrCreateIntegerType(width, is_signed),
+                                 storage_class);
+}
+
+uint32_t FuzzerPass::FindOrCreateIntegerConstant(
+    const std::vector<uint32_t>& words, uint32_t width, bool is_signed,
+    bool is_irrelevant) {
+  auto int_type_id = FindOrCreateIntegerType(width, is_signed);
+  if (auto constant_id = fuzzerutil::MaybeGetScalarConstant(
+          GetIRContext(), *GetTransformationContext(), words, int_type_id,
+          is_irrelevant)) {
+    return constant_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddConstantScalar(result, int_type_id,
+                                                      words, is_irrelevant));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateFloatConstant(
+    const std::vector<uint32_t>& words, uint32_t width, bool is_irrelevant) {
+  auto float_type_id = FindOrCreateFloatType(width);
+  opt::analysis::FloatConstant float_constant(
+      GetIRContext()->get_type_mgr()->GetType(float_type_id)->AsFloat(), words);
+  if (auto constant_id = fuzzerutil::MaybeGetScalarConstant(
+          GetIRContext(), *GetTransformationContext(), words, float_type_id,
+          is_irrelevant)) {
+    return constant_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddConstantScalar(result, float_type_id,
+                                                      words, is_irrelevant));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateBoolConstant(bool value, bool is_irrelevant) {
+  auto bool_type_id = FindOrCreateBoolType();
+  if (auto constant_id = fuzzerutil::MaybeGetScalarConstant(
+          GetIRContext(), *GetTransformationContext(), {value ? 1u : 0u},
+          bool_type_id, is_irrelevant)) {
+    return constant_id;
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(
+      TransformationAddConstantBoolean(result, value, is_irrelevant));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateConstant(const std::vector<uint32_t>& words,
+                                          uint32_t type_id,
+                                          bool is_irrelevant) {
+  assert(type_id && "Constant's type id can't be 0.");
+
+  const auto* type = GetIRContext()->get_type_mgr()->GetType(type_id);
+  assert(type && "Type does not exist.");
+
+  if (type->AsBool()) {
+    assert(words.size() == 1);
+    return FindOrCreateBoolConstant(words[0], is_irrelevant);
+  } else if (const auto* integer = type->AsInteger()) {
+    return FindOrCreateIntegerConstant(words, integer->width(),
+                                       integer->IsSigned(), is_irrelevant);
+  } else if (const auto* floating = type->AsFloat()) {
+    return FindOrCreateFloatConstant(words, floating->width(), is_irrelevant);
+  }
+
+  // This assertion will fail in debug build but not in release build
+  // so we return 0 to make compiler happy.
+  assert(false && "Constant type is not supported");
+  return 0;
+}
+
+uint32_t FuzzerPass::FindOrCreateCompositeConstant(
+    const std::vector<uint32_t>& component_ids, uint32_t type_id,
+    bool is_irrelevant) {
+  if (auto existing_constant = fuzzerutil::MaybeGetCompositeConstant(
+          GetIRContext(), *GetTransformationContext(), component_ids, type_id,
+          is_irrelevant)) {
+    return existing_constant;
+  }
+  uint32_t result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddConstantComposite(
+      result, type_id, component_ids, is_irrelevant));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateGlobalUndef(uint32_t type_id) {
+  for (auto& inst : GetIRContext()->types_values()) {
+    if (inst.opcode() == SpvOpUndef && inst.type_id() == type_id) {
+      return inst.result_id();
+    }
+  }
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddGlobalUndef(result, type_id));
+  return result;
+}
+
+uint32_t FuzzerPass::FindOrCreateNullConstant(uint32_t type_id) {
+  // Find existing declaration
+  opt::analysis::NullConstant null_constant(
+      GetIRContext()->get_type_mgr()->GetType(type_id));
+  auto existing_constant =
+      GetIRContext()->get_constant_mgr()->FindConstant(&null_constant);
+
+  // Return if found
+  if (existing_constant) {
+    return GetIRContext()
+        ->get_constant_mgr()
+        ->GetDefiningInstruction(existing_constant)
+        ->result_id();
+  }
+
+  // Create new if not found
+  auto result = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddConstantNull(result, type_id));
+  return result;
+}
+
+std::pair<std::vector<uint32_t>, std::map<uint32_t, std::vector<uint32_t>>>
+FuzzerPass::GetAvailableBasicTypesAndPointers(
+    SpvStorageClass storage_class) const {
+  // Records all of the basic types available in the module.
+  std::set<uint32_t> basic_types;
+
+  // For each basic type, records all the associated pointer types that target
+  // the basic type and that have |storage_class| as their storage class.
+  std::map<uint32_t, std::vector<uint32_t>> basic_type_to_pointers;
+
+  for (auto& inst : GetIRContext()->types_values()) {
+    // For each basic type that we come across, record type, and the fact that
+    // we cannot yet have seen any pointers that use the basic type as its
+    // pointee type.
+    //
+    // For pointer types with basic pointee types, associate the pointer type
+    // with the basic type.
+    switch (inst.opcode()) {
+      case SpvOpTypeBool:
+      case SpvOpTypeFloat:
+      case SpvOpTypeInt:
+      case SpvOpTypeMatrix:
+      case SpvOpTypeVector:
+        // These are all basic types.
+        basic_types.insert(inst.result_id());
+        basic_type_to_pointers.insert({inst.result_id(), {}});
+        break;
+      case SpvOpTypeArray:
+        // An array type is basic if its base type is basic.
+        if (basic_types.count(inst.GetSingleWordInOperand(0))) {
+          basic_types.insert(inst.result_id());
+          basic_type_to_pointers.insert({inst.result_id(), {}});
+        }
+        break;
+      case SpvOpTypeStruct: {
+        // A struct type is basic if all of its members are basic.
+        bool all_members_are_basic_types = true;
+        for (uint32_t i = 0; i < inst.NumInOperands(); i++) {
+          if (!basic_types.count(inst.GetSingleWordInOperand(i))) {
+            all_members_are_basic_types = false;
+            break;
+          }
+        }
+        if (all_members_are_basic_types) {
+          basic_types.insert(inst.result_id());
+          basic_type_to_pointers.insert({inst.result_id(), {}});
+        }
+        break;
+      }
+      case SpvOpTypePointer: {
+        // We are interested in the pointer if its pointee type is basic and it
+        // has the right storage class.
+        auto pointee_type = inst.GetSingleWordInOperand(1);
+        if (inst.GetSingleWordInOperand(0) == storage_class &&
+            basic_types.count(pointee_type)) {
+          // The pointer has the desired storage class, and its pointee type is
+          // a basic type, so we are interested in it.  Associate it with its
+          // basic type.
+          basic_type_to_pointers.at(pointee_type).push_back(inst.result_id());
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return {{basic_types.begin(), basic_types.end()}, basic_type_to_pointers};
+}
+
+uint32_t FuzzerPass::FindOrCreateZeroConstant(
+    uint32_t scalar_or_composite_type_id, bool is_irrelevant) {
+  auto type_instruction =
+      GetIRContext()->get_def_use_mgr()->GetDef(scalar_or_composite_type_id);
+  assert(type_instruction && "The type instruction must exist.");
+  switch (type_instruction->opcode()) {
+    case SpvOpTypeBool:
+      return FindOrCreateBoolConstant(false, is_irrelevant);
+    case SpvOpTypeFloat: {
+      auto width = type_instruction->GetSingleWordInOperand(0);
+      auto num_words = (width + 32 - 1) / 32;
+      return FindOrCreateFloatConstant(std::vector<uint32_t>(num_words, 0),
+                                       width, is_irrelevant);
+    }
+    case SpvOpTypeInt: {
+      auto width = type_instruction->GetSingleWordInOperand(0);
+      auto num_words = (width + 32 - 1) / 32;
+      return FindOrCreateIntegerConstant(
+          std::vector<uint32_t>(num_words, 0), width,
+          type_instruction->GetSingleWordInOperand(1), is_irrelevant);
+    }
+    case SpvOpTypeArray: {
+      auto component_type_id = type_instruction->GetSingleWordInOperand(0);
+      auto num_components =
+          fuzzerutil::GetArraySize(*type_instruction, GetIRContext());
+      return FindOrCreateCompositeConstant(
+          std::vector<uint32_t>(
+              num_components,
+              FindOrCreateZeroConstant(component_type_id, is_irrelevant)),
+          scalar_or_composite_type_id, is_irrelevant);
+    }
+    case SpvOpTypeMatrix:
+    case SpvOpTypeVector: {
+      auto component_type_id = type_instruction->GetSingleWordInOperand(0);
+      auto num_components = type_instruction->GetSingleWordInOperand(1);
+      return FindOrCreateCompositeConstant(
+          std::vector<uint32_t>(
+              num_components,
+              FindOrCreateZeroConstant(component_type_id, is_irrelevant)),
+          scalar_or_composite_type_id, is_irrelevant);
+    }
+    case SpvOpTypeStruct: {
+      std::vector<uint32_t> field_zero_ids;
+      for (uint32_t index = 0; index < type_instruction->NumInOperands();
+           index++) {
+        field_zero_ids.push_back(FindOrCreateZeroConstant(
+            type_instruction->GetSingleWordInOperand(index), is_irrelevant));
+      }
+      return FindOrCreateCompositeConstant(
+          field_zero_ids, scalar_or_composite_type_id, is_irrelevant);
+    }
+    default:
+      assert(false && "Unknown type.");
+      return 0;
   }
 }
 

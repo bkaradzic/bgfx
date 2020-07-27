@@ -42,7 +42,7 @@ bool ConvertToHalfPass::IsFloat(Instruction* inst, uint32_t width) {
   return Pass::IsFloat(ty_id, width);
 }
 
-bool ConvertToHalfPass::IsRelaxed(Instruction* inst) {
+bool ConvertToHalfPass::IsDecoratedRelaxed(Instruction* inst) {
   uint32_t r_id = inst->result_id();
   for (auto r_inst : get_decoration_mgr()->GetDecorationsFor(r_id, false))
     if (r_inst->opcode() == SpvOpDecorate &&
@@ -50,6 +50,12 @@ bool ConvertToHalfPass::IsRelaxed(Instruction* inst) {
       return true;
   return false;
 }
+
+bool ConvertToHalfPass::IsRelaxed(uint32_t id) {
+  return relaxed_ids_set_.count(id) > 0;
+}
+
+void ConvertToHalfPass::AddRelaxed(uint32_t id) { relaxed_ids_set_.insert(id); }
 
 analysis::Type* ConvertToHalfPass::FloatScalarType(uint32_t width) {
   analysis::Float float_ty(width);
@@ -87,16 +93,19 @@ uint32_t ConvertToHalfPass::EquivFloatTypeId(uint32_t ty_id, uint32_t width) {
 }
 
 void ConvertToHalfPass::GenConvert(uint32_t* val_idp, uint32_t width,
-                                   InstructionBuilder* builder) {
+                                   Instruction* inst) {
   Instruction* val_inst = get_def_use_mgr()->GetDef(*val_idp);
   uint32_t ty_id = val_inst->type_id();
   uint32_t nty_id = EquivFloatTypeId(ty_id, width);
   if (nty_id == ty_id) return;
   Instruction* cvt_inst;
+  InstructionBuilder builder(
+      context(), inst,
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
   if (val_inst->opcode() == SpvOpUndef)
-    cvt_inst = builder->AddNullaryOp(nty_id, SpvOpUndef);
+    cvt_inst = builder.AddNullaryOp(nty_id, SpvOpUndef);
   else
-    cvt_inst = builder->AddUnaryOp(nty_id, SpvOpFConvert, *val_idp);
+    cvt_inst = builder.AddUnaryOp(nty_id, SpvOpFConvert, *val_idp);
   *val_idp = cvt_inst->result_id();
 }
 
@@ -153,17 +162,15 @@ bool ConvertToHalfPass::GenHalfArith(Instruction* inst) {
   bool modified = false;
   // Convert all float32 based operands to float16 equivalent and change
   // instruction type to float16 equivalent.
-  InstructionBuilder builder(
-      context(), inst,
-      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
-  inst->ForEachInId([&builder, &modified, this](uint32_t* idp) {
+  inst->ForEachInId([&inst, &modified, this](uint32_t* idp) {
     Instruction* op_inst = get_def_use_mgr()->GetDef(*idp);
     if (!IsFloat(op_inst, 32)) return;
-    GenConvert(idp, 16, &builder);
+    GenConvert(idp, 16, inst);
     modified = true;
   });
   if (IsFloat(inst, 32)) {
     inst->SetResultType(EquivFloatTypeId(inst->type_id(), 16));
+    converted_ids_.insert(inst->result_id());
     modified = true;
   }
   if (modified) get_def_use_mgr()->AnalyzeInstUse(inst);
@@ -171,23 +178,10 @@ bool ConvertToHalfPass::GenHalfArith(Instruction* inst) {
 }
 
 bool ConvertToHalfPass::ProcessPhi(Instruction* inst) {
-  // Skip if not float32
-  if (!IsFloat(inst, 32)) return false;
-  // Skip if no relaxed operands.
-  bool relaxed_found = false;
-  uint32_t ocnt = 0;
-  inst->ForEachInId([&ocnt, &relaxed_found, this](uint32_t* idp) {
-    if (ocnt % 2 == 0) {
-      Instruction* val_inst = get_def_use_mgr()->GetDef(*idp);
-      if (IsRelaxed(val_inst)) relaxed_found = true;
-    }
-    ++ocnt;
-  });
-  if (!relaxed_found) return false;
   // Add float16 converts of any float32 operands and change type
   // of phi to float16 equivalent. Operand converts need to be added to
   // preceeding blocks.
-  ocnt = 0;
+  uint32_t ocnt = 0;
   uint32_t* prev_idp;
   inst->ForEachInId([&ocnt, &prev_idp, this](uint32_t* idp) {
     if (ocnt % 2 == 0) {
@@ -203,65 +197,32 @@ bool ConvertToHalfPass::ProcessPhi(Instruction* inst) {
               insert_before->opcode() != SpvOpLoopMerge)
             ++insert_before;
         }
-        InstructionBuilder builder(context(), &*insert_before,
-                                   IRContext::kAnalysisDefUse |
-                                       IRContext::kAnalysisInstrToBlockMapping);
-        GenConvert(prev_idp, 16, &builder);
+        GenConvert(prev_idp, 16, &*insert_before);
       }
     }
     ++ocnt;
   });
   inst->SetResultType(EquivFloatTypeId(inst->type_id(), 16));
   get_def_use_mgr()->AnalyzeInstUse(inst);
+  converted_ids_.insert(inst->result_id());
   return true;
-}
-
-bool ConvertToHalfPass::ProcessExtract(Instruction* inst) {
-  bool modified = false;
-  uint32_t comp_id = inst->GetSingleWordInOperand(0);
-  Instruction* comp_inst = get_def_use_mgr()->GetDef(comp_id);
-  // If extract is relaxed float32 based type and the composite is a relaxed
-  // float32 based type, convert it to float16 equivalent. This is slightly
-  // aggressive and pushes any likely conversion to apply to the whole
-  // composite rather than apply to each extracted component later. This
-  // can be a win if the platform can convert the entire composite in the same
-  // time as one component. It risks converting components that may not be
-  // used, although empirical data on a large set of real-world shaders seems
-  // to suggest this is not common and the composite convert is the best choice.
-  if (IsFloat(inst, 32) && IsRelaxed(inst) && IsFloat(comp_inst, 32) &&
-      IsRelaxed(comp_inst)) {
-    InstructionBuilder builder(
-        context(), inst,
-        IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
-    GenConvert(&comp_id, 16, &builder);
-    inst->SetInOperand(0, {comp_id});
-    comp_inst = get_def_use_mgr()->GetDef(comp_id);
-    modified = true;
-  }
-  // If the composite is a float16 based type, make sure the type of the
-  // extract agrees.
-  if (IsFloat(comp_inst, 16) && !IsFloat(inst, 16)) {
-    inst->SetResultType(EquivFloatTypeId(inst->type_id(), 16));
-    modified = true;
-  }
-  if (modified) get_def_use_mgr()->AnalyzeInstUse(inst);
-  return modified;
 }
 
 bool ConvertToHalfPass::ProcessConvert(Instruction* inst) {
   // If float32 and relaxed, change to float16 convert
-  if (IsFloat(inst, 32) && IsRelaxed(inst)) {
+  if (IsFloat(inst, 32) && IsRelaxed(inst->result_id())) {
     inst->SetResultType(EquivFloatTypeId(inst->type_id(), 16));
     get_def_use_mgr()->AnalyzeInstUse(inst);
+    converted_ids_.insert(inst->result_id());
   }
-  // If operand and result types are the same, replace result with operand
-  // and change convert to copy to keep validator happy; DCE will clean it up
+  // If operand and result types are the same, change FConvert to CopyObject to
+  // keep validator happy; simplification and DCE will clean it up
+  // One way this can happen is if an FConvert generated during this pass
+  // (likely by ProcessPhi) is later encountered here and its operand has been
+  // changed to half.
   uint32_t val_id = inst->GetSingleWordInOperand(0);
   Instruction* val_inst = get_def_use_mgr()->GetDef(val_id);
-  if (inst->type_id() == val_inst->type_id()) {
-    context()->ReplaceAllUsesWith(inst->result_id(), val_id);
-    inst->SetOpcode(SpvOpCopyObject);
-  }
+  if (inst->type_id() == val_inst->type_id()) inst->SetOpcode(SpvOpCopyObject);
   return true;  // modified
 }
 
@@ -270,12 +231,8 @@ bool ConvertToHalfPass::ProcessImageRef(Instruction* inst) {
   // If image reference, only need to convert dref args back to float32
   if (dref_image_ops_.count(inst->opcode()) != 0) {
     uint32_t dref_id = inst->GetSingleWordInOperand(kImageSampleDrefIdInIdx);
-    Instruction* dref_inst = get_def_use_mgr()->GetDef(dref_id);
-    if (IsFloat(dref_inst, 16) && IsRelaxed(dref_inst)) {
-      InstructionBuilder builder(
-          context(), inst,
-          IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
-      GenConvert(&dref_id, 32, &builder);
+    if (converted_ids_.count(dref_id) > 0) {
+      GenConvert(&dref_id, 32, inst);
       inst->SetInOperand(kImageSampleDrefIdInIdx, {dref_id});
       get_def_use_mgr()->AnalyzeInstUse(inst);
       modified = true;
@@ -288,32 +245,24 @@ bool ConvertToHalfPass::ProcessDefault(Instruction* inst) {
   bool modified = false;
   // If non-relaxed instruction has changed operands, need to convert
   // them back to float32
-  InstructionBuilder builder(
-      context(), inst,
-      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
-  inst->ForEachInId([&builder, &modified, this](uint32_t* idp) {
-    Instruction* op_inst = get_def_use_mgr()->GetDef(*idp);
-    if (!IsFloat(op_inst, 16)) return;
-    if (!IsRelaxed(op_inst)) return;
+  inst->ForEachInId([&inst, &modified, this](uint32_t* idp) {
+    if (converted_ids_.count(*idp) == 0) return;
     uint32_t old_id = *idp;
-    GenConvert(idp, 32, &builder);
+    GenConvert(idp, 32, inst);
     if (*idp != old_id) modified = true;
   });
   if (modified) get_def_use_mgr()->AnalyzeInstUse(inst);
   return modified;
 }
 
-bool ConvertToHalfPass::GenHalfCode(Instruction* inst) {
+bool ConvertToHalfPass::GenHalfInst(Instruction* inst) {
   bool modified = false;
   // Remember id for later deletion of RelaxedPrecision decoration
-  bool inst_relaxed = IsRelaxed(inst);
-  if (inst_relaxed) relaxed_ids_.push_back(inst->result_id());
+  bool inst_relaxed = IsRelaxed(inst->result_id());
   if (IsArithmetic(inst) && inst_relaxed)
     modified = GenHalfArith(inst);
-  else if (inst->opcode() == SpvOpPhi)
+  else if (inst->opcode() == SpvOpPhi && inst_relaxed)
     modified = ProcessPhi(inst);
-  else if (inst->opcode() == SpvOpCompositeExtract)
-    modified = ProcessExtract(inst);
   else if (inst->opcode() == SpvOpFConvert)
     modified = ProcessConvert(inst);
   else if (image_ops_.count(inst->opcode()) != 0)
@@ -323,13 +272,62 @@ bool ConvertToHalfPass::GenHalfCode(Instruction* inst) {
   return modified;
 }
 
+bool ConvertToHalfPass::CloseRelaxInst(Instruction* inst) {
+  if (inst->result_id() == 0) return false;
+  if (IsRelaxed(inst->result_id())) return false;
+  if (!IsFloat(inst, 32)) return false;
+  if (IsDecoratedRelaxed(inst)) {
+    AddRelaxed(inst->result_id());
+    return true;
+  }
+  if (closure_ops_.count(inst->opcode()) == 0) return false;
+  // Can relax if all float operands are relaxed
+  bool relax = true;
+  inst->ForEachInId([&relax, this](uint32_t* idp) {
+    Instruction* op_inst = get_def_use_mgr()->GetDef(*idp);
+    if (!IsFloat(op_inst, 32)) return;
+    if (!IsRelaxed(*idp)) relax = false;
+  });
+  if (relax) {
+    AddRelaxed(inst->result_id());
+    return true;
+  }
+  // Can relax if all uses are relaxed
+  relax = true;
+  get_def_use_mgr()->ForEachUser(inst, [&relax, this](Instruction* uinst) {
+    if (uinst->result_id() == 0 || !IsFloat(uinst, 32) ||
+        (!IsDecoratedRelaxed(uinst) && !IsRelaxed(uinst->result_id()))) {
+      relax = false;
+      return;
+    }
+  });
+  if (relax) {
+    AddRelaxed(inst->result_id());
+    return true;
+  }
+  return false;
+}
+
 bool ConvertToHalfPass::ProcessFunction(Function* func) {
+  // Do a closure of Relaxed on composite and phi instructions
+  bool changed = true;
+  while (changed) {
+    changed = false;
+    cfg()->ForEachBlockInReversePostOrder(
+        func->entry().get(), [&changed, this](BasicBlock* bb) {
+          for (auto ii = bb->begin(); ii != bb->end(); ++ii)
+            changed |= CloseRelaxInst(&*ii);
+        });
+  }
+  // Do convert of relaxed instructions to half precision
   bool modified = false;
   cfg()->ForEachBlockInReversePostOrder(
       func->entry().get(), [&modified, this](BasicBlock* bb) {
         for (auto ii = bb->begin(); ii != bb->end(); ++ii)
-          modified |= GenHalfCode(&*ii);
+          modified |= GenHalfInst(&*ii);
       });
+  // Replace invalid converts of matrix into equivalent vector extracts,
+  // converts and finally a composite construct
   cfg()->ForEachBlockInReversePostOrder(
       func->entry().get(), [&modified, this](BasicBlock* bb) {
         for (auto ii = bb->begin(); ii != bb->end(); ++ii)
@@ -346,7 +344,7 @@ Pass::Status ConvertToHalfPass::ProcessImpl() {
   // If modified, make sure module has Float16 capability
   if (modified) context()->AddCapability(SpvCapabilityFloat16);
   // Remove all RelaxedPrecision decorations from instructions and globals
-  for (auto c_id : relaxed_ids_) RemoveRelaxedDecoration(c_id);
+  for (auto c_id : relaxed_ids_set_) RemoveRelaxedDecoration(c_id);
   for (auto& val : get_module()->types_values()) {
     uint32_t v_id = val.result_id();
     if (v_id != 0) RemoveRelaxedDecoration(v_id);
@@ -366,6 +364,7 @@ void ConvertToHalfPass::Initialize() {
       SpvOpVectorShuffle,
       SpvOpCompositeConstruct,
       SpvOpCompositeInsert,
+      SpvOpCompositeExtract,
       SpvOpCopyObject,
       SpvOpTranspose,
       SpvOpConvertSToF,
@@ -453,7 +452,19 @@ void ConvertToHalfPass::Initialize() {
       SpvOpImageSparseSampleProjDrefExplicitLod,
       SpvOpImageSparseDrefGather,
   };
-  relaxed_ids_.clear();
+  closure_ops_ = {
+      SpvOpVectorExtractDynamic,
+      SpvOpVectorInsertDynamic,
+      SpvOpVectorShuffle,
+      SpvOpCompositeConstruct,
+      SpvOpCompositeInsert,
+      SpvOpCompositeExtract,
+      SpvOpCopyObject,
+      SpvOpTranspose,
+      SpvOpPhi,
+  };
+  relaxed_ids_set_.clear();
+  converted_ids_.clear();
 }
 
 }  // namespace opt

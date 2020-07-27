@@ -40,24 +40,32 @@ TransformationCompositeExtract::TransformationCompositeExtract(
 }
 
 bool TransformationCompositeExtract::IsApplicable(
-    opt::IRContext* context,
-    const spvtools::fuzz::FactManager& /*unused*/) const {
-  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
+  if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
   }
   auto instruction_to_insert_before =
-      FindInstruction(message_.instruction_to_insert_before(), context);
+      FindInstruction(message_.instruction_to_insert_before(), ir_context);
   if (!instruction_to_insert_before) {
     return false;
   }
   auto composite_instruction =
-      context->get_def_use_mgr()->GetDef(message_.composite_id());
+      ir_context->get_def_use_mgr()->GetDef(message_.composite_id());
   if (!composite_instruction) {
     return false;
   }
-  if (auto block = context->get_instr_block(composite_instruction)) {
+  if (!transformation_context.GetFactManager()->IdIsIrrelevant(
+          message_.composite_id()) &&
+      !fuzzerutil::CanMakeSynonymOf(ir_context, transformation_context,
+                                    composite_instruction)) {
+    // |composite_id| will participate in DataSynonym facts. Thus, it can't be
+    // an irrelevant id.
+    return false;
+  }
+  if (auto block = ir_context->get_instr_block(composite_instruction)) {
     if (composite_instruction == instruction_to_insert_before ||
-        !context->GetDominatorAnalysis(block->GetParent())
+        !ir_context->GetDominatorAnalysis(block->GetParent())
              ->Dominates(composite_instruction, instruction_to_insert_before)) {
       return false;
     }
@@ -66,7 +74,7 @@ bool TransformationCompositeExtract::IsApplicable(
          "An instruction in a block cannot have a result id but no type id.");
 
   auto composite_type =
-      context->get_type_mgr()->GetType(composite_instruction->type_id());
+      ir_context->get_type_mgr()->GetType(composite_instruction->type_id());
   if (!composite_type) {
     return false;
   }
@@ -76,43 +84,50 @@ bool TransformationCompositeExtract::IsApplicable(
     return false;
   }
 
-  return fuzzerutil::WalkCompositeTypeIndices(
-             context, composite_instruction->type_id(), message_.index()) != 0;
+  return fuzzerutil::WalkCompositeTypeIndices(ir_context,
+                                              composite_instruction->type_id(),
+                                              message_.index()) != 0;
 }
 
 void TransformationCompositeExtract::Apply(
-    opt::IRContext* context, spvtools::fuzz::FactManager* fact_manager) const {
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
   opt::Instruction::OperandList extract_operands;
   extract_operands.push_back({SPV_OPERAND_TYPE_ID, {message_.composite_id()}});
   for (auto an_index : message_.index()) {
     extract_operands.push_back({SPV_OPERAND_TYPE_LITERAL_INTEGER, {an_index}});
   }
   auto composite_instruction =
-      context->get_def_use_mgr()->GetDef(message_.composite_id());
+      ir_context->get_def_use_mgr()->GetDef(message_.composite_id());
   auto extracted_type = fuzzerutil::WalkCompositeTypeIndices(
-      context, composite_instruction->type_id(), message_.index());
+      ir_context, composite_instruction->type_id(), message_.index());
 
-  FindInstruction(message_.instruction_to_insert_before(), context)
+  FindInstruction(message_.instruction_to_insert_before(), ir_context)
       ->InsertBefore(MakeUnique<opt::Instruction>(
-          context, SpvOpCompositeExtract, extracted_type, message_.fresh_id(),
-          extract_operands));
+          ir_context, SpvOpCompositeExtract, extracted_type,
+          message_.fresh_id(), extract_operands));
 
-  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
+  fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
 
-  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
+  ir_context->InvalidateAnalysesExceptFor(
+      opt::IRContext::Analysis::kAnalysisNone);
 
   // Add the fact that the id storing the extracted element is synonymous with
   // the index into the structure.
-  std::vector<uint32_t> indices;
-  for (auto an_index : message_.index()) {
-    indices.push_back(an_index);
+  if (!transformation_context->GetFactManager()->IdIsIrrelevant(
+          message_.composite_id())) {
+    std::vector<uint32_t> indices;
+    for (auto an_index : message_.index()) {
+      indices.push_back(an_index);
+    }
+    protobufs::DataDescriptor data_descriptor_for_extracted_element =
+        MakeDataDescriptor(message_.composite_id(), std::move(indices));
+    protobufs::DataDescriptor data_descriptor_for_result_id =
+        MakeDataDescriptor(message_.fresh_id(), {});
+    transformation_context->GetFactManager()->AddFactDataSynonym(
+        data_descriptor_for_extracted_element, data_descriptor_for_result_id,
+        ir_context);
   }
-  protobufs::DataDescriptor data_descriptor_for_extracted_element =
-      MakeDataDescriptor(message_.composite_id(), std::move(indices));
-  protobufs::DataDescriptor data_descriptor_for_result_id =
-      MakeDataDescriptor(message_.fresh_id(), {});
-  fact_manager->AddFactDataSynonym(data_descriptor_for_extracted_element,
-                                   data_descriptor_for_result_id, context);
 }
 
 protobufs::Transformation TransformationCompositeExtract::ToMessage() const {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -7,7 +7,7 @@
 
 #include <bx/string.h>
 #include <bgfx/bgfx.h>
-#include "../../src/vertexdecl.h"
+#include "../../src/vertexlayout.h"
 
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
@@ -36,7 +36,7 @@ namespace stl = tinystl;
 			} \
 		} while(0)
 
-#	define BX_CHECK(_condition, _format, ...) \
+#	define BX_ASSERT(_condition, _format, ...) \
 		do { \
 			if (!(_condition) ) \
 			{ \
@@ -120,21 +120,21 @@ static bx::Vec3 s_axisVectors[6] =
 
 struct CoordinateSystem
 {
-	bx::Handness::Enum	m_handness;
-	Axis::Enum			m_up;
-	Axis::Enum			m_forward;
+	bx::Handness::Enum m_handness;
+	Axis::Enum         m_up;
+	Axis::Enum         m_forward;
 };
 
 struct CoordinateSystemMapping
 {
-	const char*			m_param;
-	CoordinateSystem	m_coordinateSystem;
+	const char*      m_param;
+	CoordinateSystem m_coordinateSystem;
 };
 
 static const CoordinateSystemMapping s_coordinateSystemMappings[] =
 {
-	{ "lh-up+y", { bx::Handness::Left, Axis::PositiveY, Axis::PositiveZ } } ,
-	{ "lh-up+z", { bx::Handness::Left, Axis::PositiveZ, Axis::PositiveY } },
+	{ "lh-up+y", { bx::Handness::Left,  Axis::PositiveY, Axis::PositiveZ } },
+	{ "lh-up+z", { bx::Handness::Left,  Axis::PositiveZ, Axis::PositiveY } },
 	{ "rh-up+y", { bx::Handness::Right, Axis::PositiveY, Axis::PositiveZ } },
 	{ "rh-up+z", { bx::Handness::Right, Axis::PositiveZ, Axis::PositiveY } },
 };
@@ -152,11 +152,11 @@ struct Mesh
 
 static uint32_t s_obbSteps = 17;
 
-#define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
-#define BGFX_CHUNK_MAGIC_VBC BX_MAKEFOURCC('V', 'B', 'C', 0x0)
-#define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x1)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
+constexpr uint32_t kChunkVertexBuffer           = BX_MAKEFOURCC('V', 'B', ' ', 0x1);
+constexpr uint32_t kChunkVertexBufferCompressed = BX_MAKEFOURCC('V', 'B', 'C', 0x0);
+constexpr uint32_t kChunkIndexBuffer            = BX_MAKEFOURCC('I', 'B', ' ', 0x0);
+constexpr uint32_t kChunkIndexBufferCompressed  = BX_MAKEFOURCC('I', 'B', 'C', 0x1);
+constexpr uint32_t kChunkPrimitive              = BX_MAKEFOURCC('P', 'R', 'I', 0x0);
 
 void optimizeVertexCache(uint16_t* _indices, uint32_t _numIndices, uint32_t _numVertices)
 {
@@ -181,7 +181,7 @@ void writeCompressedIndices(bx::WriterI* _writer, const uint16_t* _indices, uint
 	size_t maxSize = meshopt_encodeIndexBufferBound(_numIndices, _numVertices);
 	unsigned char* compressedIndices = (unsigned char*)malloc(maxSize);
 	size_t compressedSize = meshopt_encodeIndexBuffer(compressedIndices, maxSize, _indices, _numIndices);
-	bx::printf( "indices uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
+	bx::printf("Indices uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
 		, _numIndices*2
 		, (uint32_t)compressedSize
 		, 100.0f - float(compressedSize ) / float(_numIndices*2)*100.0f
@@ -197,7 +197,7 @@ void writeCompressedVertices(bx::WriterI* _writer,  const uint8_t* _vertices, ui
 	size_t maxSize = meshopt_encodeVertexBufferBound(_numVertices, _stride);
 	unsigned char* compressedVertices = (unsigned char*)malloc(maxSize);
 	size_t compressedSize = meshopt_encodeVertexBuffer(compressedVertices, maxSize, _vertices, _numVertices, _stride);
-	bx::printf("vertices uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
+	bx::printf("Vertices uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
 		, _numVertices * _stride
 		, (uint32_t)compressedSize
 		, 100.0f - float(compressedSize) / float(_numVertices * _stride)*100.0f
@@ -331,16 +331,17 @@ void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, u
 	bx::write(_writer, obb);
 }
 
-void write(bx::WriterI* _writer
-		, const uint8_t* _vertices
-		, uint32_t _numVertices
-		, const bgfx::VertexLayout& _layout
-		, const uint16_t* _indices
-		, uint32_t _numIndices
-		, bool _compress
-		, const stl::string& _material
-		, const PrimitiveArray& _primitives
-		)
+void write(
+	  bx::WriterI* _writer
+	, const uint8_t* _vertices
+	, uint32_t _numVertices
+	, const bgfx::VertexLayout& _layout
+	, const uint16_t* _indices
+	, uint32_t _numIndices
+	, bool _compress
+	, const stl::string& _material
+	, const PrimitiveArray& _primitives
+	)
 {
 	using namespace bx;
 	using namespace bgfx;
@@ -349,17 +350,17 @@ void write(bx::WriterI* _writer
 
 	if (_compress)
 	{
-		write(_writer, BGFX_CHUNK_MAGIC_VBC);
+		write(_writer, kChunkVertexBufferCompressed);
 		write(_writer, _vertices, _numVertices, stride);
 
 		write(_writer, _layout);
 
 		write(_writer, uint16_t(_numVertices) );
-		writeCompressedVertices(_writer, _vertices, _numVertices, uint16_t(stride));
+		writeCompressedVertices(_writer, _vertices, _numVertices, uint16_t(stride) );
 	}
 	else
 	{
-		write(_writer, BGFX_CHUNK_MAGIC_VB);
+		write(_writer, kChunkVertexBuffer);
 		write(_writer, _vertices, _numVertices, stride);
 
 		write(_writer, _layout);
@@ -370,18 +371,18 @@ void write(bx::WriterI* _writer
 
 	if (_compress)
 	{
-		write(_writer, BGFX_CHUNK_MAGIC_IBC);
+		write(_writer, kChunkIndexBufferCompressed);
 		write(_writer, _numIndices);
 		writeCompressedIndices(_writer, _indices, _numIndices, _numVertices);
 	}
 	else
 	{
-		write(_writer, BGFX_CHUNK_MAGIC_IB);
+		write(_writer, kChunkIndexBuffer);
 		write(_writer, _numIndices);
 		write(_writer, _indices, _numIndices*2);
 	}
 
-	write(_writer, BGFX_CHUNK_MAGIC_PRI);
+	write(_writer, kChunkPrimitive);
 	uint16_t nameLen = uint16_t(_material.size() );
 	write(_writer, nameLen);
 	write(_writer, _material.c_str(), nameLen);
@@ -419,19 +420,20 @@ struct GroupSortByMaterial
 
 void mtxCoordinateTransform(float* _result, const CoordinateSystem& _cs)
 {
-	bx::Vec3 up = s_axisVectors[_cs.m_up];
+	bx::Vec3 up      = s_axisVectors[_cs.m_up];
 	bx::Vec3 forward = s_axisVectors[_cs.m_forward];
-	bx::Vec3 right = cross(forward,up);
-	if ( _cs.m_handness == bx::Handness::Left)
+	bx::Vec3 right   = cross(forward,up);
+
+	if (_cs.m_handness == bx::Handness::Left)
 	{
 		right = bx::mul(right, -1.0f);
 	}
+
 	bx::mtxIdentity(_result);
 	bx::store(&_result[0], right);
 	bx::store(&_result[4], forward);
 	bx::store(&_result[8], up);
 }
-
 
 float mtxDeterminant(const float* _a)
 {
@@ -451,16 +453,15 @@ float mtxDeterminant(const float* _a)
 	const float wy = _a[13];
 	const float wz = _a[14];
 	const float ww = _a[15];
-	
+
 	float det = 0.0f;
 	det += xx * (yy*(zz*ww - zw*wz) - yz*(zy*ww - zw*wy) + yw*(zy*wz - zz*wy) );
 	det -= xy * (yx*(zz*ww - zw*wz) - yz*(zx*ww - zw*wx) + yw*(zx*wz - zz*wx) );
 	det += xz * (yx*(zy*ww - zw*wy) - yy*(zx*ww - zw*wx) + yw*(zx*wy - zy*wx) );
 	det -= xw * (yx*(zy*wz - zz*wy) - yy*(zx*wz - zz*wx) + yz*(zx*wy - zy*wx) );
-	
+
 	return det;
 }
-
 
 void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 {
@@ -483,7 +484,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 	uint32_t len = sizeof(commandLine);
 	int argc;
 	char* argv[64];
-	
+
 	for (bx::StringView next(_data, _size); !next.isEmpty(); )
 	{
 		next = bx::tokenizeCommandLine(next, commandLine, len, argc, argv, BX_COUNTOF(argv), '\n');
@@ -501,7 +502,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 			{
 				TriIndices triangle;
 				bx::memSet(&triangle, 0, sizeof(TriIndices) );
-				
+
 				const int numNormals   = (int)_mesh->m_normals.size();
 				const int numTexcoords = (int)_mesh->m_texcoords.size();
 				const int numPositions = (int)_mesh->m_positions.size();
@@ -523,24 +524,24 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 						bx::StringView triplet(argv[edge + 1]);
 						bx::StringView vertex(triplet);
 						bx::StringView texcoord = bx::strFind(triplet, '/');
-						if (!texcoord.isEmpty())
+						if (!texcoord.isEmpty() )
 						{
-							vertex.set(vertex.getPtr(), texcoord.getPtr());
+							vertex.set(vertex.getPtr(), texcoord.getPtr() );
 
-							const bx::StringView normal = bx::strFind(bx::StringView(texcoord.getPtr() + 1, triplet.getTerm()), '/');
-							if (!normal.isEmpty())
+							const bx::StringView normal = bx::strFind(bx::StringView(texcoord.getPtr() + 1, triplet.getTerm() ), '/');
+							if (!normal.isEmpty() )
 							{
 								int32_t nn;
-								bx::fromString(&nn, bx::StringView(normal.getPtr() + 1, triplet.getTerm()));
+								bx::fromString(&nn, bx::StringView(normal.getPtr() + 1, triplet.getTerm() ) );
 								index.m_normal = (nn < 0) ? nn + numNormals : nn - 1;
 							}
 
-							texcoord.set(texcoord.getPtr() + 1, normal.getPtr());
+							texcoord.set(texcoord.getPtr() + 1, normal.getPtr() );
 
 							// Reference(s):
 							// - Wavefront .obj file / Vertex normal indices without texture coordinate indices
 							//   https://en.wikipedia.org/wiki/Wavefront_.obj_file#Vertex_Normal_Indices_Without_Texture_Coordinate_Indices
-							if (!texcoord.isEmpty())
+							if (!texcoord.isEmpty() )
 							{
 								int32_t tex;
 								bx::fromString(&tex, texcoord);
@@ -562,11 +563,11 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 							_mesh->m_triangles.push_back(triangle);
 						}
 						break;
-							
+
 					default:
 						triangle.m_index[1] = triangle.m_index[2];
 						triangle.m_index[2] = index;
-							
+
 						_mesh->m_triangles.push_back(triangle);
 						break;
 					}
@@ -592,7 +593,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 					bx::fromString(&normal.x, argv[1]);
 					bx::fromString(&normal.y, argv[2]);
 					bx::fromString(&normal.z, argv[3]);
-					
+
 					_mesh->m_normals.push_back(normal);
 				}
 				else if (0 == bx::strCmp(argv[0], "vp") )
@@ -625,7 +626,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 					default:
 						break;
 					}
-					
+
 					_mesh->m_texcoords.push_back(texcoord);
 				}
 				else
@@ -643,7 +644,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 					{
 						pw = 1.0f;
 					}
-					
+
 					float invW = 1.0f/pw;
 					px *= invW;
 					py *= invW;
@@ -653,7 +654,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 					pos.x = px;
 					pos.y = py;
 					pos.z = pz;
-					
+
 					_mesh->m_positions.push_back(pos);
 				}
 			}
@@ -688,7 +689,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 
 		++num;
 	}
-	
+
 	group.m_numTriangles = (uint32_t)(_mesh->m_triangles.size() ) - group.m_startTriangle;
 	if (0 < group.m_numTriangles)
 	{
@@ -696,9 +697,8 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 		group.m_startTriangle = (uint32_t)(_mesh->m_triangles.size() );
 		group.m_numTriangles = 0;
 	}
-	
-	bx::printf("obj parser # %d\n"
-			   , num );
+
+	bx::printf("obj parser # %d\n", num);
 }
 
 
@@ -721,13 +721,13 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 		cgltf_node_transform_world(_node, nodeToWorld);
 		float nodeToWorldNormal[16];
 		bx::mtxCofactor(nodeToWorldNormal, nodeToWorld);
-		
+
 		for (cgltf_size primitiveIndex = 0; primitiveIndex < mesh->primitives_count; ++primitiveIndex)
 		{
 			cgltf_primitive* primitive = &mesh->primitives[primitiveIndex];
-			
+
 			cgltf_size numVertex = primitive->attributes[0].data->count;
-			
+
 			int32_t basePositionIndex = (int32_t)_mesh->m_positions.size();
 			int32_t baseNormalIndex = (int32_t)_mesh->m_normals.size();
 			int32_t baseTexcoordIndex = (int32_t)_mesh->m_texcoords.size();
@@ -741,10 +741,10 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 				cgltf_accessor* accessor = attribute->data;
 				cgltf_size accessorCount = accessor->count;
 
-				BX_CHECK(numVertex == accessorCount, "Invalid attribute count");
+				BX_ASSERT(numVertex == accessorCount, "Invalid attribute count");
 
 				cgltf_size floatCount = cgltf_accessor_unpack_floats(accessor, NULL, 0);
-				float* accessorData = (float*)malloc(floatCount * sizeof(float));
+				float* accessorData = (float*)malloc(floatCount * sizeof(float) );
 				cgltf_accessor_unpack_floats(accessor, accessorData, floatCount);
 
 				cgltf_size numComponents = cgltf_num_components(accessor->type);
@@ -754,7 +754,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 					_mesh->m_positions.reserve(_mesh->m_positions.size() + accessorCount);
 
 					bx::Vec3 pos;
-					for(cgltf_size v=0;v<accessorCount;++v)
+					for (cgltf_size v=0;v<accessorCount;++v)
 					{
 						gltfReadFloat(accessorData, numComponents, v, &pos.x, 3);
 						pos = mul(pos, nodeToWorld);
@@ -767,7 +767,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 
 					hasNormal = true;
 					bx::Vec3 normal;
-					for(cgltf_size v=0;v<accessorCount;++v)
+					for (cgltf_size v=0;v<accessorCount;++v)
 					{
 						gltfReadFloat(accessorData, numComponents, v, &normal.x, 3);
 						normal = mul(normal, nodeToWorldNormal);
@@ -780,7 +780,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 
 					hasTexcoord = true;
 					bx::Vec3 texcoord;
-					for(cgltf_size v=0;v<accessorCount;++v)
+					for (cgltf_size v=0;v<accessorCount;++v)
 					{
 						gltfReadFloat(accessorData, numComponents, v, &texcoord.x, 3);
 						_mesh->m_texcoords.push_back(texcoord);
@@ -789,18 +789,18 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 
 				free(accessorData);
 			}
-			
-			if ( primitive->indices != NULL )
+
+			if (primitive->indices != NULL)
 			{
 				cgltf_accessor* accessor = primitive->indices;
-				
-				for(cgltf_size v=0;v<accessor->count; v+=3)
+
+				for (cgltf_size v = 0; v < accessor->count; v += 3)
 				{
 					TriIndices triangle;
-					for(int i=0;i<3;++i)
+					for (int i = 0; i < 3; ++i)
 					{
 						Index3 index;
-						int32_t vertexIndex = int32_t(cgltf_accessor_read_index(accessor, v+i));
+						int32_t vertexIndex = int32_t(cgltf_accessor_read_index(accessor, v+i) );
 						index.m_position = basePositionIndex + vertexIndex;
 						index.m_normal = hasNormal ? baseNormalIndex + vertexIndex : -1;
 						index.m_texcoord = hasTexcoord ? baseTexcoordIndex + vertexIndex : -1;
@@ -812,10 +812,10 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 			}
 			else
 			{
-				for(cgltf_size v=0;v<numVertex; v+=3)
+				for (cgltf_size v = 0; v < numVertex; v += 3)
 				{
 					TriIndices triangle;
-					for(int i=0;i<3;++i)
+					for (int i = 0; i < 3; ++i)
 					{
 						Index3 index;
 						int32_t vertexIndex = int32_t(v * 3 + i);
@@ -828,7 +828,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 					_mesh->m_triangles.push_back(triangle);
 				}
 			}
-			
+
 			_group->m_numTriangles = (uint32_t)(_mesh->m_triangles.size() ) - _group->m_startTriangle;
 			if (0 < _group->m_numTriangles)
 			{
@@ -848,7 +848,7 @@ void parseGltf(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc, const bx::
 	// Reference(s):
 	// - Gltf 2.0 specification
 	//  https://github.com/KhronosGroup/glTF/tree/master/specification/2.0
-	
+
 	_mesh->m_coordinateSystem.m_handness = bx::Handness::Right;
 	_mesh->m_coordinateSystem.m_forward  = Axis::PositiveZ;
 	_mesh->m_coordinateSystem.m_up       = Axis::PositiveY;
@@ -856,34 +856,34 @@ void parseGltf(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc, const bx::
 	Group group;
 	group.m_startTriangle = 0;
 	group.m_numTriangles = 0;
-	
+
 	cgltf_options options = { };
 	cgltf_data* data = NULL;
 	cgltf_result result = cgltf_parse(&options, _data, _size, &data);
-	
+
 	if (result == cgltf_result_success)
 	{
 		char* path = (char*)malloc(_path.getLength()+1);
-		bx::memCopy(path, _path.getPtr(), _path.getLength());
+		bx::memCopy(path, _path.getPtr(), _path.getLength() );
 		path[_path.getLength()] = 0;
 		result = cgltf_load_buffers(&options, data, path);
 		free(path);
-		
+
 		if (result == cgltf_result_success)
 		{
 			for (cgltf_size sceneIndex = 0; sceneIndex < data->scenes_count; ++sceneIndex)
 			{
 				cgltf_scene* scene = &data->scenes[sceneIndex];
-				
+
 				for (cgltf_size nodeIndex = 0; nodeIndex < scene->nodes_count; ++nodeIndex)
 				{
 					cgltf_node* node = scene->nodes[nodeIndex];
-					
+
 					processGltfNode(node, _mesh, &group, _hasBc);
 				}
 			}
 		}
-		
+
 		cgltf_free(data);
 	}
 }
@@ -898,7 +898,7 @@ void help(const char* _error = NULL)
 
 	bx::printf(
 		  "geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
-		  "Copyright 2011-2019 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		, BGFX_GEOMETRYC_VERSION_MAJOR
 		, BGFX_GEOMETRYC_VERSION_MINOR
@@ -945,7 +945,7 @@ int main(int _argc, const char* _argv[])
 {
 	bx::CommandLine cmdLine(_argc, _argv);
 
-	if (cmdLine.hasArg('v', "version"))
+	if (cmdLine.hasArg('v', "version") )
 	{
 		bx::printf(
 			"geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
@@ -956,7 +956,7 @@ int main(int _argc, const char* _argv[])
 		return bx::kExitSuccess;
 	}
 
-	if (cmdLine.hasArg('h', "help"))
+	if (cmdLine.hasArg('h', "help") )
 	{
 		help();
 		return bx::kExitFailure;
@@ -980,7 +980,7 @@ int main(int _argc, const char* _argv[])
 	const char* scaleArg = cmdLine.findOption('s', "scale");
 	if (NULL != scaleArg)
 	{
-		if (!bx::fromString(&scale, scaleArg))
+		if (!bx::fromString(&scale, scaleArg) )
 		{
 			scale = 1.0f;
 		}
@@ -1008,7 +1008,7 @@ int main(int _argc, const char* _argv[])
 	outputCoordinateSystem.m_up = Axis::PositiveY;
 	for (uint32_t ii = 0; ii < BX_COUNTOF(s_coordinateSystemMappings); ++ii)
 	{
-		if (cmdLine.hasArg(s_coordinateSystemMappings[ii].m_param))
+		if (cmdLine.hasArg(s_coordinateSystemMappings[ii].m_param) )
 		{
 			outputCoordinateSystem = s_coordinateSystemMappings[ii].m_coordinateSystem;
 		}
@@ -1032,13 +1032,13 @@ int main(int _argc, const char* _argv[])
 
 	Mesh mesh;
 	bx::StringView ext = bx::FilePath(filePath).getExt();
-	if (0 == bx::strCmpI(ext, ".obj"))
+	if (0 == bx::strCmpI(ext, ".obj") )
 	{
 		parseObj(data, size, &mesh, hasBc);
 	}
-	else if (0 == bx::strCmpI(ext, ".gltf") || 0 == bx::strCmpI(ext, ".glb"))
+	else if (0 == bx::strCmpI(ext, ".gltf") || 0 == bx::strCmpI(ext, ".glb") )
 	{
-		parseGltf(data, size, &mesh, hasBc, bx::FilePath(filePath).getPath());
+		parseGltf(data, size, &mesh, hasBc, bx::FilePath(filePath).getPath() );
 	}
 	else
 	{
@@ -1065,11 +1065,11 @@ int main(int _argc, const char* _argv[])
 			it->z *= scale;
 		}
 	}
-	
+
 	{
 		float meshTransform[16];
 		mtxCoordinateTransform(meshTransform, mesh.m_coordinateSystem);
-		
+
 		float meshInvTranform[16];
 		bx::mtxTranspose(meshInvTranform, meshTransform);
 
@@ -1093,7 +1093,7 @@ int main(int _argc, const char* _argv[])
 			{
 				*it = bx::mul(*it, transform);
 			}
-			
+
 			for (Vec3Array::iterator it = mesh.m_normals.begin(), itEnd = mesh.m_normals.end(); it != itEnd; ++it)
 			{
 				*it = bx::mul(*it, transform);
@@ -1101,7 +1101,7 @@ int main(int _argc, const char* _argv[])
 		}
 	}
 
-	
+
 	bool hasColor = false;
 	bool hasNormal = false;
 	bool hasTexcoord = false;
@@ -1121,7 +1121,7 @@ int main(int _argc, const char* _argv[])
 				hasNormal |= -1 != jt->m_index[i].m_normal;
 			}
 		}
-		
+
 		if (changeWinding)
 		{
 			for (TriangleArray::iterator jt = mesh.m_triangles.begin(), jtEnd = mesh.m_triangles.end(); jt != jtEnd; ++jt)
@@ -1199,12 +1199,12 @@ int main(int _argc, const char* _argv[])
 
 	uint8_t* vertices = vertexData;
 	uint16_t* indices = indexData;
-	
+
 	const uint32_t tableSize = 65536 * 2;
 	const uint32_t hashmod = tableSize - 1;
 	uint32_t* table = new uint32_t[tableSize];
-	bx::memSet(table, 0xff, tableSize * sizeof(uint32_t));
-	
+	bx::memSet(table, 0xff, tableSize * sizeof(uint32_t) );
+
 	stl::string material = mesh.m_groups.empty() ? "" : mesh.m_groups.begin()->m_material;
 
 	PrimitiveArray primitives;
@@ -1256,7 +1256,7 @@ int main(int _argc, const char* _argv[])
 					const Primitive& prim1 = *primIt;
 					optimizeVertexCache(indexData + prim1.m_startIndex, prim1.m_numIndices, numVertices);
 				}
-				numVertices = optimizeVertexFetch(indexData, numIndices, vertexData, numVertices, uint16_t(stride));
+				numVertices = optimizeVertexFetch(indexData, numIndices, vertexData, numVertices, uint16_t(stride) );
 
 				triReorderElapsed += bx::getHPCounter();
 
@@ -1274,8 +1274,8 @@ int main(int _argc, const char* _argv[])
 						  );
 				}
 				primitives.clear();
-				
-				bx::memSet(table, 0xff, tableSize * sizeof(uint32_t));
+
+				bx::memSet(table, 0xff, tableSize * sizeof(uint32_t) );
 
 				++writtenPrimitives;
 				writtenVertices += numVertices;
@@ -1298,16 +1298,16 @@ int main(int _argc, const char* _argv[])
 			for (uint32_t edge = 0; edge < 3; ++edge)
 			{
 				Index3& index = triangle.m_index[edge];
-				
+
 				float* position = (float*)(vertices + positionOffset);
 				bx::memCopy(position, &mesh.m_positions[index.m_position], 3*sizeof(float) );
-				
+
 				if (hasColor)
 				{
 					uint32_t* color0 = (uint32_t*)(vertices + color0Offset);
 					*color0 = rgbaToAbgr(numVertices%255, numIndices%255, 0, 0xff);
 				}
-				
+
 				if (hasBc)
 				{
 					const float bc[4] =
@@ -1319,20 +1319,20 @@ int main(int _argc, const char* _argv[])
 					};
 					bgfx::vertexPack(bc, true, bgfx::Attrib::Color1, layout, vertices);
 				}
-				
+
 				if (hasTexcoord)
 				{
 					float uv[2];
 					bx::memCopy(uv, &mesh.m_texcoords[index.m_texcoord == -1 ? 0 : index.m_texcoord], 2*sizeof(float) );
-					
+
 					if (flipV)
 					{
 						uv[1] = -uv[1];
 					}
-					
+
 					bgfx::vertexPack(uv, true, bgfx::Attrib::TexCoord0, layout, vertices);
 				}
-				
+
 				if (hasNormal)
 				{
 					float normal[4];
@@ -1344,11 +1344,11 @@ int main(int _argc, const char* _argv[])
 				uint32_t hash = bx::hash<bx::HashMurmur2A>(vertices, stride);
 				size_t bucket = hash & hashmod;
 				uint32_t vertexIndex = UINT32_MAX;
-				
+
 				for (size_t probe = 0; probe <= hashmod; ++probe)
 				{
 					uint32_t& item = table[bucket];
-					
+
 					if (item == ~0u)
 					{
 						vertices += stride;
@@ -1356,22 +1356,22 @@ int main(int _argc, const char* _argv[])
 						vertexIndex = item;
 						break;
 					}
-					
-					if (0 == bx::memCmp(vertexData + item * stride, vertices, stride))
+
+					if (0 == bx::memCmp(vertexData + item * stride, vertices, stride) )
 					{
 						vertexIndex = item;
 						break;
 					}
-					
+
 					bucket = (bucket + probe + 1) & hashmod;
 				}
-				
+
 				if ( vertexIndex == UINT32_MAX )
 				{
 					bx::printf("hash table insert failed");
 					exit(bx::kExitFailure);
 				}
-				
+
 				*indices++ = (uint16_t)vertexIndex;
 				++numIndices;
 			}
@@ -1395,7 +1395,7 @@ int main(int _argc, const char* _argv[])
 			);
 	}
 
-	BX_CHECK(0 == primitives.size(), "Not all primitives are written");
+	BX_ASSERT(0 == primitives.size(), "Not all primitives are written");
 
 	bx::printf("size: %d\n", uint32_t(bx::seek(&writer) ) );
 	bx::close(&writer);

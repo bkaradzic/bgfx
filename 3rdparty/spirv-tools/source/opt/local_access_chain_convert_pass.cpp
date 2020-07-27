@@ -281,7 +281,7 @@ void LocalAccessChainConvertPass::Initialize() {
   // Initialize collections
   supported_ref_ptrs_.clear();
 
-  // Initialize extension whitelist
+  // Initialize extension allowlist
   InitExtensions();
 }
 
@@ -292,11 +292,11 @@ bool LocalAccessChainConvertPass::AllExtensionsSupported() const {
   if (context()->get_feature_mgr()->HasCapability(
           SpvCapabilityVariablePointers))
     return false;
-  // If any extension not in whitelist, return false
+  // If any extension not in allowlist, return false
   for (auto& ei : get_module()->extensions()) {
     const char* extName =
         reinterpret_cast<const char*>(&ei.GetInOperand(0).words[0]);
-    if (extensions_whitelist_.find(extName) == extensions_whitelist_.end())
+    if (extensions_allowlist_.find(extName) == extensions_allowlist_.end())
       return false;
   }
   return true;
@@ -336,8 +336,8 @@ Pass::Status LocalAccessChainConvertPass::Process() {
 }
 
 void LocalAccessChainConvertPass::InitExtensions() {
-  extensions_whitelist_.clear();
-  extensions_whitelist_.insert({
+  extensions_allowlist_.clear();
+  extensions_allowlist_.insert({
       "SPV_AMD_shader_explicit_vertex_parameter",
       "SPV_AMD_shader_trinary_minmax",
       "SPV_AMD_gcn_shader",
@@ -371,6 +371,7 @@ void LocalAccessChainConvertPass::InitExtensions() {
       "SPV_GOOGLE_hlsl_functionality1",
       "SPV_GOOGLE_user_type",
       "SPV_NV_shader_subgroup_partitioned",
+      "SPV_EXT_demote_to_helper_invocation",
       "SPV_EXT_descriptor_indexing",
       "SPV_NV_fragment_shader_barycentric",
       "SPV_NV_compute_shader_derivatives",
@@ -378,7 +379,10 @@ void LocalAccessChainConvertPass::InitExtensions() {
       "SPV_NV_shading_rate",
       "SPV_NV_mesh_shader",
       "SPV_NV_ray_tracing",
+      "SPV_KHR_ray_tracing",
+      "SPV_KHR_ray_query",
       "SPV_EXT_fragment_invocation_density",
+      "SPV_KHR_terminate_invocation",
   });
 }
 

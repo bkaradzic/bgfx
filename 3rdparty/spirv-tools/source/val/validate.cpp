@@ -142,7 +142,7 @@ spv_result_t ValidateEntryPointNameUnique(ValidationState_t& _,
   for (const auto other_id : _.entry_points()) {
     if (other_id == id) continue;
     const auto other_id_names = CalculateNamesForEntryPoint(_, other_id);
-    for (const auto other_id_name : other_id_names) {
+    for (const auto& other_id_name : other_id_names) {
       if (names.find(other_id_name) != names.end()) {
         return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(id))
                << "Entry point name \"" << other_id_name
@@ -368,6 +368,10 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
   // Catch undefined forward references before performing further checks.
   if (auto error = ValidateForwardDecls(*vstate)) return error;
 
+  // Calculate reachability after all the blocks are parsed, but early that it
+  // can be relied on in subsequent pases.
+  ReachabilityPass(*vstate);
+
   // ID usage needs be handled in its own iteration of the instructions,
   // between the two others. It depends on the first loop to have been
   // finished, so that all instructions have been registered. And the following
@@ -431,7 +435,7 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
   if (auto error = ValidateBuiltIns(*vstate)) return error;
   // These checks must be performed after individual opcode checks because
   // those checks register the limitation checked here.
-  for (const auto inst : vstate->ordered_instructions()) {
+  for (const auto& inst : vstate->ordered_instructions()) {
     if (auto error = ValidateExecutionLimitations(*vstate, &inst)) return error;
     if (auto error = ValidateSmallTypeUses(*vstate, &inst)) return error;
   }

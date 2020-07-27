@@ -3,6 +3,7 @@
 // Copyright (C) 2012-2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
 // Copyright (C) 2015-2018 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -35,8 +36,11 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+
 #ifndef _VERSIONS_INCLUDED_
 #define _VERSIONS_INCLUDED_
+
+#define LAST_ELEMENT_MARKER(x) x
 
 //
 // Help manage multiple profiles, versions, extensions etc.
@@ -49,12 +53,13 @@
 // Don't maintain an ordinal set of enums (0,1,2,3...) to avoid all possible
 // defects from mixing the two different forms.
 //
-typedef enum {
+typedef enum : unsigned {
     EBadProfile           = 0,
     ENoProfile            = (1 << 0), // only for desktop, before profiles showed up
     ECoreProfile          = (1 << 1),
     ECompatibilityProfile = (1 << 2),
-    EEsProfile            = (1 << 3)
+    EEsProfile            = (1 << 3),
+    LAST_ELEMENT_MARKER(EProfileCount),
 } EProfile;
 
 namespace glslang {
@@ -124,6 +129,7 @@ const char* const E_GL_ARB_compute_shader               = "GL_ARB_compute_shader
 const char* const E_GL_ARB_tessellation_shader          = "GL_ARB_tessellation_shader";
 const char* const E_GL_ARB_enhanced_layouts             = "GL_ARB_enhanced_layouts";
 const char* const E_GL_ARB_texture_cube_map_array       = "GL_ARB_texture_cube_map_array";
+const char* const E_GL_ARB_texture_multisample          = "GL_ARB_texture_multisample";
 const char* const E_GL_ARB_shader_texture_lod           = "GL_ARB_shader_texture_lod";
 const char* const E_GL_ARB_explicit_attrib_location     = "GL_ARB_explicit_attrib_location";
 const char* const E_GL_ARB_explicit_uniform_location    = "GL_ARB_explicit_uniform_location";
@@ -135,6 +141,7 @@ const char* const E_GL_ARB_derivative_control           = "GL_ARB_derivative_con
 const char* const E_GL_ARB_shader_texture_image_samples = "GL_ARB_shader_texture_image_samples";
 const char* const E_GL_ARB_viewport_array               = "GL_ARB_viewport_array";
 const char* const E_GL_ARB_gpu_shader_int64             = "GL_ARB_gpu_shader_int64";
+const char* const E_GL_ARB_gpu_shader_fp64              = "GL_ARB_gpu_shader_fp64";
 const char* const E_GL_ARB_shader_ballot                = "GL_ARB_shader_ballot";
 const char* const E_GL_ARB_sparse_texture2              = "GL_ARB_sparse_texture2";
 const char* const E_GL_ARB_sparse_texture_clamp         = "GL_ARB_sparse_texture_clamp";
@@ -144,6 +151,14 @@ const char* const E_GL_ARB_post_depth_coverage          = "GL_ARB_post_depth_cov
 const char* const E_GL_ARB_shader_viewport_layer_array  = "GL_ARB_shader_viewport_layer_array";
 const char* const E_GL_ARB_fragment_shader_interlock    = "GL_ARB_fragment_shader_interlock";
 const char* const E_GL_ARB_shader_clock                 = "GL_ARB_shader_clock";
+const char* const E_GL_ARB_uniform_buffer_object        = "GL_ARB_uniform_buffer_object";
+const char* const E_GL_ARB_sample_shading               = "GL_ARB_sample_shading";
+const char* const E_GL_ARB_shader_bit_encoding          = "GL_ARB_shader_bit_encoding";
+const char* const E_GL_ARB_shader_image_size            = "GL_ARB_shader_image_size";
+const char* const E_GL_ARB_shader_storage_buffer_object = "GL_ARB_shader_storage_buffer_object";
+const char* const E_GL_ARB_shading_language_packing     = "GL_ARB_shading_language_packing";
+const char* const E_GL_ARB_texture_query_lod            = "GL_ARB_texture_query_lod";
+const char* const E_GL_ARB_vertex_attrib_64bit          = "GL_ARB_vertex_attrib_64bit";
 
 const char* const E_GL_KHR_shader_subgroup_basic            = "GL_KHR_shader_subgroup_basic";
 const char* const E_GL_KHR_shader_subgroup_vote             = "GL_KHR_shader_subgroup_vote";
@@ -178,6 +193,12 @@ const char* const E_GL_EXT_buffer_reference2                = "GL_EXT_buffer_ref
 const char* const E_GL_EXT_buffer_reference_uvec2           = "GL_EXT_buffer_reference_uvec2";
 const char* const E_GL_EXT_demote_to_helper_invocation      = "GL_EXT_demote_to_helper_invocation";
 const char* const E_GL_EXT_shader_realtime_clock            = "GL_EXT_shader_realtime_clock";
+const char* const E_GL_EXT_debug_printf                     = "GL_EXT_debug_printf";
+const char* const E_GL_EXT_ray_tracing                      = "GL_EXT_ray_tracing";
+const char* const E_GL_EXT_ray_query                        = "GL_EXT_ray_query";
+const char* const E_GL_EXT_ray_flags_primitive_culling      = "GL_EXT_ray_flags_primitive_culling";
+const char* const E_GL_EXT_blend_func_extended              = "GL_EXT_blend_func_extended";
+const char* const E_GL_EXT_shader_implicit_conversions      = "GL_EXT_shader_implicit_conversions";
 
 // Arrays of extensions for the above viewportEXTs duplications
 
@@ -205,6 +226,8 @@ const char* const E_GL_AMD_gpu_shader_int16                     = "GL_AMD_gpu_sh
 const char* const E_GL_AMD_shader_image_load_store_lod          = "GL_AMD_shader_image_load_store_lod";
 const char* const E_GL_AMD_shader_fragment_mask                 = "GL_AMD_shader_fragment_mask";
 const char* const E_GL_AMD_gpu_shader_half_float_fetch          = "GL_AMD_gpu_shader_half_float_fetch";
+
+const char* const E_GL_INTEL_shader_integer_functions2          = "GL_INTEL_shader_integer_functions2";
 
 const char* const E_GL_NV_sample_mask_override_coverage         = "GL_NV_sample_mask_override_coverage";
 const char* const E_SPV_NV_geometry_shader_passthrough          = "GL_NV_geometry_shader_passthrough";
@@ -247,6 +270,7 @@ const char* const E_GL_EXT_tessellation_shader                  = "GL_EXT_tessel
 const char* const E_GL_EXT_tessellation_point_size              = "GL_EXT_tessellation_point_size";
 const char* const E_GL_EXT_texture_buffer                       = "GL_EXT_texture_buffer";
 const char* const E_GL_EXT_texture_cube_map_array               = "GL_EXT_texture_cube_map_array";
+const char* const E_GL_EXT_shader_integer_mix                   = "GL_EXT_shader_integer_mix"; 
 
 // OES matching AEP
 const char* const E_GL_OES_geometry_shader                      = "GL_OES_geometry_shader";
@@ -273,6 +297,8 @@ const char* const E_GL_EXT_shader_subgroup_extended_types_int8    = "GL_EXT_shad
 const char* const E_GL_EXT_shader_subgroup_extended_types_int16   = "GL_EXT_shader_subgroup_extended_types_int16";
 const char* const E_GL_EXT_shader_subgroup_extended_types_int64   = "GL_EXT_shader_subgroup_extended_types_int64";
 const char* const E_GL_EXT_shader_subgroup_extended_types_float16 = "GL_EXT_shader_subgroup_extended_types_float16";
+
+const char* const E_GL_EXT_shader_atomic_float = "GL_EXT_shader_atomic_float";
 
 // Arrays of extensions for the above AEP duplications
 

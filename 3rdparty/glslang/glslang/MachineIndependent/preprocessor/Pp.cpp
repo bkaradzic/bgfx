@@ -621,14 +621,25 @@ int TPpContext::CPPinclude(TPpToken* ppToken)
 {
     const TSourceLoc directiveLoc = ppToken->loc;
     bool startWithLocalSearch = true; // to additionally include the extra "" paths
-    int token = scanToken(ppToken);
+    int token;
 
-    // handle <header-name>-style #include
-    if (token == '<') {
+    // Find the first non-whitespace char after #include
+    int ch = getChar();
+    while (ch == ' ' || ch == '\t') {
+        ch = getChar();
+    }
+    if (ch == '<') {
+        // <header-name> style
         startWithLocalSearch = false;
         token = scanHeaderName(ppToken, '>');
+    } else if (ch == '"') {
+        // "header-name" style
+        token = scanHeaderName(ppToken, '"');
+    } else {
+        // unexpected, get the full token to generate the error
+        ungetChar();
+        token = scanToken(ppToken);
     }
-    // otherwise ppToken already has the header name and it was "header-name" style
 
     if (token != PpAtomConstString) {
         parseContext.ppError(directiveLoc, "must be followed by a header name", "#include", "");
@@ -711,7 +722,9 @@ int TPpContext::CPPline(TPpToken* ppToken)
     const char* sourceName = nullptr; // Optional source file name.
     bool lineErr = false;
     bool fileErr = false;
+    disableEscapeSequences = true;
     token = eval(token, MIN_PRECEDENCE, false, lineRes, lineErr, ppToken);
+    disableEscapeSequences = false;
     if (! lineErr) {
         lineToken = lineRes;
         if (token == '\n')
@@ -754,7 +767,9 @@ int TPpContext::CPPline(TPpToken* ppToken)
 // Handle #error
 int TPpContext::CPPerror(TPpToken* ppToken)
 {
+    disableEscapeSequences = true;
     int token = scanToken(ppToken);
+    disableEscapeSequences = false;
     std::string message;
     TSourceLoc loc = ppToken->loc;
 

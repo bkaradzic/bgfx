@@ -58,6 +58,43 @@ class FactManager {
                           const protobufs::DataDescriptor& data2,
                           opt::IRContext* context);
 
+  // Records the fact that |block_id| is dead.
+  void AddFactBlockIsDead(uint32_t block_id);
+
+  // Records the fact that |function_id| is livesafe.
+  void AddFactFunctionIsLivesafe(uint32_t function_id);
+
+  // Records the fact that the value of the pointee associated with |pointer_id|
+  // is irrelevant: it does not affect the observable behaviour of the module.
+  void AddFactValueOfPointeeIsIrrelevant(uint32_t pointer_id);
+
+  // Records a fact that the |result_id| is irrelevant (i.e. it doesn't affect
+  // the semantics of the module)
+  void AddFactIdIsIrrelevant(uint32_t result_id);
+
+  // Records the fact that |lhs_id| is defined by the equation:
+  //
+  //   |lhs_id| = |opcode| |rhs_id[0]| ... |rhs_id[N-1]|
+  //
+  void AddFactIdEquation(uint32_t lhs_id, SpvOp opcode,
+                         const std::vector<uint32_t>& rhs_id,
+                         opt::IRContext* context);
+
+  // Inspects all known facts and adds corollary facts; e.g. if we know that
+  // a.x == b.x and a.y == b.y, where a and b have vec2 type, we can record
+  // that a == b holds.
+  //
+  // This method is expensive, and should only be called (by applying a
+  // transformation) at the start of a fuzzer pass that depends on data
+  // synonym facts, rather than calling it every time a new data synonym fact
+  // is added.
+  //
+  // The parameter |maximum_equivalence_class_size| specifies the size beyond
+  // which equivalence classes should not be mined for new facts, to avoid
+  // excessively-long closure computations.
+  void ComputeClosureOfFacts(opt::IRContext* ir_context,
+                             uint32_t maximum_equivalence_class_size);
+
   // The fact manager is responsible for managing a few distinct categories of
   // facts. In principle there could be different fact managers for each kind
   // of fact, but in practice providing one 'go to' place for facts is
@@ -107,27 +144,57 @@ class FactManager {
 
   // Returns every id for which a fact of the form "this id is synonymous with
   // this piece of data" is known.
-  std::vector<uint32_t> GetIdsForWhichSynonymsAreKnown(
-      opt::IRContext* context) const;
+  std::vector<uint32_t> GetIdsForWhichSynonymsAreKnown() const;
 
   // Returns the equivalence class of all known synonyms of |id|, or an empty
   // set if no synonyms are known.
   std::vector<const protobufs::DataDescriptor*> GetSynonymsForId(
-      uint32_t id, opt::IRContext* context) const;
+      uint32_t id) const;
 
   // Returns the equivalence class of all known synonyms of |data_descriptor|,
   // or empty if no synonyms are known.
   std::vector<const protobufs::DataDescriptor*> GetSynonymsForDataDescriptor(
-      const protobufs::DataDescriptor& data_descriptor,
-      opt::IRContext* context) const;
+      const protobufs::DataDescriptor& data_descriptor) const;
 
   // Returns true if and ony if |data_descriptor1| and |data_descriptor2| are
   // known to be synonymous.
   bool IsSynonymous(const protobufs::DataDescriptor& data_descriptor1,
-                    const protobufs::DataDescriptor& data_descriptor2,
-                    opt::IRContext* context) const;
+                    const protobufs::DataDescriptor& data_descriptor2) const;
 
   // End of id synonym facts
+  //==============================
+
+  //==============================
+  // Querying facts about dead blocks
+
+  // Returns true if and ony if |block_id| is the id of a block known to be
+  // dynamically unreachable.
+  bool BlockIsDead(uint32_t block_id) const;
+
+  // End of dead block facts
+  //==============================
+
+  //==============================
+  // Querying facts about livesafe function
+
+  // Returns true if and ony if |function_id| is the id of a function known
+  // to be livesafe.
+  bool FunctionIsLivesafe(uint32_t function_id) const;
+
+  // End of dead livesafe function facts
+  //==============================
+
+  //==============================
+  // Querying facts about irrelevant values
+
+  // Returns true if and ony if the value of the pointee associated with
+  // |pointer_id| is irrelevant.
+  bool PointeeValueIsIrrelevant(uint32_t pointer_id) const;
+
+  // Returns true iff there exists a fact that the |result_id| is irrelevant.
+  bool IdIsIrrelevant(uint32_t result_id) const;
+
+  // End of irrelevant value facts
   //==============================
 
  private:
@@ -139,9 +206,24 @@ class FactManager {
   std::unique_ptr<ConstantUniformFacts>
       uniform_constant_facts_;  // Unique pointer to internal data.
 
-  class DataSynonymFacts;  // Opaque class for management of data synonym facts.
-  std::unique_ptr<DataSynonymFacts>
-      data_synonym_facts_;  // Unique pointer to internal data.
+  class DataSynonymAndIdEquationFacts;  // Opaque class for management of data
+                                        // synonym and id equation facts.
+  std::unique_ptr<DataSynonymAndIdEquationFacts>
+      data_synonym_and_id_equation_facts_;  // Unique pointer to internal data.
+
+  class DeadBlockFacts;  // Opaque class for management of dead block facts.
+  std::unique_ptr<DeadBlockFacts>
+      dead_block_facts_;  // Unique pointer to internal data.
+
+  class LivesafeFunctionFacts;  // Opaque class for management of livesafe
+                                // function facts.
+  std::unique_ptr<LivesafeFunctionFacts>
+      livesafe_function_facts_;  // Unique pointer to internal data.
+
+  class IrrelevantValueFacts;  // Opaque class for management of
+  // facts about various irrelevant values in the module.
+  std::unique_ptr<IrrelevantValueFacts>
+      irrelevant_value_facts_;  // Unique pointer to internal data.
 };
 
 }  // namespace fuzz

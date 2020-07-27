@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -1217,6 +1217,61 @@ NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* _ctx, int32_t _width, int32
 
 	tex->width  = _width;
 	tex->height = _height;
+	tex->type   = NVG_TEXTURE_RGBA;
+	tex->flags  = _imageFlags | NVG_IMAGE_PREMULTIPLIED;
+	tex->id     = bgfx::getTexture(fbh);
+
+	NVGLUframebuffer* framebuffer = BX_NEW(gl->allocator, NVGLUframebuffer);
+	framebuffer->ctx    = _ctx;
+	framebuffer->image  = tex->id.idx;
+	framebuffer->handle = fbh;
+
+	return framebuffer;
+}
+
+NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int32_t imageFlags, bgfx::ViewId viewId)
+{
+	NVGLUframebuffer* framebuffer = nvgluCreateFramebuffer(ctx, imageFlags);
+
+	if (framebuffer != NULL)
+	{
+		nvgluSetViewFramebuffer(viewId, framebuffer);
+	}
+
+	return framebuffer;
+}
+
+NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* _ctx, int32_t _imageFlags)
+{
+	BX_UNUSED(_imageFlags);
+	bgfx::TextureHandle textures[] =
+	{
+		bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY)
+	};
+	bgfx::FrameBufferHandle fbh = bgfx::createFrameBuffer(
+		  BX_COUNTOF(textures)
+		, textures
+		, true
+		);
+
+	if (!bgfx::isValid(fbh) )
+	{
+		return NULL;
+	}
+
+	struct NVGparams* params = nvgInternalParams(_ctx);
+	struct GLNVGcontext* gl = (struct GLNVGcontext*)params->userPtr;
+	struct GLNVGtexture* tex = glnvg__allocTexture(gl);
+
+	if (NULL == tex)
+	{
+		bgfx::destroy(fbh);
+		return NULL;
+	}
+
+	tex->width  = 0;
+	tex->height = 0;
 	tex->type   = NVG_TEXTURE_RGBA;
 	tex->flags  = _imageFlags | NVG_IMAGE_PREMULTIPLIED;
 	tex->id     = bgfx::getTexture(fbh);

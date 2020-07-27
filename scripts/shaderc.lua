@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2019 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2020 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
@@ -197,6 +197,11 @@ project "spirv-cross"
 			"/wd4715", -- warning C4715: '': not all control paths return a value
 		}
 
+	configuration { "mingw* or linux or osx" }
+		buildoptions {
+			"-Wno-type-limits",
+		}
+
 	configuration {}
 
 project "glslang"
@@ -209,6 +214,7 @@ project "glslang"
 
 	includedirs {
 		GLSLANG,
+		path.join(GLSLANG, ".."),
 		path.join(SPIRV_TOOLS, "include"),
 		path.join(SPIRV_TOOLS, "source"),
 	}
@@ -266,6 +272,8 @@ project "glslang"
 		buildoptions {
 			"-Wno-ignored-qualifiers",
 			"-Wno-implicit-fallthrough",
+			"-Wno-logical-op",
+			"-Wno-maybe-uninitialized",
 			"-Wno-missing-field-initializers",
 			"-Wno-reorder",
 			"-Wno-return-type",
@@ -597,6 +605,7 @@ project "shaderc"
 		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 
+		path.join(BGFX_DIR, "3rdparty/webgpu/include"),
 		path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 
 		FCPP_DIR,
@@ -625,7 +634,7 @@ project "shaderc"
 	files {
 		path.join(BGFX_DIR, "tools/shaderc/**.cpp"),
 		path.join(BGFX_DIR, "tools/shaderc/**.h"),
-		path.join(BGFX_DIR, "src/vertexdecl.**"),
+		path.join(BGFX_DIR, "src/vertexlayout.**"),
 		path.join(BGFX_DIR, "src/shader_spirv.**"),
 	}
 

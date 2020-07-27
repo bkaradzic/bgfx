@@ -41,6 +41,7 @@ spv_context spvContextCreate(spv_target_env env) {
     case SPV_ENV_WEBGPU_0:
     case SPV_ENV_UNIVERSAL_1_4:
     case SPV_ENV_UNIVERSAL_1_5:
+    case SPV_ENV_VULKAN_1_2:
       break;
     default:
       return nullptr;

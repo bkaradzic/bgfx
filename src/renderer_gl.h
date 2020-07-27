@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -12,7 +12,6 @@
 			|| BX_PLATFORM_LINUX                          \
 			|| BX_PLATFORM_NX                             \
 			|| BX_PLATFORM_RPI                            \
-			|| BX_PLATFORM_STEAMLINK                      \
 			|| BX_PLATFORM_WINDOWS                        \
 			) )
 
@@ -33,6 +32,10 @@
 			|| BX_PLATFORM_WINDOWS \
 			)
 
+// Keep a state cache of GL uniform values to avoid redundant uploads
+// on the following platforms.
+#define BGFX_GL_CONFIG_UNIFORM_CACHE BX_PLATFORM_EMSCRIPTEN
+
 #define BGFX_GL_PROFILER_BEGIN(_view, _abgr)                                               \
 	BX_MACRO_BLOCK_BEGIN                                                                   \
 		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, s_viewName[view]) ); \
@@ -41,8 +44,8 @@
 
 #define BGFX_GL_PROFILER_BEGIN_LITERAL(_name, _abgr)                                       \
 	BX_MACRO_BLOCK_BEGIN                                                                   \
-		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "" # _name) );       \
-		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr);                                    \
+		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "" _name) );         \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);                                      \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_GL_PROFILER_END()        \
@@ -132,13 +135,11 @@ typedef uint64_t GLuint64;
 #		include "glcontext_html5.h"
 #	endif // BGFX_USE_EGL
 
-#	if BX_PLATFORM_EMSCRIPTEN
-#		include <emscripten/emscripten.h>
-#	endif // BX_PLATFORM_EMSCRIPTEN
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #include "renderer.h"
 #include "debug_renderdoc.h"
+#include "emscripten.h"
 
 #ifndef GL_LUMINANCE
 #	define GL_LUMINANCE 0x1909
@@ -339,6 +340,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_BLUE
 #	define GL_BLUE 0x1905
 #endif // GL_BLUE
+
+#ifndef GL_RGB_INTEGER
+#	define GL_RGB_INTEGER 0x8D98
+#endif // GL_RGB_INTEGER
 
 #ifndef GL_RGBA_INTEGER
 #	define GL_RGBA_INTEGER 0x8D99
@@ -1095,6 +1100,9 @@ namespace bgfx { namespace gl
 {
 	void dumpExtensions(const char* _extensions);
 
+	void lazyEnableVertexAttribArray(GLuint index);
+	void lazyDisableVertexAttribArray(GLuint index);
+
 	const char* glEnumName(GLenum _enum);
 
 #define _GL_CHECK(_check, _call) \
@@ -1109,7 +1117,7 @@ namespace bgfx { namespace gl
 #define IGNORE_GL_ERROR_CHECK(...) BX_NOOP()
 
 #if BGFX_CONFIG_DEBUG
-#	define GL_CHECK(_call)   _GL_CHECK(BX_CHECK, _call)
+#	define GL_CHECK(_call)   _GL_CHECK(BX_ASSERT, _call)
 #	define GL_CHECK_I(_call) _GL_CHECK(IGNORE_GL_ERROR_CHECK, _call)
 #else
 #	define GL_CHECK(_call)   _call
@@ -1119,6 +1127,88 @@ namespace bgfx { namespace gl
 #define GL_IMPORT_TYPEDEFS 1
 #define GL_IMPORT(_optional, _proto, _func, _import) extern _proto _func
 #include "glimports.h"
+
+	class UniformStateCache
+	{
+	public:
+		struct f4   { float val[ 4]; bool operator ==(const f4   &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1]; }};
+		struct f3x3 { float val[ 9]; bool operator ==(const f3x3 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && ((const uint32_t*)a)[8] == ((const uint32_t*)b)[8]; }};
+		struct f4x4 { float val[16]; bool operator ==(const f4x4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && a[4] == b[4] && a[5] == b[5] && a[6] == b[6] && a[7] == b[7]; }};
+
+		typedef stl::unordered_map<uint64_t, int>  IMap;
+		typedef stl::unordered_map<uint64_t, f4>   F4Map;
+		typedef stl::unordered_map<uint64_t, f3x3> F3x3Map;
+		typedef stl::unordered_map<uint64_t, f4x4> F4x4Map;
+
+		UniformStateCache()
+			: m_currentProgram(0)
+		{
+		}
+
+		// Inserts the new value into the uniform cache, and returns true
+		// if the old value was different than the new one.
+		template<typename T>
+		bool updateUniformCache(uint32_t loc, const T &value)
+		{
+			if (BX_ENABLED(BGFX_GL_CONFIG_UNIFORM_CACHE) )
+			{
+				// Uniform state cache for various types.
+				stl::unordered_map<uint64_t, T>& uniformCacheMap = getUniformCache<T>();
+
+				uint64_t key = (uint64_t(m_currentProgram) << 32) | loc;
+
+				auto iter = uniformCacheMap.find(key);
+
+				// Not found in the cache? Add it.
+				if (iter == uniformCacheMap.end())
+				{
+					uniformCacheMap[key] = value;
+					return true;
+				}
+
+				// Value in the cache was the same as new state? Skip reuploading this state.
+				if (iter->second == value)
+				{
+					return false;
+				}
+
+				iter->second = value;
+			}
+
+			return true;
+		}
+
+		void saveCurrentProgram(GLuint program)
+		{
+			if (BX_ENABLED(BGFX_GL_CONFIG_UNIFORM_CACHE) )
+			{
+				m_currentProgram = program;
+			}
+		}
+
+	private:
+		GLuint m_currentProgram;
+
+		IMap    m_uniformiCacheMap;
+		F4Map   m_uniformf4CacheMap;
+		F3x3Map m_uniformf3x3CacheMap;
+		F4x4Map m_uniformf4x4CacheMap;
+
+		template<typename T>
+		stl::unordered_map<uint64_t, T>& getUniformCache();
+	};
+
+	template<>
+	inline UniformStateCache::IMap& UniformStateCache::getUniformCache() { return m_uniformiCacheMap; }
+
+	template<>
+	inline UniformStateCache::F4Map& UniformStateCache::getUniformCache() { return m_uniformf4CacheMap; }
+
+	template<>
+	inline UniformStateCache::F3x3Map& UniformStateCache::getUniformCache() { return m_uniformf3x3CacheMap; }
+
+	template<>
+	inline UniformStateCache::F4x4Map& UniformStateCache::getUniformCache() { return m_uniformf4x4CacheMap; }
 
 	class SamplerStateCache
 	{
@@ -1183,7 +1273,7 @@ namespace bgfx { namespace gl
 			m_flags = _flags;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
+			BX_ASSERT(0 != m_id, "Failed to generate buffer id.");
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id) );
 			GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER
 				, _size
@@ -1195,7 +1285,7 @@ namespace bgfx { namespace gl
 
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
-			BX_CHECK(0 != m_id, "Updating invalid index buffer.");
+			BX_ASSERT(0 != m_id, "Updating invalid index buffer.");
 
 			if (_discard)
 			{
@@ -1231,7 +1321,7 @@ namespace bgfx { namespace gl
 			m_target = drawIndirect ? GL_DRAW_INDIRECT_BUFFER : GL_ARRAY_BUFFER;
 
 			GL_CHECK(glGenBuffers(1, &m_id) );
-			BX_CHECK(0 != m_id, "Failed to generate buffer id.");
+			BX_ASSERT(0 != m_id, "Failed to generate buffer id.");
 			GL_CHECK(glBindBuffer(m_target, m_id) );
 			GL_CHECK(glBufferData(m_target
 				, _size
@@ -1243,7 +1333,7 @@ namespace bgfx { namespace gl
 
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
-			BX_CHECK(0 != m_id, "Updating invalid vertex buffer.");
+			BX_ASSERT(0 != m_id, "Updating invalid vertex buffer.");
 
 			if (_discard)
 			{
@@ -1393,7 +1483,7 @@ namespace bgfx { namespace gl
 				{
 					Attrib::Enum attr = Attrib::Enum(m_unboundUsedAttrib[ii]);
 					GLint loc = m_attributes[attr];
-					GL_CHECK(glDisableVertexAttribArray(loc) );
+					GL_CHECK(lazyDisableVertexAttribArray(loc) );
 				}
 			}
 		}
@@ -1579,52 +1669,6 @@ namespace bgfx { namespace gl
 
 		Query m_query[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 		bx::RingBufferControl m_control;
-	};
-
-	class LineReader : public bx::ReaderI
-	{
-	public:
-		LineReader(const void* _str)
-			: m_str( (const char*)_str)
-			, m_pos(0)
-			, m_size(bx::strLen( (const char*)_str) )
-		{
-		}
-
-		LineReader(const bx::StringView& _str)
-			: m_str(_str.getPtr() )
-			, m_pos(0)
-			, m_size(_str.getLength() )
-		{
-		}
-
-		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) override
-		{
-			if (m_str[m_pos] == '\0'
-			||  m_pos == m_size)
-			{
-				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_EOF, "LineReader: EOF.");
-				return 0;
-			}
-
-			uint32_t pos = m_pos;
-			const char* str = &m_str[pos];
-			const char* nl = bx::strFindNl(str).getPtr();
-			pos += (uint32_t)(nl - str);
-
-			const char* eol = &m_str[pos];
-
-			uint32_t size = bx::uint32_min(uint32_t(eol - str), _size);
-
-			bx::memCopy(_data, str, size);
-			m_pos += size;
-
-			return size;
-		}
-
-		const char* m_str;
-		uint32_t m_pos;
-		uint32_t m_size;
 	};
 
 } /* namespace gl */ } // namespace bgfx

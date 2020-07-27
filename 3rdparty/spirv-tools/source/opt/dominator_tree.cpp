@@ -176,7 +176,8 @@ void BasicBlockSuccessorHelper<BBType>::CreateSuccessorMap(
     // The tree construction requires 1 entry point, so we add a dummy node
     // that is connected to all function exiting basic blocks.
     // An exiting basic block is a block with an OpKill, OpUnreachable,
-    // OpReturn or OpReturnValue as terminator instruction.
+    // OpReturn, OpReturnValue, or OpTerminateInvocation  as terminator
+    // instruction.
     for (BasicBlock& bb : f) {
       if (bb.hasSuccessor()) {
         BasicBlockListTy& pred_list = predecessors_[&bb];
@@ -241,6 +242,7 @@ bool DominatorTree::Dominates(uint32_t a, uint32_t b) const {
 
 bool DominatorTree::Dominates(const DominatorTreeNode* a,
                               const DominatorTreeNode* b) const {
+  if (!a || !b) return false;
   // Node A dominates node B if they are the same.
   if (a == b) return true;
 

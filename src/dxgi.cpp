@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -10,7 +10,7 @@
 #include "dxgi.h"
 #include "renderer_d3d.h"
 
-#if !BX_PLATFORM_WINDOWS
+#if !BX_PLATFORM_WINDOWS && !BX_PLATFORM_LINUX
 #	include <inspectable.h>
 #	if BX_PLATFORM_WINRT
 #		include <windows.ui.xaml.media.dxinterop.h>
@@ -246,12 +246,12 @@ namespace bgfx
 				{
 					DXGI_OUTPUT_DESC outputDesc;
 					hr = output->GetDesc(&outputDesc);
-					if (SUCCEEDED(hr))
+					if (SUCCEEDED(hr) )
 					{
 						BX_TRACE("\tOutput #%d", jj);
 
 						char deviceName[BX_COUNTOF(outputDesc.DeviceName)];
-						wcstombs(deviceName, outputDesc.DeviceName, BX_COUNTOF(outputDesc.DeviceName));
+						wcstombs(deviceName, outputDesc.DeviceName, BX_COUNTOF(outputDesc.DeviceName) );
 						BX_TRACE("\t\t           DeviceName: %s", deviceName);
 						BX_TRACE("\t\t   DesktopCoordinates: %d, %d, %d, %d"
 							, outputDesc.DesktopCoordinates.left
@@ -457,26 +457,59 @@ namespace bgfx
 			}
 
 #	if BX_PLATFORM_WINRT
-			IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(_scd.nwh);
-			ISwapChainBackgroundPanelNative* panel = NULL;
-			hr = nativeWindow->QueryInterface(
-				  __uuidof(ISwapChainBackgroundPanelNative)
-				, (void **)&panel
-				);
-			if (FAILED(hr) )
-			{
-				return hr;
-			}
+			IInspectable *nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
+			ISwapChainPanelNative* swapChainPanelNative;
 
-			if (NULL != panel)
+			hr = nativeWindow->QueryInterface(
+				  __uuidof(ISwapChainPanelNative)
+				, (void**)&swapChainPanelNative
+				);
+
+			if (!FAILED(hr) )
 			{
-				hr = panel->SetSwapChain(*_swapChain);
+				// Swap Chain Panel
+				if (NULL != swapChainPanelNative)
+				{
+					hr = swapChainPanelNative->SetSwapChain(*_swapChain);
+
+					if (FAILED(hr) )
+					{
+						DX_RELEASE(swapChainPanelNative, 0);
+						BX_TRACE("Failed to SetSwapChain, hr %x.");
+						return hr;
+					}
+
+					DX_RELEASE_I(swapChainPanelNative);
+				}
+			}
+			else
+			{
+				// Swap Chain Background Panel
+				ISwapChainBackgroundPanelNative* swapChainBackgroundPanelNative = NULL;
+
+				hr = nativeWindow->QueryInterface(
+					  __uuidof(ISwapChainBackgroundPanelNative)
+					, (void**)&swapChainBackgroundPanelNative
+					);
+
 				if (FAILED(hr) )
 				{
 					return hr;
 				}
 
-				panel->Release();
+				if (NULL != swapChainBackgroundPanelNative)
+				{
+					hr = swapChainBackgroundPanelNative->SetSwapChain(*_swapChain);
+
+					if (FAILED(hr) )
+					{
+						DX_RELEASE(swapChainBackgroundPanelNative, 0);
+						BX_TRACE("Failed to SetSwapChain, hr %x.");
+						return hr;
+					}
+
+					DX_RELEASE_I(swapChainBackgroundPanelNative);
+				}
 			}
 #	endif // BX_PLATFORM_WINRT
 		}
@@ -559,7 +592,7 @@ namespace bgfx
 						hr = output6->GetDesc1(&desc);
 						if (SUCCEEDED(hr) )
 						{
-							BX_TRACE("Display specs:")
+							BX_TRACE("Display specs:");
 							BX_TRACE("\t         BitsPerColor: %d", desc.BitsPerColor);
 							BX_TRACE("\t          Color space: %s (colorspace, range, gamma, sitting, primaries, transform)"
 								, s_colorSpaceStr[bx::min<uint32_t>(desc.ColorSpace, kDxgiLastColorSpace+1)]

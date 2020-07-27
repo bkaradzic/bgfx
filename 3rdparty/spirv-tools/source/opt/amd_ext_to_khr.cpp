@@ -53,12 +53,6 @@ analysis::Type* GetUIntType(IRContext* ctx) {
   return ctx->get_type_mgr()->GetRegisteredType(&int_type);
 }
 
-bool NotImplementedYet(IRContext*, Instruction*,
-                       const std::vector<const analysis::Constant*>&) {
-  assert(false && "Not implemented.");
-  return false;
-}
-
 // Returns a folding rule that replaces |op(a,b,c)| by |op(op(a,b),c)|, where
 // |op| is either min or max. |opcode| is the binary opcode in the GLSLstd450
 // extended instruction set that corresponds to the trinary instruction being
@@ -686,13 +680,13 @@ bool ReplaceCubeFaceCoord(IRContext* ctx, Instruction* inst,
   return true;
 }
 
-// A folding rule that will replace the CubeFaceCoordAMD extended
+// A folding rule that will replace the CubeFaceIndexAMD extended
 // instruction in the SPV_AMD_gcn_shader_ballot.  Returns true if the folding
 // is successful.
 //
 // The instruction
 //
-//  %result = OpExtInst %v2float %1 CubeFaceCoordAMD %input
+//  %result = OpExtInst %float %1 CubeFaceIndexAMD %input
 //
 // with
 //
@@ -705,7 +699,7 @@ bool ReplaceCubeFaceCoord(IRContext* ctx, Instruction* inst,
 //      %is_z_neg = OpFOrdLessThan %bool %z %float_0
 //      %is_y_neg = OpFOrdLessThan %bool %y %float_0
 //      %is_x_neg = OpFOrdLessThan %bool %x %float_0
-//      %amax_x_y = OpExtInst %float %n_1 FMax %ay %ax
+//      %amax_x_y = OpExtInst %float %n_1 FMax %ax %ay
 //      %is_z_max = OpFOrdGreaterThanEqual %bool %az %amax_x_y
 //        %y_gt_x = OpFOrdGreaterThanEqual %bool %ay %ax
 //        %case_z = OpSelect %float %is_z_neg %float_5 %float4
@@ -800,6 +794,37 @@ bool ReplaceCubeFaceIndex(IRContext* ctx, Instruction* inst,
   return true;
 }
 
+// A folding rule that will replace the TimeAMD extended instruction in the
+// SPV_AMD_gcn_shader_ballot.  It returns true if the folding is successful.
+// It returns False, otherwise.
+//
+// The instruction
+//
+//  %result = OpExtInst %uint64 %1 TimeAMD
+//
+// with
+//
+//  %result = OpReadClockKHR %uint64 %uint_3
+//
+// NOTE: TimeAMD uses subgroup scope (it is not a real time clock).
+bool ReplaceTimeAMD(IRContext* ctx, Instruction* inst,
+                    const std::vector<const analysis::Constant*>&) {
+  InstructionBuilder ir_builder(
+      ctx, inst,
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+  ctx->AddExtension("SPV_KHR_shader_clock");
+  ctx->AddCapability(SpvCapabilityShaderClockKHR);
+
+  inst->SetOpcode(SpvOpReadClockKHR);
+  Instruction::OperandList args;
+  uint32_t subgroup_scope_id = ir_builder.GetUintConstantId(SpvScopeSubgroup);
+  args.push_back({SPV_OPERAND_TYPE_ID, {subgroup_scope_id}});
+  inst->SetInOperands(std::move(args));
+  ctx->UpdateDefUse(inst);
+
+  return true;
+}
+
 class AmdExtFoldingRules : public FoldingRules {
  public:
   explicit AmdExtFoldingRules(IRContext* ctx) : FoldingRules(ctx) {}
@@ -869,7 +894,7 @@ class AmdExtFoldingRules : public FoldingRules {
           ReplaceCubeFaceCoord);
       ext_rules_[{extension_id, CubeFaceIndexAMD}].push_back(
           ReplaceCubeFaceIndex);
-      ext_rules_[{extension_id, TimeAMD}].push_back(NotImplementedYet);
+      ext_rules_[{extension_id, TimeAMD}].push_back(ReplaceTimeAMD);
     }
   }
 };

@@ -49,6 +49,18 @@ bool IsMerge(IRContext* context, BasicBlock* block) {
   return IsMerge(context, block->id());
 }
 
+// Returns true if |id| is the continue target of a merge instruction.
+bool IsContinue(IRContext* context, uint32_t id) {
+  return !context->get_def_use_mgr()->WhileEachUse(
+      id, [](Instruction* user, uint32_t index) {
+        SpvOp op = user->opcode();
+        if (op == SpvOpLoopMerge && index == 1u) {
+          return false;
+        }
+        return true;
+      });
+}
+
 // Removes any OpPhi instructions in |block|, which should have exactly one
 // predecessor, replacing uses of OpPhi ids with the ids associated with the
 // predecessor.
@@ -83,6 +95,11 @@ bool CanMergeWithSuccessor(IRContext* context, BasicBlock* block) {
   bool succ_is_merge = IsMerge(context, lab_id);
   if (pred_is_merge && succ_is_merge) {
     // Cannot merge two merges together.
+    return false;
+  }
+
+  if (pred_is_merge && IsContinue(context, lab_id)) {
+    // Cannot merge a continue target with a merge block.
     return false;
   }
 
@@ -154,8 +171,17 @@ void MergeWithSuccessor(IRContext* context, Function* func,
       // flow declaration.
       context->KillInst(merge_inst);
     } else {
+      // Move OpLine/OpNoLine information to merge_inst. This solves
+      // the validation error that OpLine is placed between OpLoopMerge
+      // and OpBranchConditional.
+      auto terminator = bi->terminator();
+      auto& vec = terminator->dbg_line_insts();
+      auto& new_vec = merge_inst->dbg_line_insts();
+      new_vec.insert(new_vec.end(), vec.begin(), vec.end());
+      terminator->clear_dbg_line_insts();
+
       // Move the merge instruction to just before the terminator.
-      merge_inst->InsertBefore(bi->terminator());
+      merge_inst->InsertBefore(terminator);
     }
   }
   context->ReplaceAllUsesWith(lab_id, bi->id());
