@@ -72,9 +72,11 @@ void FuzzerPassAddParameters::Apply() {
     for (uint32_t i = 0; i < num_new_parameters; ++i) {
       ApplyTransformation(TransformationAddParameter(
           function.result_id(), GetFuzzerContext()->GetFreshId(),
+          // We mark the constant as irrelevant so that we can replace it with a
+          // more interesting value later.
           FindOrCreateZeroConstant(
-              type_candidates[GetFuzzerContext()->RandomIndex(
-                  type_candidates)]),
+              type_candidates[GetFuzzerContext()->RandomIndex(type_candidates)],
+              true),
           GetFuzzerContext()->GetFreshId()));
     }
   }

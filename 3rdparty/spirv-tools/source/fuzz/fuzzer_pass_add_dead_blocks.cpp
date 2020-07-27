@@ -45,7 +45,7 @@ void FuzzerPassAddDeadBlocks::Apply() {
       // Make sure the module contains a boolean constant equal to
       // |condition_value|.
       bool condition_value = GetFuzzerContext()->ChooseEven();
-      FindOrCreateBoolConstant(condition_value);
+      FindOrCreateBoolConstant(condition_value, false);
 
       // We speculatively create a transformation, and then apply it (below) if
       // it turns out to be applicable.  This avoids duplicating the logic for

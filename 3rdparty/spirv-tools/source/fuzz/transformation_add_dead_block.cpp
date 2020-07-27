@@ -32,7 +32,8 @@ TransformationAddDeadBlock::TransformationAddDeadBlock(uint32_t fresh_id,
 }
 
 bool TransformationAddDeadBlock::IsApplicable(
-    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   // The new block's id must be fresh.
   if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
@@ -40,8 +41,8 @@ bool TransformationAddDeadBlock::IsApplicable(
 
   // First, we check that a constant with the same value as
   // |message_.condition_value| is present.
-  if (!fuzzerutil::MaybeGetBoolConstant(ir_context,
-                                        message_.condition_value())) {
+  if (!fuzzerutil::MaybeGetBoolConstant(ir_context, transformation_context,
+                                        message_.condition_value(), false)) {
     // The required constant is not present, so the transformation cannot be
     // applied.
     return false;
@@ -92,8 +93,8 @@ void TransformationAddDeadBlock::Apply(
       existing_block->terminator()->GetSingleWordInOperand(0);
 
   // Get the id of the boolean value that will be used as the branch condition.
-  auto bool_id =
-      fuzzerutil::MaybeGetBoolConstant(ir_context, message_.condition_value());
+  auto bool_id = fuzzerutil::MaybeGetBoolConstant(
+      ir_context, *transformation_context, message_.condition_value(), false);
 
   // Make a new block that unconditionally branches to the original successor
   // block.

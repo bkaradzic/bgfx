@@ -57,9 +57,12 @@ void FuzzerPassAddEquationInstructions::Apply() {
         std::vector<opt::Instruction*> available_instructions =
             FindAvailableInstructions(
                 function, block, inst_it,
-                [](opt::IRContext*, opt::Instruction* instruction) -> bool {
+                [this](opt::IRContext*, opt::Instruction* instruction) -> bool {
                   return instruction->result_id() && instruction->type_id() &&
-                         instruction->opcode() != SpvOpUndef;
+                         instruction->opcode() != SpvOpUndef &&
+                         !GetTransformationContext()
+                              ->GetFactManager()
+                              ->IdIsIrrelevant(instruction->result_id());
                 });
 
         // Try the opcodes for which we know how to make ids at random until

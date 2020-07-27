@@ -138,7 +138,7 @@ void FuzzerPassAddAccessChains::Apply() {
           uint32_t index_value =
               GetFuzzerContext()->GetRandomIndexForAccessChain(bound);
           index_ids.push_back(FindOrCreateIntegerConstant(
-              {index_value}, 32, GetFuzzerContext()->ChooseEven()));
+              {index_value}, 32, GetFuzzerContext()->ChooseEven(), false));
           switch (subobject_type->opcode()) {
             case SpvOpTypeArray:
             case SpvOpTypeMatrix:

@@ -28,7 +28,8 @@ class TransformationAddConstantBoolean : public Transformation {
   explicit TransformationAddConstantBoolean(
       const protobufs::TransformationAddConstantBoolean& message);
 
-  TransformationAddConstantBoolean(uint32_t fresh_id, bool is_true);
+  TransformationAddConstantBoolean(uint32_t fresh_id, bool is_true,
+                                   bool is_irrelevant);
 
   // - |message_.fresh_id| must not be used by the module.
   // - The module must already contain OpTypeBool.
@@ -38,6 +39,8 @@ class TransformationAddConstantBoolean : public Transformation {
 
   // - Adds OpConstantTrue (OpConstantFalse) to the module with id
   //   |message_.fresh_id| if |message_.is_true| holds (does not hold).
+  // - Also, creates an IdIsIrrelevant fact about |fresh_id| if |is_irrelevant|
+  //   is true.
   void Apply(opt::IRContext* ir_context,
              TransformationContext* transformation_context) const override;
 

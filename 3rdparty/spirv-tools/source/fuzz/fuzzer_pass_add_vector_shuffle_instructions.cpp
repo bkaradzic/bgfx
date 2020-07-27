@@ -60,16 +60,28 @@ void FuzzerPassAddVectorShuffleInstructions::Apply() {
         std::vector<opt::Instruction*> vector_instructions =
             FindAvailableInstructions(
                 function, block, instruction_iterator,
-                [instruction_descriptor](
+                [this, instruction_descriptor](
                     opt::IRContext* ir_context,
                     opt::Instruction* instruction) -> bool {
-                  if (!instruction->type_id()) {
+                  if (!instruction->result_id() || !instruction->type_id()) {
                     return false;
                   }
 
                   if (!ir_context->get_type_mgr()
                            ->GetType(instruction->type_id())
                            ->AsVector()) {
+                    return false;
+                  }
+
+                  if (!GetTransformationContext()
+                           ->GetFactManager()
+                           ->IdIsIrrelevant(instruction->result_id()) &&
+                      !fuzzerutil::CanMakeSynonymOf(ir_context,
+                                                    *GetTransformationContext(),
+                                                    instruction)) {
+                    // If the id is irrelevant, we can use it since it will not
+                    // participate in DataSynonym fact. Otherwise, we should be
+                    // able to produce a synonym out of the id.
                     return false;
                   }
 

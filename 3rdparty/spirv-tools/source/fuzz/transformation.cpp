@@ -33,6 +33,7 @@
 #include "source/fuzz/transformation_add_local_variable.h"
 #include "source/fuzz/transformation_add_no_contraction_decoration.h"
 #include "source/fuzz/transformation_add_parameter.h"
+#include "source/fuzz/transformation_add_relaxed_decoration.h"
 #include "source/fuzz/transformation_add_spec_constant_op.h"
 #include "source/fuzz/transformation_add_synonym.h"
 #include "source/fuzz/transformation_add_type_array.h"
@@ -61,9 +62,12 @@
 #include "source/fuzz/transformation_record_synonymous_constants.h"
 #include "source/fuzz/transformation_replace_boolean_constant_with_constant_binary.h"
 #include "source/fuzz/transformation_replace_constant_with_uniform.h"
+#include "source/fuzz/transformation_replace_copy_memory_with_load_store.h"
+#include "source/fuzz/transformation_replace_copy_object_with_store_load.h"
 #include "source/fuzz/transformation_replace_id_with_synonym.h"
 #include "source/fuzz/transformation_replace_linear_algebra_instruction.h"
 #include "source/fuzz/transformation_replace_parameter_with_global.h"
+#include "source/fuzz/transformation_replace_params_with_struct.h"
 #include "source/fuzz/transformation_set_function_control.h"
 #include "source/fuzz/transformation_set_loop_control.h"
 #include "source/fuzz/transformation_set_memory_operands_mask.h"
@@ -128,6 +132,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
           message.add_no_contraction_decoration());
     case protobufs::Transformation::TransformationCase::kAddParameter:
       return MakeUnique<TransformationAddParameter>(message.add_parameter());
+    case protobufs::Transformation::TransformationCase::kAddRelaxedDecoration:
+      return MakeUnique<TransformationAddRelaxedDecoration>(
+          message.add_relaxed_decoration());
     case protobufs::Transformation::TransformationCase::kAddSpecConstantOp:
       return MakeUnique<TransformationAddSpecConstantOp>(
           message.add_spec_constant_op());
@@ -211,6 +218,14 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
         kReplaceConstantWithUniform:
       return MakeUnique<TransformationReplaceConstantWithUniform>(
           message.replace_constant_with_uniform());
+    case protobufs::Transformation::TransformationCase::
+        kReplaceCopyMemoryWithLoadStore:
+      return MakeUnique<TransformationReplaceCopyMemoryWithLoadStore>(
+          message.replace_copy_memory_with_load_store());
+    case protobufs::Transformation::TransformationCase::
+        kReplaceCopyObjectWithStoreLoad:
+      return MakeUnique<TransformationReplaceCopyObjectWithStoreLoad>(
+          message.replace_copy_object_with_store_load());
     case protobufs::Transformation::TransformationCase::kReplaceIdWithSynonym:
       return MakeUnique<TransformationReplaceIdWithSynonym>(
           message.replace_id_with_synonym());
@@ -218,6 +233,10 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
         kReplaceLinearAlgebraInstruction:
       return MakeUnique<TransformationReplaceLinearAlgebraInstruction>(
           message.replace_linear_algebra_instruction());
+    case protobufs::Transformation::TransformationCase::
+        kReplaceParamsWithStruct:
+      return MakeUnique<TransformationReplaceParamsWithStruct>(
+          message.replace_params_with_struct());
     case protobufs::Transformation::TransformationCase::kSetFunctionControl:
       return MakeUnique<TransformationSetFunctionControl>(
           message.set_function_control());

@@ -17,13 +17,13 @@
 #
 # Depends on roll-dep from depot_path being in PATH.
 
-effcee_dir="third_party/effcee/"
+effcee_dir="external/effcee/"
 effcee_trunk="origin/main"
-googletest_dir="third_party/googletest/"
+googletest_dir="external/googletest/"
 googletest_trunk="origin/master"
-re2_dir="third_party/re2/"
+re2_dir="external/re2/"
 re2_trunk="origin/master"
-spirv_headers_dir="third_party/spirv-headers/"
+spirv_headers_dir="external/spirv-headers/"
 spirv_headers_trunk="origin/master"
 
 # This script assumes it's parent directory is the repo root.

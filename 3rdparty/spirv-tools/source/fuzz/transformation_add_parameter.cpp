@@ -66,7 +66,8 @@ bool TransformationAddParameter::IsApplicable(
 }
 
 void TransformationAddParameter::Apply(
-    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
   // Find the function that will be transformed
   auto* function = fuzzerutil::FindFunction(ir_context, message_.function_id());
   assert(function && "Can't find the function");
@@ -85,6 +86,11 @@ void TransformationAddParameter::Apply(
   // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3403):
   //  Add an PointeeValueIsIrrelevant fact if the parameter is a pointer.
 
+  // Mark new parameter as irrelevant so that we can replace its use with some
+  // other id.
+  transformation_context->GetFactManager()->AddFactIdIsIrrelevant(
+      message_.parameter_fresh_id());
+
   // Fix all OpFunctionCall instructions.
   ir_context->get_def_use_mgr()->ForEachUser(
       &function->DefInst(), [this](opt::Instruction* call) {
@@ -93,9 +99,6 @@ void TransformationAddParameter::Apply(
           return;
         }
 
-        // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3177):
-        //  it would be good to mark this usage of |id| as irrelevant, so that
-        //  we can perform some interesting transformations on it later.
         call->AddOperand({SPV_OPERAND_TYPE_ID, {message_.initializer_id()}});
       });
 

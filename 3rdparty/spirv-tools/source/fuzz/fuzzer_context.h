@@ -143,6 +143,9 @@ class FuzzerContext {
     return chance_of_adding_no_contraction_decoration_;
   }
   uint32_t GetChanceOfAddingParameters() { return chance_of_adding_parameters; }
+  uint32_t GetChanceOfAddingRelaxedDecoration() {
+    return chance_of_adding_relaxed_decoration_;
+  }
   uint32_t GetChanceOfAddingStore() { return chance_of_adding_store_; }
   uint32_t GetChanceOfAddingSynonyms() { return chance_of_adding_synonyms_; }
   uint32_t GetChanceOfAddingVectorShuffle() {
@@ -209,6 +212,12 @@ class FuzzerContext {
   uint32_t GetChanceOfPushingIdThroughVariable() {
     return chance_of_pushing_id_through_variable_;
   }
+  uint32_t GetChanceOfReplacingCopyMemoryWithLoadStore() {
+    return chance_of_replacing_copy_memory_with_load_store_;
+  }
+  uint32_t GetChanceOfReplacingCopyObjectWithStoreLoad() {
+    return chance_of_replacing_copyobject_with_store_load_;
+  }
   uint32_t GetChanceOfReplacingIdWithSynonym() {
     return chance_of_replacing_id_with_synonym_;
   }
@@ -217,6 +226,9 @@ class FuzzerContext {
   }
   uint32_t GetChanceOfReplacingParametersWithGlobals() {
     return chance_of_replacing_parameters_with_globals_;
+  }
+  uint32_t GetChanceOfReplacingParametersWithStruct() {
+    return chance_of_replacing_parameters_with_struct_;
   }
   uint32_t GetChanceOfSplittingBlock() { return chance_of_splitting_block_; }
   uint32_t GetChanceOfSwappingConditionalBranchOperands() {
@@ -233,6 +245,9 @@ class FuzzerContext {
   }
   uint32_t GetMaximumNumberOfFunctionParameters() {
     return max_number_of_function_parameters_;
+  }
+  uint32_t GetMaximumNumberOfParametersReplacedWithStruct() {
+    return max_number_of_parameters_replaced_with_struct_;
   }
   std::pair<uint32_t, uint32_t> GetRandomBranchWeights() {
     std::pair<uint32_t, uint32_t> branch_weights = {0, 0};
@@ -275,6 +290,12 @@ class FuzzerContext {
         {1, std::min(max_number_of_new_parameters_,
                      GetMaximumNumberOfFunctionParameters() - num_of_params)});
   }
+  uint32_t GetRandomNumberOfParametersReplacedWithStruct(uint32_t num_params) {
+    assert(num_params != 0 && "A function must have parameters to replace");
+    return ChooseBetweenMinAndMax(
+        {1, std::min(num_params,
+                     GetMaximumNumberOfParametersReplacedWithStruct())});
+  }
   uint32_t GetRandomSizeForNewArray() {
     // Ensure that the array size is non-zero.
     return random_generator_->RandomUint32(max_new_array_size_limit_ - 1) + 1;
@@ -312,6 +333,7 @@ class FuzzerContext {
   uint32_t chance_of_adding_matrix_type_;
   uint32_t chance_of_adding_no_contraction_decoration_;
   uint32_t chance_of_adding_parameters;
+  uint32_t chance_of_adding_relaxed_decoration_;
   uint32_t chance_of_adding_store_;
   uint32_t chance_of_adding_synonyms_;
   uint32_t chance_of_adding_vector_shuffle_;
@@ -338,9 +360,12 @@ class FuzzerContext {
   uint32_t chance_of_permuting_parameters_;
   uint32_t chance_of_permuting_phi_operands_;
   uint32_t chance_of_pushing_id_through_variable_;
+  uint32_t chance_of_replacing_copy_memory_with_load_store_;
+  uint32_t chance_of_replacing_copyobject_with_store_load_;
   uint32_t chance_of_replacing_id_with_synonym_;
   uint32_t chance_of_replacing_linear_algebra_instructions_;
   uint32_t chance_of_replacing_parameters_with_globals_;
+  uint32_t chance_of_replacing_parameters_with_struct_;
   uint32_t chance_of_splitting_block_;
   uint32_t chance_of_swapping_conditional_branch_operands_;
   uint32_t chance_of_toggling_access_chain_instruction_;
@@ -355,6 +380,7 @@ class FuzzerContext {
   uint32_t max_new_array_size_limit_;
   uint32_t max_number_of_function_parameters_;
   uint32_t max_number_of_new_parameters_;
+  uint32_t max_number_of_parameters_replaced_with_struct_;
 
   // Functions to determine with what probability to go deeper when generating
   // or mutating constructs recursively.

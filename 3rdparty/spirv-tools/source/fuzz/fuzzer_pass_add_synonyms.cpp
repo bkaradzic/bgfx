@@ -53,11 +53,12 @@ void FuzzerPassAddSynonyms::Apply() {
         // Select all instructions that can be used to create a synonym to.
         auto available_instructions = FindAvailableInstructions(
             function, block, inst_it,
-            [synonym_type](opt::IRContext* ir_context, opt::Instruction* inst) {
+            [synonym_type, this](opt::IRContext* ir_context,
+                                 opt::Instruction* inst) {
               // Check that we can create a synonym to |inst| as described by
               // the |synonym_type| and insert it before |inst_it|.
               return TransformationAddSynonym::IsInstructionValid(
-                  ir_context, inst, synonym_type);
+                  ir_context, *GetTransformationContext(), inst, synonym_type);
             });
 
         if (available_instructions.empty()) {
@@ -76,7 +77,7 @@ void FuzzerPassAddSynonyms::Apply() {
           case protobufs::TransformationAddSynonym::LOGICAL_OR:
             // Create a zero constant to be used as an operand of the synonymous
             // instruction.
-            FindOrCreateZeroConstant(existing_synonym->type_id());
+            FindOrCreateZeroConstant(existing_synonym->type_id(), false);
             break;
           case protobufs::TransformationAddSynonym::MUL_ONE:
           case protobufs::TransformationAddSynonym::LOGICAL_AND: {
@@ -96,13 +97,13 @@ void FuzzerPassAddSynonyms::Apply() {
               FindOrCreateCompositeConstant(
                   std::vector<uint32_t>(
                       vector->element_count(),
-                      FindOrCreateConstant({one_word}, element_type_id)),
-                  existing_synonym->type_id());
+                      FindOrCreateConstant({one_word}, element_type_id, false)),
+                  existing_synonym->type_id(), false);
             } else {
               FindOrCreateConstant(
                   {existing_synonym_type->AsFloat() ? fuzzerutil::FloatToWord(1)
                                                     : 1u},
-                  existing_synonym->type_id());
+                  existing_synonym->type_id(), false);
             }
           } break;
           default:

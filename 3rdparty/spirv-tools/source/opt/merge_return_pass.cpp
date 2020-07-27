@@ -299,9 +299,6 @@ void MergeReturnPass::CreatePhiNodesForInst(BasicBlock* merge_block,
 
     // There is at least one values that needs to be replaced.
     // First create the OpPhi instruction.
-    InstructionBuilder builder(
-        context(), &*merge_block->begin(),
-        IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
     uint32_t undef_id = Type2Undef(inst.type_id());
     std::vector<uint32_t> phi_operands;
     const std::set<uint32_t>& new_edges = new_edges_[merge_block];
@@ -318,7 +315,50 @@ void MergeReturnPass::CreatePhiNodesForInst(BasicBlock* merge_block,
       phi_operands.push_back(pred_id);
     }
 
-    Instruction* new_phi = builder.AddPhi(inst.type_id(), phi_operands);
+    Instruction* new_phi = nullptr;
+    // If the instruction is a pointer and variable pointers are not an option,
+    // then we have to regenerate the instruction instead of creating an OpPhi
+    // instruction.  If not, the Spir-V will be invalid.
+    Instruction* inst_type = get_def_use_mgr()->GetDef(inst.type_id());
+    bool regenerateInstruction = false;
+    if (inst_type->opcode() == SpvOpTypePointer) {
+      if (!context()->get_feature_mgr()->HasCapability(
+              SpvCapabilityVariablePointers)) {
+        regenerateInstruction = true;
+      }
+
+      uint32_t storage_class = inst_type->GetSingleWordInOperand(0);
+      if (storage_class != SpvStorageClassWorkgroup &&
+          storage_class != SpvStorageClassStorageBuffer) {
+        regenerateInstruction = true;
+      }
+    }
+
+    if (regenerateInstruction) {
+      std::unique_ptr<Instruction> regen_inst(inst.Clone(context()));
+      uint32_t new_id = TakeNextId();
+      regen_inst->SetResultId(new_id);
+      Instruction* insert_pos = &*merge_block->begin();
+      while (insert_pos->opcode() == SpvOpPhi) {
+        insert_pos = insert_pos->NextNode();
+      }
+      new_phi = insert_pos->InsertBefore(std::move(regen_inst));
+      get_def_use_mgr()->AnalyzeInstDefUse(new_phi);
+      context()->set_instr_block(new_phi, merge_block);
+
+      new_phi->ForEachInId([dom_tree, merge_block, this](uint32_t* use_id) {
+        Instruction* use = get_def_use_mgr()->GetDef(*use_id);
+        BasicBlock* use_bb = context()->get_instr_block(use);
+        if (use_bb != nullptr && !dom_tree->Dominates(use_bb, merge_block)) {
+          CreatePhiNodesForInst(merge_block, *use);
+        }
+      });
+    } else {
+      InstructionBuilder builder(
+          context(), &*merge_block->begin(),
+          IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+      new_phi = builder.AddPhi(inst.type_id(), phi_operands);
+    }
     uint32_t result_of_phi = new_phi->result_id();
 
     // Update all of the users to use the result of the new OpPhi.

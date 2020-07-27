@@ -170,6 +170,7 @@ message Fact {
     FactFunctionIsLivesafe function_is_livesafe_fact = 4;
     FactPointeeValueIsIrrelevant pointee_value_is_irrelevant_fact = 5;
     FactIdEquation id_equation_fact = 6;
+    FactIdIsIrrelevant id_is_irrelevant = 7;
   }
 }
 
@@ -182,6 +183,7 @@ message FactBlockIsDead {
   // can be made to this block.
 
   uint32 block_id = 1;
+
 }
 
 message FactConstantUniform {
@@ -222,6 +224,7 @@ message FactFunctionIsLivesafe {
   // functions.
 
   uint32 function_id = 1;
+
 }
 
 message FactIdEquation {
@@ -249,6 +252,18 @@ message FactIdEquation {
 
 }
 
+message FactIdIsIrrelevant {
+
+  // Records a fact that |result_id| is irrelevant (i.e. it's usage doesn't
+  // change the semantics of the module). This implies that a use of this id
+  // can later be replaced with some other id of the same type, or the
+  // definition of |result_id| can be changed so that it yields a different value.
+
+  // An irrelevant id.
+  uint32 result_id = 1;
+
+}
+
 message FactPointeeValueIsIrrelevant {
 
   // Records the fact that value of the data pointed to by a pointer id does
@@ -258,6 +273,7 @@ message FactPointeeValueIsIrrelevant {
 
   // A result id of pointer type
   uint32 pointer_id = 1;
+
 }
 
 message AccessChainClampingInfo {
@@ -386,6 +402,10 @@ message Transformation {
     TransformationReplaceParameterWithGlobal replace_parameter_with_global = 55;
     TransformationRecordSynonymousConstants record_synonymous_constants = 56;
     TransformationAddSynonym add_synonym = 57;
+    TransformationAddRelaxedDecoration add_relaxed_decoration = 58;
+    TransformationReplaceParamsWithStruct replace_params_with_struct = 59;
+    TransformationReplaceCopyObjectWithStoreLoad replace_copy_object_with_store_load = 60;
+    TransformationReplaceCopyMemoryWithLoadStore replace_copy_memory_with_load_store = 61;
     // Add additional option using the next available number.
   }
 }
@@ -415,15 +435,21 @@ message TransformationAddConstantBoolean {
 
   // Supports adding the constants true and false to a module, which may be
   // necessary in order to enable other transformations if they are not present.
+  // Also, creates an IdIsIrrelevant fact about |fresh_id| if |is_irrelevant| is true.
 
   uint32 fresh_id = 1;
   bool is_true = 2;
+
+  // If the constant should be marked as irrelevant.
+  bool is_irrelevant = 3;
 
 }
 
 message TransformationAddConstantComposite {
 
   // Adds a constant of the given composite type to the module.
+  // Also, creates an IdIsIrrelevant fact about |fresh_id| if
+  // |is_irrelevant| is true.
 
   // Fresh id for the composite
   uint32 fresh_id = 1;
@@ -433,6 +459,9 @@ message TransformationAddConstantComposite {
 
   // Constituent ids for the composite
   repeated uint32 constituent_id = 3;
+
+  // If the constant should be marked as irrelevant.
+  bool is_irrelevant = 4;
 
 }
 
@@ -451,6 +480,8 @@ message TransformationAddConstantNull {
 message TransformationAddConstantScalar {
 
   // Adds a constant of the given scalar type.
+  // Also, creates an IdIsIrrelevant fact about
+  // |fresh_id| if |is_irrelevant| is true.
 
   // Id for the constant
   uint32 fresh_id = 1;
@@ -460,6 +491,9 @@ message TransformationAddConstantScalar {
 
   // Value of the constant
   repeated uint32 word = 3;
+
+  // If the constant should be marked as irrelevant.
+  bool is_irrelevant = 4;
 
 }
 
@@ -684,6 +718,15 @@ message TransformationAddParameter {
   // if a required function type already exists or if we can change
   // the old function type.
   uint32 function_type_fresh_id = 4;
+
+}
+
+message TransformationAddRelaxedDecoration {
+
+  // Applies OpDecorate RelaxedPrecision to the given result id
+
+  // Result id to be decorated
+  uint32 result_id = 1;
 
 }
 
@@ -1233,6 +1276,39 @@ message TransformationReplaceConstantWithUniform {
 
 }
 
+message TransformationReplaceCopyMemoryWithLoadStore {
+
+   // A transformation that replaces instructions OpCopyMemory with loading
+   // the source variable to an intermediate value and storing this value into the
+   // target variable of the original OpCopyMemory instruction.
+
+   // The intermediate value.
+   uint32 fresh_id = 1;
+
+   // The instruction descriptor to OpCopyMemory. It is necessary, because
+   // OpCopyMemory doesn't have a result id.
+   InstructionDescriptor copy_memory_instruction_descriptor = 2;
+}
+
+message TransformationReplaceCopyObjectWithStoreLoad {
+
+  // A transformation that replaces instruction OpCopyObject with
+  // storing into a new variable and immediately loading from this
+  // variable to |result_id| of the original OpCopyObject instruction.
+
+  // The result id of initial OpCopyObject instruction
+  uint32 copy_object_result_id = 1;
+
+  // A fresh id for the variable to be stored to.
+  uint32 fresh_variable_id = 2;
+
+  // The variable storage class (Function or Private).
+  uint32 variable_storage_class = 3;
+
+  // Constant to initialize the variable with.
+  uint32 variable_initializer_id = 4;
+}
+
 message TransformationReplaceIdWithSynonym {
 
   // Replaces a use of an id with an id that is known to be synonymous, e.g.
@@ -1270,6 +1346,31 @@ message TransformationReplaceLinearAlgebraInstruction {
   //   OpTranspose
   //   OpOuterProduct
   InstructionDescriptor instruction_descriptor = 2;
+
+}
+
+message TransformationReplaceParamsWithStruct {
+
+  // Replaces parameters of the function with a struct containing
+  // values of those parameters.
+
+  // Result ids of parameters to replace.
+  repeated uint32 parameter_id = 1;
+
+  // Fresh id for a new function type. This might be unused if the required type
+  // already exists in the module or if we can change the old type.
+  uint32 fresh_function_type_id = 2;
+
+  // Fresh id for a new struct function parameter to be used as a replacement.
+  uint32 fresh_parameter_id = 3;
+
+  // Fresh ids for struct objects containing values of replaced parameters.
+  // This map contains a fresh id for at least every result id of a relevant
+  // OpFunctionCall instruction.
+  //
+  // While maps are not fully deterministic, the way this map is used does not
+  // exhibit nondeterminism. Change to repeated Uint32Pair if this changes.
+  map<uint32, uint32> caller_id_to_fresh_composite_id = 4;
 
 }
 

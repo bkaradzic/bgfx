@@ -1,7 +1,41 @@
 Revision history for SPIRV-Tools
 
-v2020.4-dev 2020-05-27
- - Start v2020.4-dev
+v2020.5 2020-07-22
+ - Start SPIRV-Tools v2020.5
+
+v2020.4 2020-07-22
+ - General
+   - Changed variable names to be more descriptive (#3433)
+   - Add support to GPU-AV instrumentation for Task and Mesh shaders (#3512)
+   - Permit Simple and GLSL450 memory model in WEBGPU_0 (#3463)
+   - Support SPV_KHR_terminate_invocation (#3568)
+ - Optimizer
+   - Preserving debug information in optimizations
+     (#3389,#3420,#3425,#3356,#3459,#3444,#3492,#3451,#3497i,#3498,#3542)
+   - Eliminate branches with condition of OpConstantNull (#3438)
+   - Use structured order to unroll loops. (#3443)
+   - Updated desc_sroa to support flattening structures (#3448)
+   - Support OpCompositeExtract pattern in desc_sroa (#3456)
+   - Fix ADCE pass bug for mulitple entries (#3470)
+     - Sink pointer instructions in merge return (#3569)
+ - Validator
+   - Validate location assignments (#3308)
+     - Fix reachability in the validator (#3541)
+ - Reduce
+ - Fuzz
+   - Add support for OpSpecConstant* (#3373)
+   - Add replace linear algebra instruction transformation (#3402)
+   - Implement vector shuffle fuzzer pass (#3412)
+   - Swap operands in OpBranchConditional (#3423)
+   - Permute OpPhi instruction operands (#3421)
+   - Add FuzzerPassAddCopyMemoryInstructions (#3391)
+   - TransformationInvertComparisonOperator (#3475)
+   - Add variables with workgroup storage class (#3485)
+   - Add image sample unused components transformation (#3439)
+   - TransformationReplaceParameterWithGlobal (#3434)
+     - Support adding dead break from back-edge block (#3519)
+       - Fuzzer pass to interchange zero-like constants (#3524)
+ - Linker
 
 v2020.3 2020-05-27
  - General

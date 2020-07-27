@@ -55,8 +55,12 @@ void FuzzerPassCopyObjects::Apply() {
         }
 
         std::vector<opt::Instruction*> relevant_instructions =
-            FindAvailableInstructions(function, block, inst_it,
-                                      fuzzerutil::CanMakeSynonymOf);
+            FindAvailableInstructions(
+                function, block, inst_it,
+                [this](opt::IRContext* ir_context, opt::Instruction* inst) {
+                  return fuzzerutil::CanMakeSynonymOf(
+                      ir_context, *GetTransformationContext(), inst);
+                });
 
         // At this point, |relevant_instructions| contains all the instructions
         // we might think of copying.

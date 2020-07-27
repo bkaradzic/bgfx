@@ -23,6 +23,25 @@ namespace spvtools {
 namespace fuzz {
 
 namespace fuzzerutil {
+namespace {
+
+uint32_t MaybeGetOpConstant(opt::IRContext* ir_context,
+                            const TransformationContext& transformation_context,
+                            const std::vector<uint32_t>& words,
+                            uint32_t type_id, bool is_irrelevant) {
+  for (const auto& inst : ir_context->types_values()) {
+    if (inst.opcode() == SpvOpConstant && inst.type_id() == type_id &&
+        inst.GetInOperand(0).words == words &&
+        transformation_context.GetFactManager()->IdIsIrrelevant(
+            inst.result_id()) == is_irrelevant) {
+      return inst.result_id();
+    }
+  }
+
+  return 0;
+}
+
+}  // namespace
 
 bool IsFreshId(opt::IRContext* context, uint32_t id) {
   return !context->get_def_use_mgr()->GetDef(id);
@@ -114,7 +133,7 @@ bool PhiIdsOkForNewEdge(
 
 void AddUnreachableEdgeAndUpdateOpPhis(
     opt::IRContext* context, opt::BasicBlock* bb_from, opt::BasicBlock* bb_to,
-    bool condition_value,
+    uint32_t bool_id,
     const google::protobuf::RepeatedField<google::protobuf::uint32>& phi_ids) {
   assert(PhiIdsOkForNewEdge(context, bb_from, bb_to, phi_ids) &&
          "Precondition on phi_ids is not satisfied");
@@ -122,10 +141,13 @@ void AddUnreachableEdgeAndUpdateOpPhis(
          "Precondition on terminator of bb_from is not satisfied");
 
   // Get the id of the boolean constant to be used as the condition.
-  uint32_t bool_id = MaybeGetBoolConstant(context, condition_value);
-  assert(
-      bool_id &&
-      "Precondition that condition value must be available is not satisfied");
+  auto condition_inst = context->get_def_use_mgr()->GetDef(bool_id);
+  assert(condition_inst &&
+         (condition_inst->opcode() == SpvOpConstantTrue ||
+          condition_inst->opcode() == SpvOpConstantFalse) &&
+         "|bool_id| is invalid");
+
+  auto condition_value = condition_inst->opcode() == SpvOpConstantTrue;
 
   const bool from_to_edge_already_exists = bb_from->IsSuccessor(bb_to);
   auto successor = bb_from->terminator()->GetSingleWordInOperand(0);
@@ -226,7 +248,9 @@ bool CanInsertOpcodeBeforeInstruction(
   return opcode == SpvOpPhi || instruction_in_block->opcode() != SpvOpPhi;
 }
 
-bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst) {
+bool CanMakeSynonymOf(opt::IRContext* ir_context,
+                      const TransformationContext& transformation_context,
+                      opt::Instruction* inst) {
   if (inst->opcode() == SpvOpSampledImage) {
     // The SPIR-V data rules say that only very specific instructions may
     // may consume the result id of an OpSampledImage, and this excludes the
@@ -235,6 +259,11 @@ bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst) {
   }
   if (!inst->HasResultId()) {
     // We can only make a synonym of an instruction that generates an id.
+    return false;
+  }
+  if (transformation_context.GetFactManager()->IdIsIrrelevant(
+          inst->result_id())) {
+    // An irrelevant id can't be a synonym of anything.
     return false;
   }
   if (!inst->type_id()) {
@@ -706,6 +735,101 @@ std::vector<opt::Instruction*> GetParameters(opt::IRContext* ir_context,
   return result;
 }
 
+std::vector<opt::Instruction*> GetCallers(opt::IRContext* ir_context,
+                                          uint32_t function_id) {
+  assert(FindFunction(ir_context, function_id) &&
+         "|function_id| is not a result id of a function");
+
+  std::vector<opt::Instruction*> result;
+  ir_context->get_def_use_mgr()->ForEachUser(
+      function_id, [&result, function_id](opt::Instruction* inst) {
+        if (inst->opcode() == SpvOpFunctionCall &&
+            inst->GetSingleWordInOperand(0) == function_id) {
+          result.push_back(inst);
+        }
+      });
+
+  return result;
+}
+
+opt::Function* GetFunctionFromParameterId(opt::IRContext* ir_context,
+                                          uint32_t param_id) {
+  auto* param_inst = ir_context->get_def_use_mgr()->GetDef(param_id);
+  assert(param_inst && "Parameter id is invalid");
+
+  for (auto& function : *ir_context->module()) {
+    if (InstructionIsFunctionParameter(param_inst, &function)) {
+      return &function;
+    }
+  }
+
+  return nullptr;
+}
+
+uint32_t UpdateFunctionType(opt::IRContext* ir_context, uint32_t function_id,
+                            uint32_t new_function_type_result_id,
+                            uint32_t return_type_id,
+                            const std::vector<uint32_t>& parameter_type_ids) {
+  // Check some initial constraints.
+  assert(ir_context->get_type_mgr()->GetType(return_type_id) &&
+         "Return type is invalid");
+  for (auto id : parameter_type_ids) {
+    const auto* type = ir_context->get_type_mgr()->GetType(id);
+    (void)type;  // Make compilers happy in release mode.
+    // Parameters can't be OpTypeVoid.
+    assert(type && !type->AsVoid() && "Parameter has invalid type");
+  }
+
+  auto* function = FindFunction(ir_context, function_id);
+  assert(function && "|function_id| is invalid");
+
+  auto* old_function_type = GetFunctionType(ir_context, function);
+  assert(old_function_type && "Function has invalid type");
+
+  std::vector<uint32_t> operand_ids = {return_type_id};
+  operand_ids.insert(operand_ids.end(), parameter_type_ids.begin(),
+                     parameter_type_ids.end());
+
+  if (ir_context->get_def_use_mgr()->NumUsers(old_function_type) == 1 &&
+      FindFunctionType(ir_context, operand_ids) == 0) {
+    // We can change |old_function_type| only if it's used once in the module
+    // and we are certain we won't create a duplicate as a result of the change.
+
+    // Update |old_function_type| in-place.
+    opt::Instruction::OperandList operands;
+    for (auto id : operand_ids) {
+      operands.push_back({SPV_OPERAND_TYPE_ID, {id}});
+    }
+
+    old_function_type->SetInOperands(std::move(operands));
+
+    // |operands| may depend on result ids defined below the |old_function_type|
+    // in the module.
+    old_function_type->RemoveFromList();
+    ir_context->AddType(std::unique_ptr<opt::Instruction>(old_function_type));
+    return old_function_type->result_id();
+  } else {
+    // We can't modify the |old_function_type| so we have to either use an
+    // existing one or create a new one.
+    auto type_id = FindOrCreateFunctionType(
+        ir_context, new_function_type_result_id, operand_ids);
+
+    if (type_id != old_function_type->result_id()) {
+      function->DefInst().SetInOperand(1, {type_id});
+
+      // DefUseManager hasn't been updated yet, so if the following condition is
+      // true, then |old_function_type| will have no users when this function
+      // returns. We might as well remove it.
+      if (ir_context->get_def_use_mgr()->NumUsers(old_function_type) == 1) {
+        old_function_type->RemoveFromList();
+        delete old_function_type;
+      }
+    }
+
+    return type_id;
+  }
+}
+
 void AddFunctionType(opt::IRContext* ir_context, uint32_t result_id,
                      const std::vector<uint32_t>& type_ids) {
   assert(result_id != 0 && "Result id can't be 0");
@@ -755,6 +879,11 @@ uint32_t MaybeGetFloatType(opt::IRContext* ir_context, uint32_t width) {
   return ir_context->get_type_mgr()->GetId(&type);
 }
 
+uint32_t MaybeGetBoolType(opt::IRContext* ir_context) {
+  opt::analysis::Bool type;
+  return ir_context->get_type_mgr()->GetId(&type);
+}
+
 uint32_t MaybeGetVectorType(opt::IRContext* ir_context,
                             uint32_t component_type_id,
                             uint32_t element_count) {
@@ -786,15 +915,18 @@ uint32_t MaybeGetStructType(opt::IRContext* ir_context,
   return ir_context->get_type_mgr()->GetId(&type);
 }
 
-uint32_t MaybeGetZeroConstant(opt::IRContext* ir_context,
-                              uint32_t scalar_or_composite_type_id) {
+uint32_t MaybeGetZeroConstant(
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context,
+    uint32_t scalar_or_composite_type_id, bool is_irrelevant) {
   const auto* type =
       ir_context->get_type_mgr()->GetType(scalar_or_composite_type_id);
   assert(type && "|scalar_or_composite_type_id| is invalid");
 
   switch (type->kind()) {
     case opt::analysis::Type::kBool:
-      return MaybeGetBoolConstant(ir_context, false);
+      return MaybeGetBoolConstant(ir_context, transformation_context, false,
+                                  is_irrelevant);
     case opt::analysis::Type::kFloat:
     case opt::analysis::Type::kInteger: {
       std::vector<uint32_t> words = {0};
@@ -803,8 +935,8 @@ uint32_t MaybeGetZeroConstant(opt::IRContext* ir_context,
         words.push_back(0);
       }
 
-      return MaybeGetScalarConstant(ir_context, words,
-                                    scalar_or_composite_type_id);
+      return MaybeGetScalarConstant(ir_context, transformation_context, words,
+                                    scalar_or_composite_type_id, is_irrelevant);
     }
     case opt::analysis::Type::kStruct: {
       std::vector<uint32_t> component_ids;
@@ -813,7 +945,16 @@ uint32_t MaybeGetZeroConstant(opt::IRContext* ir_context,
             ir_context->get_type_mgr()->GetId(component_type);
         assert(component_type_id && "Component type is invalid");
 
-        auto component_id = MaybeGetZeroConstant(ir_context, component_type_id);
+        auto component_id =
+            MaybeGetZeroConstant(ir_context, transformation_context,
+                                 component_type_id, is_irrelevant);
+        if (component_id == 0 && is_irrelevant) {
+          // Irrelevant constants can use either relevant or irrelevant
+          // constituents.
+          component_id = MaybeGetZeroConstant(
+              ir_context, transformation_context, component_type_id, false);
+        }
+
         if (component_id == 0) {
           return 0;
         }
@@ -821,8 +962,9 @@ uint32_t MaybeGetZeroConstant(opt::IRContext* ir_context,
         component_ids.push_back(component_id);
       }
 
-      return MaybeGetCompositeConstant(ir_context, component_ids,
-                                       scalar_or_composite_type_id);
+      return MaybeGetCompositeConstant(
+          ir_context, transformation_context, component_ids,
+          scalar_or_composite_type_id, is_irrelevant);
     }
     case opt::analysis::Type::kMatrix:
     case opt::analysis::Type::kVector: {
@@ -833,39 +975,56 @@ uint32_t MaybeGetZeroConstant(opt::IRContext* ir_context,
           ir_context->get_type_mgr()->GetId(component_type);
       assert(component_type_id && "Component type is invalid");
 
-      if (auto component_id =
-              MaybeGetZeroConstant(ir_context, component_type_id)) {
-        auto component_count = type->AsVector()
-                                   ? type->AsVector()->element_count()
-                                   : type->AsMatrix()->element_count();
-        return MaybeGetCompositeConstant(
-            ir_context, std::vector<uint32_t>(component_count, component_id),
-            scalar_or_composite_type_id);
+      auto component_id = MaybeGetZeroConstant(
+          ir_context, transformation_context, component_type_id, is_irrelevant);
+
+      if (component_id == 0 && is_irrelevant) {
+        // Irrelevant constants can use either relevant or irrelevant
+        // constituents.
+        component_id = MaybeGetZeroConstant(ir_context, transformation_context,
+                                            component_type_id, false);
       }
 
-      return 0;
+      if (component_id == 0) {
+        return 0;
+      }
+
+      auto component_count = type->AsVector()
+                                 ? type->AsVector()->element_count()
+                                 : type->AsMatrix()->element_count();
+      return MaybeGetCompositeConstant(
+          ir_context, transformation_context,
+          std::vector<uint32_t>(component_count, component_id),
+          scalar_or_composite_type_id, is_irrelevant);
     }
     case opt::analysis::Type::kArray: {
       auto component_type_id =
           ir_context->get_type_mgr()->GetId(type->AsArray()->element_type());
       assert(component_type_id && "Component type is invalid");
 
-      if (auto component_id =
-              MaybeGetZeroConstant(ir_context, component_type_id)) {
-        auto type_id = ir_context->get_type_mgr()->GetId(type);
-        assert(type_id && "|type| is invalid");
+      auto component_id = MaybeGetZeroConstant(
+          ir_context, transformation_context, component_type_id, is_irrelevant);
 
-        const auto* type_inst = ir_context->get_def_use_mgr()->GetDef(type_id);
-        assert(type_inst && "Array's type id is invalid");
-
-        return MaybeGetCompositeConstant(
-            ir_context,
-            std::vector<uint32_t>(GetArraySize(*type_inst, ir_context),
-                                  component_id),
-            scalar_or_composite_type_id);
+      if (component_id == 0 && is_irrelevant) {
+        component_id = MaybeGetZeroConstant(ir_context, transformation_context,
+                                            component_type_id, false);
       }
 
-      return 0;
+      if (component_id == 0) {
+        return 0;
+      }
+
+      auto type_id = ir_context->get_type_mgr()->GetId(type);
+      assert(type_id && "|type| is invalid");
+
+      const auto* type_inst = ir_context->get_def_use_mgr()->GetDef(type_id);
+      assert(type_inst && "Array's type id is invalid");
+
+      return MaybeGetCompositeConstant(
+          ir_context, transformation_context,
+          std::vector<uint32_t>(GetArraySize(*type_inst, ir_context),
+                                component_id),
+          scalar_or_composite_type_id, is_irrelevant);
     }
     default:
       assert(false && "Type is not supported");
@@ -873,110 +1032,106 @@ uint32_t MaybeGetZeroConstant(opt::IRContext* ir_context,
   }
 }
 
-uint32_t MaybeGetScalarConstant(opt::IRContext* ir_context,
-                                const std::vector<uint32_t>& words,
-                                uint32_t scalar_type_id) {
+uint32_t MaybeGetScalarConstant(
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context,
+    const std::vector<uint32_t>& words, uint32_t scalar_type_id,
+    bool is_irrelevant) {
   const auto* type = ir_context->get_type_mgr()->GetType(scalar_type_id);
   assert(type && "|scalar_type_id| is invalid");
 
   if (const auto* int_type = type->AsInteger()) {
-    return MaybeGetIntegerConstant(ir_context, words, int_type->width(),
-                                   int_type->IsSigned());
+    return MaybeGetIntegerConstant(ir_context, transformation_context, words,
+                                   int_type->width(), int_type->IsSigned(),
+                                   is_irrelevant);
   } else if (const auto* float_type = type->AsFloat()) {
-    return MaybeGetFloatConstant(ir_context, words, float_type->width());
+    return MaybeGetFloatConstant(ir_context, transformation_context, words,
+                                 float_type->width(), is_irrelevant);
   } else {
     assert(type->AsBool() && words.size() == 1 &&
            "|scalar_type_id| doesn't represent a scalar type");
-    return MaybeGetBoolConstant(ir_context, words[0]);
+    return MaybeGetBoolConstant(ir_context, transformation_context, words[0],
+                                is_irrelevant);
   }
 }
 
-uint32_t MaybeGetCompositeConstant(opt::IRContext* ir_context,
-                                   const std::vector<uint32_t>& component_ids,
-                                   uint32_t composite_type_id) {
-  std::vector<const opt::analysis::Constant*> constants;
-  for (auto id : component_ids) {
-    const auto* component_constant =
-        ir_context->get_constant_mgr()->FindDeclaredConstant(id);
-    assert(component_constant && "|id| is invalid");
-
-    constants.push_back(component_constant);
-  }
-
+uint32_t MaybeGetCompositeConstant(
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context,
+    const std::vector<uint32_t>& component_ids, uint32_t composite_type_id,
+    bool is_irrelevant) {
   const auto* type = ir_context->get_type_mgr()->GetType(composite_type_id);
-  assert(type && "|composite_type_id| is invalid");
+  (void)type;  // Make compilers happy in release mode.
+  assert(type &&
+         (type->AsArray() || type->AsStruct() || type->AsVector() ||
+          type->AsMatrix()) &&
+         "|composite_type_id| is invalid");
 
-  std::unique_ptr<opt::analysis::Constant> composite_constant;
-  switch (type->kind()) {
-    case opt::analysis::Type::kStruct:
-      composite_constant = MakeUnique<opt::analysis::StructConstant>(
-          type->AsStruct(), std::move(constants));
-      break;
-    case opt::analysis::Type::kVector:
-      composite_constant = MakeUnique<opt::analysis::VectorConstant>(
-          type->AsVector(), std::move(constants));
-      break;
-    case opt::analysis::Type::kMatrix:
-      composite_constant = MakeUnique<opt::analysis::MatrixConstant>(
-          type->AsMatrix(), std::move(constants));
-      break;
-    case opt::analysis::Type::kArray:
-      composite_constant = MakeUnique<opt::analysis::ArrayConstant>(
-          type->AsArray(), std::move(constants));
-      break;
-    default:
-      assert(false &&
-             "|composite_type_id| is not a result id of a composite type");
-      return 0;
+  for (const auto& inst : ir_context->types_values()) {
+    if (inst.opcode() == SpvOpConstantComposite &&
+        inst.type_id() == composite_type_id &&
+        transformation_context.GetFactManager()->IdIsIrrelevant(
+            inst.result_id()) == is_irrelevant &&
+        inst.NumInOperands() == component_ids.size()) {
+      bool is_match = true;
+
+      for (uint32_t i = 0; i < inst.NumInOperands(); ++i) {
+        if (inst.GetSingleWordInOperand(i) != component_ids[i]) {
+          is_match = false;
+          break;
+        }
+      }
+
+      if (is_match) {
+        return inst.result_id();
+      }
+    }
   }
 
-  return ir_context->get_constant_mgr()->FindDeclaredConstant(
-      composite_constant.get(), composite_type_id);
+  return 0;
 }
 
-uint32_t MaybeGetIntegerConstant(opt::IRContext* ir_context,
-                                 const std::vector<uint32_t>& words,
-                                 uint32_t width, bool is_signed) {
-  auto type_id = MaybeGetIntegerType(ir_context, width, is_signed);
-  if (!type_id) {
-    return 0;
+uint32_t MaybeGetIntegerConstant(
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context,
+    const std::vector<uint32_t>& words, uint32_t width, bool is_signed,
+    bool is_irrelevant) {
+  if (auto type_id = MaybeGetIntegerType(ir_context, width, is_signed)) {
+    return MaybeGetOpConstant(ir_context, transformation_context, words,
+                              type_id, is_irrelevant);
   }
 
-  const auto* type = ir_context->get_type_mgr()->GetType(type_id);
-  assert(type && "|type_id| is invalid");
-
-  opt::analysis::IntConstant constant(type->AsInteger(), words);
-  return ir_context->get_constant_mgr()->FindDeclaredConstant(&constant,
-                                                              type_id);
+  return 0;
 }
 
-uint32_t MaybeGetFloatConstant(opt::IRContext* ir_context,
-                               const std::vector<uint32_t>& words,
-                               uint32_t width) {
-  auto type_id = MaybeGetFloatType(ir_context, width);
-  if (!type_id) {
-    return 0;
+uint32_t MaybeGetFloatConstant(
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context,
+    const std::vector<uint32_t>& words, uint32_t width, bool is_irrelevant) {
+  if (auto type_id = MaybeGetFloatType(ir_context, width)) {
+    return MaybeGetOpConstant(ir_context, transformation_context, words,
+                              type_id, is_irrelevant);
   }
 
-  const auto* type = ir_context->get_type_mgr()->GetType(type_id);
-  assert(type && "|type_id| is invalid");
-
-  opt::analysis::FloatConstant constant(type->AsFloat(), words);
-  return ir_context->get_constant_mgr()->FindDeclaredConstant(&constant,
-                                                              type_id);
+  return 0;
 }
 
-uint32_t MaybeGetBoolConstant(opt::IRContext* context, bool value) {
-  opt::analysis::Bool bool_type;
-  auto registered_bool_type =
-      context->get_type_mgr()->GetRegisteredType(&bool_type);
-  if (!registered_bool_type) {
-    return 0;
+uint32_t MaybeGetBoolConstant(
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context, bool value,
+    bool is_irrelevant) {
+  if (auto type_id = MaybeGetBoolType(ir_context)) {
+    for (const auto& inst : ir_context->types_values()) {
+      if (inst.opcode() == (value ? SpvOpConstantTrue : SpvOpConstantFalse) &&
+          inst.type_id() == type_id &&
+          transformation_context.GetFactManager()->IdIsIrrelevant(
+              inst.result_id()) == is_irrelevant) {
+        return inst.result_id();
+      }
+    }
   }
-  opt::analysis::BoolConstant bool_constant(registered_bool_type->AsBool(),
-                                            value);
-  return context->get_constant_mgr()->FindDeclaredConstant(
-      &bool_constant, context->get_type_mgr()->GetId(&bool_type));
+
+  return 0;
 }
 
 void AddIntegerType(opt::IRContext* ir_context, uint32_t result_id,

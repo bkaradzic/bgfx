@@ -142,6 +142,9 @@ void FuzzerPassApplyIdSynonyms::Apply() {
                                                : parent_block->terminator();
           }
 
+          assert(!GetTransformationContext()->GetFactManager()->IdIsIrrelevant(
+                     synonym_to_try->object()) &&
+                 "Irrelevant ids can't participate in DataSynonym facts");
           ApplyTransformation(TransformationCompositeExtract(
               MakeInstructionDescriptor(GetIRContext(),
                                         instruction_to_insert_before),

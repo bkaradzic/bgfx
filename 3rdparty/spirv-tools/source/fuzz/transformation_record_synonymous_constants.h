@@ -33,11 +33,15 @@ class TransformationRecordSynonymousConstants : public Transformation {
   //   of constants
   // - |message_.constant_id| and |message_.synonym_id| refer to constants
   //   that are equal or equivalent.
+  //   TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3536): Signed and
+  //   unsigned integers are currently considered non-equivalent
   //   Two integers with the same width and value are equal, even if one is
   //   signed and the other is not.
-  //   Constants are equivalent if both of them represent zero-like scalar
-  //   values of the same type (for example OpConstant of type int and value
-  //   0 and OpConstantNull of type int).
+  //   Constants are equivalent:
+  //   - if both of them represent zero-like values of the same type
+  //   - if they are composite constants with the same type and their
+  //     components are pairwise equivalent.
+  // - |constant1_id| and |constant2_id| may not be irrelevant.
   bool IsApplicable(
       opt::IRContext* ir_context,
       const TransformationContext& transformation_context) const override;
@@ -51,6 +55,13 @@ class TransformationRecordSynonymousConstants : public Transformation {
 
  private:
   protobufs::TransformationRecordSynonymousConstants message_;
+
+  // Returns true if the two given constants are equivalent
+  // (the description of IsApplicable specifies the conditions they must satisfy
+  // to be considered equivalent)
+  static bool AreEquivalentConstants(opt::IRContext* ir_context,
+                                     uint32_t constant_id1,
+                                     uint32_t constant_id2);
 };
 
 }  // namespace fuzz

@@ -48,7 +48,8 @@ class TransformationCompositeExtract : public Transformation {
   // Adds an OpCompositeConstruct instruction before the instruction identified
   // by |message_.instruction_to_insert_before|, that extracts from
   // |message_.composite_id| via indices |message_.index| into
-  // |message_.fresh_id|.  Generates a data synonym fact relating
+  // |message_.fresh_id|. If |composite_id| is not an irrelevant id,
+  // generates a data synonym fact relating
   // |message_.fresh_id| to the extracted element.
   void Apply(opt::IRContext* ir_context,
              TransformationContext* transformation_context) const override;

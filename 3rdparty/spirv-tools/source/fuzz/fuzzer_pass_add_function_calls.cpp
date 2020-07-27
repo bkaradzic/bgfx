@@ -106,148 +106,92 @@ void FuzzerPassAddFunctionCalls::Apply() {
       });
 }
 
-std::map<uint32_t, std::vector<opt::Instruction*>>
-FuzzerPassAddFunctionCalls::GetAvailableInstructionsSuitableForActualParameters(
-    opt::Function* function, opt::BasicBlock* block,
-    const opt::BasicBlock::iterator& inst_it) {
-  // Find all instructions in scope that could potentially be used as actual
-  // parameters.  Weed out unsuitable pointer arguments immediately.
-  std::vector<opt::Instruction*> potentially_suitable_instructions =
-      FindAvailableInstructions(
-          function, block, inst_it,
-          [this, block](opt::IRContext* context,
-                        opt::Instruction* inst) -> bool {
-            if (!inst->HasResultId() || !inst->type_id()) {
-              // An instruction needs a result id and type in order
-              // to be suitable as an actual parameter.
-              return false;
-            }
-            if (context->get_def_use_mgr()->GetDef(inst->type_id())->opcode() ==
-                SpvOpTypePointer) {
-              switch (inst->opcode()) {
-                case SpvOpFunctionParameter:
-                case SpvOpVariable:
-                  // Function parameters and variables are the only
-                  // kinds of pointer that can be used as actual
-                  // parameters.
-                  break;
-                default:
-                  return false;
-              }
-              if (!GetTransformationContext()->GetFactManager()->BlockIsDead(
-                      block->id()) &&
-                  !GetTransformationContext()
-                       ->GetFactManager()
-                       ->PointeeValueIsIrrelevant(inst->result_id())) {
-                // We can only pass a pointer as an actual parameter
-                // if the pointee value for the pointer is irrelevant,
-                // or if the block from which we would make the
-                // function call is dead.
-                return false;
-              }
-            }
-            return true;
-          });
-
-  // Group all the instructions that are potentially viable as function actual
-  // parameters by their result types.
-  std::map<uint32_t, std::vector<opt::Instruction*>> result;
-  for (auto inst : potentially_suitable_instructions) {
-    if (result.count(inst->type_id()) == 0) {
-      // This is the first instruction of this type we have seen, so populate
-      // the map with an entry.
-      result.insert({inst->type_id(), {}});
-    }
-    // Add the instruction to the sequence of instructions already associated
-    // with this type.
-    result.at(inst->type_id()).push_back(inst);
-  }
-  return result;
-}
-
 std::vector<uint32_t> FuzzerPassAddFunctionCalls::ChooseFunctionCallArguments(
     const opt::Function& callee, opt::Function* caller_function,
     opt::BasicBlock* caller_block,
     const opt::BasicBlock::iterator& caller_inst_it) {
-  auto type_to_available_instructions =
-      GetAvailableInstructionsSuitableForActualParameters(
-          caller_function, caller_block, caller_inst_it);
-
-  opt::Instruction* function_type = GetIRContext()->get_def_use_mgr()->GetDef(
-      callee.DefInst().GetSingleWordInOperand(1));
-  assert(function_type->opcode() == SpvOpTypeFunction &&
-         "The function type does not have the expected opcode.");
-  std::vector<uint32_t> result;
-  for (uint32_t arg_index = 1; arg_index < function_type->NumInOperands();
-       arg_index++) {
-    auto arg_type_id =
-        GetIRContext()
-            ->get_def_use_mgr()
-            ->GetDef(function_type->GetSingleWordInOperand(arg_index))
-            ->result_id();
-    if (type_to_available_instructions.count(arg_type_id)) {
-      std::vector<opt::Instruction*>& candidate_arguments =
-          type_to_available_instructions.at(arg_type_id);
-      // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3177) The value
-      //  selected here is arbitrary.  We should consider adding this
-      //  information as a fact so that the passed parameter could be
-      //  transformed/changed.
-      result.push_back(candidate_arguments[GetFuzzerContext()->RandomIndex(
-                                               candidate_arguments)]
-                           ->result_id());
-    } else {
-      // We don't have a suitable id in scope to pass, so we must make
-      // something up.
-      auto type_instruction =
-          GetIRContext()->get_def_use_mgr()->GetDef(arg_type_id);
-
-      if (type_instruction->opcode() == SpvOpTypePointer) {
-        // In the case of a pointer, we make a new variable, at function
-        // or global scope depending on the storage class of the
-        // pointer.
-
-        // Get a fresh id for the new variable.
-        uint32_t fresh_variable_id = GetFuzzerContext()->GetFreshId();
-
-        // The id of this variable is what we pass as the parameter to
-        // the call.
-        result.push_back(fresh_variable_id);
-
-        // Now bring the variable into existence.
-        auto storage_class = static_cast<SpvStorageClass>(
-            type_instruction->GetSingleWordInOperand(0));
-        if (storage_class == SpvStorageClassFunction) {
-          // Add a new zero-initialized local variable to the current
-          // function, noting that its pointee value is irrelevant.
-          ApplyTransformation(TransformationAddLocalVariable(
-              fresh_variable_id, arg_type_id, caller_function->result_id(),
-              FindOrCreateZeroConstant(
-                  type_instruction->GetSingleWordInOperand(1)),
-              true));
-        } else {
-          assert((storage_class == SpvStorageClassPrivate ||
-                  storage_class == SpvStorageClassWorkgroup) &&
-                 "Only Function, Private and Workgroup storage classes are "
-                 "supported at present.");
-          // Add a new global variable to the module, zero-initializing it if
-          // it has Private storage class, and noting that its pointee value is
-          // irrelevant.
-          ApplyTransformation(TransformationAddGlobalVariable(
-              fresh_variable_id, arg_type_id, storage_class,
-              storage_class == SpvStorageClassPrivate
-                  ? FindOrCreateZeroConstant(
-                        type_instruction->GetSingleWordInOperand(1))
-                  : 0,
-              true));
+  auto available_pointers = FindAvailableInstructions(
+      caller_function, caller_block, caller_inst_it,
+      [this, caller_block](opt::IRContext* /*unused*/, opt::Instruction* inst) {
+        if (inst->opcode() != SpvOpVariable ||
+            inst->opcode() != SpvOpFunctionParameter) {
+          // Function parameters and variables are the only
+          // kinds of pointer that can be used as actual
+          // parameters.
+          return false;
         }
-      } else {
-        // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3177): We use
-        //  constant zero for the parameter, but could consider adding a fact
-        //  to allow further passes to obfuscate it.
-        result.push_back(FindOrCreateZeroConstant(arg_type_id));
-      }
+
+        return GetTransformationContext()->GetFactManager()->BlockIsDead(
+                   caller_block->id()) ||
+               GetTransformationContext()
+                   ->GetFactManager()
+                   ->PointeeValueIsIrrelevant(inst->result_id());
+      });
+
+  std::unordered_map<uint32_t, std::vector<uint32_t>> type_id_to_result_id;
+  for (const auto* inst : available_pointers) {
+    type_id_to_result_id[inst->type_id()].push_back(inst->result_id());
+  }
+
+  std::vector<uint32_t> result;
+  for (const auto* param :
+       fuzzerutil::GetParameters(GetIRContext(), callee.result_id())) {
+    const auto* param_type =
+        GetIRContext()->get_type_mgr()->GetType(param->type_id());
+    assert(param_type && "Parameter has invalid type");
+
+    if (!param_type->AsPointer()) {
+      // We mark the constant as irrelevant so that we can replace it with a
+      // more interesting value later.
+      result.push_back(FindOrCreateZeroConstant(param->type_id(), true));
+      continue;
+    }
+
+    if (type_id_to_result_id.count(param->type_id())) {
+      // Use an existing pointer if there are any.
+      const auto& candidates = type_id_to_result_id[param->type_id()];
+      result.push_back(candidates[GetFuzzerContext()->RandomIndex(candidates)]);
+      continue;
+    }
+
+    // Make a new variable, at function or global scope depending on the storage
+    // class of the pointer.
+
+    // Get a fresh id for the new variable.
+    uint32_t fresh_variable_id = GetFuzzerContext()->GetFreshId();
+
+    // The id of this variable is what we pass as the parameter to
+    // the call.
+    result.push_back(fresh_variable_id);
+    type_id_to_result_id[param->type_id()].push_back(fresh_variable_id);
+
+    // Now bring the variable into existence.
+    auto storage_class = param_type->AsPointer()->storage_class();
+    auto pointee_type_id = fuzzerutil::GetPointeeTypeIdFromPointerType(
+        GetIRContext(), param->type_id());
+    if (storage_class == SpvStorageClassFunction) {
+      // Add a new zero-initialized local variable to the current
+      // function, noting that its pointee value is irrelevant.
+      ApplyTransformation(TransformationAddLocalVariable(
+          fresh_variable_id, param->type_id(), caller_function->result_id(),
+          FindOrCreateZeroConstant(pointee_type_id, false), true));
+    } else {
+      assert((storage_class == SpvStorageClassPrivate ||
+              storage_class == SpvStorageClassWorkgroup) &&
+             "Only Function, Private and Workgroup storage classes are "
+             "supported at present.");
+      // Add a new global variable to the module, zero-initializing it if
+      // it has Private storage class, and noting that its pointee value is
+      // irrelevant.
+      ApplyTransformation(TransformationAddGlobalVariable(
+          fresh_variable_id, param->type_id(), storage_class,
+          storage_class == SpvStorageClassPrivate
+              ? FindOrCreateZeroConstant(pointee_type_id, false)
+              : 0,
+          true));
     }
   }
+
   return result;
 }
 

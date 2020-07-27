@@ -53,9 +53,8 @@ void FuzzerPassMergeBlocks::Apply() {
   }
 
   while (!potential_transformations.empty()) {
-    uint32_t index = GetFuzzerContext()->RandomIndex(potential_transformations);
-    auto transformation = potential_transformations.at(index);
-    potential_transformations.erase(potential_transformations.begin() + index);
+    auto transformation =
+        GetFuzzerContext()->RemoveAtRandomIndex(&potential_transformations);
     MaybeApplyTransformation(transformation);
   }
 }

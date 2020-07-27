@@ -72,7 +72,8 @@ class TransformationAddDeadContinue : public Transformation {
   // module.  This is only invoked by 'IsApplicable' after certain basic
   // applicability checks have been made, ensuring that the invocation of this
   // method is legal.
-  void ApplyImpl(opt::IRContext* ir_context) const;
+  void ApplyImpl(opt::IRContext* ir_context,
+                 const TransformationContext& transformation_context) const;
 
   protobufs::TransformationAddDeadContinue message_;
 };

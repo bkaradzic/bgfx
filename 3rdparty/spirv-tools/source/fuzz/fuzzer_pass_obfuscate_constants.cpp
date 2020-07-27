@@ -311,9 +311,9 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstant(
   } while (constant_index_1 == constant_index_2);
 
   auto constant_id_1 = FindOrCreateConstant(
-      available_constant_words[constant_index_1], chosen_type_id);
+      available_constant_words[constant_index_1], chosen_type_id, false);
   auto constant_id_2 = FindOrCreateConstant(
-      available_constant_words[constant_index_2], chosen_type_id);
+      available_constant_words[constant_index_2], chosen_type_id, false);
 
   assert(constant_id_1 != 0 && constant_id_2 != 0 &&
          "We should not find an available constant with an id of 0.");
@@ -361,7 +361,7 @@ void FuzzerPassObfuscateConstants::ObfuscateScalarConstant(
   // Make sure the module has OpConstant instructions for each index used to
   // access a uniform.
   for (auto index : uniform_descriptor.index()) {
-    FindOrCreateIntegerConstant({index}, 32, true);
+    FindOrCreateIntegerConstant({index}, 32, true, false);
   }
 
   // Make sure the module has OpTypePointer that points to the element type of

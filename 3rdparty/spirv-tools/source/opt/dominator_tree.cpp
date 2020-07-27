@@ -176,7 +176,8 @@ void BasicBlockSuccessorHelper<BBType>::CreateSuccessorMap(
     // The tree construction requires 1 entry point, so we add a dummy node
     // that is connected to all function exiting basic blocks.
     // An exiting basic block is a block with an OpKill, OpUnreachable,
-    // OpReturn or OpReturnValue as terminator instruction.
+    // OpReturn, OpReturnValue, or OpTerminateInvocation  as terminator
+    // instruction.
     for (BasicBlock& bb : f) {
       if (bb.hasSuccessor()) {
         BasicBlockListTy& pred_list = predecessors_[&bb];

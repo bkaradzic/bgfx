@@ -19,7 +19,6 @@
 #include "source/fuzz/transformation.h"
 #include "source/fuzz/transformation_context.h"
 #include "source/opt/ir_context.h"
-
 #include "source/opt/types.h"
 
 namespace spvtools {
@@ -59,7 +58,9 @@ class TransformationVectorShuffle : public Transformation {
   // from which it came (with undefined components being ignored).  If the
   // result vector is a contiguous sub-range of one of the input vectors, a
   // fact is added to record that |message_.fresh_id| is synonymous with this
-  // sub-range.
+  // sub-range. DataSynonym facts are added only for non-irrelevant vectors
+  // (e.g. if |vector1| is irrelevant but |vector2| is not, synonyms will be
+  // created for |vector1| but not |vector2|).
   void Apply(opt::IRContext* ir_context,
              TransformationContext* transformation_context) const override;
 

@@ -24,9 +24,11 @@ TransformationAddConstantScalar::TransformationAddConstantScalar(
     : message_(message) {}
 
 TransformationAddConstantScalar::TransformationAddConstantScalar(
-    uint32_t fresh_id, uint32_t type_id, std::vector<uint32_t> words) {
+    uint32_t fresh_id, uint32_t type_id, const std::vector<uint32_t>& words,
+    bool is_irrelevant) {
   message_.set_fresh_id(fresh_id);
   message_.set_type_id(type_id);
+  message_.set_is_irrelevant(is_irrelevant);
   for (auto word : words) {
     message_.add_word(word);
   }
@@ -60,7 +62,8 @@ bool TransformationAddConstantScalar::IsApplicable(
 }
 
 void TransformationAddConstantScalar::Apply(
-    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
   opt::Instruction::OperandList operand_list;
   for (auto word : message_.word()) {
     operand_list.push_back({SPV_OPERAND_TYPE_LITERAL_INTEGER, {word}});
@@ -75,6 +78,11 @@ void TransformationAddConstantScalar::Apply(
   // validity of existing analyses.
   ir_context->InvalidateAnalysesExceptFor(
       opt::IRContext::Analysis::kAnalysisNone);
+
+  if (message_.is_irrelevant()) {
+    transformation_context->GetFactManager()->AddFactIdIsIrrelevant(
+        message_.fresh_id());
+  }
 }
 
 protobufs::Transformation TransformationAddConstantScalar::ToMessage() const {

@@ -32,7 +32,7 @@ class TransformationAddConstantComposite : public Transformation {
 
   TransformationAddConstantComposite(
       uint32_t fresh_id, uint32_t type_id,
-      const std::vector<uint32_t>& constituent_ids);
+      const std::vector<uint32_t>& constituent_ids, bool is_irrelevant);
 
   // - |message_.fresh_id| must be a fresh id
   // - |message_.type_id| must be the id of a composite type
@@ -42,9 +42,11 @@ class TransformationAddConstantComposite : public Transformation {
       opt::IRContext* ir_context,
       const TransformationContext& transformation_context) const override;
 
-  // Adds an OpConstantComposite instruction defining a constant of type
-  // |message_.type_id|, using |message_.constituent_id| as constituents, with
-  // result id |message_.fresh_id|.
+  // - Adds an OpConstantComposite instruction defining a constant of type
+  //   |message_.type_id|, using |message_.constituent_id| as constituents, with
+  //   result id |message_.fresh_id|.
+  // - Creates an IdIsIrrelevant fact about |fresh_id| if |is_irrelevant| is
+  //   true.
   void Apply(opt::IRContext* ir_context,
              TransformationContext* transformation_context) const override;
 

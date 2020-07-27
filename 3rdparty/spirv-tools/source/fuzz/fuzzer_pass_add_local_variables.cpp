@@ -71,7 +71,7 @@ void FuzzerPassAddLocalVariables::Apply() {
       }
       ApplyTransformation(TransformationAddLocalVariable(
           GetFuzzerContext()->GetFreshId(), pointer_type, function.result_id(),
-          FindOrCreateZeroConstant(basic_type), true));
+          FindOrCreateZeroConstant(basic_type, false), true));
     }
   }
 }

@@ -28,9 +28,10 @@ TransformationAddConstantComposite::TransformationAddConstantComposite(
 
 TransformationAddConstantComposite::TransformationAddConstantComposite(
     uint32_t fresh_id, uint32_t type_id,
-    const std::vector<uint32_t>& constituent_ids) {
+    const std::vector<uint32_t>& constituent_ids, bool is_irrelevant) {
   message_.set_fresh_id(fresh_id);
   message_.set_type_id(type_id);
+  message_.set_is_irrelevant(is_irrelevant);
   for (auto constituent_id : constituent_ids) {
     message_.add_constituent_id(constituent_id);
   }
@@ -104,7 +105,8 @@ bool TransformationAddConstantComposite::IsApplicable(
 }
 
 void TransformationAddConstantComposite::Apply(
-    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
   opt::Instruction::OperandList in_operands;
   for (auto constituent_id : message_.constituent_id()) {
     in_operands.push_back({SPV_OPERAND_TYPE_ID, {constituent_id}});
@@ -117,6 +119,11 @@ void TransformationAddConstantComposite::Apply(
   // validity of existing analyses.
   ir_context->InvalidateAnalysesExceptFor(
       opt::IRContext::Analysis::kAnalysisNone);
+
+  if (message_.is_irrelevant()) {
+    transformation_context->GetFactManager()->AddFactIdIsIrrelevant(
+        message_.fresh_id());
+  }
 }
 
 protobufs::Transformation TransformationAddConstantComposite::ToMessage()

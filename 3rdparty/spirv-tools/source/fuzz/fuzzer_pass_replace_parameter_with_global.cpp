@@ -81,7 +81,7 @@ void FuzzerPassReplaceParameterWithGlobal::Apply() {
     FindOrCreatePointerType(replaced_param->type_id(), SpvStorageClassPrivate);
 
     // Make sure initializer for the global variable exists in the module.
-    FindOrCreateZeroConstant(replaced_param->type_id());
+    FindOrCreateZeroConstant(replaced_param->type_id(), false);
 
     ApplyTransformation(TransformationReplaceParameterWithGlobal(
         GetFuzzerContext()->GetFreshId(), replaced_param->result_id(),

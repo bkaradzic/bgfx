@@ -37,7 +37,8 @@ TransformationEquationInstruction::TransformationEquationInstruction(
 }
 
 bool TransformationEquationInstruction::IsApplicable(
-    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   // The result id must be fresh.
   if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
@@ -57,6 +58,9 @@ bool TransformationEquationInstruction::IsApplicable(
       return false;
     }
     if (inst->opcode() == SpvOpUndef) {
+      return false;
+    }
+    if (transformation_context.GetFactManager()->IdIsIrrelevant(id)) {
       return false;
     }
     if (!fuzzerutil::IdIsAvailableBeforeInstruction(ir_context, insert_before,

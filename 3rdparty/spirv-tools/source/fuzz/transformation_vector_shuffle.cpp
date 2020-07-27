@@ -39,7 +39,8 @@ TransformationVectorShuffle::TransformationVectorShuffle(
 }
 
 bool TransformationVectorShuffle::IsApplicable(
-    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   // The fresh id must not already be in use.
   if (!fuzzerutil::IsFreshId(ir_context, message_.fresh_id())) {
     return false;
@@ -56,10 +57,24 @@ bool TransformationVectorShuffle::IsApplicable(
   if (!vector1_instruction || !vector1_instruction->type_id()) {
     return false;
   }
+  // We should be able to create a synonym of |vector1| if it's not irrelevant.
+  if (!transformation_context.GetFactManager()->IdIsIrrelevant(
+          message_.vector1()) &&
+      !fuzzerutil::CanMakeSynonymOf(ir_context, transformation_context,
+                                    vector1_instruction)) {
+    return false;
+  }
   // The second vector must be an instruction with a type id
   auto vector2_instruction =
       ir_context->get_def_use_mgr()->GetDef(message_.vector2());
   if (!vector2_instruction || !vector2_instruction->type_id()) {
+    return false;
+  }
+  // We should be able to create a synonym of |vector2| if it's not irrelevant.
+  if (!transformation_context.GetFactManager()->IdIsIrrelevant(
+          message_.vector2()) &&
+      !fuzzerutil::CanMakeSynonymOf(ir_context, transformation_context,
+                                    vector2_instruction)) {
     return false;
   }
   auto vector1_type =
@@ -161,9 +176,21 @@ void TransformationVectorShuffle::Apply(
     // |component| refers.
     if (component <
         GetVectorType(ir_context, message_.vector1())->element_count()) {
+      // Irrelevant id cannot participate in DataSynonym facts.
+      if (transformation_context->GetFactManager()->IdIsIrrelevant(
+              message_.vector1())) {
+        continue;
+      }
+
       descriptor_for_source_component =
           MakeDataDescriptor(message_.vector1(), {component});
     } else {
+      // Irrelevant id cannot participate in DataSynonym facts.
+      if (transformation_context->GetFactManager()->IdIsIrrelevant(
+              message_.vector2())) {
+        continue;
+      }
+
       auto index_into_vector_2 =
           component -
           GetVectorType(ir_context, message_.vector1())->element_count();

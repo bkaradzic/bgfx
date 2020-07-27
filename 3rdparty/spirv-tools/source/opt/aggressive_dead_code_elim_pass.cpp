@@ -38,6 +38,8 @@ const uint32_t kLoopMergeMergeBlockIdInIdx = 0;
 const uint32_t kLoopMergeContinueBlockIdInIdx = 1;
 const uint32_t kCopyMemoryTargetAddrInIdx = 0;
 const uint32_t kCopyMemorySourceAddrInIdx = 1;
+const uint32_t kDebugDeclareOperandVariableIndex = 5;
+const uint32_t kGlobalVariableVariableIndex = 12;
 
 // Sorting functor to present annotation instructions in an easy-to-process
 // order. The functor orders by opcode first and falls back on unique id
@@ -470,6 +472,19 @@ bool AggressiveDCEPass::AggressiveDCE(Function* func) {
       if (varId != 0) {
         ProcessLoad(func, varId);
       }
+      // If DebugDeclare, process as load of variable
+    } else if (liveInst->GetOpenCL100DebugOpcode() ==
+               OpenCLDebugInfo100DebugDeclare) {
+      uint32_t varId =
+          liveInst->GetSingleWordOperand(kDebugDeclareOperandVariableIndex);
+      ProcessLoad(func, varId);
+      // If DebugValue with Deref, process as load of variable
+    } else if (liveInst->GetOpenCL100DebugOpcode() ==
+               OpenCLDebugInfo100DebugValue) {
+      uint32_t varId = context()
+                           ->get_debug_info_mgr()
+                           ->GetVariableIdOfDebugValueUsedForDeclare(liveInst);
+      if (varId != 0) ProcessLoad(func, varId);
       // If merge, add other branches that are part of its control structure
     } else if (liveInst->opcode() == SpvOpLoopMerge ||
                liveInst->opcode() == SpvOpSelectionMerge) {
@@ -620,6 +635,18 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
         }
       }
     }
+  }
+
+  // For each DebugInfo GlobalVariable keep all operands except the Variable.
+  // Later, if the variable is dead, we will set the operand to DebugInfoNone.
+  for (auto& dbg : get_module()->ext_inst_debuginfo()) {
+    if (dbg.GetOpenCL100DebugOpcode() != OpenCLDebugInfo100DebugGlobalVariable)
+      continue;
+    dbg.ForEachInId([this](const uint32_t* iid) {
+      Instruction* inInst = get_def_use_mgr()->GetDef(*iid);
+      if (inInst->opcode() == SpvOpVariable) return;
+      AddToWorklist(inInst);
+    });
   }
 }
 
@@ -840,6 +867,26 @@ bool AggressiveDCEPass::ProcessGlobalValues() {
     }
   }
 
+  for (auto& dbg : get_module()->ext_inst_debuginfo()) {
+    if (!IsDead(&dbg)) continue;
+    // Save GlobalVariable if its variable is live, otherwise null out variable
+    // index
+    if (dbg.GetOpenCL100DebugOpcode() ==
+        OpenCLDebugInfo100DebugGlobalVariable) {
+      auto var_id = dbg.GetSingleWordOperand(kGlobalVariableVariableIndex);
+      Instruction* var_inst = get_def_use_mgr()->GetDef(var_id);
+      if (!IsDead(var_inst)) continue;
+      context()->ForgetUses(&dbg);
+      dbg.SetOperand(
+          kGlobalVariableVariableIndex,
+          {context()->get_debug_info_mgr()->GetDebugInfoNone()->result_id()});
+      context()->AnalyzeUses(&dbg);
+      continue;
+    }
+    to_kill_.push_back(&dbg);
+    modified = true;
+  }
+
   // Since ADCE is disabled for non-shaders, we don't check for export linkage
   // attributes here.
   for (auto& val : get_module()->types_values()) {
@@ -939,6 +986,7 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_KHR_ray_tracing",
       "SPV_EXT_fragment_invocation_density",
       "SPV_EXT_physical_storage_buffer",
+      "SPV_KHR_terminate_invocation",
   });
 }
 

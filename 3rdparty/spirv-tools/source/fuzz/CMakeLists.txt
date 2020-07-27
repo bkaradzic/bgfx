@@ -52,6 +52,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_local_variables.h
         fuzzer_pass_add_no_contraction_decorations.h
         fuzzer_pass_add_parameters.h
+        fuzzer_pass_add_relaxed_decorations.h
         fuzzer_pass_add_stores.h
         fuzzer_pass_add_vector_shuffle_instructions.h
         fuzzer_pass_adjust_branch_weights.h
@@ -72,8 +73,11 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_permute_function_parameters.h
         fuzzer_pass_permute_phi_operands.h
         fuzzer_pass_push_ids_through_variables.h
+        fuzzer_pass_replace_copy_memories_with_loads_stores.h
+        fuzzer_pass_replace_copy_objects_with_stores_loads.h
         fuzzer_pass_replace_linear_algebra_instructions.h
         fuzzer_pass_replace_parameter_with_global.h
+        fuzzer_pass_replace_params_with_struct.h
         fuzzer_pass_split_blocks.h
         fuzzer_pass_swap_commutable_operands.h
         fuzzer_pass_swap_conditional_branch_operands.h
@@ -104,6 +108,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_local_variable.h
         transformation_add_no_contraction_decoration.h
         transformation_add_parameter.h
+        transformation_add_relaxed_decoration.h
         transformation_add_spec_constant_op.h
         transformation_add_synonym.h
         transformation_add_type_array.h
@@ -133,9 +138,12 @@ if(SPIRV_BUILD_FUZZER)
         transformation_record_synonymous_constants.h
         transformation_replace_boolean_constant_with_constant_binary.h
         transformation_replace_constant_with_uniform.h
+        transformation_replace_copy_memory_with_load_store.h
+        transformation_replace_copy_object_with_store_load.h
         transformation_replace_id_with_synonym.h
         transformation_replace_linear_algebra_instruction.h
         transformation_replace_parameter_with_global.h
+        transformation_replace_params_with_struct.h
         transformation_set_function_control.h
         transformation_set_loop_control.h
         transformation_set_memory_operands_mask.h
@@ -171,6 +179,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_local_variables.cpp
         fuzzer_pass_add_no_contraction_decorations.cpp
         fuzzer_pass_add_parameters.cpp
+        fuzzer_pass_add_relaxed_decorations.cpp
         fuzzer_pass_add_stores.cpp
         fuzzer_pass_add_vector_shuffle_instructions.cpp
         fuzzer_pass_adjust_branch_weights.cpp
@@ -191,8 +200,11 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_permute_function_parameters.cpp
         fuzzer_pass_permute_phi_operands.cpp
         fuzzer_pass_push_ids_through_variables.cpp
+        fuzzer_pass_replace_copy_memories_with_loads_stores.cpp
+        fuzzer_pass_replace_copy_objects_with_stores_loads.cpp
         fuzzer_pass_replace_linear_algebra_instructions.cpp
         fuzzer_pass_replace_parameter_with_global.cpp
+        fuzzer_pass_replace_params_with_struct.cpp
         fuzzer_pass_split_blocks.cpp
         fuzzer_pass_swap_commutable_operands.cpp
         fuzzer_pass_swap_conditional_branch_operands.cpp
@@ -222,6 +234,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_local_variable.cpp
         transformation_add_no_contraction_decoration.cpp
         transformation_add_parameter.cpp
+        transformation_add_relaxed_decoration.cpp
         transformation_add_spec_constant_op.cpp
         transformation_add_synonym.cpp
         transformation_add_type_array.cpp
@@ -251,9 +264,12 @@ if(SPIRV_BUILD_FUZZER)
         transformation_record_synonymous_constants.cpp
         transformation_replace_boolean_constant_with_constant_binary.cpp
         transformation_replace_constant_with_uniform.cpp
+        transformation_replace_copy_memory_with_load_store.cpp
+        transformation_replace_copy_object_with_store_load.cpp
         transformation_replace_id_with_synonym.cpp
         transformation_replace_linear_algebra_instruction.cpp
         transformation_replace_parameter_with_global.cpp
+        transformation_replace_params_with_struct.cpp
         transformation_set_function_control.cpp
         transformation_set_loop_control.cpp
         transformation_set_memory_operands_mask.cpp

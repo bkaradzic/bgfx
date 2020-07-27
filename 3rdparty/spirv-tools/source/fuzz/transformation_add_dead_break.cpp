@@ -112,8 +112,9 @@ bool TransformationAddDeadBreak::IsApplicable(
     const TransformationContext& transformation_context) const {
   // First, we check that a constant with the same value as
   // |message_.break_condition_value| is present.
-  if (!fuzzerutil::MaybeGetBoolConstant(ir_context,
-                                        message_.break_condition_value())) {
+  if (!fuzzerutil::MaybeGetBoolConstant(ir_context, transformation_context,
+                                        message_.break_condition_value(),
+                                        false)) {
     // The required constant is not present, so the transformation cannot be
     // applied.
     return false;
@@ -179,14 +180,15 @@ bool TransformationAddDeadBreak::IsApplicable(
   // the validator is complete with respect to checking structured control flow
   // rules.
   auto cloned_context = fuzzerutil::CloneIRContext(ir_context);
-  ApplyImpl(cloned_context.get());
+  ApplyImpl(cloned_context.get(), transformation_context);
   return fuzzerutil::IsValid(cloned_context.get(),
                              transformation_context.GetValidatorOptions());
 }
 
 void TransformationAddDeadBreak::Apply(
-    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
-  ApplyImpl(ir_context);
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
+  ApplyImpl(ir_context, *transformation_context);
   // Invalidate all analyses
   ir_context->InvalidateAnalysesExceptFor(
       opt::IRContext::Analysis::kAnalysisNone);
@@ -199,11 +201,14 @@ protobufs::Transformation TransformationAddDeadBreak::ToMessage() const {
 }
 
 void TransformationAddDeadBreak::ApplyImpl(
-    spvtools::opt::IRContext* ir_context) const {
+    spvtools::opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   fuzzerutil::AddUnreachableEdgeAndUpdateOpPhis(
       ir_context, ir_context->cfg()->block(message_.from_block()),
       ir_context->cfg()->block(message_.to_block()),
-      message_.break_condition_value(), message_.phi_id());
+      fuzzerutil::MaybeGetBoolConstant(ir_context, transformation_context,
+                                       message_.break_condition_value(), false),
+      message_.phi_id());
 }
 
 }  // namespace fuzz

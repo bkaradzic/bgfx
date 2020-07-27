@@ -413,6 +413,7 @@ bool spvOpcodeIsAtomicWithLoad(const SpvOp opcode) {
     case SpvOpAtomicIIncrement:
     case SpvOpAtomicIDecrement:
     case SpvOpAtomicIAdd:
+    case SpvOpAtomicFAddEXT:
     case SpvOpAtomicISub:
     case SpvOpAtomicSMin:
     case SpvOpAtomicUMin:
@@ -445,7 +446,7 @@ bool spvOpcodeIsReturn(SpvOp opcode) {
 
 bool spvOpcodeIsReturnOrAbort(SpvOp opcode) {
   return spvOpcodeIsReturn(opcode) || opcode == SpvOpKill ||
-         opcode == SpvOpUnreachable;
+         opcode == SpvOpUnreachable || opcode == SpvOpTerminateInvocation;
 }
 
 bool spvOpcodeIsBlockTerminator(SpvOp opcode) {
@@ -700,6 +701,7 @@ std::vector<uint32_t> spvOpcodeMemorySemanticsOperandIndices(SpvOp opcode) {
     case SpvOpAtomicIIncrement:
     case SpvOpAtomicIDecrement:
     case SpvOpAtomicIAdd:
+    case SpvOpAtomicFAddEXT:
     case SpvOpAtomicISub:
     case SpvOpAtomicSMin:
     case SpvOpAtomicUMin:

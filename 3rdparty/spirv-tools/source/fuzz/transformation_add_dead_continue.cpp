@@ -38,8 +38,9 @@ bool TransformationAddDeadContinue::IsApplicable(
     const TransformationContext& transformation_context) const {
   // First, we check that a constant with the same value as
   // |message_.continue_condition_value| is present.
-  if (!fuzzerutil::MaybeGetBoolConstant(ir_context,
-                                        message_.continue_condition_value())) {
+  if (!fuzzerutil::MaybeGetBoolConstant(ir_context, transformation_context,
+                                        message_.continue_condition_value(),
+                                        false)) {
     // The required constant is not present, so the transformation cannot be
     // applied.
     return false;
@@ -119,14 +120,15 @@ bool TransformationAddDeadContinue::IsApplicable(
   // the validator is complete with respect to checking structured control flow
   // rules.
   auto cloned_context = fuzzerutil::CloneIRContext(ir_context);
-  ApplyImpl(cloned_context.get());
+  ApplyImpl(cloned_context.get(), transformation_context);
   return fuzzerutil::IsValid(cloned_context.get(),
                              transformation_context.GetValidatorOptions());
 }
 
 void TransformationAddDeadContinue::Apply(
-    opt::IRContext* ir_context, TransformationContext* /*unused*/) const {
-  ApplyImpl(ir_context);
+    opt::IRContext* ir_context,
+    TransformationContext* transformation_context) const {
+  ApplyImpl(ir_context, *transformation_context);
   // Invalidate all analyses
   ir_context->InvalidateAnalysesExceptFor(
       opt::IRContext::Analysis::kAnalysisNone);
@@ -139,7 +141,8 @@ protobufs::Transformation TransformationAddDeadContinue::ToMessage() const {
 }
 
 void TransformationAddDeadContinue::ApplyImpl(
-    spvtools::opt::IRContext* ir_context) const {
+    spvtools::opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   auto bb_from = ir_context->cfg()->block(message_.from_block());
   auto continue_block =
       bb_from->IsLoopHeader()
@@ -149,7 +152,10 @@ void TransformationAddDeadContinue::ApplyImpl(
   assert(continue_block && "message_.from_block must be in a loop.");
   fuzzerutil::AddUnreachableEdgeAndUpdateOpPhis(
       ir_context, bb_from, ir_context->cfg()->block(continue_block),
-      message_.continue_condition_value(), message_.phi_id());
+      fuzzerutil::MaybeGetBoolConstant(ir_context, transformation_context,
+                                       message_.continue_condition_value(),
+                                       false),
+      message_.phi_id());
 }
 
 }  // namespace fuzz

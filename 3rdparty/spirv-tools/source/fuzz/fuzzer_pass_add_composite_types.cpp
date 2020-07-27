@@ -97,7 +97,7 @@ void FuzzerPassAddCompositeTypes::AddNewArrayType() {
   ApplyTransformation(TransformationAddTypeArray(
       GetFuzzerContext()->GetFreshId(), ChooseScalarOrCompositeType(),
       FindOrCreateIntegerConstant(
-          {GetFuzzerContext()->GetRandomSizeForNewArray()}, 32, false)));
+          {GetFuzzerContext()->GetRandomSizeForNewArray()}, 32, false, false)));
 }
 
 void FuzzerPassAddCompositeTypes::AddNewStructType() {

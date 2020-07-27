@@ -38,7 +38,8 @@ TransformationAddSynonym::TransformationAddSynonym(
 }
 
 bool TransformationAddSynonym::IsApplicable(
-    opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   assert(protobufs::TransformationAddSynonym::SynonymType_IsValid(
              message_.synonym_type()) &&
          "Synonym type is invalid");
@@ -55,7 +56,8 @@ bool TransformationAddSynonym::IsApplicable(
   }
 
   // Check that we can apply |synonym_type| to |result_id|.
-  if (!IsInstructionValid(ir_context, synonym, message_.synonym_type())) {
+  if (!IsInstructionValid(ir_context, transformation_context, synonym,
+                          message_.synonym_type())) {
     return false;
   }
 
@@ -76,7 +78,7 @@ bool TransformationAddSynonym::IsApplicable(
 
   // A constant instruction must be present in the module if required.
   if (IsAdditionalConstantRequired(message_.synonym_type()) &&
-      MaybeGetConstantId(ir_context) == 0) {
+      MaybeGetConstantId(ir_context, transformation_context) == 0) {
     return false;
   }
 
@@ -90,7 +92,8 @@ void TransformationAddSynonym::Apply(
     TransformationContext* transformation_context) const {
   // Add a synonymous instruction.
   FindInstruction(message_.insert_before(), ir_context)
-      ->InsertBefore(MakeSynonymousInstruction(ir_context));
+      ->InsertBefore(
+          MakeSynonymousInstruction(ir_context, *transformation_context));
 
   fuzzerutil::UpdateModuleIdBound(ir_context, message_.synonym_fresh_id());
 
@@ -122,7 +125,8 @@ protobufs::Transformation TransformationAddSynonym::ToMessage() const {
 }
 
 bool TransformationAddSynonym::IsInstructionValid(
-    opt::IRContext* ir_context, opt::Instruction* inst,
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context, opt::Instruction* inst,
     protobufs::TransformationAddSynonym::SynonymType synonym_type) {
   // Instruction must have a result id, type id. We skip OpUndef and
   // OpConstantNull.
@@ -131,8 +135,10 @@ bool TransformationAddSynonym::IsInstructionValid(
     return false;
   }
 
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3177):
-  //  We can't create a synonym of an irrelevant id.
+  if (!fuzzerutil::CanMakeSynonymOf(ir_context, transformation_context, inst)) {
+    return false;
+  }
+
   switch (synonym_type) {
     case protobufs::TransformationAddSynonym::ADD_ZERO:
     case protobufs::TransformationAddSynonym::SUB_ZERO:
@@ -149,7 +155,9 @@ bool TransformationAddSynonym::IsInstructionValid(
       return type->AsInteger() || type->AsFloat();
     }
     case protobufs::TransformationAddSynonym::COPY_OBJECT:
-      return fuzzerutil::CanMakeSynonymOf(ir_context, inst);
+      // All checks for OpCopyObject are handled by
+      // fuzzerutil::CanMakeSynonymOf.
+      return true;
     case protobufs::TransformationAddSynonym::LOGICAL_AND:
     case protobufs::TransformationAddSynonym::LOGICAL_OR: {
       // The instruction must be either a scalar or a vector of booleans.
@@ -166,7 +174,8 @@ bool TransformationAddSynonym::IsInstructionValid(
 
 std::unique_ptr<opt::Instruction>
 TransformationAddSynonym::MakeSynonymousInstruction(
-    opt::IRContext* ir_context) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   auto synonym_type_id =
       fuzzerutil::GetTypeId(ir_context, message_.result_id());
   assert(synonym_type_id && "Synonym has invalid type id");
@@ -206,7 +215,8 @@ TransformationAddSynonym::MakeSynonymousInstruction(
           ir_context, opcode, synonym_type_id, message_.synonym_fresh_id(),
           opt::Instruction::OperandList{
               {SPV_OPERAND_TYPE_ID, {message_.result_id()}},
-              {SPV_OPERAND_TYPE_ID, {MaybeGetConstantId(ir_context)}}});
+              {SPV_OPERAND_TYPE_ID,
+               {MaybeGetConstantId(ir_context, transformation_context)}}});
     }
     case protobufs::TransformationAddSynonym::COPY_OBJECT:
       return MakeUnique<opt::Instruction>(
@@ -224,7 +234,8 @@ TransformationAddSynonym::MakeSynonymousInstruction(
           ir_context, opcode, synonym_type_id, message_.synonym_fresh_id(),
           opt::Instruction::OperandList{
               {SPV_OPERAND_TYPE_ID, {message_.result_id()}},
-              {SPV_OPERAND_TYPE_ID, {MaybeGetConstantId(ir_context)}}});
+              {SPV_OPERAND_TYPE_ID,
+               {MaybeGetConstantId(ir_context, transformation_context)}}});
     }
     default:
       assert(false && "Unhandled synonym type");
@@ -233,7 +244,8 @@ TransformationAddSynonym::MakeSynonymousInstruction(
 }
 
 uint32_t TransformationAddSynonym::MaybeGetConstantId(
-    opt::IRContext* ir_context) const {
+    opt::IRContext* ir_context,
+    const TransformationContext& transformation_context) const {
   assert(IsAdditionalConstantRequired(message_.synonym_type()) &&
          "Synonym type doesn't require an additional constant");
 
@@ -245,7 +257,8 @@ uint32_t TransformationAddSynonym::MaybeGetConstantId(
     case protobufs::TransformationAddSynonym::ADD_ZERO:
     case protobufs::TransformationAddSynonym::SUB_ZERO:
     case protobufs::TransformationAddSynonym::LOGICAL_OR:
-      return fuzzerutil::MaybeGetZeroConstant(ir_context, synonym_type_id);
+      return fuzzerutil::MaybeGetZeroConstant(
+          ir_context, transformation_context, synonym_type_id, false);
     case protobufs::TransformationAddSynonym::MUL_ONE:
     case protobufs::TransformationAddSynonym::LOGICAL_AND: {
       auto synonym_type = ir_context->get_type_mgr()->GetType(synonym_type_id);
@@ -259,19 +272,20 @@ uint32_t TransformationAddSynonym::MaybeGetConstantId(
         auto one_word =
             vector->element_type()->AsFloat() ? fuzzerutil::FloatToWord(1) : 1u;
         if (auto scalar_one_id = fuzzerutil::MaybeGetScalarConstant(
-                ir_context, {one_word}, element_type_id)) {
+                ir_context, transformation_context, {one_word}, element_type_id,
+                false)) {
           return fuzzerutil::MaybeGetCompositeConstant(
-              ir_context,
+              ir_context, transformation_context,
               std::vector<uint32_t>(vector->element_count(), scalar_one_id),
-              synonym_type_id);
+              synonym_type_id, false);
         }
 
         return 0;
       } else {
         return fuzzerutil::MaybeGetScalarConstant(
-            ir_context,
+            ir_context, transformation_context,
             {synonym_type->AsFloat() ? fuzzerutil::FloatToWord(1) : 1u},
-            synonym_type_id);
+            synonym_type_id, false);
       }
     }
     default:

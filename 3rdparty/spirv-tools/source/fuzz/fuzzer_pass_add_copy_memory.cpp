@@ -74,7 +74,7 @@ void FuzzerPassAddCopyMemory::Apply() {
         ApplyTransformation(TransformationAddCopyMemory(
             instruction_descriptor, GetFuzzerContext()->GetFreshId(),
             inst->result_id(), storage_class,
-            FindOrCreateZeroConstant(pointee_type_id)));
+            FindOrCreateZeroConstant(pointee_type_id, false)));
       });
 }
 

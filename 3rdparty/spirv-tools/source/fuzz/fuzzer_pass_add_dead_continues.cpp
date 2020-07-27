@@ -59,19 +59,16 @@ void FuzzerPassAddDeadContinues::Apply() {
         continue_block->ForEachPhiInst([this, &phi_ids](opt::Instruction* phi) {
           // Add an additional operand for OpPhi instruction.
           //
-          // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3177):
-          // If we have a way to communicate to the fact manager
-          // that a specific id use is irrelevant and could be replaced with
-          // something else, we should add such a fact about the zero
-          // provided as an OpPhi operand
-          phi_ids.push_back(FindOrCreateZeroConstant(phi->type_id()));
+          // We mark the constant as irrelevant so that we can replace it with a
+          // more interesting value later.
+          phi_ids.push_back(FindOrCreateZeroConstant(phi->type_id(), true));
         });
       }
 
       // Make sure the module contains a boolean constant equal to
       // |condition_value|.
       bool condition_value = GetFuzzerContext()->ChooseEven();
-      FindOrCreateBoolConstant(condition_value);
+      FindOrCreateBoolConstant(condition_value, false);
 
       // Make a transformation to add a dead continue from this node; if the
       // node turns out to be inappropriate (e.g. by not being in a loop) the

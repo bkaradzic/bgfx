@@ -148,6 +148,11 @@ class DebugInfoManager {
   // Erases |instr| from data structures of this class.
   void ClearDebugInfo(Instruction* instr);
 
+  // Returns the id of Value operand if |inst| is DebugValue who has Deref
+  // operation and its Value operand is a result id of OpVariable with
+  // Function storage class. Otherwise, returns 0.
+  uint32_t GetVariableIdOfDebugValueUsedForDeclare(Instruction* inst);
+
  private:
   IRContext* context() { return context_; }
 
@@ -177,11 +182,6 @@ class DebugInfoManager {
 
   // Returns a DebugExpression instruction without Operation operands.
   Instruction* GetEmptyDebugExpression();
-
-  // Returns the id of Value operand if |inst| is DebugValue who has Deref
-  // operation and its Value operand is a result id of OpVariable with
-  // Function storage class. Otherwise, returns 0.
-  uint32_t GetVariableIdOfDebugValueUsedForDeclare(Instruction* inst);
 
   // Returns true if a scope |ancestor| is |scope| or an ancestor scope
   // of |scope|.

@@ -1343,30 +1343,47 @@ bool FactManager::LivesafeFunctionFacts::FunctionIsLivesafe(
 //==============================
 
 //==============================
-// Irrelevant pointee value facts
+// Irrelevant value facts
 
 // The purpose of this class is to group the fields and data used to represent
-// facts about pointers whose pointee values are irrelevant.
-class FactManager::IrrelevantPointeeValueFacts {
+// facts about various irrelevant values in the module.
+class FactManager::IrrelevantValueFacts {
  public:
   // See method in FactManager which delegates to this method.
   void AddFact(const protobufs::FactPointeeValueIsIrrelevant& fact);
 
   // See method in FactManager which delegates to this method.
+  void AddFact(const protobufs::FactIdIsIrrelevant& fact);
+
+  // See method in FactManager which delegates to this method.
   bool PointeeValueIsIrrelevant(uint32_t pointer_id) const;
 
+  // See method in FactManager which delegates to this method.
+  bool IdIsIrrelevant(uint32_t pointer_id) const;
+
  private:
-  std::set<uint32_t> pointers_to_irrelevant_pointees_ids_;
+  std::unordered_set<uint32_t> pointers_to_irrelevant_pointees_ids_;
+  std::unordered_set<uint32_t> irrelevant_ids_;
 };
 
-void FactManager::IrrelevantPointeeValueFacts::AddFact(
+void FactManager::IrrelevantValueFacts::AddFact(
     const protobufs::FactPointeeValueIsIrrelevant& fact) {
   pointers_to_irrelevant_pointees_ids_.insert(fact.pointer_id());
 }
 
-bool FactManager::IrrelevantPointeeValueFacts::PointeeValueIsIrrelevant(
+void FactManager::IrrelevantValueFacts::AddFact(
+    const protobufs::FactIdIsIrrelevant& fact) {
+  irrelevant_ids_.insert(fact.result_id());
+}
+
+bool FactManager::IrrelevantValueFacts::PointeeValueIsIrrelevant(
     uint32_t pointer_id) const {
   return pointers_to_irrelevant_pointees_ids_.count(pointer_id) != 0;
+}
+
+bool FactManager::IrrelevantValueFacts::IdIsIrrelevant(
+    uint32_t pointer_id) const {
+  return irrelevant_ids_.count(pointer_id) != 0;
 }
 
 // End of arbitrarily-valued variable facts
@@ -1378,8 +1395,7 @@ FactManager::FactManager()
           MakeUnique<DataSynonymAndIdEquationFacts>()),
       dead_block_facts_(MakeUnique<DeadBlockFacts>()),
       livesafe_function_facts_(MakeUnique<LivesafeFunctionFacts>()),
-      irrelevant_pointee_value_facts_(
-          MakeUnique<IrrelevantPointeeValueFacts>()) {}
+      irrelevant_value_facts_(MakeUnique<IrrelevantValueFacts>()) {}
 
 FactManager::~FactManager() = default;
 
@@ -1420,6 +1436,8 @@ bool FactManager::AddFact(const fuzz::protobufs::Fact& fact,
 void FactManager::AddFactDataSynonym(const protobufs::DataDescriptor& data1,
                                      const protobufs::DataDescriptor& data2,
                                      opt::IRContext* context) {
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3550):
+  //  assert that neither |data1| nor |data2| are irrelevant.
   protobufs::FactDataSynonym fact;
   *fact.mutable_data1() = data1;
   *fact.mutable_data2() = data2;
@@ -1500,18 +1518,32 @@ void FactManager::AddFactFunctionIsLivesafe(uint32_t function_id) {
 }
 
 bool FactManager::PointeeValueIsIrrelevant(uint32_t pointer_id) const {
-  return irrelevant_pointee_value_facts_->PointeeValueIsIrrelevant(pointer_id);
+  return irrelevant_value_facts_->PointeeValueIsIrrelevant(pointer_id);
+}
+
+bool FactManager::IdIsIrrelevant(uint32_t result_id) const {
+  return irrelevant_value_facts_->IdIsIrrelevant(result_id);
 }
 
 void FactManager::AddFactValueOfPointeeIsIrrelevant(uint32_t pointer_id) {
   protobufs::FactPointeeValueIsIrrelevant fact;
   fact.set_pointer_id(pointer_id);
-  irrelevant_pointee_value_facts_->AddFact(fact);
+  irrelevant_value_facts_->AddFact(fact);
+}
+
+void FactManager::AddFactIdIsIrrelevant(uint32_t result_id) {
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3550):
+  //  assert that |result_id| is not a part of any DataSynonym fact.
+  protobufs::FactIdIsIrrelevant fact;
+  fact.set_result_id(result_id);
+  irrelevant_value_facts_->AddFact(fact);
 }
 
 void FactManager::AddFactIdEquation(uint32_t lhs_id, SpvOp opcode,
                                     const std::vector<uint32_t>& rhs_id,
                                     opt::IRContext* context) {
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3550):
+  //  assert that elements of |rhs_id| and |lhs_id| are not irrelevant.
   protobufs::FactIdEquation fact;
   fact.set_lhs_id(lhs_id);
   fact.set_opcode(opcode);

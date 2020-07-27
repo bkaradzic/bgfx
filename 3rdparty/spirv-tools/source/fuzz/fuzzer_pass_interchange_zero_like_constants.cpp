@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include "source/fuzz/fuzzer_pass_interchange_zero_like_constants.h"
+
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/id_use_descriptor.h"
 #include "source/fuzz/transformation_record_synonymous_constants.h"
@@ -49,7 +50,7 @@ uint32_t FuzzerPassInterchangeZeroLikeConstants::FindOrCreateToggledConstant(
     if (kind == opt::analysis::Type::kBool ||
         kind == opt::analysis::Type::kInteger ||
         kind == opt::analysis::Type::kFloat) {
-      return FindOrCreateZeroConstant(declaration->type_id());
+      return FindOrCreateZeroConstant(declaration->type_id(), false);
     }
   }
 
@@ -83,12 +84,20 @@ void FuzzerPassInterchangeZeroLikeConstants::Apply() {
 
   for (auto constant : GetIRContext()->GetConstants()) {
     uint32_t constant_id = constant->result_id();
-    uint32_t toggled_id = FindOrCreateToggledConstant(constant);
+    if (GetTransformationContext()->GetFactManager()->IdIsIrrelevant(
+            constant_id)) {
+      continue;
+    }
 
+    uint32_t toggled_id = FindOrCreateToggledConstant(constant);
     if (!toggled_id) {
       // Not a zero-like constant
       continue;
     }
+
+    assert(!GetTransformationContext()->GetFactManager()->IdIsIrrelevant(
+               toggled_id) &&
+           "FindOrCreateToggledConstant can't produce an irrelevant id");
 
     // Record synonymous constants
     ApplyTransformation(

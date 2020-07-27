@@ -184,7 +184,7 @@ void FuzzerPassAddImageSampleUnusedComponents::Apply() {
          // FindOrCreateZeroConstant
          // %20 = OpConstant %4 0
          // %21 = OpConstantComposite %5 %20 %20
-         FindOrCreateZeroConstant(zero_constant_type_id)},
+         FindOrCreateZeroConstant(zero_constant_type_id, false)},
         MakeInstructionDescriptor(GetIRContext(), instruction),
         coordinate_with_unused_components_id));
 

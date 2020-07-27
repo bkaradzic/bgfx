@@ -14,12 +14,10 @@
 
 #include "source/fuzz/fuzzer_pass_construct_composites.h"
 
-#include <cmath>
 #include <memory>
 
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/transformation_composite_construct.h"
-#include "source/util/make_unique.h"
 
 namespace spvtools {
 namespace fuzz {
@@ -67,8 +65,23 @@ void FuzzerPassConstructComposites::Apply() {
         // program point) and suitable for making a synonym of, associate it
         // with the id of its result type.
         TypeIdToInstructions type_id_to_available_instructions;
-        for (auto instruction : FindAvailableInstructions(
-                 function, block, inst_it, fuzzerutil::CanMakeSynonymOf)) {
+        auto available_instructions = FindAvailableInstructions(
+            function, block, inst_it,
+            [this](opt::IRContext* ir_context, opt::Instruction* inst) {
+              if (!inst->result_id() || !inst->type_id()) {
+                return false;
+              }
+
+              // If the id is irrelevant, we can use it since it will not
+              // participate in DataSynonym fact. Otherwise, we should be able
+              // to produce a synonym out of the id.
+              return GetTransformationContext()
+                         ->GetFactManager()
+                         ->IdIsIrrelevant(inst->result_id()) ||
+                     fuzzerutil::CanMakeSynonymOf(
+                         ir_context, *GetTransformationContext(), inst);
+            });
+        for (auto instruction : available_instructions) {
           RecordAvailableInstruction(instruction,
                                      &type_id_to_available_instructions);
         }

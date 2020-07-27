@@ -85,7 +85,7 @@ void FuzzerPassAddGlobalVariables::Apply() {
         GetFuzzerContext()->GetFreshId(), pointer_type_id,
         variable_storage_class,
         variable_storage_class == SpvStorageClassPrivate
-            ? FindOrCreateZeroConstant(basic_type)
+            ? FindOrCreateZeroConstant(basic_type, false)
             : 0,
         true));
   }

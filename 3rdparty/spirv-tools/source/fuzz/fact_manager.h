@@ -68,6 +68,10 @@ class FactManager {
   // is irrelevant: it does not affect the observable behaviour of the module.
   void AddFactValueOfPointeeIsIrrelevant(uint32_t pointer_id);
 
+  // Records a fact that the |result_id| is irrelevant (i.e. it doesn't affect
+  // the semantics of the module)
+  void AddFactIdIsIrrelevant(uint32_t result_id);
+
   // Records the fact that |lhs_id| is defined by the equation:
   //
   //   |lhs_id| = |opcode| |rhs_id[0]| ... |rhs_id[N-1]|
@@ -181,13 +185,16 @@ class FactManager {
   //==============================
 
   //==============================
-  // Querying facts about pointers with irrelevant pointee values
+  // Querying facts about irrelevant values
 
   // Returns true if and ony if the value of the pointee associated with
   // |pointer_id| is irrelevant.
   bool PointeeValueIsIrrelevant(uint32_t pointer_id) const;
 
-  // End of irrelevant pointee value facts
+  // Returns true iff there exists a fact that the |result_id| is irrelevant.
+  bool IdIsIrrelevant(uint32_t result_id) const;
+
+  // End of irrelevant value facts
   //==============================
 
  private:
@@ -213,10 +220,10 @@ class FactManager {
   std::unique_ptr<LivesafeFunctionFacts>
       livesafe_function_facts_;  // Unique pointer to internal data.
 
-  class IrrelevantPointeeValueFacts;  // Opaque class for management of
-  // facts about pointers whose pointee values do not matter.
-  std::unique_ptr<IrrelevantPointeeValueFacts>
-      irrelevant_pointee_value_facts_;  // Unique pointer to internal data.
+  class IrrelevantValueFacts;  // Opaque class for management of
+  // facts about various irrelevant values in the module.
+  std::unique_ptr<IrrelevantValueFacts>
+      irrelevant_value_facts_;  // Unique pointer to internal data.
 };
 
 }  // namespace fuzz
