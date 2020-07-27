@@ -367,7 +367,7 @@ namespace bgfx
 	{
 		HRESULT hr = S_OK;
 
-		bool allowTearing = false;
+		uint32_t scdFlags = _scd.flags;
 
 #if BX_PLATFORM_WINDOWS
 		IDXGIFactory5* factory5;
@@ -375,10 +375,13 @@ namespace bgfx
 
 		if (SUCCEEDED(hr) )
 		{
+			BOOL allowTearing = false;
 			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
 			//      will crash on pre Windows 8. Issue #1356.
 			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
+
+			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT : 0;
 
 			DX_RELEASE_I(factory5);
 		}
@@ -398,10 +401,7 @@ namespace bgfx
 		scd.OutputWindow = (HWND)_scd.nwh;
 		scd.Windowed     = _scd.windowed;
 		scd.SwapEffect   = _scd.swapEffect;
-		scd.Flags        = 0
-			| _scd.flags
-			| (allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT : 0)
-			;
+		scd.Flags        = scdFlags;
 
 		hr = m_factory->CreateSwapChain(
 			  _device
@@ -432,7 +432,7 @@ namespace bgfx
 		scd.Scaling     = _scd.scaling;
 		scd.SwapEffect  = _scd.swapEffect;
 		scd.AlphaMode   = _scd.alphaMode;
-		scd.Flags       = _scd.flags;
+		scd.Flags       = scdFlags;
 
 		if (NULL == _scd.ndt)
 		{
@@ -648,11 +648,11 @@ namespace bgfx
 
 #if BX_PLATFORM_WINDOWS
 		IDXGIFactory5* factory5;
-		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void **)&factory5);
+		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
 
 		if (SUCCEEDED(hr))
 		{
-			bool allowTearing = false;
+			BOOL allowTearing = false;
 			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
 			//      will crash on pre Windows 8. Issue #1356.
 			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
