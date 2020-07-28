@@ -5015,18 +5015,39 @@ namespace bgfx { namespace d3d12
 
 		const uint32_t subres = _mip + (_side * m_numMips);
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
-		const uint32_t rectpitch = _rect.m_width*bpp/8;
-		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		uint32_t rectpitch    = _rect.m_width*bpp/8;
+		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
+		{
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+			rectpitch = (_rect.m_width / blockInfo.blockWidth) * blockInfo.blockSize;
+		}
+
+		const uint32_t srcpitch   = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		const uint32_t slicepitch = rectpitch*_rect.m_height;
+
+		const bool convert = m_textureFormat != m_requestedFormat;
+
+		uint8_t* srcData = _mem->data;
+		uint8_t* temp = NULL;
+
+		if (convert)
+		{
+			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
+			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat));
+			srcData = temp;
+		}
+
 
 		D3D12_RESOURCE_DESC desc = getResourceDesc(m_ptr);
 
+		desc.Width  = _rect.m_width;
 		desc.Height = _rect.m_height;
 
 		uint32_t numRows;
 		uint64_t totalBytes;
 		D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
 		s_renderD3D12->m_device->GetCopyableFootprints(&desc
-			, subres
+			, 0
 			, 1
 			, 0
 			, &layout
@@ -5038,15 +5059,22 @@ namespace bgfx { namespace d3d12
 		const uint32_t rowPitch = layout.Footprint.RowPitch;
 
 		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
-		uint8_t* data;
+		uint8_t* dstData;
 
 		D3D12_RANGE readRange = { 0, 0 };
-		DX_CHECK(staging->Map(0, &readRange, (void**)&data) );
-		for (uint32_t ii = 0, height = _rect.m_height; ii < height; ++ii)
+		DX_CHECK(staging->Map(0, &readRange, (void**)&dstData) );
+
+		for (uint32_t ii = 0, height = numRows; ii < height; ++ii)
 		{
-			bx::memCopy(&data[ii*rowPitch], &_mem->data[ii*srcpitch], srcpitch);
+			bx::memCopy(&dstData[ii*rowPitch], &srcData[ii*srcpitch], srcpitch);
 		}
-		D3D12_RANGE writeRange = { 0, _rect.m_height*srcpitch };
+
+		if (NULL != temp)
+		{
+			BX_FREE(g_allocator, temp);
+		}
+
+		D3D12_RANGE writeRange = { 0, numRows*rowPitch };
 		staging->Unmap(0, &writeRange);
 
 		D3D12_BOX box;
