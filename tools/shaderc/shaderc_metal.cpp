@@ -730,6 +730,15 @@ namespace bgfx { namespace metal
 
 						if (!str.isEmpty() )
 						{
+							// If the line declares a uniform, merge all next
+							// lines until we encounter a semicolon.
+							bx::StringView lineEnd = strFind(strLine, ";");
+							while (lineEnd.isEmpty() && !reader.isDone()) {
+								bx::StringView nextLine = reader.next();
+								strLine.set(strLine.getPtr(), nextLine.getTerm());
+								lineEnd = strFind(nextLine, ";");
+							}
+
 							bool found = false;
 
 							for (uint32_t ii = 0; ii < BX_COUNTOF(s_samplerTypes); ++ii)
