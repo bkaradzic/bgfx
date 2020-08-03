@@ -2142,6 +2142,10 @@ void CompilerGLSL::emit_flattened_io_block_member(const std::string &basename, c
 
 	assert(member_type->basetype != SPIRType::Struct);
 
+	// We're overriding struct member names, so ensure we do so on the primary type.
+	if (parent_type->type_alias)
+		parent_type = &get<SPIRType>(parent_type->type_alias);
+
 	// Sanitize underscores because joining the two identifiers might create more than 1 underscore in a row,
 	// which is not allowed.
 	flattened_name = sanitize_underscores(flattened_name);
@@ -2185,9 +2189,13 @@ void CompilerGLSL::emit_flattened_io_block_struct(const std::string &basename, c
 
 void CompilerGLSL::emit_flattened_io_block(const SPIRVariable &var, const char *qual)
 {
-	auto &type = get<SPIRType>(var.basetype);
-	if (!type.array.empty())
+	auto &var_type = get<SPIRType>(var.basetype);
+	if (!var_type.array.empty())
 		SPIRV_CROSS_THROW("Array of varying structs cannot be flattened to legacy-compatible varyings.");
+
+	// Emit flattened types based on the type alias. Normally, we are never supposed to emit
+	// struct declarations for aliased types.
+	auto &type = var_type.type_alias ? get<SPIRType>(var_type.type_alias) : var_type;
 
 	auto old_flags = ir.meta[type.self].decoration.decoration_flags;
 	// Emit the members as if they are part of a block to get all qualifiers.
@@ -2232,7 +2240,8 @@ void CompilerGLSL::emit_interface_block(const SPIRVariable &var)
 		// ESSL earlier than 310 and GLSL earlier than 150 did not support
 		// I/O variables which are struct types.
 		// To support this, flatten the struct into separate varyings instead.
-		if ((options.es && options.version < 310) || (!options.es && options.version < 150))
+		if (options.force_flattened_io_blocks || (options.es && options.version < 310) ||
+		    (!options.es && options.version < 150))
 		{
 			// I/O blocks on ES require version 310 with Android Extension Pack extensions, or core version 320.
 			// On desktop, I/O blocks were introduced with geometry shaders in GL 3.2 (GLSL 150).
@@ -2292,7 +2301,8 @@ void CompilerGLSL::emit_interface_block(const SPIRVariable &var)
 		// I/O variables which are struct types.
 		// To support this, flatten the struct into separate varyings instead.
 		if (type.basetype == SPIRType::Struct &&
-		    ((options.es && options.version < 310) || (!options.es && options.version < 150)))
+		    (options.force_flattened_io_blocks || (options.es && options.version < 310) ||
+		     (!options.es && options.version < 150)))
 		{
 			emit_flattened_io_block(var, qual);
 		}
@@ -14066,37 +14076,29 @@ void CompilerGLSL::reset_name_caches()
 void CompilerGLSL::fixup_type_alias()
 {
 	// Due to how some backends work, the "master" type of type_alias must be a block-like type if it exists.
-	// FIXME: Multiple alias types which are both block-like will be awkward, for now, it's best to just drop the type
-	// alias if the slave type is a block type.
 	ir.for_each_typed_id<SPIRType>([&](uint32_t self, SPIRType &type) {
-		if (type.type_alias && type_is_block_like(type))
+		if (!type.type_alias)
+			return;
+
+		if (has_decoration(type.self, DecorationBlock) || has_decoration(type.self, DecorationBufferBlock))
 		{
+			// Top-level block types should never alias anything else.
+			type.type_alias = 0;
+		}
+		else if (type_is_block_like(type) && type.self == ID(self))
+		{
+			// A block-like type is any type which contains Offset decoration, but not top-level blocks,
+			// i.e. blocks which are placed inside buffers.
 			// Become the master.
 			ir.for_each_typed_id<SPIRType>([&](uint32_t other_id, SPIRType &other_type) {
-				if (other_id == type.self)
+				if (other_id == self)
 					return;
 
 				if (other_type.type_alias == type.type_alias)
-					other_type.type_alias = type.self;
+					other_type.type_alias = self;
 			});
 
 			this->get<SPIRType>(type.type_alias).type_alias = self;
-			type.type_alias = 0;
-		}
-	});
-
-	ir.for_each_typed_id<SPIRType>([&](uint32_t, SPIRType &type) {
-		if (type.type_alias && type_is_block_like(type))
-		{
-			// This is not allowed, drop the type_alias.
-			type.type_alias = 0;
-		}
-		else if (type.type_alias && !type_is_block_like(this->get<SPIRType>(type.type_alias)))
-		{
-			// If the alias master is not a block-like type, there is no reason to use type aliasing.
-			// This case can happen if two structs are declared with the same name, but they are unrelated.
-			// Aliases are only used to deal with aliased types for structs which are used in different buffer types
-			// which all create a variant of the same struct with different DecorationOffset values.
 			type.type_alias = 0;
 		}
 	});

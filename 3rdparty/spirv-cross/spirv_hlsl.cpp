@@ -568,6 +568,13 @@ void CompilerHLSL::emit_builtin_outputs_in_struct()
 			semantic = legacy ? "POSITION" : "SV_Position";
 			break;
 
+		case BuiltInSampleMask:
+			if (hlsl_options.shader_model < 41 || execution.model != ExecutionModelFragment)
+				SPIRV_CROSS_THROW("Sample Mask output is only supported in PS 4.1 or higher.");
+			type = "uint";
+			semantic = "SV_Coverage";
+			break;
+
 		case BuiltInFragDepth:
 			type = "float";
 			if (legacy)
@@ -671,6 +678,13 @@ void CompilerHLSL::emit_builtin_inputs_in_struct()
 				SPIRV_CROSS_THROW("Sample ID not supported in SM 3.0 or lower.");
 			type = "uint";
 			semantic = "SV_SampleIndex";
+			break;
+
+		case BuiltInSampleMask:
+			if (hlsl_options.shader_model < 50 || get_entry_point().model != ExecutionModelFragment)
+				SPIRV_CROSS_THROW("Sample Mask input is only supported in PS 5.0 or higher.");
+			type = "uint";
+			semantic = "SV_Coverage";
 			break;
 
 		case BuiltInGlobalInvocationId:
@@ -1064,13 +1078,15 @@ void CompilerHLSL::emit_builtin_variables()
 			type = "float";
 			break;
 
+		case BuiltInSampleMask:
+			type = "int";
+			break;
+
 		default:
 			SPIRV_CROSS_THROW(join("Unsupported builtin in HLSL: ", unsigned(builtin)));
 		}
 
 		StorageClass storage = active_input_builtins.get(i) ? StorageClassInput : StorageClassOutput;
-		// FIXME: SampleMask can be both in and out with sample builtin,
-		// need to distinguish that when we add support for that.
 
 		if (type)
 		{
@@ -1078,6 +1094,13 @@ void CompilerHLSL::emit_builtin_variables()
 				statement("static ", type, " ", builtin_to_glsl(builtin, storage), "[", array_size, "];");
 			else
 				statement("static ", type, " ", builtin_to_glsl(builtin, storage), ";");
+		}
+
+		// SampleMask can be both in and out with sample builtin, in this case we have already
+		// declared the input variable and we need to add the output one now.
+		if (builtin == BuiltInSampleMask && storage == StorageClassInput && this->active_output_builtins.get(i))
+		{
+			statement("static ", type, " ", this->builtin_to_glsl(builtin, StorageClassOutput), ";");
 		}
 	});
 
@@ -5699,4 +5722,9 @@ void CompilerHLSL::set_hlsl_force_storage_buffer_as_uav(uint32_t desc_set, uint3
 {
 	SetBindingPair pair = { desc_set, binding };
 	force_uav_buffer_bindings.insert(pair);
+}
+
+bool CompilerHLSL::builtin_translates_to_nonarray(spv::BuiltIn builtin) const
+{
+	return (builtin == BuiltInSampleMask);
 }

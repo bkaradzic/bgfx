@@ -121,6 +121,10 @@ public:
 		// which would otherwise be uninitialized will now be initialized to 0 instead.
 		bool force_zero_initialized_variables = false;
 
+		// In GLSL, force use of I/O block flattening, similar to
+		// what happens on legacy GLSL targets for blocks and structs.
+		bool force_flattened_io_blocks = false;
+
 		enum Precision
 		{
 			DontCare,
