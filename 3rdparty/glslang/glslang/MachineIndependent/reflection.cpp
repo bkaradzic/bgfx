@@ -639,7 +639,7 @@ public:
 
     int addBlockName(const TString& name, const TType& type, int size)
     {
-        int blockIndex;
+        int blockIndex = 0;
         if (type.isArray()) {
             TType derefType(type, 0);
             for (int e = 0; e < type.getOuterArraySize(); ++e) {
