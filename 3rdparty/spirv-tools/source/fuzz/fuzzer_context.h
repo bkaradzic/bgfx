@@ -186,6 +186,9 @@ class FuzzerContext {
   uint32_t GetChanceOfGoingDeeperWhenMakingAccessChain() {
     return chance_of_going_deeper_when_making_access_chain_;
   }
+  uint32_t GetChanceOfInterchangingSignednessOfIntegerOperands() {
+    return chance_of_interchanging_signedness_of_integer_operands_;
+  }
   uint32_t GetChanceOfInterchangingZeroLikeConstants() {
     return chance_of_interchanging_zero_like_constants_;
   }
@@ -223,6 +226,9 @@ class FuzzerContext {
   }
   uint32_t GetChanceOfReplacingLinearAlgebraInstructions() {
     return chance_of_replacing_linear_algebra_instructions_;
+  }
+  uint32_t GetChanceOfReplacingLoadStoreWithCopyMemory() {
+    return chance_of_replacing_load_store_with_copy_memory_;
   }
   uint32_t GetChanceOfReplacingParametersWithGlobals() {
     return chance_of_replacing_parameters_with_globals_;
@@ -350,6 +356,7 @@ class FuzzerContext {
   uint32_t chance_of_copying_object_;
   uint32_t chance_of_donating_additional_module_;
   uint32_t chance_of_going_deeper_when_making_access_chain_;
+  uint32_t chance_of_interchanging_signedness_of_integer_operands_;
   uint32_t chance_of_interchanging_zero_like_constants_;
   uint32_t chance_of_inverting_comparison_operators_;
   uint32_t chance_of_making_donor_livesafe_;
@@ -364,6 +371,7 @@ class FuzzerContext {
   uint32_t chance_of_replacing_copyobject_with_store_load_;
   uint32_t chance_of_replacing_id_with_synonym_;
   uint32_t chance_of_replacing_linear_algebra_instructions_;
+  uint32_t chance_of_replacing_load_store_with_copy_memory_;
   uint32_t chance_of_replacing_parameters_with_globals_;
   uint32_t chance_of_replacing_parameters_with_struct_;
   uint32_t chance_of_splitting_block_;

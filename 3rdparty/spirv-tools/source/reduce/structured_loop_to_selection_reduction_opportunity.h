@@ -72,8 +72,8 @@ class StructuredLoopToSelectionReductionOpportunity
   void ChangeLoopToSelection();
 
   // Fixes any scenarios where, due to CFG changes, ids have uses not dominated
-  // by their definitions, by changing such uses to uses of OpUndef or of dummy
-  // variables.
+  // by their definitions, by changing such uses to uses of OpUndef or of
+  // placeholder variables.
   void FixNonDominatedIdUses();
 
   // Returns true if and only if at least one of the following holds:

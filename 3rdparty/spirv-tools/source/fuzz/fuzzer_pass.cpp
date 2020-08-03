@@ -17,6 +17,7 @@
 #include <set>
 
 #include "source/fuzz/fuzzer_util.h"
+#include "source/fuzz/id_use_descriptor.h"
 #include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/transformation_add_constant_boolean.h"
 #include "source/fuzz/transformation_add_constant_composite.h"
@@ -512,6 +513,24 @@ uint32_t FuzzerPass::FindOrCreateZeroConstant(
       assert(false && "Unknown type.");
       return 0;
   }
+}
+
+void FuzzerPass::MaybeAddUseToReplace(
+    opt::Instruction* use_inst, uint32_t use_index, uint32_t replacement_id,
+    std::vector<std::pair<protobufs::IdUseDescriptor, uint32_t>>*
+        uses_to_replace) {
+  // Only consider this use if it is in a block
+  if (!GetIRContext()->get_instr_block(use_inst)) {
+    return;
+  }
+
+  // Get the index of the operand restricted to input operands.
+  uint32_t in_operand_index =
+      fuzzerutil::InOperandIndexFromOperandIndex(*use_inst, use_index);
+  auto id_use_descriptor =
+      MakeIdUseDescriptorFromUse(GetIRContext(), use_inst, in_operand_index);
+  uses_to_replace->emplace_back(
+      std::make_pair(id_use_descriptor, replacement_id));
 }
 
 }  // namespace fuzz

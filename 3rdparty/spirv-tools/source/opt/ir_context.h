@@ -403,9 +403,6 @@ class IRContext {
   // instruction exists.
   Instruction* KillInst(Instruction* inst);
 
-  // Deletes DebugDeclare instructions in the given function |fn|.
-  void KillDebugDeclareInsts(Function* fn);
-
   // Returns true if all of the given analyses are valid.
   bool AreAnalysesValid(Analysis set) { return (set & valid_analyses_) == set; }
 

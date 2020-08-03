@@ -39,7 +39,7 @@ v2020.4 2020-07-22
 
 v2020.3 2020-05-27
  - General
-   - Prevent Effcee install his things when build spirv-tools with testing enabled (#3256)
+   - Prevent Effcee from installing things when building spirv-tools with testing enabled (#3256)
    - Update acorn version (#3294)
    - If SPIRV-Headers is in our tree, include it as subproject (#3299)
    - allow cross compiling for Windows Store, UWP, etc. (#3330)
@@ -111,7 +111,7 @@ v2020.1 2020-02-03
  - Optimizer
    - Change default version for CreatInstBindlessCheckPass to 2 (#3096, #3119)
    - Better handling of OpLine on merge blocks (#3130)
-   - Use dummy switch instead of dummy loop in MergeReturn pass. (#3151)
+   - Use placeholder switch instead of placeholder loop in MergeReturn pass. (#3151)
    - Handle TimeAMD in AmdExtensionToKhrPass. (#3168)
  - Validator
    - Fix structured exit validation (#3141)
@@ -438,7 +438,7 @@ v2018.6 2018-11-07
  - Optimizer
    - Unrolling loops marked for unrolling in the legalization passes.
    - Improved the compile time of loop unrolling.
-   - Changee merge-return to create a dummy loop around the function.
+   - Changee merge-return to create a placeholder loop around the function.
    - Small improvement to merge-blocks to allow it to merge more often.
    - Enforce an upper bound for the ids, and add option to set it.
    - #1966: Report error if there are unreachable block before running merge return

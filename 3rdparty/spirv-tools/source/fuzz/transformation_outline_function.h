@@ -73,7 +73,7 @@ class TransformationOutlineFunction : public Transformation {
   // - Unless the type required for the new function is already known,
   //   |message_.new_function_type_id| is used as the type id for a new function
   //   type, and the new function uses this type.
-  // - The new function starts with a dummy block with id
+  // - The new function starts with a placeholder block with id
   //   |message_.new_function_first_block|, which jumps straight to a successor
   //   block, to avoid violating rules on what the first block in a function may
   //   look like.

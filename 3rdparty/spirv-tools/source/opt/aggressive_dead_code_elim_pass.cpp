@@ -696,8 +696,8 @@ Pass::Status AggressiveDCEPass::ProcessImpl() {
   // been marked, it is safe to remove dead global values.
   modified |= ProcessGlobalValues();
 
-  // Sanity check.
-  assert(to_kill_.size() == 0 || modified);
+  assert((to_kill_.empty() || modified) &&
+         "A dead instruction was identified, but no change recorded.");
 
   // Kill all dead instructions.
   for (auto inst : to_kill_) {

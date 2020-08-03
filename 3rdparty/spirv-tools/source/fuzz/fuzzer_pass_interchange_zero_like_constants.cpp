@@ -57,24 +57,6 @@ uint32_t FuzzerPassInterchangeZeroLikeConstants::FindOrCreateToggledConstant(
   return 0;
 }
 
-void FuzzerPassInterchangeZeroLikeConstants::MaybeAddUseToReplace(
-    opt::Instruction* use_inst, uint32_t use_index, uint32_t replacement_id,
-    std::vector<std::pair<protobufs::IdUseDescriptor, uint32_t>>*
-        uses_to_replace) {
-  // Only consider this use if it is in a block
-  if (!GetIRContext()->get_instr_block(use_inst)) {
-    return;
-  }
-
-  // Get the index of the operand restricted to input operands.
-  uint32_t in_operand_index =
-      fuzzerutil::InOperandIndexFromOperandIndex(*use_inst, use_index);
-  auto id_use_descriptor =
-      MakeIdUseDescriptorFromUse(GetIRContext(), use_inst, in_operand_index);
-  uses_to_replace->emplace_back(
-      std::make_pair(id_use_descriptor, replacement_id));
-}
-
 void FuzzerPassInterchangeZeroLikeConstants::Apply() {
   // Make vector keeping track of all the uses we want to replace.
   // This is a vector of pairs, where the first element is an id use descriptor
@@ -118,7 +100,7 @@ void FuzzerPassInterchangeZeroLikeConstants::Apply() {
         });
   }
 
-  // Replace the ids
+  // Replace the ids if it is allowed.
   for (auto use_to_replace : uses_to_replace) {
     MaybeApplyTransformation(TransformationReplaceIdWithSynonym(
         use_to_replace.first, use_to_replace.second));

@@ -98,7 +98,7 @@ void FuzzerPassReplaceParamsWithStruct::Apply() {
       parameter_id.push_back(params[index]->result_id());
     }
 
-    std::unordered_map<uint32_t, uint32_t> caller_id_to_fresh_id;
+    std::map<uint32_t, uint32_t> caller_id_to_fresh_id;
     for (const auto* inst :
          fuzzerutil::GetCallers(GetIRContext(), function.result_id())) {
       caller_id_to_fresh_id[inst->result_id()] =

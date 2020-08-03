@@ -161,7 +161,7 @@ void TransformationReplaceParameterWithGlobal::Apply(
   }
 
   // Remove the parameter from the function.
-  function->RemoveParameter(message_.parameter_id());
+  fuzzerutil::RemoveParameter(ir_context, message_.parameter_id());
 
   // Update function's type.
   {

@@ -48,8 +48,8 @@ extern "C" {
 
 #define SPV_BIT(shift) (1 << (shift))
 
-#define SPV_FORCE_16_BIT_ENUM(name) _##name = 0x7fff
-#define SPV_FORCE_32_BIT_ENUM(name) _##name = 0x7fffffff
+#define SPV_FORCE_16_BIT_ENUM(name) SPV_FORCE_16BIT_##name = 0x7fff
+#define SPV_FORCE_32_BIT_ENUM(name) SPV_FORCE_32BIT_##name = 0x7fffffff
 
 // Enumerations
 
@@ -189,8 +189,17 @@ typedef enum spv_operand_type_t {
 //    Variable : expands to 0, 1 or many operands or pairs of operands.
 //               This is similar to * in regular expressions.
 
+// NOTE: These FIRST_* and LAST_* enum values are DEPRECATED.
+// The concept of "optional" and "variable" operand types are only intended
+// for use as an implementation detail of parsing SPIR-V, either in text or
+// binary form.  Instead of using enum ranges, use characteristic function
+// spvOperandIsConcrete.
+// The use of enum value ranges in a public API makes it difficult to insert
+// new values into a range without also breaking binary compatibility.
+//
 // Macros for defining bounds on optional and variable operand types.
 // Any variable operand type is also optional.
+// TODO(dneto): Remove SPV_OPERAND_TYPE_FIRST_* and SPV_OPERAND_TYPE_LAST_*
 #define FIRST_OPTIONAL(ENUM) ENUM, SPV_OPERAND_TYPE_FIRST_OPTIONAL_TYPE = ENUM
 #define FIRST_VARIABLE(ENUM) ENUM, SPV_OPERAND_TYPE_FIRST_VARIABLE_TYPE = ENUM
 #define LAST_VARIABLE(ENUM)                         \
@@ -258,6 +267,12 @@ typedef enum spv_operand_type_t {
   SPV_FORCE_32_BIT_ENUM(spv_operand_type_t)
 } spv_operand_type_t;
 
+// Returns true if the given type is concrete.
+bool spvOperandIsConcrete(spv_operand_type_t type);
+
+// Returns true if the given type is concrete and also a mask.
+bool spvOperandIsConcreteMask(spv_operand_type_t type);
+
 typedef enum spv_ext_inst_type_t {
   SPV_EXT_INST_TYPE_NONE = 0,
   SPV_EXT_INST_TYPE_GLSL_STD_450,
@@ -268,6 +283,7 @@ typedef enum spv_ext_inst_type_t {
   SPV_EXT_INST_TYPE_SPV_AMD_SHADER_BALLOT,
   SPV_EXT_INST_TYPE_DEBUGINFO,
   SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100,
+  SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION,
 
   // Multiple distinct extended instruction set types could return this
   // value, if they are prefixed with NonSemantic. and are otherwise

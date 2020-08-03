@@ -17,7 +17,9 @@
 #include <vector>
 
 #include "source/fuzz/fuzzer_util.h"
+#include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/transformation_outline_function.h"
+#include "source/fuzz/transformation_split_block.h"
 
 namespace spvtools {
 namespace fuzz {
@@ -46,6 +48,33 @@ void FuzzerPassOutlineFunctions::Apply() {
       blocks.push_back(&block);
     }
     auto entry_block = blocks[GetFuzzerContext()->RandomIndex(blocks)];
+
+    // If the entry block starts with OpPhi, try to split it.
+    if (entry_block->begin()->opcode() == SpvOpPhi) {
+      // Find the first non-OpPhi instruction.
+      opt::Instruction* non_phi_inst = nullptr;
+      for (auto& instruction : *entry_block) {
+        if (instruction.opcode() != SpvOpPhi) {
+          non_phi_inst = &instruction;
+          break;
+        }
+      }
+
+      assert(non_phi_inst && "|non_phi_inst| must've been initialized");
+
+      // If the split was not applicable, the transformation will not work.
+      uint32_t new_block_id = GetFuzzerContext()->GetFreshId();
+      if (!MaybeApplyTransformation(TransformationSplitBlock(
+              MakeInstructionDescriptor(non_phi_inst->result_id(),
+                                        non_phi_inst->opcode(), 0),
+              new_block_id))) {
+        return;
+      }
+
+      // The new entry block is the newly-created block.
+      entry_block = &*function->FindBlock(new_block_id);
+    }
+
     auto dominator_analysis = GetIRContext()->GetDominatorAnalysis(function);
     auto postdominator_analysis =
         GetIRContext()->GetPostDominatorAnalysis(function);

@@ -1100,11 +1100,11 @@ void FuzzerPassDonateModules::AddLivesafeFunction(
                      "A runtime array type in the donor should have been "
                      "replaced by a fixed-sized array in the recipient.");
               // The size of this fixed-size array is a suitable bound.
-              bound = TransformationAddFunction::GetBoundForCompositeIndex(
-                  GetIRContext(), *fixed_size_array_type);
+              bound = fuzzerutil::GetBoundForCompositeIndex(
+                  *fixed_size_array_type, GetIRContext());
             } else {
-              bound = TransformationAddFunction::GetBoundForCompositeIndex(
-                  donor_ir_context, *should_be_composite_type);
+              bound = fuzzerutil::GetBoundForCompositeIndex(
+                  *should_be_composite_type, donor_ir_context);
             }
             const uint32_t index_id = inst.GetSingleWordInOperand(index);
             auto index_inst =

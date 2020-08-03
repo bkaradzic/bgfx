@@ -31,6 +31,7 @@
 #include "source/fuzz/transformation_add_global_variable.h"
 #include "source/fuzz/transformation_add_image_sample_unused_components.h"
 #include "source/fuzz/transformation_add_local_variable.h"
+#include "source/fuzz/transformation_add_loop_preheader.h"
 #include "source/fuzz/transformation_add_no_contraction_decoration.h"
 #include "source/fuzz/transformation_add_parameter.h"
 #include "source/fuzz/transformation_add_relaxed_decoration.h"
@@ -66,6 +67,7 @@
 #include "source/fuzz/transformation_replace_copy_object_with_store_load.h"
 #include "source/fuzz/transformation_replace_id_with_synonym.h"
 #include "source/fuzz/transformation_replace_linear_algebra_instruction.h"
+#include "source/fuzz/transformation_replace_load_store_with_copy_memory.h"
 #include "source/fuzz/transformation_replace_parameter_with_global.h"
 #include "source/fuzz/transformation_replace_params_with_struct.h"
 #include "source/fuzz/transformation_set_function_control.h"
@@ -126,6 +128,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kAddLocalVariable:
       return MakeUnique<TransformationAddLocalVariable>(
           message.add_local_variable());
+    case protobufs::Transformation::TransformationCase::kAddLoopPreheader:
+      return MakeUnique<TransformationAddLoopPreheader>(
+          message.add_loop_preheader());
     case protobufs::Transformation::TransformationCase::
         kAddNoContractionDecoration:
       return MakeUnique<TransformationAddNoContractionDecoration>(
@@ -233,6 +238,10 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
         kReplaceLinearAlgebraInstruction:
       return MakeUnique<TransformationReplaceLinearAlgebraInstruction>(
           message.replace_linear_algebra_instruction());
+    case protobufs::Transformation::TransformationCase::
+        kReplaceLoadStoreWithCopyMemory:
+      return MakeUnique<TransformationReplaceLoadStoreWithCopyMemory>(
+          message.replace_load_store_with_copy_memory());
     case protobufs::Transformation::TransformationCase::
         kReplaceParamsWithStruct:
       return MakeUnique<TransformationReplaceParamsWithStruct>(

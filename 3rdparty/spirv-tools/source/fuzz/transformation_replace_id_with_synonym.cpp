@@ -57,6 +57,21 @@ bool TransformationReplaceIdWithSynonym::IsApplicable(
     return false;
   }
 
+  uint32_t type_id_of_interest =
+      ir_context->get_def_use_mgr()->GetDef(id_of_interest)->type_id();
+  uint32_t type_id_synonym = ir_context->get_def_use_mgr()
+                                 ->GetDef(message_.synonymous_id())
+                                 ->type_id();
+
+  // If the id of interest and the synonym are scalar or vector integer
+  // constants with different signedness, their use can only be swapped if the
+  // instruction is agnostic to the signedness of the operand.
+  if (!TypesAreCompatible(ir_context, use_instruction->opcode(),
+                          message_.id_use_descriptor().in_operand_index(),
+                          type_id_of_interest, type_id_synonym)) {
+    return false;
+  }
+
   // Is the use suitable for being replaced in principle?
   if (!UseCanBeReplacedWithSynonym(
           ir_context, use_instruction,
@@ -180,6 +195,59 @@ bool TransformationReplaceIdWithSynonym::UseCanBeReplacedWithSynonym(
   }
 
   return true;
+}
+
+// TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3582): Add all
+//  opcodes that are agnostic to signedness of operands to function.
+//  This is not exhaustive yet.
+bool TransformationReplaceIdWithSynonym::IsAgnosticToSignednessOfOperand(
+    SpvOp opcode, uint32_t use_in_operand_index) {
+  switch (opcode) {
+    case SpvOpSNegate:
+    case SpvOpNot:
+    case SpvOpIAdd:
+    case SpvOpISub:
+    case SpvOpIMul:
+    case SpvOpSDiv:
+    case SpvOpSRem:
+    case SpvOpSMod:
+    case SpvOpShiftRightLogical:
+    case SpvOpShiftRightArithmetic:
+    case SpvOpShiftLeftLogical:
+    case SpvOpBitwiseOr:
+    case SpvOpBitwiseXor:
+    case SpvOpBitwiseAnd:
+    case SpvOpIEqual:
+    case SpvOpINotEqual:
+    case SpvOpULessThan:
+    case SpvOpSLessThan:
+    case SpvOpUGreaterThan:
+    case SpvOpSGreaterThan:
+    case SpvOpULessThanEqual:
+    case SpvOpSLessThanEqual:
+    case SpvOpUGreaterThanEqual:
+    case SpvOpSGreaterThanEqual:
+      return true;
+    case SpvOpAccessChain:
+      // The signedness of indices does not matter.
+      return use_in_operand_index > 0;
+    default:
+      // Conservatively assume that the id cannot be swapped in other
+      // instructions.
+      return false;
+  }
+}
+
+bool TransformationReplaceIdWithSynonym::TypesAreCompatible(
+    opt::IRContext* ir_context, SpvOp opcode, uint32_t use_in_operand_index,
+    uint32_t type_id_1, uint32_t type_id_2) {
+  assert(ir_context->get_type_mgr()->GetType(type_id_1) &&
+         ir_context->get_type_mgr()->GetType(type_id_2) &&
+         "Type ids are invalid");
+
+  return type_id_1 == type_id_2 ||
+         (IsAgnosticToSignednessOfOperand(opcode, use_in_operand_index) &&
+          fuzzerutil::TypesAreEqualUpToSign(ir_context, type_id_1, type_id_2));
 }
 
 }  // namespace fuzz

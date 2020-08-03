@@ -33,7 +33,7 @@ namespace {
 // Performs compile time check that all SpvImageOperandsXXX cases are handled in
 // this module. If SpvImageOperandsXXX list changes, this function will fail the
 // build.
-// For all other purposes this is a dummy function.
+// For all other purposes this is a placeholder function.
 bool CheckAllImageOperandsHandled() {
   SpvImageOperandsMask enum_val = SpvImageOperandsBiasMask;
 

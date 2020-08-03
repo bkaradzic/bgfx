@@ -21,20 +21,6 @@
 namespace spvtools {
 namespace fuzz {
 
-namespace {
-
-std::map<uint32_t, uint32_t> PairSequenceToMap(
-    const google::protobuf::RepeatedPtrField<protobufs::UInt32Pair>&
-        pair_sequence) {
-  std::map<uint32_t, uint32_t> result;
-  for (auto& pair : pair_sequence) {
-    result[pair.first()] = pair.second();
-  }
-  return result;
-}
-
-}  // namespace
-
 TransformationOutlineFunction::TransformationOutlineFunction(
     const spvtools::fuzz::protobufs::TransformationOutlineFunction& message)
     : message_(message) {}
@@ -55,18 +41,10 @@ TransformationOutlineFunction::TransformationOutlineFunction(
   message_.set_new_function_region_entry_block(new_function_region_entry_block);
   message_.set_new_caller_result_id(new_caller_result_id);
   message_.set_new_callee_result_id(new_callee_result_id);
-  for (auto& entry : input_id_to_fresh_id) {
-    protobufs::UInt32Pair pair;
-    pair.set_first(entry.first);
-    pair.set_second(entry.second);
-    *message_.add_input_id_to_fresh_id() = pair;
-  }
-  for (auto& entry : output_id_to_fresh_id) {
-    protobufs::UInt32Pair pair;
-    pair.set_first(entry.first);
-    pair.set_second(entry.second);
-    *message_.add_output_id_to_fresh_id() = pair;
-  }
+  *message_.mutable_input_id_to_fresh_id() =
+      fuzzerutil::MapToRepeatedUInt32Pair(input_id_to_fresh_id);
+  *message_.mutable_output_id_to_fresh_id() =
+      fuzzerutil::MapToRepeatedUInt32Pair(output_id_to_fresh_id);
 }
 
 bool TransformationOutlineFunction::IsApplicable(
@@ -252,8 +230,8 @@ bool TransformationOutlineFunction::IsApplicable(
 
   // For each region input id, i.e. every id defined outside the region but
   // used inside the region, ...
-  std::map<uint32_t, uint32_t> input_id_to_fresh_id_map =
-      PairSequenceToMap(message_.input_id_to_fresh_id());
+  auto input_id_to_fresh_id_map =
+      fuzzerutil::RepeatedUInt32PairToMap(message_.input_id_to_fresh_id());
   for (auto id : GetRegionInputIds(ir_context, region_set, exit_block)) {
     // There needs to be a corresponding fresh id to be used as a function
     // parameter.
@@ -280,8 +258,8 @@ bool TransformationOutlineFunction::IsApplicable(
 
   // For each region output id -- i.e. every id defined inside the region but
   // used outside the region, ...
-  std::map<uint32_t, uint32_t> output_id_to_fresh_id_map =
-      PairSequenceToMap(message_.output_id_to_fresh_id());
+  auto output_id_to_fresh_id_map =
+      fuzzerutil::RepeatedUInt32PairToMap(message_.output_id_to_fresh_id());
   for (auto id : GetRegionOutputIds(ir_context, region_set, exit_block)) {
     if (
         // ... there needs to be a corresponding fresh id that can hold the
@@ -323,10 +301,10 @@ void TransformationOutlineFunction::Apply(
       GetRegionOutputIds(ir_context, region_blocks, original_region_exit_block);
 
   // Maps from input and output ids to fresh ids.
-  std::map<uint32_t, uint32_t> input_id_to_fresh_id_map =
-      PairSequenceToMap(message_.input_id_to_fresh_id());
-  std::map<uint32_t, uint32_t> output_id_to_fresh_id_map =
-      PairSequenceToMap(message_.output_id_to_fresh_id());
+  auto input_id_to_fresh_id_map =
+      fuzzerutil::RepeatedUInt32PairToMap(message_.input_id_to_fresh_id());
+  auto output_id_to_fresh_id_map =
+      fuzzerutil::RepeatedUInt32PairToMap(message_.output_id_to_fresh_id());
 
   UpdateModuleIdBoundForFreshIds(ir_context, input_id_to_fresh_id_map,
                                  output_id_to_fresh_id_map);

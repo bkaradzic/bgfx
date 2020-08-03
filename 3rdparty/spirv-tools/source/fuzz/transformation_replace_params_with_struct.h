@@ -15,7 +15,7 @@
 #ifndef SOURCE_FUZZ_TRANSFORMATION_REPLACE_PARAMS_WITH_STRUCT_H_
 #define SOURCE_FUZZ_TRANSFORMATION_REPLACE_PARAMS_WITH_STRUCT_H_
 
-#include <unordered_map>
+#include <map>
 
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation.h"
@@ -33,8 +33,7 @@ class TransformationReplaceParamsWithStruct : public Transformation {
   TransformationReplaceParamsWithStruct(
       const std::vector<uint32_t>& parameter_id,
       uint32_t fresh_function_type_id, uint32_t fresh_parameter_id,
-      const std::unordered_map<uint32_t, uint32_t>&
-          caller_id_to_fresh_composite_id);
+      const std::map<uint32_t, uint32_t>& caller_id_to_fresh_composite_id);
 
   // - Each element of |parameter_id| is a valid result id of some
   //   OpFunctionParameter instruction. All parameter ids must correspond to

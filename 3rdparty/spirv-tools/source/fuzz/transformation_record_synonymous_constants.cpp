@@ -15,6 +15,8 @@
 
 #include "transformation_record_synonymous_constants.h"
 
+#include "source/fuzz/fuzzer_util.h"
+
 namespace spvtools {
 namespace fuzz {
 
@@ -76,18 +78,16 @@ bool TransformationRecordSynonymousConstants::AreEquivalentConstants(
     return false;
   }
 
-  // The type ids must be the same
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3536): Somehow
-  // relax this for integers (so that unsigned integer and signed integer are
-  // considered the same type)
-  if (def_1->type_id() != def_2->type_id()) {
-    return false;
-  }
-
   auto constant1 = ir_context->get_constant_mgr()->GetConstantFromInst(def_1);
   auto constant2 = ir_context->get_constant_mgr()->GetConstantFromInst(def_2);
 
   assert(constant1 && constant2 && "The ids must refer to constants.");
+
+  // The types must be compatible.
+  if (!fuzzerutil::TypesAreEqualUpToSign(ir_context, def_1->type_id(),
+                                         def_2->type_id())) {
+    return false;
+  }
 
   // If either constant is null, the other is equivalent iff it is zero-like
   if (constant1->AsNullConstant()) {

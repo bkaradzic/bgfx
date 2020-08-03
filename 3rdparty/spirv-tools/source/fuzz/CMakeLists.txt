@@ -65,6 +65,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_copy_objects.h
         fuzzer_pass_donate_modules.h
         fuzzer_pass_invert_comparison_operators.h
+        fuzzer_pass_interchange_signedness_of_integer_operands.h
         fuzzer_pass_interchange_zero_like_constants.h
         fuzzer_pass_merge_blocks.h
         fuzzer_pass_obfuscate_constants.h
@@ -76,6 +77,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_replace_copy_memories_with_loads_stores.h
         fuzzer_pass_replace_copy_objects_with_stores_loads.h
         fuzzer_pass_replace_linear_algebra_instructions.h
+        fuzzer_pass_replace_loads_stores_with_copy_memories.h
         fuzzer_pass_replace_parameter_with_global.h
         fuzzer_pass_replace_params_with_struct.h
         fuzzer_pass_split_blocks.h
@@ -106,6 +108,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_global_variable.h
         transformation_add_image_sample_unused_components.h
         transformation_add_local_variable.h
+        transformation_add_loop_preheader.h
         transformation_add_no_contraction_decoration.h
         transformation_add_parameter.h
         transformation_add_relaxed_decoration.h
@@ -142,6 +145,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_replace_copy_object_with_store_load.h
         transformation_replace_id_with_synonym.h
         transformation_replace_linear_algebra_instruction.h
+        transformation_replace_load_store_with_copy_memory.h
         transformation_replace_parameter_with_global.h
         transformation_replace_params_with_struct.h
         transformation_set_function_control.h
@@ -192,6 +196,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_copy_objects.cpp
         fuzzer_pass_donate_modules.cpp
         fuzzer_pass_invert_comparison_operators.cpp
+        fuzzer_pass_interchange_signedness_of_integer_operands.cpp
         fuzzer_pass_interchange_zero_like_constants.cpp
         fuzzer_pass_merge_blocks.cpp
         fuzzer_pass_obfuscate_constants.cpp
@@ -203,6 +208,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_replace_copy_memories_with_loads_stores.cpp
         fuzzer_pass_replace_copy_objects_with_stores_loads.cpp
         fuzzer_pass_replace_linear_algebra_instructions.cpp
+        fuzzer_pass_replace_loads_stores_with_copy_memories.cpp
         fuzzer_pass_replace_parameter_with_global.cpp
         fuzzer_pass_replace_params_with_struct.cpp
         fuzzer_pass_split_blocks.cpp
@@ -232,6 +238,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_add_global_variable.cpp
         transformation_add_image_sample_unused_components.cpp
         transformation_add_local_variable.cpp
+        transformation_add_loop_preheader.cpp
         transformation_add_no_contraction_decoration.cpp
         transformation_add_parameter.cpp
         transformation_add_relaxed_decoration.cpp
@@ -268,6 +275,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_replace_copy_object_with_store_load.cpp
         transformation_replace_id_with_synonym.cpp
         transformation_replace_linear_algebra_instruction.cpp
+        transformation_replace_load_store_with_copy_memory.cpp
         transformation_replace_parameter_with_global.cpp
         transformation_replace_params_with_struct.cpp
         transformation_set_function_control.cpp
@@ -315,7 +323,7 @@ if(SPIRV_BUILD_FUZZER)
 
   # The fuzzer reuses a lot of functionality from the SPIRV-Tools library.
   target_link_libraries(SPIRV-Tools-fuzz
-        PUBLIC ${SPIRV_TOOLS}
+        PUBLIC ${SPIRV_TOOLS}-static
         PUBLIC SPIRV-Tools-opt
         PUBLIC protobuf::libprotobuf)
 

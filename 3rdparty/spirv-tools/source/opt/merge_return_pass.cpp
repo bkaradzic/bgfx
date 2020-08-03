@@ -111,7 +111,7 @@ bool MergeReturnPass::ProcessStructured(
   }
 
   RecordImmediateDominators(function);
-  AddDummySwitchAroundFunction();
+  AddSingleCaseSwitchAroundFunction();
 
   std::list<BasicBlock*> order;
   cfg()->ComputeStructuredOrder(function, &*function->begin(), &order);
@@ -223,7 +223,8 @@ void MergeReturnPass::ProcessStructuredBlock(BasicBlock* block) {
 
   if (tail_opcode == SpvOpReturn || tail_opcode == SpvOpReturnValue ||
       tail_opcode == SpvOpUnreachable) {
-    assert(CurrentState().InBreakable() && "Should be in the dummy construct.");
+    assert(CurrentState().InBreakable() &&
+           "Should be in the placeholder construct.");
     BranchToBlock(block, CurrentState().BreakMergeId());
     return_blocks_.insert(block->id());
   }
@@ -408,7 +409,7 @@ bool MergeReturnPass::PredicateBlocks(
     if (!predicated->insert(block).second) break;
     // Skip structured subgraphs.
     assert(state->InBreakable() &&
-           "Should be in the dummy construct at the very least.");
+           "Should be in the placeholder construct at the very least.");
     Instruction* break_merge_inst = state->BreakMergeInst();
     uint32_t merge_block_id = break_merge_inst->GetSingleWordInOperand(0);
     while (state->BreakMergeId() == merge_block_id) {
@@ -768,7 +769,7 @@ void MergeReturnPass::InsertAfterElement(BasicBlock* element,
   list->insert(pos, new_element);
 }
 
-void MergeReturnPass::AddDummySwitchAroundFunction() {
+void MergeReturnPass::AddSingleCaseSwitchAroundFunction() {
   CreateReturnBlock();
   CreateReturn(final_return_block_);
 
@@ -776,7 +777,7 @@ void MergeReturnPass::AddDummySwitchAroundFunction() {
     cfg()->RegisterBlock(final_return_block_);
   }
 
-  CreateDummySwitch(final_return_block_);
+  CreateSingleCaseSwitch(final_return_block_);
 }
 
 BasicBlock* MergeReturnPass::CreateContinueTarget(uint32_t header_label_id) {
@@ -811,7 +812,7 @@ BasicBlock* MergeReturnPass::CreateContinueTarget(uint32_t header_label_id) {
   return new_block;
 }
 
-void MergeReturnPass::CreateDummySwitch(BasicBlock* merge_target) {
+void MergeReturnPass::CreateSingleCaseSwitch(BasicBlock* merge_target) {
   // Insert the switch before any code is run.  We have to split the entry
   // block to make sure the OpVariable instructions remain in the entry block.
   BasicBlock* start_block = &*function_->begin();

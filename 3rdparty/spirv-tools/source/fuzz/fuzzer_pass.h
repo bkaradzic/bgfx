@@ -175,8 +175,7 @@ class FuzzerPass {
   // with |words| as its value.  If either the required integer type or the
   // constant do not exist, transformations are applied to add them.
   // The returned id either participates in IdIsIrrelevant fact or not,
-  // depending
-  // on the |is_irrelevant| parameter.
+  // depending on the |is_irrelevant| parameter.
   uint32_t FindOrCreateIntegerConstant(const std::vector<uint32_t>& words,
                                        uint32_t width, bool is_signed,
                                        bool is_irrelevant);
@@ -273,6 +272,16 @@ class FuzzerPass {
   // --------------+-------------------------------
   uint32_t FindOrCreateZeroConstant(uint32_t scalar_or_composite_type_id,
                                     bool is_irrelevant);
+
+  // Adds a pair (id_use_descriptor, |replacement_id|) to the vector
+  // |uses_to_replace|, where id_use_descriptor is the id use descriptor
+  // representing the usage of an id in the |use_inst| instruction, at operand
+  // index |use_index|, only if the instruction is in a basic block.
+  // If the instruction is not in a basic block, it does nothing.
+  void MaybeAddUseToReplace(
+      opt::Instruction* use_inst, uint32_t use_index, uint32_t replacement_id,
+      std::vector<std::pair<protobufs::IdUseDescriptor, uint32_t>>*
+          uses_to_replace);
 
  private:
   opt::IRContext* ir_context_;

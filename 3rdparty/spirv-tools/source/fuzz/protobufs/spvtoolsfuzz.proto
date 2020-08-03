@@ -406,6 +406,8 @@ message Transformation {
     TransformationReplaceParamsWithStruct replace_params_with_struct = 59;
     TransformationReplaceCopyObjectWithStoreLoad replace_copy_object_with_store_load = 60;
     TransformationReplaceCopyMemoryWithLoadStore replace_copy_memory_with_load_store = 61;
+    TransformationReplaceLoadStoreWithCopyMemory replace_load_store_with_copy_memory = 62;
+    TransformationAddLoopPreheader add_loop_preheader = 63;
     // Add additional option using the next available number.
   }
 }
@@ -415,6 +417,13 @@ message Transformation {
 message TransformationAccessChain {
 
   // Adds an access chain instruction based on a given pointer and indices.
+
+  // When accessing a struct, the corresponding indices must be 32-bit integer constants.
+  // For any other composite, the indices can be any 32-bit integer, and the transformation
+  // adds two instructions for each such index to clamp it to the bound, as follows:
+  //
+  // %t1 = OpULessThanEqual %bool %index %bound_minus_one
+  // %t2 = OpSelect %int_type %t1 %index %bound_minus_one
 
   // Result id for the access chain
   uint32 fresh_id = 1;
@@ -428,6 +437,10 @@ message TransformationAccessChain {
   // A descriptor for an instruction in a block before which the new
   // OpAccessChain instruction should be inserted
   InstructionDescriptor instruction_to_insert_before = 4;
+
+  // Additional fresh ids, required to clamp index variables. A pair is needed
+  // for each access to a non-struct composite.
+  repeated UInt32Pair fresh_ids_for_clamping = 5;
 
 }
 
@@ -687,6 +700,34 @@ message TransformationAddLocalVariable {
   // value of the variable, in which case stores to the variable can be
   // performed in an arbitrary fashion.
   bool value_is_irrelevant = 5;
+
+}
+
+message TransformationAddLoopPreheader {
+
+  // A transformation that adds a loop preheader block before the given loop header.
+
+  // The id of the loop header block
+  uint32 loop_header_block = 1;
+
+  // A fresh id for the preheader block
+  uint32 fresh_id = 2;
+
+  // Fresh ids for splitting the OpPhi instructions in the header.
+  // A new OpPhi instruction in the preheader is needed for each OpPhi instruction in the header,
+  // if the header has more than one predecessor outside of the loop.
+  // This allows turning instructions of the form:
+  //
+  //   %loop_header_block = OpLabel
+  //                 %id1 = OpPhi %type %val1 %pred1_id %val2 %pred2_id %val3 %backedge_block_id
+  //
+  // into:
+  //            %fresh_id = OpLabel
+  //             %phi_id1 = OpPhi %type %val1 %pred1_id %val2 %pred2_id
+  //                        OpBranch %header_id
+  //   %loop_header_block = OpLabel
+  //                 %id1 = OpPhi %type %phi_id1 %fresh_id %val3 %backedge_block_id
+  repeated uint32 phi_id = 3;
 
 }
 
@@ -1331,22 +1372,20 @@ message TransformationReplaceLinearAlgebraInstruction {
   repeated uint32 fresh_ids = 1;
 
   // A descriptor for a linear algebra instruction.
-  // This transformation is only applicable if the described instruction has one of the following opcodes.
-  // Supported:
-  //   OpVectorTimesScalar
-  //   OpMatrixTimesScalar
-  //   OpVectorTimesMatrix
-  //   OpMatrixTimesVector
-  //   OpMatrixTimesMatrix
-  //   OpDot
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3354):
-  // Right now we only support certain operations. When this issue is addressed
-  // the supporting comments can be removed.
-  // To be supported in the future:
-  //   OpTranspose
-  //   OpOuterProduct
   InstructionDescriptor instruction_descriptor = 2;
 
+}
+
+message TransformationReplaceLoadStoreWithCopyMemory {
+  // A transformation that takes a pair of instruction descriptors
+  // to OpLoad and OpStore that have the same intermediate value
+  // and replaces the OpStore with an equivalent OpCopyMemory.
+
+  // The instruction descriptor to OpLoad
+  InstructionDescriptor load_instruction_descriptor = 1;
+
+  // The instruction descriptor to OpStore
+  InstructionDescriptor store_instruction_descriptor = 2;
 }
 
 message TransformationReplaceParamsWithStruct {
@@ -1365,12 +1404,9 @@ message TransformationReplaceParamsWithStruct {
   uint32 fresh_parameter_id = 3;
 
   // Fresh ids for struct objects containing values of replaced parameters.
-  // This map contains a fresh id for at least every result id of a relevant
+  // This field contains a fresh id for at least every result id of a relevant
   // OpFunctionCall instruction.
-  //
-  // While maps are not fully deterministic, the way this map is used does not
-  // exhibit nondeterminism. Change to repeated Uint32Pair if this changes.
-  map<uint32, uint32> caller_id_to_fresh_composite_id = 4;
+  repeated UInt32Pair caller_id_to_fresh_composite_id = 4;
 
 }
 

@@ -474,11 +474,19 @@ class FactManager::DataSynonymAndIdEquationFacts {
   void MakeEquivalent(const protobufs::DataDescriptor& dd1,
                       const protobufs::DataDescriptor& dd2);
 
+  // Registers a data descriptor in the equivalence relation if it hasn't been
+  // registered yet, and returns its representative.
+  const protobufs::DataDescriptor* RegisterDataDescriptor(
+      const protobufs::DataDescriptor& dd);
+
   // Returns true if and only if |dd1| and |dd2| are valid data descriptors
-  // whose associated data have the same type (modulo integer signedness).
-  bool DataDescriptorsAreWellFormedAndComparable(
+  // whose associated data have compatible types. Two types are compatible if:
+  // - they are the same
+  // - they both are numerical or vectors of numerical components with the same
+  //   number of components and the same bit count per component
+  static bool DataDescriptorsAreWellFormedAndComparable(
       opt::IRContext* context, const protobufs::DataDescriptor& dd1,
-      const protobufs::DataDescriptor& dd2) const;
+      const protobufs::DataDescriptor& dd2);
 
   OperationSet GetEquations(const protobufs::DataDescriptor* lhs) const;
 
@@ -530,9 +538,7 @@ void FactManager::DataSynonymAndIdEquationFacts::AddFact(
   protobufs::DataDescriptor lhs_dd = MakeDataDescriptor(fact.lhs_id(), {});
 
   // Register the LHS in the equivalence relation if needed.
-  if (!synonymous_.Exists(lhs_dd)) {
-    synonymous_.Register(lhs_dd);
-  }
+  RegisterDataDescriptor(lhs_dd);
 
   // Get equivalence class representatives for all ids used on the RHS of the
   // equation.
@@ -540,11 +546,8 @@ void FactManager::DataSynonymAndIdEquationFacts::AddFact(
   for (auto rhs_id : fact.rhs_id()) {
     // Register a data descriptor based on this id in the equivalence relation
     // if needed, and then record the equivalence class representative.
-    protobufs::DataDescriptor rhs_dd = MakeDataDescriptor(rhs_id, {});
-    if (!synonymous_.Exists(rhs_dd)) {
-      synonymous_.Register(rhs_dd);
-    }
-    rhs_dd_ptrs.push_back(synonymous_.Find(&rhs_dd));
+    rhs_dd_ptrs.push_back(
+        RegisterDataDescriptor(MakeDataDescriptor(rhs_id, {})));
   }
 
   // Now add the fact.
@@ -604,6 +607,14 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
     case SpvOpConvertUToF:
       ComputeConversionDataSynonymFacts(*rhs_dds[0], context);
       break;
+    case SpvOpBitcast: {
+      assert(DataDescriptorsAreWellFormedAndComparable(context, lhs_dd,
+                                                       *rhs_dds[0]) &&
+             "Operands of OpBitcast equation fact must have compatible types");
+      if (!synonymous_.IsEquivalent(lhs_dd, *rhs_dds[0])) {
+        AddDataSynonymFactRecursive(lhs_dd, *rhs_dds[0], context);
+      }
+    } break;
     case SpvOpIAdd: {
       // Equation form: "a = b + c"
       for (const auto& equation : GetEquations(rhs_dds[0])) {
@@ -713,9 +724,15 @@ void FactManager::DataSynonymAndIdEquationFacts::AddDataSynonymFactRecursive(
 
   // Record that the data descriptors provided in the fact are equivalent.
   MakeEquivalent(dd1, dd2);
+  assert(synonymous_.Find(&dd1) == synonymous_.Find(&dd2) &&
+         "|dd1| and |dd2| must have a single representative");
 
   // Compute various corollary facts.
+
+  // |dd1| and |dd2| belong to the same equivalence class so it doesn't matter
+  // which one we use here.
   ComputeConversionDataSynonymFacts(dd1, context);
+
   ComputeCompositeDataSynonymFacts(dd1, dd2, context);
 }
 
@@ -776,7 +793,7 @@ void FactManager::DataSynonymAndIdEquationFacts::
     ComputeCompositeDataSynonymFacts(const protobufs::DataDescriptor& dd1,
                                      const protobufs::DataDescriptor& dd2,
                                      opt::IRContext* context) {
-  // Check whether this is a synonym about composite objects.  If it is,
+  // Check whether this is a synonym about composite objects. If it is,
   // we can recursively add synonym facts about their associated sub-components.
 
   // Get the type of the object referred to by the first data descriptor in the
@@ -1132,11 +1149,8 @@ void FactManager::DataSynonymAndIdEquationFacts::MakeEquivalent(
     const protobufs::DataDescriptor& dd2) {
   // Register the data descriptors if they are not already known to the
   // equivalence relation.
-  for (const auto& dd : {dd1, dd2}) {
-    if (!synonymous_.Exists(dd)) {
-      synonymous_.Register(dd);
-    }
-  }
+  RegisterDataDescriptor(dd1);
+  RegisterDataDescriptor(dd2);
 
   if (synonymous_.IsEquivalent(dd1, dd2)) {
     // The data descriptors are already known to be equivalent, so there is
@@ -1203,10 +1217,17 @@ void FactManager::DataSynonymAndIdEquationFacts::MakeEquivalent(
   id_equations_.erase(no_longer_representative);
 }
 
+const protobufs::DataDescriptor*
+FactManager::DataSynonymAndIdEquationFacts::RegisterDataDescriptor(
+    const protobufs::DataDescriptor& dd) {
+  return synonymous_.Exists(dd) ? synonymous_.Find(&dd)
+                                : synonymous_.Register(dd);
+}
+
 bool FactManager::DataSynonymAndIdEquationFacts::
     DataDescriptorsAreWellFormedAndComparable(
         opt::IRContext* context, const protobufs::DataDescriptor& dd1,
-        const protobufs::DataDescriptor& dd2) const {
+        const protobufs::DataDescriptor& dd2) {
   auto end_type_id_1 = fuzzerutil::WalkCompositeTypeIndices(
       context, context->get_def_use_mgr()->GetDef(dd1.object())->type_id(),
       dd1.index());
@@ -1225,30 +1246,49 @@ bool FactManager::DataSynonymAndIdEquationFacts::
   // vectors that differ only in signedness.
 
   // Get both types.
-  const opt::analysis::Type* type_1 =
-      context->get_type_mgr()->GetType(end_type_id_1);
-  const opt::analysis::Type* type_2 =
-      context->get_type_mgr()->GetType(end_type_id_2);
+  const auto* type_a = context->get_type_mgr()->GetType(end_type_id_1);
+  const auto* type_b = context->get_type_mgr()->GetType(end_type_id_2);
+  assert(type_a && type_b && "Data descriptors have invalid type(s)");
 
-  // If the first type is a vector, check that the second type is a vector of
-  // the same width, and drill down to the vector element types.
-  if (type_1->AsVector()) {
-    if (!type_2->AsVector()) {
+  // If both types are numerical or vectors of numerical components, then they
+  // are compatible if they have the same number of components and the same bit
+  // count per component.
+
+  if (type_a->AsVector() && type_b->AsVector()) {
+    const auto* vector_a = type_a->AsVector();
+    const auto* vector_b = type_b->AsVector();
+
+    if (vector_a->element_count() != vector_b->element_count() ||
+        vector_a->element_type()->AsBool() ||
+        vector_b->element_type()->AsBool()) {
+      // The case where both vectors have boolean elements and the same number
+      // of components is handled by the direct equality check earlier.
+      // You can't have multiple identical boolean vector types.
       return false;
     }
-    if (type_1->AsVector()->element_count() !=
-        type_2->AsVector()->element_count()) {
-      return false;
-    }
-    type_1 = type_1->AsVector()->element_type();
-    type_2 = type_2->AsVector()->element_type();
+
+    type_a = vector_a->element_type();
+    type_b = vector_b->element_type();
   }
-  // Check that type_1 and type_2 are both integer types of the same bit-width
-  // (but with potentially different signedness).
-  auto integer_type_1 = type_1->AsInteger();
-  auto integer_type_2 = type_2->AsInteger();
-  return integer_type_1 && integer_type_2 &&
-         integer_type_1->width() == integer_type_2->width();
+
+  auto get_bit_count_for_numeric_type =
+      [](const opt::analysis::Type& type) -> uint32_t {
+    if (const auto* integer = type.AsInteger()) {
+      return integer->width();
+    } else if (const auto* floating = type.AsFloat()) {
+      return floating->width();
+    } else {
+      assert(false && "|type| must be a numerical type");
+      return 0;
+    }
+  };
+
+  // Checks that both |type_a| and |type_b| are either numerical or vectors of
+  // numerical components and have the same number of bits.
+  return (type_a->AsInteger() || type_a->AsFloat()) &&
+         (type_b->AsInteger() || type_b->AsFloat()) &&
+         (get_bit_count_for_numeric_type(*type_a) ==
+          get_bit_count_for_numeric_type(*type_b));
 }
 
 std::vector<const protobufs::DataDescriptor*>

@@ -58,13 +58,6 @@ class TransformationAddFunction : public Transformation {
 
   protobufs::Transformation ToMessage() const override;
 
-  // Helper method that returns the bound for indexing into a composite of type
-  // |composite_type_inst|, i.e. the number of fields of a struct, the size of
-  // an array, the number of components of a vector, or the number of columns of
-  // a matrix.
-  static uint32_t GetBoundForCompositeIndex(
-      opt::IRContext* ir_context, const opt::Instruction& composite_type_inst);
-
   // Helper method that, given composite type |composite_type_inst|, returns the
   // type of the sub-object at index |index_id|, which is required to be in-
   // bounds.

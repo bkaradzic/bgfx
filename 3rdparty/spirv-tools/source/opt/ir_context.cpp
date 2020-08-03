@@ -222,13 +222,6 @@ bool IRContext::KillDef(uint32_t id) {
   return false;
 }
 
-void IRContext::KillDebugDeclareInsts(Function* fn) {
-  fn->ForEachInst([this](Instruction* inst) {
-    if (inst->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugDeclare)
-      KillInst(inst);
-  });
-}
-
 bool IRContext::ReplaceAllUsesWith(uint32_t before, uint32_t after) {
   return ReplaceAllUsesWithPredicate(
       before, after, [](Instruction*, uint32_t) { return true; });

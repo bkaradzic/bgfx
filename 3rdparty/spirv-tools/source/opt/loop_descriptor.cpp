@@ -511,7 +511,7 @@ void Loop::ComputeLoopStructuredOrder(
 }
 
 LoopDescriptor::LoopDescriptor(IRContext* context, const Function* f)
-    : loops_(), dummy_top_loop_(nullptr) {
+    : loops_(), placeholder_top_loop_(nullptr) {
   PopulateList(context, f);
 }
 
@@ -592,7 +592,7 @@ void LoopDescriptor::PopulateList(IRContext* context, const Function* f) {
     }
   }
   for (Loop* loop : loops_) {
-    if (!loop->HasParent()) dummy_top_loop_.nested_loops_.push_back(loop);
+    if (!loop->HasParent()) placeholder_top_loop_.nested_loops_.push_back(loop);
   }
 }
 
@@ -986,7 +986,7 @@ void LoopDescriptor::ClearLoops() {
 // Adds a new loop nest to the descriptor set.
 Loop* LoopDescriptor::AddLoopNest(std::unique_ptr<Loop> new_loop) {
   Loop* loop = new_loop.release();
-  if (!loop->HasParent()) dummy_top_loop_.nested_loops_.push_back(loop);
+  if (!loop->HasParent()) placeholder_top_loop_.nested_loops_.push_back(loop);
   // Iterate from inner to outer most loop, adding basic block to loop mapping
   // as we go.
   for (Loop& current_loop :
@@ -1000,7 +1000,7 @@ Loop* LoopDescriptor::AddLoopNest(std::unique_ptr<Loop> new_loop) {
 }
 
 void LoopDescriptor::RemoveLoop(Loop* loop) {
-  Loop* parent = loop->GetParent() ? loop->GetParent() : &dummy_top_loop_;
+  Loop* parent = loop->GetParent() ? loop->GetParent() : &placeholder_top_loop_;
   parent->nested_loops_.erase(std::find(parent->nested_loops_.begin(),
                                         parent->nested_loops_.end(), loop));
   std::for_each(

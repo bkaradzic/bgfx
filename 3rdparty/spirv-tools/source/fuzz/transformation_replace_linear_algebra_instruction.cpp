@@ -41,16 +41,8 @@ bool TransformationReplaceLinearAlgebraInstruction::IsApplicable(
   auto instruction =
       FindInstruction(message_.instruction_descriptor(), ir_context);
 
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3354):
-  // Right now we only support certain operations. When this issue is addressed
-  // the following conditional can use the function |spvOpcodeIsLinearAlgebra|.
-  // It must be a supported linear algebra instruction.
-  if (instruction->opcode() != SpvOpVectorTimesScalar &&
-      instruction->opcode() != SpvOpMatrixTimesScalar &&
-      instruction->opcode() != SpvOpVectorTimesMatrix &&
-      instruction->opcode() != SpvOpMatrixTimesVector &&
-      instruction->opcode() != SpvOpMatrixTimesMatrix &&
-      instruction->opcode() != SpvOpDot) {
+  // It must be a linear algebra instruction.
+  if (!spvOpcodeIsLinearAlgebra(instruction->opcode())) {
     return false;
   }
 
@@ -77,6 +69,9 @@ void TransformationReplaceLinearAlgebraInstruction::Apply(
       FindInstruction(message_.instruction_descriptor(), ir_context);
 
   switch (linear_algebra_instruction->opcode()) {
+    case SpvOpTranspose:
+      ReplaceOpTranspose(ir_context, linear_algebra_instruction);
+      break;
     case SpvOpVectorTimesScalar:
       ReplaceOpVectorTimesScalar(ir_context, linear_algebra_instruction);
       break;
@@ -91,6 +86,9 @@ void TransformationReplaceLinearAlgebraInstruction::Apply(
       break;
     case SpvOpMatrixTimesMatrix:
       ReplaceOpMatrixTimesMatrix(ir_context, linear_algebra_instruction);
+      break;
+    case SpvOpOuterProduct:
+      ReplaceOpOuterProduct(ir_context, linear_algebra_instruction);
       break;
     case SpvOpDot:
       ReplaceOpDot(ir_context, linear_algebra_instruction);
@@ -115,6 +113,24 @@ uint32_t TransformationReplaceLinearAlgebraInstruction::GetRequiredFreshIdCount(
   // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3354):
   // Right now we only support certain operations.
   switch (instruction->opcode()) {
+    case SpvOpTranspose: {
+      // For each matrix row, |2 * matrix_column_count| OpCompositeExtract and 1
+      // OpCompositeConstruct will be inserted.
+      auto matrix_instruction = ir_context->get_def_use_mgr()->GetDef(
+          instruction->GetSingleWordInOperand(0));
+      uint32_t matrix_column_count =
+          ir_context->get_type_mgr()
+              ->GetType(matrix_instruction->type_id())
+              ->AsMatrix()
+              ->element_count();
+      uint32_t matrix_row_count = ir_context->get_type_mgr()
+                                      ->GetType(matrix_instruction->type_id())
+                                      ->AsMatrix()
+                                      ->element_type()
+                                      ->AsVector()
+                                      ->element_count();
+      return matrix_row_count * (2 * matrix_column_count + 1);
+    }
     case SpvOpVectorTimesScalar:
       // For each vector component, 1 OpCompositeExtract and 1 OpFMul will be
       // inserted.
@@ -213,6 +229,26 @@ uint32_t TransformationReplaceLinearAlgebraInstruction::GetRequiredFreshIdCount(
       return matrix_2_column_count *
              (2 + matrix_1_row_count * (5 * matrix_1_column_count - 1));
     }
+    case SpvOpOuterProduct: {
+      // For each |vector_2| component, |vector_1_component_count + 1|
+      // OpCompositeExtract, |vector_1_component_count| OpFMul and 1
+      // OpCompositeConstruct instructions will be inserted.
+      auto vector_1_instruction = ir_context->get_def_use_mgr()->GetDef(
+          instruction->GetSingleWordInOperand(0));
+      auto vector_2_instruction = ir_context->get_def_use_mgr()->GetDef(
+          instruction->GetSingleWordInOperand(1));
+      uint32_t vector_1_component_count =
+          ir_context->get_type_mgr()
+              ->GetType(vector_1_instruction->type_id())
+              ->AsVector()
+              ->element_count();
+      uint32_t vector_2_component_count =
+          ir_context->get_type_mgr()
+              ->GetType(vector_2_instruction->type_id())
+              ->AsVector()
+              ->element_count();
+      return 2 * vector_2_component_count * (vector_1_component_count + 1);
+    }
     case SpvOpDot:
       // For each pair of vector components, 2 OpCompositeExtract and 1 OpFMul
       // will be inserted. The first two OpFMul instructions will result the
@@ -231,6 +267,80 @@ uint32_t TransformationReplaceLinearAlgebraInstruction::GetRequiredFreshIdCount(
       assert(false && "Unsupported linear algebra instruction.");
       return 0;
   }
+}
+
+void TransformationReplaceLinearAlgebraInstruction::ReplaceOpTranspose(
+    opt::IRContext* ir_context,
+    opt::Instruction* linear_algebra_instruction) const {
+  // Gets OpTranspose instruction information.
+  auto matrix_instruction = ir_context->get_def_use_mgr()->GetDef(
+      linear_algebra_instruction->GetSingleWordInOperand(0));
+  uint32_t matrix_column_count = ir_context->get_type_mgr()
+                                     ->GetType(matrix_instruction->type_id())
+                                     ->AsMatrix()
+                                     ->element_count();
+  auto matrix_column_type = ir_context->get_type_mgr()
+                                ->GetType(matrix_instruction->type_id())
+                                ->AsMatrix()
+                                ->element_type();
+  auto matrix_column_component_type =
+      matrix_column_type->AsVector()->element_type();
+  uint32_t matrix_row_count = matrix_column_type->AsVector()->element_count();
+  auto resulting_matrix_column_type =
+      ir_context->get_type_mgr()
+          ->GetType(linear_algebra_instruction->type_id())
+          ->AsMatrix()
+          ->element_type();
+
+  uint32_t fresh_id_index = 0;
+  std::vector<uint32_t> result_column_ids(matrix_row_count);
+  for (uint32_t i = 0; i < matrix_row_count; i++) {
+    std::vector<uint32_t> column_component_ids(matrix_column_count);
+    for (uint32_t j = 0; j < matrix_column_count; j++) {
+      // Extracts the matrix column.
+      uint32_t matrix_column_id = message_.fresh_ids(fresh_id_index++);
+      linear_algebra_instruction->InsertBefore(MakeUnique<opt::Instruction>(
+          ir_context, SpvOpCompositeExtract,
+          ir_context->get_type_mgr()->GetId(matrix_column_type),
+          matrix_column_id,
+          opt::Instruction::OperandList(
+              {{SPV_OPERAND_TYPE_ID, {matrix_instruction->result_id()}},
+               {SPV_OPERAND_TYPE_LITERAL_INTEGER, {j}}})));
+
+      // Extracts the matrix column component.
+      column_component_ids[j] = message_.fresh_ids(fresh_id_index++);
+      linear_algebra_instruction->InsertBefore(MakeUnique<opt::Instruction>(
+          ir_context, SpvOpCompositeExtract,
+          ir_context->get_type_mgr()->GetId(matrix_column_component_type),
+          column_component_ids[j],
+          opt::Instruction::OperandList(
+              {{SPV_OPERAND_TYPE_ID, {matrix_column_id}},
+               {SPV_OPERAND_TYPE_LITERAL_INTEGER, {i}}})));
+    }
+
+    // Inserts the resulting matrix column.
+    opt::Instruction::OperandList in_operands;
+    for (auto& column_component_id : column_component_ids) {
+      in_operands.push_back({SPV_OPERAND_TYPE_ID, {column_component_id}});
+    }
+    result_column_ids[i] = message_.fresh_ids(fresh_id_index++);
+    linear_algebra_instruction->InsertBefore(MakeUnique<opt::Instruction>(
+        ir_context, SpvOpCompositeConstruct,
+        ir_context->get_type_mgr()->GetId(resulting_matrix_column_type),
+        result_column_ids[i], opt::Instruction::OperandList(in_operands)));
+  }
+
+  // The OpTranspose instruction is changed to an OpCompositeConstruct
+  // instruction.
+  linear_algebra_instruction->SetOpcode(SpvOpCompositeConstruct);
+  linear_algebra_instruction->SetInOperand(0, {result_column_ids[0]});
+  for (uint32_t i = 1; i < result_column_ids.size(); i++) {
+    linear_algebra_instruction->AddOperand(
+        {SPV_OPERAND_TYPE_ID, {result_column_ids[i]}});
+  }
+
+  fuzzerutil::UpdateModuleIdBound(
+      ir_context, message_.fresh_ids(message_.fresh_ids().size() - 1));
 }
 
 void TransformationReplaceLinearAlgebraInstruction::ReplaceOpVectorTimesScalar(
@@ -727,6 +837,92 @@ void TransformationReplaceLinearAlgebraInstruction::ReplaceOpMatrixTimesMatrix(
   }
 
   // The OpMatrixTimesMatrix instruction is changed to an OpCompositeConstruct
+  // instruction.
+  linear_algebra_instruction->SetOpcode(SpvOpCompositeConstruct);
+  linear_algebra_instruction->SetInOperand(0, {result_column_ids[0]});
+  linear_algebra_instruction->SetInOperand(1, {result_column_ids[1]});
+  for (uint32_t i = 2; i < result_column_ids.size(); i++) {
+    linear_algebra_instruction->AddOperand(
+        {SPV_OPERAND_TYPE_ID, {result_column_ids[i]}});
+  }
+
+  fuzzerutil::UpdateModuleIdBound(
+      ir_context, message_.fresh_ids(message_.fresh_ids().size() - 1));
+}
+
+void TransformationReplaceLinearAlgebraInstruction::ReplaceOpOuterProduct(
+    opt::IRContext* ir_context,
+    opt::Instruction* linear_algebra_instruction) const {
+  // Gets vector 1 information.
+  auto vector_1_instruction = ir_context->get_def_use_mgr()->GetDef(
+      linear_algebra_instruction->GetSingleWordInOperand(0));
+  uint32_t vector_1_component_count =
+      ir_context->get_type_mgr()
+          ->GetType(vector_1_instruction->type_id())
+          ->AsVector()
+          ->element_count();
+  auto vector_1_component_type = ir_context->get_type_mgr()
+                                     ->GetType(vector_1_instruction->type_id())
+                                     ->AsVector()
+                                     ->element_type();
+
+  // Gets vector 2 information.
+  auto vector_2_instruction = ir_context->get_def_use_mgr()->GetDef(
+      linear_algebra_instruction->GetSingleWordInOperand(1));
+  uint32_t vector_2_component_count =
+      ir_context->get_type_mgr()
+          ->GetType(vector_2_instruction->type_id())
+          ->AsVector()
+          ->element_count();
+
+  uint32_t fresh_id_index = 0;
+  std::vector<uint32_t> result_column_ids(vector_2_component_count);
+  for (uint32_t i = 0; i < vector_2_component_count; i++) {
+    // Extracts |vector_2| component.
+    uint32_t vector_2_component_id = message_.fresh_ids(fresh_id_index++);
+    linear_algebra_instruction->InsertBefore(MakeUnique<opt::Instruction>(
+        ir_context, SpvOpCompositeExtract,
+        ir_context->get_type_mgr()->GetId(vector_1_component_type),
+        vector_2_component_id,
+        opt::Instruction::OperandList(
+            {{SPV_OPERAND_TYPE_ID, {vector_2_instruction->result_id()}},
+             {SPV_OPERAND_TYPE_LITERAL_INTEGER, {i}}})));
+
+    std::vector<uint32_t> column_component_ids(vector_1_component_count);
+    for (uint32_t j = 0; j < vector_1_component_count; j++) {
+      // Extracts |vector_1| component.
+      uint32_t vector_1_component_id = message_.fresh_ids(fresh_id_index++);
+      linear_algebra_instruction->InsertBefore(MakeUnique<opt::Instruction>(
+          ir_context, SpvOpCompositeExtract,
+          ir_context->get_type_mgr()->GetId(vector_1_component_type),
+          vector_1_component_id,
+          opt::Instruction::OperandList(
+              {{SPV_OPERAND_TYPE_ID, {vector_1_instruction->result_id()}},
+               {SPV_OPERAND_TYPE_LITERAL_INTEGER, {j}}})));
+
+      // Multiplies |vector_1| and |vector_2| components.
+      column_component_ids[j] = message_.fresh_ids(fresh_id_index++);
+      linear_algebra_instruction->InsertBefore(MakeUnique<opt::Instruction>(
+          ir_context, SpvOpFMul,
+          ir_context->get_type_mgr()->GetId(vector_1_component_type),
+          column_component_ids[j],
+          opt::Instruction::OperandList(
+              {{SPV_OPERAND_TYPE_ID, {vector_2_component_id}},
+               {SPV_OPERAND_TYPE_ID, {vector_1_component_id}}})));
+    }
+
+    // Inserts the resulting matrix column.
+    opt::Instruction::OperandList in_operands;
+    for (auto& column_component_id : column_component_ids) {
+      in_operands.push_back({SPV_OPERAND_TYPE_ID, {column_component_id}});
+    }
+    result_column_ids[i] = message_.fresh_ids(fresh_id_index++);
+    linear_algebra_instruction->InsertBefore(MakeUnique<opt::Instruction>(
+        ir_context, SpvOpCompositeConstruct, vector_1_instruction->type_id(),
+        result_column_ids[i], in_operands));
+  }
+
+  // The OpOuterProduct instruction is changed to an OpCompositeConstruct
   // instruction.
   linear_algebra_instruction->SetOpcode(SpvOpCompositeConstruct);
   linear_algebra_instruction->SetInOperand(0, {result_column_ids[0]});
