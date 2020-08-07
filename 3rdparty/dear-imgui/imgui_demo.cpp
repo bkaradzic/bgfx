@@ -1960,7 +1960,7 @@ static void ShowDemoWindowWidgets()
 
 static void ShowDemoWindowLayout()
 {
-    if (!ImGui::CollapsingHeader("Layout"))
+    if (!ImGui::CollapsingHeader("Layout & Scrolling"))
         return;
 
     if (ImGui::TreeNode("Child windows"))
@@ -2490,11 +2490,9 @@ static void ShowDemoWindowLayout()
         ImGui::Spacing();
         HelpMarker(
             "Use SetScrollHereX() or SetScrollFromPosX() to scroll to a given horizontal position.\n\n"
-            "Using the \"Scroll To Pos\" button above will make the discontinuity at edges visible: "
-            "scrolling to the top/bottom/left/right-most item will add an additional WindowPadding to reflect "
-            "on reaching the edge of the list.\n\nBecause the clipping rectangle of most window hides half "
-            "worth of WindowPadding on the left/right, using SetScrollFromPosX(+1) will usually result in "
-            "clipped text whereas the equivalent SetScrollFromPosY(+1) wouldn't.");
+            "Because the clipping rectangle of most window hides half worth of WindowPadding on the "
+            "left/right, using SetScrollFromPosX(+1) will usually result in clipped text whereas the "
+            "equivalent SetScrollFromPosY(+1) wouldn't.");
         ImGui::PushID("##HorizontalScrolling");
         for (int i = 0; i < 5; i++)
         {
@@ -2684,23 +2682,66 @@ static void ShowDemoWindowLayout()
 
     if (ImGui::TreeNode("Clipping"))
     {
-        static ImVec2 size(100, 100), offset(50, 20);
-        ImGui::TextWrapped(
-            "On a per-widget basis we are occasionally clipping text CPU-side if it won't fit in its frame. "
-            "Otherwise we are doing coarser clipping + passing a scissor rectangle to the renderer. "
-            "The system is designed to try minimizing both execution and CPU/GPU rendering cost.");
+        static ImVec2 size(100.0f, 100.0f);
+        static ImVec2 offset(30.0f, 30.0f);
         ImGui::DragFloat2("size", (float*)&size, 0.5f, 1.0f, 200.0f, "%.0f");
-        ImGui::TextWrapped("(Click and drag)");
-        ImVec2 pos = ImGui::GetCursorScreenPos();
-        ImVec4 clip_rect(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
-        ImGui::InvisibleButton("##empty", size);
-        if (ImGui::IsItemActive() && ImGui::IsMouseDragging(0))
+        ImGui::TextWrapped("(Click and drag to scroll)");
+
+        for (int n = 0; n < 3; n++)
         {
-            offset.x += ImGui::GetIO().MouseDelta.x;
-            offset.y += ImGui::GetIO().MouseDelta.y;
+            if (n > 0)
+                ImGui::SameLine();
+            ImGui::PushID(n);
+            ImGui::BeginGroup(); // Lock X position
+
+            ImGui::InvisibleButton("##empty", size);
+            if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+            {
+                offset.x += ImGui::GetIO().MouseDelta.x;
+                offset.y += ImGui::GetIO().MouseDelta.y;
+            }
+            const ImVec2 p0 = ImGui::GetItemRectMin();
+            const ImVec2 p1 = ImGui::GetItemRectMax();
+            const char* text_str = "Line 1 hello\nLine 2 clip me!";
+            const ImVec2 text_pos = ImVec2(p0.x + offset.x, p0.y + offset.y);
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+            switch (n)
+            {
+            case 0:
+                HelpMarker(
+                    "Using ImGui::PushClipRect():\n"
+                    "Will alter ImGui hit-testing logic + ImDrawList rendering.\n"
+                    "(use this if you want your clipping rectangle to affect interactions)");
+                ImGui::PushClipRect(p0, p1, true);
+                draw_list->AddRectFilled(p0, p1, IM_COL32(90, 90, 120, 255));
+                draw_list->AddText(text_pos, IM_COL32_WHITE, text_str);
+                ImGui::PopClipRect();
+                break;
+            case 1:
+                HelpMarker(
+                    "Using ImDrawList::PushClipRect():\n"
+                    "Will alter ImDrawList rendering only.\n"
+                    "(use this as a shortcut if you are only using ImDrawList calls)");
+                draw_list->PushClipRect(p0, p1, true);
+                draw_list->AddRectFilled(p0, p1, IM_COL32(90, 90, 120, 255));
+                draw_list->AddText(text_pos, IM_COL32_WHITE, text_str);
+                draw_list->PopClipRect();
+                break;
+            case 2:
+                HelpMarker(
+                    "Using ImDrawList::AddText() with a fine ClipRect:\n"
+                    "Will alter only this specific ImDrawList::AddText() rendering.\n"
+                    "(this is often used internally to avoid altering the clipping rectangle and minimize draw calls)");
+                ImVec4 clip_rect(p0.x, p0.y, p1.x, p1.y); // AddText() takes a ImVec4* here so let's convert.
+                draw_list->AddRectFilled(p0, p1, IM_COL32(90, 90, 120, 255));
+                draw_list->AddText(ImGui::GetFont(), ImGui::GetFontSize(), text_pos, IM_COL32_WHITE, text_str, NULL, 0.0f, &clip_rect);
+                break;
+            }
+            ImGui::EndGroup();
+            ImGui::PopID();
         }
-        ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), IM_COL32(90, 90, 120, 255));
-        ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize()*2.0f, ImVec2(pos.x + offset.x, pos.y + offset.y), IM_COL32_WHITE, "Line 1 hello\nLine 2 clip me!", NULL, 0.0f, &clip_rect);
+
         ImGui::TreePop();
     }
 }
@@ -4952,8 +4993,7 @@ static void ShowExampleAppCustomRendering(bool* p_open)
 
         if (ImGui::BeginTabItem("Canvas"))
         {
-            struct ItemLine { ImVec2 p0, p1; ItemLine(const ImVec2& _p0, const ImVec2& _p1) { p0 = _p0; p1 = _p1; } };
-            static ImVector<ItemLine> lines;
+            static ImVector<ImVec2> points;
             static ImVec2 scrolling(0.0f, 0.0f);
             static bool opt_enable_grid = true;
             static bool opt_enable_context_menu = true;
@@ -4997,12 +5037,13 @@ static void ShowExampleAppCustomRendering(bool* p_open)
             // Add first and second point
             if (is_hovered && !adding_line && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                lines.push_back(ItemLine(mouse_pos_in_canvas, mouse_pos_in_canvas));
+                points.push_back(mouse_pos_in_canvas);
+                points.push_back(mouse_pos_in_canvas);
                 adding_line = true;
             }
             if (adding_line)
             {
-                lines.back().p1 = mouse_pos_in_canvas;
+                points.back() = mouse_pos_in_canvas;
                 if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
                     adding_line = false;
             }
@@ -5023,10 +5064,10 @@ static void ShowExampleAppCustomRendering(bool* p_open)
             if (ImGui::BeginPopup("context"))
             {
                 if (adding_line)
-                    lines.pop_back();
+                    points.resize(points.size() - 2);
                 adding_line = false;
-                if (ImGui::MenuItem("Remove one", NULL, false, lines.Size > 0)) { lines.pop_back(); }
-                if (ImGui::MenuItem("Remove all", NULL, false, lines.Size > 0)) { lines.clear(); }
+                if (ImGui::MenuItem("Remove one", NULL, false, points.Size > 0)) { points.resize(points.size() - 2); }
+                if (ImGui::MenuItem("Remove all", NULL, false, points.Size > 0)) { points.clear(); }
                 ImGui::EndPopup();
             }
 
@@ -5040,8 +5081,8 @@ static void ShowExampleAppCustomRendering(bool* p_open)
                 for (float y = fmodf(scrolling.y, GRID_STEP); y < canvas_sz.y; y += GRID_STEP)
                     draw_list->AddLine(ImVec2(canvas_p0.x, canvas_p0.y + y), ImVec2(canvas_p1.x, canvas_p0.y + y), IM_COL32(200, 200, 200, 40));
             }
-            for (int n = 0; n < lines.Size; n++)
-                draw_list->AddLine(ImVec2(origin.x + lines[n].p0.x, origin.y + lines[n].p0.y), ImVec2(origin.x + lines[n].p1.x, origin.y + lines[n].p1.y), IM_COL32(255, 255, 0, 255), 2.0f);
+            for (int n = 0; n < points.Size; n += 2)
+                draw_list->AddLine(ImVec2(origin.x + points[n].x, origin.y + points[n].y), ImVec2(origin.x + points[n + 1].x, origin.y + points[n + 1].y), IM_COL32(255, 255, 0, 255), 2.0f);
             draw_list->PopClipRect();
 
             ImGui::EndTabItem();
