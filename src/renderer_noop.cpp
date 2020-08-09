@@ -181,6 +181,10 @@ namespace bgfx { namespace noop
 		{
 		}
 
+        void generateMipmaps(TextureHandle /*_handle*/) override
+        {
+        }
+
 		void overrideInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/) override
 		{
 		}

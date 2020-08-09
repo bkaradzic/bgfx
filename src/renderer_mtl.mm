@@ -592,6 +592,9 @@ namespace bgfx { namespace mtl
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
 						;
 				}
+                
+                // TODO: BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
+                
 
 				g_caps.formats[ii] = support;
 			}
@@ -901,6 +904,16 @@ namespace bgfx { namespace mtl
 
 			release(mem);
 		}
+        
+        void generateMipmaps(TextureHandle _handle) override
+        {
+            TextureMtl& texture = m_textures[_handle.idx];
+            
+            BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
+            bce.generateMipmapsForTexture(texture.m_ptr);
+            endEncoding();
+
+        }
 
 		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
 		{
@@ -1721,6 +1734,30 @@ namespace bgfx { namespace mtl
 			m_fbh    = _fbh;
 			m_rtMsaa = _msaa;
 		}
+        
+        void resolveFramebuffer(FrameBufferHandle _fbh)
+        {
+            // Resolve previous frame buffer and auto-gen mipmaps if needed
+            if (isValid(_fbh))
+            {
+                FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
+                                                
+                for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
+                {
+                    uint8_t resolve = frameBuffer.m_colorAttachment[ii].resolve;
+                    if (0 != (resolve & BGFX_RESOLVE_AUTO_GEN_MIPS))
+                    {
+                        const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
+                        if (texture.m_numMips > 1)
+                        {
+                            getBlitCommandEncoder().generateMipmapsForTexture(texture.m_ptr);
+                        }
+                    }
+                }
+                
+                endEncoding();
+            }
+        }
 
 		void setDepthStencilState(uint64_t _state, uint64_t _stencil = 0)
 		{
@@ -3872,6 +3909,8 @@ namespace bgfx { namespace mtl
 							 ||  fbh.idx != _render->m_view[view].m_fbh.idx))
 						{
 							endEncoding();
+                            
+                            resolveFramebuffer(fbh);
 
 							RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
 							renderPassDescriptor.visibilityResultBuffer = m_occlusionQuery.m_buffer;
@@ -4670,6 +4709,9 @@ namespace bgfx { namespace mtl
 
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
+            // Resolve final framebuffer
+            resolveFramebuffer(fbh);
+            
 			if (0 < _render->m_numRenderItems)
 			{
 				captureElapsed = -bx::getHPCounter();

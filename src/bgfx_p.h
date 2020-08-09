@@ -807,6 +807,7 @@ namespace bgfx
 			CreateTexture,
 			UpdateTexture,
 			ResizeTexture,
+            GenerateMipmaps,
 			CreateFrameBuffer,
 			CreateUniform,
 			UpdateViewName,
@@ -2860,6 +2861,7 @@ namespace bgfx
 		virtual void updateTextureEnd() = 0;
 		virtual void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) = 0;
 		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) = 0;
+        virtual void generateMipmaps(TextureHandle _handle) = 0;
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr) = 0;
 		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
@@ -4345,6 +4347,15 @@ namespace bgfx
 			cmdbuf.write(_numMips);
 			cmdbuf.write(_numLayers);
 		}
+        
+        BGFX_API_FUNC(void generateMipmaps(TextureHandle _handle))
+        {
+            const TextureRef& textureRef = m_textureRef[_handle.idx];
+            BX_ASSERT(textureRef.m_numMips > 1, "");
+            
+            CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::GenerateMipmaps);
+            cmdbuf.write(_handle);
+        }
 
 		void textureTakeOwnership(TextureHandle _handle)
 		{

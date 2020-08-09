@@ -2912,6 +2912,8 @@ namespace bgfx
 		, uint8_t _mip = 0
 		);
 
+    void generateMipmaps(TextureHandle _handle);
+
 	/// Set texture debug name.
 	///
 	/// @param[in] _handle Texture handle.

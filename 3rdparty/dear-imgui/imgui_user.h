@@ -49,4 +49,4 @@ namespace ImGui
 #include "widgets/gizmo.h"
 #include "widgets/markdown.h"
 #include "widgets/memory_editor.h"
-#include "widgets/range_slider.h"
+//#include "widgets/range_slider.h"

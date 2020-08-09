@@ -3101,7 +3101,18 @@ namespace bgfx
 					m_renderCtx->resizeTexture(handle, width, height, numMips, numLayers);
 				}
 				break;
+            case CommandBuffer::GenerateMipmaps:
+                {
+                    BGFX_PROFILER_SCOPE("GenerateMipmaps", 0xff2040ff);
+                                        
+                    TextureHandle handle;
+                    _cmdbuf.read(handle);
+                    
+                    flushTextureUpdateBatch(_cmdbuf);
 
+                    m_renderCtx->generateMipmaps(handle);
+                }
+                break;
 			case CommandBuffer::DestroyTexture:
 				{
 					BGFX_PROFILER_SCOPE("DestroyTexture", 0xff2040ff);
@@ -4584,6 +4595,13 @@ namespace bgfx
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_READ_BACK, "Texture read-back is not supported!");
 		return s_ctx->readTexture(_handle, _data, _mip);
 	}
+
+    void generateMipmaps(TextureHandle _handle)
+    {
+        // TODO: add check caps for mipmap generation
+        //BGFX_CHECK_CAPS(BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN, "Texture mipmap generation is not supported!");
+        return s_ctx->generateMipmaps(_handle);
+    }
 
 	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint64_t _textureFlags)
 	{

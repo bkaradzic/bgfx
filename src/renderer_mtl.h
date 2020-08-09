@@ -127,6 +127,11 @@ namespace bgfx { namespace mtl
 				 destinationSlice:_destinationSlice destinationLevel:_destinationLevel destinationOrigin:_destinationOrigin];
 		}
 
+        void generateMipmapsForTexture(id<MTLTexture> _texture)
+        {
+            [m_obj generateMipmapsForTexture:_texture];
+        }
+
 #if BX_PLATFORM_OSX
 		void synchronizeTexture(id<MTLTexture> _texture, NSUInteger _slice, NSUInteger _level)
 		{
