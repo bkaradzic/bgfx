@@ -1011,12 +1011,10 @@ namespace bgfx { namespace d3d11
 					m_scd.height = _init.resolution.height;
 
 					/*
-					 * Previously, this checked for BGFX_RESET_SRGB_BACKBUFFER and used m_fmtSrgb as the backbuffer format
-					 * instead of m_fmt.
-					 * 
-					 * However, according to https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/converting-data-color-space ,
-					 * this is not actually required, because you can create the render target view with m_fmtSrgb, and it will work
-					 * identically.
+					 * According to https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/converting-data-color-space ,
+					 * it is OK to create the backbuffer with m_fmt (a non- _SRGB format), and then create the render target view into it
+					 * with m_fmtSrgb (the _SRGB format of same), and it will work identically as if you had created the swapchain with
+					 * m_fmtSrgb as the backbuffer format.
 					 *
 					 * Moreover, it is actually not desirable to create the backbuffer with an _SRGB format, because that
 					 * is incompatible with the flip presentation model, which is desirable for various reasons including
