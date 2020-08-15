@@ -751,8 +751,11 @@ TIntermTyped* TParseContext::handleBinaryMath(const TSourceLoc& loc, const char*
     }
 
     TIntermTyped* result = nullptr;
-    if (allowed)
+    if (allowed) {
+        if ((left->isReference() || right->isReference()))
+            requireExtensions(loc, 1, &E_GL_EXT_buffer_reference2, "buffer reference math");
         result = intermediate.addBinaryMath(op, left, right, loc);
+    }
 
     if (result == nullptr)
         binaryOpError(loc, str, left->getCompleteString(), right->getCompleteString());
@@ -1678,6 +1681,14 @@ TIntermTyped* TParseContext::addOutputArgumentConversions(const TFunction& funct
 
     return conversionTree;
 #endif
+}
+
+TIntermTyped* TParseContext::addAssign(const TSourceLoc& loc, TOperator op, TIntermTyped* left, TIntermTyped* right)
+{
+    if ((op == EOpAddAssign || op == EOpSubAssign) && left->isReference())
+        requireExtensions(loc, 1, &E_GL_EXT_buffer_reference2, "+= and -= on a buffer reference");
+
+    return intermediate.addAssign(op, left, right, loc);
 }
 
 void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction& fnCandidate, const TIntermOperator& callNode)
@@ -7305,6 +7316,8 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
         if (!node->getType().isCoopMat()) {
             if (type.getBasicType() != node->getType().getBasicType()) {
                 node = intermediate.addConversion(type.getBasicType(), node);
+                if (node == nullptr)
+                    return nullptr;
             }
             node = intermediate.setAggregateOperator(node, EOpConstructCooperativeMatrix, type, node->getLoc());
         } else {

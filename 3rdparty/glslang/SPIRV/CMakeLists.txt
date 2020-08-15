@@ -43,7 +43,8 @@ set(SOURCES
     CInterface/spirv_c_interface.cpp)
 
 set(SPVREMAP_SOURCES
-    SPVRemapper.cpp)
+    SPVRemapper.cpp
+    doc.cpp)
 
 set(HEADERS
     bitutils.h
@@ -68,7 +69,6 @@ set(SPVREMAP_HEADERS
     doc.h)
 
 add_library(SPIRV ${LIB_TYPE} ${SOURCES} ${HEADERS})
-target_link_libraries(SPIRV PRIVATE MachineIndependent)
 set_property(TARGET SPIRV PROPERTY FOLDER glslang)
 set_property(TARGET SPIRV PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(SPIRV PUBLIC
@@ -79,7 +79,6 @@ glslang_add_build_info_dependency(SPIRV)
 
 if (ENABLE_SPVREMAPPER)
     add_library(SPVRemapper ${LIB_TYPE} ${SPVREMAP_SOURCES} ${SPVREMAP_HEADERS})
-    target_link_libraries(SPVRemapper PRIVATE SPIRV)
     set_property(TARGET SPVRemapper PROPERTY FOLDER glslang)
     set_property(TARGET SPVRemapper PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -96,10 +95,12 @@ if(ENABLE_OPT)
         PRIVATE ${spirv-tools_SOURCE_DIR}/include
         PRIVATE ${spirv-tools_SOURCE_DIR}/source
     )
-    target_link_libraries(SPIRV PRIVATE SPIRV-Tools-opt)
+    target_link_libraries(SPIRV PRIVATE MachineIndependent SPIRV-Tools-opt)
     target_include_directories(SPIRV PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../External>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/External>)
+else()
+    target_link_libraries(SPIRV PRIVATE MachineIndependent)
 endif(ENABLE_OPT)
 
 if(WIN32)

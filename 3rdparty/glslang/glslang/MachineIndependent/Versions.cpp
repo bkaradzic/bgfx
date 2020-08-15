@@ -762,7 +762,8 @@ bool TParseVersions::checkExtensionsRequested(const TSourceLoc& loc, int numExte
 // Use when there are no profile/version to check, it's just an error if one of the
 // extensions is not present.
 //
-void TParseVersions::requireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[], const char* featureDesc)
+void TParseVersions::requireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[],
+    const char* featureDesc)
 {
     if (checkExtensionsRequested(loc, numExtensions, extensions, featureDesc))
         return;
@@ -781,7 +782,8 @@ void TParseVersions::requireExtensions(const TSourceLoc& loc, int numExtensions,
 // Use by preprocessor when there are no profile/version to check, it's just an error if one of the
 // extensions is not present.
 //
-void TParseVersions::ppRequireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[], const char* featureDesc)
+void TParseVersions::ppRequireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[],
+    const char* featureDesc)
 {
     if (checkExtensionsRequested(loc, numExtensions, extensions, featureDesc))
         return;
@@ -847,6 +849,7 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
         error(getCurrentLoc(), "behavior not supported:", "#extension", behaviorString);
         return;
     }
+    bool on = behavior != EBhDisable;
 
     // check if extension is used with correct shader stage
     checkExtensionStage(getCurrentLoc(), extension);
@@ -916,6 +919,32 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
         updateExtensionBehavior(line, "GL_EXT_shader_explicit_arithmetic_types_int64", behaviorString);
     else if (strcmp(extension, "GL_EXT_shader_subgroup_extended_types_float16") == 0)
         updateExtensionBehavior(line, "GL_EXT_shader_explicit_arithmetic_types_float16", behaviorString);
+
+    // see if we need to update the numeric features
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_int8") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_int8, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_int16") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_int16, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_int32") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_int32, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_int64") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_int64, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_float16") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_float16, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_float32") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_float32, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_float64") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_float64, on);
+    else if (strcmp(extension, "GL_EXT_shader_implicit_conversions") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_implicit_conversions, on);
+    else if (strcmp(extension, "GL_ARB_gpu_shader_fp64") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::gpu_shader_fp64, on);
+    else if (strcmp(extension, "GL_AMD_gpu_shader_int16") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::gpu_shader_int16, on);
+    else if (strcmp(extension, "GL_AMD_gpu_shader_half_float") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::gpu_shader_half_float, on);
 }
 
 void TParseVersions::updateExtensionBehavior(const char* extension, TExtensionBehavior behavior)
@@ -951,8 +980,8 @@ void TParseVersions::updateExtensionBehavior(const char* extension, TExtensionBe
         } else {
             if (iter->second == EBhDisablePartial)
                 warn(getCurrentLoc(), "extension is only partially supported:", "#extension", extension);
-            if (behavior == EBhEnable || behavior == EBhRequire || behavior == EBhDisable)
-                intermediate.updateRequestedExtension(extension, behavior);
+            if (behavior != EBhDisable)
+                intermediate.addRequestedExtension(extension);
             iter->second = behavior;
         }
     }

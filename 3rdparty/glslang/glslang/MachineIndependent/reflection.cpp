@@ -33,7 +33,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef GLSLANG_WEB
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
 
 #include "../Include/Common.h"
 #include "reflection.h"
@@ -1266,4 +1266,4 @@ void TReflection::dump()
 
 } // end namespace glslang
 
-#endif // GLSLANG_WEB
+#endif // !GLSLANG_WEB && !GLSLANG_ANGLE

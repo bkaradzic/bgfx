@@ -38,10 +38,10 @@
 
 namespace glslang {
 
-inline bool InitProcess()   { return true; } // DEPRECATED
-inline bool InitThread()    { return true; } // DEPRECATED
-inline bool DetachThread()  { return true; } // DEPRECATED
-inline bool DetachProcess() { return true; } // DEPRECATED
+bool InitProcess();
+bool InitThread();
+bool DetachThread();  // not called from standalone, perhaps other tools rely on parts of it
+bool DetachProcess(); // not called from standalone, perhaps other tools rely on parts of it
 
 } // end namespace glslang
 

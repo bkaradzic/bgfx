@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_GLSLANG_TAB_CPP_H_INCLUDED
-# define YY_YY_GLSLANG_TAB_CPP_H_INCLUDED
+#ifndef YY_YY_MACHINEINDEPENDENT_GLSLANG_TAB_CPP_H_INCLUDED
+# define YY_YY_MACHINEINDEPENDENT_GLSLANG_TAB_CPP_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 1
@@ -470,7 +470,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 97 "glslang.y" /* yacc.c:1909  */
+#line 97 "MachineIndependent/glslang.y" /* yacc.c:1909  */
 
     struct {
         glslang::TSourceLoc loc;
@@ -506,7 +506,7 @@ union YYSTYPE
         glslang::TArraySizes* typeParameters;
     } interm;
 
-#line 510 "glslang_tab.cpp.h" /* yacc.c:1909  */
+#line 510 "MachineIndependent/glslang_tab.cpp.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -518,4 +518,4 @@ typedef union YYSTYPE YYSTYPE;
 
 int yyparse (glslang::TParseContext* pParseContext);
 
-#endif /* !YY_YY_GLSLANG_TAB_CPP_H_INCLUDED  */
+#endif /* !YY_YY_MACHINEINDEPENDENT_GLSLANG_TAB_CPP_H_INCLUDED  */
