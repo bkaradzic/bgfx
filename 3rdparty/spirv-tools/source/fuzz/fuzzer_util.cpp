@@ -826,6 +826,12 @@ uint32_t UpdateFunctionType(opt::IRContext* ir_context, uint32_t function_id,
   operand_ids.insert(operand_ids.end(), parameter_type_ids.begin(),
                      parameter_type_ids.end());
 
+  // A trivial case - we change nothing.
+  if (FindFunctionType(ir_context, operand_ids) ==
+      old_function_type->result_id()) {
+    return old_function_type->result_id();
+  }
+
   if (ir_context->get_def_use_mgr()->NumUsers(old_function_type) == 1 &&
       FindFunctionType(ir_context, operand_ids) == 0) {
     // We can change |old_function_type| only if it's used once in the module
@@ -849,17 +855,16 @@ uint32_t UpdateFunctionType(opt::IRContext* ir_context, uint32_t function_id,
     // existing one or create a new one.
     auto type_id = FindOrCreateFunctionType(
         ir_context, new_function_type_result_id, operand_ids);
+    assert(type_id != old_function_type->result_id() &&
+           "We should've handled this case above");
 
-    if (type_id != old_function_type->result_id()) {
-      function->DefInst().SetInOperand(1, {type_id});
+    function->DefInst().SetInOperand(1, {type_id});
 
-      // DefUseManager hasn't been updated yet, so if the following condition is
-      // true, then |old_function_type| will have no users when this function
-      // returns. We might as well remove it.
-      if (ir_context->get_def_use_mgr()->NumUsers(old_function_type) == 1) {
-        old_function_type->RemoveFromList();
-        delete old_function_type;
-      }
+    // DefUseManager hasn't been updated yet, so if the following condition is
+    // true, then |old_function_type| will have no users when this function
+    // returns. We might as well remove it.
+    if (ir_context->get_def_use_mgr()->NumUsers(old_function_type) == 1) {
+      ir_context->KillInst(old_function_type);
     }
 
     return type_id;
@@ -1310,6 +1315,31 @@ MapToRepeatedUInt32Pair(const std::map<uint32_t, uint32_t>& data) {
   }
 
   return result;
+}
+
+opt::Instruction* GetLastInsertBeforeInstruction(opt::IRContext* ir_context,
+                                                 uint32_t block_id,
+                                                 SpvOp opcode) {
+  // CFG::block uses std::map::at which throws an exception when |block_id| is
+  // invalid. The error message is unhelpful, though. Thus, we test that
+  // |block_id| is valid here.
+  const auto* label_inst = ir_context->get_def_use_mgr()->GetDef(block_id);
+  (void)label_inst;  // Make compilers happy in release mode.
+  assert(label_inst && label_inst->opcode() == SpvOpLabel &&
+         "|block_id| is invalid");
+
+  auto* block = ir_context->cfg()->block(block_id);
+  auto it = block->rbegin();
+  assert(it != block->rend() && "Basic block can't be empty");
+
+  if (block->GetMergeInst()) {
+    ++it;
+    assert(it != block->rend() &&
+           "|block| must have at least two instructions:"
+           "terminator and a merge instruction");
+  }
+
+  return CanInsertOpcodeBeforeInstruction(opcode, &*it) ? &*it : nullptr;
 }
 
 }  // namespace fuzzerutil

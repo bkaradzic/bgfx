@@ -54,13 +54,17 @@
 #include "source/fuzz/transformation_function_call.h"
 #include "source/fuzz/transformation_invert_comparison_operator.h"
 #include "source/fuzz/transformation_load.h"
+#include "source/fuzz/transformation_make_vector_operation_dynamic.h"
 #include "source/fuzz/transformation_merge_blocks.h"
 #include "source/fuzz/transformation_move_block_down.h"
+#include "source/fuzz/transformation_move_instruction_down.h"
 #include "source/fuzz/transformation_outline_function.h"
 #include "source/fuzz/transformation_permute_function_parameters.h"
 #include "source/fuzz/transformation_permute_phi_operands.h"
+#include "source/fuzz/transformation_propagate_instruction_up.h"
 #include "source/fuzz/transformation_push_id_through_variable.h"
 #include "source/fuzz/transformation_record_synonymous_constants.h"
+#include "source/fuzz/transformation_replace_add_sub_mul_with_carrying_extended.h"
 #include "source/fuzz/transformation_replace_boolean_constant_with_constant_binary.h"
 #include "source/fuzz/transformation_replace_constant_with_uniform.h"
 #include "source/fuzz/transformation_replace_copy_memory_with_load_store.h"
@@ -190,10 +194,17 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
           message.invert_comparison_operator());
     case protobufs::Transformation::TransformationCase::kLoad:
       return MakeUnique<TransformationLoad>(message.load());
+    case protobufs::Transformation::TransformationCase::
+        kMakeVectorOperationDynamic:
+      return MakeUnique<TransformationMakeVectorOperationDynamic>(
+          message.make_vector_operation_dynamic());
     case protobufs::Transformation::TransformationCase::kMergeBlocks:
       return MakeUnique<TransformationMergeBlocks>(message.merge_blocks());
     case protobufs::Transformation::TransformationCase::kMoveBlockDown:
       return MakeUnique<TransformationMoveBlockDown>(message.move_block_down());
+    case protobufs::Transformation::TransformationCase::kMoveInstructionDown:
+      return MakeUnique<TransformationMoveInstructionDown>(
+          message.move_instruction_down());
     case protobufs::Transformation::TransformationCase::kOutlineFunction:
       return MakeUnique<TransformationOutlineFunction>(
           message.outline_function());
@@ -204,6 +215,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kPermutePhiOperands:
       return MakeUnique<TransformationPermutePhiOperands>(
           message.permute_phi_operands());
+    case protobufs::Transformation::TransformationCase::kPropagateInstructionUp:
+      return MakeUnique<TransformationPropagateInstructionUp>(
+          message.propagate_instruction_up());
     case protobufs::Transformation::TransformationCase::kPushIdThroughVariable:
       return MakeUnique<TransformationPushIdThroughVariable>(
           message.push_id_through_variable());
@@ -212,9 +226,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
       return MakeUnique<TransformationRecordSynonymousConstants>(
           message.record_synonymous_constants());
     case protobufs::Transformation::TransformationCase::
-        kReplaceParameterWithGlobal:
-      return MakeUnique<TransformationReplaceParameterWithGlobal>(
-          message.replace_parameter_with_global());
+        kReplaceAddSubMulWithCarryingExtended:
+      return MakeUnique<TransformationReplaceAddSubMulWithCarryingExtended>(
+          message.replace_add_sub_mul_with_carrying_extended());
     case protobufs::Transformation::TransformationCase::
         kReplaceBooleanConstantWithConstantBinary:
       return MakeUnique<TransformationReplaceBooleanConstantWithConstantBinary>(
@@ -242,6 +256,10 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
         kReplaceLoadStoreWithCopyMemory:
       return MakeUnique<TransformationReplaceLoadStoreWithCopyMemory>(
           message.replace_load_store_with_copy_memory());
+    case protobufs::Transformation::TransformationCase::
+        kReplaceParameterWithGlobal:
+      return MakeUnique<TransformationReplaceParameterWithGlobal>(
+          message.replace_parameter_with_global());
     case protobufs::Transformation::TransformationCase::
         kReplaceParamsWithStruct:
       return MakeUnique<TransformationReplaceParamsWithStruct>(

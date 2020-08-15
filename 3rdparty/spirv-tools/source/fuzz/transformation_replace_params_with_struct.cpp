@@ -101,8 +101,9 @@ bool TransformationReplaceParamsWithStruct::IsApplicable(
     return false;
   }
 
-  auto caller_id_to_fresh_composite_id = fuzzerutil::RepeatedUInt32PairToMap(
-      message_.caller_id_to_fresh_composite_id());
+  const auto caller_id_to_fresh_composite_id =
+      fuzzerutil::RepeatedUInt32PairToMap(
+          message_.caller_id_to_fresh_composite_id());
 
   // Check that |callee_id_to_fresh_composite_id| is valid.
   for (const auto* inst :
@@ -151,24 +152,12 @@ void TransformationReplaceParamsWithStruct::Apply(
   // Compute indices of replaced parameters. This will be used to adjust
   // OpFunctionCall instructions and create OpCompositeConstruct instructions at
   // every call site.
-  std::vector<uint32_t> indices_of_replaced_params;
-  {
-    // We want to destroy |params| after the loop because it will contain
-    // dangling pointers when we remove parameters from the function.
-    auto params = fuzzerutil::GetParameters(ir_context, function->result_id());
-    for (auto id : message_.parameter_id()) {
-      auto it = std::find_if(params.begin(), params.end(),
-                             [id](const opt::Instruction* param) {
-                               return param->result_id() == id;
-                             });
-      assert(it != params.end() && "Parameter's id is invalid");
-      indices_of_replaced_params.push_back(
-          static_cast<uint32_t>(it - params.begin()));
-    }
-  }
+  const auto indices_of_replaced_params =
+      ComputeIndicesOfReplacedParameters(ir_context);
 
-  auto caller_id_to_fresh_composite_id = fuzzerutil::RepeatedUInt32PairToMap(
-      message_.caller_id_to_fresh_composite_id());
+  const auto caller_id_to_fresh_composite_id =
+      fuzzerutil::RepeatedUInt32PairToMap(
+          message_.caller_id_to_fresh_composite_id());
 
   // Update all function calls.
   for (auto* inst : fuzzerutil::GetCallers(ir_context, function->result_id())) {
@@ -182,12 +171,13 @@ void TransformationReplaceParamsWithStruct::Apply(
     }
 
     // Remove arguments from the function call. We do it in a separate loop
-    // and in reverse order to make sure we have removed correct operands.
-    for (auto it = indices_of_replaced_params.rbegin();
-         it != indices_of_replaced_params.rend(); ++it) {
+    // and in decreasing order to make sure we have removed correct operands.
+    for (auto index : std::set<uint32_t, std::greater<uint32_t>>(
+             indices_of_replaced_params.begin(),
+             indices_of_replaced_params.end())) {
       // +1 since the first in operand to OpFunctionCall is the result id of
       // the function.
-      inst->RemoveInOperand(*it + 1);
+      inst->RemoveInOperand(index + 1);
     }
 
     // Insert OpCompositeConstruct before the function call.
@@ -303,6 +293,31 @@ uint32_t TransformationReplaceParamsWithStruct::MaybeGetRequiredStructType(
   }
 
   return fuzzerutil::MaybeGetStructType(ir_context, component_type_ids);
+}
+
+std::vector<uint32_t>
+TransformationReplaceParamsWithStruct::ComputeIndicesOfReplacedParameters(
+    opt::IRContext* ir_context) const {
+  assert(!message_.parameter_id().empty() &&
+         "There must be at least one parameter to replace");
+
+  const auto* function = fuzzerutil::GetFunctionFromParameterId(
+      ir_context, message_.parameter_id(0));
+  assert(function && "|parameter_id|s are invalid");
+
+  std::vector<uint32_t> result;
+
+  auto params = fuzzerutil::GetParameters(ir_context, function->result_id());
+  for (auto id : message_.parameter_id()) {
+    auto it = std::find_if(params.begin(), params.end(),
+                           [id](const opt::Instruction* param) {
+                             return param->result_id() == id;
+                           });
+    assert(it != params.end() && "Parameter's id is invalid");
+    result.push_back(static_cast<uint32_t>(it - params.begin()));
+  }
+
+  return result;
 }
 
 }  // namespace fuzz

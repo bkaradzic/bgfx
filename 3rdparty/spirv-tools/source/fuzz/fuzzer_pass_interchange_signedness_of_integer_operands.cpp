@@ -91,6 +91,13 @@ void FuzzerPassInterchangeSignednessOfIntegerOperands::Apply() {
 
 uint32_t FuzzerPassInterchangeSignednessOfIntegerOperands::
     FindOrCreateToggledIntegerConstant(uint32_t id) {
+  // |id| must not be a specialization constant because we do not know the value
+  // of specialization constants.
+  if (opt::IsSpecConstantInst(
+          GetIRContext()->get_def_use_mgr()->GetDef(id)->opcode())) {
+    return 0;
+  }
+
   auto constant = GetIRContext()->get_constant_mgr()->FindDeclaredConstant(id);
 
   // This pass only toggles integer constants.

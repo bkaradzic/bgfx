@@ -45,26 +45,18 @@ bool TransformationReplaceLoadStoreWithCopyMemory::IsApplicable(
     opt::IRContext* ir_context, const TransformationContext& /*unused*/) const {
   // This transformation is only applicable to the pair of OpLoad and OpStore
   // instructions.
-  if (message_.load_instruction_descriptor().target_instruction_opcode() !=
-      SpvOpLoad) {
-    return false;
-  }
-  if (message_.store_instruction_descriptor().target_instruction_opcode() !=
-      SpvOpStore) {
-    return false;
-  }
 
   // The OpLoad instruction must be defined.
   auto load_instruction =
       FindInstruction(message_.load_instruction_descriptor(), ir_context);
-  if (!load_instruction) {
+  if (!load_instruction || load_instruction->opcode() != SpvOpLoad) {
     return false;
   }
 
   // The OpStore instruction must be defined.
   auto store_instruction =
       FindInstruction(message_.store_instruction_descriptor(), ir_context);
-  if (!store_instruction) {
+  if (!store_instruction || store_instruction->opcode() != SpvOpStore) {
     return false;
   }
 

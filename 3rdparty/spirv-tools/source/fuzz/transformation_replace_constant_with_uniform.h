@@ -84,6 +84,11 @@ class TransformationReplaceConstantWithUniform : public Transformation {
   std::unique_ptr<opt::Instruction> MakeLoadInstruction(
       spvtools::opt::IRContext* ir_context, uint32_t constant_type_id) const;
 
+  // OpAccessChain and OpLoad will be inserted above the instruction returned
+  // by this function. Returns nullptr if no such instruction is present.
+  opt::Instruction* GetInsertBeforeInstruction(
+      opt::IRContext* ir_context) const;
+
   protobufs::TransformationReplaceConstantWithUniform message_;
 };
 

@@ -14,8 +14,6 @@
 
 #include "source/fuzz/transformation_add_parameter.h"
 
-#include <source/spirv_constant.h>
-
 #include "source/fuzz/fuzzer_util.h"
 
 namespace spvtools {
@@ -72,13 +70,13 @@ void TransformationAddParameter::Apply(
   auto* function = fuzzerutil::FindFunction(ir_context, message_.function_id());
   assert(function && "Can't find the function");
 
-  auto parameter_type_id =
+  const auto new_parameter_type_id =
       fuzzerutil::GetTypeId(ir_context, message_.initializer_id());
-  assert(parameter_type_id != 0 && "Initializer has invalid type");
+  assert(new_parameter_type_id != 0 && "Initializer has invalid type");
 
   // Add new parameters to the function.
   function->AddParameter(MakeUnique<opt::Instruction>(
-      ir_context, SpvOpFunctionParameter, parameter_type_id,
+      ir_context, SpvOpFunctionParameter, new_parameter_type_id,
       message_.parameter_fresh_id(), opt::Instruction::OperandList()));
 
   fuzzerutil::UpdateModuleIdBound(ir_context, message_.parameter_fresh_id());
@@ -92,43 +90,30 @@ void TransformationAddParameter::Apply(
       message_.parameter_fresh_id());
 
   // Fix all OpFunctionCall instructions.
-  ir_context->get_def_use_mgr()->ForEachUser(
-      &function->DefInst(), [this](opt::Instruction* call) {
-        if (call->opcode() != SpvOpFunctionCall ||
-            call->GetSingleWordInOperand(0) != message_.function_id()) {
-          return;
-        }
+  for (auto* inst : fuzzerutil::GetCallers(ir_context, function->result_id())) {
+    inst->AddOperand({SPV_OPERAND_TYPE_ID, {message_.initializer_id()}});
+  }
 
-        call->AddOperand({SPV_OPERAND_TYPE_ID, {message_.initializer_id()}});
-      });
+  // Update function's type.
+  {
+    // We use a separate scope here since |old_function_type| might become a
+    // dangling pointer after the call to the fuzzerutil::UpdateFunctionType.
 
-  auto* old_function_type = fuzzerutil::GetFunctionType(ir_context, function);
-  assert(old_function_type && "Function must have a valid type");
+    const auto* old_function_type =
+        fuzzerutil::GetFunctionType(ir_context, function);
+    assert(old_function_type && "Function must have a valid type");
 
-  if (ir_context->get_def_use_mgr()->NumUsers(old_function_type) == 1) {
-    // Adjust existing function type if it is used only by this function.
-    old_function_type->AddOperand({SPV_OPERAND_TYPE_ID, {parameter_type_id}});
-
-    // We must make sure that all dependencies of |old_function_type| are
-    // evaluated before |old_function_type| (i.e. the domination rules are not
-    // broken). Thus, we move |old_function_type| to the end of the list of all
-    // types in the module.
-    old_function_type->RemoveFromList();
-    ir_context->AddType(std::unique_ptr<opt::Instruction>(old_function_type));
-  } else {
-    // Otherwise, either create a new type or use an existing one.
-    std::vector<uint32_t> type_ids;
-    type_ids.reserve(old_function_type->NumInOperands() + 1);
-
-    for (uint32_t i = 0, n = old_function_type->NumInOperands(); i < n; ++i) {
-      type_ids.push_back(old_function_type->GetSingleWordInOperand(i));
+    std::vector<uint32_t> parameter_type_ids;
+    for (uint32_t i = 1; i < old_function_type->NumInOperands(); ++i) {
+      parameter_type_ids.push_back(
+          old_function_type->GetSingleWordInOperand(i));
     }
 
-    type_ids.push_back(parameter_type_id);
+    parameter_type_ids.push_back(new_parameter_type_id);
 
-    function->DefInst().SetInOperand(
-        1, {fuzzerutil::FindOrCreateFunctionType(
-               ir_context, message_.function_type_fresh_id(), type_ids)});
+    fuzzerutil::UpdateFunctionType(
+        ir_context, function->result_id(), message_.function_type_fresh_id(),
+        old_function_type->GetSingleWordInOperand(0), parameter_type_ids);
   }
 
   // Make sure our changes are analyzed.

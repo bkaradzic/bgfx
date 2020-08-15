@@ -36,23 +36,27 @@ FuzzerPassReplaceLinearAlgebraInstructions::
 void FuzzerPassReplaceLinearAlgebraInstructions::Apply() {
   // For each instruction, checks whether it is a linear algebra instruction. In
   // this case, the transformation is randomly applied.
-  GetIRContext()->module()->ForEachInst([this](opt::Instruction* instruction) {
-    if (!spvOpcodeIsLinearAlgebra(instruction->opcode())) {
-      return;
-    }
+  for (auto& function : *GetIRContext()->module()) {
+    for (auto& block : function) {
+      for (auto& instruction : block) {
+        if (!spvOpcodeIsLinearAlgebra(instruction.opcode())) {
+          continue;
+        }
 
-    if (!GetFuzzerContext()->ChoosePercentage(
-            GetFuzzerContext()
-                ->GetChanceOfReplacingLinearAlgebraInstructions())) {
-      return;
-    }
+        if (!GetFuzzerContext()->ChoosePercentage(
+                GetFuzzerContext()
+                    ->GetChanceOfReplacingLinearAlgebraInstructions())) {
+          continue;
+        }
 
-    ApplyTransformation(TransformationReplaceLinearAlgebraInstruction(
-        GetFuzzerContext()->GetFreshIds(
-            TransformationReplaceLinearAlgebraInstruction::
-                GetRequiredFreshIdCount(GetIRContext(), instruction)),
-        MakeInstructionDescriptor(GetIRContext(), instruction)));
-  });
+        ApplyTransformation(TransformationReplaceLinearAlgebraInstruction(
+            GetFuzzerContext()->GetFreshIds(
+                TransformationReplaceLinearAlgebraInstruction::
+                    GetRequiredFreshIdCount(GetIRContext(), &instruction)),
+            MakeInstructionDescriptor(GetIRContext(), &instruction)));
+      }
+    }
+  }
 }
 
 }  // namespace fuzz

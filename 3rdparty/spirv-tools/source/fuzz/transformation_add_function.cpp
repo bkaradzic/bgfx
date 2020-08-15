@@ -363,6 +363,22 @@ bool TransformationAddFunction::TryToMakeFunctionLivesafe(
   return true;
 }
 
+uint32_t TransformationAddFunction::GetBackEdgeBlockId(
+    opt::IRContext* ir_context, uint32_t loop_header_block_id) {
+  const auto* loop_header_block =
+      ir_context->cfg()->block(loop_header_block_id);
+  assert(loop_header_block && "|loop_header_block_id| is invalid");
+
+  for (auto pred : ir_context->cfg()->preds(loop_header_block_id)) {
+    if (ir_context->GetDominatorAnalysis(loop_header_block->GetParent())
+            ->Dominates(loop_header_block_id, pred)) {
+      return pred;
+    }
+  }
+
+  return 0;
+}
+
 bool TransformationAddFunction::TryToAddLoopLimiters(
     opt::IRContext* ir_context, opt::Function* added_function) const {
   // Collect up all the loop headers so that we can subsequently add loop
@@ -474,14 +490,8 @@ bool TransformationAddFunction::TryToAddLoopLimiters(
   for (auto loop_header : loop_headers) {
     // Look for the loop's back-edge block.  This is a predecessor of the loop
     // header that is dominated by the loop header.
-    uint32_t back_edge_block_id = 0;
-    for (auto pred : ir_context->cfg()->preds(loop_header->id())) {
-      if (ir_context->GetDominatorAnalysis(added_function)
-              ->Dominates(loop_header->id(), pred)) {
-        back_edge_block_id = pred;
-        break;
-      }
-    }
+    const auto back_edge_block_id =
+        GetBackEdgeBlockId(ir_context, loop_header->id());
     if (!back_edge_block_id) {
       // The loop's back-edge block must be unreachable.  This means that the
       // loop cannot iterate, so there is no need to make it lifesafe; we can
@@ -692,9 +702,7 @@ bool TransformationAddFunction::TryToAddLoopLimiters(
       back_edge_block_terminator->SetOpcode(SpvOpBranchConditional);
       back_edge_block_terminator->SetInOperands(opt::Instruction::OperandList(
           {{SPV_OPERAND_TYPE_ID, {loop_limiter_info.compare_id()}},
-           {SPV_OPERAND_TYPE_ID, {loop_header->MergeBlockId()}
-
-           },
+           {SPV_OPERAND_TYPE_ID, {loop_header->MergeBlockId()}},
            {SPV_OPERAND_TYPE_ID, {loop_header->id()}}}));
     }
 

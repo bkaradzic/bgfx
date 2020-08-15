@@ -127,9 +127,6 @@ class AggressiveDCEPass : public MemPass {
   // Erases functions that are unreachable from the entry points of the module.
   bool EliminateDeadFunctions();
 
-  // Removes |func| from the module and deletes all its instructions.
-  void EliminateFunction(Function* func);
-
   // For function |func|, mark all Stores to non-function-scope variables
   // and block terminating instructions as live. Recursively mark the values
   // they use. When complete, mark any non-live instructions to be deleted.

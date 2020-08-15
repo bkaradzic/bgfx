@@ -408,6 +408,10 @@ message Transformation {
     TransformationReplaceCopyMemoryWithLoadStore replace_copy_memory_with_load_store = 61;
     TransformationReplaceLoadStoreWithCopyMemory replace_load_store_with_copy_memory = 62;
     TransformationAddLoopPreheader add_loop_preheader = 63;
+    TransformationMoveInstructionDown move_instruction_down = 64;
+    TransformationMakeVectorOperationDynamic make_vector_operation_dynamic = 65;
+    TransformationReplaceAddSubMulWithCarryingExtended replace_add_sub_mul_with_carrying_extended = 66;
+    TransformationPropagateInstructionUp propagate_instruction_up = 67;
     // Add additional option using the next available number.
   }
 }
@@ -1105,6 +1109,21 @@ message TransformationLoad {
 
 }
 
+message TransformationMakeVectorOperationDynamic {
+
+  // A transformation that replaces the OpCompositeExtract and OpCompositeInsert
+  // instructions with the OpVectorExtractDynamic and OpVectorInsertDynamic instructions.
+
+  // The composite instruction result id.
+  uint32 instruction_result_id = 1;
+
+  // The OpCompositeExtract/Insert instructions accept integer literals as indices to the composite object.
+  // However, the OpVectorInsert/ExtractDynamic instructions require its single index to be an integer instruction.
+  // This is the result id of the integer instruction.
+  uint32 constant_index_id = 2;
+
+}
+
 message TransformationMergeBlocks {
 
   // A transformation that merges a block with its predecessor.
@@ -1122,6 +1141,15 @@ message TransformationMoveBlockDown {
 
   // The id of the block to move down.
   uint32 block_id = 1;
+}
+
+message TransformationMoveInstructionDown {
+
+  // Swaps |instruction| with the next instruction in the block.
+
+  // The instruction to move down.
+  InstructionDescriptor instruction = 1;
+
 }
 
 message TransformationOutlineFunction {
@@ -1212,6 +1240,26 @@ message TransformationPermutePhiOperands {
 
 }
 
+message TransformationPropagateInstructionUp {
+
+  // Propagates an instruction in the block into the block's predecessors.
+  // Concretely, this transformation clones some particular instruction from
+  // the |block_id| into every block's predecessor and replaces the original
+  // instruction with OpPhi. Take a look at the transformation class to learn
+  // more about how we choose what instruction to propagate.
+
+  // Id of the block to propagate an instruction from.
+  uint32 block_id = 1;
+
+  // A map from the id of some predecessor of the |block_id| to the fresh id.
+  // The map contains a fresh id for at least every predecessor of the |block_id|.
+  // The instruction is propagated by creating a number of clones - one clone for
+  // each predecessor. Fresh ids from this field are used as result ids of cloned
+  // instructions.
+  repeated UInt32Pair predecessor_id_to_fresh_id = 2;
+
+}
+
 message TransformationPushIdThroughVariable {
 
   // A transformation that makes |value_synonym_id| and |value_id| to be
@@ -1256,6 +1304,24 @@ message TransformationRecordSynonymousConstants {
 
   // The id of the synonym
   uint32 constant2_id = 2;
+
+}
+
+message TransformationReplaceAddSubMulWithCarryingExtended {
+
+   // Replaces OpIAdd with OpIAddCarry, OpISub with OpISubBorrow, OpIMul
+   // with OpUMulExtended or OpSMulExtended (depending on the signedness
+   // of the operands) and stores the result into a |struct_fresh_id|.
+   // In the original instruction the result type id and the type ids of
+   // the operands must be the same. Then the transformation extracts
+   // the first element of the result into the original |result_id|.
+   // This value is the same as the result of the original instruction.
+
+   // The fresh id of the intermediate result.
+   uint32 struct_fresh_id = 1;
+
+   // The result id of the original instruction.
+   uint32 result_id = 2;
 
 }
 

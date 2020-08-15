@@ -50,6 +50,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_synonyms.h
         fuzzer_pass_add_loads.h
         fuzzer_pass_add_local_variables.h
+        fuzzer_pass_add_loop_preheaders.h
         fuzzer_pass_add_no_contraction_decorations.h
         fuzzer_pass_add_parameters.h
         fuzzer_pass_add_relaxed_decorations.h
@@ -67,13 +68,17 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_invert_comparison_operators.h
         fuzzer_pass_interchange_signedness_of_integer_operands.h
         fuzzer_pass_interchange_zero_like_constants.h
+        fuzzer_pass_make_vector_operations_dynamic.h
         fuzzer_pass_merge_blocks.h
         fuzzer_pass_obfuscate_constants.h
         fuzzer_pass_outline_functions.h
         fuzzer_pass_permute_blocks.h
         fuzzer_pass_permute_function_parameters.h
+        fuzzer_pass_permute_instructions.h
         fuzzer_pass_permute_phi_operands.h
+        fuzzer_pass_propagate_instructions_up.h
         fuzzer_pass_push_ids_through_variables.h
+        fuzzer_pass_replace_adds_subs_muls_with_carrying_extended.h
         fuzzer_pass_replace_copy_memories_with_loads_stores.h
         fuzzer_pass_replace_copy_objects_with_stores_loads.h
         fuzzer_pass_replace_linear_algebra_instructions.h
@@ -132,13 +137,17 @@ if(SPIRV_BUILD_FUZZER)
         transformation_function_call.h
         transformation_invert_comparison_operator.h
         transformation_load.h
+        transformation_make_vector_operation_dynamic.h
         transformation_merge_blocks.h
         transformation_move_block_down.h
+        transformation_move_instruction_down.h
         transformation_outline_function.h
         transformation_permute_function_parameters.h
         transformation_permute_phi_operands.h
+        transformation_propagate_instruction_up.h
         transformation_push_id_through_variable.h
         transformation_record_synonymous_constants.h
+        transformation_replace_add_sub_mul_with_carrying_extended.h
         transformation_replace_boolean_constant_with_constant_binary.h
         transformation_replace_constant_with_uniform.h
         transformation_replace_copy_memory_with_load_store.h
@@ -181,6 +190,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_synonyms.cpp
         fuzzer_pass_add_loads.cpp
         fuzzer_pass_add_local_variables.cpp
+        fuzzer_pass_add_loop_preheaders.cpp
         fuzzer_pass_add_no_contraction_decorations.cpp
         fuzzer_pass_add_parameters.cpp
         fuzzer_pass_add_relaxed_decorations.cpp
@@ -198,13 +208,17 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_invert_comparison_operators.cpp
         fuzzer_pass_interchange_signedness_of_integer_operands.cpp
         fuzzer_pass_interchange_zero_like_constants.cpp
+        fuzzer_pass_make_vector_operations_dynamic.cpp
         fuzzer_pass_merge_blocks.cpp
         fuzzer_pass_obfuscate_constants.cpp
         fuzzer_pass_outline_functions.cpp
         fuzzer_pass_permute_blocks.cpp
         fuzzer_pass_permute_function_parameters.cpp
+        fuzzer_pass_permute_instructions.cpp
         fuzzer_pass_permute_phi_operands.cpp
+        fuzzer_pass_propagate_instructions_up.cpp
         fuzzer_pass_push_ids_through_variables.cpp
+        fuzzer_pass_replace_adds_subs_muls_with_carrying_extended.cpp
         fuzzer_pass_replace_copy_memories_with_loads_stores.cpp
         fuzzer_pass_replace_copy_objects_with_stores_loads.cpp
         fuzzer_pass_replace_linear_algebra_instructions.cpp
@@ -262,13 +276,17 @@ if(SPIRV_BUILD_FUZZER)
         transformation_function_call.cpp
         transformation_invert_comparison_operator.cpp
         transformation_load.cpp
+        transformation_make_vector_operation_dynamic.cpp
         transformation_merge_blocks.cpp
         transformation_move_block_down.cpp
+        transformation_move_instruction_down.cpp
         transformation_outline_function.cpp
         transformation_permute_function_parameters.cpp
         transformation_permute_phi_operands.cpp
+        transformation_propagate_instruction_up.cpp
         transformation_push_id_through_variable.cpp
         transformation_record_synonymous_constants.cpp
+        transformation_replace_add_sub_mul_with_carrying_extended.cpp
         transformation_replace_boolean_constant_with_constant_binary.cpp
         transformation_replace_constant_with_uniform.cpp
         transformation_replace_copy_memory_with_load_store.cpp
@@ -292,7 +310,7 @@ if(SPIRV_BUILD_FUZZER)
         ${CMAKE_CURRENT_BINARY_DIR}/protobufs/spvtoolsfuzz.pb.cc
         )
 
-  if(MSVC)
+  if(MSVC AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")))
     # Enable parallel builds across four cores for this lib
     add_definitions(/MP4)
   endif()

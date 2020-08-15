@@ -144,4 +144,7 @@ bool spvOpcodeIsImageSample(SpvOp opcode);
 // operands for |opcode|.
 std::vector<uint32_t> spvOpcodeMemorySemanticsOperandIndices(SpvOp opcode);
 
+// Returns true for opcodes that represents access chain instructions.
+bool spvOpcodeIsAccessChain(SpvOp opcode);
+
 #endif  // SOURCE_OPCODE_H_

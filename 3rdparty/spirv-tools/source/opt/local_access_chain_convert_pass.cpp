@@ -77,6 +77,15 @@ void LocalAccessChainConvertPass::AppendConstantOperands(
 bool LocalAccessChainConvertPass::ReplaceAccessChainLoad(
     const Instruction* address_inst, Instruction* original_load) {
   // Build and append load of variable in ptrInst
+  if (address_inst->NumInOperands() == 1) {
+    // An access chain with no indices is essentially a copy.  All that is
+    // needed is to propagate the address.
+    context()->ReplaceAllUsesWith(
+        address_inst->result_id(),
+        address_inst->GetSingleWordInOperand(kAccessChainPtrIdInIdx));
+    return true;
+  }
+
   std::vector<std::unique_ptr<Instruction>> new_inst;
   uint32_t varId;
   uint32_t varPteTypeId;
@@ -109,6 +118,18 @@ bool LocalAccessChainConvertPass::ReplaceAccessChainLoad(
 bool LocalAccessChainConvertPass::GenAccessChainStoreReplacement(
     const Instruction* ptrInst, uint32_t valId,
     std::vector<std::unique_ptr<Instruction>>* newInsts) {
+  if (ptrInst->NumInOperands() == 1) {
+    // An access chain with no indices is essentially a copy.  However, we still
+    // have to create a new store because the old ones will be deleted.
+    BuildAndAppendInst(
+        SpvOpStore, 0, 0,
+        {{spv_operand_type_t::SPV_OPERAND_TYPE_ID,
+          {ptrInst->GetSingleWordInOperand(kAccessChainPtrIdInIdx)}},
+         {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {valId}}},
+        newInsts);
+    return true;
+  }
+
   // Build and append load of variable in ptrInst
   uint32_t varId;
   uint32_t varPteTypeId;
@@ -246,11 +267,13 @@ Pass::Status LocalAccessChainConvertPass::ConvertLocalAccessChains(
           if (!GenAccessChainStoreReplacement(ptrInst, valId, &newInsts)) {
             return Status::Failure;
           }
+          size_t num_of_instructions_to_skip = newInsts.size() - 1;
           dead_instructions.push_back(&*ii);
           ++ii;
           ii = ii.InsertBefore(std::move(newInsts));
-          ++ii;
-          ++ii;
+          for (size_t i = 0; i < num_of_instructions_to_skip; ++i) {
+            ++ii;
+          }
           modified = true;
         } break;
         default:

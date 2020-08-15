@@ -22,6 +22,7 @@
 
 #include "source/cfa.h"
 #include "source/latest_version_glsl_std_450_header.h"
+#include "source/opt/eliminate_dead_functions_util.h"
 #include "source/opt/iterator.h"
 #include "source/opt/reflect.h"
 #include "source/spirv_constant.h"
@@ -727,20 +728,14 @@ bool AggressiveDCEPass::EliminateDeadFunctions() {
        funcIter != get_module()->end();) {
     if (live_function_set.count(&*funcIter) == 0) {
       modified = true;
-      EliminateFunction(&*funcIter);
-      funcIter = funcIter.Erase();
+      funcIter =
+          eliminatedeadfunctionsutil::EliminateFunction(context(), &funcIter);
     } else {
       ++funcIter;
     }
   }
 
   return modified;
-}
-
-void AggressiveDCEPass::EliminateFunction(Function* func) {
-  // Remove all of the instruction in the function body
-  func->ForEachInst([this](Instruction* inst) { context()->KillInst(inst); },
-                    true);
 }
 
 bool AggressiveDCEPass::ProcessGlobalValues() {

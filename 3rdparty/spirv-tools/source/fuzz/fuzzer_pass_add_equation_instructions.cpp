@@ -21,6 +21,26 @@
 
 namespace spvtools {
 namespace fuzz {
+namespace {
+
+bool IsBitWidthSupported(opt::IRContext* ir_context, uint32_t bit_width) {
+  switch (bit_width) {
+    case 32:
+      return true;
+    case 64:
+      return ir_context->get_feature_mgr()->HasCapability(
+                 SpvCapabilityFloat64) &&
+             ir_context->get_feature_mgr()->HasCapability(SpvCapabilityInt64);
+    case 16:
+      return ir_context->get_feature_mgr()->HasCapability(
+                 SpvCapabilityFloat16) &&
+             ir_context->get_feature_mgr()->HasCapability(SpvCapabilityInt16);
+    default:
+      return false;
+  }
+}
+
+}  // namespace
 
 FuzzerPassAddEquationInstructions::FuzzerPassAddEquationInstructions(
     opt::IRContext* ir_context, TransformationContext* transformation_context,
@@ -76,8 +96,22 @@ void FuzzerPassAddEquationInstructions::Apply() {
           switch (opcode) {
             case SpvOpConvertSToF:
             case SpvOpConvertUToF: {
-              auto candidate_instructions =
-                  GetIntegerInstructions(available_instructions);
+              std::vector<const opt::Instruction*> candidate_instructions;
+              for (const auto* inst :
+                   GetIntegerInstructions(available_instructions)) {
+                const auto* type =
+                    GetIRContext()->get_type_mgr()->GetType(inst->type_id());
+                assert(type && "|inst| has invalid type");
+
+                if (const auto* vector_type = type->AsVector()) {
+                  type = vector_type->element_type();
+                }
+
+                if (IsBitWidthSupported(GetIRContext(),
+                                        type->AsInteger()->width())) {
+                  candidate_instructions.push_back(inst);
+                }
+              }
 
               if (candidate_instructions.empty()) {
                 break;
@@ -112,20 +146,8 @@ void FuzzerPassAddEquationInstructions::Apply() {
               return;
             }
             case SpvOpBitcast: {
-              std::vector<const opt::Instruction*> candidate_instructions;
-              for (const auto* inst : available_instructions) {
-                const auto* type =
-                    GetIRContext()->get_type_mgr()->GetType(inst->type_id());
-                assert(type && "Instruction has invalid type");
-                if ((type->AsVector() &&
-                     (type->AsVector()->element_type()->AsInteger() ||
-                      type->AsVector()->element_type()->AsFloat())) ||
-                    type->AsInteger() || type->AsFloat()) {
-                  // We support OpBitcast for only scalars or vectors of
-                  // numerical type.
-                  candidate_instructions.push_back(inst);
-                }
-              }
+              const auto candidate_instructions =
+                  GetNumericalInstructions(available_instructions);
 
               if (!candidate_instructions.empty()) {
                 const auto* operand_inst =
@@ -353,6 +375,37 @@ FuzzerPassAddEquationInstructions::RestrictToElementBitWidth(
       result.push_back(inst);
     }
   }
+  return result;
+}
+
+std::vector<opt::Instruction*>
+FuzzerPassAddEquationInstructions::GetNumericalInstructions(
+    const std::vector<opt::Instruction*>& instructions) const {
+  std::vector<opt::Instruction*> result;
+
+  for (auto* inst : instructions) {
+    const auto* type = GetIRContext()->get_type_mgr()->GetType(inst->type_id());
+    assert(type && "Instruction has invalid type");
+
+    if (const auto* vector_type = type->AsVector()) {
+      type = vector_type->element_type();
+    }
+
+    if (!type->AsInteger() && !type->AsFloat()) {
+      // Only numerical scalars or vectors of numerical components are
+      // supported.
+      continue;
+    }
+
+    if (!IsBitWidthSupported(GetIRContext(), type->AsInteger()
+                                                 ? type->AsInteger()->width()
+                                                 : type->AsFloat()->width())) {
+      continue;
+    }
+
+    result.push_back(inst);
+  }
+
   return result;
 }
 

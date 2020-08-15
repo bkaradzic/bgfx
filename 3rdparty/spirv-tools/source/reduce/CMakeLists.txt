@@ -70,7 +70,7 @@ set(SPIRV_TOOLS_REDUCE_SOURCES
         simple_conditional_branch_to_branch_reduction_opportunity.cpp
 )
 
-if(MSVC)
+if(MSVC AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")))
   # Enable parallel builds across four cores for this lib
   add_definitions(/MP4)
 endif()

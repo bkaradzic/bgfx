@@ -283,6 +283,16 @@ class FuzzerPass {
       std::vector<std::pair<protobufs::IdUseDescriptor, uint32_t>>*
           uses_to_replace);
 
+  // Returns the preheader of the loop with header |header_id|, which satisfies
+  // all of the following conditions:
+  // - It is the only out-of-loop predecessor of the header
+  // - It unconditionally branches to the header
+  // - It is not a loop header itself
+  // If such preheader does not exist, a new one is added and returned.
+  // Requires |header_id| to be the label id of a loop header block that is
+  // reachable in the CFG (and thus has at least 2 predecessors).
+  opt::BasicBlock* GetOrCreateSimpleLoopPreheader(uint32_t header_id);
+
  private:
   opt::IRContext* ir_context_;
   TransformationContext* transformation_context_;

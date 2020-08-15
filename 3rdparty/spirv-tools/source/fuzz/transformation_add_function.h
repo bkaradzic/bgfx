@@ -65,6 +65,12 @@ class TransformationAddFunction : public Transformation {
       opt::IRContext* ir_context, const opt::Instruction& composite_type_inst,
       uint32_t index_id);
 
+  // Returns id of the back-edge block, given the corresponding
+  // |loop_header_block_id|. |loop_header_block_id| must be the id of a loop
+  // header block. Returns 0 if the loop has no back-edge block.
+  static uint32_t GetBackEdgeBlockId(opt::IRContext* ir_context,
+                                     uint32_t loop_header_block_id);
+
  private:
   // Attempts to create a function from the series of instructions in
   // |message_.instruction| and add it to |ir_context|.

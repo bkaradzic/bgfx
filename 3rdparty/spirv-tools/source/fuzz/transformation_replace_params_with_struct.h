@@ -73,6 +73,12 @@ class TransformationReplaceParamsWithStruct : public Transformation {
   // transformation (see docs on the IsApplicable method to learn more).
   uint32_t MaybeGetRequiredStructType(opt::IRContext* ir_context) const;
 
+  // Returns a vector of indices of parameters to replace. Concretely, i'th
+  // element is the index of the parameter with result id |parameter_id[i]| in
+  // its function.
+  std::vector<uint32_t> ComputeIndicesOfReplacedParameters(
+      opt::IRContext* ir_context) const;
+
   protobufs::TransformationReplaceParamsWithStruct message_;
 };
 

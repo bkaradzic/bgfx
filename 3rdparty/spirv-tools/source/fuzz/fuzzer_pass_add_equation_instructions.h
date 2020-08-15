@@ -51,6 +51,14 @@ class FuzzerPassAddEquationInstructions : public FuzzerPass {
   std::vector<opt::Instruction*> GetBooleanInstructions(
       const std::vector<opt::Instruction*>& instructions) const;
 
+  // Yields those instructions in |instructions| that have a scalar numerical or
+  // a vector of numerical components type. Only 16, 32 and 64-bit numericals
+  // are supported if both OpTypeInt and OpTypeFloat instructions can be created
+  // with the specified width (e.g. for 16-bit types both Float16 and Int16
+  // capabilities must be present).
+  std::vector<opt::Instruction*> GetNumericalInstructions(
+      const std::vector<opt::Instruction*>& instructions) const;
+
   // Requires that |instructions| are scalars or vectors of some type.  Returns
   // only those instructions whose width is |width|. If |width| is 1 this means
   // the scalars.

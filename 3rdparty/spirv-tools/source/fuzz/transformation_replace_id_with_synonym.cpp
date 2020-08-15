@@ -109,7 +109,7 @@ protobufs::Transformation TransformationReplaceIdWithSynonym::ToMessage()
 bool TransformationReplaceIdWithSynonym::UseCanBeReplacedWithSynonym(
     opt::IRContext* ir_context, opt::Instruction* use_instruction,
     uint32_t use_in_operand_index) {
-  if (use_instruction->opcode() == SpvOpAccessChain &&
+  if (spvOpcodeIsAccessChain(use_instruction->opcode()) &&
       use_in_operand_index > 0) {
     // This is an access chain index.  If the (sub-)object being accessed by the
     // given index has struct type then we cannot replace the use with a

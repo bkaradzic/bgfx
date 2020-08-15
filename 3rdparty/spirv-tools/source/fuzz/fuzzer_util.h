@@ -316,6 +316,10 @@ opt::Function* GetFunctionFromParameterId(opt::IRContext* ir_context,
 // more users, it is removed from the module. Returns the result id of the
 // OpTypeFunction instruction that is used as a type of the function with
 // |function_id|.
+//
+// CAUTION: When the old type of the function is removed from the module, its
+//          memory is deallocated. Be sure not to use any pointers to the old
+//          type when this function returns.
 uint32_t UpdateFunctionType(opt::IRContext* ir_context, uint32_t function_id,
                             uint32_t new_function_type_result_id,
                             uint32_t return_type_id,
@@ -482,6 +486,12 @@ std::map<uint32_t, uint32_t> RepeatedUInt32PairToMap(
 // Converts a map into a repeated field of UInt32Pair.
 google::protobuf::RepeatedPtrField<protobufs::UInt32Pair>
 MapToRepeatedUInt32Pair(const std::map<uint32_t, uint32_t>& data);
+
+// Returns the last instruction in |block_id| before which an instruction with
+// opcode |opcode| can be inserted, or nullptr if there is no such instruction.
+opt::Instruction* GetLastInsertBeforeInstruction(opt::IRContext* ir_context,
+                                                 uint32_t block_id,
+                                                 SpvOp opcode);
 
 }  // namespace fuzzerutil
 

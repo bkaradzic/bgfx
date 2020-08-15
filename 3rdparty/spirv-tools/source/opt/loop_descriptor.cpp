@@ -191,14 +191,13 @@ bool Loop::GetInductionInitValue(const Instruction* induction,
   if (!constant) return false;
 
   if (value) {
-    const analysis::Integer* type =
-        constant->AsIntConstant()->type()->AsInteger();
-
-    if (type->IsSigned()) {
-      *value = constant->AsIntConstant()->GetS32BitValue();
-    } else {
-      *value = constant->AsIntConstant()->GetU32BitValue();
+    const analysis::Integer* type = constant->type()->AsInteger();
+    if (!type) {
+      return false;
     }
+
+    *value = type->IsSigned() ? constant->GetSignExtendedValue()
+                              : constant->GetZeroExtendedValue();
   }
 
   return true;
@@ -682,22 +681,19 @@ bool Loop::FindNumberOfIterations(const Instruction* induction,
   if (!upper_bound) return false;
 
   // Must be integer because of the opcode on the condition.
-  int64_t condition_value = 0;
+  const analysis::Integer* type = upper_bound->type()->AsInteger();
 
-  const analysis::Integer* type =
-      upper_bound->AsIntConstant()->type()->AsInteger();
-
-  if (type->width() > 32) {
+  if (!type || type->width() > 64) {
     return false;
   }
 
-  if (type->IsSigned()) {
-    condition_value = upper_bound->AsIntConstant()->GetS32BitValue();
-  } else {
-    condition_value = upper_bound->AsIntConstant()->GetU32BitValue();
-  }
+  int64_t condition_value = type->IsSigned()
+                                ? upper_bound->GetSignExtendedValue()
+                                : upper_bound->GetZeroExtendedValue();
 
   // Find the instruction which is stepping through the loop.
+  //
+  // GetInductionStepOperation returns nullptr if |step_inst| is OpConstantNull.
   Instruction* step_inst = GetInductionStepOperation(induction);
   if (!step_inst) return false;
 
