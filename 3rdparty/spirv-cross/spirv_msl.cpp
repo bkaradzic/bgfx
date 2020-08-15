@@ -5580,8 +5580,9 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 
 	bool multi_patch_tess_ctl = get_execution_model() == ExecutionModelTessellationControl &&
 	                            msl_options.multi_patch_workgroup && ptr_type.storage == StorageClassInput;
-	bool flat_matrix = is_matrix(result_type) && !multi_patch_tess_ctl;
-	bool flat_data_type = flat_matrix || is_array(result_type) || result_type.basetype == SPIRType::Struct;
+	bool flat_matrix = is_matrix(result_type) && ptr_type.storage == StorageClassInput && !multi_patch_tess_ctl;
+	bool flat_struct = result_type.basetype == SPIRType::Struct && ptr_type.storage == StorageClassInput;
+	bool flat_data_type = flat_matrix || is_array(result_type) || flat_struct;
 	if (!flat_data_type)
 		return false;
 
@@ -5669,7 +5670,7 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 		}
 		expr += " })";
 	}
-	else if (result_type.basetype == SPIRType::Struct)
+	else if (flat_struct)
 	{
 		bool is_array_of_struct = is_array(result_type);
 		if (is_array_of_struct && !ptr_is_io_variable)
@@ -5702,7 +5703,7 @@ bool CompilerMSL::emit_tessellation_io_load(uint32_t result_type_id, uint32_t id
 
 				const auto &mbr_type = get<SPIRType>(struct_type.member_types[j]);
 				const auto &expr_mbr_type = get<SPIRType>(expr_type.member_types[j]);
-				if (is_matrix(mbr_type) && !multi_patch_tess_ctl)
+				if (is_matrix(mbr_type) && ptr_type.storage == StorageClassInput && !multi_patch_tess_ctl)
 				{
 					expr += type_to_glsl(mbr_type) + "(";
 					for (uint32_t k = 0; k < mbr_type.columns; k++, interface_index++)
@@ -7540,7 +7541,8 @@ void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, 
 		{
 			// Equivalent to length(a - b) -> abs(a - b).
 			emit_op(result_type, id,
-			        join("abs(", to_unpacked_expression(args[0]), " - ", to_unpacked_expression(args[1]), ")"),
+			        join("abs(", to_enclosed_unpacked_expression(args[0]), " - ",
+			             to_enclosed_unpacked_expression(args[1]), ")"),
 			        should_forward(args[0]) && should_forward(args[1]));
 			inherit_expression_dependencies(id, args[0]);
 			inherit_expression_dependencies(id, args[1]);
