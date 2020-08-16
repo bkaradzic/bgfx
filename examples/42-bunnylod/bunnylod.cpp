@@ -265,7 +265,7 @@ public:
 		u_tint = bgfx::createUniform("u_tint", bgfx::UniformType::Vec4);
 
 		// Create program from shaders.
-		m_program = loadProgram("vs_callback", "fs_callback");
+		m_program = loadProgram("vs_bunnylod", "fs_bunnylod");
 
 		Mesh* mesh = meshLoad("meshes/bunny_patched.bin", true);
 		loadMesh(mesh);
