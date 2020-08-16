@@ -5178,8 +5178,8 @@ namespace bgfx { namespace gl
 			const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
 
 			const GLenum fmt = srgb
-				? s_textureFormat[m_textureFormat].m_fmt
-				: s_textureFormat[m_textureFormat].m_fmtSrgb
+				? s_textureFormat[m_textureFormat].m_fmtSrgb
+				: s_textureFormat[m_textureFormat].m_fmt
 				;
 
 			m_fmt  = fmt;
@@ -5490,7 +5490,8 @@ namespace bgfx { namespace gl
 					}
 					else if (!computeWrite)
 					{
-						if (compressed)
+						if (compressed
+						&& !convert)
 						{
 							uint32_t size = bx::max<uint32_t>(1, (width  + 3)>>2)
 										  * bx::max<uint32_t>(1, (height + 3)>>2)
@@ -5604,7 +5605,8 @@ namespace bgfx { namespace gl
 			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, srcpitch*8/bpp) );
 		}
 
-		if (compressed)
+		if (compressed
+		&& !convert)
 		{
 			const uint8_t* data = _mem->data;
 
