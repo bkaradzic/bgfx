@@ -1,4 +1,4 @@
-uint findMSB(uint x)
+uint findMSB_(uint x)
 {
 	uint i;
 	uint mask;
@@ -36,7 +36,7 @@ bool isRootKey(in uint key)
 
 bool isLeafKey(in uint key)
 {
-	return findMSB(key) == 31;
+	return findMSB_(key) == 31;
 }
 
 bool isChildZeroKey(in uint key)
