@@ -64,7 +64,7 @@ void updateSubdBuffer(
 	)
 {
 	// extract subdivision level associated to the key
-	uint keyLod = findMSB(key);
+	uint keyLod = findMSB_(key);
 
 	// update the key accordingly
 	if (/* subdivide ? */ keyLod < targetLod && !isLeafKey(key) && isVisible)
