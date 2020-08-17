@@ -614,9 +614,13 @@ VK_IMPORT_DEVICE
 			, _userData
 			, s_debugReportObjectType
 		);
+
+		// For more info about 'VUID-VkSwapchainCreateInfoKHR-imageExtent-01274'
+		// check https://github.com/KhronosGroup/Vulkan-Docs/issues/1144
 		if (!bx::strFind(_message, "PointSizeMissing").isEmpty()
 		||  !bx::strFind(_message, "SwapchainTooManyImages").isEmpty()
-		||  !bx::strFind(_message, "SwapchainImageNotAcquired").isEmpty() )
+		||  !bx::strFind(_message, "SwapchainImageNotAcquired").isEmpty()
+		||  !bx::strFind(_message, "VUID-VkSwapchainCreateInfoKHR-imageExtent-01274").isEmpty() )
 		{
 			return VK_FALSE;
 		}
@@ -2454,8 +2458,8 @@ VK_IMPORT_DEVICE
 				pi.pImageIndices  = &m_backBufferColorIdx;
 				pi.pResults       = NULL;
 				VkResult result = vkQueuePresentKHR(m_queueGraphics, &pi);
-				if (VK_ERROR_OUT_OF_DATE_KHR == result
-				||  VK_SUBOPTIMAL_KHR        == result)
+				if (VK_ERROR_OUT_OF_DATE_KHR       == result
+				||  VK_ERROR_VALIDATION_FAILED_EXT == result)
 				{
 					m_needToRefreshSwapchain = true;
 				}
@@ -5963,8 +5967,8 @@ VK_DESTROY
 			, &m_backBufferColorIdx
 			);
 
-		if (VK_ERROR_OUT_OF_DATE_KHR == result
-		||  VK_SUBOPTIMAL_KHR        == result)
+		if (VK_ERROR_OUT_OF_DATE_KHR       == result
+		||  VK_ERROR_VALIDATION_FAILED_EXT == result)
 		{
 			m_needToRefreshSwapchain = true;
 			return;
