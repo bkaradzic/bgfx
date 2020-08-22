@@ -2396,7 +2396,11 @@ void CompilerHLSL::emit_hlsl_entry_point()
 			if (legacy)
 				statement(builtin, " = stage_input.", builtin, " + float4(0.5f, 0.5f, 0.0f, 0.0f);");
 			else
+			{
 				statement(builtin, " = stage_input.", builtin, ";");
+				// ZW are undefined in D3D9, only do this fixup here.
+				statement(builtin, ".w = 1.0 / ", builtin, ".w;");
+			}
 			break;
 
 		case BuiltInVertexId:

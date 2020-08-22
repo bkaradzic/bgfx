@@ -1294,24 +1294,22 @@ uint32_t CompilerGLSL::type_to_packed_array_stride(const SPIRType &type, const B
 	auto &tmp = get<SPIRType>(parent);
 
 	uint32_t size = type_to_packed_size(tmp, flags, packing);
-	if (tmp.array.empty())
-	{
-		uint32_t alignment = type_to_packed_alignment(type, flags, packing);
-		return (size + alignment - 1) & ~(alignment - 1);
-	}
-	else
-	{
-		// For multidimensional arrays, array stride always matches size of subtype.
-		// The alignment cannot change because multidimensional arrays are basically N * M array elements.
-		return size;
-	}
+	uint32_t alignment = type_to_packed_alignment(type, flags, packing);
+	return (size + alignment - 1) & ~(alignment - 1);
 }
 
 uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &flags, BufferPackingStandard packing)
 {
 	if (!type.array.empty())
 	{
-		return to_array_size_literal(type) * type_to_packed_array_stride(type, flags, packing);
+		uint32_t packed_size = to_array_size_literal(type) * type_to_packed_array_stride(type, flags, packing);
+
+		// For arrays of vectors and matrices in HLSL, the last element has a size which depends on its vector size,
+		// so that it is possible to pack other vectors into the last element.
+		if (packing_is_hlsl(packing) && type.basetype != SPIRType::Struct)
+			packed_size -= (4 - type.vecsize) * (type.width / 8);
+
+		return packed_size;
 	}
 
 	// If using PhysicalStorageBufferEXT storage class, this is a pointer,
@@ -1384,6 +1382,11 @@ uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &f
 				else
 					size = type.vecsize * type.columns * base_alignment;
 			}
+
+			// For matrices in HLSL, the last element has a size which depends on its vector size,
+			// so that it is possible to pack other vectors into the last element.
+			if (packing_is_hlsl(packing) && type.columns > 1)
+				size -= (4 - type.vecsize) * (type.width / 8);
 		}
 	}
 
@@ -1436,7 +1439,7 @@ bool CompilerGLSL::buffer_is_packing_standard(const SPIRType &type, BufferPackin
 		    is_top_level_block && size_t(i + 1) == type.member_types.size() && !memb_type.array.empty();
 
 		uint32_t packed_size = 0;
-		if (!member_can_be_unsized)
+		if (!member_can_be_unsized || packing_is_hlsl(packing))
 			packed_size = type_to_packed_size(memb_type, member_flags, packing);
 
 		// We only need to care about this if we have non-array types which can straddle the vec4 boundary.
@@ -1449,12 +1452,13 @@ bool CompilerGLSL::buffer_is_packing_standard(const SPIRType &type, BufferPackin
 				packed_alignment = max(packed_alignment, 16u);
 		}
 
+		uint32_t actual_offset = type_struct_member_offset(type, i);
+		// Field is not in the specified range anymore and we can ignore any further fields.
+		if (actual_offset >= end_offset)
+			break;
+
 		uint32_t alignment = max(packed_alignment, pad_alignment);
 		offset = (offset + alignment - 1) & ~(alignment - 1);
-
-		// Field is not in the specified range anymore and we can ignore any further fields.
-		if (offset >= end_offset)
-			break;
 
 		// The next member following a struct member is aligned to the base alignment of the struct that came before.
 		// GL 4.5 spec, 7.6.2.2.
@@ -1464,10 +1468,8 @@ bool CompilerGLSL::buffer_is_packing_standard(const SPIRType &type, BufferPackin
 			pad_alignment = 1;
 
 		// Only care about packing if we are in the given range
-		if (offset >= start_offset)
+		if (actual_offset >= start_offset)
 		{
-			uint32_t actual_offset = type_struct_member_offset(type, i);
-
 			// We only care about offsets in std140, std430, etc ...
 			// For EnhancedLayout variants, we have the flexibility to choose our own offsets.
 			if (!packing_has_flexible_offset(packing))
@@ -1510,7 +1512,7 @@ bool CompilerGLSL::buffer_is_packing_standard(const SPIRType &type, BufferPackin
 		}
 
 		// Bump size.
-		offset += packed_size;
+		offset = actual_offset + packed_size;
 	}
 
 	return true;
