@@ -412,6 +412,7 @@ message Transformation {
     TransformationMakeVectorOperationDynamic make_vector_operation_dynamic = 65;
     TransformationReplaceAddSubMulWithCarryingExtended replace_add_sub_mul_with_carrying_extended = 66;
     TransformationPropagateInstructionUp propagate_instruction_up = 67;
+    TransformationCompositeInsert composite_insert = 68;
     // Add additional option using the next available number.
   }
 }
@@ -754,15 +755,17 @@ message TransformationAddParameter {
   // Fresh id for a new parameter.
   uint32 parameter_fresh_id = 2;
 
-  // Result id of the instruction, used to initializer new parameter
-  // in function calls. Type id of that instruction is the type id of the parameter.
-  // It may not be OpTypeVoid.
-  uint32 initializer_id = 3;
+  // Type id for a new parameter.
+  uint32 parameter_type_id = 3;
+
+  // A map that maps from the OpFunctionCall id to the id that will be passed as the new
+  // parameter at that call site. It must have the same type as that of the new parameter.
+  repeated UInt32Pair call_parameter_ids = 4;
 
   // A fresh id for a new function type. This might not be used
   // if a required function type already exists or if we can change
   // the old function type.
-  uint32 function_type_fresh_id = 4;
+  uint32 function_type_fresh_id = 5;
 
 }
 
@@ -1016,6 +1019,29 @@ message TransformationCompositeExtract {
 
   // Indices that indicate which part of the composite should be extracted.
   repeated uint32 index = 4;
+
+}
+
+message TransformationCompositeInsert {
+
+  // A transformation that adds an instruction OpCompositeInsert which creates
+  // a new composite from an existing composite, with an element inserted.
+
+  // A descriptor for an instruction before which the new instruction
+  // OpCompositeInsert should be inserted.
+  InstructionDescriptor instruction_to_insert_before = 1;
+
+  // Result id of the inserted OpCompositeInsert instruction.
+  uint32 fresh_id = 2;
+
+  // Id of the composite used as the basis for the insertion.
+  uint32 composite_id = 3;
+
+  // Id of the object to be inserted.
+  uint32 object_id = 4;
+
+  // Indices that indicate which part of the composite should be inserted into.
+  repeated uint32 index = 5;
 
 }
 

@@ -38,6 +38,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_context.h
         fuzzer_pass.h
         fuzzer_pass_add_access_chains.h
+        fuzzer_pass_add_composite_inserts.h
         fuzzer_pass_add_composite_types.h
         fuzzer_pass_add_copy_memory.h
         fuzzer_pass_add_dead_blocks.h
@@ -131,6 +132,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_adjust_branch_weights.h
         transformation_composite_construct.h
         transformation_composite_extract.h
+        transformation_composite_insert.h
         transformation_compute_data_synonym_fact_closure.h
         transformation_context.h
         transformation_equation_instruction.h
@@ -178,6 +180,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_context.cpp
         fuzzer_pass.cpp
         fuzzer_pass_add_access_chains.cpp
+        fuzzer_pass_add_composite_inserts.cpp
         fuzzer_pass_add_composite_types.cpp
         fuzzer_pass_add_copy_memory.cpp
         fuzzer_pass_add_dead_blocks.cpp
@@ -270,6 +273,7 @@ if(SPIRV_BUILD_FUZZER)
         transformation_adjust_branch_weights.cpp
         transformation_composite_construct.cpp
         transformation_composite_extract.cpp
+        transformation_composite_insert.cpp
         transformation_compute_data_synonym_fact_closure.cpp
         transformation_context.cpp
         transformation_equation_instruction.cpp

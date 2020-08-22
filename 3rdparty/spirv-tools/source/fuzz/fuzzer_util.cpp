@@ -476,6 +476,16 @@ opt::Function* FindFunction(opt::IRContext* ir_context, uint32_t function_id) {
   return nullptr;
 }
 
+bool FunctionContainsOpKillOrUnreachable(const opt::Function& function) {
+  for (auto& block : function) {
+    if (block.terminator()->opcode() == SpvOpKill ||
+        block.terminator()->opcode() == SpvOpUnreachable) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool FunctionIsEntryPoint(opt::IRContext* context, uint32_t function_id) {
   for (auto& entry_point : context->module()->entry_points()) {
     if (entry_point.GetSingleWordInOperand(1) == function_id) {
@@ -1343,6 +1353,5 @@ opt::Instruction* GetLastInsertBeforeInstruction(opt::IRContext* ir_context,
 }
 
 }  // namespace fuzzerutil
-
 }  // namespace fuzz
 }  // namespace spvtools

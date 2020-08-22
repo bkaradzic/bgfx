@@ -69,14 +69,66 @@ void FuzzerPassAddParameters::Apply() {
     auto num_new_parameters =
         GetFuzzerContext()->GetRandomNumberOfNewParameters(
             GetNumberOfParameters(function));
+
     for (uint32_t i = 0; i < num_new_parameters; ++i) {
+      auto current_type_id =
+          type_candidates[GetFuzzerContext()->RandomIndex(type_candidates)];
+      auto current_type =
+          GetIRContext()->get_type_mgr()->GetType(current_type_id);
+      std::map<uint32_t, uint32_t> call_parameter_ids;
+
+      // Consider the case when a pointer type was selected.
+      if (current_type->kind() == opt::analysis::Type::kPointer) {
+        auto storage_class = fuzzerutil::GetStorageClassFromPointerType(
+            GetIRContext(), current_type_id);
+        switch (storage_class) {
+          case SpvStorageClassFunction: {
+            // In every caller find or create a local variable that has the
+            // selected type.
+            for (auto* instr :
+                 fuzzerutil::GetCallers(GetIRContext(), function.result_id())) {
+              auto block = GetIRContext()->get_instr_block(instr);
+              auto function_id = block->GetParent()->result_id();
+              uint32_t variable_id =
+                  FindOrCreateLocalVariable(current_type_id, function_id, true);
+              call_parameter_ids[instr->result_id()] = variable_id;
+            }
+          } break;
+          case SpvStorageClassPrivate:
+          case SpvStorageClassWorkgroup: {
+            // If there exists at least one caller, find or create a global
+            // variable that has the selected type.
+            std::vector<opt::Instruction*> callers =
+                fuzzerutil::GetCallers(GetIRContext(), function.result_id());
+            if (!callers.empty()) {
+              uint32_t variable_id =
+                  FindOrCreateGlobalVariable(current_type_id, true);
+              for (auto* instr : callers) {
+                call_parameter_ids[instr->result_id()] = variable_id;
+              }
+            }
+          } break;
+          default:
+            break;
+        }
+      } else {
+        // If there exists at least one caller, find or create a zero constant
+        // that has the selected type.
+        std::vector<opt::Instruction*> callers =
+            fuzzerutil::GetCallers(GetIRContext(), function.result_id());
+        if (!callers.empty()) {
+          uint32_t constant_id =
+              FindOrCreateZeroConstant(current_type_id, true);
+          for (auto* instr :
+               fuzzerutil::GetCallers(GetIRContext(), function.result_id())) {
+            call_parameter_ids[instr->result_id()] = constant_id;
+          }
+        }
+      }
+
       ApplyTransformation(TransformationAddParameter(
           function.result_id(), GetFuzzerContext()->GetFreshId(),
-          // We mark the constant as irrelevant so that we can replace it with a
-          // more interesting value later.
-          FindOrCreateZeroConstant(
-              type_candidates[GetFuzzerContext()->RandomIndex(type_candidates)],
-              true),
+          current_type_id, std::move(call_parameter_ids),
           GetFuzzerContext()->GetFreshId()));
     }
   }

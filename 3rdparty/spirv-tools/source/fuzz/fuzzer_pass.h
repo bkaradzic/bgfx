@@ -273,6 +273,9 @@ class FuzzerPass {
   uint32_t FindOrCreateZeroConstant(uint32_t scalar_or_composite_type_id,
                                     bool is_irrelevant);
 
+  // Checks if FindOrCreateZeroConstant can be called on this type.
+  bool CanFindOrCreateZeroConstant(const opt::analysis::Type& type);
+
   // Adds a pair (id_use_descriptor, |replacement_id|) to the vector
   // |uses_to_replace|, where id_use_descriptor is the id use descriptor
   // representing the usage of an id in the |use_inst| instruction, at operand
@@ -292,6 +295,27 @@ class FuzzerPass {
   // Requires |header_id| to be the label id of a loop header block that is
   // reachable in the CFG (and thus has at least 2 predecessors).
   opt::BasicBlock* GetOrCreateSimpleLoopPreheader(uint32_t header_id);
+
+  // Returns the id of an available local variable (storage class Function) with
+  // the fact PointeeValueIsIrrelevant set according to
+  // |pointee_value_is_irrelevant|. If there is no such variable, it creates one
+  // in the |function| adding a zero initializer constant that is irrelevant.
+  // The new variable has the fact PointeeValueIsIrrelevant set according to
+  // |pointee_value_is_irrelevant|. The function returns the id of the created
+  // variable.
+  uint32_t FindOrCreateLocalVariable(uint32_t pointer_type_id,
+                                     uint32_t function_id,
+                                     bool pointee_value_is_irrelevant);
+
+  // Returns the id of an available global variable (storage class Private or
+  // Workgroup) with the fact PointeeValueIsIrrelevant set according to
+  // |pointee_value_is_irrelevant|. If there is no such variable, it creates
+  // one, adding a zero initializer constant that is irrelevant. The new
+  // variable has the fact PointeeValueIsIrrelevant set according to
+  // |pointee_value_is_irrelevant|. The function returns the id of the created
+  // variable.
+  uint32_t FindOrCreateGlobalVariable(uint32_t pointer_type_id,
+                                      bool pointee_value_is_irrelevant);
 
  private:
   opt::IRContext* ir_context_;

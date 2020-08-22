@@ -179,7 +179,7 @@ spv_result_t ValidateOperandDebugType(
           return true;
         }
         return OpenCLDebugInfo100DebugTypeBasic <= dbg_inst &&
-               dbg_inst <= OpenCLDebugInfo100DebugTypePtrToMember;
+               dbg_inst <= OpenCLDebugInfo100DebugTypeTemplate;
       };
   if (DoesDebugInfoOperandMatchExpectation(_, expectation, inst, word_index))
     return SPV_SUCCESS;

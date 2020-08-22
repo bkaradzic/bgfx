@@ -78,6 +78,27 @@ bool TransformationAddDeadBlock::IsApplicable(
     return false;
   }
 
+  // |existing_block| must be reachable.
+  opt::DominatorAnalysis* dominator_analysis =
+      ir_context->GetDominatorAnalysis(existing_block->GetParent());
+  if (!dominator_analysis->IsReachable(existing_block->id())) {
+    return false;
+  }
+
+  assert(existing_block->id() != successor_block_id &&
+         "|existing_block| must be different from |successor_block_id|");
+
+  // Even though we know |successor_block_id| is not a merge block, it might
+  // still have multiple predecessors because divergent control flow is allowed
+  // to converge early (before the merge block). In this case, when we create
+  // the selection construct, its header |existing_block| will not dominate the
+  // merge block |successor_block_id|, which is invalid. Thus, |existing_block|
+  // must dominate |successor_block_id|.
+  if (!dominator_analysis->Dominates(existing_block->id(),
+                                     successor_block_id)) {
+    return false;
+  }
+
   return true;
 }
 

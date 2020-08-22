@@ -533,6 +533,17 @@ bool AggressiveDCEPass::AggressiveDCE(Function* func) {
       AddToWorklist(dec);
     }
 
+    // Add DebugScope and DebugInlinedAt for |liveInst| to the work list.
+    if (liveInst->GetDebugScope().GetLexicalScope() != kNoDebugScope) {
+      auto* scope = get_def_use_mgr()->GetDef(
+          liveInst->GetDebugScope().GetLexicalScope());
+      AddToWorklist(scope);
+    }
+    if (liveInst->GetDebugInlinedAt() != kNoInlinedAt) {
+      auto* inlined_at =
+          get_def_use_mgr()->GetDef(liveInst->GetDebugInlinedAt());
+      AddToWorklist(inlined_at);
+    }
     worklist_.pop();
   }
 

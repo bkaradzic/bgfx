@@ -158,7 +158,10 @@ class Function {
   BasicBlock* InsertBasicBlockBefore(std::unique_ptr<BasicBlock>&& new_block,
                                      BasicBlock* position);
 
-  // Return true if the function calls itself either directly or indirectly.
+  // Returns true if the function has a return block other than the exit block.
+  bool HasEarlyReturn() const;
+
+  // Returns true if the function calls itself either directly or indirectly.
   bool IsRecursive() const;
 
   // Pretty-prints all the basic blocks in this function into a std::string.

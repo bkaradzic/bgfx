@@ -29,14 +29,19 @@ class TransformationAddParameter : public Transformation {
       const protobufs::TransformationAddParameter& message);
 
   TransformationAddParameter(uint32_t function_id, uint32_t parameter_fresh_id,
-                             uint32_t initializer_id,
+                             uint32_t parameter_type_id,
+                             std::map<uint32_t, uint32_t> call_parameter_ids,
                              uint32_t function_type_fresh_id);
 
   // - |function_id| must be a valid result id of some non-entry-point function
   //   in the module.
-  // - |initializer_id| must be a valid result id of some instruction in the
-  //   module. Instruction's type must be supported by this transformation
-  //   as specified by IsParameterTypeSupported function.
+  // - |parameter_type_id| is a type id of the new parameter. The type must be
+  //   supported by this transformation as specified by IsParameterTypeSupported
+  //   function.
+  // - |call_parameter_id| must map from every id of an OpFunctionCall
+  //   instruction of this function to the id that will be passed as the new
+  //   parameter at that call site. There could be no callers, therefore this
+  //   map can be empty.
   // - |parameter_fresh_id| and |function_type_fresh_id| are fresh ids and are
   //   not equal.
   bool IsApplicable(
@@ -46,8 +51,8 @@ class TransformationAddParameter : public Transformation {
   // - Creates a new OpFunctionParameter instruction with result id
   //   |parameter_fresh_id| for the function with |function_id|.
   // - Adjusts function's type to include a new parameter.
-  // - Adds |initializer_id| as a new operand to every OpFunctionCall
-  //   instruction that calls the function.
+  // - Adds an argument to every caller of the function to account for the added
+  //   parameter. The argument is the value in |call_parameter_id| map.
   void Apply(opt::IRContext* ir_context,
              TransformationContext* transformation_context) const override;
 

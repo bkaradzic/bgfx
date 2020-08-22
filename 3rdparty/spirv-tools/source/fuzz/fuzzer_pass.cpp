@@ -24,6 +24,8 @@
 #include "source/fuzz/transformation_add_constant_null.h"
 #include "source/fuzz/transformation_add_constant_scalar.h"
 #include "source/fuzz/transformation_add_global_undef.h"
+#include "source/fuzz/transformation_add_global_variable.h"
+#include "source/fuzz/transformation_add_local_variable.h"
 #include "source/fuzz/transformation_add_loop_preheader.h"
 #include "source/fuzz/transformation_add_type_boolean.h"
 #include "source/fuzz/transformation_add_type_float.h"
@@ -516,6 +518,26 @@ uint32_t FuzzerPass::FindOrCreateZeroConstant(
   }
 }
 
+bool FuzzerPass::CanFindOrCreateZeroConstant(const opt::analysis::Type& type) {
+  switch (type.kind()) {
+    case opt::analysis::Type::kBool:
+    case opt::analysis::Type::kInteger:
+    case opt::analysis::Type::kFloat:
+    case opt::analysis::Type::kArray:
+    case opt::analysis::Type::kMatrix:
+    case opt::analysis::Type::kVector:
+      return true;
+    case opt::analysis::Type::kStruct:
+      return std::all_of(type.AsStruct()->element_types().begin(),
+                         type.AsStruct()->element_types().end(),
+                         [this](const opt::analysis::Type* element_type) {
+                           return CanFindOrCreateZeroConstant(*element_type);
+                         });
+    default:
+      return false;
+  }
+}
+
 void FuzzerPass::MaybeAddUseToReplace(
     opt::Instruction* use_inst, uint32_t use_index, uint32_t replacement_id,
     std::vector<std::pair<protobufs::IdUseDescriptor, uint32_t>>*
@@ -593,6 +615,102 @@ opt::BasicBlock* FuzzerPass::GetOrCreateSimpleLoopPreheader(
 
   // Make the newly-created preheader the new entry block.
   return &*function->FindBlock(preheader_id);
+}
+
+uint32_t FuzzerPass::FindOrCreateLocalVariable(
+    uint32_t pointer_type_id, uint32_t function_id,
+    bool pointee_value_is_irrelevant) {
+  auto pointer_type = GetIRContext()->get_type_mgr()->GetType(pointer_type_id);
+  // No unused variables in release mode.
+  (void)pointer_type;
+  assert(pointer_type && pointer_type->AsPointer() &&
+         pointer_type->AsPointer()->storage_class() ==
+             SpvStorageClassFunction &&
+         "The pointer_type_id must refer to a defined pointer type with "
+         "storage class Function");
+  auto function = fuzzerutil::FindFunction(GetIRContext(), function_id);
+  assert(function && "The function must be defined.");
+
+  // First we try to find a suitable existing variable.
+  // All of the local variable declarations are located in the first block.
+  for (auto& instruction : *function->begin()) {
+    if (instruction.opcode() != SpvOpVariable) {
+      continue;
+    }
+    // The existing OpVariable must have type |pointer_type_id|.
+    if (instruction.type_id() != pointer_type_id) {
+      continue;
+    }
+    // Check if the found variable is marked with PointeeValueIsIrrelevant
+    // according to |pointee_value_is_irrelevant|.
+    if (GetTransformationContext()->GetFactManager()->PointeeValueIsIrrelevant(
+            instruction.result_id()) != pointee_value_is_irrelevant) {
+      continue;
+    }
+    return instruction.result_id();
+  }
+
+  // No such variable was found. Apply a transformation to get one.
+  uint32_t pointee_type_id = fuzzerutil::GetPointeeTypeIdFromPointerType(
+      GetIRContext(), pointer_type_id);
+  uint32_t result_id = GetFuzzerContext()->GetFreshId();
+  ApplyTransformation(TransformationAddLocalVariable(
+      result_id, pointer_type_id, function_id,
+      FindOrCreateZeroConstant(pointee_type_id, pointee_value_is_irrelevant),
+      pointee_value_is_irrelevant));
+  return result_id;
+}
+
+uint32_t FuzzerPass::FindOrCreateGlobalVariable(
+    uint32_t pointer_type_id, bool pointee_value_is_irrelevant) {
+  auto pointer_type = GetIRContext()->get_type_mgr()->GetType(pointer_type_id);
+  // No unused variables in release mode.
+  (void)pointer_type;
+  assert(
+      pointer_type && pointer_type->AsPointer() &&
+      (pointer_type->AsPointer()->storage_class() == SpvStorageClassPrivate ||
+       pointer_type->AsPointer()->storage_class() ==
+           SpvStorageClassWorkgroup) &&
+      "The pointer_type_id must refer to a defined pointer type with storage "
+      "class Private or Workgroup");
+
+  // First we try to find a suitable existing variable.
+  for (auto& instruction : GetIRContext()->module()->types_values()) {
+    if (instruction.opcode() != SpvOpVariable) {
+      continue;
+    }
+    // The existing OpVariable must have type |pointer_type_id|.
+    if (instruction.type_id() != pointer_type_id) {
+      continue;
+    }
+    // Check if the found variable is marked with PointeeValueIsIrrelevant
+    // according to |pointee_value_is_irrelevant|.
+    if (GetTransformationContext()->GetFactManager()->PointeeValueIsIrrelevant(
+            instruction.result_id()) != pointee_value_is_irrelevant) {
+      continue;
+    }
+    return instruction.result_id();
+  }
+
+  // No such variable was found. Apply a transformation to get one.
+  uint32_t pointee_type_id = fuzzerutil::GetPointeeTypeIdFromPointerType(
+      GetIRContext(), pointer_type_id);
+  auto storage_class = fuzzerutil::GetStorageClassFromPointerType(
+      GetIRContext(), pointer_type_id);
+  uint32_t result_id = GetFuzzerContext()->GetFreshId();
+
+  // A variable with storage class Workgroup shouldn't have an initializer.
+  if (storage_class == SpvStorageClassWorkgroup) {
+    ApplyTransformation(TransformationAddGlobalVariable(
+        result_id, pointer_type_id, SpvStorageClassWorkgroup, 0,
+        pointee_value_is_irrelevant));
+  } else {
+    ApplyTransformation(TransformationAddGlobalVariable(
+        result_id, pointer_type_id, SpvStorageClassPrivate,
+        FindOrCreateZeroConstant(pointee_type_id, pointee_value_is_irrelevant),
+        pointee_value_is_irrelevant));
+  }
+  return result_id;
 }
 
 }  // namespace fuzz

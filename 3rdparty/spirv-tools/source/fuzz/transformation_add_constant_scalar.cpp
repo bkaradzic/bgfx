@@ -64,13 +64,12 @@ bool TransformationAddConstantScalar::IsApplicable(
 void TransformationAddConstantScalar::Apply(
     opt::IRContext* ir_context,
     TransformationContext* transformation_context) const {
-  opt::Instruction::OperandList operand_list;
-  for (auto word : message_.word()) {
-    operand_list.push_back({SPV_OPERAND_TYPE_LITERAL_INTEGER, {word}});
-  }
   ir_context->module()->AddGlobalValue(MakeUnique<opt::Instruction>(
       ir_context, SpvOpConstant, message_.type_id(), message_.fresh_id(),
-      operand_list));
+      opt::Instruction::OperandList(
+          {{SPV_OPERAND_TYPE_LITERAL_INTEGER,
+            std::vector<uint32_t>(message_.word().begin(),
+                                  message_.word().end())}})));
 
   fuzzerutil::UpdateModuleIdBound(ir_context, message_.fresh_id());
 

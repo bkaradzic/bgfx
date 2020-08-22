@@ -227,6 +227,18 @@ BasicBlock* Function::InsertBasicBlockBefore(
   return nullptr;
 }
 
+bool Function::HasEarlyReturn() const {
+  auto post_dominator_analysis =
+      blocks_.front()->GetLabel()->context()->GetPostDominatorAnalysis(this);
+  for (auto& block : blocks_) {
+    if (spvOpcodeIsReturn(block->tail()->opcode()) &&
+        !post_dominator_analysis->Dominates(block.get(), entry().get())) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool Function::IsRecursive() const {
   IRContext* ctx = blocks_.front()->GetLabel()->context();
   IRContext::ProcessFunction mark_visited = [this](Function* fp) {
