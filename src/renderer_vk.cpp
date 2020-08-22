@@ -5944,7 +5944,7 @@ VK_DESTROY
 
 		bool wasCompute     = false;
 		bool viewHasScissor = false;
-		bool restoreScissor = false;
+		bool scissorEnabled = false;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
@@ -6096,8 +6096,6 @@ VK_DESTROY
 						rc.extent.width  = viewScissorRect.m_width;
 						rc.extent.height = viewScissorRect.m_height;
 						vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
-
-						restoreScissor = false;
 
 						Clear& clr = _render->m_view[view].m_clear;
 						if (BGFX_CLEAR_NONE != clr.m_flags)
@@ -6396,10 +6394,9 @@ VK_DESTROY
 
 						if (UINT16_MAX == scissor)
 						{
-							if (restoreScissor
-							||  viewHasScissor)
+							scissorEnabled = viewHasScissor;
+							if (viewHasScissor)
 							{
-								restoreScissor = false;
 								VkRect2D rc;
 								rc.offset.x      = viewScissorRect.m_x;
 								rc.offset.y      = viewScissorRect.m_y;
@@ -6410,10 +6407,10 @@ VK_DESTROY
 						}
 						else
 						{
-							restoreScissor = true;
 							Rect scissorRect;
 							scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
 
+							scissorEnabled = true;
 							VkRect2D rc;
 							rc.offset.x      = scissorRect.m_x;
 							rc.offset.y      = scissorRect.m_y;
