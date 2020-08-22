@@ -120,6 +120,7 @@ typedef enum {
     VK_ICD_WSI_PLATFORM_HEADLESS,
     VK_ICD_WSI_PLATFORM_METAL,
     VK_ICD_WSI_PLATFORM_DIRECTFB,
+    VK_ICD_WSI_PLATFORM_VI,
 } VkIcdWsiPlatform;
 
 typedef struct {
@@ -216,5 +217,12 @@ typedef struct {
     const CAMetalLayer *pLayer;
 } VkIcdSurfaceMetal;
 #endif // VK_USE_PLATFORM_METAL_EXT
+
+#ifdef VK_USE_PLATFORM_VI_NN
+typedef struct {
+    VkIcdSurfaceBase base;
+    void *window;
+} VkIcdSurfaceVi;
+#endif // VK_USE_PLATFORM_VI_NN
 
 #endif  // VKICD_H
