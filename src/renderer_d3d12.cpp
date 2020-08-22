@@ -5893,7 +5893,7 @@ namespace bgfx { namespace d3d12
 
 		bool wasCompute = false;
 		bool viewHasScissor = false;
-		bool scissorEnabled = false;
+		bool restoreScissor = false;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
@@ -6033,6 +6033,7 @@ namespace bgfx { namespace d3d12
 					rc.right  = viewScissorRect.m_x + viewScissorRect.m_width;
 					rc.bottom = viewScissorRect.m_y + viewScissorRect.m_height;
 					m_commandList->RSSetScissorRects(1, &rc);
+					restoreScissor = false;
 
 					Clear& clr = _render->m_view[view].m_clear;
 					if (BGFX_CLEAR_NONE != clr.m_flags)
@@ -6529,9 +6530,10 @@ namespace bgfx { namespace d3d12
 
 						if (UINT16_MAX == scissor)
 						{
-							scissorEnabled = viewHasScissor;
-							if (viewHasScissor)
+							if (restoreScissor
+							||  viewHasScissor)
 							{
+								restoreScissor = false;
 								D3D12_RECT rc;
 								rc.left   = viewScissorRect.m_x;
 								rc.top    = viewScissorRect.m_y;
@@ -6542,11 +6544,14 @@ namespace bgfx { namespace d3d12
 						}
 						else
 						{
-							
+							restoreScissor = true;
 							Rect scissorRect;
 							scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
+							if (scissorRect.isZeroArea() )
+							{
+								continue;
+							}
 
-							scissorEnabled = true;
 							D3D12_RECT rc;
 							rc.left   = scissorRect.m_x;
 							rc.top    = scissorRect.m_y;
