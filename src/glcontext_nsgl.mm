@@ -150,6 +150,10 @@ namespace bgfx { namespace gl
 			m_view    = glView;
 			m_context = glContext;
 		}
+        else
+        {
+            [g_platformData.context makeCurrentContext];
+        }
 
 		import();
 
@@ -175,9 +179,12 @@ namespace bgfx { namespace gl
 
 #if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 		bool hidpi = !!(_flags&BGFX_RESET_HIDPI);
-		NSOpenGLView* glView = (NSOpenGLView*)m_view;
-		if ([glView respondsToSelector:@selector(setWantsBestResolutionOpenGLSurface:)])
-			[glView setWantsBestResolutionOpenGLSurface:hidpi];
+        if (m_view)
+        {
+            NSOpenGLView* glView = (NSOpenGLView*)m_view;
+            if ([glView respondsToSelector:@selector(setWantsBestResolutionOpenGLSurface:)])
+                [glView setWantsBestResolutionOpenGLSurface:hidpi];
+        }
 #endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 
 		bool vsync = !!(_flags&BGFX_RESET_VSYNC);
