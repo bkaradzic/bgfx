@@ -109,14 +109,32 @@ namespace bgfx { namespace gl
 		wglGetProcAddress = (PFNWGLGETPROCADDRESSPROC)bx::dlsym(m_opengl32dll, "wglGetProcAddress");
 		BGFX_FATAL(NULL != wglGetProcAddress, Fatal::UnableToInitialize, "Failed get wglGetProcAddress.");
 
+
+
 		// If g_platformHooks.nwh is NULL, the assumption is that GL context was created
 		// by user (for example, using SDL, GLFW, etc.)
 		BX_WARN(NULL != g_platformData.nwh
 			, "bgfx::setPlatform with valid window is not called. This might "
-			  "be intentional when GL context is created by the user."
+				"be intentional when GL context is created by the user."
 			);
 
-		if (NULL != g_platformData.nwh)
+		if (NULL != g_platformData.nwh && NULL != g_platformData.context )
+		{
+			// user has provided a context and a window
+			wglMakeCurrent = (PFNWGLMAKECURRENTPROC)bx::dlsym(m_opengl32dll, "wglMakeCurrent");
+			BGFX_FATAL(NULL != wglMakeCurrent, Fatal::UnableToInitialize, "Failed get wglMakeCurrent.");
+
+			m_hdc = GetDC( (HWND)g_platformData.nwh);
+			BGFX_FATAL(NULL != m_hdc, Fatal::UnableToInitialize, "GetDC failed!");
+
+			HGLRC context = (HGLRC)g_platformData.context;
+			int result = wglMakeCurrent(m_hdc, context );
+			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
+
+			m_context = context;
+		}
+
+		if (NULL != g_platformData.nwh && NULL == g_platformData.context )
 		{
 			wglMakeCurrent = (PFNWGLMAKECURRENTPROC)bx::dlsym(m_opengl32dll, "wglMakeCurrent");
 			BGFX_FATAL(NULL != wglMakeCurrent, Fatal::UnableToInitialize, "Failed get wglMakeCurrent.");
@@ -283,8 +301,12 @@ namespace bgfx { namespace gl
 		{
 			wglMakeCurrent(NULL, NULL);
 
-			wglDeleteContext(m_context);
-			m_context = NULL;
+			if (NULL == g_platformData.context)
+			{
+				wglDeleteContext(m_context);
+				m_context = NULL;
+
+			}
 
 			ReleaseDC( (HWND)g_platformData.nwh, m_hdc);
 			m_hdc = NULL;
