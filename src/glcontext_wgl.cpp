@@ -111,8 +111,16 @@ namespace bgfx { namespace gl
 
 
 
-		if( g_platformData.context )
+		// If g_platformHooks.nwh is NULL, the assumption is that GL context was created
+		// by user (for example, using SDL, GLFW, etc.)
+		BX_WARN(NULL != g_platformData.nwh
+			, "bgfx::setPlatform with valid window is not called. This might "
+				"be intentional when GL context is created by the user."
+			);
+
+		if (NULL != g_platformData.nwh && NULL != g_platformData.context )
 		{
+			// user has provided a context and a window
 			wglMakeCurrent = (PFNWGLMAKECURRENTPROC)bx::dlsym(m_opengl32dll, "wglMakeCurrent");
 			BGFX_FATAL(NULL != wglMakeCurrent, Fatal::UnableToInitialize, "Failed get wglMakeCurrent.");
 
@@ -124,15 +132,6 @@ namespace bgfx { namespace gl
 			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
 
 			m_context = context;
-		}
-		else
-		{
-			// If g_platformHooks.nwh is NULL, the assumption is that GL context was created
-			// by user (for example, using SDL, GLFW, etc.)
-			BX_WARN(NULL != g_platformData.nwh
-				, "bgfx::setPlatform with valid window is not called. This might "
-				  "be intentional when GL context is created by the user."
-				);
 		}
 
 		if (NULL != g_platformData.nwh && NULL == g_platformData.context )
