@@ -5828,6 +5828,71 @@ VK_DESTROY
 
 			s_renderVK->submitCommandAndWait(commandBuffer);
 		}
+
+		const bool renderTarget = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
+		if (renderTarget
+			&& 1 < m_numMips
+			&& 0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS))
+		{
+			VkCommandBuffer commandBuffer = s_renderVK->beginNewCommand();
+
+			int32_t mipWidth = m_width;
+			int32_t mipHeight = m_height;
+
+			for (uint32_t i = 1; i < m_numMips; i++) {
+				bgfx::vk::setImageMemoryBarrier(commandBuffer
+					, needResolve ? m_singleMsaaImage : m_textureImage
+					, m_aspectMask
+					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+					, i - 1
+					, 1
+				);
+
+				VkImageBlit blit{};
+				blit.srcOffsets[0] = { 0, 0, 0 };
+				blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+				blit.srcSubresource.aspectMask = m_aspectMask;
+				blit.srcSubresource.mipLevel = i - 1;
+				blit.srcSubresource.baseArrayLayer = 0;
+				blit.srcSubresource.layerCount = 1;
+				blit.dstOffsets[0] = { 0, 0, 0 };
+				blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+				blit.dstSubresource.aspectMask = m_aspectMask;
+				blit.dstSubresource.mipLevel = i;
+				blit.dstSubresource.baseArrayLayer = 0;
+				blit.dstSubresource.layerCount = 1;
+
+				vkCmdBlitImage(commandBuffer,
+					needResolve ? m_singleMsaaImage : m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					needResolve ? m_singleMsaaImage : m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					1, &blit,
+					VK_FILTER_LINEAR);
+
+				bgfx::vk::setImageMemoryBarrier(commandBuffer
+					, needResolve ? m_singleMsaaImage : m_textureImage
+					, m_aspectMask
+					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+					, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+					, i - 1
+					, 1
+				);
+
+				if (mipWidth > 1) mipWidth /= 2;
+				if (mipHeight > 1) mipHeight /= 2;
+			}
+
+			bgfx::vk::setImageMemoryBarrier(commandBuffer
+				, needResolve ? m_singleMsaaImage : m_textureImage
+				, m_aspectMask
+				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+				, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+				, m_numMips - 1
+				, 1
+			);
+
+			s_renderVK->submitCommandAndWait(commandBuffer);
+		}
 	}
 
 	void TextureVK::copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy)
