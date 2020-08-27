@@ -26,7 +26,7 @@
 
 // Check handle, cannot be bgfx::kInvalidHandle and must be valid.
 #define BGFX_CHECK_HANDLE(_desc, _handleAlloc, _handle) \
-	BX_ASSERT(isValid(_handle)                           \
+	BX_ASSERT(isValid(_handle)                          \
 		&& _handleAlloc.isValid(_handle.idx)            \
 		, "Invalid handle. %s handle: %d (max %d)"      \
 		, _desc                                         \
@@ -4439,15 +4439,16 @@ namespace bgfx
 			cmdbuf.write(_mem);
 		}
 
-		bool checkFrameBuffer(uint8_t _num, const Attachment* _attachment) const
+		void checkFrameBuffer(uint8_t _num, const Attachment* _attachment) const
 		{
 			uint8_t color = 0;
 			uint8_t depth = 0;
 
 			for (uint32_t ii = 0; ii < _num; ++ii)
 			{
-				TextureHandle texHandle = _attachment[ii].handle;
-				if (bimg::isDepth(bimg::TextureFormat::Enum(m_textureRef[texHandle.idx].m_format)))
+				const TextureHandle texHandle = _attachment[ii].handle;
+				const TextureRef& tr = m_textureRef[texHandle.idx];
+				if (bimg::isDepth(bimg::TextureFormat::Enum(tr.m_format) ) )
 				{
 					++depth;
 				}
@@ -4455,22 +4456,34 @@ namespace bgfx
 				{
 					++color;
 				}
+
+				BX_ASSERT(
+					  0 == (tr.m_flags & BGFX_TEXTURE_READ_BACK)
+					, "Frame buffer texture cannot be read back texture. Attachment %d: has flags 0x%016" PRIx64 "."
+					);
+
+				BX_ASSERT(
+					  0 != (tr.m_flags & BGFX_TEXTURE_RT_MASK)
+					, "Frame buffer texture is not create with one of `BGFX_TEXTURE_RT*` flags. Attachment %d: has flags 0x%016" PRIx64 "."
+					, ii
+					, tr.m_flags
+					);
 			}
 
-			return color <= g_caps.limits.maxFBAttachments
+			BX_ASSERT(true
+				&& color <= g_caps.limits.maxFBAttachments
 				&& depth <= 1
-				;
+				, "Too many frame buffer attachments (num attachments: %d, max color attachments %d)!"
+				, _num
+				, g_caps.limits.maxFBAttachments
+				);
 		}
 
 		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, const Attachment* _attachment, bool _destroyTextures) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			BX_ASSERT(checkFrameBuffer(_num, _attachment)
-				, "Too many frame buffer attachments (num attachments: %d, max color attachments %d)!"
-				, _num
-				, g_caps.limits.maxFBAttachments
-				);
+			checkFrameBuffer(_num, _attachment);
 
 			FrameBufferHandle handle = { m_frameBufferHandle.alloc() };
 			BX_WARN(isValid(handle), "Failed to allocate frame buffer handle.");
