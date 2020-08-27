@@ -108,6 +108,7 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkFreeCommandBuffers);            \
 			VK_IMPORT_DEVICE_FUNC(false, vkGetBufferMemoryRequirements);   \
 			VK_IMPORT_DEVICE_FUNC(false, vkGetImageMemoryRequirements);    \
+			VK_IMPORT_DEVICE_FUNC(false, vkGetImageSubresourceLayout);     \
 			VK_IMPORT_DEVICE_FUNC(false, vkAllocateMemory);                \
 			VK_IMPORT_DEVICE_FUNC(false, vkFreeMemory);                    \
 			VK_IMPORT_DEVICE_FUNC(false, vkCreateImage);                   \
@@ -171,6 +172,7 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdResolveImage);               \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBuffer);                 \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBufferToImage);          \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImage);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBlitImage);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkMapMemory);                     \
 			VK_IMPORT_DEVICE_FUNC(false, vkUnmapMemory);                   \
