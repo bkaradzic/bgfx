@@ -487,6 +487,7 @@ protected:
 	void emit_buffer_reference_block(SPIRType &type, bool forward_declaration);
 	void emit_buffer_block_legacy(const SPIRVariable &var);
 	void emit_buffer_block_flattened(const SPIRVariable &type);
+	void fixup_implicit_builtin_block_names();
 	void emit_declared_builtin_block(spv::StorageClass storage, spv::ExecutionModel model);
 	bool should_force_emit_builtin_block(spv::StorageClass storage);
 	void emit_push_constant_block_vulkan(const SPIRVariable &var);
@@ -756,8 +757,6 @@ protected:
 	bool type_is_empty(const SPIRType &type);
 
 	virtual void declare_undefined_values();
-
-	static std::string sanitize_underscores(const std::string &str);
 
 	bool can_use_io_location(spv::StorageClass storage, bool block);
 	const Instruction *get_next_instruction_in_block(const Instruction &instr);

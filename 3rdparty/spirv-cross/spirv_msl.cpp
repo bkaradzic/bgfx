@@ -589,7 +589,7 @@ void CompilerMSL::build_implicit_builtins()
 			uint_type_ptr_out.pointer = true;
 			uint_type_ptr_out.parent_type = get_uint_type_id();
 			uint_type_ptr_out.storage = StorageClassOutput;
-			
+
 			auto &ptr_out_type = set<SPIRType>(offset, uint_type_ptr_out);
 			ptr_out_type.self = get_uint_type_id();
 			set<SPIRVariable>(var_id, offset, StorageClassOutput);
@@ -1028,6 +1028,8 @@ void CompilerMSL::emit_entry_point_declarations()
 
 string CompilerMSL::compile()
 {
+	ir.fixup_reserved_names();
+
 	// Do not deal with GLES-isms like precision, older extensions and such.
 	options.vulkan_semantics = true;
 	options.es = false;
@@ -2684,7 +2686,7 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 					statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "* gl_in = &",
 					          input_buffer_var_name, "[min(", to_expression(builtin_invocation_id_id), ".x / ",
 					          get_entry_point().output_vertices,
-							  ", spvIndirectParams[1] - 1) * spvIndirectParams[0]];");
+					          ", spvIndirectParams[1] - 1) * spvIndirectParams[0]];");
 				}
 				else
 				{
@@ -10555,7 +10557,7 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 		else if (var.storage == StorageClassOutput && is_builtin_variable(var))
 		{
 			if (bi_type == BuiltInSampleMask && get_execution_model() == ExecutionModelFragment &&
-				msl_options.additional_fixed_sample_mask != 0xffffffff)
+			    msl_options.additional_fixed_sample_mask != 0xffffffff)
 			{
 				// If the additional fixed sample mask was set, we need to adjust the sample_mask
 				// output to reflect that. If the shader outputs the sample_mask itself too, we need
@@ -10563,15 +10565,15 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 				if (does_shader_write_sample_mask)
 				{
 					entry_func.fixup_hooks_out.push_back([=]() {
-						statement(to_expression(builtin_sample_mask_id), " &= ",
-							      msl_options.additional_fixed_sample_mask, ";");
+						statement(to_expression(builtin_sample_mask_id),
+						          " &= ", msl_options.additional_fixed_sample_mask, ";");
 					});
 				}
 				else
 				{
 					entry_func.fixup_hooks_out.push_back([=]() {
 						statement(to_expression(builtin_sample_mask_id), " = ",
-							      msl_options.additional_fixed_sample_mask, ";");
+						          msl_options.additional_fixed_sample_mask, ";");
 					});
 				}
 			}

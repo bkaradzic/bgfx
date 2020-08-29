@@ -971,7 +971,9 @@ std::string CompilerHLSL::builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClas
 
 		auto &var = get<SPIRVariable>(num_workgroups_builtin);
 		auto &type = get<SPIRType>(var.basetype);
-		return sanitize_underscores(join(to_name(num_workgroups_builtin), "_", get_member_name(type.self, 0)));
+		auto ret = join(to_name(num_workgroups_builtin), "_", get_member_name(type.self, 0));
+		ParsedIR::sanitize_underscores(ret);
+		return ret;
 	}
 	case BuiltInPointCoord:
 		// Crude hack, but there is no real alternative. This path is only enabled if point_coord_compat is set.
@@ -2076,7 +2078,9 @@ void CompilerHLSL::emit_buffer_block(const SPIRVariable &var)
 				add_member_name(type, i);
 				auto backup_name = get_member_name(type.self, i);
 				auto member_name = to_member_name(type, i);
-				set_member_name(type.self, i, sanitize_underscores(join(to_name(var.self), "_", member_name)));
+				member_name = join(to_name(var.self), "_", member_name);
+				ParsedIR::sanitize_underscores(member_name);
+				set_member_name(type.self, i, member_name);
 				emit_struct_member(type, member, i, "");
 				set_member_name(type.self, i, backup_name);
 				i++;
@@ -2157,8 +2161,9 @@ void CompilerHLSL::emit_push_constant_block(const SPIRVariable &var)
 					add_member_name(type, constant_index);
 					auto backup_name = get_member_name(type.self, i);
 					auto member_name = to_member_name(type, i);
-					set_member_name(type.self, constant_index,
-					                sanitize_underscores(join(to_name(var.self), "_", member_name)));
+					member_name = join(to_name(var.self), "_", member_name);
+					ParsedIR::sanitize_underscores(member_name);
+					set_member_name(type.self, constant_index, member_name);
 					emit_struct_member(type, member, i, "", layout.start);
 					set_member_name(type.self, constant_index, backup_name);
 
@@ -5590,6 +5595,8 @@ void CompilerHLSL::validate_shader_model()
 
 string CompilerHLSL::compile()
 {
+	ir.fixup_reserved_names();
+
 	// Do not deal with ES-isms like precision, older extensions and such.
 	options.es = false;
 	options.version = 450;

@@ -145,32 +145,6 @@ static BufferPackingStandard packing_to_substruct_packing(BufferPackingStandard 
 	}
 }
 
-// Sanitizes underscores for GLSL where multiple underscores in a row are not allowed.
-string CompilerGLSL::sanitize_underscores(const string &str)
-{
-	string res;
-	res.reserve(str.size());
-
-	bool last_underscore = false;
-	for (auto c : str)
-	{
-		if (c == '_')
-		{
-			if (last_underscore)
-				continue;
-
-			res += c;
-			last_underscore = true;
-		}
-		else
-		{
-			res += c;
-			last_underscore = false;
-		}
-	}
-	return res;
-}
-
 void CompilerGLSL::init()
 {
 	if (ir.source.known)
@@ -529,6 +503,8 @@ void CompilerGLSL::find_static_extensions()
 
 string CompilerGLSL::compile()
 {
+	ir.fixup_reserved_names();
+
 	if (options.vulkan_semantics)
 		backend.allow_precision_qualifiers = true;
 	else
@@ -2150,7 +2126,7 @@ void CompilerGLSL::emit_flattened_io_block_member(const std::string &basename, c
 
 	// Sanitize underscores because joining the two identifiers might create more than 1 underscore in a row,
 	// which is not allowed.
-	flattened_name = sanitize_underscores(flattened_name);
+	ParsedIR::sanitize_underscores(flattened_name);
 
 	uint32_t last_index = indices.back();
 
@@ -2693,6 +2669,23 @@ bool CompilerGLSL::should_force_emit_builtin_block(StorageClass storage)
 	return should_force;
 }
 
+void CompilerGLSL::fixup_implicit_builtin_block_names()
+{
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+		bool block = has_decoration(type.self, DecorationBlock);
+		if ((var.storage == StorageClassOutput || var.storage == StorageClassInput) && block &&
+		    is_builtin_variable(var))
+		{
+			// Make sure the array has a supported name in the code.
+			if (var.storage == StorageClassOutput)
+				set_name(var.self, "gl_out");
+			else if (var.storage == StorageClassInput)
+				set_name(var.self, "gl_in");
+		}
+	});
+}
+
 void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionModel model)
 {
 	Bitset emitted_builtins;
@@ -2874,12 +2867,6 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 
 	if (builtin_array)
 	{
-		// Make sure the array has a supported name in the code.
-		if (storage == StorageClassOutput)
-			set_name(block_var->self, "gl_out");
-		else if (storage == StorageClassInput)
-			set_name(block_var->self, "gl_in");
-
 		if (model == ExecutionModelTessellationControl && storage == StorageClassOutput)
 			end_scope_decl(join(to_name(block_var->self), "[", get_entry_point().output_vertices, "]"));
 		else
@@ -2935,6 +2922,18 @@ void CompilerGLSL::emit_resources()
 	// Emit PLS blocks if we have such variables.
 	if (!pls_inputs.empty() || !pls_outputs.empty())
 		emit_pls();
+
+	switch (execution.model)
+	{
+	case ExecutionModelGeometry:
+	case ExecutionModelTessellationControl:
+	case ExecutionModelTessellationEvaluation:
+		fixup_implicit_builtin_block_names();
+		break;
+
+	default:
+		break;
+	}
 
 	// Emit custom gl_PerVertex for SSO compatibility.
 	if (options.separate_shader_objects && !options.es && execution.model != ExecutionModelFragment)
@@ -7793,7 +7792,9 @@ void CompilerGLSL::prepare_access_chain_for_scalar_access(std::string &, const S
 
 string CompilerGLSL::to_flattened_struct_member(const string &basename, const SPIRType &type, uint32_t index)
 {
-	return sanitize_underscores(join(basename, "_", to_member_name(type, index)));
+	auto ret = join(basename, "_", to_member_name(type, index));
+	ParsedIR::sanitize_underscores(ret);
+	return ret;
 }
 
 string CompilerGLSL::access_chain(uint32_t base, const uint32_t *indices, uint32_t count, const SPIRType &target_type,
@@ -7837,7 +7838,9 @@ string CompilerGLSL::access_chain(uint32_t base, const uint32_t *indices, uint32
 		}
 
 		auto basename = to_flattened_access_chain_expression(base);
-		return sanitize_underscores(join(basename, "_", chain));
+		auto ret = join(basename, "_", chain);
+		ParsedIR::sanitize_underscores(ret);
+		return ret;
 	}
 	else
 	{
@@ -7895,7 +7898,8 @@ void CompilerGLSL::store_flattened_struct(const string &basename, uint32_t rhs_i
 	for (uint32_t i = 0; i < uint32_t(member_type->member_types.size()); i++)
 	{
 		sub_indices.back() = i;
-		auto lhs = sanitize_underscores(join(basename, "_", to_member_name(*member_type, i)));
+		auto lhs = join(basename, "_", to_member_name(*member_type, i));
+		ParsedIR::sanitize_underscores(lhs);
 
 		if (get<SPIRType>(member_type->member_types[i]).basetype == SPIRType::Struct)
 		{
@@ -11435,13 +11439,7 @@ void CompilerGLSL::add_member_name(SPIRType &type, uint32_t index)
 		if (name.empty())
 			return;
 
-		// Reserved for temporaries.
-		if (name[0] == '_' && name.size() >= 2 && isdigit(name[1]))
-		{
-			name.clear();
-			return;
-		}
-
+		ParsedIR::sanitize_identifier(name, true, true);
 		update_name_cache(type.member_name_cache, name);
 	}
 }
@@ -12167,15 +12165,12 @@ void CompilerGLSL::add_variable(unordered_set<string> &variables_primary,
 	if (name.empty())
 		return;
 
-	// Reserved for temporaries.
-	if (name[0] == '_' && name.size() >= 2 && isdigit(name[1]))
+	ParsedIR::sanitize_underscores(name);
+	if (ParsedIR::is_globally_reserved_identifier(name, true))
 	{
 		name.clear();
 		return;
 	}
-
-	// Avoid double underscores.
-	name = sanitize_underscores(name);
 
 	update_name_cache(variables_primary, variables_secondary, name);
 }
