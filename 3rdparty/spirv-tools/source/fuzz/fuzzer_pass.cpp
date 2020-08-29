@@ -296,8 +296,6 @@ uint32_t FuzzerPass::FindOrCreateIntegerConstant(
 uint32_t FuzzerPass::FindOrCreateFloatConstant(
     const std::vector<uint32_t>& words, uint32_t width, bool is_irrelevant) {
   auto float_type_id = FindOrCreateFloatType(width);
-  opt::analysis::FloatConstant float_constant(
-      GetIRContext()->get_type_mgr()->GetType(float_type_id)->AsFloat(), words);
   if (auto constant_id = fuzzerutil::MaybeGetScalarConstant(
           GetIRContext(), *GetTransformationContext(), words, float_type_id,
           is_irrelevant)) {

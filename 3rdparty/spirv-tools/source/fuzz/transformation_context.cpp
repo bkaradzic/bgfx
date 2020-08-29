@@ -14,12 +14,43 @@
 
 #include "source/fuzz/transformation_context.h"
 
+#include <cassert>
+
+#include "source/util/make_unique.h"
+
 namespace spvtools {
 namespace fuzz {
+namespace {
+
+// An overflow id source that should never be used: its methods assert false.
+// This is the right id source for use during fuzzing, when overflow ids should
+// never be required.
+class NullOverflowIdSource : public OverflowIdSource {
+  bool HasOverflowIds() const override {
+    assert(false && "Bad attempt to query whether overflow ids are available.");
+    return false;
+  }
+
+  uint32_t GetNextOverflowId() override {
+    assert(false && "Bad attempt to request an overflow id.");
+    return 0;
+  }
+};
+
+}  // namespace
 
 TransformationContext::TransformationContext(
     FactManager* fact_manager, spv_validator_options validator_options)
-    : fact_manager_(fact_manager), validator_options_(validator_options) {}
+    : fact_manager_(fact_manager),
+      validator_options_(validator_options),
+      overflow_id_source_(MakeUnique<NullOverflowIdSource>()) {}
+
+TransformationContext::TransformationContext(
+    FactManager* fact_manager, spv_validator_options validator_options,
+    std::unique_ptr<OverflowIdSource> overflow_id_source)
+    : fact_manager_(fact_manager),
+      validator_options_(validator_options),
+      overflow_id_source_(std::move(overflow_id_source)) {}
 
 TransformationContext::~TransformationContext() = default;
 

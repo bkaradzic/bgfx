@@ -12,529 +12,60 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/fuzz/fact_manager.h"
+#include "source/fuzz/fact_manager/data_synonym_and_id_equation_facts.h"
 
-#include <sstream>
-#include <unordered_map>
-#include <unordered_set>
-
-#include "source/fuzz/equivalence_relation.h"
 #include "source/fuzz/fuzzer_util.h"
-#include "source/fuzz/uniform_buffer_element_descriptor.h"
-#include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
+namespace fact_manager {
 
-namespace {
-
-std::string ToString(const protobufs::FactConstantUniform& fact) {
-  std::stringstream stream;
-  stream << "(" << fact.uniform_buffer_element_descriptor().descriptor_set()
-         << ", " << fact.uniform_buffer_element_descriptor().binding() << ")[";
-
-  bool first = true;
-  for (auto index : fact.uniform_buffer_element_descriptor().index()) {
-    if (first) {
-      first = false;
-    } else {
-      stream << ", ";
-    }
-    stream << index;
-  }
-
-  stream << "] == [";
-
-  first = true;
-  for (auto constant_word : fact.constant_word()) {
-    if (first) {
-      first = false;
-    } else {
-      stream << ", ";
-    }
-    stream << constant_word;
-  }
-
-  stream << "]";
-  return stream.str();
-}
-
-std::string ToString(const protobufs::FactDataSynonym& fact) {
-  std::stringstream stream;
-  stream << fact.data1() << " = " << fact.data2();
-  return stream.str();
-}
-
-std::string ToString(const protobufs::FactIdEquation& fact) {
-  std::stringstream stream;
-  stream << fact.lhs_id();
-  stream << " " << static_cast<SpvOp>(fact.opcode());
-  for (auto rhs_id : fact.rhs_id()) {
-    stream << " " << rhs_id;
-  }
-  return stream.str();
-}
-
-std::string ToString(const protobufs::Fact& fact) {
-  switch (fact.fact_case()) {
-    case protobufs::Fact::kConstantUniformFact:
-      return ToString(fact.constant_uniform_fact());
-    case protobufs::Fact::kDataSynonymFact:
-      return ToString(fact.data_synonym_fact());
-    case protobufs::Fact::kIdEquationFact:
-      return ToString(fact.id_equation_fact());
-    default:
-      assert(false && "Stringification not supported for this fact.");
-      return "";
-  }
-}
-
-}  // namespace
-
-//=======================
-// Constant uniform facts
-
-// The purpose of this class is to group the fields and data used to represent
-// facts about uniform constants.
-class FactManager::ConstantUniformFacts {
- public:
-  // See method in FactManager which delegates to this method.
-  bool AddFact(const protobufs::FactConstantUniform& fact,
-               opt::IRContext* context);
-
-  // See method in FactManager which delegates to this method.
-  std::vector<uint32_t> GetConstantsAvailableFromUniformsForType(
-      opt::IRContext* ir_context, uint32_t type_id) const;
-
-  // See method in FactManager which delegates to this method.
-  const std::vector<protobufs::UniformBufferElementDescriptor>
-  GetUniformDescriptorsForConstant(opt::IRContext* ir_context,
-                                   uint32_t constant_id) const;
-
-  // See method in FactManager which delegates to this method.
-  uint32_t GetConstantFromUniformDescriptor(
-      opt::IRContext* context,
-      const protobufs::UniformBufferElementDescriptor& uniform_descriptor)
-      const;
-
-  // See method in FactManager which delegates to this method.
-  std::vector<uint32_t> GetTypesForWhichUniformValuesAreKnown() const;
-
-  // See method in FactManager which delegates to this method.
-  const std::vector<std::pair<protobufs::FactConstantUniform, uint32_t>>&
-  GetConstantUniformFactsAndTypes() const;
-
- private:
-  // Returns true if and only if the words associated with
-  // |constant_instruction| exactly match the words for the constant associated
-  // with |constant_uniform_fact|.
-  bool DataMatches(
-      const opt::Instruction& constant_instruction,
-      const protobufs::FactConstantUniform& constant_uniform_fact) const;
-
-  // Yields the constant words associated with |constant_uniform_fact|.
-  std::vector<uint32_t> GetConstantWords(
-      const protobufs::FactConstantUniform& constant_uniform_fact) const;
-
-  // Yields the id of a constant of type |type_id| whose data matches the
-  // constant data in |constant_uniform_fact|, or 0 if no such constant is
-  // declared.
-  uint32_t GetConstantId(
-      opt::IRContext* context,
-      const protobufs::FactConstantUniform& constant_uniform_fact,
-      uint32_t type_id) const;
-
-  // Checks that the width of a floating-point constant is supported, and that
-  // the constant is finite.
-  bool FloatingPointValueIsSuitable(const protobufs::FactConstantUniform& fact,
-                                    uint32_t width) const;
-
-  std::vector<std::pair<protobufs::FactConstantUniform, uint32_t>>
-      facts_and_type_ids_;
-};
-
-uint32_t FactManager::ConstantUniformFacts::GetConstantId(
-    opt::IRContext* context,
-    const protobufs::FactConstantUniform& constant_uniform_fact,
-    uint32_t type_id) const {
-  auto type = context->get_type_mgr()->GetType(type_id);
-  assert(type != nullptr && "Unknown type id.");
-  const opt::analysis::Constant* known_constant;
-  if (type->AsInteger()) {
-    opt::analysis::IntConstant candidate_constant(
-        type->AsInteger(), GetConstantWords(constant_uniform_fact));
-    known_constant =
-        context->get_constant_mgr()->FindConstant(&candidate_constant);
-  } else {
-    assert(
-        type->AsFloat() &&
-        "Uniform constant facts are only supported for int and float types.");
-    opt::analysis::FloatConstant candidate_constant(
-        type->AsFloat(), GetConstantWords(constant_uniform_fact));
-    known_constant =
-        context->get_constant_mgr()->FindConstant(&candidate_constant);
-  }
-  if (!known_constant) {
-    return 0;
-  }
-  return context->get_constant_mgr()->FindDeclaredConstant(known_constant,
-                                                           type_id);
-}
-
-std::vector<uint32_t> FactManager::ConstantUniformFacts::GetConstantWords(
-    const protobufs::FactConstantUniform& constant_uniform_fact) const {
-  std::vector<uint32_t> result;
-  for (auto constant_word : constant_uniform_fact.constant_word()) {
-    result.push_back(constant_word);
-  }
-  return result;
-}
-
-bool FactManager::ConstantUniformFacts::DataMatches(
-    const opt::Instruction& constant_instruction,
-    const protobufs::FactConstantUniform& constant_uniform_fact) const {
-  assert(constant_instruction.opcode() == SpvOpConstant);
-  std::vector<uint32_t> data_in_constant;
-  for (uint32_t i = 0; i < constant_instruction.NumInOperands(); i++) {
-    data_in_constant.push_back(constant_instruction.GetSingleWordInOperand(i));
-  }
-  return data_in_constant == GetConstantWords(constant_uniform_fact);
-}
-
-std::vector<uint32_t>
-FactManager::ConstantUniformFacts::GetConstantsAvailableFromUniformsForType(
-    opt::IRContext* ir_context, uint32_t type_id) const {
-  std::vector<uint32_t> result;
-  std::set<uint32_t> already_seen;
-  for (auto& fact_and_type_id : facts_and_type_ids_) {
-    if (fact_and_type_id.second != type_id) {
-      continue;
-    }
-    if (auto constant_id =
-            GetConstantId(ir_context, fact_and_type_id.first, type_id)) {
-      if (already_seen.find(constant_id) == already_seen.end()) {
-        result.push_back(constant_id);
-        already_seen.insert(constant_id);
-      }
-    }
-  }
-  return result;
-}
-
-const std::vector<protobufs::UniformBufferElementDescriptor>
-FactManager::ConstantUniformFacts::GetUniformDescriptorsForConstant(
-    opt::IRContext* ir_context, uint32_t constant_id) const {
-  std::vector<protobufs::UniformBufferElementDescriptor> result;
-  auto constant_inst = ir_context->get_def_use_mgr()->GetDef(constant_id);
-  assert(constant_inst->opcode() == SpvOpConstant &&
-         "The given id must be that of a constant");
-  auto type_id = constant_inst->type_id();
-  for (auto& fact_and_type_id : facts_and_type_ids_) {
-    if (fact_and_type_id.second != type_id) {
-      continue;
-    }
-    if (DataMatches(*constant_inst, fact_and_type_id.first)) {
-      result.emplace_back(
-          fact_and_type_id.first.uniform_buffer_element_descriptor());
-    }
-  }
-  return result;
-}
-
-uint32_t FactManager::ConstantUniformFacts::GetConstantFromUniformDescriptor(
-    opt::IRContext* context,
-    const protobufs::UniformBufferElementDescriptor& uniform_descriptor) const {
-  // Consider each fact.
-  for (auto& fact_and_type : facts_and_type_ids_) {
-    // Check whether the uniform descriptor associated with the fact matches
-    // |uniform_descriptor|.
-    if (UniformBufferElementDescriptorEquals()(
-            &uniform_descriptor,
-            &fact_and_type.first.uniform_buffer_element_descriptor())) {
-      return GetConstantId(context, fact_and_type.first, fact_and_type.second);
-    }
-  }
-  // No fact associated with the given uniform descriptor was found.
-  return 0;
-}
-
-std::vector<uint32_t>
-FactManager::ConstantUniformFacts::GetTypesForWhichUniformValuesAreKnown()
-    const {
-  std::vector<uint32_t> result;
-  for (auto& fact_and_type : facts_and_type_ids_) {
-    if (std::find(result.begin(), result.end(), fact_and_type.second) ==
-        result.end()) {
-      result.push_back(fact_and_type.second);
-    }
-  }
-  return result;
-}
-
-bool FactManager::ConstantUniformFacts::FloatingPointValueIsSuitable(
-    const protobufs::FactConstantUniform& fact, uint32_t width) const {
-  const uint32_t kFloatWidth = 32;
-  const uint32_t kDoubleWidth = 64;
-  if (width != kFloatWidth && width != kDoubleWidth) {
-    // Only 32- and 64-bit floating-point types are handled.
-    return false;
-  }
-  std::vector<uint32_t> words = GetConstantWords(fact);
-  if (width == 32) {
-    float value;
-    memcpy(&value, words.data(), sizeof(float));
-    if (!std::isfinite(value)) {
-      return false;
-    }
-  } else {
-    double value;
-    memcpy(&value, words.data(), sizeof(double));
-    if (!std::isfinite(value)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool FactManager::ConstantUniformFacts::AddFact(
-    const protobufs::FactConstantUniform& fact, opt::IRContext* context) {
-  // Try to find a unique instruction that declares a variable such that the
-  // variable is decorated with the descriptor set and binding associated with
-  // the constant uniform fact.
-  opt::Instruction* uniform_variable = FindUniformVariable(
-      fact.uniform_buffer_element_descriptor(), context, true);
-
-  if (!uniform_variable) {
-    return false;
-  }
-
-  assert(SpvOpVariable == uniform_variable->opcode());
-  assert(SpvStorageClassUniform == uniform_variable->GetSingleWordInOperand(0));
-
-  auto should_be_uniform_pointer_type =
-      context->get_type_mgr()->GetType(uniform_variable->type_id());
-  if (!should_be_uniform_pointer_type->AsPointer()) {
-    return false;
-  }
-  if (should_be_uniform_pointer_type->AsPointer()->storage_class() !=
-      SpvStorageClassUniform) {
-    return false;
-  }
-  auto should_be_uniform_pointer_instruction =
-      context->get_def_use_mgr()->GetDef(uniform_variable->type_id());
-  auto composite_type =
-      should_be_uniform_pointer_instruction->GetSingleWordInOperand(1);
-
-  auto final_element_type_id = fuzzerutil::WalkCompositeTypeIndices(
-      context, composite_type,
-      fact.uniform_buffer_element_descriptor().index());
-  if (!final_element_type_id) {
-    return false;
-  }
-  auto final_element_type =
-      context->get_type_mgr()->GetType(final_element_type_id);
-  assert(final_element_type &&
-         "There should be a type corresponding to this id.");
-
-  if (!(final_element_type->AsFloat() || final_element_type->AsInteger())) {
-    return false;
-  }
-  auto width = final_element_type->AsFloat()
-                   ? final_element_type->AsFloat()->width()
-                   : final_element_type->AsInteger()->width();
-
-  if (final_element_type->AsFloat() &&
-      !FloatingPointValueIsSuitable(fact, width)) {
-    return false;
-  }
-
-  auto required_words = (width + 32 - 1) / 32;
-  if (static_cast<uint32_t>(fact.constant_word().size()) != required_words) {
-    return false;
-  }
-  facts_and_type_ids_.emplace_back(
-      std::pair<protobufs::FactConstantUniform, uint32_t>(
-          fact, final_element_type_id));
-  return true;
-}
-
-const std::vector<std::pair<protobufs::FactConstantUniform, uint32_t>>&
-FactManager::ConstantUniformFacts::GetConstantUniformFactsAndTypes() const {
-  return facts_and_type_ids_;
-}
-
-// End of uniform constant facts
-//==============================
-
-//==============================
-// Data synonym and id equation facts
-
-// This helper struct represents the right hand side of an equation as an
-// operator applied to a number of data descriptor operands.
-struct Operation {
-  SpvOp opcode;
-  std::vector<const protobufs::DataDescriptor*> operands;
-};
-
-// Hashing for operations, to allow deterministic unordered sets.
-struct OperationHash {
-  size_t operator()(const Operation& operation) const {
-    std::u32string hash;
-    hash.push_back(operation.opcode);
-    for (auto operand : operation.operands) {
-      hash.push_back(static_cast<uint32_t>(DataDescriptorHash()(operand)));
-    }
-    return std::hash<std::u32string>()(hash);
-  }
-};
-
-// Equality for operations, to allow deterministic unordered sets.
-struct OperationEquals {
-  bool operator()(const Operation& first, const Operation& second) const {
-    // Equal operations require...
-    //
-    // Equal opcodes.
-    if (first.opcode != second.opcode) {
-      return false;
-    }
-    // Matching operand counds.
-    if (first.operands.size() != second.operands.size()) {
-      return false;
-    }
-    // Equal operands.
-    for (uint32_t i = 0; i < first.operands.size(); i++) {
-      if (!DataDescriptorEquals()(first.operands[i], second.operands[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-};
-
-// A helper, for debugging, to represent an operation as a string.
-std::string ToString(const Operation& operation) {
-  std::stringstream stream;
-  stream << operation.opcode;
+size_t DataSynonymAndIdEquationFacts::OperationHash::operator()(
+    const Operation& operation) const {
+  std::u32string hash;
+  hash.push_back(operation.opcode);
   for (auto operand : operation.operands) {
-    stream << " " << *operand;
+    hash.push_back(static_cast<uint32_t>(DataDescriptorHash()(operand)));
   }
-  return stream.str();
+  return std::hash<std::u32string>()(hash);
 }
 
-// The purpose of this class is to group the fields and data used to represent
-// facts about data synonyms and id equations.
-class FactManager::DataSynonymAndIdEquationFacts {
- public:
-  // See method in FactManager which delegates to this method.
-  void AddFact(const protobufs::FactDataSynonym& fact, opt::IRContext* context);
-
-  // See method in FactManager which delegates to this method.
-  void AddFact(const protobufs::FactIdEquation& fact, opt::IRContext* context);
-
-  // See method in FactManager which delegates to this method.
-  std::vector<const protobufs::DataDescriptor*> GetSynonymsForDataDescriptor(
-      const protobufs::DataDescriptor& data_descriptor) const;
-
-  // See method in FactManager which delegates to this method.
-  std::vector<uint32_t> GetIdsForWhichSynonymsAreKnown() const;
-
-  // See method in FactManager which delegates to this method.
-  bool IsSynonymous(const protobufs::DataDescriptor& data_descriptor1,
-                    const protobufs::DataDescriptor& data_descriptor2) const;
-
-  // See method in FactManager which delegates to this method.
-  void ComputeClosureOfFacts(opt::IRContext* context,
-                             uint32_t maximum_equivalence_class_size);
-
- private:
-  using OperationSet =
-      std::unordered_set<Operation, OperationHash, OperationEquals>;
-
-  // Adds the synonym |dd1| = |dd2| to the set of managed facts, and recurses
-  // into sub-components of the data descriptors, if they are composites, to
-  // record that their components are pairwise-synonymous.
-  void AddDataSynonymFactRecursive(const protobufs::DataDescriptor& dd1,
-                                   const protobufs::DataDescriptor& dd2,
-                                   opt::IRContext* context);
-
-  // Computes various corollary facts from the data descriptor |dd| if members
-  // of its equivalence class participate in equation facts with OpConvert*
-  // opcodes. The descriptor should be registered in the equivalence relation.
-  void ComputeConversionDataSynonymFacts(const protobufs::DataDescriptor& dd,
-                                         opt::IRContext* context);
-
-  // Recurses into sub-components of the data descriptors, if they are
-  // composites, to record that their components are pairwise-synonymous.
-  void ComputeCompositeDataSynonymFacts(const protobufs::DataDescriptor& dd1,
-                                        const protobufs::DataDescriptor& dd2,
-                                        opt::IRContext* context);
-
-  // Records the fact that |dd1| and |dd2| are equivalent, and merges the sets
-  // of equations that are known about them.
-  void MakeEquivalent(const protobufs::DataDescriptor& dd1,
-                      const protobufs::DataDescriptor& dd2);
-
-  // Registers a data descriptor in the equivalence relation if it hasn't been
-  // registered yet, and returns its representative.
-  const protobufs::DataDescriptor* RegisterDataDescriptor(
-      const protobufs::DataDescriptor& dd);
-
-  // Returns true if and only if |dd1| and |dd2| are valid data descriptors
-  // whose associated data have compatible types. Two types are compatible if:
-  // - they are the same
-  // - they both are numerical or vectors of numerical components with the same
-  //   number of components and the same bit count per component
-  static bool DataDescriptorsAreWellFormedAndComparable(
-      opt::IRContext* context, const protobufs::DataDescriptor& dd1,
-      const protobufs::DataDescriptor& dd2);
-
-  OperationSet GetEquations(const protobufs::DataDescriptor* lhs) const;
-
-  // Requires that |lhs_dd| and every element of |rhs_dds| is present in the
-  // |synonymous_| equivalence relation, but is not necessarily its own
-  // representative.  Records the fact that the equation
-  // "|lhs_dd| |opcode| |rhs_dds_non_canonical|" holds, and adds any
-  // corollaries, in the form of data synonym or equation facts, that follow
-  // from this and other known facts.
-  void AddEquationFactRecursive(
-      const protobufs::DataDescriptor& lhs_dd, SpvOp opcode,
-      const std::vector<const protobufs::DataDescriptor*>& rhs_dds,
-      opt::IRContext* context);
-
-  // The data descriptors that are known to be synonymous with one another are
-  // captured by this equivalence relation.
-  EquivalenceRelation<protobufs::DataDescriptor, DataDescriptorHash,
-                      DataDescriptorEquals>
-      synonymous_;
-
-  // When a new synonym fact is added, it may be possible to deduce further
-  // synonym facts by computing a closure of all known facts.  However, this is
-  // an expensive operation, so it should be performed sparingly and only there
-  // is some chance of new facts being deduced.  This boolean tracks whether a
-  // closure computation is required - i.e., whether a new fact has been added
-  // since the last time such a computation was performed.
-  bool closure_computation_required_ = false;
-
-  // Represents a set of equations on data descriptors as a map indexed by
-  // left-hand-side, mapping a left-hand-side to a set of operations, each of
-  // which (together with the left-hand-side) defines an equation.
+bool DataSynonymAndIdEquationFacts::OperationEquals::operator()(
+    const Operation& first, const Operation& second) const {
+  // Equal operations require...
   //
-  // All data descriptors occurring in equations are required to be present in
-  // the |synonymous_| equivalence relation, and to be their own representatives
-  // in that relation.
-  std::unordered_map<const protobufs::DataDescriptor*, OperationSet>
-      id_equations_;
-};
+  // Equal opcodes.
+  if (first.opcode != second.opcode) {
+    return false;
+  }
+  // Matching operand counts.
+  if (first.operands.size() != second.operands.size()) {
+    return false;
+  }
+  // Equal operands.
+  for (uint32_t i = 0; i < first.operands.size(); i++) {
+    if (!DataDescriptorEquals()(first.operands[i], second.operands[i])) {
+      return false;
+    }
+  }
+  return true;
+}
 
-void FactManager::DataSynonymAndIdEquationFacts::AddFact(
+void DataSynonymAndIdEquationFacts::AddFact(
     const protobufs::FactDataSynonym& fact, opt::IRContext* context) {
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3550)
+  //  Assert that ids are not irrelevant.
+
   // Add the fact, including all facts relating sub-components of the data
   // descriptors that are involved.
   AddDataSynonymFactRecursive(fact.data1(), fact.data2(), context);
 }
 
-void FactManager::DataSynonymAndIdEquationFacts::AddFact(
+void DataSynonymAndIdEquationFacts::AddFact(
     const protobufs::FactIdEquation& fact, opt::IRContext* context) {
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3550)
+  //  Assert that ids are not irrelevant.
+
   protobufs::DataDescriptor lhs_dd = MakeDataDescriptor(fact.lhs_id(), {});
 
   // Register the LHS in the equivalence relation if needed.
@@ -542,21 +73,23 @@ void FactManager::DataSynonymAndIdEquationFacts::AddFact(
 
   // Get equivalence class representatives for all ids used on the RHS of the
   // equation.
-  std::vector<const protobufs::DataDescriptor*> rhs_dd_ptrs;
+  std::vector<const protobufs::DataDescriptor*> rhs_dds;
   for (auto rhs_id : fact.rhs_id()) {
+    // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3550)
+    //  Assert that ids are not irrelevant.
+
     // Register a data descriptor based on this id in the equivalence relation
     // if needed, and then record the equivalence class representative.
-    rhs_dd_ptrs.push_back(
-        RegisterDataDescriptor(MakeDataDescriptor(rhs_id, {})));
+    rhs_dds.push_back(RegisterDataDescriptor(MakeDataDescriptor(rhs_id, {})));
   }
 
   // Now add the fact.
-  AddEquationFactRecursive(lhs_dd, static_cast<SpvOp>(fact.opcode()),
-                           rhs_dd_ptrs, context);
+  AddEquationFactRecursive(lhs_dd, static_cast<SpvOp>(fact.opcode()), rhs_dds,
+                           context);
 }
 
-FactManager::DataSynonymAndIdEquationFacts::OperationSet
-FactManager::DataSynonymAndIdEquationFacts::GetEquations(
+DataSynonymAndIdEquationFacts::OperationSet
+DataSynonymAndIdEquationFacts::GetEquations(
     const protobufs::DataDescriptor* lhs) const {
   auto existing = id_equations_.find(lhs);
   if (existing == id_equations_.end()) {
@@ -565,7 +98,7 @@ FactManager::DataSynonymAndIdEquationFacts::GetEquations(
   return existing->second;
 }
 
-void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
+void DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
     const protobufs::DataDescriptor& lhs_dd, SpvOp opcode,
     const std::vector<const protobufs::DataDescriptor*>& rhs_dds,
     opt::IRContext* context) {
@@ -717,7 +250,7 @@ void FactManager::DataSynonymAndIdEquationFacts::AddEquationFactRecursive(
   }
 }
 
-void FactManager::DataSynonymAndIdEquationFacts::AddDataSynonymFactRecursive(
+void DataSynonymAndIdEquationFacts::AddDataSynonymFactRecursive(
     const protobufs::DataDescriptor& dd1, const protobufs::DataDescriptor& dd2,
     opt::IRContext* context) {
   assert(DataDescriptorsAreWellFormedAndComparable(context, dd1, dd2));
@@ -736,9 +269,8 @@ void FactManager::DataSynonymAndIdEquationFacts::AddDataSynonymFactRecursive(
   ComputeCompositeDataSynonymFacts(dd1, dd2, context);
 }
 
-void FactManager::DataSynonymAndIdEquationFacts::
-    ComputeConversionDataSynonymFacts(const protobufs::DataDescriptor& dd,
-                                      opt::IRContext* context) {
+void DataSynonymAndIdEquationFacts::ComputeConversionDataSynonymFacts(
+    const protobufs::DataDescriptor& dd, opt::IRContext* context) {
   assert(synonymous_.Exists(dd) &&
          "|dd| should've been registered in the equivalence relation");
 
@@ -789,10 +321,9 @@ void FactManager::DataSynonymAndIdEquationFacts::
   }
 }
 
-void FactManager::DataSynonymAndIdEquationFacts::
-    ComputeCompositeDataSynonymFacts(const protobufs::DataDescriptor& dd1,
-                                     const protobufs::DataDescriptor& dd2,
-                                     opt::IRContext* context) {
+void DataSynonymAndIdEquationFacts::ComputeCompositeDataSynonymFacts(
+    const protobufs::DataDescriptor& dd1, const protobufs::DataDescriptor& dd2,
+    opt::IRContext* context) {
   // Check whether this is a synonym about composite objects. If it is,
   // we can recursively add synonym facts about their associated sub-components.
 
@@ -862,7 +393,7 @@ void FactManager::DataSynonymAndIdEquationFacts::
   }
 }
 
-void FactManager::DataSynonymAndIdEquationFacts::ComputeClosureOfFacts(
+void DataSynonymAndIdEquationFacts::ComputeClosureOfFacts(
     opt::IRContext* context, uint32_t maximum_equivalence_class_size) {
   // Suppose that obj_1[a_1, ..., a_m] and obj_2[b_1, ..., b_n] are distinct
   // data descriptors that describe objects of the same composite type, and that
@@ -1144,7 +675,7 @@ void FactManager::DataSynonymAndIdEquationFacts::ComputeClosureOfFacts(
   }
 }
 
-void FactManager::DataSynonymAndIdEquationFacts::MakeEquivalent(
+void DataSynonymAndIdEquationFacts::MakeEquivalent(
     const protobufs::DataDescriptor& dd1,
     const protobufs::DataDescriptor& dd2) {
   // Register the data descriptors if they are not already known to the
@@ -1218,16 +749,15 @@ void FactManager::DataSynonymAndIdEquationFacts::MakeEquivalent(
 }
 
 const protobufs::DataDescriptor*
-FactManager::DataSynonymAndIdEquationFacts::RegisterDataDescriptor(
+DataSynonymAndIdEquationFacts::RegisterDataDescriptor(
     const protobufs::DataDescriptor& dd) {
   return synonymous_.Exists(dd) ? synonymous_.Find(&dd)
                                 : synonymous_.Register(dd);
 }
 
-bool FactManager::DataSynonymAndIdEquationFacts::
-    DataDescriptorsAreWellFormedAndComparable(
-        opt::IRContext* context, const protobufs::DataDescriptor& dd1,
-        const protobufs::DataDescriptor& dd2) {
+bool DataSynonymAndIdEquationFacts::DataDescriptorsAreWellFormedAndComparable(
+    opt::IRContext* context, const protobufs::DataDescriptor& dd1,
+    const protobufs::DataDescriptor& dd2) {
   auto end_type_id_1 = fuzzerutil::WalkCompositeTypeIndices(
       context, context->get_def_use_mgr()->GetDef(dd1.object())->type_id(),
       dd1.index());
@@ -1236,6 +766,13 @@ bool FactManager::DataSynonymAndIdEquationFacts::
       dd2.index());
   // The end types of the data descriptors must exist.
   if (end_type_id_1 == 0 || end_type_id_2 == 0) {
+    return false;
+  }
+  // Neither end type is allowed to be void.
+  if (context->get_def_use_mgr()->GetDef(end_type_id_1)->opcode() ==
+          SpvOpTypeVoid ||
+      context->get_def_use_mgr()->GetDef(end_type_id_2)->opcode() ==
+          SpvOpTypeVoid) {
     return false;
   }
   // If the end types are the same, the data descriptors are comparable.
@@ -1292,17 +829,16 @@ bool FactManager::DataSynonymAndIdEquationFacts::
 }
 
 std::vector<const protobufs::DataDescriptor*>
-FactManager::DataSynonymAndIdEquationFacts::GetSynonymsForDataDescriptor(
+DataSynonymAndIdEquationFacts::GetSynonymsForDataDescriptor(
     const protobufs::DataDescriptor& data_descriptor) const {
   if (synonymous_.Exists(data_descriptor)) {
     return synonymous_.GetEquivalenceClass(data_descriptor);
   }
-  return std::vector<const protobufs::DataDescriptor*>();
+  return {};
 }
 
 std::vector<uint32_t>
-FactManager::DataSynonymAndIdEquationFacts::GetIdsForWhichSynonymsAreKnown()
-    const {
+DataSynonymAndIdEquationFacts::GetIdsForWhichSynonymsAreKnown() const {
   std::vector<uint32_t> result;
   for (auto& data_descriptor : synonymous_.GetAllKnownValues()) {
     if (data_descriptor->index().empty()) {
@@ -1312,7 +848,7 @@ FactManager::DataSynonymAndIdEquationFacts::GetIdsForWhichSynonymsAreKnown()
   return result;
 }
 
-bool FactManager::DataSynonymAndIdEquationFacts::IsSynonymous(
+bool DataSynonymAndIdEquationFacts::IsSynonymous(
     const protobufs::DataDescriptor& data_descriptor1,
     const protobufs::DataDescriptor& data_descriptor2) const {
   return synonymous_.Exists(data_descriptor1) &&
@@ -1320,284 +856,6 @@ bool FactManager::DataSynonymAndIdEquationFacts::IsSynonymous(
          synonymous_.IsEquivalent(data_descriptor1, data_descriptor2);
 }
 
-// End of data synonym facts
-//==============================
-
-//==============================
-// Dead block facts
-
-// The purpose of this class is to group the fields and data used to represent
-// facts about data blocks.
-class FactManager::DeadBlockFacts {
- public:
-  // See method in FactManager which delegates to this method.
-  void AddFact(const protobufs::FactBlockIsDead& fact);
-
-  // See method in FactManager which delegates to this method.
-  bool BlockIsDead(uint32_t block_id) const;
-
- private:
-  std::set<uint32_t> dead_block_ids_;
-};
-
-void FactManager::DeadBlockFacts::AddFact(
-    const protobufs::FactBlockIsDead& fact) {
-  dead_block_ids_.insert(fact.block_id());
-}
-
-bool FactManager::DeadBlockFacts::BlockIsDead(uint32_t block_id) const {
-  return dead_block_ids_.count(block_id) != 0;
-}
-
-// End of dead block facts
-//==============================
-
-//==============================
-// Livesafe function facts
-
-// The purpose of this class is to group the fields and data used to represent
-// facts about livesafe functions.
-class FactManager::LivesafeFunctionFacts {
- public:
-  // See method in FactManager which delegates to this method.
-  void AddFact(const protobufs::FactFunctionIsLivesafe& fact);
-
-  // See method in FactManager which delegates to this method.
-  bool FunctionIsLivesafe(uint32_t function_id) const;
-
- private:
-  std::set<uint32_t> livesafe_function_ids_;
-};
-
-void FactManager::LivesafeFunctionFacts::AddFact(
-    const protobufs::FactFunctionIsLivesafe& fact) {
-  livesafe_function_ids_.insert(fact.function_id());
-}
-
-bool FactManager::LivesafeFunctionFacts::FunctionIsLivesafe(
-    uint32_t function_id) const {
-  return livesafe_function_ids_.count(function_id) != 0;
-}
-
-// End of livesafe function facts
-//==============================
-
-//==============================
-// Irrelevant value facts
-
-// The purpose of this class is to group the fields and data used to represent
-// facts about various irrelevant values in the module.
-class FactManager::IrrelevantValueFacts {
- public:
-  // See method in FactManager which delegates to this method.
-  void AddFact(const protobufs::FactPointeeValueIsIrrelevant& fact);
-
-  // See method in FactManager which delegates to this method.
-  void AddFact(const protobufs::FactIdIsIrrelevant& fact);
-
-  // See method in FactManager which delegates to this method.
-  bool PointeeValueIsIrrelevant(uint32_t pointer_id) const;
-
-  // See method in FactManager which delegates to this method.
-  bool IdIsIrrelevant(uint32_t pointer_id) const;
-
- private:
-  std::unordered_set<uint32_t> pointers_to_irrelevant_pointees_ids_;
-  std::unordered_set<uint32_t> irrelevant_ids_;
-};
-
-void FactManager::IrrelevantValueFacts::AddFact(
-    const protobufs::FactPointeeValueIsIrrelevant& fact) {
-  pointers_to_irrelevant_pointees_ids_.insert(fact.pointer_id());
-}
-
-void FactManager::IrrelevantValueFacts::AddFact(
-    const protobufs::FactIdIsIrrelevant& fact) {
-  irrelevant_ids_.insert(fact.result_id());
-}
-
-bool FactManager::IrrelevantValueFacts::PointeeValueIsIrrelevant(
-    uint32_t pointer_id) const {
-  return pointers_to_irrelevant_pointees_ids_.count(pointer_id) != 0;
-}
-
-bool FactManager::IrrelevantValueFacts::IdIsIrrelevant(
-    uint32_t pointer_id) const {
-  return irrelevant_ids_.count(pointer_id) != 0;
-}
-
-// End of arbitrarily-valued variable facts
-//==============================
-
-FactManager::FactManager()
-    : uniform_constant_facts_(MakeUnique<ConstantUniformFacts>()),
-      data_synonym_and_id_equation_facts_(
-          MakeUnique<DataSynonymAndIdEquationFacts>()),
-      dead_block_facts_(MakeUnique<DeadBlockFacts>()),
-      livesafe_function_facts_(MakeUnique<LivesafeFunctionFacts>()),
-      irrelevant_value_facts_(MakeUnique<IrrelevantValueFacts>()) {}
-
-FactManager::~FactManager() = default;
-
-void FactManager::AddFacts(const MessageConsumer& message_consumer,
-                           const protobufs::FactSequence& initial_facts,
-                           opt::IRContext* context) {
-  for (auto& fact : initial_facts.fact()) {
-    if (!AddFact(fact, context)) {
-      message_consumer(
-          SPV_MSG_WARNING, nullptr, {},
-          ("Invalid fact " + ToString(fact) + " ignored.").c_str());
-    }
-  }
-}
-
-bool FactManager::AddFact(const fuzz::protobufs::Fact& fact,
-                          opt::IRContext* context) {
-  switch (fact.fact_case()) {
-    case protobufs::Fact::kConstantUniformFact:
-      return uniform_constant_facts_->AddFact(fact.constant_uniform_fact(),
-                                              context);
-    case protobufs::Fact::kDataSynonymFact:
-      data_synonym_and_id_equation_facts_->AddFact(fact.data_synonym_fact(),
-                                                   context);
-      return true;
-    case protobufs::Fact::kBlockIsDeadFact:
-      dead_block_facts_->AddFact(fact.block_is_dead_fact());
-      return true;
-    case protobufs::Fact::kFunctionIsLivesafeFact:
-      livesafe_function_facts_->AddFact(fact.function_is_livesafe_fact());
-      return true;
-    default:
-      assert(false && "Unknown fact type.");
-      return false;
-  }
-}
-
-void FactManager::AddFactDataSynonym(const protobufs::DataDescriptor& data1,
-                                     const protobufs::DataDescriptor& data2,
-                                     opt::IRContext* context) {
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3550):
-  //  assert that neither |data1| nor |data2| are irrelevant.
-  protobufs::FactDataSynonym fact;
-  *fact.mutable_data1() = data1;
-  *fact.mutable_data2() = data2;
-  data_synonym_and_id_equation_facts_->AddFact(fact, context);
-}
-
-std::vector<uint32_t> FactManager::GetConstantsAvailableFromUniformsForType(
-    opt::IRContext* ir_context, uint32_t type_id) const {
-  return uniform_constant_facts_->GetConstantsAvailableFromUniformsForType(
-      ir_context, type_id);
-}
-
-const std::vector<protobufs::UniformBufferElementDescriptor>
-FactManager::GetUniformDescriptorsForConstant(opt::IRContext* ir_context,
-                                              uint32_t constant_id) const {
-  return uniform_constant_facts_->GetUniformDescriptorsForConstant(ir_context,
-                                                                   constant_id);
-}
-
-uint32_t FactManager::GetConstantFromUniformDescriptor(
-    opt::IRContext* context,
-    const protobufs::UniformBufferElementDescriptor& uniform_descriptor) const {
-  return uniform_constant_facts_->GetConstantFromUniformDescriptor(
-      context, uniform_descriptor);
-}
-
-std::vector<uint32_t> FactManager::GetTypesForWhichUniformValuesAreKnown()
-    const {
-  return uniform_constant_facts_->GetTypesForWhichUniformValuesAreKnown();
-}
-
-const std::vector<std::pair<protobufs::FactConstantUniform, uint32_t>>&
-FactManager::GetConstantUniformFactsAndTypes() const {
-  return uniform_constant_facts_->GetConstantUniformFactsAndTypes();
-}
-
-std::vector<uint32_t> FactManager::GetIdsForWhichSynonymsAreKnown() const {
-  return data_synonym_and_id_equation_facts_->GetIdsForWhichSynonymsAreKnown();
-}
-
-std::vector<const protobufs::DataDescriptor*>
-FactManager::GetSynonymsForDataDescriptor(
-    const protobufs::DataDescriptor& data_descriptor) const {
-  return data_synonym_and_id_equation_facts_->GetSynonymsForDataDescriptor(
-      data_descriptor);
-}
-
-std::vector<const protobufs::DataDescriptor*> FactManager::GetSynonymsForId(
-    uint32_t id) const {
-  return GetSynonymsForDataDescriptor(MakeDataDescriptor(id, {}));
-}
-
-bool FactManager::IsSynonymous(
-    const protobufs::DataDescriptor& data_descriptor1,
-    const protobufs::DataDescriptor& data_descriptor2) const {
-  return data_synonym_and_id_equation_facts_->IsSynonymous(data_descriptor1,
-                                                           data_descriptor2);
-}
-
-bool FactManager::BlockIsDead(uint32_t block_id) const {
-  return dead_block_facts_->BlockIsDead(block_id);
-}
-
-void FactManager::AddFactBlockIsDead(uint32_t block_id) {
-  protobufs::FactBlockIsDead fact;
-  fact.set_block_id(block_id);
-  dead_block_facts_->AddFact(fact);
-}
-
-bool FactManager::FunctionIsLivesafe(uint32_t function_id) const {
-  return livesafe_function_facts_->FunctionIsLivesafe(function_id);
-}
-
-void FactManager::AddFactFunctionIsLivesafe(uint32_t function_id) {
-  protobufs::FactFunctionIsLivesafe fact;
-  fact.set_function_id(function_id);
-  livesafe_function_facts_->AddFact(fact);
-}
-
-bool FactManager::PointeeValueIsIrrelevant(uint32_t pointer_id) const {
-  return irrelevant_value_facts_->PointeeValueIsIrrelevant(pointer_id);
-}
-
-bool FactManager::IdIsIrrelevant(uint32_t result_id) const {
-  return irrelevant_value_facts_->IdIsIrrelevant(result_id);
-}
-
-void FactManager::AddFactValueOfPointeeIsIrrelevant(uint32_t pointer_id) {
-  protobufs::FactPointeeValueIsIrrelevant fact;
-  fact.set_pointer_id(pointer_id);
-  irrelevant_value_facts_->AddFact(fact);
-}
-
-void FactManager::AddFactIdIsIrrelevant(uint32_t result_id) {
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3550):
-  //  assert that |result_id| is not a part of any DataSynonym fact.
-  protobufs::FactIdIsIrrelevant fact;
-  fact.set_result_id(result_id);
-  irrelevant_value_facts_->AddFact(fact);
-}
-
-void FactManager::AddFactIdEquation(uint32_t lhs_id, SpvOp opcode,
-                                    const std::vector<uint32_t>& rhs_id,
-                                    opt::IRContext* context) {
-  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/3550):
-  //  assert that elements of |rhs_id| and |lhs_id| are not irrelevant.
-  protobufs::FactIdEquation fact;
-  fact.set_lhs_id(lhs_id);
-  fact.set_opcode(opcode);
-  for (auto an_rhs_id : rhs_id) {
-    fact.add_rhs_id(an_rhs_id);
-  }
-  data_synonym_and_id_equation_facts_->AddFact(fact, context);
-}
-
-void FactManager::ComputeClosureOfFacts(
-    opt::IRContext* ir_context, uint32_t maximum_equivalence_class_size) {
-  data_synonym_and_id_equation_facts_->ComputeClosureOfFacts(
-      ir_context, maximum_equivalence_class_size);
-}
-
+}  // namespace fact_manager
 }  // namespace fuzz
 }  // namespace spvtools

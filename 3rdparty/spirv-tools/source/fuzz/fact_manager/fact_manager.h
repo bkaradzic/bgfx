@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_FUZZ_FACT_MANAGER_H_
-#define SOURCE_FUZZ_FACT_MANAGER_H_
+#ifndef SOURCE_FUZZ_FACT_MANAGER_FACT_MANAGER_H_
+#define SOURCE_FUZZ_FACT_MANAGER_FACT_MANAGER_H_
 
-#include <memory>
 #include <set>
 #include <utility>
 #include <vector>
 
 #include "source/fuzz/data_descriptor.h"
+#include "source/fuzz/fact_manager/constant_uniform_facts.h"
+#include "source/fuzz/fact_manager/data_synonym_and_id_equation_facts.h"
+#include "source/fuzz/fact_manager/dead_block_facts.h"
+#include "source/fuzz/fact_manager/irrelevant_value_facts.h"
+#include "source/fuzz/fact_manager/livesafe_function_facts.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/opt/constants.h"
 
@@ -38,10 +42,6 @@ namespace fuzz {
 // the module.
 class FactManager {
  public:
-  FactManager();
-
-  ~FactManager();
-
   // Adds all the facts from |facts|, checking them for validity with respect to
   // |context|.  Warnings about invalid facts are communicated via
   // |message_consumer|; such facts are otherwise ignored.
@@ -117,7 +117,7 @@ class FactManager {
 
   // Provides details of all uniform elements that are known to be equal to the
   // constant associated with |constant_id| in |ir_context|.
-  const std::vector<protobufs::UniformBufferElementDescriptor>
+  std::vector<protobufs::UniformBufferElementDescriptor>
   GetUniformDescriptorsForConstant(opt::IRContext* ir_context,
                                    uint32_t constant_id) const;
 
@@ -198,35 +198,16 @@ class FactManager {
   //==============================
 
  private:
-  // For each distinct kind of fact to be managed, we use a separate opaque
-  // class type.
-
-  class ConstantUniformFacts;  // Opaque class for management of
-                               // constant uniform facts.
-  std::unique_ptr<ConstantUniformFacts>
-      uniform_constant_facts_;  // Unique pointer to internal data.
-
-  class DataSynonymAndIdEquationFacts;  // Opaque class for management of data
-                                        // synonym and id equation facts.
-  std::unique_ptr<DataSynonymAndIdEquationFacts>
-      data_synonym_and_id_equation_facts_;  // Unique pointer to internal data.
-
-  class DeadBlockFacts;  // Opaque class for management of dead block facts.
-  std::unique_ptr<DeadBlockFacts>
-      dead_block_facts_;  // Unique pointer to internal data.
-
-  class LivesafeFunctionFacts;  // Opaque class for management of livesafe
-                                // function facts.
-  std::unique_ptr<LivesafeFunctionFacts>
-      livesafe_function_facts_;  // Unique pointer to internal data.
-
-  class IrrelevantValueFacts;  // Opaque class for management of
-  // facts about various irrelevant values in the module.
-  std::unique_ptr<IrrelevantValueFacts>
-      irrelevant_value_facts_;  // Unique pointer to internal data.
+  // Keep these in alphabetical order.
+  fact_manager::ConstantUniformFacts constant_uniform_facts_;
+  fact_manager::DataSynonymAndIdEquationFacts
+      data_synonym_and_id_equation_facts_;
+  fact_manager::DeadBlockFacts dead_block_facts_;
+  fact_manager::LivesafeFunctionFacts livesafe_function_facts_;
+  fact_manager::IrrelevantValueFacts irrelevant_value_facts_;
 };
 
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // SOURCE_FUZZ_FACT_MANAGER_H_
+#endif  // SOURCE_FUZZ_FACT_MANAGER_FACT_MANAGER_H_

@@ -33,6 +33,7 @@
 #include "source/fuzz/transformation_add_local_variable.h"
 #include "source/fuzz/transformation_add_loop_preheader.h"
 #include "source/fuzz/transformation_add_no_contraction_decoration.h"
+#include "source/fuzz/transformation_add_opphi_synonym.h"
 #include "source/fuzz/transformation_add_parameter.h"
 #include "source/fuzz/transformation_add_relaxed_decoration.h"
 #include "source/fuzz/transformation_add_spec_constant_op.h"
@@ -53,6 +54,7 @@
 #include "source/fuzz/transformation_compute_data_synonym_fact_closure.h"
 #include "source/fuzz/transformation_equation_instruction.h"
 #include "source/fuzz/transformation_function_call.h"
+#include "source/fuzz/transformation_inline_function.h"
 #include "source/fuzz/transformation_invert_comparison_operator.h"
 #include "source/fuzz/transformation_load.h"
 #include "source/fuzz/transformation_make_vector_operation_dynamic.h"
@@ -140,6 +142,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
         kAddNoContractionDecoration:
       return MakeUnique<TransformationAddNoContractionDecoration>(
           message.add_no_contraction_decoration());
+    case protobufs::Transformation::TransformationCase::kAddOpphiSynonym:
+      return MakeUnique<TransformationAddOpPhiSynonym>(
+          message.add_opphi_synonym());
     case protobufs::Transformation::TransformationCase::kAddParameter:
       return MakeUnique<TransformationAddParameter>(message.add_parameter());
     case protobufs::Transformation::TransformationCase::kAddRelaxedDecoration:
@@ -192,6 +197,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
           message.equation_instruction());
     case protobufs::Transformation::TransformationCase::kFunctionCall:
       return MakeUnique<TransformationFunctionCall>(message.function_call());
+    case protobufs::Transformation::TransformationCase::kInlineFunction:
+      return MakeUnique<TransformationInlineFunction>(
+          message.inline_function());
     case protobufs::Transformation::TransformationCase::
         kInvertComparisonOperator:
       return MakeUnique<TransformationInvertComparisonOperator>(

@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "source/fuzz/fuzzer_pass.h"
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "spirv-tools/libspirv.hpp"
@@ -37,11 +38,11 @@ class Fuzzer {
     kInitialBinaryInvalid,
   };
 
-  // Constructs a fuzzer from the given target environment |env|.  |seed| is a
-  // seed for pseudo-random number generation.
+  // Constructs a fuzzer from the given target environment |target_env|.  |seed|
+  // is a seed for pseudo-random number generation.
   // |validate_after_each_fuzzer_pass| controls whether the validator will be
   // invoked after every fuzzer pass is applied.
-  Fuzzer(spv_target_env env, uint32_t seed,
+  Fuzzer(spv_target_env target_env, uint32_t seed,
          bool validate_after_each_fuzzer_pass,
          spv_validator_options validator_options);
 
@@ -71,8 +72,27 @@ class Fuzzer {
       protobufs::TransformationSequence* transformation_sequence_out) const;
 
  private:
-  struct Impl;                  // Opaque struct for holding internal data.
-  std::unique_ptr<Impl> impl_;  // Unique pointer to internal data.
+  // Applies |pass|, which must be a pass constructed with |ir_context|, and
+  // then returns true if and only if |ir_context| is valid.  |tools| is used to
+  // check validity.
+  bool ApplyPassAndCheckValidity(FuzzerPass* pass,
+                                 const opt::IRContext& ir_context,
+                                 const spvtools::SpirvTools& tools) const;
+
+  // Target environment.
+  const spv_target_env target_env_;
+
+  // Message consumer.
+  MessageConsumer consumer_;
+
+  // Seed for random number generator.
+  const uint32_t seed_;
+
+  // Determines whether the validator should be invoked after every fuzzer pass.
+  bool validate_after_each_fuzzer_pass_;
+
+  // Options to control validation.
+  spv_validator_options validator_options_;
 };
 
 }  // namespace fuzz

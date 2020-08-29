@@ -921,8 +921,10 @@ void DebugScope::ToBinary(uint32_t type_id, uint32_t result_id,
       static_cast<uint32_t>(dbg_opcode),
   };
   binary->insert(binary->end(), operands.begin(), operands.end());
-  if (GetLexicalScope() != kNoDebugScope) binary->push_back(GetLexicalScope());
-  if (GetInlinedAt() != kNoInlinedAt) binary->push_back(GetInlinedAt());
+  if (GetLexicalScope() != kNoDebugScope) {
+    binary->push_back(GetLexicalScope());
+    if (GetInlinedAt() != kNoInlinedAt) binary->push_back(GetInlinedAt());
+  }
 }
 
 }  // namespace opt

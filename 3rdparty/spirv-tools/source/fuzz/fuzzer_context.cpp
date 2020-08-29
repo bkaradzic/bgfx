@@ -43,6 +43,7 @@ const std::pair<uint32_t, uint32_t> kChanceOfAddingLoopPreheader = {20, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingMatrixType = {20, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingNoContractionDecoration = {
     5, 70};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingOpPhiSynonym = {5, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingParameters = {5, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingRelaxedDecoration = {20, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfAddingStore = {5, 50};
@@ -69,6 +70,7 @@ const std::pair<uint32_t, uint32_t> kChanceOfGoingDeeperToInsertInComposite = {
     30, 70};
 const std::pair<uint32_t, uint32_t> kChanceOfGoingDeeperWhenMakingAccessChain =
     {50, 95};
+const std::pair<uint32_t, uint32_t> kChanceOfInliningFunction = {10, 90};
 const std::pair<uint32_t, uint32_t> kChanceOfInterchangingZeroLikeConstants = {
     10, 90};
 const std::pair<uint32_t, uint32_t>
@@ -181,6 +183,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfAddingMatrixType);
   chance_of_adding_no_contraction_decoration_ =
       ChooseBetweenMinAndMax(kChanceOfAddingNoContractionDecoration);
+  chance_of_adding_opphi_synonym_ =
+      ChooseBetweenMinAndMax(kChanceOfAddingOpPhiSynonym);
   chance_of_adding_parameters =
       ChooseBetweenMinAndMax(kChanceOfAddingParameters);
   chance_of_adding_relaxed_decoration_ =
@@ -216,6 +220,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       ChooseBetweenMinAndMax(kChanceOfGoingDeeperToInsertInComposite);
   chance_of_going_deeper_when_making_access_chain_ =
       ChooseBetweenMinAndMax(kChanceOfGoingDeeperWhenMakingAccessChain);
+  chance_of_inlining_function_ =
+      ChooseBetweenMinAndMax(kChanceOfInliningFunction);
   chance_of_interchanging_signedness_of_integer_operands_ =
       ChooseBetweenMinAndMax(kChanceOfInterchangingSignednessOfIntegerOperands);
   chance_of_interchanging_zero_like_constants_ =

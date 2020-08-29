@@ -271,6 +271,11 @@ bool CanMakeSynonymOf(opt::IRContext* ir_context,
     return false;
   }
   auto type_inst = ir_context->get_def_use_mgr()->GetDef(inst->type_id());
+  if (type_inst->opcode() == SpvOpTypeVoid) {
+    // We only make synonyms of instructions that define objects, and an object
+    // cannot have void type.
+    return false;
+  }
   if (type_inst->opcode() == SpvOpTypePointer) {
     switch (inst->opcode()) {
       case SpvOpConstantNull:
@@ -970,35 +975,34 @@ uint32_t MaybeGetZeroConstant(
     opt::IRContext* ir_context,
     const TransformationContext& transformation_context,
     uint32_t scalar_or_composite_type_id, bool is_irrelevant) {
-  const auto* type =
-      ir_context->get_type_mgr()->GetType(scalar_or_composite_type_id);
-  assert(type && "|scalar_or_composite_type_id| is invalid");
+  const auto* type_inst =
+      ir_context->get_def_use_mgr()->GetDef(scalar_or_composite_type_id);
+  assert(type_inst && "|scalar_or_composite_type_id| is invalid");
 
-  switch (type->kind()) {
-    case opt::analysis::Type::kBool:
+  switch (type_inst->opcode()) {
+    case SpvOpTypeBool:
       return MaybeGetBoolConstant(ir_context, transformation_context, false,
                                   is_irrelevant);
-    case opt::analysis::Type::kFloat:
-    case opt::analysis::Type::kInteger: {
+    case SpvOpTypeFloat:
+    case SpvOpTypeInt: {
+      const auto width = type_inst->GetSingleWordInOperand(0);
       std::vector<uint32_t> words = {0};
-      if ((type->AsInteger() && type->AsInteger()->width() > 32) ||
-          (type->AsFloat() && type->AsFloat()->width() > 32)) {
+      if (width > 32) {
         words.push_back(0);
       }
 
       return MaybeGetScalarConstant(ir_context, transformation_context, words,
                                     scalar_or_composite_type_id, is_irrelevant);
     }
-    case opt::analysis::Type::kStruct: {
+    case SpvOpTypeStruct: {
       std::vector<uint32_t> component_ids;
-      for (const auto* component_type : type->AsStruct()->element_types()) {
-        auto component_type_id =
-            ir_context->get_type_mgr()->GetId(component_type);
-        assert(component_type_id && "Component type is invalid");
+      for (uint32_t i = 0; i < type_inst->NumInOperands(); ++i) {
+        const auto component_type_id = type_inst->GetSingleWordInOperand(i);
 
         auto component_id =
             MaybeGetZeroConstant(ir_context, transformation_context,
                                  component_type_id, is_irrelevant);
+
         if (component_id == 0 && is_irrelevant) {
           // Irrelevant constants can use either relevant or irrelevant
           // constituents.
@@ -1017,14 +1021,9 @@ uint32_t MaybeGetZeroConstant(
           ir_context, transformation_context, component_ids,
           scalar_or_composite_type_id, is_irrelevant);
     }
-    case opt::analysis::Type::kMatrix:
-    case opt::analysis::Type::kVector: {
-      const auto* component_type = type->AsVector()
-                                       ? type->AsVector()->element_type()
-                                       : type->AsMatrix()->element_type();
-      auto component_type_id =
-          ir_context->get_type_mgr()->GetId(component_type);
-      assert(component_type_id && "Component type is invalid");
+    case SpvOpTypeMatrix:
+    case SpvOpTypeVector: {
+      const auto component_type_id = type_inst->GetSingleWordInOperand(0);
 
       auto component_id = MaybeGetZeroConstant(
           ir_context, transformation_context, component_type_id, is_irrelevant);
@@ -1040,23 +1039,21 @@ uint32_t MaybeGetZeroConstant(
         return 0;
       }
 
-      auto component_count = type->AsVector()
-                                 ? type->AsVector()->element_count()
-                                 : type->AsMatrix()->element_count();
+      const auto component_count = type_inst->GetSingleWordInOperand(1);
       return MaybeGetCompositeConstant(
           ir_context, transformation_context,
           std::vector<uint32_t>(component_count, component_id),
           scalar_or_composite_type_id, is_irrelevant);
     }
-    case opt::analysis::Type::kArray: {
-      auto component_type_id =
-          ir_context->get_type_mgr()->GetId(type->AsArray()->element_type());
-      assert(component_type_id && "Component type is invalid");
+    case SpvOpTypeArray: {
+      const auto component_type_id = type_inst->GetSingleWordInOperand(0);
 
       auto component_id = MaybeGetZeroConstant(
           ir_context, transformation_context, component_type_id, is_irrelevant);
 
       if (component_id == 0 && is_irrelevant) {
+        // Irrelevant constants can use either relevant or irrelevant
+        // constituents.
         component_id = MaybeGetZeroConstant(ir_context, transformation_context,
                                             component_type_id, false);
       }
@@ -1064,12 +1061,6 @@ uint32_t MaybeGetZeroConstant(
       if (component_id == 0) {
         return 0;
       }
-
-      auto type_id = ir_context->get_type_mgr()->GetId(type);
-      assert(type_id && "|type| is invalid");
-
-      const auto* type_inst = ir_context->get_def_use_mgr()->GetDef(type_id);
-      assert(type_inst && "Array's type id is invalid");
 
       return MaybeGetCompositeConstant(
           ir_context, transformation_context,
@@ -1113,10 +1104,7 @@ uint32_t MaybeGetCompositeConstant(
     bool is_irrelevant) {
   const auto* type = ir_context->get_type_mgr()->GetType(composite_type_id);
   (void)type;  // Make compilers happy in release mode.
-  assert(type &&
-         (type->AsArray() || type->AsStruct() || type->AsVector() ||
-          type->AsMatrix()) &&
-         "|composite_type_id| is invalid");
+  assert(IsCompositeType(type) && "|composite_type_id| is invalid");
 
   for (const auto& inst : ir_context->types_values()) {
     if (inst.opcode() == SpvOpConstantComposite &&

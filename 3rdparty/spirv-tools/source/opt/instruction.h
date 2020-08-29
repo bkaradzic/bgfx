@@ -305,6 +305,8 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   inline uint32_t GetDebugInlinedAt() const {
     return dbg_scope_.GetInlinedAt();
   }
+  // Updates lexical scope of DebugScope and OpLine.
+  inline void UpdateLexicalScope(uint32_t scope);
   // Updates OpLine and DebugScope based on the information of |from|.
   inline void UpdateDebugInfoFrom(const Instruction* from);
   // Remove the |index|-th operand
@@ -665,6 +667,13 @@ inline void Instruction::SetDebugScope(const DebugScope& scope) {
   dbg_scope_ = scope;
   for (auto& i : dbg_line_insts_) {
     i.dbg_scope_ = scope;
+  }
+}
+
+inline void Instruction::UpdateLexicalScope(uint32_t scope) {
+  dbg_scope_.SetLexicalScope(scope);
+  for (auto& i : dbg_line_insts_) {
+    i.dbg_scope_.SetLexicalScope(scope);
   }
 }
 

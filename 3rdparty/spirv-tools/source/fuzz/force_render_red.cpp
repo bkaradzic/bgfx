@@ -14,7 +14,7 @@
 
 #include "source/fuzz/force_render_red.h"
 
-#include "source/fuzz/fact_manager.h"
+#include "source/fuzz/fact_manager/fact_manager.h"
 #include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation_context.h"
@@ -25,9 +25,6 @@
 #include "source/opt/types.h"
 #include "source/util/make_unique.h"
 #include "tools/util/cli_consumer.h"
-
-#include <algorithm>
-#include <utility>
 
 namespace spvtools {
 namespace fuzz {

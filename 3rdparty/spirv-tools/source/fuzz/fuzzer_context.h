@@ -148,6 +148,9 @@ class FuzzerContext {
   uint32_t GetChanceOfAddingNoContractionDecoration() {
     return chance_of_adding_no_contraction_decoration_;
   }
+  uint32_t GetChanceOfAddingOpPhiSynonym() {
+    return chance_of_adding_opphi_synonym_;
+  }
   uint32_t GetChanceOfAddingParameters() { return chance_of_adding_parameters; }
   uint32_t GetChanceOfAddingRelaxedDecoration() {
     return chance_of_adding_relaxed_decoration_;
@@ -194,6 +197,9 @@ class FuzzerContext {
   }
   uint32_t GetChanceOfGoingDeeperWhenMakingAccessChain() {
     return chance_of_going_deeper_when_making_access_chain_;
+  }
+  uint32_t GetChanceOfInliningFunction() {
+    return chance_of_inlining_function_;
   }
   uint32_t GetChanceOfInterchangingSignednessOfIntegerOperands() {
     return chance_of_interchanging_signedness_of_integer_operands_;
@@ -364,6 +370,7 @@ class FuzzerContext {
   uint32_t chance_of_adding_loop_preheader_;
   uint32_t chance_of_adding_matrix_type_;
   uint32_t chance_of_adding_no_contraction_decoration_;
+  uint32_t chance_of_adding_opphi_synonym_;
   uint32_t chance_of_adding_parameters;
   uint32_t chance_of_adding_relaxed_decoration_;
   uint32_t chance_of_adding_store_;
@@ -383,6 +390,7 @@ class FuzzerContext {
   uint32_t chance_of_donating_additional_module_;
   uint32_t chance_of_going_deeper_to_insert_in_composite_;
   uint32_t chance_of_going_deeper_when_making_access_chain_;
+  uint32_t chance_of_inlining_function_;
   uint32_t chance_of_interchanging_signedness_of_integer_operands_;
   uint32_t chance_of_interchanging_zero_like_constants_;
   uint32_t chance_of_inverting_comparison_operators_;

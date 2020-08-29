@@ -619,6 +619,14 @@ bool InlinePass::GenInlineCode(
     assert(resId != 0);
     AddLoad(calleeTypeId, resId, returnVarId, &new_blk_ptr,
             call_inst_itr->dbg_line_inst(), call_inst_itr->GetDebugScope());
+  } else {
+    // Even though it is very unlikely, it is possible that the result id of
+    // the void-function call is used, so we need to generate an instruction
+    // with that result id.
+    std::unique_ptr<Instruction> undef_inst(
+        new Instruction(context(), SpvOpUndef, call_inst_itr->type_id(),
+                        call_inst_itr->result_id(), {}));
+    context()->AddGlobalValue(std::move(undef_inst));
   }
 
   // Move instructions of original caller block after call instruction.

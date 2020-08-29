@@ -49,8 +49,8 @@ class Shrinker {
   using InterestingnessFunction = std::function<bool(
       const std::vector<uint32_t>& binary, uint32_t counter)>;
 
-  // Constructs a shrinker from the given target environment.
-  Shrinker(spv_target_env env, uint32_t step_limit, bool validate_during_replay,
+  Shrinker(spv_target_env target_env, uint32_t step_limit,
+           bool validate_during_replay,
            spv_validator_options validator_options);
 
   // Disables copy/move constructor/assignment operations.
@@ -82,8 +82,25 @@ class Shrinker {
       protobufs::TransformationSequence* transformation_sequence_out) const;
 
  private:
-  struct Impl;                  // Opaque struct for holding internal data.
-  std::unique_ptr<Impl> impl_;  // Unique pointer to internal data.
+  // Returns the id bound for the given SPIR-V binary, which is assumed to be
+  // valid.
+  uint32_t GetIdBound(const std::vector<uint32_t>& binary) const;
+
+  // Target environment.
+  const spv_target_env target_env_;
+
+  // Message consumer.
+  MessageConsumer consumer_;
+
+  // Step limit to decide when to terminate shrinking early.
+  const uint32_t step_limit_;
+
+  // Determines whether to check for validity during the replaying of
+  // transformations.
+  const bool validate_during_replay_;
+
+  // Options to control validation.
+  spv_validator_options validator_options_;
 };
 
 }  // namespace fuzz

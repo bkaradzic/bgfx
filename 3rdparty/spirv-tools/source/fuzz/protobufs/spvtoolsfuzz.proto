@@ -413,6 +413,8 @@ message Transformation {
     TransformationReplaceAddSubMulWithCarryingExtended replace_add_sub_mul_with_carrying_extended = 66;
     TransformationPropagateInstructionUp propagate_instruction_up = 67;
     TransformationCompositeInsert composite_insert = 68;
+    TransformationInlineFunction inline_function = 69;
+    TransformationAddOpPhiSynonym add_opphi_synonym = 70;
     // Add additional option using the next available number.
   }
 }
@@ -743,6 +745,24 @@ message TransformationAddNoContractionDecoration {
   // Result id to be decorated
   uint32 result_id = 1;
 
+}
+
+message TransformationAddOpPhiSynonym {
+
+  // Adds an OpPhi instruction at the start of a block with n predecessors (pred_1, pred_2, ..., pred_n)
+  // and n related ids (id_1, id_2, ..., id_n) which are pairwise synonymous.
+  // The instruction will be of the form:
+  //       %fresh_id = OpPhi %type %id_1 %pred_1 %id_2 %pred_2 ... %id_n %pred_n
+  // and fresh_id will be recorded as being synonymous with all the other ids.
+
+  // Label id of the block
+  uint32 block_id = 1;
+
+  // Pairs (pred_i, id_i)
+  repeated UInt32Pair pred_to_id = 2;
+
+  // Fresh id for the new instruction
+  uint32 fresh_id = 3;
 }
 
 message TransformationAddParameter {
@@ -1100,6 +1120,20 @@ message TransformationFunctionCall {
   // A descriptor for an instruction in a block before which the new
   // OpFunctionCall instruction should be inserted
   InstructionDescriptor instruction_to_insert_before = 4;
+
+}
+
+message TransformationInlineFunction {
+
+  // This transformation inlines a function by mapping the function instructions to fresh ids.
+
+  // Result id of the function call instruction.
+  uint32 function_call_id = 1;
+
+  // For each result id defined by the called function,
+  // this map provides an associated fresh id that can
+  // be used in the inlined version of the function call.
+  repeated UInt32Pair result_id_map = 2;
 
 }
 

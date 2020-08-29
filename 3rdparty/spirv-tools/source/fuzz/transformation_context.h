@@ -15,7 +15,10 @@
 #ifndef SOURCE_FUZZ_TRANSFORMATION_CONTEXT_H_
 #define SOURCE_FUZZ_TRANSFORMATION_CONTEXT_H_
 
-#include "source/fuzz/fact_manager.h"
+#include <memory>
+
+#include "source/fuzz/fact_manager/fact_manager.h"
+#include "source/fuzz/overflow_id_source.h"
 #include "spirv-tools/libspirv.hpp"
 
 namespace spvtools {
@@ -26,15 +29,28 @@ namespace fuzz {
 class TransformationContext {
  public:
   // Constructs a transformation context with a given fact manager and validator
-  // options.
+  // options.  Overflow ids are not available from a transformation context
+  // constructed in this way.
   TransformationContext(FactManager* fact_manager,
                         spv_validator_options validator_options);
+
+  // Constructs a transformation context with a given fact manager, validator
+  // options and overflow id source.
+  TransformationContext(FactManager* fact_manager,
+                        spv_validator_options validator_options,
+                        std::unique_ptr<OverflowIdSource> overflow_id_source);
 
   ~TransformationContext();
 
   FactManager* GetFactManager() { return fact_manager_; }
 
   const FactManager* GetFactManager() const { return fact_manager_; }
+
+  OverflowIdSource* GetOverflowIdSource() { return overflow_id_source_.get(); }
+
+  const OverflowIdSource* GetOverflowIdSource() const {
+    return overflow_id_source_.get();
+  }
 
   spv_validator_options GetValidatorOptions() const {
     return validator_options_;
@@ -48,6 +64,8 @@ class TransformationContext {
   // Options to control validation when deciding whether transformations can be
   // applied.
   spv_validator_options validator_options_;
+
+  std::unique_ptr<OverflowIdSource> overflow_id_source_;
 };
 
 }  // namespace fuzz

@@ -624,11 +624,9 @@ Pass::Status SSARewritePass::Process() {
   for (auto& fn : *get_module()) {
     status =
         CombineStatus(status, SSARewriter(this).RewriteFunctionIntoSSA(&fn));
-    if (status == Status::SuccessWithChange) {
-      // Kill DebugDeclares for target variables.
-      for (auto var_id : seen_target_vars_) {
-        context()->get_debug_info_mgr()->KillDebugDeclares(var_id);
-      }
+    // Kill DebugDeclares for target variables.
+    for (auto var_id : seen_target_vars_) {
+      context()->get_debug_info_mgr()->KillDebugDeclares(var_id);
     }
     if (status == Status::Failure) {
       break;

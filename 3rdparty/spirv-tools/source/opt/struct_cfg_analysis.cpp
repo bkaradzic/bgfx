@@ -150,6 +150,19 @@ uint32_t StructuredCFGAnalysis::LoopContinueBlock(uint32_t bb_id) {
   return merge_inst->GetSingleWordInOperand(kContinueNodeIndex);
 }
 
+uint32_t StructuredCFGAnalysis::LoopNestingDepth(uint32_t bb_id) {
+  uint32_t result = 0;
+
+  // Find the merge block of the current loop as long as the block is inside a
+  // loop, exiting a loop for each iteration.
+  for (uint32_t merge_block_id = LoopMergeBlock(bb_id); merge_block_id != 0;
+       merge_block_id = LoopMergeBlock(merge_block_id)) {
+    result++;
+  }
+
+  return result;
+}
+
 uint32_t StructuredCFGAnalysis::SwitchMergeBlock(uint32_t bb_id) {
   uint32_t header_id = ContainingSwitch(bb_id);
   if (header_id == 0) {
