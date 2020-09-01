@@ -1840,8 +1840,11 @@ version(BindBgfx_Static)
 	 * _handle = Vertex buffer.
 	 * _startVertex = First vertex to render.
 	 * _numVertices = Number of vertices to render.
+	 * _layoutHandle = Vertex layout for aliasing vertex buffer. If invalid
+	 * handle is used, vertex layout used for creation
+	 * of vertex buffer will be used.
 	 */
-	void bgfx_set_vertex_buffer(byte _stream, bgfx_vertex_buffer_handle_t _handle, uint _startVertex, uint _numVertices);
+	void bgfx_set_vertex_buffer(byte _stream, bgfx_vertex_buffer_handle_t _handle, uint _startVertex, uint _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 	
 	/**
 	 * Set vertex buffer for draw primitive.
@@ -1850,8 +1853,11 @@ version(BindBgfx_Static)
 	 * _handle = Dynamic vertex buffer.
 	 * _startVertex = First vertex to render.
 	 * _numVertices = Number of vertices to render.
+	 * _layoutHandle = Vertex layout for aliasing vertex buffer. If invalid
+	 * handle is used, vertex layout used for creation
+	 * of vertex buffer will be used.
 	 */
-	void bgfx_set_dynamic_vertex_buffer(byte _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint _startVertex, uint _numVertices);
+	void bgfx_set_dynamic_vertex_buffer(byte _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint _startVertex, uint _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 	
 	/**
 	 * Set vertex buffer for draw primitive.
@@ -4076,8 +4082,11 @@ else
 		 * _handle = Vertex buffer.
 		 * _startVertex = First vertex to render.
 		 * _numVertices = Number of vertices to render.
+		 * _layoutHandle = Vertex layout for aliasing vertex buffer. If invalid
+		 * handle is used, vertex layout used for creation
+		 * of vertex buffer will be used.
 		 */
-		alias da_bgfx_set_vertex_buffer = void function(byte _stream, bgfx_vertex_buffer_handle_t _handle, uint _startVertex, uint _numVertices);
+		alias da_bgfx_set_vertex_buffer = void function(byte _stream, bgfx_vertex_buffer_handle_t _handle, uint _startVertex, uint _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 		da_bgfx_set_vertex_buffer bgfx_set_vertex_buffer;
 		
 		/**
@@ -4087,8 +4096,11 @@ else
 		 * _handle = Dynamic vertex buffer.
 		 * _startVertex = First vertex to render.
 		 * _numVertices = Number of vertices to render.
+		 * _layoutHandle = Vertex layout for aliasing vertex buffer. If invalid
+		 * handle is used, vertex layout used for creation
+		 * of vertex buffer will be used.
 		 */
-		alias da_bgfx_set_dynamic_vertex_buffer = void function(byte _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint _startVertex, uint _numVertices);
+		alias da_bgfx_set_dynamic_vertex_buffer = void function(byte _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint _startVertex, uint _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 		da_bgfx_set_dynamic_vertex_buffer bgfx_set_dynamic_vertex_buffer;
 		
 		/**
