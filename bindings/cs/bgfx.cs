@@ -4160,9 +4160,10 @@ public static partial class bgfx
 	/// <param name="_handle">Vertex buffer.</param>
 	/// <param name="_startVertex">First vertex to render.</param>
 	/// <param name="_numVertices">Number of vertices to render.</param>
+	/// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void set_vertex_buffer(byte _stream, VertexBufferHandle _handle, uint _startVertex, uint _numVertices);
+	public static extern unsafe void set_vertex_buffer(byte _stream, VertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexLayoutHandle _layoutHandle);
 	
 	/// <summary>
 	/// Set vertex buffer for draw primitive.
@@ -4172,9 +4173,10 @@ public static partial class bgfx
 	/// <param name="_handle">Dynamic vertex buffer.</param>
 	/// <param name="_startVertex">First vertex to render.</param>
 	/// <param name="_numVertices">Number of vertices to render.</param>
+	/// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void set_dynamic_vertex_buffer(byte _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices);
+	public static extern unsafe void set_dynamic_vertex_buffer(byte _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexLayoutHandle _layoutHandle);
 	
 	/// <summary>
 	/// Set vertex buffer for draw primitive.
