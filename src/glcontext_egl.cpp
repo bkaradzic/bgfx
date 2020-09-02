@@ -450,7 +450,7 @@ EGL_IMPORT
 			{                                                                                                                                                    \
 				if (NULL == _func)                                                                                                                               \
 				{                                                                                                                                                \
-					_func = (_proto)bx::dlsym(glesv2, #_import);                                                                                                 \
+					_func = BGFX_CAST_FUNCTION(_proto, bx::dlsym(glesv2, #_import));                                                                             \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                                                                                           \
 					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
 				}                                                                                                                                                \
@@ -460,7 +460,7 @@ EGL_IMPORT
 			{                                                                                                                                                    \
 				if (NULL == _func)                                                                                                                               \
 				{                                                                                                                                                \
-					_func = (_proto)eglGetProcAddress(#_import);                                                                                                 \
+					_func = BGFX_CAST_FUNCTION(_proto , eglGetProcAddress(#_import));                                                                            \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                                                                                           \
 					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")", #_import); \
 				}                                                                                                                                                \

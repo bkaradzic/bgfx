@@ -106,7 +106,7 @@ namespace bgfx { namespace gl
 		m_opengl32dll = bx::dlopen("opengl32.dll");
 		BGFX_FATAL(NULL != m_opengl32dll, Fatal::UnableToInitialize, "Failed to load opengl32.dll.");
 
-		wglGetProcAddress = (PFNWGLGETPROCADDRESSPROC)bx::dlsym(m_opengl32dll, "wglGetProcAddress");
+		wglGetProcAddress = BGFX_CAST_FUNCTION(PFNWGLGETPROCADDRESSPROC, bx::dlsym(m_opengl32dll, "wglGetProcAddress"));
 		BGFX_FATAL(NULL != wglGetProcAddress, Fatal::UnableToInitialize, "Failed get wglGetProcAddress.");
 
 
@@ -136,13 +136,13 @@ namespace bgfx { namespace gl
 
 		if (NULL != g_platformData.nwh && NULL == g_platformData.context )
 		{
-			wglMakeCurrent = (PFNWGLMAKECURRENTPROC)bx::dlsym(m_opengl32dll, "wglMakeCurrent");
+			wglMakeCurrent = BGFX_CAST_FUNCTION(PFNWGLMAKECURRENTPROC, bx::dlsym(m_opengl32dll, "wglMakeCurrent"));
 			BGFX_FATAL(NULL != wglMakeCurrent, Fatal::UnableToInitialize, "Failed get wglMakeCurrent.");
 
-			wglCreateContext = (PFNWGLCREATECONTEXTPROC)bx::dlsym(m_opengl32dll, "wglCreateContext");
+			wglCreateContext = BGFX_CAST_FUNCTION(PFNWGLCREATECONTEXTPROC, bx::dlsym(m_opengl32dll, "wglCreateContext"));
 			BGFX_FATAL(NULL != wglCreateContext, Fatal::UnableToInitialize, "Failed get wglCreateContext.");
 
-			wglDeleteContext = (PFNWGLDELETECONTEXTPROC)bx::dlsym(m_opengl32dll, "wglDeleteContext");
+			wglDeleteContext = BGFX_CAST_FUNCTION(PFNWGLDELETECONTEXTPROC, bx::dlsym(m_opengl32dll, "wglDeleteContext"));
 			BGFX_FATAL(NULL != wglDeleteContext, Fatal::UnableToInitialize, "Failed get wglDeleteContext.");
 
 			m_hdc = GetDC( (HWND)g_platformData.nwh);
@@ -171,10 +171,10 @@ namespace bgfx { namespace gl
 
 			HGLRC context = createContext(hdc);
 
-			wglGetExtensionsStringARB  = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
-			wglChoosePixelFormatARB    = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-			wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-			wglSwapIntervalEXT         = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+			wglGetExtensionsStringARB  = BGFX_CAST_FUNCTION(PFNWGLGETEXTENSIONSSTRINGARBPROC, wglGetProcAddress("wglGetExtensionsStringARB"));
+			wglChoosePixelFormatARB    = BGFX_CAST_FUNCTION(PFNWGLCHOOSEPIXELFORMATARBPROC, wglGetProcAddress("wglChoosePixelFormatARB"));
+			wglCreateContextAttribsARB = BGFX_CAST_FUNCTION(PFNWGLCREATECONTEXTATTRIBSARBPROC, wglGetProcAddress("wglCreateContextAttribsARB"));
+			wglSwapIntervalEXT         = BGFX_CAST_FUNCTION(PFNWGLSWAPINTERVALEXTPROC, wglGetProcAddress("wglSwapIntervalEXT"));
 
 			if (NULL != wglGetExtensionsStringARB)
 			{
@@ -391,10 +391,10 @@ namespace bgfx { namespace gl
 				{ \
 					if (NULL == _func) \
 					{ \
-						_func = (_proto)wglGetProcAddress(#_import); \
+						_func = BGFX_CAST_FUNCTION(_proto, wglGetProcAddress(#_import)); \
 						if (_func == NULL) \
 						{ \
-							_func = (_proto)bx::dlsym(m_opengl32dll, #_import); \
+							_func = BGFX_CAST_FUNCTION(_proto, bx::dlsym(m_opengl32dll, #_import)); \
 							BX_TRACE("    %p " #_func " (" #_import ")", _func); \
 						} \
 						else \
