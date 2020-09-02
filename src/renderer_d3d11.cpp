@@ -665,6 +665,7 @@ namespace bgfx { namespace d3d11
 			, m_ags(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_swapChain(NULL)
+			, m_needPresent(false)
 			, m_lost(false)
 			, m_numWindows(0)
 			, m_device(NULL)
@@ -686,7 +687,6 @@ namespace bgfx { namespace d3d11
 			, m_rtMsaa(false)
 			, m_timerQuerySupport(false)
 			, m_directAccessSupport(false)
-			, m_needPresent(false)
 		{
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(&m_scd, 0, sizeof(m_scd) );
