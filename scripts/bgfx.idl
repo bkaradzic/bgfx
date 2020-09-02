@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(108)
+version(109)
 
 typedef "bool"
 typedef "char"
@@ -2240,7 +2240,15 @@ func.Encoder.setVertexBuffer { cpponly }
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.Encoder.setVertexBuffer
+func.Encoder.setVertexBuffer { conly }
+	"void"
+	.stream       "uint8_t"            --- Vertex stream.
+	.handle       "VertexBufferHandle" --- Vertex buffer.
+	.startVertex  "uint32_t"           --- First vertex to render.
+	.numVertices  "uint32_t"           --- Number of vertices to render.
+
+--- Set vertex buffer for draw primitive.
+func.Encoder.setVertexBuffer { cname = "set_vertex_buffer_with_layout" }
 	"void"
 	.stream       "uint8_t"            --- Vertex stream.
 	.handle       "VertexBufferHandle" --- Vertex buffer.
@@ -2258,7 +2266,14 @@ func.Encoder.setVertexBuffer { cpponly }
 	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
+func.Encoder.setVertexBuffer { conly, cname = "set_dynamic_vertex_buffer" }
+	"void"
+	.stream       "uint8_t"                   --- Vertex stream.
+	.handle       "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
+	.startVertex  "uint32_t"                  --- First vertex to render.
+	.numVertices  "uint32_t"                  --- Number of vertices to render.
+
+func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer_with_layout" }
 	"void"
 	.stream       "uint8_t"                   --- Vertex stream.
 	.handle       "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
@@ -2276,7 +2291,15 @@ func.Encoder.setVertexBuffer { cpponly }
 	.tvb         "const TransientVertexBuffer*" --- Transient vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer" }
+func.Encoder.setVertexBuffer { conly, cname = "set_transient_vertex_buffer" }
+	"void"
+	.stream       "uint8_t"                      --- Vertex stream.
+	.tvb          "const TransientVertexBuffer*" --- Transient vertex buffer.
+	.startVertex  "uint32_t"                     --- First vertex to render.
+	.numVertices  "uint32_t"                     --- Number of vertices to render.
+
+--- Set vertex buffer for draw primitive.
+func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer_with_layout" }
 	"void"
 	.stream       "uint8_t"                      --- Vertex stream.
 	.tvb          "const TransientVertexBuffer*" --- Transient vertex buffer.
@@ -2770,7 +2793,15 @@ func.setVertexBuffer { cpponly }
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.setVertexBuffer
+func.setVertexBuffer { conly }
+	"void"
+	.stream      "uint8_t"                   --- Vertex stream.
+	.handle      "VertexBufferHandle"        --- Vertex buffer.
+	.startVertex "uint32_t"                  --- First vertex to render.
+	.numVertices "uint32_t"                  --- Number of vertices to render.
+
+--- Set vertex buffer for draw primitive.
+func.setVertexBuffer { cname = "set_vertex_buffer_with_layout" }
 	"void"
 	.stream      "uint8_t"                   --- Vertex stream.
 	.handle      "VertexBufferHandle"        --- Vertex buffer.
@@ -2788,7 +2819,15 @@ func.setVertexBuffer { cpponly }
 	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
+func.setVertexBuffer { conly, cname = "set_dynamic_vertex_buffer" }
+	"void"
+	.stream      "uint8_t"                   --- Vertex stream.
+	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
+	.startVertex "uint32_t"                  --- First vertex to render.
+	.numVertices "uint32_t"                  --- Number of vertices to render.
+
+--- Set vertex buffer for draw primitive.
+func.setVertexBuffer { cname = "set_dynamic_vertex_buffer_with_layout" }
 	"void"
 	.stream      "uint8_t"                   --- Vertex stream.
 	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
@@ -2807,12 +2846,24 @@ func.setVertexBuffer { cpponly }
 	.tvb         "const TransientVertexBuffer*" --- Transient vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.setVertexBuffer { cname = "set_transient_vertex_buffer" }
+func.setVertexBuffer { conly, cname = "set_transient_vertex_buffer" }
 	"void"
 	.stream      "uint8_t"                      --- Vertex stream.
 	.tvb         "const TransientVertexBuffer*" --- Transient vertex buffer.
 	.startVertex "uint32_t"                     --- First vertex to render.
 	.numVertices "uint32_t"                     --- Number of vertices to render.
+
+--- Set vertex buffer for draw primitive.
+func.setVertexBuffer { cname = "set_transient_vertex_buffer_with_layout" }
+	"void"
+	.stream      "uint8_t"                      --- Vertex stream.
+	.tvb         "const TransientVertexBuffer*" --- Transient vertex buffer.
+	.startVertex "uint32_t"                     --- First vertex to render.
+	.numVertices "uint32_t"                     --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle"          --- Vertex layout for aliasing vertex buffer. If invalid
+	                                            --- handle is used, vertex layout used for creation
+	                                            --- of vertex buffer will be used.
+	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set number of vertices for auto generated vertices use in conjuction
 --- with gl_VertexID.
