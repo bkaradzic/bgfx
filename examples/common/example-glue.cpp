@@ -150,9 +150,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		}
 		else if (ImGui::IsItemHovered() )
 		{
-			char tmp[1024];
-			bx::snprintf(tmp, BX_COUNTOF(tmp), "Documentation: %.*s", url.getLength(), url.getPtr() );
-			ImGui::SetTooltip(tmp);
+			ImGui::SetTooltip("Documentation: %.*s", url.getLength(), url.getPtr() );
 		}
 	}
 
