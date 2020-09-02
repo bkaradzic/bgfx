@@ -44,6 +44,8 @@
 		, _handleAlloc.getMaxHandles()                             \
 		)
 
+#define BGFX_CAST_FUNCTION(proto, func) ((proto)(void(*)(void))func)
+
 #if BGFX_CONFIG_MULTITHREADED
 #	define BGFX_MUTEX_SCOPE(_mutex) bx::MutexScope BX_CONCATENATE(mutexScope, __LINE__)(_mutex)
 #else

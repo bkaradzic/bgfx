@@ -188,7 +188,7 @@ namespace bgfx { namespace gl
 				{                                                                                                                                                \
 					_func = (_proto)emscripten_webgl1_get_proc_address(#_import);                                                                                \
 					if (!_func && webGLVersion >= 2)                                                                                                             \
-					    _func = (_proto)emscripten_webgl2_get_proc_address(#_import);                                                                            \
+					    _func = BGFX_CAST_FUNCTION(_proto, emscripten_webgl2_get_proc_address(#_import));                                                        \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                                                                                           \
 					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create WebGL/OpenGLES context. GetProcAddress(\"%s\")", #_import); \
 				}                                                                                                                                                \
