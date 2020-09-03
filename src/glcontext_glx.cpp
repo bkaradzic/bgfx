@@ -66,7 +66,7 @@ namespace bgfx { namespace gl
 		for(;;)
 		{
 			bx::StringView found = bx::strFind(searchStart, _ext);
-			if (found.isEmpty())
+			if (found.isEmpty() )
 			{
 				return false;
 			}
@@ -74,7 +74,7 @@ namespace bgfx { namespace gl
 			// We found the substring, but need an exact match, with a word
 			// boundary at both the front and back of the found spot.
 			if ((found.getPtr() == _extList || *(found.getPtr() - 1) == ' ')
-			&&  (found.getTerm() == end || *found.getTerm() == ' '))
+			&&  (found.getTerm() == end || *found.getTerm() == ' ') )
 			{
 				return true;
 			}
@@ -222,12 +222,16 @@ namespace bgfx { namespace gl
 		glXMakeCurrent(m_display, (::Window)g_platformData.nwh, m_context);
 		m_current = NULL;
 
-		const char* extensions = glXQueryExtensionsString(m_display, DefaultScreen(m_display));
+		const char* extensions = glXQueryExtensionsString(m_display, DefaultScreen(m_display) );
+
 		if (NULL != extensions)
 		{
 			bool foundSwapControl = false;
-			if (haveGlxExtension("GLX_EXT_swap_control", extensions)) {
-				glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT");
+
+			if (haveGlxExtension("GLX_EXT_swap_control", extensions) )
+			{
+				glXSwapIntervalEXT = bx::functionCast<PFNGLXSWAPINTERVALEXTPROC>(glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT") );
+
 				if (NULL != glXSwapIntervalEXT)
 				{
 					BX_TRACE("Using glXSwapIntervalEXT.");
@@ -235,8 +239,12 @@ namespace bgfx { namespace gl
 					foundSwapControl = true;
 				}
 			}
-			if (!foundSwapControl && haveGlxExtension("GLX_MESA_swap_control", extensions)) {
-				glXSwapIntervalMESA = (PFNGLXSWAPINTERVALMESAPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalMESA");
+
+			if (!foundSwapControl
+			&&  haveGlxExtension("GLX_MESA_swap_control", extensions) )
+			{
+				glXSwapIntervalMESA = bx::functionCast<PFNGLXSWAPINTERVALMESAPROC>(glXGetProcAddress( (const GLubyte*)"glXSwapIntervalMESA") );
+
 				if (NULL != glXSwapIntervalMESA)
 				{
 					BX_TRACE("Using glXSwapIntervalMESA.");
@@ -244,8 +252,12 @@ namespace bgfx { namespace gl
 					foundSwapControl = true;
 				}
 			}
-			if (!foundSwapControl && haveGlxExtension("GLX_SGI_swap_control", extensions)) {
-				glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress( (const GLubyte*)"glXSwapIntervalSGI");
+
+			if (!foundSwapControl
+			&&  haveGlxExtension("GLX_SGI_swap_control", extensions) )
+			{
+				glXSwapIntervalSGI = bx::functionCast<PFNGLXSWAPINTERVALSGIPROC>(glXGetProcAddress( (const GLubyte*)"glXSwapIntervalSGI") );
+
 				if (NULL != glXSwapIntervalSGI)
 				{
 					BX_TRACE("Using glXSwapIntervalSGI.");
@@ -348,16 +360,23 @@ namespace bgfx { namespace gl
 
 	void GlContext::import()
 	{
-#	define GL_EXTENSION(_optional, _proto, _func, _import) \
-				{ \
-					if (NULL == _func) \
-					{ \
-						_func = BGFX_CAST_FUNCTION(_proto, glXGetProcAddress( (const GLubyte*)#_import)); \
-						BX_TRACE("%p " #_func " (" #_import ")", _func); \
-						BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. glXGetProcAddress %s", #_import); \
-					} \
-				}
+		BX_TRACE("Import:");
+
+#	define GL_EXTENSION(_optional, _proto, _func, _import)                                       \
+		{                                                                                        \
+			if (NULL == _func)                                                                   \
+			{                                                                                    \
+				_func = bx::functionCast<_proto>(glXGetProcAddress( (const GLubyte*)#_import) ); \
+				BX_TRACE("%p " #_func " (" #_import ")", _func);                                 \
+				BGFX_FATAL(_optional || NULL != _func                                            \
+					, Fatal::UnableToInitialize                                                  \
+					, "Failed to create OpenGL context. glXGetProcAddress %s", #_import);        \
+			}                                                                                    \
+		}
+
 #	include "glimports.h"
+
+#	undef GL_EXTENSION
 	}
 
 } /* namespace gl */ } // namespace bgfx
