@@ -5193,8 +5193,8 @@ VK_DESTROY
 			m_height    = ti.height;
 			m_depth     = ti.depth;
 			m_numLayers = ti.numLayers;
-			m_requestedFormat = bgfx::TextureFormat::Enum(imageContainer.m_format);
-			m_textureFormat = getViableTextureFormat(imageContainer);
+			m_requestedFormat = uint8_t(imageContainer.m_format);
+			m_textureFormat   = uint8_t(getViableTextureFormat(imageContainer) );
 			m_format = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 				? s_textureFormat[m_textureFormat].m_fmtDsv
 				: (m_flags & BGFX_TEXTURE_SRGB) ? s_textureFormat[m_textureFormat].m_fmtSrgb : s_textureFormat[m_textureFormat].m_fmt

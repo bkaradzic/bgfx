@@ -83,6 +83,12 @@ namespace bgfx { namespace gl
 		}
 	}
 
+	template<typename ProtoT>
+	static ProtoT glXGetProcAddress(const char* _name)
+	{
+		return bx::functionCast<ProtoT>( (void*)::glXGetProcAddress( (const GLubyte*)_name) );
+	}
+
 	void GlContext::create(uint32_t _width, uint32_t _height)
 	{
 		BX_UNUSED(_width, _height);
@@ -190,7 +196,7 @@ namespace bgfx { namespace gl
 			m_context = glXCreateContext(m_display, m_visualInfo, 0, GL_TRUE);
 			BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create GL 2.1 context.");
 
-			glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress( (const GLubyte*)"glXCreateContextAttribsARB");
+			glXCreateContextAttribsARB = glXGetProcAddress<PFNGLXCREATECONTEXTATTRIBSARBPROC>("glXCreateContextAttribsARB");
 
 			if (NULL != glXCreateContextAttribsARB)
 			{
@@ -230,7 +236,7 @@ namespace bgfx { namespace gl
 
 			if (haveGlxExtension("GLX_EXT_swap_control", extensions) )
 			{
-				glXSwapIntervalEXT = bx::functionCast<PFNGLXSWAPINTERVALEXTPROC>(glXGetProcAddress( (const GLubyte*)"glXSwapIntervalEXT") );
+				glXSwapIntervalEXT = glXGetProcAddress<PFNGLXSWAPINTERVALEXTPROC>("glXSwapIntervalEXT");
 
 				if (NULL != glXSwapIntervalEXT)
 				{
@@ -243,7 +249,7 @@ namespace bgfx { namespace gl
 			if (!foundSwapControl
 			&&  haveGlxExtension("GLX_MESA_swap_control", extensions) )
 			{
-				glXSwapIntervalMESA = bx::functionCast<PFNGLXSWAPINTERVALMESAPROC>(glXGetProcAddress( (const GLubyte*)"glXSwapIntervalMESA") );
+				glXSwapIntervalMESA = glXGetProcAddress<PFNGLXSWAPINTERVALMESAPROC>("glXSwapIntervalMESA");
 
 				if (NULL != glXSwapIntervalMESA)
 				{
@@ -256,7 +262,7 @@ namespace bgfx { namespace gl
 			if (!foundSwapControl
 			&&  haveGlxExtension("GLX_SGI_swap_control", extensions) )
 			{
-				glXSwapIntervalSGI = bx::functionCast<PFNGLXSWAPINTERVALSGIPROC>(glXGetProcAddress( (const GLubyte*)"glXSwapIntervalSGI") );
+				glXSwapIntervalSGI = glXGetProcAddress<PFNGLXSWAPINTERVALSGIPROC>("glXSwapIntervalSGI");
 
 				if (NULL != glXSwapIntervalSGI)
 				{
@@ -362,16 +368,16 @@ namespace bgfx { namespace gl
 	{
 		BX_TRACE("Import:");
 
-#	define GL_EXTENSION(_optional, _proto, _func, _import)                                       \
-		{                                                                                        \
-			if (NULL == _func)                                                                   \
-			{                                                                                    \
-				_func = bx::functionCast<_proto>(glXGetProcAddress( (const GLubyte*)#_import) ); \
-				BX_TRACE("%p " #_func " (" #_import ")", _func);                                 \
-				BGFX_FATAL(_optional || NULL != _func                                            \
-					, Fatal::UnableToInitialize                                                  \
-					, "Failed to create OpenGL context. glXGetProcAddress %s", #_import);        \
-			}                                                                                    \
+#	define GL_EXTENSION(_optional, _proto, _func, _import)                                \
+		{                                                                                 \
+			if (NULL == _func)                                                            \
+			{                                                                             \
+				_func = glXGetProcAddress<_proto>(#_import);                              \
+				BX_TRACE("%p " #_func " (" #_import ")", _func);                          \
+				BGFX_FATAL(_optional || NULL != _func                                     \
+					, Fatal::UnableToInitialize                                           \
+					, "Failed to create OpenGL context. glXGetProcAddress %s", #_import); \
+			}                                                                             \
 		}
 
 #	include "glimports.h"

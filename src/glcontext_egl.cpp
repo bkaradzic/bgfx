@@ -452,7 +452,7 @@ EGL_IMPORT
 			{                                                                            \
 				if (NULL == _func)                                                       \
 				{                                                                        \
-					_func = bx::functionCast<_proto>(bx::dlsym(glesv2, #_import));       \
+					_func = bx::dlsym<_proto>(glesv2, #_import);                         \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                   \
 					BGFX_FATAL(_optional || NULL != _func                                \
 						, Fatal::UnableToInitialize                                      \
@@ -465,7 +465,7 @@ EGL_IMPORT
 			{                                                                            \
 				if (NULL == _func)                                                       \
 				{                                                                        \
-					_func = bx::functionCast<_proto>(eglGetProcAddress(#_import) );      \
+					_func = bx::dlsym<_proto>(eglGetProcAddress(#_import) );             \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                   \
 					BGFX_FATAL(_optional || NULL != _func                                \
 						, Fatal::UnableToInitialize                                      \
