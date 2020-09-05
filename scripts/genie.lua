@@ -3,6 +3,8 @@
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
+MODULE_DIR = path.getabsolute("../")
+
 newoption {
 	trigger = "with-amalgamated",
 	description = "Enable amalgamated build.",
@@ -96,7 +98,7 @@ newaction {
 		f = io.popen("git log --format=format:%H -1")
 		local sha1 = f:read("*a")
 		f:close()
-		io.output("../src/version.h")
+		io.output(path.join(MODULE_DIR, "src/version.h"))
 		io.write("/*\n")
 		io.write(" * Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n")
 		io.write(" * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n")
@@ -138,7 +140,6 @@ solution "bgfx"
 	language "C++"
 	startproject "example-00-helloworld"
 
-MODULE_DIR = path.getabsolute("../")
 BGFX_DIR   = path.getabsolute("..")
 BX_DIR     = os.getenv("BX_DIR")
 BIMG_DIR   = os.getenv("BIMG_DIR")
