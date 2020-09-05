@@ -249,6 +249,9 @@ static const uint32_t kArgumentBufferBinding = ~(3u);
 
 static const uint32_t kMaxArgumentBuffers = 8;
 
+// The arbitrary maximum for the nesting of array of array copies.
+static const uint32_t kArrayCopyMultidimMax = 6;
+
 // Decompiles SPIR-V to Metal Shading Language
 class CompilerMSL : public CompilerGLSL
 {
@@ -290,6 +293,7 @@ public:
 		bool swizzle_texture_samples = false;
 		bool tess_domain_origin_lower_left = false;
 		bool multiview = false;
+		bool multiview_layered_rendering = true;
 		bool view_index_from_device_index = false;
 		bool dispatch_base = false;
 		bool texture_1D_as_2D = false;
@@ -346,6 +350,12 @@ public:
 		// It will be translated as a compute kernel, so it can use the global invocation ID
 		// to index the output buffer.
 		bool vertex_for_tessellation = false;
+
+		// Assume that SubpassData images have multiple layers. Layered input attachments
+		// are addressed relative to the Layer output from the vertex pipeline. This option
+		// has no effect with multiview, since all input attachments are assumed to be layered
+		// and will be addressed using the current ViewIndex.
+		bool arrayed_subpass_input = false;
 
 		enum class IndexType
 		{
@@ -614,8 +624,6 @@ protected:
 		SPVFuncImplConvertYCbCrBT601,
 		SPVFuncImplConvertYCbCrBT2020,
 		SPVFuncImplDynamicImageSampler,
-
-		SPVFuncImplArrayCopyMultidimMax = 6
 	};
 
 	// If the underlying resource has been used for comparison then duplicate loads of that resource must be too

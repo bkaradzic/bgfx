@@ -1220,11 +1220,16 @@ void CompilerHLSL::declare_undefined_values()
 {
 	bool emitted = false;
 	ir.for_each_typed_id<SPIRUndef>([&](uint32_t, const SPIRUndef &undef) {
+		auto &type = this->get<SPIRType>(undef.basetype);
+		// OpUndef can be void for some reason ...
+		if (type.basetype == SPIRType::Void)
+			return;
+
 		string initializer;
-		if (options.force_zero_initialized_variables && type_can_zero_initialize(this->get<SPIRType>(undef.basetype)))
+		if (options.force_zero_initialized_variables && type_can_zero_initialize(type))
 			initializer = join(" = ", to_zero_initialized_expression(undef.basetype));
 
-		statement("static ", variable_decl(this->get<SPIRType>(undef.basetype), to_name(undef.self), undef.self),
+		statement("static ", variable_decl(type, to_name(undef.self), undef.self),
 		          initializer, ";");
 		emitted = true;
 	});

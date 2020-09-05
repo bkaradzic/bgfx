@@ -146,6 +146,7 @@ void CompilerMSL::build_implicit_builtins()
 	bool need_subgroup_ge_mask = !msl_options.is_ios() && (active_input_builtins.get(BuiltInSubgroupGeMask) ||
 	                                                       active_input_builtins.get(BuiltInSubgroupGtMask));
 	bool need_multiview = get_execution_model() == ExecutionModelVertex && !msl_options.view_index_from_device_index &&
+	                      msl_options.multiview_layered_rendering &&
 	                      (msl_options.multiview || active_input_builtins.get(BuiltInViewIndex));
 	bool need_dispatch_base =
 	    msl_options.dispatch_base && get_execution_model() == ExecutionModelGLCompute &&
@@ -172,6 +173,7 @@ void CompilerMSL::build_implicit_builtins()
 		bool has_subgroup_invocation_id = false;
 		bool has_subgroup_size = false;
 		bool has_view_idx = false;
+		bool has_layer = false;
 		uint32_t workgroup_id_type = 0;
 
 		// FIXME: Investigate the fact that there are no checks for the entry point interface variables.
@@ -195,12 +197,32 @@ void CompilerMSL::build_implicit_builtins()
 			if (var.storage != StorageClassInput)
 				return;
 
-			if (need_subpass_input && (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses) &&
-			    builtin == BuiltInFragCoord)
+			if (need_subpass_input && (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses))
 			{
-				mark_implicit_builtin(StorageClassInput, BuiltInFragCoord, var.self);
-				builtin_frag_coord_id = var.self;
-				has_frag_coord = true;
+				switch (builtin)
+				{
+				case BuiltInFragCoord:
+					mark_implicit_builtin(StorageClassInput, BuiltInFragCoord, var.self);
+					builtin_frag_coord_id = var.self;
+					has_frag_coord = true;
+					break;
+				case BuiltInLayer:
+					if (!msl_options.arrayed_subpass_input || msl_options.multiview)
+						break;
+					mark_implicit_builtin(StorageClassInput, BuiltInLayer, var.self);
+					builtin_layer_id = var.self;
+					has_layer = true;
+					break;
+				case BuiltInViewIndex:
+					if (!msl_options.multiview)
+						break;
+					mark_implicit_builtin(StorageClassInput, BuiltInViewIndex, var.self);
+					builtin_view_idx_id = var.self;
+					has_view_idx = true;
+					break;
+				default:
+					break;
+				}
 			}
 
 			if (need_sample_pos && builtin == BuiltInSampleId)
@@ -282,6 +304,12 @@ void CompilerMSL::build_implicit_builtins()
 					mark_implicit_builtin(StorageClassInput, BuiltInInstanceIndex, var.self);
 					has_instance_idx = true;
 					break;
+				case BuiltInBaseInstance:
+					// If a non-zero base instance is used, we need to adjust for it when calculating the view index.
+					builtin_base_instance_id = var.self;
+					mark_implicit_builtin(StorageClassInput, BuiltInBaseInstance, var.self);
+					has_base_instance = true;
+					break;
 				case BuiltInViewIndex:
 					builtin_view_idx_id = var.self;
 					mark_implicit_builtin(StorageClassInput, BuiltInViewIndex, var.self);
@@ -301,33 +329,79 @@ void CompilerMSL::build_implicit_builtins()
 		});
 
 		// Use Metal's native frame-buffer fetch API for subpass inputs.
-		if (!has_frag_coord && (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses) &&
-		    need_subpass_input)
+		if ((!has_frag_coord || (msl_options.multiview && !has_view_idx) ||
+		     (msl_options.arrayed_subpass_input && !msl_options.multiview && !has_layer)) &&
+		    (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses) && need_subpass_input)
 		{
-			uint32_t offset = ir.increase_bound_by(3);
-			uint32_t type_id = offset;
-			uint32_t type_ptr_id = offset + 1;
-			uint32_t var_id = offset + 2;
+			if (!has_frag_coord)
+			{
+				uint32_t offset = ir.increase_bound_by(3);
+				uint32_t type_id = offset;
+				uint32_t type_ptr_id = offset + 1;
+				uint32_t var_id = offset + 2;
 
-			// Create gl_FragCoord.
-			SPIRType vec4_type;
-			vec4_type.basetype = SPIRType::Float;
-			vec4_type.width = 32;
-			vec4_type.vecsize = 4;
-			set<SPIRType>(type_id, vec4_type);
+				// Create gl_FragCoord.
+				SPIRType vec4_type;
+				vec4_type.basetype = SPIRType::Float;
+				vec4_type.width = 32;
+				vec4_type.vecsize = 4;
+				set<SPIRType>(type_id, vec4_type);
 
-			SPIRType vec4_type_ptr;
-			vec4_type_ptr = vec4_type;
-			vec4_type_ptr.pointer = true;
-			vec4_type_ptr.parent_type = type_id;
-			vec4_type_ptr.storage = StorageClassInput;
-			auto &ptr_type = set<SPIRType>(type_ptr_id, vec4_type_ptr);
-			ptr_type.self = type_id;
+				SPIRType vec4_type_ptr;
+				vec4_type_ptr = vec4_type;
+				vec4_type_ptr.pointer = true;
+				vec4_type_ptr.parent_type = type_id;
+				vec4_type_ptr.storage = StorageClassInput;
+				auto &ptr_type = set<SPIRType>(type_ptr_id, vec4_type_ptr);
+				ptr_type.self = type_id;
 
-			set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
-			set_decoration(var_id, DecorationBuiltIn, BuiltInFragCoord);
-			builtin_frag_coord_id = var_id;
-			mark_implicit_builtin(StorageClassInput, BuiltInFragCoord, var_id);
+				set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+				set_decoration(var_id, DecorationBuiltIn, BuiltInFragCoord);
+				builtin_frag_coord_id = var_id;
+				mark_implicit_builtin(StorageClassInput, BuiltInFragCoord, var_id);
+			}
+
+			if (!has_layer && msl_options.arrayed_subpass_input && !msl_options.multiview)
+			{
+				uint32_t offset = ir.increase_bound_by(2);
+				uint32_t type_ptr_id = offset;
+				uint32_t var_id = offset + 1;
+
+				// Create gl_Layer.
+				SPIRType uint_type_ptr;
+				uint_type_ptr = get_uint_type();
+				uint_type_ptr.pointer = true;
+				uint_type_ptr.parent_type = get_uint_type_id();
+				uint_type_ptr.storage = StorageClassInput;
+				auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
+				ptr_type.self = get_uint_type_id();
+
+				set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+				set_decoration(var_id, DecorationBuiltIn, BuiltInLayer);
+				builtin_layer_id = var_id;
+				mark_implicit_builtin(StorageClassInput, BuiltInLayer, var_id);
+			}
+
+			if (!has_view_idx && msl_options.multiview)
+			{
+				uint32_t offset = ir.increase_bound_by(2);
+				uint32_t type_ptr_id = offset;
+				uint32_t var_id = offset + 1;
+
+				// Create gl_ViewIndex.
+				SPIRType uint_type_ptr;
+				uint_type_ptr = get_uint_type();
+				uint_type_ptr.pointer = true;
+				uint_type_ptr.parent_type = get_uint_type_id();
+				uint_type_ptr.storage = StorageClassInput;
+				auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
+				ptr_type.self = get_uint_type_id();
+
+				set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+				set_decoration(var_id, DecorationBuiltIn, BuiltInViewIndex);
+				builtin_view_idx_id = var_id;
+				mark_implicit_builtin(StorageClassInput, BuiltInViewIndex, var_id);
+			}
 		}
 
 		if (!has_sample_id && need_sample_pos)
@@ -352,7 +426,7 @@ void CompilerMSL::build_implicit_builtins()
 		}
 
 		if ((need_vertex_params && (!has_vertex_idx || !has_base_vertex || !has_instance_idx || !has_base_instance)) ||
-		    (need_multiview && (!has_instance_idx || !has_view_idx)))
+		    (need_multiview && (!has_instance_idx || !has_base_instance || !has_view_idx)))
 		{
 			uint32_t type_ptr_id = ir.increase_bound_by(1);
 
@@ -397,7 +471,7 @@ void CompilerMSL::build_implicit_builtins()
 				mark_implicit_builtin(StorageClassInput, BuiltInInstanceIndex, var_id);
 			}
 
-			if (need_vertex_params && !has_base_instance)
+			if (!has_base_instance) // Needed by both multiview and tessellation
 			{
 				uint32_t var_id = ir.increase_bound_by(1);
 
@@ -1303,6 +1377,18 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 					// Implicitly reads gl_FragCoord.
 					assert(builtin_frag_coord_id != 0);
 					added_arg_ids.insert(builtin_frag_coord_id);
+					if (msl_options.multiview)
+					{
+						// Implicitly reads gl_ViewIndex.
+						assert(builtin_view_idx_id != 0);
+						added_arg_ids.insert(builtin_view_idx_id);
+					}
+					else if (msl_options.arrayed_subpass_input)
+					{
+						// Implicitly reads gl_Layer.
+						assert(builtin_layer_id != 0);
+						added_arg_ids.insert(builtin_layer_id);
+					}
 				}
 
 				break;
@@ -3904,7 +3990,7 @@ void CompilerMSL::emit_custom_templates()
 // otherwise they will cause problems when linked together in a single Metallib.
 void CompilerMSL::emit_custom_functions()
 {
-	for (uint32_t i = SPVFuncImplArrayCopyMultidimMax; i >= 2; i--)
+	for (uint32_t i = kArrayCopyMultidimMax; i >= 2; i--)
 		if (spv_function_implementations.count(static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + i)))
 			spv_function_implementations.insert(static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + i - 1));
 
@@ -5339,6 +5425,10 @@ void CompilerMSL::declare_undefined_values()
 	bool emitted = false;
 	ir.for_each_typed_id<SPIRUndef>([&](uint32_t, SPIRUndef &undef) {
 		auto &type = this->get<SPIRType>(undef.basetype);
+		// OpUndef can be void for some reason ...
+		if (type.basetype == SPIRType::Void)
+			return;
+
 		statement("constant ", variable_decl(type, to_name(undef.self), undef.self), " = {};");
 		emitted = true;
 	});
@@ -7198,7 +7288,7 @@ void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id, StorageCla
 		// if this is the only use of array copies in our shader.
 		if (type.array.size() > 1)
 		{
-			if (type.array.size() > SPVFuncImplArrayCopyMultidimMax)
+			if (type.array.size() > kArrayCopyMultidimMax)
 				SPIRV_CROSS_THROW("Cannot support this many dimensions for arrays of arrays.");
 			auto func = static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + type.array.size());
 			add_spv_func_and_recompile(func);
@@ -8100,10 +8190,8 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 	case DimSubpassData:
 		// If we're using Metal's native frame-buffer fetch API for subpass inputs,
 		// this path will not be hit.
-		if (imgtype.image.ms)
-			tex_coords = "uint2(gl_FragCoord.xy)";
-		else
-			tex_coords = join("uint2(gl_FragCoord.xy), 0");
+		tex_coords = "uint2(gl_FragCoord.xy)";
+		alt_coord_component = 2;
 		break;
 
 	case Dim2D:
@@ -8220,12 +8308,30 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 		{
 			// Special case for cube arrays, face and layer are packed in one dimension.
 			if (imgtype.image.dim == DimCube && args.base.is_fetch)
+			{
 				farg_str += ", uint(" + to_extract_component_expression(args.coord, 2) + ") / 6u";
+			}
 			else
+			{
 				farg_str +=
 				    ", uint(" +
 				    round_fp_tex_coords(to_extract_component_expression(args.coord, alt_coord_component), coord_is_fp) +
 				    ")";
+				if (imgtype.image.dim == DimSubpassData)
+				{
+					if (msl_options.multiview)
+						farg_str += " + gl_ViewIndex";
+					else if (msl_options.arrayed_subpass_input)
+						farg_str += " + gl_Layer";
+				}
+			}
+		}
+		else if (imgtype.image.dim == DimSubpassData)
+		{
+			if (msl_options.multiview)
+				farg_str += ", gl_ViewIndex";
+			else if (msl_options.arrayed_subpass_input)
+				farg_str += ", gl_Layer";
 		}
 	}
 
@@ -9236,7 +9342,7 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 			switch (builtin)
 			{
 			case BuiltInViewIndex:
-				if (!msl_options.multiview)
+				if (!msl_options.multiview || !msl_options.multiview_layered_rendering)
 					break;
 				/* fallthrough */
 			case BuiltInFrontFacing:
@@ -9654,7 +9760,8 @@ bool CompilerMSL::is_direct_input_builtin(BuiltIn bi_type)
 	case BuiltInBaryCoordNoPerspNV:
 		return false;
 	case BuiltInViewIndex:
-		return get_execution_model() == ExecutionModelFragment && msl_options.multiview;
+		return get_execution_model() == ExecutionModelFragment && msl_options.multiview &&
+		       msl_options.multiview_layered_rendering;
 	// Any stage function in
 	case BuiltInDeviceIndex:
 	case BuiltInSubgroupEqMask:
@@ -10424,6 +10531,15 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 					// Since every physical device is rendering a different view,
 					// there's no need for layered rendering here.
 				}
+				else if (!msl_options.multiview_layered_rendering)
+				{
+					// In this case, the views are rendered one at a time. The view index, then,
+					// is just the first part of the "view mask".
+					entry_func.fixup_hooks_in.push_back([=]() {
+						statement("const ", builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
+						          to_expression(view_mask_buffer_id), "[0];");
+					});
+				}
 				else if (get_execution_model() == ExecutionModelFragment)
 				{
 					// Because we adjusted the view index in the vertex shader, we have to
@@ -10438,10 +10554,13 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 					// the view index in the instance index.
 					entry_func.fixup_hooks_in.push_back([=]() {
 						statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
-						          to_expression(view_mask_buffer_id), "[0] + ", to_expression(builtin_instance_idx_id),
-						          " % ", to_expression(view_mask_buffer_id), "[1];");
-						statement(to_expression(builtin_instance_idx_id), " /= ", to_expression(view_mask_buffer_id),
-						          "[1];");
+						          to_expression(view_mask_buffer_id), "[0] + (", to_expression(builtin_instance_idx_id),
+						          " - ", to_expression(builtin_base_instance_id), ") % ",
+						          to_expression(view_mask_buffer_id), "[1];");
+						statement(to_expression(builtin_instance_idx_id), " = (",
+						          to_expression(builtin_instance_idx_id), " - ",
+						          to_expression(builtin_base_instance_id), ") / ", to_expression(view_mask_buffer_id),
+						          "[1] + ", to_expression(builtin_base_instance_id), ";");
 					});
 					// In addition to setting the variable itself, we also need to
 					// set the render_target_array_index with it on output. We have to
@@ -11556,6 +11675,9 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 		case Dim1D:
 		case Dim2D:
 		case DimSubpassData:
+		{
+			bool subpass_array =
+			    img_type.dim == DimSubpassData && (msl_options.multiview || msl_options.arrayed_subpass_input);
 			if (img_type.dim == Dim1D && !msl_options.texture_1D_as_2D)
 			{
 				// Use a native Metal 1D texture
@@ -11570,7 +11692,7 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 				img_type_4.vecsize = 4;
 				return type_to_glsl(img_type_4);
 			}
-			if (img_type.ms && img_type.arrayed)
+			if (img_type.ms && (img_type.arrayed || subpass_array))
 			{
 				if (!msl_options.supports_msl_version(2, 1))
 					SPIRV_CROSS_THROW("Multisampled array textures are supported from 2.1.");
@@ -11578,11 +11700,12 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 			}
 			else if (img_type.ms)
 				img_type_name += "texture2d_ms";
-			else if (img_type.arrayed)
+			else if (img_type.arrayed || subpass_array)
 				img_type_name += "texture2d_array";
 			else
 				img_type_name += "texture2d";
 			break;
+		}
 		case Dim3D:
 			img_type_name += "texture3d";
 			break;

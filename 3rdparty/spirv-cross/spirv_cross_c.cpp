@@ -658,6 +658,14 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_MSL_VERTEX_INDEX_TYPE:
 		options->msl.vertex_index_type = static_cast<CompilerMSL::Options::IndexType>(value);
 		break;
+
+	case SPVC_COMPILER_OPTION_MSL_MULTIVIEW_LAYERED_RENDERING:
+		options->msl.multiview_layered_rendering = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_ARRAYED_SUBPASS_INPUT:
+		options->msl.arrayed_subpass_input = value != 0;
+		break;
 #endif
 
 	default:

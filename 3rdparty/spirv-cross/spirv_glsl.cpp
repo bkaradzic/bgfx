@@ -2881,11 +2881,16 @@ void CompilerGLSL::declare_undefined_values()
 {
 	bool emitted = false;
 	ir.for_each_typed_id<SPIRUndef>([&](uint32_t, const SPIRUndef &undef) {
+		auto &type = this->get<SPIRType>(undef.basetype);
+		// OpUndef can be void for some reason ...
+		if (type.basetype == SPIRType::Void)
+			return;
+
 		string initializer;
-		if (options.force_zero_initialized_variables && type_can_zero_initialize(this->get<SPIRType>(undef.basetype)))
+		if (options.force_zero_initialized_variables && type_can_zero_initialize(type))
 			initializer = join(" = ", to_zero_initialized_expression(undef.basetype));
 
-		statement(variable_decl(this->get<SPIRType>(undef.basetype), to_name(undef.self), undef.self), initializer,
+		statement(variable_decl(type, to_name(undef.self), undef.self), initializer,
 		          ";");
 		emitted = true;
 	});
@@ -9280,7 +9285,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		statement(declare_temporary(result_type, id), to_expression(vec), ";");
 		set<SPIRExpression>(id, to_name(id), result_type, true);
 		auto chain = access_chain_internal(id, &index, 1, 0, nullptr);
-		statement(chain, " = ", to_expression(comp), ";");
+		statement(chain, " = ", to_unpacked_expression(comp), ";");
 		break;
 	}
 
@@ -9382,7 +9387,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		statement(declare_temporary(result_type, id), to_expression(composite), ";");
 		set<SPIRExpression>(id, to_name(id), result_type, true);
 		auto chain = access_chain_internal(id, elems, length, ACCESS_CHAIN_INDEX_IS_LITERAL_BIT, nullptr);
-		statement(chain, " = ", to_expression(obj), ";");
+		statement(chain, " = ", to_unpacked_expression(obj), ";");
 
 		break;
 	}
@@ -9395,7 +9400,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		{
 			flush_variable_declaration(lhs);
 			flush_variable_declaration(rhs);
-			statement(to_expression(lhs), " = ", to_expression(rhs), ";");
+			statement(to_expression(lhs), " = ", to_unpacked_expression(rhs), ";");
 			register_write(lhs);
 		}
 		break;
