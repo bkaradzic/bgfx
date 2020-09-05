@@ -171,6 +171,16 @@ class DebugInfoManager {
   // Returns true if |instr| is a debug declaration instruction.
   bool IsDebugDeclare(Instruction* instr);
 
+  // Replace all uses of |before| id that is an operand of a DebugScope with
+  // |after| id if those uses (instruction) return true for |predicate|.
+  void ReplaceAllUsesInDebugScopeWithPredicate(
+      uint32_t before, uint32_t after,
+      const std::function<bool(Instruction*)>& predicate);
+
+  // Removes uses of DebugScope |inst| from |scope_id_to_users_| or uses of
+  // DebugInlinedAt |inst| from |inlinedat_id_to_users_|.
+  void ClearDebugScopeAndInlinedAtUses(Instruction* inst);
+
  private:
   IRContext* context() { return context_; }
 
@@ -227,6 +237,14 @@ class DebugInfoManager {
   // instructions whose operand is the variable or value.
   std::unordered_map<uint32_t, std::unordered_set<Instruction*>>
       var_id_to_dbg_decl_;
+
+  // Mapping from DebugScope ids to users.
+  std::unordered_map<uint32_t, std::unordered_set<Instruction*>>
+      scope_id_to_users_;
+
+  // Mapping from DebugInlinedAt ids to users.
+  std::unordered_map<uint32_t, std::unordered_set<Instruction*>>
+      inlinedat_id_to_users_;
 
   // DebugOperation whose OpCode is OpenCLDebugInfo100Deref.
   Instruction* deref_operation_;

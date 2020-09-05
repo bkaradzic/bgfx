@@ -707,6 +707,17 @@ class ValidationState_t {
   // Validates the storage class for the target environment.
   bool IsValidStorageClass(SpvStorageClass storage_class) const;
 
+  // Takes a Vulkan Valid Usage ID (VUID) as |id| and optional |reference| and
+  // will return a non-empty string only if ID is known and targeting Vulkan.
+  // VUIDs are found in the Vulkan-Docs repo in the form "[[VUID-ref-ref-id]]"
+  // where "id" is always an 5 char long number (with zeros padding) and matches
+  // to |id|. |reference| is used if there is a "common validity" and the VUID
+  // shares the same |id| value.
+  //
+  // More details about Vulkan validation can be found in Vulkan Guide:
+  // https://github.com/KhronosGroup/Vulkan-Guide/blob/master/chapters/validation_overview.md
+  std::string VkErrorID(uint32_t id, const char* reference = nullptr) const;
+
  private:
   ValidationState_t(const ValidationState_t&);
 

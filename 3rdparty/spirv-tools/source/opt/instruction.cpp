@@ -501,6 +501,40 @@ uint32_t Instruction::GetTypeComponent(uint32_t element) const {
   return subtype;
 }
 
+void Instruction::UpdateLexicalScope(uint32_t scope) {
+  dbg_scope_.SetLexicalScope(scope);
+  for (auto& i : dbg_line_insts_) {
+    i.dbg_scope_.SetLexicalScope(scope);
+  }
+  if (!IsDebugLineInst(opcode()) &&
+      context()->AreAnalysesValid(IRContext::kAnalysisDebugInfo)) {
+    context()->get_debug_info_mgr()->AnalyzeDebugInst(this);
+  }
+}
+
+void Instruction::UpdateDebugInlinedAt(uint32_t new_inlined_at) {
+  dbg_scope_.SetInlinedAt(new_inlined_at);
+  for (auto& i : dbg_line_insts_) {
+    i.dbg_scope_.SetInlinedAt(new_inlined_at);
+  }
+  if (!IsDebugLineInst(opcode()) &&
+      context()->AreAnalysesValid(IRContext::kAnalysisDebugInfo)) {
+    context()->get_debug_info_mgr()->AnalyzeDebugInst(this);
+  }
+}
+
+void Instruction::UpdateDebugInfoFrom(const Instruction* from) {
+  if (from == nullptr) return;
+  clear_dbg_line_insts();
+  if (!from->dbg_line_insts().empty())
+    dbg_line_insts().push_back(from->dbg_line_insts()[0]);
+  SetDebugScope(from->GetDebugScope());
+  if (!IsDebugLineInst(opcode()) &&
+      context()->AreAnalysesValid(IRContext::kAnalysisDebugInfo)) {
+    context()->get_debug_info_mgr()->AnalyzeDebugInst(this);
+  }
+}
+
 Instruction* Instruction::InsertBefore(std::unique_ptr<Instruction>&& inst) {
   inst.get()->InsertBefore(this);
   return inst.release();

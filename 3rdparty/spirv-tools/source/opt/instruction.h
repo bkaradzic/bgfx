@@ -301,14 +301,14 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   inline void SetDebugScope(const DebugScope& scope);
   inline const DebugScope& GetDebugScope() const { return dbg_scope_; }
   // Updates DebugInlinedAt of DebugScope and OpLine.
-  inline void UpdateDebugInlinedAt(uint32_t new_inlined_at);
+  void UpdateDebugInlinedAt(uint32_t new_inlined_at);
   inline uint32_t GetDebugInlinedAt() const {
     return dbg_scope_.GetInlinedAt();
   }
   // Updates lexical scope of DebugScope and OpLine.
-  inline void UpdateLexicalScope(uint32_t scope);
+  void UpdateLexicalScope(uint32_t scope);
   // Updates OpLine and DebugScope based on the information of |from|.
-  inline void UpdateDebugInfoFrom(const Instruction* from);
+  void UpdateDebugInfoFrom(const Instruction* from);
   // Remove the |index|-th operand
   void RemoveOperand(uint32_t index) {
     operands_.erase(operands_.begin() + index);
@@ -668,28 +668,6 @@ inline void Instruction::SetDebugScope(const DebugScope& scope) {
   for (auto& i : dbg_line_insts_) {
     i.dbg_scope_ = scope;
   }
-}
-
-inline void Instruction::UpdateLexicalScope(uint32_t scope) {
-  dbg_scope_.SetLexicalScope(scope);
-  for (auto& i : dbg_line_insts_) {
-    i.dbg_scope_.SetLexicalScope(scope);
-  }
-}
-
-inline void Instruction::UpdateDebugInlinedAt(uint32_t new_inlined_at) {
-  dbg_scope_.SetInlinedAt(new_inlined_at);
-  for (auto& i : dbg_line_insts_) {
-    i.dbg_scope_.SetInlinedAt(new_inlined_at);
-  }
-}
-
-inline void Instruction::UpdateDebugInfoFrom(const Instruction* from) {
-  if (from == nullptr) return;
-  clear_dbg_line_insts();
-  if (!from->dbg_line_insts().empty())
-    dbg_line_insts().push_back(from->dbg_line_insts()[0]);
-  SetDebugScope(from->GetDebugScope());
 }
 
 inline void Instruction::SetResultType(uint32_t ty_id) {
