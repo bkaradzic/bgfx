@@ -6256,7 +6256,7 @@ VK_DESTROY
 			VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) ) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
 			vkCmdBlitImage(
 				  commandBuffer
-				, src.m_textureImage
+				, VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_singleMsaaImage : src.m_textureImage
 				, src.m_currentImageLayout
 				, dst.m_textureImage
 				, dst.m_currentImageLayout
