@@ -1087,7 +1087,12 @@ namespace bgfx { namespace d3d11
 							desc.Height     = m_scd.height;
 							desc.MipLevels  = 1;
 							desc.ArraySize  = 1;
-							desc.Format     = m_scd.format;
+							/*
+							* According to https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/converting-data-color-space ,
+							* ONLY the backbuffer from swapchain can be created without *_SRGB format, custom backbuffer should be created the same
+							* format as well as render target view.
+							*/
+							desc.Format     = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) ? s_textureFormat[m_resolution.format].m_fmtSrgb : s_textureFormat[m_resolution.format].m_fmt;
 							desc.SampleDesc = m_scd.sampleDesc;
 							desc.Usage      = D3D11_USAGE_DEFAULT;
 							desc.BindFlags  = D3D11_BIND_RENDER_TARGET;
@@ -2461,7 +2466,7 @@ namespace bgfx { namespace d3d11
 						desc.Height     = m_scd.height;
 						desc.MipLevels  = 1;
 						desc.ArraySize  = 1;
-						desc.Format     = m_scd.format;
+						desc.Format     = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) ? s_textureFormat[m_resolution.format].m_fmtSrgb : s_textureFormat[m_resolution.format].m_fmt;
 						desc.SampleDesc = m_scd.sampleDesc;
 						desc.Usage      = D3D11_USAGE_DEFAULT;
 						desc.BindFlags  = D3D11_BIND_RENDER_TARGET;
