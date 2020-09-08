@@ -86,7 +86,7 @@ namespace bgfx { namespace gl
 	template<typename ProtoT>
 	static ProtoT glXGetProcAddress(const char* _name)
 	{
-		return bx::functionCast<ProtoT>( (void*)::glXGetProcAddress( (const GLubyte*)_name) );
+		return reinterpret_cast<ProtoT>( (void*)::glXGetProcAddress( (const GLubyte*)_name) );
 	}
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
