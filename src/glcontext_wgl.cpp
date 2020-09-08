@@ -171,10 +171,10 @@ namespace bgfx { namespace gl
 
 			HGLRC context = createContext(hdc);
 
-			wglGetExtensionsStringARB  = bx::functionCast<PFNWGLGETEXTENSIONSSTRINGARBPROC >(wglGetProcAddress("wglGetExtensionsStringARB") );
-			wglChoosePixelFormatARB    = bx::functionCast<PFNWGLCHOOSEPIXELFORMATARBPROC   >(wglGetProcAddress("wglChoosePixelFormatARB") );
-			wglCreateContextAttribsARB = bx::functionCast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB") );
-			wglSwapIntervalEXT         = bx::functionCast<PFNWGLSWAPINTERVALEXTPROC        >(wglGetProcAddress("wglSwapIntervalEXT") );
+			wglGetExtensionsStringARB  = bx::functionCast<PFNWGLGETEXTENSIONSSTRINGARBPROC >((void *)wglGetProcAddress("wglGetExtensionsStringARB") );
+			wglChoosePixelFormatARB    = bx::functionCast<PFNWGLCHOOSEPIXELFORMATARBPROC   >((void *)wglGetProcAddress("wglChoosePixelFormatARB") );
+			wglCreateContextAttribsARB = bx::functionCast<PFNWGLCREATECONTEXTATTRIBSARBPROC>((void *)wglGetProcAddress("wglCreateContextAttribsARB") );
+			wglSwapIntervalEXT         = bx::functionCast<PFNWGLSWAPINTERVALEXTPROC        >((void *)wglGetProcAddress("wglSwapIntervalEXT") );
 
 			if (NULL != wglGetExtensionsStringARB)
 			{
@@ -392,7 +392,7 @@ namespace bgfx { namespace gl
 		{                                                                                      \
 			if (NULL == _func)                                                                 \
 			{                                                                                  \
-				_func = bx::functionCast<_proto>(wglGetProcAddress(#_import) );                \
+				_func = bx::functionCast<_proto>((void *)wglGetProcAddress(#_import) );        \
 				if (NULL == _func)                                                             \
 				{                                                                              \
 					_func = bx::dlsym<_proto>(m_opengl32dll, #_import);                        \
