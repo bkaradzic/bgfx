@@ -2080,7 +2080,8 @@ namespace bgfx { namespace d3d12
 
 					if (1 < getResourceDesc(m_backBufferColor[ii]).DepthOrArraySize)
 					{
-						rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+						rtvDesc.ViewDimension = (NULL == m_msaaRt) ?
+							D3D12_RTV_DIMENSION_TEXTURE2DARRAY : D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
 						rtvDesc.Texture2DArray.FirstArraySlice = 0;
 						rtvDesc.Texture2DArray.ArraySize = getResourceDesc(m_backBufferColor[ii]).DepthOrArraySize;
 						rtvDesc.Texture2DArray.MipSlice = 0;
@@ -2088,7 +2089,8 @@ namespace bgfx { namespace d3d12
 					}
 					else
 					{
-						rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+						rtvDesc.ViewDimension = (NULL == m_msaaRt) ?
+							D3D12_RTV_DIMENSION_TEXTURE2D : D3D12_RTV_DIMENSION_TEXTURE2DMS;
 						rtvDesc.Texture2D.MipSlice = 0;
 						rtvDesc.Texture2D.PlaneSlice = 0;
 					}
