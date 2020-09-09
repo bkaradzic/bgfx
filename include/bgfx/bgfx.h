@@ -271,6 +271,10 @@ namespace bgfx
             Float,
             Vec2,
             Vec3,
+
+            Int,
+            UInt,
+            Bool,
             
 			Count
 		};

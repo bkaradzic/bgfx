@@ -275,7 +275,10 @@ typedef enum bgfx_uniform_type
     BGFX_UNIFORM_TYPE_MAT4,                   /** ( 4) 4x4 matrix.                    */
     BGFX_UNIFORM_TYPE_FLOAT,                  /** ( 5) float.                         */
     BGFX_UNIFORM_TYPE_VEC2,                   /** ( 6) 2 floats vector.               */
-    BGFX_UNIFORM_TYPE_VEC3,                   /** ( 7) 3 floats vector.               */
+    BGFX_UNIFORM_TYPE_VEC3,                   /** ( 7) 3 floats vector.               */    
+    BGFX_UNIFORM_TYPE_UINT,
+    BGFX_UNIFORM_TYPE_INT,
+    BGFX_UNIFORM_TYPE_BOOL,
     
     BGFX_UNIFORM_TYPE_COUNT
 

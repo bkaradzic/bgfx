@@ -325,9 +325,9 @@ namespace bgfx { namespace mtl
 	{
 		switch (_type)
 		{
-		case MTLDataTypeUInt:
-		case MTLDataTypeInt:
-			return UniformType::Sampler;
+//		case MTLDataTypeUInt:
+//		case MTLDataTypeInt:
+//			return UniformType::Sampler;
 
 		case MTLDataTypeFloat:
             return UniformType::Float;
@@ -337,6 +337,15 @@ namespace bgfx { namespace mtl
             return UniformType::Vec3;
 		case MTLDataTypeFloat4:
 			return UniformType::Vec4;
+                
+        case MTLDataTypeUInt:
+            return UniformType::UInt;
+                
+        case MTLDataTypeInt:
+            return UniformType::Int;
+
+        case MTLDataTypeBool:
+            return UniformType::Bool;
 
 		case MTLDataTypeFloat3x3:
 			return UniformType::Mat3;
@@ -1491,9 +1500,12 @@ namespace bgfx { namespace mtl
 					CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
 					CASE_IMPLEMENT_UNIFORM(Vec4,    F, float);
 					CASE_IMPLEMENT_UNIFORM(Mat4,    F, float);
-                    CASE_IMPLEMENT_UNIFORM(Float,    F, float);
+                    CASE_IMPLEMENT_UNIFORM(Float,   F, float);
                     CASE_IMPLEMENT_UNIFORM(Vec2,    F, float);
-                    CASE_IMPLEMENT_UNIFORM(Vec3,    F, float);
+                    CASE_IMPLEMENT_UNIFORM(Vec3,    F, float);                
+                    CASE_IMPLEMENT_UNIFORM(UInt,    I, uint32_t);
+                    CASE_IMPLEMENT_UNIFORM(Int,     I, int32_t);
+                    CASE_IMPLEMENT_UNIFORM(Bool,    I, uint32_t);
                         
 				case UniformType::End:
 					break;
