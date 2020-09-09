@@ -2078,11 +2078,11 @@ namespace bgfx { namespace d3d12
 						? s_textureFormat[m_resolution.format].m_fmtSrgb
 						: s_textureFormat[m_resolution.format].m_fmt;
 
-					if (1 < m_backBufferColor[ii]->GetDesc().DepthOrArraySize)
+					if (1 < getResourceDesc(m_backBufferColor[ii]).DepthOrArraySize)
 					{
 						rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 						rtvDesc.Texture2DArray.FirstArraySlice = 0;
-						rtvDesc.Texture2DArray.ArraySize = m_backBufferColor[ii]->GetDesc().DepthOrArraySize;
+						rtvDesc.Texture2DArray.ArraySize = getResourceDesc(m_backBufferColor[ii]).DepthOrArraySize;
 						rtvDesc.Texture2DArray.MipSlice = 0;
 						rtvDesc.Texture2DArray.PlaneSlice = 0;
 					}
