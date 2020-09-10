@@ -23,6 +23,13 @@ namespace bgfx { namespace gl
 
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
+#	undef GL_IMPORT
+
+	template<typename ProtoT>
+	static ProtoT wglGetProc(const char* _name)
+	{
+		return reinterpret_cast<ProtoT>( (void*)wglGetProcAddress(_name) );
+	}
 
 	struct SwapChainGL
 	{
@@ -109,8 +116,6 @@ namespace bgfx { namespace gl
 		wglGetProcAddress = bx::dlsym<PFNWGLGETPROCADDRESSPROC>(m_opengl32dll, "wglGetProcAddress");
 		BGFX_FATAL(NULL != wglGetProcAddress, Fatal::UnableToInitialize, "Failed get wglGetProcAddress.");
 
-
-
 		// If g_platformHooks.nwh is NULL, the assumption is that GL context was created
 		// by user (for example, using SDL, GLFW, etc.)
 		BX_WARN(NULL != g_platformData.nwh
@@ -171,10 +176,10 @@ namespace bgfx { namespace gl
 
 			HGLRC context = createContext(hdc);
 
-			wglGetExtensionsStringARB  = bx::functionCast<PFNWGLGETEXTENSIONSSTRINGARBPROC >(wglGetProcAddress("wglGetExtensionsStringARB") );
-			wglChoosePixelFormatARB    = bx::functionCast<PFNWGLCHOOSEPIXELFORMATARBPROC   >(wglGetProcAddress("wglChoosePixelFormatARB") );
-			wglCreateContextAttribsARB = bx::functionCast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB") );
-			wglSwapIntervalEXT         = bx::functionCast<PFNWGLSWAPINTERVALEXTPROC        >(wglGetProcAddress("wglSwapIntervalEXT") );
+			wglGetExtensionsStringARB  = wglGetProc<PFNWGLGETEXTENSIONSSTRINGARBPROC >("wglGetExtensionsStringARB");
+			wglChoosePixelFormatARB    = wglGetProc<PFNWGLCHOOSEPIXELFORMATARBPROC   >("wglChoosePixelFormatARB");
+			wglCreateContextAttribsARB = wglGetProc<PFNWGLCREATECONTEXTATTRIBSARBPROC>("wglCreateContextAttribsARB");
+			wglSwapIntervalEXT         = wglGetProc<PFNWGLSWAPINTERVALEXTPROC        >("wglSwapIntervalEXT");
 
 			if (NULL != wglGetExtensionsStringARB)
 			{
@@ -392,7 +397,7 @@ namespace bgfx { namespace gl
 		{                                                                                      \
 			if (NULL == _func)                                                                 \
 			{                                                                                  \
-				_func = bx::functionCast<_proto>(wglGetProcAddress(#_import) );                \
+				_func = wglGetProc<_proto>(#_import);                                          \
 				if (NULL == _func)                                                             \
 				{                                                                              \
 					_func = bx::dlsym<_proto>(m_opengl32dll, #_import);                        \
