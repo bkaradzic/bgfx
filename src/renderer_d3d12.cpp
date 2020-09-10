@@ -989,7 +989,9 @@ namespace bgfx { namespace d3d12
 						resourceDesc.Width      = m_scd.width;
 						resourceDesc.Height     = m_scd.height;
 						resourceDesc.MipLevels  = 1;
-						resourceDesc.Format     = m_scd.format;
+						resourceDesc.Format     = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
+													? s_textureFormat[m_resolution.format].m_fmtSrgb
+													: s_textureFormat[m_resolution.format].m_fmt;
 						resourceDesc.SampleDesc = m_scd.sampleDesc;
 						resourceDesc.Layout     = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 						resourceDesc.Flags      = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
@@ -2300,7 +2302,9 @@ namespace bgfx { namespace d3d12
 						resourceDesc.Width      = m_scd.width;
 						resourceDesc.Height     = m_scd.height;
 						resourceDesc.MipLevels  = 1;
-						resourceDesc.Format     = m_scd.format;
+						resourceDesc.Format     = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
+													? s_textureFormat[m_resolution.format].m_fmtSrgb
+													: s_textureFormat[m_resolution.format].m_fmt;
 						resourceDesc.SampleDesc = m_scd.sampleDesc;
 						resourceDesc.Layout     = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 						resourceDesc.Flags      = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
