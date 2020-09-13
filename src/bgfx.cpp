@@ -1869,7 +1869,7 @@ namespace bgfx
 		frameNoRenderWait();
 
 		m_encoderHandle = bx::createHandleAlloc(g_allocator, _init.limits.maxEncoders);
-		m_encoder       = (EncoderImpl*)BX_ALIGNED_ALLOC(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders, 16);
+		m_encoder       = (EncoderImpl*)BX_ALIGNED_ALLOC(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders, alignof(EncoderImpl));
 		m_encoderStats  = (EncoderStats*)BX_ALLOC(g_allocator, sizeof(EncoderStats)*_init.limits.maxEncoders);
 		for (uint32_t ii = 0, num = _init.limits.maxEncoders; ii < num; ++ii)
 		{
