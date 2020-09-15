@@ -3310,7 +3310,7 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			BX_ASSERT(0 == (_flags &  BGFX_BUFFER_COMPUTE_READ_WRITE), "Cannot initialize compute buffer from CPU.");
+			//BX_ASSERT(0 == (_flags &  BGFX_BUFFER_COMPUTE_READ_WRITE), "Cannot initialize compute buffer from CPU.");
 			const uint32_t indexSize = 0 == (_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 			DynamicIndexBufferHandle handle = createDynamicIndexBuffer(_mem->size/indexSize, _flags);
 
@@ -3332,7 +3332,7 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("updateDynamicIndexBuffer", m_dynamicIndexBufferHandle, _handle);
 
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
-			BX_ASSERT(0 == (dib.m_flags &  BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU buffer from CPU.");
+			//BX_ASSERT(0 == (dib.m_flags &  BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU buffer from CPU.");
 			const uint32_t indexSize = 0 == (dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 
 			if (dib.m_size < _mem->size
