@@ -1597,6 +1597,7 @@ namespace bgfx
 				, s_capsFlags[ii].m_str
 				);
 		}
+		BX_UNUSED(s_capsFlags);
 
 		BX_TRACE("");
 		BX_TRACE("Limits:");
