@@ -510,12 +510,12 @@ namespace bgfx { namespace mtl
 
 				g_caps.supported |= m_device.supportsFeatureSet( (MTLFeatureSet)4 /* MTLFeatureSet_iOS_GPUFamily3_v1 */)
 					? BGFX_CAPS_DRAW_INDIRECT
-					| 0
+					: 0
 					;
 
 				g_caps.supported |= m_device.supportsFeatureSet( (MTLFeatureSet)11 /* MTLFeatureSet_iOS_GPUFamily4_v1 */)
 					? BGFX_CAPS_TEXTURE_CUBE_ARRAY
-					| 0
+					: 0
 					;
 			}
 			else if (BX_ENABLED(BX_PLATFORM_OSX) )
