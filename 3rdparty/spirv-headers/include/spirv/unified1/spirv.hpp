@@ -1940,9 +1940,9 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpPtrEqual: *hasResult = true; *hasResultType = true; break;
     case OpPtrNotEqual: *hasResult = true; *hasResultType = true; break;
     case OpPtrDiff: *hasResult = true; *hasResultType = true; break;
+    case OpTerminateInvocation: *hasResult = false; *hasResultType = false; break;
     case OpSubgroupBallotKHR: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupFirstInvocationKHR: *hasResult = true; *hasResultType = true; break;
-    case OpTerminateInvocation: *hasResult = false; *hasResultType = false; break;
     case OpSubgroupAllKHR: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupAnyKHR: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupAllEqualKHR: *hasResult = true; *hasResultType = true; break;

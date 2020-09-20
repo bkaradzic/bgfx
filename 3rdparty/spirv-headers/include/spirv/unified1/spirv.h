@@ -1944,9 +1944,9 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpPtrEqual: *hasResult = true; *hasResultType = true; break;
     case SpvOpPtrNotEqual: *hasResult = true; *hasResultType = true; break;
     case SpvOpPtrDiff: *hasResult = true; *hasResultType = true; break;
+    case SpvOpTerminateInvocation: *hasResult = false; *hasResultType = false; break;
     case SpvOpSubgroupBallotKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupFirstInvocationKHR: *hasResult = true; *hasResultType = true; break;
-    case SpvOpTerminateInvocation: *hasResult = false; *hasResultType = false; break;
     case SpvOpSubgroupAllKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupAnyKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupAllEqualKHR: *hasResult = true; *hasResultType = true; break;

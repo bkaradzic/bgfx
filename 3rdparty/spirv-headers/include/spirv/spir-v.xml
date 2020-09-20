@@ -74,7 +74,8 @@
         <id value="21"  vendor="Google" tool="Clspv" comment="Contact David Neto, dneto@google.com"/>
         <id value="22"  vendor="Google" tool="MLIR SPIR-V Serializer" comment="Contact Lei Zhang, antiagainst@google.com"/>
         <id value="23"  vendor="Google" tool="Tint Compiler" comment="Contact David Neto, dneto@google.com"/>
-        <unused start="24" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="24"  vendor="Google" tool="ANGLE Shader Compiler" comment="Contact Shahbaz Youssefi, syoussefi@google.com"/>
+        <unused start="25" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->
