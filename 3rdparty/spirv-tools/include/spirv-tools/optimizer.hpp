@@ -764,7 +764,7 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // initialization checking, both of which require input buffer support.
 Optimizer::PassToken CreateInstBindlessCheckPass(
     uint32_t desc_set, uint32_t shader_id, bool input_length_enable = false,
-    bool input_init_enable = false);
+    bool input_init_enable = false, bool input_buff_oob_enable = false);
 
 // Create a pass to instrument physical buffer address checking
 // This pass instruments all physical buffer address references to check that

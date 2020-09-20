@@ -40,6 +40,9 @@ struct spv_fuzzer_options_t {
 
   // See spvFuzzerOptionsValidateAfterEveryPass.
   bool fuzzer_pass_validation_enabled;
+
+  // See spvFuzzerOptionsEnableAllPasses.
+  bool all_passes_enabled;
 };
 
 #endif  // SOURCE_SPIRV_FUZZER_OPTIONS_H_

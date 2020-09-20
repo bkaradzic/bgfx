@@ -150,7 +150,7 @@ SSAPropagator::PropStatus CCPPass::VisitAssignment(Instruction* instr) {
     // that CCP has modified the IR, independently of whether the constant is
     // actually propagated. See
     // https://github.com/KhronosGroup/SPIRV-Tools/issues/3636 for details.
-    if (folded_inst->result_id() == next_id) created_new_constant_ = true;
+    if (folded_inst->result_id() >= next_id) created_new_constant_ = true;
 
     return SSAPropagator::kInteresting;
   }

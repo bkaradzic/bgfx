@@ -22,3 +22,4 @@
 {21, "Google", "Clspv", "Google Clspv"},
 {22, "Google", "MLIR SPIR-V Serializer", "Google MLIR SPIR-V Serializer"},
 {23, "Google", "Tint Compiler", "Google Tint Compiler"},
+{24, "Google", "ANGLE Shader Compiler", "Google ANGLE Shader Compiler"},

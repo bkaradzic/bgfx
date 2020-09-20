@@ -38,7 +38,7 @@ class RemoveUnusedInstructionReductionOpportunityFinder
   std::string GetName() const final;
 
   std::vector<std::unique_ptr<ReductionOpportunity>> GetAvailableOpportunities(
-      opt::IRContext* context) const final;
+      opt::IRContext* context, uint32_t target_function) const final;
 
  private:
   // Returns true if and only if the only uses of |inst| are by decorations that

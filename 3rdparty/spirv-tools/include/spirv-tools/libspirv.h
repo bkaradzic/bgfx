@@ -675,6 +675,13 @@ SPIRV_TOOLS_EXPORT void spvReducerOptionsSetStepLimit(
 SPIRV_TOOLS_EXPORT void spvReducerOptionsSetFailOnValidationError(
     spv_reducer_options options, bool fail_on_validation_error);
 
+// Sets the function that the reducer should target.  If set to zero the reducer
+// will target all functions as well as parts of the module that lie outside
+// functions.  Otherwise the reducer will restrict reduction to the function
+// with result id |target_function|, which is required to exist.
+SPIRV_TOOLS_EXPORT void spvReducerOptionsSetTargetFunction(
+    spv_reducer_options options, uint32_t target_function);
+
 // Creates a fuzzer options object with default options. Returns a valid
 // options object. The object remains valid until it is passed into
 // |spvFuzzerOptionsDestroy|.
@@ -707,6 +714,11 @@ SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetShrinkerStepLimit(
 // Enables running the validator after every pass is applied during a fuzzing
 // run.
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableFuzzerPassValidation(
+    spv_fuzzer_options options);
+
+// Enables all fuzzer passes during a fuzzing run (instead of a random subset
+// of passes).
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableAllPasses(
     spv_fuzzer_options options);
 
 // Encodes the given SPIR-V assembly text to its binary representation. The

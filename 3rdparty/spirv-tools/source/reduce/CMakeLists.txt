@@ -50,6 +50,7 @@ set(SPIRV_TOOLS_REDUCE_SOURCES
         operand_to_dominating_id_reduction_opportunity_finder.cpp
         reducer.cpp
         reduction_opportunity.cpp
+        reduction_opportunity_finder.cpp
         reduction_pass.cpp
         reduction_util.cpp
         remove_block_reduction_opportunity.cpp

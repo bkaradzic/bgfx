@@ -731,3 +731,20 @@ bool spvOpcodeIsAccessChain(SpvOp opcode) {
       return false;
   }
 }
+
+bool spvOpcodeIsBit(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpShiftRightLogical:
+    case SpvOpShiftRightArithmetic:
+    case SpvOpShiftLeftLogical:
+    case SpvOpBitwiseOr:
+    case SpvOpBitwiseXor:
+    case SpvOpBitwiseAnd:
+    case SpvOpNot:
+    case SpvOpBitReverse:
+    case SpvOpBitCount:
+      return true;
+    default:
+      return false;
+  }
+}
