@@ -1012,8 +1012,8 @@ static const yytype_uint16 yyrline[] =
     3603,  3611,  3615,  3628,  3632,  3639,  3639,  3659,  3662,  3668,
     3680,  3692,  3696,  3703,  3703,  3718,  3718,  3734,  3734,  3755,
     3758,  3764,  3767,  3773,  3777,  3784,  3789,  3794,  3801,  3804,
-    3813,  3817,  3826,  3829,  3833,  3842,  3842,  3865,  3871,  3874,
-    3879,  3882
+    3813,  3817,  3826,  3829,  3833,  3842,  3842,  3884,  3890,  3893,
+    3898,  3901
 };
 #endif
 
@@ -10298,12 +10298,20 @@ yyreduce:
     {
         (yyvsp[0].interm).function = parseContext.handleFunctionDeclarator((yyvsp[0].interm).loc, *(yyvsp[0].interm).function, false /* not prototype */);
         (yyvsp[0].interm).intermNode = parseContext.handleFunctionDefinition((yyvsp[0].interm).loc, *(yyvsp[0].interm).function);
+
+        // For ES 100 only, according to ES shading language 100 spec: A function
+        // body has a scope nested inside the function's definition.
+        if (parseContext.profile == EEsProfile && parseContext.version == 100)
+        {
+            parseContext.symbolTable.push();
+            ++parseContext.statementNestingLevel;
+        }
     }
-#line 10303 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 10311 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
 
   case 586:
-#line 3846 "MachineIndependent/glslang.y" /* yacc.c:1646  */
+#line 3854 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
         //   May be best done as post process phase on intermediate code
         if (parseContext.currentFunctionType->getBasicType() != EbtVoid && ! parseContext.functionReturnsValue)
@@ -10318,53 +10326,64 @@ yyreduce:
         (yyval.interm.intermNode)->getAsAggregate()->setOptimize(parseContext.contextPragma.optimize);
         (yyval.interm.intermNode)->getAsAggregate()->setDebug(parseContext.contextPragma.debug);
         (yyval.interm.intermNode)->getAsAggregate()->setPragmaTable(parseContext.contextPragma.pragmaTable);
+
+        // Set currentFunctionType to empty pointer when goes outside of the function
+        parseContext.currentFunctionType = nullptr;
+
+        // For ES 100 only, according to ES shading language 100 spec: A function
+        // body has a scope nested inside the function's definition.
+        if (parseContext.profile == EEsProfile && parseContext.version == 100)
+        {
+            parseContext.symbolTable.pop(&parseContext.defaultPrecision[0]);
+            --parseContext.statementNestingLevel;
+        }
     }
-#line 10323 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 10342 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
 
   case 587:
-#line 3865 "MachineIndependent/glslang.y" /* yacc.c:1646  */
+#line 3884 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
         (yyval.interm.attributes) = (yyvsp[-2].interm.attributes);
         parseContext.requireExtensions((yyvsp[-4].lex).loc, 1, &E_GL_EXT_control_flow_attributes, "attribute");
     }
-#line 10332 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 10351 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
 
   case 588:
-#line 3871 "MachineIndependent/glslang.y" /* yacc.c:1646  */
+#line 3890 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
         (yyval.interm.attributes) = (yyvsp[0].interm.attributes);
     }
-#line 10340 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 10359 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
 
   case 589:
-#line 3874 "MachineIndependent/glslang.y" /* yacc.c:1646  */
+#line 3893 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
         (yyval.interm.attributes) = parseContext.mergeAttributes((yyvsp[-2].interm.attributes), (yyvsp[0].interm.attributes));
     }
-#line 10348 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 10367 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
 
   case 590:
-#line 3879 "MachineIndependent/glslang.y" /* yacc.c:1646  */
+#line 3898 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
         (yyval.interm.attributes) = parseContext.makeAttributes(*(yyvsp[0].lex).string);
     }
-#line 10356 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 10375 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
 
   case 591:
-#line 3882 "MachineIndependent/glslang.y" /* yacc.c:1646  */
+#line 3901 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
         (yyval.interm.attributes) = parseContext.makeAttributes(*(yyvsp[-3].lex).string, (yyvsp[-1].interm.intermTypedNode));
     }
-#line 10364 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 10383 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 10368 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 10387 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -10592,5 +10611,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 3887 "MachineIndependent/glslang.y" /* yacc.c:1906  */
+#line 3906 "MachineIndependent/glslang.y" /* yacc.c:1906  */
 

@@ -5746,8 +5746,7 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
                     for (int dim = Esd2D; dim <= EsdCube; ++dim) { // 2D, 3D, and Cube
 #else
 #if defined(GLSLANG_ANGLE)
-                    // TODO: what is subpass?
-                    for (int dim = Esd2D; dim < EsdSubpass; ++dim) { // 2D, ..., buffer
+                    for (int dim = Esd2D; dim < EsdNumDims; ++dim) { // 2D, ..., buffer, subpass
 #else
                     for (int dim = Esd1D; dim < EsdNumDims; ++dim) { // 1D, ..., buffer, subpass
 #endif

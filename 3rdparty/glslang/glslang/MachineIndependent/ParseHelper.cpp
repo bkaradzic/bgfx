@@ -246,7 +246,9 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
         else if (tokens[2].compare("off") == 0)
             contextPragma.optimize = false;
         else {
-            error(loc, "\"on\" or \"off\" expected after '(' for 'optimize' pragma", "#pragma", "");
+            if(relaxedErrors())
+                //  If an implementation does not recognize the tokens following #pragma, then it will ignore that pragma.
+                warn(loc, "\"on\" or \"off\" expected after '(' for 'optimize' pragma", "#pragma", "");
             return;
         }
 
@@ -270,7 +272,9 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
         else if (tokens[2].compare("off") == 0)
             contextPragma.debug = false;
         else {
-            error(loc, "\"on\" or \"off\" expected after '(' for 'debug' pragma", "#pragma", "");
+            if(relaxedErrors())
+                //  If an implementation does not recognize the tokens following #pragma, then it will ignore that pragma.
+                warn(loc, "\"on\" or \"off\" expected after '(' for 'debug' pragma", "#pragma", "");
             return;
         }
 
@@ -2798,7 +2802,10 @@ void TParseContext::reservedPpErrorCheck(const TSourceLoc& loc, const char* iden
     if (strncmp(identifier, "GL_", 3) == 0)
         ppError(loc, "names beginning with \"GL_\" can't be (un)defined:", op,  identifier);
     else if (strncmp(identifier, "defined", 8) == 0)
-        ppError(loc, "\"defined\" can't be (un)defined:", op,  identifier);
+        if (relaxedErrors())
+            ppWarn(loc, "\"defined\" is (un)defined:", op,  identifier);
+        else
+            ppError(loc, "\"defined\" can't be (un)defined:", op,  identifier);
     else if (strstr(identifier, "__") != 0) {
         if (isEsProfile() && version >= 300 &&
             (strcmp(identifier, "__LINE__") == 0 ||
@@ -2806,7 +2813,7 @@ void TParseContext::reservedPpErrorCheck(const TSourceLoc& loc, const char* iden
              strcmp(identifier, "__VERSION__") == 0))
             ppError(loc, "predefined names can't be (un)defined:", op,  identifier);
         else {
-            if (isEsProfile() && version < 300)
+            if (isEsProfile() && version < 300 && !relaxedErrors())
                 ppError(loc, "names containing consecutive underscores are reserved, and an error if version < 300:", op, identifier);
             else
                 ppWarn(loc, "names containing consecutive underscores are reserved:", op, identifier);
@@ -6560,6 +6567,12 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
     type.transferArraySizes(arraySizes);
     type.copyArrayInnerSizes(publicType.arraySizes);
     arrayOfArrayVersionCheck(loc, type.getArraySizes());
+
+    if (initializer) {
+        if (type.getBasicType() == EbtRayQuery) {
+            error(loc, "ray queries can only be initialized by using the rayQueryInitializeEXT intrinsic:", "=", identifier.c_str());
+        }
+    }
 
     if (type.isCoopMat()) {
         intermediate.setUseVulkanMemoryModel();

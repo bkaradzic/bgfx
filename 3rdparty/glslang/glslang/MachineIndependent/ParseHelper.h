@@ -84,6 +84,7 @@ public:
             scopeMangler("::"),
             symbolTable(symbolTable),
             statementNestingLevel(0), loopNestingLevel(0), structNestingLevel(0), controlFlowNestingLevel(0),
+            currentFunctionType(nullptr),
             postEntryPointReturn(false),
             contextPragma(true, false),
             beginInvocationInterlockCount(0), endInvocationInterlockCount(0),
