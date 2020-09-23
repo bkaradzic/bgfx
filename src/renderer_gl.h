@@ -36,6 +36,10 @@
 // on the following platforms.
 #define BGFX_GL_CONFIG_UNIFORM_CACHE BX_PLATFORM_EMSCRIPTEN
 
+#ifndef BGFX_GL_CONFIG_BLIT_EMULATION
+#	define BGFX_GL_CONFIG_BLIT_EMULATION 0
+#endif // BGFX_GL_CONFIG_BLIT_EMULATION
+
 #define BGFX_GL_PROFILER_BEGIN(_view, _abgr)                                               \
 	BX_MACRO_BLOCK_BEGIN                                                                   \
 		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, s_viewName[view]) ); \

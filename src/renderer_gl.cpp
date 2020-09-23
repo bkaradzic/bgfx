@@ -2747,12 +2747,13 @@ namespace bgfx { namespace gl
 				||  s_extension[Extension:: NV_copy_image].m_supported
 				||  s_extension[Extension::OES_copy_image].m_supported)
 				{
-					m_blitSupported   = NULL != glCopyImageSubData;
-					g_caps.supported |= m_blitSupported
-						? BGFX_CAPS_TEXTURE_BLIT
-						: 0
-						;
+					m_blitSupported = NULL != glCopyImageSubData;
 				}
+
+				g_caps.supported |= m_blitSupported || BX_ENABLED(BGFX_GL_CONFIG_BLIT_EMULATION)
+					? BGFX_CAPS_TEXTURE_BLIT
+					: 0
+				;
 
 				g_caps.supported |= m_readBackSupported
 					? BGFX_CAPS_TEXTURE_READ_BACK
@@ -6991,6 +6992,60 @@ namespace bgfx { namespace gl
 					, height
 					, bx::uint32_imax(depth, 1)
 					) );
+				}
+		}
+		else if (BX_ENABLED(BGFX_GL_CONFIG_BLIT_EMULATION) )
+		{
+			while (_bs.hasItem(_view) )
+			{
+				const BlitItem& bi = _bs.advance();
+
+				const TextureGL& src = m_textures[bi.m_src.idx];
+				const TextureGL& dst = m_textures[bi.m_dst.idx];
+
+				uint32_t srcWidth  = bx::uint32_min(src.m_width,  bi.m_srcX + bi.m_width)  - bi.m_srcX;
+				uint32_t srcHeight = bx::uint32_min(src.m_height, bi.m_srcY + bi.m_height) - bi.m_srcY;
+				uint32_t dstWidth  = bx::uint32_min(dst.m_width,  bi.m_dstX + bi.m_width)  - bi.m_dstX;
+				uint32_t dstHeight = bx::uint32_min(dst.m_height, bi.m_dstY + bi.m_height) - bi.m_dstY;
+				uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  bi.m_dstZ + bi.m_depth)  - bi.m_dstZ;
+				uint32_t width	   = bx::uint32_min(srcWidth,  dstWidth);
+				uint32_t height	   = bx::uint32_min(srcHeight, dstHeight);
+
+				BX_ASSERT((bi.m_srcZ == 0) && (bi.m_dstZ == 0) && (bi.m_depth == 0)
+						, "Blitting 3D regions is not supported"
+				);
+
+				GLuint fbo;
+				GL_CHECK(glGenFramebuffers(1, &fbo) );
+
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo) );
+
+				GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
+					, GL_COLOR_ATTACHMENT0
+					, GL_TEXTURE_2D
+					, src.m_id
+					, bi.m_srcMip
+					) );
+
+				BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_FRAMEBUFFER)
+					, "glCheckFramebufferStatus failed 0x%08x"
+					, glCheckFramebufferStatus(GL_FRAMEBUFFER)
+				);
+
+				GL_CHECK(glActiveTexture(GL_TEXTURE0) );
+				GL_CHECK(glBindTexture(GL_TEXTURE_2D, dst.m_id) );
+
+				GL_CHECK(glCopyTexSubImage2D(GL_TEXTURE_2D
+					, bi.m_dstMip
+					, bi.m_dstX
+					, bi.m_dstY
+					, bi.m_srcX
+					, bi.m_srcY
+					, width
+					, height) );
+
+				GL_CHECK(glDeleteFramebuffers(1, &fbo) );
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
 			}
 		}
 	}
