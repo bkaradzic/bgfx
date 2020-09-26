@@ -15,6 +15,16 @@
 #	import <Metal/Metal.h>
 #endif // BX_PLATFORM_OSX
 
+#ifndef BGFX_CONFIG_VULKAN_API
+#	if   10 == BGFX_CONFIG_RENDERER_VULKAN
+#		define BGFX_CONFIG_VULKAN_API VK_VERSION_1_0
+#	elif 11 == BGFX_CONFIG_RENDERER_VULKAN
+#		define BGFX_CONFIG_VULKAN_API VK_VERSION_1_1
+#	elif 12 == BGFX_CONFIG_RENDERER_VULKAN
+#		define BGFX_CONFIG_VULKAN_API VK_VERSION_1_2
+#	endif  // xx == BGFX_CONFIG_RENDERER_VULKAN
+#endif  // BGFX_CONFIG_VULKAN_API
+
 namespace bgfx { namespace vk
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -1351,7 +1361,7 @@ VK_IMPORT
 				appInfo.applicationVersion = BGFX_API_VERSION;
 				appInfo.pEngineName   = "bgfx";
 				appInfo.engineVersion = BGFX_API_VERSION;
-				appInfo.apiVersion    = VK_MAKE_VERSION(1, 0, 0); //VK_HEADER_VERSION);
+				appInfo.apiVersion    = BGFX_CONFIG_VULKAN_API;
 
 				uint32_t numEnabledLayers = 0;
 

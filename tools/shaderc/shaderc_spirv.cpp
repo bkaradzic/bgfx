@@ -676,10 +676,24 @@ namespace bgfx { namespace spirv
 		return size;
 	}
 
+	static spv_target_env getSpirvTargetVersion(uint32_t version)
+	{
+		switch (version)
+		{
+			case 10:
+				return SPV_ENV_VULKAN_1_0;
+			case 11:
+				return SPV_ENV_VULKAN_1_1;
+			case 12:
+				return SPV_ENV_VULKAN_1_2;
+			default:
+				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning SPV_ENV_VULKAN_1_0 as default.");
+				return SPV_ENV_VULKAN_1_0;
+		}
+	}
+
 	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
 	{
-		BX_UNUSED(_version);
-
 		glslang::InitializeProcess();
 
 		glslang::TProgram* program = new glslang::TProgram;
@@ -938,7 +952,7 @@ namespace bgfx { namespace spirv
 
 				glslang::GlslangToSpv(*intermediate, spirv, &options);
 
-				spvtools::Optimizer opt(SPV_ENV_VULKAN_1_0);
+				spvtools::Optimizer opt(getSpirvTargetVersion(_version));
 
 				auto print_msg_to_stderr = [](
 					  spv_message_level_t

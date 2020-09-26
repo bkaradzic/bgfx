@@ -895,6 +895,9 @@ namespace bgfx
 				"           metal\n"
 				"           pssl\n"
 				"           spirv\n"
+				"           spirv_vk_1_0 (equivalent to spirv)\n"
+				"           spirv_vk_1_1\n"
+				"           spirv_vk_1_2\n"
 			  "      --preprocess              Preprocess only.\n"
 			  "      --define <defines>        Add defines to preprocessor (semicolon separated).\n"
 			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
@@ -960,9 +963,18 @@ namespace bgfx
 			{
 				pssl = 1;
 			}
-			else if (0 == bx::strCmp(profile, "spirv") )
+			else if (0 == bx::strCmp(profile, "spirv_vk_1_1", 12) )
 			{
-				spirv = 1;
+				spirv = 11;
+			}
+			else if (0 == bx::strCmp(profile, "spirv_vk_1_2", 12) )
+			{
+				spirv = 12;
+			}
+			else if (0 == bx::strCmp(profile, "spirv_vk_1_0", 12)
+			      || 0 == bx::strCmp(profile, "spirv", 5) )
+			{
+				spirv = 10;
 			}
 			else
 			{
@@ -1480,7 +1492,7 @@ namespace bgfx
 							}
 							else if (0 != spirv)
 							{
-								compiled = compileSPIRVShader(_options, 0, code, _writer);
+								compiled = compileSPIRVShader(_options, spirv, code, _writer);
 							}
 							else if (0 != pssl)
 							{
@@ -2278,7 +2290,7 @@ namespace bgfx
 							}
 							else if (0 != spirv)
 							{
-								compiled = compileSPIRVShader(_options, 0, code, _writer);
+								compiled = compileSPIRVShader(_options, spirv, code, _writer);
 							}
 							else if (0 != pssl)
 							{
