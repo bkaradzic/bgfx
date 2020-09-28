@@ -2753,7 +2753,7 @@ namespace bgfx { namespace gl
 				g_caps.supported |= m_blitSupported || BX_ENABLED(BGFX_GL_CONFIG_BLIT_EMULATION)
 					? BGFX_CAPS_TEXTURE_BLIT
 					: 0
-				;
+					;
 
 				g_caps.supported |= m_readBackSupported
 					? BGFX_CAPS_TEXTURE_READ_BACK
@@ -7007,13 +7007,12 @@ namespace bgfx { namespace gl
 				uint32_t srcHeight = bx::uint32_min(src.m_height, bi.m_srcY + bi.m_height) - bi.m_srcY;
 				uint32_t dstWidth  = bx::uint32_min(dst.m_width,  bi.m_dstX + bi.m_width)  - bi.m_dstX;
 				uint32_t dstHeight = bx::uint32_min(dst.m_height, bi.m_dstY + bi.m_height) - bi.m_dstY;
-				uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  bi.m_dstZ + bi.m_depth)  - bi.m_dstZ;
-				uint32_t width	   = bx::uint32_min(srcWidth,  dstWidth);
-				uint32_t height	   = bx::uint32_min(srcHeight, dstHeight);
+				uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
+				uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
 
-				BX_ASSERT((bi.m_srcZ == 0) && (bi.m_dstZ == 0) && (bi.m_depth == 0)
-						, "Blitting 3D regions is not supported"
-				);
+				BX_ASSERT(0 == bi.m_srcZ && 0 == bi.m_dstZ && 0 == bi.m_depth
+					, "Blitting 3D regions is not supported"
+					);
 
 				GLuint fbo;
 				GL_CHECK(glGenFramebuffers(1, &fbo) );
@@ -7027,10 +7026,9 @@ namespace bgfx { namespace gl
 					, bi.m_srcMip
 					) );
 
-				BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_FRAMEBUFFER)
-					, "glCheckFramebufferStatus failed 0x%08x"
-					, glCheckFramebufferStatus(GL_FRAMEBUFFER)
-				);
+				GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+				BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == status, "glCheckFramebufferStatus failed 0x%08x", status);
+				BX_UNUSED(status);
 
 				GL_CHECK(glActiveTexture(GL_TEXTURE0) );
 				GL_CHECK(glBindTexture(GL_TEXTURE_2D, dst.m_id) );
@@ -7042,7 +7040,8 @@ namespace bgfx { namespace gl
 					, bi.m_srcX
 					, bi.m_srcY
 					, width
-					, height) );
+					, height
+					) );
 
 				GL_CHECK(glDeleteFramebuffers(1, &fbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );

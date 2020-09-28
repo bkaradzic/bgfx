@@ -7,30 +7,33 @@
 #define BGFX_RENDERER_GL_H_HEADER_GUARD
 
 #define BGFX_USE_EGL (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
-			|| BX_PLATFORM_ANDROID                        \
-			|| BX_PLATFORM_BSD                            \
-			|| BX_PLATFORM_LINUX                          \
-			|| BX_PLATFORM_NX                             \
-			|| BX_PLATFORM_RPI                            \
-			|| BX_PLATFORM_WINDOWS                        \
-			) )
+	|| BX_PLATFORM_ANDROID                                \
+	|| BX_PLATFORM_BSD                                    \
+	|| BX_PLATFORM_LINUX                                  \
+	|| BX_PLATFORM_NX                                     \
+	|| BX_PLATFORM_RPI                                    \
+	|| BX_PLATFORM_WINDOWS                                \
+	) )
 
 #define BGFX_USE_HTML5 (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
-			|| BX_PLATFORM_EMSCRIPTEN                     \
-			) )
+	|| BX_PLATFORM_EMSCRIPTEN                               \
+	) )
 
-#define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && BX_PLATFORM_WINDOWS)
+#define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && (0 \
+	|| BX_PLATFORM_WINDOWS                              \
+	) )
+
 #define BGFX_USE_GLX (BGFX_CONFIG_RENDERER_OPENGL && (0 \
-			|| BX_PLATFORM_BSD                          \
-			|| BX_PLATFORM_LINUX                        \
-			) )
+	|| BX_PLATFORM_BSD                                  \
+	|| BX_PLATFORM_LINUX                                \
+	) )
 
 #define BGFX_USE_GL_DYNAMIC_LIB (0 \
-			|| BX_PLATFORM_BSD     \
-			|| BX_PLATFORM_LINUX   \
-			|| BX_PLATFORM_OSX     \
-			|| BX_PLATFORM_WINDOWS \
-			)
+	|| BX_PLATFORM_BSD             \
+	|| BX_PLATFORM_LINUX           \
+	|| BX_PLATFORM_OSX             \
+	|| BX_PLATFORM_WINDOWS         \
+	)
 
 // Keep a state cache of GL uniform values to avoid redundant uploads
 // on the following platforms.
