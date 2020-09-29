@@ -404,6 +404,15 @@ Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with nativ
 ![FFVIII](https://raw.githubusercontent.com/julianxhokaxhiu/FFNx/master/.screens/ff8.png)
 
 
+## Shadow Gangs
+
+Shadow Gangs is an arcade style ninja action game.
+
+https://www.microsoft.com/en-gb/p/shadow-gangs/9n6hkcr65qdq
+
+![Shadow Gangs](https://user-images.githubusercontent.com/814772/94508248-64ba1080-01c6-11eb-800f-47dc374ef054.jpeg)
+
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
