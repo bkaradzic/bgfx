@@ -850,6 +850,10 @@ namespace bgfx
 	// 4.2    420               11.0     vhdgf+c  5.0
 	// 4.3    430      vhdgf+c
 	// 4.4    440
+	//
+	// SPIR-V profile naming convention
+	// spirv<version of SPIR-V>-<version of Vulkan>
+	//
 
 	void help(const char* _error = NULL)
 	{
@@ -894,7 +898,10 @@ namespace bgfx
 				"           s_5\n"
 				"           metal\n"
 				"           pssl\n"
-				"           spirv\n"
+				"           spirv              Alias for spirv1-10. \n"
+				"           spirv1-10\n"
+				"           spirv1-11\n"
+				"           spirv1-12\n"
 			  "      --preprocess              Preprocess only.\n"
 			  "      --define <defines>        Add defines to preprocessor (semicolon separated).\n"
 			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
@@ -960,9 +967,18 @@ namespace bgfx
 			{
 				pssl = 1;
 			}
-			else if (0 == bx::strCmp(profile, "spirv") )
+			else if (0 == bx::strCmp(profile, "spirv1-11", 9) )
 			{
-				spirv = 1;
+				spirv = 11;
+			}
+			else if (0 == bx::strCmp(profile, "spirv1-12", 9) )
+			{
+				spirv = 12;
+			}
+			else if (0 == bx::strCmp(profile, "spirv1-10", 9)
+			      || 0 == bx::strCmp(profile, "spirv", 5) )
+			{
+				spirv = 10;
 			}
 			else
 			{
@@ -1480,7 +1496,7 @@ namespace bgfx
 							}
 							else if (0 != spirv)
 							{
-								compiled = compileSPIRVShader(_options, 0, code, _writer);
+								compiled = compileSPIRVShader(_options, spirv, code, _writer);
 							}
 							else if (0 != pssl)
 							{
@@ -2278,7 +2294,7 @@ namespace bgfx
 							}
 							else if (0 != spirv)
 							{
-								compiled = compileSPIRVShader(_options, 0, code, _writer);
+								compiled = compileSPIRVShader(_options, spirv, code, _writer);
 							}
 							else if (0 != pssl)
 							{
