@@ -1584,7 +1584,7 @@ VK_IMPORT_INSTANCE
 				{
 					for (uint16_t ii = 0, last = 0; ii < BX_COUNTOF(s_msaa); ii++)
 					{
-						if ((m_deviceProperties.limits.framebufferColorSampleCounts >= s_msaa[ii].Count) && (m_deviceProperties.limits.framebufferDepthSampleCounts >= s_msaa[ii].Count))
+						if ( (m_deviceProperties.limits.framebufferColorSampleCounts >= s_msaa[ii].Count) && (m_deviceProperties.limits.framebufferDepthSampleCounts >= s_msaa[ii].Count) )
 							last = ii;
 						else
 							s_msaa[ii] = s_msaa[last];
@@ -2644,14 +2644,16 @@ VK_IMPORT_DEVICE
 
 			// Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
 			vkGetPhysicalDeviceFormatProperties(m_physicalDevice, m_sci.imageFormat, &formatProps);
-			if (!(formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) {
+			if (!(formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) )
+			{
 				BX_TRACE("Device does not support blitting from optimal tiled images, using copy instead of blit!\n");
 				supportsBlit = false;
 			}
 
 			// Check if the device supports blitting to linear images
 			vkGetPhysicalDeviceFormatProperties(m_physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, &formatProps);
-			if (!(formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT)) {
+			if (!(formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT) )
+			{
 				BX_TRACE("Device does not support blitting to linear tiled images, using copy instead of blit!\n");
 				supportsBlit = false;
 			}
@@ -2660,7 +2662,7 @@ VK_IMPORT_DEVICE
 			VkImage srcImage = m_backBufferColorImage[m_backBufferColorIdx];
 			uint32_t width = m_sci.imageExtent.width, height = m_sci.imageExtent.height;
 
-			if (isValid(_fbh))
+			if (isValid(_fbh) )
 			{
 				TextureVK& texture = m_textures[m_frameBuffers[_fbh.idx].m_attachment[0].handle.idx];
 				srcImage = VK_NULL_HANDLE != texture.m_singleMsaaImage ? texture.m_singleMsaaImage : texture.m_textureImage;
@@ -2674,21 +2676,21 @@ VK_IMPORT_DEVICE
 			ici.flags = 0;
 			// Note that vkCmdBlitImage (if supported) will also do format conversions if the swapchain color format would differ
 			ici.imageType = VK_IMAGE_TYPE_2D;
-			ici.format = VK_FORMAT_R8G8B8A8_UNORM;
-			ici.extent.width = width;
+			ici.format    = VK_FORMAT_R8G8B8A8_UNORM;
+			ici.extent.width  = width;
 			ici.extent.height = height;
-			ici.extent.depth = 1;
+			ici.extent.depth  = 1;
 			ici.arrayLayers = 1;
-			ici.mipLevels = 1;
+			ici.mipLevels   = 1;
 			ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			ici.samples = VK_SAMPLE_COUNT_1_BIT;
-			ici.tiling = VK_IMAGE_TILING_LINEAR;
-			ici.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			ici.tiling  = VK_IMAGE_TILING_LINEAR;
+			ici.usage   = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			ici.queueFamilyIndexCount = 0;
 			ici.pQueueFamilyIndices = NULL;
 			// Create the image
-			VK_CHECK(vkCreateImage(m_device, &ici, m_allocatorCb, &dstImage));
+			VK_CHECK(vkCreateImage(m_device, &ici, m_allocatorCb, &dstImage) );
 
 			// Create memory to back up the image
 			VkMemoryRequirements memRequirements;
@@ -2696,97 +2698,120 @@ VK_IMPORT_DEVICE
 
 			VkDeviceMemory dstImageMemory = VK_NULL_HANDLE;
 			// Memory must be host visible to copy from
-			VK_CHECK(allocateMemory(&memRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &dstImageMemory));
-			VK_CHECK(vkBindImageMemory(m_device, dstImage, dstImageMemory, 0));
+			VK_CHECK(allocateMemory(&memRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &dstImageMemory) );
+			VK_CHECK(vkBindImageMemory(m_device, dstImage, dstImageMemory, 0) );
 
 			// Do the actual blit from the swapchain image to our host visible destination image
 			VkCommandBuffer copyCmd = beginNewCommand();
 
 			// Transition destination image to transfer destination layout
-			bgfx::vk::setImageMemoryBarrier(copyCmd
+			bgfx::vk::setImageMemoryBarrier(
+				  copyCmd
 				, dstImage
 				, VK_IMAGE_ASPECT_COLOR_BIT
 				, VK_IMAGE_LAYOUT_UNDEFINED
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 				, 1
 				, 1
-			);
+				);
 
 			// Transition swapchain image from present to transfer source layout
-			bgfx::vk::setImageMemoryBarrier(copyCmd
+			bgfx::vk::setImageMemoryBarrier(
+				  copyCmd
 				, srcImage
 				, VK_IMAGE_ASPECT_COLOR_BIT
 				, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 				, 1
 				, 1
-			);
+				);
 
 			// If source and destination support blit we'll blit as this also does automatic format conversion (e.g. from BGR to RGB)
 			if (supportsBlit)
 			{
 				// Define the region to blit (we will blit the whole swapchain image)
-				VkOffset3D blitSize;
-				blitSize.x = width;
-				blitSize.y = height;
-				blitSize.z = 1;
-				VkImageBlit imageBlitRegion{};
-				imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				imageBlitRegion.srcSubresource.layerCount = 1;
-				imageBlitRegion.srcOffsets[1] = blitSize;
-				imageBlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				imageBlitRegion.dstSubresource.layerCount = 1;
-				imageBlitRegion.dstOffsets[1] = blitSize;
+				VkOffset3D blitSize { int32_t(width), int32_t(height), 1 };
+
+				VkImageBlit ib;
+
+				ib.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+				ib.srcSubresource.mipLevel       = 0;
+				ib.srcSubresource.baseArrayLayer = 0;
+				ib.srcSubresource.layerCount     = 1;
+				ib.srcOffsets[0]                 = { 0, 0, 0 };
+				ib.srcOffsets[1]                 = blitSize;
+
+				ib.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+				ib.dstSubresource.mipLevel       = 0;
+				ib.dstSubresource.baseArrayLayer = 0;
+				ib.dstSubresource.layerCount     = 1;
+				ib.dstOffsets[0]                 = { 0, 0, 0 };
+				ib.dstOffsets[1]                 = blitSize;
 
 				// Issue the blit command
 				vkCmdBlitImage(
-					copyCmd,
-					srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-					dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-					1,
-					&imageBlitRegion,
-					VK_FILTER_NEAREST);
+					  copyCmd
+					, srcImage
+					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+					, dstImage
+					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+					, 1
+					, &ib
+					, VK_FILTER_NEAREST
+					);
 			}
 			else
 			{
 				// Otherwise use image copy (requires us to manually flip components)
-				VkImageCopy imageCopyRegion{};
-				imageCopyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				imageCopyRegion.srcSubresource.layerCount = 1;
-				imageCopyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				imageCopyRegion.dstSubresource.layerCount = 1;
-				imageCopyRegion.extent.width = width;
-				imageCopyRegion.extent.height = height;
-				imageCopyRegion.extent.depth = 1;
+				VkImageCopy ic;
+
+				ic.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+				ic.srcSubresource.mipLevel       = 0;
+				ic.srcSubresource.baseArrayLayer = 0;
+				ic.srcSubresource.layerCount     = 1;
+				ic.srcOffset = { 0, 0, 0 };
+
+				ic.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+				ic.dstSubresource.mipLevel       = 0;
+				ic.dstSubresource.baseArrayLayer = 0;
+				ic.dstSubresource.layerCount     = 1;
+				ic.dstOffset = { 0, 0, 0 };
+
+				ic.extent = { width, height, 1 };
 
 				// Issue the copy command
 				vkCmdCopyImage(
-					copyCmd,
-					srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-					dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-					1,
-					&imageCopyRegion);
+					  copyCmd
+					, srcImage
+					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+					, dstImage
+					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+					, 1
+					, &ic
+					);
 			}
 
 			// Transition destination image to general layout, which is the required layout for mapping the image memory later on
-			bgfx::vk::setImageMemoryBarrier(copyCmd
+			bgfx::vk::setImageMemoryBarrier(
+				  copyCmd
 				, dstImage
 				, VK_IMAGE_ASPECT_COLOR_BIT
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 				, VK_IMAGE_LAYOUT_GENERAL
 				, 1
 				, 1
-			);
+				);
 
 			// Transition back the swap chain image after the blit is done
-			bgfx::vk::setImageMemoryBarrier(copyCmd
+			bgfx::vk::setImageMemoryBarrier(
+				  copyCmd
 				, srcImage
 				, VK_IMAGE_ASPECT_COLOR_BIT
 				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 				, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 				, 1
 				, 1
-			);
+				);
 
 			submitCommandAndWait(copyCmd);
 
@@ -2801,22 +2826,23 @@ VK_IMPORT_DEVICE
 			data += subResourceLayout.offset;
 
 			bimg::imageSwizzleBgra8(
-				data
+				  data
 				, uint32_t(subResourceLayout.rowPitch)
 				, width
 				, height
 				, data
 				, uint32_t(subResourceLayout.rowPitch)
-			);
+				);
 
-			g_callback->screenShot(_filePath
+			g_callback->screenShot(
+				  _filePath
 				, width
 				, height
 				, uint32_t(subResourceLayout.rowPitch)
 				, data
 				, height * uint32_t(subResourceLayout.rowPitch)
 				, false
-			);
+				);
 
 			// Clean up resources
 			vkUnmapMemory(m_device, dstImageMemory);
@@ -3198,7 +3224,7 @@ VK_IMPORT_DEVICE
 
 					for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
 					{
-						VK_CHECK(vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_presentDone[ii]));
+						VK_CHECK(vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_presentDone[ii]) );
 					}
 
 					initSwapchainImageLayout();
@@ -5416,7 +5442,7 @@ VK_DESTROY
 				: VK_IMAGE_ASPECT_COLOR_BIT
 				;
 
-			m_sampler = s_msaa[bx::uint32_satsub((m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1)];
+			m_sampler = s_msaa[bx::uint32_satsub( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1)];
 
 			if (m_format == VK_FORMAT_S8_UINT
 			||  m_format == VK_FORMAT_D16_UNORM_S8_UINT
@@ -5813,12 +5839,12 @@ VK_DESTROY
 					ici_resolve.samples = s_msaa[0].Sample;
 					ici_resolve.usage &= ~(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-					VK_CHECK(vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage));
+					VK_CHECK(vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage) );
 
 					VkMemoryRequirements imageMemReq_resolve;
 					vkGetImageMemoryRequirements(device, m_singleMsaaImage, &imageMemReq_resolve);
 
-					VK_CHECK(s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem));
+					VK_CHECK(s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem) );
 
 					vkBindImageMemory(device, m_singleMsaaImage, m_singleMsaaDeviceMem, 0);
 				}
@@ -5857,7 +5883,7 @@ VK_DESTROY
 						, &viewInfo
 						, allocatorCb
 						, &m_singleMsaaImageView
-					));
+					) );
 				}
 			}
 		}
@@ -6017,7 +6043,7 @@ VK_DESTROY
 		const bool renderTarget = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
 		if (renderTarget
 			&& 1 < m_numMips
-			&& 0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS))
+			&& 0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS) )
 		{
 			VkCommandBuffer commandBuffer = s_renderVK->beginNewCommand();
 
@@ -6168,7 +6194,7 @@ VK_DESTROY
 			{
 				const Attachment& at = m_attachment[ii];
 
-				if (isValid(at.handle))
+				if (isValid(at.handle) )
 				{
 					TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
 					texture.resolve(at.resolve);
