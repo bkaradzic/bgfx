@@ -2694,11 +2694,6 @@ VK_IMPORT_DEVICE
 			VkMemoryRequirements memRequirements;
 			vkGetImageMemoryRequirements(m_device, dstImage, &memRequirements);
 
-			VkMemoryAllocateInfo ma;
-			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			ma.pNext = NULL;
-			ma.allocationSize = memRequirements.size;
-
 			VkDeviceMemory dstImageMemory = VK_NULL_HANDLE;
 			// Memory must be host visible to copy from
 			VK_CHECK(allocateMemory(&memRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &dstImageMemory));

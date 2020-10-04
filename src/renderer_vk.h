@@ -524,6 +524,7 @@ VK_DESTROY
 	{
 		TextureVK()
 			: m_directAccessPtr(NULL)
+			, m_sampler({ 1, VK_SAMPLE_COUNT_1_BIT })
 			, m_format(VK_FORMAT_UNDEFINED)
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem(VK_NULL_HANDLE)
@@ -531,7 +532,6 @@ VK_DESTROY
 			, m_textureImageDepthView(VK_NULL_HANDLE)
 			, m_textureImageStorageView(VK_NULL_HANDLE)
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-			, m_sampler({ 1, VK_SAMPLE_COUNT_1_BIT })
 			, m_singleMsaaImage(VK_NULL_HANDLE)
 			, m_singleMsaaDeviceMem(VK_NULL_HANDLE)
 			, m_singleMsaaImageView(VK_NULL_HANDLE)
@@ -566,14 +566,14 @@ VK_DESTROY
 
 		VkImage m_textureImage;
 		VkDeviceMemory m_textureDeviceMem;
-		VkImageView m_textureImageView;
-		VkImageView m_textureImageDepthView;
-		VkImageView m_textureImageStorageView;
-		VkImageLayout m_currentImageLayout;
+		VkImageView    m_textureImageView;
+		VkImageView    m_textureImageDepthView;
+		VkImageView    m_textureImageStorageView;
+		VkImageLayout  m_currentImageLayout;
 
-		VkImage m_singleMsaaImage;
+		VkImage        m_singleMsaaImage;
 		VkDeviceMemory m_singleMsaaDeviceMem;
-		VkImageView m_singleMsaaImageView;
+		VkImageView    m_singleMsaaImageView;
 	};
 
 	struct FrameBufferVK
