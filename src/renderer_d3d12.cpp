@@ -2412,7 +2412,9 @@ namespace bgfx { namespace d3d12
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx)
 			{
-				const FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
+				FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
+
+				if (m_rtMsaa) frameBuffer.resolve();
 
 				if (NULL == frameBuffer.m_swapChain)
 				{
@@ -3527,7 +3529,7 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		device->CreateShaderResourceView(_texture.m_ptr
+		device->CreateShaderResourceView(NULL != _texture.m_singleMsaa ? _texture.m_singleMsaa : _texture.m_ptr
 			, srvd
 			, m_cpuHandle
 			);
@@ -4684,6 +4686,15 @@ namespace bgfx { namespace d3d12
 			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 
+			const uint32_t msaaQuality = bx::uint32_satsub((m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+
+			const bool needResolve = true
+				&& 1 < msaa.Count
+				&& 0 == (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
+				&& !writeOnly
+				;
+
 			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s RT[%c], BO[%c], CW[%c]%s."
 				, this - s_renderD3D12->m_textures
 				, getName( (TextureFormat::Enum)m_textureFormat)
@@ -4767,9 +4778,6 @@ namespace bgfx { namespace d3d12
 					}
 				}
 			}
-
-			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
-			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
 
 			bx::memSet(&m_srvd, 0, sizeof(m_srvd) );
 			m_srvd.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -4983,6 +4991,23 @@ namespace bgfx { namespace d3d12
 					}
 				}
 			}
+
+			if (needResolve)
+			{
+				D3D12_RESOURCE_DESC rd = resourceDesc;
+
+				rd.Alignment = 0;
+				rd.SampleDesc = s_msaa[0];
+				rd.Flags &= ~(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+
+				m_singleMsaa = createCommittedResource(device, HeapProperty::Texture, &rd, NULL);
+
+				setResourceBarrier(commandList
+					, m_singleMsaa
+					, D3D12_RESOURCE_STATE_COMMON
+					, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+				);
+			}
 		}
 
 		return m_directAccessPtr;
@@ -5004,6 +5029,12 @@ namespace bgfx { namespace d3d12
 				s_renderD3D12->m_cmd.release(m_ptr);
 				m_ptr   = NULL;
 				m_state = D3D12_RESOURCE_STATE_COMMON;
+
+				if (NULL != m_singleMsaa)
+				{
+					s_renderD3D12->m_cmd.release(m_singleMsaa);
+					m_singleMsaa = NULL;
+				}
 			}
 		}
 	}
@@ -5101,9 +5132,36 @@ namespace bgfx { namespace d3d12
 		s_renderD3D12->m_cmd.release(staging);
 	}
 
-	void TextureD3D12::resolve(uint8_t _resolve) const
+	void TextureD3D12::resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve)
 	{
 		BX_UNUSED(_resolve);
+
+		bool needResolve = NULL != m_singleMsaa;
+		if (needResolve)
+		{
+			D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
+
+			setResourceBarrier(_commandList
+				, m_singleMsaa
+				, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+				, D3D12_RESOURCE_STATE_RESOLVE_DEST
+			);
+
+			_commandList->ResolveSubresource(m_singleMsaa
+				, 0
+				, m_ptr
+				, 0
+				, s_textureFormat[m_textureFormat].m_fmt
+			);
+
+			setResourceBarrier(_commandList
+				, m_singleMsaa
+				, D3D12_RESOURCE_STATE_RESOLVE_DEST
+				, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			);
+
+			setState(_commandList, state);
+		}
 	}
 
 	D3D12_RESOURCE_STATES TextureD3D12::setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state)
@@ -5418,8 +5476,8 @@ namespace bgfx { namespace d3d12
 
 				if (isValid(at.handle) )
 				{
-					const TextureD3D12& texture = s_renderD3D12->m_textures[at.handle.idx];
-					texture.resolve(at.resolve);
+					TextureD3D12& texture = s_renderD3D12->m_textures[at.handle.idx];
+					texture.resolve(s_renderD3D12->m_commandList, at.resolve);
 				}
 			}
 		}
@@ -5750,6 +5808,13 @@ namespace bgfx { namespace d3d12
 
 				currentSrc = blit.m_src;
 
+				if (NULL != src.m_singleMsaa)
+					setResourceBarrier(m_commandList
+						, src.m_singleMsaa
+						, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+						, D3D12_RESOURCE_STATE_COPY_SOURCE
+					);
+
 				state = src.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
 			}
 
@@ -5807,7 +5872,7 @@ namespace bgfx { namespace d3d12
 				dstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				dstLocation.SubresourceIndex = dstZ*dst.m_numMips+blit.m_dstMip;
 				D3D12_TEXTURE_COPY_LOCATION srcLocation;
-				srcLocation.pResource = src.m_ptr;
+				srcLocation.pResource = NULL != src.m_singleMsaa ? src.m_singleMsaa : src.m_ptr;
 				srcLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				srcLocation.SubresourceIndex = srcZ*src.m_numMips+blit.m_srcMip;
 
@@ -5820,6 +5885,13 @@ namespace bgfx { namespace d3d12
 					, depthStencil ? NULL : &box
 					);
 			}
+
+			if (NULL != src.m_singleMsaa)
+				setResourceBarrier(m_commandList
+					, src.m_singleMsaa
+					, D3D12_RESOURCE_STATE_COPY_SOURCE
+					, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+				);
 		}
 
 		if (isValid(currentSrc)

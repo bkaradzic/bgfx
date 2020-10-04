@@ -108,6 +108,7 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkFreeCommandBuffers);            \
 			VK_IMPORT_DEVICE_FUNC(false, vkGetBufferMemoryRequirements);   \
 			VK_IMPORT_DEVICE_FUNC(false, vkGetImageMemoryRequirements);    \
+			VK_IMPORT_DEVICE_FUNC(false, vkGetImageSubresourceLayout);     \
 			VK_IMPORT_DEVICE_FUNC(false, vkAllocateMemory);                \
 			VK_IMPORT_DEVICE_FUNC(false, vkFreeMemory);                    \
 			VK_IMPORT_DEVICE_FUNC(false, vkCreateImage);                   \
@@ -171,6 +172,7 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdResolveImage);               \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBuffer);                 \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBufferToImage);          \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImage);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBlitImage);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkMapMemory);                     \
 			VK_IMPORT_DEVICE_FUNC(false, vkUnmapMemory);                   \
@@ -423,6 +425,12 @@ VK_DESTROY
 
 	typedef BufferVK IndexBufferVK;
 
+	struct MsaaSamplerVK
+	{
+		uint16_t Count;
+		VkSampleCountFlagBits Sample;
+	};
+
 	struct VertexBufferVK : public BufferVK
 	{
 		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags);
@@ -523,12 +531,17 @@ VK_DESTROY
 			, m_textureImageDepthView(VK_NULL_HANDLE)
 			, m_textureImageStorageView(VK_NULL_HANDLE)
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+			, m_sampler({ 1, VK_SAMPLE_COUNT_1_BIT })
+			, m_singleMsaaImage(VK_NULL_HANDLE)
+			, m_singleMsaaDeviceMem(VK_NULL_HANDLE)
+			, m_singleMsaaImageView(VK_NULL_HANDLE)
 		{
 		}
 
 		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 		void destroy();
 		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
+		void resolve(uint8_t _resolve);
 
 		void copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy);
 		void setImageMemoryBarrier(VkCommandBuffer commandBuffer, VkImageLayout newImageLayout);
@@ -544,6 +557,8 @@ VK_DESTROY
 		uint8_t  m_textureFormat;
 		uint8_t  m_numMips;
 
+		MsaaSamplerVK m_sampler;
+
 		VkImageViewType m_type;
 		VkFormat m_format;
 		VkComponentMapping m_components;
@@ -555,6 +570,10 @@ VK_DESTROY
 		VkImageView m_textureImageDepthView;
 		VkImageView m_textureImageStorageView;
 		VkImageLayout m_currentImageLayout;
+
+		VkImage m_singleMsaaImage;
+		VkDeviceMemory m_singleMsaaDeviceMem;
+		VkImageView m_singleMsaaImageView;
 	};
 
 	struct FrameBufferVK
@@ -570,6 +589,7 @@ VK_DESTROY
 		{
 		}
 		void create(uint8_t _num, const Attachment* _attachment);
+		void resolve();
 		void destroy();
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
