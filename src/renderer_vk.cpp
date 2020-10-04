@@ -2802,19 +2802,19 @@ VK_IMPORT_DEVICE
 
 			bimg::imageSwizzleBgra8(
 				data
-				, subResourceLayout.rowPitch
+				, uint32_t(subResourceLayout.rowPitch)
 				, width
 				, height
 				, data
-				, subResourceLayout.rowPitch
+				, uint32_t(subResourceLayout.rowPitch)
 			);
 
 			g_callback->screenShot(_filePath
 				, width
 				, height
-				, subResourceLayout.rowPitch
+				, uint32_t(subResourceLayout.rowPitch)
 				, data
-				, height * subResourceLayout.rowPitch
+				, height * uint32_t(subResourceLayout.rowPitch)
 				, false
 			);
 
