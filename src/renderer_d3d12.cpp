@@ -6422,6 +6422,12 @@ namespace bgfx { namespace d3d12
 				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
+				// The state reset on D3D12 is skipped because draw.m_streamMask is set to 0 when the current draw.m_scissor is not set ( equal to UINT16_MAX )
+				// Because of this we need to reset the internsl state, otherwise the next run will inherit the last set state and because of this may result being not different
+				// So the next draw call, at the beginning of the frame will think the scissor has already been set while this is not true.
+				// Solution: detect this particular case and manually reset the currentState scissor.
+				if (draw.m_scissor == UINT16_MAX) currentState.m_scissor = draw.m_scissor;
+
 				if (0 != draw.m_streamMask)
 				{
 					currentState.m_streamMask             = draw.m_streamMask;

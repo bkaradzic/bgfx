@@ -6893,6 +6893,40 @@ VK_DESTROY
 
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
+				uint16_t scissor = draw.m_scissor;
+				if (currentState.m_scissor != scissor)
+				{
+					currentState.m_scissor = scissor;
+
+					if (UINT16_MAX == scissor)
+					{
+						if (restoreScissor
+							|| viewHasScissor)
+						{
+							restoreScissor = false;
+							VkRect2D rc;
+							rc.offset.x = viewScissorRect.m_x;
+							rc.offset.y = viewScissorRect.m_y;
+							rc.extent.width = viewScissorRect.m_width;
+							rc.extent.height = viewScissorRect.m_height;
+							vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
+						}
+					}
+					else
+					{
+						restoreScissor = true;
+						Rect scissorRect;
+						scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
+
+						VkRect2D rc;
+						rc.offset.x = scissorRect.m_x;
+						rc.offset.y = scissorRect.m_y;
+						rc.extent.width = scissorRect.m_width;
+						rc.extent.height = scissorRect.m_height;
+						vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
+					}
+				}
+
 				if (0 != draw.m_streamMask)
 				{
 					currentState.m_streamMask = draw.m_streamMask;
@@ -6943,8 +6977,6 @@ VK_DESTROY
 							, uint8_t(draw.m_instanceDataStride/16)
 							);
 
-					uint16_t scissor = draw.m_scissor;
-
 					if (pipeline != currentPipeline
 					||  0 != changedStencil)
 					{
@@ -6973,39 +7005,6 @@ VK_DESTROY
 						primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 						prim = s_primInfo[primIndex];
 //						m_commandList->IASetPrimitiveTopology(prim.m_topology);
-					}
-
-					if (currentState.m_scissor != scissor)
-					{
-						currentState.m_scissor = scissor;
-
-						if (UINT16_MAX == scissor)
-						{
-							if (restoreScissor
-							||  viewHasScissor)
-							{
-								restoreScissor = false;
-								VkRect2D rc;
-								rc.offset.x      = viewScissorRect.m_x;
-								rc.offset.y      = viewScissorRect.m_y;
-								rc.extent.width  = viewScissorRect.m_width;
-								rc.extent.height = viewScissorRect.m_height;
-								vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
-							}
-						}
-						else
-						{
-							restoreScissor = true;
-							Rect scissorRect;
-							scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
-
-							VkRect2D rc;
-							rc.offset.x      = scissorRect.m_x;
-							rc.offset.y      = scissorRect.m_y;
-							rc.extent.width  = scissorRect.m_width;
-							rc.extent.height = scissorRect.m_height;
-							vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
-						}
 					}
 
 					if (pipeline != currentPipeline)
