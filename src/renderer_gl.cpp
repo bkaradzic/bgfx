@@ -2629,7 +2629,7 @@ namespace bgfx { namespace gl
 
 					supported |= computeSupport
 						&& isImageFormatValid(fmt)
-						? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+						? (BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ | BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
 
@@ -2893,7 +2893,7 @@ namespace bgfx { namespace gl
 					| (m_occlusionQuerySupport     ? BGFX_CAPS_OCCLUSION_QUERY        : 0)
 					| (m_depthTextureSupport       ? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL : 0)
 					| (computeSupport              ? BGFX_CAPS_COMPUTE                : 0)
-					| (m_imageLoadStoreSupport     ? BGFX_CAPS_FRAMEBUFFER_RW         : 0)
+					| (m_imageLoadStoreSupport     ? BGFX_CAPS_IMAGE_RW               : 0)
 					;
 
 				g_caps.supported |= m_glctx.getCaps();
@@ -3696,8 +3696,6 @@ namespace bgfx { namespace gl
 					m_glctx.makeCurrent(NULL);
 					m_currentFbo = frameBuffer.m_fbo[0];
 				}
-
-				frameBuffer.set();
 			}
 
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
@@ -6847,36 +6845,6 @@ namespace bgfx { namespace gl
 		GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, idx, buffers) );
 	}
 
-	void FrameBufferGL::set()
-	{
-		for(uint32_t ii = 0; ii < m_numTh; ++ii)
-		{
-			const Attachment& at = m_attachment[ii];
-
-			if (at.access == Access::Write)
-			{
-				continue;
-			}
-
-			if (isValid(at.handle) )
-			{
-				const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];
-
-				if (0 != (texture.m_flags&BGFX_TEXTURE_COMPUTE_WRITE) )
-				{
-					GL_CHECK(glBindImageTexture(ii
-						, texture.m_id
-						, at.mip
-						, GL_FALSE //texture.isLayered() ? GL_TRUE : GL_FALSE
-						, at.layer
-						, s_access[Access::ReadWrite]
-						, s_imageFormat[texture.m_textureFormat])
-						);
-				}
-			}
-		}
-	}
-
 	void OcclusionQueryGL::create()
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
@@ -7782,6 +7750,7 @@ namespace bgfx { namespace gl
 					viewState.setPredefined<1>(this, view, program, _render, draw);
 
 					{
+						GLbitfield barrier = 0;
 						for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 						{
 							const Binding& bind = renderBind.m_bind[stage];
@@ -7795,6 +7764,21 @@ namespace bgfx { namespace gl
 								{
 									switch (bind.m_type)
 									{
+									case Binding::Image:
+										{
+											const TextureGL& texture = m_textures[bind.m_idx];
+											GL_CHECK(glBindImageTexture(stage
+																		, texture.m_id
+																		, bind.m_mip
+																		, texture.isCubeMap() || texture.m_target == GL_TEXTURE_2D_ARRAY ? GL_TRUE : GL_FALSE
+																		, 0
+																		, s_access[bind.m_access]
+																		, s_imageFormat[bind.m_format])
+													);
+											barrier |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
+										}
+										break;
+
 									case Binding::Texture:
 										{
 											TextureGL& texture = m_textures[bind.m_idx];
@@ -7820,6 +7804,11 @@ namespace bgfx { namespace gl
 							}
 
 							current = bind;
+						}
+
+						if (0 != barrier)
+						{
+							GL_CHECK(glMemoryBarrier(barrier) );
 						}
 					}
 

@@ -503,7 +503,7 @@ namespace bgfx { namespace d3d12
 
 	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, uint64_t _size, D3D12_RESOURCE_FLAGS _flags = D3D12_RESOURCE_FLAG_NONE)
 	{
-		D3D12_RESOURCE_DESC resourceDesc;
+		D3D12_RESOURCE_DESC resourceDesc = {};
 		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 		resourceDesc.Alignment = 0;
 		resourceDesc.Width     = _size;
@@ -795,7 +795,12 @@ namespace bgfx { namespace d3d12
 								if (SUCCEEDED(hr))
 								{
 //									debug1->SetEnableGPUBasedValidation(true);
-//									debug1->SetEnableSynchronizedCommandQueueValidation(true);
+
+									// https://discordapp.com/channels/590611987420020747/593519198995742733/703642988345032804
+									// D3D12 Bug Number: 26131261
+									// There is a bug in the D3D12 validation that causes example-21 to fail when using UAV
+									// Setting this function below to false avoids the bug
+									debug1->SetEnableSynchronizedCommandQueueValidation(false);
 								}
 
 								DX_RELEASE(debug1, 1);
@@ -1157,6 +1162,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_ALPHA_TO_COVERAGE
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+					| BGFX_CAPS_IMAGE_RW
 					);
 				g_caps.limits.maxTextureSize     = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 				g_caps.limits.maxTextureLayers   = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
@@ -1214,7 +1220,7 @@ namespace bgfx { namespace d3d12
 							support |= 0 != (data.Support1 & (0
 									| D3D12_FORMAT_SUPPORT1_SHADER_LOAD
 									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+									? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 
@@ -1245,10 +1251,10 @@ namespace bgfx { namespace d3d12
 							BX_TRACE("CheckFeatureSupport failed with %x for format %s.", hr, getName(TextureFormat::Enum(ii) ) );
 						}
 
-						if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE) )
+						if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) )
 						{
 							// clear image flag for additional testing
-							support &= ~BGFX_CAPS_FORMAT_TEXTURE_IMAGE;
+							support &= ~BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ;
 
 							data.Format = s_textureFormat[ii].m_fmt;
 							hr = m_device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
@@ -1256,9 +1262,15 @@ namespace bgfx { namespace d3d12
 							{
 								support |= 0 != (data.Support2 & (0
 										| D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+
+								support |= 0 != (data.Support2 & (0
 										| D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE
 										) )
-										? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+										? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
 										: BGFX_CAPS_FORMAT_TEXTURE_NONE
 										;
 							}
@@ -2913,7 +2925,7 @@ namespace bgfx { namespace d3d12
 					union { uint32_t offset; void* ptr; } cast = { 0 };
 					filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
 
-					temp = alloc(uint32_t(dxbc.shader.byteCode.size() )+1024);
+					temp = alloc(uint32_t(dxbc.header.size));
 					bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
 
 					int32_t size = write(&wr, dxbc, &err);
@@ -2950,7 +2962,7 @@ namespace bgfx { namespace d3d12
 					};
 					filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
 
-					temp = alloc(uint32_t(dxbc.shader.byteCode.size() )+1024);
+					temp = alloc(uint32_t(dxbc.header.size));
 					bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
 
 					int32_t size = write(&wr, dxbc, &err);
@@ -6491,8 +6503,8 @@ namespace bgfx { namespace d3d12
 						if (NULL == bindCached)
 						{
 							uint32_t numSet = 0;
-							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-							uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+							uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
 							{
 								for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 								{
@@ -6501,6 +6513,26 @@ namespace bgfx { namespace d3d12
 									{
 										switch (bind.m_type)
 										{
+										case Binding::Image:
+											{
+												TextureD3D12& texture = m_textures[bind.m_idx];
+
+												if (Access::Read != bind.m_access)
+												{
+													texture.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+													scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_mip);
+												}
+												else
+												{
+													texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+													scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_mip);
+													samplerFlags[stage] = uint32_t(texture.m_flags);
+												}
+
+												++numSet;
+											}
+											break;
+
 										case Binding::Texture:
 											{
 												TextureD3D12& texture = m_textures[bind.m_idx];

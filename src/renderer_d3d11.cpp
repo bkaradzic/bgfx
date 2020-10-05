@@ -1204,7 +1204,7 @@ namespace bgfx { namespace d3d11
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					| ((m_featureLevel >= D3D_FEATURE_LEVEL_11_1)
-						? BGFX_CAPS_FRAMEBUFFER_RW
+						? BGFX_CAPS_IMAGE_RW
 						: 0)
 					);
 
@@ -1388,7 +1388,7 @@ namespace bgfx { namespace d3d11
 								support |= 0 != (data.OutFormatSupport & (0
 										| D3D11_FORMAT_SUPPORT_SHADER_LOAD
 										) )
-										? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+										? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
 										: BGFX_CAPS_FORMAT_TEXTURE_NONE
 										;
 
@@ -1430,10 +1430,10 @@ namespace bgfx { namespace d3d11
 									);
 							}
 
-							if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE) )
+							if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) )
 							{
 								// clear image flag for additional testing
-								support &= ~BGFX_CAPS_FORMAT_TEXTURE_IMAGE;
+								support &= ~BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ;
 
 								data.InFormat = s_textureFormat[ii].m_fmt;
 								hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &data, sizeof(data) );
@@ -1441,9 +1441,15 @@ namespace bgfx { namespace d3d11
 								{
 									support |= 0 != (data.OutFormatSupport & (0
 											| D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD
+											) )
+											? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
+											: BGFX_CAPS_FORMAT_TEXTURE_NONE
+											;
+
+									support |= 0 != (data.OutFormatSupport & (0
 											| D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE
 											) )
-											? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+											? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
 											: BGFX_CAPS_FORMAT_TEXTURE_NONE
 											;
 								}
@@ -1455,12 +1461,12 @@ namespace bgfx { namespace d3d11
 								| BGFX_CAPS_FORMAT_TEXTURE_2D
 								| BGFX_CAPS_FORMAT_TEXTURE_3D
 								| BGFX_CAPS_FORMAT_TEXTURE_CUBE
-								| BGFX_CAPS_FORMAT_TEXTURE_IMAGE
 								| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
-								| BGFX_CAPS_FORMAT_TEXTURE_IMAGE
 								| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 								| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
 								| BGFX_CAPS_FORMAT_TEXTURE_MSAA
+								| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
+								| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
 								;
 						}
 					}
@@ -3022,8 +3028,41 @@ namespace bgfx { namespace d3d11
 			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
 
+		void quietValidation()
+		{
+			const uint32_t maxTextureSamplers = g_caps.limits.maxTextureSamplers;
+
+			// vertex texture fetch not supported on 9_1 through 9_3
+			if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
+			{
+					m_deviceCtx->VSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
+					m_deviceCtx->VSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
+			}
+
+			if (m_featureLevel > D3D_FEATURE_LEVEL_11_0)
+			{
+					m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
+						D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL
+						, NULL
+						, NULL
+						, 16
+						, maxTextureSamplers
+						, s_zero.m_uav
+						, NULL
+					);
+			}
+
+			m_deviceCtx->PSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
+			m_deviceCtx->PSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
+		}
+
 		void commitTextureStage()
 		{
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG))
+			{
+				quietValidation();
+			}
+
 			const uint32_t maxTextureSamplers = g_caps.limits.maxTextureSamplers;
 
 			// vertex texture fetch not supported on 9_1 through 9_3
@@ -3031,6 +3070,19 @@ namespace bgfx { namespace d3d11
 			{
 				m_deviceCtx->VSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
 				m_deviceCtx->VSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
+			}
+
+			if (m_featureLevel > D3D_FEATURE_LEVEL_11_0)
+			{
+				m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
+					D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL
+					, NULL
+					, NULL
+					, 16
+					, maxTextureSamplers
+					, m_textureStage.m_uav
+					, NULL
+					);
 			}
 
 			m_deviceCtx->PSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
@@ -3909,6 +3961,88 @@ namespace bgfx { namespace d3d11
 		return find.m_found;
 	}
 
+	static void patchUAVRegisterByteCode(DxbcInstruction& _instruction, void* _userData)
+	{
+		union { void* ptr; uint32_t offset; } cast = { _userData };
+
+		switch (_instruction.opcode)
+		{
+		case DxbcOpcode::DCL_UNORDERED_ACCESS_VIEW_TYPED:
+			{
+				DxbcOperand& operand = _instruction.operand[0];
+				operand.regIndex[0] += 16;
+
+				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0
+					, "Unexpected values");
+			}
+			break;
+		case DxbcOpcode::DCL_UNORDERED_ACCESS_VIEW_RAW:
+			{
+				BX_ASSERT(false, "Unsupported UAV access");
+			}
+			break;
+		case DxbcOpcode::DCL_UNORDERED_ACCESS_VIEW_STRUCTURED:
+			{
+				BX_ASSERT(false, "Unsupported UAV access");
+			}
+			break;
+		case DxbcOpcode::LD_UAV_TYPED:
+			{
+				DxbcOperand& operand = _instruction.operand[2];
+				operand.regIndex[0] += 16;
+
+				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0
+					, "Unexpected values");
+			}
+			break;
+		case DxbcOpcode::STORE_UAV_TYPED:
+			{
+				DxbcOperand& operand = _instruction.operand[0];
+				operand.regIndex[0] += 16;
+
+				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0
+					, "Unexpected values");
+			}
+			break;
+		}
+	}
+
+	static void patchUAVRegisterDebugInfo(DxbcSPDB& _spdb)
+	{
+		if (!_spdb.debugCode.empty())
+		{
+			// 'register( u[xx] )'
+			char* ptr = (char*)_spdb.debugCode.data();
+			while (ptr < (char*)_spdb.debugCode.data() + _spdb.debugCode.size() - 3)
+			{
+				if (*(ptr+1) == ' '
+				&&	*(ptr+2) == 'u'
+				&&	*(ptr+3) == '[')
+				{
+					char* startPtr = ptr+4;
+					char* endPtr = ptr+4;
+
+					while (*endPtr != ']')
+					{
+						endPtr++;
+					}
+
+					uint32_t regNum = 0;
+					uint32_t regLen = endPtr - startPtr;
+					bx::fromString(&regNum, bx::StringView(startPtr, regLen));
+
+					regNum += 16;
+					uint32_t len = bx::toString(startPtr, regLen+2, regNum);
+					*(startPtr + len) = ']';
+
+					break;
+				}
+
+				++ptr;
+			}
+		}
+	}
+
 	void ShaderD3D11::create(const Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
@@ -4029,6 +4163,33 @@ namespace bgfx { namespace d3d11
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
+		const Memory* temp = NULL;
+
+		if (!isShaderType(magic, 'C'))
+		{
+			bx::MemoryReader rd(code, shaderSize);
+
+			DxbcContext dxbc;
+			bx::Error err;
+			read(&rd, dxbc, &err);
+
+			bool patchShader = !dxbc.shader.aon9;
+			if (patchShader)
+			{
+				union { uint32_t offset; void* ptr; } cast = { 0 };
+				filter(dxbc.shader, dxbc.shader, patchUAVRegisterByteCode, cast.ptr);
+				patchUAVRegisterDebugInfo(dxbc.spdb);
+
+				temp = alloc(shaderSize);
+				bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
+
+				int32_t size = write(&wr, dxbc, &err);
+				dxbcHash(temp->data + 20, size - 20, temp->data + 4);
+
+				code = temp->data;
+			}
+		}
+
 		if (isShaderType(magic, 'F') )
 		{
 			m_hasDepthOp = hasDepthOp(code, shaderSize);
@@ -4082,6 +4243,11 @@ namespace bgfx { namespace d3d11
 			DX_CHECK(s_renderD3D11->m_device->CreateBuffer(&desc, NULL, &m_buffer) );
 
 			BX_TRACE("\tCB size: %d", desc.ByteWidth);
+		}
+
+		if (NULL != temp)
+		{
+			release(temp);
 		}
 	}
 
@@ -5024,23 +5190,7 @@ namespace bgfx { namespace d3d11
 
 	void FrameBufferD3D11::set()
 	{
-		if (0 < m_numUav)
-		{
-			s_renderD3D11->m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
-				  m_num
-				, m_rtv
-				, m_dsv
-				, 16
-				, m_numUav
-				, m_uav
-				, NULL
-				);
-		}
-		else
-		{
-			s_renderD3D11->m_deviceCtx->OMSetRenderTargets(m_num, m_rtv, m_dsv);
-		}
-
+		s_renderD3D11->m_deviceCtx->OMSetRenderTargets(m_num, m_rtv, m_dsv);
 		m_needPresent = UINT16_MAX != m_denseIdx;
 		s_renderD3D11->m_currentColor        = m_rtv[0];
 		s_renderD3D11->m_currentDepthStencil = m_dsv;
@@ -5622,6 +5772,7 @@ namespace bgfx { namespace d3d11
 						{
 							m_textureStage.m_srv[stage]     = NULL;
 							m_textureStage.m_sampler[stage] = NULL;
+							m_textureStage.m_uav[stage]     = NULL;
 						}
 					}
 
@@ -5902,6 +6053,24 @@ namespace bgfx { namespace d3d11
 							{
 								switch (bind.m_type)
 								{
+								case Binding::Image:
+									{
+										TextureD3D11& texture = m_textures[bind.m_idx];
+										if (Access::Read != bind.m_access)
+										{
+											m_textureStage.m_uav[stage] = 0 == bind.m_mip
+												? texture.m_uav
+												: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_mip)
+												;
+										}
+										else
+										{
+											m_textureStage.m_srv[stage]     = s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_mip, true);
+											m_textureStage.m_sampler[stage] = s_renderD3D11->getSamplerState(uint32_t(texture.m_flags), NULL);
+										}
+									}
+									break;
+
 								case Binding::Texture:
 									{
 										TextureD3D11& texture = m_textures[bind.m_idx];
@@ -5918,6 +6087,7 @@ namespace bgfx { namespace d3d11
 											;
 										m_textureStage.m_srv[stage] = buffer.m_srv;
 										m_textureStage.m_sampler[stage] = NULL;
+										m_textureStage.m_uav[stage]     = NULL;
 									}
 									break;
 								}
@@ -5926,6 +6096,7 @@ namespace bgfx { namespace d3d11
 							{
 								m_textureStage.m_srv[stage]     = NULL;
 								m_textureStage.m_sampler[stage] = NULL;
+								m_textureStage.m_uav[stage]     = NULL;
 							}
 
 							++changes;

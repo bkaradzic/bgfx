@@ -1023,7 +1023,7 @@ namespace bgfx { namespace spirv
 						}
 					}
 
-					// Loop through the separate_images, and extract the uniform names:
+					// Loop through the storage_images, and extract the uniform names:
 					for (auto &resource : resourcesrefl.storage_images)
 					{
 						std::string name = refl.get_name(resource.id);
