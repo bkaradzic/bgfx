@@ -602,6 +602,7 @@ namespace bgfx { namespace gl
 			EXT_timer_query,
 			EXT_unpack_subimage,
 			EXT_sRGB,
+			EXT_multisampled_render_to_texture,
 
 			GOOGLE_depth_texture,
 
@@ -813,7 +814,8 @@ namespace bgfx { namespace gl
 		{ "EXT_timer_query",                          BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "EXT_unpack_subimage",                      false,                             true  },
 		{ "EXT_sRGB",                                 false,                             true  }, // GLES2 extension.
-
+		{ "EXT_multisampled_render_to_texture",       false,                             true  }, // GLES2 extension.
+		
 		{ "GOOGLE_depth_texture",                     false,                             true  },
 
 		{ "IMG_multisampled_render_to_texture",       false,                             true  },
@@ -2915,10 +2917,17 @@ namespace bgfx { namespace gl
 				}
 
 				if (s_extension[Extension::ARB_texture_multisample].m_supported
-				||  s_extension[Extension::ANGLE_framebuffer_multisample].m_supported)
+				||  s_extension[Extension::ANGLE_framebuffer_multisample].m_supported
+				||  s_extension[Extension::EXT_multisampled_render_to_texture].m_supported)
 				{
 					GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES, &m_maxMsaa) );
 				}
+
+#if BGFX_CONFIG_RENDERER_OPENGLES && (BGFX_CONFIG_RENDERER_OPENGLES < 30)
+				if (!m_maxMsaa  && s_extension[Extension::IMG_multisampled_render_to_texture].m_supported) {
+					GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES_IMG, &m_maxMsaa) );
+				}
+#endif // BGFX_CONFIG_RENDERER_OPENGLES < 30
 
 				if (s_extension[Extension::OES_read_format].m_supported
 				&& (s_extension[Extension::IMG_read_format].m_supported	|| s_extension[Extension::EXT_read_format_bgra].m_supported) )
