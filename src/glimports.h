@@ -29,6 +29,7 @@
 #define GL_IMPORT_KHR__(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## KHR)
 #define GL_IMPORT_NV___(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## NV)
 #define GL_IMPORT_OES__(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## OES)
+#define GL_IMPORT_IMG__(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## IMG)
 #define GL_IMPORT_____x(_optional, _proto, _func) GL_EXTENSION(_optional, _proto, _func, _func ## XXXXX)
 
 #if GL_IMPORT_TYPEDEFS
@@ -467,6 +468,10 @@ GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DM
 
 #	else // GLES
 GL_IMPORT______(false, PFNGLCLEARDEPTHFPROC,                       glClearDepthf);
+GL_IMPORT_EXT__(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
+#		if (BGFX_CONFIG_RENDERER_OPENGLES < 30)
+GL_IMPORT_IMG__(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
+#		endif // BGFX_CONFIG_RENDERER_OPENGLES < 30
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 
 GL_IMPORT______(true,  PFNGLINSERTEVENTMARKEREXTPROC,              glInsertEventMarker);
@@ -676,4 +681,5 @@ GL_IMPORT______(true,  PFNGLINVALIDATEFRAMEBUFFERPROC,             glInvalidateF
 #undef GL_IMPORT_KHR__
 #undef GL_IMPORT_NV___
 #undef GL_IMPORT_OES__
+#undef GL_IMPORT_IMG__
 #undef GL_IMPORT_____x
