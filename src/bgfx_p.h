@@ -131,6 +131,7 @@ namespace bgfx
 #include <bimg/bimg.h>
 #include "shader.h"
 #include "vertexlayout.h"
+#include "version.h"
 
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
 

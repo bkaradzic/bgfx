@@ -1018,7 +1018,7 @@ namespace bgfx { namespace d3d11
 					 *
 					 * Moreover, it is actually not desirable to create the backbuffer with an _SRGB format, because that
 					 * is incompatible with the flip presentation model, which is desirable for various reasons including
-					 * player embedding. 
+					 * player embedding.
 					 */
 					m_scd.format = s_textureFormat[_init.resolution.format].m_fmt;
 
@@ -6448,11 +6448,17 @@ namespace bgfx { namespace d3d11
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x8c : 0x8f
-					, " %s.%d (FL %d.%d) / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
+					, " %s.%d (FL %d.%d) / " BX_COMPILER_NAME
+					  " / " BX_CPU_NAME
+					  " / " BX_ARCH_NAME
+					  " / " BX_PLATFORM_NAME
+					  " / Version 1.%d.%d (commit: " BGFX_REV_SHA1 ")"
 					, getRendererName()
 					, m_deviceInterfaceVersion
 					, (m_featureLevel >> 12) & 0xf
 					, (m_featureLevel >>  8) & 0xf
+					, BGFX_API_VERSION
+					, BGFX_REV_NUMBER
 					);
 
 				const DXGI_ADAPTER_DESC& desc = m_dxgi.m_adapterDesc;

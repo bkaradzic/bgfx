@@ -815,7 +815,7 @@ namespace bgfx { namespace gl
 		{ "EXT_unpack_subimage",                      false,                             true  },
 		{ "EXT_sRGB",                                 false,                             true  }, // GLES2 extension.
 		{ "EXT_multisampled_render_to_texture",       false,                             true  }, // GLES2 extension.
-		
+
 		{ "GOOGLE_depth_texture",                     false,                             true  },
 
 		{ "IMG_multisampled_render_to_texture",       false,                             true  },
@@ -8216,9 +8216,16 @@ namespace bgfx { namespace gl
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x8c : 0x8f
-					, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
+					, " %s / " BX_COMPILER_NAME
+					  " / " BX_CPU_NAME
+					  " / " BX_ARCH_NAME
+					  " / " BX_PLATFORM_NAME
+					  " / Version 1.%d.%d (commit: " BGFX_REV_SHA1 ")"
 					, getRendererName()
+					, BGFX_API_VERSION
+					, BGFX_REV_NUMBER
 					);
+
 				tvm.printf(0, pos++, 0x8f, "       Vendor: %s ", m_vendor);
 				tvm.printf(0, pos++, 0x8f, "     Renderer: %s ", m_renderer);
 				tvm.printf(0, pos++, 0x8f, "      Version: %s ", m_version);

@@ -11,7 +11,6 @@
 #include <bx/mutex.h>
 
 #include "topology.h"
-#include "version.h"
 
 #if BX_PLATFORM_OSX || BX_PLATFORM_IOS
 #	include <objc/message.h>
