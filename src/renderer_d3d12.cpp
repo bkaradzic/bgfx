@@ -1642,16 +1642,17 @@ namespace bgfx { namespace d3d12
 			D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
 			uint32_t numRows;
 			uint64_t total;
-			uint64_t srcPitch;
 			m_device->GetCopyableFootprints(&desc
 				, _mip
 				, 1
 				, 0
 				, &layout
 				, &numRows
-				, &srcPitch
+				, NULL
 				, &total
 				);
+
+			uint32_t srcPitch = layout.Footprint.RowPitch;
 
 			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, total);
 
@@ -1678,10 +1679,9 @@ namespace bgfx { namespace d3d12
 			uint8_t* dst      = (uint8_t*)_data;
 			uint32_t dstPitch = srcWidth*bpp/8;
 
-			uint32_t pitch = bx::uint32_min(uint32_t(srcPitch), dstPitch);
+			uint32_t pitch = bx::uint32_min(srcPitch, dstPitch);
 
-			D3D12_RANGE readRange = { 0, dstPitch*srcHeight };
-			readback->Map(0, &readRange, (void**)&src);
+			readback->Map(0, NULL, (void**)&src);
 
 			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
 			{
@@ -1878,7 +1878,8 @@ namespace bgfx { namespace d3d12
 				, (uint32_t)total
 				, false
 				);
-			readback->Unmap(0, NULL);
+			D3D12_RANGE writeRange = { 0, 0 };
+			readback->Unmap(0, &writeRange);
 
 			DX_RELEASE(readback, 0);
 		}
