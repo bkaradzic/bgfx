@@ -1656,24 +1656,24 @@ namespace bgfx { namespace d3d12
 
 			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, total);
 
+			uint32_t srcWidth  = bx::uint32_max(1, texture.m_width >>_mip);
+			uint32_t srcHeight = bx::uint32_max(1, texture.m_height>>_mip);
+
 			D3D12_BOX box;
 			box.left   = 0;
 			box.top    = 0;
-			box.right  = texture.m_width;
-			box.bottom = texture.m_height;
+			box.right  = srcWidth;
+			box.bottom = srcHeight;
 			box.front  = 0;
 			box.back   = 1;
 
 			D3D12_TEXTURE_COPY_LOCATION dstLocation = { readback,      D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
-			D3D12_TEXTURE_COPY_LOCATION srcLocation = { texture.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {}         };
+			D3D12_TEXTURE_COPY_LOCATION srcLocation = { texture.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { }        };
+			srcLocation.SubresourceIndex = _mip;
 			m_commandList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, &box);
 
 			finish();
 			m_commandList = m_cmd.alloc();
-
-			uint32_t srcWidth  = bx::uint32_max(1, texture.m_width >>_mip);
-			uint32_t srcHeight = bx::uint32_max(1, texture.m_height>>_mip);
-			uint8_t* src;
 
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 			uint8_t* dst      = (uint8_t*)_data;
@@ -1681,6 +1681,7 @@ namespace bgfx { namespace d3d12
 
 			uint32_t pitch = bx::uint32_min(srcPitch, dstPitch);
 
+			uint8_t* src;
 			readback->Map(0, NULL, (void**)&src);
 
 			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
