@@ -6355,9 +6355,9 @@ VK_DESTROY
 			blitInfo.srcOffsets[0].x = blit.m_srcX;
 			blitInfo.srcOffsets[0].y = blit.m_srcY;
 			blitInfo.srcOffsets[0].z = srcZ;
-			blitInfo.srcOffsets[1].x = bx::min<int32_t>(blit.m_srcX + blit.m_width, src.m_width);
-			blitInfo.srcOffsets[1].y = bx::min<int32_t>(blit.m_srcY + blit.m_height, src.m_height);
-			blitInfo.srcOffsets[1].z = bx::max<int32_t>(bx::min(srcZ + depth, src.m_depth), 1);
+			blitInfo.srcOffsets[1].x = blit.m_srcX + blit.m_width;
+			blitInfo.srcOffsets[1].y = blit.m_srcY + blit.m_height;
+			blitInfo.srcOffsets[1].z = bx::max<int32_t>(srcZ + depth, 1);
 			blitInfo.dstSubresource.aspectMask     = dst.m_aspectMask;
 			blitInfo.dstSubresource.mipLevel       = blit.m_dstMip;
 			blitInfo.dstSubresource.baseArrayLayer = dstLayer;
@@ -6365,9 +6365,9 @@ VK_DESTROY
 			blitInfo.dstOffsets[0].x = blit.m_dstX;
 			blitInfo.dstOffsets[0].y = blit.m_dstY;
 			blitInfo.dstOffsets[0].z = dstZ;
-			blitInfo.dstOffsets[1].x = bx::min<int32_t>(blit.m_dstX + blit.m_width, dst.m_width);
-			blitInfo.dstOffsets[1].y = bx::min<int32_t>(blit.m_dstY + blit.m_height, dst.m_height);
-			blitInfo.dstOffsets[1].z = bx::max<int32_t>(bx::min(dstZ + depth, dst.m_depth), 1);
+			blitInfo.dstOffsets[1].x = blit.m_dstX + blit.m_width;
+			blitInfo.dstOffsets[1].y = blit.m_dstY + blit.m_height;
+			blitInfo.dstOffsets[1].z = bx::max<int32_t>(dstZ + depth, 1);
 			VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) ) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
 			vkCmdBlitImage(
 				  commandBuffer

@@ -5425,25 +5425,15 @@ namespace bgfx { namespace d3d11
 			const TextureD3D11& src = m_textures[blit.m_src.idx];
 			const TextureD3D11& dst = m_textures[blit.m_dst.idx];
 
-			uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
-			uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
-			uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
-			uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
-			uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
-			uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
-			uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
-			uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
-			uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
-
 			if (TextureD3D11::Texture3D == src.m_type)
 			{
 				D3D11_BOX box;
 				box.left   = blit.m_srcX;
 				box.top    = blit.m_srcY;
 				box.front  = blit.m_srcZ;
-				box.right  = blit.m_srcX + width;
-				box.bottom = blit.m_srcY + height;;
-				box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
+				box.right  = blit.m_srcX + blit.m_width;
+				box.bottom = blit.m_srcY + blit.m_height;
+				box.back   = blit.m_srcZ + bx::uint32_imax(1, blit.m_depth);
 
 				deviceCtx->CopySubresourceRegion(dst.m_ptr
 					, blit.m_dstMip
@@ -5459,7 +5449,7 @@ namespace bgfx { namespace d3d11
 			{
 				bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
 				BX_ASSERT(!depthStencil
-					||  (width == src.m_width && height == src.m_height)
+					||  (blit.m_width == bx::uint32_max(1, src.m_width >> blit.m_srcMip) && blit.m_height == bx::uint32_max(1, src.m_height >> blit.m_srcMip))
 					, "When blitting depthstencil surface, source resolution must match destination."
 					);
 
@@ -5467,8 +5457,8 @@ namespace bgfx { namespace d3d11
 				box.left   = blit.m_srcX;
 				box.top    = blit.m_srcY;
 				box.front  = 0;
-				box.right  = blit.m_srcX + width;
-				box.bottom = blit.m_srcY + height;
+				box.right  = blit.m_srcX + blit.m_width;
+				box.bottom = blit.m_srcY + blit.m_height;
 				box.back   = 1;
 
 				const uint32_t srcZ = blit.m_srcZ;

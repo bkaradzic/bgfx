@@ -3866,8 +3866,37 @@ namespace bgfx
 			, bimg::getName(bimg::TextureFormat::Enum(src.m_format) )
 			, bimg::getName(bimg::TextureFormat::Enum(dst.m_format) )
 			);
-		BX_UNUSED(src, dst);
-		BGFX_ENCODER(blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth) );
+		BX_ASSERT(_srcMip < src.m_numMips, "Invalid blit src mip (%d > %d)", _srcMip, src.m_numMips - 1);
+		BX_ASSERT(_dstMip < dst.m_numMips, "Invalid blit dst mip (%d > %d)", _dstMip, dst.m_numMips - 1);
+
+		uint32_t srcWidth  = bx::uint32_max(1, src.m_width  >> _srcMip);
+		uint32_t srcHeight = bx::uint32_max(1, src.m_height >> _srcMip);
+		uint32_t srcDepth  = bx::uint32_max(1, src.m_depth  >> _srcMip);
+		uint32_t dstWidth  = bx::uint32_max(1, dst.m_width  >> _dstMip);
+		uint32_t dstHeight = bx::uint32_max(1, dst.m_height >> _dstMip);
+		uint32_t dstDepth  = bx::uint32_max(1, dst.m_depth  >> _dstMip);
+
+		BX_ASSERT(_srcX < srcWidth && _srcY < srcHeight && _srcZ < srcDepth
+			, "Blit src coordinates out of range (%d,%d,%d) >= (%d,%d,%d)"
+			, _srcX, _srcY, _srcZ
+			, srcWidth, srcHeight, srcDepth);
+		BX_ASSERT(_dstX < dstWidth && _dstY < dstHeight && _dstZ < dstDepth
+			, "Blit dst coordinates out of range (%d,%d,%d) >= (%d,%d,%d)"
+			, _dstX, _dstY, _dstZ
+			, dstWidth, dstHeight, dstDepth);
+
+		srcWidth  = bx::uint32_min(srcWidth,  _srcX + _width)  - _srcX;
+		srcHeight = bx::uint32_min(srcHeight, _srcY + _height) - _srcY;
+		srcDepth  = bx::uint32_min(srcDepth,  _srcZ + _depth)  - _srcZ;
+		dstWidth  = bx::uint32_min(dstWidth,  _dstX + _width)  - _dstX;
+		dstHeight = bx::uint32_min(dstHeight, _dstY + _height) - _dstY;
+		dstDepth  = bx::uint32_min(dstDepth,  _dstZ + _depth)  - _dstZ;
+
+		uint16_t width  = uint16_t(bx::min(srcWidth,  dstWidth));
+		uint16_t height = uint16_t(bx::min(srcHeight, dstHeight));
+		uint16_t depth  = uint16_t(bx::min(srcDepth,  dstDepth));
+
+		BGFX_ENCODER(blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, width, height, depth) );
 	}
 
 #undef BGFX_ENCODER

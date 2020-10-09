@@ -1811,6 +1811,9 @@ namespace bgfx
 	{
 		void init(
 			  BackbufferRatio::Enum _ratio
+			, uint16_t _width
+			, uint16_t _height
+			, uint16_t _depth
 			, TextureFormat::Enum _format
 			, uint32_t _storageSize
 			, uint8_t _numMips
@@ -1824,6 +1827,9 @@ namespace bgfx
 			m_storageSize = _storageSize;
 			m_refCount    = 1;
 			m_bbRatio     = uint8_t(_ratio);
+			m_width       = _width;
+			m_height      = _height;
+			m_depth       = _depth;
 			m_format      = uint8_t(_format);
 			m_numMips     = _numMips;
 			m_numLayers   = _numLayers;
@@ -1848,6 +1854,9 @@ namespace bgfx
 		uint32_t m_storageSize;
 		int16_t  m_refCount;
 		uint8_t  m_bbRatio;
+		uint16_t m_width;
+		uint16_t m_height;
+		uint16_t m_depth;
 		uint8_t  m_format;
 		uint8_t  m_numMips;
 		uint16_t m_numLayers;
@@ -4248,6 +4257,9 @@ namespace bgfx
 			TextureRef& ref = m_textureRef[handle.idx];
 			ref.init(
 				  _ratio
+				, (uint16_t)imageContainer.m_width
+				, (uint16_t)imageContainer.m_height
+				, (uint16_t)imageContainer.m_depth
 				, _info->format
 				, _info->storageSize
 				, imageContainer.m_numMips
