@@ -470,7 +470,7 @@ EGL_IMPORT
 			{                                                                            \
 				if (NULL == _func)                                                       \
 				{                                                                        \
-					_func = bx::dlsym<_proto>(eglGetProcAddress(#_import) );             \
+					_func = reinterpret_cast<_proto>(eglGetProcAddress(#_import) );      \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                   \
 					BGFX_FATAL(_optional || NULL != _func                                \
 						, Fatal::UnableToInitialize                                      \
