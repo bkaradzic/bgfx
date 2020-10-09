@@ -3877,11 +3877,11 @@ namespace bgfx
 		uint32_t dstDepth  = bx::uint32_max(1, dst.m_depth  >> _dstMip);
 
 		BX_ASSERT(_srcX < srcWidth && _srcY < srcHeight && _srcZ < srcDepth
-			, "Blit src coordinates out of range (%d,%d,%d) > (%d%d%d)"
+			, "Blit src coordinates out of range (%d,%d,%d) >= (%d,%d,%d)"
 			, _srcX, _srcY, _srcZ
 			, srcWidth, srcHeight, srcDepth);
 		BX_ASSERT(_dstX < dstWidth && _dstY < dstHeight && _dstZ < dstDepth
-			, "Blit dst coordinates out of range (%d,%d,%d) > (%d%d%d)"
+			, "Blit dst coordinates out of range (%d,%d,%d) >= (%d,%d,%d)"
 			, _dstX, _dstY, _dstZ
 			, dstWidth, dstHeight, dstDepth);
 
