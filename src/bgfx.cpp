@@ -3862,8 +3862,10 @@ namespace bgfx
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		BGFX_CHECK_HANDLE("blit/src TextureHandle", s_ctx->m_textureHandle, _src);
 		BGFX_CHECK_HANDLE("blit/dst TextureHandle", s_ctx->m_textureHandle, _dst);
+
 		const TextureRef& src = s_ctx->m_textureRef[_src.idx];
 		const TextureRef& dst = s_ctx->m_textureRef[_dst.idx];
+
 		BX_ASSERT(src.m_format == dst.m_format
 			, "Texture format must match (src %s, dst %s)."
 			, bimg::getName(bimg::TextureFormat::Enum(src.m_format) )
