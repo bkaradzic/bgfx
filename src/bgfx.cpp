@@ -23,21 +23,24 @@ namespace bgfx
 #define BGFX_API_THREAD_MAGIC UINT32_C(0x78666762)
 
 #if BGFX_CONFIG_MULTITHREADED
-#	define BGFX_CHECK_API_THREAD()                                  \
+
+#	define BGFX_CHECK_API_THREAD()                                   \
 		BX_ASSERT(NULL != s_ctx, "Library is not initialized yet."); \
 		BX_ASSERT(BGFX_API_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
-#	define BGFX_CHECK_RENDER_THREAD()                        \
+
+#	define BGFX_CHECK_RENDER_THREAD()                         \
 		BX_ASSERT( (NULL != s_ctx && s_ctx->m_singleThreaded) \
-			|| ~BGFX_API_THREAD_MAGIC == s_threadIndex       \
-			, "Must be called from render thread."           \
+			|| ~BGFX_API_THREAD_MAGIC == s_threadIndex        \
+			, "Must be called from render thread."            \
 			)
+
 #else
 #	define BGFX_CHECK_API_THREAD()
 #	define BGFX_CHECK_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED
 
 #define BGFX_CHECK_CAPS(_caps, _msg)                                                   \
-	BX_ASSERT(0 != (g_caps.supported & (_caps) )                                        \
+	BX_ASSERT(0 != (g_caps.supported & (_caps) )                                       \
 		, _msg " Use bgfx::getCaps to check " #_caps " backend renderer capabilities." \
 		);
 
@@ -3869,32 +3872,35 @@ namespace bgfx
 		BX_ASSERT(_srcMip < src.m_numMips, "Invalid blit src mip (%d > %d)", _srcMip, src.m_numMips - 1);
 		BX_ASSERT(_dstMip < dst.m_numMips, "Invalid blit dst mip (%d > %d)", _dstMip, dst.m_numMips - 1);
 
-		uint32_t srcWidth  = bx::uint32_max(1, src.m_width  >> _srcMip);
-		uint32_t srcHeight = bx::uint32_max(1, src.m_height >> _srcMip);
-		uint32_t srcDepth  = bx::uint32_max(1, src.m_depth  >> _srcMip);
-		uint32_t dstWidth  = bx::uint32_max(1, dst.m_width  >> _dstMip);
-		uint32_t dstHeight = bx::uint32_max(1, dst.m_height >> _dstMip);
-		uint32_t dstDepth  = bx::uint32_max(1, dst.m_depth  >> _dstMip);
+		uint32_t srcWidth  = bx::max<uint32_t>(1, src.m_width  >> _srcMip);
+		uint32_t srcHeight = bx::max<uint32_t>(1, src.m_height >> _srcMip);
+		uint32_t dstWidth  = bx::max<uint32_t>(1, dst.m_width  >> _dstMip);
+		uint32_t dstHeight = bx::max<uint32_t>(1, dst.m_height >> _dstMip);
+
+		uint32_t srcDepth  = src.isCubeMap() ? 6 : bx::max<uint32_t>(1, src.m_depth >> _srcMip);
+		uint32_t dstDepth  = dst.isCubeMap() ? 6 : bx::max<uint32_t>(1, dst.m_depth >> _dstMip);
 
 		BX_ASSERT(_srcX < srcWidth && _srcY < srcHeight && _srcZ < srcDepth
-			, "Blit src coordinates out of range (%d,%d,%d) >= (%d,%d,%d)"
+			, "Blit src coordinates out of range (%d, %d, %d) >= (%d, %d, %d)"
 			, _srcX, _srcY, _srcZ
-			, srcWidth, srcHeight, srcDepth);
+			, srcWidth, srcHeight, srcDepth
+			);
 		BX_ASSERT(_dstX < dstWidth && _dstY < dstHeight && _dstZ < dstDepth
-			, "Blit dst coordinates out of range (%d,%d,%d) >= (%d,%d,%d)"
+			, "Blit dst coordinates out of range (%d, %d, %d) >= (%d, %d, %d)"
 			, _dstX, _dstY, _dstZ
-			, dstWidth, dstHeight, dstDepth);
+			, dstWidth, dstHeight, dstDepth
+			);
 
-		srcWidth  = bx::uint32_min(srcWidth,  _srcX + _width)  - _srcX;
-		srcHeight = bx::uint32_min(srcHeight, _srcY + _height) - _srcY;
-		srcDepth  = bx::uint32_min(srcDepth,  _srcZ + _depth)  - _srcZ;
-		dstWidth  = bx::uint32_min(dstWidth,  _dstX + _width)  - _dstX;
-		dstHeight = bx::uint32_min(dstHeight, _dstY + _height) - _dstY;
-		dstDepth  = bx::uint32_min(dstDepth,  _dstZ + _depth)  - _dstZ;
+		srcWidth  = bx::min<uint32_t>(srcWidth,  _srcX + _width ) - _srcX;
+		srcHeight = bx::min<uint32_t>(srcHeight, _srcY + _height) - _srcY;
+		srcDepth  = bx::min<uint32_t>(srcDepth,  _srcZ + _depth ) - _srcZ;
+		dstWidth  = bx::min<uint32_t>(dstWidth,  _dstX + _width ) - _dstX;
+		dstHeight = bx::min<uint32_t>(dstHeight, _dstY + _height) - _dstY;
+		dstDepth  = bx::min<uint32_t>(dstDepth,  _dstZ + _depth ) - _dstZ;
 
-		uint16_t width  = uint16_t(bx::min(srcWidth,  dstWidth));
-		uint16_t height = uint16_t(bx::min(srcHeight, dstHeight));
-		uint16_t depth  = uint16_t(bx::min(srcDepth,  dstDepth));
+		uint16_t width  = bx::min<uint16_t>(srcWidth,  dstWidth);
+		uint16_t height = bx::min<uint16_t>(srcHeight, dstHeight);
+		uint16_t depth  = bx::min<uint16_t>(srcDepth,  dstDepth);
 
 		BGFX_ENCODER(blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, width, height, depth) );
 	}

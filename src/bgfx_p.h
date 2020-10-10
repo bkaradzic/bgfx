@@ -1820,6 +1820,7 @@ namespace bgfx
 			, uint16_t _numLayers
 			, bool _ptrPending
 			, bool _immutable
+			, bool _cubeMap
 			, uint64_t _flags
 			)
 		{
@@ -1835,6 +1836,7 @@ namespace bgfx
 			m_numLayers   = _numLayers;
 			m_owned       = false;
 			m_immutable   = _immutable;
+			m_cubeMap     = _cubeMap;
 			m_flags       = _flags;
 		}
 
@@ -1846,6 +1848,11 @@ namespace bgfx
 		bool isReadBack() const
 		{
 			return 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
+		}
+
+		bool isCubeMap() const
+		{
+			return m_cubeMap;
 		}
 
 		String   m_name;
@@ -1862,6 +1869,7 @@ namespace bgfx
 		uint16_t m_numLayers;
 		bool     m_owned;
 		bool     m_immutable;
+		bool     m_cubeMap;
 	};
 
 	struct FrameBufferRef
@@ -4257,15 +4265,16 @@ namespace bgfx
 			TextureRef& ref = m_textureRef[handle.idx];
 			ref.init(
 				  _ratio
-				, (uint16_t)imageContainer.m_width
-				, (uint16_t)imageContainer.m_height
-				, (uint16_t)imageContainer.m_depth
+				, uint16_t(imageContainer.m_width)
+				, uint16_t(imageContainer.m_height)
+				, uint16_t(imageContainer.m_depth)
 				, _info->format
 				, _info->storageSize
 				, imageContainer.m_numMips
 				, imageContainer.m_numLayers
 				, 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS)
 				, _immutable
+				, imageContainer.m_cubeMap
 				, _flags
 				);
 
