@@ -205,9 +205,16 @@ EGL_IMPORT
 			// https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_recordable.txt
 			const bool hasEglAndroidRecordable = !bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable").isEmpty();
 
+			const uint32_t gles = BGFX_CONFIG_RENDERER_OPENGLES;
+
 			EGLint attrs[] =
 			{
-				EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+				EGL_RENDERABLE_TYPE, (gles >= 30) ? EGL_OPENGL_ES3_BIT_KHR : EGL_OPENGL_ES2_BIT,
+
+				EGL_BLUE_SIZE, 8,
+				EGL_GREEN_SIZE, 8,
+				EGL_RED_SIZE, 8,
+				EGL_ALPHA_SIZE, 8,
 
 #	if BX_PLATFORM_ANDROID
 				EGL_DEPTH_SIZE, 16,
@@ -265,8 +272,6 @@ EGL_IMPORT
 
 			const bool hasEglKhrCreateContext = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context").isEmpty();
 			const bool hasEglKhrNoError       = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context_no_error").isEmpty();
-
-			const uint32_t gles = BGFX_CONFIG_RENDERER_OPENGLES;
 
 			for (uint32_t ii = 0; ii < 2; ++ii)
 			{
@@ -465,7 +470,7 @@ EGL_IMPORT
 			{                                                                            \
 				if (NULL == _func)                                                       \
 				{                                                                        \
-					_func = bx::dlsym<_proto>(eglGetProcAddress(#_import) );             \
+					_func = reinterpret_cast<_proto>(eglGetProcAddress(#_import) );      \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                   \
 					BGFX_FATAL(_optional || NULL != _func                                \
 						, Fatal::UnableToInitialize                                      \

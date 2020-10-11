@@ -131,6 +131,7 @@ namespace bgfx
 #include <bimg/bimg.h>
 #include "shader.h"
 #include "vertexlayout.h"
+#include "version.h"
 
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
 
@@ -1810,12 +1811,16 @@ namespace bgfx
 	{
 		void init(
 			  BackbufferRatio::Enum _ratio
+			, uint16_t _width
+			, uint16_t _height
+			, uint16_t _depth
 			, TextureFormat::Enum _format
 			, uint32_t _storageSize
 			, uint8_t _numMips
 			, uint16_t _numLayers
 			, bool _ptrPending
 			, bool _immutable
+			, bool _cubeMap
 			, uint64_t _flags
 			)
 		{
@@ -1823,11 +1828,15 @@ namespace bgfx
 			m_storageSize = _storageSize;
 			m_refCount    = 1;
 			m_bbRatio     = uint8_t(_ratio);
+			m_width       = _width;
+			m_height      = _height;
+			m_depth       = _depth;
 			m_format      = uint8_t(_format);
 			m_numMips     = _numMips;
 			m_numLayers   = _numLayers;
 			m_owned       = false;
 			m_immutable   = _immutable;
+			m_cubeMap     = _cubeMap;
 			m_flags       = _flags;
 		}
 
@@ -1841,17 +1850,26 @@ namespace bgfx
 			return 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
 		}
 
+		bool isCubeMap() const
+		{
+			return m_cubeMap;
+		}
+
 		String   m_name;
 		void*    m_ptr;
 		uint64_t m_flags;
 		uint32_t m_storageSize;
 		int16_t  m_refCount;
 		uint8_t  m_bbRatio;
+		uint16_t m_width;
+		uint16_t m_height;
+		uint16_t m_depth;
 		uint8_t  m_format;
 		uint8_t  m_numMips;
 		uint16_t m_numLayers;
 		bool     m_owned;
 		bool     m_immutable;
+		bool     m_cubeMap;
 	};
 
 	struct FrameBufferRef
@@ -4247,12 +4265,16 @@ namespace bgfx
 			TextureRef& ref = m_textureRef[handle.idx];
 			ref.init(
 				  _ratio
+				, uint16_t(imageContainer.m_width)
+				, uint16_t(imageContainer.m_height)
+				, uint16_t(imageContainer.m_depth)
 				, _info->format
 				, _info->storageSize
 				, imageContainer.m_numMips
 				, imageContainer.m_numLayers
 				, 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS)
 				, _immutable
+				, imageContainer.m_cubeMap
 				, _flags
 				);
 

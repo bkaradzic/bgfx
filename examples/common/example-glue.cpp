@@ -393,7 +393,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 						if (ImGui::ListBoxHeader("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeightWithSpacing) ) )
 						{
-							ImGuiListClipper clipper(stats->numEncoders, itemHeight);
+							ImGuiListClipper clipper;
+							clipper.Begin(stats->numEncoders, itemHeight);
 
 							while (clipper.Step() )
 							{
@@ -425,7 +426,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 						if (ImGui::ListBoxHeader("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeightWithSpacing) ) )
 						{
-							ImGuiListClipper clipper(stats->numViews, itemHeight);
+							ImGuiListClipper clipper;
+							clipper.Begin(stats->numViews, itemHeight);
 
 							while (clipper.Step() )
 							{

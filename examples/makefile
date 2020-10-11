@@ -41,6 +41,7 @@ rebuild:
 	@make -s --no-print-directory rebuild -C 38-bloom
 #	@make -s --no-print-directory rebuild -C 39-assao
 	@make -s --no-print-directory rebuild -C 40-svt
+	@make -s --no-print-directory rebuild -C 42-bunnylod
 
 rebuild-embedded:
 	@make -s --no-print-directory rebuild -C 02-metaballs
