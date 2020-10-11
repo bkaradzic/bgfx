@@ -406,13 +406,6 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
-	static const uint32_t s_vulkanApiVersions[3] = {
-		VK_API_VERSION_1_0,
-		VK_API_VERSION_1_1,
-		VK_API_VERSION_1_2
-	};
-	BX_STATIC_ASSERT(3 == BX_COUNTOF(s_vulkanApiVersions));
-
 	void fillVertexLayout(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexLayout& _layout)
 	{
 		uint32_t numBindings = _vertexInputState.vertexBindingDescriptionCount;
@@ -1396,60 +1389,56 @@ VK_IMPORT
 					}
 				}
 
-				size_t vulkanApiSelectorIdx = (NULL == vkEnumerateInstanceVersion)
-					? 0
-					: BX_COUNTOF(s_vulkanApiVersions) - 1;
+				uint32_t vulkanApiVersionSelector;
+				if (NULL != vkEnumerateInstanceVersion)
 				{
-					VkApplicationInfo appInfo;
-					appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-					appInfo.pNext = NULL;
-					appInfo.pApplicationName   = "bgfx";
-					appInfo.applicationVersion = BGFX_API_VERSION;
-					appInfo.pEngineName   = "bgfx";
-					appInfo.engineVersion = BGFX_API_VERSION;
-					appInfo.apiVersion    = s_vulkanApiVersions[vulkanApiSelectorIdx];
-
-					VkInstanceCreateInfo ici;
-					ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-					ici.pNext = NULL;
-					ici.flags = 0;
-					ici.pApplicationInfo = &appInfo;
-					ici.enabledLayerCount   = numEnabledLayers;
-					ici.ppEnabledLayerNames = enabledLayer;
-					ici.enabledExtensionCount   = numEnabledExtensions;
-					ici.ppEnabledExtensionNames = enabledExtension;
-
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+					result = vkEnumerateInstanceVersion(&vulkanApiVersionSelector);
+					if (VK_SUCCESS != result)
 					{
-						m_allocatorCb = &s_allocationCb;
-						BX_UNUSED(s_allocationCb);
-					}
-
-					for(;;)
-					{
-						result = vkCreateInstance(&ici
-								, m_allocatorCb
-								, &m_instance
-								);
-						if (VK_SUCCESS == result)
-						{
-							break;
-						}
-						else
-						{
-							if (0 != vulkanApiSelectorIdx)
-							{
-								appInfo.apiVersion = s_vulkanApiVersions[--vulkanApiSelectorIdx];
-							}
-							else
-							{
-								BX_TRACE("Init error: vkCreateInstance failed %d: %s.", result, getName(result) );
-								goto error;
-							}
-						}
+						BX_TRACE("Init error: vkEnumerateInstanceVersion failed %d: %s.", result, getName(result) );
+						goto error;
 					}
 				}
-				m_instanceApiVersion = s_vulkanApiVersions[vulkanApiSelectorIdx];
+				else
+				{
+					vulkanApiVersionSelector = VK_API_VERSION_1_0;
+				}
+
+				VkApplicationInfo appInfo;
+				appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+				appInfo.pNext = NULL;
+				appInfo.pApplicationName   = "bgfx";
+				appInfo.applicationVersion = BGFX_API_VERSION;
+				appInfo.pEngineName   = "bgfx";
+				appInfo.engineVersion = BGFX_API_VERSION;
+				appInfo.apiVersion    = vulkanApiVersionSelector;
+
+				VkInstanceCreateInfo ici;
+				ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+				ici.pNext = NULL;
+				ici.flags = 0;
+				ici.pApplicationInfo = &appInfo;
+				ici.enabledLayerCount   = numEnabledLayers;
+				ici.ppEnabledLayerNames = enabledLayer;
+				ici.enabledExtensionCount   = numEnabledExtensions;
+				ici.ppEnabledExtensionNames = enabledExtension;
+
+				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+				{
+					m_allocatorCb = &s_allocationCb;
+					BX_UNUSED(s_allocationCb);
+				}
+
+				result = vkCreateInstance(&ici
+						, m_allocatorCb
+						, &m_instance
+						);
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Init error: vkCreateInstance failed %d: %s.", result, getName(result) );
+					goto error;
+				}
+				m_instanceApiVersion = vulkanApiVersionSelector;
 				BX_TRACE("Instance API Version Selected: %d.%d.%d"
 					, VK_VERSION_MAJOR(m_instanceApiVersion)
 					, VK_VERSION_MINOR(m_instanceApiVersion)
