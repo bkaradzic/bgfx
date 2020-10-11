@@ -1041,9 +1041,9 @@ public static partial class bgfx
 		FragmentOrdering       = 0x0000000000000040,
 	
 		/// <summary>
-		/// Read/Write frame buffer attachments are supported.
+		/// Image Read/Write is supported.
 		/// </summary>
-		FramebufferRw          = 0x0000000000000080,
+		ImageRw                = 0x0000000000000080,
 	
 		/// <summary>
 		/// Graphics debugger is present.
@@ -1148,87 +1148,92 @@ public static partial class bgfx
 	}
 	
 	[Flags]
-	public enum CapsFormatFlags : ushort
+	public enum CapsFormatFlags : uint
 	{
 		/// <summary>
 		/// Texture format is not supported.
 		/// </summary>
-		TextureNone            = 0x0000,
+		TextureNone            = 0x00000000,
 	
 		/// <summary>
 		/// Texture format is supported.
 		/// </summary>
-		Texture2d              = 0x0001,
+		Texture2d              = 0x00000001,
 	
 		/// <summary>
 		/// Texture as sRGB format is supported.
 		/// </summary>
-		Texture2dSrgb          = 0x0002,
+		Texture2dSrgb          = 0x00000002,
 	
 		/// <summary>
 		/// Texture format is emulated.
 		/// </summary>
-		Texture2dEmulated      = 0x0004,
+		Texture2dEmulated      = 0x00000004,
 	
 		/// <summary>
 		/// Texture format is supported.
 		/// </summary>
-		Texture3d              = 0x0008,
+		Texture3d              = 0x00000008,
 	
 		/// <summary>
 		/// Texture as sRGB format is supported.
 		/// </summary>
-		Texture3dSrgb          = 0x0010,
+		Texture3dSrgb          = 0x00000010,
 	
 		/// <summary>
 		/// Texture format is emulated.
 		/// </summary>
-		Texture3dEmulated      = 0x0020,
+		Texture3dEmulated      = 0x00000020,
 	
 		/// <summary>
 		/// Texture format is supported.
 		/// </summary>
-		TextureCube            = 0x0040,
+		TextureCube            = 0x00000040,
 	
 		/// <summary>
 		/// Texture as sRGB format is supported.
 		/// </summary>
-		TextureCubeSrgb        = 0x0080,
+		TextureCubeSrgb        = 0x00000080,
 	
 		/// <summary>
 		/// Texture format is emulated.
 		/// </summary>
-		TextureCubeEmulated    = 0x0100,
+		TextureCubeEmulated    = 0x00000100,
 	
 		/// <summary>
 		/// Texture format can be used from vertex shader.
 		/// </summary>
-		TextureVertex          = 0x0200,
+		TextureVertex          = 0x00000200,
 	
 		/// <summary>
-		/// Texture format can be used as image from compute shader.
+		/// Texture format can be used as image and read from.
 		/// </summary>
-		TextureImage           = 0x0400,
+		TextureImageRead       = 0x00000400,
+	
+		/// <summary>
+		/// Texture format can be used as image and written to.
+		/// </summary>
+		TextureImageWrite      = 0x00000800,
 	
 		/// <summary>
 		/// Texture format can be used as frame buffer.
 		/// </summary>
-		TextureFramebuffer     = 0x0800,
+		TextureFramebuffer     = 0x00001000,
 	
 		/// <summary>
 		/// Texture format can be used as MSAA frame buffer.
 		/// </summary>
-		TextureFramebufferMsaa = 0x1000,
+		TextureFramebufferMsaa = 0x00002000,
 	
 		/// <summary>
 		/// Texture can be sampled as MSAA.
 		/// </summary>
-		TextureMsaa            = 0x2000,
+		TextureMsaa            = 0x00004000,
 	
 		/// <summary>
 		/// Texture format supports auto-generated mips.
 		/// </summary>
-		TextureMipAutogen      = 0x4000,
+		TextureMipAutogen      = 0x00008000,
 	}
 	
 	[Flags]

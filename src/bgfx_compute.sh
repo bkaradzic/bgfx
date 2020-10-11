@@ -10,19 +10,11 @@
 
 #ifndef __cplusplus
 
-#if BGFX_SHADER_LANGUAGE_GLSL
-#	define FRAMEBUFFER_IMAGE2D_RW_0(_name, _format) IMAGE2D_RW(_name, _format, 4)
-#	define FRAMEBUFFER_IMAGE2D_RW_1(_name, _format) IMAGE2D_RW(_name, _format, 5)
-#	define FRAMEBUFFER_IMAGE2D_RW_2(_name, _format) IMAGE2D_RW(_name, _format, 6)
-#	define FRAMEBUFFER_IMAGE2D_RW_3(_name, _format) IMAGE2D_RW(_name, _format, 7)
+#if BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV
+#	define ANNOTATION(_format) [[spv::format_ ## _format]]
 #else
-#	define FRAMEBUFFER_IMAGE2D_RW_0(_name, _format) IMAGE2D_RW(_name, _format, 16)
-#	define FRAMEBUFFER_IMAGE2D_RW_1(_name, _format) IMAGE2D_RW(_name, _format, 17)
-#	define FRAMEBUFFER_IMAGE2D_RW_2(_name, _format) IMAGE2D_RW(_name, _format, 18)
-#	define FRAMEBUFFER_IMAGE2D_RW_3(_name, _format) IMAGE2D_RW(_name, _format, 19)
-#endif // BGFX_SHADER_LANGUAGE_GLSL
-
-#define FRAMEBUFFER_IMAGE2D_RW(_name, _format, _reg) FRAMEBUFFER_IMAGE2D_RW_ ## _reg(_name, _format)
+#	define ANNOTATION(_format)
+#endif
 
 #if BGFX_SHADER_LANGUAGE_GLSL
 
@@ -103,7 +95,7 @@
 #define UIMAGE2D_RO(_name, _format, _reg) IMAGE2D_RO(_name, _format, _reg)
 
 #define IMAGE2D_RW( _name, _format, _reg)                       \
-	RWTexture2D<_format> _name ## Texture : REGISTER(u, _reg);  \
+	ANNOTATION(_format) RWTexture2D<_format> _name ## Texture : REGISTER(u, _reg);  \
 	static BgfxRWImage2D_ ## _format _name = { _name ## Texture }
 
 #define IMAGE2D_WR( _name, _format, _reg) IMAGE2D_RW(_name, _format, _reg)
@@ -117,7 +109,7 @@
 #define UIMAGE2D_ARRAY_RO(_name, _format, _reg) IMAGE2D_ARRAY_RO(_name, _format, _reg)
 
 #define IMAGE2D_ARRAY_RW(_name, _format, _reg)                         \
-	RWTexture2DArray<_format> _name ## Texture : REGISTER(u, _reg);    \
+	ANNOTATION(_format) RWTexture2DArray<_format> _name ## Texture : REGISTER(u, _reg);    \
 	static BgfxRWImage2DArray_ ## _format _name = { _name ## Texture }
 
 #define UIMAGE2D_ARRAY_RW(_name, _format, _reg) IMAGE2D_ARRAY_RW(_name, _format, _reg)
@@ -131,7 +123,7 @@
 #define UIMAGE3D_RO(_name, _format, _reg) IMAGE3D_RO(_name, _format, _reg)
 
 #define IMAGE3D_RW( _name, _format, _reg)                       \
-	RWTexture3D<_format> _name ## Texture : REGISTER(u, _reg);  \
+	ANNOTATION(_format) RWTexture3D<_format> _name ## Texture : REGISTER(u, _reg);  \
 	static BgfxRWImage3D_ ## _format _name = { _name ## Texture }
 
 #define UIMAGE3D_RW(_name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
@@ -159,7 +151,7 @@
 	\
 	struct BgfxRWImage2D_ ## _format                                      \
 	{                                                                     \
-		RWTexture2D<_format> m_texture;                                   \
+		ANNOTATION(_format) RWTexture2D<_format> m_texture;               \
 	};                                                                    \
 	\
 	struct BgfxROImage2DArray_ ## _format                                 \
@@ -169,7 +161,7 @@
 	\
 	struct BgfxRWImage2DArray_ ## _format                                 \
 	{                                                                     \
-		RWTexture2DArray<_format> m_texture;                              \
+		ANNOTATION(_format) RWTexture2DArray<_format> m_texture;          \
 	};                                                                    \
 	\
 	struct BgfxROImage3D_ ## _format                                      \
@@ -179,7 +171,7 @@
 	\
 	struct BgfxRWImage3D_ ## _format                                      \
 	{                                                                     \
-		RWTexture3D<_format> m_texture;                                   \
+		ANNOTATION(_format) RWTexture3D<_format> m_texture;               \
 	};                                                                    \
 
 #define __IMAGE_IMPL_A(_format, _storeComponents, _type, _loadComponents)            \

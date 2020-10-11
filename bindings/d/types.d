@@ -354,7 +354,7 @@ enum ulong BGFX_CAPS_CONSERVATIVE_RASTER = 0x0000000000000008; /// Conservative 
 enum ulong BGFX_CAPS_DRAW_INDIRECT = 0x0000000000000010; /// Draw indirect is supported.
 enum ulong BGFX_CAPS_FRAGMENT_DEPTH = 0x0000000000000020; /// Fragment depth is accessible in fragment shader.
 enum ulong BGFX_CAPS_FRAGMENT_ORDERING = 0x0000000000000040; /// Fragment ordering is available in fragment shader.
-enum ulong BGFX_CAPS_FRAMEBUFFER_RW = 0x0000000000000080; /// Read/Write frame buffer attachments are supported.
+enum ulong BGFX_CAPS_IMAGE_RW = 0x0000000000000080; /// Image Read/Write is supported.
 enum ulong BGFX_CAPS_GRAPHICS_DEBUGGER = 0x0000000000000100; /// Graphics debugger is present.
 enum ulong BGFX_CAPS_RESERVED = 0x0000000000000200;
 enum ulong BGFX_CAPS_HDR10 = 0x0000000000000400; /// HDR10 rendering is supported.
@@ -377,22 +377,23 @@ enum ulong BGFX_CAPS_VERTEX_ATTRIB_UINT10 = 0x0000000004000000; /// Vertex attri
 enum ulong BGFX_CAPS_VERTEX_ID = 0x0000000008000000; /// Rendering with VertexID only is supported.
 enum ulong BGFX_CAPS_TEXTURE_COMPARE_ALL = 0x0000000000300000; /// All texture compare modes are supported.
 
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_NONE = 0x0000; /// Texture format is not supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_2D = 0x0001; /// Texture format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB = 0x0002; /// Texture as sRGB format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED = 0x0004; /// Texture format is emulated.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_3D = 0x0008; /// Texture format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB = 0x0010; /// Texture as sRGB format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED = 0x0020; /// Texture format is emulated.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_CUBE = 0x0040; /// Texture format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB = 0x0080; /// Texture as sRGB format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED = 0x0100; /// Texture format is emulated.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_VERTEX = 0x0200; /// Texture format can be used from vertex shader.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_IMAGE = 0x0400; /// Texture format can be used as image from compute shader.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER = 0x0800; /// Texture format can be used as frame buffer.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA = 0x1000; /// Texture format can be used as MSAA frame buffer.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_MSAA = 0x2000; /// Texture can be sampled as MSAA.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN = 0x4000; /// Texture format supports auto-generated mips.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_NONE = 0x00000000; /// Texture format is not supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_2D = 0x00000001; /// Texture format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB = 0x00000002; /// Texture as sRGB format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED = 0x00000004; /// Texture format is emulated.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_3D = 0x00000008; /// Texture format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB = 0x00000010; /// Texture as sRGB format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED = 0x00000020; /// Texture format is emulated.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_CUBE = 0x00000040; /// Texture format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB = 0x00000080; /// Texture as sRGB format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED = 0x00000100; /// Texture format is emulated.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_VERTEX = 0x00000200; /// Texture format can be used from vertex shader.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ = 0x00000400; /// Texture format can be used as image and read from.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE = 0x00000800; /// Texture format can be used as image and written to.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER = 0x00001000; /// Texture format can be used as frame buffer.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA = 0x00002000; /// Texture format can be used as MSAA frame buffer.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_MSAA = 0x00004000; /// Texture can be sampled as MSAA.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN = 0x00008000; /// Texture format supports auto-generated mips.
 
 enum ubyte BGFX_RESOLVE_NONE = 0x00; /// No resolve flags.
 enum ubyte BGFX_RESOLVE_AUTO_GEN_MIPS = 0x01; /// Auto-generate mip maps on resolve.
@@ -759,8 +760,10 @@ struct bgfx_caps_t
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB` - Texture as sRGB format is supported.
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED` - Texture format is emulated.
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - Texture format can be used from vertex shader.
-	 *   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE` - Texture format can be used as image from compute
-	 *     shader.
+	 *   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ` - Texture format can be used as image
+	 *     and read from.
+	 *   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE` - Texture format can be used as image
+	 *     and written to.
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
 	 *     buffer.
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA

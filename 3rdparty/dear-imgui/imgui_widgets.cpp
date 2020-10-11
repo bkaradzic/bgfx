@@ -1,4 +1,4 @@
-// dear imgui, v1.79 WIP
+// dear imgui, v1.79
 // (widgets code)
 
 /*
@@ -1071,7 +1071,8 @@ bool ImGui::Checkbox(const char* label, bool* v)
     RenderNavHighlight(total_bb, id);
     RenderFrame(check_bb.Min, check_bb.Max, GetColorU32((held && hovered) ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg), true, style.FrameRounding);
     ImU32 check_col = GetColorU32(ImGuiCol_CheckMark);
-    if (window->DC.ItemFlags & ImGuiItemFlags_MixedValue)
+    bool mixed_value = (window->DC.ItemFlags & ImGuiItemFlags_MixedValue) != 0;
+    if (mixed_value)
     {
         // Undocumented tristate/mixed/indeterminate checkbox (#2644)
         ImVec2 pad(ImMax(1.0f, IM_FLOOR(square_sz / 3.6f)), ImMax(1.0f, IM_FLOOR(square_sz / 3.6f)));
@@ -1084,7 +1085,7 @@ bool ImGui::Checkbox(const char* label, bool* v)
     }
 
     if (g.LogEnabled)
-        LogRenderedText(&total_bb.Min, *v ? "[x]" : "[ ]");
+        LogRenderedText(&total_bb.Min, mixed_value ? "[~]" : *v ? "[x]" : "[ ]");
     if (label_size.x > 0.0f)
         RenderText(ImVec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y), label);
 
@@ -1095,7 +1096,21 @@ bool ImGui::Checkbox(const char* label, bool* v)
 bool ImGui::CheckboxFlags(const char* label, unsigned int* flags, unsigned int flags_value)
 {
     bool v = ((*flags & flags_value) == flags_value);
-    bool pressed = Checkbox(label, &v);
+    bool pressed;
+    if (v == false && (*flags & flags_value) != 0)
+    {
+        // Mixed value (FIXME: find a way to expose neatly to Checkbox?)
+        ImGuiWindow* window = GetCurrentWindow();
+        const ImGuiItemFlags backup_item_flags = window->DC.ItemFlags;
+        window->DC.ItemFlags |= ImGuiItemFlags_MixedValue;
+        pressed = Checkbox(label, &v);
+        window->DC.ItemFlags = backup_item_flags;
+    }
+    else
+    {
+        // Regular checkbox
+        pressed = Checkbox(label, &v);
+    }
     if (pressed)
     {
         if (v)
@@ -3848,7 +3863,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
             return false;
         }
         draw_window = g.CurrentWindow; // Child window
-        draw_window->DC.NavLayerActiveMaskNext |= draw_window->DC.NavLayerCurrentMask; // This is to ensure that EndChild() will display a navigation highlight so we can "enter" into it.
+        draw_window->DC.NavLayerActiveMaskNext |= (1 << draw_window->DC.NavLayerCurrent); // This is to ensure that EndChild() will display a navigation highlight so we can "enter" into it.
         inner_size.x -= draw_window->ScrollbarSizes.x;
     }
     else
@@ -6169,7 +6184,8 @@ bool ImGui::ListBox(const char* label, int* current_item, bool (*items_getter)(v
     // Assume all items have even height (= 1 line of text). If you need items of different or variable sizes you can create a custom version of ListBox() in your code without using the clipper.
     ImGuiContext& g = *GImGui;
     bool value_changed = false;
-    ImGuiListClipper clipper(items_count, GetTextLineHeightWithSpacing()); // We know exactly our line height here so we pass it as a minor optimization, but generally you don't need to.
+    ImGuiListClipper clipper;
+    clipper.Begin(items_count, GetTextLineHeightWithSpacing()); // We know exactly our line height here so we pass it as a minor optimization, but generally you don't need to.
     while (clipper.Step())
         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
         {
@@ -6476,7 +6492,6 @@ bool ImGui::BeginMenuBar()
     window->DC.CursorPos = window->DC.CursorMaxPos = ImVec2(bar_rect.Min.x + window->DC.MenuBarOffset.x, bar_rect.Min.y + window->DC.MenuBarOffset.y);
     window->DC.LayoutType = ImGuiLayoutType_Horizontal;
     window->DC.NavLayerCurrent = ImGuiNavLayer_Menu;
-    window->DC.NavLayerCurrentMask = (1 << ImGuiNavLayer_Menu);
     window->DC.MenuBarAppending = true;
     AlignTextToFramePadding();
     return true;
@@ -6519,7 +6534,6 @@ void ImGui::EndMenuBar()
     EndGroup(); // Restore position on layer 0
     window->DC.LayoutType = ImGuiLayoutType_Vertical;
     window->DC.NavLayerCurrent = ImGuiNavLayer_Main;
-    window->DC.NavLayerCurrentMask = (1 << ImGuiNavLayer_Main);
     window->DC.MenuBarAppending = false;
 }
 
@@ -7013,13 +7027,16 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
         tab->IndexDuringLayout = (ImS8)tab_dst_n;
 
         // We will need sorting if tabs have changed section (e.g. moved from one of Leading/Central/Trailing to another)
-        ImGuiTabItem* prev_tab = &tab_bar->Tabs[tab_dst_n - 1];
         int curr_tab_section_n = (tab->Flags & ImGuiTabItemFlags_Leading) ? 0 : (tab->Flags & ImGuiTabItemFlags_Trailing) ? 2 : 1;
-        int prev_tab_section_n = (prev_tab->Flags & ImGuiTabItemFlags_Leading) ? 0 : (prev_tab->Flags & ImGuiTabItemFlags_Trailing) ? 2 : 1;
-        if (tab_dst_n > 0 && curr_tab_section_n == 0 && prev_tab_section_n != 0)
-            need_sort_by_section = true;
-        if (tab_dst_n > 0 && prev_tab_section_n == 2 && curr_tab_section_n != 2)
-            need_sort_by_section = true;
+        if (tab_dst_n > 0)
+        {
+            ImGuiTabItem* prev_tab = &tab_bar->Tabs[tab_dst_n - 1];
+            int prev_tab_section_n = (prev_tab->Flags & ImGuiTabItemFlags_Leading) ? 0 : (prev_tab->Flags & ImGuiTabItemFlags_Trailing) ? 2 : 1;
+            if (curr_tab_section_n == 0 && prev_tab_section_n != 0)
+                need_sort_by_section = true;
+            if (prev_tab_section_n == 2 && curr_tab_section_n != 2)
+                need_sort_by_section = true;
+        }
 
         sections[curr_tab_section_n].TabCount++;
         tab_dst_n++;
@@ -7839,6 +7856,7 @@ bool ImGui::TabItemLabelAndCloseButton(ImDrawList* draw_list, const ImRect& bb, 
         text_pixel_clip_bb.Max.x -= close_button_sz;
     }
 
+    // FIXME: if FramePadding is noticeably large, ellipsis_max_x will be wrong here (e.g. #3497), maybe for consistency that parameter of RenderTextEllipsis() shouldn't exist..
     float ellipsis_max_x = close_button_visible ? text_pixel_clip_bb.Max.x : bb.Max.x - 1.0f;
     RenderTextEllipsis(draw_list, text_ellipsis_clip_bb.Min, text_ellipsis_clip_bb.Max, text_pixel_clip_bb.Max.x, ellipsis_max_x, label, NULL, &label_size);
 

@@ -3955,16 +3955,7 @@ namespace bgfx { namespace webgpu
 			const TextureWgpu& src = m_textures[blit.m_src.idx];
 			const TextureWgpu& dst = m_textures[blit.m_dst.idx];
 
-			uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
-			uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
-			uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
-			uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
-			uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
-			uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
-			uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
-			uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
-			uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
-			bool     readBack  = !!(dst.m_flags & BGFX_TEXTURE_READ_BACK);
+			bool readBack = !!(dst.m_flags & BGFX_TEXTURE_READ_BACK);
 
 			wgpu::TextureCopyView srcView;
 			srcView.texture = src.m_ptr;
@@ -3978,14 +3969,14 @@ namespace bgfx { namespace webgpu
 			dstView.mipLevel = blit.m_dstMip;
 			dstView.arrayLayer = blit.m_dstZ;
 
-			if (depth == 0)
+			if (blit.m_depth == 0)
 			{
-				wgpu::Extent3D copyExtent = { width, height, 1 };
+				wgpu::Extent3D copyExtent = { blit.m_width, blit.m_height, 1 };
 				bce.CopyTextureToTexture(&srcView, &dstView, &copyExtent);
 			}
 			else
 			{
-				wgpu::Extent3D copyExtent = { width, height, depth };
+				wgpu::Extent3D copyExtent = { blit.m_width, blit.m_height, blit.m_depth };
 				bce.CopyTextureToTexture(&srcView, &dstView, &copyExtent);
 			}
 
@@ -4798,8 +4789,14 @@ namespace bgfx { namespace webgpu
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x8c : 0x8f
-					, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
+					, " %s / " BX_COMPILER_NAME
+					  " / " BX_CPU_NAME
+					  " / " BX_ARCH_NAME
+					  " / " BX_PLATFORM_NAME
+					  " / Version 1.%d.%d (commit: " BGFX_REV_SHA1 ")"
 					, getRendererName()
+					, BGFX_API_VERSION
+					, BGFX_REV_NUMBER
 					);
 
 				pos = 10;

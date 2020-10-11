@@ -38,7 +38,8 @@ namespace ImGui
 
         float line_height = GetTextLineHeight();
         int line_total_count = (int)((mem_size + Rows-1) / Rows);
-        ImGuiListClipper clipper(line_total_count, line_height);
+        ImGuiListClipper clipper;
+        clipper.Begin(line_total_count, line_height);
         int visible_start_addr = clipper.DisplayStart * Rows;
         int visible_end_addr = clipper.DisplayEnd * Rows;
 
