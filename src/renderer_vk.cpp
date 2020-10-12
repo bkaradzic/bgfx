@@ -752,10 +752,10 @@ VK_IMPORT_DEVICE
 					for (uint32_t extension = 0; extension < numExtensionProperties; ++extension)
 					{
 						bool supported = updateExtension(
-											  extensionProperties[extension].extensionName
-											, extensionProperties[extension].specVersion
-											, VK_NULL_HANDLE == _physicalDevice
-											);
+							  extensionProperties[extension].extensionName
+							, extensionProperties[extension].specVersion
+							, VK_NULL_HANDLE == _physicalDevice
+							);
 
 						BX_TRACE("%c\t\t%s (s: 0x%08x)"
 							, indent
@@ -1329,11 +1329,14 @@ VK_IMPORT_DEVICE
 			errorState = ErrorState::LoadedVulkan1;
 
 			BX_TRACE("Shared library functions:");
+
 #define VK_IMPORT_FUNC(_optional, _func)                  \
 	_func = (PFN_##_func)bx::dlsym(m_vulkan1Dll, #_func); \
 	BX_TRACE("\t%p " #_func, _func);                      \
 	imported &= _optional || NULL != _func
+
 VK_IMPORT
+
 #undef VK_IMPORT_FUNC
 
 			if (!imported)
@@ -1390,12 +1393,18 @@ VK_IMPORT
 				}
 
 				uint32_t vulkanApiVersionSelector;
+
 				if (NULL != vkEnumerateInstanceVersion)
 				{
 					result = vkEnumerateInstanceVersion(&vulkanApiVersionSelector);
+
 					if (VK_SUCCESS != result)
 					{
-						BX_TRACE("Init error: vkEnumerateInstanceVersion failed %d: %s.", result, getName(result) );
+						BX_TRACE(
+							  "Init error: vkEnumerateInstanceVersion failed %d: %s."
+							, result
+							, getName(result)
+							);
 						goto error;
 					}
 				}
@@ -1409,17 +1418,17 @@ VK_IMPORT
 				appInfo.pNext = NULL;
 				appInfo.pApplicationName   = "bgfx";
 				appInfo.applicationVersion = BGFX_API_VERSION;
-				appInfo.pEngineName   = "bgfx";
-				appInfo.engineVersion = BGFX_API_VERSION;
-				appInfo.apiVersion    = vulkanApiVersionSelector;
+				appInfo.pEngineName        = "bgfx";
+				appInfo.engineVersion      = BGFX_API_VERSION;
+				appInfo.apiVersion         = vulkanApiVersionSelector;
 
 				VkInstanceCreateInfo ici;
 				ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 				ici.pNext = NULL;
 				ici.flags = 0;
-				ici.pApplicationInfo = &appInfo;
-				ici.enabledLayerCount   = numEnabledLayers;
-				ici.ppEnabledLayerNames = enabledLayer;
+				ici.pApplicationInfo        = &appInfo;
+				ici.enabledLayerCount       = numEnabledLayers;
+				ici.ppEnabledLayerNames     = enabledLayer;
 				ici.enabledExtensionCount   = numEnabledExtensions;
 				ici.ppEnabledExtensionNames = enabledExtension;
 
@@ -1429,20 +1438,25 @@ VK_IMPORT
 					BX_UNUSED(s_allocationCb);
 				}
 
-				result = vkCreateInstance(&ici
-						, m_allocatorCb
-						, &m_instance
-						);
+				result = vkCreateInstance(
+					  &ici
+					, m_allocatorCb
+					, &m_instance
+					);
+
 				if (VK_SUCCESS != result)
 				{
 					BX_TRACE("Init error: vkCreateInstance failed %d: %s.", result, getName(result) );
 					goto error;
 				}
+
 				m_instanceApiVersion = vulkanApiVersionSelector;
+
 				BX_TRACE("Instance API Version Selected: %d.%d.%d"
 					, VK_VERSION_MAJOR(m_instanceApiVersion)
 					, VK_VERSION_MINOR(m_instanceApiVersion)
-					, VK_VERSION_PATCH(m_instanceApiVersion) );
+					, VK_VERSION_PATCH(m_instanceApiVersion)
+					);
 			}
 
 			errorState = ErrorState::InstanceCreated;
