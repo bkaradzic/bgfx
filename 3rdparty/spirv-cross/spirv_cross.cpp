@@ -1717,7 +1717,7 @@ uint32_t Compiler::evaluate_spec_constant_u32(const SPIRConstantOp &spec) const
 		break;
 
 	case OpSNegate:
-		value = -eval_u32(spec.arguments[0]);
+		value = uint32_t(-int32_t(eval_u32(spec.arguments[0])));
 		break;
 
 	case OpSelect:
@@ -2060,6 +2060,13 @@ ExecutionModel Compiler::get_execution_model() const
 bool Compiler::is_tessellation_shader(ExecutionModel model)
 {
 	return model == ExecutionModelTessellationControl || model == ExecutionModelTessellationEvaluation;
+}
+
+bool Compiler::is_vertex_like_shader() const
+{
+	auto model = get_execution_model();
+	return model == ExecutionModelVertex || model == ExecutionModelGeometry ||
+	       model == ExecutionModelTessellationControl || model == ExecutionModelTessellationEvaluation;
 }
 
 bool Compiler::is_tessellation_shader() const

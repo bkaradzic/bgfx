@@ -9028,9 +9028,7 @@ string CompilerMSL::convert_row_major_matrix(string exp_str, const SPIRType &exp
 // Called automatically at the end of the entry point function
 void CompilerMSL::emit_fixup()
 {
-	if ((get_execution_model() == ExecutionModelVertex ||
-	     get_execution_model() == ExecutionModelTessellationEvaluation) &&
-	    stage_out_var_id && !qual_pos_var_name.empty() && !capture_output_to_buffer)
+	if (is_vertex_like_shader() && stage_out_var_id && !qual_pos_var_name.empty() && !capture_output_to_buffer)
 	{
 		if (options.vertex.fixup_clipspace)
 			statement(qual_pos_var_name, ".z = (", qual_pos_var_name, ".z + ", qual_pos_var_name,

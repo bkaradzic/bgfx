@@ -388,6 +388,10 @@ void ParsedIR::set_decoration(ID id, Decoration decoration, uint32_t argument)
 		dec.xfb_stride = argument;
 		break;
 
+	case DecorationStream:
+		dec.stream = argument;
+		break;
+
 	case DecorationArrayStride:
 		dec.array_stride = argument;
 		break;
@@ -465,6 +469,10 @@ void ParsedIR::set_member_decoration(TypeID id, uint32_t index, Decoration decor
 
 	case DecorationXfbStride:
 		dec.xfb_stride = argument;
+		break;
+
+	case DecorationStream:
+		dec.stream = argument;
 		break;
 
 	case DecorationSpecId:
@@ -584,6 +592,8 @@ uint32_t ParsedIR::get_decoration(ID id, Decoration decoration) const
 		return dec.xfb_buffer;
 	case DecorationXfbStride:
 		return dec.xfb_stride;
+	case DecorationStream:
+		return dec.stream;
 	case DecorationBinding:
 		return dec.binding;
 	case DecorationDescriptorSet:
@@ -654,6 +664,10 @@ void ParsedIR::unset_decoration(ID id, Decoration decoration)
 
 	case DecorationXfbStride:
 		dec.xfb_stride = 0;
+		break;
+
+	case DecorationStream:
+		dec.stream = 0;
 		break;
 
 	case DecorationBinding:
@@ -730,6 +744,8 @@ uint32_t ParsedIR::get_member_decoration(TypeID id, uint32_t index, Decoration d
 		return dec.xfb_buffer;
 	case DecorationXfbStride:
 		return dec.xfb_stride;
+	case DecorationStream:
+		return dec.stream;
 	case DecorationSpecId:
 		return dec.spec_id;
 	case DecorationIndex:
@@ -824,6 +840,10 @@ void ParsedIR::unset_member_decoration(TypeID id, uint32_t index, Decoration dec
 
 	case DecorationXfbStride:
 		dec.xfb_stride = 0;
+		break;
+
+	case DecorationStream:
+		dec.stream = 0;
 		break;
 
 	case DecorationSpecId:

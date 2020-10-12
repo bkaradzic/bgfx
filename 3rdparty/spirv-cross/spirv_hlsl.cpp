@@ -2649,7 +2649,7 @@ void CompilerHLSL::emit_hlsl_entry_point()
 
 void CompilerHLSL::emit_fixup()
 {
-	if (get_entry_point().model == ExecutionModelVertex)
+	if (is_vertex_like_shader())
 	{
 		// Do various mangling on the gl_Position.
 		if (hlsl_options.shader_model <= 30)
