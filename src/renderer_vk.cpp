@@ -1345,15 +1345,6 @@ VK_IMPORT
 			{
 				dumpExtensions();
 
-				VkApplicationInfo appInfo;
-				appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-				appInfo.pNext = NULL;
-				appInfo.pApplicationName   = "bgfx";
-				appInfo.applicationVersion = BGFX_API_VERSION;
-				appInfo.pEngineName   = "bgfx";
-				appInfo.engineVersion = BGFX_API_VERSION;
-				appInfo.apiVersion    = VK_MAKE_VERSION(1, 0, 0); //VK_HEADER_VERSION);
-
 				uint32_t numEnabledLayers = 0;
 
 				const char* enabledLayer[Layer::Count];
@@ -1398,6 +1389,30 @@ VK_IMPORT
 					}
 				}
 
+				uint32_t vulkanApiVersionSelector;
+				if (NULL != vkEnumerateInstanceVersion)
+				{
+					result = vkEnumerateInstanceVersion(&vulkanApiVersionSelector);
+					if (VK_SUCCESS != result)
+					{
+						BX_TRACE("Init error: vkEnumerateInstanceVersion failed %d: %s.", result, getName(result) );
+						goto error;
+					}
+				}
+				else
+				{
+					vulkanApiVersionSelector = VK_API_VERSION_1_0;
+				}
+
+				VkApplicationInfo appInfo;
+				appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+				appInfo.pNext = NULL;
+				appInfo.pApplicationName   = "bgfx";
+				appInfo.applicationVersion = BGFX_API_VERSION;
+				appInfo.pEngineName   = "bgfx";
+				appInfo.engineVersion = BGFX_API_VERSION;
+				appInfo.apiVersion    = vulkanApiVersionSelector;
+
 				VkInstanceCreateInfo ici;
 				ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 				ici.pNext = NULL;
@@ -1418,12 +1433,16 @@ VK_IMPORT
 						, m_allocatorCb
 						, &m_instance
 						);
-			}
-
-			if (VK_SUCCESS != result)
-			{
-				BX_TRACE("Init error: vkCreateInstance failed %d: %s.", result, getName(result) );
-				goto error;
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Init error: vkCreateInstance failed %d: %s.", result, getName(result) );
+					goto error;
+				}
+				m_instanceApiVersion = vulkanApiVersionSelector;
+				BX_TRACE("Instance API Version Selected: %d.%d.%d"
+					, VK_VERSION_MAJOR(m_instanceApiVersion)
+					, VK_VERSION_MINOR(m_instanceApiVersion)
+					, VK_VERSION_PATCH(m_instanceApiVersion) );
 			}
 
 			errorState = ErrorState::InstanceCreated;
@@ -1500,7 +1519,10 @@ VK_IMPORT_INSTANCE
 					vkGetPhysicalDeviceProperties(physicalDevices[ii], &pdp);
 					BX_TRACE("Physical device %d:", ii);
 					BX_TRACE("\t          Name: %s", pdp.deviceName);
-					BX_TRACE("\t   API version: %x", pdp.apiVersion);
+					BX_TRACE("\t   API version: %d.%d.%d"
+						, VK_VERSION_MAJOR(pdp.apiVersion)
+						, VK_VERSION_MINOR(pdp.apiVersion)
+						, VK_VERSION_PATCH(pdp.apiVersion) );
 					BX_TRACE("\tDriver version: %x", pdp.driverVersion);
 					BX_TRACE("\t      VendorId: %x", pdp.vendorID);
 					BX_TRACE("\t      DeviceId: %x", pdp.deviceID);
@@ -4618,6 +4640,7 @@ VK_IMPORT_DEVICE
 		VkDebugReportCallbackEXT m_debugReportCallback;
 		VkInstance       m_instance;
 		VkPhysicalDevice m_physicalDevice;
+		uint32_t         m_instanceApiVersion;
 
 		VkPhysicalDeviceProperties       m_deviceProperties;
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
