@@ -195,6 +195,9 @@ class ValidationState_t {
   /// Increments the module_layout_order_section_
   void ProgressToNextLayoutSectionOrder();
 
+  /// Determines if the op instruction is in a previous layout section
+  bool IsOpcodeInPreviousLayoutSection(SpvOp op);
+
   /// Determines if the op instruction is part of the current section
   bool IsOpcodeInCurrentLayoutSection(SpvOp op);
 
@@ -717,6 +720,11 @@ class ValidationState_t {
   // More details about Vulkan validation can be found in Vulkan Guide:
   // https://github.com/KhronosGroup/Vulkan-Guide/blob/master/chapters/validation_overview.md
   std::string VkErrorID(uint32_t id, const char* reference = nullptr) const;
+
+  // Testing method to allow setting the current layout section.
+  void SetCurrentLayoutSectionForTesting(ModuleLayoutSection section) {
+    current_layout_section_ = section;
+  }
 
  private:
   ValidationState_t(const ValidationState_t&);

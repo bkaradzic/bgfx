@@ -95,9 +95,12 @@ bool LocalAccessChainConvertPass::ReplaceAccessChainLoad(
     return false;
   }
 
+  new_inst[0]->UpdateDebugInfoFrom(original_load);
   context()->get_decoration_mgr()->CloneDecorations(
       original_load->result_id(), ldResultId, {SpvDecorationRelaxedPrecision});
   original_load->InsertBefore(std::move(new_inst));
+  context()->get_debug_info_mgr()->AnalyzeDebugInst(
+      original_load->PreviousNode());
 
   // Rewrite |original_load| into an extract.
   Instruction::OperandList new_operands;
@@ -181,6 +184,10 @@ bool LocalAccessChainConvertPass::IsConstantIndexAccessChain(
 bool LocalAccessChainConvertPass::HasOnlySupportedRefs(uint32_t ptrId) {
   if (supported_ref_ptrs_.find(ptrId) != supported_ref_ptrs_.end()) return true;
   if (get_def_use_mgr()->WhileEachUser(ptrId, [this](Instruction* user) {
+        if (user->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugValue ||
+            user->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugDeclare) {
+          return true;
+        }
         SpvOp op = user->opcode();
         if (IsNonPtrAccessChain(op) || op == SpvOpCopyObject) {
           if (!HasOnlySupportedRefs(user->result_id())) {
@@ -251,7 +258,6 @@ Pass::Status LocalAccessChainConvertPass::ConvertLocalAccessChains(
           Instruction* ptrInst = GetPtr(&*ii, &varId);
           if (!IsNonPtrAccessChain(ptrInst->opcode())) break;
           if (!IsTargetVar(varId)) break;
-          std::vector<std::unique_ptr<Instruction>> newInsts;
           if (!ReplaceAccessChainLoad(ptrInst, &*ii)) {
             return Status::Failure;
           }
@@ -259,21 +265,26 @@ Pass::Status LocalAccessChainConvertPass::ConvertLocalAccessChains(
         } break;
         case SpvOpStore: {
           uint32_t varId;
-          Instruction* ptrInst = GetPtr(&*ii, &varId);
+          Instruction* store = &*ii;
+          Instruction* ptrInst = GetPtr(store, &varId);
           if (!IsNonPtrAccessChain(ptrInst->opcode())) break;
           if (!IsTargetVar(varId)) break;
           std::vector<std::unique_ptr<Instruction>> newInsts;
-          uint32_t valId = ii->GetSingleWordInOperand(kStoreValIdInIdx);
+          uint32_t valId = store->GetSingleWordInOperand(kStoreValIdInIdx);
           if (!GenAccessChainStoreReplacement(ptrInst, valId, &newInsts)) {
             return Status::Failure;
           }
           size_t num_of_instructions_to_skip = newInsts.size() - 1;
-          dead_instructions.push_back(&*ii);
+          dead_instructions.push_back(store);
           ++ii;
           ii = ii.InsertBefore(std::move(newInsts));
           for (size_t i = 0; i < num_of_instructions_to_skip; ++i) {
+            ii->UpdateDebugInfoFrom(store);
+            context()->get_debug_info_mgr()->AnalyzeDebugInst(&*ii);
             ++ii;
           }
+          ii->UpdateDebugInfoFrom(store);
+          context()->get_debug_info_mgr()->AnalyzeDebugInst(&*ii);
           modified = true;
         } break;
         default:
