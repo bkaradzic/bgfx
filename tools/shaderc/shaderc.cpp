@@ -1017,6 +1017,14 @@ namespace bgfx
 				, essl ? 1 : glsl
 				);
 
+		char hlslDefine[128];
+		if (0 != hlsl)
+		{
+			bx::snprintf(hlslDefine, BX_COUNTOF(hlslDefine)
+					, "BGFX_SHADER_LANGUAGE_HLSL=%d"
+					, hlsl);
+		}
+
 		const char* platform = _options.platform.c_str();
 
 		if (0 == bx::strCmpI(platform, "android") )
@@ -1067,15 +1075,39 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "windows") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_WINDOWS=1");
-			char temp[256];
-			bx::snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_HLSL=%d", hlsl);
-			preprocessor.setDefine(temp);
+			if (0 != hlsl)
+			{
+				preprocessor.setDefine(hlslDefine);
+			}
+			else if (0 != glsl)
+			{
+				preprocessor.setDefine(glslDefine);
+			}
+			else if (0 != spirv)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+			}
 		}
 		else if (0 == bx::strCmpI(platform, "orbis") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_PS4=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_PSSL=1");
 			preprocessor.setDefine("lit=lit_reserved");
+		}
+		else
+		{
+			if (0 != hlsl)
+			{
+				preprocessor.setDefine(hlslDefine);
+			}
+			else if (0 != glsl)
+			{
+				preprocessor.setDefine(glslDefine);
+			}
+			else if (0 != spirv)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+			}
 		}
 
 		preprocessor.setDefine("M_PI=3.1415926535897932384626433832795");
