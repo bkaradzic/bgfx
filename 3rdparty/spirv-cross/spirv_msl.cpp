@@ -1120,7 +1120,7 @@ string CompilerMSL::compile()
 	backend.basic_int16_type = "short";
 	backend.basic_uint16_type = "ushort";
 	backend.discard_literal = "discard_fragment()";
-	backend.demote_literal = "unsupported-demote";
+	backend.demote_literal = "discard_fragment()";
 	backend.boolean_mix_function = "select";
 	backend.swizzle_is_function = false;
 	backend.shared_is_implied = false;
@@ -4194,8 +4194,25 @@ void CompilerMSL::emit_custom_functions()
 		// Emulate texture2D atomic operations
 		case SPVFuncImplImage2DAtomicCoords:
 		{
+			if (msl_options.supports_msl_version(1, 2))
+			{
+				statement("// The required alignment of a linear texture of R32Uint format.");
+				statement("constant uint spvLinearTextureAlignmentOverride [[function_constant(",
+				          msl_options.r32ui_alignment_constant_id, ")]];");
+				statement("constant uint spvLinearTextureAlignment = ",
+				          "is_function_constant_defined(spvLinearTextureAlignmentOverride) ? ",
+				          "spvLinearTextureAlignmentOverride : ", msl_options.r32ui_linear_texture_alignment, ";");
+			}
+			else
+			{
+				statement("// The required alignment of a linear texture of R32Uint format.");
+				statement("constant uint spvLinearTextureAlignment = ", msl_options.r32ui_linear_texture_alignment,
+				          ";");
+			}
 			statement("// Returns buffer coords corresponding to 2D texture coords for emulating 2D texture atomics");
-			statement("#define spvImage2DAtomicCoord(tc, tex) (((tex).get_width() * (tc).x) + (tc).y)");
+			statement("#define spvImage2DAtomicCoord(tc, tex) (((((tex).get_width() + ",
+			          " spvLinearTextureAlignment / 4 - 1) & ~(",
+			          " spvLinearTextureAlignment / 4 - 1)) * (tc).y) + (tc).x)");
 			statement("");
 			break;
 		}
@@ -7117,11 +7134,18 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		break;
 	}
 
+	// SPV_EXT_demote_to_helper_invocation
+	case OpDemoteToHelperInvocationEXT:
+		if (!msl_options.supports_msl_version(2, 3))
+			SPIRV_CROSS_THROW("discard_fragment() does not formally have demote semantics until MSL 2.3.");
+		CompilerGLSL::emit_instruction(instruction);
+		break;
+
 	case OpIsHelperInvocationEXT:
-		if (msl_options.is_ios())
-			SPIRV_CROSS_THROW("simd_is_helper_thread() is only supported on macOS.");
+		if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 3))
+			SPIRV_CROSS_THROW("simd_is_helper_thread() requires MSL 2.3 on iOS.");
 		else if (msl_options.is_macos() && !msl_options.supports_msl_version(2, 1))
-			SPIRV_CROSS_THROW("simd_is_helper_thread() requires version 2.1 on macOS.");
+			SPIRV_CROSS_THROW("simd_is_helper_thread() requires MSL 2.1 on macOS.");
 		emit_op(ops[0], ops[1], "simd_is_helper_thread()", false);
 		break;
 
@@ -10192,7 +10216,10 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 			{
 				ep_args += ", device atomic_" + type_to_glsl(get<SPIRType>(basetype.image.type), 0);
 				ep_args += "* " + r.name + "_atomic";
-				ep_args += " [[buffer(" + convert_to_string(r.secondary_index) + ")]]";
+				ep_args += " [[buffer(" + convert_to_string(r.secondary_index) + ")";
+				if (interlocked_resources.count(var_id))
+					ep_args += ", raster_order_group(0)";
+				ep_args += "]]";
 			}
 			break;
 		}
@@ -13272,7 +13299,7 @@ void CompilerMSL::remap_constexpr_sampler_by_binding(uint32_t desc_set, uint32_t
 	constexpr_samplers_by_binding[{ desc_set, binding }] = sampler;
 }
 
-void CompilerMSL::bitcast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type)
+void CompilerMSL::cast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type)
 {
 	auto *var = maybe_get_backing_variable(source_id);
 	if (var)
@@ -13284,6 +13311,7 @@ void CompilerMSL::bitcast_from_builtin_load(uint32_t source_id, std::string &exp
 
 	auto builtin = static_cast<BuiltIn>(get_decoration(source_id, DecorationBuiltIn));
 	auto expected_type = expr_type.basetype;
+	auto expected_width = expr_type.width;
 	switch (builtin)
 	{
 	case BuiltInGlobalInvocationId:
@@ -13304,12 +13332,16 @@ void CompilerMSL::bitcast_from_builtin_load(uint32_t source_id, std::string &exp
 	case BuiltInBaseInstance:
 	case BuiltInBaseVertex:
 		expected_type = SPIRType::UInt;
+		expected_width = 32;
 		break;
 
 	case BuiltInTessLevelInner:
 	case BuiltInTessLevelOuter:
 		if (get_execution_model() == ExecutionModelTessellationControl)
+		{
 			expected_type = SPIRType::Half;
+			expected_width = 16;
+		}
 		break;
 
 	default:
@@ -13317,7 +13349,17 @@ void CompilerMSL::bitcast_from_builtin_load(uint32_t source_id, std::string &exp
 	}
 
 	if (expected_type != expr_type.basetype)
-		expr = bitcast_expression(expr_type, expected_type, expr);
+	{
+		if (expected_width != expr_type.width)
+		{
+			// These are of different widths, so we cannot do a straight bitcast.
+			expr = join(type_to_glsl(expr_type), "(", expr, ")");
+		}
+		else
+		{
+			expr = bitcast_expression(expr_type, expected_type, expr);
+		}
+	}
 
 	if (builtin == BuiltInTessCoord && get_entry_point().flags.get(ExecutionModeQuads) && expr_type.vecsize == 3)
 	{
@@ -13327,7 +13369,7 @@ void CompilerMSL::bitcast_from_builtin_load(uint32_t source_id, std::string &exp
 	}
 }
 
-void CompilerMSL::bitcast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type)
+void CompilerMSL::cast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type)
 {
 	auto *var = maybe_get_backing_variable(target_id);
 	if (var)
@@ -13339,6 +13381,7 @@ void CompilerMSL::bitcast_to_builtin_store(uint32_t target_id, std::string &expr
 
 	auto builtin = static_cast<BuiltIn>(get_decoration(target_id, DecorationBuiltIn));
 	auto expected_type = expr_type.basetype;
+	auto expected_width = expr_type.width;
 	switch (builtin)
 	{
 	case BuiltInLayer:
@@ -13347,11 +13390,13 @@ void CompilerMSL::bitcast_to_builtin_store(uint32_t target_id, std::string &expr
 	case BuiltInPrimitiveId:
 	case BuiltInViewIndex:
 		expected_type = SPIRType::UInt;
+		expected_width = 32;
 		break;
 
 	case BuiltInTessLevelInner:
 	case BuiltInTessLevelOuter:
 		expected_type = SPIRType::Half;
+		expected_width = 16;
 		break;
 
 	default:
@@ -13360,10 +13405,13 @@ void CompilerMSL::bitcast_to_builtin_store(uint32_t target_id, std::string &expr
 
 	if (expected_type != expr_type.basetype)
 	{
-		if (expected_type == SPIRType::Half && expr_type.basetype == SPIRType::Float)
+		if (expected_width != expr_type.width)
 		{
 			// These are of different widths, so we cannot do a straight bitcast.
-			expr = join("half(", expr, ")");
+			auto type = expr_type;
+			type.basetype = expected_type;
+			type.width = expected_width;
+			expr = join(type_to_glsl(type), "(", expr, ")");
 		}
 		else
 		{
@@ -13500,6 +13548,14 @@ void CompilerMSL::analyze_argument_buffers()
 					add_resource_name(var_id);
 					resources_in_set[desc_set].push_back(
 					    { &var, to_name(var_id), type.basetype, get_metal_resource_index(var, type.basetype), 0 });
+
+					// Emulate texture2D atomic operations
+					if (atomic_image_vars.count(var.self))
+					{
+						uint32_t buffer_resource_index = get_metal_resource_index(var, SPIRType::AtomicCounter, 0);
+						resources_in_set[desc_set].push_back(
+						    { &var, to_name(var_id) + "_atomic", SPIRType::Struct, buffer_resource_index, 0 });
+					}
 				}
 			}
 
@@ -13675,6 +13731,30 @@ void CompilerMSL::analyze_argument_buffers()
 					buffer_type.member_types.push_back(get_variable_data_type_id(var));
 					set_qualified_name(var.self, join(to_name(buffer_variable_id), ".", mbr_name));
 				}
+				else if (atomic_image_vars.count(var.self))
+				{
+					// Emulate texture2D atomic operations.
+					// Don't set the qualified name: it's already set for this variable,
+					// and the code that references the buffer manually appends "_atomic"
+					// to the name.
+					uint32_t offset = ir.increase_bound_by(2);
+					uint32_t atomic_type_id = offset;
+					uint32_t type_ptr_id = offset + 1;
+
+					SPIRType atomic_type;
+					atomic_type.basetype = SPIRType::AtomicCounter;
+					atomic_type.width = 32;
+					atomic_type.vecsize = 1;
+					set<SPIRType>(atomic_type_id, atomic_type);
+
+					atomic_type.pointer = true;
+					atomic_type.parent_type = atomic_type_id;
+					atomic_type.storage = StorageClassStorageBuffer;
+					auto &atomic_ptr_type = set<SPIRType>(type_ptr_id, atomic_type);
+					atomic_ptr_type.self = atomic_type_id;
+
+					buffer_type.member_types.push_back(type_ptr_id);
+				}
 				else
 				{
 					// Resources will be declared as pointers not references, so automatically dereference as appropriate.
@@ -13711,4 +13791,14 @@ void CompilerMSL::activate_argument_buffer_resources()
 bool CompilerMSL::using_builtin_array() const
 {
 	return msl_options.force_native_arrays || is_using_builtin_array;
+}
+
+void CompilerMSL::set_combined_sampler_suffix(const char *suffix)
+{
+	sampler_name_suffix = suffix;
+}
+
+const char *CompilerMSL::get_combined_sampler_suffix() const
+{
+	return sampler_name_suffix.c_str();
 }

@@ -854,9 +854,9 @@ protected:
 
 	// Builtins in GLSL are always specific signedness, but the SPIR-V can declare them
 	// as either unsigned or signed.
-	// Sometimes we will need to automatically perform bitcasts on load and store to make this work.
-	virtual void bitcast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type);
-	virtual void bitcast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type);
+	// Sometimes we will need to automatically perform casts on load and store to make this work.
+	virtual void cast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type);
+	virtual void cast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type);
 	void unroll_array_from_complex_load(uint32_t target_id, uint32_t source_id, std::string &expr);
 	void convert_non_uniform_expression(const SPIRType &type, std::string &expr);
 

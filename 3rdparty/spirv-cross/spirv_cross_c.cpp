@@ -666,6 +666,14 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_MSL_ARRAYED_SUBPASS_INPUT:
 		options->msl.arrayed_subpass_input = value != 0;
 		break;
+
+	case SPVC_COMPILER_OPTION_MSL_R32UI_LINEAR_TEXTURE_ALIGNMENT:
+		options->msl.r32ui_linear_texture_alignment = value;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_R32UI_ALIGNMENT_CONSTANT_ID:
+		options->msl.r32ui_alignment_constant_id = value;
+		break;
 #endif
 
 	default:
@@ -1236,6 +1244,42 @@ spvc_bool spvc_compiler_msl_is_resource_used(spvc_compiler compiler, SpvExecutio
 	(void)binding;
 	compiler->context->report_error("MSL function used on a non-MSL backend.");
 	return SPVC_FALSE;
+#endif
+}
+
+spvc_result spvc_compiler_msl_set_combined_sampler_suffix(spvc_compiler compiler, const char *suffix)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	msl.set_combined_sampler_suffix(suffix);
+	return SPVC_SUCCESS;
+#else
+	(void)suffix;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
+const char *spvc_compiler_msl_get_combined_sampler_suffix(spvc_compiler compiler)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return "";
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	return msl.get_combined_sampler_suffix();
+#else
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return "";
 #endif
 }
 

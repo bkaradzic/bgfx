@@ -563,6 +563,8 @@ struct CLIArguments
 	bool msl_vertex_for_tessellation = false;
 	uint32_t msl_additional_fixed_sample_mask = 0xffffffff;
 	bool msl_arrayed_subpass_input = false;
+	uint32_t msl_r32ui_linear_texture_alignment = 4;
+	uint32_t msl_r32ui_alignment_constant_id = 65535;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
 	bool glsl_force_flattened_io_blocks = false;
@@ -768,7 +770,11 @@ static void print_help_msl()
 	                "\t[--msl-additional-fixed-sample-mask <mask>]:\n"
 	                "\t\tSet an additional fixed sample mask. If the shader outputs a sample mask, then the final sample mask will be a bitwise AND of the two.\n"
 	                "\t[--msl-arrayed-subpass-input]:\n\t\tAssume that images of dimension SubpassData have multiple layers. Layered input attachments are accessed relative to BuiltInLayer.\n"
-	                "\t\tThis option has no effect if multiview is also enabled.\n");
+	                "\t\tThis option has no effect if multiview is also enabled.\n"
+	                "\t[--msl-r32ui-linear-texture-align <alignment>]:\n\t\tThe required alignment of linear textures of format MTLPixelFormatR32Uint.\n"
+	                "\t\tThis is used to align the row stride for atomic accesses to such images.\n"
+	                "\t[--msl-r32ui-linear-texture-align-constant-id <id>]:\n\t\tThe function constant ID to use for the linear texture alignment.\n"
+	                "\t\tOn MSL 1.2 or later, you can override the alignment by setting this function constant.\n");
 	// clang-format on
 }
 
@@ -1007,6 +1013,8 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.vertex_for_tessellation = args.msl_vertex_for_tessellation;
 		msl_opts.additional_fixed_sample_mask = args.msl_additional_fixed_sample_mask;
 		msl_opts.arrayed_subpass_input = args.msl_arrayed_subpass_input;
+		msl_opts.r32ui_linear_texture_alignment = args.msl_r32ui_linear_texture_alignment;
+		msl_opts.r32ui_alignment_constant_id = args.msl_r32ui_alignment_constant_id;
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
 			msl_comp->add_discrete_descriptor_set(v);
@@ -1427,6 +1435,10 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-additional-fixed-sample-mask",
 	        [&args](CLIParser &parser) { args.msl_additional_fixed_sample_mask = parser.next_hex_uint(); });
 	cbs.add("--msl-arrayed-subpass-input", [&args](CLIParser &) { args.msl_arrayed_subpass_input = true; });
+	cbs.add("--msl-r32ui-linear-texture-align",
+	        [&args](CLIParser &parser) { args.msl_r32ui_linear_texture_alignment = parser.next_uint(); });
+	cbs.add("--msl-r32ui-linear-texture-align-constant-id",
+	        [&args](CLIParser &parser) { args.msl_r32ui_alignment_constant_id = parser.next_uint(); });
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();

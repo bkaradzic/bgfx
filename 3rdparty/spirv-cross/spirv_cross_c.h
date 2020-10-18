@@ -33,7 +33,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 39
+#define SPVC_C_API_VERSION_MINOR 41
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -638,6 +638,8 @@ typedef enum spvc_compiler_option
 
 	SPVC_COMPILER_OPTION_MSL_MULTIVIEW_LAYERED_RENDERING = 67 | SPVC_COMPILER_OPTION_MSL_BIT,
 	SPVC_COMPILER_OPTION_MSL_ARRAYED_SUBPASS_INPUT = 68 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_R32UI_LINEAR_TEXTURE_ALIGNMENT = 69 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_R32UI_ALIGNMENT_CONSTANT_ID = 70 | SPVC_COMPILER_OPTION_MSL_BIT,
 
 	SPVC_COMPILER_OPTION_INT_MAX = 0x7fffffff
 } spvc_compiler_option;
@@ -766,6 +768,9 @@ SPVC_PUBLIC_API unsigned spvc_compiler_msl_get_automatic_resource_binding_second
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_dynamic_buffer(spvc_compiler compiler, unsigned desc_set, unsigned binding, unsigned index);
 
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_inline_uniform_block(spvc_compiler compiler, unsigned desc_set, unsigned binding);
+
+SPVC_PUBLIC_API spvc_result spvc_compiler_msl_set_combined_sampler_suffix(spvc_compiler compiler, const char *suffix);
+SPVC_PUBLIC_API const char *spvc_compiler_msl_get_combined_sampler_suffix(spvc_compiler compiler);
 
 /*
  * Reflect resources.
