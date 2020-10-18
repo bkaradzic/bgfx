@@ -76,7 +76,8 @@
         <id value="23"  vendor="Google" tool="Tint Compiler" comment="Contact David Neto, dneto@google.com"/>
         <id value="24"  vendor="Google" tool="ANGLE Shader Compiler" comment="Contact Shahbaz Youssefi, syoussefi@google.com"/>
         <id value="25"  vendor="Netease Games" tool="Messiah Shader Compiler" comment="Contact Yuwen Wu, atyuwen@gmail.com"/>
-        <unused start="26" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="26"  vendor="Xenia" tool="Xenia Emulator Microcode Translator" comment="Contact Vitaliy Kuzmin, triang3l@yandex.ru, https://github.com/xenia-project/xenia"/>
+        <unused start="27" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->
