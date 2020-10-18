@@ -215,10 +215,17 @@ class DebugInfoManager {
   // of |scope|.
   bool IsAncestorOfScope(uint32_t scope, uint32_t ancestor);
 
-  // Returns true if the declaration of a local variable |dbg_declare|
-  // is visible in the scope of an instruction |instr_scope_id|.
-  bool IsDeclareVisibleToInstr(Instruction* dbg_declare,
-                               uint32_t instr_scope_id);
+  // Returns the DebugLocalVariable declared by |dbg_declare|.
+  Instruction* GetDebugLocalVariableFromDeclare(Instruction* dbg_declare);
+
+  // Returns true if the DebugLocalVariable |dbg_local_var| is a function
+  // parameter.
+  bool IsFunctionParameter(Instruction* dbg_local_var) const;
+
+  // Returns true if the DebugLocalVariable |dbg_local_var| is visible
+  // in the scope of an instruction |instr_scope_id|.
+  bool IsLocalVariableVisibleToInstr(Instruction* dbg_local_var,
+                                     uint32_t instr_scope_id);
 
   // Returns the parent scope of the scope |child_scope|.
   uint32_t GetParentScope(uint32_t child_scope);

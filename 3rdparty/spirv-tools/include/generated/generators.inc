@@ -24,3 +24,4 @@
 {23, "Google", "Tint Compiler", "Google Tint Compiler"},
 {24, "Google", "ANGLE Shader Compiler", "Google ANGLE Shader Compiler"},
 {25, "Netease Games", "Messiah Shader Compiler", "Netease Games Messiah Shader Compiler"},
+{26, "Xenia", "Xenia Emulator Microcode Translator", "Xenia Xenia Emulator Microcode Translator"},
