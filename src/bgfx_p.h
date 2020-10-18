@@ -4603,7 +4603,16 @@ namespace bgfx
 
 			_num  = bx::max<uint16_t>(1, _num);
 
-			uint16_t idx = m_uniformHashMap.find(bx::hash<bx::HashMurmur2A>(_name) );
+            // TODO: test this extensively
+            // Append uniform type as additional character when hashing uniform name to prevent name collisions for
+            // uniforms with different types (essential for Codea)
+            static char tempName[256];
+            int32_t nameLen = bx::strLen(_name);
+            bx::strCopy(tempName, sizeof(tempName), _name);
+            tempName[nameLen] = '0' + char(_type);
+            tempName[nameLen+1] = '\0';
+            
+			uint16_t idx = m_uniformHashMap.find(bx::hash<bx::HashMurmur2A>(tempName) );
 			if (kInvalidHandle != idx)
 			{
 				UniformHandle handle = { idx };
@@ -4652,7 +4661,7 @@ namespace bgfx
 			uniform.m_type = _type;
 			uniform.m_num  = _num;
 
-			bool ok = m_uniformHashMap.insert(bx::hash<bx::HashMurmur2A>(_name), handle.idx);
+			bool ok = m_uniformHashMap.insert(bx::hash<bx::HashMurmur2A>(tempName), handle.idx);
 			BX_ASSERT(ok, "Uniform already exists (name: %s)!", _name); BX_UNUSED(ok);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);

@@ -1469,6 +1469,9 @@ namespace bgfx
         sizeof(float),
         2*sizeof(float),
         3*sizeof(float),
+        sizeof(int32_t),
+        sizeof(int32_t),
+        sizeof(int32_t),
 		1,
 	};
 
