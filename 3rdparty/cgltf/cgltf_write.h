@@ -1,7 +1,7 @@
 /**
  * cgltf_write - a single-file glTF 2.0 writer written in C99.
  *
- * Version: 1.7
+ * Version: 1.8
  *
  * Website: https://github.com/jkuhlmann/cgltf
  *
@@ -95,6 +95,13 @@ typedef struct {
 } cgltf_write_context;
 
 #define CGLTF_MIN(a, b) (a < b ? a : b)
+
+#ifdef FLT_DECIMAL_DIG
+	// FLT_DECIMAL_DIG is C11
+	#define CGLTF_DECIMAL_DIG (FLT_DECIMAL_DIG)
+#else
+	#define CGLTF_DECIMAL_DIG 9
+#endif
 
 #define CGLTF_SPRINTF(...) { \
 		context->tmp = snprintf ( context->cursor, context->remaining, __VA_ARGS__ ); \
@@ -224,7 +231,7 @@ static void cgltf_write_floatprop(cgltf_write_context* context, const char* labe
 	{
 		cgltf_write_indent(context);
 		CGLTF_SPRINTF("\"%s\": ", label);
-		CGLTF_SPRINTF("%g", val);
+		CGLTF_SPRINTF("%.*g", CGLTF_DECIMAL_DIG, val);
 		context->needs_comma = 1;
 
 		if (context->cursor)
@@ -256,11 +263,11 @@ static void cgltf_write_floatarrayprop(cgltf_write_context* context, const char*
 	{
 		if (i != 0)
 		{
-			CGLTF_SPRINTF(", %g", vals[i]);
+			CGLTF_SPRINTF(", %.*g", CGLTF_DECIMAL_DIG, vals[i]);
 		}
 		else
 		{
-			CGLTF_SPRINTF("%g", vals[i]);
+			CGLTF_SPRINTF("%.*g", CGLTF_DECIMAL_DIG, vals[i]);
 		}
 	}
 	CGLTF_SPRINTF("]");
