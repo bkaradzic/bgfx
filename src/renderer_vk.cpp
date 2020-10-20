@@ -2338,6 +2338,8 @@ VK_IMPORT_DEVICE
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
 			}
 
+			m_gpuTimer.init();
+
 			g_internalData.context = m_device;
 			return true;
 
@@ -2409,6 +2411,8 @@ VK_IMPORT_DEVICE
 		{
 			VK_CHECK(vkQueueWaitIdle(m_queueGraphics) );
 			VK_CHECK(vkDeviceWaitIdle(m_device) );
+
+			m_gpuTimer.shutdown();
 
 			m_pipelineStateCache.invalidate();
 			m_descriptorSetLayoutCache.invalidate();
@@ -4694,6 +4698,8 @@ VK_IMPORT_DEVICE
 		VkPipelineCache m_pipelineCache;
 		VkCommandPool m_commandPool;
 
+		TimerQueryVK m_gpuTimer;
+
 		void* m_renderDocDll;
 		void* m_vulkan1Dll;
 
@@ -6434,7 +6440,9 @@ VK_DESTROY
 		BX_UNUSED(_render, _clearQuad, _textVideoMemBlitter);
 
 		m_commandBuffer = beginNewCommand();
+
 		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
+
 		submitCommandAndWait(m_commandBuffer);
 		m_commandBuffer = VK_NULL_HANDLE;
 
@@ -6449,7 +6457,7 @@ VK_DESTROY
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-//		m_gpuTimer.begin(m_commandList);
+		uint32_t frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
 
 		if (0 < _render->m_iboffset)
 		{
@@ -6513,20 +6521,23 @@ VK_DESTROY
 		uint32_t statsKeyType[2] = {};
 
 		VkSemaphore renderWait = m_presentDone[m_backBufferColorIdx];
-		VkResult result = vkAcquireNextImageKHR(
-			  m_device
-			, m_swapchain
-			, UINT64_MAX
-			, renderWait
-			, VK_NULL_HANDLE
-			, &m_backBufferColorIdx
-			);
 
-		if (VK_ERROR_OUT_OF_DATE_KHR       == result
-		||  VK_ERROR_VALIDATION_FAILED_EXT == result)
 		{
-			m_needToRefreshSwapchain = true;
-			return;
+			VkResult result = vkAcquireNextImageKHR(
+				m_device
+				, m_swapchain
+				, UINT64_MAX
+				, renderWait
+				, VK_NULL_HANDLE
+				, &m_backBufferColorIdx
+				);
+
+			if (VK_ERROR_OUT_OF_DATE_KHR       == result
+			||  VK_ERROR_VALIDATION_FAILED_EXT == result)
+			{
+				m_needToRefreshSwapchain = true;
+				return;
+			}
 		}
 
 		const uint64_t f0 = BGFX_STATE_BLEND_FACTOR;
@@ -6567,6 +6578,12 @@ VK_DESTROY
 		rpbi.pClearValues    = NULL;
 
 		bool beginRenderPass = false;
+
+		Profiler<TimerQueryVK> profiler(
+			  _render
+			, m_gpuTimer
+			, s_viewName
+			);
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -6620,16 +6637,29 @@ VK_DESTROY
 					viewHasScissor  = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : rect;
 
-					rpbi.framebuffer = isValid(m_fbh) ? m_frameBuffers[m_fbh.idx].m_framebuffer : m_backBufferColor[m_backBufferColorIdx];
-					rpbi.renderPass = isValid(m_fbh) ? m_frameBuffers[m_fbh.idx].m_renderPass : m_renderPass;
+					rpbi.framebuffer = isValid(m_fbh)
+						? m_frameBuffers[m_fbh.idx].m_framebuffer
+						: m_backBufferColor[m_backBufferColorIdx]
+						;
+					rpbi.renderPass = isValid(m_fbh)
+						? m_frameBuffers[m_fbh.idx].m_renderPass
+						: m_renderPass
+						;
 					rpbi.renderArea.offset.x = rect.m_x;
 					rpbi.renderArea.offset.y = rect.m_y;
 					rpbi.renderArea.extent.width  = rect.m_width;
 					rpbi.renderArea.extent.height = rect.m_height;
 
+					if (item > 1)
+					{
+						profiler.end();
+					}
+
 					BGFX_VK_PROFILER_END();
 					setViewType(view, " ");
 					BGFX_VK_PROFILER_BEGIN(view, kColorView);
+
+					profiler.begin(view);
 
 					if (!isCompute && !beginRenderPass)
 					{
@@ -7159,6 +7189,15 @@ VK_DESTROY
 			}
 
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
+
+			if (0 < _render->m_numRenderItems)
+			{
+				captureElapsed = -bx::getHPCounter();
+//				capture();
+				captureElapsed += bx::getHPCounter();
+
+				profiler.end();
+			}
 		}
 
 		BGFX_VK_PROFILER_END();
@@ -7182,15 +7221,19 @@ BX_UNUSED(presentMin, presentMax);
 //		presentMin = bx::min<int64_t>(presentMin, m_presentElapsed);
 //		presentMax = bx::max<int64_t>(presentMax, m_presentElapsed);
 
-//		m_gpuTimer.end(m_commandList);
+		if (UINT32_MAX != frameQueryIdx)
+		{
+			m_gpuTimer.end(frameQueryIdx);
 
-//		while (m_gpuTimer.get() )
-//		{
-//			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
-//			elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
-//			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
-//		}
-//		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+			const TimerQueryVK::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
+			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
+			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, result.m_pending-1);
+		}
+
+		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
@@ -7198,13 +7241,14 @@ BX_UNUSED(presentMin, presentMax);
 		perfStats.cpuTimeBegin  = timeBegin;
 		perfStats.cpuTimeEnd    = timeEnd;
 		perfStats.cpuTimerFreq  = timerFreq;
-//		perfStats.gpuTimeBegin  = m_gpuTimer.m_begin;
-//		perfStats.gpuTimeEnd    = m_gpuTimer.m_end;
-//		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;
-//		perfStats.numDraw       = statsKeyType[0];
-//		perfStats.numCompute    = statsKeyType[1];
+		const TimerQueryVK::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		perfStats.gpuTimeBegin  = result.m_begin;
+		perfStats.gpuTimeEnd    = result.m_end;
+		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;
+		perfStats.numDraw       = statsKeyType[0];
+		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
-//		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.maxGpuLatency = maxGpuLatency;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;
@@ -7393,7 +7437,7 @@ BX_UNUSED(presentMin, presentMax);
 
 		VK_CHECK(vkEndCommandBuffer(m_commandBuffer) );
 
-		kick(renderWait); //, m_presentDone[m_backBufferColorIdx]);
+		kick(renderWait);
 		finishAll();
 
 		VK_CHECK(vkResetCommandPool(m_device, m_commandPool, 0) );
