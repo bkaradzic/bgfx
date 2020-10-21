@@ -1822,7 +1822,7 @@ bool overlap(const Plane& _plane, const Cone& _cone)
 
 	const float bb = len;
 	const float aa = _cone.radius;
-	const float cc = sqrt(square(aa) + square(bb) );
+	const float cc = bx::sqrt(square(aa) + square(bb) );
 
 	const Vec3 pos = add(add(_cone.end
 		, mul(dir, len * bb/cc) )
