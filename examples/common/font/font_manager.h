@@ -114,8 +114,8 @@ struct GlyphInfo
 	uint16_t regionIndex;
 };
 
-BGFX_HANDLE(TrueTypeHandle);
-BGFX_HANDLE(FontHandle);
+BGFX_HANDLE(TrueTypeHandle)
+BGFX_HANDLE(FontHandle)
 
 class FontManager
 {
