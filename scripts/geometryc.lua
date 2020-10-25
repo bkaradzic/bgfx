@@ -43,6 +43,11 @@ project "geometryc"
 			"psapi",
 		}
 
+	configuration { "linux*" }
+		links {
+			"dl",
+		}
+
 	configuration {}
 
 	strip()

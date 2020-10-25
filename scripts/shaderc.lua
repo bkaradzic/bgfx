@@ -659,6 +659,7 @@ project "shaderc"
 	configuration { "osx or linux*" }
 		links {
 			"pthread",
+			"dl"
 		}
 
 	configuration {}

@@ -41,4 +41,9 @@ project "texturec"
 			"psapi",
 		}
 
+	configuration { "linux*" }
+		links {
+			"dl",
+		}
+
 	configuration {}
