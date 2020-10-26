@@ -1105,8 +1105,8 @@ namespace bgfx
 			{
 				preprocessor.setDefine(hlslDefine);
 			}
-			else if (0 != glsl)
-			     || (0 != essl)
+			else if (0 != glsl
+			     ||  0 != essl)
 			{
 				preprocessor.setDefine(glslDefine);
 			}
@@ -1127,8 +1127,8 @@ namespace bgfx
 			{
 				preprocessor.setDefine(hlslDefine);
 			}
-			else if (0 != glsl)
-			     || (0 != essl)
+			else if (0 != glsl
+			     ||  0 != essl)
 			{
 				preprocessor.setDefine(glslDefine);
 			}
