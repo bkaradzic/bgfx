@@ -61,7 +61,7 @@ project ("geometryv")
 		configuration {}
 	end
 
-	configuration { "vs*" }
+	configuration { "vs* or cmake", "windows" }
 		linkoptions {
 			"/ignore:4199", -- LNK4199: /DELAYLOAD:*.dll ignored; no imports found from *.dll
 		}
@@ -69,7 +69,7 @@ project ("geometryv")
 			"DelayImp",
 		}
 
-	configuration { "vs201*" }
+	configuration { "vs201* or cmake", "windows" }
 		linkoptions { -- this is needed only for testing with GLES2/3 on Windows with VS201x
 			"/DELAYLOAD:\"libEGL.dll\"",
 			"/DELAYLOAD:\"libGLESv2.dll\"",
@@ -78,7 +78,7 @@ project ("geometryv")
 	configuration { "mingw-*" }
 		targetextension ".exe"
 
-	configuration { "vs20* or mingw*" }
+	configuration { "vs20* or mingw* or cmake", "windows" }
 		links {
 			"comdlg32",
 			"gdi32",

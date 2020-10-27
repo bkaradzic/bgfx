@@ -133,7 +133,7 @@ project "spirv-opt"
 		path.join(SPIRV_TOOLS, "source/val/validation_state.cpp"),
 	}
 
-	configuration { "vs*" }
+	configuration { "vs* or cmake", "windows" }
 		buildoptions {
 			"/wd4127", -- warning C4127: conditional expression is constant
 			"/wd4389", -- warning C4389: '==': signed/unsigned mismatch
@@ -189,7 +189,7 @@ project "spirv-cross"
 		path.join(SPIRV_CROSS, "spirv_reflect.hpp"),
 	}
 
-	configuration { "vs*" }
+	configuration { "vs* or cmake", "windows" }
 		buildoptions {
 			"/wd4018", -- warning C4018: '<': signed/unsigned mismatch
 			"/wd4245", -- warning C4245: 'return': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
@@ -250,7 +250,7 @@ project "glslang"
 			path.join(GLSLANG, "glslang/OSDependent/Windows/**.h"),
 		}
 
-	configuration { "vs*" }
+	configuration { "vs* or cmake", "windows" }
 		buildoptions {
 			"/wd4005", -- warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
 			"/wd4065", -- warning C4065: switch statement contains 'default' but no 'case' labels
@@ -502,7 +502,7 @@ project "glsl-optimizer"
 			"OptimizeSpeed",
 		}
 
-	configuration { "vs*" }
+	configuration { "vs* or cmake", "windows" }
 		includedirs {
 			path.join(GLSL_OPTIMIZER, "src/glsl/msvc"),
 		}
@@ -579,7 +579,7 @@ project "fcpp"
 		path.join(FCPP_DIR, "cpp6.c"),
 	}
 
-	configuration { "vs*" }
+	configuration { "vs* or cmake", "windows" }
 
 		buildoptions {
 			"/wd4055", -- warning C4055: 'type cast': from data pointer 'void *' to function pointer 'void (__cdecl *)(char *,void *)'
@@ -588,7 +588,7 @@ project "fcpp"
 			"/wd4706", -- warning C4706: assignment within conditional expression
 		}
 
-	configuration { "not vs*" }
+	configuration { "not vs*", "not windows" }
 		buildoptions {
 			"-Wno-implicit-fallthrough",
 			"-Wno-incompatible-pointer-types",
@@ -646,12 +646,12 @@ project "shaderc"
 			"Cocoa.framework",
 		}
 
-	configuration { "vs*" }
+	configuration { "vs* or cmake", "windows" }
 		includedirs {
 			path.join(GLSL_OPTIMIZER, "include/c99"),
 		}
 
-	configuration { "vs20* or mingw*" }
+	configuration { "vs20* or mingw* or cmake", "windows" }
 		links {
 			"psapi",
 		}

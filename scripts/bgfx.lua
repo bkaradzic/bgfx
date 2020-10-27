@@ -116,7 +116,7 @@ function bgfxProjectBase(_kind, _defines)
 			"BGFX_CONFIG_DEBUG=1",
 		}
 
-	configuration { "vs* or mingw*", "not durango" }
+	configuration { "vs* or mingw* or cmake*", "not durango", "windows" }
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 		}
@@ -203,7 +203,7 @@ function bgfxProjectBase(_kind, _defines)
 				path.join(DAWN_DIR, generator, "gen/src/include"),
 			}
 
-		configuration { "vs*" }
+		configuration { "vs* or cmake", "windows" }
 			defines {
 				"NTDDI_VERSION=NTDDI_WIN10_RS2",
 
