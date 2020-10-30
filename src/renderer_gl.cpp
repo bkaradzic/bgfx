@@ -2088,8 +2088,13 @@ namespace bgfx { namespace gl
 			{
 				if (0 == bx::strCmp(ext, extension.m_name) )
 				{
-					extension.m_supported = true;
+#if BX_PLATFORM_EMSCRIPTEN
+					EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
+					supported = emscripten_webgl_enable_extension(ctx, extension.m_name);
+#else
 					supported = true;
+#endif
+					extension.m_supported = supported;
 					break;
 				}
 			}
