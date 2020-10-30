@@ -2645,7 +2645,7 @@ namespace bgfx
 
 		void init()
 		{
-			bx::memSet(m_vertexLayoutRef,           0, sizeof(m_vertexLayoutRef)        );
+			bx::memSet(m_refCount,                  0, sizeof(m_refCount)               );
 			bx::memSet(m_vertexBufferRef,        0xff, sizeof(m_vertexBufferRef)        );
 			bx::memSet(m_dynamicVertexBufferRef, 0xff, sizeof(m_dynamicVertexBufferRef) );
 		}
@@ -2656,7 +2656,7 @@ namespace bgfx
 			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii)
 			{
 				VertexLayoutHandle handle = { _handleAlloc.getHandleAt(ii) };
-				m_vertexLayoutRef[handle.idx] = 0;
+				m_refCount[handle.idx] = 0;
 				m_vertexLayoutMap.removeByHandle(handle.idx);
 				_handleAlloc.free(handle.idx);
 			}
@@ -2672,7 +2672,7 @@ namespace bgfx
 
 		void add(VertexLayoutHandle _layoutHandle, uint32_t _hash)
 		{
-			m_vertexLayoutRef[_layoutHandle.idx]++;
+			m_refCount[_layoutHandle.idx]++;
 			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
 		}
 
@@ -2680,7 +2680,7 @@ namespace bgfx
 		{
 			BX_ASSERT(m_vertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_vertexBufferRef[_handle.idx] = _layoutHandle;
-			m_vertexLayoutRef[_layoutHandle.idx]++;
+			m_refCount[_layoutHandle.idx]++;
 			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
 		}
 
@@ -2688,7 +2688,7 @@ namespace bgfx
 		{
 			BX_ASSERT(m_dynamicVertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_dynamicVertexBufferRef[_handle.idx] = _layoutHandle;
-			m_vertexLayoutRef[_layoutHandle.idx]++;
+			m_refCount[_layoutHandle.idx]++;
 			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
 		}
 
@@ -2696,9 +2696,9 @@ namespace bgfx
 		{
 			if (isValid(_layoutHandle) )
 			{
-				m_vertexLayoutRef[_layoutHandle.idx]--;
+				m_refCount[_layoutHandle.idx]--;
 
-				if (0 == m_vertexLayoutRef[_layoutHandle.idx])
+				if (0 == m_refCount[_layoutHandle.idx])
 				{
 					m_vertexLayoutMap.removeByHandle(_layoutHandle.idx);
 					return _layoutHandle;
@@ -2729,7 +2729,7 @@ namespace bgfx
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_VERTEX_LAYOUTS*2> VertexLayoutMap;
 		VertexLayoutMap m_vertexLayoutMap;
 
-		uint16_t m_vertexLayoutRef[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
+		uint16_t m_refCount[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 		VertexLayoutHandle m_vertexBufferRef[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 		VertexLayoutHandle m_dynamicVertexBufferRef[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 	};
@@ -3165,7 +3165,10 @@ namespace bgfx
 		BGFX_API_FUNC(void destroyVertexLayout(VertexLayoutHandle _handle) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
-			m_vertexLayoutRef.release(_handle);
+			if (isValid(m_vertexLayoutRef.release(_handle) ) )
+			{
+				m_submit->free(_handle);
+			}
 		}
 
 		BGFX_API_FUNC(VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexLayout& _layout, uint16_t _flags) )
