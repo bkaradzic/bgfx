@@ -24,6 +24,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #include <spirv-tools/optimizer.hpp>
 BX_PRAGMA_DIAGNOSTIC_POP()
 
+#if BGFX_CONFIG_USE_TINYSTL
 namespace bgfx
 {
 	static bx::DefaultAllocator s_allocator;
@@ -55,6 +56,15 @@ namespace bgfx
 #include <tinystl/unordered_map.h>
 #include <tinystl/vector.h>
 namespace stl = tinystl;
+
+#else
+#	include <list>
+#	include <string>
+#	include <unordered_map>
+#	include <unordered_set>
+#	include <vector>
+namespace stl = std;
+#endif // BGFX_CONFIG_USE_TINYSTL
 
 #include "../../src/shader_spirv.h"
 #include "../../3rdparty/khronos/vulkan-local/vulkan.h"
