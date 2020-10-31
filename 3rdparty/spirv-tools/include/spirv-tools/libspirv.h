@@ -48,8 +48,8 @@ extern "C" {
 
 #define SPV_BIT(shift) (1 << (shift))
 
-#define SPV_FORCE_16_BIT_ENUM(name) _##name = 0x7fff
-#define SPV_FORCE_32_BIT_ENUM(name) _##name = 0x7fffffff
+#define SPV_FORCE_16_BIT_ENUM(name) SPV_FORCE_16BIT_##name = 0x7fff
+#define SPV_FORCE_32_BIT_ENUM(name) SPV_FORCE_32BIT_##name = 0x7fffffff
 
 // Enumerations
 
@@ -189,8 +189,17 @@ typedef enum spv_operand_type_t {
 //    Variable : expands to 0, 1 or many operands or pairs of operands.
 //               This is similar to * in regular expressions.
 
+// NOTE: These FIRST_* and LAST_* enum values are DEPRECATED.
+// The concept of "optional" and "variable" operand types are only intended
+// for use as an implementation detail of parsing SPIR-V, either in text or
+// binary form.  Instead of using enum ranges, use characteristic function
+// spvOperandIsConcrete.
+// The use of enum value ranges in a public API makes it difficult to insert
+// new values into a range without also breaking binary compatibility.
+//
 // Macros for defining bounds on optional and variable operand types.
 // Any variable operand type is also optional.
+// TODO(dneto): Remove SPV_OPERAND_TYPE_FIRST_* and SPV_OPERAND_TYPE_LAST_*
 #define FIRST_OPTIONAL(ENUM) ENUM, SPV_OPERAND_TYPE_FIRST_OPTIONAL_TYPE = ENUM
 #define FIRST_VARIABLE(ENUM) ENUM, SPV_OPERAND_TYPE_FIRST_VARIABLE_TYPE = ENUM
 #define LAST_VARIABLE(ENUM)                         \
@@ -258,6 +267,12 @@ typedef enum spv_operand_type_t {
   SPV_FORCE_32_BIT_ENUM(spv_operand_type_t)
 } spv_operand_type_t;
 
+// Returns true if the given type is concrete.
+bool spvOperandIsConcrete(spv_operand_type_t type);
+
+// Returns true if the given type is concrete and also a mask.
+bool spvOperandIsConcreteMask(spv_operand_type_t type);
+
 typedef enum spv_ext_inst_type_t {
   SPV_EXT_INST_TYPE_NONE = 0,
   SPV_EXT_INST_TYPE_GLSL_STD_450,
@@ -268,6 +283,7 @@ typedef enum spv_ext_inst_type_t {
   SPV_EXT_INST_TYPE_SPV_AMD_SHADER_BALLOT,
   SPV_EXT_INST_TYPE_DEBUGINFO,
   SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100,
+  SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION,
 
   // Multiple distinct extended instruction set types could return this
   // value, if they are prefixed with NonSemantic. and are otherwise
@@ -310,6 +326,8 @@ typedef enum spv_binary_to_text_options_t {
   // time, but will use common names for scalar types, and debug names from
   // OpName instructions.
   SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES = SPV_BIT(6),
+  // Add some comments to the generated assembly
+  SPV_BINARY_TO_TEXT_OPTION_COMMENT = SPV_BIT(7),
   SPV_FORCE_32_BIT_ENUM(spv_binary_to_text_options_t)
 } spv_binary_to_text_options_t;
 
@@ -659,6 +677,13 @@ SPIRV_TOOLS_EXPORT void spvReducerOptionsSetStepLimit(
 SPIRV_TOOLS_EXPORT void spvReducerOptionsSetFailOnValidationError(
     spv_reducer_options options, bool fail_on_validation_error);
 
+// Sets the function that the reducer should target.  If set to zero the reducer
+// will target all functions as well as parts of the module that lie outside
+// functions.  Otherwise the reducer will restrict reduction to the function
+// with result id |target_function|, which is required to exist.
+SPIRV_TOOLS_EXPORT void spvReducerOptionsSetTargetFunction(
+    spv_reducer_options options, uint32_t target_function);
+
 // Creates a fuzzer options object with default options. Returns a valid
 // options object. The object remains valid until it is passed into
 // |spvFuzzerOptionsDestroy|.
@@ -691,6 +716,11 @@ SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetShrinkerStepLimit(
 // Enables running the validator after every pass is applied during a fuzzing
 // run.
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableFuzzerPassValidation(
+    spv_fuzzer_options options);
+
+// Enables all fuzzer passes during a fuzzing run (instead of a random subset
+// of passes).
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableAllPasses(
     spv_fuzzer_options options);
 
 // Encodes the given SPIR-V assembly text to its binary representation. The

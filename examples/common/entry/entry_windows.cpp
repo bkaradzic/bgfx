@@ -23,6 +23,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <xinput.h>
+#include <shellapi.h>
 
 #ifndef XINPUT_GAMEPAD_GUIDE
 #	define XINPUT_GAMEPAD_GUIDE 0x400

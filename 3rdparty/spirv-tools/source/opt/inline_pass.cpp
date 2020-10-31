@@ -384,7 +384,8 @@ std::unique_ptr<BasicBlock> InlinePass::InlineReturn(
   for (auto callee_block_itr = calleeFn->begin();
        callee_block_itr != calleeFn->end(); ++callee_block_itr) {
     if (callee_block_itr->tail()->opcode() == SpvOpUnreachable ||
-        callee_block_itr->tail()->opcode() == SpvOpKill) {
+        callee_block_itr->tail()->opcode() == SpvOpKill ||
+        callee_block_itr->tail()->opcode() == SpvOpTerminateInvocation) {
       returnLabelId = context()->TakeNextId();
       break;
     }
@@ -618,6 +619,14 @@ bool InlinePass::GenInlineCode(
     assert(resId != 0);
     AddLoad(calleeTypeId, resId, returnVarId, &new_blk_ptr,
             call_inst_itr->dbg_line_inst(), call_inst_itr->GetDebugScope());
+  } else {
+    // Even though it is very unlikely, it is possible that the result id of
+    // the void-function call is used, so we need to generate an instruction
+    // with that result id.
+    std::unique_ptr<Instruction> undef_inst(
+        new Instruction(context(), SpvOpUndef, call_inst_itr->type_id(),
+                        call_inst_itr->result_id(), {}));
+    context()->AddGlobalValue(std::move(undef_inst));
   }
 
   // Move instructions of original caller block after call instruction.
@@ -738,16 +747,18 @@ bool InlinePass::IsInlinableFunction(Function* func) {
   bool func_is_called_from_continue =
       funcs_called_from_continue_.count(func->result_id()) != 0;
 
-  if (func_is_called_from_continue && ContainsKill(func)) {
+  if (func_is_called_from_continue && ContainsKillOrTerminateInvocation(func)) {
     return false;
   }
 
   return true;
 }
 
-bool InlinePass::ContainsKill(Function* func) const {
-  return !func->WhileEachInst(
-      [](Instruction* inst) { return inst->opcode() != SpvOpKill; });
+bool InlinePass::ContainsKillOrTerminateInvocation(Function* func) const {
+  return !func->WhileEachInst([](Instruction* inst) {
+    const auto opcode = inst->opcode();
+    return (opcode != SpvOpKill) && (opcode != SpvOpTerminateInvocation);
+  });
 }
 
 void InlinePass::InitializeInline() {

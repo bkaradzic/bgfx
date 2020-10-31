@@ -972,6 +972,8 @@ enum class Capability : unsigned {
     FPGAKernelAttributesINTEL = 5897,
     BlockingPipesINTEL = 5945,
     FPGARegINTEL = 5948,
+    AtomicFloat32AddEXT = 6033,
+    AtomicFloat64AddEXT = 6034,
     Max = 0x7fffffff,
 };
 
@@ -1367,6 +1369,7 @@ enum class Op : unsigned {
     OpPtrEqual = 401,
     OpPtrNotEqual = 402,
     OpPtrDiff = 403,
+    OpTerminateInvocation = 4416,
     OpSubgroupBallotKHR = 4421,
     OpSubgroupFirstInvocationKHR = 4422,
     OpSubgroupAllKHR = 4428,
@@ -1584,6 +1587,7 @@ enum class Op : unsigned {
     OpRayQueryGetWorldRayOriginKHR = 6030,
     OpRayQueryGetIntersectionObjectToWorldKHR = 6031,
     OpRayQueryGetIntersectionWorldToObjectKHR = 6032,
+    OpAtomicFAddEXT = 6035,
     Max = 0x7fffffff,
 };
 
@@ -1936,6 +1940,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpPtrEqual: *hasResult = true; *hasResultType = true; break;
     case Op::OpPtrNotEqual: *hasResult = true; *hasResultType = true; break;
     case Op::OpPtrDiff: *hasResult = true; *hasResultType = true; break;
+    case Op::OpTerminateInvocation: *hasResult = false; *hasResultType = false; break;
     case Op::OpSubgroupBallotKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupFirstInvocationKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAllKHR: *hasResult = true; *hasResultType = true; break;
@@ -2145,6 +2150,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpRayQueryGetWorldRayOriginKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpRayQueryGetIntersectionObjectToWorldKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpRayQueryGetIntersectionWorldToObjectKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpAtomicFAddEXT: *hasResult = true; *hasResultType = true; break;
     }
 }
 #endif /* SPV_ENABLE_UTILITY_CODE */

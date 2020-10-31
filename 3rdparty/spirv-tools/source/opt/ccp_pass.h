@@ -105,6 +105,9 @@ class CCPPass : public MemPass {
 
   // Propagator engine used.
   std::unique_ptr<SSAPropagator> propagator_;
+
+  // True if the pass created new constant instructions during propagation.
+  bool created_new_constant_;
 };
 
 }  // namespace opt

@@ -246,12 +246,12 @@ namespace bgfx
 				{
 					DXGI_OUTPUT_DESC outputDesc;
 					hr = output->GetDesc(&outputDesc);
-					if (SUCCEEDED(hr))
+					if (SUCCEEDED(hr) )
 					{
 						BX_TRACE("\tOutput #%d", jj);
 
 						char deviceName[BX_COUNTOF(outputDesc.DeviceName)];
-						wcstombs(deviceName, outputDesc.DeviceName, BX_COUNTOF(outputDesc.DeviceName));
+						wcstombs(deviceName, outputDesc.DeviceName, BX_COUNTOF(outputDesc.DeviceName) );
 						BX_TRACE("\t\t           DeviceName: %s", deviceName);
 						BX_TRACE("\t\t   DesktopCoordinates: %d, %d, %d, %d"
 							, outputDesc.DesktopCoordinates.left
@@ -367,15 +367,29 @@ namespace bgfx
 	{
 		HRESULT hr = S_OK;
 
-		bool allowTearing = false;
+		uint32_t scdFlags = _scd.flags;
 
 #if BX_PLATFORM_WINDOWS
-		if (windowsVersionIs(Condition::GreaterEqual, 0x0604) )
+		IDXGIFactory5* factory5;
+		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
+
+		if (SUCCEEDED(hr) )
 		{
+			BOOL allowTearing = false;
 			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
 			//      will crash on pre Windows 8. Issue #1356.
-			hr = m_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
+			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
+
+			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+			scdFlags |=
+				(_scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+					|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD)
+				? DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+				: 0;
+
+
+			DX_RELEASE_I(factory5);
 		}
 
 		DXGI_SWAP_CHAIN_DESC scd;
@@ -393,10 +407,7 @@ namespace bgfx
 		scd.OutputWindow = (HWND)_scd.nwh;
 		scd.Windowed     = _scd.windowed;
 		scd.SwapEffect   = _scd.swapEffect;
-		scd.Flags        = 0
-			| _scd.flags
-			| (allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
-			;
+		scd.Flags        = scdFlags;
 
 		hr = m_factory->CreateSwapChain(
 			  _device
@@ -427,7 +438,7 @@ namespace bgfx
 		scd.Scaling     = _scd.scaling;
 		scd.SwapEffect  = _scd.swapEffect;
 		scd.AlphaMode   = _scd.alphaMode;
-		scd.Flags       = _scd.flags;
+		scd.Flags       = scdFlags;
 
 		if (NULL == _scd.ndt)
 		{
@@ -457,26 +468,59 @@ namespace bgfx
 			}
 
 #	if BX_PLATFORM_WINRT
-			IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(_scd.nwh);
-			ISwapChainBackgroundPanelNative* panel = NULL;
-			hr = nativeWindow->QueryInterface(
-				  __uuidof(ISwapChainBackgroundPanelNative)
-				, (void **)&panel
-				);
-			if (FAILED(hr) )
-			{
-				return hr;
-			}
+			IInspectable *nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
+			ISwapChainPanelNative* swapChainPanelNative;
 
-			if (NULL != panel)
+			hr = nativeWindow->QueryInterface(
+				  __uuidof(ISwapChainPanelNative)
+				, (void**)&swapChainPanelNative
+				);
+
+			if (!FAILED(hr) )
 			{
-				hr = panel->SetSwapChain(*_swapChain);
+				// Swap Chain Panel
+				if (NULL != swapChainPanelNative)
+				{
+					hr = swapChainPanelNative->SetSwapChain(*_swapChain);
+
+					if (FAILED(hr) )
+					{
+						DX_RELEASE(swapChainPanelNative, 0);
+						BX_TRACE("Failed to SetSwapChain, hr %x.");
+						return hr;
+					}
+
+					DX_RELEASE_I(swapChainPanelNative);
+				}
+			}
+			else
+			{
+				// Swap Chain Background Panel
+				ISwapChainBackgroundPanelNative* swapChainBackgroundPanelNative = NULL;
+
+				hr = nativeWindow->QueryInterface(
+					  __uuidof(ISwapChainBackgroundPanelNative)
+					, (void**)&swapChainBackgroundPanelNative
+					);
+
 				if (FAILED(hr) )
 				{
 					return hr;
 				}
 
-				panel->Release();
+				if (NULL != swapChainBackgroundPanelNative)
+				{
+					hr = swapChainBackgroundPanelNative->SetSwapChain(*_swapChain);
+
+					if (FAILED(hr) )
+					{
+						DX_RELEASE(swapChainBackgroundPanelNative, 0);
+						BX_TRACE("Failed to SetSwapChain, hr %x.");
+						return hr;
+					}
+
+					DX_RELEASE_I(swapChainBackgroundPanelNative);
+				}
 			}
 #	endif // BX_PLATFORM_WINRT
 		}
@@ -559,7 +603,7 @@ namespace bgfx
 						hr = output6->GetDesc1(&desc);
 						if (SUCCEEDED(hr) )
 						{
-							BX_TRACE("Display specs:")
+							BX_TRACE("Display specs:");
 							BX_TRACE("\t         BitsPerColor: %d", desc.BitsPerColor);
 							BX_TRACE("\t          Color space: %s (colorspace, range, gamma, sitting, primaries, transform)"
 								, s_colorSpaceStr[bx::min<uint32_t>(desc.ColorSpace, kDxgiLastColorSpace+1)]
@@ -606,7 +650,29 @@ namespace bgfx
 	{
 		HRESULT hr;
 
+		uint32_t scdFlags = _scd.flags;
+
 #if BX_PLATFORM_WINDOWS
+		IDXGIFactory5* factory5;
+		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
+
+		if (SUCCEEDED(hr))
+		{
+			BOOL allowTearing = false;
+			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
+			//      will crash on pre Windows 8. Issue #1356.
+			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
+
+			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+			scdFlags |= (_scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD)
+				? DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+				: 0;
+
+			DX_RELEASE_I(factory5);
+		}
+
 		if (NULL != _nodeMask
 		&&  NULL != _presentQueue)
 		{
@@ -615,7 +681,7 @@ namespace bgfx
 				, _scd.width
 				, _scd.height
 				, _scd.format
-				, _scd.flags
+				, scdFlags
 				, _nodeMask
 				, _presentQueue
 				);
@@ -630,7 +696,7 @@ namespace bgfx
 				, _scd.width
 				, _scd.height
 				, _scd.format
-				, _scd.flags
+				, scdFlags
 				);
 		}
 

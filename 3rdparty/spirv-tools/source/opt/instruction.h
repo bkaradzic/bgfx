@@ -246,6 +246,11 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // Clear line-related debug instructions attached to this instruction.
   void clear_dbg_line_insts() { dbg_line_insts_.clear(); }
 
+  // Set line-related debug instructions.
+  void set_dbg_line_insts(const std::vector<Instruction>& lines) {
+    dbg_line_insts_ = lines;
+  }
+
   // Same semantics as in the base class except the list the InstructionList
   // containing |pos| will now assume ownership of |this|.
   // inline void MoveBefore(Instruction* pos);
@@ -296,12 +301,14 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   inline void SetDebugScope(const DebugScope& scope);
   inline const DebugScope& GetDebugScope() const { return dbg_scope_; }
   // Updates DebugInlinedAt of DebugScope and OpLine.
-  inline void UpdateDebugInlinedAt(uint32_t new_inlined_at);
+  void UpdateDebugInlinedAt(uint32_t new_inlined_at);
   inline uint32_t GetDebugInlinedAt() const {
     return dbg_scope_.GetInlinedAt();
   }
+  // Updates lexical scope of DebugScope and OpLine.
+  void UpdateLexicalScope(uint32_t scope);
   // Updates OpLine and DebugScope based on the information of |from|.
-  inline void UpdateDebugInfo(const Instruction* from);
+  void UpdateDebugInfoFrom(const Instruction* from);
   // Remove the |index|-th operand
   void RemoveOperand(uint32_t index) {
     operands_.erase(operands_.begin() + index);
@@ -544,6 +551,9 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
     return GetOpenCL100DebugOpcode() != OpenCLDebugInfo100InstructionsMax;
   }
 
+  // Returns true if this instructions a non-semantic instruction.
+  bool IsNonSemanticInstruction() const;
+
   // Dump this instruction on stderr.  Useful when running interactive
   // debuggers.
   void Dump() const;
@@ -660,21 +670,6 @@ inline void Instruction::SetDebugScope(const DebugScope& scope) {
   }
 }
 
-inline void Instruction::UpdateDebugInlinedAt(uint32_t new_inlined_at) {
-  dbg_scope_.SetInlinedAt(new_inlined_at);
-  for (auto& i : dbg_line_insts_) {
-    i.dbg_scope_.SetInlinedAt(new_inlined_at);
-  }
-}
-
-inline void Instruction::UpdateDebugInfo(const Instruction* from) {
-  if (from == nullptr) return;
-  clear_dbg_line_insts();
-  if (!from->dbg_line_insts().empty())
-    dbg_line_insts().push_back(from->dbg_line_insts()[0]);
-  SetDebugScope(from->GetDebugScope());
-}
-
 inline void Instruction::SetResultType(uint32_t ty_id) {
   // TODO(dsinclair): Allow setting a type id if there wasn't one
   // previously. Need to make room in the operands_ array to place the result,
@@ -744,21 +739,21 @@ inline void Instruction::ForEachInst(
 }
 
 inline void Instruction::ForEachId(const std::function<void(uint32_t*)>& f) {
-  for (auto& opnd : operands_)
-    if (spvIsIdType(opnd.type)) f(&opnd.words[0]);
+  for (auto& operand : operands_)
+    if (spvIsIdType(operand.type)) f(&operand.words[0]);
 }
 
 inline void Instruction::ForEachId(
     const std::function<void(const uint32_t*)>& f) const {
-  for (const auto& opnd : operands_)
-    if (spvIsIdType(opnd.type)) f(&opnd.words[0]);
+  for (const auto& operand : operands_)
+    if (spvIsIdType(operand.type)) f(&operand.words[0]);
 }
 
 inline bool Instruction::WhileEachInId(
     const std::function<bool(uint32_t*)>& f) {
-  for (auto& opnd : operands_) {
-    if (spvIsInIdType(opnd.type)) {
-      if (!f(&opnd.words[0])) return false;
+  for (auto& operand : operands_) {
+    if (spvIsInIdType(operand.type) && !f(&operand.words[0])) {
+      return false;
     }
   }
   return true;
@@ -766,9 +761,9 @@ inline bool Instruction::WhileEachInId(
 
 inline bool Instruction::WhileEachInId(
     const std::function<bool(const uint32_t*)>& f) const {
-  for (const auto& opnd : operands_) {
-    if (spvIsInIdType(opnd.type)) {
-      if (!f(&opnd.words[0])) return false;
+  for (const auto& operand : operands_) {
+    if (spvIsInIdType(operand.type) && !f(&operand.words[0])) {
+      return false;
     }
   }
   return true;
@@ -791,13 +786,13 @@ inline void Instruction::ForEachInId(
 
 inline bool Instruction::WhileEachInOperand(
     const std::function<bool(uint32_t*)>& f) {
-  for (auto& opnd : operands_) {
-    switch (opnd.type) {
+  for (auto& operand : operands_) {
+    switch (operand.type) {
       case SPV_OPERAND_TYPE_RESULT_ID:
       case SPV_OPERAND_TYPE_TYPE_ID:
         break;
       default:
-        if (!f(&opnd.words[0])) return false;
+        if (!f(&operand.words[0])) return false;
         break;
     }
   }
@@ -806,13 +801,13 @@ inline bool Instruction::WhileEachInOperand(
 
 inline bool Instruction::WhileEachInOperand(
     const std::function<bool(const uint32_t*)>& f) const {
-  for (const auto& opnd : operands_) {
-    switch (opnd.type) {
+  for (const auto& operand : operands_) {
+    switch (operand.type) {
       case SPV_OPERAND_TYPE_RESULT_ID:
       case SPV_OPERAND_TYPE_TYPE_ID:
         break;
       default:
-        if (!f(&opnd.words[0])) return false;
+        if (!f(&operand.words[0])) return false;
         break;
     }
   }
@@ -821,16 +816,16 @@ inline bool Instruction::WhileEachInOperand(
 
 inline void Instruction::ForEachInOperand(
     const std::function<void(uint32_t*)>& f) {
-  WhileEachInOperand([&f](uint32_t* op) {
-    f(op);
+  WhileEachInOperand([&f](uint32_t* operand) {
+    f(operand);
     return true;
   });
 }
 
 inline void Instruction::ForEachInOperand(
     const std::function<void(const uint32_t*)>& f) const {
-  WhileEachInOperand([&f](const uint32_t* op) {
-    f(op);
+  WhileEachInOperand([&f](const uint32_t* operand) {
+    f(operand);
     return true;
   });
 }

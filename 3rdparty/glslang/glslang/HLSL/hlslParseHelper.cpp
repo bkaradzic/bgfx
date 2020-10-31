@@ -1953,6 +1953,10 @@ void HlslParseContext::transferTypeAttributes(const TSourceLoc& loc, const TAttr
             break;
         case EatConstantId:
             // specialization constant
+            if (type.getQualifier().storage != EvqConst) {
+                error(loc, "needs a const type", "constant_id", "");
+                break;
+            }
             if (it->getInt(value)) {
                 TSourceLoc loc;
                 loc.init();

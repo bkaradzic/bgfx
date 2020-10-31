@@ -283,6 +283,8 @@ spv::SourceLanguage TranslateSourceLanguage(glslang::EShSource source, EProfile 
 {
 #ifdef GLSLANG_WEB
     return spv::SourceLanguageESSL;
+#elif defined(GLSLANG_ANGLE)
+    return spv::SourceLanguageGLSL;
 #endif
 
     switch (source) {
@@ -1442,7 +1444,7 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
     // Add the source extensions
     const auto& sourceExtensions = glslangIntermediate->getRequestedExtensions();
     for (auto it = sourceExtensions.begin(); it != sourceExtensions.end(); ++it)
-        builder.addSourceExtension(it->first.c_str());
+        builder.addSourceExtension(it->c_str());
 
     // Add the top-level modes for this shader.
 
@@ -6682,6 +6684,14 @@ spv::Id TGlslangToSpvTraverser::createAtomicOperation(glslang::TOperator op, spv
     case glslang::EOpImageAtomicAdd:
     case glslang::EOpAtomicCounterAdd:
         opCode = spv::OpAtomicIAdd;
+        if (typeProxy == glslang::EbtFloat || typeProxy == glslang::EbtDouble) {
+            opCode = spv::OpAtomicFAddEXT;
+            builder.addExtension(spv::E_SPV_EXT_shader_atomic_float_add);
+            if (typeProxy == glslang::EbtFloat)
+                builder.addCapability(spv::CapabilityAtomicFloat32AddEXT);
+            else
+                builder.addCapability(spv::CapabilityAtomicFloat64AddEXT);
+        }
         break;
     case glslang::EOpAtomicCounterSubtract:
         opCode = spv::OpAtomicISub;
@@ -8686,7 +8696,7 @@ void OutputSpvBin(const std::vector<unsigned int>& spirv, const char* baseName)
 // Write SPIR-V out to a text file with 32-bit hexadecimal words
 void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, const char* varName)
 {
-#ifndef GLSLANG_WEB
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
     std::ofstream out;
     out.open(baseName, std::ios::binary | std::ios::out);
     if (out.fail())
@@ -8713,6 +8723,7 @@ void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, 
     }
     if (varName != nullptr) {
         out << "};";
+        out << std::endl;
     }
     out.close();
 #endif

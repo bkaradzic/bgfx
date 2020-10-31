@@ -167,13 +167,22 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
       } else if (IsTypeInst(opcode)) {
         module_->AddType(std::move(spv_inst));
       } else if (IsConstantInst(opcode) || opcode == SpvOpVariable ||
-                 opcode == SpvOpUndef ||
-                 (opcode == SpvOpExtInst &&
-                  spvExtInstIsNonSemantic(inst->ext_inst_type))) {
+                 opcode == SpvOpUndef) {
         module_->AddGlobalValue(std::move(spv_inst));
       } else if (opcode == SpvOpExtInst &&
                  spvExtInstIsDebugInfo(inst->ext_inst_type)) {
         module_->AddExtInstDebugInfo(std::move(spv_inst));
+      } else if (opcode == SpvOpExtInst &&
+                 spvExtInstIsNonSemantic(inst->ext_inst_type)) {
+        // If there are no functions, add the non-semantic instructions to the
+        // global values. Otherwise append it to the list of the last function.
+        auto func_begin = module_->begin();
+        auto func_end = module_->end();
+        if (func_begin == func_end) {
+          module_->AddGlobalValue(std::move(spv_inst));
+        } else {
+          (--func_end)->AddNonSemanticInstruction(std::move(spv_inst));
+        }
       } else {
         Errorf(consumer_, src, loc,
                "Unhandled inst type (opcode: %d) found outside function "

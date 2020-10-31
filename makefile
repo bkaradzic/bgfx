@@ -59,7 +59,7 @@ projgen: ## Generate project files for all configurations.
 
 idl: ## Generate code from IDL.
 	@echo Generating code from IDL.
-	$(GENIE) idl
+	cd scripts && ../$(GENIE) idl
 
 .build/projects/gmake-android-arm:
 	$(GENIE) --gcc=android-arm gmake

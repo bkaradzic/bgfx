@@ -298,6 +298,8 @@ const char* const E_GL_EXT_shader_subgroup_extended_types_int16   = "GL_EXT_shad
 const char* const E_GL_EXT_shader_subgroup_extended_types_int64   = "GL_EXT_shader_subgroup_extended_types_int64";
 const char* const E_GL_EXT_shader_subgroup_extended_types_float16 = "GL_EXT_shader_subgroup_extended_types_float16";
 
+const char* const E_GL_EXT_shader_atomic_float = "GL_EXT_shader_atomic_float";
+
 // Arrays of extensions for the above AEP duplications
 
 const char* const AEP_geometry_shader[] = { E_GL_EXT_geometry_shader, E_GL_OES_geometry_shader };

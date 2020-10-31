@@ -307,8 +307,8 @@ void SSARewriter::ProcessStore(Instruction* inst, BasicBlock* bb) {
   }
   if (pass_->IsTargetVar(var_id)) {
     WriteVariable(var_id, bb, val_id);
-    pass_->context()->get_debug_info_mgr()->AddDebugValue(inst, var_id, val_id,
-                                                          inst);
+    pass_->context()->get_debug_info_mgr()->AddDebugValueIfVarDeclIsVisible(
+        inst, var_id, val_id, inst);
 
 #if SSA_REWRITE_DEBUGGING_LEVEL > 1
     std::cerr << "\tFound store '%" << var_id << " = %" << val_id << "': "
@@ -491,7 +491,7 @@ bool SSARewriter::ApplyReplacements() {
 
     // Add DebugValue for the new OpPhi instruction.
     insert_it->SetDebugScope(local_var->GetDebugScope());
-    pass_->context()->get_debug_info_mgr()->AddDebugValue(
+    pass_->context()->get_debug_info_mgr()->AddDebugValueIfVarDeclIsVisible(
         &*insert_it, phi_candidate->var_id(), phi_candidate->result_id(),
         &*insert_it);
 
@@ -615,8 +615,6 @@ Pass::Status SSARewriter::RewriteFunctionIntoSSA(Function* fp) {
             << fp->PrettyPrint(0) << "\n";
 #endif
 
-  if (modified) pass_->context()->KillDebugDeclareInsts(fp);
-
   return modified ? Pass::Status::SuccessWithChange
                   : Pass::Status::SuccessWithoutChange;
 }
@@ -626,6 +624,10 @@ Pass::Status SSARewritePass::Process() {
   for (auto& fn : *get_module()) {
     status =
         CombineStatus(status, SSARewriter(this).RewriteFunctionIntoSSA(&fn));
+    // Kill DebugDeclares for target variables.
+    for (auto var_id : seen_target_vars_) {
+      context()->get_debug_info_mgr()->KillDebugDeclares(var_id);
+    }
     if (status == Status::Failure) {
       break;
     }

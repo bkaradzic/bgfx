@@ -165,7 +165,7 @@ void SpirvToolsValidate(const glslang::TIntermediate& intermediate, std::vector<
 void SpirvToolsTransform(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
                          spv::SpvBuildLogger* logger, const SpvOptions* options)
 {
-    spv_target_env target_env = SPV_ENV_UNIVERSAL_1_2;
+    spv_target_env target_env = MapToSpirvToolsEnv(intermediate.getSpv(), logger);
 
     spvtools::Optimizer optimizer(target_env);
     optimizer.SetMessageConsumer(OptimizerMesssageConsumer);
@@ -223,7 +223,7 @@ void SpirvToolsTransform(const glslang::TIntermediate& intermediate, std::vector
 void SpirvToolsStripDebugInfo(const glslang::TIntermediate& intermediate,
         std::vector<unsigned int>& spirv, spv::SpvBuildLogger* logger)
 {
-    spv_target_env target_env = SPV_ENV_UNIVERSAL_1_2;
+    spv_target_env target_env = MapToSpirvToolsEnv(intermediate.getSpv(), logger);
 
     spvtools::Optimizer optimizer(target_env);
     optimizer.SetMessageConsumer(OptimizerMesssageConsumer);

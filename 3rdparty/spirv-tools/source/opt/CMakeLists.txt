@@ -226,14 +226,14 @@ set(SPIRV_TOOLS_OPT_SOURCES
   wrap_opkill.cpp
 )
 
-if(MSVC)
+if(MSVC AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")))
   # Enable parallel builds across four cores for this lib
   add_definitions(/MP4)
 endif()
 
 spvtools_pch(SPIRV_TOOLS_OPT_SOURCES pch_source_opt)
 
-add_library(SPIRV-Tools-opt ${SPIRV_TOOLS_OPT_SOURCES})
+add_library(SPIRV-Tools-opt STATIC ${SPIRV_TOOLS_OPT_SOURCES})
 
 spvtools_default_compile_options(SPIRV-Tools-opt)
 target_include_directories(SPIRV-Tools-opt
@@ -245,7 +245,7 @@ target_include_directories(SPIRV-Tools-opt
 )
 # We need the assembling and disassembling functionalities in the main library.
 target_link_libraries(SPIRV-Tools-opt
-  PUBLIC ${SPIRV_TOOLS})
+  PUBLIC ${SPIRV_TOOLS}-static)
 
 set_property(TARGET SPIRV-Tools-opt PROPERTY FOLDER "SPIRV-Tools libraries")
 spvtools_check_symbol_exports(SPIRV-Tools-opt)

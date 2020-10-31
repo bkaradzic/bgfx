@@ -4,15 +4,16 @@
  */
 
 #include <bx/bx.h>
-
 #include <stb/stb_truetype.h>
-
 #include "../common.h"
-
 #include <bgfx/bgfx.h>
 
+BX_PRAGMA_DIAGNOSTIC_PUSH()
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244) //  warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4701) //  warning C4701: potentially uninitialized local variable 'pt' used
 #define SDF_IMPLEMENTATION
 #include <sdf/sdf.h>
+BX_PRAGMA_DIAGNOSTIC_POP()
 
 #include <wchar.h> // wcslen
 

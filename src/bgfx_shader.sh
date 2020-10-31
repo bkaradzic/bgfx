@@ -50,9 +50,10 @@
 #	define bvec3 bool3
 #	define bvec4 bool4
 
-
+// To be able to patch the uav registers on the DXBC SPDB Chunk (D3D11 renderer) the whitespaces around
+// '_type[_reg]' are necessary. This only affects shaders with debug info (i.e., those that have the SPDB Chunk).
 #	if BGFX_SHADER_LANGUAGE_HLSL > 4
-#		define REGISTER(_type, _reg) register(_type[_reg])
+#		define REGISTER(_type, _reg) register( _type[_reg] )
 #	else
 #		define REGISTER(_type, _reg) register(_type ## _reg)
 #	endif // BGFX_SHADER_LANGUAGE_HLSL

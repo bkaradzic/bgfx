@@ -79,6 +79,11 @@ class Function {
   // Saves the given function end instruction.
   inline void SetFunctionEnd(std::unique_ptr<Instruction> end_inst);
 
+  // Add a non-semantic instruction that succeeds this function in the module.
+  // These instructions are maintained in the order they are added.
+  inline void AddNonSemanticInstruction(
+      std::unique_ptr<Instruction> non_semantic);
+
   // Returns the given function end instruction.
   inline Instruction* EndInst() { return end_inst_.get(); }
   inline const Instruction* EndInst() const { return end_inst_.get(); }
@@ -115,19 +120,24 @@ class Function {
   }
 
   // Runs the given function |f| on instructions in this function, in order,
-  // and optionally on debug line instructions that might precede them.
+  // and optionally on debug line instructions that might precede them and
+  // non-semantic instructions that succceed the function.
   void ForEachInst(const std::function<void(Instruction*)>& f,
-                   bool run_on_debug_line_insts = false);
+                   bool run_on_debug_line_insts = false,
+                   bool run_on_non_semantic_insts = false);
   void ForEachInst(const std::function<void(const Instruction*)>& f,
-                   bool run_on_debug_line_insts = false) const;
+                   bool run_on_debug_line_insts = false,
+                   bool run_on_non_semantic_insts = false) const;
   // Runs the given function |f| on instructions in this function, in order,
-  // and optionally on debug line instructions that might precede them.
-  // If |f| returns false, iteration is terminated and this function returns
-  // false.
+  // and optionally on debug line instructions that might precede them and
+  // non-semantic instructions that succeed the function.  If |f| returns
+  // false, iteration is terminated and this function returns false.
   bool WhileEachInst(const std::function<bool(Instruction*)>& f,
-                     bool run_on_debug_line_insts = false);
+                     bool run_on_debug_line_insts = false,
+                     bool run_on_non_semantic_insts = false);
   bool WhileEachInst(const std::function<bool(const Instruction*)>& f,
-                     bool run_on_debug_line_insts = false) const;
+                     bool run_on_debug_line_insts = false,
+                     bool run_on_non_semantic_insts = false) const;
 
   // Runs the given function |f| on each parameter instruction in this function,
   // in order, and optionally on debug line instructions that might precede
@@ -148,7 +158,10 @@ class Function {
   BasicBlock* InsertBasicBlockBefore(std::unique_ptr<BasicBlock>&& new_block,
                                      BasicBlock* position);
 
-  // Return true if the function calls itself either directly or indirectly.
+  // Returns true if the function has a return block other than the exit block.
+  bool HasEarlyReturn() const;
+
+  // Returns true if the function calls itself either directly or indirectly.
   bool IsRecursive() const;
 
   // Pretty-prints all the basic blocks in this function into a std::string.
@@ -172,6 +185,8 @@ class Function {
   std::vector<std::unique_ptr<BasicBlock>> blocks_;
   // The OpFunctionEnd instruction.
   std::unique_ptr<Instruction> end_inst_;
+  // Non-semantic instructions succeeded by this function.
+  std::vector<std::unique_ptr<Instruction>> non_semantic_;
 };
 
 // Pretty-prints |func| to |str|. Returns |str|.
@@ -233,6 +248,11 @@ inline void Function::RemoveParameter(uint32_t id) {
 
 inline void Function::SetFunctionEnd(std::unique_ptr<Instruction> end_inst) {
   end_inst_ = std::move(end_inst);
+}
+
+inline void Function::AddNonSemanticInstruction(
+    std::unique_ptr<Instruction> non_semantic) {
+  non_semantic_.emplace_back(std::move(non_semantic));
 }
 
 }  // namespace opt

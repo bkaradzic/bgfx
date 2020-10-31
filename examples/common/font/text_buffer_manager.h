@@ -8,7 +8,7 @@
 
 #include "font_manager.h"
 
-BGFX_HANDLE(TextBufferHandle);
+BGFX_HANDLE(TextBufferHandle)
 
 #define MAX_TEXT_BUFFER_COUNT 64
 

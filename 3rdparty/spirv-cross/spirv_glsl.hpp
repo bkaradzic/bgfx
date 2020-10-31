@@ -121,6 +121,10 @@ public:
 		// which would otherwise be uninitialized will now be initialized to 0 instead.
 		bool force_zero_initialized_variables = false;
 
+		// In GLSL, force use of I/O block flattening, similar to
+		// what happens on legacy GLSL targets for blocks and structs.
+		bool force_flattened_io_blocks = false;
+
 		enum Precision
 		{
 			DontCare,
@@ -131,12 +135,14 @@ public:
 
 		struct VertexOptions
 		{
-			// GLSL: In vertex shaders, rewrite [0, w] depth (Vulkan/D3D style) to [-w, w] depth (GL style).
-			// MSL: In vertex shaders, rewrite [-w, w] depth (GL style) to [0, w] depth.
-			// HLSL: In vertex shaders, rewrite [-w, w] depth (GL style) to [0, w] depth.
+			// "Vertex-like shader" here is any shader stage that can write BuiltInPosition.
+
+			// GLSL: In vertex-like shaders, rewrite [0, w] depth (Vulkan/D3D style) to [-w, w] depth (GL style).
+			// MSL: In vertex-like shaders, rewrite [-w, w] depth (GL style) to [0, w] depth.
+			// HLSL: In vertex-like shaders, rewrite [-w, w] depth (GL style) to [0, w] depth.
 			bool fixup_clipspace = false;
 
-			// Inverts gl_Position.y or equivalent.
+			// In vertex-like shaders, inverts gl_Position.y or equivalent.
 			bool flip_vert_y = false;
 
 			// GLSL only, for HLSL version of this option, see CompilerHLSL.
@@ -237,7 +243,84 @@ public:
 	// - Images which are statically used at least once with Dref opcodes.
 	bool variable_is_depth_or_compare(VariableID id) const;
 
+
 protected:
+	struct ShaderSubgroupSupportHelper
+	{
+		// lower enum value = greater priority
+		enum Candidate
+		{
+			KHR_shader_subgroup_ballot,
+			KHR_shader_subgroup_basic,
+			KHR_shader_subgroup_vote,
+			NV_gpu_shader_5,
+			NV_shader_thread_group,
+			NV_shader_thread_shuffle,
+			ARB_shader_ballot,
+			ARB_shader_group_vote,
+			AMD_gcn_shader,
+
+			CandidateCount
+		};
+
+		static const char *get_extension_name(Candidate c);
+		static SmallVector<std::string> get_extra_required_extension_names(Candidate c);
+		static const char *get_extra_required_extension_predicate(Candidate c);
+
+		enum Feature
+		{
+			SubgroupMask,
+			SubgroupSize,
+			SubgroupInvocationID,
+			SubgroupID,
+			NumSubgroups,
+			SubgroupBrodcast_First,
+			SubgroupBallotFindLSB_MSB,
+			SubgroupAll_Any_AllEqualBool,
+			SubgroupAllEqualT,
+			SubgroupElect,
+			SubgroupBarrier,
+			SubgroupMemBarrier,
+			SubgroupBallot,
+			SubgroupInverseBallot_InclBitCount_ExclBitCout,
+			SubgroupBallotBitExtract,
+			SubgroupBallotBitCount,
+
+			FeatureCount
+		};
+
+		using FeatureMask = uint32_t;
+		static_assert(sizeof(FeatureMask) * 8u >= FeatureCount, "Mask type needs more bits.");
+
+		using CandidateVector = SmallVector<Candidate, CandidateCount>;
+		using FeatureVector = SmallVector<Feature>;
+
+		static FeatureVector get_feature_dependencies(Feature feature);
+		static FeatureMask get_feature_dependency_mask(Feature feature);
+		static bool can_feature_be_implemented_without_extensions(Feature feature);
+		static Candidate get_KHR_extension_for_feature(Feature feature);
+
+		struct Result
+		{
+			Result();
+			uint32_t weights[CandidateCount];
+		};
+
+		void request_feature(Feature feature);
+		bool is_feature_requested(Feature feature) const;
+		Result resolve() const;
+
+		static CandidateVector get_candidates_for_feature(Feature ft, const Result &r);
+
+	private:
+		static CandidateVector get_candidates_for_feature(Feature ft);
+		static FeatureMask build_mask(const SmallVector<Feature> &features);
+		FeatureMask feature_mask = 0;
+	};
+
+	// TODO remove this function when all subgroup ops are supported (or make it always return true)
+	static bool is_supported_subgroup_op_in_opengl(spv::Op op);
+
 	void reset();
 	void emit_function(SPIRFunction &func, const Bitset &return_flags);
 
@@ -267,6 +350,8 @@ protected:
 	void emit_line_directive(uint32_t file_id, uint32_t line_literal);
 	void build_workgroup_size(SmallVector<std::string> &arguments, const SpecializationConstant &x,
 	                          const SpecializationConstant &y, const SpecializationConstant &z);
+
+	void request_subgroup_feature(ShaderSubgroupSupportHelper::Feature feature);
 
 	virtual void emit_sampled_image_op(uint32_t result_type, uint32_t result_id, uint32_t image_id, uint32_t samp_id);
 	virtual void emit_texture_op(const Instruction &i, bool sparse);
@@ -479,10 +564,12 @@ protected:
 
 	void emit_struct(SPIRType &type);
 	void emit_resources();
+	void emit_extension_workarounds(spv::ExecutionModel model);
 	void emit_buffer_block_native(const SPIRVariable &var);
 	void emit_buffer_reference_block(SPIRType &type, bool forward_declaration);
 	void emit_buffer_block_legacy(const SPIRVariable &var);
 	void emit_buffer_block_flattened(const SPIRVariable &type);
+	void fixup_implicit_builtin_block_names();
 	void emit_declared_builtin_block(spv::StorageClass storage, spv::ExecutionModel model);
 	bool should_force_emit_builtin_block(spv::StorageClass storage);
 	void emit_push_constant_block_vulkan(const SPIRVariable &var);
@@ -675,6 +762,8 @@ protected:
 	std::unordered_set<uint32_t> flattened_buffer_blocks;
 	std::unordered_map<uint32_t, bool> flattened_structs;
 
+	ShaderSubgroupSupportHelper shader_subgroup_supporter;
+
 	std::string load_flattened_struct(const std::string &basename, const SPIRType &type);
 	std::string to_flattened_struct_member(const std::string &basename, const SPIRType &type, uint32_t index);
 	void store_flattened_struct(uint32_t lhs_id, uint32_t value);
@@ -753,8 +842,6 @@ protected:
 
 	virtual void declare_undefined_values();
 
-	static std::string sanitize_underscores(const std::string &str);
-
 	bool can_use_io_location(spv::StorageClass storage, bool block);
 	const Instruction *get_next_instruction_in_block(const Instruction &instr);
 	static uint32_t mask_relevant_memory_semantics(uint32_t semantics);
@@ -767,9 +854,9 @@ protected:
 
 	// Builtins in GLSL are always specific signedness, but the SPIR-V can declare them
 	// as either unsigned or signed.
-	// Sometimes we will need to automatically perform bitcasts on load and store to make this work.
-	virtual void bitcast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type);
-	virtual void bitcast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type);
+	// Sometimes we will need to automatically perform casts on load and store to make this work.
+	virtual void cast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type);
+	virtual void cast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type);
 	void unroll_array_from_complex_load(uint32_t target_id, uint32_t source_id, std::string &expr);
 	void convert_non_uniform_expression(const SPIRType &type, std::string &expr);
 

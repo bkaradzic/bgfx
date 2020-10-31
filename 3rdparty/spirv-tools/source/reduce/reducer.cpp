@@ -183,7 +183,8 @@ Reducer::ReductionResultStatus Reducer::RunPasses(
       consumer_(SPV_MSG_INFO, nullptr, {},
                 ("Trying pass " + pass->GetName() + ".").c_str());
       do {
-        auto maybe_result = pass->TryApplyReduction(*current_binary);
+        auto maybe_result =
+            pass->TryApplyReduction(*current_binary, options->target_function);
         if (maybe_result.empty()) {
           // For this round, the pass has no more opportunities (chunks) to
           // apply, so move on to the next pass.

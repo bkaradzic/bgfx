@@ -246,7 +246,9 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
         else if (tokens[2].compare("off") == 0)
             contextPragma.optimize = false;
         else {
-            error(loc, "\"on\" or \"off\" expected after '(' for 'optimize' pragma", "#pragma", "");
+            if(relaxedErrors())
+                //  If an implementation does not recognize the tokens following #pragma, then it will ignore that pragma.
+                warn(loc, "\"on\" or \"off\" expected after '(' for 'optimize' pragma", "#pragma", "");
             return;
         }
 
@@ -270,7 +272,9 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
         else if (tokens[2].compare("off") == 0)
             contextPragma.debug = false;
         else {
-            error(loc, "\"on\" or \"off\" expected after '(' for 'debug' pragma", "#pragma", "");
+            if(relaxedErrors())
+                //  If an implementation does not recognize the tokens following #pragma, then it will ignore that pragma.
+                warn(loc, "\"on\" or \"off\" expected after '(' for 'debug' pragma", "#pragma", "");
             return;
         }
 
@@ -751,8 +755,11 @@ TIntermTyped* TParseContext::handleBinaryMath(const TSourceLoc& loc, const char*
     }
 
     TIntermTyped* result = nullptr;
-    if (allowed)
+    if (allowed) {
+        if ((left->isReference() || right->isReference()))
+            requireExtensions(loc, 1, &E_GL_EXT_buffer_reference2, "buffer reference math");
         result = intermediate.addBinaryMath(op, left, right, loc);
+    }
 
     if (result == nullptr)
         binaryOpError(loc, str, left->getCompleteString(), right->getCompleteString());
@@ -1680,6 +1687,14 @@ TIntermTyped* TParseContext::addOutputArgumentConversions(const TFunction& funct
 #endif
 }
 
+TIntermTyped* TParseContext::addAssign(const TSourceLoc& loc, TOperator op, TIntermTyped* left, TIntermTyped* right)
+{
+    if ((op == EOpAddAssign || op == EOpSubAssign) && left->isReference())
+        requireExtensions(loc, 1, &E_GL_EXT_buffer_reference2, "+= and -= on a buffer reference");
+
+    return intermediate.addAssign(op, left, right, loc);
+}
+
 void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction& fnCandidate, const TIntermOperator& callNode)
 {
     const TIntermSequence* argp = &callNode.getAsAggregate()->getSequence();
@@ -2110,7 +2125,14 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             if (imageType.getQualifier().getFormat() != ElfR32i && imageType.getQualifier().getFormat() != ElfR32ui)
                 error(loc, "only supported on image with format r32i or r32ui", fnCandidate.getName().c_str(), "");
         } else {
-            if (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") != 0)
+            bool isImageAtomicOnFloatAllowed = ((fnCandidate.getName().compare(0, 14, "imageAtomicAdd") == 0) ||
+                (fnCandidate.getName().compare(0, 15, "imageAtomicLoad") == 0) ||
+                (fnCandidate.getName().compare(0, 16, "imageAtomicStore") == 0) ||
+                (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") == 0));
+            if (imageType.getSampler().type == EbtFloat && isImageAtomicOnFloatAllowed &&
+                (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") != 0)) // imageAtomicExchange doesn't require GL_EXT_shader_atomic_float
+                requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float, fnCandidate.getName().c_str());
+            if (!isImageAtomicOnFloatAllowed)
                 error(loc, "only supported on integer images", fnCandidate.getName().c_str(), "");
             else if (imageType.getQualifier().getFormat() != ElfR32f && isEsProfile())
                 error(loc, "only supported on image with format r32f", fnCandidate.getName().c_str(), "");
@@ -2139,10 +2161,18 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         if (argp->size() > 3) {
             requireExtensions(loc, 1, &E_GL_KHR_memory_scope_semantics, fnCandidate.getName().c_str());
             memorySemanticsCheck(loc, fnCandidate, callNode);
+            if ((callNode.getOp() == EOpAtomicAdd || callNode.getOp() == EOpAtomicExchange ||
+                callNode.getOp() == EOpAtomicLoad || callNode.getOp() == EOpAtomicStore) &&
+                (arg0->getType().isFloatingDomain())) {
+                requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float, fnCandidate.getName().c_str());
+            }
         } else if (arg0->getType().getBasicType() == EbtInt64 || arg0->getType().getBasicType() == EbtUint64) {
             const char* const extensions[2] = { E_GL_NV_shader_atomic_int64,
                                                 E_GL_EXT_shader_atomic_int64 };
             requireExtensions(loc, 2, extensions, fnCandidate.getName().c_str());
+        } else if ((callNode.getOp() == EOpAtomicAdd || callNode.getOp() == EOpAtomicExchange) &&
+                   (arg0->getType().isFloatingDomain())) {
+            requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float, fnCandidate.getName().c_str());
         }
         break;
     }
@@ -2772,7 +2802,10 @@ void TParseContext::reservedPpErrorCheck(const TSourceLoc& loc, const char* iden
     if (strncmp(identifier, "GL_", 3) == 0)
         ppError(loc, "names beginning with \"GL_\" can't be (un)defined:", op,  identifier);
     else if (strncmp(identifier, "defined", 8) == 0)
-        ppError(loc, "\"defined\" can't be (un)defined:", op,  identifier);
+        if (relaxedErrors())
+            ppWarn(loc, "\"defined\" is (un)defined:", op,  identifier);
+        else
+            ppError(loc, "\"defined\" can't be (un)defined:", op,  identifier);
     else if (strstr(identifier, "__") != 0) {
         if (isEsProfile() && version >= 300 &&
             (strcmp(identifier, "__LINE__") == 0 ||
@@ -2780,7 +2813,7 @@ void TParseContext::reservedPpErrorCheck(const TSourceLoc& loc, const char* iden
              strcmp(identifier, "__VERSION__") == 0))
             ppError(loc, "predefined names can't be (un)defined:", op,  identifier);
         else {
-            if (isEsProfile() && version < 300)
+            if (isEsProfile() && version < 300 && !relaxedErrors())
                 ppError(loc, "names containing consecutive underscores are reserved, and an error if version < 300:", op, identifier);
             else
                 ppWarn(loc, "names containing consecutive underscores are reserved:", op, identifier);
@@ -6535,6 +6568,12 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
     type.copyArrayInnerSizes(publicType.arraySizes);
     arrayOfArrayVersionCheck(loc, type.getArraySizes());
 
+    if (initializer) {
+        if (type.getBasicType() == EbtRayQuery) {
+            error(loc, "ray queries can only be initialized by using the rayQueryInitializeEXT intrinsic:", "=", identifier.c_str());
+        }
+    }
+
     if (type.isCoopMat()) {
         intermediate.setUseVulkanMemoryModel();
         intermediate.setUseStorageBuffer();
@@ -7290,6 +7329,8 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
         if (!node->getType().isCoopMat()) {
             if (type.getBasicType() != node->getType().getBasicType()) {
                 node = intermediate.addConversion(type.getBasicType(), node);
+                if (node == nullptr)
+                    return nullptr;
             }
             node = intermediate.setAggregateOperator(node, EOpConstructCooperativeMatrix, type, node->getLoc());
         } else {

@@ -47,31 +47,40 @@ Function* Function::Clone(IRContext* ctx) const {
   }
 
   clone->SetFunctionEnd(std::unique_ptr<Instruction>(EndInst()->Clone(ctx)));
+
+  clone->non_semantic_.reserve(non_semantic_.size());
+  for (auto& non_semantic : non_semantic_) {
+    clone->AddNonSemanticInstruction(
+        std::unique_ptr<Instruction>(non_semantic->Clone(ctx)));
+  }
   return clone;
 }
 
 void Function::ForEachInst(const std::function<void(Instruction*)>& f,
-                           bool run_on_debug_line_insts) {
+                           bool run_on_debug_line_insts,
+                           bool run_on_non_semantic_insts) {
   WhileEachInst(
       [&f](Instruction* inst) {
         f(inst);
         return true;
       },
-      run_on_debug_line_insts);
+      run_on_debug_line_insts, run_on_non_semantic_insts);
 }
 
 void Function::ForEachInst(const std::function<void(const Instruction*)>& f,
-                           bool run_on_debug_line_insts) const {
+                           bool run_on_debug_line_insts,
+                           bool run_on_non_semantic_insts) const {
   WhileEachInst(
       [&f](const Instruction* inst) {
         f(inst);
         return true;
       },
-      run_on_debug_line_insts);
+      run_on_debug_line_insts, run_on_non_semantic_insts);
 }
 
 bool Function::WhileEachInst(const std::function<bool(Instruction*)>& f,
-                             bool run_on_debug_line_insts) {
+                             bool run_on_debug_line_insts,
+                             bool run_on_non_semantic_insts) {
   if (def_inst_) {
     if (!def_inst_->WhileEachInst(f, run_on_debug_line_insts)) {
       return false;
@@ -99,13 +108,26 @@ bool Function::WhileEachInst(const std::function<bool(Instruction*)>& f,
     }
   }
 
-  if (end_inst_) return end_inst_->WhileEachInst(f, run_on_debug_line_insts);
+  if (end_inst_) {
+    if (!end_inst_->WhileEachInst(f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
+
+  if (run_on_non_semantic_insts) {
+    for (auto& non_semantic : non_semantic_) {
+      if (!non_semantic->WhileEachInst(f, run_on_debug_line_insts)) {
+        return false;
+      }
+    }
+  }
 
   return true;
 }
 
 bool Function::WhileEachInst(const std::function<bool(const Instruction*)>& f,
-                             bool run_on_debug_line_insts) const {
+                             bool run_on_debug_line_insts,
+                             bool run_on_non_semantic_insts) const {
   if (def_inst_) {
     if (!static_cast<const Instruction*>(def_inst_.get())
              ->WhileEachInst(f, run_on_debug_line_insts)) {
@@ -133,9 +155,21 @@ bool Function::WhileEachInst(const std::function<bool(const Instruction*)>& f,
     }
   }
 
-  if (end_inst_)
-    return static_cast<const Instruction*>(end_inst_.get())
-        ->WhileEachInst(f, run_on_debug_line_insts);
+  if (end_inst_) {
+    if (!static_cast<const Instruction*>(end_inst_.get())
+             ->WhileEachInst(f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
+
+  if (run_on_non_semantic_insts) {
+    for (auto& non_semantic : non_semantic_) {
+      if (!static_cast<const Instruction*>(non_semantic.get())
+               ->WhileEachInst(f, run_on_debug_line_insts)) {
+        return false;
+      }
+    }
+  }
 
   return true;
 }
@@ -191,6 +225,18 @@ BasicBlock* Function::InsertBasicBlockBefore(
   }
   assert(false && "Could not find insertion point.");
   return nullptr;
+}
+
+bool Function::HasEarlyReturn() const {
+  auto post_dominator_analysis =
+      blocks_.front()->GetLabel()->context()->GetPostDominatorAnalysis(this);
+  for (auto& block : blocks_) {
+    if (spvOpcodeIsReturn(block->tail()->opcode()) &&
+        !post_dominator_analysis->Dominates(block.get(), entry().get())) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool Function::IsRecursive() const {

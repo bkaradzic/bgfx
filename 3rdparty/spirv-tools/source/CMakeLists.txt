@@ -19,8 +19,8 @@ set(LANG_HEADER_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_lang
 
 # For now, assume the DebugInfo grammar file is in the current directory.
 # It might migrate to SPIRV-Headers.
-set(DEBUGINFO_GRAMMAR_JSON_FILE "${CMAKE_CURRENT_SOURCE_DIR}/extinst.debuginfo.grammar.json")
-set(CLDEBUGINFO100_GRAMMAR_JSON_FILE "${CMAKE_CURRENT_SOURCE_DIR}/extinst.opencl.debuginfo.100.grammar.json")
+set(DEBUGINFO_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.debuginfo.grammar.json")
+set(CLDEBUGINFO100_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.opencl.debuginfo.100.grammar.json")
 
 # macro() definitions are used in the following because we need to append .inc
 # file paths into some global lists (*_CPP_DEPENDS). And those global lists are
@@ -112,7 +112,7 @@ endmacro(spvtools_opencl_tables)
 
 macro(spvtools_vendor_tables VENDOR_TABLE SHORT_NAME OPERAND_KIND_PREFIX)
   set(INSTS_FILE "${spirv-tools_BINARY_DIR}/${VENDOR_TABLE}.insts.inc")
-  set(GRAMMAR_FILE "${spirv-tools_SOURCE_DIR}/source/extinst.${VENDOR_TABLE}.grammar.json")
+  set(GRAMMAR_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.${VENDOR_TABLE}.grammar.json")
   add_custom_command(OUTPUT ${INSTS_FILE}
     COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
       --extinst-vendor-grammar=${GRAMMAR_FILE}
@@ -148,6 +148,7 @@ spvtools_vendor_tables("spv-amd-gcn-shader" "spv-amd-gs" "")
 spvtools_vendor_tables("spv-amd-shader-ballot" "spv-amd-sb" "")
 spvtools_vendor_tables("debuginfo" "debuginfo" "")
 spvtools_vendor_tables("opencl.debuginfo.100" "cldi100" "CLDEBUG100_")
+spvtools_vendor_tables("nonsemantic.clspvreflection" "clspvreflection" "")
 spvtools_extinst_lang_headers("DebugInfo" ${DEBUGINFO_GRAMMAR_JSON_FILE})
 spvtools_extinst_lang_headers("OpenCLDebugInfo100" ${CLDEBUGINFO100_GRAMMAR_JSON_FILE})
 
@@ -345,18 +346,21 @@ set_source_files_properties(
 
 spvtools_pch(SPIRV_SOURCES pch_source)
 
-add_library(${SPIRV_TOOLS} ${SPIRV_SOURCES})
-spvtools_default_compile_options(${SPIRV_TOOLS})
-target_include_directories(${SPIRV_TOOLS}
+add_library(${SPIRV_TOOLS}-static STATIC ${SPIRV_SOURCES})
+spvtools_default_compile_options(${SPIRV_TOOLS}-static)
+target_include_directories(${SPIRV_TOOLS}-static
   PUBLIC
     $<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE ${spirv-tools_BINARY_DIR}
   PRIVATE ${SPIRV_HEADER_INCLUDE_DIR}
   )
-set_property(TARGET ${SPIRV_TOOLS} PROPERTY FOLDER "SPIRV-Tools libraries")
-spvtools_check_symbol_exports(${SPIRV_TOOLS})
-add_dependencies( ${SPIRV_TOOLS} core_tables enum_string_mapping extinst_tables )
+set_property(TARGET ${SPIRV_TOOLS}-static PROPERTY FOLDER "SPIRV-Tools libraries")
+spvtools_check_symbol_exports(${SPIRV_TOOLS}-static)
+add_dependencies(${SPIRV_TOOLS}-static core_tables enum_string_mapping extinst_tables)
+
+# The static target does not have the '-static' suffix.
+set_target_properties(${SPIRV_TOOLS}-static PROPERTIES OUTPUT_NAME "${SPIRV_TOOLS}")
 
 add_library(${SPIRV_TOOLS}-shared SHARED ${SPIRV_SOURCES})
 spvtools_default_compile_options(${SPIRV_TOOLS}-shared)
@@ -374,18 +378,26 @@ target_compile_definitions(${SPIRV_TOOLS}-shared
   PRIVATE SPIRV_TOOLS_IMPLEMENTATION
   PUBLIC SPIRV_TOOLS_SHAREDLIB
 )
-add_dependencies( ${SPIRV_TOOLS}-shared core_tables enum_string_mapping extinst_tables )
+add_dependencies(${SPIRV_TOOLS}-shared core_tables enum_string_mapping extinst_tables)
+
+# Create the "${SPIRV_TOOLS}" target as an alias to either "${SPIRV_TOOLS}-static"
+# or "${SPIRV_TOOLS}-shared" depending on the value of BUILD_SHARED_LIBS.
+if(BUILD_SHARED_LIBS)
+    add_library(${SPIRV_TOOLS} ALIAS ${SPIRV_TOOLS}-shared)
+else()
+    add_library(${SPIRV_TOOLS} ALIAS ${SPIRV_TOOLS}-static)
+endif()
 
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   find_library(LIBRT rt)
   if(LIBRT)
-    target_link_libraries(${SPIRV_TOOLS} ${LIBRT})
+    target_link_libraries(${SPIRV_TOOLS}-static ${LIBRT})
     target_link_libraries(${SPIRV_TOOLS}-shared ${LIBRT})
   endif()
 endif()
 
 if(ENABLE_SPIRV_TOOLS_INSTALL)
-  install(TARGETS ${SPIRV_TOOLS} ${SPIRV_TOOLS}-shared EXPORT ${SPIRV_TOOLS}Targets
+  install(TARGETS ${SPIRV_TOOLS}-static ${SPIRV_TOOLS}-shared EXPORT ${SPIRV_TOOLS}Targets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -402,7 +414,7 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
   install(FILES ${CMAKE_BINARY_DIR}/${SPIRV_TOOLS}Config.cmake DESTINATION ${PACKAGE_DIR})
 endif(ENABLE_SPIRV_TOOLS_INSTALL)
 
-if(MSVC)
+if(MSVC AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")))
   # Enable parallel builds across four cores for this lib
   add_definitions(/MP4)
 endif()
