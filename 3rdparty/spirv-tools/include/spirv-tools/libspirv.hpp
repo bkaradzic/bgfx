@@ -202,6 +202,11 @@ class ReducerOptions {
                                               fail_on_validation_error);
   }
 
+  // See spvReducerOptionsSetTargetFunction.
+  void set_target_function(uint32_t target_function) {
+    spvReducerOptionsSetTargetFunction(options_, target_function);
+  }
+
  private:
   spv_reducer_options options_;
 };
@@ -241,6 +246,9 @@ class FuzzerOptions {
   void enable_fuzzer_pass_validation() {
     spvFuzzerOptionsEnableFuzzerPassValidation(options_);
   }
+
+  // See spvFuzzerOptionsEnableAllPasses.
+  void enable_all_passes() { spvFuzzerOptionsEnableAllPasses(options_); }
 
  private:
   spv_fuzzer_options options_;

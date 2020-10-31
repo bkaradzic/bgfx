@@ -55,6 +55,7 @@ Supported compilers:
 Languages:
 
  * [C/C++ API documentation](https://bkaradzic.github.io/bgfx/bgfx.html)
+ * [Beef API bindings](https://github.com/bkaradzic/bgfx/tree/master/bindings/bf)
  * [C# language API bindings #1](https://github.com/bkaradzic/bgfx/tree/master/bindings/cs)
  * [C#/VB/F# language API bindings #2](https://github.com/MikePopoloski/SharpBgfx)
  * [D language API bindings](https://github.com/GoaLitiuM/bindbc-bgfx)
@@ -63,11 +64,11 @@ Languages:
  * [Lightweight Java Game Library 3 bindings](https://github.com/LWJGL/lwjgl3)
  * [Lua language API bindings](https://github.com/cloudwu/lua-bgfx)
  * [Nim language API bindings](https://github.com/Halsys/nim-bgfx)
+ * [Pascal language API bindings](https://github.com/Akira13641/PasBGFX)
  * [Python language API bindings #1](https://github.com/fbertola/bgfx-python#-----bgfx-python--)
  * [Python language API bindings #2](https://github.com/jnadro/pybgfx#pybgfx)
  * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
- * [Pascal language API bindings](https://github.com/Akira13641/PasBGFX)
 
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 ----------------------------------------------------
@@ -402,6 +403,15 @@ Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with nativ
 [FFNx](https://github.com/julianxhokaxhiu/FFNx#ffnx)
 
 ![FFVIII](https://raw.githubusercontent.com/julianxhokaxhiu/FFNx/master/.screens/ff8.png)
+
+
+## Shadow Gangs
+
+Shadow Gangs is an arcade style ninja action game.
+
+https://www.microsoft.com/en-gb/p/shadow-gangs/9n6hkcr65qdq
+
+![Shadow Gangs](https://user-images.githubusercontent.com/814772/94508248-64ba1080-01c6-11eb-800f-47dc374ef054.jpeg)
 
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)

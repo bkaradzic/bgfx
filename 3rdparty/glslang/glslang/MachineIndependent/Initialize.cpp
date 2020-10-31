@@ -147,6 +147,10 @@ EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECo
 #ifdef GLSLANG_WEB
     const Versioning* Es300Desktop130 = nullptr;
     const Versioning* Es310Desktop420 = nullptr;
+#elif defined(GLSLANG_ANGLE)
+    const Versioning* Es300Desktop130 = nullptr;
+    const Versioning* Es310Desktop420 = nullptr;
+    const Versioning* Es310Desktop450 = nullptr;
 #else
     const Versioning Es300Desktop130Version[] = { { EEsProfile,      0, 300, 0, nullptr },
                                                   { EDesktopProfile, 0, 130, 0, nullptr },
@@ -415,7 +419,7 @@ void AddTabledBuiltin(TString& decls, const BuiltInFunction& function)
 // See if the tabled versioning information allows the current version.
 bool ValidVersion(const BuiltInFunction& function, int version, EProfile profile, const SpvVersion& /* spVersion */)
 {
-#ifdef GLSLANG_WEB
+#if defined(GLSLANG_WEB) || defined(GLSLANG_ANGLE)
     // all entries in table are valid
     return true;
 #endif
@@ -499,7 +503,7 @@ TBuiltIns::TBuiltIns()
     prefixes[EbtFloat] =  "";
     prefixes[EbtInt]   = "i";
     prefixes[EbtUint]  = "u";
-#ifndef GLSLANG_WEB
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
     prefixes[EbtFloat16] = "f16";
     prefixes[EbtInt8]  = "i8";
     prefixes[EbtUint8] = "u8";
@@ -516,7 +520,9 @@ TBuiltIns::TBuiltIns()
     dimMap[Esd3D] = 3;
     dimMap[EsdCube] = 3;
 #ifndef GLSLANG_WEB
+#ifndef GLSLANG_ANGLE
     dimMap[Esd1D] = 1;
+#endif
     dimMap[EsdRect] = 2;
     dimMap[EsdBuffer] = 1;
     dimMap[EsdSubpass] = 2;  // potentially unused for now
@@ -541,6 +547,9 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 #ifdef GLSLANG_WEB
     version = 310;
     profile = EEsProfile;
+#elif defined(GLSLANG_ANGLE)
+    version = 450;
+    profile = ECoreProfile;
 #endif
     addTabledBuiltins(version, profile, spvVersion);
 
@@ -586,6 +595,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec4  fwidthCoarse(vec4  p);"
     );
 
+#ifndef GLSLANG_ANGLE
     TString derivativesAndControl16bits (
         "float16_t dFdx(float16_t);"
         "f16vec2   dFdx(f16vec2);"
@@ -1173,6 +1183,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n"
         );
     }
+#endif // !GLSLANG_ANGLE
 
     if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 430)) {
@@ -1210,6 +1221,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 440) {
         commonBuiltins.append(
             "uint64_t atomicMin(coherent volatile inout uint64_t, uint64_t);"
@@ -1241,11 +1253,19 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             " int64_t atomicAdd(coherent volatile inout  int64_t,  int64_t);"
             "uint64_t atomicAdd(coherent volatile inout uint64_t, uint64_t, int, int, int);"
             " int64_t atomicAdd(coherent volatile inout  int64_t,  int64_t, int, int, int);"
+            "   float atomicAdd(coherent volatile inout float, float);"
+            "   float atomicAdd(coherent volatile inout float, float, int, int, int);"
+            "  double atomicAdd(coherent volatile inout double, double);"
+            "  double atomicAdd(coherent volatile inout double, double, int, int, int);"
 
             "uint64_t atomicExchange(coherent volatile inout uint64_t, uint64_t);"
             " int64_t atomicExchange(coherent volatile inout  int64_t,  int64_t);"
             "uint64_t atomicExchange(coherent volatile inout uint64_t, uint64_t, int, int, int);"
             " int64_t atomicExchange(coherent volatile inout  int64_t,  int64_t, int, int, int);"
+            "   float atomicExchange(coherent volatile inout float, float);"
+            "   float atomicExchange(coherent volatile inout float, float, int, int, int);"
+            "  double atomicExchange(coherent volatile inout double, double);"
+            "  double atomicExchange(coherent volatile inout double, double, int, int, int);"
 
             "uint64_t atomicCompSwap(coherent volatile inout uint64_t, uint64_t, uint64_t);"
             " int64_t atomicCompSwap(coherent volatile inout  int64_t,  int64_t,  int64_t);"
@@ -1254,12 +1274,17 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "uint64_t atomicLoad(coherent volatile in uint64_t, int, int, int);"
             " int64_t atomicLoad(coherent volatile in  int64_t, int, int, int);"
+            "   float atomicLoad(coherent volatile in float, int, int, int);"
+            "  double atomicLoad(coherent volatile in double, int, int, int);"
 
             "void atomicStore(coherent volatile out uint64_t, uint64_t, int, int, int);"
             "void atomicStore(coherent volatile out  int64_t,  int64_t, int, int, int);"
+            "void atomicStore(coherent volatile out float, float, int, int, int);"
+            "void atomicStore(coherent volatile out double, double, int, int, int);"
             "\n");
     }
-#endif
+#endif // !GLSLANG_ANGLE
+#endif // !GLSLANG_WEB
 
     if ((profile == EEsProfile && version >= 300) ||
         (profile != EEsProfile && version >= 150)) { // GL_ARB_shader_bit_encoding
@@ -1299,6 +1324,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 150) {  // ARB_gpu_shader_fp64
             commonBuiltins.append(
                 "double fma(double, double, double);"
@@ -1307,6 +1333,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "dvec4  fma(dvec4,  dvec4,  dvec4 );"
                 "\n");
     }
+#endif
 
     if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 400)) {
@@ -1324,6 +1351,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 150) { // ARB_gpu_shader_fp64
         commonBuiltins.append(
             "double frexp(double, out int);"
@@ -1341,6 +1369,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
     }
+#endif
 #endif
 
     if ((profile == EEsProfile && version >= 300) ||
@@ -1450,6 +1479,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
 #ifndef GLSLANG_WEB
+#ifndef GLSLANG_ANGLE
     //
     // Original-style texture functions existing in all stages.
     // (Per-stage functions below.)
@@ -1598,6 +1628,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "\n");
         }
     }
+#endif // !GLSLANG_ANGLE
 
     // Bitfield
     if ((profile == EEsProfile && version >= 310) ||
@@ -1740,6 +1771,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     // GL_ARB_shader_ballot
     if (profile != EEsProfile && version >= 450) {
         commonBuiltins.append(
@@ -3060,6 +3092,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "bool textureFootprintGradClampNV(sampler2D, vec2, vec2, vec2, float, int, bool, out gl_TextureFootprint2DNV);"
             "\n");
     }
+#endif // !GLSLANG_ANGLE
 
     if ((profile == EEsProfile && version >= 300 && version < 310) ||
         (profile != EEsProfile && version >= 150 && version < 450)) { // GL_EXT_shader_integer_mix
@@ -3079,6 +3112,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                               "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     // GL_AMD_gpu_shader_half_float/Explicit types
     if (profile != EEsProfile && version >= 450) {
         commonBuiltins.append(
@@ -3929,28 +3963,30 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f64vec3   log2(f64vec3);"
             "f64vec4   log2(f64vec4);"
             "\n");
-        }
-        if (profile != EEsProfile && version >= 450) {
-            stageBuiltins[EShLangFragment].append(derivativesAndControl64bits);
-            stageBuiltins[EShLangFragment].append(
-                "float64_t interpolateAtCentroid(float64_t);"
-                "f64vec2   interpolateAtCentroid(f64vec2);"
-                "f64vec3   interpolateAtCentroid(f64vec3);"
-                "f64vec4   interpolateAtCentroid(f64vec4);"
+    }
 
-                "float64_t interpolateAtSample(float64_t, int);"
-                "f64vec2   interpolateAtSample(f64vec2,   int);"
-                "f64vec3   interpolateAtSample(f64vec3,   int);"
-                "f64vec4   interpolateAtSample(f64vec4,   int);"
+    if (profile != EEsProfile && version >= 450) {
+        stageBuiltins[EShLangFragment].append(derivativesAndControl64bits);
+        stageBuiltins[EShLangFragment].append(
+            "float64_t interpolateAtCentroid(float64_t);"
+            "f64vec2   interpolateAtCentroid(f64vec2);"
+            "f64vec3   interpolateAtCentroid(f64vec3);"
+            "f64vec4   interpolateAtCentroid(f64vec4);"
 
-                "float64_t interpolateAtOffset(float64_t, f64vec2);"
-                "f64vec2   interpolateAtOffset(f64vec2,   f64vec2);"
-                "f64vec3   interpolateAtOffset(f64vec3,   f64vec2);"
-                "f64vec4   interpolateAtOffset(f64vec4,   f64vec2);"
+            "float64_t interpolateAtSample(float64_t, int);"
+            "f64vec2   interpolateAtSample(f64vec2,   int);"
+            "f64vec3   interpolateAtSample(f64vec3,   int);"
+            "f64vec4   interpolateAtSample(f64vec4,   int);"
 
-                "\n");
+            "float64_t interpolateAtOffset(float64_t, f64vec2);"
+            "f64vec2   interpolateAtOffset(f64vec2,   f64vec2);"
+            "f64vec3   interpolateAtOffset(f64vec3,   f64vec2);"
+            "f64vec4   interpolateAtOffset(f64vec4,   f64vec2);"
+
+            "\n");
 
     }
+#endif // !GLSLANG_ANGLE
 
     //============================================================================
     //
@@ -3966,6 +4002,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     if (spvVersion.vulkan == 0 && IncludeLegacy(version, profile, spvVersion))
         stageBuiltins[EShLangVertex].append("vec4 ftransform();");
 
+#ifndef GLSLANG_ANGLE
     //
     // Original-style texture Functions with lod.
     //
@@ -4025,6 +4062,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "\n");
         }
     }
+#endif // !GLSLANG_ANGLE
 
     if ((profile != EEsProfile && version >= 150) ||
         (profile == EEsProfile && version >= 310)) {
@@ -4045,7 +4083,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void EndPrimitive();"
             "\n");
     }
-#endif
+#endif // !GLSLANG_WEB
 
     //============================================================================
     //
@@ -4105,6 +4143,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
     commonBuiltins.append("void debugPrintfEXT();\n");
 
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 450) {
         // coopMatStoreNV perhaps ought to have "out" on the buf parameter, but
         // adding it introduces undesirable tempArgs on the stack. What we want
@@ -4228,6 +4267,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
     }
+#endif // !GLSLANG_ANGLE
 
     // GL_ARB_derivative_control
     if (profile != EEsProfile && version >= 400) {
@@ -4265,6 +4305,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "bool helperInvocationEXT();"
         "\n");
 
+#ifndef GLSLANG_ANGLE
     // GL_AMD_shader_explicit_vertex_parameter
     if (profile != EEsProfile && version >= 450) {
         stageBuiltins[EShLangFragment].append(
@@ -4399,12 +4440,14 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void executeCallableEXT(uint, int);"
             "\n");
     }
+#endif // !GLSLANG_ANGLE
 
     //E_SPV_NV_compute_shader_derivatives
     if ((profile == EEsProfile && version >= 320) || (profile != EEsProfile && version >= 450)) {
         stageBuiltins[EShLangCompute].append(derivativeControls);
         stageBuiltins[EShLangCompute].append("\n");
     }
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 450) {
         stageBuiltins[EShLangCompute].append(derivativesAndControl16bits);
         stageBuiltins[EShLangCompute].append(derivativesAndControl64bits);
@@ -4417,7 +4460,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void writePackedPrimitiveIndices4x8NV(uint, uint);"
             "\n");
     }
-#endif
+#endif // !GLSLANG_ANGLE
+#endif // !GLSLANG_WEB
 
     //============================================================================
     //
@@ -4454,7 +4498,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-#ifndef GLSLANG_WEB
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
     if (spvVersion.spv == 0 && IncludeLegacy(version, profile, spvVersion)) {
         //
         // Matrix state. p. 31, 32, 37, 39, 40.
@@ -4572,7 +4616,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
     }
-#endif
+#endif // !GLSLANG_WEB && !GLSLANG_ANGLE
 
     //============================================================================
     //
@@ -4603,6 +4647,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
 #ifndef GLSLANG_WEB
+#ifndef GLSLANG_ANGLE
     //============================================================================
     //
     // Define the interface to the mesh/task shader.
@@ -4690,6 +4735,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "\n");
         }
     }
+#endif // !GLSLANG_ANGLE
 
     //============================================================================
     //
@@ -5360,6 +5406,15 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
 #ifndef GLSLANG_WEB
 
+    if ((profile != EEsProfile && version >= 140) ||
+        (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangFragment].append(
+            "flat in highp int gl_DeviceIndex;"     // GL_EXT_device_group
+            "flat in highp int gl_ViewIndex;"       // GL_EXT_multiview
+            "\n");
+    }
+
+#ifndef GLSLANG_ANGLE
     // GL_ARB_shader_ballot
     if (profile != EEsProfile && version >= 450) {
         const char* ballotDecls =
@@ -5388,14 +5443,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangFragment]      .append(fragmentBallotDecls);
         stageBuiltins[EShLangMeshNV]        .append(ballotDecls);
         stageBuiltins[EShLangTaskNV]        .append(ballotDecls);
-    }
-
-    if ((profile != EEsProfile && version >= 140) ||
-        (profile == EEsProfile && version >= 310)) {
-        stageBuiltins[EShLangFragment].append(
-            "flat in highp int gl_DeviceIndex;"     // GL_EXT_device_group
-            "flat in highp int gl_ViewIndex;"       // GL_EXT_multiview
-            "\n");
     }
 
     // GL_KHR_shader_subgroup
@@ -5601,6 +5648,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangCallable].append(callableDecls);
 
     }
+
     if ((profile != EEsProfile && version >= 140)) {
         const char *deviceIndex =
             "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
@@ -5611,12 +5659,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangAnyHit].append(deviceIndex);
         stageBuiltins[EShLangClosestHit].append(deviceIndex);
         stageBuiltins[EShLangMiss].append(deviceIndex);
-    }
-
-    if (version >= 300 /* both ES and non-ES */) {
-        stageBuiltins[EShLangFragment].append(
-            "flat in highp uint gl_ViewID_OVR;"     // GL_OVR_multiview, GL_OVR_multiview2
-            "\n");
     }
 
     if ((profile != EEsProfile && version >= 420) ||
@@ -5642,7 +5684,15 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append("const int gl_StorageSemanticsImage    = 0x800;\n");
         commonBuiltins.append("const int gl_StorageSemanticsOutput   = 0x1000;\n");
     }
-#endif
+
+#endif // !GLSLANG_ANGLE
+
+    if (version >= 300 /* both ES and non-ES */) {
+        stageBuiltins[EShLangFragment].append(
+            "flat in highp uint gl_ViewID_OVR;"     // GL_OVR_multiview, GL_OVR_multiview2
+            "\n");
+    }
+#endif // !GLSLANG_WEB
 
     // printf("%s\n", commonBuiltins.c_str());
     // printf("%s\n", stageBuiltins[EShLangFragment].c_str());
@@ -5660,13 +5710,16 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
     //
 
     // enumerate all the types
+    const TBasicType bTypes[] = { EbtFloat, EbtInt, EbtUint,
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+        EbtFloat16
+#endif
+    };
 #ifdef GLSLANG_WEB
-    const TBasicType bTypes[] = { EbtFloat, EbtInt, EbtUint };
     bool skipBuffer = true;
     bool skipCubeArrayed = true;
     const int image = 0;
 #else
-    const TBasicType bTypes[] = { EbtFloat, EbtInt, EbtUint, EbtFloat16 };
     bool skipBuffer = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 140);
     bool skipCubeArrayed = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 130);
     for (int image = 0; image <= 1; ++image) // loop over "bool" image vs sampler
@@ -5692,7 +5745,11 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
 #ifdef GLSLANG_WEB
                     for (int dim = Esd2D; dim <= EsdCube; ++dim) { // 2D, 3D, and Cube
 #else
+#if defined(GLSLANG_ANGLE)
+                    for (int dim = Esd2D; dim < EsdNumDims; ++dim) { // 2D, ..., buffer, subpass
+#else
                     for (int dim = Esd1D; dim < EsdNumDims; ++dim) { // 1D, ..., buffer, subpass
+#endif
                         if (dim == EsdSubpass && spvVersion.vulkan == 0)
                             continue;
                         if (dim == EsdSubpass && (image || shadow || arrayed))
@@ -6013,11 +6070,38 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
             // not int or uint
             // GL_ARB_ES3_1_compatibility
             // TODO: spec issue: are there restrictions on the kind of layout() that can be used?  what about dropping memory qualifiers?
-            if ((profile != EEsProfile && version >= 450) ||
-                (profile == EEsProfile && version >= 310)) {
+            if (profile == EEsProfile && version >= 310) {
                 commonBuiltins.append("float imageAtomicExchange(volatile coherent ");
                 commonBuiltins.append(imageParams);
                 commonBuiltins.append(", float);\n");
+            }
+            if (profile != EEsProfile && version >= 450) {
+                commonBuiltins.append("float imageAtomicAdd(volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float);\n");
+
+                commonBuiltins.append("float imageAtomicAdd(volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float");
+                commonBuiltins.append(", int, int, int);\n");
+
+                commonBuiltins.append("float imageAtomicExchange(volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float);\n");
+
+                commonBuiltins.append("float imageAtomicExchange(volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float");
+                commonBuiltins.append(", int, int, int);\n");
+
+                commonBuiltins.append("float imageAtomicLoad(readonly volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", int, int, int);\n");
+
+                commonBuiltins.append("void imageAtomicStore(writeonly volatile coherent ");
+                commonBuiltins.append(imageParams);
+                commonBuiltins.append(", float");
+                commonBuiltins.append(", int, int, int);\n");
             }
         }
     }
@@ -6086,6 +6170,9 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
 #ifdef GLSLANG_WEB
     profile = EEsProfile;
     version = 310;
+#elif defined(GLSLANG_ANGLE)
+    profile = ECoreProfile;
+    version = 450;
 #endif
 
     //
@@ -6162,7 +6249,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                     continue;
 
                                 // loop over 16-bit floating-point texel addressing
-#ifdef GLSLANG_WEB
+#if defined(GLSLANG_WEB) || defined(GLSLANG_ANGLE)
                                 const int f16TexAddr = 0;
 #else
                                 for (int f16TexAddr = 0; f16TexAddr <= 1; ++f16TexAddr)
@@ -6175,7 +6262,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                         totalDims--;
                                     }
                                     // loop over "bool" lod clamp
-#ifdef GLSLANG_WEB
+#if defined(GLSLANG_WEB) || defined(GLSLANG_ANGLE)
                                     const int lodClamp = 0;
 #else
                                     for (int lodClamp = 0; lodClamp <= 1 ;++lodClamp)
@@ -6187,7 +6274,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                             continue;
 
                                         // loop over "bool" sparse or not
-#ifdef GLSLANG_WEB
+#if defined(GLSLANG_WEB) || defined(GLSLANG_ANGLE)
                                         const int sparse = 0;
 #else
                                         for (int sparse = 0; sparse <= 1; ++sparse)
@@ -6242,7 +6329,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                                 s.append("Offset");
                                             if (lodClamp)
                                                 s.append("Clamp");
-                                            if (lodClamp || sparse)
+                                            if (lodClamp != 0 || sparse)
                                                 s.append("ARB");
                                             s.append("(");
 
@@ -6342,7 +6429,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                             s.append(");\n");
 
                                             // Add to the per-language set of built-ins
-                                            if (bias || lodClamp) {
+                                            if (bias || lodClamp != 0) {
                                                 stageBuiltins[EShLangFragment].append(s);
                                                 stageBuiltins[EShLangCompute].append(s);
                                             } else
@@ -6371,6 +6458,9 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
 #ifdef GLSLANG_WEB
     profile = EEsProfile;
     version = 310;
+#elif defined(GLSLANG_ANGLE)
+    profile = ECoreProfile;
+    version = 450;
 #endif
 
     switch (sampler.dim) {
@@ -6614,6 +6704,9 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
 #ifdef GLSLANG_WEB
     version = 310;
     profile = EEsProfile;
+#elif defined(GLSLANG_ANGLE)
+    version = 450;
+    profile = ECoreProfile;
 #endif
 
     //
@@ -7042,6 +7135,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
         s.append("\n");
     }
 
+#ifndef GLSLANG_ANGLE
     // atomic counters (some in compute below)
     if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 420)) {
@@ -7078,6 +7172,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
 
         s.append("\n");
     }
+#endif // !GLSLANG_ANGLE
 
     // GL_ARB_cull_distance
     if (profile != EEsProfile && version >= 450) {
@@ -7094,6 +7189,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
         s.append(builtInConstant);
     }
 
+#ifndef GLSLANG_ANGLE
     // SPV_NV_mesh_shader
     if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         snprintf(builtInConstant, maxSize, "const int gl_MaxMeshOutputVerticesNV = %d;", resources.maxMeshOutputVerticesNV);
@@ -7116,6 +7212,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
 
         s.append("\n");
     }
+#endif
 #endif
 
     s.append("\n");
@@ -7200,6 +7297,9 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 #ifdef GLSLANG_WEB
     version = 310;
     profile = EEsProfile;
+#elif defined(GLSLANG_ANGLE)
+    version = 450;
+    profile = ECoreProfile;
 #endif
 
     //
@@ -7389,7 +7489,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
     case EShLangTessEvaluation:
     case EShLangGeometry:
-#endif
+#endif // !GLSLANG_WEB
         SpecialQualifier("gl_Position",   EvqPosition,   EbvPosition,   symbolTable);
         SpecialQualifier("gl_PointSize",  EvqPointSize,  EbvPointSize,  symbolTable);
 
@@ -7550,7 +7650,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
             BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
-#endif
+#endif // !GLSLANG_WEB
         break;
 
     case EShLangFragment:
@@ -8056,7 +8156,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         symbolTable.setFunctionExtensions("helperInvocationEXT",            1, &E_GL_EXT_demote_to_helper_invocation);
-#endif
+#endif // !GLSLANG_WEB
         break;
 
     case EShLangCompute:
@@ -8188,10 +8288,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("dFdyCoarse",             1, &E_GL_NV_compute_shader_derivatives);
             symbolTable.setFunctionExtensions("fwidthCoarse",           1, &E_GL_NV_compute_shader_derivatives);
         }
-#endif
+#endif // !GLSLANG_WEB
         break;
 
-#ifndef GLSLANG_WEB
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
     case EShLangRayGen:
     case EShLangIntersect:
     case EShLangAnyHit:
@@ -9094,7 +9194,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     default:
         assert(false && "Language not supported");
     }
-#endif
+#endif // !GLSLANG_WEB
 }
 
 //
@@ -9109,6 +9209,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources)
 {
 #ifndef GLSLANG_WEB
+#if defined(GLSLANG_ANGLE)
+    profile = ECoreProfile;
+    version = 450;
+#endif
     if (profile != EEsProfile && version >= 430 && version < 440) {
         symbolTable.setVariableExtensions("gl_MaxTransformFeedbackBuffers", 1, &E_GL_ARB_enhanced_layouts);
         symbolTable.setVariableExtensions("gl_MaxTransformFeedbackInterleavedComponents", 1, &E_GL_ARB_enhanced_layouts);

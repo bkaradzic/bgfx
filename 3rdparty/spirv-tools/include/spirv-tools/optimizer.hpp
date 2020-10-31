@@ -764,7 +764,7 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // initialization checking, both of which require input buffer support.
 Optimizer::PassToken CreateInstBindlessCheckPass(
     uint32_t desc_set, uint32_t shader_id, bool input_length_enable = false,
-    bool input_init_enable = false);
+    bool input_init_enable = false, bool input_buff_oob_enable = false);
 
 // Create a pass to instrument physical buffer address checking
 // This pass instruments all physical buffer address references to check that
@@ -876,8 +876,10 @@ Optimizer::PassToken CreateGraphicsRobustAccessPass();
 // for the first index.
 Optimizer::PassToken CreateDescriptorScalarReplacementPass();
 
-// Create a pass to replace all OpKill instruction with a function call to a
-// function that has a single OpKill.  This allows more code to be inlined.
+// Create a pass to replace each OpKill instruction with a function call to a
+// function that has a single OpKill.  Also replace each OpTerminateInvocation
+// instruction  with a function call to a function that has a single
+// OpTerminateInvocation.  This allows more code to be inlined.
 Optimizer::PassToken CreateWrapOpKillPass();
 
 // Replaces the extensions VK_AMD_shader_ballot,VK_AMD_gcn_shader, and

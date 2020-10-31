@@ -108,6 +108,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_fully_cove
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_invocation_densitySPV_NV_shading_rate[] = {spvtools::Extension::kSPV_EXT_fragment_invocation_density, spvtools::Extension::kSPV_NV_shading_rate};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_shader_interlock[] = {spvtools::Extension::kSPV_EXT_fragment_shader_interlock};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer[] = {spvtools::Extension::kSPV_EXT_physical_storage_buffer, spvtools::Extension::kSPV_KHR_physical_storage_buffer};
+static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_atomic_float_add[] = {spvtools::Extension::kSPV_EXT_shader_atomic_float_add};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_stencil_export[] = {spvtools::Extension::kSPV_EXT_shader_stencil_export};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_viewport_index_layerSPV_NV_viewport_array2[] = {spvtools::Extension::kSPV_EXT_shader_viewport_index_layer, spvtools::Extension::kSPV_NV_viewport_array2};
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
@@ -962,7 +963,9 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"KernelAttributesINTEL", 5892, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_kernel_attributes, {}, 0xffffffffu, 0xffffffffu},
   {"FPGAKernelAttributesINTEL", 5897, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_kernel_attributes, {}, 0xffffffffu, 0xffffffffu},
   {"BlockingPipesINTEL", 5945, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_blocking_pipes, {}, 0xffffffffu, 0xffffffffu},
-  {"FPGARegINTEL", 5948, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_reg, {}, 0xffffffffu, 0xffffffffu}
+  {"FPGARegINTEL", 5948, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_reg, {}, 0xffffffffu, 0xffffffffu},
+  {"AtomicFloat32AddEXT", 6033, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float_add, {}, 0xffffffffu, 0xffffffffu},
+  {"AtomicFloat64AddEXT", 6034, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float_add, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_RayQueryIntersectionEntries[] = {

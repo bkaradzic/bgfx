@@ -513,7 +513,7 @@ namespace bgfx { namespace hlsl
 			hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
 			if (SUCCEEDED(hr) )
 			{
-				if (D3D_SIT_SAMPLER == bindDesc.Type)
+				if (D3D_SIT_SAMPLER == bindDesc.Type || D3D_SIT_TEXTURE == bindDesc.Type)
 				{
 					BX_TRACE("\t%s, %d, %d, %d"
 						, bindDesc.Name
@@ -523,7 +523,10 @@ namespace bgfx { namespace hlsl
 						);
 
 					bx::StringView end = bx::strFind(bindDesc.Name, "Sampler");
-					if (!end.isEmpty() )
+					if (end.isEmpty())
+						end = bx::strFind(bindDesc.Name, "Texture");
+
+					if (!end.isEmpty())
 					{
 						Uniform un;
 						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );
@@ -533,6 +536,10 @@ namespace bgfx { namespace hlsl
 						un.regCount = uint16_t(bindDesc.BindCount);
 						_uniforms.push_back(un);
 					}
+				}
+				else
+				{
+					BX_TRACE("\t%s, unknown bind data", bindDesc.Name);
 				}
 			}
 		}
@@ -676,8 +683,6 @@ namespace bgfx { namespace hlsl
 			if (_firstPass
 			&&  unusedUniforms.size() > 0)
 			{
-				const size_t strLength = bx::strLen("uniform");
-
 				// first time through, we just find unused uniforms and get rid of them
 				std::string output;
 				bx::LineReader reader(_code.c_str() );

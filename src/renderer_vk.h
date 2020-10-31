@@ -42,6 +42,7 @@
 			VK_IMPORT_FUNC(false, vkGetDeviceProcAddr);                    \
 			VK_IMPORT_FUNC(false, vkEnumerateInstanceExtensionProperties); \
 			VK_IMPORT_FUNC(false, vkEnumerateInstanceLayerProperties);     \
+			VK_IMPORT_FUNC(false, vkEnumerateInstanceVersion);             \
 
 #define VK_IMPORT_INSTANCE_ANDROID \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateAndroidSurfaceKHR);
@@ -108,6 +109,7 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkFreeCommandBuffers);            \
 			VK_IMPORT_DEVICE_FUNC(false, vkGetBufferMemoryRequirements);   \
 			VK_IMPORT_DEVICE_FUNC(false, vkGetImageMemoryRequirements);    \
+			VK_IMPORT_DEVICE_FUNC(false, vkGetImageSubresourceLayout);     \
 			VK_IMPORT_DEVICE_FUNC(false, vkAllocateMemory);                \
 			VK_IMPORT_DEVICE_FUNC(false, vkFreeMemory);                    \
 			VK_IMPORT_DEVICE_FUNC(false, vkCreateImage);                   \
@@ -171,6 +173,7 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdResolveImage);               \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBuffer);                 \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBufferToImage);          \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImage);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBlitImage);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkMapMemory);                     \
 			VK_IMPORT_DEVICE_FUNC(false, vkUnmapMemory);                   \
@@ -228,44 +231,45 @@
 #	define VK_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
 
+#if BGFX_CONFIG_DEBUG_ANNOTATION
+#	define BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(_name, _abgr)         \
+		BX_MACRO_BLOCK_BEGIN                                     \
+			VkDebugUtilsLabelEXT dul;                            \
+			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT; \
+			dul.pNext = NULL;                                    \
+			dul.pLabelName = _name;                              \
+			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;      \
+			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;      \
+			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;      \
+			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;      \
+			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul); \
+		BX_MACRO_BLOCK_END
+
+#	define BGFX_VK_END_DEBUG_UTILS_LABEL()               \
+		BX_MACRO_BLOCK_BEGIN                             \
+			vkCmdEndDebugUtilsLabelEXT(m_commandBuffer); \
+		BX_MACRO_BLOCK_END
+#else
+#	define BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(_view, _abgr) BX_UNUSED(_view, _abgr)
+#	define BGFX_VK_END_DEBUG_UTILS_LABEL() BX_NOOP()
+#endif // BGFX_CONFIG_DEBUG_ANNOTATION
+
 #define BGFX_VK_PROFILER_BEGIN(_view, _abgr)                      \
 	BX_MACRO_BLOCK_BEGIN                                          \
-		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
-		{                                                         \
-			VkDebugUtilsLabelEXT dul;                             \
-			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
-			dul.pNext = NULL;                                     \
-			dul.pLabelName = s_viewName[view];                    \
-			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;       \
-			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;       \
-			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;       \
-			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;       \
-			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);  \
-		}                                                         \
+		BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(s_viewName[view], _abgr); \
 		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);             \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr)              \
-	BX_MACRO_BLOCK_BEGIN                                          \
-		if (s_extension[Extension::EXT_debug_utils].m_supported ) \
-		{                                                         \
-			VkDebugUtilsLabelEXT dul;                             \
-			dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
-			dul.pNext = NULL;                                     \
-			dul.pLabelName = "" _name;                            \
-			dul.color[0] = ((_abgr >> 24) & 0xff) / 255.0f;       \
-			dul.color[1] = ((_abgr >> 16) & 0xff) / 255.0f;       \
-			dul.color[2] = ((_abgr >> 8)  & 0xff) / 255.0f;       \
-			dul.color[3] = ((_abgr >> 0)  & 0xff) / 255.0f;       \
-			vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);  \
-		}                                                         \
-		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);             \
+#define BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr)   \
+	BX_MACRO_BLOCK_BEGIN                               \
+		BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(_name, _abgr); \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);  \
 	BX_MACRO_BLOCK_END
 
-#define BGFX_VK_PROFILER_END()                       \
-	BX_MACRO_BLOCK_BEGIN                             \
-		BGFX_PROFILER_END();                         \
-		vkCmdEndDebugUtilsLabelEXT(m_commandBuffer); \
+#define BGFX_VK_PROFILER_END()           \
+	BX_MACRO_BLOCK_BEGIN                 \
+		BGFX_PROFILER_END();             \
+		BGFX_VK_END_DEBUG_UTILS_LABEL(); \
 	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace vk
@@ -422,6 +426,12 @@ VK_DESTROY
 
 	typedef BufferVK IndexBufferVK;
 
+	struct MsaaSamplerVK
+	{
+		uint16_t Count;
+		VkSampleCountFlagBits Sample;
+	};
+
 	struct VertexBufferVK : public BufferVK
 	{
 		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags);
@@ -511,10 +521,72 @@ VK_DESTROY
 		VkPipelineLayout m_pipelineLayout;
 	};
 
+	struct TimerQueryVK
+	{
+		TimerQueryVK()
+			: m_control(BX_COUNTOF(m_query) )
+		{
+		}
+
+		void init()
+		{
+		}
+
+		void shutdown()
+		{
+		}
+
+		uint32_t begin(uint32_t _resultIdx)
+		{
+			BX_UNUSED(_resultIdx);
+			return 0;
+		}
+
+		void end(uint32_t _idx)
+		{
+			BX_UNUSED(_idx);
+		}
+
+		bool update()
+		{
+			return false;
+		}
+
+		struct Result
+		{
+			void reset()
+			{
+				m_begin   = 0;
+				m_end     = 0;
+				m_pending = 0;
+			}
+
+			uint64_t m_begin;
+			uint64_t m_end;
+			uint32_t m_pending;
+		};
+
+		struct Query
+		{
+			uint32_t m_begin;
+			uint32_t m_end;
+			uint32_t m_resultIdx;
+			bool     m_ready;
+		};
+
+		uint64_t m_frequency;
+
+		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
+
+		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
+		bx::RingBufferControl m_control;
+	};
+
 	struct TextureVK
 	{
 		TextureVK()
 			: m_directAccessPtr(NULL)
+			, m_sampler({ 1, VK_SAMPLE_COUNT_1_BIT })
 			, m_format(VK_FORMAT_UNDEFINED)
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem(VK_NULL_HANDLE)
@@ -522,12 +594,16 @@ VK_DESTROY
 			, m_textureImageDepthView(VK_NULL_HANDLE)
 			, m_textureImageStorageView(VK_NULL_HANDLE)
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+			, m_singleMsaaImage(VK_NULL_HANDLE)
+			, m_singleMsaaDeviceMem(VK_NULL_HANDLE)
+			, m_singleMsaaImageView(VK_NULL_HANDLE)
 		{
 		}
 
 		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 		void destroy();
 		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
+		void resolve(uint8_t _resolve);
 
 		void copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy);
 		void setImageMemoryBarrier(VkCommandBuffer commandBuffer, VkImageLayout newImageLayout);
@@ -543,6 +619,8 @@ VK_DESTROY
 		uint8_t  m_textureFormat;
 		uint8_t  m_numMips;
 
+		MsaaSamplerVK m_sampler;
+
 		VkImageViewType m_type;
 		VkFormat m_format;
 		VkComponentMapping m_components;
@@ -550,10 +628,14 @@ VK_DESTROY
 
 		VkImage m_textureImage;
 		VkDeviceMemory m_textureDeviceMem;
-		VkImageView m_textureImageView;
-		VkImageView m_textureImageDepthView;
-		VkImageView m_textureImageStorageView;
-		VkImageLayout m_currentImageLayout;
+		VkImageView    m_textureImageView;
+		VkImageView    m_textureImageDepthView;
+		VkImageView    m_textureImageStorageView;
+		VkImageLayout  m_currentImageLayout;
+
+		VkImage        m_singleMsaaImage;
+		VkDeviceMemory m_singleMsaaDeviceMem;
+		VkImageView    m_singleMsaaImageView;
 	};
 
 	struct FrameBufferVK
@@ -569,6 +651,7 @@ VK_DESTROY
 		{
 		}
 		void create(uint8_t _num, const Attachment* _attachment);
+		void resolve();
 		void destroy();
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];

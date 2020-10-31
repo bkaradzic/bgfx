@@ -214,6 +214,7 @@ bool CodeSinkingPass::HasUniformMemorySync() {
       case SpvOpAtomicIIncrement:
       case SpvOpAtomicIDecrement:
       case SpvOpAtomicIAdd:
+      case SpvOpAtomicFAddEXT:
       case SpvOpAtomicISub:
       case SpvOpAtomicSMin:
       case SpvOpAtomicUMin:

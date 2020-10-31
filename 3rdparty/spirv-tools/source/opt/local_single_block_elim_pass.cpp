@@ -83,7 +83,8 @@ bool LocalSingleBlockLoadStoreElimPass::LocalSingleBlockLoadStoreElim(
             auto prev_store = var2store_.find(varId);
             if (prev_store != var2store_.end() &&
                 instructions_to_save.count(prev_store->second) == 0 &&
-                !context()->get_debug_info_mgr()->IsDebugDeclared(varId)) {
+                !context()->get_debug_info_mgr()->IsVariableDebugDeclared(
+                    varId)) {
               instructions_to_kill.push_back(prev_store->second);
               modified = true;
             }
@@ -231,6 +232,7 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
       "SPV_AMD_gpu_shader_half_float",
       "SPV_KHR_shader_draw_parameters",
       "SPV_KHR_subgroup_vote",
+      "SPV_KHR_8bit_storage",
       "SPV_KHR_16bit_storage",
       "SPV_KHR_device_group",
       "SPV_KHR_multiview",
@@ -267,6 +269,7 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
       "SPV_KHR_ray_query",
       "SPV_EXT_fragment_invocation_density",
       "SPV_EXT_physical_storage_buffer",
+      "SPV_KHR_terminate_invocation",
   });
 }
 

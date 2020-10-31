@@ -778,7 +778,7 @@ assignment_expression
         parseContext.specializationCheck($2.loc, $1->getType(), "=");
         parseContext.lValueErrorCheck($2.loc, "assign", $1);
         parseContext.rValueErrorCheck($2.loc, "assign", $3);
-        $$ = parseContext.intermediate.addAssign($2.op, $1, $3, $2.loc);
+        $$ = parseContext.addAssign($2.loc, $2.op, $1, $3);
         if ($$ == 0) {
             parseContext.assignError($2.loc, "assign", $1->getCompleteString(), $3->getCompleteString());
             $$ = $1;
@@ -3842,6 +3842,14 @@ function_definition
     : function_prototype {
         $1.function = parseContext.handleFunctionDeclarator($1.loc, *$1.function, false /* not prototype */);
         $1.intermNode = parseContext.handleFunctionDefinition($1.loc, *$1.function);
+
+        // For ES 100 only, according to ES shading language 100 spec: A function
+        // body has a scope nested inside the function's definition.
+        if (parseContext.profile == EEsProfile && parseContext.version == 100)
+        {
+            parseContext.symbolTable.push();
+            ++parseContext.statementNestingLevel;
+        }
     }
     compound_statement_no_new_scope {
         //   May be best done as post process phase on intermediate code
@@ -3857,6 +3865,17 @@ function_definition
         $$->getAsAggregate()->setOptimize(parseContext.contextPragma.optimize);
         $$->getAsAggregate()->setDebug(parseContext.contextPragma.debug);
         $$->getAsAggregate()->setPragmaTable(parseContext.contextPragma.pragmaTable);
+
+        // Set currentFunctionType to empty pointer when goes outside of the function
+        parseContext.currentFunctionType = nullptr;
+
+        // For ES 100 only, according to ES shading language 100 spec: A function
+        // body has a scope nested inside the function's definition.
+        if (parseContext.profile == EEsProfile && parseContext.version == 100)
+        {
+            parseContext.symbolTable.pop(&parseContext.defaultPrecision[0]);
+            --parseContext.statementNestingLevel;
+        }
     }
     ;
 

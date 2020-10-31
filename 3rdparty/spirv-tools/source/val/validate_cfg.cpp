@@ -1096,11 +1096,17 @@ spv_result_t CfgPass(ValidationState_t& _, const Instruction* inst) {
     case SpvOpKill:
     case SpvOpReturnValue:
     case SpvOpUnreachable:
+    case SpvOpTerminateInvocation:
       _.current_function().RegisterBlockEnd(std::vector<uint32_t>());
       if (opcode == SpvOpKill) {
         _.current_function().RegisterExecutionModelLimitation(
             SpvExecutionModelFragment,
             "OpKill requires Fragment execution model");
+      }
+      if (opcode == SpvOpTerminateInvocation) {
+        _.current_function().RegisterExecutionModelLimitation(
+            SpvExecutionModelFragment,
+            "OpTerminateInvocation requires Fragment execution model");
       }
       break;
     default:

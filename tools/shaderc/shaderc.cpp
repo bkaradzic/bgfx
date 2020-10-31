@@ -13,13 +13,13 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
-#define BGFX_SHADER_BIN_VERSION 8
+#define BGFX_SHADER_BIN_VERSION 9
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 16
+#define BGFX_SHADERC_VERSION_MINOR 17
 
 namespace bgfx
 {
@@ -850,6 +850,15 @@ namespace bgfx
 	// 4.2    420               11.0     vhdgf+c  5.0
 	// 4.3    430      vhdgf+c
 	// 4.4    440
+	//
+	// SPIR-V profile naming convention:
+	//  spirv<SPIR-V version>-<Vulkan version>
+	//
+	// SPIR-V version | Vulkan version | shaderc encoding
+	//       1.0      |       1.0      |      1010
+	//       1.3      |       1.1      |      1311
+	//       1.4      |       1.1      |      1411
+	//       1.5      |       1.2      |      1512
 
 	void help(const char* _error = NULL)
 	{
@@ -894,7 +903,11 @@ namespace bgfx
 				"           s_5\n"
 				"           metal\n"
 				"           pssl\n"
-				"           spirv\n"
+				"           spirv              Alias for spirv10-10. \n"
+				"           spirv10-10\n"
+				"           spirv13-11\n"
+				"           spirv14-11\n"
+				"           spirv15-12\n"
 			  "      --preprocess              Preprocess only.\n"
 			  "      --define <defines>        Add defines to preprocessor (semicolon separated).\n"
 			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
@@ -960,9 +973,22 @@ namespace bgfx
 			{
 				pssl = 1;
 			}
-			else if (0 == bx::strCmp(profile, "spirv") )
+			else if (0 == bx::strCmp(profile, "spirv13-11") )
 			{
-				spirv = 1;
+				spirv = 1311;
+			}
+			else if (0 == bx::strCmp(profile, "spirv14-11") )
+			{
+				spirv = 1411;
+			}
+			else if (0 == bx::strCmp(profile, "spirv15-12") )
+			{
+				spirv = 1512;
+			}
+			else if (0 == bx::strCmp(profile, "spirv10-10")
+			      || 0 == bx::strCmp(profile, "spirv") )
+			{
+				spirv = 1010;
 			}
 			else
 			{
@@ -1017,6 +1043,14 @@ namespace bgfx
 				, essl ? 1 : glsl
 				);
 
+		char hlslDefine[128];
+		if (0 != hlsl)
+		{
+			bx::snprintf(hlslDefine, BX_COUNTOF(hlslDefine)
+					, "BGFX_SHADER_LANGUAGE_HLSL=%d"
+					, hlsl);
+		}
+
 		const char* platform = _options.platform.c_str();
 
 		if (0 == bx::strCmpI(platform, "android") )
@@ -1067,15 +1101,41 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "windows") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_WINDOWS=1");
-			char temp[256];
-			bx::snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_HLSL=%d", hlsl);
-			preprocessor.setDefine(temp);
+			if (0 != hlsl)
+			{
+				preprocessor.setDefine(hlslDefine);
+			}
+			else if (0 != glsl
+			     ||  0 != essl)
+			{
+				preprocessor.setDefine(glslDefine);
+			}
+			else if (0 != spirv)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+			}
 		}
 		else if (0 == bx::strCmpI(platform, "orbis") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_PS4=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_PSSL=1");
 			preprocessor.setDefine("lit=lit_reserved");
+		}
+		else
+		{
+			if (0 != hlsl)
+			{
+				preprocessor.setDefine(hlslDefine);
+			}
+			else if (0 != glsl
+			     ||  0 != essl)
+			{
+				preprocessor.setDefine(glslDefine);
+			}
+			else if (0 != spirv)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+			}
 		}
 
 		preprocessor.setDefine("M_PI=3.1415926535897932384626433832795");
@@ -1480,7 +1540,7 @@ namespace bgfx
 							}
 							else if (0 != spirv)
 							{
-								compiled = compileSPIRVShader(_options, 0, code, _writer);
+								compiled = compileSPIRVShader(_options, spirv, code, _writer);
 							}
 							else if (0 != pssl)
 							{
@@ -2278,7 +2338,7 @@ namespace bgfx
 							}
 							else if (0 != spirv)
 							{
-								compiled = compileSPIRVShader(_options, 0, code, _writer);
+								compiled = compileSPIRVShader(_options, spirv, code, _writer);
 							}
 							else if (0 != pssl)
 							{

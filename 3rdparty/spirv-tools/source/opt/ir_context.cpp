@@ -181,6 +181,7 @@ Instruction* IRContext::KillInst(Instruction* inst) {
     }
   }
   if (AreAnalysesValid(kAnalysisDebugInfo)) {
+    get_debug_info_mgr()->ClearDebugScopeAndInlinedAtUses(inst);
     get_debug_info_mgr()->ClearDebugInfo(inst);
   }
   if (type_mgr_ && IsTypeInst(inst->opcode())) {
@@ -213,6 +214,30 @@ Instruction* IRContext::KillInst(Instruction* inst) {
   return next_instruction;
 }
 
+void IRContext::KillNonSemanticInfo(Instruction* inst) {
+  if (!inst->HasResultId()) return;
+  std::vector<Instruction*> work_list;
+  std::vector<Instruction*> to_kill;
+  std::unordered_set<Instruction*> seen;
+  work_list.push_back(inst);
+
+  while (!work_list.empty()) {
+    auto* i = work_list.back();
+    work_list.pop_back();
+    get_def_use_mgr()->ForEachUser(
+        i, [&work_list, &to_kill, &seen](Instruction* user) {
+          if (user->IsNonSemanticInstruction() && seen.insert(user).second) {
+            work_list.push_back(user);
+            to_kill.push_back(user);
+          }
+        });
+  }
+
+  for (auto* dead : to_kill) {
+    KillInst(dead);
+  }
+}
+
 bool IRContext::KillDef(uint32_t id) {
   Instruction* def = get_def_use_mgr()->GetDef(id);
   if (def != nullptr) {
@@ -222,22 +247,20 @@ bool IRContext::KillDef(uint32_t id) {
   return false;
 }
 
-void IRContext::KillDebugDeclareInsts(Function* fn) {
-  fn->ForEachInst([this](Instruction* inst) {
-    if (inst->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugDeclare)
-      KillInst(inst);
-  });
-}
-
 bool IRContext::ReplaceAllUsesWith(uint32_t before, uint32_t after) {
-  return ReplaceAllUsesWithPredicate(
-      before, after, [](Instruction*, uint32_t) { return true; });
+  return ReplaceAllUsesWithPredicate(before, after,
+                                     [](Instruction*) { return true; });
 }
 
 bool IRContext::ReplaceAllUsesWithPredicate(
     uint32_t before, uint32_t after,
-    const std::function<bool(Instruction*, uint32_t)>& predicate) {
+    const std::function<bool(Instruction*)>& predicate) {
   if (before == after) return false;
+
+  if (AreAnalysesValid(kAnalysisDebugInfo)) {
+    get_debug_info_mgr()->ReplaceAllUsesInDebugScopeWithPredicate(before, after,
+                                                                  predicate);
+  }
 
   // Ensure that |after| has been registered as def.
   assert(get_def_use_mgr()->GetDef(after) &&
@@ -246,7 +269,7 @@ bool IRContext::ReplaceAllUsesWithPredicate(
   std::vector<std::pair<Instruction*, uint32_t>> uses_to_update;
   get_def_use_mgr()->ForEachUse(
       before, [&predicate, &uses_to_update](Instruction* user, uint32_t index) {
-        if (predicate(user, index)) {
+        if (predicate(user)) {
           uses_to_update.emplace_back(user, index);
         }
       });
@@ -284,7 +307,6 @@ bool IRContext::ReplaceAllUsesWithPredicate(
     }
     AnalyzeUses(user);
   }
-
   return true;
 }
 

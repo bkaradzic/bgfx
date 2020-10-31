@@ -11,7 +11,6 @@
 #include <bx/mutex.h>
 
 #include "topology.h"
-#include "version.h"
 
 #if BX_PLATFORM_OSX || BX_PLATFORM_IOS
 #	include <objc/message.h>
@@ -24,21 +23,24 @@ namespace bgfx
 #define BGFX_API_THREAD_MAGIC UINT32_C(0x78666762)
 
 #if BGFX_CONFIG_MULTITHREADED
-#	define BGFX_CHECK_API_THREAD()                                  \
+
+#	define BGFX_CHECK_API_THREAD()                                   \
 		BX_ASSERT(NULL != s_ctx, "Library is not initialized yet."); \
 		BX_ASSERT(BGFX_API_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
-#	define BGFX_CHECK_RENDER_THREAD()                        \
+
+#	define BGFX_CHECK_RENDER_THREAD()                         \
 		BX_ASSERT( (NULL != s_ctx && s_ctx->m_singleThreaded) \
-			|| ~BGFX_API_THREAD_MAGIC == s_threadIndex       \
-			, "Must be called from render thread."           \
+			|| ~BGFX_API_THREAD_MAGIC == s_threadIndex        \
+			, "Must be called from render thread."            \
 			)
+
 #else
 #	define BGFX_CHECK_API_THREAD()
 #	define BGFX_CHECK_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED
 
 #define BGFX_CHECK_CAPS(_caps, _msg)                                                   \
-	BX_ASSERT(0 != (g_caps.supported & (_caps) )                                        \
+	BX_ASSERT(0 != (g_caps.supported & (_caps) )                                       \
 		, _msg " Use bgfx::getCaps to check " #_caps " backend renderer capabilities." \
 		);
 
@@ -1597,6 +1599,7 @@ namespace bgfx
 				, s_capsFlags[ii].m_str
 				);
 		}
+		BX_UNUSED(s_capsFlags);
 
 		BX_TRACE("");
 		BX_TRACE("Limits:");
@@ -1636,7 +1639,7 @@ namespace bgfx
 		BX_TRACE("\t ||||+------------ Cube: x = supported / * = emulated");
 		BX_TRACE("\t |||||+----------- Cube: sRGB format");
 		BX_TRACE("\t ||||||+---------- vertex format");
-		BX_TRACE("\t |||||||+--------- image");
+		BX_TRACE("\t |||||||+--------- image: i = read-write / r = read / w = write");
 		BX_TRACE("\t ||||||||+-------- framebuffer");
 		BX_TRACE("\t |||||||||+------- MSAA framebuffer");
 		BX_TRACE("\t ||||||||||+------ MSAA texture");
@@ -1647,7 +1650,7 @@ namespace bgfx
 			if (TextureFormat::Unknown != ii
 			&&  TextureFormat::UnknownDepth != ii)
 			{
-				uint16_t flags = g_caps.formats[ii];
+				uint32_t flags = g_caps.formats[ii];
 				BX_TRACE("\t[%c%c%c%c%c%c%c%c%c%c%c%c] %s"
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_2D               ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED ? '*' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB          ? 'l' : ' '
@@ -1656,7 +1659,8 @@ namespace bgfx
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_CUBE             ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED ? '*' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB        ? 'l' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_VERTEX           ? 'v' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE            ? 'i' : ' '
+					, (flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) &&
+					  (flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)    ? 'i' : flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ ? 'r' : flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE ? 'w' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      ? 'f' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA ? '+' : ' '
 					, flags&BGFX_CAPS_FORMAT_TEXTURE_MSAA             ? 'm' : ' '
@@ -1869,7 +1873,7 @@ namespace bgfx
 		frameNoRenderWait();
 
 		m_encoderHandle = bx::createHandleAlloc(g_allocator, _init.limits.maxEncoders);
-		m_encoder       = (EncoderImpl*)BX_ALIGNED_ALLOC(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders, 16);
+		m_encoder       = (EncoderImpl*)BX_ALIGNED_ALLOC(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders, BX_ALIGNOF(EncoderImpl) );
 		m_encoderStats  = (EncoderStats*)BX_ALLOC(g_allocator, sizeof(EncoderStats)*_init.limits.maxEncoders);
 		for (uint32_t ii = 0, num = _init.limits.maxEncoders; ii < num; ++ii)
 		{
@@ -1975,7 +1979,8 @@ namespace bgfx
 		{
 			m_encoder[ii].~EncoderImpl();
 		}
-		BX_ALIGNED_FREE(g_allocator, m_encoder, 16);
+
+		BX_ALIGNED_FREE(g_allocator, m_encoder, BX_ALIGNOF(EncoderImpl) );
 		BX_FREE(g_allocator, m_encoderStats);
 
 		m_dynVertexBufferAllocator.compact();
@@ -3857,15 +3862,49 @@ namespace bgfx
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		BGFX_CHECK_HANDLE("blit/src TextureHandle", s_ctx->m_textureHandle, _src);
 		BGFX_CHECK_HANDLE("blit/dst TextureHandle", s_ctx->m_textureHandle, _dst);
+
 		const TextureRef& src = s_ctx->m_textureRef[_src.idx];
 		const TextureRef& dst = s_ctx->m_textureRef[_dst.idx];
+
 		BX_ASSERT(src.m_format == dst.m_format
 			, "Texture format must match (src %s, dst %s)."
 			, bimg::getName(bimg::TextureFormat::Enum(src.m_format) )
 			, bimg::getName(bimg::TextureFormat::Enum(dst.m_format) )
 			);
-		BX_UNUSED(src, dst);
-		BGFX_ENCODER(blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth) );
+		BX_ASSERT(_srcMip < src.m_numMips, "Invalid blit src mip (%d > %d)", _srcMip, src.m_numMips - 1);
+		BX_ASSERT(_dstMip < dst.m_numMips, "Invalid blit dst mip (%d > %d)", _dstMip, dst.m_numMips - 1);
+
+		uint32_t srcWidth  = bx::max<uint32_t>(1, src.m_width  >> _srcMip);
+		uint32_t srcHeight = bx::max<uint32_t>(1, src.m_height >> _srcMip);
+		uint32_t dstWidth  = bx::max<uint32_t>(1, dst.m_width  >> _dstMip);
+		uint32_t dstHeight = bx::max<uint32_t>(1, dst.m_height >> _dstMip);
+
+		uint32_t srcDepth  = src.isCubeMap() ? 6 : bx::max<uint32_t>(1, src.m_depth >> _srcMip);
+		uint32_t dstDepth  = dst.isCubeMap() ? 6 : bx::max<uint32_t>(1, dst.m_depth >> _dstMip);
+
+		BX_ASSERT(_srcX < srcWidth && _srcY < srcHeight && _srcZ < srcDepth
+			, "Blit src coordinates out of range (%d, %d, %d) >= (%d, %d, %d)"
+			, _srcX, _srcY, _srcZ
+			, srcWidth, srcHeight, srcDepth
+			);
+		BX_ASSERT(_dstX < dstWidth && _dstY < dstHeight && _dstZ < dstDepth
+			, "Blit dst coordinates out of range (%d, %d, %d) >= (%d, %d, %d)"
+			, _dstX, _dstY, _dstZ
+			, dstWidth, dstHeight, dstDepth
+			);
+
+		srcWidth  = bx::min<uint32_t>(srcWidth,  _srcX + _width ) - _srcX;
+		srcHeight = bx::min<uint32_t>(srcHeight, _srcY + _height) - _srcY;
+		srcDepth  = bx::min<uint32_t>(srcDepth,  _srcZ + _depth ) - _srcZ;
+		dstWidth  = bx::min<uint32_t>(dstWidth,  _dstX + _width ) - _dstX;
+		dstHeight = bx::min<uint32_t>(dstHeight, _dstY + _height) - _dstY;
+		dstDepth  = bx::min<uint32_t>(dstDepth,  _dstZ + _depth ) - _dstZ;
+
+		uint16_t width  = bx::min<uint16_t>(srcWidth,  dstWidth);
+		uint16_t height = bx::min<uint16_t>(srcHeight, dstHeight);
+		uint16_t depth  = bx::min<uint16_t>(srcDepth,  dstDepth);
+
+		BGFX_ENCODER(blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, width, height, depth) );
 	}
 
 #undef BGFX_ENCODER

@@ -676,6 +676,65 @@ namespace bgfx { namespace spirv
 		return size;
 	}
 
+	static spv_target_env getSpirvTargetVersion(uint32_t version)
+	{
+		switch (version)
+		{
+			case 1010:
+				return SPV_ENV_VULKAN_1_0;
+			case 1311:
+				return SPV_ENV_VULKAN_1_1;
+			case 1411:
+				return SPV_ENV_VULKAN_1_1_SPIRV_1_4;
+			case 1512:
+				return SPV_ENV_VULKAN_1_2;
+			default:
+				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning SPV_ENV_VULKAN_1_0 as default.");
+				return SPV_ENV_VULKAN_1_0;
+		}
+	}
+
+	static glslang::EShTargetClientVersion getGlslangTargetVulkanVersion(uint32_t version)
+	{
+		switch (version)
+		{
+			case 1010:
+				return glslang::EShTargetVulkan_1_0;
+			case 1311:
+			case 1411:
+				return glslang::EShTargetVulkan_1_1;
+			case 1512:
+				return glslang::EShTargetVulkan_1_2;
+			default:
+				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning EShTargetVulkan_1_0 as default.");
+				return glslang::EShTargetVulkan_1_0;
+		}
+	}
+
+	static glslang::EShTargetLanguageVersion getGlslangTargetSpirvVersion(uint32_t version)
+	{
+		switch (version)
+		{
+			case 1010:
+				return glslang::EShTargetSpv_1_0;
+			case 1311:
+				return glslang::EShTargetSpv_1_3;
+			case 1411:
+				return glslang::EShTargetSpv_1_4;
+			case 1512:
+				return glslang::EShTargetSpv_1_5;
+			default:
+				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning EShTargetSpv_1_0 as default.");
+				return glslang::EShTargetSpv_1_0;
+		}
+	}
+
+	/// This is the value used to fill out GLSLANG's SpvVersion object.
+	/// The required value is that which is defined by GL_KHR_vulkan_glsl, which is defined here:
+	/// https://github.com/KhronosGroup/GLSL/blob/master/extensions/khr/GL_KHR_vulkan_glsl.txt
+	/// The value is 100.
+	constexpr int s_GLSL_VULKAN_CLIENT_VERSION = 100;
+
 	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
 	{
 		BX_UNUSED(_version);
@@ -701,6 +760,9 @@ namespace bgfx { namespace spirv
 
 		shader->setEntryPoint("main");
 		shader->setAutoMapBindings(true);
+		shader->setEnvInput(glslang::EShSourceHlsl, stage, glslang::EShClientVulkan, s_GLSL_VULKAN_CLIENT_VERSION);
+		shader->setEnvClient(glslang::EShClientVulkan, getGlslangTargetVulkanVersion(_version));
+		shader->setEnvTarget(glslang::EShTargetSpv, getGlslangTargetSpirvVersion(_version));
 		uint32_t bindingOffset = (stage == EShLanguage::EShLangFragment ? 48 : 0);
 		shader->setShiftBinding(glslang::EResUbo, bindingOffset);
 		shader->setShiftBinding(glslang::EResTexture, bindingOffset + 16);
@@ -938,7 +1000,7 @@ namespace bgfx { namespace spirv
 
 				glslang::GlslangToSpv(*intermediate, spirv, &options);
 
-				spvtools::Optimizer opt(SPV_ENV_VULKAN_1_0);
+				spvtools::Optimizer opt(getSpirvTargetVersion(_version));
 
 				auto print_msg_to_stderr = [](
 					  spv_message_level_t
@@ -1023,7 +1085,7 @@ namespace bgfx { namespace spirv
 						}
 					}
 
-					// Loop through the separate_images, and extract the uniform names:
+					// Loop through the storage_images, and extract the uniform names:
 					for (auto &resource : resourcesrefl.storage_images)
 					{
 						std::string name = refl.get_name(resource.id);

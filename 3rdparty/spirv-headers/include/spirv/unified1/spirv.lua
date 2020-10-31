@@ -934,6 +934,8 @@ spv = {
         FPGAKernelAttributesINTEL = 5897,
         BlockingPipesINTEL = 5945,
         FPGARegINTEL = 5948,
+        AtomicFloat32AddEXT = 6033,
+        AtomicFloat64AddEXT = 6034,
     },
 
     RayFlagsShift = {
@@ -1324,6 +1326,7 @@ spv = {
         OpPtrEqual = 401,
         OpPtrNotEqual = 402,
         OpPtrDiff = 403,
+        OpTerminateInvocation = 4416,
         OpSubgroupBallotKHR = 4421,
         OpSubgroupFirstInvocationKHR = 4422,
         OpSubgroupAllKHR = 4428,
@@ -1541,6 +1544,7 @@ spv = {
         OpRayQueryGetWorldRayOriginKHR = 6030,
         OpRayQueryGetIntersectionObjectToWorldKHR = 6031,
         OpRayQueryGetIntersectionWorldToObjectKHR = 6032,
+        OpAtomicFAddEXT = 6035,
     },
 
 }
