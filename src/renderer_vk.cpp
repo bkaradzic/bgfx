@@ -6943,8 +6943,6 @@ VK_DESTROY
 							, uint8_t(draw.m_instanceDataStride/16)
 							);
 
-					uint16_t scissor = draw.m_scissor;
-
 					if (pipeline != currentPipeline
 					||  0 != changedStencil)
 					{
@@ -6974,6 +6972,8 @@ VK_DESTROY
 						prim = s_primInfo[primIndex];
 //						m_commandList->IASetPrimitiveTopology(prim.m_topology);
 					}
+
+					const uint16_t scissor = draw.m_scissor;
 
 					if (currentState.m_scissor != scissor)
 					{
