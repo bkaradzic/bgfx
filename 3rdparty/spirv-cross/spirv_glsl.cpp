@@ -511,6 +511,7 @@ string CompilerGLSL::compile()
 	{
 		// only NV_gpu_shader5 supports divergent indexing on OpenGL, and it does so without extra qualifiers
 		backend.nonuniform_qualifier = "";
+		backend.needs_row_major_load_workaround = true;
 	}
 	backend.force_gl_in_out_block = true;
 	backend.supports_extensions = true;
@@ -3797,6 +3798,17 @@ void CompilerGLSL::emit_extension_workarounds(spv::ExecutionModel model)
 			statement("#endif");
 			statement("");
 		}
+	}
+
+	if (!workaround_ubo_load_overload_types.empty())
+	{
+		for (auto &type_id : workaround_ubo_load_overload_types)
+		{
+			auto &type = get<SPIRType>(type_id);
+			statement(type_to_glsl(type), " SPIRV_Cross_workaround_load_row_major(", type_to_glsl(type),
+			          " wrap) { return wrap; }");
+		}
+		statement("");
 	}
 }
 
@@ -9496,11 +9508,15 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		if (forward && ptr_expression)
 			ptr_expression->need_transpose = old_need_transpose;
 
+		bool flattened = ptr_expression && flattened_buffer_blocks.count(ptr_expression->loaded_from) != 0;
+
+		if (backend.needs_row_major_load_workaround && !is_non_native_row_major_matrix(ptr) && !flattened)
+			rewrite_load_for_wrapped_row_major(expr, result_type, ptr);
+
 		// By default, suppress usage tracking since using same expression multiple times does not imply any extra work.
 		// However, if we try to load a complex, composite object from a flattened buffer,
 		// we should avoid emitting the same code over and over and lower the result to a temporary.
-		bool usage_tracking = ptr_expression && flattened_buffer_blocks.count(ptr_expression->loaded_from) != 0 &&
-		                      (type.basetype == SPIRType::Struct || (type.columns > 1));
+		bool usage_tracking = flattened && (type.basetype == SPIRType::Struct || (type.columns > 1));
 
 		SPIRExpression *e = nullptr;
 		if (!forward && expression_is_non_value_type_array(ptr))
@@ -13253,8 +13269,14 @@ void CompilerGLSL::branch(BlockID from, BlockID to)
 		// and end the chain here.
 		statement("continue;");
 	}
-	else if (is_break(to))
+	else if (from != to && is_break(to))
 	{
+		// We cannot break to ourselves, so check explicitly for from != to.
+		// This case can trigger if a loop header is all three of these things:
+		// - Continue block
+		// - Loop header
+		// - Break merge target all at once ...
+
 		// Very dirty workaround.
 		// Switch constructs are able to break, but they cannot break out of a loop at the same time.
 		// Only sensible solution is to make a ladder variable, which we declare at the top of the switch block,
@@ -14578,7 +14600,35 @@ void CompilerGLSL::convert_non_uniform_expression(const SPIRType &type, std::str
 		// so we might have to fixup the OpLoad-ed expression late.
 
 		auto start_array_index = expr.find_first_of('[');
-		auto end_array_index = expr.find_last_of(']');
+
+		if (start_array_index == string::npos)
+			return;
+
+		// Check for the edge case that a non-arrayed resource was marked to be nonuniform,
+		// and the bracket we found is actually part of non-resource related data.
+		if (expr.find_first_of(',') < start_array_index)
+			return;
+
+		// We've opened a bracket, track expressions until we can close the bracket.
+		// This must be our image index.
+		size_t end_array_index = string::npos;
+		unsigned bracket_count = 1;
+		for (size_t index = start_array_index + 1; index < expr.size(); index++)
+		{
+			if (expr[index] == ']')
+			{
+				if (--bracket_count == 0)
+				{
+					end_array_index = index;
+					break;
+				}
+			}
+			else if (expr[index] == '[')
+				bracket_count++;
+		}
+
+		assert(bracket_count == 0);
+
 		// Doesn't really make sense to declare a non-arrayed image with nonuniformEXT, but there's
 		// nothing we can do here to express that.
 		if (start_array_index == string::npos || end_array_index == string::npos || end_array_index < start_array_index)
@@ -15086,4 +15136,64 @@ CompilerGLSL::ShaderSubgroupSupportHelper::Result::Result()
 	weights[KHR_shader_subgroup_ballot] = big_num;
 	weights[KHR_shader_subgroup_basic] = big_num;
 	weights[KHR_shader_subgroup_vote] = big_num;
+}
+
+void CompilerGLSL::request_workaround_wrapper_overload(TypeID id)
+{
+	// Must be ordered to maintain deterministic output, so vector is appropriate.
+	if (find(begin(workaround_ubo_load_overload_types), end(workaround_ubo_load_overload_types), id) ==
+	    end(workaround_ubo_load_overload_types))
+	{
+		force_recompile();
+		workaround_ubo_load_overload_types.push_back(id);
+	}
+}
+
+void CompilerGLSL::rewrite_load_for_wrapped_row_major(std::string &expr, TypeID loaded_type, ID ptr)
+{
+	// Loading row-major matrices from UBOs on older AMD Windows OpenGL drivers is problematic.
+	// To load these types correctly, we must first wrap them in a dummy function which only purpose is to
+	// ensure row_major decoration is actually respected.
+	auto *var = maybe_get_backing_variable(ptr);
+	if (!var)
+		return;
+
+	auto &backing_type = get<SPIRType>(var->basetype);
+	bool is_ubo = backing_type.basetype == SPIRType::Struct &&
+	              backing_type.storage == StorageClassUniform &&
+	              has_decoration(backing_type.self, DecorationBlock);
+	if (!is_ubo)
+		return;
+
+	auto *type = &get<SPIRType>(loaded_type);
+	bool rewrite = false;
+
+	if (is_matrix(*type))
+	{
+		// To avoid adding a lot of unnecessary meta tracking to forward the row_major state,
+		// we will simply look at the base struct itself. It is exceptionally rare to mix and match row-major/col-major state.
+		// If there is any row-major action going on, we apply the workaround.
+		// It is harmless to apply the workaround to column-major matrices, so this is still a valid solution.
+		// If an access chain occurred, the workaround is not required, so loading vectors or scalars don't need workaround.
+		type = &backing_type;
+	}
+
+	if (type->basetype == SPIRType::Struct)
+	{
+		// If we're loading a struct where any member is a row-major matrix, apply the workaround.
+		for (uint32_t i = 0; i < uint32_t(type->member_types.size()); i++)
+		{
+			if (combined_decoration_for_member(*type, i).get(DecorationRowMajor))
+			{
+				rewrite = true;
+				break;
+			}
+		}
+	}
+
+	if (rewrite)
+	{
+		request_workaround_wrapper_overload(loaded_type);
+		expr = join("SPIRV_Cross_workaround_load_row_major(", expr, ")");
+	}
 }

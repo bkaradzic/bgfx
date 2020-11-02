@@ -599,8 +599,8 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 		options->msl.enable_base_index_zero = value != 0;
 		break;
 
-	case SPVC_COMPILER_OPTION_MSL_IOS_FRAMEBUFFER_FETCH_SUBPASS:
-		options->msl.ios_use_framebuffer_fetch_subpasses = value != 0;
+	case SPVC_COMPILER_OPTION_MSL_FRAMEBUFFER_FETCH_SUBPASS:
+		options->msl.use_framebuffer_fetch_subpasses = value != 0;
 		break;
 
 	case SPVC_COMPILER_OPTION_MSL_INVARIANT_FP_MATH:

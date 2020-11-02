@@ -560,6 +560,7 @@ protected:
 		bool support_small_type_sampling_result = false;
 		bool support_case_fallthrough = true;
 		bool use_array_constructor = false;
+		bool needs_row_major_load_workaround = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
@@ -783,6 +784,10 @@ protected:
 	// and we need to reuse the IDs across recompilation loops.
 	// Currently used by NMin/Max/Clamp implementations.
 	std::unordered_map<uint32_t, uint32_t> extra_sub_expressions;
+
+	SmallVector<TypeID> workaround_ubo_load_overload_types;
+	void request_workaround_wrapper_overload(TypeID id);
+	void rewrite_load_for_wrapped_row_major(std::string &expr, TypeID loaded_type, ID ptr);
 
 	uint32_t statement_count = 0;
 

@@ -357,28 +357,6 @@ public:
 		return TypedID<U>(*this);
 	}
 
-	bool operator==(const TypedID &other) const
-	{
-		return id == other.id;
-	}
-
-	bool operator!=(const TypedID &other) const
-	{
-		return id != other.id;
-	}
-
-	template <Types type>
-	bool operator==(const TypedID<type> &other) const
-	{
-		return id == uint32_t(other);
-	}
-
-	template <Types type>
-	bool operator!=(const TypedID<type> &other) const
-	{
-		return id != uint32_t(other);
-	}
-
 private:
 	uint32_t id = 0;
 };
@@ -401,26 +379,6 @@ public:
 	operator uint32_t() const
 	{
 		return id;
-	}
-
-	bool operator==(const TypedID &other) const
-	{
-		return id == other.id;
-	}
-
-	bool operator!=(const TypedID &other) const
-	{
-		return id != other.id;
-	}
-
-	bool operator==(const TypedID<TypeNone> &other) const
-	{
-		return id == uint32_t(other);
-	}
-
-	bool operator!=(const TypedID<TypeNone> &other) const
-	{
-		return id != uint32_t(other);
 	}
 
 private:

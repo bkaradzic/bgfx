@@ -160,7 +160,7 @@ void CompilerMSL::build_implicit_builtins()
 	bool need_sample_mask = msl_options.additional_fixed_sample_mask != 0xffffffff;
 	if (need_subpass_input || need_sample_pos || need_subgroup_mask || need_vertex_params || need_tesc_params ||
 	    need_multiview || need_dispatch_base || need_vertex_base_params || need_grid_params ||
-	    needs_subgroup_invocation_id || need_sample_mask)
+	    needs_subgroup_invocation_id || needs_subgroup_size || need_sample_mask)
 	{
 		bool has_frag_coord = false;
 		bool has_sample_id = false;
@@ -197,7 +197,7 @@ void CompilerMSL::build_implicit_builtins()
 			if (var.storage != StorageClassInput)
 				return;
 
-			if (need_subpass_input && (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses))
+			if (need_subpass_input && (!msl_options.use_framebuffer_fetch_subpasses))
 			{
 				switch (builtin)
 				{
@@ -287,7 +287,7 @@ void CompilerMSL::build_implicit_builtins()
 				has_subgroup_invocation_id = true;
 			}
 
-			if (need_subgroup_ge_mask && builtin == BuiltInSubgroupSize)
+			if ((need_subgroup_ge_mask || needs_subgroup_size) && builtin == BuiltInSubgroupSize)
 			{
 				builtin_subgroup_size_id = var.self;
 				mark_implicit_builtin(StorageClassInput, BuiltInSubgroupSize, var.self);
@@ -331,7 +331,7 @@ void CompilerMSL::build_implicit_builtins()
 		// Use Metal's native frame-buffer fetch API for subpass inputs.
 		if ((!has_frag_coord || (msl_options.multiview && !has_view_idx) ||
 		     (msl_options.arrayed_subpass_input && !msl_options.multiview && !has_layer)) &&
-		    (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses) && need_subpass_input)
+		    (!msl_options.use_framebuffer_fetch_subpasses) && need_subpass_input)
 		{
 			if (!has_frag_coord)
 			{
@@ -593,7 +593,7 @@ void CompilerMSL::build_implicit_builtins()
 			mark_implicit_builtin(StorageClassInput, BuiltInSubgroupLocalInvocationId, var_id);
 		}
 
-		if (!has_subgroup_size && need_subgroup_ge_mask)
+		if (!has_subgroup_size && (need_subgroup_ge_mask || needs_subgroup_size))
 		{
 			uint32_t offset = ir.increase_bound_by(2);
 			uint32_t type_ptr_id = offset;
@@ -1265,7 +1265,8 @@ void CompilerMSL::preprocess_op_codes()
 		add_pragma_line("#pragma clang diagnostic ignored \"-Wunused-variable\"");
 	}
 
-	// Metal vertex functions that write to resources must disable rasterization and return void.
+	// Before MSL 2.1 (2.2 for textures), Metal vertex functions that write to
+	// resources must disable rasterization and return void.
 	if (preproc.uses_resource_write)
 		is_rasterization_disabled = true;
 
@@ -1280,6 +1281,8 @@ void CompilerMSL::preprocess_op_codes()
 
 	if (preproc.needs_subgroup_invocation_id)
 		needs_subgroup_invocation_id = true;
+	if (preproc.needs_subgroup_size)
+		needs_subgroup_size = true;
 }
 
 // Move the Private and Workgroup global variables to the entry function.
@@ -1372,7 +1375,7 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 				// Use Metal's native frame-buffer fetch API for subpass inputs.
 				auto &type = get<SPIRType>(ops[0]);
 				if (type.basetype == SPIRType::Image && type.image.dim == DimSubpassData &&
-				    (!msl_options.is_ios() || !msl_options.ios_use_framebuffer_fetch_subpasses))
+				    (!msl_options.use_framebuffer_fetch_subpasses))
 				{
 					// Implicitly reads gl_FragCoord.
 					assert(builtin_frag_coord_id != 0);
@@ -4608,6 +4611,59 @@ void CompilerMSL::emit_custom_functions()
 			statement("");
 			break;
 
+		case SPVFuncImplSubgroupBroadcast:
+			// Metal doesn't allow broadcasting boolean values directly, but we can work around that by broadcasting
+			// them as integers.
+			statement("template<typename T>");
+			statement("inline T spvSubgroupBroadcast(T value, ushort lane)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return quad_broadcast(value, lane);");
+			else
+				statement("return simd_broadcast(value, lane);");
+			end_scope();
+			statement("");
+			statement("template<>");
+			statement("inline bool spvSubgroupBroadcast(bool value, ushort lane)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return !!quad_broadcast((ushort)value, lane);");
+			else
+				statement("return !!simd_broadcast((ushort)value, lane);");
+			end_scope();
+			statement("");
+			statement("template<uint N>");
+			statement("inline vec<bool, N> spvSubgroupBroadcast(vec<bool, N> value, ushort lane)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return (vec<bool, N>)quad_broadcast((vec<ushort, N>)value, lane);");
+			else
+				statement("return (vec<bool, N>)simd_broadcast((vec<ushort, N>)value, lane);");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplSubgroupBroadcastFirst:
+			statement("template<typename T>");
+			statement("inline T spvSubgroupBroadcastFirst(T value)");
+			begin_scope();
+			statement("return simd_broadcast_first(value);");
+			end_scope();
+			statement("");
+			statement("template<>");
+			statement("inline bool spvSubgroupBroadcastFirst(bool value)");
+			begin_scope();
+			statement("return !!simd_broadcast_first((ushort)value);");
+			end_scope();
+			statement("");
+			statement("template<uint N>");
+			statement("inline vec<bool, N> spvSubgroupBroadcastFirst(vec<bool, N> value)");
+			begin_scope();
+			statement("return (vec<bool, N>)simd_broadcast_first((vec<ushort, N>)value);");
+			end_scope();
+			statement("");
+			break;
+
 		case SPVFuncImplSubgroupBallot:
 			statement("inline uint4 spvSubgroupBallot(bool value)");
 			begin_scope();
@@ -4631,8 +4687,11 @@ void CompilerMSL::emit_custom_functions()
 			break;
 
 		case SPVFuncImplSubgroupBallotFindLSB:
-			statement("inline uint spvSubgroupBallotFindLSB(uint4 ballot)");
+			statement("inline uint spvSubgroupBallotFindLSB(uint4 ballot, uint gl_SubgroupSize)");
 			begin_scope();
+			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupSize, 32u)), "
+			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupSize - 32, 0)), uint2(0));");
+			statement("ballot &= mask;");
 			statement("return select(ctz(ballot.x), select(32 + ctz(ballot.y), select(64 + ctz(ballot.z), select(96 + "
 			          "ctz(ballot.w), uint(-1), ballot.w == 0), ballot.z == 0), ballot.y == 0), ballot.x == 0);");
 			end_scope();
@@ -4640,8 +4699,11 @@ void CompilerMSL::emit_custom_functions()
 			break;
 
 		case SPVFuncImplSubgroupBallotFindMSB:
-			statement("inline uint spvSubgroupBallotFindMSB(uint4 ballot)");
+			statement("inline uint spvSubgroupBallotFindMSB(uint4 ballot, uint gl_SubgroupSize)");
 			begin_scope();
+			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupSize, 32u)), "
+			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupSize - 32, 0)), uint2(0));");
+			statement("ballot &= mask;");
 			statement("return select(128 - (clz(ballot.w) + 1), select(96 - (clz(ballot.z) + 1), select(64 - "
 			          "(clz(ballot.y) + 1), select(32 - (clz(ballot.x) + 1), uint(-1), ballot.x == 0), ballot.y == 0), "
 			          "ballot.z == 0), ballot.w == 0);");
@@ -4650,9 +4712,16 @@ void CompilerMSL::emit_custom_functions()
 			break;
 
 		case SPVFuncImplSubgroupBallotBitCount:
-			statement("inline uint spvSubgroupBallotBitCount(uint4 ballot)");
+			statement("inline uint spvPopCount4(uint4 ballot)");
 			begin_scope();
 			statement("return popcount(ballot.x) + popcount(ballot.y) + popcount(ballot.z) + popcount(ballot.w);");
+			end_scope();
+			statement("");
+			statement("inline uint spvSubgroupBallotBitCount(uint4 ballot, uint gl_SubgroupSize)");
+			begin_scope();
+			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupSize, 32u)), "
+			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupSize - 32, 0)), uint2(0));");
+			statement("return spvPopCount4(ballot & mask);");
 			end_scope();
 			statement("");
 			statement("inline uint spvSubgroupBallotInclusiveBitCount(uint4 ballot, uint gl_SubgroupInvocationID)");
@@ -4660,14 +4729,14 @@ void CompilerMSL::emit_custom_functions()
 			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupInvocationID + 1, 32u)), "
 			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupInvocationID + 1 - 32, 0)), "
 			          "uint2(0));");
-			statement("return spvSubgroupBallotBitCount(ballot & mask);");
+			statement("return spvPopCount4(ballot & mask);");
 			end_scope();
 			statement("");
 			statement("inline uint spvSubgroupBallotExclusiveBitCount(uint4 ballot, uint gl_SubgroupInvocationID)");
 			begin_scope();
 			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupInvocationID, 32u)), "
 			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupInvocationID - 32, 0)), uint2(0));");
-			statement("return spvSubgroupBallotBitCount(ballot & mask);");
+			statement("return spvPopCount4(ballot & mask);");
 			end_scope();
 			statement("");
 			break;
@@ -4680,13 +4749,191 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<typename T>");
 			statement("inline bool spvSubgroupAllEqual(T value)");
 			begin_scope();
-			statement("return simd_all(value == simd_broadcast_first(value));");
+			statement("return simd_all(all(value == simd_broadcast_first(value)));");
 			end_scope();
 			statement("");
 			statement("template<>");
 			statement("inline bool spvSubgroupAllEqual(bool value)");
 			begin_scope();
 			statement("return simd_all(value) || !simd_any(value);");
+			end_scope();
+			statement("");
+			statement("template<uint N>");
+			statement("inline bool spvSubgroupAllEqual(vec<bool, N> value)");
+			begin_scope();
+			statement("return simd_all(all(value == (vec<bool, N>)simd_broadcast_first((vec<ushort, N>)value)));");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplSubgroupShuffle:
+			statement("template<typename T>");
+			statement("inline T spvSubgroupShuffle(T value, ushort lane)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return quad_shuffle(value, lane);");
+			else
+				statement("return simd_shuffle(value, lane);");
+			end_scope();
+			statement("");
+			statement("template<>");
+			statement("inline bool spvSubgroupShuffle(bool value, ushort lane)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return !!quad_shuffle((ushort)value, lane);");
+			else
+				statement("return !!simd_shuffle((ushort)value, lane);");
+			end_scope();
+			statement("");
+			statement("template<uint N>");
+			statement("inline vec<bool, N> spvSubgroupShuffle(vec<bool, N> value, ushort lane)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return (vec<bool, N>)quad_shuffle((vec<ushort, N>)value, lane);");
+			else
+				statement("return (vec<bool, N>)simd_shuffle((vec<ushort, N>)value, lane);");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplSubgroupShuffleXor:
+			statement("template<typename T>");
+			statement("inline T spvSubgroupShuffleXor(T value, ushort mask)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return quad_shuffle_xor(value, mask);");
+			else
+				statement("return simd_shuffle_xor(value, mask);");
+			end_scope();
+			statement("");
+			statement("template<>");
+			statement("inline bool spvSubgroupShuffleXor(bool value, ushort mask)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return !!quad_shuffle_xor((ushort)value, mask);");
+			else
+				statement("return !!simd_shuffle_xor((ushort)value, mask);");
+			end_scope();
+			statement("");
+			statement("template<uint N>");
+			statement("inline vec<bool, N> spvSubgroupShuffleXor(vec<bool, N> value, ushort mask)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return (vec<bool, N>)quad_shuffle_xor((vec<ushort, N>)value, mask);");
+			else
+				statement("return (vec<bool, N>)simd_shuffle_xor((vec<ushort, N>)value, mask);");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplSubgroupShuffleUp:
+			statement("template<typename T>");
+			statement("inline T spvSubgroupShuffleUp(T value, ushort delta)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return quad_shuffle_up(value, delta);");
+			else
+				statement("return simd_shuffle_up(value, delta);");
+			end_scope();
+			statement("");
+			statement("template<>");
+			statement("inline bool spvSubgroupShuffleUp(bool value, ushort delta)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return !!quad_shuffle_up((ushort)value, delta);");
+			else
+				statement("return !!simd_shuffle_up((ushort)value, delta);");
+			end_scope();
+			statement("");
+			statement("template<uint N>");
+			statement("inline vec<bool, N> spvSubgroupShuffleUp(vec<bool, N> value, ushort delta)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return (vec<bool, N>)quad_shuffle_up((vec<ushort, N>)value, delta);");
+			else
+				statement("return (vec<bool, N>)simd_shuffle_up((vec<ushort, N>)value, delta);");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplSubgroupShuffleDown:
+			statement("template<typename T>");
+			statement("inline T spvSubgroupShuffleDown(T value, ushort delta)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return quad_shuffle_down(value, delta);");
+			else
+				statement("return simd_shuffle_down(value, delta);");
+			end_scope();
+			statement("");
+			statement("template<>");
+			statement("inline bool spvSubgroupShuffleDown(bool value, ushort delta)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return !!quad_shuffle_down((ushort)value, delta);");
+			else
+				statement("return !!simd_shuffle_down((ushort)value, delta);");
+			end_scope();
+			statement("");
+			statement("template<uint N>");
+			statement("inline vec<bool, N> spvSubgroupShuffleDown(vec<bool, N> value, ushort delta)");
+			begin_scope();
+			if (msl_options.is_ios())
+				statement("return (vec<bool, N>)quad_shuffle_down((vec<ushort, N>)value, delta);");
+			else
+				statement("return (vec<bool, N>)simd_shuffle_down((vec<ushort, N>)value, delta);");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplQuadBroadcast:
+			statement("template<typename T>");
+			statement("inline T spvQuadBroadcast(T value, uint lane)");
+			begin_scope();
+			statement("return quad_broadcast(value, lane);");
+			end_scope();
+			statement("");
+			statement("template<>");
+			statement("inline bool spvQuadBroadcast(bool value, uint lane)");
+			begin_scope();
+			statement("return !!quad_broadcast((ushort)value, lane);");
+			end_scope();
+			statement("");
+			statement("template<uint N>");
+			statement("inline vec<bool, N> spvQuadBroadcast(vec<bool, N> value, uint lane)");
+			begin_scope();
+			statement("return (vec<bool, N>)quad_broadcast((vec<ushort, N>)value, lane);");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplQuadSwap:
+			// We can implement this easily based on the following table giving
+			// the target lane ID from the direction and current lane ID:
+			//        Direction
+			//      | 0 | 1 | 2 |
+			//   ---+---+---+---+
+			// L 0  | 1   2   3
+			// a 1  | 0   3   2
+			// n 2  | 3   0   1
+			// e 3  | 2   1   0
+			// Notice that target = source ^ (direction + 1).
+			statement("template<typename T>");
+			statement("inline T spvQuadSwap(T value, uint dir)");
+			begin_scope();
+			statement("return quad_shuffle_xor(value, dir + 1);");
+			end_scope();
+			statement("");
+			statement("template<>");
+			statement("inline bool spvQuadSwap(bool value, uint dir)");
+			begin_scope();
+			statement("return !!quad_shuffle_xor((ushort)value, dir + 1);");
+			end_scope();
+			statement("");
+			statement("template<uint N>");
+			statement("inline vec<bool, N> spvQuadSwap(vec<bool, N> value, uint dir)");
+			begin_scope();
+			statement("return (vec<bool, N>)quad_shuffle_xor((vec<ushort, N>)value, dir + 1);");
 			end_scope();
 			statement("");
 			break;
@@ -7168,7 +7415,7 @@ void CompilerMSL::emit_texture_op(const Instruction &i, bool sparse)
 	if (sparse)
 		SPIRV_CROSS_THROW("Sparse feedback not yet supported in MSL.");
 
-	if (msl_options.is_ios() && msl_options.ios_use_framebuffer_fetch_subpasses)
+	if (msl_options.use_framebuffer_fetch_subpasses)
 	{
 		auto *ops = stream(i);
 
@@ -8265,25 +8512,26 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 		break;
 	}
 
-	if (args.base.is_fetch && args.offset)
+	if (args.base.is_fetch && (args.offset || args.coffset))
 	{
+		uint32_t offset_expr = args.offset ? args.offset : args.coffset;
 		// Fetch offsets must be applied directly to the coordinate.
-		forward = forward && should_forward(args.offset);
-		auto &type = expression_type(args.offset);
-		if (type.basetype != SPIRType::UInt)
-			tex_coords += " + " + bitcast_expression(SPIRType::UInt, args.offset);
+		forward = forward && should_forward(offset_expr);
+		auto &type = expression_type(offset_expr);
+		if (imgtype.image.dim == Dim1D && msl_options.texture_1D_as_2D)
+		{
+			if (type.basetype != SPIRType::UInt)
+				tex_coords += join(" + uint2(", bitcast_expression(SPIRType::UInt, offset_expr), ", 0)");
+			else
+				tex_coords += join(" + uint2(", to_enclosed_expression(offset_expr), ", 0)");
+		}
 		else
-			tex_coords += " + " + to_enclosed_expression(args.offset);
-	}
-	else if (args.base.is_fetch && args.coffset)
-	{
-		// Fetch offsets must be applied directly to the coordinate.
-		forward = forward && should_forward(args.coffset);
-		auto &type = expression_type(args.coffset);
-		if (type.basetype != SPIRType::UInt)
-			tex_coords += " + " + bitcast_expression(SPIRType::UInt, args.coffset);
-		else
-			tex_coords += " + " + to_enclosed_expression(args.coffset);
+		{
+			if (type.basetype != SPIRType::UInt)
+				tex_coords += " + " + bitcast_expression(SPIRType::UInt, offset_expr);
+			else
+				tex_coords += " + " + to_enclosed_expression(offset_expr);
+		}
 	}
 
 	// If projection, use alt coord as divisor
@@ -8454,6 +8702,7 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 		string grad_opt;
 		switch (imgtype.image.dim)
 		{
+		case Dim1D:
 		case Dim2D:
 			grad_opt = "2d";
 			break;
@@ -8489,30 +8738,42 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 
 	// Add offsets
 	string offset_expr;
+	const SPIRType *offset_type = nullptr;
 	if (args.coffset && !args.base.is_fetch)
 	{
 		forward = forward && should_forward(args.coffset);
 		offset_expr = to_expression(args.coffset);
+		offset_type = &expression_type(args.coffset);
 	}
 	else if (args.offset && !args.base.is_fetch)
 	{
 		forward = forward && should_forward(args.offset);
 		offset_expr = to_expression(args.offset);
+		offset_type = &expression_type(args.offset);
 	}
 
 	if (!offset_expr.empty())
 	{
 		switch (imgtype.image.dim)
 		{
+		case Dim1D:
+			if (!msl_options.texture_1D_as_2D)
+				break;
+			if (offset_type->vecsize > 1)
+				offset_expr = enclose_expression(offset_expr) + ".x";
+
+			farg_str += join(", int2(", offset_expr, ", 0)");
+			break;
+
 		case Dim2D:
-			if (coord_type.vecsize > 2)
+			if (offset_type->vecsize > 2)
 				offset_expr = enclose_expression(offset_expr) + ".xy";
 
 			farg_str += ", " + offset_expr;
 			break;
 
 		case Dim3D:
-			if (coord_type.vecsize > 3)
+			if (offset_type->vecsize > 3)
 				offset_expr = enclose_expression(offset_expr) + ".xyz";
 
 			farg_str += ", " + offset_expr;
@@ -8532,7 +8793,10 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 		if (!msl_options.swizzle_texture_samples || is_dynamic_img_sampler)
 		{
 			forward = forward && should_forward(args.component);
-			farg_str += ", " + to_component_argument(args.component);
+
+			if (const auto *var = maybe_get_backing_variable(img))
+				if (!image_is_comparison(get<SPIRType>(var->basetype), var->self))
+					farg_str += ", " + to_component_argument(args.component);
 		}
 	}
 
@@ -8962,9 +9226,9 @@ string CompilerMSL::to_swizzle_expression(uint32_t id)
 	auto index = expr.find_first_of('[');
 
 	// If an image is part of an argument buffer translate this to a legal identifier.
-	for (auto &c : expr)
-		if (c == '.')
-			c = '_';
+	string::size_type period = 0;
+	while ((period = expr.find_first_of('.', period)) != string::npos && period < index)
+		expr[period] = '_';
 
 	if (index == string::npos)
 		return expr + swizzle_name_suffix;
@@ -9828,9 +10092,9 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 				if (bi_type == BuiltInSampleMask && get_entry_point().flags.get(ExecutionModePostDepthCoverage))
 				{
 					if (!msl_options.supports_msl_version(2))
-						SPIRV_CROSS_THROW("Post-depth coverage requires Metal 2.0.");
-					if (!msl_options.is_ios())
-						SPIRV_CROSS_THROW("Post-depth coverage is only supported on iOS.");
+						SPIRV_CROSS_THROW("Post-depth coverage requires MSL 2.0.");
+					if (msl_options.is_macos() && !msl_options.supports_msl_version(2, 3))
+						SPIRV_CROSS_THROW("Post-depth coverage on Mac requires MSL 2.3.");
 					ep_args += ", post_depth_coverage";
 				}
 				ep_args += "]]";
@@ -10207,6 +10471,8 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 			}
 			else
 			{
+				if (msl_options.is_macos() && !msl_options.supports_msl_version(2, 3))
+					SPIRV_CROSS_THROW("Framebuffer fetch on Mac is not supported before MSL 2.3.");
 				ep_args += image_type_glsl(type, var_id) + " " + r.name;
 				ep_args += " [[color(" + convert_to_string(r.index) + ")]]";
 			}
@@ -10449,7 +10715,7 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.1.");
 				entry_func.fixup_hooks_in.push_back([=]() {
 					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
-					          to_expression(builtin_subgroup_invocation_id_id), " > 32 ? uint4(0, (1 << (",
+					          to_expression(builtin_subgroup_invocation_id_id), " >= 32 ? uint4(0, (1 << (",
 					          to_expression(builtin_subgroup_invocation_id_id), " - 32)), uint2(0)) : uint4(1 << ",
 					          to_expression(builtin_subgroup_invocation_id_id), ", uint3(0));");
 				});
@@ -10461,25 +10727,25 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.1.");
 				entry_func.fixup_hooks_in.push_back([=]() {
 					// Case where index < 32, size < 32:
-					// mask0 = bfe(0xFFFFFFFF, index, size - index);
-					// mask1 = bfe(0xFFFFFFFF, 0, 0); // Gives 0
+					// mask0 = bfi(0, 0xFFFFFFFF, index, size - index);
+					// mask1 = bfi(0, 0xFFFFFFFF, 0, 0); // Gives 0
 					// Case where index < 32 but size >= 32:
-					// mask0 = bfe(0xFFFFFFFF, index, 32 - index);
-					// mask1 = bfe(0xFFFFFFFF, 0, size - 32);
+					// mask0 = bfi(0, 0xFFFFFFFF, index, 32 - index);
+					// mask1 = bfi(0, 0xFFFFFFFF, 0, size - 32);
 					// Case where index >= 32:
-					// mask0 = bfe(0xFFFFFFFF, 32, 0); // Gives 0
-					// mask1 = bfe(0xFFFFFFFF, index - 32, size - index);
+					// mask0 = bfi(0, 0xFFFFFFFF, 32, 0); // Gives 0
+					// mask1 = bfi(0, 0xFFFFFFFF, index - 32, size - index);
 					// This is expressed without branches to avoid divergent
 					// control flow--hence the complicated min/max expressions.
 					// This is further complicated by the fact that if you attempt
-					// to bfe out-of-bounds on Metal, undefined behavior is the
+					// to bfi/bfe out-of-bounds on Metal, undefined behavior is the
 					// result.
 					statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
-					          " = uint4(extract_bits(0xFFFFFFFF, min(",
+					          " = uint4(insert_bits(0u, 0xFFFFFFFF, min(",
 					          to_expression(builtin_subgroup_invocation_id_id), ", 32u), (uint)max(min((int)",
 					          to_expression(builtin_subgroup_size_id), ", 32) - (int)",
 					          to_expression(builtin_subgroup_invocation_id_id),
-					          ", 0)), extract_bits(0xFFFFFFFF, (uint)max((int)",
+					          ", 0)), insert_bits(0u, 0xFFFFFFFF, (uint)max((int)",
 					          to_expression(builtin_subgroup_invocation_id_id), " - 32, 0), (uint)max((int)",
 					          to_expression(builtin_subgroup_size_id), " - (int)max(",
 					          to_expression(builtin_subgroup_invocation_id_id), ", 32u), 0)), uint2(0));");
@@ -10494,11 +10760,11 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 					// The same logic applies here, except now the index is one
 					// more than the subgroup invocation ID.
 					statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
-					          " = uint4(extract_bits(0xFFFFFFFF, min(",
+					          " = uint4(insert_bits(0u, 0xFFFFFFFF, min(",
 					          to_expression(builtin_subgroup_invocation_id_id), " + 1, 32u), (uint)max(min((int)",
 					          to_expression(builtin_subgroup_size_id), ", 32) - (int)",
 					          to_expression(builtin_subgroup_invocation_id_id),
-					          " - 1, 0)), extract_bits(0xFFFFFFFF, (uint)max((int)",
+					          " - 1, 0)), insert_bits(0u, 0xFFFFFFFF, (uint)max((int)",
 					          to_expression(builtin_subgroup_invocation_id_id), " + 1 - 32, 0), (uint)max((int)",
 					          to_expression(builtin_subgroup_size_id), " - (int)max(",
 					          to_expression(builtin_subgroup_invocation_id_id), " + 1, 32u), 0)), uint2(0));");
@@ -10834,8 +11100,8 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 
 bool CompilerMSL::type_is_msl_framebuffer_fetch(const SPIRType &type) const
 {
-	return type.basetype == SPIRType::Image && type.image.dim == DimSubpassData && msl_options.is_ios() &&
-	       msl_options.ios_use_framebuffer_fetch_subpasses;
+	return type.basetype == SPIRType::Image && type.image.dim == DimSubpassData &&
+	       msl_options.use_framebuffer_fetch_subpasses;
 }
 
 string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
@@ -11062,6 +11328,11 @@ void CompilerMSL::replace_illegal_names()
 		"fragment",
 		"compute",
 		"bias",
+		"level",
+		"gradient2d",
+		"gradientcube",
+		"gradient3d",
+		"min_lod_clamp",
 		"assert",
 		"VARIABLE_TRACEPOINT",
 		"STATIC_DATA_TRACEPOINT",
@@ -11850,12 +12121,11 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 		break;
 
 	case OpGroupNonUniformBroadcast:
-		emit_binary_func_op(result_type, id, ops[3], ops[4],
-		                    msl_options.is_ios() ? "quad_broadcast" : "simd_broadcast");
+		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupBroadcast");
 		break;
 
 	case OpGroupNonUniformBroadcastFirst:
-		emit_unary_func_op(result_type, id, ops[3], "simd_broadcast_first");
+		emit_unary_func_op(result_type, id, ops[3], "spvSubgroupBroadcastFirst");
 		break;
 
 	case OpGroupNonUniformBallot:
@@ -11871,46 +12141,50 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 		break;
 
 	case OpGroupNonUniformBallotFindLSB:
-		emit_unary_func_op(result_type, id, ops[3], "spvSubgroupBallotFindLSB");
+		emit_binary_func_op(result_type, id, ops[3], builtin_subgroup_size_id, "spvSubgroupBallotFindLSB");
 		break;
 
 	case OpGroupNonUniformBallotFindMSB:
-		emit_unary_func_op(result_type, id, ops[3], "spvSubgroupBallotFindMSB");
+		emit_binary_func_op(result_type, id, ops[3], builtin_subgroup_size_id, "spvSubgroupBallotFindMSB");
 		break;
 
 	case OpGroupNonUniformBallotBitCount:
 	{
 		auto operation = static_cast<GroupOperation>(ops[3]);
-		if (operation == GroupOperationReduce)
-			emit_unary_func_op(result_type, id, ops[4], "spvSubgroupBallotBitCount");
-		else if (operation == GroupOperationInclusiveScan)
+		switch (operation)
+		{
+		case GroupOperationReduce:
+			emit_binary_func_op(result_type, id, ops[4], builtin_subgroup_size_id, "spvSubgroupBallotBitCount");
+			break;
+		case GroupOperationInclusiveScan:
 			emit_binary_func_op(result_type, id, ops[4], builtin_subgroup_invocation_id_id,
 			                    "spvSubgroupBallotInclusiveBitCount");
-		else if (operation == GroupOperationExclusiveScan)
+			break;
+		case GroupOperationExclusiveScan:
 			emit_binary_func_op(result_type, id, ops[4], builtin_subgroup_invocation_id_id,
 			                    "spvSubgroupBallotExclusiveBitCount");
-		else
+			break;
+		default:
 			SPIRV_CROSS_THROW("Invalid BitCount operation.");
+			break;
+		}
 		break;
 	}
 
 	case OpGroupNonUniformShuffle:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], msl_options.is_ios() ? "quad_shuffle" : "simd_shuffle");
+		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupShuffle");
 		break;
 
 	case OpGroupNonUniformShuffleXor:
-		emit_binary_func_op(result_type, id, ops[3], ops[4],
-		                    msl_options.is_ios() ? "quad_shuffle_xor" : "simd_shuffle_xor");
+		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupShuffleXor");
 		break;
 
 	case OpGroupNonUniformShuffleUp:
-		emit_binary_func_op(result_type, id, ops[3], ops[4],
-		                    msl_options.is_ios() ? "quad_shuffle_up" : "simd_shuffle_up");
+		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupShuffleUp");
 		break;
 
 	case OpGroupNonUniformShuffleDown:
-		emit_binary_func_op(result_type, id, ops[3], ops[4],
-		                    msl_options.is_ios() ? "quad_shuffle_down" : "simd_shuffle_down");
+		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupShuffleDown");
 		break;
 
 	case OpGroupNonUniformAll:
@@ -12018,26 +12292,11 @@ case OpGroupNonUniform##op: \
 #undef MSL_GROUP_OP_CAST
 
 	case OpGroupNonUniformQuadSwap:
-	{
-		// We can implement this easily based on the following table giving
-		// the target lane ID from the direction and current lane ID:
-		//        Direction
-		//      | 0 | 1 | 2 |
-		//   ---+---+---+---+
-		// L 0  | 1   2   3
-		// a 1  | 0   3   2
-		// n 2  | 3   0   1
-		// e 3  | 2   1   0
-		// Notice that target = source ^ (direction + 1).
-		uint32_t mask = evaluate_constant_u32(ops[4]) + 1;
-		uint32_t mask_id = ir.increase_bound_by(1);
-		set<SPIRConstant>(mask_id, expression_type_id(ops[4]), mask, false);
-		emit_binary_func_op(result_type, id, ops[3], mask_id, "quad_shuffle_xor");
+		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvQuadSwap");
 		break;
-	}
 
 	case OpGroupNonUniformQuadBroadcast:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], "quad_broadcast");
+		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvQuadBroadcast");
 		break;
 
 	default:
@@ -12930,7 +13189,8 @@ bool CompilerMSL::OpCodePreprocessor::handle(Op opcode, const uint32_t *args, ui
 	}
 
 	case OpImageWrite:
-		uses_resource_write = true;
+		if (!compiler.msl_options.supports_msl_version(2, 2))
+			uses_resource_write = true;
 		break;
 
 	case OpStore:
@@ -12990,8 +13250,15 @@ bool CompilerMSL::OpCodePreprocessor::handle(Op opcode, const uint32_t *args, ui
 		needs_subgroup_invocation_id = true;
 		break;
 
+	case OpGroupNonUniformBallotFindLSB:
+	case OpGroupNonUniformBallotFindMSB:
+		needs_subgroup_size = true;
+		break;
+
 	case OpGroupNonUniformBallotBitCount:
-		if (args[3] != GroupOperationReduce)
+		if (args[3] == GroupOperationReduce)
+			needs_subgroup_size = true;
+		else
 			needs_subgroup_invocation_id = true;
 		break;
 
@@ -13035,7 +13302,8 @@ void CompilerMSL::OpCodePreprocessor::check_resource_write(uint32_t var_id)
 {
 	auto *p_var = compiler.maybe_get_backing_variable(var_id);
 	StorageClass sc = p_var ? p_var->storage : StorageClassMax;
-	if (sc == StorageClassUniform || sc == StorageClassStorageBuffer)
+	if (!compiler.msl_options.supports_msl_version(2, 1) &&
+	    (sc == StorageClassUniform || sc == StorageClassStorageBuffer))
 		uses_resource_write = true;
 }
 
@@ -13174,6 +13442,12 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 		break;
 	}
 
+	case OpGroupNonUniformBroadcast:
+		return SPVFuncImplSubgroupBroadcast;
+
+	case OpGroupNonUniformBroadcastFirst:
+		return SPVFuncImplSubgroupBroadcastFirst;
+
 	case OpGroupNonUniformBallot:
 		return SPVFuncImplSubgroupBallot;
 
@@ -13192,6 +13466,24 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 
 	case OpGroupNonUniformAllEqual:
 		return SPVFuncImplSubgroupAllEqual;
+
+	case OpGroupNonUniformShuffle:
+		return SPVFuncImplSubgroupShuffle;
+
+	case OpGroupNonUniformShuffleXor:
+		return SPVFuncImplSubgroupShuffleXor;
+
+	case OpGroupNonUniformShuffleUp:
+		return SPVFuncImplSubgroupShuffleUp;
+
+	case OpGroupNonUniformShuffleDown:
+		return SPVFuncImplSubgroupShuffleDown;
+
+	case OpGroupNonUniformQuadBroadcast:
+		return SPVFuncImplQuadBroadcast;
+
+	case OpGroupNonUniformQuadSwap:
+		return SPVFuncImplQuadSwap;
 
 	default:
 		break;
