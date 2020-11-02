@@ -94,6 +94,9 @@ class Function {
   // Returns function's return type id
   inline uint32_t type_id() const { return def_inst_->type_id(); }
 
+  // Returns the function's control mask
+  inline uint32_t control_mask() const { return def_inst_->GetSingleWordInOperand(0); }
+
   // Returns the entry basic block for this function.
   const std::unique_ptr<BasicBlock>& entry() const { return blocks_.front(); }
 

@@ -527,7 +527,7 @@ void Instruction::UpdateDebugInfoFrom(const Instruction* from) {
   if (from == nullptr) return;
   clear_dbg_line_insts();
   if (!from->dbg_line_insts().empty())
-    dbg_line_insts().push_back(from->dbg_line_insts()[0]);
+    dbg_line_insts().push_back(from->dbg_line_insts().back());
   SetDebugScope(from->GetDebugScope());
   if (!IsDebugLineInst(opcode()) &&
       context()->AreAnalysesValid(IRContext::kAnalysisDebugInfo)) {

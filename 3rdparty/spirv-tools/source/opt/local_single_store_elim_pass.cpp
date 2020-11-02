@@ -149,8 +149,8 @@ bool LocalSingleStoreElimPass::ProcessVariable(Instruction* var_inst) {
     const analysis::Type* store_type = var_type->AsPointer()->pointee_type();
     if (!(store_type->AsStruct() || store_type->AsArray())) {
       context()->get_debug_info_mgr()->AddDebugValueIfVarDeclIsVisible(
-          store_inst, var_id, store_inst->GetSingleWordInOperand(1),
-          store_inst);
+          nullptr, var_id, store_inst->GetSingleWordInOperand(1), store_inst,
+          nullptr);
       context()->get_debug_info_mgr()->KillDebugDeclares(var_id);
     }
   }

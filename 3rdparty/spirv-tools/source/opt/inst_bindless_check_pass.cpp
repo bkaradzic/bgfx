@@ -349,8 +349,9 @@ uint32_t InstBindlessCheckPass::GenLastByteIdx(ref_analysis* ref,
                                    : SpvDecorationArrayStride;
         uint32_t arr_stride = FindStride(curr_ty_id, stride_deco);
         uint32_t arr_stride_id = builder->GetUintConstantId(arr_stride);
+        uint32_t curr_idx_32b_id = Gen32BitCvtCode(curr_idx_id, builder);
         Instruction* curr_offset_inst = builder->AddBinaryOp(
-            GetUintId(), SpvOpIMul, arr_stride_id, curr_idx_id);
+            GetUintId(), SpvOpIMul, arr_stride_id, curr_idx_32b_id);
         curr_offset_id = curr_offset_inst->result_id();
         // Get element type for next step
         curr_ty_id = curr_ty_inst->GetSingleWordInOperand(0);
@@ -360,8 +361,9 @@ uint32_t InstBindlessCheckPass::GenLastByteIdx(ref_analysis* ref,
         uint32_t comp_ty_id = curr_ty_inst->GetSingleWordInOperand(0u);
         uint32_t vec_stride = ByteSize(comp_ty_id);
         uint32_t vec_stride_id = builder->GetUintConstantId(vec_stride);
+        uint32_t curr_idx_32b_id = Gen32BitCvtCode(curr_idx_id, builder);
         Instruction* curr_offset_inst = builder->AddBinaryOp(
-            GetUintId(), SpvOpIMul, vec_stride_id, curr_idx_id);
+            GetUintId(), SpvOpIMul, vec_stride_id, curr_idx_32b_id);
         curr_offset_id = curr_offset_inst->result_id();
         // Get element type for next step
         curr_ty_id = comp_ty_id;
@@ -434,18 +436,27 @@ void InstBindlessCheckPass::GenCheckCode(
   new_blk_ptr.reset(new BasicBlock(std::move(invalid_label)));
   builder.SetInsertPoint(&*new_blk_ptr);
   uint32_t u_index_id = GenUintCastCode(ref->desc_idx_id, &builder);
-  if (offset_id != 0)
+  if (offset_id != 0) {
+    // Buffer OOB
+    uint32_t u_offset_id = GenUintCastCode(offset_id, &builder);
+    uint32_t u_length_id = GenUintCastCode(length_id, &builder);
     GenDebugStreamWrite(uid2offset_[ref->ref_inst->unique_id()], stage_idx,
-                        {error_id, u_index_id, offset_id, length_id}, &builder);
-  else if (buffer_bounds_enabled_)
-    // So all error modes will use same debug stream write function
+                        {error_id, u_index_id, u_offset_id, u_length_id},
+                        &builder);
+  } else if (buffer_bounds_enabled_) {
+    // Uninitialized Descriptor - Return additional unused zero so all error
+    // modes will use same debug stream write function
+    uint32_t u_length_id = GenUintCastCode(length_id, &builder);
     GenDebugStreamWrite(
         uid2offset_[ref->ref_inst->unique_id()], stage_idx,
-        {error_id, u_index_id, length_id, builder.GetUintConstantId(0)},
+        {error_id, u_index_id, u_length_id, builder.GetUintConstantId(0)},
         &builder);
-  else
+  } else {
+    // Uninitialized Descriptor - Normal error return
+    uint32_t u_length_id = GenUintCastCode(length_id, &builder);
     GenDebugStreamWrite(uid2offset_[ref->ref_inst->unique_id()], stage_idx,
-                        {error_id, u_index_id, length_id}, &builder);
+                        {error_id, u_index_id, u_length_id}, &builder);
+  }
   // Remember last invalid block id
   uint32_t last_invalid_blk_id = new_blk_ptr->GetLabelInst()->result_id();
   // Gen zero for invalid  reference
@@ -516,8 +527,11 @@ void InstBindlessCheckPass::GenDescIdxCheckCode(
   // Generate full runtime bounds test code with true branch
   // being full reference and false branch being debug output and zero
   // for the referenced value.
+  uint32_t desc_idx_32b_id = Gen32BitCvtCode(ref.desc_idx_id, &builder);
+  uint32_t length_32b_id = Gen32BitCvtCode(length_id, &builder);
   Instruction* ult_inst = builder.AddBinaryOp(GetBoolId(), SpvOpULessThan,
-                                              ref.desc_idx_id, length_id);
+                                              desc_idx_32b_id, length_32b_id);
+  ref.desc_idx_id = desc_idx_32b_id;
   GenCheckCode(ult_inst->result_id(), error_id, 0u, length_id, stage_idx, &ref,
                new_blocks);
   // Move original block's remaining code into remainder/merge block and add

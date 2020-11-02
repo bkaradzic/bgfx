@@ -536,28 +536,16 @@ Optimizer::PassToken CreateDeadInsertElimPass();
 // eliminated with standard dead code elimination.
 Optimizer::PassToken CreateAggressiveDCEPass();
 
-// Create line propagation pass
-// This pass propagates line information based on the rules for OpLine and
-// OpNoline and clones an appropriate line instruction into every instruction
-// which does not already have debug line instructions.
-//
-// This pass is intended to maximize preservation of source line information
-// through passes which delete, move and clone instructions. Ideally it should
-// be run before any such pass. It is a bookend pass with EliminateDeadLines
-// which can be used to remove redundant line instructions at the end of a
-// run of such passes and reduce final output file size.
+// Creates an empty pass.
+// This is deprecated and will be removed.
+// TODO(jaebaek): remove this pass after handling glslang's broken unit tests.
+//                https://github.com/KhronosGroup/glslang/pull/2440
 Optimizer::PassToken CreatePropagateLineInfoPass();
 
-// Create dead line elimination pass
-// This pass eliminates redundant line instructions based on the rules for
-// OpLine and OpNoline. Its main purpose is to reduce the size of the file
-// need to store the SPIR-V without losing line information.
-//
-// This is a bookend pass with PropagateLines which attaches line instructions
-// to every instruction to preserve line information during passes which
-// delete, move and clone instructions. DeadLineElim should be run after
-// PropagateLines and all such subsequent passes. Normally it would be one
-// of the last passes to be run.
+// Creates an empty pass.
+// This is deprecated and will be removed.
+// TODO(jaebaek): remove this pass after handling glslang's broken unit tests.
+//                https://github.com/KhronosGroup/glslang/pull/2440
 Optimizer::PassToken CreateRedundantLineInfoElimPass();
 
 // Creates a compact ids pass.
