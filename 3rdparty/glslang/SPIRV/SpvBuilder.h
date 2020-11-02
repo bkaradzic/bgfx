@@ -721,7 +721,8 @@ public:
     }
 
     // use accessChain and swizzle to store value
-    void accessChainStore(Id rvalue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone,
+    void accessChainStore(Id rvalue, Decoration nonUniform,
+        spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone,
         spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // use accessChain and swizzle to load an r-value

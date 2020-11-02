@@ -4226,6 +4226,8 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
         (identifier == "gl_FragCoord"           && ((nonEsRedecls && version >= 150) || esRedecls)) ||
          identifier == "gl_ClipDistance"                                                            ||
          identifier == "gl_CullDistance"                                                            ||
+         identifier == "gl_ShadingRateEXT"                                                          ||
+         identifier == "gl_PrimitiveShadingRateEXT"                                                 ||
          identifier == "gl_FrontColor"                                                              ||
          identifier == "gl_BackColor"                                                               ||
          identifier == "gl_FrontSecondaryColor"                                                     ||

@@ -1986,6 +1986,7 @@ public:
         case EbtAccStruct:         return "accelerationStructureNV";
         case EbtRayQuery:          return "rayQueryEXT";
         case EbtReference:         return "reference";
+        case EbtString:            return "string";
 #endif
         default:                   return "unknown type";
         }

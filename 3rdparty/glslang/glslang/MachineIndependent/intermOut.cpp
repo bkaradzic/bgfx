@@ -1321,6 +1321,9 @@ static void OutputConstantUnion(TInfoSink& out, const TIntermTyped* node, const 
                 out.debug << buf << "\n";
             }
             break;
+        case EbtString:
+            out.debug << "\"" << constUnion[i].getSConst()->c_str() << "\"\n";
+            break;
         default:
             out.info.message(EPrefixInternalError, "Unknown constant", node->getLoc());
             break;

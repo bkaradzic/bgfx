@@ -372,6 +372,8 @@ const char* BuiltInString(int builtIn)
     case 4424: return "BaseVertex";
     case 4425: return "BaseInstance";
     case 4426: return "DrawIndex";
+    case 4432: return "PrimitiveShadingRateKHR";
+    case 4444: return "ShadingRateKHR";
     case 5014: return "FragStencilRefEXT";
 
     case 4992: return "BaryCoordNoPerspAMD";
@@ -951,6 +953,8 @@ const char* CapabilityString(int info)
     case CapabilityFragmentShaderSampleInterlockEXT:        return "CapabilityFragmentShaderSampleInterlockEXT";
     case CapabilityFragmentShaderPixelInterlockEXT:         return "CapabilityFragmentShaderPixelInterlockEXT";
     case CapabilityFragmentShaderShadingRateInterlockEXT:   return "CapabilityFragmentShaderShadingRateInterlockEXT";
+
+    case CapabilityFragmentShadingRateKHR:                  return "FragmentShadingRateKHR";
 
     case CapabilityDemoteToHelperInvocationEXT:             return "DemoteToHelperInvocationEXT";
     case CapabilityShaderClockKHR:                          return "ShaderClockKHR";
