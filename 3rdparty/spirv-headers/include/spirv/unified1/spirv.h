@@ -54,11 +54,11 @@
 typedef unsigned int SpvId;
 
 #define SPV_VERSION 0x10500
-#define SPV_REVISION 3
+#define SPV_REVISION 4
 
 static const unsigned int SpvMagicNumber = 0x07230203;
 static const unsigned int SpvVersion = 0x00010500;
-static const unsigned int SpvRevision = 3;
+static const unsigned int SpvRevision = 4;
 static const unsigned int SpvOpCodeMask = 0xffff;
 static const unsigned int SpvWordCountShift = 16;
 
@@ -278,6 +278,8 @@ typedef enum SpvImageFormat_ {
     SpvImageFormatRg8ui = 37,
     SpvImageFormatR16ui = 38,
     SpvImageFormatR8ui = 39,
+    SpvImageFormatR64ui = 40,
+    SpvImageFormatR64i = 41,
     SpvImageFormatMax = 0x7fffffff,
 } SpvImageFormat;
 
@@ -562,8 +564,10 @@ typedef enum SpvBuiltIn_ {
     SpvBuiltInBaseVertex = 4424,
     SpvBuiltInBaseInstance = 4425,
     SpvBuiltInDrawIndex = 4426,
+    SpvBuiltInPrimitiveShadingRateKHR = 4432,
     SpvBuiltInDeviceIndex = 4438,
     SpvBuiltInViewIndex = 4440,
+    SpvBuiltInShadingRateKHR = 4444,
     SpvBuiltInBaryCoordNoPerspAMD = 4992,
     SpvBuiltInBaryCoordNoPerspCentroidAMD = 4993,
     SpvBuiltInBaryCoordNoPerspSampleAMD = 4994,
@@ -874,6 +878,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityGroupNonUniformQuad = 68,
     SpvCapabilityShaderLayer = 69,
     SpvCapabilityShaderViewportIndex = 70,
+    SpvCapabilityFragmentShadingRateKHR = 4422,
     SpvCapabilitySubgroupBallotKHR = 4423,
     SpvCapabilityDrawParameters = 4427,
     SpvCapabilitySubgroupVoteKHR = 4431,
@@ -904,6 +909,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityFragmentMaskAMD = 5010,
     SpvCapabilityStencilExportEXT = 5013,
     SpvCapabilityImageReadWriteLodAMD = 5015,
+    SpvCapabilityInt64ImageEXT = 5016,
     SpvCapabilityShaderClockKHR = 5055,
     SpvCapabilitySampleMaskOverrideCoverageNV = 5249,
     SpvCapabilityGeometryShaderPassthroughNV = 5251,
@@ -1027,6 +1033,22 @@ typedef enum SpvRayQueryCandidateIntersectionType_ {
     SpvRayQueryCandidateIntersectionTypeRayQueryCandidateIntersectionAABBKHR = 1,
     SpvRayQueryCandidateIntersectionTypeMax = 0x7fffffff,
 } SpvRayQueryCandidateIntersectionType;
+
+typedef enum SpvFragmentShadingRateShift_ {
+    SpvFragmentShadingRateVertical2PixelsShift = 0,
+    SpvFragmentShadingRateVertical4PixelsShift = 1,
+    SpvFragmentShadingRateHorizontal2PixelsShift = 2,
+    SpvFragmentShadingRateHorizontal4PixelsShift = 3,
+    SpvFragmentShadingRateMax = 0x7fffffff,
+} SpvFragmentShadingRateShift;
+
+typedef enum SpvFragmentShadingRateMask_ {
+    SpvFragmentShadingRateMaskNone = 0,
+    SpvFragmentShadingRateVertical2PixelsMask = 0x00000001,
+    SpvFragmentShadingRateVertical4PixelsMask = 0x00000002,
+    SpvFragmentShadingRateHorizontal2PixelsMask = 0x00000004,
+    SpvFragmentShadingRateHorizontal4PixelsMask = 0x00000008,
+} SpvFragmentShadingRateMask;
 
 typedef enum SpvOp_ {
     SpvOpNop = 0,
