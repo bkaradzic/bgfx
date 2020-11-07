@@ -516,6 +516,7 @@ struct SPIRType : IVariant
 
 		// Keep internal types at the end.
 		ControlPointArray,
+		Interpolant,
 		Char
 	};
 
@@ -1572,6 +1573,13 @@ enum ExtendedDecorations
 	// SPIR-V, but the MSL backend can change the type of input variables, necessitating the
 	// addition of swizzles to keep the generated code compiling.
 	SPIRVCrossDecorationTessIOOriginalInputTypeID,
+
+	// Apply to any access chain of an interface variable used with pull-model interpolation, where the variable is a
+	// vector but the resulting pointer is a scalar; stores the component index that is to be accessed by the chain.
+	// This is used when emitting calls to interpolation functions on the chain in MSL: in this case, the component
+	// must be applied to the result, since pull-model interpolants in MSL cannot be swizzled directly, but the
+	// results of interpolation can.
+	SPIRVCrossDecorationInterpolantComponentExpr,
 
 	SPIRVCrossDecorationCount
 };
