@@ -161,6 +161,7 @@ Optimizer& Optimizer::RegisterPerformancePasses() {
       .RegisterPass(CreateDeadBranchElimPass())
       .RegisterPass(CreateMergeReturnPass())
       .RegisterPass(CreateInlineExhaustivePass())
+      .RegisterPass(CreateEliminateDeadFunctionsPass())
       .RegisterPass(CreateAggressiveDCEPass())
       .RegisterPass(CreatePrivateToLocalPass())
       .RegisterPass(CreateLocalSingleBlockLoadStoreElimPass())

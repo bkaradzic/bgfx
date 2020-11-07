@@ -138,14 +138,15 @@ class DebugInfoManager {
   bool IsVariableDebugDeclared(uint32_t variable_id);
 
   // Kills all debug declaration instructions with Deref whose 'Local Variable'
-  // operand is |variable_id|.
-  void KillDebugDeclares(uint32_t variable_id);
+  // operand is |variable_id|. Returns whether it kills an instruction or not.
+  bool KillDebugDeclares(uint32_t variable_id);
 
   // Generates a DebugValue instruction with value |value_id| for every local
   // variable that is in the scope of |scope_and_line| and whose memory is
   // |variable_id| and inserts it after the instruction |insert_pos|.
-  // |invisible_decls| returns DebugDeclares invisible to |scope_and_line|.
-  void AddDebugValueIfVarDeclIsVisible(
+  // Returns whether a DebugValue is added or not. |invisible_decls| returns
+  // DebugDeclares invisible to |scope_and_line|.
+  bool AddDebugValueIfVarDeclIsVisible(
       Instruction* scope_and_line, uint32_t variable_id, uint32_t value_id,
       Instruction* insert_pos,
       std::unordered_set<Instruction*>* invisible_decls);

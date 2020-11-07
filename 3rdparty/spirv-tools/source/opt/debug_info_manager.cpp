@@ -384,7 +384,8 @@ bool DebugInfoManager::IsVariableDebugDeclared(uint32_t variable_id) {
   return dbg_decl_itr != var_id_to_dbg_decl_.end();
 }
 
-void DebugInfoManager::KillDebugDeclares(uint32_t variable_id) {
+bool DebugInfoManager::KillDebugDeclares(uint32_t variable_id) {
+  bool modified = false;
   auto dbg_decl_itr = var_id_to_dbg_decl_.find(variable_id);
   if (dbg_decl_itr != var_id_to_dbg_decl_.end()) {
     // We intentionally copy the list of DebugDeclare instructions because
@@ -394,9 +395,11 @@ void DebugInfoManager::KillDebugDeclares(uint32_t variable_id) {
 
     for (auto* dbg_decl : copy_dbg_decls) {
       context()->KillInst(dbg_decl);
+      modified = true;
     }
     var_id_to_dbg_decl_.erase(dbg_decl_itr);
   }
+  return modified;
 }
 
 uint32_t DebugInfoManager::GetParentScope(uint32_t child_scope) {
@@ -514,16 +517,18 @@ Instruction* DebugInfoManager::AddDebugValueWithIndex(
   return added_dbg_value;
 }
 
-void DebugInfoManager::AddDebugValueIfVarDeclIsVisible(
+bool DebugInfoManager::AddDebugValueIfVarDeclIsVisible(
     Instruction* scope_and_line, uint32_t variable_id, uint32_t value_id,
     Instruction* insert_pos,
     std::unordered_set<Instruction*>* invisible_decls) {
-  auto dbg_decl_itr = var_id_to_dbg_decl_.find(variable_id);
-  if (dbg_decl_itr == var_id_to_dbg_decl_.end()) return;
+  assert(scope_and_line != nullptr);
 
+  auto dbg_decl_itr = var_id_to_dbg_decl_.find(variable_id);
+  if (dbg_decl_itr == var_id_to_dbg_decl_.end()) return false;
+
+  bool modified = false;
   for (auto* dbg_decl_or_val : dbg_decl_itr->second) {
-    if (scope_and_line &&
-        !IsDeclareVisibleToInstr(dbg_decl_or_val, scope_and_line)) {
+    if (!IsDeclareVisibleToInstr(dbg_decl_or_val, scope_and_line)) {
       if (invisible_decls) invisible_decls->insert(dbg_decl_or_val);
       continue;
     }
@@ -547,10 +552,11 @@ void DebugInfoManager::AddDebugValueIfVarDeclIsVisible(
                                    kDebugValueOperandLocalVariableIndex),
                                value_id, 0, index_id, insert_before);
     assert(added_dbg_value != nullptr);
-    added_dbg_value->UpdateDebugInfoFrom(scope_and_line ? scope_and_line
-                                                        : dbg_decl_or_val);
+    added_dbg_value->UpdateDebugInfoFrom(scope_and_line);
     AnalyzeDebugInst(added_dbg_value);
+    modified = true;
   }
+  return modified;
 }
 
 bool DebugInfoManager::AddDebugValueForDecl(Instruction* dbg_decl,

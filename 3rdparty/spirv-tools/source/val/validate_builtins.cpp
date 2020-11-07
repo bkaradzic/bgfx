@@ -2603,17 +2603,19 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
       assert(function_id_ == 0);
       for (const auto em :
            {SpvExecutionModelVertex, SpvExecutionModelTessellationEvaluation,
-            SpvExecutionModelGeometry}) {
+            SpvExecutionModelGeometry, SpvExecutionModelMeshNV}) {
         id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
-            std::bind(&BuiltInsValidator::ValidateNotCalledWithExecutionModel,
-                      this,
-                      "Vulkan spec doesn't allow BuiltIn Layer and "
-                      "ViewportIndex to be "
-                      "used for variables with Input storage class if "
-                      "execution model is Vertex, TessellationEvaluation, or "
-                      "Geometry.",
-                      em, decoration, built_in_inst, referenced_from_inst,
-                      std::placeholders::_1));
+            std::bind(
+                &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
+                std::string(
+                    _.VkErrorID((operand == SpvBuiltInLayer) ? 4274 : 4406) +
+                    "Vulkan spec doesn't allow BuiltIn Layer and "
+                    "ViewportIndex to be "
+                    "used for variables with Input storage class if "
+                    "execution model is Vertex, TessellationEvaluation, "
+                    "Geometry, or MeshNV."),
+                em, decoration, built_in_inst, referenced_from_inst,
+                std::placeholders::_1));
       }
     }
 
@@ -2621,11 +2623,12 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
       assert(function_id_ == 0);
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
           &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-          "Vulkan spec doesn't allow BuiltIn Layer and "
-          "ViewportIndex to be "
-          "used for variables with Output storage class if "
-          "execution model is "
-          "Fragment.",
+          std::string(_.VkErrorID((operand == SpvBuiltInLayer) ? 4275 : 4407) +
+                      "Vulkan spec doesn't allow BuiltIn Layer and "
+                      "ViewportIndex to be "
+                      "used for variables with Output storage class if "
+                      "execution model is "
+                      "Fragment."),
           SpvExecutionModelFragment, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
     }

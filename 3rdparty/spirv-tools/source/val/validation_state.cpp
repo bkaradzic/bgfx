@@ -1377,6 +1377,10 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-InstanceIndex-InstanceIndex-04265);
     case 4272:
       return VUID_WRAP(VUID-Layer-Layer-04272);
+    case 4274:
+      return VUID_WRAP(VUID-Layer-Layer-04274);
+    case 4275:
+      return VUID_WRAP(VUID-Layer-Layer-04275);
     case 4276:
       return VUID_WRAP(VUID-Layer-Layer-04276);
     case 4281:
@@ -1469,6 +1473,10 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-ViewIndex-ViewIndex-04403);
     case 4404:
       return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04404);
+    case 4406:
+      return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04406);
+    case 4407:
+      return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04407);
     case 4408:
       return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04408);
     case 4422:
@@ -1483,6 +1491,18 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-WorkgroupSize-WorkgroupSize-04426);
     case 4427:
       return VUID_WRAP(VUID-WorkgroupSize-WorkgroupSize-04427);
+    case 4484:
+      return VUID_WRAP(VUID-PrimitiveShadingRateKHR-PrimitiveShadingRateKHR-04484);
+    case 4485:
+      return VUID_WRAP(VUID-PrimitiveShadingRateKHR-PrimitiveShadingRateKHR-04485);
+    case 4486:
+      return VUID_WRAP(VUID-PrimitiveShadingRateKHR-PrimitiveShadingRateKHR-04486);
+    case 4490:
+      return VUID_WRAP(VUID-ShadingRateKHR-ShadingRateKHR-04490);
+    case 4491:
+      return VUID_WRAP(VUID-ShadingRateKHR-ShadingRateKHR-04491);
+    case 4492:
+      return VUID_WRAP(VUID-ShadingRateKHR-ShadingRateKHR-04492);
     default:
       return "";  // unknown id
   };

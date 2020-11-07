@@ -94,6 +94,10 @@ class LocalSingleStoreElimPass : public Pass {
   bool RewriteLoads(Instruction* store_inst,
                     const std::vector<Instruction*>& uses, bool* all_rewritten);
 
+  // Replaces DebugDeclares of |var_id| with DebugValues using the value
+  // assignment of |store_inst|.
+  bool RewriteDebugDeclares(Instruction* store_inst, uint32_t var_id);
+
   // Extensions supported by this pass.
   std::unordered_set<std::string> extensions_allowlist_;
 };
