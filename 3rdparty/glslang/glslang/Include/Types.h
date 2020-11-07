@@ -406,6 +406,7 @@ enum TLayoutFormat {
     ElfRg8i,
     ElfR16i,
     ElfR8i,
+    ElfR64i,
 
     ElfIntGuard,       // to help with comparisons
 
@@ -423,6 +424,7 @@ enum TLayoutFormat {
     ElfRg8ui,
     ElfR16ui,
     ElfR8ui,
+    ElfR64ui,
 
     ElfCount
 };
@@ -1117,6 +1119,8 @@ public:
         case ElfR32ui:        return "r32ui";
         case ElfR16ui:        return "r16ui";
         case ElfR8ui:         return "r8ui";
+        case ElfR64ui:        return "r64ui";
+        case ElfR64i:         return "r64i";
         default:              return "none";
         }
     }

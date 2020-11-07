@@ -714,8 +714,12 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
             glslangIntermediate->getStage() == EShLangTessControl ||
             glslangIntermediate->getStage() == EShLangTessEvaluation) {
 
-            builder.addIncorporatedExtension(spv::E_SPV_EXT_shader_viewport_index_layer, spv::Spv_1_5);
-            builder.addCapability(spv::CapabilityShaderViewportIndexLayerEXT);
+            if (builder.getSpvVersion() < spv::Spv_1_5) {
+                builder.addIncorporatedExtension(spv::E_SPV_EXT_shader_viewport_index_layer, spv::Spv_1_5);
+                builder.addCapability(spv::CapabilityShaderViewportIndexLayerEXT);
+            }
+            else
+                builder.addCapability(spv::CapabilityShaderViewportIndex);
         }
         return spv::BuiltInViewportIndex;
 
@@ -739,8 +743,11 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
             glslangIntermediate->getStage() == EShLangTessControl ||
             glslangIntermediate->getStage() == EShLangTessEvaluation) {
 
-            builder.addIncorporatedExtension(spv::E_SPV_EXT_shader_viewport_index_layer, spv::Spv_1_5);
-            builder.addCapability(spv::CapabilityShaderViewportIndexLayerEXT);
+            if (builder.getSpvVersion() < spv::Spv_1_5) {
+                builder.addIncorporatedExtension(spv::E_SPV_EXT_shader_viewport_index_layer, spv::Spv_1_5);
+                builder.addCapability(spv::CapabilityShaderViewportIndexLayerEXT);
+            } else
+                builder.addCapability(spv::CapabilityShaderLayer);
         }
         return spv::BuiltInLayer;
 
@@ -1081,6 +1088,10 @@ spv::ImageFormat TGlslangToSpvTraverser::TranslateImageFormat(const glslang::TTy
         builder.addCapability(spv::CapabilityStorageImageExtendedFormats);
         break;
 
+    case glslang::ElfR64ui:
+    case glslang::ElfR64i:
+        builder.addExtension(spv::E_SPV_EXT_shader_image_int64);
+        builder.addCapability(spv::CapabilityInt64ImageEXT);
     default:
         break;
     }
@@ -1127,6 +1138,8 @@ spv::ImageFormat TGlslangToSpvTraverser::TranslateImageFormat(const glslang::TTy
     case glslang::ElfRg8ui:         return spv::ImageFormatRg8ui;
     case glslang::ElfR16ui:         return spv::ImageFormatR16ui;
     case glslang::ElfR8ui:          return spv::ImageFormatR8ui;
+    case glslang::ElfR64ui:         return spv::ImageFormatR64ui;
+    case glslang::ElfR64i:          return spv::ImageFormatR64i;
     default:                        return spv::ImageFormatMax;
     }
 }
@@ -3587,6 +3600,12 @@ spv::Id TGlslangToSpvTraverser::getSampledType(const glslang::TSampler& sampler)
             builder.addExtension(spv::E_SPV_AMD_gpu_shader_half_float_fetch);
             builder.addCapability(spv::CapabilityFloat16ImageAMD);
             return builder.makeFloatType(16);
+        case glslang::EbtInt64:      return builder.makeIntType(64);
+            builder.addExtension(spv::E_SPV_EXT_shader_image_int64);
+            builder.addCapability(spv::CapabilityFloat16ImageAMD);
+        case glslang::EbtUint64:     return builder.makeUintType(64);
+            builder.addExtension(spv::E_SPV_EXT_shader_image_int64);
+            builder.addCapability(spv::CapabilityFloat16ImageAMD);
 #endif
         default:
             assert(0);
@@ -3952,6 +3971,8 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
     // Name and decorate the non-hidden members
     int offset = -1;
     int locationOffset = 0;  // for use within the members of this struct
+    bool memberLocationInvalid = type.isArrayOfArrays() ||
+        (type.isArray() && (type.getQualifier().isArrayedIo(glslangIntermediate->getStage()) == false));
     for (int i = 0; i < (int)glslangMembers->size(); i++) {
         glslang::TType& glslangMember = *(*glslangMembers)[i].type;
         int member = i;
@@ -4004,7 +4025,7 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
         // just track whether a member needs to be decorated.
         // Ignore member locations if the container is an array, as that's
         // ill-specified and decisions have been made to not allow this.
-        if (! type.isArray() && memberQualifier.hasLocation())
+        if (!memberLocationInvalid && memberQualifier.hasLocation())
             builder.addMemberDecoration(spvType, member, spv::DecorationLocation, memberQualifier.layoutLocation);
 
         if (qualifier.hasLocation())      // track for upcoming inheritance

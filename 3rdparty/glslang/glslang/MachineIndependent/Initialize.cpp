@@ -509,6 +509,8 @@ TBuiltIns::TBuiltIns()
     prefixes[EbtUint8] = "u8";
     prefixes[EbtInt16]  = "i16";
     prefixes[EbtUint16] = "u16";
+    prefixes[EbtInt64]  = "i64";
+    prefixes[EbtUint64] = "u64";
 #endif
 
     postfixes[2] = "2";
@@ -5724,6 +5726,45 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             stageBuiltins[static_cast<EShLanguage>(stage)].append("const highp int gl_ShadingRateFlag4HorizontalPixelsEXT     = 8;\n");
         }
     }
+    
+    // GL_EXT_shader_image_int64
+    if ((profile != EEsProfile && version >= 420) ||
+        (profile == EEsProfile && version >= 310)) {
+            
+        const TBasicType bTypes[] = { EbtInt64, EbtUint64 };
+        for (int ms = 0; ms <= 1; ++ms) { // loop over "bool" multisample or not
+            for (int arrayed = 0; arrayed <= 1; ++arrayed) { // loop over "bool" arrayed or not
+                for (int dim = Esd1D; dim < EsdSubpass; ++dim) { // 1D, ..., buffer
+                    if ((dim == Esd1D || dim == EsdRect) && profile == EEsProfile)
+                        continue;
+                    
+                    if ((dim == Esd3D || dim == EsdRect || dim == EsdBuffer) && arrayed)
+                        continue;
+                    
+                    if (dim != Esd2D && ms)
+                        continue;
+                    
+                    // Loop over the bTypes
+                    for (size_t bType = 0; bType < sizeof(bTypes)/sizeof(TBasicType); ++bType) {
+                        //
+                        // Now, make all the function prototypes for the type we just built...
+                        //
+                        TSampler sampler;
+                    
+                        sampler.setImage(bTypes[bType], (TSamplerDim)dim, arrayed ? true : false,
+                                                                          false,
+                                                                          ms      ? true : false);
+
+                        TString typeName = sampler.getString();
+
+                        addQueryFunctions(sampler, typeName, version, profile);
+                        addImageFunctions(sampler, typeName, version, profile);
+                    }
+                }
+            }
+        }
+    }
+    
 #endif // !GLSLANG_WEB
 
     // printf("%s\n", commonBuiltins.c_str());
@@ -5820,7 +5861,6 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
 #endif
                             if (shadow && (bTypes[bType] == EbtInt || bTypes[bType] == EbtUint))
                                 continue;
-
                             //
                             // Now, make all the function prototypes for the type we just built...
                             //
@@ -6045,8 +6085,16 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
 
     if ( profile != EEsProfile ||
         (profile == EEsProfile && version >= 310)) {
-        if (sampler.type == EbtInt || sampler.type == EbtUint) {
-            const char* dataType = sampler.type == EbtInt ? "highp int" : "highp uint";
+        if (sampler.type == EbtInt || sampler.type == EbtUint || sampler.type == EbtInt64 || sampler.type == EbtUint64 ) {
+            
+            const char* dataType;
+            switch (sampler.type) {
+                case(EbtInt): dataType = "highp int"; break;
+                case(EbtUint): dataType = "highp uint"; break;
+                case(EbtInt64): dataType = "highp int64_t"; break;
+                case(EbtUint64): dataType = "highp uint64_t"; break;
+                default: dataType = "";
+            }
 
             const int numBuiltins = 7;
 
