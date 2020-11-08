@@ -1041,7 +1041,7 @@ namespace bgfx { namespace spirv
 
 					if (g_verbose)
 					{
-						glslang::SpirvToolsDisassemble(std::cout, spirv);
+						glslang::SpirvToolsDisassemble(std::cout, spirv, getSpirvTargetVersion(_version) );
 					}
 
 					// Loop through the separate_images, and extract the uniform names:
