@@ -903,7 +903,7 @@ namespace bgfx
 				"           s_5\n"
 				"           metal\n"
 				"           pssl\n"
-				"           spirv              Alias for spirv10-10. \n"
+				"           spirv                Alias for spirv10-10. \n"
 				"           spirv10-10\n"
 				"           spirv13-11\n"
 				"           spirv14-11\n"
