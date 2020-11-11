@@ -826,7 +826,6 @@ namespace bgfx
 			DestroyFrameBuffer,
 			DestroyUniform,
 			ReadTexture,
-			RequestScreenShot,
 		};
 
 		void resize(uint32_t _capacity = 0)
@@ -1987,6 +1986,12 @@ namespace bgfx
 		RectCache m_rectCache;
 	};
 
+	struct ScreenShot
+	{
+		bx::FilePath filePath;
+		FrameBufferHandle handle;
+	};
+
 	BX_ALIGN_DECL_CACHE_LINE(struct) Frame
 	{
 		Frame()
@@ -2060,7 +2065,7 @@ namespace bgfx
 			m_cmdPre.start();
 			m_cmdPost.start();
 			m_capture = false;
-			m_saveScreenshot = false;
+			m_numScreenShots = 0;
 		}
 
 		void finish()
@@ -2198,7 +2203,9 @@ namespace bgfx
 
 		Resolution m_resolution;
 		uint32_t m_debug;
-		bool m_saveScreenshot;
+
+		ScreenShot m_screenShot[BGFX_CONFIG_MAX_SCREENSHOTS];
+		uint8_t m_numScreenShots;
 
 		CommandBuffer m_cmdPre;
 		CommandBuffer m_cmdPost;
@@ -4804,13 +4811,25 @@ namespace bgfx
 				}
 			}
 
-			m_submit->m_saveScreenshot = true;
+			if (m_submit->m_numScreenShots >= BGFX_CONFIG_MAX_SCREENSHOTS)
+			{
+				BX_TRACE("Only %d screenshots can be requested.", BGFX_CONFIG_MAX_SCREENSHOTS);
+				return;
+			}
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RequestScreenShot);
-			uint16_t len = (uint16_t)bx::strLen(_filePath)+1;
-			cmdbuf.write(_handle);
-			cmdbuf.write(len);
-			cmdbuf.write(_filePath, len);
+			for (uint8_t ii = 0, num = m_submit->m_numScreenShots; ii < num; ++ii)
+			{
+				const ScreenShot& screenShot = m_submit->m_screenShot[ii];
+				if (screenShot.handle.idx == _handle.idx)
+				{
+					BX_TRACE("Already requested screenshot on handle %d.", _handle.idx);
+					return;
+				}
+			}
+
+			ScreenShot& screenShot = m_submit->m_screenShot[m_submit->m_numScreenShots++];
+			screenShot.handle = _handle;
+			screenShot.filePath.set(_filePath);
 		}
 
 		BGFX_API_FUNC(void setPaletteColor(uint8_t _index, const float _rgba[4]) )

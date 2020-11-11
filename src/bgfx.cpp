@@ -2348,9 +2348,20 @@ namespace bgfx
 
 			if (m_rendererInitialized)
 			{
-				BGFX_PROFILER_SCOPE("bgfx/Render submit", 0xff2040ff);
-				m_renderCtx->submit(m_render, m_clearQuad, m_textVideoMemBlitter);
-				m_flipped = false;
+				{
+					BGFX_PROFILER_SCOPE("bgfx/Render submit", 0xff2040ff);
+					m_renderCtx->submit(m_render, m_clearQuad, m_textVideoMemBlitter);
+					m_flipped = false;
+				}
+
+				{
+					BGFX_PROFILER_SCOPE("bgfx/Screenshot", 0xff2040ff);
+					for (uint8_t ii = 0, num = m_render->m_numScreenShots; ii < num; ++ii)
+					{
+						const ScreenShot& screenShot = m_render->m_screenShot[ii];
+						m_renderCtx->requestScreenShot(screenShot.handle, screenShot.filePath.getCPtr() );
+					}
+				}
 			}
 
 			{
@@ -3195,22 +3206,6 @@ namespace bgfx
 					_cmdbuf.read(handle);
 
 					m_renderCtx->destroyUniform(handle);
-				}
-				break;
-
-			case CommandBuffer::RequestScreenShot:
-				{
-					BGFX_PROFILER_SCOPE("RequestScreenShot", 0xff2040ff);
-
-					FrameBufferHandle handle;
-					_cmdbuf.read(handle);
-
-					uint16_t len;
-					_cmdbuf.read(len);
-
-					const char* filePath = (const char*)_cmdbuf.skip(len);
-
-					m_renderCtx->requestScreenShot(handle, filePath);
 				}
 				break;
 
