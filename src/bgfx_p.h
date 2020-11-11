@@ -2060,6 +2060,7 @@ namespace bgfx
 			m_cmdPre.start();
 			m_cmdPost.start();
 			m_capture = false;
+			m_saveScreenshot = false;
 		}
 
 		void finish()
@@ -2197,6 +2198,7 @@ namespace bgfx
 
 		Resolution m_resolution;
 		uint32_t m_debug;
+		bool m_saveScreenshot;
 
 		CommandBuffer m_cmdPre;
 		CommandBuffer m_cmdPost;
@@ -4801,6 +4803,8 @@ namespace bgfx
 					return;
 				}
 			}
+
+			m_submit->m_saveScreenshot = true;
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RequestScreenShot);
 			uint16_t len = (uint16_t)bx::strLen(_filePath)+1;
