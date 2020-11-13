@@ -138,15 +138,18 @@ class DebugInfoManager {
   bool IsVariableDebugDeclared(uint32_t variable_id);
 
   // Kills all debug declaration instructions with Deref whose 'Local Variable'
-  // operand is |variable_id|.
-  void KillDebugDeclares(uint32_t variable_id);
+  // operand is |variable_id|. Returns whether it kills an instruction or not.
+  bool KillDebugDeclares(uint32_t variable_id);
 
   // Generates a DebugValue instruction with value |value_id| for every local
   // variable that is in the scope of |scope_and_line| and whose memory is
   // |variable_id| and inserts it after the instruction |insert_pos|.
-  void AddDebugValueIfVarDeclIsVisible(Instruction* scope_and_line,
-                                       uint32_t variable_id, uint32_t value_id,
-                                       Instruction* insert_pos);
+  // Returns whether a DebugValue is added or not. |invisible_decls| returns
+  // DebugDeclares invisible to |scope_and_line|.
+  bool AddDebugValueIfVarDeclIsVisible(
+      Instruction* scope_and_line, uint32_t variable_id, uint32_t value_id,
+      Instruction* insert_pos,
+      std::unordered_set<Instruction*>* invisible_decls);
 
   // Generates a DebugValue instruction with |dbg_local_var_id|, |value_id|,
   // |expr_id|, |index_id| operands and inserts it before |insert_before|.
@@ -154,6 +157,11 @@ class DebugInfoManager {
                                       uint32_t value_id, uint32_t expr_id,
                                       uint32_t index_id,
                                       Instruction* insert_before);
+
+  // Adds DebugValue for DebugDeclare |dbg_decl|. The new DebugValue has the
+  // same line, scope, and operands but it uses |value_id| for value. Returns
+  // weather it succeeds or not.
+  bool AddDebugValueForDecl(Instruction* dbg_decl, uint32_t value_id);
 
   // Erases |instr| from data structures of this class.
   void ClearDebugInfo(Instruction* instr);
@@ -215,17 +223,9 @@ class DebugInfoManager {
   // of |scope|.
   bool IsAncestorOfScope(uint32_t scope, uint32_t ancestor);
 
-  // Returns the DebugLocalVariable declared by |dbg_declare|.
-  Instruction* GetDebugLocalVariableFromDeclare(Instruction* dbg_declare);
-
-  // Returns true if the DebugLocalVariable |dbg_local_var| is a function
-  // parameter.
-  bool IsFunctionParameter(Instruction* dbg_local_var) const;
-
-  // Returns true if the DebugLocalVariable |dbg_local_var| is visible
-  // in the scope of an instruction |instr_scope_id|.
-  bool IsLocalVariableVisibleToInstr(Instruction* dbg_local_var,
-                                     uint32_t instr_scope_id);
+  // Returns true if the declaration of a local variable |dbg_declare|
+  // is visible in the scope of an instruction |instr_scope_id|.
+  bool IsDeclareVisibleToInstr(Instruction* dbg_declare, Instruction* scope);
 
   // Returns the parent scope of the scope |child_scope|.
   uint32_t GetParentScope(uint32_t child_scope);

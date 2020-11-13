@@ -161,6 +161,7 @@ Optimizer& Optimizer::RegisterPerformancePasses() {
       .RegisterPass(CreateDeadBranchElimPass())
       .RegisterPass(CreateMergeReturnPass())
       .RegisterPass(CreateInlineExhaustivePass())
+      .RegisterPass(CreateEliminateDeadFunctionsPass())
       .RegisterPass(CreateAggressiveDCEPass())
       .RegisterPass(CreatePrivateToLocalPass())
       .RegisterPass(CreateLocalSingleBlockLoadStoreElimPass())
@@ -339,10 +340,6 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterPass(CreateDescriptorScalarReplacementPass());
   } else if (pass_name == "eliminate-dead-code-aggressive") {
     RegisterPass(CreateAggressiveDCEPass());
-  } else if (pass_name == "propagate-line-info") {
-    RegisterPass(CreatePropagateLineInfoPass());
-  } else if (pass_name == "eliminate-redundant-line-info") {
-    RegisterPass(CreateRedundantLineInfoElimPass());
   } else if (pass_name == "eliminate-insert-extract") {
     RegisterPass(CreateInsertExtractElimPass());
   } else if (pass_name == "eliminate-local-single-block") {
@@ -758,13 +755,11 @@ Optimizer::PassToken CreateAggressiveDCEPass() {
 }
 
 Optimizer::PassToken CreatePropagateLineInfoPass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::ProcessLinesPass>(opt::kLinesPropagateLines));
+  return MakeUnique<Optimizer::PassToken::Impl>(MakeUnique<opt::EmptyPass>());
 }
 
 Optimizer::PassToken CreateRedundantLineInfoElimPass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::ProcessLinesPass>(opt::kLinesEliminateDeadLines));
+  return MakeUnique<Optimizer::PassToken::Impl>(MakeUnique<opt::EmptyPass>());
 }
 
 Optimizer::PassToken CreateCompactIdsPass() {

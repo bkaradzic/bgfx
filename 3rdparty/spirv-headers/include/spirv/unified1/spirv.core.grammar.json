@@ -27,7 +27,7 @@
   "magic_number" : "0x07230203",
   "major_version" : 1,
   "minor_version" : 5,
-  "revision" : 3,
+  "revision" : 4,
   "instruction_printing_class" : [
     {
       "tag"     : "@exclude"
@@ -7720,6 +7720,36 @@
       ]
     },
     {
+      "category" : "BitEnum",
+      "kind" : "FragmentShadingRate",
+      "enumerants" : [
+        {
+          "enumerant" : "Vertical2Pixels",
+          "value" : "0x0001",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Vertical4Pixels",
+          "value" : "0x0002",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Horizontal2Pixels",
+          "value" : "0x0004",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Horizontal4Pixels",
+          "value" : "0x0008",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
       "category" : "ValueEnum",
       "kind" : "SourceLanguage",
       "enumerants" : [
@@ -8826,6 +8856,16 @@
           "enumerant" : "R8ui",
           "value" : 39,
           "capabilities" : [ "StorageImageExtendedFormats" ]
+        },
+	{
+          "enumerant" : "R64ui",
+          "value" : 40,
+          "capabilities" : [ "Int64ImageEXT" ]
+        },
+        {
+          "enumerant" : "R64i",
+          "value" : 41,
+          "capabilities" : [ "Int64ImageEXT" ]
         }
       ]
     },
@@ -10005,6 +10045,13 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "PrimitiveShadingRateKHR",
+          "value" : 4432,
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "extensions" : [ "SPV_KHR_fragment_shading_rate" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "DeviceIndex",
           "value" : 4438,
           "capabilities" : [ "DeviceGroup" ],
@@ -10017,6 +10064,13 @@
           "capabilities" : [ "MultiView" ],
           "extensions" : [ "SPV_KHR_multiview" ],
           "version" : "1.3"
+        },
+        {
+          "enumerant" : "ShadingRateKHR",
+          "value" : 4444,
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "extensions" : [ "SPV_KHR_fragment_shading_rate" ],
+          "version" : "None"
         },
         {
           "enumerant" : "BaryCoordNoPerspAMD",
@@ -10902,6 +10956,13 @@
           "version" : "1.5"
         },
         {
+          "enumerant" : "FragmentShadingRateKHR",
+          "value" : 4422,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_fragment_shading_rate" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SubgroupBallotKHR",
           "value" : 4423,
           "extensions" : [ "SPV_KHR_shader_ballot" ],
@@ -11099,6 +11160,13 @@
           "value" : 5015,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_AMD_shader_image_load_store_lod" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Int64ImageEXT",
+          "value" : 5016,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_shader_image_int64" ],
           "version" : "None"
         },
         {

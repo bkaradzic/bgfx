@@ -2764,7 +2764,7 @@ namespace bgfx { namespace gl
 					: 0
 					;
 
-				g_caps.supported |= m_readBackSupported
+				g_caps.supported |= (m_readBackSupported || BX_ENABLED(BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION))
 					? BGFX_CAPS_TEXTURE_READ_BACK
 					: 0
 					;
@@ -3263,7 +3263,7 @@ namespace bgfx { namespace gl
 
 				GL_CHECK(glBindTexture(texture.m_target, 0) );
 			}
-			else
+			else if (BX_ENABLED(BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION))
 			{
 				const TextureGL& texture = m_textures[_handle.idx];
 				const bool compressed    = bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) );

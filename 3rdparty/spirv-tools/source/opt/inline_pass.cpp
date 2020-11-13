@@ -727,6 +727,12 @@ void InlinePass::AnalyzeReturns(Function* func) {
 bool InlinePass::IsInlinableFunction(Function* func) {
   // We can only inline a function if it has blocks.
   if (func->cbegin() == func->cend()) return false;
+
+  // Do not inline functions with DontInline flag.
+  if (func->control_mask() & SpvFunctionControlDontInlineMask) {
+    return false;
+  }
+
   // Do not inline functions with returns in loops. Currently early return
   // functions are inlined by wrapping them in a one trip loop and implementing
   // the returns as a branch to the loop's merge block. However, this can only

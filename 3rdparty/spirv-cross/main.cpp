@@ -565,6 +565,7 @@ struct CLIArguments
 	bool msl_arrayed_subpass_input = false;
 	uint32_t msl_r32ui_linear_texture_alignment = 4;
 	uint32_t msl_r32ui_alignment_constant_id = 65535;
+	bool msl_texture_1d_as_2d = false;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
 	bool glsl_force_flattened_io_blocks = false;
@@ -606,6 +607,7 @@ struct CLIArguments
 	bool hlsl_force_storage_buffer_as_uav = false;
 	bool hlsl_nonwritable_uav_texture_as_srv = false;
 	bool hlsl_enable_16bit_types = false;
+	bool hlsl_flatten_matrix_vertex_input_semantics = false;
 	HLSLBindingFlags hlsl_binding_flags = 0;
 	bool vulkan_semantics = false;
 	bool flatten_multidimensional_arrays = false;
@@ -704,6 +706,7 @@ static void print_help_hlsl()
 	                "\t[--set-hlsl-vertex-input-semantic <location> <semantic>]:\n\t\tEmits a specific vertex input semantic for a given location.\n"
 	                "\t\tOtherwise, TEXCOORD# is used as semantics, where # is location.\n"
 	                "\t[--hlsl-enable-16bit-types]:\n\t\tEnables native use of half/int16_t/uint16_t and ByteAddressBuffer interaction with these types. Requires SM 6.2.\n"
+	                "\t[--hlsl-flatten-matrix-vertex-input-semantics]:\n\t\tEmits matrix vertex inputs with input semantics as if they were independent vectors, e.g. TEXCOORD{2,3,4} rather than matrix form TEXCOORD2_{0,1,2}.\n"
 	);
 	// clang-format on
 }
@@ -728,7 +731,7 @@ static void print_help_msl()
 	                "\t[--msl-texture-buffer-native]:\n\t\tEnable native support for texel buffers. Otherwise, it is emulated as a normal texture.\n"
 	                "\t[--msl-framebuffer-fetch]:\n\t\tImplement subpass inputs with frame buffer fetch.\n"
 	                "\t\tEmits [[color(N)]] inputs in fragment stage.\n"
-	                "\t\tRequires iOS Metal.\n"
+	                "\t\tRequires an Apple GPU.\n"
 	                "\t[--msl-emulate-cube-array]:\n\t\tEmulate cube arrays with 2D array and manual math.\n"
 	                "\t[--msl-discrete-descriptor-set <index>]:\n\t\tWhen using argument buffers, forces a specific descriptor set to be implemented without argument buffers.\n"
 	                "\t\tUseful for implementing push descriptors in emulation layers.\n"
@@ -774,7 +777,9 @@ static void print_help_msl()
 	                "\t[--msl-r32ui-linear-texture-align <alignment>]:\n\t\tThe required alignment of linear textures of format MTLPixelFormatR32Uint.\n"
 	                "\t\tThis is used to align the row stride for atomic accesses to such images.\n"
 	                "\t[--msl-r32ui-linear-texture-align-constant-id <id>]:\n\t\tThe function constant ID to use for the linear texture alignment.\n"
-	                "\t\tOn MSL 1.2 or later, you can override the alignment by setting this function constant.\n");
+	                "\t\tOn MSL 1.2 or later, you can override the alignment by setting this function constant.\n"
+	                "\t[--msl-texture-1d-as-2d]:\n\t\tEmit Image variables of dimension Dim1D as texture2d.\n"
+	                "\t\tIn Metal, 1D textures do not support all features that 2D textures do. Use this option if your code relies on these features.\n");
 	// clang-format on
 }
 
@@ -991,9 +996,9 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		if (args.msl_ios)
 		{
 			msl_opts.platform = CompilerMSL::Options::iOS;
-			msl_opts.ios_use_framebuffer_fetch_subpasses = args.msl_framebuffer_fetch;
 			msl_opts.emulate_cube_array = args.msl_emulate_cube_array;
 		}
+		msl_opts.use_framebuffer_fetch_subpasses = args.msl_framebuffer_fetch;
 		msl_opts.pad_fragment_output_components = args.msl_pad_fragment_output;
 		msl_opts.tess_domain_origin_lower_left = args.msl_domain_lower_left;
 		msl_opts.argument_buffers = args.msl_argument_buffers;
@@ -1015,6 +1020,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.arrayed_subpass_input = args.msl_arrayed_subpass_input;
 		msl_opts.r32ui_linear_texture_alignment = args.msl_r32ui_linear_texture_alignment;
 		msl_opts.r32ui_alignment_constant_id = args.msl_r32ui_alignment_constant_id;
+		msl_opts.texture_1D_as_2D = args.msl_texture_1d_as_2d;
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
 			msl_comp->add_discrete_descriptor_set(v);
@@ -1191,6 +1197,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		hlsl_opts.force_storage_buffer_as_uav = args.hlsl_force_storage_buffer_as_uav;
 		hlsl_opts.nonwritable_uav_texture_as_srv = args.hlsl_nonwritable_uav_texture_as_srv;
 		hlsl_opts.enable_16bit_types = args.hlsl_enable_16bit_types;
+		hlsl_opts.flatten_matrix_vertex_input_semantics = args.hlsl_flatten_matrix_vertex_input_semantics;
 		hlsl->set_hlsl_options(hlsl_opts);
 		hlsl->set_resource_binding_flags(args.hlsl_binding_flags);
 	}
@@ -1363,6 +1370,7 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--hlsl-nonwritable-uav-texture-as-srv",
 	        [&args](CLIParser &) { args.hlsl_nonwritable_uav_texture_as_srv = true; });
 	cbs.add("--hlsl-enable-16bit-types", [&args](CLIParser &) { args.hlsl_enable_16bit_types = true; });
+	cbs.add("--hlsl-flatten-matrix-vertex-input-semantics", [&args](CLIParser &) { args.hlsl_flatten_matrix_vertex_input_semantics = true; });
 	cbs.add("--vulkan-semantics", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("-V", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("--flatten-multidimensional-arrays", [&args](CLIParser &) { args.flatten_multidimensional_arrays = true; });
@@ -1439,6 +1447,7 @@ static int main_inner(int argc, char *argv[])
 	        [&args](CLIParser &parser) { args.msl_r32ui_linear_texture_alignment = parser.next_uint(); });
 	cbs.add("--msl-r32ui-linear-texture-align-constant-id",
 	        [&args](CLIParser &parser) { args.msl_r32ui_alignment_constant_id = parser.next_uint(); });
+	cbs.add("--msl-texture-1d-as-2d", [&args](CLIParser &) { args.msl_texture_1d_as_2d = true; });
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();

@@ -699,8 +699,31 @@ bool Compiler::InterfaceVariableAccessHandler::handle(Op opcode, const uint32_t 
 	{
 		if (length < 5)
 			return false;
-		uint32_t extension_set = args[2];
-		if (compiler.get<SPIRExtension>(extension_set).ext == SPIRExtension::SPV_AMD_shader_explicit_vertex_parameter)
+		auto &extension_set = compiler.get<SPIRExtension>(args[2]);
+		switch (extension_set.ext)
+		{
+		case SPIRExtension::GLSL:
+		{
+			auto op = static_cast<GLSLstd450>(args[3]);
+
+			switch (op)
+			{
+			case GLSLstd450InterpolateAtCentroid:
+			case GLSLstd450InterpolateAtSample:
+			case GLSLstd450InterpolateAtOffset:
+			{
+				auto *var = compiler.maybe_get<SPIRVariable>(args[4]);
+				if (var && storage_class_is_interface(var->storage))
+					variables.insert(args[4]);
+				break;
+			}
+
+			default:
+				break;
+			}
+			break;
+		}
+		case SPIRExtension::SPV_AMD_shader_explicit_vertex_parameter:
 		{
 			enum AMDShaderExplicitVertexParameter
 			{
@@ -722,6 +745,10 @@ bool Compiler::InterfaceVariableAccessHandler::handle(Op opcode, const uint32_t 
 			default:
 				break;
 			}
+			break;
+		}
+		default:
+			break;
 		}
 		break;
 	}

@@ -77,7 +77,8 @@
         <id value="24"  vendor="Google" tool="ANGLE Shader Compiler" comment="Contact Shahbaz Youssefi, syoussefi@google.com"/>
         <id value="25"  vendor="Netease Games" tool="Messiah Shader Compiler" comment="Contact Yuwen Wu, atyuwen@gmail.com"/>
         <id value="26"  vendor="Xenia" tool="Xenia Emulator Microcode Translator" comment="Contact Vitaliy Kuzmin, triang3l@yandex.ru, https://github.com/xenia-project/xenia"/>
-        <unused start="27" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="27"  vendor="Embark Studios" tool="Rust GPU Compiler Backend" comment="https://github.com/embarkstudios/rust-gpu"/>
+        <unused start="28" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->
@@ -179,8 +180,8 @@
 
     <!-- Reserved loop control bits -->
     <ids type="LoopControl" start="0" end="15" vendor="Khronos" comment="Reserved LoopControl bits, not available to vendors - see the SPIR-V Specification"/>
-    <ids type="LoopControl" start="16" end="22" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
-    <ids type="LoopControl" start="23" end="30" comment="Unreserved bits reservable for use by vendors"/>
+    <ids type="LoopControl" start="16" end="23" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
+    <ids type="LoopControl" start="24" end="30" comment="Unreserved bits reservable for use by vendors"/>
     <ids type="LoopControl" start="31" end="31" vendor="Khronos" comment="Reserved LoopControl bit, not available to vendors"/>
 
 

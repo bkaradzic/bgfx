@@ -50,11 +50,11 @@ namespace spv {
 typedef unsigned int Id;
 
 #define SPV_VERSION 0x10500
-#define SPV_REVISION 3
+#define SPV_REVISION 4
 
 static const unsigned int MagicNumber = 0x07230203;
 static const unsigned int Version = 0x00010500;
-static const unsigned int Revision = 3;
+static const unsigned int Revision = 4;
 static const unsigned int OpCodeMask = 0xffff;
 static const unsigned int WordCountShift = 16;
 
@@ -274,6 +274,8 @@ enum class ImageFormat : unsigned {
     Rg8ui = 37,
     R16ui = 38,
     R8ui = 39,
+    R64ui = 40,
+    R64i = 41,
     Max = 0x7fffffff,
 };
 
@@ -558,8 +560,10 @@ enum class BuiltIn : unsigned {
     BaseVertex = 4424,
     BaseInstance = 4425,
     DrawIndex = 4426,
+    PrimitiveShadingRateKHR = 4432,
     DeviceIndex = 4438,
     ViewIndex = 4440,
+    ShadingRateKHR = 4444,
     BaryCoordNoPerspAMD = 4992,
     BaryCoordNoPerspCentroidAMD = 4993,
     BaryCoordNoPerspSampleAMD = 4994,
@@ -870,6 +874,7 @@ enum class Capability : unsigned {
     GroupNonUniformQuad = 68,
     ShaderLayer = 69,
     ShaderViewportIndex = 70,
+    FragmentShadingRateKHR = 4422,
     SubgroupBallotKHR = 4423,
     DrawParameters = 4427,
     SubgroupVoteKHR = 4431,
@@ -900,6 +905,7 @@ enum class Capability : unsigned {
     FragmentMaskAMD = 5010,
     StencilExportEXT = 5013,
     ImageReadWriteLodAMD = 5015,
+    Int64ImageEXT = 5016,
     ShaderClockKHR = 5055,
     SampleMaskOverrideCoverageNV = 5249,
     GeometryShaderPassthroughNV = 5251,
@@ -1022,6 +1028,22 @@ enum class RayQueryCandidateIntersectionType : unsigned {
     RayQueryCandidateIntersectionTriangleKHR = 0,
     RayQueryCandidateIntersectionAABBKHR = 1,
     Max = 0x7fffffff,
+};
+
+enum class FragmentShadingRateShift : unsigned {
+    Vertical2Pixels = 0,
+    Vertical4Pixels = 1,
+    Horizontal2Pixels = 2,
+    Horizontal4Pixels = 3,
+    Max = 0x7fffffff,
+};
+
+enum class FragmentShadingRateMask : unsigned {
+    MaskNone = 0,
+    Vertical2Pixels = 0x00000001,
+    Vertical4Pixels = 0x00000002,
+    Horizontal2Pixels = 0x00000004,
+    Horizontal4Pixels = 0x00000008,
 };
 
 enum class Op : unsigned {
@@ -2166,6 +2188,7 @@ inline MemorySemanticsMask operator|(MemorySemanticsMask a, MemorySemanticsMask 
 inline MemoryAccessMask operator|(MemoryAccessMask a, MemoryAccessMask b) { return MemoryAccessMask(unsigned(a) | unsigned(b)); }
 inline KernelProfilingInfoMask operator|(KernelProfilingInfoMask a, KernelProfilingInfoMask b) { return KernelProfilingInfoMask(unsigned(a) | unsigned(b)); }
 inline RayFlagsMask operator|(RayFlagsMask a, RayFlagsMask b) { return RayFlagsMask(unsigned(a) | unsigned(b)); }
+inline FragmentShadingRateMask operator|(FragmentShadingRateMask a, FragmentShadingRateMask b) { return FragmentShadingRateMask(unsigned(a) | unsigned(b)); }
 
 }  // end namespace spv
 

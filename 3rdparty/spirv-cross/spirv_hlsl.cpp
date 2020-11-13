@@ -310,7 +310,7 @@ string CompilerHLSL::image_type_hlsl_modern(const SPIRType &type, uint32_t id)
 	            ">");
 }
 
-string CompilerHLSL::image_type_hlsl_legacy(const SPIRType &type, uint32_t id)
+string CompilerHLSL::image_type_hlsl_legacy(const SPIRType &type, uint32_t /*id*/)
 {
 	auto &imagetype = get<SPIRType>(type.image.type);
 	string res;
@@ -373,8 +373,6 @@ string CompilerHLSL::image_type_hlsl_legacy(const SPIRType &type, uint32_t id)
 		res += "MS";
 	if (type.image.arrayed)
 		res += "Array";
-	if (image_is_comparison(type, id))
-		res += "Shadow";
 
 	return res;
 }
@@ -935,8 +933,15 @@ void CompilerHLSL::emit_interface_block_in_struct(const SPIRVariable &var, unord
 			{
 				SPIRType newtype = type;
 				newtype.columns = 1;
+
+				string effective_semantic;
+				if (hlsl_options.flatten_matrix_vertex_input_semantics)
+					effective_semantic = to_semantic(location_number, execution.model, var.storage);
+				else
+					effective_semantic = join(semantic, "_", i);
+
 				statement(to_interpolation_qualifiers(get_decoration_bitset(var.self)),
-				          variable_decl(newtype, join(name, "_", i)), " : ", semantic, "_", i, ";");
+				          variable_decl(newtype, join(name, "_", i)), " : ", effective_semantic, ";");
 				active_locations.insert(location_number++);
 			}
 		}
@@ -2926,14 +2931,15 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 				SPIRV_CROSS_THROW("textureGather is not supported in HLSL shader model 2/3.");
 			if (offset || coffset)
 				SPIRV_CROSS_THROW("textureOffset is not supported in HLSL shader model 2/3.");
-			if (proj)
-				texop += "proj";
+
 			if (grad_x || grad_y)
 				texop += "grad";
-			if (lod)
+			else if (lod)
 				texop += "lod";
-			if (bias)
+			else if (bias)
 				texop += "bias";
+			else if (proj || dref)
+				texop += "proj";
 		}
 	}
 
@@ -2987,35 +2993,47 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 
 	if (hlsl_options.shader_model < 40)
 	{
-		string coord_filler;
-		uint32_t modifier_count = 0;
+		if (dref)
+		{
+			if (imgtype.image.dim != spv::Dim1D && imgtype.image.dim != spv::Dim2D)
+				SPIRV_CROSS_THROW("Depth comparison is only supported for 1D and 2D textures in HLSL shader model 2/3.");
+
+			if (grad_x || grad_y)
+				SPIRV_CROSS_THROW("Depth comparison is not supported for grad sampling in HLSL shader model 2/3.");
+
+			for (uint32_t size = coord_components; size < 2; ++size)
+				coord_expr += ", 0.0";
+
+			forward = forward && should_forward(dref);
+			coord_expr += ", " + to_expression(dref);
+		}
+		else if (lod || bias || proj)
+		{
+			for (uint32_t size = coord_components; size < 3; ++size)
+				coord_expr += ", 0.0";
+		}
 
 		if (lod)
 		{
-			for (uint32_t size = coord_components; size < 3; ++size)
-				coord_filler += ", 0.0";
-			coord_expr = "float4(" + coord_expr + coord_filler + ", " + to_expression(lod) + ")";
-			modifier_count++;
+			coord_expr = "float4(" + coord_expr + ", " + to_expression(lod) + ")";
 		}
-
-		if (bias)
+		else if (bias)
 		{
-			for (uint32_t size = coord_components; size < 3; ++size)
-				coord_filler += ", 0.0";
-			coord_expr = "float4(" + coord_expr + coord_filler + ", " + to_expression(bias) + ")";
-			modifier_count++;
+			coord_expr = "float4(" + coord_expr + ", " + to_expression(bias) + ")";
 		}
-
-		if (proj)
+		else if (proj)
 		{
-			for (uint32_t size = coord_components; size < 3; ++size)
-				coord_filler += ", 0.0";
-			coord_expr = "float4(" + coord_expr + coord_filler + ", " +
+			coord_expr = "float4(" + coord_expr + ", " +
 			             to_extract_component_expression(coord, coord_components) + ")";
-			modifier_count++;
+		}
+		else if (dref)
+		{
+			// A "normal" sample gets fed into tex2Dproj as well, because the
+			// regular tex2D accepts only two coordinates.
+			coord_expr = "float4(" + coord_expr + ", 1.0)";
 		}
 
-		if (modifier_count > 1)
+		if (!!lod + !!bias + !!proj > 1)
 			SPIRV_CROSS_THROW("Legacy HLSL can only use one of lod/bias/proj modifiers.");
 	}
 
@@ -3029,11 +3047,8 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 		expr += ", ";
 	expr += coord_expr;
 
-	if (dref)
+	if (dref && hlsl_options.shader_model >= 40)
 	{
-		if (hlsl_options.shader_model < 40)
-			SPIRV_CROSS_THROW("Legacy HLSL does not support comparison sampling.");
-
 		forward = forward && should_forward(dref);
 		expr += ", ";
 
@@ -3087,6 +3102,9 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 	}
 
 	expr += ")";
+
+	if (dref && hlsl_options.shader_model < 40)
+		expr += ".x";
 
 	if (op == OpImageQueryLod)
 	{
@@ -3426,7 +3444,10 @@ void CompilerHLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 		break;
 
 	case GLSLstd450RoundEven:
-		SPIRV_CROSS_THROW("roundEven is not supported on HLSL.");
+		if (hlsl_options.shader_model < 40)
+			SPIRV_CROSS_THROW("roundEven is not supported in HLSL shader model 2/3.");
+		emit_unary_func_op(result_type, id, args[0], "round");
+		break;
 
 	case GLSLstd450Acosh:
 	case GLSLstd450Asinh:

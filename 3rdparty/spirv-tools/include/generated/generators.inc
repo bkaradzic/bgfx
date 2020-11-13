@@ -25,3 +25,4 @@
 {24, "Google", "ANGLE Shader Compiler", "Google ANGLE Shader Compiler"},
 {25, "Netease Games", "Messiah Shader Compiler", "Netease Games Messiah Shader Compiler"},
 {26, "Xenia", "Xenia Emulator Microcode Translator", "Xenia Xenia Emulator Microcode Translator"},
+{27, "Embark Studios", "Rust GPU Compiler Backend", "Embark Studios Rust GPU Compiler Backend"},

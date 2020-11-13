@@ -199,13 +199,13 @@ namespace entry
 		{
 			NSRect  originalFrame = [_window frame];
 			NSRect  adjustFrame   = [_window contentRectForFrameRect: originalFrame];
-			
+
 			adjustFrame.origin.y = NSMaxY(NSScreen.screens[0].frame) - NSMaxY(adjustFrame);
-			
+
 			CGWarpMouseCursorPosition(CGPointMake(_x + adjustFrame.origin.x, _y + adjustFrame.origin.y));
 			CGAssociateMouseAndMouseCursorPosition(YES);
 		}
-		
+
 		void setMouseLock(NSWindow* _window, bool _lock)
 		{
 			NSWindow* newMouseLock = _lock ? _window : NULL;
@@ -216,10 +216,10 @@ namespace entry
 				{
 					NSRect  originalFrame = [_window frame];
 					NSRect  adjustFrame   = [_window contentRectForFrameRect: originalFrame];
-					
+
 					m_cmx = (int)adjustFrame.size.width / 2;
 					m_cmy = (int)adjustFrame.size.height / 2;
-					
+
 					setMousePos(_window, m_cmx, m_cmy);
 					[NSCursor hide];
 				}
@@ -324,12 +324,12 @@ namespace entry
 				case NSEventTypeRightMouseDragged:
 				case NSEventTypeOtherMouseDragged:
 					getMousePos(window, &m_mx, &m_my);
-						
+
 					if (window == m_mouseLock)
 					{
 						m_mx -= m_cmx;
 						m_my -= m_cmy;
-							
+
 						setMousePos(window, m_cmx, m_cmy);
 					}
 
@@ -572,7 +572,7 @@ namespace entry
 		int32_t m_scroll;
 		int32_t m_style;
 		bool    m_exit;
-		
+
 		NSWindow* m_mouseLock;
 		int32_t m_cmx;
 		int32_t m_cmy;

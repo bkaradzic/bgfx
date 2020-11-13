@@ -176,12 +176,13 @@ typedef enum spv_operand_type_t {
 
   // Set 5:  Operands that are a single word bitmask.
   // Sometimes a set bit indicates the instruction requires still more operands.
-  SPV_OPERAND_TYPE_IMAGE,              // SPIR-V Sec 3.14
-  SPV_OPERAND_TYPE_FP_FAST_MATH_MODE,  // SPIR-V Sec 3.15
-  SPV_OPERAND_TYPE_SELECTION_CONTROL,  // SPIR-V Sec 3.22
-  SPV_OPERAND_TYPE_LOOP_CONTROL,       // SPIR-V Sec 3.23
-  SPV_OPERAND_TYPE_FUNCTION_CONTROL,   // SPIR-V Sec 3.24
-  SPV_OPERAND_TYPE_MEMORY_ACCESS,      // SPIR-V Sec 3.26
+  SPV_OPERAND_TYPE_IMAGE,                  // SPIR-V Sec 3.14
+  SPV_OPERAND_TYPE_FP_FAST_MATH_MODE,      // SPIR-V Sec 3.15
+  SPV_OPERAND_TYPE_SELECTION_CONTROL,      // SPIR-V Sec 3.22
+  SPV_OPERAND_TYPE_LOOP_CONTROL,           // SPIR-V Sec 3.23
+  SPV_OPERAND_TYPE_FUNCTION_CONTROL,       // SPIR-V Sec 3.24
+  SPV_OPERAND_TYPE_MEMORY_ACCESS,          // SPIR-V Sec 3.26
+  SPV_OPERAND_TYPE_FRAGMENT_SHADING_RATE,  // SPIR-V Sec 3.FSR
 
 // The remaining operand types are only used internally by the assembler.
 // There are two categories:
