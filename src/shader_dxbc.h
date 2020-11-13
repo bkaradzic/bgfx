@@ -643,6 +643,16 @@ namespace bgfx
 		stl::vector<uint8_t> debugCode;
 	};
 
+	struct DxbcRDEF
+	{
+		stl::vector<uint8_t> rdefCode;
+	};
+
+	struct DxbcSTAT
+	{
+		stl::vector<uint8_t> statCode;
+	};
+
 	int32_t read(bx::ReaderSeekerI* _reader, DxbcShader& _shader, bx::Error* _err);
 	int32_t write(bx::WriterI* _writer, const DxbcShader& _shader, bx::Error* _err);
 
@@ -671,6 +681,8 @@ namespace bgfx
 		DxbcShader shader;
 		DxbcSFI0 sfi0;
 		DxbcSPDB spdb;
+		DxbcRDEF rdef;
+		DxbcSTAT stat;
 		uint32_t chunksFourcc[DXBC_MAX_CHUNKS];
 	};
 

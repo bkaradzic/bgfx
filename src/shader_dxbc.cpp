@@ -1854,6 +1854,9 @@ namespace bgfx
 #define DXBC_CHUNK_SFI0             BX_MAKEFOURCC('S', 'F', 'I', '0')
 #define DXBC_CHUNK_SPDB             BX_MAKEFOURCC('S', 'P', 'D', 'B')
 
+#define DXBC_CHUNK_RDEF             BX_MAKEFOURCC('R', 'D', 'E', 'F')
+#define DXBC_CHUNK_STAT             BX_MAKEFOURCC('S', 'T', 'A', 'T')
+
 	int32_t read(bx::ReaderSeekerI* _reader, DxbcContext& _dxbc, bx::Error* _err)
 	{
 		int32_t size = 0;
@@ -1913,11 +1916,16 @@ namespace bgfx
 				_dxbc.spdb.debugCode.resize(chunkSize);
 				size += bx::read(_reader, _dxbc.spdb.debugCode.data(), chunkSize, _err);
 				break;
-
+			case DXBC_CHUNK_RDEF: // Resource definition.
+				_dxbc.rdef.rdefCode.resize(chunkSize);
+				size += bx::read(_reader, _dxbc.rdef.rdefCode.data(), chunkSize, _err);
+				break;
+			case DXBC_CHUNK_STAT: // Statistics.
+				_dxbc.stat.statCode.resize(chunkSize);
+				size += bx::read(_reader, _dxbc.stat.statCode.data(), chunkSize, _err);
+				break;
 			case BX_MAKEFOURCC('I', 'F', 'C', 'E'): // Interface.
-			case BX_MAKEFOURCC('R', 'D', 'E', 'F'): // Resource definition.
 			case BX_MAKEFOURCC('S', 'D', 'G', 'B'): // Shader debugging info (old).
-			case BX_MAKEFOURCC('S', 'T', 'A', 'T'): // Statistics.
 			case BX_MAKEFOURCC('P', 'C', 'S', 'G'): // Patch constant signature.
 			case BX_MAKEFOURCC('P', 'S', 'O', '1'): // Pipeline State Object 1
 			case BX_MAKEFOURCC('P', 'S', 'O', '2'): // Pipeline State Object 2
@@ -1960,6 +1968,8 @@ namespace bgfx
 			case DXBC_CHUNK_OUTPUT_SIGNATURE:
 			case DXBC_CHUNK_SFI0:
 			case DXBC_CHUNK_SPDB:
+			case DXBC_CHUNK_RDEF:
+			case DXBC_CHUNK_STAT:
 				++numSupportedChunks;
 				break;
 
@@ -2033,12 +2043,23 @@ namespace bgfx
 				chunkSize[idx] = bx::write(_writer, _dxbc.spdb.debugCode.data(), _dxbc.spdb.debugCode.size(), _err);
 				size += chunkSize[idx++];
 				break;
-
+			case DXBC_CHUNK_RDEF: // Resource definition.
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, DXBC_CHUNK_RDEF, _err);
+				size += bx::write(_writer, UINT32(_dxbc.rdef.rdefCode.size()), _err);
+				chunkSize[idx] = bx::write(_writer, _dxbc.rdef.rdefCode.data(), _dxbc.rdef.rdefCode.size(), _err);
+				size += chunkSize[idx++];
+				break;
+			case DXBC_CHUNK_STAT: // Statistics.
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, DXBC_CHUNK_STAT, _err);
+				size += bx::write(_writer, UINT32(_dxbc.rdef.rdefCode.size()), _err);
+				chunkSize[idx] = bx::write(_writer, _dxbc.rdef.rdefCode.data(), _dxbc.rdef.rdefCode.size(), _err);
+				size += chunkSize[idx++];
+				break;
 			case BX_MAKEFOURCC('A', 'o', 'n', '9'): // Contains DX9BC for feature level 9.x (*s_4_0_level_9_*) shaders.
 			case BX_MAKEFOURCC('I', 'F', 'C', 'E'): // Interface.
-			case BX_MAKEFOURCC('R', 'D', 'E', 'F'): // Resource definition.
 			case BX_MAKEFOURCC('S', 'D', 'G', 'B'): // Shader debugging info (old).
-			case BX_MAKEFOURCC('S', 'T', 'A', 'T'): // Statistics.
 			case BX_MAKEFOURCC('P', 'C', 'S', 'G'): // Patch constant signature.
 			case BX_MAKEFOURCC('P', 'S', 'O', '1'): // Pipeline State Object 1
 			case BX_MAKEFOURCC('P', 'S', 'O', '2'): // Pipeline State Object 2
