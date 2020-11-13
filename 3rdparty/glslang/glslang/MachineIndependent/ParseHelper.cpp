@@ -2121,9 +2121,15 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     {
         // Make sure the image types have the correct layout() format and correct argument types
         const TType& imageType = arg0->getType();
-        if (imageType.getSampler().type == EbtInt || imageType.getSampler().type == EbtUint) {
-            if (imageType.getQualifier().getFormat() != ElfR32i && imageType.getQualifier().getFormat() != ElfR32ui)
+        if (imageType.getSampler().type == EbtInt || imageType.getSampler().type == EbtUint ||
+            imageType.getSampler().type == EbtInt64 || imageType.getSampler().type == EbtUint64) {
+            if (imageType.getQualifier().getFormat() != ElfR32i && imageType.getQualifier().getFormat() != ElfR32ui &&
+                imageType.getQualifier().getFormat() != ElfR64i && imageType.getQualifier().getFormat() != ElfR64ui)
                 error(loc, "only supported on image with format r32i or r32ui", fnCandidate.getName().c_str(), "");
+            if (callNode.getType().getBasicType() == EbtInt64 && imageType.getQualifier().getFormat() != ElfR64i)
+                error(loc, "only supported on image with format r64i", fnCandidate.getName().c_str(), "");
+            else if (callNode.getType().getBasicType() == EbtUint64 && imageType.getQualifier().getFormat() != ElfR64ui)
+                error(loc, "only supported on image with format r64ui", fnCandidate.getName().c_str(), "");
         } else {
             bool isImageAtomicOnFloatAllowed = ((fnCandidate.getName().compare(0, 14, "imageAtomicAdd") == 0) ||
                 (fnCandidate.getName().compare(0, 15, "imageAtomicLoad") == 0) ||
@@ -3368,7 +3374,7 @@ void TParseContext::transparentOpaqueCheck(const TSourceLoc& loc, const TType& t
 //
 void TParseContext::memberQualifierCheck(glslang::TPublicType& publicType)
 {
-    globalQualifierFixCheck(publicType.loc, publicType.qualifier);
+    globalQualifierFixCheck(publicType.loc, publicType.qualifier, true);
     checkNoShaderLayouts(publicType.loc, publicType.shaderQualifiers);
     if (publicType.qualifier.isNonUniform()) {
         error(publicType.loc, "not allowed on block or structure members", "nonuniformEXT", "");
@@ -3379,7 +3385,7 @@ void TParseContext::memberQualifierCheck(glslang::TPublicType& publicType)
 //
 // Check/fix just a full qualifier (no variables or types yet, but qualifier is complete) at global level.
 //
-void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& qualifier)
+void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& qualifier, bool isMemberCheck)
 {
     bool nonuniformOkay = false;
 
@@ -3404,6 +3410,16 @@ void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& q
     case EvqTemporary:
         nonuniformOkay = true;
         break;
+    case EvqUniform:
+        // According to GLSL spec: The std430 qualifier is supported only for shader storage blocks; a shader using
+        // the std430 qualifier on a uniform block will fail to compile.
+        // Only check the global declaration: layout(std430) uniform;
+        if (blockName == nullptr &&
+            qualifier.layoutPacking == ElpStd430)
+        {
+            error(loc, "it is invalid to declare std430 qualifier on uniform", "", "");
+        }
+        break;
     default:
         break;
     }
@@ -3411,7 +3427,9 @@ void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& q
     if (!nonuniformOkay && qualifier.isNonUniform())
         error(loc, "for non-parameter, can only apply to 'in' or no storage qualifier", "nonuniformEXT", "");
 
-    invariantCheck(loc, qualifier);
+    // Storage qualifier isn't ready for memberQualifierCheck, we should skip invariantCheck for it.
+    if (!isMemberCheck || structNestingLevel > 0)
+        invariantCheck(loc, qualifier);
 }
 
 //
@@ -4083,6 +4101,9 @@ void TParseContext::checkRuntimeSizable(const TSourceLoc& loc, const TIntermType
     if (isRuntimeLength(base))
         return;
 
+    if (base.getType().getQualifier().builtIn == EbvSampleMask)
+        return;
+
     // Check for last member of a bufferreference type, which is runtime sizeable
     // but doesn't support runtime length
     if (base.getType().getQualifier().storage == EvqBuffer) {
@@ -4226,6 +4247,8 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
         (identifier == "gl_FragCoord"           && ((nonEsRedecls && version >= 150) || esRedecls)) ||
          identifier == "gl_ClipDistance"                                                            ||
          identifier == "gl_CullDistance"                                                            ||
+         identifier == "gl_ShadingRateEXT"                                                          ||
+         identifier == "gl_PrimitiveShadingRateEXT"                                                 ||
          identifier == "gl_FrontColor"                                                              ||
          identifier == "gl_BackColor"                                                               ||
          identifier == "gl_FrontSecondaryColor"                                                     ||
@@ -4632,14 +4655,14 @@ void TParseContext::paramCheckFix(const TSourceLoc& loc, const TQualifier& quali
 
 void TParseContext::nestedBlockCheck(const TSourceLoc& loc)
 {
-    if (structNestingLevel > 0)
+    if (structNestingLevel > 0 || blockNestingLevel > 0)
         error(loc, "cannot nest a block definition inside a structure or block", "", "");
-    ++structNestingLevel;
+    ++blockNestingLevel;
 }
 
 void TParseContext::nestedStructCheck(const TSourceLoc& loc)
 {
-    if (structNestingLevel > 0)
+    if (structNestingLevel > 0 || blockNestingLevel > 0)
         error(loc, "cannot nest a structure definition inside a structure or block", "", "");
     ++structNestingLevel;
 }
@@ -6535,11 +6558,13 @@ void TParseContext::declareTypeDefaults(const TSourceLoc& loc, const TPublicType
             error(loc, "atomic_uint binding is too large", "binding", "");
             return;
         }
-
-        if(publicType.qualifier.hasOffset()) {
+        if (publicType.qualifier.hasOffset())
             atomicUintOffsets[publicType.qualifier.layoutBinding] = publicType.qualifier.layoutOffset;
-        }
         return;
+    }
+
+    if (publicType.arraySizes) {
+        error(loc, "expect an array name", "", "");
     }
 
     if (publicType.qualifier.hasLayout() && !publicType.qualifier.hasBufferReference())
@@ -6631,6 +6656,22 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
 
     if (type.getQualifier().storage == EvqShared && type.containsCoopMat())
         error(loc, "qualifier", "Cooperative matrix types must not be used in shared memory", "");
+
+    if (profile == EEsProfile) {
+        if (type.getQualifier().isPipeInput() && type.getBasicType() == EbtStruct) {
+            if (type.getQualifier().isArrayedIo(language)) {
+                TType perVertexType(type, 0);
+                if (perVertexType.containsArray() && perVertexType.containsBuiltIn() == false) {
+                    error(loc, "A per vertex structure containing an array is not allowed as input in ES", type.getTypeName().c_str(), "");
+                }
+            }
+            else if (type.containsArray() && type.containsBuiltIn() == false) {
+                error(loc, "A structure containing an array is not allowed as input in ES", type.getTypeName().c_str(), "");
+            }
+            if (type.containsStructure())
+                error(loc, "A structure containing an struct is not allowed as input in ES", type.getTypeName().c_str(), "");
+        }
+    }
 
     if (identifier != "gl_FragCoord" && (publicType.shaderQualifiers.originUpperLeft || publicType.shaderQualifiers.pixelCenterInteger))
         error(loc, "can only apply origin_upper_left and pixel_center_origin to gl_FragCoord", "layout qualifier", "");
@@ -6953,6 +6994,15 @@ TIntermTyped* TParseContext::convertInitializerList(const TSourceLoc& loc, const
         if (type.getVectorSize() != (int)initList->getSequence().size()) {
             error(loc, "wrong vector size (or rows in a matrix column):", "initializer list", type.getCompleteString().c_str());
             return nullptr;
+        }
+        TBasicType destType = type.getBasicType();
+        for (int i = 0; i < type.getVectorSize(); ++i) {
+            TBasicType initType = initList->getSequence()[i]->getAsTyped()->getBasicType();
+            if (destType != initType && !intermediate.canImplicitlyPromote(initType, destType)) {
+                error(loc, "type mismatch in initializer list", "initializer list", type.getCompleteString().c_str());
+                return nullptr;
+            }
+
         }
     } else {
         error(loc, "unexpected initializer-list type:", "initializer list", type.getCompleteString().c_str());
@@ -7490,10 +7540,10 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
         TType& memberType = *typeList[member].type;
         TQualifier& memberQualifier = memberType.getQualifier();
         const TSourceLoc& memberLoc = typeList[member].loc;
-        globalQualifierFixCheck(memberLoc, memberQualifier);
         if (memberQualifier.storage != EvqTemporary && memberQualifier.storage != EvqGlobal && memberQualifier.storage != currentBlockQualifier.storage)
             error(memberLoc, "member storage qualifier cannot contradict block storage qualifier", memberType.getFieldName().c_str(), "");
         memberQualifier.storage = currentBlockQualifier.storage;
+        globalQualifierFixCheck(memberLoc, memberQualifier);
 #ifndef GLSLANG_WEB
         inheritMemoryQualifiers(currentBlockQualifier, memberQualifier);
         if (currentBlockQualifier.perPrimitiveNV)
@@ -8191,7 +8241,7 @@ void TParseContext::invariantCheck(const TSourceLoc& loc, const TQualifier& qual
 
     bool pipeOut = qualifier.isPipeOutput();
     bool pipeIn = qualifier.isPipeInput();
-    if (version >= 300 || (!isEsProfile() && version >= 420)) {
+    if ((version >= 300 && isEsProfile()) || (!isEsProfile() && version >= 420)) {
         if (! pipeOut)
             error(loc, "can only apply to an output", "invariant", "");
     } else {

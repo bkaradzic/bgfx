@@ -1,4 +1,6 @@
 // Copyright (c) 2018 Google LLC.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +15,6 @@
 // limitations under the License.
 
 // Validates correctness of built-in variables.
-
-#include "source/val/validate.h"
 
 #include <functional>
 #include <list>
@@ -31,6 +31,7 @@
 #include "source/spirv_target_env.h"
 #include "source/util/bitutils.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -230,6 +231,12 @@ class BuiltInsValidator {
   spv_result_t ValidateComputeI32InputAtDefinition(const Decoration& decoration,
                                                    const Instruction& inst);
 
+  spv_result_t ValidatePrimitiveShadingRateAtDefinition(
+      const Decoration& decoration, const Instruction& inst);
+
+  spv_result_t ValidateShadingRateAtDefinition(const Decoration& decoration,
+                                               const Instruction& inst);
+
   // The following section contains functions which are called when id defined
   // by |referenced_inst| is
   // 1. referenced by |referenced_from_inst|
@@ -379,6 +386,16 @@ class BuiltInsValidator {
       const Instruction& referenced_from_inst);
 
   spv_result_t ValidateSMBuiltinsAtReference(
+      const Decoration& decoration, const Instruction& built_in_inst,
+      const Instruction& referenced_inst,
+      const Instruction& referenced_from_inst);
+
+  spv_result_t ValidatePrimitiveShadingRateAtReference(
+      const Decoration& decoration, const Instruction& built_in_inst,
+      const Instruction& referenced_inst,
+      const Instruction& referenced_from_inst);
+
+  spv_result_t ValidateShadingRateAtReference(
       const Decoration& decoration, const Instruction& built_in_inst,
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
@@ -2586,17 +2603,19 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
       assert(function_id_ == 0);
       for (const auto em :
            {SpvExecutionModelVertex, SpvExecutionModelTessellationEvaluation,
-            SpvExecutionModelGeometry}) {
+            SpvExecutionModelGeometry, SpvExecutionModelMeshNV}) {
         id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
-            std::bind(&BuiltInsValidator::ValidateNotCalledWithExecutionModel,
-                      this,
-                      "Vulkan spec doesn't allow BuiltIn Layer and "
-                      "ViewportIndex to be "
-                      "used for variables with Input storage class if "
-                      "execution model is Vertex, TessellationEvaluation, or "
-                      "Geometry.",
-                      em, decoration, built_in_inst, referenced_from_inst,
-                      std::placeholders::_1));
+            std::bind(
+                &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
+                std::string(
+                    _.VkErrorID((operand == SpvBuiltInLayer) ? 4274 : 4406) +
+                    "Vulkan spec doesn't allow BuiltIn Layer and "
+                    "ViewportIndex to be "
+                    "used for variables with Input storage class if "
+                    "execution model is Vertex, TessellationEvaluation, "
+                    "Geometry, or MeshNV."),
+                em, decoration, built_in_inst, referenced_from_inst,
+                std::placeholders::_1));
       }
     }
 
@@ -2604,11 +2623,12 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
       assert(function_id_ == 0);
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
           &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-          "Vulkan spec doesn't allow BuiltIn Layer and "
-          "ViewportIndex to be "
-          "used for variables with Output storage class if "
-          "execution model is "
-          "Fragment.",
+          std::string(_.VkErrorID((operand == SpvBuiltInLayer) ? 4275 : 4407) +
+                      "Vulkan spec doesn't allow BuiltIn Layer and "
+                      "ViewportIndex to be "
+                      "used for variables with Output storage class if "
+                      "execution model is "
+                      "Fragment."),
           SpvExecutionModelFragment, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
     }
@@ -2623,12 +2643,26 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
         case SpvExecutionModelVertex:
         case SpvExecutionModelTessellationEvaluation: {
           if (!_.HasCapability(SpvCapabilityShaderViewportIndexLayerEXT)) {
+            if (operand == SpvBuiltInViewportIndex &&
+                _.HasCapability(SpvCapabilityShaderViewportIndex))
+              break;  // Ok
+            if (operand == SpvBuiltInLayer &&
+                _.HasCapability(SpvCapabilityShaderLayer))
+              break;  // Ok
+
+            const char* capability = "ShaderViewportIndexLayerEXT";
+
+            if (operand == SpvBuiltInViewportIndex)
+              capability = "ShaderViewportIndexLayerEXT or ShaderViewportIndex";
+            if (operand == SpvBuiltInLayer)
+              capability = "ShaderViewportIndexLayerEXT or ShaderLayer";
+
             return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
                    << "Using BuiltIn "
                    << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
                                                     operand)
-                   << " in Vertex or Tessellation execution model requires "
-                      "the ShaderViewportIndexLayerEXT capability.";
+                   << " in Vertex or Tessellation execution model requires the "
+                   << capability << " capability.";
           }
           break;
         }
@@ -3314,6 +3348,142 @@ spv_result_t BuiltInsValidator::ValidateSMBuiltinsAtReference(
   return SPV_SUCCESS;
 }
 
+spv_result_t BuiltInsValidator::ValidatePrimitiveShadingRateAtDefinition(
+    const Decoration& decoration, const Instruction& inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (spv_result_t error = ValidateI32(
+            decoration, inst,
+            [this, &inst,
+             &decoration](const std::string& message) -> spv_result_t {
+              return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                     << _.VkErrorID(4486)
+                     << "According to the Vulkan spec BuiltIn "
+                     << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                      decoration.params()[0])
+                     << " variable needs to be a 32-bit int scalar. "
+                     << message;
+            })) {
+      return error;
+    }
+  }
+
+  // Seed at reference checks with this built-in.
+  return ValidatePrimitiveShadingRateAtReference(decoration, inst, inst, inst);
+}
+
+spv_result_t BuiltInsValidator::ValidatePrimitiveShadingRateAtReference(
+    const Decoration& decoration, const Instruction& built_in_inst,
+    const Instruction& referenced_inst,
+    const Instruction& referenced_from_inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const SpvStorageClass storage_class = GetStorageClass(referenced_from_inst);
+    if (storage_class != SpvStorageClassMax &&
+        storage_class != SpvStorageClassOutput) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+             << _.VkErrorID(4485) << "Vulkan spec allows BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              decoration.params()[0])
+             << " to be only used for variables with Output storage class. "
+             << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                 referenced_from_inst)
+             << " " << GetStorageClassDesc(referenced_from_inst);
+    }
+
+    for (const SpvExecutionModel execution_model : execution_models_) {
+      switch (execution_model) {
+        case SpvExecutionModelVertex:
+        case SpvExecutionModelGeometry:
+        case SpvExecutionModelMeshNV:
+          break;
+        default: {
+          return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+                 << _.VkErrorID(4484) << "Vulkan spec allows BuiltIn "
+                 << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                  decoration.params()[0])
+                 << " to be used only with Vertex, Geometry, or MeshNV "
+                    "execution models. "
+                 << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                     referenced_from_inst, execution_model);
+        }
+      }
+    }
+  }
+
+  if (function_id_ == 0) {
+    // Propagate this rule to all dependant ids in the global scope.
+    id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
+        std::bind(&BuiltInsValidator::ValidatePrimitiveShadingRateAtReference,
+                  this, decoration, built_in_inst, referenced_from_inst,
+                  std::placeholders::_1));
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t BuiltInsValidator::ValidateShadingRateAtDefinition(
+    const Decoration& decoration, const Instruction& inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (spv_result_t error = ValidateI32(
+            decoration, inst,
+            [this, &inst,
+             &decoration](const std::string& message) -> spv_result_t {
+              return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                     << _.VkErrorID(4492)
+                     << "According to the Vulkan spec BuiltIn "
+                     << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                      decoration.params()[0])
+                     << " variable needs to be a 32-bit int scalar. "
+                     << message;
+            })) {
+      return error;
+    }
+  }
+
+  // Seed at reference checks with this built-in.
+  return ValidateShadingRateAtReference(decoration, inst, inst, inst);
+}
+
+spv_result_t BuiltInsValidator::ValidateShadingRateAtReference(
+    const Decoration& decoration, const Instruction& built_in_inst,
+    const Instruction& referenced_inst,
+    const Instruction& referenced_from_inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const SpvStorageClass storage_class = GetStorageClass(referenced_from_inst);
+    if (storage_class != SpvStorageClassMax &&
+        storage_class != SpvStorageClassInput) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+             << _.VkErrorID(4491) << "Vulkan spec allows BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              decoration.params()[0])
+             << " to be only used for variables with Input storage class. "
+             << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                 referenced_from_inst)
+             << " " << GetStorageClassDesc(referenced_from_inst);
+    }
+
+    for (const SpvExecutionModel execution_model : execution_models_) {
+      if (execution_model != SpvExecutionModelFragment) {
+        return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+               << _.VkErrorID(4490) << "Vulkan spec allows BuiltIn "
+               << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                decoration.params()[0])
+               << " to be used only with the Fragment execution model. "
+               << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                   referenced_from_inst, execution_model);
+      }
+    }
+  }
+
+  if (function_id_ == 0) {
+    // Propagate this rule to all dependant ids in the global scope.
+    id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
+        &BuiltInsValidator::ValidateShadingRateAtReference, this, decoration,
+        built_in_inst, referenced_from_inst, std::placeholders::_1));
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   const SpvBuiltIn label = SpvBuiltIn(decoration.params()[0]);
@@ -3514,6 +3684,11 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInRayGeometryIndexKHR: {
       // No validation rules (for the moment).
       break;
+
+      case SpvBuiltInPrimitiveShadingRateKHR:
+        return ValidatePrimitiveShadingRateAtDefinition(decoration, inst);
+      case SpvBuiltInShadingRateKHR:
+        return ValidateShadingRateAtDefinition(decoration, inst);
     }
   }
   return SPV_SUCCESS;

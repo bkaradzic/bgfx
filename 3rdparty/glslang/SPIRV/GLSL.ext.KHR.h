@@ -48,4 +48,5 @@ static const char* const E_SPV_KHR_shader_clock                 = "SPV_KHR_shade
 static const char* const E_SPV_KHR_non_semantic_info            = "SPV_KHR_non_semantic_info";
 static const char* const E_SPV_KHR_ray_tracing                  = "SPV_KHR_ray_tracing";
 static const char* const E_SPV_KHR_ray_query                    = "SPV_KHR_ray_query";
+static const char* const E_SPV_KHR_fragment_shading_rate        = "SPV_KHR_fragment_shading_rate";
 #endif  // #ifndef GLSLextKHR_H

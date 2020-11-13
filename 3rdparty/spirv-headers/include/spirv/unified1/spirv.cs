@@ -49,7 +49,7 @@ namespace Spv
     {
         public const uint MagicNumber = 0x07230203;
         public const uint Version = 0x00010500;
-        public const uint Revision = 3;
+        public const uint Revision = 4;
         public const uint OpCodeMask = 0xffff;
         public const uint WordCountShift = 16;
 
@@ -270,6 +270,8 @@ namespace Spv
             Rg8ui = 37,
             R16ui = 38,
             R8ui = 39,
+            R64ui = 40,
+            R64i = 41,
         }
 
         public enum ImageChannelOrder
@@ -556,8 +558,10 @@ namespace Spv
             BaseVertex = 4424,
             BaseInstance = 4425,
             DrawIndex = 4426,
+            PrimitiveShadingRateKHR = 4432,
             DeviceIndex = 4438,
             ViewIndex = 4440,
+            ShadingRateKHR = 4444,
             BaryCoordNoPerspAMD = 4992,
             BaryCoordNoPerspCentroidAMD = 4993,
             BaryCoordNoPerspSampleAMD = 4994,
@@ -874,6 +878,7 @@ namespace Spv
             GroupNonUniformQuad = 68,
             ShaderLayer = 69,
             ShaderViewportIndex = 70,
+            FragmentShadingRateKHR = 4422,
             SubgroupBallotKHR = 4423,
             DrawParameters = 4427,
             SubgroupVoteKHR = 4431,
@@ -904,6 +909,7 @@ namespace Spv
             FragmentMaskAMD = 5010,
             StencilExportEXT = 5013,
             ImageReadWriteLodAMD = 5015,
+            Int64ImageEXT = 5016,
             ShaderClockKHR = 5055,
             SampleMaskOverrideCoverageNV = 5249,
             GeometryShaderPassthroughNV = 5251,
@@ -1026,6 +1032,23 @@ namespace Spv
         {
             RayQueryCandidateIntersectionTriangleKHR = 0,
             RayQueryCandidateIntersectionAABBKHR = 1,
+        }
+
+        public enum FragmentShadingRateShift
+        {
+            Vertical2Pixels = 0,
+            Vertical4Pixels = 1,
+            Horizontal2Pixels = 2,
+            Horizontal4Pixels = 3,
+        }
+
+        public enum FragmentShadingRateMask
+        {
+            MaskNone = 0,
+            Vertical2Pixels = 0x00000001,
+            Vertical4Pixels = 0x00000002,
+            Horizontal2Pixels = 0x00000004,
+            Horizontal4Pixels = 0x00000008,
         }
 
         public enum Op

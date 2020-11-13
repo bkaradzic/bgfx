@@ -150,10 +150,10 @@ namespace bgfx { namespace gl
 			m_view    = glView;
 			m_context = glContext;
 		}
-        else
-        {
-            [g_platformData.context makeCurrentContext];
-        }
+		else
+		{
+			[(NSOpenGLContext*)g_platformData.context makeCurrentContext];
+		}
 
 		import();
 

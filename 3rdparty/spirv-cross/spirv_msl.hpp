@@ -60,7 +60,11 @@ struct MSLShaderInput
 
 // Matches the binding index of a MSL resource for a binding within a descriptor set.
 // Taken together, the stage, desc_set and binding combine to form a reference to a resource
-// descriptor used in a particular shading stage.
+// descriptor used in a particular shading stage. The count field indicates the number of
+// resources consumed by this binding, if the binding represents an array of resources.
+// If the resource array is a run-time-sized array, which are legal in GLSL or SPIR-V, this value
+// will be used to declare the array size in MSL, which does not support run-time-sized arrays.
+// For resources that are not held in a run-time-sized array, the count field does not need to be populated.
 // If using MSL 2.0 argument buffers, the descriptor set is not marked as a discrete descriptor set,
 // and (for iOS only) the resource is not a storage image (sampled != 2), the binding reference we
 // remap to will become an [[id(N)]] attribute within the "descriptor set" argument buffer structure.
@@ -71,6 +75,7 @@ struct MSLResourceBinding
 	spv::ExecutionModel stage = spv::ExecutionModelMax;
 	uint32_t desc_set = 0;
 	uint32_t binding = 0;
+	uint32_t count = 0;
 	uint32_t msl_buffer = 0;
 	uint32_t msl_texture = 0;
 	uint32_t msl_sampler = 0;
@@ -315,7 +320,7 @@ public:
 		bool ios_support_base_vertex_instance = false;
 
 		// Use Metal's native frame-buffer fetch API for subpass inputs.
-		bool ios_use_framebuffer_fetch_subpasses = false;
+		bool use_framebuffer_fetch_subpasses = false;
 
 		// Enables use of "fma" intrinsic for invariant float math
 		bool invariant_float_math = false;
@@ -600,12 +605,20 @@ protected:
 		SPVFuncImplTextureSwizzle,
 		SPVFuncImplGatherSwizzle,
 		SPVFuncImplGatherCompareSwizzle,
+		SPVFuncImplSubgroupBroadcast,
+		SPVFuncImplSubgroupBroadcastFirst,
 		SPVFuncImplSubgroupBallot,
 		SPVFuncImplSubgroupBallotBitExtract,
 		SPVFuncImplSubgroupBallotFindLSB,
 		SPVFuncImplSubgroupBallotFindMSB,
 		SPVFuncImplSubgroupBallotBitCount,
 		SPVFuncImplSubgroupAllEqual,
+		SPVFuncImplSubgroupShuffle,
+		SPVFuncImplSubgroupShuffleXor,
+		SPVFuncImplSubgroupShuffleUp,
+		SPVFuncImplSubgroupShuffleDown,
+		SPVFuncImplQuadBroadcast,
+		SPVFuncImplQuadSwap,
 		SPVFuncImplReflectScalar,
 		SPVFuncImplRefractScalar,
 		SPVFuncImplFaceForwardScalar,
@@ -664,7 +677,7 @@ protected:
 	std::string variable_decl(const SPIRType &type, const std::string &name, uint32_t id = 0) override;
 
 	std::string image_type_glsl(const SPIRType &type, uint32_t id = 0) override;
-	std::string sampler_type(const SPIRType &type);
+	std::string sampler_type(const SPIRType &type, uint32_t id);
 	std::string builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage) override;
 	std::string to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id) override;
 	std::string to_name(uint32_t id, bool allow_alias = true) const override;
@@ -748,6 +761,7 @@ protected:
 	void emit_specialization_constants_and_structs();
 	void emit_interface_block(uint32_t ib_var_id);
 	bool maybe_emit_array_assignment(uint32_t id_lhs, uint32_t id_rhs);
+	uint32_t get_resource_array_size(uint32_t id) const;
 
 	void fix_up_shader_inputs_outputs();
 
@@ -855,6 +869,7 @@ protected:
 
 	void prepare_access_chain_for_scalar_access(std::string &expr, const SPIRType &type, spv::StorageClass storage,
 	                                            bool &is_packed) override;
+	void fix_up_interpolant_access_chain(const uint32_t *ops, uint32_t length);
 	bool emit_tessellation_access_chain(const uint32_t *ops, uint32_t length);
 	bool emit_tessellation_io_load(uint32_t result_type, uint32_t id, uint32_t ptr);
 	bool is_out_of_bounds_tessellation_level(uint32_t id_lhs);
@@ -913,6 +928,8 @@ protected:
 	bool used_swizzle_buffer = false;
 	bool added_builtin_tess_level = false;
 	bool needs_subgroup_invocation_id = false;
+	bool needs_subgroup_size = false;
+	bool needs_sample_id = false;
 	std::string qual_pos_var_name;
 	std::string stage_in_var_name = "in";
 	std::string stage_out_var_name = "out";
@@ -938,6 +955,7 @@ protected:
 	std::unordered_set<uint32_t> buffers_requiring_array_length;
 	SmallVector<uint32_t> buffer_arrays;
 	std::unordered_set<uint32_t> atomic_image_vars; // Emulate texture2D atomic operations
+	std::unordered_set<uint32_t> pull_model_inputs;
 
 	// Must be ordered since array is in a specific order.
 	std::map<SetBindingPair, std::pair<uint32_t, uint32_t>> buffers_requiring_dynamic_offset;
@@ -956,6 +974,7 @@ protected:
 	uint32_t get_target_components_for_fragment_location(uint32_t location) const;
 	uint32_t build_extended_vector_type(uint32_t type_id, uint32_t components,
 	                                    SPIRType::BaseType basetype = SPIRType::Unknown);
+	uint32_t build_msl_interpolant_type(uint32_t type_id, bool is_noperspective);
 
 	bool suppress_missing_prototypes = false;
 
@@ -984,6 +1003,8 @@ protected:
 		bool uses_atomics = false;
 		bool uses_resource_write = false;
 		bool needs_subgroup_invocation_id = false;
+		bool needs_subgroup_size = false;
+		bool needs_sample_id = false;
 	};
 
 	// OpcodeHandler that scans for uses of sampled images

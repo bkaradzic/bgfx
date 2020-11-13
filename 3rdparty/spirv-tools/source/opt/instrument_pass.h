@@ -213,8 +213,12 @@ class InstrumentPass : public Pass {
   uint32_t GenDebugDirectRead(const std::vector<uint32_t>& offset_ids,
                               InstructionBuilder* builder);
 
-  // Generate code to cast |value_id| to unsigned, if needed. Return
-  // an id to the unsigned equivalent.
+  // Generate code to convert integer |value_id| to 32bit, if needed. Return
+  // an id to the 32bit equivalent.
+  uint32_t Gen32BitCvtCode(uint32_t value_id, InstructionBuilder* builder);
+
+  // Generate code to cast integer |value_id| to 32bit unsigned, if needed.
+  // Return an id to the Uint equivalent.
   uint32_t GenUintCastCode(uint32_t value_id, InstructionBuilder* builder);
 
   // Return new label.

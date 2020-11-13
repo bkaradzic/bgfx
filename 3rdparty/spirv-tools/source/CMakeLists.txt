@@ -346,58 +346,64 @@ set_source_files_properties(
 
 spvtools_pch(SPIRV_SOURCES pch_source)
 
-add_library(${SPIRV_TOOLS}-static STATIC ${SPIRV_SOURCES})
-spvtools_default_compile_options(${SPIRV_TOOLS}-static)
-target_include_directories(${SPIRV_TOOLS}-static
-  PUBLIC
-    $<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  PRIVATE ${spirv-tools_BINARY_DIR}
-  PRIVATE ${SPIRV_HEADER_INCLUDE_DIR}
+# spirv_tools_default_target_options() sets the target options that are common
+# for all ${SPIRV_TOOLS} targets.
+function(spirv_tools_default_target_options target)
+  spvtools_default_compile_options(${target})
+  target_include_directories(${target}
+    PUBLIC
+      $<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE ${spirv-tools_BINARY_DIR}
+    PRIVATE ${SPIRV_HEADER_INCLUDE_DIR}
   )
-set_property(TARGET ${SPIRV_TOOLS}-static PROPERTY FOLDER "SPIRV-Tools libraries")
-spvtools_check_symbol_exports(${SPIRV_TOOLS}-static)
-add_dependencies(${SPIRV_TOOLS}-static core_tables enum_string_mapping extinst_tables)
+  set_property(TARGET ${target} PROPERTY FOLDER "SPIRV-Tools libraries")
+  spvtools_check_symbol_exports(${target})
+  add_dependencies(${target} core_tables enum_string_mapping extinst_tables)
+endfunction()
 
-# The static target does not have the '-static' suffix.
-set_target_properties(${SPIRV_TOOLS}-static PROPERTIES OUTPUT_NAME "${SPIRV_TOOLS}")
-
+# Always build ${SPIRV_TOOLS}-shared. This is expected distro packages, and
+# unlike the other SPIRV_TOOLS target, defaults to hidden symbol visibility.
 add_library(${SPIRV_TOOLS}-shared SHARED ${SPIRV_SOURCES})
-spvtools_default_compile_options(${SPIRV_TOOLS}-shared)
-target_include_directories(${SPIRV_TOOLS}-shared
-  PUBLIC
-    $<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  PRIVATE ${spirv-tools_BINARY_DIR}
-  PRIVATE ${SPIRV_HEADER_INCLUDE_DIR}
-  )
+spirv_tools_default_target_options(${SPIRV_TOOLS}-shared)
 set_target_properties(${SPIRV_TOOLS}-shared PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_property(TARGET ${SPIRV_TOOLS}-shared PROPERTY FOLDER "SPIRV-Tools libraries")
-spvtools_check_symbol_exports(${SPIRV_TOOLS}-shared)
 target_compile_definitions(${SPIRV_TOOLS}-shared
   PRIVATE SPIRV_TOOLS_IMPLEMENTATION
   PUBLIC SPIRV_TOOLS_SHAREDLIB
 )
-add_dependencies(${SPIRV_TOOLS}-shared core_tables enum_string_mapping extinst_tables)
 
-# Create the "${SPIRV_TOOLS}" target as an alias to either "${SPIRV_TOOLS}-static"
-# or "${SPIRV_TOOLS}-shared" depending on the value of BUILD_SHARED_LIBS.
-if(BUILD_SHARED_LIBS)
+if(SPIRV_TOOLS_BUILD_STATIC)
+  add_library(${SPIRV_TOOLS}-static STATIC ${SPIRV_SOURCES})
+  spirv_tools_default_target_options(${SPIRV_TOOLS}-static)
+  # The static target does not have the '-static' suffix.
+  set_target_properties(${SPIRV_TOOLS}-static PROPERTIES OUTPUT_NAME "${SPIRV_TOOLS}")
+
+  # Create the "${SPIRV_TOOLS}" target as an alias to either "${SPIRV_TOOLS}-static"
+  # or "${SPIRV_TOOLS}-shared" depending on the value of BUILD_SHARED_LIBS.
+  if(BUILD_SHARED_LIBS)
     add_library(${SPIRV_TOOLS} ALIAS ${SPIRV_TOOLS}-shared)
-else()
+  else()
     add_library(${SPIRV_TOOLS} ALIAS ${SPIRV_TOOLS}-static)
+  endif()
+
+  set(SPIRV_TOOLS_TARGETS ${SPIRV_TOOLS}-static ${SPIRV_TOOLS}-shared)
+else()
+  add_library(${SPIRV_TOOLS} ${SPIRV_TOOLS_LIBRARY_TYPE} ${SPIRV_SOURCES})
+  spirv_tools_default_target_options(${SPIRV_TOOLS})
+  set(SPIRV_TOOLS_TARGETS ${SPIRV_TOOLS} ${SPIRV_TOOLS}-shared)
 endif()
 
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   find_library(LIBRT rt)
   if(LIBRT)
-    target_link_libraries(${SPIRV_TOOLS}-static ${LIBRT})
-    target_link_libraries(${SPIRV_TOOLS}-shared ${LIBRT})
+    foreach(target ${SPIRV_TOOLS_TARGETS})
+      target_link_libraries(${target} ${LIBRT})
+    endforeach()
   endif()
 endif()
 
 if(ENABLE_SPIRV_TOOLS_INSTALL)
-  install(TARGETS ${SPIRV_TOOLS}-static ${SPIRV_TOOLS}-shared EXPORT ${SPIRV_TOOLS}Targets
+  install(TARGETS ${SPIRV_TOOLS_TARGETS} EXPORT ${SPIRV_TOOLS}Targets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

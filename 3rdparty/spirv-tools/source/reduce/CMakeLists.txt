@@ -78,7 +78,7 @@ endif()
 
 spvtools_pch(SPIRV_TOOLS_REDUCE_SOURCES pch_source_reduce)
 
-add_library(SPIRV-Tools-reduce STATIC ${SPIRV_TOOLS_REDUCE_SOURCES})
+add_library(SPIRV-Tools-reduce ${SPIRV_TOOLS_LIBRARY_TYPE} ${SPIRV_TOOLS_REDUCE_SOURCES})
 
 spvtools_default_compile_options(SPIRV-Tools-reduce)
 target_include_directories(SPIRV-Tools-reduce
@@ -90,7 +90,7 @@ target_include_directories(SPIRV-Tools-reduce
 )
 # The reducer reuses a lot of functionality from the SPIRV-Tools library.
 target_link_libraries(SPIRV-Tools-reduce
-  PUBLIC ${SPIRV_TOOLS}-static
+  PUBLIC ${SPIRV_TOOLS_FULL_VISIBILITY}
   PUBLIC SPIRV-Tools-opt)
 
 set_property(TARGET SPIRV-Tools-reduce PROPERTY FOLDER "SPIRV-Tools libraries")

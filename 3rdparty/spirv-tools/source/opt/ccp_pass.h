@@ -106,8 +106,9 @@ class CCPPass : public MemPass {
   // Propagator engine used.
   std::unique_ptr<SSAPropagator> propagator_;
 
-  // True if the pass created new constant instructions during propagation.
-  bool created_new_constant_;
+  // Value for the module's ID bound before running CCP. Used to detect whether
+  // propagation created new instructions.
+  uint32_t original_id_bound_;
 };
 
 }  // namespace opt

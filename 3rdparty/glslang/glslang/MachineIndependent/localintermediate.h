@@ -259,6 +259,23 @@ private:
     unsigned int features;
 };
 
+// MustBeAssigned wraps a T, asserting that it has been assigned with 
+// operator =() before attempting to read with operator T() or operator ->().
+// Used to catch cases where fields are read before they have been assigned.
+template<typename T>
+class MustBeAssigned
+{
+public:
+    MustBeAssigned() = default;
+    MustBeAssigned(const T& v) : value(v) {}
+    operator const T&() const { assert(isSet); return value; }
+    const T* operator ->() const { assert(isSet); return &value; }
+    MustBeAssigned& operator = (const T& v) { value = v; isSet = true; return *this; } 
+private:
+    T value;
+    bool isSet = false;
+};
+
 //
 // Set of helper functions to help parse and build the tree.
 //
@@ -270,6 +287,7 @@ public:
         profile(p), version(v),
 #endif
         treeRoot(0),
+        resources(TBuiltInResource{}),
         numEntryPoints(0), numErrors(0), numPushConstants(0), recursive(false),
         invertY(false),
         useStorageBuffer(false),
@@ -406,6 +424,7 @@ public:
     int getNumErrors() const { return numErrors; }
     void addPushConstantCount() { ++numPushConstants; }
     void setLimits(const TBuiltInResource& r) { resources = r; }
+    const TBuiltInResource& getLimits() const { return resources; }
 
     bool postProcess(TIntermNode*, EShLanguage);
     void removeTree();
@@ -955,7 +974,7 @@ protected:
     SpvVersion spvVersion;
     TIntermNode* treeRoot;
     std::set<std::string> requestedExtensions;  // cumulation of all enabled or required extensions; not connected to what subset of the shader used them
-    TBuiltInResource resources;
+    MustBeAssigned<TBuiltInResource> resources;
     int numEntryPoints;
     int numErrors;
     int numPushConstants;
