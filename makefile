@@ -171,11 +171,21 @@ vs2017-winstore100: vs2017-winstore100-debug32 vs2017-winstore100-release32 vs20
 
 .build/projects/gmake-osx:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx gmake
-osx-debug64: .build/projects/gmake-osx ## Build - OSX x64 Debug
+osx-debug64: osx-debug64-x86 osx-debug64-arm64 ## Build - macOS Universal Debug
+osx-release64: osx-release64-x86 osx-release64-arm64 ## Build - macOS Universal Release
+osx: osx-debug64 osx-release64 ## Build - macOS Universal Debug and Release
+
+osx-debug64-x86: .build/projects/gmake-osx ## Build - macOS x64 Debug
 	$(MAKE) -C .build/projects/gmake-osx config=debug64
-osx-release64: .build/projects/gmake-osx ## Build - OSX x64 Release
+osx-release64-x86: .build/projects/gmake-osx ## Build - macOS x64 Release
 	$(MAKE) -C .build/projects/gmake-osx config=release64
-osx: osx-debug64 osx-release64 ## Build - OSX x64 Debug and Release
+osx-x86: osx-debug64 osx-release64 ## Build - macOS x64 Debug and Release
+
+osx-debug64-arm64: .build/projects/gmake-osx ## Build - macOS ARM Debug
+	$(MAKE) -C .build/projects/gmake-osx config=debug64 ARCH="-arch arm64 -Wno-error=unused-command-line-argument -Wno-unused-command-line-argument"
+osx-release64-arm64: .build/projects/gmake-osx ## Build - macOS ARM Release
+	$(MAKE) -C .build/projects/gmake-osx config=release64 ARCH="-arch arm64 -Wno-error=unused-command-line-argument -Wno-unused-command-line-argument"
+osx-arm: osx-debug64-arm64 osx-release64-arm64 ## Build - macOS ARM Debug and Release
 
 .build/projects/gmake-ios-arm:
 	$(GENIE) --gcc=ios-arm gmake
