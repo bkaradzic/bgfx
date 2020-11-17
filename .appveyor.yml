@@ -6,7 +6,7 @@ os:
 environment:
   matrix:
   - TOOLSET: vs2017
-  - TOOLSET: vs2019
+#  - TOOLSET: vs2019
 
 configuration:
   - Debug

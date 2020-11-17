@@ -27,7 +27,7 @@
   "magic_number" : "0x07230203",
   "major_version" : 1,
   "minor_version" : 5,
-  "revision" : 3,
+  "revision" : 4,
   "instruction_printing_class" : [
     {
       "tag"     : "@exclude"
@@ -4102,6 +4102,16 @@
       "version" : "1.4"
     },
     {
+      "opname" : "OpTerminateInvocation",
+      "class"  : "Control-Flow",
+      "opcode" : 4416,
+      "extensions" : [
+        "SPV_KHR_terminate_invocation"
+      ],
+      "capabilities" : [ "Shader" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpSubgroupBallotKHR",
       "class"  : "Group",
       "opcode" : 4421,
@@ -7060,6 +7070,22 @@
         "capabilities" : [ "RayQueryProvisionalKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
+    },
+    {
+      "opname" : "OpAtomicFAddEXT",
+      "class"  : "Atomic",
+      "opcode" : 6035,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
+        { "kind" : "IdRef",             "name" : "'Value'" }
+      ],
+      "capabilities" : [ "AtomicFloat32AddEXT", "AtomicFloat64AddEXT" ],
+      "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
+      "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -7689,6 +7715,36 @@
           "enumerant" : "SkipAABBsKHR",
           "value" : "0x0200",
           "capabilities" : [ "RayTraversalPrimitiveCullingProvisionalKHR" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "BitEnum",
+      "kind" : "FragmentShadingRate",
+      "enumerants" : [
+        {
+          "enumerant" : "Vertical2Pixels",
+          "value" : "0x0001",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Vertical4Pixels",
+          "value" : "0x0002",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Horizontal2Pixels",
+          "value" : "0x0004",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Horizontal4Pixels",
+          "value" : "0x0008",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
           "version" : "None"
         }
       ]
@@ -8800,6 +8856,16 @@
           "enumerant" : "R8ui",
           "value" : 39,
           "capabilities" : [ "StorageImageExtendedFormats" ]
+        },
+	{
+          "enumerant" : "R64ui",
+          "value" : 40,
+          "capabilities" : [ "Int64ImageEXT" ]
+        },
+        {
+          "enumerant" : "R64i",
+          "value" : 41,
+          "capabilities" : [ "Int64ImageEXT" ]
         }
       ]
     },
@@ -9979,6 +10045,13 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "PrimitiveShadingRateKHR",
+          "value" : 4432,
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "extensions" : [ "SPV_KHR_fragment_shading_rate" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "DeviceIndex",
           "value" : 4438,
           "capabilities" : [ "DeviceGroup" ],
@@ -9991,6 +10064,13 @@
           "capabilities" : [ "MultiView" ],
           "extensions" : [ "SPV_KHR_multiview" ],
           "version" : "1.3"
+        },
+        {
+          "enumerant" : "ShadingRateKHR",
+          "value" : 4444,
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "extensions" : [ "SPV_KHR_fragment_shading_rate" ],
+          "version" : "None"
         },
         {
           "enumerant" : "BaryCoordNoPerspAMD",
@@ -10876,6 +10956,13 @@
           "version" : "1.5"
         },
         {
+          "enumerant" : "FragmentShadingRateKHR",
+          "value" : 4422,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_fragment_shading_rate" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SubgroupBallotKHR",
           "value" : 4423,
           "extensions" : [ "SPV_KHR_shader_ballot" ],
@@ -11073,6 +11160,13 @@
           "value" : 5015,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_AMD_shader_image_load_store_lod" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Int64ImageEXT",
+          "value" : 5016,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_shader_image_int64" ],
           "version" : "None"
         },
         {
@@ -11538,6 +11632,20 @@
           "enumerant" : "FPGARegINTEL",
           "value" : 5948,
           "extensions" : [ "SPV_INTEL_fpga_reg" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat32AddEXT",
+          "value" : 6033,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat64AddEXT",
+          "value" : 6034,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
           "version" : "None"
         }
       ]

@@ -57,7 +57,8 @@ enum AccessChainFlagBits
 	ACCESS_CHAIN_CHAIN_ONLY_BIT = 1 << 1,
 	ACCESS_CHAIN_PTR_CHAIN_BIT = 1 << 2,
 	ACCESS_CHAIN_SKIP_REGISTER_EXPRESSION_READ_BIT = 1 << 3,
-	ACCESS_CHAIN_LITERAL_MSB_FORCE_ID = 1 << 4
+	ACCESS_CHAIN_LITERAL_MSB_FORCE_ID = 1 << 4,
+	ACCESS_CHAIN_FLATTEN_ALL_MEMBERS_BIT = 1 << 5
 };
 typedef uint32_t AccessChainFlags;
 
@@ -120,6 +121,10 @@ public:
 		// which would otherwise be uninitialized will now be initialized to 0 instead.
 		bool force_zero_initialized_variables = false;
 
+		// In GLSL, force use of I/O block flattening, similar to
+		// what happens on legacy GLSL targets for blocks and structs.
+		bool force_flattened_io_blocks = false;
+
 		enum Precision
 		{
 			DontCare,
@@ -128,14 +133,16 @@ public:
 			Highp
 		};
 
-		struct
+		struct VertexOptions
 		{
-			// GLSL: In vertex shaders, rewrite [0, w] depth (Vulkan/D3D style) to [-w, w] depth (GL style).
-			// MSL: In vertex shaders, rewrite [-w, w] depth (GL style) to [0, w] depth.
-			// HLSL: In vertex shaders, rewrite [-w, w] depth (GL style) to [0, w] depth.
+			// "Vertex-like shader" here is any shader stage that can write BuiltInPosition.
+
+			// GLSL: In vertex-like shaders, rewrite [0, w] depth (Vulkan/D3D style) to [-w, w] depth (GL style).
+			// MSL: In vertex-like shaders, rewrite [-w, w] depth (GL style) to [0, w] depth.
+			// HLSL: In vertex-like shaders, rewrite [-w, w] depth (GL style) to [0, w] depth.
 			bool fixup_clipspace = false;
 
-			// Inverts gl_Position.y or equivalent.
+			// In vertex-like shaders, inverts gl_Position.y or equivalent.
 			bool flip_vert_y = false;
 
 			// GLSL only, for HLSL version of this option, see CompilerHLSL.
@@ -145,7 +152,7 @@ public:
 			bool support_nonzero_base_instance = true;
 		} vertex;
 
-		struct
+		struct FragmentOptions
 		{
 			// Add precision mediump float in ES targets when emitting GLES source.
 			// Add precision highp int in ES targets when emitting GLES source.
@@ -236,7 +243,84 @@ public:
 	// - Images which are statically used at least once with Dref opcodes.
 	bool variable_is_depth_or_compare(VariableID id) const;
 
+
 protected:
+	struct ShaderSubgroupSupportHelper
+	{
+		// lower enum value = greater priority
+		enum Candidate
+		{
+			KHR_shader_subgroup_ballot,
+			KHR_shader_subgroup_basic,
+			KHR_shader_subgroup_vote,
+			NV_gpu_shader_5,
+			NV_shader_thread_group,
+			NV_shader_thread_shuffle,
+			ARB_shader_ballot,
+			ARB_shader_group_vote,
+			AMD_gcn_shader,
+
+			CandidateCount
+		};
+
+		static const char *get_extension_name(Candidate c);
+		static SmallVector<std::string> get_extra_required_extension_names(Candidate c);
+		static const char *get_extra_required_extension_predicate(Candidate c);
+
+		enum Feature
+		{
+			SubgroupMask,
+			SubgroupSize,
+			SubgroupInvocationID,
+			SubgroupID,
+			NumSubgroups,
+			SubgroupBrodcast_First,
+			SubgroupBallotFindLSB_MSB,
+			SubgroupAll_Any_AllEqualBool,
+			SubgroupAllEqualT,
+			SubgroupElect,
+			SubgroupBarrier,
+			SubgroupMemBarrier,
+			SubgroupBallot,
+			SubgroupInverseBallot_InclBitCount_ExclBitCout,
+			SubgroupBallotBitExtract,
+			SubgroupBallotBitCount,
+
+			FeatureCount
+		};
+
+		using FeatureMask = uint32_t;
+		static_assert(sizeof(FeatureMask) * 8u >= FeatureCount, "Mask type needs more bits.");
+
+		using CandidateVector = SmallVector<Candidate, CandidateCount>;
+		using FeatureVector = SmallVector<Feature>;
+
+		static FeatureVector get_feature_dependencies(Feature feature);
+		static FeatureMask get_feature_dependency_mask(Feature feature);
+		static bool can_feature_be_implemented_without_extensions(Feature feature);
+		static Candidate get_KHR_extension_for_feature(Feature feature);
+
+		struct Result
+		{
+			Result();
+			uint32_t weights[CandidateCount];
+		};
+
+		void request_feature(Feature feature);
+		bool is_feature_requested(Feature feature) const;
+		Result resolve() const;
+
+		static CandidateVector get_candidates_for_feature(Feature ft, const Result &r);
+
+	private:
+		static CandidateVector get_candidates_for_feature(Feature ft);
+		static FeatureMask build_mask(const SmallVector<Feature> &features);
+		FeatureMask feature_mask = 0;
+	};
+
+	// TODO remove this function when all subgroup ops are supported (or make it always return true)
+	static bool is_supported_subgroup_op_in_opengl(spv::Op op);
+
 	void reset();
 	void emit_function(SPIRFunction &func, const Bitset &return_flags);
 
@@ -266,6 +350,8 @@ protected:
 	void emit_line_directive(uint32_t file_id, uint32_t line_literal);
 	void build_workgroup_size(SmallVector<std::string> &arguments, const SpecializationConstant &x,
 	                          const SpecializationConstant &y, const SpecializationConstant &z);
+
+	void request_subgroup_feature(ShaderSubgroupSupportHelper::Feature feature);
 
 	virtual void emit_sampled_image_op(uint32_t result_type, uint32_t result_id, uint32_t image_id, uint32_t samp_id);
 	virtual void emit_texture_op(const Instruction &i, bool sparse);
@@ -316,7 +402,8 @@ protected:
 	};
 	virtual std::string to_function_args(const TextureFunctionArguments &args, bool *p_forward);
 
-	void emit_sparse_feedback_temporaries(uint32_t result_type_id, uint32_t id, uint32_t &feedback_id, uint32_t &texel_id);
+	void emit_sparse_feedback_temporaries(uint32_t result_type_id, uint32_t id, uint32_t &feedback_id,
+	                                      uint32_t &texel_id);
 	uint32_t get_sparse_feedback_texel_id(uint32_t id) const;
 	virtual void emit_buffer_block(const SPIRVariable &type);
 	virtual void emit_push_constant_block(const SPIRVariable &var);
@@ -473,20 +560,27 @@ protected:
 		bool support_small_type_sampling_result = false;
 		bool support_case_fallthrough = true;
 		bool use_array_constructor = false;
+		bool needs_row_major_load_workaround = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
 	void emit_resources();
+	void emit_extension_workarounds(spv::ExecutionModel model);
 	void emit_buffer_block_native(const SPIRVariable &var);
 	void emit_buffer_reference_block(SPIRType &type, bool forward_declaration);
 	void emit_buffer_block_legacy(const SPIRVariable &var);
 	void emit_buffer_block_flattened(const SPIRVariable &type);
+	void fixup_implicit_builtin_block_names();
 	void emit_declared_builtin_block(spv::StorageClass storage, spv::ExecutionModel model);
 	bool should_force_emit_builtin_block(spv::StorageClass storage);
 	void emit_push_constant_block_vulkan(const SPIRVariable &var);
 	void emit_push_constant_block_glsl(const SPIRVariable &var);
 	void emit_interface_block(const SPIRVariable &type);
 	void emit_flattened_io_block(const SPIRVariable &var, const char *qual);
+	void emit_flattened_io_block_struct(const std::string &basename, const SPIRType &type, const char *qual,
+	                                    const SmallVector<uint32_t> &indices);
+	void emit_flattened_io_block_member(const std::string &basename, const SPIRType &type, const char *qual,
+	                                    const SmallVector<uint32_t> &indices);
 	void emit_block_chain(SPIRBlock &block);
 	void emit_hoisted_temporaries(SmallVector<std::pair<TypeID, ID>> &temporaries);
 	std::string constant_value_macro_name(uint32_t id);
@@ -549,6 +643,7 @@ protected:
 	void emit_unary_op(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op);
 	bool expression_is_forwarded(uint32_t id) const;
 	bool expression_suppresses_usage_tracking(uint32_t id) const;
+	bool expression_read_implies_multiple_reads(uint32_t id) const;
 	SPIRExpression &emit_op(uint32_t result_type, uint32_t result_id, const std::string &rhs, bool forward_rhs,
 	                        bool suppress_usage_tracking = false);
 
@@ -557,6 +652,9 @@ protected:
 
 	std::string access_chain_internal(uint32_t base, const uint32_t *indices, uint32_t count, AccessChainFlags flags,
 	                                  AccessChainMeta *meta);
+
+	virtual void prepare_access_chain_for_scalar_access(std::string &expr, const SPIRType &type,
+	                                                    spv::StorageClass storage, bool &is_packed);
 
 	std::string access_chain(uint32_t base, const uint32_t *indices, uint32_t count, const SPIRType &target_type,
 	                         AccessChainMeta *meta = nullptr, bool ptr_chain = false);
@@ -602,6 +700,7 @@ protected:
 	void strip_enclosed_expression(std::string &expr);
 	std::string to_member_name(const SPIRType &type, uint32_t index);
 	virtual std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain);
+	std::string to_multi_member_reference(const SPIRType &type, const SmallVector<uint32_t> &indices);
 	std::string type_to_glsl_constructor(const SPIRType &type);
 	std::string argument_decl(const SPIRFunction::Parameter &arg);
 	virtual std::string to_qualifiers_glsl(uint32_t id);
@@ -651,8 +750,7 @@ protected:
 
 	void replace_fragment_output(SPIRVariable &var);
 	void replace_fragment_outputs();
-	bool check_explicit_lod_allowed(uint32_t lod);
-	std::string legacy_tex_op(const std::string &op, const SPIRType &imgtype, uint32_t lod, uint32_t id);
+	std::string legacy_tex_op(const std::string &op, const SPIRType &imgtype, uint32_t id);
 
 	uint32_t indent = 0;
 
@@ -662,11 +760,16 @@ protected:
 	std::unordered_set<uint32_t> flushed_phi_variables;
 
 	std::unordered_set<uint32_t> flattened_buffer_blocks;
-	std::unordered_set<uint32_t> flattened_structs;
+	std::unordered_map<uint32_t, bool> flattened_structs;
 
-	std::string load_flattened_struct(SPIRVariable &var);
-	std::string to_flattened_struct_member(const SPIRVariable &var, uint32_t index);
-	void store_flattened_struct(SPIRVariable &var, uint32_t value);
+	ShaderSubgroupSupportHelper shader_subgroup_supporter;
+
+	std::string load_flattened_struct(const std::string &basename, const SPIRType &type);
+	std::string to_flattened_struct_member(const std::string &basename, const SPIRType &type, uint32_t index);
+	void store_flattened_struct(uint32_t lhs_id, uint32_t value);
+	void store_flattened_struct(const std::string &basename, uint32_t rhs, const SPIRType &type,
+	                            const SmallVector<uint32_t> &indices);
+	std::string to_flattened_access_chain_expression(uint32_t id);
 
 	// Usage tracking. If a temporary is used more than once, use the temporary instead to
 	// avoid AST explosion when SPIRV is generated with pure SSA and doesn't write stuff to variables.
@@ -680,6 +783,10 @@ protected:
 	// and we need to reuse the IDs across recompilation loops.
 	// Currently used by NMin/Max/Clamp implementations.
 	std::unordered_map<uint32_t, uint32_t> extra_sub_expressions;
+
+	SmallVector<TypeID> workaround_ubo_load_overload_types;
+	void request_workaround_wrapper_overload(TypeID id);
+	void rewrite_load_for_wrapped_row_major(std::string &expr, TypeID loaded_type, ID ptr);
 
 	uint32_t statement_count = 0;
 
@@ -697,6 +804,10 @@ protected:
 	{
 		return !options.es && options.version < 130;
 	}
+
+	bool requires_transpose_2x2 = false;
+	bool requires_transpose_3x3 = false;
+	bool requires_transpose_4x4 = false;
 
 	bool args_will_forward(uint32_t id, const uint32_t *args, uint32_t num_args, bool pure);
 	void register_call_out_argument(uint32_t id);
@@ -739,8 +850,6 @@ protected:
 
 	virtual void declare_undefined_values();
 
-	static std::string sanitize_underscores(const std::string &str);
-
 	bool can_use_io_location(spv::StorageClass storage, bool block);
 	const Instruction *get_next_instruction_in_block(const Instruction &instr);
 	static uint32_t mask_relevant_memory_semantics(uint32_t semantics);
@@ -753,9 +862,9 @@ protected:
 
 	// Builtins in GLSL are always specific signedness, but the SPIR-V can declare them
 	// as either unsigned or signed.
-	// Sometimes we will need to automatically perform bitcasts on load and store to make this work.
-	virtual void bitcast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type);
-	virtual void bitcast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type);
+	// Sometimes we will need to automatically perform casts on load and store to make this work.
+	virtual void cast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type);
+	virtual void cast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type);
 	void unroll_array_from_complex_load(uint32_t target_id, uint32_t source_id, std::string &expr);
 	void convert_non_uniform_expression(const SPIRType &type, std::string &expr);
 

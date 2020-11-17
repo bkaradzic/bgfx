@@ -1,4 +1,6 @@
 // Copyright (c) 2017 Google Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +35,7 @@ namespace {
 // Performs compile time check that all SpvImageOperandsXXX cases are handled in
 // this module. If SpvImageOperandsXXX list changes, this function will fail the
 // build.
-// For all other purposes this is a dummy function.
+// For all other purposes this is a placeholder function.
 bool CheckAllImageOperandsHandled() {
   SpvImageOperandsMask enum_val = SpvImageOperandsBiasMask;
 
@@ -737,7 +739,9 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
   if (spvIsVulkanEnv(_.context()->target_env)) {
     if ((!_.IsFloatScalarType(info.sampled_type) &&
          !_.IsIntScalarType(info.sampled_type)) ||
-        32 != _.GetBitWidth(info.sampled_type)) {
+        (32 != _.GetBitWidth(info.sampled_type) &&
+         (64 != _.GetBitWidth(info.sampled_type) ||
+          !_.HasCapability(SpvCapabilityInt64ImageEXT)))) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Expected Sampled Type to be a 32-bit int or float "
                 "scalar type for Vulkan environment";

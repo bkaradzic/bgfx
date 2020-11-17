@@ -11,12 +11,12 @@ namespace bgfx
 	extern bool g_verbose;
 }
 
-#define _BX_TRACE(_format, ...)                                                               \
-				BX_MACRO_BLOCK_BEGIN                                                          \
-					if (bgfx::g_verbose)                                                      \
-					{                                                                         \
-						fprintf(stdout, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
-					}                                                                         \
+#define _BX_TRACE(_format, ...)                                                          \
+				BX_MACRO_BLOCK_BEGIN                                                     \
+					if (bgfx::g_verbose)                                                 \
+					{                                                                    \
+						bx::printf(BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
+					}                                                                    \
 				BX_MACRO_BLOCK_END
 
 #define _BX_WARN(_condition, _format, ...)                        \

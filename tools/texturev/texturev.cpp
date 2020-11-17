@@ -1104,11 +1104,16 @@ struct InterpolatorT
 
 	bool isActive() const
 	{
-		const double freq = double(bx::getHPFrequency() );
-		int64_t now = bx::getHPCounter();
-		float time = (float)(double(now - offset) / freq);
-		float lerp = bx::clamp(time, 0.0f, duration) / duration;
-		return lerp < 1.0f;
+		if (0.0f < duration)
+		{
+			const double freq = double(bx::getHPFrequency() );
+			int64_t now = bx::getHPCounter();
+			float time = (float)(double(now - offset) / freq);
+			float lerp = bx::clamp(time, 0.0f, duration) / duration;
+			return lerp < 1.0f;
+		}
+
+		return false;
 	}
 };
 
@@ -1118,9 +1123,9 @@ typedef InterpolatorT<bx::lerp,      bx::easeLinear>     InterpolatorLinear;
 
 void keyBindingHelp(const char* _bindings, const char* _description)
 {
-	ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), _bindings);
+	ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", _bindings);
 	ImGui::SameLine(100);
-	ImGui::Text(_description);
+	ImGui::Text("%s", _description);
 }
 
 void associate()
@@ -1633,6 +1638,7 @@ int _main_(int _argc, char** _argv)
 					ImGui::Separator();
 					ImGui::TextColored(
 						  ImVec4(0.0f, 1.0f, 1.0f, 1.0f)
+						, "%s"
 						, view.m_fileList[view.m_fileIndex].c_str()
 						);
 
@@ -1843,19 +1849,23 @@ int _main_(int _argc, char** _argv)
 								ImGui::SetScrollY(ImGui::GetScrollY() + (index-end+1)*itemHeight);
 							}
 
-							ImGuiListClipper clipper(itemCount, itemHeight);
+							ImGuiListClipper clipper;
+							clipper.Begin(itemCount, itemHeight);
 
-							for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
+							while (clipper.Step() )
 							{
-								ImGui::PushID(pos);
-
-								bool isSelected = uint32_t(pos) == view.m_fileIndex;
-								if (ImGui::Selectable(view.m_fileList[pos].c_str(), &isSelected) )
+								for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
 								{
-									view.m_fileIndex = pos;
-								}
+									ImGui::PushID(pos);
 
-								ImGui::PopID();
+									bool isSelected = uint32_t(pos) == view.m_fileIndex;
+									if (ImGui::Selectable(view.m_fileList[pos].c_str(), &isSelected) )
+									{
+										view.m_fileIndex = pos;
+									}
+
+									ImGui::PopID();
+								}
 							}
 
 							clipper.End();

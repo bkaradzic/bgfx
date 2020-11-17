@@ -112,14 +112,14 @@ namespace entry
 
 			if (NULL != m_file)
 			{
-				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_ALREADY_OPEN, "FileReader: File is already open.");
+				BX_ERROR_SET(_err, bx::kErrorReaderWriterAlreadyOpen, "FileReader: File is already open.");
 				return false;
 			}
 
 			m_file = AAssetManager_open(m_assetManager, _filePath.getCPtr(), AASSET_MODE_RANDOM);
 			if (NULL == m_file)
 			{
-				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_OPEN, "FileReader: Failed to open file.");
+				BX_ERROR_SET(_err, bx::kErrorReaderWriterOpen, "FileReader: Failed to open file.");
 				return false;
 			}
 
@@ -154,7 +154,7 @@ namespace entry
 			{
 				if (0 == AAsset_getRemainingLength(m_file) )
 				{
-					BX_ERROR_SET(_err, BX_ERROR_READERWRITER_EOF, "FileReader: EOF.");
+					BX_ERROR_SET(_err, bx::kErrorRederWriterEof, "FileReader: EOF.");
 				}
 
 				return size >= 0 ? size : 0;

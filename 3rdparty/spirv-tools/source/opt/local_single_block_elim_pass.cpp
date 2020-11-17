@@ -31,6 +31,11 @@ const uint32_t kStoreValIdInIdx = 1;
 bool LocalSingleBlockLoadStoreElimPass::HasOnlySupportedRefs(uint32_t ptrId) {
   if (supported_ref_ptrs_.find(ptrId) != supported_ref_ptrs_.end()) return true;
   if (get_def_use_mgr()->WhileEachUser(ptrId, [this](Instruction* user) {
+        auto dbg_op = user->GetOpenCL100DebugOpcode();
+        if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
+            dbg_op == OpenCLDebugInfo100DebugValue) {
+          return true;
+        }
         SpvOp op = user->opcode();
         if (IsNonPtrAccessChain(op) || op == SpvOpCopyObject) {
           if (!HasOnlySupportedRefs(user->result_id())) {
@@ -73,10 +78,13 @@ bool LocalSingleBlockLoadStoreElimPass::LocalSingleBlockLoadStoreElim(
           // variable.
           if (ptrInst->opcode() == SpvOpVariable) {
             // If a previous store to same variable, mark the store
-            // for deletion if not still used.
+            // for deletion if not still used. Don't delete store
+            // if debugging; let ssa-rewrite and DCE handle it
             auto prev_store = var2store_.find(varId);
             if (prev_store != var2store_.end() &&
-                instructions_to_save.count(prev_store->second) == 0) {
+                instructions_to_save.count(prev_store->second) == 0 &&
+                !context()->get_debug_info_mgr()->IsVariableDebugDeclared(
+                    varId)) {
               instructions_to_kill.push_back(prev_store->second);
               modified = true;
             }
@@ -224,6 +232,7 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
       "SPV_AMD_gpu_shader_half_float",
       "SPV_KHR_shader_draw_parameters",
       "SPV_KHR_subgroup_vote",
+      "SPV_KHR_8bit_storage",
       "SPV_KHR_16bit_storage",
       "SPV_KHR_device_group",
       "SPV_KHR_multiview",
@@ -260,6 +269,7 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
       "SPV_KHR_ray_query",
       "SPV_EXT_fragment_invocation_density",
       "SPV_EXT_physical_storage_buffer",
+      "SPV_KHR_terminate_invocation",
   });
 }
 

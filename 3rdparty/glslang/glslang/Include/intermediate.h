@@ -1231,6 +1231,7 @@ public:
     TOperator getFlowOp() const { return flowOp; }
     TIntermTyped* getExpression() const { return expression; }
     void setExpression(TIntermTyped* pExpression) { expression = pExpression; }
+    void updatePrecision(TPrecisionQualifier parentPrecision);
 protected:
     TOperator flowOp;
     TIntermTyped* expression;
@@ -1281,6 +1282,8 @@ public:
     TIntermTyped* getConstSubtree() const { return constSubtree; }
 #ifndef GLSLANG_WEB
     void setFlattenSubset(int subset) { flattenSubset = subset; }
+    virtual const TString& getAccessName() const;
+
     int getFlattenSubset() const { return flattenSubset; } // -1 means full object
 #endif
 

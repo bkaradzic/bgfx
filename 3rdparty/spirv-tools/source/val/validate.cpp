@@ -284,9 +284,10 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
         const auto execution_model = inst->GetOperandAs<SpvExecutionModel>(0);
         const char* str = reinterpret_cast<const char*>(
             inst->words().data() + inst->operand(2).offset);
+        const std::string desc_name(str);
 
         ValidationState_t::EntryPointDescription desc;
-        desc.name = str;
+        desc.name = desc_name;
 
         std::vector<uint32_t> interfaces;
         for (size_t j = 3; j < inst->operands().size(); ++j)
@@ -303,7 +304,7 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
                 check_inst->words().data() + inst->operand(2).offset);
             const std::string check_name(check_str);
 
-            if (desc.name == check_name &&
+            if (desc_name == check_name &&
                 execution_model == check_execution_model) {
               return vstate->diag(SPV_ERROR_INVALID_DATA, inst)
                      << "2 Entry points cannot share the same name and "
@@ -367,6 +368,10 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
 
   // Catch undefined forward references before performing further checks.
   if (auto error = ValidateForwardDecls(*vstate)) return error;
+
+  // Calculate reachability after all the blocks are parsed, but early that it
+  // can be relied on in subsequent pases.
+  ReachabilityPass(*vstate);
 
   // ID usage needs be handled in its own iteration of the instructions,
   // between the two others. It depends on the first loop to have been

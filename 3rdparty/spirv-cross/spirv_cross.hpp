@@ -513,8 +513,21 @@ protected:
 
 	SPIRFunction *current_function = nullptr;
 	SPIRBlock *current_block = nullptr;
+	uint32_t current_loop_level = 0;
 	std::unordered_set<VariableID> active_interface_variables;
 	bool check_active_interface_variables = false;
+
+	void add_loop_level();
+
+	void set_initializers(SPIRExpression &e)
+	{
+		e.emitted_loop_level = current_loop_level;
+	}
+
+	template <typename T>
+	void set_initializers(const T &)
+	{
+	}
 
 	// If our IDs are out of range here as part of opcodes, throw instead of
 	// undefined behavior.
@@ -524,6 +537,7 @@ protected:
 		ir.add_typed_id(static_cast<Types>(T::type), id);
 		auto &var = variant_set<T>(ir.ids[id], std::forward<P>(args)...);
 		var.self = id;
+		set_initializers(var);
 		return var;
 	}
 
@@ -1045,6 +1059,11 @@ protected:
 	std::string get_remapped_declared_block_name(uint32_t id, bool fallback_prefer_instance_name) const;
 
 	bool flush_phi_required(BlockID from, BlockID to) const;
+
+	uint32_t evaluate_spec_constant_u32(const SPIRConstantOp &spec) const;
+	uint32_t evaluate_constant_u32(uint32_t id) const;
+
+	bool is_vertex_like_shader() const;
 
 private:
 	// Used only to implement the old deprecated get_entry_point() interface.

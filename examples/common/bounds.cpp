@@ -1478,8 +1478,7 @@ bool overlap(const Cone& _cone, const Aabb& _aabb)
 
 bool overlap(const Cone& _cone, const Plane& _plane)
 {
-	BX_UNUSED(_cone, _plane);
-	return false;
+	return overlap(_plane, _cone);
 }
 
 bool overlap(const Cone& _cone, const Triangle& _triangle)
@@ -1769,6 +1768,11 @@ bool overlap(const Obb& _obbA, const Obb& _obbB)
 	return false;
 }
 
+bool overlap(const Plane& _plane, const LineSegment& _line)
+{
+	return isNearZero(distance(_plane, _line) );
+}
+
 bool overlap(const Plane& _plane, const Vec3& _pos)
 {
 	return isNearZero(distance(_plane, _pos) );
@@ -1809,8 +1813,23 @@ bool overlap(const Plane& _plane, const Capsule& _capsule)
 
 bool overlap(const Plane& _plane, const Cone& _cone)
 {
-	BX_UNUSED(_plane, _cone);
-	return false;
+	const Vec3 axis = sub(_cone.pos, _cone.end);
+	const float len = length(axis);
+	const Vec3 dir  = normalize(axis);
+
+	const Vec3 v1 = cross(_plane.normal, dir);
+	const Vec3 v2 = cross(v1, dir);
+
+	const float bb = len;
+	const float aa = _cone.radius;
+	const float cc = bx::sqrt(square(aa) + square(bb) );
+
+	const Vec3 pos = add(add(_cone.end
+		, mul(dir, len * bb/cc) )
+		, mul(v2,  len * aa/cc)
+		);
+
+	return overlap(_plane, LineSegment{pos, _cone.end});
 }
 
 bool overlap(const Plane& _plane, const Disk& _disk)

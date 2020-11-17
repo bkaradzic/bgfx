@@ -331,7 +331,7 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
 //
 // It is possible that this is not needed, but that would require some tweaking
 // of other rules to get the same results.
-inline bool IsValid(const char* cname, char retOrder, char retType, char argOrder, char argType, int dim0, int dim1)
+inline bool IsValid(const char* cname, char /* retOrder */, char /* retType */, char argOrder, char /* argType */, int dim0, int /* dim1 */)
 {
     const bool isVec = (argOrder == 'V');
 
@@ -605,7 +605,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "noise",                            "S",     "F",       "V",              "F",             EShLangPS,     false },
         { "normalize",                        nullptr, nullptr,   "V",              "F",             EShLangAll,    false },
         { "pow",                              nullptr, nullptr,   "SVM,",           "F,",            EShLangAll,    false },
-        // { "printf",                           "-",     "-",       "",            "",              EShLangAll,    false }, TODO: varargs
+        { "printf",                           nullptr, nullptr,   "-",              "-",             EShLangAll,    false },
         { "Process2DQuadTessFactorsAvg",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS,     false },
         { "Process2DQuadTessFactorsMax",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS,     false },
         { "Process2DQuadTessFactorsMin",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS,     false },
@@ -1107,7 +1107,7 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     // symbolTable.relateToOperator("noise",                    EOpNoise); // TODO: check return type
     symbolTable.relateToOperator("normalize",                   EOpNormalize);
     symbolTable.relateToOperator("pow",                         EOpPow);
-    // symbolTable.relateToOperator("printf",                     EOpPrintf);
+    symbolTable.relateToOperator("printf",                      EOpDebugPrintf);
     // symbolTable.relateToOperator("Process2DQuadTessFactorsAvg");
     // symbolTable.relateToOperator("Process2DQuadTessFactorsMax");
     // symbolTable.relateToOperator("Process2DQuadTessFactorsMin");

@@ -150,9 +150,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		}
 		else if (ImGui::IsItemHovered() )
 		{
-			char tmp[1024];
-			bx::snprintf(tmp, BX_COUNTOF(tmp), "Documentation: %.*s", url.getLength(), url.getPtr() );
-			ImGui::SetTooltip(tmp);
+			ImGui::SetTooltip("Documentation: %.*s", url.getLength(), url.getPtr() );
 		}
 	}
 
@@ -395,7 +393,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 						if (ImGui::ListBoxHeader("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeightWithSpacing) ) )
 						{
-							ImGuiListClipper clipper(stats->numEncoders, itemHeight);
+							ImGuiListClipper clipper;
+							clipper.Begin(stats->numEncoders, itemHeight);
 
 							while (clipper.Step() )
 							{
@@ -427,7 +426,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 						if (ImGui::ListBoxHeader("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeightWithSpacing) ) )
 						{
-							ImGuiListClipper clipper(stats->numViews, itemHeight);
+							ImGuiListClipper clipper;
+							clipper.Begin(stats->numViews, itemHeight);
 
 							while (clipper.Step() )
 							{

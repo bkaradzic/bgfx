@@ -71,10 +71,6 @@ class Pass {
     return context()->get_def_use_mgr();
   }
 
-  analysis::DebugInfoManager* get_debug_info_mgr() const {
-    return context()->get_debug_info_mgr();
-  }
-
   analysis::DecorationManager* get_decoration_mgr() const {
     return context()->get_decoration_mgr();
   }

@@ -192,6 +192,10 @@ class SSARewriter {
     }
   }
 
+  // Returns the value of |var_id| at |bb| if |defs_at_block_| contains it.
+  // Otherwise, returns 0.
+  uint32_t GetValueAtBlock(uint32_t var_id, BasicBlock* bb);
+
   // Processes the store operation |inst| in basic block |bb|. This extracts
   // the variable ID being stored into, determines whether the variable is an
   // SSA-target variable, and, if it is, it stores its value in the
@@ -249,6 +253,11 @@ class SSARewriter {
   // candidates.
   void FinalizePhiCandidates();
 
+  // Adds DebugValues for DebugDeclares in
+  // |decls_invisible_to_value_assignment_|. Returns whether the function was
+  // modified or not, and whether or not the conversion was successful.
+  Pass::Status AddDebugValuesForInvisibleDebugDecls(Function* fp);
+
   // Prints the table of Phi candidates to std::cerr.
   void PrintPhiCandidates() const;
 
@@ -286,6 +295,10 @@ class SSARewriter {
 
   // Memory pass requesting the SSA rewriter.
   MemPass* pass_;
+
+  // Set of DebugDeclare instructions that are not added as DebugValue because
+  // they are invisible to the store or phi instructions.
+  std::unordered_set<Instruction*> decls_invisible_to_value_assignment_;
 };
 
 class SSARewritePass : public MemPass {

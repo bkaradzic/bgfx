@@ -730,6 +730,15 @@ namespace bgfx { namespace metal
 
 						if (!str.isEmpty() )
 						{
+							// If the line declares a uniform, merge all next
+							// lines until we encounter a semicolon.
+							bx::StringView lineEnd = strFind(strLine, ";");
+							while (lineEnd.isEmpty() && !reader.isDone()) {
+								bx::StringView nextLine = reader.next();
+								strLine.set(strLine.getPtr(), nextLine.getTerm());
+								lineEnd = strFind(nextLine, ";");
+							}
+
 							bool found = false;
 
 							for (uint32_t ii = 0; ii < BX_COUNTOF(s_samplerTypes); ++ii)
@@ -900,7 +909,7 @@ namespace bgfx { namespace metal
 					{
 						if (g_verbose)
 						{
-							glslang::SpirvToolsDisassemble(std::cout, spirv);
+							glslang::SpirvToolsDisassemble(std::cout, spirv, SPV_ENV_VULKAN_1_0);
 						}
 
 						spirv_cross::CompilerMSL msl(std::move(spirv) );

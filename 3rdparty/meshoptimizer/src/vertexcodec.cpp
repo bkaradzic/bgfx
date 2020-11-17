@@ -42,10 +42,8 @@
 #endif
 
 // When targeting Wasm SIMD we can't use runtime cpuid checks so we unconditionally enable SIMD
-// Note that we need unimplemented-simd128 subset for a few functions that are implemented de-facto
 #if defined(__wasm_simd128__)
 #define SIMD_WASM
-#define SIMD_TARGET __attribute__((target("unimplemented-simd128")))
 #endif
 
 #ifndef SIMD_TARGET
@@ -98,15 +96,6 @@
 #define wasmx_unpackhi_v16x8(a, b) wasm_v16x8_shuffle(a, b, 4, 12, 5, 13, 6, 14, 7, 15)
 #define wasmx_unpacklo_v64x2(a, b) wasm_v64x2_shuffle(a, b, 0, 2)
 #define wasmx_unpackhi_v64x2(a, b) wasm_v64x2_shuffle(a, b, 1, 3)
-#endif
-
-#if defined(SIMD_WASM)
-// v128_t wasm_v8x16_swizzle(v128_t a, v128_t b)
-SIMD_TARGET
-static __inline__ v128_t wasm_v8x16_swizzle(v128_t a, v128_t b)
-{
-	return (v128_t)__builtin_wasm_swizzle_v8x16((__i8x16)a, (__i8x16)b);
-}
 #endif
 
 namespace meshopt
@@ -769,6 +758,7 @@ static void wasmMoveMask(v128_t mask, unsigned char& mask0, unsigned char& mask1
 	uint64_t mask_1a = wasm_i64x2_extract_lane(mask_0, 0) & 0x0804020108040201ull;
 	uint64_t mask_1b = wasm_i64x2_extract_lane(mask_0, 1) & 0x8040201080402010ull;
 
+	// TODO: This can use v8x16_bitmask in the future
 	uint64_t mask_2 = mask_1a | mask_1b;
 	uint64_t mask_4 = mask_2 | (mask_2 >> 16);
 	uint64_t mask_8 = mask_4 | (mask_4 >> 8);

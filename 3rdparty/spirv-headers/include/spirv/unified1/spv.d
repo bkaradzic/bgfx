@@ -52,7 +52,7 @@ module spv;
 
 enum uint MagicNumber = 0x07230203;
 enum uint Version = 0x00010500;
-enum uint Revision = 3;
+enum uint Revision = 4;
 enum uint OpCodeMask = 0xffff;
 enum uint WordCountShift = 16;
 
@@ -273,6 +273,8 @@ enum ImageFormat : uint
     Rg8ui = 37,
     R16ui = 38,
     R8ui = 39,
+    R64ui = 40,
+    R64i = 41,
 }
 
 enum ImageChannelOrder : uint
@@ -559,8 +561,10 @@ enum BuiltIn : uint
     BaseVertex = 4424,
     BaseInstance = 4425,
     DrawIndex = 4426,
+    PrimitiveShadingRateKHR = 4432,
     DeviceIndex = 4438,
     ViewIndex = 4440,
+    ShadingRateKHR = 4444,
     BaryCoordNoPerspAMD = 4992,
     BaryCoordNoPerspCentroidAMD = 4993,
     BaryCoordNoPerspSampleAMD = 4994,
@@ -877,6 +881,7 @@ enum Capability : uint
     GroupNonUniformQuad = 68,
     ShaderLayer = 69,
     ShaderViewportIndex = 70,
+    FragmentShadingRateKHR = 4422,
     SubgroupBallotKHR = 4423,
     DrawParameters = 4427,
     SubgroupVoteKHR = 4431,
@@ -907,6 +912,7 @@ enum Capability : uint
     FragmentMaskAMD = 5010,
     StencilExportEXT = 5013,
     ImageReadWriteLodAMD = 5015,
+    Int64ImageEXT = 5016,
     ShaderClockKHR = 5055,
     SampleMaskOverrideCoverageNV = 5249,
     GeometryShaderPassthroughNV = 5251,
@@ -979,6 +985,8 @@ enum Capability : uint
     FPGAKernelAttributesINTEL = 5897,
     BlockingPipesINTEL = 5945,
     FPGARegINTEL = 5948,
+    AtomicFloat32AddEXT = 6033,
+    AtomicFloat64AddEXT = 6034,
 }
 
 enum RayFlagsShift : uint
@@ -1027,6 +1035,23 @@ enum RayQueryCandidateIntersectionType : uint
 {
     RayQueryCandidateIntersectionTriangleKHR = 0,
     RayQueryCandidateIntersectionAABBKHR = 1,
+}
+
+enum FragmentShadingRateShift : uint
+{
+    Vertical2Pixels = 0,
+    Vertical4Pixels = 1,
+    Horizontal2Pixels = 2,
+    Horizontal4Pixels = 3,
+}
+
+enum FragmentShadingRateMask : uint
+{
+    MaskNone = 0,
+    Vertical2Pixels = 0x00000001,
+    Vertical4Pixels = 0x00000002,
+    Horizontal2Pixels = 0x00000004,
+    Horizontal4Pixels = 0x00000008,
 }
 
 enum Op : uint
@@ -1375,6 +1400,7 @@ enum Op : uint
     OpPtrEqual = 401,
     OpPtrNotEqual = 402,
     OpPtrDiff = 403,
+    OpTerminateInvocation = 4416,
     OpSubgroupBallotKHR = 4421,
     OpSubgroupFirstInvocationKHR = 4422,
     OpSubgroupAllKHR = 4428,
@@ -1592,6 +1618,7 @@ enum Op : uint
     OpRayQueryGetWorldRayOriginKHR = 6030,
     OpRayQueryGetIntersectionObjectToWorldKHR = 6031,
     OpRayQueryGetIntersectionWorldToObjectKHR = 6032,
+    OpAtomicFAddEXT = 6035,
 }
 
 

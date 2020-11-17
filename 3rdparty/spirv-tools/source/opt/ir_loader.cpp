@@ -41,6 +41,7 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
   ++inst_index_;
   const auto opcode = static_cast<SpvOp>(inst->opcode);
   if (IsDebugLineInst(opcode)) {
+    last_line_inst_.reset();
     dbg_line_info_.push_back(
         Instruction(module()->context(), *inst, last_dbg_scope_));
     return true;
@@ -90,7 +91,16 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
 
   std::unique_ptr<Instruction> spv_inst(
       new Instruction(module()->context(), *inst, std::move(dbg_line_info_)));
-  dbg_line_info_.clear();
+  if (!spv_inst->dbg_line_insts().empty()) {
+    if (spv_inst->dbg_line_insts().back().opcode() != SpvOpNoLine) {
+      last_line_inst_ = std::unique_ptr<Instruction>(
+          spv_inst->dbg_line_insts().back().Clone(module()->context()));
+    }
+    dbg_line_info_.clear();
+  } else if (last_line_inst_ != nullptr) {
+    last_line_inst_->SetDebugScope(last_dbg_scope_);
+    spv_inst->dbg_line_insts().push_back(*last_line_inst_);
+  }
 
   const char* src = source_.c_str();
   spv_position_t loc = {inst_index_, 0, 0};
@@ -141,6 +151,8 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
     function_->AddBasicBlock(std::move(block_));
     block_ = nullptr;
     last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
+    last_line_inst_.reset();
+    dbg_line_info_.clear();
   } else {
     if (function_ == nullptr) {  // Outside function definition
       SPIRV_ASSERT(consumer_, block_ == nullptr);
@@ -167,13 +179,22 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
       } else if (IsTypeInst(opcode)) {
         module_->AddType(std::move(spv_inst));
       } else if (IsConstantInst(opcode) || opcode == SpvOpVariable ||
-                 opcode == SpvOpUndef ||
-                 (opcode == SpvOpExtInst &&
-                  spvExtInstIsNonSemantic(inst->ext_inst_type))) {
+                 opcode == SpvOpUndef) {
         module_->AddGlobalValue(std::move(spv_inst));
       } else if (opcode == SpvOpExtInst &&
                  spvExtInstIsDebugInfo(inst->ext_inst_type)) {
         module_->AddExtInstDebugInfo(std::move(spv_inst));
+      } else if (opcode == SpvOpExtInst &&
+                 spvExtInstIsNonSemantic(inst->ext_inst_type)) {
+        // If there are no functions, add the non-semantic instructions to the
+        // global values. Otherwise append it to the list of the last function.
+        auto func_begin = module_->begin();
+        auto func_end = module_->end();
+        if (func_begin == func_end) {
+          module_->AddGlobalValue(std::move(spv_inst));
+        } else {
+          (--func_end)->AddNonSemanticInstruction(std::move(spv_inst));
+        }
       } else {
         Errorf(consumer_, src, loc,
                "Unhandled inst type (opcode: %d) found outside function "

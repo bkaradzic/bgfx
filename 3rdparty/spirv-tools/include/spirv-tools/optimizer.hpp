@@ -536,28 +536,16 @@ Optimizer::PassToken CreateDeadInsertElimPass();
 // eliminated with standard dead code elimination.
 Optimizer::PassToken CreateAggressiveDCEPass();
 
-// Create line propagation pass
-// This pass propagates line information based on the rules for OpLine and
-// OpNoline and clones an appropriate line instruction into every instruction
-// which does not already have debug line instructions.
-//
-// This pass is intended to maximize preservation of source line information
-// through passes which delete, move and clone instructions. Ideally it should
-// be run before any such pass. It is a bookend pass with EliminateDeadLines
-// which can be used to remove redundant line instructions at the end of a
-// run of such passes and reduce final output file size.
+// Creates an empty pass.
+// This is deprecated and will be removed.
+// TODO(jaebaek): remove this pass after handling glslang's broken unit tests.
+//                https://github.com/KhronosGroup/glslang/pull/2440
 Optimizer::PassToken CreatePropagateLineInfoPass();
 
-// Create dead line elimination pass
-// This pass eliminates redundant line instructions based on the rules for
-// OpLine and OpNoline. Its main purpose is to reduce the size of the file
-// need to store the SPIR-V without losing line information.
-//
-// This is a bookend pass with PropagateLines which attaches line instructions
-// to every instruction to preserve line information during passes which
-// delete, move and clone instructions. DeadLineElim should be run after
-// PropagateLines and all such subsequent passes. Normally it would be one
-// of the last passes to be run.
+// Creates an empty pass.
+// This is deprecated and will be removed.
+// TODO(jaebaek): remove this pass after handling glslang's broken unit tests.
+//                https://github.com/KhronosGroup/glslang/pull/2440
 Optimizer::PassToken CreateRedundantLineInfoElimPass();
 
 // Creates a compact ids pass.
@@ -764,7 +752,7 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // initialization checking, both of which require input buffer support.
 Optimizer::PassToken CreateInstBindlessCheckPass(
     uint32_t desc_set, uint32_t shader_id, bool input_length_enable = false,
-    bool input_init_enable = false);
+    bool input_init_enable = false, bool input_buff_oob_enable = false);
 
 // Create a pass to instrument physical buffer address checking
 // This pass instruments all physical buffer address references to check that
@@ -876,8 +864,10 @@ Optimizer::PassToken CreateGraphicsRobustAccessPass();
 // for the first index.
 Optimizer::PassToken CreateDescriptorScalarReplacementPass();
 
-// Create a pass to replace all OpKill instruction with a function call to a
-// function that has a single OpKill.  This allows more code to be inlined.
+// Create a pass to replace each OpKill instruction with a function call to a
+// function that has a single OpKill.  Also replace each OpTerminateInvocation
+// instruction  with a function call to a function that has a single
+// OpTerminateInvocation.  This allows more code to be inlined.
 Optimizer::PassToken CreateWrapOpKillPass();
 
 // Replaces the extensions VK_AMD_shader_ballot,VK_AMD_gcn_shader, and

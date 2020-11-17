@@ -23,6 +23,13 @@ namespace bgfx { namespace gl
 
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
+#	undef GL_IMPORT
+
+	template<typename ProtoT>
+	static ProtoT wglGetProc(const char* _name)
+	{
+		return reinterpret_cast<ProtoT>( (void*)wglGetProcAddress(_name) );
+	}
 
 	struct SwapChainGL
 	{
@@ -106,25 +113,41 @@ namespace bgfx { namespace gl
 		m_opengl32dll = bx::dlopen("opengl32.dll");
 		BGFX_FATAL(NULL != m_opengl32dll, Fatal::UnableToInitialize, "Failed to load opengl32.dll.");
 
-		wglGetProcAddress = (PFNWGLGETPROCADDRESSPROC)bx::dlsym(m_opengl32dll, "wglGetProcAddress");
+		wglGetProcAddress = bx::dlsym<PFNWGLGETPROCADDRESSPROC>(m_opengl32dll, "wglGetProcAddress");
 		BGFX_FATAL(NULL != wglGetProcAddress, Fatal::UnableToInitialize, "Failed get wglGetProcAddress.");
 
 		// If g_platformHooks.nwh is NULL, the assumption is that GL context was created
 		// by user (for example, using SDL, GLFW, etc.)
 		BX_WARN(NULL != g_platformData.nwh
 			, "bgfx::setPlatform with valid window is not called. This might "
-			  "be intentional when GL context is created by the user."
+				"be intentional when GL context is created by the user."
 			);
 
-		if (NULL != g_platformData.nwh)
+		if (NULL != g_platformData.nwh && NULL != g_platformData.context )
 		{
+			// user has provided a context and a window
 			wglMakeCurrent = (PFNWGLMAKECURRENTPROC)bx::dlsym(m_opengl32dll, "wglMakeCurrent");
 			BGFX_FATAL(NULL != wglMakeCurrent, Fatal::UnableToInitialize, "Failed get wglMakeCurrent.");
 
-			wglCreateContext = (PFNWGLCREATECONTEXTPROC)bx::dlsym(m_opengl32dll, "wglCreateContext");
+			m_hdc = GetDC( (HWND)g_platformData.nwh);
+			BGFX_FATAL(NULL != m_hdc, Fatal::UnableToInitialize, "GetDC failed!");
+
+			HGLRC context = (HGLRC)g_platformData.context;
+			int result = wglMakeCurrent(m_hdc, context );
+			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
+
+			m_context = context;
+		}
+
+		if (NULL != g_platformData.nwh && NULL == g_platformData.context )
+		{
+			wglMakeCurrent = bx::dlsym<PFNWGLMAKECURRENTPROC>(m_opengl32dll, "wglMakeCurrent");
+			BGFX_FATAL(NULL != wglMakeCurrent, Fatal::UnableToInitialize, "Failed get wglMakeCurrent.");
+
+			wglCreateContext = bx::dlsym<PFNWGLCREATECONTEXTPROC>(m_opengl32dll, "wglCreateContext");
 			BGFX_FATAL(NULL != wglCreateContext, Fatal::UnableToInitialize, "Failed get wglCreateContext.");
 
-			wglDeleteContext = (PFNWGLDELETECONTEXTPROC)bx::dlsym(m_opengl32dll, "wglDeleteContext");
+			wglDeleteContext = bx::dlsym<PFNWGLDELETECONTEXTPROC>(m_opengl32dll, "wglDeleteContext");
 			BGFX_FATAL(NULL != wglDeleteContext, Fatal::UnableToInitialize, "Failed get wglDeleteContext.");
 
 			m_hdc = GetDC( (HWND)g_platformData.nwh);
@@ -153,10 +176,10 @@ namespace bgfx { namespace gl
 
 			HGLRC context = createContext(hdc);
 
-			wglGetExtensionsStringARB  = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
-			wglChoosePixelFormatARB    = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-			wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-			wglSwapIntervalEXT         = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+			wglGetExtensionsStringARB  = wglGetProc<PFNWGLGETEXTENSIONSSTRINGARBPROC >("wglGetExtensionsStringARB");
+			wglChoosePixelFormatARB    = wglGetProc<PFNWGLCHOOSEPIXELFORMATARBPROC   >("wglChoosePixelFormatARB");
+			wglCreateContextAttribsARB = wglGetProc<PFNWGLCREATECONTEXTATTRIBSARBPROC>("wglCreateContextAttribsARB");
+			wglSwapIntervalEXT         = wglGetProc<PFNWGLSWAPINTERVALEXTPROC        >("wglSwapIntervalEXT");
 
 			if (NULL != wglGetExtensionsStringARB)
 			{
@@ -283,8 +306,12 @@ namespace bgfx { namespace gl
 		{
 			wglMakeCurrent(NULL, NULL);
 
-			wglDeleteContext(m_context);
-			m_context = NULL;
+			if (NULL == g_platformData.context)
+			{
+				wglDeleteContext(m_context);
+				m_context = NULL;
+
+			}
 
 			ReleaseDC( (HWND)g_platformData.nwh, m_hdc);
 			m_hdc = NULL;
@@ -365,24 +392,30 @@ namespace bgfx { namespace gl
 	void GlContext::import()
 	{
 		BX_TRACE("Import:");
-#	define GL_EXTENSION(_optional, _proto, _func, _import) \
-				{ \
-					if (NULL == _func) \
-					{ \
-						_func = (_proto)wglGetProcAddress(#_import); \
-						if (_func == NULL) \
-						{ \
-							_func = (_proto)bx::dlsym(m_opengl32dll, #_import); \
-							BX_TRACE("    %p " #_func " (" #_import ")", _func); \
-						} \
-						else \
-						{ \
-							BX_TRACE("wgl %p " #_func " (" #_import ")", _func); \
-						} \
-						BGFX_FATAL(BX_IGNORE_C4127(_optional) || NULL != _func, Fatal::UnableToInitialize, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_import); \
-					} \
-				}
+
+#	define GL_EXTENSION(_optional, _proto, _func, _import)                                     \
+		{                                                                                      \
+			if (NULL == _func)                                                                 \
+			{                                                                                  \
+				_func = wglGetProc<_proto>(#_import);                                          \
+				if (NULL == _func)                                                             \
+				{                                                                              \
+					_func = bx::dlsym<_proto>(m_opengl32dll, #_import);                        \
+					BX_TRACE("    %p " #_func " (" #_import ")", _func);                       \
+				}                                                                              \
+				else                                                                           \
+				{                                                                              \
+					BX_TRACE("wgl %p " #_func " (" #_import ")", _func);                       \
+				}                                                                              \
+				BGFX_FATAL(BX_IGNORE_C4127(_optional) || NULL != _func                         \
+					, Fatal::UnableToInitialize                                                \
+					, "Failed to create OpenGL context. wglGetProcAddress(\"%s\")", #_import); \
+			}                                                                                  \
+		}
+
 #	include "glimports.h"
+
+#	undef GL_EXTENSION
 	}
 
 } } // namespace bgfx

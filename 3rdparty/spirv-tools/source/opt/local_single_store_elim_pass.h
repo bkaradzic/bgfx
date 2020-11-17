@@ -89,9 +89,14 @@ class LocalSingleStoreElimPass : public Pass {
   bool FeedsAStore(Instruction* inst) const;
 
   // Replaces all of the loads in |uses| by the value stored in |store_inst|.
-  // The load instructions are then killed.
+  // The load instructions are then killed. |all_rewritten| is true iff all
+  // uses have been rewritten.
   bool RewriteLoads(Instruction* store_inst,
-                    const std::vector<Instruction*>& uses);
+                    const std::vector<Instruction*>& uses, bool* all_rewritten);
+
+  // Replaces DebugDeclares of |var_id| with DebugValues using the value
+  // assignment of |store_inst|.
+  bool RewriteDebugDeclares(Instruction* store_inst, uint32_t var_id);
 
   // Extensions supported by this pass.
   std::unordered_set<std::string> extensions_allowlist_;

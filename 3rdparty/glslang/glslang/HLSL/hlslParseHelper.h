@@ -60,8 +60,8 @@ public:
     virtual const char* getGlobalUniformBlockName() const override { return "$Global"; }
     virtual void setUniformBlockDefaults(TType& block) const override
     {
-        block.getQualifier().layoutPacking = ElpStd140;
-        block.getQualifier().layoutMatrix = ElmRowMajor;
+        block.getQualifier().layoutPacking = globalUniformDefaults.layoutPacking;
+        block.getQualifier().layoutMatrix = globalUniformDefaults.layoutMatrix;
     }
 
     void reservedPpErrorCheck(const TSourceLoc&, const char* /*name*/, const char* /*op*/) override { }
