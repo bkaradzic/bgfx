@@ -89,6 +89,7 @@ namespace bgfx
 		Spirv, 1010, "spirv10-10",
 		Spirv, 1010, "spirv",
 
+		GLSL, 120, "120",
 		GLSL, 130, "130",
 		GLSL, 140, "140",
 		GLSL, 150, "150",
@@ -1010,7 +1011,7 @@ namespace bgfx
 				}
 			}
 			if(profile_id == count) {
-				bx::printf("Unknown profile: %s", profile_opt);
+				bx::printf("Unknown profile: %s\n", profile_opt);
 				return false;
 			}
 		}
