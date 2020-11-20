@@ -134,7 +134,7 @@ namespace bgfx { namespace gl
 
 				SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
 
-				import(1);
+				import(version);
 
 				return swapChain;
 			}
