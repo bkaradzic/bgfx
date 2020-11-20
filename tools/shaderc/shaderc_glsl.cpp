@@ -16,23 +16,15 @@ namespace bgfx { namespace glsl
 			: (ch == 'c' ? kGlslOptShaderCompute : kGlslOptShaderVertex);
 
 		glslopt_target target = kGlslTargetOpenGL;
-		switch (_version)
+		if(_version == BX_MAKEFOURCC('M', 'T', 'L', 0))
 		{
-		case BX_MAKEFOURCC('M', 'T', 'L', 0):
 			target = kGlslTargetMetal;
-			break;
-
-		case 2:
-			target = kGlslTargetOpenGLES20;
-			break;
-
-		case 3:
-			target = kGlslTargetOpenGLES30;
-			break;
-
-		default:
+		} else if(_version < 0x80000000) {
 			target = kGlslTargetOpenGL;
-			break;
+		}
+		else {
+			_version &= ~0x80000000;
+			target = (_version >= 300) ? kGlslTargetOpenGLES30 : kGlslTargetOpenGLES20;
 		}
 
 		glslopt_ctx* ctx = glslopt_initialize(target);
@@ -70,10 +62,10 @@ namespace bgfx { namespace glsl
 		const char* optimizedShader = glslopt_get_output(shader);
 
 		// Trim all directives.
-		while ('#' == *optimizedShader)
-		{
-			optimizedShader = bx::strFindNl(optimizedShader).getPtr();
-		}
+		//while ('#' == *optimizedShader)
+		//{
+		//	optimizedShader = bx::strFindNl(optimizedShader).getPtr();												// [todo] no!
+		//}
 
 		{
 			char* code = const_cast<char*>(optimizedShader);

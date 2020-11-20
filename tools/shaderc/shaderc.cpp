@@ -163,6 +163,7 @@ namespace bgfx
 	{
 		"gl_VertexID",
 		"gl_InstanceID",
+		"texture2DLodOffset",
 		NULL
 	};
 
@@ -205,6 +206,7 @@ namespace bgfx
 		"usampler3D",
 		"isamplerCube",
 		"usamplerCube",
+		"textureSize",
 		NULL
 	};
 
@@ -1600,15 +1602,35 @@ namespace bgfx
 				if (profile->lang == GLSL
 				||  profile->lang == ESSL)
 				{
-					if (profile->lang != ESSL)
+					// gl_FragColor and gl_FragData are deprecated for essl > 300
+					if((profile->lang == ESSL) && (profile->id >= 300))
 					{
-						// bgfx shadow2D/Proj behave like EXT_shadow_samplers
-						// not as GLSL language 1.2 specs shadow2D/Proj.
-						preprocessor.writef(
-							"#define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord).x\n"
-							"#define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord).x\n"
-							);
+						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
+						bool hasFragData[8] = {};
+						uint32_t numFragData = 0;
+						for (uint32_t ii = 0; ii < BX_COUNTOF(hasFragData); ++ii)
+						{
+							char temp[32];
+							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
+							hasFragData[ii] = !bx::strFind(input, temp).isEmpty();
+							numFragData += hasFragData[ii];
+						}
+						if(hasFragColor) {
+							preprocessor.writef("#define gl_FragColor bgfx_FragData0\n");
+							preprocessor.writef("out mediump vec4 bgfx_FragData0;\n");
+						}
+						else if(numFragData) {
+							preprocessor.writef("#define gl_FragData bgfx_FragData\n");
+							preprocessor.writef("out mediump vec4 bgfx_FragData[gl_MaxDrawBuffers];\n");
+						}
 					}
+
+					// bgfx shadow2D/Proj behave like EXT_shadow_samplers
+					// not as GLSL language 1.2 specs shadow2D/Proj.
+					preprocessor.writef(
+						"#define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord).x\n"
+						"#define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord).x\n"
+						);
 
 					for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
 					{
@@ -2008,18 +2030,6 @@ namespace bgfx
 
 					if (_options.preprocessOnly)
 					{
-						if (profile->lang == GLSL
-						||  profile->lang == ESSL)
-						{
-							if (profile->lang == ESSL)
-							{
-								writef(_writer
-									, "#ifdef GL_ES\n"
-										"precision highp float;\n"
-										"#endif // GL_ES\n\n"
-									);
-							}
-						}
 						bx::write(_writer, preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
 
 						return true;
@@ -2063,7 +2073,12 @@ namespace bgfx
 									) )
 								)
 							{
-								glsl_profile = 430;
+								if((profile->lang == GLSL) && (glsl_profile < 430)) {
+									glsl_profile = 430;
+								}
+								else if(glsl_profile < 310) {
+									glsl_profile = 310;
+								}
 							}
 
 							if (glsl_profile < 400)
@@ -2219,15 +2234,17 @@ namespace bgfx
 								}
 								else
 								{
-									if (usesInterpolationQualifiers)
+									if (glsl_profile > 100)
 									{
-										bx::stringPrintf(code, "#version 300 es\n");
+										bx::stringPrintf(code, "#version %d es\n", glsl_profile);
 										bx::stringPrintf(code, "#define attribute in\n");
 										bx::stringPrintf(code, "#define varying %s\n"
 											, 'f' == _options.shaderType ? "in" : "out"
 											);
+										bx::stringPrintf(code, "precision mediump float;\n");
+										bx::stringPrintf(code, "precision highp int;\n");
 									}
-									else if (glsl_profile == 100)
+									else
 									{
 										code +=
 											"mat2 transpose(mat2 _mtx)\n"
@@ -2296,12 +2313,19 @@ namespace bgfx
 										bx::stringPrintf(code, "#extension GL_OES_texture_3D : enable\n");
 									}
 
-									if (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty() )
+									if ((glsl_profile < 300) && (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty()) )
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_shadow_samplers : enable\n"
-											  "#define shadow2D shadow2DEXT\n"
-											  "#define shadow2DProj shadow2DProjEXT\n"
+											  "#define bgfxShadow2D shadow2DEXT\n"
+											  "#define bgfxShadow2DProj shadow2DProjEXT\n"
+											);
+									}
+									else
+									{
+										bx::stringPrintf(code
+											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
+											  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
 											);
 									}
 
@@ -2319,7 +2343,7 @@ namespace bgfx
 											);
 									}
 
-									if (!bx::findIdentifierMatch(input, "gl_FragDepth").isEmpty() )
+									if ((profile->lang != ESSL) && (!bx::findIdentifierMatch(input, "gl_FragDepth").isEmpty() ))
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_frag_depth : enable\n"
@@ -2333,15 +2357,6 @@ namespace bgfx
 											, "#extension GL_EXT_texture_array : enable\n"
 											);
 									}
-
-									bx::stringPrintf(code
-										, "#define ivec2 vec2\n"
-										  "#define ivec3 vec3\n"
-										  "#define ivec4 vec4\n"
-										  "#define uvec2 vec2\n"
-										  "#define uvec3 vec3\n"
-										  "#define uvec4 vec4\n"
-									);
 								}
 							}
 							else
@@ -2349,13 +2364,14 @@ namespace bgfx
 								bx::stringPrintf(code, "#version %d\n", glsl_profile);
 
 								bx::stringPrintf(code
-									, "#define texture2DLod      textureLod\n"
-									  "#define texture2DGrad     textureGrad\n"
-									  "#define texture2DProjLod  textureProjLod\n"
-									  "#define texture2DProjGrad textureProjGrad\n"
-									  "#define textureCubeLod    textureLod\n"
-									  "#define textureCubeGrad   textureGrad\n"
-									  "#define texture3D         texture\n"
+									, "#define texture2DLod       textureLod\n"
+									  "#define texture2DGrad      textureGrad\n"
+									  "#define texture2DProjLod   textureProjLod\n"
+									  "#define texture2DProjGrad  textureProjGrad\n"
+									  "#define textureCubeLod     textureLod\n"
+									  "#define textureCubeGrad    textureGrad\n"
+									  "#define texture3D          texture\n"
+									  "#define texture2DLofOffset textureLodOffset\n"
 									);
 
 								bx::stringPrintf(code, "#define attribute in\n");
@@ -2369,7 +2385,8 @@ namespace bgfx
 									);
 							}
 
-							if (glsl_profile > 400)
+							if ( ((profile->lang == GLSL) && (glsl_profile > 400)) 
+							  || ((profile->lang == ESSL) && (glsl_profile > 300)) )
 							{
 								code += preprocessor.m_preprocessed;
 
@@ -2387,6 +2404,9 @@ namespace bgfx
 								code += _comment;
 								code += preprocessor.m_preprocessed;
 
+								if(profile->lang == ESSL) {
+									glsl_profile |= 0x80000000;
+								}
 								compiled = compileGLSLShader(_options, glsl_profile, code, _writer);
 							}
 						}
