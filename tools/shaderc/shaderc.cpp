@@ -74,10 +74,10 @@ namespace bgfx
 		ESSL, 310, "310_es",
 		ESSL, 320, "320_es",
 
-		HLSL, 2, "s_3",
+		HLSL, 2, "s_3_0",
 		HLSL, 3, "s_4_0_level",
-		HLSL, 4, "s_4",
-		HLSL, 5, "s_5",
+		HLSL, 4, "s_4_0",
+		HLSL, 5, "s_5_0",
 
 		Metal, 1, "metal",
 		
@@ -2241,7 +2241,7 @@ namespace bgfx
 										bx::stringPrintf(code, "#define varying %s\n"
 											, 'f' == _options.shaderType ? "in" : "out"
 											);
-										bx::stringPrintf(code, "precision mediump float;\n");
+										bx::stringPrintf(code, "precision highp float;\n");
 										bx::stringPrintf(code, "precision highp int;\n");
 									}
 									else

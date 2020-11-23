@@ -61,11 +61,25 @@ namespace bgfx { namespace glsl
 
 		const char* optimizedShader = glslopt_get_output(shader);
 
+		std::string out;
+		// Preserver #version preamble
+		if('#' == *optimizedShader)
+		{
+			bx::StringView preamble(optimizedShader, bx::strFindNl(optimizedShader).getPtr());
+			if(bx::strCmp(preamble, "#version", 8) == 0)
+			{
+				out.append(preamble.getPtr(), preamble.getLength());
+			}
+		}
+
 		// Trim all directives.
-		//while ('#' == *optimizedShader)
-		//{
-		//	optimizedShader = bx::strFindNl(optimizedShader).getPtr();												// [todo] no!
-		//}
+		while ('#' == *optimizedShader)
+		{
+			optimizedShader = bx::strFindNl(optimizedShader).getPtr();
+		}
+
+		out.append(optimizedShader, strlen(optimizedShader));
+		optimizedShader = out.c_str();
 
 		{
 			char* code = const_cast<char*>(optimizedShader);
@@ -98,6 +112,10 @@ namespace bgfx { namespace glsl
 		{
 			bx::StringView parse(optimizedShader);
 
+			if(bx::strCmp(parse, "#version", 8) == 0) {
+				parse.set(bx::strFindNl(parse).getPtr(), parse.getTerm());
+			}
+
 			while (!parse.isEmpty() )
 			{
 				parse = bx::strLTrimSpace(parse);
@@ -105,6 +123,13 @@ namespace bgfx { namespace glsl
 				if (!eol.isEmpty() )
 				{
 					bx::StringView qualifier = nextWord(parse);
+
+					if (0 == bx::strCmp(qualifier, "precision", 9) )
+					{
+						// skip precision
+						parse.set(eol.getPtr() + 1, parse.getTerm() );
+						continue;
+					}
 
 					if (0 == bx::strCmp(qualifier, "attribute", 9)
 					||  0 == bx::strCmp(qualifier, "varying",   7)
