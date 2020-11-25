@@ -1624,13 +1624,6 @@ namespace bgfx
 						}
 					}
 
-					// bgfx shadow2D/Proj behave like EXT_shadow_samplers
-					// not as GLSL language 1.2 specs shadow2D/Proj.
-					preprocessor.writef(
-						"#define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord).x\n"
-						"#define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord).x\n"
-						);
-
 					for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
 					{
 						VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
@@ -2219,15 +2212,8 @@ namespace bgfx
 									if (need130)
 									{
 										bx::stringPrintf(code
-											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
-											  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
-											);
-									}
-									else
-									{
-										bx::stringPrintf(code
-											, "#define bgfxShadow2D     shadow2D\n"
-											  "#define bgfxShadow2DProj shadow2DProj\n"
+											, "#define shadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
+											  "#define shadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
 											);
 									}
 								}
@@ -2312,19 +2298,19 @@ namespace bgfx
 										bx::stringPrintf(code, "#extension GL_OES_texture_3D : enable\n");
 									}
 
-									if ((glsl_profile < 300) && (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty()) )
+									if ((glsl_profile < 300) && (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty()))
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_shadow_samplers : enable\n"
-											  "#define bgfxShadow2D shadow2DEXT\n"
-											  "#define bgfxShadow2DProj shadow2DProjEXT\n"
+											  "#define shadow2D shadow2DEXT\n"
+											  "#define shadow2DProj shadow2DProjEXT\n"
 											);
 									}
 									else
 									{
 										bx::stringPrintf(code
-											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
-											  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
+											, "#define shadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
+											  "#define shadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
 											);
 									}
 
@@ -2342,7 +2328,7 @@ namespace bgfx
 											);
 									}
 
-									if ((profile->lang != ESSL) && (!bx::findIdentifierMatch(input, "gl_FragDepth").isEmpty() ))
+									if ((glsl_profile < 300) && (!bx::findIdentifierMatch(input, "gl_FragDepth").isEmpty() ))
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_frag_depth : enable\n"
@@ -2407,6 +2393,9 @@ namespace bgfx
 									glsl_profile |= 0x80000000;
 								}
 								compiled = compileGLSLShader(_options, glsl_profile, code, _writer);
+                                if(!compiled) {
+                                    fprintf(stderr, "%s\n", code.c_str());
+                                }
 							}
 						}
 						else
