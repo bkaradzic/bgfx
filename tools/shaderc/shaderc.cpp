@@ -74,10 +74,9 @@ namespace bgfx
 		ESSL, 310, "310_es",
 		ESSL, 320, "320_es",
 
-		HLSL, 2, "s_3_0",
-		HLSL, 3, "s_4_0_level",
-		HLSL, 4, "s_4_0",
-		HLSL, 5, "s_5_0",
+		HLSL, 300, "s_3_0",
+		HLSL, 400, "s_4_0",
+		HLSL, 500, "s_5_0",
 
 		Metal, 1, "metal",
 		
@@ -1006,7 +1005,7 @@ namespace bgfx
 				}
 				else if((s_profiles[profile_id].lang == HLSL)&& (0 == bx::strCmp(&profile_opt[1], s_profiles[profile_id].name))) {
 					// This test is here to allow hlsl profile names e.g:
-					// cs_4_0, cs_5_0, ps_4_0_level_0, etc...
+					// cs_4_0, gs_5_0, etc...
 					// There's no check to ensure that the profile name matches the shader type set via the cli.
 					// This means that you can pass `hs_5_0` when compiling a fragment shader.
 					break;
@@ -1263,7 +1262,7 @@ namespace bgfx
 					var.m_name.assign(name.getPtr(), name.getTerm() );
 					var.m_semantics.assign(semantics.getPtr(), semantics.getTerm() );
 
-					if ((profile->lang == HLSL && profile->id == 2)
+					if ((profile->lang == HLSL && profile->id < 400)
 					&&  var.m_semantics == "BITANGENT")
 					{
 						var.m_semantics = "BINORMAL";
@@ -1704,7 +1703,7 @@ namespace bgfx
 						);
 
 					if (profile->lang == HLSL
-					&&  profile->id < 4)
+					&&  profile->id < 400)
 					{
 						preprocessor.writef(
 							"#define centroid\n"
@@ -1725,7 +1724,7 @@ namespace bgfx
 						}
 
 						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
-						const bool hasFragCoord   = !bx::strFind(input, "gl_FragCoord").isEmpty() || profile->id > 2;
+						const bool hasFragCoord   = !bx::strFind(input, "gl_FragCoord").isEmpty() || profile->id >= 400;
 						const bool hasFragDepth   = !bx::strFind(input, "gl_FragDepth").isEmpty();
 						const bool hasFrontFacing = !bx::strFind(input, "gl_FrontFacing").isEmpty();
 						const bool hasPrimitiveId = !bx::strFind(input, "gl_PrimitiveID").isEmpty();
@@ -1749,10 +1748,10 @@ namespace bgfx
 							// If it has gl_FragData or gl_FragColor, color target at
 							// index 0 exists, otherwise shader is not modifying color
 							// targets.
-							hasFragData[0] |= hasFragColor || profile->id < 3;
+							hasFragData[0] |= hasFragColor || profile->id < 400;
 
 							if (!insert.isEmpty()
-							&&  profile->id < 3
+							&&  profile->id < 400
 							&&  !hasFragColor)
 							{
 								insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\ngl_FragColor = bgfx_VoidFrag;\n");
@@ -1786,7 +1785,7 @@ namespace bgfx
 							}
 						}
 
-						const uint32_t maxRT = profile->id > 2 ? BX_COUNTOF(hasFragData) : 4;
+						const uint32_t maxRT = profile->id >= 400 ? BX_COUNTOF(hasFragData) : 4;
 
 						for (uint32_t ii = 0; ii < BX_COUNTOF(hasFragData); ++ii)
 						{
@@ -1813,7 +1812,7 @@ namespace bgfx
 
 						if (hasFrontFacing)
 						{
-							if (profile->id < 3)
+							if (profile->id < 400)
 							{
 								preprocessor.writef(
 									" \\\n\t%sfloat __vface : VFACE"
@@ -1831,7 +1830,7 @@ namespace bgfx
 
 						if (hasPrimitiveId)
 						{
-							if (profile->id > 2)
+							if (profile->id >= 400)
 							{
 								preprocessor.writef(
 									" \\\n\t%suint gl_PrimitiveID : SV_PrimitiveID"
@@ -1851,7 +1850,7 @@ namespace bgfx
 
 						if (hasFrontFacing)
 						{
-							if (profile->id == 2)
+							if (profile->id < 400)
 							{
 								preprocessor.writef(
 									"#define gl_FrontFacing (__vface >= 0.0)\n"
@@ -1961,7 +1960,7 @@ namespace bgfx
 
 						if (hasVertexId)
 						{
-							if (profile->id > 2)
+							if (profile->id >= 400)
 							{
 								preprocessor.writef(
 									" \\\n\t%suint gl_VertexID : SV_VertexID"
@@ -1977,7 +1976,7 @@ namespace bgfx
 
 						if (hasInstanceId)
 						{
-							if (profile->id > 2)
+							if (profile->id >= 400)
 							{
 								preprocessor.writef(
 									" \\\n\t%suint gl_InstanceID : SV_InstanceID"
