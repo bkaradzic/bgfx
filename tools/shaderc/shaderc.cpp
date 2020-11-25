@@ -2393,9 +2393,6 @@ namespace bgfx
 									glsl_profile |= 0x80000000;
 								}
 								compiled = compileGLSLShader(_options, glsl_profile, code, _writer);
-                                if(!compiled) {
-                                    fprintf(stderr, "%s\n", code.c_str());
-                                }
 							}
 						}
 						else
