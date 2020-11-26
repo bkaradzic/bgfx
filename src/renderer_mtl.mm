@@ -1343,31 +1343,37 @@ namespace bgfx { namespace mtl
 				for (uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 				{
 					MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
+
 					if (NULL != desc.texture)
 					{
-						desc.loadAction = MTLLoadActionLoad;
-						desc.storeAction = desc.resolveTexture == nil ?
-											MTLStoreActionStore :
-											MTLStoreActionMultisampleResolve;
+						desc.loadAction  = MTLLoadActionLoad;
+						desc.storeAction = desc.resolveTexture == nil
+							? MTLStoreActionStore
+							: MTLStoreActionMultisampleResolve
+							;
 					}
 				}
 
 				RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
+
 				if (NULL != depthAttachment.texture)
 				{
-					depthAttachment.loadAction = MTLLoadActionLoad;
-					depthAttachment.storeAction = depthAttachment.resolveTexture == nil ?
-													MTLStoreActionStore :
-													MTLStoreActionMultisampleResolve;
+					depthAttachment.loadAction  = MTLLoadActionLoad;
+					depthAttachment.storeAction = depthAttachment.resolveTexture == nil
+						? MTLStoreActionStore
+						: MTLStoreActionMultisampleResolve
+						;
 				}
 
 				RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
+
 				if (NULL != stencilAttachment.texture)
 				{
-					stencilAttachment.loadAction   = MTLLoadActionLoad;
-					stencilAttachment.storeAction = stencilAttachment.resolveTexture == nil ?
-													MTLStoreActionStore :
-													MTLStoreActionMultisampleResolve;
+					stencilAttachment.loadAction  = MTLLoadActionLoad;
+					stencilAttachment.storeAction = stencilAttachment.resolveTexture == nil
+						? MTLStoreActionStore
+						: MTLStoreActionMultisampleResolve
+						;
 				}
 
 				m_renderCommandEncoder = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
@@ -1440,7 +1446,7 @@ namespace bgfx { namespace mtl
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
 	case UniformType::_uniform:                            \
-	case UniformType::_uniform|kUniformFragmentBit:   \
+	case UniformType::_uniform|kUniformFragmentBit:        \
 	{                                                      \
 		setShaderUniform(uint8_t(type), loc, data, num);   \
 	}                                                      \
