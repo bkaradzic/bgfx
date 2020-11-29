@@ -656,6 +656,8 @@ restart:
 
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse)
 	{
+		bool needReset = s_reset != _reset;
+
 		s_debug = _debug;
 		s_reset = _reset;
 
@@ -742,7 +744,8 @@ restart:
 						handle  = size->m_handle;
 						_width  = size->m_width;
 						_height = size->m_height;
-						_reset  = !s_reset; // force reset
+
+						needReset = true;
 					}
 					break;
 
@@ -768,8 +771,10 @@ restart:
 
 		} while (NULL != ev);
 
+		needReset |= _reset != s_reset;
+
 		if (handle.idx == 0
-		&&  _reset != s_reset)
+		&&  needReset)
 		{
 			_reset = s_reset;
 			bgfx::reset(_width, _height, _reset);
@@ -786,6 +791,8 @@ restart:
 
 	bool processWindowEvents(WindowState& _state, uint32_t& _debug, uint32_t& _reset)
 	{
+		bool needReset = s_reset != _reset;
+
 		s_debug = _debug;
 		s_reset = _reset;
 
@@ -894,10 +901,8 @@ restart:
 						win.m_handle = size->m_handle;
 						win.m_width  = size->m_width;
 						win.m_height = size->m_height;
-						_reset  = win.m_handle.idx == 0
-								? !s_reset
-								: _reset
-								; // force reset
+
+						needReset = win.m_handle.idx == 0 ? true : needReset;
 					}
 					break;
 
@@ -946,7 +951,9 @@ restart:
 			}
 		}
 
-		if (_reset != s_reset)
+		needReset |= _reset != s_reset;
+
+		if (needReset)
 		{
 			_reset = s_reset;
 			bgfx::reset(s_window[0].m_width, s_window[0].m_height, _reset);
