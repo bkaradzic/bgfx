@@ -1683,8 +1683,9 @@ namespace bgfx
 	void dump(const Resolution& _resolution)
 	{
 		const uint32_t reset = _resolution.reset;
+		const uint32_t msaa = (reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 
-		BX_TRACE("Resolution: %d x %d, format: %s, MSAAx%d"
+		BX_TRACE("Resolution: %d x %d, format: %s"
 			, _resolution.width
 			, _resolution.height
 			, TextureFormat::Count == _resolution.format
@@ -1692,6 +1693,7 @@ namespace bgfx
 				: bimg::getName(bimg::TextureFormat::Enum(_resolution.format) )
 			, 1 << ( (reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT)
 			);
+		BX_TRACE("\t[%c] MSAAx%d", 0 != msaa ? 'x' : ' ', 1<<msaa);
 		BX_TRACE("\t[%c] Fullscreen",         0 != (reset & BGFX_RESET_FULLSCREEN)         ? 'x' : ' ');
 		BX_TRACE("\t[%c] V-sync",             0 != (reset & BGFX_RESET_VSYNC)              ? 'x' : ' ');
 		BX_TRACE("\t[%c] Max Anisotropy",     0 != (reset & BGFX_RESET_MAXANISOTROPY)      ? 'x' : ' ');
