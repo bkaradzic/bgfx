@@ -348,8 +348,12 @@ const char* CapabilityToString(SpvCapability capability) {
       return "RoundingModeRTZ";
     case SpvCapabilityRayQueryProvisionalKHR:
       return "RayQueryProvisionalKHR";
-    case SpvCapabilityRayTraversalPrimitiveCullingProvisionalKHR:
-      return "RayTraversalPrimitiveCullingProvisionalKHR";
+    case SpvCapabilityRayQueryKHR:
+      return "RayQueryKHR";
+    case SpvCapabilityRayTraversalPrimitiveCullingKHR:
+      return "RayTraversalPrimitiveCullingKHR";
+    case SpvCapabilityRayTracingKHR:
+      return "RayTracingKHR";
     case SpvCapabilityFloat16ImageAMD:
       return "Float16ImageAMD";
     case SpvCapabilityImageGatherBiasLodAMD:

@@ -680,8 +680,8 @@ Pass::Status SSARewriter::AddDebugValuesForInvisibleDebugDecls(Function* fp) {
     // If |value| dominates |decl|, we can set it as DebugValue.
     if (value && (pass_->context()->get_instr_block(value) == nullptr ||
                   dom_tree->Dominates(value, decl))) {
-      if (!pass_->context()->get_debug_info_mgr()->AddDebugValueForDecl(
-              decl, value->result_id())) {
+      if (pass_->context()->get_debug_info_mgr()->AddDebugValueForDecl(
+              decl, value->result_id(), decl) == nullptr) {
         return Pass::Status::Failure;
       }
     } else {
@@ -689,8 +689,8 @@ Pass::Status SSARewriter::AddDebugValuesForInvisibleDebugDecls(Function* fp) {
       // assign the value in the immediate dominator.
       value_id = GetValueAtBlock(var_id, dom_tree->ImmediateDominator(bb));
       if (value_id &&
-          !pass_->context()->get_debug_info_mgr()->AddDebugValueForDecl(
-              decl, value_id)) {
+          pass_->context()->get_debug_info_mgr()->AddDebugValueForDecl(
+              decl, value_id, decl) == nullptr) {
         return Pass::Status::Failure;
       }
     }

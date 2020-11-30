@@ -403,6 +403,7 @@ class BuiltInsValidator {
   // Validates that |built_in_inst| is not (even indirectly) referenced from
   // within a function which can be called with |execution_model|.
   //
+  // |vuid| - Vulkan ID for the error, or a negative value if none.
   // |comment| - text explaining why the restriction was imposed.
   // |decoration| - BuiltIn decoration which causes the restriction.
   // |referenced_inst| - instruction which is dependent on |built_in_inst| and
@@ -410,7 +411,7 @@ class BuiltInsValidator {
   // |referenced_from_inst| - instruction which references id defined by
   //                          |referenced_inst| from within a function.
   spv_result_t ValidateNotCalledWithExecutionModel(
-      std::string comment, SpvExecutionModel execution_model,
+      int vuid, const char* comment, SpvExecutionModel execution_model,
       const Decoration& decoration, const Instruction& built_in_inst,
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
@@ -909,7 +910,7 @@ spv_result_t BuiltInsValidator::ValidateF32ArrHelper(
 }
 
 spv_result_t BuiltInsValidator::ValidateNotCalledWithExecutionModel(
-    std::string comment, SpvExecutionModel execution_model,
+    int vuid, const char* comment, SpvExecutionModel execution_model,
     const Decoration& decoration, const Instruction& built_in_inst,
     const Instruction& referenced_inst,
     const Instruction& referenced_from_inst) {
@@ -920,7 +921,8 @@ spv_result_t BuiltInsValidator::ValidateNotCalledWithExecutionModel(
       const char* built_in_str = _.grammar().lookupOperandName(
           SPV_OPERAND_TYPE_BUILT_IN, decoration.params()[0]);
       return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
-             << comment << " " << GetIdDesc(referenced_inst) << " depends on "
+             << (vuid < 0 ? std::string("") : _.VkErrorID(vuid)) << comment
+             << " " << GetIdDesc(referenced_inst) << " depends on "
              << GetIdDesc(built_in_inst) << " which is decorated with BuiltIn "
              << built_in_str << "."
              << " Id <" << referenced_inst.id() << "> is later referenced by "
@@ -932,7 +934,7 @@ spv_result_t BuiltInsValidator::ValidateNotCalledWithExecutionModel(
     // Propagate this rule to all dependant ids in the global scope.
     id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
         std::bind(&BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-                  comment, execution_model, decoration, built_in_inst,
+                  vuid, comment, execution_model, decoration, built_in_inst,
                   referenced_from_inst, std::placeholders::_1));
   }
   return SPV_SUCCESS;
@@ -968,7 +970,7 @@ spv_result_t BuiltInsValidator::ValidateClipOrCullDistanceAtReference(
     if (storage_class == SpvStorageClassInput) {
       assert(function_id_ == 0);
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, -1,
           "Vulkan spec doesn't allow BuiltIn ClipDistance/CullDistance to be "
           "used for variables with Input storage class if execution model is "
           "Vertex.",
@@ -979,7 +981,7 @@ spv_result_t BuiltInsValidator::ValidateClipOrCullDistanceAtReference(
     if (storage_class == SpvStorageClassOutput) {
       assert(function_id_ == 0);
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, -1,
           "Vulkan spec doesn't allow BuiltIn ClipDistance/CullDistance to be "
           "used for variables with Output storage class if execution model is "
           "Fragment.",
@@ -1619,12 +1621,10 @@ spv_result_t BuiltInsValidator::ValidatePointSizeAtReference(
     if (storage_class == SpvStorageClassInput) {
       assert(function_id_ == 0);
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-          std::string(
-              _.VkErrorID(4315) +
-              "Vulkan spec doesn't allow BuiltIn PointSize to be used for "
-              "variables with Input storage class if execution model is "
-              "Vertex."),
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, 4315,
+          "Vulkan spec doesn't allow BuiltIn PointSize to be used for "
+          "variables with Input storage class if execution model is "
+          "Vertex.",
           SpvExecutionModelVertex, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
     }
@@ -1737,11 +1737,10 @@ spv_result_t BuiltInsValidator::ValidatePositionAtReference(
     if (storage_class == SpvStorageClassInput) {
       assert(function_id_ == 0);
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-          std::string(_.VkErrorID(4320) +
-                      "Vulkan spec doesn't allow BuiltIn Position to be used "
-                      "for variables "
-                      "with Input storage class if execution model is Vertex."),
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, 4320,
+          "Vulkan spec doesn't allow BuiltIn Position to be used "
+          "for variables "
+          "with Input storage class if execution model is Vertex.",
           SpvExecutionModelVertex, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
     }
@@ -1928,30 +1927,24 @@ spv_result_t BuiltInsValidator::ValidatePrimitiveIdAtReference(
     if (storage_class == SpvStorageClassOutput) {
       assert(function_id_ == 0);
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-          std::string(
-              _.VkErrorID(4334) +
-              "Vulkan spec doesn't allow BuiltIn PrimitiveId to be used for "
-              "variables with Output storage class if execution model is "
-              "TessellationControl."),
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, 4334,
+          "Vulkan spec doesn't allow BuiltIn PrimitiveId to be used for "
+          "variables with Output storage class if execution model is "
+          "TessellationControl.",
           SpvExecutionModelTessellationControl, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-          std::string(
-              _.VkErrorID(4334) +
-              "Vulkan spec doesn't allow BuiltIn PrimitiveId to be used for "
-              "variables with Output storage class if execution model is "
-              "TessellationEvaluation."),
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, 4334,
+          "Vulkan spec doesn't allow BuiltIn PrimitiveId to be used for "
+          "variables with Output storage class if execution model is "
+          "TessellationEvaluation.",
           SpvExecutionModelTessellationEvaluation, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-          std::string(
-              _.VkErrorID(4334) +
-              "Vulkan spec doesn't allow BuiltIn PrimitiveId to be used for "
-              "variables with Output storage class if execution model is "
-              "Fragment."),
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, 4334,
+          "Vulkan spec doesn't allow BuiltIn PrimitiveId to be used for "
+          "variables with Output storage class if execution model is "
+          "Fragment.",
           SpvExecutionModelFragment, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
     }
@@ -2304,7 +2297,7 @@ spv_result_t BuiltInsValidator::ValidateTessLevelAtReference(
     if (storage_class == SpvStorageClassInput) {
       assert(function_id_ == 0);
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, -1,
           "Vulkan spec doesn't allow TessLevelOuter/TessLevelInner to be "
           "used "
           "for variables with Input storage class if execution model is "
@@ -2316,7 +2309,7 @@ spv_result_t BuiltInsValidator::ValidateTessLevelAtReference(
     if (storage_class == SpvStorageClassOutput) {
       assert(function_id_ == 0);
       id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, -1,
           "Vulkan spec doesn't allow TessLevelOuter/TessLevelInner to be "
           "used "
           "for variables with Output storage class if execution model is "
@@ -2382,10 +2375,9 @@ spv_result_t BuiltInsValidator::ValidateVertexIndexAtDefinition(
 spv_result_t BuiltInsValidator::ValidateVertexIdOrInstanceIdAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   const SpvBuiltIn label = SpvBuiltIn(decoration.params()[0]);
-  bool allow_instance_id =
-      (_.HasCapability(SpvCapabilityRayTracingNV) ||
-       _.HasCapability(SpvCapabilityRayTracingProvisionalKHR)) &&
-      label == SpvBuiltInInstanceId;
+  bool allow_instance_id = (_.HasCapability(SpvCapabilityRayTracingNV) ||
+                            _.HasCapability(SpvCapabilityRayTracingKHR)) &&
+                           label == SpvBuiltInInstanceId;
 
   if (spvIsVulkanEnv(_.context()->target_env) && !allow_instance_id) {
     return _.diag(SPV_ERROR_INVALID_DATA, &inst)
@@ -2605,32 +2597,30 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
            {SpvExecutionModelVertex, SpvExecutionModelTessellationEvaluation,
             SpvExecutionModelGeometry, SpvExecutionModelMeshNV}) {
         id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
-            std::bind(
-                &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-                std::string(
-                    _.VkErrorID((operand == SpvBuiltInLayer) ? 4274 : 4406) +
-                    "Vulkan spec doesn't allow BuiltIn Layer and "
-                    "ViewportIndex to be "
-                    "used for variables with Input storage class if "
-                    "execution model is Vertex, TessellationEvaluation, "
-                    "Geometry, or MeshNV."),
-                em, decoration, built_in_inst, referenced_from_inst,
-                std::placeholders::_1));
+            std::bind(&BuiltInsValidator::ValidateNotCalledWithExecutionModel,
+                      this, ((operand == SpvBuiltInLayer) ? 4274 : 4406),
+                      "Vulkan spec doesn't allow BuiltIn Layer and "
+                      "ViewportIndex to be "
+                      "used for variables with Input storage class if "
+                      "execution model is Vertex, TessellationEvaluation, "
+                      "Geometry, or MeshNV.",
+                      em, decoration, built_in_inst, referenced_from_inst,
+                      std::placeholders::_1));
       }
     }
 
     if (storage_class == SpvStorageClassOutput) {
       assert(function_id_ == 0);
-      id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this,
-          std::string(_.VkErrorID((operand == SpvBuiltInLayer) ? 4275 : 4407) +
-                      "Vulkan spec doesn't allow BuiltIn Layer and "
-                      "ViewportIndex to be "
-                      "used for variables with Output storage class if "
-                      "execution model is "
-                      "Fragment."),
-          SpvExecutionModelFragment, decoration, built_in_inst,
-          referenced_from_inst, std::placeholders::_1));
+      id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
+          std::bind(&BuiltInsValidator::ValidateNotCalledWithExecutionModel,
+                    this, ((operand == SpvBuiltInLayer) ? 4275 : 4407),
+                    "Vulkan spec doesn't allow BuiltIn Layer and "
+                    "ViewportIndex to be "
+                    "used for variables with Output storage class if "
+                    "execution model is "
+                    "Fragment.",
+                    SpvExecutionModelFragment, decoration, built_in_inst,
+                    referenced_from_inst, std::placeholders::_1));
     }
 
     for (const SpvExecutionModel execution_model : execution_models_) {

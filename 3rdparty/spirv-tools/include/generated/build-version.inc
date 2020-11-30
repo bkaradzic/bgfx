@@ -1,1 +1,1 @@
-"v2020.6", "SPIRV-Tools v2020.6 e4fdbb82647a417e30b6da25c632bddf5cf79a58"
+"v2020.6", "SPIRV-Tools v2020.6 475fea23bc1061461168fd99de41ebc8ee321b3b"

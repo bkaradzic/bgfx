@@ -20,7 +20,7 @@
 namespace {
 const uint32_t kRemovedMember = 0xFFFFFFFF;
 const uint32_t kSpecConstOpOpcodeIdx = 0;
-}
+}  // namespace
 
 namespace spvtools {
 namespace opt {

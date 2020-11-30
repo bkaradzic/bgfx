@@ -132,8 +132,10 @@ class InstBindlessCheckPass : public InstrumentPass {
     Instruction* ref_inst;
   } ref_analysis;
 
-  // Return size of type |ty_id| in bytes.
-  uint32_t ByteSize(uint32_t ty_id);
+  // Return size of type |ty_id| in bytes. Use |matrix_stride| and |col_major|
+  // for matrix type, or for vector type if vector is |in_matrix|.
+  uint32_t ByteSize(uint32_t ty_id, uint32_t matrix_stride, bool col_major,
+                    bool in_matrix);
 
   // Return stride of type |ty_id| with decoration |stride_deco|. Return 0
   // if not found
