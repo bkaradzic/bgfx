@@ -1685,13 +1685,15 @@ namespace bgfx
 		const uint32_t reset = _resolution.reset;
 		const uint32_t msaa = (reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 
-		BX_TRACE("Resolution: %d x %d, format: %s"
+		BX_TRACE("Reset back-buffer swap chain:");
+		BX_TRACE("\t%dx%d, format: %s, numBackBuffers: %d, maxFrameLatency: %d"
 			, _resolution.width
 			, _resolution.height
 			, TextureFormat::Count == _resolution.format
 				? "*default*"
 				: bimg::getName(bimg::TextureFormat::Enum(_resolution.format) )
-			, 1 << ( (reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT)
+			, _resolution.numBackBuffers
+			, _resolution.maxFrameLatency
 			);
 		BX_TRACE("\t[%c] MSAAx%d", 0 != msaa ? 'x' : ' ', 1<<msaa);
 		BX_TRACE("\t[%c] Fullscreen",         0 != (reset & BGFX_RESET_FULLSCREEN)         ? 'x' : ' ');
@@ -1825,6 +1827,8 @@ namespace bgfx
 
 		m_init = _init;
 		m_init.resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
+		m_init.resolution.numBackBuffers  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
+		m_init.resolution.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, 3);
 		dump(m_init.resolution);
 
 		if (g_platformData.ndt          == NULL
