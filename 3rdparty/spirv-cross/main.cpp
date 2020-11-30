@@ -566,6 +566,10 @@ struct CLIArguments
 	uint32_t msl_r32ui_linear_texture_alignment = 4;
 	uint32_t msl_r32ui_alignment_constant_id = 65535;
 	bool msl_texture_1d_as_2d = false;
+	bool msl_ios_use_simdgroup_functions = false;
+	bool msl_emulate_subgroups = false;
+	uint32_t msl_fixed_subgroup_size = 0;
+	bool msl_force_sample_rate_shading = false;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
 	bool glsl_force_flattened_io_blocks = false;
@@ -779,7 +783,16 @@ static void print_help_msl()
 	                "\t[--msl-r32ui-linear-texture-align-constant-id <id>]:\n\t\tThe function constant ID to use for the linear texture alignment.\n"
 	                "\t\tOn MSL 1.2 or later, you can override the alignment by setting this function constant.\n"
 	                "\t[--msl-texture-1d-as-2d]:\n\t\tEmit Image variables of dimension Dim1D as texture2d.\n"
-	                "\t\tIn Metal, 1D textures do not support all features that 2D textures do. Use this option if your code relies on these features.\n");
+	                "\t\tIn Metal, 1D textures do not support all features that 2D textures do. Use this option if your code relies on these features.\n"
+	                "\t[--msl-ios-use-simdgroup-functions]:\n\t\tUse simd_*() functions for subgroup ops instead of quad_*().\n"
+	                "\t\tRecent Apple GPUs support SIMD-groups larger than a quad. Use this option to take advantage of this support.\n"
+	                "\t[--msl-emulate-subgroups]:\n\t\tAssume subgroups of size 1.\n"
+	                "\t\tIntended for Vulkan Portability implementations where Metal support for SIMD-groups is insufficient for true subgroups.\n"
+	                "\t[--msl-fixed-subgroup-size <size>]:\n\t\tAssign a constant <size> to the SubgroupSize builtin.\n"
+	                "\t\tIntended for Vulkan Portability implementations where VK_EXT_subgroup_size_control is not supported or disabled.\n"
+	                "\t\tIf 0, assume variable subgroup size as actually exposed by Metal.\n"
+	                "\t[--msl-force-sample-rate-shading]:\n\t\tForce fragment shaders to run per sample.\n"
+	                "\t\tThis adds a [[sample_id]] parameter if none is already present.\n");
 	// clang-format on
 }
 
@@ -1021,6 +1034,10 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.r32ui_linear_texture_alignment = args.msl_r32ui_linear_texture_alignment;
 		msl_opts.r32ui_alignment_constant_id = args.msl_r32ui_alignment_constant_id;
 		msl_opts.texture_1D_as_2D = args.msl_texture_1d_as_2d;
+		msl_opts.ios_use_simdgroup_functions = args.msl_ios_use_simdgroup_functions;
+		msl_opts.emulate_subgroups = args.msl_emulate_subgroups;
+		msl_opts.fixed_subgroup_size = args.msl_fixed_subgroup_size;
+		msl_opts.force_sample_rate_shading = args.msl_force_sample_rate_shading;
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
 			msl_comp->add_discrete_descriptor_set(v);
@@ -1370,7 +1387,8 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--hlsl-nonwritable-uav-texture-as-srv",
 	        [&args](CLIParser &) { args.hlsl_nonwritable_uav_texture_as_srv = true; });
 	cbs.add("--hlsl-enable-16bit-types", [&args](CLIParser &) { args.hlsl_enable_16bit_types = true; });
-	cbs.add("--hlsl-flatten-matrix-vertex-input-semantics", [&args](CLIParser &) { args.hlsl_flatten_matrix_vertex_input_semantics = true; });
+	cbs.add("--hlsl-flatten-matrix-vertex-input-semantics",
+	        [&args](CLIParser &) { args.hlsl_flatten_matrix_vertex_input_semantics = true; });
 	cbs.add("--vulkan-semantics", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("-V", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("--flatten-multidimensional-arrays", [&args](CLIParser &) { args.flatten_multidimensional_arrays = true; });
@@ -1448,6 +1466,11 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-r32ui-linear-texture-align-constant-id",
 	        [&args](CLIParser &parser) { args.msl_r32ui_alignment_constant_id = parser.next_uint(); });
 	cbs.add("--msl-texture-1d-as-2d", [&args](CLIParser &) { args.msl_texture_1d_as_2d = true; });
+	cbs.add("--msl-ios-use-simdgroup-functions", [&args](CLIParser &) { args.msl_ios_use_simdgroup_functions = true; });
+	cbs.add("--msl-emulate-subgroups", [&args](CLIParser &) { args.msl_emulate_subgroups = true; });
+	cbs.add("--msl-fixed-subgroup-size",
+	        [&args](CLIParser &parser) { args.msl_fixed_subgroup_size = parser.next_uint(); });
+	cbs.add("--msl-force-sample-rate-shading", [&args](CLIParser &) { args.msl_force_sample_rate_shading = true; });
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();

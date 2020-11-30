@@ -139,6 +139,7 @@ public:
 	void mark_used_as_array_length(ID id);
 	uint32_t increase_bound_by(uint32_t count);
 	Bitset get_buffer_block_flags(const SPIRVariable &var) const;
+	Bitset get_buffer_block_type_flags(const SPIRType &type) const;
 
 	void add_typed_id(Types type, ID id);
 	void remove_typed_id(Types type, ID id);

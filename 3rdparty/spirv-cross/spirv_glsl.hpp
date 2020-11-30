@@ -243,7 +243,6 @@ public:
 	// - Images which are statically used at least once with Dref opcodes.
 	bool variable_is_depth_or_compare(VariableID id) const;
 
-
 protected:
 	struct ShaderSubgroupSupportHelper
 	{

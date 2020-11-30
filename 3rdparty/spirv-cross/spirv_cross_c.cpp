@@ -678,6 +678,22 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_MSL_R32UI_ALIGNMENT_CONSTANT_ID:
 		options->msl.r32ui_alignment_constant_id = value;
 		break;
+
+	case SPVC_COMPILER_OPTION_MSL_IOS_USE_SIMDGROUP_FUNCTIONS:
+		options->msl.ios_use_simdgroup_functions = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_EMULATE_SUBGROUPS:
+		options->msl.emulate_subgroups = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_FIXED_SUBGROUP_SIZE:
+		options->msl.fixed_subgroup_size = value;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_FORCE_SAMPLE_RATE_SHADING:
+		options->msl.force_sample_rate_shading = value != 0;
+		break;
 #endif
 
 	default:

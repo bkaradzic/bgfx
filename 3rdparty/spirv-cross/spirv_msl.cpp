@@ -168,9 +168,12 @@ void CompilerMSL::build_implicit_builtins()
 	     active_input_builtins.get(BuiltInBaseVertex) || active_input_builtins.get(BuiltInInstanceId) ||
 	     active_input_builtins.get(BuiltInInstanceIndex) || active_input_builtins.get(BuiltInBaseInstance));
 	bool need_sample_mask = msl_options.additional_fixed_sample_mask != 0xffffffff;
+	bool need_local_invocation_index = msl_options.emulate_subgroups && active_input_builtins.get(BuiltInSubgroupId);
+	bool need_workgroup_size = msl_options.emulate_subgroups && active_input_builtins.get(BuiltInNumSubgroups);
 	if (need_subpass_input || need_sample_pos || need_subgroup_mask || need_vertex_params || need_tesc_params ||
 	    need_multiview || need_dispatch_base || need_vertex_base_params || need_grid_params || needs_sample_id ||
-	    needs_subgroup_invocation_id || needs_subgroup_size || need_sample_mask)
+	    needs_subgroup_invocation_id || needs_subgroup_size || need_sample_mask || need_local_invocation_index ||
+	    need_workgroup_size)
 	{
 		bool has_frag_coord = false;
 		bool has_sample_id = false;
@@ -184,6 +187,8 @@ void CompilerMSL::build_implicit_builtins()
 		bool has_subgroup_size = false;
 		bool has_view_idx = false;
 		bool has_layer = false;
+		bool has_local_invocation_index = false;
+		bool has_workgroup_size = false;
 		uint32_t workgroup_id_type = 0;
 
 		// FIXME: Investigate the fact that there are no checks for the entry point interface variables.
@@ -191,7 +196,6 @@ void CompilerMSL::build_implicit_builtins()
 			if (!ir.meta[var.self].decoration.builtin)
 				return;
 
-			// Use Metal's native frame-buffer fetch API for subpass inputs.
 			BuiltIn builtin = ir.meta[var.self].decoration.builtin_type;
 
 			if (var.storage == StorageClassOutput)
@@ -207,6 +211,7 @@ void CompilerMSL::build_implicit_builtins()
 			if (var.storage != StorageClassInput)
 				return;
 
+			// Use Metal's native frame-buffer fetch API for subpass inputs.
 			if (need_subpass_input && (!msl_options.use_framebuffer_fetch_subpasses))
 			{
 				switch (builtin)
@@ -328,6 +333,20 @@ void CompilerMSL::build_implicit_builtins()
 				default:
 					break;
 				}
+			}
+
+			if (need_local_invocation_index && builtin == BuiltInLocalInvocationIndex)
+			{
+				builtin_local_invocation_index_id = var.self;
+				mark_implicit_builtin(StorageClassInput, BuiltInLocalInvocationIndex, var.self);
+				has_local_invocation_index = true;
+			}
+
+			if (need_workgroup_size && builtin == BuiltInLocalInvocationId)
+			{
+				builtin_workgroup_size_id = var.self;
+				mark_implicit_builtin(StorageClassInput, BuiltInWorkgroupSize, var.self);
+				has_workgroup_size = true;
 			}
 
 			// The base workgroup needs to have the same type and vector size
@@ -680,6 +699,48 @@ void CompilerMSL::build_implicit_builtins()
 			set_decoration(var_id, DecorationBuiltIn, BuiltInSampleMask);
 			builtin_sample_mask_id = var_id;
 			mark_implicit_builtin(StorageClassOutput, BuiltInSampleMask, var_id);
+		}
+
+		if (need_local_invocation_index && !has_local_invocation_index)
+		{
+			uint32_t offset = ir.increase_bound_by(2);
+			uint32_t type_ptr_id = offset;
+			uint32_t var_id = offset + 1;
+
+			// Create gl_LocalInvocationIndex.
+			SPIRType uint_type_ptr;
+			uint_type_ptr = get_uint_type();
+			uint_type_ptr.pointer = true;
+			uint_type_ptr.parent_type = get_uint_type_id();
+			uint_type_ptr.storage = StorageClassInput;
+
+			auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
+			ptr_type.self = get_uint_type_id();
+			set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+			set_decoration(var_id, DecorationBuiltIn, BuiltInLocalInvocationIndex);
+			builtin_local_invocation_index_id = var_id;
+			mark_implicit_builtin(StorageClassInput, BuiltInLocalInvocationIndex, var_id);
+		}
+
+		if (need_workgroup_size && !has_workgroup_size)
+		{
+			uint32_t offset = ir.increase_bound_by(2);
+			uint32_t type_ptr_id = offset;
+			uint32_t var_id = offset + 1;
+
+			// Create gl_WorkgroupSize.
+			uint32_t type_id = build_extended_vector_type(get_uint_type_id(), 3);
+			SPIRType uint_type_ptr = get<SPIRType>(type_id);
+			uint_type_ptr.pointer = true;
+			uint_type_ptr.parent_type = type_id;
+			uint_type_ptr.storage = StorageClassInput;
+
+			auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
+			ptr_type.self = type_id;
+			set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+			set_decoration(var_id, DecorationBuiltIn, BuiltInWorkgroupSize);
+			builtin_workgroup_size_id = var_id;
+			mark_implicit_builtin(StorageClassInput, BuiltInWorkgroupSize, var_id);
 		}
 	}
 
@@ -1293,7 +1354,12 @@ void CompilerMSL::preprocess_op_codes()
 		needs_subgroup_invocation_id = true;
 	if (preproc.needs_subgroup_size)
 		needs_subgroup_size = true;
-	if (preproc.needs_sample_id)
+	// build_implicit_builtins() hasn't run yet, and in fact, this needs to execute
+	// before then so that gl_SampleID will get added; so we also need to check if
+	// that function would add gl_FragCoord.
+	if (preproc.needs_sample_id || msl_options.force_sample_rate_shading ||
+	    (is_sample_rate() && (active_input_builtins.get(BuiltInFragCoord) ||
+	                          (need_subpass_input && !msl_options.use_framebuffer_fetch_subpasses))))
 		needs_sample_id = true;
 }
 
@@ -1489,6 +1555,38 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 						break;
 					}
 				}
+				break;
+			}
+
+			case OpGroupNonUniformInverseBallot:
+			{
+				added_arg_ids.insert(builtin_subgroup_invocation_id_id);
+				break;
+			}
+
+			case OpGroupNonUniformBallotFindLSB:
+			case OpGroupNonUniformBallotFindMSB:
+			{
+				added_arg_ids.insert(builtin_subgroup_size_id);
+				break;
+			}
+
+			case OpGroupNonUniformBallotBitCount:
+			{
+				auto operation = static_cast<GroupOperation>(ops[3]);
+				switch (operation)
+				{
+				case GroupOperationReduce:
+					added_arg_ids.insert(builtin_subgroup_size_id);
+					break;
+				case GroupOperationInclusiveScan:
+				case GroupOperationExclusiveScan:
+					added_arg_ids.insert(builtin_subgroup_invocation_id_id);
+					break;
+				default:
+					break;
+				}
+				break;
 			}
 
 			default:
@@ -4755,7 +4853,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<typename T>");
 			statement("inline T spvSubgroupBroadcast(T value, ushort lane)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return quad_broadcast(value, lane);");
 			else
 				statement("return simd_broadcast(value, lane);");
@@ -4764,7 +4862,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<>");
 			statement("inline bool spvSubgroupBroadcast(bool value, ushort lane)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return !!quad_broadcast((ushort)value, lane);");
 			else
 				statement("return !!simd_broadcast((ushort)value, lane);");
@@ -4773,7 +4871,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<uint N>");
 			statement("inline vec<bool, N> spvSubgroupBroadcast(vec<bool, N> value, ushort lane)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return (vec<bool, N>)quad_broadcast((vec<ushort, N>)value, lane);");
 			else
 				statement("return (vec<bool, N>)simd_broadcast((vec<ushort, N>)value, lane);");
@@ -4785,19 +4883,28 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<typename T>");
 			statement("inline T spvSubgroupBroadcastFirst(T value)");
 			begin_scope();
-			statement("return simd_broadcast_first(value);");
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+				statement("return quad_broadcast_first(value);");
+			else
+				statement("return simd_broadcast_first(value);");
 			end_scope();
 			statement("");
 			statement("template<>");
 			statement("inline bool spvSubgroupBroadcastFirst(bool value)");
 			begin_scope();
-			statement("return !!simd_broadcast_first((ushort)value);");
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+				statement("return !!quad_broadcast_first((ushort)value);");
+			else
+				statement("return !!simd_broadcast_first((ushort)value);");
 			end_scope();
 			statement("");
 			statement("template<uint N>");
 			statement("inline vec<bool, N> spvSubgroupBroadcastFirst(vec<bool, N> value)");
 			begin_scope();
-			statement("return (vec<bool, N>)simd_broadcast_first((vec<ushort, N>)value);");
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+				statement("return (vec<bool, N>)quad_broadcast_first((vec<ushort, N>)value);");
+			else
+				statement("return (vec<bool, N>)simd_broadcast_first((vec<ushort, N>)value);");
 			end_scope();
 			statement("");
 			break;
@@ -4805,13 +4912,26 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplSubgroupBallot:
 			statement("inline uint4 spvSubgroupBallot(bool value)");
 			begin_scope();
-			statement("simd_vote vote = simd_ballot(value);");
-			statement("// simd_ballot() returns a 64-bit integer-like object, but");
-			statement("// SPIR-V callers expect a uint4. We must convert.");
-			statement("// FIXME: This won't include higher bits if Apple ever supports");
-			statement("// 128 lanes in an SIMD-group.");
-			statement("return uint4((uint)((simd_vote::vote_t)vote & 0xFFFFFFFF), (uint)(((simd_vote::vote_t)vote >> "
-			          "32) & 0xFFFFFFFF), 0, 0);");
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+			{
+				statement("return uint4((quad_vote::vote_t)quad_ballot(value), 0, 0, 0);");
+			}
+			else if (msl_options.is_ios())
+			{
+				// The current simd_vote on iOS uses a 32-bit integer-like object.
+				statement("return uint4((simd_vote::vote_t)simd_ballot(value), 0, 0, 0);");
+			}
+			else
+			{
+				statement("simd_vote vote = simd_ballot(value);");
+				statement("// simd_ballot() returns a 64-bit integer-like object, but");
+				statement("// SPIR-V callers expect a uint4. We must convert.");
+				statement("// FIXME: This won't include higher bits if Apple ever supports");
+				statement("// 128 lanes in an SIMD-group.");
+				statement(
+				    "return uint4((uint)((simd_vote::vote_t)vote & 0xFFFFFFFF), (uint)(((simd_vote::vote_t)vote >> "
+				    "32) & 0xFFFFFFFF), 0, 0);");
+			}
 			end_scope();
 			statement("");
 			break;
@@ -4827,8 +4947,15 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplSubgroupBallotFindLSB:
 			statement("inline uint spvSubgroupBallotFindLSB(uint4 ballot, uint gl_SubgroupSize)");
 			begin_scope();
-			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupSize, 32u)), "
-			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupSize - 32, 0)), uint2(0));");
+			if (msl_options.is_ios())
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, gl_SubgroupSize), uint3(0));");
+			}
+			else
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupSize, 32u)), "
+				          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupSize - 32, 0)), uint2(0));");
+			}
 			statement("ballot &= mask;");
 			statement("return select(ctz(ballot.x), select(32 + ctz(ballot.y), select(64 + ctz(ballot.z), select(96 + "
 			          "ctz(ballot.w), uint(-1), ballot.w == 0), ballot.z == 0), ballot.y == 0), ballot.x == 0);");
@@ -4839,8 +4966,15 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplSubgroupBallotFindMSB:
 			statement("inline uint spvSubgroupBallotFindMSB(uint4 ballot, uint gl_SubgroupSize)");
 			begin_scope();
-			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupSize, 32u)), "
-			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupSize - 32, 0)), uint2(0));");
+			if (msl_options.is_ios())
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, gl_SubgroupSize), uint3(0));");
+			}
+			else
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupSize, 32u)), "
+				          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupSize - 32, 0)), uint2(0));");
+			}
 			statement("ballot &= mask;");
 			statement("return select(128 - (clz(ballot.w) + 1), select(96 - (clz(ballot.z) + 1), select(64 - "
 			          "(clz(ballot.y) + 1), select(32 - (clz(ballot.x) + 1), uint(-1), ballot.x == 0), ballot.y == 0), "
@@ -4857,23 +4991,44 @@ void CompilerMSL::emit_custom_functions()
 			statement("");
 			statement("inline uint spvSubgroupBallotBitCount(uint4 ballot, uint gl_SubgroupSize)");
 			begin_scope();
-			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupSize, 32u)), "
-			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupSize - 32, 0)), uint2(0));");
+			if (msl_options.is_ios())
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, gl_SubgroupSize), uint3(0));");
+			}
+			else
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupSize, 32u)), "
+				          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupSize - 32, 0)), uint2(0));");
+			}
 			statement("return spvPopCount4(ballot & mask);");
 			end_scope();
 			statement("");
 			statement("inline uint spvSubgroupBallotInclusiveBitCount(uint4 ballot, uint gl_SubgroupInvocationID)");
 			begin_scope();
-			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupInvocationID + 1, 32u)), "
-			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupInvocationID + 1 - 32, 0)), "
-			          "uint2(0));");
+			if (msl_options.is_ios())
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, gl_SubgroupInvocationID + 1), uint3(0));");
+			}
+			else
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupInvocationID + 1, 32u)), "
+				          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupInvocationID + 1 - 32, 0)), "
+				          "uint2(0));");
+			}
 			statement("return spvPopCount4(ballot & mask);");
 			end_scope();
 			statement("");
 			statement("inline uint spvSubgroupBallotExclusiveBitCount(uint4 ballot, uint gl_SubgroupInvocationID)");
 			begin_scope();
-			statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupInvocationID, 32u)), "
-			          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupInvocationID - 32, 0)), uint2(0));");
+			if (msl_options.is_ios())
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, gl_SubgroupInvocationID), uint2(0));");
+			}
+			else
+			{
+				statement("uint4 mask = uint4(extract_bits(0xFFFFFFFF, 0, min(gl_SubgroupInvocationID, 32u)), "
+				          "extract_bits(0xFFFFFFFF, 0, (uint)max((int)gl_SubgroupInvocationID - 32, 0)), uint2(0));");
+			}
 			statement("return spvPopCount4(ballot & mask);");
 			end_scope();
 			statement("");
@@ -4887,19 +5042,28 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<typename T>");
 			statement("inline bool spvSubgroupAllEqual(T value)");
 			begin_scope();
-			statement("return simd_all(all(value == simd_broadcast_first(value)));");
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+				statement("return quad_all(all(value == quad_broadcast_first(value)));");
+			else
+				statement("return simd_all(all(value == simd_broadcast_first(value)));");
 			end_scope();
 			statement("");
 			statement("template<>");
 			statement("inline bool spvSubgroupAllEqual(bool value)");
 			begin_scope();
-			statement("return simd_all(value) || !simd_any(value);");
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+				statement("return quad_all(value) || !quad_any(value);");
+			else
+				statement("return simd_all(value) || !simd_any(value);");
 			end_scope();
 			statement("");
 			statement("template<uint N>");
 			statement("inline bool spvSubgroupAllEqual(vec<bool, N> value)");
 			begin_scope();
-			statement("return simd_all(all(value == (vec<bool, N>)simd_broadcast_first((vec<ushort, N>)value)));");
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+				statement("return quad_all(all(value == (vec<bool, N>)quad_broadcast_first((vec<ushort, N>)value)));");
+			else
+				statement("return simd_all(all(value == (vec<bool, N>)simd_broadcast_first((vec<ushort, N>)value)));");
 			end_scope();
 			statement("");
 			break;
@@ -4908,7 +5072,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<typename T>");
 			statement("inline T spvSubgroupShuffle(T value, ushort lane)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return quad_shuffle(value, lane);");
 			else
 				statement("return simd_shuffle(value, lane);");
@@ -4917,7 +5081,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<>");
 			statement("inline bool spvSubgroupShuffle(bool value, ushort lane)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return !!quad_shuffle((ushort)value, lane);");
 			else
 				statement("return !!simd_shuffle((ushort)value, lane);");
@@ -4926,7 +5090,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<uint N>");
 			statement("inline vec<bool, N> spvSubgroupShuffle(vec<bool, N> value, ushort lane)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return (vec<bool, N>)quad_shuffle((vec<ushort, N>)value, lane);");
 			else
 				statement("return (vec<bool, N>)simd_shuffle((vec<ushort, N>)value, lane);");
@@ -4938,7 +5102,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<typename T>");
 			statement("inline T spvSubgroupShuffleXor(T value, ushort mask)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return quad_shuffle_xor(value, mask);");
 			else
 				statement("return simd_shuffle_xor(value, mask);");
@@ -4947,7 +5111,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<>");
 			statement("inline bool spvSubgroupShuffleXor(bool value, ushort mask)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return !!quad_shuffle_xor((ushort)value, mask);");
 			else
 				statement("return !!simd_shuffle_xor((ushort)value, mask);");
@@ -4956,7 +5120,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<uint N>");
 			statement("inline vec<bool, N> spvSubgroupShuffleXor(vec<bool, N> value, ushort mask)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return (vec<bool, N>)quad_shuffle_xor((vec<ushort, N>)value, mask);");
 			else
 				statement("return (vec<bool, N>)simd_shuffle_xor((vec<ushort, N>)value, mask);");
@@ -4968,7 +5132,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<typename T>");
 			statement("inline T spvSubgroupShuffleUp(T value, ushort delta)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return quad_shuffle_up(value, delta);");
 			else
 				statement("return simd_shuffle_up(value, delta);");
@@ -4977,7 +5141,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<>");
 			statement("inline bool spvSubgroupShuffleUp(bool value, ushort delta)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return !!quad_shuffle_up((ushort)value, delta);");
 			else
 				statement("return !!simd_shuffle_up((ushort)value, delta);");
@@ -4986,7 +5150,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<uint N>");
 			statement("inline vec<bool, N> spvSubgroupShuffleUp(vec<bool, N> value, ushort delta)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return (vec<bool, N>)quad_shuffle_up((vec<ushort, N>)value, delta);");
 			else
 				statement("return (vec<bool, N>)simd_shuffle_up((vec<ushort, N>)value, delta);");
@@ -4998,7 +5162,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<typename T>");
 			statement("inline T spvSubgroupShuffleDown(T value, ushort delta)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return quad_shuffle_down(value, delta);");
 			else
 				statement("return simd_shuffle_down(value, delta);");
@@ -5007,7 +5171,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<>");
 			statement("inline bool spvSubgroupShuffleDown(bool value, ushort delta)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return !!quad_shuffle_down((ushort)value, delta);");
 			else
 				statement("return !!simd_shuffle_down((ushort)value, delta);");
@@ -5016,7 +5180,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<uint N>");
 			statement("inline vec<bool, N> spvSubgroupShuffleDown(vec<bool, N> value, ushort delta)");
 			begin_scope();
-			if (msl_options.is_ios())
+			if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
 				statement("return (vec<bool, N>)quad_shuffle_down((vec<ushort, N>)value, delta);");
 			else
 				statement("return (vec<bool, N>)simd_shuffle_down((vec<ushort, N>)value, delta);");
@@ -6697,8 +6861,8 @@ void CompilerMSL::fix_up_interpolant_access_chain(const uint32_t *ops, uint32_t 
 		// Assume an access chain into a struct variable.
 		assert(var_type.basetype == SPIRType::Struct);
 		auto &c = get<SPIRConstant>(ops[3 + var_type.array.size()]);
-		interface_index = get_extended_member_decoration(var->self, c.scalar(),
-		                                                 SPIRVCrossDecorationInterfaceMemberIndex);
+		interface_index =
+		    get_extended_member_decoration(var->self, c.scalar(), SPIRVCrossDecorationInterfaceMemberIndex);
 	}
 	// Accumulate indices. We'll have to skip over the one for the struct, if present, because we already accounted
 	// for that getting the base index.
@@ -7645,6 +7809,10 @@ void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uin
 	// Use the wider of the two scopes (smaller value)
 	exe_scope = min(exe_scope, mem_scope);
 
+	if (msl_options.emulate_subgroups && exe_scope >= ScopeSubgroup && !id_mem_sem)
+		// In this case, we assume a "subgroup" size of 1. The barrier, then, is a noop.
+		return;
+
 	string bar_stmt;
 	if ((msl_options.is_ios() && msl_options.supports_msl_version(1, 2)) || msl_options.supports_msl_version(2))
 		bar_stmt = exe_scope < ScopeSubgroup ? "threadgroup_barrier" : "simdgroup_barrier";
@@ -8105,7 +8273,8 @@ void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, 
 		}
 		emit_op(result_type, id,
 		        join(to_name(stage_in_var_id), ".", to_member_name(get_stage_in_struct_type(), interface_index),
-		             ".interpolate_at_centroid()", component), should_forward(args[0]));
+		             ".interpolate_at_centroid()", component),
+		        should_forward(args[0]));
 		break;
 	}
 
@@ -8326,7 +8495,7 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 		// Fake arrays returns by writing to an out array instead.
 		decl += "thread ";
 		decl += type_to_glsl(type);
-		decl += " (&SPIRV_Cross_return_value)";
+		decl += " (&spvReturnValue)";
 		decl += type_to_array_glsl(type);
 		if (!func.arguments.empty())
 			decl += ", ";
@@ -8913,8 +9082,8 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 			}
 			else if (!msl_options.supports_msl_version(2, 3))
 			{
-				SPIRV_CROSS_THROW(
-				    "Using non-constant 0.0 bias() qualifier for sample_compare. This is not supported on macOS prior to MSL 2.3.");
+				SPIRV_CROSS_THROW("Using non-constant 0.0 bias() qualifier for sample_compare. This is not supported "
+				                  "on macOS prior to MSL 2.3.");
 			}
 		}
 	}
@@ -8978,13 +9147,8 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 
 	if (args.min_lod)
 	{
-		if (msl_options.is_macos())
-		{
-			if (!msl_options.supports_msl_version(2, 2))
-				SPIRV_CROSS_THROW("min_lod_clamp() is only supported in MSL 2.2+ and up on macOS.");
-		}
-		else if (msl_options.is_ios())
-			SPIRV_CROSS_THROW("min_lod_clamp() is not supported on iOS.");
+		if (!msl_options.supports_msl_version(2, 2))
+			SPIRV_CROSS_THROW("min_lod_clamp() is only supported in MSL 2.2+ and up.");
 
 		forward = forward && should_forward(args.min_lod);
 		farg_str += ", min_lod_clamp(" + to_expression(args.min_lod) + ")";
@@ -9824,9 +9988,11 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 			case BuiltInPrimitiveId:
 				if (msl_options.multi_patch_workgroup)
 					return "";
-				/* fallthrough */
+				return string(" [[") + builtin_qualifier(builtin) + "]]" + (mbr_type.array.empty() ? "" : " ");
 			case BuiltInSubgroupLocalInvocationId: // FIXME: Should work in any stage
 			case BuiltInSubgroupSize: // FIXME: Should work in any stage
+				if (msl_options.emulate_subgroups)
+					return "";
 				return string(" [[") + builtin_qualifier(builtin) + "]]" + (mbr_type.array.empty() ? "" : " ");
 			case BuiltInPatchVertices:
 				return "";
@@ -10034,15 +10200,18 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 		{
 			switch (builtin)
 			{
+			case BuiltInNumSubgroups:
+			case BuiltInSubgroupId:
+			case BuiltInSubgroupLocalInvocationId: // FIXME: Should work in any stage
+			case BuiltInSubgroupSize: // FIXME: Should work in any stage
+				if (msl_options.emulate_subgroups)
+					break;
+				/* fallthrough */
 			case BuiltInGlobalInvocationId:
 			case BuiltInWorkgroupId:
 			case BuiltInNumWorkgroups:
 			case BuiltInLocalInvocationId:
 			case BuiltInLocalInvocationIndex:
-			case BuiltInNumSubgroups:
-			case BuiltInSubgroupId:
-			case BuiltInSubgroupLocalInvocationId: // FIXME: Should work in any stage
-			case BuiltInSubgroupSize: // FIXME: Should work in any stage
 				return string(" [[") + builtin_qualifier(builtin) + "]]";
 
 			default:
@@ -10308,6 +10477,10 @@ bool CompilerMSL::is_direct_input_builtin(BuiltIn bi_type)
 	case BuiltInViewIndex:
 		return get_execution_model() == ExecutionModelFragment && msl_options.multiview &&
 		       msl_options.multiview_layered_rendering;
+	// Compute function in
+	case BuiltInSubgroupId:
+	case BuiltInNumSubgroups:
+		return !msl_options.emulate_subgroups;
 	// Any stage function in
 	case BuiltInDeviceIndex:
 	case BuiltInSubgroupEqMask:
@@ -10316,13 +10489,25 @@ bool CompilerMSL::is_direct_input_builtin(BuiltIn bi_type)
 	case BuiltInSubgroupLeMask:
 	case BuiltInSubgroupLtMask:
 		return false;
-	case BuiltInSubgroupLocalInvocationId:
 	case BuiltInSubgroupSize:
-		return get_execution_model() == ExecutionModelGLCompute ||
-		       (get_execution_model() == ExecutionModelFragment && msl_options.supports_msl_version(2, 2));
+		if (msl_options.fixed_subgroup_size != 0)
+			return false;
+		/* fallthrough */
+	case BuiltInSubgroupLocalInvocationId:
+		return !msl_options.emulate_subgroups;
 	default:
 		return true;
 	}
+}
+
+// Returns true if this is a fragment shader that runs per sample, and false otherwise.
+bool CompilerMSL::is_sample_rate() const
+{
+	auto &caps = get_declared_capabilities();
+	return get_execution_model() == ExecutionModelFragment &&
+	       (msl_options.force_sample_rate_shading ||
+	        std::find(caps.begin(), caps.end(), CapabilitySampleRateShading) != caps.end() ||
+	        (msl_options.use_framebuffer_fetch_subpasses && need_subpass_input));
 }
 
 void CompilerMSL::entry_point_args_builtin(string &ep_args)
@@ -10867,7 +11052,7 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 		uint32_t var_id = var.self;
 		BuiltIn bi_type = ir.meta[var_id].decoration.builtin_type;
 
-		if (var.storage == StorageClassInput && is_builtin_variable(var))
+		if (var.storage == StorageClassInput && is_builtin_variable(var) && active_input_builtins.get(bi_type))
 		{
 			switch (bi_type)
 			{
@@ -10877,9 +11062,18 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 					          to_expression(builtin_sample_id_id), ");");
 				});
 				break;
+			case BuiltInFragCoord:
+				if (is_sample_rate())
+				{
+					entry_func.fixup_hooks_in.push_back([=]() {
+						statement(to_expression(var_id), ".xy += get_sample_position(",
+						          to_expression(builtin_sample_id_id), ") - 0.5;");
+					});
+				}
+				break;
 			case BuiltInHelperInvocation:
-				if (msl_options.is_ios())
-					SPIRV_CROSS_THROW("simd_is_helper_thread() is only supported on macOS.");
+				if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 3))
+					SPIRV_CROSS_THROW("simd_is_helper_thread() requires version 2.3 on iOS.");
 				else if (msl_options.is_macos() && !msl_options.supports_msl_version(2, 1))
 					SPIRV_CROSS_THROW("simd_is_helper_thread() requires version 2.1 on macOS.");
 
@@ -10930,67 +11124,78 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 					entry_func.fixup_hooks_in.push_back([=]() { statement(tc, ".y = 1.0 - ", tc, ".y;"); });
 				}
 				break;
-			case BuiltInSubgroupLocalInvocationId:
-				// This is natively supported in compute shaders.
-				if (get_execution_model() == ExecutionModelGLCompute)
+			case BuiltInSubgroupId:
+				if (!msl_options.emulate_subgroups)
 					break;
-
-				// This is natively supported in fragment shaders in MSL 2.2.
-				if (get_execution_model() == ExecutionModelFragment && msl_options.supports_msl_version(2, 2))
-					break;
-
-				if (msl_options.is_ios())
-					SPIRV_CROSS_THROW(
-					    "SubgroupLocalInvocationId cannot be used outside of compute shaders before MSL 2.2 on iOS.");
-
-				if (!msl_options.supports_msl_version(2, 1))
-					SPIRV_CROSS_THROW(
-					    "SubgroupLocalInvocationId cannot be used outside of compute shaders before MSL 2.1.");
-
-				// Shaders other than compute shaders don't support the SIMD-group
-				// builtins directly, but we can emulate them using the SIMD-group
-				// functions. This might break if some of the subgroup terminated
-				// before reaching the entry point.
+				// For subgroup emulation, this is the same as the local invocation index.
 				entry_func.fixup_hooks_in.push_back([=]() {
-					statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
-					          " = simd_prefix_exclusive_sum(1);");
+					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
+					          to_expression(builtin_local_invocation_index_id), ";");
 				});
 				break;
-			case BuiltInSubgroupSize:
-				// This is natively supported in compute shaders.
-				if (get_execution_model() == ExecutionModelGLCompute)
+			case BuiltInNumSubgroups:
+				if (!msl_options.emulate_subgroups)
 					break;
-
-				// This is natively supported in fragment shaders in MSL 2.2.
-				if (get_execution_model() == ExecutionModelFragment && msl_options.supports_msl_version(2, 2))
+				// For subgroup emulation, this is the same as the workgroup size.
+				entry_func.fixup_hooks_in.push_back([=]() {
+					auto &type = expression_type(builtin_workgroup_size_id);
+					string size_expr = to_expression(builtin_workgroup_size_id);
+					if (type.vecsize >= 3)
+						size_expr = join(size_expr, ".x * ", size_expr, ".y * ", size_expr, ".z");
+					else if (type.vecsize == 2)
+						size_expr = join(size_expr, ".x * ", size_expr, ".y");
+					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ", size_expr, ";");
+				});
+				break;
+			case BuiltInSubgroupLocalInvocationId:
+				if (!msl_options.emulate_subgroups)
 					break;
-
-				if (msl_options.is_ios())
-					SPIRV_CROSS_THROW("SubgroupSize cannot be used outside of compute shaders on iOS.");
-
-				if (!msl_options.supports_msl_version(2, 1))
-					SPIRV_CROSS_THROW("SubgroupSize cannot be used outside of compute shaders before Metal 2.1.");
-
+				// For subgroup emulation, assume subgroups of size 1.
 				entry_func.fixup_hooks_in.push_back(
-				    [=]() { statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = simd_sum(1);"); });
+				    [=]() { statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = 0;"); });
+				break;
+			case BuiltInSubgroupSize:
+				if (msl_options.emulate_subgroups)
+				{
+					// For subgroup emulation, assume subgroups of size 1.
+					entry_func.fixup_hooks_in.push_back(
+					    [=]() { statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = 1;"); });
+				}
+				else if (msl_options.fixed_subgroup_size != 0)
+				{
+					entry_func.fixup_hooks_in.push_back([=]() {
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
+						          msl_options.fixed_subgroup_size, ";");
+					});
+				}
 				break;
 			case BuiltInSubgroupEqMask:
-				if (msl_options.is_ios())
-					SPIRV_CROSS_THROW("Subgroup ballot functionality is unavailable on iOS.");
+				if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 2))
+					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.2 on iOS.");
 				if (!msl_options.supports_msl_version(2, 1))
 					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.1.");
 				entry_func.fixup_hooks_in.push_back([=]() {
-					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
-					          to_expression(builtin_subgroup_invocation_id_id), " >= 32 ? uint4(0, (1 << (",
-					          to_expression(builtin_subgroup_invocation_id_id), " - 32)), uint2(0)) : uint4(1 << ",
-					          to_expression(builtin_subgroup_invocation_id_id), ", uint3(0));");
+					if (msl_options.is_ios())
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ", "uint4(1 << ",
+						          to_expression(builtin_subgroup_invocation_id_id), ", uint3(0));");
+					}
+					else
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
+						          to_expression(builtin_subgroup_invocation_id_id), " >= 32 ? uint4(0, (1 << (",
+						          to_expression(builtin_subgroup_invocation_id_id), " - 32)), uint2(0)) : uint4(1 << ",
+						          to_expression(builtin_subgroup_invocation_id_id), ", uint3(0));");
+					}
 				});
 				break;
 			case BuiltInSubgroupGeMask:
-				if (msl_options.is_ios())
-					SPIRV_CROSS_THROW("Subgroup ballot functionality is unavailable on iOS.");
+				if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 2))
+					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.2 on iOS.");
 				if (!msl_options.supports_msl_version(2, 1))
 					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.1.");
+				if (msl_options.fixed_subgroup_size != 0)
+					add_spv_func_and_recompile(SPVFuncImplSubgroupBallot);
 				entry_func.fixup_hooks_in.push_back([=]() {
 					// Case where index < 32, size < 32:
 					// mask0 = bfi(0, 0xFFFFFFFF, index, size - index);
@@ -11006,60 +11211,149 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 					// This is further complicated by the fact that if you attempt
 					// to bfi/bfe out-of-bounds on Metal, undefined behavior is the
 					// result.
-					statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
-					          " = uint4(insert_bits(0u, 0xFFFFFFFF, min(",
-					          to_expression(builtin_subgroup_invocation_id_id), ", 32u), (uint)max(min((int)",
-					          to_expression(builtin_subgroup_size_id), ", 32) - (int)",
-					          to_expression(builtin_subgroup_invocation_id_id),
-					          ", 0)), insert_bits(0u, 0xFFFFFFFF, (uint)max((int)",
-					          to_expression(builtin_subgroup_invocation_id_id), " - 32, 0), (uint)max((int)",
-					          to_expression(builtin_subgroup_size_id), " - (int)max(",
-					          to_expression(builtin_subgroup_invocation_id_id), ", 32u), 0)), uint2(0));");
+					if (msl_options.fixed_subgroup_size > 32)
+					{
+						// Don't use the subgroup size variable with fixed subgroup sizes,
+						// since the variables could be defined in the wrong order.
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(insert_bits(0u, 0xFFFFFFFF, min(",
+						          to_expression(builtin_subgroup_invocation_id_id), ", 32u), (uint)max(32 - (int)",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          ", 0)), insert_bits(0u, 0xFFFFFFFF,"
+						          " (uint)max((int)",
+						          to_expression(builtin_subgroup_invocation_id_id), " - 32, 0), ",
+						          msl_options.fixed_subgroup_size, " - max(",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          ", 32u)), uint2(0));");
+					}
+					else if (msl_options.fixed_subgroup_size != 0)
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(insert_bits(0u, 0xFFFFFFFF, ",
+						          to_expression(builtin_subgroup_invocation_id_id), ", ",
+						          msl_options.fixed_subgroup_size, " - ",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          "), uint3(0));");
+					}
+					else if (msl_options.is_ios())
+					{
+						// On iOS, the SIMD-group size will currently never exceed 32.
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(insert_bits(0u, 0xFFFFFFFF, ",
+						          to_expression(builtin_subgroup_invocation_id_id), ", ",
+						          to_expression(builtin_subgroup_size_id), " - ",
+						          to_expression(builtin_subgroup_invocation_id_id), "), uint3(0));");
+					}
+					else
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(insert_bits(0u, 0xFFFFFFFF, min(",
+						          to_expression(builtin_subgroup_invocation_id_id), ", 32u), (uint)max(min((int)",
+						          to_expression(builtin_subgroup_size_id), ", 32) - (int)",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          ", 0)), insert_bits(0u, 0xFFFFFFFF, (uint)max((int)",
+						          to_expression(builtin_subgroup_invocation_id_id), " - 32, 0), (uint)max((int)",
+						          to_expression(builtin_subgroup_size_id), " - (int)max(",
+						          to_expression(builtin_subgroup_invocation_id_id), ", 32u), 0)), uint2(0));");
+					}
 				});
 				break;
 			case BuiltInSubgroupGtMask:
-				if (msl_options.is_ios())
-					SPIRV_CROSS_THROW("Subgroup ballot functionality is unavailable on iOS.");
+				if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 2))
+					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.2 on iOS.");
 				if (!msl_options.supports_msl_version(2, 1))
 					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.1.");
+				add_spv_func_and_recompile(SPVFuncImplSubgroupBallot);
 				entry_func.fixup_hooks_in.push_back([=]() {
 					// The same logic applies here, except now the index is one
 					// more than the subgroup invocation ID.
-					statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
-					          " = uint4(insert_bits(0u, 0xFFFFFFFF, min(",
-					          to_expression(builtin_subgroup_invocation_id_id), " + 1, 32u), (uint)max(min((int)",
-					          to_expression(builtin_subgroup_size_id), ", 32) - (int)",
-					          to_expression(builtin_subgroup_invocation_id_id),
-					          " - 1, 0)), insert_bits(0u, 0xFFFFFFFF, (uint)max((int)",
-					          to_expression(builtin_subgroup_invocation_id_id), " + 1 - 32, 0), (uint)max((int)",
-					          to_expression(builtin_subgroup_size_id), " - (int)max(",
-					          to_expression(builtin_subgroup_invocation_id_id), " + 1, 32u), 0)), uint2(0));");
+					if (msl_options.fixed_subgroup_size > 32)
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(insert_bits(0u, 0xFFFFFFFF, min(",
+						          to_expression(builtin_subgroup_invocation_id_id), " + 1, 32u), (uint)max(32 - (int)",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          " - 1, 0)), insert_bits(0u, 0xFFFFFFFF, (uint)max((int)",
+						          to_expression(builtin_subgroup_invocation_id_id), " + 1 - 32, 0), ",
+						          msl_options.fixed_subgroup_size, " - max(",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          " + 1, 32u)), uint2(0));");
+					}
+					else if (msl_options.fixed_subgroup_size != 0)
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(insert_bits(0u, 0xFFFFFFFF, ",
+						          to_expression(builtin_subgroup_invocation_id_id), " + 1, ",
+						          msl_options.fixed_subgroup_size, " - ",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          " - 1), uint3(0));");
+					}
+					else if (msl_options.is_ios())
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(insert_bits(0u, 0xFFFFFFFF, ",
+						          to_expression(builtin_subgroup_invocation_id_id), " + 1, ",
+						          to_expression(builtin_subgroup_size_id), " - ",
+						          to_expression(builtin_subgroup_invocation_id_id), " - 1), uint3(0));");
+					}
+					else
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(insert_bits(0u, 0xFFFFFFFF, min(",
+						          to_expression(builtin_subgroup_invocation_id_id), " + 1, 32u), (uint)max(min((int)",
+						          to_expression(builtin_subgroup_size_id), ", 32) - (int)",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          " - 1, 0)), insert_bits(0u, 0xFFFFFFFF, (uint)max((int)",
+						          to_expression(builtin_subgroup_invocation_id_id), " + 1 - 32, 0), (uint)max((int)",
+						          to_expression(builtin_subgroup_size_id), " - (int)max(",
+						          to_expression(builtin_subgroup_invocation_id_id), " + 1, 32u), 0)), uint2(0));");
+					}
 				});
 				break;
 			case BuiltInSubgroupLeMask:
-				if (msl_options.is_ios())
-					SPIRV_CROSS_THROW("Subgroup ballot functionality is unavailable on iOS.");
+				if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 2))
+					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.2 on iOS.");
 				if (!msl_options.supports_msl_version(2, 1))
 					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.1.");
+				add_spv_func_and_recompile(SPVFuncImplSubgroupBallot);
 				entry_func.fixup_hooks_in.push_back([=]() {
-					statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
-					          " = uint4(extract_bits(0xFFFFFFFF, 0, min(",
-					          to_expression(builtin_subgroup_invocation_id_id),
-					          " + 1, 32u)), extract_bits(0xFFFFFFFF, 0, (uint)max((int)",
-					          to_expression(builtin_subgroup_invocation_id_id), " + 1 - 32, 0)), uint2(0));");
+					if (msl_options.is_ios())
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(extract_bits(0xFFFFFFFF, 0, ",
+						          to_expression(builtin_subgroup_invocation_id_id), " + 1), uint3(0));");
+					}
+					else
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(extract_bits(0xFFFFFFFF, 0, min(",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          " + 1, 32u)), extract_bits(0xFFFFFFFF, 0, (uint)max((int)",
+						          to_expression(builtin_subgroup_invocation_id_id), " + 1 - 32, 0)), uint2(0));");
+					}
 				});
 				break;
 			case BuiltInSubgroupLtMask:
-				if (msl_options.is_ios())
-					SPIRV_CROSS_THROW("Subgroup ballot functionality is unavailable on iOS.");
+				if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 2))
+					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.2 on iOS.");
 				if (!msl_options.supports_msl_version(2, 1))
 					SPIRV_CROSS_THROW("Subgroup ballot functionality requires Metal 2.1.");
+				add_spv_func_and_recompile(SPVFuncImplSubgroupBallot);
 				entry_func.fixup_hooks_in.push_back([=]() {
-					statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
-					          " = uint4(extract_bits(0xFFFFFFFF, 0, min(",
-					          to_expression(builtin_subgroup_invocation_id_id),
-					          ", 32u)), extract_bits(0xFFFFFFFF, 0, (uint)max((int)",
-					          to_expression(builtin_subgroup_invocation_id_id), " - 32, 0)), uint2(0));");
+					if (msl_options.is_ios())
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(extract_bits(0xFFFFFFFF, 0, ",
+						          to_expression(builtin_subgroup_invocation_id_id), "), uint3(0));");
+					}
+					else
+					{
+						statement(builtin_type_decl(bi_type), " ", to_expression(var_id),
+						          " = uint4(extract_bits(0xFFFFFFFF, 0, min(",
+						          to_expression(builtin_subgroup_invocation_id_id),
+						          ", 32u)), extract_bits(0xFFFFFFFF, 0, (uint)max((int)",
+						          to_expression(builtin_subgroup_invocation_id_id), " - 32, 0)), uint2(0));");
+					}
 				});
 				break;
 			case BuiltInViewIndex:
@@ -11224,7 +11518,7 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 				break;
 			}
 		}
-		else if (var.storage == StorageClassOutput && is_builtin_variable(var))
+		else if (var.storage == StorageClassOutput && is_builtin_variable(var) && active_output_builtins.get(bi_type))
 		{
 			if (bi_type == BuiltInSampleMask && get_execution_model() == ExecutionModelFragment &&
 			    msl_options.additional_fixed_sample_mask != 0xffffffff)
@@ -11985,7 +12279,7 @@ string CompilerMSL::type_to_glsl(const SPIRType &type, uint32_t id)
 
 	case SPIRType::ControlPointArray:
 		return join("patch_control_point<", type_to_glsl(get<SPIRType>(type.parent_type), id), ">");
-	
+
 	case SPIRType::Interpolant:
 		return join("interpolant<", type_to_glsl(get<SPIRType>(type.parent_type), id), ", interpolation::",
 		            has_decoration(type.self, DecorationNoPerspective) ? "no_perspective" : "perspective", ">");
@@ -12348,10 +12642,23 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 	const uint32_t *ops = stream(i);
 	auto op = static_cast<Op>(i.op);
 
-	// Metal 2.0 is required. iOS only supports quad ops. macOS only supports
-	// broadcast and shuffle on 10.13 (2.0), with full support in 10.14 (2.1).
-	// Note that iOS makes no distinction between a quad-group and a subgroup;
-	// all subgroups are quad-groups there.
+	if (msl_options.emulate_subgroups)
+	{
+		// In this mode, only the GroupNonUniform cap is supported. The only op
+		// we need to handle, then, is OpGroupNonUniformElect.
+		if (op != OpGroupNonUniformElect)
+			SPIRV_CROSS_THROW("Subgroup emulation does not support operations other than Elect.");
+		// In this mode, the subgroup size is assumed to be one, so every invocation
+		// is elected.
+		emit_op(ops[0], ops[1], "true", true);
+		return;
+	}
+
+	// Metal 2.0 is required. iOS only supports quad ops on 11.0 (2.0), with
+	// full support in 13.0 (2.2). macOS only supports broadcast and shuffle on
+	// 10.13 (2.0), with full support in 10.14 (2.1).
+	// Note that Apple GPUs before A13 make no distinction between a quad-group
+	// and a SIMD-group; all SIMD-groups are quad-groups on those.
 	if (!msl_options.supports_msl_version(2))
 		SPIRV_CROSS_THROW("Subgroups are only supported in Metal 2.0 and up.");
 
@@ -12360,12 +12667,32 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 	auto int_type = to_signed_basetype(integer_width);
 	auto uint_type = to_unsigned_basetype(integer_width);
 
-	if (msl_options.is_ios())
+	if (msl_options.is_ios() && (!msl_options.supports_msl_version(2, 3) || !msl_options.ios_use_simdgroup_functions))
 	{
 		switch (op)
 		{
 		default:
-			SPIRV_CROSS_THROW("iOS only supports quad-group operations.");
+			SPIRV_CROSS_THROW("Subgroup ops beyond broadcast, ballot, and shuffle on iOS require Metal 2.3 and up.");
+		case OpGroupNonUniformBroadcastFirst:
+			if (!msl_options.supports_msl_version(2, 2))
+				SPIRV_CROSS_THROW("BroadcastFirst on iOS requires Metal 2.2 and up.");
+			break;
+		case OpGroupNonUniformElect:
+			if (!msl_options.supports_msl_version(2, 2))
+				SPIRV_CROSS_THROW("Elect on iOS requires Metal 2.2 and up.");
+			break;
+		case OpGroupNonUniformAny:
+		case OpGroupNonUniformAll:
+		case OpGroupNonUniformAllEqual:
+		case OpGroupNonUniformBallot:
+		case OpGroupNonUniformInverseBallot:
+		case OpGroupNonUniformBallotBitExtract:
+		case OpGroupNonUniformBallotFindLSB:
+		case OpGroupNonUniformBallotFindMSB:
+		case OpGroupNonUniformBallotBitCount:
+			if (!msl_options.supports_msl_version(2, 2))
+				SPIRV_CROSS_THROW("Ballot ops on iOS requires Metal 2.2 and up.");
+			break;
 		case OpGroupNonUniformBroadcast:
 		case OpGroupNonUniformShuffle:
 		case OpGroupNonUniformShuffleXor:
@@ -12402,7 +12729,10 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 	switch (op)
 	{
 	case OpGroupNonUniformElect:
-		emit_op(result_type, id, "simd_is_first()", true);
+		if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+			emit_op(result_type, id, "quad_is_first()", false);
+		else
+			emit_op(result_type, id, "simd_is_first()", false);
 		break;
 
 	case OpGroupNonUniformBroadcast:
@@ -12473,11 +12803,17 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 		break;
 
 	case OpGroupNonUniformAll:
-		emit_unary_func_op(result_type, id, ops[3], "simd_all");
+		if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+			emit_unary_func_op(result_type, id, ops[3], "quad_all");
+		else
+			emit_unary_func_op(result_type, id, ops[3], "simd_all");
 		break;
 
 	case OpGroupNonUniformAny:
-		emit_unary_func_op(result_type, id, ops[3], "simd_any");
+		if (msl_options.is_ios() && !msl_options.ios_use_simdgroup_functions)
+			emit_unary_func_op(result_type, id, ops[3], "quad_any");
+		else
+			emit_unary_func_op(result_type, id, ops[3], "simd_any");
 		break;
 
 	case OpGroupNonUniformAllEqual:
@@ -12872,8 +13208,8 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 		case ExecutionModelTessellationEvaluation:
 			return "patch_id";
 		case ExecutionModelFragment:
-			if (msl_options.is_ios())
-				SPIRV_CROSS_THROW("PrimitiveId is not supported in fragment on iOS.");
+			if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 3))
+				SPIRV_CROSS_THROW("PrimitiveId on iOS requires MSL 2.3.");
 			else if (msl_options.is_macos() && !msl_options.supports_msl_version(2, 2))
 				SPIRV_CROSS_THROW("PrimitiveId on macOS requires MSL 2.2.");
 			return "primitive_id";
@@ -12941,6 +13277,9 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 		return "thread_index_in_threadgroup";
 
 	case BuiltInSubgroupSize:
+		if (msl_options.emulate_subgroups || msl_options.fixed_subgroup_size != 0)
+			// Shouldn't be reached.
+			SPIRV_CROSS_THROW("Emitting threads_per_simdgroup attribute with fixed subgroup size??");
 		if (execution.model == ExecutionModelFragment)
 		{
 			if (!msl_options.supports_msl_version(2, 2))
@@ -12955,16 +13294,25 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 		}
 
 	case BuiltInNumSubgroups:
+		if (msl_options.emulate_subgroups)
+			// Shouldn't be reached.
+			SPIRV_CROSS_THROW("NumSubgroups is handled specially with emulation.");
 		if (!msl_options.supports_msl_version(2))
 			SPIRV_CROSS_THROW("Subgroup builtins require Metal 2.0.");
 		return msl_options.is_ios() ? "quadgroups_per_threadgroup" : "simdgroups_per_threadgroup";
 
 	case BuiltInSubgroupId:
+		if (msl_options.emulate_subgroups)
+			// Shouldn't be reached.
+			SPIRV_CROSS_THROW("SubgroupId is handled specially with emulation.");
 		if (!msl_options.supports_msl_version(2))
 			SPIRV_CROSS_THROW("Subgroup builtins require Metal 2.0.");
 		return msl_options.is_ios() ? "quadgroup_index_in_threadgroup" : "simdgroup_index_in_threadgroup";
 
 	case BuiltInSubgroupLocalInvocationId:
+		if (msl_options.emulate_subgroups)
+			// Shouldn't be reached.
+			SPIRV_CROSS_THROW("SubgroupLocalInvocationId is handled specially with emulation.");
 		if (execution.model == ExecutionModelFragment)
 		{
 			if (!msl_options.supports_msl_version(2, 2))
@@ -12988,16 +13336,16 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 
 	case BuiltInBaryCoordNV:
 		// TODO: AMD barycentrics as well? Seem to have different swizzle and 2 components rather than 3.
-		if (msl_options.is_ios())
-			SPIRV_CROSS_THROW("Barycentrics not supported on iOS.");
+		if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 3))
+			SPIRV_CROSS_THROW("Barycentrics are only supported in MSL 2.3 and above on iOS.");
 		else if (!msl_options.supports_msl_version(2, 2))
 			SPIRV_CROSS_THROW("Barycentrics are only supported in MSL 2.2 and above on macOS.");
 		return "barycentric_coord, center_perspective";
 
 	case BuiltInBaryCoordNoPerspNV:
 		// TODO: AMD barycentrics as well? Seem to have different swizzle and 2 components rather than 3.
-		if (msl_options.is_ios())
-			SPIRV_CROSS_THROW("Barycentrics not supported on iOS.");
+		if (msl_options.is_ios() && !msl_options.supports_msl_version(2, 3))
+			SPIRV_CROSS_THROW("Barycentrics are only supported in MSL 2.3 and above on iOS.");
 		else if (!msl_options.supports_msl_version(2, 2))
 			SPIRV_CROSS_THROW("Barycentrics are only supported in MSL 2.2 and above on macOS.");
 		return "barycentric_coord, center_no_perspective";
