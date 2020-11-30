@@ -2040,23 +2040,26 @@ namespace bgfx
 				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
 				size += bx::write(_writer, DXBC_CHUNK_SPDB, _err);
 				size += bx::write(_writer, UINT32_C(0), _err);
-				chunkSize[idx] = bx::write(_writer, _dxbc.spdb.debugCode.data(), _dxbc.spdb.debugCode.size(), _err);
+				chunkSize[idx] = bx::write(_writer, _dxbc.spdb.debugCode.data(), int32_t(_dxbc.spdb.debugCode.size() ), _err);
 				size += chunkSize[idx++];
 				break;
+
 			case DXBC_CHUNK_RDEF: // Resource definition.
 				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
 				size += bx::write(_writer, DXBC_CHUNK_RDEF, _err);
 				size += bx::write(_writer, uint32_t(_dxbc.rdef.rdefCode.size()), _err);
-				chunkSize[idx] = bx::write(_writer, _dxbc.rdef.rdefCode.data(), _dxbc.rdef.rdefCode.size(), _err);
+				chunkSize[idx] = bx::write(_writer, _dxbc.rdef.rdefCode.data(), int32_t(_dxbc.rdef.rdefCode.size() ), _err);
 				size += chunkSize[idx++];
 				break;
+
 			case DXBC_CHUNK_STAT: // Statistics.
 				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
 				size += bx::write(_writer, DXBC_CHUNK_STAT, _err);
 				size += bx::write(_writer, uint32_t(_dxbc.rdef.rdefCode.size()), _err);
-				chunkSize[idx] = bx::write(_writer, _dxbc.rdef.rdefCode.data(), _dxbc.rdef.rdefCode.size(), _err);
+				chunkSize[idx] = bx::write(_writer, _dxbc.rdef.rdefCode.data(), int32_t(_dxbc.rdef.rdefCode.size() ), _err);
 				size += chunkSize[idx++];
 				break;
+
 			case BX_MAKEFOURCC('A', 'o', 'n', '9'): // Contains DX9BC for feature level 9.x (*s_4_0_level_9_*) shaders.
 			case BX_MAKEFOURCC('I', 'F', 'C', 'E'): // Interface.
 			case BX_MAKEFOURCC('S', 'D', 'G', 'B'): // Shader debugging info (old).

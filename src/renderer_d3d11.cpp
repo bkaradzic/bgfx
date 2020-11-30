@@ -4028,7 +4028,7 @@ namespace bgfx { namespace d3d11
 					}
 
 					uint32_t regNum = 0;
-					uint32_t regLen = endPtr - startPtr;
+					uint32_t regLen = uint32_t(endPtr - startPtr);
 					bx::fromString(&regNum, bx::StringView(startPtr, regLen));
 
 					regNum += 16;
