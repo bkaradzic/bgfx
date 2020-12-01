@@ -2560,25 +2560,7 @@ VK_IMPORT_DEVICE
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) override
 		{
-
-if (_handle.idx == 1312)
-{
-	bx::debugBreak();
-}
-
-if (m_textures[1312].m_textureImage != VK_NULL_HANDLE)
-{
-	bx::debugBreak();
-}
-
-			void* result = m_textures[_handle.idx].create(_mem, _flags, _skip);
-
-if (m_textures[1312].m_textureImage != VK_NULL_HANDLE)
-{
-	bx::debugBreak();
-}
-
-			return result;
+			return m_textures[_handle.idx].create(_mem, _flags, _skip);
 		}
 
 		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
