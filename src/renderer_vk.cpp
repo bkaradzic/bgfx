@@ -4146,7 +4146,9 @@ VK_IMPORT_DEVICE
 				// bgfx does not seem to forbid setting a texture to a stage that a program does not use
 				if (bind.m_type == Binding::Texture
 				&& !isValid(program.m_bindInfo[stage].uniformHandle) )
+				{
 					continue;
+				}
 
 				if (kInvalidHandle != bind.m_idx)
 				{
