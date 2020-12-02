@@ -1817,7 +1817,7 @@ namespace bgfx
 		m_frames  = 0;
 		m_debug   = BGFX_DEBUG_NONE;
 		m_frameTimeLast = bx::getHPCounter();
-        m_flipAfterRender = !!(m_init.resolution.reset & BGFX_RESET_FLIP_AFTER_RENDER);
+		m_flipAfterRender = !!(m_init.resolution.reset & BGFX_RESET_FLIP_AFTER_RENDER);
 
 		m_submit->create(_init.limits.minResourceCbSize);
 
