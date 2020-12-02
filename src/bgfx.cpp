@@ -1684,6 +1684,7 @@ namespace bgfx
 	{
 		const uint32_t reset = _resolution.reset;
 		const uint32_t msaa = (reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+		BX_UNUSED(reset, msaa);
 
 		BX_TRACE("Reset back-buffer swap chain:");
 		BX_TRACE("\t%dx%d, format: %s, numBackBuffers: %d, maxFrameLatency: %d"
