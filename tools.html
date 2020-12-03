@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,12 +11,18 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -29,10 +34,6 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Internals" href="internals.html" />
@@ -50,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> bgfx
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> bgfx
           
 
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -91,6 +93,7 @@
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tools</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#geometry-viewer-geometryv">Geometry Viewer (geometryv)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#shader-compiler-shaderc">Shader Compiler (shaderc)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#building-shaders">Building shaders</a></li>
 </ul>
@@ -106,6 +109,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -144,7 +148,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Tools</li>
     
@@ -167,7 +171,91 @@
 <h1>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="geometry-compiler-geometryc">
 <h2>Geometry Compiler (geometryc)<a class="headerlink" href="#geometry-compiler-geometryc" title="Permalink to this headline">¶</a></h2>
-<p>Converts Wavefront .obj mesh file to format optimal for using with bgfx.</p>
+<p>Converts Wavefront .obj, or glTF 2.0 mesh file to format optimal for using with bgfx.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">geometryc</span> <span class="o">-</span><span class="n">f</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">o</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Supported input file formats:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 82%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Format</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>.obj</p></td>
+<td><p>Wavefront</p></td>
+</tr>
+<tr class="row-odd"><td><p>.gltf</p></td>
+<td><p>glTF 2.0</p></td>
+</tr>
+<tr class="row-even"><td><p>.glb</p></td>
+<td><p>glTF 2.0</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Options:</p>
+<blockquote>
+<div><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Help.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--version</span></kbd></dt>
+<dd><p>Version information only.</p>
+</dd>
+<dt><kbd><span class="option">-f <var>&lt;file path&gt;</var></span></kbd></dt>
+<dd><p>Input file path.</p>
+</dd>
+<dt><kbd><span class="option">-o <var>&lt;file path&gt;</var></span></kbd></dt>
+<dd><p>Output file path.</p>
+</dd>
+<dt><kbd><span class="option">-s</span>, <span class="option">--scale <var>&lt;num&gt;</var></span></kbd></dt>
+<dd><p>Scale factor.</p>
+</dd>
+<dt><kbd><span class="option">--ccw</span></kbd></dt>
+<dd><p>Front face is counter-clockwise winding order.</p>
+</dd>
+<dt><kbd><span class="option">--flipv</span></kbd></dt>
+<dd><p>Flip texture coordinate V.</p>
+</dd>
+<dt><kbd><span class="option">--obb <var>&lt;num&gt;</var></span></kbd></dt>
+<dd><p>Number of steps for calculating oriented bounding box.
+Default value is 17. Less steps less precise OBB is.
+More steps slower calculation.</p>
+</dd>
+<dt><kbd><span class="option">--packnormal <var>&lt;num&gt;</var></span></kbd></dt>
+<dd><p>Normal packing.
+0 - unpacked 12 bytes (default).
+1 - packed 4 bytes.</p>
+</dd>
+<dt><kbd><span class="option">--packuv <var>&lt;num&gt;</var></span></kbd></dt>
+<dd><p>Texture coordinate packing.
+0 - unpacked 8 bytes (default).
+1 - packed 4 bytes.</p>
+</dd>
+<dt><kbd><span class="option">--tangent</span></kbd></dt>
+<dd><p>Calculate tangent vectors (packing mode is the same as normal).</p>
+</dd>
+<dt><kbd><span class="option">--barycentric</span></kbd></dt>
+<dd><p>Adds barycentric vertex attribute (packed in bgfx::Attrib::Color1).</p>
+</dd>
+<dt><kbd><span class="option">-c</span>, <span class="option">--compress</span></kbd></dt>
+<dd><p>Compress indices.
+–[l/r]h-up+[y/z]    Coordinate system. Default is ‘–lh-up+y’ Left-Handed +Y is up.</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="geometry-viewer-geometryv">
+<h2>Geometry Viewer (geometryv)<a class="headerlink" href="#geometry-viewer-geometryv" title="Permalink to this headline">¶</a></h2>
+<p>Geometry viewer.</p>
 </div>
 <div class="section" id="shader-compiler-shaderc">
 <h2>Shader Compiler (shaderc)<a class="headerlink" href="#shader-compiler-shaderc" title="Permalink to this headline">¶</a></h2>
@@ -195,12 +283,146 @@ macros</a>.</p>
 <div class="section" id="building-shaders">
 <h3>Building shaders<a class="headerlink" href="#building-shaders" title="Permalink to this headline">¶</a></h3>
 <p>Shaders must be compiled for all renderers by using <cite>shaderc</cite> tool. Makefile to simplify building
-shaders is provided in examples. D3D9 and D3D11 shaders can be only compiled on Windows.</p>
+shaders is provided in examples. D3D shaders can be only compiled on Windows.</p>
 </div>
 </div>
 <div class="section" id="texture-compiler-texturec">
 <h2>Texture Compiler (texturec)<a class="headerlink" href="#texture-compiler-texturec" title="Permalink to this headline">¶</a></h2>
 <p>Convert PNG, TGA, DDS, KTX, PVR texture into bgfx supported texture formats.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">texturec</span> <span class="o">-</span><span class="n">f</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">o</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span> <span class="p">[</span><span class="o">-</span><span class="n">t</span> <span class="o">&lt;</span><span class="n">texture</span> <span class="nb">format</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Supported file formats:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 32%" />
+<col style="width: 56%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Format</p></th>
+<th class="head"><p>In/Out</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>.bmp</p></td>
+<td><p>(input)</p></td>
+<td><p>Windows Bitmap.</p></td>
+</tr>
+<tr class="row-odd"><td><p>.dds</p></td>
+<td><p>(input, output)</p></td>
+<td><p>Direct Draw Surface.</p></td>
+</tr>
+<tr class="row-even"><td><p>.exr</p></td>
+<td><p>(input, output)</p></td>
+<td><p>OpenEXR.</p></td>
+</tr>
+<tr class="row-odd"><td><p>.gif</p></td>
+<td><p>(input)</p></td>
+<td><p>Graphics Interchange Format.</p></td>
+</tr>
+<tr class="row-even"><td><p>.jpg</p></td>
+<td><p>(input)</p></td>
+<td><p>JPEG Interchange Format.</p></td>
+</tr>
+<tr class="row-odd"><td><p>.hdr</p></td>
+<td><p>(input, output)</p></td>
+<td><p>Radiance RGBE.</p></td>
+</tr>
+<tr class="row-even"><td><p>.ktx</p></td>
+<td><p>(input, output)</p></td>
+<td><p>Khronos Texture.</p></td>
+</tr>
+<tr class="row-odd"><td><p>.png</p></td>
+<td><p>(input, output)</p></td>
+<td><p>Portable Network Graphics.</p></td>
+</tr>
+<tr class="row-even"><td><p>.psd</p></td>
+<td><p>(input)</p></td>
+<td><p>Photoshop Document.</p></td>
+</tr>
+<tr class="row-odd"><td><p>.pvr</p></td>
+<td><p>(input)</p></td>
+<td><p>PowerVR.</p></td>
+</tr>
+<tr class="row-even"><td><p>.tga</p></td>
+<td><p>(input)</p></td>
+<td><p>Truevision TGA.</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Options:</p>
+<blockquote>
+<div><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Help.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--version</span></kbd></dt>
+<dd><p>Version information only.</p>
+</dd>
+<dt><kbd><span class="option">-f <var>&lt;file path&gt;</var></span></kbd></dt>
+<dd><p>Input file path.</p>
+</dd>
+<dt><kbd><span class="option">-o <var>&lt;file path&gt;</var></span></kbd></dt>
+<dd><p>Output file path.</p>
+</dd>
+<dt><kbd><span class="option">-t <var>&lt;format&gt;</var></span></kbd></dt>
+<dd><p>Output format type (BC1/2/3/4/5, ETC1, PVR14, etc.).</p>
+</dd>
+<dt><kbd><span class="option">-q <var>&lt;quality&gt;</var></span></kbd></dt>
+<dd><p>Encoding quality (default, fastest, highest).</p>
+</dd>
+<dt><kbd><span class="option">-m</span>, <span class="option">--mips</span></kbd></dt>
+<dd><p>Generate mip-maps.</p>
+</dd>
+<dt><kbd><span class="option">--mipskip <var>&lt;N&gt;</var></span></kbd></dt>
+<dd><p>Skip &lt;N&gt; number of mips.</p>
+</dd>
+<dt><kbd><span class="option">-n</span>, <span class="option">--normalmap</span></kbd></dt>
+<dd><p>Input texture is normal map. (Implies –linear)</p>
+</dd>
+<dt><kbd><span class="option">--equirect</span></kbd></dt>
+<dd><p>Input texture is equirectangular projection of cubemap.</p>
+</dd>
+<dt><kbd><span class="option">--strip</span></kbd></dt>
+<dd><p>Input texture is horizontal strip of cubemap.</p>
+</dd>
+<dt><kbd><span class="option">--sdf</span></kbd></dt>
+<dd><p>Compute SDF texture.</p>
+</dd>
+<dt><kbd><span class="option">--ref <var>&lt;alpha&gt;</var></span></kbd></dt>
+<dd><p>Alpha reference value.</p>
+</dd>
+<dt><kbd><span class="option">--iqa</span></kbd></dt>
+<dd><p>Image Quality Assessment</p>
+</dd>
+<dt><kbd><span class="option">--pma</span></kbd></dt>
+<dd><p>Premultiply alpha into RGB channel.</p>
+</dd>
+<dt><kbd><span class="option">--linear</span></kbd></dt>
+<dd><p>Input and output texture is linear color space (gamma correction won’t be applied).</p>
+</dd>
+<dt><kbd><span class="option">--max <var>&lt;max size&gt;</var></span></kbd></dt>
+<dd><p>Maximum width/height (image will be scaled down and aspect ratio will be preserved).</p>
+</dd>
+<dt><kbd><span class="option">--radiance <var>&lt;model&gt;</var></span></kbd></dt>
+<dd><p>Radiance cubemap filter. (Lighting model: Phong, PhongBrdf, Blinn, BlinnBrdf, GGX)</p>
+</dd>
+<dt><kbd><span class="option">--as <var>&lt;extension&gt;</var></span></kbd></dt>
+<dd><p>Save as.</p>
+</dd>
+<dt><kbd><span class="option">--formats</span></kbd></dt>
+<dd><p>List all supported formats.</p>
+</dd>
+<dt><kbd><span class="option">--validate</span></kbd></dt>
+<dd><p><strong>DEBUG</strong> Validate that output image produced matches after loading.</p>
+</dd>
+</dl>
+</div></blockquote>
 </div>
 <div class="section" id="texture-viewer-texturev">
 <h2>Texture Viewer (texturev)<a class="headerlink" href="#texture-viewer-texturev" title="Permalink to this headline">¶</a></h2>
@@ -228,6 +450,7 @@ shaders is provided in examples. D3D9 and D3D11 shaders can be only compiled on 
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2010-2020, Branimir Karadžić
 
     </p>
@@ -242,7 +465,6 @@ shaders is provided in examples. D3D9 and D3D11 shaders can be only compiled on 
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

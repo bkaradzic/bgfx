@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,12 +11,18 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -29,10 +34,6 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Tools" href="tools.html" />
@@ -50,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> bgfx
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> bgfx
           
 
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -161,6 +163,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -199,7 +202,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>API Reference</li>
     
@@ -223,7 +226,9 @@
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>TL;DR for simple walkthrough how to use bgfx API, see <a class="reference external" href="https://dev.to/pperon/hello-bgfx-4dka">Hello, bgfx!</a>,
-<a class="reference external" href="https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example">bgfx-minimal-example</a>, or <a class="reference external" href="https://www.sandeepnambiar.com/getting-started-with-bgfx/">Using the bgfx library with C++ on Ubuntu</a> tutorial.</p>
+<a class="reference external" href="https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example">bgfx-minimal-example</a>,
+or <a class="reference external" href="https://www.sandeepnambiar.com/getting-started-with-bgfx/">Using the bgfx library with C++ on Ubuntu</a>
+tutorial.</p>
 </div>
 <div class="section" id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
@@ -1180,7 +1185,8 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB</span></code> - Texture as sRGB format is supported.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED</span></code> - Texture format is emulated.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_VERTEX</span></code> - Texture format can be used from vertex shader.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_IMAGE</span></code> - Texture format can be used as image from compute shader.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ</span></code> - Texture format can be used as image and read from.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE</span></code> - Texture format can be used as image and written to.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER</span></code> - Texture format can be used as frame buffer.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA</span></code> - Texture format can be used as MSAA frame buffer.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_MSAA</span></code> - Texture can be sampled as MSAA.</p></li>
@@ -1421,12 +1427,6 @@
 </dd></dl>
 
 <dl class="cpp macro">
-<dt id="c.BGFX_CAPS_FRAMEBUFFER_RW">
-<span class="target" id="defines_8h_1ac15b28b6f682066a630a876d8dc7955f"></span><code class="sig-name descname">BGFX_CAPS_FRAMEBUFFER_RW</code><a class="headerlink" href="#c.BGFX_CAPS_FRAMEBUFFER_RW" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Read/Write frame buffer attachments are supported. </p>
-</dd></dl>
-
-<dl class="cpp macro">
 <dt id="c.BGFX_CAPS_GRAPHICS_DEBUGGER">
 <span class="target" id="defines_8h_1a09ab03b89a07295a645d15cc4ac1580d"></span><code class="sig-name descname">BGFX_CAPS_GRAPHICS_DEBUGGER</code><a class="headerlink" href="#c.BGFX_CAPS_GRAPHICS_DEBUGGER" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Graphics debugger is present. </p>
@@ -1442,6 +1442,12 @@
 <dt id="c.BGFX_CAPS_HIDPI">
 <span class="target" id="defines_8h_1a917840ff950077d8f5964028e5854b42"></span><code class="sig-name descname">BGFX_CAPS_HIDPI</code><a class="headerlink" href="#c.BGFX_CAPS_HIDPI" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>HiDPI rendering is supported. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt id="c.BGFX_CAPS_IMAGE_RW">
+<span class="target" id="defines_8h_1adac8ada97eb107696b9aa3d287c4ddba"></span><code class="sig-name descname">BGFX_CAPS_IMAGE_RW</code><a class="headerlink" href="#c.BGFX_CAPS_IMAGE_RW" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Image Read/Write is supported. </p>
 </dd></dl>
 
 <dl class="cpp macro">
@@ -2060,8 +2066,8 @@ creating windows.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numMips</span></code>: Number of mip-maps. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_format</span></code>: Texture format. See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span class="std std-ref"><span class="pre">TextureFormat::Enum</span></span></a></code>. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Default texture sampling mode is linear, and wrap mode is repeat.<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</p></li>
 </ul>
 </p></li>
 </ul>
@@ -7162,6 +7168,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2010-2020, Branimir Karadžić
 
     </p>
@@ -7176,7 +7183,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {
