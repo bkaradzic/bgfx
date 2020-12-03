@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(109)
+version(110)
 
 typedef "bool"
 typedef "char"
@@ -371,11 +371,10 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.DrawIndirect           --- Draw indirect is supported.
 	.FragmentDepth          --- Fragment depth is accessible in fragment shader.
 	.FragmentOrdering       --- Fragment ordering is available in fragment shader.
-	.ImageRw                --- Image Read/Write is supported.
 	.GraphicsDebugger       --- Graphics debugger is present.
-	.Reserved
 	.Hdr10                  --- HDR10 rendering is supported.
 	.Hidpi                  --- HiDPI rendering is supported.
+	.ImageRw                --- Image Read/Write is supported.
 	.Index32                --- 32-bit indices are supported.
 	.Instancing             --- Instancing is supported.
 	.OcclusionQuery         --- Occlusion query is supported.
@@ -384,7 +383,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.Texture_2dArray        --- 2D texture array is supported.
 	.Texture_3d             --- 3D textures are supported.
 	.TextureBlit            --- Texture blit is supported.
-	.TextureCompareReserved --- All texture compare modes are supported.
+	.TextureCompareReserved
 	.TextureCompareLequal   --- Texture compare less equal mode is supported.
 	.TextureCubeArray       --- Cubemap texture array is supported.
 	.TextureDirectAccess    --- CPU direct access to GPU texture memory.

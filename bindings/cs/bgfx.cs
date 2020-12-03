@@ -1041,110 +1041,105 @@ public static partial class bgfx
 		FragmentOrdering       = 0x0000000000000040,
 	
 		/// <summary>
-		/// Image Read/Write is supported.
-		/// </summary>
-		ImageRw                = 0x0000000000000080,
-	
-		/// <summary>
 		/// Graphics debugger is present.
 		/// </summary>
-		GraphicsDebugger       = 0x0000000000000100,
-		Reserved               = 0x0000000000000200,
+		GraphicsDebugger       = 0x0000000000000080,
 	
 		/// <summary>
 		/// HDR10 rendering is supported.
 		/// </summary>
-		Hdr10                  = 0x0000000000000400,
+		Hdr10                  = 0x0000000000000100,
 	
 		/// <summary>
 		/// HiDPI rendering is supported.
 		/// </summary>
-		Hidpi                  = 0x0000000000000800,
+		Hidpi                  = 0x0000000000000200,
+	
+		/// <summary>
+		/// Image Read/Write is supported.
+		/// </summary>
+		ImageRw                = 0x0000000000000400,
 	
 		/// <summary>
 		/// 32-bit indices are supported.
 		/// </summary>
-		Index32                = 0x0000000000001000,
+		Index32                = 0x0000000000000800,
 	
 		/// <summary>
 		/// Instancing is supported.
 		/// </summary>
-		Instancing             = 0x0000000000002000,
+		Instancing             = 0x0000000000001000,
 	
 		/// <summary>
 		/// Occlusion query is supported.
 		/// </summary>
-		OcclusionQuery         = 0x0000000000004000,
+		OcclusionQuery         = 0x0000000000002000,
 	
 		/// <summary>
 		/// Renderer is on separate thread.
 		/// </summary>
-		RendererMultithreaded  = 0x0000000000008000,
+		RendererMultithreaded  = 0x0000000000004000,
 	
 		/// <summary>
 		/// Multiple windows are supported.
 		/// </summary>
-		SwapChain              = 0x0000000000010000,
+		SwapChain              = 0x0000000000008000,
 	
 		/// <summary>
 		/// 2D texture array is supported.
 		/// </summary>
-		Texture2dArray         = 0x0000000000020000,
+		Texture2dArray         = 0x0000000000010000,
 	
 		/// <summary>
 		/// 3D textures are supported.
 		/// </summary>
-		Texture3d              = 0x0000000000040000,
+		Texture3d              = 0x0000000000020000,
 	
 		/// <summary>
 		/// Texture blit is supported.
 		/// </summary>
-		TextureBlit            = 0x0000000000080000,
-	
-		/// <summary>
-		/// All texture compare modes are supported.
-		/// </summary>
-		TextureCompareReserved = 0x0000000000100000,
+		TextureBlit            = 0x0000000000040000,
+		TextureCompareReserved = 0x0000000000080000,
 	
 		/// <summary>
 		/// Texture compare less equal mode is supported.
 		/// </summary>
-		TextureCompareLequal   = 0x0000000000200000,
+		TextureCompareLequal   = 0x0000000000100000,
 	
 		/// <summary>
 		/// Cubemap texture array is supported.
 		/// </summary>
-		TextureCubeArray       = 0x0000000000400000,
+		TextureCubeArray       = 0x0000000000200000,
 	
 		/// <summary>
 		/// CPU direct access to GPU texture memory.
 		/// </summary>
-		TextureDirectAccess    = 0x0000000000800000,
+		TextureDirectAccess    = 0x0000000000400000,
 	
 		/// <summary>
 		/// Read-back texture is supported.
 		/// </summary>
-		TextureReadBack        = 0x0000000001000000,
+		TextureReadBack        = 0x0000000000800000,
 	
 		/// <summary>
 		/// Vertex attribute half-float is supported.
 		/// </summary>
-		VertexAttribHalf       = 0x0000000002000000,
+		VertexAttribHalf       = 0x0000000001000000,
 	
 		/// <summary>
 		/// Vertex attribute 10_10_10_2 is supported.
 		/// </summary>
-		VertexAttribUint10     = 0x0000000004000000,
+		VertexAttribUint10     = 0x0000000002000000,
 	
 		/// <summary>
 		/// Rendering with VertexID only is supported.
 		/// </summary>
-		VertexId               = 0x0000000008000000,
+		VertexId               = 0x0000000004000000,
 	
 		/// <summary>
 		/// All texture compare modes are supported.
 		/// </summary>
-		TextureCompareAll      = 0x0000000000300000,
+		TextureCompareAll      = 0x0000000000180000,
 	}
 	
 	[Flags]
