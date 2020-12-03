@@ -746,7 +746,10 @@ namespace entry
 	{
 		Display* display = s_ctx.m_display;
 		Window   window  = s_ctx.m_window[_handle.idx];
-		XStoreName(display, window, _title);
+
+		XTextProperty tp;
+		Xutf8TextListToTextProperty(display, (char**)&_title, 1, XUTF8StringStyle, &tp);
+		XSetWMName(display, window, &tp);
 	}
 
 	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
