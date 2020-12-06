@@ -447,7 +447,7 @@ static const unsigned char* decodeVertexBlock(const unsigned char* data, const u
 static unsigned char kDecodeBytesGroupShuffle[256][8];
 static unsigned char kDecodeBytesGroupCount[256];
 
-#ifdef EMSCRIPTEN
+#ifdef __wasm__
 __attribute__((cold)) // this saves 500 bytes in the output binary - we don't need to vectorize this loop!
 #endif
 static bool
@@ -736,11 +736,9 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 SIMD_TARGET
 static v128_t decodeShuffleMask(unsigned char mask0, unsigned char mask1)
 {
-	// TODO: 8b buffer overrun - should we use splat or extend buffers?
 	v128_t sm0 = wasm_v128_load(&kDecodeBytesGroupShuffle[mask0]);
 	v128_t sm1 = wasm_v128_load(&kDecodeBytesGroupShuffle[mask1]);
 
-	// TODO: we should use v8x16_load_splat
 	v128_t sm1off = wasm_v128_load(&kDecodeBytesGroupCount[mask0]);
 	sm1off = wasm_v8x16_shuffle(sm1off, sm1off, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -754,7 +752,6 @@ static void wasmMoveMask(v128_t mask, unsigned char& mask0, unsigned char& mask1
 {
 	v128_t mask_0 = wasm_v32x4_shuffle(mask, mask, 0, 2, 1, 3);
 
-	// TODO: when Chrome supports v128.const we can try doing vectorized and?
 	uint64_t mask_1a = wasm_i64x2_extract_lane(mask_0, 0) & 0x0804020108040201ull;
 	uint64_t mask_1b = wasm_i64x2_extract_lane(mask_0, 1) & 0x8040201080402010ull;
 
@@ -786,7 +783,6 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 
 	case 1:
 	{
-		// TODO: test 4b load splat
 		v128_t sel2 = wasm_v128_load(data);
 		v128_t rest = wasm_v128_load(data + 4);
 
@@ -801,7 +797,6 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 
 		v128_t shuf = decodeShuffleMask(mask0, mask1);
 
-		// TODO: test or/andnot
 		v128_t result = wasm_v128_bitselect(wasm_v8x16_swizzle(rest, shuf), sel, mask);
 
 		wasm_v128_store(buffer, result);
@@ -811,7 +806,6 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 
 	case 2:
 	{
-		// TODO: test 8b load splat
 		v128_t sel4 = wasm_v128_load(data);
 		v128_t rest = wasm_v128_load(data + 8);
 
@@ -825,7 +819,6 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 
 		v128_t shuf = decodeShuffleMask(mask0, mask1);
 
-		// TODO: test or/andnot
 		v128_t result = wasm_v128_bitselect(wasm_v8x16_swizzle(rest, shuf), sel, mask);
 
 		wasm_v128_store(buffer, result);
@@ -917,8 +910,7 @@ SIMD_TARGET
 static v128_t unzigzag8(v128_t v)
 {
 	v128_t xl = wasm_i8x16_neg(wasm_v128_and(v, wasm_i8x16_splat(1)));
-	// TODO: use wasm_u8x16_shr when v8 fixes codegen for constant shifts
-	v128_t xr = wasm_v128_and(wasm_u16x8_shr(v, 1), wasm_i8x16_splat(127));
+	v128_t xr = wasm_u8x16_shr(v, 1);
 
 	return wasm_v128_xor(xl, xr);
 }
@@ -1010,7 +1002,7 @@ static const unsigned char* decodeVertexBlockSimd(const unsigned char* data, con
 
 #ifdef SIMD_WASM
 #define TEMP v128_t
-#define PREP() v128_t pi = wasm_v128_load(last_vertex + k) // TODO: use wasm_v32x4_load_splat to avoid buffer overrun
+#define PREP() v128_t pi = wasm_v128_load(last_vertex + k)
 #define LOAD(i) v128_t r##i = wasm_v128_load(buffer + j + i * vertex_count_aligned)
 #define GRP4(i) t0 = wasmx_splat_v32x4(r##i, 0), t1 = wasmx_splat_v32x4(r##i, 1), t2 = wasmx_splat_v32x4(r##i, 2), t3 = wasmx_splat_v32x4(r##i, 3)
 #define FIXD(i) t##i = pi = wasm_i8x16_add(pi, t##i)

@@ -623,7 +623,7 @@ static void decodeFilterOctSimd(signed char* data, size_t count)
 static void decodeFilterOctSimd(short* data, size_t count)
 {
 	const v128_t sign = wasm_f32x4_splat(-0.f);
-	volatile v128_t zmask = wasm_i32x4_splat(0x7fff); // TODO: volatile works around LLVM shuffle "optimizations"
+	const v128_t zmask = wasm_i32x4_splat(0x7fff);
 
 	for (size_t i = 0; i < count; i += 4)
 	{
