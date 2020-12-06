@@ -398,7 +398,8 @@ https://www.minecraft.net/zh-hant/attribution/
 
 ## FFNx
 
-Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with native Steam 2013 release support! )
+Next generation driver for Final Fantasy VII and Final Fantasy VIII
+(with native Steam 2013 release support!)
 
 [FFNx](https://github.com/julianxhokaxhiu/FFNx#ffnx)
 
@@ -413,6 +414,15 @@ https://www.microsoft.com/en-gb/p/shadow-gangs/9n6hkcr65qdq
 
 ![Shadow Gangs](https://user-images.githubusercontent.com/814772/94508248-64ba1080-01c6-11eb-800f-47dc374ef054.jpeg)
 
+## Growtopia
+
+Growtopia is a free-to-play sandbox MMO game with almost endless possibilities
+for world creation, customization and having fun with your friends. Enjoy
+thousands of items, challenges and events.
+
+https://growtopiagame.com/
+
+![growtopia](https://s3.eu-west-1.amazonaws.com/cdn.growtopiagame.com/website/resources/assets/images/grow_header.jpg)
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
