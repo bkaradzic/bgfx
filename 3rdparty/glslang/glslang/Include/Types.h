@@ -757,6 +757,12 @@ public:
     bool isPerPrimitive() const { return perPrimitiveNV; }
     bool isPerView() const { return perViewNV; }
     bool isTaskMemory() const { return perTaskNV; }
+    bool isAnyPayload() const {
+        return storage == EvqPayload || storage == EvqPayloadIn;
+    }
+    bool isAnyCallable() const {
+        return storage == EvqCallableData || storage == EvqCallableDataIn;
+    }
 
     // True if this type of IO is supposed to be arrayed with extra level for per-vertex data
     bool isArrayedIo(EShLanguage language) const
