@@ -16,6 +16,7 @@
 
 // Validates correctness of built-in variables.
 
+#include <array>
 #include <functional>
 #include <list>
 #include <map>
@@ -134,6 +135,114 @@ bool IsBuiltInValidForWebGPU(SpvBuiltIn label) {
   return false;
 }
 
+typedef enum VUIDError_ {
+  VUIDErrorExecutionModel = 0,
+  VUIDErrorStorageClass = 1,
+  VUIDErrorType = 2,
+  VUIDErrorMax,
+} VUIDError;
+
+const static uint32_t NumRtBuiltins = 16;
+
+typedef struct {
+  SpvBuiltIn builtIn;
+  uint32_t vuid[VUIDErrorMax];  // execution mode, storage class, type VUIDs
+} RtBuiltinVUIDMapping;
+
+std::array<RtBuiltinVUIDMapping, NumRtBuiltins> rtBuiltinInfo = {{
+    // clang-format off
+    {SpvBuiltInHitKindKHR,                {4242, 4243, 4244}},
+    {SpvBuiltInHitTNV,                    {4245, 4246, 4247}},
+    {SpvBuiltInInstanceCustomIndexKHR,    {4251, 4252, 4253}},
+    {SpvBuiltInInstanceId,                {4254, 4255, 4256}},
+    {SpvBuiltInRayGeometryIndexKHR,       {4345, 4346, 4347}},
+    {SpvBuiltInObjectRayDirectionKHR,     {4299, 4300, 4301}},
+    {SpvBuiltInObjectRayOriginKHR,        {4302, 4303, 4304}},
+    {SpvBuiltInObjectToWorldKHR,          {4305, 4306, 4307}},
+    {SpvBuiltInWorldToObjectKHR,          {4434, 4435, 4436}},
+    {SpvBuiltInIncomingRayFlagsKHR,       {4248, 4249, 4250}},
+    {SpvBuiltInRayTminKHR,                {4351, 4352, 4353}},
+    {SpvBuiltInRayTmaxKHR,                {4348, 4349, 4350}},
+    {SpvBuiltInWorldRayDirectionKHR,      {4428, 4429, 4430}},
+    {SpvBuiltInWorldRayOriginKHR,         {4431, 4432, 4433}},
+    {SpvBuiltInLaunchIdKHR,               {4266, 4267, 4268}},
+    {SpvBuiltInLaunchSizeKHR,             {4269, 4270, 4271}},
+    // clang-format off
+} };
+
+uint32_t GetVUIDForRTBuiltin(SpvBuiltIn builtIn, VUIDError type) {
+  uint32_t vuid = 0;
+  for (const auto& iter: rtBuiltinInfo) {
+    if (iter.builtIn == builtIn) {
+      assert(type < VUIDErrorMax);
+      vuid = iter.vuid[type];
+      break;
+    }
+  }
+  return vuid;
+}
+
+bool IsExecutionModelValidForRtBuiltIn(SpvBuiltIn builtin,
+                                       SpvExecutionModel stage) {
+  switch (builtin) {
+    case SpvBuiltInHitKindKHR:
+    case SpvBuiltInHitTNV:
+      if (stage == SpvExecutionModelAnyHitKHR ||
+          stage == SpvExecutionModelClosestHitKHR) {
+        return true;
+      }
+      break;
+    case SpvBuiltInInstanceCustomIndexKHR:
+    case SpvBuiltInInstanceId:
+    case SpvBuiltInRayGeometryIndexKHR:
+    case SpvBuiltInObjectRayDirectionKHR:
+    case SpvBuiltInObjectRayOriginKHR:
+    case SpvBuiltInObjectToWorldKHR:
+    case SpvBuiltInWorldToObjectKHR:
+      switch (stage) {
+        case SpvExecutionModelIntersectionKHR:
+        case SpvExecutionModelAnyHitKHR:
+        case SpvExecutionModelClosestHitKHR:
+          return true;
+        default:
+          return false;
+      }
+      break;
+    case SpvBuiltInIncomingRayFlagsKHR:
+    case SpvBuiltInRayTminKHR:
+    case SpvBuiltInRayTmaxKHR:
+    case SpvBuiltInWorldRayDirectionKHR:
+    case SpvBuiltInWorldRayOriginKHR:
+      switch (stage) {
+        case SpvExecutionModelIntersectionKHR:
+        case SpvExecutionModelAnyHitKHR:
+        case SpvExecutionModelClosestHitKHR:
+        case SpvExecutionModelMissKHR:
+          return true;
+        default:
+          return false;
+      }
+      break;
+    case SpvBuiltInLaunchIdKHR:
+    case SpvBuiltInLaunchSizeKHR:
+      switch (stage) {
+        case SpvExecutionModelRayGenerationKHR:
+        case SpvExecutionModelIntersectionKHR:
+        case SpvExecutionModelAnyHitKHR:
+        case SpvExecutionModelClosestHitKHR:
+        case SpvExecutionModelMissKHR:
+        case SpvExecutionModelCallableKHR:
+          return true;
+        default:
+          return false;
+      }
+      break;
+    default:
+      break;
+  }
+  return false;
+}
+
 // Helper class managing validation of built-ins.
 // TODO: Generic functionality of this class can be moved into
 // ValidationState_t to be made available to other users.
@@ -200,8 +309,8 @@ class BuiltInsValidator {
                                                   const Instruction& inst);
   spv_result_t ValidateVertexIndexAtDefinition(const Decoration& decoration,
                                                const Instruction& inst);
-  spv_result_t ValidateVertexIdOrInstanceIdAtDefinition(
-      const Decoration& decoration, const Instruction& inst);
+  spv_result_t ValidateVertexIdAtDefinition(const Decoration& decoration,
+                                            const Instruction& inst);
   spv_result_t ValidateLocalInvocationIndexAtDefinition(
       const Decoration& decoration, const Instruction& inst);
   spv_result_t ValidateWorkgroupSizeAtDefinition(const Decoration& decoration,
@@ -237,6 +346,9 @@ class BuiltInsValidator {
   spv_result_t ValidateShadingRateAtDefinition(const Decoration& decoration,
                                                const Instruction& inst);
 
+  spv_result_t ValidateRayTracingBuiltinsAtDefinition(
+      const Decoration& decoration, const Instruction& inst);
+
   // The following section contains functions which are called when id defined
   // by |referenced_inst| is
   // 1. referenced by |referenced_from_inst|
@@ -265,11 +377,6 @@ class BuiltInsValidator {
       const Instruction& referenced_from_inst);
 
   spv_result_t ValidateInvocationIdAtReference(
-      const Decoration& decoration, const Instruction& built_in_inst,
-      const Instruction& referenced_inst,
-      const Instruction& referenced_from_inst);
-
-  spv_result_t ValidateInstanceIdAtReference(
       const Decoration& decoration, const Instruction& built_in_inst,
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
@@ -400,6 +507,11 @@ class BuiltInsValidator {
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
 
+  spv_result_t ValidateRayTracingBuiltinsAtReference(
+      const Decoration& decoration, const Instruction& built_in_inst,
+      const Instruction& referenced_inst,
+      const Instruction& referenced_from_inst);
+
   // Validates that |built_in_inst| is not (even indirectly) referenced from
   // within a function which can be called with |execution_model|.
   //
@@ -476,6 +588,10 @@ class BuiltInsValidator {
       uint32_t num_components,
       const std::function<spv_result_t(const std::string& message)>& diag,
       uint32_t underlying_type);
+  spv_result_t ValidateF32Mat(
+      const Decoration& decoration, const Instruction& inst,
+      uint32_t req_num_rows, uint32_t req_num_columns,
+      const std::function<spv_result_t(const std::string& message)>& diag);
 
   // Generates strings like "Member #0 of struct ID <2>".
   std::string GetDefinitionDesc(const Decoration& decoration,
@@ -907,6 +1023,32 @@ spv_result_t BuiltInsValidator::ValidateF32ArrHelper(
   }
 
   return SPV_SUCCESS;
+}
+
+spv_result_t BuiltInsValidator::ValidateF32Mat(
+    const Decoration& decoration, const Instruction& inst,
+    uint32_t req_num_rows, uint32_t req_num_columns,
+    const std::function<spv_result_t(const std::string& message)>& diag) {
+  uint32_t underlying_type = 0;
+  uint32_t num_rows = 0;
+  uint32_t num_cols = 0;
+  uint32_t col_type = 0;
+  uint32_t component_type = 0;
+  if (spv_result_t error =
+          GetUnderlyingType(_, decoration, inst, &underlying_type)) {
+    return error;
+  }
+  if (!_.GetMatrixTypeInfo(underlying_type, &num_rows, &num_cols, &col_type,
+                           &component_type) ||
+      num_rows != req_num_rows || num_cols != req_num_columns) {
+    std::ostringstream ss;
+    ss << GetDefinitionDesc(decoration, inst) << " has columns " << num_cols
+       << " and rows " << num_rows << " not equal to expected "
+       << req_num_columns << "x" << req_num_rows << ".";
+    return diag(ss.str());
+  }
+
+  return ValidateF32VecHelper(decoration, inst, req_num_rows, diag, col_type);
 }
 
 spv_result_t BuiltInsValidator::ValidateNotCalledWithExecutionModel(
@@ -1947,6 +2089,27 @@ spv_result_t BuiltInsValidator::ValidatePrimitiveIdAtReference(
           "Fragment.",
           SpvExecutionModelFragment, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
+      id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, 4334,
+          "Vulkan spec doesn't allow BuiltIn PrimitiveId to be used for "
+          "variables with Output storage class if execution model is "
+          "IntersectionKHR.",
+          SpvExecutionModelIntersectionKHR, decoration, built_in_inst,
+          referenced_from_inst, std::placeholders::_1));
+      id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, 4334,
+          "Vulkan spec doesn't allow BuiltIn PrimitiveId to be used for "
+          "variables with Output storage class if execution model is "
+          "AnyHitKHR.",
+          SpvExecutionModelAnyHitKHR, decoration, built_in_inst,
+          referenced_from_inst, std::placeholders::_1));
+      id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, 4334,
+          "Vulkan spec doesn't allow BuiltIn PrimitiveId to be used for "
+          "variables with Output storage class if execution model is "
+          "ClosestHitKHR.",
+          SpvExecutionModelClosestHitKHR, decoration, built_in_inst,
+          referenced_from_inst, std::placeholders::_1));
     }
 
     for (const SpvExecutionModel execution_model : execution_models_) {
@@ -1956,12 +2119,9 @@ spv_result_t BuiltInsValidator::ValidatePrimitiveIdAtReference(
         case SpvExecutionModelTessellationEvaluation:
         case SpvExecutionModelGeometry:
         case SpvExecutionModelMeshNV:
-        case SpvExecutionModelRayGenerationNV:
-        case SpvExecutionModelIntersectionNV:
-        case SpvExecutionModelAnyHitNV:
-        case SpvExecutionModelClosestHitNV:
-        case SpvExecutionModelMissNV:
-        case SpvExecutionModelCallableNV: {
+        case SpvExecutionModelIntersectionKHR:
+        case SpvExecutionModelAnyHitKHR:
+        case SpvExecutionModelClosestHitKHR: {
           // Ok.
           break;
         }
@@ -1971,7 +2131,9 @@ spv_result_t BuiltInsValidator::ValidatePrimitiveIdAtReference(
                  << _.VkErrorID(4330)
                  << "Vulkan spec allows BuiltIn PrimitiveId to be used only "
                     "with Fragment, TessellationControl, "
-                    "TessellationEvaluation or Geometry execution models. "
+                    "TessellationEvaluation, Geometry, MeshNV, "
+                    "IntersectionKHR, "
+                    "AnyHitKHR, and ClosestHitKHR execution models. "
                  << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
                                      referenced_from_inst, execution_model);
         }
@@ -2372,54 +2534,13 @@ spv_result_t BuiltInsValidator::ValidateVertexIndexAtDefinition(
   return ValidateVertexIndexAtReference(decoration, inst, inst, inst);
 }
 
-spv_result_t BuiltInsValidator::ValidateVertexIdOrInstanceIdAtDefinition(
+spv_result_t BuiltInsValidator::ValidateVertexIdAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
-  const SpvBuiltIn label = SpvBuiltIn(decoration.params()[0]);
-  bool allow_instance_id = (_.HasCapability(SpvCapabilityRayTracingNV) ||
-                            _.HasCapability(SpvCapabilityRayTracingKHR)) &&
-                           label == SpvBuiltInInstanceId;
-
-  if (spvIsVulkanEnv(_.context()->target_env) && !allow_instance_id) {
-    return _.diag(SPV_ERROR_INVALID_DATA, &inst)
-           << "Vulkan spec doesn't allow BuiltIn VertexId/InstanceId "
-              "to be used.";
-  }
-
-  if (label == SpvBuiltInInstanceId) {
-    return ValidateInstanceIdAtReference(decoration, inst, inst, inst);
-  }
-  return SPV_SUCCESS;
-}
-
-spv_result_t BuiltInsValidator::ValidateInstanceIdAtReference(
-    const Decoration& decoration, const Instruction& built_in_inst,
-    const Instruction& referenced_inst,
-    const Instruction& referenced_from_inst) {
+  (void)decoration;
   if (spvIsVulkanEnv(_.context()->target_env)) {
-    for (const SpvExecutionModel execution_model : execution_models_) {
-      switch (execution_model) {
-        case SpvExecutionModelIntersectionNV:
-        case SpvExecutionModelClosestHitNV:
-        case SpvExecutionModelAnyHitNV:
-          // Do nothing, valid stages
-          break;
-        default:
-          return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
-                 << "Vulkan spec allows BuiltIn InstanceId to be used "
-                    "only with IntersectionNV, ClosestHitNV and AnyHitNV "
-                    "execution models. "
-                 << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
-                                     referenced_from_inst);
-          break;
-      }
-    }
-  }
-
-  if (function_id_ == 0) {
-    // Propagate this rule to all dependant ids in the global scope.
-    id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-        &BuiltInsValidator::ValidateInstanceIdAtReference, this, decoration,
-        built_in_inst, referenced_from_inst, std::placeholders::_1));
+    return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+           << "Vulkan spec doesn't allow BuiltIn VertexId "
+              "to be used.";
   }
 
   return SPV_SUCCESS;
@@ -3474,6 +3595,174 @@ spv_result_t BuiltInsValidator::ValidateShadingRateAtReference(
   return SPV_SUCCESS;
 }
 
+spv_result_t BuiltInsValidator::ValidateRayTracingBuiltinsAtDefinition(
+    const Decoration& decoration, const Instruction& inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const SpvBuiltIn builtin = SpvBuiltIn(decoration.params()[0]);
+    switch (builtin) {
+      case SpvBuiltInHitTNV:
+      case SpvBuiltInRayTminKHR:
+      case SpvBuiltInRayTmaxKHR:
+        // f32 scalar
+        if (spv_result_t error = ValidateF32(
+                decoration, inst,
+                [this, &inst,
+                 builtin](const std::string& message) -> spv_result_t {
+                  uint32_t vuid = GetVUIDForRTBuiltin(builtin, VUIDErrorType);
+                  return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                         << _.VkErrorID(vuid)
+                         << "According to the Vulkan spec BuiltIn "
+                         << _.grammar().lookupOperandName(
+                                SPV_OPERAND_TYPE_BUILT_IN, builtin)
+                         << " variable needs to be a 32-bit float scalar. "
+                         << message;
+                })) {
+          return error;
+        }
+        break;
+      case SpvBuiltInHitKindKHR:
+      case SpvBuiltInInstanceCustomIndexKHR:
+      case SpvBuiltInInstanceId:
+      case SpvBuiltInRayGeometryIndexKHR:
+      case SpvBuiltInIncomingRayFlagsKHR:
+        // i32 scalar
+        if (spv_result_t error = ValidateI32(
+                decoration, inst,
+                [this, &inst,
+                 builtin](const std::string& message) -> spv_result_t {
+                  uint32_t vuid = GetVUIDForRTBuiltin(builtin, VUIDErrorType);
+                  return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                         << _.VkErrorID(vuid)
+                         << "According to the Vulkan spec BuiltIn "
+                         << _.grammar().lookupOperandName(
+                                SPV_OPERAND_TYPE_BUILT_IN, builtin)
+                         << " variable needs to be a 32-bit int scalar. "
+                         << message;
+                })) {
+          return error;
+        }
+        break;
+      case SpvBuiltInObjectRayDirectionKHR:
+      case SpvBuiltInObjectRayOriginKHR:
+      case SpvBuiltInWorldRayDirectionKHR:
+      case SpvBuiltInWorldRayOriginKHR:
+        // f32 vec3
+        if (spv_result_t error = ValidateF32Vec(
+                decoration, inst, 3,
+                [this, &inst,
+                 builtin](const std::string& message) -> spv_result_t {
+                  uint32_t vuid = GetVUIDForRTBuiltin(builtin, VUIDErrorType);
+                  return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                         << _.VkErrorID(vuid)
+                         << "According to the Vulkan spec BuiltIn "
+                         << _.grammar().lookupOperandName(
+                                SPV_OPERAND_TYPE_BUILT_IN, builtin)
+                         << " variable needs to be a 3-component 32-bit float "
+                            "vector. "
+                         << message;
+                })) {
+          return error;
+        }
+        break;
+      case SpvBuiltInLaunchIdKHR:
+      case SpvBuiltInLaunchSizeKHR:
+        // i32 vec3
+        if (spv_result_t error = ValidateI32Vec(
+                decoration, inst, 3,
+                [this, &inst,
+                 builtin](const std::string& message) -> spv_result_t {
+                  uint32_t vuid = GetVUIDForRTBuiltin(builtin, VUIDErrorType);
+                  return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                         << _.VkErrorID(vuid)
+                         << "According to the Vulkan spec BuiltIn "
+                         << _.grammar().lookupOperandName(
+                                SPV_OPERAND_TYPE_BUILT_IN, builtin)
+                         << " variable needs to be a 3-component 32-bit int "
+                            "vector. "
+                         << message;
+                })) {
+          return error;
+        }
+        break;
+      case SpvBuiltInObjectToWorldKHR:
+      case SpvBuiltInWorldToObjectKHR:
+        // f32 mat4x3
+        if (spv_result_t error = ValidateF32Mat(
+                decoration, inst, 3, 4,
+                [this, &inst,
+                 builtin](const std::string& message) -> spv_result_t {
+                  uint32_t vuid = GetVUIDForRTBuiltin(builtin, VUIDErrorType);
+                  return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                         << _.VkErrorID(vuid)
+                         << "According to the Vulkan spec BuiltIn "
+                         << _.grammar().lookupOperandName(
+                                SPV_OPERAND_TYPE_BUILT_IN, builtin)
+                         << " variable needs to be a matrix with"
+                         << " 4 columns of 3-component vectors of 32-bit "
+                            "floats. "
+                         << message;
+                })) {
+          return error;
+        }
+        break;
+      default:
+        assert(0 && "Unexpected ray tracing builtin");
+        break;
+    }
+  }
+
+  // Seed at reference checks with this built-in.
+  return ValidateRayTracingBuiltinsAtReference(decoration, inst, inst, inst);
+}
+
+spv_result_t BuiltInsValidator::ValidateRayTracingBuiltinsAtReference(
+    const Decoration& decoration, const Instruction& built_in_inst,
+    const Instruction& referenced_inst,
+    const Instruction& referenced_from_inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const SpvBuiltIn builtin = SpvBuiltIn(decoration.params()[0]);
+    const SpvStorageClass storage_class = GetStorageClass(referenced_from_inst);
+    if (storage_class != SpvStorageClassMax &&
+        storage_class != SpvStorageClassInput) {
+      uint32_t vuid = GetVUIDForRTBuiltin(builtin, VUIDErrorStorageClass);
+      return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+             << _.VkErrorID(vuid) << "Vulkan spec allows BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              decoration.params()[0])
+             << " to be only used for variables with Input storage class. "
+             << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                 referenced_from_inst)
+             << " " << GetStorageClassDesc(referenced_from_inst);
+    }
+
+    for (const SpvExecutionModel execution_model : execution_models_) {
+      if (!IsExecutionModelValidForRtBuiltIn(builtin, execution_model)) {
+        uint32_t vuid = GetVUIDForRTBuiltin(builtin, VUIDErrorExecutionModel);
+        return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+               << _.VkErrorID(vuid) << "Vulkan spec does not allow BuiltIn "
+               << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                decoration.params()[0])
+               << " to be used with the execution model "
+               << _.grammar().lookupOperandName(
+                      SPV_OPERAND_TYPE_EXECUTION_MODEL, execution_model)
+               << ".\n"
+               << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                   referenced_from_inst, execution_model);
+      }
+    }
+  }
+
+  if (function_id_ == 0) {
+    // Propagate this rule to all dependant ids in the global scope.
+    id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
+        std::bind(&BuiltInsValidator::ValidateRayTracingBuiltinsAtReference,
+                  this, decoration, built_in_inst, referenced_from_inst,
+                  std::placeholders::_1));
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   const SpvBuiltIn label = SpvBuiltIn(decoration.params()[0]);
@@ -3596,9 +3885,8 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInWorkgroupSize: {
       return ValidateWorkgroupSizeAtDefinition(decoration, inst);
     }
-    case SpvBuiltInVertexId:
-    case SpvBuiltInInstanceId: {
-      return ValidateVertexIdOrInstanceIdAtDefinition(decoration, inst);
+    case SpvBuiltInVertexId: {
+      return ValidateVertexIdAtDefinition(decoration, inst);
     }
     case SpvBuiltInLocalInvocationIndex: {
       return ValidateLocalInvocationIndexAtDefinition(decoration, inst);
@@ -3621,6 +3909,27 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     }
     case SpvBuiltInDeviceIndex: {
       return ValidateDeviceIndexAtDefinition(decoration, inst);
+    }
+    // Ray tracing builtins
+    case SpvBuiltInHitKindKHR:  // alias SpvBuiltInHitKindNV
+    case SpvBuiltInHitTNV:      // NOT present in KHR
+    case SpvBuiltInInstanceId:
+    case SpvBuiltInLaunchIdKHR:           // alias SpvBuiltInLaunchIdNV
+    case SpvBuiltInLaunchSizeKHR:         // alias SpvBuiltInLaunchSizeNV
+    case SpvBuiltInWorldRayOriginKHR:     // alias SpvBuiltInWorldRayOriginNV
+    case SpvBuiltInWorldRayDirectionKHR:  // alias SpvBuiltInWorldRayDirectionNV
+    case SpvBuiltInObjectRayOriginKHR:    // alias SpvBuiltInObjectRayOriginNV
+    case SpvBuiltInObjectRayDirectionKHR:   // alias
+                                            // SpvBuiltInObjectRayDirectionNV
+    case SpvBuiltInRayTminKHR:              // alias SpvBuiltInRayTminNV
+    case SpvBuiltInRayTmaxKHR:              // alias SpvBuiltInRayTmaxNV
+    case SpvBuiltInInstanceCustomIndexKHR:  // alias
+                                            // SpvBuiltInInstanceCustomIndexNV
+    case SpvBuiltInObjectToWorldKHR:        // alias SpvBuiltInObjectToWorldNV
+    case SpvBuiltInWorldToObjectKHR:        // alias SpvBuiltInWorldToObjectNV
+    case SpvBuiltInIncomingRayFlagsKHR:    // alias SpvBuiltInIncomingRayFlagsNV
+    case SpvBuiltInRayGeometryIndexKHR: {  // NOT present in NV
+      return ValidateRayTracingBuiltinsAtDefinition(decoration, inst);
     }
     case SpvBuiltInWorkDim:
     case SpvBuiltInGlobalSize:
@@ -3657,28 +3966,14 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInFragmentSizeNV:         // alias SpvBuiltInFragSizeEXT
     case SpvBuiltInInvocationsPerPixelNV:  // alias
                                            // SpvBuiltInFragInvocationCountEXT
-    case SpvBuiltInLaunchIdNV:
-    case SpvBuiltInLaunchSizeNV:
-    case SpvBuiltInWorldRayOriginNV:
-    case SpvBuiltInWorldRayDirectionNV:
-    case SpvBuiltInObjectRayOriginNV:
-    case SpvBuiltInObjectRayDirectionNV:
-    case SpvBuiltInRayTminNV:
-    case SpvBuiltInRayTmaxNV:
-    case SpvBuiltInInstanceCustomIndexNV:
-    case SpvBuiltInObjectToWorldNV:
-    case SpvBuiltInWorldToObjectNV:
-    case SpvBuiltInHitTNV:
-    case SpvBuiltInHitKindNV:
-    case SpvBuiltInIncomingRayFlagsNV:
-    case SpvBuiltInRayGeometryIndexKHR: {
       // No validation rules (for the moment).
       break;
 
-      case SpvBuiltInPrimitiveShadingRateKHR:
-        return ValidatePrimitiveShadingRateAtDefinition(decoration, inst);
-      case SpvBuiltInShadingRateKHR:
-        return ValidateShadingRateAtDefinition(decoration, inst);
+    case SpvBuiltInPrimitiveShadingRateKHR: {
+      return ValidatePrimitiveShadingRateAtDefinition(decoration, inst);
+    }
+    case SpvBuiltInShadingRateKHR: {
+      return ValidateShadingRateAtDefinition(decoration, inst);
     }
   }
   return SPV_SUCCESS;
