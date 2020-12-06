@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
+ */
+
 #include "spirv_msl.hpp"
 #include "GLSL.std.450.h"
 
@@ -12019,6 +12026,8 @@ void CompilerMSL::replace_illegal_names()
 		"main",
 		"saturate",
 		"assert",
+		"fmin3",
+		"fmax3",
 		"VARIABLE_TRACEPOINT",
 		"STATIC_DATA_TRACEPOINT",
 		"STATIC_DATA_TRACEPOINT_V",
@@ -13319,12 +13328,17 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 				SPIRV_CROSS_THROW("thread_index_in_simdgroup requires Metal 2.2 in fragment shaders.");
 			return "thread_index_in_simdgroup";
 		}
-		else
+		else if (execution.model == ExecutionModelKernel || execution.model == ExecutionModelGLCompute ||
+		         execution.model == ExecutionModelTessellationControl ||
+		         (execution.model == ExecutionModelVertex && msl_options.vertex_for_tessellation))
 		{
+			// We are generating a Metal kernel function.
 			if (!msl_options.supports_msl_version(2))
-				SPIRV_CROSS_THROW("Subgroup builtins require Metal 2.0.");
+				SPIRV_CROSS_THROW("Subgroup builtins in kernel functions require Metal 2.0.");
 			return msl_options.is_ios() ? "thread_index_in_quadgroup" : "thread_index_in_simdgroup";
 		}
+		else
+			SPIRV_CROSS_THROW("Subgroup builtins are not available in this type of function.");
 
 	case BuiltInSubgroupEqMask:
 	case BuiltInSubgroupGeMask:
