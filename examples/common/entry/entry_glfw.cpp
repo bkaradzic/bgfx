@@ -799,13 +799,11 @@ namespace entry
 
 	const Event* poll()
 	{
-		glfwPostEmptyEvent();
 		return s_ctx.m_eventQueue.poll();
 	}
 
 	const Event* poll(WindowHandle _handle)
 	{
-		glfwPostEmptyEvent();
 		return s_ctx.m_eventQueue.poll(_handle);
 	}
 
