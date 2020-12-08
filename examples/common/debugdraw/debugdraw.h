@@ -148,10 +148,10 @@ struct DebugDrawEncoder
 	void draw(GeometryHandle _handle);
 
 	///
-	void drawLineList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const uint16_t* _indices = NULL);
+	void drawLineList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const bgfx::TransientIndexType* _indices = NULL);
 
 	///
-	void drawTriList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const uint16_t* _indices = NULL);
+	void drawTriList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const bgfx::TransientIndexType* _indices = NULL);
 
 	///
 	void drawFrustum(const void* _viewProj);

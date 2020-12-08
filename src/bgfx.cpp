@@ -785,7 +785,7 @@ namespace bgfx
 		for (;yy < _mem.m_height;)
 		{
 			Vertex* vertex = (Vertex*)_blitter.m_vb->data;
-			uint16_t* indices = (uint16_t*)_blitter.m_ib->data;
+			TransientIndexType* indices = (TransientIndexType*)_blitter.m_ib->data;
 			uint32_t startVertex = 0;
 			uint32_t numIndices = 0;
 
@@ -821,12 +821,12 @@ namespace bgfx
 						bx::memCopy(vertex, vert, sizeof(vert) );
 						vertex += 4;
 
-						indices[0] = uint16_t(startVertex+0);
-						indices[1] = uint16_t(startVertex+1);
-						indices[2] = uint16_t(startVertex+2);
-						indices[3] = uint16_t(startVertex+2);
-						indices[4] = uint16_t(startVertex+3);
-						indices[5] = uint16_t(startVertex+0);
+						indices[0] = TransientIndexType(startVertex+0);
+						indices[1] = TransientIndexType(startVertex+1);
+						indices[2] = TransientIndexType(startVertex+2);
+						indices[3] = TransientIndexType(startVertex+2);
+						indices[4] = TransientIndexType(startVertex+3);
+						indices[5] = TransientIndexType(startVertex+0);
 
 						startVertex += 4;
 						indices += 6;
@@ -4162,11 +4162,11 @@ namespace bgfx
 		BX_ASSERT(NULL != _tib, "_tib can't be NULL");
 		BX_ASSERT(0 < _num, "Requesting 0 indices.");
 		s_ctx->allocTransientIndexBuffer(_tib, _num);
-		BX_ASSERT(_num == _tib->size/2
+		BX_ASSERT(_num == _tib->size/sizeof(TransientIndexType)
 			, "Failed to allocate transient index buffer (requested %d, available %d). "
 			  "Use bgfx::getAvailTransient* functions to ensure availability."
 			, _num
-			, _tib->size/2
+			, _tib->size/sizeof(TransientIndexType)
 			);
 	}
 

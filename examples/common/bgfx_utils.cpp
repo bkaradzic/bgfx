@@ -259,7 +259,7 @@ bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum
 	return bimg::imageParse(entry::getAllocator(), data, size, bimg::TextureFormat::Enum(_dstFormat) );
 }
 
-void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices)
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const bgfx::TransientIndexType* _indices, uint32_t _numIndices)
 {
 	struct PosTexcoord
 	{
@@ -282,7 +282,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _la
 
 	for (uint32_t ii = 0, num = _numIndices/3; ii < num; ++ii)
 	{
-		const uint16_t* indices = &_indices[ii*3];
+		const bgfx::TransientIndexType* indices = &_indices[ii*3];
 		uint32_t i0 = indices[0];
 		uint32_t i1 = indices[1];
 		uint32_t i2 = indices[2];
@@ -465,7 +465,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 
 				if (_ramcopy)
 				{
-					group.m_indices = (uint16_t*)BX_ALLOC(allocator, group.m_numIndices*2);
+					group.m_indices = (bgfx::TransientIndexType*)BX_ALLOC(allocator, group.m_numIndices*2);
 					bx::memCopy(group.m_indices, mem->data, mem->size);
 				}
 
@@ -492,7 +492,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 
 				if (_ramcopy)
 				{
-					group.m_indices = (uint16_t*)BX_ALLOC(allocator, group.m_numIndices*2);
+					group.m_indices = (bgfx::TransientIndexType*)BX_ALLOC(allocator, group.m_numIndices*2);
 					bx::memCopy(group.m_indices, mem->data, mem->size);
 				}
 

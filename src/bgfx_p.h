@@ -2090,18 +2090,18 @@ namespace bgfx
 
 		uint32_t getAvailTransientIndexBuffer(uint32_t _num)
 		{
-			uint32_t offset   = bx::strideAlign(m_iboffset, sizeof(uint16_t) );
-			uint32_t iboffset = offset + _num*sizeof(uint16_t);
+			uint32_t offset   = bx::strideAlign(m_iboffset, sizeof(TransientIndexType) );
+			uint32_t iboffset = offset + _num*sizeof(TransientIndexType);
 			iboffset = bx::min<uint32_t>(iboffset, g_caps.limits.transientIbSize);
-			uint32_t num = (iboffset-offset)/sizeof(uint16_t);
+			uint32_t num = (iboffset-offset)/sizeof(TransientIndexType);
 			return num;
 		}
 
 		uint32_t allocTransientIndexBuffer(uint32_t& _num)
 		{
-			uint32_t offset = bx::strideAlign(m_iboffset, sizeof(uint16_t) );
+			uint32_t offset = bx::strideAlign(m_iboffset, sizeof(TransientIndexType) );
 			uint32_t num    = getAvailTransientIndexBuffer(_num);
-			m_iboffset = offset + num*sizeof(uint16_t);
+			m_iboffset = offset + num*sizeof(TransientIndexType);
 			_num = num;
 
 			return offset;
@@ -2437,7 +2437,7 @@ namespace bgfx
 		void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
 			BX_ASSERT(UINT8_MAX != m_draw.m_streamMask, "bgfx::setVertexCount was already called for this draw call.");
-			const uint32_t numIndices = bx::min(_numIndices, _tib->size/2);
+			const uint32_t numIndices = bx::min(_numIndices, (uint32_t)(_tib->size/sizeof(TransientIndexType)));
 			m_draw.m_indexBuffer = _tib->handle;
 			m_draw.m_startIndex  = _tib->startIndex + _firstIndex;
 			m_draw.m_numIndices  = numIndices;
@@ -3676,7 +3676,7 @@ namespace bgfx
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicIndexBuffer);
 				cmdbuf.write(handle);
 				cmdbuf.write(_size);
-				uint16_t flags = BGFX_BUFFER_NONE;
+				uint16_t flags = sizeof(TransientIndexType) == sizeof(uint32_t) ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE;
 				cmdbuf.write(flags);
 
 				const uint32_t size = 0
@@ -3712,9 +3712,9 @@ namespace bgfx
 			TransientIndexBuffer& tib = *m_submit->m_transientIb;
 
 			_tib->data       = &tib.data[offset];
-			_tib->size       = _num * 2;
+			_tib->size       = _num * sizeof(TransientIndexType);
 			_tib->handle     = tib.handle;
-			_tib->startIndex = bx::strideAlign(offset, 2)/2;
+			_tib->startIndex = bx::strideAlign(offset, sizeof(TransientIndexType))/sizeof(TransientIndexType);
 		}
 
 		TransientVertexBuffer* createTransientVertexBuffer(uint32_t _size, const VertexLayout* _layout = NULL)

@@ -1604,7 +1604,7 @@ struct DebugDrawEncoderImpl
 		m_encoder->submit(m_viewId, program);
 	}
 
-	void draw(bool _lineList, uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+	void draw(bool _lineList, uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const bgfx::TransientIndexType* _indices)
 	{
 		flush();
 
@@ -1631,23 +1631,23 @@ struct DebugDrawEncoderImpl
 						, 0
 						, _indices
 						, _numIndices
-						, false
+						, sizeof(bgfx::TransientIndexType) == sizeof(uint32_t)
 						);
 
 					bgfx::allocTransientIndexBuffer(&tib, numIndices);
 					bgfx::topologyConvert(
 						  bgfx::TopologyConvert::TriListToLineList
 						, tib.data
-						, numIndices * sizeof(uint16_t)
+						, numIndices * sizeof(bgfx::TransientIndexType)
 						, _indices
 						, _numIndices
-						, false
+						, sizeof(bgfx::TransientIndexType) == sizeof(uint32_t)
 					);
 				}
 				else
 				{
 					bgfx::allocTransientIndexBuffer(&tib, numIndices);
-					bx::memCopy(tib.data, _indices, numIndices * sizeof(uint16_t) );
+					bx::memCopy(tib.data, _indices, numIndices * sizeof(bgfx::TransientIndexType) );
 				}
 
 				m_encoder->setIndexBuffer(&tib);
@@ -2171,7 +2171,7 @@ struct DebugDrawEncoderImpl
 
 				bgfx::TransientIndexBuffer tib;
 				bgfx::allocTransientIndexBuffer(&tib, m_indexPos);
-				bx::memCopy(tib.data, m_indices, m_indexPos * sizeof(uint16_t) );
+				bx::memCopy(tib.data, m_indices, m_indexPos * sizeof(bgfx::TransientIndexType) );
 
 				const Attrib& attrib = m_attrib[m_stack];
 
@@ -2484,12 +2484,12 @@ void DebugDrawEncoder::draw(GeometryHandle _handle)
 	DEBUG_DRAW_ENCODER(draw(_handle) );
 }
 
-void DebugDrawEncoder::drawLineList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+void DebugDrawEncoder::drawLineList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const bgfx::TransientIndexType* _indices)
 {
 	DEBUG_DRAW_ENCODER(draw(true, _numVertices, _vertices, _numIndices, _indices) );
 }
 
-void DebugDrawEncoder::drawTriList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+void DebugDrawEncoder::drawTriList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const bgfx::TransientIndexType* _indices)
 {
 	DEBUG_DRAW_ENCODER(draw(false, _numVertices, _vertices, _numIndices, _indices) );
 }

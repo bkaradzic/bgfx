@@ -813,6 +813,15 @@ namespace bgfx
 		uint16_t formats[TextureFormat::Count];
 	};
 
+#if !defined(BGFX_CONFIG_TRANSIENT_INDEX32)
+#define BGFX_CONFIG_TRANSIENT_INDEX32 0
+#endif // !defined(BGFX_CONFIG_TRANSIENT_INDEX32)
+#if BGFX_CONFIG_TRANSIENT_INDEX32
+	typedef uint32_t TransientIndexType;
+#else
+	typedef uint16_t TransientIndexType;
+#endif // BGFX_CONFIG_TRANSIENT_INDEX32
+
 	/// Transient index buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_transient_index_buffer_t`.
@@ -2442,7 +2451,8 @@ namespace bgfx
 	/// @param[in] _num Number of indices to allocate.
 	///
 	/// @remarks
-	///   Only 16-bit index buffer is supported.
+	///   Defaults to 16-bit index buffers.
+	///   For 32-bit index buffers: #define BGFX_CONFIG_TRANSIENT_INDEX32 1
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_transient_index_buffer`.
 	///
@@ -2472,7 +2482,8 @@ namespace bgfx
 	/// true.
 	///
 	/// @remarks
-	///   Only 16-bit index buffer is supported.
+	///   Defaults to 16-bit index buffers.
+	///   For 32-bit index buffers: #define BGFX_CONFIG_TRANSIENT_INDEX32 1
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_transient_buffers`.
 	///

@@ -216,7 +216,7 @@ namespace bgfx
 				return topologyConvertTriStripToTriList(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
 			}
 
-			return topologyConvertTriStripToTriList(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
+			return topologyConvertTriStripToTriList(_dst, _dstSize, (const TransientIndexType*)_indices, _numIndices);
 
 		case TopologyConvert::TriListFlipWinding:
 			if (_index32)
@@ -224,7 +224,7 @@ namespace bgfx
 				return topologyConvertTriListFlipWinding(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
 			}
 
-			return topologyConvertTriListFlipWinding(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
+			return topologyConvertTriListFlipWinding(_dst, _dstSize, (const TransientIndexType*)_indices, _numIndices);
 
 		case TopologyConvert::TriStripFlipWinding:
 			if (_index32)
@@ -232,7 +232,7 @@ namespace bgfx
 				return topologyConvertTriStripFlipWinding(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
 			}
 
-			return topologyConvertTriStripFlipWinding(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
+			return topologyConvertTriStripFlipWinding(_dst, _dstSize, (const TransientIndexType*)_indices, _numIndices);
 
 		case TopologyConvert::TriListToLineList:
 			if (NULL == _allocator)
@@ -245,7 +245,7 @@ namespace bgfx
 				return topologyConvertTriListToLineList<uint32_t, uint64_t>(_dst, _dstSize, (const uint32_t*)_indices, _numIndices, _allocator);
 			}
 
-			return topologyConvertTriListToLineList<uint16_t, uint32_t>(_dst, _dstSize, (const uint16_t*)_indices, _numIndices, _allocator);
+			return topologyConvertTriListToLineList<TransientIndexType, uint32_t>(_dst, _dstSize, (const TransientIndexType*)_indices, _numIndices, _allocator);
 
 		case TopologyConvert::LineStripToLineList:
 			if (_index32)
@@ -253,7 +253,7 @@ namespace bgfx
 				return topologyConvertLineStripToLineList(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
 			}
 
-			return topologyConvertLineStripToLineList(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
+			return topologyConvertLineStripToLineList(_dst, _dstSize, (const TransientIndexType*)_indices, _numIndices);
 
 		default:
 			break;

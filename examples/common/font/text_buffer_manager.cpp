@@ -114,7 +114,7 @@ public:
 	}
 
 	/// get a pointer to the index buffer to submit it to the graphic
-	const uint16_t* getIndexBuffer() const
+	const bgfx::TransientIndexType* getIndexBuffer() const
 	{
 		return m_indexBuffer;
 	}
@@ -128,7 +128,7 @@ public:
 	/// Size in bytes of an index.
 	uint32_t getIndexSize() const
 	{
-		return sizeof(uint16_t);
+		return sizeof(bgfx::TransientIndexType);
 	}
 
 	uint32_t getTextColor() const
@@ -194,7 +194,7 @@ private:
 	};
 
 	TextVertex* m_vertexBuffer;
-	uint16_t* m_indexBuffer;
+	bgfx::TransientIndexType* m_indexBuffer;
 	uint8_t* m_styleBuffer;
 
 	uint32_t m_indexCount;
@@ -218,7 +218,7 @@ TextBuffer::TextBuffer(FontManager* _fontManager)
 	, m_lineGap(0)
 	, m_fontManager(_fontManager)
 	, m_vertexBuffer(new TextVertex[MAX_BUFFERED_CHARACTERS * 4])
-	, m_indexBuffer(new uint16_t[MAX_BUFFERED_CHARACTERS * 6])
+	, m_indexBuffer(new bgfx::TransientIndexType[MAX_BUFFERED_CHARACTERS * 6])
 	, m_styleBuffer(new uint8_t[MAX_BUFFERED_CHARACTERS * 4])
 	, m_indexCount(0)
 	, m_lineStartIndex(0)
