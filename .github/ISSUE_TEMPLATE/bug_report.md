@@ -12,7 +12,11 @@ assignees: ''
 
 IMPORTANT: READ FIRST!
 
-If you have any questions please ask on Discord: https://discord.gg/9eMbv7J (documentation might help too: https://bkaradzic.github.io/bgfx/)
+If you have any questions please do not open issue, rather:
+
+ - If you have quick question, ask on Discord: https://discord.gg/9eMbv7J
+ - Ask in dicussions: https://github.com/bkaradzic/bgfx/discussions
+ - Search documentation: https://bkaradzic.github.io/bgfx/
 
 Issue tracker is **ONLY** used for reporting bugs. New features should be discussed on our Discord channel: https://discord.gg/9eMbv7J
 
