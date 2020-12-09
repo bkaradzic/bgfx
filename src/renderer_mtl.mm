@@ -1222,7 +1222,7 @@ namespace bgfx { namespace mtl
 				}
 			}
 
-			m_cmd.kick(true);
+			m_cmd.kick(true, BGFX_CONFIG_WAIT_FOR_FLIP);
 			m_commandBuffer = 0;
 		}
 
