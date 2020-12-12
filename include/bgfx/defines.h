@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(110)
+#define BGFX_API_VERSION UINT32_C(111)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -466,7 +466,7 @@
 #define BGFX_CAPS_COMPUTE                   UINT64_C(0x0000000000000004) //!< Compute shaders are supported.
 #define BGFX_CAPS_CONSERVATIVE_RASTER       UINT64_C(0x0000000000000008) //!< Conservative rasterization is supported.
 #define BGFX_CAPS_DRAW_INDIRECT             UINT64_C(0x0000000000000010) //!< Draw indirect is supported.
-#define BGFX_CAPS_FRAGMENT_DEPTH            UINT64_C(0x0000000000000020) //!< Fragment depth is accessible in fragment shader.
+#define BGFX_CAPS_FRAGMENT_DEPTH            UINT64_C(0x0000000000000020) //!< Fragment depth is available in fragment shader.
 #define BGFX_CAPS_FRAGMENT_ORDERING         UINT64_C(0x0000000000000040) //!< Fragment ordering is available in fragment shader.
 #define BGFX_CAPS_GRAPHICS_DEBUGGER         UINT64_C(0x0000000000000080) //!< Graphics debugger is present.
 #define BGFX_CAPS_HDR10                     UINT64_C(0x0000000000000100) //!< HDR10 rendering is supported.
@@ -488,6 +488,7 @@
 #define BGFX_CAPS_VERTEX_ATTRIB_HALF        UINT64_C(0x0000000001000000) //!< Vertex attribute half-float is supported.
 #define BGFX_CAPS_VERTEX_ATTRIB_UINT10      UINT64_C(0x0000000002000000) //!< Vertex attribute 10_10_10_2 is supported.
 #define BGFX_CAPS_VERTEX_ID                 UINT64_C(0x0000000004000000) //!< Rendering with VertexID only is supported.
+#define BGFX_CAPS_VIEWPORT_LAYER_ARRAY      UINT64_C(0x0000000008000000) //!< Viewport layer is available in vertex shader.
 /// All texture compare modes are supported.
 #define BGFX_CAPS_TEXTURE_COMPARE_ALL (0 \
 	| BGFX_CAPS_TEXTURE_COMPARE_RESERVED \

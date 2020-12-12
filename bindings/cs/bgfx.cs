@@ -1031,7 +1031,7 @@ public static partial class bgfx
 		DrawIndirect           = 0x0000000000000010,
 	
 		/// <summary>
-		/// Fragment depth is accessible in fragment shader.
+		/// Fragment depth is available in fragment shader.
 		/// </summary>
 		FragmentDepth          = 0x0000000000000020,
 	
@@ -1135,6 +1135,11 @@ public static partial class bgfx
 		/// Rendering with VertexID only is supported.
 		/// </summary>
 		VertexId               = 0x0000000004000000,
+	
+		/// <summary>
+		/// Viewport layer is available in vertex shader.
+		/// </summary>
+		ViewportLayerArray     = 0x0000000008000000,
 	
 		/// <summary>
 		/// All texture compare modes are supported.
@@ -2094,6 +2099,7 @@ public static partial class bgfx
 		public TextureHandle handle;
 		public ushort mip;
 		public ushort layer;
+		public ushort numLayers;
 		public byte resolve;
 	}
 	
@@ -2241,12 +2247,13 @@ public static partial class bgfx
 	///
 	/// <param name="_handle">Render target texture handle.</param>
 	/// <param name="_access">Access. See `Access::Enum`.</param>
-	/// <param name="_layer">Cubemap side or depth layer/slice.</param>
+	/// <param name="_layer">Cubemap side or depth layer/slice to use.</param>
+	/// <param name="_numLayers">Number of texture layer/slice(s) in array to use.</param>
 	/// <param name="_mip">Mip level.</param>
 	/// <param name="_resolve">Resolve flags. See: `BGFX_RESOLVE_*`</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_attachment_init", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, ushort _layer, ushort _mip, byte _resolve);
+	public static extern unsafe void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, ushort _layer, ushort _numLayers, ushort _mip, byte _resolve);
 	
 	/// <summary>
 	/// Start VertexLayout.

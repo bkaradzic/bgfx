@@ -17,11 +17,12 @@ version(BindBgfx_Static)
 	 * Params:
 	 * _handle = Render target texture handle.
 	 * _access = Access. See `Access::Enum`.
-	 * _layer = Cubemap side or depth layer/slice.
+	 * _layer = Cubemap side or depth layer/slice to use.
+	 * _numLayers = Number of texture layer/slice(s) in array to use.
 	 * _mip = Mip level.
 	 * _resolve = Resolve flags. See: `BGFX_RESOLVE_*`
 	 */
-	void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, ushort _layer, ushort _mip, byte _resolve);
+	void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, ushort _layer, ushort _numLayers, ushort _mip, byte _resolve);
 	
 	/**
 	 * Start VertexLayout.
@@ -2149,11 +2150,12 @@ else
 		 * Params:
 		 * _handle = Render target texture handle.
 		 * _access = Access. See `Access::Enum`.
-		 * _layer = Cubemap side or depth layer/slice.
+		 * _layer = Cubemap side or depth layer/slice to use.
+		 * _numLayers = Number of texture layer/slice(s) in array to use.
 		 * _mip = Mip level.
 		 * _resolve = Resolve flags. See: `BGFX_RESOLVE_*`
 		 */
-		alias da_bgfx_attachment_init = void function(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, ushort _layer, ushort _mip, byte _resolve);
+		alias da_bgfx_attachment_init = void function(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, ushort _layer, ushort _numLayers, ushort _mip, byte _resolve);
 		da_bgfx_attachment_init bgfx_attachment_init;
 		
 		/**

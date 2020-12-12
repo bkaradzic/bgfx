@@ -891,7 +891,8 @@ namespace bgfx
 		///
 		/// @param[in] _handle Render target texture handle.
 		/// @param[in] _access Access. See `Access::Enum`.
-		/// @param[in] _layer Cubemap side or depth layer/slice.
+		/// @param[in] _layer Cubemap side or depth layer/slice to use.
+		/// @param[in] _numLayers Number of texture layer/slice(s) in array to use.
 		/// @param[in] _mip Mip level.
 		/// @param[in] _resolve Resolve flags. See: `BGFX_RESOLVE_*`
 		///
@@ -899,6 +900,7 @@ namespace bgfx
 			  TextureHandle _handle
 			, Access::Enum _access = Access::Write
 			, uint16_t _layer = 0
+			, uint16_t _numLayers = 1
 			, uint16_t _mip = 0
 			, uint8_t _resolve = BGFX_RESOLVE_AUTO_GEN_MIPS
 			);
@@ -906,7 +908,8 @@ namespace bgfx
 		Access::Enum  access; //!< Attachement access. See `Access::Enum`.
 		TextureHandle handle; //!< Render target texture handle.
 		uint16_t mip;         //!< Mip level.
-		uint16_t layer;       //!< Cubemap side or depth layer/slice.
+		uint16_t layer;       //!< Cubemap side or depth layer/slice to use.
+		uint16_t numLayers;   //!< Number of texture layer/slice(s) in array to use.
 		uint8_t  resolve;     //!< Resolve flags. See: `BGFX_RESOLVE_*`
 	};
 

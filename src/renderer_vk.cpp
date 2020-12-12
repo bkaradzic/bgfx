@@ -836,7 +836,17 @@ VK_IMPORT_DEVICE
 		}
 	}
 
-	void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImage _image, VkImageAspectFlags _aspectMask, VkImageLayout _oldLayout, VkImageLayout _newLayout, uint32_t _levelCount, uint32_t _layerCount)
+	void setImageMemoryBarrier(
+		  VkCommandBuffer _commandBuffer
+		, VkImage _image
+		, VkImageAspectFlags _aspectMask
+		, VkImageLayout _oldLayout
+		, VkImageLayout _newLayout
+		, uint32_t _baseMipLevel
+		, uint32_t _levelCount
+		, uint32_t _baseArrayLayer
+		, uint32_t _layerCount
+		)
 	{
 		BX_ASSERT(true
 			&& _newLayout != VK_IMAGE_LAYOUT_UNDEFINED
@@ -943,9 +953,9 @@ VK_IMPORT_DEVICE
 		imb.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		imb.image = _image;
 		imb.subresourceRange.aspectMask     = _aspectMask;
-		imb.subresourceRange.baseMipLevel   = 0;
+		imb.subresourceRange.baseMipLevel   = _baseMipLevel;
 		imb.subresourceRange.levelCount     = _levelCount;
-		imb.subresourceRange.baseArrayLayer = 0;
+		imb.subresourceRange.baseArrayLayer = _baseArrayLayer;
 		imb.subresourceRange.layerCount     = _layerCount;
 		vkCmdPipelineBarrier(_commandBuffer
 			, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
@@ -1261,7 +1271,9 @@ VK_IMPORT_DEVICE
 				, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
 				, VK_IMAGE_LAYOUT_UNDEFINED
 				, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+				, 0
 				, 1
+				, 0
 				, 1
 				);
 
@@ -2618,25 +2630,29 @@ VK_IMPORT_DEVICE
 
 			VkCommandBuffer copyCmd = beginNewCommand();
 
-			bgfx::vk::setImageMemoryBarrier(
-				copyCmd
+			setImageMemoryBarrier(
+				  copyCmd
 				, dstImage
 				, texture.m_aspectMask
 				, VK_IMAGE_LAYOUT_UNDEFINED
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+				, 0
 				, 1
+				, 0
 				, 1
-			);
+				);
 
-			bgfx::vk::setImageMemoryBarrier(
-				copyCmd
+			setImageMemoryBarrier(
+				  copyCmd
 				, srcImage
 				, texture.m_aspectMask
 				, texture.m_currentImageLayout
 				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+				, 0
 				, 1
+				, 0
 				, 1
-			);
+				);
 
 			VkImageCopy ic;
 
@@ -2665,25 +2681,29 @@ VK_IMPORT_DEVICE
 			);
 
 			// Transition destination image to general layout, which is the required layout for mapping the image memory later on
-			bgfx::vk::setImageMemoryBarrier(
-				copyCmd
+			setImageMemoryBarrier(
+				  copyCmd
 				, dstImage
 				, texture.m_aspectMask
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 				, VK_IMAGE_LAYOUT_GENERAL
+				, 0
 				, 1
+				, 0
 				, 1
-			);
+				);
 
-			bgfx::vk::setImageMemoryBarrier(
-				copyCmd
+			setImageMemoryBarrier(
+				  copyCmd
 				, srcImage
 				, texture.m_aspectMask
 				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 				, texture.m_currentImageLayout
+				, 0
 				, 1
+				, 0
 				, 1
-			);
+				);
 
 			submitCommandAndWait(copyCmd);
 
@@ -2823,24 +2843,28 @@ VK_IMPORT_DEVICE
 			VkCommandBuffer copyCmd = beginNewCommand();
 
 			// Transition destination image to transfer destination layout
-			bgfx::vk::setImageMemoryBarrier(
+			setImageMemoryBarrier(
 				  copyCmd
 				, dstImage
 				, VK_IMAGE_ASPECT_COLOR_BIT
 				, VK_IMAGE_LAYOUT_UNDEFINED
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+				, 0
 				, 1
+				, 0
 				, 1
 				);
 
 			// Transition swapchain image from present to transfer source layout
-			bgfx::vk::setImageMemoryBarrier(
+			setImageMemoryBarrier(
 				  copyCmd
 				, srcImage
 				, VK_IMAGE_ASPECT_COLOR_BIT
 				, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+				, 0
 				, 1
+				, 0
 				, 1
 				);
 
@@ -2872,24 +2896,28 @@ VK_IMPORT_DEVICE
 				);
 
 			// Transition destination image to general layout, which is the required layout for mapping the image memory later on
-			bgfx::vk::setImageMemoryBarrier(
+			setImageMemoryBarrier(
 				  copyCmd
 				, dstImage
 				, VK_IMAGE_ASPECT_COLOR_BIT
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 				, VK_IMAGE_LAYOUT_GENERAL
+				, 0
 				, 1
+				, 0
 				, 1
 				);
 
 			// Transition back the swap chain image after the blit is done
-			bgfx::vk::setImageMemoryBarrier(
+			setImageMemoryBarrier(
 				  copyCmd
 				, srcImage
 				, VK_IMAGE_ASPECT_COLOR_BIT
 				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 				, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+				, 0
 				, 1
+				, 0
 				, 1
 				);
 
@@ -5968,7 +5996,9 @@ VK_DESTROY
 						, m_aspectMask
 						, VK_IMAGE_LAYOUT_UNDEFINED
 						, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+						, 0
 						, m_numMips
+						, 0
 						, m_numSides
 						);
 
@@ -6175,7 +6205,9 @@ VK_DESTROY
 					, m_aspectMask
 					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+					, 0
 					, i - 1
+					, 0
 					, 1
 					);
 
@@ -6210,7 +6242,9 @@ VK_DESTROY
 					, m_aspectMask
 					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 					, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+					, 0
 					, i - 1
+					, 0
 					, 1
 					);
 
@@ -6224,7 +6258,9 @@ VK_DESTROY
 				, m_aspectMask
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 				, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+				, 0
 				, m_numMips - 1
+				, 0
 				, 1
 				);
 
@@ -6266,7 +6302,9 @@ VK_DESTROY
 			, m_aspectMask
 			, m_currentImageLayout
 			, newImageLayout
+			, 0
 			, m_numMips
+			, 0
 			, m_numSides
 			);
 
@@ -6560,12 +6598,17 @@ VK_DESTROY
 		m_commandBuffer = m_commandBuffers[m_backBufferColorIdx];
 		VK_CHECK(vkBeginCommandBuffer(m_commandBuffer, &cbbi) );
 
-		setImageMemoryBarrier(m_commandBuffer
+		setImageMemoryBarrier(
+			  m_commandBuffer
 			, m_backBufferColorImage[m_backBufferColorIdx]
 			, VK_IMAGE_ASPECT_COLOR_BIT
 			, m_backBufferColorImageLayout[m_backBufferColorIdx]
 			, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-			, 1, 1);
+			, 0
+			, 1
+			, 0
+			, 1
+			);
 		m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkRenderPassBeginInfo rpbi;
@@ -7432,7 +7475,9 @@ BX_UNUSED(presentMin, presentMax);
 			, VK_IMAGE_ASPECT_COLOR_BIT
 			, m_backBufferColorImageLayout[m_backBufferColorIdx]
 			, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+			, 0
 			, 1
+			, 0
 			, 1
 			);
 		m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;

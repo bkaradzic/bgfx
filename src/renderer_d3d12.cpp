@@ -5349,7 +5349,7 @@ namespace bgfx { namespace d3d12
 								{
 									dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
 									dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
-									dsvDesc.Texture2DMSArray.ArraySize       = 1;
+									dsvDesc.Texture2DMSArray.ArraySize       = at.numLayers;
 								}
 								else
 								{
@@ -5362,7 +5362,7 @@ namespace bgfx { namespace d3d12
 								{
 									dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 									dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
-									dsvDesc.Texture2DArray.ArraySize       = 1;
+									dsvDesc.Texture2DArray.ArraySize       = at.numLayers;
 									dsvDesc.Texture2DArray.MipSlice        = at.mip;
 								}
 								else
@@ -5377,14 +5377,14 @@ namespace bgfx { namespace d3d12
 							if (1 < msaa.Count)
 							{
 								dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-								dsvDesc.Texture2DMSArray.ArraySize       = 1;
 								dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
+								dsvDesc.Texture2DMSArray.ArraySize       = at.numLayers;
 							}
 							else
 							{
 								dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-								dsvDesc.Texture2DArray.ArraySize       = 1;
 								dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
+								dsvDesc.Texture2DArray.ArraySize       = at.numLayers;
 								dsvDesc.Texture2DArray.MipSlice        = at.mip;
 							}
 							break;
@@ -5413,7 +5413,7 @@ namespace bgfx { namespace d3d12
 								{
 									desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
 									desc.Texture2DMSArray.FirstArraySlice = at.layer;
-									desc.Texture2DMSArray.ArraySize       = 1;
+									desc.Texture2DMSArray.ArraySize       = at.numLayers;
 								}
 								else
 								{
@@ -5426,7 +5426,7 @@ namespace bgfx { namespace d3d12
 								{
 									desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 									desc.Texture2DArray.FirstArraySlice = at.layer;
-									desc.Texture2DArray.ArraySize       = 1;
+									desc.Texture2DArray.ArraySize       = at.numLayers;
 									desc.Texture2DArray.MipSlice        = at.mip;
 									desc.Texture2DArray.PlaneSlice      = 0;
 								}
@@ -5443,14 +5443,14 @@ namespace bgfx { namespace d3d12
 							if (1 < msaa.Count)
 							{
 								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-								desc.Texture2DMSArray.ArraySize       = 1;
 								desc.Texture2DMSArray.FirstArraySlice = at.layer;
+								desc.Texture2DMSArray.ArraySize       = at.numLayers;
 							}
 							else
 							{
 								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-								desc.Texture2DArray.ArraySize       = 1;
 								desc.Texture2DArray.FirstArraySlice = at.layer;
+								desc.Texture2DArray.ArraySize       = at.numLayers;
 								desc.Texture2DArray.MipSlice        = at.mip;
 								desc.Texture2DArray.PlaneSlice      = 0;
 							}
@@ -5458,9 +5458,9 @@ namespace bgfx { namespace d3d12
 
 						case TextureD3D12::Texture3D:
 							desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
-							desc.Texture3D.MipSlice = at.mip;
-							desc.Texture3D.WSize = 1;
+							desc.Texture3D.MipSlice    = at.mip;
 							desc.Texture3D.FirstWSlice = at.layer;
+							desc.Texture3D.WSize       = at.numLayers;
 							break;
 						}
 

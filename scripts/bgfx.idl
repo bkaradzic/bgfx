@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(110)
+version(111)
 
 typedef "bool"
 typedef "char"
@@ -369,7 +369,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.Compute                --- Compute shaders are supported.
 	.ConservativeRaster     --- Conservative rasterization is supported.
 	.DrawIndirect           --- Draw indirect is supported.
-	.FragmentDepth          --- Fragment depth is accessible in fragment shader.
+	.FragmentDepth          --- Fragment depth is available in fragment shader.
 	.FragmentOrdering       --- Fragment ordering is available in fragment shader.
 	.GraphicsDebugger       --- Graphics debugger is present.
 	.Hdr10                  --- HDR10 rendering is supported.
@@ -391,6 +391,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.VertexAttribHalf       --- Vertex attribute half-float is supported.
 	.VertexAttribUint10     --- Vertex attribute 10_10_10_2 is supported.
 	.VertexId               --- Rendering with VertexID only is supported.
+	.ViewportLayerArray     --- Viewport layer is available in vertex shader.
 	.TextureCompareAll { "TextureCompareReserved", "TextureCompareLequal" } --- All texture compare modes are supported.
 	()
 
@@ -853,11 +854,12 @@ struct.UniformInfo
 
 --- Frame buffer texture attachment info.
 struct.Attachment { shortname }
-	.access  "Access::Enum"  --- Attachement access. See `Access::Enum`.
-	.handle  "TextureHandle" --- Render target texture handle.
-	.mip     "uint16_t"      --- Mip level.
-	.layer   "uint16_t"      --- Cubemap side or depth layer/slice.
-	.resolve "uint8_t"       --- Resolve flags. See: `BGFX_RESOLVE_*`
+	.access    "Access::Enum"  --- Attachement access. See `Access::Enum`.
+	.handle    "TextureHandle" --- Render target texture handle.
+	.mip       "uint16_t"      --- Mip level.
+	.layer     "uint16_t"      --- Cubemap side or depth layer/slice to use.
+	.numLayers "uint16_t"      --- Number of texture layer/slice(s) in array to use.
+	.resolve   "uint8_t"       --- Resolve flags. See: `BGFX_RESOLVE_*`
 
 --- Init attachment.
 func.Attachment.init
@@ -865,8 +867,10 @@ func.Attachment.init
 	.handle "TextureHandle" --- Render target texture handle.
 	.access "Access::Enum"  --- Access. See `Access::Enum`.
 	 { default = "Access::Write" }
-	.layer "uint16_t"       --- Cubemap side or depth layer/slice.
+	.layer "uint16_t"       --- Cubemap side or depth layer/slice to use.
 	 { default = 0 }
+	.numLayers "uint16_t"   --- Number of texture layer/slice(s) in array to use.
+	 { default = 1 }
 	.mip "uint16_t"         --- Mip level.
 	 { default = 0 }
 	.resolve "uint8_t"      --- Resolve flags. See: `BGFX_RESOLVE_*`
