@@ -19,7 +19,7 @@ extern "C"
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 17
+#define BGFX_SHADERC_VERSION_MINOR 18
 
 namespace bgfx
 {
@@ -87,6 +87,16 @@ namespace bgfx
 	{
 		"gl_VertexID",
 		"gl_InstanceID",
+		NULL
+	};
+
+	// To be use from vertex program require:
+	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_shader_viewport_layer_array.txt
+	// DX11 11_1 feature level
+	static const char* s_ARB_shader_viewport_layer_array[] =
+	{
+		"gl_ViewportIndex",
+		"gl_Layer",
 		NULL
 	};
 
@@ -896,18 +906,18 @@ namespace bgfx
 			  "           orbis\n"
 			  "           osx\n"
 			  "           windows\n"
-				"      -p, --profile <profile>   Shader model (default GLSL).\n"
-				"           s_3\n"
-				"           s_4\n"
-				"           s_4_0_level\n"
-				"           s_5\n"
-				"           metal\n"
-				"           pssl\n"
-				"           spirv                Alias for spirv10-10. \n"
-				"           spirv10-10\n"
-				"           spirv13-11\n"
-				"           spirv14-11\n"
-				"           spirv15-12\n"
+			  "      -p, --profile <profile>   Shader model (default GLSL).\n"
+			  "           s_3\n"
+			  "           s_4\n"
+			  "           s_4_0_level\n"
+			  "           s_5\n"
+			  "           metal\n"
+			  "           pssl\n"
+			  "           spirv                Alias for spirv10-10.\n"
+			  "           spirv10-10\n"
+			  "           spirv13-11\n"
+			  "           spirv14-11\n"
+			  "           spirv15-12\n"
 			  "      --preprocess              Preprocess only.\n"
 			  "      --define <defines>        Add defines to preprocessor (semicolon separated).\n"
 			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
@@ -1822,8 +1832,10 @@ namespace bgfx
 					}
 					else if ('v' == _options.shaderType)
 					{
-						const bool hasVertexId    = !bx::strFind(input, "gl_VertexID").isEmpty();
-						const bool hasInstanceId  = !bx::strFind(input, "gl_InstanceID").isEmpty();
+						const bool hasVertexId   = !bx::strFind(input, "gl_VertexID").isEmpty();
+						const bool hasInstanceId = !bx::strFind(input, "gl_InstanceID").isEmpty();
+						const bool hasViewportId = !bx::strFind(input, "gl_ViewportIndex").isEmpty();
+						const bool hasLayerId    = !bx::strFind(input, "gl_Layer").isEmpty();
 
 						bx::StringView brace = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!brace.isEmpty() )
@@ -1841,6 +1853,7 @@ namespace bgfx
 							"\tvec4 gl_Position : SV_POSITION;\n"
 							"#define gl_Position _varying_.gl_Position\n"
 							);
+
 						for (InOut::const_iterator it = shaderOutputs.begin(), itEnd = shaderOutputs.end(); it != itEnd; ++it)
 						{
 							VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
@@ -1861,6 +1874,39 @@ namespace bgfx
 									);
 							}
 						}
+
+						if (hasViewportId)
+						{
+							if (d3d > 9)
+							{
+								preprocessor.writef(
+									"\tuint gl_ViewportIndex : SV_ViewportArrayIndex;\n"
+									"#define gl_ViewportIndex _varying_.gl_ViewportIndex\n"
+									);
+							}
+							else
+							{
+								bx::printf("gl_ViewportIndex builtin is not supported by this D3D9 HLSL.\n");
+								return false;
+							}
+						}
+
+						if (hasLayerId)
+						{
+							if (d3d > 9)
+							{
+								preprocessor.writef(
+									"\tuint gl_Layer : SV_RenderTargetArrayIndex;\n"
+									"#define gl_Layer _varying_.gl_Layer\n"
+									);
+							}
+							else
+							{
+								bx::printf("gl_Layer builtin is not supported by this D3D9 HLSL.\n");
+								return false;
+							}
+						}
+
 						preprocessor.writef(
 							"};\n"
 							);
@@ -2023,12 +2069,13 @@ namespace bgfx
 									&& !bx::findIdentifierMatch(input, s_ARB_gpu_shader5).isEmpty()
 									;
 
-								const bool usesInstanceID   = !bx::findIdentifierMatch(input, "gl_InstanceID").isEmpty();
-								const bool usesGpuShader4   = !bx::findIdentifierMatch(input, s_EXT_gpu_shader4).isEmpty();
-								const bool usesTexelFetch   = !bx::findIdentifierMatch(input, s_texelFetch).isEmpty();
-								const bool usesTextureMS    = !bx::findIdentifierMatch(input, s_ARB_texture_multisample).isEmpty();
-								const bool usesTextureArray = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
-								const bool usesPacking      = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
+								const bool usesInstanceID         = !bx::findIdentifierMatch(input, "gl_InstanceID").isEmpty();
+								const bool usesGpuShader4         = !bx::findIdentifierMatch(input, s_EXT_gpu_shader4).isEmpty();
+								const bool usesTexelFetch         = !bx::findIdentifierMatch(input, s_texelFetch).isEmpty();
+								const bool usesTextureMS          = !bx::findIdentifierMatch(input, s_ARB_texture_multisample).isEmpty();
+								const bool usesTextureArray       = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
+								const bool usesPacking            = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
+								const bool usesViewportLayerArray = !bx::findIdentifierMatch(input, s_ARB_shader_viewport_layer_array).isEmpty();
 
 								if (0 == essl)
 								{
@@ -2052,6 +2099,13 @@ namespace bgfx
 									{
 										bx::stringPrintf(code
 											, "#extension GL_ARB_draw_instanced : enable\n"
+											);
+									}
+
+									if (usesViewportLayerArray)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_ARB_shader_viewport_layer_array : enable\n"
 											);
 									}
 
