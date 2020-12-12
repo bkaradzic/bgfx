@@ -261,8 +261,8 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 
 	init();
 
-	m_layers = new PackedLayer[24];
-	for (int ii = 0; ii < 24; ++ii)
+	m_layers = new PackedLayer[6];
+	for (int ii = 0; ii < 6; ++ii)
 	{
 		m_layers[ii].packer.init(_textureSize, _textureSize);
 	}
@@ -279,7 +279,7 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 }
 
 Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _regionCount, const uint8_t* _regionBuffer, uint16_t _maxRegionsCount)
-	: m_usedLayers(24)
+	: m_usedLayers(6)
 	, m_usedFaces(6)
 	, m_textureSize(_textureSize)
 	, m_regionCount(_regionCount)
@@ -366,8 +366,9 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 			return UINT16_MAX;
 		}
 
-		for (int ii = 0; ii < _type; ++ii)
+		//for (int ii = 0; ii < _type; ++ii)
 		{
+			int ii = 0;
 			AtlasRegion& region = m_layers[idx + ii].faceRegion;
 			region.x = 0;
 			region.y = 0;
@@ -376,7 +377,7 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 			region.setMask(_type, m_usedFaces, ii);
 		}
 
-		m_usedLayers += _type;
+		m_usedLayers++;
 		m_usedFaces++;
 
 		if (!m_layers[idx].packer.addRectangle(_width + 1, _height + 1, xx, yy) )
