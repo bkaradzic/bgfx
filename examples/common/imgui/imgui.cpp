@@ -101,8 +101,37 @@ struct OcornutImguiContext
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
 			bx::memCopy(verts, drawList->VtxBuffer.begin(), numVertices * sizeof(ImDrawVert) );
 
-			ImDrawIdx* indices = (ImDrawIdx*)tib.data;
-			bx::memCopy(indices, drawList->IdxBuffer.begin(), numIndices * sizeof(ImDrawIdx) );
+			bgfx::TransientIndexType* indices = (bgfx::TransientIndexType*)tib.data;
+			size_t u16Size = sizeof(ImU16);
+			if (sizeof(ImDrawIdx) == u16Size)
+			{
+				if (sizeof(bgfx::TransientIndexType) == u16Size)
+				{
+					bx::memCopy(indices, drawList->IdxBuffer.begin(), numIndices * sizeof(ImDrawIdx) );
+				}
+				else
+				{
+					for (uint32_t index = 0; index < numIndices; ++index)
+					{
+						indices[index] = (bgfx::TransientIndexType)drawList->IdxBuffer[index];
+					}
+				}
+			}
+			else
+			{
+				size_t u32Size = sizeof(uint32_t);
+				if (sizeof(bgfx::TransientIndexType) == u32Size)
+				{
+					bx::memCopy(indices, drawList->IdxBuffer.begin(), numIndices * sizeof(ImDrawIdx) );
+				}
+				else
+				{
+					for (uint32_t index = 0; index < numIndices; ++index)
+					{
+						indices[index] = (bgfx::TransientIndexType)drawList->IdxBuffer[index];
+					}
+				}
+			}
 
 			uint32_t offset = 0;
 			for (const ImDrawCmd* cmd = drawList->CmdBuffer.begin(), *cmdEnd = drawList->CmdBuffer.end(); cmd != cmdEnd; ++cmd)

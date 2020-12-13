@@ -115,7 +115,7 @@ static DebugShapeVertex s_quadVertices[4] =
 
 };
 
-static const uint16_t s_quadIndices[6] =
+static const bgfx::TransientIndexType s_quadIndices[6] =
 {
 	0, 1, 2,
 	1, 3, 2,
@@ -133,7 +133,7 @@ static DebugShapeVertex s_cubeVertices[8] =
 	{ 1.0f, -1.0f, -1.0f, { 0, 0, 0, 0 } },
 };
 
-static const uint16_t s_cubeIndices[36] =
+static const bgfx::TransientIndexType s_cubeIndices[36] =
 {
 	0, 1, 2, // 0
 	1, 3, 2,
@@ -641,7 +641,7 @@ struct DebugDrawShared
 		m_texture  = bgfx::createTexture2D(SPRITE_TEXTURE_SIZE, SPRITE_TEXTURE_SIZE, false, 1, bgfx::TextureFormat::BGRA8);
 
 		void* vertices[DebugMesh::Count] = {};
-		uint16_t* indices[DebugMesh::Count] = {};
+		bgfx::TransientIndexType* indices[DebugMesh::Count] = {};
 		uint16_t stride = DebugShapeVertex::ms_layout.getStride();
 
 		uint32_t startVertex = 0;
@@ -659,10 +659,10 @@ struct DebugDrawShared
 			bx::memSet(vertices[id], 0, numVertices*stride);
 			genSphere(tess, vertices[id], stride);
 
-			uint16_t* trilist = (uint16_t*)BX_ALLOC(m_allocator, numIndices*sizeof(uint16_t) );
+			bgfx::TransientIndexType* trilist = (bgfx::TransientIndexType*)BX_ALLOC(m_allocator, numIndices*sizeof(bgfx::TransientIndexType) );
 			for (uint32_t ii = 0; ii < numIndices; ++ii)
 			{
-				trilist[ii] = uint16_t(ii);
+				trilist[ii] = bgfx::TransientIndexType(ii);
 			}
 
 			uint32_t numLineListIndices = bgfx::topologyConvert(
@@ -671,19 +671,19 @@ struct DebugDrawShared
 				, 0
 				, trilist
 				, numIndices
-				, false
+				, sizeof(bgfx::TransientIndexType) == sizeof(uint32_t)
 				);
-			indices[id] = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
-			uint16_t* indicesOut = indices[id];
-			bx::memCopy(indicesOut, trilist, numIndices*sizeof(uint16_t) );
+			indices[id] = (bgfx::TransientIndexType*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(bgfx::TransientIndexType) );
+			bgfx::TransientIndexType* indicesOut = indices[id];
+			bx::memCopy(indicesOut, trilist, numIndices*sizeof(bgfx::TransientIndexType) );
 
 			bgfx::topologyConvert(
 				  bgfx::TopologyConvert::TriListToLineList
 				, &indicesOut[numIndices]
-				, numLineListIndices*sizeof(uint16_t)
+				, numLineListIndices*sizeof(bgfx::TransientIndexType)
 				, trilist
 				, numIndices
-				, false
+				, sizeof(bgfx::TransientIndexType) == sizeof(uint32_t)
 				);
 
 			m_mesh[id].m_startVertex = startVertex;
@@ -711,11 +711,11 @@ struct DebugDrawShared
 			const uint32_t numLineListIndices = num*4;
 
 			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
-			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
-			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			indices[id]  = (bgfx::TransientIndexType*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(bgfx::TransientIndexType) );
+			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(bgfx::TransientIndexType) );
 
 			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
-			uint16_t* index = indices[id];
+			bgfx::TransientIndexType* index = indices[id];
 
 			vertex[num].m_x = 0.0f;
 			vertex[num].m_y = 0.0f;
@@ -734,19 +734,19 @@ struct DebugDrawShared
 				vertex[ii].m_z = xy[0];
 				vertex[ii].m_indices[0] = 0;
 
-				index[ii*3+0] = uint16_t(num);
-				index[ii*3+1] = uint16_t( (ii+1)%num);
-				index[ii*3+2] = uint16_t(ii);
+				index[ii*3+0] = bgfx::TransientIndexType(num);
+				index[ii*3+1] = bgfx::TransientIndexType( (ii+1)%num);
+				index[ii*3+2] = bgfx::TransientIndexType(ii);
 
 				index[num*3+ii*3+0] = 0;
-				index[num*3+ii*3+1] = uint16_t(ii);
-				index[num*3+ii*3+2] = uint16_t( (ii+1)%num);
+				index[num*3+ii*3+1] = bgfx::TransientIndexType(ii);
+				index[num*3+ii*3+2] = bgfx::TransientIndexType( (ii+1)%num);
 
-				index[numIndices+ii*2+0] = uint16_t(ii);
-				index[numIndices+ii*2+1] = uint16_t(num);
+				index[numIndices+ii*2+0] = bgfx::TransientIndexType(ii);
+				index[numIndices+ii*2+1] = bgfx::TransientIndexType(num);
 
-				index[numIndices+num*2+ii*2+0] = uint16_t(ii);
-				index[numIndices+num*2+ii*2+1] = uint16_t( (ii+1)%num);
+				index[numIndices+num*2+ii*2+0] = bgfx::TransientIndexType(ii);
+				index[numIndices+num*2+ii*2+1] = bgfx::TransientIndexType( (ii+1)%num);
 			}
 
 			m_mesh[id].m_startVertex = startVertex;
@@ -772,11 +772,11 @@ struct DebugDrawShared
 			const uint32_t numLineListIndices = num*6;
 
 			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
-			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
-			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			indices[id]  = (bgfx::TransientIndexType*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(bgfx::TransientIndexType) );
+			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(bgfx::TransientIndexType) );
 
 			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
-			uint16_t* index = indices[id];
+			bgfx::TransientIndexType* index = indices[id];
 
 			for (uint32_t ii = 0; ii < num; ++ii)
 			{
@@ -795,28 +795,28 @@ struct DebugDrawShared
 				vertex[ii+num].m_z = xy[0];
 				vertex[ii+num].m_indices[0] = 1;
 
-				index[ii*6+0] = uint16_t(ii+num);
-				index[ii*6+1] = uint16_t( (ii+1)%num);
-				index[ii*6+2] = uint16_t(ii);
-				index[ii*6+3] = uint16_t(ii+num);
-				index[ii*6+4] = uint16_t( (ii+1)%num+num);
-				index[ii*6+5] = uint16_t( (ii+1)%num);
+				index[ii*6+0] = bgfx::TransientIndexType(ii+num);
+				index[ii*6+1] = bgfx::TransientIndexType( (ii+1)%num);
+				index[ii*6+2] = bgfx::TransientIndexType(ii);
+				index[ii*6+3] = bgfx::TransientIndexType(ii+num);
+				index[ii*6+4] = bgfx::TransientIndexType( (ii+1)%num+num);
+				index[ii*6+5] = bgfx::TransientIndexType( (ii+1)%num);
 
-				index[num*6+ii*6+0] = uint16_t(0);
-				index[num*6+ii*6+1] = uint16_t(ii);
-				index[num*6+ii*6+2] = uint16_t( (ii+1)%num);
-				index[num*6+ii*6+3] = uint16_t(num);
-				index[num*6+ii*6+4] = uint16_t( (ii+1)%num+num);
-				index[num*6+ii*6+5] = uint16_t(ii+num);
+				index[num*6+ii*6+0] = bgfx::TransientIndexType(0);
+				index[num*6+ii*6+1] = bgfx::TransientIndexType(ii);
+				index[num*6+ii*6+2] = bgfx::TransientIndexType( (ii+1)%num);
+				index[num*6+ii*6+3] = bgfx::TransientIndexType(num);
+				index[num*6+ii*6+4] = bgfx::TransientIndexType( (ii+1)%num+num);
+				index[num*6+ii*6+5] = bgfx::TransientIndexType(ii+num);
 
-				index[numIndices+ii*2+0] = uint16_t(ii);
-				index[numIndices+ii*2+1] = uint16_t(ii+num);
+				index[numIndices+ii*2+0] = bgfx::TransientIndexType(ii);
+				index[numIndices+ii*2+1] = bgfx::TransientIndexType(ii+num);
 
-				index[numIndices+num*2+ii*2+0] = uint16_t(ii);
-				index[numIndices+num*2+ii*2+1] = uint16_t( (ii+1)%num);
+				index[numIndices+num*2+ii*2+0] = bgfx::TransientIndexType(ii);
+				index[numIndices+num*2+ii*2+1] = bgfx::TransientIndexType( (ii+1)%num);
 
-				index[numIndices+num*4+ii*2+0] = uint16_t(num + ii);
-				index[numIndices+num*4+ii*2+1] = uint16_t(num + (ii+1)%num);
+				index[numIndices+num*4+ii*2+0] = bgfx::TransientIndexType(num + ii);
+				index[numIndices+num*4+ii*2+1] = bgfx::TransientIndexType(num + (ii+1)%num);
 			}
 
 			m_mesh[id].m_startVertex = startVertex;
@@ -842,11 +842,11 @@ struct DebugDrawShared
 			const uint32_t numLineListIndices = num*6;
 
 			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
-			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
-			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			indices[id]  = (bgfx::TransientIndexType*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(bgfx::TransientIndexType) );
+			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(bgfx::TransientIndexType) );
 
 			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
-			uint16_t* index = indices[id];
+			bgfx::TransientIndexType* index = indices[id];
 
 			for (uint32_t ii = 0; ii < num; ++ii)
 			{
@@ -865,28 +865,28 @@ struct DebugDrawShared
 				vertex[ii+num].m_z = xy[0];
 				vertex[ii+num].m_indices[0] = 1;
 
-				index[ii*6+0] = uint16_t(ii+num);
-				index[ii*6+1] = uint16_t( (ii+1)%num);
-				index[ii*6+2] = uint16_t(ii);
-				index[ii*6+3] = uint16_t(ii+num);
-				index[ii*6+4] = uint16_t( (ii+1)%num+num);
-				index[ii*6+5] = uint16_t( (ii+1)%num);
+				index[ii*6+0] = bgfx::TransientIndexType(ii+num);
+				index[ii*6+1] = bgfx::TransientIndexType( (ii+1)%num);
+				index[ii*6+2] = bgfx::TransientIndexType(ii);
+				index[ii*6+3] = bgfx::TransientIndexType(ii+num);
+				index[ii*6+4] = bgfx::TransientIndexType( (ii+1)%num+num);
+				index[ii*6+5] = bgfx::TransientIndexType( (ii+1)%num);
 
-//				index[num*6+ii*6+0] = uint16_t(0);
-//				index[num*6+ii*6+1] = uint16_t(ii);
-//				index[num*6+ii*6+2] = uint16_t( (ii+1)%num);
-//				index[num*6+ii*6+3] = uint16_t(num);
-//				index[num*6+ii*6+4] = uint16_t( (ii+1)%num+num);
-//				index[num*6+ii*6+5] = uint16_t(ii+num);
+//				index[num*6+ii*6+0] = bgfx::TransientIndexType(0);
+//				index[num*6+ii*6+1] = bgfx::TransientIndexType(ii);
+//				index[num*6+ii*6+2] = bgfx::TransientIndexType( (ii+1)%num);
+//				index[num*6+ii*6+3] = bgfx::TransientIndexType(num);
+//				index[num*6+ii*6+4] = bgfx::TransientIndexType( (ii+1)%num+num);
+//				index[num*6+ii*6+5] = bgfx::TransientIndexType(ii+num);
 
-				index[numIndices+ii*2+0] = uint16_t(ii);
-				index[numIndices+ii*2+1] = uint16_t(ii+num);
+				index[numIndices+ii*2+0] = bgfx::TransientIndexType(ii);
+				index[numIndices+ii*2+1] = bgfx::TransientIndexType(ii+num);
 
-				index[numIndices+num*2+ii*2+0] = uint16_t(ii);
-				index[numIndices+num*2+ii*2+1] = uint16_t( (ii+1)%num);
+				index[numIndices+num*2+ii*2+0] = bgfx::TransientIndexType(ii);
+				index[numIndices+num*2+ii*2+1] = bgfx::TransientIndexType( (ii+1)%num);
 
-				index[numIndices+num*4+ii*2+0] = uint16_t(num + ii);
-				index[numIndices+num*4+ii*2+1] = uint16_t(num + (ii+1)%num);
+				index[numIndices+num*4+ii*2+0] = bgfx::TransientIndexType(num + ii);
+				index[numIndices+num*4+ii*2+1] = bgfx::TransientIndexType(num + (ii+1)%num);
 			}
 
 			m_mesh[id].m_startVertex = startVertex;
@@ -919,7 +919,7 @@ struct DebugDrawShared
 		startIndex  += m_mesh[DebugMesh::Cube].m_numIndices[0];
 
 		const bgfx::Memory* vb = bgfx::alloc(startVertex*stride);
-		const bgfx::Memory* ib = bgfx::alloc(startIndex*sizeof(uint16_t) );
+		const bgfx::Memory* ib = bgfx::alloc(startIndex*sizeof(bgfx::TransientIndexType) );
 
 		for (uint32_t mesh = DebugMesh::Sphere0; mesh < DebugMesh::Quad; ++mesh)
 		{
@@ -929,9 +929,9 @@ struct DebugDrawShared
 				 , m_mesh[id].m_numVertices*stride
 				 );
 
-			bx::memCopy(&ib->data[m_mesh[id].m_startIndex[0] * sizeof(uint16_t)]
+			bx::memCopy(&ib->data[m_mesh[id].m_startIndex[0] * sizeof(bgfx::TransientIndexType)]
 				 , indices[id]
-				 , (m_mesh[id].m_numIndices[0]+m_mesh[id].m_numIndices[1])*sizeof(uint16_t)
+				 , (m_mesh[id].m_numIndices[0]+m_mesh[id].m_numIndices[1])*sizeof(bgfx::TransientIndexType)
 				 );
 
 			BX_FREE(m_allocator, vertices[id]);
@@ -943,7 +943,7 @@ struct DebugDrawShared
 			, sizeof(s_quadVertices)
 			);
 
-		bx::memCopy(&ib->data[m_mesh[DebugMesh::Quad].m_startIndex[0] * sizeof(uint16_t)]
+		bx::memCopy(&ib->data[m_mesh[DebugMesh::Quad].m_startIndex[0] * sizeof(bgfx::TransientIndexType)]
 			, s_quadIndices
 			, sizeof(s_quadIndices)
 			);
@@ -953,13 +953,13 @@ struct DebugDrawShared
 			, sizeof(s_cubeVertices)
 			);
 
-		bx::memCopy(&ib->data[m_mesh[DebugMesh::Cube].m_startIndex[0] * sizeof(uint16_t)]
+		bx::memCopy(&ib->data[m_mesh[DebugMesh::Cube].m_startIndex[0] * sizeof(bgfx::TransientIndexType)]
 			, s_cubeIndices
 			, sizeof(s_cubeIndices)
 			);
 
 		m_vbh = bgfx::createVertexBuffer(vb, DebugShapeVertex::ms_layout);
-		m_ibh = bgfx::createIndexBuffer(ib);
+		m_ibh = bgfx::createIndexBuffer(ib, sizeof(bgfx::TransientIndexType) == sizeof(uint32_t) ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE);
 	}
 
 	void shutdown()
@@ -2209,10 +2209,10 @@ struct DebugDrawEncoderImpl
 
 				bgfx::TransientIndexBuffer tib;
 				bgfx::allocTransientIndexBuffer(&tib, numIndices);
-				uint16_t* indices = (uint16_t*)tib.data;
-				for (uint16_t ii = 0, num = m_posQuad/4; ii < num; ++ii)
+				bgfx::TransientIndexType* indices = (bgfx::TransientIndexType*)tib.data;
+				for (bgfx::TransientIndexType ii = 0, num = m_posQuad/4; ii < num; ++ii)
 				{
-					uint16_t startVertex = ii*4;
+					bgfx::TransientIndexType startVertex = ii*4;
 					indices[0] = startVertex+0;
 					indices[1] = startVertex+1;
 					indices[2] = startVertex+2;
@@ -2257,7 +2257,7 @@ struct DebugDrawEncoderImpl
 
 	DebugVertex   m_cache[kCacheSize+1];
 	DebugUvVertex m_cacheQuad[kCacheQuadSize];
-	uint16_t m_indices[kCacheSize*2];
+	bgfx::TransientIndexType m_indices[kCacheSize*2];
 	uint16_t m_pos;
 	uint16_t m_posQuad;
 	uint16_t m_indexPos;

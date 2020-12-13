@@ -252,6 +252,7 @@ public:
 				, PosNormalTangentTexcoordVertex::ms_layout
 				, s_cubeIndices
 				, BX_COUNTOF(s_cubeIndices)
+				, false
 				);
 
 		// Create static vertex buffer.
@@ -756,7 +757,7 @@ public:
 								vertex->m_z = 0.0f;
 								vertex->m_abgr = abgr;
 
-								uint16_t* indices = (uint16_t*)tib.data;
+								bgfx::TransientIndexType* indices = (bgfx::TransientIndexType*)tib.data;
 								*indices++ = 0;
 								*indices++ = 1;
 								*indices++ = 1;

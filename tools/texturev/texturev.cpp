@@ -911,7 +911,7 @@ struct PosUvwColorVertex
 
 bgfx::VertexLayout PosUvwColorVertex::ms_layout;
 
-static uint32_t addQuad(uint16_t* _indices, uint16_t _idx0, uint16_t _idx1, uint16_t _idx2, uint16_t _idx3)
+static uint32_t addQuad(bgfx::TransientIndexType* _indices, uint16_t _idx0, uint16_t _idx1, uint16_t _idx2, uint16_t _idx3)
 {
 	_indices[0] = _idx0;
 	_indices[1] = _idx3;
@@ -980,7 +980,7 @@ void setGeometry(
 			bgfx::allocTransientIndexBuffer(&tib, numIndices);
 
 			PosUvwColorVertex* vertex = (PosUvwColorVertex*)tvb.data;
-			uint16_t* indices = (uint16_t*)tib.data;
+			bgfx::TransientIndexType* indices = (bgfx::TransientIndexType*)tib.data;
 
 			if (Geometry::Cross == _type)
 			{

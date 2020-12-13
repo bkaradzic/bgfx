@@ -168,7 +168,7 @@ static DdVertex s_bunnyVertices[] =
 	{   6.19167f,    34.497f,   -17.965f },
 };
 
-static const uint16_t s_bunnyTriList[] =
+static const bgfx::TransientIndexType s_bunnyTriList[] =
 {
 	 80,   2,  52,
 	  0, 143,  92,
@@ -812,6 +812,7 @@ public:
 			, s_bunnyVertices
 			, BX_COUNTOF(s_bunnyTriList)
 			, s_bunnyTriList
+			, sizeof(bgfx::TransientIndexType) == sizeof(uint32_t)
 			);
 
 		imguiCreate();

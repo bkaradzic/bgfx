@@ -83,7 +83,7 @@ void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program, float _x
 		vertex[3].m_u = minu;
 		vertex[3].m_v = maxv;
 
-		uint16_t* indices = (uint16_t*)tib.data;
+		bgfx::TransientIndexType* indices = (bgfx::TransientIndexType*)tib.data;
 
 		indices[0] = 0;
 		indices[1] = 2;

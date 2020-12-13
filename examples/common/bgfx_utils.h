@@ -35,7 +35,7 @@ bgfx::TextureHandle loadTexture(const char* _name, uint64_t _flags = BGFX_TEXTUR
 bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum _dstFormat);
 
 ///
-void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const bgfx::TransientIndexType* _indices, uint32_t _numIndices);
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const void* _indices, uint32_t _numIndices, bool _index32);
 
 /// Returns true if both internal transient index and vertex buffer have
 /// enough space.

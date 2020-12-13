@@ -64,7 +64,7 @@ static PosNormalTangentTexcoordVertex s_cubeVertices[24] =
 	{-1.0f,  1.0f, -1.0f, encodeNormalRgba8(-1.0f,  0.0f,  0.0f), 0, 0x7fff, 0x7fff },
 };
 
-static const uint16_t s_cubeIndices[36] =
+static const bgfx::TransientIndexType s_cubeIndices[36] =
 {
 	 0,  2,  1,
 	 1,  2,  3,

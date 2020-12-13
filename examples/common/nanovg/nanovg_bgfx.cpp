@@ -571,7 +571,7 @@ namespace
 		uint32_t numTris = _count-2;
 		bgfx::TransientIndexBuffer tib;
 		bgfx::allocTransientIndexBuffer(&tib, numTris*3);
-		uint16_t* data = (uint16_t*)tib.data;
+		bgfx::TransientIndexType* data = (bgfx::TransientIndexType*)tib.data;
 		for (uint32_t ii = 0; ii < numTris; ++ii)
 		{
 			data[ii*3+0] = _start;

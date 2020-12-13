@@ -259,7 +259,8 @@ bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum
 	return bimg::imageParse(entry::getAllocator(), data, size, bimg::TextureFormat::Enum(_dstFormat) );
 }
 
-void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const bgfx::TransientIndexType* _indices, uint32_t _numIndices)
+template <typename IndexT>
+static void calcTangentsHelper(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const IndexT* _indices, uint32_t _numIndices)
 {
 	struct PosTexcoord
 	{
@@ -282,7 +283,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _la
 
 	for (uint32_t ii = 0, num = _numIndices/3; ii < num; ++ii)
 	{
-		const bgfx::TransientIndexType* indices = &_indices[ii*3];
+		const IndexT* indices = &_indices[ii*3];
 		uint32_t i0 = indices[0];
 		uint32_t i1 = indices[1];
 		uint32_t i2 = indices[2];
@@ -354,6 +355,18 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _la
 	}
 
 	delete [] tangents;
+}
+
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _layout, const void* _indices, uint32_t _numIndices, bool _index32)
+{
+	if (_index32)
+	{
+		calcTangentsHelper(_vertices, _numVertices, _layout, (const uint32_t*)_indices, _numIndices);
+	}
+	else
+	{
+		calcTangentsHelper(_vertices, _numVertices, _layout, (const uint16_t*)_indices, _numIndices);
+	}
 }
 
 Group::Group()
@@ -460,12 +473,12 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 			case kChunkIndexBuffer:
 			{
 				read(_reader, group.m_numIndices);
-				const bgfx::Memory* mem = bgfx::alloc(group.m_numIndices*2);
+				const bgfx::Memory* mem = bgfx::alloc(group.m_numIndices*sizeof(bgfx::TransientIndexType));
 				read(_reader, mem->data, mem->size);
 
 				if (_ramcopy)
 				{
-					group.m_indices = (bgfx::TransientIndexType*)BX_ALLOC(allocator, group.m_numIndices*2);
+					group.m_indices = (bgfx::TransientIndexType*)BX_ALLOC(allocator, group.m_numIndices*sizeof(bgfx::TransientIndexType));
 					bx::memCopy(group.m_indices, mem->data, mem->size);
 				}
 
@@ -477,7 +490,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 			{
 				bx::read(_reader, group.m_numIndices);
 
-				const bgfx::Memory* mem = bgfx::alloc(group.m_numIndices*2);
+				const bgfx::Memory* mem = bgfx::alloc(group.m_numIndices*sizeof(bgfx::TransientIndexType));
 
 				uint32_t compressedSize;
 				bx::read(_reader, compressedSize);
@@ -486,13 +499,13 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 
 				bx::read(_reader, compressedIndices, compressedSize);
 
-				meshopt_decodeIndexBuffer(mem->data, group.m_numIndices, 2, (uint8_t*)compressedIndices, compressedSize);
+				meshopt_decodeIndexBuffer(mem->data, group.m_numIndices, sizeof(bgfx::TransientIndexType), (uint8_t*)compressedIndices, compressedSize);
 
 				BX_FREE(allocator, compressedIndices);
 
 				if (_ramcopy)
 				{
-					group.m_indices = (bgfx::TransientIndexType*)BX_ALLOC(allocator, group.m_numIndices*2);
+					group.m_indices = (bgfx::TransientIndexType*)BX_ALLOC(allocator, group.m_numIndices*sizeof(bgfx::TransientIndexType));
 					bx::memCopy(group.m_indices, mem->data, mem->size);
 				}
 
