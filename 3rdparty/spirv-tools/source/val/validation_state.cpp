@@ -1315,10 +1315,22 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-BaseVertex-BaseVertex-04186);
     case 4187:
       return VUID_WRAP(VUID-ClipDistance-ClipDistance-04187);
+    case 4188:
+      return VUID_WRAP(VUID-ClipDistance-ClipDistance-04188);
+    case 4189:
+      return VUID_WRAP(VUID-ClipDistance-ClipDistance-04189);
+    case 4190:
+      return VUID_WRAP(VUID-ClipDistance-ClipDistance-04190);
     case 4191:
       return VUID_WRAP(VUID-ClipDistance-ClipDistance-04191);
     case 4196:
       return VUID_WRAP(VUID-CullDistance-CullDistance-04196);
+    case 4197:
+      return VUID_WRAP(VUID-CullDistance-CullDistance-04197);
+    case 4198:
+      return VUID_WRAP(VUID-CullDistance-CullDistance-04198);
+    case 4199:
+      return VUID_WRAP(VUID-CullDistance-CullDistance-04199);
     case 4200:
       return VUID_WRAP(VUID-CullDistance-CullDistance-04200);
     case 4205:
@@ -1419,6 +1431,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-LaunchSizeKHR-LaunchSizeKHR-04271);
     case 4272:
       return VUID_WRAP(VUID-Layer-Layer-04272);
+    case 4273:
+      return VUID_WRAP(VUID-Layer-Layer-04273);
     case 4274:
       return VUID_WRAP(VUID-Layer-Layer-04274);
     case 4275:
@@ -1477,6 +1491,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-PointSize-PointSize-04317);
     case 4318:
       return VUID_WRAP(VUID-Position-Position-04318);
+    case 4319:
+      return VUID_WRAP(VUID-Position-Position-04319);
     case 4320:
       return VUID_WRAP(VUID-Position-Position-04320);
     case 4321:
@@ -1531,10 +1547,18 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-TessCoord-TessCoord-04389);
     case 4390:
       return VUID_WRAP(VUID-TessLevelOuter-TessLevelOuter-04390);
+    case 4391:
+      return VUID_WRAP(VUID-TessLevelOuter-TessLevelOuter-04391);
+    case 4392:
+      return VUID_WRAP(VUID-TessLevelOuter-TessLevelOuter-04392);
     case 4393:
       return VUID_WRAP(VUID-TessLevelOuter-TessLevelOuter-04393);
     case 4394:
       return VUID_WRAP(VUID-TessLevelInner-TessLevelInner-04394);
+    case 4395:
+      return VUID_WRAP(VUID-TessLevelInner-TessLevelInner-04395);
+    case 4396:
+      return VUID_WRAP(VUID-TessLevelInner-TessLevelInner-04396);
     case 4397:
       return VUID_WRAP(VUID-TessLevelInner-TessLevelInner-04397);
     case 4398:
@@ -1551,6 +1575,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-ViewIndex-ViewIndex-04403);
     case 4404:
       return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04404);
+    case 4405:
+      return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04405);
     case 4406:
       return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04406);
     case 4407:

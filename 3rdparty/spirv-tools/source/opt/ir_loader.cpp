@@ -137,7 +137,7 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
       return false;
     }
     block_ = MakeUnique<BasicBlock>(std::move(spv_inst));
-  } else if (IsTerminatorInst(opcode)) {
+  } else if (spvOpcodeIsBlockTerminator(opcode)) {
     if (function_ == nullptr) {
       Error(consumer_, src, loc, "terminator instruction outside function");
       return false;

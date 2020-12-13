@@ -24,6 +24,7 @@
 #include "DebugInfo.h"
 #include "OpenCLDebugInfo100.h"
 #include "source/macro.h"
+#include "source/opcode.h"
 #include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 
@@ -491,6 +492,11 @@ bool spvIsInIdType(spv_operand_type_t type) {
 std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
     SpvOp opcode) {
   std::function<bool(unsigned index)> out;
+  if (spvOpcodeGeneratesType(opcode)) {
+    // All types can use forward pointers.
+    out = [](unsigned) { return true; };
+    return out;
+  }
   switch (opcode) {
     case SpvOpExecutionMode:
     case SpvOpExecutionModeId:
@@ -503,7 +509,6 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
     case SpvOpDecorateId:
     case SpvOpDecorateStringGOOGLE:
     case SpvOpMemberDecorateStringGOOGLE:
-    case SpvOpTypeStruct:
     case SpvOpBranch:
     case SpvOpLoopMerge:
       out = [](unsigned) { return true; };

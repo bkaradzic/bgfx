@@ -1,14 +1,15 @@
 Revision history for SPIRV-Tools
 
-v2020.7-dev 2020-12-03
+v2020.7-dev 2020-12-07
  - Start v2020.7-dev
 
-v2020.6 2020-12-02
+v2020.6 2020-12-07
  - General
     CMake: Add SPIRV_TOOLS_BUILD_STATIC flag (#3910)
  - Disassembler
     Add some context comments to disassembly. (#3847)
  - Optimizer
+   - Take new (raytracing) termination instructions into account. (#4050)
    - Do run DCE if SPV_KHR_ray_query is used. (#4047)
    - Handle 8-bit index in elim dead member (#4043)
    - Add texel buffer out-of-bounds checking instrumentation (#4038)

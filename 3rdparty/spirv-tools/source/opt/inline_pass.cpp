@@ -383,9 +383,7 @@ std::unique_ptr<BasicBlock> InlinePass::InlineReturn(
   uint32_t returnLabelId = 0;
   for (auto callee_block_itr = calleeFn->begin();
        callee_block_itr != calleeFn->end(); ++callee_block_itr) {
-    if (callee_block_itr->tail()->opcode() == SpvOpUnreachable ||
-        callee_block_itr->tail()->opcode() == SpvOpKill ||
-        callee_block_itr->tail()->opcode() == SpvOpTerminateInvocation) {
+    if (spvOpcodeIsAbort(callee_block_itr->tail()->opcode())) {
       returnLabelId = context()->TakeNextId();
       break;
     }
@@ -759,8 +757,7 @@ bool InlinePass::IsInlinableFunction(Function* func) {
 
 bool InlinePass::ContainsKillOrTerminateInvocation(Function* func) const {
   return !func->WhileEachInst([](Instruction* inst) {
-    const auto opcode = inst->opcode();
-    return (opcode != SpvOpKill) && (opcode != SpvOpTerminateInvocation);
+    return !spvOpcodeTerminatesExecution(inst->opcode());
   });
 }
 

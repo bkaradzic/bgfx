@@ -230,7 +230,7 @@ std::string BasicBlock::PrettyPrint(uint32_t options) const {
   std::ostringstream str;
   ForEachInst([&str, options](const Instruction* inst) {
     str << inst->PrettyPrint(options);
-    if (!IsTerminatorInst(inst->opcode())) {
+    if (!spvOpcodeIsBlockTerminator(inst->opcode())) {
       str << std::endl;
     }
   });

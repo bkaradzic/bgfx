@@ -444,13 +444,30 @@ bool spvOpcodeIsReturn(SpvOp opcode) {
   }
 }
 
+bool spvOpcodeIsAbort(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpKill:
+    case SpvOpUnreachable:
+    case SpvOpTerminateInvocation:
+    case SpvOpTerminateRayKHR:
+    case SpvOpIgnoreIntersectionKHR:
+      return true;
+    default:
+      return false;
+  }
+}
+
 bool spvOpcodeIsReturnOrAbort(SpvOp opcode) {
-  return spvOpcodeIsReturn(opcode) || opcode == SpvOpKill ||
-         opcode == SpvOpUnreachable || opcode == SpvOpTerminateInvocation;
+  return spvOpcodeIsReturn(opcode) || spvOpcodeIsAbort(opcode);
 }
 
 bool spvOpcodeIsBlockTerminator(SpvOp opcode) {
   return spvOpcodeIsBranch(opcode) || spvOpcodeIsReturnOrAbort(opcode);
+}
+
+bool spvOpcodeTerminatesExecution(SpvOp opcode) {
+  return opcode == SpvOpKill || opcode == SpvOpTerminateInvocation ||
+         opcode == SpvOpTerminateRayKHR || opcode == SpvOpIgnoreIntersectionKHR;
 }
 
 bool spvOpcodeIsBaseOpaqueType(SpvOp opcode) {
