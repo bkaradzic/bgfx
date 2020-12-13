@@ -502,6 +502,10 @@ void CompilerGLSL::find_static_extensions()
 			}
 			break;
 
+		case CapabilityVariablePointers:
+		case CapabilityVariablePointersStorageBuffer:
+			SPIRV_CROSS_THROW("VariablePointers capability is not supported in GLSL.");
+
 		default:
 			break;
 		}
@@ -3565,9 +3569,9 @@ void CompilerGLSL::emit_extension_workarounds(spv::ExecutionModel model)
 			statement("");
 		}
 
-		if (shader_subgroup_supporter.is_feature_requested(Supp::SubgroupBrodcast_First))
+		if (shader_subgroup_supporter.is_feature_requested(Supp::SubgroupBroadcast_First))
 		{
-			auto exts = Supp::get_candidates_for_feature(Supp::SubgroupBrodcast_First, result);
+			auto exts = Supp::get_candidates_for_feature(Supp::SubgroupBroadcast_First, result);
 
 			for (auto &e : exts)
 			{
@@ -6169,6 +6173,7 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool sparse, bool 
 	bool gather = false;
 	bool proj = false;
 	bool fetch = false;
+	bool nonuniform_expression = false;
 	const uint32_t *opt = nullptr;
 
 	auto &result_type = get<SPIRType>(result_type_id);
@@ -6177,7 +6182,17 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool sparse, bool 
 
 	// Make sure non-uniform decoration is back-propagated to where it needs to be.
 	if (has_decoration(img, DecorationNonUniformEXT))
-		propagate_nonuniform_qualifier(img);
+	{
+		// In Vulkan GLSL, we cannot back-propgate nonuniform qualifiers if we
+		// use a combined image sampler constructor.
+		// We're only interested in back-propagating if we can trace back through access chains.
+		// If not, we will apply nonuniform to the sampled image expression itself.
+		auto *backing = maybe_get_backing_variable(img);
+		if (backing)
+			propagate_nonuniform_qualifier(img);
+		else
+			nonuniform_expression = true;
+	}
 
 	switch (op)
 	{
@@ -6362,6 +6377,7 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool sparse, bool 
 	args.sample = sample;
 	args.sparse_texel = sparse_texel_id;
 	args.min_lod = minlod;
+	args.nonuniform_expression = nonuniform_expression;
 	expr += to_function_args(args, forward);
 	expr += ")";
 
@@ -6549,6 +6565,12 @@ string CompilerGLSL::to_function_args(const TextureFunctionArguments &args, bool
 		farg_str = convert_separate_image_to_expression(img);
 	else
 		farg_str = to_expression(img);
+
+	if (args.nonuniform_expression && farg_str.find_first_of('[') != string::npos)
+	{
+		// Only emit nonuniformEXT() wrapper if the underlying expression is arrayed in some way.
+		farg_str = join(backend.nonuniform_qualifier, "(", farg_str, ")");
+	}
 
 	bool swizz_func = backend.swizzle_is_function;
 	auto swizzle = [swizz_func](uint32_t comps, uint32_t in_comps) -> const char * {
@@ -7358,7 +7380,7 @@ void CompilerGLSL::emit_subgroup_op(const Instruction &i)
 
 	case OpGroupNonUniformBroadcast:
 	case OpGroupNonUniformBroadcastFirst:
-		request_subgroup_feature(ShaderSubgroupSupportHelper::SubgroupBrodcast_First);
+		request_subgroup_feature(ShaderSubgroupSupportHelper::SubgroupBroadcast_First);
 		break;
 
 	case OpGroupNonUniformShuffle:
@@ -15128,7 +15150,7 @@ CompilerGLSL::ShaderSubgroupSupportHelper::FeatureVector CompilerGLSL::ShaderSub
 	switch (feature)
 	{
 	case SubgroupAllEqualT:
-		return { SubgroupBrodcast_First, SubgroupAll_Any_AllEqualBool };
+		return { SubgroupBroadcast_First, SubgroupAll_Any_AllEqualBool };
 	case SubgroupElect:
 		return { SubgroupBallotFindLSB_MSB, SubgroupBallot, SubgroupInvocationID };
 	case SubgroupInverseBallot_InclBitCount_ExclBitCout:
@@ -15163,8 +15185,8 @@ CompilerGLSL::ShaderSubgroupSupportHelper::Candidate CompilerGLSL::ShaderSubgrou
 	static const Candidate extensions[FeatureCount] = {
 		KHR_shader_subgroup_ballot, KHR_shader_subgroup_basic,  KHR_shader_subgroup_basic,  KHR_shader_subgroup_basic,
 		KHR_shader_subgroup_basic,  KHR_shader_subgroup_ballot, KHR_shader_subgroup_ballot, KHR_shader_subgroup_vote,
-		KHR_shader_subgroup_vote,   KHR_shader_subgroup_basic,  KHR_shader_subgroup_ballot, KHR_shader_subgroup_basic,
-		KHR_shader_subgroup_basic,  KHR_shader_subgroup_ballot, KHR_shader_subgroup_ballot, KHR_shader_subgroup_ballot
+		KHR_shader_subgroup_vote,   KHR_shader_subgroup_basic,  KHR_shader_subgroup_basic, KHR_shader_subgroup_basic,
+		KHR_shader_subgroup_ballot, KHR_shader_subgroup_ballot, KHR_shader_subgroup_ballot, KHR_shader_subgroup_ballot
 	};
 
 	return extensions[feature];
@@ -15238,7 +15260,7 @@ CompilerGLSL::ShaderSubgroupSupportHelper::CandidateVector CompilerGLSL::ShaderS
 		return { KHR_shader_subgroup_basic, NV_shader_thread_group };
 	case NumSubgroups:
 		return { KHR_shader_subgroup_basic, NV_shader_thread_group };
-	case SubgroupBrodcast_First:
+	case SubgroupBroadcast_First:
 		return { KHR_shader_subgroup_ballot, NV_shader_thread_shuffle, ARB_shader_ballot };
 	case SubgroupBallotFindLSB_MSB:
 		return { KHR_shader_subgroup_ballot, NV_shader_thread_group };

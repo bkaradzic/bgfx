@@ -5616,6 +5616,12 @@ void CompilerHLSL::validate_shader_model()
 			if (hlsl_options.shader_model < 51)
 				SPIRV_CROSS_THROW(
 				    "Shader model 5.1 or higher is required to use bindless resources or NonUniformResourceIndex.");
+			break;
+
+		case CapabilityVariablePointers:
+		case CapabilityVariablePointersStorageBuffer:
+			SPIRV_CROSS_THROW("VariablePointers capability is not supported in HLSL.");
+
 		default:
 			break;
 		}

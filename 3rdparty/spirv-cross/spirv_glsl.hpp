@@ -275,22 +275,22 @@ protected:
 
 		enum Feature
 		{
-			SubgroupMask,
-			SubgroupSize,
-			SubgroupInvocationID,
-			SubgroupID,
-			NumSubgroups,
-			SubgroupBrodcast_First,
-			SubgroupBallotFindLSB_MSB,
-			SubgroupAll_Any_AllEqualBool,
-			SubgroupAllEqualT,
-			SubgroupElect,
-			SubgroupBarrier,
-			SubgroupMemBarrier,
-			SubgroupBallot,
-			SubgroupInverseBallot_InclBitCount_ExclBitCout,
-			SubgroupBallotBitExtract,
-			SubgroupBallotBitCount,
+			SubgroupMask = 0,
+			SubgroupSize = 1,
+			SubgroupInvocationID = 2,
+			SubgroupID = 3,
+			NumSubgroups = 4,
+			SubgroupBroadcast_First = 5,
+			SubgroupBallotFindLSB_MSB = 6,
+			SubgroupAll_Any_AllEqualBool = 7,
+			SubgroupAllEqualT = 8,
+			SubgroupElect = 9,
+			SubgroupBarrier = 10,
+			SubgroupMemBarrier = 11,
+			SubgroupBallot = 12,
+			SubgroupInverseBallot_InclBitCount_ExclBitCout = 13,
+			SubgroupBallotBitExtract = 14,
+			SubgroupBallotBitCount = 15,
 
 			FeatureCount
 		};
@@ -405,6 +405,7 @@ protected:
 		uint32_t coord = 0, coord_components = 0, dref = 0;
 		uint32_t grad_x = 0, grad_y = 0, lod = 0, coffset = 0, offset = 0;
 		uint32_t bias = 0, component = 0, sample = 0, sparse_texel = 0, min_lod = 0;
+		bool nonuniform_expression = false;
 	};
 	virtual std::string to_function_args(const TextureFunctionArguments &args, bool *p_forward);
 
