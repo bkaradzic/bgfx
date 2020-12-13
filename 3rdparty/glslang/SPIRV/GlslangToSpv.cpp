@@ -7991,7 +7991,7 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
         opCode = spv::OpRayQueryGetIntersectionInstanceIdKHR;
         break;
     case glslang::EOpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffset:
-        typeId = builder.makeIntType(32);
+        typeId = builder.makeUintType(32);
         opCode = spv::OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR;
         break;
     case glslang::EOpRayQueryGetIntersectionGeometryIndex:
