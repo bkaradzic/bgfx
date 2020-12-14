@@ -991,6 +991,13 @@ namespace bgfx { namespace mtl
 				return;
 			}
 
+#if BX_PLATFORM_OSX
+            m_blitCommandEncoder = getBlitCommandEncoder();
+            m_blitCommandEncoder.synchronizeResource(m_screenshotTarget);
+            m_blitCommandEncoder.endEncoding();
+            m_blitCommandEncoder = 0;
+#endif  // BX_PLATFORM_OSX
+
 			m_cmd.kick(false, true);
 			m_commandBuffer = 0;
 
