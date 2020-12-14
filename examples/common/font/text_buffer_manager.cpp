@@ -237,6 +237,29 @@ private:
 			 ;
 	}
 
+	void setVertex(uint32_t _i, float _x, float _y, uint32_t _rgba, uint8_t _style = STYLE_NORMAL)
+	{
+		m_vertexBuffer[_i].x = _x;
+		m_vertexBuffer[_i].y = _y;
+		m_vertexBuffer[_i].rgba = _rgba;
+		m_styleBuffer[_i] = _style;
+	}
+
+	void setOutlineColor(uint32_t _i, uint32_t _rgbaOutline)
+	{
+		m_vertexBuffer[_i].rgbaOutline = _rgbaOutline;
+	}
+
+	struct TextVertex
+	{
+		float x, y;
+		int16_t u, v, w, t;
+		int16_t u1, v1, w1, t1;
+		int16_t u2, v2, w2, t2;
+		uint32_t rgba;
+		uint32_t rgbaOutline;
+	};
+
 	uint32_t m_styleFlags;
 
 	// color states
@@ -272,29 +295,6 @@ private:
 	TextRectangle m_rectangle;
 	FontManager* m_fontManager;
 
-	void setVertex(uint32_t _i, float _x, float _y, uint32_t _rgba, uint8_t _style = STYLE_NORMAL)
-	{
-		m_vertexBuffer[_i].x = _x;
-		m_vertexBuffer[_i].y = _y;
-		m_vertexBuffer[_i].rgba = _rgba;
-		m_styleBuffer[_i] = _style;
-	}
-
-	void setOutlineColor(uint32_t _i, uint32_t _rgbaOutline)
-	{
-		m_vertexBuffer[_i].rgbaOutline = _rgbaOutline;
-	}
-
-	struct TextVertex
-	{
-		float x, y;
-		int16_t u, v, w, t;
-		int16_t u1, v1, w1, t1;
-		int16_t u2, v2, w2, t2;
-		uint32_t rgba;
-		uint32_t rgbaOutline;
-	};
-
 	TextVertex* m_vertexBuffer;
 	uint16_t* m_indexBuffer;
 	uint8_t* m_styleBuffer;
@@ -306,11 +306,11 @@ private:
 
 TextBuffer::TextBuffer(FontManager* _fontManager)
 	: m_styleFlags(STYLE_NORMAL)
-	, m_textColor(0xffffffff)
-	, m_backgroundColor(0xffffffff)
-	, m_overlineColor(0xffffffff)
-	, m_underlineColor(0xffffffff)
-	, m_strikeThroughColor(0xffffffff)
+	, m_textColor(UINT32_MAX)
+	, m_backgroundColor(UINT32_MAX)
+	, m_overlineColor(UINT32_MAX)
+	, m_underlineColor(UINT32_MAX)
+	, m_strikeThroughColor(UINT32_MAX)
 	, m_outlineWidth(3.0f)
 	, m_outlineColor(0x000000ff)
 	, m_dropShadowColor(0x0000005a)
@@ -322,6 +322,7 @@ TextBuffer::TextBuffer(FontManager* _fontManager)
 	, m_lineAscender(0)
 	, m_lineDescender(0)
 	, m_lineGap(0)
+	, m_previousCodePoint(0)
 	, m_fontManager(_fontManager)
 	, m_vertexBuffer(new TextVertex[MAX_BUFFERED_CHARACTERS * 4])
 	, m_indexBuffer(new uint16_t[MAX_BUFFERED_CHARACTERS * 6])
@@ -329,7 +330,6 @@ TextBuffer::TextBuffer(FontManager* _fontManager)
 	, m_indexCount(0)
 	, m_lineStartIndex(0)
 	, m_vertexCount(0)
-	, m_previousCodePoint(0)
 {
 	m_rectangle.width = 0;
 	m_rectangle.height = 0;
