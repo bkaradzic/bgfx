@@ -62,16 +62,6 @@ namespace bgfx { namespace glsl
 		const char* optimizedShader = glslopt_get_output(shader);
 
 		std::string out;
-		// Preserver #version preamble
-		if('#' == *optimizedShader)
-		{
-			bx::StringView preamble(optimizedShader, bx::strFindNl(optimizedShader).getPtr());
-			if(bx::strCmp(preamble, "#version", 8) == 0)
-			{
-				out.append(preamble.getPtr(), preamble.getLength());
-			}
-		}
-
 		// Trim all directives.
 		while ('#' == *optimizedShader)
 		{
@@ -111,10 +101,6 @@ namespace bgfx { namespace glsl
 		if (target != kGlslTargetMetal)
 		{
 			bx::StringView parse(optimizedShader);
-
-			if(bx::strCmp(parse, "#version", 8) == 0) {
-				parse.set(bx::strFindNl(parse).getPtr(), parse.getTerm());
-			}
 
 			while (!parse.isEmpty() )
 			{

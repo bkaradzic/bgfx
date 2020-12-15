@@ -1601,6 +1601,15 @@ namespace bgfx
 				if (profile->lang == GLSL
 				||  profile->lang == ESSL)
 				{
+					if(profile->lang != ESSL) {
+						// bgfx shadow2D/Proj behave like EXT_shadow_samplers
+						// not as GLSL language 1.2 specs shadow2D/Proj.
+						preprocessor.writef(
+							"#define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord).x\n"
+							"#define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord).x\n"
+							);
+					}
+
 					// gl_FragColor and gl_FragData are deprecated for essl > 300
 					if((profile->lang == ESSL) && (profile->id >= 300))
 					{
@@ -1898,7 +1907,7 @@ namespace bgfx
 
 						if (hasViewportId)
 						{
-							if (d3d > 9)
+							if (profile->id >= 400)
 							{
 								preprocessor.writef(
 									"\tuint gl_ViewportIndex : SV_ViewportArrayIndex;\n"
@@ -1914,7 +1923,7 @@ namespace bgfx
 
 						if (hasLayerId)
 						{
-							if (d3d > 9)
+							if (profile->id >= 400)
 							{
 								preprocessor.writef(
 									"\tuint gl_Layer : SV_RenderTargetArrayIndex;\n"
@@ -2212,8 +2221,15 @@ namespace bgfx
 									if (need130)
 									{
 										bx::stringPrintf(code
-											, "#define shadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
-											  "#define shadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
+											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
+											  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
+											);
+									}
+									else
+									{
+										bx::stringPrintf(code
+											, "#define bgfxShadow2D     shadow2D\n"
+											  "#define bgfxShadow2DProj shader2DProj\n"
 											);
 									}
 								}
@@ -2304,13 +2320,6 @@ namespace bgfx
 											, "#extension GL_EXT_shadow_samplers : enable\n"
 											  "#define shadow2D shadow2DEXT\n"
 											  "#define shadow2DProj shadow2DProjEXT\n"
-											);
-									}
-									else
-									{
-										bx::stringPrintf(code
-											, "#define shadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
-											  "#define shadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
 											);
 									}
 
