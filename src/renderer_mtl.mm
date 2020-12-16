@@ -2595,11 +2595,14 @@ namespace bgfx { namespace mtl
 
 		if (NULL == _data)
 		{
-			m_ptr = s_renderMtl->m_device.newBufferWithLength(_size, 0);
+			m_ptr = s_renderMtl->m_device.newBufferWithLength(_size, MTLResourceStorageModePrivate);
 		}
 		else
 		{
-			m_ptr = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
+			MTLResourceOptions options = BX_ENABLED(BX_PLATFORM_IOS)
+				? 0        /* MTLResourceStorageModeShared  */
+				: (1 << 4) /* MTLResourceStorageModeManaged */;
+			m_ptr = s_renderMtl->m_device.newBufferWithBytes(_data, _size, options);
 		}
 	}
 
