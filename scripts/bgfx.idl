@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(111)
+version(112)
 
 typedef "bool"
 typedef "char"
@@ -806,8 +806,8 @@ struct.Init { ctor }
 ---
 --- @attention It is illegal to create this structure on stack and pass it to any bgfx API.
 struct.Memory
-	.data "uint8_t*" [[Pointer to data.]]
-	.size "uint32_t" [[Data size.]]
+	.data "uint8_t*" --- Pointer to data.
+	.size "uint32_t" --- Data size.
 
 --- Transient index buffer.
 struct.TransientIndexBuffer
@@ -815,6 +815,7 @@ struct.TransientIndexBuffer
 	.size       "uint32_t"          --- Data size.
 	.startIndex "uint32_t"          --- First index.
 	.handle     "IndexBufferHandle" --- Index buffer handle.
+	.isIndex16  "bool"              --- Index buffer format is 16-bits if true, otherwise it is 32-bit.
 
 --- Transient vertex buffer.
 struct.TransientVertexBuffer
@@ -1472,10 +1473,12 @@ func.getAvailInstanceDataBuffer
 ---
 func.allocTransientIndexBuffer
 	"void"
-	.tib "TransientIndexBuffer*" { out } --- TransientIndexBuffer structure is filled and is valid
-	                                     --- for the duration of frame, and it can be reused for multiple draw
-	                                     --- calls.
-	.num "uint32_t"                      --- Number of indices to allocate.
+	.tib     "TransientIndexBuffer*" { out } --- TransientIndexBuffer structure is filled and is valid
+	                                         --- for the duration of frame, and it can be reused for multiple draw
+	                                         --- calls.
+	.num     "uint32_t"                      --- Number of indices to allocate.
+	.index32 "bool"                          --- Set to `true` if input indices will be 32-bit.
+	 { default = false }
 
 --- Allocate transient vertex buffer.
 func.allocTransientVertexBuffer

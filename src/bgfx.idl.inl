@@ -345,9 +345,9 @@ BGFX_C_API uint32_t bgfx_get_avail_instance_data_buffer(uint32_t _num, uint16_t 
 	return bgfx::getAvailInstanceDataBuffer(_num, _stride);
 }
 
-BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint32_t _num)
+BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint32_t _num, bool _index32)
 {
-	bgfx::allocTransientIndexBuffer((bgfx::TransientIndexBuffer*)_tib, _num);
+	bgfx::allocTransientIndexBuffer((bgfx::TransientIndexBuffer*)_tib, _num, _index32);
 }
 
 BGFX_C_API void bgfx_alloc_transient_vertex_buffer(bgfx_transient_vertex_buffer_t* _tvb, uint32_t _num, const bgfx_vertex_layout_t * _layout)

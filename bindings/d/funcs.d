@@ -567,8 +567,9 @@ version(BindBgfx_Static)
 	 * for the duration of frame, and it can be reused for multiple draw
 	 * calls.
 	 * _num = Number of indices to allocate.
+	 * _index32 = Set to `true` if input indices will be 32-bit.
 	 */
-	void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint _num);
+	void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint _num, bool _index32);
 	
 	/**
 	 * Allocate transient vertex buffer.
@@ -2751,8 +2752,9 @@ else
 		 * for the duration of frame, and it can be reused for multiple draw
 		 * calls.
 		 * _num = Number of indices to allocate.
+		 * _index32 = Set to `true` if input indices will be 32-bit.
 		 */
-		alias da_bgfx_alloc_transient_index_buffer = void function(bgfx_transient_index_buffer_t* _tib, uint _num);
+		alias da_bgfx_alloc_transient_index_buffer = void function(bgfx_transient_index_buffer_t* _tib, uint _num, bool _index32);
 		da_bgfx_alloc_transient_index_buffer bgfx_alloc_transient_index_buffer;
 		
 		/**

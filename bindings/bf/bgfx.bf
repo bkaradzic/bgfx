@@ -2074,6 +2074,7 @@ public static class bgfx
 		public uint32 size;
 		public uint32 startIndex;
 		public IndexBufferHandle handle;
+		public uint8 isIndex16;
 	}
 	
 	[CRepr]
@@ -2842,9 +2843,10 @@ public static class bgfx
 	///
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 	/// <param name="_num">Number of indices to allocate.</param>
+	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 	///
 	[LinkName("bgfx_alloc_transient_index_buffer")]
-	public static extern void alloc_transient_index_buffer(TransientIndexBuffer* _tib, uint32 _num);
+	public static extern void alloc_transient_index_buffer(TransientIndexBuffer* _tib, uint32 _num, bool _index32);
 	
 	/// <summary>
 	/// Allocate transient vertex buffer.

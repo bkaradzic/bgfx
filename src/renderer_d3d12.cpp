@@ -4069,8 +4069,12 @@ namespace bgfx { namespace d3d12
 				BufferD3D12& ib = s_renderD3D12->m_indexBuffers[_draw.m_indexBuffer.idx];
 				ib.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-				const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
-				const uint32_t indexSize = hasIndex16 ? 2 : 4;
+				const bool isIndex16          = _draw.isIndex16();
+				const uint32_t indexSize      = isIndex16 ? 2 : 4;
+				const DXGI_FORMAT indexFormat = isIndex16
+					? DXGI_FORMAT_R16_UINT
+					: DXGI_FORMAT_R32_UINT
+					;
 
 				numIndices = UINT32_MAX == _draw.m_numIndices
 					? ib.m_size / indexSize
@@ -4080,10 +4084,7 @@ namespace bgfx { namespace d3d12
 				D3D12_INDEX_BUFFER_VIEW ibv;
 				ibv.BufferLocation = ib.m_gpuVA;
 				ibv.SizeInBytes    = ib.m_size;
-				ibv.Format = hasIndex16
-					? DXGI_FORMAT_R16_UINT
-					: DXGI_FORMAT_R32_UINT
-					;
+				ibv.Format         = indexFormat;
 				_commandList->IASetIndexBuffer(&ibv);
 
 				_commandList->ExecuteIndirect(
@@ -4148,8 +4149,9 @@ namespace bgfx { namespace d3d12
 			BufferD3D12& ib = s_renderD3D12->m_indexBuffers[_draw.m_indexBuffer.idx];
 			ib.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-			const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
-			const uint32_t indexSize = hasIndex16 ? 2 : 4;
+			const bool isIndex16          = _draw.isIndex16();
+			const uint32_t indexSize      = isIndex16 ? 2 : 4;
+			const DXGI_FORMAT indexFormat = isIndex16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 
 			numIndices = UINT32_MAX == _draw.m_numIndices
 				? ib.m_size / indexSize
@@ -4160,10 +4162,7 @@ namespace bgfx { namespace d3d12
 			cmd.cbv = _cbv;
 			cmd.ibv.BufferLocation = ib.m_gpuVA;
 			cmd.ibv.SizeInBytes    = ib.m_size;
-			cmd.ibv.Format = hasIndex16
-				? DXGI_FORMAT_R16_UINT
-				: DXGI_FORMAT_R32_UINT
-				;
+			cmd.ibv.Format         = indexFormat;
 
 			uint32_t numVertices;
 			uint8_t  numStreams = fill(_commandList, cmd.vbv, _draw, numVertices);

@@ -6192,16 +6192,18 @@ namespace bgfx { namespace d3d11
 					}
 				}
 
-				if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx)
+				if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx
+				||  currentState.isIndex16() != draw.isIndex16() )
 				{
 					currentState.m_indexBuffer = draw.m_indexBuffer;
+					currentState.m_submitFlags = draw.m_submitFlags;
 
 					uint16_t handle = draw.m_indexBuffer.idx;
 					if (kInvalidHandle != handle)
 					{
 						const IndexBufferD3D11& ib = m_indexBuffers[handle];
 						deviceCtx->IASetIndexBuffer(ib.m_ptr
-							, 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT
+							, draw.isIndex16() ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT
 							, 0
 							);
 					}

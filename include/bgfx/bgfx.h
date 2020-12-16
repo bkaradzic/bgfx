@@ -823,6 +823,7 @@ namespace bgfx
 		uint32_t size;            //!< Data size.
 		uint32_t startIndex;      //!< First index.
 		IndexBufferHandle handle; //!< Index buffer handle.
+		bool isIndex16;           //!< Index buffer format is 16-bits if true, otherwise it is 32-bit.
 	};
 
 	/// Transient vertex buffer.
@@ -2443,6 +2444,7 @@ namespace bgfx
 	///   for the duration of frame, and it can be reused for multiple draw
 	///   calls.
 	/// @param[in] _num Number of indices to allocate.
+	/// @param[in] _index32 Set to `true` if input indices will be 32-bit.
 	///
 	/// @remarks
 	///   Only 16-bit index buffer is supported.
@@ -2452,7 +2454,8 @@ namespace bgfx
 	void allocTransientIndexBuffer(
 		  TransientIndexBuffer* _tib
 		, uint32_t _num
-		);
+		, bool _index32 = false
+	);
 
 	/// Allocate transient vertex buffer.
 	///

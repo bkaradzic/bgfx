@@ -8037,10 +8037,10 @@ namespace bgfx { namespace gl
 
 							if (isValid(draw.m_indexBuffer) )
 							{
-								const IndexBufferGL& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-								const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
-								const uint32_t indexSize = hasIndex16 ? 2 : 4;
-								const GLenum indexFormat = hasIndex16
+								const IndexBufferGL& ib  = m_indexBuffers[draw.m_indexBuffer.idx];
+								const bool isIndex16     = draw.isIndex16();
+								const uint32_t indexSize = isIndex16 ? 2 : 4;
+								const GLenum indexFormat = isIndex16
 									? GL_UNSIGNED_SHORT
 									: GL_UNSIGNED_INT
 									;
@@ -8061,10 +8061,10 @@ namespace bgfx { namespace gl
 								}
 								else if (prim.m_min <= draw.m_numIndices)
 								{
-									numIndices = draw.m_numIndices;
+									numIndices        = draw.m_numIndices;
 									numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-									numInstances = draw.m_numInstances;
-									numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
+									numInstances      = draw.m_numInstances;
+									numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
 									GL_CHECK(glDrawElementsInstanced(prim.m_type
 										, numIndices
@@ -8077,8 +8077,8 @@ namespace bgfx { namespace gl
 							else
 							{
 								numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
-								numInstances = draw.m_numInstances;
-								numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
+								numInstances      = draw.m_numInstances;
+								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
 								GL_CHECK(glDrawArraysInstanced(prim.m_type
 									, 0

@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 111;
+enum uint BGFX_API_VERSION = 112;
 
 alias bgfx_view_id_t = ushort;
 
@@ -891,6 +891,7 @@ struct bgfx_transient_index_buffer_t
 	uint size; /// Data size.
 	uint startIndex; /// First index.
 	bgfx_index_buffer_handle_t handle; /// Index buffer handle.
+	bool isIndex16; /// Index buffer format is 16-bits if true, otherwise it is 32-bit.
 }
 
 /// Transient vertex buffer.

@@ -711,6 +711,7 @@ typedef struct bgfx_transient_index_buffer_s
     uint32_t             size;               /** Data size.                               */
     uint32_t             startIndex;         /** First index.                             */
     bgfx_index_buffer_handle_t handle;       /** Index buffer handle.                     */
+    bool                 isIndex16;          /** Index buffer format is 16-bits if true, otherwise it is 32-bit. */
 
 } bgfx_transient_index_buffer_t;
 
@@ -1546,9 +1547,10 @@ BGFX_C_API uint32_t bgfx_get_avail_instance_data_buffer(uint32_t _num, uint16_t 
  *  for the duration of frame, and it can be reused for multiple draw
  *  calls.
  * @param[in] _num Number of indices to allocate.
+ * @param[in] _index32 Set to `true` if input indices will be 32-bit.
  *
  */
-BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint32_t _num);
+BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint32_t _num, bool _index32);
 
 /**
  * Allocate transient vertex buffer.
@@ -3585,7 +3587,7 @@ struct bgfx_interface_vtbl
     uint32_t (*get_avail_transient_index_buffer)(uint32_t _num);
     uint32_t (*get_avail_transient_vertex_buffer)(uint32_t _num, const bgfx_vertex_layout_t * _layout);
     uint32_t (*get_avail_instance_data_buffer)(uint32_t _num, uint16_t _stride);
-    void (*alloc_transient_index_buffer)(bgfx_transient_index_buffer_t* _tib, uint32_t _num);
+    void (*alloc_transient_index_buffer)(bgfx_transient_index_buffer_t* _tib, uint32_t _num, bool _index32);
     void (*alloc_transient_vertex_buffer)(bgfx_transient_vertex_buffer_t* _tvb, uint32_t _num, const bgfx_vertex_layout_t * _layout);
     bool (*alloc_transient_buffers)(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_layout_t * _layout, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices);
     void (*alloc_instance_data_buffer)(bgfx_instance_data_buffer_t* _idb, uint32_t _num, uint16_t _stride);

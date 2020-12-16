@@ -4591,8 +4591,9 @@ namespace bgfx { namespace mtl
 
 						if (isValid(draw.m_indexBuffer) )
 						{
-							const IndexBufferMtl& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-							MTLIndexType indexType = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+							const bool isIndex16           = draw.isIndex16();
+							const MTLIndexType indexFormat = isIndex16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+							const IndexBufferMtl& ib       = m_indexBuffers[draw.m_indexBuffer.idx];
 
 							numDrawIndirect = UINT16_MAX == draw.m_numIndirect
 								? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
@@ -4601,7 +4602,7 @@ namespace bgfx { namespace mtl
 
 							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
-								rce.drawIndexedPrimitives(prim.m_type,indexType, ib.m_ptr, 0, vb.m_ptr, (draw.m_startIndirect + ii )* BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
+								rce.drawIndexedPrimitives(prim.m_type, indexFormat, ib.m_ptr, 0, vb.m_ptr, (draw.m_startIndirect + ii )* BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
 							}
 						}
 						else
@@ -4613,7 +4614,7 @@ namespace bgfx { namespace mtl
 
 							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
-								rce.drawPrimitives(prim.m_type,vb.m_ptr, (draw.m_startIndirect + ii) * BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
+								rce.drawPrimitives(prim.m_type, vb.m_ptr, (draw.m_startIndirect + ii) * BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
 							}
 						}
 					}
@@ -4621,28 +4622,28 @@ namespace bgfx { namespace mtl
 					{
 						if (isValid(draw.m_indexBuffer) )
 						{
-							const IndexBufferMtl& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-							MTLIndexType indexType = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+							const bool isIndex16           = draw.isIndex16();
+							const uint32_t indexSize       = isIndex16 ? 2 : 4;
+							const MTLIndexType indexFormat = isIndex16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+							const IndexBufferMtl& ib       = m_indexBuffers[draw.m_indexBuffer.idx];
 
 							if (UINT32_MAX == draw.m_numIndices)
 							{
-								const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 								numIndices        = ib.m_size/indexSize;
 								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 								numInstances      = draw.m_numInstances;
 								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
-								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexType, ib.m_ptr, 0, draw.m_numInstances);
+								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexFormat, ib.m_ptr, 0, draw.m_numInstances);
 							}
 							else if (prim.m_min <= draw.m_numIndices)
 							{
-								const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 								numIndices        = draw.m_numIndices;
 								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 								numInstances      = draw.m_numInstances;
 								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
-								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexType, ib.m_ptr, draw.m_startIndex * indexSize,numInstances);
+								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexFormat, ib.m_ptr, draw.m_startIndex * indexSize,numInstances);
 							}
 						}
 						else

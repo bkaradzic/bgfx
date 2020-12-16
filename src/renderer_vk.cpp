@@ -7184,10 +7184,10 @@ VK_DESTROY
 					}
 					else
 					{
-						BufferVK& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-
-						const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
-						const uint32_t indexSize = hasIndex16 ? 2 : 4;
+						const bool isIndex16          = draw.isIndex16();
+						const uint32_t indexSize      = isIndex16 ? 2 : 4;
+						const VkIndexType indexFormat = isIndex16 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
+						const BufferVK& ib            = m_indexBuffers[draw.m_indexBuffer.idx];
 
 						numIndices = UINT32_MAX == draw.m_numIndices
 							? ib.m_size / indexSize
@@ -7197,9 +7197,7 @@ VK_DESTROY
 						vkCmdBindIndexBuffer(m_commandBuffer
 							, ib.m_buffer
 							, 0
-							, hasIndex16
-								? VK_INDEX_TYPE_UINT16
-								: VK_INDEX_TYPE_UINT32
+							, indexFormat
 							);
 						vkCmdDrawIndexed(m_commandBuffer
 							, numIndices

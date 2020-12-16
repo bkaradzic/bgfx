@@ -3644,7 +3644,8 @@ namespace bgfx
 	void Encoder::setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 	{
 		BGFX_CHECK_HANDLE("setIndexBuffer", s_ctx->m_indexBufferHandle, _handle);
-		BGFX_ENCODER(setIndexBuffer(_handle, _firstIndex, _numIndices) );
+		const IndexBuffer& ib = s_ctx->m_indexBuffers[_handle.idx];
+		BGFX_ENCODER(setIndexBuffer(_handle, ib, _firstIndex, _numIndices) );
 	}
 
 	void Encoder::setIndexBuffer(DynamicIndexBufferHandle _handle)
@@ -4158,17 +4159,19 @@ namespace bgfx
 		return s_ctx->getAvailTransientVertexBuffer(_num, _stride);
 	}
 
-	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num)
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num, bool _index32)
 	{
 		BX_ASSERT(NULL != _tib, "_tib can't be NULL");
 		BX_ASSERT(0 < _num, "Requesting 0 indices.");
-		s_ctx->allocTransientIndexBuffer(_tib, _num);
-		BX_ASSERT(_num == _tib->size/2
+		s_ctx->allocTransientIndexBuffer(_tib, _num, _index32);
+		const uint32_t indexSize = _tib->isIndex16 ? 2 : 4;
+		BX_ASSERT(_num == _tib->size/ indexSize
 			, "Failed to allocate transient index buffer (requested %d, available %d). "
 			  "Use bgfx::getAvailTransient* functions to ensure availability."
 			, _num
-			, _tib->size/2
+			, _tib->size/indexSize
 			);
+		BX_UNUSED(indexSize);
 	}
 
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexLayout& _layout)
@@ -5279,7 +5282,7 @@ BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
 
 BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
 	| BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE
-	, BGFX_SUBMIT_RESERVED_MASK
+	, BGFX_SUBMIT_INTERNAL_RESERVED_MASK
 	) );
 
 BX_STATIC_ASSERT( (0

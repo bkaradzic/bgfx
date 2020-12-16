@@ -4310,7 +4310,8 @@ namespace bgfx { namespace d3d9
 						if (UINT32_MAX == draw.m_numIndices)
 						{
 							const IndexBufferD3D9& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-							const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+							const bool isIndex16     = draw.isIndex16();
+							const uint32_t indexSize = isIndex16 ? 2 : 4;
 							numIndices        = ib.m_size/indexSize;
 							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 							numInstances      = draw.m_numInstances;

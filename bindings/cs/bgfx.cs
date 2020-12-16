@@ -2051,6 +2051,7 @@ public static partial class bgfx
 		public uint size;
 		public uint startIndex;
 		public IndexBufferHandle handle;
+		public byte isIndex16;
 	}
 	
 	public unsafe struct TransientVertexBuffer
@@ -2798,9 +2799,10 @@ public static partial class bgfx
 	///
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 	/// <param name="_num">Number of indices to allocate.</param>
+	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_alloc_transient_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void alloc_transient_index_buffer(TransientIndexBuffer* _tib, uint _num);
+	public static extern unsafe void alloc_transient_index_buffer(TransientIndexBuffer* _tib, uint _num, bool _index32);
 	
 	/// <summary>
 	/// Allocate transient vertex buffer.
