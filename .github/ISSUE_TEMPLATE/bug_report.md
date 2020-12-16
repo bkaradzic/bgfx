@@ -10,14 +10,14 @@ assignees: ''
 <!---
 ###########################################################################
 
-IMPORTANT: READ FIRST!
+**IMPORTANT: READ FIRST!**
 
 Issue tracker is **ONLY** used for reporting bugs.
 
-If you have any questions please do not open issue, rather:
+If you have any questions please **do not** open issue, rather:
 
  - If you have quick question, ask on Discord: https://discord.gg/9eMbv7J
- - Ask in dicussions: https://github.com/bkaradzic/bgfx/discussions
+ - Ask in discussions: https://github.com/bkaradzic/bgfx/discussions
  - Search documentation: https://bkaradzic.github.io/bgfx/
 
 New features should be discussed on:
