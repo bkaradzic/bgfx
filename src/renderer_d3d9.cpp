@@ -710,7 +710,6 @@ namespace bgfx { namespace d3d9
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				| BGFX_CAPS_FRAGMENT_DEPTH
 				| BGFX_CAPS_SWAP_CHAIN
-				| ( (UINT16_MAX < m_caps.MaxVertexIndex) ? BGFX_CAPS_INDEX32 : 0)
 				| ( (m_caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES) ? BGFX_CAPS_TEXTURE_BLIT : 0)
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| (m_occlusionQuerySupport ? BGFX_CAPS_OCCLUSION_QUERY : 0)

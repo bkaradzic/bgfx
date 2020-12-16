@@ -4053,6 +4053,10 @@ namespace bgfx
 
 	IndexBufferHandle createIndexBuffer(const Memory* _mem, uint16_t _flags)
 	{
+		BX_ASSERT(
+			  0 == (_flags & BGFX_BUFFER_INDEX32) || 0 != (g_caps.supported & BGFX_CAPS_INDEX32)
+			, "32-bit indices are not supported. Use bgfx::getCaps to check BGFX_CAPS_INDEX32 backend renderer capabilities."
+			);
 		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
 		return s_ctx->createIndexBuffer(_mem, _flags);
 	}
@@ -4101,6 +4105,10 @@ namespace bgfx
 
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem, uint16_t _flags)
 	{
+		BX_ASSERT(
+			  0 == (_flags & BGFX_BUFFER_INDEX32) || 0 != (g_caps.supported & BGFX_CAPS_INDEX32)
+			, "32-bit indices are not supported. Use bgfx::getCaps to check BGFX_CAPS_INDEX32 backend renderer capabilities."
+			);
 		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
 		return s_ctx->createDynamicIndexBuffer(_mem, _flags);
 	}
@@ -4163,7 +4171,13 @@ namespace bgfx
 	{
 		BX_ASSERT(NULL != _tib, "_tib can't be NULL");
 		BX_ASSERT(0 < _num, "Requesting 0 indices.");
+		BX_ASSERT(
+			  !_index32 || 0 != (g_caps.supported & BGFX_CAPS_INDEX32)
+			, "32-bit indices are not supported. Use bgfx::getCaps to check BGFX_CAPS_INDEX32 backend renderer capabilities."
+			);
+
 		s_ctx->allocTransientIndexBuffer(_tib, _num, _index32);
+
 		const uint32_t indexSize = _tib->isIndex16 ? 2 : 4;
 		BX_ASSERT(_num == _tib->size/ indexSize
 			, "Failed to allocate transient index buffer (requested %d, available %d). "
