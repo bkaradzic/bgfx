@@ -1845,6 +1845,19 @@ namespace bgfx
 			bx::memCopy(&m_init.platformData, &g_platformData, sizeof(PlatformData) );
 		}
 
+		if (true
+		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_PS4)
+		&&  RendererType::Noop != m_init.type
+		&&  NULL == m_init.platformData.ndt
+		&&  NULL == m_init.platformData.nwh
+		&&  NULL == m_init.platformData.context
+		&&  NULL == m_init.platformData.backBuffer
+		&&  NULL == m_init.platformData.backBufferDS
+		   )
+		{
+			BX_TRACE("bgfx platform data like window handle or backbuffer is not set, creating headless device.");
+		}
+
 		m_exit    = false;
 		m_flipped = true;
 		m_frames  = 0;
@@ -3436,19 +3449,6 @@ namespace bgfx
 		{
 			g_callback =
 				s_callbackStub = BX_NEW(g_allocator, CallbackStub);
-		}
-
-		if (true
-		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_PS4)
-		&&  RendererType::Noop != init.type
-		&&  NULL == init.platformData.ndt
-		&&  NULL == init.platformData.nwh
-		&&  NULL == init.platformData.context
-		&&  NULL == init.platformData.backBuffer
-		&&  NULL == init.platformData.backBufferDS
-		   )
-		{
-			BX_TRACE("bgfx platform data like window handle or backbuffer is not set, creating headless device.");
 		}
 
 		bx::memSet(&g_caps, 0, sizeof(g_caps) );
