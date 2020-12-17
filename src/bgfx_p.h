@@ -2959,8 +2959,6 @@ namespace bgfx
 			, m_rtMemoryUsed(0)
 			, m_textureMemoryUsed(0)
 			, m_renderCtx(NULL)
-			, m_renderMain(NULL)
-			, m_renderNoop(NULL)
 			, m_rendererInitialized(false)
 			, m_exit(false)
 			, m_flipAfterRender(false)
@@ -5161,8 +5159,6 @@ namespace bgfx
 		ClearQuad m_clearQuad;
 
 		RendererContextI* m_renderCtx;
-		RendererContextI* m_renderMain;
-		RendererContextI* m_renderNoop;
 
 		bool m_rendererInitialized;
 		bool m_exit;
