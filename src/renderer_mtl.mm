@@ -478,6 +478,7 @@ namespace bgfx { namespace mtl
 			g_caps.supported |= (0
 				| BGFX_CAPS_ALPHA_TO_COVERAGE
 				| BGFX_CAPS_BLEND_INDEPENDENT
+				| BGFX_CAPS_COMPUTE
 				| BGFX_CAPS_FRAGMENT_DEPTH
 				| BGFX_CAPS_INDEX32
 				| BGFX_CAPS_INSTANCING
@@ -491,7 +492,7 @@ namespace bgfx { namespace mtl
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
-				| BGFX_CAPS_COMPUTE
+				| BGFX_CAPS_VERTEX_ID
 				);
 
 			if (BX_ENABLED(BX_PLATFORM_IOS) )
@@ -990,6 +991,13 @@ namespace bgfx { namespace mtl
 				return;
 			}
 
+#if BX_PLATFORM_OSX
+            m_blitCommandEncoder = getBlitCommandEncoder();
+            m_blitCommandEncoder.synchronizeResource(m_screenshotTarget);
+            m_blitCommandEncoder.endEncoding();
+            m_blitCommandEncoder = 0;
+#endif  // BX_PLATFORM_OSX
+
 			m_cmd.kick(false, true);
 			m_commandBuffer = 0;
 
@@ -1342,31 +1350,37 @@ namespace bgfx { namespace mtl
 				for (uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 				{
 					MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
+
 					if (NULL != desc.texture)
 					{
-						desc.loadAction = MTLLoadActionLoad;
-						desc.storeAction = desc.resolveTexture == nil ?
-											MTLStoreActionStore :
-											MTLStoreActionMultisampleResolve;
+						desc.loadAction  = MTLLoadActionLoad;
+						desc.storeAction = desc.resolveTexture == nil
+							? MTLStoreActionStore
+							: MTLStoreActionMultisampleResolve
+							;
 					}
 				}
 
 				RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
+
 				if (NULL != depthAttachment.texture)
 				{
-					depthAttachment.loadAction = MTLLoadActionLoad;
-					depthAttachment.storeAction = depthAttachment.resolveTexture == nil ?
-													MTLStoreActionStore :
-													MTLStoreActionMultisampleResolve;
+					depthAttachment.loadAction  = MTLLoadActionLoad;
+					depthAttachment.storeAction = depthAttachment.resolveTexture == nil
+						? MTLStoreActionStore
+						: MTLStoreActionMultisampleResolve
+						;
 				}
 
 				RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
+
 				if (NULL != stencilAttachment.texture)
 				{
-					stencilAttachment.loadAction   = MTLLoadActionLoad;
-					stencilAttachment.storeAction = stencilAttachment.resolveTexture == nil ?
-													MTLStoreActionStore :
-													MTLStoreActionMultisampleResolve;
+					stencilAttachment.loadAction  = MTLLoadActionLoad;
+					stencilAttachment.storeAction = stencilAttachment.resolveTexture == nil
+						? MTLStoreActionStore
+						: MTLStoreActionMultisampleResolve
+						;
 				}
 
 				m_renderCommandEncoder = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
@@ -1439,7 +1453,7 @@ namespace bgfx { namespace mtl
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
 	case UniformType::_uniform:                            \
-	case UniformType::_uniform|kUniformFragmentBit:   \
+	case UniformType::_uniform|kUniformFragmentBit:        \
 	{                                                      \
 		setShaderUniform(uint8_t(type), loc, data, num);   \
 	}                                                      \
@@ -4551,6 +4565,7 @@ namespace bgfx { namespace mtl
 				if (0 != currentState.m_streamMask)
 				{
 					uint32_t numVertices = draw.m_numVertices;
+
 					if (UINT32_MAX == numVertices)
 					{
 						const VertexBufferMtl& vb = m_vertexBuffers[currentState.m_stream[0].m_handle.idx];
@@ -4576,28 +4591,30 @@ namespace bgfx { namespace mtl
 
 						if (isValid(draw.m_indexBuffer) )
 						{
-							const IndexBufferMtl& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-							MTLIndexType indexType = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+							const bool isIndex16           = draw.isIndex16();
+							const MTLIndexType indexFormat = isIndex16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+							const IndexBufferMtl& ib       = m_indexBuffers[draw.m_indexBuffer.idx];
 
 							numDrawIndirect = UINT16_MAX == draw.m_numIndirect
-							? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
-							: draw.m_numIndirect
-							;
+								? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								: draw.m_numIndirect
+								;
 
 							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
-								rce.drawIndexedPrimitives(prim.m_type,indexType, ib.m_ptr, 0, vb.m_ptr, (draw.m_startIndirect + ii )* BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
+								rce.drawIndexedPrimitives(prim.m_type, indexFormat, ib.m_ptr, 0, vb.m_ptr, (draw.m_startIndirect + ii )* BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
 							}
 						}
 						else
 						{
 							numDrawIndirect = UINT16_MAX == draw.m_numIndirect
-							? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
-							: draw.m_numIndirect
-							;
+								? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								: draw.m_numIndirect
+								;
+
 							for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 							{
-								rce.drawPrimitives(prim.m_type,vb.m_ptr, (draw.m_startIndirect + ii) * BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
+								rce.drawPrimitives(prim.m_type, vb.m_ptr, (draw.m_startIndirect + ii) * BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
 							}
 						}
 					}
@@ -4605,28 +4622,28 @@ namespace bgfx { namespace mtl
 					{
 						if (isValid(draw.m_indexBuffer) )
 						{
-							const IndexBufferMtl& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-							MTLIndexType indexType = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+							const bool isIndex16           = draw.isIndex16();
+							const uint32_t indexSize       = isIndex16 ? 2 : 4;
+							const MTLIndexType indexFormat = isIndex16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+							const IndexBufferMtl& ib       = m_indexBuffers[draw.m_indexBuffer.idx];
 
 							if (UINT32_MAX == draw.m_numIndices)
 							{
-								const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 								numIndices        = ib.m_size/indexSize;
 								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 								numInstances      = draw.m_numInstances;
 								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
-								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexType, ib.m_ptr, 0, draw.m_numInstances);
+								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexFormat, ib.m_ptr, 0, draw.m_numInstances);
 							}
 							else if (prim.m_min <= draw.m_numIndices)
 							{
-								const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 								numIndices        = draw.m_numIndices;
 								numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 								numInstances      = draw.m_numInstances;
 								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
-								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexType, ib.m_ptr, draw.m_startIndex * indexSize,numInstances);
+								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexFormat, ib.m_ptr, draw.m_startIndex * indexSize,numInstances);
 							}
 						}
 						else

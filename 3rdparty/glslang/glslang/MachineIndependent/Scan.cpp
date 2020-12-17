@@ -365,6 +365,9 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["if"] =                      IF;
     (*KeywordMap)["else"] =                    ELSE;
     (*KeywordMap)["discard"] =                 DISCARD;
+    (*KeywordMap)["terminateInvocation"] =     TERMINATE_INVOCATION;
+    (*KeywordMap)["terminateRayEXT"] =         TERMINATE_RAY;
+    (*KeywordMap)["ignoreIntersectionEXT"] =   IGNORE_INTERSECTION;
     (*KeywordMap)["return"] =                  RETURN;
     (*KeywordMap)["void"] =                    VOID;
     (*KeywordMap)["bool"] =                    BOOL;
@@ -934,6 +937,17 @@ int TScanContext::tokenizeIdentifier()
     case DISCARD:
     case RETURN:
     case CASE:
+        return keyword;
+
+    case TERMINATE_INVOCATION:
+        if (!parseContext.extensionTurnedOn(E_GL_EXT_terminate_invocation))
+            return identifierOrType();
+        return keyword;
+
+    case TERMINATE_RAY:
+    case IGNORE_INTERSECTION:
+        if (!parseContext.extensionTurnedOn(E_GL_EXT_ray_tracing))
+            return identifierOrType();
         return keyword;
 
     case BUFFER:

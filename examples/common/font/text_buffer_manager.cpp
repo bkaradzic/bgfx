@@ -21,6 +21,16 @@
 #include "fs_font_distance_field.bin.h"
 #include "vs_font_distance_field_subpixel.bin.h"
 #include "fs_font_distance_field_subpixel.bin.h"
+#include "vs_font_distance_field_outline.bin.h"
+#include "fs_font_distance_field_outline.bin.h"
+#include "vs_font_distance_field_outline_image.bin.h"
+#include "fs_font_distance_field_outline_image.bin.h"
+#include "vs_font_distance_field_drop_shadow.bin.h"
+#include "fs_font_distance_field_drop_shadow.bin.h"
+#include "vs_font_distance_field_drop_shadow_image.bin.h"
+#include "fs_font_distance_field_drop_shadow_image.bin.h"
+#include "vs_font_distance_field_outline_drop_shadow_image.bin.h"
+#include "fs_font_distance_field_outline_drop_shadow_image.bin.h"
 
 static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
@@ -30,6 +40,16 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER(fs_font_distance_field),
 	BGFX_EMBEDDED_SHADER(vs_font_distance_field_subpixel),
 	BGFX_EMBEDDED_SHADER(fs_font_distance_field_subpixel),
+	BGFX_EMBEDDED_SHADER(vs_font_distance_field_outline),
+	BGFX_EMBEDDED_SHADER(fs_font_distance_field_outline),
+	BGFX_EMBEDDED_SHADER(vs_font_distance_field_outline_image),
+	BGFX_EMBEDDED_SHADER(fs_font_distance_field_outline_image),
+	BGFX_EMBEDDED_SHADER(vs_font_distance_field_drop_shadow),
+	BGFX_EMBEDDED_SHADER(fs_font_distance_field_drop_shadow),
+	BGFX_EMBEDDED_SHADER(vs_font_distance_field_drop_shadow_image),
+	BGFX_EMBEDDED_SHADER(fs_font_distance_field_drop_shadow_image),
+	BGFX_EMBEDDED_SHADER(vs_font_distance_field_outline_drop_shadow_image),
+	BGFX_EMBEDDED_SHADER(fs_font_distance_field_outline_drop_shadow_image),
 
 	BGFX_EMBEDDED_SHADER_END()
 };
@@ -44,6 +64,36 @@ public:
 	/// @remark the ownership of the manager is not taken
 	TextBuffer(FontManager* _fontManager);
 	~TextBuffer();
+
+	uint32_t getOutlineColor()
+	{
+		return m_outlineColor;
+	}
+
+	float getOutlineWidth()
+	{
+		return m_outlineWidth;
+	}
+
+	uint32_t getDropShadowColor()
+	{
+		return m_dropShadowColor;
+	}
+
+	float getDropShadowOffsetU()
+	{
+		return m_dropShadowOffset[0];
+	}
+
+	float getDropShadowOffsetV()
+	{
+		return m_dropShadowOffset[1];
+	}
+
+	float getDropShadowSoftener()
+	{
+		return m_dropShadowSoftener;
+	}
 
 	void setStyle(uint32_t _flags = STYLE_NORMAL)
 	{
@@ -73,6 +123,39 @@ public:
 	void setStrikeThroughColor(uint32_t _rgba = 0x000000FF)
 	{
 		m_strikeThroughColor = toABGR(_rgba);
+	}
+
+	void setOutlineColor(uint32_t _rgba = 0x000000FF)
+	{
+		m_outlineColor = toABGR(_rgba);
+	}
+
+	void setOutlineWidth(float _outlineWidth = 3.0f)
+	{
+		m_outlineWidth = _outlineWidth;
+	}
+
+	void setDropShadowColor(uint32_t _rgba = 0x000000FF)
+	{
+		m_dropShadowColor = toABGR(_rgba);
+	}
+
+	/*
+	void setDropShadowWidth(float _dropShadowWidth = 3.0f)
+	{
+		m_dropShadowWidth = _dropShadowWidth;
+	}
+	*/
+
+	void setDropShadowOffset(float u, float v)
+	{
+		m_dropShadowOffset[0] = u;
+		m_dropShadowOffset[1] = v;
+	}
+
+	void setDropShadowSoftener(float smoother)
+	{
+		m_dropShadowSoftener = smoother;
 	}
 
 	void setPenPosition(float _x, float _y)
@@ -142,7 +225,7 @@ public:
 	}
 
 private:
-	void appendGlyph(FontHandle _handle, CodePoint _codePoint);
+	void appendGlyph(FontHandle _handle, CodePoint _codePoint, bool shadow);
 	void verticalCenterLastLine(float _txtDecalY, float _top, float _bottom);
 
 	static uint32_t toABGR(uint32_t _rgba)
@@ -154,6 +237,29 @@ private:
 			 ;
 	}
 
+	void setVertex(uint32_t _i, float _x, float _y, uint32_t _rgba, uint8_t _style = STYLE_NORMAL)
+	{
+		m_vertexBuffer[_i].x = _x;
+		m_vertexBuffer[_i].y = _y;
+		m_vertexBuffer[_i].rgba = _rgba;
+		m_styleBuffer[_i] = _style;
+	}
+
+	void setOutlineColor(uint32_t _i, uint32_t _rgbaOutline)
+	{
+		m_vertexBuffer[_i].rgbaOutline = _rgbaOutline;
+	}
+
+	struct TextVertex
+	{
+		float x, y;
+		int16_t u, v, w, t;
+		int16_t u1, v1, w1, t1;
+		int16_t u2, v2, w2, t2;
+		uint32_t rgba;
+		uint32_t rgbaOutline;
+	};
+
 	uint32_t m_styleFlags;
 
 	// color states
@@ -163,6 +269,15 @@ private:
 	uint32_t m_overlineColor;
 	uint32_t m_underlineColor;
 	uint32_t m_strikeThroughColor;
+
+	// outline state
+	float m_outlineWidth;
+	uint32_t m_outlineColor;
+
+	// drop shadow state
+	float m_dropShadowOffset[2];
+	uint32_t m_dropShadowColor;
+	float m_dropShadowSoftener;
 
 	//position states
 	float m_penX;
@@ -175,23 +290,10 @@ private:
 	float m_lineDescender;
 	float m_lineGap;
 
+	CodePoint m_previousCodePoint;
+
 	TextRectangle m_rectangle;
 	FontManager* m_fontManager;
-
-	void setVertex(uint32_t _i, float _x, float _y, uint32_t _rgba, uint8_t _style = STYLE_NORMAL)
-	{
-		m_vertexBuffer[_i].x = _x;
-		m_vertexBuffer[_i].y = _y;
-		m_vertexBuffer[_i].rgba = _rgba;
-		m_styleBuffer[_i] = _style;
-	}
-
-	struct TextVertex
-	{
-		float x, y;
-		int16_t u, v, w, t;
-		uint32_t rgba;
-	};
 
 	TextVertex* m_vertexBuffer;
 	uint16_t* m_indexBuffer;
@@ -204,11 +306,15 @@ private:
 
 TextBuffer::TextBuffer(FontManager* _fontManager)
 	: m_styleFlags(STYLE_NORMAL)
-	, m_textColor(0xffffffff)
-	, m_backgroundColor(0xffffffff)
-	, m_overlineColor(0xffffffff)
-	, m_underlineColor(0xffffffff)
-	, m_strikeThroughColor(0xffffffff)
+	, m_textColor(UINT32_MAX)
+	, m_backgroundColor(UINT32_MAX)
+	, m_overlineColor(UINT32_MAX)
+	, m_underlineColor(UINT32_MAX)
+	, m_strikeThroughColor(UINT32_MAX)
+	, m_outlineWidth(3.0f)
+	, m_outlineColor(0x000000ff)
+	, m_dropShadowColor(0x0000005a)
+	, m_dropShadowSoftener(1.0f)
 	, m_penX(0)
 	, m_penY(0)
 	, m_originX(0)
@@ -216,6 +322,7 @@ TextBuffer::TextBuffer(FontManager* _fontManager)
 	, m_lineAscender(0)
 	, m_lineDescender(0)
 	, m_lineGap(0)
+	, m_previousCodePoint(0)
 	, m_fontManager(_fontManager)
 	, m_vertexBuffer(new TextVertex[MAX_BUFFERED_CHARACTERS * 4])
 	, m_indexBuffer(new uint16_t[MAX_BUFFERED_CHARACTERS * 6])
@@ -226,6 +333,8 @@ TextBuffer::TextBuffer(FontManager* _fontManager)
 {
 	m_rectangle.width = 0;
 	m_rectangle.height = 0;
+	m_dropShadowOffset[0] = 0.00f;
+	m_dropShadowOffset[1] = 0.00f;
 }
 
 TextBuffer::~TextBuffer()
@@ -244,6 +353,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const c
 		m_lineDescender = 0;
 		m_lineAscender = 0;
 		m_lineGap = 0;
+		m_previousCodePoint = 0;
 	}
 
 	CodePoint codepoint = 0;
@@ -255,11 +365,35 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const c
 	}
 	BX_ASSERT(_end >= _string);
 
+	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
+	if (font.fontType & FONT_TYPE_MASK_DISTANCE_DROP_SHADOW)
+	{
+		float savePenX = m_penX;
+		float savePenY = m_penY;
+		CodePoint savePreviousCodePoint = m_previousCodePoint;
+		TextRectangle saveRectangle = m_rectangle;
+
+		const char* origString = _string;
+		for (; *_string && _string < _end ; ++_string)
+		{
+			if (utf8_decode(&state, (uint32_t*)&codepoint, *_string) == UTF8_ACCEPT )
+			{
+				appendGlyph(_fontHandle, codepoint, true);
+			}
+		}
+		_string = origString;
+
+		m_penX = savePenX;
+		m_penY = savePenY;
+		m_previousCodePoint = savePreviousCodePoint;
+		m_rectangle = saveRectangle;
+	}
+
 	for (; *_string && _string < _end ; ++_string)
 	{
 		if (utf8_decode(&state, (uint32_t*)&codepoint, *_string) == UTF8_ACCEPT )
 		{
-			appendGlyph(_fontHandle, codepoint);
+			appendGlyph(_fontHandle, codepoint, false);
 		}
 	}
 
@@ -275,6 +409,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string, cons
 		m_lineDescender = 0;
 		m_lineAscender = 0;
 		m_lineGap = 0;
+		m_previousCodePoint = 0;
 	}
 
 	if (_end == NULL)
@@ -283,10 +418,30 @@ void TextBuffer::appendText(FontHandle _fontHandle, const wchar_t* _string, cons
 	}
 	BX_ASSERT(_end >= _string);
 
+	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
+	if (font.fontType & FONT_TYPE_MASK_DISTANCE_DROP_SHADOW)
+	{
+		float savePenX = m_penX;
+		float savePenY = m_penY;
+		CodePoint savePreviousCodePoint = m_previousCodePoint;
+		TextRectangle saveRectangle = m_rectangle;
+
+		for (const wchar_t* _current = _string; _current < _end; ++_current)
+		{
+			uint32_t _codePoint = *_current;
+			appendGlyph(_fontHandle, _codePoint, true);
+		}
+
+		m_penX = savePenX;
+		m_penY = savePenY;
+		m_previousCodePoint = savePreviousCodePoint;
+		m_rectangle = saveRectangle;
+	}
+
 	for (const wchar_t* _current = _string; _current < _end; ++_current)
 	{
 		uint32_t _codePoint = *_current;
-		appendGlyph(_fontHandle, _codePoint);
+		appendGlyph(_fontHandle, _codePoint, false);
 	}
 }
 
@@ -336,17 +491,18 @@ void TextBuffer::clearTextBuffer()
 	m_lineAscender = 0;
 	m_lineDescender = 0;
 	m_lineGap = 0;
+	m_previousCodePoint = 0;
 	m_rectangle.width = 0;
 	m_rectangle.height = 0;
 }
 
-void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
+void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint, bool shadow)
 {
 	if (_codePoint == L'\t')
 	{
 		for (uint32_t ii = 0; ii < 4; ++ii)
 		{
-			appendGlyph(_handle, L' ');
+			appendGlyph(_handle, L' ', shadow);
 		}
 		return;
 	}
@@ -355,11 +511,13 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 	BX_WARN(NULL != glyph, "Glyph not found (font handle %d, code point %d)", _handle.idx, _codePoint);
 	if (NULL == glyph)
 	{
+		m_previousCodePoint = 0;
 		return;
 	}
 
 	if( m_vertexCount/4 >= MAX_BUFFERED_CHARACTERS)
 	{
+		m_previousCodePoint = 0;
 		return;
 	}
 
@@ -373,6 +531,7 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 		m_lineDescender  = font.descender;
 		m_lineAscender   = font.ascender;
 		m_lineStartIndex = m_vertexCount;
+		m_previousCodePoint = 0;
 		return;
 	}
 
@@ -392,11 +551,64 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 		verticalCenterLastLine( (txtDecals), (m_penY - m_lineAscender), (m_penY + m_lineAscender - m_lineDescender + m_lineGap) );
 	}
 
-	float kerning = 0 * font.scale;
+	float kerning = m_fontManager->getKerning(_handle, m_previousCodePoint, _codePoint);
 	m_penX += kerning;
 
 	const GlyphInfo& blackGlyph = m_fontManager->getBlackGlyph();
 	const Atlas* atlas = m_fontManager->getAtlas();
+	const AtlasRegion& atlasRegion = atlas->getRegion(glyph->regionIndex);
+
+	if (shadow)
+	{
+		if (atlasRegion.getType() != AtlasRegion::TYPE_BGRA8)
+		{
+			float extraXOffset = m_dropShadowOffset[0];
+			float extraYOffset = m_dropShadowOffset[1];
+
+			float x0 = m_penX + (glyph->offset_x) + extraXOffset;
+			float y0 = (m_penY + m_lineAscender + (glyph->offset_y) + extraYOffset );
+			float x1 = (x0 + glyph->width);
+			float y1 = (y0 + glyph->height);
+
+			bx::memSet(&m_vertexBuffer[m_vertexCount], 0, sizeof(TextVertex) * 4);
+
+			atlas->packUV(glyph->regionIndex
+				, (uint8_t*)m_vertexBuffer
+				, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u2)
+				, sizeof(TextVertex)
+				);
+
+			uint32_t adjustedDropShadowColor = ((((m_dropShadowColor & 0xff000000) >> 8) * (m_textColor >> 24)) & 0xff000000) | (m_dropShadowColor & 0x00ffffff);
+			setVertex(m_vertexCount + 0, x0, y0, adjustedDropShadowColor);
+			setVertex(m_vertexCount + 1, x0, y1, adjustedDropShadowColor);
+			setVertex(m_vertexCount + 2, x1, y1, adjustedDropShadowColor);
+			setVertex(m_vertexCount + 3, x1, y0, adjustedDropShadowColor);
+
+			m_indexBuffer[m_indexCount + 0] = m_vertexCount + 0;
+			m_indexBuffer[m_indexCount + 1] = m_vertexCount + 1;
+			m_indexBuffer[m_indexCount + 2] = m_vertexCount + 2;
+			m_indexBuffer[m_indexCount + 3] = m_vertexCount + 0;
+			m_indexBuffer[m_indexCount + 4] = m_vertexCount + 2;
+			m_indexBuffer[m_indexCount + 5] = m_vertexCount + 3;
+			m_vertexCount += 4;
+			m_indexCount += 6;
+		}
+
+		m_penX += glyph->advance_x;
+		if (m_penX > m_rectangle.width)
+		{
+			m_rectangle.width = m_penX;
+		}
+
+		if ( (m_penY +m_lineAscender - m_lineDescender+m_lineGap) > m_rectangle.height)
+		{
+			m_rectangle.height = (m_penY +m_lineAscender - m_lineDescender+m_lineGap);
+		}
+
+		m_previousCodePoint = _codePoint;
+
+		return;
+	}
 
 	if (m_styleFlags & STYLE_BACKGROUND
 	&&  m_backgroundColor & 0xff000000)
@@ -515,21 +727,54 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 		m_indexCount += 6;
 	}
 
-	float x0 = m_penX + (glyph->offset_x);
-	float y0 = (m_penY + m_lineAscender + (glyph->offset_y) );
-	float x1 = (x0 + glyph->width);
-	float y1 = (y0 + glyph->height);
+	if (!shadow  &&  atlasRegion.getType() == AtlasRegion::TYPE_BGRA8)
+	{
+		bx::memSet(&m_vertexBuffer[m_vertexCount], 0, sizeof(TextVertex) * 4);
 
-	atlas->packUV(glyph->regionIndex
-		, (uint8_t*)m_vertexBuffer
-		, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
-		, sizeof(TextVertex)
-		);
+		atlas->packUV(glyph->regionIndex
+			, (uint8_t*)m_vertexBuffer
+			, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u1)
+			, sizeof(TextVertex)
+			);
 
-	setVertex(m_vertexCount + 0, x0, y0, m_textColor);
-	setVertex(m_vertexCount + 1, x0, y1, m_textColor);
-	setVertex(m_vertexCount + 2, x1, y1, m_textColor);
-	setVertex(m_vertexCount + 3, x1, y0, m_textColor);
+		float glyphScale = glyph->bitmapScale;
+		float glyphWidth = glyph->width * glyphScale;
+		float glyphHeight = glyph->height * glyphScale;
+		float x0 = m_penX + (glyph->offset_x);
+		float y0 = (m_penY + (font.ascender + -font.descender - glyphHeight) / 2);
+		float x1 = (x0 + glyphWidth);
+		float y1 = (y0 + glyphHeight);
+
+		setVertex(m_vertexCount + 0, x0, y0, m_textColor);
+		setVertex(m_vertexCount + 1, x0, y1, m_textColor);
+		setVertex(m_vertexCount + 2, x1, y1, m_textColor);
+		setVertex(m_vertexCount + 3, x1, y0, m_textColor);
+	}
+	else if (!shadow)
+	{
+		bx::memSet(&m_vertexBuffer[m_vertexCount], 0, sizeof(TextVertex) * 4);
+
+		atlas->packUV(glyph->regionIndex
+			, (uint8_t*)m_vertexBuffer
+			, sizeof(TextVertex) * m_vertexCount + offsetof(TextVertex, u)
+			, sizeof(TextVertex)
+			);
+
+		float x0 = m_penX + (glyph->offset_x);
+		float y0 = (m_penY + m_lineAscender + (glyph->offset_y) );
+		float x1 = (x0 + glyph->width);
+		float y1 = (y0 + glyph->height);
+
+		setVertex(m_vertexCount + 0, x0, y0, m_textColor);
+		setVertex(m_vertexCount + 1, x0, y1, m_textColor);
+		setVertex(m_vertexCount + 2, x1, y1, m_textColor);
+		setVertex(m_vertexCount + 3, x1, y0, m_textColor);
+
+		setOutlineColor(m_vertexCount + 0, m_outlineColor);
+		setOutlineColor(m_vertexCount + 1, m_outlineColor);
+		setOutlineColor(m_vertexCount + 2, m_outlineColor);
+		setOutlineColor(m_vertexCount + 3, m_outlineColor);
+	}
 
 	m_indexBuffer[m_indexCount + 0] = m_vertexCount + 0;
 	m_indexBuffer[m_indexCount + 1] = m_vertexCount + 1;
@@ -550,6 +795,8 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 	{
 		m_rectangle.height = (m_penY +m_lineAscender - m_lineDescender+m_lineGap);
 	}
+
+	m_previousCodePoint = _codePoint;
 }
 
 void TextBuffer::verticalCenterLastLine(float _dy, float _top, float _bottom)
@@ -598,14 +845,49 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 		, true
 		);
 
+	m_distanceDropShadowProgram = bgfx::createProgram(
+		  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_font_distance_field_drop_shadow")
+		, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_font_distance_field_drop_shadow")
+		, true
+		);
+
+	m_distanceDropShadowImageProgram = bgfx::createProgram(
+		  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_font_distance_field_drop_shadow_image")
+		, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_font_distance_field_drop_shadow_image")
+		, true
+		);
+
+	m_distanceOutlineProgram = bgfx::createProgram(
+		  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_font_distance_field_outline")
+		, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_font_distance_field_outline")
+		, true
+		);
+
+	m_distanceOutlineImageProgram = bgfx::createProgram(
+		  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_font_distance_field_outline_image")
+		, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_font_distance_field_outline_image")
+		, true
+		);
+
+	m_distanceOutlineDropShadowImageProgram = bgfx::createProgram(
+		  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_font_distance_field_outline_drop_shadow_image")
+		, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_font_distance_field_outline_drop_shadow_image")
+		, true
+		);
+
 	m_vertexLayout
 		.begin()
 		.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
 		.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Int16, true)
+		.add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Int16, true)
+		.add(bgfx::Attrib::TexCoord2, 4, bgfx::AttribType::Int16, true)
 		.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
+		.add(bgfx::Attrib::Color1,    4, bgfx::AttribType::Uint8, true)
 		.end();
 
 	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+	u_dropShadowColor = bgfx::createUniform("u_dropShadowColor", bgfx::UniformType::Vec4);
+	u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
 }
 
 TextBufferManager::~TextBufferManager()
@@ -613,11 +895,19 @@ TextBufferManager::~TextBufferManager()
 	BX_ASSERT(m_textBufferHandles.getNumHandles() == 0, "All the text buffers must be destroyed before destroying the manager");
 	delete [] m_textBuffers;
 
+	bgfx::destroy(u_params);
+
+	bgfx::destroy(u_dropShadowColor);
 	bgfx::destroy(s_texColor);
 
 	bgfx::destroy(m_basicProgram);
 	bgfx::destroy(m_distanceProgram);
 	bgfx::destroy(m_distanceSubpixelProgram);
+	bgfx::destroy(m_distanceOutlineProgram);
+	bgfx::destroy(m_distanceOutlineImageProgram);
+	bgfx::destroy(m_distanceDropShadowProgram);
+	bgfx::destroy(m_distanceDropShadowImageProgram);
+	bgfx::destroy(m_distanceOutlineDropShadowImageProgram);
 }
 
 TextBufferHandle TextBufferManager::createTextBuffer(uint32_t _type, BufferType::Enum _bufferType)
@@ -706,12 +996,17 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 		break;
 
 	case FONT_TYPE_DISTANCE:
+	{
 		program = m_distanceProgram;
 		bgfx::setState(0
 			| BGFX_STATE_WRITE_RGB
 			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 			);
+
+		float params[4] = { 0.0f, (float)m_fontManager->getAtlas()->getTextureSize() / 512.0f, 0.0f, 0.0f };
+		bgfx::setUniform(u_params, &params);
 		break;
+	}
 
 	case FONT_TYPE_DISTANCE_SUBPIXEL:
 		program = m_distanceSubpixelProgram;
@@ -721,6 +1016,84 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 			, bc.textBuffer->getTextColor()
 			);
 		break;
+
+	case FONT_TYPE_DISTANCE_OUTLINE:
+	{
+		program = m_distanceOutlineProgram;
+		bgfx::setState(0
+			| BGFX_STATE_WRITE_RGB
+			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+			);
+
+		float params[4] = { 0.0f, (float)m_fontManager->getAtlas()->getTextureSize() / 512.0f, 0.0f, bc.textBuffer->getOutlineWidth() };
+		bgfx::setUniform(u_params, &params);
+		break;
+	}
+
+	case FONT_TYPE_DISTANCE_OUTLINE_IMAGE:
+	{
+		program = m_distanceOutlineImageProgram;
+		bgfx::setState(0
+			| BGFX_STATE_WRITE_RGB
+			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+			);
+
+		float params[4] = { 0.0f, (float)m_fontManager->getAtlas()->getTextureSize() / 512.0f, 0.0f, bc.textBuffer->getOutlineWidth() };
+		bgfx::setUniform(u_params, &params);
+		break;
+	}
+
+	case FONT_TYPE_DISTANCE_DROP_SHADOW:
+	{
+		program = m_distanceDropShadowProgram;
+		bgfx::setState(0
+			| BGFX_STATE_WRITE_RGB
+			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+			);
+
+		uint32_t dropShadowColor = bc.textBuffer->getDropShadowColor();
+		float dropShadowColorVec[4] = { ((dropShadowColor >> 16) & 0xff) / 255.0f, ((dropShadowColor >> 8) & 0xff) / 255.0f, (dropShadowColor & 0xff) / 255.0f, (dropShadowColor >> 24) / 255.0f };
+		bgfx::setUniform(u_dropShadowColor, &dropShadowColorVec);
+
+		float params[4] = { 0.0f, (float)m_fontManager->getAtlas()->getTextureSize() / 512.0f, bc.textBuffer->getDropShadowSoftener(), 0.0 };
+		bgfx::setUniform(u_params, &params);
+		break;
+	}
+
+	case FONT_TYPE_DISTANCE_DROP_SHADOW_IMAGE:
+	{
+		program = m_distanceDropShadowImageProgram;
+		bgfx::setState(0
+			| BGFX_STATE_WRITE_RGB
+			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+			);
+
+		uint32_t dropShadowColor = bc.textBuffer->getDropShadowColor();
+		float dropShadowColorVec[4] = { ((dropShadowColor >> 16) & 0xff) / 255.0f, ((dropShadowColor >> 8) & 0xff) / 255.0f, (dropShadowColor & 0xff) / 255.0f, (dropShadowColor >> 24) / 255.0f };
+		bgfx::setUniform(u_dropShadowColor, &dropShadowColorVec);
+
+		float params[4] = { 0.0f, (float)m_fontManager->getAtlas()->getTextureSize() / 512.0f, bc.textBuffer->getDropShadowSoftener(), 0.0 };
+		bgfx::setUniform(u_params, &params);
+		break;
+	}
+
+	case FONT_TYPE_DISTANCE_OUTLINE_DROP_SHADOW_IMAGE:
+	{
+		program = m_distanceOutlineDropShadowImageProgram;
+		bgfx::setState(0
+			| BGFX_STATE_WRITE_RGB
+			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+			);
+
+		uint32_t dropShadowColor = bc.textBuffer->getDropShadowColor();
+		float dropShadowColorVec[4] = { ((dropShadowColor >> 16) & 0xff) / 255.0f, ((dropShadowColor >> 8) & 0xff) / 255.0f, (dropShadowColor & 0xff) / 255.0f, (dropShadowColor >> 24) / 255.0f };
+		bgfx::setUniform(u_dropShadowColor, &dropShadowColorVec);
+
+		float params[4] = { 0.0f, (float)m_fontManager->getAtlas()->getTextureSize() / 512.0f, bc.textBuffer->getDropShadowSoftener(), bc.textBuffer->getOutlineWidth() };
+		bgfx::setUniform(u_params, &params);
+		break;
+	}
+
 	}
 
 	switch (bc.bufferType)
@@ -854,6 +1227,41 @@ void TextBufferManager::setStrikeThroughColor(TextBufferHandle _handle, uint32_t
 	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
 	BufferCache& bc = m_textBuffers[_handle.idx];
 	bc.textBuffer->setStrikeThroughColor(_rgba);
+}
+
+void TextBufferManager::setOutlineColor(TextBufferHandle _handle, uint32_t _rgba)
+{
+	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
+	BufferCache& bc = m_textBuffers[_handle.idx];
+	bc.textBuffer->setOutlineColor(_rgba);
+}
+
+void TextBufferManager::setOutlineWidth(TextBufferHandle _handle, float _outlineWidth)
+{
+	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
+	BufferCache& bc = m_textBuffers[_handle.idx];
+	bc.textBuffer->setOutlineWidth(_outlineWidth);
+}
+
+void TextBufferManager::setDropShadowColor(TextBufferHandle _handle, uint32_t _rgba)
+{
+	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
+	BufferCache& bc = m_textBuffers[_handle.idx];
+	bc.textBuffer->setDropShadowColor(_rgba);
+}
+
+void TextBufferManager::setDropShadowOffset(TextBufferHandle _handle, float _u, float _v)
+{
+	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
+	BufferCache& bc = m_textBuffers[_handle.idx];
+	bc.textBuffer->setDropShadowOffset(_u, _v);
+}
+
+void TextBufferManager::setDropShadowSoftener(TextBufferHandle _handle, float smoother)
+{
+	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
+	BufferCache& bc = m_textBuffers[_handle.idx];
+	bc.textBuffer->setDropShadowSoftener(smoother);
 }
 
 void TextBufferManager::setPenPosition(TextBufferHandle _handle, float _x, float _y)

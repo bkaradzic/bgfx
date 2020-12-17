@@ -4069,8 +4069,12 @@ namespace bgfx { namespace d3d12
 				BufferD3D12& ib = s_renderD3D12->m_indexBuffers[_draw.m_indexBuffer.idx];
 				ib.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-				const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
-				const uint32_t indexSize = hasIndex16 ? 2 : 4;
+				const bool isIndex16          = _draw.isIndex16();
+				const uint32_t indexSize      = isIndex16 ? 2 : 4;
+				const DXGI_FORMAT indexFormat = isIndex16
+					? DXGI_FORMAT_R16_UINT
+					: DXGI_FORMAT_R32_UINT
+					;
 
 				numIndices = UINT32_MAX == _draw.m_numIndices
 					? ib.m_size / indexSize
@@ -4080,10 +4084,7 @@ namespace bgfx { namespace d3d12
 				D3D12_INDEX_BUFFER_VIEW ibv;
 				ibv.BufferLocation = ib.m_gpuVA;
 				ibv.SizeInBytes    = ib.m_size;
-				ibv.Format = hasIndex16
-					? DXGI_FORMAT_R16_UINT
-					: DXGI_FORMAT_R32_UINT
-					;
+				ibv.Format         = indexFormat;
 				_commandList->IASetIndexBuffer(&ibv);
 
 				_commandList->ExecuteIndirect(
@@ -4148,8 +4149,9 @@ namespace bgfx { namespace d3d12
 			BufferD3D12& ib = s_renderD3D12->m_indexBuffers[_draw.m_indexBuffer.idx];
 			ib.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-			const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
-			const uint32_t indexSize = hasIndex16 ? 2 : 4;
+			const bool isIndex16          = _draw.isIndex16();
+			const uint32_t indexSize      = isIndex16 ? 2 : 4;
+			const DXGI_FORMAT indexFormat = isIndex16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 
 			numIndices = UINT32_MAX == _draw.m_numIndices
 				? ib.m_size / indexSize
@@ -4160,10 +4162,7 @@ namespace bgfx { namespace d3d12
 			cmd.cbv = _cbv;
 			cmd.ibv.BufferLocation = ib.m_gpuVA;
 			cmd.ibv.SizeInBytes    = ib.m_size;
-			cmd.ibv.Format = hasIndex16
-				? DXGI_FORMAT_R16_UINT
-				: DXGI_FORMAT_R32_UINT
-				;
+			cmd.ibv.Format         = indexFormat;
 
 			uint32_t numVertices;
 			uint8_t  numStreams = fill(_commandList, cmd.vbv, _draw, numVertices);
@@ -5349,7 +5348,7 @@ namespace bgfx { namespace d3d12
 								{
 									dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
 									dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
-									dsvDesc.Texture2DMSArray.ArraySize       = 1;
+									dsvDesc.Texture2DMSArray.ArraySize       = at.numLayers;
 								}
 								else
 								{
@@ -5362,7 +5361,7 @@ namespace bgfx { namespace d3d12
 								{
 									dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 									dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
-									dsvDesc.Texture2DArray.ArraySize       = 1;
+									dsvDesc.Texture2DArray.ArraySize       = at.numLayers;
 									dsvDesc.Texture2DArray.MipSlice        = at.mip;
 								}
 								else
@@ -5377,14 +5376,14 @@ namespace bgfx { namespace d3d12
 							if (1 < msaa.Count)
 							{
 								dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-								dsvDesc.Texture2DMSArray.ArraySize       = 1;
 								dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
+								dsvDesc.Texture2DMSArray.ArraySize       = at.numLayers;
 							}
 							else
 							{
 								dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-								dsvDesc.Texture2DArray.ArraySize       = 1;
 								dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
+								dsvDesc.Texture2DArray.ArraySize       = at.numLayers;
 								dsvDesc.Texture2DArray.MipSlice        = at.mip;
 							}
 							break;
@@ -5413,7 +5412,7 @@ namespace bgfx { namespace d3d12
 								{
 									desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
 									desc.Texture2DMSArray.FirstArraySlice = at.layer;
-									desc.Texture2DMSArray.ArraySize       = 1;
+									desc.Texture2DMSArray.ArraySize       = at.numLayers;
 								}
 								else
 								{
@@ -5426,7 +5425,7 @@ namespace bgfx { namespace d3d12
 								{
 									desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 									desc.Texture2DArray.FirstArraySlice = at.layer;
-									desc.Texture2DArray.ArraySize       = 1;
+									desc.Texture2DArray.ArraySize       = at.numLayers;
 									desc.Texture2DArray.MipSlice        = at.mip;
 									desc.Texture2DArray.PlaneSlice      = 0;
 								}
@@ -5443,14 +5442,14 @@ namespace bgfx { namespace d3d12
 							if (1 < msaa.Count)
 							{
 								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-								desc.Texture2DMSArray.ArraySize       = 1;
 								desc.Texture2DMSArray.FirstArraySlice = at.layer;
+								desc.Texture2DMSArray.ArraySize       = at.numLayers;
 							}
 							else
 							{
 								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-								desc.Texture2DArray.ArraySize       = 1;
 								desc.Texture2DArray.FirstArraySlice = at.layer;
+								desc.Texture2DArray.ArraySize       = at.numLayers;
 								desc.Texture2DArray.MipSlice        = at.mip;
 								desc.Texture2DArray.PlaneSlice      = 0;
 							}
@@ -5458,9 +5457,9 @@ namespace bgfx { namespace d3d12
 
 						case TextureD3D12::Texture3D:
 							desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
-							desc.Texture3D.MipSlice = at.mip;
-							desc.Texture3D.WSize = 1;
+							desc.Texture3D.MipSlice    = at.mip;
 							desc.Texture3D.FirstWSlice = at.layer;
+							desc.Texture3D.WSize       = at.numLayers;
 							break;
 						}
 

@@ -823,6 +823,7 @@ namespace bgfx
 		uint32_t size;            //!< Data size.
 		uint32_t startIndex;      //!< First index.
 		IndexBufferHandle handle; //!< Index buffer handle.
+		bool isIndex16;           //!< Index buffer format is 16-bits if true, otherwise it is 32-bit.
 	};
 
 	/// Transient vertex buffer.
@@ -891,7 +892,8 @@ namespace bgfx
 		///
 		/// @param[in] _handle Render target texture handle.
 		/// @param[in] _access Access. See `Access::Enum`.
-		/// @param[in] _layer Cubemap side or depth layer/slice.
+		/// @param[in] _layer Cubemap side or depth layer/slice to use.
+		/// @param[in] _numLayers Number of texture layer/slice(s) in array to use.
 		/// @param[in] _mip Mip level.
 		/// @param[in] _resolve Resolve flags. See: `BGFX_RESOLVE_*`
 		///
@@ -899,6 +901,7 @@ namespace bgfx
 			  TextureHandle _handle
 			, Access::Enum _access = Access::Write
 			, uint16_t _layer = 0
+			, uint16_t _numLayers = 1
 			, uint16_t _mip = 0
 			, uint8_t _resolve = BGFX_RESOLVE_AUTO_GEN_MIPS
 			);
@@ -906,7 +909,8 @@ namespace bgfx
 		Access::Enum  access; //!< Attachement access. See `Access::Enum`.
 		TextureHandle handle; //!< Render target texture handle.
 		uint16_t mip;         //!< Mip level.
-		uint16_t layer;       //!< Cubemap side or depth layer/slice.
+		uint16_t layer;       //!< Cubemap side or depth layer/slice to use.
+		uint16_t numLayers;   //!< Number of texture layer/slice(s) in array to use.
 		uint8_t  resolve;     //!< Resolve flags. See: `BGFX_RESOLVE_*`
 	};
 
@@ -2440,6 +2444,7 @@ namespace bgfx
 	///   for the duration of frame, and it can be reused for multiple draw
 	///   calls.
 	/// @param[in] _num Number of indices to allocate.
+	/// @param[in] _index32 Set to `true` if input indices will be 32-bit.
 	///
 	/// @remarks
 	///   Only 16-bit index buffer is supported.
@@ -2449,7 +2454,8 @@ namespace bgfx
 	void allocTransientIndexBuffer(
 		  TransientIndexBuffer* _tib
 		, uint32_t _num
-		);
+		, bool _index32 = false
+	);
 
 	/// Allocate transient vertex buffer.
 	///

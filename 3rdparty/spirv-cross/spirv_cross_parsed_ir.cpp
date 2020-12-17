@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
+ */
+
 #include "spirv_cross_parsed_ir.hpp"
 #include <algorithm>
 #include <assert.h>
@@ -526,6 +533,17 @@ void ParsedIR::mark_used_as_array_length(ID id)
 	}
 }
 
+Bitset ParsedIR::get_buffer_block_type_flags(const SPIRType &type) const
+{
+	if (type.member_types.empty())
+		return {};
+
+	Bitset all_members_flags = get_member_decoration_bitset(type.self, 0);
+	for (uint32_t i = 1; i < uint32_t(type.member_types.size()); i++)
+		all_members_flags.merge_and(get_member_decoration_bitset(type.self, i));
+	return all_members_flags;
+}
+
 Bitset ParsedIR::get_buffer_block_flags(const SPIRVariable &var) const
 {
 	auto &type = get<SPIRType>(var.basetype);
@@ -542,10 +560,7 @@ Bitset ParsedIR::get_buffer_block_flags(const SPIRVariable &var) const
 	if (type.member_types.empty())
 		return base_flags;
 
-	Bitset all_members_flags = get_member_decoration_bitset(type.self, 0);
-	for (uint32_t i = 1; i < uint32_t(type.member_types.size()); i++)
-		all_members_flags.merge_and(get_member_decoration_bitset(type.self, i));
-
+	auto all_members_flags = get_buffer_block_type_flags(type);
 	base_flags.merge_or(all_members_flags);
 	return base_flags;
 }

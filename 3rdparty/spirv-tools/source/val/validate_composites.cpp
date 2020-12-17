@@ -437,6 +437,10 @@ spv_result_t ValidateCopyObject(ValidationState_t& _, const Instruction* inst) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Result Type and Operand type to be the same";
   }
+  if (_.IsVoidType(result_type)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "OpCopyObject cannot have void result type";
+  }
   return SPV_SUCCESS;
 }
 

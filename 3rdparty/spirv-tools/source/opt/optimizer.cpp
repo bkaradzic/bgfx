@@ -425,7 +425,7 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterPass(CreateBlockMergePass());
     RegisterPass(CreateAggressiveDCEPass());
   } else if (pass_name == "inst-buff-oob-check") {
-    RegisterPass(CreateInstBindlessCheckPass(7, 23, false, false, true));
+    RegisterPass(CreateInstBindlessCheckPass(7, 23, false, false, true, true));
     RegisterPass(CreateSimplificationPass());
     RegisterPass(CreateDeadBranchElimPass());
     RegisterPass(CreateBlockMergePass());
@@ -892,15 +892,14 @@ Optimizer::PassToken CreateUpgradeMemoryModelPass() {
       MakeUnique<opt::UpgradeMemoryModel>());
 }
 
-Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t desc_set,
-                                                 uint32_t shader_id,
-                                                 bool input_length_enable,
-                                                 bool input_init_enable,
-                                                 bool input_buff_oob_enable) {
+Optimizer::PassToken CreateInstBindlessCheckPass(
+    uint32_t desc_set, uint32_t shader_id, bool desc_length_enable,
+    bool desc_init_enable, bool buff_oob_enable, bool texbuff_oob_enable) {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::InstBindlessCheckPass>(
-          desc_set, shader_id, input_length_enable, input_init_enable,
-          input_buff_oob_enable));
+          desc_set, shader_id, desc_length_enable, desc_init_enable,
+          buff_oob_enable, texbuff_oob_enable,
+          desc_length_enable || desc_init_enable || buff_oob_enable));
 }
 
 Optimizer::PassToken CreateInstDebugPrintfPass(uint32_t desc_set,

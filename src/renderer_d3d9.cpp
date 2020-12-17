@@ -710,7 +710,6 @@ namespace bgfx { namespace d3d9
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				| BGFX_CAPS_FRAGMENT_DEPTH
 				| BGFX_CAPS_SWAP_CHAIN
-				| ( (UINT16_MAX < m_caps.MaxVertexIndex) ? BGFX_CAPS_INDEX32 : 0)
 				| ( (m_caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES) ? BGFX_CAPS_TEXTURE_BLIT : 0)
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| (m_occlusionQuerySupport ? BGFX_CAPS_OCCLUSION_QUERY : 0)
@@ -4310,7 +4309,8 @@ namespace bgfx { namespace d3d9
 						if (UINT32_MAX == draw.m_numIndices)
 						{
 							const IndexBufferD3D9& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-							const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+							const bool isIndex16     = draw.isIndex16();
+							const uint32_t indexSize = isIndex16 ? 2 : 4;
 							numIndices        = ib.m_size/indexSize;
 							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 							numInstances      = draw.m_numInstances;

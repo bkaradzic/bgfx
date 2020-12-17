@@ -102,6 +102,13 @@ class DecorationManager {
   bool WhileEachDecoration(uint32_t id, uint32_t decoration,
                            std::function<bool(const Instruction&)> f);
 
+  // |f| is run on each decoration instruction for |id| with decoration
+  // |decoration|. Processes all decoration which target |id| either directly or
+  // indirectly through decoration groups. If |f| returns true, iteration is
+  // terminated and this function returns true. Otherwise returns false.
+  bool FindDecoration(uint32_t id, uint32_t decoration,
+                      std::function<bool(const Instruction&)> f);
+
   // Clone all decorations from one id |from|.
   // The cloned decorations are assigned to the given id |to| and are
   // added to the module. The purpose is to decorate cloned instructions.

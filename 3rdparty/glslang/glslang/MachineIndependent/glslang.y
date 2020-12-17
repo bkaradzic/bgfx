@@ -293,6 +293,8 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> CENTROID IN OUT INOUT
 %token <lex> STRUCT VOID WHILE
 %token <lex> BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
+%token <lex> TERMINATE_INVOCATION
+%token <lex> TERMINATE_RAY IGNORE_INTERSECTION
 %token <lex> UNIFORM SHARED BUFFER
 %token <lex> FLAT SMOOTH LAYOUT
 
@@ -3927,6 +3929,20 @@ jump_statement
         parseContext.requireStage($1.loc, EShLangFragment, "discard");
         $$ = parseContext.intermediate.addBranch(EOpKill, $1.loc);
     }
+    | TERMINATE_INVOCATION SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangFragment, "terminateInvocation");
+        $$ = parseContext.intermediate.addBranch(EOpTerminateInvocation, $1.loc);
+    }
+
+    | TERMINATE_RAY SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangAnyHit, "terminateRayEXT");
+        $$ = parseContext.intermediate.addBranch(EOpTerminateRayKHR, $1.loc);
+    }
+    | IGNORE_INTERSECTION SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangAnyHit, "ignoreIntersectionEXT");
+        $$ = parseContext.intermediate.addBranch(EOpIgnoreIntersectionKHR, $1.loc);
+    }
+
     ;
 
 // Grammar Note:  No 'goto'.  Gotos are not supported.

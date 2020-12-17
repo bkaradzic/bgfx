@@ -96,7 +96,7 @@ struct OcornutImguiContext
 			}
 
 			bgfx::allocTransientVertexBuffer(&tvb, numVertices, m_layout);
-			bgfx::allocTransientIndexBuffer(&tib, numIndices);
+			bgfx::allocTransientIndexBuffer(&tib, numIndices, sizeof(ImDrawIdx) == 4);
 
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
 			bx::memCopy(verts, drawList->VtxBuffer.begin(), numVertices * sizeof(ImDrawVert) );

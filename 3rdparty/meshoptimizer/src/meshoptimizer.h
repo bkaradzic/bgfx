@@ -1,5 +1,5 @@
 /**
- * meshoptimizer - version 0.14
+ * meshoptimizer - version 0.15
  *
  * Copyright (C) 2016-2020, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
  * Report bugs and download new versions at https://github.com/zeux/meshoptimizer
@@ -12,7 +12,7 @@
 #include <stddef.h>
 
 /* Version macro; major * 1000 + minor * 10 + patch */
-#define MESHOPTIMIZER_VERSION 140
+#define MESHOPTIMIZER_VERSION 150 /* 0.15 */
 
 /* If no API is defined, assume default */
 #ifndef MESHOPTIMIZER_API
@@ -42,6 +42,7 @@ struct meshopt_Stream
  * Generates a vertex remap table from the vertex buffer and an optional index buffer and returns number of unique vertices
  * As a result, all vertices that are binary equivalent map to the same (new) location, with no gaps in the resulting sequence.
  * Resulting remap table maps old vertices to new vertices and can be used in meshopt_remapVertexBuffer/meshopt_remapIndexBuffer.
+ * Note that binary equivalence considers all vertex_size bytes, including padding which should be zero-initialized.
  *
  * destination must contain enough space for the resulting remap table (vertex_count elements)
  * indices can be NULL if the input is unindexed
@@ -53,6 +54,7 @@ MESHOPTIMIZER_API size_t meshopt_generateVertexRemap(unsigned int* destination, 
  * As a result, all vertices that are binary equivalent map to the same (new) location, with no gaps in the resulting sequence.
  * Resulting remap table maps old vertices to new vertices and can be used in meshopt_remapVertexBuffer/meshopt_remapIndexBuffer.
  * To remap vertex buffers, you will need to call meshopt_remapVertexBuffer for each vertex stream.
+ * Note that binary equivalence considers all size bytes in each stream, including padding which should be zero-initialized.
  *
  * destination must contain enough space for the resulting remap table (vertex_count elements)
  * indices can be NULL if the input is unindexed
@@ -79,6 +81,7 @@ MESHOPTIMIZER_API void meshopt_remapIndexBuffer(unsigned int* destination, const
  * Generate index buffer that can be used for more efficient rendering when only a subset of the vertex attributes is necessary
  * All vertices that are binary equivalent (wrt first vertex_size bytes) map to the first vertex in the original vertex buffer.
  * This makes it possible to use the index buffer for Z pre-pass or shadowmap rendering, while using the original index buffer for regular rendering.
+ * Note that binary equivalence considers all vertex_size bytes, including padding which should be zero-initialized.
  *
  * destination must contain enough space for the resulting index buffer (index_count elements)
  */
@@ -88,6 +91,7 @@ MESHOPTIMIZER_API void meshopt_generateShadowIndexBuffer(unsigned int* destinati
  * Generate index buffer that can be used for more efficient rendering when only a subset of the vertex attributes is necessary
  * All vertices that are binary equivalent (wrt specified streams) map to the first vertex in the original vertex buffer.
  * This makes it possible to use the index buffer for Z pre-pass or shadowmap rendering, while using the original index buffer for regular rendering.
+ * Note that binary equivalence considers all size bytes in each stream, including padding which should be zero-initialized.
  *
  * destination must contain enough space for the resulting index buffer (index_count elements)
  */
@@ -209,6 +213,7 @@ MESHOPTIMIZER_EXPERIMENTAL int meshopt_decodeIndexSequence(void* destination, si
  * Encodes vertex data into an array of bytes that is generally smaller and compresses better compared to original.
  * Returns encoded data size on success, 0 on error; the only error condition is if buffer doesn't have enough space
  * This function works for a single vertex stream; for multiple vertex streams, call meshopt_encodeVertexBuffer for each stream.
+ * Note that all vertex_size bytes of each vertex are encoded verbatim, including padding which should be zero-initialized.
  *
  * buffer must contain enough space for the encoded vertex buffer (use meshopt_encodeVertexBufferBound to compute worst case size)
  */

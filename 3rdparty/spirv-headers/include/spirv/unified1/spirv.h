@@ -618,7 +618,6 @@ typedef enum SpvBuiltIn_ {
     SpvBuiltInObjectToWorldNV = 5330,
     SpvBuiltInWorldToObjectKHR = 5331,
     SpvBuiltInWorldToObjectNV = 5331,
-    SpvBuiltInHitTKHR = 5332,
     SpvBuiltInHitTNV = 5332,
     SpvBuiltInHitKindKHR = 5333,
     SpvBuiltInHitKindNV = 5333,
@@ -903,7 +902,9 @@ typedef enum SpvCapability_ {
     SpvCapabilityRoundingModeRTE = 4467,
     SpvCapabilityRoundingModeRTZ = 4468,
     SpvCapabilityRayQueryProvisionalKHR = 4471,
-    SpvCapabilityRayTraversalPrimitiveCullingProvisionalKHR = 4478,
+    SpvCapabilityRayQueryKHR = 4472,
+    SpvCapabilityRayTraversalPrimitiveCullingKHR = 4478,
+    SpvCapabilityRayTracingKHR = 4479,
     SpvCapabilityFloat16ImageAMD = 5008,
     SpvCapabilityImageGatherBiasLodAMD = 5009,
     SpvCapabilityFragmentMaskAMD = 5010,
@@ -1402,7 +1403,12 @@ typedef enum SpvOp_ {
     SpvOpSubgroupAnyKHR = 4429,
     SpvOpSubgroupAllEqualKHR = 4430,
     SpvOpSubgroupReadInvocationKHR = 4432,
-    SpvOpTypeRayQueryProvisionalKHR = 4472,
+    SpvOpTraceRayKHR = 4445,
+    SpvOpExecuteCallableKHR = 4446,
+    SpvOpConvertUToAccelerationStructureKHR = 4447,
+    SpvOpIgnoreIntersectionKHR = 4448,
+    SpvOpTerminateRayKHR = 4449,
+    SpvOpTypeRayQueryKHR = 4472,
     SpvOpRayQueryInitializeKHR = 4473,
     SpvOpRayQueryTerminateKHR = 4474,
     SpvOpRayQueryGenerateIntersectionKHR = 4475,
@@ -1425,15 +1431,11 @@ typedef enum SpvOp_ {
     SpvOpWritePackedPrimitiveIndices4x8NV = 5299,
     SpvOpReportIntersectionKHR = 5334,
     SpvOpReportIntersectionNV = 5334,
-    SpvOpIgnoreIntersectionKHR = 5335,
     SpvOpIgnoreIntersectionNV = 5335,
-    SpvOpTerminateRayKHR = 5336,
     SpvOpTerminateRayNV = 5336,
     SpvOpTraceNV = 5337,
-    SpvOpTraceRayKHR = 5337,
     SpvOpTypeAccelerationStructureKHR = 5341,
     SpvOpTypeAccelerationStructureNV = 5341,
-    SpvOpExecuteCallableKHR = 5344,
     SpvOpExecuteCallableNV = 5344,
     SpvOpTypeCooperativeMatrixNV = 5358,
     SpvOpCooperativeMatrixLoadNV = 5359,
@@ -1973,7 +1975,12 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpSubgroupAnyKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupAllEqualKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupReadInvocationKHR: *hasResult = true; *hasResultType = true; break;
-    case SpvOpTypeRayQueryProvisionalKHR: *hasResult = true; *hasResultType = false; break;
+    case SpvOpTraceRayKHR: *hasResult = false; *hasResultType = false; break;
+    case SpvOpExecuteCallableKHR: *hasResult = false; *hasResultType = false; break;
+    case SpvOpConvertUToAccelerationStructureKHR: *hasResult = true; *hasResultType = true; break;
+    case SpvOpIgnoreIntersectionKHR: *hasResult = false; *hasResultType = false; break;
+    case SpvOpTerminateRayKHR: *hasResult = false; *hasResultType = false; break;
+    case SpvOpTypeRayQueryKHR: *hasResult = true; *hasResultType = false; break;
     case SpvOpRayQueryInitializeKHR: *hasResult = false; *hasResultType = false; break;
     case SpvOpRayQueryTerminateKHR: *hasResult = false; *hasResultType = false; break;
     case SpvOpRayQueryGenerateIntersectionKHR: *hasResult = false; *hasResultType = false; break;

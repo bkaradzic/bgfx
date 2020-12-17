@@ -78,19 +78,29 @@ public:
 		m_txtFile = load("text/sherlock_holmes_a_scandal_in_bohemia_arthur_conan_doyle.txt", &size);
 		m_bigText = bx::StringView( (const char*)m_txtFile, size);
 
+		// Set up some defaults.
+		m_outlineColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+		m_outlineWidth = 1.0f;
+		m_dropShadowColor = ImVec4(0.0f, 0.0f, 0.0f, 0.35f);
+		m_dropShadowOffsetX = 1.0f;
+		m_dropShadowOffsetY = 1.0f;
+		m_dropShadowSoftener = 2.0f;
+
+		m_textScroll = 0.0f;
+		m_textRotation = 0.0f;
+		m_textScale = 1.0f;
+		m_textSize = 14.0f;
+
 		// Init the text rendering system.
-		m_fontManager = new FontManager(512);
-		m_textBufferManager = new TextBufferManager(m_fontManager);
+		m_fontManager = NULL;
+		m_textBufferManager = NULL;
+		m_font = BGFX_INVALID_HANDLE;
+		m_fontSdf = BGFX_INVALID_HANDLE;
+		m_fontScaled = BGFX_INVALID_HANDLE;
+		m_scrollableBuffer = BGFX_INVALID_HANDLE;
 
-		m_font = loadTtf(m_fontManager, "font/special_elite.ttf");
+		initializeFont(FONT_TYPE_DISTANCE);
 
-		// Create a distance field font.
-		m_fontSdf = m_fontManager->createFontByPixelSize(m_font, 0, 48, FONT_TYPE_DISTANCE);
-
-		// Create a scaled down version of the same font (without adding anything to the atlas).
-		m_fontScaled = m_fontManager->createScaledFontToPixelSize(m_fontSdf, 14);
-
-		m_metrics = TextLineMetrics(m_fontManager->getFontInfo(m_fontScaled) );
 		m_lineCount = m_metrics.getLineCount(m_bigText);
 
 		m_visibleLineCount = 20.0f;
@@ -99,15 +109,11 @@ public:
 		m_textEnd = 0;
 		m_metrics.getSubText(m_bigText, 0, (uint32_t)m_visibleLineCount, m_textBegin, m_textEnd);
 
-		m_scrollableBuffer = m_textBufferManager->createTextBuffer(FONT_TYPE_DISTANCE, BufferType::Transient);
-		m_textBufferManager->setTextColor(m_scrollableBuffer, 0xFFFFFFFF);
+		initializeTextBuffer(FONT_TYPE_DISTANCE);
+
+		applyTextBufferAttributes();
 
 		m_textBufferManager->appendText(m_scrollableBuffer, m_fontScaled, m_textBegin, m_textEnd);
-
-		m_textScroll = 0.0f;
-		m_textRotation = 0.0f;
-		m_textScale = 1.0f;
-		m_textSize = 14.0f;
 	}
 
 	virtual int shutdown() override
@@ -162,7 +168,25 @@ public:
 				);
 
 			bool recomputeVisibleText = false;
-			recomputeVisibleText |= ImGui::SliderFloat("# of lines", &m_visibleLineCount, 1.0f, 177.0f);
+
+			static int fontTypeIndex = 0;
+			if (ImGui::Combo("SDF Font Type", &fontTypeIndex, "Standard\0Outline\0Outline_Image\0DropShadow\0DropShadow_Image\0Outline_DropShadow_Image\0\0"))
+			{
+				uint32_t fontTypeList[] =
+				{
+					FONT_TYPE_DISTANCE,
+					FONT_TYPE_DISTANCE_OUTLINE,
+					FONT_TYPE_DISTANCE_OUTLINE_IMAGE,
+					FONT_TYPE_DISTANCE_DROP_SHADOW,
+					FONT_TYPE_DISTANCE_DROP_SHADOW_IMAGE,
+					FONT_TYPE_DISTANCE_OUTLINE_DROP_SHADOW_IMAGE
+				};
+				uint32_t fontType = fontTypeList[fontTypeIndex];
+
+				initializeFont(fontType);
+				initializeTextBuffer(fontType);
+				recomputeVisibleText = true;
+			}
 
 			if (ImGui::SliderFloat("Font size", &m_textSize, 6.0f, 64.0f) )
 			{
@@ -172,6 +196,32 @@ public:
 				recomputeVisibleText = true;
 			}
 
+			if (ImGui::ColorEdit3("Outline Color", (float*)&m_outlineColor))
+			{
+				recomputeVisibleText = true;
+			}
+			if (ImGui::SliderFloat("Outline Width", &m_outlineWidth, 0.5f, 5.0f))
+			{
+				recomputeVisibleText = true;
+			}
+			if (ImGui::ColorEdit4("Drop Shadow Color", (float*)&m_dropShadowColor))
+			{
+				recomputeVisibleText = true;
+			}
+			if (ImGui::SliderFloat("Drop Shadow Offset X", &m_dropShadowOffsetX, -5.0f, 5.0f))
+			{
+				recomputeVisibleText = true;
+			}
+			if (ImGui::SliderFloat("Drop Shadow Offset Y", &m_dropShadowOffsetY, -5.0f, 5.0f))
+			{
+				recomputeVisibleText = true;
+			}
+			if (ImGui::SliderFloat("Drop Shadow Softener", &m_dropShadowSoftener, 0.0f, 5.0f))
+			{
+				recomputeVisibleText = true;
+			}
+
+			recomputeVisibleText |= ImGui::SliderFloat("# of lines", &m_visibleLineCount, 1.0f, 177.0f);
 			recomputeVisibleText |= ImGui::SliderFloat("Scroll", &m_textScroll, 0.0f, (m_lineCount-m_visibleLineCount));
 			ImGui::SliderFloat("Rotate", &m_textRotation, 0.0f, bx::kPi*2.0f);
 			recomputeVisibleText |= ImGui::SliderFloat("Scale", &m_textScale, 0.1f, 10.0f);
@@ -179,6 +229,9 @@ public:
 			if (recomputeVisibleText)
 			{
 				m_textBufferManager->clearTextBuffer(m_scrollableBuffer);
+
+				applyTextBufferAttributes();
+
 				m_metrics.getSubText(m_bigText,(uint32_t)m_textScroll, (uint32_t)(m_textScroll+m_visibleLineCount), m_textBegin, m_textEnd);
 				m_textBufferManager->appendText(m_scrollableBuffer, m_fontScaled, m_textBegin, m_textEnd);
 			}
@@ -250,6 +303,67 @@ public:
 		return false;
 	}
 
+	void initializeFont(uint32_t fontType)
+	{
+		if (m_font.idx != bgfx::kInvalidHandle)
+		{
+			m_fontManager->destroyTtf(m_font);
+		}
+
+		if (m_scrollableBuffer.idx != bgfx::kInvalidHandle)
+		{
+			m_textBufferManager->destroyTextBuffer(m_scrollableBuffer);
+		}
+
+		if (m_fontScaled.idx != bgfx::kInvalidHandle)
+		{
+			m_fontManager->destroyFont(m_fontScaled);
+		}
+		if (m_fontSdf.idx != bgfx::kInvalidHandle)
+		{
+			m_fontManager->destroyFont(m_fontSdf);
+		}
+
+		delete m_textBufferManager;
+		delete m_fontManager;
+
+		m_fontManager = new FontManager(512);
+		m_textBufferManager = new TextBufferManager(m_fontManager);
+
+		m_font = loadTtf(m_fontManager, "font/special_elite.ttf");
+
+		m_fontSdf = m_fontManager->createFontByPixelSize(m_font, 0, 48, fontType, 6 + 2, 6 + 2);
+
+		m_fontScaled = m_fontManager->createScaledFontToPixelSize(m_fontSdf, (uint32_t) m_textSize);
+
+		if (fontType & FONT_TYPE_MASK_DISTANCE_IMAGE)
+		{
+			float extraScale = 2.0f;
+			bimg::ImageContainer* glyphImage = imageLoad("font/glyph_space.png", bgfx::TextureFormat::Enum::BGRA8);
+			m_fontManager->addGlyphBitmap(m_fontSdf, 32, (uint16_t)glyphImage->m_width, (uint16_t)glyphImage->m_height, (uint16_t)(glyphImage->m_width * 4), extraScale, (const uint8_t*)glyphImage->m_data, 0.0f, -3.0f);
+
+			glyphImage = imageLoad("font/glyph_long.png", bgfx::TextureFormat::Enum::BGRA8);
+			m_fontManager->addGlyphBitmap(m_fontSdf, 65, (uint16_t)glyphImage->m_width, (uint16_t)glyphImage->m_height, (uint16_t)(glyphImage->m_width * 4), extraScale, (const uint8_t*)glyphImage->m_data, 0.0f, -3.0f);
+		}
+
+		m_metrics = TextLineMetrics(m_fontManager->getFontInfo(m_fontScaled) );
+	}
+
+	void initializeTextBuffer(uint32_t fontType)
+	{
+		m_scrollableBuffer = m_textBufferManager->createTextBuffer(fontType, BufferType::Transient);
+	}
+
+	void applyTextBufferAttributes()
+	{
+		m_textBufferManager->setTextColor(m_scrollableBuffer, 0xFFFFFFFF);
+		m_textBufferManager->setOutlineColor(m_scrollableBuffer, ((uint32_t)(m_outlineColor.x * 255) << 24) | ((uint32_t)(m_outlineColor.y * 255) << 16) | ((uint32_t)(m_outlineColor.z * 255) << 8) | ((uint32_t)(m_outlineColor.w * 255)));
+		m_textBufferManager->setOutlineWidth(m_scrollableBuffer, m_outlineWidth);
+		m_textBufferManager->setDropShadowColor(m_scrollableBuffer, ((uint32_t)(m_dropShadowColor.x * 255) << 24) | ((uint32_t)(m_dropShadowColor.y * 255) << 16) | ((uint32_t)(m_dropShadowColor.z * 255) << 8) | ((uint32_t)(m_dropShadowColor.w * 255)));
+		m_textBufferManager->setDropShadowOffset(m_scrollableBuffer, m_dropShadowOffsetX, m_dropShadowOffsetY);
+		m_textBufferManager->setDropShadowSoftener(m_scrollableBuffer, m_dropShadowSoftener);
+	}
+
 	entry::MouseState m_mouseState;
 	uint32_t m_width;
 	uint32_t m_height;
@@ -274,6 +388,13 @@ public:
 	float m_visibleLineCount;
 	const char* m_textBegin;
 	const char* m_textEnd;
+
+	ImVec4 m_outlineColor;
+	float m_outlineWidth;
+	ImVec4 m_dropShadowColor;
+	float m_dropShadowOffsetX;
+	float m_dropShadowOffsetY;
+	float m_dropShadowSoftener;
 
 	float m_textScroll;
 	float m_textRotation;

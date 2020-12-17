@@ -736,7 +736,8 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
            << "Corrupt image type definition";
   }
 
-  if (spvIsVulkanEnv(_.context()->target_env)) {
+  const auto target_env = _.context()->target_env;
+  if (spvIsVulkanEnv(target_env)) {
     if ((!_.IsFloatScalarType(info.sampled_type) &&
          !_.IsIntScalarType(info.sampled_type)) ||
         (32 != _.GetBitWidth(info.sampled_type) &&
@@ -746,7 +747,7 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
              << "Expected Sampled Type to be a 32-bit int or float "
                 "scalar type for Vulkan environment";
     }
-  } else if (spvIsOpenCLEnv(_.context()->target_env)) {
+  } else if (spvIsOpenCLEnv(target_env)) {
     if (!_.IsVoidType(info.sampled_type)) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Sampled Type must be OpTypeVoid in the OpenCL environment.";
@@ -774,7 +775,7 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
            << "Invalid Arrayed " << info.arrayed << " (must be 0 or 1)";
   }
 
-  if (spvIsOpenCLEnv(_.context()->target_env)) {
+  if (spvIsOpenCLEnv(target_env)) {
     if ((info.arrayed == 1) && (info.dim != SpvDim1D) &&
         (info.dim != SpvDim2D)) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
@@ -788,16 +789,25 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
            << "Invalid MS " << info.multisampled << " (must be 0 or 1)";
   }
 
-  if (spvIsOpenCLEnv(_.context()->target_env)) {
+  if (spvIsOpenCLEnv(target_env)) {
     if (info.multisampled != 0) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "MS must be 0 in the OpenCL environement.";
+             << "MS must be 0 in the OpenCL environment.";
     }
   }
 
   if (info.sampled > 2) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Invalid Sampled " << info.sampled << " (must be 0, 1 or 2)";
+  }
+
+  if (spvIsVulkanEnv(target_env) || spvIsWebGPUEnv(target_env)) {
+    if (info.sampled == 0) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Sampled must be 1 or 2 in the "
+             << (spvIsVulkanEnv(target_env) ? "Vulkan" : "WebGPU")
+             << " environment.";
+    }
   }
 
   if (spvIsOpenCLEnv(_.context()->target_env)) {
@@ -826,6 +836,15 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "In the OpenCL environment, the optional Access Qualifier"
              << " must be present.";
+    }
+  }
+
+  if (info.multisampled && (info.sampled == 2) &&
+      (info.dim != SpvDimSubpassData)) {
+    if (!_.HasCapability(SpvCapabilityStorageImageMultisample)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Capability StorageImageMultisample is required when using "
+                "multisampled storage image";
     }
   }
 
