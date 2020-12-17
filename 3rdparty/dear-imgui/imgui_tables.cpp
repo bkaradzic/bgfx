@@ -369,7 +369,6 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
     table->FreezeColumnsRequest = table->FreezeColumnsCount = 0;
     table->IsUnfrozen = true;
     table->DeclColumnsCount = 0;
-    table->RightMostEnabledColumn = -1;
 
     // Using opaque colors facilitate overlapping elements of the grid
     table->BorderColorStrong = GetColorU32(ImGuiCol_TableBorderStrong);
@@ -493,8 +492,7 @@ void ImGui::TableBeginApplyRequests(ImGuiTable* table)
 {
     // Handle resizing request
     // (We process this at the first TableBegin of the frame)
-    // FIXME-TABLE: Preserve contents width _while resizing down_ until releasing.
-    // FIXME-TABLE: Contains columns if our work area doesn't allow for scrolling.
+    // FIXME-TABLE: Contains columns if our work area doesn't allow for scrolling?
     if (table->InstanceCurrent == 0)
     {
         if (table->ResizedColumn != -1 && table->ResizedColumnNextWidth != FLT_MAX)
@@ -692,6 +690,7 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
     if ((table->Flags & ImGuiTableFlags_Sortable) && table->SortSpecsCount == 0 && !(table->Flags & ImGuiTableFlags_SortTristate))
         table->IsSortSpecsDirty = true;
     table->RightMostEnabledColumn = (ImGuiTableColumnIdx)last_visible_column_idx;
+    IM_ASSERT(table->RightMostEnabledColumn >= 0);
 
     // [Part 2] Disable child window clipping while fitting columns. This is not strictly necessary but makes it possible
     // to avoid the column fitting to wait until the first visible frame of the child container (may or not be a good thing).
@@ -709,7 +708,7 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
     float sum_weights_stretched = 0.0f;     // Sum of all weights for weighted columns.
     float sum_width_fixed_requests = 0.0f;  // Sum of all width for fixed and auto-resize columns, excluding width contributed by Stretch columns.
     float max_width_auto = 0.0f;            // Largest auto-width (used for SameWidths feature)
-    table->LeftMostStretchedColumnDisplayOrder = -1;
+    table->LeftMostStretchedColumn = table->RightMostStretchedColumn = -1;
     for (int column_n = 0; column_n < table->ColumnsCount; column_n++)
     {
         if (!(table->EnabledMaskByIndex & ((ImU64)1 << column_n)))
@@ -760,11 +759,16 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
         else
         {
             IM_ASSERT(column->Flags & ImGuiTableColumnFlags_WidthStretch);
-            if (column->StretchWeight < 0.0f)
-                column->StretchWeight = 1.0f;
+
+            // Revert or initialize weight (when column->StretchWeight < 0.0f normally it means there has been no init value so it'll always default to 1.0f)
+            if (column->AutoFitQueue != 0x00 || column->StretchWeight < 0.0f) 
+                column->StretchWeight = (column->InitStretchWeightOrWidth > 0.0f) ? column->InitStretchWeightOrWidth : 1.0f;
+
             sum_weights_stretched += column->StretchWeight;
-            if (table->LeftMostStretchedColumnDisplayOrder == -1 || table->LeftMostStretchedColumnDisplayOrder > column->DisplayOrder)
-                table->LeftMostStretchedColumnDisplayOrder = column->DisplayOrder;
+            if (table->LeftMostStretchedColumn == -1 || table->Columns[table->LeftMostStretchedColumn].DisplayOrder > column->DisplayOrder)
+                table->LeftMostStretchedColumn = (ImGuiTableColumnIdx)column_n;
+            if (table->RightMostStretchedColumn == -1 || table->Columns[table->RightMostStretchedColumn].DisplayOrder < column->DisplayOrder)
+                table->RightMostStretchedColumn = (ImGuiTableColumnIdx)column_n;
         }
         max_width_auto = ImMax(max_width_auto, column->WidthAuto);
         sum_width_fixed_requests += table->CellPaddingX * 2.0f;
@@ -811,28 +815,17 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
             continue;
         ImGuiTableColumn* column = &table->Columns[column_n];
 
-        // Allocate width for stretched/weighted columns
-        if (column->Flags & ImGuiTableColumnFlags_WidthStretch)
+        // Allocate width for stretched/weighted columns (StretchWeight gets converted into WidthRequest)
+        if ((column->Flags & ImGuiTableColumnFlags_WidthStretch) && !mixed_same_widths)
         {
-            // StretchWeight gets converted into WidthRequest
-            if (!mixed_same_widths)
-            {
-                float weight_ratio = column->StretchWeight / sum_weights_stretched;
-                column->WidthRequest = IM_FLOOR(ImMax(width_avail_for_stretched_columns * weight_ratio, min_column_width) + 0.01f);
-                width_remaining_for_stretched_columns -= column->WidthRequest;
-            }
-
-            // [Resize Rule 2] Resizing from right-side of a stretch column preceding a fixed column
-            // needs to forward resizing to left-side of fixed column. We also need to copy the NoResize flag..
-            if (column->NextEnabledColumn != -1)
-                if (ImGuiTableColumn* next_column = &table->Columns[column->NextEnabledColumn])
-                    if (next_column->Flags & ImGuiTableColumnFlags_WidthFixed)
-                        column->Flags |= (next_column->Flags & ImGuiTableColumnFlags_NoDirectResize_);
+            float weight_ratio = column->StretchWeight / sum_weights_stretched;
+            column->WidthRequest = IM_FLOOR(ImMax(width_avail_for_stretched_columns * weight_ratio, min_column_width) + 0.01f);
+            width_remaining_for_stretched_columns -= column->WidthRequest;
         }
 
         // [Resize Rule 1] The right-most Visible column is not resizable if there is at least one Stretch column
-        // (see comments in TableResizeColumn())
-        if (column->NextEnabledColumn == -1 && table->LeftMostStretchedColumnDisplayOrder != -1)
+        // See additional comments in TableSetColumnWidth().
+        if (column->NextEnabledColumn == -1 && table->LeftMostStretchedColumn != -1)
             column->Flags |= ImGuiTableColumnFlags_NoDirectResize_;
 
         // Assign final width, record width in case we will need to shrink
@@ -1010,9 +1003,7 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
     // because of using _WidthAutoResize/_WidthStretch). This will hide the resizing option from the context menu.
     if (is_hovering_table && table->HoveredColumnBody == -1)
     {
-        float unused_x1 = table->WorkRect.Min.x;
-        if (table->RightMostEnabledColumn != -1)
-            unused_x1 = ImMax(unused_x1, table->Columns[table->RightMostEnabledColumn].ClipRect.Max.x);
+        float unused_x1 = ImMax(table->WorkRect.Min.x, table->Columns[table->RightMostEnabledColumn].ClipRect.Max.x);
         if (g.IO.MousePos.x >= unused_x1)
             table->HoveredColumnBody = (ImGuiTableColumnIdx)table->ColumnsCount;
     }
@@ -1105,6 +1096,8 @@ void ImGui::TableUpdateBorders(ImGuiTable* table)
         }
         if (held)
         {
+            if (table->LastResizedColumn == -1)
+                table->ResizeLockMinContentsX2 = table->RightMostEnabledColumn != -1 ? table->Columns[table->RightMostEnabledColumn].MaxX : -FLT_MAX;
             table->ResizedColumn = (ImGuiTableColumnIdx)column_n;
             table->InstanceInteracted = table->InstanceCurrent;
         }
@@ -1178,6 +1171,8 @@ void    ImGui::EndTable()
     float max_pos_x = backup_inner_max_pos_x;
     if (table->RightMostEnabledColumn != -1)
         max_pos_x = ImMax(max_pos_x, table->Columns[table->RightMostEnabledColumn].MaxX);
+    if (table->ResizedColumn != -1)
+        max_pos_x = ImMax(max_pos_x, table->ResizeLockMinContentsX2);
 
 #if 0
     // Strip out dummy channel draw calls
@@ -1286,7 +1281,7 @@ void ImGui::TableSetupColumn(const char* label, ImGuiTableColumnFlags flags, flo
     table->DeclColumnsCount++;
 
     // When passing a width automatically enforce WidthFixed policy
-    // (vs TableFixColumnFlags would default to WidthAutoResize)
+    // (whereas TableSetupColumnFlags would default to WidthAutoResize)
     if ((flags & ImGuiTableColumnFlags_WidthMask_) == 0)
         if ((table->Flags & ImGuiTableFlags_ColumnsWidthFixed) && (init_width_or_weight > 0.0f))
             flags |= ImGuiTableColumnFlags_WidthFixed;
@@ -1369,7 +1364,8 @@ const char* ImGui::TableGetColumnName(int column_n)
 
 const char* ImGui::TableGetColumnName(const ImGuiTable* table, int column_n)
 {
-    IM_ASSERT(table->IsLayoutLocked == true || column_n <= table->DeclColumnsCount); // NameOffset is invalid otherwise
+    if (table->IsLayoutLocked == false && column_n >= table->DeclColumnsCount)
+        return ""; // NameOffset is invalid at this point
     const ImGuiTableColumn* column = &table->Columns[column_n];
     if (column->NameOffset == -1)
         return "";
@@ -1762,7 +1758,6 @@ void ImGui::TableBeginCell(ImGuiTable* table, int column_n)
     window->DC.CursorMaxPos.x = window->DC.CursorPos.x;
     window->DC.ColumnsOffset.x = start_x - window->Pos.x - window->DC.Indent.x; // FIXME-WORKRECT
     window->DC.CurrLineTextBaseOffset = table->RowTextBaseline;
-    window->DC.LastItemId = 0;
     window->DC.NavLayerCurrent = (ImGuiNavLayer)column->NavLayerCurrent;
 
     window->WorkRect.Min.y = window->DC.CursorPos.y;
@@ -1775,6 +1770,12 @@ void ImGui::TableBeginCell(ImGuiTable* table, int column_n)
         window->DC.CursorPos.y = ImMax(window->DC.CursorPos.y, table->RowPosY2);
 
     window->SkipItems = column->IsSkipItems;
+    if (column->IsSkipItems)
+    {
+        window->DC.LastItemId = 0;
+        window->DC.LastItemStatusFlags = 0;
+    }
+
     if (table->Flags & ImGuiTableFlags_NoClip)
     {
         // FIXME: if we end up drawing all borders/bg in EndTable, could remove this and just assert that channel hasn't changed.
@@ -1851,7 +1852,13 @@ void ImGui::TableSetColumnWidth(int column_n, float width)
 
     ImGuiTableColumn* column_1 = (column_0->NextEnabledColumn != -1) ? &table->Columns[column_0->NextEnabledColumn] : NULL;
 
-    // In this surprisingly not simple because of how we support mixing Fixed and Stretch columns.
+    // In this surprisingly not simple because of how we support mixing Fixed and multiple Stretch columns.
+    // - All fixed: easy.
+    // - All stretch: easy.
+    // - One or more fixed + one stretch: easy.
+    // - One or more fixed + more than one stretch: tricky.
+    // Qt when manual resize is enabled only support a single _trailing_ stretch column.
+
     // When forwarding resize from Wn| to Fn+1| we need to be considerate of the _NoResize flag on Fn+1.
     // FIXME-TABLE: Find a way to rewrite all of this so interactions feel more consistent for the user.
     // Scenarios:
@@ -1859,15 +1866,22 @@ void ImGui::TableSetColumnWidth(int column_n, float width)
     // - F1 F2 F3  resize from F3|          --> ok: alter ->WidthRequested of Fixed column. If active, ScrollX extent can be altered.
     // - F1 F2 W3  resize from F1| or F2|   --> ok: alter ->WidthRequested of Fixed column. If active, ScrollX extent can be altered, but it doesn't make much sense as the Stretch column will always be minimal size.
     // - F1 F2 W3  resize from W3|          --> ok: no-op (disabled by Resize Rule 1)
-    // - W1 W2 W3  resize from W1| or W2|   --> FIXME
+    // - W1 W2 W3  resize from W1| or W2|   --> ok
     // - W1 W2 W3  resize from W3|          --> ok: no-op (disabled by Resize Rule 1)
     // - W1 F2 F3  resize from F3|          --> ok: no-op (disabled by Resize Rule 1)
     // - W1 F2     resize from F2|          --> ok: no-op (disabled by Resize Rule 1)
     // - W1 W2 F3  resize from W1| or W2|   --> ok
     // - W1 F2 W3  resize from W1| or F2|   --> FIXME
     // - F1 W2 F3  resize from W2|          --> ok
+    // - F1 W3 F2  resize from W3|          --> ok
     // - W1 F2 F3  resize from W1|          --> ok: equivalent to resizing |F2. F3 will not move. (forwarded by Resize Rule 2)
-    // - W1 F2 F3  resize from F2|          --> FIXME should resize F2, F3 and not have effect on W1 (Stretch columns are _before_ the Fixed column).
+    // - W1 F2 F3  resize from F2|          --> ok
+    // All resizes from a Wx columns are locking other columns.
+
+    // Possible improvements:
+    // - W1 W2 W3  resize W1|               --> to not be stuck, both W2 and W3 would stretch down. Seems possible to fix. Would be most beneficial to simplify resize of all-weighted columns.
+    // - W1 F2 W3  resize W1| or F2|        --> symmetrical resize is weird and glitchy. Seems possible to fix.
+    // - W3 F1 F2  resize W3|               --> to not be stuck past F1|, both F1 and F2 would need to stretch down, which would be lossy or ambiguous. Seems hard to fix.
 
     // Rules:
     // - [Resize Rule 1] Can't resize from right of right-most visible column if there is any Stretch column. Implemented in TableUpdateLayout().
@@ -1879,7 +1893,7 @@ void ImGui::TableSetColumnWidth(int column_n, float width)
         // [Resize Rule 3] If we are are followed by a fixed column and we have a Stretch column before, we need to ensure
         // that our left border won't move, which we can do by making sure column_a/column_b resizes cancels each others.
         if (column_1 && (column_1->Flags & ImGuiTableColumnFlags_WidthFixed))
-            if (table->LeftMostStretchedColumnDisplayOrder != -1 && table->LeftMostStretchedColumnDisplayOrder < column_0->DisplayOrder)
+            if (table->LeftMostStretchedColumn != -1 && table->Columns[table->LeftMostStretchedColumn].DisplayOrder < column_0->DisplayOrder)
             {
                 // (old_a + old_b == new_a + new_b) --> (new_a == old_a + old_b - new_b)
                 float column_1_width = ImMax(column_1->WidthRequest - (column_0_width - column_0->WidthRequest), min_width);
@@ -1893,7 +1907,7 @@ void ImGui::TableSetColumnWidth(int column_n, float width)
     }
     else if (column_0->Flags & ImGuiTableColumnFlags_WidthStretch)
     {
-        // We can also use previous column if there's no next one
+        // We can also use previous column if there's no next one (this is used when doing an auto-fit on the right-most stretch column)
         if (column_1 == NULL)
             column_1 = (column_0->PrevEnabledColumn != -1) ? &table->Columns[column_0->PrevEnabledColumn] : NULL;
         if (column_1 == NULL)
@@ -1908,6 +1922,7 @@ void ImGui::TableSetColumnWidth(int column_n, float width)
         }
         else
         {
+            // At this point column_1 is the next OR previous column and we know it is a stretch column.
             // (old_a + old_b == new_a + new_b) --> (new_a == old_a + old_b - new_b)
             float column_1_width = ImMax(column_1->WidthRequest - (column_0_width - column_0->WidthRequest), min_width);
             column_0_width = column_0->WidthRequest + column_1->WidthRequest - column_1_width;
@@ -1927,9 +1942,10 @@ void ImGui::TableSetColumnWidthAutoSingle(ImGuiTable* table, int column_n)
     if (!column->IsEnabled)
         return;
     column->CannotSkipItemsQueue = (1 << 0);
-    column->AutoFitQueue = (1 << 1);
     if (column->Flags & ImGuiTableColumnFlags_WidthStretch)
         table->AutoFitSingleStretchColumn = (ImGuiTableColumnIdx)column_n;
+    else
+        column->AutoFitQueue = (1 << 1);
 }
 
 void ImGui::TableSetColumnWidthAutoAll(ImGuiTable* table)
@@ -1937,7 +1953,7 @@ void ImGui::TableSetColumnWidthAutoAll(ImGuiTable* table)
     for (int column_n = 0; column_n < table->ColumnsCount; column_n++)
     {
         ImGuiTableColumn* column = &table->Columns[column_n];
-        if (!column->IsEnabled)
+        if (!column->IsEnabled && !(column->Flags & ImGuiTableColumnFlags_WidthStretch)) // Can reset weight of hidden stretch column
             continue;
         column->CannotSkipItemsQueue = (1 << 0);
         column->AutoFitQueue = (1 << 1);
@@ -1946,7 +1962,7 @@ void ImGui::TableSetColumnWidthAutoAll(ImGuiTable* table)
 
 void ImGui::TableUpdateColumnsWeightFromWidth(ImGuiTable* table)
 {
-    IM_ASSERT(table->LeftMostStretchedColumnDisplayOrder != -1);
+    IM_ASSERT(table->LeftMostStretchedColumn != -1 && table->RightMostStretchedColumn != -1);
 
     // Measure existing quantity
     float visible_weight = 0.0f;
@@ -1968,7 +1984,8 @@ void ImGui::TableUpdateColumnsWeightFromWidth(ImGuiTable* table)
         ImGuiTableColumn* column = &table->Columns[column_n];
         if (!column->IsEnabled || !(column->Flags & ImGuiTableColumnFlags_WidthStretch))
             continue;
-        column->StretchWeight = ((column->WidthRequest + 0.0f) / visible_width) * visible_weight;
+        column->StretchWeight = (column->WidthRequest / visible_width) * visible_weight;
+        IM_ASSERT(column->StretchWeight > 0.0f);
     }
 }
 
@@ -2500,7 +2517,7 @@ void ImGui::TableSortSpecsSanitize(ImGuiTable* table)
             {
                 sort_order_count = 1;
                 column->SortOrder = 0;
-                column->SortDirection = TableGetColumnAvailSortDirection(column, 0);
+                column->SortDirection = (ImU8)TableGetColumnAvailSortDirection(column, 0);
                 break;
             }
         }
@@ -2627,6 +2644,26 @@ void ImGui::TableHeader(const char* label)
     ImRect cell_r = TableGetCellBgRect(table, column_n);
     float label_height = ImMax(label_size.y, table->RowMinHeight - table->CellPaddingY * 2.0f);
 
+    // Calculate ideal size for sort order arrow
+    float w_arrow = 0.0f;
+    float w_sort_text = 0.0f;
+    char sort_order_suf[4] = "";
+    const float ARROW_SCALE = 0.65f;
+    if ((table->Flags & ImGuiTableFlags_Sortable) && !(column->Flags & ImGuiTableColumnFlags_NoSort))
+    {
+        w_arrow = ImFloor(g.FontSize * ARROW_SCALE + g.Style.FramePadding.x);// table->CellPadding.x);
+        if (column->SortOrder > 0)
+        {
+            ImFormatString(sort_order_suf, IM_ARRAYSIZE(sort_order_suf), "%d", column->SortOrder + 1);
+            w_sort_text = g.Style.ItemInnerSpacing.x + CalcTextSize(sort_order_suf).x;
+        }
+    }
+
+    // We feed our unclipped width to the column without writing on CursorMaxPos, so that column is still considering for merging.
+    float max_pos_x = label_pos.x + label_size.x + w_sort_text + w_arrow;
+    column->ContentMaxXHeadersUsed = ImMax(column->ContentMaxXHeadersUsed, column->WorkMaxX);
+    column->ContentMaxXHeadersIdeal = ImMax(column->ContentMaxXHeadersIdeal, max_pos_x);
+
     // Keep header highlighted when context menu is open.
     const bool selected = (table->IsContextPopupOpen && table->ContextPopupColumn == column_n && table->InstanceInteracted == table->InstanceCurrent);
     ImGuiID id = window->GetID(label);
@@ -2638,8 +2675,11 @@ void ImGui::TableHeader(const char* label)
     //GetForegroundDrawList()->AddRect(cell_r.Min, cell_r.Max, IM_COL32(255, 0, 0, 255)); // [DEBUG]
     //GetForegroundDrawList()->AddRect(bb.Min, bb.Max, IM_COL32(255, 0, 0, 255)); // [DEBUG]
 
+    // Using AllowItemOverlap mode because we cover the whole cell, and we want user to be able to submit subsequent items.
     bool hovered, held;
-    bool pressed = ButtonBehavior(bb, id, &hovered, &held, ImGuiButtonFlags_None);
+    bool pressed = ButtonBehavior(bb, id, &hovered, &held, ImGuiButtonFlags_AllowItemOverlap);
+    if (g.ActiveId != id)
+        SetItemAllowOverlap();
     if (hovered || selected)
     {
         const ImU32 col = GetColorU32(held ? ImGuiCol_HeaderActive : hovered ? ImGuiCol_HeaderHovered : ImGuiCol_Header);
@@ -2679,28 +2719,13 @@ void ImGui::TableHeader(const char* label)
     }
 
     // Sort order arrow
-    float w_arrow = 0.0f;
-    float w_sort_text = 0.0f;
-    float ellipsis_max = cell_r.Max.x;
+    const float ellipsis_max = cell_r.Max.x - w_arrow - w_sort_text;
     if ((table->Flags & ImGuiTableFlags_Sortable) && !(column->Flags & ImGuiTableColumnFlags_NoSort))
     {
-        const float ARROW_SCALE = 0.65f;
-        w_arrow = ImFloor(g.FontSize * ARROW_SCALE + g.Style.FramePadding.x);// table->CellPadding.x);
         if (column->SortOrder != -1)
         {
-            char sort_order_suf[8];
-            w_sort_text = 0.0f;
-            if (column->SortOrder > 0)
-            {
-                ImFormatString(sort_order_suf, IM_ARRAYSIZE(sort_order_suf), "%d", column->SortOrder + 1);
-                w_sort_text = g.Style.ItemInnerSpacing.x + CalcTextSize(sort_order_suf).x;
-            }
-
             float x = ImMax(cell_r.Min.x, cell_r.Max.x - w_arrow - w_sort_text);
-            ellipsis_max -= w_arrow + w_sort_text;
-
             float y = label_pos.y;
-            ImU32 col = GetColorU32(ImGuiCol_Text);
             if (column->SortOrder > 0)
             {
                 PushStyleColor(ImGuiCol_Text, GetColorU32(ImGuiCol_Text, 0.70f));
@@ -2708,7 +2733,7 @@ void ImGui::TableHeader(const char* label)
                 PopStyleColor();
                 x += w_sort_text;
             }
-            RenderArrow(window->DrawList, ImVec2(x, y), col, column->SortDirection == ImGuiSortDirection_Ascending ? ImGuiDir_Up : ImGuiDir_Down, ARROW_SCALE);
+            RenderArrow(window->DrawList, ImVec2(x, y), GetColorU32(ImGuiCol_Text), column->SortDirection == ImGuiSortDirection_Ascending ? ImGuiDir_Up : ImGuiDir_Down, ARROW_SCALE);
         }
 
         // Handle clicking on column header to adjust Sort Order
@@ -2727,11 +2752,6 @@ void ImGui::TableHeader(const char* label)
     const bool text_clipped = label_size.x > (ellipsis_max - label_pos.x);
     if (text_clipped && hovered && g.HoveredIdNotActiveTimer > g.TooltipSlowDelay)
         SetTooltip("%.*s", (int)(label_end - label), label);
-
-    // We feed our unclipped width to the column without writing on CursorMaxPos, so that column is still considering for merging.
-    float max_pos_x = label_pos.x + label_size.x + w_sort_text + w_arrow;
-    column->ContentMaxXHeadersUsed = ImMax(column->ContentMaxXHeadersUsed, column->WorkMaxX);
-    column->ContentMaxXHeadersIdeal = ImMax(column->ContentMaxXHeadersIdeal, max_pos_x);
 
     // We don't use BeginPopupContextItem() because we want the popup to stay up even after the column is hidden
     if (IsMouseReleased(1) && IsItemHovered())
@@ -2784,7 +2804,7 @@ void ImGui::TableDrawContextMenu(ImGuiTable* table)
         if (column != NULL)
         {
             const bool can_resize = !(column->Flags & ImGuiTableColumnFlags_NoResize) && column->IsEnabled;
-            if (MenuItem("Size column to fit", NULL, false, can_resize))
+            if (MenuItem("Size column to fit###SizeOne", NULL, false, can_resize))
                 TableSetColumnWidthAutoSingle(table, column_n);
         }
 
@@ -3025,6 +3045,7 @@ void ImGui::TableLoadSettings(ImGuiTable* table)
 
     // Serialize ImGuiTableSettings/ImGuiTableColumnSettings into ImGuiTable/ImGuiTableColumn
     ImGuiTableColumnSettings* column_settings = settings->GetColumnSettings();
+    ImU64 display_order_mask = 0;
     for (int data_n = 0; data_n < settings->ColumnsCount; data_n++, column_settings++)
     {
         int column_n = column_settings->Index;
@@ -3044,12 +3065,19 @@ void ImGui::TableLoadSettings(ImGuiTable* table)
             column->DisplayOrder = column_settings->DisplayOrder;
         else
             column->DisplayOrder = (ImGuiTableColumnIdx)column_n;
+        display_order_mask |= (ImU64)1 << column->DisplayOrder;
         column->IsEnabled = column->IsEnabledNextFrame = column_settings->IsEnabled;
         column->SortOrder = column_settings->SortOrder;
         column->SortDirection = column_settings->SortDirection;
     }
 
-    // FIXME-TABLE: Need to validate .ini data
+    // Validate and fix invalid display order data
+    const ImU64 expected_display_order_mask = (settings->ColumnsCount == 64) ? ~0 : ((ImU64)1 << settings->ColumnsCount) - 1;
+    if (display_order_mask != expected_display_order_mask)
+        for (int column_n = 0; column_n < table->ColumnsCount; column_n++)
+            table->Columns[column_n].DisplayOrder = (ImGuiTableColumnIdx)column_n;
+
+    // Rebuild index
     for (int column_n = 0; column_n < table->ColumnsCount; column_n++)
         table->DisplayOrderToIndex[table->Columns[column_n].DisplayOrder] = (ImGuiTableColumnIdx)column_n;
 }
@@ -3256,6 +3284,10 @@ void ImGui::DebugNodeTable(ImGuiTable* table)
     BulletText("HoveredColumnBody: %d, HoveredColumnBorder: %d", table->HoveredColumnBody, table->HoveredColumnBorder);
     BulletText("ResizedColumn: %d, ReorderColumn: %d, HeldHeaderColumn: %d", table->ResizedColumn, table->ReorderColumn, table->HeldHeaderColumn);
     //BulletText("BgDrawChannels: %d/%d", 0, table->BgDrawChannelUnfrozen);
+    float sum_weights = 0.0f;
+    for (int n = 0; n < table->ColumnsCount; n++)
+        if (table->Columns[n].Flags & ImGuiTableColumnFlags_WidthStretch)
+            sum_weights += table->Columns[n].StretchWeight;
     for (int n = 0; n < table->ColumnsCount; n++)
     {
         ImGuiTableColumn* column = &table->Columns[n];
@@ -3263,13 +3295,13 @@ void ImGui::DebugNodeTable(ImGuiTable* table)
         ImFormatString(buf, IM_ARRAYSIZE(buf),
             "Column %d order %d name '%s': offset %+.2f to %+.2f\n"
             "Enabled: %d, VisibleX/Y: %d/%d, RequestOutput: %d, SkipItems: %d, DrawChannels: %d,%d\n"
-            "WidthGiven: %.1f, Request/Auto: %.1f/%.1f, StretchWeight: %.3f\n"
+            "WidthGiven: %.1f, Request/Auto: %.1f/%.1f, StretchWeight: %.3f (%.1f%%)\n"
             "MinX: %.1f, MaxX: %.1f (%+.1f), ClipRect: %.1f to %.1f (+%.1f)\n"
             "ContentWidth: %.1f,%.1f, HeadersUsed/Ideal %.1f/%.1f\n"
             "Sort: %d%s, UserID: 0x%08X, Flags: 0x%04X: %s%s%s%s..",
             n, column->DisplayOrder, name, column->MinX - table->WorkRect.Min.x, column->MaxX - table->WorkRect.Min.x,
             column->IsEnabled, column->IsVisibleX, column->IsVisibleY, column->IsRequestOutput, column->IsSkipItems, column->DrawChannelFrozen, column->DrawChannelUnfrozen,
-            column->WidthGiven, column->WidthRequest, column->WidthAuto, column->StretchWeight,
+            column->WidthGiven, column->WidthRequest, column->WidthAuto, column->StretchWeight, (column->StretchWeight / sum_weights) * 100.0f,
             column->MinX, column->MaxX, column->MaxX - column->MinX, column->ClipRect.Min.x, column->ClipRect.Max.x, column->ClipRect.Max.x - column->ClipRect.Min.x,
             column->ContentMaxXFrozen - column->WorkMinX, column->ContentMaxXUnfrozen - column->WorkMinX, column->ContentMaxXHeadersUsed - column->WorkMinX, column->ContentMaxXHeadersIdeal - column->WorkMinX,
             column->SortOrder, (column->SortDirection == ImGuiSortDirection_Ascending) ? " (Asc)" : (column->SortDirection == ImGuiSortDirection_Descending) ? " (Des)" : "", column->UserID, column->Flags,
