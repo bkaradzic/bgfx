@@ -246,12 +246,6 @@ class Module {
   // If |skip_nop| is true and this is a OpNop, do nothing.
   void ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const;
 
-  // Pushes the binary segments for this instruction into the back of *|binary|
-  // including all OpLine and OpNoLine even if we can skip emitting some line
-  // instructions. If |skip_nop| is true and this is a OpNop, do nothing.
-  void ToBinaryWithAllOpLines(std::vector<uint32_t>* binary,
-                              bool skip_nop) const;
-
   // Returns 1 more than the maximum Id value mentioned in the module.
   uint32_t ComputeIdBound() const;
 

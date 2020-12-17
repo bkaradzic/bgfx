@@ -17,11 +17,12 @@ version(BindBgfx_Static)
 	 * Params:
 	 * _handle = Render target texture handle.
 	 * _access = Access. See `Access::Enum`.
-	 * _layer = Cubemap side or depth layer/slice.
+	 * _layer = Cubemap side or depth layer/slice to use.
+	 * _numLayers = Number of texture layer/slice(s) in array to use.
 	 * _mip = Mip level.
 	 * _resolve = Resolve flags. See: `BGFX_RESOLVE_*`
 	 */
-	void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, ushort _layer, ushort _mip, byte _resolve);
+	void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, ushort _layer, ushort _numLayers, ushort _mip, byte _resolve);
 	
 	/**
 	 * Start VertexLayout.
@@ -566,8 +567,9 @@ version(BindBgfx_Static)
 	 * for the duration of frame, and it can be reused for multiple draw
 	 * calls.
 	 * _num = Number of indices to allocate.
+	 * _index32 = Set to `true` if input indices will be 32-bit.
 	 */
-	void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint _num);
+	void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint _num, bool _index32);
 	
 	/**
 	 * Allocate transient vertex buffer.
@@ -2149,11 +2151,12 @@ else
 		 * Params:
 		 * _handle = Render target texture handle.
 		 * _access = Access. See `Access::Enum`.
-		 * _layer = Cubemap side or depth layer/slice.
+		 * _layer = Cubemap side or depth layer/slice to use.
+		 * _numLayers = Number of texture layer/slice(s) in array to use.
 		 * _mip = Mip level.
 		 * _resolve = Resolve flags. See: `BGFX_RESOLVE_*`
 		 */
-		alias da_bgfx_attachment_init = void function(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, ushort _layer, ushort _mip, byte _resolve);
+		alias da_bgfx_attachment_init = void function(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, ushort _layer, ushort _numLayers, ushort _mip, byte _resolve);
 		da_bgfx_attachment_init bgfx_attachment_init;
 		
 		/**
@@ -2749,8 +2752,9 @@ else
 		 * for the duration of frame, and it can be reused for multiple draw
 		 * calls.
 		 * _num = Number of indices to allocate.
+		 * _index32 = Set to `true` if input indices will be 32-bit.
 		 */
-		alias da_bgfx_alloc_transient_index_buffer = void function(bgfx_transient_index_buffer_t* _tib, uint _num);
+		alias da_bgfx_alloc_transient_index_buffer = void function(bgfx_transient_index_buffer_t* _tib, uint _num, bool _index32);
 		da_bgfx_alloc_transient_index_buffer bgfx_alloc_transient_index_buffer;
 		
 		/**

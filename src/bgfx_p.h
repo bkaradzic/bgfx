@@ -216,8 +216,10 @@ namespace stl = std;
 #define BGFX_STATE_INTERNAL_SCISSOR         UINT64_C(0x2000000000000000)
 #define BGFX_STATE_INTERNAL_OCCLUSION_QUERY UINT64_C(0x4000000000000000)
 
-#define BGFX_SUBMIT_RESERVED_MASK              UINT8_C(0xff)
+#define BGFX_SUBMIT_INTERNAL_NONE              UINT8_C(0x00)
+#define BGFX_SUBMIT_INTERNAL_INDEX32           UINT8_C(0x40)
 #define BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE UINT8_C(0x80)
+#define BGFX_SUBMIT_INTERNAL_RESERVED_MASK     UINT8_C(0xff)
 
 #define BGFX_RENDERER_DIRECT3D9_NAME  "Direct3D 9"
 #define BGFX_RENDERER_DIRECT3D11_NAME "Direct3D 11"
@@ -545,8 +547,11 @@ namespace bgfx
 		return 1;
 	}
 
-	/// Dump vertex layout into debug output.
+	/// Dump vertex layout info into debug output.
 	void dump(const VertexLayout& _layout);
+
+	/// Dump resolution and reset info into debug output.
+	void dump(const Resolution& _resolution);
 
 	struct TextVideoMem
 	{
@@ -1656,6 +1661,11 @@ namespace bgfx
 			return 0 != tmp;
 		}
 
+		bool isIndex16() const
+		{
+			return 0 == (m_submitFlags & BGFX_SUBMIT_INTERNAL_INDEX32);
+		}
+
 		Stream   m_stream[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 		uint64_t m_stateFlags;
 		uint64_t m_stencil;
@@ -1751,6 +1761,7 @@ namespace bgfx
 	{
 		String   m_name;
 		uint32_t m_size;
+		uint16_t m_flags;
 	};
 
 	struct VertexBuffer
@@ -2094,11 +2105,11 @@ namespace bgfx
 			return num;
 		}
 
-		uint32_t allocTransientIndexBuffer(uint32_t& _num)
+		uint32_t allocTransientIndexBuffer(uint32_t& _num, uint32_t _indexSize)
 		{
-			uint32_t offset = bx::strideAlign(m_iboffset, sizeof(uint16_t) );
+			uint32_t offset = bx::strideAlign(m_iboffset, _indexSize);
 			uint32_t num    = getAvailTransientIndexBuffer(_num);
-			m_iboffset = offset + num*sizeof(uint16_t);
+			m_iboffset = offset + num*_indexSize;
 			_num = num;
 
 			return offset;
@@ -2414,12 +2425,13 @@ namespace bgfx
 			m_draw.m_numMatrices = uint16_t(bx::min<uint32_t>(_cache+_num, BGFX_CONFIG_MAX_MATRIX_CACHE-1) - _cache);
 		}
 
-		void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
+		void setIndexBuffer(IndexBufferHandle _handle, const IndexBuffer& _ib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
 			BX_ASSERT(UINT32_MAX != m_draw.m_streamMask, "bgfx::setVertexCount was already called for this draw call.");
 			m_draw.m_startIndex  = _firstIndex;
 			m_draw.m_numIndices  = _numIndices;
 			m_draw.m_indexBuffer = _handle;
+			m_draw.m_submitFlags |= 0 == (_ib.m_flags & BGFX_BUFFER_INDEX32) ? BGFX_SUBMIT_INTERNAL_NONE : BGFX_SUBMIT_INTERNAL_INDEX32;
 		}
 
 		void setIndexBuffer(const DynamicIndexBuffer& _dib, uint32_t _firstIndex, uint32_t _numIndices)
@@ -2429,16 +2441,19 @@ namespace bgfx
 			m_draw.m_startIndex  = _dib.m_startIndex + _firstIndex;
 			m_draw.m_numIndices  = bx::min(_numIndices, _dib.m_size/indexSize);
 			m_draw.m_indexBuffer = _dib.m_handle;
+			m_draw.m_submitFlags |= 0 == (_dib.m_flags & BGFX_BUFFER_INDEX32) ? BGFX_SUBMIT_INTERNAL_NONE : BGFX_SUBMIT_INTERNAL_INDEX32;
 		}
 
 		void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
 			BX_ASSERT(UINT32_MAX != m_draw.m_streamMask, "bgfx::setVertexCount was already called for this draw call.");
-			const uint32_t numIndices = bx::min(_numIndices, _tib->size/2);
+			const uint32_t indexSize  = _tib->isIndex16 ? 2 : 4;
+			const uint32_t numIndices = bx::min(_numIndices, _tib->size/indexSize);
 			m_draw.m_indexBuffer = _tib->handle;
 			m_draw.m_startIndex  = _tib->startIndex + _firstIndex;
 			m_draw.m_numIndices  = numIndices;
-			m_discard = 0 == numIndices;
+			m_draw.m_submitFlags |= _tib->isIndex16 ? BGFX_SUBMIT_INTERNAL_NONE : BGFX_SUBMIT_INTERNAL_INDEX32;
+			m_discard            = 0 == numIndices;
 		}
 
 		void setVertexBuffer(
@@ -2944,8 +2959,6 @@ namespace bgfx
 			, m_rtMemoryUsed(0)
 			, m_textureMemoryUsed(0)
 			, m_renderCtx(NULL)
-			, m_renderMain(NULL)
-			, m_renderNoop(NULL)
 			, m_rendererInitialized(false)
 			, m_exit(false)
 			, m_flipAfterRender(false)
@@ -2982,6 +2995,17 @@ namespace bgfx
 
 		BGFX_API_FUNC(void reset(uint32_t _width, uint32_t _height, uint32_t _flags, TextureFormat::Enum _format) )
 		{
+			const TextureFormat::Enum format = TextureFormat::Count != _format ? _format : m_init.resolution.format;
+
+			if (m_init.resolution.format == format
+			&&  m_init.resolution.width  == _width
+			&&  m_init.resolution.height == _height
+			&&  m_init.resolution.reset  == _flags)
+			{
+				// Nothing changed, ignore request.
+				return;
+			}
+
 			BX_WARN(g_caps.limits.maxTextureSize >= _width
 				&&  g_caps.limits.maxTextureSize >= _height
 				, "Frame buffer resolution width or height can't be larger than limits.maxTextureSize %d (width %d, height %d)."
@@ -2989,13 +3013,14 @@ namespace bgfx
 				, _width
 				, _height
 				);
-			m_init.resolution.format = TextureFormat::Count != _format ? _format : m_init.resolution.format;
+			m_init.resolution.format = format;
 			m_init.resolution.width  = bx::clamp(_width,  1u, g_caps.limits.maxTextureSize);
 			m_init.resolution.height = bx::clamp(_height, 1u, g_caps.limits.maxTextureSize);
 			m_init.resolution.reset  = 0
 				| _flags
 				| (g_platformDataChangedSinceReset ? BGFX_RESET_INTERNAL_FORCE : 0)
 				;
+			dump(m_init.resolution);
 			g_platformDataChangedSinceReset = false;
 
 			m_flipAfterRender = !!(_flags & BGFX_RESET_FLIP_AFTER_RENDER);
@@ -3091,7 +3116,8 @@ namespace bgfx
 			if (isValid(handle) )
 			{
 				IndexBuffer& ib = m_indexBuffers[handle.idx];
-				ib.m_size = _mem->size;
+				ib.m_size  = _mem->size;
+				ib.m_flags = _flags;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateIndexBuffer);
 				cmdbuf.write(handle);
@@ -3688,18 +3714,21 @@ namespace bgfx
 			BX_ALIGNED_FREE(g_allocator, _tib, 16);
 		}
 
-		BGFX_API_FUNC(void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num) )
+		BGFX_API_FUNC(void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num, bool _index32) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			uint32_t offset = m_submit->allocTransientIndexBuffer(_num);
+			const bool isIndex16     = !_index32;
+			const uint32_t indexSize = isIndex16 ? 2 : 4;
+			const uint32_t offset    = m_submit->allocTransientIndexBuffer(_num, indexSize);
 
 			TransientIndexBuffer& tib = *m_submit->m_transientIb;
 
 			_tib->data       = &tib.data[offset];
-			_tib->size       = _num * 2;
+			_tib->size       = _num * indexSize;
 			_tib->handle     = tib.handle;
-			_tib->startIndex = bx::strideAlign(offset, 2)/2;
+			_tib->startIndex = bx::strideAlign(offset, indexSize) / indexSize;
+			_tib->isIndex16  = isIndex16;
 		}
 
 		TransientVertexBuffer* createTransientVertexBuffer(uint32_t _size, const VertexLayout* _layout = NULL)
@@ -5130,8 +5159,6 @@ namespace bgfx
 		ClearQuad m_clearQuad;
 
 		RendererContextI* m_renderCtx;
-		RendererContextI* m_renderMain;
-		RendererContextI* m_renderNoop;
 
 		bool m_rendererInitialized;
 		bool m_exit;

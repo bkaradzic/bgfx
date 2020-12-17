@@ -416,6 +416,9 @@ public:
     EShLanguage getStage() const { return language; }
     void addRequestedExtension(const char* extension) { requestedExtensions.insert(extension); }
     const std::set<std::string>& getRequestedExtensions() const { return requestedExtensions; }
+    bool isRayTracingStage() const {
+        return language >= EShLangRayGen && language <= EShLangCallableNV;
+    }
 
     void setTreeRoot(TIntermNode* r) { treeRoot = r; }
     TIntermNode* getTreeRoot() const { return treeRoot; }
@@ -531,6 +534,7 @@ public:
     // Linkage related
     void addSymbolLinkageNodes(TIntermAggregate*& linkage, EShLanguage, TSymbolTable&);
     void addSymbolLinkageNode(TIntermAggregate*& linkage, const TSymbol&);
+    TIntermAggregate* findLinkerObjects() const;
 
     void setUseStorageBuffer() { useStorageBuffer = true; }
     bool usingStorageBuffer() const { return useStorageBuffer; }
@@ -866,6 +870,7 @@ public:
 
     int addUsedLocation(const TQualifier&, const TType&, bool& typeCollision);
     int checkLocationRange(int set, const TIoRange& range, const TType&, bool& typeCollision);
+    int checkLocationRT(int set, int location);
     int addUsedOffsets(int binding, int offset, int numOffsets);
     bool addUsedConstantId(int id);
     static int computeTypeLocationSize(const TType&, EShLanguage);
@@ -941,7 +946,6 @@ protected:
     void checkCallGraphCycles(TInfoSink&);
     void checkCallGraphBodies(TInfoSink&, bool keepUncalled);
     void inOutLocationCheck(TInfoSink&);
-    TIntermAggregate* findLinkerObjects() const;
     bool userOutputUsed() const;
     bool isSpecializationOperation(const TIntermOperator&) const;
     bool isNonuniformPropagating(TOperator) const;
@@ -1050,6 +1054,8 @@ protected:
     std::unordered_set<int> usedConstantId; // specialization constant ids used
     std::vector<TOffsetRange> usedAtomics;  // sets of bindings used by atomic counters
     std::vector<TIoRange> usedIo[4];        // sets of used locations, one for each of in, out, uniform, and buffers
+    std::vector<TRange> usedIoRT[2];        // sets of used location, one for rayPayload/rayPayloadIN and other
+                                            // for callableData/callableDataIn
     // set of names of statically read/written I/O that might need extra checking
     std::set<TString> ioAccessed;
     // source code of shader, useful as part of debug information

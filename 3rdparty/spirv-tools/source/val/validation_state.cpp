@@ -1315,10 +1315,22 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-BaseVertex-BaseVertex-04186);
     case 4187:
       return VUID_WRAP(VUID-ClipDistance-ClipDistance-04187);
+    case 4188:
+      return VUID_WRAP(VUID-ClipDistance-ClipDistance-04188);
+    case 4189:
+      return VUID_WRAP(VUID-ClipDistance-ClipDistance-04189);
+    case 4190:
+      return VUID_WRAP(VUID-ClipDistance-ClipDistance-04190);
     case 4191:
       return VUID_WRAP(VUID-ClipDistance-ClipDistance-04191);
     case 4196:
       return VUID_WRAP(VUID-CullDistance-CullDistance-04196);
+    case 4197:
+      return VUID_WRAP(VUID-CullDistance-CullDistance-04197);
+    case 4198:
+      return VUID_WRAP(VUID-CullDistance-CullDistance-04198);
+    case 4199:
+      return VUID_WRAP(VUID-CullDistance-CullDistance-04199);
     case 4200:
       return VUID_WRAP(VUID-CullDistance-CullDistance-04200);
     case 4205:
@@ -1363,6 +1375,36 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-HelperInvocation-HelperInvocation-04240);
     case 4241:
       return VUID_WRAP(VUID-HelperInvocation-HelperInvocation-04241);
+    case 4242:
+      return VUID_WRAP(VUID-HitKindKHR-HitKindKHR-04242);
+    case 4243:
+      return VUID_WRAP(VUID-HitKindKHR-HitKindKHR-04243);
+    case 4244:
+      return VUID_WRAP(VUID-HitKindKHR-HitKindKHR-04244);
+    case 4245:
+      return VUID_WRAP(VUID-HitTNV-HitTNV-04245);
+    case 4246:
+      return VUID_WRAP(VUID-HitTNV-HitTNV-04246);
+    case 4247:
+      return VUID_WRAP(VUID-HitTNV-HitTNV-04247);
+    case 4248:
+      return VUID_WRAP(VUID-IncomingRayFlagsKHR-IncomingRayFlagsKHR-04248);
+    case 4249:
+      return VUID_WRAP(VUID-IncomingRayFlagsKHR-IncomingRayFlagsKHR-04249);
+    case 4250:
+      return VUID_WRAP(VUID-IncomingRayFlagsKHR-IncomingRayFlagsKHR-04250);
+    case 4251:
+      return VUID_WRAP(VUID-InstanceCustomIndexKHR-InstanceCustomIndexKHR-04251);
+    case 4252:
+      return VUID_WRAP(VUID-InstanceCustomIndexKHR-InstanceCustomIndexKHR-04252);
+    case 4253:
+      return VUID_WRAP(VUID-InstanceCustomIndexKHR-InstanceCustomIndexKHR-04253);
+    case 4254:
+      return VUID_WRAP(VUID-InstanceId-InstanceId-04254);
+    case 4255:
+      return VUID_WRAP(VUID-InstanceId-InstanceId-04255);
+    case 4256:
+      return VUID_WRAP(VUID-InstanceId-InstanceId-04256);
     case 4257:
       return VUID_WRAP(VUID-InvocationId-InvocationId-04257);
     case 4258:
@@ -1375,8 +1417,22 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-InstanceIndex-InstanceIndex-04264);
     case 4265:
       return VUID_WRAP(VUID-InstanceIndex-InstanceIndex-04265);
+    case 4266:
+      return VUID_WRAP(VUID-LaunchIdKHR-LaunchIdKHR-04266);
+    case 4267:
+      return VUID_WRAP(VUID-LaunchIdKHR-LaunchIdKHR-04267);
+    case 4268:
+      return VUID_WRAP(VUID-LaunchIdKHR-LaunchIdKHR-04268);
+    case 4269:
+      return VUID_WRAP(VUID-LaunchSizeKHR-LaunchSizeKHR-04269);
+    case 4270:
+      return VUID_WRAP(VUID-LaunchSizeKHR-LaunchSizeKHR-04270);
+    case 4271:
+      return VUID_WRAP(VUID-LaunchSizeKHR-LaunchSizeKHR-04271);
     case 4272:
       return VUID_WRAP(VUID-Layer-Layer-04272);
+    case 4273:
+      return VUID_WRAP(VUID-Layer-Layer-04273);
     case 4274:
       return VUID_WRAP(VUID-Layer-Layer-04274);
     case 4275:
@@ -1395,6 +1451,24 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-NumWorkgroups-NumWorkgroups-04297);
     case 4298:
       return VUID_WRAP(VUID-NumWorkgroups-NumWorkgroups-04298);
+    case 4299:
+      return VUID_WRAP(VUID-ObjectRayDirectionKHR-ObjectRayDirectionKHR-04299);
+    case 4300:
+      return VUID_WRAP(VUID-ObjectRayDirectionKHR-ObjectRayDirectionKHR-04300);
+    case 4301:
+      return VUID_WRAP(VUID-ObjectRayDirectionKHR-ObjectRayDirectionKHR-04301);
+    case 4302:
+      return VUID_WRAP(VUID-ObjectRayOriginKHR-ObjectRayOriginKHR-04302);
+    case 4303:
+      return VUID_WRAP(VUID-ObjectRayOriginKHR-ObjectRayOriginKHR-04303);
+    case 4304:
+      return VUID_WRAP(VUID-ObjectRayOriginKHR-ObjectRayOriginKHR-04304);
+    case 4305:
+      return VUID_WRAP(VUID-ObjectToWorldKHR-ObjectToWorldKHR-04305);
+    case 4306:
+      return VUID_WRAP(VUID-ObjectToWorldKHR-ObjectToWorldKHR-04306);
+    case 4307:
+      return VUID_WRAP(VUID-ObjectToWorldKHR-ObjectToWorldKHR-04307);
     case 4308:
       return VUID_WRAP(VUID-PatchVertices-PatchVertices-04308);
     case 4309:
@@ -1417,6 +1491,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-PointSize-PointSize-04317);
     case 4318:
       return VUID_WRAP(VUID-Position-Position-04318);
+    case 4319:
+      return VUID_WRAP(VUID-Position-Position-04319);
     case 4320:
       return VUID_WRAP(VUID-Position-Position-04320);
     case 4321:
@@ -1427,6 +1503,24 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-PrimitiveId-PrimitiveId-04334);
     case 4337:
       return VUID_WRAP(VUID-PrimitiveId-PrimitiveId-04337);
+    case 4345:
+      return VUID_WRAP(VUID-RayGeometryIndexKHR-RayGeometryIndexKHR-04345);
+    case 4346:
+      return VUID_WRAP(VUID-RayGeometryIndexKHR-RayGeometryIndexKHR-04346);
+    case 4347:
+      return VUID_WRAP(VUID-RayGeometryIndexKHR-RayGeometryIndexKHR-04347);
+    case 4348:
+      return VUID_WRAP(VUID-RayTmaxKHR-RayTmaxKHR-04348);
+    case 4349:
+      return VUID_WRAP(VUID-RayTmaxKHR-RayTmaxKHR-04349);
+    case 4350:
+      return VUID_WRAP(VUID-RayTmaxKHR-RayTmaxKHR-04350);
+    case 4351:
+      return VUID_WRAP(VUID-RayTminKHR-RayTminKHR-04351);
+    case 4352:
+      return VUID_WRAP(VUID-RayTminKHR-RayTminKHR-04352);
+    case 4353:
+      return VUID_WRAP(VUID-RayTminKHR-RayTminKHR-04353);
     case 4354:
       return VUID_WRAP(VUID-SampleId-SampleId-04354);
     case 4355:
@@ -1453,10 +1547,18 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-TessCoord-TessCoord-04389);
     case 4390:
       return VUID_WRAP(VUID-TessLevelOuter-TessLevelOuter-04390);
+    case 4391:
+      return VUID_WRAP(VUID-TessLevelOuter-TessLevelOuter-04391);
+    case 4392:
+      return VUID_WRAP(VUID-TessLevelOuter-TessLevelOuter-04392);
     case 4393:
       return VUID_WRAP(VUID-TessLevelOuter-TessLevelOuter-04393);
     case 4394:
       return VUID_WRAP(VUID-TessLevelInner-TessLevelInner-04394);
+    case 4395:
+      return VUID_WRAP(VUID-TessLevelInner-TessLevelInner-04395);
+    case 4396:
+      return VUID_WRAP(VUID-TessLevelInner-TessLevelInner-04396);
     case 4397:
       return VUID_WRAP(VUID-TessLevelInner-TessLevelInner-04397);
     case 4398:
@@ -1473,6 +1575,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-ViewIndex-ViewIndex-04403);
     case 4404:
       return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04404);
+    case 4405:
+      return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04405);
     case 4406:
       return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-04406);
     case 4407:
@@ -1491,6 +1595,24 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-WorkgroupSize-WorkgroupSize-04426);
     case 4427:
       return VUID_WRAP(VUID-WorkgroupSize-WorkgroupSize-04427);
+    case 4428:
+      return VUID_WRAP(VUID-WorldRayDirectionKHR-WorldRayDirectionKHR-04428);
+    case 4429:
+      return VUID_WRAP(VUID-WorldRayDirectionKHR-WorldRayDirectionKHR-04429);
+    case 4430:
+      return VUID_WRAP(VUID-WorldRayDirectionKHR-WorldRayDirectionKHR-04430);
+    case 4431:
+      return VUID_WRAP(VUID-WorldRayOriginKHR-WorldRayOriginKHR-04431);
+    case 4432:
+      return VUID_WRAP(VUID-WorldRayOriginKHR-WorldRayOriginKHR-04432);
+    case 4433:
+      return VUID_WRAP(VUID-WorldRayOriginKHR-WorldRayOriginKHR-04433);
+    case 4434:
+      return VUID_WRAP(VUID-WorldToObjectKHR-WorldToObjectKHR-04434);
+    case 4435:
+      return VUID_WRAP(VUID-WorldToObjectKHR-WorldToObjectKHR-04435);
+    case 4436:
+      return VUID_WRAP(VUID-WorldToObjectKHR-WorldToObjectKHR-04436);
     case 4484:
       return VUID_WRAP(VUID-PrimitiveShadingRateKHR-PrimitiveShadingRateKHR-04484);
     case 4485:

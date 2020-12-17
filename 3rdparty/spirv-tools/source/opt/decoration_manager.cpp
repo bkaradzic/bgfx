@@ -487,6 +487,13 @@ void DecorationManager::ForEachDecoration(
   });
 }
 
+bool DecorationManager::FindDecoration(
+    uint32_t id, uint32_t decoration,
+    std::function<bool(const Instruction&)> f) {
+  return !WhileEachDecoration(
+      id, decoration, [&f](const Instruction& inst) { return !f(inst); });
+}
+
 void DecorationManager::CloneDecorations(uint32_t from, uint32_t to) {
   const auto decoration_list = id_to_decoration_insts_.find(from);
   if (decoration_list == id_to_decoration_insts_.end()) return;

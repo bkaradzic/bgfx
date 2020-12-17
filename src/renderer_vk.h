@@ -621,12 +621,12 @@ VK_DESTROY
 
 		MsaaSamplerVK m_sampler;
 
-		VkImageViewType m_type;
-		VkFormat m_format;
+		VkImageViewType    m_type;
+		VkFormat           m_format;
 		VkComponentMapping m_components;
 		VkImageAspectFlags m_aspectMask;
 
-		VkImage m_textureImage;
+		VkImage        m_textureImage;
 		VkDeviceMemory m_textureDeviceMem;
 		VkImageView    m_textureImageView;
 		VkImageView    m_textureImageDepthView;
@@ -641,7 +641,7 @@ VK_DESTROY
 	struct FrameBufferVK
 	{
 		FrameBufferVK()
-			: m_depth{ kInvalidHandle }
+			: m_depth({ kInvalidHandle })
 			, m_width(0)
 			, m_height(0)
 			, m_denseIdx(kInvalidHandle)
@@ -650,6 +650,7 @@ VK_DESTROY
 			, m_framebuffer(VK_NULL_HANDLE)
 		{
 		}
+
 		void create(uint8_t _num, const Attachment* _attachment);
 		void resolve();
 		void destroy();

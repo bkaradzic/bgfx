@@ -1782,7 +1782,7 @@ namespace bgfx { namespace webgpu
 			, FrameBufferHandle _fbh
 			, uint8_t _numStreams
 			, const VertexLayout** _vertexDecls
-			, bool _index32
+			, bool _isIndex16
 			, ProgramHandle _program
 			, uint8_t _numInstanceData
 			)
@@ -2103,7 +2103,7 @@ namespace bgfx { namespace webgpu
 					input.vertexBuffers[stream].attributes = &input.attributes[firstAttrib];
 				}
 
-				input.desc.indexFormat = _index32 ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16;
+				input.desc.indexFormat = _isIndex16 ? wgpu::IndexFormat::Uint16 : wgpu::IndexFormat::Uint32;
 
 				pd.desc.vertexState = &input.desc;
 
@@ -2122,7 +2122,7 @@ namespace bgfx { namespace webgpu
 			, uint32_t _rgba
 			, FrameBufferHandle _fbh
 			, VertexLayoutHandle _declHandle
-			, bool _index32
+			, bool _isIndex16
 			, ProgramHandle _program
 			, uint8_t _numInstanceData
 			)
@@ -2135,7 +2135,7 @@ namespace bgfx { namespace webgpu
 				, _fbh
 				, 1
 				, &decl
-				, _index32
+				, _isIndex16
 				, _program
 				, _numInstanceData
 				);
@@ -4478,14 +4478,6 @@ namespace bgfx { namespace webgpu
 						rce.SetVertexBuffer(idx, vb.m_ptr, offset);
 					}
 
-					bool index32 = false;
-
-					if (isValid(draw.m_indexBuffer))
-					{
-						const IndexBufferWgpu& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-						index32 = 0 != (ib.m_flags & BGFX_BUFFER_INDEX32);
-					}
-
 					currentState.m_numVertices = numVertices;
 
 					if (!isValid(currentProgram))
@@ -4505,7 +4497,7 @@ namespace bgfx { namespace webgpu
 								, fbh
 								, numStreams
 								, decls
-								, index32
+								, draw.isIndex16()
 								, currentProgram
 								, uint8_t(draw.m_instanceDataStride / 16)
 							);
@@ -4646,8 +4638,7 @@ namespace bgfx { namespace webgpu
 						if (isValid(draw.m_indexBuffer) )
 						{
 							const IndexBufferWgpu& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-
-							const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+							const uint32_t indexSize  = draw.isIndex16() ? 2 : 4;
 
 							if (UINT32_MAX == draw.m_numIndices)
 							{

@@ -1104,11 +1104,16 @@ struct InterpolatorT
 
 	bool isActive() const
 	{
-		const double freq = double(bx::getHPFrequency() );
-		int64_t now = bx::getHPCounter();
-		float time = (float)(double(now - offset) / freq);
-		float lerp = bx::clamp(time, 0.0f, duration) / duration;
-		return lerp < 1.0f;
+		if (0.0f < duration)
+		{
+			const double freq = double(bx::getHPFrequency() );
+			int64_t now = bx::getHPCounter();
+			float time = (float)(double(now - offset) / freq);
+			float lerp = bx::clamp(time, 0.0f, duration) / duration;
+			return lerp < 1.0f;
+		}
+
+		return false;
 	}
 };
 

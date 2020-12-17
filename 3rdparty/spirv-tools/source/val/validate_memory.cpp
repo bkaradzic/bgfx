@@ -536,8 +536,7 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
               _, pointee,
               {SpvOpTypeImage, SpvOpTypeSampler, SpvOpTypeSampledImage,
                SpvOpTypeAccelerationStructureNV,
-               SpvOpTypeAccelerationStructureKHR,
-               SpvOpTypeRayQueryProvisionalKHR})) {
+               SpvOpTypeAccelerationStructureKHR, SpvOpTypeRayQueryKHR})) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << "UniformConstant OpVariable <id> '" << _.getIdName(inst->id())
                << "' has illegal type.\n"
@@ -547,7 +546,7 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
                << "variables must be typed as OpTypeImage, OpTypeSampler, "
                << "OpTypeSampledImage, OpTypeAccelerationStructureNV, "
                   "OpTypeAccelerationStructureKHR, "
-                  "OpTypeRayQueryProvisionalKHR, "
+                  "OpTypeRayQueryKHR, "
                << "or an array of one of these types.";
       }
     }

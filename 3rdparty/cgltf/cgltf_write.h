@@ -78,6 +78,7 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 #define CGLTF_EXTENSION_FLAG_MATERIALS_IOR          (1 << 6)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_SPECULAR     (1 << 7)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_TRANSMISSION (1 << 8)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN        (1 << 9)
 
 typedef struct {
 	char* buffer;
@@ -527,6 +528,11 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_SPECULAR;
 	}
 
+	if (material->has_sheen)
+	{
+		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN;
+	}
+
 	if (material->has_pbr_metallic_roughness)
 	{
 		const cgltf_pbr_metallic_roughness* params = &material->pbr_metallic_roughness;
@@ -543,7 +549,7 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 		cgltf_write_line(context, "}");
 	}
 
-	if (material->unlit || material->has_pbr_specular_glossiness || material->has_clearcoat || material->has_ior || material->has_specular || material->has_transmission)
+	if (material->unlit || material->has_pbr_specular_glossiness || material->has_clearcoat || material->has_ior || material->has_specular || material->has_transmission || material->has_sheen)
 	{
 		cgltf_write_line(context, "\"extensions\": {");
 		if (material->has_clearcoat)
@@ -582,6 +588,19 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 			cgltf_write_line(context, "\"KHR_materials_transmission\": {");
 			CGLTF_WRITE_TEXTURE_INFO("transmissionTexture", params->transmission_texture);
 			cgltf_write_floatprop(context, "transmissionFactor", params->transmission_factor, 0.0f);
+			cgltf_write_line(context, "}");
+		}
+		if (material->has_sheen)
+		{
+			const cgltf_sheen* params = &material->sheen;
+			cgltf_write_line(context, "\"KHR_materials_sheen\": {");
+			CGLTF_WRITE_TEXTURE_INFO("sheenColorTexture", params->sheen_color_texture);
+			CGLTF_WRITE_TEXTURE_INFO("sheenRoughnessTexture", params->sheen_roughness_texture);
+			if (cgltf_check_floatarray(params->sheen_color_factor, 3, 0.0f))
+			{
+				cgltf_write_floatarrayprop(context, "sheenColorFactor", params->sheen_color_factor, 3);
+			}
+			cgltf_write_floatprop(context, "sheenRoughnessFactor", params->sheen_roughness_factor, 0.0f);
 			cgltf_write_line(context, "}");
 		}
 		if (material->has_pbr_specular_glossiness)
@@ -960,6 +979,9 @@ static void cgltf_write_extensions(cgltf_write_context* context, uint32_t extens
 	}
 	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_TRANSMISSION) {
 		cgltf_write_stritem(context, "KHR_materials_transmission");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN) {
+		cgltf_write_stritem(context, "KHR_materials_sheen");
 	}
 }
 

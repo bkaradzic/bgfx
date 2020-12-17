@@ -26,6 +26,10 @@ namespace val {
 namespace {
 
 spv_result_t ValidateUndef(ValidationState_t& _, const Instruction* inst) {
+  if (_.IsVoidType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Cannot create undefined values with void type";
+  }
   if (_.HasCapability(SpvCapabilityShader) &&
       _.ContainsLimitedUseIntOrFloatType(inst->type_id()) &&
       !_.IsPointerType(inst->type_id())) {
