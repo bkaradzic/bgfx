@@ -427,6 +427,35 @@ https://growtopiagame.com/
 
 ![growtopia](https://s3.eu-west-1.amazonaws.com/cdn.growtopiagame.com/website/resources/assets/images/grow_header.jpg)
 
+## Galaxy Trucker
+
+Digital implementation of tabletop spaceship building in real-time or turn-based mode,
+then surviving space adventures, with AI opponents, multiplayer, achievements
+and solo campaign.
+
+https://galaxytrucker.com/
+
+![Galaxy Trucker](https://press.galaxytrucker.com/images/GTAT_junk.png)
+
+## Through the Ages
+
+The card tabletop deep strategy game in your devices. Lead your civilization from pyramids
+to space flights. Challenges, achievements, skilled AIs and online multiplayer.
+
+https://throughtheages.com/
+
+![Through the Ages](https://press.throughtheages.com/images/tta01.png)
+
+## Codenames
+
+One of the best party game. Two rival spymasters know the secret identities of 25 agents.
+Their teammates know the agents only by their codenames. Simple to explain,
+easy to understand, challenging gameplay.
+
+https://codenamesgame.com/
+
+![Codenames](https://codenamesgame.com/img/game-features-img-1.jpg)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
