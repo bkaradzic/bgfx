@@ -2455,7 +2455,7 @@ namespace bgfx
 		  TransientIndexBuffer* _tib
 		, uint32_t _num
 		, bool _index32 = false
-	);
+		);
 
 	/// Allocate transient vertex buffer.
 	///
