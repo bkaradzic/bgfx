@@ -6155,8 +6155,6 @@ namespace bgfx { namespace d3d11
 						}
 					}
 
-					currentState.m_numVertices = numVertices;
-
 					if (0 < numStreams)
 					{
 						deviceCtx->IASetVertexBuffers(0, numStreams, buffers, strides, offsets);

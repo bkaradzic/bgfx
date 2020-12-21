@@ -4251,8 +4251,6 @@ namespace bgfx { namespace d3d9
 						DX_CHECK(device->SetStreamSource(numStreams, vb.m_ptr, 0, stride) );
 					}
 
-					currentState.m_numVertices = numVertices;
-
 					if (0 < numStreams)
 					{
 						if (instanced)

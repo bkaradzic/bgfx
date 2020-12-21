@@ -4430,8 +4430,6 @@ namespace bgfx { namespace mtl
 						rce.setVertexBuffer(vb.m_ptr, offset, idx+1);
 					}
 
-					currentState.m_numVertices = numVertices;
-
 					if (!isValid(currentProgram) )
 					{
 						continue;

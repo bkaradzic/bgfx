@@ -4478,8 +4478,6 @@ namespace bgfx { namespace webgpu
 						rce.SetVertexBuffer(idx, vb.m_ptr, offset);
 					}
 
-					currentState.m_numVertices = numVertices;
-
 					if (!isValid(currentProgram))
 					{
 						continue;
