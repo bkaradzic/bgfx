@@ -565,11 +565,8 @@ namespace
 
 				imguiEndFrame();
 
-				if (!ImGui::MouseOverArea())
-				{
-					// Update camera.
-					cameraUpdate(deltaTime, m_mouseState);
-				}
+				// Update camera.
+				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));

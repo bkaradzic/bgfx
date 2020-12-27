@@ -451,7 +451,7 @@ public:
 			const float deltaTime = float(frameTime/freq);
 
 			// Update camera
-			cameraUpdate(deltaTime*0.15f, m_mouseState);
+			cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
 
 			// Set up matrices for gbuffer
 			float view[16];

@@ -333,7 +333,7 @@ public:
 			const double freq = double(bx::getHPFrequency() );
 			const float deltaTime = float(frameTime/freq);
 
-			cameraUpdate(deltaTime, m_mouseState);
+			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 			float view[16];
 			cameraGetViewMtx(view);

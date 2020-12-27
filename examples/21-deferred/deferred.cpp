@@ -416,14 +416,14 @@ public:
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			imguiBeginFrame(m_mouseState.m_mx
-					, m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					, m_mouseState.m_mz
-					, uint16_t(m_width)
-					, uint16_t(m_height)
-					);
+				, m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				, m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
 			showExampleDialog(this);
 
@@ -437,17 +437,14 @@ public:
 			float time = (float)( (now-m_timeOffset)/freq);
 
 			ImGui::SetNextWindowPos(
-				ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
 				, ImGuiCond_FirstUseEver
-			);
+				);
 			ImGui::SetNextWindowSize(
-				ImVec2(m_width / 5.0f, m_height / 3.0f)
+				  ImVec2(m_width / 5.0f, m_height / 3.0f)
 				, ImGuiCond_FirstUseEver
-			);
-			ImGui::Begin("Settings"
-				, NULL
-				, 0
-			);
+				);
+			ImGui::Begin("Settings", NULL, 0);
 
 			ImGui::SliderInt("Num lights", &m_numLights, 1, 2048);
 			ImGui::Checkbox("Show G-Buffer.", &m_showGBuffer);
@@ -573,7 +570,7 @@ public:
 				}
 
 				// Update camera.
-				cameraUpdate(deltaTime, m_mouseState);
+				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 				float view[16];
 				cameraGetViewMtx(view);

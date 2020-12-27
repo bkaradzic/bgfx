@@ -203,8 +203,9 @@ public:
 				const float deltaTime = float(frameTime/freq);
 
 				// Update camera.
+				cameraUpdate(deltaTime, m_state.m_mouse, ImGui::MouseOverArea() );
+
 				float view[16];
-				cameraUpdate(deltaTime, m_state.m_mouse);
 				cameraGetViewMtx(view);
 
 				// Set view and projection matrix for view 0.
