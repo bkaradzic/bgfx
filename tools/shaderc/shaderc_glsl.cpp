@@ -16,23 +16,15 @@ namespace bgfx { namespace glsl
 			: (ch == 'c' ? kGlslOptShaderCompute : kGlslOptShaderVertex);
 
 		glslopt_target target = kGlslTargetOpenGL;
-		switch (_version)
+		if(_version == BX_MAKEFOURCC('M', 'T', 'L', 0))
 		{
-		case BX_MAKEFOURCC('M', 'T', 'L', 0):
 			target = kGlslTargetMetal;
-			break;
-
-		case 2:
-			target = kGlslTargetOpenGLES20;
-			break;
-
-		case 3:
-			target = kGlslTargetOpenGLES30;
-			break;
-
-		default:
+		} else if(_version < 0x80000000) {
 			target = kGlslTargetOpenGL;
-			break;
+		}
+		else {
+			_version &= ~0x80000000;
+			target = (_version >= 300) ? kGlslTargetOpenGLES30 : kGlslTargetOpenGLES20;
 		}
 
 		glslopt_ctx* ctx = glslopt_initialize(target);
@@ -69,11 +61,15 @@ namespace bgfx { namespace glsl
 
 		const char* optimizedShader = glslopt_get_output(shader);
 
+		std::string out;
 		// Trim all directives.
 		while ('#' == *optimizedShader)
 		{
 			optimizedShader = bx::strFindNl(optimizedShader).getPtr();
 		}
+
+		out.append(optimizedShader, strlen(optimizedShader));
+		optimizedShader = out.c_str();
 
 		{
 			char* code = const_cast<char*>(optimizedShader);
@@ -113,6 +109,13 @@ namespace bgfx { namespace glsl
 				if (!eol.isEmpty() )
 				{
 					bx::StringView qualifier = nextWord(parse);
+
+					if (0 == bx::strCmp(qualifier, "precision", 9) )
+					{
+						// skip precision
+						parse.set(eol.getPtr() + 1, parse.getTerm() );
+						continue;
+					}
 
 					if (0 == bx::strCmp(qualifier, "attribute", 9)
 					||  0 == bx::strCmp(qualifier, "varying",   7)

@@ -663,7 +663,7 @@ namespace bgfx { namespace hlsl
 		uint16_t attrs[bgfx::Attrib::Count];
 		uint16_t size = 0;
 
-		if (_version == 9)
+		if (_version < 400)
 		{
 			if (!getReflectionDataD3D9(code, uniforms) )
 			{
@@ -782,7 +782,7 @@ namespace bgfx { namespace hlsl
 			bx::write(_writer, nul);
 		}
 
-		if (_version > 9)
+		if (_version >= 400)
 		{
 			bx::write(_writer, numAttrs);
 			bx::write(_writer, attrs, numAttrs*sizeof(uint16_t) );
