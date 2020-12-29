@@ -159,7 +159,7 @@ struct Camera
 		m_mouseLast.m_mz = m_mouseNow.m_mz;
 		m_mouseNow.m_mz  = _mouseState.m_mz;
 
-		const int32_t deltaZ = float(m_mouseNow.m_mz - m_mouseLast.m_mz);
+		const float deltaZ = float(m_mouseNow.m_mz - m_mouseLast.m_mz);
 
 		if (m_mouseDown)
 		{
