@@ -25,15 +25,38 @@ namespace bgfx
 {
 	bool g_verbose = false;
 
-	enum ShadingLang{
-		HLSL,
-		Metal,
-		PSSL,
-		Spirv,
-		GLSL,
-		ESSL,
-		ShadingLangCount
+	struct ShadingLang
+	{
+		enum Enum
+		{
+			ESSL,
+			GLSL,
+			HLSL,
+			Metal,
+			PSSL,
+			SpirV,
+
+			Count
+		};
 	};
+
+	static const char* s_shadingLangName[] =
+	{
+		"OpenGL ES Shading Language / WebGL (ESSL)",
+		"OpenGL Shading Language (GLSL)",
+		"High-Level Shading Language (HLSL)",
+		"Metal Shading Language (MSL)",
+		"PlayStation Shader Language (PSSL)",
+		"Standard Portable Intermediate Representation - V (SPIR-V)",
+
+		"Unknown?!"
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_shadingLangName) == ShadingLang::Count+1, "ShadingLang::Enum and s_shadingLangName mismatch");
+
+	const char* getName(ShadingLang::Enum _lang)
+	{
+		return s_shadingLangName[_lang];
+	}
 
 	// c - compute
 	// d - domain
@@ -63,41 +86,39 @@ namespace bgfx
 	//       1.4      |       1.1      |      1411
 	//       1.5      |       1.2      |      1512
 
-	static const struct Profile {
-		ShadingLang lang;
-		uint32_t id;
-		const char *name;
-		// [todo] description ?
-	} s_profiles[] = {
-		ESSL, 100, "100_es",
-		ESSL, 300, "300_es",
-		ESSL, 310, "310_es",
-		ESSL, 320, "320_es",
+	struct Profile
+	{
+		ShadingLang::Enum lang;
+		uint32_t    id;
+		const char* name;
+	};
 
-		HLSL, 300, "s_3_0",
-		HLSL, 400, "s_4_0",
-		HLSL, 500, "s_5_0",
-
-		Metal, 1, "metal",
-		
-		PSSL, 1, "pssl",
-		
-		Spirv, 1331, "spirv13-11",
-		Spirv, 1411, "spirv14-11",
-		Spirv, 1512, "spirv15-12",
-		Spirv, 1010, "spirv10-10",
-		Spirv, 1010, "spirv",
-
-		GLSL, 120, "120",
-		GLSL, 130, "130",
-		GLSL, 140, "140",
-		GLSL, 150, "150",
-		GLSL, 330, "330",
-		GLSL, 400, "400",
-		GLSL, 410, "410",
-		GLSL, 420, "420",
-		GLSL, 430, "430",
-		GLSL, 440, "440"
+	static const Profile s_profiles[] =
+	{
+		{  ShadingLang::ESSL,  100,    "100_es"     },
+		{  ShadingLang::ESSL,  300,    "300_es"     },
+		{  ShadingLang::ESSL,  310,    "310_es"     },
+		{  ShadingLang::ESSL,  320,    "320_es"     },
+		{  ShadingLang::HLSL,  300,    "s_3_0"      },
+		{  ShadingLang::HLSL,  400,    "s_4_0"      },
+		{  ShadingLang::HLSL,  500,    "s_5_0"      },
+		{  ShadingLang::Metal, 1,      "metal"      },
+		{  ShadingLang::PSSL,  1,      "pssl"       },
+		{  ShadingLang::SpirV, 1331,   "spirv13-11" },
+		{  ShadingLang::SpirV, 1411,   "spirv14-11" },
+		{  ShadingLang::SpirV, 1512,   "spirv15-12" },
+		{  ShadingLang::SpirV, 1010,   "spirv10-10" },
+		{  ShadingLang::SpirV, 1010,   "spirv"      },
+		{  ShadingLang::GLSL,  120,    "120"        },
+		{  ShadingLang::GLSL,  130,    "130"        },
+		{  ShadingLang::GLSL,  140,    "140"        },
+		{  ShadingLang::GLSL,  150,    "150"        },
+		{  ShadingLang::GLSL,  330,    "330"        },
+		{  ShadingLang::GLSL,  400,    "400"        },
+		{  ShadingLang::GLSL,  410,    "410"        },
+		{  ShadingLang::GLSL,  420,    "420"        },
+		{  ShadingLang::GLSL,  430,    "430"        },
+		{  ShadingLang::GLSL,  440,    "440"        },
 	};
 
 	static const char* s_ARB_shader_texture_lod[] =
@@ -958,8 +979,23 @@ namespace bgfx
 			  "      -p, --profile <profile>   Shader model (default GLSL).\n"
 			);
 
-		for(unsigned int i=0; i<BX_COUNTOF(s_profiles); i++) {
-				bx::printf("           %s\n", s_profiles[i].name);
+		{
+			ShadingLang::Enum lang = ShadingLang::Count;
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_profiles); ++ii)
+			{
+				const Profile& profile = s_profiles[ii];
+				if (lang != profile.lang)
+				{
+					lang = profile.lang;
+					bx::printf("\n");
+					bx::printf("           %-20s %s\n", profile.name, getName(profile.lang) );
+				}
+				else
+				{
+					bx::printf("           %s\n", profile.name);
+				}
+
+			}
 		}
 
 		bx::printf(
@@ -999,11 +1035,15 @@ namespace bgfx
 		if ('\0' != profile_opt[0])
 		{
 			const uint32_t count = BX_COUNTOF(s_profiles);
-			for(profile_id=0; profile_id<count; profile_id++) {
-				if(0 == bx::strCmp(profile_opt, s_profiles[profile_id].name)) {
+			for (profile_id=0; profile_id<count; profile_id++ )
+			{
+				if (0 == bx::strCmp(profile_opt, s_profiles[profile_id].name) )
+				{
 					break;
 				}
-				else if((s_profiles[profile_id].lang == HLSL)&& (0 == bx::strCmp(&profile_opt[1], s_profiles[profile_id].name))) {
+				else if (s_profiles[profile_id].lang == ShadingLang::HLSL
+					 &&  0 == bx::strCmp(&profile_opt[1], s_profiles[profile_id].name) )
+				{
 					// This test is here to allow hlsl profile names e.g:
 					// cs_4_0, gs_5_0, etc...
 					// There's no check to ensure that the profile name matches the shader type set via the cli.
@@ -1011,14 +1051,17 @@ namespace bgfx
 					break;
 				}
 			}
-			if(profile_id == count) {
+
+			if (profile_id == count)
+			{
 				bx::printf("Unknown profile: %s\n", profile_opt);
 				return false;
 			}
 		}
+
 		const Profile *profile = &s_profiles[profile_id];
 
-		Preprocessor preprocessor(_options.inputFilePath.c_str(), profile->lang != ESSL);
+		Preprocessor preprocessor(_options.inputFilePath.c_str(), profile->lang != ShadingLang::ESSL);
 
 		for (size_t ii = 0; ii < _options.includeDirs.size(); ++ii)
 		{
@@ -1058,11 +1101,11 @@ namespace bgfx
 		char glslDefine[128];
 		bx::snprintf(glslDefine, BX_COUNTOF(glslDefine)
 				, "BGFX_SHADER_LANGUAGE_GLSL=%d"
-				, (profile->lang == ESSL) ? 1 : profile->id
+				, (profile->lang == ShadingLang::ESSL) ? 1 : profile->id
 				);
 
 		char hlslDefine[128];
-		if (profile->lang == HLSL)
+		if (profile->lang == ShadingLang::HLSL)
 		{
 			bx::snprintf(hlslDefine, BX_COUNTOF(hlslDefine)
 					, "BGFX_SHADER_LANGUAGE_HLSL=%d"
@@ -1084,7 +1127,7 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "ios") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_IOS=1");
-			if (profile->lang == Metal)
+			if (profile->lang == ShadingLang::Metal)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_METAL=1");
 			}
@@ -1096,7 +1139,7 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "linux") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_LINUX=1");
-			if (profile->lang == Spirv)
+			if (profile->lang == ShadingLang::SpirV)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
 			}
@@ -1108,27 +1151,32 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "osx") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_OSX=1");
-			if (profile->lang != Metal)
+			if (profile->lang != ShadingLang::Metal)
 			{
 				preprocessor.setDefine(glslDefine);
 			}
 			char temp[256];
-			bx::snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_METAL=%d", (profile->lang == Metal) ? profile->id : 0);
+			bx::snprintf(
+				  temp
+				, sizeof(temp)
+				, "BGFX_SHADER_LANGUAGE_METAL=%d"
+				, (profile->lang == ShadingLang::Metal) ? profile->id : 0
+				);
 			preprocessor.setDefine(temp);
 		}
 		else if (0 == bx::strCmpI(platform, "windows") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_WINDOWS=1");
-			if (profile->lang == HLSL)
+			if (profile->lang == ShadingLang::HLSL)
 			{
 				preprocessor.setDefine(hlslDefine);
 			}
-			else if (profile->lang == GLSL
-			     ||  profile->lang == ESSL)
+			else if (profile->lang == ShadingLang::GLSL
+			     ||  profile->lang == ShadingLang::ESSL)
 			{
 				preprocessor.setDefine(glslDefine);
 			}
-			else if (profile->lang == Spirv)
+			else if (profile->lang == ShadingLang::SpirV)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
 			}
@@ -1141,16 +1189,16 @@ namespace bgfx
 		}
 		else
 		{
-			if (profile->lang == HLSL)
+			if (profile->lang == ShadingLang::HLSL)
 			{
 				preprocessor.setDefine(hlslDefine);
 			}
-			else if (profile->lang == GLSL
-			     ||  profile->lang == ESSL)
+			else if (profile->lang == ShadingLang::GLSL
+			     ||  profile->lang == ShadingLang::ESSL)
 			{
 				preprocessor.setDefine(glslDefine);
 			}
-			else if (profile->lang == Spirv)
+			else if (profile->lang == ShadingLang::SpirV)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
 			}
@@ -1216,8 +1264,8 @@ namespace bgfx
 				||  0 == bx::strCmp(typen, "centroid", 8) )
 				{
 					if ('f' == _options.shaderType
-					||   profile->lang == GLSL
-					||   profile->lang == ESSL)
+					||   profile->lang == ShadingLang::GLSL
+					||   profile->lang == ShadingLang::ESSL)
 					{
 						interpolation = typen;
 						usesInterpolationQualifiers = true;
@@ -1262,7 +1310,8 @@ namespace bgfx
 					var.m_name.assign(name.getPtr(), name.getTerm() );
 					var.m_semantics.assign(semantics.getPtr(), semantics.getTerm() );
 
-					if ((profile->lang == HLSL && profile->id < 400)
+					if (profile->lang == ShadingLang::HLSL
+					&&  profile->id < 400
 					&&  var.m_semantics == "BITANGENT")
 					{
 						var.m_semantics = "BINORMAL";
@@ -1394,7 +1443,7 @@ namespace bgfx
 
 		if (raw)
 		{
-			if (profile->lang == GLSL)
+			if (profile->lang == ShadingLang::GLSL)
 			{
 				bx::write(_writer, uint16_t(0) );
 
@@ -1405,7 +1454,7 @@ namespace bgfx
 
 				compiled = true;
 			}
-			else if (profile->lang == PSSL)
+			else if (profile->lang == ShadingLang::PSSL)
 			{
 				compiled = compilePSSLShader(_options, 0, input, _writer);
 			}
@@ -1423,13 +1472,13 @@ namespace bgfx
 			}
 			else
 			{
-				if (profile->lang == GLSL
-				||  profile->lang == ESSL)
+				if (profile->lang == ShadingLang::GLSL
+				||  profile->lang == ShadingLang::ESSL)
 				{
 				}
 				else
 				{
-					if (profile->lang != PSSL)
+					if (profile->lang != ShadingLang::PSSL)
 					{
 						preprocessor.writef(getPsslPreamble() );
 					}
@@ -1517,16 +1566,20 @@ namespace bgfx
 						bx::write(_writer, uint32_t(0) );
 						bx::write(_writer, outputHash);
 
-						if (profile->lang == GLSL
-						||  profile->lang == ESSL)
+						if (profile->lang == ShadingLang::GLSL
+						||  profile->lang == ShadingLang::ESSL)
 						{
-							if (profile->lang == ESSL)
+							if (profile->lang == ShadingLang::ESSL)
 							{
 								bx::stringPrintf(code, "#version 310 es\n");
 							}
 							else
 							{
-								bx::stringPrintf(code, "#version %d\n", (profile->lang != GLSL) ? 430 : profile->id);
+								bx::stringPrintf(
+									  code
+									, "#version %d\n"
+									, (profile->lang != ShadingLang::GLSL) ? 430 : profile->id
+									);
 							}
 
 #if 1
@@ -1552,15 +1605,15 @@ namespace bgfx
 							code += _comment;
 							code += preprocessor.m_preprocessed;
 
-							if (profile->lang == Metal)
+							if (profile->lang == ShadingLang::Metal)
 							{
 								compiled = compileMetalShader(_options, BX_MAKEFOURCC('M', 'T', 'L', 0), code, _writer);
 							}
-							else if (profile->lang == Spirv)
+							else if (profile->lang == ShadingLang::SpirV)
 							{
 								compiled = compileSPIRVShader(_options, profile->id, code, _writer);
 							}
-							else if (profile->lang == PSSL)
+							else if (profile->lang == ShadingLang::PSSL)
 							{
 								compiled = compilePSSLShader(_options, 0, code, _writer);
 							}
@@ -1598,10 +1651,11 @@ namespace bgfx
 			}
 			else
 			{
-				if (profile->lang == GLSL
-				||  profile->lang == ESSL)
+				if (profile->lang == ShadingLang::GLSL
+				||  profile->lang == ShadingLang::ESSL)
 				{
-					if(profile->lang != ESSL) {
+					if (profile->lang != ShadingLang::ESSL)
+					{
 						// bgfx shadow2D/Proj behave like EXT_shadow_samplers
 						// not as GLSL language 1.2 specs shadow2D/Proj.
 						preprocessor.writef(
@@ -1611,7 +1665,8 @@ namespace bgfx
 					}
 
 					// gl_FragColor and gl_FragData are deprecated for essl > 300
-					if((profile->lang == ESSL) && (profile->id >= 300))
+					if (profile->lang == ShadingLang::ESSL
+					&&  profile->id >= 300)
 					{
 						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
 						bool hasFragData[8] = {};
@@ -1623,11 +1678,13 @@ namespace bgfx
 							hasFragData[ii] = !bx::strFind(input, temp).isEmpty();
 							numFragData += hasFragData[ii];
 						}
-						if(hasFragColor) {
+						if (hasFragColor)
+						{
 							preprocessor.writef("#define gl_FragColor bgfx_FragData0\n");
 							preprocessor.writef("out mediump vec4 bgfx_FragData0;\n");
 						}
-						else if(numFragData) {
+						else if (numFragData)
+						{
 							preprocessor.writef("#define gl_FragData bgfx_FragData\n");
 							preprocessor.writef("out mediump vec4 bgfx_FragData[gl_MaxDrawBuffers];\n");
 						}
@@ -1681,7 +1738,7 @@ namespace bgfx
 				}
 				else
 				{
-					if (profile->lang == PSSL)
+					if (profile->lang == ShadingLang::PSSL)
 					{
 						preprocessor.writef(getPsslPreamble() );
 					}
@@ -1704,7 +1761,7 @@ namespace bgfx
 						"#define mat4 float4x4\n"
 						);
 
-					if (profile->lang == HLSL
+					if (profile->lang == ShadingLang::HLSL
 					&&  profile->id < 400)
 					{
 						preprocessor.writef(
@@ -2058,8 +2115,8 @@ namespace bgfx
 							bx::write(_writer, outputHash);
 						}
 
-						if (profile->lang == GLSL
-						||  profile->lang == ESSL)
+						if (profile->lang == ShadingLang::GLSL
+						||  profile->lang == ShadingLang::ESSL)
 						{
 							const bx::StringView preprocessedInput(preprocessor.m_preprocessed.c_str() );
 							uint32_t glsl_profile = profile->id;
@@ -2074,10 +2131,13 @@ namespace bgfx
 									) )
 								)
 							{
-								if((profile->lang == GLSL) && (glsl_profile < 430)) {
+								if (profile->lang == ShadingLang::GLSL
+								&&  glsl_profile < 430)
+								{
 									glsl_profile = 430;
 								}
-								else if(glsl_profile < 310) {
+								else if (glsl_profile < 310)
+								{
 									glsl_profile = 310;
 								}
 							}
@@ -2102,7 +2162,7 @@ namespace bgfx
 								const bool usesPacking            = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
 								const bool usesViewportLayerArray = !bx::findIdentifierMatch(input, s_ARB_shader_viewport_layer_array).isEmpty();
 
-								if (profile->lang != ESSL)
+								if (profile->lang != ShadingLang::ESSL)
 								{
 									const bool need130 = (120 == glsl_profile && (false
 										|| !bx::findIdentifierMatch(input, s_130).isEmpty()
@@ -2379,8 +2439,8 @@ namespace bgfx
 									);
 							}
 
-							if ( ((profile->lang == GLSL) && (glsl_profile > 400)) 
-							  || ((profile->lang == ESSL) && (glsl_profile > 300)) )
+							if ( (profile->lang == ShadingLang::GLSL && glsl_profile > 400)
+							||   (profile->lang == ShadingLang::ESSL && glsl_profile > 300) )
 							{
 								code += preprocessor.m_preprocessed;
 
@@ -2398,9 +2458,11 @@ namespace bgfx
 								code += _comment;
 								code += preprocessor.m_preprocessed;
 
-								if(profile->lang == ESSL) {
+								if (profile->lang == ShadingLang::ESSL)
+								{
 									glsl_profile |= 0x80000000;
 								}
+
 								compiled = compileGLSLShader(_options, glsl_profile, code, _writer);
 							}
 						}
@@ -2409,15 +2471,15 @@ namespace bgfx
 							code += _comment;
 							code += preprocessor.m_preprocessed;
 
-							if (profile->lang == Metal)
+							if (profile->lang == ShadingLang::Metal)
 							{
 								compiled = compileMetalShader(_options, BX_MAKEFOURCC('M', 'T', 'L', 0), code, _writer);
 							}
-							else if (profile->lang == Spirv)
+							else if (profile->lang == ShadingLang::SpirV)
 							{
 								compiled = compileSPIRVShader(_options, profile->id, code, _writer);
 							}
-							else if (profile->lang == PSSL)
+							else if (profile->lang == ShadingLang::PSSL)
 							{
 								compiled = compilePSSLShader(_options, 0, code, _writer);
 							}
