@@ -168,7 +168,9 @@ namespace bgfx { namespace glsl
 
 					char uniformType[256];
 
-					if (0 == bx::strCmp(typen, "sampler", 7) )
+					if (0 == bx::strCmp(typen, "sampler", 7)
+					||  0 == bx::strCmp(typen, "isampler", 8)
+					||  0 == bx::strCmp(typen, "usampler", 8) )
 					{
 						bx::strCopy(uniformType, BX_COUNTOF(uniformType), "int");
 					}
