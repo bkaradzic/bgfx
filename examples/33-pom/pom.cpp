@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -23,7 +23,7 @@ struct PosTangentBitangentTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Tangent,   4, bgfx::AttribType::Uint8, true, true)
@@ -32,10 +32,10 @@ struct PosTangentBitangentTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosTangentBitangentTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosTangentBitangentTexcoordVertex::ms_layout;
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
@@ -111,8 +111,8 @@ static const uint16_t s_cubeIndices[36] =
 class ExamplePom : public entry::AppI
 {
 public:
-	ExamplePom(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExamplePom(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -149,15 +149,15 @@ public:
 
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ),
-						 PosTangentBitangentTexcoordVertex::ms_decl);
+						 PosTangentBitangentTexcoordVertex::ms_layout);
 
 		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 		// Create texture sampler uniforms.
-		s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Int1);
-		s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Int1);
-		s_texDepth = bgfx::createUniform("s_texDepth",  bgfx::UniformType::Int1);
+		s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
+		s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Sampler);
+		s_texDepth = bgfx::createUniform("s_texDepth",  bgfx::UniformType::Sampler);
 
 
 		u_light_pos = bgfx::createUniform("u_light_pos", bgfx::UniformType::Vec4);
@@ -385,4 +385,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExamplePom, "33-pom", "Parallax mapping.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExamplePom
+	, "33-pom"
+	, "Parallax mapping."
+	, "https://bkaradzic.github.io/bgfx/examples.html#pom"
+	);

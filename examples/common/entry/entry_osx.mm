@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -30,7 +30,6 @@
 
 @interface Window : NSObject<NSWindowDelegate>
 {
-	uint32_t windowCount;
 }
 
 + (Window*)sharedDelegate;
@@ -86,21 +85,22 @@ namespace entry
 			}
 
 			MainThreadEntry* self = (MainThreadEntry*)_userData;
-			return main(self->m_argc, self->m_argv);
+			uint32_t result = main(self->m_argc, self->m_argv);
+			[NSApp terminate:nil];
+			return result;
 		}
 	};
 
 	struct Context
 	{
 		Context()
-			: m_windowsCreated(0)
-			, m_scrollf(0.0f)
+			: m_scrollf(0.0f)
 			, m_mx(0)
 			, m_my(0)
 			, m_scroll(0)
 			, m_style(0)
 			, m_exit(false)
-			, m_fullscreen(false)
+			, m_mouseLock(NULL)
 		{
 			s_translateKey[27]             = Key::Esc;
 			s_translateKey[uint8_t('\r')]  = Key::Return;
@@ -151,6 +151,11 @@ namespace entry
 				s_translateKey[uint8_t(ch)]       =
 				s_translateKey[uint8_t(ch - ' ')] = Key::KeyA + (ch - 'a');
 			}
+
+			for(int ii=0; ii<ENTRY_CONFIG_MAX_WINDOWS; ++ii)
+			{
+				m_window[ii] = NULL;
+			}
 		}
 
 		NSEvent* waitEvent()
@@ -190,13 +195,54 @@ namespace entry
 			*outY = bx::clamp(y, 0, int32_t(adjustFrame.size.height) );
 		}
 
+		void setMousePos(NSWindow* _window, int _x, int _y)
+		{
+			NSRect  originalFrame = [_window frame];
+			NSRect  adjustFrame   = [_window contentRectForFrameRect: originalFrame];
+
+			adjustFrame.origin.y = NSMaxY(NSScreen.screens[0].frame) - NSMaxY(adjustFrame);
+
+			CGWarpMouseCursorPosition(CGPointMake(_x + adjustFrame.origin.x, _y + adjustFrame.origin.y));
+			CGAssociateMouseAndMouseCursorPosition(YES);
+		}
+
+		void setMouseLock(NSWindow* _window, bool _lock)
+		{
+			NSWindow* newMouseLock = _lock ? _window : NULL;
+
+			if ( m_mouseLock != newMouseLock )
+			{
+				if ( _lock )
+				{
+					NSRect  originalFrame = [_window frame];
+					NSRect  adjustFrame   = [_window contentRectForFrameRect: originalFrame];
+
+					m_cmx = (int)adjustFrame.size.width / 2;
+					m_cmy = (int)adjustFrame.size.height / 2;
+
+					setMousePos(_window, m_cmx, m_cmy);
+					[NSCursor hide];
+				}
+				else
+				{
+					[NSCursor unhide];
+				}
+				m_mouseLock = newMouseLock;
+			}
+		}
+
+
 		uint8_t translateModifiers(int flags)
 		{
 			return 0
-				| (0 != (flags & NSEventModifierFlagShift  ) ) ? Modifier::LeftShift | Modifier::RightShift : 0
-				| (0 != (flags & NSEventModifierFlagOption ) ) ? Modifier::LeftAlt   | Modifier::RightAlt   : 0
-				| (0 != (flags & NSEventModifierFlagControl) ) ? Modifier::LeftCtrl  | Modifier::RightCtrl  : 0
-				| (0 != (flags & NSEventModifierFlagCommand) ) ? Modifier::LeftMeta  | Modifier::RightMeta  : 0
+				| ( (0 != (flags & NX_DEVICELSHIFTKEYMASK) ) ? Modifier::LeftShift  : 0)
+				| ( (0 != (flags & NX_DEVICERSHIFTKEYMASK) ) ? Modifier::RightShift : 0)
+				| ( (0 != (flags & NX_DEVICELALTKEYMASK) )   ? Modifier::LeftAlt    : 0)
+				| ( (0 != (flags & NX_DEVICERALTKEYMASK) )   ? Modifier::RightAlt   : 0)
+				| ( (0 != (flags & NX_DEVICELCTLKEYMASK) )   ? Modifier::LeftCtrl   : 0)
+				| ( (0 != (flags & NX_DEVICERCTLKEYMASK) )   ? Modifier::RightCtrl  : 0)
+				| ( (0 != (flags & NX_DEVICELCMDKEYMASK) )   ? Modifier::LeftMeta   : 0)
+				| ( (0 != (flags & NX_DEVICERCMDKEYMASK) )   ? Modifier::RightMeta  : 0)
 				;
 		}
 
@@ -258,8 +304,18 @@ namespace entry
 			{
 				NSEventType eventType = [event type];
 
-				NSWindow *window = [NSApp keyWindow];
-				WindowHandle handle = handleFromWindow(window);
+				NSWindow *window = [event window];
+				WindowHandle handle = {UINT16_MAX};
+				if (nil != window)
+				{
+					handle = findHandle(window);
+				}
+				if (!isValid(handle))
+				{
+					[NSApp sendEvent:event];
+					[NSApp updateWindows];
+					return true;
+				}
 
 				switch (eventType)
 				{
@@ -268,6 +324,15 @@ namespace entry
 				case NSEventTypeRightMouseDragged:
 				case NSEventTypeOtherMouseDragged:
 					getMousePos(window, &m_mx, &m_my);
+
+					if (window == m_mouseLock)
+					{
+						m_mx -= m_cmx;
+						m_my -= m_cmy;
+
+						setMousePos(window, m_cmx, m_cmy);
+					}
+
 					m_eventQueue.postMouseEvent(handle, m_mx, m_my, m_scroll);
 					break;
 
@@ -367,7 +432,7 @@ namespace entry
 
 		void windowDidResize(NSWindow *window)
 		{
-			WindowHandle handle = handleFromWindow(window);
+			WindowHandle handle = findHandle(window);
 			NSRect originalFrame = [window frame];
 			NSRect rect = [window contentRectForFrameRect: originalFrame];
 			uint32_t width  = uint32_t(rect.size.width);
@@ -381,14 +446,14 @@ namespace entry
 
 		void windowDidBecomeKey(NSWindow *window)
 		{
-			WindowHandle handle = handleFromWindow(window);
+			WindowHandle handle = findHandle(window);
 			m_eventQueue.postSuspendEvent(handle, Suspend::WillResume);
 			m_eventQueue.postSuspendEvent(handle, Suspend::DidResume);
 		}
 
 		void windowDidResignKey(NSWindow *window)
 		{
-			WindowHandle handle = handleFromWindow(window);
+			WindowHandle handle = findHandle(window);
 			m_eventQueue.postSuspendEvent(handle, Suspend::WillSuspend);
 			m_eventQueue.postSuspendEvent(handle, Suspend::DidSuspend);
 		}
@@ -461,8 +526,11 @@ namespace entry
 			{
 				bgfx::renderFrame();
 
-				while (dispatchEvent(peekEvent() ) )
+				@autoreleasepool
 				{
+					while (dispatchEvent(peekEvent() ) )
+					{
+					}
 				}
 			}
 
@@ -474,31 +542,28 @@ namespace entry
 			return 0;
 		}
 
-		bool isValid(WindowHandle _handle)
+		WindowHandle findHandle(NSWindow *_window)
 		{
-			return m_windowAlloc.isValid(_handle.idx);
-		}
-
-		WindowHandle handleFromWindow(NSWindow *window)
-		{
-			uint16_t windowIdx = 0;
-			for (uint16_t i = 0; i < m_windowsCreated; i++)
+			bx::MutexScope scope(m_lock);
+			for (uint16_t ii = 0, num = m_windowAlloc.getNumHandles(); ii < num; ++ii)
 			{
-				if (window == m_window[i])
+				uint16_t idx = m_windowAlloc.getHandleAt(ii);
+				if (_window == m_window[idx])
 				{
-					windowIdx = i;
-					break;
+					WindowHandle handle = { idx };
+					return handle;
 				}
 			}
-			WindowHandle handle = { windowIdx };
-			return handle;
+
+			WindowHandle invalid = { UINT16_MAX };
+			return invalid;
 		}
 
 		EventQueue m_eventQueue;
+		bx::Mutex m_lock;
 
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 		NSWindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
-		SInt32 m_windowsCreated;
 		NSRect m_windowFrame;
 
 		float   m_scrollf;
@@ -507,7 +572,10 @@ namespace entry
 		int32_t m_scroll;
 		int32_t m_style;
 		bool    m_exit;
-		bool    m_fullscreen;
+
+		NSWindow* m_mouseLock;
+		int32_t m_cmx;
+		int32_t m_cmy;
 	};
 
 	static Context s_ctx;
@@ -531,104 +599,111 @@ namespace entry
 	{
 		BX_UNUSED(_flags);
 
-		uint16_t handleIdx = IncrementAtomic(&s_ctx.m_windowsCreated);
+		bx::MutexScope scope(s_ctx.m_lock);
+		WindowHandle handle = { s_ctx.m_windowAlloc.alloc() };
 
-		if (handleIdx >= ENTRY_CONFIG_MAX_WINDOWS)
+		if (UINT16_MAX != handle.idx)
 		{
-			return { UINT16_MAX };
-		}
+			void (^createWindowBlock)(void) = ^(void) {
+				NSRect rect = NSMakeRect(_x, _y, _width, _height);
+				NSWindow* window = [
+					[NSWindow alloc]
+					initWithContentRect:rect
+					styleMask:s_ctx.m_style
+					backing:NSBackingStoreBuffered defer:NO
+					];
+				NSString* appName = [NSString stringWithUTF8String:_title];
+				[window setTitle:appName];
+				[window makeKeyAndOrderFront:window];
+				[window setAcceptsMouseMovedEvents:YES];
+				[window setBackgroundColor:[NSColor blackColor]];
+				[[Window sharedDelegate] windowCreated:window];
 
-		WindowHandle handle = { handleIdx };
+				s_ctx.m_window[handle.idx] = window;
 
-		void (^createWindowBlock)(void) = ^(void) {
-			s_ctx.m_windowAlloc.alloc();
-			NSRect rect = NSMakeRect(_x, _y, _width, _height);
-			NSWindow* window = [[NSWindow alloc]
-						initWithContentRect:rect
-						styleMask:s_ctx.m_style
-						backing:NSBackingStoreBuffered defer:NO
-						];
-			NSString* appName = [NSString stringWithUTF8String:_title];
-			[window setTitle:appName];
-			[window makeKeyAndOrderFront:window];
-			[window setAcceptsMouseMovedEvents:YES];
-			[window setBackgroundColor:[NSColor blackColor]];
-			[[Window sharedDelegate] windowCreated:window];
-
-			s_ctx.m_window[handleIdx] = window;
-
-			if(s_ctx.m_windowsCreated > 1)
-			{
 				s_ctx.m_eventQueue.postSizeEvent(handle, _width, _height);
 				s_ctx.m_eventQueue.postWindowEvent(handle, window);
-			}
-		};
+			};
 
-		if ([NSThread isMainThread])
-		{
-			createWindowBlock();
-		}
-		else
-		{
-			dispatch_async(dispatch_get_main_queue(), createWindowBlock);
+			if ([NSThread isMainThread])
+			{
+				createWindowBlock();
+			}
+			else
+			{
+				dispatch_async(dispatch_get_main_queue(), createWindowBlock);
+			}
 		}
 
 		return handle;
 	}
 
-	void destroyWindow(WindowHandle _handle)
+	void destroyWindow(WindowHandle _handle, bool _closeWindow)
 	{
-		if (s_ctx.isValid(_handle) )
+		if (isValid(_handle))
 		{
 			dispatch_async(dispatch_get_main_queue()
-			, ^{
-				[s_ctx.m_window[_handle.idx] performClose: nil];
-			});
+				, ^(void){
+					NSWindow *window = s_ctx.m_window[_handle.idx];
+					if ( NULL != window)
+					{
+						s_ctx.m_eventQueue.postWindowEvent(_handle);
+						s_ctx.m_window[_handle.idx] = NULL;
+						if ( _closeWindow )
+						{
+							[window close];
+						}
+
+						if (0 == _handle.idx)
+						{
+							[NSApp terminate:nil];
+						}
+					}
+				});
+
+			bx::MutexScope scope(s_ctx.m_lock);
+			s_ctx.m_windowAlloc.free(_handle.idx);
 		}
+	}
+
+	void destroyWindow(WindowHandle _handle)
+	{
+		destroyWindow(_handle, true);
 	}
 
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
 	{
-		if (s_ctx.isValid(_handle) )
-		{
-			NSWindow* window = s_ctx.m_window[_handle.idx];
-			NSScreen* screen = [window screen];
-
-			NSRect screenRect = [screen frame];
-			CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
-
-			NSPoint position = { float(_x), screenRect.size.height - menuBarHeight - float(_y) };
-
-			dispatch_async(dispatch_get_main_queue()
+		dispatch_async(dispatch_get_main_queue()
 			, ^{
+				NSWindow* window = s_ctx.m_window[_handle.idx];
+				NSScreen* screen = [window screen];
+
+				NSRect screenRect = [screen frame];
+				CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+
+				NSPoint position = { float(_x), screenRect.size.height - menuBarHeight - float(_y) };
+
 				[window setFrameTopLeftPoint: position];
 			});
-		}
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
-		if (s_ctx.isValid(_handle) )
-		{
-			NSSize size = { float(_width), float(_height) };
-			dispatch_async(dispatch_get_main_queue()
+		NSSize size = { float(_width), float(_height) };
+		dispatch_async(dispatch_get_main_queue()
 			, ^{
 				[s_ctx.m_window[_handle.idx] setContentSize: size];
 			});
-		}
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		if (s_ctx.isValid(_handle) )
-		{
-			NSString* title = [[NSString alloc] initWithCString:_title encoding:1];
-			dispatch_async(dispatch_get_main_queue()
+		NSString* title = [[NSString alloc] initWithCString:_title encoding:1];
+		dispatch_async(dispatch_get_main_queue()
 			, ^{
 				[s_ctx.m_window[_handle.idx] setTitle: title];
+				[title release];
 			});
-			[title release];
-		}
 	}
 
 	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
@@ -638,42 +713,20 @@ namespace entry
 
 	void toggleFullscreen(WindowHandle _handle)
 	{
-		if (s_ctx.isValid(_handle) )
-		{
-			NSWindow* window = s_ctx.m_window[_handle.idx];
-			NSScreen* screen = [window screen];
-			NSRect screenRect = [screen frame];
-
-			if (!s_ctx.m_fullscreen)
-			{
-				s_ctx.m_style &= ~NSWindowStyleMaskTitled;
-				dispatch_async(dispatch_get_main_queue()
-				, ^{
-					[NSMenu setMenuBarVisible: false];
-					[window setStyleMask: s_ctx.m_style];
-					[window setFrame:screenRect display:YES];
-				});
-
-				s_ctx.m_fullscreen = true;
-			}
-			else
-			{
-				s_ctx.m_style |= NSWindowStyleMaskTitled;
-				dispatch_async(dispatch_get_main_queue()
-				, ^{
-					[NSMenu setMenuBarVisible: true];
-					[window setStyleMask: s_ctx.m_style];
-					[window setFrame:s_ctx.m_windowFrame display:YES];
-				});
-
-				s_ctx.m_fullscreen = false;
-			}
-		}
+		dispatch_async(dispatch_get_main_queue()
+			, ^{
+				NSWindow* window = s_ctx.m_window[_handle.idx];
+				[window toggleFullScreen:nil];
+			});
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
-		BX_UNUSED(_handle, _lock);
+		dispatch_async(dispatch_get_main_queue()
+			, ^{
+				NSWindow* window = s_ctx.m_window[_handle.idx];
+				s_ctx.setMouseLock(window, _lock);
+			});
 	}
 
 } // namespace entry
@@ -729,7 +782,6 @@ namespace entry
 		return nil;
 	}
 
-	self->windowCount = 0;
 	return self;
 }
 
@@ -738,31 +790,22 @@ namespace entry
 	assert(window);
 
 	[window setDelegate:self];
-
-	assert(self->windowCount < ~0u);
-	self->windowCount += 1;
 }
 
 - (void)windowWillClose:(NSNotification*)notification
 {
 	BX_UNUSED(notification);
+	NSWindow *window = [notification object];
+
+	[window setDelegate:nil];
+
+	destroyWindow(entry::s_ctx.findHandle(window), false);
 }
 
 - (BOOL)windowShouldClose:(NSWindow*)window
 {
 	assert(window);
-
-	[window setDelegate:nil];
-
-	assert(self->windowCount);
-	self->windowCount -= 1;
-
-	if (self->windowCount == 0)
-	{
-		[NSApp terminate:self];
-		return false;
-	}
-
+	BX_UNUSED(window);
 	return true;
 }
 

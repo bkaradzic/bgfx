@@ -26,7 +26,7 @@ namespace stl = tinystl;
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _layout, bx::Error* _err = NULL);
 }
 
 namespace
@@ -52,7 +52,7 @@ struct PosNormalTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
@@ -60,10 +60,10 @@ struct PosNormalTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosNormalTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosNormalTexcoordVertex::ms_layout;
 
 static const float s_texcoord = 50.0f;
 static PosNormalTexcoordVertex s_hplaneVertices[] =
@@ -99,8 +99,9 @@ static bgfx::FrameBufferHandle s_stencilFb;
 
 void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 {
-	for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
+	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
+		const uint32_t ntz = bx::uint32_cnttz(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 
@@ -110,8 +111,9 @@ void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float 
 
 void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj)
 {
-	for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
+	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
+        const uint32_t ntz = bx::uint32_cnttz(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 
@@ -121,8 +123,9 @@ void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _pr
 
 void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 {
-	for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
+	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
+        const uint32_t ntz = bx::uint32_cnttz(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 
@@ -130,11 +133,12 @@ void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _wid
 	}
 }
 
-void mtxBillboard(float* __restrict _result
-				  , const float* __restrict _view
-				  , const float* __restrict _pos
-				  , const float* __restrict _scale
-				  )
+void mtxBillboard(
+	  float* _result
+	, const float* _view
+	, const float* _pos
+	, const float* _scale
+	)
 {
 	_result[ 0] = _view[0]  * _scale[0];
 	_result[ 1] = _view[4]  * _scale[0];
@@ -154,10 +158,11 @@ void mtxBillboard(float* __restrict _result
 	_result[15] = 1.0f;
 }
 
-void planeNormal(float* __restrict _result
-	, const float* __restrict _v0
-	, const float* __restrict _v1
-	, const float* __restrict _v2
+void planeNormal(
+	  float* _result
+	, const float* _v0
+	, const float* _v1
+	, const float* _v2
 	)
 {
 	const bx::Vec3 v0    = bx::load<bx::Vec3>(_v0);
@@ -553,37 +558,6 @@ void touch(bgfx::ViewId _id)
 	::submit(_id, handle);
 }
 
-struct Aabb
-{
-	float m_min[3];
-	float m_max[3];
-};
-
-struct Obb
-{
-	float m_mtx[16];
-};
-
-struct Sphere
-{
-	float m_center[3];
-	float m_radius;
-};
-
-struct Primitive
-{
-	uint32_t m_startIndex;
-	uint32_t m_numIndices;
-	uint32_t m_startVertex;
-	uint32_t m_numVertices;
-
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-};
-
-typedef std::vector<Primitive> PrimitiveArray;
-
 struct Face
 {
 	uint16_t m_i[3];
@@ -725,7 +699,7 @@ inline float sqLength(const float _a[3], const float _b[3])
 	return xx*xx + yy*yy + zz*zz;
 }
 
-uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
+uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexLayout& _layout, const void* _data, uint16_t _num, float _epsilon)
 {
 	const uint32_t hashSize = bx::uint32_nextpow2(_num);
 	const uint32_t hashMask = hashSize-1;
@@ -742,14 +716,14 @@ uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexDecl& _decl, cons
 	for (uint16_t ii = 0; ii < _num; ++ii)
 	{
 		float pos[4];
-		vertexUnpack(pos, bgfx::Attrib::Position, _decl, _data, ii);
+		vertexUnpack(pos, bgfx::Attrib::Position, _layout, _data, ii);
 		uint32_t hashValue = bx::hash<bx::HashMurmur2A>(pos, 3*sizeof(float) ) & hashMask;
 
 		uint16_t offset = hashTable[hashValue];
 		for (; UINT16_MAX != offset; offset = next[offset])
 		{
 			float test[4];
-			vertexUnpack(test, bgfx::Attrib::Position, _decl, _data, _output[offset].m_v);
+			vertexUnpack(test, bgfx::Attrib::Position, _layout, _data, _output[offset].m_v);
 
 			if (sqLength(test, pos) < epsilonSq)
 			{
@@ -810,9 +784,9 @@ struct Group
 		Plane m_plane[2];
 	};
 
-	void fillStructures(const bgfx::VertexDecl& _decl)
+	void fillStructures(const bgfx::VertexLayout& _layout)
 	{
-		uint16_t stride = _decl.getStride();
+		uint16_t stride = _layout.getStride();
 		m_faces.clear();
 		m_halfEdges.destroy();
 
@@ -830,7 +804,7 @@ struct Group
 
 		//Get unique indices.
 		WeldedVertex* uniqueVertices = (WeldedVertex*)malloc(m_numVertices*sizeof(WeldedVertex) );
-		::weldVertices(uniqueVertices, _decl, m_vertices, m_numVertices, 0.0001f);
+		::weldVertices(uniqueVertices, _layout, m_vertices, m_numVertices, 0.0001f);
 		uint16_t* uniqueIndices = (uint16_t*)malloc(m_numIndices*sizeof(uint16_t) );
 		for (uint32_t ii = 0; ii < m_numIndices; ++ii)
 		{
@@ -961,7 +935,7 @@ typedef std::vector<Group> GroupArray;
 
 struct Mesh
 {
-	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		Group group;
 		const bgfx::Memory* mem;
@@ -969,13 +943,13 @@ struct Mesh
 
 		//vertices
 		group.m_numVertices = _numVertices;
-		size = _numVertices*_decl.getStride();
+		size = _numVertices*_layout.getStride();
 
 		group.m_vertices = (uint8_t*)malloc(size);
 		bx::memCopy(group.m_vertices, _vertices, size);
 
 		mem = bgfx::makeRef(group.m_vertices, size);
-		group.m_vbh = bgfx::createVertexBuffer(mem, _decl);
+		group.m_vbh = bgfx::createVertexBuffer(mem, _layout);
 
 		//indices
 		group.m_numIndices = _numIndices;
@@ -992,100 +966,41 @@ struct Mesh
 
 	void load(const char* _filePath)
 	{
-#define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
-#define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
+		::Mesh* mesh = ::meshLoad(_filePath, true);
+		m_layout = mesh->m_layout;
+		uint16_t stride = m_layout.getStride();
 
-		bx::FileReaderI* reader = entry::getFileReader();
-		bx::open(reader, _filePath);
-
-		Group group;
-
-		uint32_t chunk;
-		while (4 == bx::read(reader, chunk) )
+		for (::GroupArray::iterator it = mesh->m_groups.begin(), itEnd = mesh->m_groups.end(); it != itEnd; ++it)
 		{
-			switch (chunk)
-			{
-			case BGFX_CHUNK_MAGIC_VB:
-				{
-					bx::read(reader, group.m_sphere);
-					bx::read(reader, group.m_aabb);
-					bx::read(reader, group.m_obb);
+			Group group;
+			group.m_numVertices = it->m_numVertices;
+			const uint32_t vertexSize = group.m_numVertices*stride;
+			group.m_vertices = (uint8_t*)malloc(vertexSize);
+			bx::memCopy(group.m_vertices, it->m_vertices, vertexSize);
 
-					bgfx::read(reader, m_decl);
-					uint16_t stride = m_decl.getStride();
+			const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, vertexSize);
+			group.m_vbh = bgfx::createVertexBuffer(mem, m_layout);
 
-					bx::read(reader, group.m_numVertices);
-					const uint32_t size = group.m_numVertices*stride;
-					group.m_vertices = (uint8_t*)malloc(size);
-					bx::read(reader, group.m_vertices, size);
+			group.m_numIndices = it->m_numIndices;
+			const uint32_t indexSize = 2 * group.m_numIndices;
+			group.m_indices = (uint16_t*)malloc(indexSize);
+			bx::memCopy(group.m_indices, it->m_indices, indexSize);
 
-					const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, size);
-					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
-				}
-				break;
+			mem = bgfx::makeRef(group.m_indices, indexSize);
+			group.m_ibh = bgfx::createIndexBuffer(mem);
 
-			case BGFX_CHUNK_MAGIC_IB:
-				{
-					bx::read(reader, group.m_numIndices);
-					const uint32_t size = group.m_numIndices*2;
-					group.m_indices = (uint16_t*)malloc(size);
-					bx::read(reader, group.m_indices, size);
+			group.m_sphere = it->m_sphere;
+			group.m_aabb = it->m_aabb;
+			group.m_obb = it->m_obb;
+			group.m_prims = it->m_prims;
 
-					const bgfx::Memory* mem = bgfx::makeRef(group.m_indices, size);
-					group.m_ibh = bgfx::createIndexBuffer(mem);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_PRI:
-				{
-					uint16_t len;
-					bx::read(reader, len);
-
-					std::string material;
-					material.resize(len);
-					bx::read(reader, const_cast<char*>(material.c_str() ), len);
-
-					uint16_t num;
-					bx::read(reader, num);
-
-					for (uint32_t ii = 0; ii < num; ++ii)
-					{
-						bx::read(reader, len);
-
-						std::string name;
-						name.resize(len);
-						bx::read(reader, const_cast<char*>(name.c_str() ), len);
-
-						Primitive prim;
-						bx::read(reader, prim.m_startIndex);
-						bx::read(reader, prim.m_numIndices);
-						bx::read(reader, prim.m_startVertex);
-						bx::read(reader, prim.m_numVertices);
-						bx::read(reader, prim.m_sphere);
-						bx::read(reader, prim.m_aabb);
-						bx::read(reader, prim.m_obb);
-
-						group.m_prims.push_back(prim);
-					}
-
-					m_groups.push_back(group);
-					group.reset();
-				}
-				break;
-
-			default:
-				DBG("%08x at %d", chunk, bx::seek(reader) );
-				abort();
-				break;
-			}
+			m_groups.push_back(group);
 		}
-
-		bx::close(reader);
+		::meshUnload(mesh);
 
 		for (GroupArray::iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
-			it->fillStructures(m_decl);
+			it->fillStructures(m_layout);
 		}
 	}
 
@@ -1098,7 +1013,7 @@ struct Mesh
 		m_groups.clear();
 	}
 
-	bgfx::VertexDecl m_decl;
+	bgfx::VertexLayout m_layout;
 	GroupArray m_groups;
 };
 
@@ -1110,9 +1025,9 @@ struct Model
 		m_texture.idx = bgfx::kInvalidHandle;
 	}
 
-	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexLayout _layout, const uint16_t* _indices, uint32_t _numIndices)
 	{
-		m_mesh.load(_vertices, _numVertices, _decl, _indices, _numIndices);
+		m_mesh.load(_vertices, _numVertices, _layout, _indices, _numIndices);
 	}
 
 	void load(const char* _meshFilePath)
@@ -1152,7 +1067,7 @@ struct Model
 			::setRenderState(_renderState);
 
 			// Submit
-			BX_CHECK(bgfx::kInvalidHandle != m_program, "Error, program is not set.");
+			BX_ASSERT(bgfx::kInvalidHandle != m_program, "Error, program is not set.");
 			::submit(_viewId, m_program);
 		}
 	}
@@ -1189,7 +1104,7 @@ struct Instance
 			, m_pos[2]
 			);
 
-		BX_CHECK(NULL != m_model, "Instance model cannot be NULL!");
+		BX_ASSERT(NULL != m_model, "Instance model cannot be NULL!");
 		m_model->submit(_viewId, mtx, _renderState);
 	}
 
@@ -1225,7 +1140,7 @@ struct ShadowVolumeAllocator
 	{
 		void* ret = (void*)m_ptr;
 		m_ptr += _size;
-		BX_CHECK(m_ptr - m_mem < (m_firstPage ? SV_PAGE_SIZE : 2 * SV_PAGE_SIZE), "Buffer overflow!");
+		BX_ASSERT(m_ptr - m_mem < (m_firstPage ? SV_PAGE_SIZE : 2 * SV_PAGE_SIZE), "Buffer overflow!");
 		return ret;
 	}
 
@@ -1275,12 +1190,13 @@ struct ShadowVolume
 	bool m_cap;
 };
 
-void shadowVolumeLightTransform(float* __restrict _outLightPos
-							  , const float* __restrict _scale
-							  , const float* __restrict _rotate
-							  , const float* __restrict _translate
-							  , const float* __restrict _lightPos // world pos
-							  )
+void shadowVolumeLightTransform(
+	  float* _outLightPos
+	, const float* _scale
+	, const float* _rotate
+	, const float* _translate
+	, const float* _lightPos // world pos
+	)
 {
 	/**
 	 * Instead of transforming all the vertices, transform light instead:
@@ -1315,19 +1231,19 @@ void shadowVolumeLightTransform(float* __restrict _outLightPos
 	float mtx[16];
 	bx::mtxMul(mtx, tmp0, invScale);
 
-	float origin[3] = { 0.0f, 0.0f, 0.0f };
-	bx::vec3MulMtx(_outLightPos, origin, mtx);
+	bx::store(_outLightPos, bx::mul({ 0.0f, 0.0f, 0.0f }, mtx) );
 }
 
-void shadowVolumeCreate(ShadowVolume& _shadowVolume
-					  , Group& _group
-					  , uint16_t _stride
-					  , const float* _mtx
-					  , const float* _light // in model space
-					  , ShadowVolumeImpl::Enum _impl = ShadowVolumeImpl::DepthPass
-					  , ShadowVolumeAlgorithm::Enum _algo = ShadowVolumeAlgorithm::FaceBased
-					  , bool _textureAsStencil = false
-					  )
+void shadowVolumeCreate(
+	  ShadowVolume& _shadowVolume
+	, Group& _group
+	, uint16_t _stride
+	, const float* _mtx
+	, const float* _light // in model space
+	, ShadowVolumeImpl::Enum _impl = ShadowVolumeImpl::DepthPass
+	, ShadowVolumeAlgorithm::Enum _algo = ShadowVolumeAlgorithm::FaceBased
+	, bool _textureAsStencil = false
+	)
 {
 	const uint8_t*    vertices   = _group.m_vertices;
 	const FaceArray&  faces      = _group.m_faces;
@@ -1629,8 +1545,8 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		}
 	}
 
-	bgfx::VertexDecl decl;
-	decl.begin()
+	bgfx::VertexLayout layout;
+	layout.begin()
 		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 		.end();
@@ -1649,7 +1565,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 	uint32_t isize = sideI * sizeof(uint16_t);
 
 	mem = bgfx::makeRef(verticesSide, vsize);
-	_shadowVolume.m_vbSides = bgfx::createVertexBuffer(mem, decl);
+	_shadowVolume.m_vbSides = bgfx::createVertexBuffer(mem, layout);
 
 	mem = bgfx::makeRef(indicesSide, isize);
 	_shadowVolume.m_ibSides = bgfx::createIndexBuffer(mem);
@@ -1679,13 +1595,14 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 	}
 }
 
-void createNearClipVolume(float* __restrict _outPlanes24f
-						, float* __restrict _lightPos
-						, float* __restrict _view
-						, float _fovy
-						, float _aspect
-						, float _near
-						)
+void createNearClipVolume(
+	  float* _outPlanes24f
+	, float* _lightPos
+	, float* _view
+	, float _fovy
+	, float _aspect
+	, float _near
+	)
 {
 	float (*volumePlanes)[4] = (float(*)[4])_outPlanes24f;
 
@@ -1708,24 +1625,18 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	// -1.0f - behind near plane
 	const float lightSide = float( (d > delta) - (d < -delta) );
 
-	float t = bx::tan(bx::toRad(_fovy)*0.5f) * _near;
-	float b = -t;
-	float r = t * _aspect;
-	float l = -r;
+	const float t = bx::tan(bx::toRad(_fovy)*0.5f) * _near;
+	const float b = -t;
+	const float r = t * _aspect;
+	const float l = -r;
 
-	float cornersV[4][3] =
+	const bx::Vec3 corners[4] =
 	{
-		{ r, t, _near },
-		{ l, t, _near },
-		{ l, b, _near },
-		{ r, b, _near },
+		bx::mul({ r, t, _near }, mtxViewInv),
+		bx::mul({ l, t, _near }, mtxViewInv),
+		bx::mul({ l, b, _near }, mtxViewInv),
+		bx::mul({ r, b, _near }, mtxViewInv),
 	};
-
-	float corners[4][3];
-	bx::vec3MulMtx(corners[0], cornersV[0], mtxViewInv);
-	bx::vec3MulMtx(corners[1], cornersV[1], mtxViewInv);
-	bx::vec3MulMtx(corners[2], cornersV[2], mtxViewInv);
-	bx::vec3MulMtx(corners[3], cornersV[3], mtxViewInv);
 
 	float planeNormals[4][3];
 	for (uint8_t ii = 0; ii < 4; ++ii)
@@ -1733,8 +1644,8 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 		float* outNormal = planeNormals[ii];
 		float* outPlane  = volumePlanes[ii];
 
-		const bx::Vec3 c0       = bx::load<bx::Vec3>(corners[ii]);
-		const bx::Vec3 planeVec = bx::sub(c0, bx::load<bx::Vec3>(corners[(ii-1)&3]) );
+		const bx::Vec3 c0       = corners[ii];
+		const bx::Vec3 planeVec = bx::sub(c0, corners[(ii-1)&3]);
 		const bx::Vec3 light    = bx::sub(bx::load<bx::Vec3>(_lightPos), bx::mul(c0, _lightPos[3]) );
 		const bx::Vec3 normal   = bx::mul(bx::cross(planeVec, light), lightSide);
 
@@ -1776,17 +1687,17 @@ bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const 
 		const Group& group = *it;
 
 		Sphere sphere = group.m_sphere;
-		sphere.m_center[0] = sphere.m_center[0] * scale + _translate[0];
-		sphere.m_center[1] = sphere.m_center[1] * scale + _translate[1];
-		sphere.m_center[2] = sphere.m_center[2] * scale + _translate[2];
-		sphere.m_radius *= (scale+0.4f);
+		sphere.center.x = sphere.center.x * scale + _translate[0];
+		sphere.center.y = sphere.center.y * scale + _translate[1];
+		sphere.center.z = sphere.center.z * scale + _translate[2];
+		sphere.radius *= (scale+0.4f);
 
 		bool isInside = true;
 		for (uint8_t ii = 0; ii < _planeNum; ++ii)
 		{
 			const float* plane = volumePlanes[ii];
 
-			float positiveSide = bx::dot(bx::load<bx::Vec3>(plane), bx::load<bx::Vec3>(sphere.m_center) ) + plane[3] + sphere.m_radius;
+			float positiveSide = bx::dot(bx::load<bx::Vec3>(plane), sphere.center ) + plane[3] + sphere.radius;
 
 			if (positiveSide < 0.0f)
 			{
@@ -1852,8 +1763,8 @@ enum Scene
 class ExampleShadowVolumes : public entry::AppI
 {
 public:
-	ExampleShadowVolumes(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleShadowVolumes(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -1901,8 +1812,8 @@ public:
 
 		s_stencilFb  = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
-		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
-		s_texStencil = bgfx::createUniform("s_texStencil", bgfx::UniformType::Int1);
+		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Sampler);
+		s_texStencil = bgfx::createUniform("s_texStencil", bgfx::UniformType::Sampler);
 
 		m_programTextureLighting = loadProgram("vs_shadowvolume_texture_lighting", "fs_shadowvolume_texture_lighting");
 		m_programColorLighting   = loadProgram("vs_shadowvolume_color_lighting",   "fs_shadowvolume_color_lighting"  );
@@ -1951,7 +1862,7 @@ public:
 
 		m_hplaneFieldModel.load(s_hplaneVertices
 			, BX_COUNTOF(s_hplaneVertices)
-			, PosNormalTexcoordVertex::ms_decl
+			, PosNormalTexcoordVertex::ms_layout
 			, s_planeIndices
 			, BX_COUNTOF(s_planeIndices)
 			);
@@ -1960,7 +1871,7 @@ public:
 
 		m_hplaneFigureModel.load(s_hplaneVertices
 			, BX_COUNTOF(s_hplaneVertices)
-			, PosNormalTexcoordVertex::ms_decl
+			, PosNormalTexcoordVertex::ms_layout
 			, s_planeIndices
 			, BX_COUNTOF(s_planeIndices)
 			);
@@ -1969,7 +1880,7 @@ public:
 
 		m_vplaneModel.load(s_vplaneVertices
 			, BX_COUNTOF(s_vplaneVertices)
-			, PosNormalTexcoordVertex::ms_decl
+			, PosNormalTexcoordVertex::ms_layout
 			, s_planeIndices
 			, BX_COUNTOF(s_planeIndices)
 			);
@@ -2116,7 +2027,7 @@ public:
 			s_uniforms.m_time = time;
 
 			// Update camera.
-			cameraUpdate(deltaTime, m_mouseState);
+			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 			// Set view and projection matrix for view 0.
 			{
@@ -2692,7 +2603,7 @@ public:
 						);
 
 					GroupArray& groups = model->m_mesh.m_groups;
-					const uint16_t stride = model->m_mesh.m_decl.getStride();
+					const uint16_t stride = model->m_mesh.m_layout.getStride();
 					for (GroupArray::iterator it = groups.begin(), itEnd = groups.end(); it != itEnd; ++it)
 					{
 						Group& group = *it;
@@ -2926,4 +2837,8 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleShadowVolumes, "14-shadowvolumes", "Shadow volumes.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleShadowVolumes
+	, "14-shadowvolumes"
+	, "Shadow volumes."
+	, "https://bkaradzic.github.io/bgfx/examples.html#shadowvolumes");

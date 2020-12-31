@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -32,7 +32,7 @@ struct PosNormalColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,   3, bgfx::AttribType::Float)
@@ -40,10 +40,10 @@ struct PosNormalColorVertex
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosNormalColorVertex::ms_decl;
+bgfx::VertexLayout PosNormalColorVertex::ms_layout;
 
 struct Grid
 {
@@ -59,8 +59,9 @@ struct Grid
 	float m_normal[3];
 };
 
-// Triangulation tables taken from:
-// http://paulbourke.net/geometry/polygonise/
+// Reference(s):
+// - Polygonising a scalar field
+//   https://web.archive.org/web/20181127124338/http://paulbourke.net/geometry/polygonise/
 
 static const uint16_t s_edges[256] =
 {
@@ -370,10 +371,10 @@ static const float s_cube[8][3] =
 	{ 0.0f, 0.0f, 0.0f }, // 7
 };
 
-float vertLerp(float* __restrict _result, float _iso, uint32_t _idx0, float _v0, uint32_t _idx1, float _v1)
+float vertLerp(float* _result, float _iso, uint32_t _idx0, float _v0, uint32_t _idx1, float _v1)
 {
-	const float* __restrict edge0 = s_cube[_idx0];
-	const float* __restrict edge1 = s_cube[_idx1];
+	const float* edge0 = s_cube[_idx0];
+	const float* edge1 = s_cube[_idx1];
 
 	if (bx::abs(_iso-_v1) < 0.00001f)
 	{
@@ -400,7 +401,15 @@ float vertLerp(float* __restrict _result, float _iso, uint32_t _idx0, float _v0,
 	return lerp;
 }
 
-uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict _rgb, const float* __restrict _xyz, const Grid* _val[8], float _iso)
+uint32_t triangulate(
+	  uint8_t* _result
+	, uint32_t _stride
+	, const float* _rgb
+	, const float* _xyz
+	, const Grid* _val[8]
+	, float _iso
+	, float _scale
+	)
 {
 	uint8_t cubeindex = 0;
 	cubeindex |= (_val[0]->m_val < _iso) ? 0x01 : 0;
@@ -437,9 +446,9 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 		}
 	}
 
-	float dr = _rgb[3] - _rgb[0];
-	float dg = _rgb[4] - _rgb[1];
-	float db = _rgb[5] - _rgb[2];
+	const float dr = _rgb[3] - _rgb[0];
+	const float dg = _rgb[4] - _rgb[1];
+	const float db = _rgb[5] - _rgb[2];
 
 	uint32_t num = 0;
 	const int8_t* indices = s_indices[cubeindex];
@@ -448,13 +457,13 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 		const float* vertex = verts[uint8_t(indices[ii])];
 
 		float* xyz = (float*)_result;
-		xyz[0] = _xyz[0] + vertex[0];
-		xyz[1] = _xyz[1] + vertex[1];
-		xyz[2] = _xyz[2] + vertex[2];
+		xyz[0] = _xyz[0] + vertex[0]*_scale;
+		xyz[1] = _xyz[1] + vertex[1]*_scale;
+		xyz[2] = _xyz[2] + vertex[2]*_scale;
 
-		xyz[3] = vertex[3];
-		xyz[4] = vertex[4];
-		xyz[5] = vertex[5];
+		xyz[3] = vertex[3]*_scale;
+		xyz[4] = vertex[4]*_scale;
+		xyz[5] = vertex[5]*_scale;
 
 		uint32_t rr = uint8_t( (_rgb[0] + vertex[0]*dr)*255.0f);
 		uint32_t gg = uint8_t( (_rgb[1] + vertex[1]*dg)*255.0f);
@@ -474,13 +483,14 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 	return num;
 }
 
-#define DIMS 32
+constexpr uint32_t kMaxDims  = 32;
+constexpr float    kMaxDimsF = float(kMaxDims);
 
 class ExampleMetaballs : public entry::AppI
 {
 public:
-	ExampleMetaballs(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleMetaballs(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -523,7 +533,7 @@ public:
 		// Create program from shaders.
 		m_program = bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 
-		m_grid = new Grid[DIMS*DIMS*DIMS];
+		m_grid = new Grid[kMaxDims*kMaxDims*kMaxDims];
 		m_timeOffset = bx::getHPCounter();
 
 		imguiCreate();
@@ -546,9 +556,8 @@ public:
 
 	bool update() override
 	{
-		const uint32_t ypitch = DIMS;
-		const uint32_t zpitch = DIMS*DIMS;
-		const float invdim = 1.0f/float(DIMS-1);
+		const uint32_t ypitch = kMaxDims;
+		const uint32_t zpitch = kMaxDims*kMaxDims;
 
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
@@ -563,6 +572,29 @@ public:
 				);
 
 			showExampleDialog(this);
+
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 5.0f, m_height / 7.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+				);
+			static float iso = 0.75f;
+			ImGui::SliderFloat("ISO", &iso, 0.1f, 4.0f);
+
+			static uint32_t numDims = kMaxDims;
+			ImGui::SliderInt("Size", (int*)&numDims, 8, kMaxDims);
+			ImGui::End();
+
+			const float numDimsF = float(numDims);
+			const float scale    = kMaxDimsF/numDimsF;
+			const float invDim   = 1.0f/(numDimsF-1.0f);
 
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
@@ -604,27 +636,27 @@ public:
 			// Allocate 32K vertices in transient vertex buffer.
 			uint32_t maxVertices = (32<<10);
 			bgfx::TransientVertexBuffer tvb;
-			bgfx::allocTransientVertexBuffer(&tvb, maxVertices, PosNormalColorVertex::ms_decl);
+			bgfx::allocTransientVertexBuffer(&tvb, maxVertices, PosNormalColorVertex::ms_layout);
 
 			const uint32_t numSpheres = 16;
 			float sphere[numSpheres][4];
 			for (uint32_t ii = 0; ii < numSpheres; ++ii)
 			{
-				sphere[ii][0] = bx::sin(time*(ii*0.21f)+ii*0.37f) * (DIMS * 0.5f - 8.0f);
-				sphere[ii][1] = bx::sin(time*(ii*0.37f)+ii*0.67f) * (DIMS * 0.5f - 8.0f);
-				sphere[ii][2] = bx::cos(time*(ii*0.11f)+ii*0.13f) * (DIMS * 0.5f - 8.0f);
-				sphere[ii][3] = 1.0f/(2.0f + (bx::sin(time*(ii*0.13f) )*0.5f+0.5f)*2.0f);
+				sphere[ii][0] = bx::sin(time*(ii*0.21f)+ii*0.37f) * (kMaxDimsF * 0.5f - 8.0f);
+				sphere[ii][1] = bx::sin(time*(ii*0.37f)+ii*0.67f) * (kMaxDimsF * 0.5f - 8.0f);
+				sphere[ii][2] = bx::cos(time*(ii*0.11f)+ii*0.13f) * (kMaxDimsF * 0.5f - 8.0f);
+				sphere[ii][3] = 1.0f/(3.0f + (bx::sin(time*(ii*0.13f) )*0.5f+0.5f)*0.9f );
 			}
 
 			profUpdate = bx::getHPCounter();
 
-			for (uint32_t zz = 0; zz < DIMS; ++zz)
+			for (uint32_t zz = 0; zz < numDims; ++zz)
 			{
-				for (uint32_t yy = 0; yy < DIMS; ++yy)
+				for (uint32_t yy = 0; yy < numDims; ++yy)
 				{
-					uint32_t offset = (zz*DIMS+yy)*DIMS;
+					uint32_t offset = (zz*kMaxDims+yy)*kMaxDims;
 
-					for (uint32_t xx = 0; xx < DIMS; ++xx)
+					for (uint32_t xx = 0; xx < numDims; ++xx)
 					{
 						uint32_t xoffset = offset + xx;
 
@@ -633,12 +665,12 @@ public:
 						for (uint32_t ii = 0; ii < numSpheres; ++ii)
 						{
 							const float* pos = sphere[ii];
-							float dx = pos[0] - (-DIMS*0.5f + float(xx) );
-							float dy = pos[1] - (-DIMS*0.5f + float(yy) );
-							float dz = pos[2] - (-DIMS*0.5f + float(zz) );
-							float invr = pos[3];
-							float dot = dx*dx + dy*dy + dz*dz;
-							dot *= invr*invr;
+							float dx   = pos[0] - (-kMaxDimsF*0.5f + float(xx)*scale);
+							float dy   = pos[1] - (-kMaxDimsF*0.5f + float(yy)*scale);
+							float dz   = pos[2] - (-kMaxDimsF*0.5f + float(zz)*scale);
+							float invR = pos[3];
+							float dot  = dx*dx + dy*dy + dz*dz;
+							dot *= bx::square(invR);
 
 							dist *= dot;
 							dist += prod;
@@ -654,13 +686,13 @@ public:
 
 			profNormal = bx::getHPCounter();
 
-			for (uint32_t zz = 1; zz < DIMS-1; ++zz)
+			for (uint32_t zz = 1; zz < numDims-1; ++zz)
 			{
-				for (uint32_t yy = 1; yy < DIMS-1; ++yy)
+				for (uint32_t yy = 1; yy < numDims-1; ++yy)
 				{
-					uint32_t offset = (zz*DIMS+yy)*DIMS;
+					uint32_t offset = (zz*kMaxDims+yy)*kMaxDims;
 
-					for (uint32_t xx = 1; xx < DIMS-1; ++xx)
+					for (uint32_t xx = 1; xx < numDims-1; ++xx)
 					{
 						uint32_t xoffset = offset + xx;
 
@@ -683,31 +715,31 @@ public:
 
 			PosNormalColorVertex* vertex = (PosNormalColorVertex*)tvb.data;
 
-			for (uint32_t zz = 0; zz < DIMS-1 && numVertices+12 < maxVertices; ++zz)
+			for (uint32_t zz = 0; zz < numDims-1 && numVertices+12 < maxVertices; ++zz)
 			{
 				float rgb[6];
-				rgb[2] = zz*invdim;
-				rgb[5] = (zz+1)*invdim;
+				rgb[2] = zz*invDim;
+				rgb[5] = (zz+1)*invDim;
 
-				for (uint32_t yy = 0; yy < DIMS-1 && numVertices+12 < maxVertices; ++yy)
+				for (uint32_t yy = 0; yy < numDims-1 && numVertices+12 < maxVertices; ++yy)
 				{
-					uint32_t offset = (zz*DIMS+yy)*DIMS;
+					uint32_t offset = (zz*kMaxDims+yy)*kMaxDims;
 
-					rgb[1] = yy*invdim;
-					rgb[4] = (yy+1)*invdim;
+					rgb[1] = yy*invDim;
+					rgb[4] = (yy+1)*invDim;
 
-					for (uint32_t xx = 0; xx < DIMS-1 && numVertices+12 < maxVertices; ++xx)
+					for (uint32_t xx = 0; xx < numDims-1 && numVertices+12 < maxVertices; ++xx)
 					{
 						uint32_t xoffset = offset + xx;
 
-						rgb[0] = xx*invdim;
-						rgb[3] = (xx+1)*invdim;
+						rgb[0] = xx*invDim;
+						rgb[3] = (xx+1)*invDim;
 
 						float pos[3] =
 						{
-							-DIMS*0.5f + float(xx),
-							-DIMS*0.5f + float(yy),
-							-DIMS*0.5f + float(zz)
+							-kMaxDimsF*0.5f + float(xx)*scale,
+							-kMaxDimsF*0.5f + float(yy)*scale,
+							-kMaxDimsF*0.5f + float(zz)*scale,
 						};
 
 						const Grid* grid = m_grid;
@@ -722,7 +754,15 @@ public:
 							&grid[xoffset                ],
 						};
 
-						uint32_t num = triangulate( (uint8_t*)vertex, PosNormalColorVertex::ms_decl.getStride(), rgb, pos, val, 0.5f);
+						uint32_t num = triangulate(
+							  (uint8_t*)vertex
+							, PosNormalColorVertex::ms_layout.getStride()
+							, rgb
+							, pos
+							, val
+							, iso
+							, scale
+							);
 						vertex += num;
 						numVertices += num;
 					}
@@ -748,7 +788,7 @@ public:
 
 			// Display stats.
 			ImGui::SetNextWindowPos(
-				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, m_height / 7.0f + 30.0f)
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::SetNextWindowSize(
@@ -794,4 +834,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleMetaballs, "02-metaball", "Rendering with transient buffers and embedding shaders.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleMetaballs
+	, "02-metaball"
+	, "Rendering with transient buffers and embedding shaders."
+	, "https://bkaradzic.github.io/bgfx/examples.html#metaballs"
+	);

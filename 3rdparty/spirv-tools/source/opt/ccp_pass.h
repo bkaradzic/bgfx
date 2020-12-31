@@ -40,7 +40,8 @@ class CCPPass : public MemPass {
            IRContext::kAnalysisInstrToBlockMapping |
            IRContext::kAnalysisDecorations | IRContext::kAnalysisCombinators |
            IRContext::kAnalysisCFG | IRContext::kAnalysisDominatorAnalysis |
-           IRContext::kAnalysisNameMap;
+           IRContext::kAnalysisNameMap | IRContext::kAnalysisConstants |
+           IRContext::kAnalysisTypes;
   }
 
  private:
@@ -104,6 +105,10 @@ class CCPPass : public MemPass {
 
   // Propagator engine used.
   std::unique_ptr<SSAPropagator> propagator_;
+
+  // Value for the module's ID bound before running CCP. Used to detect whether
+  // propagation created new instructions.
+  uint32_t original_id_bound_;
 };
 
 }  // namespace opt

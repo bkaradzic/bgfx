@@ -54,13 +54,14 @@
         </Expand>
     </Type>
 
-    <Type Name="bgfx::Context::ShaderRef">
+    <Type Name="bgfx::ShaderRef">
         <Expand>
             <Item Name="m_uniforms">m_uniforms,[m_num]</Item>
             <Item Name="m_name">m_name</Item>
-            <Item Name="m_hash">m_hash</Item>
-            <Item Name="m_refCount">m_refCount</Item>
+            <Item Name="m_hashIn">m_hashIn</Item>
+            <Item Name="m_hashOut">m_hashOut</Item>
             <Item Name="m_num">m_num</Item>
+            <Item Name="m_refCount">m_refCount</Item>
         </Expand>
     </Type>
 
@@ -82,18 +83,19 @@
         </Expand>
     </Type>
 
-    <Type Name="bgfx::Context::TextureRef">
+    <Type Name="bgfx::TextureRef">
         <Expand>
             <Item Name="m_name">m_name</Item>
             <Item Name="m_ptr">m_ptr</Item>
+            <Item Name="m_flags">m_flags</Item>
             <Item Name="m_storageSize">m_storageSize</Item>
             <Item Name="m_refCount">m_refCount</Item>
             <Item Name="m_bbRatio">m_bbRatio</Item>
             <Item Name="m_format">(bgfx::TextureFormat::Enum)m_format</Item>
             <Item Name="m_numMips">m_numMips</Item>
+            <Item Name="m_numLayers">m_numLayers</Item>
             <Item Name="m_owned">m_owned</Item>
             <Item Name="m_immutable">m_immutable</Item>
-            <Item Name="m_rt">m_rt</Item>
         </Expand>
     </Type>
 
@@ -106,12 +108,12 @@
         </Expand>
     </Type>
 
-    <Type Name="bgfx::VertexDeclHandle">
+    <Type Name="bgfx::VertexLayoutHandle">
         <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
         <DisplayString>{{ idx={idx} }}</DisplayString>
         <Expand>
             <ExpandedItem>this,!</ExpandedItem>
-            <ExpandedItem>bgfx::s_ctx->m_declRef[idx]</ExpandedItem>
+            <ExpandedItem>bgfx::s_ctx->m_vertexLayoutRef[idx]</ExpandedItem>
         </Expand>
     </Type>
 

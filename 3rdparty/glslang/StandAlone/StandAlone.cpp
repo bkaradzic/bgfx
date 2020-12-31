@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013-2016 LunarG, Inc.
+// Copyright (C) 2016-2020 Google, Inc.
 //
 // All rights reserved.
 //
@@ -43,7 +44,6 @@
 #include "Worklist.h"
 #include "DirStackFileIncluder.h"
 #include "./../glslang/Include/ShHandle.h"
-#include "./../glslang/Include/revision.h"
 #include "./../glslang/Public/ShaderLang.h"
 #include "../SPIRV/GlslangToSpv.h"
 #include "../SPIRV/GLSL.std.450.h"
@@ -61,8 +61,11 @@
 
 #include "../glslang/OSDependent/osinclude.h"
 
+// Build-time generated includes
+#include "glslang/build_info.h"
+
 extern "C" {
-    SH_IMPORT_EXPORT void ShOutputHtml();
+    GLSLANG_EXPORT void ShOutputHtml();
 }
 
 // Command-line options
@@ -104,6 +107,9 @@ enum TOptions {
 bool targetHlslFunctionality1 = false;
 bool SpvToolsDisassembler = false;
 bool SpvToolsValidate = false;
+bool NaNClamp = false;
+bool stripDebugInfo = false;
+bool beQuiet = false;
 
 //
 // Return codes from main/exit().
@@ -145,13 +151,16 @@ void ProcessConfigFile()
 {
     if (ConfigFile.size() == 0)
         Resources = glslang::DefaultTBuiltInResource;
+#ifndef GLSLANG_WEB
     else {
         char* configString = ReadFileData(ConfigFile.c_str());
         glslang::DecodeResourceLimits(&Resources,  configString);
         FreeFileData(configString);
     }
+#endif
 }
 
+int ReflectOptions = EShReflectionDefault;
 int Options = 0;
 const char* ExecutableName = nullptr;
 const char* binaryFileName = nullptr;
@@ -161,6 +170,7 @@ const char* shaderStageName = nullptr;
 const char* variableName = nullptr;
 bool HlslEnable16BitTypes = false;
 bool HlslDX9compatible = false;
+bool DumpBuiltinSymbols = false;
 std::vector<std::string> IncludeDirectoryList;
 
 // Source environment
@@ -199,7 +209,7 @@ public:
         text.append("#define ");
         fixLine(def);
 
-        Processes.push_back("D");
+        Processes.push_back("define-macro ");
         Processes.back().append(def);
 
         // The first "=" needs to turn into a space
@@ -217,7 +227,7 @@ public:
         text.append("#undef ");
         fixLine(undef);
 
-        Processes.push_back("U");
+        Processes.push_back("undef-macro ");
         Processes.back().append(undef);
 
         text.append(undef);
@@ -236,6 +246,7 @@ protected:
     std::string text;  // contents of preamble
 };
 
+// Track the user's #define and #undef from the command line.
 TPreamble UserPreamble;
 
 //
@@ -252,16 +263,14 @@ const char* GetBinaryName(EShLanguage stage)
         case EShLangGeometry:        name = "geom.spv";    break;
         case EShLangFragment:        name = "frag.spv";    break;
         case EShLangCompute:         name = "comp.spv";    break;
-#ifdef NV_EXTENSIONS
-        case EShLangRayGenNV:        name = "rgen.spv";    break;
-        case EShLangIntersectNV:     name = "rint.spv";    break;
-        case EShLangAnyHitNV:        name = "rahit.spv";   break;
-        case EShLangClosestHitNV:    name = "rchit.spv";   break;
-        case EShLangMissNV:          name = "rmiss.spv";   break;
-        case EShLangCallableNV:      name = "rcall.spv";   break;
+        case EShLangRayGen:          name = "rgen.spv";    break;
+        case EShLangIntersect:       name = "rint.spv";    break;
+        case EShLangAnyHit:          name = "rahit.spv";   break;
+        case EShLangClosestHit:      name = "rchit.spv";   break;
+        case EShLangMiss:            name = "rmiss.spv";   break;
+        case EShLangCallable:        name = "rcall.spv";   break;
         case EShLangMeshNV:          name = "mesh.spv";    break;
         case EShLangTaskNV:          name = "task.spv";    break;
-#endif
         default:                     name = "unknown";     break;
         }
     } else
@@ -289,9 +298,12 @@ bool SetConfigFile(const std::string& name)
 //
 // Give error and exit with failure code.
 //
-void Error(const char* message)
+void Error(const char* message, const char* detail = nullptr)
 {
-    fprintf(stderr, "%s: Error %s (use -h for usage)\n", ExecutableName, message);
+    fprintf(stderr, "%s: Error: ", ExecutableName);
+    if (detail != nullptr)
+        fprintf(stderr, "%s: ", detail);
+    fprintf(stderr, "%s (use -h for usage)\n", message);
     exit(EFailUsage);
 }
 
@@ -479,7 +491,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         Options |= EOptionAutoMapLocations;
                     } else if (lowerword == "uniform-base") {
                         if (argc <= 1)
-                            Error("no <base> provided for --uniform-base");
+                            Error("no <base> provided", lowerword.c_str());
                         uniformBase = ::strtol(argv[1], NULL, 10);
                         bumpArg();
                         break;
@@ -490,13 +502,23 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                             else if (strcmp(argv[1], "opengl100") == 0)
                                 setOpenGlSpv();
                             else
-                                Error("--client expects vulkan100 or opengl100");
-                        }
+                                Error("expects vulkan100 or opengl100", lowerword.c_str());
+                        } else
+                            Error("expects vulkan100 or opengl100", lowerword.c_str());
                         bumpArg();
+                    } else if (lowerword == "define-macro" ||
+                               lowerword == "d") {
+                        if (argc > 1)
+                            UserPreamble.addDef(argv[1]);
+                        else
+                            Error("expects <name[=def]>", argv[0]);
+                        bumpArg();
+                    } else if (lowerword == "dump-builtin-symbols") {
+                        DumpBuiltinSymbols = true;
                     } else if (lowerword == "entry-point") {
                         entryPointName = argv[1];
                         if (argc <= 1)
-                            Error("no <name> provided for --entry-point");
+                            Error("no <name> provided", lowerword.c_str());
                         bumpArg();
                     } else if (lowerword == "flatten-uniform-arrays" || // synonyms
                                lowerword == "flatten-uniform-array"  ||
@@ -518,11 +540,31 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     } else if (lowerword == "keep-uncalled" || // synonyms
                                lowerword == "ku") {
                         Options |= EOptionKeepUncalled;
+                    } else if (lowerword == "nan-clamp") {
+                        NaNClamp = true;
                     } else if (lowerword == "no-storage-format" || // synonyms
                                lowerword == "nsf") {
                         Options |= EOptionNoStorageFormat;
                     } else if (lowerword == "relaxed-errors") {
                         Options |= EOptionRelaxedErrors;
+                    } else if (lowerword == "reflect-strict-array-suffix") {
+                        ReflectOptions |= EShReflectionStrictArraySuffix;
+                    } else if (lowerword == "reflect-basic-array-suffix") {
+                        ReflectOptions |= EShReflectionBasicArraySuffix;
+                    } else if (lowerword == "reflect-intermediate-io") {
+                        ReflectOptions |= EShReflectionIntermediateIO;
+                    } else if (lowerword == "reflect-separate-buffers") {
+                        ReflectOptions |= EShReflectionSeparateBuffers;
+                    } else if (lowerword == "reflect-all-block-variables") {
+                        ReflectOptions |= EShReflectionAllBlockVariables;
+                    } else if (lowerword == "reflect-unwrap-io-blocks") {
+                        ReflectOptions |= EShReflectionUnwrapIOBlocks;
+                    } else if (lowerword == "reflect-all-io-variables") {
+                        ReflectOptions |= EShReflectionAllIOVariables;
+                    } else if (lowerword == "reflect-shared-std140-ubo") {
+                        ReflectOptions |= EShReflectionSharedStd140UBO;
+                    } else if (lowerword == "reflect-shared-std140-ssbo") {
+                        ReflectOptions |= EShReflectionSharedStd140SSBO;
                     } else if (lowerword == "resource-set-bindings" ||  // synonyms
                                lowerword == "resource-set-binding"  ||
                                lowerword == "rsb") {
@@ -557,7 +599,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     } else if (lowerword == "source-entrypoint" || // synonyms
                                lowerword == "sep") {
                         if (argc <= 1)
-                            Error("no <entry-point> provided for --source-entrypoint");
+                            Error("no <entry-point> provided", lowerword.c_str());
                         sourceEntryPointName = argv[1];
                         bumpArg();
                         break;
@@ -578,6 +620,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                             } else if (strcmp(argv[1], "vulkan1.1") == 0) {
                                 setVulkanSpv();
                                 ClientVersion = glslang::EShTargetVulkan_1_1;
+                            } else if (strcmp(argv[1], "vulkan1.2") == 0) {
+                                setVulkanSpv();
+                                ClientVersion = glslang::EShTargetVulkan_1_2;
                             } else if (strcmp(argv[1], "opengl") == 0) {
                                 setOpenGlSpv();
                                 ClientVersion = glslang::EShTargetOpenGL_450;
@@ -596,22 +641,38 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                             } else if (strcmp(argv[1], "spirv1.4") == 0) {
                                 TargetLanguage = glslang::EShTargetSpv;
                                 TargetVersion = glslang::EShTargetSpv_1_4;
+                            } else if (strcmp(argv[1], "spirv1.5") == 0) {
+                                TargetLanguage = glslang::EShTargetSpv;
+                                TargetVersion = glslang::EShTargetSpv_1_5;
                             } else
-                                Error("--target-env expected one of: vulkan1.0, vulkan1.1, opengl, spirv1.0, spirv1.1, spirv1.2, or spirv1.3");
+                                Error("--target-env expected one of: vulkan1.0, vulkan1.1, vulkan1.2, opengl,\n"
+                                      "spirv1.0, spirv1.1, spirv1.2, spirv1.3, spirv1.4, or spirv1.5");
                         }
+                        bumpArg();
+                    } else if (lowerword == "undef-macro" ||
+                               lowerword == "u") {
+                        if (argc > 1)
+                            UserPreamble.addUndef(argv[1]);
+                        else
+                            Error("expects <name>", argv[0]);
                         bumpArg();
                     } else if (lowerword == "variable-name" || // synonyms
                                lowerword == "vn") {
                         Options |= EOptionOutputHexadecimal;
                         if (argc <= 1)
-                            Error("no <C-variable-name> provided for --variable-name");
+                            Error("no <C-variable-name> provided", lowerword.c_str());
                         variableName = argv[1];
                         bumpArg();
                         break;
+                    } else if (lowerword == "quiet") {
+                        beQuiet = true;
                     } else if (lowerword == "version") {
                         Options |= EOptionDumpVersions;
-                    } else {
+                    } else if (lowerword == "help") {
                         usage();
+                        break;
+                    } else {
+                        Error("unrecognized command-line option", argv[0]);
                     }
                 }
                 break;
@@ -622,7 +683,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 if (argv[0][2] == 0)
                     Options |= EOptionReadHlsl;
                 else
-                    UserPreamble.addDef(getStringOperand("-D<macro> macro name"));
+                    UserPreamble.addDef(getStringOperand("-D<name[=def]>"));
                 break;
             case 'u':
                 uniformLocationOverrides.push_back(getUniformOverride());
@@ -635,6 +696,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 setOpenGlSpv();
                 if (argv[0][2] != 0)
                     ClientInputSemanticsVersion = getAttachedNumber("-G<num> client input semantics");
+                if (ClientInputSemanticsVersion != 100)
+                    Error("unknown client version for -G, should be 100");
                 break;
             case 'H':
                 Options |= EOptionHumanReadableSpv;
@@ -665,12 +728,14 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 bumpArg();
                 break;
             case 'U':
-                UserPreamble.addUndef(getStringOperand("-U<macro>: macro name"));
+                UserPreamble.addUndef(getStringOperand("-U<name>"));
                 break;
             case 'V':
                 setVulkanSpv();
                 if (argv[0][2] != 0)
                     ClientInputSemanticsVersion = getAttachedNumber("-V<num> client input semantics");
+                if (ClientInputSemanticsVersion != 100)
+                    Error("unknown client version for -V, should be 100");
                 break;
             case 'c':
                 Options |= EOptionDumpConfig;
@@ -695,7 +760,13 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     Error("-f: expected hlsl_functionality1");
                 break;
             case 'g':
-                Options |= EOptionDebug;
+                // Override previous -g or -g0 argument
+                stripDebugInfo = false;
+                Options &= ~EOptionDebug;
+                if (argv[0][2] == '0')
+                    stripDebugInfo = true;
+                else
+                    Options |= EOptionDebug;
                 break;
             case 'h':
                 usage();
@@ -737,7 +808,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 Options |= EOptionOutputHexadecimal;
                 break;
             default:
-                usage();
+                Error("unrecognized command-line option", argv[0]);
                 break;
             }
         } else {
@@ -753,8 +824,17 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
         Error("must provide -S when --stdin is given");
 
     // Make sure that -E is not specified alongside linking (which includes SPV generation)
-    if ((Options & EOptionOutputPreprocessed) && (Options & EOptionLinkProgram))
-        Error("can't use -E when linking is selected");
+    // Or things that require linking
+    if (Options & EOptionOutputPreprocessed) {
+        if (Options & EOptionLinkProgram)
+            Error("can't use -E when linking is selected");
+        if (Options & EOptionDumpReflection)
+            Error("reflection requires linking, which can't be used when -E when is selected");
+    }
+
+    // reflection requires linking
+    if ((Options & EOptionDumpReflection) && !(Options & EOptionLinkProgram))
+        Error("reflection requires -l for linking");
 
     // -o or -x makes no sense if there is no target binary
     if (binaryFileName && (Options & EOptionSpv) == 0)
@@ -774,6 +854,10 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
         case glslang::EShTargetVulkan_1_1:
             TargetLanguage = glslang::EShTargetSpv;
             TargetVersion = glslang::EShTargetSpv_1_3;
+            break;
+        case glslang::EShTargetVulkan_1_2:
+            TargetLanguage = glslang::EShTargetSpv;
+            TargetVersion = glslang::EShTargetSpv_1_5;
             break;
         case glslang::EShTargetOpenGL_450:
             TargetLanguage = glslang::EShTargetSpv;
@@ -820,6 +904,8 @@ void SetMessageOptions(EShMessages& messages)
         messages = (EShMessages)(messages | EShMsgHlslLegalization);
     if (HlslDX9compatible)
         messages = (EShMessages)(messages | EShMsgHlslDX9Compatible);
+    if (DumpBuiltinSymbols)
+        messages = (EShMessages)(messages | EShMsgBuiltinSymbolTable);
 }
 
 //
@@ -947,26 +1033,22 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             shader->setPreamble(UserPreamble.get());
         shader->addProcesses(Processes);
 
+#ifndef GLSLANG_WEB
         // Set IO mapper binding shift values
         for (int r = 0; r < glslang::EResCount; ++r) {
             const glslang::TResourceType res = glslang::TResourceType(r);
 
             // Set base bindings
             shader->setShiftBinding(res, baseBinding[res][compUnit.stage]);
-            
+
             // Set bindings for particular resource sets
             // TODO: use a range based for loop here, when available in all environments.
             for (auto i = baseBindingForSet[res][compUnit.stage].begin();
                  i != baseBindingForSet[res][compUnit.stage].end(); ++i)
                 shader->setShiftBindingForSet(res, i->second, i->first);
         }
-
-        shader->setFlattenUniformArrays((Options & EOptionFlattenUniformArrays) != 0);
         shader->setNoStorageFormat((Options & EOptionNoStorageFormat) != 0);
         shader->setResourceSetBinding(baseResourceSetBinding[compUnit.stage]);
-
-        if (Options & EOptionHlslIoMapping)
-            shader->setHlslIoMapping(true);
 
         if (Options & EOptionAutoMapBindings)
             shader->setAutoMapBindings(true);
@@ -974,15 +1056,24 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         if (Options & EOptionAutoMapLocations)
             shader->setAutoMapLocations(true);
 
-        if (Options & EOptionInvertY)
-            shader->setInvertY(true);
-
         for (auto& uniOverride : uniformLocationOverrides) {
             shader->addUniformLocationOverride(uniOverride.first.c_str(),
                                                uniOverride.second);
         }
 
         shader->setUniformLocationBase(uniformBase);
+#endif
+
+        shader->setNanMinMaxClamp(NaNClamp);
+
+#ifdef ENABLE_HLSL
+        shader->setFlattenUniformArrays((Options & EOptionFlattenUniformArrays) != 0);
+        if (Options & EOptionHlslIoMapping)
+            shader->setHlslIoMapping(true);
+#endif
+
+        if (Options & EOptionInvertY)
+            shader->setInvertY(true);
 
         // Set up the environment, some subsettings take precedence over earlier
         // ways of setting things.
@@ -992,8 +1083,10 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                                 compUnit.stage, Client, ClientInputSemanticsVersion);
             shader->setEnvClient(Client, ClientVersion);
             shader->setEnvTarget(TargetLanguage, TargetVersion);
+#ifdef ENABLE_HLSL
             if (targetHlslFunctionality1)
                 shader->setEnvTargetHlslFunctionality1();
+#endif
         }
 
         shaders.push_back(shader);
@@ -1003,6 +1096,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         DirStackFileIncluder includer;
         std::for_each(IncludeDirectoryList.rbegin(), IncludeDirectoryList.rend(), [&includer](const std::string& dir) {
             includer.pushExternalLocalDirectory(dir); });
+#ifndef GLSLANG_WEB
         if (Options & EOptionOutputPreprocessed) {
             std::string str;
             if (shader->preprocess(&Resources, defaultVersion, ENoProfile, false, false, messages, &str, includer)) {
@@ -1014,6 +1108,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             StderrIfNonEmpty(shader->getInfoDebugLog());
             continue;
         }
+#endif
 
         if (! shader->parse(&Resources, defaultVersion, false, messages, includer))
             CompileFailed = true;
@@ -1022,7 +1117,8 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         if (! (Options & EOptionSuppressInfolog) &&
             ! (Options & EOptionMemoryLeakMode)) {
-            PutsIfNonEmpty(compUnit.fileName[0].c_str());
+            if (!beQuiet)
+                PutsIfNonEmpty(compUnit.fileName[0].c_str());
             PutsIfNonEmpty(shader->getInfoLog());
             PutsIfNonEmpty(shader->getInfoDebugLog());
         }
@@ -1036,11 +1132,13 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
     if (! (Options & EOptionOutputPreprocessed) && ! program.link(messages))
         LinkFailed = true;
 
+#ifndef GLSLANG_WEB
     // Map IO
     if (Options & EOptionSpv) {
         if (!program.mapIO())
             LinkFailed = true;
     }
+#endif
 
     // Report
     if (! (Options & EOptionSuppressInfolog) &&
@@ -1049,11 +1147,13 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         PutsIfNonEmpty(program.getInfoDebugLog());
     }
 
+#ifndef GLSLANG_WEB
     // Reflect
     if (Options & EOptionDumpReflection) {
-        program.buildReflection();
+        program.buildReflection(ReflectOptions);
         program.dumpReflection();
     }
+#endif
 
     // Dump SPIR-V
     if (Options & EOptionSpv) {
@@ -1063,11 +1163,12 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             for (int stage = 0; stage < EShLangCount; ++stage) {
                 if (program.getIntermediate((EShLanguage)stage)) {
                     std::vector<unsigned int> spirv;
-                    std::string warningsErrors;
                     spv::SpvBuildLogger logger;
                     glslang::SpvOptions spvOptions;
                     if (Options & EOptionDebug)
                         spvOptions.generateDebugInfo = true;
+                    else if (stripDebugInfo)
+                        spvOptions.stripDebugInfo = true;
                     spvOptions.disableOptimizer = (Options & EOptionOptimizeDisable) != 0;
                     spvOptions.optimizeSize = (Options & EOptionOptimizeSize) != 0;
                     spvOptions.disassemble = SpvToolsDisassembler;
@@ -1083,8 +1184,10 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                         } else {
                             glslang::OutputSpvBin(spirv, GetBinaryName((EShLanguage)stage));
                         }
+#ifndef GLSLANG_WEB
                         if (!SpvToolsDisassembler && (Options & EOptionHumanReadableSpv))
                             spv::Disassemble(std::cout, spirv);
+#endif
                     }
                 }
             }
@@ -1172,20 +1275,22 @@ int singleMain()
         workList.add(item.get());
     });
 
+#ifndef GLSLANG_WEB
     if (Options & EOptionDumpConfig) {
         printf("%s", glslang::GetDefaultTBuiltInResourceString().c_str());
         if (workList.empty())
             return ESuccess;
     }
+#endif
 
     if (Options & EOptionDumpBareVersion) {
-        printf("%d.%d.%d\n",
-            glslang::GetSpirvGeneratorVersion(), GLSLANG_MINOR_VERSION, GLSLANG_PATCH_LEVEL);
+        printf("%d:%d.%d.%d%s\n", glslang::GetSpirvGeneratorVersion(), GLSLANG_VERSION_MAJOR, GLSLANG_VERSION_MINOR,
+                GLSLANG_VERSION_PATCH, GLSLANG_VERSION_FLAVOR);
         if (workList.empty())
             return ESuccess;
     } else if (Options & EOptionDumpVersions) {
-        printf("Glslang Version: %d.%d.%d\n",
-            glslang::GetSpirvGeneratorVersion(), GLSLANG_MINOR_VERSION, GLSLANG_PATCH_LEVEL);
+        printf("Glslang Version: %d:%d.%d.%d%s\n", glslang::GetSpirvGeneratorVersion(), GLSLANG_VERSION_MAJOR,
+                GLSLANG_VERSION_MINOR, GLSLANG_VERSION_PATCH, GLSLANG_VERSION_FLAVOR);
         printf("ESSL Version: %s\n", glslang::GetEsslVersionString());
         printf("GLSL Version: %s\n", glslang::GetGlslVersionString());
         std::string spirvVersion;
@@ -1212,7 +1317,7 @@ int singleMain()
     ProcessConfigFile();
 
     if ((Options & EOptionReadHlsl) && !((Options & EOptionOutputPreprocessed) || (Options & EOptionSpv)))
-        Error("ERROR: HLSL requires SPIR-V code generation (or preprocessing only)");
+        Error("HLSL requires SPIR-V code generation (or preprocessing only)");
 
     //
     // Two modes:
@@ -1348,24 +1453,22 @@ EShLanguage FindLanguage(const std::string& name, bool parseStageName)
         return EShLangFragment;
     else if (stageName == "comp")
         return EShLangCompute;
-#ifdef NV_EXTENSIONS
     else if (stageName == "rgen")
-        return EShLangRayGenNV;
+        return EShLangRayGen;
     else if (stageName == "rint")
-        return EShLangIntersectNV;
+        return EShLangIntersect;
     else if (stageName == "rahit")
-        return EShLangAnyHitNV;
+        return EShLangAnyHit;
     else if (stageName == "rchit")
-        return EShLangClosestHitNV;
+        return EShLangClosestHit;
     else if (stageName == "rmiss")
-        return EShLangMissNV;
+        return EShLangMiss;
     else if (stageName == "rcall")
-        return EShLangCallableNV;
+        return EShLangCallable;
     else if (stageName == "mesh")
         return EShLangMeshNV;
     else if (stageName == "task")
         return EShLangTaskNV;
-#endif
 
     usage();
     return EShLangVertex;
@@ -1435,7 +1538,6 @@ void usage()
            "    .geom   for a geometry shader\n"
            "    .frag   for a fragment shader\n"
            "    .comp   for a compute shader\n"
-#ifdef NV_EXTENSIONS
            "    .mesh   for a mesh shader\n"
            "    .task   for a task shader\n"
            "    .rgen    for a ray generation shader\n"
@@ -1444,15 +1546,14 @@ void usage()
            "    .rchit   for a ray closest hit shader\n"
            "    .rmiss   for a ray miss shader\n"
            "    .rcall   for a ray callable shader\n"
-#endif
            "    .glsl   for .vert.glsl, .tesc.glsl, ..., .comp.glsl compound suffixes\n"
            "    .hlsl   for .vert.hlsl, .tesc.hlsl, ..., .comp.hlsl compound suffixes\n"
            "\n"
            "Options:\n"
            "  -C          cascading errors; risk crash from accumulation of error recoveries\n"
            "  -D          input is HLSL (this is the default when any suffix is .hlsl)\n"
-           "  -D<macro=def>\n"
-           "  -D<macro>   define a pre-processor macro\n"
+           "  -D<name[=def]> | --define-macro <name[=def]> | --D <name[=def]>\n"
+           "              define a pre-processor macro\n"
            "  -E          print pre-processed GLSL; cannot be used with -l;\n"
            "              errors will appear on stderr\n"
            "  -G[ver]     create SPIR-V binary, under OpenGL semantics; turns on -l;\n"
@@ -1468,7 +1569,8 @@ void usage()
            "  -Os         optimizes SPIR-V to minimize size\n"
            "  -S <stage>  uses specified stage rather than parsing the file extension\n"
            "              choices for <stage> are vert, tesc, tese, geom, frag, or comp\n"
-           "  -U<macro>   undefine a pre-processor macro\n"
+           "  -U<name> | --undef-macro <name> | --U <name>\n"
+           "              undefine a pre-processor macro\n"
            "  -V[ver]     create SPIR-V binary, under Vulkan semantics; turns on -l;\n"
            "              default file name is <stage>.spv (-o overrides this)\n"
            "              'ver', when present, is the version of the input semantics,\n"
@@ -1485,12 +1587,13 @@ void usage()
            "              'hlsl_functionality1' enables use of the\n"
            "              SPV_GOOGLE_hlsl_functionality1 extension\n"
            "  -g          generate debug information\n"
+           "  -g0         strip debug information\n"
            "  -h          print this usage message\n"
            "  -i          intermediate tree (glslang AST) is printed out\n"
            "  -l          link all input files together to form a single module\n"
            "  -m          memory leak mode\n"
            "  -o <file>   save binary to <file>, requires a binary option (e.g., -V)\n"
-           "  -q          dump reflection query database\n"
+           "  -q          dump reflection query database; requires -l for linking\n"
            "  -r | --relaxed-errors"
            "              relaxed GLSL semantic error-checking mode\n"
            "  -s          silence syntax and semantic error reporting\n"
@@ -1507,6 +1610,7 @@ void usage()
            "  --auto-map-locations | --aml      automatically locate input/output lacking\n"
            "                                    'location' (fragile, not cross stage)\n"
            "  --client {vulkan<ver>|opengl<ver>} see -V and -G\n"
+           "  --dump-builtin-symbols            prints builtin symbol table prior each compile\n"
            "  -dumpfullversion | -dumpversion   print bare major.minor.patchlevel\n"
            "  --flatten-uniform-arrays | --fua  flatten uniform texture/sampler arrays to\n"
            "                                    scalars\n"
@@ -1514,10 +1618,26 @@ void usage()
            "                                    works independently of source language\n"
            "  --hlsl-iomap                      perform IO mapping in HLSL register space\n"
            "  --hlsl-enable-16bit-types         allow 16-bit types in SPIR-V for HLSL\n"
-           "  --hlsl-dx9-compatible             interprets sampler declarations as a texture/sampler combo like DirectX9 would."
+           "  --hlsl-dx9-compatible             interprets sampler declarations as a\n"
+           "                                    texture/sampler combo like DirectX9 would,\n"
+           "                                    and recognizes DirectX9-specific semantics\n"
            "  --invert-y | --iy                 invert position.Y output in vertex shader\n"
            "  --keep-uncalled | --ku            don't eliminate uncalled functions\n"
+           "  --nan-clamp                       favor non-NaN operand in min, max, and clamp\n"
            "  --no-storage-format | --nsf       use Unknown image format\n"
+           "  --quiet                           do not print anything to stdout, unless\n"
+           "                                    requested by another option\n"
+           "  --reflect-strict-array-suffix     use strict array suffix rules when\n"
+           "                                    reflecting\n"
+           "  --reflect-basic-array-suffix      arrays of basic types will have trailing [0]\n"
+           "  --reflect-intermediate-io         reflection includes inputs/outputs of linked\n"
+           "                                    shaders rather than just vertex/fragment\n"
+           "  --reflect-separate-buffers        reflect buffer variables and blocks\n"
+           "                                    separately to uniforms\n"
+           "  --reflect-all-block-variables     reflect all variables in blocks, whether\n"
+           "                                    inactive or active\n"
+           "  --reflect-unwrap-io-blocks        unwrap input/output blocks the same as\n"
+           "                                    uniform blocks\n"
            "  --resource-set-binding [stage] name set binding\n"
            "                                    set descriptor set and binding for\n"
            "                                    individual resources\n"
@@ -1560,16 +1680,17 @@ void usage()
            "  --sep                             synonym for --source-entrypoint\n"
            "  --stdin                           read from stdin instead of from a file;\n"
            "                                    requires providing the shader stage using -S\n"
-           "  --target-env {vulkan1.0 | vulkan1.1 | opengl | \n"
-           "                spirv1.0 | spirv1.1 | spirv1.2 | spirv1.3}\n"
-           "                                    set execution environment that emitted code\n"
-           "                                    will execute in (versus source language\n"
-           "                                    semantics selected by --client) defaults:\n"
-           "                                     * 'vulkan1.0' under '--client vulkan<ver>'\n"
-           "                                     * 'opengl' under '--client opengl<ver>'\n"
-           "                                     * 'spirv1.0' under --target-env vulkan1.0\n"
-           "                                     * 'spirv1.3' under --target-env vulkan1.1\n"
-           "                                    multiple --targen-env can be specified.\n"
+           "  --target-env {vulkan1.0 | vulkan1.1 | vulkan1.2 | opengl | \n"
+           "                spirv1.0 | spirv1.1 | spirv1.2 | spirv1.3 | spirv1.4 | spirv1.5}\n"
+           "                                    Set the execution environment that the\n"
+           "                                    generated code will be executed in.\n"
+           "                                    Defaults to:\n"
+           "                                     * vulkan1.0 under --client vulkan<ver>\n"
+           "                                     * opengl    under --client opengl<ver>\n"
+           "                                     * spirv1.0  under --target-env vulkan1.0\n"
+           "                                     * spirv1.3  under --target-env vulkan1.1\n"
+           "                                     * spirv1.5  under --target-env vulkan1.2\n"
+           "                                    Multiple --target-env can be specified.\n"
            "  --variable-name <name>\n"
            "  --vn <name>                       creates a C header file that contains a\n"
            "                                    uint32_t array named <name>\n"

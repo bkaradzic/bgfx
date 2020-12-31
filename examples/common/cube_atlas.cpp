@@ -85,8 +85,8 @@ RectanglePacker::RectanglePacker(uint32_t _width, uint32_t _height)
 
 void RectanglePacker::init(uint32_t _width, uint32_t _height)
 {
-	BX_CHECK(_width > 2, "_width must be > 2");
-	BX_CHECK(_height > 2, "_height must be > 2");
+	BX_ASSERT(_width > 2, "_width must be > 2");
+	BX_ASSERT(_height > 2, "_height must be > 2");
 	m_width = _width;
 	m_height = _height;
 	m_usedSpace = 0;
@@ -256,13 +256,13 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 	, m_regionCount(0)
 	, m_maxRegionCount(_maxRegionsCount)
 {
-	BX_CHECK(_textureSize >= 64 && _textureSize <= 4096, "Invalid _textureSize %d.", _textureSize);
-	BX_CHECK(_maxRegionsCount >= 64 && _maxRegionsCount <= 32000, "Invalid _maxRegionsCount %d.", _maxRegionsCount);
+	BX_ASSERT(_textureSize >= 64 && _textureSize <= 4096, "Invalid _textureSize %d.", _textureSize);
+	BX_ASSERT(_maxRegionsCount >= 64 && _maxRegionsCount <= 32000, "Invalid _maxRegionsCount %d.", _maxRegionsCount);
 
 	init();
 
-	m_layers = new PackedLayer[24];
-	for (int ii = 0; ii < 24; ++ii)
+	m_layers = new PackedLayer[6];
+	for (int ii = 0; ii < 6; ++ii)
 	{
 		m_layers[ii].packer.init(_textureSize, _textureSize);
 	}
@@ -279,13 +279,13 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 }
 
 Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _regionCount, const uint8_t* _regionBuffer, uint16_t _maxRegionsCount)
-	: m_usedLayers(24)
+	: m_usedLayers(6)
 	, m_usedFaces(6)
 	, m_textureSize(_textureSize)
 	, m_regionCount(_regionCount)
 	, m_maxRegionCount(_regionCount < _maxRegionsCount ? _regionCount : _maxRegionsCount)
 {
-	BX_CHECK(_regionCount <= 64 && _maxRegionsCount <= 4096, "_regionCount %d, _maxRegionsCount %d", _regionCount, _maxRegionsCount);
+	BX_ASSERT(_regionCount <= 64 && _maxRegionsCount <= 4096, "_regionCount %d, _maxRegionsCount %d", _regionCount, _maxRegionsCount);
 
 	init();
 
@@ -366,8 +366,9 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 			return UINT16_MAX;
 		}
 
-		for (int ii = 0; ii < _type; ++ii)
+		//for (int ii = 0; ii < _type; ++ii)
 		{
+			int ii = 0;
 			AtlasRegion& region = m_layers[idx + ii].faceRegion;
 			region.x = 0;
 			region.y = 0;
@@ -376,7 +377,7 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 			region.setMask(_type, m_usedFaces, ii);
 		}
 
-		m_usedLayers += _type;
+		m_usedLayers++;
 		m_usedFaces++;
 
 		if (!m_layers[idx].packer.addRectangle(_width + 1, _height + 1, xx, yy) )

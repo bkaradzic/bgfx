@@ -59,7 +59,7 @@ CONST(uint g_numTaps[5]) = { 3, 5, 12, 0, 0 };
 SAMPLER2D(s_viewspaceDepthSource,  0); 
 SAMPLER2D(s_viewspaceDepthSourceMirror,  1); 
 IMAGE2D_RO(s_normalmapSource, rgba8, 2);
-UIMAGE2D_RO(s_loadCounter, r32ui, 3); 
+BUFFER_RO(s_loadCounter, uint, 3); 
 SAMPLER2D(s_importanceMap,  4); 
 IMAGE2D_ARRAY_RO(s_baseSSAO, rg8, 5);
 IMAGE2D_ARRAY_WR(s_target, rg8, 6);
@@ -410,7 +410,7 @@ void GenerateSSAOShadowsInternal( out float outShadowTerm, out vec4 outEdges, ou
         float edgeCount = dot( 1.0-edgesLRTB, vec4( 1.0, 1.0, 1.0, 1.0 ) );
         //importance += edgeCount / (float)SSAO_ADAPTIVE_TAP_FLEXIBLE_COUNT;
 
-        float avgTotalImportance = float(imageLoad(s_loadCounter,ivec2(0,0)).x) * u_loadCounterAvgDiv;
+        float avgTotalImportance = float(s_loadCounter[0]) * u_loadCounterAvgDiv;
 
         float importanceLimiter = saturate( u_adaptiveSampleCountLimit / avgTotalImportance );
         importance *= importanceLimiter;

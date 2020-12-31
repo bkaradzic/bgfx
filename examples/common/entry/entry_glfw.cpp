@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -15,8 +15,13 @@
 #endif // GLFW_VERSION_MINOR < 2
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#	define GLFW_EXPOSE_NATIVE_X11
-#	define GLFW_EXPOSE_NATIVE_GLX
+#	if ENTRY_CONFIG_USE_WAYLAND
+#		include <wayland-egl.h>
+#		define GLFW_EXPOSE_NATIVE_WAYLAND
+#	else
+#		define GLFW_EXPOSE_NATIVE_X11
+#		define GLFW_EXPOSE_NATIVE_GLX
+#	endif
 #elif BX_PLATFORM_OSX
 #	define GLFW_EXPOSE_NATIVE_COCOA
 #	define GLFW_EXPOSE_NATIVE_NSGL
@@ -40,7 +45,22 @@ namespace entry
 	static void* glfwNativeWindowHandle(GLFWwindow* _window)
 	{
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+# 		if ENTRY_CONFIG_USE_WAYLAND
+		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
+		if(!win_impl)
+		{
+			int width, height;
+			glfwGetWindowSize(_window, &width, &height);
+			struct wl_surface* surface = (struct wl_surface*)glfwGetWaylandWindow(_window);
+			if(!surface)
+				return nullptr;
+			win_impl = wl_egl_window_create(surface, width, height);
+			glfwSetWindowUserPointer(_window, (void*)(uintptr_t)win_impl);
+		}
+		return (void*)(uintptr_t)win_impl;
+#		else
 		return (void*)(uintptr_t)glfwGetX11Window(_window);
+#		endif
 #	elif BX_PLATFORM_OSX
 		return glfwGetCocoaWindow(_window);
 #	elif BX_PLATFORM_WINDOWS
@@ -48,11 +68,32 @@ namespace entry
 #	endif // BX_PLATFORM_
 	}
 
+	static void glfwDestroyWindowImpl(GLFWwindow *_window)
+	{
+		if(!_window)
+			return;
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if ENTRY_CONFIG_USE_WAYLAND
+		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
+		if(win_impl)
+		{
+			glfwSetWindowUserPointer(_window, nullptr);
+			wl_egl_window_destroy(win_impl);
+		}
+#		endif
+#	endif
+		glfwDestroyWindow(_window);
+	}
+
 	static void glfwSetWindow(GLFWwindow* _window)
 	{
 		bgfx::PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+# 		if ENTRY_CONFIG_USE_WAYLAND
+		pd.ndt      = glfwGetWaylandDisplay();
+#		else
 		pd.ndt      = glfwGetX11Display();
+		#endif
 #	elif BX_PLATFORM_OSX
 		pd.ndt      = NULL;
 #	elif BX_PLATFORM_WINDOWS
@@ -454,7 +495,7 @@ namespace entry
 			while (NULL != m_windows[0]
 			&&     !glfwWindowShouldClose(m_windows[0]))
 			{
-				glfwWaitEvents();
+				glfwWaitEventsTimeout(0.016);
 
 				for (uint32_t ii = 0; ii < ENTRY_CONFIG_MAX_GAMEPADS; ++ii)
 				{
@@ -506,7 +547,7 @@ namespace entry
 							{
 								GLFWwindow* window = m_windows[msg->m_handle.idx];
 								m_eventQueue.postWindowEvent(msg->m_handle);
-								glfwDestroyWindow(window);
+								glfwDestroyWindowImpl(window);
 								m_windows[msg->m_handle.idx] = NULL;
 							}
 						}
@@ -598,7 +639,7 @@ namespace entry
 			m_eventQueue.postExitEvent();
 			m_thread.shutdown();
 
-			glfwDestroyWindow(m_windows[0]);
+			glfwDestroyWindowImpl(m_windows[0]);
 			glfwTerminate();
 
 			return m_thread.getExitCode();
@@ -758,13 +799,11 @@ namespace entry
 
 	const Event* poll()
 	{
-		glfwPostEmptyEvent();
 		return s_ctx.m_eventQueue.poll();
 	}
 
 	const Event* poll(WindowHandle _handle)
 	{
-		glfwPostEmptyEvent();
 		return s_ctx.m_eventQueue.poll(_handle);
 	}
 
@@ -784,7 +823,6 @@ namespace entry
 		msg->m_title = _title;
 		msg->m_handle.idx = s_ctx.m_windowAlloc.alloc();
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 		return msg->m_handle;
 	}
 
@@ -793,7 +831,6 @@ namespace entry
 		Msg* msg = new Msg(GLFW_WINDOW_DESTROY);
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
@@ -803,7 +840,6 @@ namespace entry
 		msg->m_y = _y;
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
@@ -813,7 +849,6 @@ namespace entry
 		msg->m_height = _height;
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
@@ -822,7 +857,6 @@ namespace entry
 		msg->m_title = _title;
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
@@ -835,7 +869,6 @@ namespace entry
 		Msg* msg = new Msg(GLFW_WINDOW_TOGGLE_FULL_SCREEN);
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
@@ -844,7 +877,6 @@ namespace entry
 		msg->m_value = _lock;
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	int32_t MainThreadEntry::threadFunc(bx::Thread* _thread, void* _userData)
@@ -858,7 +890,6 @@ namespace entry
 		Msg* msg = new Msg(GLFW_WINDOW_DESTROY);
 		msg->m_handle.idx = 0;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 
 		return result;
 	}

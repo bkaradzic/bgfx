@@ -1,4 +1,6 @@
-// Copyright (c) 2015-2016 The Khronos Group Inc.
+// Copyright (c) 2015-2020 The Khronos Group Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,6 +54,7 @@ class Disassembler {
         indent_(spvIsInBitfield(SPV_BINARY_TO_TEXT_OPTION_INDENT, options)
                     ? kStandardIndent
                     : 0),
+        comment_(spvIsInBitfield(SPV_BINARY_TO_TEXT_OPTION_COMMENT, options)),
         text_(),
         out_(print_ ? out_stream() : out_stream(text_)),
         stream_(out_.get()),
@@ -116,6 +119,7 @@ class Disassembler {
   const bool print_;  // Should we also print to the standard output stream?
   const bool color_;  // Should we print in colour?
   const int indent_;  // How much to indent. 0 means don't indent
+  const int comment_;        // Should we comment the source
   spv_endianness_t endian_;  // The detected endianness of the binary.
   std::stringstream text_;   // Captures the text, if not printing.
   out_stream out_;  // The Output stream.  Either to text_ or standard output.
@@ -124,6 +128,9 @@ class Disassembler {
   const bool show_byte_offset_;  // Should we print byte offset, in hex?
   size_t byte_offset_;           // The number of bytes processed so far.
   spvtools::NameMapper name_mapper_;
+  bool inserted_decoration_space_ = false;
+  bool inserted_debug_space_ = false;
+  bool inserted_type_space_ = false;
 };
 
 spv_result_t Disassembler::HandleHeader(spv_endianness_t endian,
@@ -132,7 +139,6 @@ spv_result_t Disassembler::HandleHeader(spv_endianness_t endian,
   endian_ = endian;
 
   if (header_) {
-    SetGrey();
     const char* generator_tool =
         spvGeneratorStr(SPV_GENERATOR_TOOL_PART(generator));
     stream_ << "; SPIR-V\n"
@@ -148,7 +154,6 @@ spv_result_t Disassembler::HandleHeader(spv_endianness_t endian,
     stream_ << "; " << SPV_GENERATOR_MISC_PART(generator) << "\n"
             << "; Bound: " << id_bound << "\n"
             << "; Schema: " << schema << "\n";
-    ResetColor();
   }
 
   byte_offset_ = SPV_INDEX_INSTRUCTION * sizeof(uint32_t);
@@ -158,6 +163,32 @@ spv_result_t Disassembler::HandleHeader(spv_endianness_t endian,
 
 spv_result_t Disassembler::HandleInstruction(
     const spv_parsed_instruction_t& inst) {
+  auto opcode = static_cast<SpvOp>(inst.opcode);
+  if (comment_ && opcode == SpvOpFunction) {
+    stream_ << std::endl;
+    stream_ << std::string(indent_, ' ');
+    stream_ << "; Function " << name_mapper_(inst.result_id) << std::endl;
+  }
+  if (comment_ && !inserted_decoration_space_ &&
+      spvOpcodeIsDecoration(opcode)) {
+    inserted_decoration_space_ = true;
+    stream_ << std::endl;
+    stream_ << std::string(indent_, ' ');
+    stream_ << "; Annotations" << std::endl;
+  }
+  if (comment_ && !inserted_debug_space_ && spvOpcodeIsDebug(opcode)) {
+    inserted_debug_space_ = true;
+    stream_ << std::endl;
+    stream_ << std::string(indent_, ' ');
+    stream_ << "; Debug Information" << std::endl;
+  }
+  if (comment_ && !inserted_type_space_ && spvOpcodeGeneratesType(opcode)) {
+    inserted_type_space_ = true;
+    stream_ << std::endl;
+    stream_ << std::string(indent_, ' ');
+    stream_ << "; Types, variables and constants" << std::endl;
+  }
+
   if (inst.result_id) {
     SetBlue();
     const std::string id_name = name_mapper_(inst.result_id);
@@ -170,7 +201,7 @@ spv_result_t Disassembler::HandleInstruction(
     stream_ << std::string(indent_, ' ');
   }
 
-  stream_ << "Op" << spvOpcodeString(static_cast<SpvOp>(inst.opcode));
+  stream_ << "Op" << spvOpcodeString(opcode);
 
   for (uint16_t i = 0; i < inst.num_operands; i++) {
     const spv_operand_type_t type = inst.operands[i].type;
@@ -178,6 +209,12 @@ spv_result_t Disassembler::HandleInstruction(
     if (type == SPV_OPERAND_TYPE_RESULT_ID) continue;
     stream_ << " ";
     EmitOperand(inst, i);
+  }
+
+  if (comment_ && opcode == SpvOpName) {
+    const spv_parsed_operand_t& operand = inst.operands[0];
+    const uint32_t word = inst.words[operand.offset];
+    stream_ << "  ; id %" << word;
   }
 
   if (show_byte_offset_) {
@@ -217,10 +254,18 @@ void Disassembler::EmitOperand(const spv_parsed_instruction_t& inst,
       break;
     case SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER: {
       spv_ext_inst_desc ext_inst;
-      if (grammar_.lookupExtInst(inst.ext_inst_type, word, &ext_inst))
-        assert(false && "should have caught this earlier");
       SetRed();
-      stream_ << ext_inst->name;
+      if (grammar_.lookupExtInst(inst.ext_inst_type, word, &ext_inst) ==
+          SPV_SUCCESS) {
+        stream_ << ext_inst->name;
+      } else {
+        if (!spvExtInstIsNonSemantic(inst.ext_inst_type)) {
+          assert(false && "should have caught this earlier");
+        } else {
+          // for non-semantic instruction sets we can just print the number
+          stream_ << word;
+        }
+      }
     } break;
     case SPV_OPERAND_TYPE_SPEC_CONSTANT_OP_NUMBER: {
       spv_opcode_desc opcode_desc;
@@ -269,10 +314,19 @@ void Disassembler::EmitOperand(const spv_parsed_instruction_t& inst,
     case SPV_OPERAND_TYPE_GROUP_OPERATION:
     case SPV_OPERAND_TYPE_KERNEL_ENQ_FLAGS:
     case SPV_OPERAND_TYPE_KERNEL_PROFILING_INFO:
+    case SPV_OPERAND_TYPE_RAY_FLAGS:
+    case SPV_OPERAND_TYPE_RAY_QUERY_INTERSECTION:
+    case SPV_OPERAND_TYPE_RAY_QUERY_COMMITTED_INTERSECTION_TYPE:
+    case SPV_OPERAND_TYPE_RAY_QUERY_CANDIDATE_INTERSECTION_TYPE:
     case SPV_OPERAND_TYPE_DEBUG_BASE_TYPE_ATTRIBUTE_ENCODING:
     case SPV_OPERAND_TYPE_DEBUG_COMPOSITE_TYPE:
     case SPV_OPERAND_TYPE_DEBUG_TYPE_QUALIFIER:
-    case SPV_OPERAND_TYPE_DEBUG_OPERATION: {
+    case SPV_OPERAND_TYPE_DEBUG_OPERATION:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_BASE_TYPE_ATTRIBUTE_ENCODING:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_COMPOSITE_TYPE:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY: {
       spv_operand_desc entry;
       if (grammar_.lookupOperand(operand.type, word, &entry))
         assert(false && "should have caught this earlier");
@@ -285,6 +339,7 @@ void Disassembler::EmitOperand(const spv_parsed_instruction_t& inst,
     case SPV_OPERAND_TYPE_MEMORY_ACCESS:
     case SPV_OPERAND_TYPE_SELECTION_CONTROL:
     case SPV_OPERAND_TYPE_DEBUG_INFO_FLAGS:
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS:
       EmitMaskOperand(operand.type, word);
       break;
     default:

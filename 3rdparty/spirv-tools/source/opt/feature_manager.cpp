@@ -31,13 +31,25 @@ void FeatureManager::Analyze(Module* module) {
 
 void FeatureManager::AddExtensions(Module* module) {
   for (auto ext : module->extensions()) {
-    const std::string name =
-        reinterpret_cast<const char*>(ext.GetInOperand(0u).words.data());
-    Extension extension;
-    if (GetExtensionFromString(name.c_str(), &extension)) {
-      extensions_.Add(extension);
-    }
+    AddExtension(&ext);
   }
+}
+
+void FeatureManager::AddExtension(Instruction* ext) {
+  assert(ext->opcode() == SpvOpExtension &&
+         "Expecting an extension instruction.");
+
+  const std::string name =
+      reinterpret_cast<const char*>(ext->GetInOperand(0u).words.data());
+  Extension extension;
+  if (GetExtensionFromString(name.c_str(), &extension)) {
+    extensions_.Add(extension);
+  }
+}
+
+void FeatureManager::RemoveExtension(Extension ext) {
+  if (!extensions_.Contains(ext)) return;
+  extensions_.Remove(ext);
 }
 
 void FeatureManager::AddCapability(SpvCapability cap) {
@@ -53,6 +65,11 @@ void FeatureManager::AddCapability(SpvCapability cap) {
   }
 }
 
+void FeatureManager::RemoveCapability(SpvCapability cap) {
+  if (!capabilities_.Contains(cap)) return;
+  capabilities_.Remove(cap);
+}
+
 void FeatureManager::AddCapabilities(Module* module) {
   for (Instruction& inst : module->capabilities()) {
     AddCapability(static_cast<SpvCapability>(inst.GetSingleWordInOperand(0)));
@@ -61,7 +78,36 @@ void FeatureManager::AddCapabilities(Module* module) {
 
 void FeatureManager::AddExtInstImportIds(Module* module) {
   extinst_importid_GLSLstd450_ = module->GetExtInstImportId("GLSL.std.450");
+  extinst_importid_OpenCL100DebugInfo_ =
+      module->GetExtInstImportId("OpenCL.DebugInfo.100");
 }
 
+bool operator==(const FeatureManager& a, const FeatureManager& b) {
+  // We check that the addresses of the grammars are the same because they
+  // are large objects, and this is faster.  It can be changed if needed as a
+  // later time.
+  if (&a.grammar_ != &b.grammar_) {
+    return false;
+  }
+
+  if (a.capabilities_ != b.capabilities_) {
+    return false;
+  }
+
+  if (a.extensions_ != b.extensions_) {
+    return false;
+  }
+
+  if (a.extinst_importid_GLSLstd450_ != b.extinst_importid_GLSLstd450_) {
+    return false;
+  }
+
+  if (a.extinst_importid_OpenCL100DebugInfo_ !=
+      b.extinst_importid_OpenCL100DebugInfo_) {
+    return false;
+  }
+
+  return true;
+}
 }  // namespace opt
 }  // namespace spvtools

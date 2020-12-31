@@ -1,11 +1,12 @@
 shallow_clone: true
 
 os:
-  - Visual Studio 2017
+  - Visual Studio 2019
 
 environment:
   matrix:
   - TOOLSET: vs2017
+#  - TOOLSET: vs2019
 
 configuration:
   - Debug

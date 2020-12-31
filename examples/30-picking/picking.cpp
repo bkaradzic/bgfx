@@ -21,8 +21,8 @@ namespace
 class ExamplePicking : public entry::AppI
 {
 public:
-	ExamplePicking(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExamplePicking(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -268,17 +268,12 @@ public:
 				float mouseXNDC = ( m_mouseState.m_mx             / (float)m_width ) * 2.0f - 1.0f;
 				float mouseYNDC = ((m_height - m_mouseState.m_my) / (float)m_height) * 2.0f - 1.0f;
 
-				float pickEye[3];
-				float mousePosNDC[3] = { mouseXNDC, mouseYNDC, 0.0f };
-				bx::vec3MulMtxH(pickEye, mousePosNDC, invViewProj);
-
-				float pickAt[3];
-				float mousePosNDCEnd[3] = { mouseXNDC, mouseYNDC, 1.0f };
-				bx::vec3MulMtxH(pickAt, mousePosNDCEnd, invViewProj);
+				const bx::Vec3 pickEye = bx::mulH({ mouseXNDC, mouseYNDC, 0.0f }, invViewProj);
+				const bx::Vec3 pickAt  = bx::mulH({ mouseXNDC, mouseYNDC, 1.0f }, invViewProj);
 
 				// Look at our unprojected point
 				float pickView[16];
-				bx::mtxLookAt(pickView, bx::load<bx::Vec3>(pickEye), bx::load<bx::Vec3>(pickAt) );
+				bx::mtxLookAt(pickView, pickEye, pickAt);
 
 				// Tight FOV is best for picking
 				float pickProj[16];
@@ -447,4 +442,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExamplePicking, "30-picking", "Mouse picking via GPU texture readback.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExamplePicking
+	, "30-picking"
+	, "Mouse picking via GPU texture readback."
+	, "https://bkaradzic.github.io/bgfx/examples.html#picking"
+	);

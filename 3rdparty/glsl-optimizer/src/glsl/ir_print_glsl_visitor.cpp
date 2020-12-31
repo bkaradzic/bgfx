@@ -900,7 +900,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 
 	if (is_array && state->EXT_texture_array_enable)
 		buffer.asprintf_append ("Array");
-	if (ir->op == ir_tex && is_proj)
+	if ((ir->op == ir_tex || ir->op == ir_txl) && is_proj)
 		buffer.asprintf_append ("Proj");
 	if (ir->op == ir_txl)
 		buffer.asprintf_append ("Lod");

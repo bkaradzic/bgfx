@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2017 Stanislav Pidhorskyi. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
@@ -37,11 +37,11 @@
  * ==========
  *
  * [1] R. Perez, R. Seals, and J. Michalsky."An All-Weather Model for Sky Luminance Distribution".
- *     Solar Energy, Volume 50, Number 3 (March 1993), pp. 235–245.
+ *     Solar Energy, Volume 50, Number 3 (March 1993), pp. 235-245.
  *
  * [2] A. J. Preetham, Peter Shirley, and Brian Smits. "A Practical Analytic Model for Daylight",
  *     Proceedings of the 26th Annual Conference on Computer Graphics and Interactive Techniques,
- *     1999, pp. 91–100.
+ *     1999, pp. 91-100.
  *     https://www.cs.utah.edu/~shirley/papers/sunsky/sunsky.pdf
  *
  * [3] E. Lengyel, Game Engine Gems, Volume One. Jones & Bartlett Learning, 2010. pp. 219 - 234
@@ -134,7 +134,7 @@ namespace
 
 
 	// Turbidity tables. Taken from:
-	// A. J. Preetham, P. Shirley, and B. Smits. A Practical Analytic Model for Daylight. SIGGRAPH ’99
+	// A. J. Preetham, P. Shirley, and B. Smits. A Practical Analytic Model for Daylight. SIGGRAPH '99
 	// Coefficients correspond to xyY colorspace.
 	static Color ABCDE[] =
 	{
@@ -304,16 +304,16 @@ namespace
 
 		static void init()
 		{
-			ms_decl
+			ms_layout
 				.begin()
 				.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
 				.end();
 		}
 
-		static bgfx::VertexDecl ms_decl;
+		static bgfx::VertexLayout ms_layout;
 	};
 
-	bgfx::VertexDecl ScreenPosVertex::ms_decl;
+	bgfx::VertexLayout ScreenPosVertex::ms_layout;
 
 	// Renders a screen-space grid of triangles.
 	// Because of performance reasons, and because sky color is smooth, sky color is computed in vertex shader.
@@ -365,7 +365,7 @@ namespace
 				}
 			}
 
-			m_vbh = bgfx::createVertexBuffer(bgfx::copy(vertices, sizeof(ScreenPosVertex) * verticalCount * horizontalCount), ScreenPosVertex::ms_decl);
+			m_vbh = bgfx::createVertexBuffer(bgfx::copy(vertices, sizeof(ScreenPosVertex) * verticalCount * horizontalCount), ScreenPosVertex::ms_layout);
 			m_ibh = bgfx::createIndexBuffer(bgfx::copy(indices, sizeof(uint16_t) * k));
 
 			BX_FREE(allocator, indices);
@@ -400,8 +400,8 @@ namespace
 	class ExampleProceduralSky : public entry::AppI
 	{
 	public:
-		ExampleProceduralSky(const char* _name, const char* _description)
-			: entry::AppI(_name, _description)
+		ExampleProceduralSky(const char* _name, const char* _description, const char* _url)
+			: entry::AppI(_name, _description, _url)
 		{
 		}
 
@@ -447,7 +447,7 @@ namespace
 			m_time = 0.0f;
 			m_timeScale = 1.0f;
 
-			s_texLightmap     = bgfx::createUniform("s_texLightmap",     bgfx::UniformType::Int1);
+			s_texLightmap     = bgfx::createUniform("s_texLightmap",     bgfx::UniformType::Sampler);
 			u_sunLuminance    = bgfx::createUniform("u_sunLuminance",    bgfx::UniformType::Vec4);
 			u_skyLuminanceXYZ = bgfx::createUniform("u_skyLuminanceXYZ", bgfx::UniformType::Vec4);
 			u_skyLuminance    = bgfx::createUniform("u_skyLuminance",    bgfx::UniformType::Vec4);
@@ -565,11 +565,8 @@ namespace
 
 				imguiEndFrame();
 
-				if (!ImGui::MouseOverArea())
-				{
-					// Update camera.
-					cameraUpdate(deltaTime, m_mouseState);
-				}
+				// Update camera.
+				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
@@ -661,4 +658,9 @@ namespace
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleProceduralSky, "36-sky", "Perez dynamic sky model.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleProceduralSky
+	, "36-sky"
+	, "Perez dynamic sky model."
+	, "https://bkaradzic.github.io/bgfx/examples.html#sky"
+	);

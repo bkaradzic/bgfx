@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -24,6 +24,24 @@
 #include "renderer.h"
 #include "renderer_d3d.h"
 #include "nvapi.h"
+
+#define BGFX_D3D9_PROFILER_BEGIN(_view, _abgr)         \
+	BX_MACRO_BLOCK_BEGIN                               \
+		PIX_BEGINEVENT(_abgr, s_viewNameW[_view]);     \
+		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);  \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_D3D9_PROFILER_BEGIN_LITERAL(_name, _abgr) \
+	BX_MACRO_BLOCK_BEGIN                               \
+		PIX_BEGINEVENT(_abgr, L"" _name);              \
+		BGFX_PROFILER_BEGIN_LITERAL("" _name, _abgr);  \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_D3D9_PROFILER_END()                       \
+	BX_MACRO_BLOCK_BEGIN                               \
+		BGFX_PROFILER_END();                           \
+		PIX_ENDEVENT();                                \
+	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace d3d9
 {
@@ -173,7 +191,7 @@ namespace bgfx { namespace d3d9
 		{
 		}
 
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle);
+		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
 			if (NULL  != m_dynamic
@@ -214,7 +232,7 @@ namespace bgfx { namespace d3d9
 		IDirect3DVertexBuffer9* m_ptr;
 		uint8_t* m_dynamic;
 		uint32_t m_size;
-		VertexDeclHandle m_decl;
+		VertexLayoutHandle m_layoutHandle;
 	};
 
 	struct ShaderD3D9

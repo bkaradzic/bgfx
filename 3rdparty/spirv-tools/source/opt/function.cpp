@@ -17,6 +17,10 @@
 #include <ostream>
 #include <sstream>
 
+#include "function.h"
+#include "ir_context.h"
+#include "source/util/bit_vector.h"
+
 namespace spvtools {
 namespace opt {
 
@@ -30,41 +34,149 @@ Function* Function::Clone(IRContext* ctx) const {
       },
       true);
 
+  for (const auto& i : debug_insts_in_header_) {
+    clone->AddDebugInstructionInHeader(
+        std::unique_ptr<Instruction>(i.Clone(ctx)));
+  }
+
   clone->blocks_.reserve(blocks_.size());
   for (const auto& b : blocks_) {
     std::unique_ptr<BasicBlock> bb(b->Clone(ctx));
-    bb->SetParent(clone);
     clone->AddBasicBlock(std::move(bb));
   }
 
   clone->SetFunctionEnd(std::unique_ptr<Instruction>(EndInst()->Clone(ctx)));
+
+  clone->non_semantic_.reserve(non_semantic_.size());
+  for (auto& non_semantic : non_semantic_) {
+    clone->AddNonSemanticInstruction(
+        std::unique_ptr<Instruction>(non_semantic->Clone(ctx)));
+  }
   return clone;
 }
 
 void Function::ForEachInst(const std::function<void(Instruction*)>& f,
-                           bool run_on_debug_line_insts) {
-  if (def_inst_) def_inst_->ForEachInst(f, run_on_debug_line_insts);
-  for (auto& param : params_) param->ForEachInst(f, run_on_debug_line_insts);
-  for (auto& bb : blocks_) bb->ForEachInst(f, run_on_debug_line_insts);
-  if (end_inst_) end_inst_->ForEachInst(f, run_on_debug_line_insts);
+                           bool run_on_debug_line_insts,
+                           bool run_on_non_semantic_insts) {
+  WhileEachInst(
+      [&f](Instruction* inst) {
+        f(inst);
+        return true;
+      },
+      run_on_debug_line_insts, run_on_non_semantic_insts);
 }
 
 void Function::ForEachInst(const std::function<void(const Instruction*)>& f,
-                           bool run_on_debug_line_insts) const {
-  if (def_inst_)
-    static_cast<const Instruction*>(def_inst_.get())
-        ->ForEachInst(f, run_on_debug_line_insts);
+                           bool run_on_debug_line_insts,
+                           bool run_on_non_semantic_insts) const {
+  WhileEachInst(
+      [&f](const Instruction* inst) {
+        f(inst);
+        return true;
+      },
+      run_on_debug_line_insts, run_on_non_semantic_insts);
+}
 
-  for (const auto& param : params_)
-    static_cast<const Instruction*>(param.get())
-        ->ForEachInst(f, run_on_debug_line_insts);
+bool Function::WhileEachInst(const std::function<bool(Instruction*)>& f,
+                             bool run_on_debug_line_insts,
+                             bool run_on_non_semantic_insts) {
+  if (def_inst_) {
+    if (!def_inst_->WhileEachInst(f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
 
-  for (const auto& bb : blocks_)
-    static_cast<const BasicBlock*>(bb.get())->ForEachInst(
-        f, run_on_debug_line_insts);
+  for (auto& param : params_) {
+    if (!param->WhileEachInst(f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
 
-  if (end_inst_)
-    static_cast<const Instruction*>(end_inst_.get())
+  if (!debug_insts_in_header_.empty()) {
+    Instruction* di = &debug_insts_in_header_.front();
+    while (di != nullptr) {
+      Instruction* next_instruction = di->NextNode();
+      if (!di->WhileEachInst(f, run_on_debug_line_insts)) return false;
+      di = next_instruction;
+    }
+  }
+
+  for (auto& bb : blocks_) {
+    if (!bb->WhileEachInst(f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
+
+  if (end_inst_) {
+    if (!end_inst_->WhileEachInst(f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
+
+  if (run_on_non_semantic_insts) {
+    for (auto& non_semantic : non_semantic_) {
+      if (!non_semantic->WhileEachInst(f, run_on_debug_line_insts)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool Function::WhileEachInst(const std::function<bool(const Instruction*)>& f,
+                             bool run_on_debug_line_insts,
+                             bool run_on_non_semantic_insts) const {
+  if (def_inst_) {
+    if (!static_cast<const Instruction*>(def_inst_.get())
+             ->WhileEachInst(f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
+
+  for (const auto& param : params_) {
+    if (!static_cast<const Instruction*>(param.get())
+             ->WhileEachInst(f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
+
+  for (const auto& di : debug_insts_in_header_) {
+    if (!static_cast<const Instruction*>(&di)->WhileEachInst(
+            f, run_on_debug_line_insts))
+      return false;
+  }
+
+  for (const auto& bb : blocks_) {
+    if (!static_cast<const BasicBlock*>(bb.get())->WhileEachInst(
+            f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
+
+  if (end_inst_) {
+    if (!static_cast<const Instruction*>(end_inst_.get())
+             ->WhileEachInst(f, run_on_debug_line_insts)) {
+      return false;
+    }
+  }
+
+  if (run_on_non_semantic_insts) {
+    for (auto& non_semantic : non_semantic_) {
+      if (!static_cast<const Instruction*>(non_semantic.get())
+               ->WhileEachInst(f, run_on_debug_line_insts)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+void Function::ForEachParam(const std::function<void(Instruction*)>& f,
+                            bool run_on_debug_line_insts) {
+  for (auto& param : params_)
+    static_cast<Instruction*>(param.get())
         ->ForEachInst(f, run_on_debug_line_insts);
 }
 
@@ -73,6 +185,18 @@ void Function::ForEachParam(const std::function<void(const Instruction*)>& f,
   for (const auto& param : params_)
     static_cast<const Instruction*>(param.get())
         ->ForEachInst(f, run_on_debug_line_insts);
+}
+
+void Function::ForEachDebugInstructionsInHeader(
+    const std::function<void(Instruction*)>& f) {
+  if (debug_insts_in_header_.empty()) return;
+
+  Instruction* di = &debug_insts_in_header_.front();
+  while (di != nullptr) {
+    Instruction* next_instruction = di->NextNode();
+    di->ForEachInst(f);
+    di = next_instruction;
+  }
 }
 
 BasicBlock* Function::InsertBasicBlockAfter(
@@ -89,9 +213,51 @@ BasicBlock* Function::InsertBasicBlockAfter(
   return nullptr;
 }
 
+BasicBlock* Function::InsertBasicBlockBefore(
+    std::unique_ptr<BasicBlock>&& new_block, BasicBlock* position) {
+  for (auto bb_iter = begin(); bb_iter != end(); ++bb_iter) {
+    if (&*bb_iter == position) {
+      new_block->SetParent(this);
+      bb_iter = bb_iter.InsertBefore(std::move(new_block));
+      return &*bb_iter;
+    }
+  }
+  assert(false && "Could not find insertion point.");
+  return nullptr;
+}
+
+bool Function::HasEarlyReturn() const {
+  auto post_dominator_analysis =
+      blocks_.front()->GetLabel()->context()->GetPostDominatorAnalysis(this);
+  for (auto& block : blocks_) {
+    if (spvOpcodeIsReturn(block->tail()->opcode()) &&
+        !post_dominator_analysis->Dominates(block.get(), entry().get())) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Function::IsRecursive() const {
+  IRContext* ctx = blocks_.front()->GetLabel()->context();
+  IRContext::ProcessFunction mark_visited = [this](Function* fp) {
+    return fp == this;
+  };
+
+  // Process the call tree from all of the function called by |this|.  If it get
+  // back to |this|, then we have a recursive function.
+  std::queue<uint32_t> roots;
+  ctx->AddCalls(this, &roots);
+  return ctx->ProcessCallTreeFromRoots(mark_visited, &roots);
+}
+
 std::ostream& operator<<(std::ostream& str, const Function& func) {
   str << func.PrettyPrint();
   return str;
+}
+
+void Function::Dump() const {
+  std::cerr << "Function #" << result_id() << "\n" << *this << "\n";
 }
 
 std::string Function::PrettyPrint(uint32_t options) const {
@@ -104,6 +270,5 @@ std::string Function::PrettyPrint(uint32_t options) const {
   });
   return str.str();
 }
-
 }  // namespace opt
 }  // namespace spvtools

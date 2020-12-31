@@ -192,15 +192,15 @@ bool RangeSliderFloat(const char* label, float* v1, float* v2, float v_min, floa
         if (tab_focus_requested || g.IO.KeyCtrl)
         {
             start_text_input = true;
-            g.ScalarAsInputTextId = 0;
+            g.TempInputId = 0;
         }
     }
 
-    if (start_text_input || (g.ActiveId == id && g.ScalarAsInputTextId == id))
+    if (start_text_input || (g.ActiveId == id && g.TempInputId == id))
     {
         char fmt[64];
         snprintf(fmt, 64, "%%.%df", decimal_precision);
-        return InputScalarAsWidgetReplacement(frame_bb, id, label, ImGuiDataType_Float, v1, fmt);
+        return TempInputScalar(frame_bb, id, label, ImGuiDataType_Float, v1, fmt);
     }
 
     ItemSize(total_bb, style.FramePadding.y);

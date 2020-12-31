@@ -79,10 +79,12 @@ class TVariable;
 class TFunction;
 class TAnonMember;
 
+typedef TVector<const char*> TExtensionList;
+
 class TSymbol {
 public:
     POOL_ALLOCATOR_NEW_DELETE(GetThreadPoolAllocator())
-    explicit TSymbol(const TString *n) :  name(n), numExtensions(0), extensions(0), writable(true) { }
+    explicit TSymbol(const TString *n) :  name(n), extensions(0), writable(true) { }
     virtual TSymbol* clone() const = 0;
     virtual ~TSymbol() { }  // rely on all symbol owned memory coming from the pool
 
@@ -104,18 +106,21 @@ public:
     virtual TType& getWritableType() = 0;
     virtual void setUniqueId(int id) { uniqueId = id; }
     virtual int getUniqueId() const { return uniqueId; }
-    virtual void setExtensions(int num, const char* const exts[])
+    virtual void setExtensions(int numExts, const char* const exts[])
     {
         assert(extensions == 0);
-        assert(num > 0);
-        numExtensions = num;
-        extensions = NewPoolObject(exts[0], num);
-        for (int e = 0; e < num; ++e)
-            extensions[e] = exts[e];
+        assert(numExts > 0);
+        extensions = NewPoolObject(extensions);
+        for (int e = 0; e < numExts; ++e)
+            extensions->push_back(exts[e]);
     }
-    virtual int getNumExtensions() const { return numExtensions; }
-    virtual const char** getExtensions() const { return extensions; }
-    virtual void dump(TInfoSink &infoSink) const = 0;
+    virtual int getNumExtensions() const { return extensions == nullptr ? 0 : (int)extensions->size(); }
+    virtual const char** getExtensions() const { return extensions->data(); }
+
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+    virtual void dump(TInfoSink& infoSink, bool complete = false) const = 0;
+    void dumpExtensions(TInfoSink& infoSink) const;
+#endif
 
     virtual bool isReadOnly() const { return ! writable; }
     virtual void makeReadOnly() { writable = false; }
@@ -129,8 +134,7 @@ protected:
 
     // For tracking what extensions must be present
     // (don't use if correct version/profile is present).
-    int numExtensions;
-    const char** extensions; // an array of pointers to existing constant char strings
+    TExtensionList* extensions; // an array of pointers to existing constant char strings
 
     //
     // N.B.: Non-const functions that will be generally used should assert on this,
@@ -155,7 +159,9 @@ public:
         : TSymbol(name),
           userType(uT),
           constSubtree(nullptr),
-          anonId(-1) { type.shallowCopy(t); }
+          memberExtensions(nullptr),
+          anonId(-1)
+        { type.shallowCopy(t); }
     virtual TVariable* clone() const;
     virtual ~TVariable() { }
 
@@ -172,7 +178,27 @@ public:
     virtual void setAnonId(int i) { anonId = i; }
     virtual int getAnonId() const { return anonId; }
 
-    virtual void dump(TInfoSink &infoSink) const;
+    virtual void setMemberExtensions(int member, int numExts, const char* const exts[])
+    {
+        assert(type.isStruct());
+        assert(numExts > 0);
+        if (memberExtensions == nullptr) {
+            memberExtensions = NewPoolObject(memberExtensions);
+            memberExtensions->resize(type.getStruct()->size());
+        }
+        for (int e = 0; e < numExts; ++e)
+            (*memberExtensions)[member].push_back(exts[e]);
+    }
+    virtual bool hasMemberExtensions() const { return memberExtensions != nullptr; }
+    virtual int getNumMemberExtensions(int member) const 
+    {
+        return memberExtensions == nullptr ? 0 : (int)(*memberExtensions)[member].size();
+    }
+    virtual const char** getMemberExtensions(int member) const { return (*memberExtensions)[member].data(); }
+
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+    virtual void dump(TInfoSink& infoSink, bool complete = false) const;
+#endif
 
 protected:
     explicit TVariable(const TVariable&);
@@ -180,15 +206,14 @@ protected:
 
     TType type;
     bool userType;
+
     // we are assuming that Pool Allocator will free the memory allocated to unionArray
     // when this object is destroyed
 
-    // TODO: these two should be a union
-    // A variable could be a compile-time constant, or a specialization
-    // constant, or neither, but never both.
-    TConstUnionArray constArray;  // for compile-time constant value
-    TIntermTyped* constSubtree;   // for specialization constant computation
-    int anonId;                   // the ID used for anonymous blocks: TODO: see if uniqueId could serve a dual purpose
+    TConstUnionArray constArray;               // for compile-time constant value
+    TIntermTyped* constSubtree;                // for specialization constant computation
+    TVector<TExtensionList>* memberExtensions; // per-member extension list, allocated only when needed
+    int anonId; // the ID used for anonymous blocks: TODO: see if uniqueId could serve a dual purpose
 };
 
 //
@@ -294,7 +319,9 @@ public:
     virtual TParameter& operator[](int i) { assert(writable); return parameters[i]; }
     virtual const TParameter& operator[](int i) const { return parameters[i]; }
 
-    virtual void dump(TInfoSink &infoSink) const override;
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+    virtual void dump(TInfoSink& infoSink, bool complete = false) const override;
+#endif
 
 protected:
     explicit TFunction(const TFunction&);
@@ -325,35 +352,44 @@ protected:
 //
 class TAnonMember : public TSymbol {
 public:
-    TAnonMember(const TString* n, unsigned int m, const TVariable& a, int an) : TSymbol(n), anonContainer(a), memberNumber(m), anonId(an) { }
-    virtual TAnonMember* clone() const;
+    TAnonMember(const TString* n, unsigned int m, TVariable& a, int an) : TSymbol(n), anonContainer(a), memberNumber(m), anonId(an) { }
+    virtual TAnonMember* clone() const override;
     virtual ~TAnonMember() { }
 
-    virtual const TAnonMember* getAsAnonMember() const { return this; }
+    virtual const TAnonMember* getAsAnonMember() const override { return this; }
     virtual const TVariable& getAnonContainer() const { return anonContainer; }
     virtual unsigned int getMemberNumber() const { return memberNumber; }
 
-    virtual const TType& getType() const
+    virtual const TType& getType() const override
     {
         const TTypeList& types = *anonContainer.getType().getStruct();
         return *types[memberNumber].type;
     }
 
-    virtual TType& getWritableType()
+    virtual TType& getWritableType() override
     {
         assert(writable);
         const TTypeList& types = *anonContainer.getType().getStruct();
         return *types[memberNumber].type;
     }
 
+    virtual void setExtensions(int numExts, const char* const exts[]) override
+    {
+        anonContainer.setMemberExtensions(memberNumber, numExts, exts);
+    }
+    virtual int getNumExtensions() const override { return anonContainer.getNumMemberExtensions(memberNumber); }
+    virtual const char** getExtensions() const override { return anonContainer.getMemberExtensions(memberNumber); }
+
     virtual int getAnonId() const { return anonId; }
-    virtual void dump(TInfoSink &infoSink) const;
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+    virtual void dump(TInfoSink& infoSink, bool complete = false) const override;
+#endif
 
 protected:
     explicit TAnonMember(const TAnonMember&);
     TAnonMember& operator=(const TAnonMember&);
 
-    const TVariable& anonContainer;
+    TVariable& anonContainer;
     unsigned int memberNumber;
     int anonId;
 };
@@ -515,7 +551,9 @@ public:
 
     void relateToOperator(const char* name, TOperator op);
     void setFunctionExtensions(const char* name, int num, const char* const extensions[]);
-    void dump(TInfoSink &infoSink) const;
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+    void dump(TInfoSink& infoSink, bool complete = false) const;
+#endif
     TSymbolTableLevel* clone() const;
     void readOnly();
 
@@ -575,20 +613,24 @@ public:
     //
 protected:
     static const int globalLevel = 3;
-    bool isSharedLevel(int level)  { return level <= 1; }              // exclude all per-compile levels
-    bool isBuiltInLevel(int level) { return level <= 2; }              // exclude user globals
-    bool isGlobalLevel(int level)  { return level <= globalLevel; }    // include user globals
+    static bool isSharedLevel(int level)  { return level <= 1; }            // exclude all per-compile levels
+    static bool isBuiltInLevel(int level) { return level <= 2; }            // exclude user globals
+    static bool isGlobalLevel(int level)  { return level <= globalLevel; }  // include user globals
 public:
     bool isEmpty() { return table.size() == 0; }
     bool atBuiltInLevel() { return isBuiltInLevel(currentLevel()); }
     bool atGlobalLevel()  { return isGlobalLevel(currentLevel()); }
-
+    static bool isBuiltInSymbol(int uniqueId) {
+        int level = uniqueId >> LevelFlagBitOffset;
+        return isBuiltInLevel(level);
+    }
     void setNoBuiltInRedeclarations() { noBuiltInRedeclarations = true; }
     void setSeparateNameSpaces() { separateNameSpaces = true; }
 
     void push()
     {
         table.push_back(new TSymbolTableLevel);
+        updateUniqueIdLevelFlag();
     }
 
     // Make a new symbol-table level to represent the scope introduced by a structure
@@ -601,6 +643,7 @@ public:
     {
         assert(thisSymbol.getName().size() == 0);
         table.push_back(new TSymbolTableLevel);
+        updateUniqueIdLevelFlag();
         table.back()->setThisLevel();
         insert(thisSymbol);
     }
@@ -610,6 +653,7 @@ public:
         table[currentLevel()]->getPreviousDefaultPrecisions(p);
         delete table.back();
         table.pop_back();
+        updateUniqueIdLevelFlag();
     }
 
     //
@@ -789,15 +833,36 @@ public:
             table[level]->setFunctionExtensions(name, num, extensions);
     }
 
-    void setVariableExtensions(const char* name, int num, const char* const extensions[])
+    void setVariableExtensions(const char* name, int numExts, const char* const extensions[])
     {
         TSymbol* symbol = find(TString(name));
-        if (symbol)
-            symbol->setExtensions(num, extensions);
+        if (symbol == nullptr)
+            return;
+
+        symbol->setExtensions(numExts, extensions);
+    }
+
+    void setVariableExtensions(const char* blockName, const char* name, int numExts, const char* const extensions[])
+    {
+        TSymbol* symbol = find(TString(blockName));
+        if (symbol == nullptr)
+            return;
+        TVariable* variable = symbol->getAsVariable();
+        assert(variable != nullptr);
+
+        const TTypeList& structure = *variable->getAsVariable()->getType().getStruct();
+        for (int member = 0; member < (int)structure.size(); ++member) {
+            if (structure[member].type->getFieldName().compare(name) == 0) {
+                variable->setMemberExtensions(member, numExts, extensions);
+                return;
+            }
+        }
     }
 
     int getMaxSymbolId() { return uniqueId; }
-    void dump(TInfoSink &infoSink) const;
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+    void dump(TInfoSink& infoSink, bool complete = false) const;
+#endif
     void copyTable(const TSymbolTable& copyOf);
 
     void setPreviousDefaultPrecisions(TPrecisionQualifier *p) { table[currentLevel()]->setPreviousDefaultPrecisions(p); }
@@ -808,12 +873,20 @@ public:
             table[level]->readOnly();
     }
 
+    // Add current level in the high-bits of unique id
+    void updateUniqueIdLevelFlag() {
+        // clamp level to avoid overflow
+        uint32_t level = currentLevel() > 7 ? 7 : currentLevel();
+        uniqueId &= ((1 << LevelFlagBitOffset) - 1);
+        uniqueId |= (level << LevelFlagBitOffset);
+    }
+
 protected:
     TSymbolTable(TSymbolTable&);
     TSymbolTable& operator=(TSymbolTableLevel&);
 
     int currentLevel() const { return static_cast<int>(table.size()) - 1; }
-
+    static const uint32_t LevelFlagBitOffset = 28;
     std::vector<TSymbolTableLevel*> table;
     int uniqueId;     // for unique identification in code generation
     bool noBuiltInRedeclarations;

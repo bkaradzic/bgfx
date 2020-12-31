@@ -58,14 +58,13 @@ spv_result_t UpdateIdUse(ValidationState_t& _, const Instruction* inst) {
 ///
 /// NOTE: This function does NOT check module scoped functions which are
 /// checked during the initial binary parse in the IdPass below
-spv_result_t CheckIdDefinitionDominateUse(const ValidationState_t& _) {
+spv_result_t CheckIdDefinitionDominateUse(ValidationState_t& _) {
   std::vector<const Instruction*> phi_instructions;
   std::unordered_set<uint32_t> phi_ids;
   for (const auto& inst : _.ordered_instructions()) {
     if (inst.id() == 0) continue;
     if (const Function* func = inst.function()) {
       if (const BasicBlock* block = inst.block()) {
-        if (!block->reachable()) continue;
         // If the Id is defined within a block then make sure all references to
         // that Id appear in a blocks that are dominated by the defining block
         for (auto& use_index_pair : inst.uses()) {
@@ -132,7 +131,11 @@ spv_result_t CheckIdDefinitionDominateUse(const ValidationState_t& _) {
 // instruction operand's ID can be forward referenced.
 spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
   auto can_have_forward_declared_ids =
-      spvOperandCanBeForwardDeclaredFunction(inst->opcode());
+      inst->opcode() == SpvOpExtInst &&
+              spvExtInstIsDebugInfo(inst->ext_inst_type())
+          ? spvDbgInfoExtOperandCanBeForwardDeclaredFunction(
+                inst->ext_inst_type(), inst->word(4))
+          : spvOperandCanBeForwardDeclaredFunction(inst->opcode());
 
   // Keep track of a result id defined by this instruction.  0 means it
   // does not define an id.
@@ -164,10 +167,48 @@ spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
       case SPV_OPERAND_TYPE_ID:
       case SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID:
       case SPV_OPERAND_TYPE_SCOPE_ID:
-        if (_.IsDefinedId(operand_word)) {
-          ret = SPV_SUCCESS;
+        if (const auto def = _.FindDef(operand_word)) {
+          const auto opcode = inst->opcode();
+          if (spvOpcodeGeneratesType(def->opcode()) &&
+              !spvOpcodeGeneratesType(opcode) && !spvOpcodeIsDebug(opcode) &&
+              !inst->IsDebugInfo() && !inst->IsNonSemantic() &&
+              !spvOpcodeIsDecoration(opcode) && opcode != SpvOpFunction &&
+              opcode != SpvOpCooperativeMatrixLengthNV &&
+              !(opcode == SpvOpSpecConstantOp &&
+                inst->word(3) == SpvOpCooperativeMatrixLengthNV)) {
+            return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << "Operand " << _.getIdName(operand_word)
+                   << " cannot be a type";
+          } else if (def->type_id() == 0 && !spvOpcodeGeneratesType(opcode) &&
+                     !spvOpcodeIsDebug(opcode) && !inst->IsDebugInfo() &&
+                     !inst->IsNonSemantic() && !spvOpcodeIsDecoration(opcode) &&
+                     !spvOpcodeIsBranch(opcode) && opcode != SpvOpPhi &&
+                     opcode != SpvOpExtInst && opcode != SpvOpExtInstImport &&
+                     opcode != SpvOpSelectionMerge &&
+                     opcode != SpvOpLoopMerge && opcode != SpvOpFunction &&
+                     opcode != SpvOpCooperativeMatrixLengthNV &&
+                     !(opcode == SpvOpSpecConstantOp &&
+                       inst->word(3) == SpvOpCooperativeMatrixLengthNV)) {
+            return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << "Operand " << _.getIdName(operand_word)
+                   << " requires a type";
+          } else if (def->IsNonSemantic() && !inst->IsNonSemantic()) {
+            return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << "Operand " << _.getIdName(operand_word)
+                   << " in semantic instruction cannot be a non-semantic "
+                      "instruction";
+          } else {
+            ret = SPV_SUCCESS;
+          }
         } else if (can_have_forward_declared_ids(i)) {
-          ret = _.ForwardDeclareId(operand_word);
+          if (spvOpcodeGeneratesType(inst->opcode()) &&
+              !_.IsForwardPointer(operand_word)) {
+            ret = _.diag(SPV_ERROR_INVALID_ID, inst)
+                  << "Operand " << _.getIdName(operand_word)
+                  << " requires a previous definition";
+          } else {
+            ret = _.ForwardDeclareId(operand_word);
+          }
         } else {
           ret = _.diag(SPV_ERROR_INVALID_ID, inst)
                 << "ID " << _.getIdName(operand_word)

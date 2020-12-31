@@ -38,8 +38,20 @@
 #define _COMMON_INCLUDED_
 
 #include <sstream>
+#include <algorithm>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <list>
+#include <map>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || (defined(_MSC_VER) && _MSC_VER < 1700)
+
 namespace std {
 template<typename T>
 std::string to_string(const T& val) {
@@ -92,17 +104,6 @@ std::string to_string(const T& val) {
     #pragma warning(disable : 4514) // unused inline method
     #pragma warning(disable : 4201) // nameless union
 #endif
-
-#include <set>
-#include <unordered_set>
-#include <vector>
-#include <map>
-#include <unordered_map>
-#include <list>
-#include <algorithm>
-#include <string>
-#include <cstdio>
-#include <cassert>
 
 #include "PoolAlloc.h"
 
@@ -250,7 +251,8 @@ struct TSourceLoc {
             return nullptr;
         return name->c_str();
     }
-    TString* name; // descriptive name for this string
+    const char* getFilenameStr() const { return name == nullptr ? "" : name->c_str(); }
+    TString* name; // descriptive name for this string, when a textual name is available, otherwise nullptr
     int string;
     int line;
     int column;

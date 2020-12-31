@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2018 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2020 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
@@ -28,42 +28,33 @@ project ("example-common")
 	}
 
 	files {
-		path.join(BGFX_DIR, "3rdparty/ib-compress/**.cpp"),
-		path.join(BGFX_DIR, "3rdparty/ib-compress/**.h"),
+		path.join(BGFX_DIR, "3rdparty/meshoptimizer/src/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/meshoptimizer/src/**.h"),
 		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.h"),
-		path.join(BGFX_DIR, "examples/common/**.cpp"),
 		path.join(BGFX_DIR, "examples/common/**.cpp"),
 		path.join(BGFX_DIR, "examples/common/**.h"),
 	}
 
+	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"),
+		{ path.join(BGFX_DIR, "../bgfx-gnm/examples/common/entry/entry_orbis.cpp") }) then
+
+		files {
+			path.join(BGFX_DIR, "../bgfx-gnm/examples/common/entry/entry_orbis.cpp"),
+		}
+	end
+
+	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-nvn"),
+		{ path.join(BGFX_DIR, "../bgfx-gnm/examples/common/entry/entry_nx.cpp") }) then
+
+		files {
+			path.join(BGFX_DIR, "../bgfx-gnm/examples/common/entry/entry_nx.cpp"),
+		}
+	end
+
 	removefiles {
 		path.join(BGFX_DIR, "examples/common/example-glue.cpp"),
 	}
-
-	if _OPTIONS["with-scintilla"] then
-		defines {
-			"SCI_NAMESPACE",
-			"SCI_LEXER",
-		}
-
-		buildoptions {
---			"-Wno-missing-field-initializers",
-		}
-
-		includedirs {
-			path.join(BGFX_DIR, "3rdparty/scintilla/include"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib"),
-		}
-
-		files {
-			path.join(BGFX_DIR, "3rdparty/scintilla/src/**.cxx"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/src/**.h"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib/**.cxx"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib/**.h"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/lexers/**.cxx"),
-		}
-	end
 
 	if _OPTIONS["with-sdl"] then
 		defines {
@@ -80,10 +71,11 @@ project ("example-common")
 		}
 	end
 
-	configuration { "linux-steamlink" }
+	if _OPTIONS["with-wayland"] then
 		defines {
-			"EGL_API_FB",
+			"ENTRY_CONFIG_USE_WAYLAND=1",
 		}
+	end
 
 	configuration { "osx or ios* or tvos*" }
 		files {

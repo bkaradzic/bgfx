@@ -49,7 +49,9 @@ class AggressiveDCEPass : public MemPass {
   Status Process() override;
 
   IRContext::Analysis GetPreservedAnalyses() override {
-    return IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping;
+    return IRContext::kAnalysisDefUse |
+           IRContext::kAnalysisInstrToBlockMapping |
+           IRContext::kAnalysisConstants | IRContext::kAnalysisTypes;
   }
 
  private:
@@ -83,9 +85,9 @@ class AggressiveDCEPass : public MemPass {
 
   // Add all store instruction which use |ptrId|, directly or indirectly,
   // to the live instruction worklist.
-  void AddStores(uint32_t ptrId);
+  void AddStores(Function* func, uint32_t ptrId);
 
-  // Initialize extensions whitelist
+  // Initialize extensions allowlist
   void InitExtensions();
 
   // Return true if all extensions in this module are supported by this pass.
@@ -97,7 +99,7 @@ class AggressiveDCEPass : public MemPass {
   bool IsTargetDead(Instruction* inst);
 
   // If |varId| is local, mark all stores of varId as live.
-  void ProcessLoad(uint32_t varId);
+  void ProcessLoad(Function* func, uint32_t varId);
 
   // If |bp| is structured header block, returns true and sets |mergeInst| to
   // the merge instruction, |branchInst| to the branch and |mergeBlockId| to the
@@ -107,8 +109,8 @@ class AggressiveDCEPass : public MemPass {
   bool IsStructuredHeader(BasicBlock* bp, Instruction** mergeInst,
                           Instruction** branchInst, uint32_t* mergeBlockId);
 
-  // Initialize block2headerBranch_ and branch2merge_ using |structuredOrder|
-  // to order blocks.
+  // Initialize block2headerBranch_,  header2nextHeaderBranch_, and
+  // branch2merge_ using |structuredOrder| to order blocks.
   void ComputeBlock2HeaderMaps(std::list<BasicBlock*>& structuredOrder);
 
   // Add branch to |labelId| to end of block |bp|.
@@ -124,9 +126,6 @@ class AggressiveDCEPass : public MemPass {
 
   // Erases functions that are unreachable from the entry points of the module.
   bool EliminateDeadFunctions();
-
-  // Removes |func| from the module and deletes all its instructions.
-  void EliminateFunction(Function* func);
 
   // For function |func|, mark all Stores to non-function-scope variables
   // and block terminating instructions as live. Recursively mark the values
@@ -163,6 +162,12 @@ class AggressiveDCEPass : public MemPass {
   // of an enclosing construct's header, if one exists.
   std::unordered_map<BasicBlock*, Instruction*> block2headerBranch_;
 
+  // Map from header block to the branch instruction in the header of the
+  // structured construct enclosing it.
+  // The liveness algorithm is designed to iteratively mark as live all
+  // structured constructs enclosing a live instruction.
+  std::unordered_map<BasicBlock*, Instruction*> header2nextHeaderBranch_;
+
   // Maps basic block to their index in the structured order traversal.
   std::unordered_map<BasicBlock*, uint32_t> structured_order_index_;
 
@@ -183,7 +188,7 @@ class AggressiveDCEPass : public MemPass {
   std::vector<Instruction*> to_kill_;
 
   // Extensions supported by this pass.
-  std::unordered_set<std::string> extensions_whitelist_;
+  std::unordered_set<std::string> extensions_allowlist_;
 };
 
 }  // namespace opt

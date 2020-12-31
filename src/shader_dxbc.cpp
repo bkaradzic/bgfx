@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -468,7 +468,7 @@ namespace bgfx
 
 	const char* getName(DxbcOpcode::Enum _opcode)
 	{
-		BX_CHECK(_opcode < DxbcOpcode::Count, "Unknown opcode id %d.", _opcode);
+		BX_ASSERT(_opcode < DxbcOpcode::Count, "Unknown opcode id %d.", _opcode);
 		return s_dxbcOpcode[_opcode];
 	}
 
@@ -717,8 +717,8 @@ namespace bgfx
 	}
 
 	// dxbc hash function is slightly modified version of MD5 hash.
-	// https://tools.ietf.org/html/rfc1321
-	// http://www.efgh.com/software/md5.txt
+	// https://web.archive.org/web/20190207230524/https://tools.ietf.org/html/rfc1321
+	// https://web.archive.org/web/20190207230538/http://www.efgh.com/software/md5.txt
 	//
 	// Assumption is that data pointer, size are both 4-byte aligned,
 	// and little endian.
@@ -825,7 +825,7 @@ namespace bgfx
 			break;
 
 		default:
-			BX_CHECK(false, "sub operand addressing mode %d", _subOperand.addrMode);
+			BX_ASSERT(false, "sub operand addressing mode %d", _subOperand.addrMode);
 			break;
 		}
 
@@ -878,7 +878,7 @@ namespace bgfx
 			break;
 
 		default:
-			BX_CHECK(false, "sub operand addressing mode %d", _subOperand.addrMode);
+			BX_ASSERT(false, "sub operand addressing mode %d", _subOperand.addrMode);
 			break;
 		}
 
@@ -967,7 +967,7 @@ namespace bgfx
 				break;
 
 			default:
-				BX_CHECK(false, "operand %d addressing mode %d", ii, _operand.addrMode[ii]);
+				BX_ASSERT(false, "operand %d addressing mode %d", ii, _operand.addrMode[ii]);
 				break;
 			}
 		}
@@ -1042,7 +1042,7 @@ namespace bgfx
 				break;
 
 			default:
-				BX_CHECK(false, "operand %d addressing mode %d", ii, _operand.addrMode[ii]);
+				BX_ASSERT(false, "operand %d addressing mode %d", ii, _operand.addrMode[ii]);
 				break;
 			}
 		}
@@ -1065,6 +1065,8 @@ namespace bgfx
 		// +-------------------------------- extended
 
 		_instruction.opcode = DxbcOpcode::Enum( (token & UINT32_C(0x000007ff) )      );
+		BX_ASSERT(_instruction.opcode < DxbcOpcode::Enum::Count, "unknown opcode");
+		
 		_instruction.length =          uint8_t( (token & UINT32_C(0x7f000000) ) >> 24);
 		bool extended       =              0 != (token & UINT32_C(0x80000000) );
 
@@ -1297,7 +1299,7 @@ namespace bgfx
 					uint32_t num;
 					size += read(_reader, num, _err);
 
-					BX_CHECK(false, "not implemented.");
+					BX_ASSERT(false, "not implemented.");
 				}
 				break;
 
@@ -1325,7 +1327,7 @@ namespace bgfx
 			break;
 
 		default:
-			BX_CHECK(false, "Instruction %s with invalid number of operands %d (numValues %d)."
+			BX_ASSERT(false, "Instruction %s with invalid number of operands %d (numValues %d)."
 					, getName(_instruction.opcode)
 					, info.numOperands
 					, info.numValues
@@ -1849,6 +1851,12 @@ namespace bgfx
 #define DXBC_CHUNK_INPUT_SIGNATURE  BX_MAKEFOURCC('I', 'S', 'G', 'N')
 #define DXBC_CHUNK_OUTPUT_SIGNATURE BX_MAKEFOURCC('O', 'S', 'G', 'N')
 
+#define DXBC_CHUNK_SFI0             BX_MAKEFOURCC('S', 'F', 'I', '0')
+#define DXBC_CHUNK_SPDB             BX_MAKEFOURCC('S', 'P', 'D', 'B')
+
+#define DXBC_CHUNK_RDEF             BX_MAKEFOURCC('R', 'D', 'E', 'F')
+#define DXBC_CHUNK_STAT             BX_MAKEFOURCC('S', 'T', 'A', 'T')
+
 	int32_t read(bx::ReaderSeekerI* _reader, DxbcContext& _dxbc, bx::Error* _err)
 	{
 		int32_t size = 0;
@@ -1867,6 +1875,7 @@ namespace bgfx
 
 			uint32_t fourcc;
 			size += bx::read(_reader, fourcc, _err);
+			_dxbc.chunksFourcc[ii] = fourcc;
 
 			uint32_t chunkSize;
 			size += bx::read(_reader, chunkSize, _err);
@@ -1896,12 +1905,27 @@ namespace bgfx
 				_dxbc.shader.aon9 = true;
 				break;
 
+			case DXBC_CHUNK_SFI0: // ?
+				BX_ASSERT(chunkSize == sizeof(_dxbc.sfi0.data),
+					"Unexpected size of SFI0 chunk");
+
+				size += bx::read(_reader, _dxbc.sfi0.data, _err);
+				break;
+
+			case DXBC_CHUNK_SPDB: // Shader debugging info (new).
+				_dxbc.spdb.debugCode.resize(chunkSize);
+				size += bx::read(_reader, _dxbc.spdb.debugCode.data(), chunkSize, _err);
+				break;
+			case DXBC_CHUNK_RDEF: // Resource definition.
+				_dxbc.rdef.rdefCode.resize(chunkSize);
+				size += bx::read(_reader, _dxbc.rdef.rdefCode.data(), chunkSize, _err);
+				break;
+			case DXBC_CHUNK_STAT: // Statistics.
+				_dxbc.stat.statCode.resize(chunkSize);
+				size += bx::read(_reader, _dxbc.stat.statCode.data(), chunkSize, _err);
+				break;
 			case BX_MAKEFOURCC('I', 'F', 'C', 'E'): // Interface.
-			case BX_MAKEFOURCC('R', 'D', 'E', 'F'): // Resource definition.
 			case BX_MAKEFOURCC('S', 'D', 'G', 'B'): // Shader debugging info (old).
-			case BX_MAKEFOURCC('S', 'P', 'D', 'B'): // Shader debugging info (new).
-			case BX_MAKEFOURCC('S', 'F', 'I', '0'): // ?
-			case BX_MAKEFOURCC('S', 'T', 'A', 'T'): // Statistics.
 			case BX_MAKEFOURCC('P', 'C', 'S', 'G'): // Patch constant signature.
 			case BX_MAKEFOURCC('P', 'S', 'O', '1'): // Pipeline State Object 1
 			case BX_MAKEFOURCC('P', 'S', 'O', '2'): // Pipeline State Object 2
@@ -1912,7 +1936,7 @@ namespace bgfx
 
 			default:
 				size += chunkSize;
-				BX_CHECK(false, "UNKNOWN FOURCC %c%c%c%c %d"
+				BX_ASSERT(false, "UNKNOWN FOURCC %c%c%c%c %d"
 					, ( (char*)&fourcc)[0]
 					, ( (char*)&fourcc)[1]
 					, ( (char*)&fourcc)[2]
@@ -1930,6 +1954,30 @@ namespace bgfx
 	{
 		int32_t size = 0;
 
+		uint32_t numSupportedChunks = 0;
+		for (uint32_t ii = 0; ii < _dxbc.header.numChunks; ++ii)
+		{
+			switch(_dxbc.chunksFourcc[ii])
+			{
+			case DXBC_CHUNK_SHADER_EX:
+			case DXBC_CHUNK_SHADER:
+			case BX_MAKEFOURCC('I', 'S', 'G', '1'):
+			case DXBC_CHUNK_INPUT_SIGNATURE:
+			case BX_MAKEFOURCC('O', 'S', 'G', '1'):
+			case BX_MAKEFOURCC('O', 'S', 'G', '5'):
+			case DXBC_CHUNK_OUTPUT_SIGNATURE:
+			case DXBC_CHUNK_SFI0:
+			case DXBC_CHUNK_SPDB:
+			case DXBC_CHUNK_RDEF:
+			case DXBC_CHUNK_STAT:
+				++numSupportedChunks;
+				break;
+
+			default:
+				break;
+			}
+		}
+
 		int64_t dxbcOffset = bx::seek(_writer);
 		size += bx::write(_writer, DXBC_CHUNK_HEADER);
 
@@ -1940,35 +1988,96 @@ namespace bgfx
 		int64_t sizeOffset = bx::seek(_writer);
 		size += bx::writeRep(_writer, 0, 4, _err);
 
-		uint32_t numChunks = 3;
-		size += bx::write(_writer, numChunks, _err);
+		size += bx::write(_writer, numSupportedChunks, _err);
 
 		int64_t chunksOffsets = bx::seek(_writer);
-		size += bx::writeRep(_writer, 0, numChunks*sizeof(uint32_t), _err);
+		size += bx::writeRep(_writer, 0, numSupportedChunks*sizeof(uint32_t), _err);
 
-		uint32_t chunkOffset[3];
-		uint32_t chunkSize[3];
+		uint32_t chunkOffset[DXBC_MAX_CHUNKS] = {};
+		uint32_t chunkSize[DXBC_MAX_CHUNKS] = {};
 
-		chunkOffset[0] = uint32_t(bx::seek(_writer) - dxbcOffset);
-		size += write(_writer, DXBC_CHUNK_INPUT_SIGNATURE, _err);
-		size += write(_writer, UINT32_C(0), _err);
-		chunkSize[0] = write(_writer, _dxbc.inputSignature, _err);
+		for (uint32_t ii = 0, idx = 0; ii < _dxbc.header.numChunks; ++ii)
+		{
+			switch (_dxbc.chunksFourcc[ii])
+			{
+			case DXBC_CHUNK_SHADER_EX:
+			case DXBC_CHUNK_SHADER:
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, _dxbc.shader.shex ? DXBC_CHUNK_SHADER_EX : DXBC_CHUNK_SHADER, _err);
+				size += bx::write(_writer, UINT32_C(0), _err);
+				chunkSize[idx] = write(_writer, _dxbc.shader, _err);
+				size += chunkSize[idx++];
+				break;
 
-		chunkOffset[1] = uint32_t(bx::seek(_writer) - dxbcOffset);
-		size += write(_writer, DXBC_CHUNK_OUTPUT_SIGNATURE, _err);
-		size += write(_writer, UINT32_C(0), _err);
-		chunkSize[1] = write(_writer, _dxbc.outputSignature, _err);
+			case BX_MAKEFOURCC('I', 'S', 'G', '1'):
+			case DXBC_CHUNK_INPUT_SIGNATURE:
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, DXBC_CHUNK_INPUT_SIGNATURE, _err);
+				size += bx::write(_writer, UINT32_C(0), _err);
+				chunkSize[idx] = write(_writer, _dxbc.inputSignature, _err);
+				size += chunkSize[idx++];
+				break;
 
-		chunkOffset[2] = uint32_t(bx::seek(_writer) - dxbcOffset);
-		size += write(_writer, _dxbc.shader.shex ? DXBC_CHUNK_SHADER_EX : DXBC_CHUNK_SHADER, _err);
-		size += write(_writer, UINT32_C(0), _err);
-		chunkSize[2] = write(_writer, _dxbc.shader, _err);
+			case BX_MAKEFOURCC('O', 'S', 'G', '1'):
+			case BX_MAKEFOURCC('O', 'S', 'G', '5'):
+			case DXBC_CHUNK_OUTPUT_SIGNATURE:
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, DXBC_CHUNK_OUTPUT_SIGNATURE, _err);
+				size += bx::write(_writer, UINT32_C(0), _err);
+				chunkSize[idx] = write(_writer, _dxbc.outputSignature, _err);
+				size += chunkSize[idx++];
+				break;
 
-		size += 0
-			+ chunkSize[0]
-			+ chunkSize[1]
-			+ chunkSize[2]
-			;
+			case DXBC_CHUNK_SFI0:
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, DXBC_CHUNK_SFI0, _err);
+				size += bx::write(_writer, UINT32_C(0), _err);
+				chunkSize[idx] = bx::write(_writer, _dxbc.sfi0.data, _err);
+				size += chunkSize[idx++];
+				break;
+
+			case DXBC_CHUNK_SPDB: // Shader debugging info (new).
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, DXBC_CHUNK_SPDB, _err);
+				size += bx::write(_writer, UINT32_C(0), _err);
+				chunkSize[idx] = bx::write(_writer, _dxbc.spdb.debugCode.data(), int32_t(_dxbc.spdb.debugCode.size() ), _err);
+				size += chunkSize[idx++];
+				break;
+
+			case DXBC_CHUNK_RDEF: // Resource definition.
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, DXBC_CHUNK_RDEF, _err);
+				size += bx::write(_writer, uint32_t(_dxbc.rdef.rdefCode.size()), _err);
+				chunkSize[idx] = bx::write(_writer, _dxbc.rdef.rdefCode.data(), int32_t(_dxbc.rdef.rdefCode.size() ), _err);
+				size += chunkSize[idx++];
+				break;
+
+			case DXBC_CHUNK_STAT: // Statistics.
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, DXBC_CHUNK_STAT, _err);
+				size += bx::write(_writer, uint32_t(_dxbc.stat.statCode.size()), _err);
+				chunkSize[idx] = bx::write(_writer, _dxbc.stat.statCode.data(), int32_t(_dxbc.stat.statCode.size() ), _err);
+				size += chunkSize[idx++];
+				break;
+
+			case BX_MAKEFOURCC('A', 'o', 'n', '9'): // Contains DX9BC for feature level 9.x (*s_4_0_level_9_*) shaders.
+			case BX_MAKEFOURCC('I', 'F', 'C', 'E'): // Interface.
+			case BX_MAKEFOURCC('S', 'D', 'G', 'B'): // Shader debugging info (old).
+			case BX_MAKEFOURCC('P', 'C', 'S', 'G'): // Patch constant signature.
+			case BX_MAKEFOURCC('P', 'S', 'O', '1'): // Pipeline State Object 1
+			case BX_MAKEFOURCC('P', 'S', 'O', '2'): // Pipeline State Object 2
+			case BX_MAKEFOURCC('X', 'N', 'A', 'P'): // ?
+			case BX_MAKEFOURCC('X', 'N', 'A', 'S'): // ?
+			default:
+				BX_ASSERT(false, "Writing of DXBC %c%c%c%c chunk unsupported"
+					, ( (char*)&_dxbc.chunksFourcc[ii])[0]
+					, ( (char*)&_dxbc.chunksFourcc[ii])[1]
+					, ( (char*)&_dxbc.chunksFourcc[ii])[2]
+					, ( (char*)&_dxbc.chunksFourcc[ii])[3]
+					);
+				break;
+			}
+		}
 
 		int64_t eof = bx::seek(_writer);
 
@@ -1976,9 +2085,9 @@ namespace bgfx
 		bx::write(_writer, size, _err);
 
 		bx::seek(_writer, chunksOffsets, bx::Whence::Begin);
-		bx::write(_writer, chunkOffset, sizeof(chunkOffset), _err);
+		bx::write(_writer, chunkOffset, numSupportedChunks*sizeof(chunkOffset[0]), _err);
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(chunkOffset); ++ii)
+		for (uint32_t ii = 0; ii < numSupportedChunks; ++ii)
 		{
 			bx::seek(_writer, chunkOffset[ii]+4, bx::Whence::Begin);
 			bx::write(_writer, chunkSize[ii], _err);
@@ -1999,7 +2108,7 @@ namespace bgfx
 		{
 			DxbcInstruction instruction;
 			uint32_t size = read(&reader, instruction, _err);
-			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
+			BX_ASSERT(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			bool cont = _fn(token * sizeof(uint32_t), instruction, _userData);
 			if (!cont)
@@ -2026,7 +2135,7 @@ namespace bgfx
 		{
 			DxbcInstruction instruction;
 			uint32_t size = read(&reader, instruction, _err);
-			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
+			BX_ASSERT(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			_fn(instruction, _userData);
 

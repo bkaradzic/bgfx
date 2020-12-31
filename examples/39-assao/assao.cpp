@@ -60,7 +60,7 @@ namespace
 		0.25f
 	};
 
-	// Vertex decl for our screen space quad (used in deferred rendering)
+	// Vertex layout for our screen space quad (used in deferred rendering)
 	struct PosTexCoord0Vertex
 	{
 		float m_x;
@@ -71,25 +71,25 @@ namespace
 
 		static void init()
 		{
-			ms_decl
+			ms_layout
 				.begin()
 				.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 				.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 				.end();
 		}
 
-		static bgfx::VertexDecl ms_decl;
+		static bgfx::VertexLayout ms_layout;
 	};
 
-	bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+	bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 	// Utility function to draw a screen space quad for deferred rendering
 	void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 	{
-		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_decl))
+		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
 		{
 			bgfx::TransientVertexBuffer vb;
-			bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_decl);
+			bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 			PosTexCoord0Vertex* vertex = (PosTexCoord0Vertex*)vb.data;
 
 			const float minx = -_width;
@@ -247,8 +247,8 @@ namespace
 	class ExampleASSAO : public entry::AppI
 	{
 	public:
-		ExampleASSAO(const char* _name, const char* _description)
-			: entry::AppI(_name, _description)
+		ExampleASSAO(const char* _name, const char* _description, const char* _url)
+			: entry::AppI(_name, _description, _url)
 			, m_currFrame(UINT32_MAX)
 			, m_enableSSAO(true)
 			, m_enableTexturing(true)
@@ -296,18 +296,18 @@ namespace
 			m_uniforms.init();
 
 			// Create texture sampler uniforms (used when we bind textures)
-			s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Int1);  // Normal gbuffer
-			s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Int1);  // Normal gbuffer
-			s_color  = bgfx::createUniform("s_color",  bgfx::UniformType::Int1);  // Color (albedo) gbuffer
-			s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Int1);
+			s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);  // Normal gbuffer
+			s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Sampler);  // Normal gbuffer
+			s_color  = bgfx::createUniform("s_color",  bgfx::UniformType::Sampler);  // Color (albedo) gbuffer
+			s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
 
-			s_ao                         = bgfx::createUniform("s_ao", bgfx::UniformType::Int1);
-			s_blurInput                  = bgfx::createUniform("s_blurInput", bgfx::UniformType::Int1);
-			s_finalSSAO                  = bgfx::createUniform("s_finalSSAO", bgfx::UniformType::Int1);
-			s_depthSource                = bgfx::createUniform("s_depthSource", bgfx::UniformType::Int1);
-			s_viewspaceDepthSource       = bgfx::createUniform("s_viewspaceDepthSource", bgfx::UniformType::Int1);
-			s_viewspaceDepthSourceMirror = bgfx::createUniform("s_viewspaceDepthSourceMirror", bgfx::UniformType::Int1);
-			s_importanceMap              = bgfx::createUniform("s_importanceMap", bgfx::UniformType::Int1);
+			s_ao                         = bgfx::createUniform("s_ao", bgfx::UniformType::Sampler);
+			s_blurInput                  = bgfx::createUniform("s_blurInput", bgfx::UniformType::Sampler);
+			s_finalSSAO                  = bgfx::createUniform("s_finalSSAO", bgfx::UniformType::Sampler);
+			s_depthSource                = bgfx::createUniform("s_depthSource", bgfx::UniformType::Sampler);
+			s_viewspaceDepthSource       = bgfx::createUniform("s_viewspaceDepthSource", bgfx::UniformType::Sampler);
+			s_viewspaceDepthSourceMirror = bgfx::createUniform("s_viewspaceDepthSourceMirror", bgfx::UniformType::Sampler);
+			s_importanceMap              = bgfx::createUniform("s_importanceMap", bgfx::UniformType::Sampler);
 
 			// Create program from shaders.
 			m_gbufferProgram = loadProgram("vs_assao_gbuffer", "fs_assao_gbuffer");  // Gbuffer
@@ -363,9 +363,9 @@ namespace
 			m_recreateFrameBuffers = false;
 			createFramebuffers();
 
-			m_loadCounter = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::R32U, BGFX_TEXTURE_COMPUTE_WRITE);
+			m_loadCounter = bgfx::createDynamicIndexBuffer(1, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
 
-			// Vertex decl
+			// Vertex layout
 			PosTexCoord0Vertex::init();
 
 			// Init camera
@@ -471,7 +471,7 @@ namespace
 				}
 
 				// Update camera
-				cameraUpdate(deltaTime*0.15f, m_mouseState);
+				cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
 
 				// Set up matrices for gbuffer
 				cameraGetViewMtx(m_view);
@@ -630,7 +630,7 @@ namespace
 
 							if (!adaptiveBasePass && (m_settings.m_qualityLevel == 3))
 							{
-								bgfx::setImage(3, m_loadCounter, 0, bgfx::Access::Read, bgfx::TextureFormat::R32U);
+								bgfx::setBuffer(3, m_loadCounter, bgfx::Access::Read);
 								bgfx::setTexture(4, s_importanceMap, m_importanceMap, SAMPLER_LINEAR_CLAMP);
 								bgfx::setImage(5, m_finalResults, 0, bgfx::Access::Read, bgfx::TextureFormat::RG8);
 							}
@@ -697,13 +697,13 @@ namespace
 						bgfx::setTexture(1, s_importanceMap, m_importanceMap);
 						bgfx::dispatch(view, m_postprocessImportanceMapAProgram, (m_quarterSize[0] + 7) / 8, (m_quarterSize[1] + 7) / 8);
 
-						bgfx::setImage(0, m_loadCounter, 0, bgfx::Access::ReadWrite, bgfx::TextureFormat::R32U);
+						bgfx::setBuffer(0, m_loadCounter, bgfx::Access::ReadWrite);
 						bgfx::dispatch(view, m_loadCounterClearProgram, 1,1);
 
 						m_uniforms.submit();
 						bgfx::setImage(0, m_importanceMap, 0, bgfx::Access::Write, bgfx::TextureFormat::R8);
 						bgfx::setTexture(1, s_importanceMap, m_importanceMapPong);
-						bgfx::setImage(2, m_loadCounter, 0, bgfx::Access::ReadWrite, bgfx::TextureFormat::R32U);
+						bgfx::setBuffer(2, m_loadCounter, bgfx::Access::ReadWrite);
 						bgfx::dispatch(view, m_postprocessImportanceMapBProgram, (m_quarterSize[0]+7) / 8, (m_quarterSize[1]+7) / 8);
 						++view;
 					}
@@ -1159,7 +1159,7 @@ namespace
 		// Only needed for quality level 3 (adaptive quality)
 		bgfx::TextureHandle m_importanceMap;
 		bgfx::TextureHandle m_importanceMapPong;
-		bgfx::TextureHandle m_loadCounter;
+		bgfx::DynamicIndexBufferHandle m_loadCounter;
 
 		struct Model
 		{
@@ -1200,6 +1200,11 @@ namespace
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleASSAO, "39-assao", "Adaptive Screen Space Ambient Occlusion.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleASSAO
+	, "39-assao"
+	, "Adaptive Screen Space Ambient Occlusion."
+	, "https://bkaradzic.github.io/bgfx/examples.html#assao"
+	);
 
 

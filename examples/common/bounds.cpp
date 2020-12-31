@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -7,217 +7,213 @@
 #include <bx/math.h>
 #include "bounds.h"
 
-void aabbToObb(Obb& _obb, const Aabb& _aabb)
+using namespace bx;
+
+Vec3 getCenter(const Aabb& _aabb)
 {
-	bx::memSet(_obb.m_mtx, 0, sizeof(_obb.m_mtx) );
-	_obb.m_mtx[ 0] = (_aabb.m_max.x - _aabb.m_min.x) * 0.5f;
-	_obb.m_mtx[ 5] = (_aabb.m_max.y - _aabb.m_min.y) * 0.5f;
-	_obb.m_mtx[10] = (_aabb.m_max.z - _aabb.m_min.z) * 0.5f;
-	_obb.m_mtx[12] = (_aabb.m_min.x + _aabb.m_max.x) * 0.5f;
-	_obb.m_mtx[13] = (_aabb.m_min.y + _aabb.m_max.y) * 0.5f;
-	_obb.m_mtx[14] = (_aabb.m_min.z + _aabb.m_max.z) * 0.5f;
-	_obb.m_mtx[15] = 1.0f;
+	return mul(add(_aabb.min, _aabb.max), 0.5f);
 }
 
-void toAabb(Aabb& _aabb, const Obb& _obb)
+Vec3 getExtents(const Aabb& _aabb)
 {
-	bx::Vec3 xyz = { 1.0f, 1.0f, 1.0f };
-	bx::Vec3 tmp = bx::mul(xyz, _obb.m_mtx);
+	return mul(sub(_aabb.max, _aabb.min), 0.5f);
+}
 
-	_aabb.m_min = tmp;
-	_aabb.m_max = tmp;
+Vec3 getCenter(const Triangle& _triangle)
+{
+	return mul(add(add(_triangle.v0, _triangle.v1), _triangle.v2), 1.0f/3.0f);
+}
+
+void toAabb(Aabb& _outAabb, const Vec3& _extents)
+{
+	_outAabb.min = neg(_extents);
+	_outAabb.max =     _extents;
+}
+
+void toAabb(Aabb& _outAabb, const Vec3& _center, const Vec3& _extents)
+{
+	_outAabb.min = sub(_center, _extents);
+	_outAabb.max = add(_center, _extents);
+}
+
+void toAabb(Aabb& _outAabb, const Cylinder& _cylinder)
+{
+	// Reference(s):
+	// - https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	//
+	const Vec3 axis = sub(_cylinder.end, _cylinder.pos);
+	const Vec3 asq  = mul(axis, axis);
+	const Vec3 nsq  = mul(asq, 1.0f/dot(axis, axis) );
+	const Vec3 tmp  = sub(Vec3(1.0f), nsq);
+
+	const float inv = 1.0f/(tmp.x*tmp.y*tmp.z);
+
+	const Vec3 extent =
+	{
+		_cylinder.radius * tmp.x * bx::sqrt( (nsq.x + nsq.y * nsq.z) * inv),
+		_cylinder.radius * tmp.y * bx::sqrt( (nsq.y + nsq.z * nsq.x) * inv),
+		_cylinder.radius * tmp.z * bx::sqrt( (nsq.z + nsq.x * nsq.y) * inv),
+	};
+
+	const Vec3 minP = sub(_cylinder.pos, extent);
+	const Vec3 minE = sub(_cylinder.end, extent);
+	const Vec3 maxP = add(_cylinder.pos, extent);
+	const Vec3 maxE = add(_cylinder.end, extent);
+
+	_outAabb.min = min(minP, minE);
+	_outAabb.max = max(maxP, maxE);
+}
+
+void toAabb(Aabb& _outAabb, const Disk& _disk)
+{
+	// Reference(s):
+	// - https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	//
+	const Vec3 nsq = mul(_disk.normal, _disk.normal);
+	const Vec3 one = { 1.0f, 1.0f, 1.0f };
+	const Vec3 tmp = sub(one, nsq);
+	const float inv = 1.0f / (tmp.x*tmp.y*tmp.z);
+
+	const Vec3 extent =
+	{
+		_disk.radius * tmp.x * bx::sqrt( (nsq.x + nsq.y * nsq.z) * inv),
+		_disk.radius * tmp.y * bx::sqrt( (nsq.y + nsq.z * nsq.x) * inv),
+		_disk.radius * tmp.z * bx::sqrt( (nsq.z + nsq.x * nsq.y) * inv),
+	};
+
+	_outAabb.min = sub(_disk.center, extent);
+	_outAabb.max = add(_disk.center, extent);
+}
+
+void toAabb(Aabb& _outAabb, const Obb& _obb)
+{
+	Vec3 xyz = { 1.0f, 1.0f, 1.0f };
+	Vec3 tmp = mul(xyz, _obb.mtx);
+
+	_outAabb.min = tmp;
+	_outAabb.max = tmp;
 
 	for (uint32_t ii = 1; ii < 8; ++ii)
 	{
 		xyz.x = ii & 1 ? -1.0f : 1.0f;
 		xyz.y = ii & 2 ? -1.0f : 1.0f;
 		xyz.z = ii & 4 ? -1.0f : 1.0f;
-		tmp = bx::mul(xyz, _obb.m_mtx);
+		tmp = mul(xyz, _obb.mtx);
 
-		_aabb.m_min = bx::min(_aabb.m_min, tmp);
-		_aabb.m_max = bx::max(_aabb.m_max, tmp);
+		_outAabb.min = min(_outAabb.min, tmp);
+		_outAabb.max = max(_outAabb.max, tmp);
 	}
 }
 
-void toAabb(Aabb& _aabb, const Sphere& _sphere)
+void toAabb(Aabb& _outAabb, const Sphere& _sphere)
 {
-	const float radius = _sphere.m_radius;
-	_aabb.m_min = bx::sub(_sphere.m_center, radius);
-	_aabb.m_max = bx::add(_sphere.m_center, radius);
+	const float radius = _sphere.radius;
+	_outAabb.min = sub(_sphere.center, radius);
+	_outAabb.max = add(_sphere.center, radius);
 }
 
-void toAabb(Aabb& _aabb, const Disk& _disk)
+void toAabb(Aabb& _outAabb, const Triangle& _triangle)
 {
-	// Reference(s):
-	// - https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
-	//
-	const bx::Vec3 nsq = bx::mul(_disk.m_normal, _disk.m_normal);
-	const bx::Vec3 one = { 1.0f, 1.0f, 1.0f };
-	const bx::Vec3 tmp = bx::sub(one, nsq);
-	const float inv = 1.0f / (tmp.x*tmp.y*tmp.z);
-
-	const bx::Vec3 extent =
-	{
-		_disk.m_radius * tmp.x * bx::sqrt((nsq.x + nsq.y * nsq.z) * inv),
-		_disk.m_radius * tmp.y * bx::sqrt((nsq.y + nsq.z * nsq.x) * inv),
-		_disk.m_radius * tmp.z * bx::sqrt((nsq.z + nsq.x * nsq.y) * inv),
-	};
-
-	_aabb.m_min = bx::sub(_disk.m_center, extent);
-	_aabb.m_max = bx::add(_disk.m_center, extent);
-}
-
-void toAabb(Aabb& _aabb, const Cylinder& _cylinder)
-{
-	// Reference(s):
-	// - https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
-	//
-	const bx::Vec3 axis = bx::sub(_cylinder.m_end, _cylinder.m_pos);
-	const bx::Vec3 asq  = bx::mul(axis, axis);
-	const bx::Vec3 nsq  = bx::mul(asq, 1.0f/bx::dot(axis, axis) );
-	const bx::Vec3 one  = { 1.0f, 1.0f, 1.0f };
-	const bx::Vec3 tmp  = bx::sub(one, nsq);
-
-	const float inv = 1.0f / (tmp.x*tmp.y*tmp.z);
-
-	const bx::Vec3 extent =
-	{
-		_cylinder.m_radius * tmp.x * bx::sqrt( (nsq.x + nsq.y * nsq.z) * inv),
-		_cylinder.m_radius * tmp.y * bx::sqrt( (nsq.y + nsq.z * nsq.x) * inv),
-		_cylinder.m_radius * tmp.z * bx::sqrt( (nsq.z + nsq.x * nsq.y) * inv),
-	};
-
-	const bx::Vec3 minP = bx::sub(_cylinder.m_pos, extent);
-	const bx::Vec3 minE = bx::sub(_cylinder.m_end, extent);
-	const bx::Vec3 maxP = bx::add(_cylinder.m_pos, extent);
-	const bx::Vec3 maxE = bx::add(_cylinder.m_end, extent);
-
-	_aabb.m_min = bx::min(minP, minE);
-	_aabb.m_max = bx::max(maxP, maxE);
+	_outAabb.min = min(_triangle.v0, _triangle.v1, _triangle.v2);
+	_outAabb.max = max(_triangle.v0, _triangle.v1, _triangle.v2);
 }
 
 void aabbTransformToObb(Obb& _obb, const Aabb& _aabb, const float* _mtx)
 {
-	aabbToObb(_obb, _aabb);
+	toObb(_obb, _aabb);
 	float result[16];
-	bx::mtxMul(result, _obb.m_mtx, _mtx);
-	bx::memCopy(_obb.m_mtx, result, sizeof(result) );
+	mtxMul(result, _obb.mtx, _mtx);
+	memCopy(_obb.mtx, result, sizeof(result) );
 }
 
-void toAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
+void toAabb(Aabb& _outAabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
-	bx::Vec3 min, max;
+	Vec3 mn, mx;
 	uint8_t* vertex = (uint8_t*)_vertices;
-	float* position = (float*)vertex;
-	min.x = max.x = position[0];
-	min.y = max.y = position[1];
-	min.z = max.z = position[2];
+
+	mn = mx = load<Vec3>(vertex);
 	vertex += _stride;
 
 	for (uint32_t ii = 1; ii < _numVertices; ++ii)
 	{
-		position = (float*)vertex;
+		const Vec3 pos = load<Vec3>(vertex);
 		vertex += _stride;
 
-		bx::Vec3 pos =
-		{
-			position[0],
-			position[1],
-			position[2],
-		};
-		min = bx::min(pos, min);
-		max = bx::max(pos, max);
+		mn = min(pos, mn);
+		mx = max(pos, mx);
 	}
 
-	_aabb.m_min = min;
-	_aabb.m_max = max;
+	_outAabb.min = mn;
+	_outAabb.max = mx;
 }
 
-void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
+void toAabb(Aabb& _outAabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
-	bx::Vec3 min, max;
+	Vec3 mn, mx;
 	uint8_t* vertex = (uint8_t*)_vertices;
+	mn = mx = mul(load<Vec3>(vertex), _mtx);
 
-	float position[3];
-	bx::vec3MulMtx(position, (float*)vertex, _mtx);
-	min.x = max.x = position[0];
-	min.y = max.y = position[1];
-	min.z = max.z = position[2];
 	vertex += _stride;
 
 	for (uint32_t ii = 1; ii < _numVertices; ++ii)
 	{
-		bx::vec3MulMtx(position, (float*)vertex, _mtx);
+		Vec3 pos = mul(load<Vec3>(vertex), _mtx);
 		vertex += _stride;
 
-		bx::Vec3 pos =
-		{
-			position[0],
-			position[1],
-			position[2],
-		};
-		min = bx::min(pos, min);
-		max = bx::max(pos, max);
+		mn = min(pos, mn);
+		mx = max(pos, mx);
 	}
 
-	_aabb.m_min = min;
-	_aabb.m_max = max;
+	_outAabb.min = mn;
+	_outAabb.max = mx;
 }
 
 float calcAreaAabb(const Aabb& _aabb)
 {
-	const float ww = _aabb.m_max.x - _aabb.m_min.x;
-	const float hh = _aabb.m_max.y - _aabb.m_min.y;
-	const float dd = _aabb.m_max.z - _aabb.m_min.z;
+	const float ww = _aabb.max.x - _aabb.min.x;
+	const float hh = _aabb.max.y - _aabb.min.y;
+	const float dd = _aabb.max.z - _aabb.min.z;
 	return 2.0f * (ww*hh + ww*dd + hh*dd);
 }
 
-void aabbExpand(Aabb& _aabb, float _factor)
+void aabbExpand(Aabb& _outAabb, float _factor)
 {
-	_aabb.m_min.x -= _factor;
-	_aabb.m_min.y -= _factor;
-	_aabb.m_min.z -= _factor;
-	_aabb.m_max.x += _factor;
-	_aabb.m_max.y += _factor;
-	_aabb.m_max.z += _factor;
+	_outAabb.min.x -= _factor;
+	_outAabb.min.y -= _factor;
+	_outAabb.min.z -= _factor;
+	_outAabb.max.x += _factor;
+	_outAabb.max.y += _factor;
+	_outAabb.max.z += _factor;
 }
 
-void aabbExpand(Aabb& _aabb, const float* _pos)
+void aabbExpand(Aabb& _outAabb, const Vec3& _pos)
 {
-	const bx::Vec3 pos = { _pos[0], _pos[1], _pos[2] };
-	_aabb.m_min = bx::min(_aabb.m_min, pos);
-	_aabb.m_max = bx::max(_aabb.m_max, pos);
+	_outAabb.min = min(_outAabb.min, _pos);
+	_outAabb.max = max(_outAabb.max, _pos);
 }
 
-uint32_t aabbOverlapTest(const Aabb& _aabb0, const Aabb& _aabb1)
+void toObb(Obb& _outObb, const Aabb& _aabb)
 {
-	const uint32_t ltMinX = _aabb0.m_max.x < _aabb1.m_min.x;
-	const uint32_t gtMaxX = _aabb0.m_min.x > _aabb1.m_max.x;
-	const uint32_t ltMinY = _aabb0.m_max.y < _aabb1.m_min.y;
-	const uint32_t gtMaxY = _aabb0.m_min.y > _aabb1.m_max.y;
-	const uint32_t ltMinZ = _aabb0.m_max.z < _aabb1.m_min.z;
-	const uint32_t gtMaxZ = _aabb0.m_min.z > _aabb1.m_max.z;
-
-	return 0
-		| (ltMinX<<0)
-		| (gtMaxX<<1)
-		| (ltMinY<<2)
-		| (gtMaxY<<3)
-		| (ltMinZ<<4)
-		| (gtMaxZ<<5)
-		;
+	memSet(_outObb.mtx, 0, sizeof(_outObb.mtx) );
+	_outObb.mtx[ 0] = (_aabb.max.x - _aabb.min.x) * 0.5f;
+	_outObb.mtx[ 5] = (_aabb.max.y - _aabb.min.y) * 0.5f;
+	_outObb.mtx[10] = (_aabb.max.z - _aabb.min.z) * 0.5f;
+	_outObb.mtx[12] = (_aabb.min.x + _aabb.max.x) * 0.5f;
+	_outObb.mtx[13] = (_aabb.min.y + _aabb.max.y) * 0.5f;
+	_outObb.mtx[14] = (_aabb.min.z + _aabb.max.z) * 0.5f;
+	_outObb.mtx[15] = 1.0f;
 }
 
-void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _stride, uint32_t _steps)
+void calcObb(Obb& _outObb, const void* _vertices, uint32_t _numVertices, uint32_t _stride, uint32_t _steps)
 {
 	Aabb aabb;
 	toAabb(aabb, _vertices, _numVertices, _stride);
 	float minArea = calcAreaAabb(aabb);
 
 	Obb best;
-	aabbToObb(best, aabb);
+	toObb(best, aabb);
 
-	float angleStep = float(bx::kPiHalf/_steps);
+	float angleStep = float(kPiHalf/_steps);
 	float ax = 0.0f;
 	float mtx[16];
 
@@ -231,10 +227,10 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 
 			for (uint32_t kk = 0; kk < _steps; ++kk)
 			{
-				bx::mtxRotateXYZ(mtx, ax, ay, az);
+				mtxRotateXYZ(mtx, ax, ay, az);
 
 				float mtxT[16];
-				bx::mtxTranspose(mtxT, mtx);
+				mtxTranspose(mtxT, mtx);
 				toAabb(aabb, mtxT, _vertices, _numVertices, _stride);
 
 				float area = calcAreaAabb(aabb);
@@ -253,7 +249,7 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 		ax += angleStep;
 	}
 
-	bx::memCopy(&_obb, &best, sizeof(Obb) );
+	memCopy(&_outObb, &best, sizeof(Obb) );
 }
 
 void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
@@ -261,39 +257,32 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	Aabb aabb;
 	toAabb(aabb, _vertices, _numVertices, _stride);
 
-	bx::Vec3 center =
-	{
-		(aabb.m_min.x + aabb.m_max.x) * 0.5f,
-		(aabb.m_min.y + aabb.m_max.y) * 0.5f,
-		(aabb.m_min.z + aabb.m_max.z) * 0.5f,
-	};
+	Vec3 center = getCenter(aabb);
 
 	float maxDistSq = 0.0f;
 	uint8_t* vertex = (uint8_t*)_vertices;
 
 	for (uint32_t ii = 0; ii < _numVertices; ++ii)
 	{
-		float* position = (float*)vertex;
+		const Vec3& pos = load<Vec3>(vertex);
 		vertex += _stride;
 
-		const float xx = position[0] - center.x;
-		const float yy = position[1] - center.y;
-		const float zz = position[2] - center.z;
-		const float distSq = xx*xx + yy*yy + zz*zz;
-		maxDistSq = bx::max(distSq, maxDistSq);
+		const Vec3 tmp = sub(pos, center);
+		const float distSq = dot(tmp, tmp);
+		maxDistSq = max(distSq, maxDistSq);
 	}
 
-	_sphere.m_center = center;
-	_sphere.m_radius = bx::sqrt(maxDistSq);
+	_sphere.center = center;
+	_sphere.radius = bx::sqrt(maxDistSq);
 }
 
 void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step)
 {
-	bx::RngMwc rng;
+	RngMwc rng;
 
 	uint8_t* vertex = (uint8_t*)_vertices;
 
-	bx::Vec3 center;
+	Vec3 center;
 	float* position = (float*)&vertex[0];
 	center.x = position[0];
 	center.y = position[1];
@@ -335,7 +324,7 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 				center.x += xx * radiusStep;
 				center.y += yy * radiusStep;
 				center.z += zz * radiusStep;
-				maxDistSq = bx::lerp(maxDistSq, distSq, _step);
+				maxDistSq = lerp(maxDistSq, distSq, _step);
 
 				break;
 			}
@@ -343,13 +332,8 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 
 	} while (!done);
 
-	_sphere.m_center = center;
-	_sphere.m_radius = bx::sqrt(maxDistSq);
-}
-
-void calcPlaneUv(const Plane& _plane, bx::Vec3& _udir, bx::Vec3& _vdir)
-{
-	bx::calcTangentFrame(_udir, _vdir, _plane.m_normal);
+	_sphere.center = center;
+	_sphere.radius = bx::sqrt(maxDistSq);
 }
 
 void buildFrustumPlanes(Plane* _result, const float* _viewProj)
@@ -371,110 +355,92 @@ void buildFrustumPlanes(Plane* _result, const float* _viewProj)
 	Plane& top    = _result[4];
 	Plane& bottom = _result[5];
 
-	near.m_normal.x = xw - xz;
-	near.m_normal.y = yw - yz;
-	near.m_normal.z = zw - zz;
-	near.m_dist     = ww - wz;
+	near.normal.x = xw - xz;
+	near.normal.y = yw - yz;
+	near.normal.z = zw - zz;
+	near.dist     = ww - wz;
 
-	far.m_normal.x = xw + xz;
-	far.m_normal.y = yw + yz;
-	far.m_normal.z = zw + zz;
-	far.m_dist     = ww + wz;
+	far.normal.x = xw + xz;
+	far.normal.y = yw + yz;
+	far.normal.z = zw + zz;
+	far.dist     = ww + wz;
 
 	const float xx = _viewProj[ 0];
 	const float yx = _viewProj[ 4];
 	const float zx = _viewProj[ 8];
 	const float wx = _viewProj[12];
 
-	left.m_normal.x = xw - xx;
-	left.m_normal.y = yw - yx;
-	left.m_normal.z = zw - zx;
-	left.m_dist     = ww - wx;
+	left.normal.x = xw - xx;
+	left.normal.y = yw - yx;
+	left.normal.z = zw - zx;
+	left.dist     = ww - wx;
 
-	right.m_normal.x = xw + xx;
-	right.m_normal.y = yw + yx;
-	right.m_normal.z = zw + zx;
-	right.m_dist     = ww + wx;
+	right.normal.x = xw + xx;
+	right.normal.y = yw + yx;
+	right.normal.z = zw + zx;
+	right.dist     = ww + wx;
 
 	const float xy = _viewProj[ 1];
 	const float yy = _viewProj[ 5];
 	const float zy = _viewProj[ 9];
 	const float wy = _viewProj[13];
 
-	top.m_normal.x = xw + xy;
-	top.m_normal.y = yw + yy;
-	top.m_normal.z = zw + zy;
-	top.m_dist     = ww + wy;
+	top.normal.x = xw + xy;
+	top.normal.y = yw + yy;
+	top.normal.z = zw + zy;
+	top.dist     = ww + wy;
 
-	bottom.m_normal.x = xw - xy;
-	bottom.m_normal.y = yw - yy;
-	bottom.m_normal.z = zw - zy;
-	bottom.m_dist      = ww - wy;
+	bottom.normal.x = xw - xy;
+	bottom.normal.y = yw - yy;
+	bottom.normal.z = zw - zy;
+	bottom.dist     = ww - wy;
 
 	Plane* plane = _result;
 	for (uint32_t ii = 0; ii < 6; ++ii)
 	{
-		const float len = bx::length(plane->m_normal);
-		plane->m_normal = bx::normalize(plane->m_normal);
-		float invLen = 1.0f / len;
-		plane->m_dist *= invLen;
+		const float invLen = 1.0f/length(plane->normal);
+		plane->normal = normalize(plane->normal);
+		plane->dist  *= invLen;
 		++plane;
 	}
-}
-
-bx::Vec3 intersectPlanes(const Plane& _pa, const Plane& _pb, const Plane& _pc)
-{
-	const bx::Vec3 axb  = bx::cross(_pa.m_normal, _pb.m_normal);
-	const bx::Vec3 bxc  = bx::cross(_pb.m_normal, _pc.m_normal);
-	const bx::Vec3 cxa  = bx::cross(_pc.m_normal, _pa.m_normal);
-	const bx::Vec3 tmp0 = bx::mul(bxc, _pa.m_dist);
-	const bx::Vec3 tmp1 = bx::mul(cxa, _pb.m_dist);
-	const bx::Vec3 tmp2 = bx::mul(axb, _pc.m_dist);
-	const bx::Vec3 tmp3 = bx::add(tmp0, tmp1);
-	const bx::Vec3 tmp4 = bx::add(tmp3, tmp2);
-
-	const float denom = bx::dot(_pa.m_normal, bxc);
-	const bx::Vec3 result = bx::mul(tmp4, -1.0f/denom);
-
-	return result;
 }
 
 Ray makeRay(float _x, float _y, const float* _invVp)
 {
 	Ray ray;
 
-	const bx::Vec3 near = { _x, _y, 0.0f };
-	ray.m_pos = bx::mulH(near, _invVp);
+	const Vec3 near = { _x, _y, 0.0f };
+	ray.pos = mulH(near, _invVp);
 
-	const bx::Vec3 far = { _x, _y, 1.0f };
-	bx::Vec3 tmp = bx::mulH(far, _invVp);
+	const Vec3 far = { _x, _y, 1.0f };
+	Vec3 tmp = mulH(far, _invVp);
 
-	const bx::Vec3 dir = bx::sub(tmp, ray.m_pos);
-	ray.m_dir = bx::normalize(dir);
+	const Vec3 dir = sub(tmp, ray.pos);
+	ray.dir = normalize(dir);
 
 	return ray;
 }
 
-inline bx::Vec3 getPointAt(const Ray& _ray, float _t)
+inline Vec3 getPointAt(const Ray& _ray, float _t)
 {
-	return bx::add(bx::mul(_ray.m_dir, _t), _ray.m_pos);
+	return mad(_ray.dir, _t, _ray.pos);
 }
 
 bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit)
 {
-	const bx::Vec3 invDir = bx::rcp(_ray.m_dir);
-	const bx::Vec3 tmp0   = bx::sub(_aabb.m_min, _ray.m_pos);
-	const bx::Vec3 t0     = bx::mul(tmp0, invDir);
-	const bx::Vec3 tmp1   = bx::sub(_aabb.m_max, _ray.m_pos);
-	const bx::Vec3 t1     = bx::mul(tmp1, invDir);
+	const Vec3 invDir = rcp(_ray.dir);
+	const Vec3 tmp0   = sub(_aabb.min, _ray.pos);
+	const Vec3 t0     = mul(tmp0, invDir);
+	const Vec3 tmp1   = sub(_aabb.max, _ray.pos);
+	const Vec3 t1     = mul(tmp1, invDir);
 
-	const bx::Vec3 min = bx::min(t0, t1);
-	const bx::Vec3 max = bx::max(t0, t1);
+	const Vec3 mn = min(t0, t1);
+	const Vec3 mx = max(t0, t1);
 
-	const float tmin = bx::max(min.x, min.y, min.z);
-	const float tmax = bx::min(max.x, max.y, max.z);
+	const float tmin = max(mn.x, mn.y, mn.z);
+	const float tmax = min(mx.x, mx.y, mx.z);
 
-	if (tmax < 0.0f
+	if (0.0f > tmax
 	||  tmin > tmax)
 	{
 		return false;
@@ -482,18 +448,18 @@ bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit)
 
 	if (NULL != _hit)
 	{
-		_hit->m_normal.x = float( (t1.x == tmin) - (t0.x == tmin) );
-		_hit->m_normal.y = float( (t1.y == tmin) - (t0.y == tmin) );
-		_hit->m_normal.z = float( (t1.z == tmin) - (t0.z == tmin) );
+		_hit->plane.normal.x = float( (t1.x == tmin) - (t0.x == tmin) );
+		_hit->plane.normal.y = float( (t1.y == tmin) - (t0.y == tmin) );
+		_hit->plane.normal.z = float( (t1.z == tmin) - (t0.z == tmin) );
 
-		_hit->m_dist = tmin;
-		_hit->m_pos  = getPointAt(_ray, tmin);
+		_hit->plane.dist = tmin;
+		_hit->pos        = getPointAt(_ray, tmin);
 	}
 
 	return true;
 }
 
-static const Aabb s_kUnitAabb =
+static constexpr Aabb kUnitAabb =
 {
 	{ -1.0f, -1.0f, -1.0f },
 	{  1.0f,  1.0f,  1.0f },
@@ -510,20 +476,20 @@ bool intersect(const Ray& _ray, const Obb& _obb, Hit* _hit)
 	}
 
 	float mtxInv[16];
-	bx::mtxInverse(mtxInv, _obb.m_mtx);
+	mtxInverse(mtxInv, _obb.mtx);
 
 	Ray obbRay;
-	obbRay.m_pos = bx::mul(_ray.m_pos, mtxInv);
-	obbRay.m_dir = bx::mulXyz0(_ray.m_dir, mtxInv);
+	obbRay.pos = mul(_ray.pos, mtxInv);
+	obbRay.dir = mulXyz0(_ray.dir, mtxInv);
 
-	if (intersect(obbRay, s_kUnitAabb, _hit) )
+	if (intersect(obbRay, kUnitAabb, _hit) )
 	{
 		if (NULL != _hit)
 		{
-			_hit->m_pos = bx::mul(_hit->m_pos, _obb.m_mtx);
+			_hit->pos = mul(_hit->pos, _obb.mtx);
 
-			const bx::Vec3 tmp = bx::mulXyz0(_hit->m_normal, _obb.m_mtx);
-			_hit->m_normal = bx::normalize(tmp);
+			const Vec3 tmp = mulXyz0(_hit->plane.normal, _obb.mtx);
+			_hit->plane.normal = normalize(tmp);
 		}
 
 		return true;
@@ -535,16 +501,16 @@ bool intersect(const Ray& _ray, const Obb& _obb, Hit* _hit)
 bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit)
 {
 	Plane plane;
-	plane.m_normal = _disk.m_normal;
-	plane.m_dist = -bx::dot(_disk.m_center, _disk.m_normal);
+	plane.normal = _disk.normal;
+	plane.dist   = -dot(_disk.center, _disk.normal);
 
 	Hit tmpHit;
 	_hit = NULL != _hit ? _hit : &tmpHit;
 
 	if (intersect(_ray, plane, _hit) )
 	{
-		const bx::Vec3 tmp = bx::sub(_disk.m_center, _hit->m_pos);
-		return bx::dot(tmp, tmp) <= bx::square(_disk.m_radius);
+		const Vec3 tmp = sub(_disk.center, _hit->pos);
+		return dot(tmp, tmp) <= square(_disk.radius);
 	}
 
 	return false;
@@ -552,54 +518,54 @@ bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit)
 
 static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Hit* _hit)
 {
-	bx::Vec3 axis = bx::sub(_cylinder.m_end, _cylinder.m_pos);
-	const bx::Vec3 rc   = bx::sub(_ray.m_pos, _cylinder.m_pos);
-	const bx::Vec3 dxa  = bx::cross(_ray.m_dir, axis);
+	Vec3 axis = sub(_cylinder.end, _cylinder.pos);
+	const Vec3 rc   = sub(_ray.pos, _cylinder.pos);
+	const Vec3 dxa  = cross(_ray.dir, axis);
 
-	const float len = bx::length(dxa);
-	const bx::Vec3 normal = bx::normalize(dxa);
-	const float dist = bx::abs(bx::dot(rc, normal) );
+	const float len    = length(dxa);
+	const Vec3  normal = normalize(dxa);
+	const float dist   = bx::abs(dot(rc, normal) );
 
-	if (dist > _cylinder.m_radius)
+	if (dist > _cylinder.radius)
 	{
 		return false;
 	}
 
-	bx::Vec3 vo = bx::cross(rc, axis);
-	const float t0 = -bx::dot(vo, normal) / len;
+	Vec3 vo = cross(rc, axis);
+	const float t0 = -dot(vo, normal) / len;
 
-	vo = bx::normalize(bx::cross(normal, axis) );
+	vo = normalize(cross(normal, axis) );
 
-	const float rsq   = bx::square(_cylinder.m_radius);
-	const float ddoto = bx::dot(_ray.m_dir, vo);
-	const float ss    = t0 - bx::abs(bx::sqrt(rsq - bx::square(dist) ) / ddoto);
+	const float rsq   = square(_cylinder.radius);
+	const float ddoto = dot(_ray.dir, vo);
+	const float ss    = t0 - bx::abs(bx::sqrt(rsq - square(dist) ) / ddoto);
 
 	if (0.0f > ss)
 	{
 		return false;
 	}
 
-	const bx::Vec3 point = getPointAt(_ray, ss);
+	const Vec3 point = getPointAt(_ray, ss);
 
-	const float axisLen = bx::length(axis);
-	axis = bx::normalize(axis);
-	const float pdota  = bx::dot(_cylinder.m_pos, axis);
-	const float height = bx::dot(point, axis) - pdota;
+	const float axisLen = length(axis);
+	axis = normalize(axis);
+	const float pdota  = dot(_cylinder.pos, axis);
+	const float height = dot(point, axis) - pdota;
 
-	if (height > 0.0f
-	&&  height < axisLen)
+	if (0.0f    < height
+	&&  axisLen > height)
 	{
 		if (NULL != _hit)
 		{
 			const float t1 = height / axisLen;
-			const bx::Vec3 pointOnAxis = bx::lerp(_cylinder.m_pos, _cylinder.m_end, t1);
+			const Vec3 pointOnAxis = lerp(_cylinder.pos, _cylinder.end, t1);
 
-			_hit->m_pos = point;
+			_hit->pos = point;
 
-			const bx::Vec3 tmp = bx::sub(point, pointOnAxis);
-			_hit->m_normal = bx::normalize(tmp);
+			const Vec3 tmp = sub(point, pointOnAxis);
+			_hit->plane.normal = normalize(tmp);
 
-			_hit->m_dist = ss;
+			_hit->plane.dist = ss;
 		}
 
 		return true;
@@ -607,53 +573,53 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 
 	if (_capsule)
 	{
-		const float rdota = bx::dot(_ray.m_pos, axis);
+		const float rdota = dot(_ray.pos, axis);
 		const float pp    = rdota - pdota;
 		const float t1    = pp / axisLen;
 
-		const bx::Vec3 pointOnAxis = bx::lerp(_cylinder.m_pos, _cylinder.m_end, t1);
-		const bx::Vec3 axisToRay   = bx::sub(_ray.m_pos, pointOnAxis);
+		const Vec3 pointOnAxis = lerp(_cylinder.pos, _cylinder.end, t1);
+		const Vec3 axisToRay   = sub(_ray.pos, pointOnAxis);
 
-		if (_cylinder.m_radius < bx::length(axisToRay)
+		if (_cylinder.radius < length(axisToRay)
 		&&  0.0f > ss)
 		{
 			return false;
 		}
 
 		Sphere sphere;
-		sphere.m_radius = _cylinder.m_radius;
+		sphere.radius = _cylinder.radius;
 
-		sphere.m_center = 0.0f >= height
-			? _cylinder.m_pos
-			: _cylinder.m_end
+		sphere.center = 0.0f >= height
+			? _cylinder.pos
+			: _cylinder.end
 			;
 
 		return intersect(_ray, sphere, _hit);
 	}
 
 	Plane plane;
-	bx::Vec3 pos;
+	Vec3 pos;
 
 	if (0.0f >= height)
 	{
-		plane.m_normal = bx::neg(axis);
-		pos = _cylinder.m_pos;
+		plane.normal = neg(axis);
+		pos = _cylinder.pos;
 	}
 	else
 	{
-		plane.m_normal = axis;
-		pos = _cylinder.m_end;
+		plane.normal = axis;
+		pos = _cylinder.end;
 	}
 
-	plane.m_dist = -bx::dot(pos, plane.m_normal);
+	plane.dist = -dot(pos, plane.normal);
 
 	Hit tmpHit;
 	_hit = NULL != _hit ? _hit : &tmpHit;
 
 	if (intersect(_ray, plane, _hit) )
 	{
-		const bx::Vec3 tmp = bx::sub(pos, _hit->m_pos);
-		return bx::dot(tmp, tmp) <= rsq;
+		const Vec3 tmp = sub(pos, _hit->pos);
+		return dot(tmp, tmp) <= rsq;
 	}
 
 	return false;
@@ -672,30 +638,30 @@ bool intersect(const Ray& _ray, const Capsule& _capsule, Hit* _hit)
 
 bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 {
-	const bx::Vec3 axis = bx::sub(_cone.m_pos, _cone.m_end);
+	const Vec3 axis = sub(_cone.pos, _cone.end);
 
-	const float len = bx::length(axis);
-	const bx::Vec3 normal = bx::normalize(axis);
+	const float len = length(axis);
+	const Vec3 normal = normalize(axis);
 
 	Disk disk;
-	disk.m_center = _cone.m_pos;
-	disk.m_normal = normal;
-	disk.m_radius = _cone.m_radius;
+	disk.center = _cone.pos;
+	disk.normal = normal;
+	disk.radius = _cone.radius;
 
 	Hit tmpInt;
 	Hit* out = NULL != _hit ? _hit : &tmpInt;
 	bool hit = intersect(_ray, disk, out);
 
-	const bx::Vec3 ro = bx::sub(_ray.m_pos, _cone.m_end);
+	const Vec3 ro = sub(_ray.pos, _cone.end);
 
-	const float hyp    = bx::sqrt(bx::square(_cone.m_radius) + bx::square(len) );
-	const float cosaSq = bx::square(len/hyp);
-	const float ndoto  = bx::dot(normal, ro);
-	const float ndotd  = bx::dot(normal, _ray.m_dir);
+	const float hyp    = bx::sqrt(square(_cone.radius) + square(len) );
+	const float cosaSq = square(len/hyp);
+	const float ndoto  = dot(normal, ro);
+	const float ndotd  = dot(normal, _ray.dir);
 
-	const float aa = bx::square(ndotd) - cosaSq;
-	const float bb = 2.0f * (ndotd*ndoto - bx::dot(_ray.m_dir, ro)*cosaSq);
-	const float cc = bx::square(ndoto) - bx::dot(ro, ro)*cosaSq;
+	const float aa = square(ndotd) - cosaSq;
+	const float bb = 2.0f * (ndotd*ndoto - dot(_ray.dir, ro)*cosaSq);
+	const float cc = square(ndoto) - dot(ro, ro)*cosaSq;
 
 	float det = bb*bb - 4.0f*aa*cc;
 
@@ -721,10 +687,10 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 		return hit;
 	}
 
-	const bx::Vec3 hitPos = getPointAt(_ray, tt);
-	const bx::Vec3 point  = bx::sub(hitPos, _cone.m_end);
+	const Vec3 hitPos = getPointAt(_ray, tt);
+	const Vec3 point  = sub(hitPos, _cone.end);
 
-	const float hh = bx::dot(normal, point);
+	const float hh = dot(normal, point);
 
 	if (0.0f > hh
 	||  len  < hh)
@@ -735,16 +701,16 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 	if (NULL != _hit)
 	{
 		if (!hit
-		||  tt < _hit->m_dist)
+		||  tt < _hit->plane.dist)
 		{
-			_hit->m_dist = tt;
-			_hit->m_pos  = hitPos;
+			_hit->plane.dist = tt;
+			_hit->pos  = hitPos;
 
-			const float scale = hh / bx::dot(point, point);
-			const bx::Vec3 pointScaled = bx::mul(point, scale);
+			const float scale = hh / dot(point, point);
+			const Vec3 pointScaled = mul(point, scale);
 
-			const bx::Vec3 tmp = bx::sub(pointScaled, normal);
-			_hit->m_normal = bx::normalize(tmp);
+			const Vec3 tmp = sub(pointScaled, normal);
+			_hit->plane.normal = normalize(tmp);
 		}
 	}
 
@@ -753,13 +719,13 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 
 bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
 {
-	float equation = bx::dot(_ray.m_pos, _plane.m_normal) + _plane.m_dist;
-	if (0.0f > equation)
+	const float dist = distance(_plane, _ray.pos);
+	if (0.0f > dist)
 	{
 		return false;
 	}
 
-	float ndotd = bx::dot(_ray.m_dir, _plane.m_normal);
+	const float ndotd = dot(_ray.dir, _plane.normal);
 	if (0.0f < ndotd)
 	{
 		return false;
@@ -767,11 +733,11 @@ bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
 
 	if (NULL != _hit)
 	{
-		_hit->m_normal = _plane.m_normal;
+		_hit->plane.normal = _plane.normal;
 
-		float tt = -equation/ndotd;
-		_hit->m_dist = tt;
-		_hit->m_pos  = getPointAt(_ray, tt);
+		float tt = -dist/ndotd;
+		_hit->plane.dist = tt;
+		_hit->pos = getPointAt(_ray, tt);
 	}
 
 	return true;
@@ -779,16 +745,16 @@ bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
 
 bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit)
 {
-	const bx::Vec3 rs = bx::sub(_ray.m_pos, _sphere.m_center);
+	const Vec3 rs = sub(_ray.pos, _sphere.center);
 
-	const float bb = bx::dot(rs, _ray.m_dir);
+	const float bb = dot(rs, _ray.dir);
 	if (0.0f < bb)
 	{
 		return false;
 	}
 
-	const float aa = bx::dot(_ray.m_dir, _ray.m_dir);
-	const float cc = bx::dot(rs, rs) - bx::square(_sphere.m_radius);
+	const float aa = dot(_ray.dir, _ray.dir);
+	const float cc = dot(rs, rs) - square(_sphere.radius);
 
 	const float discriminant = bb*bb - aa*cc;
 
@@ -808,50 +774,1405 @@ bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit)
 
 	if (NULL != _hit)
 	{
-		_hit->m_dist = tt;
+		_hit->plane.dist = tt;
 
-		const bx::Vec3 point = getPointAt(_ray, tt);
-		_hit->m_pos = point;
+		const Vec3 point = getPointAt(_ray, tt);
+		_hit->pos = point;
 
-		const bx::Vec3 tmp = bx::sub(point, _sphere.m_center);
-		_hit->m_normal = bx::normalize(tmp);
+		const Vec3 tmp = sub(point, _sphere.center);
+		_hit->plane.normal = normalize(tmp);
 	}
 
 	return true;
 }
 
-bool intersect(const Ray& _ray, const Tris& _triangle, Hit* _hit)
+bool intersect(const Ray& _ray, const Triangle& _triangle, Hit* _hit)
 {
-	const bx::Vec3 edge10 = bx::sub(_triangle.m_v1, _triangle.m_v0);
-	const bx::Vec3 edge02 = bx::sub(_triangle.m_v0, _triangle.m_v2);
-	const bx::Vec3 normal = bx::cross(edge02, edge10);
-	const bx::Vec3 vo     = bx::sub(_triangle.m_v0, _ray.m_pos);
-	const bx::Vec3 dxo    = bx::cross(_ray.m_dir, vo);
-	const float det = bx::dot(normal, _ray.m_dir);
+	const Vec3 edge10 = sub(_triangle.v1, _triangle.v0);
+	const Vec3 edge02 = sub(_triangle.v0, _triangle.v2);
+	const Vec3 normal = cross(edge02, edge10);
+	const Vec3 vo     = sub(_triangle.v0, _ray.pos);
+	const Vec3 dxo    = cross(_ray.dir, vo);
+	const float det = dot(normal, _ray.dir);
 
-	if (det > 0.0f)
+	if (0.0f < det)
 	{
 		return false;
 	}
 
 	const float invDet = 1.0f/det;
-	const float bz = bx::dot(dxo, edge02) * invDet;
-	const float by = bx::dot(dxo, edge10) * invDet;
+	const float bz = dot(dxo, edge02) * invDet;
+	const float by = dot(dxo, edge10) * invDet;
 	const float bx = 1.0f - by - bz;
 
-	if (bx < 0.0f || by < 0.0f || bz < 0.0f)
+	if (0.0f > bx
+	||  0.0f > by
+	||  0.0f > bz)
 	{
 		return false;
 	}
 
 	if (NULL != _hit)
 	{
-		_hit->m_normal = bx::normalize(normal);
+		_hit->plane.normal = normalize(normal);
 
-		const float tt = bx::dot(normal, vo) * invDet;
-		_hit->m_dist = tt;
-		_hit->m_pos  = getPointAt(_ray, tt);
+		const float tt = dot(normal, vo) * invDet;
+		_hit->plane.dist = tt;
+		_hit->pos  = getPointAt(_ray, tt);
 	}
 
 	return true;
 }
+
+Vec3 barycentric(const Triangle& _triangle, const Vec3& _pos)
+{
+	const Vec3 v0 = sub(_triangle.v1, _triangle.v0);
+	const Vec3 v1 = sub(_triangle.v2, _triangle.v0);
+	const Vec3 v2 = sub(_pos, _triangle.v0);
+
+	const float dot00 = dot(v0, v0);
+	const float dot01 = dot(v0, v1);
+	const float dot02 = dot(v0, v2);
+	const float dot11 = dot(v1, v1);
+	const float dot12 = dot(v1, v2);
+
+	const float invDenom = 1.0f/(dot00*dot11 - square(dot01) );
+
+	const float vv = (dot11*dot02 - dot01*dot12)*invDenom;
+	const float ww = (dot00*dot12 - dot01*dot02)*invDenom;
+	const float uu = 1.0f - vv - ww;
+
+	return { uu, vv, ww };
+}
+
+Vec3 cartesian(const Triangle& _triangle, const Vec3& _uvw)
+{
+	const Vec3 b0 = mul(_triangle.v0, _uvw.x);
+	const Vec3 b1 = mul(_triangle.v1, _uvw.y);
+	const Vec3 b2 = mul(_triangle.v2, _uvw.z);
+
+	return add(add(b0, b1), b2);
+}
+
+void calcPlane(Plane& _outPlane, const Disk& _disk)
+{
+	calcPlane(_outPlane, _disk.normal, _disk.center);
+}
+
+void calcPlane(Plane& _outPlane, const Triangle& _triangle)
+{
+	calcPlane(_outPlane, _triangle.v0, _triangle.v1, _triangle.v2);
+}
+
+struct Interval
+{
+	float start;
+	float end;
+};
+
+bool overlap(const Interval& _a, const Interval& _b)
+{
+	return _a.end > _b.start
+		&& _b.end > _a.start
+		;
+}
+
+float projectToAxis(const Vec3& _axis, const Vec3& _point)
+{
+	return dot(_axis, _point);
+}
+
+Interval projectToAxis(const Vec3& _axis, const Aabb& _aabb)
+{
+	const float extent = bx::abs(dot(abs(_axis), getExtents(_aabb) ) );
+	const float center =         dot(    _axis , getCenter (_aabb) );
+	return
+	{
+		center - extent,
+		center + extent,
+	};
+}
+
+Interval projectToAxis(const Vec3& _axis, const Triangle& _triangle)
+{
+	const float a0 = dot(_axis, _triangle.v0);
+	const float a1 = dot(_axis, _triangle.v1);
+	const float a2 = dot(_axis, _triangle.v2);
+	return
+	{
+		min(a0, a1, a2),
+		max(a0, a1, a2),
+	};
+}
+
+struct Srt
+{
+	Quaternion rotation;
+	Vec3       translation;
+	Vec3       scale;
+};
+
+Srt toSrt(const void* _mtx)
+{
+	Srt result;
+
+	const float* mtx = (const float*)_mtx;
+
+	result.translation = { mtx[12], mtx[13], mtx[14] };
+
+	float xx = mtx[ 0];
+	float xy = mtx[ 1];
+	float xz = mtx[ 2];
+	float yx = mtx[ 4];
+	float yy = mtx[ 5];
+	float yz = mtx[ 6];
+	float zx = mtx[ 8];
+	float zy = mtx[ 9];
+	float zz = mtx[10];
+
+	result.scale =
+	{
+		bx::sqrt(xx*xx + xy*xy + xz*xz),
+		bx::sqrt(yx*yx + yy*yy + yz*yz),
+		bx::sqrt(zx*zx + zy*zy + zz*zz),
+	};
+
+	const Vec3 invScale = rcp(result.scale);
+
+	xx *= invScale.x;
+	xy *= invScale.x;
+	xz *= invScale.x;
+	yx *= invScale.y;
+	yy *= invScale.y;
+	yz *= invScale.y;
+	zx *= invScale.z;
+	zy *= invScale.z;
+	zz *= invScale.z;
+
+	const float trace = xx + yy + zz;
+
+	if (0.0f < trace)
+	{
+		const float invS = 0.5f * rsqrt(trace + 1.0f);
+		result.rotation =
+		{
+			(yz - zy) * invS,
+			(zx - xz) * invS,
+			(xy - yx) * invS,
+			0.25f     / invS,
+		};
+	}
+	else
+	{
+		if (xx > yy
+		&&  xx > zz)
+		{
+			const float invS = 0.5f * bx::sqrt(max(1.0f + xx - yy - zz, 1e-8f) );
+			result.rotation =
+			{
+				0.25f     / invS,
+				(xy + yx) * invS,
+				(xz + zx) * invS,
+				(yz - zy) * invS,
+			};
+		}
+		else if (yy > zz)
+		{
+			const float invS = 0.5f * bx::sqrt(max(1.0f + yy - xx - zz, 1e-8f) );
+			result.rotation =
+			{
+				(xy + yx) * invS,
+				0.25f     / invS,
+				(yz + zy) * invS,
+				(zx - xz) * invS,
+			};
+		}
+		else
+		{
+			const float invS = 0.5f * bx::sqrt(max(1.0f + zz - xx - yy, 1e-8f) );
+			result.rotation =
+			{
+				(xz + zx) * invS,
+				(yz + zy) * invS,
+				0.25f     / invS,
+				(xy - yx) * invS,
+			};
+		}
+	}
+
+	return result;
+}
+
+void mtxFromSrt(float* _outMtx, const Srt& _srt)
+{
+	mtxQuat(_outMtx, _srt.rotation);
+
+	store<Vec3>(&_outMtx[0], mul(load<Vec3>(&_outMtx[0]), _srt.scale.x) );
+	store<Vec3>(&_outMtx[4], mul(load<Vec3>(&_outMtx[4]), _srt.scale.y) );
+	store<Vec3>(&_outMtx[8], mul(load<Vec3>(&_outMtx[8]), _srt.scale.z) );
+
+	store<Vec3>(&_outMtx[12], _srt.translation);
+}
+
+bool isNearZero(float _v)
+{
+	return equal(_v, 0.0f, 0.00001f);
+}
+
+bool isNearZero(const Vec3& _v)
+{
+	return isNearZero(dot(_v, _v) );
+}
+
+struct Line
+{
+	Vec3 pos;
+	Vec3 dir;
+};
+
+inline Vec3 getPointAt(const Line& _line, float _t)
+{
+	return mad(_line.dir, _t, _line.pos);
+}
+
+bool intersect(Line& _outLine, const Plane& _planeA, const Plane& _planeB)
+{
+	const Vec3  axb   = cross(_planeA.normal, _planeB.normal);
+	const float denom = dot(axb, axb);
+
+	if (isNearZero(denom) )
+	{
+		return false;
+	}
+
+	const Vec3 bxaxb = cross(_planeB.normal, axb);
+	const Vec3 axbxa = cross(axb, _planeA.normal);
+	const Vec3 tmp0  = mul(bxaxb, _planeA.dist);
+	const Vec3 tmp1  = mul(axbxa, _planeB.dist);
+	const Vec3 tmp2  = add(tmp0, tmp1);
+
+	_outLine.pos = mul(tmp2, -1.0f/denom);
+	_outLine.dir = normalize(axb);
+
+	return true;
+}
+
+Vec3 intersectPlanes(const Plane& _pa, const Plane& _pb, const Plane& _pc)
+{
+	const Vec3 axb  = cross(_pa.normal, _pb.normal);
+	const Vec3 bxc  = cross(_pb.normal, _pc.normal);
+	const Vec3 cxa  = cross(_pc.normal, _pa.normal);
+	const Vec3 tmp0 = mul(bxc, _pa.dist);
+	const Vec3 tmp1 = mul(cxa, _pb.dist);
+	const Vec3 tmp2 = mul(axb, _pc.dist);
+	const Vec3 tmp3 = add(tmp0, tmp1);
+	const Vec3 tmp4 = add(tmp3, tmp2);
+
+	const float denom = dot(_pa.normal, bxc);
+	const Vec3 result = mul(tmp4, -1.0f/denom);
+
+	return result;
+}
+
+struct LineSegment
+{
+	Vec3 pos;
+	Vec3 end;
+};
+
+inline Vec3 getPointAt(const LineSegment& _line, float _t)
+{
+	return lerp(_line.pos, _line.end, _t);
+}
+
+bool intersect(float& _outTa, float& _outTb, const LineSegment& _a, const LineSegment& _b)
+{
+	// Reference(s):
+	//
+	// - The shortest line between two lines in 3D
+	//   https://web.archive.org/web/20120309093234/http://paulbourke.net/geometry/lineline3d/
+
+	const Vec3 bd = sub(_b.end, _b.pos);
+	if (isNearZero(bd) )
+	{
+		return false;
+	}
+
+	const Vec3 ad = sub(_a.end, _a.pos);
+	if (isNearZero(ad) )
+	{
+		return false;
+	}
+
+	const Vec3  ab = sub(_a.pos, _b.pos);
+
+	const float d0 = projectToAxis(ab, bd);
+	const float d1 = projectToAxis(ad, bd);
+	const float d2 = projectToAxis(ab, ad);
+	const float d3 = projectToAxis(bd, bd);
+	const float d4 = projectToAxis(ad, ad);
+
+	const float denom = d4*d3 - square(d1);
+
+	float ta = 0.0f;
+
+	if (!isNearZero(denom) )
+	{
+		ta = (d0*d1 - d2*d3)/denom;
+	}
+
+	_outTa = ta;
+	_outTb = (d0+d1*ta)/d3;
+
+	return true;
+}
+
+bool intersect(const LineSegment& _a, const LineSegment& _b)
+{
+	float ta, tb;
+	if (!intersect(ta, tb, _a, _b) )
+	{
+		return false;
+	}
+
+	return 0.0f >= ta
+		&& 1.0f <= ta
+		&& 0.0f >= tb
+		&& 1.0f <= tb
+		;
+}
+
+bool intersect(const LineSegment& _line, const Plane& _plane, Hit* _hit)
+{
+	const float dist  = distance(_plane, _line.pos);
+	const float flip  = sign(dist);
+	const Vec3  dir   = normalize(sub(_line.end, _line.pos) );
+	const float ndotd = dot(dir, _plane.normal);
+	const float tt    = -dist/ndotd;
+	const float len   = length(sub(_line.end, _line.pos) );
+
+	if (tt < 0.0f || tt > len)
+	{
+		return false;
+	}
+
+	if (NULL != _hit)
+	{
+		_hit->pos = mad(dir, tt, _line.pos);
+
+		_hit->plane.normal =  mul(_plane.normal, flip);
+		_hit->plane.dist   = -dot(_hit->plane.normal, _hit->pos);
+	}
+
+	return true;
+}
+
+float distance(const Plane& _plane, const LineSegment& _line)
+{
+	const float pd = distance(_plane, _line.pos);
+	const float ed = distance(_plane, _line.end);
+	return min(max(pd*ed, 0.0f), bx::abs(pd), bx::abs(ed) );
+}
+
+Vec3 closestPoint(const Line& _line, const Vec3& _point)
+{
+	const float tt = projectToAxis(_line.dir, sub(_point, _line.pos) );
+	return getPointAt(_line, tt);
+}
+
+Vec3 closestPoint(const LineSegment& _line, const Vec3& _point, float& _outT)
+{
+	const Vec3  axis     = sub(_line.end, _line.pos);
+	const float lengthSq = dot(axis, axis);
+	const float tt       = clamp(projectToAxis(axis, sub(_point, _line.pos) ) / lengthSq, 0.0f, 1.0f);
+	_outT = tt;
+	return mad(axis, tt, _line.pos);
+}
+
+Vec3 closestPoint(const LineSegment& _line, const Vec3& _point)
+{
+	float ignored;
+	return closestPoint(_line, _point, ignored);
+}
+
+Vec3 closestPoint(const Plane& _plane, const Vec3& _point)
+{
+	const float dist = distance(_plane, _point);
+	return sub(_point, mul(_plane.normal, dist) );
+}
+
+Vec3 closestPoint(const Aabb& _aabb, const Vec3& _point)
+{
+	return clamp(_point, _aabb.min, _aabb.max);
+}
+
+Vec3 closestPoint(const Obb& _obb, const Vec3& _point)
+{
+	Srt srt = toSrt(_obb.mtx);
+
+	Aabb aabb;
+	toAabb(aabb, srt.scale);
+
+	const Quaternion invRotation = invert(srt.rotation);
+	const Vec3 obbSpacePos = mul(sub(_point, srt.translation), srt.rotation);
+	const Vec3 pos = closestPoint(aabb, obbSpacePos);
+
+	return add(mul(pos, invRotation), srt.translation);
+}
+
+Vec3 closestPoint(const Triangle& _triangle, const Vec3& _point)
+{
+	Plane plane;
+	calcPlane(plane, _triangle);
+
+	const Vec3 pos = closestPoint(plane, _point);
+	const Vec3 uvw = barycentric(_triangle, pos);
+
+	return cartesian(_triangle, clamp<Vec3>(uvw, Vec3(0.0f), Vec3(1.0f) ) );
+}
+
+bool overlap(const Aabb& _aabb, const Vec3& _pos)
+{
+	const Vec3 ac  = getCenter(_aabb);
+	const Vec3 ae  = getExtents(_aabb);
+	const Vec3 abc = bx::abs(sub(ac, _pos) );
+
+	return abc.x <= ae.x
+		&& abc.y <= ae.y
+		&& abc.z <= ae.z
+		;
+}
+
+bool overlap(const Aabb& _aabb, const Sphere& _sphere)
+{
+	return overlap(_sphere, _aabb);
+}
+
+bool overlap(const Aabb& _aabbA, const Aabb& _aabbB)
+{
+	return true
+		&& _aabbA.max.x > _aabbB.min.x
+		&& _aabbB.max.x > _aabbA.min.x
+		&& _aabbA.max.y > _aabbB.min.y
+		&& _aabbB.max.y > _aabbA.min.y
+		&& _aabbA.max.z > _aabbB.min.z
+		&& _aabbB.max.z > _aabbA.min.z
+		;
+}
+
+bool overlap(const Aabb& _aabb, const Plane& _plane)
+{
+	const Vec3 center = getCenter(_aabb);
+	const float dist  = distance(_plane, center);
+
+	const Vec3 extents = getExtents(_aabb);
+	const Vec3 normal  = bx::abs(_plane.normal);
+	const float radius = dot(extents, normal);
+
+	return bx::abs(dist) <= radius;
+}
+
+static constexpr Vec3 kAxis[] =
+{
+	{ 1.0f, 0.0f, 0.0f },
+	{ 0.0f, 1.0f, 0.0f },
+	{ 0.0f, 0.0f, 1.0f },
+};
+
+bool overlap(const Aabb& _aabb, const Triangle& _triangle)
+{
+	Aabb triAabb;
+	toAabb(triAabb, _triangle);
+
+	if (!overlap(_aabb, triAabb) )
+	{
+		return false;
+	}
+
+	Plane plane;
+	calcPlane(plane, _triangle);
+
+	if (!overlap(_aabb, plane) )
+	{
+		return false;
+	}
+
+	const Vec3 center = getCenter(_aabb);
+	const Vec3 v0 = sub(_triangle.v0, center);
+	const Vec3 v1 = sub(_triangle.v1, center);
+	const Vec3 v2 = sub(_triangle.v2, center);
+
+	const Vec3 edge[] =
+	{
+		sub(v1, v0),
+		sub(v2, v1),
+		sub(v0, v2),
+	};
+
+	for (uint32_t ii = 0; ii < 3; ++ii)
+	{
+		for (uint32_t jj = 0; jj < 3; ++jj)
+		{
+			const Vec3 axis = cross(kAxis[ii], edge[jj]);
+
+			const Interval aabbR = projectToAxis(axis, _aabb);
+			const Interval triR  = projectToAxis(axis, _triangle);
+
+			if (!overlap(aabbR, triR) )
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool overlap(const Aabb& _aabb, const Cylinder& _cylinder)
+{
+	return overlap(_cylinder, _aabb);
+}
+
+bool overlap(const Aabb& _aabb, const Capsule& _capsule)
+{
+	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, getCenter(_aabb) );
+	return overlap(_aabb, Sphere{pos, _capsule.radius});
+}
+
+bool overlap(const Aabb& _aabb, const Cone& _cone)
+{
+	float tt;
+	const Vec3 pos = closestPoint(LineSegment{_cone.pos, _cone.end}, getCenter(_aabb), tt);
+	return overlap(_aabb, Sphere{pos, lerp(_cone.radius, 0.0f, tt)});
+}
+
+bool overlap(const Aabb& _aabb, const Disk& _disk)
+{
+	if (!overlap(_aabb, Sphere{_disk.center, _disk.radius}) )
+	{
+		return false;
+	}
+
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
+
+	return overlap(_aabb, plane);
+}
+
+bool overlap(const Aabb& _aabb, const Obb& _obb)
+{
+	BX_UNUSED(_aabb, _obb);
+	return false;
+}
+
+bool overlap(const Capsule& _capsule, const Vec3& _pos)
+{
+	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, _pos);
+	return overlap(Sphere{pos, _capsule.radius}, _pos);
+}
+
+bool overlap(const Capsule& _capsule, const Sphere& _sphere)
+{
+	return overlap(_sphere, _capsule);
+}
+
+bool overlap(const Capsule& _capsule, const Aabb& _aabb)
+{
+	return overlap(_aabb, _capsule);
+}
+
+bool overlap(const Capsule& _capsule, const Plane& _plane)
+{
+	return distance(_plane, LineSegment{_capsule.pos, _capsule.end}) <= _capsule.radius;
+}
+
+bool overlap(const Capsule& _capsule, const Triangle& _triangle)
+{
+	return overlap(_triangle, _capsule);
+}
+
+bool overlap(const Capsule& _capsule, const Cylinder& _cylinder)
+{
+	return overlap(_cylinder, _capsule);
+}
+
+bool overlap(const Capsule& _capsuleA, const Capsule& _capsuleB)
+{
+	float ta, tb;
+	if (!intersect(ta, tb, {_capsuleA.pos, _capsuleA.end}, {_capsuleB.pos, _capsuleB.end}) )
+	{
+		return false;
+	}
+
+	if (0.0f <= ta
+	&&  1.0f >= ta
+	&&  0.0f <= tb
+	&&  1.0f >= tb)
+	{
+		const Vec3 ad = sub(_capsuleA.end, _capsuleA.pos);
+		const Vec3 bd = sub(_capsuleB.end, _capsuleB.pos);
+
+		return overlap(
+			  Sphere{mad(ad, ta, _capsuleA.pos), _capsuleA.radius}
+			, Sphere{mad(bd, tb, _capsuleB.pos), _capsuleB.radius}
+			);
+	}
+
+	if (0.0f <= ta
+	&&  1.0f >= ta)
+	{
+		return overlap(_capsuleA, Sphere{0.0f >= tb ? _capsuleB.pos : _capsuleB.end, _capsuleB.radius});
+	}
+
+	if (0.0f <= tb
+	&&  1.0f >= tb)
+	{
+		return overlap(_capsuleB, Sphere{0.0f >= ta ? _capsuleA.pos : _capsuleA.end, _capsuleA.radius});
+	}
+
+	const Vec3 pa = 0.0f > ta ? _capsuleA.pos : _capsuleA.end;
+	const Vec3 pb = 0.0f > tb ? _capsuleB.pos : _capsuleB.end;
+	const Vec3 closestA = closestPoint(LineSegment{_capsuleA.pos, _capsuleA.end}, pb);
+	const Vec3 closestB = closestPoint(LineSegment{_capsuleB.pos, _capsuleB.end}, pa);
+
+	if (dot(closestA, pb) <= dot(closestB, pa) )
+	{
+		return overlap(_capsuleA, Sphere{closestB, _capsuleB.radius});
+	}
+
+	return overlap(_capsuleB, Sphere{closestA, _capsuleA.radius});
+}
+
+bool overlap(const Capsule& _capsule, const Cone& _cone)
+{
+	BX_UNUSED(_capsule, _cone);
+	return false;
+}
+
+bool overlap(const Capsule& _capsule, const Disk& _disk)
+{
+	return overlap(_disk, _capsule);
+}
+
+bool overlap(const Capsule& _capsule, const Obb& _obb)
+{
+	return overlap(_obb, _capsule);
+}
+
+bool overlap(const Cone& _cone, const Vec3& _pos)
+{
+	float tt;
+	const Vec3 pos = closestPoint(LineSegment{_cone.pos, _cone.end}, _pos, tt);
+	return overlap(Disk{pos, normalize(sub(_cone.end, _cone.pos) ), lerp(_cone.radius, 0.0f, tt)}, _pos);
+}
+
+bool overlap(const Cone& _cone, const Sphere& _sphere)
+{
+	return overlap(_sphere, _cone);
+}
+
+bool overlap(const Cone& _cone, const Aabb& _aabb)
+{
+	return overlap(_aabb, _cone);
+}
+
+bool overlap(const Cone& _cone, const Plane& _plane)
+{
+	return overlap(_plane, _cone);
+}
+
+bool overlap(const Cone& _cone, const Triangle& _triangle)
+{
+	return overlap(_triangle, _cone);
+}
+
+bool overlap(const Cone& _cone, const Cylinder& _cylinder)
+{
+	BX_UNUSED(_cone, _cylinder);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Capsule& _capsule)
+{
+	BX_UNUSED(_cone, _capsule);
+	return false;
+}
+
+bool overlap(const Cone& _coneA, const Cone& _coneB)
+{
+	BX_UNUSED(_coneA, _coneB);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Disk& _disk)
+{
+	BX_UNUSED(_cone, _disk);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Obb& _obb)
+{
+	BX_UNUSED(_cone, _obb);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Vec3& _pos)
+{
+	const Vec3 pos = closestPoint(LineSegment{_cylinder.pos, _cylinder.end}, _pos);
+	return overlap(Disk{pos, normalize(sub(_cylinder.end, _cylinder.pos) ), _cylinder.radius}, _pos);
+}
+
+bool overlap(const Cylinder& _cylinder, const Sphere& _sphere)
+{
+	const Vec3 pos = closestPoint(LineSegment{_cylinder.pos, _cylinder.end}, _sphere.center);
+	return overlap(Disk{pos, normalize(sub(_cylinder.end, _cylinder.pos) ), _cylinder.radius}, _sphere);
+}
+
+bool overlap(const Cylinder& _cylinder, const Aabb& _aabb)
+{
+	const Vec3 pos = closestPoint(LineSegment{_cylinder.pos, _cylinder.end}, getCenter(_aabb) );
+	return overlap(Disk{pos, normalize(sub(_cylinder.end, _cylinder.pos) ), _cylinder.radius}, _aabb);
+}
+
+bool overlap(const Cylinder& _cylinder, const Plane& _plane)
+{
+	BX_UNUSED(_cylinder, _plane);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Triangle& _triangle)
+{
+	return overlap(_triangle, _cylinder);
+}
+
+bool overlap(const Cylinder& _cylinderA, const Cylinder& _cylinderB)
+{
+	BX_UNUSED(_cylinderA, _cylinderB);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Capsule& _capsule)
+{
+	BX_UNUSED(_cylinder, _capsule);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Cone& _cone)
+{
+	BX_UNUSED(_cylinder, _cone);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Disk& _disk)
+{
+	BX_UNUSED(_cylinder, _disk);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Obb& _obb)
+{
+	BX_UNUSED(_cylinder, _obb);
+	return false;
+}
+
+bool overlap(const Disk& _disk, const Vec3& _pos)
+{
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
+
+	if (!isNearZero(distance(plane, _pos) ) )
+	{
+		return false;
+	}
+
+	return distanceSq(_disk.center, _pos) <= square(_disk.radius);
+}
+
+bool overlap(const Disk& _disk, const Sphere& _sphere)
+{
+	return overlap(_sphere, _disk);
+}
+
+bool overlap(const Disk& _disk, const Aabb& _aabb)
+{
+	return overlap(_aabb, _disk);
+}
+
+bool overlap(const Disk& _disk, const Plane& _plane)
+{
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
+
+	if (!overlap(plane, _plane) )
+	{
+		return false;
+	}
+
+	return overlap(_plane, Sphere{_disk.center, _disk.radius});
+}
+
+bool overlap(const Disk& _disk, const Triangle& _triangle)
+{
+	return overlap(_triangle, _disk);
+}
+
+bool overlap(const Disk& _disk, const Cylinder& _cylinder)
+{
+	return overlap(_cylinder, _disk);
+}
+
+bool overlap(const Disk& _disk, const Capsule& _capsule)
+{
+	if (!overlap(_capsule, Sphere{_disk.center, _disk.radius}) )
+	{
+		return false;
+	}
+
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
+
+	return overlap(_capsule, plane);
+}
+
+bool overlap(const Disk& _disk, const Cone& _cone)
+{
+	BX_UNUSED(_disk, _cone);
+	return false;
+}
+
+bool overlap(const Disk& _diskA, const Disk& _diskB)
+{
+	Plane planeA;
+	calcPlane(planeA, _diskA.normal, _diskA.center);
+
+	Plane planeB;
+	calcPlane(planeB, _diskB);
+
+	Line line;
+
+	if (!intersect(line, planeA, planeB) )
+	{
+		return false;
+	}
+
+	const Vec3 pa = closestPoint(line, _diskA.center);
+	const Vec3 pb = closestPoint(line, _diskB.center);
+
+	const float lenA = distance(pa, _diskA.center);
+	const float lenB = distance(pb, _diskB.center);
+
+	return bx::sqrt(square(_diskA.radius) - square(lenA) )
+		+  bx::sqrt(square(_diskB.radius) - square(lenB) )
+		>= distance(pa, pb)
+		;
+}
+
+bool overlap(const Disk& _disk, const Obb& _obb)
+{
+	if (!overlap(_obb, Sphere{_disk.center, _disk.radius}) )
+	{
+		return false;
+	}
+
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
+
+	return overlap(_obb, plane);
+}
+
+bool overlap(const Obb& _obb, const Vec3& _pos)
+{
+	Srt srt = toSrt(_obb.mtx);
+
+	Aabb aabb;
+	toAabb(aabb, srt.scale);
+
+	const Quaternion invRotation = invert(srt.rotation);
+	const Vec3 pos = mul(sub(_pos, srt.translation), invRotation);
+
+	return overlap(aabb, pos);
+}
+
+bool overlap(const Obb& _obb, const Sphere& _sphere)
+{
+	return overlap(_sphere, _obb);
+}
+
+bool overlap(const Obb& _obb, const Aabb& _aabb)
+{
+	return overlap(_aabb, _obb);
+}
+
+bool overlap(const Obb& _obb, const Plane& _plane)
+{
+	Srt srt = toSrt(_obb.mtx);
+
+	const Quaternion invRotation = invert(srt.rotation);
+	const Vec3 axis =
+	{
+		projectToAxis(_plane.normal, mul(Vec3{1.0f, 0.0f, 0.0f}, invRotation) ),
+		projectToAxis(_plane.normal, mul(Vec3{0.0f, 1.0f, 0.0f}, invRotation) ),
+		projectToAxis(_plane.normal, mul(Vec3{0.0f, 0.0f, 1.0f}, invRotation) ),
+	};
+
+	const float dist   = bx::abs(distance(_plane, srt.translation) );
+	const float radius = dot(srt.scale, bx::abs(axis) );
+
+	return dist <= radius;
+}
+
+bool overlap(const Obb& _obb, const Triangle& _triangle)
+{
+	return overlap(_triangle, _obb);
+}
+
+bool overlap(const Obb& _obb, const Cylinder& _cylinder)
+{
+	BX_UNUSED(_obb, _cylinder);
+	return false;
+}
+
+bool overlap(const Obb& _obb, const Capsule& _capsule)
+{
+	Srt srt = toSrt(_obb.mtx);
+
+	Aabb aabb;
+	toAabb(aabb, srt.scale);
+
+	const Quaternion invRotation = invert(srt.rotation);
+
+	const Capsule capsule =
+	{
+		mul(sub(_capsule.pos, srt.translation), invRotation),
+		mul(sub(_capsule.end, srt.translation), invRotation),
+		_capsule.radius,
+	};
+
+	return overlap(aabb, capsule);
+}
+
+bool overlap(const Obb& _obb, const Cone& _cone)
+{
+	BX_UNUSED(_obb, _cone);
+	return false;
+}
+
+bool overlap(const Obb& _obb, const Disk& _disk)
+{
+	return overlap(_disk, _obb);
+}
+
+bool overlap(const Obb& _obbA, const Obb& _obbB)
+{
+	BX_UNUSED(_obbA, _obbB);
+	return false;
+}
+
+bool overlap(const Plane& _plane, const LineSegment& _line)
+{
+	return isNearZero(distance(_plane, _line) );
+}
+
+bool overlap(const Plane& _plane, const Vec3& _pos)
+{
+	return isNearZero(distance(_plane, _pos) );
+}
+
+bool overlap(const Plane& _plane, const Sphere& _sphere)
+{
+	return overlap(_sphere, _plane);
+}
+
+bool overlap(const Plane& _plane, const Aabb& _aabb)
+{
+	return overlap(_aabb, _plane);
+}
+
+bool overlap(const Plane& _planeA, const Plane& _planeB)
+{
+	const Vec3  dir = cross(_planeA.normal, _planeB.normal);
+	const float len = length(dir);
+
+	return !isNearZero(len);
+}
+
+bool overlap(const Plane& _plane, const Triangle& _triangle)
+{
+	return overlap(_triangle, _plane);
+}
+
+bool overlap(const Plane& _plane, const Cylinder& _cylinder)
+{
+	return overlap(_cylinder, _plane);
+}
+
+bool overlap(const Plane& _plane, const Capsule& _capsule)
+{
+	return overlap(_capsule, _plane);
+}
+
+bool overlap(const Plane& _plane, const Cone& _cone)
+{
+	const Vec3 axis = sub(_cone.pos, _cone.end);
+	const float len = length(axis);
+	const Vec3 dir  = normalize(axis);
+
+	const Vec3 v1 = cross(_plane.normal, dir);
+	const Vec3 v2 = cross(v1, dir);
+
+	const float bb = len;
+	const float aa = _cone.radius;
+	const float cc = bx::sqrt(square(aa) + square(bb) );
+
+	const Vec3 pos = add(add(_cone.end
+		, mul(dir, len * bb/cc) )
+		, mul(v2,  len * aa/cc)
+		);
+
+	return overlap(_plane, LineSegment{pos, _cone.end});
+}
+
+bool overlap(const Plane& _plane, const Disk& _disk)
+{
+	return overlap(_disk, _plane);
+}
+
+bool overlap(const Plane& _plane, const Obb& _obb)
+{
+	return overlap(_obb, _plane);
+}
+
+bool overlap(const Sphere& _sphere, const Vec3& _pos)
+{
+	const float distSq   = distanceSq(_sphere.center, _pos);
+	const float radiusSq = square(_sphere.radius);
+	return distSq <= radiusSq;
+}
+
+bool overlap(const Sphere& _sphereA, const Sphere& _sphereB)
+{
+	const float distSq   = distanceSq(_sphereA.center, _sphereB.center);
+	const float radiusSq = square(_sphereA.radius + _sphereB.radius);
+	return distSq <= radiusSq;
+}
+
+bool overlap(const Sphere& _sphere, const Aabb& _aabb)
+{
+	const Vec3 pos = closestPoint(_aabb, _sphere.center);
+	return overlap(_sphere, pos);
+}
+
+bool overlap(const Sphere& _sphere, const Plane& _plane)
+{
+	return bx::abs(distance(_plane, _sphere.center) ) <= _sphere.radius;
+}
+
+bool overlap(const Sphere& _sphere, const Triangle& _triangle)
+{
+	Plane plane;
+	calcPlane(plane, _triangle);
+
+	if (!overlap(_sphere, plane) )
+	{
+		return false;
+	}
+
+	const Vec3 pos = closestPoint(plane, _sphere.center);
+	const Vec3 uvw = barycentric(_triangle, pos);
+	const float nr = -_sphere.radius;
+
+	return uvw.x >= nr
+		&& uvw.y >= nr
+		&& uvw.z >= nr
+		;
+}
+
+bool overlap(const Sphere& _sphere, const Cylinder& _cylinder)
+{
+	return overlap(_cylinder, _sphere);
+}
+
+bool overlap(const Sphere& _sphere, const Capsule& _capsule)
+{
+	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, _sphere.center);
+	return overlap(_sphere, Sphere{pos, _capsule.radius});
+}
+
+bool overlap(const Sphere& _sphere, const Cone& _cone)
+{
+	float tt;
+	const Vec3 pos = closestPoint(LineSegment{_cone.pos, _cone.end}, _sphere.center, tt);
+	return overlap(_sphere, Sphere{pos, lerp(_cone.radius, 0.0f, tt)});
+}
+
+bool overlap(const Sphere& _sphere, const Disk& _disk)
+{
+	if (!overlap(_sphere, Sphere{_disk.center, _disk.radius}) )
+	{
+		return false;
+	}
+
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
+
+	return overlap(_sphere, plane);
+}
+
+bool overlap(const Sphere& _sphere, const Obb& _obb)
+{
+	const Vec3 pos = closestPoint(_obb, _sphere.center);
+	return overlap(_sphere, pos);
+}
+
+bool overlap(const Triangle& _triangle, const Vec3& _pos)
+{
+	const Vec3 uvw = barycentric(_triangle, _pos);
+
+	return uvw.x >= 0.0f
+		&& uvw.y >= 0.0f
+		&& uvw.z >= 0.0f
+		;
+}
+
+bool overlap(const Triangle& _triangle, const Sphere& _sphere)
+{
+	return overlap(_sphere, _triangle);
+}
+
+bool overlap(const Triangle& _triangle, const Aabb& _aabb)
+{
+	return overlap(_aabb, _triangle);
+}
+
+bool overlap(const Triangle& _triangle, const Plane& _plane)
+{
+	const float dist0 = distance(_plane, _triangle.v0);
+	const float dist1 = distance(_plane, _triangle.v1);
+	const float dist2 = distance(_plane, _triangle.v2);
+
+	const float minDist = min(dist0, dist1, dist2);
+	const float maxDist = max(dist0, dist1, dist2);
+
+	return 0.0f > minDist
+		&& 0.0f < maxDist
+		;
+}
+
+inline bool overlap(const Triangle& _triangleA, const Triangle& _triangleB, const Vec3& _axis)
+{
+	const Interval ia = projectToAxis(_axis, _triangleA);
+	const Interval ib = projectToAxis(_axis, _triangleB);
+	return overlap(ia, ib);
+}
+
+bool overlap(const Triangle& _triangleA, const Triangle& _triangleB)
+{
+	const Vec3 baA = sub(_triangleA.v1, _triangleA.v0);
+	const Vec3 cbA = sub(_triangleA.v2, _triangleA.v1);
+	const Vec3 acA = sub(_triangleA.v0, _triangleA.v2);
+
+	const Vec3 baB = sub(_triangleB.v1, _triangleB.v0);
+	const Vec3 cbB = sub(_triangleB.v2, _triangleB.v1);
+	const Vec3 acB = sub(_triangleB.v0, _triangleB.v2);
+
+	return overlap(_triangleA, _triangleB, cross(baA, cbA) )
+		&& overlap(_triangleA, _triangleB, cross(baB, cbB) )
+		&& overlap(_triangleA, _triangleB, cross(baB, baA) )
+		&& overlap(_triangleA, _triangleB, cross(baB, cbA) )
+		&& overlap(_triangleA, _triangleB, cross(baB, acA) )
+		&& overlap(_triangleA, _triangleB, cross(cbB, baA) )
+		&& overlap(_triangleA, _triangleB, cross(cbB, cbA) )
+		&& overlap(_triangleA, _triangleB, cross(cbB, acA) )
+		&& overlap(_triangleA, _triangleB, cross(acB, baA) )
+		&& overlap(_triangleA, _triangleB, cross(acB, cbA) )
+		&& overlap(_triangleA, _triangleB, cross(acB, acA) )
+		;
+}
+
+template<typename Ty>
+bool overlap(const Triangle& _triangle, const Ty& _ty)
+{
+	Plane plane;
+	calcPlane(plane, _triangle);
+
+	plane.normal = neg(plane.normal);
+	plane.dist   = -plane.dist;
+
+	const LineSegment line =
+	{
+		_ty.pos,
+		_ty.end,
+	};
+
+	Hit hit;
+	if (intersect(line, plane, &hit) )
+	{
+		return true;
+	}
+
+	const Vec3 pos = closestPoint(plane, hit.pos);
+	const Vec3 uvw = barycentric(_triangle, pos);
+
+	const float nr = -_ty.radius;
+
+	if (uvw.x >= nr
+	&&  uvw.y >= nr
+	&&  uvw.z >= nr)
+	{
+		return true;
+	}
+
+	const LineSegment ab = LineSegment{_triangle.v0, _triangle.v1};
+	const LineSegment bc = LineSegment{_triangle.v1, _triangle.v2};
+	const LineSegment ca = LineSegment{_triangle.v2, _triangle.v0};
+
+	float ta0 = 0.0f, tb0 = 0.0f;
+	const bool i0 = intersect(ta0, tb0, ab, line);
+
+	float ta1, tb1;
+	const bool i1 = intersect(ta1, tb1, bc, line);
+
+	float ta2, tb2;
+	const bool i2 = intersect(ta2, tb2, ca, line);
+
+	if (!i0
+	||  !i1
+	||  !i2)
+	{
+		return false;
+	}
+
+	ta0 = clamp(ta0, 0.0f, 1.0f);
+	ta1 = clamp(ta1, 0.0f, 1.0f);
+	ta2 = clamp(ta2, 0.0f, 1.0f);
+	tb0 = clamp(tb0, 0.0f, 1.0f);
+	tb1 = clamp(tb1, 0.0f, 1.0f);
+	tb2 = clamp(tb2, 0.0f, 1.0f);
+
+	const Vec3 pa0 = getPointAt(ab, ta0);
+	const Vec3 pa1 = getPointAt(bc, ta1);
+	const Vec3 pa2 = getPointAt(ca, ta2);
+
+	const Vec3 pb0 = getPointAt(line, tb0);
+	const Vec3 pb1 = getPointAt(line, tb1);
+	const Vec3 pb2 = getPointAt(line, tb2);
+
+	const float d0 = distanceSq(pa0, pb0);
+	const float d1 = distanceSq(pa1, pb1);
+	const float d2 = distanceSq(pa2, pb2);
+
+	if (d0 <= d1
+	&&  d0 <= d2)
+	{
+		return overlap(_ty, pa0);
+	}
+	else if (d1 <= d2)
+	{
+		return overlap(_ty, pa1);
+	}
+
+	return overlap(_ty, pa2);
+}
+
+bool overlap(const Triangle& _triangle, const Cylinder& _cylinder)
+{
+	return overlap<Cylinder>(_triangle, _cylinder);
+}
+
+bool overlap(const Triangle& _triangle, const Capsule& _capsule)
+{
+	return overlap<Capsule>(_triangle, _capsule);
+}
+
+bool overlap(const Triangle& _triangle, const Cone& _cone)
+{
+	const LineSegment ab = LineSegment{_triangle.v0, _triangle.v1};
+	const LineSegment bc = LineSegment{_triangle.v1, _triangle.v2};
+	const LineSegment ca = LineSegment{_triangle.v2, _triangle.v0};
+
+	const LineSegment line =
+	{
+		_cone.pos,
+		_cone.end,
+	};
+
+	float ta0 = 0.0f, tb0 = 0.0f;
+	const bool i0 = intersect(ta0, tb0, ab, line);
+
+	float ta1, tb1;
+	const bool i1 = intersect(ta1, tb1, bc, line);
+
+	float ta2, tb2;
+	const bool i2 = intersect(ta2, tb2, ca, line);
+
+	if (!i0
+	||  !i1
+	||  !i2)
+	{
+		return false;
+	}
+
+	ta0 = clamp(ta0, 0.0f, 1.0f);
+	ta1 = clamp(ta1, 0.0f, 1.0f);
+	ta2 = clamp(ta2, 0.0f, 1.0f);
+	tb0 = clamp(tb0, 0.0f, 1.0f);
+	tb1 = clamp(tb1, 0.0f, 1.0f);
+	tb2 = clamp(tb2, 0.0f, 1.0f);
+
+	const Vec3 pa0 = getPointAt(ab, ta0);
+	const Vec3 pa1 = getPointAt(bc, ta1);
+	const Vec3 pa2 = getPointAt(ca, ta2);
+
+	const Vec3 pb0 = getPointAt(line, tb0);
+	const Vec3 pb1 = getPointAt(line, tb1);
+	const Vec3 pb2 = getPointAt(line, tb2);
+
+	const float d0 = distanceSq(pa0, pb0);
+	const float d1 = distanceSq(pa1, pb1);
+	const float d2 = distanceSq(pa2, pb2);
+
+	if (d0 <= d1
+	&&  d0 <= d2)
+	{
+		return overlap(_cone, pa0);
+	}
+	else if (d1 <= d2)
+	{
+		return overlap(_cone, pa1);
+	}
+
+	return overlap(_cone, pa2);
+}
+
+bool overlap(const Triangle& _triangle, const Disk& _disk)
+{
+	if (!overlap(_triangle, Sphere{_disk.center, _disk.radius}) )
+	{
+		return false;
+	}
+
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
+
+	return overlap(_triangle, plane);
+}
+
+bool overlap(const Triangle& _triangle, const Obb& _obb)
+{
+	Srt srt = toSrt(_obb.mtx);
+
+	Aabb aabb;
+	toAabb(aabb, srt.scale);
+
+	const Quaternion invRotation = invert(srt.rotation);
+
+	const Triangle triangle =
+	{
+		mul(sub(_triangle.v0, srt.translation), invRotation),
+		mul(sub(_triangle.v1, srt.translation), invRotation),
+		mul(sub(_triangle.v2, srt.translation), invRotation),
+	};
+
+	return overlap(triangle, aabb);
+}
+

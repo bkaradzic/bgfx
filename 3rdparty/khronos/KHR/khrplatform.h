@@ -2,7 +2,7 @@
 #define __khrplatform_h_
 
 /*
-** Copyright (c) 2008-2009 The Khronos Group Inc.
+** Copyright (c) 2008-2018 The Khronos Group Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and/or associated documentation files (the
@@ -26,18 +26,16 @@
 
 /* Khronos platform-specific types and definitions.
  *
- * $Revision: 7820 $ on $Date: 2009-04-03 13:46:26 -0700 (Fri, 03 Apr 2009) $
+ * The master copy of khrplatform.h is maintained in the Khronos EGL
+ * Registry repository at https://github.com/KhronosGroup/EGL-Registry
+ * The last semantic modification to khrplatform.h was at commit ID:
+ *      67a3e0864c2d75ea5287b9f3d2eb74a745936692
  *
  * Adopters may modify this file to suit their platform. Adopters are
  * encouraged to submit platform specific modifications to the Khronos
  * group so that they can be included in future versions of this file.
- * Please submit changes by sending them to the public Khronos Bugzilla
- * (http://khronos.org/bugzilla) by filing a bug against product
- * "Khronos (general)" component "Registry".
- *
- * A predefined template which fills in some of the bug fields can be
- * reached using http://tinyurl.com/khrplatform-h-bugreport, but you
- * must create a Bugzilla login first.
+ * Please submit changes by filing pull requests or issues on
+ * the EGL Registry repository linked above.
  *
  *
  * See the Implementer's Guidelines for information about where this file
@@ -101,6 +99,8 @@
 #   define KHRONOS_APICALL __declspec(dllimport)
 #elif defined (__SYMBIAN32__)
 #   define KHRONOS_APICALL IMPORT_C
+#elif defined(__ANDROID__)
+#   define KHRONOS_APICALL __attribute__((visibility("default")))
 #else
 #   define KHRONOS_APICALL
 #endif
@@ -221,10 +221,23 @@ typedef signed   char          khronos_int8_t;
 typedef unsigned char          khronos_uint8_t;
 typedef signed   short int     khronos_int16_t;
 typedef unsigned short int     khronos_uint16_t;
+
+/*
+ * Types that differ between LLP64 and LP64 architectures - in LLP64,
+ * pointers are 64 bits, but 'long' is still 32 bits. Win64 appears
+ * to be the only LLP64 architecture in current use.
+ */
+#ifdef _WIN64
+typedef signed   long long int khronos_intptr_t;
+typedef unsigned long long int khronos_uintptr_t;
+typedef signed   long long int khronos_ssize_t;
+typedef unsigned long long int khronos_usize_t;
+#else
 typedef signed   long  int     khronos_intptr_t;
 typedef unsigned long  int     khronos_uintptr_t;
 typedef signed   long  int     khronos_ssize_t;
 typedef unsigned long  int     khronos_usize_t;
+#endif
 
 #if KHRONOS_SUPPORT_FLOAT
 /*

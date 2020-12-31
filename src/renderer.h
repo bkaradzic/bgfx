@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -10,6 +10,23 @@
 
 namespace bgfx
 {
+	inline constexpr uint32_t toAbgr8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
+	{
+		return 0
+			| (uint32_t(_r)<<24)
+			| (uint32_t(_g)<<16)
+			| (uint32_t(_b)<< 8)
+			| (uint32_t(_a)    )
+			;
+	}
+
+	constexpr uint32_t kColorFrame    = toAbgr8(0xff, 0xd7, 0xc9);
+	constexpr uint32_t kColorView     = toAbgr8(0xe4, 0xb4, 0x8e);
+	constexpr uint32_t kColorDraw     = toAbgr8(0xc6, 0xe5, 0xb9);
+	constexpr uint32_t kColorCompute  = toAbgr8(0xa7, 0xdb, 0xd8);
+	constexpr uint32_t kColorMarker   = toAbgr8(0xff, 0x00, 0x00);
+	constexpr uint32_t kColorResource = toAbgr8(0xff, 0x40, 0x20);
+
 	struct BlitState
 	{
 		BlitState(const Frame* _frame)
@@ -83,8 +100,8 @@ namespace bgfx
 			for (uint32_t ii = 0, num = _program.m_numPredefined; ii < num; ++ii)
 			{
 				const PredefinedUniform& predefined = _program.m_predefined[ii];
-				uint8_t flags = predefined.m_type&BGFX_UNIFORM_FRAGMENTBIT;
-				switch (predefined.m_type&(~BGFX_UNIFORM_FRAGMENTBIT) )
+				uint8_t flags = predefined.m_type&kUniformFragmentBit;
+				switch (predefined.m_type&(~kUniformFragmentBit) )
 				{
 				case PredefinedUniform::ViewRect:
 					{
@@ -215,7 +232,7 @@ namespace bgfx
 					{
 						Matrix4 modelView;
 						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
-						bx::float4x4_mul(&modelView.un.f4x4
+						bx::model4x4_mul(&modelView.un.f4x4
 							, &model.un.f4x4
 							, &m_view[_view].un.f4x4
 							);
@@ -231,7 +248,7 @@ namespace bgfx
 					{
 						Matrix4 modelViewProj;
 						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
-						bx::float4x4_mul(&modelViewProj.un.f4x4
+						bx::model4x4_mul_viewproj4x4(&modelViewProj.un.f4x4
 							, &model.un.f4x4
 							, &m_viewProj[_view].un.f4x4
 							);
@@ -254,7 +271,7 @@ namespace bgfx
 					break;
 
 				default:
-					BX_CHECK(false, "predefined %d not handled", predefined.m_type);
+					BX_ASSERT(false, "predefined %d not handled", predefined.m_type);
 					break;
 				}
 			}
@@ -287,7 +304,7 @@ namespace bgfx
 				handle = m_alloc.alloc();
 			}
 
-			BX_CHECK(UINT16_MAX != handle, "Failed to find handle.");
+			BX_ASSERT(UINT16_MAX != handle, "Failed to find handle.");
 
 			Data& data = m_data[handle];
 			data.m_hash   = _key;
@@ -440,11 +457,12 @@ namespace bgfx
 			return true;
 		}
 
-		for (uint32_t idx = 0, streamMask = _new.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+		for (uint32_t idx = 0, streamMask = _new.m_streamMask
 			; 0 != streamMask
-			; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
+			; streamMask >>= 1, idx += 1
 			)
 		{
+			const uint32_t ntz = bx::uint32_cnttz(streamMask);
 			streamMask >>= ntz;
 			idx         += ntz;
 
@@ -481,7 +499,7 @@ namespace bgfx
 			if (m_enabled)
 			{
 				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
-				viewStats.cpuTimeElapsed = -bx::getHPCounter();
+				viewStats.cpuTimeBegin = bx::getHPCounter();
 
 				m_queryIdx = m_gpuTimer.begin(_view);
 
@@ -503,8 +521,9 @@ namespace bgfx
 				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
 				const typename Ty::Result& result = m_gpuTimer.m_result[viewStats.view];
 
-				viewStats.cpuTimeElapsed += bx::getHPCounter();
-				viewStats.gpuTimeElapsed = result.m_end - result.m_begin;
+				viewStats.cpuTimeEnd = bx::getHPCounter();
+				viewStats.gpuTimeBegin = result.m_begin;
+				viewStats.gpuTimeEnd = result.m_end;
 
 				++m_numViews;
 				m_queryIdx = UINT32_MAX;

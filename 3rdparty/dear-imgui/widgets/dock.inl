@@ -231,13 +231,13 @@ namespace ImGui
 
 		Dock& getDock(const char* label, bool opened)
 		{
-			ImU32 id = ImHash(label, 0);
+			ImU32 id = ImHashStr(label, 0);
 			for (int i = 0; i < m_docks.size(); ++i)
 			{
-        if (m_docks[i]->id == id)
-        {
-          return *m_docks[i];
-        }
+				if (m_docks[i]->id == id)
+				{
+					return *m_docks[i];
+				}
 			}
 
 			Dock* new_dock = (Dock*)MemAlloc(sizeof(Dock));
@@ -691,7 +691,7 @@ namespace ImGui
 				ImU32 text_color = GetColorU32(ImGuiCol_Text);
 				ImU32 text_color_disabled = GetColorU32(ImGuiCol_TextDisabled);
 				float line_height = GetTextLineHeightWithSpacing();
-				float tab_base;
+				float tab_base = 0.0f;
 
 				drawTabbarListButton(dock);
 
@@ -706,7 +706,7 @@ namespace ImGui
 						dock_tab->setActive();
 					}
 
-					if (IsItemActive() && IsMouseDragging())
+					if (IsItemActive() && IsMouseDragging(0))
 					{
 						m_drag_offset = GetMousePos() - dock_tab->pos;
 						doUndock(*dock_tab);

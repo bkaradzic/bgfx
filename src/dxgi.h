@@ -1,12 +1,12 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #ifndef BGFX_DXGI_H_HEADER_GUARD
 #define BGFX_DXGI_H_HEADER_GUARD
 
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 #	include <d3dcommon.h>
 #	include <dxgi1_6.h>
 #else
@@ -15,7 +15,7 @@
 
 namespace bgfx
 {
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	typedef ::IUnknown IUnknown;
 #else
 	typedef ::IGraphicsUnknown IUnknown;

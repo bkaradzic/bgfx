@@ -105,7 +105,7 @@ static const float s_meshScale[] =
 	0.05f
 };
 
-// Vertex decl for our screen space quad (used in deferred rendering)
+// Vertex layout for our screen space quad (used in deferred rendering)
 struct PosTexCoord0Vertex
 {
 	float m_x;
@@ -116,24 +116,24 @@ struct PosTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
-bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 // Utility function to draw a screen space quad for deferred rendering
 void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 		PosTexCoord0Vertex* vertex = (PosTexCoord0Vertex*)vb.data;
 
 		const float minx = -_width;
@@ -186,8 +186,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleRSM : public entry::AppI
 {
 public:
-	ExampleRSM(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleRSM(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 		, m_reading(0)
 		, m_currFrame(UINT32_MAX)
 		, m_cameraSpin(false)
@@ -258,12 +258,12 @@ public:
 		u_rsmAmount     = bgfx::createUniform("u_rsmAmount",     bgfx::UniformType::Vec4);  // How much RSM to use vs directional light
 
 		// Create texture sampler uniforms (used when we bind textures)
-		s_normal    = bgfx::createUniform("s_normal",    bgfx::UniformType::Int1);  // Normal gbuffer
-		s_depth     = bgfx::createUniform("s_depth",     bgfx::UniformType::Int1);  // Normal gbuffer
-		s_color     = bgfx::createUniform("s_color",     bgfx::UniformType::Int1);  // Color (albedo) gbuffer
-		s_light     = bgfx::createUniform("s_light",     bgfx::UniformType::Int1);  // Light buffer
-		s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Int1);  // Shadow map
-		s_rsm       = bgfx::createUniform("s_rsm",       bgfx::UniformType::Int1);  // Reflective shadow map
+		s_normal    = bgfx::createUniform("s_normal",    bgfx::UniformType::Sampler);  // Normal gbuffer
+		s_depth     = bgfx::createUniform("s_depth",     bgfx::UniformType::Sampler);  // Normal gbuffer
+		s_color     = bgfx::createUniform("s_color",     bgfx::UniformType::Sampler);  // Color (albedo) gbuffer
+		s_light     = bgfx::createUniform("s_light",     bgfx::UniformType::Sampler);  // Light buffer
+		s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Sampler);  // Shadow map
+		s_rsm       = bgfx::createUniform("s_rsm",       bgfx::UniformType::Sampler);  // Reflective shadow map
 
 		// Create program from shaders.
 		m_gbufferProgram = loadProgram("vs_rsm_gbuffer", "fs_rsm_gbuffer");  // Gbuffer
@@ -312,9 +312,13 @@ public:
 			;
 
 		// Make gbuffer and related textures
+		bgfx::TextureFormat::Enum depthFormat = bgfx::getRendererType() == bgfx::RendererType::WebGPU
+			? bgfx::TextureFormat::D32F
+			: bgfx::TextureFormat::D24;
+
 		m_gbufferTex[GBUFFER_RT_NORMAL] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
 		m_gbufferTex[GBUFFER_RT_COLOR]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
-		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::D24,   tsFlags);
+		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat,                tsFlags);
 		m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
 
 		// Make light buffer
@@ -359,7 +363,7 @@ public:
 
 		m_shadowBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_shadowBufferTex), m_shadowBufferTex, true);
 
-		// Vertex decl
+		// Vertex layout
 		PosTexCoord0Vertex::init();
 
 		// Init camera
@@ -447,7 +451,7 @@ public:
 			const float deltaTime = float(frameTime/freq);
 
 			// Update camera
-			cameraUpdate(deltaTime*0.15f, m_mouseState);
+			cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
 
 			// Set up matrices for gbuffer
 			float view[16];
@@ -758,4 +762,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleRSM, "31-rsm", "Global Illumination with Reflective Shadow Map.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleRSM
+	, "31-rsm"
+	, "Global Illumination with Reflective Shadow Map."
+	, "https://bkaradzic.github.io/bgfx/examples.html#rsm"
+	);

@@ -1,7 +1,8 @@
 //
 // Copyright (C) 2014-2015 LunarG, Inc.
-// Copyright (C) 2015-2018 Google, Inc.
+// Copyright (C) 2015-2020 Google, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -57,8 +58,18 @@
 #include <sstream>
 #include <stack>
 #include <unordered_map>
+#include <map>
 
 namespace spv {
+
+typedef enum {
+    Spv_1_0 = (1 << 16),
+    Spv_1_1 = (1 << 16) | (1 << 8),
+    Spv_1_2 = (1 << 16) | (2 << 8),
+    Spv_1_3 = (1 << 16) | (3 << 8),
+    Spv_1_4 = (1 << 16) | (4 << 8),
+    Spv_1_5 = (1 << 16) | (5 << 8),
+} SpvVersion;
 
 class Builder {
 public:
@@ -74,20 +85,48 @@ public:
         source = lang;
         sourceVersion = version;
     }
+    spv::Id getStringId(const std::string& str)
+    {
+        auto sItr = stringIds.find(str);
+        if (sItr != stringIds.end())
+            return sItr->second;
+        spv::Id strId = getUniqueId();
+        Instruction* fileString = new Instruction(strId, NoType, OpString);
+        const char* file_c_str = str.c_str();
+        fileString->addStringOperand(file_c_str);
+        strings.push_back(std::unique_ptr<Instruction>(fileString));
+        module.mapInstruction(fileString);
+        stringIds[file_c_str] = strId;
+        return strId;
+    }
     void setSourceFile(const std::string& file)
     {
-        Instruction* fileString = new Instruction(getUniqueId(), NoType, OpString);
-        const char* file_c_str = file.c_str();
-        fileString->addStringOperand(file_c_str);
-        sourceFileStringId = fileString->getResultId();
-        strings.push_back(std::unique_ptr<Instruction>(fileString));
-        stringIds[file_c_str] = sourceFileStringId;
+        sourceFileStringId = getStringId(file);
     }
     void setSourceText(const std::string& text) { sourceText = text; }
     void addSourceExtension(const char* ext) { sourceExtensions.push_back(ext); }
     void addModuleProcessed(const std::string& p) { moduleProcesses.push_back(p.c_str()); }
     void setEmitOpLines() { emitOpLines = true; }
     void addExtension(const char* ext) { extensions.insert(ext); }
+    void removeExtension(const char* ext)
+    {
+        extensions.erase(ext);
+    }
+    void addIncorporatedExtension(const char* ext, SpvVersion incorporatedVersion)
+    {
+        if (getSpvVersion() < static_cast<unsigned>(incorporatedVersion))
+            addExtension(ext);
+    }
+    void promoteIncorporatedExtension(const char* baseExt, const char* promoExt, SpvVersion incorporatedVersion)
+    {
+        removeExtension(baseExt);
+        addIncorporatedExtension(promoExt, incorporatedVersion);
+    }
+    void addInclude(const std::string& name, const std::string& text)
+    {
+        spv::Id incId = getStringId(name);
+        includeFiles[incId] = &text;
+    }
     Id import(const char*);
     void setMemoryModel(spv::AddressingModel addr, spv::MemoryModel mem)
     {
@@ -124,7 +163,9 @@ public:
     // For creating new types (will return old type if the requested one was already made).
     Id makeVoidType();
     Id makeBoolType();
-    Id makePointer(StorageClass, Id type);
+    Id makePointer(StorageClass, Id pointee);
+    Id makeForwardPointer(StorageClass);
+    Id makePointerFromForwardPointer(StorageClass, Id forwardPointerType, Id pointee);
     Id makeIntegerType(int width, bool hasSign);   // generic
     Id makeIntType(int width) { return makeIntegerType(width, true); }
     Id makeUintType(int width) { return makeIntegerType(width, false); }
@@ -139,9 +180,12 @@ public:
     Id makeImageType(Id sampledType, Dim, bool depth, bool arrayed, bool ms, unsigned sampled, ImageFormat format);
     Id makeSamplerType();
     Id makeSampledImageType(Id imageType);
+    Id makeCooperativeMatrixType(Id component, Id scope, Id rows, Id cols);
 
     // accelerationStructureNV type
-    Id makeAccelerationStructureNVType();
+    Id makeAccelerationStructureType();
+    // rayQueryEXT type
+    Id makeRayQueryType();
 
     // For querying about types.
     Id getTypeId(Id resultId) const { return module.getTypeId(resultId); }
@@ -156,38 +200,60 @@ public:
     Id getContainedTypeId(Id typeId) const;
     Id getContainedTypeId(Id typeId, int) const;
     StorageClass getTypeStorageClass(Id typeId) const { return module.getStorageClass(typeId); }
-    ImageFormat getImageTypeFormat(Id typeId) const { return (ImageFormat)module.getInstruction(typeId)->getImmediateOperand(6); }
+    ImageFormat getImageTypeFormat(Id typeId) const
+        { return (ImageFormat)module.getInstruction(typeId)->getImmediateOperand(6); }
 
     bool isPointer(Id resultId)      const { return isPointerType(getTypeId(resultId)); }
     bool isScalar(Id resultId)       const { return isScalarType(getTypeId(resultId)); }
     bool isVector(Id resultId)       const { return isVectorType(getTypeId(resultId)); }
     bool isMatrix(Id resultId)       const { return isMatrixType(getTypeId(resultId)); }
+    bool isCooperativeMatrix(Id resultId)const { return isCooperativeMatrixType(getTypeId(resultId)); }
     bool isAggregate(Id resultId)    const { return isAggregateType(getTypeId(resultId)); }
     bool isSampledImage(Id resultId) const { return isSampledImageType(getTypeId(resultId)); }
 
-    bool isBoolType(Id typeId)               { return groupedTypes[OpTypeBool].size() > 0 && typeId == groupedTypes[OpTypeBool].back()->getResultId(); }
-    bool isIntType(Id typeId)          const { return getTypeClass(typeId) == OpTypeInt && module.getInstruction(typeId)->getImmediateOperand(1) != 0; }
-    bool isUintType(Id typeId)         const { return getTypeClass(typeId) == OpTypeInt && module.getInstruction(typeId)->getImmediateOperand(1) == 0; }
+    bool isBoolType(Id typeId)
+        { return groupedTypes[OpTypeBool].size() > 0 && typeId == groupedTypes[OpTypeBool].back()->getResultId(); }
+    bool isIntType(Id typeId)          const
+        { return getTypeClass(typeId) == OpTypeInt && module.getInstruction(typeId)->getImmediateOperand(1) != 0; }
+    bool isUintType(Id typeId)         const
+        { return getTypeClass(typeId) == OpTypeInt && module.getInstruction(typeId)->getImmediateOperand(1) == 0; }
     bool isFloatType(Id typeId)        const { return getTypeClass(typeId) == OpTypeFloat; }
     bool isPointerType(Id typeId)      const { return getTypeClass(typeId) == OpTypePointer; }
-    bool isScalarType(Id typeId)       const { return getTypeClass(typeId) == OpTypeFloat  || getTypeClass(typeId) == OpTypeInt || getTypeClass(typeId) == OpTypeBool; }
+    bool isScalarType(Id typeId)       const
+        { return getTypeClass(typeId) == OpTypeFloat || getTypeClass(typeId) == OpTypeInt ||
+          getTypeClass(typeId) == OpTypeBool; }
     bool isVectorType(Id typeId)       const { return getTypeClass(typeId) == OpTypeVector; }
     bool isMatrixType(Id typeId)       const { return getTypeClass(typeId) == OpTypeMatrix; }
     bool isStructType(Id typeId)       const { return getTypeClass(typeId) == OpTypeStruct; }
     bool isArrayType(Id typeId)        const { return getTypeClass(typeId) == OpTypeArray; }
-    bool isAggregateType(Id typeId)    const { return isArrayType(typeId) || isStructType(typeId); }
+#ifdef GLSLANG_WEB
+    bool isCooperativeMatrixType(Id typeId)const { return false; }
+#else
+    bool isCooperativeMatrixType(Id typeId)const { return getTypeClass(typeId) == OpTypeCooperativeMatrixNV; }
+#endif
+    bool isAggregateType(Id typeId)    const
+        { return isArrayType(typeId) || isStructType(typeId) || isCooperativeMatrixType(typeId); }
     bool isImageType(Id typeId)        const { return getTypeClass(typeId) == OpTypeImage; }
     bool isSamplerType(Id typeId)      const { return getTypeClass(typeId) == OpTypeSampler; }
     bool isSampledImageType(Id typeId) const { return getTypeClass(typeId) == OpTypeSampledImage; }
     bool containsType(Id typeId, Op typeOp, unsigned int width) const;
+    bool containsPhysicalStorageBufferOrArray(Id typeId) const;
 
     bool isConstantOpCode(Op opcode) const;
     bool isSpecConstantOpCode(Op opcode) const;
     bool isConstant(Id resultId) const { return isConstantOpCode(getOpCode(resultId)); }
     bool isConstantScalar(Id resultId) const { return getOpCode(resultId) == OpConstant; }
     bool isSpecConstant(Id resultId) const { return isSpecConstantOpCode(getOpCode(resultId)); }
-    unsigned int getConstantScalar(Id resultId) const { return module.getInstruction(resultId)->getImmediateOperand(0); }
+    unsigned int getConstantScalar(Id resultId) const
+        { return module.getInstruction(resultId)->getImmediateOperand(0); }
     StorageClass getStorageClass(Id resultId) const { return getTypeStorageClass(getTypeId(resultId)); }
+
+    bool isVariableOpCode(Op opcode) const { return opcode == OpVariable; }
+    bool isVariable(Id resultId) const { return isVariableOpCode(getOpCode(resultId)); }
+    bool isGlobalStorage(Id resultId) const { return getStorageClass(resultId) != StorageClassFunction; }
+    bool isGlobalVariable(Id resultId) const { return isVariable(resultId) && isGlobalStorage(resultId); }
+    // See if a resultId is valid for use as an initializer.
+    bool isValidInitializer(Id resultId) const { return isConstant(resultId) || isGlobalVariable(resultId); }
 
     int getScalarTypeWidth(Id typeId) const
     {
@@ -228,14 +294,22 @@ public:
 
     // For making new constants (will return old constant if the requested one was already made).
     Id makeBoolConstant(bool b, bool specConstant = false);
-    Id makeInt8Constant(int i, bool specConstant = false)        { return makeIntConstant(makeIntType(8),  (unsigned)i, specConstant); }
-    Id makeUint8Constant(unsigned u, bool specConstant = false)  { return makeIntConstant(makeUintType(8),           u, specConstant); }
-    Id makeInt16Constant(int i, bool specConstant = false)       { return makeIntConstant(makeIntType(16),  (unsigned)i, specConstant); }
-    Id makeUint16Constant(unsigned u, bool specConstant = false) { return makeIntConstant(makeUintType(16),           u, specConstant); }
-    Id makeIntConstant(int i, bool specConstant = false)         { return makeIntConstant(makeIntType(32),  (unsigned)i, specConstant); }
-    Id makeUintConstant(unsigned u, bool specConstant = false)   { return makeIntConstant(makeUintType(32),           u, specConstant); }
-    Id makeInt64Constant(long long i, bool specConstant = false)            { return makeInt64Constant(makeIntType(64),  (unsigned long long)i, specConstant); }
-    Id makeUint64Constant(unsigned long long u, bool specConstant = false)  { return makeInt64Constant(makeUintType(64),                     u, specConstant); }
+    Id makeInt8Constant(int i, bool specConstant = false)
+        { return makeIntConstant(makeIntType(8),  (unsigned)i, specConstant); }
+    Id makeUint8Constant(unsigned u, bool specConstant = false)
+        { return makeIntConstant(makeUintType(8),           u, specConstant); }
+    Id makeInt16Constant(int i, bool specConstant = false)
+        { return makeIntConstant(makeIntType(16),  (unsigned)i, specConstant); }
+    Id makeUint16Constant(unsigned u, bool specConstant = false)
+        { return makeIntConstant(makeUintType(16),           u, specConstant); }
+    Id makeIntConstant(int i, bool specConstant = false)
+        { return makeIntConstant(makeIntType(32),  (unsigned)i, specConstant); }
+    Id makeUintConstant(unsigned u, bool specConstant = false)
+        { return makeIntConstant(makeUintType(32),           u, specConstant); }
+    Id makeInt64Constant(long long i, bool specConstant = false)
+        { return makeInt64Constant(makeIntType(64),  (unsigned long long)i, specConstant); }
+    Id makeUint64Constant(unsigned long long u, bool specConstant = false)
+        { return makeInt64Constant(makeUintType(64),                     u, specConstant); }
     Id makeFloatConstant(float f, bool specConstant = false);
     Id makeDoubleConstant(double d, bool specConstant = false);
     Id makeFloat16Constant(float f16, bool specConstant = false);
@@ -247,13 +321,20 @@ public:
     // Methods for adding information outside the CFG.
     Instruction* addEntryPoint(ExecutionModel, Function*, const char* name);
     void addExecutionMode(Function*, ExecutionMode mode, int value1 = -1, int value2 = -1, int value3 = -1);
+    void addExecutionMode(Function*, ExecutionMode mode, const std::vector<unsigned>& literals);
+    void addExecutionModeId(Function*, ExecutionMode mode, const std::vector<Id>& operandIds);
     void addName(Id, const char* name);
     void addMemberName(Id, int member, const char* name);
     void addDecoration(Id, Decoration, int num = -1);
     void addDecoration(Id, Decoration, const char*);
+    void addDecoration(Id, Decoration, const std::vector<unsigned>& literals);
+    void addDecoration(Id, Decoration, const std::vector<const char*>& strings);
     void addDecorationId(Id id, Decoration, Id idDecoration);
+    void addDecorationId(Id id, Decoration, const std::vector<Id>& operandIds);
     void addMemberDecoration(Id, unsigned int member, Decoration, int num = -1);
     void addMemberDecoration(Id, unsigned int member, Decoration, const char*);
+    void addMemberDecoration(Id, unsigned int member, Decoration, const std::vector<unsigned>& literals);
+    void addMemberDecoration(Id, unsigned int member, Decoration, const std::vector<const char*>& strings);
 
     // At the end of what block do the next create*() instructions go?
     void setBuildPoint(Block* bp) { buildPoint = bp; }
@@ -266,8 +347,8 @@ public:
     // Make a shader-style function, and create its entry block if entry is non-zero.
     // Return the function, pass back the entry.
     // The returned pointer is only valid for the lifetime of this builder.
-    Function* makeFunctionEntry(Decoration precision, Id returnType, const char* name, const std::vector<Id>& paramTypes,
-                                const std::vector<std::vector<Decoration>>& precisions, Block **entry = 0);
+    Function* makeFunctionEntry(Decoration precision, Id returnType, const char* name,
+        const std::vector<Id>& paramTypes, const std::vector<std::vector<Decoration>>& precisions, Block **entry = 0);
 
     // Create a return. An 'implicit' return is one not appearing in the source
     // code.  In the case of an implicit return, no post-return block is inserted.
@@ -276,26 +357,34 @@ public:
     // Generate all the code needed to finish up a function.
     void leaveFunction();
 
-    // Create a discard.
-    void makeDiscard();
+    // Create block terminator instruction for certain statements like
+    // discard, terminate-invocation, terminateRayEXT, or ignoreIntersectionEXT
+    void makeStatementTerminator(spv::Op opcode, const char *name);
 
     // Create a global or function local or IO variable.
-    Id createVariable(StorageClass, Id type, const char* name = 0);
+    Id createVariable(Decoration precision, StorageClass, Id type, const char* name = nullptr,
+        Id initializer = NoResult);
 
     // Create an intermediate with an undefined value.
     Id createUndefined(Id type);
 
     // Store into an Id and return the l-value
-    void createStore(Id rValue, Id lValue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax);
+    void createStore(Id rValue, Id lValue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone,
+        spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // Load from an Id and return it
-    Id createLoad(Id lValue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax);
+    Id createLoad(Id lValue, spv::Decoration precision,
+        spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone,
+        spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // Create an OpAccessChain instruction
     Id createAccessChain(StorageClass, Id base, const std::vector<Id>& offsets);
 
     // Create an OpArrayLength instruction
     Id createArrayLength(Id base, unsigned int member);
+
+    // Create an OpCooperativeMatrixLengthNV instruction
+    Id createCooperativeMatrixLength(Id type);
 
     // Create an OpCompositeExtract instruction
     Id createCompositeExtract(Id composite, Id typeId, unsigned index);
@@ -385,7 +474,8 @@ public:
     };
 
     // Select the correct texture operation based on all inputs, and emit the correct instruction
-    Id createTextureCall(Decoration precision, Id resultType, bool sparse, bool fetch, bool proj, bool gather, bool noImplicit, const TextureParameters&);
+    Id createTextureCall(Decoration precision, Id resultType, bool sparse, bool fetch, bool proj, bool gather,
+        bool noImplicit, const TextureParameters&, ImageOperandsMask);
 
     // Emit the OpTextureQuery* instruction that was passed in.
     // Figure out the right return value and type, and return it.
@@ -444,7 +534,7 @@ public:
     // recursion stack can hold the memory for it.
     //
     void makeSwitch(Id condition, unsigned int control, int numSegments, const std::vector<int>& caseValues,
-                    const std::vector<int>& valueToSegment, int defaultSegment, std::vector<Block*>& segmentBB); // return argument
+                    const std::vector<int>& valueToSegment, int defaultSegment, std::vector<Block*>& segmentBB);
 
     // Add a branch to the innermost switch's merge block.
     void addSwitchBreak();
@@ -461,7 +551,7 @@ public:
         Block &head, &body, &merge, &continue_target;
     private:
         LoopBlocks();
-        LoopBlocks& operator=(const LoopBlocks&);
+        LoopBlocks& operator=(const LoopBlocks&) = delete;
     };
 
     // Start a new loop and prepare the builder to generate code for it.  Until
@@ -518,20 +608,39 @@ public:
         std::vector<Id> indexChain;
         Id instr;                      // cache the instruction that generates this access chain
         std::vector<unsigned> swizzle; // each std::vector element selects the next GLSL component number
-        Id component;                  // a dynamic component index, can coexist with a swizzle, done after the swizzle, NoResult if not present
-        Id preSwizzleBaseType;         // dereferenced type, before swizzle or component is applied; NoType unless a swizzle or component is present
+        Id component;                  // a dynamic component index, can coexist with a swizzle,
+                                       // done after the swizzle, NoResult if not present
+        Id preSwizzleBaseType;         // dereferenced type, before swizzle or component is applied;
+                                       // NoType unless a swizzle or component is present
         bool isRValue;                 // true if 'base' is an r-value, otherwise, base is an l-value
+        unsigned int alignment;        // bitwise OR of alignment values passed in. Accumulates worst alignment.
+                                       // Only tracks base and (optional) component selection alignment.
 
         // Accumulate whether anything in the chain of structures has coherent decorations.
         struct CoherentFlags {
+            CoherentFlags() { clear(); }
+#ifdef GLSLANG_WEB
+            void clear() { }
+            bool isVolatile() const { return false; }
+            CoherentFlags operator |=(const CoherentFlags &other) { return *this; }
+#else
+            bool isVolatile() const { return volatil; }
+            bool isNonUniform() const { return nonUniform; }
+            bool anyCoherent() const {
+                return coherent || devicecoherent || queuefamilycoherent || workgroupcoherent ||
+                    subgroupcoherent || shadercallcoherent;
+            }
+
             unsigned coherent : 1;
             unsigned devicecoherent : 1;
             unsigned queuefamilycoherent : 1;
             unsigned workgroupcoherent : 1;
             unsigned subgroupcoherent : 1;
+            unsigned shadercallcoherent : 1;
             unsigned nonprivate : 1;
             unsigned volatil : 1;
             unsigned isImage : 1;
+            unsigned nonUniform : 1;
 
             void clear() {
                 coherent = 0;
@@ -539,23 +648,27 @@ public:
                 queuefamilycoherent = 0;
                 workgroupcoherent = 0;
                 subgroupcoherent = 0;
+                shadercallcoherent = 0;
                 nonprivate = 0;
                 volatil = 0;
                 isImage = 0;
+                nonUniform = 0;
             }
 
-            CoherentFlags() { clear(); }
             CoherentFlags operator |=(const CoherentFlags &other) {
                 coherent |= other.coherent;
                 devicecoherent |= other.devicecoherent;
                 queuefamilycoherent |= other.queuefamilycoherent;
                 workgroupcoherent |= other.workgroupcoherent;
                 subgroupcoherent |= other.subgroupcoherent;
+                shadercallcoherent |= other.shadercallcoherent;
                 nonprivate |= other.nonprivate;
                 volatil |= other.volatil;
                 isImage |= other.isImage;
+                nonUniform |= other.nonUniform;
                 return *this;
             }
+#endif
         };
         CoherentFlags coherentFlags;
     };
@@ -587,31 +700,45 @@ public:
     }
 
     // push offset onto the end of the chain
-    void accessChainPush(Id offset, AccessChain::CoherentFlags coherentFlags)
+    void accessChainPush(Id offset, AccessChain::CoherentFlags coherentFlags, unsigned int alignment)
     {
         accessChain.indexChain.push_back(offset);
         accessChain.coherentFlags |= coherentFlags;
+        accessChain.alignment |= alignment;
     }
 
     // push new swizzle onto the end of any existing swizzle, merging into a single swizzle
-    void accessChainPushSwizzle(std::vector<unsigned>& swizzle, Id preSwizzleBaseType);
+    void accessChainPushSwizzle(std::vector<unsigned>& swizzle, Id preSwizzleBaseType,
+        AccessChain::CoherentFlags coherentFlags, unsigned int alignment);
 
     // push a dynamic component selection onto the access chain, only applicable with a
     // non-trivial swizzle or no swizzle
-    void accessChainPushComponent(Id component, Id preSwizzleBaseType)
+    void accessChainPushComponent(Id component, Id preSwizzleBaseType, AccessChain::CoherentFlags coherentFlags,
+        unsigned int alignment)
     {
         if (accessChain.swizzle.size() != 1) {
             accessChain.component = component;
             if (accessChain.preSwizzleBaseType == NoType)
                 accessChain.preSwizzleBaseType = preSwizzleBaseType;
         }
+        accessChain.coherentFlags |= coherentFlags;
+        accessChain.alignment |= alignment;
     }
 
     // use accessChain and swizzle to store value
-    void accessChainStore(Id rvalue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax);
+    void accessChainStore(Id rvalue, Decoration nonUniform,
+        spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone,
+        spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // use accessChain and swizzle to load an r-value
-    Id accessChainLoad(Decoration precision, Decoration nonUniform, Id ResultType, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax);
+    Id accessChainLoad(Decoration precision, Decoration l_nonUniform, Decoration r_nonUniform, Id ResultType,
+        spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax,
+            unsigned int alignment = 0);
+
+    // Return whether or not the access chain can be represented in SPIR-V
+    // as an l-value.
+    // E.g., a[3].yx cannot be, while a[3].y and a[3].y[x] can be.
+    bool isSpvLvalue() const { return accessChain.swizzle.size() <= 1; }
 
     // get the direct pointer for an l-value
     Id accessChainGetLValue();
@@ -620,22 +747,28 @@ public:
     // based on the type of the base and the chain of dereferences.
     Id accessChainGetInferredType();
 
-    // Add capabilities, extensions, remove unneeded decorations, etc., 
+    // Add capabilities, extensions, remove unneeded decorations, etc.,
     // based on the resulting SPIR-V.
     void postProcess();
 
+    // Prune unreachable blocks in the CFG and remove unneeded decorations.
+    void postProcessCFG();
+
+#ifndef GLSLANG_WEB
+    // Add capabilities, extensions based on instructions in the module.
+    void postProcessFeatures();
     // Hook to visit each instruction in a block in a function
-    void postProcess(const Instruction&);
-    // Hook to visit each instruction in a reachable block in a function.
-    void postProcessReachable(const Instruction&);
+    void postProcess(Instruction&);
     // Hook to visit each non-32-bit sized float/int operation in a block.
     void postProcessType(const Instruction&, spv::Id typeId);
+#endif
 
     void dump(std::vector<unsigned int>&) const;
 
     void createBranch(Block* block);
     void createConditionalBranch(Id condition, Block* thenBlock, Block* elseBlock);
-    void createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control, unsigned int dependencyLength);
+    void createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control,
+        const std::vector<unsigned int>& operands);
 
     // Sets to generate opcode for specialization constants.
     void setToSpecConstCodeGenMode() { generatingOpCodeForSpecConst = true; }
@@ -649,7 +782,7 @@ public:
     Id makeInt64Constant(Id typeId, unsigned long long value, bool specConstant);
     Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned value);
     Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned v1, unsigned v2);
-    Id findCompositeConstant(Op typeClass, const std::vector<Id>& comps);
+    Id findCompositeConstant(Op typeClass, Id typeId, const std::vector<Id>& comps);
     Id findStructConstant(Id typeId, const std::vector<Id>& comps);
     Id collapseAccessChain();
     void remapDynamicSwizzle();
@@ -658,8 +791,11 @@ public:
     void createAndSetNoPredecessorBlock(const char*);
     void createSelectionMerge(Block* mergeBlock, unsigned int control);
     void dumpSourceInstructions(std::vector<unsigned int>&) const;
+    void dumpSourceInstructions(const spv::Id fileId, const std::string& text, std::vector<unsigned int>&) const;
     void dumpInstructions(std::vector<unsigned int>&, const std::vector<std::unique_ptr<Instruction> >&) const;
     void dumpModuleProcesses(std::vector<unsigned int>&) const;
+    spv::MemoryAccessMask sanitizeMemoryAccessForStorageClass(spv::MemoryAccessMask memoryAccess, StorageClass sc)
+        const;
 
     unsigned int spvVersion;     // the version of SPIR-V to emit in the header
     SourceLanguage source;
@@ -694,10 +830,14 @@ public:
     std::vector<std::unique_ptr<Instruction> > externals;
     std::vector<std::unique_ptr<Function> > functions;
 
-     // not output, internally used for quick & dirty canonical (unique) creation
-    std::unordered_map<unsigned int, std::vector<Instruction*>> groupedConstants;       // map type opcodes to constant inst.
-    std::unordered_map<unsigned int, std::vector<Instruction*>> groupedStructConstants; // map struct-id to constant instructions
-    std::unordered_map<unsigned int, std::vector<Instruction*>> groupedTypes;           // map type opcodes to type instructions
+    // not output, internally used for quick & dirty canonical (unique) creation
+
+    // map type opcodes to constant inst.
+    std::unordered_map<unsigned int, std::vector<Instruction*>> groupedConstants;
+    // map struct-id to constant instructions
+    std::unordered_map<unsigned int, std::vector<Instruction*>> groupedStructConstants;
+    // map type opcodes to type instructions
+    std::unordered_map<unsigned int, std::vector<Instruction*>> groupedTypes;
 
     // stack of switches
     std::stack<Block*> switchMerges;
@@ -707,6 +847,9 @@ public:
 
     // map from strings to their string ids
     std::unordered_map<std::string, spv::Id> stringIds;
+
+    // map from include file name ids to their contents
+    std::map<spv::Id, const std::string*> includeFiles;
 
     // The stream for outputting warnings and errors.
     SpvBuildLogger* logger;

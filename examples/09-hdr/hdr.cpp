@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -24,7 +24,7 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
@@ -32,17 +32,17 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBottomLeft = false, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_layout);
 		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)vb.data;
 
 		const float zz = 0.0f;
@@ -140,8 +140,8 @@ void setOffsets4x4Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 class ExampleHDR : public entry::AppI
 {
 public:
-	ExampleHDR(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleHDR(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -183,10 +183,10 @@ public:
 		m_meshProgram    = loadProgram("vs_hdr_mesh",    "fs_hdr_mesh");
 		m_tonemapProgram = loadProgram("vs_hdr_tonemap", "fs_hdr_tonemap");
 
-		s_texCube   = bgfx::createUniform("s_texCube",  bgfx::UniformType::Int1);
-		s_texColor  = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
-		s_texLum    = bgfx::createUniform("s_texLum",   bgfx::UniformType::Int1);
-		s_texBlur   = bgfx::createUniform("s_texBlur",  bgfx::UniformType::Int1);
+		s_texCube   = bgfx::createUniform("s_texCube",  bgfx::UniformType::Sampler);
+		s_texColor  = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+		s_texLum    = bgfx::createUniform("s_texLum",   bgfx::UniformType::Sampler);
+		s_texBlur   = bgfx::createUniform("s_texBlur",  bgfx::UniformType::Sampler);
 		u_mtx       = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
 		u_tonemap   = bgfx::createUniform("u_tonemap",  bgfx::UniformType::Vec4);
 		u_offset    = bgfx::createUniform("u_offset",   bgfx::UniformType::Vec4, 16);
@@ -629,4 +629,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleHDR, "09-hdr", "Using multiple views with frame buffers, and view order remapping.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleHDR
+	, "09-hdr"
+	, "Using multiple views with frame buffers, and view order remapping."
+	, "https://bkaradzic.github.io/bgfx/examples.html#hdr"
+	);

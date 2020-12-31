@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -37,7 +37,7 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
@@ -45,10 +45,10 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 void EmitterUniforms::reset()
 {
@@ -375,32 +375,37 @@ namespace ps
 				const bx::Vec3 vdir = { _mtxView[1]*scale, _mtxView[5]*scale, _mtxView[9]*scale };
 
 				PosColorTexCoord0Vertex* vertex = &_outVertices[current*4];
-				bx::store(&vertex->m_x, bx::sub(bx::sub(pos, udir), vdir) );
-				aabbExpand(aabb, &vertex->m_x);
+
+				const bx::Vec3 ul = bx::sub(bx::sub(pos, udir), vdir);
+				bx::store(&vertex->m_x, ul);
+				aabbExpand(aabb, ul);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[0];
 				vertex->m_v     = _uv[1];
 				vertex->m_blend = blend;
 				++vertex;
 
-				bx::store(&vertex->m_x, bx::sub(bx::add(pos, udir), vdir) );
-				aabbExpand(aabb, &vertex->m_x);
+				const bx::Vec3 ur = bx::sub(bx::add(pos, udir), vdir);
+				bx::store(&vertex->m_x, ur);
+				aabbExpand(aabb, ur);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[2];
 				vertex->m_v     = _uv[1];
 				vertex->m_blend = blend;
 				++vertex;
 
-				bx::store(&vertex->m_x, bx::add(bx::add(pos, udir), vdir) );
-				aabbExpand(aabb, &vertex->m_x);
+				const bx::Vec3 br = bx::add(bx::add(pos, udir), vdir);
+				bx::store(&vertex->m_x, br);
+				aabbExpand(aabb, br);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[2];
 				vertex->m_v     = _uv[3];
 				vertex->m_blend = blend;
 				++vertex;
 
-				bx::store(&vertex->m_x, bx::add(bx::sub(pos, udir), vdir) );
-				aabbExpand(aabb, &vertex->m_x);
+				const bx::Vec3 bl = bx::add(bx::sub(pos, udir), vdir);
+				bx::store(&vertex->m_x, bl);
+				aabbExpand(aabb, bl);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[0];
 				vertex->m_v     = _uv[3];
@@ -453,7 +458,7 @@ namespace ps
 
 			m_num = 0;
 
-			s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+			s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 			m_texture  = bgfx::createTexture2D(
 				  SPRITE_TEXTURE_SIZE
 				, SPRITE_TEXTURE_SIZE
@@ -530,7 +535,7 @@ namespace ps
 				bgfx::TransientVertexBuffer tvb;
 				bgfx::TransientIndexBuffer tib;
 
-				const uint32_t numVertices = bgfx::getAvailTransientVertexBuffer(m_num*4, PosColorTexCoord0Vertex::ms_decl);
+				const uint32_t numVertices = bgfx::getAvailTransientVertexBuffer(m_num*4, PosColorTexCoord0Vertex::ms_layout);
 				const uint32_t numIndices  = bgfx::getAvailTransientIndexBuffer(m_num*6);
 				const uint32_t max = bx::uint32_min(numVertices/4, numIndices/6);
 				BX_WARN(m_num == max
@@ -542,7 +547,7 @@ namespace ps
 				if (0 < max)
 				{
 					bgfx::allocTransientBuffers(&tvb
-						, PosColorTexCoord0Vertex::ms_decl
+						, PosColorTexCoord0Vertex::ms_layout
 						, max*4
 						, &tib
 						, max*6
@@ -621,7 +626,7 @@ namespace ps
 
 		void updateEmitter(EmitterHandle _handle, const EmitterUniforms* _uniforms)
 		{
-			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
 				, "destroyEmitter handle %d is not valid."
 				, _handle.idx
 				);
@@ -640,7 +645,7 @@ namespace ps
 
 		void getAabb(EmitterHandle _handle, Aabb& _outAabb)
 		{
-			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
 				, "getAabb handle %d is not valid."
 				, _handle.idx
 				);
@@ -649,7 +654,7 @@ namespace ps
 
 		void destroyEmitter(EmitterHandle _handle)
 		{
-			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
 				, "destroyEmitter handle %d is not valid."
 				, _handle.idx
 				);

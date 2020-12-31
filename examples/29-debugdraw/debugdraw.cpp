@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -464,6 +464,287 @@ static const uint16_t s_bunnyTriList[] =
 	146,  72, 147,
 };
 
+struct Shape
+{
+	struct Type
+	{
+		enum Enum
+		{
+			Sphere,
+			Aabb,
+			Triangle,
+			Capsule,
+			Plane,
+			Disk,
+			Obb,
+			Cone,
+			Cylinder,
+
+			Count
+		};
+	};
+
+	Shape() : type(uint8_t(Type::Count) ) {}
+	Shape(const Aabb     & _a) : type(uint8_t(Type::Aabb    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Capsule  & _a) : type(uint8_t(Type::Capsule ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Cone     & _a) : type(uint8_t(Type::Cone    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Cylinder & _a) : type(uint8_t(Type::Cylinder) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Disk     & _a) : type(uint8_t(Type::Disk    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Obb      & _a) : type(uint8_t(Type::Obb     ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Plane& _a) : type(uint8_t(Type::Plane   ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Sphere   & _a) : type(uint8_t(Type::Sphere  ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Triangle & _a) : type(uint8_t(Type::Triangle) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+
+	uint8_t data[64];
+	uint8_t type;
+};
+
+#define OVERLAP(_shapeType)                                                                                      \
+	bool overlap(const _shapeType& _shapeA, const Shape& _shapeB)                                                \
+	{                                                                                                            \
+		switch (_shapeB.type)                                                                                    \
+		{                                                                                                        \
+		case Shape::Type::Aabb:     return ::overlap(_shapeA, *reinterpret_cast<const Aabb     *>(_shapeB.data) ); \
+		case Shape::Type::Capsule:  return ::overlap(_shapeA, *reinterpret_cast<const Capsule  *>(_shapeB.data) ); \
+		case Shape::Type::Cone:     return ::overlap(_shapeA, *reinterpret_cast<const Cone     *>(_shapeB.data) ); \
+		case Shape::Type::Cylinder: return ::overlap(_shapeA, *reinterpret_cast<const Cylinder *>(_shapeB.data) ); \
+		case Shape::Type::Disk:     return ::overlap(_shapeA, *reinterpret_cast<const Disk     *>(_shapeB.data) ); \
+		case Shape::Type::Obb:      return ::overlap(_shapeA, *reinterpret_cast<const Obb      *>(_shapeB.data) ); \
+		case Shape::Type::Plane:    return ::overlap(_shapeA, *reinterpret_cast<const bx::Plane*>(_shapeB.data) ); \
+		case Shape::Type::Sphere:   return ::overlap(_shapeA, *reinterpret_cast<const Sphere   *>(_shapeB.data) ); \
+		case Shape::Type::Triangle: return ::overlap(_shapeA, *reinterpret_cast<const Triangle *>(_shapeB.data) ); \
+		}                                                                                                        \
+		return false;                                                                                            \
+	}
+
+OVERLAP(Aabb);
+OVERLAP(Capsule);
+OVERLAP(Cone);
+OVERLAP(Cylinder);
+OVERLAP(Disk);
+OVERLAP(Obb);
+OVERLAP(bx::Plane);
+OVERLAP(Sphere);
+OVERLAP(Triangle);
+
+#undef OVERLAP
+
+void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
+{
+	switch (_type)
+	{
+	case Shape::Type::Aabb:
+		{
+			Aabb aabb;
+			toAabb(aabb, _pos, { 0.5f, 0.5f, 0.5f });
+			_outShape = Shape(aabb);
+		}
+		break;
+
+	case Shape::Type::Capsule:
+		_outShape = Shape(Capsule
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.0f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Cone:
+		_outShape = Shape(Cone
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.0f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Cylinder:
+		_outShape = Shape(Cylinder
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.0f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Disk:
+		_outShape = Shape(Disk
+		{
+			_pos,
+			bx::normalize(bx::Vec3{0.0f, 1.0f, 1.0f}),
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Obb:
+		{
+			Obb obb;
+			bx::mtxSRT(obb.mtx
+				, 0.25f
+				, 1.0f
+				, 0.25f
+				, bx::toRad(50.0f)
+				, bx::toRad(15.0f)
+				, bx::toRad(45.0f)
+				, _pos.x
+				, _pos.y
+				, _pos.z
+				);
+			_outShape = Shape(obb);
+		}
+		break;
+
+	case Shape::Type::Sphere:
+		_outShape = Shape(Sphere{_pos, 0.5f});
+		break;
+
+	case Shape::Type::Plane:
+		{
+			bx::Plane plane;
+			bx::calcPlane(plane, bx::normalize(bx::Vec3{0.0f, 1.0f, 1.0f}), _pos);
+			_outShape = Shape(plane);
+		}
+		break;
+
+	case Shape::Type::Triangle:
+		_outShape = Shape(Triangle
+			{
+				{ bx::add(_pos, {-0.4f,  0.0f, -0.4f}) },
+				{ bx::add(_pos, { 0.0f, -0.3f,  0.5f}) },
+				{ bx::add(_pos, { 0.0f,  0.5f,  0.3f}) },
+			});
+		break;
+
+	default: break;
+	}
+}
+
+void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
+{
+	switch (_type)
+	{
+	case Shape::Type::Aabb:
+		{
+			Aabb aabb;
+			toAabb(aabb, _pos, { 0.5f, 0.5f, 0.5f });
+			_outShape = Shape(aabb);
+		}
+		break;
+
+	case Shape::Type::Capsule:
+		_outShape = Shape(Capsule
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.2f,
+		});
+		break;
+
+	case Shape::Type::Cone:
+		_outShape = Shape(Cone
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.2f,
+		});
+		break;
+
+	case Shape::Type::Cylinder:
+		_outShape = Shape(Cylinder
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.2f,
+		});
+		break;
+
+	case Shape::Type::Disk:
+		_outShape = Shape(Disk
+		{
+			_pos,
+			bx::normalize(bx::Vec3{1.0f, 1.0f, 0.0f}),
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Obb:
+		{
+			Obb obb;
+			bx::mtxSRT(obb.mtx
+				, 1.0f
+				, 0.25f
+				, 0.25f
+				, bx::toRad(10.0f)
+				, bx::toRad(30.0f)
+				, bx::toRad(70.0f)
+				, _pos.x
+				, _pos.y
+				, _pos.z
+				);
+			_outShape = Shape(obb);
+		}
+		break;
+
+	case Shape::Type::Plane:
+		{
+			bx::Plane plane;
+			bx::calcPlane(plane, bx::normalize(bx::Vec3{1.0f, 1.0f, 0.0f}), _pos);
+			_outShape = Shape(plane);
+		}
+		break;
+
+	case Shape::Type::Sphere:
+		_outShape = Shape(Sphere{_pos, 0.5f});
+		break;
+
+	case Shape::Type::Triangle:
+		_outShape = Shape(Triangle
+			{
+				{ bx::add(_pos, {-0.4f,  0.0f, -0.4f}) },
+				{ bx::add(_pos, {-0.5f, -0.3f,  0.0f}) },
+				{ bx::add(_pos, { 0.3f,  0.5f,  0.0f}) },
+			});
+		break;
+
+	default: break;
+	}
+}
+
+int32_t overlap(const Shape& _shapeA, const Shape& _shapeB)
+{
+	switch (_shapeA.type)
+	{
+	case Shape::Type::Aabb:     return overlap(*reinterpret_cast<const Aabb     *>(_shapeA.data), _shapeB);
+	case Shape::Type::Capsule:  return overlap(*reinterpret_cast<const Capsule  *>(_shapeA.data), _shapeB);
+	case Shape::Type::Cone:     return overlap(*reinterpret_cast<const Cone     *>(_shapeA.data), _shapeB);
+	case Shape::Type::Cylinder: return overlap(*reinterpret_cast<const Cylinder *>(_shapeA.data), _shapeB);
+	case Shape::Type::Disk:     return overlap(*reinterpret_cast<const Disk     *>(_shapeA.data), _shapeB);
+	case Shape::Type::Obb:      return overlap(*reinterpret_cast<const Obb      *>(_shapeA.data), _shapeB);
+	case Shape::Type::Plane:    return overlap(*reinterpret_cast<const bx::Plane*>(_shapeA.data), _shapeB);
+	case Shape::Type::Sphere:   return overlap(*reinterpret_cast<const Sphere   *>(_shapeA.data), _shapeB);
+	case Shape::Type::Triangle: return overlap(*reinterpret_cast<const Triangle *>(_shapeA.data), _shapeB);
+	}
+
+	return 2;
+}
+
+void draw(DebugDrawEncoder& _dde, const Shape& _shape, const bx::Vec3 _pos)
+{
+	switch (_shape.type)
+	{
+	case Shape::Type::Aabb:     _dde.draw    (*reinterpret_cast<const Aabb     *>(_shape.data) ); break;
+	case Shape::Type::Capsule:  _dde.draw    (*reinterpret_cast<const Capsule  *>(_shape.data) ); break;
+	case Shape::Type::Cone:     _dde.draw    (*reinterpret_cast<const Cone     *>(_shape.data) ); break;
+	case Shape::Type::Cylinder: _dde.draw    (*reinterpret_cast<const Cylinder *>(_shape.data) ); break;
+	case Shape::Type::Disk:     _dde.draw    (*reinterpret_cast<const Disk     *>(_shape.data) ); break;
+	case Shape::Type::Obb:      _dde.draw    (*reinterpret_cast<const Obb      *>(_shape.data) ); break;
+	case Shape::Type::Plane:  { _dde.drawGrid( reinterpret_cast<const bx::Plane*>(_shape.data)->normal, _pos, 9, 0.3f); } break;
+	case Shape::Type::Sphere:   _dde.draw    (*reinterpret_cast<const Sphere   *>(_shape.data) ); break;
+	case Shape::Type::Triangle: _dde.draw    (*reinterpret_cast<const Triangle *>(_shape.data) ); break;
+	}
+}
+
 void imageCheckerboard(void* _dst, uint32_t _width, uint32_t _height, uint32_t _step, uint32_t _0, uint32_t _1)
 {
 	uint32_t* dst = (uint32_t*)_dst;
@@ -480,8 +761,8 @@ void imageCheckerboard(void* _dst, uint32_t _width, uint32_t _height, uint32_t _
 class ExampleDebugDraw : public entry::AppI
 {
 public:
-	ExampleDebugDraw(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleDebugDraw(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -565,10 +846,7 @@ public:
 
 			_dde->setColor(0xff0000ff);
 
-			const bx::Vec3 tmp = bx::mul(hit.m_normal, 0.7f);
-			const bx::Vec3 end = bx::add(hit.m_pos, tmp);
-
-			_dde->drawCone(hit.m_pos, end, 0.1f);
+			_dde->drawCone(hit.pos, bx::mad(hit.plane.normal, 0.7f, hit.pos), 0.1f);
 
 			_dde->pop();
 
@@ -595,6 +873,27 @@ public:
 
 			showExampleDialog(this);
 
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 5.0f, m_height / 3.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+				);
+
+			static float amplitudeMul = 0.0f;
+			ImGui::SliderFloat("Amplitude", &amplitudeMul, 0.0f, 1.0f);
+
+			static float timeScale = 1.0f;
+			ImGui::SliderFloat("T scale", &timeScale, -1.0f, 1.0f);
+
+			ImGui::End();
+
 			imguiEndFrame();
 
 			int64_t now = bx::getHPCounter() - m_timeOffset;
@@ -605,7 +904,7 @@ public:
 			const float deltaTime = float(frameTime/freq);
 
 			// Update camera.
-			cameraUpdate(deltaTime, m_mouseState);
+			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 			float view[16];
 			cameraGetViewMtx(view);
@@ -638,7 +937,9 @@ public:
 				, mtxInvVp
 				);
 
-			const uint32_t selected = 0xff80ffff;
+			constexpr uint32_t kSelected = 0xff80ffff;
+			constexpr uint32_t kOverlapA = 0xff0000ff;
+			constexpr uint32_t kOverlapB = 0xff8080ff;
 
 			DebugDrawEncoder dde;
 
@@ -652,19 +953,20 @@ public:
 					{ 10.0f, 5.0f, 5.0f },
 				};
 				dde.setWireframe(true);
-				dde.setColor(intersect(&dde, ray, aabb) ? selected : 0xff00ff00);
+				dde.setColor(intersect(&dde, ray, aabb) ? kSelected : 0xff00ff00);
 				dde.draw(aabb);
 			dde.pop();
 
-			float time = float(now/freq);
+			static float time = 0.0f;
+			time += deltaTime*timeScale;
 
 			Obb obb;
-			bx::mtxRotateX(obb.m_mtx, time);
+			bx::mtxRotateX(obb.mtx, time);
 			dde.setWireframe(true);
-			dde.setColor(intersect(&dde, ray, obb) ? selected : 0xffffffff);
+			dde.setColor(intersect(&dde, ray, obb) ? kSelected : 0xffffffff);
 			dde.draw(obb);
 
-			bx::mtxSRT(obb.m_mtx, 1.0f, 1.0f, 1.0f, time*0.23f, time, 0.0f, 3.0f, 0.0f, 0.0f);
+			bx::mtxSRT(obb.mtx, 1.0f, 1.0f, 1.0f, time*0.23f, time, 0.0f, 3.0f, 0.0f, 0.0f);
 
 			dde.push();
 				toAabb(aabb, obb);
@@ -674,7 +976,7 @@ public:
 			dde.pop();
 
 			dde.setWireframe(false);
-			dde.setColor(intersect(&dde, ray, obb) ? selected : 0xffffffff);
+			dde.setColor(intersect(&dde, ray, obb) ? kSelected : 0xffffffff);
 			dde.draw(obb);
 
 			dde.setColor(0xffffffff);
@@ -697,40 +999,40 @@ public:
 				const bx::Vec3 normal = { 0.0f,  1.0f, 0.0f };
 				const bx::Vec3 pos    = { 0.0f, -2.0f, 0.0f };
 
-				Plane plane;
-				bx::calcPlane(&plane.m_normal.x, normal, pos);
+				bx::Plane plane;
+				bx::calcPlane(plane, normal, pos);
 
 				dde.setColor(false
 					|| intersect(&dde, ray, plane)
-					? selected
+					? kSelected
 					: 0xffffffff
 					);
 
-				dde.drawGrid(Axis::Y, pos, 20, 1.0f);
+				dde.drawGrid(Axis::Y, pos, 128, 1.0f);
 			}
 
 			dde.drawFrustum(mtxVp);
 
 			dde.push();
 				Sphere sphere = { { 0.0f, 5.0f, 0.0f }, 1.0f };
-				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xfff0c0ff);
+				dde.setColor(intersect(&dde, ray, sphere) ? kSelected : 0xfff0c0ff);
 				dde.setWireframe(true);
 				dde.setLod(3);
 				dde.draw(sphere);
 				dde.setWireframe(false);
 
-				sphere.m_center.x = -2.0f;
-				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xc0ffc0ff);
+				sphere.center.x = -2.0f;
+				dde.setColor(intersect(&dde, ray, sphere) ? kSelected : 0xc0ffc0ff);
 				dde.setLod(2);
 				dde.draw(sphere);
 
-				sphere.m_center.x = -4.0f;
-				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xa0f0ffff);
+				sphere.center.x = -4.0f;
+				dde.setColor(intersect(&dde, ray, sphere) ? kSelected : 0xa0f0ffff);
 				dde.setLod(1);
 				dde.draw(sphere);
 
-				sphere.m_center.x = -6.0f;
-				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xffc0ff00);
+				sphere.center.x = -6.0f;
+				dde.setColor(intersect(&dde, ray, sphere) ? kSelected : 0xffc0ff00);
 				dde.setLod(0);
 				dde.draw(sphere);
 			dde.pop();
@@ -780,7 +1082,7 @@ public:
 						dde.setColor(false
 							|| intersect(&dde, ray, cone)
 							|| intersect(&dde, ray, cylinder)
-							? selected
+							? kSelected
 							: 0xffffffff
 							);
 
@@ -797,7 +1099,7 @@ public:
 						{ -6.0f, 7.0f, 0.0f },
 						0.5f
 					};
-					dde.setColor(intersect(&dde, ray, capsule) ? selected : 0xffffffff);
+					dde.setColor(intersect(&dde, ray, capsule) ? kSelected : 0xffffffff);
 					dde.draw(capsule);
 				}
 			dde.pop();
@@ -814,13 +1116,12 @@ public:
 				Cylinder cylinder =
 				{
 					{ -10.0f, 1.0f, 10.0f },
-					{ 0.0f, 0.0f, 0.0f },
+					{   0.0f, 0.0f,  0.0f },
 					1.0f
 				};
 
-				float up[3] = { 0.0f, 4.0f, 0.0f };
-				bx::vec3MulMtx(&cylinder.m_end.x, up, mtx);
-				dde.setColor(intersect(&dde, ray, cylinder) ? selected : 0xffffffff);
+				cylinder.end = bx::mul({ 0.0f, 4.0f, 0.0f }, mtx);
+				dde.setColor(intersect(&dde, ray, cylinder) ? kSelected : 0xffffffff);
 				dde.draw(cylinder);
 
 				dde.push();
@@ -833,6 +1134,68 @@ public:
 			dde.pop();
 
 			dde.drawOrb(-11.0f, 0.0f, 0.0f, 1.0f);
+
+			dde.push();
+				{
+					constexpr uint32_t colorA[] =
+					{
+						0xffffffff,
+						kOverlapA,
+						0xff666666,
+						0xff6666ff,
+					};
+
+					constexpr uint32_t colorB[] =
+					{
+						0xffffffff,
+						kOverlapB,
+						0xff888888,
+						0xff8888ff,
+					};
+
+					constexpr float kStep = 3.0f;
+
+					bx::Vec3 posA =
+					{
+						-4.5f*kStep,
+						 1.0f,
+						20.0f,
+					};
+
+					for (uint32_t ii = 0; ii < Shape::Type::Count; ++ii)
+					{
+						const bx::Vec3 posB = bx::add(posA,
+						{
+							amplitudeMul*bx::sin(time*0.39f) * 1.03f,
+							amplitudeMul*bx::cos(time*0.79f) * 1.03f,
+							amplitudeMul*bx::cos(time)       * 1.03f,
+						});
+
+						for (uint32_t jj = 0; jj < Shape::Type::Count; ++jj)
+						{
+							const bx::Vec3 pa = bx::add(posA, {jj*kStep, 0.0f, 0.0f});
+							const bx::Vec3 pb = bx::add(posB, {jj*kStep, 0.0f, 0.0f});
+
+							Shape shapeA, shapeB;
+							initA(shapeA, Shape::Type::Enum(ii), pa);
+							initB(shapeB, Shape::Type::Enum(jj), pb);
+
+							int32_t olp = overlap(shapeA, shapeB);
+
+							dde.setColor(colorA[olp]);
+							dde.setWireframe(false);
+							draw(dde, shapeA, pa);
+
+							dde.setColor(colorB[olp]);
+							dde.setWireframe(true);
+							draw(dde, shapeB, pb);
+						}
+
+						posA = bx::add(posA, {0.0f, 0.0f, kStep});
+					}
+				}
+
+			dde.pop();
 
 			dde.end();
 
@@ -861,4 +1224,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleDebugDraw, "29-debugdraw", "Debug draw.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleDebugDraw
+	, "29-debugdraw"
+	, "Debug draw."
+	, "https://bkaradzic.github.io/bgfx/examples.html#debugdraw"
+	);

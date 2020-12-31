@@ -1,0 +1,2 @@
+/usr/bin/ar qc libglslang-default-resource-limits.a  CMakeFiles/glslang-default-resource-limits.dir/ResourceLimits.cpp.o CMakeFiles/glslang-default-resource-limits.dir/resource_limits_c.cpp.o
+/usr/bin/ranlib libglslang-default-resource-limits.a

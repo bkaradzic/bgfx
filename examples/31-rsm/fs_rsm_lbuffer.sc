@@ -29,7 +29,7 @@ vec3 clipToWorld(mat4 _invViewProj, vec3 _clipPos)
 
 void main()
 {
-#if BGFX_SHADER_LANGUAGE_HLSL && (BGFX_SHADER_LANGUAGE_HLSL < 4)
+#if BGFX_SHADER_LANGUAGE_HLSL && (BGFX_SHADER_LANGUAGE_HLSL < 400)
 	vec2 texCoord = gl_FragCoord.xy * u_viewTexel.xy + u_viewTexel.xy * vec2_splat(0.5);
 #else
 	vec2 texCoord = gl_FragCoord.xy * u_viewTexel.xy;

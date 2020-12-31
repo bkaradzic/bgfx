@@ -16,9 +16,16 @@
 
 #include <utility>
 
+#include "DebugInfo.h"
+#include "OpenCLDebugInfo100.h"
+#include "source/ext_inst.h"
 #include "source/opt/log.h"
 #include "source/opt/reflect.h"
 #include "source/util/make_unique.h"
+
+static const uint32_t kExtInstSetIndex = 4;
+static const uint32_t kLexicalScopeIndex = 5;
+static const uint32_t kInlinedAtIndex = 6;
 
 namespace spvtools {
 namespace opt {
@@ -27,19 +34,74 @@ IrLoader::IrLoader(const MessageConsumer& consumer, Module* m)
     : consumer_(consumer),
       module_(m),
       source_("<instruction>"),
-      inst_index_(0) {}
+      inst_index_(0),
+      last_dbg_scope_(kNoDebugScope, kNoInlinedAt) {}
 
 bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
   ++inst_index_;
   const auto opcode = static_cast<SpvOp>(inst->opcode);
   if (IsDebugLineInst(opcode)) {
-    dbg_line_info_.push_back(Instruction(module()->context(), *inst));
+    last_line_inst_.reset();
+    dbg_line_info_.push_back(
+        Instruction(module()->context(), *inst, last_dbg_scope_));
     return true;
+  }
+
+  // If it is a DebugScope or DebugNoScope of debug extension, we do not
+  // create a new instruction, but simply keep the information in
+  // struct DebugScope.
+  if (opcode == SpvOpExtInst && spvExtInstIsDebugInfo(inst->ext_inst_type)) {
+    const uint32_t ext_inst_index = inst->words[kExtInstSetIndex];
+    if (inst->ext_inst_type == SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100) {
+      const OpenCLDebugInfo100Instructions ext_inst_key =
+          OpenCLDebugInfo100Instructions(ext_inst_index);
+      if (ext_inst_key == OpenCLDebugInfo100DebugScope) {
+        uint32_t inlined_at = 0;
+        if (inst->num_words > kInlinedAtIndex)
+          inlined_at = inst->words[kInlinedAtIndex];
+        last_dbg_scope_ =
+            DebugScope(inst->words[kLexicalScopeIndex], inlined_at);
+        module()->SetContainsDebugScope();
+        return true;
+      }
+      if (ext_inst_key == OpenCLDebugInfo100DebugNoScope) {
+        last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
+        module()->SetContainsDebugScope();
+        return true;
+      }
+    } else {
+      const DebugInfoInstructions ext_inst_key =
+          DebugInfoInstructions(ext_inst_index);
+      if (ext_inst_key == DebugInfoDebugScope) {
+        uint32_t inlined_at = 0;
+        if (inst->num_words > kInlinedAtIndex)
+          inlined_at = inst->words[kInlinedAtIndex];
+        last_dbg_scope_ =
+            DebugScope(inst->words[kLexicalScopeIndex], inlined_at);
+        module()->SetContainsDebugScope();
+        return true;
+      }
+      if (ext_inst_key == DebugInfoDebugNoScope) {
+        last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
+        module()->SetContainsDebugScope();
+        return true;
+      }
+    }
   }
 
   std::unique_ptr<Instruction> spv_inst(
       new Instruction(module()->context(), *inst, std::move(dbg_line_info_)));
-  dbg_line_info_.clear();
+  if (!spv_inst->dbg_line_insts().empty()) {
+    if (extra_line_tracking_ &&
+        (spv_inst->dbg_line_insts().back().opcode() != SpvOpNoLine)) {
+      last_line_inst_ = std::unique_ptr<Instruction>(
+          spv_inst->dbg_line_insts().back().Clone(module()->context()));
+    }
+    dbg_line_info_.clear();
+  } else if (last_line_inst_ != nullptr) {
+    last_line_inst_->SetDebugScope(last_dbg_scope_);
+    spv_inst->dbg_line_insts().push_back(*last_line_inst_);
+  }
 
   const char* src = source_.c_str();
   spv_position_t loc = {inst_index_, 0, 0};
@@ -75,7 +137,7 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
       return false;
     }
     block_ = MakeUnique<BasicBlock>(std::move(spv_inst));
-  } else if (IsTerminatorInst(opcode)) {
+  } else if (spvOpcodeIsBlockTerminator(opcode)) {
     if (function_ == nullptr) {
       Error(consumer_, src, loc, "terminator instruction outside function");
       return false;
@@ -84,9 +146,14 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
       Error(consumer_, src, loc, "terminator instruction outside basic block");
       return false;
     }
+    if (last_dbg_scope_.GetLexicalScope() != kNoDebugScope)
+      spv_inst->SetDebugScope(last_dbg_scope_);
     block_->AddInstruction(std::move(spv_inst));
     function_->AddBasicBlock(std::move(block_));
     block_ = nullptr;
+    last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
+    last_line_inst_.reset();
+    dbg_line_info_.clear();
   } else {
     if (function_ == nullptr) {  // Outside function definition
       SPIRV_ASSERT(consumer_, block_ == nullptr);
@@ -115,22 +182,103 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
       } else if (IsConstantInst(opcode) || opcode == SpvOpVariable ||
                  opcode == SpvOpUndef) {
         module_->AddGlobalValue(std::move(spv_inst));
+      } else if (opcode == SpvOpExtInst &&
+                 spvExtInstIsDebugInfo(inst->ext_inst_type)) {
+        module_->AddExtInstDebugInfo(std::move(spv_inst));
+      } else if (opcode == SpvOpExtInst &&
+                 spvExtInstIsNonSemantic(inst->ext_inst_type)) {
+        // If there are no functions, add the non-semantic instructions to the
+        // global values. Otherwise append it to the list of the last function.
+        auto func_begin = module_->begin();
+        auto func_end = module_->end();
+        if (func_begin == func_end) {
+          module_->AddGlobalValue(std::move(spv_inst));
+        } else {
+          (--func_end)->AddNonSemanticInstruction(std::move(spv_inst));
+        }
       } else {
-        SPIRV_UNIMPLEMENTED(consumer_,
-                            "unhandled inst type outside function definition");
+        Errorf(consumer_, src, loc,
+               "Unhandled inst type (opcode: %d) found outside function "
+               "definition.",
+               opcode);
+        return false;
       }
     } else {
-      if (block_ == nullptr) {  // Inside function but outside blocks
-        if (opcode != SpvOpFunctionParameter) {
-          Errorf(consumer_, src, loc,
-                 "Non-OpFunctionParameter (opcode: %d) found inside "
-                 "function but outside basic block",
-                 opcode);
-          return false;
+      if (opcode == SpvOpLoopMerge || opcode == SpvOpSelectionMerge)
+        last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
+      if (last_dbg_scope_.GetLexicalScope() != kNoDebugScope)
+        spv_inst->SetDebugScope(last_dbg_scope_);
+      if (opcode == SpvOpExtInst &&
+          spvExtInstIsDebugInfo(inst->ext_inst_type)) {
+        const uint32_t ext_inst_index = inst->words[kExtInstSetIndex];
+        if (inst->ext_inst_type == SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100) {
+          const OpenCLDebugInfo100Instructions ext_inst_key =
+              OpenCLDebugInfo100Instructions(ext_inst_index);
+          switch (ext_inst_key) {
+            case OpenCLDebugInfo100DebugDeclare: {
+              if (block_ == nullptr)  // Inside function but outside blocks
+                function_->AddDebugInstructionInHeader(std::move(spv_inst));
+              else
+                block_->AddInstruction(std::move(spv_inst));
+              break;
+            }
+            case OpenCLDebugInfo100DebugValue: {
+              if (block_ == nullptr)  // Inside function but outside blocks
+                function_->AddDebugInstructionInHeader(std::move(spv_inst));
+              else
+                block_->AddInstruction(std::move(spv_inst));
+              break;
+            }
+            default: {
+              Errorf(consumer_, src, loc,
+                     "Debug info extension instruction other than DebugScope, "
+                     "DebugNoScope, DebugDeclare, and DebugValue found inside "
+                     "function",
+                     opcode);
+              return false;
+            }
+          }
+        } else {
+          const DebugInfoInstructions ext_inst_key =
+              DebugInfoInstructions(ext_inst_index);
+          switch (ext_inst_key) {
+            case DebugInfoDebugDeclare: {
+              if (block_ == nullptr)  // Inside function but outside blocks
+                function_->AddDebugInstructionInHeader(std::move(spv_inst));
+              else
+                block_->AddInstruction(std::move(spv_inst));
+              break;
+            }
+            case DebugInfoDebugValue: {
+              if (block_ == nullptr)  // Inside function but outside blocks
+                function_->AddDebugInstructionInHeader(std::move(spv_inst));
+              else
+                block_->AddInstruction(std::move(spv_inst));
+              break;
+            }
+            default: {
+              Errorf(consumer_, src, loc,
+                     "Debug info extension instruction other than DebugScope, "
+                     "DebugNoScope, DebugDeclare, and DebugValue found inside "
+                     "function",
+                     opcode);
+              return false;
+            }
+          }
         }
-        function_->AddParameter(std::move(spv_inst));
       } else {
-        block_->AddInstruction(std::move(spv_inst));
+        if (block_ == nullptr) {  // Inside function but outside blocks
+          if (opcode != SpvOpFunctionParameter) {
+            Errorf(consumer_, src, loc,
+                   "Non-OpFunctionParameter (opcode: %d) found inside "
+                   "function but outside basic block",
+                   opcode);
+            return false;
+          }
+          function_->AddParameter(std::move(spv_inst));
+        } else {
+          block_->AddInstruction(std::move(spv_inst));
+        }
       }
     }
   }
@@ -157,6 +305,9 @@ void IrLoader::EndModule() {
   for (auto& function : *module_) {
     for (auto& bb : function) bb.SetParent(&function);
   }
+
+  // Copy any trailing Op*Line instruction into the module
+  module_->SetTrailingDbgLineInfo(std::move(dbg_line_info_));
 }
 
 }  // namespace opt

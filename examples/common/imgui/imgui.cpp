@@ -16,21 +16,13 @@
 //#define USE_ENTRY 1
 
 #ifndef USE_ENTRY
-#	if defined(SCI_NAMESPACE)
-#		define USE_ENTRY 1
-#	else
-#		define USE_ENTRY 0
-#	endif // defined(SCI_NAMESPACE)
+#	define USE_ENTRY 0
 #endif // USE_ENTRY
 
 #if USE_ENTRY
 #	include "../entry/entry.h"
 #	include "../entry/input.h"
 #endif // USE_ENTRY
-
-#if defined(SCI_NAMESPACE)
-#	include "scintilla.h"
-#endif // defined(SCI_NAMESPACE)
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
@@ -97,14 +89,14 @@ struct OcornutImguiContext
 			uint32_t numVertices = (uint32_t)drawList->VtxBuffer.size();
 			uint32_t numIndices  = (uint32_t)drawList->IdxBuffer.size();
 
-			if (!checkAvailTransientBuffers(numVertices, m_decl, numIndices) )
+			if (!checkAvailTransientBuffers(numVertices, m_layout, numIndices) )
 			{
 				// not enough space in transient buffer just quit drawing the rest...
 				break;
 			}
 
-			bgfx::allocTransientVertexBuffer(&tvb, numVertices, m_decl);
-			bgfx::allocTransientIndexBuffer(&tib, numIndices);
+			bgfx::allocTransientVertexBuffer(&tvb, numVertices, m_layout);
+			bgfx::allocTransientIndexBuffer(&tib, numIndices, sizeof(ImDrawIdx) == 4);
 
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
 			bx::memCopy(verts, drawList->VtxBuffer.begin(), numVertices * sizeof(ImDrawVert) );
@@ -153,9 +145,9 @@ struct OcornutImguiContext
 					const uint16_t xx = uint16_t(bx::max(cmd->ClipRect.x, 0.0f) );
 					const uint16_t yy = uint16_t(bx::max(cmd->ClipRect.y, 0.0f) );
 					bgfx::setScissor(xx, yy
-							, uint16_t(bx::min(cmd->ClipRect.z, 65535.0f)-xx)
-							, uint16_t(bx::min(cmd->ClipRect.w, 65535.0f)-yy)
-							);
+						, uint16_t(bx::min(cmd->ClipRect.z, 65535.0f)-xx)
+						, uint16_t(bx::min(cmd->ClipRect.w, 65535.0f)-yy)
+						);
 
 					bgfx::setState(state);
 					bgfx::setTexture(0, s_tex, th);
@@ -255,14 +247,14 @@ struct OcornutImguiContext
 			, true
 			);
 
-		m_decl
+		m_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
 			.end();
 
-		s_tex = bgfx::createUniform("s_tex", bgfx::UniformType::Int1);
+		s_tex = bgfx::createUniform("s_tex", bgfx::UniformType::Sampler);
 
 		uint8_t* data;
 		int32_t width;
@@ -348,16 +340,16 @@ struct OcornutImguiContext
 		, int32_t _scroll
 		, int _width
 		, int _height
-		, char _inputChar
+		, int _inputChar
 		, bgfx::ViewId _viewId
 		)
 	{
 		m_viewId = _viewId;
 
 		ImGuiIO& io = ImGui::GetIO();
-		if (_inputChar < 0x7f)
+		if (_inputChar >= 0)
 		{
-			io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
+			io.AddInputCharacter(_inputChar);
 		}
 
 		io.DisplaySize = ImVec2( (float)_width, (float)_height);
@@ -399,7 +391,7 @@ struct OcornutImguiContext
 
 	ImGuiContext*       m_imgui;
 	bx::AllocatorI*     m_allocator;
-	bgfx::VertexDecl    m_decl;
+	bgfx::VertexLayout  m_layout;
 	bgfx::ProgramHandle m_program;
 	bgfx::ProgramHandle m_imageProgram;
 	bgfx::TextureHandle m_texture;
@@ -435,7 +427,7 @@ void imguiDestroy()
 	s_ctx.destroy();
 }
 
-void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, bgfx::ViewId _viewId)
+void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, int _inputChar, bgfx::ViewId _viewId)
 {
 	s_ctx.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, _viewId);
 }
@@ -454,10 +446,9 @@ namespace ImGui
 } // namespace ImGui
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function"); // warning: ‘int rect_width_compare(const void*, const void*)’ defined but not used
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function"); // warning: 'int rect_width_compare(const void*, const void*)' defined but not used
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas")
-//BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-but-set-variable"); // warning: variable ‘L1’ set but not used
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits"); // warning: comparison is always true due to limited range of data type
 #define STBTT_malloc(_size, _userData) memAlloc(_size, _userData)
 #define STBTT_free(_ptr, _userData) memFree(_ptr, _userData)

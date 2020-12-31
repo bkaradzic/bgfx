@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -19,17 +19,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 struct PosColorTexCoord0Vertex
 {
@@ -42,7 +42,7 @@ struct PosColorTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
@@ -50,10 +50,10 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -93,10 +93,10 @@ inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, flo
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBottomLeft = false, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorTexCoord0Vertex::ms_layout);
 		PosColorTexCoord0Vertex* vertex = (PosColorTexCoord0Vertex*)vb.data;
 
 		const float zz = 0.0f;
@@ -152,8 +152,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 class ExampleOIT : public entry::AppI
 {
 public:
-	ExampleOIT(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleOIT(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -203,15 +203,15 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-			, PosColorVertex::ms_decl
+			, PosColorVertex::ms_layout
 			);
 
 		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 		// Create texture sampler uniforms.
-		s_texColor0 = bgfx::createUniform("s_texColor0", bgfx::UniformType::Int1);
-		s_texColor1 = bgfx::createUniform("s_texColor1", bgfx::UniformType::Int1);
+		s_texColor0 = bgfx::createUniform("s_texColor0", bgfx::UniformType::Sampler);
+		s_texColor1 = bgfx::createUniform("s_texColor1", bgfx::UniformType::Sampler);
 		u_color     = bgfx::createUniform("u_color",     bgfx::UniformType::Vec4);
 
 		m_blend          = loadProgram("vs_oit",      "fs_oit"                  );
@@ -550,4 +550,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleOIT, "19-oit", "Weighted, Blended Order Independent Transparency.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleOIT
+	, "19-oit"
+	, "Weighted, Blended Order Independent Transparency."
+	, "https://bkaradzic.github.io/bgfx/examples.html#oit"
+	);

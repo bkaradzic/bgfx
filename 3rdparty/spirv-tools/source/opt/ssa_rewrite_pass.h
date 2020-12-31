@@ -39,16 +39,15 @@ namespace opt {
 // (https://link.springer.com/chapter/10.1007/978-3-642-37051-9_6)
 class SSARewriter {
  public:
-  SSARewriter(MemPass* pass)
-      : pass_(pass), first_phi_id_(pass_->get_module()->IdBound()) {}
+  SSARewriter(MemPass* pass) : pass_(pass) {}
 
   // Rewrites SSA-target variables in function |fp| into SSA.  This is the
   // entry point for the SSA rewrite algorithm.  SSA-target variables are
   // locally defined variables that meet the criteria set by IsSSATargetVar.
   //
-  // It returns true if function |fp| was modified.  Otherwise, it returns
-  // false.
-  bool RewriteFunctionIntoSSA(Function* fp);
+  // Returns whether the function was modified or not, and whether or not the
+  // rewrite was successful.
+  Pass::Status RewriteFunctionIntoSSA(Function* fp);
 
  private:
   class PhiCandidate {
@@ -128,8 +127,8 @@ class SSARewriter {
 
   // Generates all the SSA rewriting decisions for basic block |bb|.  This
   // populates the Phi candidate table (|phi_candidate_|) and the load
-  // replacement table (|load_replacement_).
-  void GenerateSSAReplacements(BasicBlock* bb);
+  // replacement table (|load_replacement_).  Returns true if successful.
+  bool GenerateSSAReplacements(BasicBlock* bb);
 
   // Seals block |bb|.  Sealing a basic block means |bb| and all its
   // predecessors of |bb| have been scanned for loads/stores.
@@ -188,7 +187,14 @@ class SSARewriter {
   // value |val_id|.
   void WriteVariable(uint32_t var_id, BasicBlock* bb, uint32_t val_id) {
     defs_at_block_[bb][var_id] = val_id;
+    if (auto* pc = GetPhiCandidate(val_id)) {
+      pc->AddUser(bb->id());
+    }
   }
+
+  // Returns the value of |var_id| at |bb| if |defs_at_block_| contains it.
+  // Otherwise, returns 0.
+  uint32_t GetValueAtBlock(uint32_t var_id, BasicBlock* bb);
 
   // Processes the store operation |inst| in basic block |bb|. This extracts
   // the variable ID being stored into, determines whether the variable is an
@@ -199,8 +205,8 @@ class SSARewriter {
   // Processes the load operation |inst| in basic block |bb|. This extracts
   // the variable ID being stored into, determines whether the variable is an
   // SSA-target variable, and, if it is, it reads its reaching definition by
-  // calling |GetReachingDef|.
-  void ProcessLoad(Instruction* inst, BasicBlock* bb);
+  // calling |GetReachingDef|.  Returns true if successful.
+  bool ProcessLoad(Instruction* inst, BasicBlock* bb);
 
   // Reads the current definition for variable |var_id| in basic block |bb|.
   // If |var_id| is not defined in block |bb| it walks up the predecessors of
@@ -247,6 +253,11 @@ class SSARewriter {
   // candidates.
   void FinalizePhiCandidates();
 
+  // Adds DebugValues for DebugDeclares in
+  // |decls_invisible_to_value_assignment_|. Returns whether the function was
+  // modified or not, and whether or not the conversion was successful.
+  Pass::Status AddDebugValuesForInvisibleDebugDecls(Function* fp);
+
   // Prints the table of Phi candidates to std::cerr.
   void PrintPhiCandidates() const;
 
@@ -285,9 +296,9 @@ class SSARewriter {
   // Memory pass requesting the SSA rewriter.
   MemPass* pass_;
 
-  // ID of the first Phi created by the SSA rewriter.  During rewriting, any
-  // ID bigger than this corresponds to a Phi candidate.
-  uint32_t first_phi_id_;
+  // Set of DebugDeclare instructions that are not added as DebugValue because
+  // they are invisible to the store or phi instructions.
+  std::unordered_set<Instruction*> decls_invisible_to_value_assignment_;
 };
 
 class SSARewritePass : public MemPass {

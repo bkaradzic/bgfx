@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -120,6 +120,12 @@ namespace bgfx
 
 				uint16_t regCount;
 				bx::read(_reader, regCount, _err);
+
+				if (!isShaderVerLess(magic, 8) )
+				{
+					uint16_t texInfo;
+					bx::read(_reader, texInfo, _err);
+				}
 			}
 
 			uint32_t shaderSize;

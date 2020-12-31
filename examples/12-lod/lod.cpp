@@ -29,8 +29,8 @@ static const KnightPos knightTour[8*4] =
 class ExampleLod : public entry::AppI
 {
 public:
-	ExampleLod(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleLod(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -62,8 +62,8 @@ public:
 			, 0
 			);
 
-		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
-		s_texStipple = bgfx::createUniform("s_texStipple", bgfx::UniformType::Int1);
+		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Sampler);
+		s_texStipple = bgfx::createUniform("s_texStipple", bgfx::UniformType::Sampler);
 		u_stipple    = bgfx::createUniform("u_stipple",    bgfx::UniformType::Vec4);
 
 		m_program = loadProgram("vs_tree", "fs_tree");
@@ -311,4 +311,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleLod, "12-lod", "Mesh LOD transitions.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleLod
+	, "12-lod"
+	, "Mesh LOD transitions."
+	, "https://bkaradzic.github.io/bgfx/examples.html#lod"
+	);

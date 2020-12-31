@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -30,7 +30,7 @@ namespace bx { struct AllocatorI; }
 void imguiCreate(float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL);
 void imguiDestroy();
 
-void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar = 0, bgfx::ViewId _view = 255);
+void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, int _inputChar = -1, bgfx::ViewId _view = 255);
 void imguiEndFrame();
 
 namespace entry { class AppI; }
@@ -40,6 +40,15 @@ namespace ImGui
 {
 #define IMGUI_FLAGS_NONE        UINT8_C(0x00)
 #define IMGUI_FLAGS_ALPHA_BLEND UINT8_C(0x01)
+
+	inline ImTextureID toId(bgfx::TextureHandle _handle, uint8_t _flags, uint8_t _mip)
+	{
+		union { struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; ImTextureID id; } tex;
+		tex.s.handle = _handle;
+		tex.s.flags  = _flags;
+		tex.s.mip    = _mip;
+		return tex.id;
+	}
 
 	// Helper function for passing bgfx::TextureHandle to ImGui::Image.
 	inline void Image(bgfx::TextureHandle _handle
@@ -52,11 +61,7 @@ namespace ImGui
 		, const ImVec4& _borderCol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f)
 		)
 	{
-		union { struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; ImTextureID ptr; } texture;
-		texture.s.handle = _handle;
-		texture.s.flags  = _flags;
-		texture.s.mip    = _mip;
-		Image(texture.ptr, _size, _uv0, _uv1, _tintCol, _borderCol);
+		Image(toId(_handle, _flags, _mip), _size, _uv0, _uv1, _tintCol, _borderCol);
 	}
 
 	// Helper function for passing bgfx::TextureHandle to ImGui::Image.
@@ -83,11 +88,7 @@ namespace ImGui
 		, const ImVec4& _tintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
 		)
 	{
-		union { struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; ImTextureID ptr; } texture;
-		texture.s.handle = _handle;
-		texture.s.flags  = _flags;
-		texture.s.mip    = _mip;
-		return ImageButton(texture.ptr, _size, _uv0, _uv1, _framePadding, _bgCol, _tintCol);
+		return ImageButton(toId(_handle, _flags, _mip), _size, _uv0, _uv1, _framePadding, _bgCol, _tintCol);
 	}
 
 	// Helper function for passing bgfx::TextureHandle to ImGui::ImageButton.
@@ -108,32 +109,13 @@ namespace ImGui
 		SetCursorPosY(GetCursorPosY() + GetTextLineHeightWithSpacing() );
 	}
 
-	inline bool TabButton(const char* _text, float _width, bool _active)
-	{
-		int32_t count = 1;
-
-		if (_active)
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.75f, 0.0f, 0.78f) );
-			ImGui::PushStyleColor(ImGuiCol_Text,   ImVec4(0.0f, 0.0f,  0.0f, 1.0f ) );
-			count = 2;
-		}
-		else
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 0.7f) );
-		}
-
-		bool retval = ImGui::Button(_text, ImVec2(_width, 20.0f) );
-		ImGui::PopStyleColor(count);
-
-		return retval;
-	}
-
 	inline bool MouseOverArea()
 	{
 		return false
+			|| ImGui::IsAnyItemActive()
 			|| ImGui::IsAnyItemHovered()
 			|| ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
+//			|| ImGuizmo::IsOver()
 			;
 	}
 

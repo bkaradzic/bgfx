@@ -138,6 +138,7 @@ SSAPropagator::PropStatus CCPPass::VisitAssignment(Instruction* instr) {
   Instruction* folded_inst =
       context()->get_instruction_folder().FoldInstructionToConstant(instr,
                                                                     map_func);
+
   if (folded_inst != nullptr) {
     // We do not want to change the body of the function by adding new
     // instructions.  When folding we can only generate new constants.
@@ -266,15 +267,27 @@ SSAPropagator::PropStatus CCPPass::VisitInstruction(Instruction* instr,
 }
 
 bool CCPPass::ReplaceValues() {
-  bool retval = false;
+  // Even if we make no changes to the function's IR, propagation may have
+  // created new constants.  Even if those constants cannot be replaced in
+  // the IR, the constant definition itself is a change.  To reflect this,
+  // we check whether the next ID to be given by the module is different than
+  // the original bound ID. If that happens, new instructions were added to the
+  // module during propagation.
+  //
+  // See https://github.com/KhronosGroup/SPIRV-Tools/issues/3636 and
+  // https://github.com/KhronosGroup/SPIRV-Tools/issues/3991 for details.
+  bool changed_ir = (context()->module()->IdBound() > original_id_bound_);
+
   for (const auto& it : values_) {
     uint32_t id = it.first;
     uint32_t cst_id = it.second;
     if (!IsVaryingValue(cst_id) && id != cst_id) {
-      retval |= context()->ReplaceAllUsesWith(id, cst_id);
+      context()->KillNamesAndDecorates(id);
+      changed_ir |= context()->ReplaceAllUsesWith(id, cst_id);
     }
   }
-  return retval;
+
+  return changed_ir;
 }
 
 bool CCPPass::PropagateConstants(Function* fp) {
@@ -312,6 +325,8 @@ void CCPPass::Initialize() {
       values_[inst.result_id()] = kVaryingSSAId;
     }
   }
+
+  original_id_bound_ = context()->module()->IdBound();
 }
 
 Pass::Status CCPPass::Process() {
@@ -319,7 +334,7 @@ Pass::Status CCPPass::Process() {
 
   // Process all entry point functions.
   ProcessFunction pfn = [this](Function* fp) { return PropagateConstants(fp); };
-  bool modified = ProcessReachableCallTree(pfn, context());
+  bool modified = context()->ProcessReachableCallTree(pfn);
   return modified ? Pass::Status::SuccessWithChange
                   : Pass::Status::SuccessWithoutChange;
 }

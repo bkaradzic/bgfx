@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -64,45 +64,35 @@
 
 namespace bgfx
 {
-	constexpr uint32_t toRgba8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a)
-	{
-		return 0
-			| (uint32_t(_r)<<24)
-			| (uint32_t(_g)<<16)
-			| (uint32_t(_b)<< 8)
-			| (uint32_t(_a)    )
-			;
-	}
-
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	typedef ::IUnknown IUnknown;
 #else
 	typedef ::IGraphicsUnknown IUnknown;
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 
-#define _DX_CHECK(_call) \
-			BX_MACRO_BLOCK_BEGIN \
-				HRESULT __hr__ = _call; \
-				BX_CHECK(SUCCEEDED(__hr__), #_call " FAILED 0x%08x" DX_CHECK_EXTRA_F "\n" \
-					, (uint32_t)__hr__ \
-					DX_CHECK_EXTRA_ARGS \
-					); \
+#define _DX_CHECK(_call)                                                                   \
+			BX_MACRO_BLOCK_BEGIN                                                           \
+				HRESULT __hr__ = _call;                                                    \
+				BX_ASSERT(SUCCEEDED(__hr__), #_call " FAILED 0x%08x" DX_CHECK_EXTRA_F "\n" \
+					, (uint32_t)__hr__                                                     \
+					DX_CHECK_EXTRA_ARGS                                                    \
+					);                                                                     \
 			BX_MACRO_BLOCK_END
 
-#define _DX_RELEASE(_ptr, _expected, _check) \
-			BX_MACRO_BLOCK_BEGIN \
-				if (NULL != (_ptr) ) \
-				{ \
-					ULONG count = (_ptr)->Release(); \
+#define _DX_RELEASE(_ptr, _expected, _check)                                                                                                                 \
+			BX_MACRO_BLOCK_BEGIN                                                                                                                             \
+				if (NULL != (_ptr) )                                                                                                                         \
+				{                                                                                                                                            \
+					ULONG count = (_ptr)->Release();                                                                                                         \
 					_check(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); BX_UNUSED(count); \
-					_ptr = NULL; \
-				} \
+					_ptr = NULL;                                                                                                                             \
+				}                                                                                                                                            \
 			BX_MACRO_BLOCK_END
 
-#define _DX_CHECK_REFCOUNT(_ptr, _expected) \
-			BX_MACRO_BLOCK_BEGIN \
-				ULONG count = getRefCount(_ptr); \
-				BX_CHECK(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
+#define _DX_CHECK_REFCOUNT(_ptr, _expected)                                                                                               \
+			BX_MACRO_BLOCK_BEGIN                                                                                                          \
+				ULONG count = getRefCount(_ptr);                                                                                          \
+				BX_ASSERT(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
 			BX_MACRO_BLOCK_END
 
 #define _DX_NAME(_ptr, _format, ...) setDebugObjectName(_ptr, _format, ##__VA_ARGS__)
@@ -121,7 +111,7 @@ namespace bgfx
 #	define DX_NAME(_ptr, _format, ...)
 #endif // BGFX_CONFIG_DEBUG_OBJECT_NAME
 
-#define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
+#define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_ASSERT)
 #define DX_RELEASE_W(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
 #define DX_RELEASE_I(_ptr) _DX_RELEASE(_ptr, 0, BX_NOOP)
 
@@ -133,11 +123,11 @@ namespace bgfx
 	typedef void    (WINAPI* PFN_D3DPERF_SET_OPTIONS)(DWORD _options);
 	typedef DWORD   (WINAPI* PFN_D3DPERF_GET_STATUS)();
 
-#define _PIX_SETMARKER(_col, _name)  D3DPERF_SetMarker(_col, _name)
-#define _PIX_BEGINEVENT(_col, _name) D3DPERF_BeginEvent(_col, _name)
-#define _PIX_ENDEVENT()              D3DPERF_EndEvent()
+#define _PIX_SETMARKER(_color, _name)    D3DPERF_SetMarker(_color, _name)
+#define _PIX_BEGINEVENT(_color, _name)   D3DPERF_BeginEvent(_color, _name)
+#define _PIX_ENDEVENT()                  D3DPERF_EndEvent()
 
-#if BGFX_CONFIG_DEBUG_PIX
+#if BGFX_CONFIG_DEBUG_ANNOTATION
 #	define PIX_SETMARKER(_color, _name)  _PIX_SETMARKER(_color, _name)
 #	define PIX_BEGINEVENT(_color, _name) _PIX_BEGINEVENT(_color, _name)
 #	define PIX_ENDEVENT()                _PIX_ENDEVENT()
@@ -145,15 +135,7 @@ namespace bgfx
 #	define PIX_SETMARKER(_color, _name)  BX_UNUSED(_name)
 #	define PIX_BEGINEVENT(_color, _name) BX_UNUSED(_name)
 #	define PIX_ENDEVENT()
-#endif // BGFX_CONFIG_DEBUG_PIX
-
-#define D3DCOLOR_FRAME   toRgba8(0xff, 0xd7, 0xc9, 0xff)
-#define D3DCOLOR_VIEW    toRgba8(0xe4, 0xb4, 0x8e, 0xff)
-#define D3DCOLOR_VIEW_L  toRgba8(0xf9, 0xee, 0xe5, 0xff)
-#define D3DCOLOR_VIEW_R  toRgba8(0xe8, 0xd3, 0xc0, 0xff)
-#define D3DCOLOR_DRAW    toRgba8(0xc6, 0xe5, 0xb9, 0xff)
-#define D3DCOLOR_COMPUTE toRgba8(0xa7, 0xdb, 0xd8, 0xff)
-#define D3DCOLOR_MARKER  toRgba8(0xff, 0x00, 0x00, 0xff)
+#endif // BGFX_CONFIG_DEBUG_ANNOTATION
 
 	inline bool isType(IUnknown* _interface, const GUID& _id)
 	{
@@ -182,7 +164,7 @@ namespace bgfx
 		{
 			invalidate(_key);
 			m_hashMap.insert(stl::make_pair(_key, _value) );
-			BX_CHECK(isGraphicsDebuggerPresent()
+			BX_ASSERT(isGraphicsDebuggerPresent()
 				|| 1 == getRefCount(_value), "Interface ref count %d, hash %" PRIx64 "."
 				, getRefCount(_value)
 				, _key

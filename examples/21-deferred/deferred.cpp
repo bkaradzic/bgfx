@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -12,11 +12,12 @@
 namespace
 {
 
-#define RENDER_PASS_GEOMETRY_ID       0
-#define RENDER_PASS_LIGHT_ID          1
-#define RENDER_PASS_COMBINE_ID        2
-#define RENDER_PASS_DEBUG_LIGHTS_ID   3
-#define RENDER_PASS_DEBUG_GBUFFER_ID  4
+constexpr bgfx::ViewId kRenderPassGeometry     = 0;
+constexpr bgfx::ViewId kRenderPassClearUav     = 1;
+constexpr bgfx::ViewId kRenderPassLight        = 2;
+constexpr bgfx::ViewId kRenderPassCombine      = 3;
+constexpr bgfx::ViewId kRenderPassDebugLights  = 4;
+constexpr bgfx::ViewId kRenderPassDebugGBuffer = 5;
 
 static float s_texelHalf = 0.0f;
 
@@ -32,7 +33,7 @@ struct PosNormalTangentTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
@@ -41,10 +42,10 @@ struct PosNormalTangentTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosNormalTangentTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosNormalTangentTexcoordVertex::ms_layout;
 
 struct PosTexCoord0Vertex
 {
@@ -56,17 +57,17 @@ struct PosTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 struct DebugVertex
 {
@@ -77,17 +78,17 @@ struct DebugVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexDecl DebugVertex::ms_decl;
+bgfx::VertexLayout DebugVertex::ms_layout;
 
 static PosNormalTangentTexcoordVertex s_cubeVertices[24] =
 {
@@ -137,10 +138,10 @@ static const uint16_t s_cubeIndices[36] =
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_decl) )
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
-		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_decl);
+		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 		PosTexCoord0Vertex* vertex = (PosTexCoord0Vertex*)vb.data;
 
 		const float minx = -_width;
@@ -193,8 +194,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleDeferred : public entry::AppI
 {
 public:
-	ExampleDeferred(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleDeferred(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -225,15 +226,16 @@ public:
 		bgfx::setPaletteColor(1, UINT32_C(0x303030ff) );
 
 		// Set geometry pass view clear state.
-		bgfx::setViewClear(RENDER_PASS_GEOMETRY_ID
+		bgfx::setViewClear(kRenderPassGeometry
 				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 				, 1.0f
 				, 0
 				, 1
+				, 0
 				);
 
 		// Set light pass view clear state.
-		bgfx::setViewClear(RENDER_PASS_LIGHT_ID
+		bgfx::setViewClear(kRenderPassLight
 				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 				, 1.0f
 				, 0
@@ -247,7 +249,7 @@ public:
 
 		calcTangents(s_cubeVertices
 				, BX_COUNTOF(s_cubeVertices)
-				, PosNormalTangentTexcoordVertex::ms_decl
+				, PosNormalTangentTexcoordVertex::ms_layout
 				, s_cubeIndices
 				, BX_COUNTOF(s_cubeIndices)
 				);
@@ -255,20 +257,20 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 				bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-				, PosNormalTangentTexcoordVertex::ms_decl
+				, PosNormalTangentTexcoordVertex::ms_layout
 				);
 
 		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 		// Create texture sampler uniforms.
-		s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Int1);
-		s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Int1);
+		s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
+		s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Sampler);
 
-		s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Int1);
-		s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Int1);
-		s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Int1);
-		s_light  = bgfx::createUniform("s_light",  bgfx::UniformType::Int1);
+		s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
+		s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);
+		s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Sampler);
+		s_light  = bgfx::createUniform("s_light",  bgfx::UniformType::Sampler);
 
 		u_mtx            = bgfx::createUniform("u_mtx",            bgfx::UniformType::Mat4);
 		u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Vec4);
@@ -281,17 +283,44 @@ public:
 		m_debugProgram   = loadProgram("vs_deferred_debug",      "fs_deferred_debug");
 		m_lineProgram    = loadProgram("vs_deferred_debug_line", "fs_deferred_debug_line");
 
+		m_useTArray = false;
+		m_useUav = false;
+
+		if (0 != (BGFX_CAPS_TEXTURE_2D_ARRAY & bgfx::getCaps()->supported) )
+		{
+			m_lightTaProgram = loadProgram("vs_deferred_light", "fs_deferred_light_ta");
+		}
+		else
+		{
+			m_lightTaProgram = BGFX_INVALID_HANDLE;
+		}
+
+		if (0 != (BGFX_CAPS_IMAGE_RW & bgfx::getCaps()->supported)
+		&&  0 != (BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ & bgfx::getCaps()->formats[bgfx::TextureFormat::RGBA8])
+		&&  0 != (BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE & bgfx::getCaps()->formats[bgfx::TextureFormat::RGBA8]) )
+		{
+			m_clearUavProgram = loadProgram("vs_deferred_light", "fs_deferred_clear_uav");
+			m_lightUavProgram = loadProgram("vs_deferred_light", "fs_deferred_light_uav");
+		}
+		else
+		{
+			m_lightUavProgram = BGFX_INVALID_HANDLE;
+			m_clearUavProgram = BGFX_INVALID_HANDLE;
+		}
+
 		// Load diffuse texture.
 		m_textureColor  = loadTexture("textures/fieldstone-rgba.dds");
 
 		// Load normal texture.
 		m_textureNormal = loadTexture("textures/fieldstone-n.dds");
 
+		m_lightBufferTex.idx = bgfx::kInvalidHandle;
+
 		m_gbufferTex[0].idx = bgfx::kInvalidHandle;
 		m_gbufferTex[1].idx = bgfx::kInvalidHandle;
 		m_gbufferTex[2].idx = bgfx::kInvalidHandle;
-		m_gbuffer.idx = bgfx::kInvalidHandle;
-		m_lightBuffer.idx = bgfx::kInvalidHandle;
+		m_gbuffer.idx       = bgfx::kInvalidHandle;
+		m_lightBuffer.idx   = bgfx::kInvalidHandle;
 
 		// Imgui.
 		imguiCreate();
@@ -329,7 +358,16 @@ public:
 		if (bgfx::isValid(m_gbuffer) )
 		{
 			bgfx::destroy(m_gbuffer);
+		}
+
+		if (bgfx::isValid(m_lightBuffer) )
+		{
 			bgfx::destroy(m_lightBuffer);
+		}
+
+		if (bgfx::isValid(m_lightBufferTex) )
+		{
+			bgfx::destroy(m_lightBufferTex);
 		}
 
 		bgfx::destroy(m_ibh);
@@ -337,6 +375,18 @@ public:
 
 		bgfx::destroy(m_geomProgram);
 		bgfx::destroy(m_lightProgram);
+
+		if (bgfx::isValid(m_lightTaProgram) )
+		{
+			bgfx::destroy(m_lightTaProgram);
+		}
+
+		if (bgfx::isValid(m_lightUavProgram) )
+		{
+			bgfx::destroy(m_lightUavProgram);
+			bgfx::destroy(m_clearUavProgram);
+		}
+
 		bgfx::destroy(m_combineProgram);
 		bgfx::destroy(m_debugProgram);
 		bgfx::destroy(m_lineProgram);
@@ -366,14 +416,14 @@ public:
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			imguiBeginFrame(m_mouseState.m_mx
-					, m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					, m_mouseState.m_mz
-					, uint16_t(m_width)
-					, uint16_t(m_height)
-					);
+				, m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				, m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
 			showExampleDialog(this);
 
@@ -385,6 +435,43 @@ public:
 			const float deltaTime = float(frameTime/freq);
 
 			float time = (float)( (now-m_timeOffset)/freq);
+
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 5.0f, m_height / 3.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::Begin("Settings", NULL, 0);
+
+			ImGui::SliderInt("Num lights", &m_numLights, 1, 2048);
+			ImGui::Checkbox("Show G-Buffer.", &m_showGBuffer);
+			ImGui::Checkbox("Show light scissor.", &m_showScissorRects);
+
+			if (bgfx::isValid(m_lightTaProgram))
+			{
+				ImGui::Checkbox("Use texture array frame buffer.", &m_useTArray);
+			}
+			else
+			{
+				ImGui::Text("Texture array frame buffer is not supported.");
+			}
+
+			if (bgfx::isValid(m_lightUavProgram))
+			{
+				ImGui::Checkbox("Use UAV.", &m_useUav);
+			}
+			else
+			{
+				ImGui::Text("UAV is not supported.");
+			}
+
+			ImGui::Checkbox("Animate mesh.", &m_animateMesh);
+			ImGui::SliderFloat("Anim.speed", &m_lightAnimationSpeed, 0.0f, 0.4f);
+
+			ImGui::End();
 
 			if (2 > m_caps->limits.maxFBAttachments)
 			{
@@ -402,65 +489,88 @@ public:
 			}
 			else
 			{
-				if (m_oldWidth  != m_width
-				||  m_oldHeight != m_height
-				||  m_oldReset  != m_reset
+				if (m_oldWidth     != m_width
+				||  m_oldHeight    != m_height
+				||  m_oldReset     != m_reset
+				||  m_oldUseTArray != m_useTArray
+				||  m_oldUseUav    != m_useUav
 				||  !bgfx::isValid(m_gbuffer) )
 				{
 					// Recreate variable size render targets when resolution changes.
-					m_oldWidth  = m_width;
-					m_oldHeight = m_height;
-					m_oldReset  = m_reset;
+					m_oldWidth     = m_width;
+					m_oldHeight    = m_height;
+					m_oldReset     = m_reset;
+					m_oldUseTArray = m_useTArray;
+					m_oldUseUav    = m_useUav;
 
 					if (bgfx::isValid(m_gbuffer) )
 					{
 						bgfx::destroy(m_gbuffer);
+						m_gbufferTex[0].idx = bgfx::kInvalidHandle;
+						m_gbufferTex[1].idx = bgfx::kInvalidHandle;
+						m_gbufferTex[2].idx = bgfx::kInvalidHandle;
 					}
 
 					const uint64_t tsFlags = 0
-						| BGFX_TEXTURE_RT
 						| BGFX_SAMPLER_MIN_POINT
 						| BGFX_SAMPLER_MAG_POINT
 						| BGFX_SAMPLER_MIP_POINT
 						| BGFX_SAMPLER_U_CLAMP
 						| BGFX_SAMPLER_V_CLAMP
 						;
-					m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
-					m_gbufferTex[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
-					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, tsFlags);
-					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
+
+					bgfx::Attachment gbufferAt[3];
+
+					if (m_useTArray)
+					{
+						m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 2, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
+						gbufferAt[0].init(m_gbufferTex[0], bgfx::Access::Write, 0);
+						gbufferAt[1].init(m_gbufferTex[0], bgfx::Access::Write, 1);
+					}
+					else
+					{
+						m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
+						m_gbufferTex[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
+						gbufferAt[0].init(m_gbufferTex[0]);
+						gbufferAt[1].init(m_gbufferTex[1]);
+					}
+
+					bgfx::TextureFormat::Enum depthFormat =
+						  bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D32F, BGFX_TEXTURE_RT | tsFlags)
+						? bgfx::TextureFormat::D32F
+						: bgfx::TextureFormat::D24
+						;
+
+					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, depthFormat, BGFX_TEXTURE_RT | tsFlags);
+					gbufferAt[2].init(m_gbufferTex[2]);
+
+					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAt), gbufferAt, true);
 
 					if (bgfx::isValid(m_lightBuffer) )
 					{
 						bgfx::destroy(m_lightBuffer);
+						m_lightBuffer.idx = bgfx::kInvalidHandle;
 					}
 
-					m_lightBuffer = bgfx::createFrameBuffer(uint16_t(m_width), uint16_t(m_height), bgfx::TextureFormat::BGRA8, tsFlags);
+					if (bgfx::isValid(m_lightBufferTex))
+					{
+						bgfx::destroy(m_lightBufferTex);
+						m_lightBufferTex.idx = bgfx::kInvalidHandle;
+					}
+
+					if (m_useUav)
+					{
+						m_lightBufferTex = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_COMPUTE_WRITE | tsFlags);
+					}
+					else
+					{
+						m_lightBufferTex = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
+						m_lightBuffer = bgfx::createFrameBuffer(1, &m_lightBufferTex, true);
+					}
 				}
 
-				ImGui::SetNextWindowPos(
-					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
-					, ImGuiCond_FirstUseEver
-					);
-				ImGui::SetNextWindowSize(
-					  ImVec2(m_width / 5.0f, m_height / 3.0f)
-					, ImGuiCond_FirstUseEver
-					);
-				ImGui::Begin("Settings"
-					, NULL
-					, 0
-					);
-
-				ImGui::SliderInt("Num lights", &m_numLights, 1, 2048);
-				ImGui::Checkbox("Show G-Buffer.", &m_showGBuffer);
-				ImGui::Checkbox("Show light scissor.", &m_showScissorRects);
-				ImGui::Checkbox("Animate mesh.", &m_animateMesh);
-				ImGui::SliderFloat("Anim.speed", &m_lightAnimationSpeed, 0.0f, 0.4f);
-
-				ImGui::End();
-
 				// Update camera.
-				cameraUpdate(deltaTime, m_mouseState);
+				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 				float view[16];
 				cameraGetViewMtx(view);
@@ -469,19 +579,27 @@ public:
 				float vp[16];
 				float invMvp[16];
 				{
-					bgfx::setViewRect(RENDER_PASS_GEOMETRY_ID,      0, 0, uint16_t(m_width), uint16_t(m_height) );
-					bgfx::setViewRect(RENDER_PASS_LIGHT_ID,         0, 0, uint16_t(m_width), uint16_t(m_height) );
-					bgfx::setViewRect(RENDER_PASS_COMBINE_ID,       0, 0, uint16_t(m_width), uint16_t(m_height) );
-					bgfx::setViewRect(RENDER_PASS_DEBUG_LIGHTS_ID,  0, 0, uint16_t(m_width), uint16_t(m_height) );
-					bgfx::setViewRect(RENDER_PASS_DEBUG_GBUFFER_ID, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassGeometry,     0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassClearUav,     0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassLight,        0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassCombine,      0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassDebugLights,  0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassDebugGBuffer, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
-					bgfx::setViewFrameBuffer(RENDER_PASS_LIGHT_ID, m_lightBuffer);
+					if (!m_useUav)
+					{
+						bgfx::setViewFrameBuffer(kRenderPassLight, m_lightBuffer);
+					}
+					else
+					{
+						bgfx::setViewFrameBuffer(kRenderPassLight, BGFX_INVALID_HANDLE);
+					}
 
 					float proj[16];
 					bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, m_caps->homogeneousDepth);
 
-					bgfx::setViewFrameBuffer(RENDER_PASS_GEOMETRY_ID, m_gbuffer);
-					bgfx::setViewTransform(RENDER_PASS_GEOMETRY_ID, view, proj);
+					bgfx::setViewFrameBuffer(kRenderPassGeometry, m_gbuffer);
+					bgfx::setViewTransform(kRenderPassGeometry, view, proj);
 
 					bx::mtxMul(vp, view, proj);
 					bx::mtxInverse(invMvp, vp);
@@ -489,16 +607,17 @@ public:
 					const bgfx::Caps* caps = bgfx::getCaps();
 
 					bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
-					bgfx::setViewTransform(RENDER_PASS_LIGHT_ID,   NULL, proj);
-					bgfx::setViewTransform(RENDER_PASS_COMBINE_ID, NULL, proj);
+					bgfx::setViewTransform(kRenderPassClearUav, NULL, proj);
+					bgfx::setViewTransform(kRenderPassLight,    NULL, proj);
+					bgfx::setViewTransform(kRenderPassCombine,  NULL, proj);
 
 					const float aspectRatio = float(m_height)/float(m_width);
 					const float size = 10.0f;
 					bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
-					bgfx::setViewTransform(RENDER_PASS_DEBUG_GBUFFER_ID, NULL, proj);
+					bgfx::setViewTransform(kRenderPassDebugGBuffer, NULL, proj);
 
 					bx::mtxOrtho(proj, 0.0f, (float)m_width, 0.0f, (float)m_height, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
-					bgfx::setViewTransform(RENDER_PASS_DEBUG_LIGHTS_ID, NULL, proj);
+					bgfx::setViewTransform(kRenderPassDebugLights, NULL, proj);
 				}
 
 				const uint32_t dim = 11;
@@ -535,16 +654,26 @@ public:
 
 						// Set render states.
 						bgfx::setState(0
-								| BGFX_STATE_WRITE_RGB
-								| BGFX_STATE_WRITE_A
-								| BGFX_STATE_WRITE_Z
-								| BGFX_STATE_DEPTH_TEST_LESS
-								| BGFX_STATE_MSAA
-								);
+							| BGFX_STATE_WRITE_RGB
+							| BGFX_STATE_WRITE_A
+							| BGFX_STATE_WRITE_Z
+							| BGFX_STATE_DEPTH_TEST_LESS
+							| BGFX_STATE_MSAA
+							);
 
 						// Submit primitive for rendering to view 0.
-						bgfx::submit(RENDER_PASS_GEOMETRY_ID, m_geomProgram);
+						bgfx::submit(kRenderPassGeometry, m_geomProgram);
 					}
+				}
+
+				// Clear UAV texture
+				if (m_useUav)
+				{
+					screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
+					bgfx::setViewFrameBuffer(kRenderPassClearUav, BGFX_INVALID_HANDLE);
+					bgfx::setState(0);
+					bgfx::setImage(2, m_lightBufferTex, 0, bgfx::Access::ReadWrite, bgfx::TextureFormat::RGBA8);
+					bgfx::submit(kRenderPassClearUav, m_clearUavProgram);
 				}
 
 				// Draw lights into light buffer.
@@ -553,57 +682,50 @@ public:
 					Sphere lightPosRadius;
 
 					float lightTime = time * m_lightAnimationSpeed * (bx::sin(light/float(m_numLights) * bx::kPiHalf ) * 0.5f + 0.5f);
-					lightPosRadius.m_center.x = bx::sin( ( (lightTime + light*0.47f) + bx::kPiHalf*1.37f ) )*offset;
-					lightPosRadius.m_center.y = bx::cos( ( (lightTime + light*0.69f) + bx::kPiHalf*1.49f ) )*offset;
-					lightPosRadius.m_center.z = bx::sin( ( (lightTime + light*0.37f) + bx::kPiHalf*1.57f ) )*2.0f;
-					lightPosRadius.m_radius   = 2.0f;
+					lightPosRadius.center.x = bx::sin( ( (lightTime + light*0.47f) + bx::kPiHalf*1.37f ) )*offset;
+					lightPosRadius.center.y = bx::cos( ( (lightTime + light*0.69f) + bx::kPiHalf*1.49f ) )*offset;
+					lightPosRadius.center.z = bx::sin( ( (lightTime + light*0.37f) + bx::kPiHalf*1.57f ) )*2.0f;
+					lightPosRadius.radius   = 2.0f;
 
 					Aabb aabb;
 					toAabb(aabb, lightPosRadius);
 
-					float box[8][3] =
+					const bx::Vec3 box[8] =
 					{
-						{ aabb.m_min.x, aabb.m_min.y, aabb.m_min.z },
-						{ aabb.m_min.x, aabb.m_min.y, aabb.m_max.z },
-						{ aabb.m_min.x, aabb.m_max.y, aabb.m_min.z },
-						{ aabb.m_min.x, aabb.m_max.y, aabb.m_max.z },
-						{ aabb.m_max.x, aabb.m_min.y, aabb.m_min.z },
-						{ aabb.m_max.x, aabb.m_min.y, aabb.m_max.z },
-						{ aabb.m_max.x, aabb.m_max.y, aabb.m_min.z },
-						{ aabb.m_max.x, aabb.m_max.y, aabb.m_max.z },
+						{ aabb.min.x, aabb.min.y, aabb.min.z },
+						{ aabb.min.x, aabb.min.y, aabb.max.z },
+						{ aabb.min.x, aabb.max.y, aabb.min.z },
+						{ aabb.min.x, aabb.max.y, aabb.max.z },
+						{ aabb.max.x, aabb.min.y, aabb.min.z },
+						{ aabb.max.x, aabb.min.y, aabb.max.z },
+						{ aabb.max.x, aabb.max.y, aabb.min.z },
+						{ aabb.max.x, aabb.max.y, aabb.max.z },
 					};
 
-					float xyz[3];
-					bx::vec3MulMtxH(xyz, box[0], vp);
-					float minx = xyz[0];
-					float miny = xyz[1];
-					float maxx = xyz[0];
-					float maxy = xyz[1];
-					float maxz = xyz[2];
+					bx::Vec3 xyz = bx::mulH(box[0], vp);
+					bx::Vec3 min = xyz;
+					bx::Vec3 max = xyz;
 
 					for (uint32_t ii = 1; ii < 8; ++ii)
 					{
-						bx::vec3MulMtxH(xyz, box[ii], vp);
-						minx = bx::min(minx, xyz[0]);
-						miny = bx::min(miny, xyz[1]);
-						maxx = bx::max(maxx, xyz[0]);
-						maxy = bx::max(maxy, xyz[1]);
-						maxz = bx::max(maxz, xyz[2]);
+						xyz = bx::mulH(box[ii], vp);
+						min = bx::min(min, xyz);
+						max = bx::max(max, xyz);
 					}
 
 					// Cull light if it's fully behind camera.
-					if (maxz >= 0.0f)
+					if (max.z >= 0.0f)
 					{
-						float x0 = bx::clamp( (minx * 0.5f + 0.5f) * m_width,  0.0f, (float)m_width);
-						float y0 = bx::clamp( (miny * 0.5f + 0.5f) * m_height, 0.0f, (float)m_height);
-						float x1 = bx::clamp( (maxx * 0.5f + 0.5f) * m_width,  0.0f, (float)m_width);
-						float y1 = bx::clamp( (maxy * 0.5f + 0.5f) * m_height, 0.0f, (float)m_height);
+						const float x0 = bx::clamp( (min.x * 0.5f + 0.5f) * m_width,  0.0f, (float)m_width);
+						const float y0 = bx::clamp( (min.y * 0.5f + 0.5f) * m_height, 0.0f, (float)m_height);
+						const float x1 = bx::clamp( (max.x * 0.5f + 0.5f) * m_width,  0.0f, (float)m_width);
+						const float y1 = bx::clamp( (max.y * 0.5f + 0.5f) * m_height, 0.0f, (float)m_height);
 
 						if (m_showScissorRects)
 						{
 							bgfx::TransientVertexBuffer tvb;
 							bgfx::TransientIndexBuffer tib;
-							if (bgfx::allocTransientBuffers(&tvb, DebugVertex::ms_decl, 4, &tib, 8) )
+							if (bgfx::allocTransientBuffers(&tvb, DebugVertex::ms_layout, 4, &tib, 8) )
 							{
 								uint32_t abgr = 0x8000ff00;
 
@@ -644,11 +766,11 @@ public:
 								bgfx::setVertexBuffer(0, &tvb);
 								bgfx::setIndexBuffer(&tib);
 								bgfx::setState(0
-										| BGFX_STATE_WRITE_RGB
-										| BGFX_STATE_PT_LINES
-										| BGFX_STATE_BLEND_ALPHA
-										);
-								bgfx::submit(RENDER_PASS_DEBUG_LIGHTS_ID, m_lineProgram);
+									| BGFX_STATE_WRITE_RGB
+									| BGFX_STATE_PT_LINES
+									| BGFX_STATE_BLEND_ALPHA
+									);
+								bgfx::submit(kRenderPassDebugLights, m_lineProgram);
 							}
 						}
 
@@ -670,24 +792,41 @@ public:
 						bgfx::setTexture(0, s_normal, bgfx::getTexture(m_gbuffer, 1) );
 						bgfx::setTexture(1, s_depth,  bgfx::getTexture(m_gbuffer, 2) );
 						bgfx::setState(0
-								| BGFX_STATE_WRITE_RGB
-								| BGFX_STATE_WRITE_A
-								| BGFX_STATE_BLEND_ADD
-								);
+							| BGFX_STATE_WRITE_RGB
+							| BGFX_STATE_WRITE_A
+							| BGFX_STATE_BLEND_ADD
+							);
 						screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
-						bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightProgram);
+
+						if (bgfx::isValid(m_lightTaProgram)
+						&&  m_useTArray)
+						{
+							bgfx::submit(kRenderPassLight, m_lightTaProgram);
+						}
+						else if (bgfx::isValid(m_lightUavProgram)
+							 &&  m_useUav)
+						{
+							bgfx::setViewFrameBuffer(kRenderPassLight, BGFX_INVALID_HANDLE);
+							bgfx::setState(0);
+							bgfx::setImage(3, m_lightBufferTex, 0, bgfx::Access::ReadWrite, bgfx::TextureFormat::RGBA8);
+							bgfx::submit(kRenderPassLight, m_lightUavProgram);
+						}
+						else
+						{
+							bgfx::submit(kRenderPassLight, m_lightProgram);
+						}
 					}
 				}
 
 				// Combine color and light buffers.
-				bgfx::setTexture(0, s_albedo, bgfx::getTexture(m_gbuffer,     0) );
-				bgfx::setTexture(1, s_light,  bgfx::getTexture(m_lightBuffer, 0) );
+				bgfx::setTexture(0, s_albedo, m_gbufferTex[0]);
+				bgfx::setTexture(1, s_light,  m_lightBufferTex);
 				bgfx::setState(0
-						| BGFX_STATE_WRITE_RGB
-						| BGFX_STATE_WRITE_A
-						);
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					);
 				screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
-				bgfx::submit(RENDER_PASS_COMBINE_ID, m_combineProgram);
+				bgfx::submit(kRenderPassCombine, m_combineProgram);
 
 				if (m_showGBuffer)
 				{
@@ -698,17 +837,17 @@ public:
 					{
 						float mtx[16];
 						bx::mtxSRT(mtx
-								, aspectRatio, 1.0f, 1.0f
-								, 0.0f, 0.0f, 0.0f
-								, -7.9f - BX_COUNTOF(m_gbufferTex)*0.1f*0.5f + ii*2.1f*aspectRatio, 4.0f, 0.0f
-								);
+							, aspectRatio, 1.0f, 1.0f
+							, 0.0f, 0.0f, 0.0f
+							, -7.9f - BX_COUNTOF(m_gbufferTex)*0.1f*0.5f + ii*2.1f*aspectRatio, 4.0f, 0.0f
+							);
 
 						bgfx::setTransform(mtx);
 						bgfx::setVertexBuffer(0, m_vbh);
 						bgfx::setIndexBuffer(m_ibh, 0, 6);
 						bgfx::setTexture(0, s_texColor, m_gbufferTex[ii]);
 						bgfx::setState(BGFX_STATE_WRITE_RGB);
-						bgfx::submit(RENDER_PASS_DEBUG_GBUFFER_ID, m_debugProgram);
+						bgfx::submit(kRenderPassDebugGBuffer, m_debugProgram);
 					}
 				}
 			}
@@ -741,6 +880,9 @@ public:
 
 	bgfx::ProgramHandle m_geomProgram;
 	bgfx::ProgramHandle m_lightProgram;
+	bgfx::ProgramHandle m_lightTaProgram;
+	bgfx::ProgramHandle m_lightUavProgram;
+	bgfx::ProgramHandle m_clearUavProgram;
 	bgfx::ProgramHandle m_combineProgram;
 	bgfx::ProgramHandle m_debugProgram;
 	bgfx::ProgramHandle m_lineProgram;
@@ -748,6 +890,7 @@ public:
 	bgfx::TextureHandle m_textureNormal;
 
 	bgfx::TextureHandle m_gbufferTex[3];
+	bgfx::TextureHandle m_lightBufferTex;
 	bgfx::FrameBufferHandle m_gbuffer;
 	bgfx::FrameBufferHandle m_lightBuffer;
 
@@ -759,6 +902,12 @@ public:
 	uint32_t m_oldWidth;
 	uint32_t m_oldHeight;
 	uint32_t m_oldReset;
+
+	bool m_useTArray;
+	bool m_oldUseTArray;
+
+	bool m_useUav;
+	bool m_oldUseUav;
 
 	int32_t m_scrollArea;
 	int32_t m_numLights;
@@ -775,4 +924,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleDeferred, "21-deferred", "MRT rendering and deferred shading.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleDeferred
+	, "21-deferred"
+	, "MRT rendering and deferred shading."
+	, "https://bkaradzic.github.io/bgfx/examples.html#deferred"
+	);

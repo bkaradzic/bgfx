@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2018 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2020 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
@@ -15,11 +15,9 @@ project "geometryc"
 	}
 
 	files {
-		path.join(BGFX_DIR, "3rdparty/forsyth-too/**.cpp"),
-		path.join(BGFX_DIR, "3rdparty/forsyth-too/**.h"),
-		path.join(BGFX_DIR, "3rdparty/ib-compress/**.cpp"),
-		path.join(BGFX_DIR, "3rdparty/ib-compress/**.h"),
-		path.join(BGFX_DIR, "src/vertexdecl.**"),
+		path.join(BGFX_DIR, "3rdparty/meshoptimizer/src/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/meshoptimizer/src/**.h"),
+		path.join(BGFX_DIR, "src/vertexlayout.**"),
 		path.join(BGFX_DIR, "tools/geometryc/**.cpp"),
 		path.join(BGFX_DIR, "tools/geometryc/**.h"),
 		path.join(BGFX_DIR, "examples/common/bounds.**"),
