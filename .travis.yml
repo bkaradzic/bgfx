@@ -24,7 +24,7 @@ before_script:
 
 script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then make build CXX="g++-8" CC="gcc-8"; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then make osx-debug64-x86; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then make osx-x64; fi
 
 branches:
   only:
