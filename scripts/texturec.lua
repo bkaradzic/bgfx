@@ -31,7 +31,7 @@ project "texturec"
 			"psapi",
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		links {
 			"Cocoa.framework",
 		}

@@ -33,7 +33,7 @@ project "geometryc"
 			"psapi",
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		links {
 			"Cocoa.framework",
 		}

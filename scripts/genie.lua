@@ -255,7 +255,7 @@ function exampleProjectDefaults()
 				}
 			end
 
-		configuration { "osx" }
+		configuration { "osx*" }
 			libdirs { "$(SDL2_DIR)/lib" }
 
 		configuration {}
@@ -280,7 +280,7 @@ function exampleProjectDefaults()
 				}
 			end
 
-		configuration { "osx" }
+		configuration { "osx*" }
 			linkoptions {
 				"-framework CoreVideo",
 				"-framework IOKit",
@@ -401,7 +401,7 @@ function exampleProjectDefaults()
 			"pthread",
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		linkoptions {
 			"-framework Cocoa",
 			"-framework QuartzCore",

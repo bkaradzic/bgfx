@@ -138,7 +138,7 @@ function bgfxProjectBase(_kind, _defines)
 			"-Wno-microsoft-const-init", -- default initialization of an object of const type '' without a user-provided default constructor is a Microsoft extension
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		buildoptions { "-x objective-c++" }  -- additional build option for osx
 		linkoptions {
 			"-framework Cocoa",
@@ -232,7 +232,7 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "src/vertexlayout.cpp"),
 		}
 
-		configuration { "xcode* or osx or ios*" }
+		configuration { "xcode* or osx* or ios*" }
 			files {
 				path.join(BGFX_DIR, "src/amalgamated.mm"),
 			}
@@ -243,7 +243,7 @@ function bgfxProjectBase(_kind, _defines)
 				path.join(BGFX_DIR, "src/amalgamated.cpp"),
 			}
 
-		configuration { "not (xcode* or osx or ios*)" }
+		configuration { "not (xcode* or osx* or ios*)" }
 			excludes {
 				path.join(BGFX_DIR, "src/**.mm"),
 			}
@@ -251,7 +251,7 @@ function bgfxProjectBase(_kind, _defines)
 		configuration {}
 
 	else
-		configuration { "xcode* or osx or ios*" }
+		configuration { "xcode* or osx* or ios*" }
 			files {
 				path.join(BGFX_DIR, "src/glcontext_**.mm"),
 				path.join(BGFX_DIR, "src/renderer_**.mm"),

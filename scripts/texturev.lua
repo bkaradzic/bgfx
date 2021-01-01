@@ -52,7 +52,7 @@ project ("texturev")
 				"Xcursor",
 			}
 
-		configuration { "osx" }
+		configuration { "osx*" }
 			linkoptions {
 				"-framework CoreVideo",
 				"-framework IOKit",
@@ -138,7 +138,7 @@ project ("texturev")
 			"pthread",
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		linkoptions {
 			"-framework Cocoa",
 			"-framework Metal",

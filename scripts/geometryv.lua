@@ -52,7 +52,7 @@ project ("geometryv")
 				"Xcursor",
 			}
 
-		configuration { "osx" }
+		configuration { "osx*" }
 			linkoptions {
 				"-framework CoreVideo",
 				"-framework IOKit",
@@ -138,7 +138,7 @@ project ("geometryv")
 			"pthread",
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		linkoptions {
 			"-framework Cocoa",
 			"-framework Metal",
