@@ -280,6 +280,73 @@ precission instead of using <code class="docutils literal notranslate"><span cla
 </ul>
 <p>For more info see <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh">shader helper
 macros</a>.</p>
+<dl>
+<dt>Options:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Help.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--version</span></kbd></dt>
+<dd><p>Version information only.</p>
+</dd>
+<dt><kbd><span class="option">-f <var>&lt;file path&gt;</var></span></kbd></dt>
+<dd><p>Input file path.</p>
+</dd>
+<dt><kbd><span class="option">-i <var>&lt;include path&gt;</var></span></kbd></dt>
+<dd><p>Include path (for multiple paths use -i multiple times).</p>
+</dd>
+<dt><kbd><span class="option">-o <var>&lt;file path&gt;</var></span></kbd></dt>
+<dd><p>Output file path.</p>
+</dd>
+<dt><kbd><span class="option">--bin2c <var>&lt;array name&gt;</var></span></kbd></dt>
+<dd><p>Generate C header file. If array name is not specified base file name will be used as name.</p>
+</dd>
+<dt><kbd><span class="option">--depends</span></kbd></dt>
+<dd><p>Generate makefile style depends file.</p>
+</dd>
+<dt><kbd><span class="option">--platform <var>&lt;platform&gt;</var></span></kbd></dt>
+<dd><p>Target platform.</p>
+</dd>
+<dt><kbd><span class="option">-p</span>, <span class="option">--profile <var>&lt;profile&gt;</var></span></kbd></dt>
+<dd><p>Shader model (default GLSL).</p>
+</dd>
+<dt><kbd><span class="option">--preprocess</span></kbd></dt>
+<dd><p>Preprocess only.</p>
+</dd>
+<dt><kbd><span class="option">--define <var>&lt;defines&gt;</var></span></kbd></dt>
+<dd><p>Add defines to preprocessor (semicolon separated).</p>
+</dd>
+<dt><kbd><span class="option">--raw</span></kbd></dt>
+<dd><p>Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).</p>
+</dd>
+<dt><kbd><span class="option">--type <var>&lt;type&gt;</var></span></kbd></dt>
+<dd><p>Shader type (vertex, fragment)</p>
+</dd>
+<dt><kbd><span class="option">--varyingdef <var>&lt;file path&gt;</var></span></kbd></dt>
+<dd><p>Path to varying.def.sc file.</p>
+</dd>
+<dt><kbd><span class="option">--verbose</span></kbd></dt>
+<dd><p>Verbose.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Options (DX9 and DX11 only):</p>
+<blockquote>
+<div><dl class="option-list">
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Debug information.</p>
+</dd>
+<dt><kbd><span class="option">--disasm</span></kbd></dt>
+<dd><p>Disassemble compiled shader.</p>
+</dd>
+<dt><kbd><span class="option">-O <var>&lt;level&gt;</var></span></kbd></dt>
+<dd><p>Optimization level (0, 1, 2, 3).</p>
+</dd>
+<dt><kbd><span class="option">--Werror</span></kbd></dt>
+<dd><p>Treat warnings as errors.</p>
+</dd>
+</dl>
+</div></blockquote>
 <div class="section" id="building-shaders">
 <h3>Building shaders<a class="headerlink" href="#building-shaders" title="Permalink to this headline">¶</a></h3>
 <p>Shaders must be compiled for all renderers by using <cite>shaderc</cite> tool. Makefile to simplify building
