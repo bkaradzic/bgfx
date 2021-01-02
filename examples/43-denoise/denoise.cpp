@@ -36,17 +36,15 @@
 /*
  * Reference(s):
  *
- * Spatiotemporal Variance-Guided Filtering: Real-Time Reconstruction for
- *   Path-Traced Global Illumination. by Christoph Schied and more.
- *   SVGF denoising algorithm
+ * - Spatiotemporal Variance-Guided Filtering: Real-Time Reconstruction for Path-Traced Global Illumination.
+ *   https://web.archive.org/web/20170720213354/https://research.nvidia.com/sites/default/files/pubs/2017-07_Spatiotemporal-Variance-Guided-Filtering%3A/svgf_preprint.pdf
  *
- * Streaming G-Buffer Compression for Multi-Sample Anti-Aliasing.
- *   by E. Kerzner and M. Salvi.
- *   details about history comparison for temporal denoising filter
+ * - Streaming G-Buffer Compression for Multi-Sample Anti-Aliasing.
+ *   https://web.archive.org/web/20200807211002/https://software.intel.com/content/www/us/en/develop/articles/streaming-g-buffer-compression-for-multi-sample-anti-aliasing.html
  *
- * Edge-Avoiding À-Trous Wavelet Transform for Fast Global Illumination
- *   Filtering. by Holger Dammertz and more.
- *   details about a-trous algorithm for spatial denoising filter
+ * - Edge-Avoiding A-Trous Wavelet Transform for fast Global Illumination Filtering
+ *   https://web.archive.org/web/20130412085423/https://www.uni-ulm.de/fileadmin/website_uni_ulm/iui.inst.100/institut/Papers/atrousGIfilter.pdf
+ *
  */
 
 #include <common.h>
