@@ -1,53 +1,53 @@
 /*
-* Copyright 2021 elven cache. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
-*/
+ * Copyright 2021 elven cache. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ */
 
 /*
-* Implement SVGF style denoising as bgfx example. Goal is to explore various
-* options and parameters, not produce an optimized, efficient denoiser.
-*
-* Starts with deferred rendering scene with very basic lighting. Lighting is
-* masked out with a noise pattern to provide something to denoise. There are
-* two options for the noise pattern. One is a fixed 2x2 dither pattern to
-* stand-in for lighting at quarter resolution. The other is the common
-* shadertoy random pattern as a stand-in for some fancier lighting without
-* enough samples per pixel, like ray tracing.
-*
-* First a temporal denoising filter is applied. The temporal filter is only
-* using normals to reject previous samples. The SVGF paper also describes using
-* depth comparison to reject samples but that is not implemented here.
-*
-* Followed by some number of spatial filters. These are implemented like in the
-* SVGF paper. As an alternative to the 5x5 Edge-Avoiding A-Trous filter, can
-* select a 3x3 filter instead. The 3x3 filter takes fewer samples and covers a
-* smaller area, but takes less time to compute. From a loosely eyeballed
-* comparison, N 5x5 passes looks similar to N+1 3x3 passes. The wider spatial
-* filters take a fair chunk of time to compute. I wonder if it would be a good
-* idea to interleave the input texture before computing, after the first pass
-* which skips zero pixels.
-*
-* I have not implemetened the variance guided part.
-*
-* There's also an optional TXAA pass to be applied after. I am not happy with
-* its implementation yet, so it defaults to off here.
-*/
+ * Implement SVGF style denoising as bgfx example. Goal is to explore various
+ * options and parameters, not produce an optimized, efficient denoiser.
+ *
+ * Starts with deferred rendering scene with very basic lighting. Lighting is
+ * masked out with a noise pattern to provide something to denoise. There are
+ * two options for the noise pattern. One is a fixed 2x2 dither pattern to
+ * stand-in for lighting at quarter resolution. The other is the common
+ * shadertoy random pattern as a stand-in for some fancier lighting without
+ * enough samples per pixel, like ray tracing.
+ *
+ * First a temporal denoising filter is applied. The temporal filter is only
+ * using normals to reject previous samples. The SVGF paper also describes using
+ * depth comparison to reject samples but that is not implemented here.
+ *
+ * Followed by some number of spatial filters. These are implemented like in the
+ * SVGF paper. As an alternative to the 5x5 Edge-Avoiding A-Trous filter, can
+ * select a 3x3 filter instead. The 3x3 filter takes fewer samples and covers a
+ * smaller area, but takes less time to compute. From a loosely eyeballed
+ * comparison, N 5x5 passes looks similar to N+1 3x3 passes. The wider spatial
+ * filters take a fair chunk of time to compute. I wonder if it would be a good
+ * idea to interleave the input texture before computing, after the first pass
+ * which skips zero pixels.
+ *
+ * I have not implemetened the variance guided part.
+ *
+ * There's also an optional TXAA pass to be applied after. I am not happy with
+ * its implementation yet, so it defaults to off here.
+ */
 
 /*
-* References:
-* Spatiotemporal Variance-Guided Filtering: Real-Time Reconstruction for
-*	Path-Traced Global Illumination. by Christoph Schied and more.
-*	- SVGF denoising algorithm
-*
-* Streaming G-Buffer Compression for Multi-Sample Anti-Aliasing.
-*	by E. Kerzner and M. Salvi.
-*	- details about history comparison for temporal denoising filter
-*
-* Edge-Avoiding À-Trous Wavelet Transform for Fast Global Illumination
-*	Filtering. by Holger Dammertz and more.
-*	- details about a-trous algorithm for spatial denoising filter
-*/
-
+ * Reference(s):
+ *
+ * Spatiotemporal Variance-Guided Filtering: Real-Time Reconstruction for
+ *   Path-Traced Global Illumination. by Christoph Schied and more.
+ *   SVGF denoising algorithm
+ *
+ * Streaming G-Buffer Compression for Multi-Sample Anti-Aliasing.
+ *   by E. Kerzner and M. Salvi.
+ *   details about history comparison for temporal denoising filter
+ *
+ * Edge-Avoiding À-Trous Wavelet Transform for Fast Global Illumination
+ *   Filtering. by Holger Dammertz and more.
+ *   details about a-trous algorithm for spatial denoising filter
+ */
 
 #include <common.h>
 #include <camera.h>
@@ -55,7 +55,6 @@
 #include <imgui/imgui.h>
 #include <bx/rng.h>
 #include <bx/os.h>
-
 
 namespace {
 
@@ -165,7 +164,7 @@ struct RenderTarget
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
-	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
+	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 	{
 		bgfx::TransientVertexBuffer vb;
 		bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
@@ -246,18 +245,18 @@ public:
 	{
 		Args args(_argc, _argv);
 
-		m_width = _width;
+		m_width  = _width;
 		m_height = _height;
-		m_debug = BGFX_DEBUG_NONE;
-		m_reset = BGFX_RESET_VSYNC;
+		m_debug  = BGFX_DEBUG_NONE;
+		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::Init init;
 		init.type = args.m_type;
 
-		init.vendorId = args.m_pciId;
-		init.resolution.width = m_width;
+		init.vendorId          = args.m_pciId;
+		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
-		init.resolution.reset = m_reset;
+		init.resolution.reset  = m_reset;
 		bgfx::init(init);
 
 		// Enable debug text.
@@ -267,23 +266,23 @@ public:
 		m_uniforms.init();
 
 		// Create texture sampler uniforms (used when we bind textures)
-		s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler); // Model's source albedo
-		s_color = bgfx::createUniform("s_color", bgfx::UniformType::Sampler); // Color (albedo) gbuffer, default color input
-		s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler); // Normal gbuffer, Model's source normal
-		s_velocity = bgfx::createUniform("s_velocity", bgfx::UniformType::Sampler); // Velocity gbuffer
-		s_depth = bgfx::createUniform("s_depth", bgfx::UniformType::Sampler); // Depth gbuffer
-		s_previousColor = bgfx::createUniform("s_previousColor", bgfx::UniformType::Sampler); // Previous frame's result
+		s_albedo         = bgfx::createUniform("s_albedo",         bgfx::UniformType::Sampler); // Model's source albedo
+		s_color          = bgfx::createUniform("s_color",          bgfx::UniformType::Sampler); // Color (albedo) gbuffer, default color input
+		s_normal         = bgfx::createUniform("s_normal",         bgfx::UniformType::Sampler); // Normal gbuffer, Model's source normal
+		s_velocity       = bgfx::createUniform("s_velocity",       bgfx::UniformType::Sampler); // Velocity gbuffer
+		s_depth          = bgfx::createUniform("s_depth",          bgfx::UniformType::Sampler); // Depth gbuffer
+		s_previousColor  = bgfx::createUniform("s_previousColor",  bgfx::UniformType::Sampler); // Previous frame's result
 		s_previousNormal = bgfx::createUniform("s_previousNormal", bgfx::UniformType::Sampler); // Previous frame's gbuffer normal
 
 		// Create program from shaders.
-		m_gbufferProgram = loadProgram("vs_denoise_gbuffer", "fs_denoise_gbuffer"); // Fill gbuffer
-		m_combineProgram = loadProgram("vs_denoise_screenquad", "fs_denoise_deferred_combine"); // Compute lighting from gbuffer
-		m_copyProgram = loadProgram("vs_denoise_screenquad", "fs_denoise_copy");
-		m_denoiseTemporalProgram = loadProgram("vs_denoise_screenquad", "fs_denoise_temporal");
+		m_gbufferProgram           = loadProgram("vs_denoise_gbuffer",    "fs_denoise_gbuffer"); // Fill gbuffer
+		m_combineProgram           = loadProgram("vs_denoise_screenquad", "fs_denoise_deferred_combine"); // Compute lighting from gbuffer
+		m_copyProgram              = loadProgram("vs_denoise_screenquad", "fs_denoise_copy");
+		m_denoiseTemporalProgram   = loadProgram("vs_denoise_screenquad", "fs_denoise_temporal");
 		m_denoiseSpatialProgram3x3 = loadProgram("vs_denoise_screenquad", "fs_denoise_spatial_3x3");
 		m_denoiseSpatialProgram5x5 = loadProgram("vs_denoise_screenquad", "fs_denoise_spatial_5x5");
-		m_denoiseApplyLighting = loadProgram("vs_denoise_screenquad", "fs_denoise_apply_lighting");
-		m_txaaProgram = loadProgram("vs_denoise_screenquad", "fs_denoise_txaa");
+		m_denoiseApplyLighting     = loadProgram("vs_denoise_screenquad", "fs_denoise_apply_lighting");
+		m_txaaProgram              = loadProgram("vs_denoise_screenquad", "fs_denoise_txaa");
 
 		// Load some meshes
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_meshPaths); ++ii)
@@ -298,9 +297,9 @@ public:
 			Model& model = m_models[ii];
 
 			model.mesh = mwc.gen() % BX_COUNTOF(s_meshPaths);
-			model.position[0] = (((mwc.gen() % 256)) - 128.0f) / 20.0f;
+			model.position[0] = ( ( (mwc.gen() % 256) ) - 128.0f) / 20.0f;
 			model.position[1] = 0;
-			model.position[2] = (((mwc.gen() % 256)) - 128.0f) / 20.0f;
+			model.position[2] = ( ( (mwc.gen() % 256) ) - 128.0f) / 20.0f;
 		}
 
 		// Load ground, just use the cube
@@ -343,6 +342,7 @@ public:
 		{
 			meshUnload(m_meshes[ii]);
 		}
+
 		meshUnload(m_ground);
 
 		bgfx::destroy(m_normalTexture);
@@ -380,10 +380,11 @@ public:
 
 	bool update() override
 	{
-		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState))
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			// skip processing when minimized, otherwise crashing
-			if (0 == m_width || 0 == m_height)
+			if (0 == m_width
+			||  0 == m_height)
 			{
 				return true;
 			}
@@ -393,7 +394,7 @@ public:
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
 			last = now;
-			const double freq = double(bx::getHPFrequency());
+			const double freq = double(bx::getHPFrequency() );
 			const float deltaTime = float(frameTime / freq);
 			const bgfx::Caps* caps = bgfx::getCaps();
 
@@ -427,15 +428,15 @@ public:
 
 			// Draw everything into gbuffer
 			{
-				bgfx::setViewName(view, "gbuffer");
+				bgfx::setViewName(view, "GBuffer");
 				bgfx::setViewClear(view
 					, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 					, 0
 					, 1.0f
 					, 0
-				);
+					);
 
-				bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0]), uint16_t(m_size[1]));
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0]), uint16_t(m_size[1]) );
 				bgfx::setViewTransform(view, m_view, m_proj);
 				// Make sure when we draw it goes into gbuffer and not backbuffer
 				bgfx::setViewFrameBuffer(view, m_gbuffer);
@@ -456,7 +457,7 @@ public:
 
 			// Shade gbuffer
 			{
-				bgfx::setViewName(view, "combine");
+				bgfx::setViewName(view, "Combine");
 
 				// for some reason, previous draws texture lingering in transform stack
 				// need to clear out, otherwise this copy is garbled. this used to work
@@ -465,9 +466,10 @@ public:
 				bx::mtxIdentity(identity);
 				bgfx::setTransform(identity);
 
-				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewTransform(view, NULL, orthoProj);
 				bgfx::setViewFrameBuffer(view, m_currentColor.m_buffer);
+
 				bgfx::setState(0
 					| BGFX_STATE_WRITE_RGB
 					| BGFX_STATE_WRITE_A
@@ -475,9 +477,13 @@ public:
 					);
 				bgfx::setTexture(0, s_color, m_gbufferTex[GBUFFER_RT_COLOR]);
 				bgfx::setTexture(1, s_normal, m_gbufferTex[GBUFFER_RT_NORMAL]);
+
 				m_uniforms.submit();
+
 				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
+
 				bgfx::submit(view, m_combineProgram);
+
 				++view;
 			}
 
@@ -487,9 +493,9 @@ public:
 			// denoise temporal pass
 			if (m_useTemporalPass && m_havePrevious)
 			{
-				bgfx::setViewName(view, "denoise temporal");
+				bgfx::setViewName(view, "Denoise Temporal");
 
-				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewTransform(view, NULL, orthoProj);
 				bgfx::setViewFrameBuffer(view, m_temporaryColor.m_buffer);
 				bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS);
@@ -505,8 +511,11 @@ public:
 				bgfx::setTexture(4, s_previousNormal, m_previousNormal.m_texture);
 
 				m_uniforms.submit();
+
 				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
+
 				bgfx::submit(view, m_denoiseTemporalProgram);
+
 				++view;
 
 				lastTex = m_temporaryColor.m_texture;
@@ -516,46 +525,54 @@ public:
 			if (0 < m_denoisePasses)
 			{
 				// variable number of passes for denoise, alternate between two textures/buffers
-				bgfx::FrameBufferHandle destBuffer[DENOISE_MAX_PASSES] = {
+				bgfx::FrameBufferHandle destBuffer[] =
+				{
 					m_previousDenoise.m_buffer,
 					m_currentColor.m_buffer,
 					m_temporaryColor.m_buffer,
 					m_currentColor.m_buffer,
 					m_temporaryColor.m_buffer,
-					m_currentColor.m_buffer
+					m_currentColor.m_buffer,
 				};
+				BX_STATIC_ASSERT(BX_COUNTOF(destBuffer) == DENOISE_MAX_PASSES);
 
-				uint32_t denoisePasses = bx::min(DENOISE_MAX_PASSES, m_denoisePasses);
-				for (uint32_t i = 0; i < denoisePasses; ++i)
+				const uint32_t denoisePasses = bx::min(DENOISE_MAX_PASSES, m_denoisePasses);
+
+				for (uint32_t ii = 0; ii < denoisePasses; ++ii)
 				{
-					const char buffer[] = { 'd', 'e', 'n', 'o', 'i', 's', 'e', ' ', char('0'+i), 0 };
-					bgfx::setViewName(view, buffer);
+					char name[64];
+					bx::snprintf(name, BX_COUNTOF(name), "Denoise %d/%d", ii, denoisePasses-1);
+					bgfx::setViewName(view, name);
 
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 					bgfx::setViewTransform(view, NULL, orthoProj);
-					bgfx::setViewFrameBuffer(view, destBuffer[i]);
+					bgfx::setViewFrameBuffer(view, destBuffer[ii]);
+
 					bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS);
-					bgfx::setTexture(0, s_color, lastTex);
+					bgfx::setTexture(0, s_color,  lastTex);
 					bgfx::setTexture(1, s_normal, m_gbufferTex[GBUFFER_RT_NORMAL]);
-					bgfx::setTexture(2, s_depth, m_gbufferTex[GBUFFER_RT_DEPTH]);
+					bgfx::setTexture(2, s_depth,  m_gbufferTex[GBUFFER_RT_DEPTH]);
 
 					// need to update some denoise uniforms per draw
-					float denoiseStepScale = bx::pow(2.0f, float(i));
+					const float denoiseStepScale = bx::pow(2.0f, float(ii) );
 					m_uniforms.m_denoiseStep = denoiseStepScale;
-
 					m_uniforms.submit();
+
 					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
-					bgfx::ProgramHandle spatialProgram = (0 == m_spatialSampleType)
+
+					const bgfx::ProgramHandle spatialProgram = (0 == m_spatialSampleType)
 						? m_denoiseSpatialProgram3x3
-						: m_denoiseSpatialProgram5x5;
+						: m_denoiseSpatialProgram5x5
+						;
 					bgfx::submit(view, spatialProgram);
+
 					++view;
 
-					if (m_previousDenoise.m_buffer.idx == destBuffer[i].idx)
+					if (m_previousDenoise.m_buffer.idx == destBuffer[ii].idx)
 					{
 						lastTex = m_previousDenoise.m_texture;
 					}
-					else if (m_temporaryColor.m_buffer.idx == destBuffer[i].idx)
+					else if (m_temporaryColor.m_buffer.idx == destBuffer[ii].idx)
 					{
 						lastTex = m_temporaryColor.m_texture;
 					}
@@ -569,27 +586,30 @@ public:
 			{
 				// need color result for temporal denoise if not supplied by spatial pass
 				// (per SVGF paper, reuse previous frame's first spatial pass output as previous color
-				bgfx::setViewName(view, "copy color for temporal denoise");
-				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+				bgfx::setViewName(view, "Copy Color for Temporal Denoise");
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewTransform(view, NULL, orthoProj);
 				bgfx::setViewFrameBuffer(view, m_previousDenoise.m_buffer);
 				bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS);
 				bgfx::setTexture(0, s_color, lastTex);
+
 				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 				bgfx::submit(view, m_copyProgram);
+
 				++view;
 			}
 
 			// apply lighting
 			{
-				bgfx::setViewName(view, "apply lighting");
+				bgfx::setViewName(view, "Apply Lighting");
 
-				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewTransform(view, NULL, orthoProj);
 
 				bgfx::FrameBufferHandle destBuffer = (lastTex.idx == m_currentColor.m_texture.idx)
 					? m_temporaryColor.m_buffer
-					: m_currentColor.m_buffer;
+					: m_currentColor.m_buffer
+					;
 				bgfx::setViewFrameBuffer(view, destBuffer);
 				bgfx::setState(0
 					| BGFX_STATE_WRITE_RGB
@@ -599,23 +619,27 @@ public:
 				bgfx::setTexture(0, s_color, lastTex);
 				bgfx::setTexture(1, s_albedo, m_gbufferTex[GBUFFER_RT_COLOR]);
 				m_uniforms.submit();
+
 				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 				bgfx::submit(view, m_denoiseApplyLighting);
 				++view;
+
 				lastTex = (m_temporaryColor.m_buffer.idx == destBuffer.idx)
 					? m_temporaryColor.m_texture
-					: m_currentColor.m_texture;
+					: m_currentColor.m_texture
+					;
 			}
 
 			if (m_enableTxaa)
 			{
 				// Draw txaa to txaa buffer
 				{
-					bgfx::setViewName(view, "temporal aa");
+					bgfx::setViewName(view, "Temporal AA");
 
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 					bgfx::setViewTransform(view, NULL, orthoProj);
 					bgfx::setViewFrameBuffer(view, m_txaaColor.m_buffer);
+
 					bgfx::setState(0
 						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_WRITE_A
@@ -626,16 +650,18 @@ public:
 					bgfx::setTexture(2, s_velocity, m_gbufferTex[GBUFFER_RT_VELOCITY]);
 					bgfx::setTexture(3, s_depth, m_gbufferTex[GBUFFER_RT_DEPTH]);
 					m_uniforms.submit();
+
 					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 					bgfx::submit(view, m_txaaProgram);
+
 					++view;
 				}
 
 				// Copy txaa result to previous
 				{
-					bgfx::setViewName(view, "copy2previous");
+					bgfx::setViewName(view, "Copy to Previous");
 
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 					bgfx::setViewTransform(view, NULL, orthoProj);
 					bgfx::setViewFrameBuffer(view, m_previousColor.m_buffer);
 					bgfx::setState(0
@@ -644,16 +670,18 @@ public:
 						| BGFX_STATE_DEPTH_TEST_ALWAYS
 						);
 					bgfx::setTexture(0, s_color, m_txaaColor.m_texture);
+
 					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 					bgfx::submit(view, m_copyProgram);
+
 					++view;
 				}
 
 				// Copy txaa result to swap chain
 				{
-					bgfx::setViewName(view, "display");
+					bgfx::setViewName(view, "Display");
 
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 					bgfx::setViewTransform(view, NULL, orthoProj);
 					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 					bgfx::setState(0
@@ -662,8 +690,10 @@ public:
 						| BGFX_STATE_DEPTH_TEST_ALWAYS
 						);
 					bgfx::setTexture(0, s_color, m_txaaColor.m_texture);
+
 					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 					bgfx::submit(view, m_copyProgram);
+
 					++view;
 				}
 			}
@@ -671,15 +701,15 @@ public:
 			{
 				// Copy color result to swap chain
 				{
-					bgfx::setViewName(view, "display");
+					bgfx::setViewName(view, "Display");
 					bgfx::setViewClear(view
 						, BGFX_CLEAR_NONE
 						, 0
 						, 1.0f
 						, 0
-					);
+						);
 
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 					bgfx::setViewTransform(view, NULL, orthoProj);
 					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 					bgfx::setState(0
@@ -687,22 +717,26 @@ public:
 						| BGFX_STATE_WRITE_A
 						);
 					bgfx::setTexture(0, s_color, lastTex);
+
 					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 					bgfx::submit(view, m_copyProgram);
+
 					++view;
 				}
 			}
 
 			// copy the normal buffer for next time
 			{
-				bgfx::setViewName(view, "copy normals");
-				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+				bgfx::setViewName(view, "Copy Normals");
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewTransform(view, NULL, orthoProj);
 				bgfx::setViewFrameBuffer(view, m_previousNormal.m_buffer);
 				bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS);
 				bgfx::setTexture(0, s_color, m_gbufferTex[GBUFFER_RT_NORMAL]);
+
 				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 				bgfx::submit(view, m_copyProgram);
+
 				++view;
 
 				// update previous status
@@ -750,7 +784,7 @@ public:
 
 				ImGui::Text("noise controls:");
 				ImGui::Combo("pattern", &m_noiseType, "none\0dither\0random\0\0");
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
 				{
 					ImGui::BeginTooltip();
 					ImGui::Text("none");
@@ -766,8 +800,11 @@ public:
 				}
 
 				ImGui::Checkbox("dynamic noise", &m_dynamicNoise);
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
+				{
 					ImGui::SetTooltip("update noise pattern each frame");
+				}
+
 				ImGui::Separator();
 			}
 
@@ -780,46 +817,62 @@ public:
 			{
 				ImGui::Text("spatial denoise pass controls:");
 				ImGui::SliderInt("spatial passes", &m_denoisePasses, 0, DENOISE_MAX_PASSES);
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
+				{
 					ImGui::SetTooltip("set passes to 0 to turn off spatial denoise");
+				}
 
 				ImGui::Combo("spatial sample extent", &m_spatialSampleType, "three\0five\0\0");
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
+				{
 					ImGui::SetTooltip("select 3x3 or 5x5 filter kernal");
+				}
 
 				ImGui::SliderFloat("sigma z", &m_sigmaDepth, 0.0f, 0.1f, "%.5f");
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
+				{
 					ImGui::SetTooltip("lower sigma z, pickier blending across depth edges");
+				}
 
 				ImGui::SliderFloat("sigma n", &m_sigmaNormal, 1.0f, 256.0f);
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
+				{
 					ImGui::SetTooltip("higher sigma n, pickier blending across normal edges");
+				}
+
 				ImGui::Separator();
 			}
 
-			if (ImGui::CollapsingHeader("TXAA options"))
+			if (ImGui::CollapsingHeader("TXAA options") )
 			{
 				ImGui::Checkbox("use TXAA", &m_enableTxaa);
 				ImGui::Checkbox("apply extra blur to current color", &m_applyMitchellFilter);
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
+				{
 					ImGui::SetTooltip("reduces flicker/crawl on thin features, maybe too much!");
+				}
 
 				ImGui::SliderFloat("feedback min", &m_feedbackMin, 0.0f, 1.0f);
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
+				{
 					ImGui::SetTooltip("minimum amount of previous frame to blend in");
+				}
 
 				ImGui::SliderFloat("feedback max", &m_feedbackMax, 0.0f, 1.0f);
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
+				{
 					ImGui::SetTooltip("maximum amount of previous frame to blend in");
+				}
 
 				ImGui::Checkbox("debug TXAA with slow frame rate", &m_useTxaaSlow);
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered() )
 				{
 					ImGui::BeginTooltip();
 					ImGui::Text("sleep 100ms per frame to highlight temporal artifacts");
 					ImGui::Text("high framerate compensates for flickering, masking issues");
 					ImGui::EndTooltip();
 				}
+
 				ImGui::Separator();
 			}
 
@@ -941,22 +994,23 @@ public:
 	{
 		{
 			uint32_t idx = m_currFrame % 8;
-			const float offsets[] = {
-				(1.0f/2.0f),  (1.0f/3.0f),
-				(1.0f/4.0f),  (2.0f/3.0f),
-				(3.0f/4.0f),  (1.0f/9.0f),
-				(1.0f/8.0f),  (4.0f/9.0f),
-				(5.0f/8.0f),  (7.0f/9.0f),
-				(3.0f/8.0f),  (2.0f/9.0f),
-				(7.0f/8.0f),  (5.0f/9.0f),
-				(1.0f/16.0f), (8.0f/9.0f)
+			const float offsets[] =
+			{
+				(1.0f/ 2.0f), (1.0f/3.0f),
+				(1.0f/ 4.0f), (2.0f/3.0f),
+				(3.0f/ 4.0f), (1.0f/9.0f),
+				(1.0f/ 8.0f), (4.0f/9.0f),
+				(5.0f/ 8.0f), (7.0f/9.0f),
+				(3.0f/ 8.0f), (2.0f/9.0f),
+				(7.0f/ 8.0f), (5.0f/9.0f),
+				(1.0f/16.0f), (8.0f/9.0f),
 			};
 
 			// Strange constant for jitterX is because 8 values from halton2
 			// sequence above do not average out to 0.5, 1/16 skews it to the
 			// left. Subtracting a smaller value to center the range of jitter
 			// around 0. Not necessary for jitterY. Not confident this makes sense...
-			const float jitterX = 1.0f * (offsets[2*idx]   - (7.125f/16.0f));
+			const float jitterX = 1.0f * (offsets[2*idx]   - (7.125f/16.0f) );
 			const float jitterY = 1.0f * (offsets[2*idx+1] - 0.5f);
 
 			vec2Set(m_uniforms.m_cameraJitterCurr, jitterX, jitterY);
@@ -975,7 +1029,8 @@ public:
 
 		m_uniforms.m_frameOffsetForNoise = m_dynamicNoise
 			? float(m_currFrame % 8)
-			: 0.0f;
+			: 0.0f
+			;
 		m_uniforms.m_noiseType = float(m_noiseType);
 		m_uniforms.m_sigmaDepth = m_sigmaDepth;
 		m_uniforms.m_sigmaNormal = m_sigmaNormal;
@@ -1034,32 +1089,32 @@ public:
 	bgfx::TextureHandle m_normalTexture;
 
 	uint32_t m_currFrame;
-	float m_texelHalf = 0.0f;
-	float m_fovY = 60.0f;
-	bool m_recreateFrameBuffers = false;
-	bool m_havePrevious = false;
+	float    m_texelHalf            = 0.0f;
+	float    m_fovY                 = 60.0f;
+	bool     m_recreateFrameBuffers = false;
+	bool     m_havePrevious         = false;
 
-	float m_view[16];
-	float m_proj[16];
-	float m_proj2[16];
-	float m_viewToProjPrev[16];
-	float m_worldToViewPrev[16];
-	float m_jitter[2];
+	float   m_view[16];
+	float   m_proj[16];
+	float   m_proj2[16];
+	float   m_viewToProjPrev[16];
+	float   m_worldToViewPrev[16];
+	float   m_jitter[2];
 	int32_t m_size[2];
 
 	// UI parameters
-	int32_t m_noiseType = 2;
-	bool m_dynamicNoise = true;
-	bool m_useTemporalPass = true;
-	int32_t m_spatialSampleType = 1;
-	int32_t m_denoisePasses = 5;
-	float m_sigmaDepth = 0.05f;
-	float m_sigmaNormal = 128.0f;
-	bool m_enableTxaa = false;
-	float m_feedbackMin = 0.8f;
-	float m_feedbackMax = 0.95f;
-	bool m_applyMitchellFilter = true;
-	bool m_useTxaaSlow = false;
+	int32_t m_noiseType           = 2;
+	int32_t m_spatialSampleType   = 1;
+	int32_t m_denoisePasses       = 5;
+	float   m_sigmaDepth          = 0.05f;
+	float   m_sigmaNormal         = 128.0f;
+	float   m_feedbackMin         = 0.8f;
+	float   m_feedbackMax         = 0.95f;
+	bool    m_dynamicNoise        = true;
+	bool    m_useTemporalPass     = true;
+	bool    m_enableTxaa          = false;
+	bool    m_applyMitchellFilter = true;
+	bool    m_useTxaaSlow         = false;
 };
 
 } // namespace
