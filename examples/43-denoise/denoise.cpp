@@ -224,14 +224,6 @@ void vec2Set(float* _v, float _x, float _y)
 	_v[1] = _y;
 }
 
-void vec4Set(float* _v, float _x, float _y, float _z, float _w)
-{
-	_v[0] = _x;
-	_v[1] = _y;
-	_v[2] = _z;
-	_v[3] = _w;
-}
-
 void mat4Set(float * _m, const float * _src)
 {
 	const uint32_t MAT4_FLOATS = 16;
@@ -921,7 +913,7 @@ public:
 		m_gbufferTex[GBUFFER_RT_COLOR]    = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::BGRA8, pointSampleFlags);
 		m_gbufferTex[GBUFFER_RT_NORMAL]   = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::BGRA8, pointSampleFlags);
 		m_gbufferTex[GBUFFER_RT_VELOCITY] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::RG16F, pointSampleFlags);
-		m_gbufferTex[GBUFFER_RT_DEPTH]    = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D24, pointSampleFlags);
+		m_gbufferTex[GBUFFER_RT_DEPTH]    = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D32F , pointSampleFlags);
 		m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
 
 		m_currentColor.init(m_size[0], m_size[1], bgfx::TextureFormat::RG11B10F, bilinearFlags);
