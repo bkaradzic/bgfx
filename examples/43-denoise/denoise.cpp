@@ -286,7 +286,7 @@ public:
 		// Create program from shaders.
 		m_gbufferProgram = loadProgram("vs_denoise_gbuffer", "fs_denoise_gbuffer"); // Fill gbuffer
 		m_combineProgram = loadProgram("vs_denoise_screenquad", "fs_denoise_deferred_combine"); // Compute lighting from gbuffer
-		m_copyProgram = loadProgram("vs_denoise_screenquad", "fs_denoise_copy"); 
+		m_copyProgram = loadProgram("vs_denoise_screenquad", "fs_denoise_copy");
 		m_denoiseTemporalProgram = loadProgram("vs_denoise_screenquad", "fs_denoise_temporal");
 		m_denoiseSpatialProgram3x3 = loadProgram("vs_denoise_screenquad", "fs_denoise_spatial_3x3");
 		m_denoiseSpatialProgram5x5 = loadProgram("vs_denoise_screenquad", "fs_denoise_spatial_5x5");
@@ -319,7 +319,7 @@ public:
 
 		m_recreateFrameBuffers = false;
 		createFramebuffers();
-	
+
 		// Vertex decl
 		PosTexCoord0Vertex::init();
 
@@ -519,7 +519,7 @@ public:
 
 				lastTex = m_temporaryColor.m_texture;
 			}
-			
+
 			// denoise spatial passes
 			if (0 < m_denoisePasses)
 			{
@@ -532,7 +532,7 @@ public:
 					m_temporaryColor.m_buffer,
 					m_currentColor.m_buffer
 				};
-				
+
 				uint32_t denoisePasses = bx::min(DENOISE_MAX_PASSES, m_denoisePasses);
 				for (uint32_t i = 0; i < denoisePasses; ++i)
 				{
@@ -638,7 +638,7 @@ public:
 					bgfx::submit(view, m_txaaProgram);
 					++view;
 				}
-			
+
 				// Copy txaa result to previous
 				{
 					bgfx::setViewName(view, "copy2previous");
@@ -715,7 +715,7 @@ public:
 
 				// update previous status
 				m_havePrevious = true;
-			}	
+			}
 
 			// Copy matrices for next time
 			mat4Set(m_worldToViewPrev, m_view);
@@ -1072,4 +1072,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleDenoise, "xx-denoise", "Denoise.");
+ENTRY_IMPLEMENT_MAIN(ExampleDenoise, "43-denoise", "Denoise.");
