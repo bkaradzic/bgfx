@@ -2997,7 +2997,8 @@ namespace bgfx
 		{
 			const TextureFormat::Enum format = TextureFormat::Count != _format ? _format : m_init.resolution.format;
 
-			if (m_init.resolution.format == format
+			if (!g_platformDataChangedSinceReset
+			&&  m_init.resolution.format == format
 			&&  m_init.resolution.width  == _width
 			&&  m_init.resolution.height == _height
 			&&  m_init.resolution.reset  == _flags)
