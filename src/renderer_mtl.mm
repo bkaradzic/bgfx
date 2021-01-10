@@ -2954,16 +2954,18 @@ namespace bgfx { namespace mtl
 			desc.mipmapLevelCount = 1;
 			desc.sampleCount = 1;
 			desc.arrayLength = 1;
+
 			if (s_renderMtl->m_iOS9Runtime
-				||  s_renderMtl->m_macOS11Runtime)
+			||  s_renderMtl->m_macOS11Runtime)
 			{
 				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 				desc.storageMode  = BX_ENABLED(BX_PLATFORM_IOS)
-				? (MTLStorageMode)0 // MTLStorageModeShared
-				: (MTLStorageMode)1 // MTLStorageModeManaged
-				;
+					? (MTLStorageMode)0 // MTLStorageModeShared
+					: (MTLStorageMode)1 // MTLStorageModeManaged
+					;
 				desc.usage        = 0;
 			}
+
 			Texture tempTexture = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			MTLRegion region =
 			{
@@ -3278,13 +3280,13 @@ namespace bgfx { namespace mtl
 				desc.arrayLength = 1;
 
 				if (s_renderMtl->m_iOS9Runtime
-					||  s_renderMtl->m_macOS11Runtime)
+				||  s_renderMtl->m_macOS11Runtime)
 				{
 					desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 					desc.storageMode = BX_ENABLED(BX_PLATFORM_IOS)
-					? (MTLStorageMode)0 // MTLStorageModeShared
-					: (MTLStorageMode)1 // MTLStorageModeManaged
-					;
+						? (MTLStorageMode)0 // MTLStorageModeShared
+						: (MTLStorageMode)1 // MTLStorageModeManaged
+						;
 
 					desc.usage = MTLTextureUsageRenderTarget;
 				}
