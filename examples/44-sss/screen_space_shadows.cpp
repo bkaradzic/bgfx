@@ -326,7 +326,7 @@ public:
 
 		m_recreateFrameBuffers = false;
 		createFramebuffers();
-	
+
 		// Vertex decl
 		PosTexCoord0Vertex::init();
 
@@ -847,4 +847,8 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleScreenSpaceShadows, "xx-sss", "Screen Space Shadows.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleScreenSpaceShadows
+	, "44-sss"
+	, "Screen Space Shadows."
+	);
