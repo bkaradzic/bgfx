@@ -1445,6 +1445,12 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-LocalInvocationId-LocalInvocationId-04282);
     case 4283:
       return VUID_WRAP(VUID-LocalInvocationId-LocalInvocationId-04283);
+    case 4293:
+      return VUID_WRAP(VUID-NumSubgroups-NumSubgroups-04293);
+    case 4294:
+      return VUID_WRAP(VUID-NumSubgroups-NumSubgroups-04294);
+    case 4295:
+      return VUID_WRAP(VUID-NumSubgroups-NumSubgroups-04295);
     case 4296:
       return VUID_WRAP(VUID-NumWorkgroups-NumWorkgroups-04296);
     case 4297:
@@ -1539,6 +1545,40 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-SamplePosition-SamplePosition-04361);
     case 4362:
       return VUID_WRAP(VUID-SamplePosition-SamplePosition-04362);
+    case 4367:
+      return VUID_WRAP(VUID-SubgroupId-SubgroupId-04367);
+    case 4368:
+      return VUID_WRAP(VUID-SubgroupId-SubgroupId-04368);
+    case 4369:
+      return VUID_WRAP(VUID-SubgroupId-SubgroupId-04369);
+    case 4370:
+      return VUID_WRAP(VUID-SubgroupEqMask-SubgroupEqMask-04370);
+    case 4371:
+      return VUID_WRAP(VUID-SubgroupEqMask-SubgroupEqMask-04371);
+    case 4372:
+      return VUID_WRAP(VUID-SubgroupGeMask-SubgroupGeMask-04372);
+    case 4373:
+      return VUID_WRAP(VUID-SubgroupGeMask-SubgroupGeMask-04373);
+    case 4374:
+      return VUID_WRAP(VUID-SubgroupGtMask-SubgroupGtMask-04374);
+    case 4375:
+      return VUID_WRAP(VUID-SubgroupGtMask-SubgroupGtMask-04375);
+    case 4376:
+      return VUID_WRAP(VUID-SubgroupLeMask-SubgroupLeMask-04376);
+    case 4377:
+      return VUID_WRAP(VUID-SubgroupLeMask-SubgroupLeMask-04377);
+    case 4378:
+      return VUID_WRAP(VUID-SubgroupLtMask-SubgroupLtMask-04378);
+    case 4379:
+      return VUID_WRAP(VUID-SubgroupLtMask-SubgroupLtMask-04379);
+    case 4380:
+      return VUID_WRAP(VUID-SubgroupLocalInvocationId-SubgroupLocalInvocationId-04380);
+    case 4381:
+      return VUID_WRAP(VUID-SubgroupLocalInvocationId-SubgroupLocalInvocationId-04381);
+    case 4382:
+      return VUID_WRAP(VUID-SubgroupSize-SubgroupSize-04382);
+    case 4383:
+      return VUID_WRAP(VUID-SubgroupSize-SubgroupSize-04383);
     case 4387:
       return VUID_WRAP(VUID-TessCoord-TessCoord-04387);
     case 4388:
@@ -1625,6 +1665,34 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-ShadingRateKHR-ShadingRateKHR-04491);
     case 4492:
       return VUID_WRAP(VUID-ShadingRateKHR-ShadingRateKHR-04492);
+    case 4633:
+      return VUID_WRAP(VUID-StandaloneSpirv-None-04633);
+    case 4642:
+      return VUID_WRAP(VUID-StandaloneSpirv-None-04642);
+    case 4649:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpMemoryBarrier-04649);
+    case 4651:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpVariable-04651);
+    case 4652:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpReadClockKHR-04652);
+    case 4653:
+      return VUID_WRAP(VUID-StandaloneSpirv-OriginLowerLeft-04653);
+    case 4654:
+      return VUID_WRAP(VUID-StandaloneSpirv-PixelCenterInteger-04654);
+    case 4656:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpTypeImage-04656);
+    case 4657:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpTypeImage-04657);
+    case 4658:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpImageTexelPointer-04658);
+    case 4669:
+      return VUID_WRAP(VUID-StandaloneSpirv-GLSLShared-04669);
+    case 4675:
+      return VUID_WRAP(VUID-StandaloneSpirv-FPRoundingMode-04675);
+    case 4685:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpGroupNonUniformBallotBitCount-04685);
+    case 4711:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpTypeForwardPointer-04711);
     default:
       return "";  // unknown id
   };

@@ -219,6 +219,16 @@ spv_result_t ValidateDecorate(ValidationState_t& _, const Instruction* inst) {
            << "' is not valid for the WebGPU execution environment.";
   }
 
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if ((decoration == SpvDecorationGLSLShared) ||
+        (decoration == SpvDecorationGLSLPacked)) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << _.VkErrorID(4669) << "OpDecorate decoration '"
+             << LogStringForDecoration(decoration)
+             << "' is not valid for the Vulkan execution environment.";
+    }
+  }
+
   if (DecorationTakesIdParameters(decoration)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Decorations taking ID parameters may not be used with "

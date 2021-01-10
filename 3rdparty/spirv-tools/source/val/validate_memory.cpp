@@ -585,7 +585,8 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
       storage_class != SpvStorageClassFunction) {
     if (spvIsVulkanOrWebGPUEnv(_.context()->target_env)) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
-             << "OpVariable, <id> '" << _.getIdName(inst->id())
+             << _.VkErrorID(4651) << "OpVariable, <id> '"
+             << _.getIdName(inst->id())
              << "', has a disallowed initializer & storage class "
              << "combination.\n"
              << "From " << spvLogStringForEnv(_.context()->target_env)

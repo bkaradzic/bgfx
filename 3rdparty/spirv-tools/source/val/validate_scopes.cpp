@@ -99,7 +99,7 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
       if (spvOpcodeIsNonUniformGroupOperation(opcode) &&
           value != SpvScopeSubgroup) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << spvOpcodeString(opcode)
+               << _.VkErrorID(4642) << spvOpcodeString(opcode)
                << ": in Vulkan environment Execution scope is limited to "
                << "Subgroup";
       }

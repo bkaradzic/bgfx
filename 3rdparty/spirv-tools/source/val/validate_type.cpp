@@ -555,8 +555,8 @@ spv_result_t ValidateTypeForwardPointer(ValidationState_t& _,
            << "Pointer type in OpTypeForwardPointer is not a pointer type.";
   }
 
-  if (inst->GetOperandAs<uint32_t>(1) !=
-      pointer_type_inst->GetOperandAs<uint32_t>(1)) {
+  const auto storage_class = inst->GetOperandAs<SpvStorageClass>(1);
+  if (storage_class != pointer_type_inst->GetOperandAs<uint32_t>(1)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Storage class in OpTypeForwardPointer does not match the "
            << "pointer definition.";
@@ -567,6 +567,15 @@ spv_result_t ValidateTypeForwardPointer(ValidationState_t& _,
   if (!pointee_type || pointee_type->opcode() != SpvOpTypeStruct) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Forward pointers must point to a structure";
+  }
+
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (storage_class != SpvStorageClassPhysicalStorageBuffer) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << _.VkErrorID(4711)
+             << "In Vulkan, OpTypeForwardPointer must have "
+             << "a storage class of PhysicalStorageBuffer.";
+    }
   }
 
   return SPV_SUCCESS;
