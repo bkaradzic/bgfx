@@ -38,6 +38,11 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#endif
+
 #ifdef HAVE_SPIRV_CROSS_GIT_VERSION
 #include "gitversion.h"
 #endif
@@ -220,8 +225,27 @@ struct CLIParser
 #pragma warning(disable : 4996)
 #endif
 
+static vector<uint32_t> read_spirv_file_stdin()
+{
+#ifdef _WIN32
+	setmode(fileno(stdin), O_BINARY);
+#endif
+
+	vector<uint32_t> buffer;
+	uint32_t tmp[256];
+	size_t ret;
+
+	while ((ret = fread(tmp, sizeof(uint32_t), 256, stdin)))
+		buffer.insert(buffer.end(), tmp, tmp + ret);
+
+	return buffer;
+}
+
 static vector<uint32_t> read_spirv_file(const char *path)
 {
+	if (path[0] == '-' && path[1] == '\0')
+		return read_spirv_file_stdin();
+
 	FILE *file = fopen(path, "rb");
 	if (!file)
 	{
@@ -849,7 +873,7 @@ static void print_help()
 	// clang-format off
 	fprintf(stderr, "Usage: spirv-cross <...>\n"
 	                "\nBasic:\n"
-	                "\t[SPIR-V file]\n"
+	                "\t[SPIR-V file] (- is stdin)\n"
 	                "\t[--output <output path>]: If not provided, prints output to stdout.\n"
 	                "\t[--dump-resources]:\n\t\tPrints a basic reflection of the SPIR-V module along with other output.\n"
 	                "\t[--help]:\n\t\tPrints this help message.\n"
@@ -1548,6 +1572,7 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--emit-line-directives", [&args](CLIParser &) { args.emit_line_directives = true; });
 
 	cbs.default_handler = [&args](const char *value) { args.input = value; };
+	cbs.add("-", [&args](CLIParser &) { args.input = "-"; });
 	cbs.error_handler = [] { print_help(); };
 
 	CLIParser parser{ move(cbs), argc - 1, argv + 1 };

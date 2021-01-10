@@ -735,6 +735,12 @@ protected:
 	void declare_undefined_values() override;
 	void declare_constant_arrays();
 
+	void replace_illegal_entry_point_names();
+	void sync_entry_point_aliases_and_names();
+
+	static const std::unordered_set<std::string> &get_reserved_keyword_set();
+	static const std::unordered_set<std::string> &get_illegal_func_names();
+
 	// Constant arrays of non-primitive types (i.e. matrices) won't link properly into Metal libraries
 	void declare_complex_constant_arrays();
 
@@ -1020,6 +1026,7 @@ protected:
 	void activate_argument_buffer_resources();
 
 	bool type_is_msl_framebuffer_fetch(const SPIRType &type) const;
+	bool is_supported_argument_buffer_type(const SPIRType &type) const;
 
 	// OpcodeHandler that handles several MSL preprocessing operations.
 	struct OpCodePreprocessor : OpcodeHandler

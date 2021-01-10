@@ -833,6 +833,9 @@ protected:
 		Compiler &compiler;
 
 		void handle_builtin(const SPIRType &type, spv::BuiltIn builtin, const Bitset &decoration_flags);
+		void add_if_builtin(uint32_t id);
+		void add_if_builtin_or_block(uint32_t id);
+		void add_if_builtin(uint32_t id, bool allow_blocks);
 	};
 
 	bool traverse_all_reachable_opcodes(const SPIRBlock &block, OpcodeHandler &handler) const;

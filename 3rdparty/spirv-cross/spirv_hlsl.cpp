@@ -839,6 +839,21 @@ std::string CompilerHLSL::to_semantic(uint32_t location, ExecutionModel em, Stor
 	return join("TEXCOORD", location);
 }
 
+std::string CompilerHLSL::to_initializer_expression(const SPIRVariable &var)
+{
+	// We cannot emit static const initializer for block constants for practical reasons,
+	// so just inline the initializer.
+	// FIXME: There is a theoretical problem here if someone tries to composite extract
+	// into this initializer since we don't declare it properly, but that is somewhat non-sensical.
+	auto &type = get<SPIRType>(var.basetype);
+	bool is_block = has_decoration(type.self, DecorationBlock);
+	auto *c = maybe_get<SPIRConstant>(var.initializer);
+	if (is_block && c)
+		return constant_expression(*c);
+	else
+		return CompilerGLSL::to_initializer_expression(var);
+}
+
 void CompilerHLSL::emit_io_block(const SPIRVariable &var)
 {
 	auto &execution = get_entry_point();
@@ -1008,11 +1023,42 @@ void CompilerHLSL::emit_builtin_variables()
 
 	bool need_base_vertex_info = false;
 
+	std::unordered_map<uint32_t, ID> builtin_to_initializer;
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		if (!is_builtin_variable(var) || var.storage != StorageClassOutput || !var.initializer)
+			return;
+
+		auto *c = this->maybe_get<SPIRConstant>(var.initializer);
+		if (!c)
+			return;
+
+		auto &type = this->get<SPIRType>(var.basetype);
+		if (type.basetype == SPIRType::Struct)
+		{
+			uint32_t member_count = uint32_t(type.member_types.size());
+			for (uint32_t i = 0; i < member_count; i++)
+			{
+				if (has_member_decoration(type.self, i, DecorationBuiltIn))
+				{
+					builtin_to_initializer[get_member_decoration(type.self, i, DecorationBuiltIn)] =
+						c->subconstants[i];
+				}
+			}
+		}
+		else if (has_decoration(var.self, DecorationBuiltIn))
+			builtin_to_initializer[get_decoration(var.self, DecorationBuiltIn)] = var.initializer;
+	});
+
 	// Emit global variables for the interface variables which are statically used by the shader.
 	builtins.for_each_bit([&](uint32_t i) {
 		const char *type = nullptr;
 		auto builtin = static_cast<BuiltIn>(i);
 		uint32_t array_size = 0;
+
+		string init_expr;
+		auto init_itr = builtin_to_initializer.find(builtin);
+		if (init_itr != builtin_to_initializer.end())
+			init_expr = join(" = ", to_expression(init_itr->second));
 
 		switch (builtin)
 		{
@@ -1106,16 +1152,16 @@ void CompilerHLSL::emit_builtin_variables()
 		if (type)
 		{
 			if (array_size)
-				statement("static ", type, " ", builtin_to_glsl(builtin, storage), "[", array_size, "];");
+				statement("static ", type, " ", builtin_to_glsl(builtin, storage), "[", array_size, "]", init_expr, ";");
 			else
-				statement("static ", type, " ", builtin_to_glsl(builtin, storage), ";");
+				statement("static ", type, " ", builtin_to_glsl(builtin, storage), init_expr, ";");
 		}
 
 		// SampleMask can be both in and out with sample builtin, in this case we have already
 		// declared the input variable and we need to add the output one now.
 		if (builtin == BuiltInSampleMask && storage == StorageClassInput && this->active_output_builtins.get(i))
 		{
-			statement("static ", type, " ", this->builtin_to_glsl(builtin, StorageClassOutput), ";");
+			statement("static ", type, " ", this->builtin_to_glsl(builtin, StorageClassOutput), init_expr, ";");
 		}
 	});
 
@@ -1141,7 +1187,11 @@ void CompilerHLSL::emit_composite_constants()
 			return;
 
 		auto &type = this->get<SPIRType>(c.constant_type);
-		if (type.basetype == SPIRType::Struct || !type.array.empty())
+
+		// Cannot declare block type constants here.
+		// We do not have the struct type yet.
+		bool is_block = has_decoration(type.self, DecorationBlock);
+		if (!is_block && (type.basetype == SPIRType::Struct || !type.array.empty()))
 		{
 			auto name = to_name(c.self);
 			statement("static const ", variable_decl(type, name), " = ", constant_expression(c), ";");

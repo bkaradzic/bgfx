@@ -235,6 +235,11 @@ bool ParsedIR::is_globally_reserved_identifier(std::string &str, bool allow_rese
 	return is_reserved_identifier(str, false, allow_reserved_prefixes);
 }
 
+uint32_t ParsedIR::get_spirv_version() const
+{
+	return spirv[1];
+}
+
 static string make_unreserved_identifier(const string &name)
 {
 	if (is_reserved_prefix(name))

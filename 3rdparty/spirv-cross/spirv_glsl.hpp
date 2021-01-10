@@ -711,6 +711,8 @@ protected:
 	std::string type_to_glsl_constructor(const SPIRType &type);
 	std::string argument_decl(const SPIRFunction::Parameter &arg);
 	virtual std::string to_qualifiers_glsl(uint32_t id);
+	void fixup_io_block_patch_qualifiers(const SPIRVariable &var);
+	void emit_output_variable_initializer(const SPIRVariable &var);
 	const char *to_precision_qualifiers_glsl(uint32_t id);
 	virtual const char *to_storage_qualifiers_glsl(const SPIRVariable &var);
 	const char *flags_to_qualifiers_glsl(const SPIRType &type, const Bitset &flags);
@@ -815,6 +817,8 @@ protected:
 	bool requires_transpose_2x2 = false;
 	bool requires_transpose_3x3 = false;
 	bool requires_transpose_4x4 = false;
+	bool ray_tracing_is_khr = false;
+	void ray_tracing_khr_fixup_locations();
 
 	bool args_will_forward(uint32_t id, const uint32_t *args, uint32_t num_args, bool pure);
 	void register_call_out_argument(uint32_t id);

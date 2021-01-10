@@ -222,6 +222,8 @@ public:
 	static void sanitize_identifier(std::string &str, bool member, bool allow_reserved_prefixes);
 	static bool is_globally_reserved_identifier(std::string &str, bool allow_reserved_prefixes);
 
+	uint32_t get_spirv_version() const;
+
 private:
 	template <typename T>
 	T &get(uint32_t id)
