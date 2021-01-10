@@ -5465,7 +5465,14 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         if (! IsPow2(value))
             error(loc, "must be a power of 2", "buffer_reference_align", "");
         else
+#ifdef __ANDROID__
+            // Android NDK r15c tageting ABI 15 doesn't have full support for C++11
+            // (no std::exp2/log2). ::exp2 is available from C99 but ::log2 isn't
+            // available up until ABI 18 so we use the mathematical equivalent form
+            publicType.qualifier.layoutBufferReferenceAlign = (unsigned int)(std::log(value) / std::log(2.0));
+#else
             publicType.qualifier.layoutBufferReferenceAlign = (unsigned int)std::log2(value);
+#endif
         if (nonLiteral)
             error(loc, "needs a literal integer", "buffer_reference_align", "");
         return;

@@ -5492,6 +5492,10 @@ TIntermTyped* HlslParseContext::handleFunctionCall(const TSourceLoc& loc, TFunct
 
             op = fnCandidate->getBuiltInOp();
             if (builtIn && op != EOpNull) {
+                // SM 4.0 and above guarantees roundEven semantics for round()
+                if (!hlslDX9Compatible() && op == EOpRound)
+                    op = EOpRoundEven;
+
                 // A function call mapped to a built-in operation.
                 result = intermediate.addBuiltInFunctionCall(loc, op, fnCandidate->getParamCount() == 1, arguments,
                                                              fnCandidate->getType());
@@ -9865,7 +9869,7 @@ void HlslParseContext::addPatchConstantInvocation()
                 } else {
                     // Use the original declaration type for the linkage
                     paramType->getQualifier().builtIn = biType;
-                    if (biType == EbvTessLevelInner || biType == EbvTessLevelInner)
+                    if (biType == EbvTessLevelInner || biType == EbvTessLevelOuter)
                         paramType->getQualifier().patch = true;
 
                     if (notInEntryPoint.count(tInterstageIoData(biType, storage)) == 1)
