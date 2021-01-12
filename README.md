@@ -5,7 +5,7 @@
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
-[![Build Status](https://travis-ci.org/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.org/bkaradzic/bgfx)
+[![Build Status](https://travis-ci.com/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.com/bkaradzic/bgfx)
 [![Build status](https://ci.appveyor.com/api/projects/status/ipa3ojgeaet1oko5?svg=true)](https://ci.appveyor.com/project/bkaradzic/bgfx)
 [![License](https://img.shields.io/badge/license-BSD--2%20clause-blue.svg)](https://bkaradzic.github.io/bgfx/license.html)
 [![Join the chat at https://discord.gg/9eMbv7J](https://img.shields.io/discord/712512073522872352?color=%237289DA&label=bgfx&logo=discord&logoColor=white)](https://discord.gg/9eMbv7J)
@@ -77,7 +77,7 @@ Languages:
 ----------------------------------------------------
 
  - AppVeyor https://ci.appveyor.com/project/bkaradzic/bgfx
- - TravisCI https://travis-ci.org/bkaradzic/bgfx
+ - TravisCI https://travis-ci.com/bkaradzic/bgfx
 
 [Getting involved](https://bkaradzic.github.io/bgfx/overview.html#getting-involved)
 -----------------------------------------------------------------------------------
