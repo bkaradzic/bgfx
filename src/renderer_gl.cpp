@@ -6399,7 +6399,7 @@ namespace bgfx { namespace gl
 							bx::write(&writer, &err, "out vec4 bgfx_FragData[%d];\n", fragData);
 							bx::write(&writer, "#define gl_FragData bgfx_FragData\n");
 						}
-						else
+						else if (!bx::findIdentifierMatch(code, "gl_FragColor").isEmpty())
 						{
 							bx::write(&writer
 								, "out vec4 bgfx_FragColor;\n"
