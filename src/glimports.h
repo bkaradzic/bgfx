@@ -170,6 +170,7 @@ typedef void           (GL_APIENTRYP PFNGLPOLYGONMODEPROC) (GLenum face, GLenum 
 typedef void           (GL_APIENTRYP PFNGLPOPDEBUGGROUPPROC) (void);
 typedef void           (GL_APIENTRYP PFNGLPROGRAMBINARYPROC) (GLuint program, GLenum binaryFormat, const void *binary, GLsizei length);
 typedef void           (GL_APIENTRYP PFNGLPROGRAMPARAMETERIPROC) (GLuint program, GLenum pname, GLint value);
+typedef void           (GL_APIENTRYP PFNGLPROVOKINGVERTEXPROC) (GLenum mode);
 typedef void           (GL_APIENTRYP PFNGLPUSHDEBUGGROUPPROC) (GLenum source, GLuint id, GLsizei length, const GLchar *message);
 typedef void           (GL_APIENTRYP PFNGLQUERYCOUNTERPROC) (GLuint id, GLenum target);
 typedef void           (GL_APIENTRYP PFNGLREADBUFFERPROC) (GLenum mode);
@@ -371,6 +372,7 @@ GL_IMPORT______(false, PFNGLPIXELSTOREIPROC,                       glPixelStorei
 GL_IMPORT______(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
 GL_IMPORT______(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBinary);
 GL_IMPORT______(true,  PFNGLPROGRAMPARAMETERIPROC,                 glProgramParameteri);
+GL_IMPORT______(true,  PFNGLPROVOKINGVERTEXPROC,                   glProvokingVertex);
 GL_IMPORT______(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
 GL_IMPORT______(true,  PFNGLQUERYCOUNTERPROC,                      glQueryCounter);
 GL_IMPORT______(true,  PFNGLREADBUFFERPROC,                        glReadBuffer);
