@@ -6808,6 +6808,7 @@ VK_DESTROY
 							allocDescriptorSet(program, renderBind, scratchBuffer);
 						}
 
+						uint32_t numOffset = 0;
 						uint32_t offset = 0;
 
 						if (constantsChanged
@@ -6816,11 +6817,15 @@ VK_DESTROY
 							const uint32_t align = uint32_t(m_deviceProperties.limits.minUniformBufferOffsetAlignment);
 							const uint32_t vsize = bx::strideAlign(program.m_vsh->m_size, align);
 
-							offset = scratchBuffer.m_pos;
+							if (vsize > 0)
+							{
+								offset = scratchBuffer.m_pos;
+								++numOffset;
 
-							bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos], m_vsScratch, program.m_vsh->m_size);
+								bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos], m_vsScratch, program.m_vsh->m_size);
 
-							scratchBuffer.m_pos += vsize;
+								scratchBuffer.m_pos += vsize;
+							}
 						}
 
 						vkCmdBindDescriptorSets(
@@ -6830,7 +6835,7 @@ VK_DESTROY
 							, 0
 							, 1
 							, &scratchBuffer.getCurrentDS()
-							, constantsChanged || hasPredefined ? 1 : 0
+							, numOffset
 							, &offset
 							);
 					}
