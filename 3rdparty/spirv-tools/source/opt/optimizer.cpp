@@ -62,7 +62,9 @@ struct Optimizer::Impl {
   opt::PassManager pass_manager;  // Internal implementation pass manager.
 };
 
-Optimizer::Optimizer(spv_target_env env) : impl_(new Impl(env)) {}
+Optimizer::Optimizer(spv_target_env env) : impl_(new Impl(env)) {
+  assert(env != SPV_ENV_WEBGPU_0);
+}
 
 Optimizer::~Optimizer() {}
 
@@ -239,23 +241,6 @@ Optimizer& Optimizer::RegisterSizePasses() {
       .RegisterPass(CreateCFGCleanupPass());
 }
 
-Optimizer& Optimizer::RegisterVulkanToWebGPUPasses() {
-  return RegisterPass(CreateStripAtomicCounterMemoryPass())
-      .RegisterPass(CreateGenerateWebGPUInitializersPass())
-      .RegisterPass(CreateLegalizeVectorShufflePass())
-      .RegisterPass(CreateSplitInvalidUnreachablePass())
-      .RegisterPass(CreateEliminateDeadConstantPass())
-      .RegisterPass(CreateFlattenDecorationPass())
-      .RegisterPass(CreateAggressiveDCEPass())
-      .RegisterPass(CreateDeadBranchElimPass())
-      .RegisterPass(CreateCompactIdsPass());
-}
-
-Optimizer& Optimizer::RegisterWebGPUToVulkanPasses() {
-  return RegisterPass(CreateDecomposeInitializedVariablesPass())
-      .RegisterPass(CreateCompactIdsPass());
-}
-
 bool Optimizer::RegisterPassesFromFlags(const std::vector<std::string>& flags) {
   for (const auto& flag : flags) {
     if (!RegisterPassFromFlag(flag)) {
@@ -298,9 +283,7 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
   //
   // Both Pass::name() and Pass::desc() should be static class members so they
   // can be invoked without creating a pass instance.
-  if (pass_name == "strip-atomic-counter-memory") {
-    RegisterPass(CreateStripAtomicCounterMemoryPass());
-  } else if (pass_name == "strip-debug") {
+  if (pass_name == "strip-debug") {
     RegisterPass(CreateStripDebugInfoPass());
   } else if (pass_name == "strip-reflect") {
     RegisterPass(CreateStripReflectInfoPass());
@@ -505,14 +488,6 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterSizePasses();
   } else if (pass_name == "legalize-hlsl") {
     RegisterLegalizationPasses();
-  } else if (pass_name == "generate-webgpu-initializers") {
-    RegisterPass(CreateGenerateWebGPUInitializersPass());
-  } else if (pass_name == "legalize-vector-shuffle") {
-    RegisterPass(CreateLegalizeVectorShufflePass());
-  } else if (pass_name == "split-invalid-unreachable") {
-    RegisterPass(CreateSplitInvalidUnreachablePass());
-  } else if (pass_name == "decompose-initialized-variables") {
-    RegisterPass(CreateDecomposeInitializedVariablesPass());
   } else if (pass_name == "graphics-robust-access") {
     RegisterPass(CreateGraphicsRobustAccessPass());
   } else if (pass_name == "wrap-opkill") {
@@ -583,10 +558,12 @@ bool Optimizer::Run(const uint32_t* original_binary,
 #ifndef NDEBUG
   // We do not keep the result id of DebugScope in struct DebugScope.
   // Instead, we assign random ids for them, which results in integrity
+  // check failures. In addition, propagating the OpLine/OpNoLine to preserve
+  // the debug information through transformations results in integrity
   // check failures. We want to skip the integrity check when the module
-  // contains DebugScope instructions.
+  // contains DebugScope or OpLine/OpNoLine instructions.
   if (status == opt::Pass::Status::SuccessWithoutChange &&
-      !context->module()->ContainsDebugScope()) {
+      !context->module()->ContainsDebugInfo()) {
     std::vector<uint32_t> optimized_binary_with_nop;
     context->module()->ToBinary(&optimized_binary_with_nop,
                                 /* skip_nop = */ false);
@@ -625,11 +602,6 @@ Optimizer& Optimizer::SetValidateAfterAll(bool validate) {
 
 Optimizer::PassToken CreateNullPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(MakeUnique<opt::NullPass>());
-}
-
-Optimizer::PassToken CreateStripAtomicCounterMemoryPass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::StripAtomicCounterMemoryPass>());
 }
 
 Optimizer::PassToken CreateStripDebugInfoPass() {
@@ -929,29 +901,9 @@ Optimizer::PassToken CreateCodeSinkingPass() {
       MakeUnique<opt::CodeSinkingPass>());
 }
 
-Optimizer::PassToken CreateGenerateWebGPUInitializersPass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::GenerateWebGPUInitializersPass>());
-}
-
 Optimizer::PassToken CreateFixStorageClassPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::FixStorageClass>());
-}
-
-Optimizer::PassToken CreateLegalizeVectorShufflePass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::LegalizeVectorShufflePass>());
-}
-
-Optimizer::PassToken CreateDecomposeInitializedVariablesPass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::DecomposeInitializedVariablesPass>());
-}
-
-Optimizer::PassToken CreateSplitInvalidUnreachablePass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::SplitInvalidUnreachablePass>());
 }
 
 Optimizer::PassToken CreateGraphicsRobustAccessPass() {

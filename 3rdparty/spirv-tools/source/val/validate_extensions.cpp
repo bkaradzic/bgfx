@@ -685,34 +685,9 @@ bool IsDebugVariableWithIntScalarType(ValidationState_t& _,
 
 }  // anonymous namespace
 
-spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
-  if (spvIsWebGPUEnv(_.context()->target_env)) {
-    std::string extension = GetExtensionString(&(inst->c_inst()));
-
-    if (extension != ExtensionToString(kSPV_KHR_vulkan_memory_model)) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "For WebGPU, the only valid parameter to OpExtension is "
-             << "\"" << ExtensionToString(kSPV_KHR_vulkan_memory_model)
-             << "\".";
-    }
-  }
-
-  return SPV_SUCCESS;
-}
-
 spv_result_t ValidateExtInstImport(ValidationState_t& _,
                                    const Instruction* inst) {
   const auto name_id = 1;
-  if (spvIsWebGPUEnv(_.context()->target_env)) {
-    const std::string name(reinterpret_cast<const char*>(
-        inst->words().data() + inst->operands()[name_id].offset));
-    if (name != "GLSL.std.450") {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "For WebGPU, the only valid parameter to OpExtInstImport is "
-                "\"GLSL.std.450\".";
-    }
-  }
-
   if (!_.HasExtension(kSPV_KHR_non_semantic_info)) {
     const std::string name(reinterpret_cast<const char*>(
         inst->words().data() + inst->operands()[name_id].offset));
@@ -3149,7 +3124,6 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
 
 spv_result_t ExtensionPass(ValidationState_t& _, const Instruction* inst) {
   const SpvOp opcode = inst->opcode();
-  if (opcode == SpvOpExtension) return ValidateExtension(_, inst);
   if (opcode == SpvOpExtInstImport) return ValidateExtInstImport(_, inst);
   if (opcode == SpvOpExtInst) return ValidateExtInst(_, inst);
 

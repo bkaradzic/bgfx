@@ -471,21 +471,6 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
     }
   }
 
-  if (spvIsWebGPUEnv(_.context()->target_env)) {
-    if (mode != SpvExecutionModeOriginUpperLeft &&
-        mode != SpvExecutionModeDepthReplacing &&
-        mode != SpvExecutionModeDepthGreater &&
-        mode != SpvExecutionModeDepthLess &&
-        mode != SpvExecutionModeDepthUnchanged &&
-        mode != SpvExecutionModeLocalSize &&
-        mode != SpvExecutionModeLocalSizeHint) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "Execution mode must be one of OriginUpperLeft, "
-                "DepthReplacing, DepthGreater, DepthLess, DepthUnchanged, "
-                "LocalSize, or LocalSizeHint for WebGPU environment.";
-    }
-  }
-
   return SPV_SUCCESS;
 }
 
@@ -498,13 +483,6 @@ spv_result_t ValidateMemoryModel(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "VulkanMemoryModelKHR capability must only be specified if "
               "the VulkanKHR memory model is used.";
-  }
-
-  if (spvIsWebGPUEnv(_.context()->target_env)) {
-    if (_.addressing_model() != SpvAddressingModelLogical) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "Addressing model must be Logical for WebGPU environment.";
-    }
   }
 
   if (spvIsOpenCLEnv(_.context()->target_env)) {
@@ -520,6 +498,15 @@ spv_result_t ValidateMemoryModel(ValidationState_t& _,
     }
   }
 
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if ((_.addressing_model() != SpvAddressingModelLogical) &&
+        (_.addressing_model() != SpvAddressingModelPhysicalStorageBuffer64)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(4635)
+             << "Addressing model must be Logical or PhysicalStorageBuffer64 "
+             << "in the Vulkan environment.";
+    }
+  }
   return SPV_SUCCESS;
 }
 

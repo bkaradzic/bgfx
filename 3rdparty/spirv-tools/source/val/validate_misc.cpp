@@ -37,10 +37,6 @@ spv_result_t ValidateUndef(ValidationState_t& _, const Instruction* inst) {
            << "Cannot create undefined values with 8- or 16-bit types";
   }
 
-  if (spvIsWebGPUEnv(_.context()->target_env)) {
-    return _.diag(SPV_ERROR_INVALID_BINARY, inst) << "OpUndef is disallowed";
-  }
-
   return SPV_SUCCESS;
 }
 

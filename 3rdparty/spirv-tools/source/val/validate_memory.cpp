@@ -578,12 +578,12 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
-  // WebGPU & Vulkan Appendix A: Check that if contains initializer, then
+  // Vulkan Appendix A: Check that if contains initializer, then
   // storage class is Output, Private, or Function.
   if (inst->operands().size() > 3 && storage_class != SpvStorageClassOutput &&
       storage_class != SpvStorageClassPrivate &&
       storage_class != SpvStorageClassFunction) {
-    if (spvIsVulkanOrWebGPUEnv(_.context()->target_env)) {
+    if (spvIsVulkanEnv(_.context()->target_env)) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << _.VkErrorID(4651) << "OpVariable, <id> '"
              << _.getIdName(inst->id())
@@ -595,20 +595,6 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
              << "one of the following storage classes: Output, Private, or "
              << "Function";
     }
-  }
-
-  // WebGPU: All variables with storage class Output, Private, or Function MUST
-  // have an initializer.
-  if (spvIsWebGPUEnv(_.context()->target_env) && inst->operands().size() <= 3 &&
-      (storage_class == SpvStorageClassOutput ||
-       storage_class == SpvStorageClassPrivate ||
-       storage_class == SpvStorageClassFunction)) {
-    return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpVariable, <id> '" << _.getIdName(inst->id())
-           << "', must have an initializer.\n"
-           << "From WebGPU execution environment spec:\n"
-           << "All variables in the following storage classes must have an "
-           << "initializer: Output, Private, or Function";
   }
 
   if (storage_class == SpvStorageClassPhysicalStorageBufferEXT) {
@@ -698,41 +684,6 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
                  << "For Vulkan, OpTypeStruct variables containing "
                  << "OpTypeRuntimeArray must have storage class of "
                  << "StorageBuffer or Uniform.";
-        }
-      }
-    }
-  }
-
-  // WebGPU specific validation rules for OpTypeRuntimeArray
-  if (spvIsWebGPUEnv(_.context()->target_env)) {
-    // OpTypeRuntimeArray should only ever be in an OpTypeStruct,
-    // so should never appear as a bare variable.
-    if (value_type && value_type->opcode() == SpvOpTypeRuntimeArray) {
-      return _.diag(SPV_ERROR_INVALID_ID, inst)
-             << "OpVariable, <id> '" << _.getIdName(inst->id())
-             << "', is attempting to create memory for an illegal type, "
-             << "OpTypeRuntimeArray.\nFor WebGPU OpTypeRuntimeArray can only "
-             << "appear as the final member of an OpTypeStruct, thus cannot "
-             << "be instantiated via OpVariable";
-    }
-
-    // If an OpStruct has an OpTypeRuntimeArray somewhere within it, then it
-    // must have the storage class StorageBuffer and be decorated
-    // with Block.
-    if (value_type && value_type->opcode() == SpvOpTypeStruct) {
-      if (DoesStructContainRTA(_, value_type)) {
-        if (storage_class == SpvStorageClassStorageBuffer) {
-          if (!_.HasDecoration(value_id, SpvDecorationBlock)) {
-            return _.diag(SPV_ERROR_INVALID_ID, inst)
-                   << "For WebGPU, an OpTypeStruct variable containing an "
-                   << "OpTypeRuntimeArray must be decorated with Block if it "
-                   << "has storage class StorageBuffer.";
-          }
-        } else {
-          return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << "For WebGPU, OpTypeStruct variables containing "
-                 << "OpTypeRuntimeArray must have storage class of "
-                 << "StorageBuffer";
         }
       }
     }

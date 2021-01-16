@@ -137,30 +137,6 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
     }
   }
 
-  // WebGPU Specific rules
-  if (spvIsWebGPUEnv(_.context()->target_env)) {
-    if (value != SpvScopeWorkgroup) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << spvOpcodeString(opcode)
-             << ": in WebGPU environment Execution Scope is limited to "
-             << "Workgroup";
-    } else {
-      _.function(inst->function()->id())
-          ->RegisterExecutionModelLimitation(
-              [](SpvExecutionModel model, std::string* message) {
-                if (model != SpvExecutionModelGLCompute) {
-                  if (message) {
-                    *message =
-                        ": in WebGPU environment, Workgroup Execution Scope is "
-                        "limited to GLCompute execution model";
-                  }
-                  return false;
-                }
-                return true;
-              });
-    }
-  }
-
   // TODO(atgoo@github.com) Add checks for OpenCL and OpenGL environments.
 
   // General SPIRV rules
@@ -252,62 +228,6 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
                     *message =
                         "ShaderCallKHR Memory Scope requires a ray tracing "
                         "execution model";
-                  }
-                  return false;
-                }
-                return true;
-              });
-    }
-  }
-
-  // WebGPU specific rules
-  if (spvIsWebGPUEnv(_.context()->target_env)) {
-    switch (inst->opcode()) {
-      case SpvOpControlBarrier:
-        if (value != SpvScopeWorkgroup) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << spvOpcodeString(opcode)
-                 << ": in WebGPU environment Memory Scope is limited to "
-                 << "Workgroup for OpControlBarrier";
-        }
-        break;
-      case SpvOpMemoryBarrier:
-        if (value != SpvScopeWorkgroup) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << spvOpcodeString(opcode)
-                 << ": in WebGPU environment Memory Scope is limited to "
-                 << "Workgroup for OpMemoryBarrier";
-        }
-        break;
-      default:
-        if (spvOpcodeIsAtomicOp(inst->opcode())) {
-          if (value != SpvScopeQueueFamilyKHR) {
-            return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                   << spvOpcodeString(opcode)
-                   << ": in WebGPU environment Memory Scope is limited to "
-                   << "QueueFamilyKHR for OpAtomic* operations";
-          }
-        }
-
-        if (value != SpvScopeWorkgroup && value != SpvScopeInvocation &&
-            value != SpvScopeQueueFamilyKHR) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << spvOpcodeString(opcode)
-                 << ": in WebGPU environment Memory Scope is limited to "
-                 << "Workgroup, Invocation, and QueueFamilyKHR";
-        }
-        break;
-    }
-
-    if (value == SpvScopeWorkgroup) {
-      _.function(inst->function()->id())
-          ->RegisterExecutionModelLimitation(
-              [](SpvExecutionModel model, std::string* message) {
-                if (model != SpvExecutionModelGLCompute) {
-                  if (message) {
-                    *message =
-                        ": in WebGPU environment, Workgroup Memory Scope is "
-                        "limited to GLCompute execution model";
                   }
                   return false;
                 }

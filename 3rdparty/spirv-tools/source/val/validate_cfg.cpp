@@ -820,120 +820,6 @@ spv_result_t StructuredControlFlowChecks(
   return SPV_SUCCESS;
 }
 
-spv_result_t PerformWebGPUCfgChecks(ValidationState_t& _, Function* function) {
-  for (auto& block : function->ordered_blocks()) {
-    if (block->reachable()) continue;
-    if (block->is_type(kBlockTypeMerge)) {
-      // 1. Find the referencing merge and confirm that it is reachable.
-      BasicBlock* merge_header = function->GetMergeHeader(block);
-      assert(merge_header != nullptr);
-      if (!merge_header->reachable()) {
-        return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-               << "For WebGPU, unreachable merge-blocks must be referenced by "
-                  "a reachable merge instruction.";
-      }
-
-      // 2. Check that the only instructions are OpLabel and OpUnreachable.
-      auto* label_inst = block->label();
-      auto* terminator_inst = block->terminator();
-      assert(label_inst != nullptr);
-      assert(terminator_inst != nullptr);
-
-      if (terminator_inst->opcode() != SpvOpUnreachable) {
-        return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-               << "For WebGPU, unreachable merge-blocks must terminate with "
-                  "OpUnreachable.";
-      }
-
-      auto label_idx = label_inst - &_.ordered_instructions()[0];
-      auto terminator_idx = terminator_inst - &_.ordered_instructions()[0];
-      if (label_idx + 1 != terminator_idx) {
-        return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-               << "For WebGPU, unreachable merge-blocks must only contain an "
-                  "OpLabel and OpUnreachable instruction.";
-      }
-
-      // 3. Use label instruction to confirm there is no uses by branches.
-      for (auto use : label_inst->uses()) {
-        const auto* use_inst = use.first;
-        if (spvOpcodeIsBranch(use_inst->opcode())) {
-          return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-                 << "For WebGPU, unreachable merge-blocks cannot be the target "
-                    "of a branch.";
-        }
-      }
-    } else if (block->is_type(kBlockTypeContinue)) {
-      // 1. Find referencing loop and confirm that it is reachable.
-      std::vector<BasicBlock*> continue_headers =
-          function->GetContinueHeaders(block);
-      if (continue_headers.empty()) {
-        return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-               << "For WebGPU, unreachable continue-target must be referenced "
-                  "by a loop instruction.";
-      }
-
-      std::vector<BasicBlock*> reachable_headers(continue_headers.size());
-      auto iter =
-          std::copy_if(continue_headers.begin(), continue_headers.end(),
-                       reachable_headers.begin(),
-                       [](BasicBlock* header) { return header->reachable(); });
-      reachable_headers.resize(std::distance(reachable_headers.begin(), iter));
-
-      if (reachable_headers.empty()) {
-        return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-               << "For WebGPU, unreachable continue-target must be referenced "
-                  "by a reachable loop instruction.";
-      }
-
-      // 2. Check that the only instructions are OpLabel and OpBranch.
-      auto* label_inst = block->label();
-      auto* terminator_inst = block->terminator();
-      assert(label_inst != nullptr);
-      assert(terminator_inst != nullptr);
-
-      if (terminator_inst->opcode() != SpvOpBranch) {
-        return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-               << "For WebGPU, unreachable continue-target must terminate with "
-                  "OpBranch.";
-      }
-
-      auto label_idx = label_inst - &_.ordered_instructions()[0];
-      auto terminator_idx = terminator_inst - &_.ordered_instructions()[0];
-      if (label_idx + 1 != terminator_idx) {
-        return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-               << "For WebGPU, unreachable continue-target must only contain "
-                  "an OpLabel and an OpBranch instruction.";
-      }
-
-      // 3. Use label instruction to confirm there is no uses by branches.
-      for (auto use : label_inst->uses()) {
-        const auto* use_inst = use.first;
-        if (spvOpcodeIsBranch(use_inst->opcode())) {
-          return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-                 << "For WebGPU, unreachable continue-target cannot be the "
-                    "target of a branch.";
-        }
-      }
-
-      // 4. Confirm that continue-target has a back edge to a reachable loop
-      //    header block.
-      auto branch_target = terminator_inst->GetOperandAs<uint32_t>(0);
-      for (auto* continue_header : reachable_headers) {
-        if (branch_target != continue_header->id()) {
-          return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-                 << "For WebGPU, unreachable continue-target must only have a "
-                    "back edge to a single reachable loop instruction.";
-        }
-      }
-    } else {
-      return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
-             << "For WebGPU, all blocks must be reachable, unless they are "
-             << "degenerate cases of merge-block or continue-target.";
-    }
-  }
-  return SPV_SUCCESS;
-}
-
 spv_result_t PerformCfgChecks(ValidationState_t& _) {
   for (auto& function : _.functions()) {
     // Check all referenced blocks are defined within a function
@@ -1013,13 +899,6 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
                    << " appears in the binary before its dominator "
                    << _.getIdName(idom->id());
           }
-        }
-
-        // For WebGPU check that all unreachable blocks are degenerate cases for
-        // merge-block or continue-target.
-        if (spvIsWebGPUEnv(_.context()->target_env)) {
-          spv_result_t result = PerformWebGPUCfgChecks(_, &function);
-          if (result != SPV_SUCCESS) return result;
         }
       }
       // If we have structed control flow, check that no block has a control

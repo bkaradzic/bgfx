@@ -821,12 +821,11 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
            << "Invalid Sampled " << info.sampled << " (must be 0, 1 or 2)";
   }
 
-  if (spvIsVulkanEnv(target_env) || spvIsWebGPUEnv(target_env)) {
+  if (spvIsVulkanEnv(target_env)) {
     if (info.sampled == 0) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << _.VkErrorID(4657) << "Sampled must be 1 or 2 in the "
-             << (spvIsVulkanEnv(target_env) ? "Vulkan" : "WebGPU")
-             << " environment.";
+             << _.VkErrorID(4657)
+             << "Sampled must be 1 or 2 in the Vulkan environment.";
     }
   }
 
@@ -1469,9 +1468,9 @@ spv_result_t ValidateImageRead(ValidationState_t& _, const Instruction* inst) {
   }
 
   const auto target_env = _.context()->target_env;
-  // Vulkan and WebGPU require the result to be a 4-element int or float
+  // Vulkan requires the result to be a 4-element int or float
   // vector.
-  if (spvIsVulkanEnv(target_env) || spvIsWebGPUEnv(target_env)) {
+  if (spvIsVulkanEnv(target_env)) {
     if (_.GetDimension(actual_result_type) != 4) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Expected " << GetActualResultTypeStr(opcode)

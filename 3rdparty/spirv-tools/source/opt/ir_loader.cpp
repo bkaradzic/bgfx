@@ -41,6 +41,7 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
   ++inst_index_;
   const auto opcode = static_cast<SpvOp>(inst->opcode);
   if (IsDebugLineInst(opcode)) {
+    module()->SetContainsDebugInfo();
     last_line_inst_.reset();
     dbg_line_info_.push_back(
         Instruction(module()->context(), *inst, last_dbg_scope_));
@@ -61,12 +62,12 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
           inlined_at = inst->words[kInlinedAtIndex];
         last_dbg_scope_ =
             DebugScope(inst->words[kLexicalScopeIndex], inlined_at);
-        module()->SetContainsDebugScope();
+        module()->SetContainsDebugInfo();
         return true;
       }
       if (ext_inst_key == OpenCLDebugInfo100DebugNoScope) {
         last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
-        module()->SetContainsDebugScope();
+        module()->SetContainsDebugInfo();
         return true;
       }
     } else {
@@ -78,12 +79,12 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
           inlined_at = inst->words[kInlinedAtIndex];
         last_dbg_scope_ =
             DebugScope(inst->words[kLexicalScopeIndex], inlined_at);
-        module()->SetContainsDebugScope();
+        module()->SetContainsDebugInfo();
         return true;
       }
       if (ext_inst_key == DebugInfoDebugNoScope) {
         last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
-        module()->SetContainsDebugScope();
+        module()->SetContainsDebugInfo();
         return true;
       }
     }
