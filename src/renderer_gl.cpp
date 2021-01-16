@@ -525,6 +525,7 @@ namespace bgfx { namespace gl
 			ARB_occlusion_query,
 			ARB_occlusion_query2,
 			ARB_program_interface_query,
+			ARB_provoking_vertex,
 			ARB_sampler_objects,
 			ARB_seamless_cube_map,
 			ARB_shader_bit_encoding,
@@ -738,6 +739,7 @@ namespace bgfx { namespace gl
 		{ "ARB_occlusion_query",                      BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "ARB_occlusion_query2",                     BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "ARB_program_interface_query",              BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
+		{ "ARB_provoking_vertex",                     BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "ARB_sampler_objects",                      BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "ARB_seamless_cube_map",                    BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
 		{ "ARB_shader_bit_encoding",                  BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
@@ -3001,6 +3003,11 @@ namespace bgfx { namespace gl
 				if (s_extension[Extension::ARB_seamless_cube_map].m_supported)
 				{
 					GL_CHECK(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS) );
+				}
+
+				if (s_extension[Extension::ARB_provoking_vertex].m_supported)
+				{
+					GL_CHECK(glProvokingVertex(GL_FIRST_VERTEX_CONVENTION) );
 				}
 
 				if (NULL == glInsertEventMarker
