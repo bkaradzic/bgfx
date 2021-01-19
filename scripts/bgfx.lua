@@ -184,9 +184,10 @@ function bgfxProjectBase(_kind, _defines)
 	if _OPTIONS["with-webgpu"] then
 		defines {
 			"BGFX_CONFIG_RENDERER_WEBGPU=1",
+			"BGFX_CONFIG_DEBUG_ANNOTATION=0", -- does not work
 		}
 
-		local generator = "out/VS2019"
+		local generator = "out/Default"
 
 		configuration { "wasm*" }
 			defines {
@@ -196,10 +197,8 @@ function bgfxProjectBase(_kind, _defines)
 
 		configuration { "not wasm*" }
 			includedirs {
-				path.join(DAWN_DIR, "src"),
 				path.join(DAWN_DIR, "src/include"),
 				path.join(DAWN_DIR, "third_party/vulkan-headers/include"),
-				path.join(DAWN_DIR, generator, "gen/src"),
 				path.join(DAWN_DIR, generator, "gen/src/include"),
 			}
 
@@ -297,23 +296,16 @@ if _OPTIONS["with-webgpu"] then
 			}
 
 		configuration { "not wasm*" }
-			--local generator = "out/Default"
-			local generator = "out/VS2019"
+			local generator = "out/Default"
 
 			includedirs {
-				path.join(DAWN_DIR, "src"),
 				path.join(DAWN_DIR, "src/include"),
-				path.join(DAWN_DIR, generator, "gen/src"),
 				path.join(DAWN_DIR, generator, "gen/src/include"),
 			}
 
 			libdirs {
 				path.join(DAWN_DIR, generator),
 				path.join(DAWN_DIR, generator, "lib/Debug"),
-			}
-
-			files {
-				path.join(DAWN_DIR, generator, "gen/src/dawn/webgpu_cpp.cpp"),
 			}
 
 			links {

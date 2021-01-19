@@ -178,7 +178,7 @@ if _OPTIONS["with-webgpu"] then
 		DAWN_DIR = path.getabsolute(path.join(BGFX_DIR, "../dawn"))
 	end
 
-	if not os.isdir(DAWN_DIR) then
+	if not os.isdir(DAWN_DIR) and "wasm*" ~= _OPTIONS["gcc"] then
 		print("Dawn not found at \"" .. DAWN_DIR .. "\". git clone https://dawn.googlesource.com/dawn?")
 
 		print("For more info see: https://bkaradzic.github.io/bgfx/build.html")
