@@ -4612,7 +4612,7 @@ namespace bgfx
             tempName[nameLen] = '0' + char(_type);
             tempName[nameLen+1] = '\0';
             
-			uint16_t idx = m_uniformHashMap.find(bx::hash<bx::HashMurmur2A>(tempName) );
+			uint16_t idx = m_uniformHashMap.find(bx::hash<bx::HashMurmur2A>(bx::StringView(tempName)));
 			if (kInvalidHandle != idx)
 			{
 				UniformHandle handle = { idx };
@@ -4661,7 +4661,7 @@ namespace bgfx
 			uniform.m_type = _type;
 			uniform.m_num  = _num;
 
-			bool ok = m_uniformHashMap.insert(bx::hash<bx::HashMurmur2A>(tempName), handle.idx);
+			bool ok = m_uniformHashMap.insert(bx::hash<bx::HashMurmur2A>(bx::StringView(tempName)), handle.idx);
 			BX_ASSERT(ok, "Uniform already exists (name: %s)!", _name); BX_UNUSED(ok);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
