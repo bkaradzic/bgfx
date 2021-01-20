@@ -1,8 +1,8 @@
 #ifndef WEBGPU_CPP_H_
 #define WEBGPU_CPP_H_
 
-#include "dawn/webgpu.h"
-#include "dawn/EnumClassBitmasks.h"
+#include "webgpu.h"
+#include "EnumClassBitmasks.h"
 
 namespace wgpu {
 
