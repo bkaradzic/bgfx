@@ -862,7 +862,7 @@ namespace bgfx { namespace mtl
 		{
 			const TextureMtl& texture = m_textures[_handle.idx];
 
-#if BX_PLATFORM_OSX
+#if BX_PLATFORM_OSX || TARGET_OS_MACCATALYST
 			BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
 			bce.synchronizeTexture(texture.m_ptr, 0, _mip);
 			endEncoding();
@@ -1750,7 +1750,7 @@ namespace bgfx { namespace mtl
         void resolveFramebuffer(FrameBufferHandle _fbh)
         {
             // Resolve previous frame buffer and auto-gen mipmaps if needed
-            if (isValid(_fbh))
+            if (isValid(_fbh) && _fbh.idx != BGFX_CONFIG_MAX_FRAME_BUFFERS)
             {
                 FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
                                                 
