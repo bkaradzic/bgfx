@@ -324,6 +324,7 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
         IM_ASSERT(table->ColumnsCount == columns_count && "BeginTable(): Cannot change columns count mid-frame while preserving same ID");
 
     // Fix flags
+    table->IsDefaultSizingPolicy = (flags & ImGuiTableFlags_SizingMask_) == 0;
     flags = TableFixFlags(flags, outer_window);
 
     // Initialize
@@ -335,7 +336,7 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
     table->ColumnsCount = columns_count;
     table->IsLayoutLocked = false;
     table->InnerWidth = inner_width;
-    table->IsOuterRectMinFitX = (outer_size.x == 0.0f) && (use_child_window == false); // Will be set to false later if there are any Stretch column.
+    table->UserOuterSize = outer_size;
 
     // When not using a child window, WorkRect.Max will grow as we append contents.
     if (use_child_window)
@@ -355,6 +356,10 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
 
         if (override_content_size.x != FLT_MAX || override_content_size.y != FLT_MAX)
             SetNextWindowContentSize(ImVec2(override_content_size.x != FLT_MAX ? override_content_size.x : 0.0f, override_content_size.y != FLT_MAX ? override_content_size.y : 0.0f));
+
+        // Reset scroll if we are reactivating it
+        if ((table_last_flags & (ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY)) == 0)
+            SetNextWindowScroll(ImVec2(0.0f, 0.0f));
 
         // Create scrolling region (without border and zero window padding)
         ImGuiWindowFlags child_flags = (flags & ImGuiTableFlags_ScrollX) ? ImGuiWindowFlags_HorizontalScrollbar : ImGuiWindowFlags_None;
@@ -1031,8 +1036,7 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
     // [Part 8] Lock actual OuterRect/WorkRect right-most position.
     // This is done late to handle the case of fixed-columns tables not claiming more widths that they need.
     // Because of this we are careful with uses of WorkRect and InnerClipRect before this point.
-    if (table->RightMostStretchedColumn != -1)
-        table->IsOuterRectMinFitX = false;
+    table->IsOuterRectMinFitX = (table->UserOuterSize.x == 0.0f) && table->RightMostStretchedColumn == -1 && (table->InnerWindow == table->OuterWindow);
     if (table->IsOuterRectMinFitX)
     {
         table->OuterRect.Max.x = table->WorkRect.Max.x = unused_x1;
@@ -1285,28 +1289,44 @@ void    ImGui::EndTable()
     // Layout in outer window
     // (FIXME: To allow auto-fit and allow desirable effect of SameLine() we dissociate 'used' vs 'ideal' size by overriding
     // CursorPosPrevLine and CursorMaxPos manually. That should be a more general layout feature, see same problem e.g. #3414)
-    const float outer_width = table->IsOuterRectMinFitX ? table->WorkRect.GetWidth() : table->ColumnsAutoFitWidth;
-    const float outer_height = table->OuterRect.GetHeight();
     if (inner_window != outer_window)
     {
         EndChild();
     }
     else
     {
-        ItemSize(ImVec2(outer_width, outer_height));
-        outer_window->DC.CursorPosPrevLine.x = table->OuterRect.Max.x;
+        ItemSize(table->OuterRect.GetSize());
+        ItemAdd(table->OuterRect, 0);
     }
 
-    // Override declared contents width to enable auto-resize on the X axis when possible.
-    // FIXME-TABLE: This can be improved (e.g. for Fixed columns we don't want to auto AutoFitWidth? or propagate window auto-fit to table?)
-    if (table->Flags & ImGuiTableFlags_ScrollX)
-        outer_window->DC.CursorMaxPos.x = ImMax(backup_outer_max_pos.x, table->OuterRect.Min.x + table->ColumnsGivenWidth + inner_window->ScrollbarSizes.x); // For outer scrolling
+    // Override declared contents width/height to enable auto-resize while not needlessly adding a scrollbar
+    if (table->IsOuterRectMinFitX)
+    {
+        // FIXME-TABLE: Could we remove this section?
+        IM_ASSERT((table->Flags & ImGuiTableFlags_ScrollX) == 0);
+        outer_window->DC.CursorMaxPos.x = ImMax(backup_outer_max_pos.x, table->OuterRect.Min.x + table->ColumnsAutoFitWidth);
+    }
+    else if (table->UserOuterSize.x <= 0.0f)
+    {
+        const float decoration_size = (table->Flags & ImGuiTableFlags_ScrollX) ? inner_window->ScrollbarSizes.x : 0.0f;
+        outer_window->DC.IdealMaxPos.x = ImMax(outer_window->DC.IdealMaxPos.x, table->OuterRect.Min.x + table->ColumnsAutoFitWidth + decoration_size - table->UserOuterSize.x);
+        outer_window->DC.CursorMaxPos.x = ImMax(backup_outer_max_pos.x, ImMin(table->OuterRect.Max.x, table->OuterRect.Min.x + table->ColumnsAutoFitWidth));
+    }
     else
-        outer_window->DC.CursorMaxPos.x = ImMax(backup_outer_max_pos.x, table->WorkRect.Min.x + outer_width); // For auto-fit
-
-    // Override declared contents height
-    if (inner_window == outer_window && !(flags & ImGuiTableFlags_NoHostExtendY))
-        outer_window->DC.CursorMaxPos.y = ImMax(outer_window->DC.CursorMaxPos.y, inner_content_max_y);
+    {
+        outer_window->DC.CursorMaxPos.x = ImMax(backup_outer_max_pos.x, table->OuterRect.Max.x);
+    }
+    if (table->UserOuterSize.y <= 0.0f)
+    {
+        const float decoration_size = (table->Flags & ImGuiTableFlags_ScrollY) ? inner_window->ScrollbarSizes.y : 0.0f;
+        outer_window->DC.IdealMaxPos.y = ImMax(outer_window->DC.IdealMaxPos.y, inner_content_max_y + decoration_size - table->UserOuterSize.y);
+        outer_window->DC.CursorMaxPos.y = ImMax(backup_outer_max_pos.y, ImMin(table->OuterRect.Max.y, inner_content_max_y));
+    }
+    else
+    {
+        // OuterRect.Max.y may already have been pushed downward from the initial value (unless ImGuiTableFlags_NoHostExtendY is set)
+        outer_window->DC.CursorMaxPos.y = ImMax(backup_outer_max_pos.y, table->OuterRect.Max.y);
+    }
 
     // Save settings
     if (table->IsSettingsDirty)
@@ -1337,6 +1357,11 @@ void ImGui::TableSetupColumn(const char* label, ImGuiTableColumnFlags flags, flo
 
     ImGuiTableColumn* column = &table->Columns[table->DeclColumnsCount];
     table->DeclColumnsCount++;
+
+    // Assert when passing a width or weight if policy is entirely left to default, to avoid storing width into weight and vice-versa.
+    // Give a grace to users of ImGuiTableFlags_ScrollX.
+    if (table->IsDefaultSizingPolicy && (flags & ImGuiTableColumnFlags_WidthMask_) == 0 && (flags & ImGuiTableFlags_ScrollX) == 0)
+        IM_ASSERT(init_width_or_weight <= 0.0f && "Can only specify width/weight if sizing policy is set explicitely in either Table or Column.");
 
     // When passing a width automatically enforce WidthFixed policy
     // (whereas TableSetupColumnFlags would default to WidthAuto if table is not Resizable)
@@ -2276,8 +2301,8 @@ void ImGui::TableMergeDrawChannels(ImGuiTable* table)
         g.DrawChannelsTempMergeBuffer.resize(splitter->_Count - LEADING_DRAW_CHANNELS); // Use shared temporary storage so the allocation gets amortized
         ImDrawChannel* dst_tmp = g.DrawChannelsTempMergeBuffer.Data;
         ImBitArray<IMGUI_TABLE_MAX_DRAW_CHANNELS> remaining_mask;                       // We need 132-bit of storage
-        remaining_mask.ClearBits();
-        remaining_mask.SetBitRange(LEADING_DRAW_CHANNELS, splitter->_Count - 1);
+        remaining_mask.ClearAllBits();
+        remaining_mask.SetBitRange(LEADING_DRAW_CHANNELS, splitter->_Count);
         remaining_mask.ClearBit(table->Bg2DrawChannelUnfrozen);
         IM_ASSERT(has_freeze_v == false || table->Bg2DrawChannelUnfrozen != TABLE_DRAW_CHANNEL_BG2_FROZEN);
         int remaining_count = splitter->_Count - (has_freeze_v ? LEADING_DRAW_CHANNELS + 1 : LEADING_DRAW_CHANNELS);
