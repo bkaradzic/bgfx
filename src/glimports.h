@@ -477,6 +477,7 @@ GL_IMPORT_IMG__(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbuffe
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 
 GL_IMPORT______(true,  PFNGLINSERTEVENTMARKEREXTPROC,              glInsertEventMarker);
+GL_IMPORT_ARB__(true,  PFNGLPROVOKINGVERTEXPROC,                   glProvokingVertex);
 GL_IMPORT_ARB__(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
 GL_IMPORT_ARB__(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
 GL_IMPORT______(true,  PFNGLPUSHGROUPMARKEREXTPROC,                glPushGroupMarker);
@@ -523,6 +524,7 @@ GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DM
 GL_IMPORT_EXT__(true,  PFNGLFRAMEBUFFERTEXTURELAYERPROC,           glFramebufferTextureLayer);
 
 GL_IMPORT_EXT__(true,  PFNGLINSERTEVENTMARKEREXTPROC,              glInsertEventMarker);
+GL_IMPORT_ARB__(true,  PFNGLPROVOKINGVERTEXPROC,                   glProvokingVertex);
 GL_IMPORT_ARB__(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
 GL_IMPORT_ARB__(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
 GL_IMPORT_EXT__(true,  PFNGLPUSHGROUPMARKEREXTPROC,                glPushGroupMarker);
@@ -609,6 +611,7 @@ GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DM
 GL_IMPORT______(true,  PFNGLFRAMEBUFFERTEXTURELAYERPROC,           glFramebufferTextureLayer);
 
 GL_IMPORT______(true,  PFNGLINSERTEVENTMARKEREXTPROC,              glInsertEventMarker);
+GL_IMPORT_ARB__(true,  PFNGLPROVOKINGVERTEXPROC,                   glProvokingVertex);
 GL_IMPORT_ARB__(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
 GL_IMPORT_ARB__(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
 GL_IMPORT______(true,  PFNGLPUSHGROUPMARKEREXTPROC,                glPushGroupMarker);
