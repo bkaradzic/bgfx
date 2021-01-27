@@ -326,7 +326,9 @@ void Disassembler::EmitOperand(const spv_parsed_instruction_t& inst,
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_COMPOSITE_TYPE:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION:
-    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY: {
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY:
+    case SPV_OPERAND_TYPE_FPDENORM_MODE:
+    case SPV_OPERAND_TYPE_FPOPERATION_MODE: {
       spv_operand_desc entry;
       if (grammar_.lookupOperand(operand.type, word, &entry))
         assert(false && "should have caught this earlier");

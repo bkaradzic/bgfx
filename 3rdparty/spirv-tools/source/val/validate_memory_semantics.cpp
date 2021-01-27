@@ -172,7 +172,7 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
 
     if (opcode == SpvOpMemoryBarrier && !num_memory_order_set_bits) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << _.VkErrorID(4649) << spvOpcodeString(opcode)
+             << _.VkErrorID(4732) << spvOpcodeString(opcode)
              << ": Vulkan specification requires Memory Semantics to have "
                 "one "
                 "of the following bits set: Acquire, Release, "
@@ -182,7 +182,7 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
 
     if (opcode == SpvOpMemoryBarrier && !includes_storage_class) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << _.VkErrorID(4649) << spvOpcodeString(opcode)
+             << _.VkErrorID(4733) << spvOpcodeString(opcode)
              << ": expected Memory Semantics to include a Vulkan-supported "
                 "storage class";
     }
@@ -223,6 +223,7 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
          value & SpvMemorySemanticsAcquireReleaseMask ||
          value & SpvMemorySemanticsSequentiallyConsistentMask)) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(4731)
              << "Vulkan spec disallows OpAtomicLoad with Memory Semantics "
                 "Release, AcquireRelease and SequentiallyConsistent";
     }
@@ -232,6 +233,7 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
          value & SpvMemorySemanticsAcquireReleaseMask ||
          value & SpvMemorySemanticsSequentiallyConsistentMask)) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(4730)
              << "Vulkan spec disallows OpAtomicStore with Memory Semantics "
                 "Acquire, AcquireRelease and SequentiallyConsistent";
     }

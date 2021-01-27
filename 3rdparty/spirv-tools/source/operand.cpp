@@ -265,6 +265,11 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_IMAGE_CHANNEL_DATA_TYPE:
       return "image channel data type";
 
+    case SPV_OPERAND_TYPE_FPDENORM_MODE:
+      return "FP denorm mode";
+    case SPV_OPERAND_TYPE_FPOPERATION_MODE:
+      return "FP operation mode";
+
     case SPV_OPERAND_TYPE_NONE:
       return "NONE";
     default:
@@ -348,6 +353,8 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY:
+    case SPV_OPERAND_TYPE_FPDENORM_MODE:
+    case SPV_OPERAND_TYPE_FPOPERATION_MODE:
       return true;
     default:
       break;

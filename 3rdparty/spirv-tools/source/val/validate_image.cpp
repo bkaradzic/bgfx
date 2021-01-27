@@ -285,6 +285,7 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
           mask & (SpvImageOperandsOffsetMask | SpvImageOperandsConstOffsetMask |
                   SpvImageOperandsConstOffsetsMask)) > 1) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << _.VkErrorID(4662)
            << "Image Operands Offset, ConstOffset, ConstOffsets cannot be used "
            << "together";
   }
@@ -877,6 +878,20 @@ spv_result_t ValidateTypeSampledImage(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Image to be of type OpTypeImage";
   }
+
+  ImageTypeInfo info;
+  if (!GetImageTypeInfo(_, image_type, &info)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Corrupt image type definition";
+  }
+  // OpenCL requires Sampled=0, checked elsewhere.
+  // Vulkan uses the Sampled=1 case.
+  if ((info.sampled != 0) && (info.sampled != 1)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Sampled image type requires an image type with \"Sampled\" "
+              "operand set to 0 or 1";
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -1728,6 +1743,16 @@ spv_result_t ValidateImageQuerySizeLod(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_DATA, inst) << "Image 'MS' must be 0";
   }
 
+  const auto target_env = _.context()->target_env;
+  if (spvIsVulkanEnv(target_env)) {
+    if (info.sampled != 1) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(4659)
+             << "OpImageQuerySizeLod must only consume an \"Image\" operand "
+                "whose type has its \"Sampled\" operand set to 1";
+    }
+  }
+
   uint32_t result_num_components = _.GetDimension(result_type);
   if (result_num_components != expected_num_components) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
@@ -1902,6 +1927,13 @@ spv_result_t ValidateImageQueryLod(ValidationState_t& _,
            << "Expected Coordinate to have at least " << min_coord_size
            << " components, but given only " << actual_coord_size;
   }
+
+  // The operad is a sampled image.
+  // The sampled image type is already checked to be parameterized by an image
+  // type with Sampled=0 or Sampled=1.  Vulkan bans Sampled=0, and so we have
+  // Sampled=1.  So the validator already enforces Vulkan VUID 4659:
+  //   OpImageQuerySizeLod must only consume an “Image” operand whose type has
+  //   its "Sampled" operand set to 1
   return SPV_SUCCESS;
 }
 
@@ -1937,6 +1969,15 @@ spv_result_t ValidateImageQueryLevelsOrSamples(ValidationState_t& _,
         info.dim != SpvDimCube) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Image 'Dim' must be 1D, 2D, 3D or Cube";
+    }
+    const auto target_env = _.context()->target_env;
+    if (spvIsVulkanEnv(target_env)) {
+      if (info.sampled != 1) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << _.VkErrorID(4659)
+               << "OpImageQueryLevels must only consume an \"Image\" operand "
+                  "whose type has its \"Sampled\" operand set to 1";
+      }
     }
   } else {
     assert(opcode == SpvOpImageQuerySamples);

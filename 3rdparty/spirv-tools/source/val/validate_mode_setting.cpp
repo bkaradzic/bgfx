@@ -228,6 +228,7 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
           }
           if (!ok) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << _.VkErrorID(4683)
                    << "In the Vulkan environment, GLCompute execution model "
                       "entry points require either the LocalSize execution "
                       "mode or an object decorated with WorkgroupSize must be "

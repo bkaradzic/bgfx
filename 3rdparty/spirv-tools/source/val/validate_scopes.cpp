@@ -190,7 +190,7 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
   if (spvIsVulkanEnv(_.context()->target_env)) {
     if (value == SpvScopeCrossDevice) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << spvOpcodeString(opcode)
+             << _.VkErrorID(4638) << spvOpcodeString(opcode)
              << ": in Vulkan environment, Memory Scope cannot be CrossDevice";
     }
     // Vulkan 1.0 specifc rules
@@ -198,7 +198,7 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
         value != SpvScopeDevice && value != SpvScopeWorkgroup &&
         value != SpvScopeInvocation) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << spvOpcodeString(opcode)
+             << _.VkErrorID(4638) << spvOpcodeString(opcode)
              << ": in Vulkan 1.0 environment Memory Scope is limited to "
              << "Device, Workgroup and Invocation";
     }
@@ -209,15 +209,16 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
         value != SpvScopeSubgroup && value != SpvScopeInvocation &&
         value != SpvScopeShaderCallKHR) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << spvOpcodeString(opcode)
+             << _.VkErrorID(4638) << spvOpcodeString(opcode)
              << ": in Vulkan 1.1 and 1.2 environment Memory Scope is limited "
              << "to Device, Workgroup, Invocation, and ShaderCall";
     }
 
     if (value == SpvScopeShaderCallKHR) {
+      std::string errorVUID = _.VkErrorID(4640);
       _.function(inst->function()->id())
           ->RegisterExecutionModelLimitation(
-              [](SpvExecutionModel model, std::string* message) {
+              [errorVUID](SpvExecutionModel model, std::string* message) {
                 if (model != SpvExecutionModelRayGenerationKHR &&
                     model != SpvExecutionModelIntersectionKHR &&
                     model != SpvExecutionModelAnyHitKHR &&
@@ -226,8 +227,28 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
                     model != SpvExecutionModelCallableKHR) {
                   if (message) {
                     *message =
+                        errorVUID +
                         "ShaderCallKHR Memory Scope requires a ray tracing "
                         "execution model";
+                  }
+                  return false;
+                }
+                return true;
+              });
+    }
+
+    if (value == SpvScopeWorkgroup) {
+      std::string errorVUID = _.VkErrorID(4639);
+      _.function(inst->function()->id())
+          ->RegisterExecutionModelLimitation(
+              [errorVUID](SpvExecutionModel model, std::string* message) {
+                if (model != SpvExecutionModelGLCompute &&
+                    model != SpvExecutionModelTaskNV &&
+                    model != SpvExecutionModelMeshNV) {
+                  if (message) {
+                    *message = errorVUID +
+                               "Workgroup Memory Scope is limited to MeshNV, "
+                               "TaskNV, and GLCompute execution model";
                   }
                   return false;
                 }

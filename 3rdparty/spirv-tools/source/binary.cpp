@@ -655,7 +655,9 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_COMPOSITE_TYPE:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION:
-    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY: {
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY:
+    case SPV_OPERAND_TYPE_FPDENORM_MODE:
+    case SPV_OPERAND_TYPE_FPOPERATION_MODE: {
       // A single word that is a plain enum value.
 
       // Map an optional operand type to its corresponding concrete type.
