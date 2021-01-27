@@ -3652,13 +3652,14 @@ spv::Id TGlslangToSpvTraverser::createSpvVariable(const glslang::TIntermSymbol* 
 
     spv::Id initializer = spv::NoResult;
 
-    if (node->getType().getQualifier().storage == glslang::EvqUniform &&
-        !node->getConstArray().empty()) {
-            int nextConst = 0;
-            initializer = createSpvConstantFromConstUnionArray(node->getType(),
-                                                               node->getConstArray(),
-                                                               nextConst,
-                                                               false /* specConst */);
+    if (node->getType().getQualifier().storage == glslang::EvqUniform && !node->getConstArray().empty()) {
+        int nextConst = 0;
+        initializer = createSpvConstantFromConstUnionArray(node->getType(),
+                                                           node->getConstArray(),
+                                                           nextConst,
+                                                           false /* specConst */);
+    } else if (node->getType().getQualifier().isNullInit()) {
+        initializer = builder.makeNullConstant(spvType);
     }
 
     return builder.createVariable(spv::NoPrecision, storageClass, spvType, name, initializer);

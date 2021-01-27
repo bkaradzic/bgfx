@@ -869,6 +869,30 @@ bool Builder::isSpecConstantOpCode(Op opcode) const
     }
 }
 
+Id Builder::makeNullConstant(Id typeId)
+{
+    Instruction* constant;
+
+    // See if we already made it.
+    Id existing = NoResult;
+    for (int i = 0; i < (int)nullConstants.size(); ++i) {
+        constant = nullConstants[i];
+        if (constant->getTypeId() == typeId)
+            existing = constant->getResultId();
+    }
+
+    if (existing != NoResult)
+        return existing;
+
+    // Make it
+    Instruction* c = new Instruction(getUniqueId(), typeId, OpConstantNull);
+    constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(c));
+    nullConstants.push_back(c);
+    module.mapInstruction(c);
+
+    return c->getResultId();
+}
+
 Id Builder::makeBoolConstant(bool b, bool specConstant)
 {
     Id typeId = makeBoolType();

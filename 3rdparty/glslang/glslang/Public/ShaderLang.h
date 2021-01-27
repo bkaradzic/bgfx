@@ -167,7 +167,7 @@ typedef enum {
     EShTargetVulkan_1_1 = (1 << 22) | (1 << 12),      // Vulkan 1.1
     EShTargetVulkan_1_2 = (1 << 22) | (2 << 12),      // Vulkan 1.2
     EShTargetOpenGL_450 = 450,                        // OpenGL
-    LAST_ELEMENT_MARKER(EShTargetClientVersionCount),
+    LAST_ELEMENT_MARKER(EShTargetClientVersionCount = 4),
 } EShTargetClientVersion;
 
 typedef EShTargetClientVersion EshTargetClientVersion;
@@ -179,7 +179,7 @@ typedef enum {
     EShTargetSpv_1_3 = (1 << 16) | (3 << 8),          // SPIR-V 1.3
     EShTargetSpv_1_4 = (1 << 16) | (4 << 8),          // SPIR-V 1.4
     EShTargetSpv_1_5 = (1 << 16) | (5 << 8),          // SPIR-V 1.5
-    LAST_ELEMENT_MARKER(EShTargetLanguageVersionCount),
+    LAST_ELEMENT_MARKER(EShTargetLanguageVersionCount = 6),
 } EShTargetLanguageVersion;
 
 struct TInputLanguage {

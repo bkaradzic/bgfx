@@ -293,6 +293,7 @@ public:
     }
 
     // For making new constants (will return old constant if the requested one was already made).
+    Id makeNullConstant(Id typeId);
     Id makeBoolConstant(bool b, bool specConstant = false);
     Id makeInt8Constant(int i, bool specConstant = false)
         { return makeIntConstant(makeIntType(8),  (unsigned)i, specConstant); }
@@ -838,6 +839,8 @@ public:
     std::unordered_map<unsigned int, std::vector<Instruction*>> groupedStructConstants;
     // map type opcodes to type instructions
     std::unordered_map<unsigned int, std::vector<Instruction*>> groupedTypes;
+    // list of OpConstantNull instructions
+    std::vector<Instruction*> nullConstants;
 
     // stack of switches
     std::stack<Block*> switchMerges;

@@ -305,6 +305,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_tessellation_point_size]              = EBhDisable;
     extensionBehavior[E_GL_EXT_texture_buffer]                       = EBhDisable;
     extensionBehavior[E_GL_EXT_texture_cube_map_array]               = EBhDisable;
+    extensionBehavior[E_GL_EXT_null_initializer]                     = EBhDisable;
 
     // OES matching AEP
     extensionBehavior[E_GL_OES_geometry_shader]          = EBhDisable;
@@ -408,8 +409,11 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             ;
 
-            if (isEsProfile() && version >= 300) {
+            if (version >= 300) {
                 preamble += "#define GL_NV_shader_noperspective_interpolation 1\n";
+            }
+            if (version >= 310) {
+                preamble += "#define GL_EXT_null_initializer 1\n";
             }
 
     } else { // !isEsProfile()
@@ -537,6 +541,9 @@ void TParseVersions::getPreamble(std::string& preamble)
 
             if (profile == ECompatibilityProfile)
                 preamble += "#define GL_compatibility_profile 1\n";
+        }
+        if (version >= 140) {
+            preamble += "#define GL_EXT_null_initializer 1\n";
         }
 #endif // GLSLANG_WEB
     }
