@@ -538,9 +538,11 @@ void CompilerGLSL::ray_tracing_khr_fixup_locations()
 {
 	uint32_t location = 0;
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
-		if (var.storage != StorageClassRayPayloadKHR && var.storage != StorageClassCallableDataKHR)
+		// Incoming payload storage can also be used for tracing.
+		if (var.storage != StorageClassRayPayloadKHR && var.storage != StorageClassCallableDataKHR &&
+		    var.storage != StorageClassIncomingRayPayloadKHR && var.storage != StorageClassIncomingCallableDataKHR)
 			return;
-		if (!interface_variable_exists_in_entry_point(var.self))
+		if (is_hidden_variable(var))
 			return;
 		set_decoration(var.self, DecorationLocation, location++);
 	});
@@ -3451,6 +3453,9 @@ void CompilerGLSL::emit_resources()
 	for (auto global : global_variables)
 	{
 		auto &var = get<SPIRVariable>(global);
+		if (is_hidden_variable(var, true))
+			continue;
+
 		if (var.storage != StorageClassOutput)
 		{
 			if (!variable_is_lut(var))
@@ -4281,6 +4286,44 @@ string CompilerGLSL::to_extract_component_expression(uint32_t id, uint32_t index
 		return join(expr, "[", index, "]");
 	else
 		return join(expr, ".", index_to_swizzle(index));
+}
+
+string CompilerGLSL::to_extract_constant_composite_expression(uint32_t result_type, const SPIRConstant &c,
+                                                              const uint32_t *chain, uint32_t length)
+{
+	// It is kinda silly if application actually enter this path since they know the constant up front.
+	// It is useful here to extract the plain constant directly.
+	SPIRConstant tmp;
+	tmp.constant_type = result_type;
+	auto &composite_type = get<SPIRType>(c.constant_type);
+	assert(composite_type.basetype != SPIRType::Struct && composite_type.array.empty());
+	assert(!c.specialization);
+
+	if (is_matrix(composite_type))
+	{
+		if (length == 2)
+		{
+			tmp.m.c[0].vecsize = 1;
+			tmp.m.columns = 1;
+			tmp.m.c[0].r[0] = c.m.c[chain[0]].r[chain[1]];
+		}
+		else
+		{
+			assert(length == 1);
+			tmp.m.c[0].vecsize = composite_type.vecsize;
+			tmp.m.columns = 1;
+			tmp.m.c[0] = c.m.c[chain[0]];
+		}
+	}
+	else
+	{
+		assert(length == 1);
+		tmp.m.c[0].vecsize = 1;
+		tmp.m.columns = 1;
+		tmp.m.c[0].r[0] = c.m.c[0].r[chain[0]];
+	}
+
+	return constant_expression(tmp);
 }
 
 string CompilerGLSL::to_rerolled_array_expression(const string &base_expr, const SPIRType &type)
@@ -10179,7 +10222,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 
 		// Do not allow base expression for struct members. We risk doing "swizzle" optimizations in this case.
 		auto &composite_type = expression_type(ops[2]);
-		if (composite_type.basetype == SPIRType::Struct || !composite_type.array.empty())
+		bool composite_type_is_complex = composite_type.basetype == SPIRType::Struct || !composite_type.array.empty();
+		if (composite_type_is_complex)
 			allow_base_expression = false;
 
 		// Packed expressions or physical ID mapped expressions cannot be split up.
@@ -10194,10 +10238,17 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 
 		AccessChainMeta meta;
 		SPIRExpression *e = nullptr;
+		auto *c = maybe_get<SPIRConstant>(ops[2]);
 
-		// Only apply this optimization if result is scalar.
-		if (allow_base_expression && should_forward(ops[2]) && type.vecsize == 1 && type.columns == 1 && length == 1)
+		if (c && !c->specialization && !composite_type_is_complex)
 		{
+			auto expr = to_extract_constant_composite_expression(result_type, *c, ops + 3, length);
+			e = &emit_op(result_type, id, expr, true, true);
+		}
+		else if (allow_base_expression && should_forward(ops[2]) && type.vecsize == 1 && type.columns == 1 && length == 1)
+		{
+			// Only apply this optimization if result is scalar.
+
 			// We want to split the access chain from the base.
 			// This is so we can later combine different CompositeExtract results
 			// with CompositeConstruct without emitting code like
@@ -12216,6 +12267,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		flush_control_dependent_expressions(current_emitting_block->self);
 		break;
 	case OpTraceNV:
+		if (has_decoration(ops[0], DecorationNonUniformEXT))
+			propagate_nonuniform_qualifier(ops[0]);
 		statement("traceNV(", to_expression(ops[0]), ", ", to_expression(ops[1]), ", ", to_expression(ops[2]), ", ",
 		          to_expression(ops[3]), ", ", to_expression(ops[4]), ", ", to_expression(ops[5]), ", ",
 		          to_expression(ops[6]), ", ", to_expression(ops[7]), ", ", to_expression(ops[8]), ", ",
@@ -12225,6 +12278,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	case OpTraceRayKHR:
 		if (!has_decoration(ops[10], DecorationLocation))
 			SPIRV_CROSS_THROW("A memory declaration object must be used in TraceRayKHR.");
+		if (has_decoration(ops[0], DecorationNonUniformEXT))
+			propagate_nonuniform_qualifier(ops[0]);
 		statement("traceRayEXT(", to_expression(ops[0]), ", ", to_expression(ops[1]), ", ", to_expression(ops[2]), ", ",
 		          to_expression(ops[3]), ", ", to_expression(ops[4]), ", ", to_expression(ops[5]), ", ",
 		          to_expression(ops[6]), ", ", to_expression(ops[7]), ", ", to_expression(ops[8]), ", ",
@@ -15009,7 +15064,7 @@ void CompilerGLSL::convert_non_uniform_expression(const SPIRType &type, std::str
 
 	// Handle SPV_EXT_descriptor_indexing.
 	if (type.basetype == SPIRType::Sampler || type.basetype == SPIRType::SampledImage ||
-	    type.basetype == SPIRType::Image)
+	    type.basetype == SPIRType::Image || type.basetype == SPIRType::AccelerationStructure)
 	{
 		// The image/sampler ID must be declared as non-uniform.
 		// However, it is not legal GLSL to have

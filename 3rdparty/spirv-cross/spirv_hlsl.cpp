@@ -1362,7 +1362,8 @@ void CompilerHLSL::emit_resources()
 		}
 
 		if (var.storage != StorageClassFunction && !is_builtin_variable(var) && !var.remapped_variable &&
-		    type.pointer && (type.storage == StorageClassUniformConstant || type.storage == StorageClassAtomicCounter))
+		    type.pointer && (type.storage == StorageClassUniformConstant || type.storage == StorageClassAtomicCounter) &&
+		    !is_hidden_variable(var))
 		{
 			emit_uniform(var);
 			emitted = true;
@@ -1516,6 +1517,9 @@ void CompilerHLSL::emit_resources()
 	for (auto global : global_variables)
 	{
 		auto &var = get<SPIRVariable>(global);
+		if (is_hidden_variable(var, true))
+			continue;
+
 		if (var.storage != StorageClassOutput)
 		{
 			if (!variable_is_lut(var))

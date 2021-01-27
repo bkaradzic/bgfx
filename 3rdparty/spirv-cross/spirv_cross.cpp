@@ -546,10 +546,16 @@ bool Compiler::is_hidden_variable(const SPIRVariable &var, bool include_builtins
 		return false;
 	}
 
-	bool hidden = false;
-	if (check_active_interface_variables && storage_class_is_interface(var.storage))
-		hidden = active_interface_variables.find(var.self) == end(active_interface_variables);
-	return hidden;
+	// In SPIR-V 1.4 and up we must also use the active variable interface to disable global variables
+	// which are not part of the entry point.
+	if (ir.get_spirv_version() >= 0x10400 && var.storage != spv::StorageClassGeneric &&
+	    var.storage != spv::StorageClassFunction && !interface_variable_exists_in_entry_point(var.self))
+	{
+		return true;
+	}
+
+	return check_active_interface_variables && storage_class_is_interface(var.storage) &&
+	       active_interface_variables.find(var.self) == end(active_interface_variables);
 }
 
 bool Compiler::is_builtin_type(const SPIRType &type) const
