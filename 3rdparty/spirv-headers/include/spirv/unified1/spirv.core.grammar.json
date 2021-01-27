@@ -5123,7 +5123,7 @@
       "version" : "None"
     },
     {
-      "opname" : "OpFunctionPointerINTEL",
+      "opname" : "OpConstFunctionPointerINTEL",
       "class"  : "@exclude",
       "opcode" : 5600,
       "operands" : [
@@ -5146,6 +5146,46 @@
       ],
       "capabilities" : [ "FunctionPointersINTEL" ],
       "extensions" : [ "SPV_INTEL_function_pointers" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAsmTargetINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5609,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "LiteralString", "name" : "'Asm target'" }
+      ],
+      "capabilities" : [ "AsmINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAsmINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5610,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Asm type'" },
+        { "kind" : "IdRef", "name" : "'Target'" },
+        { "kind" : "LiteralString", "name" : "'Asm instructions'" },
+        { "kind" : "LiteralString", "name" : "'Constraints'" }
+      ],
+      "capabilities" : [ "AsmINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAsmCallINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5611,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Asm'" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'Argument 0'" }
+      ],
+      "capabilities" : [ "AsmINTEL" ],
       "version" : "None"
     },
     {
@@ -6712,6 +6752,39 @@
       "version" : "None"
     },
     {
+      "opname" : "OpVariableLengthArrayINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5818,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Lenght'" }
+      ],
+      "capabilities" : [ "VariableLengthArrayINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSaveMemoryINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5819,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "VariableLengthArrayINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpRestoreMemoryINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5820,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "'Ptr'" }
+      ],
+      "capabilities" : [ "VariableLengthArrayINTEL" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpLoopControlINTEL",
       "class"  : "Reserved",
       "opcode" : 5887,
@@ -6720,6 +6793,30 @@
       ],
       "capabilities" : [ "UnstructuredLoopControlsINTEL" ],
       "extensions" : [ "SPV_INTEL_unstructured_loop_controls" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpPtrCastToCrossWorkgroupINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5934,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Pointer'" }
+      ],
+      "capabilities" : [ "USMStorageClassesINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCrossWorkgroupCastToPtrINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5938,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Pointer'" }
+      ],
+      "capabilities" : [ "USMStorageClassesINTEL" ],
       "version" : "None"
     },
     {
@@ -7099,6 +7196,46 @@
       "capabilities" : [ "AtomicFloat32AddEXT", "AtomicFloat64AddEXT" ],
       "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
       "version" : "None"
+    },
+    {
+      "opname" : "OpTypeBufferSurfaceINTEL",
+      "class"  : "Type-Declaration",
+      "opcode" : 6086,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "VectorComputeINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeStructContinuedINTEL",
+      "class"  : "Type-Declaration",
+      "opcode" : 6090,
+      "operands" : [
+        { "kind" : "IdRef",    "quantifier" : "*", "name" : "'Member 0 type', +\n'member 1 type', +\n..." }
+      ],
+      "capabilities" : [ "LongConstantCompositeINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConstantCompositeContinuedINTEL",
+      "class"  : "Constant-Creation",
+      "opcode" : 6091,
+      "operands" : [
+        { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Constituents'" }
+      ],
+      "capabilities" : [ "LongConstantCompositeINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSpecConstantCompositeContinuedINTEL",
+      "class"  : "Constant-Creation",
+      "opcode" : 6092,
+      "operands" : [
+        { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Constituents'" }
+      ],
+      "capabilities" : [ "LongConstantCompositeINTEL" ],
+      "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -7279,6 +7416,18 @@
           "enumerant" : "Fast",
           "value" : "0x0010",
           "capabilities" : [ "Kernel" ]
+        },
+        {
+          "enumerant" : "AllowContractFastINTEL",
+          "value" : "0x10000",
+          "capabilities" : [ "FPFastMathModeINTEL" ],
+	  "version" : "None"
+        },
+        {
+          "enumerant" : "AllowReassocINTEL",
+          "value" : "0x20000",
+          "capabilities" : [ "FPFastMathModeINTEL" ],
+	  "version" : "None"
         }
       ]
     },
@@ -7432,6 +7581,16 @@
         {
           "enumerant" : "SpeculatedIterationsINTEL",
           "value" : "0x400000",
+          "parameters" : [
+            { "kind" : "LiteralInteger" }
+          ],
+          "capabilities" : [ "FPGALoopControlsINTEL" ],
+          "extensions" : [ "SPV_INTEL_fpga_loop_controls" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NoFusionINTEL",
+          "value" : "0x800000",
           "parameters" : [
             { "kind" : "LiteralInteger" }
           ],
@@ -8365,6 +8524,51 @@
           "version" : "None"
         },
         {
+          "enumerant" : "SharedLocalMemorySizeINTEL",
+          "value" : 5618,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Size'" }
+          ],
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RoundingModeRTPINTEL",
+          "value" : 5620,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "capabilities" : [ "RoundToInfinityINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RoundingModeRTNINTEL",
+          "value" : 5621,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "capabilities" : [ "RoundToInfinityINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FloatingPointModeALTINTEL",
+          "value" : 5622,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "capabilities" : [ "RoundToInfinityINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FloatingPointModeIEEEINTEL",
+          "value" : 5623,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "capabilities" : [ "RoundToInfinityINTEL" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "MaxWorkgroupSizeINTEL",
           "value" : 5893,
           "parameters" : [
@@ -8401,6 +8605,15 @@
           ],
           "capabilities" : [ "FPGAKernelAttributesINTEL" ],
           "extensions" : [ "SPV_INTEL_kernel_attributes" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SchedulerTargetFmaxMhzINTEL",
+          "value" : 5903,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'target_fmax'" }
+          ],
+          "capabilities" : [ "FPGAKernelAttributesINTEL" ],
           "version" : "None"
         }
       ]
@@ -8576,6 +8789,24 @@
           "value" : 5605,
           "extensions" : [ "SPV_INTEL_function_pointers" ],
           "capabilities" : [ "FunctionPointersINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DeviceOnlyINTEL",
+          "value" : 5936,
+          "extensions" : [
+            "SPV_INTEL_usm_storage_classes"
+          ],
+          "capabilities" : [ "USMStorageClassesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "HostOnlyINTEL",
+          "value" : 5937,
+          "extensions" : [
+            "SPV_INTEL_usm_storage_classes"
+          ],
+          "capabilities" : [ "USMStorageClassesINTEL" ],
           "version" : "None"
         }
       ]
@@ -9103,6 +9334,42 @@
     },
     {
       "category" : "ValueEnum",
+      "kind" : "FPDenormMode",
+      "enumerants" : [
+        {
+          "enumerant" : "Preserve",
+          "value" : 0,
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FlushToZero",
+          "value" : 1,
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "FPOperationMode",
+      "enumerants" : [
+        {
+          "enumerant" : "IEEE",
+          "value" : 0,
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ALT",
+          "value" : 1,
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
       "kind" : "LinkageType",
       "enumerants" : [
         {
@@ -9608,10 +9875,70 @@
           "version" : "1.5"
         },
         {
+          "enumerant" : "SIMTCallINTEL",
+          "value" : 5599,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'N'" }
+          ],
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "ReferencedIndirectlyINTEL",
           "value" : 5602,
           "capabilities" : [ "IndirectReferencesINTEL" ],
           "extensions" : [ "SPV_INTEL_function_pointers" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ClobberINTEL",
+          "value" : 5607,
+          "parameters" : [
+            { "kind" : "LiteralString", "name" : "'Register'" }
+          ],
+          "capabilities" : [ "AsmINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SideEffectsINTEL",
+          "value" : 5608,
+          "capabilities" : [ "AsmINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorComputeVariableINTEL",
+          "value" : 5624,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FuncParamIOKindINTEL",
+          "value" : 5625,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Kind'" }
+          ],
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorComputeFunctionINTEL",
+          "value" : 5626,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StackCallINTEL",
+          "value" : 5627,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "GlobalVariableOffsetINTEL",
+          "value" : 5628,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Offset'" }
+          ],
+          "capabilities" : [ "VectorComputeINTEL" ],
           "version" : "None"
         },
         {
@@ -9655,6 +9982,26 @@
             { "kind" : "LiteralString", "name" : "'User Type'" }
           ],
           "extensions" : [ "SPV_GOOGLE_user_type" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FunctionRoundingModeINTEL",
+          "value" : 5822,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" },
+            { "kind" : "FPRoundingMode", "name" : "'FP Rounding Mode'" }
+          ],
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FunctionDenormModeINTEL",
+          "value" : 5823,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" },
+            { "kind" : "FPDenormMode", "name" : "'FP Denorm Mode'" }
+          ],
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
           "version" : "None"
         },
         {
@@ -9764,6 +10111,88 @@
           ],
           "capabilities" : [ "FPGAMemoryAttributesINTEL" ],
           "extensions" : [ "SPV_INTEL_fpga_memory_attributes" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BurstCoalesceINTEL",
+          "value" : 5899,
+          "capabilities" : [ "FPGAMemoryAccessesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CacheSizeINTEL",
+          "value" : 5900,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Cache Size in bytes'" }
+          ],
+          "capabilities" : [ "FPGAMemoryAccessesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DontStaticallyCoalesceINTEL",
+          "value" : 5901,
+          "capabilities" : [ "FPGAMemoryAccessesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "PrefetchINTEL",
+          "value" : 5902,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Prefetcher Size in bytes'" }
+          ],
+          "capabilities" : [ "FPGAMemoryAccessesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StallEnableINTEL",
+          "value" : 5905,
+          "capabilities" : [ "FPGAClusterAttributesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FuseLoopsInFunctionINTEL",
+          "value" : 5907,
+          "capabilities" : [ "LoopFuseINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BufferLocationINTEL",
+          "value" : 5921,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Buffer Location ID'" }
+          ],
+          "capabilities" : [ "FPGABufferLocationINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "IOPipeStorageINTEL",
+          "value" : 5944,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'IO Pipe ID'" }
+          ],
+          "capabilities" : [ "IOPipesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FunctionFloatingPointModeINTEL",
+          "value" : 6080,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" },
+            { "kind" : "FPOperationMode", "name" : "'FP Operation Mode'" }
+          ],
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SingleElementVectorINTEL",
+          "value" : 6085,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorComputeCallableFunctionINTEL",
+          "value" : 6087,
+          "capabilities" : [ "VectorComputeINTEL" ],
           "version" : "None"
         }
       ]
@@ -10982,6 +11411,27 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "WorkgroupMemoryExplicitLayoutKHR",
+          "value" : 4428,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_workgroup_memory_explicit_layout" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "WorkgroupMemoryExplicitLayout8BitAccessKHR",
+          "value" : 4429,
+          "capabilities" : [ "WorkgroupMemoryExplicitLayoutKHR" ],
+          "extensions" : [ "SPV_KHR_workgroup_memory_explicit_layout" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "WorkgroupMemoryExplicitLayout16BitAccessKHR",
+          "value" : 4430,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_workgroup_memory_explicit_layout" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SubgroupVoteKHR",
           "value" : 4431,
           "extensions" : [ "SPV_KHR_subgroup_vote" ],
@@ -11576,6 +12026,18 @@
           "version" : "None"
         },
         {
+          "enumerant" : "RoundToInfinityINTEL",
+          "value" : 5582,
+          "extensions" : [ "SPV_INTEL_float_controls2" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FloatingPointModeINTEL",
+          "value" : 5583,
+          "extensions" : [ "SPV_INTEL_float_controls2" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "IntegerFunctions2INTEL",
           "value" : 5584,
           "capabilities" : [ "Shader" ],
@@ -11592,6 +12054,25 @@
           "enumerant" : "IndirectReferencesINTEL",
           "value" : 5604,
           "extensions" : [ "SPV_INTEL_function_pointers" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AsmINTEL",
+          "value" : 5606,
+          "extensions" : [ "SPV_INTEL_inline_assembly" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorComputeINTEL",
+          "value" : 5617,
+          "capabilities" : [ "VectorAnyINTEL" ],
+          "extensions" : [ "SPV_INTEL_vector_compute" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorAnyINTEL",
+          "value" : 5619,
+          "extensions" : [ "SPV_INTEL_vector_compute" ],
           "version" : "None"
         },
         {
@@ -11613,9 +12094,34 @@
           "version" : "None"
         },
         {
+          "enumerant" : "VariableLengthArrayINTEL",
+          "value" : 5817,
+          "extensions" : [ "SPV_INTEL_variable_length_array" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FunctionFloatControlINTEL",
+          "value" : 5821,
+          "extensions" : [ "SPV_INTEL_float_controls2" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "FPGAMemoryAttributesINTEL",
           "value" : 5824,
           "extensions" : [ "SPV_INTEL_fpga_memory_attributes" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FPFastMathModeINTEL",
+          "value" : 5837,
+          "capabilities" : [ "Kernel" ],
+          "extensions" : [ "SPV_INTEL_fp_fast_math_mode" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ArbitraryPrecisionIntegersINTEL",
+          "value" : 5844,
+          "extensions" : [ "SPV_INTEL_arbitrary_precision_integers" ],
           "version" : "None"
         },
         {
@@ -11643,6 +12149,42 @@
           "version" : "None"
         },
         {
+          "enumerant" : "FPGAMemoryAccessesINTEL",
+          "value" : 5898,
+          "extensions" : [ "SPV_INTEL_fpga_memory_accesses" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FPGAClusterAttributesINTEL",
+          "value" : 5904,
+          "extensions" : [ "SPV_INTEL_fpga_cluster_attributes" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "LoopFuseINTEL",
+          "value" : 5906,
+          "extensions" : [ "SPV_INTEL_loop_fuse" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FPGABufferLocationINTEL",
+          "value" : 5920,
+          "extensions" : [ "SPV_INTEL_fpga_buffer_location" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "USMStorageClassesINTEL",
+          "value" : 5935,
+          "extensions" : [ "SPV_INTEL_usm_storage_classes" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "IOPipesINTEL",
+          "value" : 5943,
+          "extensions" : [ "SPV_INTEL_io_pipes" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "BlockingPipesINTEL",
           "value" : 5945,
           "extensions" : [ "SPV_INTEL_blocking_pipes" ],
@@ -11666,6 +12208,12 @@
           "value" : 6034,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "LongConstantCompositeINTEL",
+          "value" : 6089,
+          "extensions" : [ "SPV_INTEL_long_constant_composite" ],
           "version" : "None"
         }
       ]

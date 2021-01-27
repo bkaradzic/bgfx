@@ -167,10 +167,16 @@ enum ExecutionMode : uint
     SampleInterlockUnorderedEXT = 5369,
     ShadingRateInterlockOrderedEXT = 5370,
     ShadingRateInterlockUnorderedEXT = 5371,
+    SharedLocalMemorySizeINTEL = 5618,
+    RoundingModeRTPINTEL = 5620,
+    RoundingModeRTNINTEL = 5621,
+    FloatingPointModeALTINTEL = 5622,
+    FloatingPointModeIEEEINTEL = 5623,
     MaxWorkgroupSizeINTEL = 5893,
     MaxWorkDimINTEL = 5894,
     NoGlobalOffsetINTEL = 5895,
     NumSIMDWorkitemsINTEL = 5896,
+    SchedulerTargetFmaxMhzINTEL = 5903,
 }
 
 enum StorageClass : uint
@@ -203,6 +209,8 @@ enum StorageClass : uint
     PhysicalStorageBuffer = 5349,
     PhysicalStorageBufferEXT = 5349,
     CodeSectionINTEL = 5605,
+    DeviceOnlyINTEL = 5936,
+    HostOnlyINTEL = 5937,
 }
 
 enum Dim : uint
@@ -374,6 +382,8 @@ enum FPFastMathModeShift : uint
     NSZ = 2,
     AllowRecip = 3,
     Fast = 4,
+    AllowContractFastINTEL = 16,
+    AllowReassocINTEL = 17,
 }
 
 enum FPFastMathModeMask : uint
@@ -384,6 +394,8 @@ enum FPFastMathModeMask : uint
     NSZ = 0x00000004,
     AllowRecip = 0x00000008,
     Fast = 0x00000010,
+    AllowContractFastINTEL = 0x00010000,
+    AllowReassocINTEL = 0x00020000,
 }
 
 enum FPRoundingMode : uint
@@ -485,12 +497,22 @@ enum Decoration : uint
     RestrictPointerEXT = 5355,
     AliasedPointer = 5356,
     AliasedPointerEXT = 5356,
+    SIMTCallINTEL = 5599,
     ReferencedIndirectlyINTEL = 5602,
+    ClobberINTEL = 5607,
+    SideEffectsINTEL = 5608,
+    VectorComputeVariableINTEL = 5624,
+    FuncParamIOKindINTEL = 5625,
+    VectorComputeFunctionINTEL = 5626,
+    StackCallINTEL = 5627,
+    GlobalVariableOffsetINTEL = 5628,
     CounterBuffer = 5634,
     HlslCounterBufferGOOGLE = 5634,
     HlslSemanticGOOGLE = 5635,
     UserSemantic = 5635,
     UserTypeGOOGLE = 5636,
+    FunctionRoundingModeINTEL = 5822,
+    FunctionDenormModeINTEL = 5823,
     RegisterINTEL = 5825,
     MemoryINTEL = 5826,
     NumbanksINTEL = 5827,
@@ -503,6 +525,17 @@ enum Decoration : uint
     MergeINTEL = 5834,
     BankBitsINTEL = 5835,
     ForcePow2DepthINTEL = 5836,
+    BurstCoalesceINTEL = 5899,
+    CacheSizeINTEL = 5900,
+    DontStaticallyCoalesceINTEL = 5901,
+    PrefetchINTEL = 5902,
+    StallEnableINTEL = 5905,
+    FuseLoopsInFunctionINTEL = 5907,
+    BufferLocationINTEL = 5921,
+    IOPipeStorageINTEL = 5944,
+    FunctionFloatingPointModeINTEL = 6080,
+    SingleElementVectorINTEL = 6085,
+    VectorComputeCallableFunctionINTEL = 6087,
 }
 
 enum BuiltIn : uint
@@ -658,6 +691,7 @@ enum LoopControlShift : uint
     LoopCoalesceINTEL = 20,
     MaxInterleavingINTEL = 21,
     SpeculatedIterationsINTEL = 22,
+    NoFusionINTEL = 23,
 }
 
 enum LoopControlMask : uint
@@ -679,6 +713,7 @@ enum LoopControlMask : uint
     LoopCoalesceINTEL = 0x00100000,
     MaxInterleavingINTEL = 0x00200000,
     SpeculatedIterationsINTEL = 0x00400000,
+    NoFusionINTEL = 0x00800000,
 }
 
 enum FunctionControlShift : uint
@@ -883,6 +918,9 @@ enum Capability : uint
     FragmentShadingRateKHR = 4422,
     SubgroupBallotKHR = 4423,
     DrawParameters = 4427,
+    WorkgroupMemoryExplicitLayoutKHR = 4428,
+    WorkgroupMemoryExplicitLayout8BitAccessKHR = 4429,
+    WorkgroupMemoryExplicitLayout16BitAccessKHR = 4430,
     SubgroupVoteKHR = 4431,
     StorageBuffer16BitAccess = 4433,
     StorageUniformBufferBlock16 = 4433,
@@ -973,21 +1011,37 @@ enum Capability : uint
     SubgroupBufferBlockIOINTEL = 5569,
     SubgroupImageBlockIOINTEL = 5570,
     SubgroupImageMediaBlockIOINTEL = 5579,
+    RoundToInfinityINTEL = 5582,
+    FloatingPointModeINTEL = 5583,
     IntegerFunctions2INTEL = 5584,
     FunctionPointersINTEL = 5603,
     IndirectReferencesINTEL = 5604,
+    AsmINTEL = 5606,
+    VectorComputeINTEL = 5617,
+    VectorAnyINTEL = 5619,
     SubgroupAvcMotionEstimationINTEL = 5696,
     SubgroupAvcMotionEstimationIntraINTEL = 5697,
     SubgroupAvcMotionEstimationChromaINTEL = 5698,
+    VariableLengthArrayINTEL = 5817,
+    FunctionFloatControlINTEL = 5821,
     FPGAMemoryAttributesINTEL = 5824,
+    FPFastMathModeINTEL = 5837,
+    ArbitraryPrecisionIntegersINTEL = 5844,
     UnstructuredLoopControlsINTEL = 5886,
     FPGALoopControlsINTEL = 5888,
     KernelAttributesINTEL = 5892,
     FPGAKernelAttributesINTEL = 5897,
+    FPGAMemoryAccessesINTEL = 5898,
+    FPGAClusterAttributesINTEL = 5904,
+    LoopFuseINTEL = 5906,
+    FPGABufferLocationINTEL = 5920,
+    USMStorageClassesINTEL = 5935,
+    IOPipesINTEL = 5943,
     BlockingPipesINTEL = 5945,
     FPGARegINTEL = 5948,
     AtomicFloat32AddEXT = 6033,
     AtomicFloat64AddEXT = 6034,
+    LongConstantCompositeINTEL = 6089,
 }
 
 enum RayFlagsShift : uint
@@ -1053,6 +1107,18 @@ enum FragmentShadingRateMask : uint
     Vertical4Pixels = 0x00000002,
     Horizontal2Pixels = 0x00000004,
     Horizontal4Pixels = 0x00000008,
+}
+
+enum FPDenormMode : uint
+{
+    Preserve = 0,
+    FlushToZero = 1,
+}
+
+enum FPOperationMode : uint
+{
+    IEEE = 0,
+    ALT = 1,
 }
 
 enum Op : uint
@@ -1475,8 +1541,11 @@ enum Op : uint
     OpUSubSatINTEL = 5596,
     OpIMul32x16INTEL = 5597,
     OpUMul32x16INTEL = 5598,
-    OpFunctionPointerINTEL = 5600,
+    OpConstFunctionPointerINTEL = 5600,
     OpFunctionPointerCallINTEL = 5601,
+    OpAsmTargetINTEL = 5609,
+    OpAsmINTEL = 5610,
+    OpAsmCallINTEL = 5611,
     OpDecorateString = 5632,
     OpDecorateStringGOOGLE = 5632,
     OpMemberDecorateString = 5633,
@@ -1599,7 +1668,12 @@ enum Op : uint
     OpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL = 5814,
     OpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL = 5815,
     OpSubgroupAvcSicGetInterRawSadsINTEL = 5816,
+    OpVariableLengthArrayINTEL = 5818,
+    OpSaveMemoryINTEL = 5819,
+    OpRestoreMemoryINTEL = 5820,
     OpLoopControlINTEL = 5887,
+    OpPtrCastToCrossWorkgroupINTEL = 5934,
+    OpCrossWorkgroupCastToPtrINTEL = 5938,
     OpReadPipeBlockingINTEL = 5946,
     OpWritePipeBlockingINTEL = 5947,
     OpFPGARegINTEL = 5949,
@@ -1621,6 +1695,10 @@ enum Op : uint
     OpRayQueryGetIntersectionObjectToWorldKHR = 6031,
     OpRayQueryGetIntersectionWorldToObjectKHR = 6032,
     OpAtomicFAddEXT = 6035,
+    OpTypeBufferSurfaceINTEL = 6086,
+    OpTypeStructContinuedINTEL = 6090,
+    OpConstantCompositeContinuedINTEL = 6091,
+    OpSpecConstantCompositeContinuedINTEL = 6092,
 }
 
 
