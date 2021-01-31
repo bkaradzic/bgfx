@@ -2735,7 +2735,7 @@ namespace bgfx
 
 			if (!bx::open(writer, outFilePath) )
 			{
-				bx::printf("Unable to open output file '%s'.", outFilePath);
+				bx::printf("Unable to open output file '%s'.\n", outFilePath);
 				return bx::kExitFailure;
 			}
 
