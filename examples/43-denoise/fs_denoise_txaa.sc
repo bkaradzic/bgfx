@@ -19,7 +19,7 @@ SAMPLER2D(s_depth,			3); // depth buffer
 
 vec3 FindNearestDepth(sampler2D _depthSampler, vec2 _texCoord) {
 	vec2 du = vec2(u_viewTexel.x, 0.0);
-	vec2 dv = vec2(u_viewTexel.y, 0.0);
+	vec2 dv = vec2(0.0, u_viewTexel.y);
 
 	vec2 coord = _texCoord - du - dv;
 	vec3 tcd0 = vec3(coord, texture2D(_depthSampler, coord).x);
