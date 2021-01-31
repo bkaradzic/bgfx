@@ -229,14 +229,6 @@ void vec2Set(float* _v, float _x, float _y)
 	_v[1] = _y;
 }
 
-void vec4Set(float* _v, float _x, float _y, float _z, float _w)
-{
-	_v[0] = _x;
-	_v[1] = _y;
-	_v[2] = _z;
-	_v[3] = _w;
-}
-
 class ExampleBokeh : public entry::AppI
 {
 public:
@@ -282,7 +274,7 @@ public:
 		// Create program from shaders.
 		m_forwardProgram			= loadProgram("vs_bokeh_forward",		"fs_bokeh_forward");
 		m_gridProgram				= loadProgram("vs_bokeh_forward",		"fs_bokeh_forward_grid");
-		m_copyProgram				= loadProgram("vs_bokeh_screenquad",	"fs_bokeh_copy"); 
+		m_copyProgram				= loadProgram("vs_bokeh_screenquad",	"fs_bokeh_copy");
 		m_linearDepthProgram		= loadProgram("vs_bokeh_screenquad",	"fs_bokeh_linear_depth");
 		m_dofSinglePassProgram		= loadProgram("vs_bokeh_screenquad",	"fs_bokeh_dof_single_pass");
 		m_dofDownsampleProgram		= loadProgram("vs_bokeh_screenquad",	"fs_bokeh_dof_downsample");
@@ -301,7 +293,7 @@ public:
 
 		m_recreateFrameBuffers = false;
 		createFramebuffers();
-	
+
 		// Vertex decl
 		PosTexCoord0Vertex::init();
 
@@ -559,7 +551,7 @@ public:
 					ImGui::SetTooltip("multiply focus calculation, larger=tighter focus");
 				ImGui::Separator();
 
-				
+
 				ImGui::Text("sample pattern controls:");
 				ImGui::Combo("pattern", &m_samplePattern, "original\0sqrt\0\0");
 				if (ImGui::IsItemHovered())
@@ -826,7 +818,7 @@ public:
 			;
 
 		m_frameBufferTex[FRAMEBUFFER_RT_COLOR] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::BGRA8, bilinearFlags);
-		m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D24, bilinearFlags);
+		m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D32F,  bilinearFlags);
 		m_frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_frameBufferTex), m_frameBufferTex, true);
 
 		m_linearDepth.init(m_size[0], m_size[1], bgfx::TextureFormat::R16F, bilinearFlags);
