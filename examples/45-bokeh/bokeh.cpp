@@ -5,7 +5,7 @@
 
 /*
 * Implement bokeh depth of field as described in the blog post here:
-* https://blog.tuxedolabs.com/2018/05/04/bokeh-depth-of-field-in-single-pass.html
+* https://web.archive.org/web/20201215123940/https://blog.tuxedolabs.com/2018/05/04/bokeh-depth-of-field-in-single-pass.html
 *
 * Additionally, implement the optimizations discussed in the closing paragraph.
 * Apply the effect in multiple passes. Calculate the circle of confusion and store
@@ -973,4 +973,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleBokeh, "xx-bokeh", "bokeh depth of field");
+ENTRY_IMPLEMENT_MAIN(ExampleBokeh, "45-bokeh", "Bokeh Depth of Field");
