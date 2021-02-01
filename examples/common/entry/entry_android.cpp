@@ -154,7 +154,7 @@ namespace entry
 			{
 				if (0 == AAsset_getRemainingLength(m_file) )
 				{
-					BX_ERROR_SET(_err, bx::kErrorRederWriterEof, "FileReader: EOF.");
+					BX_ERROR_SET(_err, bx::kErrorReaderWriterEof, "FileReader: EOF.");
 				}
 
 				return size >= 0 ? size : 0;
