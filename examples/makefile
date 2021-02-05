@@ -82,8 +82,8 @@ rebuild:
 #	@make -s --no-print-directory rebuild -C 39-assao
 	@make -s --no-print-directory rebuild -C 40-svt
 	@make -s --no-print-directory rebuild -C 42-bunnylod
-#	@make -s --no-print-directory rebuild -C 43-denoise
-#	@make -s --no-print-directory rebuild -C 44-sss
+	@make -s --no-print-directory rebuild -C 43-denoise
+	@make -s --no-print-directory rebuild -C 44-sss
 	@make -s --no-print-directory rebuild -C 45-bokeh
 
 rebuild-embedded:
