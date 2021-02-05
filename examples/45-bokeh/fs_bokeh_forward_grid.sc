@@ -51,7 +51,8 @@ void main()
 
 	float lightAmount = ambient + diffuse;
 	vec3 color = gridColor * lightAmount + specular;
-	color = toGamma(color);
+
+	// leave color in linear space for better dof filter result
 
 	gl_FragColor = vec4(color, 1.0);
 }

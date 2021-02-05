@@ -7,19 +7,16 @@ $input v_texcoord0
 
 #include "../common/common.sh"
 #include "parameters.sh"
-#include "bokeh_dof.sh"
 
-SAMPLER2D(s_color,			0);
-SAMPLER2D(s_depth,			1);
+SAMPLER2D(s_color, 0);
 
 void main()
 {
-	vec2 texCoord = v_texcoord0.xy;
-
-	vec3 outColor = DepthOfField(s_color, s_depth, texCoord, u_focusPoint, u_focusScale).xyz;
+	vec2 texCoord = v_texcoord0;
+	vec4 linearColor = texture2D(s_color, texCoord);
 
 	// this pass is writing directly out to backbuffer, convert from linear to gamma
-	outColor = toGamma(outColor);
+	vec4 color = vec4(toGamma(linearColor.xyz), linearColor.w);
 
-	gl_FragColor = vec4(outColor, 1.0);
+	gl_FragColor = color;
 }
