@@ -1292,7 +1292,7 @@ int _main_(int _argc, char** _argv)
 
 	bgfx::Init init;
 	init.resolution.width = view.m_width;
-	init.resolution.width = view.m_height;
+	init.resolution.height = view.m_height;
 	init.resolution.reset = BGFX_RESET_VSYNC;
 
 	bgfx::init(init);
