@@ -17,7 +17,9 @@ void main()
 {
 	vec2 texCoord = v_texcoord0.xy;
 
-	vec4 outColor = DepthOfField(s_color, s_color, texCoord, u_focusPoint, u_focusScale, u_samplePattern);
+	vec4 outColor = DepthOfField(s_color, s_color, texCoord, u_focusPoint, u_focusScale);
+
+	// this pass isn't writing final output, leave in linear space for combining with scene color
 
 	gl_FragColor = outColor;
 }

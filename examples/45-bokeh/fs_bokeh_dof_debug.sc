@@ -18,6 +18,7 @@ void main()
 
 	// desaturate color to make tinted color stand out
 	vec3 color = texture2D(s_color, texCoord).xyz;
+	color = toGamma(color);
 	color = vec3_splat(dot(color, vec3(0.33, 0.34, 0.33)));
 
 	// get circle of confusion from depth
