@@ -502,7 +502,7 @@ public:
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::SetNextWindowSize(
-				ImVec2(m_width / 4.0f, m_height / 1.4f)
+				ImVec2(m_width / 4.0f, m_height / 1.35f)
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::Begin("Settings"
