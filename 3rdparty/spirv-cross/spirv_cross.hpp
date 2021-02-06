@@ -498,6 +498,12 @@ public:
 	// The most common use here is to check if a buffer is readonly or writeonly.
 	Bitset get_buffer_block_flags(VariableID id) const;
 
+	// Returns whether the position output is invariant
+	bool is_position_invariant() const
+	{
+		return position_invariant;
+	}
+
 protected:
 	const uint32_t *stream(const Instruction &instr) const
 	{
