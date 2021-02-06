@@ -331,6 +331,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_fragment_shading_rate]       = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_image_int64]   = EBhDisable;
     extensionBehavior[E_GL_EXT_terminate_invocation]        = EBhDisable;
+    extensionBehavior[E_GL_EXT_shared_memory_block]         = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -472,6 +473,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_demote_to_helper_invocation 1\n"
             "#define GL_EXT_debug_printf 1\n"
             "#define GL_EXT_fragment_shading_rate 1\n"
+            "#define GL_EXT_shared_memory_block 1\n"
 
             // GL_KHR_shader_subgroup
             "#define GL_KHR_shader_subgroup_basic 1\n"

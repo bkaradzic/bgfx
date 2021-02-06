@@ -87,6 +87,10 @@ TParseContext::TParseContext(TSymbolTable& symbolTable, TIntermediate& interm, b
     globalInputDefaults.clear();
     globalOutputDefaults.clear();
 
+    globalSharedDefaults.clear();
+    globalSharedDefaults.layoutMatrix = ElmColumnMajor;
+    globalSharedDefaults.layoutPacking = ElpStd430;
+
 #ifndef GLSLANG_WEB
     // "Shaders in the transform
     // feedback capturing mode have an initial global default of
@@ -6033,12 +6037,28 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
     }
 }
 
+static bool storageCanHaveLayoutInBlock(const enum TStorageQualifier storage)
+{
+    switch (storage) {
+    case EvqUniform:
+    case EvqBuffer:
+    case EvqShared:
+        return true;
+    default:
+        return false;
+    }
+}
+
 // Do layout error checking that can be done within a layout qualifier proper, not needing to know
 // if there are blocks, atomic counters, variables, etc.
 void TParseContext::layoutQualifierCheck(const TSourceLoc& loc, const TQualifier& qualifier)
 {
-    if (qualifier.storage == EvqShared && qualifier.hasLayout())
-        error(loc, "cannot apply layout qualifiers to a shared variable", "shared", "");
+    if (qualifier.storage == EvqShared && qualifier.hasLayout()) {
+        if (spvVersion.spv > 0 && spvVersion.spv < EShTargetSpv_1_4) {
+            error(loc, "shared block requires at least SPIR-V 1.4", "shared block", "");
+        }
+        profileRequires(loc, EEsProfile | ECoreProfile | ECompatibilityProfile, 0, E_GL_EXT_shared_memory_block, "shared block");
+    }
 
     // "It is a compile-time error to use *component* without also specifying the location qualifier (order does not matter)."
     if (qualifier.hasComponent() && ! qualifier.hasLocation())
@@ -6121,7 +6141,7 @@ void TParseContext::layoutQualifierCheck(const TSourceLoc& loc, const TQualifier
             error(loc, "can only be used on an output", "xfb layout qualifier", "");
     }
     if (qualifier.hasUniformLayout()) {
-        if (! qualifier.isUniformOrBuffer() && !qualifier.isTaskMemory()) {
+        if (!storageCanHaveLayoutInBlock(qualifier.storage) && !qualifier.isTaskMemory()) {
             if (qualifier.hasMatrix() || qualifier.hasPacking())
                 error(loc, "matrix or packing qualifiers can only be used on a uniform or buffer", "layout", "");
             if (qualifier.hasOffset() || qualifier.hasAlign())
@@ -7667,6 +7687,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
     case EvqBuffer:     defaultQualification = globalBufferDefaults;     break;
     case EvqVaryingIn:  defaultQualification = globalInputDefaults;      break;
     case EvqVaryingOut: defaultQualification = globalOutputDefaults;     break;
+    case EvqShared:     defaultQualification = globalSharedDefaults;     break;
     default:            defaultQualification.clear();                    break;
     }
 
@@ -7930,6 +7951,12 @@ void TParseContext::blockStageIoCheck(const TSourceLoc& loc, const TQualifier& q
             error(loc, "output blocks cannot be used in a task shader", "out", "");
         }
         break;
+    case EvqShared:
+        if (spvVersion.spv > 0 && spvVersion.spv < EShTargetSpv_1_4) {
+            error(loc, "shared block requires at least SPIR-V 1.4", "shared block", "");
+        }
+        profileRequires(loc, EEsProfile | ECoreProfile | ECompatibilityProfile, 0, E_GL_EXT_shared_memory_block, "shared block");
+        break;
 #ifndef GLSLANG_WEB
     case EvqPayload:
         profileRequires(loc, ~EEsProfile, 460, 2, extsrt, "rayPayloadNV block");
@@ -8088,7 +8115,7 @@ void TParseContext::fixXfbOffsets(TQualifier& qualifier, TTypeList& typeList)
 //
 void TParseContext::fixBlockUniformOffsets(TQualifier& qualifier, TTypeList& typeList)
 {
-    if (!qualifier.isUniformOrBuffer() && !qualifier.isTaskMemory())
+    if (!storageCanHaveLayoutInBlock(qualifier.storage) && !qualifier.isTaskMemory())
         return;
     if (qualifier.layoutPacking != ElpStd140 && qualifier.layoutPacking != ElpStd430 && qualifier.layoutPacking != ElpScalar)
         return;
@@ -8602,8 +8629,14 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
         }
 #endif
         break;
+    case EvqShared:
+        if (qualifier.hasMatrix())
+            globalSharedDefaults.layoutMatrix = qualifier.layoutMatrix;
+        if (qualifier.hasPacking())
+            globalSharedDefaults.layoutPacking = qualifier.layoutPacking;
+        break;
     default:
-        error(loc, "default qualifier requires 'uniform', 'buffer', 'in', or 'out' storage qualification", "", "");
+        error(loc, "default qualifier requires 'uniform', 'buffer', 'in', 'out' or 'shared' storage qualification", "", "");
         return;
     }
 

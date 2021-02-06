@@ -2870,7 +2870,7 @@ void TIntermediate::addToCallGraph(TInfoSink& /*infoSink*/, const TString& calle
             return;
     }
 
-    callGraph.push_front(TCall(caller, callee));
+    callGraph.emplace_front(caller, callee);
 }
 
 //
