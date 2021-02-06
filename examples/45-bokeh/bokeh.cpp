@@ -391,7 +391,7 @@ public:
 			}
 
 			// Update camera
-			cameraUpdate(deltaTime*0.15f, m_mouseState);
+			cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
 
 			cameraGetViewMtx(m_view);
 
@@ -883,7 +883,7 @@ public:
 			return 1.0f;
 		}
 
-		// divide edge into some number of lobes 
+		// divide edge into some number of lobes
 		const float invPeriod = float(_lobeCount) / (bx::kPi2);
 		float periodFraction = bx::fract(_theta * invPeriod + _rotation);
 
@@ -907,7 +907,7 @@ public:
 		BX_ASSERT(0 < _lobeCount);
 
 		const uint32_t bokehSize = 128;
-			
+
 		const bgfx::Memory* mem = bgfx::alloc(bokehSize*bokehSize*4);
 		bx::memSet(mem->data, 0x00, bokehSize*bokehSize*4);
 
