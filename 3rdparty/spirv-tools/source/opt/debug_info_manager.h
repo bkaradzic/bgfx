@@ -152,11 +152,14 @@ class DebugInfoManager {
       std::unordered_set<Instruction*>* invisible_decls);
 
   // Creates a DebugValue for DebugDeclare |dbg_decl| and inserts it before
-  // |insert_before|. The new DebugValue has the same line, scope, and
-  // operands with DebugDeclare but it uses |value_id| for value. Returns
-  // the added DebugValue, or nullptr if it does not add a DebugValue.
+  // |insert_before|. The new DebugValue has the same line and scope as
+  // |scope_and_line|, or no scope and line information if |scope_and_line|
+  // is nullptr. The new DebugValue has the same operands as DebugDeclare
+  // but it uses |value_id| for the value. Returns the created DebugValue,
+  // or nullptr if fails to create one.
   Instruction* AddDebugValueForDecl(Instruction* dbg_decl, uint32_t value_id,
-                                    Instruction* insert_before);
+                                    Instruction* insert_before,
+                                    Instruction* scope_and_line);
 
   // Erases |instr| from data structures of this class.
   void ClearDebugInfo(Instruction* instr);

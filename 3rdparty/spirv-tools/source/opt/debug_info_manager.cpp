@@ -500,14 +500,15 @@ bool DebugInfoManager::AddDebugValueIfVarDeclIsVisible(
            insert_before->opcode() == SpvOpVariable) {
       insert_before = insert_before->NextNode();
     }
-    modified |= AddDebugValueForDecl(dbg_decl_or_val, value_id,
-                                     insert_before) != nullptr;
+    modified |= AddDebugValueForDecl(dbg_decl_or_val, value_id, insert_before,
+                                     scope_and_line) != nullptr;
   }
   return modified;
 }
 
 Instruction* DebugInfoManager::AddDebugValueForDecl(
-    Instruction* dbg_decl, uint32_t value_id, Instruction* insert_before) {
+    Instruction* dbg_decl, uint32_t value_id, Instruction* insert_before,
+    Instruction* scope_and_line) {
   if (dbg_decl == nullptr || !IsDebugDeclare(dbg_decl)) return nullptr;
 
   std::unique_ptr<Instruction> dbg_val(dbg_decl->Clone(context()));
@@ -517,6 +518,7 @@ Instruction* DebugInfoManager::AddDebugValueForDecl(
   dbg_val->SetOperand(kDebugDeclareOperandVariableIndex, {value_id});
   dbg_val->SetOperand(kDebugValueOperandExpressionIndex,
                       {GetEmptyDebugExpression()->result_id()});
+  dbg_val->UpdateDebugInfoFrom(scope_and_line);
 
   auto* added_dbg_val = insert_before->InsertBefore(std::move(dbg_val));
   AnalyzeDebugInst(added_dbg_val);

@@ -626,6 +626,12 @@ SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetUniformBufferStandardLayout(
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetScalarBlockLayout(
     spv_validator_options options, bool val);
 
+// Records whether the validator should use "scalar" block layout
+// rules (as defined above) for Workgroup blocks.  See Vulkan
+// extension VK_KHR_workgroup_memory_explicit_layout.
+SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetWorkgroupScalarBlockLayout(
+    spv_validator_options options, bool val);
+
 // Records whether or not the validator should skip validating standard
 // uniform/storage block layout.
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetSkipBlockLayout(

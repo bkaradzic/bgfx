@@ -175,7 +175,7 @@ bool LocalSingleStoreElimPass::RewriteDebugDeclares(Instruction* store_inst,
     for (auto* decl : invisible_decls) {
       if (dominator_analysis->Dominates(store_inst, decl)) {
         context()->get_debug_info_mgr()->AddDebugValueForDecl(decl, value_id,
-                                                              decl);
+                                                              decl, store_inst);
         modified = true;
       }
     }

@@ -27,6 +27,7 @@
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/latest_version_opencl_std_header.h"
 #include "source/opcode.h"
+#include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
 #include "source/val/validate.h"
@@ -684,6 +685,20 @@ bool IsDebugVariableWithIntScalarType(ValidationState_t& _,
 }
 
 }  // anonymous namespace
+
+spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
+  if (_.version() < SPV_SPIRV_VERSION_WORD(1, 4)) {
+    std::string extension = GetExtensionString(&(inst->c_inst()));
+    if (extension ==
+        ExtensionToString(kSPV_KHR_workgroup_memory_explicit_layout)) {
+      return _.diag(SPV_ERROR_WRONG_VERSION, inst)
+          << "SPV_KHR_workgroup_memory_explicit_layout extension "
+             "requires SPIR-V version 1.4 or later.";
+    }
+  }
+
+  return SPV_SUCCESS;
+}
 
 spv_result_t ValidateExtInstImport(ValidationState_t& _,
                                    const Instruction* inst) {
@@ -3124,6 +3139,7 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
 
 spv_result_t ExtensionPass(ValidationState_t& _, const Instruction* inst) {
   const SpvOp opcode = inst->opcode();
+  if (opcode == SpvOpExtension) return ValidateExtension(_, inst);
   if (opcode == SpvOpExtInstImport) return ValidateExtInstImport(_, inst);
   if (opcode == SpvOpExtInst) return ValidateExtInst(_, inst);
 
