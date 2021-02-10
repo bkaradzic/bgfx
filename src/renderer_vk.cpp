@@ -2693,6 +2693,23 @@ VK_IMPORT_DEVICE
 				, 1
 				);
 
+			// Make changes to image visible to host read
+			VkMemoryBarrier memBarrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+			memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+			vkCmdPipelineBarrier(
+				  copyCmd
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				, VK_PIPELINE_STAGE_HOST_BIT
+				, 0
+				, 1
+				, &memBarrier
+				, 0
+				, NULL
+				, 0
+				, NULL
+			);
+
 			setImageMemoryBarrier(
 				  copyCmd
 				, srcImage
@@ -2907,6 +2924,23 @@ VK_IMPORT_DEVICE
 				, 0
 				, 1
 				);
+
+			// Make changes to image visible to host read
+			VkMemoryBarrier memBarrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+			memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+			vkCmdPipelineBarrier(
+				copyCmd
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				, VK_PIPELINE_STAGE_HOST_BIT
+				, 0
+				, 1
+				, &memBarrier
+				, 0
+				, NULL
+				, 0
+				, NULL
+			);
 
 			// Transition back the swap chain image after the blit is done
 			setImageMemoryBarrier(
