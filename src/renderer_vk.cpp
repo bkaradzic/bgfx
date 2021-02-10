@@ -482,7 +482,7 @@ VK_IMPORT_DEVICE
 
 	const char* getName(VkPhysicalDeviceType _type)
 	{
-		return s_deviceTypeName[bx::min<int32_t>(_type, BX_COUNTOF(s_deviceTypeName) )];
+		return s_deviceTypeName[bx::min<int32_t>(_type, BX_COUNTOF(s_deviceTypeName)-1 )];
 	}
 
 	static const char* s_allocScopeName[] =
