@@ -4562,7 +4562,7 @@ VK_IMPORT_DEVICE
 		uint64_t kick(VkSemaphore _wait = VK_NULL_HANDLE, VkSemaphore _signal = VK_NULL_HANDLE)
 		{
 			VkPipelineStageFlags stageFlags = 0
-				| VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+				| VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
 				;
 
 			VkSubmitInfo si;
