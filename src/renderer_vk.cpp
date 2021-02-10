@@ -6693,11 +6693,20 @@ VK_DESTROY
 						beginRenderPass = false;
 					}
 
-					VK_CHECK(vkEndCommandBuffer(m_commandBuffer) );
-
-					kick(renderWait);
-					renderWait = VK_NULL_HANDLE;
-					finishAll();
+					const VkPipelineStageFlags srcStage = wasCompute
+						? VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+						: VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT
+						;
+					const VkPipelineStageFlags dstStage = isCompute
+						? VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+						: VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT
+						;
+					VkMemoryBarrier memBarrier;
+					memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+					memBarrier.pNext = NULL;
+					memBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+					memBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+					vkCmdPipelineBarrier(m_commandBuffer, srcStage, dstStage, 0, 1, &memBarrier, 0, NULL, 0, NULL);
 
 					view = key.m_view;
 					currentPipeline = VK_NULL_HANDLE;
@@ -6705,8 +6714,7 @@ VK_DESTROY
 					currentProgram         = BGFX_INVALID_HANDLE;
 					hasPredefined          = false;
 					BX_UNUSED(currentSamplerStateIdx);
-
-					VK_CHECK(vkBeginCommandBuffer(m_commandBuffer, &cbbi) );
+					
 					fbh = _render->m_view[view].m_fbh;
 					setFrameBuffer(fbh);
 
