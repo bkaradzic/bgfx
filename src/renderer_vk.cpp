@@ -2097,11 +2097,13 @@ VK_IMPORT_DEVICE
 					compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 				}
 
+				uint8_t swapBufferCount = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
 				m_sci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 				m_sci.pNext = NULL;
 				m_sci.flags = 0;
 				m_sci.surface = m_surface;
 				m_sci.minImageCount   = surfaceCapabilities.minImageCount;
+				m_sci.minImageCount   = bx::clamp<uint32_t>(swapBufferCount, surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
 				m_sci.imageFormat     = m_backBufferColorFormat.format;
 				m_sci.imageColorSpace = m_backBufferColorFormat.colorSpace;
 				m_sci.imageExtent.width  = width;
