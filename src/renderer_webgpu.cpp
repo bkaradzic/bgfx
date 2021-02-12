@@ -569,7 +569,7 @@ namespace bgfx { namespace webgpu
 			m_cmd.init(m_queue);
 			//BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
 
-			for (uint8_t ii = 0; ii < BGFX_MAX_FRAME_LATENCY; ++ii)
+			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
 			{
 				BX_TRACE("Create scratch buffer %d", ii);
 				m_scratchBuffers[ii].create(BGFX_CONFIG_MAX_DRAW_CALLS * 128);
@@ -2372,9 +2372,9 @@ namespace bgfx { namespace webgpu
 		CommandQueueWgpu   m_cmd;
 
 		StagingBufferWgpu	m_uniformBuffers[WEBGPU_NUM_UNIFORM_BUFFERS];
-		ScratchBufferWgpu   m_scratchBuffers[BGFX_MAX_FRAME_LATENCY];
+		ScratchBufferWgpu   m_scratchBuffers[BGFX_CONFIG_MAX_FRAME_LATENCY];
 
-		BindStateCacheWgpu  m_bindStateCache[BGFX_MAX_FRAME_LATENCY];
+		BindStateCacheWgpu  m_bindStateCache[BGFX_CONFIG_MAX_FRAME_LATENCY];
 
 		uint8_t m_frameIndex;
 
@@ -3800,7 +3800,7 @@ namespace bgfx { namespace webgpu
 	{
 		m_queue = _queue;
 #if BGFX_CONFIG_MULTITHREADED
-		//m_framesSemaphore.post(BGFX_MAX_FRAME_LATENCY);
+		//m_framesSemaphore.post(BGFX_CONFIG_MAX_FRAME_LATENCY);
 #endif
 	}
 
@@ -3838,7 +3838,7 @@ namespace bgfx { namespace webgpu
 		{
 			if (_endFrame)
 			{
-				m_releaseWriteIndex = (m_releaseWriteIndex + 1) % BGFX_MAX_FRAME_LATENCY;
+				m_releaseWriteIndex = (m_releaseWriteIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
 				//m_encoder.addCompletedHandler(commandBufferFinishedCallback, this);
 			}
 
@@ -3898,7 +3898,7 @@ namespace bgfx { namespace webgpu
 		//m_framesSemaphore.wait();
 #endif
 
-		m_releaseReadIndex = (m_releaseReadIndex + 1) % BGFX_MAX_FRAME_LATENCY;
+		m_releaseReadIndex = (m_releaseReadIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
 
 		for (wgpu::Buffer& buffer : m_release[m_releaseReadIndex])
 		{
@@ -4044,7 +4044,7 @@ namespace bgfx { namespace webgpu
 
 		updateResolution(_render->m_resolution);
 
-		m_frameIndex = 0; // (m_frameIndex + 1) % BGFX_MAX_FRAME_LATENCY;
+		m_frameIndex = 0; // (m_frameIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
 
 		ScratchBufferWgpu& scratchBuffer = m_scratchBuffers[m_frameIndex];
 		scratchBuffer.begin();

@@ -500,7 +500,7 @@ namespace bgfx { namespace webgpu
 		int m_releaseReadIndex = 0;
 
 		typedef stl::vector<wgpu::Buffer> ResourceArray;
-		ResourceArray m_release[BGFX_MAX_FRAME_LATENCY];
+		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
 
 	struct TimerQueryWgpu

@@ -361,6 +361,10 @@ BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS m
 #	define BGFX_CONFIG_MAX_BACK_BUFFERS 4
 #endif // BGFX_CONFIG_MAX_BACK_BUFFERS
 
+#ifndef BGFX_CONFIG_MAX_FRAME_LATENCY
+#	define BGFX_CONFIG_MAX_FRAME_LATENCY 3
+#endif // BGFX_CONFIG_MAX_FRAME_LATENCY
+
 #ifndef BGFX_CONFIG_PREFER_DISCRETE_GPU
 // On laptops with integrated and discrete GPU, prefer selection of discrete GPU.
 // nVidia and AMD, on Windows only.

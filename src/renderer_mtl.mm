@@ -423,7 +423,7 @@ namespace bgfx { namespace mtl
 			m_textureDescriptor = newTextureDescriptor();
 			m_samplerDescriptor = newSamplerDescriptor();
 
-			for (uint8_t ii = 0; ii < BGFX_MAX_FRAME_LATENCY; ++ii)
+			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
 			{
 				m_uniformBuffers[ii] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
 			}
@@ -711,7 +711,7 @@ namespace bgfx { namespace mtl
 
 			m_mainFrameBuffer.destroy();
 
-			for (uint8_t i=0; i < BGFX_MAX_FRAME_LATENCY; ++i)
+			for (uint8_t i=0; i < BGFX_CONFIG_MAX_FRAME_LATENCY; ++i)
 			{
 				MTL_RELEASE(m_uniformBuffers[i]);
 			}
@@ -2344,7 +2344,7 @@ namespace bgfx { namespace mtl
 		bool m_hasStoreActionStoreAndMultisampleResolve;
 
 		Buffer   m_uniformBuffer;
-		Buffer   m_uniformBuffers[BGFX_MAX_FRAME_LATENCY];
+		Buffer   m_uniformBuffers[BGFX_CONFIG_MAX_FRAME_LATENCY];
 		uint32_t m_uniformBufferVertexOffset;
 		uint32_t m_uniformBufferFragmentOffset;
 
@@ -3403,7 +3403,7 @@ namespace bgfx { namespace mtl
 	void CommandQueueMtl::init(Device _device)
 	{
 		m_commandQueue = _device.newCommandQueue();
-		m_framesSemaphore.post(BGFX_MAX_FRAME_LATENCY);
+		m_framesSemaphore.post(BGFX_CONFIG_MAX_FRAME_LATENCY);
 	}
 
 	void CommandQueueMtl::shutdown()
@@ -3435,7 +3435,7 @@ namespace bgfx { namespace mtl
 		{
 			if (_endFrame)
 			{
-				m_releaseWriteIndex = (m_releaseWriteIndex + 1) % BGFX_MAX_FRAME_LATENCY;
+				m_releaseWriteIndex = (m_releaseWriteIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
 				m_activeCommandBuffer.addCompletedHandler(commandBufferFinishedCallback, this);
 			}
 
@@ -3480,7 +3480,7 @@ namespace bgfx { namespace mtl
 	void CommandQueueMtl::consume()
 	{
 		m_framesSemaphore.wait();
-		m_releaseReadIndex = (m_releaseReadIndex + 1) % BGFX_MAX_FRAME_LATENCY;
+		m_releaseReadIndex = (m_releaseReadIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
 
 		ResourceArray& ra = m_release[m_releaseReadIndex];
 
@@ -3755,7 +3755,7 @@ namespace bgfx { namespace mtl
 		}
 
 		m_uniformBuffer = m_uniformBuffers[m_bufferIndex];
-		m_bufferIndex = (m_bufferIndex + 1) % BGFX_MAX_FRAME_LATENCY;
+		m_bufferIndex = (m_bufferIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
 		m_uniformBufferVertexOffset = 0;
 		m_uniformBufferFragmentOffset = 0;
 

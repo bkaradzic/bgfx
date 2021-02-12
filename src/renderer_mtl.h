@@ -1113,7 +1113,7 @@ namespace bgfx { namespace mtl
 		int m_releaseWriteIndex;
 		int m_releaseReadIndex;
 		typedef stl::vector<NSObject*> ResourceArray;
-		ResourceArray m_release[BGFX_MAX_FRAME_LATENCY];
+		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
 
 	struct TimerQueryMtl

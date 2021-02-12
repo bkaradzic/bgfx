@@ -206,7 +206,6 @@ namespace stl = std;
 #	include <windows.h>
 #endif // BX_PLATFORM_*
 
-#define BGFX_MAX_FRAME_LATENCY 3
 #define BGFX_MAX_COMPUTE_BINDINGS BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
 
 #define BGFX_SAMPLER_INTERNAL_DEFAULT       UINT32_C(0x10000000)
