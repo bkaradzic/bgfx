@@ -954,7 +954,7 @@ namespace bgfx { namespace d3d12
 				m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
 				m_scd.flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-				m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, 3);
+				m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
 				m_scd.nwh             = g_platformData.nwh;
 				m_scd.ndt             = g_platformData.ndt;
 				m_scd.windowed        = true;

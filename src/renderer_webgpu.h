@@ -32,7 +32,6 @@
 		BGFX_PROFILER_END();       \
 	BX_MACRO_BLOCK_END
 
-#define WEBGPU_MAX_FRAMES_IN_FLIGHT 3
 #define WEBGPU_NUM_UNIFORM_BUFFERS  8
 
 namespace bgfx { namespace webgpu
@@ -501,7 +500,7 @@ namespace bgfx { namespace webgpu
 		int m_releaseReadIndex = 0;
 
 		typedef stl::vector<wgpu::Buffer> ResourceArray;
-		ResourceArray m_release[WEBGPU_MAX_FRAMES_IN_FLIGHT];
+		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
 
 	struct TimerQueryWgpu

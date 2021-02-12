@@ -482,7 +482,7 @@ VK_IMPORT_DEVICE
 
 	const char* getName(VkPhysicalDeviceType _type)
 	{
-		return s_deviceTypeName[bx::min<int32_t>(_type, BX_COUNTOF(s_deviceTypeName) )];
+		return s_deviceTypeName[bx::min<int32_t>(_type, BX_COUNTOF(s_deviceTypeName)-1 )];
 	}
 
 	static const char* s_allocScopeName[] =
@@ -860,40 +860,38 @@ VK_IMPORT_DEVICE
 		switch (_oldLayout)
 		{
 		case VK_IMAGE_LAYOUT_UNDEFINED:
-//			srcAccessMask |= VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_GENERAL:
+			srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-			srcAccessMask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-			srcAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
 			break;
 
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-			srcAccessMask |= VK_ACCESS_SHADER_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-			srcAccessMask |= VK_ACCESS_TRANSFER_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_PREINITIALIZED:
-			srcAccessMask |= VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+			srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
-			srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
 			break;
 
 		default:
@@ -902,40 +900,36 @@ VK_IMPORT_DEVICE
 
 		switch (_newLayout)
 		{
-		case VK_IMAGE_LAYOUT_UNDEFINED:
-			break;
-
 		case VK_IMAGE_LAYOUT_GENERAL:
+			dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-			dstAccessMask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-			dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+			dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-			dstAccessMask |= VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+			dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-			dstAccessMask |= VK_ACCESS_SHADER_READ_BIT;
+			dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-			dstAccessMask |= VK_ACCESS_TRANSFER_READ_BIT;
-			break;
-
-		case VK_IMAGE_LAYOUT_PREINITIALIZED:
+			dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
-			dstAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
+			dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 			break;
 
 		default:
@@ -2103,11 +2097,13 @@ VK_IMPORT_DEVICE
 					compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 				}
 
+				uint8_t swapBufferCount = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
 				m_sci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 				m_sci.pNext = NULL;
 				m_sci.flags = 0;
 				m_sci.surface = m_surface;
 				m_sci.minImageCount   = surfaceCapabilities.minImageCount;
+				m_sci.minImageCount   = bx::clamp<uint32_t>(swapBufferCount, surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
 				m_sci.imageFormat     = m_backBufferColorFormat.format;
 				m_sci.imageColorSpace = m_backBufferColorFormat.colorSpace;
 				m_sci.imageExtent.width  = width;
@@ -2693,6 +2689,23 @@ VK_IMPORT_DEVICE
 				, 1
 				);
 
+			// Make changes to image visible to host read
+			VkMemoryBarrier memBarrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+			memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+			vkCmdPipelineBarrier(
+				  copyCmd
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				, VK_PIPELINE_STAGE_HOST_BIT
+				, 0
+				, 1
+				, &memBarrier
+				, 0
+				, NULL
+				, 0
+				, NULL
+			);
+
 			setImageMemoryBarrier(
 				  copyCmd
 				, srcImage
@@ -2907,6 +2920,23 @@ VK_IMPORT_DEVICE
 				, 0
 				, 1
 				);
+
+			// Make changes to image visible to host read
+			VkMemoryBarrier memBarrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+			memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+			vkCmdPipelineBarrier(
+				copyCmd
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				, VK_PIPELINE_STAGE_HOST_BIT
+				, 0
+				, 1
+				, &memBarrier
+				, 0
+				, NULL
+				, 0
+				, NULL
+			);
 
 			// Transition back the swap chain image after the blit is done
 			setImageMemoryBarrier(
@@ -4528,7 +4558,7 @@ VK_IMPORT_DEVICE
 		uint64_t kick(VkSemaphore _wait = VK_NULL_HANDLE, VkSemaphore _signal = VK_NULL_HANDLE)
 		{
 			VkPipelineStageFlags stageFlags = 0
-				| VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+				| VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
 				;
 
 			VkSubmitInfo si;
@@ -6659,11 +6689,20 @@ VK_DESTROY
 						beginRenderPass = false;
 					}
 
-					VK_CHECK(vkEndCommandBuffer(m_commandBuffer) );
-
-					kick(renderWait);
-					renderWait = VK_NULL_HANDLE;
-					finishAll();
+					const VkPipelineStageFlags srcStage = wasCompute
+						? VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
+						: VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT
+						;
+					const VkPipelineStageFlags dstStage = isCompute
+						? VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
+						: VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT
+						;
+					VkMemoryBarrier memBarrier;
+					memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+					memBarrier.pNext = NULL;
+					memBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+					memBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+					vkCmdPipelineBarrier(m_commandBuffer, srcStage, dstStage, 0, 1, &memBarrier, 0, NULL, 0, NULL);
 
 					view = key.m_view;
 					currentPipeline = VK_NULL_HANDLE;
@@ -6671,8 +6710,7 @@ VK_DESTROY
 					currentProgram         = BGFX_INVALID_HANDLE;
 					hasPredefined          = false;
 					BX_UNUSED(currentSamplerStateIdx);
-
-					VK_CHECK(vkBeginCommandBuffer(m_commandBuffer, &cbbi) );
+					
 					fbh = _render->m_view[view].m_fbh;
 					setFrameBuffer(fbh);
 
