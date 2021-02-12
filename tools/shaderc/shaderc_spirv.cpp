@@ -12,6 +12,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wattributes") // warning: attribute ign
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wdeprecated-declarations") // warning: ‘MSLVertexAttr’ is deprecated
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits") // warning: comparison of unsigned expression in ‘< 0’ is always false
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'userData' shadows a member of 'glslang::TShader::Includer::IncludeResult'
+#include <memory>
 #define ENABLE_OPT 1
 #include <ShaderLang.h>
 #include <ResourceLimits.h>
@@ -741,15 +742,15 @@ namespace bgfx { namespace spirv
 
 		glslang::InitializeProcess();
 
-		glslang::TProgram* program = new glslang::TProgram;
-
 		EShLanguage stage = getLang(_options.shaderType);
 		if (EShLangCount == stage)
 		{
 			bx::printf("Error: Unknown shader type '%c'.\n", _options.shaderType);
 			return false;
 		}
-		glslang::TShader* shader = new glslang::TShader(stage);
+
+		std::unique_ptr<glslang::TProgram> program = std::unique_ptr<glslang::TProgram>(new glslang::TProgram);
+		std::unique_ptr<glslang::TShader> shader   = std::unique_ptr<glslang::TShader>(new glslang::TShader(stage));
 
 		EShMessages messages = EShMessages(0
 			| EShMsgDefault
@@ -820,7 +821,7 @@ namespace bgfx { namespace spirv
 		}
 		else
 		{
-			program->addShader(shader);
+			program->addShader(shader.get());
 			linked = true
 				&& program->link(messages)
 				&& program->mapIO()
@@ -1227,9 +1228,6 @@ namespace bgfx { namespace spirv
 				}
 			}
 		}
-
-		delete program;
-		delete shader;
 
 		glslang::FinalizeProcess();
 
