@@ -741,15 +741,15 @@ namespace bgfx { namespace spirv
 
 		glslang::InitializeProcess();
 
-		glslang::TProgram* program = new glslang::TProgram;
-
 		EShLanguage stage = getLang(_options.shaderType);
 		if (EShLangCount == stage)
 		{
 			bx::printf("Error: Unknown shader type '%c'.\n", _options.shaderType);
 			return false;
 		}
-		glslang::TShader* shader = new glslang::TShader(stage);
+
+		glslang::TProgram* program = new glslang::TProgram;
+		glslang::TShader* shader   = new glslang::TShader(stage);
 
 		EShMessages messages = EShMessages(0
 			| EShMsgDefault
@@ -934,6 +934,8 @@ namespace bgfx { namespace spirv
 					output = uniformBlock + output;
 
 					// recompile with the unused uniforms converted to statics
+					delete program;
+					delete shader;
 					return compile(_options, _version, output.c_str(), _writer, false);
 				}
 				else
