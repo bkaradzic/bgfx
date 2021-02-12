@@ -2674,7 +2674,7 @@ VK_IMPORT_DEVICE
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 				, 1
 				, &ic
-			);
+				);
 
 			// Transition destination image to general layout, which is the required layout for mapping the image memory later on
 			setImageMemoryBarrier(
@@ -2690,7 +2690,9 @@ VK_IMPORT_DEVICE
 				);
 
 			// Make changes to image visible to host read
-			VkMemoryBarrier memBarrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+			VkMemoryBarrier memBarrier;
+			memBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+			memBarrier.pNext         = NULL;
 			memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
 			vkCmdPipelineBarrier(
@@ -2704,7 +2706,7 @@ VK_IMPORT_DEVICE
 				, NULL
 				, 0
 				, NULL
-			);
+				);
 
 			setImageMemoryBarrier(
 				  copyCmd
@@ -2922,11 +2924,13 @@ VK_IMPORT_DEVICE
 				);
 
 			// Make changes to image visible to host read
-			VkMemoryBarrier memBarrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+			VkMemoryBarrier memBarrier;
+			memBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+			memBarrier.pNext         = NULL;
 			memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
 			vkCmdPipelineBarrier(
-				copyCmd
+				  copyCmd
 				, VK_PIPELINE_STAGE_TRANSFER_BIT
 				, VK_PIPELINE_STAGE_HOST_BIT
 				, 0
@@ -2936,7 +2940,7 @@ VK_IMPORT_DEVICE
 				, NULL
 				, 0
 				, NULL
-			);
+				);
 
 			// Transition back the swap chain image after the blit is done
 			setImageMemoryBarrier(
@@ -6710,7 +6714,7 @@ VK_DESTROY
 					currentProgram         = BGFX_INVALID_HANDLE;
 					hasPredefined          = false;
 					BX_UNUSED(currentSamplerStateIdx);
-					
+
 					fbh = _render->m_view[view].m_fbh;
 					setFrameBuffer(fbh);
 
