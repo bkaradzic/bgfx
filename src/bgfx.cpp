@@ -340,15 +340,9 @@ namespace bgfx
 
 	void setPlatformData(const PlatformData& _data)
 	{
-		if (NULL != s_ctx)
-		{
-			BGFX_FATAL(true
-				&& g_platformData.ndt     == _data.ndt
-				&& g_platformData.context == _data.context
-				, Fatal::UnableToInitialize
-				, "Only backbuffer pointer and native window handle can be changed after initialization!"
-				);
-		}
+		BGFX_FATAL(NULL == s_ctx, 
+		           Fatal::UnableToInitialize,
+				   "Setting platform data is only allowed before initialization!");
 		bx::memCopy(&g_platformData, &_data, sizeof(PlatformData) );
 		g_platformDataChangedSinceReset = true;
 	}
