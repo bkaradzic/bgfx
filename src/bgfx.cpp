@@ -344,9 +344,10 @@ namespace bgfx
 		{
 			BGFX_FATAL(true
 				&& g_platformData.ndt     == _data.ndt
+				&& g_platformData.nwh     == _data.nwh
 				&& g_platformData.context == _data.context
 				, Fatal::UnableToInitialize
-				, "Only backbuffer pointer and native window handle can be changed after initialization!"
+				, "Only backbuffer pointer can be changed after initialization!"
 				);
 		}
 		bx::memCopy(&g_platformData, &_data, sizeof(PlatformData) );
