@@ -344,7 +344,10 @@ namespace bgfx
 		{
 			BGFX_FATAL(true
 				&& g_platformData.ndt     == _data.ndt
+#if !BX_PLATFORM_ANDROID
+				// Changing window handle on Android is actually possible:
 				&& g_platformData.nwh     == _data.nwh
+#endif
 				&& g_platformData.context == _data.context
 				, Fatal::UnableToInitialize
 				, "Only backbuffer pointer can be changed after initialization!"
