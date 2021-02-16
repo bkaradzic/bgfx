@@ -177,6 +177,7 @@ void CompilerMSL::build_implicit_builtins()
 	bool need_sample_mask = msl_options.additional_fixed_sample_mask != 0xffffffff;
 	bool need_local_invocation_index = msl_options.emulate_subgroups && active_input_builtins.get(BuiltInSubgroupId);
 	bool need_workgroup_size = msl_options.emulate_subgroups && active_input_builtins.get(BuiltInNumSubgroups);
+
 	if (need_subpass_input || need_sample_pos || need_subgroup_mask || need_vertex_params || need_tesc_params ||
 	    need_multiview || need_dispatch_base || need_vertex_base_params || need_grid_params || needs_sample_id ||
 	    needs_subgroup_invocation_id || needs_subgroup_size || need_sample_mask || need_local_invocation_index ||
@@ -797,6 +798,51 @@ void CompilerMSL::build_implicit_builtins()
 		set_extended_decoration(var_id, SPIRVCrossDecorationResourceIndexPrimary,
 		                        msl_options.dynamic_offsets_buffer_index);
 		dynamic_offsets_buffer_id = var_id;
+	}
+
+	// If we're returning a struct from a vertex-like entry point, we must return a position attribute.
+	bool need_position =
+			(get_execution_model() == ExecutionModelVertex ||
+			 get_execution_model() == ExecutionModelTessellationEvaluation) &&
+			!capture_output_to_buffer && !get_is_rasterization_disabled() &&
+			!active_output_builtins.get(BuiltInPosition);
+
+	if (need_position)
+	{
+		// If we can get away with returning void from entry point, we don't need to care.
+		// If there is at least one other stage output, we need to return [[position]].
+		need_position = false;
+		ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+			if (var.storage == StorageClassOutput && interface_variable_exists_in_entry_point(var.self))
+				need_position = true;
+		});
+	}
+
+	if (need_position)
+	{
+		uint32_t offset = ir.increase_bound_by(3);
+		uint32_t type_id = offset;
+		uint32_t type_ptr_id = offset + 1;
+		uint32_t var_id = offset + 2;
+
+		// Create gl_Position.
+		SPIRType vec4_type;
+		vec4_type.basetype = SPIRType::Float;
+		vec4_type.width = 32;
+		vec4_type.vecsize = 4;
+		set<SPIRType>(type_id, vec4_type);
+
+		SPIRType vec4_type_ptr;
+		vec4_type_ptr = vec4_type;
+		vec4_type_ptr.pointer = true;
+		vec4_type_ptr.parent_type = type_id;
+		vec4_type_ptr.storage = StorageClassOutput;
+		auto &ptr_type = set<SPIRType>(type_ptr_id, vec4_type_ptr);
+		ptr_type.self = type_id;
+
+		set<SPIRVariable>(var_id, type_ptr_id, StorageClassOutput);
+		set_decoration(var_id, DecorationBuiltIn, BuiltInPosition);
+		mark_implicit_builtin(StorageClassOutput, BuiltInPosition, var_id);
 	}
 }
 

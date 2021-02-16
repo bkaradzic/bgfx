@@ -1272,7 +1272,7 @@ void CompilerHLSL::replace_illegal_names()
 {
 	static const unordered_set<string> keywords = {
 		// Additional HLSL specific keywords.
-		"line", "linear", "matrix", "point", "row_major", "sampler",
+		"line", "linear", "matrix", "point", "row_major", "sampler", "vector"
 	};
 
 	CompilerGLSL::replace_illegal_names(keywords);

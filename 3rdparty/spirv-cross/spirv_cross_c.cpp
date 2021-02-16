@@ -701,6 +701,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_MSL_FORCE_SAMPLE_RATE_SHADING:
 		options->msl.force_sample_rate_shading = value != 0;
 		break;
+
+	case SPVC_COMPILER_OPTION_MSL_IOS_SUPPORT_BASE_VERTEX_INSTANCE:
+		options->msl.ios_support_base_vertex_instance = value != 0;
+		break;
 #endif
 
 	default:
