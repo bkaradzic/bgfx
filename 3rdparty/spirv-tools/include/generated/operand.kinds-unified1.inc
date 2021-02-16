@@ -125,6 +125,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_invocation
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_shader_interlock[] = {spvtools::Extension::kSPV_EXT_fragment_shader_interlock};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer[] = {spvtools::Extension::kSPV_EXT_physical_storage_buffer, spvtools::Extension::kSPV_KHR_physical_storage_buffer};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_atomic_float_add[] = {spvtools::Extension::kSPV_EXT_shader_atomic_float_add};
+static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_atomic_float_min_max[] = {spvtools::Extension::kSPV_EXT_shader_atomic_float_min_max};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_image_int64[] = {spvtools::Extension::kSPV_EXT_shader_image_int64};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_stencil_export[] = {spvtools::Extension::kSPV_EXT_shader_stencil_export};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_viewport_index_layerSPV_NV_viewport_array2[] = {spvtools::Extension::kSPV_EXT_shader_viewport_index_layer, spvtools::Extension::kSPV_NV_viewport_array2};
@@ -1048,6 +1049,9 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"FunctionPointersINTEL", 5603, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_function_pointers, {}, 0xffffffffu, 0xffffffffu},
   {"IndirectReferencesINTEL", 5604, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_function_pointers, {}, 0xffffffffu, 0xffffffffu},
   {"AsmINTEL", 5606, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_inline_assembly, {}, 0xffffffffu, 0xffffffffu},
+  {"AtomicFloat32MinMaxEXT", 5612, 0, nullptr, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float_min_max, {}, 0xffffffffu, 0xffffffffu},
+  {"AtomicFloat64MinMaxEXT", 5613, 0, nullptr, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float_min_max, {}, 0xffffffffu, 0xffffffffu},
+  {"AtomicFloat16MinMaxEXT", 5616, 0, nullptr, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float_min_max, {}, 0xffffffffu, 0xffffffffu},
   {"VectorComputeINTEL", 5617, 1, pygen_variable_caps_VectorAnyINTEL, 1, pygen_variable_exts_SPV_INTEL_vector_compute, {}, 0xffffffffu, 0xffffffffu},
   {"VectorAnyINTEL", 5619, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_vector_compute, {}, 0xffffffffu, 0xffffffffu},
   {"SubgroupAvcMotionEstimationINTEL", 5696, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_device_side_avc_motion_estimation, {}, 0xffffffffu, 0xffffffffu},

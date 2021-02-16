@@ -170,7 +170,10 @@ static const int kInstMaxOutCnt = kInstStageOutCnt + 4;
 static const int kInstErrorBindlessBounds = 0;
 static const int kInstErrorBindlessUninit = 1;
 static const int kInstErrorBuffAddrUnallocRef = 2;
-static const int kInstErrorBindlessBuffOOB = 3;
+// Deleted: static const int kInstErrorBindlessBuffOOB = 3;
+// This comment will will remain for 2 releases to allow
+// for the transition of all builds. Buffer OOB is
+// generating the following four differentiated codes instead:
 static const int kInstErrorBuffOOBUniform = 4;
 static const int kInstErrorBuffOOBStorage = 5;
 static const int kInstErrorBuffOOBUniformTexel = 6;
