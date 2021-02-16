@@ -5189,6 +5189,36 @@
       "version" : "None"
     },
     {
+      "opname" : "OpAtomicFMinEXT",
+      "class"  : "Atomic",
+      "opcode" : 5614,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
+        { "kind" : "IdRef",             "name" : "'Value'" }
+      ],
+      "capabilities" : [ "AtomicFloat16MinMaxEXT", "AtomicFloat32MinMaxEXT", "AtomicFloat64MinMaxEXT" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAtomicFMaxEXT",
+      "class"  : "Atomic",
+      "opcode" : 5615,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
+        { "kind" : "IdRef",             "name" : "'Value'" }
+      ],
+      "capabilities" : [ "AtomicFloat16MinMaxEXT", "AtomicFloat32MinMaxEXT", "AtomicFloat64MinMaxEXT" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpDecorateString",
       "class"  : "Annotation",
       "opcode" : 5632,
@@ -10407,34 +10437,16 @@
           "version" : "1.3"
         },
         {
-          "enumerant" : "SubgroupGeMask",
-          "value" : 4417,
-          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
-          "version" : "1.3"
-        },
-        {
-          "enumerant" : "SubgroupGtMask",
-          "value" : 4418,
-          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
-          "version" : "1.3"
-        },
-        {
-          "enumerant" : "SubgroupLeMask",
-          "value" : 4419,
-          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
-          "version" : "1.3"
-        },
-        {
-          "enumerant" : "SubgroupLtMask",
-          "value" : 4420,
-          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
-          "version" : "1.3"
-        },
-        {
           "enumerant" : "SubgroupEqMaskKHR",
           "value" : 4416,
           "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
           "extensions" : [ "SPV_KHR_shader_ballot" ],
+          "version" : "1.3"
+        },
+        {
+          "enumerant" : "SubgroupGeMask",
+          "value" : 4417,
+          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
           "version" : "1.3"
         },
         {
@@ -10445,6 +10457,12 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "SubgroupGtMask",
+          "value" : 4418,
+          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
+          "version" : "1.3"
+        },
+        {
           "enumerant" : "SubgroupGtMaskKHR",
           "value" : 4418,
           "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
@@ -10452,10 +10470,22 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "SubgroupLeMask",
+          "value" : 4419,
+          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
+          "version" : "1.3"
+        },
+        {
           "enumerant" : "SubgroupLeMaskKHR",
           "value" : 4419,
           "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
           "extensions" : [ "SPV_KHR_shader_ballot" ],
+          "version" : "1.3"
+        },
+        {
+          "enumerant" : "SubgroupLtMask",
+          "value" : 4420,
+          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
           "version" : "1.3"
         },
         {
@@ -12060,6 +12090,24 @@
           "enumerant" : "AsmINTEL",
           "value" : 5606,
           "extensions" : [ "SPV_INTEL_inline_assembly" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat32MinMaxEXT",
+          "value" : 5612,
+          "extensions" : [ "SPV_EXT_shader_atomic_float_min_max" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat64MinMaxEXT",
+          "value" : 5613,
+          "extensions" : [ "SPV_EXT_shader_atomic_float_min_max" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat16MinMaxEXT",
+          "value" : 5616,
+          "extensions" : [ "SPV_EXT_shader_atomic_float_min_max" ],
           "version" : "None"
         },
         {

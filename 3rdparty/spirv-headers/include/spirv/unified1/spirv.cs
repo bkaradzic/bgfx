@@ -1014,6 +1014,9 @@ namespace Spv
             FunctionPointersINTEL = 5603,
             IndirectReferencesINTEL = 5604,
             AsmINTEL = 5606,
+            AtomicFloat32MinMaxEXT = 5612,
+            AtomicFloat64MinMaxEXT = 5613,
+            AtomicFloat16MinMaxEXT = 5616,
             VectorComputeINTEL = 5617,
             VectorAnyINTEL = 5619,
             SubgroupAvcMotionEstimationINTEL = 5696,
@@ -1106,14 +1109,16 @@ namespace Spv
             Horizontal4Pixels = 0x00000008,
         }
 
-        public enum FPDenormMode {
-          Preserve = 0,
-          FlushToZero = 1,
+        public enum FPDenormMode
+        {
+            Preserve = 0,
+            FlushToZero = 1,
         }
 
-        public enum FPOperationMode {
-          IEEE = 0,
-          ALT = 1,
+        public enum FPOperationMode
+        {
+            IEEE = 0,
+            ALT = 1,
         }
 
         public enum Op
@@ -1541,6 +1546,8 @@ namespace Spv
             OpAsmTargetINTEL = 5609,
             OpAsmINTEL = 5610,
             OpAsmCallINTEL = 5611,
+            OpAtomicFMinEXT = 5614,
+            OpAtomicFMaxEXT = 5615,
             OpDecorateString = 5632,
             OpDecorateStringGOOGLE = 5632,
             OpMemberDecorateString = 5633,
