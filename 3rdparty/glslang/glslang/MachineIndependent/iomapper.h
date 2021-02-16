@@ -52,7 +52,7 @@ namespace glslang {
 
 class TIntermediate;
 struct TVarEntryInfo {
-    int id;
+    long long id;
     TIntermSymbol* symbol;
     bool live;
     int newBinding;

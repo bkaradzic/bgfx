@@ -458,6 +458,7 @@ public:
     GLSLANG_EXPORT void setEntryPoint(const char* entryPoint);
     GLSLANG_EXPORT void setSourceEntryPoint(const char* sourceEntryPointName);
     GLSLANG_EXPORT void addProcesses(const std::vector<std::string>&);
+    GLSLANG_EXPORT void setUniqueId(unsigned long long id);
 
     // IO resolver binding data: see comments in ShaderLang.cpp
     GLSLANG_EXPORT void setShiftBinding(TResourceType res, unsigned int base);

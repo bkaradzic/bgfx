@@ -257,15 +257,15 @@ protected:
     spv::Id nonSemanticDebugPrintf;
     std::unordered_map<const char*, spv::Id> extBuiltinMap;
 
-    std::unordered_map<int, spv::Id> symbolValues;
-    std::unordered_set<int> rValueParameters;  // set of formal function parameters passed as rValues,
+    std::unordered_map<long long, spv::Id> symbolValues;
+    std::unordered_set<long long> rValueParameters;  // set of formal function parameters passed as rValues,
                                                // rather than a pointer
     std::unordered_map<std::string, spv::Function*> functionMap;
     std::unordered_map<const glslang::TTypeList*, spv::Id> structMap[glslang::ElpCount][glslang::ElmCount];
     // for mapping glslang block indices to spv indices (e.g., due to hidden members):
-    std::unordered_map<int, std::vector<int>> memberRemapper;
+    std::unordered_map<long long, std::vector<int>> memberRemapper;
     // for mapping glslang symbol struct to symbol Id
-    std::unordered_map<const glslang::TTypeList*, int> glslangTypeToIdMap;
+    std::unordered_map<const glslang::TTypeList*, long long> glslangTypeToIdMap;
     std::stack<bool> breakForLoop;  // false means break for switch
     std::unordered_map<std::string, const glslang::TIntermSymbol*> counterOriginator;
     // Map pointee types for EbtReference to their forward pointers
@@ -1994,7 +1994,7 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
                 {
                     // This may be, e.g., an anonymous block-member selection, which generally need
                     // index remapping due to hidden members in anonymous blocks.
-                    int glslangId = glslangTypeToIdMap[node->getLeft()->getType().getStruct()];
+                    long long glslangId = glslangTypeToIdMap[node->getLeft()->getType().getStruct()];
                     if (memberRemapper.find(glslangId) != memberRemapper.end()) {
                         std::vector<int>& remapper = memberRemapper[glslangId];
                         assert(remapper.size() > 0);

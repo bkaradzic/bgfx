@@ -1275,15 +1275,15 @@ public:
     // if symbol is initialized as symbol(sym), the memory comes from the pool allocator of sym. If sym comes from
     // per process threadPoolAllocator, then it causes increased memory usage per compile
     // it is essential to use "symbol = sym" to assign to symbol
-    TIntermSymbol(int i, const TString& n, const TType& t)
+    TIntermSymbol(long long i, const TString& n, const TType& t)
         : TIntermTyped(t), id(i),
 #ifndef GLSLANG_WEB
         flattenSubset(-1),
 #endif
         constSubtree(nullptr)
           { name = n; }
-    virtual int getId() const { return id; }
-    virtual void changeId(int i) { id = i; }
+    virtual long long getId() const { return id; }
+    virtual void changeId(long long i) { id = i; }
     virtual const TString& getName() const { return name; }
     virtual void traverse(TIntermTraverser*);
     virtual       TIntermSymbol* getAsSymbolNode()       { return this; }
@@ -1301,10 +1301,10 @@ public:
 
     // This is meant for cases where a node has already been constructed, and
     // later on, it becomes necessary to switch to a different symbol.
-    virtual void switchId(int newId) { id = newId; }
+    virtual void switchId(long long newId) { id = newId; }
 
 protected:
-    int id;                      // the unique id of the symbol this node represents
+    long long id;                // the unique id of the symbol this node represents
 #ifndef GLSLANG_WEB
     int flattenSubset;           // how deeply the flattened object rooted at id has been dereferenced
 #endif

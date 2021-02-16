@@ -4296,8 +4296,10 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
         // If it wasn't at a built-in level, then it's already been redeclared;
         // that is, this is a redeclaration of a redeclaration; reuse that initial
         // redeclaration.  Otherwise, make the new one.
-        if (builtIn)
+        if (builtIn) {
             makeEditable(symbol);
+            symbolTable.amendSymbolIdLevel(*symbol);
+        }
 
         // Now, modify the type of the copy, as per the type of the current redeclaration.
 
@@ -4826,7 +4828,7 @@ void TParseContext::inductiveLoopCheck(const TSourceLoc& loc, TIntermNode* init,
     }
 
     // get the unique id of the loop index
-    int loopIndex = binaryInit->getLeft()->getAsSymbolNode()->getId();
+    long long loopIndex = binaryInit->getLeft()->getAsSymbolNode()->getId();
     inductiveLoopIds.insert(loopIndex);
 
     // condition's form must be "loop-index relational-operator constant-expression"

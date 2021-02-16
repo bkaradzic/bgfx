@@ -67,7 +67,7 @@ struct TPragma {
 class TScanContext;
 class TPpContext;
 
-typedef std::set<int> TIdSetType;
+typedef std::set<long long> TIdSetType;
 typedef std::map<const TTypeList*, std::map<size_t, const TTypeList*>> TStructRecord;
 
 //
@@ -392,7 +392,7 @@ public:
     void arrayLimitCheck(const TSourceLoc&, const TString&, int size);
     void limitCheck(const TSourceLoc&, int value, const char* limit, const char* feature);
 
-    void inductiveLoopBodyCheck(TIntermNode*, int loopIndexId, TSymbolTable&);
+    void inductiveLoopBodyCheck(TIntermNode*, long long loopIndexId, TSymbolTable&);
     void constantIndexExpressionCheck(TIntermNode*);
 
     void setLayoutQualifier(const TSourceLoc&, TPublicType&, TString&);
