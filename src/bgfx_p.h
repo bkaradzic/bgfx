@@ -588,11 +588,11 @@ namespace bgfx
 				uint32_t size = m_size;
 				m_size = m_width * m_height;
 
-				m_mem = (MemSlot*)BX_REALLOC(g_allocator, m_mem, m_size * sizeof(MemSlot));
+				m_mem = (MemSlot*)BX_REALLOC(g_allocator, m_mem, m_size * sizeof(MemSlot) );
 
 				if (size < m_size)
 				{
-					bx::memSet(&m_mem[size], 0, (m_size-size) * sizeof(MemSlot));
+					bx::memSet(&m_mem[size], 0, (m_size-size) * sizeof(MemSlot) );
 				}
 			}
 		}
@@ -600,7 +600,7 @@ namespace bgfx
 		void clear(uint8_t _attr = 0)
 		{
 			MemSlot* mem = m_mem;
-			bx::memSet(mem, 0, m_size * sizeof(MemSlot));
+			bx::memSet(mem, 0, m_size * sizeof(MemSlot) );
 			if (_attr != 0)
 			{
 				for (uint32_t ii = 0, num = m_size; ii < num; ++ii)
@@ -3351,9 +3351,11 @@ namespace bgfx
 			const uint32_t indexSize = 0 == (_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 			const uint32_t size = bx::alignUp(_num*indexSize, 16);
 
-			const uint64_t ptr =	(0 != (_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) ) ? 
-									allocIndexBuffer(size, _flags) :
-									allocDynamicIndexBuffer(size, _flags);
+			const uint64_t ptr = (0 != (_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
+				? allocIndexBuffer(size, _flags)
+				: allocDynamicIndexBuffer(size, _flags)
+				;
+
 			if (ptr == NonLocalAllocator::kInvalidBlock)
 			{
 				m_dynamicIndexBufferHandle.free(handle.idx);
@@ -3404,10 +3406,12 @@ namespace bgfx
 			{
 				m_dynIndexBufferAllocator.free(uint64_t(dib.m_handle.idx)<<32 | dib.m_offset);
 				m_dynIndexBufferAllocator.compact();
-				
-				const uint64_t ptr =	(0 != (dib.m_flags & BGFX_BUFFER_COMPUTE_READ) ) ?
-										allocIndexBuffer(_mem->size, dib.m_flags) :
-										allocDynamicIndexBuffer(_mem->size, dib.m_flags);
+
+				const uint64_t ptr = (0 != (dib.m_flags & BGFX_BUFFER_COMPUTE_READ) )
+					? allocIndexBuffer(_mem->size, dib.m_flags)
+					: allocDynamicIndexBuffer(_mem->size, dib.m_flags)
+					;
+
 				dib.m_handle.idx = uint16_t(ptr>>32);
 				dib.m_offset     = uint32_t(ptr);
 				dib.m_size       = _mem->size;
@@ -3537,9 +3541,10 @@ namespace bgfx
 
 			const uint32_t size = bx::strideAlign<16>(_num*_layout.m_stride, _layout.m_stride)+_layout.m_stride;
 
-			const uint64_t ptr = (0 != (_flags & BGFX_BUFFER_COMPUTE_READ_WRITE)) ?
-							allocVertexBuffer(size, _flags) : 
-							allocDynamicVertexBuffer(size, _flags);
+			const uint64_t ptr = (0 != (_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
+				? allocVertexBuffer(size, _flags)
+				: allocDynamicVertexBuffer(size, _flags)
+				;
 
 			if (ptr == NonLocalAllocator::kInvalidBlock)
 			{
@@ -3595,10 +3600,11 @@ namespace bgfx
 				m_dynVertexBufferAllocator.compact();
 
 				const uint32_t size = bx::strideAlign<16>(_mem->size, dvb.m_stride)+dvb.m_stride;
-					
-				const uint64_t ptr = (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_READ)) ?
-							allocVertexBuffer(size, dvb.m_flags) :
-							allocDynamicVertexBuffer(size, dvb.m_flags);
+
+				const uint64_t ptr = (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_READ) )
+					? allocVertexBuffer(size, dvb.m_flags)
+					: allocDynamicVertexBuffer(size, dvb.m_flags)
+					;
 
 				dvb.m_handle.idx  = uint16_t(ptr>>32);
 				dvb.m_offset      = uint32_t(ptr);
@@ -3987,14 +3993,14 @@ namespace bgfx
 				uint16_t regCount;
 				bx::read(&reader, regCount, &err);
 
-				if (!isShaderVerLess(magic, 8))
+				if (!isShaderVerLess(magic, 8) )
 				{
 					uint16_t texInfo;
 					bx::read(&reader, texInfo);
 				}
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
-				if (PredefinedUniform::Count == predefined && UniformType::End != UniformType::Enum(type))
+				if (PredefinedUniform::Count == predefined && UniformType::End != UniformType::Enum(type) )
 				{
 					uniforms[sr.m_num] = createUniform(name, UniformType::Enum(type), regCount);
 					sr.m_num++;
