@@ -811,6 +811,8 @@ VK_IMPORT_DEVICE
 	VkObjectType getType();
 
 	template<> VkObjectType getType<VkBuffer      >() { return VK_OBJECT_TYPE_BUFFER;        }
+	template<> VkObjectType getType<VkImage       >() { return VK_OBJECT_TYPE_IMAGE;         }
+	template<> VkObjectType getType<VkImageView   >() { return VK_OBJECT_TYPE_IMAGE_VIEW;    }
 	template<> VkObjectType getType<VkShaderModule>() { return VK_OBJECT_TYPE_SHADER_MODULE; }
 
 	template<typename Ty>
@@ -3054,7 +3056,19 @@ VK_IMPORT_DEVICE
 				break;
 
 			case Handle::Texture:
-//				setDebugObjectName(m_device, m_textures[_handle.idx].m_ptr, "%.*s", _len, _name);
+				setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImage, "%.*s", _len, _name);
+				if (m_textures[_handle.idx].m_textureImageView != VK_NULL_HANDLE)
+				{
+					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageView, "%.*s", _len, _name);
+				}
+				if (m_textures[_handle.idx].m_textureImageStorageView != VK_NULL_HANDLE)
+				{
+					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageStorageView, "%.*s", _len, _name);
+				}
+				if (m_textures[_handle.idx].m_textureImageDepthView != VK_NULL_HANDLE)
+				{
+					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageDepthView, "%.*s", _len, _name);
+				}
 				break;
 
 			case Handle::VertexBuffer:
