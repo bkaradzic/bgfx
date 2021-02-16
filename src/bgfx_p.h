@@ -3404,8 +3404,8 @@ namespace bgfx
 			{
 				m_dynIndexBufferAllocator.free(uint64_t(dib.m_handle.idx)<<32 | dib.m_offset);
 				m_dynIndexBufferAllocator.compact();
-
-				const uint64_t ptr =	(0 != (dib.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) ) ?
+				
+				const uint64_t ptr =	(0 != (dib.m_flags & BGFX_BUFFER_COMPUTE_READ) ) ?
 										allocIndexBuffer(_mem->size, dib.m_flags) :
 										allocDynamicIndexBuffer(_mem->size, dib.m_flags);
 				dib.m_handle.idx = uint16_t(ptr>>32);
@@ -3595,7 +3595,8 @@ namespace bgfx
 				m_dynVertexBufferAllocator.compact();
 
 				const uint32_t size = bx::strideAlign<16>(_mem->size, dvb.m_stride)+dvb.m_stride;
-				const uint64_t ptr = (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE)) ?
+					
+				const uint64_t ptr = (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_READ)) ?
 							allocVertexBuffer(size, dvb.m_flags) :
 							allocDynamicVertexBuffer(size, dvb.m_flags);
 
