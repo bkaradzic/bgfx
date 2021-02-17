@@ -6688,9 +6688,6 @@ VK_DESTROY
 
 					if (!isCompute && !beginRenderPass)
 					{
-						vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
-						beginRenderPass = true;
-
 						VkViewport vp;
 						vp.x        =  float(rect.m_x);
 						vp.y        =  float(rect.m_y + rect.m_height);
@@ -6712,14 +6709,21 @@ VK_DESTROY
 						Clear& clr = _render->m_view[view].m_clear;
 						if (BGFX_CLEAR_NONE != clr.m_flags)
 						{
+							vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+
 							Rect clearRect = rect;
 							clearRect.setIntersect(rect, viewScissorRect);
 							clearQuad(clearRect, clr, _render->m_colorPalette);
+
+							vkCmdEndRenderPass(m_commandBuffer);
 						}
 
 						prim = s_primInfo[Topology::Count]; // Force primitive type update.
 
 						submitBlit(bs, view);
+
+						vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+						beginRenderPass = true;
 					}
 				}
 
