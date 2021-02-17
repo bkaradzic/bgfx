@@ -2046,7 +2046,7 @@ VK_IMPORT_DEVICE
 					BX_TRACE("Supported surface format: %d", surfaceFormats[ii].format);
 
 					if (preferredColorSpace == surfaceFormats[ii].colorSpace)
-                    {
+					{
 						for (uint32_t jj = 0; jj < BX_COUNTOF(preferredSurfaceFormat); jj++)
 						{
 							if (preferredSurfaceFormat[jj] == surfaceFormats[ii].format)
@@ -2112,25 +2112,38 @@ VK_IMPORT_DEVICE
 					compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 				}
 
-				uint8_t swapBufferCount = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
+				VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+				if (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
+				{
+					imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+				}
+
+				uint32_t minSwapBufferCount = bx::max<uint32_t>(surfaceCapabilities.minImageCount, 2);
+				uint32_t maxSwapBufferCount = surfaceCapabilities.maxImageCount == 0
+					? BGFX_CONFIG_MAX_BACK_BUFFERS
+					: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, BGFX_CONFIG_MAX_BACK_BUFFERS);
+				BX_ASSERT(minSwapBufferCount <= maxSwapBufferCount, "Incompatible swapchain image count");
+
+				uint32_t swapBufferCount = bx::clamp<uint32_t>(_init.resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
+
 				m_sci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 				m_sci.pNext = NULL;
 				m_sci.flags = 0;
 				m_sci.surface = m_surface;
-				m_sci.minImageCount   = bx::clamp<uint32_t>(swapBufferCount, surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
+				m_sci.minImageCount   = swapBufferCount;
 				m_sci.imageFormat     = m_backBufferColorFormat.format;
 				m_sci.imageColorSpace = m_backBufferColorFormat.colorSpace;
 				m_sci.imageExtent.width  = width;
 				m_sci.imageExtent.height = height;
 				m_sci.imageArrayLayers = 1;
-				m_sci.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+				m_sci.imageUsage       = imageUsage;
 				m_sci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 				m_sci.queueFamilyIndexCount = 0;
 				m_sci.pQueueFamilyIndices   = NULL;
 				m_sci.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 				m_sci.compositeAlpha = compositeAlpha;
 				m_sci.presentMode    = s_presentMode[presentModeIdx].mode;
-				m_sci.clipped        = VK_TRUE;
+				m_sci.clipped        = VK_FALSE;
 				m_sci.oldSwapchain   = VK_NULL_HANDLE;
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
@@ -2696,6 +2709,11 @@ VK_IMPORT_DEVICE
 					? texture.m_singleMsaaImage
 					: texture.m_textureImage
 					;
+			}
+			else if (!(m_sci.imageUsage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) )
+			{
+				BX_TRACE("Unable to capture screenshot %s.", _filePath);
+				return;
 			}
 
 			VkDeviceMemory stagingMemory;
