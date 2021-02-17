@@ -1131,9 +1131,9 @@ VK_IMPORT_DEVICE
 				}
 
 				m_backBufferColorImageLayout[ii] = VK_IMAGE_LAYOUT_UNDEFINED;
-				m_backBufferReadbacks[ii].create(m_backBufferColorImage[ii], ici.extent.width, ici.extent.height, bimg::TextureFormat::BGRA8);
 			}
 
+			m_needPresent = false;
 			m_needToRefreshSwapchain = false;
 
 			return result;
@@ -1150,7 +1150,6 @@ VK_IMPORT_DEVICE
 			{
 				vkDestroy(m_backBufferColorImageView[ii]);
 				m_backBufferColorImageLayout[ii] = VK_IMAGE_LAYOUT_UNDEFINED;
-				m_backBufferReadbacks[ii].destroy();
 				m_backBufferColorFence[ii] = VK_NULL_HANDLE;
 			}
 			vkDestroy(m_swapchain);
@@ -2157,7 +2156,11 @@ VK_IMPORT_DEVICE
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_presentDoneSemaphore); ++ii)
 				{
 					m_presentDoneSemaphore[ii] = VK_NULL_HANDLE;
+					m_renderDoneSemaphore[ii] = VK_NULL_HANDLE;
 				}
+
+				m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
+				m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
 				result = createSwapchain();
 				if (VK_SUCCESS != result)
@@ -2175,8 +2178,8 @@ VK_IMPORT_DEVICE
 
 				for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 				{
-					result = vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_presentDoneSemaphore[ii]);
-					if (VK_SUCCESS != result)
+					if (VK_SUCCESS != vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_presentDoneSemaphore[ii])
+					||  VK_SUCCESS != vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_renderDoneSemaphore[ii]) )
 					{
 						BX_TRACE("Init error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
 						goto error;
@@ -2316,6 +2319,7 @@ VK_IMPORT_DEVICE
 				for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 				{
 					vkDestroy(m_presentDoneSemaphore[ii]);
+					vkDestroy(m_renderDoneSemaphore[ii]);
 				}
 				releaseSwapchain();
 				BX_FALLTHROUGH;
@@ -2403,6 +2407,7 @@ VK_IMPORT_DEVICE
 			for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 			{
 				vkDestroy(m_presentDoneSemaphore[ii]);
+				vkDestroy(m_renderDoneSemaphore[ii]);
 			}
 
 			releaseSwapchainFramebuffer();
@@ -2446,19 +2451,17 @@ VK_IMPORT_DEVICE
 
 		void flip() override
 		{
-			if (VK_NULL_HANDLE != m_swapchain)
+			if (VK_NULL_HANDLE != m_swapchain && m_needPresent)
 			{
-				VkSemaphore presentWait = m_cmd.m_kickedSemaphore;
-
 				VkPresentInfoKHR pi;
 				pi.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 				pi.pNext = NULL;
 				pi.waitSemaphoreCount = 1;
-				pi.pWaitSemaphores    = &presentWait;
-				pi.swapchainCount = 1;
-				pi.pSwapchains    = &m_swapchain;
-				pi.pImageIndices  = &m_backBufferColorIdx;
-				pi.pResults       = NULL;
+				pi.pWaitSemaphores    = &m_lastImageRenderedSemaphore;
+				pi.swapchainCount     = 1;
+				pi.pSwapchains        = &m_swapchain;
+				pi.pImageIndices      = &m_backBufferColorIdx;
+				pi.pResults           = NULL;
 				VkResult result = vkQueuePresentKHR(m_queueGraphics, &pi);
 				if (VK_ERROR_OUT_OF_DATE_KHR       == result
 				||  VK_SUBOPTIMAL_KHR              == result
@@ -2466,6 +2469,9 @@ VK_IMPORT_DEVICE
 				{
 					m_needToRefreshSwapchain = true;
 				}
+
+				m_needPresent = false;
+				m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
 			}
 		}
 
@@ -2574,58 +2580,15 @@ VK_IMPORT_DEVICE
 			TextureVK& texture = m_textures[_handle.idx];
 
 			VkImage srcImage = texture.m_textureImage;
-			uint32_t dstWidth  = bx::uint32_max(1, texture.m_width  >> _mip);
-			uint32_t dstHeight = bx::uint32_max(1, texture.m_height >> _mip);
-			uint32_t dstPitch  = texture.m_readback.pitch(_mip);
-			uint32_t size = dstHeight * dstPitch;
+			uint32_t height = bx::uint32_max(1, texture.m_height >> _mip);
+			uint32_t pitch  = texture.m_readback.pitch(_mip);
+			uint32_t size = height * pitch;
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
 			createStagingBuffer(size, &stagingBuffer, &stagingMemory);
 
-			VkImageLayout oldLayout = texture.m_currentImageLayout;
-			texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-
-			VkBufferImageCopy bic;
-			bic.bufferOffset = 0;
-			bic.bufferRowLength = dstPitch;
-			bic.bufferImageHeight = dstHeight;
-			bic.imageSubresource.aspectMask = texture.m_aspectMask;
-			bic.imageSubresource.mipLevel = _mip;
-			bic.imageSubresource.baseArrayLayer = 0;
-			bic.imageSubresource.layerCount = 1;
-			bic.imageOffset = { 0, 0, 0 };
-			bic.imageExtent = { dstWidth, dstHeight, 1 };
-
-			vkCmdCopyImageToBuffer(
-				  m_commandBuffer
-				, texture.m_textureImage
-				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-				, stagingBuffer
-				, 1
-				, &bic
-			    );
-
-			// Make changes to the buffer visible to host read
-			VkMemoryBarrier memBarrier;
-			memBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			memBarrier.pNext         = NULL;
-			memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-			vkCmdPipelineBarrier(
-				  m_commandBuffer
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				, VK_PIPELINE_STAGE_HOST_BIT
-				, 0
-				, 1
-				, &memBarrier
-				, 0
-				, NULL
-				, 0
-				, NULL
-				);
-
-			texture.setImageMemoryBarrier(m_commandBuffer, oldLayout);
+			texture.m_readback.copyImageToBuffer(m_commandBuffer, stagingBuffer, texture.m_currentImageLayout, texture.m_aspectMask, _mip);
 
 			ReadbackVK::Data* readbackData = (ReadbackVK::Data*)BX_ALLOC(g_allocator, sizeof(ReadbackVK::Data));
 			readbackData->m_readback = &texture.m_readback;
@@ -2653,7 +2616,7 @@ VK_IMPORT_DEVICE
 
 		void destroyTexture(TextureHandle _handle) override
 		{
-		    m_textures[_handle.idx].destroy();
+			m_textures[_handle.idx].destroy();
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override
@@ -2694,11 +2657,6 @@ VK_IMPORT_DEVICE
 		{
 			// Source for the copy is the last rendered swapchain image
 			VkImage srcImage = m_backBufferColorImage[m_backBufferColorIdx];
-			const uint32_t width  = m_sci.imageExtent.width;
-			const uint32_t height = m_sci.imageExtent.height;
-			ReadbackVK& readback = m_backBufferReadbacks[m_backBufferColorIdx];
-			uint32_t pitch = readback.pitch();
-			uint32_t size = height * pitch;
 
 			if (isValid(_fbh) )
 			{
@@ -2716,83 +2674,25 @@ VK_IMPORT_DEVICE
 				return;
 			}
 
+			const uint32_t width = m_sci.imageExtent.width;
+			const uint32_t height = m_sci.imageExtent.height;
+
+			ReadbackVK readback;
+			readback.create(srcImage, width, height, bimg::TextureFormat::BGRA8);
+			uint32_t pitch = readback.pitch();
+			uint32_t size = height * pitch;
+
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
 			createStagingBuffer(size, &stagingBuffer, &stagingMemory);
 
-			// Transition swapchain image from present to transfer source layout
-			setImageMemoryBarrier(
-				  m_commandBuffer
-				, srcImage
-				, VK_IMAGE_ASPECT_COLOR_BIT
-				, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-				, 0
-				, 1
-				, 0
-				, 1
-			    );
+			readback.copyImageToBuffer(m_commandBuffer, stagingBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT);
 
-			VkBufferImageCopy bic;
-			bic.bufferOffset = 0;
-			bic.bufferRowLength = pitch;
-			bic.bufferImageHeight = height;
-			bic.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			bic.imageSubresource.mipLevel = 0;
-			bic.imageSubresource.baseArrayLayer = 0;
-			bic.imageSubresource.layerCount = 1;
-			bic.imageOffset = { 0, 0, 0 };
-			bic.imageExtent = { width, height, 1 };
+			// stall for commandbuffer to finish
+			kick(true);
 
-			vkCmdCopyImageToBuffer(
-				  m_commandBuffer
-				, srcImage
-				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-				, stagingBuffer
-				, 1
-				, &bic
-			    );
-
-			// Make changes to the buffer visible to host read
-			VkMemoryBarrier memBarrier;
-			memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			memBarrier.pNext = NULL;
-			memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-			vkCmdPipelineBarrier(
-				  m_commandBuffer
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				, VK_PIPELINE_STAGE_HOST_BIT
-				, 0
-				, 1
-				, &memBarrier
-				, 0
-				, NULL
-				, 0
-				, NULL
-			    );
-
-			// Transition back the swap chain image after the copy is done
-			setImageMemoryBarrier(
-				  m_commandBuffer
-				, srcImage
-				, VK_IMAGE_ASPECT_COLOR_BIT
-				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-				, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-				, 0
-				, 1
-				, 0
-				, 1
-				);
-
-			ReadbackVK::Data* readbackData = (ReadbackVK::Data*)BX_ALLOC(g_allocator, sizeof(ReadbackVK::Data));
-			readbackData->m_readback = &readback;
-			readbackData->m_memory = stagingMemory;
-			readbackData->m_offset = 0;
-			readbackData->m_mip = 0;
-			readbackData->m_data = NULL;
-			readbackData->m_swizzleBgra8 = false;
-			readbackData->m_filePath = _filePath;
+			uint8_t* src;
+			VK_CHECK(vkMapMemory(m_device, stagingMemory, 0, VK_WHOLE_SIZE, 0, (void**)&src));
 
 			static const VkFormat unswizzledFormats[] =
 			{
@@ -2804,13 +2704,27 @@ VK_IMPORT_DEVICE
 			{
 				if (m_sci.imageFormat == unswizzledFormats[ii])
 				{
-					readbackData->m_swizzleBgra8 = true;
+					bimg::imageSwizzleBgra8(src, pitch, width, height, src, pitch);
 					break;
 				}
 			}
 
-			runDeferred(&ReadbackVK::screenshotCallback, readbackData);
-			releaseDeferred(stagingBuffer, stagingMemory);
+			g_callback->screenShot(
+				  _filePath
+				, width
+				, height
+				, pitch
+				, src
+				, height * pitch
+				, false
+				);
+
+			vkUnmapMemory(m_device, stagingMemory);
+
+			readback.destroy();
+
+			vkDestroyBuffer(m_device, stagingBuffer, m_allocatorCb);
+			vkFreeMemory(m_device, stagingMemory, m_allocatorCb);
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -3184,8 +3098,11 @@ VK_IMPORT_DEVICE
 					for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 					{
 						vkDestroy(m_presentDoneSemaphore[ii]);
-						m_presentDoneSemaphore[ii] = VK_NULL_HANDLE;
+						vkDestroy(m_renderDoneSemaphore[ii]);
 					}
+
+					m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
+					m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
 					m_cmd.reset();
 					m_commandBuffer = m_cmd.alloc();
@@ -3238,6 +3155,7 @@ VK_IMPORT_DEVICE
 					for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 					{
 						VK_CHECK(vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_presentDoneSemaphore[ii]) );
+						VK_CHECK(vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_renderDoneSemaphore[ii]) );
 					}
 
 					VK_CHECK(createSwapchain() );
@@ -4421,6 +4339,56 @@ VK_IMPORT_DEVICE
 			}
 		}
 
+		bool acquireImage()
+		{
+			if (m_needPresent)
+			{
+				return true;
+			}
+
+			m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_cmd.m_currentFrameInFlight];
+			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_cmd.m_currentFrameInFlight];
+
+			VkResult result = vkAcquireNextImageKHR(
+				  m_device
+				, m_swapchain
+				, UINT64_MAX
+				, m_lastImageAcquiredSemaphore
+				, VK_NULL_HANDLE
+				, &m_backBufferColorIdx
+				);
+
+			if (VK_ERROR_OUT_OF_DATE_KHR == result
+				|| VK_ERROR_VALIDATION_FAILED_EXT == result)
+			{
+				m_needToRefreshSwapchain = true;
+				return false;
+			}
+
+			if (m_backBufferColorFence[m_backBufferColorIdx] != VK_NULL_HANDLE)
+			{
+				vkWaitForFences(m_device, 1, &m_backBufferColorFence[m_backBufferColorIdx], VK_TRUE, UINT64_MAX);
+			}
+
+			m_needPresent = true;
+			return true;
+		}
+
+		void kick(bool _wait = false)
+		{
+			bool acquired = m_lastImageAcquiredSemaphore != VK_NULL_HANDLE;
+			VkSemaphore waitSemaphore = m_lastImageAcquiredSemaphore;
+			VkSemaphore signalSemaphore = acquired ? m_lastImageRenderedSemaphore : VK_NULL_HANDLE;
+			m_cmd.kick(waitSemaphore, signalSemaphore, _wait);
+			if (acquired)
+			{
+				m_backBufferColorFence[m_backBufferColorIdx] = m_cmd.m_kickedFence;
+			}
+			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
+			m_cmd.finish(_wait);
+			m_commandBuffer = m_cmd.alloc();
+		}
+
 		int32_t selectMemoryType(uint32_t _memoryTypeBits, uint32_t _propertyFlags, int32_t _startIndex = 0) const
 		{
 			for (int32_t ii = _startIndex, num = m_memoryProperties.memoryTypeCount; ii < num; ++ii)
@@ -4510,11 +4478,15 @@ VK_IMPORT_DEVICE
 		VkImageView        m_backBufferColorImageView[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkFramebuffer      m_backBufferColor[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkFence            m_backBufferColorFence[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		ReadbackVK         m_backBufferReadbacks[BGFX_CONFIG_MAX_BACK_BUFFERS];
 
 		VkSemaphore        m_presentDoneSemaphore[BGFX_CONFIG_MAX_FRAME_LATENCY];
+		VkSemaphore        m_renderDoneSemaphore[BGFX_CONFIG_MAX_FRAME_LATENCY];
+
+		VkSemaphore        m_lastImageRenderedSemaphore;
+		VkSemaphore        m_lastImageAcquiredSemaphore;
 
 		uint32_t           m_backBufferColorIdx;
+		bool               m_needPresent;
 		bool               m_needToRefreshSwapchain;
 
 		VkFormat           m_backBufferDepthStencilFormat;
@@ -4676,6 +4648,22 @@ VK_DESTROY
 		bx::memSet(m_descriptorSet, 0, sizeof(VkDescriptorSet) * m_maxDescriptors);
 		m_pos = 0;
 		m_currentDs = 0;
+	}
+
+	void ScratchBufferVK::flush()
+	{
+		const VkPhysicalDeviceProperties& deviceProperties = s_renderVK->m_deviceProperties;
+		VkDevice device = s_renderVK->m_device;
+
+		const uint32_t align = uint32_t(deviceProperties.limits.nonCoherentAtomSize);
+		const uint32_t size = bx::min(bx::strideAlign(m_pos, align), m_size);
+		VkMappedMemoryRange range;
+		range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		range.pNext = NULL;
+		range.memory = m_deviceMem;
+		range.offset = 0;
+		range.size = size;
+		vkFlushMappedMemoryRanges(device, 1, &range);
 	}
 
 	VkResult ImageVK::create(VkFormat _format, const VkExtent3D& _extent)
@@ -5299,6 +5287,75 @@ VK_DESTROY
 		return mipWidth * bpp / 8;
 	}
 
+	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip) const
+	{
+		uint32_t mipWidth  = bx::uint32_max(1, m_width  >> _mip);
+		uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
+
+		setImageMemoryBarrier(
+			  _commandBuffer
+			, m_image
+			, _aspect
+			, _layout
+			, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			, _mip
+			, 1
+			, 0
+			, 1
+			);
+
+		VkBufferImageCopy bic;
+		bic.bufferOffset = 0;
+		bic.bufferRowLength = mipWidth;
+		bic.bufferImageHeight = mipHeight;
+		bic.imageSubresource.aspectMask = _aspect;
+		bic.imageSubresource.mipLevel = _mip;
+		bic.imageSubresource.baseArrayLayer = 0;
+		bic.imageSubresource.layerCount = 1;
+		bic.imageOffset = { 0, 0, 0 };
+		bic.imageExtent = { mipWidth, mipHeight, 1 };
+
+		vkCmdCopyImageToBuffer(
+			  _commandBuffer
+			, m_image
+			, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			, _buffer
+			, 1
+			, &bic
+			);
+
+		// Make changes to the buffer visible to host read
+		VkMemoryBarrier memBarrier;
+		memBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+		memBarrier.pNext         = NULL;
+		memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+		vkCmdPipelineBarrier(
+			  _commandBuffer
+			, VK_PIPELINE_STAGE_TRANSFER_BIT
+			, VK_PIPELINE_STAGE_HOST_BIT
+			, 0
+			, 1
+			, &memBarrier
+			, 0
+			, NULL
+			, 0
+			, NULL
+			);
+
+		setImageMemoryBarrier(
+			  _commandBuffer
+			, m_image
+			, _aspect
+			, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			, _layout
+			, _mip
+			, 1
+			, 0
+			, 1
+			);
+	}
+
 	void ReadbackVK::readback(const Data& _data) const
 	{
 		uint32_t mipHeight = bx::uint32_max(1, m_height >> _data.m_mip);
@@ -5319,43 +5376,10 @@ VK_DESTROY
 		vkUnmapMemory(s_renderVK->m_device, _data.m_memory);
 	}
 
-	void ReadbackVK::screenshot(const Data& _data) const
-	{
-		uint32_t rowPitch = pitch();
-
-		uint8_t* src;
-		VK_CHECK(vkMapMemory(s_renderVK->m_device, _data.m_memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
-		src += _data.m_offset;
-
-		if (_data.m_swizzleBgra8)
-		{
-			bimg::imageSwizzleBgra8(src, rowPitch, m_width, m_height, src, rowPitch);
-		}
-
-		g_callback->screenShot(
-			  _data.m_filePath
-			, m_width
-			, m_height
-			, rowPitch
-			, src
-			, m_height * rowPitch
-			, false
-		    );
-
-		vkUnmapMemory(s_renderVK->m_device, _data.m_memory);
-	}
-
 	void ReadbackVK::copyCallback(void* _data)
 	{
 		const Data* readbackData = (Data*)_data;
 		readbackData->m_readback->readback(*readbackData);
-		BX_FREE(g_allocator, _data);
-	}
-
-	void ReadbackVK::screenshotCallback(void* _data)
-	{
-		const Data* readbackData = (Data*)_data;
-		readbackData->m_readback->screenshot(*readbackData);
 		BX_FREE(g_allocator, _data);
 	}
 
@@ -6155,9 +6179,11 @@ VK_DESTROY
 		shutdown();
 
 		m_currentFrameInFlight = 0;
-		m_consumeIndex = 0;
+		m_consumeIndex         = 0;
 
 		m_activeCommandBuffer = VK_NULL_HANDLE;
+		m_kickedSemaphore     = VK_NULL_HANDLE;
+		m_kickedFence         = VK_NULL_HANDLE;
 
 		VkCommandPoolCreateInfo cpci;
 		cpci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -6229,33 +6255,54 @@ VK_DESTROY
 		return m_activeCommandBuffer;
 	}
 
-	void CommandQueueVK::kick(VkSemaphore _wait)
+	void CommandQueueVK::kick(VkSemaphore _waitSemaphore, VkSemaphore _signalSemaphore, bool _wait)
 	{
 		if (m_activeCommandBuffer != VK_NULL_HANDLE)
 		{
 			VK_CHECK(vkEndCommandBuffer(m_activeCommandBuffer) );
 
+			static const VkPipelineStageFlags stageFlags[2] = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT , VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
+
+			VkSemaphore waitSemaphores[2];
+			uint32_t waitSemaphoreCount = 0;
+			if (m_kickedSemaphore != VK_NULL_HANDLE)
+			{
+				waitSemaphores[waitSemaphoreCount++] = m_kickedSemaphore;
+			}
+			if (_waitSemaphore != VK_NULL_HANDLE)
+			{
+				waitSemaphores[waitSemaphoreCount++] = _waitSemaphore;
+			}
+
 			m_kickedSemaphore = m_commandList[m_currentFrameInFlight].m_semaphore;
 			m_kickedFence = m_commandList[m_currentFrameInFlight].m_fence;
 
-			VK_CHECK(vkResetFences(s_renderVK->m_device, 1, &m_kickedFence));
+			VkSemaphore signalSemaphores[2] = { m_kickedSemaphore };
+			uint32_t signalSemaphoreCount = 1;
+			if (_signalSemaphore != VK_NULL_HANDLE)
+			{
+				signalSemaphores[signalSemaphoreCount++] = _signalSemaphore;
+			}
 
-			const VkPipelineStageFlags stageFlags = 0
-				| VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
-				;
+			VK_CHECK(vkResetFences(s_renderVK->m_device, 1, &m_kickedFence));
 
 			VkSubmitInfo si;
 			si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 			si.pNext = NULL;
-			si.waitSemaphoreCount = VK_NULL_HANDLE != _wait;
-			si.pWaitSemaphores = &_wait;
-			si.pWaitDstStageMask = &stageFlags;
+			si.waitSemaphoreCount = waitSemaphoreCount;
+			si.pWaitSemaphores = &waitSemaphores[0];
+			si.pWaitDstStageMask = &stageFlags[0];
 			si.commandBufferCount = 1;
 			si.pCommandBuffers = &m_activeCommandBuffer;
-			si.signalSemaphoreCount = 1;
-			si.pSignalSemaphores = &m_kickedSemaphore;
+			si.signalSemaphoreCount = signalSemaphoreCount;
+			si.pSignalSemaphores = &signalSemaphores[0];
 
 			VK_CHECK(vkQueueSubmit(m_queue, 1, &si, m_kickedFence) );
+
+			if (_wait)
+			{
+				VK_CHECK(vkWaitForFences(s_renderVK->m_device, 1, &m_kickedFence, VK_TRUE, UINT64_MAX) );
+			}
 
 			m_activeCommandBuffer = VK_NULL_HANDLE;
 
@@ -6508,29 +6555,11 @@ VK_DESTROY
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
 
-		VkSemaphore renderWait = m_presentDoneSemaphore[m_cmd.m_currentFrameInFlight];
-
+		bool needAcquire = true;
+		if (needAcquire)
 		{
-			VkResult result = vkAcquireNextImageKHR(
-				m_device
-				, m_swapchain
-				, UINT64_MAX
-				, renderWait
-				, VK_NULL_HANDLE
-				, &m_backBufferColorIdx
-				);
-
-			if (VK_ERROR_OUT_OF_DATE_KHR       == result
-			||  VK_ERROR_VALIDATION_FAILED_EXT == result)
-			{
-				m_needToRefreshSwapchain = true;
+			if (!acquireImage() )
 				return;
-			}
-		}
-
-		if (m_backBufferColorFence[m_backBufferColorIdx] != VK_NULL_HANDLE)
-		{
-			vkWaitForFences(m_device, 1, &m_backBufferColorFence[m_backBufferColorIdx], VK_TRUE, UINT64_MAX);
 		}
 		
 		const uint64_t f0 = BGFX_STATE_BLEND_FACTOR;
@@ -7399,15 +7428,7 @@ BX_UNUSED(presentMin, presentMax);
 			BGFX_VK_PROFILER_END();
 		}
 
-		const uint32_t align = uint32_t(m_deviceProperties.limits.nonCoherentAtomSize);
-		const uint32_t size = bx::min(bx::strideAlign(scratchBuffer.m_pos, align), scratchBuffer.m_size);
-		VkMappedMemoryRange range;
-		range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		range.pNext  = NULL;
-		range.memory = scratchBuffer.m_deviceMem;
-		range.offset = 0;
-		range.size   = size;
-		vkFlushMappedMemoryRanges(m_device, 1, &range);
+		scratchBuffer.flush();
 
 		if (beginRenderPass)
 		{
@@ -7428,10 +7449,7 @@ BX_UNUSED(presentMin, presentMax);
 			);
 		m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-		m_cmd.kick(renderWait);
-		m_backBufferColorFence[m_backBufferColorIdx] = m_cmd.m_kickedFence;
-		m_cmd.finish();
-		m_commandBuffer = m_cmd.alloc();
+		kick();
 	}
 
 } /* namespace vk */ } // namespace bgfx

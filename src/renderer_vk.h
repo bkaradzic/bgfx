@@ -370,6 +370,7 @@ VK_DESTROY
 		void create(uint32_t _size, uint32_t _maxDescriptors);
 		void destroy();
 		void reset();
+		void flush();
 
 		VkDescriptorSet& getCurrentDS()
 		{
@@ -592,16 +593,13 @@ VK_DESTROY
 			VkDeviceSize m_offset;
 			uint8_t m_mip;
 			void* m_data;
-			// screenshot only
-			bool m_swizzleBgra8;
-			const char* m_filePath;
 		};
 
 		void create(VkImage _image, uint32_t _width, uint32_t _height, bimg::TextureFormat::Enum _format);
 		void destroy() {}
 		uint32_t pitch(uint8_t _mip = 0) const;
+		void copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip = 0) const;
 		void readback(const Data& _data) const;
-		void screenshot(const Data& _data) const;
 
 		VkImage m_image;
 		uint32_t m_width;
@@ -609,7 +607,6 @@ VK_DESTROY
 		bimg::TextureFormat::Enum m_format;
 
 		static void copyCallback(void* _data);
-		static void screenshotCallback(void* _data);
 	};
 
 	struct TextureVK
@@ -689,7 +686,6 @@ VK_DESTROY
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
-//		IDXGISwapChain* m_swapChain;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;
@@ -709,7 +705,7 @@ VK_DESTROY
 		void reset();
 		void shutdown();
 		VkCommandBuffer alloc();
-		void kick(VkSemaphore _wait = VK_NULL_HANDLE);
+		void kick(VkSemaphore _waitSemaphore = VK_NULL_HANDLE, VkSemaphore _signalSemaphore = VK_NULL_HANDLE, bool _wait = false);
 		void finish(bool _finishAll = false);
 		void release(uint64_t _handle, VkObjectType _type);
 		void run(Callback _func, void* _data = NULL);
