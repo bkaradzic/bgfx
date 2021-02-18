@@ -814,6 +814,7 @@ VK_IMPORT_DEVICE
 	template<> VkObjectType getType<VkImage       >() { return VK_OBJECT_TYPE_IMAGE;         }
 	template<> VkObjectType getType<VkImageView   >() { return VK_OBJECT_TYPE_IMAGE_VIEW;    }
 	template<> VkObjectType getType<VkShaderModule>() { return VK_OBJECT_TYPE_SHADER_MODULE; }
+	template<> VkObjectType getType<VkFramebuffer >() { return VK_OBJECT_TYPE_FRAMEBUFFER;   }
 	template<> VkObjectType getType<VkDeviceMemory>() { return VK_OBJECT_TYPE_DEVICE_MEMORY; }
 
 	template<typename Ty>
@@ -6162,7 +6163,8 @@ VK_DESTROY
 
 	void FrameBufferVK::destroy()
 	{
-		vkDestroy(m_framebuffer);
+		s_renderVK->releaseDeferred(m_framebuffer);
+		m_framebuffer = VK_NULL_HANDLE;
 	}
 
 	void CommandQueueVK::init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight)
@@ -6370,6 +6372,9 @@ VK_DESTROY
 				break;
 			case VK_OBJECT_TYPE_IMAGE:
 				vkDestroyImage(device, ::VkImage(resource.m_handle), allocatorCb);
+				break;
+			case VK_OBJECT_TYPE_FRAMEBUFFER:
+				vkDestroyFramebuffer(device, ::VkFramebuffer(resource.m_handle), allocatorCb);
 				break;
 			case VK_OBJECT_TYPE_DEVICE_MEMORY:
 				vkFreeMemory(device, ::VkDeviceMemory(resource.m_handle), allocatorCb);
