@@ -596,7 +596,7 @@ VK_DESTROY
 		};
 
 		void create(VkImage _image, uint32_t _width, uint32_t _height, bimg::TextureFormat::Enum _format);
-		void destroy() {}
+		void destroy();
 		uint32_t pitch(uint8_t _mip = 0) const;
 		void copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip = 0) const;
 		void readback(const Data& _data) const;

@@ -2362,7 +2362,6 @@ VK_IMPORT_DEVICE
 
 		void shutdown()
 		{
-			VK_CHECK(vkQueueWaitIdle(m_queueGraphics) );
 			VK_CHECK(vkDeviceWaitIdle(m_device) );
 
 			m_gpuTimer.shutdown();
@@ -2591,7 +2590,7 @@ VK_IMPORT_DEVICE
 
 			texture.m_readback.copyImageToBuffer(m_commandBuffer, stagingBuffer, texture.m_currentImageLayout, texture.m_aspectMask, _mip);
 
-			ReadbackVK::Data* readbackData = (ReadbackVK::Data*)BX_ALLOC(g_allocator, sizeof(ReadbackVK::Data));
+			ReadbackVK::Data* readbackData = (ReadbackVK::Data*)BX_ALLOC(g_allocator, sizeof(ReadbackVK::Data) );
 			readbackData->m_readback = &texture.m_readback;
 			readbackData->m_memory = stagingMemory;
 			readbackData->m_offset = 0;
@@ -2693,7 +2692,7 @@ VK_IMPORT_DEVICE
 			kick(true);
 
 			uint8_t* src;
-			VK_CHECK(vkMapMemory(m_device, stagingMemory, 0, VK_WHOLE_SIZE, 0, (void**)&src));
+			VK_CHECK(vkMapMemory(m_device, stagingMemory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
 
 			static const VkFormat unswizzledFormats[] =
 			{
@@ -2805,10 +2804,10 @@ VK_IMPORT_DEVICE
 		template<typename Ty>
 		void releaseDeferred(Ty _object, VkDeviceMemory _memory = 0)
 		{
-			m_cmd.release(uint64_t(_object.vk), getType<Ty>());
+			m_cmd.release(uint64_t(_object.vk), getType<Ty>() );
 			if (_memory != VK_NULL_HANDLE)
 			{
-				m_cmd.release(uint64_t(_memory), getType<VkDeviceMemory>());
+				m_cmd.release(uint64_t(_memory), getType<VkDeviceMemory>() );
 			}
 		}
 
@@ -3096,6 +3095,9 @@ VK_IMPORT_DEVICE
 				{
 					VK_CHECK(vkDeviceWaitIdle(m_device));
 
+					m_cmd.reset();
+					m_commandBuffer = m_cmd.alloc();
+
 					for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 					{
 						vkDestroy(m_presentDoneSemaphore[ii]);
@@ -3104,9 +3106,6 @@ VK_IMPORT_DEVICE
 
 					m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
 					m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
-
-					m_cmd.reset();
-					m_commandBuffer = m_cmd.alloc();
 
 					releaseSwapchainFramebuffer();
 					releaseSwapchainRenderPass();
@@ -3242,13 +3241,10 @@ VK_IMPORT_DEVICE
 
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
-			BX_UNUSED(_msaa);
-
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx)
 			{
 				FrameBufferVK& frameBuffer = m_frameBuffers[m_fbh.idx];
-				BX_UNUSED(frameBuffer);
 
 				if (m_rtMsaa) frameBuffer.resolve();
 
@@ -3283,7 +3279,6 @@ VK_IMPORT_DEVICE
 			else
 			{
 				const FrameBufferVK& frameBuffer = m_frameBuffers[_fbh.idx];
-				BX_UNUSED(frameBuffer);
 
 				if (0 < frameBuffer.m_num)
 				{
@@ -4621,7 +4616,7 @@ VK_DESTROY
 
 		VK_CHECK(vkMapMemory(device, m_deviceMem, 0, m_size, 0, (void**)&m_data) );
 	}
-
+	
 	void ScratchBufferVK::destroy()
 	{
 		reset();
@@ -5281,6 +5276,11 @@ VK_DESTROY
 		m_format = _format;
 	}
 
+	void ReadbackVK::destroy()
+	{
+		m_image = VK_NULL_HANDLE;
+	}
+
 	uint32_t ReadbackVK::pitch(uint8_t _mip) const
 	{
 		uint32_t mipWidth = bx::uint32_max(1, m_width >> _mip);
@@ -5359,6 +5359,11 @@ VK_DESTROY
 
 	void ReadbackVK::readback(const Data& _data) const
 	{
+		if (m_image == VK_NULL_HANDLE)
+		{
+			return;
+		}
+
 		uint32_t mipHeight = bx::uint32_max(1, m_height >> _data.m_mip);
 		uint32_t rowPitch = pitch(_data.m_mip);
 
@@ -5623,16 +5628,15 @@ VK_DESTROY
 			{
 				s_renderVK->createStagingBuffer(totalMemSize, &stagingBuffer, &stagingDeviceMem);
 
+				uint8_t* mappedMemory;
 				VK_CHECK(vkMapMemory(
 					  device
 					, stagingDeviceMem
 					, 0
 					, totalMemSize
 					, 0
-					, &m_directAccessPtr
+					, (void**)&mappedMemory
 					) );
-
-				uint8_t* mappedMemory = (uint8_t*)m_directAccessPtr;
 
 				// copy image to staging buffer
 				for (uint32_t ii = 0; ii < numSrd; ++ii)
@@ -5708,7 +5712,6 @@ VK_DESTROY
 						? VK_IMAGE_LAYOUT_GENERAL
 						: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 					) );
-				s_renderVK->debugBarrier();
 			}
 
 			BX_FREE(g_allocator, bufferCopyInfo);
@@ -6058,6 +6061,8 @@ VK_DESTROY
 
 	void TextureVK::copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy)
 	{
+		const VkImageLayout oldLayout = m_currentImageLayout;
+
 		// image Layout transition into destination optimal
 		setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -6071,8 +6076,7 @@ VK_DESTROY
 			, _bufferImageCopy
 			);
 
-		setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		s_renderVK->debugBarrier();
+		setImageMemoryBarrier(_commandBuffer, oldLayout == VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : oldLayout);
 	}
 
 	void TextureVK::setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout)
@@ -6172,6 +6176,7 @@ VK_DESTROY
 		m_queueFamily = _queueFamily;
 		m_queue = _queue;
 		m_numFramesInFlight = bx::clamp<uint32_t>(_numFramesInFlight, 1, BGFX_CONFIG_MAX_FRAME_LATENCY);
+		m_activeCommandBuffer = VK_NULL_HANDLE;
 
 		reset();
 	}
@@ -6221,6 +6226,7 @@ VK_DESTROY
 
 	void CommandQueueVK::shutdown()
 	{
+		kick(VK_NULL_HANDLE, VK_NULL_HANDLE, true);
 		finish(true);
 
 		for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
@@ -6286,7 +6292,7 @@ VK_DESTROY
 				signalSemaphores[signalSemaphoreCount++] = _signalSemaphore;
 			}
 
-			VK_CHECK(vkResetFences(s_renderVK->m_device, 1, &m_kickedFence));
+			VK_CHECK(vkResetFences(s_renderVK->m_device, 1, &m_kickedFence) );
 
 			VkSubmitInfo si;
 			si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -6455,7 +6461,7 @@ VK_DESTROY
 				blitInfo.srcSubresource.layerCount = blit.m_depth;
 				blitInfo.dstSubresource.layerCount = blit.m_depth;
 			}
-			else if(VK_IMAGE_VIEW_TYPE_3D == src.m_type)
+			else if (VK_IMAGE_VIEW_TYPE_3D == src.m_type)
 			{
 				blitInfo.srcOffsets[0].z = blit.m_srcZ;
 				blitInfo.dstOffsets[0].z = blit.m_dstZ;
