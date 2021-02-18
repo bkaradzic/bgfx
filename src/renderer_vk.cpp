@@ -6426,34 +6426,47 @@ VK_DESTROY
 				currentDst = blit.m_dst;
 			}
 
-			uint32_t srcZ = (VK_IMAGE_VIEW_TYPE_CUBE == src.m_type ? 0 : blit.m_srcZ);
-			uint32_t dstZ = (VK_IMAGE_VIEW_TYPE_CUBE == dst.m_type ? 0 : blit.m_dstZ);
-			uint32_t srcLayer = (VK_IMAGE_VIEW_TYPE_CUBE == src.m_type ? blit.m_srcZ : 0);
-			uint32_t dstLayer = (VK_IMAGE_VIEW_TYPE_CUBE == dst.m_type ? blit.m_dstZ : 0);
-			uint32_t depth = (blit.m_depth == UINT16_MAX ? 1 : blit.m_depth);
-
 			VkImageBlit blitInfo;
 			blitInfo.srcSubresource.aspectMask     = src.m_aspectMask;
 			blitInfo.srcSubresource.mipLevel       = blit.m_srcMip;
-			blitInfo.srcSubresource.baseArrayLayer = srcLayer;
+			blitInfo.srcSubresource.baseArrayLayer = 0;
 			blitInfo.srcSubresource.layerCount     = 1;
 			blitInfo.srcOffsets[0].x = blit.m_srcX;
 			blitInfo.srcOffsets[0].y = blit.m_srcY;
-			blitInfo.srcOffsets[0].z = srcZ;
+			blitInfo.srcOffsets[0].z = 0;
 			blitInfo.srcOffsets[1].x = blit.m_srcX + blit.m_width;
 			blitInfo.srcOffsets[1].y = blit.m_srcY + blit.m_height;
-			blitInfo.srcOffsets[1].z = bx::max<int32_t>(srcZ + depth, 1);
+			blitInfo.srcOffsets[1].z = 1;
 			blitInfo.dstSubresource.aspectMask     = dst.m_aspectMask;
 			blitInfo.dstSubresource.mipLevel       = blit.m_dstMip;
-			blitInfo.dstSubresource.baseArrayLayer = dstLayer;
+			blitInfo.dstSubresource.baseArrayLayer = 0;
 			blitInfo.dstSubresource.layerCount     = 1;
 			blitInfo.dstOffsets[0].x = blit.m_dstX;
 			blitInfo.dstOffsets[0].y = blit.m_dstY;
-			blitInfo.dstOffsets[0].z = dstZ;
+			blitInfo.dstOffsets[0].z = 0;
 			blitInfo.dstOffsets[1].x = blit.m_dstX + blit.m_width;
 			blitInfo.dstOffsets[1].y = blit.m_dstY + blit.m_height;
-			blitInfo.dstOffsets[1].z = bx::max<int32_t>(dstZ + depth, 1);
-			VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) ) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+			blitInfo.dstOffsets[1].z = 1;
+
+			if (VK_IMAGE_VIEW_TYPE_CUBE == src.m_type)
+			{
+				blitInfo.srcSubresource.baseArrayLayer = blit.m_srcZ;
+				blitInfo.dstSubresource.baseArrayLayer = blit.m_dstZ;
+				blitInfo.srcSubresource.layerCount = blit.m_depth;
+				blitInfo.dstSubresource.layerCount = blit.m_depth;
+			}
+			else if(VK_IMAGE_VIEW_TYPE_3D == src.m_type)
+			{
+				blitInfo.srcOffsets[0].z = blit.m_srcZ;
+				blitInfo.dstOffsets[0].z = blit.m_dstZ;
+				blitInfo.srcOffsets[1].z = blit.m_srcZ + blit.m_depth;
+				blitInfo.dstOffsets[1].z = blit.m_dstZ + blit.m_depth;
+			}
+
+			const VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) )
+				? VK_FILTER_NEAREST
+				: VK_FILTER_LINEAR
+				;
 
 			vkCmdBlitImage(
 				  m_commandBuffer
@@ -6476,9 +6489,6 @@ VK_DESTROY
 		{
 			m_textures[currentDst.idx].setImageMemoryBarrier(m_commandBuffer, oldDstLayout);
 		}
-
-		// TODO
-		//debugBarrier();
 	}
 
 	void RendererContextVK::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
