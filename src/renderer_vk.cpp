@@ -4006,25 +4006,14 @@ VK_IMPORT_DEVICE
 							wds[wdsCount].pTexelBufferView = NULL;
 
 							TextureVK& texture = m_textures[bind.m_idx];
-							VkSampler sampler = getSampler(
-								(0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
-									? bind.m_samplerFlags
-									: (uint32_t)texture.m_flags
-								) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK)
-								, (uint32_t)texture.m_numMips);
-
-							if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout
-							&&  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL != texture.m_currentImageLayout)
-							{
-								texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-							}
+							texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_GENERAL);
 
 							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
 							imageInfo[imageCount].imageView   = VK_NULL_HANDLE != texture.m_textureImageStorageView
 								? texture.m_textureImageStorageView
 								: texture.m_textureImageView
 								;
-							imageInfo[imageCount].sampler     = sampler;
+							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
 							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
 							++imageCount;
 
@@ -4068,8 +4057,7 @@ VK_IMPORT_DEVICE
 								, (uint32_t)texture.m_numMips
 								);
 
-							if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout
-							&&  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL != texture.m_currentImageLayout)
+							if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout)
 							{
 								texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 							}
