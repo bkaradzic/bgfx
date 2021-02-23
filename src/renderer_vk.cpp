@@ -872,10 +872,10 @@ VK_IMPORT_DEVICE
 		, VkImageAspectFlags _aspectMask
 		, VkImageLayout _oldLayout
 		, VkImageLayout _newLayout
-		, uint32_t _baseMipLevel
-		, uint32_t _levelCount
-		, uint32_t _baseArrayLayer
-		, uint32_t _layerCount
+		, uint32_t _baseMipLevel = 0
+		, uint32_t _levelCount = VK_REMAINING_MIP_LEVELS
+		, uint32_t _baseArrayLayer = 0
+		, uint32_t _layerCount = VK_REMAINING_ARRAY_LAYERS
 		)
 	{
 		BX_ASSERT(true
@@ -1330,10 +1330,6 @@ VK_IMPORT_DEVICE
 				, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
 				, VK_IMAGE_LAYOUT_UNDEFINED
 				, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-				, 0
-				, 1
-				, 0
-				, 1
 				);
 
 			m_backBufferColorIdx = 0;
@@ -3123,7 +3119,7 @@ VK_IMPORT_DEVICE
 				||  formatChanged
 				||  m_needToRefreshSwapchain)
 				{
-					VK_CHECK(vkDeviceWaitIdle(m_device));
+					VK_CHECK(vkDeviceWaitIdle(m_device) );
 
 					m_cmd.reset();
 					m_commandBuffer = m_cmd.alloc();
@@ -3295,44 +3291,9 @@ VK_IMPORT_DEVICE
 				}
 			}
 
-			if (!isValid(_fbh) )
-			{
-//				m_rtvHandle = m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-//				uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-//				m_rtvHandle.ptr += m_currentFrameInFlight * rtvDescriptorSize;
-//				m_dsvHandle = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-//
-//				m_currentColor        = &m_rtvHandle;
-//				m_currentDepthStencil = &m_dsvHandle;
-//				m_commandList->OMSetRenderTargets(1, m_currentColor, true, m_currentDepthStencil);
-			}
-			else
+			if (isValid(_fbh) )
 			{
 				const FrameBufferVK& frameBuffer = m_frameBuffers[_fbh.idx];
-
-				if (0 < frameBuffer.m_num)
-				{
-//					D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-//					uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-//					m_rtvHandle.ptr = rtvDescriptor.ptr + (BX_COUNTOF(m_backBufferColor) + _fbh.idx * BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) * rtvDescriptorSize;
-//					m_currentColor  = &m_rtvHandle;
-				}
-				else
-				{
-//					m_currentColor = NULL;
-				}
-
-				if (isValid(frameBuffer.m_depth) )
-				{
-//					D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-//					uint32_t dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-//					m_dsvHandle.ptr = dsvDescriptor.ptr + (1 + _fbh.idx) * dsvDescriptorSize;
-//					m_currentDepthStencil = &m_dsvHandle;
-				}
-				else
-				{
-//					m_currentDepthStencil = NULL;
-				}
 
 				for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 				{
@@ -3345,12 +3306,6 @@ VK_IMPORT_DEVICE
 					TextureVK& texture = m_textures[frameBuffer.m_depth.idx];
 					texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 				}
-
-//				m_commandList->OMSetRenderTargets(frameBuffer.m_num
-//												, m_currentColor
-//												, true
-//												, m_currentDepthStencil
-//												);
 			}
 
 			m_fbh = _fbh;
@@ -4384,21 +4339,45 @@ VK_IMPORT_DEVICE
 				vkWaitForFences(m_device, 1, &m_backBufferColorFence[m_backBufferColorIdx], VK_TRUE, UINT64_MAX);
 			}
 
+			setImageMemoryBarrier(
+				  m_commandBuffer
+				, m_backBufferColorImage[m_backBufferColorIdx]
+				, VK_IMAGE_ASPECT_COLOR_BIT
+				, m_backBufferColorImageLayout[m_backBufferColorIdx]
+				, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+				);
+			m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
 			m_needPresent = true;
 			return true;
 		}
 
 		void kick(bool _wait = false)
 		{
-			bool acquired = m_lastImageAcquiredSemaphore != VK_NULL_HANDLE;
-			VkSemaphore waitSemaphore = m_lastImageAcquiredSemaphore;
-			VkSemaphore signalSemaphore = acquired ? m_lastImageRenderedSemaphore : VK_NULL_HANDLE;
+			const bool acquired = m_lastImageAcquiredSemaphore != VK_NULL_HANDLE;
+			const VkSemaphore waitSemaphore = m_lastImageAcquiredSemaphore;
+			const VkSemaphore signalSemaphore = acquired ? m_lastImageRenderedSemaphore : VK_NULL_HANDLE;
+			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
+
+			if (acquired)
+			{
+				setImageMemoryBarrier(
+					  m_commandBuffer
+					, m_backBufferColorImage[m_backBufferColorIdx]
+					, VK_IMAGE_ASPECT_COLOR_BIT
+					, m_backBufferColorImageLayout[m_backBufferColorIdx]
+					, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+					);
+				m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			}
+
 			m_cmd.kick(waitSemaphore, signalSemaphore, _wait);
+
 			if (acquired)
 			{
 				m_backBufferColorFence[m_backBufferColorIdx] = m_cmd.m_kickedFence;
 			}
-			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
+
 			m_commandBuffer = m_cmd.alloc();
 			m_cmd.finish(_wait);
 		}
@@ -5842,10 +5821,6 @@ VK_DESTROY
 						, m_aspectMask
 						, VK_IMAGE_LAYOUT_UNDEFINED
 						, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-						, 0
-						, m_numMips
-						, 0
-						, m_numSides
 						);
 				}
 
@@ -6090,10 +6065,8 @@ VK_DESTROY
 	{
 		const VkImageLayout oldLayout = m_currentImageLayout;
 
-		// image Layout transition into destination optimal
 		setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-		// copy buffer to image
 		vkCmdCopyBufferToImage(
 			  _commandBuffer
 			, _stagingBuffer
@@ -6119,10 +6092,6 @@ VK_DESTROY
 			, m_aspectMask
 			, m_currentImageLayout
 			, _newImageLayout
-			, 0
-			, m_numMips
-			, 0
-			, m_numSides
 			);
 
 		m_currentImageLayout = _newImageLayout;
@@ -6600,19 +6569,6 @@ VK_DESTROY
 
 		ScratchBufferVK& scratchBuffer = m_scratchBuffer[m_cmd.m_currentFrameInFlight];
 		scratchBuffer.reset();
-
-		setImageMemoryBarrier(
-			  m_commandBuffer
-			, m_backBufferColorImage[m_backBufferColorIdx]
-			, VK_IMAGE_ASPECT_COLOR_BIT
-			, m_backBufferColorImageLayout[m_backBufferColorIdx]
-			, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-			, 0
-			, 1
-			, 0
-			, 1
-			);
-		m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		setMemoryBarrier(
 			  m_commandBuffer
@@ -7472,19 +7428,6 @@ BX_UNUSED(presentMin, presentMax);
 			vkCmdEndRenderPass(m_commandBuffer);
 			beginRenderPass = false;
 		}
-
-		setImageMemoryBarrier(
-			  m_commandBuffer
-			, m_backBufferColorImage[m_backBufferColorIdx]
-			, VK_IMAGE_ASPECT_COLOR_BIT
-			, m_backBufferColorImageLayout[m_backBufferColorIdx]
-			, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-			, 0
-			, 1
-			, 0
-			, 1
-			);
-		m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 		kick();
 	}
