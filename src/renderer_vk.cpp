@@ -2641,7 +2641,6 @@ VK_IMPORT_DEVICE
 		{
 			TextureVK& texture = m_textures[_handle.idx];
 
-			VkImage srcImage = texture.m_textureImage;
 			uint32_t height = bx::uint32_max(1, texture.m_height >> _mip);
 			uint32_t pitch  = texture.m_readback.pitch(_mip);
 			uint32_t size = height * pitch;
@@ -4676,7 +4675,7 @@ VK_DESTROY
 
 		VK_CHECK(vkMapMemory(device, m_deviceMem, 0, m_size, 0, (void**)&m_data) );
 	}
-	
+
 	void ScratchBufferVK::destroy()
 	{
 		reset();
@@ -6654,7 +6653,7 @@ VK_DESTROY
 			if (!acquireImage() )
 				return;
 		}
-		
+
 		const uint64_t f0 = BGFX_STATE_BLEND_FACTOR;
 		const uint64_t f1 = BGFX_STATE_BLEND_INV_FACTOR;
 		const uint64_t f2 = BGFX_STATE_BLEND_FACTOR<<4;
