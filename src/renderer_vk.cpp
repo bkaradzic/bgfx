@@ -6555,7 +6555,21 @@ VK_DESTROY
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
 
-		bool needAcquire = true;
+		bool needAcquire = !!(_render->m_debug & (BGFX_DEBUG_STATS|BGFX_DEBUG_TEXT) );
+		if (!needAcquire)
+		{
+			for (uint32_t ii = 0; ii < _render->m_numRenderItems; ++ii)
+			{
+				const ViewId decodedView = SortKey::decodeView(_render->m_sortKeys[ii]);
+				const ViewId remappedView = _render->m_viewRemap[decodedView];
+				if (!isValid(_render->m_view[remappedView].m_fbh) )
+				{
+					needAcquire = true;
+					break;
+				}
+			}
+		}
+
 		if (needAcquire)
 		{
 			if (!acquireImage() )
