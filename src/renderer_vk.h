@@ -586,27 +586,16 @@ VK_DESTROY
 
 	struct ReadbackVK
 	{
-		struct Data
-		{
-			ReadbackVK* m_readback;
-			VkDeviceMemory m_memory;
-			VkDeviceSize m_offset;
-			uint8_t m_mip;
-			void* m_data;
-		};
-
 		void create(VkImage _image, uint32_t _width, uint32_t _height, bimg::TextureFormat::Enum _format);
 		void destroy();
 		uint32_t pitch(uint8_t _mip = 0) const;
 		void copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip = 0) const;
-		void readback(const Data& _data) const;
+		void readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, uint8_t _mip = 0) const;
 
 		VkImage m_image;
 		uint32_t m_width;
 		uint32_t m_height;
 		bimg::TextureFormat::Enum m_format;
-
-		static void copyCallback(void* _data);
 	};
 
 	struct TextureVK
@@ -699,8 +688,6 @@ VK_DESTROY
 
 	struct CommandQueueVK
 	{
-		typedef void (*Callback)(void*);
-
 		void init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight);
 		void reset();
 		void shutdown();
@@ -708,7 +695,6 @@ VK_DESTROY
 		void kick(VkSemaphore _waitSemaphore = VK_NULL_HANDLE, VkSemaphore _signalSemaphore = VK_NULL_HANDLE, bool _wait = false);
 		void finish(bool _finishAll = false);
 		void release(uint64_t _handle, VkObjectType _type);
-		void run(Callback _func, void* _data = NULL);
 		void consume();
 
 		uint32_t m_queueFamily;
@@ -742,15 +728,6 @@ VK_DESTROY
 
 		typedef stl::vector<Resource> ResourceArray;
 		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
-
-		struct RunData
-		{
-			Callback m_func;
-			void* m_data;
-		};
-
-		typedef stl::vector<RunData> RunDataArray;
-		RunDataArray m_run[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
 
 } /* namespace bgfx */ } // namespace vk

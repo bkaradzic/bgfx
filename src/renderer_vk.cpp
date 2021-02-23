@@ -2651,15 +2651,12 @@ VK_IMPORT_DEVICE
 
 			texture.m_readback.copyImageToBuffer(m_commandBuffer, stagingBuffer, texture.m_currentImageLayout, texture.m_aspectMask, _mip);
 
-			ReadbackVK::Data* readbackData = (ReadbackVK::Data*)BX_ALLOC(g_allocator, sizeof(ReadbackVK::Data) );
-			readbackData->m_readback = &texture.m_readback;
-			readbackData->m_memory = stagingMemory;
-			readbackData->m_offset = 0;
-			readbackData->m_mip = _mip;
-			readbackData->m_data = _data;
+			kick(true);
 
-			runDeferred(&ReadbackVK::copyCallback, readbackData);
-			releaseDeferred(stagingBuffer, stagingMemory);
+			texture.m_readback.readback(stagingMemory, 0, _data, _mip);
+
+			vkDestroy(stagingBuffer);
+			vkFreeMemory(m_device, stagingMemory, m_allocatorCb);
 		}
 
 		void resizeTexture(TextureHandle /*_handle*/, uint16_t /*_width*/, uint16_t /*_height*/, uint8_t /*_numMips*/, uint16_t /*_numLayers*/) override
@@ -2784,7 +2781,7 @@ VK_IMPORT_DEVICE
 
 			readback.destroy();
 
-			vkDestroyBuffer(m_device, stagingBuffer, m_allocatorCb);
+			vkDestroy(stagingBuffer);
 			vkFreeMemory(m_device, stagingMemory, m_allocatorCb);
 		}
 
@@ -2870,11 +2867,6 @@ VK_IMPORT_DEVICE
 			{
 				m_cmd.release(uint64_t(_memory), getType<VkDeviceMemory>() );
 			}
-		}
-
-		void runDeferred(CommandQueueVK::Callback _func, void* data = NULL)
-		{
-			m_cmd.run(_func, data);
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
@@ -4407,8 +4399,8 @@ VK_IMPORT_DEVICE
 				m_backBufferColorFence[m_backBufferColorIdx] = m_cmd.m_kickedFence;
 			}
 			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
-			m_cmd.finish(_wait);
 			m_commandBuffer = m_cmd.alloc();
+			m_cmd.finish(_wait);
 		}
 
 		int32_t selectMemoryType(uint32_t _memoryTypeBits, uint32_t _propertyFlags, int32_t _startIndex = 0) const
@@ -5393,20 +5385,20 @@ VK_DESTROY
 			);
 	}
 
-	void ReadbackVK::readback(const Data& _data) const
+	void ReadbackVK::readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, uint8_t _mip) const
 	{
 		if (m_image == VK_NULL_HANDLE)
 		{
 			return;
 		}
 
-		uint32_t mipHeight = bx::uint32_max(1, m_height >> _data.m_mip);
-		uint32_t rowPitch = pitch(_data.m_mip);
+		uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
+		uint32_t rowPitch = pitch(_mip);
 
 		uint8_t* src;
-		VK_CHECK(vkMapMemory(s_renderVK->m_device, _data.m_memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
-		src += _data.m_offset;
-		uint8_t* dst = (uint8_t*)_data.m_data;
+		VK_CHECK(vkMapMemory(s_renderVK->m_device, _memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
+		src += _offset;
+		uint8_t* dst = (uint8_t*)_data;
 
 		for (uint32_t yy = 0; yy < mipHeight; ++yy)
 		{
@@ -5415,14 +5407,7 @@ VK_DESTROY
 			dst += rowPitch;
 		}
 
-		vkUnmapMemory(s_renderVK->m_device, _data.m_memory);
-	}
-
-	void ReadbackVK::copyCallback(void* _data)
-	{
-		const Data* readbackData = (Data*)_data;
-		readbackData->m_readback->readback(*readbackData);
-		BX_FREE(g_allocator, _data);
+		vkUnmapMemory(s_renderVK->m_device, _memory);
 	}
 
 	void* TextureVK::create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip)
@@ -6368,6 +6353,7 @@ VK_DESTROY
 			{
 				consume();
 			}
+			m_consumeIndex = m_currentFrameInFlight;
 		}
 		else
 		{
@@ -6383,27 +6369,9 @@ VK_DESTROY
 		m_release[m_currentFrameInFlight].push_back(resource);
 	}
 
-	void CommandQueueVK::run(Callback _func, void* _data)
-	{
-		RunData runData;
-		runData.m_func = _func;
-		runData.m_data = _data;
-		m_run[m_currentFrameInFlight].push_back(runData);
-	}
-
 	void CommandQueueVK::consume()
 	{
 		m_consumeIndex = (m_consumeIndex + 1) % m_numFramesInFlight;
-
-		for (const RunData& run : m_run[m_consumeIndex])
-		{
-			if (run.m_func)
-			{
-				run.m_func(run.m_data);
-			}
-		}
-
-		m_run[m_consumeIndex].clear();
 
 		for (const Resource& resource : m_release[m_consumeIndex])
 		{
