@@ -1275,8 +1275,6 @@ VK_IMPORT_DEVICE
 			sd[0].preserveAttachmentCount = 0;
 			sd[0].pPreserveAttachments    = NULL;
 
-			VkSubpassDependency dep[2];
-
 			const VkPipelineStageFlags graphicsStages = 0
 				| VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
 				| VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
@@ -1292,20 +1290,22 @@ VK_IMPORT_DEVICE
 				| VK_PIPELINE_STAGE_TRANSFER_BIT
 				;
 
-			dep[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-			dep[0].dstSubpass = 0;
-			dep[0].srcStageMask = outsideStages;
-			dep[0].dstStageMask = graphicsStages;
-			dep[0].srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-			dep[0].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+			VkSubpassDependency dep[2];
+
+			dep[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+			dep[0].dstSubpass      = 0;
+			dep[0].srcStageMask    = outsideStages;
+			dep[0].dstStageMask    = graphicsStages;
+			dep[0].srcAccessMask   = VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[0].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
 			dep[0].dependencyFlags = 0;
 
-			dep[1].srcSubpass = BX_COUNTOF(sd)-1;
-			dep[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-			dep[1].srcStageMask = graphicsStages;
-			dep[1].dstStageMask = outsideStages;
-			dep[1].srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-			dep[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[1].srcSubpass      = BX_COUNTOF(sd)-1;
+			dep[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
+			dep[1].srcStageMask    = graphicsStages;
+			dep[1].dstStageMask    = outsideStages;
+			dep[1].srcAccessMask   = VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
 			dep[1].dependencyFlags = 0;
 
 			VkRenderPassCreateInfo rpi;
@@ -3028,6 +3028,19 @@ VK_IMPORT_DEVICE
 				m_indexBuffers[_blitter.m_ib->handle.idx].update(m_commandBuffer, 0, _numIndices*2, _blitter.m_ib->data);
 				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandBuffer, 0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data, true);
 
+				VkRenderPassBeginInfo rpbi;
+				rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+				rpbi.pNext = NULL;
+				rpbi.renderPass  = m_renderPass;
+				rpbi.framebuffer = m_backBufferColor[m_backBufferColorIdx];
+				rpbi.renderArea.offset.x = 0;
+				rpbi.renderArea.offset.y = 0;
+				rpbi.renderArea.extent = m_sci.imageExtent;
+				rpbi.clearValueCount = 0;
+				rpbi.pClearValues    = NULL;
+
+				vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+
 				vkCmdDrawIndexed(m_commandBuffer
 					, _numIndices
 					, 1
@@ -3035,6 +3048,8 @@ VK_IMPORT_DEVICE
 					, 0
 					, 0
 					);
+
+				vkCmdEndRenderPass(m_commandBuffer);
 			}
 		}
 
@@ -3597,6 +3612,39 @@ VK_IMPORT_DEVICE
 			sd[0].preserveAttachmentCount = 0;
 			sd[0].pPreserveAttachments    = NULL;
 
+			const VkPipelineStageFlags graphicsStages = 0
+				| VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
+				| VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
+				| VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
+				| VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+				| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+				| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
+				| VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+				;
+			const VkPipelineStageFlags outsideStages = 0
+				| graphicsStages
+				| VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+				| VK_PIPELINE_STAGE_TRANSFER_BIT
+				;
+
+			VkSubpassDependency dep[2];
+
+			dep[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+			dep[0].dstSubpass      = 0;
+			dep[0].srcStageMask    = outsideStages;
+			dep[0].dstStageMask    = graphicsStages;
+			dep[0].srcAccessMask   = VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[0].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[0].dependencyFlags = 0;
+
+			dep[1].srcSubpass      = BX_COUNTOF(sd)-1;
+			dep[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
+			dep[1].srcStageMask    = graphicsStages;
+			dep[1].dstStageMask    = outsideStages;
+			dep[1].srcAccessMask   = VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[1].dependencyFlags = 0;
+
 			VkRenderPassCreateInfo rpi;
 			rpi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 			rpi.pNext           = NULL;
@@ -3605,8 +3653,8 @@ VK_IMPORT_DEVICE
 			rpi.pAttachments    = ad;
 			rpi.subpassCount    = BX_COUNTOF(sd);
 			rpi.pSubpasses      = sd;
-			rpi.dependencyCount = 0;
-			rpi.pDependencies   = NULL;
+			rpi.dependencyCount = BX_COUNTOF(dep);
+			rpi.pDependencies   = dep;
 
 			VK_CHECK( vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &renderPass) );
 
@@ -6586,7 +6634,7 @@ VK_DESTROY
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
 
-		bool needAcquire = !!(_render->m_debug & (BGFX_DEBUG_STATS|BGFX_DEBUG_TEXT) );
+		bool needAcquire = !!(_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS|BGFX_DEBUG_TEXT) );
 		if (!needAcquire)
 		{
 			for (uint32_t ii = 0; ii < _render->m_numRenderItems; ++ii)
@@ -7258,6 +7306,12 @@ VK_DESTROY
 			}
 		}
 
+		if (beginRenderPass)
+		{
+			vkCmdEndRenderPass(m_commandBuffer);
+			beginRenderPass = false;
+		}
+
 		BGFX_VK_PROFILER_END();
 
 		int64_t timeEnd = bx::getHPCounter();
@@ -7315,7 +7369,6 @@ BX_UNUSED(presentMin, presentMax);
 		{
 			BGFX_VK_PROFILER_BEGIN_LITERAL("debugstats", kColorFrame);
 
-//			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = timeEnd;
@@ -7467,12 +7520,6 @@ BX_UNUSED(presentMin, presentMax);
 		}
 
 		scratchBuffer.flush();
-
-		if (beginRenderPass)
-		{
-			vkCmdEndRenderPass(m_commandBuffer);
-			beginRenderPass = false;
-		}
 
 		kick();
 	}
