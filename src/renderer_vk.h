@@ -174,6 +174,7 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBuffer);                 \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBufferToImage);          \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImage);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImageToBuffer);          \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBlitImage);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkMapMemory);                     \
 			VK_IMPORT_DEVICE_FUNC(false, vkUnmapMemory);                   \
@@ -330,7 +331,7 @@ VK_DESTROY
 			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
-				vkDestroy(it->second);
+				destroy(it->second);
 				m_hashMap.erase(it);
 			}
 		}
@@ -339,7 +340,7 @@ VK_DESTROY
 		{
 			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
 			{
-				vkDestroy(it->second);
+				destroy(it->second);
 			}
 
 			m_hashMap.clear();
@@ -351,6 +352,8 @@ VK_DESTROY
 		}
 
 	private:
+		void destroy(Ty handle);
+
 		typedef stl::unordered_map<uint64_t, Ty> HashMap;
 		HashMap m_hashMap;
 	};
@@ -369,6 +372,7 @@ VK_DESTROY
 		void create(uint32_t _size, uint32_t _maxDescriptors);
 		void destroy();
 		void reset();
+		void flush();
 
 		VkDescriptorSet& getCurrentDS()
 		{
@@ -413,7 +417,7 @@ VK_DESTROY
 		{
 		}
 
-		void create(uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride = 0);
+		void create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride = 0);
 		void update(VkCommandBuffer _commandBuffer, uint32_t _offset, uint32_t _size, void* _data, bool _discard = false);
 		void destroy();
 
@@ -434,7 +438,7 @@ VK_DESTROY
 
 	struct VertexBufferVK : public BufferVK
 	{
-		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags);
+		void create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags);
 
 		VertexLayoutHandle m_layoutHandle;
 	};
@@ -582,6 +586,20 @@ VK_DESTROY
 		bx::RingBufferControl m_control;
 	};
 
+	struct ReadbackVK
+	{
+		void create(VkImage _image, uint32_t _width, uint32_t _height, bimg::TextureFormat::Enum _format);
+		void destroy();
+		uint32_t pitch(uint8_t _mip = 0) const;
+		void copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip = 0) const;
+		void readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, uint8_t _mip = 0) const;
+
+		VkImage m_image;
+		uint32_t m_width;
+		uint32_t m_height;
+		bimg::TextureFormat::Enum m_format;
+	};
+
 	struct TextureVK
 	{
 		TextureVK()
@@ -600,13 +618,13 @@ VK_DESTROY
 		{
 		}
 
-		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
+		void* create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip);
 		void destroy();
-		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void resolve(uint8_t _resolve);
+		void update(VkCommandBuffer _commandBuffer, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
+		void resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve);
 
-		void copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy);
-		void setImageMemoryBarrier(VkCommandBuffer commandBuffer, VkImageLayout newImageLayout);
+		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
+		void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout);
 
 		void*    m_directAccessPtr;
 		uint64_t m_flags;
@@ -636,6 +654,8 @@ VK_DESTROY
 		VkImage        m_singleMsaaImage;
 		VkDeviceMemory m_singleMsaaDeviceMem;
 		VkImageView    m_singleMsaaImageView;
+
+		ReadbackVK m_readback;
 	};
 
 	struct FrameBufferVK
@@ -657,7 +677,6 @@ VK_DESTROY
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
-//		IDXGISwapChain* m_swapChain;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;
@@ -667,6 +686,50 @@ VK_DESTROY
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		VkFramebuffer m_framebuffer;
 		VkRenderPass m_renderPass;
+	};
+
+	struct CommandQueueVK
+	{
+		void init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight);
+		void reset();
+		void shutdown();
+		VkCommandBuffer alloc();
+		void kick(VkSemaphore _waitSemaphore = VK_NULL_HANDLE, VkSemaphore _signalSemaphore = VK_NULL_HANDLE, bool _wait = false);
+		void finish(bool _finishAll = false);
+		void release(uint64_t _handle, VkObjectType _type);
+		void consume();
+
+		uint32_t m_queueFamily;
+		VkQueue m_queue;
+
+		uint32_t m_numFramesInFlight;
+
+		uint32_t m_currentFrameInFlight = 0;
+		uint32_t m_consumeIndex = 0;
+
+		VkCommandBuffer m_activeCommandBuffer;
+
+		VkSemaphore m_kickedSemaphore;
+		VkFence m_kickedFence;
+
+		struct CommandList
+		{
+			VkCommandPool m_commandPool = VK_NULL_HANDLE;
+			VkCommandBuffer m_commandBuffer = VK_NULL_HANDLE;
+			VkSemaphore m_semaphore = VK_NULL_HANDLE;
+			VkFence m_fence = VK_NULL_HANDLE;
+		};
+
+		CommandList m_commandList[BGFX_CONFIG_MAX_FRAME_LATENCY];
+
+		struct Resource
+		{
+			VkObjectType m_type;
+			uint64_t m_handle;
+		};
+
+		typedef stl::vector<Resource> ResourceArray;
+		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
 
 } /* namespace bgfx */ } // namespace vk
