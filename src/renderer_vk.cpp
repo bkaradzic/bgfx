@@ -840,6 +840,32 @@ VK_IMPORT_DEVICE
 		}
 	}
 
+	void setMemoryBarrier(
+		  VkCommandBuffer _commandBuffer
+		, VkPipelineStageFlags _srcStages
+		, VkPipelineStageFlags _dstStages
+		)
+	{
+		VkMemoryBarrier mb;
+		mb.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+		mb.pNext = NULL;
+		mb.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+		mb.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+
+		vkCmdPipelineBarrier(
+			  _commandBuffer
+			, _srcStages
+			, _dstStages
+			, 0
+			, 1
+			, &mb
+			, 0
+			, NULL
+			, 0
+			, NULL
+			);
+	}
+
 	void setImageMemoryBarrier(
 		  VkCommandBuffer _commandBuffer
 		, VkImage _image
@@ -1199,6 +1225,7 @@ VK_IMPORT_DEVICE
 		VkResult createSwapchainRenderPass()
 		{
 			VkAttachmentDescription ad[2];
+
 			ad[0].flags          = 0;
 			ad[0].format         = m_sci.imageFormat;
 			ad[0].samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -1208,6 +1235,7 @@ VK_IMPORT_DEVICE
 			ad[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			ad[0].initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			ad[0].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
 			ad[1].flags          = 0;
 			ad[1].format         = m_backBufferDepthStencilFormat;
 			ad[1].samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -1242,6 +1270,39 @@ VK_IMPORT_DEVICE
 			sd[0].preserveAttachmentCount = 0;
 			sd[0].pPreserveAttachments    = NULL;
 
+			VkSubpassDependency dep[2];
+
+			const VkPipelineStageFlags graphicsStages = 0
+				| VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
+				| VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
+				| VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
+				| VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+				| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+				| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
+				| VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+				;
+			const VkPipelineStageFlags outsideStages = 0
+				| graphicsStages
+				| VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+				| VK_PIPELINE_STAGE_TRANSFER_BIT
+				;
+
+			dep[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+			dep[0].dstSubpass = 0;
+			dep[0].srcStageMask = outsideStages;
+			dep[0].dstStageMask = graphicsStages;
+			dep[0].srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[0].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[0].dependencyFlags = 0;
+
+			dep[1].srcSubpass = BX_COUNTOF(sd)-1;
+			dep[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+			dep[1].srcStageMask = graphicsStages;
+			dep[1].dstStageMask = outsideStages;
+			dep[1].srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+			dep[1].dependencyFlags = 0;
+
 			VkRenderPassCreateInfo rpi;
 			rpi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 			rpi.pNext           = NULL;
@@ -1250,8 +1311,8 @@ VK_IMPORT_DEVICE
 			rpi.pAttachments    = ad;
 			rpi.subpassCount    = BX_COUNTOF(sd);
 			rpi.pSubpasses      = sd;
-			rpi.dependencyCount = 0;
-			rpi.pDependencies   = NULL;
+			rpi.dependencyCount = BX_COUNTOF(dep);
+			rpi.pDependencies   = dep;
 
 			return vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &m_renderPass);
 		}
@@ -2814,29 +2875,6 @@ VK_IMPORT_DEVICE
 		void runDeferred(CommandQueueVK::Callback _func, void* data = NULL)
 		{
 			m_cmd.run(_func, data);
-		}
-
-		// TODO remove
-		void debugBarrier()
-		{
-			VkMemoryBarrier mb;
-			mb.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			mb.pNext = NULL;
-			mb.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-			mb.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
-
-			vkCmdPipelineBarrier(
-				  m_commandBuffer
-				, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
-				, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
-				, 0
-				, 1
-				, &mb
-				, 0
-				, NULL
-				, 0
-				, NULL
-				);
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
@@ -4795,7 +4833,12 @@ VK_DESTROY
 			region.size      = _size;
 			vkCmdCopyBuffer(_commandBuffer, stagingBuffer, m_buffer, 1, &region);
 
-			s_renderVK->debugBarrier();
+			setMemoryBarrier(
+				  _commandBuffer
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				);
+
 			s_renderVK->releaseDeferred(stagingBuffer, stagingMem);
 		}
 	}
@@ -4814,7 +4857,12 @@ VK_DESTROY
 		region.size      = _size;
 		vkCmdCopyBuffer(_commandBuffer, stagingBuffer, m_buffer, 1, &region);
 
-		s_renderVK->debugBarrier();
+		setMemoryBarrier(
+			  _commandBuffer
+			, VK_PIPELINE_STAGE_TRANSFER_BIT
+			, VK_PIPELINE_STAGE_TRANSFER_BIT
+			);
+
 		s_renderVK->releaseDeferred(stagingBuffer, stagingMem);
 	}
 
@@ -5814,8 +5862,6 @@ VK_DESTROY
 						, 0
 						, m_numSides
 						);
-
-					s_renderVK->debugBarrier();
 				}
 
 				{
@@ -5936,6 +5982,12 @@ VK_DESTROY
 
 		if (needResolve)
 		{
+			setMemoryBarrier(
+				  _commandBuffer
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				);
+
 			VkImageResolve blitInfo;
 			blitInfo.srcOffset.x = 0;
 			blitInfo.srcOffset.y = 0;
@@ -5965,7 +6017,11 @@ VK_DESTROY
 				, &blitInfo
 				);
 
-			s_renderVK->debugBarrier();
+			setMemoryBarrier(
+				  _commandBuffer
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				);
 		}
 
 		const bool renderTarget = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
@@ -6042,8 +6098,6 @@ VK_DESTROY
 				, 0
 				, 1
 				);
-
-			s_renderVK->debugBarrier();
 		}
 	}
 
@@ -6592,6 +6646,12 @@ VK_DESTROY
 			);
 		m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+		setMemoryBarrier(
+			  m_commandBuffer
+			, VK_PIPELINE_STAGE_TRANSFER_BIT
+			, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
+			);
+
 		VkRenderPassBeginInfo rpbi;
 		rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		rpbi.pNext = NULL;
@@ -6640,20 +6700,16 @@ VK_DESTROY
 						beginRenderPass = false;
 					}
 
-					const VkPipelineStageFlags srcStage = wasCompute
-						? VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
-						: VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT
-						;
-					const VkPipelineStageFlags dstStage = isCompute
-						? VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
-						: VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT
-						;
-					VkMemoryBarrier memBarrier;
-					memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-					memBarrier.pNext = NULL;
-					memBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-					memBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
-					vkCmdPipelineBarrier(m_commandBuffer, srcStage, dstStage, 0, 1, &memBarrier, 0, NULL, 0, NULL);
+					// renderpass external subpass dependencies handle graphics -> compute and compute -> graphics
+					// but not compute -> compute
+					if (wasCompute && isCompute)
+					{
+						setMemoryBarrier(
+							  m_commandBuffer
+							, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+							, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
+							);
+					}
 
 					view = key.m_view;
 					currentPipeline = VK_NULL_HANDLE;
