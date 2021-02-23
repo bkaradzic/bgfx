@@ -331,7 +331,7 @@ VK_DESTROY
 			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
-				vkDestroy(it->second);
+				destroy(it->second);
 				m_hashMap.erase(it);
 			}
 		}
@@ -340,7 +340,7 @@ VK_DESTROY
 		{
 			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
 			{
-				vkDestroy(it->second);
+				destroy(it->second);
 			}
 
 			m_hashMap.clear();
@@ -352,6 +352,8 @@ VK_DESTROY
 		}
 
 	private:
+		void destroy(Ty handle);
+
 		typedef stl::unordered_map<uint64_t, Ty> HashMap;
 		HashMap m_hashMap;
 	};

@@ -810,12 +810,17 @@ VK_IMPORT_DEVICE
 	template<typename Ty>
 	VkObjectType getType();
 
-	template<> VkObjectType getType<VkBuffer      >() { return VK_OBJECT_TYPE_BUFFER;        }
-	template<> VkObjectType getType<VkImage       >() { return VK_OBJECT_TYPE_IMAGE;         }
-	template<> VkObjectType getType<VkImageView   >() { return VK_OBJECT_TYPE_IMAGE_VIEW;    }
-	template<> VkObjectType getType<VkShaderModule>() { return VK_OBJECT_TYPE_SHADER_MODULE; }
-	template<> VkObjectType getType<VkFramebuffer >() { return VK_OBJECT_TYPE_FRAMEBUFFER;   }
-	template<> VkObjectType getType<VkDeviceMemory>() { return VK_OBJECT_TYPE_DEVICE_MEMORY; }
+	template<> VkObjectType getType<VkBuffer              >() { return VK_OBJECT_TYPE_BUFFER;                }
+	template<> VkObjectType getType<VkImage               >() { return VK_OBJECT_TYPE_IMAGE;                 }
+	template<> VkObjectType getType<VkImageView           >() { return VK_OBJECT_TYPE_IMAGE_VIEW;            }
+	template<> VkObjectType getType<VkShaderModule        >() { return VK_OBJECT_TYPE_SHADER_MODULE;         }
+	template<> VkObjectType getType<VkFramebuffer         >() { return VK_OBJECT_TYPE_FRAMEBUFFER;           }
+	template<> VkObjectType getType<VkPipelineLayout      >() { return VK_OBJECT_TYPE_PIPELINE_LAYOUT;       }
+	template<> VkObjectType getType<VkPipeline            >() { return VK_OBJECT_TYPE_PIPELINE;              }
+	template<> VkObjectType getType<VkDescriptorSetLayout >() { return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT; }
+	template<> VkObjectType getType<VkRenderPass          >() { return VK_OBJECT_TYPE_RENDER_PASS;           }
+	template<> VkObjectType getType<VkSampler             >() { return VK_OBJECT_TYPE_SAMPLER;               }
+	template<> VkObjectType getType<VkDeviceMemory        >() { return VK_OBJECT_TYPE_DEVICE_MEMORY;         }
 
 	template<typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(VkDevice _device, Ty _object, const char* _format, ...)
@@ -4570,6 +4575,16 @@ VK_IMPORT_DEVICE
 VK_DESTROY
 #undef VK_DESTROY_FUNC
 
+	template class StateCacheT<VkPipeline>;
+	template class StateCacheT<VkDescriptorSetLayout>;
+	template class StateCacheT<VkRenderPass>;
+	template class StateCacheT<VkSampler>;
+
+	template<typename Ty> void StateCacheT<Ty>::destroy(Ty handle)
+	{
+		s_renderVK->releaseDeferred(handle);
+	}
+
 	void ScratchBufferVK::create(uint32_t _size, uint32_t _maxDescriptors)
 	{
 		m_maxDescriptors = _maxDescriptors;
@@ -5269,7 +5284,8 @@ VK_DESTROY
 
 	void ProgramVK::destroy()
 	{
-		vkDestroy(m_pipelineLayout);
+		s_renderVK->releaseDeferred(m_pipelineLayout);
+		m_pipelineLayout = VK_NULL_HANDLE;
 		m_numPredefined = 0;
 		m_vsh = NULL;
 		m_fsh = NULL;
@@ -6360,6 +6376,21 @@ VK_DESTROY
 				break;
 			case VK_OBJECT_TYPE_FRAMEBUFFER:
 				vkDestroyFramebuffer(device, ::VkFramebuffer(resource.m_handle), allocatorCb);
+				break;
+			case VK_OBJECT_TYPE_PIPELINE_LAYOUT:
+				vkDestroyPipelineLayout(device, ::VkPipelineLayout(resource.m_handle), allocatorCb);
+				break;
+			case VK_OBJECT_TYPE_PIPELINE:
+				vkDestroyPipeline(device, ::VkPipeline(resource.m_handle), allocatorCb);
+				break;
+			case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT:
+				vkDestroyDescriptorSetLayout(device, ::VkDescriptorSetLayout(resource.m_handle), allocatorCb);
+				break;
+			case VK_OBJECT_TYPE_RENDER_PASS:
+				vkDestroyRenderPass(device, ::VkRenderPass(resource.m_handle), allocatorCb);
+				break;
+			case VK_OBJECT_TYPE_SAMPLER:
+				vkDestroySampler(device, ::VkSampler(resource.m_handle), allocatorCb);
 				break;
 			case VK_OBJECT_TYPE_DEVICE_MEMORY:
 				vkFreeMemory(device, ::VkDeviceMemory(resource.m_handle), allocatorCb);
