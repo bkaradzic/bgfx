@@ -2525,6 +2525,7 @@ VK_IMPORT_DEVICE
 				pi.pImageIndices      = &m_backBufferColorIdx;
 				pi.pResults           = NULL;
 				VkResult result = vkQueuePresentKHR(m_queueGraphics, &pi);
+
 				if (VK_ERROR_OUT_OF_DATE_KHR       == result
 				||  VK_SUBOPTIMAL_KHR              == result
 				||  VK_ERROR_VALIDATION_FAILED_EXT == result)
@@ -2835,15 +2836,18 @@ VK_IMPORT_DEVICE
 
 			case Handle::Texture:
 				setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImage, "%.*s", _len, _name);
-				if (m_textures[_handle.idx].m_textureImageView != VK_NULL_HANDLE)
+
+				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageView)
 				{
 					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageView, "%.*s", _len, _name);
 				}
-				if (m_textures[_handle.idx].m_textureImageStorageView != VK_NULL_HANDLE)
+
+				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageStorageView)
 				{
 					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageStorageView, "%.*s", _len, _name);
 				}
-				if (m_textures[_handle.idx].m_textureImageDepthView != VK_NULL_HANDLE)
+
+				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageDepthView)
 				{
 					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageDepthView, "%.*s", _len, _name);
 				}
@@ -2860,12 +2864,13 @@ VK_IMPORT_DEVICE
 		}
 
 		template<typename Ty>
-		void releaseDeferred(Ty _object, VkDeviceMemory _memory = 0)
+		void release(Ty _object, VkDeviceMemory _memory = VK_NULL_HANDLE)
 		{
 			m_cmd.release(uint64_t(_object.vk), getType<Ty>() );
-			if (_memory != VK_NULL_HANDLE)
+
+			if (VK_NULL_HANDLE != _memory)
 			{
-				m_cmd.release(uint64_t(_memory), getType<VkDeviceMemory>() );
+				m_cmd.release(uint64_t(_memory), VK_OBJECT_TYPE_DEVICE_MEMORY);
 			}
 		}
 
@@ -3551,8 +3556,11 @@ VK_IMPORT_DEVICE
 			VkRenderPass renderPass = VK_NULL_HANDLE;
 			uint32_t hashKey = getRenderPassHashkey(_num, _attachments);
 			renderPass = (VkRenderPass)m_renderPassCache.find(hashKey);
-			if (renderPass != VK_NULL_HANDLE)
+
+			if (VK_NULL_HANDLE != renderPass)
+			{
 				return renderPass;
+			}
 
 			// cache missed
 			VkAttachmentDescription ad[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
@@ -3670,7 +3678,8 @@ VK_IMPORT_DEVICE
 			uint32_t hashKey = hash.end();
 
 			VkSampler sampler = m_samplerCache.find(hashKey);
-			if (sampler != VK_NULL_HANDLE)
+
+			if (VK_NULL_HANDLE != sampler)
 			{
 				return sampler;
 			}
@@ -4379,14 +4388,14 @@ VK_IMPORT_DEVICE
 				, &m_backBufferColorIdx
 				);
 
-			if (VK_ERROR_OUT_OF_DATE_KHR == result
-				|| VK_ERROR_VALIDATION_FAILED_EXT == result)
+			if (VK_ERROR_OUT_OF_DATE_KHR       == result
+			||  VK_ERROR_VALIDATION_FAILED_EXT == result)
 			{
 				m_needToRefreshSwapchain = true;
 				return false;
 			}
 
-			if (m_backBufferColorFence[m_backBufferColorIdx] != VK_NULL_HANDLE)
+			if (VK_NULL_HANDLE != m_backBufferColorFence[m_backBufferColorIdx])
 			{
 				vkWaitForFences(m_device, 1, &m_backBufferColorFence[m_backBufferColorIdx], VK_TRUE, UINT64_MAX);
 			}
@@ -4406,7 +4415,7 @@ VK_IMPORT_DEVICE
 
 		void kick(bool _wait = false)
 		{
-			const bool acquired = m_lastImageAcquiredSemaphore != VK_NULL_HANDLE;
+			const bool acquired = VK_NULL_HANDLE != m_lastImageAcquiredSemaphore;
 			const VkSemaphore waitSemaphore = m_lastImageAcquiredSemaphore;
 			const VkSemaphore signalSemaphore = acquired ? m_lastImageRenderedSemaphore : VK_NULL_HANDLE;
 			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
@@ -4610,15 +4619,15 @@ VK_IMPORT_DEVICE
 		s_renderVK = NULL;
 	}
 
-#define VK_DESTROY_FUNC(_name)                                                               \
-			void vkDestroy(Vk##_name& _obj)                                                  \
-			{                                                                                \
-				if (VK_NULL_HANDLE != _obj)                                                  \
-				{                                                                            \
-					vkDestroy##_name(s_renderVK->m_device, _obj, s_renderVK->m_allocatorCb); \
-					_obj = VK_NULL_HANDLE;                                                   \
-				}                                                                            \
-			}
+#define VK_DESTROY_FUNC(_name)                                                       \
+	void vkDestroy(Vk##_name& _obj)                                                  \
+	{                                                                                \
+		if (VK_NULL_HANDLE != _obj)                                                  \
+		{                                                                            \
+			vkDestroy##_name(s_renderVK->m_device, _obj, s_renderVK->m_allocatorCb); \
+			_obj = VK_NULL_HANDLE;                                                   \
+		}                                                                            \
+	}
 VK_DESTROY
 #undef VK_DESTROY_FUNC
 
@@ -4629,13 +4638,13 @@ VK_DESTROY
 
 	template<typename Ty> void StateCacheT<Ty>::destroy(Ty handle)
 	{
-		s_renderVK->releaseDeferred(handle);
+		s_renderVK->release(handle);
 	}
 
 	void ScratchBufferVK::create(uint32_t _size, uint32_t _maxDescriptors)
 	{
 		m_maxDescriptors = _maxDescriptors;
-		m_currentDs = 0;
+		m_currentDs      = 0;
 		m_descriptorSet  = (VkDescriptorSet*)BX_ALLOC(g_allocator, m_maxDescriptors * sizeof(VkDescriptorSet) );
 		bx::memSet(m_descriptorSet, 0, sizeof(VkDescriptorSet) * m_maxDescriptors);
 
@@ -4648,7 +4657,7 @@ VK_DESTROY
 		bci.flags = 0;
 		bci.size  = _size;
 		bci.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		bci.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
 		bci.queueFamilyIndexCount = 0;
 		bci.pQueueFamilyIndices   = NULL;
 
@@ -4683,7 +4692,7 @@ VK_DESTROY
 
 		vkUnmapMemory(s_renderVK->m_device, m_deviceMem);
 
-		s_renderVK->releaseDeferred(m_buffer, m_deviceMem);
+		s_renderVK->release(m_buffer, m_deviceMem);
 		m_buffer    = VK_NULL_HANDLE;
 		m_deviceMem = VK_NULL_HANDLE;
 	}
@@ -4809,8 +4818,8 @@ VK_DESTROY
 
 	void ImageVK::destroy()
 	{
-		s_renderVK->releaseDeferred(m_imageView);
-		s_renderVK->releaseDeferred(m_image, m_memory);
+		s_renderVK->release(m_imageView);
+		s_renderVK->release(m_image, m_memory);
 		m_imageView = VK_NULL_HANDLE;
 		m_image     = VK_NULL_HANDLE;
 		m_memory    = VK_NULL_HANDLE;
@@ -4872,7 +4881,7 @@ VK_DESTROY
 				, VK_PIPELINE_STAGE_TRANSFER_BIT
 				);
 
-			s_renderVK->releaseDeferred(stagingBuffer, stagingMem);
+			s_renderVK->release(stagingBuffer, stagingMem);
 		}
 	}
 
@@ -4896,14 +4905,14 @@ VK_DESTROY
 			, VK_PIPELINE_STAGE_TRANSFER_BIT
 			);
 
-		s_renderVK->releaseDeferred(stagingBuffer, stagingMem);
+		s_renderVK->release(stagingBuffer, stagingMem);
 	}
 
 	void BufferVK::destroy()
 	{
 		if (VK_NULL_HANDLE != m_buffer)
 		{
-			s_renderVK->releaseDeferred(m_buffer, m_deviceMem);
+			s_renderVK->release(m_buffer, m_deviceMem);
 			m_buffer    = VK_NULL_HANDLE;
 			m_deviceMem = VK_NULL_HANDLE;
 
@@ -5331,7 +5340,7 @@ VK_DESTROY
 
 	void ProgramVK::destroy()
 	{
-		s_renderVK->releaseDeferred(m_pipelineLayout);
+		s_renderVK->release(m_pipelineLayout);
 		m_pipelineLayout = VK_NULL_HANDLE;
 		m_numPredefined = 0;
 		m_vsh = NULL;
@@ -5761,11 +5770,11 @@ VK_DESTROY
 
 			vkBindImageMemory(device, m_textureImage, m_textureDeviceMem, 0);
 
-			if (stagingBuffer != VK_NULL_HANDLE)
+			if (VK_NULL_HANDLE != stagingBuffer)
 			{
 				copyBufferToTexture(_commandBuffer, stagingBuffer, numSrd, bufferCopyInfo);
 
-				s_renderVK->releaseDeferred(stagingBuffer, stagingDeviceMem);
+				s_renderVK->release(stagingBuffer, stagingDeviceMem);
 			}
 			else
 			{
@@ -5922,10 +5931,10 @@ VK_DESTROY
 
 		if (VK_NULL_HANDLE != m_textureImage)
 		{
-			s_renderVK->releaseDeferred(m_textureImageStorageView);
-			s_renderVK->releaseDeferred(m_textureImageDepthView);
-			s_renderVK->releaseDeferred(m_textureImageView);
-			s_renderVK->releaseDeferred(m_textureImage, m_textureDeviceMem);
+			s_renderVK->release(m_textureImageStorageView);
+			s_renderVK->release(m_textureImageDepthView);
+			s_renderVK->release(m_textureImageView);
+			s_renderVK->release(m_textureImage, m_textureDeviceMem);
 
 			m_textureImageStorageView = VK_NULL_HANDLE;
 			m_textureImageDepthView   = VK_NULL_HANDLE;
@@ -5936,8 +5945,8 @@ VK_DESTROY
 
 		if (VK_NULL_HANDLE != m_singleMsaaImage)
 		{
-			s_renderVK->releaseDeferred(m_singleMsaaImageView);
-			s_renderVK->releaseDeferred(m_singleMsaaImage, m_singleMsaaDeviceMem);
+			s_renderVK->release(m_singleMsaaImageView);
+			s_renderVK->release(m_singleMsaaImage, m_singleMsaaDeviceMem);
 
 			m_singleMsaaImageView = VK_NULL_HANDLE;
 			m_singleMsaaImage     = VK_NULL_HANDLE;
@@ -5989,7 +5998,7 @@ VK_DESTROY
 
 		copyBufferToTexture(_commandBuffer, stagingBuffer, 1, &region);
 
-		s_renderVK->releaseDeferred(stagingBuffer, stagingDeviceMem);
+		s_renderVK->release(stagingBuffer, stagingDeviceMem);
 
 		if (NULL != temp)
 		{
@@ -6226,7 +6235,7 @@ VK_DESTROY
 
 	void FrameBufferVK::destroy()
 	{
-		s_renderVK->releaseDeferred(m_framebuffer);
+		s_renderVK->release(m_framebuffer);
 		m_framebuffer = VK_NULL_HANDLE;
 	}
 
@@ -6292,7 +6301,7 @@ VK_DESTROY
 		{
 			vkDestroy(m_commandList[ii].m_fence);
 			vkDestroy(m_commandList[ii].m_semaphore);
-			if (m_commandList[ii].m_commandBuffer != VK_NULL_HANDLE)
+			if (VK_NULL_HANDLE != m_commandList[ii].m_commandBuffer)
 			{
 				vkFreeCommandBuffers(s_renderVK->m_device, m_commandList[ii].m_commandPool, 1, &m_commandList[ii].m_commandBuffer);
 				m_commandList[ii].m_commandBuffer = VK_NULL_HANDLE;
@@ -6324,7 +6333,7 @@ VK_DESTROY
 
 	void CommandQueueVK::kick(VkSemaphore _waitSemaphore, VkSemaphore _signalSemaphore, bool _wait)
 	{
-		if (m_activeCommandBuffer != VK_NULL_HANDLE)
+		if (VK_NULL_HANDLE != m_activeCommandBuffer)
 		{
 			VK_CHECK(vkEndCommandBuffer(m_activeCommandBuffer) );
 
@@ -6332,11 +6341,13 @@ VK_DESTROY
 
 			VkSemaphore waitSemaphores[2];
 			uint32_t waitSemaphoreCount = 0;
-			if (m_kickedSemaphore != VK_NULL_HANDLE)
+
+			if (VK_NULL_HANDLE != m_kickedSemaphore)
 			{
 				waitSemaphores[waitSemaphoreCount++] = m_kickedSemaphore;
 			}
-			if (_waitSemaphore != VK_NULL_HANDLE)
+
+			if (VK_NULL_HANDLE != _waitSemaphore)
 			{
 				waitSemaphores[waitSemaphoreCount++] = _waitSemaphore;
 			}
@@ -6346,7 +6357,8 @@ VK_DESTROY
 
 			VkSemaphore signalSemaphores[2] = { m_kickedSemaphore };
 			uint32_t signalSemaphoreCount = 1;
-			if (_signalSemaphore != VK_NULL_HANDLE)
+
+			if (VK_NULL_HANDLE != _signalSemaphore)
 			{
 				signalSemaphores[signalSemaphoreCount++] = _signalSemaphore;
 			}
