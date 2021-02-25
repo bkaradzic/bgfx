@@ -7264,6 +7264,20 @@ VK_DESTROY
 							);
 					}
 
+					VkBuffer bufferIndirect = VK_NULL_HANDLE;
+					uint32_t numDrawIndirect = 0;
+					uint32_t bufferOffsetIndirect = 0;
+					if (isValid(draw.m_indirectBuffer) )
+					{
+						const VertexBufferVK& vb = m_vertexBuffers[draw.m_indirectBuffer.idx];
+						bufferIndirect = vb.m_buffer;
+						numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+							? vb.m_size / BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+							: draw.m_numIndirect
+							;
+						bufferOffsetIndirect = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+					}
+
 					if (!isValid(draw.m_indexBuffer) )
 					{
 						const VertexBufferVK& vertexBuffer = m_vertexBuffers[draw.m_stream[0].m_handle.idx];
@@ -7273,12 +7287,28 @@ VK_DESTROY
 							? vertexBuffer.m_size / layout->m_stride
 							: draw.m_numVertices
 							;
-						vkCmdDraw(m_commandBuffer
-							, numVertices
-							, draw.m_numInstances
-							, draw.m_stream[0].m_startVertex
-							, 0
-							);
+
+						if (isValid(draw.m_indirectBuffer) )
+						{
+							vkCmdDrawIndirect(
+								  m_commandBuffer
+								, bufferIndirect
+								, bufferOffsetIndirect
+								, numDrawIndirect
+								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								);
+						}
+						else
+						{
+							vkCmdDraw(
+								  m_commandBuffer
+								, numVertices
+								, draw.m_numInstances
+								, draw.m_stream[0].m_startVertex
+								, 0
+								);
+						}
+
 					}
 					else
 					{
@@ -7292,18 +7322,34 @@ VK_DESTROY
 							: draw.m_numIndices
 							;
 
-						vkCmdBindIndexBuffer(m_commandBuffer
+						vkCmdBindIndexBuffer(
+							  m_commandBuffer
 							, ib.m_buffer
 							, 0
 							, indexFormat
 							);
-						vkCmdDrawIndexed(m_commandBuffer
-							, numIndices
-							, draw.m_numInstances
-							, draw.m_startIndex
-							, draw.m_stream[0].m_startVertex
-							, 0
-							);
+
+						if (isValid(draw.m_indirectBuffer) )
+						{
+							vkCmdDrawIndexedIndirect(
+								  m_commandBuffer
+								, bufferIndirect
+								, bufferOffsetIndirect
+								, numDrawIndirect
+								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								);
+						}
+						else
+						{
+							vkCmdDrawIndexed(
+								  m_commandBuffer
+								, numIndices
+								, draw.m_numInstances
+								, draw.m_startIndex
+								, draw.m_stream[0].m_startVertex
+								, 0
+								);
+						}
 					}
 
 					uint32_t numPrimsSubmitted = numIndices / prim.m_div - prim.m_sub;
