@@ -1005,7 +1005,7 @@ VK_IMPORT_DEVICE
 			: m_allocatorCb(NULL)
 			, m_renderDocDll(NULL)
 			, m_vulkan1Dll(NULL)
-			, m_maxAnisotropy(1)
+			, m_maxAnisotropy(1.0f)
 			, m_depthClamp(false)
 			, m_wireframe(false)
 			, m_rtMsaa(false)
@@ -3134,13 +3134,16 @@ VK_IMPORT_DEVICE
 
 		bool updateResolution(const Resolution& _resolution)
 		{
+			float maxAnisotropy = 1.0f;
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
 			{
-				m_maxAnisotropy = UINT32_MAX;
+				maxAnisotropy = m_deviceProperties.limits.maxSamplerAnisotropy;
 			}
-			else
+
+			if (m_maxAnisotropy != maxAnisotropy)
 			{
-				m_maxAnisotropy = 1;
+				m_maxAnisotropy = maxAnisotropy;
+				m_samplerCache.invalidate();
 			}
 
 			bool depthClamp = !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
@@ -3716,7 +3719,7 @@ VK_IMPORT_DEVICE
 			sci.addressModeW     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
 			sci.mipLodBias       = 0.0f;
 			sci.anisotropyEnable = VK_FALSE;
-			sci.maxAnisotropy    = 4.0f;
+			sci.maxAnisotropy    = m_maxAnisotropy;
 			sci.compareEnable    = 0 != cmpFunc;
 			sci.compareOp        = s_cmpFunc[cmpFunc];
 			sci.minLod           = 0.0f;
@@ -4608,7 +4611,7 @@ VK_IMPORT_DEVICE
 		StateCacheT<VkSampler> m_samplerCache;
 
 		Resolution m_resolution;
-		uint32_t m_maxAnisotropy;
+		float m_maxAnisotropy;
 		bool m_depthClamp;
 		bool m_wireframe;
 		bool m_rtMsaa;
