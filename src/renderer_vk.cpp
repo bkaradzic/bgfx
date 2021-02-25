@@ -2461,6 +2461,7 @@ VK_IMPORT_DEVICE
 			m_descriptorSetLayoutCache.invalidate();
 			m_renderPassCache.invalidate();
 			m_samplerCache.invalidate();
+			m_storageImageViewCache.invalidate();
 
 			for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 			{
@@ -2911,11 +2912,6 @@ VK_IMPORT_DEVICE
 				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageView)
 				{
 					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageView, "%.*s", _len, _name);
-				}
-
-				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageStorageView)
-				{
-					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageStorageView, "%.*s", _len, _name);
 				}
 
 				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageDepthView)
@@ -3811,6 +3807,29 @@ VK_IMPORT_DEVICE
 			return sampler;
 		}
 
+		VkImageView getStorageImageView(TextureHandle _handle, uint8_t _mip)
+		{
+			const TextureVK& texture = m_textures[_handle.idx];
+
+			bx::HashMurmur2A hash;
+			hash.begin();
+			hash.add(texture.m_textureImage);
+			hash.add(_mip);
+			uint32_t hashKey = hash.end();
+
+			VkImageView view = m_storageImageViewCache.find(hashKey);
+
+			if (VK_NULL_HANDLE != view)
+			{
+				return view;
+			}
+			
+			view = texture.createView(0, texture.m_numSides, _mip, 1);
+
+			m_storageImageViewCache.add(hashKey, view);
+			return view;
+		}
+
 		VkPipeline getPipeline(ProgramHandle _program)
 		{
 			ProgramVK& program = m_program[_program.idx];
@@ -4140,7 +4159,7 @@ VK_IMPORT_DEVICE
 							texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_GENERAL);
 
 							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
-							imageInfo[imageCount].imageView   = texture.m_textureImageStorageView;
+							imageInfo[imageCount].imageView = getStorageImageView({ bind.m_idx }, bind.m_mip);
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
 							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
 							++imageCount;
@@ -4665,6 +4684,7 @@ VK_IMPORT_DEVICE
 		StateCacheT<VkDescriptorSetLayout> m_descriptorSetLayoutCache;
 		StateCacheT<VkRenderPass> m_renderPassCache;
 		StateCacheT<VkSampler> m_samplerCache;
+		StateCacheT<VkImageView> m_storageImageViewCache;
 
 		Resolution m_resolution;
 		float m_maxAnisotropy;
@@ -5930,32 +5950,6 @@ VK_DESTROY
 					) );
 			}
 
-			// image view creation for storage image usage
-			{
-				VkImageViewCreateInfo viewInfo;
-				viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.pNext      = NULL;
-				viewInfo.flags      = 0;
-				viewInfo.image      = m_textureImage;
-				viewInfo.viewType   = m_type == VK_IMAGE_VIEW_TYPE_CUBE
-					? VK_IMAGE_VIEW_TYPE_2D_ARRAY
-					: m_type
-					;
-				viewInfo.format     = m_format;
-				viewInfo.components = m_components;
-				viewInfo.subresourceRange.aspectMask     = m_aspectMask;
-				viewInfo.subresourceRange.baseMipLevel   = 0;
-				viewInfo.subresourceRange.levelCount     = m_numMips;
-				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount     = m_numSides;
-				VK_CHECK(vkCreateImageView(
-					  device
-					, &viewInfo
-					, allocatorCb
-					, &m_textureImageStorageView
-					) );
-			}
-
 			if (needResolve)
 			{
 				{
@@ -6018,12 +6012,10 @@ VK_DESTROY
 
 		if (VK_NULL_HANDLE != m_textureImage)
 		{
-			s_renderVK->release(m_textureImageStorageView);
 			s_renderVK->release(m_textureImageDepthView);
 			s_renderVK->release(m_textureImageView);
 			s_renderVK->release(m_textureImage, m_textureDeviceMem);
 
-			m_textureImageStorageView = VK_NULL_HANDLE;
 			m_textureImageDepthView   = VK_NULL_HANDLE;
 			m_textureImageView        = VK_NULL_HANDLE;
 			m_textureImage            = VK_NULL_HANDLE;
@@ -6256,7 +6248,7 @@ VK_DESTROY
 		m_currentImageLayout = _newImageLayout;
 	}
 
-	VkImageView TextureVK::createView(uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint16_t _numMips) const
+	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips) const
 	{
 		VkImageView view = VK_NULL_HANDLE;
 
