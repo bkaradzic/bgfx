@@ -317,6 +317,7 @@ VK_IMPORT_DEVICE
 			EXT_debug_report,
 			EXT_memory_budget,
 			KHR_get_physical_device_properties2,
+			EXT_shader_viewport_index_layer,
 
 			Count
 		};
@@ -337,6 +338,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_debug_report",                    1, false, false, BGFX_CONFIG_DEBUG            , Layer::Count },
 		{ "VK_EXT_memory_budget",                   1, false, false, true                         , Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                         , Layer::Count },
+		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                         , Layer::Count }
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -667,8 +669,7 @@ VK_IMPORT_DEVICE
 			if (VK_SUCCESS == result
 			&&  0 < numExtensionProperties)
 			{
-				VkExtensionProperties extensionProperties[64];
-				numExtensionProperties = bx::min<uint32_t>(numExtensionProperties, BX_COUNTOF(extensionProperties) );
+				VkExtensionProperties* extensionProperties = (VkExtensionProperties*)BX_ALLOC(g_allocator, numExtensionProperties * sizeof(VkExtensionProperties) );
 				result = enumerateExtensionProperties(_physicalDevice
 					, NULL
 					, &numExtensionProperties
@@ -695,6 +696,8 @@ VK_IMPORT_DEVICE
 
 					BX_UNUSED(supported);
 				}
+
+				BX_FREE(g_allocator, extensionProperties);
 			}
 		}
 
@@ -705,8 +708,7 @@ VK_IMPORT_DEVICE
 		if (VK_SUCCESS == result
 		&&  0 < numLayerProperties)
 		{
-			VkLayerProperties layerProperties[64];
-			numLayerProperties = bx::min<uint32_t>(numLayerProperties, BX_COUNTOF(layerProperties) );
+			VkLayerProperties* layerProperties = (VkLayerProperties*)BX_ALLOC(g_allocator, numLayerProperties * sizeof(VkLayerProperties) );
 			result = enumerateLayerProperties(_physicalDevice, &numLayerProperties, layerProperties);
 
 			char indent = VK_NULL_HANDLE == _physicalDevice ? '\0' : '\t';
@@ -741,8 +743,7 @@ VK_IMPORT_DEVICE
 				if (VK_SUCCESS == result
 				&&  0 < numExtensionProperties)
 				{
-					VkExtensionProperties extensionProperties[64];
-					numExtensionProperties = bx::min<uint32_t>(numExtensionProperties, BX_COUNTOF(extensionProperties) );
+					VkExtensionProperties* extensionProperties = (VkExtensionProperties*)BX_ALLOC(g_allocator, numExtensionProperties * sizeof(VkExtensionProperties) );
 					result = enumerateExtensionProperties(_physicalDevice
 						, layerProperties[layer].layerName
 						, &numExtensionProperties
@@ -766,8 +767,12 @@ VK_IMPORT_DEVICE
 
 						BX_UNUSED(supported);
 					}
+
+					BX_FREE(g_allocator, extensionProperties);
 				}
 			}
+
+			BX_FREE(g_allocator, layerProperties);
 		}
 	}
 
@@ -1005,7 +1010,7 @@ VK_IMPORT_DEVICE
 			: m_allocatorCb(NULL)
 			, m_renderDocDll(NULL)
 			, m_vulkan1Dll(NULL)
-			, m_maxAnisotropy(1)
+			, m_maxAnisotropy(1.0f)
 			, m_depthClamp(false)
 			, m_wireframe(false)
 			, m_rtMsaa(false)
@@ -1595,6 +1600,7 @@ VK_IMPORT_INSTANCE
 					goto error;
 				}
 
+				VkPhysicalDevice fallbackPhysicalDevice = VK_NULL_HANDLE;
 				m_physicalDevice = VK_NULL_HANDLE;
 
 				for (uint32_t ii = 0; ii < numPhysicalDevices; ++ii)
@@ -1620,7 +1626,14 @@ VK_IMPORT_INSTANCE
 					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || pdp.vendorID == g_caps.vendorId)
 					&&   (0 == g_caps.deviceId                || pdp.deviceID == g_caps.deviceId) )
 					{
-						m_physicalDevice = physicalDevices[ii];
+						if (BX_ENABLED(BGFX_CONFIG_PREFER_DISCRETE_GPU) && (pdp.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) )
+						{
+							fallbackPhysicalDevice = physicalDevices[ii];
+						}
+						else
+						{
+							m_physicalDevice = physicalDevices[ii];
+						}
 					}
 
 					VkPhysicalDeviceMemoryProperties pdmp;
@@ -1653,7 +1666,10 @@ VK_IMPORT_INSTANCE
 
 				if (VK_NULL_HANDLE == m_physicalDevice)
 				{
-					m_physicalDevice = physicalDevices[0];
+					m_physicalDevice = VK_NULL_HANDLE == fallbackPhysicalDevice
+						? physicalDevices[0]
+						: fallbackPhysicalDevice
+						;
 				}
 
 				vkGetPhysicalDeviceProperties(m_physicalDevice, &m_deviceProperties);
@@ -1679,6 +1695,10 @@ VK_IMPORT_INSTANCE
 					| BGFX_CAPS_VERTEX_ID
 					| BGFX_CAPS_IMAGE_RW
 					);
+
+				g_caps.supported |= 0
+					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
+					;
 
 				g_caps.limits.maxTextureSize     = m_deviceProperties.limits.maxImageDimension2D;
 				g_caps.limits.maxTextureLayers   = m_deviceProperties.limits.maxImageArrayLayers;
@@ -2149,8 +2169,8 @@ VK_IMPORT_DEVICE
 					}
 				}
 
-				BX_ASSERT(surfaceFormatIdx < numSurfaceFormats, "Cannot find preferred surface format from supported surface formats");
-				BX_WARN(surfaceFormatSrgbIdx < numSurfaceFormats, "Cannot find preferred sRGB surface format from supported surface formats");
+				BX_ASSERT(surfaceFormatIdx < numSurfaceFormats, "Cannot find preferred surface format from supported surface formats.");
+				BX_WARN(surfaceFormatSrgbIdx < numSurfaceFormats, "Cannot find preferred sRGB surface format from supported surface formats.");
 
 				m_backBufferColorFormat     = surfaceFormats[surfaceFormatIdx];
 				m_backBufferColorFormatSrgb = surfaceFormatSrgbIdx < numSurfaceFormats
@@ -2202,7 +2222,11 @@ VK_IMPORT_DEVICE
 					? BGFX_CONFIG_MAX_BACK_BUFFERS
 					: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, BGFX_CONFIG_MAX_BACK_BUFFERS)
 					;
-				BX_ASSERT(minSwapBufferCount <= maxSwapBufferCount, "Incompatible swapchain image count");
+				BX_ASSERT(minSwapBufferCount <= maxSwapBufferCount
+					, "Incompatible swapchain image count (min: %d, max: %d)."
+					, minSwapBufferCount
+					, maxSwapBufferCount
+					);
 
 				uint32_t swapBufferCount = bx::clamp<uint32_t>(_init.resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
 
@@ -2450,6 +2474,7 @@ VK_IMPORT_DEVICE
 			m_descriptorSetLayoutCache.invalidate();
 			m_renderPassCache.invalidate();
 			m_samplerCache.invalidate();
+			m_storageImageViewCache.invalidate();
 
 			for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 			{
@@ -2678,8 +2703,50 @@ VK_IMPORT_DEVICE
 			vkFreeMemory(m_device, stagingMemory, m_allocatorCb);
 		}
 
-		void resizeTexture(TextureHandle /*_handle*/, uint16_t /*_width*/, uint16_t /*_height*/, uint8_t /*_numMips*/, uint16_t /*_numLayers*/) override
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
 		{
+			TextureVK& texture = m_textures[_handle.idx];
+
+			if (!!(texture.m_flags & BGFX_TEXTURE_RT_MASK) )
+			{
+				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
+				{
+					if (VK_NULL_HANDLE != m_frameBuffers[ii].m_framebuffer)
+					{
+						for (uint8_t jj = 0, num = m_frameBuffers[ii].m_numTh; jj < num; ++jj)
+						{
+							if (_handle.idx == m_frameBuffers[ii].m_attachment[jj].handle.idx)
+							{
+								m_frameBuffers[ii].m_needRecreate = true;
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
+			const Memory* mem = alloc(size);
+
+			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
+			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
+			bx::write(&writer, magic);
+
+			TextureCreate tc;
+			tc.m_width     = _width;
+			tc.m_height    = _height;
+			tc.m_depth     = 0;
+			tc.m_numLayers = _numLayers;
+			tc.m_numMips   = _numMips;
+			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
+			tc.m_cubeMap   = false;
+			tc.m_mem       = NULL;
+			bx::write(&writer, tc);
+
+			texture.destroy();
+			texture.create(m_commandBuffer, mem, texture.m_flags, 0);
+
+			bgfx::release(mem);
 		}
 
 		void overrideInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/) override
@@ -2860,11 +2927,6 @@ VK_IMPORT_DEVICE
 					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageView, "%.*s", _len, _name);
 				}
 
-				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageStorageView)
-				{
-					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageStorageView, "%.*s", _len, _name);
-				}
-
 				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageDepthView)
 				{
 					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageDepthView, "%.*s", _len, _name);
@@ -2884,7 +2946,10 @@ VK_IMPORT_DEVICE
 		template<typename Ty>
 		void release(Ty _object, VkDeviceMemory _memory = VK_NULL_HANDLE)
 		{
-			m_cmd.release(uint64_t(_object.vk), getType<Ty>() );
+			if (VK_NULL_HANDLE != _object)
+			{
+				m_cmd.release(uint64_t(_object.vk), getType<Ty>() );
+			}
 
 			if (VK_NULL_HANDLE != _memory)
 			{
@@ -3134,13 +3199,16 @@ VK_IMPORT_DEVICE
 
 		bool updateResolution(const Resolution& _resolution)
 		{
+			float maxAnisotropy = 1.0f;
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
 			{
-				m_maxAnisotropy = UINT32_MAX;
+				maxAnisotropy = m_deviceProperties.limits.maxSamplerAnisotropy;
 			}
-			else
+
+			if (m_maxAnisotropy != maxAnisotropy)
 			{
-				m_maxAnisotropy = 1;
+				m_maxAnisotropy = maxAnisotropy;
+				m_samplerCache.invalidate();
 			}
 
 			bool depthClamp = !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
@@ -3324,7 +3392,13 @@ VK_IMPORT_DEVICE
 
 			if (isValid(_fbh) )
 			{
-				const FrameBufferVK& frameBuffer = m_frameBuffers[_fbh.idx];
+				FrameBufferVK& frameBuffer = m_frameBuffers[_fbh.idx];
+
+				if (frameBuffer.m_needRecreate)
+				{
+					frameBuffer.destroy();
+					frameBuffer.create(frameBuffer.m_numTh, frameBuffer.m_attachment);
+				}
 
 				for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 				{
@@ -3347,6 +3421,15 @@ VK_IMPORT_DEVICE
 
 			m_fbh = _fbh;
 			m_rtMsaa = _msaa;
+		}
+
+		void setDebugWireframe(bool _wireframe)
+		{
+			if (m_wireframe != _wireframe)
+			{
+				m_wireframe = _wireframe;
+				m_pipelineStateCache.invalidate();
+			}
 		}
 
 		void setBlendState(VkPipelineColorBlendStateCreateInfo& _desc, uint64_t _state, uint32_t _rgba = 0)
@@ -3714,9 +3797,9 @@ VK_IMPORT_DEVICE
 			sci.addressModeU     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
 			sci.addressModeV     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
 			sci.addressModeW     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
-			sci.mipLodBias       = 0.0f;
+			sci.mipLodBias       = float(BGFX_CONFIG_MIP_LOD_BIAS);
 			sci.anisotropyEnable = VK_FALSE;
-			sci.maxAnisotropy    = 4.0f;
+			sci.maxAnisotropy    = m_maxAnisotropy;
 			sci.compareEnable    = 0 != cmpFunc;
 			sci.compareOp        = s_cmpFunc[cmpFunc];
 			sci.minLod           = 0.0f;
@@ -3747,6 +3830,29 @@ VK_IMPORT_DEVICE
 
 			m_samplerCache.add(hashKey, sampler);
 			return sampler;
+		}
+
+		VkImageView getStorageImageView(TextureHandle _handle, uint8_t _mip)
+		{
+			const TextureVK& texture = m_textures[_handle.idx];
+
+			bx::HashMurmur2A hash;
+			hash.begin();
+			hash.add(texture.m_textureImage);
+			hash.add(_mip);
+			uint32_t hashKey = hash.end();
+
+			VkImageView view = m_storageImageViewCache.find(hashKey);
+
+			if (VK_NULL_HANDLE != view)
+			{
+				return view;
+			}
+			
+			view = texture.createView(0, texture.m_numSides, _mip, 1);
+
+			m_storageImageViewCache.add(hashKey, view);
+			return view;
 		}
 
 		VkPipeline getPipeline(ProgramHandle _program)
@@ -3867,7 +3973,7 @@ VK_IMPORT_DEVICE
 			inputAssemblyState.primitiveRestartEnable = VK_FALSE;
 
 			VkPipelineRasterizationStateCreateInfo rasterizationState;
-			setRasterizerState(rasterizationState, _state);
+			setRasterizerState(rasterizationState, _state, m_wireframe);
 
 			VkPipelineDepthStencilStateCreateInfo depthStencilState;
 			setDepthStencilState(depthStencilState, _state, _stencil);
@@ -4052,7 +4158,7 @@ VK_IMPORT_DEVICE
 
 				// bgfx does not seem to forbid setting a texture to a stage that a program does not use
 				if (bind.m_type == Binding::Texture
-				&& !isValid(program.m_bindInfo[stage].uniformHandle) )
+				&& !isValid(bindInfo.uniformHandle) )
 				{
 					continue;
 				}
@@ -4078,10 +4184,7 @@ VK_IMPORT_DEVICE
 							texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_GENERAL);
 
 							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
-							imageInfo[imageCount].imageView   = VK_NULL_HANDLE != texture.m_textureImageStorageView
-								? texture.m_textureImageStorageView
-								: texture.m_textureImageView
-								;
+							imageInfo[imageCount].imageView = getStorageImageView({ bind.m_idx }, bind.m_mip);
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
 							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
 							++imageCount;
@@ -4329,6 +4432,7 @@ VK_IMPORT_DEVICE
 			{
 				const FrameBufferVK& fb = m_frameBuffers[fbh.idx];
 				numMrt = fb.m_num;
+				rect[0].layerCount = fb.m_attachment[0].numLayers;
 			}
 
 			VkClearAttachment attachments[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -4435,7 +4539,10 @@ VK_IMPORT_DEVICE
 		{
 			const bool acquired = VK_NULL_HANDLE != m_lastImageAcquiredSemaphore;
 			const VkSemaphore waitSemaphore   = m_lastImageAcquiredSemaphore;
-			const VkSemaphore signalSemaphore = acquired ? m_lastImageRenderedSemaphore : VK_NULL_HANDLE;
+			const VkSemaphore signalSemaphore = acquired
+				? m_lastImageRenderedSemaphore
+				: VkSemaphore(VK_NULL_HANDLE)
+				;
 
 			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
@@ -4606,9 +4713,10 @@ VK_IMPORT_DEVICE
 		StateCacheT<VkDescriptorSetLayout> m_descriptorSetLayoutCache;
 		StateCacheT<VkRenderPass> m_renderPassCache;
 		StateCacheT<VkSampler> m_samplerCache;
+		StateCacheT<VkImageView> m_storageImageViewCache;
 
 		Resolution m_resolution;
-		uint32_t m_maxAnisotropy;
+		float m_maxAnisotropy;
 		bool m_depthClamp;
 		bool m_wireframe;
 		bool m_rtMsaa;
@@ -4750,101 +4858,6 @@ VK_DESTROY
 		range.offset = 0;
 		range.size = size;
 		vkFlushMappedMemoryRanges(device, 1, &range);
-	}
-
-	VkResult ImageVK::create(VkFormat _format, const VkExtent3D& _extent)
-	{
-		VkResult result;
-
-		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
-		VkDevice device = s_renderVK->m_device;
-
-		VkImageCreateInfo ici;
-		ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		ici.pNext = NULL;
-		ici.flags = 0;
-		ici.imageType = VK_IMAGE_TYPE_2D;
-		ici.format = _format;
-		ici.extent = _extent;
-		ici.mipLevels   = 1;
-		ici.arrayLayers = 1;
-		ici.samples = VK_SAMPLE_COUNT_1_BIT;
-		ici.tiling  = VK_IMAGE_TILING_OPTIMAL;
-		ici.usage   = 0
-			| VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
-			| VK_IMAGE_USAGE_TRANSFER_SRC_BIT
-			;
-		ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		ici.queueFamilyIndexCount = 0;
-		ici.pQueueFamilyIndices   = 0;
-		ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		result = vkCreateImage(device, &ici, allocatorCb, &m_image);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("vkCreateImage failed %d: %s.", result, getName(result) );
-			return result;
-		}
-
-		VkMemoryRequirements mr;
-		vkGetImageMemoryRequirements(device, m_image, &mr);
-
-		result = s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_memory);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("vkAllocateMemory failed %d: %s.", result, getName(result) );
-			destroy();
-			return result;
-		}
-
-		result = vkBindImageMemory(device, m_image, m_memory, 0);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("vkBindImageMemory failed %d: %s.", result, getName(result) );
-			destroy();
-			return result;
-		}
-
-		VkImageViewCreateInfo ivci;
-		ivci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ivci.pNext = NULL;
-		ivci.flags = 0;
-		ivci.image    = m_image;
-		ivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		ivci.format   = _format;
-		ivci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ivci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ivci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ivci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ivci.subresourceRange.aspectMask = 0
-			| VK_IMAGE_ASPECT_DEPTH_BIT
-			| VK_IMAGE_ASPECT_STENCIL_BIT
-			;
-		ivci.subresourceRange.baseMipLevel   = 0;
-		ivci.subresourceRange.levelCount     = 1;
-		ivci.subresourceRange.baseArrayLayer = 0;
-		ivci.subresourceRange.layerCount     = 1;
-		result = vkCreateImageView(device, &ivci, allocatorCb, &m_imageView);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("vkCreateImageView failed %d: %s.", result, getName(result) );
-			destroy();
-			return result;
-		}
-
-		return VK_SUCCESS;
-	}
-
-	void ImageVK::destroy()
-	{
-		s_renderVK->release(m_imageView);
-		s_renderVK->release(m_image, m_memory);
-		m_imageView = VK_NULL_HANDLE;
-		m_image     = VK_NULL_HANDLE;
-		m_memory    = VK_NULL_HANDLE;
 	}
 
 	void BufferVK::create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
@@ -5427,23 +5440,11 @@ VK_DESTROY
 			, &bic
 			);
 
-		// Make changes to the buffer visible to host read
-		VkMemoryBarrier memBarrier;
-		memBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		memBarrier.pNext         = NULL;
-		memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-		vkCmdPipelineBarrier(
-			  _commandBuffer
+		// Make changes to the buffer visible to the host
+		setMemoryBarrier(
+			_commandBuffer
 			, VK_PIPELINE_STAGE_TRANSFER_BIT
 			, VK_PIPELINE_STAGE_HOST_BIT
-			, 0
-			, 1
-			, &memBarrier
-			, 0
-			, NULL
-			, 0
-			, NULL
 			);
 
 		setImageMemoryBarrier(
@@ -5547,6 +5548,10 @@ VK_DESTROY
 			else if (imageContainer.m_depth > 1)
 			{
 				m_type = VK_IMAGE_VIEW_TYPE_3D;
+			}
+			else if (imageContainer.m_numLayers > 1)
+			{
+				m_type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 			}
 			else
 			{
@@ -5867,33 +5872,6 @@ VK_DESTROY
 					) );
 			}
 
-			// image view creation for storage if needed
-			if (m_flags & BGFX_TEXTURE_COMPUTE_WRITE)
-			{
-				VkImageViewCreateInfo viewInfo;
-				viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.pNext      = NULL;
-				viewInfo.flags      = 0;
-				viewInfo.image      = m_textureImage;
-				viewInfo.viewType   = m_type == VK_IMAGE_VIEW_TYPE_CUBE
-					? VK_IMAGE_VIEW_TYPE_2D_ARRAY
-					: m_type
-					;
-				viewInfo.format     = m_format;
-				viewInfo.components = m_components;
-				viewInfo.subresourceRange.aspectMask     = m_aspectMask;
-				viewInfo.subresourceRange.baseMipLevel   = 0;
-				viewInfo.subresourceRange.levelCount     = m_numMips;
-				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount     = m_numSides;
-				VK_CHECK(vkCreateImageView(
-					  device
-					, &viewInfo
-					, allocatorCb
-					, &m_textureImageStorageView
-					) );
-			}
-
 			if (needResolve)
 			{
 				{
@@ -5956,12 +5934,10 @@ VK_DESTROY
 
 		if (VK_NULL_HANDLE != m_textureImage)
 		{
-			s_renderVK->release(m_textureImageStorageView);
 			s_renderVK->release(m_textureImageDepthView);
 			s_renderVK->release(m_textureImageView);
 			s_renderVK->release(m_textureImage, m_textureDeviceMem);
 
-			m_textureImageStorageView = VK_NULL_HANDLE;
 			m_textureImageDepthView   = VK_NULL_HANDLE;
 			m_textureImageView        = VK_NULL_HANDLE;
 			m_textureImage            = VK_NULL_HANDLE;
@@ -6194,10 +6170,39 @@ VK_DESTROY
 		m_currentImageLayout = _newImageLayout;
 	}
 
+	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips) const
+	{
+		VkImageView view = VK_NULL_HANDLE;
+
+		VkImageViewCreateInfo viewInfo;
+		viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.pNext      = NULL;
+		viewInfo.flags      = 0;
+		viewInfo.image      = m_textureImage;
+		viewInfo.viewType   = m_type == VK_IMAGE_VIEW_TYPE_CUBE
+			? VK_IMAGE_VIEW_TYPE_2D_ARRAY
+			: m_type
+			;
+		viewInfo.format     = m_format;
+		viewInfo.components = m_components;
+		viewInfo.subresourceRange.aspectMask     = m_aspectMask;
+		viewInfo.subresourceRange.baseMipLevel   = _mip;
+		viewInfo.subresourceRange.levelCount     = _numMips;
+		viewInfo.subresourceRange.baseArrayLayer = _layer;
+		viewInfo.subresourceRange.layerCount     = _numLayers;
+		VK_CHECK(vkCreateImageView(
+			  s_renderVK->m_device
+			, &viewInfo
+			, s_renderVK->m_allocatorCb
+			, &view
+			) );
+
+		return view;
+	}
+
 	void FrameBufferVK::create(uint8_t _num, const Attachment* _attachment)
 	{
-		// create frame buffer object
-		m_numAttachment = _num;
+		m_numTh = _num;
 		bx::memCopy(m_attachment, _attachment, sizeof(Attachment) * _num);
 
 		VkDevice device = s_renderVK->m_device;
@@ -6210,10 +6215,25 @@ VK_DESTROY
 		m_depth.idx = bx::kInvalidHandle;
 		m_num = 0;
 
-		for (uint8_t ii = 0; ii < m_numAttachment; ++ii)
+		uint16_t numLayers = m_attachment[0].numLayers;
+
+		for (uint8_t ii = 0; ii < m_numTh; ++ii)
 		{
 			const TextureVK& texture = s_renderVK->m_textures[m_attachment[ii].handle.idx];
-			textureImageViews[ii] = texture.m_textureImageView;
+
+			BX_ASSERT(numLayers == m_attachment[ii].numLayers
+				, "Mismatching framebuffer attachment layer counts (%d != %d)."
+				, m_attachment[ii].numLayers
+				, numLayers
+				);
+
+			m_textureImageViews[ii] = texture.createView(
+				  m_attachment[ii].layer
+				, m_attachment[ii].numLayers
+				, m_attachment[ii].mip
+				, 1
+				);
+			textureImageViews[ii] = m_textureImageViews[ii];
 
 			if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
 			{
@@ -6226,42 +6246,52 @@ VK_DESTROY
 			}
 		}
 
+		m_width = firstTexture.m_width >> m_attachment[0].mip;
+		m_height = firstTexture.m_height >> m_attachment[0].mip;
+
 		VkFramebufferCreateInfo fci;
 		fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		fci.pNext = NULL;
 		fci.flags = 0;
 		fci.renderPass      = renderPass;
-		fci.attachmentCount = m_numAttachment;
+		fci.attachmentCount = m_numTh;
 		fci.pAttachments    = textureImageViews;
-		fci.width  = firstTexture.m_width >> m_attachment[0].mip;
-		fci.height = firstTexture.m_height >> m_attachment[0].mip;
-		fci.layers = firstTexture.m_numSides;
+		fci.width  = m_width;
+		fci.height = m_height;
+		fci.layers = numLayers;
 		VK_CHECK( vkCreateFramebuffer(device, &fci, allocatorCb, &m_framebuffer) );
 
 		m_renderPass = renderPass;
+
+		m_needRecreate = false;
 	}
 
 	void FrameBufferVK::resolve()
 	{
-		if (0 < m_numAttachment)
+		for (uint32_t ii = 0; ii < m_numTh; ++ii)
 		{
-			for (uint32_t ii = 0; ii < m_numAttachment; ++ii)
-			{
-				const Attachment& at = m_attachment[ii];
+			const Attachment& at = m_attachment[ii];
 
-				if (isValid(at.handle) )
-				{
-					TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
-					texture.resolve(s_renderVK->m_commandBuffer, at.resolve);
-				}
+			if (isValid(at.handle) )
+			{
+				TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
+				texture.resolve(s_renderVK->m_commandBuffer, at.resolve);
 			}
 		}
 	}
 
 	void FrameBufferVK::destroy()
 	{
-		s_renderVK->release(m_framebuffer);
-		m_framebuffer = VK_NULL_HANDLE;
+		if (VK_NULL_HANDLE != m_framebuffer)
+		{
+			s_renderVK->release(m_framebuffer);
+			m_framebuffer = VK_NULL_HANDLE;
+
+			for (uint8_t ii = 0; ii < m_numTh; ++ii)
+			{
+				s_renderVK->release(m_textureImageViews[ii]);
+			}
+		}
 	}
 
 	void CommandQueueVK::init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight)
@@ -6620,8 +6650,8 @@ VK_DESTROY
 		static ViewState viewState;
 		viewState.reset(_render);
 
-// 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
-// 		setDebugWireframe(wireframe);
+		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
+		setDebugWireframe(wireframe);
 
 		uint16_t currentSamplerStateIdx = kInvalidHandle;
 		ProgramHandle currentProgram    = BGFX_INVALID_HANDLE;
@@ -7253,6 +7283,20 @@ VK_DESTROY
 							);
 					}
 
+					VkBuffer bufferIndirect = VK_NULL_HANDLE;
+					uint32_t numDrawIndirect = 0;
+					uint32_t bufferOffsetIndirect = 0;
+					if (isValid(draw.m_indirectBuffer) )
+					{
+						const VertexBufferVK& vb = m_vertexBuffers[draw.m_indirectBuffer.idx];
+						bufferIndirect = vb.m_buffer;
+						numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+							? vb.m_size / BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+							: draw.m_numIndirect
+							;
+						bufferOffsetIndirect = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+					}
+
 					if (!isValid(draw.m_indexBuffer) )
 					{
 						const VertexBufferVK& vertexBuffer = m_vertexBuffers[draw.m_stream[0].m_handle.idx];
@@ -7262,12 +7306,28 @@ VK_DESTROY
 							? vertexBuffer.m_size / layout->m_stride
 							: draw.m_numVertices
 							;
-						vkCmdDraw(m_commandBuffer
-							, numVertices
-							, draw.m_numInstances
-							, draw.m_stream[0].m_startVertex
-							, 0
-							);
+
+						if (isValid(draw.m_indirectBuffer) )
+						{
+							vkCmdDrawIndirect(
+								  m_commandBuffer
+								, bufferIndirect
+								, bufferOffsetIndirect
+								, numDrawIndirect
+								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								);
+						}
+						else
+						{
+							vkCmdDraw(
+								  m_commandBuffer
+								, numVertices
+								, draw.m_numInstances
+								, draw.m_stream[0].m_startVertex
+								, 0
+								);
+						}
+
 					}
 					else
 					{
@@ -7281,18 +7341,34 @@ VK_DESTROY
 							: draw.m_numIndices
 							;
 
-						vkCmdBindIndexBuffer(m_commandBuffer
+						vkCmdBindIndexBuffer(
+							  m_commandBuffer
 							, ib.m_buffer
 							, 0
 							, indexFormat
 							);
-						vkCmdDrawIndexed(m_commandBuffer
-							, numIndices
-							, draw.m_numInstances
-							, draw.m_startIndex
-							, draw.m_stream[0].m_startVertex
-							, 0
-							);
+
+						if (isValid(draw.m_indirectBuffer) )
+						{
+							vkCmdDrawIndexedIndirect(
+								  m_commandBuffer
+								, bufferIndirect
+								, bufferOffsetIndirect
+								, numDrawIndirect
+								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								);
+						}
+						else
+						{
+							vkCmdDrawIndexed(
+								  m_commandBuffer
+								, numIndices
+								, draw.m_numInstances
+								, draw.m_startIndex
+								, draw.m_stream[0].m_startVertex
+								, 0
+								);
+						}
 					}
 
 					uint32_t numPrimsSubmitted = numIndices / prim.m_div - prim.m_sub;

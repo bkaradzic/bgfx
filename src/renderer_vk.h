@@ -389,23 +389,6 @@ VK_DESTROY
 		uint32_t m_maxDescriptors;
 	};
 
-	struct ImageVK
-	{
-		ImageVK()
-			: m_memory(VK_NULL_HANDLE)
-			, m_image(VK_NULL_HANDLE)
-			, m_imageView(VK_NULL_HANDLE)
-		{
-		}
-
-		VkResult create(VkFormat _format, const VkExtent3D& _extent);
-		void destroy();
-
-		VkDeviceMemory m_memory;
-		VkImage        m_image;
-		VkImageView    m_imageView;
-	};
-
 	struct BufferVK
 	{
 		BufferVK()
@@ -610,7 +593,6 @@ VK_DESTROY
 			, m_textureDeviceMem(VK_NULL_HANDLE)
 			, m_textureImageView(VK_NULL_HANDLE)
 			, m_textureImageDepthView(VK_NULL_HANDLE)
-			, m_textureImageStorageView(VK_NULL_HANDLE)
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 			, m_singleMsaaImage(VK_NULL_HANDLE)
 			, m_singleMsaaDeviceMem(VK_NULL_HANDLE)
@@ -625,6 +607,8 @@ VK_DESTROY
 
 		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
 		void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout);
+
+		VkImageView createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips) const;
 
 		void*    m_directAccessPtr;
 		uint64_t m_flags;
@@ -648,7 +632,6 @@ VK_DESTROY
 		VkDeviceMemory m_textureDeviceMem;
 		VkImageView    m_textureImageView;
 		VkImageView    m_textureImageDepthView;
-		VkImageView    m_textureImageStorageView;
 		VkImageLayout  m_currentImageLayout;
 
 		VkImage        m_singleMsaaImage;
@@ -667,6 +650,7 @@ VK_DESTROY
 			, m_denseIdx(kInvalidHandle)
 			, m_num(0)
 			, m_numTh(0)
+			, m_needRecreate(false)
 			, m_framebuffer(VK_NULL_HANDLE)
 		{
 		}
@@ -682,8 +666,10 @@ VK_DESTROY
 		uint16_t m_denseIdx;
 		uint8_t m_num;
 		uint8_t m_numTh;
-		uint8_t m_numAttachment;
+		bool m_needRecreate;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+
+		VkImageView m_textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		VkFramebuffer m_framebuffer;
 		VkRenderPass m_renderPass;
 	};
