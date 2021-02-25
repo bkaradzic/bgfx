@@ -4140,10 +4140,7 @@ VK_IMPORT_DEVICE
 							texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_GENERAL);
 
 							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
-							imageInfo[imageCount].imageView   = VK_NULL_HANDLE != texture.m_textureImageStorageView
-								? texture.m_textureImageStorageView
-								: texture.m_textureImageView
-								;
+							imageInfo[imageCount].imageView   = texture.m_textureImageStorageView;
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
 							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
 							++imageCount;
@@ -5610,6 +5607,10 @@ VK_DESTROY
 			{
 				m_type = VK_IMAGE_VIEW_TYPE_3D;
 			}
+			else if (imageContainer.m_numLayers > 1)
+			{
+				m_type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+			}
 			else
 			{
 				m_type = VK_IMAGE_VIEW_TYPE_2D;
@@ -5929,8 +5930,7 @@ VK_DESTROY
 					) );
 			}
 
-			// image view creation for storage if needed
-			if (m_flags & BGFX_TEXTURE_COMPUTE_WRITE)
+			// image view creation for storage image usage
 			{
 				VkImageViewCreateInfo viewInfo;
 				viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -6256,10 +6256,39 @@ VK_DESTROY
 		m_currentImageLayout = _newImageLayout;
 	}
 
+	VkImageView TextureVK::createView(uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint16_t _numMips) const
+	{
+		VkImageView view = VK_NULL_HANDLE;
+
+		VkImageViewCreateInfo viewInfo;
+		viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.pNext      = NULL;
+		viewInfo.flags      = 0;
+		viewInfo.image      = m_textureImage;
+		viewInfo.viewType   = m_type == VK_IMAGE_VIEW_TYPE_CUBE
+			? VK_IMAGE_VIEW_TYPE_2D_ARRAY
+			: m_type
+			;
+		viewInfo.format     = m_format;
+		viewInfo.components = m_components;
+		viewInfo.subresourceRange.aspectMask     = m_aspectMask;
+		viewInfo.subresourceRange.baseMipLevel   = _mip;
+		viewInfo.subresourceRange.levelCount     = _numMips;
+		viewInfo.subresourceRange.baseArrayLayer = _layer;
+		viewInfo.subresourceRange.layerCount     = _numLayers;
+		VK_CHECK(vkCreateImageView(
+			  s_renderVK->m_device
+			, &viewInfo
+			, s_renderVK->m_allocatorCb
+			, &view
+			) );
+
+		return view;
+	}
+
 	void FrameBufferVK::create(uint8_t _num, const Attachment* _attachment)
 	{
-		// create frame buffer object
-		m_numAttachment = _num;
+		m_numTh = _num;
 		bx::memCopy(m_attachment, _attachment, sizeof(Attachment) * _num);
 
 		VkDevice device = s_renderVK->m_device;
@@ -6272,10 +6301,25 @@ VK_DESTROY
 		m_depth.idx = bx::kInvalidHandle;
 		m_num = 0;
 
-		for (uint8_t ii = 0; ii < m_numAttachment; ++ii)
+		uint16_t numLayers = m_attachment[0].numLayers;
+
+		for (uint8_t ii = 0; ii < m_numTh; ++ii)
 		{
 			const TextureVK& texture = s_renderVK->m_textures[m_attachment[ii].handle.idx];
-			textureImageViews[ii] = texture.m_textureImageView;
+
+			BX_ASSERT(numLayers == m_attachment[ii].numLayers
+				, "Mismatching framebuffer attachment layer counts (%d != %d)."
+				, m_attachment[ii].numLayers
+				, numLayers
+				);
+
+			m_textureImageViews[ii] = texture.createView(
+				  m_attachment[ii].layer
+				, m_attachment[ii].numLayers
+				, m_attachment[ii].mip
+				, 1
+				);
+			textureImageViews[ii] = m_textureImageViews[ii];
 
 			if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
 			{
@@ -6288,42 +6332,52 @@ VK_DESTROY
 			}
 		}
 
+		m_width = firstTexture.m_width >> m_attachment[0].mip;
+		m_height = firstTexture.m_height >> m_attachment[0].mip;
+
 		VkFramebufferCreateInfo fci;
 		fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		fci.pNext = NULL;
 		fci.flags = 0;
 		fci.renderPass      = renderPass;
-		fci.attachmentCount = m_numAttachment;
+		fci.attachmentCount = m_numTh;
 		fci.pAttachments    = textureImageViews;
-		fci.width  = firstTexture.m_width >> m_attachment[0].mip;
-		fci.height = firstTexture.m_height >> m_attachment[0].mip;
-		fci.layers = firstTexture.m_numSides;
+		fci.width  = m_width;
+		fci.height = m_height;
+		fci.layers = numLayers;
 		VK_CHECK( vkCreateFramebuffer(device, &fci, allocatorCb, &m_framebuffer) );
 
 		m_renderPass = renderPass;
+
+		m_needRecreate = false;
 	}
 
 	void FrameBufferVK::resolve()
 	{
-		if (0 < m_numAttachment)
+		for (uint32_t ii = 0; ii < m_numTh; ++ii)
 		{
-			for (uint32_t ii = 0; ii < m_numAttachment; ++ii)
-			{
-				const Attachment& at = m_attachment[ii];
+			const Attachment& at = m_attachment[ii];
 
-				if (isValid(at.handle) )
-				{
-					TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
-					texture.resolve(s_renderVK->m_commandBuffer, at.resolve);
-				}
+			if (isValid(at.handle) )
+			{
+				TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
+				texture.resolve(s_renderVK->m_commandBuffer, at.resolve);
 			}
 		}
 	}
 
 	void FrameBufferVK::destroy()
 	{
-		s_renderVK->release(m_framebuffer);
-		m_framebuffer = VK_NULL_HANDLE;
+		if (VK_NULL_HANDLE != m_framebuffer)
+		{
+			s_renderVK->release(m_framebuffer);
+			m_framebuffer = VK_NULL_HANDLE;
+
+			for (uint8_t ii = 0; ii < m_numTh; ++ii)
+			{
+				s_renderVK->release(m_textureImageViews[ii]);
+			}
+		}
 	}
 
 	void CommandQueueVK::init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight)
