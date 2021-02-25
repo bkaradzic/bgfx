@@ -1595,6 +1595,7 @@ VK_IMPORT_INSTANCE
 					goto error;
 				}
 
+				VkPhysicalDevice fallbackPhysicalDevice = VK_NULL_HANDLE;
 				m_physicalDevice = VK_NULL_HANDLE;
 
 				for (uint32_t ii = 0; ii < numPhysicalDevices; ++ii)
@@ -1620,7 +1621,14 @@ VK_IMPORT_INSTANCE
 					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || pdp.vendorID == g_caps.vendorId)
 					&&   (0 == g_caps.deviceId                || pdp.deviceID == g_caps.deviceId) )
 					{
-						m_physicalDevice = physicalDevices[ii];
+						if (BX_ENABLED(BGFX_CONFIG_PREFER_DISCRETE_GPU) && (pdp.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) )
+						{
+							fallbackPhysicalDevice = physicalDevices[ii];
+						}
+						else
+						{
+							m_physicalDevice = physicalDevices[ii];
+						}
 					}
 
 					VkPhysicalDeviceMemoryProperties pdmp;
@@ -1653,7 +1661,10 @@ VK_IMPORT_INSTANCE
 
 				if (VK_NULL_HANDLE == m_physicalDevice)
 				{
-					m_physicalDevice = physicalDevices[0];
+					m_physicalDevice = VK_NULL_HANDLE == fallbackPhysicalDevice
+						? physicalDevices[0]
+						: fallbackPhysicalDevice
+						;
 				}
 
 				vkGetPhysicalDeviceProperties(m_physicalDevice, &m_deviceProperties);
