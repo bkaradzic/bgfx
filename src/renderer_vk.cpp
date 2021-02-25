@@ -667,8 +667,7 @@ VK_IMPORT_DEVICE
 			if (VK_SUCCESS == result
 			&&  0 < numExtensionProperties)
 			{
-				VkExtensionProperties extensionProperties[64];
-				numExtensionProperties = bx::min<uint32_t>(numExtensionProperties, BX_COUNTOF(extensionProperties) );
+				VkExtensionProperties* extensionProperties = (VkExtensionProperties*)BX_ALLOC(g_allocator, numExtensionProperties * sizeof(VkExtensionProperties) );
 				result = enumerateExtensionProperties(_physicalDevice
 					, NULL
 					, &numExtensionProperties
@@ -695,6 +694,8 @@ VK_IMPORT_DEVICE
 
 					BX_UNUSED(supported);
 				}
+
+				BX_FREE(g_allocator, extensionProperties);
 			}
 		}
 
@@ -705,8 +706,7 @@ VK_IMPORT_DEVICE
 		if (VK_SUCCESS == result
 		&&  0 < numLayerProperties)
 		{
-			VkLayerProperties layerProperties[64];
-			numLayerProperties = bx::min<uint32_t>(numLayerProperties, BX_COUNTOF(layerProperties) );
+			VkLayerProperties* layerProperties = (VkLayerProperties*)BX_ALLOC(g_allocator, numLayerProperties * sizeof(VkLayerProperties) );
 			result = enumerateLayerProperties(_physicalDevice, &numLayerProperties, layerProperties);
 
 			char indent = VK_NULL_HANDLE == _physicalDevice ? '\0' : '\t';
@@ -741,8 +741,7 @@ VK_IMPORT_DEVICE
 				if (VK_SUCCESS == result
 				&&  0 < numExtensionProperties)
 				{
-					VkExtensionProperties extensionProperties[64];
-					numExtensionProperties = bx::min<uint32_t>(numExtensionProperties, BX_COUNTOF(extensionProperties) );
+					VkExtensionProperties* extensionProperties = (VkExtensionProperties*)BX_ALLOC(g_allocator, numExtensionProperties * sizeof(VkExtensionProperties) );
 					result = enumerateExtensionProperties(_physicalDevice
 						, layerProperties[layer].layerName
 						, &numExtensionProperties
@@ -766,8 +765,12 @@ VK_IMPORT_DEVICE
 
 						BX_UNUSED(supported);
 					}
+
+					BX_FREE(g_allocator, extensionProperties);
 				}
 			}
+
+			BX_FREE(g_allocator, layerProperties);
 		}
 	}
 
