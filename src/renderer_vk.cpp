@@ -3414,6 +3414,15 @@ VK_IMPORT_DEVICE
 			m_rtMsaa = _msaa;
 		}
 
+		void setDebugWireframe(bool _wireframe)
+		{
+			if (m_wireframe != _wireframe)
+			{
+				m_wireframe = _wireframe;
+				m_pipelineStateCache.invalidate();
+			}
+		}
+
 		void setBlendState(VkPipelineColorBlendStateCreateInfo& _desc, uint64_t _state, uint32_t _rgba = 0)
 		{
 			VkPipelineColorBlendAttachmentState* bas = const_cast<VkPipelineColorBlendAttachmentState*>(_desc.pAttachments);
@@ -3955,7 +3964,7 @@ VK_IMPORT_DEVICE
 			inputAssemblyState.primitiveRestartEnable = VK_FALSE;
 
 			VkPipelineRasterizationStateCreateInfo rasterizationState;
-			setRasterizerState(rasterizationState, _state);
+			setRasterizerState(rasterizationState, _state, m_wireframe);
 
 			VkPipelineDepthStencilStateCreateInfo depthStencilState;
 			setDepthStencilState(depthStencilState, _state, _stencil);
@@ -6631,8 +6640,8 @@ VK_DESTROY
 		static ViewState viewState;
 		viewState.reset(_render);
 
-// 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
-// 		setDebugWireframe(wireframe);
+		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
+		setDebugWireframe(wireframe);
 
 		uint16_t currentSamplerStateIdx = kInvalidHandle;
 		ProgramHandle currentProgram    = BGFX_INVALID_HANDLE;
