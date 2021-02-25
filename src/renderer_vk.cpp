@@ -317,6 +317,7 @@ VK_IMPORT_DEVICE
 			EXT_debug_report,
 			EXT_memory_budget,
 			KHR_get_physical_device_properties2,
+			EXT_shader_viewport_index_layer,
 
 			Count
 		};
@@ -337,6 +338,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_debug_report",                    1, false, false, BGFX_CONFIG_DEBUG            , Layer::Count },
 		{ "VK_EXT_memory_budget",                   1, false, false, true                         , Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                         , Layer::Count },
+		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                         , Layer::Count }
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1693,6 +1695,10 @@ VK_IMPORT_INSTANCE
 					| BGFX_CAPS_VERTEX_ID
 					| BGFX_CAPS_IMAGE_RW
 					);
+
+				g_caps.supported |= 0
+					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
+					;
 
 				g_caps.limits.maxTextureSize     = m_deviceProperties.limits.maxImageDimension2D;
 				g_caps.limits.maxTextureLayers   = m_deviceProperties.limits.maxImageArrayLayers;
@@ -4426,6 +4432,7 @@ VK_IMPORT_DEVICE
 			{
 				const FrameBufferVK& fb = m_frameBuffers[fbh.idx];
 				numMrt = fb.m_num;
+				rect[0].layerCount = fb.m_attachment[0].numLayers;
 			}
 
 			VkClearAttachment attachments[BGFX_CONFIG_MAX_FRAME_BUFFERS];
