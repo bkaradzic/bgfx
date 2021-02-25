@@ -2160,8 +2160,8 @@ VK_IMPORT_DEVICE
 					}
 				}
 
-				BX_ASSERT(surfaceFormatIdx < numSurfaceFormats, "Cannot find preferred surface format from supported surface formats");
-				BX_WARN(surfaceFormatSrgbIdx < numSurfaceFormats, "Cannot find preferred sRGB surface format from supported surface formats");
+				BX_ASSERT(surfaceFormatIdx < numSurfaceFormats, "Cannot find preferred surface format from supported surface formats.");
+				BX_WARN(surfaceFormatSrgbIdx < numSurfaceFormats, "Cannot find preferred sRGB surface format from supported surface formats.");
 
 				m_backBufferColorFormat     = surfaceFormats[surfaceFormatIdx];
 				m_backBufferColorFormatSrgb = surfaceFormatSrgbIdx < numSurfaceFormats
@@ -2213,7 +2213,11 @@ VK_IMPORT_DEVICE
 					? BGFX_CONFIG_MAX_BACK_BUFFERS
 					: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, BGFX_CONFIG_MAX_BACK_BUFFERS)
 					;
-				BX_ASSERT(minSwapBufferCount <= maxSwapBufferCount, "Incompatible swapchain image count");
+				BX_ASSERT(minSwapBufferCount <= maxSwapBufferCount
+					, "Incompatible swapchain image count (min: %d, max: %d)."
+					, minSwapBufferCount
+					, maxSwapBufferCount
+					);
 
 				uint32_t swapBufferCount = bx::clamp<uint32_t>(_init.resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
 
@@ -2694,7 +2698,7 @@ VK_IMPORT_DEVICE
 		{
 			TextureVK& texture = m_textures[_handle.idx];
 
-			if (!!(texture.m_flags & BGFX_TEXTURE_RT_MASK))
+			if (!!(texture.m_flags & BGFX_TEXTURE_RT_MASK) )
 			{
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 				{
@@ -2933,7 +2937,10 @@ VK_IMPORT_DEVICE
 		template<typename Ty>
 		void release(Ty _object, VkDeviceMemory _memory = VK_NULL_HANDLE)
 		{
-			m_cmd.release(uint64_t(_object.vk), getType<Ty>() );
+			if (VK_NULL_HANDLE != _object)
+			{
+				m_cmd.release(uint64_t(_object.vk), getType<Ty>() );
+			}
 
 			if (VK_NULL_HANDLE != _memory)
 			{
@@ -4133,7 +4140,7 @@ VK_IMPORT_DEVICE
 
 				// bgfx does not seem to forbid setting a texture to a stage that a program does not use
 				if (bind.m_type == Binding::Texture
-				&& !isValid(program.m_bindInfo[stage].uniformHandle) )
+				&& !isValid(bindInfo.uniformHandle) )
 				{
 					continue;
 				}
@@ -4513,7 +4520,10 @@ VK_IMPORT_DEVICE
 		{
 			const bool acquired = VK_NULL_HANDLE != m_lastImageAcquiredSemaphore;
 			const VkSemaphore waitSemaphore   = m_lastImageAcquiredSemaphore;
-			const VkSemaphore signalSemaphore = acquired ? m_lastImageRenderedSemaphore : VK_NULL_HANDLE;
+			const VkSemaphore signalSemaphore = acquired
+				? m_lastImageRenderedSemaphore
+				: VkSemaphore(VK_NULL_HANDLE)
+				;
 
 			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
@@ -4829,101 +4839,6 @@ VK_DESTROY
 		range.offset = 0;
 		range.size = size;
 		vkFlushMappedMemoryRanges(device, 1, &range);
-	}
-
-	VkResult ImageVK::create(VkFormat _format, const VkExtent3D& _extent)
-	{
-		VkResult result;
-
-		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
-		VkDevice device = s_renderVK->m_device;
-
-		VkImageCreateInfo ici;
-		ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		ici.pNext = NULL;
-		ici.flags = 0;
-		ici.imageType = VK_IMAGE_TYPE_2D;
-		ici.format = _format;
-		ici.extent = _extent;
-		ici.mipLevels   = 1;
-		ici.arrayLayers = 1;
-		ici.samples = VK_SAMPLE_COUNT_1_BIT;
-		ici.tiling  = VK_IMAGE_TILING_OPTIMAL;
-		ici.usage   = 0
-			| VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
-			| VK_IMAGE_USAGE_TRANSFER_SRC_BIT
-			;
-		ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		ici.queueFamilyIndexCount = 0;
-		ici.pQueueFamilyIndices   = 0;
-		ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		result = vkCreateImage(device, &ici, allocatorCb, &m_image);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("vkCreateImage failed %d: %s.", result, getName(result) );
-			return result;
-		}
-
-		VkMemoryRequirements mr;
-		vkGetImageMemoryRequirements(device, m_image, &mr);
-
-		result = s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_memory);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("vkAllocateMemory failed %d: %s.", result, getName(result) );
-			destroy();
-			return result;
-		}
-
-		result = vkBindImageMemory(device, m_image, m_memory, 0);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("vkBindImageMemory failed %d: %s.", result, getName(result) );
-			destroy();
-			return result;
-		}
-
-		VkImageViewCreateInfo ivci;
-		ivci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ivci.pNext = NULL;
-		ivci.flags = 0;
-		ivci.image    = m_image;
-		ivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		ivci.format   = _format;
-		ivci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ivci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ivci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ivci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ivci.subresourceRange.aspectMask = 0
-			| VK_IMAGE_ASPECT_DEPTH_BIT
-			| VK_IMAGE_ASPECT_STENCIL_BIT
-			;
-		ivci.subresourceRange.baseMipLevel   = 0;
-		ivci.subresourceRange.levelCount     = 1;
-		ivci.subresourceRange.baseArrayLayer = 0;
-		ivci.subresourceRange.layerCount     = 1;
-		result = vkCreateImageView(device, &ivci, allocatorCb, &m_imageView);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("vkCreateImageView failed %d: %s.", result, getName(result) );
-			destroy();
-			return result;
-		}
-
-		return VK_SUCCESS;
-	}
-
-	void ImageVK::destroy()
-	{
-		s_renderVK->release(m_imageView);
-		s_renderVK->release(m_image, m_memory);
-		m_imageView = VK_NULL_HANDLE;
-		m_image     = VK_NULL_HANDLE;
-		m_memory    = VK_NULL_HANDLE;
 	}
 
 	void BufferVK::create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
@@ -5506,23 +5421,11 @@ VK_DESTROY
 			, &bic
 			);
 
-		// Make changes to the buffer visible to host read
-		VkMemoryBarrier memBarrier;
-		memBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		memBarrier.pNext         = NULL;
-		memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		memBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-		vkCmdPipelineBarrier(
-			  _commandBuffer
+		// Make changes to the buffer visible to the host
+		setMemoryBarrier(
+			_commandBuffer
 			, VK_PIPELINE_STAGE_TRANSFER_BIT
 			, VK_PIPELINE_STAGE_HOST_BIT
-			, 0
-			, 1
-			, &memBarrier
-			, 0
-			, NULL
-			, 0
-			, NULL
 			);
 
 		setImageMemoryBarrier(
