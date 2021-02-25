@@ -2689,8 +2689,50 @@ VK_IMPORT_DEVICE
 			vkFreeMemory(m_device, stagingMemory, m_allocatorCb);
 		}
 
-		void resizeTexture(TextureHandle /*_handle*/, uint16_t /*_width*/, uint16_t /*_height*/, uint8_t /*_numMips*/, uint16_t /*_numLayers*/) override
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
 		{
+			TextureVK& texture = m_textures[_handle.idx];
+
+			if (!!(texture.m_flags & BGFX_TEXTURE_RT_MASK))
+			{
+				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
+				{
+					if (VK_NULL_HANDLE != m_frameBuffers[ii].m_framebuffer)
+					{
+						for (uint8_t jj = 0, num = m_frameBuffers[ii].m_numTh; jj < num; ++jj)
+						{
+							if (_handle.idx == m_frameBuffers[ii].m_attachment[jj].handle.idx)
+							{
+								m_frameBuffers[ii].m_needRecreate = true;
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
+			const Memory* mem = alloc(size);
+
+			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
+			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
+			bx::write(&writer, magic);
+
+			TextureCreate tc;
+			tc.m_width     = _width;
+			tc.m_height    = _height;
+			tc.m_depth     = 0;
+			tc.m_numLayers = _numLayers;
+			tc.m_numMips   = _numMips;
+			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
+			tc.m_cubeMap   = false;
+			tc.m_mem       = NULL;
+			bx::write(&writer, tc);
+
+			texture.destroy();
+			texture.create(m_commandBuffer, mem, texture.m_flags, 0);
+
+			bgfx::release(mem);
 		}
 
 		void overrideInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/) override
@@ -3338,7 +3380,13 @@ VK_IMPORT_DEVICE
 
 			if (isValid(_fbh) )
 			{
-				const FrameBufferVK& frameBuffer = m_frameBuffers[_fbh.idx];
+				FrameBufferVK& frameBuffer = m_frameBuffers[_fbh.idx];
+
+				if (frameBuffer.m_needRecreate)
+				{
+					frameBuffer.destroy();
+					frameBuffer.create(frameBuffer.m_numTh, frameBuffer.m_attachment);
+				}
 
 				for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 				{

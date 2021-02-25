@@ -667,6 +667,7 @@ VK_DESTROY
 			, m_denseIdx(kInvalidHandle)
 			, m_num(0)
 			, m_numTh(0)
+			, m_needRecreate(false)
 			, m_framebuffer(VK_NULL_HANDLE)
 		{
 		}
@@ -683,6 +684,7 @@ VK_DESTROY
 		uint8_t m_num;
 		uint8_t m_numTh;
 		uint8_t m_numAttachment;
+		bool m_needRecreate;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		VkFramebuffer m_framebuffer;
 		VkRenderPass m_renderPass;
