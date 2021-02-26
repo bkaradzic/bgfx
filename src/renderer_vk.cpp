@@ -7188,10 +7188,13 @@ VK_DESTROY
 							commit(*vcb);
 						}
 
-						UniformBuffer* fcb = program.m_fsh->m_constantBuffer;
-						if (NULL != fcb)
+						if (NULL != program.m_fsh)
 						{
-							commit(*fcb);
+							UniformBuffer* fcb = program.m_fsh->m_constantBuffer;
+							if (NULL != fcb)
+							{
+								commit(*fcb);
+							}
 						}
 
 						hasPredefined = 0 < program.m_numPredefined;
