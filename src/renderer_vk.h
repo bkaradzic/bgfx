@@ -369,9 +369,10 @@ VK_DESTROY
 		{
 		}
 
-		void create(uint32_t _size, uint32_t _maxDescriptors);
+		void create(uint32_t _size, uint32_t _count, uint32_t _maxDescriptors);
 		void destroy();
 		void reset();
+		uint32_t write(const void* _data, uint32_t _size);
 		void flush();
 
 		VkDescriptorSet& getCurrentDS()
