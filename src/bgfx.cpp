@@ -2659,6 +2659,7 @@ namespace bgfx
 				}
 				else if (BX_ENABLED(BX_PLATFORM_LINUX) )
 				{
+					score += RendererType::Vulkan   == renderer ? 30 : 0;
 					score += RendererType::OpenGL   == renderer ? 20 : 0;
 					score += RendererType::OpenGLES == renderer ? 10 : 0;
 				}
