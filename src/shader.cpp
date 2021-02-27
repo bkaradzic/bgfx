@@ -10,6 +10,112 @@
 
 namespace bgfx
 {
+	struct DescriptorTypeToId
+	{
+		DescriptorType::Enum type;
+		uint16_t id;
+	};
+
+	static DescriptorTypeToId s_descriptorTypeToId[] =
+	{
+		// NOTICE:
+		// DescriptorType must be in order how it appears in DescriptorType::Enum! id is
+		// unique and should not be changed if new DescriptorTypes are added.
+		{ DescriptorType::Undefined,     0xFFFF },
+		{ DescriptorType::StorageBuffer, 0x0007 }, // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+		{ DescriptorType::StorageImage,  0x0003 }, // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_descriptorTypeToId) == DescriptorType::Count);
+
+	DescriptorType::Enum idToDescriptorType(uint16_t _id)
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_descriptorTypeToId); ++ii)
+		{
+			if (s_descriptorTypeToId[ii].id == _id)
+			{
+				return s_descriptorTypeToId[ii].type;
+			}
+		}
+
+		return DescriptorType::Undefined;
+	}
+
+	uint16_t descriptorTypeToId(DescriptorType::Enum _type)
+	{
+		return s_descriptorTypeToId[_type].id;
+	}
+
+	struct TextureComponentTypeToId
+	{
+		TextureComponentType::Enum type;
+		uint8_t id;
+	};
+
+	static TextureComponentTypeToId s_textureComponentTypeToId[] =
+	{
+		// see comment in s_descriptorTypeToId
+		{ TextureComponentType::Undefined, 0xFF },
+		{ TextureComponentType::Float,     0x00 }, // wgpu::TextureComponentType::Float
+		{ TextureComponentType::Int,       0x01 }, // wgpu::TextureComponentType::Sint
+		{ TextureComponentType::Uint,      0x02 }, // wgpu::TextureComponentType::Uint
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_textureComponentTypeToId) == TextureComponentType::Count);
+
+	TextureComponentType::Enum idToTextureComponentType(uint8_t _id)
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_textureComponentTypeToId); ++ii)
+		{
+			if (s_textureComponentTypeToId[ii].id == _id)
+			{
+				return s_textureComponentTypeToId[ii].type;
+			}
+		}
+
+		return TextureComponentType::Undefined;
+	}
+
+	uint8_t textureComponentTypeToId(TextureComponentType::Enum _type)
+	{
+		return s_textureComponentTypeToId[_type].id;
+	}
+
+	struct TextureDimensionToId
+	{
+		TextureDimension::Enum dimension;
+		uint8_t id;
+	};
+
+	static TextureDimensionToId s_textureDimensionToId[] =
+	{
+		// see comment in s_descriptorTypeToId
+		{ TextureDimension::Undefined,          0x00 }, // wgpu::TextureViewDimension::Undefined
+		{ TextureDimension::Dimension1D,        0x01 }, // wgpu::TextureViewDimension::e1D
+		{ TextureDimension::Dimension2D,        0x02 }, // wgpu::TextureComponentType::e2D
+		{ TextureDimension::Dimension2DArray,   0x03 }, // wgpu::TextureComponentType::e2DArray
+		{ TextureDimension::DimensionCube,      0x04 }, // wgpu::TextureComponentType::Cube
+		{ TextureDimension::DimensionCubeArray, 0x05 }, // wgpu::TextureComponentType::CubeArray
+		{ TextureDimension::Dimension3D,        0x06 }, // wgpu::TextureComponentType::e3D
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_textureDimensionToId) == TextureDimension::Count);
+
+	TextureDimension::Enum idToTextureDimension(uint8_t _id)
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_textureDimensionToId); ++ii)
+		{
+			if (s_textureDimensionToId[ii].id == _id)
+			{
+				return s_textureDimensionToId[ii].dimension;
+			}
+		}
+
+		return TextureDimension::Undefined;
+	}
+
+	uint8_t textureDimensionToId(TextureDimension::Enum _dim)
+	{
+		return s_textureDimensionToId[_dim].id;
+	}
+
 	static bool printAsm(uint32_t _offset, const DxbcInstruction& _instruction, void* _userData)
 	{
 		BX_UNUSED(_offset);

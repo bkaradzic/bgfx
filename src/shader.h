@@ -10,6 +10,56 @@
 
 namespace bgfx
 {
+	struct DescriptorType
+	{
+		enum Enum
+		{
+			Undefined,
+			StorageBuffer,
+			StorageImage,
+
+			Count
+		};
+	};
+
+	DescriptorType::Enum idToDescriptorType(uint16_t _id);
+	uint16_t descriptorTypeToId(DescriptorType::Enum _type);
+
+	struct TextureComponentType
+	{
+		enum Enum
+		{
+			Undefined,
+			Float,
+			Int,
+			Uint,
+
+			Count
+		};
+	};
+
+	TextureComponentType::Enum idToTextureComponentType(uint8_t _id);
+	uint8_t textureComponentTypeToId(TextureComponentType::Enum _type);
+
+	struct TextureDimension
+	{
+		enum Enum
+		{
+			Undefined,
+			Dimension1D,
+			Dimension2D,
+			Dimension2DArray,
+			DimensionCube,
+			DimensionCubeArray,
+			Dimension3D,
+
+			Count
+		};
+	};
+
+	TextureDimension::Enum idToTextureDimension(uint8_t _id);
+	uint8_t textureDimensionToId(TextureDimension::Enum _dim);
+
 	///
 	void disassemble(bx::WriterI* _writer, bx::ReaderSeekerI* _reader, bx::Error* _err = NULL);
 
