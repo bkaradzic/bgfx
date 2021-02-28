@@ -4424,19 +4424,20 @@ VK_IMPORT_DEVICE
 			rect[0].layerCount     = 1;
 
 			uint32_t numMrt = 1;
+			VkImageAspectFlags depthAspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 			FrameBufferHandle fbh = m_fbh;
 			if (isValid(fbh) )
 			{
 				const FrameBufferVK& fb = m_frameBuffers[fbh.idx];
 				numMrt = fb.m_num;
+				depthAspectMask = isValid(fb.m_depth) ? m_textures[fb.m_depth.idx].m_aspectMask : 0;
 				rect[0].layerCount = fb.m_attachment[0].numLayers;
 			}
 
 			VkClearAttachment attachments[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 			uint32_t mrt = 0;
 
-			if (true //NULL != m_currentColor
-			&&  BGFX_CLEAR_COLOR & _clear.m_flags)
+			if (BGFX_CLEAR_COLOR & _clear.m_flags)
 			{
 				if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 				{
@@ -4469,13 +4470,14 @@ VK_IMPORT_DEVICE
 				}
 			}
 
-			if (true //NULL != m_currentDepthStencil
+			if (0 != depthAspectMask
 			&& (BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL) & _clear.m_flags)
 			{
 				attachments[mrt].colorAttachment = mrt;
 				attachments[mrt].aspectMask = 0;
 				attachments[mrt].aspectMask |= (_clear.m_flags & BGFX_CLEAR_DEPTH  ) ? VK_IMAGE_ASPECT_DEPTH_BIT   : 0;
 				attachments[mrt].aspectMask |= (_clear.m_flags & BGFX_CLEAR_STENCIL) ? VK_IMAGE_ASPECT_STENCIL_BIT : 0;
+				attachments[mrt].aspectMask &= depthAspectMask;
 
 				attachments[mrt].clearValue.depthStencil.stencil = _clear.m_stencil;
 				attachments[mrt].clearValue.depthStencil.depth   = _clear.m_depth;
