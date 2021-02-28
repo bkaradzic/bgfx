@@ -14,7 +14,6 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			Undefined,
 			StorageBuffer,
 			StorageImage,
 
@@ -29,7 +28,6 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			Undefined,
 			Float,
 			Int,
 			Uint,
@@ -45,7 +43,6 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			Undefined,
 			Dimension1D,
 			Dimension2D,
 			Dimension2DArray,

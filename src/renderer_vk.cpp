@@ -5067,9 +5067,10 @@ VK_DESTROY
 				uint16_t regCount;
 				bx::read(&reader, regCount);
 
-				uint8_t texComponent = textureComponentTypeToId(TextureComponentType::Undefined);
-				uint8_t texDimension = textureDimensionToId(TextureDimension::Undefined);
-				if (!isShaderVerLess(magic, 8) )
+				const bool hasTexData = !isShaderVerLess(magic, 8);
+				uint8_t texComponent = 0;
+				uint8_t texDimension = 0;
+				if (hasTexData)
 				{
 					bx::read(&reader, texComponent);
 					bx::read(&reader, texDimension);

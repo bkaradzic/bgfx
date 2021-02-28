@@ -214,7 +214,8 @@ namespace bgfx { namespace spirv
 				: bgfx::TextureDimension::DimensionCube
 				;
 		default:
-			return bgfx::TextureDimension::Undefined;
+			BX_ASSERT(false, "Unknown texture dimension %d", _dim);
+			return bgfx::TextureDimension::Dimension2D;
 		}
 	}
 
