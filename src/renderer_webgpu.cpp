@@ -2542,7 +2542,7 @@ namespace bgfx { namespace webgpu
 				else if (UniformType::End == (~kUniformMask & type))
 				{
 					// regCount is used for descriptor type
-					const bool buffer = regCount == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+					const bool buffer = idToDescriptorType(regCount) == DescriptorType::StorageBuffer;
 					const bool readonly = (type & kUniformReadOnlyBit) != 0;
 
 					const uint8_t stage = regIndex - (buffer ? 16 : 32) - (fragment ? 48 : 0);
@@ -2583,28 +2583,36 @@ namespace bgfx { namespace webgpu
 					m_bindInfo[stage].m_binding = regIndex;
 					m_bindInfo[stage].m_uniform = info->m_handle;
 
-					auto textureComponentToSampleType = [](wgpu::TextureComponentType componentType)
+					auto textureDimensionToWgpu = [](TextureDimension::Enum dimension)
+					{
+						switch (dimension)
+						{
+						case TextureDimension::Dimension1D:        return wgpu::TextureViewDimension::e1D;
+						case TextureDimension::Dimension2D:        return wgpu::TextureViewDimension::e2D;
+						case TextureDimension::Dimension2DArray:   return wgpu::TextureViewDimension::e2DArray;
+						case TextureDimension::DimensionCube:      return wgpu::TextureViewDimension::eCube;
+						case TextureDimension::DimensionCubeArray: return wgpu::TextureViewDimension::eCubeArray;
+						case TextureDimension::Dimension3D:        return wgpu::TextureViewDimension::e3D;
+						default:                                   return wgpu::TextureViewDimension::Undefined;
+						}
+					};
+
+					auto textureComponentToWgpuSampleType = [](TextureComponentType::Enum componentType)
 					{
 						switch (componentType)
 						{
-						case wgpu::TextureComponentType::Float:
-							return wgpu::TextureSampleType::Float;
-						case wgpu::TextureComponentType::Sint:
-							return wgpu::TextureSampleType::Sint;
-						case wgpu::TextureComponentType::Uint:
-							return wgpu::TextureSampleType::Uint;
-						case wgpu::TextureComponentType::DepthComparison:
-							return wgpu::TextureSampleType::UnfilterableFloat;
-						default:
-							return wgpu::TextureSampleType::Float;
+						case TextureComponentType::Float: return wgpu::TextureSampleType::Float;
+						case TextureComponentType::Int:   return wgpu::TextureSampleType::Sint;
+						case TextureComponentType::Uint:  return wgpu::TextureSampleType::Uint;
+						default:                          return wgpu::TextureSampleType::Float;
 						}
 					};
 
 					m_textures[m_numSamplers] = wgpu::BindGroupLayoutEntry();
 					m_textures[m_numSamplers].binding = regIndex;
 					m_textures[m_numSamplers].visibility = shaderStage;
-					m_textures[m_numSamplers].texture.viewDimension = wgpu::TextureViewDimension(texDimension);
-					m_textures[m_numSamplers].texture.sampleType = textureComponentToSampleType(wgpu::TextureComponentType(texComponent));
+					m_textures[m_numSamplers].texture.viewDimension = textureDimensionToWgpu(idToTextureDimension(texDimension));
+					m_textures[m_numSamplers].texture.sampleType = textureComponentToWgpuSampleType(idToTextureComponentType(texComponent));
 
 					const bool comparisonSampler = (type & kUniformCompareBit) != 0;
 

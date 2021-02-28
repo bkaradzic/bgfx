@@ -5067,12 +5067,19 @@ VK_DESTROY
 				uint16_t regCount;
 				bx::read(&reader, regCount);
 
-				if (!isShaderVerLess(magic, 8) )
+				const bool hasTexData = !isShaderVerLess(magic, 8);
+				uint8_t texComponent = 0;
+				uint8_t texDimension = 0;
+				if (hasTexData)
 				{
-					uint16_t texInfo = 0;
-					bx::read(&reader, texInfo);
+					bx::read(&reader, texComponent);
+					bx::read(&reader, texDimension);
 				}
+
 				const char* kind = "invalid";
+
+				BX_UNUSED(num);
+				BX_UNUSED(texComponent);
 
 				if (UINT16_MAX != regIndex)
 				{
@@ -5088,7 +5095,7 @@ VK_DESTROY
 					else if (UniformType::End == (~kUniformMask & type) )
 					{
 						// regCount is used for descriptor type
-						const bool  isBuffer = regCount == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+						const bool isBuffer = idToDescriptorType(regCount) == DescriptorType::StorageBuffer;
 						const uint16_t stage = regIndex - (isBuffer ? 16 : 32) - (fragment ? 48 : 0);  // regIndex is used for buffer binding index
 
 						m_bindInfo[stage].type = isBuffer ? BindType::Buffer : BindType::Image;
@@ -5129,13 +5136,14 @@ VK_DESTROY
 					}
 				}
 
-				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
+				BX_TRACE("\t%s: %s (%s), r.index %3d, r.count %2d, r.texComponent %1d, r.texDimension %1d"
 					, kind
 					, name
 					, getUniformTypeName(UniformType::Enum(type&~kUniformMask) )
-					, num
 					, regIndex
 					, regCount
+					, texComponent
+					, texDimension
 					);
 				BX_UNUSED(kind);
 			}

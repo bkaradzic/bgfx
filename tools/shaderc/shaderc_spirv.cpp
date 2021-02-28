@@ -56,6 +56,7 @@ namespace bgfx
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
+#include "../../src/shader.h"
 #include "../../src/shader_spirv.h"
 #include "../../3rdparty/khronos/vulkan-local/vulkan.h"
 
@@ -179,39 +180,42 @@ namespace bgfx { namespace spirv
 		return true;
 	}
 
-	wgpu::TextureComponentType SpirvCrossBaseTypeToFormatType(spirv_cross::SPIRType::BaseType spirvBaseType)
+	bgfx::TextureComponentType::Enum SpirvCrossBaseTypeToFormatType(spirv_cross::SPIRType::BaseType _type)
 	{
-		switch (spirvBaseType)
+		switch (_type)
 		{
 		case spirv_cross::SPIRType::Float:
-			return wgpu::TextureComponentType::Float;
+			return bgfx::TextureComponentType::Float;
 		case spirv_cross::SPIRType::Int:
-			return wgpu::TextureComponentType::Sint;
+			return bgfx::TextureComponentType::Int;
 		case spirv_cross::SPIRType::UInt:
-			return wgpu::TextureComponentType::Uint;
+			return bgfx::TextureComponentType::Uint;
 		default:
-		    return wgpu::TextureComponentType::Float;
+		    return bgfx::TextureComponentType::Float;
 		}
 	}
 
-	wgpu::TextureViewDimension SpirvDimToTextureViewDimension(spv::Dim dim, bool arrayed)
+	bgfx::TextureDimension::Enum SpirvDimToTextureViewDimension(spv::Dim _dim, bool _arrayed)
 	{
-		switch (dim)
+		switch (_dim)
 		{
 		case spv::Dim::Dim1D:
-			return wgpu::TextureViewDimension::e1D;
+			return bgfx::TextureDimension::Dimension1D;
 		case spv::Dim::Dim2D:
-			return arrayed
-				? wgpu::TextureViewDimension::e2DArray
-				: wgpu::TextureViewDimension::e2D;
+			return _arrayed
+				? bgfx::TextureDimension::Dimension2DArray
+				: bgfx::TextureDimension::Dimension2D
+				;
 		case spv::Dim::Dim3D:
-			return wgpu::TextureViewDimension::e3D;
+			return bgfx::TextureDimension::Dimension3D;
 		case spv::Dim::DimCube:
-			return arrayed
-				? wgpu::TextureViewDimension::CubeArray
-				: wgpu::TextureViewDimension::Cube;
+			return _arrayed
+				? bgfx::TextureDimension::DimensionCubeArray
+				: bgfx::TextureDimension::DimensionCube
+				;
 		default:
-			return wgpu::TextureViewDimension::Undefined;
+			BX_ASSERT(false, "Unknown texture dimension %d", _dim);
+			return bgfx::TextureDimension::Dimension2D;
 		}
 	}
 
@@ -1077,8 +1081,8 @@ namespace bgfx { namespace spirv
 									| (isCompareSampler ? kUniformCompareBit : 0)
 									);
 
-							un.texComponent = uint8_t(SpirvCrossBaseTypeToFormatType(componentType) );
-							un.texDimension = uint8_t(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
+							un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType) );
+							un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
 
 							un.regIndex = binding_index;
 							un.regCount = 0; // unused
@@ -1110,11 +1114,11 @@ namespace bgfx { namespace spirv
 							un.name = uniform_name;
 							un.type = type;
 
-							un.texComponent = uint8_t(SpirvCrossBaseTypeToFormatType(componentType) );
-							un.texDimension = uint8_t(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
+							un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType) );
+							un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
 
 							un.regIndex = binding_index;
-							un.regCount = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;	// for descriptor type
+							un.regCount = descriptorTypeToId(DescriptorType::StorageImage);
 
 							uniforms.push_back(un);
 						}
@@ -1138,7 +1142,7 @@ namespace bgfx { namespace spirv
 								uniform.name = name;
 								uniform.type = type;
 								uniform.regIndex = binding_index;
-								uniform.regCount = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+								uniform.regCount = descriptorTypeToId(DescriptorType::StorageBuffer);
 								break;
 							}
 						}
