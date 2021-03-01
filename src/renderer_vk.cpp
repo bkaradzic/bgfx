@@ -1685,11 +1685,19 @@ VK_IMPORT_INSTANCE
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
+				vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_deviceFeatures);
+				m_deviceFeatures.robustBufferAccess = VK_FALSE;
+
+				const bool indirectDrawSupport = true
+					&& m_deviceFeatures.multiDrawIndirect
+					&& m_deviceFeatures.drawIndirectFirstInstance
+					;
+
 				g_caps.supported |= ( 0
 					| BGFX_CAPS_ALPHA_TO_COVERAGE
-					| BGFX_CAPS_BLEND_INDEPENDENT
 					| BGFX_CAPS_COMPUTE
-					| BGFX_CAPS_DRAW_INDIRECT
+					| (indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT : 0)
+					| (m_deviceFeatures.independentBlend ? BGFX_CAPS_BLEND_INDEPENDENT : 0)
 					| BGFX_CAPS_FRAGMENT_DEPTH
 					| BGFX_CAPS_INDEX32
 					| BGFX_CAPS_INSTANCING
@@ -1715,9 +1723,6 @@ VK_IMPORT_INSTANCE
 				g_caps.limits.maxFBAttachments   = bx::min(uint8_t(m_deviceProperties.limits.maxFragmentOutputAttachments), uint8_t(BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 				g_caps.limits.maxComputeBindings = BGFX_MAX_COMPUTE_BINDINGS;
 				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
-
-				vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_deviceFeatures);
-				m_deviceFeatures.robustBufferAccess = VK_FALSE;
 
 				{
 					const VkSampleCountFlags fbColorSampleCounts = m_deviceProperties.limits.framebufferColorSampleCounts;
@@ -3230,7 +3235,7 @@ VK_IMPORT_DEVICE
 				m_samplerCache.invalidate();
 			}
 
-			bool depthClamp = !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
+			bool depthClamp = m_deviceFeatures.depthClamp && !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
 
 			if (m_depthClamp != depthClamp)
 			{
@@ -3444,9 +3449,10 @@ VK_IMPORT_DEVICE
 
 		void setDebugWireframe(bool _wireframe)
 		{
-			if (m_wireframe != _wireframe)
+			const bool wireframe = m_deviceFeatures.fillModeNonSolid && _wireframe;
+			if (m_wireframe != wireframe)
 			{
-				m_wireframe = _wireframe;
+				m_wireframe = wireframe;
 				m_pipelineStateCache.invalidate();
 			}
 		}
@@ -3544,9 +3550,9 @@ VK_IMPORT_DEVICE
 			_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 			_desc.pNext = NULL;
 			_desc.flags = 0;
-			_desc.depthClampEnable = m_depthClamp;
+			_desc.depthClampEnable = m_deviceFeatures.depthClamp && m_depthClamp;
 			_desc.rasterizerDiscardEnable = VK_FALSE;
-			_desc.polygonMode = _wireframe
+			_desc.polygonMode = m_deviceFeatures.fillModeNonSolid && _wireframe
 				? VK_POLYGON_MODE_LINE
 				: VK_POLYGON_MODE_FILL
 				;
@@ -3840,14 +3846,14 @@ VK_IMPORT_DEVICE
 
 			switch (_samplerFlags & BGFX_SAMPLER_MAG_MASK)
 			{
-				case BGFX_SAMPLER_MAG_POINT:       sci.magFilter = VK_FILTER_NEAREST; break;
-				case BGFX_SAMPLER_MAG_ANISOTROPIC: sci.anisotropyEnable = VK_TRUE;    break;
+				case BGFX_SAMPLER_MAG_POINT:       sci.magFilter = VK_FILTER_NEAREST;                         break;
+				case BGFX_SAMPLER_MAG_ANISOTROPIC: sci.anisotropyEnable = m_deviceFeatures.samplerAnisotropy; break;
 			}
 
 			switch (_samplerFlags & BGFX_SAMPLER_MIN_MASK)
 			{
-				case BGFX_SAMPLER_MIN_POINT:       sci.minFilter = VK_FILTER_NEAREST; break;
-				case BGFX_SAMPLER_MIN_ANISOTROPIC: sci.anisotropyEnable = VK_TRUE;    break;
+				case BGFX_SAMPLER_MIN_POINT:       sci.minFilter = VK_FILTER_NEAREST;                         break;
+				case BGFX_SAMPLER_MIN_ANISOTROPIC: sci.anisotropyEnable = m_deviceFeatures.samplerAnisotropy; break;
 			}
 
 			uint32_t borderColor = ( (_samplerFlags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
@@ -3937,12 +3943,11 @@ VK_IMPORT_DEVICE
 				| BGFX_STATE_DEPTH_TEST_MASK
 				| BGFX_STATE_BLEND_MASK
 				| BGFX_STATE_BLEND_EQUATION_MASK
-				| BGFX_STATE_BLEND_INDEPENDENT
+				| (g_caps.supported & BGFX_CAPS_BLEND_INDEPENDENT ? BGFX_STATE_BLEND_INDEPENDENT : 0)
 				| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 				| BGFX_STATE_CULL_MASK
 				| BGFX_STATE_MSAA
-				| BGFX_STATE_LINEAA
-				| BGFX_STATE_CONSERVATIVE_RASTER
+				| (g_caps.supported & BGFX_CAPS_CONSERVATIVE_RASTER ? BGFX_STATE_CONSERVATIVE_RASTER : 0)
 				| BGFX_STATE_PT_MASK
 				;
 
