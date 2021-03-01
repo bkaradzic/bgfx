@@ -318,6 +318,7 @@ VK_IMPORT_DEVICE
 			EXT_memory_budget,
 			KHR_get_physical_device_properties2,
 			EXT_conservative_rasterization,
+			EXT_line_rasterization,
 			EXT_shader_viewport_index_layer,
 
 			Count
@@ -340,6 +341,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_memory_budget",                   1, false, false, true                         , Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                         , Layer::Count },
 		{ "VK_EXT_conservative_rasterization",      1, false, false, true                         , Layer::Count },
+		{ "VK_EXT_line_rasterization",              1, false, false, true                         , Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                         , Layer::Count }
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
@@ -1581,6 +1583,12 @@ VK_IMPORT_INSTANCE
 				BX_WARN(VK_SUCCESS == result, "vkCreateDebugReportCallbackEXT failed %d: %s.", result, getName(result) );
 			}
 
+			VkPhysicalDeviceFeatures2KHR deviceFeatures2;
+			deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+			deviceFeatures2.pNext = NULL;
+
+			void** ppNextFeatures = &deviceFeatures2.pNext;
+
 			{
 				BX_TRACE("---");
 
@@ -1685,8 +1693,21 @@ VK_IMPORT_INSTANCE
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
-				vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_deviceFeatures);
-				m_deviceFeatures.robustBufferAccess = VK_FALSE;
+				*ppNextFeatures = &m_lineRasterizationFeatures;
+				ppNextFeatures = &m_lineRasterizationFeatures.pNext;
+				m_lineRasterizationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT;
+				m_lineRasterizationFeatures.pNext = NULL;
+				
+				vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
+
+				deviceFeatures2.features.robustBufferAccess = VK_FALSE;
+
+				m_deviceFeatures = deviceFeatures2.features;
+
+				m_lineAASupport = true
+					&& s_extension[Extension::EXT_line_rasterization].m_supported
+					&& m_lineRasterizationFeatures.smoothLines
+					;
 
 				const bool indirectDrawSupport = true
 					&& m_deviceFeatures.multiDrawIndirect
@@ -1935,7 +1956,7 @@ VK_IMPORT_INSTANCE
 
 				VkDeviceCreateInfo dci;
 				dci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-				dci.pNext = NULL;
+				dci.pNext = &deviceFeatures2;
 				dci.flags = 0;
 				dci.queueCreateInfoCount = 1;
 				dci.pQueueCreateInfos    = &dcqi;
@@ -1943,7 +1964,7 @@ VK_IMPORT_INSTANCE
 				dci.ppEnabledLayerNames  = enabledLayer;
 				dci.enabledExtensionCount   = numEnabledExtensions;
 				dci.ppEnabledExtensionNames = enabledExtension;
-				dci.pEnabledFeatures = &m_deviceFeatures;
+				dci.pEnabledFeatures = NULL;
 
 				result = vkCreateDevice(
 					  m_physicalDevice
@@ -3577,6 +3598,19 @@ VK_IMPORT_DEVICE
 			_desc.extraPrimitiveOverestimationSize = 0.0f;
 		}
 
+		void setLineRasterizerState(VkPipelineRasterizationLineStateCreateInfoEXT& _desc, uint64_t _state)
+		{
+			_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO_EXT;
+			_desc.pNext = NULL;
+			_desc.lineRasterizationMode = (_state & BGFX_STATE_LINEAA)
+				? VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_EXT
+				: VK_LINE_RASTERIZATION_MODE_DEFAULT_EXT
+				;
+			_desc.stippledLineEnable = VK_FALSE;
+			_desc.lineStippleFactor = 0;
+			_desc.lineStipplePattern = 0;
+		}
+
 		void setDepthStencilState(VkPipelineDepthStencilStateCreateInfo& _desc, uint64_t _state, uint64_t _stencil = 0)
 		{
 			const uint32_t fstencil = unpackStencil(0, _stencil);
@@ -3947,6 +3981,7 @@ VK_IMPORT_DEVICE
 				| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 				| BGFX_STATE_CULL_MASK
 				| BGFX_STATE_MSAA
+				| (m_lineAASupport ? BGFX_STATE_LINEAA : 0)
 				| (g_caps.supported & BGFX_CAPS_CONSERVATIVE_RASTER ? BGFX_STATE_CONSERVATIVE_RASTER : 0)
 				| BGFX_STATE_PT_MASK
 				;
@@ -4011,11 +4046,22 @@ VK_IMPORT_DEVICE
 			VkPipelineRasterizationStateCreateInfo rasterizationState;
 			setRasterizerState(rasterizationState, _state, m_wireframe);
 
+			const void** ppNext = &rasterizationState.pNext;
+
 			VkPipelineRasterizationConservativeStateCreateInfoEXT conservativeRasterizationState;
 			if (s_extension[Extension::EXT_conservative_rasterization].m_supported)
 			{
-				rasterizationState.pNext = &conservativeRasterizationState;
+				*ppNext = &conservativeRasterizationState;
+				ppNext = &conservativeRasterizationState.pNext;
 				setConservativeRasterizerState(conservativeRasterizationState, _state);
+			}
+
+			VkPipelineRasterizationLineStateCreateInfoEXT lineRasterizationState;
+			if (m_lineAASupport)
+			{
+				*ppNext = &lineRasterizationState;
+				ppNext = &lineRasterizationState.pNext;
+				setLineRasterizerState(lineRasterizationState, _state);
 			}
 
 			VkPipelineDepthStencilStateCreateInfo depthStencilState;
@@ -4699,6 +4745,10 @@ VK_IMPORT_DEVICE
 		VkPhysicalDeviceProperties       m_deviceProperties;
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
 		VkPhysicalDeviceFeatures         m_deviceFeatures;
+
+		VkPhysicalDeviceLineRasterizationFeaturesEXT m_lineRasterizationFeatures;
+
+		bool m_lineAASupport;
 
 		VkSwapchainCreateInfoKHR m_sci;
 		VkSurfaceKHR       m_surface;
