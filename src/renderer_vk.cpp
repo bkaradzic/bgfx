@@ -317,6 +317,7 @@ VK_IMPORT_DEVICE
 			EXT_debug_report,
 			EXT_memory_budget,
 			KHR_get_physical_device_properties2,
+			EXT_conservative_rasterization,
 			EXT_shader_viewport_index_layer,
 
 			Count
@@ -338,6 +339,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_debug_report",                    1, false, false, BGFX_CONFIG_DEBUG            , Layer::Count },
 		{ "VK_EXT_memory_budget",                   1, false, false, true                         , Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                         , Layer::Count },
+		{ "VK_EXT_conservative_rasterization",      1, false, false, true                         , Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                         , Layer::Count }
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
@@ -1704,6 +1706,7 @@ VK_IMPORT_INSTANCE
 					);
 
 				g_caps.supported |= 0
+					| (s_extension[Extension::EXT_conservative_rasterization ].m_supported ? BGFX_CAPS_CONSERVATIVE_RASTER  : 0)
 					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
 					;
 
@@ -3556,6 +3559,18 @@ VK_IMPORT_DEVICE
 			_desc.lineWidth               = 1.0f;
 		}
 
+		void setConservativeRasterizerState(VkPipelineRasterizationConservativeStateCreateInfoEXT& _desc, uint64_t _state)
+		{
+			_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
+			_desc.pNext = NULL;
+			_desc.flags = 0;
+			_desc.conservativeRasterizationMode = (_state&BGFX_STATE_CONSERVATIVE_RASTER)
+				? VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT
+				: VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT
+				;
+			_desc.extraPrimitiveOverestimationSize = 0.0f;
+		}
+
 		void setDepthStencilState(VkPipelineDepthStencilStateCreateInfo& _desc, uint64_t _state, uint64_t _stencil = 0)
 		{
 			const uint32_t fstencil = unpackStencil(0, _stencil);
@@ -3991,6 +4006,13 @@ VK_IMPORT_DEVICE
 			VkPipelineRasterizationStateCreateInfo rasterizationState;
 			setRasterizerState(rasterizationState, _state, m_wireframe);
 
+			VkPipelineRasterizationConservativeStateCreateInfoEXT conservativeRasterizationState;
+			if (s_extension[Extension::EXT_conservative_rasterization].m_supported)
+			{
+				rasterizationState.pNext = &conservativeRasterizationState;
+				setConservativeRasterizerState(conservativeRasterizationState, _state);
+			}
+
 			VkPipelineDepthStencilStateCreateInfo depthStencilState;
 			setDepthStencilState(depthStencilState, _state, _stencil);
 
@@ -4054,7 +4076,7 @@ VK_IMPORT_DEVICE
 			multisampleState.flags = 0;
 			multisampleState.rasterizationSamples  = rasterizerMsaa;
 			multisampleState.sampleShadingEnable   = VK_FALSE;
-			multisampleState.minSampleShading      = !!(BGFX_STATE_CONSERVATIVE_RASTER & _state) ? 1.0f : 0.0f;
+			multisampleState.minSampleShading      = 0.0f;
 			multisampleState.pSampleMask           = NULL;
 			multisampleState.alphaToCoverageEnable = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
 			multisampleState.alphaToOneEnable      = VK_FALSE;
