@@ -1180,21 +1180,27 @@ VK_IMPORT_DEVICE
 		{
 			VK_CHECK(vkDeviceWaitIdle(m_device) );
 			vkFreeMemory(m_device, m_backBufferDepthStencilMemory, m_allocatorCb);
+
 			m_backBufferDepthStencilMemory = VK_NULL_HANDLE;
+
 			vkDestroy(m_backBufferDepthStencilImageView);
 			vkDestroy(m_backBufferDepthStencilImage);
+
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 			{
 				vkDestroy(m_backBufferColorImageView[ii]);
+
 				m_backBufferColorImageLayout[ii] = VK_IMAGE_LAYOUT_UNDEFINED;
 				m_backBufferColorFence[ii] = VK_NULL_HANDLE;
 			}
+
 			vkDestroy(m_swapchain);
 		}
 
 		VkResult createSwapchainFramebuffer()
 		{
 			VkResult result = VK_SUCCESS;
+
 			for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
 			{
 				::VkImageView attachments[] =
@@ -1221,6 +1227,7 @@ VK_IMPORT_DEVICE
 					return result;
 				}
 			}
+
 			return result;
 		}
 
@@ -2694,7 +2701,13 @@ VK_IMPORT_DEVICE
 			VkBuffer stagingBuffer;
 			createStagingBuffer(size, &stagingBuffer, &stagingMemory);
 
-			texture.m_readback.copyImageToBuffer(m_commandBuffer, stagingBuffer, texture.m_currentImageLayout, texture.m_aspectMask, _mip);
+			texture.m_readback.copyImageToBuffer(
+				  m_commandBuffer
+				, stagingBuffer
+				, texture.m_currentImageLayout
+				, texture.m_aspectMask
+				, _mip
+				);
 
 			kick(true);
 
@@ -2904,6 +2917,7 @@ VK_IMPORT_DEVICE
 				dul.color[1] = 0.0f;
 				dul.color[2] = 0.0f;
 				dul.color[3] = 1.0f;
+
 				vkCmdInsertDebugUtilsLabelEXT(m_commandBuffer, &dul);
 			}
 		}
@@ -3024,7 +3038,11 @@ VK_IMPORT_DEVICE
 			dsai.descriptorPool = m_descriptorPool;
 			dsai.descriptorSetCount = 1;
 			dsai.pSetLayouts = &dsl;
-			vkAllocateDescriptorSets(m_device, &dsai, &scratchBuffer.m_descriptorSet[scratchBuffer.m_currentDs]);
+			VK_CHECK(vkAllocateDescriptorSets(
+				  m_device
+				, &dsai
+				, &scratchBuffer.m_descriptorSet[scratchBuffer.m_currentDs]
+				) );
 
 			TextureVK& texture = m_textures[_blitter.m_texture.idx];
 			uint32_t samplerFlags = (uint32_t)(texture.m_flags & BGFX_SAMPLER_BITS_MASK);
@@ -3761,7 +3779,7 @@ VK_IMPORT_DEVICE
 			rpi.dependencyCount = BX_COUNTOF(dep);
 			rpi.pDependencies   = dep;
 
-			VK_CHECK( vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &renderPass) );
+			VK_CHECK(vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &renderPass) );
 
 			m_renderPassCache.add(hashKey, renderPass);
 
@@ -3846,7 +3864,7 @@ VK_IMPORT_DEVICE
 			{
 				return view;
 			}
-			
+
 			view = texture.createView(0, texture.m_numSides, _mip, 1);
 
 			m_storageImageViewCache.add(hashKey, view);
@@ -3886,7 +3904,7 @@ VK_IMPORT_DEVICE
 			cpci.basePipelineHandle = VK_NULL_HANDLE;
 			cpci.basePipelineIndex  = 0;
 
-			VK_CHECK( vkCreateComputePipelines(m_device, m_pipelineCache, 1, &cpci, m_allocatorCb, &pipeline) );
+			VK_CHECK(vkCreateComputePipelines(m_device, m_pipelineCache, 1, &cpci, m_allocatorCb, &pipeline) );
 
 			m_pipelineStateCache.add(hash, pipeline);
 
@@ -4518,7 +4536,13 @@ VK_IMPORT_DEVICE
 
 			if (VK_NULL_HANDLE != m_backBufferColorFence[m_backBufferColorIdx])
 			{
-				vkWaitForFences(m_device, 1, &m_backBufferColorFence[m_backBufferColorIdx], VK_TRUE, UINT64_MAX);
+				VK_CHECK(vkWaitForFences(
+					  m_device
+					, 1
+					, &m_backBufferColorFence[m_backBufferColorIdx]
+					, VK_TRUE
+					, UINT64_MAX
+					) );
 			}
 
 			setImageMemoryBarrier(
@@ -4625,6 +4649,7 @@ VK_IMPORT_DEVICE
 
 			VkMemoryRequirements mr;
 			vkGetBufferMemoryRequirements(m_device, *_buffer, &mr);
+
 			VK_CHECK(allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, _memory) );
 
 			VK_CHECK(vkBindBufferMemory(m_device, *_buffer, *_memory, 0) );
@@ -4836,12 +4861,12 @@ VK_DESTROY
 	{
 		if (m_currentDs > 0)
 		{
-			vkFreeDescriptorSets(
+			VK_CHECK(vkFreeDescriptorSets(
 				  s_renderVK->m_device
 				, s_renderVK->m_descriptorPool
 				, m_currentDs
 				, m_descriptorSet
-				);
+				) );
 		}
 
 		bx::memSet(m_descriptorSet, 0, sizeof(VkDescriptorSet) * m_maxDescriptors);
@@ -4875,14 +4900,15 @@ VK_DESTROY
 		VkDevice device = s_renderVK->m_device;
 
 		const uint32_t align = uint32_t(deviceLimits.nonCoherentAtomSize);
-		const uint32_t size = bx::min(bx::strideAlign(m_pos, align), m_size);
+		const uint32_t size  = bx::min(bx::strideAlign(m_pos, align), m_size);
+
 		VkMappedMemoryRange range;
-		range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		range.pNext = NULL;
+		range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		range.pNext  = NULL;
 		range.memory = m_deviceMem;
 		range.offset = 0;
-		range.size = size;
-		vkFlushMappedMemoryRanges(device, 1, &range);
+		range.size   = size;
+		VK_CHECK(vkFlushMappedMemoryRanges(device, 1, &range) );
 	}
 
 	void BufferVK::create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
@@ -5166,9 +5192,9 @@ VK_DESTROY
 		bx::memCopy(m_code->data, code, shaderSize);
 
 		VkShaderModuleCreateInfo smci;
-		smci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		smci.pNext = NULL;
-		smci.flags = 0;
+		smci.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		smci.pNext    = NULL;
+		smci.flags    = 0;
 		smci.codeSize = m_code->size;
 		smci.pCode    = (const uint32_t*)m_code->data;
 
@@ -5741,6 +5767,7 @@ VK_DESTROY
 
 			uint32_t totalMemSize = 0;
 			VkBufferImageCopy* bufferCopyInfo = (VkBufferImageCopy*)BX_ALLOC(g_allocator, sizeof(VkBufferImageCopy) * numSrd);
+
 			for (uint32_t ii = 0; ii < numSrd; ++ii)
 			{
 				const uint32_t idealWidth  = bx::max<uint32_t>(1, m_width  >> imageInfos[ii].mipLevel);
@@ -5759,6 +5786,7 @@ VK_DESTROY
 
 			VkBuffer stagingBuffer = VK_NULL_HANDLE;
 			VkDeviceMemory stagingDeviceMem = VK_NULL_HANDLE;
+
 			if (totalMemSize > 0)
 			{
 				s_renderVK->createStagingBuffer(totalMemSize, &stagingBuffer, &stagingDeviceMem);
@@ -5831,7 +5859,7 @@ VK_DESTROY
 				, &m_textureDeviceMem
 				) );
 
-			vkBindImageMemory(device, m_textureImage, m_textureDeviceMem, 0);
+			VK_CHECK(vkBindImageMemory(device, m_textureImage, m_textureDeviceMem, 0) );
 
 			if (VK_NULL_HANDLE != stagingBuffer)
 			{
@@ -5873,6 +5901,7 @@ VK_DESTROY
 				viewInfo.subresourceRange.levelCount     = m_numMips;
 				viewInfo.subresourceRange.baseArrayLayer = 0;
 				viewInfo.subresourceRange.layerCount     = m_numSides;
+
 				VK_CHECK(vkCreateImageView(
 					  device
 					, &viewInfo
@@ -5897,6 +5926,7 @@ VK_DESTROY
 				viewInfo.subresourceRange.levelCount     = m_numMips;
 				viewInfo.subresourceRange.baseArrayLayer = 0;
 				viewInfo.subresourceRange.layerCount     = m_numSides;
+
 				VK_CHECK(vkCreateImageView(
 					  device
 					, &viewInfo
@@ -5919,7 +5949,7 @@ VK_DESTROY
 
 					VK_CHECK(s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem) );
 
-					vkBindImageMemory(device, m_singleMsaaImage, m_singleMsaaDeviceMem, 0);
+					VK_CHECK(vkBindImageMemory(device, m_singleMsaaImage, m_singleMsaaDeviceMem, 0) );
 				}
 
 				{
@@ -5946,6 +5976,7 @@ VK_DESTROY
 					viewInfo.subresourceRange.levelCount = m_numMips;
 					viewInfo.subresourceRange.baseArrayLayer = 0;
 					viewInfo.subresourceRange.layerCount = m_numSides;
+
 					VK_CHECK(vkCreateImageView(
 						  device
 						, &viewInfo
@@ -6223,6 +6254,7 @@ VK_DESTROY
 		viewInfo.subresourceRange.levelCount     = _numMips;
 		viewInfo.subresourceRange.baseArrayLayer = _layer;
 		viewInfo.subresourceRange.layerCount     = _numLayers;
+
 		VK_CHECK(vkCreateImageView(
 			  s_renderVK->m_device
 			, &viewInfo
@@ -6292,7 +6324,8 @@ VK_DESTROY
 		fci.width  = m_width;
 		fci.height = m_height;
 		fci.layers = numLayers;
-		VK_CHECK( vkCreateFramebuffer(device, &fci, allocatorCb, &m_framebuffer) );
+
+		VK_CHECK(vkCreateFramebuffer(device, &fci, allocatorCb, &m_framebuffer) );
 
 		m_renderPass = renderPass;
 
@@ -6372,11 +6405,32 @@ VK_DESTROY
 
 		for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 		{
-			VK_CHECK(vkCreateCommandPool(s_renderVK->m_device, &cpci, s_renderVK->m_allocatorCb, &m_commandList[ii].m_commandPool) );
+			VK_CHECK(vkCreateCommandPool(
+				  s_renderVK->m_device
+				, &cpci
+				, s_renderVK->m_allocatorCb
+				, &m_commandList[ii].m_commandPool
+				) );
+
 			cbai.commandPool = m_commandList[ii].m_commandPool;
-			VK_CHECK(vkAllocateCommandBuffers(s_renderVK->m_device, &cbai, &m_commandList[ii].m_commandBuffer) );
-			VK_CHECK(vkCreateSemaphore(s_renderVK->m_device, &sci, s_renderVK->m_allocatorCb, &m_commandList[ii].m_semaphore) );
-			VK_CHECK(vkCreateFence(s_renderVK->m_device, &fci, s_renderVK->m_allocatorCb, &m_commandList[ii].m_fence) );
+
+			VK_CHECK(vkAllocateCommandBuffers(
+				  s_renderVK->m_device
+				, &cbai
+				, &m_commandList[ii].m_commandBuffer
+				) );
+			VK_CHECK(vkCreateSemaphore(
+				  s_renderVK->m_device
+				, &sci
+				, s_renderVK->m_allocatorCb
+				, &m_commandList[ii].m_semaphore
+				) );
+			VK_CHECK(vkCreateFence(
+				  s_renderVK->m_device
+				, &fci
+				, s_renderVK->m_allocatorCb
+				, &m_commandList[ii].m_fence
+				) );
 		}
 	}
 
@@ -6414,6 +6468,7 @@ VK_DESTROY
 			cbi.pNext = NULL;
 			cbi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 			cbi.pInheritanceInfo = NULL;
+
 			VK_CHECK(vkBeginCommandBuffer(commandList.m_commandBuffer, &cbi) );
 
 			m_activeCommandBuffer = commandList.m_commandBuffer;
