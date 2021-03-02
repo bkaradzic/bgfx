@@ -1025,9 +1025,27 @@ VK_IMPORT_DEVICE
 		{
 		}
 
-		VkResult createSwapchain()
+		VkResult createSwapchain(uint32_t _reset)
 		{
 			VkResult result = VK_SUCCESS;
+			
+			const bool srgb = !!(_reset & BGFX_RESET_SRGB_BACKBUFFER);
+			VkSurfaceFormatKHR surfaceFormat = srgb
+				? m_backBufferColorFormatSrgb
+				: m_backBufferColorFormat
+				;
+			m_sci.imageFormat = surfaceFormat.format;
+			m_sci.imageColorSpace = surfaceFormat.colorSpace;
+
+			const bool vsync = !!(_reset & BGFX_RESET_VSYNC);
+			uint32_t presentModeIdx = findPresentMode(vsync);
+			if (UINT32_MAX == presentModeIdx)
+			{
+				BX_TRACE("Unable to find present mode (vsync: %d).", vsync);
+				return VK_ERROR_INITIALIZATION_FAILED;
+			}
+			m_sci.presentMode = s_presentMode[presentModeIdx].mode;
+
 			result = vkCreateSwapchainKHR(m_device, &m_sci, m_allocatorCb, &m_swapchain);
 			if (VK_SUCCESS != result)
 			{
@@ -2005,8 +2023,21 @@ VK_IMPORT_DEVICE
 					: bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY)
 					;
 
-				m_cmd.init(m_qfiGraphics, m_queueGraphics, m_numFramesInFlight);
-				m_commandBuffer = m_cmd.alloc();
+				result = m_cmd.init(m_qfiGraphics, m_queueGraphics, m_numFramesInFlight);
+
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Init error: creating command queue failed %d: %s.", result, getName(result) );
+					goto error;
+				}
+
+				result = m_cmd.alloc(&m_commandBuffer);
+
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Init error: allocating command buffer failed %d: %s.", result, getName(result) );
+					goto error;
+				}
 			}
 
 			errorState = ErrorState::CommandQueueCreated;
@@ -2166,10 +2197,9 @@ VK_IMPORT_DEVICE
 					VK_FORMAT_B8G8R8A8_SRGB
 				};
 
-				VkColorSpaceKHR preferredColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+				const VkColorSpaceKHR preferredColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
-				uint32_t surfaceFormatIdx = numSurfaceFormats;
-				uint32_t surfaceFormatSrgbIdx = numSurfaceFormats;
+				uint32_t surfaceFormatIdx = UINT32_MAX;
 
 				for (uint32_t ii = 0; ii < numSurfaceFormats; ii++)
 				{
@@ -2182,45 +2212,31 @@ VK_IMPORT_DEVICE
 							if (preferredSurfaceFormat[jj] == surfaceFormats[ii].format)
 							{
 								BX_TRACE("Preferred surface format found: %d", surfaceFormats[ii].format);
-								surfaceFormatIdx = ii;
+								surfaceFormatIdx = jj;
 								break;
 							}
 						}
 
-						for (uint32_t jj = 0; jj < BX_COUNTOF(preferredSurfaceFormatSrgb); jj++)
-						{
-							if (preferredSurfaceFormatSrgb[jj] == surfaceFormats[ii].format)
-							{
-								BX_TRACE("Preferred sRGB surface format found: %d", surfaceFormats[ii].format);
-								surfaceFormatSrgbIdx = ii;
-								break;
-							}
-						}
-
-						if (surfaceFormatIdx     < numSurfaceFormats
-						&&  surfaceFormatSrgbIdx < numSurfaceFormats)
+						if (surfaceFormatIdx < numSurfaceFormats)
 						{ // found
 							break;
 						}
 					}
 				}
 
-				BX_ASSERT(surfaceFormatIdx < numSurfaceFormats, "Cannot find preferred surface format from supported surface formats.");
-				BX_WARN(surfaceFormatSrgbIdx < numSurfaceFormats, "Cannot find preferred sRGB surface format from supported surface formats.");
-
-				m_backBufferColorFormat     = surfaceFormats[surfaceFormatIdx];
-				m_backBufferColorFormatSrgb = surfaceFormatSrgbIdx < numSurfaceFormats
-					? surfaceFormats[surfaceFormatSrgbIdx]
-					: m_backBufferColorFormat
-					;
-
-				// find the best match...
-				uint32_t presentModeIdx = findPresentMode(false);
-				if (UINT32_MAX == presentModeIdx)
+				if (UINT32_MAX == surfaceFormatIdx)
 				{
-					BX_TRACE("Unable to find present mode.");
+					BX_TRACE("Cannot find preferred surface format.");
 					goto error;
 				}
+
+				// The spec guarantees that if there's a combination of SRGB_NONLINEAR and a format with
+				// FEATURE_COLOR_ATTACHMENT support, an equivalent SRGB surface format must exist.
+				// R8G8B8A8_UNORM and B8G8R8A8_UNORM both have mandatory support for FEATURE_COLOR_ATTACHMENT.
+				m_backBufferColorFormat.format         = preferredSurfaceFormat[surfaceFormatIdx];
+				m_backBufferColorFormat.colorSpace     = preferredColorSpace;
+				m_backBufferColorFormatSrgb.format     = preferredSurfaceFormatSrgb[surfaceFormatIdx];
+				m_backBufferColorFormatSrgb.colorSpace = preferredColorSpace;
 
 				m_backBufferDepthStencilFormat = 0 != (g_caps.formats[TextureFormat::D24S8] & BGFX_CAPS_FORMAT_TEXTURE_2D)
 					? VK_FORMAT_D24_UNORM_S8_UINT
@@ -2258,11 +2274,15 @@ VK_IMPORT_DEVICE
 					? BGFX_CONFIG_MAX_BACK_BUFFERS
 					: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, BGFX_CONFIG_MAX_BACK_BUFFERS)
 					;
-				BX_ASSERT(minSwapBufferCount <= maxSwapBufferCount
-					, "Incompatible swapchain image count (min: %d, max: %d)."
-					, minSwapBufferCount
-					, maxSwapBufferCount
+
+				if (minSwapBufferCount > maxSwapBufferCount)
+				{
+					BX_TRACE("Incompatible swapchain image count (min: %d, max: %d)."
+						, minSwapBufferCount
+						, maxSwapBufferCount
 					);
+					goto error;
+				}
 
 				uint32_t swapBufferCount = bx::clamp<uint32_t>(_init.resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
 
@@ -2271,8 +2291,6 @@ VK_IMPORT_DEVICE
 				m_sci.flags = 0;
 				m_sci.surface = m_surface;
 				m_sci.minImageCount   = swapBufferCount;
-				m_sci.imageFormat     = m_backBufferColorFormat.format;
-				m_sci.imageColorSpace = m_backBufferColorFormat.colorSpace;
 				m_sci.imageExtent.width  = width;
 				m_sci.imageExtent.height = height;
 				m_sci.imageArrayLayers = 1;
@@ -2282,7 +2300,6 @@ VK_IMPORT_DEVICE
 				m_sci.pQueueFamilyIndices   = NULL;
 				m_sci.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 				m_sci.compositeAlpha = compositeAlpha;
-				m_sci.presentMode    = s_presentMode[presentModeIdx].mode;
 				m_sci.clipped        = VK_FALSE;
 				m_sci.oldSwapchain   = VK_NULL_HANDLE;
 
@@ -2303,7 +2320,8 @@ VK_IMPORT_DEVICE
 				m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
 				m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
-				result = createSwapchain();
+				result = createSwapchain(_init.resolution.reset);
+
 				if (VK_SUCCESS != result)
 				{
 					BX_TRACE("Init error: creating swapchain and image view failed %d: %s", result, getName(result) );
@@ -2344,6 +2362,7 @@ VK_IMPORT_DEVICE
 
 			// framebuffer creation
 			result = createSwapchainFramebuffer();
+
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Init error: vkCreateFramebuffer failed %d: %s.", result, getName(result) );
@@ -2431,7 +2450,13 @@ VK_IMPORT_DEVICE
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
 			}
 
-			m_gpuTimer.init();
+			result = m_gpuTimer.init();
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Init error: creating GPU timer failed %d: %s.", result, getName(result) );
+				goto error;
+			}
 
 			g_internalData.context = m_device;
 			return true;
@@ -2728,7 +2753,7 @@ VK_IMPORT_DEVICE
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
-			createStagingBuffer(size, &stagingBuffer, &stagingMemory);
+			VK_CHECK(createStagingBuffer(size, &stagingBuffer, &stagingMemory) );
 
 			texture.m_readback.copyImageToBuffer(
 				  m_commandBuffer
@@ -2871,7 +2896,7 @@ VK_IMPORT_DEVICE
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
-			createStagingBuffer(size, &stagingBuffer, &stagingMemory);
+			VK_CHECK(createStagingBuffer(size, &stagingBuffer, &stagingMemory) );
 
 			readback.copyImageToBuffer(m_commandBuffer, stagingBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT);
 
@@ -3287,8 +3312,8 @@ VK_IMPORT_DEVICE
 				{
 					VK_CHECK(vkDeviceWaitIdle(m_device) );
 
-					m_cmd.reset();
-					m_commandBuffer = m_cmd.alloc();
+					VK_CHECK(m_cmd.reset() );
+					VK_CHECK(m_cmd.alloc(&m_commandBuffer) );
 
 					for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 					{
@@ -3302,23 +3327,6 @@ VK_IMPORT_DEVICE
 					releaseSwapchainFramebuffer();
 					releaseSwapchainRenderPass();
 					releaseSwapchain();
-
-					VkSurfaceFormatKHR surfaceFormat = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
-						? m_backBufferColorFormatSrgb
-						: m_backBufferColorFormat
-						;
-					m_sci.imageFormat = surfaceFormat.format;
-					m_sci.imageColorSpace = surfaceFormat.colorSpace;
-
-					const bool vsync = !!(flags & BGFX_RESET_VSYNC);
-					const uint32_t presentModeIdx = findPresentMode(vsync);
-					BGFX_FATAL(
-						  UINT32_MAX != presentModeIdx
-						, bgfx::Fatal::DeviceLost
-						, "Unable to find present mode."
-						);
-
-					m_sci.presentMode = s_presentMode[presentModeIdx].mode;
 
 					VkSurfaceCapabilitiesKHR surfaceCapabilities;
 					VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities) );
@@ -3354,18 +3362,11 @@ VK_IMPORT_DEVICE
 						VK_CHECK(vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_renderDoneSemaphore[ii]) );
 					}
 
-					VK_CHECK(createSwapchain() );
+					VK_CHECK(createSwapchain(flags) );
 					VK_CHECK(createSwapchainRenderPass() );
 					VK_CHECK(createSwapchainFramebuffer() );
 
 					initSwapchainImageLayout();
-
-					BX_TRACE("Swapchain (%s): %dx%d%s"
-						, s_presentMode[presentModeIdx].name
-						, m_sci.imageExtent.width
-						, m_sci.imageExtent.height
-						, vsync ? " + vsync" : ""
-						);
 				}
 			}
 
@@ -4661,7 +4662,7 @@ VK_IMPORT_DEVICE
 				m_backBufferColorFence[m_backBufferColorIdx] = m_cmd.m_kickedFence;
 			}
 
-			m_commandBuffer = m_cmd.alloc();
+			VK_CHECK(m_cmd.alloc(&m_commandBuffer) );
 			m_cmd.finish(_wait);
 		}
 
@@ -4707,8 +4708,10 @@ VK_IMPORT_DEVICE
 			return result;
 		}
 
-		void createStagingBuffer(uint32_t _size, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
+		VkResult createStagingBuffer(uint32_t _size, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
 		{
+			VkResult result = VK_SUCCESS;
+
 			VkBufferCreateInfo bci;
 			bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 			bci.pNext = NULL;
@@ -4718,22 +4721,46 @@ VK_IMPORT_DEVICE
 			bci.pQueueFamilyIndices = NULL;
 			bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-			VK_CHECK(vkCreateBuffer(m_device, &bci, m_allocatorCb, _buffer) );
+
+			result = vkCreateBuffer(m_device, &bci, m_allocatorCb, _buffer);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create staging buffer error: vkCreateBuffer failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			VkMemoryRequirements mr;
 			vkGetBufferMemoryRequirements(m_device, *_buffer, &mr);
 
-			VK_CHECK(allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, _memory) );
+			result = allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, _memory);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create staging buffer error: vkAllocateMemory failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
-			VK_CHECK(vkBindBufferMemory(m_device, *_buffer, *_memory, 0) );
+			result = vkBindBufferMemory(m_device, *_buffer, *_memory, 0);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create staging buffer error: vkBindBufferMemory failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			if (_data != NULL)
 			{
 				void* dst;
-				VK_CHECK(vkMapMemory(m_device, *_memory, 0, _size, 0, &dst) );
+				result = vkMapMemory(m_device, *_memory, 0, _size, 0, &dst);
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Create staging buffer error: vkMapMemory failed %d: %s.", result, getName(result) );
+					return result;
+				}
+
 				bx::memCopy(dst, _data, _size);
 				vkUnmapMemory(m_device, *_memory);
 			}
+
+			return result;
 		}
 
 		VkAllocationCallbacks*   m_allocatorCb;
@@ -5029,7 +5056,7 @@ VK_DESTROY
 		{
 			VkBuffer stagingBuffer;
 			VkDeviceMemory stagingMem;
-			s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data);
+			VK_CHECK(s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data) );
 
 			// copy buffer to buffer
 			VkBufferCopy region;
@@ -5054,7 +5081,7 @@ VK_DESTROY
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingMem;
-		s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data);
+		VK_CHECK(s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data) );
 
 		VkBufferCopy region;
 		region.srcOffset = 0;
@@ -5866,7 +5893,7 @@ VK_DESTROY
 
 			if (totalMemSize > 0)
 			{
-				s_renderVK->createStagingBuffer(totalMemSize, &stagingBuffer, &stagingDeviceMem);
+				VK_CHECK(s_renderVK->createStagingBuffer(totalMemSize, &stagingBuffer, &stagingDeviceMem) );
 
 				uint8_t* mappedMemory;
 				VK_CHECK(vkMapMemory(
@@ -6125,7 +6152,7 @@ VK_DESTROY
 
 		VkBuffer stagingBuffer = VK_NULL_HANDLE;
 		VkDeviceMemory stagingDeviceMem = VK_NULL_HANDLE;
-		s_renderVK->createStagingBuffer(size, &stagingBuffer, &stagingDeviceMem, data);
+		VK_CHECK(s_renderVK->createStagingBuffer(size, &stagingBuffer, &stagingDeviceMem, data) );
 
 		VkBufferImageCopy region;
 		region.bufferOffset      = 0;
@@ -6437,17 +6464,17 @@ VK_DESTROY
 		}
 	}
 
-	void CommandQueueVK::init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight)
+	VkResult CommandQueueVK::init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight)
 	{
 		m_queueFamily = _queueFamily;
 		m_queue = _queue;
 		m_numFramesInFlight = bx::clamp<uint32_t>(_numFramesInFlight, 1, BGFX_CONFIG_MAX_FRAME_LATENCY);
 		m_activeCommandBuffer = VK_NULL_HANDLE;
 
-		reset();
+		return reset();
 	}
 
-	void CommandQueueVK::reset()
+	VkResult CommandQueueVK::reset()
 	{
 		shutdown();
 
@@ -6480,35 +6507,65 @@ VK_DESTROY
 		fci.pNext = NULL;
 		fci.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
+		VkResult result = VK_SUCCESS;
+
 		for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 		{
-			VK_CHECK(vkCreateCommandPool(
+			result = vkCreateCommandPool(
 				  s_renderVK->m_device
 				, &cpci
 				, s_renderVK->m_allocatorCb
 				, &m_commandList[ii].m_commandPool
-				) );
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create command queue error: vkCreateCommandPool failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			cbai.commandPool = m_commandList[ii].m_commandPool;
 
-			VK_CHECK(vkAllocateCommandBuffers(
+			result = vkAllocateCommandBuffers(
 				  s_renderVK->m_device
 				, &cbai
 				, &m_commandList[ii].m_commandBuffer
-				) );
-			VK_CHECK(vkCreateSemaphore(
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create command queue error: vkAllocateCommandBuffers failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			result = vkCreateSemaphore(
 				  s_renderVK->m_device
 				, &sci
 				, s_renderVK->m_allocatorCb
 				, &m_commandList[ii].m_semaphore
-				) );
-			VK_CHECK(vkCreateFence(
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create command queue error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			result = vkCreateFence(
 				  s_renderVK->m_device
 				, &fci
 				, s_renderVK->m_allocatorCb
 				, &m_commandList[ii].m_fence
-				) );
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create command queue error: vkCreateFence failed %d: %s.", result, getName(result) );
+				return result;
+			}
 		}
+
+		return result;
 	}
 
 	void CommandQueueVK::shutdown()
@@ -6531,14 +6588,29 @@ VK_DESTROY
 		}
 	}
 
-	VkCommandBuffer CommandQueueVK::alloc()
+	VkResult CommandQueueVK::alloc(VkCommandBuffer* _commandBuffer)
 	{
+		VkResult result = VK_SUCCESS;
+
 		if (m_activeCommandBuffer == VK_NULL_HANDLE)
 		{
 			CommandList& commandList = m_commandList[m_currentFrameInFlight];
 
-			VK_CHECK(vkWaitForFences(s_renderVK->m_device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX) );
-			VK_CHECK(vkResetCommandPool(s_renderVK->m_device, commandList.m_commandPool, 0) );
+			result = vkWaitForFences(s_renderVK->m_device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Allocate command buffer error: vkWaitForFences failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			result = vkResetCommandPool(s_renderVK->m_device, commandList.m_commandPool, 0);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Allocate command buffer error: vkResetCommandPool failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			VkCommandBufferBeginInfo cbi;
 			cbi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -6546,11 +6618,23 @@ VK_DESTROY
 			cbi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 			cbi.pInheritanceInfo = NULL;
 
-			VK_CHECK(vkBeginCommandBuffer(commandList.m_commandBuffer, &cbi) );
+			result = vkBeginCommandBuffer(commandList.m_commandBuffer, &cbi);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Allocate command buffer error: vkBeginCommandBuffer failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			m_activeCommandBuffer = commandList.m_commandBuffer;
 		}
-		return m_activeCommandBuffer;
+
+		if (NULL != _commandBuffer)
+		{
+			*_commandBuffer = m_activeCommandBuffer;
+		}
+
+		return result;
 	}
 
 	void CommandQueueVK::kick(VkSemaphore _waitSemaphore, VkSemaphore _signalSemaphore, bool _wait)
