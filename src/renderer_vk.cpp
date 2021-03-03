@@ -3296,6 +3296,8 @@ VK_IMPORT_DEVICE
 
 		bool updateResolution(const Resolution& _resolution, bool _needsAcquire)
 		{
+			const bool suspended = !!(_resolution.reset & BGFX_RESET_SUSPEND);
+
 			float maxAnisotropy = 1.0f;
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
 			{
@@ -3316,7 +3318,11 @@ VK_IMPORT_DEVICE
 				m_pipelineStateCache.invalidate();
 			}
 
-			uint32_t flags = _resolution.reset & ~(BGFX_RESET_MAXANISOTROPY | BGFX_RESET_DEPTH_CLAMP);
+			uint32_t flags = _resolution.reset & ~(0
+				| BGFX_RESET_SUSPEND
+				| BGFX_RESET_MAXANISOTROPY
+				| BGFX_RESET_DEPTH_CLAMP
+				);
 
 			const bool resize = false
 				|| m_resolution.width  != _resolution.width
@@ -3338,9 +3344,14 @@ VK_IMPORT_DEVICE
 			{
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
+				const uint64_t recreateMask = 0
+					| BGFX_RESET_VSYNC
+					| BGFX_RESET_SRGB_BACKBUFFER
+					;
+
 				const bool recreate = false
 					|| resize
-					|| (flags & ~BGFX_RESET_MSAA_MASK) != (m_resolution.reset & ~BGFX_RESET_MSAA_MASK)
+					|| (flags & recreateMask) != (m_resolution.reset & recreateMask)
 					|| m_needToRecreateSurface
 					;
 
@@ -3352,6 +3363,8 @@ VK_IMPORT_DEVICE
 
 				if (recreate)
 				{
+					skipFrame = _needsAcquire;
+
 					VK_CHECK(vkDeviceWaitIdle(m_device) );
 
 					VK_CHECK(m_cmd.reset() );
@@ -3377,7 +3390,7 @@ VK_IMPORT_DEVICE
 						if (VK_SUCCESS != result)
 						{
 							BX_TRACE("Surface lost.");
-							return _needsAcquire;
+							return skipFrame || suspended;
 						}
 					}
 
@@ -3399,7 +3412,7 @@ VK_IMPORT_DEVICE
 					if (m_sci.imageExtent.width  == 0
 					||  m_sci.imageExtent.height == 0)
 					{
-						return _needsAcquire;
+						return skipFrame || suspended;
 					}
 
 					VkSemaphoreCreateInfo sci;
@@ -3423,7 +3436,7 @@ VK_IMPORT_DEVICE
 				}
 			}
 
-			return skipFrame;
+			return skipFrame || suspended;
 		}
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
