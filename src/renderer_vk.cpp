@@ -4070,6 +4070,7 @@ VK_IMPORT_DEVICE
 
 			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
 			murmur.add(m_fbh.idx);
+			murmur.add(isValid(m_fbh) ? 0 : m_sci.imageFormat);
 			murmur.add(_numInstanceData);
 			const uint32_t hash = murmur.end();
 
