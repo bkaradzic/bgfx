@@ -1025,9 +1025,111 @@ VK_IMPORT_DEVICE
 		{
 		}
 
+		VkResult createSurface()
+		{
+			VkResult result = VK_SUCCESS;
+
+#if BX_PLATFORM_WINDOWS
+			{
+				VkWin32SurfaceCreateInfoKHR sci;
+				sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+				sci.pNext = NULL;
+				sci.flags     = 0;
+				sci.hinstance = (HINSTANCE)GetModuleHandle(NULL);
+				sci.hwnd      = (HWND)g_platformData.nwh;
+				result = vkCreateWin32SurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+			}
+#elif BX_PLATFORM_ANDROID
+			{
+				VkAndroidSurfaceCreateInfoKHR sci;
+				sci.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
+				sci.pNext = NULL;
+				sci.flags = 0;
+				sci.window = (ANativeWindow*)g_platformData.nwh;
+				result = vkCreateAndroidSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+			}
+#elif BX_PLATFORM_LINUX
+			{
+				if (NULL != vkCreateXlibSurfaceKHR)
+				{
+					VkXlibSurfaceCreateInfoKHR sci;
+					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+					sci.pNext = NULL;
+					sci.flags  = 0;
+					sci.dpy    = (Display*)g_platformData.ndt;
+					sci.window = (Window)g_platformData.nwh;
+					result = vkCreateXlibSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+				}
+				else
+				{
+					result = VK_RESULT_MAX_ENUM;
+				}
+
+				if (VK_SUCCESS != result)
+				{
+					void* xcbdll = bx::dlopen("libX11-xcb.so.1");
+
+					if (NULL != xcbdll)
+					{
+						typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
+						PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
+
+						union { void* ptr; xcb_window_t window; } cast = { g_platformData.nwh };
+
+						VkXcbSurfaceCreateInfoKHR sci;
+						sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+						sci.pNext      = NULL;
+						sci.flags      = 0;
+						sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
+						sci.window     = cast.window;
+						result = vkCreateXcbSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+
+						bx::dlclose(xcbdll);
+					}
+				}
+			}
+#elif BX_PLATFORM_OSX
+			{
+				if (NULL != vkCreateMacOSSurfaceMVK)
+				{
+					NSWindow* window    = (NSWindow*)(g_platformData.nwh);
+					NSView* contentView = (NSView*)window.contentView;
+					CAMetalLayer* layer = [CAMetalLayer layer];
+
+					if (_init.resolution.reset & BGFX_RESET_HIDPI)
+					{
+						layer.contentsScale = [window backingScaleFactor];
+					}
+
+					[contentView setWantsLayer : YES];
+					[contentView setLayer : layer];
+
+					VkMacOSSurfaceCreateInfoMVK sci;
+					sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+					sci.pNext = NULL;
+					sci.flags = 0;
+					sci.pView = (__bridge void*)layer;
+					result = vkCreateMacOSSurfaceMVK(m_instance, &sci, m_allocatorCb, &m_surface);
+				}
+				else
+				{
+					result = VK_RESULT_MAX_ENUM;
+				}
+			}
+#else
+#	error "Figure out KHR surface..."
+#endif // BX_PLATFORM_
+
+			m_needToRecreateSurface = false;
+
+			return result;
+		}
+
 		VkResult createSwapchain(uint32_t _reset)
 		{
 			VkResult result = VK_SUCCESS;
+
+			m_sci.surface = m_surface;
 			
 			const bool srgb = !!(_reset & BGFX_RESET_SRGB_BACKBUFFER);
 			VkSurfaceFormatKHR surfaceFormat = srgb
@@ -1041,7 +1143,7 @@ VK_IMPORT_DEVICE
 			uint32_t presentModeIdx = findPresentMode(vsync);
 			if (UINT32_MAX == presentModeIdx)
 			{
-				BX_TRACE("Unable to find present mode (vsync: %d).", vsync);
+				BX_TRACE("Create swapchain error: Unable to find present mode (vsync: %d).", vsync);
 				return VK_ERROR_INITIALIZATION_FAILED;
 			}
 			m_sci.presentMode = s_presentMode[presentModeIdx].mode;
@@ -2042,96 +2144,7 @@ VK_IMPORT_DEVICE
 
 			errorState = ErrorState::CommandQueueCreated;
 
-#if BX_PLATFORM_WINDOWS
-			{
-				VkWin32SurfaceCreateInfoKHR sci;
-				sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-				sci.pNext = NULL;
-				sci.flags     = 0;
-				sci.hinstance = (HINSTANCE)GetModuleHandle(NULL);
-				sci.hwnd      = (HWND)g_platformData.nwh;
-				result = vkCreateWin32SurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
-			}
-#elif BX_PLATFORM_ANDROID
-			{
-				VkAndroidSurfaceCreateInfoKHR sci;
-				sci.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-				sci.pNext = NULL;
-				sci.flags = 0;
-				sci.window = (ANativeWindow*)g_platformData.nwh;
-				result = vkCreateAndroidSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
-			}
-#elif BX_PLATFORM_LINUX
-			{
-				if (NULL != vkCreateXlibSurfaceKHR)
-				{
-					VkXlibSurfaceCreateInfoKHR sci;
-					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-					sci.pNext = NULL;
-					sci.flags  = 0;
-					sci.dpy    = (Display*)g_platformData.ndt;
-					sci.window = (Window)g_platformData.nwh;
-					result = vkCreateXlibSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
-				}
-				else
-				{
-					result = VK_RESULT_MAX_ENUM;
-				}
-
-				if (VK_SUCCESS != result)
-				{
-					void* xcbdll = bx::dlopen("libX11-xcb.so.1");
-
-					if (NULL != xcbdll)
-					{
-						typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
-						PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
-
-						union { void* ptr; xcb_window_t window; } cast = { g_platformData.nwh };
-
-						VkXcbSurfaceCreateInfoKHR sci;
-						sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-						sci.pNext      = NULL;
-						sci.flags      = 0;
-						sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
-						sci.window     = cast.window;
-						result = vkCreateXcbSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
-
-						bx::dlclose(xcbdll);
-					}
-				}
-			}
-#elif BX_PLATFORM_OSX
-			{
-				if (NULL != vkCreateMacOSSurfaceMVK)
-				{
-					NSWindow* window    = (NSWindow*)(g_platformData.nwh);
-					NSView* contentView = (NSView*)window.contentView;
-					CAMetalLayer* layer = [CAMetalLayer layer];
-
-					if (_init.resolution.reset & BGFX_RESET_HIDPI)
-					{
-						layer.contentsScale = [window backingScaleFactor];
-					}
-
-					[contentView setWantsLayer : YES];
-					[contentView setLayer : layer];
-
-					VkMacOSSurfaceCreateInfoMVK sci;
-					sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-					sci.pNext = NULL;
-					sci.flags = 0;
-					sci.pView = (__bridge void*)layer;
-					result = vkCreateMacOSSurfaceMVK(m_instance, &sci, m_allocatorCb, &m_surface);
-				}
-				else
-				{
-					result = VK_RESULT_MAX_ENUM;
-				}
-			}
-#else
-#	error "Figure out KHR surface..."
-#endif // BX_PLATFORM_
+			result = createSurface();
 
 			if (VK_SUCCESS != result)
 			{
@@ -2142,6 +2155,15 @@ VK_IMPORT_DEVICE
 			errorState = ErrorState::SurfaceCreated;
 
 			{
+				m_resolution       = _init.resolution;
+				m_resolution.reset = _init.resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
+
+				m_resolution.width  = _init.resolution.width;
+				m_resolution.height = _init.resolution.height;
+
+				m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
+				m_textVideoMem.clear();
+
 				VkBool32 surfaceSupported;
 				result = vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, m_qfiGraphics, m_surface, &surfaceSupported);
 
@@ -2226,7 +2248,7 @@ VK_IMPORT_DEVICE
 
 				if (UINT32_MAX == surfaceFormatIdx)
 				{
-					BX_TRACE("Cannot find preferred surface format.");
+					BX_TRACE("Init error: Cannot find preferred surface format.");
 					goto error;
 				}
 
@@ -2277,7 +2299,7 @@ VK_IMPORT_DEVICE
 
 				if (minSwapBufferCount > maxSwapBufferCount)
 				{
-					BX_TRACE("Incompatible swapchain image count (min: %d, max: %d)."
+					BX_TRACE("Init error: Incompatible swapchain image count (min: %d, max: %d)."
 						, minSwapBufferCount
 						, maxSwapBufferCount
 					);
@@ -2289,7 +2311,6 @@ VK_IMPORT_DEVICE
 				m_sci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 				m_sci.pNext = NULL;
 				m_sci.flags = 0;
-				m_sci.surface = m_surface;
 				m_sci.minImageCount   = swapBufferCount;
 				m_sci.imageExtent.width  = width;
 				m_sci.imageExtent.height = height;
@@ -2631,11 +2652,17 @@ VK_IMPORT_DEVICE
 				pi.pResults           = NULL;
 				VkResult result = vkQueuePresentKHR(m_queueGraphics, &pi);
 
-				if (VK_ERROR_OUT_OF_DATE_KHR       == result
-				||  VK_SUBOPTIMAL_KHR              == result
-				||  VK_ERROR_VALIDATION_FAILED_EXT == result)
+				switch (result)
 				{
+				case VK_ERROR_SURFACE_LOST_KHR:
+					m_needToRecreateSurface = true;
+					BX_FALLTHROUGH;
+				case VK_ERROR_OUT_OF_DATE_KHR:
+				case VK_SUBOPTIMAL_KHR:
+				case VK_ERROR_VALIDATION_FAILED_EXT:
 					m_needToRefreshSwapchain = true;
+				default:
+					break;
 				}
 
 				m_needPresent = false;
@@ -3267,7 +3294,7 @@ VK_IMPORT_DEVICE
 			return idx;
 		}
 
-		bool updateResolution(const Resolution& _resolution)
+		bool updateResolution(const Resolution& _resolution, bool _needsAcquire)
 		{
 			float maxAnisotropy = 1.0f;
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
@@ -3291,14 +3318,31 @@ VK_IMPORT_DEVICE
 
 			uint32_t flags = _resolution.reset & ~(BGFX_RESET_MAXANISOTROPY | BGFX_RESET_DEPTH_CLAMP);
 
-			if (m_resolution.width  != _resolution.width
-			||  m_resolution.height != _resolution.height
-			||  m_resolution.reset  != flags)
+			const bool resize = false
+				|| m_resolution.width  != _resolution.width
+				|| m_resolution.height != _resolution.height
+				;
+
+			// Note: m_needToRefreshSwapchain is deliberately ignored when deciding whether to recreate the swapchain
+			// because it can happen several frames before submit is called with the new resolution.
+			// Instead, vkAcquireNextImageKHR and the entire submit call are skipped until the window size is updated.
+			// That also fixes a related issue where VK_ERROR_OUT_OF_DATE_KHR is returned from
+			// vkQueuePresentKHR when the window doesn't exist anymore, and vkGetPhysicalDeviceSurfaceCapabilitiesKHR
+			// fails with VK_ERROR_SURFACE_LOST_KHR.
+
+			bool skipFrame = m_needToRefreshSwapchain && _needsAcquire;
+
+			if (resize
+			||  m_resolution.reset != flags
+			||  m_needToRecreateSurface)
 			{
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				const bool resize        = (m_resolution.reset & BGFX_RESET_MSAA_MASK      ) == (_resolution.reset & BGFX_RESET_MSAA_MASK      );
-				const bool formatChanged = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) == (_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER);
+				const bool recreate = false
+					|| resize
+					|| (flags & ~BGFX_RESET_MSAA_MASK) != (m_resolution.reset & ~BGFX_RESET_MSAA_MASK)
+					|| m_needToRecreateSurface
+					;
 
 				m_resolution = _resolution;
 				m_resolution.reset = flags;
@@ -3306,9 +3350,7 @@ VK_IMPORT_DEVICE
 				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
 				m_textVideoMem.clear();
 
-				if (resize
-				||  formatChanged
-				||  m_needToRefreshSwapchain)
+				if (recreate)
 				{
 					VK_CHECK(vkDeviceWaitIdle(m_device) );
 
@@ -3328,6 +3370,17 @@ VK_IMPORT_DEVICE
 					releaseSwapchainRenderPass();
 					releaseSwapchain();
 
+					if (m_needToRecreateSurface)
+					{
+						vkDestroySurfaceKHR(m_instance, m_surface, m_allocatorCb);
+						VkResult result = result = createSurface();
+						if (VK_SUCCESS != result)
+						{
+							BX_TRACE("Surface lost.");
+							return _needsAcquire;
+						}
+					}
+
 					VkSurfaceCapabilitiesKHR surfaceCapabilities;
 					VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities) );
 
@@ -3346,9 +3399,7 @@ VK_IMPORT_DEVICE
 					if (m_sci.imageExtent.width  == 0
 					||  m_sci.imageExtent.height == 0)
 					{
-						m_resolution.width  = 0;
-						m_resolution.height = 0;
-						return true;
+						return _needsAcquire;
 					}
 
 					VkSemaphoreCreateInfo sci;
@@ -3367,15 +3418,12 @@ VK_IMPORT_DEVICE
 					VK_CHECK(createSwapchainFramebuffer() );
 
 					initSwapchainImageLayout();
+
+					skipFrame = false;
 				}
 			}
 
-			if (m_needToRefreshSwapchain)
-			{
-				return true;
-			}
-
-			return false;
+			return skipFrame;
 		}
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
@@ -4584,51 +4632,61 @@ VK_IMPORT_DEVICE
 
 		bool acquireImage()
 		{
-			if (m_needPresent)
+			if (VK_NULL_HANDLE == m_swapchain
+			||  m_needToRefreshSwapchain)
 			{
-				return true;
-			}
-
-			m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_cmd.m_currentFrameInFlight];
-			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_cmd.m_currentFrameInFlight];
-
-			VkResult result = vkAcquireNextImageKHR(
-				  m_device
-				, m_swapchain
-				, UINT64_MAX
-				, m_lastImageAcquiredSemaphore
-				, VK_NULL_HANDLE
-				, &m_backBufferColorIdx
-				);
-
-			if (VK_ERROR_OUT_OF_DATE_KHR       == result
-			||  VK_ERROR_VALIDATION_FAILED_EXT == result)
-			{
-				m_needToRefreshSwapchain = true;
 				return false;
 			}
 
-			if (VK_NULL_HANDLE != m_backBufferColorFence[m_backBufferColorIdx])
+			if (!m_needPresent)
 			{
-				VK_CHECK(vkWaitForFences(
+				m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_cmd.m_currentFrameInFlight];
+				m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_cmd.m_currentFrameInFlight];
+
+				VkResult result = vkAcquireNextImageKHR(
 					  m_device
-					, 1
-					, &m_backBufferColorFence[m_backBufferColorIdx]
-					, VK_TRUE
+					, m_swapchain
 					, UINT64_MAX
-					) );
+					, m_lastImageAcquiredSemaphore
+					, VK_NULL_HANDLE
+					, &m_backBufferColorIdx
+					);
+
+				switch (result)
+				{
+				case VK_ERROR_SURFACE_LOST_KHR:
+					m_needToRecreateSurface = true;
+					BX_FALLTHROUGH;
+				case VK_ERROR_OUT_OF_DATE_KHR:
+				case VK_ERROR_VALIDATION_FAILED_EXT:
+					m_needToRefreshSwapchain = true;
+					return false;
+				default:
+					break;
+				}
+
+				if (VK_NULL_HANDLE != m_backBufferColorFence[m_backBufferColorIdx])
+				{
+					VK_CHECK(vkWaitForFences(
+						  m_device
+						, 1
+						, &m_backBufferColorFence[m_backBufferColorIdx]
+						, VK_TRUE
+						, UINT64_MAX
+						) );
+				}
+
+				setImageMemoryBarrier(
+					  m_commandBuffer
+					, m_backBufferColorImage[m_backBufferColorIdx]
+					, VK_IMAGE_ASPECT_COLOR_BIT
+					, m_backBufferColorImageLayout[m_backBufferColorIdx]
+					, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+					);
+				m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+				m_needPresent = true;
 			}
-
-			setImageMemoryBarrier(
-				  m_commandBuffer
-				, m_backBufferColorImage[m_backBufferColorIdx]
-				, VK_IMAGE_ASPECT_COLOR_BIT
-				, m_backBufferColorImageLayout[m_backBufferColorIdx]
-				, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-				);
-			m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-			m_needPresent = true;
 			return true;
 		}
 
@@ -4798,6 +4856,7 @@ VK_IMPORT_DEVICE
 		uint32_t           m_backBufferColorIdx;
 		bool               m_needPresent;
 		bool               m_needToRefreshSwapchain;
+		bool               m_needToRecreateSurface;
 
 		VkFormat           m_backBufferDepthStencilFormat;
 		VkDeviceMemory     m_backBufferDepthStencilMemory;
@@ -6858,14 +6917,32 @@ VK_DESTROY
 	{
 		BX_UNUSED(_clearQuad);
 
-		if (updateResolution(_render->m_resolution) )
+		bool needAcquire = !!(_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS|BGFX_DEBUG_TEXT) );
+		if (!needAcquire)
+		{
+			for (uint32_t ii = 0; ii < _render->m_numRenderItems; ++ii)
+			{
+				const ViewId decodedView = SortKey::decodeView(_render->m_sortKeys[ii]);
+				const ViewId remappedView = _render->m_viewRemap[decodedView];
+				if (!isValid(_render->m_view[remappedView].m_fbh) )
+				{
+					needAcquire = true;
+					break;
+				}
+			}
+		}
+
+		if (updateResolution(_render->m_resolution, needAcquire) )
 		{
 			return;
 		}
 
-		if (VK_NULL_HANDLE == m_swapchain)
+		if (needAcquire)
 		{
-			return;
+			if (!acquireImage() )
+			{
+				return;
+			}
 		}
 
 		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
@@ -6932,29 +7009,6 @@ VK_DESTROY
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
-
-		bool needAcquire = !!(_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS|BGFX_DEBUG_TEXT) );
-		if (!needAcquire)
-		{
-			for (uint32_t ii = 0; ii < _render->m_numRenderItems; ++ii)
-			{
-				const ViewId decodedView = SortKey::decodeView(_render->m_sortKeys[ii]);
-				const ViewId remappedView = _render->m_viewRemap[decodedView];
-				if (!isValid(_render->m_view[remappedView].m_fbh) )
-				{
-					needAcquire = true;
-					break;
-				}
-			}
-		}
-
-		if (needAcquire)
-		{
-			if (!acquireImage() )
-			{
-				return;
-			}
-		}
 
 		const uint64_t f0 = BGFX_STATE_BLEND_FACTOR;
 		const uint64_t f1 = BGFX_STATE_BLEND_INV_FACTOR;
