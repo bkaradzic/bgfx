@@ -341,14 +341,14 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_memory_budget",                   1, false, false, true                         , Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                         , Layer::Count },
 		{ "VK_EXT_conservative_rasterization",      1, false, false, true                         , Layer::Count },
-		{ "VK_EXT_line_rasterization",              1, false, false, true                         , Layer::Count },
+		{ "VK_EXT_line_rasterization",              1, false, false, false                        , Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                         , Layer::Count }
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
 	bool updateExtension(const char* _name, uint32_t _version, bool _instanceExt)
 	{
-		bx::StringView ext(_name);
+		const bx::StringView ext(_name);
 
 		bool supported = false;
 		for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -834,7 +834,8 @@ VK_IMPORT_DEVICE
 	template<typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(VkDevice _device, Ty _object, const char* _format, ...)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OBJECT_NAME) && s_extension[Extension::EXT_debug_utils].m_supported)
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OBJECT_NAME)
+		&&  s_extension[Extension::EXT_debug_utils].m_supported)
 		{
 			char temp[2048];
 			va_list argList;
