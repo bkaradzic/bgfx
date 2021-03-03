@@ -1130,7 +1130,7 @@ VK_IMPORT_DEVICE
 			VkResult result = VK_SUCCESS;
 
 			m_sci.surface = m_surface;
-			
+
 			const bool srgb = !!(_reset & BGFX_RESET_SRGB_BACKBUFFER);
 			VkSurfaceFormatKHR surfaceFormat = srgb
 				? m_backBufferColorFormatSrgb
@@ -1498,6 +1498,7 @@ VK_IMPORT_DEVICE
 			};
 
 			ErrorState::Enum errorState = ErrorState::Default;
+			void** ppNextFeatures = NULL;
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -1707,7 +1708,7 @@ VK_IMPORT_INSTANCE
 			deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
 			deviceFeatures2.pNext = NULL;
 
-			void** ppNextFeatures = &deviceFeatures2.pNext;
+			ppNextFeatures = &deviceFeatures2.pNext;
 
 			{
 				BX_TRACE("---");
@@ -1817,7 +1818,7 @@ VK_IMPORT_INSTANCE
 				ppNextFeatures = &m_lineRasterizationFeatures.pNext;
 				m_lineRasterizationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT;
 				m_lineRasterizationFeatures.pNext = NULL;
-				
+
 				vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
 
 				deviceFeatures2.features.robustBufferAccess = VK_FALSE;
@@ -3386,7 +3387,8 @@ VK_IMPORT_DEVICE
 					if (m_needToRecreateSurface)
 					{
 						vkDestroySurfaceKHR(m_instance, m_surface, m_allocatorCb);
-						VkResult result = result = createSurface();
+						VkResult result = createSurface();
+
 						if (VK_SUCCESS != result)
 						{
 							BX_TRACE("Surface lost.");
