@@ -1499,7 +1499,11 @@ VK_IMPORT_DEVICE
 			};
 
 			ErrorState::Enum errorState = ErrorState::Default;
-			void** nextFeatures = NULL;
+
+			VkPhysicalDeviceLineRasterizationFeaturesEXT lineRasterizationFeatures;
+			const void* nextFeatures = NULL;
+
+			bx::memSet(&lineRasterizationFeatures, 0, sizeof(lineRasterizationFeatures) );
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -1705,12 +1709,6 @@ VK_IMPORT_INSTANCE
 				BX_WARN(VK_SUCCESS == result, "vkCreateDebugReportCallbackEXT failed %d: %s.", result, getName(result) );
 			}
 
-			VkPhysicalDeviceFeatures2KHR deviceFeatures2;
-			deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-			deviceFeatures2.pNext = NULL;
-
-			nextFeatures = &deviceFeatures2.pNext;
-
 			{
 				BX_TRACE("---");
 
@@ -1815,20 +1813,37 @@ VK_IMPORT_INSTANCE
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
-				*nextFeatures = &m_lineRasterizationFeatures;
-				nextFeatures  = &m_lineRasterizationFeatures.pNext;
-				m_lineRasterizationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT;
-				m_lineRasterizationFeatures.pNext = NULL;
+				if (s_extension[Extension::KHR_get_physical_device_properties2].m_supported)
+				{
+					VkPhysicalDeviceFeatures2KHR deviceFeatures2;
+					deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+					deviceFeatures2.pNext = NULL;
 
-				vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
+					VkBaseOutStructure* next = (VkBaseOutStructure*)&deviceFeatures2;
 
-				deviceFeatures2.features.robustBufferAccess = VK_FALSE;
+					if (s_extension[Extension::EXT_line_rasterization].m_supported)
+					{
+						next->pNext = (VkBaseOutStructure*)&lineRasterizationFeatures;
+						next = (VkBaseOutStructure*)&lineRasterizationFeatures;
+						lineRasterizationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT;
+						lineRasterizationFeatures.pNext = NULL;
+					}
 
-				m_deviceFeatures = deviceFeatures2.features;
+					nextFeatures = deviceFeatures2.pNext;
+
+					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
+					m_deviceFeatures = deviceFeatures2.features;
+				}
+				else
+				{
+					vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_deviceFeatures);
+				}
+
+				m_deviceFeatures.robustBufferAccess = VK_FALSE;
 
 				m_lineAASupport = true
 					&& s_extension[Extension::EXT_line_rasterization].m_supported
-					&& m_lineRasterizationFeatures.smoothLines
+					&& lineRasterizationFeatures.smoothLines
 					;
 
 				const bool indirectDrawSupport = true
@@ -2078,7 +2093,7 @@ VK_IMPORT_INSTANCE
 
 				VkDeviceCreateInfo dci;
 				dci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-				dci.pNext = &deviceFeatures2;
+				dci.pNext = nextFeatures;
 				dci.flags = 0;
 				dci.queueCreateInfoCount = 1;
 				dci.pQueueCreateInfos    = &dcqi;
@@ -2086,7 +2101,7 @@ VK_IMPORT_INSTANCE
 				dci.ppEnabledLayerNames  = enabledLayer;
 				dci.enabledExtensionCount   = numEnabledExtensions;
 				dci.ppEnabledExtensionNames = enabledExtension;
-				dci.pEnabledFeatures = NULL;
+				dci.pEnabledFeatures = &m_deviceFeatures;
 
 				result = vkCreateDevice(
 					  m_physicalDevice
@@ -4112,21 +4127,21 @@ VK_IMPORT_DEVICE
 			VkPipelineRasterizationStateCreateInfo rasterizationState;
 			setRasterizerState(rasterizationState, _state, m_wireframe);
 
-			const void** nextRasterizationState = &rasterizationState.pNext;
+			VkBaseInStructure* nextRasterizationState = (VkBaseInStructure*)&rasterizationState;
 
 			VkPipelineRasterizationConservativeStateCreateInfoEXT conservativeRasterizationState;
 			if (s_extension[Extension::EXT_conservative_rasterization].m_supported)
 			{
-				*nextRasterizationState = &conservativeRasterizationState;
-				nextRasterizationState  = &conservativeRasterizationState.pNext;
+				nextRasterizationState->pNext = (VkBaseInStructure*)&conservativeRasterizationState;
+				nextRasterizationState = (VkBaseInStructure*)&conservativeRasterizationState;
 				setConservativeRasterizerState(conservativeRasterizationState, _state);
 			}
 
 			VkPipelineRasterizationLineStateCreateInfoEXT lineRasterizationState;
 			if (m_lineAASupport)
 			{
-				*nextRasterizationState = &lineRasterizationState;
-				nextRasterizationState  = &lineRasterizationState.pNext;
+				nextRasterizationState->pNext = (VkBaseInStructure*)&lineRasterizationState;
+				nextRasterizationState = (VkBaseInStructure*)&lineRasterizationState;
 				setLineRasterizerState(lineRasterizationState, _state);
 			}
 
@@ -4847,8 +4862,6 @@ VK_IMPORT_DEVICE
 		VkPhysicalDeviceProperties       m_deviceProperties;
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
 		VkPhysicalDeviceFeatures         m_deviceFeatures;
-
-		VkPhysicalDeviceLineRasterizationFeaturesEXT m_lineRasterizationFeatures;
 
 		bool m_lineAASupport;
 
@@ -7764,15 +7777,15 @@ BX_UNUSED(presentMin, presentMax);
 		dmbp.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
 		dmbp.pNext = NULL;
 
-		VkPhysicalDeviceMemoryProperties2 pdmp2;
-		pdmp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
-		pdmp2.pNext = &dmbp;
-
 		int64_t gpuMemoryAvailable = -INT64_MAX;
 		int64_t gpuMemoryUsed      = -INT64_MAX;
 
 		if (s_extension[Extension::EXT_memory_budget].m_supported)
 		{
+			VkPhysicalDeviceMemoryProperties2 pdmp2;
+			pdmp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+			pdmp2.pNext = &dmbp;
+
 			vkGetPhysicalDeviceMemoryProperties2KHR(m_physicalDevice, &pdmp2);
 
 			gpuMemoryAvailable = 0;
