@@ -7743,6 +7743,34 @@ BX_UNUSED(presentMin, presentMax);
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
+		VkPhysicalDeviceMemoryBudgetPropertiesEXT dmbp;
+		dmbp.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
+		dmbp.pNext = NULL;
+
+		VkPhysicalDeviceMemoryProperties2 pdmp2;
+		pdmp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+		pdmp2.pNext = &dmbp;
+
+		int64_t gpuMemoryAvailable = -INT64_MAX;
+		int64_t gpuMemoryUsed      = -INT64_MAX;
+
+		if (s_extension[Extension::EXT_memory_budget].m_supported)
+		{
+			vkGetPhysicalDeviceMemoryProperties2KHR(m_physicalDevice, &pdmp2);
+
+			gpuMemoryAvailable = 0;
+			gpuMemoryUsed      = 0;
+
+			for (uint32_t ii = 0; ii < m_memoryProperties.memoryHeapCount; ++ii)
+			{
+				if (!!(m_memoryProperties.memoryHeaps[ii].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) )
+				{
+					gpuMemoryAvailable += dmbp.heapBudget[ii];
+					gpuMemoryUsed += dmbp.heapUsage[ii];
+				}
+			}
+		}
+
 		Stats& perfStats = _render->m_perfStats;
 		perfStats.cpuTimeBegin  = timeBegin;
 		perfStats.cpuTimeEnd    = timeEnd;
@@ -7756,8 +7784,8 @@ BX_UNUSED(presentMin, presentMax);
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
-		perfStats.gpuMemoryMax  = -INT64_MAX;
-		perfStats.gpuMemoryUsed = -INT64_MAX;
+		perfStats.gpuMemoryMax  = gpuMemoryAvailable;
+		perfStats.gpuMemoryUsed = gpuMemoryUsed;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
@@ -7793,33 +7821,21 @@ BX_UNUSED(presentMin, presentMax);
 					, getName(pdp.deviceType)
 					);
 
-				if (s_extension[Extension::EXT_memory_budget].m_supported)
+				if (0 <= gpuMemoryAvailable && 0 <= gpuMemoryUsed)
 				{
-					VkPhysicalDeviceMemoryBudgetPropertiesEXT dmbp;
-					dmbp.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
-					dmbp.pNext = NULL;
-
-					VkPhysicalDeviceMemoryProperties2 pdmp2;
-					pdmp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
-					pdmp2.pNext = &dmbp;
-
-					vkGetPhysicalDeviceMemoryProperties2KHR(m_physicalDevice, &pdmp2);
-
-					for (uint32_t ii = 0; ii < VK_MAX_MEMORY_HEAPS; ++ii)
+					for (uint32_t ii = 0; ii < m_memoryProperties.memoryHeapCount; ++ii)
 					{
-						if (dmbp.heapBudget[ii] == 0)
-						{
-							continue;
-						}
-
 						char budget[16];
 						bx::prettify(budget, BX_COUNTOF(budget), dmbp.heapBudget[ii]);
 
 						char usage[16];
 						bx::prettify(usage, BX_COUNTOF(usage), dmbp.heapUsage[ii]);
 
-						tvm.printf(0, pos++, 0x8f, " Memory %d - Budget: %12s, Usage: %12s"
+						const bool local = (!!(m_memoryProperties.memoryHeaps[ii].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) );
+
+						tvm.printf(0, pos++, 0x8f, " Memory %d %s - Budget: %12s, Usage: %12s"
 							, ii
+							, local ? "(local)    " : "(non-local)"
 							, budget
 							, usage
 							);
