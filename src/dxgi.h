@@ -87,7 +87,7 @@ namespace bgfx
 
 #if BX_PLATFORM_WINRT
 		///
-		HRESULT releaseSwapChain(const SwapChainDesc& _scd, SwapChainI** _swapChain);
+		HRESULT removeSwapChain(const SwapChainDesc& _scd, SwapChainI** _swapChain);
 #endif
 
 		///

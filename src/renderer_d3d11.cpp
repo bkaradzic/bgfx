@@ -1681,11 +1681,9 @@ namespace bgfx { namespace d3d11
 			DX_RELEASE(m_annotation, 1);
 			DX_RELEASE_W(m_infoQueue, 0);
 			DX_RELEASE(m_msaaRt, 0);
-
 #if BX_PLATFORM_WINRT
-			m_dxgi.releaseSwapChain(m_scd, &m_swapChain);
+			m_dxgi.removeSwapChain(m_scd, &m_swapChain);
 #endif
-
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
 			DX_RELEASE(m_device, 0);
@@ -2462,9 +2460,8 @@ namespace bgfx { namespace d3d11
 						m_scd.sampleDesc = s_msaa[(m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 #if BX_PLATFORM_WINRT
-						m_dxgi.releaseSwapChain(m_scd, &m_swapChain);
+						m_dxgi.removeSwapChain(m_scd, &m_swapChain);
 #endif
-
 						DX_RELEASE(m_swapChain, 0);
 
 						HRESULT hr = m_dxgi.createSwapChain(m_device

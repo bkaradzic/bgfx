@@ -573,7 +573,7 @@ namespace bgfx
 	}
 
 #if BX_PLATFORM_WINRT
-	HRESULT Dxgi::releaseSwapChain(const SwapChainDesc& _scd, SwapChainI** _swapChain)
+	HRESULT Dxgi::removeSwapChain(const SwapChainDesc& _scd, SwapChainI** _swapChain)
 	{
 		IInspectable *nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
 		ISwapChainPanelNative* swapChainPanelNative;
