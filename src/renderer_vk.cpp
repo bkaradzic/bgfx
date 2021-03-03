@@ -1499,7 +1499,7 @@ VK_IMPORT_DEVICE
 			};
 
 			ErrorState::Enum errorState = ErrorState::Default;
-			void** ppNextFeatures = NULL;
+			void** nextFeatures = NULL;
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -1709,7 +1709,7 @@ VK_IMPORT_INSTANCE
 			deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
 			deviceFeatures2.pNext = NULL;
 
-			ppNextFeatures = &deviceFeatures2.pNext;
+			nextFeatures = &deviceFeatures2.pNext;
 
 			{
 				BX_TRACE("---");
@@ -1815,8 +1815,8 @@ VK_IMPORT_INSTANCE
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
-				*ppNextFeatures = &m_lineRasterizationFeatures;
-				ppNextFeatures = &m_lineRasterizationFeatures.pNext;
+				*nextFeatures = &m_lineRasterizationFeatures;
+				nextFeatures  = &m_lineRasterizationFeatures.pNext;
 				m_lineRasterizationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT;
 				m_lineRasterizationFeatures.pNext = NULL;
 
@@ -4112,21 +4112,21 @@ VK_IMPORT_DEVICE
 			VkPipelineRasterizationStateCreateInfo rasterizationState;
 			setRasterizerState(rasterizationState, _state, m_wireframe);
 
-			const void** ppNext = &rasterizationState.pNext;
+			const void** nextRasterizationState = &rasterizationState.pNext;
 
 			VkPipelineRasterizationConservativeStateCreateInfoEXT conservativeRasterizationState;
 			if (s_extension[Extension::EXT_conservative_rasterization].m_supported)
 			{
-				*ppNext = &conservativeRasterizationState;
-				ppNext = &conservativeRasterizationState.pNext;
+				*nextRasterizationState = &conservativeRasterizationState;
+				nextRasterizationState  = &conservativeRasterizationState.pNext;
 				setConservativeRasterizerState(conservativeRasterizationState, _state);
 			}
 
 			VkPipelineRasterizationLineStateCreateInfoEXT lineRasterizationState;
 			if (m_lineAASupport)
 			{
-				*ppNext = &lineRasterizationState;
-				ppNext = &lineRasterizationState.pNext;
+				*nextRasterizationState = &lineRasterizationState;
+				nextRasterizationState  = &lineRasterizationState.pNext;
 				setLineRasterizerState(lineRasterizationState, _state);
 			}
 
