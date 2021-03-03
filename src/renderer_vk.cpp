@@ -317,6 +317,8 @@ VK_IMPORT_DEVICE
 			EXT_debug_report,
 			EXT_memory_budget,
 			KHR_get_physical_device_properties2,
+			EXT_conservative_rasterization,
+			EXT_line_rasterization,
 			EXT_shader_viewport_index_layer,
 
 			Count
@@ -338,6 +340,8 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_debug_report",                    1, false, false, BGFX_CONFIG_DEBUG            , Layer::Count },
 		{ "VK_EXT_memory_budget",                   1, false, false, true                         , Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                         , Layer::Count },
+		{ "VK_EXT_conservative_rasterization",      1, false, false, true                         , Layer::Count },
+		{ "VK_EXT_line_rasterization",              1, false, false, true                         , Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                         , Layer::Count }
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
@@ -1021,9 +1025,129 @@ VK_IMPORT_DEVICE
 		{
 		}
 
-		VkResult createSwapchain()
+		VkResult createSurface()
 		{
 			VkResult result = VK_SUCCESS;
+
+#if BX_PLATFORM_WINDOWS
+			{
+				VkWin32SurfaceCreateInfoKHR sci;
+				sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+				sci.pNext = NULL;
+				sci.flags     = 0;
+				sci.hinstance = (HINSTANCE)GetModuleHandle(NULL);
+				sci.hwnd      = (HWND)g_platformData.nwh;
+				result = vkCreateWin32SurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+			}
+#elif BX_PLATFORM_ANDROID
+			{
+				VkAndroidSurfaceCreateInfoKHR sci;
+				sci.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
+				sci.pNext = NULL;
+				sci.flags = 0;
+				sci.window = (ANativeWindow*)g_platformData.nwh;
+				result = vkCreateAndroidSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+			}
+#elif BX_PLATFORM_LINUX
+			{
+				if (NULL != vkCreateXlibSurfaceKHR)
+				{
+					VkXlibSurfaceCreateInfoKHR sci;
+					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+					sci.pNext = NULL;
+					sci.flags  = 0;
+					sci.dpy    = (Display*)g_platformData.ndt;
+					sci.window = (Window)g_platformData.nwh;
+					result = vkCreateXlibSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+				}
+				else
+				{
+					result = VK_RESULT_MAX_ENUM;
+				}
+
+				if (VK_SUCCESS != result)
+				{
+					void* xcbdll = bx::dlopen("libX11-xcb.so.1");
+
+					if (NULL != xcbdll)
+					{
+						typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
+						PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
+
+						union { void* ptr; xcb_window_t window; } cast = { g_platformData.nwh };
+
+						VkXcbSurfaceCreateInfoKHR sci;
+						sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+						sci.pNext      = NULL;
+						sci.flags      = 0;
+						sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
+						sci.window     = cast.window;
+						result = vkCreateXcbSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+
+						bx::dlclose(xcbdll);
+					}
+				}
+			}
+#elif BX_PLATFORM_OSX
+			{
+				if (NULL != vkCreateMacOSSurfaceMVK)
+				{
+					NSWindow* window    = (NSWindow*)(g_platformData.nwh);
+					NSView* contentView = (NSView*)window.contentView;
+					CAMetalLayer* layer = [CAMetalLayer layer];
+
+					if (_init.resolution.reset & BGFX_RESET_HIDPI)
+					{
+						layer.contentsScale = [window backingScaleFactor];
+					}
+
+					[contentView setWantsLayer : YES];
+					[contentView setLayer : layer];
+
+					VkMacOSSurfaceCreateInfoMVK sci;
+					sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+					sci.pNext = NULL;
+					sci.flags = 0;
+					sci.pView = (__bridge void*)layer;
+					result = vkCreateMacOSSurfaceMVK(m_instance, &sci, m_allocatorCb, &m_surface);
+				}
+				else
+				{
+					result = VK_RESULT_MAX_ENUM;
+				}
+			}
+#else
+#	error "Figure out KHR surface..."
+#endif // BX_PLATFORM_
+
+			m_needToRecreateSurface = false;
+
+			return result;
+		}
+
+		VkResult createSwapchain(uint32_t _reset)
+		{
+			VkResult result = VK_SUCCESS;
+
+			m_sci.surface = m_surface;
+			
+			const bool srgb = !!(_reset & BGFX_RESET_SRGB_BACKBUFFER);
+			VkSurfaceFormatKHR surfaceFormat = srgb
+				? m_backBufferColorFormatSrgb
+				: m_backBufferColorFormat
+				;
+			m_sci.imageFormat = surfaceFormat.format;
+			m_sci.imageColorSpace = surfaceFormat.colorSpace;
+
+			const bool vsync = !!(_reset & BGFX_RESET_VSYNC);
+			uint32_t presentModeIdx = findPresentMode(vsync);
+			if (UINT32_MAX == presentModeIdx)
+			{
+				BX_TRACE("Create swapchain error: Unable to find present mode (vsync: %d).", vsync);
+				return VK_ERROR_INITIALIZATION_FAILED;
+			}
+			m_sci.presentMode = s_presentMode[presentModeIdx].mode;
+
 			result = vkCreateSwapchainKHR(m_device, &m_sci, m_allocatorCb, &m_swapchain);
 			if (VK_SUCCESS != result)
 			{
@@ -1579,6 +1703,12 @@ VK_IMPORT_INSTANCE
 				BX_WARN(VK_SUCCESS == result, "vkCreateDebugReportCallbackEXT failed %d: %s.", result, getName(result) );
 			}
 
+			VkPhysicalDeviceFeatures2KHR deviceFeatures2;
+			deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+			deviceFeatures2.pNext = NULL;
+
+			void** ppNextFeatures = &deviceFeatures2.pNext;
+
 			{
 				BX_TRACE("---");
 
@@ -1683,11 +1813,32 @@ VK_IMPORT_INSTANCE
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
+				*ppNextFeatures = &m_lineRasterizationFeatures;
+				ppNextFeatures = &m_lineRasterizationFeatures.pNext;
+				m_lineRasterizationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT;
+				m_lineRasterizationFeatures.pNext = NULL;
+				
+				vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
+
+				deviceFeatures2.features.robustBufferAccess = VK_FALSE;
+
+				m_deviceFeatures = deviceFeatures2.features;
+
+				m_lineAASupport = true
+					&& s_extension[Extension::EXT_line_rasterization].m_supported
+					&& m_lineRasterizationFeatures.smoothLines
+					;
+
+				const bool indirectDrawSupport = true
+					&& m_deviceFeatures.multiDrawIndirect
+					&& m_deviceFeatures.drawIndirectFirstInstance
+					;
+
 				g_caps.supported |= ( 0
 					| BGFX_CAPS_ALPHA_TO_COVERAGE
-					| BGFX_CAPS_BLEND_INDEPENDENT
 					| BGFX_CAPS_COMPUTE
-					| BGFX_CAPS_DRAW_INDIRECT
+					| (indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT : 0)
+					| (m_deviceFeatures.independentBlend ? BGFX_CAPS_BLEND_INDEPENDENT : 0)
 					| BGFX_CAPS_FRAGMENT_DEPTH
 					| BGFX_CAPS_INDEX32
 					| BGFX_CAPS_INSTANCING
@@ -1704,6 +1855,7 @@ VK_IMPORT_INSTANCE
 					);
 
 				g_caps.supported |= 0
+					| (s_extension[Extension::EXT_conservative_rasterization ].m_supported ? BGFX_CAPS_CONSERVATIVE_RASTER  : 0)
 					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
 					;
 
@@ -1712,9 +1864,6 @@ VK_IMPORT_INSTANCE
 				g_caps.limits.maxFBAttachments   = bx::min(uint8_t(m_deviceProperties.limits.maxFragmentOutputAttachments), uint8_t(BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 				g_caps.limits.maxComputeBindings = BGFX_MAX_COMPUTE_BINDINGS;
 				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
-
-				vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_deviceFeatures);
-				m_deviceFeatures.robustBufferAccess = VK_FALSE;
 
 				{
 					const VkSampleCountFlags fbColorSampleCounts = m_deviceProperties.limits.framebufferColorSampleCounts;
@@ -1927,7 +2076,7 @@ VK_IMPORT_INSTANCE
 
 				VkDeviceCreateInfo dci;
 				dci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-				dci.pNext = NULL;
+				dci.pNext = &deviceFeatures2;
 				dci.flags = 0;
 				dci.queueCreateInfoCount = 1;
 				dci.pQueueCreateInfos    = &dcqi;
@@ -1935,7 +2084,7 @@ VK_IMPORT_INSTANCE
 				dci.ppEnabledLayerNames  = enabledLayer;
 				dci.enabledExtensionCount   = numEnabledExtensions;
 				dci.ppEnabledExtensionNames = enabledExtension;
-				dci.pEnabledFeatures = &m_deviceFeatures;
+				dci.pEnabledFeatures = NULL;
 
 				result = vkCreateDevice(
 					  m_physicalDevice
@@ -1976,102 +2125,26 @@ VK_IMPORT_DEVICE
 					: bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY)
 					;
 
-				m_cmd.init(m_qfiGraphics, m_queueGraphics, m_numFramesInFlight);
-				m_commandBuffer = m_cmd.alloc();
+				result = m_cmd.init(m_qfiGraphics, m_queueGraphics, m_numFramesInFlight);
+
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Init error: creating command queue failed %d: %s.", result, getName(result) );
+					goto error;
+				}
+
+				result = m_cmd.alloc(&m_commandBuffer);
+
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Init error: allocating command buffer failed %d: %s.", result, getName(result) );
+					goto error;
+				}
 			}
 
 			errorState = ErrorState::CommandQueueCreated;
 
-#if BX_PLATFORM_WINDOWS
-			{
-				VkWin32SurfaceCreateInfoKHR sci;
-				sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-				sci.pNext = NULL;
-				sci.flags     = 0;
-				sci.hinstance = (HINSTANCE)GetModuleHandle(NULL);
-				sci.hwnd      = (HWND)g_platformData.nwh;
-				result = vkCreateWin32SurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
-			}
-#elif BX_PLATFORM_ANDROID
-			{
-				VkAndroidSurfaceCreateInfoKHR sci;
-				sci.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-				sci.pNext = NULL;
-				sci.flags = 0;
-				sci.window = (ANativeWindow*)g_platformData.nwh;
-				result = vkCreateAndroidSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
-			}
-#elif BX_PLATFORM_LINUX
-			{
-				if (NULL != vkCreateXlibSurfaceKHR)
-				{
-					VkXlibSurfaceCreateInfoKHR sci;
-					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-					sci.pNext = NULL;
-					sci.flags  = 0;
-					sci.dpy    = (Display*)g_platformData.ndt;
-					sci.window = (Window)g_platformData.nwh;
-					result = vkCreateXlibSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
-				}
-				else
-				{
-					result = VK_RESULT_MAX_ENUM;
-				}
-
-				if (VK_SUCCESS != result)
-				{
-					void* xcbdll = bx::dlopen("libX11-xcb.so.1");
-
-					if (NULL != xcbdll)
-					{
-						typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
-						PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
-
-						union { void* ptr; xcb_window_t window; } cast = { g_platformData.nwh };
-
-						VkXcbSurfaceCreateInfoKHR sci;
-						sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-						sci.pNext      = NULL;
-						sci.flags      = 0;
-						sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
-						sci.window     = cast.window;
-						result = vkCreateXcbSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
-
-						bx::dlclose(xcbdll);
-					}
-				}
-			}
-#elif BX_PLATFORM_OSX
-			{
-				if (NULL != vkCreateMacOSSurfaceMVK)
-				{
-					NSWindow* window    = (NSWindow*)(g_platformData.nwh);
-					NSView* contentView = (NSView*)window.contentView;
-					CAMetalLayer* layer = [CAMetalLayer layer];
-
-					if (_init.resolution.reset & BGFX_RESET_HIDPI)
-					{
-						layer.contentsScale = [window backingScaleFactor];
-					}
-
-					[contentView setWantsLayer : YES];
-					[contentView setLayer : layer];
-
-					VkMacOSSurfaceCreateInfoMVK sci;
-					sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-					sci.pNext = NULL;
-					sci.flags = 0;
-					sci.pView = (__bridge void*)layer;
-					result = vkCreateMacOSSurfaceMVK(m_instance, &sci, m_allocatorCb, &m_surface);
-				}
-				else
-				{
-					result = VK_RESULT_MAX_ENUM;
-				}
-			}
-#else
-#	error "Figure out KHR surface..."
-#endif // BX_PLATFORM_
+			result = createSurface();
 
 			if (VK_SUCCESS != result)
 			{
@@ -2082,6 +2155,15 @@ VK_IMPORT_DEVICE
 			errorState = ErrorState::SurfaceCreated;
 
 			{
+				m_resolution       = _init.resolution;
+				m_resolution.reset = _init.resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
+
+				m_resolution.width  = _init.resolution.width;
+				m_resolution.height = _init.resolution.height;
+
+				m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
+				m_textVideoMem.clear();
+
 				VkBool32 surfaceSupported;
 				result = vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, m_qfiGraphics, m_surface, &surfaceSupported);
 
@@ -2137,10 +2219,9 @@ VK_IMPORT_DEVICE
 					VK_FORMAT_B8G8R8A8_SRGB
 				};
 
-				VkColorSpaceKHR preferredColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+				const VkColorSpaceKHR preferredColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
-				uint32_t surfaceFormatIdx = numSurfaceFormats;
-				uint32_t surfaceFormatSrgbIdx = numSurfaceFormats;
+				uint32_t surfaceFormatIdx = UINT32_MAX;
 
 				for (uint32_t ii = 0; ii < numSurfaceFormats; ii++)
 				{
@@ -2153,45 +2234,31 @@ VK_IMPORT_DEVICE
 							if (preferredSurfaceFormat[jj] == surfaceFormats[ii].format)
 							{
 								BX_TRACE("Preferred surface format found: %d", surfaceFormats[ii].format);
-								surfaceFormatIdx = ii;
+								surfaceFormatIdx = jj;
 								break;
 							}
 						}
 
-						for (uint32_t jj = 0; jj < BX_COUNTOF(preferredSurfaceFormatSrgb); jj++)
-						{
-							if (preferredSurfaceFormatSrgb[jj] == surfaceFormats[ii].format)
-							{
-								BX_TRACE("Preferred sRGB surface format found: %d", surfaceFormats[ii].format);
-								surfaceFormatSrgbIdx = ii;
-								break;
-							}
-						}
-
-						if (surfaceFormatIdx     < numSurfaceFormats
-						&&  surfaceFormatSrgbIdx < numSurfaceFormats)
+						if (surfaceFormatIdx < numSurfaceFormats)
 						{ // found
 							break;
 						}
 					}
 				}
 
-				BX_ASSERT(surfaceFormatIdx < numSurfaceFormats, "Cannot find preferred surface format from supported surface formats.");
-				BX_WARN(surfaceFormatSrgbIdx < numSurfaceFormats, "Cannot find preferred sRGB surface format from supported surface formats.");
-
-				m_backBufferColorFormat     = surfaceFormats[surfaceFormatIdx];
-				m_backBufferColorFormatSrgb = surfaceFormatSrgbIdx < numSurfaceFormats
-					? surfaceFormats[surfaceFormatSrgbIdx]
-					: m_backBufferColorFormat
-					;
-
-				// find the best match...
-				uint32_t presentModeIdx = findPresentMode(false);
-				if (UINT32_MAX == presentModeIdx)
+				if (UINT32_MAX == surfaceFormatIdx)
 				{
-					BX_TRACE("Unable to find present mode.");
+					BX_TRACE("Init error: Cannot find preferred surface format.");
 					goto error;
 				}
+
+				// The spec guarantees that if there's a combination of SRGB_NONLINEAR and a format with
+				// FEATURE_COLOR_ATTACHMENT support, an equivalent SRGB surface format must exist.
+				// R8G8B8A8_UNORM and B8G8R8A8_UNORM both have mandatory support for FEATURE_COLOR_ATTACHMENT.
+				m_backBufferColorFormat.format         = preferredSurfaceFormat[surfaceFormatIdx];
+				m_backBufferColorFormat.colorSpace     = preferredColorSpace;
+				m_backBufferColorFormatSrgb.format     = preferredSurfaceFormatSrgb[surfaceFormatIdx];
+				m_backBufferColorFormatSrgb.colorSpace = preferredColorSpace;
 
 				m_backBufferDepthStencilFormat = 0 != (g_caps.formats[TextureFormat::D24S8] & BGFX_CAPS_FORMAT_TEXTURE_2D)
 					? VK_FORMAT_D24_UNORM_S8_UINT
@@ -2229,21 +2296,22 @@ VK_IMPORT_DEVICE
 					? BGFX_CONFIG_MAX_BACK_BUFFERS
 					: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, BGFX_CONFIG_MAX_BACK_BUFFERS)
 					;
-				BX_ASSERT(minSwapBufferCount <= maxSwapBufferCount
-					, "Incompatible swapchain image count (min: %d, max: %d)."
-					, minSwapBufferCount
-					, maxSwapBufferCount
+
+				if (minSwapBufferCount > maxSwapBufferCount)
+				{
+					BX_TRACE("Init error: Incompatible swapchain image count (min: %d, max: %d)."
+						, minSwapBufferCount
+						, maxSwapBufferCount
 					);
+					goto error;
+				}
 
 				uint32_t swapBufferCount = bx::clamp<uint32_t>(_init.resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
 
 				m_sci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 				m_sci.pNext = NULL;
 				m_sci.flags = 0;
-				m_sci.surface = m_surface;
 				m_sci.minImageCount   = swapBufferCount;
-				m_sci.imageFormat     = m_backBufferColorFormat.format;
-				m_sci.imageColorSpace = m_backBufferColorFormat.colorSpace;
 				m_sci.imageExtent.width  = width;
 				m_sci.imageExtent.height = height;
 				m_sci.imageArrayLayers = 1;
@@ -2253,7 +2321,6 @@ VK_IMPORT_DEVICE
 				m_sci.pQueueFamilyIndices   = NULL;
 				m_sci.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 				m_sci.compositeAlpha = compositeAlpha;
-				m_sci.presentMode    = s_presentMode[presentModeIdx].mode;
 				m_sci.clipped        = VK_FALSE;
 				m_sci.oldSwapchain   = VK_NULL_HANDLE;
 
@@ -2274,7 +2341,8 @@ VK_IMPORT_DEVICE
 				m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
 				m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
-				result = createSwapchain();
+				result = createSwapchain(_init.resolution.reset);
+
 				if (VK_SUCCESS != result)
 				{
 					BX_TRACE("Init error: creating swapchain and image view failed %d: %s", result, getName(result) );
@@ -2315,6 +2383,7 @@ VK_IMPORT_DEVICE
 
 			// framebuffer creation
 			result = createSwapchainFramebuffer();
+
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Init error: vkCreateFramebuffer failed %d: %s.", result, getName(result) );
@@ -2402,7 +2471,13 @@ VK_IMPORT_DEVICE
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
 			}
 
-			m_gpuTimer.init();
+			result = m_gpuTimer.init();
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Init error: creating GPU timer failed %d: %s.", result, getName(result) );
+				goto error;
+			}
 
 			g_internalData.context = m_device;
 			return true;
@@ -2577,11 +2652,17 @@ VK_IMPORT_DEVICE
 				pi.pResults           = NULL;
 				VkResult result = vkQueuePresentKHR(m_queueGraphics, &pi);
 
-				if (VK_ERROR_OUT_OF_DATE_KHR       == result
-				||  VK_SUBOPTIMAL_KHR              == result
-				||  VK_ERROR_VALIDATION_FAILED_EXT == result)
+				switch (result)
 				{
+				case VK_ERROR_SURFACE_LOST_KHR:
+					m_needToRecreateSurface = true;
+					BX_FALLTHROUGH;
+				case VK_ERROR_OUT_OF_DATE_KHR:
+				case VK_SUBOPTIMAL_KHR:
+				case VK_ERROR_VALIDATION_FAILED_EXT:
 					m_needToRefreshSwapchain = true;
+				default:
+					break;
 				}
 
 				m_needPresent = false;
@@ -2699,7 +2780,7 @@ VK_IMPORT_DEVICE
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
-			createStagingBuffer(size, &stagingBuffer, &stagingMemory);
+			VK_CHECK(createStagingBuffer(size, &stagingBuffer, &stagingMemory) );
 
 			texture.m_readback.copyImageToBuffer(
 				  m_commandBuffer
@@ -2842,7 +2923,7 @@ VK_IMPORT_DEVICE
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
-			createStagingBuffer(size, &stagingBuffer, &stagingMemory);
+			VK_CHECK(createStagingBuffer(size, &stagingBuffer, &stagingMemory) );
 
 			readback.copyImageToBuffer(m_commandBuffer, stagingBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT);
 
@@ -3213,8 +3294,10 @@ VK_IMPORT_DEVICE
 			return idx;
 		}
 
-		bool updateResolution(const Resolution& _resolution)
+		bool updateResolution(const Resolution& _resolution, bool _needsAcquire)
 		{
+			const bool suspended = !!(_resolution.reset & BGFX_RESET_SUSPEND);
+
 			float maxAnisotropy = 1.0f;
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
 			{
@@ -3227,7 +3310,7 @@ VK_IMPORT_DEVICE
 				m_samplerCache.invalidate();
 			}
 
-			bool depthClamp = !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
+			bool depthClamp = m_deviceFeatures.depthClamp && !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
 
 			if (m_depthClamp != depthClamp)
 			{
@@ -3235,16 +3318,42 @@ VK_IMPORT_DEVICE
 				m_pipelineStateCache.invalidate();
 			}
 
-			uint32_t flags = _resolution.reset & ~(BGFX_RESET_MAXANISOTROPY | BGFX_RESET_DEPTH_CLAMP);
+			uint32_t flags = _resolution.reset & ~(0
+				| BGFX_RESET_SUSPEND
+				| BGFX_RESET_MAXANISOTROPY
+				| BGFX_RESET_DEPTH_CLAMP
+				);
 
-			if (m_resolution.width  != _resolution.width
-			||  m_resolution.height != _resolution.height
-			||  m_resolution.reset  != flags)
+			const bool resize = false
+				|| m_resolution.width  != _resolution.width
+				|| m_resolution.height != _resolution.height
+				;
+
+			// Note: m_needToRefreshSwapchain is deliberately ignored when deciding whether to recreate the swapchain
+			// because it can happen several frames before submit is called with the new resolution.
+			// Instead, vkAcquireNextImageKHR and the entire submit call are skipped until the window size is updated.
+			// That also fixes a related issue where VK_ERROR_OUT_OF_DATE_KHR is returned from
+			// vkQueuePresentKHR when the window doesn't exist anymore, and vkGetPhysicalDeviceSurfaceCapabilitiesKHR
+			// fails with VK_ERROR_SURFACE_LOST_KHR.
+
+			bool skipFrame = m_needToRefreshSwapchain && _needsAcquire;
+
+			if (resize
+			||  m_resolution.reset != flags
+			||  m_needToRecreateSurface)
 			{
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				const bool resize        = (m_resolution.reset & BGFX_RESET_MSAA_MASK      ) == (_resolution.reset & BGFX_RESET_MSAA_MASK      );
-				const bool formatChanged = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) == (_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER);
+				const uint64_t recreateMask = 0
+					| BGFX_RESET_VSYNC
+					| BGFX_RESET_SRGB_BACKBUFFER
+					;
+
+				const bool recreate = false
+					|| resize
+					|| (flags & recreateMask) != (m_resolution.reset & recreateMask)
+					|| m_needToRecreateSurface
+					;
 
 				m_resolution = _resolution;
 				m_resolution.reset = flags;
@@ -3252,14 +3361,14 @@ VK_IMPORT_DEVICE
 				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
 				m_textVideoMem.clear();
 
-				if (resize
-				||  formatChanged
-				||  m_needToRefreshSwapchain)
+				if (recreate)
 				{
+					skipFrame = _needsAcquire;
+
 					VK_CHECK(vkDeviceWaitIdle(m_device) );
 
-					m_cmd.reset();
-					m_commandBuffer = m_cmd.alloc();
+					VK_CHECK(m_cmd.reset() );
+					VK_CHECK(m_cmd.alloc(&m_commandBuffer) );
 
 					for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 					{
@@ -3274,22 +3383,16 @@ VK_IMPORT_DEVICE
 					releaseSwapchainRenderPass();
 					releaseSwapchain();
 
-					VkSurfaceFormatKHR surfaceFormat = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
-						? m_backBufferColorFormatSrgb
-						: m_backBufferColorFormat
-						;
-					m_sci.imageFormat = surfaceFormat.format;
-					m_sci.imageColorSpace = surfaceFormat.colorSpace;
-
-					const bool vsync = !!(flags & BGFX_RESET_VSYNC);
-					const uint32_t presentModeIdx = findPresentMode(vsync);
-					BGFX_FATAL(
-						  UINT32_MAX != presentModeIdx
-						, bgfx::Fatal::DeviceLost
-						, "Unable to find present mode."
-						);
-
-					m_sci.presentMode = s_presentMode[presentModeIdx].mode;
+					if (m_needToRecreateSurface)
+					{
+						vkDestroySurfaceKHR(m_instance, m_surface, m_allocatorCb);
+						VkResult result = result = createSurface();
+						if (VK_SUCCESS != result)
+						{
+							BX_TRACE("Surface lost.");
+							return skipFrame || suspended;
+						}
+					}
 
 					VkSurfaceCapabilitiesKHR surfaceCapabilities;
 					VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities) );
@@ -3309,9 +3412,7 @@ VK_IMPORT_DEVICE
 					if (m_sci.imageExtent.width  == 0
 					||  m_sci.imageExtent.height == 0)
 					{
-						m_resolution.width  = 0;
-						m_resolution.height = 0;
-						return true;
+						return skipFrame || suspended;
 					}
 
 					VkSemaphoreCreateInfo sci;
@@ -3325,27 +3426,17 @@ VK_IMPORT_DEVICE
 						VK_CHECK(vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_renderDoneSemaphore[ii]) );
 					}
 
-					VK_CHECK(createSwapchain() );
+					VK_CHECK(createSwapchain(flags) );
 					VK_CHECK(createSwapchainRenderPass() );
 					VK_CHECK(createSwapchainFramebuffer() );
 
 					initSwapchainImageLayout();
 
-					BX_TRACE("Swapchain (%s): %dx%d%s"
-						, s_presentMode[presentModeIdx].name
-						, m_sci.imageExtent.width
-						, m_sci.imageExtent.height
-						, vsync ? " + vsync" : ""
-						);
+					skipFrame = false;
 				}
 			}
 
-			if (m_needToRefreshSwapchain)
-			{
-				return true;
-			}
-
-			return false;
+			return skipFrame || suspended;
 		}
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
@@ -3441,9 +3532,10 @@ VK_IMPORT_DEVICE
 
 		void setDebugWireframe(bool _wireframe)
 		{
-			if (m_wireframe != _wireframe)
+			const bool wireframe = m_deviceFeatures.fillModeNonSolid && _wireframe;
+			if (m_wireframe != wireframe)
 			{
-				m_wireframe = _wireframe;
+				m_wireframe = wireframe;
 				m_pipelineStateCache.invalidate();
 			}
 		}
@@ -3541,9 +3633,9 @@ VK_IMPORT_DEVICE
 			_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 			_desc.pNext = NULL;
 			_desc.flags = 0;
-			_desc.depthClampEnable = m_depthClamp;
+			_desc.depthClampEnable = m_deviceFeatures.depthClamp && m_depthClamp;
 			_desc.rasterizerDiscardEnable = VK_FALSE;
-			_desc.polygonMode = _wireframe
+			_desc.polygonMode = m_deviceFeatures.fillModeNonSolid && _wireframe
 				? VK_POLYGON_MODE_LINE
 				: VK_POLYGON_MODE_FILL
 				;
@@ -3554,6 +3646,31 @@ VK_IMPORT_DEVICE
 			_desc.depthBiasClamp          = 0.0f;
 			_desc.depthBiasSlopeFactor    = 0.0f;
 			_desc.lineWidth               = 1.0f;
+		}
+
+		void setConservativeRasterizerState(VkPipelineRasterizationConservativeStateCreateInfoEXT& _desc, uint64_t _state)
+		{
+			_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
+			_desc.pNext = NULL;
+			_desc.flags = 0;
+			_desc.conservativeRasterizationMode = (_state&BGFX_STATE_CONSERVATIVE_RASTER)
+				? VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT
+				: VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT
+				;
+			_desc.extraPrimitiveOverestimationSize = 0.0f;
+		}
+
+		void setLineRasterizerState(VkPipelineRasterizationLineStateCreateInfoEXT& _desc, uint64_t _state)
+		{
+			_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO_EXT;
+			_desc.pNext = NULL;
+			_desc.lineRasterizationMode = (_state & BGFX_STATE_LINEAA)
+				? VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_EXT
+				: VK_LINE_RASTERIZATION_MODE_DEFAULT_EXT
+				;
+			_desc.stippledLineEnable = VK_FALSE;
+			_desc.lineStippleFactor = 0;
+			_desc.lineStipplePattern = 0;
 		}
 
 		void setDepthStencilState(VkPipelineDepthStencilStateCreateInfo& _desc, uint64_t _state, uint64_t _stencil = 0)
@@ -3825,14 +3942,14 @@ VK_IMPORT_DEVICE
 
 			switch (_samplerFlags & BGFX_SAMPLER_MAG_MASK)
 			{
-				case BGFX_SAMPLER_MAG_POINT:       sci.magFilter = VK_FILTER_NEAREST; break;
-				case BGFX_SAMPLER_MAG_ANISOTROPIC: sci.anisotropyEnable = VK_TRUE;    break;
+				case BGFX_SAMPLER_MAG_POINT:       sci.magFilter = VK_FILTER_NEAREST;                         break;
+				case BGFX_SAMPLER_MAG_ANISOTROPIC: sci.anisotropyEnable = m_deviceFeatures.samplerAnisotropy; break;
 			}
 
 			switch (_samplerFlags & BGFX_SAMPLER_MIN_MASK)
 			{
-				case BGFX_SAMPLER_MIN_POINT:       sci.minFilter = VK_FILTER_NEAREST; break;
-				case BGFX_SAMPLER_MIN_ANISOTROPIC: sci.anisotropyEnable = VK_TRUE;    break;
+				case BGFX_SAMPLER_MIN_POINT:       sci.minFilter = VK_FILTER_NEAREST;                         break;
+				case BGFX_SAMPLER_MIN_ANISOTROPIC: sci.anisotropyEnable = m_deviceFeatures.samplerAnisotropy; break;
 			}
 
 			uint32_t borderColor = ( (_samplerFlags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
@@ -3922,12 +4039,12 @@ VK_IMPORT_DEVICE
 				| BGFX_STATE_DEPTH_TEST_MASK
 				| BGFX_STATE_BLEND_MASK
 				| BGFX_STATE_BLEND_EQUATION_MASK
-				| BGFX_STATE_BLEND_INDEPENDENT
+				| (g_caps.supported & BGFX_CAPS_BLEND_INDEPENDENT ? BGFX_STATE_BLEND_INDEPENDENT : 0)
 				| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 				| BGFX_STATE_CULL_MASK
 				| BGFX_STATE_MSAA
-				| BGFX_STATE_LINEAA
-				| BGFX_STATE_CONSERVATIVE_RASTER
+				| (m_lineAASupport ? BGFX_STATE_LINEAA : 0)
+				| (g_caps.supported & BGFX_CAPS_CONSERVATIVE_RASTER ? BGFX_STATE_CONSERVATIVE_RASTER : 0)
 				| BGFX_STATE_PT_MASK
 				;
 
@@ -3966,6 +4083,7 @@ VK_IMPORT_DEVICE
 
 			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
 			murmur.add(m_fbh.idx);
+			murmur.add(isValid(m_fbh) ? 0 : m_sci.imageFormat);
 			murmur.add(_numInstanceData);
 			const uint32_t hash = murmur.end();
 
@@ -3990,6 +4108,24 @@ VK_IMPORT_DEVICE
 
 			VkPipelineRasterizationStateCreateInfo rasterizationState;
 			setRasterizerState(rasterizationState, _state, m_wireframe);
+
+			const void** ppNext = &rasterizationState.pNext;
+
+			VkPipelineRasterizationConservativeStateCreateInfoEXT conservativeRasterizationState;
+			if (s_extension[Extension::EXT_conservative_rasterization].m_supported)
+			{
+				*ppNext = &conservativeRasterizationState;
+				ppNext = &conservativeRasterizationState.pNext;
+				setConservativeRasterizerState(conservativeRasterizationState, _state);
+			}
+
+			VkPipelineRasterizationLineStateCreateInfoEXT lineRasterizationState;
+			if (m_lineAASupport)
+			{
+				*ppNext = &lineRasterizationState;
+				ppNext = &lineRasterizationState.pNext;
+				setLineRasterizerState(lineRasterizationState, _state);
+			}
 
 			VkPipelineDepthStencilStateCreateInfo depthStencilState;
 			setDepthStencilState(depthStencilState, _state, _stencil);
@@ -4054,7 +4190,7 @@ VK_IMPORT_DEVICE
 			multisampleState.flags = 0;
 			multisampleState.rasterizationSamples  = rasterizerMsaa;
 			multisampleState.sampleShadingEnable   = VK_FALSE;
-			multisampleState.minSampleShading      = !!(BGFX_STATE_CONSERVATIVE_RASTER & _state) ? 1.0f : 0.0f;
+			multisampleState.minSampleShading      = 0.0f;
 			multisampleState.pSampleMask           = NULL;
 			multisampleState.alphaToCoverageEnable = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
 			multisampleState.alphaToOneEnable      = VK_FALSE;
@@ -4510,51 +4646,61 @@ VK_IMPORT_DEVICE
 
 		bool acquireImage()
 		{
-			if (m_needPresent)
+			if (VK_NULL_HANDLE == m_swapchain
+			||  m_needToRefreshSwapchain)
 			{
-				return true;
-			}
-
-			m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_cmd.m_currentFrameInFlight];
-			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_cmd.m_currentFrameInFlight];
-
-			VkResult result = vkAcquireNextImageKHR(
-				  m_device
-				, m_swapchain
-				, UINT64_MAX
-				, m_lastImageAcquiredSemaphore
-				, VK_NULL_HANDLE
-				, &m_backBufferColorIdx
-				);
-
-			if (VK_ERROR_OUT_OF_DATE_KHR       == result
-			||  VK_ERROR_VALIDATION_FAILED_EXT == result)
-			{
-				m_needToRefreshSwapchain = true;
 				return false;
 			}
 
-			if (VK_NULL_HANDLE != m_backBufferColorFence[m_backBufferColorIdx])
+			if (!m_needPresent)
 			{
-				VK_CHECK(vkWaitForFences(
+				m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_cmd.m_currentFrameInFlight];
+				m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_cmd.m_currentFrameInFlight];
+
+				VkResult result = vkAcquireNextImageKHR(
 					  m_device
-					, 1
-					, &m_backBufferColorFence[m_backBufferColorIdx]
-					, VK_TRUE
+					, m_swapchain
 					, UINT64_MAX
-					) );
+					, m_lastImageAcquiredSemaphore
+					, VK_NULL_HANDLE
+					, &m_backBufferColorIdx
+					);
+
+				switch (result)
+				{
+				case VK_ERROR_SURFACE_LOST_KHR:
+					m_needToRecreateSurface = true;
+					BX_FALLTHROUGH;
+				case VK_ERROR_OUT_OF_DATE_KHR:
+				case VK_ERROR_VALIDATION_FAILED_EXT:
+					m_needToRefreshSwapchain = true;
+					return false;
+				default:
+					break;
+				}
+
+				if (VK_NULL_HANDLE != m_backBufferColorFence[m_backBufferColorIdx])
+				{
+					VK_CHECK(vkWaitForFences(
+						  m_device
+						, 1
+						, &m_backBufferColorFence[m_backBufferColorIdx]
+						, VK_TRUE
+						, UINT64_MAX
+						) );
+				}
+
+				setImageMemoryBarrier(
+					  m_commandBuffer
+					, m_backBufferColorImage[m_backBufferColorIdx]
+					, VK_IMAGE_ASPECT_COLOR_BIT
+					, m_backBufferColorImageLayout[m_backBufferColorIdx]
+					, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+					);
+				m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+				m_needPresent = true;
 			}
-
-			setImageMemoryBarrier(
-				  m_commandBuffer
-				, m_backBufferColorImage[m_backBufferColorIdx]
-				, VK_IMAGE_ASPECT_COLOR_BIT
-				, m_backBufferColorImageLayout[m_backBufferColorIdx]
-				, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-				);
-			m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-			m_needPresent = true;
 			return true;
 		}
 
@@ -4588,7 +4734,7 @@ VK_IMPORT_DEVICE
 				m_backBufferColorFence[m_backBufferColorIdx] = m_cmd.m_kickedFence;
 			}
 
-			m_commandBuffer = m_cmd.alloc();
+			VK_CHECK(m_cmd.alloc(&m_commandBuffer) );
 			m_cmd.finish(_wait);
 		}
 
@@ -4634,8 +4780,10 @@ VK_IMPORT_DEVICE
 			return result;
 		}
 
-		void createStagingBuffer(uint32_t _size, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
+		VkResult createStagingBuffer(uint32_t _size, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
 		{
+			VkResult result = VK_SUCCESS;
+
 			VkBufferCreateInfo bci;
 			bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 			bci.pNext = NULL;
@@ -4645,22 +4793,46 @@ VK_IMPORT_DEVICE
 			bci.pQueueFamilyIndices = NULL;
 			bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-			VK_CHECK(vkCreateBuffer(m_device, &bci, m_allocatorCb, _buffer) );
+
+			result = vkCreateBuffer(m_device, &bci, m_allocatorCb, _buffer);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create staging buffer error: vkCreateBuffer failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			VkMemoryRequirements mr;
 			vkGetBufferMemoryRequirements(m_device, *_buffer, &mr);
 
-			VK_CHECK(allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, _memory) );
+			result = allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, _memory);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create staging buffer error: vkAllocateMemory failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
-			VK_CHECK(vkBindBufferMemory(m_device, *_buffer, *_memory, 0) );
+			result = vkBindBufferMemory(m_device, *_buffer, *_memory, 0);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create staging buffer error: vkBindBufferMemory failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			if (_data != NULL)
 			{
 				void* dst;
-				VK_CHECK(vkMapMemory(m_device, *_memory, 0, _size, 0, &dst) );
+				result = vkMapMemory(m_device, *_memory, 0, _size, 0, &dst);
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Create staging buffer error: vkMapMemory failed %d: %s.", result, getName(result) );
+					return result;
+				}
+
 				bx::memCopy(dst, _data, _size);
 				vkUnmapMemory(m_device, *_memory);
 			}
+
+			return result;
 		}
 
 		VkAllocationCallbacks*   m_allocatorCb;
@@ -4672,6 +4844,10 @@ VK_IMPORT_DEVICE
 		VkPhysicalDeviceProperties       m_deviceProperties;
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
 		VkPhysicalDeviceFeatures         m_deviceFeatures;
+
+		VkPhysicalDeviceLineRasterizationFeaturesEXT m_lineRasterizationFeatures;
+
+		bool m_lineAASupport;
 
 		VkSwapchainCreateInfoKHR m_sci;
 		VkSurfaceKHR       m_surface;
@@ -4694,6 +4870,7 @@ VK_IMPORT_DEVICE
 		uint32_t           m_backBufferColorIdx;
 		bool               m_needPresent;
 		bool               m_needToRefreshSwapchain;
+		bool               m_needToRecreateSurface;
 
 		VkFormat           m_backBufferDepthStencilFormat;
 		VkDeviceMemory     m_backBufferDepthStencilMemory;
@@ -4952,7 +5129,7 @@ VK_DESTROY
 		{
 			VkBuffer stagingBuffer;
 			VkDeviceMemory stagingMem;
-			s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data);
+			VK_CHECK(s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data) );
 
 			// copy buffer to buffer
 			VkBufferCopy region;
@@ -4977,7 +5154,7 @@ VK_DESTROY
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingMem;
-		s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data);
+		VK_CHECK(s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data) );
 
 		VkBufferCopy region;
 		region.srcOffset = 0;
@@ -5789,7 +5966,7 @@ VK_DESTROY
 
 			if (totalMemSize > 0)
 			{
-				s_renderVK->createStagingBuffer(totalMemSize, &stagingBuffer, &stagingDeviceMem);
+				VK_CHECK(s_renderVK->createStagingBuffer(totalMemSize, &stagingBuffer, &stagingDeviceMem) );
 
 				uint8_t* mappedMemory;
 				VK_CHECK(vkMapMemory(
@@ -6048,7 +6225,7 @@ VK_DESTROY
 
 		VkBuffer stagingBuffer = VK_NULL_HANDLE;
 		VkDeviceMemory stagingDeviceMem = VK_NULL_HANDLE;
-		s_renderVK->createStagingBuffer(size, &stagingBuffer, &stagingDeviceMem, data);
+		VK_CHECK(s_renderVK->createStagingBuffer(size, &stagingBuffer, &stagingDeviceMem, data) );
 
 		VkBufferImageCopy region;
 		region.bufferOffset      = 0;
@@ -6360,17 +6537,17 @@ VK_DESTROY
 		}
 	}
 
-	void CommandQueueVK::init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight)
+	VkResult CommandQueueVK::init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight)
 	{
 		m_queueFamily = _queueFamily;
 		m_queue = _queue;
 		m_numFramesInFlight = bx::clamp<uint32_t>(_numFramesInFlight, 1, BGFX_CONFIG_MAX_FRAME_LATENCY);
 		m_activeCommandBuffer = VK_NULL_HANDLE;
 
-		reset();
+		return reset();
 	}
 
-	void CommandQueueVK::reset()
+	VkResult CommandQueueVK::reset()
 	{
 		shutdown();
 
@@ -6403,35 +6580,65 @@ VK_DESTROY
 		fci.pNext = NULL;
 		fci.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
+		VkResult result = VK_SUCCESS;
+
 		for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 		{
-			VK_CHECK(vkCreateCommandPool(
+			result = vkCreateCommandPool(
 				  s_renderVK->m_device
 				, &cpci
 				, s_renderVK->m_allocatorCb
 				, &m_commandList[ii].m_commandPool
-				) );
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create command queue error: vkCreateCommandPool failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			cbai.commandPool = m_commandList[ii].m_commandPool;
 
-			VK_CHECK(vkAllocateCommandBuffers(
+			result = vkAllocateCommandBuffers(
 				  s_renderVK->m_device
 				, &cbai
 				, &m_commandList[ii].m_commandBuffer
-				) );
-			VK_CHECK(vkCreateSemaphore(
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create command queue error: vkAllocateCommandBuffers failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			result = vkCreateSemaphore(
 				  s_renderVK->m_device
 				, &sci
 				, s_renderVK->m_allocatorCb
 				, &m_commandList[ii].m_semaphore
-				) );
-			VK_CHECK(vkCreateFence(
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create command queue error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			result = vkCreateFence(
 				  s_renderVK->m_device
 				, &fci
 				, s_renderVK->m_allocatorCb
 				, &m_commandList[ii].m_fence
-				) );
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create command queue error: vkCreateFence failed %d: %s.", result, getName(result) );
+				return result;
+			}
 		}
+
+		return result;
 	}
 
 	void CommandQueueVK::shutdown()
@@ -6454,14 +6661,29 @@ VK_DESTROY
 		}
 	}
 
-	VkCommandBuffer CommandQueueVK::alloc()
+	VkResult CommandQueueVK::alloc(VkCommandBuffer* _commandBuffer)
 	{
+		VkResult result = VK_SUCCESS;
+
 		if (m_activeCommandBuffer == VK_NULL_HANDLE)
 		{
 			CommandList& commandList = m_commandList[m_currentFrameInFlight];
 
-			VK_CHECK(vkWaitForFences(s_renderVK->m_device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX) );
-			VK_CHECK(vkResetCommandPool(s_renderVK->m_device, commandList.m_commandPool, 0) );
+			result = vkWaitForFences(s_renderVK->m_device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Allocate command buffer error: vkWaitForFences failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			result = vkResetCommandPool(s_renderVK->m_device, commandList.m_commandPool, 0);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Allocate command buffer error: vkResetCommandPool failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			VkCommandBufferBeginInfo cbi;
 			cbi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -6469,11 +6691,23 @@ VK_DESTROY
 			cbi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 			cbi.pInheritanceInfo = NULL;
 
-			VK_CHECK(vkBeginCommandBuffer(commandList.m_commandBuffer, &cbi) );
+			result = vkBeginCommandBuffer(commandList.m_commandBuffer, &cbi);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Allocate command buffer error: vkBeginCommandBuffer failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			m_activeCommandBuffer = commandList.m_commandBuffer;
 		}
-		return m_activeCommandBuffer;
+
+		if (NULL != _commandBuffer)
+		{
+			*_commandBuffer = m_activeCommandBuffer;
+		}
+
+		return result;
 	}
 
 	void CommandQueueVK::kick(VkSemaphore _waitSemaphore, VkSemaphore _signalSemaphore, bool _wait)
@@ -6697,14 +6931,32 @@ VK_DESTROY
 	{
 		BX_UNUSED(_clearQuad);
 
-		if (updateResolution(_render->m_resolution) )
+		bool needAcquire = !!(_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS|BGFX_DEBUG_TEXT) );
+		if (!needAcquire)
+		{
+			for (uint32_t ii = 0; ii < _render->m_numRenderItems; ++ii)
+			{
+				const ViewId decodedView = SortKey::decodeView(_render->m_sortKeys[ii]);
+				const ViewId remappedView = _render->m_viewRemap[decodedView];
+				if (!isValid(_render->m_view[remappedView].m_fbh) )
+				{
+					needAcquire = true;
+					break;
+				}
+			}
+		}
+
+		if (updateResolution(_render->m_resolution, needAcquire) )
 		{
 			return;
 		}
 
-		if (VK_NULL_HANDLE == m_swapchain)
+		if (needAcquire)
 		{
-			return;
+			if (!acquireImage() )
+			{
+				return;
+			}
 		}
 
 		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
@@ -6771,29 +7023,6 @@ VK_DESTROY
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
-
-		bool needAcquire = !!(_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS|BGFX_DEBUG_TEXT) );
-		if (!needAcquire)
-		{
-			for (uint32_t ii = 0; ii < _render->m_numRenderItems; ++ii)
-			{
-				const ViewId decodedView = SortKey::decodeView(_render->m_sortKeys[ii]);
-				const ViewId remappedView = _render->m_viewRemap[decodedView];
-				if (!isValid(_render->m_view[remappedView].m_fbh) )
-				{
-					needAcquire = true;
-					break;
-				}
-			}
-		}
-
-		if (needAcquire)
-		{
-			if (!acquireImage() )
-			{
-				return;
-			}
-		}
 
 		const uint64_t f0 = BGFX_STATE_BLEND_FACTOR;
 		const uint64_t f1 = BGFX_STATE_BLEND_INV_FACTOR;
@@ -7528,6 +7757,34 @@ BX_UNUSED(presentMin, presentMax);
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
+		VkPhysicalDeviceMemoryBudgetPropertiesEXT dmbp;
+		dmbp.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
+		dmbp.pNext = NULL;
+
+		VkPhysicalDeviceMemoryProperties2 pdmp2;
+		pdmp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+		pdmp2.pNext = &dmbp;
+
+		int64_t gpuMemoryAvailable = -INT64_MAX;
+		int64_t gpuMemoryUsed      = -INT64_MAX;
+
+		if (s_extension[Extension::EXT_memory_budget].m_supported)
+		{
+			vkGetPhysicalDeviceMemoryProperties2KHR(m_physicalDevice, &pdmp2);
+
+			gpuMemoryAvailable = 0;
+			gpuMemoryUsed      = 0;
+
+			for (uint32_t ii = 0; ii < m_memoryProperties.memoryHeapCount; ++ii)
+			{
+				if (!!(m_memoryProperties.memoryHeaps[ii].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) )
+				{
+					gpuMemoryAvailable += dmbp.heapBudget[ii];
+					gpuMemoryUsed += dmbp.heapUsage[ii];
+				}
+			}
+		}
+
 		Stats& perfStats = _render->m_perfStats;
 		perfStats.cpuTimeBegin  = timeBegin;
 		perfStats.cpuTimeEnd    = timeEnd;
@@ -7541,8 +7798,8 @@ BX_UNUSED(presentMin, presentMax);
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
-		perfStats.gpuMemoryMax  = -INT64_MAX;
-		perfStats.gpuMemoryUsed = -INT64_MAX;
+		perfStats.gpuMemoryMax  = gpuMemoryAvailable;
+		perfStats.gpuMemoryUsed = gpuMemoryUsed;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
@@ -7578,33 +7835,21 @@ BX_UNUSED(presentMin, presentMax);
 					, getName(pdp.deviceType)
 					);
 
-				if (s_extension[Extension::EXT_memory_budget].m_supported)
+				if (0 <= gpuMemoryAvailable && 0 <= gpuMemoryUsed)
 				{
-					VkPhysicalDeviceMemoryBudgetPropertiesEXT dmbp;
-					dmbp.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
-					dmbp.pNext = NULL;
-
-					VkPhysicalDeviceMemoryProperties2 pdmp2;
-					pdmp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
-					pdmp2.pNext = &dmbp;
-
-					vkGetPhysicalDeviceMemoryProperties2KHR(m_physicalDevice, &pdmp2);
-
-					for (uint32_t ii = 0; ii < VK_MAX_MEMORY_HEAPS; ++ii)
+					for (uint32_t ii = 0; ii < m_memoryProperties.memoryHeapCount; ++ii)
 					{
-						if (dmbp.heapBudget[ii] == 0)
-						{
-							continue;
-						}
-
 						char budget[16];
 						bx::prettify(budget, BX_COUNTOF(budget), dmbp.heapBudget[ii]);
 
 						char usage[16];
 						bx::prettify(usage, BX_COUNTOF(usage), dmbp.heapUsage[ii]);
 
-						tvm.printf(0, pos++, 0x8f, " Memory %d - Budget: %12s, Usage: %12s"
+						const bool local = (!!(m_memoryProperties.memoryHeaps[ii].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) );
+
+						tvm.printf(0, pos++, 0x8f, " Memory %d %s - Budget: %12s, Usage: %12s"
 							, ii
+							, local ? "(local)    " : "(non-local)"
 							, budget
 							, usage
 							);

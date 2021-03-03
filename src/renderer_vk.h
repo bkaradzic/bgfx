@@ -73,6 +73,7 @@
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceProperties);             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFormatProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFeatures);               \
+			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFeatures2KHR);           \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceImageFormatProperties);  \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceMemoryProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMemoryProperties2KHR);   \
@@ -516,8 +517,9 @@ VK_DESTROY
 		{
 		}
 
-		void init()
+		VkResult init()
 		{
+			return VK_SUCCESS;
 		}
 
 		void shutdown()
@@ -677,10 +679,10 @@ VK_DESTROY
 
 	struct CommandQueueVK
 	{
-		void init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight);
-		void reset();
+		VkResult init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight);
+		VkResult reset();
 		void shutdown();
-		VkCommandBuffer alloc();
+		VkResult alloc(VkCommandBuffer* _commandBuffer);
 		void kick(VkSemaphore _waitSemaphore = VK_NULL_HANDLE, VkSemaphore _signalSemaphore = VK_NULL_HANDLE, bool _wait = false);
 		void finish(bool _finishAll = false);
 		void release(uint64_t _handle, VkObjectType _type);
