@@ -3430,7 +3430,7 @@ VK_IMPORT_DEVICE
 					if (m_needToRecreateSurface)
 					{
 						vkDestroySurfaceKHR(m_instance, m_surface, m_allocatorCb);
-						VkResult result = createSurface();
+						VkResult result = createSurface(_resolution);
 
 						if (VK_SUCCESS != result)
 						{
