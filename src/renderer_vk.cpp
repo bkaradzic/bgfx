@@ -1028,7 +1028,7 @@ VK_IMPORT_DEVICE
 		{
 		}
 
-		VkResult createSurface()
+		VkResult createSurface(const Resolution& _resolution)
 		{
 			VkResult result = VK_SUCCESS;
 
@@ -1099,7 +1099,7 @@ VK_IMPORT_DEVICE
 					NSView* contentView = (NSView*)window.contentView;
 					CAMetalLayer* layer = [CAMetalLayer layer];
 
-					if (_init.resolution.reset & BGFX_RESET_HIDPI)
+					if (_resolution.reset & BGFX_RESET_HIDPI)
 					{
 						layer.contentsScale = [window backingScaleFactor];
 					}
@@ -2188,7 +2188,7 @@ VK_IMPORT_DEVICE
 
 			errorState = ErrorState::CommandQueueCreated;
 
-			result = createSurface();
+			result = createSurface(_init.resolution);
 
 			if (VK_SUCCESS != result)
 			{
