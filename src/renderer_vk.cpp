@@ -346,14 +346,14 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
-	bool updateExtension(const char* _name, uint32_t _version, bool _instanceExt)
+	bool updateExtension(const char* _name, uint32_t _version, bool _instanceExt, Extension _extensions[Extension::Count])
 	{
 		const bx::StringView ext(_name);
 
 		bool supported = false;
 		for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 		{
-			Extension& extension = s_extension[ii];
+			Extension& extension = _extensions[ii];
 			LayerInfo& layerInfo = _instanceExt
 				? s_layer[extension.m_layer].m_instance
 				: s_layer[extension.m_layer].m_device
@@ -660,7 +660,7 @@ VK_IMPORT_DEVICE
 			;
 	}
 
-	void dumpExtensions(VkPhysicalDevice _physicalDevice)
+	void dumpExtensions(VkPhysicalDevice _physicalDevice, Extension _extensions[Extension::Count])
 	{
 		{ // Global extensions.
 			uint32_t numExtensionProperties;
@@ -690,6 +690,7 @@ VK_IMPORT_DEVICE
 						  extensionProperties[extension].extensionName
 						, extensionProperties[extension].specVersion
 						, VK_NULL_HANDLE == _physicalDevice
+						, _extensions
 						);
 
 					BX_TRACE("\tv%-3d %s%s"
@@ -760,6 +761,7 @@ VK_IMPORT_DEVICE
 							  extensionProperties[extension].extensionName
 							, extensionProperties[extension].specVersion
 							, VK_NULL_HANDLE == _physicalDevice
+							, _extensions
 							);
 
 						BX_TRACE("%c\t\t%s (s: 0x%08x)"
@@ -1558,11 +1560,13 @@ VK_IMPORT
 			}
 
 			{
-				dumpExtensions(VK_NULL_HANDLE);
+				dumpExtensions(VK_NULL_HANDLE, s_extension);
 
 				uint32_t numEnabledLayers = 0;
 
 				const char* enabledLayer[Layer::Count];
+
+				BX_TRACE("Enabled instance layers:");
 
 				for (uint32_t ii = 0; ii < Layer::Count; ++ii)
 				{
@@ -1572,7 +1576,7 @@ VK_IMPORT
 					&&  layer.m_instance.m_initialize)
 					{
 						enabledLayer[numEnabledLayers++] = layer.m_name;
-						BX_TRACE("%d: %s", numEnabledLayers, layer.m_name);
+						BX_TRACE("\t%s", layer.m_name);
 					}
 				}
 
@@ -1600,8 +1604,14 @@ VK_IMPORT
 					&&  layerEnabled)
 					{
 						enabledExtension[numEnabledExtensions++] = extension.m_name;
-						BX_TRACE("%d: %s", numEnabledExtensions, extension.m_name);
 					}
+				}
+
+				BX_TRACE("Enabled instance extensions:");
+
+				for (uint32_t ii = 0; ii < numEnabledExtensions; ++ii)
+				{
+					BX_TRACE("\t%s", enabledExtension[ii]);
 				}
 
 				uint32_t vulkanApiVersionSelector;
@@ -1737,8 +1747,10 @@ VK_IMPORT_INSTANCE
 					goto error;
 				}
 
-				VkPhysicalDevice fallbackPhysicalDevice = VK_NULL_HANDLE;
-				m_physicalDevice = VK_NULL_HANDLE;
+				Extension physicalDeviceExtensions[4][Extension::Count];
+
+				uint32_t physicalDeviceIdx         = UINT32_MAX;
+				uint32_t fallbackPhysicalDeviceIdx = UINT32_MAX;
 
 				for (uint32_t ii = 0; ii < numPhysicalDevices; ++ii)
 				{
@@ -1765,11 +1777,11 @@ VK_IMPORT_INSTANCE
 					{
 						if (BX_ENABLED(BGFX_CONFIG_PREFER_DISCRETE_GPU) && (pdp.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) )
 						{
-							fallbackPhysicalDevice = physicalDevices[ii];
+							fallbackPhysicalDeviceIdx = ii;
 						}
 						else
 						{
-							m_physicalDevice = physicalDevices[ii];
+							physicalDeviceIdx = ii;
 						}
 					}
 
@@ -1798,20 +1810,27 @@ VK_IMPORT_INSTANCE
 								);
 					}
 
-					dumpExtensions(physicalDevices[ii]);
+					bx::memCopy(&physicalDeviceExtensions[ii][0], &s_extension[0], sizeof(s_extension) );
+					dumpExtensions(physicalDevices[ii], physicalDeviceExtensions[ii]);
 				}
 
-				if (VK_NULL_HANDLE == m_physicalDevice)
+				if (UINT32_MAX == physicalDeviceIdx)
 				{
-					m_physicalDevice = VK_NULL_HANDLE == fallbackPhysicalDevice
-						? physicalDevices[0]
-						: fallbackPhysicalDevice
+					physicalDeviceIdx = UINT32_MAX == fallbackPhysicalDeviceIdx
+						? 0
+						: fallbackPhysicalDeviceIdx
 						;
 				}
+
+				m_physicalDevice = physicalDevices[physicalDeviceIdx];
+
+				bx::memCopy(&s_extension[0], &physicalDeviceExtensions[physicalDeviceIdx][0], sizeof(s_extension) );
 
 				vkGetPhysicalDeviceProperties(m_physicalDevice, &m_deviceProperties);
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
+
+				BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.deviceName);
 
 				if (s_extension[Extension::KHR_get_physical_device_properties2].m_supported)
 				{
@@ -2043,6 +2062,8 @@ VK_IMPORT_INSTANCE
 
 				const char* enabledLayer[Layer::Count];
 
+				BX_TRACE("Enabled device layers:");
+
 				for (uint32_t ii = 0; ii < Layer::Count; ++ii)
 				{
 					const Layer& layer = s_layer[ii];
@@ -2051,7 +2072,7 @@ VK_IMPORT_INSTANCE
 					&&  layer.m_device.m_initialize)
 					{
 						enabledLayer[numEnabledLayers++] = layer.m_name;
-						BX_TRACE("%d: %s", numEnabledLayers, layer.m_name);
+						BX_TRACE("\t%s", layer.m_name);
 					}
 				}
 
@@ -2078,8 +2099,14 @@ VK_IMPORT_INSTANCE
 					&&  layerEnabled)
 					{
 						enabledExtension[numEnabledExtensions++] = extension.m_name;
-						BX_TRACE("%d: %s", numEnabledExtensions, extension.m_name);
 					}
+				}
+
+				BX_TRACE("Enabled device extensions:");
+
+				for (uint32_t ii = 0; ii < numEnabledExtensions; ++ii)
+				{
+					BX_TRACE("\t%s", enabledExtension[ii]);
 				}
 
 				float queuePriorities[1] = { 0.0f };
