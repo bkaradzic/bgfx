@@ -341,7 +341,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_memory_budget",                   1, false, false, true                         , Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                         , Layer::Count },
 		{ "VK_EXT_conservative_rasterization",      1, false, false, true                         , Layer::Count },
-		{ "VK_EXT_line_rasterization",              1, false, false, false                        , Layer::Count },
+		{ "VK_EXT_line_rasterization",              1, false, false, true                         , Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                         , Layer::Count }
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
