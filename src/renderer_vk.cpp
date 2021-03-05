@@ -1122,6 +1122,7 @@ VK_IMPORT_DEVICE
 #else
 #	error "Figure out KHR surface..."
 #endif // BX_PLATFORM_
+			BX_UNUSED(_resolution);
 
 			m_needToRecreateSurface = false;
 
