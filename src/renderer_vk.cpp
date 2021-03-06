@@ -6958,6 +6958,12 @@ VK_DESTROY
 				, &blitInfo
 				, filter
 				);
+
+			setMemoryBarrier(
+				  m_commandBuffer
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				);
 		}
 
 		if (oldSrcLayout != VK_IMAGE_LAYOUT_UNDEFINED)
@@ -7131,8 +7137,8 @@ VK_DESTROY
 					}
 
 					// renderpass external subpass dependencies handle graphics -> compute and compute -> graphics
-					// but not compute -> compute
-					if (wasCompute && isCompute)
+					// but not compute -> compute (possibly also across views if they contain no draw calls)
+					if (wasCompute)
 					{
 						setMemoryBarrier(
 							  m_commandBuffer
