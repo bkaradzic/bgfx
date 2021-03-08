@@ -2451,7 +2451,8 @@ namespace bgfx { namespace d3d11
 				m_scd.width  = _resolution.width;
 				m_scd.height = _resolution.height;
 				// see comment in init() about why we don't worry about BGFX_RESET_SRGB_BACKBUFFER here
-				m_scd.format = s_textureFormat[_resolution.format].m_fmt;
+				m_scd.format = s_textureFormat[_resolution.format].m_fmt
+					;
 
 				preReset();
 
