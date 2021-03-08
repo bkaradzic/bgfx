@@ -957,10 +957,10 @@ namespace bgfx { namespace spirv
 						Uniform un;
 						un.name = program->getUniformName(ii);
 
-						un.num = uint8_t(program->getUniformArraySize(ii) );
+						un.num = 0;
 						const uint32_t offset = program->getUniformBufferOffset(ii);
 						un.regIndex = uint16_t(offset);
-						un.regCount = un.num;
+						un.regCount = uint16_t(program->getUniformArraySize(ii));
 
 						switch (program->getUniformType(ii) )
 						{
