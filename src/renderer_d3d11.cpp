@@ -2362,8 +2362,9 @@ namespace bgfx { namespace d3d11
 		void updateNativeWindow()
 		{
 #if BX_PLATFORM_WINRT
-			if (m_scd.nwh != g_platformData.nwh
-				|| m_scd.ndt != g_platformData.ndt)
+			// SwapChainPanels can be dynamically updated
+			if (m_scd.ndt == reinterpret_cast<void*>(2)
+				&& (m_scd.nwh != g_platformData.nwh || m_scd.ndt != g_platformData.ndt))
 			{
 				// Remove swap chain from SwapChainPanel (nwh) if applicable
 				m_dxgi.removeSwapChain(m_scd, &m_swapChain);
