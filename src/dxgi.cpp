@@ -589,7 +589,7 @@ namespace bgfx
 			if (NULL != swapChainPanelNative)
 			{
 				// Remove swap chain
-				hr = swapChainPanelNative->SetSwapChain(nullptr);
+				hr = swapChainPanelNative->SetSwapChain(NULL);
 
 				if (FAILED(hr))
 				{
@@ -619,7 +619,7 @@ namespace bgfx
 			if (NULL != swapChainBackgroundPanelNative)
 			{
 				// Remove swap chain
-				hr = swapChainBackgroundPanelNative->SetSwapChain(nullptr);
+				hr = swapChainBackgroundPanelNative->SetSwapChain(NULL);
 
 				if (FAILED(hr))
 				{
