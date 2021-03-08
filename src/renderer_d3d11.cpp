@@ -2430,8 +2430,7 @@ namespace bgfx { namespace d3d11
 				m_scd.width  = _resolution.width;
 				m_scd.height = _resolution.height;
 				// see comment in init() about why we don't worry about BGFX_RESET_SRGB_BACKBUFFER here
-				m_scd.format = s_textureFormat[_resolution.format].m_fmt
-					;
+				m_scd.format = s_textureFormat[_resolution.format].m_fmt;
 
 				preReset();
 
@@ -2461,9 +2460,12 @@ namespace bgfx { namespace d3d11
 
 #if BX_PLATFORM_WINRT
 						m_dxgi.removeSwapChain(m_scd, &m_swapChain);
+						// Avoid updating the native window handler prior to removing preexisting swap chains.
+						// Then, ensure the native window handler is up to date prior to creating swap chains.
+						m_scd.nwh = g_platformData.nwh;
+						m_scd.ndt = g_platformData.ndt;
 #endif
 						DX_RELEASE(m_swapChain, 0);
-
 						HRESULT hr = m_dxgi.createSwapChain(m_device
 							, m_scd
 							, &m_swapChain
