@@ -588,6 +588,7 @@ namespace bgfx
 			// Swap Chain Panel
 			if (NULL != swapChainPanelNative)
 			{
+				// Remove swap chain
 				hr = swapChainPanelNative->SetSwapChain(nullptr);
 
 				if (FAILED(hr))
@@ -617,6 +618,7 @@ namespace bgfx
 
 			if (NULL != swapChainBackgroundPanelNative)
 			{
+				// Remove swap chain
 				hr = swapChainBackgroundPanelNative->SetSwapChain(nullptr);
 
 				if (FAILED(hr))
