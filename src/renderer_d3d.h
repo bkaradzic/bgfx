@@ -219,61 +219,63 @@ namespace bgfx
 		DX_RELEASE(_ptr, 0);
 	}
 
-	template<typename InterfaceType>
-	class Ptr
+	template<typename Interface>
+	class DxPtr
 	{
 	private:
 		ULONG _expected;
-		InterfaceType* _ptr;
+		Interface* _ptr;
 
 	public:
 		class Ref
 		{
 		private:
-			Ptr<InterfaceType>* _ref;
+			DxPtr<Interface>* _ref;
 
 		public:
-			Ref(Ptr* ref)
+			Ref(DxPtr* ref)
 				: _ref(ref)
 			{}
 
 			~Ref()
 			{
-				_ref->_expected = getRefCount(_ref->_ptr) - 1;
+				Interface* ptr = _ref->_ptr;
+				if( NULL != ptr )
+					_ref->_expected = getRefCount(ptr) - 1;
 			}
 
-			operator InterfaceType** () const throw()
+			operator Interface** () const throw()
 			{
-				return (InterfaceType**)&(_ref->_ptr);
+				return &_ref->_ptr;
 			}
 		};
 
 	public:
-		Ptr(InterfaceType* ptr)
+		DxPtr(Interface* ptr)
 			: _expected(ptr ? (getRefCount(ptr) - 1) : 0)
 			, _ptr(ptr)
 		{}
 
-		inline InterfaceType* operator->() const throw()
+		inline Interface* operator->() const throw()
 		{
 			return _ptr;
 		}
 
-		void operator=(InterfaceType* ptr)
+		void operator=(Interface* ptr)
 		{
 			_expected = ptr ? (getRefCount(ptr) - 1) : 0;
 			_ptr = ptr;
 		}
 
-		operator InterfaceType* () { return _ptr; }
-		operator InterfaceType* () const { return _ptr; }
+		operator Interface*() { return _ptr; }
+		operator Interface*() const { return _ptr; }
 
-		Ptr::Ref operator&() throw()
+		DxPtr::Ref operator&() throw()
 		{
-			return Ptr::Ref(this);
+			return DxPtr::Ref(this);
 		}
 
-		InterfaceType* get() { return _ptr; }
+		Interface* get() { return _ptr; }
 
 		inline ULONG expected()
 		{

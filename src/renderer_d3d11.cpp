@@ -3554,7 +3554,7 @@ namespace bgfx { namespace d3d11
 
 		D3D_FEATURE_LEVEL m_featureLevel;
 
-		Ptr<Dxgi::SwapChainI> m_swapChain;
+		DxPtr<Dxgi::SwapChainI> m_swapChain;
 		ID3D11Texture2D*  m_msaaRt;
 
 		bool m_needPresent;
@@ -3562,8 +3562,8 @@ namespace bgfx { namespace d3d11
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
-		Ptr<ID3D11Device>          m_device;
-		Ptr<ID3D11DeviceContext>   m_deviceCtx;
+		DxPtr<ID3D11Device>        m_device;
+		DxPtr<ID3D11DeviceContext> m_deviceCtx;
 		ID3DUserDefinedAnnotation* m_annotation;
 		ID3D11InfoQueue*           m_infoQueue;
 
