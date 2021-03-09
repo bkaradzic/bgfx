@@ -219,6 +219,67 @@ namespace bgfx
 		DX_RELEASE(_ptr, 0);
 	}
 
+	template<typename InterfaceType>
+	class Ptr
+	{
+	private:
+		ULONG _expected;
+		InterfaceType* _ptr;
+
+	public:
+		class Ref
+		{
+		private:
+			Ptr<InterfaceType>* _ref;
+
+		public:
+			Ref(Ptr* ref)
+				: _ref(ref)
+			{}
+
+			~Ref()
+			{
+				_ref->_expected = getRefCount(_ref->_ptr) - 1;
+			}
+
+			operator InterfaceType** () const throw()
+			{
+				return (InterfaceType**)&(_ref->_ptr);
+			}
+		};
+
+	public:
+		Ptr(InterfaceType* ptr)
+			: _expected(ptr ? (getRefCount(ptr) - 1) : 0)
+			, _ptr(ptr)
+		{}
+
+		inline InterfaceType* operator->() const throw()
+		{
+			return _ptr;
+		}
+
+		void operator=(InterfaceType* ptr)
+		{
+			_expected = ptr ? (getRefCount(ptr) - 1) : 0;
+			_ptr = ptr;
+		}
+
+		operator InterfaceType* () { return _ptr; }
+		operator InterfaceType* () const { return _ptr; }
+
+		Ptr::Ref operator&() throw()
+		{
+			return Ptr::Ref(this);
+		}
+
+		InterfaceType* get() { return _ptr; }
+
+		inline ULONG expected()
+		{
+			return _expected;
+		}
+	};
 } // namespace bgfx
 
 #endif // BGFX_RENDERER_D3D_H_HEADER_GUARD

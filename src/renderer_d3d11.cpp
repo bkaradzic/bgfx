@@ -1689,9 +1689,13 @@ namespace bgfx { namespace d3d11
 			// Remove swap chain from SwapChainPanel (nwh) if applicable
 			m_dxgi.removeSwapChain(m_scd, &m_swapChain);
 #endif
-			DX_RELEASE(m_swapChain, 0);
-			DX_RELEASE(m_deviceCtx, 0);
-			DX_RELEASE(m_device, 0);
+			DX_RELEASE(m_swapChain, m_swapChain.expected());
+			DX_RELEASE(m_deviceCtx, m_deviceCtx.expected());
+			if (NULL == g_platformData.context)
+			{
+				// -1 due to reference in m_deviceCtx on initial creation
+				DX_RELEASE(m_device, m_device.expected() - 1);
+			}
 
 			m_nvapi.shutdown();
 			m_dxgi.shutdown();
@@ -2484,7 +2488,7 @@ namespace bgfx { namespace d3d11
 						// Remove swap chain from SwapChainPanel (nwh) if applicable
 						m_dxgi.removeSwapChain(m_scd, &m_swapChain);
 #endif
-						DX_RELEASE(m_swapChain, 0);
+						DX_RELEASE(m_swapChain, m_swapChain.expected());
 						HRESULT hr = m_dxgi.createSwapChain(m_device
 							, m_scd
 							, &m_swapChain
@@ -2943,7 +2947,7 @@ namespace bgfx { namespace d3d11
 						: D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF
 						;
 
-					ID3D11Device3* device3 = reinterpret_cast<ID3D11Device3*>(m_device);
+					ID3D11Device3* device3 = reinterpret_cast<ID3D11Device3*>(m_device.get());
 					DX_CHECK(device3->CreateRasterizerState2(&desc, reinterpret_cast<ID3D11RasterizerState2**>(&rs) ) );
 				}
 				else
@@ -3550,7 +3554,7 @@ namespace bgfx { namespace d3d11
 
 		D3D_FEATURE_LEVEL m_featureLevel;
 
-		Dxgi::SwapChainI* m_swapChain;
+		Ptr<Dxgi::SwapChainI> m_swapChain;
 		ID3D11Texture2D*  m_msaaRt;
 
 		bool m_needPresent;
@@ -3558,8 +3562,8 @@ namespace bgfx { namespace d3d11
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
-		ID3D11Device*              m_device;
-		ID3D11DeviceContext*       m_deviceCtx;
+		Ptr<ID3D11Device>          m_device;
+		Ptr<ID3D11DeviceContext>   m_deviceCtx;
 		ID3DUserDefinedAnnotation* m_annotation;
 		ID3D11InfoQueue*           m_infoQueue;
 
