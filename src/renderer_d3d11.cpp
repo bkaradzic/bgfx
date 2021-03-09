@@ -1690,12 +1690,8 @@ namespace bgfx { namespace d3d11
 			m_dxgi.removeSwapChain(m_scd, &m_swapChain);
 #endif
 			DX_RELEASE(m_swapChain, m_swapChain.expected());
+			DX_RELEASE(m_device, m_device.expected());
 			DX_RELEASE(m_deviceCtx, m_deviceCtx.expected());
-			if (NULL == g_platformData.context)
-			{
-				// -1 due to reference in m_deviceCtx on initial creation
-				DX_RELEASE(m_device, m_device.expected() - 1);
-			}
 
 			m_nvapi.shutdown();
 			m_dxgi.shutdown();
