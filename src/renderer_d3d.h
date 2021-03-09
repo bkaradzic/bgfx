@@ -248,6 +248,11 @@ namespace bgfx
 			{
 				return &_ref->_ptr;
 			}
+
+			operator void** () const throw()
+			{
+				return reinterpret_cast<void**>(&_ref->_ptr);
+			}
 		};
 
 	public:

@@ -654,6 +654,7 @@ namespace bgfx { namespace d3d12
 			, m_winPixEvent(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_swapChain(NULL)
+			, m_device(NULL)
 			, m_wireframe(false)
 			, m_lost(false)
 			, m_maxAnisotropy(1)
@@ -1460,12 +1461,12 @@ namespace bgfx { namespace d3d12
 
 			DX_RELEASE(m_rootSignature, 0);
 			DX_RELEASE(m_msaaRt, 0);
-			DX_RELEASE(m_swapChain, 0);
+			DX_RELEASE(m_swapChain, m_swapChain.expected());
 
 			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, NULL);
 			m_cmd.shutdown();
 
-			DX_RELEASE(m_device, 0);
+			DX_RELEASE(m_device, m_device.expected());
 
 			m_nvapi.shutdown();
 			m_dxgi.shutdown();
@@ -2297,7 +2298,7 @@ namespace bgfx { namespace d3d12
 						updateMsaa(m_scd.format);
 						m_scd.sampleDesc = s_msaa[(m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
-						DX_RELEASE(m_swapChain, 0);
+						DX_RELEASE(m_swapChain, m_swapChain.expected());
 
 						HRESULT hr;
 						hr = m_dxgi.createSwapChain(
@@ -3348,7 +3349,7 @@ namespace bgfx { namespace d3d12
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
 
-		Dxgi::SwapChainI* m_swapChain;
+		DxPtr<Dxgi::SwapChainI> m_swapChain;
 		ID3D12Resource*   m_msaaRt;
 
 #if BX_PLATFORM_WINDOWS
@@ -3359,7 +3360,7 @@ namespace bgfx { namespace d3d12
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
-		ID3D12Device*       m_device;
+		DxPtr<ID3D12Device> m_device;
 		TimerQueryD3D12     m_gpuTimer;
 		OcclusionQueryD3D12 m_occlusionQuery;
 
