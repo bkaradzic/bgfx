@@ -4552,7 +4552,7 @@
       "operands" : [
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
-        { "kind" : "IdScope", "name" : "'Execution'" }
+        { "kind" : "IdScope", "name" : "'Scope'" }
       ],
       "capabilities" : [ "ShaderClockKHR" ],
       "extensions" : [ "SPV_KHR_shader_clock" ],
@@ -5216,6 +5216,31 @@
         { "kind" : "IdRef",             "name" : "'Value'" }
       ],
       "capabilities" : [ "AtomicFloat16MinMaxEXT", "AtomicFloat32MinMaxEXT", "AtomicFloat64MinMaxEXT" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAssumeTrueKHR",
+      "class"  : "Miscellaneous",
+      "opcode" : 5630,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "'Condition'" }
+      ],
+      "capabilities" : [ "ExpectAssumeKHR" ],
+      "extensions" : [ "SPV_KHR_expect_assume" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpExpectKHR",
+      "class"  : "Miscellaneous",
+      "opcode" : 5631,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Value'" },
+        { "kind" : "IdRef", "name" : "'ExpectedValue'" }
+      ],
+      "capabilities" : [ "ExpectAssumeKHR" ],
+      "extensions" : [ "SPV_KHR_expect_assume" ],
       "version" : "None"
     },
     {
@@ -9411,6 +9436,13 @@
           "enumerant" : "Import",
           "value" : 1,
           "capabilities" : [ "Linkage" ]
+        },
+        {
+          "enumerant" : "LinkOnceODR",
+          "value" : 2,
+          "capabilities" : [ "Linkage" ],
+          "extensions" : [ "SPV_KHR_linkonce_odr" ],
+          "version" : "None"
         }
       ]
     },
@@ -12121,6 +12153,12 @@
           "enumerant" : "VectorAnyINTEL",
           "value" : 5619,
           "extensions" : [ "SPV_INTEL_vector_compute" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ExpectAssumeKHR",
+          "value" : 5629,
+          "extensions" : [ "SPV_KHR_expect_assume" ],
           "version" : "None"
         },
         {
