@@ -917,6 +917,7 @@ const char* CapabilityString(int info)
     case CapabilityRayTracingNV:                    return "RayTracingNV";
     case CapabilityRayTracingKHR:                   return "RayTracingKHR";
     case CapabilityRayQueryKHR:                     return "RayQueryKHR";
+    case CapabilityRayTracingProvisionalKHR:        return "RayTracingProvisionalKHR";
     case CapabilityRayTraversalPrimitiveCullingKHR: return "RayTraversalPrimitiveCullingKHR";
     case CapabilityComputeDerivativeGroupQuadsNV:   return "ComputeDerivativeGroupQuadsNV";
     case CapabilityComputeDerivativeGroupLinearNV:  return "ComputeDerivativeGroupLinearNV";

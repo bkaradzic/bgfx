@@ -550,6 +550,11 @@ public:
         return true;
     }
     unsigned int getLocalSize(int dim) const { return localSize[dim]; }
+    bool isLocalSizeSet() const
+    {
+        // Return true if any component has been set (i.e. any component is not default).
+        return localSizeNotDefault[0] || localSizeNotDefault[1] || localSizeNotDefault[2];
+    }
     bool setLocalSizeSpecId(int dim, int id)
     {
         if (localSizeSpecId[dim] != TQualifier::layoutNotSet)
@@ -558,6 +563,13 @@ public:
         return true;
     }
     int getLocalSizeSpecId(int dim) const { return localSizeSpecId[dim]; }
+    bool isLocalSizeSpecialized() const
+    {
+        // Return true if any component has been specialized.
+        return localSizeSpecId[0] != TQualifier::layoutNotSet ||
+               localSizeSpecId[1] != TQualifier::layoutNotSet ||
+               localSizeSpecId[2] != TQualifier::layoutNotSet;
+    }
 #ifdef GLSLANG_WEB
     void output(TInfoSink&, bool tree) { }
 

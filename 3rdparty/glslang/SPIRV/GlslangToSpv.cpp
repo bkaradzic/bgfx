@@ -255,7 +255,7 @@ protected:
     bool nanMinMaxClamp;               // true if use NMin/NMax/NClamp instead of FMin/FMax/FClamp
     spv::Id stdBuiltins;
     spv::Id nonSemanticDebugPrintf;
-    std::unordered_map<const char*, spv::Id> extBuiltinMap;
+    std::unordered_map<std::string, spv::Id> extBuiltinMap;
 
     std::unordered_map<long long, spv::Id> symbolValues;
     std::unordered_set<long long> rValueParameters;  // set of formal function parameters passed as rValues,
@@ -1551,15 +1551,16 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
             builder.addExtension(spv::E_SPV_KHR_post_depth_coverage);
         }
 
-        if (glslangIntermediate->getDepth() != glslang::EldUnchanged && glslangIntermediate->isDepthReplacing())
+        if (glslangIntermediate->isDepthReplacing())
             builder.addExecutionMode(shaderEntry, spv::ExecutionModeDepthReplacing);
 
 #ifndef GLSLANG_WEB
 
         switch(glslangIntermediate->getDepth()) {
-        case glslang::EldGreater:  mode = spv::ExecutionModeDepthGreater; break;
-        case glslang::EldLess:     mode = spv::ExecutionModeDepthLess;    break;
-        default:                   mode = spv::ExecutionModeMax;          break;
+        case glslang::EldGreater:   mode = spv::ExecutionModeDepthGreater;   break;
+        case glslang::EldLess:      mode = spv::ExecutionModeDepthLess;      break;
+        case glslang::EldUnchanged: mode = spv::ExecutionModeDepthUnchanged; break;
+        default:                    mode = spv::ExecutionModeMax;            break;
         }
         if (mode != spv::ExecutionModeMax)
             builder.addExecutionMode(shaderEntry, (spv::ExecutionMode)mode);
@@ -3163,7 +3164,9 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
 #endif
     if (atomic) {
         // Handle all atomics
-        result = createAtomicOperation(node->getOp(), precision, resultType(), operands, node->getBasicType(),
+        glslang::TBasicType typeProxy = (node->getOp() == glslang::EOpAtomicStore)
+            ? node->getSequence()[0]->getAsTyped()->getBasicType() : node->getBasicType();
+        result = createAtomicOperation(node->getOp(), precision, resultType(), operands, typeProxy,
             lvalueCoherentFlags);
     } else if (node->getOp() == glslang::EOpDebugPrintf) {
         if (!nonSemanticDebugPrintf) {
