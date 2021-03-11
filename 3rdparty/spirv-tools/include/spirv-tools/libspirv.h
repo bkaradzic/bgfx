@@ -672,7 +672,7 @@ SPIRV_TOOLS_EXPORT void spvOptimizerOptionsSetPreserveSpecConstants(
 // Creates a reducer options object with default options. Returns a valid
 // options object. The object remains valid until it is passed into
 // |spvReducerOptionsDestroy|.
-SPIRV_TOOLS_EXPORT spv_reducer_options spvReducerOptionsCreate();
+SPIRV_TOOLS_EXPORT spv_reducer_options spvReducerOptionsCreate(void);
 
 // Destroys the given reducer options object.
 SPIRV_TOOLS_EXPORT void spvReducerOptionsDestroy(spv_reducer_options options);
@@ -699,7 +699,7 @@ SPIRV_TOOLS_EXPORT void spvReducerOptionsSetTargetFunction(
 // Creates a fuzzer options object with default options. Returns a valid
 // options object. The object remains valid until it is passed into
 // |spvFuzzerOptionsDestroy|.
-SPIRV_TOOLS_EXPORT spv_fuzzer_options spvFuzzerOptionsCreate();
+SPIRV_TOOLS_EXPORT spv_fuzzer_options spvFuzzerOptionsCreate(void);
 
 // Destroys the given fuzzer options object.
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsDestroy(spv_fuzzer_options options);

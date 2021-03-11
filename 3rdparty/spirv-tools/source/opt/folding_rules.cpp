@@ -470,7 +470,7 @@ uint32_t PerformFloatingPointOperation(analysis::ConstantManager* const_mgr,
     float fval = val.getAsFloat();                                           \
     if (!IsValidResult(fval)) return 0;                                      \
     words = val.GetWords();                                                  \
-  }
+  } static_assert(true, "require extra semicolon")
   switch (opcode) {
     case SpvOpFMul:
       FOLD_OP(*);
@@ -522,7 +522,7 @@ uint32_t PerformIntegerOperation(analysis::ConstantManager* const_mgr,
       uint32_t val = input1->GetU32() op input2->GetU32(); \
       words.push_back(val);                                \
     }                                                      \
-  }
+  } static_assert(true, "require extra semicalon")
   switch (opcode) {
     case SpvOpIMul:
       FOLD_OP(*);

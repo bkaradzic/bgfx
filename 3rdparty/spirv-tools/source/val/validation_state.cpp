@@ -1736,7 +1736,7 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpMemoryBarrier-04733);
     default:
       return "";  // unknown id
-  };
+  }
   // clang-format on
 }
 

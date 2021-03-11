@@ -74,6 +74,7 @@ enum OpenCLDebugInfo100Instructions {
 
 
 enum OpenCLDebugInfo100DebugInfoFlags {
+    OpenCLDebugInfo100None = 0x0000,
     OpenCLDebugInfo100FlagIsProtected = 0x01,
     OpenCLDebugInfo100FlagIsPrivate = 0x02,
     OpenCLDebugInfo100FlagIsPublic = 0x03,
