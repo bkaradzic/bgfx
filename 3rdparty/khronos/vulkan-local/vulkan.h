@@ -80,6 +80,12 @@
 #endif
 
 
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+#include <screen/screen.h>
+#include "vulkan_screen.h"
+#endif
+
+
 #ifdef VK_ENABLE_BETA_EXTENSIONS
 #include "vulkan_beta.h"
 #endif
