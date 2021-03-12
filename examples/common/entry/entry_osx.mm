@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -235,14 +235,14 @@ namespace entry
 		uint8_t translateModifiers(int flags)
 		{
 			return 0
-				| (0 != (flags & NX_DEVICELSHIFTKEYMASK ) ) ? Modifier::LeftShift  : 0
-				| (0 != (flags & NX_DEVICERSHIFTKEYMASK ) ) ? Modifier::RightShift : 0
-				| (0 != (flags & NX_DEVICELALTKEYMASK ) )   ? Modifier::LeftAlt    : 0
-				| (0 != (flags & NX_DEVICERALTKEYMASK ) )   ? Modifier::RightAlt   : 0
-				| (0 != (flags & NX_DEVICELCTLKEYMASK ) )   ? Modifier::LeftCtrl   : 0
-				| (0 != (flags & NX_DEVICERCTLKEYMASK ) )   ? Modifier::RightCtrl  : 0
-				| (0 != (flags & NX_DEVICELCMDKEYMASK) )    ? Modifier::LeftMeta   : 0
-				| (0 != (flags & NX_DEVICERCMDKEYMASK) )    ? Modifier::RightMeta  : 0
+				| ( (0 != (flags & NX_DEVICELSHIFTKEYMASK) ) ? Modifier::LeftShift  : 0)
+				| ( (0 != (flags & NX_DEVICERSHIFTKEYMASK) ) ? Modifier::RightShift : 0)
+				| ( (0 != (flags & NX_DEVICELALTKEYMASK) )   ? Modifier::LeftAlt    : 0)
+				| ( (0 != (flags & NX_DEVICERALTKEYMASK) )   ? Modifier::RightAlt   : 0)
+				| ( (0 != (flags & NX_DEVICELCTLKEYMASK) )   ? Modifier::LeftCtrl   : 0)
+				| ( (0 != (flags & NX_DEVICERCTLKEYMASK) )   ? Modifier::RightCtrl  : 0)
+				| ( (0 != (flags & NX_DEVICELCMDKEYMASK) )   ? Modifier::LeftMeta   : 0)
+				| ( (0 != (flags & NX_DEVICERCMDKEYMASK) )   ? Modifier::RightMeta  : 0)
 				;
 		}
 

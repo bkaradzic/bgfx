@@ -104,6 +104,12 @@ class ValidatorOptions {
     spvValidatorOptionsSetScalarBlockLayout(options_, val);
   }
 
+  // Enables scalar layout when validating Workgroup blocks.  See
+  // VK_KHR_workgroup_memory_explicit_layout.
+  void SetWorkgroupScalarBlockLayout(bool val) {
+    spvValidatorOptionsSetWorkgroupScalarBlockLayout(options_, val);
+  }
+
   // Skips validating standard uniform/storage buffer/push-constant layout.
   void SetSkipBlockLayout(bool val) {
     spvValidatorOptionsSetSkipBlockLayout(options_, val);

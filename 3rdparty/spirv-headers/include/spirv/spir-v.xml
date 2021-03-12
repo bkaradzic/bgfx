@@ -78,7 +78,8 @@
         <id value="25"  vendor="Netease Games" tool="Messiah Shader Compiler" comment="Contact Yuwen Wu, atyuwen@gmail.com"/>
         <id value="26"  vendor="Xenia" tool="Xenia Emulator Microcode Translator" comment="Contact Vitaliy Kuzmin, triang3l@yandex.ru, https://github.com/xenia-project/xenia"/>
         <id value="27"  vendor="Embark Studios" tool="Rust GPU Compiler Backend" comment="https://github.com/embarkstudios/rust-gpu"/>
-        <unused start="28" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="28"  vendor="gfx-rs community" tool="Naga" comment="https://github.com/gfx-rs/naga"/>
+        <unused start="29" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->
@@ -183,6 +184,27 @@
     <ids type="LoopControl" start="16" end="23" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
     <ids type="LoopControl" start="24" end="30" comment="Unreserved bits reservable for use by vendors"/>
     <ids type="LoopControl" start="31" end="31" vendor="Khronos" comment="Reserved LoopControl bit, not available to vendors"/>
+
+
+    <!-- SECTION: SPIR-V Function Control Bit Reservations -->
+    <!-- Reserve ranges of bits in the function control bitfield.
+
+         Each vendor determines the use of values in their own ranges.
+         Vendors are not required to disclose those uses.  If the use of a
+         value is included in an extension that is adopted by a Khronos
+         extension or specification, then that value's use may be permanently
+         fixed as if originally reserved in a Khronos range.
+
+         The SPIR Working Group strongly recommends:
+         - Each value is used for only one purpose.
+         - All values in a range should be used before allocating a new range.
+         -->
+
+    <!-- Reserved function control bits -->
+    <ids type="FunctionControl" start="0" end="15" vendor="Khronos" comment="Reserved FunctionControl bits, not available to vendors - see the SPIR-V Specification"/>
+    <ids type="FunctionControl" start="16" end="16" vendor="Intel" comment="Contact ben.ashbaugh@intel.com"/>
+    <ids type="FunctionControl" start="17" end="30" comment="Unreserved bits reservable for use by vendors"/>
+    <ids type="FunctionControl" start="31" end="31" vendor="Khronos" comment="Reserved FunctionControl bit, not available to vendors"/>
 
 
     <!-- SECTION: SPIR-V FP Fast Math Mode Bit Reservations -->

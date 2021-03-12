@@ -471,7 +471,7 @@ namespace
 				}
 
 				// Update camera
-				cameraUpdate(deltaTime*0.15f, m_mouseState);
+				cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
 
 				// Set up matrices for gbuffer
 				cameraGetViewMtx(m_view);

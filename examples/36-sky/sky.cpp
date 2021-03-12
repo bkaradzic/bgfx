@@ -37,11 +37,11 @@
  * ==========
  *
  * [1] R. Perez, R. Seals, and J. Michalsky."An All-Weather Model for Sky Luminance Distribution".
- *     Solar Energy, Volume 50, Number 3 (March 1993), pp. 235–245.
+ *     Solar Energy, Volume 50, Number 3 (March 1993), pp. 235-245.
  *
  * [2] A. J. Preetham, Peter Shirley, and Brian Smits. "A Practical Analytic Model for Daylight",
  *     Proceedings of the 26th Annual Conference on Computer Graphics and Interactive Techniques,
- *     1999, pp. 91–100.
+ *     1999, pp. 91-100.
  *     https://www.cs.utah.edu/~shirley/papers/sunsky/sunsky.pdf
  *
  * [3] E. Lengyel, Game Engine Gems, Volume One. Jones & Bartlett Learning, 2010. pp. 219 - 234
@@ -134,7 +134,7 @@ namespace
 
 
 	// Turbidity tables. Taken from:
-	// A. J. Preetham, P. Shirley, and B. Smits. A Practical Analytic Model for Daylight. SIGGRAPH ’99
+	// A. J. Preetham, P. Shirley, and B. Smits. A Practical Analytic Model for Daylight. SIGGRAPH '99
 	// Coefficients correspond to xyY colorspace.
 	static Color ABCDE[] =
 	{
@@ -565,11 +565,8 @@ namespace
 
 				imguiEndFrame();
 
-				if (!ImGui::MouseOverArea())
-				{
-					// Update camera.
-					cameraUpdate(deltaTime, m_mouseState);
-				}
+				// Update camera.
+				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));

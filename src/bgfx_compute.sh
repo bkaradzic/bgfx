@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -10,11 +10,15 @@
 
 #ifndef __cplusplus
 
+#if BGFX_SHADER_LANGUAGE_HLSL > 0 && BGFX_SHADER_LANGUAGE_HLSL < 400
+#	error "Compute is not supported!"
+#endif // BGFX_SHADER_LANGUAGE_HLSL
+
 #if BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV
 #	define ANNOTATION(_format) [[spv::format_ ## _format]]
 #else
 #	define ANNOTATION(_format)
-#endif
+#endif // BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV
 
 #if BGFX_SHADER_LANGUAGE_GLSL
 

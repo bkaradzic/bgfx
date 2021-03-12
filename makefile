@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+# Copyright 2011-2021 Branimir Karadzic. All rights reserved.
 # License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 #
 
@@ -43,7 +43,8 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-combined-examples                   --vs=winstore100      vs2017
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc       gmake
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx             gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-x64         gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-arm64       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=osx           xcode9
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=ios           xcode9
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=freebsd         gmake
@@ -169,23 +170,26 @@ vs2017-winstore100-release64: .build/projects/vs2017-winstore100 ## Build - vs20
 	devenv .build/projects/vs2017-winstore100/bgfx.sln /Build "Release|x64"
 vs2017-winstore100: vs2017-winstore100-debug32 vs2017-winstore100-release32 vs2017-winstore100-debug64 vs2017-winstore100-release64 ## Build - vs2017-winstore100 x86/x64 Debug and Release
 
-.build/projects/gmake-osx:
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx gmake
-osx-debug64: osx-debug64-x86 osx-debug64-arm64 ## Build - macOS Universal Debug
-osx-release64: osx-release64-x86 osx-release64-arm64 ## Build - macOS Universal Release
-osx: osx-debug64 osx-release64 ## Build - macOS Universal Debug and Release
+.build/projects/gmake-osx-x64:
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-x64 gmake
+.build/projects/gmake-osx-arm64:
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-arm64 gmake
 
-osx-debug64-x86: .build/projects/gmake-osx ## Build - macOS x64 Debug
-	$(MAKE) -C .build/projects/gmake-osx config=debug64
-osx-release64-x86: .build/projects/gmake-osx ## Build - macOS x64 Release
-	$(MAKE) -C .build/projects/gmake-osx config=release64
-osx-x86: osx-debug64 osx-release64 ## Build - macOS x64 Debug and Release
+osx-debug: osx-x64-debug osx-arm64-debug ## Build - macOS Universal Debug
+osx-release: osx-x64-release osx-arm64-release ## Build - macOS Universal Release
+osx: osx-debug osx-release ## Build - macOS Universal Debug and Release
 
-osx-debug64-arm64: .build/projects/gmake-osx ## Build - macOS ARM Debug
-	$(MAKE) -C .build/projects/gmake-osx config=debug64 ARCH="-arch arm64 -Wno-error=unused-command-line-argument -Wno-unused-command-line-argument"
-osx-release64-arm64: .build/projects/gmake-osx ## Build - macOS ARM Release
-	$(MAKE) -C .build/projects/gmake-osx config=release64 ARCH="-arch arm64 -Wno-error=unused-command-line-argument -Wno-unused-command-line-argument"
-osx-arm: osx-debug64-arm64 osx-release64-arm64 ## Build - macOS ARM Debug and Release
+osx-x64-debug: .build/projects/gmake-osx-x64 ## Build - macOS x64 Debug
+	$(MAKE) -C .build/projects/gmake-osx-x64 config=debug
+osx-x64-release: .build/projects/gmake-osx-x64 ## Build - macOS x64 Release
+	$(MAKE) -C .build/projects/gmake-osx-x64 config=release
+osx-x64: osx-x64-debug osx-x64-release ## Build - macOS x64 Debug and Release
+
+osx-arm64-debug: .build/projects/gmake-osx-arm64 ## Build - macOS ARM Debug
+	$(MAKE) -C .build/projects/gmake-osx-arm64 config=debug
+osx-arm64-release: .build/projects/gmake-osx-arm64 ## Build - macOS ARM Release
+	$(MAKE) -C .build/projects/gmake-osx-arm64 config=release
+osx-arm: osx-arm64-debug osx-arm64-release ## Build - macOS ARM Debug and Release
 
 .build/projects/gmake-ios-arm:
 	$(GENIE) --gcc=ios-arm gmake
@@ -227,7 +231,7 @@ rpi-release: .build/projects/gmake-rpi ## Build - RasberryPi Release
 	$(MAKE) -R -C .build/projects/gmake-rpi config=release
 rpi: rpi-debug rpi-release ## Build - RasberryPi Debug and Release
 
-build-darwin: osx
+build-darwin: osx-x64
 
 build-linux: linux-debug64 linux-release64
 
@@ -257,9 +261,9 @@ UNAME := $(shell uname)
 ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin FreeBSD GNU/kFreeBSD))
 ifeq ($(UNAME),$(filter $(UNAME),Darwin))
 OS=darwin
-BUILD_PROJECT_DIR=gmake-osx
-BUILD_OUTPUT_DIR=osx64_clang
-BUILD_TOOLS_CONFIG=release64
+BUILD_PROJECT_DIR=gmake-osx-x64
+BUILD_OUTPUT_DIR=osx-x64
+BUILD_TOOLS_CONFIG=release
 BUILD_TOOLS_SUFFIX=Release
 EXE=
 else
@@ -337,16 +341,16 @@ dist-linux: .build/projects/gmake-linux
 	$(SILENT) $(MAKE) -C .build/projects/gmake-linux     config=release64 -j 6 texturev
 	$(SILENT) cp .build/linux64_gcc/bin/texturevRelease  tools/bin/linux/texturev
 
-dist-darwin: .build/projects/gmake-osx
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx       config=release64 -j 6 geometryc
-	$(SILENT) cp .build/osx64_clang/bin/geometrycRelease tools/bin/darwin/geometryc
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx       config=release64 -j 6 geometryv
-	$(SILENT) cp .build/osx64_clang/bin/geometryvRelease tools/bin/darwin/geometryv
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx       config=release64 -j 6 shaderc
-	$(SILENT) cp .build/osx64_clang/bin/shadercRelease   tools/bin/darwin/shaderc
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx       config=release64 -j 6 texturec
-	$(SILENT) cp .build/osx64_clang/bin/texturecRelease  tools/bin/darwin/texturec
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx       config=release64 -j 6 texturev
-	$(SILENT) cp .build/osx64_clang/bin/texturevRelease  tools/bin/darwin/texturev
+dist-darwin: .build/projects/gmake-osx-x64
+	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 geometryc
+	$(SILENT) cp .build/osx-x64/bin/geometrycRelease tools/bin/darwin/geometryc
+	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 geometryv
+	$(SILENT) cp .build/osx-x64/bin/geometryvRelease tools/bin/darwin/geometryv
+	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 shaderc
+	$(SILENT) cp .build/osx-x64/bin/shadercRelease tools/bin/darwin/shaderc
+	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 texturec
+	$(SILENT) cp .build/osx-x64/bin/texturecRelease tools/bin/darwin/texturec
+	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 texturev
+	$(SILENT) cp .build/osx-x64/bin/texturevRelease tools/bin/darwin/texturev
 
 dist: clean dist-windows dist-linux dist-darwin

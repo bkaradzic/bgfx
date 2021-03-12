@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -154,7 +154,7 @@ namespace entry
 			{
 				if (0 == AAsset_getRemainingLength(m_file) )
 				{
-					BX_ERROR_SET(_err, bx::kErrorRederWriterEof, "FileReader: EOF.");
+					BX_ERROR_SET(_err, bx::kErrorReaderWriterEof, "FileReader: EOF.");
 				}
 
 				return size >= 0 ? size : 0;
@@ -197,8 +197,8 @@ namespace entry
 				, 0
 				);
 
-			const char* const argv[1] = { "android.so" };
-			m_mte.m_argc = 1;
+			static const char* const argv[] = { "android.so" };
+			m_mte.m_argc = BX_COUNTOF(argv);
 			m_mte.m_argv = argv;
 
 			while (0 == m_app->destroyRequested)

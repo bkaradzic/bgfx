@@ -32,7 +32,6 @@
 		BGFX_PROFILER_END();       \
 	BX_MACRO_BLOCK_END
 
-#define WEBGPU_MAX_FRAMES_IN_FLIGHT 3
 #define WEBGPU_NUM_UNIFORM_BUFFERS  8
 
 namespace bgfx { namespace webgpu
@@ -113,7 +112,12 @@ namespace bgfx { namespace webgpu
 		uint8_t*     m_dynamic = NULL;
 	};
 
-	typedef BufferWgpu IndexBufferWgpu;
+	struct IndexBufferWgpu : public BufferWgpu
+	{
+		void create(uint32_t _size, void* _data, uint16_t _flags);
+
+		wgpu::IndexFormat m_format;
+	};
 
 	struct VertexBufferWgpu : public BufferWgpu
 	{
@@ -293,7 +297,7 @@ namespace bgfx { namespace webgpu
 		void unmap();
 		void destroy();
 
-		void mapped(void* _data, uint64_t _size);
+		void mapped(void* _data);
 
 		wgpu::Buffer m_buffer;
 		void* m_data = NULL;
@@ -339,9 +343,9 @@ namespace bgfx { namespace webgpu
 			m_buffer.Destroy();
 		}
 
-		void readback(void const* data, uint64_t size)
+		void readback(void const* data)
 		{
-			bx::memCopy(m_data, data, m_size < size ? m_size : size);
+			bx::memCopy(m_data, data, m_size);
 			m_buffer.Unmap();
 			m_mapped = false;
 		}
@@ -496,7 +500,7 @@ namespace bgfx { namespace webgpu
 		int m_releaseReadIndex = 0;
 
 		typedef stl::vector<wgpu::Buffer> ResourceArray;
-		ResourceArray m_release[WEBGPU_MAX_FRAMES_IN_FLIGHT];
+		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
 
 	struct TimerQueryWgpu

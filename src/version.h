@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -9,5 +9,5 @@
  *
  */
 
-#define BGFX_REV_NUMBER 7474
-#define BGFX_REV_SHA1   "7248e7b477ef27141af7542355ae1ae7c325aedb"
+#define BGFX_REV_NUMBER 7649
+#define BGFX_REV_SHA1   "56e3c5e867a0049e7eaa3d4f9110ad8d5ebed19d"

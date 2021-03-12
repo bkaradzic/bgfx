@@ -4,6 +4,10 @@ $input v_color0, v_texcoord0
 
 SAMPLERCUBE(s_texColor, 0);
 
+uniform vec4 u_params;
+
+#define u_distanceMultiplier     u_params.y
+
 void main()
 {	
 	vec4 color = textureCube(s_texColor, v_texcoord0.xyz);
@@ -13,12 +17,11 @@ void main()
 	rgba[1] = color.y;
 	rgba[2] = color.x;
 	rgba[3] = color.w;
-	float dist = rgba[index];
+	float distance = rgba[index];
 
-	float dx = length(dFdx(v_texcoord0.xyz) );
-	float dy = length(dFdy(v_texcoord0.xyz) );
-	float w = 16.0*0.5*(dx+dy);
+	float smoothing = 16.0 * length(fwidth(v_texcoord0.xyz)) / sqrt(2.0) * u_distanceMultiplier;
 
-	float alpha = smoothstep(0.5-w, 0.5+w, dist);
-	gl_FragColor = vec4(v_color0.xyz, v_color0.w*alpha);
+	float alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, distance);
+	vec4 sdfColor = vec4(v_color0.xyz, alpha * v_color0.w);
+	gl_FragColor = sdfColor;
 }

@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2020 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2021 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
@@ -138,7 +138,7 @@ function bgfxProjectBase(_kind, _defines)
 			"-Wno-microsoft-const-init", -- default initialization of an object of const type '' without a user-provided default constructor is a Microsoft extension
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		buildoptions { "-x objective-c++" }  -- additional build option for osx
 		linkoptions {
 			"-framework Cocoa",
@@ -184,9 +184,10 @@ function bgfxProjectBase(_kind, _defines)
 	if _OPTIONS["with-webgpu"] then
 		defines {
 			"BGFX_CONFIG_RENDERER_WEBGPU=1",
+			"BGFX_CONFIG_DEBUG_ANNOTATION=0", -- does not work
 		}
 
-		local generator = "out/VS2019"
+		local generator = "out/Default"
 
 		configuration { "wasm*" }
 			defines {
@@ -196,10 +197,8 @@ function bgfxProjectBase(_kind, _defines)
 
 		configuration { "not wasm*" }
 			includedirs {
-				path.join(DAWN_DIR, "src"),
 				path.join(DAWN_DIR, "src/include"),
 				path.join(DAWN_DIR, "third_party/vulkan-headers/include"),
-				path.join(DAWN_DIR, generator, "gen/src"),
 				path.join(DAWN_DIR, generator, "gen/src/include"),
 			}
 
@@ -232,7 +231,7 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "src/vertexlayout.cpp"),
 		}
 
-		configuration { "xcode* or osx or ios*" }
+		configuration { "xcode* or osx* or ios*" }
 			files {
 				path.join(BGFX_DIR, "src/amalgamated.mm"),
 			}
@@ -243,7 +242,7 @@ function bgfxProjectBase(_kind, _defines)
 				path.join(BGFX_DIR, "src/amalgamated.cpp"),
 			}
 
-		configuration { "not (xcode* or osx or ios*)" }
+		configuration { "not (xcode* or osx* or ios*)" }
 			excludes {
 				path.join(BGFX_DIR, "src/**.mm"),
 			}
@@ -251,7 +250,7 @@ function bgfxProjectBase(_kind, _defines)
 		configuration {}
 
 	else
-		configuration { "xcode* or osx or ios*" }
+		configuration { "xcode* or osx* or ios*" }
 			files {
 				path.join(BGFX_DIR, "src/glcontext_**.mm"),
 				path.join(BGFX_DIR, "src/renderer_**.mm"),
@@ -297,23 +296,16 @@ if _OPTIONS["with-webgpu"] then
 			}
 
 		configuration { "not wasm*" }
-			--local generator = "out/Default"
-			local generator = "out/VS2019"
+			local generator = "out/Default"
 
 			includedirs {
-				path.join(DAWN_DIR, "src"),
 				path.join(DAWN_DIR, "src/include"),
-				path.join(DAWN_DIR, generator, "gen/src"),
 				path.join(DAWN_DIR, generator, "gen/src/include"),
 			}
 
 			libdirs {
 				path.join(DAWN_DIR, generator),
 				path.join(DAWN_DIR, generator, "lib/Debug"),
-			}
-
-			files {
-				path.join(DAWN_DIR, generator, "gen/src/dawn/webgpu_cpp.cpp"),
 			}
 
 			links {

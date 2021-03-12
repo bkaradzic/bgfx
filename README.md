@@ -5,10 +5,13 @@
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
-[![Build Status](https://travis-ci.org/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.org/bkaradzic/bgfx)
+[![Build Status](https://travis-ci.com/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.com/bkaradzic/bgfx)
 [![Build status](https://ci.appveyor.com/api/projects/status/ipa3ojgeaet1oko5?svg=true)](https://ci.appveyor.com/project/bkaradzic/bgfx)
 [![License](https://img.shields.io/badge/license-BSD--2%20clause-blue.svg)](https://bkaradzic.github.io/bgfx/license.html)
 [![Join the chat at https://discord.gg/9eMbv7J](https://img.shields.io/discord/712512073522872352?color=%237289DA&label=bgfx&logo=discord&logoColor=white)](https://discord.gg/9eMbv7J)
+
+ * [GitHub Discussions](https://github.com/bkaradzic/bgfx/discussions)
+ * [Discord Chat](https://discord.gg/9eMbv7J)
 
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
 -------------------------------------------------------------
@@ -74,7 +77,7 @@ Languages:
 ----------------------------------------------------
 
  - AppVeyor https://ci.appveyor.com/project/bkaradzic/bgfx
- - TravisCI https://travis-ci.org/bkaradzic/bgfx
+ - TravisCI https://travis-ci.com/bkaradzic/bgfx
 
 [Getting involved](https://bkaradzic.github.io/bgfx/overview.html#getting-involved)
 -----------------------------------------------------------------------------------
@@ -398,7 +401,8 @@ https://www.minecraft.net/zh-hant/attribution/
 
 ## FFNx
 
-Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with native Steam 2013 release support! )
+Next generation driver for Final Fantasy VII and Final Fantasy VIII
+(with native Steam 2013 release support!)
 
 [FFNx](https://github.com/julianxhokaxhiu/FFNx#ffnx)
 
@@ -413,6 +417,44 @@ https://www.microsoft.com/en-gb/p/shadow-gangs/9n6hkcr65qdq
 
 ![Shadow Gangs](https://user-images.githubusercontent.com/814772/94508248-64ba1080-01c6-11eb-800f-47dc374ef054.jpeg)
 
+## Growtopia
+
+Growtopia is a free-to-play sandbox MMO game with almost endless possibilities
+for world creation, customization and having fun with your friends. Enjoy
+thousands of items, challenges and events.
+
+https://growtopiagame.com/
+
+![growtopia](https://s3.eu-west-1.amazonaws.com/cdn.growtopiagame.com/website/resources/assets/images/grow_header.jpg)
+
+## Galaxy Trucker
+
+Digital implementation of tabletop spaceship building in real-time or turn-based mode,
+then surviving space adventures, with AI opponents, multiplayer, achievements
+and solo campaign.
+
+https://galaxytrucker.com/
+
+![Galaxy Trucker](https://press.galaxytrucker.com/images/GTAT_junk.png)
+
+## Through the Ages
+
+The card tabletop deep strategy game in your devices. Lead your civilization from pyramids
+to space flights. Challenges, achievements, skilled AIs and online multiplayer.
+
+https://throughtheages.com/
+
+![Through the Ages](https://press.throughtheages.com/images/tta01.png)
+
+## Codenames
+
+One of the best party game. Two rival spymasters know the secret identities of 25 agents.
+Their teammates know the agents only by their codenames. Simple to explain,
+easy to understand, challenging gameplay.
+
+https://codenamesgame.com/
+
+![Codenames](https://codenamesgame.com/img/game-features-img-1.jpg)
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
@@ -421,7 +463,7 @@ https://www.microsoft.com/en-gb/p/shadow-gangs/9n6hkcr65qdq
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 </a>
 
-	Copyright 2010-2020 Branimir Karadzic
+	Copyright 2010-2021 Branimir Karadzic
 	
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:

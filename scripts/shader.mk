@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+# Copyright 2011-2021 Branimir Karadzic. All rights reserved.
 # License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 #
 
@@ -15,24 +15,38 @@ ifndef TARGET
 .PHONY: all
 all:
 	@echo Usage: make TARGET=# [clean, all, rebuild]
-	@echo "  TARGET=0 (hlsl  - d3d9)"
-	@echo "  TARGET=1 (hlsl  - d3d11)"
-	@echo "  TARGET=2 (essl  - nacl)"
+	@echo "  TARGET=0 (hlsl  - d3d9  / Windows only!)"
+	@echo "  TARGET=1 (hlsl  - d3d11 / Windows only!)"
 	@echo "  TARGET=3 (essl  - android)"
 	@echo "  TARGET=4 (glsl)"
 	@echo "  TARGET=5 (metal)"
 	@echo "  TARGET=6 (pssl)"
 	@echo "  TARGET=7 (spirv)"
 
+.PHONY: build
+build:
+ifeq ($(OS), windows)
+	@make -s --no-print-directory TARGET=0 all
+	@make -s --no-print-directory TARGET=1 all
+endif
+	@make -s --no-print-directory TARGET=3 all
+	@make -s --no-print-directory TARGET=4 all
+	@make -s --no-print-directory TARGET=5 all
+	@make -s --no-print-directory TARGET=7 all
+
+.PHONY: clean
+clean:
+ifeq ($(OS), windows)
+	@make -s --no-print-directory TARGET=0 clean
+	@make -s --no-print-directory TARGET=1 clean
+endif
+	@make -s --no-print-directory TARGET=3 clean
+	@make -s --no-print-directory TARGET=4 clean
+	@make -s --no-print-directory TARGET=5 clean
+	@make -s --no-print-directory TARGET=7 clean
+
 .PHONY: rebuild
-rebuild:
-	@make -s --no-print-directory TARGET=0 clean all
-	@make -s --no-print-directory TARGET=1 clean all
-	@make -s --no-print-directory TARGET=2 clean all
-	@make -s --no-print-directory TARGET=3 clean all
-	@make -s --no-print-directory TARGET=4 clean all
-	@make -s --no-print-directory TARGET=5 clean all
-	@make -s --no-print-directory TARGET=7 clean all
+rebuild: clean build
 
 else
 
@@ -138,7 +152,7 @@ $(BUILD_INTERMEDIATE_DIR)/cs_%.bin: $(SHADERS_DIR)cs_%.sc
 
 .PHONY: all
 all: dirs $(BIN)
-	@echo Target $(SHADER_PATH)
+	@echo Target $(notdir $(CURDIR)) / $(SHADER_PATH)
 
 .PHONY: clean
 clean:

@@ -844,6 +844,10 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
         (Options & EOptionReadHlsl) == 0)
         Error("uniform array flattening only valid when compiling HLSL source.");
 
+    if ((Options & EOptionReadHlsl) && (Client == glslang::EShClientOpenGL)) {
+        Error("Using HLSL input under OpenGL semantics is not currently supported.");
+    }
+
     // rationalize client and target language
     if (TargetLanguage == glslang::EShTargetNone) {
         switch (ClientVersion) {
@@ -1561,7 +1565,8 @@ void usage()
            "              'ver', when present, is the version of the input semantics,\n"
            "              which will appear in #define GL_SPIRV ver;\n"
            "              '--client opengl100' is the same as -G100;\n"
-           "              a '--target-env' for OpenGL will also imply '-G'\n"
+           "              a '--target-env' for OpenGL will also imply '-G';\n"
+           "              currently only supports GLSL\n"
            "  -H          print human readable form of SPIR-V; turns on -V\n"
            "  -I<dir>     add dir to the include search path; includer's directory\n"
            "              is searched first, followed by left-to-right order of -I\n"

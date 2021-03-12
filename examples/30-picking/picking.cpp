@@ -124,7 +124,7 @@ public:
 			| BGFX_SAMPLER_U_CLAMP
 			| BGFX_SAMPLER_V_CLAMP
 			);
-		m_pickingRTDepth = bgfx::createTexture2D(ID_DIM, ID_DIM, false, 1, bgfx::TextureFormat::D24S8, 0
+		m_pickingRTDepth = bgfx::createTexture2D(ID_DIM, ID_DIM, false, 1, bgfx::TextureFormat::D32F, 0
 			| BGFX_TEXTURE_RT
 			| BGFX_SAMPLER_MIN_POINT
 			| BGFX_SAMPLER_MAG_POINT

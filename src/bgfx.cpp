@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -1506,6 +1506,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_GRAPHICS_DEBUGGER),
 		CAPS_FLAGS(BGFX_CAPS_HDR10),
 		CAPS_FLAGS(BGFX_CAPS_HIDPI),
+		CAPS_FLAGS(BGFX_CAPS_IMAGE_RW),
 		CAPS_FLAGS(BGFX_CAPS_INDEX32),
 		CAPS_FLAGS(BGFX_CAPS_INSTANCING),
 		CAPS_FLAGS(BGFX_CAPS_OCCLUSION_QUERY),
@@ -1522,6 +1523,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_HALF),
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_UINT10),
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ID),
+		CAPS_FLAGS(BGFX_CAPS_VIEWPORT_LAYER_ARRAY),
 #undef CAPS_FLAGS
 	};
 
@@ -1680,6 +1682,36 @@ namespace bgfx
 		BX_TRACE("");
 	}
 
+	void dump(const Resolution& _resolution)
+	{
+		const uint32_t reset = _resolution.reset;
+		const uint32_t msaa = (reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+		BX_UNUSED(reset, msaa);
+
+		BX_TRACE("Reset back-buffer swap chain:");
+		BX_TRACE("\t%dx%d, format: %s, numBackBuffers: %d, maxFrameLatency: %d"
+			, _resolution.width
+			, _resolution.height
+			, TextureFormat::Count == _resolution.format
+				? "*default*"
+				: bimg::getName(bimg::TextureFormat::Enum(_resolution.format) )
+			, _resolution.numBackBuffers
+			, _resolution.maxFrameLatency
+			);
+		BX_TRACE("\t[%c] MSAAx%d", 0 != msaa ? 'x' : ' ', 1<<msaa);
+		BX_TRACE("\t[%c] Fullscreen",         0 != (reset & BGFX_RESET_FULLSCREEN)         ? 'x' : ' ');
+		BX_TRACE("\t[%c] V-sync",             0 != (reset & BGFX_RESET_VSYNC)              ? 'x' : ' ');
+		BX_TRACE("\t[%c] Max Anisotropy",     0 != (reset & BGFX_RESET_MAXANISOTROPY)      ? 'x' : ' ');
+		BX_TRACE("\t[%c] Capture",            0 != (reset & BGFX_RESET_CAPTURE)            ? 'x' : ' ');
+		BX_TRACE("\t[%c] Flush After Render", 0 != (reset & BGFX_RESET_FLUSH_AFTER_RENDER) ? 'x' : ' ');
+		BX_TRACE("\t[%c] Flip After Render",  0 != (reset & BGFX_RESET_FLIP_AFTER_RENDER)  ? 'x' : ' ');
+		BX_TRACE("\t[%c] sRGB Back Buffer",   0 != (reset & BGFX_RESET_SRGB_BACKBUFFER)    ? 'x' : ' ');
+		BX_TRACE("\t[%c] HDR10",              0 != (reset & BGFX_RESET_HDR10)              ? 'x' : ' ');
+		BX_TRACE("\t[%c] Hi-DPI",             0 != (reset & BGFX_RESET_HIDPI)              ? 'x' : ' ');
+		BX_TRACE("\t[%c] Depth Clamp",        0 != (reset & BGFX_RESET_DEPTH_CLAMP)        ? 'x' : ' ');
+		BX_TRACE("\t[%c] Suspend",            0 != (reset & BGFX_RESET_SUSPEND)            ? 'x' : ' ');
+	}
+
 	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer)
 	{
 		const uint32_t formatCaps = g_caps.formats[_imageContainer.m_format];
@@ -1798,6 +1830,9 @@ namespace bgfx
 
 		m_init = _init;
 		m_init.resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
+		m_init.resolution.numBackBuffers  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
+		m_init.resolution.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
+		dump(m_init.resolution);
 
 		if (g_platformData.ndt          == NULL
 		&&  g_platformData.nwh          == NULL
@@ -1810,6 +1845,19 @@ namespace bgfx
 		else
 		{
 			bx::memCopy(&m_init.platformData, &g_platformData, sizeof(PlatformData) );
+		}
+
+		if (true
+		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_PS4)
+		&&  RendererType::Noop != m_init.type
+		&&  NULL == m_init.platformData.ndt
+		&&  NULL == m_init.platformData.nwh
+		&&  NULL == m_init.platformData.context
+		&&  NULL == m_init.platformData.backBuffer
+		&&  NULL == m_init.platformData.backBufferDS
+		   )
+		{
+			BX_TRACE("bgfx platform data like window handle or backbuffer is not set, creating headless device.");
 		}
 
 		m_exit    = false;
@@ -2611,6 +2659,7 @@ namespace bgfx
 				}
 				else if (BX_ENABLED(BX_PLATFORM_LINUX) )
 				{
+					score += RendererType::Vulkan   == renderer ? 30 : 0;
 					score += RendererType::OpenGL   == renderer ? 20 : 0;
 					score += RendererType::OpenGLES == renderer ? 10 : 0;
 				}
@@ -3350,13 +3399,14 @@ namespace bgfx
 	{
 	}
 
-	void Attachment::init(TextureHandle _handle, Access::Enum _access, uint16_t _layer, uint16_t _mip, uint8_t _resolve)
+	void Attachment::init(TextureHandle _handle, Access::Enum _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _resolve)
 	{
-		access  = _access;
-		handle  = _handle;
-		mip     = _mip;
-		layer   = _layer;
-		resolve = _resolve;
+		access    = _access;
+		handle    = _handle;
+		mip       = _mip;
+		layer     = _layer;
+		numLayers = _numLayers;
+		resolve   = _resolve;
 	}
 
 	bool init(const Init& _userInit)
@@ -3402,19 +3452,6 @@ namespace bgfx
 		{
 			g_callback =
 				s_callbackStub = BX_NEW(g_allocator, CallbackStub);
-		}
-
-		if (true
-		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_PS4)
-		&&  RendererType::Noop != init.type
-		&&  NULL == init.platformData.ndt
-		&&  NULL == init.platformData.nwh
-		&&  NULL == init.platformData.context
-		&&  NULL == init.platformData.backBuffer
-		&&  NULL == init.platformData.backBufferDS
-		   )
-		{
-			BX_TRACE("bgfx platform data like window handle or backbuffer is not set, creating headless device.");
 		}
 
 		bx::memSet(&g_caps, 0, sizeof(g_caps) );
@@ -3610,7 +3647,8 @@ namespace bgfx
 	void Encoder::setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 	{
 		BGFX_CHECK_HANDLE("setIndexBuffer", s_ctx->m_indexBufferHandle, _handle);
-		BGFX_ENCODER(setIndexBuffer(_handle, _firstIndex, _numIndices) );
+		const IndexBuffer& ib = s_ctx->m_indexBuffers[_handle.idx];
+		BGFX_ENCODER(setIndexBuffer(_handle, ib, _firstIndex, _numIndices) );
 	}
 
 	void Encoder::setIndexBuffer(DynamicIndexBufferHandle _handle)
@@ -3895,9 +3933,9 @@ namespace bgfx
 		dstHeight = bx::min<uint32_t>(dstHeight, _dstY + _height) - _dstY;
 		dstDepth  = bx::min<uint32_t>(dstDepth,  _dstZ + _depth ) - _dstZ;
 
-		uint16_t width  = bx::min<uint16_t>(srcWidth,  dstWidth);
-		uint16_t height = bx::min<uint16_t>(srcHeight, dstHeight);
-		uint16_t depth  = bx::min<uint16_t>(srcDepth,  dstDepth);
+		const uint16_t width  = uint16_t(bx::min(srcWidth,  dstWidth ) );
+		const uint16_t height = uint16_t(bx::min(srcHeight, dstHeight) );
+		const uint16_t depth  = uint16_t(bx::min(srcDepth,  dstDepth ) );
 
 		BGFX_ENCODER(blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, width, height, depth) );
 	}
@@ -4018,6 +4056,10 @@ namespace bgfx
 
 	IndexBufferHandle createIndexBuffer(const Memory* _mem, uint16_t _flags)
 	{
+		BX_ASSERT(
+			  0 == (_flags & BGFX_BUFFER_INDEX32) || 0 != (g_caps.supported & BGFX_CAPS_INDEX32)
+			, "32-bit indices are not supported. Use bgfx::getCaps to check BGFX_CAPS_INDEX32 backend renderer capabilities."
+			);
 		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
 		return s_ctx->createIndexBuffer(_mem, _flags);
 	}
@@ -4066,6 +4108,10 @@ namespace bgfx
 
 	DynamicIndexBufferHandle createDynamicIndexBuffer(const Memory* _mem, uint16_t _flags)
 	{
+		BX_ASSERT(
+			  0 == (_flags & BGFX_BUFFER_INDEX32) || 0 != (g_caps.supported & BGFX_CAPS_INDEX32)
+			, "32-bit indices are not supported. Use bgfx::getCaps to check BGFX_CAPS_INDEX32 backend renderer capabilities."
+			);
 		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
 		return s_ctx->createDynamicIndexBuffer(_mem, _flags);
 	}
@@ -4124,17 +4170,25 @@ namespace bgfx
 		return s_ctx->getAvailTransientVertexBuffer(_num, _stride);
 	}
 
-	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num)
+	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num, bool _index32)
 	{
 		BX_ASSERT(NULL != _tib, "_tib can't be NULL");
 		BX_ASSERT(0 < _num, "Requesting 0 indices.");
-		s_ctx->allocTransientIndexBuffer(_tib, _num);
-		BX_ASSERT(_num == _tib->size/2
+		BX_ASSERT(
+			  !_index32 || 0 != (g_caps.supported & BGFX_CAPS_INDEX32)
+			, "32-bit indices are not supported. Use bgfx::getCaps to check BGFX_CAPS_INDEX32 backend renderer capabilities."
+			);
+
+		s_ctx->allocTransientIndexBuffer(_tib, _num, _index32);
+
+		const uint32_t indexSize = _tib->isIndex16 ? 2 : 4;
+		BX_ASSERT(_num == _tib->size/ indexSize
 			, "Failed to allocate transient index buffer (requested %d, available %d). "
 			  "Use bgfx::getAvailTransient* functions to ensure availability."
 			, _num
-			, _tib->size/2
+			, _tib->size/indexSize
 			);
+		BX_UNUSED(indexSize);
 	}
 
 	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexLayout& _layout)
@@ -4634,7 +4688,7 @@ namespace bgfx
 		for (uint8_t ii = 0; ii < _num; ++ii)
 		{
 			Attachment& at = attachment[ii];
-			at.init(_handles[ii], Access::Write, 0, 0, BGFX_RESOLVE_AUTO_GEN_MIPS);
+			at.init(_handles[ii], Access::Write, 0, 1, 0, BGFX_RESOLVE_AUTO_GEN_MIPS);
 		}
 		return createFrameBuffer(_num, attachment, _destroyTextures);
 	}
@@ -5245,7 +5299,7 @@ BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
 
 BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
 	| BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE
-	, BGFX_SUBMIT_RESERVED_MASK
+	, BGFX_SUBMIT_INTERNAL_RESERVED_MASK
 	) );
 
 BX_STATIC_ASSERT( (0

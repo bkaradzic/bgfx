@@ -213,7 +213,29 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
 
       // Then Shader rules
       if (_.HasCapability(SpvCapabilityShader)) {
-        if (storage_class == SpvStorageClassFunction) {
+        if (spvIsVulkanEnv(_.context()->target_env)) {
+          if ((storage_class != SpvStorageClassUniform) &&
+              (storage_class != SpvStorageClassStorageBuffer) &&
+              (storage_class != SpvStorageClassWorkgroup) &&
+              (storage_class != SpvStorageClassImage) &&
+              (storage_class != SpvStorageClassPhysicalStorageBuffer)) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << _.VkErrorID(4686) << spvOpcodeString(opcode)
+                   << ": Vulkan spec only allows storage classes for atomic to "
+                      "be: Uniform, Workgroup, Image, StorageBuffer, or "
+                      "PhysicalStorageBuffer.";
+          }
+
+          // Can't use result_type because OpAtomicStore doesn't have a result
+          if (opcode == SpvOpAtomicStore && _.GetBitWidth(data_type) == 64 &&
+              _.IsIntScalarType(data_type) &&
+              !_.HasCapability(SpvCapabilityInt64Atomics)) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << spvOpcodeString(opcode)
+                   << ": 64-bit atomics require the Int64Atomics "
+                      "capability";
+          }
+        } else if (storage_class == SpvStorageClassFunction) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << spvOpcodeString(opcode)
                  << ": Function storage class forbidden when the Shader "

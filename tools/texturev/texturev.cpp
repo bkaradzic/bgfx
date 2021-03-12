@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -1224,7 +1224,7 @@ void help(const char* _error = NULL)
 
 	bx::printf(
 		  "texturev, bgfx texture viewer tool, version %d.%d.%d.\n"
-		  "Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2021 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		, BGFX_TEXTUREV_VERSION_MAJOR
 		, BGFX_TEXTUREV_VERSION_MINOR
@@ -1292,7 +1292,7 @@ int _main_(int _argc, char** _argv)
 
 	bgfx::Init init;
 	init.resolution.width = view.m_width;
-	init.resolution.width = view.m_height;
+	init.resolution.height = view.m_height;
 	init.resolution.reset = BGFX_RESET_VSYNC;
 
 	bgfx::init(init);
@@ -1832,7 +1832,7 @@ int _main_(int _argc, char** _argv)
 							;
 
 						ImGui::PushItemWidth(-1);
-						if (ImGui::ListBoxHeader("##empty", ImVec2(0.0f, listHeight) ) )
+						if (ImGui::BeginListBox("##empty", ImVec2(0.0f, listHeight) ) )
 						{
 							const int32_t itemCount = int32_t(view.m_fileList.size() );
 
@@ -1870,7 +1870,7 @@ int _main_(int _argc, char** _argv)
 
 							clipper.End();
 
-							ImGui::ListBoxFooter();
+							ImGui::EndListBox();
 						}
 
 						ImGui::PopFont();
@@ -1887,7 +1887,7 @@ int _main_(int _argc, char** _argv)
 
 				ImGui::Text(
 					"texturev, bgfx texture viewer tool " ICON_KI_WRENCH ", version %d.%d.%d.\n"
-					"Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n"
+					"Copyright 2011-2021 Branimir Karadzic. All rights reserved.\n"
 					"License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n"
 					, BGFX_TEXTUREV_VERSION_MAJOR
 					, BGFX_TEXTUREV_VERSION_MINOR

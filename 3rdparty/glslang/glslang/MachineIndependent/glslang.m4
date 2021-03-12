@@ -293,6 +293,8 @@ GLSLANG_WEB_EXCLUDE_OFF
 %token <lex> CENTROID IN OUT INOUT
 %token <lex> STRUCT VOID WHILE
 %token <lex> BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
+%token <lex> TERMINATE_INVOCATION
+%token <lex> TERMINATE_RAY IGNORE_INTERSECTION
 %token <lex> UNIFORM SHARED BUFFER
 %token <lex> FLAT SMOOTH LAYOUT
 
@@ -3573,6 +3575,12 @@ GLSLANG_WEB_EXCLUDE_ON
         parseContext.profileRequires($1.loc, ~EEsProfile, 420, E_GL_ARB_shading_language_420pack, initFeature);
         $$ = $2;
     }
+    | LEFT_BRACE RIGHT_BRACE {
+        const char* initFeature = "empty { } initializer";
+        parseContext.profileRequires($1.loc, EEsProfile, 0, E_GL_EXT_null_initializer, initFeature);
+        parseContext.profileRequires($1.loc, ~EEsProfile, 0, E_GL_EXT_null_initializer, initFeature);
+        $$ = parseContext.intermediate.makeAggregate($1.loc);
+    }
 GLSLANG_WEB_EXCLUDE_OFF
     ;
 
@@ -3927,6 +3935,20 @@ jump_statement
         parseContext.requireStage($1.loc, EShLangFragment, "discard");
         $$ = parseContext.intermediate.addBranch(EOpKill, $1.loc);
     }
+    | TERMINATE_INVOCATION SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangFragment, "terminateInvocation");
+        $$ = parseContext.intermediate.addBranch(EOpTerminateInvocation, $1.loc);
+    }
+GLSLANG_WEB_EXCLUDE_ON
+    | TERMINATE_RAY SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangAnyHit, "terminateRayEXT");
+        $$ = parseContext.intermediate.addBranch(EOpTerminateRayKHR, $1.loc);
+    }
+    | IGNORE_INTERSECTION SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangAnyHit, "ignoreIntersectionEXT");
+        $$ = parseContext.intermediate.addBranch(EOpIgnoreIntersectionKHR, $1.loc);
+    }
+GLSLANG_WEB_EXCLUDE_OFF
     ;
 
 // Grammar Note:  No 'goto'.  Gotos are not supported.

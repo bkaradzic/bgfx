@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -1031,7 +1031,7 @@ public static partial class bgfx
 		DrawIndirect           = 0x0000000000000010,
 	
 		/// <summary>
-		/// Fragment depth is accessible in fragment shader.
+		/// Fragment depth is available in fragment shader.
 		/// </summary>
 		FragmentDepth          = 0x0000000000000020,
 	
@@ -1041,110 +1041,110 @@ public static partial class bgfx
 		FragmentOrdering       = 0x0000000000000040,
 	
 		/// <summary>
-		/// Image Read/Write is supported.
-		/// </summary>
-		ImageRw                = 0x0000000000000080,
-	
-		/// <summary>
 		/// Graphics debugger is present.
 		/// </summary>
-		GraphicsDebugger       = 0x0000000000000100,
-		Reserved               = 0x0000000000000200,
+		GraphicsDebugger       = 0x0000000000000080,
 	
 		/// <summary>
 		/// HDR10 rendering is supported.
 		/// </summary>
-		Hdr10                  = 0x0000000000000400,
+		Hdr10                  = 0x0000000000000100,
 	
 		/// <summary>
 		/// HiDPI rendering is supported.
 		/// </summary>
-		Hidpi                  = 0x0000000000000800,
+		Hidpi                  = 0x0000000000000200,
+	
+		/// <summary>
+		/// Image Read/Write is supported.
+		/// </summary>
+		ImageRw                = 0x0000000000000400,
 	
 		/// <summary>
 		/// 32-bit indices are supported.
 		/// </summary>
-		Index32                = 0x0000000000001000,
+		Index32                = 0x0000000000000800,
 	
 		/// <summary>
 		/// Instancing is supported.
 		/// </summary>
-		Instancing             = 0x0000000000002000,
+		Instancing             = 0x0000000000001000,
 	
 		/// <summary>
 		/// Occlusion query is supported.
 		/// </summary>
-		OcclusionQuery         = 0x0000000000004000,
+		OcclusionQuery         = 0x0000000000002000,
 	
 		/// <summary>
 		/// Renderer is on separate thread.
 		/// </summary>
-		RendererMultithreaded  = 0x0000000000008000,
+		RendererMultithreaded  = 0x0000000000004000,
 	
 		/// <summary>
 		/// Multiple windows are supported.
 		/// </summary>
-		SwapChain              = 0x0000000000010000,
+		SwapChain              = 0x0000000000008000,
 	
 		/// <summary>
 		/// 2D texture array is supported.
 		/// </summary>
-		Texture2dArray         = 0x0000000000020000,
+		Texture2dArray         = 0x0000000000010000,
 	
 		/// <summary>
 		/// 3D textures are supported.
 		/// </summary>
-		Texture3d              = 0x0000000000040000,
+		Texture3d              = 0x0000000000020000,
 	
 		/// <summary>
 		/// Texture blit is supported.
 		/// </summary>
-		TextureBlit            = 0x0000000000080000,
-	
-		/// <summary>
-		/// All texture compare modes are supported.
-		/// </summary>
-		TextureCompareReserved = 0x0000000000100000,
+		TextureBlit            = 0x0000000000040000,
+		TextureCompareReserved = 0x0000000000080000,
 	
 		/// <summary>
 		/// Texture compare less equal mode is supported.
 		/// </summary>
-		TextureCompareLequal   = 0x0000000000200000,
+		TextureCompareLequal   = 0x0000000000100000,
 	
 		/// <summary>
 		/// Cubemap texture array is supported.
 		/// </summary>
-		TextureCubeArray       = 0x0000000000400000,
+		TextureCubeArray       = 0x0000000000200000,
 	
 		/// <summary>
 		/// CPU direct access to GPU texture memory.
 		/// </summary>
-		TextureDirectAccess    = 0x0000000000800000,
+		TextureDirectAccess    = 0x0000000000400000,
 	
 		/// <summary>
 		/// Read-back texture is supported.
 		/// </summary>
-		TextureReadBack        = 0x0000000001000000,
+		TextureReadBack        = 0x0000000000800000,
 	
 		/// <summary>
 		/// Vertex attribute half-float is supported.
 		/// </summary>
-		VertexAttribHalf       = 0x0000000002000000,
+		VertexAttribHalf       = 0x0000000001000000,
 	
 		/// <summary>
 		/// Vertex attribute 10_10_10_2 is supported.
 		/// </summary>
-		VertexAttribUint10     = 0x0000000004000000,
+		VertexAttribUint10     = 0x0000000002000000,
 	
 		/// <summary>
 		/// Rendering with VertexID only is supported.
 		/// </summary>
-		VertexId               = 0x0000000008000000,
+		VertexId               = 0x0000000004000000,
+	
+		/// <summary>
+		/// Viewport layer is available in vertex shader.
+		/// </summary>
+		ViewportLayerArray     = 0x0000000008000000,
 	
 		/// <summary>
 		/// All texture compare modes are supported.
 		/// </summary>
-		TextureCompareAll      = 0x0000000000300000,
+		TextureCompareAll      = 0x0000000000180000,
 	}
 	
 	[Flags]
@@ -1854,7 +1854,7 @@ public static partial class bgfx
 		TriListFlipWinding,
 	
 		/// <summary>
-		/// Flip winding order of trinagle strip.
+		/// Flip winding order of triangle strip.
 		/// </summary>
 		TriStripFlipWinding,
 	
@@ -2051,6 +2051,7 @@ public static partial class bgfx
 		public uint size;
 		public uint startIndex;
 		public IndexBufferHandle handle;
+		public byte isIndex16;
 	}
 	
 	public unsafe struct TransientVertexBuffer
@@ -2099,6 +2100,7 @@ public static partial class bgfx
 		public TextureHandle handle;
 		public ushort mip;
 		public ushort layer;
+		public ushort numLayers;
 		public byte resolve;
 	}
 	
@@ -2246,12 +2248,13 @@ public static partial class bgfx
 	///
 	/// <param name="_handle">Render target texture handle.</param>
 	/// <param name="_access">Access. See `Access::Enum`.</param>
-	/// <param name="_layer">Cubemap side or depth layer/slice.</param>
+	/// <param name="_layer">Cubemap side or depth layer/slice to use.</param>
+	/// <param name="_numLayers">Number of texture layer/slice(s) in array to use.</param>
 	/// <param name="_mip">Mip level.</param>
 	/// <param name="_resolve">Resolve flags. See: `BGFX_RESOLVE_*`</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_attachment_init", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, ushort _layer, ushort _mip, byte _resolve);
+	public static extern unsafe void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, ushort _layer, ushort _numLayers, ushort _mip, byte _resolve);
 	
 	/// <summary>
 	/// Start VertexLayout.
@@ -2796,9 +2799,10 @@ public static partial class bgfx
 	///
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 	/// <param name="_num">Number of indices to allocate.</param>
+	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_alloc_transient_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void alloc_transient_index_buffer(TransientIndexBuffer* _tib, uint _num);
+	public static extern unsafe void alloc_transient_index_buffer(TransientIndexBuffer* _tib, uint _num, bool _index32);
 	
 	/// <summary>
 	/// Allocate transient vertex buffer.

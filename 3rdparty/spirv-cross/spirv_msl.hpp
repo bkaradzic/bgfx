@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The Brenwill Workshop Ltd.
+ * Copyright 2016-2021 The Brenwill Workshop Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #ifndef SPIRV_CROSS_MSL_HPP
@@ -364,6 +371,28 @@ public:
 		// and will be addressed using the current ViewIndex.
 		bool arrayed_subpass_input = false;
 
+		// Whether to use SIMD-group or quadgroup functions to implement group nnon-uniform
+		// operations. Some GPUs on iOS do not support the SIMD-group functions, only the
+		// quadgroup functions.
+		bool ios_use_simdgroup_functions = false;
+
+		// If set, the subgroup size will be assumed to be one, and subgroup-related
+		// builtins and operations will be emitted accordingly. This mode is intended to
+		// be used by MoltenVK on hardware/software configurations which do not provide
+		// sufficient support for subgroups.
+		bool emulate_subgroups = false;
+
+		// If nonzero, a fixed subgroup size to assume. Metal, similarly to VK_EXT_subgroup_size_control,
+		// allows the SIMD-group size (aka thread execution width) to vary depending on
+		// register usage and requirements. In certain circumstances--for example, a pipeline
+		// in MoltenVK without VK_PIPELINE_SHADER_STAGE_CREATE_ALLOW_VARYING_SUBGROUP_SIZE_BIT_EXT--
+		// this is undesirable. This fixes the value of the SubgroupSize builtin, instead of
+		// mapping it to the Metal builtin [[thread_execution_width]]. If the thread
+		// execution width is reduced, the extra invocations will appear to be inactive.
+		// If zero, the SubgroupSize will be allowed to vary, and the builtin will be mapped
+		// to the Metal [[thread_execution_width]] builtin.
+		uint32_t fixed_subgroup_size = 0;
+
 		enum class IndexType
 		{
 			None = 0,
@@ -378,6 +407,11 @@ public:
 		// handling for the gl_VertexIndex builtin. We may as well, then, create three
 		// different shaders for these three scenarios.
 		IndexType vertex_index_type = IndexType::None;
+
+		// If set, a dummy [[sample_id]] input is added to a fragment shader if none is present.
+		// This will force the shader to run at sample rate, assuming Metal does not optimize
+		// the extra threads away.
+		bool force_sample_rate_shading = false;
 
 		bool is_ios() const
 		{
@@ -516,6 +550,13 @@ public:
 	// Query after compilation is done. This allows you to check if an input location was used by the shader.
 	bool is_msl_shader_input_used(uint32_t location);
 
+	// If not using add_msl_shader_input, it's possible
+	// that certain builtin attributes need to be automatically assigned locations.
+	// This is typical for tessellation builtin inputs such as tess levels, gl_Position, etc.
+	// This returns k_unknown_location if the location was explicitly assigned with
+	// add_msl_shader_input or the builtin is not used, otherwise returns N in [[attribute(N)]].
+	uint32_t get_automatic_builtin_input_location(spv::BuiltIn builtin) const;
+
 	// NOTE: Only resources which are remapped using add_msl_resource_binding will be reported here.
 	// Constexpr samplers are always assumed to be emitted.
 	// No specific MSLResourceBinding remapping is required for constexpr samplers as long as they are remapped
@@ -533,6 +574,7 @@ public:
 
 	// Same as get_automatic_msl_resource_binding, but should only be used for combined image samplers, in which case the
 	// sampler's binding is returned instead. For any other resource type, -1 is returned.
+	// Secondary bindings are also used for the auxillary image atomic buffer.
 	uint32_t get_automatic_msl_resource_binding_secondary(uint32_t id) const;
 
 	// Same as get_automatic_msl_resource_binding, but should only be used for combined image samplers for multiplanar images,
@@ -701,6 +743,12 @@ protected:
 	void declare_undefined_values() override;
 	void declare_constant_arrays();
 
+	void replace_illegal_entry_point_names();
+	void sync_entry_point_aliases_and_names();
+
+	static const std::unordered_set<std::string> &get_reserved_keyword_set();
+	static const std::unordered_set<std::string> &get_illegal_func_names();
+
 	// Constant arrays of non-primitive types (i.e. matrices) won't link properly into Metal libraries
 	void declare_complex_constant_arrays();
 
@@ -776,6 +824,7 @@ protected:
 	std::string to_sampler_expression(uint32_t id);
 	std::string to_swizzle_expression(uint32_t id);
 	std::string to_buffer_size_expression(uint32_t id);
+	bool is_sample_rate() const;
 	bool is_direct_input_builtin(spv::BuiltIn builtin);
 	std::string builtin_qualifier(spv::BuiltIn builtin);
 	std::string builtin_type_decl(spv::BuiltIn builtin, uint32_t id = 0);
@@ -784,7 +833,11 @@ protected:
 	std::string argument_decl(const SPIRFunction::Parameter &arg);
 	std::string round_fp_tex_coords(std::string tex_coords, bool coord_is_fp);
 	uint32_t get_metal_resource_index(SPIRVariable &var, SPIRType::BaseType basetype, uint32_t plane = 0);
-	uint32_t get_ordered_member_location(uint32_t type_id, uint32_t index, uint32_t *comp = nullptr);
+	uint32_t get_member_location(uint32_t type_id, uint32_t index, uint32_t *comp = nullptr) const;
+	uint32_t get_or_allocate_builtin_input_member_location(spv::BuiltIn builtin,
+	                                                       uint32_t type_id, uint32_t index, uint32_t *comp = nullptr);
+
+	uint32_t get_physical_tess_level_array_size(spv::BuiltIn builtin) const;
 
 	// MSL packing rules. These compute the effective packing rules as observed by the MSL compiler in the MSL output.
 	// These values can change depending on various extended decorations which control packing rules.
@@ -853,6 +906,8 @@ protected:
 	uint32_t builtin_subgroup_size_id = 0;
 	uint32_t builtin_dispatch_base_id = 0;
 	uint32_t builtin_stage_input_size_id = 0;
+	uint32_t builtin_local_invocation_index_id = 0;
+	uint32_t builtin_workgroup_size_id = 0;
 	uint32_t swizzle_buffer_id = 0;
 	uint32_t buffer_size_buffer_id = 0;
 	uint32_t view_mask_buffer_id = 0;
@@ -885,13 +940,15 @@ protected:
 	// Must be ordered to ensure declarations are in a specific order.
 	std::map<uint32_t, MSLShaderInput> inputs_by_location;
 	std::unordered_map<uint32_t, MSLShaderInput> inputs_by_builtin;
-	std::unordered_set<uint32_t> inputs_in_use;
+	std::unordered_set<uint32_t> location_inputs_in_use;
 	std::unordered_map<uint32_t, uint32_t> fragment_output_components;
+	std::unordered_map<uint32_t, uint32_t> builtin_to_automatic_input_location;
 	std::set<std::string> pragma_lines;
 	std::set<std::string> typedef_lines;
 	SmallVector<uint32_t> vars_needing_early_declaration;
 
 	std::unordered_map<StageSetBinding, std::pair<MSLResourceBinding, bool>, InternalHasher> resource_bindings;
+	uint32_t type_to_location_count(const SPIRType &type) const;
 
 	uint32_t next_metal_resource_index_buffer = 0;
 	uint32_t next_metal_resource_index_texture = 0;
@@ -983,6 +1040,9 @@ protected:
 	void activate_argument_buffer_resources();
 
 	bool type_is_msl_framebuffer_fetch(const SPIRType &type) const;
+	bool type_is_pointer(const SPIRType &type) const;
+	bool type_is_pointer_to_pointer(const SPIRType &type) const;
+	bool is_supported_argument_buffer_type(const SPIRType &type) const;
 
 	// OpcodeHandler that handles several MSL preprocessing operations.
 	struct OpCodePreprocessor : OpcodeHandler

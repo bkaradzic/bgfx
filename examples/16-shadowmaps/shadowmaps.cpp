@@ -1747,7 +1747,7 @@ public:
 			bgfx::TextureHandle fbtextures[] =
 			{
 				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
+				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D32F,  BGFX_TEXTURE_RT),
 			};
 			s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
@@ -2047,7 +2047,7 @@ public:
 			const float deltaTime = float(frameTime/freq);
 
 			// Update camera.
-			cameraUpdate(deltaTime, m_mouseState);
+			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 			// Update view mtx.
 			cameraGetViewMtx(m_viewState.m_view);

@@ -949,6 +949,9 @@ bool ProcessDeferred(
     if (cachedTable)
         symbolTable->adoptLevels(*cachedTable);
 
+    if (intermediate.getUniqueId() != 0)
+        symbolTable->overwriteUniqueId(intermediate.getUniqueId());
+
     // Add built-in symbols that are potentially context dependent;
     // they get popped again further down.
     if (! AddContextSpecificSymbols(resources, compiler->infoSink, *symbolTable, version, profile, spvVersion,
@@ -1011,6 +1014,7 @@ bool ProcessDeferred(
     bool success = processingContext(*parseContext, ppContext, fullInput,
                                      versionWillBeError, *symbolTable,
                                      intermediate, optLevel, messages);
+    intermediate.setUniqueId(symbolTable->getMaxSymbolId());
     return success;
 }
 
@@ -1270,14 +1274,15 @@ bool PreprocessDeferred(
     EShMessages messages,       // warnings/errors/AST; things to print out
     TShader::Includer& includer,
     TIntermediate& intermediate, // returned tree, etc.
-    std::string* outputString)
+    std::string* outputString,
+    TEnvironment* environment = nullptr)
 {
     DoPreprocessing parser(outputString);
     return ProcessDeferred(compiler, shaderStrings, numStrings, inputLengths, stringNames,
                            preamble, optLevel, resources, defaultVersion,
                            defaultProfile, forceDefaultVersionAndProfile,
                            forwardCompatible, messages, intermediate, parser,
-                           false, includer);
+                           false, includer, "", environment);
 }
 #endif
 
@@ -1810,6 +1815,11 @@ void TShader::addProcesses(const std::vector<std::string>& p)
     intermediate->addProcesses(p);
 }
 
+void  TShader::setUniqueId(unsigned long long id)
+{
+    intermediate->setUniqueId(id);
+}
+
 void TShader::setInvertY(bool invert)                   { intermediate->setInvertY(invert); }
 void TShader::setNanMinMaxClamp(bool useNonNan)         { intermediate->setNanMinMaxClamp(useNonNan); }
 
@@ -1909,7 +1919,8 @@ bool TShader::preprocess(const TBuiltInResource* builtInResources,
     return PreprocessDeferred(compiler, strings, numStrings, lengths, stringNames, preamble,
                               EShOptNone, builtInResources, defaultVersion,
                               defaultProfile, forceDefaultVersionAndProfile,
-                              forwardCompatible, message, includer, *intermediate, output_string);
+                              forwardCompatible, message, includer, *intermediate, output_string,
+                              &environment);
 }
 #endif
 

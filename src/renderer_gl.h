@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -624,7 +624,7 @@ typedef uint64_t GLuint64;
 #	define GL_MAX_SAMPLES 0x8D57
 #endif // GL_MAX_SAMPLES
 
-#ifndef GL_MAX_SAMPLES_IMG 
+#ifndef GL_MAX_SAMPLES_IMG
 #   define GL_MAX_SAMPLES_IMG 0x9135
 #endif // GL_MAX_SAMPLES_IMG
 
@@ -980,6 +980,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_COMMAND_BARRIER_BIT
 #	define GL_COMMAND_BARRIER_BIT 0x00000040
 #endif // GL_COMMAND_BARRIER_BIT
+
+#ifndef GL_FIRST_VERTEX_CONVENTION
+#	define GL_FIRST_VERTEX_CONVENTION 0x8E4D
+#endif // GL_FIRST_VERTEX_CONVENTION
 
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242

@@ -1376,7 +1376,7 @@ TIntermTyped* HlslParseContext::flattenAccess(TIntermTyped* base, int member)
 
     return flattened ? flattened : base;
 }
-TIntermTyped* HlslParseContext::flattenAccess(int uniqueId, int member, TStorageQualifier outerStorage,
+TIntermTyped* HlslParseContext::flattenAccess(long long uniqueId, int member, TStorageQualifier outerStorage,
     const TType& dereferencedType, int subset)
 {
     const auto flattenData = flattenMap.find(uniqueId);
@@ -1444,7 +1444,7 @@ int HlslParseContext::findSubtreeOffset(const TType& type, int subset, const TVe
 };
 
 // Find and return the split IO TVariable for id, or nullptr if none.
-TVariable* HlslParseContext::getSplitNonIoVar(int id) const
+TVariable* HlslParseContext::getSplitNonIoVar(long long id) const
 {
     const auto splitNonIoVar = splitNonIoVars.find(id);
     if (splitNonIoVar == splitNonIoVars.end())
@@ -3256,7 +3256,7 @@ TIntermAggregate* HlslParseContext::handleSamplerTextureCombine(const TSourceLoc
         // shadow state.  This depends on downstream optimization to
         // DCE one variant in [shadow, nonshadow] if both are present,
         // or the SPIR-V module would be invalid.
-        int newId = texSymbol->getId();
+        long long newId = texSymbol->getId();
 
         // Check to see if this texture has been given a shadow mode already.
         // If so, look up the one we already have.
@@ -5492,6 +5492,10 @@ TIntermTyped* HlslParseContext::handleFunctionCall(const TSourceLoc& loc, TFunct
 
             op = fnCandidate->getBuiltInOp();
             if (builtIn && op != EOpNull) {
+                // SM 4.0 and above guarantees roundEven semantics for round()
+                if (!hlslDX9Compatible() && op == EOpRound)
+                    op = EOpRoundEven;
+
                 // A function call mapped to a built-in operation.
                 result = intermediate.addBuiltInFunctionCall(loc, op, fnCandidate->getParamCount() == 1, arguments,
                                                              fnCandidate->getType());
@@ -9865,7 +9869,7 @@ void HlslParseContext::addPatchConstantInvocation()
                 } else {
                     // Use the original declaration type for the linkage
                     paramType->getQualifier().builtIn = biType;
-                    if (biType == EbvTessLevelInner || biType == EbvTessLevelInner)
+                    if (biType == EbvTessLevelInner || biType == EbvTessLevelOuter)
                         paramType->getQualifier().patch = true;
 
                     if (notInEntryPoint.count(tInterstageIoData(biType, storage)) == 1)

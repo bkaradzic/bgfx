@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 109;
+enum uint BGFX_API_VERSION = 112;
 
 alias bgfx_view_id_t = ushort;
 
@@ -352,30 +352,30 @@ enum ulong BGFX_CAPS_BLEND_INDEPENDENT = 0x0000000000000002; /// Blend independe
 enum ulong BGFX_CAPS_COMPUTE = 0x0000000000000004; /// Compute shaders are supported.
 enum ulong BGFX_CAPS_CONSERVATIVE_RASTER = 0x0000000000000008; /// Conservative rasterization is supported.
 enum ulong BGFX_CAPS_DRAW_INDIRECT = 0x0000000000000010; /// Draw indirect is supported.
-enum ulong BGFX_CAPS_FRAGMENT_DEPTH = 0x0000000000000020; /// Fragment depth is accessible in fragment shader.
+enum ulong BGFX_CAPS_FRAGMENT_DEPTH = 0x0000000000000020; /// Fragment depth is available in fragment shader.
 enum ulong BGFX_CAPS_FRAGMENT_ORDERING = 0x0000000000000040; /// Fragment ordering is available in fragment shader.
-enum ulong BGFX_CAPS_IMAGE_RW = 0x0000000000000080; /// Image Read/Write is supported.
-enum ulong BGFX_CAPS_GRAPHICS_DEBUGGER = 0x0000000000000100; /// Graphics debugger is present.
-enum ulong BGFX_CAPS_RESERVED = 0x0000000000000200;
-enum ulong BGFX_CAPS_HDR10 = 0x0000000000000400; /// HDR10 rendering is supported.
-enum ulong BGFX_CAPS_HIDPI = 0x0000000000000800; /// HiDPI rendering is supported.
-enum ulong BGFX_CAPS_INDEX32 = 0x0000000000001000; /// 32-bit indices are supported.
-enum ulong BGFX_CAPS_INSTANCING = 0x0000000000002000; /// Instancing is supported.
-enum ulong BGFX_CAPS_OCCLUSION_QUERY = 0x0000000000004000; /// Occlusion query is supported.
-enum ulong BGFX_CAPS_RENDERER_MULTITHREADED = 0x0000000000008000; /// Renderer is on separate thread.
-enum ulong BGFX_CAPS_SWAP_CHAIN = 0x0000000000010000; /// Multiple windows are supported.
-enum ulong BGFX_CAPS_TEXTURE_2D_ARRAY = 0x0000000000020000; /// 2D texture array is supported.
-enum ulong BGFX_CAPS_TEXTURE_3D = 0x0000000000040000; /// 3D textures are supported.
-enum ulong BGFX_CAPS_TEXTURE_BLIT = 0x0000000000080000; /// Texture blit is supported.
-enum ulong BGFX_CAPS_TEXTURE_COMPARE_RESERVED = 0x0000000000100000; /// All texture compare modes are supported.
-enum ulong BGFX_CAPS_TEXTURE_COMPARE_LEQUAL = 0x0000000000200000; /// Texture compare less equal mode is supported.
-enum ulong BGFX_CAPS_TEXTURE_CUBE_ARRAY = 0x0000000000400000; /// Cubemap texture array is supported.
-enum ulong BGFX_CAPS_TEXTURE_DIRECT_ACCESS = 0x0000000000800000; /// CPU direct access to GPU texture memory.
-enum ulong BGFX_CAPS_TEXTURE_READ_BACK = 0x0000000001000000; /// Read-back texture is supported.
-enum ulong BGFX_CAPS_VERTEX_ATTRIB_HALF = 0x0000000002000000; /// Vertex attribute half-float is supported.
-enum ulong BGFX_CAPS_VERTEX_ATTRIB_UINT10 = 0x0000000004000000; /// Vertex attribute 10_10_10_2 is supported.
-enum ulong BGFX_CAPS_VERTEX_ID = 0x0000000008000000; /// Rendering with VertexID only is supported.
-enum ulong BGFX_CAPS_TEXTURE_COMPARE_ALL = 0x0000000000300000; /// All texture compare modes are supported.
+enum ulong BGFX_CAPS_GRAPHICS_DEBUGGER = 0x0000000000000080; /// Graphics debugger is present.
+enum ulong BGFX_CAPS_HDR10 = 0x0000000000000100; /// HDR10 rendering is supported.
+enum ulong BGFX_CAPS_HIDPI = 0x0000000000000200; /// HiDPI rendering is supported.
+enum ulong BGFX_CAPS_IMAGE_RW = 0x0000000000000400; /// Image Read/Write is supported.
+enum ulong BGFX_CAPS_INDEX32 = 0x0000000000000800; /// 32-bit indices are supported.
+enum ulong BGFX_CAPS_INSTANCING = 0x0000000000001000; /// Instancing is supported.
+enum ulong BGFX_CAPS_OCCLUSION_QUERY = 0x0000000000002000; /// Occlusion query is supported.
+enum ulong BGFX_CAPS_RENDERER_MULTITHREADED = 0x0000000000004000; /// Renderer is on separate thread.
+enum ulong BGFX_CAPS_SWAP_CHAIN = 0x0000000000008000; /// Multiple windows are supported.
+enum ulong BGFX_CAPS_TEXTURE_2D_ARRAY = 0x0000000000010000; /// 2D texture array is supported.
+enum ulong BGFX_CAPS_TEXTURE_3D = 0x0000000000020000; /// 3D textures are supported.
+enum ulong BGFX_CAPS_TEXTURE_BLIT = 0x0000000000040000; /// Texture blit is supported.
+enum ulong BGFX_CAPS_TEXTURE_COMPARE_RESERVED = 0x0000000000080000;
+enum ulong BGFX_CAPS_TEXTURE_COMPARE_LEQUAL = 0x0000000000100000; /// Texture compare less equal mode is supported.
+enum ulong BGFX_CAPS_TEXTURE_CUBE_ARRAY = 0x0000000000200000; /// Cubemap texture array is supported.
+enum ulong BGFX_CAPS_TEXTURE_DIRECT_ACCESS = 0x0000000000400000; /// CPU direct access to GPU texture memory.
+enum ulong BGFX_CAPS_TEXTURE_READ_BACK = 0x0000000000800000; /// Read-back texture is supported.
+enum ulong BGFX_CAPS_VERTEX_ATTRIB_HALF = 0x0000000001000000; /// Vertex attribute half-float is supported.
+enum ulong BGFX_CAPS_VERTEX_ATTRIB_UINT10 = 0x0000000002000000; /// Vertex attribute 10_10_10_2 is supported.
+enum ulong BGFX_CAPS_VERTEX_ID = 0x0000000004000000; /// Rendering with VertexID only is supported.
+enum ulong BGFX_CAPS_VIEWPORT_LAYER_ARRAY = 0x0000000008000000; /// Viewport layer is available in vertex shader.
+enum ulong BGFX_CAPS_TEXTURE_COMPARE_ALL = 0x0000000000180000; /// All texture compare modes are supported.
 
 enum uint BGFX_CAPS_FORMAT_TEXTURE_NONE = 0x00000000; /// Texture format is not supported.
 enum uint BGFX_CAPS_FORMAT_TEXTURE_2D = 0x00000001; /// Texture format is supported.
@@ -644,7 +644,7 @@ enum bgfx_topology_t
 enum bgfx_topology_convert_t
 {
 	BGFX_TOPOLOGY_CONVERT_TRILISTFLIPWINDING, /// Flip winding order of triangle list.
-	BGFX_TOPOLOGY_CONVERT_TRISTRIPFLIPWINDING, /// Flip winding order of trinagle strip.
+	BGFX_TOPOLOGY_CONVERT_TRISTRIPFLIPWINDING, /// Flip winding order of triangle strip.
 	BGFX_TOPOLOGY_CONVERT_TRILISTTOLINELIST, /// Convert triangle list to line list.
 	BGFX_TOPOLOGY_CONVERT_TRISTRIPTOTRILIST, /// Convert triangle strip to triangle list.
 	BGFX_TOPOLOGY_CONVERT_LINESTRIPTOLINELIST, /// Convert line strip to line list.
@@ -891,6 +891,7 @@ struct bgfx_transient_index_buffer_t
 	uint size; /// Data size.
 	uint startIndex; /// First index.
 	bgfx_index_buffer_handle_t handle; /// Index buffer handle.
+	bool isIndex16; /// Index buffer format is 16-bits if true, otherwise it is 32-bit.
 }
 
 /// Transient vertex buffer.
@@ -943,7 +944,8 @@ struct bgfx_attachment_t
 	bgfx_access_t access; /// Attachement access. See `Access::Enum`.
 	bgfx_texture_handle_t handle; /// Render target texture handle.
 	ushort mip; /// Mip level.
-	ushort layer; /// Cubemap side or depth layer/slice.
+	ushort layer; /// Cubemap side or depth layer/slice to use.
+	ushort numLayers; /// Number of texture layer/slice(s) in array to use.
 	byte resolve; /// Resolve flags. See: `BGFX_RESOLVE_*`
 }
 

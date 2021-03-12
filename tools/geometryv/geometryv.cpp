@@ -1051,7 +1051,7 @@ int _main_(int _argc, char** _argv)
 							;
 
 						ImGui::PushItemWidth(-1);
-						if (ImGui::ListBoxHeader("##empty", ImVec2(0.0f, listHeight) ) )
+						if (ImGui::BeginListBox("##empty", ImVec2(0.0f, listHeight) ) )
 						{
 							const int32_t itemCount = int32_t(view.m_fileList.size() );
 
@@ -1089,7 +1089,7 @@ int _main_(int _argc, char** _argv)
 
 							clipper.End();
 
-							ImGui::ListBoxFooter();
+							ImGui::EndListBox();
 						}
 
 						ImGui::PopFont();

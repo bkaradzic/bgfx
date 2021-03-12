@@ -58,7 +58,7 @@ class ConstantManager;
 class Constant {
  public:
   Constant() = delete;
-  virtual ~Constant() {}
+  virtual ~Constant() = default;
 
   // Make a deep copy of this constant.
   virtual std::unique_ptr<Constant> Copy() const = 0;

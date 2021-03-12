@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 Arm Limited
+ * Copyright 2015-2021 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #include "spirv_cpp.hpp"
@@ -30,6 +37,11 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
+
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#endif
 
 #ifdef HAVE_SPIRV_CROSS_GIT_VERSION
 #include "gitversion.h"
@@ -213,8 +225,27 @@ struct CLIParser
 #pragma warning(disable : 4996)
 #endif
 
+static vector<uint32_t> read_spirv_file_stdin()
+{
+#ifdef _WIN32
+	setmode(fileno(stdin), O_BINARY);
+#endif
+
+	vector<uint32_t> buffer;
+	uint32_t tmp[256];
+	size_t ret;
+
+	while ((ret = fread(tmp, sizeof(uint32_t), 256, stdin)))
+		buffer.insert(buffer.end(), tmp, tmp + ret);
+
+	return buffer;
+}
+
 static vector<uint32_t> read_spirv_file(const char *path)
 {
+	if (path[0] == '-' && path[1] == '\0')
+		return read_spirv_file_stdin();
+
 	FILE *file = fopen(path, "rb");
 	if (!file)
 	{
@@ -566,6 +597,10 @@ struct CLIArguments
 	uint32_t msl_r32ui_linear_texture_alignment = 4;
 	uint32_t msl_r32ui_alignment_constant_id = 65535;
 	bool msl_texture_1d_as_2d = false;
+	bool msl_ios_use_simdgroup_functions = false;
+	bool msl_emulate_subgroups = false;
+	uint32_t msl_fixed_subgroup_size = 0;
+	bool msl_force_sample_rate_shading = false;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
 	bool glsl_force_flattened_io_blocks = false;
@@ -779,7 +814,16 @@ static void print_help_msl()
 	                "\t[--msl-r32ui-linear-texture-align-constant-id <id>]:\n\t\tThe function constant ID to use for the linear texture alignment.\n"
 	                "\t\tOn MSL 1.2 or later, you can override the alignment by setting this function constant.\n"
 	                "\t[--msl-texture-1d-as-2d]:\n\t\tEmit Image variables of dimension Dim1D as texture2d.\n"
-	                "\t\tIn Metal, 1D textures do not support all features that 2D textures do. Use this option if your code relies on these features.\n");
+	                "\t\tIn Metal, 1D textures do not support all features that 2D textures do. Use this option if your code relies on these features.\n"
+	                "\t[--msl-ios-use-simdgroup-functions]:\n\t\tUse simd_*() functions for subgroup ops instead of quad_*().\n"
+	                "\t\tRecent Apple GPUs support SIMD-groups larger than a quad. Use this option to take advantage of this support.\n"
+	                "\t[--msl-emulate-subgroups]:\n\t\tAssume subgroups of size 1.\n"
+	                "\t\tIntended for Vulkan Portability implementations where Metal support for SIMD-groups is insufficient for true subgroups.\n"
+	                "\t[--msl-fixed-subgroup-size <size>]:\n\t\tAssign a constant <size> to the SubgroupSize builtin.\n"
+	                "\t\tIntended for Vulkan Portability implementations where VK_EXT_subgroup_size_control is not supported or disabled.\n"
+	                "\t\tIf 0, assume variable subgroup size as actually exposed by Metal.\n"
+	                "\t[--msl-force-sample-rate-shading]:\n\t\tForce fragment shaders to run per sample.\n"
+	                "\t\tThis adds a [[sample_id]] parameter if none is already present.\n");
 	// clang-format on
 }
 
@@ -829,7 +873,7 @@ static void print_help()
 	// clang-format off
 	fprintf(stderr, "Usage: spirv-cross <...>\n"
 	                "\nBasic:\n"
-	                "\t[SPIR-V file]\n"
+	                "\t[SPIR-V file] (- is stdin)\n"
 	                "\t[--output <output path>]: If not provided, prints output to stdout.\n"
 	                "\t[--dump-resources]:\n\t\tPrints a basic reflection of the SPIR-V module along with other output.\n"
 	                "\t[--help]:\n\t\tPrints this help message.\n"
@@ -1021,6 +1065,10 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.r32ui_linear_texture_alignment = args.msl_r32ui_linear_texture_alignment;
 		msl_opts.r32ui_alignment_constant_id = args.msl_r32ui_alignment_constant_id;
 		msl_opts.texture_1D_as_2D = args.msl_texture_1d_as_2d;
+		msl_opts.ios_use_simdgroup_functions = args.msl_ios_use_simdgroup_functions;
+		msl_opts.emulate_subgroups = args.msl_emulate_subgroups;
+		msl_opts.fixed_subgroup_size = args.msl_fixed_subgroup_size;
+		msl_opts.force_sample_rate_shading = args.msl_force_sample_rate_shading;
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
 			msl_comp->add_discrete_descriptor_set(v);
@@ -1370,7 +1418,8 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--hlsl-nonwritable-uav-texture-as-srv",
 	        [&args](CLIParser &) { args.hlsl_nonwritable_uav_texture_as_srv = true; });
 	cbs.add("--hlsl-enable-16bit-types", [&args](CLIParser &) { args.hlsl_enable_16bit_types = true; });
-	cbs.add("--hlsl-flatten-matrix-vertex-input-semantics", [&args](CLIParser &) { args.hlsl_flatten_matrix_vertex_input_semantics = true; });
+	cbs.add("--hlsl-flatten-matrix-vertex-input-semantics",
+	        [&args](CLIParser &) { args.hlsl_flatten_matrix_vertex_input_semantics = true; });
 	cbs.add("--vulkan-semantics", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("-V", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("--flatten-multidimensional-arrays", [&args](CLIParser &) { args.flatten_multidimensional_arrays = true; });
@@ -1448,6 +1497,11 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-r32ui-linear-texture-align-constant-id",
 	        [&args](CLIParser &parser) { args.msl_r32ui_alignment_constant_id = parser.next_uint(); });
 	cbs.add("--msl-texture-1d-as-2d", [&args](CLIParser &) { args.msl_texture_1d_as_2d = true; });
+	cbs.add("--msl-ios-use-simdgroup-functions", [&args](CLIParser &) { args.msl_ios_use_simdgroup_functions = true; });
+	cbs.add("--msl-emulate-subgroups", [&args](CLIParser &) { args.msl_emulate_subgroups = true; });
+	cbs.add("--msl-fixed-subgroup-size",
+	        [&args](CLIParser &parser) { args.msl_fixed_subgroup_size = parser.next_uint(); });
+	cbs.add("--msl-force-sample-rate-shading", [&args](CLIParser &) { args.msl_force_sample_rate_shading = true; });
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();
@@ -1518,6 +1572,7 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--emit-line-directives", [&args](CLIParser &) { args.emit_line_directives = true; });
 
 	cbs.default_handler = [&args](const char *value) { args.input = value; };
+	cbs.add("-", [&args](CLIParser &) { args.input = "-"; });
 	cbs.error_handler = [] { print_help(); };
 
 	CLIParser parser{ move(cbs), argc - 1, argv + 1 };

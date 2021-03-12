@@ -1,7 +1,7 @@
 $input v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4
 
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
