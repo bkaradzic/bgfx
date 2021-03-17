@@ -407,6 +407,7 @@ namespace Spv
         {
             Export = 0,
             Import = 1,
+            LinkOnceODR = 2,
         }
 
         public enum AccessQualifier
@@ -1019,6 +1020,7 @@ namespace Spv
             AtomicFloat16MinMaxEXT = 5616,
             VectorComputeINTEL = 5617,
             VectorAnyINTEL = 5619,
+            ExpectAssumeKHR = 5629,
             SubgroupAvcMotionEstimationINTEL = 5696,
             SubgroupAvcMotionEstimationIntraINTEL = 5697,
             SubgroupAvcMotionEstimationChromaINTEL = 5698,
@@ -1548,6 +1550,8 @@ namespace Spv
             OpAsmCallINTEL = 5611,
             OpAtomicFMinEXT = 5614,
             OpAtomicFMaxEXT = 5615,
+            OpAssumeTrueKHR = 5630,
+            OpExpectKHR = 5631,
             OpDecorateString = 5632,
             OpDecorateStringGOOGLE = 5632,
             OpMemberDecorateString = 5633,

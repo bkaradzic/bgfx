@@ -513,9 +513,18 @@ protected:
 		if (!instr.length)
 			return nullptr;
 
-		if (instr.offset + instr.length > ir.spirv.size())
-			SPIRV_CROSS_THROW("Compiler::stream() out of range.");
-		return &ir.spirv[instr.offset];
+		if (instr.is_embedded())
+		{
+			auto &embedded = static_cast<const EmbeddedInstruction &>(instr);
+			assert(embedded.ops.size() == instr.length);
+			return embedded.ops.data();
+		}
+		else
+		{
+			if (instr.offset + instr.length > ir.spirv.size())
+				SPIRV_CROSS_THROW("Compiler::stream() out of range.");
+			return &ir.spirv[instr.offset];
+		}
 	}
 
 	ParsedIR ir;

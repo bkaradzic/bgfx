@@ -4635,12 +4635,8 @@ void CompilerHLSL::emit_subgroup_op(const Instruction &i)
 		break;
 
 	case OpGroupNonUniformAllEqual:
-	{
-		auto &type = get<SPIRType>(result_type);
-		emit_unary_func_op(result_type, id, ops[3],
-		                   type.basetype == SPIRType::Boolean ? "WaveActiveAllEqualBool" : "WaveActiveAllEqual");
+		emit_unary_func_op(result_type, id, ops[3], "WaveActiveAllEqual");
 		break;
-	}
 
 	// clang-format off
 #define HLSL_GROUP_OP(op, hlsl_op, supports_scan) \
@@ -4688,6 +4684,9 @@ case OpGroupNonUniform##op: \
 	HLSL_GROUP_OP(BitwiseAnd, BitAnd, false)
 	HLSL_GROUP_OP(BitwiseOr, BitOr, false)
 	HLSL_GROUP_OP(BitwiseXor, BitXor, false)
+	HLSL_GROUP_OP_CAST(LogicalAnd, BitAnd, uint_type)
+	HLSL_GROUP_OP_CAST(LogicalOr, BitOr, uint_type)
+	HLSL_GROUP_OP_CAST(LogicalXor, BitXor, uint_type)
 
 #undef HLSL_GROUP_OP
 #undef HLSL_GROUP_OP_CAST

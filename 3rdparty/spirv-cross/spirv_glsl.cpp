@@ -40,6 +40,13 @@ using namespace spv;
 using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
 
+enum ExtraSubExpressionType
+{
+	// Create masks above any legal ID range to allow multiple address spaces into the extra_sub_expressions map.
+	EXTRA_SUB_EXPRESSION_TYPE_STREAM_OFFSET = 0x10000000,
+	EXTRA_SUB_EXPRESSION_TYPE_AUX = 0x20000000
+};
+
 static bool is_unsigned_opcode(Op op)
 {
 	// Don't have to be exhaustive, only relevant for legacy target checking ...
@@ -3601,6 +3608,21 @@ void CompilerGLSL::emit_output_variable_initializer(const SPIRVariable &var)
 			statement(to_expression(var.self), "[gl_InvocationID] = ", lut_name, "[gl_InvocationID];");
 		});
 	}
+	else if (has_decoration(var.self, DecorationBuiltIn) &&
+	         BuiltIn(get_decoration(var.self, DecorationBuiltIn)) == BuiltInSampleMask)
+	{
+		// We cannot copy the array since gl_SampleMask is unsized in GLSL. Unroll time! <_<
+		entry_func.fixup_hooks_in.push_back([&] {
+			auto &c = this->get<SPIRConstant>(var.initializer);
+			uint32_t num_constants = uint32_t(c.subconstants.size());
+			for (uint32_t i = 0; i < num_constants; i++)
+			{
+				// Don't use to_expression on constant since it might be uint, just fish out the raw int.
+				statement(to_expression(var.self), "[", i, "] = ",
+				          convert_to_string(this->get<SPIRConstant>(c.subconstants[i]).scalar_i32()), ";");
+			}
+		});
+	}
 	else
 	{
 		auto lut_name = join("_", var.self, "_init");
@@ -5700,14 +5722,27 @@ void CompilerGLSL::emit_unary_func_op_cast(uint32_t result_type, uint32_t result
 	// Bit-widths might be different in unary cases because we use it for SConvert/UConvert and friends.
 	expected_type.basetype = input_type;
 	expected_type.width = expr_type.width;
-	string cast_op = expr_type.basetype != input_type ? bitcast_glsl(expected_type, op0) : to_unpacked_expression(op0);
+
+	string cast_op;
+	if (expr_type.basetype != input_type)
+	{
+		if (expr_type.basetype == SPIRType::Boolean)
+			cast_op = join(type_to_glsl(expected_type), "(", to_unpacked_expression(op0), ")");
+		else
+			cast_op = bitcast_glsl(expected_type, op0);
+	}
+	else
+		cast_op = to_unpacked_expression(op0);
 
 	string expr;
 	if (out_type.basetype != expected_result_type)
 	{
 		expected_type.basetype = expected_result_type;
 		expected_type.width = out_type.width;
-		expr = bitcast_glsl_op(out_type, expected_type);
+		if (out_type.basetype == SPIRType::Boolean)
+			expr = type_to_glsl(out_type);
+		else
+			expr = bitcast_glsl_op(out_type, expected_type);
 		expr += '(';
 		expr += join(op, "(", cast_op, ")");
 		expr += ')';
@@ -7364,7 +7399,7 @@ void CompilerGLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 	{
 		// Make sure we have a unique ID here to avoid aliasing the extra sub-expressions between clamp and NMin sub-op.
 		// IDs cannot exceed 24 bits, so we can make use of the higher bits for some unique flags.
-		uint32_t &max_id = extra_sub_expressions[id | 0x80000000u];
+		uint32_t &max_id = extra_sub_expressions[id | EXTRA_SUB_EXPRESSION_TYPE_AUX];
 		if (!max_id)
 			max_id = ir.increase_bound_by(1);
 
@@ -7646,6 +7681,9 @@ void CompilerGLSL::emit_subgroup_op(const Instruction &i)
 	case OpGroupNonUniformBitwiseAnd:
 	case OpGroupNonUniformBitwiseOr:
 	case OpGroupNonUniformBitwiseXor:
+	case OpGroupNonUniformLogicalAnd:
+	case OpGroupNonUniformLogicalOr:
+	case OpGroupNonUniformLogicalXor:
 	{
 		auto operation = static_cast<GroupOperation>(ops[3]);
 		if (operation == GroupOperationClusteredReduce)
@@ -7802,6 +7840,9 @@ case OpGroupNonUniform##op: \
 	GLSL_GROUP_OP(BitwiseAnd, And)
 	GLSL_GROUP_OP(BitwiseOr, Or)
 	GLSL_GROUP_OP(BitwiseXor, Xor)
+	GLSL_GROUP_OP(LogicalAnd, And)
+	GLSL_GROUP_OP(LogicalOr, Or)
+	GLSL_GROUP_OP(LogicalXor, Xor)
 #undef GLSL_GROUP_OP
 #undef GLSL_GROUP_OP_CAST
 		// clang-format on
@@ -9638,17 +9679,20 @@ void CompilerGLSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_ex
 	{
 		handle_store_to_invariant_variable(lhs_expression, rhs_expression);
 
-		auto lhs = to_dereferenced_expression(lhs_expression);
+		if (!unroll_array_to_complex_store(lhs_expression, rhs_expression))
+		{
+			auto lhs = to_dereferenced_expression(lhs_expression);
 
-		// We might need to cast in order to store to a builtin.
-		cast_to_builtin_store(lhs_expression, rhs, expression_type(rhs_expression));
+			// We might need to cast in order to store to a builtin.
+			cast_to_builtin_store(lhs_expression, rhs, expression_type(rhs_expression));
 
-		// Tries to optimize assignments like "<lhs> = <lhs> op expr".
-		// While this is purely cosmetic, this is important for legacy ESSL where loop
-		// variable increments must be in either i++ or i += const-expr.
-		// Without this, we end up with i = i + 1, which is correct GLSL, but not correct GLES 2.0.
-		if (!optimize_read_modify_write(expression_type(rhs_expression), lhs, rhs))
-			statement(lhs, " = ", rhs, ";");
+			// Tries to optimize assignments like "<lhs> = <lhs> op expr".
+			// While this is purely cosmetic, this is important for legacy ESSL where loop
+			// variable increments must be in either i++ or i += const-expr.
+			// Without this, we end up with i = i + 1, which is correct GLSL, but not correct GLES 2.0.
+			if (!optimize_read_modify_write(expression_type(rhs_expression), lhs, rhs))
+				statement(lhs, " = ", rhs, ";");
+		}
 		register_write(lhs_expression);
 	}
 }
@@ -9810,6 +9854,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		// We might be trying to load a gl_Position[N], where we should be
 		// doing float4[](gl_in[i].gl_Position, ...) instead.
 		// Similar workarounds are required for input arrays in tessellation.
+		// Also, loading from gl_SampleMask array needs special unroll.
 		unroll_array_from_complex_load(id, ptr, expr);
 
 		// Shouldn't need to check for ID, but current glslang codegen requires it in some cases
@@ -10314,10 +10359,27 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		uint32_t rhs = ops[1];
 		if (lhs != rhs)
 		{
-			flush_variable_declaration(lhs);
-			flush_variable_declaration(rhs);
-			statement(to_expression(lhs), " = ", to_unpacked_expression(rhs), ";");
-			register_write(lhs);
+			uint32_t &tmp_id = extra_sub_expressions[instruction.offset | EXTRA_SUB_EXPRESSION_TYPE_STREAM_OFFSET];
+			if (!tmp_id)
+				tmp_id = ir.increase_bound_by(1);
+			uint32_t tmp_type_id = expression_type(rhs).parent_type;
+
+			EmbeddedInstruction fake_load, fake_store;
+			fake_load.op = OpLoad;
+			fake_load.length = 3;
+			fake_load.ops.push_back(tmp_type_id);
+			fake_load.ops.push_back(tmp_id);
+			fake_load.ops.push_back(rhs);
+
+			fake_store.op = OpStore;
+			fake_store.length = 2;
+			fake_store.ops.push_back(lhs);
+			fake_store.ops.push_back(tmp_id);
+
+			// Load and Store do a *lot* of workarounds, and we'd like to reuse them as much as possible.
+			// Synthesize a fake Load and Store pair for CopyMemory.
+			emit_instruction(fake_load);
+			emit_instruction(fake_store);
 		}
 		break;
 	}
@@ -12148,6 +12210,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	case OpGroupNonUniformBitwiseAnd:
 	case OpGroupNonUniformBitwiseOr:
 	case OpGroupNonUniformBitwiseXor:
+	case OpGroupNonUniformLogicalAnd:
+	case OpGroupNonUniformLogicalOr:
+	case OpGroupNonUniformLogicalXor:
 	case OpGroupNonUniformQuadSwap:
 	case OpGroupNonUniformQuadBroadcast:
 		emit_subgroup_op(instruction);
@@ -12791,7 +12856,7 @@ string CompilerGLSL::variable_decl(const SPIRVariable &variable)
 	// Ignore the pointer type since GLSL doesn't have pointers.
 	auto &type = get_variable_data_type(variable);
 
-	if (type.pointer_depth > 1)
+	if (type.pointer_depth > 1 && !backend.support_pointer_to_pointer)
 		SPIRV_CROSS_THROW("Cannot declare pointer-to-pointer types.");
 
 	auto res = join(to_qualifiers_glsl(variable.self), variable_decl(type, to_name(variable.self), variable.self));
@@ -14920,6 +14985,43 @@ void CompilerGLSL::emit_array_copy(const string &lhs, uint32_t rhs_id, StorageCl
 	statement(lhs, " = ", to_expression(rhs_id), ";");
 }
 
+bool CompilerGLSL::unroll_array_to_complex_store(uint32_t target_id, uint32_t source_id)
+{
+	if (!backend.force_gl_in_out_block)
+		return false;
+	// This path is only relevant for GL backends.
+
+	auto *var = maybe_get<SPIRVariable>(target_id);
+	if (!var || var->storage != StorageClassOutput)
+		return false;
+
+	if (!is_builtin_variable(*var) || BuiltIn(get_decoration(var->self, DecorationBuiltIn)) != BuiltInSampleMask)
+		return false;
+
+	auto &type = expression_type(source_id);
+	string array_expr;
+	if (type.array_size_literal.back())
+	{
+		array_expr = convert_to_string(type.array.back());
+		if (type.array.back() == 0)
+			SPIRV_CROSS_THROW("Cannot unroll an array copy from unsized array.");
+	}
+	else
+		array_expr = to_expression(type.array.back());
+
+	SPIRType target_type;
+	target_type.basetype = SPIRType::Int;
+
+	statement("for (int i = 0; i < int(", array_expr, "); i++)");
+	begin_scope();
+	statement(to_expression(target_id), "[i] = ",
+	          bitcast_expression(target_type, type.basetype, join(to_expression(source_id), "[i]")),
+	          ";");
+	end_scope();
+
+	return true;
+}
+
 void CompilerGLSL::unroll_array_from_complex_load(uint32_t target_id, uint32_t source_id, std::string &expr)
 {
 	if (!backend.force_gl_in_out_block)
@@ -14930,7 +15032,7 @@ void CompilerGLSL::unroll_array_from_complex_load(uint32_t target_id, uint32_t s
 	if (!var)
 		return;
 
-	if (var->storage != StorageClassInput)
+	if (var->storage != StorageClassInput && var->storage != StorageClassOutput)
 		return;
 
 	auto &type = get_variable_data_type(*var);
@@ -14938,9 +15040,13 @@ void CompilerGLSL::unroll_array_from_complex_load(uint32_t target_id, uint32_t s
 		return;
 
 	auto builtin = BuiltIn(get_decoration(var->self, DecorationBuiltIn));
-	bool is_builtin = is_builtin_variable(*var) && (builtin == BuiltInPointSize || builtin == BuiltInPosition);
+	bool is_builtin = is_builtin_variable(*var) &&
+	                  (builtin == BuiltInPointSize ||
+	                   builtin == BuiltInPosition ||
+	                   builtin == BuiltInSampleMask);
 	bool is_tess = is_tessellation_shader();
 	bool is_patch = has_decoration(var->self, DecorationPatch);
+	bool is_sample_mask = is_builtin && builtin == BuiltInSampleMask;
 
 	// Tessellation input arrays are special in that they are unsized, so we cannot directly copy from it.
 	// We must unroll the array load.
@@ -14964,8 +15070,14 @@ void CompilerGLSL::unroll_array_from_complex_load(uint32_t target_id, uint32_t s
 		// The array size might be a specialization constant, so use a for-loop instead.
 		statement("for (int i = 0; i < int(", array_expr, "); i++)");
 		begin_scope();
-		if (is_builtin)
+		if (is_builtin && !is_sample_mask)
 			statement(new_expr, "[i] = gl_in[i].", expr, ";");
+		else if (is_sample_mask)
+		{
+			SPIRType target_type;
+			target_type.basetype = SPIRType::Int;
+			statement(new_expr, "[i] = ", bitcast_expression(target_type, type.basetype, join(expr, "[i]")), ";");
+		}
 		else
 			statement(new_expr, "[i] = ", expr, "[i];");
 		end_scope();
@@ -14976,6 +15088,10 @@ void CompilerGLSL::unroll_array_from_complex_load(uint32_t target_id, uint32_t s
 
 void CompilerGLSL::cast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type)
 {
+	// We will handle array cases elsewhere.
+	if (!expr_type.array.empty())
+		return;
+
 	auto *var = maybe_get_backing_variable(source_id);
 	if (var)
 		source_id = var->self;
@@ -15003,6 +15119,7 @@ void CompilerGLSL::cast_from_builtin_load(uint32_t source_id, std::string &expr,
 	case BuiltInDrawIndex:
 	case BuiltInFragStencilRefEXT:
 	case BuiltInInstanceCustomIndexNV:
+	case BuiltInSampleMask:
 		expected_type = SPIRType::Int;
 		break;
 
@@ -15028,6 +15145,10 @@ void CompilerGLSL::cast_from_builtin_load(uint32_t source_id, std::string &expr,
 
 void CompilerGLSL::cast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type)
 {
+	auto *var = maybe_get_backing_variable(target_id);
+	if (var)
+		target_id = var->self;
+
 	// Only interested in standalone builtin variables.
 	if (!has_decoration(target_id, DecorationBuiltIn))
 		return;
@@ -15042,6 +15163,7 @@ void CompilerGLSL::cast_to_builtin_store(uint32_t target_id, std::string &expr, 
 	case BuiltInPrimitiveId:
 	case BuiltInViewportIndex:
 	case BuiltInFragStencilRefEXT:
+	case BuiltInSampleMask:
 		expected_type = SPIRType::Int;
 		break;
 

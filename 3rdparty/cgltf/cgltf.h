@@ -246,6 +246,7 @@ typedef struct cgltf_extension {
 
 typedef struct cgltf_buffer
 {
+	char* name;
 	cgltf_size size;
 	char* uri;
 	void* data; /* loaded by cgltf_load_buffers */
@@ -281,6 +282,7 @@ typedef struct cgltf_meshopt_compression
 
 typedef struct cgltf_buffer_view
 {
+	char *name;
 	cgltf_buffer* buffer;
 	cgltf_size offset;
 	cgltf_size size;
@@ -315,6 +317,7 @@ typedef struct cgltf_accessor_sparse
 
 typedef struct cgltf_accessor
 {
+	char* name;
 	cgltf_component_type component_type;
 	cgltf_bool normalized;
 	cgltf_type type;
@@ -354,6 +357,7 @@ typedef struct cgltf_image
 
 typedef struct cgltf_sampler
 {
+	char* name;
 	cgltf_int mag_filter;
 	cgltf_int min_filter;
 	cgltf_int wrap_s;
@@ -554,8 +558,10 @@ typedef struct cgltf_skin {
 } cgltf_skin;
 
 typedef struct cgltf_camera_perspective {
+	cgltf_bool has_aspect_ratio;
 	cgltf_float aspect_ratio;
 	cgltf_float yfov;
+	cgltf_bool has_zfar;
 	cgltf_float zfar;
 	cgltf_float znear;
 	cgltf_extras extras;
@@ -1699,6 +1705,8 @@ void cgltf_free(cgltf_data* data)
 
 	for (cgltf_size i = 0; i < data->accessors_count; ++i)
 	{
+		data->memory.free(data->memory.user_data, data->accessors[i].name);
+
 		if(data->accessors[i].is_sparse)
 		{
 			cgltf_free_extensions(data, data->accessors[i].sparse.extensions, data->accessors[i].sparse.extensions_count);
@@ -1711,6 +1719,7 @@ void cgltf_free(cgltf_data* data)
 
 	for (cgltf_size i = 0; i < data->buffer_views_count; ++i)
 	{
+		data->memory.free(data->memory.user_data, data->buffer_views[i].name);
 		data->memory.free(data->memory.user_data, data->buffer_views[i].data);
 
 		cgltf_free_extensions(data, data->buffer_views[i].extensions, data->buffer_views[i].extensions_count);
@@ -1719,6 +1728,8 @@ void cgltf_free(cgltf_data* data)
 
 	for (cgltf_size i = 0; i < data->buffers_count; ++i)
 	{
+		data->memory.free(data->memory.user_data, data->buffers[i].name);
+
 		if (data->buffers[i].data != data->bin)
 		{
 			file_release(&data->memory, &data->file, data->buffers[i].data);
@@ -1854,6 +1865,7 @@ void cgltf_free(cgltf_data* data)
 
 	for (cgltf_size i = 0; i < data->samplers_count; ++i)
 	{
+		data->memory.free(data->memory.user_data, data->samplers[i].name);
 		cgltf_free_extensions(data, data->samplers[i].extensions, data->samplers[i].extensions_count);
 	}
 
@@ -3191,7 +3203,11 @@ static int cgltf_parse_json_accessor(cgltf_options* options, jsmntok_t const* to
 	{
 		CGLTF_CHECK_KEY(tokens[i]);
 
-		if (cgltf_json_strcmp(tokens+i, json_chunk, "bufferView") == 0)
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "name") == 0)
+		{
+			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_accessor->name);
+		}
+		else if (cgltf_json_strcmp(tokens+i, json_chunk, "bufferView") == 0)
 		{
 			++i;
 			out_accessor->buffer_view = CGLTF_PTRINDEX(cgltf_buffer_view, cgltf_json_to_int(tokens + i, json_chunk));
@@ -3857,7 +3873,11 @@ static int cgltf_parse_json_sampler(cgltf_options* options, jsmntok_t const* tok
 	{
 		CGLTF_CHECK_KEY(tokens[i]);
 
-		if (cgltf_json_strcmp(tokens + i, json_chunk, "magFilter") == 0) 
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "name") == 0)
+		{
+			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_sampler->name);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "magFilter") == 0)
 		{
 			++i;
 			out_sampler->mag_filter
@@ -4331,7 +4351,11 @@ static int cgltf_parse_json_buffer_view(cgltf_options* options, jsmntok_t const*
 	{
 		CGLTF_CHECK_KEY(tokens[i]);
 
-		if (cgltf_json_strcmp(tokens+i, json_chunk, "buffer") == 0)
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "name") == 0)
+		{
+			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_buffer_view->name);
+		}
+		else if (cgltf_json_strcmp(tokens+i, json_chunk, "buffer") == 0)
 		{
 			++i;
 			out_buffer_view->buffer = CGLTF_PTRINDEX(cgltf_buffer, cgltf_json_to_int(tokens + i, json_chunk));
@@ -4465,7 +4489,11 @@ static int cgltf_parse_json_buffer(cgltf_options* options, jsmntok_t const* toke
 	{
 		CGLTF_CHECK_KEY(tokens[i]);
 
-		if (cgltf_json_strcmp(tokens+i, json_chunk, "byteLength") == 0)
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "name") == 0)
+		{
+			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_buffer->name);
+		}
+		else if (cgltf_json_strcmp(tokens+i, json_chunk, "byteLength") == 0)
 		{
 			++i;
 			out_buffer->size =
@@ -4647,6 +4675,7 @@ static int cgltf_parse_json_camera(cgltf_options* options, jsmntok_t const* toke
 				if (cgltf_json_strcmp(tokens+i, json_chunk, "aspectRatio") == 0)
 				{
 					++i;
+					out_camera->data.perspective.has_aspect_ratio = 1;
 					out_camera->data.perspective.aspect_ratio = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}
@@ -4659,6 +4688,7 @@ static int cgltf_parse_json_camera(cgltf_options* options, jsmntok_t const* toke
 				else if (cgltf_json_strcmp(tokens+i, json_chunk, "zfar") == 0)
 				{
 					++i;
+					out_camera->data.perspective.has_zfar = 1;
 					out_camera->data.perspective.zfar = cgltf_json_to_float(tokens + i, json_chunk);
 					++i;
 				}

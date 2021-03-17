@@ -140,6 +140,8 @@ void Parser::parse()
 		SPIRV_CROSS_THROW("Function was not terminated.");
 	if (current_block)
 		SPIRV_CROSS_THROW("Block was not terminated.");
+	if (ir.default_entry_point == 0)
+		SPIRV_CROSS_THROW("There is no entry point in the SPIR-V module.");
 }
 
 const uint32_t *Parser::stream(const Instruction &instr) const

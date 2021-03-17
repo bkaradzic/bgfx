@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 11.2.0 2021-02-18
+
+### Other changes
+* Removed Python requirement when not building with spirv-tools
+* Add support for GL_EXT_shared_memory_block
+* Implement GL_EXT_null_initializer
+* Add CMake support for Fuschia
+
+## 11.1.0 2020-12-07
+
+### Other changes
+* Added ray-tracing extension support
+
 ## 11.0.0 2020-07-20
 
 ### Breaking changes
