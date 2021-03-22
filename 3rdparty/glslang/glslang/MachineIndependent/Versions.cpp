@@ -1273,7 +1273,7 @@ void TParseVersions::spvRemoved(const TSourceLoc& loc, const char* op)
 // Call for any operation removed because Vulkan SPIR-V is being generated.
 void TParseVersions::vulkanRemoved(const TSourceLoc& loc, const char* op)
 {
-    if (spvVersion.vulkan > 0)
+    if (spvVersion.vulkan > 0 && !spvVersion.vulkanRelaxed)
         error(loc, "not allowed when using GLSL for Vulkan", op, "");
 }
 

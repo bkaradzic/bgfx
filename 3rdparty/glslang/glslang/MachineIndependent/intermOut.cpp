@@ -886,6 +886,7 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpTime:                       out.debug << "time";                  break;
 
     case EOpAtomicAdd:                  out.debug << "AtomicAdd";             break;
+    case EOpAtomicSubtract:             out.debug << "AtomicSubtract";        break;
     case EOpAtomicMin:                  out.debug << "AtomicMin";             break;
     case EOpAtomicMax:                  out.debug << "AtomicMax";             break;
     case EOpAtomicAnd:                  out.debug << "AtomicAnd";             break;

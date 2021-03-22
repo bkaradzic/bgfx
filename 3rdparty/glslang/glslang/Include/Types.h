@@ -501,6 +501,7 @@ public:
         noContraction = false;
         nullInit = false;
 #endif
+        defaultBlock = false;
     }
 
     // drop qualifiers that don't belong in a temporary variable
@@ -514,6 +515,7 @@ public:
         specConstant = false;
         nonUniform = false;
         nullInit = false;
+        defaultBlock = false;
         clearLayout();
     }
 
@@ -572,6 +574,7 @@ public:
     bool specConstant : 1;
     bool nonUniform   : 1;
     bool explicitOffset   : 1;
+    bool defaultBlock : 1; // default blocks with matching names have structures merged when linking
 
 #ifdef GLSLANG_WEB
     bool isWriteOnly() const { return false; }
@@ -756,6 +759,46 @@ public:
         }
     }
 
+    TBlockStorageClass getBlockStorage() const {
+        if (storage == EvqUniform && !isPushConstant()) {
+            return EbsUniform;
+        }
+        else if (storage == EvqUniform) {
+            return EbsPushConstant;
+        }
+        else if (storage == EvqBuffer) {
+            return EbsStorageBuffer;
+        }
+        return EbsNone;
+    }
+
+    void setBlockStorage(TBlockStorageClass newBacking) {
+#ifndef GLSLANG_WEB
+        layoutPushConstant = (newBacking == EbsPushConstant);
+#endif
+        switch (newBacking) {
+        case EbsUniform :
+            if (layoutPacking == ElpStd430) {
+                // std430 would not be valid
+                layoutPacking = ElpStd140;
+            }
+            storage = EvqUniform;
+            break;
+        case EbsStorageBuffer : 
+            storage = EvqBuffer;
+            break;
+#ifndef GLSLANG_WEB
+        case EbsPushConstant :
+            storage = EvqUniform;
+            layoutSet = TQualifier::layoutSetEnd;
+            layoutBinding = TQualifier::layoutBindingEnd;
+            break;
+#endif
+        default:
+            break;
+        }
+    }
+
 #ifdef GLSLANG_WEB
     bool isPerView() const { return false; }
     bool isTaskMemory() const { return false; }
@@ -852,6 +895,7 @@ public:
         return hasNonXfbLayout() ||
                hasXfb();
     }
+
     TLayoutMatrix  layoutMatrix  : 3;
     TLayoutPacking layoutPacking : 4;
     int layoutOffset;
@@ -2292,6 +2336,17 @@ public:
         name += ';' ;
     }
 
+    // These variables are inconsistently declared inside and outside of gl_PerVertex in glslang right now.
+    // They are declared inside of 'in gl_PerVertex', but sitting as standalone when they are 'out'puts.
+    bool isInconsistentGLPerVertexMember(const TString& name) const
+    {
+        if (name == "gl_SecondaryPositionNV" ||
+            name == "gl_PositionPerViewNV")
+            return true;
+        return false;
+    }
+
+
     // Do two structure types match?  They could be declared independently,
     // in different places, but still might satisfy the definition of matching.
     // From the spec:
@@ -2307,22 +2362,48 @@ public:
             (isStruct() && right.isStruct() && structure == right.structure))
             return true;
 
-        // Both being nullptr was caught above, now they both have to be structures of the same number of elements
-        if (!isStruct() || !right.isStruct() ||
-            structure->size() != right.structure->size())
-            return false;
-
         // Structure names have to match
         if (*typeName != *right.typeName)
             return false;
 
-        // Compare the names and types of all the members, which have to match
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->getFieldName() != (*right.structure)[i].type->getFieldName())
-                return false;
+        // There are inconsistencies with how gl_PerVertex is setup. For now ignore those as errors if they
+        // are known inconsistencies.
+        bool isGLPerVertex = *typeName == "gl_PerVertex";
 
-            if (*(*structure)[i].type != *(*right.structure)[i].type)
-                return false;
+        // Both being nullptr was caught above, now they both have to be structures of the same number of elements
+        if (!isStruct() || !right.isStruct() ||
+            (structure->size() != right.structure->size() && !isGLPerVertex))
+            return false;
+
+        // Compare the names and types of all the members, which have to match
+        for (int li = 0, ri = 0; li < structure->size() || ri < right.structure->size(); ++li, ++ri) {
+            if (li < structure->size() && ri < right.structure->size()) {
+                if ((*structure)[li].type->getFieldName() == (*right.structure)[ri].type->getFieldName()) {
+                    if (*(*structure)[li].type != *(*right.structure)[ri].type)
+                        return false;
+                } else {
+                    // If one of the members is something that's inconsistently declared, skip over it
+                    // for now.
+                    if (isGLPerVertex) {
+                        if (isInconsistentGLPerVertexMember((*structure)[li].type->getFieldName())) {
+                            ri--;
+                            continue;
+                        } else if (isInconsistentGLPerVertexMember((*right.structure)[ri].type->getFieldName())) {
+                            li--;
+                            continue;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+            // If we get here, then there should only be inconsistently declared members left
+            } else if (li < structure->size()) {
+                if (!isInconsistentGLPerVertexMember((*structure)[li].type->getFieldName()))
+                    return false;
+            } else {
+                if (!isInconsistentGLPerVertexMember((*right.structure)[ri].type->getFieldName()))
+                    return false;
+            }
         }
 
         return true;

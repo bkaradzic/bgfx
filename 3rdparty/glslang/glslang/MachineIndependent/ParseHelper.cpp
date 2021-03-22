@@ -225,6 +225,108 @@ void TParseContext::parserError(const char* s)
         error(getCurrentLoc(), "compilation terminated", "", "");
 }
 
+void TParseContext::growGlobalUniformBlock(const TSourceLoc& loc, TType& memberType, const TString& memberName, TTypeList* typeList)
+{
+    bool createBlock = globalUniformBlock == nullptr;
+
+    if (createBlock) {
+        globalUniformBinding = intermediate.getGlobalUniformBinding();
+        globalUniformSet = intermediate.getGlobalUniformSet();
+    }
+
+    // use base class function to create/expand block
+    TParseContextBase::growGlobalUniformBlock(loc, memberType, memberName, typeList);
+
+    if (spvVersion.vulkan > 0 && spvVersion.vulkanRelaxed) {
+        // check for a block storage override
+        TBlockStorageClass storageOverride = intermediate.getBlockStorageOverride(getGlobalUniformBlockName());
+        TQualifier& qualifier = globalUniformBlock->getWritableType().getQualifier();
+        qualifier.defaultBlock = true;
+
+        if (storageOverride != EbsNone) {
+            if (createBlock) {
+                // Remap block storage
+                qualifier.setBlockStorage(storageOverride);
+
+                // check that the change didn't create errors
+                blockQualifierCheck(loc, qualifier, false);
+            }
+
+            // remap meber storage as well
+            memberType.getQualifier().setBlockStorage(storageOverride);
+        }
+    }
+}
+
+void TParseContext::growAtomicCounterBlock(int binding, const TSourceLoc& loc, TType& memberType, const TString& memberName, TTypeList* typeList)
+{
+    bool createBlock = atomicCounterBuffers.find(binding) == atomicCounterBuffers.end();
+
+    if (createBlock) {
+        atomicCounterBlockSet = intermediate.getAtomicCounterBlockSet();
+    }
+
+    // use base class function to create/expand block
+    TParseContextBase::growAtomicCounterBlock(binding, loc, memberType, memberName, typeList);
+    TQualifier& qualifier = atomicCounterBuffers[binding]->getWritableType().getQualifier();
+    qualifier.defaultBlock = true;
+
+    if (spvVersion.vulkan > 0 && spvVersion.vulkanRelaxed) {
+        // check for a Block storage override
+        TBlockStorageClass storageOverride = intermediate.getBlockStorageOverride(getAtomicCounterBlockName());
+
+        if (storageOverride != EbsNone) {
+            if (createBlock) {
+                // Remap block storage
+
+                qualifier.setBlockStorage(storageOverride);
+
+                // check that the change didn't create errors
+                blockQualifierCheck(loc, qualifier, false);
+            }
+
+            // remap meber storage as well
+            memberType.getQualifier().setBlockStorage(storageOverride);
+        }
+    }
+}
+
+const char* TParseContext::getGlobalUniformBlockName() const
+{
+    const char* name = intermediate.getGlobalUniformBlockName();
+    if (std::string(name) == "")
+        return "gl_DefaultUniformBlock";
+    else
+        return name;
+}
+void TParseContext::finalizeGlobalUniformBlockLayout(TVariable&)
+{
+}
+void TParseContext::setUniformBlockDefaults(TType& block) const
+{
+    block.getQualifier().layoutPacking = ElpStd140;
+    block.getQualifier().layoutMatrix = ElmColumnMajor;
+}
+
+
+const char* TParseContext::getAtomicCounterBlockName() const
+{
+    const char* name = intermediate.getAtomicCounterBlockName();
+    if (std::string(name) == "")
+        return "gl_AtomicCounterBlock";
+    else
+        return name;
+}
+void TParseContext::finalizeAtomicCounterBlockLayout(TVariable&)
+{
+}
+
+void TParseContext::setAtomicCounterBlockDefaults(TType& block) const
+{
+    block.getQualifier().layoutPacking = ElpStd430;
+    block.getQualifier().layoutMatrix = ElmRowMajor;
+}
+
 void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& tokens)
 {
 #ifndef GLSLANG_WEB
@@ -1135,6 +1237,14 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
 {
     TIntermTyped* result = nullptr;
 
+    if (spvVersion.vulkan != 0 && spvVersion.vulkanRelaxed) {
+        // allow calls that are invalid in Vulkan Semantics to be invisibily
+        // remapped to equivalent valid functions
+        result = vkRelaxedRemapFunctionCall(loc, function, arguments);
+        if (result)
+            return result;
+    }
+
     if (function->getBuiltInOp() == EOpArrayLength)
         result = handleLengthMethod(loc, function, arguments);
     else if (function->getBuiltInOp() != EOpNull) {
@@ -1727,6 +1837,7 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
     // Grab the semantics and storage class semantics from the operands, based on opcode
     switch (callNode.getOp()) {
     case EOpAtomicAdd:
+    case EOpAtomicSubtract:
     case EOpAtomicMin:
     case EOpAtomicMax:
     case EOpAtomicAnd:
@@ -2176,6 +2287,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     }
 
     case EOpAtomicAdd:
+    case EOpAtomicSubtract:
     case EOpAtomicMin:
     case EOpAtomicMax:
     case EOpAtomicAnd:
@@ -3388,7 +3500,7 @@ void TParseContext::transparentOpaqueCheck(const TSourceLoc& loc, const TType& t
 
     if (type.containsNonOpaque()) {
         // Vulkan doesn't allow transparent uniforms outside of blocks
-        if (spvVersion.vulkan > 0)
+        if (spvVersion.vulkan > 0 && !spvVersion.vulkanRelaxed)
             vulkanRemoved(loc, "non-opaque uniforms outside a block");
         // OpenGL wants locations on these (unless they are getting automapped)
         if (spvVersion.openGl > 0 && !type.getQualifier().hasLocation() && !intermediate.getAutoMapLocations())
@@ -5019,14 +5131,22 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         return;
     }
     if (id == TQualifier::getLayoutPackingString(ElpPacked)) {
-        if (spvVersion.spv != 0)
-            spvRemoved(loc, "packed");
+        if (spvVersion.spv != 0) {
+            if (spvVersion.vulkanRelaxed)
+                return; // silently ignore qualifier
+            else
+                spvRemoved(loc, "packed");
+        }
         publicType.qualifier.layoutPacking = ElpPacked;
         return;
     }
     if (id == TQualifier::getLayoutPackingString(ElpShared)) {
-        if (spvVersion.spv != 0)
-            spvRemoved(loc, "shared");
+        if (spvVersion.spv != 0) {
+            if (spvVersion.vulkanRelaxed)
+                return; // silently ignore qualifier
+            else
+                spvRemoved(loc, "shared");
+        }
         publicType.qualifier.layoutPacking = ElpShared;
         return;
     }
@@ -5928,7 +6048,7 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
                 error(loc, "sampler binding not less than gl_MaxCombinedTextureImageUnits", "binding", type.isArray() ? "(using array)" : "");
 #endif
         }
-        if (type.isAtomic()) {
+        if (type.isAtomic() && !spvVersion.vulkanRelaxed) {
             if (qualifier.layoutBinding >= (unsigned int)resources.maxAtomicCounterBindings) {
                 error(loc, "atomic_uint binding is too large; see gl_MaxAtomicCounterBindings", "binding", "");
                 return;
@@ -6598,6 +6718,68 @@ const TFunction* TParseContext::findFunctionExplicitTypes(const TSourceLoc& loc,
     return bestMatch;
 }
 
+//
+// Adjust function calls that aren't declared in Vulkan to a
+// calls with equivalent effects
+//
+TIntermTyped* TParseContext::vkRelaxedRemapFunctionCall(const TSourceLoc& loc, TFunction* function, TIntermNode* arguments)
+{
+    TIntermTyped* result = nullptr;
+
+#ifndef GLSLANG_WEB
+    if (function->getBuiltInOp() != EOpNull) {
+        return nullptr;
+    }
+
+    if (function->getName() == "atomicCounterIncrement") {
+        // change atomicCounterIncrement into an atomicAdd of 1
+        TString name("atomicAdd");
+        TType uintType(EbtUint);
+
+        TFunction realFunc(&name, function->getType());
+
+        for (int i = 0; i < function->getParamCount(); ++i) {
+            realFunc.addParameter((*function)[i]);
+        }
+
+        TParameter tmpP = { 0, &uintType };
+        realFunc.addParameter(tmpP);
+        arguments = intermediate.growAggregate(arguments, intermediate.addConstantUnion(1, loc, true));
+
+        result = handleFunctionCall(loc, &realFunc, arguments);
+    } else if (function->getName() == "atomicCounterDecrement") {
+        // change atomicCounterDecrement into an atomicAdd with -1
+        // and subtract 1 from result, to return post-decrement value
+        TString name("atomicAdd");
+        TType uintType(EbtUint);
+
+        TFunction realFunc(&name, function->getType());
+
+        for (int i = 0; i < function->getParamCount(); ++i) {
+            realFunc.addParameter((*function)[i]);
+        }
+
+        TParameter tmpP = { 0, &uintType };
+        realFunc.addParameter(tmpP);
+        arguments = intermediate.growAggregate(arguments, intermediate.addConstantUnion(-1, loc, true));
+
+        result = handleFunctionCall(loc, &realFunc, arguments);
+
+        // post decrement, so that it matches AtomicCounterDecrement semantics
+        if (result) {
+            result = handleBinaryMath(loc, "-", EOpSub, result, intermediate.addConstantUnion(1, loc, true));
+        }
+    } else if (function->getName() == "atomicCounter") {
+        // change atomicCounter into a direct read of the variable
+        if (arguments->getAsTyped()) {
+            result = arguments->getAsTyped();
+        }
+    }
+#endif
+
+    return result;
+}
+
 // When a declaration includes a type, but not a variable name, it can be used
 // to establish defaults.
 void TParseContext::declareTypeDefaults(const TSourceLoc& loc, const TPublicType& publicType)
@@ -6620,6 +6802,91 @@ void TParseContext::declareTypeDefaults(const TSourceLoc& loc, const TPublicType
     if (publicType.qualifier.hasLayout() && !publicType.qualifier.hasBufferReference())
         warn(loc, "useless application of layout qualifier", "layout", "");
 #endif
+}
+
+bool TParseContext::vkRelaxedRemapUniformVariable(const TSourceLoc& loc, TString& identifier, const TPublicType&,
+    TArraySizes*, TIntermTyped* initializer, TType& type)
+{
+    if (parsingBuiltins || symbolTable.atBuiltInLevel() || !symbolTable.atGlobalLevel() ||
+        type.getQualifier().storage != EvqUniform ||
+        !(type.containsNonOpaque()
+#ifndef GLSLANG_WEB
+            || type.getBasicType() == EbtAtomicUint
+#endif
+        )) {
+        return false;
+    }
+
+    if (type.getQualifier().hasLocation()) {
+        warn(loc, "ignoring layout qualifier for uniform", identifier.c_str(), "location");
+        type.getQualifier().layoutLocation = TQualifier::layoutLocationEnd;
+    }
+
+    if (initializer) {
+        warn(loc, "Ignoring initializer for uniform", identifier.c_str(), "");
+        initializer = nullptr;
+    }
+
+    if (type.isArray()) {
+        // do array size checks here
+        arraySizesCheck(loc, type.getQualifier(), type.getArraySizes(), initializer, false);
+
+        if (arrayQualifierError(loc, type.getQualifier()) || arrayError(loc, type)) {
+            error(loc, "array param error", identifier.c_str(), "");
+        }
+    }
+
+    // do some checking on the type as it was declared
+    layoutTypeCheck(loc, type);
+
+    int bufferBinding = TQualifier::layoutBindingEnd;
+    TVariable* updatedBlock = nullptr;
+
+#ifndef GLSLANG_WEB
+    // Convert atomic_uint into members of a buffer block
+    if (type.isAtomic()) {
+        type.setBasicType(EbtUint);
+        type.getQualifier().storage = EvqBuffer;
+
+        type.getQualifier().volatil = true;
+        type.getQualifier().coherent = true;
+
+        // xxTODO: use logic from fixOffset() to apply explicit member offset
+        bufferBinding = type.getQualifier().layoutBinding;
+        type.getQualifier().layoutBinding = TQualifier::layoutBindingEnd;
+        type.getQualifier().explicitOffset = false;
+        growAtomicCounterBlock(bufferBinding, loc, type, identifier, nullptr);
+        updatedBlock = atomicCounterBuffers[bufferBinding];
+    }
+#endif
+
+    if (!updatedBlock) {
+        growGlobalUniformBlock(loc, type, identifier, nullptr);
+        updatedBlock = globalUniformBlock;
+    }
+
+    //
+    //      don't assign explicit member offsets here
+    //      if any are assigned, need to be updated here and in the merge/link step
+    // fixBlockUniformOffsets(updatedBlock->getWritableType().getQualifier(), *updatedBlock->getWritableType().getWritableStruct());
+
+    // checks on update buffer object
+    layoutObjectCheck(loc, *updatedBlock);
+
+    TSymbol* symbol = symbolTable.find(identifier);
+
+    if (!symbol) {
+        if (updatedBlock == globalUniformBlock)
+            error(loc, "error adding uniform to default uniform block", identifier.c_str(), "");
+        else
+            error(loc, "error adding atomic counter to atomic counter block", identifier.c_str(), "");
+        return false;
+    }
+
+    // merge qualifiers
+    mergeObjectLayoutQualifiers(updatedBlock->getWritableType().getQualifier(), type.getQualifier(), true);
+
+    return true;
 }
 
 //
@@ -6732,6 +6999,14 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
     TSymbol* symbol = redeclareBuiltinVariable(loc, identifier, type.getQualifier(), publicType.shaderQualifiers);
     if (symbol == nullptr)
         reservedErrorCheck(loc, identifier);
+
+    if (symbol == nullptr && spvVersion.vulkan > 0 && spvVersion.vulkanRelaxed) {
+        bool remapped = vkRelaxedRemapUniformVariable(loc, identifier, publicType, arraySizes, initializer, type);
+
+        if (remapped) {
+            return nullptr;
+        }
+    }
 
     inheritGlobalDefaults(type.getQualifier());
 
@@ -7625,6 +7900,8 @@ void TParseContext::inheritMemoryQualifiers(const TQualifier& from, TQualifier& 
 void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, const TString* instanceName,
     TArraySizes* arraySizes)
 {
+    if (spvVersion.vulkan > 0 && spvVersion.vulkanRelaxed)
+        blockStorageRemap(loc, blockName, currentBlockQualifier);
     blockStageIoCheck(loc, currentBlockQualifier);
     blockQualifierCheck(loc, currentBlockQualifier, instanceName != nullptr);
     if (arraySizes != nullptr) {
@@ -7912,6 +8189,17 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
 
     // Save it in the AST for linker use.
     trackLinkage(variable);
+}
+
+//
+// allow storage type of block to be remapped at compile time
+//
+void TParseContext::blockStorageRemap(const TSourceLoc&, const TString* instanceName, TQualifier& qualifier)
+{
+    TBlockStorageClass type = intermediate.getBlockStorageOverride(instanceName->c_str());
+    if (type != EbsNone) {
+        qualifier.setBlockStorage(type);
+    }
 }
 
 // Do all block-declaration checking regarding the combination of in/out/uniform/buffer

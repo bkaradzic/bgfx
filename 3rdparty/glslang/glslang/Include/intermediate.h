@@ -593,6 +593,7 @@ enum TOperator {
     EOpTime,
 
     EOpAtomicAdd,
+    EOpAtomicSubtract,
     EOpAtomicMin,
     EOpAtomicMax,
     EOpAtomicAnd,
@@ -1135,6 +1136,8 @@ public:
     virtual TBasicType getBasicType() const { return type.getBasicType(); }
     virtual TQualifier& getQualifier() { return type.getQualifier(); }
     virtual const TQualifier& getQualifier() const { return type.getQualifier(); }
+    virtual TArraySizes* getArraySizes() { return type.getArraySizes(); }
+    virtual const TArraySizes* getArraySizes() const { return type.getArraySizes(); }
     virtual void propagatePrecision(TPrecisionQualifier);
     virtual int getVectorSize() const { return type.getVectorSize(); }
     virtual int getMatrixCols() const { return type.getMatrixCols(); }

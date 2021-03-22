@@ -1630,6 +1630,36 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "\n");
         }
     }
+    else if (spvVersion.vulkanRelaxed) {
+        //
+        // Atomic counter functions act as aliases to normal atomic functions.
+        // replace definitions to take 'volatile coherent uint' instead of 'atomic_uint'
+        // and map to equivalent non-counter atomic op
+        //
+        if ((profile != EEsProfile && version >= 300) ||
+            (profile == EEsProfile && version >= 310)) {
+            commonBuiltins.append(
+                "uint atomicCounterIncrement(volatile coherent uint);"
+                "uint atomicCounterDecrement(volatile coherent uint);"
+                "uint atomicCounter(volatile coherent uint);"
+
+                "\n");
+        }
+        if (profile != EEsProfile && version >= 460) {
+            commonBuiltins.append(
+                "uint atomicCounterAdd(volatile coherent uint, uint);"
+                "uint atomicCounterSubtract(volatile coherent uint, uint);"
+                "uint atomicCounterMin(volatile coherent uint, uint);"
+                "uint atomicCounterMax(volatile coherent uint, uint);"
+                "uint atomicCounterAnd(volatile coherent uint, uint);"
+                "uint atomicCounterOr(volatile coherent uint, uint);"
+                "uint atomicCounterXor(volatile coherent uint, uint);"
+                "uint atomicCounterExchange(volatile coherent uint, uint);"
+                "uint atomicCounterCompSwap(volatile coherent uint, uint, uint);"
+
+                "\n");
+        }
+    }
 #endif // !GLSLANG_ANGLE
 
     // Bitfield
@@ -4124,7 +4154,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 #ifndef GLSLANG_WEB
     if ((profile != EEsProfile && version >= 420) || esBarrier) {
-        if (spvVersion.vulkan == 0) {
+        if (spvVersion.vulkan == 0 || spvVersion.vulkanRelaxed) {
             commonBuiltins.append("void memoryBarrierAtomicCounter();");
         }
         commonBuiltins.append("void memoryBarrierImage();");
@@ -4848,6 +4878,13 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in int gl_VertexIndex;"
                 "in int gl_InstanceIndex;"
                 );
+
+        if (spvVersion.vulkan > 0 && version >= 140 && spvVersion.vulkanRelaxed)
+            stageBuiltins[EShLangVertex].append(
+                "in int gl_VertexID;"         // declare with 'in' qualifier
+                "in int gl_InstanceID;"
+                );
+
         if (version >= 440) {
             stageBuiltins[EShLangVertex].append(
                 "in int gl_BaseVertexARB;"
@@ -4885,7 +4922,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "mediump float gl_PointSize;" // needs qualifier fixed later
                 );
         } else {
-            if (spvVersion.vulkan == 0)
+            if (spvVersion.vulkan == 0 || spvVersion.vulkanRelaxed)
                 stageBuiltins[EShLangVertex].append(
                     "in highp int gl_VertexID;"      // needs qualifier fixed later
                     "in highp int gl_InstanceID;"    // needs qualifier fixed later
@@ -7436,6 +7473,12 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             SpecialQualifier("gl_InstanceID", EvqInstanceId, EbvInstanceId, symbolTable);
         }
 
+        if (spvVersion.vulkan > 0 && spvVersion.vulkanRelaxed) {
+            // treat these built-ins as aliases of VertexIndex and InstanceIndex
+            BuiltInVariable("gl_VertexID", EbvVertexIndex, symbolTable);
+            BuiltInVariable("gl_InstanceID", EbvInstanceIndex, symbolTable);
+        }
+
         if (profile != EEsProfile) {
             if (version >= 440) {
                 symbolTable.setVariableExtensions("gl_BaseVertexARB",   1, &E_GL_ARB_shader_draw_parameters);
@@ -8912,12 +8955,34 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("memoryBarrierAtomicCounter", EOpMemoryBarrierAtomicCounter);
     symbolTable.relateToOperator("memoryBarrierImage",         EOpMemoryBarrierImage);
 
+    if (spvVersion.vulkanRelaxed) {
+        //
+        // functions signature have been replaced to take uint operations on buffer variables
+        // remap atomic counter functions to atomic operations
+        //
+        symbolTable.relateToOperator("memoryBarrierAtomicCounter", EOpMemoryBarrierBuffer);
+    }
+
     symbolTable.relateToOperator("atomicLoad",     EOpAtomicLoad);
     symbolTable.relateToOperator("atomicStore",    EOpAtomicStore);
 
     symbolTable.relateToOperator("atomicCounterIncrement", EOpAtomicCounterIncrement);
     symbolTable.relateToOperator("atomicCounterDecrement", EOpAtomicCounterDecrement);
     symbolTable.relateToOperator("atomicCounter",          EOpAtomicCounter);
+
+    if (spvVersion.vulkanRelaxed) {
+        //
+        // functions signature have been replaced to take uint operations
+        // remap atomic counter functions to atomic operations
+        //
+        // these atomic counter functions do not match signatures of glsl
+        // atomic functions, so they will be remapped to semantically
+        // equivalent functions in the parser
+        //
+        symbolTable.relateToOperator("atomicCounterIncrement", EOpNull);
+        symbolTable.relateToOperator("atomicCounterDecrement", EOpNull);
+        symbolTable.relateToOperator("atomicCounter", EOpNull);
+    }
 
     symbolTable.relateToOperator("clockARB",     EOpReadClockSubgroupKHR);
     symbolTable.relateToOperator("clock2x32ARB", EOpReadClockSubgroupKHR);
@@ -8935,6 +9000,23 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("atomicCounterXor",      EOpAtomicCounterXor);
         symbolTable.relateToOperator("atomicCounterExchange", EOpAtomicCounterExchange);
         symbolTable.relateToOperator("atomicCounterCompSwap", EOpAtomicCounterCompSwap);
+    }
+
+    if (spvVersion.vulkanRelaxed) {
+        //
+        // functions signature have been replaced to take 'uint' instead of 'atomic_uint'
+        // remap atomic counter functions to non-counter atomic ops so
+        // functions act as aliases to non-counter atomic ops
+        //
+        symbolTable.relateToOperator("atomicCounterAdd", EOpAtomicAdd);
+        symbolTable.relateToOperator("atomicCounterSubtract", EOpAtomicSubtract);
+        symbolTable.relateToOperator("atomicCounterMin", EOpAtomicMin);
+        symbolTable.relateToOperator("atomicCounterMax", EOpAtomicMax);
+        symbolTable.relateToOperator("atomicCounterAnd", EOpAtomicAnd);
+        symbolTable.relateToOperator("atomicCounterOr", EOpAtomicOr);
+        symbolTable.relateToOperator("atomicCounterXor", EOpAtomicXor);
+        symbolTable.relateToOperator("atomicCounterExchange", EOpAtomicExchange);
+        symbolTable.relateToOperator("atomicCounterCompSwap", EOpAtomicCompSwap);
     }
 
     symbolTable.relateToOperator("fma",               EOpFma);
