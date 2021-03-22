@@ -143,6 +143,7 @@ spv_result_t ValidateEntryPoints(ValidationState_t& _) {
       if (_.recursive_entry_points().find(entry_point) !=
           _.recursive_entry_points().end()) {
         return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(entry_point))
+               << _.VkErrorID(4634)
                << "Entry points may not have a call graph with cycles.";
       }
     }

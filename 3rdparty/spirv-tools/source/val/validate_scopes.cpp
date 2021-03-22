@@ -105,21 +105,30 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
       }
     }
 
-    // If OpControlBarrier is used in fragment, vertex, tessellation evaluation,
-    // or geometry stages, the execution Scope must be Subgroup.
+    // OpControlBarrier must only use Subgroup execution scope for a subset of
+    // execution models.
     if (opcode == SpvOpControlBarrier && value != SpvScopeSubgroup) {
+      std::string errorVUID = _.VkErrorID(4682);
       _.function(inst->function()->id())
-          ->RegisterExecutionModelLimitation([](SpvExecutionModel model,
-                                                std::string* message) {
+          ->RegisterExecutionModelLimitation([errorVUID](
+                                                 SpvExecutionModel model,
+                                                 std::string* message) {
             if (model == SpvExecutionModelFragment ||
                 model == SpvExecutionModelVertex ||
                 model == SpvExecutionModelGeometry ||
-                model == SpvExecutionModelTessellationEvaluation) {
+                model == SpvExecutionModelTessellationEvaluation ||
+                model == SpvExecutionModelRayGenerationKHR ||
+                model == SpvExecutionModelIntersectionKHR ||
+                model == SpvExecutionModelAnyHitKHR ||
+                model == SpvExecutionModelClosestHitKHR ||
+                model == SpvExecutionModelMissKHR) {
               if (message) {
                 *message =
-                    "in Vulkan evironment, OpControlBarrier execution scope "
-                    "must be Subgroup for Fragment, Vertex, Geometry and "
-                    "TessellationEvaluation execution models";
+                    errorVUID +
+                    "in Vulkan environment, OpControlBarrier execution scope "
+                    "must be Subgroup for Fragment, Vertex, Geometry, "
+                    "TessellationEvaluation, RayGeneration, Intersection, "
+                    "AnyHit, ClosestHit, and Miss execution models";
               }
               return false;
             }
@@ -127,11 +136,34 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
           });
     }
 
+    // Only subset of execution models support Workgroup.
+    if (value == SpvScopeWorkgroup) {
+      std::string errorVUID = _.VkErrorID(4637);
+      _.function(inst->function()->id())
+          ->RegisterExecutionModelLimitation(
+              [errorVUID](SpvExecutionModel model, std::string* message) {
+                if (model != SpvExecutionModelTaskNV &&
+                    model != SpvExecutionModelMeshNV &&
+                    model != SpvExecutionModelTessellationControl &&
+                    model != SpvExecutionModelGLCompute) {
+                  if (message) {
+                    *message =
+                        errorVUID +
+                        "in Vulkan environment, Workgroup execution scope is "
+                        "only for TaskNV, MeshNV, TessellationControl, and "
+                        "GLCompute execution models";
+                  }
+                  return false;
+                }
+                return true;
+              });
+    }
+
     // Vulkan generic rules
     // Scope for execution must be limited to Workgroup or Subgroup
     if (value != SpvScopeWorkgroup && value != SpvScopeSubgroup) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << spvOpcodeString(opcode)
+             << _.VkErrorID(4636) << spvOpcodeString(opcode)
              << ": in Vulkan environment Execution Scope is limited to "
              << "Workgroup and Subgroup";
     }
