@@ -942,10 +942,6 @@ namespace bgfx { namespace spirv
 					delete shader;
 					return compile(_options, _version, output.c_str(), _writer, false);
 				}
-				else
-				{
-					// second time, do nothing (todo remove)
-				}
 
 				UniformArray uniforms;
 
