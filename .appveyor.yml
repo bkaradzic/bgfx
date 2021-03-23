@@ -8,6 +8,10 @@ environment:
   - TOOLSET: vs2017
 #  - TOOLSET: vs2019
 
+platform:
+  - x86
+  - x64
+
 configuration:
   - Debug
   - Release
