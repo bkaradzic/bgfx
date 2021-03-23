@@ -9,7 +9,7 @@ environment:
 #  - TOOLSET: vs2019
 
 platform:
-  - x86
+  - Win32
   - x64
 
 configuration:
