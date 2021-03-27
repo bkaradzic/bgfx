@@ -72,6 +72,9 @@ function bgfxProjectBase(_kind, _defines)
 
 		configuration { "android*" }
 			targetextension ".so"
+			linkoptions {
+				"-shared", -- To build droid .so on mac, -dynamiclib is rejected, need this to expose symbols.
+			}
 
 		configuration { "android*" ,"Debug"}
 			linkoptions {
