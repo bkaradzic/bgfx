@@ -61,6 +61,8 @@ bool HasReturnType(uint32_t opcode) {
 bool HasOnlyFloatReturnType(uint32_t opcode) {
   switch (opcode) {
     case SpvOpAtomicFAddEXT:
+    case SpvOpAtomicFMinEXT:
+    case SpvOpAtomicFMaxEXT:
       return true;
       break;
     default:
@@ -132,8 +134,10 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
     case SpvOpAtomicISub:
     case SpvOpAtomicSMin:
     case SpvOpAtomicUMin:
+    case SpvOpAtomicFMinEXT:
     case SpvOpAtomicSMax:
     case SpvOpAtomicUMax:
+    case SpvOpAtomicFMaxEXT:
     case SpvOpAtomicAnd:
     case SpvOpAtomicOr:
     case SpvOpAtomicXor:
@@ -231,6 +235,29 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
                    << spvOpcodeString(opcode)
                    << ": float add atomics require the AtomicFloat64AddEXT "
                       "capability";
+          }
+        } else if (opcode == SpvOpAtomicFMinEXT ||
+                   opcode == SpvOpAtomicFMaxEXT) {
+          if ((_.GetBitWidth(result_type) == 16) &&
+              (!_.HasCapability(SpvCapabilityAtomicFloat16MinMaxEXT))) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << spvOpcodeString(opcode)
+                   << ": float min/max atomics require the "
+                      "AtomicFloat16MinMaxEXT capability";
+          }
+          if ((_.GetBitWidth(result_type) == 32) &&
+              (!_.HasCapability(SpvCapabilityAtomicFloat32MinMaxEXT))) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << spvOpcodeString(opcode)
+                   << ": float min/max atomics require the "
+                      "AtomicFloat32MinMaxEXT capability";
+          }
+          if ((_.GetBitWidth(result_type) == 64) &&
+              (!_.HasCapability(SpvCapabilityAtomicFloat64MinMaxEXT))) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << spvOpcodeString(opcode)
+                   << ": float min/max atomics require the "
+                      "AtomicFloat64MinMaxEXT capability";
           }
         }
       }
