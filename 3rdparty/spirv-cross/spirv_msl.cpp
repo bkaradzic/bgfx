@@ -14092,10 +14092,6 @@ uint32_t CompilerMSL::get_declared_type_alignment_msl(const SPIRType &type, bool
 	case SPIRType::Sampler:
 		SPIRV_CROSS_THROW("Querying alignment of opaque object.");
 
-	case SPIRType::Int64:
-		SPIRV_CROSS_THROW("long types are not supported in buffers in MSL.");
-	case SPIRType::UInt64:
-		SPIRV_CROSS_THROW("ulong types are not supported in buffers in MSL.");
 	case SPIRType::Double:
 		SPIRV_CROSS_THROW("double types are not supported in buffers in MSL.");
 
@@ -14110,6 +14106,10 @@ uint32_t CompilerMSL::get_declared_type_alignment_msl(const SPIRType &type, bool
 
 	default:
 	{
+		if (type.basetype == SPIRType::Int64 && !msl_options.supports_msl_version(2, 3))
+			SPIRV_CROSS_THROW("long types in buffers are only supported in MSL 2.3 and above.");
+		if (type.basetype == SPIRType::UInt64 && !msl_options.supports_msl_version(2, 3))
+			SPIRV_CROSS_THROW("ulong types in buffers are only supported in MSL 2.3 and above.");
 		// Alignment of packed type is the same as the underlying component or column size.
 		// Alignment of unpacked type is the same as the vector size.
 		// Alignment of 3-elements vector is the same as 4-elements (including packed using column).
