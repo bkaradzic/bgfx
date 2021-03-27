@@ -2376,7 +2376,7 @@ public:
             return false;
 
         // Compare the names and types of all the members, which have to match
-        for (int li = 0, ri = 0; li < structure->size() || ri < right.structure->size(); ++li, ++ri) {
+        for (size_t li = 0, ri = 0; li < structure->size() || ri < right.structure->size(); ++li, ++ri) {
             if (li < structure->size() && ri < right.structure->size()) {
                 if ((*structure)[li].type->getFieldName() == (*right.structure)[ri].type->getFieldName()) {
                     if (*(*structure)[li].type != *(*right.structure)[ri].type)

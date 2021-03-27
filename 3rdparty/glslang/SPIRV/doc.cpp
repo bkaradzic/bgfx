@@ -2719,7 +2719,7 @@ void Parameterize()
 
     InstructionDesc[OpGroupNonUniformQuadSwap].operands.push(OperandScope, "'Execution'");
     InstructionDesc[OpGroupNonUniformQuadSwap].operands.push(OperandId, "X");
-    InstructionDesc[OpGroupNonUniformQuadSwap].operands.push(OperandLiteralNumber, "'Direction'");
+    InstructionDesc[OpGroupNonUniformQuadSwap].operands.push(OperandId, "'Direction'");
 
     InstructionDesc[OpSubgroupBallotKHR].operands.push(OperandId, "'Predicate'");
 

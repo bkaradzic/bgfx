@@ -871,12 +871,13 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
         }
     }
 
-    // Qualifiers have to (almost) match
+    bool isInOut = crossStage &&
+                   ((symbol.getQualifier().storage == EvqVaryingIn && unitSymbol.getQualifier().storage == EvqVaryingOut) ||
+                   (symbol.getQualifier().storage == EvqVaryingOut && unitSymbol.getQualifier().storage == EvqVaryingIn));
 
+    // Qualifiers have to (almost) match
     // Storage...
-    if (symbol.getQualifier().storage != unitSymbol.getQualifier().storage &&
-        !((crossStage && symbol.getQualifier().storage == EvqVaryingIn && unitSymbol.getQualifier().storage == EvqVaryingOut) ||
-          (crossStage && symbol.getQualifier().storage == EvqVaryingOut && unitSymbol.getQualifier().storage == EvqVaryingIn))) {
+    if (!isInOut && symbol.getQualifier().storage != unitSymbol.getQualifier().storage) {
         error(infoSink, "Storage qualifiers must match:");
         writeTypeComparison = true;
     }
@@ -898,7 +899,7 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
     }
 
     // Precision...
-    if (symbol.getQualifier().precision != unitSymbol.getQualifier().precision) {
+    if (!isInOut && symbol.getQualifier().precision != unitSymbol.getQualifier().precision) {
         error(infoSink, "Precision qualifiers must match:");
         writeTypeComparison = true;
     }
