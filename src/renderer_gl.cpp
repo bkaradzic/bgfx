@@ -5638,7 +5638,10 @@ namespace bgfx { namespace gl
 				bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
 				data = temp;
 			}
-
+			const GLenum internalFmt = (0 != (m_flags & BGFX_TEXTURE_SRGB))
+				? s_textureFormat[m_textureFormat].m_internalFmtSrgb
+				: s_textureFormat[m_textureFormat].m_internalFmt
+				;
 			GL_CHECK(compressedTexSubImage(target+_side
 				, _mip
 				, _rect.m_x
@@ -5647,7 +5650,7 @@ namespace bgfx { namespace gl
 				, _rect.m_width
 				, _rect.m_height
 				, _depth
-				, m_fmt
+				, internalFmt
 				, _mem->size
 				, data
 				) );
