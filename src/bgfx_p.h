@@ -1885,6 +1885,8 @@ namespace bgfx
 	struct FrameBufferRef
 	{
 		String m_name;
+		uint16_t m_width;
+		uint16_t m_height;
 
 		union un
 		{
@@ -4570,15 +4572,22 @@ namespace bgfx
 				cmdbuf.write(_num);
 
 				FrameBufferRef& ref = m_frameBufferRef[handle.idx];
+				ref.m_width  = UINT16_MAX;
+				ref.m_height = UINT16_MAX;
 				ref.m_window = false;
 				bx::memSet(ref.un.m_th, 0xff, sizeof(ref.un.m_th) );
-				BackbufferRatio::Enum bbRatio = BackbufferRatio::Enum(m_textureRef[_attachment[0].handle.idx].m_bbRatio);
+				const BackbufferRatio::Enum bbRatio = BackbufferRatio::Enum(m_textureRef[_attachment[0].handle.idx].m_bbRatio);
 				for (uint32_t ii = 0; ii < _num; ++ii)
 				{
 					TextureHandle texHandle = _attachment[ii].handle;
 					BGFX_CHECK_HANDLE("createFrameBuffer texture", m_textureHandle, texHandle);
 					BX_ASSERT(bbRatio == m_textureRef[texHandle.idx].m_bbRatio, "Mismatch in texture back-buffer ratio.");
-					BX_UNUSED(bbRatio);
+
+					if (BackbufferRatio::Count == bbRatio)
+					{
+						ref.m_width  = bx::min(ref.m_width, m_textureRef[texHandle.idx].m_width);
+						ref.m_height = bx::min(ref.m_height, m_textureRef[texHandle.idx].m_height);
+					}
 
 					ref.un.m_th[ii] = texHandle;
 					textureIncRef(texHandle);
@@ -4617,6 +4626,8 @@ namespace bgfx
 				cmdbuf.write(_depthFormat);
 
 				FrameBufferRef& ref = m_frameBufferRef[handle.idx];
+				ref.m_width  = _width;
+				ref.m_height = _height;
 				ref.m_window = true;
 				ref.un.m_nwh = _nwh;
 			}
