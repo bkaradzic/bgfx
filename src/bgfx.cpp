@@ -1410,11 +1410,12 @@ namespace bgfx
 			if (isValid(view.m_fbh) )
 			{
 				const FrameBufferRef& fb = s_ctx->m_frameBufferRef[view.m_fbh.idx];
-				if (fb.m_width == UINT16_MAX && fb.m_height == UINT16_MAX)
+				const BackbufferRatio::Enum bbRatio = fb.m_window
+					? BackbufferRatio::Count
+					: BackbufferRatio::Enum(s_ctx->m_textureRef[fb.un.m_th[0].idx].m_bbRatio)
+					;
+				if (BackbufferRatio::Count != bbRatio)
 				{
-					BX_ASSERT(!fb.m_window, "");
-					const BackbufferRatio::Enum bbRatio = BackbufferRatio::Enum(s_ctx->m_textureRef[fb.un.m_th[0].idx].m_bbRatio);
-					BX_ASSERT(BackbufferRatio::Count != bbRatio, "");
 					getTextureSizeFromRatio(bbRatio, fbRect.m_width, fbRect.m_height);
 				}
 				else

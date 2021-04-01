@@ -4538,9 +4538,9 @@ namespace bgfx
 
 				BX_ASSERT(
 					  _attachment[ii].mip < tr.m_numMips
-					, "Invalid texture mip level (%d >= %d)."
+					, "Invalid texture mip level (%d > %d)."
 					, _attachment[ii].mip
-					, tr.m_numMips
+					, tr.m_numMips - 1
 				);
 				const uint16_t numLayers = tr.m_numLayers * (tr.isCubeMap() ? 6 : 1) * (tr.is3D() ? tr.m_depth : 1);
 				BX_ASSERT(
@@ -4564,7 +4564,9 @@ namespace bgfx
 					const uint16_t height = bx::max<uint16_t>(tr.m_height >> _attachment[ii].mip, 1);
 					BX_ASSERT(
 						  width == firstAttachmentWidth && height == firstAttachmentHeight
-						, "Mismatch in texture size."
+						, "Mismatch in texture size (%dx%d != %dx%d)."
+						, width, height
+						, firstAttachmentWidth, firstAttachmentHeight
 						);
 				}
 
@@ -4580,11 +4582,13 @@ namespace bgfx
 				BX_ASSERT(
 					  0 == (tr.m_flags & BGFX_TEXTURE_READ_BACK)
 					, "Frame buffer texture cannot be read back texture. Attachment %d: has flags 0x%016" PRIx64 "."
+					, ii
+					, tr.m_flags
 					);
 
 				BX_ASSERT(
 					  0 != (tr.m_flags & BGFX_TEXTURE_RT_MASK)
-					, "Frame buffer texture is not create with one of `BGFX_TEXTURE_RT*` flags. Attachment %d: has flags 0x%016" PRIx64 "."
+					, "Frame buffer texture is not created with one of `BGFX_TEXTURE_RT*` flags. Attachment %d: has flags 0x%016" PRIx64 "."
 					, ii
 					, tr.m_flags
 					);
@@ -4623,11 +4627,6 @@ namespace bgfx
 				{
 					ref.m_width  = bx::max<uint16_t>(firstTexture.m_width  >> _attachment[0].mip, 1);
 					ref.m_height = bx::max<uint16_t>(firstTexture.m_height >> _attachment[0].mip, 1);
-				}
-				else
-				{
-					ref.m_width  = UINT16_MAX;
-					ref.m_height = UINT16_MAX;
 				}
 				ref.m_window = false;
 				bx::memSet(ref.un.m_th, 0xff, sizeof(ref.un.m_th) );
