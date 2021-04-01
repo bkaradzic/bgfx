@@ -6618,7 +6618,7 @@ VK_DESTROY
 		VkCommandPoolCreateInfo cpci;
 		cpci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		cpci.pNext = NULL;
-		cpci.flags = 0;
+		cpci.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 		cpci.queueFamilyIndex = m_queueFamily;
 
 		VkCommandBufferAllocateInfo cbai;
