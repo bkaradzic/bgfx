@@ -348,28 +348,30 @@ VK_IMPORT_DEVICE
 
 	bool updateExtension(const char* _name, uint32_t _version, bool _instanceExt, Extension _extensions[Extension::Count])
 	{
-		const bx::StringView ext(_name);
-
 		bool supported = false;
-		for (uint32_t ii = 0; ii < Extension::Count; ++ii)
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 		{
-			Extension& extension = _extensions[ii];
-			LayerInfo& layerInfo = _instanceExt
-				? s_layer[extension.m_layer].m_instance
-				: s_layer[extension.m_layer].m_device
-				;
-
-			if (!extension.m_supported
-			&&   extension.m_initialize
-			&&  (extension.m_layer == Layer::Count || layerInfo.m_supported) )
+			const bx::StringView ext(_name);
+			for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 			{
-				if (       0 == bx::strCmp(ext, extension.m_name)
-				&&  _version >= extension.m_minVersion)
+				Extension& extension = _extensions[ii];
+				LayerInfo& layerInfo = _instanceExt
+					? s_layer[extension.m_layer].m_instance
+					: s_layer[extension.m_layer].m_device
+					;
+
+				if (!extension.m_supported
+				&&   extension.m_initialize
+				&&  (extension.m_layer == Layer::Count || layerInfo.m_supported) )
 				{
-					extension.m_supported   = true;
-					extension.m_instanceExt = _instanceExt;
-					supported = true;
-					break;
+					if (       0 == bx::strCmp(ext, extension.m_name)
+					&&  _version >= extension.m_minVersion)
+					{
+						extension.m_supported   = true;
+						extension.m_instanceExt = _instanceExt;
+						supported = true;
+						break;
+					}
 				}
 			}
 		}
