@@ -6496,56 +6496,58 @@ VK_DESTROY
 		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 		VkRenderPass renderPass = s_renderVK->getRenderPass(_num, _attachment);
 
-		TextureVK& firstTexture = s_renderVK->m_textures[m_attachment[0].handle.idx];
 		::VkImageView textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 
 		m_depth.idx = bx::kInvalidHandle;
 		m_num = 0;
 
-		uint16_t numLayers = m_attachment[0].numLayers;
+		uint8_t viewCount = 0;
 
 		for (uint8_t ii = 0; ii < m_numTh; ++ii)
 		{
-			const TextureVK& texture = s_renderVK->m_textures[m_attachment[ii].handle.idx];
+			const Attachment& at = m_attachment[ii];
 
-			BX_ASSERT(numLayers == m_attachment[ii].numLayers
-				, "Mismatching framebuffer attachment layer counts (%d != %d)."
-				, m_attachment[ii].numLayers
-				, numLayers
-				);
-
-			m_textureImageViews[ii] = texture.createView(
-				  m_attachment[ii].layer
-				, m_attachment[ii].numLayers
-				, m_attachment[ii].mip
-				, 1
-				);
-			textureImageViews[ii] = m_textureImageViews[ii];
-
-			if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
+			if (isValid(at.handle) )
 			{
-				m_texture[m_num] = m_attachment[ii].handle;
-				m_num++;
+				const TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
+				m_textureImageViews[ii] = texture.createView(
+					  at.layer
+					, at.numLayers
+					, at.mip
+					, 1
+					);
+				textureImageViews[viewCount++] = m_textureImageViews[ii];
+
+				if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
+				{
+					m_texture[m_num] = at.handle;
+					m_num++;
+				}
+				else if (texture.m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
+				{
+					m_depth = at.handle;
+				}
 			}
-			else if (texture.m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
+			else
 			{
-				m_depth = m_attachment[ii].handle;
+				m_textureImageViews[ii] = VK_NULL_HANDLE;
 			}
 		}
 
-		m_width = firstTexture.m_width >> m_attachment[0].mip;
-		m_height = firstTexture.m_height >> m_attachment[0].mip;
+		const TextureVK& firstTexture = s_renderVK->m_textures[m_attachment[0].handle.idx];
+		m_width  = bx::uint32_max(firstTexture.m_width  >> m_attachment[0].mip, 1);
+		m_height = bx::uint32_max(firstTexture.m_height >> m_attachment[0].mip, 1);
 
 		VkFramebufferCreateInfo fci;
 		fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		fci.pNext = NULL;
 		fci.flags = 0;
 		fci.renderPass      = renderPass;
-		fci.attachmentCount = m_numTh;
+		fci.attachmentCount = viewCount;
 		fci.pAttachments    = textureImageViews;
 		fci.width  = m_width;
 		fci.height = m_height;
-		fci.layers = numLayers;
+		fci.layers = m_attachment[0].numLayers;
 
 		VK_CHECK(vkCreateFramebuffer(device, &fci, allocatorCb, &m_framebuffer) );
 

@@ -1404,6 +1404,34 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
 			viewRemap[m_viewRemap[ii] ] = ViewId(ii);
+
+			View& view = s_ctx->m_view[ii];
+			Rect fbRect(0, 0, uint16_t(m_resolution.width), uint16_t(m_resolution.height) );
+			if (isValid(view.m_fbh) )
+			{
+				const FrameBufferRef& fb = s_ctx->m_frameBufferRef[view.m_fbh.idx];
+				const BackbufferRatio::Enum bbRatio = fb.m_window
+					? BackbufferRatio::Count
+					: BackbufferRatio::Enum(s_ctx->m_textureRef[fb.un.m_th[0].idx].m_bbRatio)
+					;
+				if (BackbufferRatio::Count != bbRatio)
+				{
+					getTextureSizeFromRatio(bbRatio, fbRect.m_width, fbRect.m_height);
+				}
+				else
+				{
+					fbRect.m_width  = fb.m_width;
+					fbRect.m_height = fb.m_height;
+				}
+			}
+
+			view.m_rect.intersect(fbRect);
+			BX_ASSERT(!view.m_rect.isZeroArea(), "View %d: view rect outside of framebuffer extent", ii);
+
+			if (!view.m_scissor.isZero() )
+			{
+				view.m_scissor.intersect(fbRect);
+			}
 		}
 
 		for (uint32_t ii = 0, num = m_numRenderItems; ii < num; ++ii)
