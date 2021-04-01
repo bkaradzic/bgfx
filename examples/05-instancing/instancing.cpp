@@ -75,6 +75,9 @@ public:
 		m_height = _height;
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
+		m_use_instancing = true;
+		m_last_frame_missing = 0;
+		m_side_size = 11;
 
 		bgfx::Init init;
 		init.type     = args.m_type;
@@ -111,6 +114,7 @@ public:
 
 		// Create program from shaders.
 		m_program = loadProgram("vs_instancing", "fs_instancing");
+		m_program_non_instanced = loadProgram("vs_cubes", "fs_cubes");
 
 		m_timeOffset = bx::getHPCounter();
 
@@ -125,6 +129,7 @@ public:
 		bgfx::destroy(m_ibh);
 		bgfx::destroy(m_vbh);
 		bgfx::destroy(m_program);
+		bgfx::destroy(m_program_non_instanced);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -148,6 +153,34 @@ public:
 
 			showExampleDialog(this);
 
+			ImGui::SetNextWindowPos(
+				ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+			);
+			ImGui::SetNextWindowSize(
+				ImVec2(m_width / 5.0f, m_height / 2.0f)
+				, ImGuiCond_FirstUseEver
+			);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+			);
+
+			ImGui::Text("%d draw calls", bgfx::getStats()->numDraw);
+			ImGui::Checkbox("Use Instancing", &m_use_instancing);
+			ImGui::Text("Grid Side Size:");
+			ImGui::SliderInt("", (int*)&m_side_size, 1, 512);
+			if (m_last_frame_missing > 0)
+			{
+				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Couldn't draw %d cubes last frame", m_last_frame_missing);
+			}
+			if (bgfx::getStats()->numDraw >= bgfx::getCaps()->limits.maxDrawCalls)
+			{
+				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Draw call limit reached!");
+			}
+
+			ImGui::End();
+
 			imguiEndFrame();
 
 			// Set view 0 default viewport.
@@ -169,81 +202,114 @@ public:
 				// code path that doesn't use instancing.
 				bool blink = uint32_t(time*3.0f)&1;
 				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Instancing is not supported by GPU. ");
+
+				m_use_instancing = false;
+			}
+
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
+
+			// Set view and projection matrix for view 0.
+			{
+				float view[16];
+				bx::mtxLookAt(view, eye, at);
+
+				float proj[16];
+				bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
+				bgfx::setViewTransform(0, view, proj);
+
+				// Set view 0 default viewport.
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+			}
+
+			m_last_frame_missing = 0;
+
+			if (m_use_instancing)
+			{
+				// 80 bytes stride = 64 bytes for 4x4 matrix + 16 bytes for RGBA color.
+				const uint16_t instanceStride = 80;
+				// to total number of instances to draw
+				uint32_t totalCubes = m_side_size * m_side_size;
+
+				// figure out how big of a buffer is available
+				uint32_t drawnCubes = bgfx::getAvailInstanceDataBuffer(totalCubes, instanceStride);
+
+				// save how many we couldn't draw due to buffer room so we can display it
+				m_last_frame_missing = totalCubes - drawnCubes;
+
+				bgfx::InstanceDataBuffer idb;
+				bgfx::allocInstanceDataBuffer(&idb, drawnCubes, instanceStride);
+
+				uint8_t* data = idb.data;
+
+				for (uint32_t ii = 0; ii < drawnCubes; ++ii)
+				{
+					uint32_t yy = ii / m_side_size;
+					uint32_t xx = ii % m_side_size;
+
+					float* mtx = (float*)data;
+					bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
+					mtx[12] = -15.0f + float(xx) * 3.0f;
+					mtx[13] = -15.0f + float(yy) * 3.0f;
+					mtx[14] = 0.0f;
+
+					float* color = (float*)&data[64];
+					color[0] = bx::sin(time + float(xx) / 11.0f) * 0.5f + 0.5f;
+					color[1] = bx::cos(time + float(yy) / 11.0f) * 0.5f + 0.5f;
+					color[2] = bx::sin(time * 3.0f) * 0.5f + 0.5f;
+					color[3] = 1.0f;
+
+					data += instanceStride;
+				}
+
+				// Set vertex and index buffer.
+				bgfx::setVertexBuffer(0, m_vbh);
+				bgfx::setIndexBuffer(m_ibh);
+
+				// Set instance data buffer.
+				bgfx::setInstanceDataBuffer(&idb);
+
+				// Set render states.
+				bgfx::setState(BGFX_STATE_DEFAULT);
+
+				// Submit primitive for rendering to view 0.
+				bgfx::submit(0, m_program);
 			}
 			else
 			{
-				const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
-				const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
-
-				// Set view and projection matrix for view 0.
+				// non-instanced path
+				for (uint32_t yy = 0; yy < m_side_size; ++yy)
 				{
-					float view[16];
-					bx::mtxLookAt(view, eye, at);
-
-					float proj[16];
-					bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
-					bgfx::setViewTransform(0, view, proj);
-
-					// Set view 0 default viewport.
-					bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-				}
-
-				// 80 bytes stride = 64 bytes for 4x4 matrix + 16 bytes for RGBA color.
-				const uint16_t instanceStride = 80;
-				// 11x11 cubes
-				const uint32_t numInstances   = 121;
-
-				if (numInstances == bgfx::getAvailInstanceDataBuffer(numInstances, instanceStride) )
-				{
-					bgfx::InstanceDataBuffer idb;
-					bgfx::allocInstanceDataBuffer(&idb, numInstances, instanceStride);
-
-					uint8_t* data = idb.data;
-
-					// Write instance data for 11x11 cubes.
-					for (uint32_t yy = 0; yy < 11; ++yy)
+					for (uint32_t xx = 0; xx < m_side_size; ++xx)
 					{
-						for (uint32_t xx = 0; xx < 11; ++xx)
-						{
-							float* mtx = (float*)data;
-							bx::mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
-							mtx[12] = -15.0f + float(xx)*3.0f;
-							mtx[13] = -15.0f + float(yy)*3.0f;
-							mtx[14] = 0.0f;
+						float mtx[16];
+						bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
+						mtx[12] = -15.0f + float(xx) * 3.0f;
+						mtx[13] = -15.0f + float(yy) * 3.0f;
+						mtx[14] = 0.0f;
 
-							float* color = (float*)&data[64];
-							color[0] = bx::sin(time+float(xx)/11.0f)*0.5f+0.5f;
-							color[1] = bx::cos(time+float(yy)/11.0f)*0.5f+0.5f;
-							color[2] = bx::sin(time*3.0f)*0.5f+0.5f;
-							color[3] = 1.0f;
+						// Set model matrix for rendering.
+						bgfx::setTransform(mtx);
 
-							data += instanceStride;
-						}
+						// Set vertex and index buffer.
+						bgfx::setVertexBuffer(0, m_vbh);
+						bgfx::setIndexBuffer(m_ibh);
+
+						// Set render states.
+						bgfx::setState(BGFX_STATE_DEFAULT);
+
+						// Submit primitive for rendering to view 0.
+						bgfx::submit(0, m_program_non_instanced);
 					}
-
-					// Set vertex and index buffer.
-					bgfx::setVertexBuffer(0, m_vbh);
-					bgfx::setIndexBuffer(m_ibh);
-
-					// Set instance data buffer.
-					bgfx::setInstanceDataBuffer(&idb);
-
-					// Set render states.
-					bgfx::setState(BGFX_STATE_DEFAULT);
-
-					// Submit primitive for rendering to view 0.
-					bgfx::submit(0, m_program);
 				}
 			}
-
-			// Advance to next frame. Rendering thread will be kicked to
-			// process submitted rendering primitives.
-			bgfx::frame();
-
-			return true;
 		}
 
-		return false;
+		// Advance to next frame. Rendering thread will be kicked to
+		// process submitted rendering primitives.
+		bgfx::frame();
+
+		return true;
 	}
 
 	entry::MouseState m_mouseState;
@@ -252,9 +318,14 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
+	bool m_use_instancing;
+	uint32_t m_last_frame_missing;
+	uint32_t m_side_size;
+
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle  m_ibh;
 	bgfx::ProgramHandle m_program;
+	bgfx::ProgramHandle m_program_non_instanced;
 
 	int64_t m_timeOffset;
 };
