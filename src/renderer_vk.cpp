@@ -4030,7 +4030,8 @@ VK_IMPORT_DEVICE
 				return view;
 			}
 
-			view = texture.createView(0, texture.m_numSides, _mip, 1);
+			const bool asArray = texture.m_type == VK_IMAGE_VIEW_TYPE_CUBE;
+			view = texture.createView(0, texture.m_numSides, _mip, 1, asArray);
 
 			m_storageImageViewCache.add(hashKey, view);
 			return view;
@@ -6039,9 +6040,15 @@ VK_DESTROY
 			VkImageCreateInfo ici;
 			ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			ici.pNext = NULL;
-			ici.flags = VK_IMAGE_VIEW_TYPE_CUBE == m_type
-				? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
-				: 0
+			ici.flags = 0
+				| (VK_IMAGE_VIEW_TYPE_CUBE == m_type
+					? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
+					: 0
+					)
+				| (VK_IMAGE_VIEW_TYPE_3D == m_type
+					? VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT_KHR
+					: 0
+					)
 				;
 			ici.pQueueFamilyIndices   = NULL;
 			ici.queueFamilyIndexCount = 0;
@@ -6458,7 +6465,7 @@ VK_DESTROY
 		m_currentImageLayout = _newImageLayout;
 	}
 
-	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips) const
+	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, bool _asArray) const
 	{
 		VkImageView view = VK_NULL_HANDLE;
 
@@ -6467,7 +6474,7 @@ VK_DESTROY
 		viewInfo.pNext      = NULL;
 		viewInfo.flags      = 0;
 		viewInfo.image      = m_textureImage;
-		viewInfo.viewType   = m_type == VK_IMAGE_VIEW_TYPE_CUBE
+		viewInfo.viewType   = _asArray
 			? VK_IMAGE_VIEW_TYPE_2D_ARRAY
 			: m_type
 			;
@@ -6517,6 +6524,7 @@ VK_DESTROY
 					, at.numLayers
 					, at.mip
 					, 1
+					, true
 					);
 				textureImageViews[viewCount++] = m_textureImageViews[ii];
 
