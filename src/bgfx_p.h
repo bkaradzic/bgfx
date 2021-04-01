@@ -4520,10 +4520,49 @@ namespace bgfx
 			uint8_t color = 0;
 			uint8_t depth = 0;
 
+			const TextureRef& firstTexture = m_textureRef[_attachment[0].handle.idx];
+
+			const uint16_t firstAttachmentWidth  = bx::max<uint16_t>(firstTexture.m_width  >> _attachment[0].mip, 1);
+			const uint16_t firstAttachmentHeight = bx::max<uint16_t>(firstTexture.m_height >> _attachment[0].mip, 1);
+
 			for (uint32_t ii = 0; ii < _num; ++ii)
 			{
 				const TextureHandle texHandle = _attachment[ii].handle;
+				BGFX_CHECK_HANDLE("createFrameBuffer texture", m_textureHandle, texHandle);
 				const TextureRef& tr = m_textureRef[texHandle.idx];
+
+				BX_ASSERT(
+					  _attachment[ii].mip < tr.m_numMips
+					, "Invalid texture mip level (%d >= %d)."
+					, _attachment[ii].mip
+					, tr.m_numMips
+				);
+				const uint16_t numLayers = tr.isCubeMap() ? 6 : tr.m_numLayers;
+				BX_ASSERT(
+					  (_attachment[ii].layer + _attachment[ii].numLayers) <= numLayers
+					, "Invalid texture layer range (layer %d + num %d > total %d)."
+					, _attachment[ii].layer
+					, _attachment[ii].numLayers
+					, numLayers
+					);
+
+				BX_ASSERT(
+					  _attachment[0].numLayers == _attachment[ii].numLayers
+					, "Mismatch in attachment layer count (%d != %d)."
+					, _attachment[ii].numLayers
+					, _attachment[0].numLayers
+					);
+				BX_ASSERT(firstTexture.m_bbRatio == tr.m_bbRatio, "Mismatch in texture back-buffer ratio.");
+				if (BackbufferRatio::Count == firstTexture.m_bbRatio)
+				{
+					const uint16_t width  = bx::max<uint16_t>(tr.m_width  >> _attachment[ii].mip, 1);
+					const uint16_t height = bx::max<uint16_t>(tr.m_height >> _attachment[ii].mip, 1);
+					BX_ASSERT(
+						  width == firstAttachmentWidth && height == firstAttachmentHeight
+						, "Mismatch in texture size."
+						);
+				}
+
 				if (bimg::isDepth(bimg::TextureFormat::Enum(tr.m_format) ) )
 				{
 					++depth;
@@ -4571,24 +4610,26 @@ namespace bgfx
 				cmdbuf.write(false);
 				cmdbuf.write(_num);
 
+				const TextureRef& firstTexture = m_textureRef[_attachment[0].handle.idx];
+				const BackbufferRatio::Enum bbRatio = BackbufferRatio::Enum(firstTexture.m_bbRatio);
+
 				FrameBufferRef& ref = m_frameBufferRef[handle.idx];
-				ref.m_width  = UINT16_MAX;
-				ref.m_height = UINT16_MAX;
+				if (BackbufferRatio::Count == bbRatio)
+				{
+					ref.m_width  = bx::max<uint16_t>(firstTexture.m_width  >> _attachment[0].mip, 1);
+					ref.m_height = bx::max<uint16_t>(firstTexture.m_height >> _attachment[0].mip, 1);
+				}
+				else
+				{
+					ref.m_width  = UINT16_MAX;
+					ref.m_height = UINT16_MAX;
+				}
 				ref.m_window = false;
 				bx::memSet(ref.un.m_th, 0xff, sizeof(ref.un.m_th) );
-				const BackbufferRatio::Enum bbRatio = BackbufferRatio::Enum(m_textureRef[_attachment[0].handle.idx].m_bbRatio);
+				
 				for (uint32_t ii = 0; ii < _num; ++ii)
 				{
 					TextureHandle texHandle = _attachment[ii].handle;
-					BGFX_CHECK_HANDLE("createFrameBuffer texture", m_textureHandle, texHandle);
-					BX_ASSERT(bbRatio == m_textureRef[texHandle.idx].m_bbRatio, "Mismatch in texture back-buffer ratio.");
-
-					if (BackbufferRatio::Count == bbRatio)
-					{
-						ref.m_width  = bx::min(ref.m_width, m_textureRef[texHandle.idx].m_width);
-						ref.m_height = bx::min(ref.m_height, m_textureRef[texHandle.idx].m_height);
-					}
-
 					ref.un.m_th[ii] = texHandle;
 					textureIncRef(texHandle);
 				}

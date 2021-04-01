@@ -1425,7 +1425,7 @@ namespace bgfx
 			}
 
 			view.m_rect.intersect(fbRect);
-			BX_ASSERT(!view.m_rect.isZeroArea(), "View %d: empty view rect", ii);
+			BX_ASSERT(!view.m_rect.isZeroArea(), "View %d: view rect outside of framebuffer extent", ii);
 
 			if (!view.m_scissor.isZero() )
 			{
