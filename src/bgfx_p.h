@@ -1865,6 +1865,11 @@ namespace bgfx
 			return m_cubeMap;
 		}
 
+		bool is3D() const
+		{
+			return 0 < m_depth;
+		}
+
 		String   m_name;
 		void*    m_ptr;
 		uint64_t m_flags;
@@ -4537,7 +4542,7 @@ namespace bgfx
 					, _attachment[ii].mip
 					, tr.m_numMips
 				);
-				const uint16_t numLayers = tr.isCubeMap() ? 6 : tr.m_numLayers;
+				const uint16_t numLayers = tr.m_numLayers * (tr.isCubeMap() ? 6 : 1) * (tr.is3D() ? tr.m_depth : 1);
 				BX_ASSERT(
 					  (_attachment[ii].layer + _attachment[ii].numLayers) <= numLayers
 					, "Invalid texture layer range (layer %d + num %d > total %d)."
