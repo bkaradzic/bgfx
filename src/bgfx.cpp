@@ -1406,31 +1406,33 @@ namespace bgfx
 			viewRemap[m_viewRemap[ii] ] = ViewId(ii);
 
 			View& view = s_ctx->m_view[ii];
-			Rect fbRect(0, 0, uint16_t(m_resolution.width), uint16_t(m_resolution.height) );
+			Rect rect(0, 0, uint16_t(m_resolution.width), uint16_t(m_resolution.height) );
+
 			if (isValid(view.m_fbh) )
 			{
-				const FrameBufferRef& fb = s_ctx->m_frameBufferRef[view.m_fbh.idx];
-				const BackbufferRatio::Enum bbRatio = fb.m_window
+				const FrameBufferRef& fbr = s_ctx->m_frameBufferRef[view.m_fbh.idx];
+				const BackbufferRatio::Enum bbRatio = fbr.m_window
 					? BackbufferRatio::Count
-					: BackbufferRatio::Enum(s_ctx->m_textureRef[fb.un.m_th[0].idx].m_bbRatio)
+					: BackbufferRatio::Enum(s_ctx->m_textureRef[fbr.un.m_th[0].idx].m_bbRatio)
 					;
+
 				if (BackbufferRatio::Count != bbRatio)
 				{
-					getTextureSizeFromRatio(bbRatio, fbRect.m_width, fbRect.m_height);
+					getTextureSizeFromRatio(bbRatio, rect.m_width, rect.m_height);
 				}
 				else
 				{
-					fbRect.m_width  = fb.m_width;
-					fbRect.m_height = fb.m_height;
+					rect.m_width  = fbr.m_width;
+					rect.m_height = fbr.m_height;
 				}
 			}
 
-			view.m_rect.intersect(fbRect);
+			view.m_rect.intersect(rect);
 			BX_ASSERT(!view.m_rect.isZeroArea(), "View %d: view rect outside of framebuffer extent", ii);
 
 			if (!view.m_scissor.isZero() )
 			{
-				view.m_scissor.intersect(fbRect);
+				view.m_scissor.intersect(rect);
 			}
 		}
 
@@ -1438,12 +1440,14 @@ namespace bgfx
 		{
 			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], viewRemap);
 		}
+
 		bx::radixSort(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_numRenderItems);
 
 		for (uint32_t ii = 0, num = m_numBlitItems; ii < num; ++ii)
 		{
 			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], viewRemap);
 		}
+
 		bx::radixSort(m_blitKeys, (uint32_t*)&s_ctx->m_tempKeys, m_numBlitItems);
 	}
 

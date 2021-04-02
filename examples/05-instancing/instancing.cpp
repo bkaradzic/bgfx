@@ -75,9 +75,9 @@ public:
 		m_height = _height;
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
-		m_use_instancing = true;
-		m_last_frame_missing = 0;
-		m_side_size = 11;
+		m_useInstancing    = true;
+		m_lastFrameMissing = 0;
+		m_sideSize         = 11;
 
 		bgfx::Init init;
 		init.type     = args.m_type;
@@ -166,14 +166,27 @@ public:
 				, 0
 			);
 
+			// Get renderer capabilities info.
+			const bgfx::Caps* caps = bgfx::getCaps();
+
+			// Check if instancing is supported.
+			const bool instancingSupported = 0 != (BGFX_CAPS_INSTANCING & caps->supported);
+			m_useInstancing &= instancingSupported;
+
 			ImGui::Text("%d draw calls", bgfx::getStats()->numDraw);
-			ImGui::Checkbox("Use Instancing", &m_use_instancing);
+
+			ImGui::PushEnabled(instancingSupported);
+			ImGui::Checkbox("Use Instancing", &m_useInstancing);
+			ImGui::PopEnabled();
+
 			ImGui::Text("Grid Side Size:");
-			ImGui::SliderInt("", (int*)&m_side_size, 1, 512);
-			if (m_last_frame_missing > 0)
+			ImGui::SliderInt("", (int*)&m_sideSize, 1, 512);
+
+			if (m_lastFrameMissing > 0)
 			{
-				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Couldn't draw %d cubes last frame", m_last_frame_missing);
+				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Couldn't draw %d cubes last frame", m_lastFrameMissing);
 			}
+
 			if (bgfx::getStats()->numDraw >= bgfx::getCaps()->limits.maxDrawCalls)
 			{
 				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Draw call limit reached!");
@@ -192,18 +205,14 @@ public:
 
 			float time = (float)( (bx::getHPCounter() - m_timeOffset)/double(bx::getHPFrequency() ) );
 
-			// Get renderer capabilities info.
-			const bgfx::Caps* caps = bgfx::getCaps();
-
-			// Check if instancing is supported.
-			if (0 == (BGFX_CAPS_INSTANCING & caps->supported) )
+			if (!instancingSupported)
 			{
 				// When instancing is not supported by GPU, implement alternative
 				// code path that doesn't use instancing.
 				bool blink = uint32_t(time*3.0f)&1;
 				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Instancing is not supported by GPU. ");
 
-				m_use_instancing = false;
+				m_useInstancing = false;
 			}
 
 			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
@@ -222,20 +231,20 @@ public:
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			}
 
-			m_last_frame_missing = 0;
+			m_lastFrameMissing = 0;
 
-			if (m_use_instancing)
+			if (m_useInstancing)
 			{
 				// 80 bytes stride = 64 bytes for 4x4 matrix + 16 bytes for RGBA color.
 				const uint16_t instanceStride = 80;
 				// to total number of instances to draw
-				uint32_t totalCubes = m_side_size * m_side_size;
+				uint32_t totalCubes = m_sideSize * m_sideSize;
 
 				// figure out how big of a buffer is available
 				uint32_t drawnCubes = bgfx::getAvailInstanceDataBuffer(totalCubes, instanceStride);
 
 				// save how many we couldn't draw due to buffer room so we can display it
-				m_last_frame_missing = totalCubes - drawnCubes;
+				m_lastFrameMissing = totalCubes - drawnCubes;
 
 				bgfx::InstanceDataBuffer idb;
 				bgfx::allocInstanceDataBuffer(&idb, drawnCubes, instanceStride);
@@ -244,8 +253,8 @@ public:
 
 				for (uint32_t ii = 0; ii < drawnCubes; ++ii)
 				{
-					uint32_t yy = ii / m_side_size;
-					uint32_t xx = ii % m_side_size;
+					uint32_t yy = ii / m_sideSize;
+					uint32_t xx = ii % m_sideSize;
 
 					float* mtx = (float*)data;
 					bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
@@ -278,9 +287,9 @@ public:
 			else
 			{
 				// non-instanced path
-				for (uint32_t yy = 0; yy < m_side_size; ++yy)
+				for (uint32_t yy = 0; yy < m_sideSize; ++yy)
 				{
-					for (uint32_t xx = 0; xx < m_side_size; ++xx)
+					for (uint32_t xx = 0; xx < m_sideSize; ++xx)
 					{
 						float mtx[16];
 						bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
@@ -320,9 +329,9 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	bool m_use_instancing;
-	uint32_t m_last_frame_missing;
-	uint32_t m_side_size;
+	bool     m_useInstancing;
+	uint32_t m_lastFrameMissing;
+	uint32_t m_sideSize;
 
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle  m_ibh;
