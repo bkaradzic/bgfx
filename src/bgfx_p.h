@@ -1643,9 +1643,12 @@ namespace bgfx
 				m_startIndex      = 0;
 				m_numIndices      = UINT32_MAX;
 				m_indexBuffer.idx = kInvalidHandle;
+				m_submitFlags   = 0;
+			} else {
+				// if index buffer retained track its size in submit flags.
+				m_submitFlags = isIndex16() ? 0 : BGFX_SUBMIT_INTERNAL_INDEX32;
 			}
 
-			m_submitFlags   = 0;
 			m_startIndirect = 0;
 			m_numIndirect   = UINT16_MAX;
 			m_indirectBuffer.idx = kInvalidHandle;
