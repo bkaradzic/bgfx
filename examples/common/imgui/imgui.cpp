@@ -9,6 +9,7 @@
 #include <bx/math.h>
 #include <bx/timer.h>
 #include <dear-imgui/imgui.h>
+#include <dear-imgui/imgui_internal.h>
 
 #include "imgui.h"
 #include "../bgfx_utils.h"
@@ -443,6 +444,21 @@ namespace ImGui
 	{
 		PushFont(s_ctx.m_font[_font]);
 	}
+
+	void PushEnabled(bool _enabled)
+	{
+		extern void PushItemFlag(int option, bool enabled);
+		PushItemFlag(ImGuiItemFlags_Disabled, !_enabled);
+		PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * (_enabled ? 1.0f : 0.5f) );
+	}
+
+	void PopEnabled()
+	{
+		extern void PopItemFlag();
+		PopItemFlag();
+		PopStyleVar();
+	}
+
 } // namespace ImGui
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
