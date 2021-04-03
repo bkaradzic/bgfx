@@ -6941,19 +6941,19 @@ VK_DESTROY
 			blitInfo.dstOffsets[1].y = blit.m_dstY + blit.m_height;
 			blitInfo.dstOffsets[1].z = 1;
 
-			if (VK_IMAGE_VIEW_TYPE_CUBE == src.m_type)
-			{
-				blitInfo.srcSubresource.baseArrayLayer = blit.m_srcZ;
-				blitInfo.dstSubresource.baseArrayLayer = blit.m_dstZ;
-				blitInfo.srcSubresource.layerCount = blit.m_depth;
-				blitInfo.dstSubresource.layerCount = blit.m_depth;
-			}
-			else if (VK_IMAGE_VIEW_TYPE_3D == src.m_type)
+			if (VK_IMAGE_VIEW_TYPE_3D == src.m_type)
 			{
 				blitInfo.srcOffsets[0].z = blit.m_srcZ;
 				blitInfo.dstOffsets[0].z = blit.m_dstZ;
 				blitInfo.srcOffsets[1].z = blit.m_srcZ + blit.m_depth;
 				blitInfo.dstOffsets[1].z = blit.m_dstZ + blit.m_depth;
+			}
+			else
+			{
+				blitInfo.srcSubresource.baseArrayLayer = blit.m_srcZ;
+				blitInfo.dstSubresource.baseArrayLayer = blit.m_dstZ;
+				blitInfo.srcSubresource.layerCount = bx::max<uint32_t>(1, blit.m_depth);
+				blitInfo.dstSubresource.layerCount = bx::max<uint32_t>(1, blit.m_depth);
 			}
 
 			const VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) )
