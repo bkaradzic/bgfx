@@ -36,7 +36,7 @@
 
 // Check handle, it's ok to be bgfx::kInvalidHandle or must be valid.
 #define BGFX_CHECK_HANDLE_INVALID_OK(_desc, _handleAlloc, _handle) \
-	BX_ASSERT(!isValid(_handle)                                     \
+	BX_ASSERT(!isValid(_handle)                                    \
 		|| _handleAlloc.isValid(_handle.idx)                       \
 		, "Invalid handle. %s handle: %d (max %d)"                 \
 		, _desc                                                    \
@@ -78,35 +78,35 @@ namespace bgfx
 	inline bool operator==(const UniformHandle& _lhs,    const UniformHandle&    _rhs) { return _lhs.idx == _rhs.idx; }
 }
 
-#define _BX_TRACE(_format, ...)                                                                     \
-				BX_MACRO_BLOCK_BEGIN                                                                \
-					bgfx::trace(__FILE__, uint16_t(__LINE__), "BGFX " _format "\n", ##__VA_ARGS__); \
-				BX_MACRO_BLOCK_END
+#define _BX_TRACE(_format, ...)                                                         \
+	BX_MACRO_BLOCK_BEGIN                                                                \
+		bgfx::trace(__FILE__, uint16_t(__LINE__), "BGFX " _format "\n", ##__VA_ARGS__); \
+	BX_MACRO_BLOCK_END
 
-#define _BX_WARN(_condition, _format, ...)                        \
-				BX_MACRO_BLOCK_BEGIN                              \
-					if (!BX_IGNORE_C4127(_condition) )            \
-					{                                             \
-						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
-					}                                             \
-				BX_MACRO_BLOCK_END
+#define _BX_WARN(_condition, _format, ...)            \
+	BX_MACRO_BLOCK_BEGIN                              \
+		if (!BX_IGNORE_C4127(_condition) )            \
+		{                                             \
+			BX_TRACE("WARN " _format, ##__VA_ARGS__); \
+		}                                             \
+	BX_MACRO_BLOCK_END
 
-#define _BX_ASSERT(_condition, _format, ...)                                                                         \
-				BX_MACRO_BLOCK_BEGIN                                                                                \
-					if (!BX_IGNORE_C4127(_condition) )                                                              \
-					{                                                                                               \
-						BX_TRACE("CHECK " _format, ##__VA_ARGS__);                                                  \
-						bgfx::fatal(__FILE__, uint16_t(__LINE__), bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
-					}                                                                                               \
-				BX_MACRO_BLOCK_END
+#define _BX_ASSERT(_condition, _format, ...)                                                            \
+	BX_MACRO_BLOCK_BEGIN                                                                                \
+		if (!BX_IGNORE_C4127(_condition) )                                                              \
+		{                                                                                               \
+			BX_TRACE("CHECK " _format, ##__VA_ARGS__);                                                  \
+			bgfx::fatal(__FILE__, uint16_t(__LINE__), bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
+		}                                                                                               \
+	BX_MACRO_BLOCK_END
 
-#define BGFX_FATAL(_condition, _err, _format, ...)                                     \
-			BX_MACRO_BLOCK_BEGIN                                                       \
-				if (!BX_IGNORE_C4127(_condition) )                                     \
-				{                                                                      \
-					fatal(__FILE__, uint16_t(__LINE__), _err, _format, ##__VA_ARGS__); \
-				}                                                                      \
-			BX_MACRO_BLOCK_END
+#define BGFX_FATAL(_condition, _err, _format, ...)                             \
+	BX_MACRO_BLOCK_BEGIN                                                       \
+		if (!BX_IGNORE_C4127(_condition) )                                     \
+		{                                                                      \
+			fatal(__FILE__, uint16_t(__LINE__), _err, _format, ##__VA_ARGS__); \
+		}                                                                      \
+	BX_MACRO_BLOCK_END
 
 #include <bx/allocator.h>
 #include <bx/bx.h>
@@ -404,9 +404,9 @@ namespace bgfx
 
 		void clear()
 		{
-			m_x =
-			m_y =
-			m_width =
+			m_x      = 0;
+			m_y      = 0;
+			m_width  = 0;
 			m_height = 0;
 		}
 
@@ -461,8 +461,8 @@ namespace bgfx
 		uint16_t m_height;
 		uint16_t m_depth;
 		uint16_t m_numLayers;
-		uint8_t m_numMips;
-		bool m_cubeMap;
+		uint8_t  m_numMips;
+		bool     m_cubeMap;
 		const Memory* m_mem;
 	};
 
@@ -1161,15 +1161,18 @@ namespace bgfx
 		bool decode(uint64_t _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
 		{
 			m_view = _viewRemap[(_key & kSortKeyViewMask) >> kSortKeyViewBitShift];
+
 			if (_key & kSortKeyDrawBit)
 			{
 				uint64_t type = _key & kSortKeyDrawTypeMask;
+
 				if (type == kSortKeyDrawTypeDepth)
 				{
 					m_program.idx = uint16_t( (_key & kSortKeyDraw1ProgramMask) >> kSortKeyDraw1ProgramShift);
 					return false;
 				}
-				else if (type == kSortKeyDrawTypeSequence)
+
+				if (type == kSortKeyDrawTypeSequence)
 				{
 					m_program.idx = uint16_t( (_key & kSortKeyDraw2ProgramMask) >> kSortKeyDraw2ProgramShift);
 					return false;
@@ -1231,9 +1234,9 @@ namespace bgfx
 
 		static uint32_t remapView(uint32_t _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
 		{
-			const ViewId   oldView  = ViewId(_key >> 24);
-			const uint32_t view     = uint32_t(_viewRemap[oldView]) << 24;
-			const uint32_t key      = (_key & ~UINT32_C(0xff000000) ) | view;
+			const ViewId   oldView = ViewId(_key >> 24);
+			const uint32_t view    = uint32_t(_viewRemap[oldView]) << 24;
+			const uint32_t key     = (_key & ~UINT32_C(0xff000000) ) | view;
 			return key;
 		}
 
@@ -1345,7 +1348,7 @@ namespace bgfx
 			return first;
 		}
 
-		Rect m_cache[BGFX_CONFIG_MAX_RECT_CACHE];
+		Rect     m_cache[BGFX_CONFIG_MAX_RECT_CACHE];
 		uint32_t m_num;
 	};
 
@@ -1494,7 +1497,7 @@ namespace bgfx
 
 		uint32_t m_size;
 		uint32_t m_pos;
-		char m_buffer[256<<20];
+		char     m_buffer[256<<20];
 	};
 
 	struct UniformRegInfo
@@ -1572,14 +1575,14 @@ namespace bgfx
 	{
 		void clear()
 		{
-			m_startVertex       = 0;
-			m_handle.idx        = kInvalidHandle;
-			m_layoutHandle.idx  = kInvalidHandle;
+			m_startVertex      = 0;
+			m_handle.idx       = kInvalidHandle;
+			m_layoutHandle.idx = kInvalidHandle;
 		}
 
 		uint32_t           m_startVertex;
 		VertexBufferHandle m_handle;
-		VertexLayoutHandle   m_layoutHandle;
+		VertexLayoutHandle m_layoutHandle;
 	};
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderBind
