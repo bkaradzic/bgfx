@@ -289,8 +289,15 @@ namespace bgfx { namespace vk
 		const ::Vk##_name* operator &() const { return &vk; }    \
 	};                                                           \
 	BX_STATIC_ASSERT(sizeof(::Vk##_name) == sizeof(Vk##_name) ); \
-	void vkDestroy(Vk##_name&)
+	void vkDestroy(::Vk##_name);                                 \
+	void vkDestroy(Vk##_name& _obj)                              \
+	{                                                            \
+		vkDestroy(_obj.vk);                                      \
+		_obj = VK_NULL_HANDLE;                                   \
+	}                                                            \
+	void release(Vk##_name&)
 VK_DESTROY
+VK_DESTROY_FUNC(DeviceMemory);
 #undef VK_DESTROY_FUNC
 
 	struct DslBinding
@@ -332,7 +339,7 @@ VK_DESTROY
 			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
-				destroy(it->second);
+				release(it->second);
 				m_hashMap.erase(it);
 			}
 		}
@@ -341,7 +348,7 @@ VK_DESTROY
 		{
 			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
 			{
-				destroy(it->second);
+				release(it->second);
 			}
 
 			m_hashMap.clear();
@@ -353,8 +360,6 @@ VK_DESTROY
 		}
 
 	private:
-		void destroy(Ty handle);
-
 		typedef stl::unordered_map<uint64_t, Ty> HashMap;
 		HashMap m_hashMap;
 	};

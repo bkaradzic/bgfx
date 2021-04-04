@@ -823,17 +823,23 @@ VK_IMPORT_DEVICE
 	template<typename Ty>
 	VkObjectType getType();
 
-	template<> VkObjectType getType<VkBuffer              >() { return VK_OBJECT_TYPE_BUFFER;                }
-	template<> VkObjectType getType<VkImage               >() { return VK_OBJECT_TYPE_IMAGE;                 }
-	template<> VkObjectType getType<VkImageView           >() { return VK_OBJECT_TYPE_IMAGE_VIEW;            }
-	template<> VkObjectType getType<VkShaderModule        >() { return VK_OBJECT_TYPE_SHADER_MODULE;         }
-	template<> VkObjectType getType<VkFramebuffer         >() { return VK_OBJECT_TYPE_FRAMEBUFFER;           }
-	template<> VkObjectType getType<VkPipelineLayout      >() { return VK_OBJECT_TYPE_PIPELINE_LAYOUT;       }
-	template<> VkObjectType getType<VkPipeline            >() { return VK_OBJECT_TYPE_PIPELINE;              }
-	template<> VkObjectType getType<VkDescriptorSetLayout >() { return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT; }
-	template<> VkObjectType getType<VkRenderPass          >() { return VK_OBJECT_TYPE_RENDER_PASS;           }
-	template<> VkObjectType getType<VkSampler             >() { return VK_OBJECT_TYPE_SAMPLER;               }
-	template<> VkObjectType getType<VkDeviceMemory        >() { return VK_OBJECT_TYPE_DEVICE_MEMORY;         }
+	template<> VkObjectType getType<VkBuffer             >() { return VK_OBJECT_TYPE_BUFFER;                }
+	template<> VkObjectType getType<VkCommandPool        >() { return VK_OBJECT_TYPE_COMMAND_POOL;          }
+	template<> VkObjectType getType<VkDescriptorPool     >() { return VK_OBJECT_TYPE_DESCRIPTOR_POOL;       }
+	template<> VkObjectType getType<VkDescriptorSetLayout>() { return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT; }
+	template<> VkObjectType getType<VkFence              >() { return VK_OBJECT_TYPE_FENCE;                 }
+	template<> VkObjectType getType<VkFramebuffer        >() { return VK_OBJECT_TYPE_FRAMEBUFFER;           }
+	template<> VkObjectType getType<VkImage              >() { return VK_OBJECT_TYPE_IMAGE;                 }
+	template<> VkObjectType getType<VkImageView          >() { return VK_OBJECT_TYPE_IMAGE_VIEW;            }
+	template<> VkObjectType getType<VkSampler            >() { return VK_OBJECT_TYPE_SAMPLER;               }
+	template<> VkObjectType getType<VkPipeline           >() { return VK_OBJECT_TYPE_PIPELINE;              }
+	template<> VkObjectType getType<VkPipelineCache      >() { return VK_OBJECT_TYPE_PIPELINE_CACHE;        }
+	template<> VkObjectType getType<VkPipelineLayout     >() { return VK_OBJECT_TYPE_PIPELINE_LAYOUT;       }
+	template<> VkObjectType getType<VkRenderPass         >() { return VK_OBJECT_TYPE_RENDER_PASS;           }
+	template<> VkObjectType getType<VkSemaphore          >() { return VK_OBJECT_TYPE_SEMAPHORE;             }
+	template<> VkObjectType getType<VkShaderModule       >() { return VK_OBJECT_TYPE_SHADER_MODULE;         }
+	template<> VkObjectType getType<VkSwapchainKHR       >() { return VK_OBJECT_TYPE_SWAPCHAIN_KHR;         }
+	template<> VkObjectType getType<VkDeviceMemory       >() { return VK_OBJECT_TYPE_DEVICE_MEMORY;         }
 
 	template<typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(VkDevice _device, Ty _object, const char* _format, ...)
@@ -1309,7 +1315,7 @@ VK_IMPORT_DEVICE
 		void releaseSwapchain()
 		{
 			VK_CHECK(vkDeviceWaitIdle(m_device) );
-			vkFreeMemory(m_device, m_backBufferDepthStencilMemory, m_allocatorCb);
+			vkDestroy(m_backBufferDepthStencilMemory);
 
 			m_backBufferDepthStencilMemory = VK_NULL_HANDLE;
 
@@ -2842,7 +2848,7 @@ VK_IMPORT_DEVICE
 			texture.m_readback.readback(stagingMemory, 0, _data, _mip);
 
 			vkDestroy(stagingBuffer);
-			vkFreeMemory(m_device, stagingMemory, m_allocatorCb);
+			vkDestroy(stagingMemory);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
@@ -3010,7 +3016,7 @@ VK_IMPORT_DEVICE
 			readback.destroy();
 
 			vkDestroy(stagingBuffer);
-			vkFreeMemory(m_device, stagingMemory, m_allocatorCb);
+			vkDestroy(stagingMemory);
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -3087,16 +3093,12 @@ VK_IMPORT_DEVICE
 		}
 
 		template<typename Ty>
-		void release(Ty _object, VkDeviceMemory _memory = VK_NULL_HANDLE)
+		void release(Ty& _object)
 		{
 			if (VK_NULL_HANDLE != _object)
 			{
 				m_cmd.release(uint64_t(_object.vk), getType<Ty>() );
-			}
-
-			if (VK_NULL_HANDLE != _memory)
-			{
-				m_cmd.release(uint64_t(_memory), VK_OBJECT_TYPE_DEVICE_MEMORY);
+				_object = VK_NULL_HANDLE;
 			}
 		}
 
@@ -4804,7 +4806,7 @@ VK_IMPORT_DEVICE
 			return -1;
 		}
 
-		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, VkDeviceMemory* memory) const
+		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, ::VkDeviceMemory* memory) const
 		{
 			VkMemoryAllocateInfo ma;
 			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -4999,26 +5001,31 @@ VK_IMPORT_DEVICE
 	}
 
 #define VK_DESTROY_FUNC(_name)                                                       \
-	void vkDestroy(Vk##_name& _obj)                                                  \
+	void vkDestroy(::Vk##_name _obj)                                                 \
 	{                                                                                \
 		if (VK_NULL_HANDLE != _obj)                                                  \
 		{                                                                            \
 			vkDestroy##_name(s_renderVK->m_device, _obj, s_renderVK->m_allocatorCb); \
-			_obj = VK_NULL_HANDLE;                                                   \
 		}                                                                            \
+	}                                                                                \
+	void release(Vk##_name& _obj)                                                    \
+	{                                                                                \
+		s_renderVK->release(_obj);                                                   \
 	}
 VK_DESTROY
 #undef VK_DESTROY_FUNC
 
-	template class StateCacheT<VkPipeline>;
-	template class StateCacheT<VkDescriptorSetLayout>;
-	template class StateCacheT<VkRenderPass>;
-	template class StateCacheT<VkSampler>;
-	template class StateCacheT<VkImageView>;
-
-	template<typename Ty> void StateCacheT<Ty>::destroy(Ty handle)
+	void vkDestroy(::VkDeviceMemory _obj)
 	{
-		s_renderVK->release(handle);
+		if (VK_NULL_HANDLE != _obj)
+		{
+			vkFreeMemory(s_renderVK->m_device, _obj, s_renderVK->m_allocatorCb);
+		}
+	}
+
+	void release(VkDeviceMemory& _obj)
+	{
+		s_renderVK->release(_obj);
 	}
 
 	void ScratchBufferVK::create(uint32_t _size, uint32_t _count, uint32_t _maxDescriptors)
@@ -5077,9 +5084,8 @@ VK_DESTROY
 
 		vkUnmapMemory(s_renderVK->m_device, m_deviceMem);
 
-		s_renderVK->release(m_buffer, m_deviceMem);
-		m_buffer    = VK_NULL_HANDLE;
-		m_deviceMem = VK_NULL_HANDLE;
+		s_renderVK->release(m_buffer);
+		s_renderVK->release(m_deviceMem);
 	}
 
 	void ScratchBufferVK::reset()
@@ -5192,7 +5198,8 @@ VK_DESTROY
 				, VK_PIPELINE_STAGE_TRANSFER_BIT
 				);
 
-			s_renderVK->release(stagingBuffer, stagingMem);
+			s_renderVK->release(stagingBuffer);
+			s_renderVK->release(stagingMem);
 		}
 	}
 
@@ -5216,16 +5223,16 @@ VK_DESTROY
 			, VK_PIPELINE_STAGE_TRANSFER_BIT
 			);
 
-		s_renderVK->release(stagingBuffer, stagingMem);
+		s_renderVK->release(stagingBuffer);
+		s_renderVK->release(stagingMem);
 	}
 
 	void BufferVK::destroy()
 	{
 		if (VK_NULL_HANDLE != m_buffer)
 		{
-			s_renderVK->release(m_buffer, m_deviceMem);
-			m_buffer    = VK_NULL_HANDLE;
-			m_deviceMem = VK_NULL_HANDLE;
+			s_renderVK->release(m_buffer);
+			s_renderVK->release(m_deviceMem);
 
 			m_dynamic = false;
 		}
@@ -5661,7 +5668,6 @@ VK_DESTROY
 	void ProgramVK::destroy()
 	{
 		s_renderVK->release(m_pipelineLayout);
-		m_pipelineLayout = VK_NULL_HANDLE;
 		m_numPredefined = 0;
 		m_vsh = NULL;
 		m_fsh = NULL;
@@ -6096,7 +6102,8 @@ VK_DESTROY
 			{
 				copyBufferToTexture(_commandBuffer, stagingBuffer, numSrd, bufferCopyInfo);
 
-				s_renderVK->release(stagingBuffer, stagingDeviceMem);
+				s_renderVK->release(stagingBuffer);
+				s_renderVK->release(stagingDeviceMem);
 			}
 			else
 			{
@@ -6231,22 +6238,15 @@ VK_DESTROY
 		{
 			s_renderVK->release(m_textureImageDepthView);
 			s_renderVK->release(m_textureImageView);
-			s_renderVK->release(m_textureImage, m_textureDeviceMem);
-
-			m_textureImageDepthView   = VK_NULL_HANDLE;
-			m_textureImageView        = VK_NULL_HANDLE;
-			m_textureImage            = VK_NULL_HANDLE;
-			m_textureDeviceMem        = VK_NULL_HANDLE;
+			s_renderVK->release(m_textureImage);
+			s_renderVK->release(m_textureDeviceMem);
 		}
 
 		if (VK_NULL_HANDLE != m_singleMsaaImage)
 		{
 			s_renderVK->release(m_singleMsaaImageView);
-			s_renderVK->release(m_singleMsaaImage, m_singleMsaaDeviceMem);
-
-			m_singleMsaaImageView = VK_NULL_HANDLE;
-			m_singleMsaaImage     = VK_NULL_HANDLE;
-			m_singleMsaaDeviceMem = VK_NULL_HANDLE;
+			s_renderVK->release(m_singleMsaaImage);
+			s_renderVK->release(m_singleMsaaDeviceMem);
 		}
 
 		m_currentImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -6294,7 +6294,8 @@ VK_DESTROY
 
 		copyBufferToTexture(_commandBuffer, stagingBuffer, 1, &region);
 
-		s_renderVK->release(stagingBuffer, stagingDeviceMem);
+		s_renderVK->release(stagingBuffer);
+		s_renderVK->release(stagingDeviceMem);
 
 		if (NULL != temp)
 		{
@@ -6585,7 +6586,6 @@ VK_DESTROY
 		if (VK_NULL_HANDLE != m_framebuffer)
 		{
 			s_renderVK->release(m_framebuffer);
-			m_framebuffer = VK_NULL_HANDLE;
 
 			for (uint8_t ii = 0; ii < m_numTh; ++ii)
 			{
@@ -6856,21 +6856,18 @@ VK_DESTROY
 
 		for (const Resource& resource : m_release[m_consumeIndex])
 		{
-			VkDevice device = s_renderVK->m_device;
-			VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
-
 			switch (resource.m_type)
 			{
-			case VK_OBJECT_TYPE_BUFFER:                vkDestroyBuffer             (device, ::VkBuffer(resource.m_handle),              allocatorCb); break;
-			case VK_OBJECT_TYPE_IMAGE_VIEW:            vkDestroyImageView          (device, ::VkImageView(resource.m_handle),           allocatorCb); break;
-			case VK_OBJECT_TYPE_IMAGE:                 vkDestroyImage              (device, ::VkImage(resource.m_handle),               allocatorCb); break;
-			case VK_OBJECT_TYPE_FRAMEBUFFER:           vkDestroyFramebuffer        (device, ::VkFramebuffer(resource.m_handle),         allocatorCb); break;
-			case VK_OBJECT_TYPE_PIPELINE_LAYOUT:       vkDestroyPipelineLayout     (device, ::VkPipelineLayout(resource.m_handle),      allocatorCb); break;
-			case VK_OBJECT_TYPE_PIPELINE:              vkDestroyPipeline           (device, ::VkPipeline(resource.m_handle),            allocatorCb); break;
-			case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: vkDestroyDescriptorSetLayout(device, ::VkDescriptorSetLayout(resource.m_handle), allocatorCb); break;
-			case VK_OBJECT_TYPE_RENDER_PASS:           vkDestroyRenderPass         (device, ::VkRenderPass(resource.m_handle),          allocatorCb); break;
-			case VK_OBJECT_TYPE_SAMPLER:               vkDestroySampler            (device, ::VkSampler(resource.m_handle),             allocatorCb); break;
-			case VK_OBJECT_TYPE_DEVICE_MEMORY:         vkFreeMemory                (device, ::VkDeviceMemory(resource.m_handle),        allocatorCb); break;
+			case VK_OBJECT_TYPE_BUFFER:                vkDestroy(::VkBuffer(resource.m_handle) );              break;
+			case VK_OBJECT_TYPE_IMAGE_VIEW:            vkDestroy(::VkImageView(resource.m_handle) );           break;
+			case VK_OBJECT_TYPE_IMAGE:                 vkDestroy(::VkImage(resource.m_handle) );               break;
+			case VK_OBJECT_TYPE_FRAMEBUFFER:           vkDestroy(::VkFramebuffer(resource.m_handle) );         break;
+			case VK_OBJECT_TYPE_PIPELINE_LAYOUT:       vkDestroy(::VkPipelineLayout(resource.m_handle) );      break;
+			case VK_OBJECT_TYPE_PIPELINE:              vkDestroy(::VkPipeline(resource.m_handle) );            break;
+			case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: vkDestroy(::VkDescriptorSetLayout(resource.m_handle) ); break;
+			case VK_OBJECT_TYPE_RENDER_PASS:           vkDestroy(::VkRenderPass(resource.m_handle) );          break;
+			case VK_OBJECT_TYPE_SAMPLER:               vkDestroy(::VkSampler(resource.m_handle) );             break;
+			case VK_OBJECT_TYPE_DEVICE_MEMORY:         vkDestroy(::VkDeviceMemory(resource.m_handle) );        break;
 
 			default:
 				BX_ASSERT(false, "Invalid resource type: %d", resource.m_type);
