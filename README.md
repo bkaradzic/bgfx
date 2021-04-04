@@ -5,6 +5,16 @@
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
+<p align="center">
+    <a href="#what-is-it">What is it?</a> -
+    <a href="https://bkaradzic.github.io/bgfx/overview.html#getting-involved">Getting Involved</a> -
+    <a href="https://bkaradzic.github.io/bgfx/examples.html">Examples</a> -
+    <a href="https://bkaradzic.github.io/bgfx/bgfx.html">API Reference</a> -
+    <a href="https://bkaradzic.github.io/bgfx/tools.html">Tools</a> -
+    <a href="#who-is-using-it-madewithbgfx">Who is using it?</a> -
+    <a href="#license-bsd-2-clause">License</a>
+</p>
+
 [![Build Status](https://travis-ci.com/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.com/bkaradzic/bgfx)
 [![Build status](https://ci.appveyor.com/api/projects/status/ipa3ojgeaet1oko5?svg=true)](https://ci.appveyor.com/project/bkaradzic/bgfx)
 [![License](https://img.shields.io/badge/license-BSD--2%20clause-blue.svg)](https://bkaradzic.github.io/bgfx/license.html)
