@@ -46,15 +46,6 @@ namespace bgfx { namespace vk
 	};
 	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_primInfo)-1);
 
-	static const uint32_t s_checkMsaa[] =
-	{
-		0,
-		2,
-		4,
-		8,
-		16,
-	};
-
 	static MsaaSamplerVK s_msaa[] =
 	{
 		{  1, VK_SAMPLE_COUNT_1_BIT },
@@ -1490,8 +1481,6 @@ VK_IMPORT_DEVICE
 
 		bool init(const Init& _init)
 		{
-			BX_UNUSED(s_checkMsaa, s_textureAddress);
-
 			struct ErrorState
 			{
 				enum Enum
@@ -3823,22 +3812,17 @@ VK_IMPORT_DEVICE
 			hash.begin(0);
 			for (uint8_t ii = 0; ii < _num; ++ii)
 			{
-				hash.add(attachments[ii].access);
-				hash.add(attachments[ii].layer);
-				hash.add(attachments[ii].mip);
-				hash.add(attachments[ii].resolve);
-
 				TextureVK& texture = m_textures[attachments[ii].handle.idx];
 				hash.add(texture.m_textureFormat);
+				hash.add(texture.m_sampler.Sample);
 			}
 			return hash.end();
 		}
 
 		VkRenderPass getRenderPass(uint8_t _num, const Attachment* _attachments)
 		{
-			VkRenderPass renderPass = VK_NULL_HANDLE;
 			uint32_t hashKey = getRenderPassHashkey(_num, _attachments);
-			renderPass = (VkRenderPass)m_renderPassCache.find(hashKey);
+			VkRenderPass renderPass = m_renderPassCache.find(hashKey);
 
 			if (VK_NULL_HANDLE != renderPass)
 			{
