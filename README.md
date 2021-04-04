@@ -7,6 +7,7 @@
 
 <p align="center">
     <a href="#what-is-it">What is it?</a> -
+    <a href="https://bkaradzic.github.io/bgfx/build.html">Building</a> -
     <a href="https://bkaradzic.github.io/bgfx/overview.html#getting-involved">Getting Involved</a> -
     <a href="https://bkaradzic.github.io/bgfx/examples.html">Examples</a> -
     <a href="https://bkaradzic.github.io/bgfx/bgfx.html">API Reference</a> -
@@ -22,6 +23,8 @@
 
  * [GitHub Discussions](https://github.com/bkaradzic/bgfx/discussions)
  * [Discord Chat](https://discord.gg/9eMbv7J)
+ * [AppVeyor CI](https://ci.appveyor.com/project/bkaradzic/bgfx)
+ * [Travis CI](https://travis-ci.com/bkaradzic/bgfx)
 
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
 -------------------------------------------------------------
@@ -82,24 +85,6 @@ Languages:
  * [Python language API bindings #2](https://github.com/jnadro/pybgfx#pybgfx)
  * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
-
-[Building](https://bkaradzic.github.io/bgfx/build.html)
-----------------------------------------------------
-
- - AppVeyor https://ci.appveyor.com/project/bkaradzic/bgfx
- - TravisCI https://travis-ci.com/bkaradzic/bgfx
-
-[Getting involved](https://bkaradzic.github.io/bgfx/overview.html#getting-involved)
------------------------------------------------------------------------------------
-
-[Examples](https://bkaradzic.github.io/bgfx/examples.html)
-----------------------------------------------------------
-
-[API Reference](https://bkaradzic.github.io/bgfx/bgfx.html)
------------------------------------------------------------
-
-[Tools](https://bkaradzic.github.io/bgfx/tools.html)
-----------------------------------------------------
 
 Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&f=live)
 -------------------------------------------------------------------------------------
