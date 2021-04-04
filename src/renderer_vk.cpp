@@ -5817,7 +5817,10 @@ VK_DESTROY
 
 			if (imageContainer.m_cubeMap)
 			{
-				m_type = VK_IMAGE_VIEW_TYPE_CUBE;
+				m_type = imageContainer.m_numLayers > 1
+					? VK_IMAGE_VIEW_TYPE_CUBE_ARRAY
+					: VK_IMAGE_VIEW_TYPE_CUBE
+					;
 			}
 			else if (imageContainer.m_depth > 1)
 			{
