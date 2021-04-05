@@ -1849,6 +1849,7 @@ namespace bgfx
 			m_height      = _height;
 			m_depth       = _depth;
 			m_format      = uint8_t(_format);
+			m_numSamples  = 1 << bx::uint32_satsub((_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			m_numMips     = _numMips;
 			m_numLayers   = _numLayers;
 			m_owned       = false;
@@ -1887,6 +1888,7 @@ namespace bgfx
 		uint16_t m_height;
 		uint16_t m_depth;
 		uint8_t  m_format;
+		uint8_t  m_numSamples;
 		uint8_t  m_numMips;
 		uint16_t m_numLayers;
 		bool     m_owned;
@@ -4549,7 +4551,10 @@ namespace bgfx
 					, _attachment[ii].mip
 					, tr.m_numMips - 1
 				);
-				const uint16_t numLayers = tr.m_numLayers * (tr.isCubeMap() ? 6 : 1) * (tr.is3D() ? tr.m_depth : 1);
+				const uint16_t numLayers = tr.is3D()
+					? bx::max<uint16_t>(tr.m_depth >> _attachment[ii].mip, 1)
+					: tr.m_numLayers * (tr.isCubeMap() ? 6 : 1)
+					;
 				BX_ASSERT(
 					  (_attachment[ii].layer + _attachment[ii].numLayers) <= numLayers
 					, "Invalid texture layer range (layer %d + num %d > total %d)."
@@ -4565,6 +4570,12 @@ namespace bgfx
 					, _attachment[0].numLayers
 					);
 				BX_ASSERT(firstTexture.m_bbRatio == tr.m_bbRatio, "Mismatch in texture back-buffer ratio.");
+				BX_ASSERT(
+					  firstTexture.m_numSamples == tr.m_numSamples
+					, "Mismatch in texture sample count (%d != %d)."
+					, tr.m_numSamples
+					, firstTexture.m_numSamples
+					);
 				if (BackbufferRatio::Count == firstTexture.m_bbRatio)
 				{
 					const uint16_t width  = bx::max<uint16_t>(tr.m_width  >> _attachment[ii].mip, 1);
