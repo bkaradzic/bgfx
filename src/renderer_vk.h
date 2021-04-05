@@ -289,12 +289,7 @@ namespace bgfx { namespace vk
 		const ::Vk##_name* operator &() const { return &vk; }    \
 	};                                                           \
 	BX_STATIC_ASSERT(sizeof(::Vk##_name) == sizeof(Vk##_name) ); \
-	void vkDestroy(::Vk##_name);                                 \
-	void vkDestroy(Vk##_name& _obj)                              \
-	{                                                            \
-		vkDestroy(_obj.vk);                                      \
-		_obj = VK_NULL_HANDLE;                                   \
-	}                                                            \
+	void vkDestroy(Vk##_name&);                                  \
 	void release(Vk##_name&)
 VK_DESTROY
 VK_DESTROY_FUNC(DeviceMemory);
@@ -731,6 +726,15 @@ VK_DESTROY_FUNC(DeviceMemory);
 
 		typedef stl::vector<Resource> ResourceArray;
 		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
+
+	private:
+		template<typename Ty>
+		void destroy(uint64_t _handle)
+		{
+			typedef decltype(Ty::vk) vk_t;
+			Ty obj = vk_t(_handle);
+			vkDestroy(obj);
+		}
 	};
 
 } /* namespace bgfx */ } // namespace vk

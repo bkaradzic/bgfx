@@ -5002,26 +5002,28 @@ VK_IMPORT_DEVICE
 		s_renderVK = NULL;
 	}
 
-#define VK_DESTROY_FUNC(_name)                                                       \
-	void vkDestroy(::Vk##_name _obj)                                                 \
-	{                                                                                \
-		if (VK_NULL_HANDLE != _obj)                                                  \
-		{                                                                            \
-			vkDestroy##_name(s_renderVK->m_device, _obj, s_renderVK->m_allocatorCb); \
-		}                                                                            \
-	}                                                                                \
-	void release(Vk##_name& _obj)                                                    \
-	{                                                                                \
-		s_renderVK->release(_obj);                                                   \
+#define VK_DESTROY_FUNC(_name)                                                          \
+	void vkDestroy(Vk##_name& _obj)                                                     \
+	{                                                                                   \
+		if (VK_NULL_HANDLE != _obj)                                                     \
+		{                                                                               \
+			vkDestroy##_name(s_renderVK->m_device, _obj.vk, s_renderVK->m_allocatorCb); \
+			_obj = VK_NULL_HANDLE;                                                      \
+		}                                                                               \
+	}                                                                                   \
+	void release(Vk##_name& _obj)                                                       \
+	{                                                                                   \
+		s_renderVK->release(_obj);                                                      \
 	}
 VK_DESTROY
 #undef VK_DESTROY_FUNC
 
-	void vkDestroy(::VkDeviceMemory _obj)
+	void vkDestroy(VkDeviceMemory& _obj)
 	{
 		if (VK_NULL_HANDLE != _obj)
 		{
-			vkFreeMemory(s_renderVK->m_device, _obj, s_renderVK->m_allocatorCb);
+			vkFreeMemory(s_renderVK->m_device, _obj.vk, s_renderVK->m_allocatorCb);
+			_obj = VK_NULL_HANDLE;
 		}
 	}
 
@@ -6864,16 +6866,16 @@ VK_DESTROY
 		{
 			switch (resource.m_type)
 			{
-			case VK_OBJECT_TYPE_BUFFER:                vkDestroy(::VkBuffer(resource.m_handle) );              break;
-			case VK_OBJECT_TYPE_IMAGE_VIEW:            vkDestroy(::VkImageView(resource.m_handle) );           break;
-			case VK_OBJECT_TYPE_IMAGE:                 vkDestroy(::VkImage(resource.m_handle) );               break;
-			case VK_OBJECT_TYPE_FRAMEBUFFER:           vkDestroy(::VkFramebuffer(resource.m_handle) );         break;
-			case VK_OBJECT_TYPE_PIPELINE_LAYOUT:       vkDestroy(::VkPipelineLayout(resource.m_handle) );      break;
-			case VK_OBJECT_TYPE_PIPELINE:              vkDestroy(::VkPipeline(resource.m_handle) );            break;
-			case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: vkDestroy(::VkDescriptorSetLayout(resource.m_handle) ); break;
-			case VK_OBJECT_TYPE_RENDER_PASS:           vkDestroy(::VkRenderPass(resource.m_handle) );          break;
-			case VK_OBJECT_TYPE_SAMPLER:               vkDestroy(::VkSampler(resource.m_handle) );             break;
-			case VK_OBJECT_TYPE_DEVICE_MEMORY:         vkDestroy(::VkDeviceMemory(resource.m_handle) );        break;
+			case VK_OBJECT_TYPE_BUFFER:                destroy<VkBuffer             >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_IMAGE_VIEW:            destroy<VkImageView          >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_IMAGE:                 destroy<VkImage              >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_FRAMEBUFFER:           destroy<VkFramebuffer        >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_PIPELINE_LAYOUT:       destroy<VkPipelineLayout     >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_PIPELINE:              destroy<VkPipeline           >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: destroy<VkDescriptorSetLayout>(resource.m_handle); break;
+			case VK_OBJECT_TYPE_RENDER_PASS:           destroy<VkRenderPass         >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_SAMPLER:               destroy<VkSampler            >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_DEVICE_MEMORY:         destroy<VkDeviceMemory       >(resource.m_handle); break;
 
 			default:
 				BX_ASSERT(false, "Invalid resource type: %d", resource.m_type);
