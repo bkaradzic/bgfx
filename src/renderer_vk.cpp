@@ -2599,7 +2599,7 @@ VK_IMPORT_DEVICE
 			m_descriptorSetLayoutCache.invalidate();
 			m_renderPassCache.invalidate();
 			m_samplerCache.invalidate();
-			m_storageImageViewCache.invalidate();
+			m_imageViewCache.invalidate();
 
 			for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 			{
@@ -3060,14 +3060,9 @@ VK_IMPORT_DEVICE
 			case Handle::Texture:
 				setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImage, "%.*s", _len, _name);
 
-				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageView)
+				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_singleMsaaImage)
 				{
-					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageView, "%.*s", _len, _name);
-				}
-
-				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageDepthView)
-				{
-					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageDepthView, "%.*s", _len, _name);
+					setDebugObjectName(m_device, m_textures[_handle.idx].m_singleMsaaImage, "%.*s", _len, _name);
 				}
 				break;
 
@@ -3188,8 +3183,13 @@ VK_IMPORT_DEVICE
 
 			VkDescriptorImageInfo imageInfo;
 			imageInfo.imageLayout = texture.m_currentImageLayout;
-			imageInfo.imageView = texture.m_textureImageView;
-			imageInfo.sampler = sampler;
+			imageInfo.sampler     = sampler;
+			imageInfo.imageView   = getCachedImageView(
+				  _blitter.m_texture
+				, 0
+				, texture.m_numMips
+				, texture.m_type
+				);
 
 			wds[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			wds[1].pNext = NULL;
@@ -3999,7 +3999,7 @@ VK_IMPORT_DEVICE
 			return sampler;
 		}
 
-		VkImageView getStorageImageView(TextureHandle _handle, uint8_t _mip)
+		VkImageView getCachedImageView(TextureHandle _handle, uint32_t _mip, uint32_t _numMips, VkImageViewType _type)
 		{
 			const TextureVK& texture = m_textures[_handle.idx];
 
@@ -4007,19 +4007,20 @@ VK_IMPORT_DEVICE
 			hash.begin();
 			hash.add(texture.m_textureImage);
 			hash.add(_mip);
+			hash.add(_numMips);
+			hash.add(_type);
 			uint32_t hashKey = hash.end();
 
-			VkImageView view = m_storageImageViewCache.find(hashKey);
+			VkImageView* viewCached = m_imageViewCache.find(hashKey);
 
-			if (VK_NULL_HANDLE != view)
+			if (NULL != viewCached)
 			{
-				return view;
+				return *viewCached;
 			}
 
-			const bool asArray = texture.m_type == VK_IMAGE_VIEW_TYPE_CUBE;
-			view = texture.createView(0, texture.m_numSides, _mip, 1, asArray);
+			const VkImageView view = texture.createView(0, texture.m_numSides, _mip, _numMips, _type, false);
+			m_imageViewCache.add(hashKey, view, 0);
 
-			m_storageImageViewCache.add(hashKey, view);
 			return view;
 		}
 
@@ -4371,9 +4372,25 @@ VK_IMPORT_DEVICE
 							TextureVK& texture = m_textures[bind.m_idx];
 							texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_GENERAL);
 
+							VkImageViewType type = texture.m_type;
+							if (UINT32_MAX != bindInfo.index)
+							{
+								type = program.m_textures[bindInfo.index].type;
+							}
+							else if (type == VK_IMAGE_VIEW_TYPE_CUBE
+							     ||  type == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY)
+							{
+								type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+							}
+
 							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
-							imageInfo[imageCount].imageView = getStorageImageView({ bind.m_idx }, bind.m_mip);
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
+							imageInfo[imageCount].imageView   = getCachedImageView(
+								  { bind.m_idx }
+								, bind.m_mip
+								, 1
+								, type
+								);
 							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
 							++imageCount;
 
@@ -4414,7 +4431,7 @@ VK_IMPORT_DEVICE
 									? bind.m_samplerFlags
 									: (uint32_t)texture.m_flags
 								) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK)
-								, (uint32_t)texture.m_numMips
+								, texture.m_numMips
 								);
 
 							if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout)
@@ -4422,18 +4439,19 @@ VK_IMPORT_DEVICE
 								texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 							}
 
-							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
-							imageInfo[imageCount].imageView   = VK_NULL_HANDLE != texture.m_textureImageDepthView
-								? texture.m_textureImageDepthView
-								: texture.m_textureImageView
+							const VkImageViewType type = UINT32_MAX == bindInfo.index
+								? texture.m_type
+								: program.m_textures[bindInfo.index].type
 								;
 
-							if (VK_NULL_HANDLE != texture.m_singleMsaaImageView)
-							{
-								imageInfo[imageCount].imageView = texture.m_singleMsaaImageView;
-							}
-
+							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
 							imageInfo[imageCount].sampler     = sampler;
+							imageInfo[imageCount].imageView   = getCachedImageView(
+								  { bind.m_idx }
+								, 0
+								, texture.m_numMips
+								, type
+								);
 
 							wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 							wds[wdsCount].pNext            = NULL;
@@ -4948,7 +4966,7 @@ VK_IMPORT_DEVICE
 		StateCacheT<VkDescriptorSetLayout> m_descriptorSetLayoutCache;
 		StateCacheT<VkRenderPass> m_renderPassCache;
 		StateCacheT<VkSampler> m_samplerCache;
-		StateCacheT<VkImageView> m_storageImageViewCache;
+		StateCacheLru<VkImageView, 1024> m_imageViewCache;
 
 		Resolution m_resolution;
 		float m_maxAnisotropy;
@@ -5272,6 +5290,7 @@ VK_DESTROY
 
 		m_numPredefined = 0;
 		m_numUniforms = count;
+		m_numTextures = 0;
 
 		BX_TRACE("%s Shader consts %d"
 			, getShaderTypeName(magic)
@@ -5286,6 +5305,7 @@ VK_DESTROY
 			m_bindInfo[ii].type           = BindType::Count;
 			m_bindInfo[ii].binding        = 0;
 			m_bindInfo[ii].samplerBinding = 0;
+			m_bindInfo[ii].index          = UINT32_MAX;
 		}
 
 		if (0 < count)
@@ -5325,6 +5345,20 @@ VK_DESTROY
 				BX_UNUSED(num);
 				BX_UNUSED(texComponent);
 
+				auto textureDimensionToViewType = [](TextureDimension::Enum dimension)
+				{
+					switch (dimension)
+					{
+					case TextureDimension::Dimension1D:        return VK_IMAGE_VIEW_TYPE_1D;
+					case TextureDimension::Dimension2D:        return VK_IMAGE_VIEW_TYPE_2D;
+					case TextureDimension::Dimension2DArray:   return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+					case TextureDimension::DimensionCube:      return VK_IMAGE_VIEW_TYPE_CUBE;
+					case TextureDimension::DimensionCubeArray: return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+					case TextureDimension::Dimension3D:        return VK_IMAGE_VIEW_TYPE_3D;
+					default:                                   return VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+					}
+				};
+
 				if (UINT16_MAX != regIndex)
 				{
 					PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
@@ -5346,6 +5380,21 @@ VK_DESTROY
 						m_bindInfo[stage].uniformHandle  = { 0 };
 						m_bindInfo[stage].binding        = regIndex;
 
+						if (!isBuffer)
+						{
+							const VkImageViewType viewType = hasTexData
+								? textureDimensionToViewType(idToTextureDimension(texDimension) )
+								: VK_IMAGE_VIEW_TYPE_MAX_ENUM
+								;
+
+							if (VK_IMAGE_VIEW_TYPE_MAX_ENUM != viewType)
+							{
+								m_bindInfo[stage].index = m_numTextures;
+								m_textures[m_numTextures].type = viewType;
+								m_numTextures++;
+							}
+						}
+
 						kind = "storage";
 					}
 					else if (UniformType::Sampler == (~kUniformMask & type) )
@@ -5359,6 +5408,18 @@ VK_DESTROY
 						m_bindInfo[stage].type             = BindType::Sampler;
 						m_bindInfo[stage].binding          = regIndex;
 						m_bindInfo[stage].samplerBinding   = regIndex + 16;
+
+						const VkImageViewType viewType = hasTexData
+							? textureDimensionToViewType(idToTextureDimension(texDimension) )
+							: VK_IMAGE_VIEW_TYPE_MAX_ENUM
+							;
+
+						if (VK_IMAGE_VIEW_TYPE_MAX_ENUM != viewType)
+						{
+							m_bindInfo[stage].index = m_numTextures;
+							m_textures[m_numTextures].type = viewType;
+							m_numTextures++;
+						}
 
 						kind = "sampler";
 					}
@@ -5563,16 +5624,31 @@ VK_DESTROY
 			m_numPredefined += _fsh->m_numPredefined;
 		}
 
-		for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+		m_numTextures = 0;
+
+		for (uint8_t stage = 0; stage < BX_COUNTOF(m_bindInfo); ++stage)
 		{
+			const ShaderVK* shader = NULL;
 			if (isValid(m_vsh->m_bindInfo[stage].uniformHandle) )
 			{
-				m_bindInfo[stage] = m_vsh->m_bindInfo[stage];
+				shader = _vsh;
 			}
 			else if (NULL != m_fsh
 				 &&  isValid(m_fsh->m_bindInfo[stage].uniformHandle) )
 			{
-				m_bindInfo[stage] = m_fsh->m_bindInfo[stage];
+				shader = _fsh;
+			}
+
+			if (NULL != shader)
+			{
+				m_bindInfo[stage] = shader->m_bindInfo[stage];
+				uint32_t& index = m_bindInfo[stage].index;
+				if (UINT32_MAX != index)
+				{
+					m_textures[m_numTextures] = shader->m_textures[index];
+					index = m_numTextures;
+					m_numTextures++;
+				}
 			}
 		}
 
@@ -6111,55 +6187,6 @@ VK_DESTROY
 
 			BX_FREE(g_allocator, imageInfos);
 
-			// image view creation
-			{
-				VkImageViewCreateInfo viewInfo;
-				viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.pNext      = NULL;
-				viewInfo.flags      = 0;
-				viewInfo.image      = m_textureImage;
-				viewInfo.viewType   = m_type;
-				viewInfo.format     = m_format;
-				viewInfo.components = m_components;
-				viewInfo.subresourceRange.aspectMask     = m_aspectMask;
-				viewInfo.subresourceRange.baseMipLevel   = 0;
-				viewInfo.subresourceRange.levelCount     = m_numMips;
-				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount     = m_numSides;
-
-				VK_CHECK(vkCreateImageView(
-					  device
-					, &viewInfo
-					, allocatorCb
-					, &m_textureImageView
-					) );
-			}
-
-			if ( (m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
-			&&   (m_aspectMask & VK_IMAGE_ASPECT_STENCIL_BIT) )
-			{
-				VkImageViewCreateInfo viewInfo;
-				viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.pNext      = NULL;
-				viewInfo.flags      = 0;
-				viewInfo.image      = m_textureImage;
-				viewInfo.viewType   = m_type;
-				viewInfo.format     = m_format;
-				viewInfo.components = m_components;
-				viewInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
-				viewInfo.subresourceRange.baseMipLevel   = 0;
-				viewInfo.subresourceRange.levelCount     = m_numMips;
-				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount     = m_numSides;
-
-				VK_CHECK(vkCreateImageView(
-					  device
-					, &viewInfo
-					, allocatorCb
-					, &m_textureImageDepthView
-					) );
-			}
-
 			if (needResolve)
 			{
 				{
@@ -6186,29 +6213,6 @@ VK_DESTROY
 						, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 						);
 				}
-
-				{
-					VkImageViewCreateInfo viewInfo;
-					viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-					viewInfo.pNext = NULL;
-					viewInfo.flags = 0;
-					viewInfo.image = m_singleMsaaImage;
-					viewInfo.viewType = m_type;
-					viewInfo.format = m_format;
-					viewInfo.components = m_components;
-					viewInfo.subresourceRange.aspectMask = m_aspectMask;
-					viewInfo.subresourceRange.baseMipLevel = 0;
-					viewInfo.subresourceRange.levelCount = m_numMips;
-					viewInfo.subresourceRange.baseArrayLayer = 0;
-					viewInfo.subresourceRange.layerCount = m_numSides;
-
-					VK_CHECK(vkCreateImageView(
-						  device
-						, &viewInfo
-						, allocatorCb
-						, &m_singleMsaaImageView
-						) );
-				}
 			}
 
 			m_readback.create(m_textureImage, m_width, m_height, bimg::TextureFormat::Enum(m_textureFormat) );
@@ -6223,15 +6227,12 @@ VK_DESTROY
 
 		if (VK_NULL_HANDLE != m_textureImage)
 		{
-			s_renderVK->release(m_textureImageDepthView);
-			s_renderVK->release(m_textureImageView);
 			s_renderVK->release(m_textureImage);
 			s_renderVK->release(m_textureDeviceMem);
 		}
 
 		if (VK_NULL_HANDLE != m_singleMsaaImage)
 		{
-			s_renderVK->release(m_singleMsaaImageView);
 			s_renderVK->release(m_singleMsaaImage);
 			s_renderVK->release(m_singleMsaaDeviceMem);
 		}
@@ -6453,26 +6454,57 @@ VK_DESTROY
 		m_currentImageLayout = _newImageLayout;
 	}
 
-	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, bool _asArray) const
+	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget) const
 	{
+		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
+		{
+			BX_ASSERT(false
+				  || !_renderTarget
+				  || !(m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
+				, "3D image can't be a depth attachment"
+			);
+		}
+
+		if (VK_IMAGE_VIEW_TYPE_CUBE       == _type
+		||  VK_IMAGE_VIEW_TYPE_CUBE_ARRAY == _type)
+		{
+			BX_ASSERT(_numLayers % 6 == 0, "");
+			BX_ASSERT(
+				  VK_IMAGE_VIEW_TYPE_3D != m_type
+				, "3D image can't be aliased as a cube texture"
+				);
+		}
+
 		VkImageView view = VK_NULL_HANDLE;
+
+		const VkImageAspectFlags aspectMask = 0
+			| VK_IMAGE_ASPECT_COLOR_BIT
+			| VK_IMAGE_ASPECT_DEPTH_BIT
+			| (_renderTarget ? VK_IMAGE_ASPECT_STENCIL_BIT : 0)
+			;
 
 		VkImageViewCreateInfo viewInfo;
 		viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.pNext      = NULL;
 		viewInfo.flags      = 0;
-		viewInfo.image      = m_textureImage;
-		viewInfo.viewType   = _asArray
-			? VK_IMAGE_VIEW_TYPE_2D_ARRAY
-			: m_type
+		viewInfo.image      = ((VK_NULL_HANDLE != m_singleMsaaImage) && !_renderTarget)
+			? m_singleMsaaImage
+			: m_textureImage
 			;
+		viewInfo.viewType   = _type;
 		viewInfo.format     = m_format;
 		viewInfo.components = m_components;
-		viewInfo.subresourceRange.aspectMask     = m_aspectMask;
+		viewInfo.subresourceRange.aspectMask     = m_aspectMask & aspectMask;
 		viewInfo.subresourceRange.baseMipLevel   = _mip;
 		viewInfo.subresourceRange.levelCount     = _numMips;
 		viewInfo.subresourceRange.baseArrayLayer = _layer;
-		viewInfo.subresourceRange.layerCount     = _numLayers;
+		viewInfo.subresourceRange.layerCount     = 1;
+
+		if (VK_IMAGE_VIEW_TYPE_2D != _type
+		&&  VK_IMAGE_VIEW_TYPE_3D != _type)
+		{
+			viewInfo.subresourceRange.layerCount = _numLayers;
+		}
 
 		VK_CHECK(vkCreateImageView(
 			  s_renderVK->m_device
@@ -6491,44 +6523,33 @@ VK_DESTROY
 
 		VkDevice device = s_renderVK->m_device;
 		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
-		VkRenderPass renderPass = s_renderVK->getRenderPass(_num, _attachment);
-
-		::VkImageView textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		m_renderPass = s_renderVK->getRenderPass(_num, _attachment);
 
 		m_depth.idx = bx::kInvalidHandle;
 		m_num = 0;
 
-		uint8_t viewCount = 0;
-
 		for (uint8_t ii = 0; ii < m_numTh; ++ii)
 		{
 			const Attachment& at = m_attachment[ii];
+			BX_ASSERT(at.numLayers < s_renderVK->m_deviceProperties.limits.maxFramebufferLayers, "");
+			const TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
+			m_textureImageViews[ii] = texture.createView(
+				  at.layer
+				, at.numLayers
+				, at.mip
+				, 1
+				, at.numLayers > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D
+				, true
+				);
 
-			if (isValid(at.handle) )
+			if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
 			{
-				const TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
-				m_textureImageViews[ii] = texture.createView(
-					  at.layer
-					, at.numLayers
-					, at.mip
-					, 1
-					, true
-					);
-				textureImageViews[viewCount++] = m_textureImageViews[ii];
-
-				if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
-				{
-					m_texture[m_num] = at.handle;
-					m_num++;
-				}
-				else if (texture.m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
-				{
-					m_depth = at.handle;
-				}
+				m_texture[m_num] = at.handle;
+				m_num++;
 			}
-			else
+			else if (texture.m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
 			{
-				m_textureImageViews[ii] = VK_NULL_HANDLE;
+				m_depth = at.handle;
 			}
 		}
 
@@ -6540,16 +6561,14 @@ VK_DESTROY
 		fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		fci.pNext = NULL;
 		fci.flags = 0;
-		fci.renderPass      = renderPass;
-		fci.attachmentCount = viewCount;
-		fci.pAttachments    = textureImageViews;
+		fci.renderPass      = m_renderPass;
+		fci.attachmentCount = m_numTh;
+		fci.pAttachments    = &m_textureImageViews[0];
 		fci.width  = m_width;
 		fci.height = m_height;
 		fci.layers = m_attachment[0].numLayers;
 
 		VK_CHECK(vkCreateFramebuffer(device, &fci, allocatorCb, &m_framebuffer) );
-
-		m_renderPass = renderPass;
 
 		m_needRecreate = false;
 	}

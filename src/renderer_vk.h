@@ -451,6 +451,12 @@ VK_DESTROY_FUNC(DeviceMemory);
 		BindType::Enum type;
 		uint32_t binding;
 		uint32_t samplerBinding;
+		uint32_t index;
+	};
+
+	struct TextureBindInfo
+	{
+		VkImageViewType type;
 	};
 
 	struct ShaderVK
@@ -485,6 +491,10 @@ VK_DESTROY_FUNC(DeviceMemory);
 		uint8_t m_numAttrs;
 
 		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+
+		TextureBindInfo m_textures[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		uint8_t m_numTextures;
+
 		uint32_t m_uniformBinding;
 		uint16_t m_numBindings;
 		VkDescriptorSetLayoutBinding m_bindings[32];
@@ -507,6 +517,9 @@ VK_DESTROY_FUNC(DeviceMemory);
 		const ShaderVK* m_fsh;
 
 		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+
+		TextureBindInfo m_textures[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		uint8_t m_numTextures;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
@@ -599,12 +612,9 @@ VK_DESTROY_FUNC(DeviceMemory);
 			, m_format(VK_FORMAT_UNDEFINED)
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem(VK_NULL_HANDLE)
-			, m_textureImageView(VK_NULL_HANDLE)
-			, m_textureImageDepthView(VK_NULL_HANDLE)
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 			, m_singleMsaaImage(VK_NULL_HANDLE)
 			, m_singleMsaaDeviceMem(VK_NULL_HANDLE)
-			, m_singleMsaaImageView(VK_NULL_HANDLE)
 		{
 		}
 
@@ -616,7 +626,7 @@ VK_DESTROY_FUNC(DeviceMemory);
 		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
 		void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout);
 
-		VkImageView createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, bool _asArray = false) const;
+		VkImageView createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget) const;
 
 		void*    m_directAccessPtr;
 		uint64_t m_flags;
@@ -638,13 +648,10 @@ VK_DESTROY_FUNC(DeviceMemory);
 
 		VkImage        m_textureImage;
 		VkDeviceMemory m_textureDeviceMem;
-		VkImageView    m_textureImageView;
-		VkImageView    m_textureImageDepthView;
 		VkImageLayout  m_currentImageLayout;
 
 		VkImage        m_singleMsaaImage;
 		VkDeviceMemory m_singleMsaaDeviceMem;
-		VkImageView    m_singleMsaaImageView;
 
 		ReadbackVK m_readback;
 	};
