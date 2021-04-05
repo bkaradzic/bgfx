@@ -7,6 +7,7 @@
 #define BGFX_RENDERER_H_HEADER_GUARD
 
 #include "bgfx_p.h"
+#include <memory>
 
 namespace bgfx
 {
@@ -312,7 +313,7 @@ namespace bgfx
 			data.m_parent = _parent;
 			m_hashMap.insert(stl::make_pair(_key, handle) );
 
-			return &m_data[handle].m_value;
+			return std::addressof(m_data[handle].m_value);
 		}
 
 		Ty* find(uint64_t _key)
@@ -322,7 +323,7 @@ namespace bgfx
 			{
 				uint16_t handle = it->second;
 				m_alloc.touch(handle);
-				return &m_data[handle].m_value;
+				return std::addressof(m_data[handle].m_value);
 			}
 
 			return NULL;

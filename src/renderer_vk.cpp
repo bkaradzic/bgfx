@@ -46,15 +46,6 @@ namespace bgfx { namespace vk
 	};
 	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_primInfo)-1);
 
-	static const uint32_t s_checkMsaa[] =
-	{
-		0,
-		2,
-		4,
-		8,
-		16,
-	};
-
 	static MsaaSamplerVK s_msaa[] =
 	{
 		{  1, VK_SAMPLE_COUNT_1_BIT },
@@ -348,28 +339,30 @@ VK_IMPORT_DEVICE
 
 	bool updateExtension(const char* _name, uint32_t _version, bool _instanceExt, Extension _extensions[Extension::Count])
 	{
-		const bx::StringView ext(_name);
-
 		bool supported = false;
-		for (uint32_t ii = 0; ii < Extension::Count; ++ii)
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 		{
-			Extension& extension = _extensions[ii];
-			LayerInfo& layerInfo = _instanceExt
-				? s_layer[extension.m_layer].m_instance
-				: s_layer[extension.m_layer].m_device
-				;
-
-			if (!extension.m_supported
-			&&   extension.m_initialize
-			&&  (extension.m_layer == Layer::Count || layerInfo.m_supported) )
+			const bx::StringView ext(_name);
+			for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 			{
-				if (       0 == bx::strCmp(ext, extension.m_name)
-				&&  _version >= extension.m_minVersion)
+				Extension& extension = _extensions[ii];
+				LayerInfo& layerInfo = _instanceExt
+					? s_layer[extension.m_layer].m_instance
+					: s_layer[extension.m_layer].m_device
+					;
+
+				if (!extension.m_supported
+				&&   extension.m_initialize
+				&&  (extension.m_layer == Layer::Count || layerInfo.m_supported) )
 				{
-					extension.m_supported   = true;
-					extension.m_instanceExt = _instanceExt;
-					supported = true;
-					break;
+					if (       0 == bx::strCmp(ext, extension.m_name)
+					&&  _version >= extension.m_minVersion)
+					{
+						extension.m_supported   = true;
+						extension.m_instanceExt = _instanceExt;
+						supported = true;
+						break;
+					}
 				}
 			}
 		}
@@ -821,17 +814,23 @@ VK_IMPORT_DEVICE
 	template<typename Ty>
 	VkObjectType getType();
 
-	template<> VkObjectType getType<VkBuffer              >() { return VK_OBJECT_TYPE_BUFFER;                }
-	template<> VkObjectType getType<VkImage               >() { return VK_OBJECT_TYPE_IMAGE;                 }
-	template<> VkObjectType getType<VkImageView           >() { return VK_OBJECT_TYPE_IMAGE_VIEW;            }
-	template<> VkObjectType getType<VkShaderModule        >() { return VK_OBJECT_TYPE_SHADER_MODULE;         }
-	template<> VkObjectType getType<VkFramebuffer         >() { return VK_OBJECT_TYPE_FRAMEBUFFER;           }
-	template<> VkObjectType getType<VkPipelineLayout      >() { return VK_OBJECT_TYPE_PIPELINE_LAYOUT;       }
-	template<> VkObjectType getType<VkPipeline            >() { return VK_OBJECT_TYPE_PIPELINE;              }
-	template<> VkObjectType getType<VkDescriptorSetLayout >() { return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT; }
-	template<> VkObjectType getType<VkRenderPass          >() { return VK_OBJECT_TYPE_RENDER_PASS;           }
-	template<> VkObjectType getType<VkSampler             >() { return VK_OBJECT_TYPE_SAMPLER;               }
-	template<> VkObjectType getType<VkDeviceMemory        >() { return VK_OBJECT_TYPE_DEVICE_MEMORY;         }
+	template<> VkObjectType getType<VkBuffer             >() { return VK_OBJECT_TYPE_BUFFER;                }
+	template<> VkObjectType getType<VkCommandPool        >() { return VK_OBJECT_TYPE_COMMAND_POOL;          }
+	template<> VkObjectType getType<VkDescriptorPool     >() { return VK_OBJECT_TYPE_DESCRIPTOR_POOL;       }
+	template<> VkObjectType getType<VkDescriptorSetLayout>() { return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT; }
+	template<> VkObjectType getType<VkFence              >() { return VK_OBJECT_TYPE_FENCE;                 }
+	template<> VkObjectType getType<VkFramebuffer        >() { return VK_OBJECT_TYPE_FRAMEBUFFER;           }
+	template<> VkObjectType getType<VkImage              >() { return VK_OBJECT_TYPE_IMAGE;                 }
+	template<> VkObjectType getType<VkImageView          >() { return VK_OBJECT_TYPE_IMAGE_VIEW;            }
+	template<> VkObjectType getType<VkSampler            >() { return VK_OBJECT_TYPE_SAMPLER;               }
+	template<> VkObjectType getType<VkPipeline           >() { return VK_OBJECT_TYPE_PIPELINE;              }
+	template<> VkObjectType getType<VkPipelineCache      >() { return VK_OBJECT_TYPE_PIPELINE_CACHE;        }
+	template<> VkObjectType getType<VkPipelineLayout     >() { return VK_OBJECT_TYPE_PIPELINE_LAYOUT;       }
+	template<> VkObjectType getType<VkRenderPass         >() { return VK_OBJECT_TYPE_RENDER_PASS;           }
+	template<> VkObjectType getType<VkSemaphore          >() { return VK_OBJECT_TYPE_SEMAPHORE;             }
+	template<> VkObjectType getType<VkShaderModule       >() { return VK_OBJECT_TYPE_SHADER_MODULE;         }
+	template<> VkObjectType getType<VkSwapchainKHR       >() { return VK_OBJECT_TYPE_SWAPCHAIN_KHR;         }
+	template<> VkObjectType getType<VkDeviceMemory       >() { return VK_OBJECT_TYPE_DEVICE_MEMORY;         }
 
 	template<typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(VkDevice _device, Ty _object, const char* _format, ...)
@@ -1307,7 +1306,7 @@ VK_IMPORT_DEVICE
 		void releaseSwapchain()
 		{
 			VK_CHECK(vkDeviceWaitIdle(m_device) );
-			vkFreeMemory(m_device, m_backBufferDepthStencilMemory, m_allocatorCb);
+			vkDestroy(m_backBufferDepthStencilMemory);
 
 			m_backBufferDepthStencilMemory = VK_NULL_HANDLE;
 
@@ -1482,8 +1481,6 @@ VK_IMPORT_DEVICE
 
 		bool init(const Init& _init)
 		{
-			BX_UNUSED(s_checkMsaa, s_textureAddress);
-
 			struct ErrorState
 			{
 				enum Enum
@@ -2602,7 +2599,7 @@ VK_IMPORT_DEVICE
 			m_descriptorSetLayoutCache.invalidate();
 			m_renderPassCache.invalidate();
 			m_samplerCache.invalidate();
-			m_storageImageViewCache.invalidate();
+			m_imageViewCache.invalidate();
 
 			for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 			{
@@ -2840,7 +2837,7 @@ VK_IMPORT_DEVICE
 			texture.m_readback.readback(stagingMemory, 0, _data, _mip);
 
 			vkDestroy(stagingBuffer);
-			vkFreeMemory(m_device, stagingMemory, m_allocatorCb);
+			vkDestroy(stagingMemory);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
@@ -3008,7 +3005,7 @@ VK_IMPORT_DEVICE
 			readback.destroy();
 
 			vkDestroy(stagingBuffer);
-			vkFreeMemory(m_device, stagingMemory, m_allocatorCb);
+			vkDestroy(stagingMemory);
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -3063,14 +3060,9 @@ VK_IMPORT_DEVICE
 			case Handle::Texture:
 				setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImage, "%.*s", _len, _name);
 
-				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageView)
+				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_singleMsaaImage)
 				{
-					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageView, "%.*s", _len, _name);
-				}
-
-				if (VK_NULL_HANDLE != m_textures[_handle.idx].m_textureImageDepthView)
-				{
-					setDebugObjectName(m_device, m_textures[_handle.idx].m_textureImageDepthView, "%.*s", _len, _name);
+					setDebugObjectName(m_device, m_textures[_handle.idx].m_singleMsaaImage, "%.*s", _len, _name);
 				}
 				break;
 
@@ -3085,16 +3077,12 @@ VK_IMPORT_DEVICE
 		}
 
 		template<typename Ty>
-		void release(Ty _object, VkDeviceMemory _memory = VK_NULL_HANDLE)
+		void release(Ty& _object)
 		{
 			if (VK_NULL_HANDLE != _object)
 			{
 				m_cmd.release(uint64_t(_object.vk), getType<Ty>() );
-			}
-
-			if (VK_NULL_HANDLE != _memory)
-			{
-				m_cmd.release(uint64_t(_memory), VK_OBJECT_TYPE_DEVICE_MEMORY);
+				_object = VK_NULL_HANDLE;
 			}
 		}
 
@@ -3195,8 +3183,13 @@ VK_IMPORT_DEVICE
 
 			VkDescriptorImageInfo imageInfo;
 			imageInfo.imageLayout = texture.m_currentImageLayout;
-			imageInfo.imageView = texture.m_textureImageView;
-			imageInfo.sampler = sampler;
+			imageInfo.sampler     = sampler;
+			imageInfo.imageView   = getCachedImageView(
+				  _blitter.m_texture
+				, 0
+				, texture.m_numMips
+				, texture.m_type
+				);
 
 			wds[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			wds[1].pNext = NULL;
@@ -3819,22 +3812,17 @@ VK_IMPORT_DEVICE
 			hash.begin(0);
 			for (uint8_t ii = 0; ii < _num; ++ii)
 			{
-				hash.add(attachments[ii].access);
-				hash.add(attachments[ii].layer);
-				hash.add(attachments[ii].mip);
-				hash.add(attachments[ii].resolve);
-
 				TextureVK& texture = m_textures[attachments[ii].handle.idx];
 				hash.add(texture.m_textureFormat);
+				hash.add(texture.m_sampler.Sample);
 			}
 			return hash.end();
 		}
 
 		VkRenderPass getRenderPass(uint8_t _num, const Attachment* _attachments)
 		{
-			VkRenderPass renderPass = VK_NULL_HANDLE;
 			uint32_t hashKey = getRenderPassHashkey(_num, _attachments);
-			renderPass = (VkRenderPass)m_renderPassCache.find(hashKey);
+			VkRenderPass renderPass = m_renderPassCache.find(hashKey);
 
 			if (VK_NULL_HANDLE != renderPass)
 			{
@@ -4011,7 +3999,7 @@ VK_IMPORT_DEVICE
 			return sampler;
 		}
 
-		VkImageView getStorageImageView(TextureHandle _handle, uint8_t _mip)
+		VkImageView getCachedImageView(TextureHandle _handle, uint32_t _mip, uint32_t _numMips, VkImageViewType _type)
 		{
 			const TextureVK& texture = m_textures[_handle.idx];
 
@@ -4019,18 +4007,20 @@ VK_IMPORT_DEVICE
 			hash.begin();
 			hash.add(texture.m_textureImage);
 			hash.add(_mip);
+			hash.add(_numMips);
+			hash.add(_type);
 			uint32_t hashKey = hash.end();
 
-			VkImageView view = m_storageImageViewCache.find(hashKey);
+			VkImageView* viewCached = m_imageViewCache.find(hashKey);
 
-			if (VK_NULL_HANDLE != view)
+			if (NULL != viewCached)
 			{
-				return view;
+				return *viewCached;
 			}
 
-			view = texture.createView(0, texture.m_numSides, _mip, 1);
+			const VkImageView view = texture.createView(0, texture.m_numSides, _mip, _numMips, _type, false);
+			m_imageViewCache.add(hashKey, view, 0);
 
-			m_storageImageViewCache.add(hashKey, view);
 			return view;
 		}
 
@@ -4382,9 +4372,25 @@ VK_IMPORT_DEVICE
 							TextureVK& texture = m_textures[bind.m_idx];
 							texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_GENERAL);
 
+							VkImageViewType type = texture.m_type;
+							if (UINT32_MAX != bindInfo.index)
+							{
+								type = program.m_textures[bindInfo.index].type;
+							}
+							else if (type == VK_IMAGE_VIEW_TYPE_CUBE
+							     ||  type == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY)
+							{
+								type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+							}
+
 							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
-							imageInfo[imageCount].imageView = getStorageImageView({ bind.m_idx }, bind.m_mip);
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
+							imageInfo[imageCount].imageView   = getCachedImageView(
+								  { bind.m_idx }
+								, bind.m_mip
+								, 1
+								, type
+								);
 							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
 							++imageCount;
 
@@ -4425,7 +4431,7 @@ VK_IMPORT_DEVICE
 									? bind.m_samplerFlags
 									: (uint32_t)texture.m_flags
 								) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK)
-								, (uint32_t)texture.m_numMips
+								, texture.m_numMips
 								);
 
 							if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout)
@@ -4433,18 +4439,19 @@ VK_IMPORT_DEVICE
 								texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 							}
 
-							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
-							imageInfo[imageCount].imageView   = VK_NULL_HANDLE != texture.m_textureImageDepthView
-								? texture.m_textureImageDepthView
-								: texture.m_textureImageView
+							const VkImageViewType type = UINT32_MAX == bindInfo.index
+								? texture.m_type
+								: program.m_textures[bindInfo.index].type
 								;
 
-							if (VK_NULL_HANDLE != texture.m_singleMsaaImageView)
-							{
-								imageInfo[imageCount].imageView = texture.m_singleMsaaImageView;
-							}
-
+							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
 							imageInfo[imageCount].sampler     = sampler;
+							imageInfo[imageCount].imageView   = getCachedImageView(
+								  { bind.m_idx }
+								, 0
+								, texture.m_numMips
+								, type
+								);
 
 							wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 							wds[wdsCount].pNext            = NULL;
@@ -4801,7 +4808,7 @@ VK_IMPORT_DEVICE
 			return -1;
 		}
 
-		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, VkDeviceMemory* memory) const
+		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, ::VkDeviceMemory* memory) const
 		{
 			VkMemoryAllocateInfo ma;
 			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -4959,7 +4966,7 @@ VK_IMPORT_DEVICE
 		StateCacheT<VkDescriptorSetLayout> m_descriptorSetLayoutCache;
 		StateCacheT<VkRenderPass> m_renderPassCache;
 		StateCacheT<VkSampler> m_samplerCache;
-		StateCacheT<VkImageView> m_storageImageViewCache;
+		StateCacheLru<VkImageView, 1024> m_imageViewCache;
 
 		Resolution m_resolution;
 		float m_maxAnisotropy;
@@ -4995,27 +5002,34 @@ VK_IMPORT_DEVICE
 		s_renderVK = NULL;
 	}
 
-#define VK_DESTROY_FUNC(_name)                                                       \
-	void vkDestroy(Vk##_name& _obj)                                                  \
-	{                                                                                \
-		if (VK_NULL_HANDLE != _obj)                                                  \
-		{                                                                            \
-			vkDestroy##_name(s_renderVK->m_device, _obj, s_renderVK->m_allocatorCb); \
-			_obj = VK_NULL_HANDLE;                                                   \
-		}                                                                            \
+#define VK_DESTROY_FUNC(_name)                                                          \
+	void vkDestroy(Vk##_name& _obj)                                                     \
+	{                                                                                   \
+		if (VK_NULL_HANDLE != _obj)                                                     \
+		{                                                                               \
+			vkDestroy##_name(s_renderVK->m_device, _obj.vk, s_renderVK->m_allocatorCb); \
+			_obj = VK_NULL_HANDLE;                                                      \
+		}                                                                               \
+	}                                                                                   \
+	void release(Vk##_name& _obj)                                                       \
+	{                                                                                   \
+		s_renderVK->release(_obj);                                                      \
 	}
 VK_DESTROY
 #undef VK_DESTROY_FUNC
 
-	template class StateCacheT<VkPipeline>;
-	template class StateCacheT<VkDescriptorSetLayout>;
-	template class StateCacheT<VkRenderPass>;
-	template class StateCacheT<VkSampler>;
-	template class StateCacheT<VkImageView>;
-
-	template<typename Ty> void StateCacheT<Ty>::destroy(Ty handle)
+	void vkDestroy(VkDeviceMemory& _obj)
 	{
-		s_renderVK->release(handle);
+		if (VK_NULL_HANDLE != _obj)
+		{
+			vkFreeMemory(s_renderVK->m_device, _obj.vk, s_renderVK->m_allocatorCb);
+			_obj = VK_NULL_HANDLE;
+		}
+	}
+
+	void release(VkDeviceMemory& _obj)
+	{
+		s_renderVK->release(_obj);
 	}
 
 	void ScratchBufferVK::create(uint32_t _size, uint32_t _count, uint32_t _maxDescriptors)
@@ -5074,9 +5088,8 @@ VK_DESTROY
 
 		vkUnmapMemory(s_renderVK->m_device, m_deviceMem);
 
-		s_renderVK->release(m_buffer, m_deviceMem);
-		m_buffer    = VK_NULL_HANDLE;
-		m_deviceMem = VK_NULL_HANDLE;
+		s_renderVK->release(m_buffer);
+		s_renderVK->release(m_deviceMem);
 	}
 
 	void ScratchBufferVK::reset()
@@ -5189,7 +5202,8 @@ VK_DESTROY
 				, VK_PIPELINE_STAGE_TRANSFER_BIT
 				);
 
-			s_renderVK->release(stagingBuffer, stagingMem);
+			s_renderVK->release(stagingBuffer);
+			s_renderVK->release(stagingMem);
 		}
 	}
 
@@ -5213,16 +5227,16 @@ VK_DESTROY
 			, VK_PIPELINE_STAGE_TRANSFER_BIT
 			);
 
-		s_renderVK->release(stagingBuffer, stagingMem);
+		s_renderVK->release(stagingBuffer);
+		s_renderVK->release(stagingMem);
 	}
 
 	void BufferVK::destroy()
 	{
 		if (VK_NULL_HANDLE != m_buffer)
 		{
-			s_renderVK->release(m_buffer, m_deviceMem);
-			m_buffer    = VK_NULL_HANDLE;
-			m_deviceMem = VK_NULL_HANDLE;
+			s_renderVK->release(m_buffer);
+			s_renderVK->release(m_deviceMem);
 
 			m_dynamic = false;
 		}
@@ -5278,6 +5292,7 @@ VK_DESTROY
 
 		m_numPredefined = 0;
 		m_numUniforms = count;
+		m_numTextures = 0;
 
 		BX_TRACE("%s Shader consts %d"
 			, getShaderTypeName(magic)
@@ -5292,6 +5307,7 @@ VK_DESTROY
 			m_bindInfo[ii].type           = BindType::Count;
 			m_bindInfo[ii].binding        = 0;
 			m_bindInfo[ii].samplerBinding = 0;
+			m_bindInfo[ii].index          = UINT32_MAX;
 		}
 
 		if (0 < count)
@@ -5331,6 +5347,20 @@ VK_DESTROY
 				BX_UNUSED(num);
 				BX_UNUSED(texComponent);
 
+				auto textureDimensionToViewType = [](TextureDimension::Enum dimension)
+				{
+					switch (dimension)
+					{
+					case TextureDimension::Dimension1D:        return VK_IMAGE_VIEW_TYPE_1D;
+					case TextureDimension::Dimension2D:        return VK_IMAGE_VIEW_TYPE_2D;
+					case TextureDimension::Dimension2DArray:   return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+					case TextureDimension::DimensionCube:      return VK_IMAGE_VIEW_TYPE_CUBE;
+					case TextureDimension::DimensionCubeArray: return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+					case TextureDimension::Dimension3D:        return VK_IMAGE_VIEW_TYPE_3D;
+					default:                                   return VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+					}
+				};
+
 				if (UINT16_MAX != regIndex)
 				{
 					PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
@@ -5352,6 +5382,21 @@ VK_DESTROY
 						m_bindInfo[stage].uniformHandle  = { 0 };
 						m_bindInfo[stage].binding        = regIndex;
 
+						if (!isBuffer)
+						{
+							const VkImageViewType viewType = hasTexData
+								? textureDimensionToViewType(idToTextureDimension(texDimension) )
+								: VK_IMAGE_VIEW_TYPE_MAX_ENUM
+								;
+
+							if (VK_IMAGE_VIEW_TYPE_MAX_ENUM != viewType)
+							{
+								m_bindInfo[stage].index = m_numTextures;
+								m_textures[m_numTextures].type = viewType;
+								m_numTextures++;
+							}
+						}
+
 						kind = "storage";
 					}
 					else if (UniformType::Sampler == (~kUniformMask & type) )
@@ -5365,6 +5410,18 @@ VK_DESTROY
 						m_bindInfo[stage].type             = BindType::Sampler;
 						m_bindInfo[stage].binding          = regIndex;
 						m_bindInfo[stage].samplerBinding   = regIndex + 16;
+
+						const VkImageViewType viewType = hasTexData
+							? textureDimensionToViewType(idToTextureDimension(texDimension) )
+							: VK_IMAGE_VIEW_TYPE_MAX_ENUM
+							;
+
+						if (VK_IMAGE_VIEW_TYPE_MAX_ENUM != viewType)
+						{
+							m_bindInfo[stage].index = m_numTextures;
+							m_textures[m_numTextures].type = viewType;
+							m_numTextures++;
+						}
 
 						kind = "sampler";
 					}
@@ -5569,16 +5626,31 @@ VK_DESTROY
 			m_numPredefined += _fsh->m_numPredefined;
 		}
 
-		for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+		m_numTextures = 0;
+
+		for (uint8_t stage = 0; stage < BX_COUNTOF(m_bindInfo); ++stage)
 		{
+			const ShaderVK* shader = NULL;
 			if (isValid(m_vsh->m_bindInfo[stage].uniformHandle) )
 			{
-				m_bindInfo[stage] = m_vsh->m_bindInfo[stage];
+				shader = _vsh;
 			}
 			else if (NULL != m_fsh
 				 &&  isValid(m_fsh->m_bindInfo[stage].uniformHandle) )
 			{
-				m_bindInfo[stage] = m_fsh->m_bindInfo[stage];
+				shader = _fsh;
+			}
+
+			if (NULL != shader)
+			{
+				m_bindInfo[stage] = shader->m_bindInfo[stage];
+				uint32_t& index = m_bindInfo[stage].index;
+				if (UINT32_MAX != index)
+				{
+					m_textures[m_numTextures] = shader->m_textures[index];
+					index = m_numTextures;
+					m_numTextures++;
+				}
 			}
 		}
 
@@ -5658,7 +5730,6 @@ VK_DESTROY
 	void ProgramVK::destroy()
 	{
 		s_renderVK->release(m_pipelineLayout);
-		m_pipelineLayout = VK_NULL_HANDLE;
 		m_numPredefined = 0;
 		m_vsh = NULL;
 		m_fsh = NULL;
@@ -5824,7 +5895,10 @@ VK_DESTROY
 
 			if (imageContainer.m_cubeMap)
 			{
-				m_type = VK_IMAGE_VIEW_TYPE_CUBE;
+				m_type = imageContainer.m_numLayers > 1
+					? VK_IMAGE_VIEW_TYPE_CUBE_ARRAY
+					: VK_IMAGE_VIEW_TYPE_CUBE
+					;
 			}
 			else if (imageContainer.m_depth > 1)
 			{
@@ -6037,9 +6111,15 @@ VK_DESTROY
 			VkImageCreateInfo ici;
 			ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			ici.pNext = NULL;
-			ici.flags = VK_IMAGE_VIEW_TYPE_CUBE == m_type
-				? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
-				: 0
+			ici.flags = 0
+				| (VK_IMAGE_VIEW_TYPE_CUBE == m_type
+					? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
+					: 0
+					)
+				| (VK_IMAGE_VIEW_TYPE_3D == m_type
+					? VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT_KHR
+					: 0
+					)
 				;
 			ici.pQueueFamilyIndices   = NULL;
 			ici.queueFamilyIndexCount = 0;
@@ -6087,7 +6167,8 @@ VK_DESTROY
 			{
 				copyBufferToTexture(_commandBuffer, stagingBuffer, numSrd, bufferCopyInfo);
 
-				s_renderVK->release(stagingBuffer, stagingDeviceMem);
+				s_renderVK->release(stagingBuffer);
+				s_renderVK->release(stagingDeviceMem);
 			}
 			else
 			{
@@ -6107,55 +6188,6 @@ VK_DESTROY
 			}
 
 			BX_FREE(g_allocator, imageInfos);
-
-			// image view creation
-			{
-				VkImageViewCreateInfo viewInfo;
-				viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.pNext      = NULL;
-				viewInfo.flags      = 0;
-				viewInfo.image      = m_textureImage;
-				viewInfo.viewType   = m_type;
-				viewInfo.format     = m_format;
-				viewInfo.components = m_components;
-				viewInfo.subresourceRange.aspectMask     = m_aspectMask;
-				viewInfo.subresourceRange.baseMipLevel   = 0;
-				viewInfo.subresourceRange.levelCount     = m_numMips;
-				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount     = m_numSides;
-
-				VK_CHECK(vkCreateImageView(
-					  device
-					, &viewInfo
-					, allocatorCb
-					, &m_textureImageView
-					) );
-			}
-
-			if ( (m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
-			&&   (m_aspectMask & VK_IMAGE_ASPECT_STENCIL_BIT) )
-			{
-				VkImageViewCreateInfo viewInfo;
-				viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.pNext      = NULL;
-				viewInfo.flags      = 0;
-				viewInfo.image      = m_textureImage;
-				viewInfo.viewType   = m_type;
-				viewInfo.format     = m_format;
-				viewInfo.components = m_components;
-				viewInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
-				viewInfo.subresourceRange.baseMipLevel   = 0;
-				viewInfo.subresourceRange.levelCount     = m_numMips;
-				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount     = m_numSides;
-
-				VK_CHECK(vkCreateImageView(
-					  device
-					, &viewInfo
-					, allocatorCb
-					, &m_textureImageDepthView
-					) );
-			}
 
 			if (needResolve)
 			{
@@ -6183,29 +6215,6 @@ VK_DESTROY
 						, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 						);
 				}
-
-				{
-					VkImageViewCreateInfo viewInfo;
-					viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-					viewInfo.pNext = NULL;
-					viewInfo.flags = 0;
-					viewInfo.image = m_singleMsaaImage;
-					viewInfo.viewType = m_type;
-					viewInfo.format = m_format;
-					viewInfo.components = m_components;
-					viewInfo.subresourceRange.aspectMask = m_aspectMask;
-					viewInfo.subresourceRange.baseMipLevel = 0;
-					viewInfo.subresourceRange.levelCount = m_numMips;
-					viewInfo.subresourceRange.baseArrayLayer = 0;
-					viewInfo.subresourceRange.layerCount = m_numSides;
-
-					VK_CHECK(vkCreateImageView(
-						  device
-						, &viewInfo
-						, allocatorCb
-						, &m_singleMsaaImageView
-						) );
-				}
 			}
 
 			m_readback.create(m_textureImage, m_width, m_height, bimg::TextureFormat::Enum(m_textureFormat) );
@@ -6220,24 +6229,14 @@ VK_DESTROY
 
 		if (VK_NULL_HANDLE != m_textureImage)
 		{
-			s_renderVK->release(m_textureImageDepthView);
-			s_renderVK->release(m_textureImageView);
-			s_renderVK->release(m_textureImage, m_textureDeviceMem);
-
-			m_textureImageDepthView   = VK_NULL_HANDLE;
-			m_textureImageView        = VK_NULL_HANDLE;
-			m_textureImage            = VK_NULL_HANDLE;
-			m_textureDeviceMem        = VK_NULL_HANDLE;
+			s_renderVK->release(m_textureImage);
+			s_renderVK->release(m_textureDeviceMem);
 		}
 
 		if (VK_NULL_HANDLE != m_singleMsaaImage)
 		{
-			s_renderVK->release(m_singleMsaaImageView);
-			s_renderVK->release(m_singleMsaaImage, m_singleMsaaDeviceMem);
-
-			m_singleMsaaImageView = VK_NULL_HANDLE;
-			m_singleMsaaImage     = VK_NULL_HANDLE;
-			m_singleMsaaDeviceMem = VK_NULL_HANDLE;
+			s_renderVK->release(m_singleMsaaImage);
+			s_renderVK->release(m_singleMsaaDeviceMem);
 		}
 
 		m_currentImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -6285,7 +6284,8 @@ VK_DESTROY
 
 		copyBufferToTexture(_commandBuffer, stagingBuffer, 1, &region);
 
-		s_renderVK->release(stagingBuffer, stagingDeviceMem);
+		s_renderVK->release(stagingBuffer);
+		s_renderVK->release(stagingDeviceMem);
 
 		if (NULL != temp)
 		{
@@ -6456,26 +6456,57 @@ VK_DESTROY
 		m_currentImageLayout = _newImageLayout;
 	}
 
-	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips) const
+	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget) const
 	{
+		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
+		{
+			BX_ASSERT(false
+				  || !_renderTarget
+				  || !(m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
+				, "3D image can't be a depth attachment"
+			);
+		}
+
+		if (VK_IMAGE_VIEW_TYPE_CUBE       == _type
+		||  VK_IMAGE_VIEW_TYPE_CUBE_ARRAY == _type)
+		{
+			BX_ASSERT(_numLayers % 6 == 0, "");
+			BX_ASSERT(
+				  VK_IMAGE_VIEW_TYPE_3D != m_type
+				, "3D image can't be aliased as a cube texture"
+				);
+		}
+
 		VkImageView view = VK_NULL_HANDLE;
+
+		const VkImageAspectFlags aspectMask = 0
+			| VK_IMAGE_ASPECT_COLOR_BIT
+			| VK_IMAGE_ASPECT_DEPTH_BIT
+			| (_renderTarget ? VK_IMAGE_ASPECT_STENCIL_BIT : 0)
+			;
 
 		VkImageViewCreateInfo viewInfo;
 		viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.pNext      = NULL;
 		viewInfo.flags      = 0;
-		viewInfo.image      = m_textureImage;
-		viewInfo.viewType   = m_type == VK_IMAGE_VIEW_TYPE_CUBE
-			? VK_IMAGE_VIEW_TYPE_2D_ARRAY
-			: m_type
+		viewInfo.image      = ((VK_NULL_HANDLE != m_singleMsaaImage) && !_renderTarget)
+			? m_singleMsaaImage
+			: m_textureImage
 			;
+		viewInfo.viewType   = _type;
 		viewInfo.format     = m_format;
 		viewInfo.components = m_components;
-		viewInfo.subresourceRange.aspectMask     = m_aspectMask;
+		viewInfo.subresourceRange.aspectMask     = m_aspectMask & aspectMask;
 		viewInfo.subresourceRange.baseMipLevel   = _mip;
 		viewInfo.subresourceRange.levelCount     = _numMips;
 		viewInfo.subresourceRange.baseArrayLayer = _layer;
-		viewInfo.subresourceRange.layerCount     = _numLayers;
+		viewInfo.subresourceRange.layerCount     = 1;
+
+		if (VK_IMAGE_VIEW_TYPE_2D != _type
+		&&  VK_IMAGE_VIEW_TYPE_3D != _type)
+		{
+			viewInfo.subresourceRange.layerCount = _numLayers;
+		}
 
 		VK_CHECK(vkCreateImageView(
 			  s_renderVK->m_device
@@ -6494,43 +6525,33 @@ VK_DESTROY
 
 		VkDevice device = s_renderVK->m_device;
 		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
-		VkRenderPass renderPass = s_renderVK->getRenderPass(_num, _attachment);
-
-		::VkImageView textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		m_renderPass = s_renderVK->getRenderPass(_num, _attachment);
 
 		m_depth.idx = bx::kInvalidHandle;
 		m_num = 0;
 
-		uint8_t viewCount = 0;
-
 		for (uint8_t ii = 0; ii < m_numTh; ++ii)
 		{
 			const Attachment& at = m_attachment[ii];
+			BX_ASSERT(at.numLayers < s_renderVK->m_deviceProperties.limits.maxFramebufferLayers, "");
+			const TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
+			m_textureImageViews[ii] = texture.createView(
+				  at.layer
+				, at.numLayers
+				, at.mip
+				, 1
+				, at.numLayers > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D
+				, true
+				);
 
-			if (isValid(at.handle) )
+			if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
 			{
-				const TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
-				m_textureImageViews[ii] = texture.createView(
-					  at.layer
-					, at.numLayers
-					, at.mip
-					, 1
-					);
-				textureImageViews[viewCount++] = m_textureImageViews[ii];
-
-				if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
-				{
-					m_texture[m_num] = at.handle;
-					m_num++;
-				}
-				else if (texture.m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
-				{
-					m_depth = at.handle;
-				}
+				m_texture[m_num] = at.handle;
+				m_num++;
 			}
-			else
+			else if (texture.m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
 			{
-				m_textureImageViews[ii] = VK_NULL_HANDLE;
+				m_depth = at.handle;
 			}
 		}
 
@@ -6542,16 +6563,14 @@ VK_DESTROY
 		fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		fci.pNext = NULL;
 		fci.flags = 0;
-		fci.renderPass      = renderPass;
-		fci.attachmentCount = viewCount;
-		fci.pAttachments    = textureImageViews;
+		fci.renderPass      = m_renderPass;
+		fci.attachmentCount = m_numTh;
+		fci.pAttachments    = &m_textureImageViews[0];
 		fci.width  = m_width;
 		fci.height = m_height;
 		fci.layers = m_attachment[0].numLayers;
 
 		VK_CHECK(vkCreateFramebuffer(device, &fci, allocatorCb, &m_framebuffer) );
-
-		m_renderPass = renderPass;
 
 		m_needRecreate = false;
 	}
@@ -6575,7 +6594,6 @@ VK_DESTROY
 		if (VK_NULL_HANDLE != m_framebuffer)
 		{
 			s_renderVK->release(m_framebuffer);
-			m_framebuffer = VK_NULL_HANDLE;
 
 			for (uint8_t ii = 0; ii < m_numTh; ++ii)
 			{
@@ -6608,7 +6626,7 @@ VK_DESTROY
 		VkCommandPoolCreateInfo cpci;
 		cpci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		cpci.pNext = NULL;
-		cpci.flags = 0;
+		cpci.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 		cpci.queueFamilyIndex = m_queueFamily;
 
 		VkCommandBufferAllocateInfo cbai;
@@ -6846,21 +6864,18 @@ VK_DESTROY
 
 		for (const Resource& resource : m_release[m_consumeIndex])
 		{
-			VkDevice device = s_renderVK->m_device;
-			VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
-
 			switch (resource.m_type)
 			{
-			case VK_OBJECT_TYPE_BUFFER:                vkDestroyBuffer             (device, ::VkBuffer(resource.m_handle),              allocatorCb); break;
-			case VK_OBJECT_TYPE_IMAGE_VIEW:            vkDestroyImageView          (device, ::VkImageView(resource.m_handle),           allocatorCb); break;
-			case VK_OBJECT_TYPE_IMAGE:                 vkDestroyImage              (device, ::VkImage(resource.m_handle),               allocatorCb); break;
-			case VK_OBJECT_TYPE_FRAMEBUFFER:           vkDestroyFramebuffer        (device, ::VkFramebuffer(resource.m_handle),         allocatorCb); break;
-			case VK_OBJECT_TYPE_PIPELINE_LAYOUT:       vkDestroyPipelineLayout     (device, ::VkPipelineLayout(resource.m_handle),      allocatorCb); break;
-			case VK_OBJECT_TYPE_PIPELINE:              vkDestroyPipeline           (device, ::VkPipeline(resource.m_handle),            allocatorCb); break;
-			case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: vkDestroyDescriptorSetLayout(device, ::VkDescriptorSetLayout(resource.m_handle), allocatorCb); break;
-			case VK_OBJECT_TYPE_RENDER_PASS:           vkDestroyRenderPass         (device, ::VkRenderPass(resource.m_handle),          allocatorCb); break;
-			case VK_OBJECT_TYPE_SAMPLER:               vkDestroySampler            (device, ::VkSampler(resource.m_handle),             allocatorCb); break;
-			case VK_OBJECT_TYPE_DEVICE_MEMORY:         vkFreeMemory                (device, ::VkDeviceMemory(resource.m_handle),        allocatorCb); break;
+			case VK_OBJECT_TYPE_BUFFER:                destroy<VkBuffer             >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_IMAGE_VIEW:            destroy<VkImageView          >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_IMAGE:                 destroy<VkImage              >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_FRAMEBUFFER:           destroy<VkFramebuffer        >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_PIPELINE_LAYOUT:       destroy<VkPipelineLayout     >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_PIPELINE:              destroy<VkPipeline           >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: destroy<VkDescriptorSetLayout>(resource.m_handle); break;
+			case VK_OBJECT_TYPE_RENDER_PASS:           destroy<VkRenderPass         >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_SAMPLER:               destroy<VkSampler            >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_DEVICE_MEMORY:         destroy<VkDeviceMemory       >(resource.m_handle); break;
 
 			default:
 				BX_ASSERT(false, "Invalid resource type: %d", resource.m_type);
@@ -6931,19 +6946,19 @@ VK_DESTROY
 			blitInfo.dstOffsets[1].y = blit.m_dstY + blit.m_height;
 			blitInfo.dstOffsets[1].z = 1;
 
-			if (VK_IMAGE_VIEW_TYPE_CUBE == src.m_type)
-			{
-				blitInfo.srcSubresource.baseArrayLayer = blit.m_srcZ;
-				blitInfo.dstSubresource.baseArrayLayer = blit.m_dstZ;
-				blitInfo.srcSubresource.layerCount = blit.m_depth;
-				blitInfo.dstSubresource.layerCount = blit.m_depth;
-			}
-			else if (VK_IMAGE_VIEW_TYPE_3D == src.m_type)
+			if (VK_IMAGE_VIEW_TYPE_3D == src.m_type)
 			{
 				blitInfo.srcOffsets[0].z = blit.m_srcZ;
 				blitInfo.dstOffsets[0].z = blit.m_dstZ;
 				blitInfo.srcOffsets[1].z = blit.m_srcZ + blit.m_depth;
 				blitInfo.dstOffsets[1].z = blit.m_dstZ + blit.m_depth;
+			}
+			else
+			{
+				blitInfo.srcSubresource.baseArrayLayer = blit.m_srcZ;
+				blitInfo.dstSubresource.baseArrayLayer = blit.m_dstZ;
+				blitInfo.srcSubresource.layerCount = bx::max<uint32_t>(1, blit.m_depth);
+				blitInfo.dstSubresource.layerCount = bx::max<uint32_t>(1, blit.m_depth);
 			}
 
 			const VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) )

@@ -73,7 +73,7 @@
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceProperties);             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFormatProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFeatures);               \
-			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFeatures2KHR);           \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceFeatures2KHR);           \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceImageFormatProperties);  \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceMemoryProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMemoryProperties2KHR);   \
@@ -289,8 +289,10 @@ namespace bgfx { namespace vk
 		const ::Vk##_name* operator &() const { return &vk; }    \
 	};                                                           \
 	BX_STATIC_ASSERT(sizeof(::Vk##_name) == sizeof(Vk##_name) ); \
-	void vkDestroy(Vk##_name&)
+	void vkDestroy(Vk##_name&);                                  \
+	void release(Vk##_name&)
 VK_DESTROY
+VK_DESTROY_FUNC(DeviceMemory);
 #undef VK_DESTROY_FUNC
 
 	struct DslBinding
@@ -332,7 +334,7 @@ VK_DESTROY
 			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
-				destroy(it->second);
+				release(it->second);
 				m_hashMap.erase(it);
 			}
 		}
@@ -341,7 +343,7 @@ VK_DESTROY
 		{
 			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
 			{
-				destroy(it->second);
+				release(it->second);
 			}
 
 			m_hashMap.clear();
@@ -353,8 +355,6 @@ VK_DESTROY
 		}
 
 	private:
-		void destroy(Ty handle);
-
 		typedef stl::unordered_map<uint64_t, Ty> HashMap;
 		HashMap m_hashMap;
 	};
@@ -446,6 +446,12 @@ VK_DESTROY
 		BindType::Enum type;
 		uint32_t binding;
 		uint32_t samplerBinding;
+		uint32_t index;
+	};
+
+	struct TextureBindInfo
+	{
+		VkImageViewType type;
 	};
 
 	struct ShaderVK
@@ -480,6 +486,10 @@ VK_DESTROY
 		uint8_t m_numAttrs;
 
 		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+
+		TextureBindInfo m_textures[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		uint8_t m_numTextures;
+
 		uint32_t m_uniformBinding;
 		uint16_t m_numBindings;
 		VkDescriptorSetLayoutBinding m_bindings[32];
@@ -502,6 +512,9 @@ VK_DESTROY
 		const ShaderVK* m_fsh;
 
 		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+
+		TextureBindInfo m_textures[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		uint8_t m_numTextures;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
@@ -594,12 +607,9 @@ VK_DESTROY
 			, m_format(VK_FORMAT_UNDEFINED)
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem(VK_NULL_HANDLE)
-			, m_textureImageView(VK_NULL_HANDLE)
-			, m_textureImageDepthView(VK_NULL_HANDLE)
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 			, m_singleMsaaImage(VK_NULL_HANDLE)
 			, m_singleMsaaDeviceMem(VK_NULL_HANDLE)
-			, m_singleMsaaImageView(VK_NULL_HANDLE)
 		{
 		}
 
@@ -611,7 +621,7 @@ VK_DESTROY
 		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
 		void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout);
 
-		VkImageView createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips) const;
+		VkImageView createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget) const;
 
 		void*    m_directAccessPtr;
 		uint64_t m_flags;
@@ -633,13 +643,10 @@ VK_DESTROY
 
 		VkImage        m_textureImage;
 		VkDeviceMemory m_textureDeviceMem;
-		VkImageView    m_textureImageView;
-		VkImageView    m_textureImageDepthView;
 		VkImageLayout  m_currentImageLayout;
 
 		VkImage        m_singleMsaaImage;
 		VkDeviceMemory m_singleMsaaDeviceMem;
-		VkImageView    m_singleMsaaImageView;
 
 		ReadbackVK m_readback;
 	};
@@ -719,6 +726,15 @@ VK_DESTROY
 
 		typedef stl::vector<Resource> ResourceArray;
 		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
+
+	private:
+		template<typename Ty>
+		void destroy(uint64_t _handle)
+		{
+			typedef decltype(Ty::vk) vk_t;
+			Ty obj = vk_t(_handle);
+			vkDestroy(obj);
+		}
 	};
 
 } /* namespace bgfx */ } // namespace vk
