@@ -3832,9 +3832,11 @@ VK_IMPORT_DEVICE
 			// cache missed
 			VkAttachmentDescription ad[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 			VkAttachmentReference colorAr[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
-			VkAttachmentReference resolveAr[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 			VkAttachmentReference depthAr;
 			uint32_t numColorAr = 0;
+
+			colorAr[0].attachment = VK_ATTACHMENT_UNUSED;
+			colorAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 			depthAr.attachment = VK_ATTACHMENT_UNUSED;
 			depthAr.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -3842,14 +3844,14 @@ VK_IMPORT_DEVICE
 			for (uint8_t ii = 0; ii < _num; ++ii)
 			{
 				TextureVK& texture = m_textures[_attachments[ii].handle.idx];
-				ad[ii].flags       = 0;
-				ad[ii].format      = texture.m_format;
-				ad[ii].samples     = texture.m_sampler.Sample;
+				ad[ii].flags   = 0;
+				ad[ii].format  = texture.m_format;
+				ad[ii].samples = texture.m_sampler.Sample;
+				ad[ii].loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
+				ad[ii].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
 				if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
 				{
-					ad[ii].loadOp                  = VK_ATTACHMENT_LOAD_OP_LOAD;
-					ad[ii].storeOp                 = VK_ATTACHMENT_STORE_OP_STORE;
 					ad[ii].stencilLoadOp           = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 					ad[ii].stencilStoreOp          = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 					ad[ii].initialLayout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -3860,8 +3862,6 @@ VK_IMPORT_DEVICE
 				}
 				else if (texture.m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
 				{
-					ad[ii].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
-					ad[ii].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
 					ad[ii].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
 					ad[ii].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 					ad[ii].initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -3869,9 +3869,6 @@ VK_IMPORT_DEVICE
 					depthAr.layout        = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 					depthAr.attachment    = ii;
 				}
-
-				resolveAr[ii].attachment = VK_ATTACHMENT_UNUSED;
-				resolveAr[ii].layout     = ad[ii].initialLayout;
 			}
 
 			VkSubpassDescription sd[1];
@@ -3879,9 +3876,9 @@ VK_IMPORT_DEVICE
 			sd[0].pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
 			sd[0].inputAttachmentCount    = 0;
 			sd[0].pInputAttachments       = NULL;
-			sd[0].colorAttachmentCount    = numColorAr;
+			sd[0].colorAttachmentCount    = bx::max<uint32_t>(numColorAr, 1);
 			sd[0].pColorAttachments       = colorAr;
-			sd[0].pResolveAttachments     = resolveAr;
+			sd[0].pResolveAttachments     = NULL;
 			sd[0].pDepthStencilAttachment = &depthAr;
 			sd[0].preserveAttachmentCount = 0;
 			sd[0].pPreserveAttachments    = NULL;
