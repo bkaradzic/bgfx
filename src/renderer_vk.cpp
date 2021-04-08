@@ -4355,19 +4355,32 @@ VK_IMPORT_DEVICE
 					{
 					case Binding::Image:
 						{
+							const bool isImageDescriptor = BindType::Image == bindInfo.type;
+
 							wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 							wds[wdsCount].pNext            = NULL;
 							wds[wdsCount].dstSet           = descriptorSet;
 							wds[wdsCount].dstBinding       = bindInfo.binding;
 							wds[wdsCount].dstArrayElement  = 0;
 							wds[wdsCount].descriptorCount  = 1;
-							wds[wdsCount].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+							wds[wdsCount].descriptorType   = isImageDescriptor
+								? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+								: VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
+								;
 							wds[wdsCount].pImageInfo       = NULL;
 							wds[wdsCount].pBufferInfo      = NULL;
 							wds[wdsCount].pTexelBufferView = NULL;
 
 							TextureVK& texture = m_textures[bind.m_idx];
-							texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_GENERAL);
+
+							if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout)
+							{
+								const VkImageLayout layout = isImageDescriptor
+									? VK_IMAGE_LAYOUT_GENERAL
+									: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+									;
+								texture.setImageMemoryBarrier(m_commandBuffer, layout);
+							}
 
 							VkImageViewType type = texture.m_type;
 							if (UINT32_MAX != bindInfo.index)
