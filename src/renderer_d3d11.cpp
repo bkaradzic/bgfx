@@ -5561,6 +5561,8 @@ namespace bgfx { namespace d3d11
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
+		uint32_t currentNumVertices = 0;
+
 		RenderBind currentBind;
 		currentBind.clear();
 
@@ -6191,6 +6193,8 @@ namespace bgfx { namespace d3d11
 						}
 					}
 
+					currentNumVertices = numVertices;
+
 					if (0 < numStreams)
 					{
 						deviceCtx->IASetVertexBuffers(0, numStreams, buffers, strides, offsets);
@@ -6249,7 +6253,7 @@ namespace bgfx { namespace d3d11
 
 				if (0 != currentState.m_streamMask)
 				{
-					uint32_t numVertices       = draw.m_numVertices;
+					uint32_t numVertices       = currentNumVertices;
 					uint32_t numIndices        = 0;
 					uint32_t numPrimsSubmitted = 0;
 					uint32_t numInstances      = 0;
