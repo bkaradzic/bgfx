@@ -7457,6 +7457,7 @@ VK_DESTROY
 
 					const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 					uint8_t numStreams = 0;
+					uint32_t numVertices = draw.m_numVertices;
 					if (UINT8_MAX != draw.m_streamMask)
 					{
 						for (uint32_t idx = 0, streamMask = draw.m_streamMask
@@ -7479,8 +7480,15 @@ VK_DESTROY
 								: vb.m_layoutHandle.idx
 								;
 							const VertexLayout& layout = m_vertexLayouts[decl];
+							const uint32_t stride = layout.m_stride;
 
 							layouts[numStreams] = &layout;
+
+							numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
+								? vb.m_size/stride
+								: draw.m_numVertices
+								, numVertices
+								);
 						}
 					}
 
@@ -7685,14 +7693,6 @@ VK_DESTROY
 
 					if (!isValid(draw.m_indexBuffer) )
 					{
-						const VertexBufferVK& vertexBuffer = m_vertexBuffers[draw.m_stream[0].m_handle.idx];
-						const VertexLayout* layout = layouts[0];
-
-						const uint32_t numVertices = UINT32_MAX == draw.m_numVertices
-							? vertexBuffer.m_size / layout->m_stride
-							: draw.m_numVertices
-							;
-
 						if (isValid(draw.m_indirectBuffer) )
 						{
 							vkCmdDrawIndirect(
