@@ -7822,9 +7822,6 @@ namespace bgfx { namespace gl
 					}
 
 					{
-						bool diffStreamHandles = false;
-						bool diffIndexBuffer = false;
-
 						for (uint32_t idx = 0, streamMask = draw.m_streamMask
 							; 0 != streamMask
 							; streamMask >>= 1, idx += 1
@@ -7836,8 +7833,14 @@ namespace bgfx { namespace gl
 
 							if (currentState.m_stream[idx].m_handle.idx != draw.m_stream[idx].m_handle.idx)
 							{
-								diffStreamHandles = true;
-								break;
+								currentState.m_stream[idx].m_handle = draw.m_stream[idx].m_handle;
+								bindAttribs = true;
+							}
+
+							if (currentState.m_stream[idx].m_startVertex != draw.m_stream[idx].m_startVertex)
+							{
+								currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+								bindAttribs = true;
 							}
 						}
 
@@ -7845,25 +7848,12 @@ namespace bgfx { namespace gl
 						||  currentState.m_streamMask             != draw.m_streamMask
 						||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
 						||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
-						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride
-						||  diffStreamHandles)
+						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
 						{
-							currentState.m_streamMask             = draw.m_streamMask;
-							currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
-							currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
-							currentState.m_instanceDataStride     = draw.m_instanceDataStride;
-
-							for (uint32_t idx = 0, streamMask = draw.m_streamMask
-								; 0 != streamMask
-								; streamMask >>= 1, idx += 1
-								)
-							{
-								const uint32_t ntz = bx::uint32_cnttz(streamMask);
-								streamMask >>= ntz;
-								idx         += ntz;
-
-								currentState.m_stream[idx].m_handle = draw.m_stream[idx].m_handle;
-							}
+							currentState.m_streamMask         = draw.m_streamMask;
+							currentState.m_instanceDataBuffer = draw.m_instanceDataBuffer;
+							currentState.m_instanceDataOffset = draw.m_instanceDataOffset;
+							currentState.m_instanceDataStride = draw.m_instanceDataStride;
 
 							bindAttribs = true;
 						}
@@ -7872,51 +7862,30 @@ namespace bgfx { namespace gl
 						{
 							currentState.m_indexBuffer = draw.m_indexBuffer;
 
-							uint16_t handle = draw.m_indexBuffer.idx;
-							if (kInvalidHandle != handle)
+							if (isValid(draw.m_indexBuffer) )
 							{
-								IndexBufferGL& ib = m_indexBuffers[handle];
+								IndexBufferGL& ib = m_indexBuffers[draw.m_indexBuffer.idx];
 								GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 							}
 							else
 							{
 								GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
 							}
-
-							diffIndexBuffer = true;
 						}
 
 						if (currentState.m_startIndex != draw.m_startIndex)
 						{
 							currentState.m_startIndex = draw.m_startIndex;
-							diffIndexBuffer = true;
 						}
 
 						if (0 != currentState.m_streamMask)
 						{
-							bool diffStartVertex = false;
-							for (uint32_t idx = 0, streamMask = draw.m_streamMask
-								; 0 != streamMask
-								; streamMask >>= 1, idx += 1
-								)
-							{
-								const uint32_t ntz = bx::uint32_cnttz(streamMask);
-								streamMask >>= ntz;
-								idx         += ntz;
-
-								if (currentState.m_stream[idx].m_startVertex != draw.m_stream[idx].m_startVertex)
-								{
-									diffStartVertex = true;
-									break;
-								}
-							}
-
-							if (bindAttribs || diffStartVertex)
+							if (bindAttribs)
 							{
 								if (isValid(boundProgram) )
 								{
 									m_program[boundProgram.idx].unbindAttributes();
-									boundProgram = BGFX_INVALID_HANDLE;
+									m_program[boundProgram.idx].unbindInstanceData();
 								}
 
 								boundProgram = currentProgram;
@@ -7934,8 +7903,6 @@ namespace bgfx { namespace gl
 										streamMask >>= ntz;
 										idx         += ntz;
 
-										currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
-
 										const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
 										const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
 											? draw.m_stream[idx].m_layoutHandle.idx
@@ -7946,10 +7913,7 @@ namespace bgfx { namespace gl
 								}
 
 								program.bindAttributesEnd();
-							}
 
-							if (bindAttribs || diffStartVertex || diffIndexBuffer)
-							{
 								if (isValid(draw.m_instanceDataBuffer) )
 								{
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffers[draw.m_instanceDataBuffer.idx].m_id) );
@@ -8101,11 +8065,6 @@ namespace bgfx { namespace gl
 						if (hasOcclusionQuery)
 						{
 							m_occlusionQuery.end();
-						}
-
-						if (isValid(draw.m_instanceDataBuffer) )
-						{
-							program.unbindInstanceData();
 						}
 
 						statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
