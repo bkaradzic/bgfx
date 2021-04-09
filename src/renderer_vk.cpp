@@ -4342,9 +4342,7 @@ VK_IMPORT_DEVICE
 				const Binding& bind = renderBind.m_bind[stage];
 				const BindInfo& bindInfo = program.m_bindInfo[stage];
 
-				// bgfx does not seem to forbid setting a texture to a stage that a program does not use
-				if (bind.m_type == Binding::Texture
-				&& !isValid(bindInfo.uniformHandle) )
+				if (!isValid(bindInfo.uniformHandle) )
 				{
 					continue;
 				}
@@ -5386,6 +5384,10 @@ VK_DESTROY
 					{
 						// regCount is used for descriptor type
 						const bool isBuffer = idToDescriptorType(regCount) == DescriptorType::StorageBuffer;
+						if (0 == regIndex)
+						{
+							continue;
+						}
 						const uint16_t stage = regIndex - (isBuffer ? 16 : 32) - (fragment ? 48 : 0);  // regIndex is used for buffer binding index
 
 						m_bindInfo[stage].type = isBuffer ? BindType::Buffer : BindType::Image;
