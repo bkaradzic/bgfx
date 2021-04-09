@@ -206,7 +206,7 @@ flag.Discard { bits = 8, const, desc = "Discard flags" }
 	.Bindings      (0x01) --- Discard texture sampler and buffer bindings.
 	.IndexBuffer   (0x02) --- Discard index buffer.
 	.InstanceData  (0x04) --- Discard instance data.
-	.State         (0x08) --- Discard state.
+	.State         (0x08) --- Discard state and uniform bindings.
 	.Transform     (0x10) --- Discard transform.
 	.VertexStreams (0x20) --- Discard vertex streams.
 	.All           (0xff) --- Discard all states.

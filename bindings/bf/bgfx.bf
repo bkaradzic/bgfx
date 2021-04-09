@@ -554,7 +554,7 @@ public static class bgfx
 		InstanceData           = 0x00000004,
 	
 		/// <summary>
-		/// Discard state.
+		/// Discard state and uniform bindings.
 		/// </summary>
 		State                  = 0x00000008,
 	
