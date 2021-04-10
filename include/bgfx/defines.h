@@ -262,7 +262,7 @@
 #define BGFX_DISCARD_BINDINGS                     UINT8_C(0x01) //!< Discard texture sampler and buffer bindings.
 #define BGFX_DISCARD_INDEX_BUFFER                 UINT8_C(0x02) //!< Discard index buffer.
 #define BGFX_DISCARD_INSTANCE_DATA                UINT8_C(0x04) //!< Discard instance data.
-#define BGFX_DISCARD_STATE                        UINT8_C(0x08) //!< Discard state.
+#define BGFX_DISCARD_STATE                        UINT8_C(0x08) //!< Discard state and uniform bindings.
 #define BGFX_DISCARD_TRANSFORM                    UINT8_C(0x10) //!< Discard transform.
 #define BGFX_DISCARD_VERTEX_STREAMS               UINT8_C(0x20) //!< Discard vertex streams.
 #define BGFX_DISCARD_ALL                          UINT8_C(0xff) //!< Discard all states.
