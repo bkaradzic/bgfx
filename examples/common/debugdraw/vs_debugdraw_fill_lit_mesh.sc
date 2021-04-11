@@ -1,4 +1,4 @@
-$input a_position, a_indices
+$input a_position
 $output v_view, v_world
 
 /*

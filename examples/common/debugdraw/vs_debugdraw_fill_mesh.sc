@@ -1,4 +1,4 @@
-$input a_position, a_indices
+$input a_position
 
 /*
  * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
