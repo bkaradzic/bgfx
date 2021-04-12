@@ -936,7 +936,7 @@ namespace bgfx { namespace mtl
 
 			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
 			fb.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
-			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, 0);
+			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, m_resolution.reset);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
