@@ -781,7 +781,7 @@ typedef struct bgfx_uniform_info_s
  */
 typedef struct bgfx_attachment_s
 {
-    bgfx_access_t        access;             /** Attachement access. See `Access::Enum`.  */
+    bgfx_access_t        access;             /** Attachment access. See `Access::Enum`.   */
     bgfx_texture_handle_t handle;            /** Render target texture handle.            */
     uint16_t             mip;                /** Mip level.                               */
     uint16_t             layer;              /** Cubemap side or depth layer/slice to use. */
@@ -2002,7 +2002,7 @@ BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_handles(uint
  * Create MRT frame buffer from texture handles with specific layer and
  * mip level.
  *
- * @param[in] _num Number of attachements.
+ * @param[in] _num Number of attachments.
  * @param[in] _attachment Attachment texture info. See: `bgfx::Attachment`.
  * @param[in] _destroyTexture If true, textures will be destroyed when
  *  frame buffer is destroyed.

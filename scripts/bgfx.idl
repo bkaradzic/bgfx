@@ -856,7 +856,7 @@ struct.UniformInfo
 
 --- Frame buffer texture attachment info.
 struct.Attachment { shortname }
-	.access    "Access::Enum"  --- Attachement access. See `Access::Enum`.
+	.access    "Access::Enum"  --- Attachment access. See `Access::Enum`.
 	.handle    "TextureHandle" --- Render target texture handle.
 	.mip       "uint16_t"      --- Mip level.
 	.layer     "uint16_t"      --- Cubemap side or depth layer/slice to use.
@@ -1843,7 +1843,7 @@ func.createFrameBuffer { cname = "create_frame_buffer_from_handles" }
 --- mip level.
 func.createFrameBuffer { cname = "create_frame_buffer_from_attachment" }
 	"FrameBufferHandle"                 --- Frame buffer handle.
-	.num            "uint8_t"           --- Number of attachements.
+	.num            "uint8_t"           --- Number of attachments.
 	.attachment     "const Attachment*" --- Attachment texture info. See: `bgfx::Attachment`.
 	.destroyTexture "bool"              --- If true, textures will be destroyed when
 	 { default = false }                --- frame buffer is destroyed.

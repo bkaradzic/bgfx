@@ -906,7 +906,7 @@ namespace bgfx
 			, uint8_t _resolve = BGFX_RESOLVE_AUTO_GEN_MIPS
 			);
 
-		Access::Enum  access; //!< Attachement access. See `Access::Enum`.
+		Access::Enum  access; //!< Attachment access. See `Access::Enum`.
 		TextureHandle handle; //!< Render target texture handle.
 		uint16_t mip;         //!< Mip level.
 		uint16_t layer;       //!< Cubemap side or depth layer/slice to use.

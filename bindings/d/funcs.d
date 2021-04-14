@@ -956,7 +956,7 @@ version(BindBgfx_Static)
 	 * Create MRT frame buffer from texture handles with specific layer and
 	 * mip level.
 	 * Params:
-	 * _num = Number of attachements.
+	 * _num = Number of attachments.
 	 * _attachment = Attachment texture info. See: `bgfx::Attachment`.
 	 * _destroyTexture = If true, textures will be destroyed when
 	 * frame buffer is destroyed.
@@ -3171,7 +3171,7 @@ else
 		 * Create MRT frame buffer from texture handles with specific layer and
 		 * mip level.
 		 * Params:
-		 * _num = Number of attachements.
+		 * _num = Number of attachments.
 		 * _attachment = Attachment texture info. See: `bgfx::Attachment`.
 		 * _destroyTexture = If true, textures will be destroyed when
 		 * frame buffer is destroyed.

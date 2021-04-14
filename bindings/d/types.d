@@ -941,7 +941,7 @@ struct bgfx_uniform_info_t
 /// Frame buffer texture attachment info.
 struct bgfx_attachment_t
 {
-	bgfx_access_t access; /// Attachement access. See `Access::Enum`.
+	bgfx_access_t access; /// Attachment access. See `Access::Enum`.
 	bgfx_texture_handle_t handle; /// Render target texture handle.
 	ushort mip; /// Mip level.
 	ushort layer; /// Cubemap side or depth layer/slice to use.
@@ -1062,3 +1062,4 @@ struct bgfx_uniform_handle_t { ushort idx; }
 struct bgfx_vertex_buffer_handle_t { ushort idx; }
 
 struct bgfx_vertex_layout_handle_t { ushort idx; }
+
