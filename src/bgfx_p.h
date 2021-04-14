@@ -73,6 +73,7 @@ namespace bgfx
 #endif // BX_COMPILER_CLANG_ANALYZER
 
 	void trace(const char* _filePath, uint16_t _line, const char* _format, ...);
+	void checkFrameBuffer(uint8_t _num, const Attachment* _attachment);
 
 	inline bool operator==(const VertexLayoutHandle& _lhs, const VertexLayoutHandle& _rhs) { return _lhs.idx == _rhs.idx; }
 	inline bool operator==(const UniformHandle& _lhs,    const UniformHandle&    _rhs) { return _lhs.idx == _rhs.idx; }
@@ -4527,98 +4528,6 @@ namespace bgfx
 			cmdbuf.write(_depth);
 			cmdbuf.write(_pitch);
 			cmdbuf.write(_mem);
-		}
-
-		void checkFrameBuffer(uint8_t _num, const Attachment* _attachment) const
-		{
-			uint8_t color = 0;
-			uint8_t depth = 0;
-
-			const TextureRef& firstTexture = m_textureRef[_attachment[0].handle.idx];
-
-			const uint16_t firstAttachmentWidth  = bx::max<uint16_t>(firstTexture.m_width  >> _attachment[0].mip, 1);
-			const uint16_t firstAttachmentHeight = bx::max<uint16_t>(firstTexture.m_height >> _attachment[0].mip, 1);
-
-			for (uint32_t ii = 0; ii < _num; ++ii)
-			{
-				const TextureHandle texHandle = _attachment[ii].handle;
-				BGFX_CHECK_HANDLE("createFrameBuffer texture", m_textureHandle, texHandle);
-				const TextureRef& tr = m_textureRef[texHandle.idx];
-
-				BX_ASSERT(
-					  _attachment[ii].mip < tr.m_numMips
-					, "Invalid texture mip level (%d > %d)."
-					, _attachment[ii].mip
-					, tr.m_numMips - 1
-				);
-				const uint16_t numLayers = tr.is3D()
-					? bx::max<uint16_t>(tr.m_depth >> _attachment[ii].mip, 1)
-					: tr.m_numLayers * (tr.isCubeMap() ? 6 : 1)
-					;
-				BX_ASSERT(
-					  (_attachment[ii].layer + _attachment[ii].numLayers) <= numLayers
-					, "Invalid texture layer range (layer %d + num %d > total %d)."
-					, _attachment[ii].layer
-					, _attachment[ii].numLayers
-					, numLayers
-					);
-
-				BX_ASSERT(
-					  _attachment[0].numLayers == _attachment[ii].numLayers
-					, "Mismatch in attachment layer count (%d != %d)."
-					, _attachment[ii].numLayers
-					, _attachment[0].numLayers
-					);
-				BX_ASSERT(firstTexture.m_bbRatio == tr.m_bbRatio, "Mismatch in texture back-buffer ratio.");
-				BX_ASSERT(
-					  firstTexture.m_numSamples == tr.m_numSamples
-					, "Mismatch in texture sample count (%d != %d)."
-					, tr.m_numSamples
-					, firstTexture.m_numSamples
-					);
-				if (BackbufferRatio::Count == firstTexture.m_bbRatio)
-				{
-					const uint16_t width  = bx::max<uint16_t>(tr.m_width  >> _attachment[ii].mip, 1);
-					const uint16_t height = bx::max<uint16_t>(tr.m_height >> _attachment[ii].mip, 1);
-					BX_ASSERT(
-						  width == firstAttachmentWidth && height == firstAttachmentHeight
-						, "Mismatch in texture size (%dx%d != %dx%d)."
-						, width, height
-						, firstAttachmentWidth, firstAttachmentHeight
-						);
-				}
-
-				if (bimg::isDepth(bimg::TextureFormat::Enum(tr.m_format) ) )
-				{
-					++depth;
-				}
-				else
-				{
-					++color;
-				}
-
-				BX_ASSERT(
-					  0 == (tr.m_flags & BGFX_TEXTURE_READ_BACK)
-					, "Frame buffer texture cannot be read back texture. Attachment %d: has flags 0x%016" PRIx64 "."
-					, ii
-					, tr.m_flags
-					);
-
-				BX_ASSERT(
-					  0 != (tr.m_flags & BGFX_TEXTURE_RT_MASK)
-					, "Frame buffer texture is not created with one of `BGFX_TEXTURE_RT*` flags. Attachment %d: has flags 0x%016" PRIx64 "."
-					, ii
-					, tr.m_flags
-					);
-			}
-
-			BX_ASSERT(true
-				&& color <= g_caps.limits.maxFBAttachments
-				&& depth <= 1
-				, "Too many frame buffer attachments (num attachments: %d, max color attachments %d)!"
-				, _num
-				, g_caps.limits.maxFBAttachments
-				);
 		}
 
 		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, const Attachment* _attachment, bool _destroyTextures) )
