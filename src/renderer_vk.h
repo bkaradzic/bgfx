@@ -615,7 +615,11 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		}
 
 		void* create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip);
+		// internal render target
+		VkResult create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format, VkImageAspectFlags _aspectMask);
+
 		void destroy();
+
 		void update(VkCommandBuffer _commandBuffer, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve);
 
@@ -650,6 +654,9 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkDeviceMemory m_singleMsaaDeviceMem;
 
 		ReadbackVK m_readback;
+
+	private:
+		VkResult createImages(VkCommandBuffer _commandBuffer);
 	};
 
 	struct SwapChainVK
@@ -658,6 +665,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 			: m_swapchain(VK_NULL_HANDLE)
 			, m_lastImageRenderedSemaphore(VK_NULL_HANDLE)
 			, m_lastImageAcquiredSemaphore(VK_NULL_HANDLE)
+			, m_backBufferColorMsaaImageView(VK_NULL_HANDLE)
 		{
 		}
 
@@ -695,36 +703,29 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkImageLayout      m_backBufferColorImageLayout[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkImage            m_backBufferColorImage[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkImageView        m_backBufferColorImageView[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkImage            m_backBufferColorMsaaImage[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkImageView        m_backBufferColorMsaaImageView[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkFramebuffer      m_backBufferFrameBuffer[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkFence            m_backBufferFence[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkRenderPass       m_renderPass;
 
-		VkSemaphore        m_presentDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkSemaphore        m_renderDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		uint32_t           m_currentSemaphore;
+		VkSemaphore m_presentDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		VkSemaphore m_renderDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		uint32_t    m_currentSemaphore;
 
-		VkSemaphore        m_lastImageRenderedSemaphore;
-		VkSemaphore        m_lastImageAcquiredSemaphore;
+		VkSemaphore m_lastImageRenderedSemaphore;
+		VkSemaphore m_lastImageAcquiredSemaphore;
 
-		uint32_t           m_backBufferColorIdx;
-		bool               m_needPresent;
-		bool               m_needToRefreshSwapchain;
-		bool               m_needToRecreateSurface;
+		uint32_t m_backBufferColorIdx;
+		bool     m_needPresent;
+		bool     m_needToRefreshSwapchain;
+		bool     m_needToRecreateSurface;
 
-		VkFormat           m_backBufferDepthStencilFormat;
-		VkDeviceMemory     m_backBufferDepthStencilMemory;
-		VkImage            m_backBufferDepthStencilImage;
-		VkImageView        m_backBufferDepthStencilImageView;
+		VkFormat    m_backBufferDepthStencilFormat;
+		TextureVK   m_backBufferDepthStencil;
+		VkImageView m_backBufferDepthStencilImageView;
 
-		VkImage m_backBufferColorMsaa;
-		VkImage m_backBufferDepth;
-
-		VkFormat m_colorFormat;
-		VkFormat m_depthFormat;
-
-		uint8_t m_sampleCount;
+		TextureVK     m_backBufferColorMsaa;
+		VkImageView   m_backBufferColorMsaaImageView;
+		MsaaSamplerVK m_sampler;
 	};
 
 	struct FrameBufferVK
