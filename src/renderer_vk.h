@@ -78,13 +78,13 @@
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceMemoryProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMemoryProperties2KHR);   \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceQueueFamilyProperties);  \
-			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceSurfaceCapabilitiesKHR); \
-			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceSurfaceFormatsKHR);      \
-			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceSurfacePresentModesKHR); \
-			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceSurfaceSupportKHR);      \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceCapabilitiesKHR); \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceFormatsKHR);      \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfacePresentModesKHR); \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceSupportKHR);      \
 			VK_IMPORT_INSTANCE_FUNC(false, vkCreateDevice);                            \
 			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyDevice);                           \
-			VK_IMPORT_INSTANCE_FUNC(false, vkDestroySurfaceKHR);                       \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroySurfaceKHR);                       \
 			/* VK_EXT_debug_report */                                                  \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateDebugReportCallbackEXT);            \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroyDebugReportCallbackEXT);           \
@@ -93,11 +93,11 @@
 
 #define VK_IMPORT_DEVICE                                                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkGetDeviceQueue);                \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateSwapchainKHR);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroySwapchainKHR);           \
-			VK_IMPORT_DEVICE_FUNC(false, vkGetSwapchainImagesKHR);         \
-			VK_IMPORT_DEVICE_FUNC(false, vkAcquireNextImageKHR);           \
-			VK_IMPORT_DEVICE_FUNC(false, vkQueuePresentKHR);               \
+			VK_IMPORT_DEVICE_FUNC(true,  vkCreateSwapchainKHR);            \
+			VK_IMPORT_DEVICE_FUNC(true,  vkDestroySwapchainKHR);           \
+			VK_IMPORT_DEVICE_FUNC(true,  vkGetSwapchainImagesKHR);         \
+			VK_IMPORT_DEVICE_FUNC(true,  vkAcquireNextImageKHR);           \
+			VK_IMPORT_DEVICE_FUNC(true,  vkQueuePresentKHR);               \
 			VK_IMPORT_DEVICE_FUNC(false, vkCreateFence);                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkDestroyFence);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkCreateSemaphore);               \

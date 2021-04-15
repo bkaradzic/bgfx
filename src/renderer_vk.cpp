@@ -1046,6 +1046,8 @@ VK_IMPORT_DEVICE
 
 			ErrorState::Enum errorState = ErrorState::Default;
 
+			const bool headless = NULL == g_platformData.nwh;
+
 			VkPhysicalDeviceLineRasterizationFeaturesEXT lineRasterizationFeatures;
 			const void* nextFeatures = NULL;
 
@@ -1124,7 +1126,7 @@ VK_IMPORT
 					}
 				}
 
-				uint32_t numEnabledExtensions = 2;
+				uint32_t numEnabledExtensions = headless ? 0 : 2;
 
 				const char* enabledExtension[Extension::Count + 2] =
 				{
@@ -1621,12 +1623,12 @@ VK_IMPORT_INSTANCE
 				}
 
 
-				uint32_t numEnabledExtensions = 2;
+				uint32_t numEnabledExtensions = headless ? 1 : 2;
 
 				const char* enabledExtension[Extension::Count + 2] =
 				{
-					VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-					VK_KHR_MAINTENANCE1_EXTENSION_NAME
+					VK_KHR_MAINTENANCE1_EXTENSION_NAME,
+					VK_KHR_SWAPCHAIN_EXTENSION_NAME
 				};
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -1736,15 +1738,18 @@ VK_IMPORT_DEVICE
 				m_resolution = _init.resolution;
 				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
-				m_textVideoMem.clear();
-
-				result = m_swapChain.create(m_qfiGraphics, m_queueGraphics, m_commandBuffer, m_resolution);
-
-				if (VK_SUCCESS != result)
+				if (!headless)
 				{
-					BX_TRACE("Init error: creating swap chain failed %d: %s.", result, getName(result) );
-					goto error;
+					m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
+					m_textVideoMem.clear();
+
+					result = m_swapChain.create(m_qfiGraphics, m_queueGraphics, m_commandBuffer, m_resolution);
+
+					if (VK_SUCCESS != result)
+					{
+						BX_TRACE("Init error: creating swap chain failed %d: %s.", result, getName(result) );
+						goto error;
+					}
 				}
 			}
 
@@ -2543,6 +2548,11 @@ VK_IMPORT_DEVICE
 			{
 				m_depthClamp = depthClamp;
 				m_pipelineStateCache.invalidate();
+			}
+
+			if (VK_NULL_HANDLE == m_swapChain.m_swapchain)
+			{
+				return suspended;
 			}
 
 			uint32_t flags = _resolution.reset & ~(0
@@ -5605,6 +5615,11 @@ VK_DESTROY
 
 		VkResult result = VK_SUCCESS;
 
+		if (NULL == g_platformData.nwh)
+		{
+			return result;
+		}
+
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
 		m_queue = _queue;
@@ -5867,10 +5882,13 @@ VK_DESTROY
 
 	void SwapChainVK::destroy()
 	{
-		releaseFrameBuffer();
-		releaseRenderPass();
-		releaseSwapChain();
-		releaseSurface();
+		if (VK_NULL_HANDLE != m_swapchain)
+		{
+			releaseFrameBuffer();
+			releaseRenderPass();
+			releaseSwapChain();
+			releaseSurface();
+		}
 	}
 
 	void SwapChainVK::update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset)
@@ -7085,6 +7103,8 @@ VK_DESTROY
 
 		if (needAcquire)
 		{
+			BX_ASSERT(VK_NULL_HANDLE != m_swapChain.m_swapchain, "Rendering to backbuffer in headless mode");
+
 			if (!m_swapChain.acquire(m_commandBuffer) )
 			{
 				return;
