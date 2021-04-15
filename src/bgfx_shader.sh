@@ -301,6 +301,20 @@ vec2 bgfxTextureSize(BgfxSampler2D _sampler, int _lod)
 	return result;
 }
 
+vec2 bgfxTextureSize(BgfxISampler2D _sampler, int _lod)
+{
+	vec2 result;
+	_sampler.m_texture.GetDimensions(result.x, result.y);
+	return result;
+}
+
+vec2 bgfxTextureSize(BgfxUSampler2D _sampler, int _lod)
+{
+	vec2 result;
+	_sampler.m_texture.GetDimensions(result.x, result.y);
+	return result;
+}
+
 vec4 bgfxTextureGather(BgfxSampler2D _sampler, vec2 _coord)
 {
 	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord );
