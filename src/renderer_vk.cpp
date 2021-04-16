@@ -5597,11 +5597,11 @@ VK_DESTROY
 		setImageMemoryBarrier(_commandBuffer, oldLayout);
 	}
 
-	void TextureVK::setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage)
+	VkImageLayout TextureVK::setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage)
 	{
 		if (_singleMsaaImage && VK_NULL_HANDLE == m_singleMsaaImage)
 		{
-			return;
+			return VK_IMAGE_LAYOUT_UNDEFINED;
 		}
 
 		VkImageLayout& currentLayout = _singleMsaaImage
@@ -5609,9 +5609,11 @@ VK_DESTROY
 			: m_currentImageLayout
 			;
 
+		const VkImageLayout oldLayout = currentLayout;
+
 		if (currentLayout == _newImageLayout)
 		{
-			return;
+			return oldLayout;
 		}
 
 		const VkImage image = _singleMsaaImage
@@ -5628,6 +5630,7 @@ VK_DESTROY
 			);
 
 		currentLayout = _newImageLayout;
+		return oldLayout;
 	}
 
 	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget) const
@@ -7061,11 +7064,15 @@ VK_DESTROY
 			{
 				if (oldSrcLayout != VK_IMAGE_LAYOUT_UNDEFINED)
 				{
-					m_textures[currentSrc.idx].setImageMemoryBarrier(m_commandBuffer, oldSrcLayout);
+					TextureVK& texture = m_textures[currentSrc.idx];
+					texture.setImageMemoryBarrier(m_commandBuffer, oldSrcLayout, VK_NULL_HANDLE != texture.m_singleMsaaImage);
 				}
 
-				oldSrcLayout = src.m_currentImageLayout;
-				src.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+				oldSrcLayout = src.setImageMemoryBarrier(
+					  m_commandBuffer
+					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+					, VK_NULL_HANDLE != src.m_singleMsaaImage
+					);
 				currentSrc = blit.m_src;
 			}
 
@@ -7076,62 +7083,66 @@ VK_DESTROY
 					m_textures[currentDst.idx].setImageMemoryBarrier(m_commandBuffer, oldDstLayout);
 				}
 
-				oldDstLayout = dst.m_currentImageLayout;
-				dst.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+				oldDstLayout = dst.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 				currentDst = blit.m_dst;
 			}
 
-			VkImageBlit blitInfo;
-			blitInfo.srcSubresource.aspectMask     = src.m_aspectMask;
-			blitInfo.srcSubresource.mipLevel       = blit.m_srcMip;
-			blitInfo.srcSubresource.baseArrayLayer = 0;
-			blitInfo.srcSubresource.layerCount     = 1;
-			blitInfo.srcOffsets[0].x = blit.m_srcX;
-			blitInfo.srcOffsets[0].y = blit.m_srcY;
-			blitInfo.srcOffsets[0].z = 0;
-			blitInfo.srcOffsets[1].x = blit.m_srcX + blit.m_width;
-			blitInfo.srcOffsets[1].y = blit.m_srcY + blit.m_height;
-			blitInfo.srcOffsets[1].z = 1;
-			blitInfo.dstSubresource.aspectMask     = dst.m_aspectMask;
-			blitInfo.dstSubresource.mipLevel       = blit.m_dstMip;
-			blitInfo.dstSubresource.baseArrayLayer = 0;
-			blitInfo.dstSubresource.layerCount     = 1;
-			blitInfo.dstOffsets[0].x = blit.m_dstX;
-			blitInfo.dstOffsets[0].y = blit.m_dstY;
-			blitInfo.dstOffsets[0].z = 0;
-			blitInfo.dstOffsets[1].x = blit.m_dstX + blit.m_width;
-			blitInfo.dstOffsets[1].y = blit.m_dstY + blit.m_height;
-			blitInfo.dstOffsets[1].z = 1;
+			const uint16_t srcSamples = VK_NULL_HANDLE != src.m_singleMsaaImage ? 1 : src.m_sampler.Count;
+			const uint16_t dstSamples = dst.m_sampler.Count;
+
+			BX_ASSERT(
+				  srcSamples == dstSamples
+				, "Mismatching texture sample count (%d != %d)."
+				, srcSamples
+				, dstSamples
+				);
+
+			VkImageCopy copyInfo;
+			copyInfo.srcSubresource.aspectMask     = src.m_aspectMask;
+			copyInfo.srcSubresource.mipLevel       = blit.m_srcMip;
+			copyInfo.srcSubresource.baseArrayLayer = 0;
+			copyInfo.srcSubresource.layerCount     = 1;
+			copyInfo.srcOffset.x = blit.m_srcX;
+			copyInfo.srcOffset.y = blit.m_srcY;
+			copyInfo.srcOffset.z = 0;
+			copyInfo.dstSubresource.aspectMask     = dst.m_aspectMask;
+			copyInfo.dstSubresource.mipLevel       = blit.m_dstMip;
+			copyInfo.dstSubresource.baseArrayLayer = 0;
+			copyInfo.dstSubresource.layerCount     = 1;
+			copyInfo.dstOffset.x = blit.m_dstX;
+			copyInfo.dstOffset.y = blit.m_dstY;
+			copyInfo.dstOffset.z = 0;
+			copyInfo.extent.width  = blit.m_width;
+			copyInfo.extent.height = blit.m_height;
+			copyInfo.extent.depth  = 1;
+
+			const uint32_t depth = bx::max<uint32_t>(1, blit.m_depth);
 
 			if (VK_IMAGE_VIEW_TYPE_3D == src.m_type)
 			{
-				blitInfo.srcOffsets[0].z = blit.m_srcZ;
-				blitInfo.dstOffsets[0].z = blit.m_dstZ;
-				blitInfo.srcOffsets[1].z = blit.m_srcZ + blit.m_depth;
-				blitInfo.dstOffsets[1].z = blit.m_dstZ + blit.m_depth;
+				BX_ASSERT(VK_IMAGE_VIEW_TYPE_3D == dst.m_type, "Can't blit between 2D and 3D image.");
+
+				copyInfo.srcOffset.z  = blit.m_srcZ;
+				copyInfo.dstOffset.z  = blit.m_dstZ;
+				copyInfo.extent.depth = depth;
+				copyInfo.extent.depth = depth;
 			}
 			else
 			{
-				blitInfo.srcSubresource.baseArrayLayer = blit.m_srcZ;
-				blitInfo.dstSubresource.baseArrayLayer = blit.m_dstZ;
-				blitInfo.srcSubresource.layerCount = bx::max<uint32_t>(1, blit.m_depth);
-				blitInfo.dstSubresource.layerCount = bx::max<uint32_t>(1, blit.m_depth);
+				copyInfo.srcSubresource.baseArrayLayer = blit.m_srcZ;
+				copyInfo.dstSubresource.baseArrayLayer = blit.m_dstZ;
+				copyInfo.srcSubresource.layerCount = depth;
+				copyInfo.dstSubresource.layerCount = depth;
 			}
 
-			const VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) )
-				? VK_FILTER_NEAREST
-				: VK_FILTER_LINEAR
-				;
-
-			vkCmdBlitImage(
+			vkCmdCopyImage(
 				  m_commandBuffer
 				, VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_singleMsaaImage : src.m_textureImage
-				, src.m_currentImageLayout
+				, VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_currentSingleMsaaImageLayout : src.m_currentImageLayout
 				, dst.m_textureImage
 				, dst.m_currentImageLayout
 				, 1
-				, &blitInfo
-				, filter
+				, &copyInfo
 				);
 
 			setMemoryBarrier(
@@ -7143,7 +7154,8 @@ VK_DESTROY
 
 		if (oldSrcLayout != VK_IMAGE_LAYOUT_UNDEFINED)
 		{
-			m_textures[currentSrc.idx].setImageMemoryBarrier(m_commandBuffer, oldSrcLayout);
+			TextureVK& texture = m_textures[currentSrc.idx];
+			texture.setImageMemoryBarrier(m_commandBuffer, oldSrcLayout, VK_NULL_HANDLE != texture.m_singleMsaaImage);
 		}
 
 		if (oldDstLayout != VK_IMAGE_LAYOUT_UNDEFINED)
