@@ -611,6 +611,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 			, m_singleMsaaImage(VK_NULL_HANDLE)
 			, m_singleMsaaDeviceMem(VK_NULL_HANDLE)
+			, m_currentSingleMsaaImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 		{
 		}
 
@@ -621,10 +622,10 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		void destroy();
 
 		void update(VkCommandBuffer _commandBuffer, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve);
+		void resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip);
 
 		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
-		void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout);
+		void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage = false);
 
 		VkImageView createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget) const;
 
@@ -652,6 +653,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		VkImage        m_singleMsaaImage;
 		VkDeviceMemory m_singleMsaaDeviceMem;
+		VkImageLayout  m_currentSingleMsaaImageLayout;
 
 		ReadbackVK m_readback;
 

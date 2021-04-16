@@ -1020,7 +1020,6 @@ VK_IMPORT_DEVICE
 			, m_maxAnisotropy(1.0f)
 			, m_depthClamp(false)
 			, m_wireframe(false)
-			, m_rtMsaa(false)
 		{
 		}
 
@@ -2647,17 +2646,14 @@ VK_IMPORT_DEVICE
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
-		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
+		void setFrameBuffer(FrameBufferHandle _fbh)
 		{
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx)
 			{
 				FrameBufferVK& frameBuffer = m_frameBuffers[m_fbh.idx];
 
-				if (m_rtMsaa)
-				{
-					frameBuffer.resolve();
-				}
+				frameBuffer.resolve();
 
 				for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 				{
@@ -2713,7 +2709,6 @@ VK_IMPORT_DEVICE
 			}
 
 			m_fbh = _fbh;
-			m_rtMsaa = _msaa;
 		}
 
 		void setDebugWireframe(bool _wireframe)
@@ -4040,7 +4035,6 @@ VK_IMPORT_DEVICE
 		float m_maxAnisotropy;
 		bool m_depthClamp;
 		bool m_wireframe;
-		bool m_rtMsaa;
 
 		TextVideoMem m_textVideoMem;
 
@@ -4965,6 +4959,12 @@ VK_DESTROY
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 		const VkDevice device = s_renderVK->m_device;
 
+		if (m_sampler.Count > 1)
+		{
+			BX_ASSERT(VK_IMAGE_VIEW_TYPE_3D != m_type, "Can't create multisample 3D image.");
+			BX_ASSERT(m_numMips <= 1, "Can't create multisample image with mip chain.");
+		}
+
 		// create texture and allocate its device memory
 		VkImageCreateInfo ici;
 		ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -5043,6 +5043,7 @@ VK_DESTROY
 			VkImageCreateInfo ici_resolve = ici;
 			ici_resolve.samples = s_msaa[0].Sample;
 			ici_resolve.usage &= ~(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			ici_resolve.flags &= ~VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
 			result = vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage);
 			if (VK_SUCCESS != result)
@@ -5068,13 +5069,7 @@ VK_DESTROY
 				return result;
 			}
 
-			vk::setImageMemoryBarrier(
-				  _commandBuffer
-				, m_singleMsaaImage
-				, m_aspectMask
-				, VK_IMAGE_LAYOUT_UNDEFINED
-				, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-				);
+			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
 		}
 
 		return result;
@@ -5390,6 +5385,7 @@ VK_DESTROY
 		}
 
 		m_currentImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		m_currentSingleMsaaImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
 
 	void TextureVK::update(VkCommandBuffer _commandBuffer, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
@@ -5443,36 +5439,42 @@ VK_DESTROY
 		}
 	}
 
-	void TextureVK::resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve)
+	void TextureVK::resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
 	{
 		const bool needResolve = VK_NULL_HANDLE != m_singleMsaaImage;
 
+		const bool needMipGen = true
+			&& 0 != (m_flags & BGFX_TEXTURE_RT_MASK)
+			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
+			&& (_mip + 1) < m_numMips
+			&& 0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS);
+
+		const VkImageLayout oldLayout = m_currentImageLayout;
+		const VkImageLayout oldSingleMsaaLayout = m_currentSingleMsaaImageLayout;
+
 		if (needResolve)
 		{
-			setMemoryBarrier(
-				  _commandBuffer
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				);
+			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
 
-			VkImageResolve blitInfo;
-			blitInfo.srcOffset.x = 0;
-			blitInfo.srcOffset.y = 0;
-			blitInfo.srcOffset.z = 0;
-			blitInfo.dstOffset.x = 0;
-			blitInfo.dstOffset.y = 0;
-			blitInfo.dstOffset.z = 0;
-			blitInfo.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			blitInfo.srcSubresource.mipLevel = 0;
-			blitInfo.srcSubresource.baseArrayLayer = 0;
-			blitInfo.srcSubresource.layerCount = 1;
-			blitInfo.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			blitInfo.dstSubresource.mipLevel = 0;
-			blitInfo.dstSubresource.baseArrayLayer = 0;
-			blitInfo.dstSubresource.layerCount = 1;
-			blitInfo.extent.width = m_width;
-			blitInfo.extent.height = m_height;
-			blitInfo.extent.depth = 1;
+			VkImageResolve resolve;
+			resolve.srcOffset.x = 0;
+			resolve.srcOffset.y = 0;
+			resolve.srcOffset.z = 0;
+			resolve.dstOffset.x = 0;
+			resolve.dstOffset.y = 0;
+			resolve.dstOffset.z = 0;
+			resolve.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+			resolve.srcSubresource.mipLevel       = _mip;
+			resolve.srcSubresource.baseArrayLayer = _layer;
+			resolve.srcSubresource.layerCount     = _numLayers;
+			resolve.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+			resolve.dstSubresource.mipLevel       = _mip;
+			resolve.dstSubresource.baseArrayLayer = _layer;
+			resolve.dstSubresource.layerCount     = _numLayers;
+			resolve.extent.width  = m_width;
+			resolve.extent.height = m_height;
+			resolve.extent.depth  = 1;
 
 			vkCmdResolveImage(
 				  _commandBuffer
@@ -5481,9 +5483,12 @@ VK_DESTROY
 				, m_singleMsaaImage
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 				, 1
-				, &blitInfo
+				, &resolve
 				);
+		}
 
+		if (needResolve && needMipGen)
+		{
 			setMemoryBarrier(
 				  _commandBuffer
 				, VK_PIPELINE_STAGE_TRANSFER_BIT
@@ -5491,81 +5496,84 @@ VK_DESTROY
 				);
 		}
 
-		const bool renderTarget = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
-		if (renderTarget
-		&&  1 < m_numMips
-		&&  0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS) )
+		if (needMipGen)
 		{
-			int32_t mipWidth = m_width;
-			int32_t mipHeight = m_height;
+			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, needResolve);
 
-			for (uint32_t i = 1; i < m_numMips; i++)
+			int32_t mipWidth  = bx::max<int32_t>(int32_t(m_width)  >> _mip, 1);
+			int32_t mipHeight = bx::max<int32_t>(int32_t(m_height) >> _mip, 1);
+
+			const VkImage image = needResolve ? m_singleMsaaImage : m_textureImage;
+
+			const VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
+				? VK_FILTER_NEAREST
+				: VK_FILTER_LINEAR
+				;
+
+			VkImageBlit blit;
+			blit.srcOffsets[0] = { 0, 0, 0 };
+			blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+			blit.srcSubresource.aspectMask = m_aspectMask;
+			blit.srcSubresource.mipLevel = 0;
+			blit.srcSubresource.baseArrayLayer = _layer;
+			blit.srcSubresource.layerCount = _numLayers;
+			blit.dstOffsets[0] = { 0, 0, 0 };
+			blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
+			blit.dstSubresource.aspectMask = m_aspectMask;
+			blit.dstSubresource.mipLevel = 0;
+			blit.dstSubresource.baseArrayLayer = _layer;
+			blit.dstSubresource.layerCount = _numLayers;
+
+			for (uint32_t i = _mip + 1; i < m_numMips; i++)
 			{
+				blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+				blit.srcSubresource.mipLevel = i - 1;
+
+				mipWidth  = bx::uint32_max(mipWidth  >> 1, 1);
+				mipHeight = bx::uint32_max(mipHeight >> 1, 1);
+
+				blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
+				blit.dstSubresource.mipLevel = i;
+
 				vk::setImageMemoryBarrier(
 					  _commandBuffer
-					, needResolve ? m_singleMsaaImage : m_textureImage
+					, image
 					, m_aspectMask
 					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-					, 0
-					, i - 1
-					, 0
+					, blit.srcSubresource.mipLevel
 					, 1
+					, _layer
+					, _numLayers
 					);
-
-				VkImageBlit blit{};
-				blit.srcOffsets[0] = { 0, 0, 0 };
-				blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
-				blit.srcSubresource.aspectMask = m_aspectMask;
-				blit.srcSubresource.mipLevel = i - 1;
-				blit.srcSubresource.baseArrayLayer = 0;
-				blit.srcSubresource.layerCount = 1;
-				blit.dstOffsets[0] = { 0, 0, 0 };
-				blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
-				blit.dstSubresource.aspectMask = m_aspectMask;
-				blit.dstSubresource.mipLevel = i;
-				blit.dstSubresource.baseArrayLayer = 0;
-				blit.dstSubresource.layerCount = 1;
 
 				vkCmdBlitImage(
 					  _commandBuffer
-					, needResolve ? m_singleMsaaImage : m_textureImage
+					, image
 					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-					, needResolve ? m_singleMsaaImage : m_textureImage
+					, image
 					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 					, 1
 					, &blit
-					, VK_FILTER_LINEAR
+					, filter
 					);
-
-				vk::setImageMemoryBarrier(
-					  _commandBuffer
-					, needResolve ? m_singleMsaaImage : m_textureImage
-					, m_aspectMask
-					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-					, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-					, 0
-					, i - 1
-					, 0
-					, 1
-					);
-
-				mipWidth  = bx::max(1, mipWidth  >> 1);
-				mipHeight = bx::max(1, mipHeight >> 1);
 			}
 
 			vk::setImageMemoryBarrier(
 				  _commandBuffer
-				, needResolve ? m_singleMsaaImage : m_textureImage
+				, image
 				, m_aspectMask
+				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-				, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-				, 0
-				, m_numMips - 1
-				, 0
-				, 1
+				, _mip
+				, m_numMips - _mip - 1
+				, _layer
+				, _numLayers
 				);
 		}
+
+		setImageMemoryBarrier(_commandBuffer, oldLayout);
+		setImageMemoryBarrier(_commandBuffer, oldSingleMsaaLayout, true);
 	}
 
 	void TextureVK::copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy)
@@ -5589,22 +5597,37 @@ VK_DESTROY
 		setImageMemoryBarrier(_commandBuffer, oldLayout);
 	}
 
-	void TextureVK::setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout)
+	void TextureVK::setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage)
 	{
-		if (m_currentImageLayout == _newImageLayout)
+		if (_singleMsaaImage && VK_NULL_HANDLE == m_singleMsaaImage)
 		{
 			return;
 		}
 
+		VkImageLayout& currentLayout = _singleMsaaImage
+			? m_currentSingleMsaaImageLayout
+			: m_currentImageLayout
+			;
+
+		if (currentLayout == _newImageLayout)
+		{
+			return;
+		}
+
+		const VkImage image = _singleMsaaImage
+			? m_singleMsaaImage
+			: m_textureImage
+			;
+
 		vk::setImageMemoryBarrier(
 			  _commandBuffer
-			, m_textureImage
+			, image
 			, m_aspectMask
-			, m_currentImageLayout
+			, currentLayout
 			, _newImageLayout
 			);
 
-		m_currentImageLayout = _newImageLayout;
+		currentLayout = _newImageLayout;
 	}
 
 	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget) const
@@ -6715,7 +6738,7 @@ VK_DESTROY
 			if (isValid(at.handle) )
 			{
 				TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
-				texture.resolve(s_renderVK->m_commandBuffer, at.resolve);
+				texture.resolve(s_renderVK->m_commandBuffer, at.resolve, at.layer, at.numLayers, at.mip);
 			}
 		}
 	}
