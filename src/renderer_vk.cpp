@@ -3240,6 +3240,11 @@ VK_IMPORT_DEVICE
 				}
 			}
 
+			const VkRenderPass renderPass = isValid(m_fbh)
+				? m_frameBuffers[m_fbh.idx].m_renderPass
+				: m_swapChain.m_renderPass
+				;
+
 			bx::HashMurmur2A murmur;
 			murmur.begin();
 			murmur.add(_state);
@@ -3258,9 +3263,7 @@ VK_IMPORT_DEVICE
 			}
 
 			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
-			murmur.add(m_fbh.idx);
-			murmur.add(isValid(m_fbh) ? 0 : m_swapChain.m_sci.imageFormat);
-			murmur.add(isValid(m_fbh) ? 0 : m_swapChain.m_sampler.Count);
+			murmur.add(renderPass);
 			murmur.add(_numInstanceData);
 			const uint32_t hash = murmur.end();
 
@@ -3391,7 +3394,7 @@ VK_IMPORT_DEVICE
 			graphicsPipeline.pColorBlendState    = &colorBlendState;
 			graphicsPipeline.pDynamicState       = &dynamicState;
 			graphicsPipeline.layout     = program.m_pipelineLayout;
-			graphicsPipeline.renderPass = isValid(m_fbh) ? m_frameBuffers[m_fbh.idx].m_renderPass : m_swapChain.m_renderPass;
+			graphicsPipeline.renderPass = renderPass;
 			graphicsPipeline.subpass    = 0;
 			graphicsPipeline.basePipelineHandle = VK_NULL_HANDLE;
 			graphicsPipeline.basePipelineIndex  = 0;
