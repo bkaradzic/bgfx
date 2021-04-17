@@ -5995,7 +5995,7 @@ VK_DESTROY
 
 		m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
 		m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
-		
+
 		releaseFrameBuffer();
 		releaseRenderPass();
 		releaseSwapChain();
@@ -6238,7 +6238,7 @@ VK_DESTROY
 		}
 
 		m_backBufferDepthStencilImageView = m_backBufferDepthStencil.createView(0, 1, 0, 1, VK_IMAGE_VIEW_TYPE_2D, true);
-		
+
 		if (m_sampler.Count > 1)
 		{
 			result = m_backBufferColorMsaa.create(
@@ -7092,6 +7092,7 @@ VK_DESTROY
 
 			const uint16_t srcSamples = VK_NULL_HANDLE != src.m_singleMsaaImage ? 1 : src.m_sampler.Count;
 			const uint16_t dstSamples = dst.m_sampler.Count;
+			BX_UNUSED(srcSamples, dstSamples);
 
 			BX_ASSERT(
 				  srcSamples == dstSamples
