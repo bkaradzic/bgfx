@@ -108,6 +108,29 @@ namespace bgfx
 		}                                                                      \
 	BX_MACRO_BLOCK_END
 
+#define BGFX_ERROR_CHECK(_condition, _err, _result, _msg, _format, ...) \
+	if (!BX_IGNORE_C4127(_condition) )                                  \
+	{                                                                   \
+		BX_ERROR_SET(_err, _result, _msg);                              \
+		BX_TRACE("%.*s: 0x%08x '%.*s' - " _format                       \
+			, bxErrorScope.getName().getLength()                        \
+			, bxErrorScope.getName().getPtr()                           \
+			, _err->get().code                                          \
+			, _err->getMessage().getLength()                            \
+			, _err->getMessage().getPtr()                               \
+			, ##__VA_ARGS__                                             \
+			);                                                          \
+		return;                                                         \
+	}
+
+#define BGFX_ERROR_ASSERT(_err)            \
+	BX_ASSERT((_err)->isOk()               \
+		, "ERROR: 0x%08x '%.*s'."          \
+		, (_err)->get().code               \
+		, (_err)->getMessage().getLength() \
+		, (_err)->getMessage().getPtr()    \
+		);
+
 #include <bx/allocator.h>
 #include <bx/bx.h>
 #include <bx/cpu.h>
@@ -4537,6 +4560,7 @@ namespace bgfx
 
 			bx::Error err;
 			isFrameBufferValid(_num, _attachment, &err);
+			BGFX_ERROR_ASSERT(&err);
 
 			if (!err.isOk() )
 			{

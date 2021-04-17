@@ -4329,20 +4329,6 @@ namespace bgfx
 		s_ctx->destroyProgram(_handle);
 	}
 
-#define BGFX_ERROR_CHECK(_condition, _err, _result, _msg, _format, ...) \
-	if (!BX_IGNORE_C4127(_condition) )                                  \
-	{                                                                   \
-		BX_ERROR_SET(_err, _result, _msg);                              \
-		BX_TRACE("%.*s: '%.*s' - " _format                              \
-			, bxErrorScope.getName().getLength()                        \
-			, bxErrorScope.getName().getPtr()                           \
-			, _err->getMessage().getLength()                            \
-			, _err->getMessage().getPtr()                               \
-			, ##__VA_ARGS__                                             \
-			);                                                          \
-		return;                                                         \
-	}
-
 	void isFrameBufferValid(uint8_t _num, const Attachment* _attachment, bx::Error* _err)
 	{
 		BX_ERROR_SCOPE(_err, "Frame buffer validation");
@@ -4604,9 +4590,10 @@ namespace bgfx
 			  formatSupported
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
-			, "Texture format is not supported! "
+			, "Texture format is not supported!"
 			  "Use bgfx::isTextureValid to check support for texture format before creating it."
-			, ""
+			, "Texture format: %s."
+			, getName(_format)
 			);
 
 		BGFX_ERROR_CHECK(false
@@ -4615,7 +4602,8 @@ namespace bgfx
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
 			, "MSAA sampling for this texture format is not supported."
-			, ""
+			, "Texture format: %s."
+			, getName(_format)
 			);
 
 		BGFX_ERROR_CHECK(false
@@ -4628,7 +4616,8 @@ namespace bgfx
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
 			, "sRGB sampling for this texture format is not supported."
-			, ""
+			, "Texture format: %s."
+			, getName(_format)
 			);
 	}
 
@@ -4672,11 +4661,12 @@ namespace bgfx
 	{
 		bx::Error err;
 		isTextureValid(0, false, _numLayers, _format, _flags, &err);
-		BX_ASSERT(err.isOk(), "%s (layers %d, format %s)"
-			, err.getMessage().getPtr()
-			, _numLayers
-			, getName(_format)
-			);
+		BGFX_ERROR_ASSERT(&err);
+
+		if (!err.isOk() )
+		{
+			return BGFX_INVALID_HANDLE;
+		}
 
 		if (BackbufferRatio::Count != _ratio)
 		{
@@ -4737,7 +4727,12 @@ namespace bgfx
 	{
 		bx::Error err;
 		isTextureValid(_depth, false, 1, _format, _flags, &err);
-		BX_ASSERT(err.isOk(), "%s", err.getMessage().getPtr() );
+		BGFX_ERROR_ASSERT(&err);
+
+		if (!err.isOk() )
+		{
+			return BGFX_INVALID_HANDLE;
+		}
 
 		const uint8_t numMips = calcNumMips(_hasMips, _width, _height, _depth);
 
@@ -4778,7 +4773,12 @@ namespace bgfx
 	{
 		bx::Error err;
 		isTextureValid(0, true, _numLayers, _format, _flags, &err);
-		BX_ASSERT(err.isOk(), "%s", err.getMessage().getPtr() );
+		BGFX_ERROR_ASSERT(&err);
+
+		if (!err.isOk() )
+		{
+			return BGFX_INVALID_HANDLE;
+		}
 
 		const uint8_t numMips = calcNumMips(_hasMips, _size, _size);
 		_numLayers = bx::max<uint16_t>(_numLayers, 1);
