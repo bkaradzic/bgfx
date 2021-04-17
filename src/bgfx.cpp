@@ -16,7 +16,8 @@
 #	include <objc/message.h>
 #endif // BX_PLATFORM_OSX
 
-BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,  BX_MAKEFOURCC('b', 'g', 0, 1) );
+BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,      BX_MAKEFOURCC('b', 'g', 0, 1) );
+BX_ERROR_RESULT(BGFX_ERROR_FRAME_BUFFER_VALIDATION, BX_MAKEFOURCC('b', 'g', 0, 2) );
 
 namespace bgfx
 {
@@ -4328,8 +4329,24 @@ namespace bgfx
 		s_ctx->destroyProgram(_handle);
 	}
 
-	void checkFrameBuffer(uint8_t _num, const Attachment* _attachment)
+#define BGFX_ERROR_CHECK(_condition, _err, _result, _msg, _format, ...) \
+	if (!BX_IGNORE_C4127(_condition) )                                  \
+	{                                                                   \
+		BX_ERROR_SET(_err, _result, _msg);                              \
+		BX_TRACE("%.*s: '%.*s' - " _format                              \
+			, bxErrorScope.getName().getLength()                        \
+			, bxErrorScope.getName().getPtr()                           \
+			, _err->getMessage().getLength()                            \
+			, _err->getMessage().getPtr()                               \
+			, ##__VA_ARGS__                                             \
+			);                                                          \
+		return;                                                         \
+	}
+
+	void isFrameBufferValid(uint8_t _num, const Attachment* _attachment, bx::Error* _err)
 	{
+		BX_ERROR_SCOPE(_err, "Frame buffer validation");
+
 		uint8_t color = 0;
 		uint8_t depth = 0;
 
@@ -4337,60 +4354,104 @@ namespace bgfx
 
 		const uint16_t firstAttachmentWidth  = bx::max<uint16_t>(firstTexture.m_width  >> _attachment[0].mip, 1);
 		const uint16_t firstAttachmentHeight = bx::max<uint16_t>(firstTexture.m_height >> _attachment[0].mip, 1);
-		BX_UNUSED(firstAttachmentWidth, firstAttachmentHeight);
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
-			const TextureHandle texHandle = _attachment[ii].handle;
-			BGFX_CHECK_HANDLE("createFrameBuffer texture", s_ctx->m_textureHandle, texHandle);
+			const Attachment&   at = _attachment[ii];
+			const TextureHandle texHandle = at.handle;
 			const TextureRef& tr = s_ctx->m_textureRef[texHandle.idx];
 
-			BX_ASSERT(_attachment[ii].mip < tr.m_numMips
-				, "Invalid texture mip level (%d > %d)."
-				, _attachment[ii].mip
-				, tr.m_numMips - 1
+			BGFX_ERROR_CHECK(true
+				&& isValid(texHandle)
+				&& s_ctx->m_textureHandle.isValid(texHandle.idx)
+				, _err
+				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+				, "Invalid texture attachment."
+				, "Attachment %d, texture handle %d."
+				, ii
+				, texHandle.idx
 				);
 
-			const uint16_t numLayers = tr.is3D()
-				? bx::max<uint16_t>(tr.m_depth >> _attachment[ii].mip, 1)
-				: tr.m_numLayers * (tr.isCubeMap() ? 6 : 1)
-				;
-			BX_UNUSED(numLayers);
-
-			BX_ASSERT( (_attachment[ii].layer + _attachment[ii].numLayers) <= numLayers
-				, "Invalid texture layer range (layer %d + num %d > total %d)."
-				, _attachment[ii].layer
-				, _attachment[ii].numLayers
-				, numLayers
+			BGFX_ERROR_CHECK(
+				  at.mip < tr.m_numMips
+				, _err
+				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+				, "Invalid texture mip level."
+				, "Attachment %d, Mip %d, texture number of mips %d."
+				, ii
+				, at.mip
+				, tr.m_numMips
 				);
 
-			BX_ASSERT(_attachment[0].numLayers == _attachment[ii].numLayers
-				, "Mismatch in attachment layer count (%d != %d)."
-				, _attachment[ii].numLayers
+			{
+				const uint16_t numLayers = tr.is3D()
+					? bx::max<uint16_t>(tr.m_depth >> at.mip, 1)
+					: tr.m_numLayers * (tr.isCubeMap() ? 6 : 1)
+					;
+
+				BGFX_ERROR_CHECK(
+					(at.layer + at.numLayers) <= numLayers
+					, _err
+					, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+					, "Invalid texture layer range."
+					, "Attachment %d, Layer: %d, Num: %d, Max number of layers: %d."
+					, ii
+					, at.layer
+					, at.numLayers
+					, numLayers
+					);
+			}
+
+			BGFX_ERROR_CHECK(
+				  _attachment[0].numLayers == at.numLayers
+				, _err
+				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+				, "Mismatch in attachment layer count."
+				, "Attachment %d, Given: %d, Expected: %d."
+				, ii
+				, at.numLayers
 				, _attachment[0].numLayers
 				);
 
-			BX_ASSERT(firstTexture.m_bbRatio == tr.m_bbRatio
+			BGFX_ERROR_CHECK(
+				  firstTexture.m_bbRatio == tr.m_bbRatio
+				, _err
+				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 				, "Mismatch in texture back-buffer ratio."
+				, "Attachment %d, Given: %d, Expected: %d."
+				, ii
+				, tr.m_bbRatio
+				, firstTexture.m_bbRatio
 				);
 
-			BX_ASSERT(firstTexture.m_numSamples == tr.m_numSamples
-				, "Mismatch in texture sample count (%d != %d)."
+			BGFX_ERROR_CHECK(
+				  firstTexture.m_numSamples == tr.m_numSamples
+				, _err
+				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+				, "Mismatch in texture sample count."
+				, "Attachment %d, Given: %d, Expected: %d."
+				, ii
 				, tr.m_numSamples
 				, firstTexture.m_numSamples
 				);
 
 			if (BackbufferRatio::Count == firstTexture.m_bbRatio)
 			{
-				const uint16_t width  = bx::max<uint16_t>(tr.m_width  >> _attachment[ii].mip, 1);
-				const uint16_t height = bx::max<uint16_t>(tr.m_height >> _attachment[ii].mip, 1);
-				BX_UNUSED(width, height);
+				const uint16_t width  = bx::max<uint16_t>(tr.m_width  >> at.mip, 1);
+				const uint16_t height = bx::max<uint16_t>(tr.m_height >> at.mip, 1);
 
-				BX_ASSERT(width == firstAttachmentWidth && height == firstAttachmentHeight
-					, "Mismatch in texture size (%dx%d != %dx%d)."
+				BGFX_ERROR_CHECK(true
+					&& width  == firstAttachmentWidth
+					&& height == firstAttachmentHeight
+					, _err
+					, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+					, "Mismatch in texture size."
+					, "Attachment %d, Given: %dx%d, Expected: %dx%d."
+					, ii
 					, width
 					, height
-					, firstAttachmentWidth, firstAttachmentHeight
+					, firstAttachmentWidth
+					, firstAttachmentHeight
 					);
 			}
 
@@ -4403,70 +4464,98 @@ namespace bgfx
 				++color;
 			}
 
-			BX_ASSERT(0 == (tr.m_flags & BGFX_TEXTURE_READ_BACK)
-				, "Frame buffer texture cannot be read back texture. Attachment %d: has flags 0x%016" PRIx64 "."
+			BGFX_ERROR_CHECK(
+				  0 == (tr.m_flags & BGFX_TEXTURE_READ_BACK)
+				, _err
+				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+				, "Frame buffer texture cannot be created with `BGFX_TEXTURE_READ_BACK`."
+				, "Attachment %d, texture flags 0x%016" PRIx64 "."
 				, ii
 				, tr.m_flags
 				);
 
-			BX_ASSERT(0 != (tr.m_flags & BGFX_TEXTURE_RT_MASK)
-				, "Frame buffer texture is not created with one of `BGFX_TEXTURE_RT*` flags. Attachment %d: has flags 0x%016" PRIx64 "."
+			BGFX_ERROR_CHECK(
+				  0 != (tr.m_flags & BGFX_TEXTURE_RT_MASK)
+				, _err
+				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+				, "Frame buffer texture is not created with one of `BGFX_TEXTURE_RT*` flags."
+				, "Attachment %d, texture flags 0x%016" PRIx64 "."
 				, ii
 				, tr.m_flags
 				);
 		}
 
-		BX_ASSERT(true
-			&& color <= g_caps.limits.maxFBAttachments
-			&& depth <= 1
-			, "Too many frame buffer attachments (num attachments: %d, max color attachments %d)!"
+		BGFX_ERROR_CHECK(
+			  color <= g_caps.limits.maxFBAttachments
+			, _err
+			, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+			, "Too many frame buffer color attachments."
+			, "Num: %d, Max: %d."
 			, _num
 			, g_caps.limits.maxFBAttachments
 			);
+
+		BGFX_ERROR_CHECK(
+			  depth <= 1
+			, _err
+			, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+			, "There can be only one depth texture attachment."
+			, "Num depth attachments %d."
+			, depth
+			);
+	}
+
+	bool isFrameBufferValid(uint8_t _num, const Attachment* _attachment)
+	{
+		BGFX_MUTEX_SCOPE(s_ctx->m_resourceApiLock);
+		bx::Error err;
+		isFrameBufferValid(_num, _attachment, &err);
+		return err.isOk();
 	}
 
 	static void isTextureValid(uint16_t _depth, bool _cubeMap, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, bx::Error* _err)
 	{
-		BX_ERROR_SCOPE(_err);
+		BX_ERROR_SCOPE(_err, "Texture validation");
 
 		const bool is3DTexture = 1 < _depth;
 
-		if (_cubeMap && is3DTexture)
-		{
-			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
-				, "Texture can't be depth and cube map at the same time."
-				);
-			return;
-		}
+		BGFX_ERROR_CHECK(false
+			|| !_cubeMap
+			|| !is3DTexture
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Texture can't be 3D and cube map at the same time."
+			, ""
+			);
 
-		if (is3DTexture
-		&& 	0 == (g_caps.supported & BGFX_CAPS_TEXTURE_3D) )
-		{
-			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
-				, "Texture3D is not supported! "
-				  "Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_3D backend renderer capabilities."
-				);
-			return;
-		}
+		BGFX_ERROR_CHECK(false
+			|| is3DTexture
+			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D)
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Texture3D is not supported! "
+			  "Use bgfx::getCaps to check `BGFX_CAPS_TEXTURE_3D` backend renderer capabilities."
+			, ""
+			);
 
-		if (0 != (_flags & BGFX_TEXTURE_RT_MASK)
-		&&  0 != (_flags & BGFX_TEXTURE_READ_BACK) )
-		{
-			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
-				, "Can't create render target with BGFX_TEXTURE_READ_BACK flag."
-				);
-			return;
-		}
+		BGFX_ERROR_CHECK(false
+			|| 0 == (_flags & BGFX_TEXTURE_RT_MASK)
+			|| 0 == (_flags & BGFX_TEXTURE_READ_BACK)
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Can't create render target with `BGFX_TEXTURE_READ_BACK` flag."
+			, ""
+			);
 
-		if (1 < _numLayers
-		&&  0 == (g_caps.supported & BGFX_CAPS_TEXTURE_2D_ARRAY) )
-		{
-			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
-				, "Texture array is not supported! "
-				  "Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_2D_ARRAY backend renderer capabilities."
-				);
-			return;
-		}
+		BGFX_ERROR_CHECK(false
+			|| 1 >= _numLayers
+			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_2D_ARRAY)
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Texture array is not supported! "
+			  "Use bgfx::getCaps to check `BGFX_CAPS_TEXTURE_2D_ARRAY` backend renderer capabilities."
+			, ""
+			);
 
 		bool formatSupported;
 		if (0 != (_flags & (BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY)) )
@@ -4511,36 +4600,36 @@ namespace bgfx
 				) );
 		}
 
-		if (!formatSupported)
-		{
-			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
-				, "Texture format is not supported! "
-				  "Use bgfx::isTextureValid to check support for texture format before creating it."
-				);
-			return;
-		}
+		BGFX_ERROR_CHECK(
+			  formatSupported
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Texture format is not supported! "
+			  "Use bgfx::isTextureValid to check support for texture format before creating it."
+			, ""
+			);
 
-		if (0 != (_flags & BGFX_TEXTURE_MSAA_SAMPLE)
-		&&  0 == (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_MSAA) )
-		{
-			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
-				, "MSAA sampling for this texture format is not supported."
-				);
-			return;
-		}
+		BGFX_ERROR_CHECK(false
+			|| 0 == (_flags & BGFX_TEXTURE_MSAA_SAMPLE)
+			|| 0 != (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_MSAA)
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "MSAA sampling for this texture format is not supported."
+			, ""
+			);
 
-		if (0 != (_flags & BGFX_TEXTURE_SRGB)
-		&&  0 == (g_caps.formats[_format] & srgbCaps & (0
-				| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
-				| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
-				| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
-				) ) )
-		{
-			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
-				, "sRGB sampling for this texture format is not supported."
-				);
-			return;
-		}
+		BGFX_ERROR_CHECK(false
+			|| 0 == (_flags & BGFX_TEXTURE_SRGB)
+			|| 0 != (g_caps.formats[_format] & srgbCaps & (0
+					| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+					) )
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "sRGB sampling for this texture format is not supported."
+			, ""
+			);
 	}
 
 	bool isTextureValid(uint16_t _depth, bool _cubeMap, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags)

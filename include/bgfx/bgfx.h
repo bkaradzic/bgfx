@@ -2629,6 +2629,18 @@ namespace bgfx
 		, uint64_t _flags
 		);
 
+	/// Validate frame buffer parameters.
+	///
+	/// @param[in] _num Number of attachments.
+	/// @param[in] _attachment Attachment texture info. See: `bgfx::Attachment`.
+	///
+	/// @returns True if frame buffer can be successfully created.
+	///
+	bool isFrameBufferValid(
+		  uint8_t _num
+		, const Attachment* _attachment
+		);
+
 	/// Calculate amount of memory required for texture.
 	///
 	/// @param[out] _info Resulting texture info structure. See: `TextureInfo`.

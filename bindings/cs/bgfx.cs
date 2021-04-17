@@ -2951,6 +2951,17 @@ public static partial class bgfx
 	public static extern unsafe bool is_texture_valid(ushort _depth, bool _cubeMap, ushort _numLayers, TextureFormat _format, ulong _flags);
 	
 	/// <summary>
+	/// Validate frame buffer parameters.
+	/// </summary>
+	///
+	/// <param name="_num">Number of attachments.</param>
+	/// <param name="_attachment">Attachment texture info. See: `bgfx::Attachment`.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_is_frame_buffer_valid", CallingConvention = CallingConvention.Cdecl)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	public static extern unsafe bool is_frame_buffer_valid(byte _num, Attachment* _attachment);
+	
+	/// <summary>
 	/// Calculate amount of memory required for texture.
 	/// </summary>
 	///

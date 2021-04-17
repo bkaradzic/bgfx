@@ -699,6 +699,14 @@ version(BindBgfx_Static)
 	bool bgfx_is_texture_valid(ushort _depth, bool _cubeMap, ushort _numLayers, bgfx_texture_format_t _format, ulong _flags);
 	
 	/**
+	 * Validate frame buffer parameters.
+	 * Params:
+	 * _num = Number of attachments.
+	 * _attachment = Attachment texture info. See: `bgfx::Attachment`.
+	 */
+	bool bgfx_is_frame_buffer_valid(byte _num, const(bgfx_attachment_t)* _attachment);
+	
+	/**
 	 * Calculate amount of memory required for texture.
 	 * Params:
 	 * _info = Resulting texture info structure. See: `TextureInfo`.
@@ -2896,6 +2904,15 @@ else
 		 */
 		alias da_bgfx_is_texture_valid = bool function(ushort _depth, bool _cubeMap, ushort _numLayers, bgfx_texture_format_t _format, ulong _flags);
 		da_bgfx_is_texture_valid bgfx_is_texture_valid;
+		
+		/**
+		 * Validate frame buffer parameters.
+		 * Params:
+		 * _num = Number of attachments.
+		 * _attachment = Attachment texture info. See: `bgfx::Attachment`.
+		 */
+		alias da_bgfx_is_frame_buffer_valid = bool function(byte _num, const(bgfx_attachment_t)* _attachment);
+		da_bgfx_is_frame_buffer_valid bgfx_is_frame_buffer_valid;
 		
 		/**
 		 * Calculate amount of memory required for texture.

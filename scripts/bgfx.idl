@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(112)
+version(113)
 
 typedef "bool"
 typedef "char"
@@ -1592,6 +1592,12 @@ func.isTextureValid
 	.numLayers "uint16_t"            --- Number of layers in texture array.
 	.format    "TextureFormat::Enum" --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"            --- Texture flags. See `BGFX_TEXTURE_*`.
+
+--- Validate frame buffer parameters.
+func.isFrameBufferValid
+	"bool"                              --- True if frame buffer can be successfully created.
+	.num            "uint8_t"           --- Number of attachments.
+	.attachment     "const Attachment*" --- Attachment texture info. See: `bgfx::Attachment`.
 
 --- Calculate amount of memory required for texture.
 func.calcTextureSize

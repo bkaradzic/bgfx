@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 112;
+enum uint BGFX_API_VERSION = 113;
 
 alias bgfx_view_id_t = ushort;
 
