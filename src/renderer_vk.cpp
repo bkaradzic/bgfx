@@ -3003,7 +3003,7 @@ VK_IMPORT_DEVICE
 					colorAr[numColorAr].attachment = ii;
 					numColorAr++;
 				}
-				else if (texture.m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
+				else if (texture.m_aspectMask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 				{
 					ad[ii].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
 					ad[ii].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -3786,7 +3786,7 @@ VK_IMPORT_DEVICE
 			rect[0].layerCount     = 1;
 
 			uint32_t numMrt = 1;
-			VkImageAspectFlags depthAspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+			VkImageAspectFlags depthAspectMask = 0;
 			FrameBufferHandle fbh = m_fbh;
 			if (isValid(fbh) )
 			{
@@ -3794,6 +3794,10 @@ VK_IMPORT_DEVICE
 				numMrt = fb.m_num;
 				depthAspectMask = isValid(fb.m_depth) ? m_textures[fb.m_depth.idx].m_aspectMask : 0;
 				rect[0].layerCount = fb.m_attachment[0].numLayers;
+			}
+			else
+			{
+				depthAspectMask = m_backBuffer.m_swapChain.m_backBufferDepthStencil.m_aspectMask;
 			}
 
 			VkClearAttachment attachments[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -4776,7 +4780,7 @@ VK_DESTROY
 
 			dsl = s_renderVK->m_descriptorSetLayoutCache.find(m_descriptorSetLayoutHash);
 
-			if (NULL == dsl)
+			if (VK_NULL_HANDLE == dsl)
 			{
 				VkDescriptorSetLayoutBinding bindings[64];
 				bx::memCopy(
@@ -4964,7 +4968,7 @@ VK_DESTROY
 
 		if (VK_SUCCESS == result)
 		{
-			const VkImageLayout layout = _aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT
+			const VkImageLayout layout = 0 != (_aspectMask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 				? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 				: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 				;
@@ -5135,20 +5139,30 @@ VK_DESTROY
 
 			const bool convert = m_textureFormat != m_requestedFormat;
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
-			m_aspectMask = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
-				? VK_IMAGE_ASPECT_DEPTH_BIT
-				: VK_IMAGE_ASPECT_COLOR_BIT
-				;
+
+			m_aspectMask = 0;
+
+			if (bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
+			{
+				if (m_format != VK_FORMAT_S8_UINT)
+				{
+					m_aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+				}
+
+				if (m_format == VK_FORMAT_S8_UINT
+				||  m_format == VK_FORMAT_D16_UNORM_S8_UINT
+				||  m_format == VK_FORMAT_D24_UNORM_S8_UINT
+				||  m_format == VK_FORMAT_D32_SFLOAT_S8_UINT)
+				{
+					m_aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+				}
+			}
+			else
+			{
+				m_aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
+			}
 
 			m_sampler = s_msaa[bx::uint32_satsub( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1)];
-
-			if (m_format == VK_FORMAT_S8_UINT
-			||  m_format == VK_FORMAT_D16_UNORM_S8_UINT
-			||  m_format == VK_FORMAT_D24_UNORM_S8_UINT
-			||  m_format == VK_FORMAT_D32_SFLOAT_S8_UINT)
-			{
-				m_aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-			}
 
 			if (imageContainer.m_cubeMap)
 			{
@@ -5661,7 +5675,7 @@ VK_DESTROY
 		{
 			BX_ASSERT(false
 				  || !_renderTarget
-				  || !(m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
+				  || !(m_aspectMask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 				, "3D image can't be a depth attachment"
 			);
 		}
@@ -6728,7 +6742,7 @@ VK_DESTROY
 				m_texture[m_num] = at.handle;
 				m_num++;
 			}
-			else if (texture.m_aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT)
+			else if (texture.m_aspectMask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 			{
 				m_depth = at.handle;
 			}
@@ -7147,7 +7161,6 @@ VK_DESTROY
 
 				copyInfo.srcOffset.z  = blit.m_srcZ;
 				copyInfo.dstOffset.z  = blit.m_dstZ;
-				copyInfo.extent.depth = depth;
 				copyInfo.extent.depth = depth;
 			}
 			else
