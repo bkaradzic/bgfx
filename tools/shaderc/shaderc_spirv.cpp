@@ -1099,42 +1099,44 @@ namespace bgfx { namespace spirv
 					for (auto &resource : resourcesrefl.separate_images)
 					{
 						std::string name = refl.get_name(resource.id);
+
 						if (name.size() > 7
 						&&  0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
 						{
-							std::string uniform_name = name.substr(0, name.length() - 7);
-							uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
-
-							auto imageType = refl.get_type(resource.base_type_id).image;
-							auto componentType = refl.get_type(imageType.type).basetype;
-
-							bool isCompareSampler = false;
-							for (auto& sampler : resourcesrefl.separate_samplers)
-							{
-								if (binding_index + 16 == refl.get_decoration(sampler.id, spv::Decoration::DecorationBinding) )
-								{
-									std::string samplerName = refl.get_name(sampler.id);
-									isCompareSampler = refl.variable_is_depth_or_compare(sampler.id) || samplerName.find("Comparison") != std::string::npos;
-									break;
-								}
-							}
-
-							Uniform un;
-							un.name = uniform_name;
-							un.type = UniformType::Enum(UniformType::Sampler
-									| kUniformSamplerBit
-									| (isCompareSampler ? kUniformCompareBit : 0)
-									);
-
-							un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
-							un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
-							un.texFormat = uint16_t(s_textureFormats[imageType.format]);
-
-							un.regIndex = binding_index;
-							un.regCount = 0; // unused
-
-							uniforms.push_back(un);
+							name = name.substr(0, name.length() - 7);
 						}
+
+						uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
+
+						auto imageType = refl.get_type(resource.base_type_id).image;
+						auto componentType = refl.get_type(imageType.type).basetype;
+
+						bool isCompareSampler = false;
+						for (auto& sampler : resourcesrefl.separate_samplers)
+						{
+							if (binding_index + 16 == refl.get_decoration(sampler.id, spv::Decoration::DecorationBinding) )
+							{
+								std::string samplerName = refl.get_name(sampler.id);
+								isCompareSampler = refl.variable_is_depth_or_compare(sampler.id) || samplerName.find("Comparison") != std::string::npos;
+								break;
+							}
+						}
+
+						Uniform un;
+						un.name = name;
+						un.type = UniformType::Enum(UniformType::Sampler
+								| kUniformSamplerBit
+								| (isCompareSampler ? kUniformCompareBit : 0)
+								);
+
+						un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
+						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
+						un.texFormat = uint16_t(s_textureFormats[imageType.format]);
+
+						un.regIndex = binding_index;
+						un.regCount = 0; // unused
+
+						uniforms.push_back(un);
 					}
 
 					// Loop through the storage_images, and extract the uniform names:
@@ -1142,33 +1144,28 @@ namespace bgfx { namespace spirv
 					{
 						std::string name = refl.get_name(resource.id);
 
-						if (name.size() > 7
-						&&  0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
-						{
-							std::string uniform_name = name.substr(0, name.length() - 7);
-							uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
+						uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
 
-							auto imageType = refl.get_type(resource.base_type_id).image;
-							auto componentType = refl.get_type(imageType.type).basetype;
+						auto imageType = refl.get_type(resource.base_type_id).image;
+						auto componentType = refl.get_type(imageType.type).basetype;
 
-							spirv_cross::Bitset flags = refl.get_buffer_block_flags(resource.id);
-							UniformType::Enum type = flags.get(spv::DecorationNonWritable)
-								? UniformType::Enum(kUniformReadOnlyBit | UniformType::End)
-								: UniformType::End;
+						spirv_cross::Bitset flags = refl.get_decoration_bitset(resource.id);
+						UniformType::Enum type = flags.get(spv::DecorationNonWritable)
+							? UniformType::Enum(kUniformReadOnlyBit | UniformType::End)
+							: UniformType::End;
 
-							Uniform un;
-							un.name = uniform_name;
-							un.type = type;
+						Uniform un;
+						un.name = name;
+						un.type = type;
 
-							un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
-							un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
-							un.texFormat = uint16_t(s_textureFormats[imageType.format]);
+						un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
+						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
+						un.texFormat = uint16_t(s_textureFormats[imageType.format]);
 
-							un.regIndex = binding_index;
-							un.regCount = descriptorTypeToId(DescriptorType::StorageImage);
+						un.regIndex = binding_index;
+						un.regCount = descriptorTypeToId(DescriptorType::StorageImage);
 
-							uniforms.push_back(un);
-						}
+						uniforms.push_back(un);
 					}
 
 					// Loop through the storage buffer, and extract the uniform names:

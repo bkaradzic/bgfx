@@ -1379,6 +1379,13 @@ namespace bgfx { namespace webgpu
 						wgpu::BindGroupEntry& entry = b.m_entries[b.numEntries++];
 						entry.binding = bindInfo.m_binding;
 						entry.textureView = texture.getTextureMipLevel(bind.m_mip);
+
+						if (Access::Read == bind.m_access)
+						{
+							wgpu::BindGroupEntry& samplerEntry = b.m_entries[b.numEntries++];
+							samplerEntry.binding = bindInfo.m_binding + 16;
+							samplerEntry.sampler = texture.m_sampler;
+						}
 					}
 					break;
 
