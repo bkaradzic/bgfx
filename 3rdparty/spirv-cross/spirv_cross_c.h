@@ -40,7 +40,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 45
+#define SPVC_C_API_VERSION_MINOR 46
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -861,6 +861,8 @@ SPVC_PUBLIC_API unsigned spvc_compiler_get_execution_mode_argument(spvc_compiler
 SPVC_PUBLIC_API unsigned spvc_compiler_get_execution_mode_argument_by_index(spvc_compiler compiler,
                                                                             SpvExecutionMode mode, unsigned index);
 SPVC_PUBLIC_API SpvExecutionModel spvc_compiler_get_execution_model(spvc_compiler compiler);
+SPVC_PUBLIC_API void spvc_compiler_update_active_builtins(spvc_compiler compiler);
+SPVC_PUBLIC_API spvc_bool spvc_compiler_has_active_builtin(spvc_compiler compiler, SpvBuiltIn builtin, SpvStorageClass storage);
 
 /*
  * Type query interface.
