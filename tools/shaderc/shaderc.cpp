@@ -1454,6 +1454,14 @@ namespace bgfx
 
 				compiled = true;
 			}
+			else if (profile->lang == ShadingLang::Metal)
+			{
+				compiled = compileMetalShader(_options, BX_MAKEFOURCC('M', 'T', 'L', 0), input, _writer);
+			}
+			else if (profile->lang == ShadingLang::SpirV)
+			{
+				compiled = compileSPIRVShader(_options, profile->id, input, _writer);
+			}
 			else if (profile->lang == ShadingLang::PSSL)
 			{
 				compiled = compilePSSLShader(_options, 0, input, _writer);
