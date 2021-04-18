@@ -227,9 +227,9 @@ namespace bgfx { namespace webgpu
 	{
 		VertexStateDescriptor();
 
-		wgpu::VertexStateDescriptor desc;
+		wgpu::VertexState desc;
 
-		wgpu::VertexBufferLayoutDescriptor vertexBuffers[kMaxVertexInputs];
+		wgpu::VertexBufferLayoutDescriptor buffers[kMaxVertexInputs];
 		wgpu::VertexAttributeDescriptor attributes[kMaxVertexAttributes];
 	};
 
@@ -237,16 +237,13 @@ namespace bgfx { namespace webgpu
 	{
 		RenderPipelineDescriptor();
 
-		wgpu::RenderPipelineDescriptor desc;
+		wgpu::RenderPipelineDescriptor2 desc;
 
-		//wgpu::ProgrammableStageDescriptor vertexStage;
-		wgpu::ProgrammableStageDescriptor fragmentStage;
+		wgpu::FragmentState fragment;
+		wgpu::DepthStencilState depthStencil;
 
-		wgpu::VertexStateDescriptor inputState;
-
-		wgpu::RasterizationStateDescriptor rasterizationState;
-		wgpu::DepthStencilStateDescriptor depthStencilState;
-		wgpu::ColorStateDescriptor colorStates[kMaxColorAttachments];
+		wgpu::ColorTargetState targets[kMaxColorAttachments];
+		wgpu::BlendState blends[kMaxColorAttachments];
 	};
 
 	struct BindingsWgpu
