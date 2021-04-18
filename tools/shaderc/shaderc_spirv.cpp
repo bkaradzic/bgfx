@@ -1191,68 +1191,11 @@ namespace bgfx { namespace spirv
 
 					uint16_t size = writeUniformArray( _writer, uniforms, _options.shaderType == 'f');
 
-					if (_version == BX_MAKEFOURCC('M', 'T', 'L', 0) )
-					{
-						spirv_cross::CompilerMSL msl(std::move(spirv) );
-
-						spirv_cross::ShaderResources resources = msl.get_shader_resources();
-
-						spirv_cross::SmallVector<spirv_cross::EntryPoint> entryPoints = msl.get_entry_points_and_stages();
-						if (!entryPoints.empty() )
-						{
-							msl.rename_entry_point(
-								  entryPoints[0].name
-								, "xlatMtlMain"
-								, entryPoints[0].execution_model
-								);
-						}
-
-						for (auto &resource : resources.uniform_buffers)
-						{
-							msl.set_name(resource.id, "_mtl_u");
-						}
-
-						for (auto &resource : resources.storage_buffers)
-						{
-							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
-							msl.set_decoration(resource.id, spv::DecorationBinding, binding + 1);
-						}
-
-						for (auto &resource : resources.separate_images)
-						{
-							std::string name = msl.get_name(resource.id);
-							if (name.size() > 7
-							&&  0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
-							{
-								msl.set_name(resource.id, name.substr(0, name.length() - 7) );
-							}
-						}
-
-						std::string source = msl.compile();
-
-						if ('c' == _options.shaderType)
-						{
-							for (int i = 0; i < 3; ++i)
-							{
-								uint16_t dim = (uint16_t)msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
-								bx::write(_writer, dim);
-							}
-						}
-
-						uint32_t shaderSize = (uint32_t)source.size();
-						bx::write(_writer, shaderSize);
-						bx::write(_writer, source.c_str(), shaderSize);
-						uint8_t nul = 0;
-						bx::write(_writer, nul);
-					}
-					else
-					{
-						uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
-						bx::write(_writer, shaderSize);
-						bx::write(_writer, spirv.data(), shaderSize);
-						uint8_t nul = 0;
-						bx::write(_writer, nul);
-					}
+					uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
+					bx::write(_writer, shaderSize);
+					bx::write(_writer, spirv.data(), shaderSize);
+					uint8_t nul = 0;
+					bx::write(_writer, nul);
 
 					const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
 					bx::write(_writer, numAttr);
