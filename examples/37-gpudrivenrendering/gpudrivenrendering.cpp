@@ -603,7 +603,10 @@ public:
 			m_indirectBuffer = bgfx::createIndirectBuffer(m_noofProps);
 
 			// Create programs from shaders for occlusion pass.
-			m_programOcclusionPass    = loadProgram("vs_gdr_render_occlusion", NULL);
+			if (bgfx::RendererType::WebGPU == bgfx::getRendererType())
+				m_programOcclusionPass = loadProgram("vs_gdr_render_occlusion", "fs_gdr_render_occlusion");
+			else
+				m_programOcclusionPass = loadProgram("vs_gdr_render_occlusion", NULL);
 			m_programCopyZ            = loadProgram("cs_gdr_copy_z", NULL);
 			m_programDownscaleHiZ     = loadProgram("cs_gdr_downscale_hi_z", NULL);
 			m_programOccludeProps     = loadProgram("cs_gdr_occlude_props", NULL);
