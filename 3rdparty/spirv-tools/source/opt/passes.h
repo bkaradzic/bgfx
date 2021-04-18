@@ -46,6 +46,7 @@
 #include "source/opt/inst_bindless_check_pass.h"
 #include "source/opt/inst_buff_addr_check_pass.h"
 #include "source/opt/inst_debug_printf_pass.h"
+#include "source/opt/interp_fixup_pass.h"
 #include "source/opt/licm_pass.h"
 #include "source/opt/local_access_chain_convert_pass.h"
 #include "source/opt/local_redundancy_elimination.h"
