@@ -662,6 +662,7 @@ namespace bgfx { namespace webgpu
 			g_caps.formats[TextureFormat::RGB5A1] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 			g_caps.formats[TextureFormat::RGB9E5F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+			g_caps.formats[TextureFormat::RG11B10F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
 
 			// disable compressed formats
 			for (uint32_t ii = 0; ii < TextureFormat::Unknown; ++ii)
