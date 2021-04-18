@@ -161,8 +161,10 @@ bool HlslGrammar::acceptDeclarationList(TIntermNode*& nodeList)
             return true;
 
         // declaration
-        if (! acceptDeclaration(nodeList))
+        if (! acceptDeclaration(nodeList)) {
+            expected("declaration");
             return false;
+        }
     } while (true);
 
     return true;

@@ -1675,6 +1675,7 @@ public:
         flatten(false), dontFlatten(false) {}
     virtual void traverse(TIntermTraverser*);
     virtual TIntermTyped* getCondition() const { return condition; }
+    virtual void setCondition(TIntermTyped* c) { condition = c; }
     virtual TIntermNode* getTrueBlock() const { return trueBlock; }
     virtual TIntermNode* getFalseBlock() const { return falseBlock; }
     virtual       TIntermSelection* getAsSelectionNode()       { return this; }

@@ -2301,7 +2301,8 @@ bool TGlslangToSpvTraverser::visitUnary(glslang::TVisit /* visit */, glslang::TI
     if (node->getOp() == glslang::EOpAtomicCounterIncrement ||
         node->getOp() == glslang::EOpAtomicCounterDecrement ||
         node->getOp() == glslang::EOpAtomicCounter          ||
-        node->getOp() == glslang::EOpInterpolateAtCentroid  ||
+        (node->getOp() == glslang::EOpInterpolateAtCentroid &&
+          glslangIntermediate->getSource() != glslang::EShSourceHlsl)  ||
         node->getOp() == glslang::EOpRayQueryProceed        ||
         node->getOp() == glslang::EOpRayQueryGetRayTMin     ||
         node->getOp() == glslang::EOpRayQueryGetRayFlags    ||
@@ -2977,7 +2978,13 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
         case glslang::EOpInterpolateAtOffset:
         case glslang::EOpInterpolateAtVertex:
             if (arg == 0) {
-                lvalue = true;
+                // If GLSL, use the address of the interpolant argument.
+                // If HLSL, use an internal version of OpInterolates that takes
+                // the rvalue of the interpolant. A fixup pass in spirv-opt
+                // legalization will remove the OpLoad and convert to an lvalue.
+                // Had to do this because legalization will only propagate a
+                // builtin into an rvalue.
+                lvalue = glslangIntermediate->getSource() != glslang::EShSourceHlsl;
 
                 // Does it need a swizzle inversion?  If so, evaluation is inverted;
                 // operate first on the swizzle base, then apply the swizzle.

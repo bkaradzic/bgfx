@@ -931,7 +931,203 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-    if (profile != EEsProfile && version >= 450) {
+    if (profile == EEsProfile && version >= 310) {  // Explicit Types
+      commonBuiltins.append(
+
+        "float64_t sqrt(float64_t);"
+        "f64vec2  sqrt(f64vec2);"
+        "f64vec3  sqrt(f64vec3);"
+        "f64vec4  sqrt(f64vec4);"
+
+        "float64_t inversesqrt(float64_t);"
+        "f64vec2  inversesqrt(f64vec2);"
+        "f64vec3  inversesqrt(f64vec3);"
+        "f64vec4  inversesqrt(f64vec4);"
+
+        "float64_t abs(float64_t);"
+        "f64vec2  abs(f64vec2);"
+        "f64vec3  abs(f64vec3);"
+        "f64vec4  abs(f64vec4);"
+
+        "float64_t sign(float64_t);"
+        "f64vec2  sign(f64vec2);"
+        "f64vec3  sign(f64vec3);"
+        "f64vec4  sign(f64vec4);"
+
+        "float64_t floor(float64_t);"
+        "f64vec2  floor(f64vec2);"
+        "f64vec3  floor(f64vec3);"
+        "f64vec4  floor(f64vec4);"
+
+        "float64_t trunc(float64_t);"
+        "f64vec2  trunc(f64vec2);"
+        "f64vec3  trunc(f64vec3);"
+        "f64vec4  trunc(f64vec4);"
+
+        "float64_t round(float64_t);"
+        "f64vec2  round(f64vec2);"
+        "f64vec3  round(f64vec3);"
+        "f64vec4  round(f64vec4);"
+
+        "float64_t roundEven(float64_t);"
+        "f64vec2  roundEven(f64vec2);"
+        "f64vec3  roundEven(f64vec3);"
+        "f64vec4  roundEven(f64vec4);"
+
+        "float64_t ceil(float64_t);"
+        "f64vec2  ceil(f64vec2);"
+        "f64vec3  ceil(f64vec3);"
+        "f64vec4  ceil(f64vec4);"
+
+        "float64_t fract(float64_t);"
+        "f64vec2  fract(f64vec2);"
+        "f64vec3  fract(f64vec3);"
+        "f64vec4  fract(f64vec4);"
+
+        "float64_t mod(float64_t, float64_t);"
+        "f64vec2  mod(f64vec2 , float64_t);"
+        "f64vec3  mod(f64vec3 , float64_t);"
+        "f64vec4  mod(f64vec4 , float64_t);"
+        "f64vec2  mod(f64vec2 , f64vec2);"
+        "f64vec3  mod(f64vec3 , f64vec3);"
+        "f64vec4  mod(f64vec4 , f64vec4);"
+
+        "float64_t modf(float64_t, out float64_t);"
+        "f64vec2  modf(f64vec2,  out f64vec2);"
+        "f64vec3  modf(f64vec3,  out f64vec3);"
+        "f64vec4  modf(f64vec4,  out f64vec4);"
+
+        "float64_t min(float64_t, float64_t);"
+        "f64vec2  min(f64vec2,  float64_t);"
+        "f64vec3  min(f64vec3,  float64_t);"
+        "f64vec4  min(f64vec4,  float64_t);"
+        "f64vec2  min(f64vec2,  f64vec2);"
+        "f64vec3  min(f64vec3,  f64vec3);"
+        "f64vec4  min(f64vec4,  f64vec4);"
+
+        "float64_t max(float64_t, float64_t);"
+        "f64vec2  max(f64vec2 , float64_t);"
+        "f64vec3  max(f64vec3 , float64_t);"
+        "f64vec4  max(f64vec4 , float64_t);"
+        "f64vec2  max(f64vec2 , f64vec2);"
+        "f64vec3  max(f64vec3 , f64vec3);"
+        "f64vec4  max(f64vec4 , f64vec4);"
+
+        "float64_t clamp(float64_t, float64_t, float64_t);"
+        "f64vec2  clamp(f64vec2 , float64_t, float64_t);"
+        "f64vec3  clamp(f64vec3 , float64_t, float64_t);"
+        "f64vec4  clamp(f64vec4 , float64_t, float64_t);"
+        "f64vec2  clamp(f64vec2 , f64vec2 , f64vec2);"
+        "f64vec3  clamp(f64vec3 , f64vec3 , f64vec3);"
+        "f64vec4  clamp(f64vec4 , f64vec4 , f64vec4);"
+
+        "float64_t mix(float64_t, float64_t, float64_t);"
+        "f64vec2  mix(f64vec2,  f64vec2,  float64_t);"
+        "f64vec3  mix(f64vec3,  f64vec3,  float64_t);"
+        "f64vec4  mix(f64vec4,  f64vec4,  float64_t);"
+        "f64vec2  mix(f64vec2,  f64vec2,  f64vec2);"
+        "f64vec3  mix(f64vec3,  f64vec3,  f64vec3);"
+        "f64vec4  mix(f64vec4,  f64vec4,  f64vec4);"
+        "float64_t mix(float64_t, float64_t, bool);"
+        "f64vec2  mix(f64vec2,  f64vec2,  bvec2);"
+        "f64vec3  mix(f64vec3,  f64vec3,  bvec3);"
+        "f64vec4  mix(f64vec4,  f64vec4,  bvec4);"
+
+        "float64_t step(float64_t, float64_t);"
+        "f64vec2  step(f64vec2 , f64vec2);"
+        "f64vec3  step(f64vec3 , f64vec3);"
+        "f64vec4  step(f64vec4 , f64vec4);"
+        "f64vec2  step(float64_t, f64vec2);"
+        "f64vec3  step(float64_t, f64vec3);"
+        "f64vec4  step(float64_t, f64vec4);"
+
+        "float64_t smoothstep(float64_t, float64_t, float64_t);"
+        "f64vec2  smoothstep(f64vec2 , f64vec2 , f64vec2);"
+        "f64vec3  smoothstep(f64vec3 , f64vec3 , f64vec3);"
+        "f64vec4  smoothstep(f64vec4 , f64vec4 , f64vec4);"
+        "f64vec2  smoothstep(float64_t, float64_t, f64vec2);"
+        "f64vec3  smoothstep(float64_t, float64_t, f64vec3);"
+        "f64vec4  smoothstep(float64_t, float64_t, f64vec4);"
+
+        "float64_t length(float64_t);"
+        "float64_t length(f64vec2);"
+        "float64_t length(f64vec3);"
+        "float64_t length(f64vec4);"
+
+        "float64_t distance(float64_t, float64_t);"
+        "float64_t distance(f64vec2 , f64vec2);"
+        "float64_t distance(f64vec3 , f64vec3);"
+        "float64_t distance(f64vec4 , f64vec4);"
+
+        "float64_t dot(float64_t, float64_t);"
+        "float64_t dot(f64vec2 , f64vec2);"
+        "float64_t dot(f64vec3 , f64vec3);"
+        "float64_t dot(f64vec4 , f64vec4);"
+
+        "f64vec3 cross(f64vec3, f64vec3);"
+
+        "float64_t normalize(float64_t);"
+        "f64vec2  normalize(f64vec2);"
+        "f64vec3  normalize(f64vec3);"
+        "f64vec4  normalize(f64vec4);"
+
+        "float64_t faceforward(float64_t, float64_t, float64_t);"
+        "f64vec2  faceforward(f64vec2,  f64vec2,  f64vec2);"
+        "f64vec3  faceforward(f64vec3,  f64vec3,  f64vec3);"
+        "f64vec4  faceforward(f64vec4,  f64vec4,  f64vec4);"
+
+        "float64_t reflect(float64_t, float64_t);"
+        "f64vec2  reflect(f64vec2 , f64vec2 );"
+        "f64vec3  reflect(f64vec3 , f64vec3 );"
+        "f64vec4  reflect(f64vec4 , f64vec4 );"
+
+        "float64_t refract(float64_t, float64_t, float64_t);"
+        "f64vec2  refract(f64vec2 , f64vec2 , float64_t);"
+        "f64vec3  refract(f64vec3 , f64vec3 , float64_t);"
+        "f64vec4  refract(f64vec4 , f64vec4 , float64_t);"
+
+        "f64mat2 matrixCompMult(f64mat2, f64mat2);"
+        "f64mat3 matrixCompMult(f64mat3, f64mat3);"
+        "f64mat4 matrixCompMult(f64mat4, f64mat4);"
+        "f64mat2x3 matrixCompMult(f64mat2x3, f64mat2x3);"
+        "f64mat2x4 matrixCompMult(f64mat2x4, f64mat2x4);"
+        "f64mat3x2 matrixCompMult(f64mat3x2, f64mat3x2);"
+        "f64mat3x4 matrixCompMult(f64mat3x4, f64mat3x4);"
+        "f64mat4x2 matrixCompMult(f64mat4x2, f64mat4x2);"
+        "f64mat4x3 matrixCompMult(f64mat4x3, f64mat4x3);"
+
+        "f64mat2   outerProduct(f64vec2, f64vec2);"
+        "f64mat3   outerProduct(f64vec3, f64vec3);"
+        "f64mat4   outerProduct(f64vec4, f64vec4);"
+        "f64mat2x3 outerProduct(f64vec3, f64vec2);"
+        "f64mat3x2 outerProduct(f64vec2, f64vec3);"
+        "f64mat2x4 outerProduct(f64vec4, f64vec2);"
+        "f64mat4x2 outerProduct(f64vec2, f64vec4);"
+        "f64mat3x4 outerProduct(f64vec4, f64vec3);"
+        "f64mat4x3 outerProduct(f64vec3, f64vec4);"
+
+        "f64mat2   transpose(f64mat2);"
+        "f64mat3   transpose(f64mat3);"
+        "f64mat4   transpose(f64mat4);"
+        "f64mat2x3 transpose(f64mat3x2);"
+        "f64mat3x2 transpose(f64mat2x3);"
+        "f64mat2x4 transpose(f64mat4x2);"
+        "f64mat4x2 transpose(f64mat2x4);"
+        "f64mat3x4 transpose(f64mat4x3);"
+        "f64mat4x3 transpose(f64mat3x4);"
+
+        "float64_t determinant(f64mat2);"
+        "float64_t determinant(f64mat3);"
+        "float64_t determinant(f64mat4);"
+
+        "f64mat2 inverse(f64mat2);"
+        "f64mat3 inverse(f64mat3);"
+        "f64mat4 inverse(f64mat4);"
+
+        "\n");
+    }
+
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 310)) {
         commonBuiltins.append(
 
             "int64_t abs(int64_t);"
@@ -998,25 +1194,25 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "u64vec3  mix(u64vec3,  u64vec3,  bvec3);"
             "u64vec4  mix(u64vec4,  u64vec4,  bvec4);"
 
-            "int64_t doubleBitsToInt64(double);"
-            "i64vec2 doubleBitsToInt64(dvec2);"
-            "i64vec3 doubleBitsToInt64(dvec3);"
-            "i64vec4 doubleBitsToInt64(dvec4);"
+            "int64_t doubleBitsToInt64(float64_t);"
+            "i64vec2 doubleBitsToInt64(f64vec2);"
+            "i64vec3 doubleBitsToInt64(f64vec3);"
+            "i64vec4 doubleBitsToInt64(f64vec4);"
 
-            "uint64_t doubleBitsToUint64(double);"
-            "u64vec2  doubleBitsToUint64(dvec2);"
-            "u64vec3  doubleBitsToUint64(dvec3);"
-            "u64vec4  doubleBitsToUint64(dvec4);"
+            "uint64_t doubleBitsToUint64(float64_t);"
+            "u64vec2  doubleBitsToUint64(f64vec2);"
+            "u64vec3  doubleBitsToUint64(f64vec3);"
+            "u64vec4  doubleBitsToUint64(f64vec4);"
 
-            "double int64BitsToDouble(int64_t);"
-            "dvec2  int64BitsToDouble(i64vec2);"
-            "dvec3  int64BitsToDouble(i64vec3);"
-            "dvec4  int64BitsToDouble(i64vec4);"
+            "float64_t int64BitsToDouble(int64_t);"
+            "f64vec2  int64BitsToDouble(i64vec2);"
+            "f64vec3  int64BitsToDouble(i64vec3);"
+            "f64vec4  int64BitsToDouble(i64vec4);"
 
-            "double uint64BitsToDouble(uint64_t);"
-            "dvec2  uint64BitsToDouble(u64vec2);"
-            "dvec3  uint64BitsToDouble(u64vec3);"
-            "dvec4  uint64BitsToDouble(u64vec4);"
+            "float64_t uint64BitsToDouble(uint64_t);"
+            "f64vec2  uint64BitsToDouble(u64vec2);"
+            "f64vec3  uint64BitsToDouble(u64vec3);"
+            "f64vec4  uint64BitsToDouble(u64vec4);"
 
             "int64_t  packInt2x32(ivec2);"
             "uint64_t packUint2x32(uvec2);"
@@ -1335,6 +1531,15 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "dvec4  fma(dvec4,  dvec4,  dvec4 );"
                 "\n");
     }
+
+    if (profile == EEsProfile && version >= 310) {  // ARB_gpu_shader_fp64
+            commonBuiltins.append(
+                "float64_t fma(float64_t, float64_t, float64_t);"
+                "f64vec2  fma(f64vec2,  f64vec2,  f64vec2 );"
+                "f64vec3  fma(f64vec3,  f64vec3,  f64vec3 );"
+                "f64vec4  fma(f64vec4,  f64vec4,  f64vec4 );"
+                "\n");
+    }
 #endif
 
     if ((profile == EEsProfile && version >= 310) ||
@@ -1368,6 +1573,21 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "double packDouble2x32(uvec2);"
             "uvec2 unpackDouble2x32(double);"
+
+            "\n");
+    }
+
+    if (profile == EEsProfile && version >= 310) { // ARB_gpu_shader_fp64
+        commonBuiltins.append(
+            "float64_t frexp(float64_t, out int);"
+            "f64vec2  frexp( f64vec2, out ivec2);"
+            "f64vec3  frexp( f64vec3, out ivec3);"
+            "f64vec4  frexp( f64vec4, out ivec4);"
+
+            "float64_t ldexp(float64_t, int);"
+            "f64vec2  ldexp( f64vec2, ivec2);"
+            "f64vec3  ldexp( f64vec3, ivec3);"
+            "f64vec4  ldexp( f64vec4, ivec4);"
 
             "\n");
     }
@@ -3146,7 +3366,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
 #ifndef GLSLANG_ANGLE
     // GL_AMD_gpu_shader_half_float/Explicit types
-    if (profile != EEsProfile && version >= 450) {
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 310)) {
         commonBuiltins.append(
             "float16_t radians(float16_t);"
             "f16vec2   radians(f16vec2);"
@@ -3494,7 +3714,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
     // Explicit types
-    if (profile != EEsProfile && version >= 450) {
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 310)) {
         commonBuiltins.append(
             "int8_t abs(int8_t);"
             "i8vec2 abs(i8vec2);"

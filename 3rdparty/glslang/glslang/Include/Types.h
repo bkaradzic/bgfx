@@ -1738,6 +1738,7 @@ public:
 
     virtual bool isScalar() const { return ! isVector() && ! isMatrix() && ! isStruct() && ! isArray(); }
     virtual bool isScalarOrVec1() const { return isScalar() || vector1; }
+    virtual bool isScalarOrVector() const { return !isMatrix() && !isStruct() && !isArray(); }
     virtual bool isVector() const { return vectorSize > 1 || vector1; }
     virtual bool isMatrix() const { return matrixCols ? true : false; }
     virtual bool isArray()  const { return arraySizes != nullptr; }
