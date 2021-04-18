@@ -667,21 +667,22 @@ VK_DESTROY_FUNC(SurfaceKHR);
 	struct SwapChainVK
 	{
 		SwapChainVK()
-			: m_swapchain(VK_NULL_HANDLE)
+			: m_nwh(NULL)
+			, m_swapchain(VK_NULL_HANDLE)
 			, m_lastImageRenderedSemaphore(VK_NULL_HANDLE)
 			, m_lastImageAcquiredSemaphore(VK_NULL_HANDLE)
 			, m_backBufferColorMsaaImageView(VK_NULL_HANDLE)
 		{
 		}
 
-		VkResult create(uint32_t queueFamily, VkQueue _queue, VkCommandBuffer _commandBuffer, const Resolution& _resolution);
+		VkResult create(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution, TextureFormat::Enum _depthFormat = TextureFormat::Count);
 		
 		void destroy();
 
-		void update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset);
+		void update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset, TextureFormat::Enum _format);
 
-		VkResult createSurface(uint32_t _reset);
-		VkResult createSwapChain(uint32_t _reset);
+		VkResult createSurface(void* _nwh, uint32_t _reset);
+		VkResult createSwapChain(VkCommandBuffer _commandBuffer, uint32_t _reset);
 		VkResult createRenderPass();
 		VkResult createFrameBuffer();
 
@@ -690,8 +691,6 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		void releaseRenderPass();
 		void releaseFrameBuffer();
 
-		void initImageLayout(VkCommandBuffer _commandBuffer);
-
 		uint32_t findPresentMode(bool _vsync);
 
 		bool acquire(VkCommandBuffer _commandBuffer);
@@ -699,6 +698,8 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		VkQueue m_queue;
 		VkSwapchainCreateInfoKHR m_sci;
+
+		void* m_nwh;
 
 		VkSurfaceKHR       m_surface;
 		VkSwapchainKHR     m_swapchain;
@@ -743,13 +744,24 @@ VK_DESTROY_FUNC(SurfaceKHR);
 			, m_num(0)
 			, m_numTh(0)
 			, m_needRecreate(false)
+			, m_nwh(NULL)
+			, m_needPresent(false)
 			, m_framebuffer(VK_NULL_HANDLE)
 		{
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
+		VkResult create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format = TextureFormat::Count, TextureFormat::Enum _depthFormat = TextureFormat::Count);
+
+		void update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset, TextureFormat::Enum _format = TextureFormat::Count);
+
 		void resolve();
 		void destroy();
+
+		bool acquire(VkCommandBuffer _commandBuffer);
+		void present();
+
+		bool valid() const;
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
@@ -761,9 +773,16 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		bool m_needRecreate;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 
+		SwapChainVK m_swapChain;
+		void* m_nwh;
+		bool m_needPresent;
+
 		VkImageView m_textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		VkFramebuffer m_framebuffer;
 		VkRenderPass m_renderPass;
+		MsaaSamplerVK m_sampler;
+
+		VkFramebuffer m_currentFramebuffer;
 	};
 
 	struct CommandQueueVK
