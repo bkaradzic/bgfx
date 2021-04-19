@@ -2515,7 +2515,7 @@ namespace bgfx { namespace webgpu
 		const bool fragment = isShaderType(magic, 'F');
 		uint8_t fragmentBit = fragment ? kUniformFragmentBit : 0;
 
-		BX_ASSERT(!isShaderVerLess(magic, 7), "WebGPU backend supports only shader binary version >= 7");
+		BX_ASSERT(!isShaderVerLess(magic, 10), "WebGPU backend supports only shader binary version >= 10");
 
 		if (0 < count)
 		{
@@ -2545,6 +2545,9 @@ namespace bgfx { namespace webgpu
 
 				uint8_t texDimension;
 				bx::read(&reader, texDimension);
+
+				uint16_t texFormat = 0;
+				bx::read(&reader, texFormat);
 
 				const char* kind = "invalid";
 
@@ -2584,6 +2587,8 @@ namespace bgfx { namespace webgpu
 						m_buffers[m_numBuffers].storageTexture.access = readonly
 							? wgpu::StorageTextureAccess::ReadOnly
 							: wgpu::StorageTextureAccess::WriteOnly;
+
+						m_buffers[m_numBuffers].storageTexture.format = s_textureFormat[texFormat].m_fmt;
 					}
 
 					m_numBuffers++;

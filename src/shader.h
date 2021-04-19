@@ -31,6 +31,8 @@ namespace bgfx
 			Float,
 			Int,
 			Uint,
+			Depth,
+			UnfilterableFloat,
 
 			Count
 		};

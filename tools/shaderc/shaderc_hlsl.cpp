@@ -747,6 +747,7 @@ namespace bgfx { namespace hlsl
 				bx::write(_writer, un.regCount);
 				bx::write(_writer, un.texComponent);
 				bx::write(_writer, un.texDimension);
+				bx::write(_writer, un.texFormat);
 
 				BX_TRACE("%s, %s, %d, %d, %d"
 					, un.name.c_str()
