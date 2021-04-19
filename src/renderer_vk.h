@@ -709,6 +709,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkImageView        m_backBufferColorImageView[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkFramebuffer      m_backBufferFrameBuffer[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkFence            m_backBufferFence[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		bool               m_supportsReadback;
 
 		VkSemaphore m_presentDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkSemaphore m_renderDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
@@ -729,6 +730,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		TextureVK     m_backBufferColorMsaa;
 		VkImageView   m_backBufferColorMsaaImageView;
 		MsaaSamplerVK m_sampler;
+		bool          m_supportsManualResolve;
 	};
 
 	struct FrameBufferVK
@@ -758,7 +760,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		bool acquire(VkCommandBuffer _commandBuffer);
 		void present();
 
-		bool valid() const;
+		bool isRenderable() const;
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;

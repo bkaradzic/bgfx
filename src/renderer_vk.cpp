@@ -2207,9 +2207,9 @@ VK_IMPORT_DEVICE
 				;
 			const SwapChainVK& swapChain = frameBuffer.m_swapChain;
 
-			if (!frameBuffer.valid()
+			if (!frameBuffer.isRenderable()
 			||  NULL == swapChain.m_nwh
-			||  !(swapChain.m_sci.imageUsage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) )
+			||  !swapChain.m_supportsReadback)
 			{
 				BX_TRACE("Unable to capture screenshot %s.", _filePath);
 				return;
@@ -2507,7 +2507,7 @@ VK_IMPORT_DEVICE
 		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
 		{
 			const uint32_t numVertices = _numIndices*4/6;
-			if (0 < numVertices)
+			if (0 < numVertices && m_backBuffer.isRenderable() )
 			{
 				m_indexBuffers[_blitter.m_ib->handle.idx].update(m_commandBuffer, 0, _numIndices*2, _blitter.m_ib->data);
 				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandBuffer, 0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data, true);
@@ -2639,7 +2639,7 @@ VK_IMPORT_DEVICE
 		void setFrameBuffer(FrameBufferHandle _fbh)
 		{
 			BX_ASSERT(false
-				  ||  isValid(m_fbh)
+				  ||  isValid(_fbh)
 				  ||  NULL != m_backBuffer.m_nwh
 				, "Rendering to backbuffer in headless mode."
 				);
@@ -3149,7 +3149,7 @@ VK_IMPORT_DEVICE
 			};
 			const bool resolve[2] =
 			{
-				true,
+				swapChain.m_supportsManualResolve ? false : true,
 				false
 			};
 			const VkSampleCountFlagBits samples = swapChain.m_sampler.Sample;
@@ -3938,7 +3938,7 @@ VK_IMPORT_DEVICE
 		void kick(bool _wait = false)
 		{
 			const bool acquired = true
-				&& m_backBuffer.valid()
+				&& m_backBuffer.isRenderable()
 				&& VK_NULL_HANDLE != m_backBuffer.m_swapChain.m_lastImageAcquiredSemaphore
 				;
 			const VkSemaphore waitSemaphore   = m_backBuffer.m_swapChain.m_lastImageAcquiredSemaphore;
@@ -5980,12 +5980,15 @@ VK_DESTROY
 				compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 			}
 
-			VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			const VkImageUsageFlags imageUsageMask = 0
+				| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+				| VK_IMAGE_USAGE_TRANSFER_SRC_BIT
+				| VK_IMAGE_USAGE_TRANSFER_DST_BIT
+				;
+			const VkImageUsageFlags imageUsage = surfaceCapabilities.supportedUsageFlags & imageUsageMask;
 
-			if (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
-			{
-				imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-			}
+			m_supportsReadback      = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+			m_supportsManualResolve = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 			const uint32_t minSwapBufferCount = bx::max<uint32_t>(surfaceCapabilities.minImageCount, 2);
 			const uint32_t maxSwapBufferCount = surfaceCapabilities.maxImageCount == 0
@@ -6465,7 +6468,7 @@ VK_DESTROY
 				m_backBufferDepthStencilImageView,
 			};
 
-			if (m_sampler.Count > 1)
+			if (m_sampler.Count > 1 && !m_supportsManualResolve)
 			{
 				attachments[numAttachments++] = m_backBufferColorImageView[ii];
 			}
@@ -6679,13 +6682,12 @@ VK_DESTROY
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 		VK_CHECK(s_renderVK->getRenderPass(_num, _attachment, &m_renderPass) );
 
-		m_depth.idx = bx::kInvalidHandle;
+		m_depth = BGFX_INVALID_HANDLE;
 		m_num = 0;
 
 		for (uint8_t ii = 0; ii < m_numTh; ++ii)
 		{
 			const Attachment& at = m_attachment[ii];
-			BX_ASSERT(at.numLayers < s_renderVK->m_deviceProperties.limits.maxFramebufferLayers, "");
 			const TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
 			m_textureImageViews[ii] = texture.createView(
 				  at.layer
@@ -6726,8 +6728,6 @@ VK_DESTROY
 		VK_CHECK(vkCreateFramebuffer(device, &fci, allocatorCb, &m_framebuffer) );
 
 		m_currentFramebuffer = m_framebuffer;
-
-		m_needRecreate = false;
 	}
 
 	VkResult FrameBufferVK::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
@@ -6755,12 +6755,10 @@ VK_DESTROY
 			return result;
 		}
 
-		m_framebuffer = VK_NULL_HANDLE;
-		m_sampler = m_swapChain.m_sampler;
 		m_nwh = _nwh;
 		m_width = _width;
 		m_height = _height;
-		m_needPresent = false;
+		m_sampler = m_swapChain.m_sampler;
 
 		return result;
 	}
@@ -6774,15 +6772,30 @@ VK_DESTROY
 
 	void FrameBufferVK::resolve()
 	{
-		for (uint32_t ii = 0; ii < m_numTh; ++ii)
+		if (NULL == m_nwh)
 		{
-			const Attachment& at = m_attachment[ii];
-
-			if (isValid(at.handle) )
+			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
-				TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
-				texture.resolve(s_renderVK->m_commandBuffer, at.resolve, at.layer, at.numLayers, at.mip);
+				const Attachment& at = m_attachment[ii];
+
+				if (isValid(at.handle) )
+				{
+					TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
+					texture.resolve(s_renderVK->m_commandBuffer, at.resolve, at.layer, at.numLayers, at.mip);
+				}
 			}
+		}
+		else if (isRenderable()
+		&&       m_sampler.Count > 1
+		&&       m_swapChain.m_supportsManualResolve)
+		{
+			m_swapChain.m_backBufferColorMsaa.m_singleMsaaImage = m_swapChain.m_backBufferColorImage[m_swapChain.m_backBufferColorIdx];
+			m_swapChain.m_backBufferColorMsaa.m_currentSingleMsaaImageLayout = m_swapChain.m_backBufferColorImageLayout[m_swapChain.m_backBufferColorIdx];
+
+			m_swapChain.m_backBufferColorMsaa.resolve(s_renderVK->m_commandBuffer, 0, 0, 1, 0);
+
+			m_swapChain.m_backBufferColorMsaa.m_singleMsaaImage = VK_NULL_HANDLE;
+			m_swapChain.m_backBufferColorMsaa.m_currentSingleMsaaImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		}
 	}
 
@@ -6796,28 +6809,32 @@ VK_DESTROY
 			{
 				s_renderVK->release(m_textureImageViews[ii]);
 			}
-		}
 
-		m_swapChain.destroy();
-		m_nwh = NULL;
+			m_num = 0;
+			m_numTh = 0;
+			m_depth = BGFX_INVALID_HANDLE;
+			m_needRecreate = false;
+		}
+		else if (NULL != m_nwh)
+		{
+			m_swapChain.destroy();
+			m_nwh = NULL;
+			m_needPresent = false;
+		}
 	}
 
 	bool FrameBufferVK::acquire(VkCommandBuffer _commandBuffer)
 	{
-		if (NULL == m_nwh)
+		if (NULL != m_nwh)
 		{
-			return true;
-		}
-
-		bool acquired = m_swapChain.acquire(_commandBuffer);
-		m_needPresent = m_swapChain.m_needPresent;
-
-		if (acquired)
-		{
+			const bool acquired = m_swapChain.acquire(_commandBuffer);
+			m_needPresent = m_swapChain.m_needPresent;
 			m_currentFramebuffer = m_swapChain.m_backBufferFrameBuffer[m_swapChain.m_backBufferColorIdx];
+
+			return acquired;
 		}
 
-		return acquired;
+		return true;
 	}
 
 	void FrameBufferVK::present()
@@ -6826,11 +6843,11 @@ VK_DESTROY
 		m_needPresent = false;
 	}
 
-	bool FrameBufferVK::valid() const
+	bool FrameBufferVK::isRenderable() const
 	{
 		return false
-			|| NULL == m_nwh
-			|| !m_swapChain.m_needToRefreshSwapchain
+			|| (NULL == m_nwh)
+			|| m_swapChain.m_needPresent
 			;
 	}
 
@@ -7404,7 +7421,7 @@ VK_DESTROY
 						: m_backBuffer
 						;
 
-					isFrameBufferValid = fb.valid();
+					isFrameBufferValid = fb.isRenderable();
 
 					rpbi.framebuffer = fb.m_currentFramebuffer;
 					rpbi.renderPass  = fb.m_renderPass;
@@ -8096,7 +8113,7 @@ BX_UNUSED(presentMin, presentMax);
 		perfStats.gpuMemoryMax  = gpuMemoryAvailable;
 		perfStats.gpuMemoryUsed = gpuMemoryUsed;
 
-		if ((_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) ) && m_backBuffer.valid() )
+		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
 			BGFX_VK_PROFILER_BEGIN_LITERAL("debugstats", kColorFrame);
 
@@ -8229,7 +8246,7 @@ BX_UNUSED(presentMin, presentMax);
 
 			BGFX_VK_PROFILER_END();
 		}
-		else if ((_render->m_debug & BGFX_DEBUG_TEXT) && m_backBuffer.valid() )
+		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
 			BGFX_VK_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
 
@@ -8239,6 +8256,11 @@ BX_UNUSED(presentMin, presentMax);
 		}
 
 		scratchBuffer.flush();
+
+		if (m_backBuffer.isRenderable() )
+		{
+			m_backBuffer.resolve();
+		}
 
 		kick();
 	}
