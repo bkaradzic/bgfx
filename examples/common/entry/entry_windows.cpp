@@ -573,6 +573,8 @@ namespace entry
 							, (HINSTANCE)GetModuleHandle(NULL)
 							, 0
 							);
+
+						adjust(hwnd, msg->m_width, msg->m_height, true);
 						clear(hwnd);
 
 						m_hwnd[_wparam]  = hwnd;
