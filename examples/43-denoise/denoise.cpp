@@ -969,13 +969,15 @@ public:
 
 		bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RG11B10F;
 		if (!bgfx::isTextureValid(1, false, 1, format, bilinearFlags))
+		{
 			format = bgfx::TextureFormat::RGBA16F;
+		}
 
-		m_currentColor.init(m_size[0], m_size[1], format, bilinearFlags);
-		m_previousColor.init(m_size[0], m_size[1], format, bilinearFlags);
-		m_txaaColor.init(m_size[0], m_size[1], format, bilinearFlags);
-		m_temporaryColor.init(m_size[0], m_size[1], format, bilinearFlags);
-		m_previousNormal.init(m_size[0], m_size[1], format, pointSampleFlags);
+		m_currentColor   .init(m_size[0], m_size[1], format, bilinearFlags);
+		m_previousColor  .init(m_size[0], m_size[1], format, bilinearFlags);
+		m_txaaColor      .init(m_size[0], m_size[1], format, bilinearFlags);
+		m_temporaryColor .init(m_size[0], m_size[1], format, bilinearFlags);
+		m_previousNormal .init(m_size[0], m_size[1], format, pointSampleFlags);
 		m_previousDenoise.init(m_size[0], m_size[1], format, bilinearFlags);
 	}
 
