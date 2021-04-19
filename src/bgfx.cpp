@@ -1406,7 +1406,7 @@ namespace bgfx
 		{
 			viewRemap[m_viewRemap[ii] ] = ViewId(ii);
 
-			View& view = s_ctx->m_view[ii];
+			View& view = m_view[ii];
 			Rect rect(0, 0, uint16_t(m_resolution.width), uint16_t(m_resolution.height) );
 
 			if (isValid(view.m_fbh) )

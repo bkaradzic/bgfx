@@ -1021,6 +1021,7 @@ namespace bgfx { namespace d3d12
 				m_resolution.width  = _init.resolution.width;
 				m_resolution.height = _init.resolution.height;
 
+				m_windows[0] = BGFX_INVALID_HANDLE;
 				m_numWindows = 1;
 
 #if BX_PLATFORM_WINDOWS
