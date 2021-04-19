@@ -2954,70 +2954,96 @@ VK_IMPORT_DEVICE
 			}
 		}
 
-		uint32_t getRenderPassHashkey(uint8_t _num, const Attachment* attachments)
+		VkResult getRenderPass(uint8_t _num, const VkFormat* _formats, const VkImageAspectFlags* _aspects, const bool* _resolve, VkSampleCountFlagBits _samples, ::VkRenderPass* _renderPass)
 		{
-			if (_num == 0)
-				return 0;
+			VkResult result = VK_SUCCESS;
+
+			if (VK_SAMPLE_COUNT_1_BIT == _samples)
+			{
+				_resolve = NULL;
+			}
+
 			bx::HashMurmur2A hash;
 			hash.begin(0);
+			hash.add(_samples);
 			for (uint8_t ii = 0; ii < _num; ++ii)
 			{
-				TextureVK& texture = m_textures[attachments[ii].handle.idx];
-				hash.add(texture.m_textureFormat);
-				hash.add(texture.m_sampler.Sample);
+				hash.add(_formats[ii]);
+				hash.add(NULL != _resolve ? _resolve[ii] : false);
 			}
-			return hash.end();
-		}
+			uint32_t hashKey = hash.end();
 
-		VkRenderPass getRenderPass(uint8_t _num, const Attachment* _attachments)
-		{
-			uint32_t hashKey = getRenderPassHashkey(_num, _attachments);
 			VkRenderPass renderPass = m_renderPassCache.find(hashKey);
 
 			if (VK_NULL_HANDLE != renderPass)
 			{
-				return renderPass;
+				*_renderPass = renderPass;
+				return result;
 			}
 
-			// cache missed
-			VkAttachmentDescription ad[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+			VkAttachmentDescription ad[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS * 2];
+
+			for (uint8_t ii = 0; ii < (_num * 2); ++ii)
+			{
+				ad[ii].flags          = 0;
+				ad[ii].format         = VK_FORMAT_UNDEFINED;
+				ad[ii].samples        = _samples;
+				ad[ii].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
+				ad[ii].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+				ad[ii].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+				ad[ii].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+				ad[ii].initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				ad[ii].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			}
+
 			VkAttachmentReference colorAr[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+			VkAttachmentReference resolveAr[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 			VkAttachmentReference depthAr;
 			uint32_t numColorAr = 0;
+			uint32_t numResolveAr = 0;
 
-			colorAr[0].attachment = VK_ATTACHMENT_UNUSED;
-			colorAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-			depthAr.attachment = VK_ATTACHMENT_UNUSED;
-			depthAr.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			colorAr[0].attachment   = VK_ATTACHMENT_UNUSED;
+			colorAr[0].layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			resolveAr[0].attachment = VK_ATTACHMENT_UNUSED;
+			resolveAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			depthAr.attachment      = VK_ATTACHMENT_UNUSED;
+			depthAr.layout          = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 			for (uint8_t ii = 0; ii < _num; ++ii)
 			{
-				TextureVK& texture = m_textures[_attachments[ii].handle.idx];
-				ad[ii].flags   = 0;
-				ad[ii].format  = texture.m_format;
-				ad[ii].samples = texture.m_sampler.Sample;
-				ad[ii].loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
-				ad[ii].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+				ad[ii].format = _formats[ii];
 
-				if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
+				if (_aspects[ii] & VK_IMAGE_ASPECT_COLOR_BIT)
 				{
-					ad[ii].stencilLoadOp           = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-					ad[ii].stencilStoreOp          = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-					ad[ii].initialLayout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-					ad[ii].finalLayout             = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 					colorAr[numColorAr].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 					colorAr[numColorAr].attachment = ii;
+
+					resolveAr[numColorAr].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					resolveAr[numColorAr].attachment = VK_ATTACHMENT_UNUSED;
+					if (NULL != _resolve
+					&&  _resolve[ii])
+					{
+						const uint32_t resolve = _num + numResolveAr;
+
+						ad[resolve].format  = _formats[ii];
+						ad[resolve].samples = VK_SAMPLE_COUNT_1_BIT;
+						ad[resolve].loadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+
+						resolveAr[numColorAr].attachment = resolve;
+						numResolveAr++;
+					}
+
 					numColorAr++;
 				}
-				else if (texture.m_aspectMask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
+				else if (_aspects[ii] & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 				{
 					ad[ii].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
 					ad[ii].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 					ad[ii].initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 					ad[ii].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-					depthAr.layout        = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-					depthAr.attachment    = ii;
+
+					depthAr.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+					depthAr.attachment = ii;
 				}
 			}
 
@@ -3028,7 +3054,7 @@ VK_IMPORT_DEVICE
 			sd[0].pInputAttachments       = NULL;
 			sd[0].colorAttachmentCount    = bx::max<uint32_t>(numColorAr, 1);
 			sd[0].pColorAttachments       = colorAr;
-			sd[0].pResolveAttachments     = NULL;
+			sd[0].pResolveAttachments     = resolveAr;
 			sd[0].pDepthStencilAttachment = &depthAr;
 			sd[0].preserveAttachmentCount = 0;
 			sd[0].pPreserveAttachments    = NULL;
@@ -3070,18 +3096,65 @@ VK_IMPORT_DEVICE
 			rpi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 			rpi.pNext           = NULL;
 			rpi.flags           = 0;
-			rpi.attachmentCount = _num;
+			rpi.attachmentCount = _num + numResolveAr;
 			rpi.pAttachments    = ad;
 			rpi.subpassCount    = BX_COUNTOF(sd);
 			rpi.pSubpasses      = sd;
 			rpi.dependencyCount = BX_COUNTOF(dep);
 			rpi.pDependencies   = dep;
 
-			VK_CHECK(vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &renderPass) );
+			result = vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &renderPass);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create render pass error: vkCreateRenderPass failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
 			m_renderPassCache.add(hashKey, renderPass);
 
-			return renderPass;
+			*_renderPass = renderPass;
+
+			return result;
+		}
+
+		VkResult getRenderPass(uint8_t _num, const Attachment* _attachments, ::VkRenderPass* _renderPass)
+		{
+			VkFormat formats[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+			VkImageAspectFlags aspects[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+			VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
+
+			for (uint8_t ii = 0; ii < _num; ++ii)
+			{
+				const TextureVK& texture = m_textures[_attachments[ii].handle.idx];
+				formats[ii] = texture.m_format;
+				aspects[ii] = texture.m_aspectMask;
+				samples = texture.m_sampler.Sample;
+			}
+
+			return getRenderPass(_num, formats, aspects, NULL, samples, _renderPass);
+		}
+
+		VkResult getRenderPass(const SwapChainVK& swapChain, ::VkRenderPass* _renderPass)
+		{
+			const VkFormat formats[2] =
+			{
+				swapChain.m_sci.imageFormat,
+				swapChain.m_backBufferDepthStencil.m_format
+			};
+			const VkImageAspectFlags aspects[2] =
+			{
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				swapChain.m_backBufferDepthStencil.m_aspectMask
+			};
+			const bool resolve[2] =
+			{
+				true,
+				false
+			};
+			const VkSampleCountFlagBits samples = swapChain.m_sampler.Sample;
+			
+			return getRenderPass(BX_COUNTOF(formats), formats, aspects, resolve, samples, _renderPass);
 		}
 
 		VkSampler getSampler(uint32_t _samplerFlags, uint32_t _mipLevels)
@@ -5069,6 +5142,7 @@ VK_DESTROY
 
 		const bool needResolve = true
 			&& 1 < m_sampler.Count
+			&& 0 != (ici.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
 			&& 0 == (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
 			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
 			;
@@ -5077,7 +5151,7 @@ VK_DESTROY
 		{
 			VkImageCreateInfo ici_resolve = ici;
 			ici_resolve.samples = s_msaa[0].Sample;
-			ici_resolve.usage &= ~(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			ici_resolve.usage &= ~VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 			ici_resolve.flags &= ~VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
 			result = vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage);
@@ -5750,8 +5824,7 @@ VK_DESTROY
 			{
 				Default,
 				SurfaceCreated,
-				SwapChainCreated,
-				RenderPassCreated
+				SwapChainCreated
 			};
 		};
 
@@ -5973,23 +6046,11 @@ VK_DESTROY
 		errorState = ErrorState::SwapChainCreated;
 
 		{
-			result = createRenderPass();
-
-			if (VK_SUCCESS != result)
-			{
-				BX_TRACE("Create swap chain error: vkCreateRenderPass failed %d: %s.", result, getName(result) );
-				goto error;
-			}
-		}
-
-		errorState = ErrorState::RenderPassCreated;
-
-		{
 			result = createFrameBuffer();
 
 			if (VK_SUCCESS != result)
 			{
-				BX_TRACE("Create swap chain error: vkCreateFramebuffer failed %d: %s.", result, getName(result) );
+				BX_TRACE("Create swap chain error: creating frame buffers failed %d: %s.", result, getName(result) );
 				goto error;
 			}
 		}
@@ -6000,10 +6061,6 @@ VK_DESTROY
 		BX_TRACE("errorState %d", errorState);
 		switch (errorState)
 		{
-		case ErrorState::RenderPassCreated:
-			releaseRenderPass();
-			BX_FALLTHROUGH;
-
 		case ErrorState::SwapChainCreated:
 			releaseSwapChain();
 			BX_FALLTHROUGH;
@@ -6027,7 +6084,6 @@ VK_DESTROY
 		if (VK_NULL_HANDLE != m_swapchain)
 		{
 			releaseFrameBuffer();
-			releaseRenderPass();
 			releaseSwapChain();
 			releaseSurface();
 		}
@@ -6048,7 +6104,6 @@ VK_DESTROY
 		m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
 		releaseFrameBuffer();
-		releaseRenderPass();
 		releaseSwapChain();
 
 		if (m_needToRecreateSurface)
@@ -6085,7 +6140,6 @@ VK_DESTROY
 		}
 
 		VK_CHECK(createSwapChain(_commandBuffer, _reset) );
-		VK_CHECK(createRenderPass() );
 		VK_CHECK(createFrameBuffer() );
 	}
 
@@ -6392,23 +6446,36 @@ VK_DESTROY
 		const VkDevice device = s_renderVK->m_device;
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 
+		VkRenderPass renderPass;
+		result = s_renderVK->getRenderPass(*this, &renderPass);
+
+		if (VK_SUCCESS != result)
+		{
+			return result;
+		}
+
 		for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
 		{
-			::VkImageView attachments[] =
+			uint32_t numAttachments = 2;
+			::VkImageView attachments[3] =
 			{
 				m_sampler.Count > 1
 					? m_backBufferColorMsaaImageView
 					: m_backBufferColorImageView[ii],
 				m_backBufferDepthStencilImageView,
-				m_backBufferColorImageView[ii]
 			};
+
+			if (m_sampler.Count > 1)
+			{
+				attachments[numAttachments++] = m_backBufferColorImageView[ii];
+			}
 
 			VkFramebufferCreateInfo fci;
 			fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			fci.pNext = NULL;
 			fci.flags = 0;
-			fci.renderPass = m_renderPass;
-			fci.attachmentCount = BX_COUNTOF(attachments);
+			fci.renderPass = renderPass;
+			fci.attachmentCount = numAttachments;
 			fci.pAttachments = attachments;
 			fci.width = m_sci.imageExtent.width;
 			fci.height = m_sci.imageExtent.height;
@@ -6431,119 +6498,6 @@ VK_DESTROY
 		{
 			vkDestroy(m_backBufferFrameBuffer[ii]);
 		}
-	}
-
-	VkResult SwapChainVK::createRenderPass()
-	{
-		const VkDevice device = s_renderVK->m_device;
-		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
-
-		VkAttachmentDescription ad[3];
-
-		ad[0].flags          = 0;
-		ad[0].format         = m_sci.imageFormat;
-		ad[0].samples        = m_sampler.Sample;
-		ad[0].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
-		ad[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-		ad[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		ad[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		ad[0].initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		ad[0].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		ad[1].flags          = 0;
-		ad[1].format         = m_backBufferDepthStencil.m_format;
-		ad[1].samples        = m_sampler.Sample;
-		ad[1].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
-		ad[1].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-		ad[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
-		ad[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-		ad[1].initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		ad[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		ad[2].flags          = 0;
-		ad[2].format         = m_sci.imageFormat;
-		ad[2].samples        = VK_SAMPLE_COUNT_1_BIT;
-		ad[2].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
-		ad[2].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-		ad[2].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
-		ad[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-		ad[2].initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		ad[2].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference colorAr[1];
-		colorAr[0].attachment = 0;
-		colorAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference depthAr[1];
-		depthAr[0].attachment = 1;
-		depthAr[0].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference resolveAr[1];
-		resolveAr[0].attachment = m_sampler.Count > 1 ? 2 : VK_ATTACHMENT_UNUSED;
-		resolveAr[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkSubpassDescription sd[1];
-		sd[0].flags                   = 0;
-		sd[0].pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		sd[0].inputAttachmentCount    = 0;
-		sd[0].pInputAttachments       = NULL;
-		sd[0].colorAttachmentCount    = BX_COUNTOF(colorAr);
-		sd[0].pColorAttachments       = colorAr;
-		sd[0].pResolveAttachments     = resolveAr;
-		sd[0].pDepthStencilAttachment = depthAr;
-		sd[0].preserveAttachmentCount = 0;
-		sd[0].pPreserveAttachments    = NULL;
-
-		const VkPipelineStageFlags graphicsStages = 0
-			| VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
-			| VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
-			| VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
-			| VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-			| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
-			| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
-			| VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-			;
-		const VkPipelineStageFlags outsideStages = 0
-			| graphicsStages
-			| VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
-			| VK_PIPELINE_STAGE_TRANSFER_BIT
-			;
-
-		VkSubpassDependency dep[2];
-
-		dep[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-		dep[0].dstSubpass      = 0;
-		dep[0].srcStageMask    = outsideStages;
-		dep[0].dstStageMask    = graphicsStages;
-		dep[0].srcAccessMask   = VK_ACCESS_MEMORY_WRITE_BIT;
-		dep[0].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
-		dep[0].dependencyFlags = 0;
-
-		dep[1].srcSubpass      = BX_COUNTOF(sd)-1;
-		dep[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-		dep[1].srcStageMask    = graphicsStages;
-		dep[1].dstStageMask    = outsideStages;
-		dep[1].srcAccessMask   = VK_ACCESS_MEMORY_WRITE_BIT;
-		dep[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
-		dep[1].dependencyFlags = 0;
-
-		VkRenderPassCreateInfo rpi;
-		rpi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		rpi.pNext           = NULL;
-		rpi.flags           = 0;
-		rpi.attachmentCount = BX_COUNTOF(ad);
-		rpi.pAttachments    = ad;
-		rpi.subpassCount    = BX_COUNTOF(sd);
-		rpi.pSubpasses      = sd;
-		rpi.dependencyCount = BX_COUNTOF(dep);
-		rpi.pDependencies   = dep;
-
-		return vkCreateRenderPass(device, &rpi, allocatorCb, &m_renderPass);
-	}
-
-	void SwapChainVK::releaseRenderPass()
-	{
-		vkDestroy(m_renderPass);
 	}
 
 	uint32_t SwapChainVK::findPresentMode(bool _vsync)
@@ -6723,7 +6677,7 @@ VK_DESTROY
 
 		const VkDevice device = s_renderVK->m_device;
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
-		m_renderPass = s_renderVK->getRenderPass(_num, _attachment);
+		VK_CHECK(s_renderVK->getRenderPass(_num, _attachment, &m_renderPass) );
 
 		m_depth.idx = bx::kInvalidHandle;
 		m_num = 0;
@@ -6780,22 +6734,33 @@ VK_DESTROY
 	{
 		BX_UNUSED(_denseIdx);
 
+		VkResult result = VK_SUCCESS;
+
 		Resolution resolution = s_renderVK->m_resolution;
 		resolution.format = TextureFormat::Count == _format ? resolution.format : _format;
 		resolution.width  = _width;
 		resolution.height = _height;
 
-		VkResult result = m_swapChain.create(s_renderVK->m_commandBuffer, _nwh, resolution, _depthFormat);
-		if (VK_SUCCESS == result)
+		result = m_swapChain.create(s_renderVK->m_commandBuffer, _nwh, resolution, _depthFormat);
+
+		if (VK_SUCCESS != result)
 		{
-			m_framebuffer = VK_NULL_HANDLE;
-			m_renderPass = m_swapChain.m_renderPass;
-			m_sampler = m_swapChain.m_sampler;
-			m_nwh = _nwh;
-			m_width = _width;
-			m_height = _height;
-			m_needPresent = false;
+			return result;
 		}
+
+		result = s_renderVK->getRenderPass(m_swapChain, &m_renderPass);
+
+		if (VK_SUCCESS != result)
+		{
+			return result;
+		}
+
+		m_framebuffer = VK_NULL_HANDLE;
+		m_sampler = m_swapChain.m_sampler;
+		m_nwh = _nwh;
+		m_width = _width;
+		m_height = _height;
+		m_needPresent = false;
 
 		return result;
 	}
@@ -6803,7 +6768,7 @@ VK_DESTROY
 	void FrameBufferVK::update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset, TextureFormat::Enum _format)
 	{
 		m_swapChain.update(_commandBuffer, _width, _height, _reset, _format);
-		m_renderPass = m_swapChain.m_renderPass;
+		VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &m_renderPass) );
 		m_sampler = m_swapChain.m_sampler;
 	}
 

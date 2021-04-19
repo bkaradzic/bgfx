@@ -683,12 +683,10 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		VkResult createSurface(void* _nwh, uint32_t _reset);
 		VkResult createSwapChain(VkCommandBuffer _commandBuffer, uint32_t _reset);
-		VkResult createRenderPass();
 		VkResult createFrameBuffer();
 
 		void releaseSurface();
 		void releaseSwapChain();
-		void releaseRenderPass();
 		void releaseFrameBuffer();
 
 		uint32_t findPresentMode(bool _vsync);
@@ -711,7 +709,6 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkImageView        m_backBufferColorImageView[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkFramebuffer      m_backBufferFrameBuffer[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkFence            m_backBufferFence[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkRenderPass       m_renderPass;
 
 		VkSemaphore m_presentDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkSemaphore m_renderDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
