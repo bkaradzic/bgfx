@@ -685,7 +685,6 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkResult createSwapChain(VkCommandBuffer _commandBuffer, uint32_t _reset);
 		VkResult createFrameBuffer();
 
-		void releaseSurface();
 		void releaseSwapChain();
 		void releaseFrameBuffer();
 
@@ -693,6 +692,8 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		bool acquire(VkCommandBuffer _commandBuffer);
 		void present();
+
+		void transitionImage(VkCommandBuffer _commandBuffer, VkImageLayout _newLayout);
 
 		VkQueue m_queue;
 		VkSwapchainCreateInfoKHR m_sci;
@@ -755,7 +756,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		void update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset, TextureFormat::Enum _format = TextureFormat::Count);
 
 		void resolve();
-		void destroy();
+		uint16_t destroy();
 
 		bool acquire(VkCommandBuffer _commandBuffer);
 		void present();
@@ -789,9 +790,13 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkResult init(uint32_t _queueFamily, VkQueue _queue, uint32_t _numFramesInFlight);
 		VkResult reset();
 		void shutdown();
+
 		VkResult alloc(VkCommandBuffer* _commandBuffer);
-		void kick(VkSemaphore _waitSemaphore = VK_NULL_HANDLE, VkSemaphore _signalSemaphore = VK_NULL_HANDLE, bool _wait = false);
+		void addWaitSemaphore(VkSemaphore _semaphore, VkPipelineStageFlags _waitFlags = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+		void addSignalSemaphore(VkSemaphore _semaphore);
+		void kick(bool _wait = false);
 		void finish(bool _finishAll = false);
+
 		void release(uint64_t _handle, VkObjectType _type);
 		void consume();
 
@@ -805,18 +810,23 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		VkCommandBuffer m_activeCommandBuffer;
 
-		VkSemaphore m_kickedSemaphore;
+		VkFence m_upcomingFence;
 		VkFence m_kickedFence;
 
 		struct CommandList
 		{
 			VkCommandPool m_commandPool = VK_NULL_HANDLE;
 			VkCommandBuffer m_commandBuffer = VK_NULL_HANDLE;
-			VkSemaphore m_semaphore = VK_NULL_HANDLE;
 			VkFence m_fence = VK_NULL_HANDLE;
 		};
 
 		CommandList m_commandList[BGFX_CONFIG_MAX_FRAME_LATENCY];
+
+		uint32_t             m_numWaitSemaphores;
+		VkSemaphore          m_waitSemaphores[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		VkPipelineStageFlags m_waitSemaphoreStages[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		uint32_t             m_numSignalSemaphores;
+		VkSemaphore          m_signalSemaphores[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
 		struct Resource
 		{

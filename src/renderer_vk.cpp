@@ -1418,22 +1418,23 @@ VK_IMPORT_INSTANCE
 
 				g_caps.supported |= ( 0
 					| BGFX_CAPS_ALPHA_TO_COVERAGE
+					| (m_deviceFeatures.independentBlend ? BGFX_CAPS_BLEND_INDEPENDENT : 0)
 					| BGFX_CAPS_COMPUTE
 					| (indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT : 0)
-					| (m_deviceFeatures.independentBlend ? BGFX_CAPS_BLEND_INDEPENDENT : 0)
 					| BGFX_CAPS_FRAGMENT_DEPTH
+					| BGFX_CAPS_IMAGE_RW
 					| BGFX_CAPS_INDEX32
 					| BGFX_CAPS_INSTANCING
+					| BGFX_CAPS_SWAP_CHAIN
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_3D
 					| BGFX_CAPS_TEXTURE_BLIT
-					| BGFX_CAPS_TEXTURE_READ_BACK
 					| BGFX_CAPS_TEXTURE_COMPARE_ALL
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+					| BGFX_CAPS_TEXTURE_READ_BACK
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					| BGFX_CAPS_VERTEX_ID
-					| BGFX_CAPS_IMAGE_RW
 					);
 
 				g_caps.supported |= 0
@@ -1738,6 +1739,8 @@ VK_IMPORT_DEVICE
 				m_resolution = _init.resolution;
 				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
+				m_numWindows = 0;
+
 				if (!headless)
 				{
 					m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
@@ -1750,6 +1753,9 @@ VK_IMPORT_DEVICE
 						BX_TRACE("Init error: creating swap chain failed %d: %s.", result, getName(result) );
 						goto error;
 					}
+
+					m_windows[0] = BGFX_INVALID_HANDLE;
+					m_numWindows++;
 				}
 			}
 
@@ -1974,7 +1980,15 @@ VK_IMPORT_DEVICE
 
 		void flip() override
 		{
-			m_backBuffer.present();
+			for (uint16_t ii = 0; ii < m_numWindows; ++ii)
+			{
+				FrameBufferVK& fb = isValid(m_windows[ii])
+					? m_frameBuffers[m_windows[ii].idx]
+					: m_backBuffer
+					;
+
+				fb.present();
+			}
 		}
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
@@ -2170,13 +2184,42 @@ VK_IMPORT_DEVICE
 			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
-		void createFrameBuffer(FrameBufferHandle /*_handle*/, void* /*_nwh*/, uint32_t /*_width*/, uint32_t /*_height*/, TextureFormat::Enum /*_format*/, TextureFormat::Enum /*_depthFormat*/) override
+		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
 		{
+			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
+			{
+				FrameBufferHandle handle = m_windows[ii];
+				if (isValid(handle)
+				&&  m_frameBuffers[handle.idx].m_nwh == _nwh)
+				{
+					destroyFrameBuffer(handle);
+				}
+			}
+
+			uint16_t denseIdx = m_numWindows++;
+			m_windows[denseIdx] = _handle;
+			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
 		{
-			m_frameBuffers[_handle.idx].destroy();
+			FrameBufferVK& frameBuffer = m_frameBuffers[_handle.idx];
+
+			uint16_t denseIdx = frameBuffer.destroy();
+			if (UINT16_MAX != denseIdx)
+			{
+				--m_numWindows;
+				if (m_numWindows > 1)
+				{
+					FrameBufferHandle handle = m_windows[m_numWindows];
+					m_windows[m_numWindows]  = {kInvalidHandle};
+					if (m_numWindows != denseIdx)
+					{
+						m_windows[denseIdx] = handle;
+						m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
+					}
+				}
+			}
 		}
 
 		void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) override
@@ -2604,8 +2647,7 @@ VK_IMPORT_DEVICE
 
 				if (recreate)
 				{
-					VK_CHECK(m_cmd.reset() );
-					VK_CHECK(m_cmd.alloc(&m_commandBuffer) );
+					kick(true);
 
 					m_backBuffer.update(m_commandBuffer, m_resolution.width, m_resolution.height, m_resolution.reset, m_resolution.format);
 				}
@@ -3935,41 +3977,11 @@ VK_IMPORT_DEVICE
 			}
 		}
 
-		void kick(bool _wait = false)
+		void kick(bool _finishAll = false)
 		{
-			const bool acquired = true
-				&& m_backBuffer.isRenderable()
-				&& VK_NULL_HANDLE != m_backBuffer.m_swapChain.m_lastImageAcquiredSemaphore
-				;
-			const VkSemaphore waitSemaphore   = m_backBuffer.m_swapChain.m_lastImageAcquiredSemaphore;
-			const VkSemaphore signalSemaphore = acquired
-				? m_backBuffer.m_swapChain.m_lastImageRenderedSemaphore
-				: VkSemaphore(VK_NULL_HANDLE)
-				;
-
-			m_backBuffer.m_swapChain.m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
-
-			if (acquired)
-			{
-				setImageMemoryBarrier(
-					  m_commandBuffer
-					, m_backBuffer.m_swapChain.m_backBufferColorImage[m_backBuffer.m_swapChain.m_backBufferColorIdx]
-					, VK_IMAGE_ASPECT_COLOR_BIT
-					, m_backBuffer.m_swapChain.m_backBufferColorImageLayout[m_backBuffer.m_swapChain.m_backBufferColorIdx]
-					, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-					);
-				m_backBuffer.m_swapChain.m_backBufferColorImageLayout[m_backBuffer.m_swapChain.m_backBufferColorIdx] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			}
-
-			m_cmd.kick(waitSemaphore, signalSemaphore, _wait);
-
-			if (acquired)
-			{
-				m_backBuffer.m_swapChain.m_backBufferFence[m_backBuffer.m_swapChain.m_backBufferColorIdx] = m_cmd.m_kickedFence;
-			}
-
+			m_cmd.kick(_finishAll);
 			VK_CHECK(m_cmd.alloc(&m_commandBuffer) );
-			m_cmd.finish(_wait);
+			m_cmd.finish(_finishAll);
 		}
 
 		int32_t selectMemoryType(uint32_t _memoryTypeBits, uint32_t _propertyFlags, int32_t _startIndex = 0) const
@@ -4082,6 +4094,9 @@ VK_IMPORT_DEVICE
 		bool m_lineAASupport;
 
 		FrameBufferVK m_backBuffer;
+
+		uint16_t m_numWindows;
+		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
 		ScratchBufferVK m_scratchBuffer[BGFX_CONFIG_MAX_FRAME_LATENCY];
 
@@ -6020,7 +6035,7 @@ VK_DESTROY
 			m_sci.pQueueFamilyIndices   = NULL;
 			m_sci.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 			m_sci.compositeAlpha = compositeAlpha;
-			m_sci.clipped        = VK_FALSE;
+			m_sci.clipped        = !m_supportsReadback;
 			m_sci.oldSwapchain   = VK_NULL_HANDLE;
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
@@ -6069,7 +6084,7 @@ VK_DESTROY
 			BX_FALLTHROUGH;
 
 		case ErrorState::SurfaceCreated:
-			releaseSurface();
+			vkDestroy(m_surface);
 			BX_FALLTHROUGH;
 
 		case ErrorState::Default:
@@ -6086,9 +6101,13 @@ VK_DESTROY
 	{
 		if (VK_NULL_HANDLE != m_swapchain)
 		{
+			const VkDevice device = s_renderVK->m_device;
+
+			VK_CHECK(vkDeviceWaitIdle(device) );
+
 			releaseFrameBuffer();
 			releaseSwapChain();
-			releaseSurface();
+			vkDestroy(m_surface);
 		}
 
 		m_nwh = NULL;
@@ -6249,11 +6268,6 @@ VK_DESTROY
 		m_needToRecreateSurface = false;
 
 		return result;
-	}
-
-	void SwapChainVK::releaseSurface()
-	{
-		release(m_surface);
 	}
 
 	VkResult SwapChainVK::createSwapChain(VkCommandBuffer _commandBuffer, uint32_t _reset)
@@ -6623,14 +6637,7 @@ VK_DESTROY
 					) );
 			}
 
-			setImageMemoryBarrier(
-				  _commandBuffer
-				, m_backBufferColorImage[m_backBufferColorIdx]
-				, VK_IMAGE_ASPECT_COLOR_BIT
-				, m_backBufferColorImageLayout[m_backBufferColorIdx]
-				, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-				);
-			m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			transitionImage(_commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 			m_needPresent = true;
 		}
@@ -6670,6 +6677,23 @@ VK_DESTROY
 
 			m_needPresent = false;
 			m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
+		}
+	}
+
+	void SwapChainVK::transitionImage(VkCommandBuffer _commandBuffer, VkImageLayout _newLayout)
+	{
+		VkImageLayout& layout = m_backBufferColorImageLayout[m_backBufferColorIdx];
+		if (_newLayout != layout)
+		{
+			setImageMemoryBarrier(
+				  _commandBuffer
+				, m_backBufferColorImage[m_backBufferColorIdx]
+				, VK_IMAGE_ASPECT_COLOR_BIT
+				, layout
+				, _newLayout
+			);
+
+			layout = _newLayout;
 		}
 	}
 
@@ -6732,14 +6756,13 @@ VK_DESTROY
 
 	VkResult FrameBufferVK::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
 	{
-		BX_UNUSED(_denseIdx);
-
 		VkResult result = VK_SUCCESS;
 
 		Resolution resolution = s_renderVK->m_resolution;
 		resolution.format = TextureFormat::Count == _format ? resolution.format : _format;
 		resolution.width  = _width;
 		resolution.height = _height;
+		resolution.reset &= ~BGFX_RESET_MSAA_MASK;
 
 		result = m_swapChain.create(s_renderVK->m_commandBuffer, _nwh, resolution, _depthFormat);
 
@@ -6755,6 +6778,7 @@ VK_DESTROY
 			return result;
 		}
 
+		m_denseIdx = _denseIdx;
 		m_nwh = _nwh;
 		m_width = _width;
 		m_height = _height;
@@ -6767,6 +6791,8 @@ VK_DESTROY
 	{
 		m_swapChain.update(_commandBuffer, _width, _height, _reset, _format);
 		VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &m_renderPass) );
+		m_width = _width;
+		m_height = _height;
 		m_sampler = m_swapChain.m_sampler;
 	}
 
@@ -6799,7 +6825,7 @@ VK_DESTROY
 		}
 	}
 
-	void FrameBufferVK::destroy()
+	uint16_t FrameBufferVK::destroy()
 	{
 		if (VK_NULL_HANDLE != m_framebuffer)
 		{
@@ -6810,8 +6836,6 @@ VK_DESTROY
 				s_renderVK->release(m_textureImageViews[ii]);
 			}
 
-			m_num = 0;
-			m_numTh = 0;
 			m_depth = BGFX_INVALID_HANDLE;
 			m_needRecreate = false;
 		}
@@ -6821,6 +6845,10 @@ VK_DESTROY
 			m_nwh = NULL;
 			m_needPresent = false;
 		}
+
+		uint16_t denseIdx = m_denseIdx;
+		m_denseIdx = UINT16_MAX;
+		return denseIdx;
 	}
 
 	bool FrameBufferVK::acquire(VkCommandBuffer _commandBuffer)
@@ -6868,8 +6896,11 @@ VK_DESTROY
 		m_currentFrameInFlight = 0;
 		m_consumeIndex         = 0;
 
+		m_numSignalSemaphores = 0;
+		m_numWaitSemaphores   = 0;
+
 		m_activeCommandBuffer = VK_NULL_HANDLE;
-		m_kickedSemaphore     = VK_NULL_HANDLE;
+		m_upcomingFence       = VK_NULL_HANDLE;
 		m_kickedFence         = VK_NULL_HANDLE;
 
 		VkCommandPoolCreateInfo cpci;
@@ -6883,11 +6914,6 @@ VK_DESTROY
 		cbai.pNext = NULL;
 		cbai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		cbai.commandBufferCount = 1;
-
-		VkSemaphoreCreateInfo sci;
-		sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		sci.pNext = NULL;
-		sci.flags = 0;
 
 		VkFenceCreateInfo fci;
 		fci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -6925,19 +6951,6 @@ VK_DESTROY
 				return result;
 			}
 
-			result = vkCreateSemaphore(
-				  s_renderVK->m_device
-				, &sci
-				, s_renderVK->m_allocatorCb
-				, &m_commandList[ii].m_semaphore
-				);
-
-			if (VK_SUCCESS != result)
-			{
-				BX_TRACE("Create command queue error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
-				return result;
-			}
-
 			result = vkCreateFence(
 				  s_renderVK->m_device
 				, &fci
@@ -6957,13 +6970,12 @@ VK_DESTROY
 
 	void CommandQueueVK::shutdown()
 	{
-		kick(VK_NULL_HANDLE, VK_NULL_HANDLE, true);
+		kick(true);
 		finish(true);
 
 		for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 		{
 			vkDestroy(m_commandList[ii].m_fence);
-			vkDestroy(m_commandList[ii].m_semaphore);
 
 			if (VK_NULL_HANDLE != m_commandList[ii].m_commandBuffer)
 			{
@@ -7014,6 +7026,7 @@ VK_DESTROY
 			}
 
 			m_activeCommandBuffer = commandList.m_commandBuffer;
+			m_upcomingFence = commandList.m_fence;
 		}
 
 		if (NULL != _commandBuffer)
@@ -7024,50 +7037,53 @@ VK_DESTROY
 		return result;
 	}
 
-	void CommandQueueVK::kick(VkSemaphore _waitSemaphore, VkSemaphore _signalSemaphore, bool _wait)
+	void CommandQueueVK::addWaitSemaphore(VkSemaphore _semaphore, VkPipelineStageFlags _waitFlags)
+	{
+		BX_ASSERT(m_numWaitSemaphores < BX_COUNTOF(m_waitSemaphores), "Too many wait semaphores.");
+
+		m_waitSemaphores[m_numWaitSemaphores]      = _semaphore;
+		m_waitSemaphoreStages[m_numWaitSemaphores] = _waitFlags;
+		m_numWaitSemaphores++;
+	}
+
+	void CommandQueueVK::addSignalSemaphore(VkSemaphore _semaphore)
+	{
+		BX_ASSERT(m_numSignalSemaphores < BX_COUNTOF(m_signalSemaphores), "Too many signal semaphores.");
+
+		m_signalSemaphores[m_numSignalSemaphores] = _semaphore;
+		m_numSignalSemaphores++;
+	}
+
+	void CommandQueueVK::kick(bool _wait)
 	{
 		if (VK_NULL_HANDLE != m_activeCommandBuffer)
 		{
+			setMemoryBarrier(
+				  m_activeCommandBuffer
+				, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
+				, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
+				);
+
 			VK_CHECK(vkEndCommandBuffer(m_activeCommandBuffer) );
 
-			static const VkPipelineStageFlags stageFlags[2] = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT , VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
-
-			VkSemaphore waitSemaphores[2];
-			uint32_t waitSemaphoreCount = 0;
-
-			if (VK_NULL_HANDLE != m_kickedSemaphore)
-			{
-				waitSemaphores[waitSemaphoreCount++] = m_kickedSemaphore;
-			}
-
-			if (VK_NULL_HANDLE != _waitSemaphore)
-			{
-				waitSemaphores[waitSemaphoreCount++] = _waitSemaphore;
-			}
-
-			m_kickedSemaphore = m_commandList[m_currentFrameInFlight].m_semaphore;
-			m_kickedFence = m_commandList[m_currentFrameInFlight].m_fence;
-
-			VkSemaphore signalSemaphores[2] = { m_kickedSemaphore };
-			uint32_t signalSemaphoreCount = 1;
-
-			if (VK_NULL_HANDLE != _signalSemaphore)
-			{
-				signalSemaphores[signalSemaphoreCount++] = _signalSemaphore;
-			}
+			m_kickedFence = m_upcomingFence;
+			m_upcomingFence = VK_NULL_HANDLE;
 
 			VK_CHECK(vkResetFences(s_renderVK->m_device, 1, &m_kickedFence) );
 
 			VkSubmitInfo si;
 			si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 			si.pNext = NULL;
-			si.waitSemaphoreCount = waitSemaphoreCount;
-			si.pWaitSemaphores = &waitSemaphores[0];
-			si.pWaitDstStageMask = &stageFlags[0];
-			si.commandBufferCount = 1;
-			si.pCommandBuffers = &m_activeCommandBuffer;
-			si.signalSemaphoreCount = signalSemaphoreCount;
-			si.pSignalSemaphores = &signalSemaphores[0];
+			si.waitSemaphoreCount    = m_numWaitSemaphores;
+			si.pWaitSemaphores       = &m_waitSemaphores[0];
+			si.pWaitDstStageMask     = m_waitSemaphoreStages;
+			si.commandBufferCount    = 1;
+			si.pCommandBuffers       = &m_activeCommandBuffer;
+			si.signalSemaphoreCount  = m_numSignalSemaphores;
+			si.pSignalSemaphores     = &m_signalSemaphores[0];
+
+			m_numWaitSemaphores   = 0;
+			m_numSignalSemaphores = 0;
 
 			VK_CHECK(vkQueueSubmit(m_queue, 1, &si, m_kickedFence) );
 
@@ -8257,9 +8273,25 @@ BX_UNUSED(presentMin, presentMax);
 
 		scratchBuffer.flush();
 
-		if (m_backBuffer.isRenderable() )
+		for (uint16_t ii = 0; ii < m_numWindows; ++ii)
 		{
-			m_backBuffer.resolve();
+			FrameBufferVK& fb = isValid(m_windows[ii])
+				? m_frameBuffers[m_windows[ii].idx]
+				: m_backBuffer
+				;
+
+			if (fb.m_needPresent)
+			{
+				fb.resolve();
+
+				fb.m_swapChain.transitionImage(m_commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+				m_cmd.addWaitSemaphore(fb.m_swapChain.m_lastImageAcquiredSemaphore, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+				m_cmd.addSignalSemaphore(fb.m_swapChain.m_lastImageRenderedSemaphore);
+				fb.m_swapChain.m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
+
+				fb.m_swapChain.m_backBufferFence[fb.m_swapChain.m_backBufferColorIdx] = m_cmd.m_upcomingFence;
+			}
 		}
 
 		kick();
