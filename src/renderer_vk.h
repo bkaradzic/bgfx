@@ -743,7 +743,6 @@ VK_DESTROY_FUNC(SurfaceKHR);
 			, m_denseIdx(kInvalidHandle)
 			, m_num(0)
 			, m_numTh(0)
-			, m_needRecreate(false)
 			, m_nwh(NULL)
 			, m_needPresent(false)
 			, m_framebuffer(VK_NULL_HANDLE)
@@ -752,11 +751,14 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		void create(uint8_t _num, const Attachment* _attachment);
 		VkResult create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format = TextureFormat::Count, TextureFormat::Enum _depthFormat = TextureFormat::Count);
+		uint16_t destroy();
 
 		void update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset, TextureFormat::Enum _format = TextureFormat::Count);
 
+		void preReset();
+		void postReset();
+
 		void resolve();
-		uint16_t destroy();
 
 		bool acquire(VkCommandBuffer _commandBuffer);
 		void present();
@@ -770,7 +772,6 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		uint16_t m_denseIdx;
 		uint8_t m_num;
 		uint8_t m_numTh;
-		bool m_needRecreate;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 
 		SwapChainVK m_swapChain;
