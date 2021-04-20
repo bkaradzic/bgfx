@@ -2641,6 +2641,13 @@ VK_IMPORT_DEVICE
 			{
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
+				if (g_platformData.nwh != m_backBuffer.m_nwh)
+				{
+					m_backBuffer.m_nwh = g_platformData.nwh;
+					m_backBuffer.m_swapChain.m_nwh = g_platformData.nwh;
+					m_backBuffer.m_swapChain.m_needToRecreateSurface = true;
+				}
+
 				const uint64_t recreateMask = 0
 					| BGFX_RESET_VSYNC
 					| BGFX_RESET_SRGB_BACKBUFFER
