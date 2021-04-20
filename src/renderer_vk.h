@@ -685,6 +685,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkResult createSwapChain(VkCommandBuffer _commandBuffer, uint32_t _reset);
 		VkResult createFrameBuffer();
 
+		void releaseSurface();
 		void releaseSwapChain();
 		void releaseFrameBuffer();
 

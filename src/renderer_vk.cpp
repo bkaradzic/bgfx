@@ -2670,8 +2670,6 @@ VK_IMPORT_DEVICE
 
 				if (recreate)
 				{
-					kick(true);
-
 					m_backBuffer.update(m_commandBuffer, m_resolution.width, m_resolution.height, m_resolution.reset, m_resolution.format);
 				}
 
@@ -6186,7 +6184,7 @@ VK_DESTROY
 			BX_FALLTHROUGH;
 
 		case ErrorState::SurfaceCreated:
-			vkDestroy(m_surface);
+			releaseSurface();
 			BX_FALLTHROUGH;
 
 		case ErrorState::Default:
@@ -6205,11 +6203,14 @@ VK_DESTROY
 		{
 			const VkDevice device = s_renderVK->m_device;
 
-			VK_CHECK(vkDeviceWaitIdle(device) );
-
 			releaseFrameBuffer();
 			releaseSwapChain();
-			vkDestroy(m_surface);
+			releaseSurface();
+
+			// can't delay-delete the surface, since there can only be one swapchain per surface
+			// new framebuffer with the same window would get an error at swapchain creation
+			VK_CHECK(vkDeviceWaitIdle(device) );
+			s_renderVK->m_cmd.finish(true);
 		}
 
 		m_nwh = NULL;
@@ -6222,19 +6223,23 @@ VK_DESTROY
 		const VkDevice device = s_renderVK->m_device;
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
-		VK_CHECK(vkDeviceWaitIdle(device) );
-
 		m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
 		m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
+
+		VkSwapchainKHR oldSwapchain = m_swapchain;
 
 		releaseFrameBuffer();
 		releaseSwapChain();
 
 		if (m_needToRecreateSurface)
 		{
-			vkDestroy(m_surface);
-			VkResult result = createSurface(m_nwh, _reset);
+			oldSwapchain = VK_NULL_HANDLE;
+			releaseSurface();
 
+			VK_CHECK(vkDeviceWaitIdle(device) );
+			s_renderVK->m_cmd.finish(true);
+
+			VkResult result = createSurface(m_nwh, _reset);
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Surface lost.");
@@ -6263,8 +6268,12 @@ VK_DESTROY
 			return;
 		}
 
+		m_sci.oldSwapchain = oldSwapchain;
+
 		VK_CHECK(createSwapChain(_commandBuffer, _reset) );
 		VK_CHECK(createFrameBuffer() );
+
+		m_sci.oldSwapchain = VK_NULL_HANDLE;
 	}
 
 	VkResult SwapChainVK::createSurface(void* _nwh, uint32_t _reset)
@@ -6370,6 +6379,11 @@ VK_DESTROY
 		m_needToRecreateSurface = false;
 
 		return result;
+	}
+
+	void SwapChainVK::releaseSurface()
+	{
+		release(m_surface);
 	}
 
 	VkResult SwapChainVK::createSwapChain(VkCommandBuffer _commandBuffer, uint32_t _reset)
@@ -6540,22 +6554,22 @@ VK_DESTROY
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 		{
-			vkDestroy(m_backBufferColorImageView[ii]);
+			release(m_backBufferColorImageView[ii]);
 
 			m_backBufferColorImageLayout[ii] = VK_IMAGE_LAYOUT_UNDEFINED;
 			m_backBufferFence[ii] = VK_NULL_HANDLE;
 
-			vkDestroy(m_presentDoneSemaphore[ii]);
-			vkDestroy(m_renderDoneSemaphore[ii]);
+			release(m_presentDoneSemaphore[ii]);
+			release(m_renderDoneSemaphore[ii]);
 		}
 
-		vkDestroy(m_backBufferDepthStencilImageView);
-		vkDestroy(m_backBufferColorMsaaImageView);
+		release(m_backBufferDepthStencilImageView);
+		release(m_backBufferColorMsaaImageView);
 
 		m_backBufferDepthStencil.destroy();
 		m_backBufferColorMsaa.destroy();
 
-		vkDestroy(m_swapchain);
+		release(m_swapchain);
 	}
 
 	VkResult SwapChainVK::createFrameBuffer()
@@ -6615,7 +6629,7 @@ VK_DESTROY
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 		{
-			vkDestroy(m_backBufferFrameBuffer[ii]);
+			release(m_backBufferFrameBuffer[ii]);
 		}
 	}
 
