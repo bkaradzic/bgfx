@@ -2641,11 +2641,18 @@ VK_IMPORT_DEVICE
 			{
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
+				const uint64_t recreateSurfaceMask = BGFX_RESET_HIDPI;
+
+				m_backBuffer.m_swapChain.m_needToRecreateSurface = false
+					|| m_backBuffer.m_swapChain.m_needToRecreateSurface
+					|| g_platformData.nwh != m_backBuffer.m_nwh
+					|| (flags & recreateSurfaceMask) != (m_resolution.reset & recreateSurfaceMask)
+					;
+
 				if (g_platformData.nwh != m_backBuffer.m_nwh)
 				{
 					m_backBuffer.m_nwh = g_platformData.nwh;
 					m_backBuffer.m_swapChain.m_nwh = g_platformData.nwh;
-					m_backBuffer.m_swapChain.m_needToRecreateSurface = true;
 				}
 
 				const uint64_t recreateMask = 0
