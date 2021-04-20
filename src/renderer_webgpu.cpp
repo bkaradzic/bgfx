@@ -1328,7 +1328,7 @@ namespace bgfx { namespace webgpu
 			if (NULL != program.m_fsh
 			&& 0 < program.m_fsh->m_gpuSize)
 			{
-				bindings.m_entries[1].binding = program.m_fsh->m_oldBindingModel ? kSpirvOldFragmentBinding : kSpirvFragmentBinding;
+				bindings.m_entries[1].binding = kSpirvFragmentBinding;
 				bindings.m_entries[1].offset = 0;
 				bindings.m_entries[1].size = program.m_fsh->m_gpuSize;
 				bindings.m_entries[1].buffer = scratchBuffer.m_buffer;
@@ -2515,8 +2515,6 @@ namespace bgfx { namespace webgpu
 		m_numPredefined = 0;
 		m_numUniforms = count;
 
-		m_oldBindingModel = isShaderVerLess(magic, 11);
-
 		BX_TRACE("%s Shader consts %d"
 			, getShaderTypeName(magic)
 			, count
@@ -2525,7 +2523,7 @@ namespace bgfx { namespace webgpu
 		const bool fragment = isShaderType(magic, 'F');
 		uint8_t fragmentBit = fragment ? kUniformFragmentBit : 0;
 
-		BX_ASSERT(!isShaderVerLess(magic, 10), "WebGPU backend supports only shader binary version >= 10");
+		BX_ASSERT(!isShaderVerLess(magic, 11), "WebGPU backend supports only shader binary version >= 11");
 
 		if (0 < count)
 		{
@@ -2576,10 +2574,7 @@ namespace bgfx { namespace webgpu
 					const bool buffer = idToDescriptorType(regCount) == DescriptorType::StorageBuffer;
 					const bool readonly = (type & kUniformReadOnlyBit) != 0;
 
-					const uint8_t reverseShift = m_oldBindingModel
-						? (fragment ? kSpirvOldFragmentShift : 0) + (buffer ? kSpirvOldBufferShift : kSpirvOldImageShift)
-						: kSpirvBindShift;
-
+					const uint8_t reverseShift = kSpirvBindShift;
 					const uint8_t stage = regIndex - reverseShift;
 
 					m_bindInfo[stage].m_index = m_numBuffers;
@@ -2614,10 +2609,7 @@ namespace bgfx { namespace webgpu
 					const UniformRegInfo* info = s_renderWgpu->m_uniformReg.find(name);
 					BX_ASSERT(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
-					const uint8_t reverseShift = m_oldBindingModel
-						? (fragment ? kSpirvOldFragmentShift : 0) + kSpirvOldTextureShift
-						: kSpirvBindShift;
-
+					const uint8_t reverseShift = kSpirvBindShift;
 					const uint8_t stage = regIndex - reverseShift;
 
 					m_bindInfo[stage].m_index = m_numSamplers;
@@ -2837,7 +2829,7 @@ namespace bgfx { namespace webgpu
 
 		if (NULL != _fsh && _fsh->m_size > 0)
 		{
-			bindings[numBindings].binding = _fsh->m_oldBindingModel ? kSpirvOldFragmentBinding : kSpirvFragmentBinding;
+			bindings[numBindings].binding = kSpirvFragmentBinding;
 			bindings[numBindings].visibility = wgpu::ShaderStage::Fragment;
 			bindings[numBindings].buffer.type = wgpu::BufferBindingType::Uniform;
 			bindings[numBindings].buffer.hasDynamicOffset = true;
