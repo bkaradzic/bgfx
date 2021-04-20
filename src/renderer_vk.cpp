@@ -1739,6 +1739,8 @@ VK_IMPORT_DEVICE
 
 			errorState = ErrorState::CommandQueueCreated;
 
+			m_presentElapsed = 0;
+
 			{
 				m_resolution = _init.resolution;
 				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
@@ -1988,6 +1990,8 @@ VK_IMPORT_DEVICE
 
 		void flip() override
 		{
+			int64_t start = bx::getHPCounter();
+
 			for (uint16_t ii = 0; ii < m_numWindows; ++ii)
 			{
 				FrameBufferVK& fb = isValid(m_windows[ii])
@@ -1997,6 +2001,10 @@ VK_IMPORT_DEVICE
 
 				fb.present();
 			}
+
+			int64_t now = bx::getHPCounter();
+
+			m_presentElapsed += now - start;
 		}
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
@@ -2559,26 +2567,24 @@ VK_IMPORT_DEVICE
 				m_frameBuffers[ii].postReset();
 			}
 
-			if (NULL != m_backBuffer.m_swapChain.m_nwh
-			&&  m_backBuffer.m_swapChain.m_supportsReadback)
+			if (NULL != m_backBuffer.m_nwh
+			&&  m_backBuffer.m_swapChain.m_supportsReadback
+			&&  m_resolution.reset & BGFX_RESET_CAPTURE)
 			{
-				if (m_resolution.reset&BGFX_RESET_CAPTURE)
+				const uint32_t captureSize = m_resolution.width*m_resolution.height*4;
+
+				if (captureSize > m_captureSize)
 				{
-					const uint32_t captureSize = m_resolution.width*m_resolution.height*4;
+					release(m_captureBuffer);
+					release(m_captureMemory);
 
-					if (captureSize > m_captureSize)
-					{
-						release(m_captureBuffer);
-						release(m_captureMemory);
+					m_captureSize = captureSize;
+					VK_CHECK(createStagingBuffer(m_captureSize, &m_captureBuffer, &m_captureMemory) );
 
-						m_captureSize = captureSize;
-						VK_CHECK(createStagingBuffer(m_captureSize, &m_captureBuffer, &m_captureMemory) );
-
-						m_captureData = BX_REALLOC(g_allocator, m_captureData, m_captureSize);
-					}
-
-					g_callback->captureBegin(m_resolution.width, m_resolution.height, m_resolution.width*4, TextureFormat::BGRA8, false);
+					m_captureData = BX_REALLOC(g_allocator, m_captureData, m_captureSize);
 				}
+
+				g_callback->captureBegin(m_resolution.width, m_resolution.height, m_resolution.width*4, TextureFormat::BGRA8, false);
 			}
 		}
 
@@ -2759,7 +2765,13 @@ VK_IMPORT_DEVICE
 			}
 			else
 			{
+				int64_t start = bx::getHPCounter();
+
 				newFrameBuffer.acquire(m_commandBuffer);
+
+				int64_t now = bx::getHPCounter();
+
+				m_presentElapsed += now - start;
 			}
 
 			m_fbh = _fbh;
@@ -4174,6 +4186,7 @@ VK_IMPORT_DEVICE
 
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		int64_t m_presentElapsed;
 
 		ScratchBufferVK m_scratchBuffer[BGFX_CONFIG_MAX_FRAME_LATENCY];
 
@@ -8163,13 +8176,11 @@ VK_DESTROY
 		static uint32_t maxGpuLatency = 0;
 		static double   maxGpuElapsed = 0.0f;
 		double elapsedGpuMs = 0.0;
-BX_UNUSED(maxGpuLatency, maxGpuElapsed, elapsedGpuMs);
 
-		static int64_t presentMin = 0; //m_presentElapsed;
-		static int64_t presentMax = 0; //m_presentElapsed;
-BX_UNUSED(presentMin, presentMax);
-//		presentMin = bx::min<int64_t>(presentMin, m_presentElapsed);
-//		presentMax = bx::max<int64_t>(presentMax, m_presentElapsed);
+		static int64_t presentMin = m_presentElapsed;
+		static int64_t presentMax = m_presentElapsed;
+		presentMin = bx::min<int64_t>(presentMin, m_presentElapsed);
+		presentMax = bx::max<int64_t>(presentMax, m_presentElapsed);
 
 		if (UINT32_MAX != frameQueryIdx)
 		{
@@ -8293,11 +8304,11 @@ BX_UNUSED(presentMin, presentMax);
 					, double(max)*toMs
 					, freq/frameTime
 					);
-//				tvm.printf(10, pos++, 0x8b, "     Present: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] "
-//					, double(m_presentElapsed)*toMs
-//					, double(presentMin)*toMs
-//					, double(presentMax)*toMs
-//					);
+				tvm.printf(10, pos++, 0x8b, "     Present: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] "
+					, double(m_presentElapsed)*toMs
+					, double(presentMin)*toMs
+					, double(presentMax)*toMs
+					);
 
 				const uint32_t msaa = (m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 				tvm.printf(10, pos++, 0x8b, " Reset flags: [%c] vsync, [%c] MSAAx%d, [%c] MaxAnisotropy "
@@ -8356,8 +8367,8 @@ BX_UNUSED(presentMin, presentMax);
 
 				min = frameTime;
 				max = frameTime;
-//				presentMin = m_presentElapsed;
-//				presentMax = m_presentElapsed;
+				presentMin = m_presentElapsed;
+				presentMax = m_presentElapsed;
 			}
 
 			blit(this, _textVideoMemBlitter, tvm);
@@ -8372,6 +8383,8 @@ BX_UNUSED(presentMin, presentMax);
 
 			BGFX_VK_PROFILER_END();
 		}
+
+		m_presentElapsed = 0;
 
 		scratchBuffer.flush();
 
