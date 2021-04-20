@@ -7,6 +7,7 @@
 
 #if BGFX_CONFIG_RENDERER_VULKAN
 #	include "renderer_vk.h"
+#	include "shader_spirv.h"
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
@@ -4373,6 +4374,8 @@ VK_DESTROY
 		m_numUniforms = count;
 		m_numTextures = 0;
 
+		m_oldBindingModel = isShaderVerLess(magic, 11);
+
 		BX_TRACE("%s Shader consts %d"
 			, getShaderTypeName(magic)
 			, count
@@ -4466,7 +4469,12 @@ VK_DESTROY
 						{
 							continue;
 						}
-						const uint16_t stage = regIndex - (isBuffer ? 16 : 32) - (fragment ? 48 : 0);  // regIndex is used for buffer binding index
+
+						const uint8_t reverseShift = m_oldBindingModel
+							? (fragment ? kSpirvOldFragmentShift : 0) + (isBuffer ? kSpirvOldBufferShift : kSpirvOldImageShift)
+							: kSpirvBindShift;
+
+						const uint16_t stage = regIndex - reverseShift; // regIndex is used for buffer binding index
 
 						m_bindInfo[stage].type = isBuffer ? BindType::Buffer : BindType::Image;
 						m_bindInfo[stage].uniformHandle  = { 0 };
@@ -4491,7 +4499,11 @@ VK_DESTROY
 					}
 					else if (UniformType::Sampler == (~kUniformMask & type) )
 					{
-						const uint16_t stage = regIndex - 16 - (fragment ? 48 : 0); // regIndex is used for image/sampler binding index
+						const uint8_t reverseShift = m_oldBindingModel
+							? (fragment ? kSpirvOldFragmentShift : 0) + kSpirvOldTextureShift
+							: kSpirvBindShift;
+
+						const uint16_t stage = regIndex - reverseShift; // regIndex is used for image/sampler binding index
 
 						const UniformRegInfo* info = s_renderVK->m_uniformReg.find(name);
 						BX_ASSERT(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -4499,7 +4511,7 @@ VK_DESTROY
 						m_bindInfo[stage].uniformHandle    = info->m_handle;
 						m_bindInfo[stage].type             = BindType::Sampler;
 						m_bindInfo[stage].binding          = regIndex;
-						m_bindInfo[stage].samplerBinding   = regIndex + 16;
+						m_bindInfo[stage].samplerBinding   = regIndex + kSpirvSamplerShift;
 
 						const VkImageViewType viewType = hasTexData
 							? textureDimensionToViewType(idToTextureDimension(texDimension) )
@@ -4611,7 +4623,7 @@ VK_DESTROY
 		uint16_t bidx = 0;
 		if (m_size > 0)
 		{
-			m_uniformBinding = fragment ? 48 : 0;
+			m_uniformBinding = fragment ? (m_oldBindingModel ? kSpirvOldFragmentBinding : kSpirvFragmentBinding) : 0;
 
 			VkDescriptorSetLayoutBinding& binding = m_bindings[bidx];
 			binding.stageFlags = VK_SHADER_STAGE_ALL;

@@ -466,6 +466,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 			, m_numPredefined(0)
 			, m_uniformBinding(0)
 			, m_numBindings(0)
+			, m_oldBindingModel(false)
 		{
 		}
 
@@ -494,6 +495,8 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		uint32_t m_uniformBinding;
 		uint16_t m_numBindings;
 		VkDescriptorSetLayoutBinding m_bindings[32];
+
+		bool m_oldBindingModel;
 	};
 
 	struct ProgramVK

@@ -13,6 +13,7 @@
 #	include "renderer.h"
 #	include "debug_renderdoc.h"
 #	include "emscripten.h"
+#	include "shader_spirv.h"
 
 #	if BX_PLATFORM_ANDROID
 #		define VK_USE_PLATFORM_ANDROID_KHR
@@ -1317,7 +1318,7 @@ namespace bgfx { namespace webgpu
 			// first two bindings are always uniform buffer (vertex/fragment)
 			if (0 < program.m_vsh->m_gpuSize)
 			{
-				bindings.m_entries[0].binding = 0;
+				bindings.m_entries[0].binding = kSpirvVertexBinding;
 				bindings.m_entries[0].offset = 0;
 				bindings.m_entries[0].size = program.m_vsh->m_gpuSize;
 				bindings.m_entries[0].buffer = scratchBuffer.m_buffer;
@@ -1327,7 +1328,7 @@ namespace bgfx { namespace webgpu
 			if (NULL != program.m_fsh
 			&& 0 < program.m_fsh->m_gpuSize)
 			{
-				bindings.m_entries[1].binding = 48;
+				bindings.m_entries[1].binding = program.m_fsh->m_oldBindingModel ? kSpirvOldFragmentBinding : kSpirvFragmentBinding;
 				bindings.m_entries[1].offset = 0;
 				bindings.m_entries[1].size = program.m_fsh->m_gpuSize;
 				bindings.m_entries[1].buffer = scratchBuffer.m_buffer;
@@ -1406,7 +1407,7 @@ namespace bgfx { namespace webgpu
 							textureEntry.textureView = texture.m_ptr.CreateView(&viewDesc);
 
 							wgpu::BindGroupEntry& samplerEntry = b.m_entries[b.numEntries++];
-							samplerEntry.binding = bindInfo.m_binding + 16;
+							samplerEntry.binding = bindInfo.m_binding + kSpirvSamplerShift;
 							samplerEntry.sampler = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & flags)
 								? getSamplerState(flags)
 								: texture.m_sampler;
@@ -2514,6 +2515,8 @@ namespace bgfx { namespace webgpu
 		m_numPredefined = 0;
 		m_numUniforms = count;
 
+		m_oldBindingModel = isShaderVerLess(magic, 11);
+
 		BX_TRACE("%s Shader consts %d"
 			, getShaderTypeName(magic)
 			, count
@@ -2573,7 +2576,11 @@ namespace bgfx { namespace webgpu
 					const bool buffer = idToDescriptorType(regCount) == DescriptorType::StorageBuffer;
 					const bool readonly = (type & kUniformReadOnlyBit) != 0;
 
-					const uint8_t stage = regIndex - (buffer ? 16 : 32) - (fragment ? 48 : 0);
+					const uint8_t reverseShift = m_oldBindingModel
+						? (fragment ? kSpirvOldFragmentShift : 0) + (buffer ? kSpirvOldBufferShift : kSpirvOldImageShift)
+						: kSpirvBindShift;
+
+					const uint8_t stage = regIndex - reverseShift;
 
 					m_bindInfo[stage].m_index = m_numBuffers;
 					m_bindInfo[stage].m_binding = regIndex;
@@ -2607,7 +2614,11 @@ namespace bgfx { namespace webgpu
 					const UniformRegInfo* info = s_renderWgpu->m_uniformReg.find(name);
 					BX_ASSERT(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
-					const uint8_t stage = regIndex - 16 - (fragment ? 48 : 0);
+					const uint8_t reverseShift = m_oldBindingModel
+						? (fragment ? kSpirvOldFragmentShift : 0) + kSpirvOldTextureShift
+						: kSpirvBindShift;
+
+					const uint8_t stage = regIndex - reverseShift;
 
 					m_bindInfo[stage].m_index = m_numSamplers;
 					m_bindInfo[stage].m_binding = regIndex;
@@ -2647,7 +2658,7 @@ namespace bgfx { namespace webgpu
 					const bool comparisonSampler = (type & kUniformCompareBit) != 0;
 
 					m_samplers[m_numSamplers] = wgpu::BindGroupLayoutEntry();
-					m_samplers[m_numSamplers].binding = regIndex + 16;
+					m_samplers[m_numSamplers].binding = regIndex + kSpirvSamplerShift;
 					m_samplers[m_numSamplers].visibility = shaderStage;
 					m_samplers[m_numSamplers].sampler.type = comparisonSampler
 						? wgpu::SamplerBindingType::Comparison
@@ -2817,7 +2828,7 @@ namespace bgfx { namespace webgpu
 
 		if (_vsh->m_size > 0)
 		{
-			bindings[numBindings].binding = 0;
+			bindings[numBindings].binding = kSpirvVertexBinding;
 			bindings[numBindings].visibility = _vsh->m_stage;
 			bindings[numBindings].buffer.type = wgpu::BufferBindingType::Uniform;
 			bindings[numBindings].buffer.hasDynamicOffset = true;
@@ -2826,7 +2837,7 @@ namespace bgfx { namespace webgpu
 
 		if (NULL != _fsh && _fsh->m_size > 0)
 		{
-			bindings[numBindings].binding = 48;
+			bindings[numBindings].binding = _fsh->m_oldBindingModel ? kSpirvOldFragmentBinding : kSpirvFragmentBinding;
 			bindings[numBindings].visibility = wgpu::ShaderStage::Fragment;
 			bindings[numBindings].buffer.type = wgpu::BufferBindingType::Uniform;
 			bindings[numBindings].buffer.hasDynamicOffset = true;
