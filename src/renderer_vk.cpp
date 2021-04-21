@@ -4413,12 +4413,19 @@ VK_DESTROY
 				bx::read(&reader, regCount);
 
 				const bool hasTexData = !isShaderVerLess(magic, 8);
+				const bool hasTexFormat = !isShaderVerLess(magic, 10);
 				uint8_t texComponent = 0;
 				uint8_t texDimension = 0;
+				uint16_t texFormat = 0;
 				if (hasTexData)
 				{
 					bx::read(&reader, texComponent);
 					bx::read(&reader, texDimension);
+				}
+
+				if (hasTexFormat)
+				{
+					bx::read(&reader, texFormat);
 				}
 
 				const char* kind = "invalid";

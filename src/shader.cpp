@@ -53,9 +53,11 @@ namespace bgfx
 	static TextureComponentTypeToId s_textureComponentTypeToId[] =
 	{
 		// see comment in s_descriptorTypeToId
-		{ TextureComponentType::Float,     0x00 },
-		{ TextureComponentType::Int,       0x01 },
-		{ TextureComponentType::Uint,      0x02 },
+		{ TextureComponentType::Float,             0x00 },
+		{ TextureComponentType::Int,               0x01 },
+		{ TextureComponentType::Uint,              0x02 },
+		{ TextureComponentType::Depth,             0x03 },
+		{ TextureComponentType::UnfilterableFloat, 0x04 },
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_textureComponentTypeToId) == TextureComponentType::Count);
 
@@ -228,6 +230,12 @@ namespace bgfx
 				{
 					uint16_t texInfo;
 					bx::read(_reader, texInfo, _err);
+				}
+
+				if (!isShaderVerLess(magic, 10) )
+				{
+					uint16_t texFormat = 0;
+					bx::read(_reader, texFormat, _err);
 				}
 			}
 

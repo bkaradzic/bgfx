@@ -607,6 +607,7 @@ namespace bgfx { namespace metal
 			bx::write(_writer, un.regCount);
 			bx::write(_writer, un.texComponent);
 			bx::write(_writer, un.texDimension);
+			bx::write(_writer, un.texFormat);
 
 			BX_TRACE("%s, %s, %d, %d, %d"
 				, un.name.c_str()
@@ -890,20 +891,20 @@ namespace bgfx { namespace metal
 					for (auto &resource : resourcesrefl.separate_images)
 					{
 						std::string name = refl.get_name(resource.id);
-						if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
+						if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture"))
 						{
-							auto uniform_name = name.substr(0, name.length() - 7);
-
-							Uniform un;
-							un.name = uniform_name;
-							un.type = UniformType::Sampler;
-
-							un.num = 0;			// needed?
-							un.regIndex = 0;	// needed?
-							un.regCount = 0;	// needed?
-
-							uniforms.push_back(un);
+							name = name.substr(0, name.length() - 7);
 						}
+
+						Uniform un;
+						un.name = name;
+						un.type = UniformType::Sampler;
+
+						un.num = 0;			// needed?
+						un.regIndex = 0;	// needed?
+						un.regCount = 0;	// needed?
+
+						uniforms.push_back(un);
 					}
 					uint16_t size = writeUniformArray( _writer, uniforms, _options.shaderType == 'f');
 
@@ -979,10 +980,6 @@ namespace bgfx { namespace metal
 						for (auto &resource : resources.storage_images)
 						{
 							std::string name = msl.get_name(resource.id);
-							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
-							{
-								msl.set_name(resource.id, name.substr(0, name.length() - 7) );
-							}
 
 							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
 							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );

@@ -2488,6 +2488,12 @@ namespace bgfx { namespace mtl
 				uint16_t texInfo = 0;
 				bx::read(&reader, texInfo);
 			}
+
+			if (!isShaderVerLess(magic, 10) )
+			{
+				uint16_t texFormat = 0;
+				bx::read(&reader, texFormat);
+			}
 		}
 
 		if (isShaderType(magic, 'C'))
