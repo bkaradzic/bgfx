@@ -620,7 +620,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		void* create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip);
 		// internal render target
-		VkResult create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format, VkImageAspectFlags _aspectMask);
+		VkResult create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format);
 
 		void destroy();
 
@@ -662,6 +662,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 	private:
 		VkResult createImages(VkCommandBuffer _commandBuffer);
+		static VkImageAspectFlags getAspectMask(VkFormat _format);
 	};
 
 	struct SwapChainVK
@@ -728,9 +729,9 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		bool     m_needToRefreshSwapchain;
 		bool     m_needToRecreateSurface;
 
-		VkFormat    m_backBufferDepthStencilFormat;
-		TextureVK   m_backBufferDepthStencil;
-		VkImageView m_backBufferDepthStencilImageView;
+		TextureFormat::Enum m_backBufferDepthStencilFormat;
+		TextureVK           m_backBufferDepthStencil;
+		VkImageView         m_backBufferDepthStencilImageView;
 
 		TextureVK     m_backBufferColorMsaa;
 		VkImageView   m_backBufferColorMsaaImageView;

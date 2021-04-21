@@ -1769,7 +1769,7 @@ VK_IMPORT_DEVICE
 					m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
 					m_textVideoMem.clear();
 
-					result = m_backBuffer.create(UINT16_MAX, g_platformData.nwh, m_resolution.width, m_resolution.height);
+					result = m_backBuffer.create(UINT16_MAX, g_platformData.nwh, m_resolution.width, m_resolution.height, m_resolution.format);
 
 					if (VK_SUCCESS != result)
 					{
@@ -5139,7 +5139,7 @@ VK_DESTROY
 		vkUnmapMemory(s_renderVK->m_device, _memory);
 	}
 
-	VkResult TextureVK::create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format, VkImageAspectFlags _aspectMask)
+	VkResult TextureVK::create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format)
 	{
 		m_flags     = _flags;
 		m_width     = _width;
@@ -5150,13 +5150,9 @@ VK_DESTROY
 		m_textureFormat   = uint8_t(bimg::TextureFormat::Count);
 		m_format = _format;
 		m_components = { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY };
-
-		m_aspectMask = _aspectMask;
-
+		m_aspectMask = getAspectMask(m_format);
 		m_sampler = s_msaa[bx::uint32_satsub( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1)];
-
 		m_type = VK_IMAGE_VIEW_TYPE_2D;
-
 		m_numMips = 1;
 		m_numSides = 1;
 
@@ -5164,7 +5160,7 @@ VK_DESTROY
 
 		if (VK_SUCCESS == result)
 		{
-			const VkImageLayout layout = 0 != (_aspectMask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
+			const VkImageLayout layout = 0 != (m_aspectMask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 				? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 				: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 				;
@@ -5337,28 +5333,7 @@ VK_DESTROY
 			const bool convert = m_textureFormat != m_requestedFormat;
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 
-			m_aspectMask = 0;
-
-			if (bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
-			{
-				if (m_format != VK_FORMAT_S8_UINT)
-				{
-					m_aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
-				}
-
-				if (m_format == VK_FORMAT_S8_UINT
-				||  m_format == VK_FORMAT_D16_UNORM_S8_UINT
-				||  m_format == VK_FORMAT_D24_UNORM_S8_UINT
-				||  m_format == VK_FORMAT_D32_SFLOAT_S8_UINT)
-				{
-					m_aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-				}
-			}
-			else
-			{
-				m_aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
-			}
-
+			m_aspectMask = getAspectMask(m_format);
 			m_sampler = s_msaa[bx::uint32_satsub( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1)];
 
 			if (imageContainer.m_cubeMap)
@@ -5941,6 +5916,26 @@ VK_DESTROY
 		return result;
 	}
 
+	VkImageAspectFlags TextureVK::getAspectMask(VkFormat _format)
+	{
+		switch (_format)
+		{
+		case VK_FORMAT_S8_UINT:
+			return VK_IMAGE_ASPECT_STENCIL_BIT;
+			break;
+		case VK_FORMAT_D16_UNORM:
+		case VK_FORMAT_X8_D24_UNORM_PACK32:
+		case VK_FORMAT_D32_SFLOAT:
+			return VK_IMAGE_ASPECT_DEPTH_BIT;
+		case VK_FORMAT_D16_UNORM_S8_UINT:
+		case VK_FORMAT_D24_UNORM_S8_UINT:
+		case VK_FORMAT_D32_SFLOAT_S8_UINT:
+			return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+		default:
+			return VK_IMAGE_ASPECT_COLOR_BIT;
+		}
+	}
+
 	VkResult SwapChainVK::create(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution, TextureFormat::Enum _depthFormat)
 	{
 		BX_UNUSED(_depthFormat);
@@ -5970,6 +5965,7 @@ VK_DESTROY
 
 		m_nwh = _nwh;
 		m_resolution = _resolution;
+		m_backBufferDepthStencilFormat = TextureFormat::Count == _depthFormat ? TextureFormat::D24S8 : _depthFormat;
 
 		m_queue = s_renderVK->m_queueGraphics;
 
@@ -6085,11 +6081,6 @@ VK_DESTROY
 			m_backBufferColorFormat.colorSpace     = preferredColorSpace;
 			m_backBufferColorFormatSrgb.format     = preferredSurfaceFormatSrgb[surfaceFormatIdx];
 			m_backBufferColorFormatSrgb.colorSpace = preferredColorSpace;
-
-			m_backBufferDepthStencilFormat = 0 != (g_caps.formats[TextureFormat::D24S8] & BGFX_CAPS_FORMAT_TEXTURE_2D)
-				? VK_FORMAT_D24_UNORM_S8_UINT
-				: VK_FORMAT_D32_SFLOAT_S8_UINT
-				;
 
 			VkCompositeAlphaFlagBitsKHR compositeAlpha = (VkCompositeAlphaFlagBitsKHR)0;
 
@@ -6595,13 +6586,29 @@ VK_DESTROY
 		const uint64_t textureFlags = (uint64_t(samplerIndex + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY;
 		m_sampler = s_msaa[samplerIndex];
 
+		const uint16_t requiredCaps = m_sampler.Count > 1
+			? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+			: BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
+			;
+
+		// the spec guarantees that at least one of D24S8 and D32FS8 is supported
+		VkFormat depthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
+
+		if (g_caps.formats[m_backBufferDepthStencilFormat] & requiredCaps)
+		{
+			depthFormat = s_textureFormat[m_backBufferDepthStencilFormat].m_fmtDsv;
+		}
+		else if (g_caps.formats[TextureFormat::D24S8] & requiredCaps)
+		{
+			depthFormat = s_textureFormat[TextureFormat::D24S8].m_fmtDsv;
+		}
+
 		result = m_backBufferDepthStencil.create(
 			  _commandBuffer
 			, m_sci.imageExtent.width
 			, m_sci.imageExtent.height
 			, textureFlags
-			, m_backBufferDepthStencilFormat
-			, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+			, depthFormat
 			);
 
 		if (VK_SUCCESS != result)
@@ -6626,7 +6633,6 @@ VK_DESTROY
 				, m_sci.imageExtent.height
 				, textureFlags
 				, m_sci.imageFormat
-				, VK_IMAGE_ASPECT_COLOR_BIT
 				);
 
 			if (VK_SUCCESS != result)
