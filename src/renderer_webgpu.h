@@ -219,8 +219,8 @@ namespace bgfx { namespace webgpu
 
 		wgpu::RenderPassDescriptor desc;
 
-		wgpu::RenderPassColorAttachmentDescriptor colorAttachments[kMaxColorAttachments];
-		wgpu::RenderPassDepthStencilAttachmentDescriptor depthStencilAttachment;
+		wgpu::RenderPassColorAttachment colorAttachments[kMaxColorAttachments];
+		wgpu::RenderPassDepthStencilAttachment depthStencilAttachment;
 	};
 
 	struct VertexStateDescriptor

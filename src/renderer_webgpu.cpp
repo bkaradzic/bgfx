@@ -64,16 +64,16 @@ namespace bgfx { namespace webgpu
 	template <> wgpu::PipelineLayoutDescriptor     defaultDescriptor() { return { NULL, "", 0, NULL }; }
 	template <> wgpu::TextureViewDescriptor        defaultDescriptor() { return {}; }
 
-	template <> wgpu::RenderPassColorAttachmentDescriptor defaultDescriptor() { return { {}, {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, { 0.0f, 0.0f, 0.0f, 0.0f } }; }
-	template <> wgpu::RenderPassDepthStencilAttachmentDescriptor defaultDescriptor() { return { {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, 1.0f, false, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, 0, false }; }
+	template <> wgpu::RenderPassColorAttachment defaultDescriptor() { return { {}, {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, { 0.0f, 0.0f, 0.0f, 0.0f } }; }
+	template <> wgpu::RenderPassDepthStencilAttachment defaultDescriptor() { return { {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, 1.0f, false, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, 0, false }; }
 
 	RenderPassDescriptor::RenderPassDescriptor()
 	{
-		depthStencilAttachment = defaultDescriptor<wgpu::RenderPassDepthStencilAttachmentDescriptor>();
+		depthStencilAttachment = defaultDescriptor<wgpu::RenderPassDepthStencilAttachment>();
 
 		for(uint32_t i = 0; i < kMaxColorAttachments; ++i)
 		{
-			colorAttachments[i] = defaultDescriptor<wgpu::RenderPassColorAttachmentDescriptor>();
+			colorAttachments[i] = defaultDescriptor<wgpu::RenderPassColorAttachment>();
 		}
 
 		desc = defaultDescriptor<wgpu::RenderPassDescriptor>();
@@ -1144,7 +1144,7 @@ namespace bgfx { namespace webgpu
 														 );
 
 				RenderPassDescriptor renderPassDescriptor;
-				wgpu::RenderPassColorAttachmentDescriptor& color = renderPassDescriptor.colorAttachments[0];
+				wgpu::RenderPassColorAttachment& color = renderPassDescriptor.colorAttachments[0];
 
 				setFrameBuffer(renderPassDescriptor, fbh);
 
@@ -1684,7 +1684,7 @@ namespace bgfx { namespace webgpu
 					: m_frameBuffers[_fbh.idx].m_swapChain
 					;
 
-				_renderPassDescriptor.colorAttachments[0] = defaultDescriptor<wgpu::RenderPassColorAttachmentDescriptor>();
+				_renderPassDescriptor.colorAttachments[0] = defaultDescriptor<wgpu::RenderPassColorAttachment>();
 				_renderPassDescriptor.desc.colorAttachmentCount = 1;
 
 				// Force 1 array layers for attachments
@@ -1693,16 +1693,16 @@ namespace bgfx { namespace webgpu
 
 				if (swapChain->m_backBufferColorMsaa)
 				{
-					_renderPassDescriptor.colorAttachments[0].attachment    = swapChain->m_backBufferColorMsaa.CreateView(&desc);
+					_renderPassDescriptor.colorAttachments[0].view    = swapChain->m_backBufferColorMsaa.CreateView(&desc);
 					_renderPassDescriptor.colorAttachments[0].resolveTarget = swapChain->current();
 				}
 				else
 				{
-					_renderPassDescriptor.colorAttachments[0].attachment = swapChain->current();
+					_renderPassDescriptor.colorAttachments[0].view = swapChain->current();
 				}
 
-				_renderPassDescriptor.depthStencilAttachment = defaultDescriptor<wgpu::RenderPassDepthStencilAttachmentDescriptor>();
-				_renderPassDescriptor.depthStencilAttachment.attachment = swapChain->m_backBufferDepth.CreateView();
+				_renderPassDescriptor.depthStencilAttachment = defaultDescriptor<wgpu::RenderPassDepthStencilAttachment>();
+				_renderPassDescriptor.depthStencilAttachment.view = swapChain->m_backBufferDepth.CreateView();
 				_renderPassDescriptor.desc.depthStencilAttachment = &_renderPassDescriptor.depthStencilAttachment;
 			}
 			else
@@ -1717,8 +1717,8 @@ namespace bgfx { namespace webgpu
 
 					const wgpu::TextureViewDescriptor desc = attachmentView(frameBuffer.m_colorAttachment[ii], texture);
 
-					_renderPassDescriptor.colorAttachments[ii] = defaultDescriptor<wgpu::RenderPassColorAttachmentDescriptor>();
-					_renderPassDescriptor.colorAttachments[ii].attachment = texture.m_ptrMsaa
+					_renderPassDescriptor.colorAttachments[ii] = defaultDescriptor<wgpu::RenderPassColorAttachment>();
+					_renderPassDescriptor.colorAttachments[ii].view = texture.m_ptrMsaa
 						? texture.m_ptrMsaa.CreateView(&desc)
 						: texture.m_ptr.CreateView(&desc)
 						;
@@ -1733,8 +1733,8 @@ namespace bgfx { namespace webgpu
 					const TextureWgpu& texture = m_textures[frameBuffer.m_depthHandle.idx];
 					const wgpu::TextureViewDescriptor desc = attachmentView(frameBuffer.m_depthAttachment, texture);
 
-					_renderPassDescriptor.depthStencilAttachment = defaultDescriptor<wgpu::RenderPassDepthStencilAttachmentDescriptor>();
-					_renderPassDescriptor.depthStencilAttachment.attachment = texture.m_ptrMsaa
+					_renderPassDescriptor.depthStencilAttachment = defaultDescriptor<wgpu::RenderPassDepthStencilAttachment>();
+					_renderPassDescriptor.depthStencilAttachment.view = texture.m_ptrMsaa
 						? texture.m_ptrMsaa.CreateView(&desc)
 						: texture.m_ptr.CreateView(&desc)
 						;
@@ -2284,7 +2284,7 @@ namespace bgfx { namespace webgpu
 			{
 				for(uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 				{
-					wgpu::RenderPassColorAttachmentDescriptor& color = renderPassDescriptor.colorAttachments[ii];
+					wgpu::RenderPassColorAttachment& color = renderPassDescriptor.colorAttachments[ii];
 
 					if(0 != (BGFX_CLEAR_COLOR & clr.m_flags))
 					{
@@ -2314,13 +2314,13 @@ namespace bgfx { namespace webgpu
 						color.loadOp = wgpu::LoadOp::Load;
 					}
 
-					//desc.storeOp = desc.attachment.sampleCount > 1 ? wgpu::StoreOp::MultisampleResolve : wgpu::StoreOp::Store;
+					//desc.storeOp = desc.view.sampleCount > 1 ? wgpu::StoreOp::MultisampleResolve : wgpu::StoreOp::Store;
 					color.storeOp = wgpu::StoreOp::Store;
 				}
 
-				wgpu::RenderPassDepthStencilAttachmentDescriptor& depthStencil = renderPassDescriptor.depthStencilAttachment;
+				wgpu::RenderPassDepthStencilAttachment& depthStencil = renderPassDescriptor.depthStencilAttachment;
 
-				if(depthStencil.attachment)
+				if(depthStencil.view)
 				{
 					depthStencil.clearDepth = clr.m_depth;
 					depthStencil.depthLoadOp = 0 != (BGFX_CLEAR_DEPTH & clr.m_flags)
@@ -2347,16 +2347,16 @@ namespace bgfx { namespace webgpu
 			{
 				for(uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 				{
-					wgpu::RenderPassColorAttachmentDescriptor& color = renderPassDescriptor.colorAttachments[ii];
-					if(color.attachment)
+					wgpu::RenderPassColorAttachment& color = renderPassDescriptor.colorAttachments[ii];
+					if(color.view)
 					{
 						color.loadOp = wgpu::LoadOp::Load;
 					}
 				}
 
-				wgpu::RenderPassDepthStencilAttachmentDescriptor& depthStencil = renderPassDescriptor.depthStencilAttachment;
+				wgpu::RenderPassDepthStencilAttachment& depthStencil = renderPassDescriptor.depthStencilAttachment;
 
-				if(depthStencil.attachment)
+				if(depthStencil.view)
 				{
 					depthStencil.depthLoadOp = wgpu::LoadOp::Load;
 					depthStencil.depthStoreOp = wgpu::StoreOp::Store;
