@@ -630,7 +630,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
 		VkImageLayout setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage = false);
 
-		VkImageView createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget) const;
+		VkResult createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget, ::VkImageView* _view) const;
 
 		void*    m_directAccessPtr;
 		uint64_t m_flags;
@@ -679,14 +679,16 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		
 		void destroy();
 
-		void update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset, TextureFormat::Enum _format);
+		void update(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution);
 
 		VkResult createSurface(void* _nwh, uint32_t _reset);
-		VkResult createSwapChain(VkCommandBuffer _commandBuffer, uint32_t _reset);
+		VkResult createSwapChain(uint32_t _reset);
+		VkResult createAttachments(VkCommandBuffer _commandBuffer, uint32_t _reset);
 		VkResult createFrameBuffer();
 
 		void releaseSurface();
 		void releaseSwapChain();
+		void releaseAttachments();
 		void releaseFrameBuffer();
 
 		uint32_t findPresentMode(bool _vsync);
@@ -700,6 +702,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkSwapchainCreateInfoKHR m_sci;
 
 		void* m_nwh;
+		Resolution m_resolution;
 
 		VkSurfaceKHR       m_surface;
 		VkSwapchainKHR     m_swapchain;
@@ -754,7 +757,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkResult create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format = TextureFormat::Count, TextureFormat::Enum _depthFormat = TextureFormat::Count);
 		uint16_t destroy();
 
-		void update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset, TextureFormat::Enum _format = TextureFormat::Count);
+		void update(VkCommandBuffer _commandBuffer, const Resolution& _resolution);
 
 		void preReset();
 		void postReset();

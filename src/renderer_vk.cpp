@@ -2623,49 +2623,26 @@ VK_IMPORT_DEVICE
 				| BGFX_RESET_DEPTH_CLAMP
 				);
 
-			const bool resize = false
-				|| m_resolution.width  != _resolution.width
-				|| m_resolution.height != _resolution.height
-				;
-
 			// Note: m_needToRefreshSwapchain is deliberately ignored when deciding whether to recreate the swapchain
 			// because it can happen several frames before submit is called with the new resolution.
-			// Instead, vkAcquireNextImageKHR and the entire submit call are skipped until the window size is updated.
+			// Instead, vkAcquireNextImageKHR and all draws to the backbuffer are skipped until the window size is updated.
 			// That also fixes a related issue where VK_ERROR_OUT_OF_DATE_KHR is returned from
 			// vkQueuePresentKHR when the window doesn't exist anymore, and vkGetPhysicalDeviceSurfaceCapabilitiesKHR
 			// fails with VK_ERROR_SURFACE_LOST_KHR.
 
-			if (resize
-			||  m_resolution.reset != flags
+			if (false
+			||  m_resolution.format != _resolution.format
+			||  m_resolution.width  != _resolution.width
+			||  m_resolution.height != _resolution.height
+			||  m_resolution.reset  != flags
 			||  m_backBuffer.m_swapChain.m_needToRecreateSurface)
 			{
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				const uint64_t recreateSurfaceMask = BGFX_RESET_HIDPI;
-
-				m_backBuffer.m_swapChain.m_needToRecreateSurface = false
-					|| m_backBuffer.m_swapChain.m_needToRecreateSurface
-					|| g_platformData.nwh != m_backBuffer.m_nwh
-					|| (flags & recreateSurfaceMask) != (m_resolution.reset & recreateSurfaceMask)
-					;
-
 				if (g_platformData.nwh != m_backBuffer.m_nwh)
 				{
 					m_backBuffer.m_nwh = g_platformData.nwh;
-					m_backBuffer.m_swapChain.m_nwh = g_platformData.nwh;
 				}
-
-				const uint64_t recreateMask = 0
-					| BGFX_RESET_VSYNC
-					| BGFX_RESET_SRGB_BACKBUFFER
-					| BGFX_RESET_MSAA_MASK
-					;
-
-				const bool recreate = false
-					|| resize
-					|| (flags & recreateMask) != (m_resolution.reset & recreateMask)
-					|| m_backBuffer.m_swapChain.m_needToRecreateSurface
-					;
 
 				m_resolution = _resolution;
 				m_resolution.reset = flags;
@@ -2675,10 +2652,7 @@ VK_IMPORT_DEVICE
 
 				preReset();
 
-				if (recreate)
-				{
-					m_backBuffer.update(m_commandBuffer, m_resolution.width, m_resolution.height, m_resolution.reset, m_resolution.format);
-				}
+				m_backBuffer.update(m_commandBuffer, m_resolution);
 
 				postReset();
 			}
@@ -3310,7 +3284,8 @@ VK_IMPORT_DEVICE
 				return *viewCached;
 			}
 
-			const VkImageView view = texture.createView(0, texture.m_numSides, _mip, _numMips, _type, false);
+			VkImageView view;
+			VK_CHECK(texture.createView(0, texture.m_numSides, _mip, _numMips, _type, false, &view) );
 			m_imageViewCache.add(hashKey, view, 0);
 
 			return view;
@@ -5874,8 +5849,10 @@ VK_DESTROY
 		return oldLayout;
 	}
 
-	VkImageView TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget) const
+	VkResult TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget, ::VkImageView* _view) const
 	{
+		VkResult result = VK_SUCCESS;
+
 		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
 		{
 			BX_ASSERT(false
@@ -5926,14 +5903,22 @@ VK_DESTROY
 			viewInfo.subresourceRange.layerCount = _numLayers;
 		}
 
-		VK_CHECK(vkCreateImageView(
+		result = vkCreateImageView(
 			  s_renderVK->m_device
 			, &viewInfo
 			, s_renderVK->m_allocatorCb
 			, &view
-			) );
+			);
 
-		return view;
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("Create texture view error: vkCreateImageView failed %d: %s.", result, getName(result) );
+			return result;
+		}
+
+		*_view = view;
+
+		return result;
 	}
 
 	VkResult SwapChainVK::create(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution, TextureFormat::Enum _depthFormat)
@@ -5946,7 +5931,8 @@ VK_DESTROY
 			{
 				Default,
 				SurfaceCreated,
-				SwapChainCreated
+				SwapChainCreated,
+				AttachmentsCreated
 			};
 		};
 
@@ -5963,9 +5949,11 @@ VK_DESTROY
 		const uint32_t queueFamily = s_renderVK->m_qfiGraphics;
 
 		m_nwh = _nwh;
+		m_resolution = _resolution;
+
 		m_queue = s_renderVK->m_queueGraphics;
 
-		result = createSurface(m_nwh, _resolution.reset);
+		result = createSurface(m_nwh, m_resolution.reset);
 
 		if (VK_SUCCESS != result)
 		{
@@ -6001,12 +5989,12 @@ VK_DESTROY
 			}
 
 			const uint32_t width = bx::clamp<uint32_t>(
-				  _resolution.width
+				  m_resolution.width
 				, surfaceCapabilities.minImageExtent.width
 				, surfaceCapabilities.maxImageExtent.width
 				);
 			const uint32_t height = bx::clamp<uint32_t>(
-				  _resolution.height
+				  m_resolution.height
 				, surfaceCapabilities.minImageExtent.height
 				, surfaceCapabilities.maxImageExtent.height
 				);
@@ -6127,7 +6115,7 @@ VK_DESTROY
 				goto error;
 			}
 
-			uint32_t swapBufferCount = bx::clamp<uint32_t>(_resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
+			uint32_t swapBufferCount = bx::clamp<uint32_t>(m_resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
 
 			m_sci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 			m_sci.pNext = NULL;
@@ -6159,7 +6147,7 @@ VK_DESTROY
 			m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
 			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
-			result = createSwapChain(_commandBuffer, _resolution.reset);
+			result = createSwapChain(m_resolution.reset);
 
 			if (VK_SUCCESS != result)
 			{
@@ -6169,6 +6157,18 @@ VK_DESTROY
 		}
 
 		errorState = ErrorState::SwapChainCreated;
+
+		{
+			result = createAttachments(_commandBuffer, m_resolution.reset);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swap chain error: creating MSAA/depth attachments failed %d: %s.", result, getName(result) );
+				goto error;
+			}
+		}
+
+		errorState = ErrorState::AttachmentsCreated;
 
 		{
 			result = createFrameBuffer();
@@ -6186,6 +6186,10 @@ VK_DESTROY
 		BX_TRACE("errorState %d", errorState);
 		switch (errorState)
 		{
+		case ErrorState::AttachmentsCreated:
+			releaseAttachments();
+			BX_FALLTHROUGH;
+
 		case ErrorState::SwapChainCreated:
 			releaseSwapChain();
 			BX_FALLTHROUGH;
@@ -6211,6 +6215,7 @@ VK_DESTROY
 			const VkDevice device = s_renderVK->m_device;
 
 			releaseFrameBuffer();
+			releaseAttachments();
 			releaseSwapChain();
 			releaseSurface();
 
@@ -6223,64 +6228,92 @@ VK_DESTROY
 		m_nwh = NULL;
 	}
 
-	void SwapChainVK::update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset, TextureFormat::Enum _format)
+	void SwapChainVK::update(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution)
 	{
-		BX_UNUSED(_format);
-
 		const VkDevice device = s_renderVK->m_device;
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
 		m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
 		m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
-		VkSwapchainKHR oldSwapchain = m_swapchain;
+		const uint64_t recreateSurfaceMask     = BGFX_RESET_HIDPI;
+		const uint64_t recreateSwapchainMask   = BGFX_RESET_VSYNC | BGFX_RESET_SRGB_BACKBUFFER;
+		const uint64_t recreateAttachmentsMask = BGFX_RESET_MSAA_MASK;
 
-		releaseFrameBuffer();
-		releaseSwapChain();
+		const bool recreateSurface = false
+			|| m_needToRecreateSurface
+			|| m_nwh != _nwh
+			|| (m_resolution.reset & recreateSurfaceMask) != (_resolution.reset & recreateSurfaceMask)
+			;
 
-		if (m_needToRecreateSurface)
+		const bool recreateSwapchain = false
+			|| m_resolution.format != _resolution.format
+			|| m_resolution.width  != _resolution.width
+			|| m_resolution.height != _resolution.height
+			|| (m_resolution.reset & recreateSwapchainMask) != (_resolution.reset & recreateSwapchainMask)
+			|| recreateSurface
+			;
+
+		const bool recreateAttachments = false
+			|| (m_resolution.reset & recreateAttachmentsMask) != (_resolution.reset & recreateAttachmentsMask)
+			|| recreateSwapchain
+			;
+
+		m_nwh = _nwh;
+		m_resolution = _resolution;
+
+		if (recreateAttachments)
 		{
-			oldSwapchain = VK_NULL_HANDLE;
-			releaseSurface();
+			releaseFrameBuffer();
+			releaseAttachments();
 
-			VK_CHECK(vkDeviceWaitIdle(device) );
-			s_renderVK->m_cmd.finish(true);
-
-			VkResult result = createSurface(m_nwh, _reset);
-			if (VK_SUCCESS != result)
+			if (recreateSwapchain)
 			{
-				BX_TRACE("Surface lost.");
-				return;
+				releaseSwapChain();
+
+				if (recreateSurface)
+				{
+					m_sci.oldSwapchain = VK_NULL_HANDLE;
+					releaseSurface();
+
+					VK_CHECK(vkDeviceWaitIdle(device) );
+					s_renderVK->m_cmd.finish(true);
+
+					VkResult result = createSurface(m_nwh, m_resolution.reset);
+					if (VK_SUCCESS != result)
+					{
+						BX_TRACE("Surface lost.");
+						return;
+					}
+				}
+
+				VkSurfaceCapabilitiesKHR surfaceCapabilities;
+				VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities) );
+
+				m_sci.imageExtent.width  = bx::clamp<uint32_t>(
+					  m_resolution.width
+					, surfaceCapabilities.minImageExtent.width
+					, surfaceCapabilities.maxImageExtent.width
+					);
+				m_sci.imageExtent.height = bx::clamp<uint32_t>(
+					  m_resolution.height
+					, surfaceCapabilities.minImageExtent.height
+					, surfaceCapabilities.maxImageExtent.height
+					);
+
+				// Prevent validation error when minimizing a window
+				if (m_sci.imageExtent.width  == 0
+				||  m_sci.imageExtent.height == 0)
+				{
+					return;
+				}
+
+				VK_CHECK(createSwapChain(m_resolution.reset) );
 			}
+
+			VK_CHECK(createAttachments(_commandBuffer, m_resolution.reset) );
+			VK_CHECK(createFrameBuffer() );
 		}
-
-		VkSurfaceCapabilitiesKHR surfaceCapabilities;
-		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities) );
-
-		m_sci.imageExtent.width  = bx::clamp<uint32_t>(
-			  _width
-			, surfaceCapabilities.minImageExtent.width
-			, surfaceCapabilities.maxImageExtent.width
-			);
-		m_sci.imageExtent.height = bx::clamp<uint32_t>(
-			  _height
-			, surfaceCapabilities.minImageExtent.height
-			, surfaceCapabilities.maxImageExtent.height
-			);
-
-		// Prevent validation error when minimizing a window
-		if (m_sci.imageExtent.width  == 0
-		||  m_sci.imageExtent.height == 0)
-		{
-			return;
-		}
-
-		m_sci.oldSwapchain = oldSwapchain;
-
-		VK_CHECK(createSwapChain(_commandBuffer, _reset) );
-		VK_CHECK(createFrameBuffer() );
-
-		m_sci.oldSwapchain = VK_NULL_HANDLE;
 	}
 
 	VkResult SwapChainVK::createSurface(void* _nwh, uint32_t _reset)
@@ -6393,7 +6426,7 @@ VK_DESTROY
 		release(m_surface);
 	}
 
-	VkResult SwapChainVK::createSwapChain(VkCommandBuffer _commandBuffer, uint32_t _reset)
+	VkResult SwapChainVK::createSwapChain(uint32_t _reset)
 	{
 		VkResult result = VK_SUCCESS;
 
@@ -6425,6 +6458,8 @@ VK_DESTROY
 			BX_TRACE("Create swapchain error: vkCreateSwapchainKHR failed %d: %s.", result, getName(result) );
 			return result;
 		}
+
+		m_sci.oldSwapchain = m_swapchain;
 
 		result = vkGetSwapchainImagesKHR(device, m_swapchain, &m_numSwapchainImages, NULL);
 		if (VK_SUCCESS != result)
@@ -6459,47 +6494,6 @@ VK_DESTROY
 				, getName(result)
 				);
 			return result;
-		}
-
-		const uint32_t samplerIndex = (_reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
-		const uint64_t textureFlags = (uint64_t(samplerIndex + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY;
-		m_sampler = s_msaa[samplerIndex];
-
-		result = m_backBufferDepthStencil.create(
-			  _commandBuffer
-			, m_sci.imageExtent.width
-			, m_sci.imageExtent.height
-			, textureFlags
-			, m_backBufferDepthStencilFormat
-			, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-			);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("Create swapchain error: creating depth stencil image failed %d: %s.", result, getName(result) );
-			return result;
-		}
-
-		m_backBufferDepthStencilImageView = m_backBufferDepthStencil.createView(0, 1, 0, 1, VK_IMAGE_VIEW_TYPE_2D, true);
-
-		if (m_sampler.Count > 1)
-		{
-			result = m_backBufferColorMsaa.create(
-				  _commandBuffer
-				, m_sci.imageExtent.width
-				, m_sci.imageExtent.height
-				, textureFlags
-				, m_sci.imageFormat
-				, VK_IMAGE_ASPECT_COLOR_BIT
-				);
-
-			if (VK_SUCCESS != result)
-			{
-				BX_TRACE("Create swapchain error: creating MSAA color image failed %d: %s.", result, getName(result) );
-				return result;
-			}
-
-			m_backBufferColorMsaaImageView = m_backBufferColorMsaa.createView(0, 1, 0, 1, VK_IMAGE_VIEW_TYPE_2D, true);
 		}
 
 		VkImageViewCreateInfo ivci;
@@ -6570,13 +6564,76 @@ VK_DESTROY
 			release(m_renderDoneSemaphore[ii]);
 		}
 
+		release(m_swapchain);
+	}
+
+	VkResult SwapChainVK::createAttachments(VkCommandBuffer _commandBuffer, uint32_t _reset)
+	{
+		VkResult result = VK_SUCCESS;
+
+		const uint32_t samplerIndex = (_reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
+		const uint64_t textureFlags = (uint64_t(samplerIndex + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY;
+		m_sampler = s_msaa[samplerIndex];
+
+		result = m_backBufferDepthStencil.create(
+			  _commandBuffer
+			, m_sci.imageExtent.width
+			, m_sci.imageExtent.height
+			, textureFlags
+			, m_backBufferDepthStencilFormat
+			, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+			);
+
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("Create swapchain error: creating depth stencil image failed %d: %s.", result, getName(result) );
+			return result;
+		}
+
+		result = m_backBufferDepthStencil.createView(0, 1, 0, 1, VK_IMAGE_VIEW_TYPE_2D, true, &m_backBufferDepthStencilImageView);
+
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("Create swapchain error: creating depth stencil image view failed %d: %s.", result, getName(result) );
+			return result;
+		}
+
+		if (m_sampler.Count > 1)
+		{
+			result = m_backBufferColorMsaa.create(
+				  _commandBuffer
+				, m_sci.imageExtent.width
+				, m_sci.imageExtent.height
+				, textureFlags
+				, m_sci.imageFormat
+				, VK_IMAGE_ASPECT_COLOR_BIT
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: creating MSAA color image failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			result = m_backBufferColorMsaa.createView(0, 1, 0, 1, VK_IMAGE_VIEW_TYPE_2D, true, &m_backBufferColorMsaaImageView);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: creating MSAA color image view failed %d: %s.", result, getName(result) );
+				return result;
+			}
+		}
+
+		return result;
+	}
+
+	void SwapChainVK::releaseAttachments()
+	{
 		release(m_backBufferDepthStencilImageView);
 		release(m_backBufferColorMsaaImageView);
 
 		m_backBufferDepthStencil.destroy();
 		m_backBufferColorMsaa.destroy();
-
-		release(m_swapchain);
 	}
 
 	VkResult SwapChainVK::createFrameBuffer()
@@ -6895,14 +6952,15 @@ VK_DESTROY
 			{
 				const Attachment& at = m_attachment[ii];
 				const TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
-				m_textureImageViews[ii] = texture.createView(
+				VK_CHECK(texture.createView(
 					  at.layer
 					, at.numLayers
 					, at.mip
 					, 1
 					, at.numLayers > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D
 					, true
-					);
+					, &m_textureImageViews[ii]
+					) );
 
 				if (texture.m_aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
 				{
@@ -6937,12 +6995,12 @@ VK_DESTROY
 		}
 	}
 
-	void FrameBufferVK::update(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint32_t _reset, TextureFormat::Enum _format)
+	void FrameBufferVK::update(VkCommandBuffer _commandBuffer, const Resolution& _resolution)
 	{
-		m_swapChain.update(_commandBuffer, _width, _height, _reset, _format);
+		m_swapChain.update(_commandBuffer, m_nwh, _resolution);
 		VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &m_renderPass) );
-		m_width = _width;
-		m_height = _height;
+		m_width   = _resolution.width;
+		m_height  = _resolution.height;
 		m_sampler = m_swapChain.m_sampler;
 	}
 
