@@ -448,12 +448,13 @@ namespace bgfx { namespace spirv
 		shader->setEnvInput(glslang::EShSourceHlsl, stage, glslang::EShClientVulkan, s_GLSL_VULKAN_CLIENT_VERSION);
 		shader->setEnvClient(glslang::EShClientVulkan, getGlslangTargetVulkanVersion(_version));
 		shader->setEnvTarget(glslang::EShTargetSpv, getGlslangTargetSpirvVersion(_version));
-		uint32_t bindingOffset = (stage == EShLanguage::EShLangFragment ? 48 : 0);
-		shader->setShiftBinding(glslang::EResUbo, bindingOffset);
-		shader->setShiftBinding(glslang::EResTexture, bindingOffset + 16);
-		shader->setShiftBinding(glslang::EResSampler, bindingOffset + 32);
-		shader->setShiftBinding(glslang::EResSsbo, bindingOffset + 16);
-		shader->setShiftBinding(glslang::EResImage, bindingOffset + 32);
+
+		// Reserve two spots for the stage UBOs
+		shader->setShiftBinding(glslang::EResUbo, (stage == EShLanguage::EShLangFragment ? kSpirvFragmentBinding : kSpirvVertexBinding));
+		shader->setShiftBinding(glslang::EResTexture, kSpirvBindShift);
+		shader->setShiftBinding(glslang::EResSampler, kSpirvBindShift + kSpirvSamplerShift);
+		shader->setShiftBinding(glslang::EResSsbo, kSpirvBindShift);
+		shader->setShiftBinding(glslang::EResImage, kSpirvBindShift);
 
 		const char* shaderStrings[] = { _code.c_str() };
 		shader->setStrings(

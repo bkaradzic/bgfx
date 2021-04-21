@@ -177,6 +177,8 @@ namespace bgfx { namespace webgpu
 		uint8_t                    m_numSamplers = 0;
 		wgpu::BindGroupLayoutEntry m_buffers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t                   m_numBuffers = 0;
+
+		bool m_oldBindingModel = false;
 	};
 
 	struct PipelineStateWgpu;
