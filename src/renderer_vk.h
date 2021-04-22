@@ -591,16 +591,16 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 	struct ReadbackVK
 	{
-		void create(VkImage _image, uint32_t _width, uint32_t _height, bimg::TextureFormat::Enum _format);
+		void create(VkImage _image, uint32_t _width, uint32_t _height, TextureFormat::Enum _format);
 		void destroy();
 		uint32_t pitch(uint8_t _mip = 0) const;
 		void copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip = 0) const;
 		void readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, uint8_t _mip = 0) const;
 
-		VkImage m_image;
+		VkImage  m_image;
 		uint32_t m_width;
 		uint32_t m_height;
-		bimg::TextureFormat::Enum m_format;
+		TextureFormat::Enum  m_format;
 	};
 
 	struct TextureVK
@@ -682,9 +682,9 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		void update(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution);
 
-		VkResult createSurface(void* _nwh, uint32_t _reset);
-		VkResult createSwapChain(uint32_t _reset);
-		VkResult createAttachments(VkCommandBuffer _commandBuffer, uint32_t _reset);
+		VkResult createSurface();
+		VkResult createSwapChain();
+		VkResult createAttachments(VkCommandBuffer _commandBuffer);
 		VkResult createFrameBuffer();
 
 		void releaseSurface();
@@ -693,6 +693,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		void releaseFrameBuffer();
 
 		uint32_t findPresentMode(bool _vsync);
+		TextureFormat::Enum findSurfaceFormat(TextureFormat::Enum _format, VkColorSpaceKHR _colorSpace, bool _srgb);
 
 		bool acquire(VkCommandBuffer _commandBuffer);
 		void present();
@@ -705,17 +706,18 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		void* m_nwh;
 		Resolution m_resolution;
 
-		VkSurfaceKHR       m_surface;
-		VkSwapchainKHR     m_swapchain;
-		uint32_t           m_numSwapchainImages;
-		VkSurfaceFormatKHR m_backBufferColorFormat;
-		VkSurfaceFormatKHR m_backBufferColorFormatSrgb;
-		VkImageLayout      m_backBufferColorImageLayout[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkImage            m_backBufferColorImage[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkImageView        m_backBufferColorImageView[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkFramebuffer      m_backBufferFrameBuffer[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkFence            m_backBufferFence[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		bool               m_supportsReadback;
+		TextureFormat::Enum m_colorFormat;
+		TextureFormat::Enum m_depthFormat;
+
+		VkSurfaceKHR   m_surface;
+		VkSwapchainKHR m_swapchain;
+		uint32_t       m_numSwapchainImages;
+		VkImageLayout  m_backBufferColorImageLayout[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		VkImage        m_backBufferColorImage[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		VkImageView    m_backBufferColorImageView[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		VkFramebuffer  m_backBufferFrameBuffer[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		VkFence        m_backBufferFence[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		uint32_t       m_backBufferColorIdx;
 
 		VkSemaphore m_presentDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		VkSemaphore m_renderDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
@@ -723,20 +725,20 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		VkSemaphore m_lastImageRenderedSemaphore;
 		VkSemaphore m_lastImageAcquiredSemaphore;
-
-		uint32_t m_backBufferColorIdx;
-		bool     m_needPresent;
-		bool     m_needToRefreshSwapchain;
-		bool     m_needToRecreateSurface;
-
-		TextureFormat::Enum m_backBufferDepthStencilFormat;
-		TextureVK           m_backBufferDepthStencil;
-		VkImageView         m_backBufferDepthStencilImageView;
+		
+		bool m_needPresent;
+		bool m_needToRefreshSwapchain;
+		bool m_needToRecreateSurface;
+		
+		TextureVK   m_backBufferDepthStencil;
+		VkImageView m_backBufferDepthStencilImageView;
 
 		TextureVK     m_backBufferColorMsaa;
 		VkImageView   m_backBufferColorMsaaImageView;
 		MsaaSamplerVK m_sampler;
-		bool          m_supportsManualResolve;
+
+		bool m_supportsReadback;
+		bool m_supportsManualResolve;
 	};
 
 	struct FrameBufferVK

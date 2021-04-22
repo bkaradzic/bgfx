@@ -2265,9 +2265,7 @@ VK_IMPORT_DEVICE
 				;
 			const SwapChainVK& swapChain = frameBuffer.m_swapChain;
 
-			if (NULL == swapChain.m_nwh
-			||  !swapChain.m_needPresent
-			||  !swapChain.m_supportsReadback)
+			if (!isSwapChainReadable(swapChain) )
 			{
 				BX_TRACE("Unable to capture screenshot %s.", _filePath);
 				return;
@@ -2287,7 +2285,8 @@ VK_IMPORT_DEVICE
 					);
 			};
 
-			const uint32_t size = frameBuffer.m_width * frameBuffer.m_height * 4;
+			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(swapChain.m_colorFormat) );
+			const uint32_t size = frameBuffer.m_width * frameBuffer.m_height * bpp / 8;
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
@@ -2584,11 +2583,14 @@ VK_IMPORT_DEVICE
 				m_frameBuffers[ii].postReset();
 			}
 
-			if (NULL != m_backBuffer.m_nwh
-			&&  m_backBuffer.m_swapChain.m_supportsReadback
-			&&  m_resolution.reset & BGFX_RESET_CAPTURE)
+			if (m_resolution.reset & BGFX_RESET_CAPTURE)
 			{
-				const uint32_t captureSize = m_resolution.width*m_resolution.height*4;
+				const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_backBuffer.m_swapChain.m_colorFormat) );
+				const uint32_t captureSize = m_backBuffer.m_width * m_backBuffer.m_height * bpp / 8;
+
+				const uint8_t dstBpp = bimg::getBitsPerPixel(bimg::TextureFormat::BGRA8);
+				const uint32_t dstPitch = m_backBuffer.m_width * dstBpp / 8;
+				const uint32_t dstSize = m_backBuffer.m_height * dstPitch;
 
 				if (captureSize > m_captureSize)
 				{
@@ -2598,10 +2600,10 @@ VK_IMPORT_DEVICE
 					m_captureSize = captureSize;
 					VK_CHECK(createStagingBuffer(m_captureSize, &m_captureBuffer, &m_captureMemory) );
 
-					m_captureData = BX_REALLOC(g_allocator, m_captureData, m_captureSize);
+					m_captureData = BX_REALLOC(g_allocator, m_captureData, dstSize);
 				}
 
-				g_callback->captureBegin(m_resolution.width, m_resolution.height, m_resolution.width*4, TextureFormat::BGRA8, false);
+				g_callback->captureBegin(m_resolution.width, m_resolution.height, dstPitch, TextureFormat::BGRA8, false);
 			}
 		}
 
@@ -3830,25 +3832,32 @@ VK_IMPORT_DEVICE
 			vkUpdateDescriptorSets(m_device, wdsCount, wds, 0, NULL);
 		}
 
+		bool isSwapChainReadable(const SwapChainVK& _swapChain)
+		{
+			return true
+				&& NULL != _swapChain.m_nwh
+				&& _swapChain.m_needPresent
+				&& _swapChain.m_supportsReadback
+				&& bimg::imageConvert(bimg::TextureFormat::BGRA8, bimg::TextureFormat::Enum(_swapChain.m_colorFormat) )
+				;
+		}
+
 		typedef void (*SwapChainReadFunc)(void* /*src*/, uint32_t /*width*/, uint32_t /*height*/, uint32_t /*pitch*/, const void* /*userData*/);
 
 		bool readSwapChain(const SwapChainVK& _swapChain, VkBuffer _buffer, VkDeviceMemory _memory, SwapChainReadFunc _func, const void* _userData = NULL)
 		{
-			if (NULL != _swapChain.m_nwh
-			&&  _swapChain.m_needPresent
-			&&  _swapChain.m_supportsReadback)
+			if (isSwapChainReadable(_swapChain) )
 			{
 				// source for the copy is the last rendered swapchain image
 				const VkImage image = _swapChain.m_backBufferColorImage[_swapChain.m_backBufferColorIdx];
 				const VkImageLayout layout = _swapChain.m_backBufferColorImageLayout[_swapChain.m_backBufferColorIdx];
 
-				const uint32_t width = _swapChain.m_sci.imageExtent.width;
+				const uint32_t width  = _swapChain.m_sci.imageExtent.width;
 				const uint32_t height = _swapChain.m_sci.imageExtent.height;
 
 				ReadbackVK readback;
-				readback.create(image, width, height, bimg::TextureFormat::BGRA8);
+				readback.create(image, width, height, _swapChain.m_colorFormat);
 				const uint32_t pitch = readback.pitch();
-				const uint32_t size = height * pitch;
 
 				readback.copyImageToBuffer(m_commandBuffer, _buffer, layout, VK_IMAGE_ASPECT_COLOR_BIT);
 
@@ -3858,22 +3867,28 @@ VK_IMPORT_DEVICE
 				uint8_t* src;
 				VK_CHECK(vkMapMemory(m_device, _memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
 
-				static const VkFormat unswizzledFormats[] =
+				if (_swapChain.m_colorFormat == TextureFormat::RGBA8)
 				{
-					VK_FORMAT_R8G8B8A8_UNORM,
-					VK_FORMAT_R8G8B8A8_SRGB
-				};
-
-				for (uint32_t ii = 0; ii < BX_COUNTOF(unswizzledFormats); ii++)
-				{
-					if (_swapChain.m_sci.imageFormat == unswizzledFormats[ii])
-					{
-						bimg::imageSwizzleBgra8(src, pitch, width, height, src, pitch);
-						break;
-					}
+					bimg::imageSwizzleBgra8(src, pitch, width, height, src, pitch);
 				}
+				else if (_swapChain.m_colorFormat == TextureFormat::BGRA8)
+				{
+					_func(src, width, height, pitch, _userData);
+				}
+				else
+				{
+					const uint8_t dstBpp = bimg::getBitsPerPixel(bimg::TextureFormat::BGRA8);
+					const uint32_t dstPitch = width * dstBpp / 8;
+					const uint32_t dstSize = height * dstPitch;
+					
+					void* dst = BX_ALLOC(g_allocator, dstSize);
 
-				_func(src, width, height, pitch, _userData);
+					bimg::imageConvert(g_allocator, dst, bimg::TextureFormat::BGRA8, src, bimg::TextureFormat::Enum(_swapChain.m_colorFormat), width, height, 1);
+					
+					_func(dst, width, height, dstPitch, _userData);
+
+					BX_FREE(g_allocator, dst);
+				}
 
 				vkUnmapMemory(m_device, _memory);
 
@@ -4620,6 +4635,7 @@ VK_DESTROY
 				uint8_t texComponent = 0;
 				uint8_t texDimension = 0;
 				uint16_t texFormat = 0;
+
 				if (hasTexData)
 				{
 					bx::read(&reader, texComponent);
@@ -4635,6 +4651,7 @@ VK_DESTROY
 
 				BX_UNUSED(num);
 				BX_UNUSED(texComponent);
+				BX_UNUSED(texFormat);
 
 				auto textureDimensionToViewType = [](TextureDimension::Enum dimension)
 				{
@@ -5037,10 +5054,10 @@ VK_DESTROY
 		m_fsh = NULL;
 	}
 
-	void ReadbackVK::create(VkImage _image, uint32_t _width, uint32_t _height, bimg::TextureFormat::Enum _format)
+	void ReadbackVK::create(VkImage _image, uint32_t _width, uint32_t _height, TextureFormat::Enum _format)
 	{
-		m_image = _image;
-		m_width = _width;
+		m_image  = _image;
+		m_width  = _width;
 		m_height = _height;
 		m_format = _format;
 	}
@@ -5053,7 +5070,7 @@ VK_DESTROY
 	uint32_t ReadbackVK::pitch(uint8_t _mip) const
 	{
 		uint32_t mipWidth = bx::uint32_max(1, m_width >> _mip);
-		uint8_t bpp = bimg::getBitsPerPixel(m_format);
+		uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_format) );
 		return mipWidth * bpp / 8;
 	}
 
@@ -5141,6 +5158,9 @@ VK_DESTROY
 
 	VkResult TextureVK::create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format)
 	{
+		BX_ASSERT(0 != (_flags & BGFX_TEXTURE_RT_MASK), "");
+		_flags |= BGFX_TEXTURE_RT_WRITE_ONLY;
+
 		m_flags     = _flags;
 		m_width     = _width;
 		m_height    = _height;
@@ -5570,7 +5590,7 @@ VK_DESTROY
 
 			BX_FREE(g_allocator, imageInfos);
 
-			m_readback.create(m_textureImage, m_width, m_height, bimg::TextureFormat::Enum(m_textureFormat) );
+			m_readback.create(m_textureImage, m_width, m_height, TextureFormat::Enum(m_textureFormat) );
 		}
 
 		return m_directAccessPtr;
@@ -5938,8 +5958,6 @@ VK_DESTROY
 
 	VkResult SwapChainVK::create(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution, TextureFormat::Enum _depthFormat)
 	{
-		BX_UNUSED(_depthFormat);
-
 		struct ErrorState
 		{
 			enum Enum
@@ -5960,205 +5978,47 @@ VK_DESTROY
 			return result;
 		}
 
-		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
-		const uint32_t queueFamily = s_renderVK->m_qfiGraphics;
-
 		m_nwh = _nwh;
 		m_resolution = _resolution;
-		m_backBufferDepthStencilFormat = TextureFormat::Count == _depthFormat ? TextureFormat::D24S8 : _depthFormat;
+		m_depthFormat = TextureFormat::Count == _depthFormat ? TextureFormat::D24S8 : _depthFormat;
 
 		m_queue = s_renderVK->m_queueGraphics;
 
-		result = createSurface(m_nwh, m_resolution.reset);
+		result = createSurface();
 
 		if (VK_SUCCESS != result)
 		{
-			BX_TRACE("Create swap chain error: vkCreateSurfaceKHR failed %d: %s.", result, getName(result) );
+			BX_TRACE("Create swap chain error: creating surface failed %d: %s.", result, getName(result) );
 			goto error;
 		}
 
 		errorState = ErrorState::SurfaceCreated;
 
 		{
-			VkBool32 surfaceSupported;
-			result = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamily, m_surface, &surfaceSupported);
-
-			if (VK_SUCCESS != result)
-			{
-				BX_TRACE("Create swap chain error: vkGetPhysicalDeviceSurfaceSupportKHR failed %d: %s.", result, getName(result) );
-				goto error;
-			}
-
-			if (!surfaceSupported)
-			{
-				BX_TRACE("Create swap chain error: Presentation to the given surface not supported");
-				goto error;
-			}
-
-			VkSurfaceCapabilitiesKHR surfaceCapabilities;
-			result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities);
-
-			if (VK_SUCCESS != result)
-			{
-				BX_TRACE("Create swap chain error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed %d: %s.", result, getName(result) );
-				goto error;
-			}
-
-			const uint32_t width = bx::clamp<uint32_t>(
-				  m_resolution.width
-				, surfaceCapabilities.minImageExtent.width
-				, surfaceCapabilities.maxImageExtent.width
-				);
-			const uint32_t height = bx::clamp<uint32_t>(
-				  m_resolution.height
-				, surfaceCapabilities.minImageExtent.height
-				, surfaceCapabilities.maxImageExtent.height
-				);
-
-			uint32_t numSurfaceFormats;
-			result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, NULL);
-
-			if (VK_SUCCESS != result)
-			{
-				BX_TRACE("Create swap chain error: vkGetPhysicalDeviceSurfaceFormatsKHR failed %d: %s.", result, getName(result) );
-				goto error;
-			}
-
-			VkSurfaceFormatKHR surfaceFormats[10];
-			numSurfaceFormats = bx::min<uint32_t>(numSurfaceFormats, BX_COUNTOF(surfaceFormats) );
-			vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, surfaceFormats);
-
-			// find the best match...
-			static const VkFormat preferredSurfaceFormat[] =
-			{
-				VK_FORMAT_R8G8B8A8_UNORM,
-				VK_FORMAT_B8G8R8A8_UNORM
-			};
-
-			static const VkFormat preferredSurfaceFormatSrgb[] =
-			{
-				VK_FORMAT_R8G8B8A8_SRGB,
-				VK_FORMAT_B8G8R8A8_SRGB
-			};
-
-			const VkColorSpaceKHR preferredColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-
-			uint32_t surfaceFormatIdx = UINT32_MAX;
-
-			for (uint32_t ii = 0; ii < numSurfaceFormats; ii++)
-			{
-				BX_TRACE("Supported surface format: %d", surfaceFormats[ii].format);
-
-				if (preferredColorSpace == surfaceFormats[ii].colorSpace)
-				{
-					for (uint32_t jj = 0; jj < BX_COUNTOF(preferredSurfaceFormat); jj++)
-					{
-						if (preferredSurfaceFormat[jj] == surfaceFormats[ii].format)
-						{
-							BX_TRACE("Preferred surface format found: %d", surfaceFormats[ii].format);
-							surfaceFormatIdx = jj;
-							break;
-						}
-					}
-
-					if (surfaceFormatIdx < numSurfaceFormats)
-					{ // found
-						break;
-					}
-				}
-			}
-
-			if (UINT32_MAX == surfaceFormatIdx)
-			{
-				BX_TRACE("Create swap chain error: Cannot find preferred surface format.");
-				goto error;
-			}
-
-			// The spec guarantees that if there's a combination of SRGB_NONLINEAR and a format with
-			// FEATURE_COLOR_ATTACHMENT support, an equivalent SRGB surface format must exist.
-			// R8G8B8A8_UNORM and B8G8R8A8_UNORM both have mandatory support for FEATURE_COLOR_ATTACHMENT.
-			m_backBufferColorFormat.format         = preferredSurfaceFormat[surfaceFormatIdx];
-			m_backBufferColorFormat.colorSpace     = preferredColorSpace;
-			m_backBufferColorFormatSrgb.format     = preferredSurfaceFormatSrgb[surfaceFormatIdx];
-			m_backBufferColorFormatSrgb.colorSpace = preferredColorSpace;
-
-			VkCompositeAlphaFlagBitsKHR compositeAlpha = (VkCompositeAlphaFlagBitsKHR)0;
-
-			if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR)
-			{
-				compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
-			}
-			else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
-			{
-				compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
-			}
-			else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR)
-			{
-				compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
-			}
-			else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
-			{
-				compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-			}
-
-			const VkImageUsageFlags imageUsageMask = 0
-				| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
-				| VK_IMAGE_USAGE_TRANSFER_SRC_BIT
-				| VK_IMAGE_USAGE_TRANSFER_DST_BIT
-				;
-			const VkImageUsageFlags imageUsage = surfaceCapabilities.supportedUsageFlags & imageUsageMask;
-
-			m_supportsReadback      = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-			m_supportsManualResolve = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-
-			const uint32_t minSwapBufferCount = bx::max<uint32_t>(surfaceCapabilities.minImageCount, 2);
-			const uint32_t maxSwapBufferCount = surfaceCapabilities.maxImageCount == 0
-				? BGFX_CONFIG_MAX_BACK_BUFFERS
-				: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, BGFX_CONFIG_MAX_BACK_BUFFERS)
-				;
-
-			if (minSwapBufferCount > maxSwapBufferCount)
-			{
-				BX_TRACE("Create swap chain error: Incompatible swapchain image count (min: %d, max: %d)."
-					, minSwapBufferCount
-					, maxSwapBufferCount
-				);
-				goto error;
-			}
-
-			uint32_t swapBufferCount = bx::clamp<uint32_t>(m_resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
-
 			m_sci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 			m_sci.pNext = NULL;
 			m_sci.flags = 0;
-			m_sci.minImageCount      = swapBufferCount;
-			m_sci.imageExtent.width  = width;
-			m_sci.imageExtent.height = height;
-			m_sci.imageArrayLayers   = 1;
-			m_sci.imageUsage         = imageUsage;
-			m_sci.imageSharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+			m_sci.imageArrayLayers      = 1;
+			m_sci.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
 			m_sci.queueFamilyIndexCount = 0;
 			m_sci.pQueueFamilyIndices   = NULL;
-			m_sci.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-			m_sci.compositeAlpha = compositeAlpha;
-			m_sci.clipped        = !m_supportsReadback;
-			m_sci.oldSwapchain   = VK_NULL_HANDLE;
+			m_sci.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+			m_sci.oldSwapchain          = VK_NULL_HANDLE;
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 			{
-				m_backBufferColorImage[ii]         = VK_NULL_HANDLE;
-				m_backBufferColorImageView[ii]     = VK_NULL_HANDLE;
-				m_backBufferFrameBuffer[ii]        = VK_NULL_HANDLE;
-				m_backBufferFence[ii]              = VK_NULL_HANDLE;
-
-				m_presentDoneSemaphore[ii] = VK_NULL_HANDLE;
-				m_renderDoneSemaphore[ii]  = VK_NULL_HANDLE;
+				m_backBufferColorImage[ii]     = VK_NULL_HANDLE;
+				m_backBufferColorImageView[ii] = VK_NULL_HANDLE;
+				m_backBufferFrameBuffer[ii]    = VK_NULL_HANDLE;
+				m_backBufferFence[ii]          = VK_NULL_HANDLE;
+				m_presentDoneSemaphore[ii]     = VK_NULL_HANDLE;
+				m_renderDoneSemaphore[ii]      = VK_NULL_HANDLE;
 			}
 
 			m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
 			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
-			result = createSwapChain(m_resolution.reset);
+			result = createSwapChain();
 
 			if (VK_SUCCESS != result)
 			{
@@ -6170,7 +6030,7 @@ VK_DESTROY
 		errorState = ErrorState::SwapChainCreated;
 
 		{
-			result = createAttachments(_commandBuffer, m_resolution.reset);
+			result = createAttachments(_commandBuffer);
 
 			if (VK_SUCCESS != result)
 			{
@@ -6223,8 +6083,6 @@ VK_DESTROY
 	{
 		if (VK_NULL_HANDLE != m_swapchain)
 		{
-			const VkDevice device = s_renderVK->m_device;
-
 			releaseFrameBuffer();
 			releaseAttachments();
 			releaseSwapChain();
@@ -6232,8 +6090,7 @@ VK_DESTROY
 
 			// can't delay-delete the surface, since there can only be one swapchain per surface
 			// new framebuffer with the same window would get an error at swapchain creation
-			VK_CHECK(vkDeviceWaitIdle(device) );
-			s_renderVK->m_cmd.finish(true);
+			s_renderVK->kick(true);
 		}
 
 		m_nwh = NULL;
@@ -6241,7 +6098,6 @@ VK_DESTROY
 
 	void SwapChainVK::update(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution)
 	{
-		const VkDevice device = s_renderVK->m_device;
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
 		m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
@@ -6286,11 +6142,9 @@ VK_DESTROY
 				{
 					m_sci.oldSwapchain = VK_NULL_HANDLE;
 					releaseSurface();
+					s_renderVK->kick(true);
 
-					VK_CHECK(vkDeviceWaitIdle(device) );
-					s_renderVK->m_cmd.finish(true);
-
-					VkResult result = createSurface(m_nwh, m_resolution.reset);
+					VkResult result = createSurface();
 					if (VK_SUCCESS != result)
 					{
 						BX_TRACE("Surface lost.");
@@ -6301,57 +6155,66 @@ VK_DESTROY
 				VkSurfaceCapabilitiesKHR surfaceCapabilities;
 				VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities) );
 
-				m_sci.imageExtent.width  = bx::clamp<uint32_t>(
+				const uint32_t width = bx::clamp<uint32_t>(
 					  m_resolution.width
 					, surfaceCapabilities.minImageExtent.width
 					, surfaceCapabilities.maxImageExtent.width
 					);
-				m_sci.imageExtent.height = bx::clamp<uint32_t>(
+				const uint32_t height = bx::clamp<uint32_t>(
 					  m_resolution.height
 					, surfaceCapabilities.minImageExtent.height
 					, surfaceCapabilities.maxImageExtent.height
 					);
 
-				// Prevent validation error when minimizing a window
-				if (m_sci.imageExtent.width  == 0
-				||  m_sci.imageExtent.height == 0)
+				// swapchain can't have size 0
+				// on some platforms this happens when minimized
+				if (width  == 0
+				||  height == 0)
 				{
+					m_sci.oldSwapchain = VK_NULL_HANDLE;
+					s_renderVK->kick(true);
 					return;
 				}
 
-				VK_CHECK(createSwapChain(m_resolution.reset) );
+				VK_CHECK(createSwapChain() );
 			}
 
-			VK_CHECK(createAttachments(_commandBuffer, m_resolution.reset) );
+			VK_CHECK(createAttachments(_commandBuffer) );
 			VK_CHECK(createFrameBuffer() );
 		}
 	}
 
-	VkResult SwapChainVK::createSurface(void* _nwh, uint32_t _reset)
+	VkResult SwapChainVK::createSurface()
 	{
-		VkResult result = VK_SUCCESS;
+		VkResult result = VK_ERROR_INITIALIZATION_FAILED;
 
 		const VkInstance instance = s_renderVK->m_instance;
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 
 #if BX_PLATFORM_WINDOWS
 		{
-			VkWin32SurfaceCreateInfoKHR sci;
-			sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			sci.pNext = NULL;
-			sci.flags     = 0;
-			sci.hinstance = (HINSTANCE)GetModuleHandle(NULL);
-			sci.hwnd      = (HWND)_nwh;
-			result = vkCreateWin32SurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+			if (NULL != vkCreateWin32SurfaceKHR)
+			{
+				VkWin32SurfaceCreateInfoKHR sci;
+				sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+				sci.pNext = NULL;
+				sci.flags     = 0;
+				sci.hinstance = (HINSTANCE)GetModuleHandle(NULL);
+				sci.hwnd      = (HWND)m_nwh;
+				result = vkCreateWin32SurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+			}
 		}
 #elif BX_PLATFORM_ANDROID
 		{
-			VkAndroidSurfaceCreateInfoKHR sci;
-			sci.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-			sci.pNext = NULL;
-			sci.flags = 0;
-			sci.window = (ANativeWindow*)_nwh;
-			result = vkCreateAndroidSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+			if (NULL != vkCreateAndroidSurfaceKHR)
+			{
+				VkAndroidSurfaceCreateInfoKHR sci;
+				sci.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
+				sci.pNext = NULL;
+				sci.flags = 0;
+				sci.window = (ANativeWindow*)m_nwh;
+				result = vkCreateAndroidSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+			}
 		}
 #elif BX_PLATFORM_LINUX
 		{
@@ -6362,24 +6225,21 @@ VK_DESTROY
 				sci.pNext = NULL;
 				sci.flags  = 0;
 				sci.dpy    = (Display*)g_platformData.ndt;
-				sci.window = (Window)_nwh;
+				sci.window = (Window)m_nwh;
 				result = vkCreateXlibSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
-			}
-			else
-			{
-				result = VK_RESULT_MAX_ENUM;
 			}
 
 			if (VK_SUCCESS != result)
 			{
 				void* xcbdll = bx::dlopen("libX11-xcb.so.1");
 
-				if (NULL != xcbdll)
+				if (NULL != xcbdll
+				&&  NULL != vkCreateXcbSurfaceKHR)
 				{
 					typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
 					PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
 
-					union { void* ptr; xcb_window_t window; } cast = { _nwh };
+					union { void* ptr; xcb_window_t window; } cast = { m_nwh };
 
 					VkXcbSurfaceCreateInfoKHR sci;
 					sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
@@ -6397,11 +6257,11 @@ VK_DESTROY
 		{
 			if (NULL != vkCreateMacOSSurfaceMVK)
 			{
-				NSWindow* window    = (NSWindow*)(_nwh);
+				NSWindow* window    = (NSWindow*)(m_nwh);
 				NSView* contentView = (NSView*)window.contentView;
 				CAMetalLayer* layer = [CAMetalLayer layer];
 
-				if (_reset & BGFX_RESET_HIDPI)
+				if (m_resolution.reset & BGFX_RESET_HIDPI)
 				{
 					layer.contentsScale = [window backingScaleFactor];
 				}
@@ -6416,18 +6276,31 @@ VK_DESTROY
 				sci.pView = (__bridge void*)layer;
 				result = vkCreateMacOSSurfaceMVK(instance, &sci, allocatorCb, &m_surface);
 			}
-			else
-			{
-				result = VK_RESULT_MAX_ENUM;
-			}
 		}
 #else
 #	error "Figure out KHR surface..."
 #endif // BX_PLATFORM_
 
-		BX_UNUSED(_reset);
-
 		m_needToRecreateSurface = false;
+
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("Create surface error: vkCreate[Platform]SurfaceKHR failed %d: %s.", result, getName(result) );
+			return result;
+		}
+
+		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
+		const uint32_t queueFamily = s_renderVK->m_qfiGraphics;
+
+		VkBool32 surfaceSupported;
+		result = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamily, m_surface, &surfaceSupported);
+
+		if (VK_SUCCESS != result
+		||  !surfaceSupported)
+		{
+			BX_TRACE("Create surface error: Presentation to the given surface not supported.");
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
 
 		return result;
 	}
@@ -6437,31 +6310,111 @@ VK_DESTROY
 		release(m_surface);
 	}
 
-	VkResult SwapChainVK::createSwapChain(uint32_t _reset)
+	VkResult SwapChainVK::createSwapChain()
 	{
 		VkResult result = VK_SUCCESS;
 
+		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 		const VkDevice device = s_renderVK->m_device;
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 
-		m_sci.surface = m_surface;
+		VkSurfaceCapabilitiesKHR surfaceCapabilities;
+		result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities);
 
-		const bool srgb = !!(_reset & BGFX_RESET_SRGB_BACKBUFFER);
-		VkSurfaceFormatKHR surfaceFormat = srgb
-			? m_backBufferColorFormatSrgb
-			: m_backBufferColorFormat
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("Create swapchain error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed %d: %s.", result, getName(result) );
+			return result;
+		}
+
+		const uint32_t minSwapBufferCount = bx::max<uint32_t>(surfaceCapabilities.minImageCount, 2);
+		const uint32_t maxSwapBufferCount = surfaceCapabilities.maxImageCount == 0
+			? BGFX_CONFIG_MAX_BACK_BUFFERS
+			: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, BGFX_CONFIG_MAX_BACK_BUFFERS)
 			;
-		m_sci.imageFormat = surfaceFormat.format;
-		m_sci.imageColorSpace = surfaceFormat.colorSpace;
 
-		const bool vsync = !!(_reset & BGFX_RESET_VSYNC);
+		if (minSwapBufferCount > maxSwapBufferCount)
+		{
+			BX_TRACE("Create swapchain error: Incompatible swapchain image count (min: %d, max: %d, BGFX_CONFIG_MAX_BACK_BUFFERS: %d)."
+				, minSwapBufferCount
+				, maxSwapBufferCount
+				, BGFX_CONFIG_MAX_BACK_BUFFERS
+				);
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
+
+		const uint32_t swapBufferCount = bx::clamp<uint32_t>(m_resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
+
+		const VkColorSpaceKHR surfaceColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+
+		const bool srgb = !!(m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER);
+		m_colorFormat = findSurfaceFormat(m_resolution.format, surfaceColorSpace, srgb);
+
+		if (TextureFormat::Count == m_colorFormat)
+		{
+			BX_TRACE("Create swapchain error: Unable to find surface format (srgb: %d).", srgb);
+			return VK_ERROR_INITIALIZATION_FAILED;
+		}
+
+		const VkFormat surfaceFormat = srgb
+			? s_textureFormat[m_colorFormat].m_fmtSrgb
+			: s_textureFormat[m_colorFormat].m_fmt
+			;
+
+		const uint32_t width = bx::clamp<uint32_t>(
+			  m_resolution.width
+			, surfaceCapabilities.minImageExtent.width
+			, surfaceCapabilities.maxImageExtent.width
+			);
+		const uint32_t height = bx::clamp<uint32_t>(
+			  m_resolution.height
+			, surfaceCapabilities.minImageExtent.height
+			, surfaceCapabilities.maxImageExtent.height
+			);
+
+		VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+		if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+		}
+		else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+		}
+		else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
+		}
+
+		const VkImageUsageFlags imageUsageMask = 0
+			| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+			| VK_IMAGE_USAGE_TRANSFER_SRC_BIT
+			| VK_IMAGE_USAGE_TRANSFER_DST_BIT
+			;
+		const VkImageUsageFlags imageUsage = surfaceCapabilities.supportedUsageFlags & imageUsageMask;
+
+		m_supportsReadback      = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		m_supportsManualResolve = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+
+		const bool vsync = !!(m_resolution.reset & BGFX_RESET_VSYNC);
 		uint32_t presentModeIdx = findPresentMode(vsync);
 		if (UINT32_MAX == presentModeIdx)
 		{
 			BX_TRACE("Create swapchain error: Unable to find present mode (vsync: %d).", vsync);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
-		m_sci.presentMode = s_presentMode[presentModeIdx].mode;
+
+		m_sci.surface            = m_surface;
+		m_sci.minImageCount      = swapBufferCount;
+		m_sci.imageFormat        = surfaceFormat;
+		m_sci.imageColorSpace    = surfaceColorSpace;
+		m_sci.imageExtent.width  = width;
+		m_sci.imageExtent.height = height;
+		m_sci.imageUsage         = imageUsage;
+		m_sci.compositeAlpha     = compositeAlpha;
+		m_sci.presentMode        = s_presentMode[presentModeIdx].mode;
+		m_sci.clipped            = VK_FALSE;
 
 		result = vkCreateSwapchainKHR(device, &m_sci, allocatorCb, &m_swapchain);
 		if (VK_SUCCESS != result)
@@ -6578,11 +6531,11 @@ VK_DESTROY
 		release(m_swapchain);
 	}
 
-	VkResult SwapChainVK::createAttachments(VkCommandBuffer _commandBuffer, uint32_t _reset)
+	VkResult SwapChainVK::createAttachments(VkCommandBuffer _commandBuffer)
 	{
 		VkResult result = VK_SUCCESS;
 
-		const uint32_t samplerIndex = (_reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
+		const uint32_t samplerIndex = (m_resolution.reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
 		const uint64_t textureFlags = (uint64_t(samplerIndex + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY;
 		m_sampler = s_msaa[samplerIndex];
 
@@ -6594,9 +6547,9 @@ VK_DESTROY
 		// the spec guarantees that at least one of D24S8 and D32FS8 is supported
 		VkFormat depthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 
-		if (g_caps.formats[m_backBufferDepthStencilFormat] & requiredCaps)
+		if (g_caps.formats[m_depthFormat] & requiredCaps)
 		{
-			depthFormat = s_textureFormat[m_backBufferDepthStencilFormat].m_fmtDsv;
+			depthFormat = s_textureFormat[m_depthFormat].m_fmtDsv;
 		}
 		else if (g_caps.formats[TextureFormat::D24S8] & requiredCaps)
 		{
@@ -6739,11 +6692,7 @@ VK_DESTROY
 
 		if (VK_SUCCESS != result)
 		{
-			BX_TRACE(
-				  "findPresentMode error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s."
-				, result
-				, getName(result)
-				);
+			BX_TRACE("findPresentMode error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s.", result, getName(result) );
 			return UINT32_MAX;
 		}
 
@@ -6758,11 +6707,7 @@ VK_DESTROY
 
 		if (VK_SUCCESS != result)
 		{
-			BX_TRACE(
-				  "findPresentMode error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s."
-				, result
-				, getName(result)
-				);
+			BX_TRACE("findPresentMode error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s.", result, getName(result) );
 			return UINT32_MAX;
 		}
 
@@ -6790,6 +6735,77 @@ VK_DESTROY
 		}
 
 		return idx;
+	}
+
+	TextureFormat::Enum SwapChainVK::findSurfaceFormat(TextureFormat::Enum _format, VkColorSpaceKHR _colorSpace, bool _srgb)
+	{
+		VkResult result = VK_SUCCESS;
+
+		TextureFormat::Enum selectedFormat = TextureFormat::Count;
+
+		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
+
+		uint32_t numSurfaceFormats;
+		result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, NULL);
+
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("findSurfaceFormat error: vkGetPhysicalDeviceSurfaceFormatsKHR failed %d: %s.", result, getName(result) );
+			return selectedFormat;
+		}
+
+		VkSurfaceFormatKHR* surfaceFormats = (VkSurfaceFormatKHR*)BX_ALLOC(g_allocator, numSurfaceFormats * sizeof(VkSurfaceFormatKHR) );
+		result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, surfaceFormats);
+
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("findSurfaceFormat error: vkGetPhysicalDeviceSurfaceFormatsKHR failed %d: %s.", result, getName(result) );
+			BX_FREE(g_allocator, surfaceFormats);
+			return selectedFormat;
+		}
+
+		const TextureFormat::Enum requestedFormats[] =
+		{
+			_format,
+			TextureFormat::BGRA8,
+			TextureFormat::RGBA8,
+		};
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(requestedFormats) && TextureFormat::Count == selectedFormat; ii++)
+		{
+			const TextureFormat::Enum requested = requestedFormats[ii];
+			const VkFormat requestedVkFormat = _srgb
+				? s_textureFormat[requested].m_fmtSrgb
+				: s_textureFormat[requested].m_fmt
+				;
+
+			for (uint32_t jj = 0; jj < numSurfaceFormats; jj++)
+			{
+				if (_colorSpace == surfaceFormats[jj].colorSpace
+				&&  requestedVkFormat == surfaceFormats[jj].format)
+				{
+					selectedFormat = requested;
+					if (0 != ii)
+					{
+						BX_TRACE(
+							"findSurfaceFormat: Surface format %s not found! Defaulting to %s."
+							, bimg::getName(bimg::TextureFormat::Enum(_format) )
+							, bimg::getName(bimg::TextureFormat::Enum(selectedFormat) )
+							);
+					}
+					break;
+				}
+			}
+		}
+
+		BX_FREE(g_allocator, surfaceFormats);
+
+		if (TextureFormat::Count == selectedFormat)
+		{
+			BX_TRACE("findSurfaceFormat error: No supported surface format found.");
+		}
+
+		return selectedFormat;
 	}
 
 	bool SwapChainVK::acquire(VkCommandBuffer _commandBuffer)
