@@ -57,6 +57,7 @@ namespace bgfx
 namespace stl = tinystl;
 
 #include "../../src/shader.h"
+#include "../../src/shader_spirv.h"
 #include "../../3rdparty/khronos/vulkan-local/vulkan.h"
 
 namespace bgfx { namespace spirv
