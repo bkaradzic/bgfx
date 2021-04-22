@@ -494,7 +494,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		uint32_t m_uniformBinding;
 		uint16_t m_numBindings;
-		VkDescriptorSetLayoutBinding m_bindings[32];
+		VkDescriptorSetLayoutBinding m_bindings[2 * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS + 1];
 
 		bool m_oldBindingModel;
 	};
@@ -504,7 +504,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		ProgramVK()
 			: m_vsh(NULL)
 			, m_fsh(NULL)
-			, m_descriptorSetLayoutHash(0)
+			, m_descriptorSetLayout(VK_NULL_HANDLE)
 			, m_pipelineLayout(VK_NULL_HANDLE)
 		{
 		}
@@ -523,7 +523,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
 
-		uint32_t m_descriptorSetLayoutHash;
+		VkDescriptorSetLayout m_descriptorSetLayout;
 		VkPipelineLayout m_pipelineLayout;
 	};
 

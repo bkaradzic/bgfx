@@ -2436,13 +2436,12 @@ VK_IMPORT_DEVICE
 			}
 
 			ScratchBufferVK& scratchBuffer = m_scratchBuffer[m_cmd.m_currentFrameInFlight];
-			VkDescriptorSetLayout dsl = m_descriptorSetLayoutCache.find(program.m_descriptorSetLayoutHash);
 			VkDescriptorSetAllocateInfo dsai;
 			dsai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			dsai.pNext = NULL;
 			dsai.descriptorPool = m_descriptorPool;
 			dsai.descriptorSetCount = 1;
-			dsai.pSetLayouts = &dsl;
+			dsai.pSetLayouts = &program.m_descriptorSetLayout;
 			VK_CHECK(vkAllocateDescriptorSets(
 				  m_device
 				, &dsai
@@ -3606,13 +3605,12 @@ VK_IMPORT_DEVICE
 
 		void allocDescriptorSet(const ProgramVK& program, const RenderBind& renderBind, ScratchBufferVK& scratchBuffer)
 		{
-			VkDescriptorSetLayout dsl = m_descriptorSetLayoutCache.find(program.m_descriptorSetLayoutHash);
 			VkDescriptorSetAllocateInfo dsai;
 			dsai.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			dsai.pNext              = NULL;
 			dsai.descriptorPool     = m_descriptorPool;
 			dsai.descriptorSetCount = 1;
-			dsai.pSetLayouts        = &dsl;
+			dsai.pSetLayouts        = &program.m_descriptorSetLayout;
 
 			VkDescriptorSet& descriptorSet = scratchBuffer.m_descriptorSet[scratchBuffer.m_currentDs];
 			vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
@@ -4550,7 +4548,7 @@ VK_DESTROY
 		uint32_t magic;
 		bx::read(&reader, magic);
 
-		VkShaderStageFlagBits shaderStage;
+		VkShaderStageFlagBits shaderStage = VK_SHADER_STAGE_ALL;
 		BX_UNUSED(shaderStage);
 
 		if (isShaderType(magic, 'C') )
@@ -4843,7 +4841,7 @@ VK_DESTROY
 			m_uniformBinding = fragment ? (m_oldBindingModel ? kSpirvOldFragmentBinding : kSpirvFragmentBinding) : 0;
 
 			VkDescriptorSetLayoutBinding& binding = m_bindings[bidx];
-			binding.stageFlags = VK_SHADER_STAGE_ALL;
+			binding.stageFlags = shaderStage;
 			binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 			binding.binding = m_uniformBinding;
 			binding.pImmutableSamplers = NULL;
@@ -4859,7 +4857,7 @@ VK_DESTROY
 				case BindType::Image:
 				{
 					VkDescriptorSetLayoutBinding& binding = m_bindings[bidx];
-					binding.stageFlags = VK_SHADER_STAGE_ALL;
+					binding.stageFlags = shaderStage;
 					binding.descriptorType = BindType::Buffer == m_bindInfo[ii].type
 						? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
 						: VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
@@ -4874,7 +4872,7 @@ VK_DESTROY
 				case BindType::Sampler:
 				{
 					VkDescriptorSetLayoutBinding& textureBinding = m_bindings[bidx];
-					textureBinding.stageFlags = VK_SHADER_STAGE_ALL;
+					textureBinding.stageFlags = shaderStage;
 					textureBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 					textureBinding.binding = m_bindInfo[ii].binding;
 					textureBinding.pImmutableSamplers = NULL;
@@ -4882,7 +4880,7 @@ VK_DESTROY
 					bidx++;
 
 					VkDescriptorSetLayoutBinding& samplerBinding = m_bindings[bidx];
-					samplerBinding.stageFlags = VK_SHADER_STAGE_ALL;
+					samplerBinding.stageFlags = shaderStage;
 					samplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
 					samplerBinding.binding = m_bindInfo[ii].samplerBinding;
 					samplerBinding.pImmutableSamplers = NULL;
@@ -4953,6 +4951,13 @@ VK_DESTROY
 			if (isValid(m_vsh->m_bindInfo[stage].uniformHandle) )
 			{
 				shader = _vsh;
+
+				BX_ASSERT(false
+					  || NULL == m_fsh
+					  || !isValid(m_fsh->m_bindInfo[stage].uniformHandle)
+					  || !(m_vsh->m_oldBindingModel || m_fsh->m_oldBindingModel)
+					, "Shared vertex/fragment bindings require shader binary version >= 11."
+					);
 			}
 			else if (NULL != m_fsh
 				 &&  isValid(m_fsh->m_bindInfo[stage].uniformHandle) )
@@ -4974,7 +4979,7 @@ VK_DESTROY
 		}
 
 		// create exact pipeline layout
-		VkDescriptorSetLayout dsl = VK_NULL_HANDLE;
+		m_descriptorSetLayout = VK_NULL_HANDLE;
 
 		uint32_t numBindings = m_vsh->m_numBindings + (m_fsh ? m_fsh->m_numBindings : 0);
 		if (0 < numBindings)
@@ -4989,26 +4994,50 @@ VK_DESTROY
 				murmur.add(m_fsh->m_bindings, sizeof(VkDescriptorSetLayoutBinding) * m_fsh->m_numBindings);
 			}
 
-			m_descriptorSetLayoutHash = murmur.end();
+			uint32_t descriptorSetLayoutHash = murmur.end();
 
-			dsl = s_renderVK->m_descriptorSetLayoutCache.find(m_descriptorSetLayoutHash);
+			m_descriptorSetLayout = s_renderVK->m_descriptorSetLayoutCache.find(descriptorSetLayoutHash);
 
-			if (VK_NULL_HANDLE == dsl)
+			if (VK_NULL_HANDLE == m_descriptorSetLayout)
 			{
-				VkDescriptorSetLayoutBinding bindings[64];
+				VkDescriptorSetLayoutBinding bindings[2 * BX_COUNTOF(ShaderVK::m_bindings)];
+
 				bx::memCopy(
 					  bindings
 					, m_vsh->m_bindings
 					, sizeof(VkDescriptorSetLayoutBinding) * m_vsh->m_numBindings
 					);
 
+				numBindings = m_vsh->m_numBindings;
+
 				if (NULL != m_fsh)
 				{
-					bx::memCopy(
-						  bindings + m_vsh->m_numBindings
-						, m_fsh->m_bindings
-						, sizeof(VkDescriptorSetLayoutBinding) * m_fsh->m_numBindings
-						);
+					for (uint16_t ii = 0; ii < m_fsh->m_numBindings; ii++)
+					{
+						const VkDescriptorSetLayoutBinding& fsBinding = m_fsh->m_bindings[ii];
+						uint16_t vsBindingIdx = UINT16_MAX;
+						for (uint16_t jj = 0; jj < m_vsh->m_numBindings; jj++)
+						{
+							if (fsBinding.binding == bindings[jj].binding)
+							{
+								vsBindingIdx = jj;
+								break;
+							}
+						}
+						if (UINT16_MAX != vsBindingIdx)
+						{
+							BX_ASSERT(
+								bindings[vsBindingIdx].descriptorType == fsBinding.descriptorType
+								, "Mismatching descriptor types. Shaders compiled with different versions of shaderc?"
+								);
+							bindings[vsBindingIdx].stageFlags |= fsBinding.stageFlags;
+						}
+						else
+						{
+							bindings[numBindings] = fsBinding;
+							numBindings++;
+						}
+					}
 				}
 
 				VkDescriptorSetLayoutCreateInfo dslci;
@@ -5022,10 +5051,10 @@ VK_DESTROY
 					  s_renderVK->m_device
 					, &dslci
 					, s_renderVK->m_allocatorCb
-					, &dsl
+					, &m_descriptorSetLayout
 					) );
 
-				s_renderVK->m_descriptorSetLayoutCache.add(m_descriptorSetLayoutHash, dsl);
+				s_renderVK->m_descriptorSetLayoutCache.add(descriptorSetLayoutHash, m_descriptorSetLayout);
 			}
 		}
 
@@ -5035,8 +5064,8 @@ VK_DESTROY
 		plci.flags = 0;
 		plci.pushConstantRangeCount = 0;
 		plci.pPushConstantRanges = NULL;
-		plci.setLayoutCount = (dsl == VK_NULL_HANDLE ? 0 : 1);
-		plci.pSetLayouts = &dsl;
+		plci.setLayoutCount = (m_descriptorSetLayout == VK_NULL_HANDLE ? 0 : 1);
+		plci.pSetLayouts = &m_descriptorSetLayout;
 
 		VK_CHECK(vkCreatePipelineLayout(
 			  s_renderVK->m_device
@@ -7558,12 +7587,12 @@ VK_DESTROY
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		setDebugWireframe(wireframe);
 
-		uint16_t currentSamplerStateIdx = kInvalidHandle;
-		ProgramHandle currentProgram    = BGFX_INVALID_HANDLE;
-		uint32_t currentBindHash        = 0;
-		uint32_t currentDslHash         = 0;
-		bool     hasPredefined          = false;
-		bool     commandListChanged     = false;
+		uint16_t currentSamplerStateIdx  = kInvalidHandle;
+		ProgramHandle currentProgram     = BGFX_INVALID_HANDLE;
+		uint32_t currentBindHash         = 0;
+		VkDescriptorSetLayout currentDsl = VK_NULL_HANDLE;
+		bool     hasPredefined           = false;
+		bool     commandListChanged      = false;
 		VkPipeline currentPipeline = VK_NULL_HANDLE;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
@@ -7761,7 +7790,7 @@ VK_DESTROY
 						currentPipeline = pipeline;
 						vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 						currentBindHash = 0;
-						currentDslHash = 0;
+						currentDsl = VK_NULL_HANDLE;
 					}
 
 					bool constantsChanged = false;
@@ -7793,15 +7822,15 @@ VK_DESTROY
 						viewState.setPredefined<4>(this, view, program, _render, compute);
 					}
 
-					if (program.m_descriptorSetLayoutHash != 0)
+					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
 					{
 						uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
 
 						if (currentBindHash != bindHash
-						||  currentDslHash  != program.m_descriptorSetLayoutHash)
+						||  currentDsl      != program.m_descriptorSetLayout)
 						{
 							currentBindHash = bindHash;
-							currentDslHash  = program.m_descriptorSetLayoutHash;
+							currentDsl      = program.m_descriptorSetLayout;
 
 							allocDescriptorSet(program, renderBind, scratchBuffer);
 						}
@@ -7917,7 +7946,7 @@ VK_DESTROY
 
 					currentPipeline        = VK_NULL_HANDLE;
 					currentBindHash        = 0;
-					currentDslHash         = 0;
+					currentDsl             = VK_NULL_HANDLE;
 					currentSamplerStateIdx = kInvalidHandle;
 					currentProgram         = BGFX_INVALID_HANDLE;
 					currentState.clear();
@@ -8101,14 +8130,14 @@ VK_DESTROY
 						viewState.setPredefined<4>(this, view, program, _render, draw);
 					}
 
-					if (program.m_descriptorSetLayoutHash != 0)
+					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
 					{
 						uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
 						if (currentBindHash != bindHash
-						||  currentDslHash  != program.m_descriptorSetLayoutHash)
+						||  currentDsl      != program.m_descriptorSetLayout)
 						{
 							currentBindHash = bindHash;
-							currentDslHash  = program.m_descriptorSetLayoutHash;
+							currentDsl      = program.m_descriptorSetLayout;
 
 							allocDescriptorSet(program, renderBind, scratchBuffer);
 						}
