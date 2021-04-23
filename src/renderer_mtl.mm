@@ -546,12 +546,12 @@ namespace bgfx { namespace mtl
 				|| (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("10.0.0") )
 				;
 
-			m_macOS11Runtime = true
+			m_macOS11Runtime = false
 				&& BX_ENABLED(BX_PLATFORM_OSX)
 				&& macOSVersionEqualOrGreater(10, 11, 0)
 				;
 
-			m_iOS9Runtime = true
+			m_iOS9Runtime = false
 				&& BX_ENABLED(BX_PLATFORM_IOS)
 				&& iOSVersionEqualOrGreater("9.0.0")
 				;
