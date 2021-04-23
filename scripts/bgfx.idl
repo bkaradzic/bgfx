@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(113)
+version(114)
 
 typedef "bool"
 typedef "char"
@@ -790,7 +790,7 @@ struct.Init { ctor }
 
 	.deviceId       "uint16_t"            --- Device id. If set to 0 it will select first device, or device with
 	                                      --- matching id.
-
+	.capabilities   "uint64_t"            --- Capabilities initialization mask (default: UINT64_MAX).
 	.debug          "bool"                --- Enable device for debuging.
 	.profile        "bool"                --- Enable device for profiling.
 	.platformData   "PlatformData"        --- Platform data.

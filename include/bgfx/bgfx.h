@@ -662,6 +662,8 @@ namespace bgfx
 		/// matching id.
 		uint16_t deviceId;
 
+		uint64_t capabilities; //!< Capabilities initialization mask (default: UINT64_MAX).
+
 		bool debug;   //!< Enable device for debuging.
 		bool profile; //!< Enable device for profiling.
 

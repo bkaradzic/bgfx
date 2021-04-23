@@ -2001,6 +2001,7 @@ namespace bgfx
 		g_caps.rendererType = m_renderCtx->getRendererType();
 		initAttribTypeSizeTable(g_caps.rendererType);
 
+		g_caps.supported &= _init.capabilities;
 		g_caps.supported |= 0
 			| (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) && !m_singleThreaded ? BGFX_CAPS_RENDERER_MULTITHREADED : 0)
 			| (isGraphicsDebuggerPresent() ? BGFX_CAPS_GRAPHICS_DEBUGGER : 0)
@@ -3424,6 +3425,7 @@ namespace bgfx
 		: type(RendererType::Count)
 		, vendorId(BGFX_PCI_ID_NONE)
 		, deviceId(0)
+		, capabilities(UINT64_MAX)
 		, debug(BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		, profile(BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 		, callback(NULL)

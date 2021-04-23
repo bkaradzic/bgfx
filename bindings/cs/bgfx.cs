@@ -2030,6 +2030,7 @@ public static partial class bgfx
 		public RendererType type;
 		public ushort vendorId;
 		public ushort deviceId;
+		public ulong capabilities;
 		public byte debug;
 		public byte profile;
 		public PlatformData platformData;

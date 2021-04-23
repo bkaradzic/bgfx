@@ -2053,6 +2053,7 @@ public static class bgfx
 		public RendererType type;
 		public uint16 vendorId;
 		public uint16 deviceId;
+		public uint64 capabilities;
 		public uint8 debug;
 		public uint8 profile;
 		public PlatformData platformData;

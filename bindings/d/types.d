@@ -10,7 +10,7 @@ public import core.stdc.stdarg : va_list;
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 113;
+enum uint BGFX_API_VERSION = 114;
 
 alias bgfx_view_id_t = ushort;
 
@@ -854,6 +854,7 @@ struct bgfx_init_t
 	 * matching id.
 	 */
 	ushort deviceId;
+	ulong capabilities; /// Capabilities initialization mask.
 	bool debug_; /// Enable device for debuging.
 	bool profile; /// Enable device for profiling.
 	bgfx_platform_data_t platformData; /// Platform data.
