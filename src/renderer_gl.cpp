@@ -7504,7 +7504,7 @@ namespace bgfx { namespace gl
 					 | BGFX_STATE_WRITE_A
 					 | BGFX_STATE_WRITE_RGB
 					 | BGFX_STATE_WRITE_Z
-					 ) & changedFlags)
+					 ) & changedFlags) || blendFactor != draw.m_rgba)
 				{
 					if (BGFX_STATE_FRONT_CCW & changedFlags)
 					{
