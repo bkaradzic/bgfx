@@ -7487,7 +7487,7 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				if ( (0
+				if ( ((0
 					 | BGFX_STATE_ALPHA_REF_MASK
 					 | BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 					 | BGFX_STATE_BLEND_EQUATION_MASK
