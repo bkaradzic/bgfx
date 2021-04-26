@@ -2134,7 +2134,7 @@ VK_IMPORT_DEVICE
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
-			VK_CHECK(createStagingBuffer(size, &stagingBuffer, &stagingMemory) );
+			VK_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
 
 			texture.m_readback.copyImageToBuffer(
 				  m_commandBuffer
@@ -2290,7 +2290,7 @@ VK_IMPORT_DEVICE
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
-			VK_CHECK(createStagingBuffer(size, &stagingBuffer, &stagingMemory) );
+			VK_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
 
 			readSwapChain(swapChain, stagingBuffer, stagingMemory, callback, _filePath);
 
@@ -2572,7 +2572,6 @@ VK_IMPORT_DEVICE
 
 				release(m_captureBuffer);
 				release(m_captureMemory);
-				BX_FREE(g_allocator, m_captureData);
 				m_captureSize = 0;
 			}
 		}
@@ -2591,7 +2590,6 @@ VK_IMPORT_DEVICE
 
 				const uint8_t dstBpp = bimg::getBitsPerPixel(bimg::TextureFormat::BGRA8);
 				const uint32_t dstPitch = m_backBuffer.m_width * dstBpp / 8;
-				const uint32_t dstSize = m_backBuffer.m_height * dstPitch;
 
 				if (captureSize > m_captureSize)
 				{
@@ -2599,9 +2597,7 @@ VK_IMPORT_DEVICE
 					release(m_captureMemory);
 
 					m_captureSize = captureSize;
-					VK_CHECK(createStagingBuffer(m_captureSize, &m_captureBuffer, &m_captureMemory) );
-
-					m_captureData = BX_REALLOC(g_allocator, m_captureData, dstSize);
+					VK_CHECK(createReadbackBuffer(m_captureSize, &m_captureBuffer, &m_captureMemory) );
 				}
 
 				g_callback->captureBegin(m_resolution.width, m_resolution.height, dstPitch, TextureFormat::BGRA8, false);
@@ -3904,15 +3900,15 @@ VK_IMPORT_DEVICE
 		{
 			if (m_captureSize > 0)
 			{
-				auto callback = [](void* _src, uint32_t /*_width*/, uint32_t _height, uint32_t _pitch, const void* _userData)
+				m_backBuffer.resolve();
+
+				auto callback = [](void* _src, uint32_t /*_width*/, uint32_t _height, uint32_t _pitch, const void* /*_userData*/)
 				{
-					void* captureData = (void*)_userData;
 					const uint32_t size = _height * _pitch;
-					bx::memCopy(captureData, _src, size);
-					g_callback->captureFrame(captureData, size);
+					g_callback->captureFrame(_src, size);
 				};
 
-				readSwapChain(m_backBuffer.m_swapChain, m_captureBuffer, m_captureMemory, callback, m_captureData);
+				readSwapChain(m_backBuffer.m_swapChain, m_captureBuffer, m_captureMemory, callback);
 			}
 		}
 
@@ -4134,7 +4130,7 @@ VK_IMPORT_DEVICE
 			return result;
 		}
 
-		VkResult createStagingBuffer(uint32_t _size, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
+		VkResult createHostBuffer(uint32_t _size, VkMemoryPropertyFlags _flags, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
 		{
 			VkResult result = VK_SUCCESS;
 
@@ -4151,24 +4147,31 @@ VK_IMPORT_DEVICE
 			result = vkCreateBuffer(m_device, &bci, m_allocatorCb, _buffer);
 			if (VK_SUCCESS != result)
 			{
-				BX_TRACE("Create staging buffer error: vkCreateBuffer failed %d: %s.", result, getName(result) );
+				BX_TRACE("Create host buffer error: vkCreateBuffer failed %d: %s.", result, getName(result) );
 				return result;
 			}
 
 			VkMemoryRequirements mr;
 			vkGetBufferMemoryRequirements(m_device, *_buffer, &mr);
 
-			result = allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, _memory);
+			result = allocateMemory(&mr, _flags, _memory);
+
+			if (VK_SUCCESS != result
+			&&  (_flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) )
+			{
+				result = allocateMemory(&mr, _flags & ~VK_MEMORY_PROPERTY_HOST_CACHED_BIT, _memory);
+			}
+
 			if (VK_SUCCESS != result)
 			{
-				BX_TRACE("Create staging buffer error: vkAllocateMemory failed %d: %s.", result, getName(result) );
+				BX_TRACE("Create host buffer error: vkAllocateMemory failed %d: %s.", result, getName(result) );
 				return result;
 			}
 
 			result = vkBindBufferMemory(m_device, *_buffer, *_memory, 0);
 			if (VK_SUCCESS != result)
 			{
-				BX_TRACE("Create staging buffer error: vkBindBufferMemory failed %d: %s.", result, getName(result) );
+				BX_TRACE("Create host buffer error: vkBindBufferMemory failed %d: %s.", result, getName(result) );
 				return result;
 			}
 
@@ -4178,7 +4181,7 @@ VK_IMPORT_DEVICE
 				result = vkMapMemory(m_device, *_memory, 0, _size, 0, &dst);
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("Create staging buffer error: vkMapMemory failed %d: %s.", result, getName(result) );
+					BX_TRACE("Create host buffer error: vkMapMemory failed %d: %s.", result, getName(result) );
 					return result;
 				}
 
@@ -4187,6 +4190,25 @@ VK_IMPORT_DEVICE
 			}
 
 			return result;
+		}
+
+		VkResult createStagingBuffer(uint32_t _size, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
+		{
+			const VkMemoryPropertyFlags flags = 0
+				| VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+				;
+			return createHostBuffer(_size, flags, _buffer, _memory, _data);
+		}
+
+		VkResult createReadbackBuffer(uint32_t _size, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory)
+		{
+			const VkMemoryPropertyFlags flags = 0
+				| VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+				| VK_MEMORY_PROPERTY_HOST_CACHED_BIT
+				;
+			return createHostBuffer(_size, flags, _buffer, _memory, NULL);
 		}
 
 		VkAllocationCallbacks*   m_allocatorCb;
@@ -4252,7 +4274,6 @@ VK_IMPORT_DEVICE
 
 		VkBuffer m_captureBuffer;
 		VkDeviceMemory m_captureMemory;
-		void* m_captureData;
 		uint32_t m_captureSize;
 
 		TextVideoMem m_textVideoMem;
