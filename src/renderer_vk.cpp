@@ -1053,7 +1053,6 @@ VK_IMPORT_DEVICE
 			, m_wireframe(false)
 			, m_captureBuffer(VK_NULL_HANDLE)
 			, m_captureMemory(VK_NULL_HANDLE)
-			, m_captureData(NULL)
 			, m_captureSize(0)
 		{
 		}
@@ -7653,6 +7652,7 @@ VK_DESTROY
 		bool     hasPredefined           = false;
 		bool     commandListChanged      = false;
 		VkPipeline currentPipeline = VK_NULL_HANDLE;
+		VkIndexType currentIndexFormat = VK_INDEX_TYPE_MAX_ENUM;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -8023,8 +8023,6 @@ VK_DESTROY
 
 				if (0 != draw.m_streamMask)
 				{
-					currentState.m_streamMask = draw.m_streamMask;
-
 					const uint64_t state = draw.m_stateFlags;
 					bool hasFactor = 0
 						|| f0 == (state & f0)
@@ -8033,9 +8031,16 @@ VK_DESTROY
 						|| f3 == (state & f3)
 						;
 
+					const bool bindAttribs = hasVertexStreamChanged(currentState, draw);
+
+					currentState.m_streamMask         = draw.m_streamMask;
+					currentState.m_instanceDataBuffer = draw.m_instanceDataBuffer;
+					currentState.m_instanceDataOffset = draw.m_instanceDataOffset;
+					currentState.m_instanceDataStride = draw.m_instanceDataStride;
+
 					const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
-					VertexBufferHandle streamHandles[BGFX_CONFIG_MAX_VERTEX_STREAMS];
-					uint32_t streamOffsets[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+					VkBuffer streamBuffers[BGFX_CONFIG_MAX_VERTEX_STREAMS + 1];
+					VkDeviceSize streamOffsets[BGFX_CONFIG_MAX_VERTEX_STREAMS + 1];
 					uint8_t numStreams = 0;
 					uint32_t numVertices = draw.m_numVertices;
 					if (UINT8_MAX != draw.m_streamMask)
@@ -8049,11 +8054,9 @@ VK_DESTROY
 							streamMask >>= ntz;
 							idx         += ntz;
 
-							currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
-							currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;
-							currentState.m_stream[idx].m_startVertex  = draw.m_stream[idx].m_startVertex;
+							currentState.m_stream[idx] = draw.m_stream[idx];
 
-							VertexBufferHandle handle = draw.m_stream[idx].m_handle;
+							const VertexBufferHandle handle = draw.m_stream[idx].m_handle;
 							const VertexBufferVK& vb = m_vertexBuffers[handle.idx];
 							const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
 								? draw.m_stream[idx].m_layoutHandle.idx
@@ -8062,7 +8065,7 @@ VK_DESTROY
 							const VertexLayout& layout = m_vertexLayouts[decl];
 							const uint32_t stride = layout.m_stride;
 
-							streamHandles[numStreams] = handle;
+							streamBuffers[numStreams] = m_vertexBuffers[handle.idx].m_buffer;
 							streamOffsets[numStreams] = draw.m_stream[idx].m_startVertex * stride;
 							layouts[numStreams]       = &layout;
 
@@ -8070,6 +8073,29 @@ VK_DESTROY
 								? vb.m_size/stride
 								: draw.m_numVertices
 								, numVertices
+								);
+						}
+					}
+
+					if (bindAttribs)
+					{
+						uint32_t numVertexBuffers = numStreams;
+
+						if (isValid(draw.m_instanceDataBuffer) )
+						{
+							streamOffsets[numVertexBuffers] = draw.m_instanceDataOffset;
+							streamBuffers[numVertexBuffers] = m_vertexBuffers[draw.m_instanceDataBuffer.idx].m_buffer;
+							numVertexBuffers++;
+						}
+
+						if (0 < numVertexBuffers)
+						{
+							vkCmdBindVertexBuffers(
+								  m_commandBuffer
+								, 0
+								, numVertexBuffers
+								, &streamBuffers[0]
+								, streamOffsets
 								);
 						}
 					}
@@ -8233,32 +8259,6 @@ VK_DESTROY
 							);
 					}
 
-					uint32_t numIndices = 0;
-					for (uint32_t ii = 0; ii < numStreams; ++ii)
-					{
-						const VkDeviceSize offset = streamOffsets[ii];
-						vkCmdBindVertexBuffers(
-							  m_commandBuffer
-							, ii
-							, 1
-							, &m_vertexBuffers[streamHandles[ii].idx].m_buffer
-							, &offset
-							);
-					}
-
-					if (isValid(draw.m_instanceDataBuffer) )
-					{
-						VkDeviceSize instanceOffset = draw.m_instanceDataOffset;
-						VertexBufferVK& instanceBuffer = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
-						vkCmdBindVertexBuffers(
-							  m_commandBuffer
-							, numStreams
-							, 1
-							, &instanceBuffer.m_buffer
-							, &instanceOffset
-							);
-					}
-
 					VkBuffer bufferIndirect = VK_NULL_HANDLE;
 					uint32_t numDrawIndirect = 0;
 					uint32_t bufferOffsetIndirect = 0;
@@ -8272,6 +8272,8 @@ VK_DESTROY
 							;
 						bufferOffsetIndirect = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 					}
+
+					uint32_t numIndices = 0;
 
 					if (!isValid(draw.m_indexBuffer) )
 					{
@@ -8308,12 +8310,19 @@ VK_DESTROY
 							: draw.m_numIndices
 							;
 
-						vkCmdBindIndexBuffer(
-							  m_commandBuffer
-							, ib.m_buffer
-							, 0
-							, indexFormat
-							);
+						if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx
+						||  currentIndexFormat != indexFormat)
+						{
+							currentState.m_indexBuffer = draw.m_indexBuffer;
+							currentIndexFormat = indexFormat;
+
+							vkCmdBindIndexBuffer(
+								  m_commandBuffer
+								, m_indexBuffers[draw.m_indexBuffer.idx].m_buffer
+								, 0
+								, indexFormat
+								);
+						}
 
 						if (isValid(draw.m_indirectBuffer) )
 						{
