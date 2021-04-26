@@ -902,6 +902,20 @@ VK_IMPORT_DEVICE
 			, "_newLayout cannot use VK_IMAGE_LAYOUT_UNDEFINED or VK_IMAGE_LAYOUT_PREINITIALIZED."
 			);
 
+		constexpr VkPipelineStageFlags depthStageMask = 0
+			| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+			| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
+			;
+
+		constexpr VkPipelineStageFlags sampledStageMask = 0
+			| VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
+			| VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+			| VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+			;
+
+		VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+
 		VkAccessFlags srcAccessMask = 0;
 		VkAccessFlags dstAccessMask = 0;
 
@@ -911,31 +925,39 @@ VK_IMPORT_DEVICE
 			break;
 
 		case VK_IMAGE_LAYOUT_GENERAL:
+			srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 			srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+			srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+			srcStageMask = depthStageMask;
 			srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+			srcStageMask = depthStageMask | sampledStageMask;
 			break;
 
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			srcStageMask = sampledStageMask;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_PREINITIALIZED:
+			srcStageMask = VK_PIPELINE_STAGE_HOST_BIT;
 			srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 			break;
 
@@ -949,35 +971,43 @@ VK_IMPORT_DEVICE
 		switch (_newLayout)
 		{
 		case VK_IMAGE_LAYOUT_GENERAL:
+			dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 			dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+			dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+			dstStageMask = depthStageMask;
 			dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+			dstStageMask = depthStageMask | sampledStageMask;
 			dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			dstStageMask = sampledStageMask;
 			dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
-			dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+			// vkQueuePresentKHR performs automatic visibility operations
+			dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 			break;
 
 		default:
@@ -1000,8 +1030,8 @@ VK_IMPORT_DEVICE
 		imb.subresourceRange.baseArrayLayer = _baseArrayLayer;
 		imb.subresourceRange.layerCount     = _layerCount;
 		vkCmdPipelineBarrier(_commandBuffer
-			, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
-			, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
+			, srcStageMask
+			, dstStageMask
 			, 0
 			, 0
 			, NULL
