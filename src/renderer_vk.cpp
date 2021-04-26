@@ -2322,14 +2322,16 @@ VK_IMPORT_DEVICE
 			{
 				BX_UNUSED(_len);
 
+				const uint32_t abgr = kColorMarker;
+
 				VkDebugUtilsLabelEXT dul;
 				dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
 				dul.pNext = NULL;
 				dul.pLabelName = _marker;
-				dul.color[0] = 1.0f;
-				dul.color[1] = 0.0f;
-				dul.color[2] = 0.0f;
-				dul.color[3] = 1.0f;
+				dul.color[0] = ((abgr >> 24) & 0xff) / 255.0f;
+				dul.color[1] = ((abgr >> 16) & 0xff) / 255.0f;
+				dul.color[2] = ((abgr >> 8)  & 0xff) / 255.0f;
+				dul.color[3] = ((abgr >> 0)  & 0xff) / 255.0f;
 
 				vkCmdInsertDebugUtilsLabelEXT(m_commandBuffer, &dul);
 			}
@@ -4549,7 +4551,6 @@ VK_DESTROY
 		bx::read(&reader, magic);
 
 		VkShaderStageFlagBits shaderStage = VK_SHADER_STAGE_ALL;
-		BX_UNUSED(shaderStage);
 
 		if (isShaderType(magic, 'C') )
 		{
@@ -5027,7 +5028,7 @@ VK_DESTROY
 						if (UINT16_MAX != vsBindingIdx)
 						{
 							BX_ASSERT(
-								bindings[vsBindingIdx].descriptorType == fsBinding.descriptorType
+								  bindings[vsBindingIdx].descriptorType == fsBinding.descriptorType
 								, "Mismatching descriptor types. Shaders compiled with different versions of shaderc?"
 								);
 							bindings[vsBindingIdx].stageFlags |= fsBinding.stageFlags;
@@ -8295,6 +8296,12 @@ VK_DESTROY
 				}
 			}
 
+			if (beginRenderPass)
+			{
+				vkCmdEndRenderPass(m_commandBuffer);
+				beginRenderPass = false;
+			}
+
 			if (wasCompute)
 			{
 				setViewType(view, "C");
@@ -8303,12 +8310,6 @@ VK_DESTROY
 			}
 
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
-
-			if (beginRenderPass)
-			{
-				vkCmdEndRenderPass(m_commandBuffer);
-				beginRenderPass = false;
-			}
 
 			if (0 < _render->m_numRenderItems)
 			{

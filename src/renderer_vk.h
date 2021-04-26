@@ -296,19 +296,6 @@ VK_DESTROY_FUNC(DeviceMemory);
 VK_DESTROY_FUNC(SurfaceKHR);
 #undef VK_DESTROY_FUNC
 
-	struct DslBinding
-	{
-		enum Enum
-		{
-//			CombinedImageSampler,
-			VertexUniformBuffer,
-			FragmentUniformBuffer,
-//			StorageBuffer,
-
-			Count
-		};
-	};
-
 	template<typename Ty>
 	class StateCacheT
 	{
