@@ -4387,7 +4387,14 @@ VK_DESTROY
 			, &mr
 			);
 
-		VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_deviceMem) );
+		VkMemoryPropertyFlags flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		VkResult result = s_renderVK->allocateMemory(&mr, flags, &m_deviceMem);
+
+		if (VK_SUCCESS != result)
+		{
+			flags &= ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			VK_CHECK(s_renderVK->allocateMemory(&mr, flags, &m_deviceMem) );
+		}
 
 		m_size = (uint32_t)mr.size;
 		m_pos  = 0;
