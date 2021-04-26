@@ -683,6 +683,53 @@ void meshSubmit(const Mesh* _mesh, const MeshState*const* _state, uint8_t _numPa
 	_mesh->submit(_state, _numPasses, _mtx, _numMatrices);
 }
 
+struct RendererTypeRemap
+{
+	bx::StringView           name;
+	bgfx::RendererType::Enum type;
+};
+
+static RendererTypeRemap s_rendererTypeRemap[] =
+{
+	{ "d3d11", bgfx::RendererType::Direct3D11 },
+	{ "d3d12", bgfx::RendererType::Direct3D12 },
+	{ "d3d9",  bgfx::RendererType::Direct3D9  },
+	{ "gl",    bgfx::RendererType::OpenGL     },
+	{ "mtl",   bgfx::RendererType::Metal      },
+	{ "noop",  bgfx::RendererType::Noop       },
+	{ "vk",    bgfx::RendererType::Vulkan     },
+};
+
+bx::StringView getName(bgfx::RendererType::Enum _type)
+{
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_rendererTypeRemap); ++ii)
+	{
+		const RendererTypeRemap& remap = s_rendererTypeRemap[ii];
+
+		if (_type == remap.type)
+		{
+			return remap.name;
+		}
+	}
+
+	return "";
+}
+
+bgfx::RendererType::Enum getType(const bx::StringView& _name)
+{
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_rendererTypeRemap); ++ii)
+	{
+		const RendererTypeRemap& remap = s_rendererTypeRemap[ii];
+
+		if (0 == bx::strCmpI(_name, remap.name) )
+		{
+			return remap.type;
+		}
+	}
+
+	return bgfx::RendererType::Count;
+}
+
 Args::Args(int _argc, const char* const* _argv)
 	: m_type(bgfx::RendererType::Count)
 	, m_pciId(BGFX_PCI_ID_NONE)

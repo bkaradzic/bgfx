@@ -818,22 +818,7 @@ struct View
 				m_height = 720;
 			}
 
-			bx::StringView rendererType = settings.get("view/renderer");
-			if (!rendererType.isEmpty() )
-			{
-				m_rendererType = bgfx::RendererType::Count;
-
-				for (uint32_t ii = 0; ii < BX_COUNTOF(s_rendererTypeRemap); ++ii)
-				{
-					const RendererTypeRemap& remap = s_rendererTypeRemap[ii];
-
-					if (0 == bx::strCmpI(rendererType, remap.name) )
-					{
-						m_rendererType = remap.type;
-						break;
-					}
-				}
-			}
+			m_rendererType = getType(settings.get("view/renderer") );
 		}
 	}
 
@@ -858,16 +843,7 @@ struct View
 
 			if (m_rendererType != bgfx::RendererType::Count)
 			{
-				for (uint32_t ii = 0; ii < BX_COUNTOF(s_rendererTypeRemap); ++ii)
-				{
-					const RendererTypeRemap& remap = s_rendererTypeRemap[ii];
-
-					if (m_rendererType == remap.type)
-					{
-						settings.set("view/renderer", remap.name);
-						break;
-					}
-				}
+				settings.set("view/renderer", getName(m_rendererType) );
 			}
 
 			bx::FileWriter writer;
