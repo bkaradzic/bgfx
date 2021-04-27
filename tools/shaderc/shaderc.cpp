@@ -2304,7 +2304,7 @@ namespace bgfx
 											);
 									}
 
-									if (need130)
+									if (need130 || (glsl_profile >= 130))
 									{
 										bx::stringPrintf(code
 											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
