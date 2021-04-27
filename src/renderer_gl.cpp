@@ -6474,7 +6474,12 @@ namespace bgfx { namespace gl
 				code = temp;
 			}
 
-			GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&code, NULL) );
+			{
+				const GLchar* str = (const GLchar*)code.getPtr();
+				int32_t len = code.getLength();
+				GL_CHECK(glShaderSource(m_id, 1, &str, &len) );
+			}
+
 			GL_CHECK(glCompileShader(m_id) );
 
 			GLint compiled = 0;
