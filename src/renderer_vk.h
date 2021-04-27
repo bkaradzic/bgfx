@@ -144,6 +144,8 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkAllocateDescriptorSets);        \
 			VK_IMPORT_DEVICE_FUNC(false, vkFreeDescriptorSets);            \
 			VK_IMPORT_DEVICE_FUNC(false, vkUpdateDescriptorSets);          \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateQueryPool);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyQueryPool);              \
 			VK_IMPORT_DEVICE_FUNC(false, vkQueueSubmit);                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkQueueWaitIdle);                 \
 			VK_IMPORT_DEVICE_FUNC(false, vkDeviceWaitIdle);                \
@@ -167,7 +169,6 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindDescriptorSets);         \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindIndexBuffer);            \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindVertexBuffers);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdUpdateBuffer);               \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearColorImage);            \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearDepthStencilImage);     \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearAttachments);           \
@@ -177,6 +178,9 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImage);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImageToBuffer);          \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBlitImage);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdResetQueryPool);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdWriteTimestamp);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyQueryPoolResults);       \
 			VK_IMPORT_DEVICE_FUNC(false, vkMapMemory);                     \
 			VK_IMPORT_DEVICE_FUNC(false, vkUnmapMemory);                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkFlushMappedMemoryRanges);       \
@@ -211,11 +215,12 @@
 			VK_DESTROY_FUNC(Framebuffer);         \
 			VK_DESTROY_FUNC(Image);               \
 			VK_DESTROY_FUNC(ImageView);           \
-			VK_DESTROY_FUNC(Sampler);             \
 			VK_DESTROY_FUNC(Pipeline);            \
 			VK_DESTROY_FUNC(PipelineCache);       \
 			VK_DESTROY_FUNC(PipelineLayout);      \
+			VK_DESTROY_FUNC(QueryPool);           \
 			VK_DESTROY_FUNC(RenderPass);          \
+			VK_DESTROY_FUNC(Sampler);             \
 			VK_DESTROY_FUNC(Semaphore);           \
 			VK_DESTROY_FUNC(ShaderModule);        \
 			VK_DESTROY_FUNC(SwapchainKHR);        \
@@ -521,30 +526,11 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		{
 		}
 
-		VkResult init()
-		{
-			return VK_SUCCESS;
-		}
-
-		void shutdown()
-		{
-		}
-
-		uint32_t begin(uint32_t _resultIdx)
-		{
-			BX_UNUSED(_resultIdx);
-			return 0;
-		}
-
-		void end(uint32_t _idx)
-		{
-			BX_UNUSED(_idx);
-		}
-
-		bool update()
-		{
-			return false;
-		}
+		VkResult init();
+		void shutdown();
+		uint32_t begin(uint32_t _resultIdx);
+		void end(uint32_t _idx);
+		bool update();
 
 		struct Result
 		{
@@ -562,17 +548,20 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		struct Query
 		{
-			uint32_t m_begin;
-			uint32_t m_end;
-			uint32_t m_resultIdx;
-			bool     m_ready;
+			uint32_t  m_resultIdx;
+			bool      m_ready;
+			uint64_t  m_completed;
 		};
 
 		uint64_t m_frequency;
 
 		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
-
 		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
+
+		VkBuffer m_readback;
+		VkDeviceMemory m_readbackMemory;
+		VkQueryPool m_queryPool;
+		const uint64_t* m_queryResult;
 		bx::RingBufferControl m_control;
 	};
 
@@ -800,13 +789,15 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		uint32_t m_numFramesInFlight;
 
-		uint32_t m_currentFrameInFlight = 0;
-		uint32_t m_consumeIndex = 0;
+		uint32_t m_currentFrameInFlight;
+		uint32_t m_consumeIndex;
 
 		VkCommandBuffer m_activeCommandBuffer;
 
-		VkFence m_upcomingFence;
-		VkFence m_kickedFence;
+		VkFence m_currentFence;
+		VkFence m_completedFence;
+
+		uint64_t m_submitted;
 
 		struct CommandList
 		{

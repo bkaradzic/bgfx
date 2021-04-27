@@ -819,20 +819,22 @@ VK_IMPORT_DEVICE
 	template<> VkObjectType getType<VkCommandPool        >() { return VK_OBJECT_TYPE_COMMAND_POOL;          }
 	template<> VkObjectType getType<VkDescriptorPool     >() { return VK_OBJECT_TYPE_DESCRIPTOR_POOL;       }
 	template<> VkObjectType getType<VkDescriptorSetLayout>() { return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT; }
+	template<> VkObjectType getType<VkDeviceMemory       >() { return VK_OBJECT_TYPE_DEVICE_MEMORY;         }
 	template<> VkObjectType getType<VkFence              >() { return VK_OBJECT_TYPE_FENCE;                 }
 	template<> VkObjectType getType<VkFramebuffer        >() { return VK_OBJECT_TYPE_FRAMEBUFFER;           }
 	template<> VkObjectType getType<VkImage              >() { return VK_OBJECT_TYPE_IMAGE;                 }
 	template<> VkObjectType getType<VkImageView          >() { return VK_OBJECT_TYPE_IMAGE_VIEW;            }
-	template<> VkObjectType getType<VkSampler            >() { return VK_OBJECT_TYPE_SAMPLER;               }
 	template<> VkObjectType getType<VkPipeline           >() { return VK_OBJECT_TYPE_PIPELINE;              }
 	template<> VkObjectType getType<VkPipelineCache      >() { return VK_OBJECT_TYPE_PIPELINE_CACHE;        }
 	template<> VkObjectType getType<VkPipelineLayout     >() { return VK_OBJECT_TYPE_PIPELINE_LAYOUT;       }
+	template<> VkObjectType getType<VkQueryPool          >() { return VK_OBJECT_TYPE_QUERY_POOL;            }
 	template<> VkObjectType getType<VkRenderPass         >() { return VK_OBJECT_TYPE_RENDER_PASS;           }
+	template<> VkObjectType getType<VkSampler            >() { return VK_OBJECT_TYPE_SAMPLER;               }
 	template<> VkObjectType getType<VkSemaphore          >() { return VK_OBJECT_TYPE_SEMAPHORE;             }
 	template<> VkObjectType getType<VkShaderModule       >() { return VK_OBJECT_TYPE_SHADER_MODULE;         }
 	template<> VkObjectType getType<VkSurfaceKHR         >() { return VK_OBJECT_TYPE_SURFACE_KHR;           }
 	template<> VkObjectType getType<VkSwapchainKHR       >() { return VK_OBJECT_TYPE_SWAPCHAIN_KHR;         }
-	template<> VkObjectType getType<VkDeviceMemory       >() { return VK_OBJECT_TYPE_DEVICE_MEMORY;         }
+
 
 	template<typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(VkDevice _device, Ty _object, const char* _format, ...)
@@ -1444,6 +1446,8 @@ VK_IMPORT_INSTANCE
 					&& lineRasterizationFeatures.smoothLines
 					;
 
+				m_timerQuerySupport = m_deviceProperties.limits.timestampComputeAndGraphics;
+
 				const bool indirectDrawSupport = true
 					&& m_deviceFeatures.multiDrawIndirect
 					&& m_deviceFeatures.drawIndirectFirstInstance
@@ -1894,12 +1898,15 @@ VK_IMPORT_DEVICE
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
 			}
 
-			result = m_gpuTimer.init();
-
-			if (VK_SUCCESS != result)
+			if (m_timerQuerySupport)
 			{
-				BX_TRACE("Init error: creating GPU timer failed %d: %s.", result, getName(result) );
-				goto error;
+				result = m_gpuTimer.init();
+
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Init error: creating GPU timer failed %d: %s.", result, getName(result) );
+					goto error;
+				}
 			}
 
 			g_internalData.context = m_device;
@@ -1957,7 +1964,10 @@ VK_IMPORT_DEVICE
 		{
 			VK_CHECK(vkDeviceWaitIdle(m_device) );
 
-			m_gpuTimer.shutdown();
+			if (m_timerQuerySupport)
+			{
+				m_gpuTimer.shutdown();
+			}
 
 			preReset();
 
@@ -4251,6 +4261,7 @@ VK_IMPORT_DEVICE
 		VkPhysicalDeviceFeatures         m_deviceFeatures;
 
 		bool m_lineAASupport;
+		bool m_timerQuerySupport;
 
 		FrameBufferVK m_backBuffer;
 
@@ -5139,6 +5150,153 @@ VK_DESTROY
 		m_numPredefined = 0;
 		m_vsh = NULL;
 		m_fsh = NULL;
+	}
+
+	VkResult TimerQueryVK::init()
+	{
+		VkResult result = VK_SUCCESS;
+
+		const uint32_t count = m_control.m_size * 2;
+
+		VkQueryPoolCreateInfo qpci;
+		qpci.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+		qpci.pNext = NULL;
+		qpci.flags = 0;
+		qpci.queryType = VK_QUERY_TYPE_TIMESTAMP;
+		qpci.queryCount = count;
+		qpci.pipelineStatistics = 0;
+
+		result = vkCreateQueryPool(s_renderVK->m_device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool);
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("Create timer query error: vkCreateQueryPool failed %d: %s.", result, getName(result) );
+			return result;
+		}
+
+		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+
+		vkCmdResetQueryPool(commandBuffer, m_queryPool, 0, count);
+
+		const uint32_t size = count * sizeof(uint64_t);
+		result = s_renderVK->createReadbackBuffer(size, &m_readback, &m_readbackMemory);
+		if (VK_SUCCESS != result)
+		{
+			return result;
+		}
+
+		result = vkMapMemory(s_renderVK->m_device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
+
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("Create timer query error: vkMapMemory failed %d: %s.", result, getName(result) );
+			return result;
+		}
+
+		m_frequency = uint64_t(1000000000.0 / double(s_renderVK->m_deviceProperties.limits.timestampPeriod) );
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			m_result[ii].reset();
+		}
+
+		m_control.reset();
+
+		return result;
+	}
+
+	void TimerQueryVK::shutdown()
+	{
+		vkDestroy(m_queryPool);
+		vkDestroy(m_readback);
+		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory);
+		vkFreeMemory(s_renderVK->m_device, m_readbackMemory, s_renderVK->m_allocatorCb);
+	}
+
+	uint32_t TimerQueryVK::begin(uint32_t _resultIdx)
+	{
+		while (0 == m_control.reserve(1) )
+		{
+			m_control.consume(1);
+		}
+
+		Result& result = m_result[_resultIdx];
+		++result.m_pending;
+
+		const uint32_t idx = m_control.m_current;
+		Query& query = m_query[idx];
+		query.m_resultIdx = _resultIdx;
+		query.m_ready     = false;
+
+		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+		const uint32_t offset = idx * 2 + 0;
+
+		vkCmdResetQueryPool(commandBuffer, m_queryPool, offset, 2);
+		vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, m_queryPool, offset + 0);
+
+		m_control.commit(1);
+
+		return idx;
+	}
+
+	void TimerQueryVK::end(uint32_t _idx)
+	{
+		Query& query = m_query[_idx];
+		query.m_ready = true;
+		query.m_completed = s_renderVK->m_cmd.m_submitted + s_renderVK->m_cmd.m_numFramesInFlight;
+
+		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+		const uint32_t offset = _idx * 2 + 0;
+
+		vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, m_queryPool, offset + 1);
+
+		vkCmdCopyQueryPoolResults(
+			  commandBuffer
+			, m_queryPool
+			, offset
+			, 2
+			, m_readback
+			, offset * sizeof(uint64_t)
+			, sizeof(uint64_t)
+			, VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT
+			);
+
+		setMemoryBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT);
+
+		while (update() )
+		{
+		}
+	}
+
+	bool TimerQueryVK::update()
+	{
+		if (0 != m_control.available() )
+		{
+			uint32_t idx = m_control.m_read;
+			Query& query = m_query[idx];
+
+			if (!query.m_ready)
+			{
+				return false;
+			}
+
+			if (query.m_completed > s_renderVK->m_cmd.m_submitted)
+			{
+				return false;
+			}
+
+			m_control.consume(1);
+
+			Result& result = m_result[query.m_resultIdx];
+			--result.m_pending;
+
+			uint32_t offset = idx * 2;
+			result.m_begin  = m_queryResult[offset+0];
+			result.m_end    = m_queryResult[offset+1];
+
+			return true;
+		}
+
+		return false;
 	}
 
 	void ReadbackVK::create(VkImage _image, uint32_t _width, uint32_t _height, TextureFormat::Enum _format)
@@ -7230,8 +7388,10 @@ VK_DESTROY
 		m_numWaitSemaphores   = 0;
 
 		m_activeCommandBuffer = VK_NULL_HANDLE;
-		m_upcomingFence       = VK_NULL_HANDLE;
-		m_kickedFence         = VK_NULL_HANDLE;
+		m_currentFence        = VK_NULL_HANDLE;
+		m_completedFence      = VK_NULL_HANDLE;
+
+		m_submitted = 0;
 
 		VkCommandPoolCreateInfo cpci;
 		cpci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -7323,9 +7483,10 @@ VK_DESTROY
 
 		if (m_activeCommandBuffer == VK_NULL_HANDLE)
 		{
+			const VkDevice device = s_renderVK->m_device;
 			CommandList& commandList = m_commandList[m_currentFrameInFlight];
 
-			result = vkWaitForFences(s_renderVK->m_device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
+			result = vkWaitForFences(device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
 
 			if (VK_SUCCESS != result)
 			{
@@ -7333,7 +7494,7 @@ VK_DESTROY
 				return result;
 			}
 
-			result = vkResetCommandPool(s_renderVK->m_device, commandList.m_commandPool, 0);
+			result = vkResetCommandPool(device, commandList.m_commandPool, 0);
 
 			if (VK_SUCCESS != result)
 			{
@@ -7356,7 +7517,7 @@ VK_DESTROY
 			}
 
 			m_activeCommandBuffer = commandList.m_commandBuffer;
-			m_upcomingFence = commandList.m_fence;
+			m_currentFence = commandList.m_fence;
 		}
 
 		if (NULL != _commandBuffer)
@@ -7396,10 +7557,10 @@ VK_DESTROY
 
 			VK_CHECK(vkEndCommandBuffer(m_activeCommandBuffer) );
 
-			m_kickedFence = m_upcomingFence;
-			m_upcomingFence = VK_NULL_HANDLE;
+			m_completedFence = m_currentFence;
+			m_currentFence = VK_NULL_HANDLE;
 
-			VK_CHECK(vkResetFences(s_renderVK->m_device, 1, &m_kickedFence) );
+			VK_CHECK(vkResetFences(device, 1, &m_completedFence) );
 
 			VkSubmitInfo si;
 			si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -7415,16 +7576,17 @@ VK_DESTROY
 			m_numWaitSemaphores   = 0;
 			m_numSignalSemaphores = 0;
 
-			VK_CHECK(vkQueueSubmit(m_queue, 1, &si, m_kickedFence) );
+			VK_CHECK(vkQueueSubmit(m_queue, 1, &si, m_completedFence) );
 
 			if (_wait)
 			{
-				VK_CHECK(vkWaitForFences(s_renderVK->m_device, 1, &m_kickedFence, VK_TRUE, UINT64_MAX) );
+				VK_CHECK(vkWaitForFences(device, 1, &m_completedFence, VK_TRUE, UINT64_MAX) );
 			}
 
 			m_activeCommandBuffer = VK_NULL_HANDLE;
 
 			m_currentFrameInFlight = (m_currentFrameInFlight + 1) % m_numFramesInFlight;
+			m_submitted++;
 		}
 	}
 
@@ -7616,7 +7778,12 @@ VK_DESTROY
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-		uint32_t frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
+		uint32_t frameQueryIdx = UINT32_MAX;
+
+		if (m_timerQuerySupport)
+		{
+			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
+		}
 
 		if (0 < _render->m_iboffset)
 		{
@@ -7705,6 +7872,7 @@ VK_DESTROY
 			  _render
 			, m_gpuTimer
 			, s_viewName
+			, m_timerQuerySupport
 			);
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
@@ -8630,7 +8798,7 @@ VK_DESTROY
 				m_cmd.addSignalSemaphore(fb.m_swapChain.m_lastImageRenderedSemaphore);
 				fb.m_swapChain.m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
-				fb.m_swapChain.m_backBufferFence[fb.m_swapChain.m_backBufferColorIdx] = m_cmd.m_upcomingFence;
+				fb.m_swapChain.m_backBufferFence[fb.m_swapChain.m_backBufferColorIdx] = m_cmd.m_currentFence;
 			}
 		}
 
