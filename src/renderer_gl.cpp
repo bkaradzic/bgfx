@@ -5061,18 +5061,19 @@ namespace bgfx { namespace gl
 		used = 0;
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
 		{
-			GLuint loc = glGetAttribLocation(m_id, s_instanceDataName[ii]);
-			if (GLuint(-1) != loc )
+			GLint loc = glGetAttribLocation(m_id, s_instanceDataName[ii]);
+			if (-1 != loc)
 			{
 				BX_TRACE("instance data %s: %d", s_instanceDataName[ii], loc);
 				m_instanceData[used++] = loc;
 			}
 		}
-		BX_ASSERT(used < BX_COUNTOF(m_instanceData), "Out of bounds %d > array size %d."
-				, used
-				, BX_COUNTOF(m_instanceData)
-				);
-		m_instanceData[used] = 0xffff;
+		BX_ASSERT(used < BX_COUNTOF(m_instanceData)
+			, "Out of bounds %d > array size %d."
+			, used
+			, BX_COUNTOF(m_instanceData)
+			);
+		m_instanceData[used] = -1;
 	}
 
 	void ProgramGL::bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex)
@@ -5142,7 +5143,7 @@ namespace bgfx { namespace gl
 	void ProgramGL::bindInstanceData(uint32_t _stride, uint32_t _baseVertex) const
 	{
 		uint32_t baseVertex = _baseVertex;
-		for (uint32_t ii = 0; 0xffff != m_instanceData[ii]; ++ii)
+		for (uint32_t ii = 0; -1 != m_instanceData[ii]; ++ii)
 		{
 			GLint loc = m_instanceData[ii];
 			lazyEnableVertexAttribArray(loc);
@@ -5154,7 +5155,7 @@ namespace bgfx { namespace gl
 
 	void ProgramGL::unbindInstanceData() const
 	{
-		for(uint32_t ii = 0; 0xffff != m_instanceData[ii]; ++ii)
+		for(uint32_t ii = 0; -1 != m_instanceData[ii]; ++ii)
 		{
 			GLint loc = m_instanceData[ii];
 			lazyDisableVertexAttribArray(loc);
