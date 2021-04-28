@@ -927,17 +927,17 @@ VK_IMPORT_DEVICE
 			break;
 
 		case VK_IMAGE_LAYOUT_GENERAL:
-			srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+			srcStageMask  = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 			srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-			srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-			srcStageMask = depthStageMask;
+			srcStageMask  = depthStageMask;
 			srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			break;
 
@@ -954,12 +954,12 @@ VK_IMPORT_DEVICE
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-			srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			srcStageMask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_PREINITIALIZED:
-			srcStageMask = VK_PIPELINE_STAGE_HOST_BIT;
+			srcStageMask  = VK_PIPELINE_STAGE_HOST_BIT;
 			srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 			break;
 
@@ -967,52 +967,53 @@ VK_IMPORT_DEVICE
 			break;
 
 		default:
+			BX_ASSERT(false, "Unknown image layout.");
 			break;
 		}
 
 		switch (_newLayout)
 		{
 		case VK_IMAGE_LAYOUT_GENERAL:
-			dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+			dstStageMask  = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 			dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-			dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-			dstStageMask = depthStageMask;
+			dstStageMask  = depthStageMask;
 			dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
-			dstStageMask = depthStageMask | sampledStageMask;
+			dstStageMask  = depthStageMask | sampledStageMask;
 			dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-			dstStageMask = sampledStageMask;
+			dstStageMask  = sampledStageMask;
 			dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-			dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			dstStageMask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-			dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			dstStageMask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
 			// vkQueuePresentKHR performs automatic visibility operations
-			dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 			break;
 
 		default:
+			BX_ASSERT(false, "Unknown image layout.");
 			break;
 		}
 
@@ -2763,10 +2764,11 @@ VK_IMPORT_DEVICE
 				for (uint8_t ii = 0, num = oldFrameBuffer.m_num; ii < num; ++ii)
 				{
 					TextureVK& texture = m_textures[oldFrameBuffer.m_texture[ii].idx];
-					texture.setImageMemoryBarrier(
-						  m_commandBuffer
-						, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-						);
+					texture.setImageMemoryBarrier(m_commandBuffer, texture.m_sampledLayout);
+					if (VK_NULL_HANDLE != texture.m_singleMsaaImage)
+					{
+						texture.setImageMemoryBarrier(m_commandBuffer, texture.m_sampledLayout, true);
+					}
 				}
 
 				if (isValid(oldFrameBuffer.m_depth) )
@@ -2776,10 +2778,7 @@ VK_IMPORT_DEVICE
 
 					if (!writeOnly)
 					{
-						texture.setImageMemoryBarrier(
-							  m_commandBuffer
-							, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-							);
+						texture.setImageMemoryBarrier(m_commandBuffer, texture.m_sampledLayout);
 					}
 				}
 			}
@@ -3691,16 +3690,7 @@ VK_IMPORT_DEVICE
 							wds[wdsCount].pBufferInfo      = NULL;
 							wds[wdsCount].pTexelBufferView = NULL;
 
-							TextureVK& texture = m_textures[bind.m_idx];
-
-							if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout)
-							{
-								const VkImageLayout layout = isImageDescriptor
-									? VK_IMAGE_LAYOUT_GENERAL
-									: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-									;
-								texture.setImageMemoryBarrier(m_commandBuffer, layout);
-							}
+							const TextureVK& texture = m_textures[bind.m_idx];
 
 							VkImageViewType type = texture.m_type;
 							if (UINT32_MAX != bindInfo.index)
@@ -3713,7 +3703,12 @@ VK_IMPORT_DEVICE
 								type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 							}
 
-							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
+							BX_ASSERT(
+								  texture.m_currentImageLayout == texture.m_sampledLayout
+								, "Mismatching image layout. Texture currently used as a framebuffer attachment?"
+								);
+
+							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
 							imageInfo[imageCount].imageView   = getCachedImageView(
 								  { bind.m_idx }
@@ -3742,7 +3737,11 @@ VK_IMPORT_DEVICE
 							wds[wdsCount].pBufferInfo      = NULL;
 							wds[wdsCount].pTexelBufferView = NULL;
 
-							BufferVK& sb = bind.m_type == Binding::VertexBuffer ? m_vertexBuffers[bind.m_idx] : m_indexBuffers[bind.m_idx];
+							const BufferVK& sb = bind.m_type == Binding::VertexBuffer
+								? m_vertexBuffers[bind.m_idx]
+								: m_indexBuffers[bind.m_idx]
+								;
+
 							bufferInfo[bufferCount].buffer = sb.m_buffer;
 							bufferInfo[bufferCount].offset = 0;
 							bufferInfo[bufferCount].range  = sb.m_size;
@@ -3764,17 +3763,17 @@ VK_IMPORT_DEVICE
 								, texture.m_numMips
 								);
 
-							if (VK_IMAGE_LAYOUT_GENERAL != texture.m_currentImageLayout)
-							{
-								texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-							}
-
 							const VkImageViewType type = UINT32_MAX == bindInfo.index
 								? texture.m_type
 								: program.m_textures[bindInfo.index].type
 								;
 
-							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
+							BX_ASSERT(
+								  texture.m_currentImageLayout == texture.m_sampledLayout
+								, "Mismatching image layout. Texture currently used as a framebuffer attachment?"
+								);
+
+							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;
 							imageInfo[imageCount].sampler     = sampler;
 							imageInfo[imageCount].imageView   = getCachedImageView(
 								  { bind.m_idx }
@@ -4548,25 +4547,7 @@ VK_DESTROY
 
 		if (!m_dynamic)
 		{
-			VkBuffer stagingBuffer;
-			VkDeviceMemory stagingMem;
-			VK_CHECK(s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data) );
-
-			// copy buffer to buffer
-			VkBufferCopy region;
-			region.srcOffset = 0;
-			region.dstOffset = 0;
-			region.size      = _size;
-			vkCmdCopyBuffer(_commandBuffer, stagingBuffer, m_buffer, 1, &region);
-
-			setMemoryBarrier(
-				  _commandBuffer
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				);
-
-			s_renderVK->release(stagingBuffer);
-			s_renderVK->release(stagingMem);
+			update(_commandBuffer, 0, _size, _data);
 		}
 	}
 
@@ -5515,6 +5496,11 @@ VK_DESTROY
 			return result;
 		}
 
+		m_sampledLayout = m_flags & BGFX_TEXTURE_COMPUTE_WRITE
+			? VK_IMAGE_LAYOUT_GENERAL
+			: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+			;
+
 		const bool needResolve = true
 			&& 1 < m_sampler.Count
 			&& 0 != (ici.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
@@ -5553,7 +5539,7 @@ VK_DESTROY
 				return result;
 			}
 
-			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
+			setImageMemoryBarrier(_commandBuffer, m_sampledLayout, true);
 		}
 
 		return result;
@@ -5571,9 +5557,9 @@ VK_DESTROY
 			bimg::TextureInfo ti;
 			bimg::imageGetSize(
 				  &ti
-				, uint16_t(imageContainer.m_width >> startLod)
+				, uint16_t(imageContainer.m_width  >> startLod)
 				, uint16_t(imageContainer.m_height >> startLod)
-				, uint16_t(imageContainer.m_depth >> startLod)
+				, uint16_t(imageContainer.m_depth  >> startLod)
 				, imageContainer.m_cubeMap
 				, 1 < imageContainer.m_numMips
 				, imageContainer.m_numLayers
@@ -5818,12 +5804,7 @@ VK_DESTROY
 			}
 			else
 			{
-				setImageMemoryBarrier(
-					  _commandBuffer
-					, (m_flags & BGFX_TEXTURE_COMPUTE_WRITE
-						? VK_IMAGE_LAYOUT_GENERAL
-						: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-					) );
+				setImageMemoryBarrier(_commandBuffer, m_sampledLayout);
 			}
 
 			BX_FREE(g_allocator, bufferCopyInfo);
@@ -6052,7 +6033,7 @@ VK_DESTROY
 	void TextureVK::copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy)
 	{
 		const VkImageLayout oldLayout = m_currentImageLayout == VK_IMAGE_LAYOUT_UNDEFINED
-			? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+			? m_sampledLayout
 			: m_currentImageLayout
 			;
 
@@ -7549,6 +7530,8 @@ VK_DESTROY
 	{
 		if (VK_NULL_HANDLE != m_activeCommandBuffer)
 		{
+			const VkDevice device = s_renderVK->m_device;
+
 			setMemoryBarrier(
 				  m_activeCommandBuffer
 				, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT

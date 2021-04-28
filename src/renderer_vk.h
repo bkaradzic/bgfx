@@ -634,6 +634,8 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkDeviceMemory m_singleMsaaDeviceMem;
 		VkImageLayout  m_currentSingleMsaaImageLayout;
 
+		VkImageLayout m_sampledLayout;
+
 		ReadbackVK m_readback;
 
 	private:
