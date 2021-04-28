@@ -8408,10 +8408,13 @@ VK_DESTROY
 						bufferOffsetIndirect = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 					}
 
+					uint32_t numPrimsSubmitted = 0;
 					uint32_t numIndices = 0;
 
 					if (!isValid(draw.m_indexBuffer) )
 					{
+						numPrimsSubmitted = numVertices / prim.m_div - prim.m_sub;
+
 						if (isValid(draw.m_indirectBuffer) )
 						{
 							vkCmdDrawIndirect(
@@ -8444,6 +8447,8 @@ VK_DESTROY
 							? ib.m_size / indexSize
 							: draw.m_numIndices
 							;
+
+						numPrimsSubmitted = numIndices / prim.m_div - prim.m_sub;
 
 						if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx
 						||  currentIndexFormat != indexFormat)
@@ -8482,7 +8487,6 @@ VK_DESTROY
 						}
 					}
 
-					uint32_t numPrimsSubmitted = numIndices / prim.m_div - prim.m_sub;
 					uint32_t numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
 					statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
