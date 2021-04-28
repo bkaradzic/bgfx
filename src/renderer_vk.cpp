@@ -7872,23 +7872,12 @@ VK_DESTROY
 				const RenderBind& renderBind = _render->m_renderItemBind[itemIdx];
 				++item;
 
-				if (viewChanged || isCompute || wasCompute)
+				if (viewChanged)
 				{
 					if (beginRenderPass)
 					{
 						vkCmdEndRenderPass(m_commandBuffer);
 						beginRenderPass = false;
-					}
-
-					// renderpass external subpass dependencies handle graphics -> compute and compute -> graphics
-					// but not compute -> compute (possibly also across views if they contain no draw calls)
-					if (wasCompute)
-					{
-						setMemoryBarrier(
-							  m_commandBuffer
-							, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
-							, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
-							);
 					}
 
 					view = key.m_view;
@@ -7897,29 +7886,6 @@ VK_DESTROY
 					currentProgram         = BGFX_INVALID_HANDLE;
 					hasPredefined          = false;
 					BX_UNUSED(currentSamplerStateIdx);
-
-					fbh = _render->m_view[view].m_fbh;
-					setFrameBuffer(fbh);
-
-					viewState.m_rect = _render->m_view[view].m_rect;
-					const Rect& rect        = _render->m_view[view].m_rect;
-					const Rect& scissorRect = _render->m_view[view].m_scissor;
-					viewHasScissor  = !scissorRect.isZero();
-					viewScissorRect = viewHasScissor ? scissorRect : rect;
-
-					const FrameBufferVK& fb = isValid(m_fbh)
-						? m_frameBuffers[m_fbh.idx]
-						: m_backBuffer
-						;
-
-					isFrameBufferValid = fb.isRenderable();
-
-					rpbi.framebuffer = fb.m_currentFramebuffer;
-					rpbi.renderPass  = fb.m_renderPass;
-					rpbi.renderArea.offset.x = rect.m_x;
-					rpbi.renderArea.offset.y = rect.m_y;
-					rpbi.renderArea.extent.width  = rect.m_width;
-					rpbi.renderArea.extent.height = rect.m_height;
 
 					if (item > 1)
 					{
@@ -7932,8 +7898,32 @@ VK_DESTROY
 
 					profiler.begin(view);
 
-					if (!isCompute && isFrameBufferValid)
+					fbh = _render->m_view[view].m_fbh;
+					setFrameBuffer(fbh);
+
+					const FrameBufferVK& fb = isValid(m_fbh)
+						? m_frameBuffers[m_fbh.idx]
+						: m_backBuffer
+						;
+
+					isFrameBufferValid = fb.isRenderable();
+
+					viewState.m_rect = _render->m_view[view].m_rect;
+					const Rect& rect        = _render->m_view[view].m_rect;
+					const Rect& scissorRect = _render->m_view[view].m_scissor;
+					viewHasScissor  = !scissorRect.isZero();
+					viewScissorRect = viewHasScissor ? scissorRect : rect;
+					restoreScissor = false;
+
+					if (isFrameBufferValid)
 					{
+						rpbi.framebuffer = fb.m_currentFramebuffer;
+						rpbi.renderPass  = fb.m_renderPass;
+						rpbi.renderArea.offset.x = rect.m_x;
+						rpbi.renderArea.offset.y = rect.m_y;
+						rpbi.renderArea.extent.width  = rect.m_width;
+						rpbi.renderArea.extent.height = rect.m_height;
+
 						VkViewport vp;
 						vp.x        =  float(rect.m_x);
 						vp.y        =  float(rect.m_y + rect.m_height);
@@ -7950,8 +7940,6 @@ VK_DESTROY
 						rc.extent.height = viewScissorRect.m_height;
 						vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
 
-						restoreScissor = false;
-
 						Clear& clr = _render->m_view[view].m_clear;
 						if (BGFX_CLEAR_NONE != clr.m_flags)
 						{
@@ -7967,9 +7955,6 @@ VK_DESTROY
 						prim = s_primInfo[Topology::Count]; // Force primitive type update.
 
 						submitBlit(bs, view);
-
-						vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
-						beginRenderPass = true;
 					}
 				}
 
@@ -7983,6 +7968,14 @@ VK_DESTROY
 						setViewType(view, "C");
 						BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
 					}
+
+					// renderpass external subpass dependencies handle graphics -> compute and compute -> graphics
+					// but not compute -> compute (possibly also across views if they contain no draw calls)
+					setMemoryBarrier(
+						  m_commandBuffer
+						, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+						, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT
+					);
 
 					const RenderCompute& compute = renderItem.compute;
 
@@ -8114,20 +8107,16 @@ VK_DESTROY
 				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
 				currentState.m_stencil = newStencil;
 
-				if (viewChanged
-				||  wasCompute)
+				if (!beginRenderPass)
 				{
-					if (wasCompute)
-					{
-						wasCompute = false;
-					}
+					wasCompute = false;
 
-					if (viewChanged)
-					{
-						BGFX_VK_PROFILER_END();
-						setViewType(view, " ");
-						BGFX_VK_PROFILER_BEGIN(view, kColorDraw);
-					}
+					BGFX_VK_PROFILER_END();
+					setViewType(view, " ");
+					BGFX_VK_PROFILER_BEGIN(view, kColorDraw);
+
+					vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+					beginRenderPass = true;
 
 					commandListChanged = true;
 				}
