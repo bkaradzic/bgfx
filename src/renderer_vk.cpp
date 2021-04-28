@@ -7745,6 +7745,11 @@ VK_DESTROY
 			return;
 		}
 
+		if (_render->m_capture)
+		{
+			renderDocTriggerCapture();
+		}
+
 		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
 
 		int64_t timeBegin = bx::getHPCounter();
