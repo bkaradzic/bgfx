@@ -6358,6 +6358,7 @@ VK_DESTROY
 					m_sci.oldSwapchain = VK_NULL_HANDLE;
 					releaseSurface();
 					s_renderVK->kick(true);
+					_commandBuffer = s_renderVK->m_commandBuffer;
 
 					VkResult result = createSurface();
 					if (VK_SUCCESS != result)
