@@ -7815,10 +7815,10 @@ VK_DESTROY
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		setDebugWireframe(wireframe);
 
-		ProgramHandle currentProgram     = BGFX_INVALID_HANDLE;
-		bool hasPredefined      = false;
-		bool commandListChanged = false;
-		VkPipeline currentPipeline = VK_NULL_HANDLE;
+		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
+		bool hasPredefined = false;
+		VkPipeline currentGraphicsPipeline = VK_NULL_HANDLE;
+		VkPipeline currentComputePipeline  = VK_NULL_HANDLE;
 		VkIndexType currentIndexFormat = VK_INDEX_TYPE_MAX_ENUM;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
@@ -7826,11 +7826,7 @@ VK_DESTROY
 
 		BlitState bs(_render);
 
-		uint32_t blendFactor = 0;
-
-		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
-		uint8_t primIndex = uint8_t(primType >> BGFX_STATE_PT_SHIFT);
-		PrimInfo prim = s_primInfo[primIndex];
+		uint64_t blendFactor = UINT64_MAX;
 
 		bool wasCompute     = false;
 		bool viewHasScissor = false;
@@ -7932,15 +7928,15 @@ VK_DESTROY
 
 					isFrameBufferValid = fb.isRenderable();
 
-					viewState.m_rect = _render->m_view[view].m_rect;
-					const Rect& rect        = _render->m_view[view].m_rect;
-					const Rect& scissorRect = _render->m_view[view].m_scissor;
-					viewHasScissor  = !scissorRect.isZero();
-					viewScissorRect = viewHasScissor ? scissorRect : rect;
-					restoreScissor = false;
-
 					if (isFrameBufferValid)
 					{
+						viewState.m_rect = _render->m_view[view].m_rect;
+						const Rect& rect        = _render->m_view[view].m_rect;
+						const Rect& scissorRect = _render->m_view[view].m_scissor;
+						viewHasScissor  = !scissorRect.isZero();
+						viewScissorRect = viewHasScissor ? scissorRect : rect;
+						restoreScissor = false;
+					
 						rpbi.framebuffer = fb.m_currentFramebuffer;
 						rpbi.renderPass  = fb.m_renderPass;
 						rpbi.renderArea.offset.x = rect.m_x;
@@ -7964,7 +7960,7 @@ VK_DESTROY
 						rc.extent.height = viewScissorRect.m_height;
 						vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
 
-						Clear& clr = _render->m_view[view].m_clear;
+						const Clear& clr = _render->m_view[view].m_clear;
 						if (BGFX_CLEAR_NONE != clr.m_flags)
 						{
 							vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
@@ -7975,8 +7971,6 @@ VK_DESTROY
 
 							vkCmdEndRenderPass(m_commandBuffer);
 						}
-
-						prim = s_primInfo[Topology::Count]; // Force primitive type update.
 
 						submitBlit(bs, view);
 					}
@@ -8003,11 +7997,11 @@ VK_DESTROY
 
 					const RenderCompute& compute = renderItem.compute;
 
-					VkPipeline pipeline = getPipeline(key.m_program);
+					const VkPipeline pipeline = getPipeline(key.m_program);
 
-					if (pipeline != currentPipeline)
+					if (pipeline != currentComputePipeline)
 					{
-						currentPipeline = pipeline;
+						currentComputePipeline = pipeline;
 						vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 					}
 
@@ -8112,24 +8106,12 @@ VK_DESTROY
 					if (occluded
 					||  _render->m_frameCache.isZeroArea(viewScissorRect, draw.m_scissor) )
 					{
-//						if (resetState)
-//						{
-//							currentState.clear();
-//							currentState.m_scissor = !draw.m_scissor;
-//							currentBind.clear();
-//						}
-
 						continue;
 					}
 				}
 
-				const uint64_t newFlags = draw.m_stateFlags;
 				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
-				currentState.m_stateFlags = newFlags;
-
-				const uint64_t newStencil = draw.m_stencil;
-				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
-				currentState.m_stencil = newStencil;
+				currentState.m_stateFlags = draw.m_stateFlags;
 
 				if (!beginRenderPass)
 				{
@@ -8142,38 +8124,14 @@ VK_DESTROY
 					vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
 					beginRenderPass = true;
 
-					commandListChanged = true;
-				}
-
-				if (commandListChanged)
-				{
-					commandListChanged = false;
-
-					currentPipeline        = VK_NULL_HANDLE;
-					currentProgram         = BGFX_INVALID_HANDLE;
-					currentState.clear();
+					currentProgram = BGFX_INVALID_HANDLE;
 					currentState.m_scissor = !draw.m_scissor;
-					changedFlags = BGFX_STATE_MASK;
-					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_stateFlags = newFlags;
-					currentState.m_stencil    = newStencil;
-
-					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
-					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 				}
 
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
 				if (0 != draw.m_streamMask)
 				{
-					const uint64_t state = draw.m_stateFlags;
-					bool hasFactor = 0
-						|| f0 == (state & f0)
-						|| f1 == (state & f1)
-						|| f2 == (state & f2)
-						|| f3 == (state & f3)
-						;
-
 					const bool bindAttribs = hasVertexStreamChanged(currentState, draw);
 
 					currentState.m_streamMask         = draw.m_streamMask;
@@ -8243,8 +8201,8 @@ VK_DESTROY
 						}
 					}
 
-					VkPipeline pipeline =
-						getPipeline(state
+					const VkPipeline pipeline =
+						getPipeline(draw.m_stateFlags
 							, draw.m_stencil
 							, numStreams
 							, layouts
@@ -8252,16 +8210,33 @@ VK_DESTROY
 							, uint8_t(draw.m_instanceDataStride/16)
 							);
 
-					if (pipeline != currentPipeline
-					||  0 != changedStencil)
+					if (pipeline != currentGraphicsPipeline)
 					{
+						currentGraphicsPipeline = pipeline;
+						vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+					}
+
+					const bool hasStencil = 0 != draw.m_stencil;
+
+					if (hasStencil
+					&&  currentState.m_stencil != draw.m_stencil)
+					{
+						currentState.m_stencil = draw.m_stencil;
+
 						const uint32_t fstencil = unpackStencil(0, draw.m_stencil);
 						const uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
 						vkCmdSetStencilReference(m_commandBuffer, VK_STENCIL_FRONT_AND_BACK, ref);
 					}
 
-					if (pipeline != currentPipeline
-					|| (hasFactor && blendFactor != draw.m_rgba) )
+					const bool hasFactor = 0
+						|| f0 == (draw.m_stateFlags & f0)
+						|| f1 == (draw.m_stateFlags & f1)
+						|| f2 == (draw.m_stateFlags & f2)
+						|| f3 == (draw.m_stateFlags & f3)
+						;
+
+					if (hasFactor
+					&& blendFactor != draw.m_rgba)
 					{
 						blendFactor = draw.m_rgba;
 
@@ -8271,14 +8246,6 @@ VK_DESTROY
 						bf[2] = ( (draw.m_rgba>> 8)&0xff)/255.0f;
 						bf[3] = ( (draw.m_rgba    )&0xff)/255.0f;
 						vkCmdSetBlendConstants(m_commandBuffer, bf);
-					}
-
-					if (0 != (BGFX_STATE_PT_MASK & changedFlags)
-					||  prim.m_topology != s_primInfo[primIndex].m_topology)
-					{
-						const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
-						primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
-						prim = s_primInfo[primIndex];
 					}
 
 					const uint16_t scissor = draw.m_scissor;
@@ -8316,12 +8283,6 @@ VK_DESTROY
 						}
 					}
 
-					if (pipeline != currentPipeline)
-					{
-						currentPipeline = pipeline;
-						vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-					}
-
 					bool constantsChanged = false;
 					if (draw.m_uniformBegin < draw.m_uniformEnd
 					||  currentProgram.idx != key.m_program.idx
@@ -8353,7 +8314,7 @@ VK_DESTROY
 
 					if (hasPredefined)
 					{
-						uint32_t ref = (newFlags & BGFX_STATE_ALPHA_REF_MASK) >> BGFX_STATE_ALPHA_REF_SHIFT;
+						uint32_t ref = (draw.m_stateFlags & BGFX_STATE_ALPHA_REF_MASK) >> BGFX_STATE_ALPHA_REF_SHIFT;
 						viewState.m_alphaRef = ref / 255.0f;
 						viewState.setPredefined<4>(this, view, program, _render, draw);
 					}
@@ -8407,6 +8368,9 @@ VK_DESTROY
 							;
 						bufferOffsetIndirect = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 					}
+
+					const uint8_t primIndex = uint8_t((draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT);
+					const PrimInfo& prim = s_primInfo[primIndex];
 
 					uint32_t numPrimsSubmitted = 0;
 					uint32_t numIndices = 0;
