@@ -755,6 +755,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		SwapChainVK m_swapChain;
 		void* m_nwh;
 		bool m_needPresent;
+		bool m_needResolve;
 
 		VkImageView m_textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		VkFramebuffer m_framebuffer;

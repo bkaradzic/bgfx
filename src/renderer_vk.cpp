@@ -2760,6 +2760,8 @@ VK_IMPORT_DEVICE
 						, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 						);
 				}
+
+				newFrameBuffer.acquire(m_commandBuffer);
 			}
 			else
 			{
@@ -7202,8 +7204,6 @@ VK_DESTROY
 			{
 				s_renderVK->release(m_textureImageViews[ii]);
 			}
-
-			m_depth = BGFX_INVALID_HANDLE;
 		}
 	}
 
@@ -7277,6 +7277,11 @@ VK_DESTROY
 
 	void FrameBufferVK::resolve()
 	{
+		if (!m_needResolve)
+		{
+			return;
+		}
+
 		if (NULL == m_nwh)
 		{
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
@@ -7302,6 +7307,8 @@ VK_DESTROY
 			m_swapChain.m_backBufferColorMsaa.m_singleMsaaImage = VK_NULL_HANDLE;
 			m_swapChain.m_backBufferColorMsaa.m_currentSingleMsaaImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		}
+
+		m_needResolve = false;
 	}
 
 	uint16_t FrameBufferVK::destroy()
@@ -7317,6 +7324,9 @@ VK_DESTROY
 
 		m_numTh = 0;
 		m_num = 0;
+		m_depth = BGFX_INVALID_HANDLE;
+
+		m_needResolve = false;
 
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
@@ -7325,16 +7335,18 @@ VK_DESTROY
 
 	bool FrameBufferVK::acquire(VkCommandBuffer _commandBuffer)
 	{
+		bool acquired = true;
+
 		if (NULL != m_nwh)
 		{
-			const bool acquired = m_swapChain.acquire(_commandBuffer);
+			acquired = m_swapChain.acquire(_commandBuffer);
 			m_needPresent = m_swapChain.m_needPresent;
 			m_currentFramebuffer = m_swapChain.m_backBufferFrameBuffer[m_swapChain.m_backBufferColorIdx];
-
-			return acquired;
 		}
 
-		return true;
+		m_needResolve = true;
+
+		return acquired;
 	}
 
 	void FrameBufferVK::present()
@@ -7803,7 +7815,6 @@ VK_DESTROY
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		setDebugWireframe(wireframe);
 
-		uint16_t currentSamplerStateIdx  = kInvalidHandle;
 		ProgramHandle currentProgram     = BGFX_INVALID_HANDLE;
 		bool hasPredefined      = false;
 		bool commandListChanged = false;
@@ -7894,11 +7905,8 @@ VK_DESTROY
 					}
 
 					view = key.m_view;
-					currentPipeline = VK_NULL_HANDLE;
-					currentSamplerStateIdx = kInvalidHandle;
-					currentProgram         = BGFX_INVALID_HANDLE;
-					hasPredefined          = false;
-					BX_UNUSED(currentSamplerStateIdx);
+					currentProgram = BGFX_INVALID_HANDLE;
+					hasPredefined  = false;
 
 					if (item > 1)
 					{
@@ -7910,9 +7918,12 @@ VK_DESTROY
 					BGFX_VK_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
-
-					fbh = _render->m_view[view].m_fbh;
-					setFrameBuffer(fbh);
+					
+					if (_render->m_view[view].m_fbh.idx != fbh.idx)
+					{
+						fbh = _render->m_view[view].m_fbh;
+						setFrameBuffer(fbh);
+					}
 
 					const FrameBufferVK& fb = isValid(m_fbh)
 						? m_frameBuffers[m_fbh.idx]
@@ -8139,7 +8150,6 @@ VK_DESTROY
 					commandListChanged = false;
 
 					currentPipeline        = VK_NULL_HANDLE;
-					currentSamplerStateIdx = kInvalidHandle;
 					currentProgram         = BGFX_INVALID_HANDLE;
 					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
