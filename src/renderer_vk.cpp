@@ -258,7 +258,6 @@ VK_IMPORT_DEVICE
 		enum Enum
 		{
 			VK_LAYER_LUNARG_standard_validation,
-			VK_LAYER_LUNARG_vktrace,
 			VK_LAYER_KHRONOS_validation,
 
 			Count
@@ -275,9 +274,8 @@ VK_IMPORT_DEVICE
 	//
 	static Layer s_layer[] =
 	{
-		{ "VK_LAYER_LUNARG_standard_validation",  1, { false, BGFX_CONFIG_DEBUG }, { false, false             } },
-		{ "VK_LAYER_LUNARG_vktrace",              1, { false, false             }, { false, false             } },
-		{ "VK_LAYER_KHRONOS_validation",          1, { false, BGFX_CONFIG_DEBUG }, { false, BGFX_CONFIG_DEBUG } },
+		{ "VK_LAYER_LUNARG_standard_validation", 1, { false, false }, { false, false } },
+		{ "VK_LAYER_KHRONOS_validation",         1, { false, false }, { false, false } },
 	};
 	BX_STATIC_ASSERT(Layer::Count == BX_COUNTOF(s_layer) );
 
@@ -720,7 +718,7 @@ VK_IMPORT_DEVICE
 			for (uint32_t layer = 0; layer < numLayerProperties; ++layer)
 			{
 				updateLayer(
-					layerProperties[layer].layerName
+					  layerProperties[layer].layerName
 					, layerProperties[layer].implementationVersion
 					, VK_NULL_HANDLE == _physicalDevice
 					);
@@ -1145,7 +1143,22 @@ VK_IMPORT
 			}
 
 			{
+				if (_init.debug)
+				{
+					s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_device.m_initialize   = true;
+					s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_instance.m_initialize = true;
+					s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_device.m_initialize   = true;
+					s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_instance.m_initialize = true;
+				}
+
 				dumpExtensions(VK_NULL_HANDLE, s_extension);
+
+				if (s_layer[Layer::VK_LAYER_KHRONOS_validation].m_device.m_supported
+				||  s_layer[Layer::VK_LAYER_KHRONOS_validation].m_instance.m_supported)
+				{
+					s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_device.m_supported   = false;
+					s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_instance.m_supported = false;
+				}
 
 				uint32_t numEnabledLayers = 0;
 
