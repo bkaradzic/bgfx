@@ -299,6 +299,7 @@ namespace bgfx { namespace vk
 VK_DESTROY
 VK_DESTROY_FUNC(DeviceMemory);
 VK_DESTROY_FUNC(SurfaceKHR);
+VK_DESTROY_FUNC(DescriptorSet);
 #undef VK_DESTROY_FUNC
 
 	template<typename Ty>
@@ -363,25 +364,17 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		{
 		}
 
-		void create(uint32_t _size, uint32_t _count, uint32_t _maxDescriptors);
+		void create(uint32_t _size, uint32_t _count);
 		void destroy();
 		void reset();
 		uint32_t write(const void* _data, uint32_t _size);
 		void flush();
 
-		VkDescriptorSet& getCurrentDS()
-		{
-			return m_descriptorSet[m_currentDs - 1];
-		}
-
-		VkDescriptorSet* m_descriptorSet;
 		VkBuffer m_buffer;
 		VkDeviceMemory m_deviceMem;
 		uint8_t* m_data;
 		uint32_t m_size;
 		uint32_t m_pos;
-		uint32_t m_currentDs;
-		uint32_t m_maxDescriptors;
 	};
 
 	struct BufferVK
