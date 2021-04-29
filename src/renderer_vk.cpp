@@ -1078,6 +1078,7 @@ VK_IMPORT_DEVICE
 					CommandQueueCreated,
 					SwapChainCreated,
 					DescriptorCreated,
+					TimerQueryCreated,
 				};
 			};
 
@@ -1479,6 +1480,7 @@ VK_IMPORT_INSTANCE
 					| BGFX_CAPS_IMAGE_RW
 					| (m_deviceFeatures.fullDrawIndexUint32 ? BGFX_CAPS_INDEX32 : 0)
 					| BGFX_CAPS_INSTANCING
+					| BGFX_CAPS_OCCLUSION_QUERY
 					| BGFX_CAPS_SWAP_CHAIN
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_3D
@@ -1925,6 +1927,16 @@ VK_IMPORT_DEVICE
 				}
 			}
 
+			errorState = ErrorState::TimerQueryCreated;
+
+			result = m_occlusionQuery.init();
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Init error: creating occlusion query failed %d: %s.", result, getName(result) );
+				goto error;
+			}
+
 			g_internalData.context = m_device;
 			return true;
 
@@ -1932,6 +1944,13 @@ VK_IMPORT_DEVICE
 			BX_TRACE("errorState %d", errorState);
 			switch (errorState)
 			{
+			case ErrorState::TimerQueryCreated:
+				if (m_timerQuerySupport)
+				{
+					m_gpuTimer.shutdown();
+				}
+				BX_FALLTHROUGH;
+
 			case ErrorState::DescriptorCreated:
 				for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 				{
@@ -1984,6 +2003,7 @@ VK_IMPORT_DEVICE
 			{
 				m_gpuTimer.shutdown();
 			}
+			m_occlusionQuery.shutdown();
 
 			preReset();
 
@@ -2369,7 +2389,7 @@ VK_IMPORT_DEVICE
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
 		{
-			BX_UNUSED(_handle);
+			m_occlusionQuery.invalidate(_handle);
 		}
 
 		void setMarker(const char* _marker, uint16_t _len) override
@@ -3957,6 +3977,11 @@ VK_IMPORT_DEVICE
 			}
 		}
 
+		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
+		{
+			return _visible == (0 != _render->m_occlusion[_handle.idx]);
+		}
+
 		void commit(UniformBuffer& _uniformBuffer)
 		{
 			_uniformBuffer.reset();
@@ -4291,6 +4316,7 @@ VK_IMPORT_DEVICE
 		VkPipelineCache  m_pipelineCache;
 
 		TimerQueryVK m_gpuTimer;
+		OcclusionQueryVK m_occlusionQuery;
 
 		void* m_renderDocDll;
 		void* m_vulkan1Dll;
@@ -5141,6 +5167,9 @@ VK_DESTROY
 	{
 		VkResult result = VK_SUCCESS;
 
+		const VkDevice device = s_renderVK->m_device;
+		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+
 		const uint32_t count = m_control.m_size * 2;
 
 		VkQueryPoolCreateInfo qpci;
@@ -5151,25 +5180,25 @@ VK_DESTROY
 		qpci.queryCount = count;
 		qpci.pipelineStatistics = 0;
 
-		result = vkCreateQueryPool(s_renderVK->m_device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool);
+		result = vkCreateQueryPool(device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool);
+
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create timer query error: vkCreateQueryPool failed %d: %s.", result, getName(result) );
 			return result;
 		}
 
-		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
-
 		vkCmdResetQueryPool(commandBuffer, m_queryPool, 0, count);
 
 		const uint32_t size = count * sizeof(uint64_t);
 		result = s_renderVK->createReadbackBuffer(size, &m_readback, &m_readbackMemory);
+
 		if (VK_SUCCESS != result)
 		{
 			return result;
 		}
 
-		result = vkMapMemory(s_renderVK->m_device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
+		result = vkMapMemory(device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
 
 		if (VK_SUCCESS != result)
 		{
@@ -5194,7 +5223,7 @@ VK_DESTROY
 		vkDestroy(m_queryPool);
 		vkDestroy(m_readback);
 		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory);
-		vkFreeMemory(s_renderVK->m_device, m_readbackMemory, s_renderVK->m_allocatorCb);
+		vkDestroy(m_readbackMemory);
 	}
 
 	uint32_t TimerQueryVK::begin(uint32_t _resultIdx)
@@ -5282,6 +5311,148 @@ VK_DESTROY
 		}
 
 		return false;
+	}
+
+	VkResult OcclusionQueryVK::init()
+	{
+		VkResult result = VK_SUCCESS;
+
+		const VkDevice device = s_renderVK->m_device;
+		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+
+		const uint32_t count = BX_COUNTOF(m_handle);
+
+		VkQueryPoolCreateInfo qpci;
+		qpci.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+		qpci.pNext = NULL;
+		qpci.flags = 0;
+		qpci.queryType = VK_QUERY_TYPE_OCCLUSION;
+		qpci.queryCount = count;
+		qpci.pipelineStatistics = 0;
+
+		result = vkCreateQueryPool(device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool);
+
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("Create occlusion query error: vkCreateQueryPool failed %d: %s.", result, getName(result) );
+			return result;
+		}
+
+		vkCmdResetQueryPool(commandBuffer, m_queryPool, 0, count);
+
+		const uint32_t size = count * sizeof(uint32_t);
+		result = s_renderVK->createReadbackBuffer(size, &m_readback, &m_readbackMemory);
+
+		if (VK_SUCCESS != result)
+		{
+			return result;
+		}
+
+		result = vkMapMemory(device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
+
+		if (VK_SUCCESS != result)
+		{
+			BX_TRACE("Create occlusion query error: vkMapMemory failed %d: %s.", result, getName(result) );
+			return result;
+		}
+
+		m_control.reset();
+
+		return result;
+	}
+
+	void OcclusionQueryVK::shutdown()
+	{
+		vkDestroy(m_queryPool);
+		vkDestroy(m_readback);
+		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory);
+		vkDestroy(m_readbackMemory);
+	}
+
+	void OcclusionQueryVK::begin(OcclusionQueryHandle _handle)
+	{
+		m_control.reserve(1);
+
+		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+
+		m_handle[m_control.m_current] = _handle;
+		vkCmdBeginQuery(commandBuffer, m_queryPool, _handle.idx, 0);
+	}
+
+	void OcclusionQueryVK::end()
+	{
+		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+
+		const OcclusionQueryHandle handle = m_handle[m_control.m_current];
+		vkCmdEndQuery(commandBuffer, m_queryPool, handle.idx);
+
+		m_control.commit(1);
+	}
+
+	void OcclusionQueryVK::flush(Frame* _render)
+	{
+		if (0 < m_control.available() )
+		{
+			VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+
+			const uint32_t size = m_control.m_size;
+
+			// need to copy each result individually because VK_QUERY_RESULT_WAIT_BIT causes
+			// vkWaitForFences to hang indefinitely if we copy all results (including unavailable ones)
+			for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+			{
+				const OcclusionQueryHandle& handle = m_handle[(m_control.m_read + ii) % size];
+
+				vkCmdCopyQueryPoolResults(
+					  commandBuffer
+					, m_queryPool
+					, handle.idx
+					, 1
+					, m_readback
+					, handle.idx * sizeof(uint32_t)
+					, sizeof(uint32_t)
+					, VK_QUERY_RESULT_WAIT_BIT
+					);
+			}
+
+			setMemoryBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT);
+			s_renderVK->kick(true);
+
+			commandBuffer = s_renderVK->m_commandBuffer;
+
+			// resetting in the new command buffer prevents a false positive validation layer error 
+			const uint32_t count = BX_COUNTOF(m_handle);
+			vkCmdResetQueryPool(commandBuffer, m_queryPool, 0, count);
+
+			resolve(_render);
+		}
+	}
+
+	void OcclusionQueryVK::resolve(Frame* _render)
+	{
+		while (0 != m_control.available() )
+		{
+			OcclusionQueryHandle handle = m_handle[m_control.m_read];
+			if (isValid(handle) )
+			{
+				_render->m_occlusion[handle.idx] = m_queryResult[handle.idx];
+			}
+			m_control.consume(1);
+		}
+	}
+
+	void OcclusionQueryVK::invalidate(OcclusionQueryHandle _handle)
+	{
+		const uint32_t size = m_control.m_size;
+
+		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		{
+			OcclusionQueryHandle& handle = m_handle[(m_control.m_read + ii) % size];
+			if (handle.idx == _handle.idx)
+			{
+				handle.idx = bgfx::kInvalidHandle;
+			}
+		}
 	}
 
 	void ReadbackVK::create(VkImage _image, uint32_t _width, uint32_t _height, TextureFormat::Enum _format)
@@ -7871,6 +8042,8 @@ VK_DESTROY
 			, m_timerQuerySupport
 			);
 
+		m_occlusionQuery.flush(_render);
+
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
 			viewState.m_rect = _render->m_view[0].m_rect;
@@ -8095,12 +8268,12 @@ VK_DESTROY
 
 				const RenderDraw& draw = renderItem.draw;
 
-				const bool hasOcclusionQuery = false; //0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
+				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
 				{
-					const bool occluded = false //true
-//						&& isValid(draw.m_occlusionQuery)
-//						&& !hasOcclusionQuery
-//						&& !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) )
+					const bool occluded = true
+						&& isValid(draw.m_occlusionQuery)
+						&& !hasOcclusionQuery
+						&& !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags & BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) )
 						;
 
 					if (occluded
@@ -8236,7 +8409,7 @@ VK_DESTROY
 						;
 
 					if (hasFactor
-					&& blendFactor != draw.m_rgba)
+					&&  blendFactor != draw.m_rgba)
 					{
 						blendFactor = draw.m_rgba;
 
@@ -8369,6 +8542,11 @@ VK_DESTROY
 						bufferOffsetIndirect = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 					}
 
+					if (hasOcclusionQuery)
+					{
+						m_occlusionQuery.begin(draw.m_occlusionQuery);
+					}
+
 					const uint8_t primIndex = uint8_t((draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT);
 					const PrimInfo& prim = s_primInfo[primIndex];
 
@@ -8460,8 +8638,7 @@ VK_DESTROY
 
 					if (hasOcclusionQuery)
 					{
-//						m_occlusionQuery.begin(m_commandList, _render, draw.m_occlusionQuery);
-//						m_occlusionQuery.end(m_commandList);
+						m_occlusionQuery.end();
 					}
 				}
 			}
@@ -8673,6 +8850,9 @@ VK_DESTROY
 //				tvm.printf(10, pos++, 0x8b, " Uniform size: %7d, Max: %7d ", _render->m_uniformEnd, _render->m_uniformMax);
 				tvm.printf(10, pos++, 0x8b, "     DVB size: %7d ", _render->m_vboffset);
 				tvm.printf(10, pos++, 0x8b, "     DIB size: %7d ", _render->m_iboffset);
+
+				pos++;
+				tvm.printf(10, pos++, 0x8b, " Occlusion queries: %3d ", m_occlusionQuery.m_control.available() );
 
 				pos++;
 				tvm.printf(10, pos++, 0x8b, " State cache:             ");
