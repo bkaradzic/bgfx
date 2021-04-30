@@ -665,6 +665,7 @@ namespace bgfx { namespace d3d11
 			, m_ags(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_swapChain(NULL)
+			, m_msaaRt(NULL)
 			, m_needPresent(false)
 			, m_lost(false)
 			, m_numWindows(0)
