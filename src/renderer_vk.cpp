@@ -2209,9 +2209,12 @@ VK_IMPORT_DEVICE
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
 		{
-			TextureVK& texture = m_textures[_handle.idx];
+			const TextureVK& texture = m_textures[_handle.idx];
 
-			uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
+			const TextureFormat::Enum format = TextureFormat::Enum(texture.m_requestedFormat);
+			const uint64_t flags = texture.m_flags;
+
+			const uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
 			const Memory* mem = alloc(size);
 
 			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
@@ -2224,13 +2227,13 @@ VK_IMPORT_DEVICE
 			tc.m_depth     = 0;
 			tc.m_numLayers = _numLayers;
 			tc.m_numMips   = _numMips;
-			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
+			tc.m_format    = format;
 			tc.m_cubeMap   = false;
 			tc.m_mem       = NULL;
 			bx::write(&writer, tc);
 
-			texture.destroy();
-			texture.create(m_commandBuffer, mem, texture.m_flags, 0);
+			destroyTexture(_handle);
+			createTexture(_handle, mem, flags, 0);
 
 			bgfx::release(mem);
 		}
@@ -2246,6 +2249,7 @@ VK_IMPORT_DEVICE
 
 		void destroyTexture(TextureHandle _handle) override
 		{
+			m_imageViewCache.invalidateWithParent(_handle.idx);
 			m_textures[_handle.idx].destroy();
 		}
 
@@ -3284,7 +3288,7 @@ VK_IMPORT_DEVICE
 
 			bx::HashMurmur2A hash;
 			hash.begin();
-			hash.add(texture.m_textureImage);
+			hash.add(_handle.idx);
 			hash.add(_mip);
 			hash.add(_numMips);
 			hash.add(_type);
@@ -3299,7 +3303,7 @@ VK_IMPORT_DEVICE
 
 			VkImageView view;
 			VK_CHECK(texture.createView(0, texture.m_numSides, _mip, _numMips, _type, false, &view) );
-			m_imageViewCache.add(hashKey, view, 0);
+			m_imageViewCache.add(hashKey, view, _handle.idx);
 
 			return view;
 		}
