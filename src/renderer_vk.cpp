@@ -1097,8 +1097,7 @@ VK_IMPORT_DEVICE
 
 			bool imported = true;
 			VkResult result;
-			m_qfiGraphics = UINT32_MAX;
-			m_qfiCompute  = UINT32_MAX;
+			m_globalQueueFamily = UINT32_MAX;
 
 			if (_init.debug
 			||  _init.profile)
@@ -1620,8 +1619,7 @@ VK_IMPORT_INSTANCE
 					, NULL
 					);
 
-				VkQueueFamilyProperties queueFamilyPropertices[10];
-				queueFamilyPropertyCount = bx::min<uint32_t>(queueFamilyPropertyCount, BX_COUNTOF(queueFamilyPropertices) );
+				VkQueueFamilyProperties* queueFamilyPropertices = (VkQueueFamilyProperties*)BX_ALLOC(g_allocator, queueFamilyPropertyCount * sizeof(VkQueueFamilyProperties) );
 				vkGetPhysicalDeviceQueueFamilyProperties(
 					  m_physicalDevice
 					, &queueFamilyPropertyCount
@@ -1631,7 +1629,7 @@ VK_IMPORT_INSTANCE
 				for (uint32_t ii = 0; ii < queueFamilyPropertyCount; ++ii)
 				{
 					const VkQueueFamilyProperties& qfp = queueFamilyPropertices[ii];
-					BX_UNUSED(qfp);
+
 					BX_TRACE("Queue family property %d:", ii);
 					BX_TRACE("\t  Queue flags: 0x%08x", qfp.queueFlags);
 					BX_TRACE("\t  Queue count: %d", qfp.queueCount);
@@ -1641,40 +1639,23 @@ VK_IMPORT_INSTANCE
 						, qfp.minImageTransferGranularity.height
 						, qfp.minImageTransferGranularity.depth
 						);
-				}
 
-				for (uint32_t ii = 0; ii < queueFamilyPropertyCount; ++ii)
-				{
-					const VkQueueFamilyProperties& qfp = queueFamilyPropertices[ii];
-					if (UINT32_MAX == m_qfiGraphics
-					&&  VK_QUEUE_GRAPHICS_BIT & qfp.queueFlags)
-					{
-						m_qfiGraphics = ii;
-					}
+					constexpr VkQueueFlags requiredFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
 
-					if (UINT32_MAX == m_qfiCompute
-					&&  VK_QUEUE_COMPUTE_BIT & qfp.queueFlags)
+					if (UINT32_MAX == m_globalQueueFamily
+					&&  requiredFlags == (requiredFlags & qfp.queueFlags) )
 					{
-						m_qfiCompute = ii;
-					}
-
-					if (UINT32_MAX != m_qfiGraphics
-					&&  UINT32_MAX != m_qfiCompute)
-					{
-						break;
+						m_globalQueueFamily = ii;
 					}
 				}
 
-				if (UINT32_MAX == m_qfiGraphics)
+				BX_FREE(g_allocator, queueFamilyPropertices);
+
+				if (UINT32_MAX == m_globalQueueFamily)
 				{
-					BX_TRACE("Init error: Unable to find graphics queue.");
+					BX_TRACE("Init error: Unable to find combined graphics and compute queue.");
 					goto error;
 				}
-			}
-
-			if (m_qfiCompute != UINT32_MAX)
-			{
-				g_caps.supported |= BGFX_CAPS_COMPUTE;
 			}
 
 			{
@@ -1695,7 +1676,6 @@ VK_IMPORT_INSTANCE
 						BX_TRACE("\t%s", layer.m_name);
 					}
 				}
-
 
 				uint32_t numEnabledExtensions = headless ? 1 : 2;
 
@@ -1734,7 +1714,7 @@ VK_IMPORT_INSTANCE
 				dcqi.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 				dcqi.pNext = NULL;
 				dcqi.flags = 0;
-				dcqi.queueFamilyIndex = m_qfiGraphics;
+				dcqi.queueFamilyIndex = m_globalQueueFamily;
 				dcqi.queueCount       = 1;
 				dcqi.pQueuePriorities = queuePriorities;
 
@@ -1780,8 +1760,7 @@ VK_IMPORT_DEVICE
 				goto error;
 			}
 
-			vkGetDeviceQueue(m_device, m_qfiGraphics, 0, &m_queueGraphics);
-			vkGetDeviceQueue(m_device, m_qfiCompute,  0, &m_queueCompute);
+			vkGetDeviceQueue(m_device, m_globalQueueFamily, 0, &m_globalQueue);
 
 			{
 				m_numFramesInFlight = _init.resolution.maxFrameLatency == 0
@@ -1789,7 +1768,7 @@ VK_IMPORT_DEVICE
 					: _init.resolution.maxFrameLatency
 					;
 
-				result = m_cmd.init(m_qfiGraphics, m_queueGraphics, m_numFramesInFlight);
+				result = m_cmd.init(m_globalQueueFamily, m_globalQueue, m_numFramesInFlight);
 
 				if (VK_SUCCESS != result)
 				{
@@ -4306,12 +4285,10 @@ VK_IMPORT_DEVICE
 		CommandQueueVK  m_cmd;
 		VkCommandBuffer m_commandBuffer;
 
-		uint32_t m_qfiGraphics;
-		uint32_t m_qfiCompute;
 
 		VkDevice m_device;
-		VkQueue  m_queueGraphics;
-		VkQueue  m_queueCompute;
+		uint32_t m_globalQueueFamily;
+		VkQueue  m_globalQueue;
 		VkDescriptorPool m_descriptorPool;
 		VkPipelineCache  m_pipelineCache;
 
@@ -6383,7 +6360,7 @@ VK_DESTROY
 		m_resolution = _resolution;
 		m_depthFormat = TextureFormat::Count == _depthFormat ? TextureFormat::D24S8 : _depthFormat;
 
-		m_queue = s_renderVK->m_queueGraphics;
+		m_queue = s_renderVK->m_globalQueue;
 
 		result = createSurface();
 
@@ -6692,7 +6669,7 @@ VK_DESTROY
 		}
 
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
-		const uint32_t queueFamily = s_renderVK->m_qfiGraphics;
+		const uint32_t queueFamily = s_renderVK->m_globalQueueFamily;
 
 		VkBool32 surfaceSupported;
 		result = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamily, m_surface, &surfaceSupported);
