@@ -351,7 +351,6 @@ BasicBlock* LoopPeeling::CreateBlockBefore(BasicBlock* bb) {
   std::unique_ptr<BasicBlock> new_bb =
       MakeUnique<BasicBlock>(std::unique_ptr<Instruction>(new Instruction(
           context_, SpvOpLabel, 0, context_->TakeNextId(), {})));
-  new_bb->SetParent(loop_utils_.GetFunction());
   // Update the loop descriptor.
   Loop* in_loop = (*loop_utils_.GetLoopDescriptor())[bb];
   if (in_loop) {
@@ -1063,7 +1062,7 @@ LoopPeelingPass::LoopPeelingInfo::HandleInequality(CmpOperator cmp_op,
   }
 
   uint32_t cast_iteration = 0;
-  // sanity check: can we fit |iteration| in a uint32_t ?
+  // Integrity check: can we fit |iteration| in a uint32_t ?
   if (static_cast<uint64_t>(iteration) < std::numeric_limits<uint32_t>::max()) {
     cast_iteration = static_cast<uint32_t>(iteration);
   }

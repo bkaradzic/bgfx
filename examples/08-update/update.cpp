@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -588,7 +588,21 @@ public:
 					updateTextureCubeRectBgra8(m_textureCube[0], face.m_side, rect.m_x, rect.m_y, rect.m_width, rect.m_height, m_rr, m_gg, m_bb);
 					if (m_blitSupported)
 					{
-						bgfx::blit(0, m_textureCube[1], 0, rect.m_x, rect.m_y, face.m_side, m_textureCube[0], 0, rect.m_x, rect.m_y, face.m_side, rect.m_width, rect.m_height);
+						bgfx::blit(
+							  0
+							, m_textureCube[1]
+							, 0
+							, rect.m_x
+							, rect.m_y
+							, face.m_side
+							, m_textureCube[0]
+							, 0
+							, rect.m_x
+							, rect.m_y
+							, face.m_side
+							, rect.m_width
+							, rect.m_height
+							);
 					}
 
 					m_rr = m_rng.gen()%255;
@@ -607,7 +621,21 @@ public:
 						updateTextureCubeRectBgra8(m_textureCube[0], face.m_side, rect.m_x, rect.m_y, rect.m_width, rect.m_height, 0, 0, 0);
 						if (m_blitSupported)
 						{
-							bgfx::blit(0, m_textureCube[1], 0, rect.m_x, rect.m_y, face.m_side, m_textureCube[0], 0, rect.m_x, rect.m_y, face.m_side, rect.m_width, rect.m_height);
+							bgfx::blit(
+								  0
+								, m_textureCube[1]
+								, 0
+								, rect.m_x
+								, rect.m_y
+								, face.m_side
+								, m_textureCube[0]
+								, 0
+								, rect.m_x
+								, rect.m_y
+								, face.m_side
+								, rect.m_width
+								, rect.m_height
+								);
 						}
 
 						m_cube.clear(face);

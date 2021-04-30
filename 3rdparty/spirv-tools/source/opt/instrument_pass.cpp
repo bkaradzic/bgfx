@@ -88,12 +88,36 @@ std::unique_ptr<Instruction> InstrumentPass::NewLabel(uint32_t label_id) {
   return newLabel;
 }
 
+uint32_t InstrumentPass::Gen32BitCvtCode(uint32_t val_id,
+                                         InstructionBuilder* builder) {
+  // Convert integer value to 32-bit if necessary
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  uint32_t val_ty_id = get_def_use_mgr()->GetDef(val_id)->type_id();
+  analysis::Integer* val_ty = type_mgr->GetType(val_ty_id)->AsInteger();
+  if (val_ty->width() == 32) return val_id;
+  bool is_signed = val_ty->IsSigned();
+  analysis::Integer val_32b_ty(32, is_signed);
+  analysis::Type* val_32b_reg_ty = type_mgr->GetRegisteredType(&val_32b_ty);
+  uint32_t val_32b_reg_ty_id = type_mgr->GetId(val_32b_reg_ty);
+  if (is_signed)
+    return builder->AddUnaryOp(val_32b_reg_ty_id, SpvOpSConvert, val_id)
+        ->result_id();
+  else
+    return builder->AddUnaryOp(val_32b_reg_ty_id, SpvOpUConvert, val_id)
+        ->result_id();
+}
+
 uint32_t InstrumentPass::GenUintCastCode(uint32_t val_id,
                                          InstructionBuilder* builder) {
-  // Cast value to 32-bit unsigned if necessary
-  if (get_def_use_mgr()->GetDef(val_id)->type_id() == GetUintId())
-    return val_id;
-  return builder->AddUnaryOp(GetUintId(), SpvOpBitcast, val_id)->result_id();
+  // Convert value to 32-bit if necessary
+  uint32_t val_32b_id = Gen32BitCvtCode(val_id, builder);
+  // Cast value to unsigned if necessary
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  uint32_t val_ty_id = get_def_use_mgr()->GetDef(val_32b_id)->type_id();
+  analysis::Integer* val_ty = type_mgr->GetType(val_ty_id)->AsInteger();
+  if (!val_ty->IsSigned()) return val_32b_id;
+  return builder->AddUnaryOp(GetUintId(), SpvOpBitcast, val_32b_id)
+      ->result_id();
 }
 
 void InstrumentPass::GenDebugOutputFieldCode(uint32_t base_offset_id,
@@ -281,14 +305,42 @@ void InstrumentPass::GenDebugStreamWrite(
   (void)builder->AddNaryOp(GetVoidId(), SpvOpFunctionCall, args);
 }
 
+bool InstrumentPass::AllConstant(const std::vector<uint32_t>& ids) {
+  for (auto& id : ids) {
+    Instruction* id_inst = context()->get_def_use_mgr()->GetDef(id);
+    if (!spvOpcodeIsConstant(id_inst->opcode())) return false;
+  }
+  return true;
+}
+
 uint32_t InstrumentPass::GenDebugDirectRead(
-    const std::vector<uint32_t>& offset_ids, InstructionBuilder* builder) {
+    const std::vector<uint32_t>& offset_ids, InstructionBuilder* ref_builder) {
   // Call debug input function. Pass func_idx and offset ids as args.
   uint32_t off_id_cnt = static_cast<uint32_t>(offset_ids.size());
   uint32_t input_func_id = GetDirectReadFunctionId(off_id_cnt);
   std::vector<uint32_t> args = {input_func_id};
   (void)args.insert(args.end(), offset_ids.begin(), offset_ids.end());
-  return builder->AddNaryOp(GetUintId(), SpvOpFunctionCall, args)->result_id();
+  // If optimizing direct reads and the call has already been generated,
+  // use its result
+  if (opt_direct_reads_) {
+    uint32_t res_id = call2id_[args];
+    if (res_id != 0) return res_id;
+  }
+  // If the offsets are all constants, the call can be moved to the first block
+  // of the function where its result can be reused. One example where this is
+  // profitable is for uniform buffer references, of which there are often many.
+  InstructionBuilder builder(ref_builder->GetContext(),
+                             &*ref_builder->GetInsertPoint(),
+                             ref_builder->GetPreservedAnalysis());
+  bool insert_in_first_block = opt_direct_reads_ && AllConstant(offset_ids);
+  if (insert_in_first_block) {
+    Instruction* insert_before = &*curr_func_->begin()->tail();
+    builder.SetInsertPoint(insert_before);
+  }
+  uint32_t res_id =
+      builder.AddNaryOp(GetUintId(), SpvOpFunctionCall, args)->result_id();
+  if (insert_in_first_block) call2id_[args] = res_id;
+  return res_id;
 }
 
 bool InstrumentPass::IsSameBlockOp(const Instruction* inst) const {
@@ -706,7 +758,6 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
                                        write_blk_id, merge_blk_id, merge_blk_id,
                                        SpvSelectionControlMaskNone);
     // Close safety test block and gen write block
-    new_blk_ptr->SetParent(&*output_func);
     output_func->AddBasicBlock(std::move(new_blk_ptr));
     new_blk_ptr = MakeUnique<BasicBlock>(std::move(write_label));
     builder.SetInsertPoint(&*new_blk_ptr);
@@ -721,13 +772,11 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
     }
     // Close write block and gen merge block
     (void)builder.AddBranch(merge_blk_id);
-    new_blk_ptr->SetParent(&*output_func);
     output_func->AddBasicBlock(std::move(new_blk_ptr));
     new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
     builder.SetInsertPoint(&*new_blk_ptr);
     // Close merge block and function and add function to module
     (void)builder.AddNullaryOp(0, SpvOpReturn);
-    new_blk_ptr->SetParent(&*output_func);
     output_func->AddBasicBlock(std::move(new_blk_ptr));
     std::unique_ptr<Instruction> func_end_inst(
         new Instruction(get_module()->context(), SpvOpFunctionEnd, 0, 0, {}));
@@ -808,7 +857,6 @@ uint32_t InstrumentPass::GetDirectReadFunctionId(uint32_t param_cnt) {
       context(), SpvOpReturnValue, 0, 0,
       std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {last_value_id}}}));
   // Close block and function and add function to module
-  new_blk_ptr->SetParent(&*input_func);
   input_func->AddBasicBlock(std::move(new_blk_ptr));
   std::unique_ptr<Instruction> func_end_inst(
       new Instruction(get_module()->context(), SpvOpFunctionEnd, 0, 0, {}));
@@ -819,21 +867,52 @@ uint32_t InstrumentPass::GetDirectReadFunctionId(uint32_t param_cnt) {
   return func_id;
 }
 
+void InstrumentPass::SplitBlock(
+    BasicBlock::iterator inst_itr, UptrVectorIterator<BasicBlock> block_itr,
+    std::vector<std::unique_ptr<BasicBlock>>* new_blocks) {
+  // Make sure def/use analysis is done before we start moving instructions
+  // out of function
+  (void)get_def_use_mgr();
+  // Move original block's preceding instructions into first new block
+  std::unique_ptr<BasicBlock> first_blk_ptr;
+  MovePreludeCode(inst_itr, block_itr, &first_blk_ptr);
+  InstructionBuilder builder(
+      context(), &*first_blk_ptr,
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+  uint32_t split_blk_id = TakeNextId();
+  std::unique_ptr<Instruction> split_label(NewLabel(split_blk_id));
+  (void)builder.AddBranch(split_blk_id);
+  new_blocks->push_back(std::move(first_blk_ptr));
+  // Move remaining instructions into split block and add to new blocks
+  std::unique_ptr<BasicBlock> split_blk_ptr(
+      new BasicBlock(std::move(split_label)));
+  MovePostludeCode(block_itr, &*split_blk_ptr);
+  new_blocks->push_back(std::move(split_blk_ptr));
+}
+
 bool InstrumentPass::InstrumentFunction(Function* func, uint32_t stage_idx,
                                         InstProcessFunction& pfn) {
+  curr_func_ = func;
+  call2id_.clear();
+  bool first_block_split = false;
   bool modified = false;
-  // Compute function index
-  uint32_t function_idx = 0;
-  for (auto fii = get_module()->begin(); fii != get_module()->end(); ++fii) {
-    if (&*fii == func) break;
-    ++function_idx;
-  }
-  std::vector<std::unique_ptr<BasicBlock>> new_blks;
+  // Apply instrumentation function to each instruction.
   // Using block iterators here because of block erasures and insertions.
+  std::vector<std::unique_ptr<BasicBlock>> new_blks;
   for (auto bi = func->begin(); bi != func->end(); ++bi) {
     for (auto ii = bi->begin(); ii != bi->end();) {
-      // Generate instrumentation if warranted
-      pfn(ii, bi, stage_idx, &new_blks);
+      // Split all executable instructions out of first block into a following
+      // block. This will allow function calls to be inserted into the first
+      // block without interfering with the instrumentation algorithm.
+      if (opt_direct_reads_ && !first_block_split) {
+        if (ii->opcode() != SpvOpVariable) {
+          SplitBlock(ii, bi, &new_blks);
+          first_block_split = true;
+        }
+      } else {
+        pfn(ii, bi, stage_idx, &new_blks);
+      }
+      // If no new code, continue
       if (new_blks.size() == 0) {
         ++ii;
         continue;

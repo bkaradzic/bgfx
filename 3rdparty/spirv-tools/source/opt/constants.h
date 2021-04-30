@@ -58,7 +58,7 @@ class ConstantManager;
 class Constant {
  public:
   Constant() = delete;
-  virtual ~Constant() {}
+  virtual ~Constant() = default;
 
   // Make a deep copy of this constant.
   virtual std::unique_ptr<Constant> Copy() const = 0;
@@ -629,6 +629,9 @@ class ConstantManager {
 
   // Returns the id of a 32-bit floating point constant with value |val|.
   uint32_t GetFloatConst(float val);
+
+  // Returns the id of a 32-bit signed integer constant with value |val|.
+  uint32_t GetSIntConst(int32_t val);
 
  private:
   // Creates a Constant instance with the given type and a vector of constant

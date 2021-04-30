@@ -14,8 +14,6 @@
 
 // Validates OpCapability instruction.
 
-#include "source/val/validate.h"
-
 #include <cassert>
 #include <string>
 #include <unordered_set>
@@ -23,6 +21,7 @@
 #include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -166,7 +165,6 @@ bool IsSupportGuaranteedOpenCL_1_2(uint32_t capability, bool embedded_profile) {
   switch (capability) {
     case SpvCapabilityAddresses:
     case SpvCapabilityFloat16Buffer:
-    case SpvCapabilityGroups:
     case SpvCapabilityInt16:
     case SpvCapabilityInt8:
     case SpvCapabilityKernel:
@@ -175,8 +173,6 @@ bool IsSupportGuaranteedOpenCL_1_2(uint32_t capability, bool embedded_profile) {
       return true;
     case SpvCapabilityInt64:
       return !embedded_profile;
-    case SpvCapabilityPipes:
-      return embedded_profile;
   }
   return false;
 }
@@ -187,6 +183,7 @@ bool IsSupportGuaranteedOpenCL_2_0(uint32_t capability, bool embedded_profile) {
   switch (capability) {
     case SpvCapabilityDeviceEnqueue:
     case SpvCapabilityGenericPointer:
+    case SpvCapabilityGroups:
     case SpvCapabilityPipes:
       return true;
   }
@@ -259,19 +256,6 @@ bool IsEnabledByCapabilityOpenCL_2_0(ValidationState_t& _,
         return true;
     }
     return false;
-  }
-  return false;
-}
-
-bool IsSupportGuaranteedWebGPU(uint32_t capability) {
-  switch (capability) {
-    case SpvCapabilityMatrix:
-    case SpvCapabilityShader:
-    case SpvCapabilitySampled1D:
-    case SpvCapabilityImage1D:
-    case SpvCapabilityDerivativeControl:
-    case SpvCapabilityImageQuery:
-      return true;
   }
   return false;
 }
@@ -367,14 +351,6 @@ spv_result_t CapabilityPass(ValidationState_t& _, const Instruction* inst) {
              << " is not allowed by OpenCL 2.2 " << opencl_profile
              << " Profile specification"
              << " (or requires extension or capability)";
-    }
-  } else if (env == SPV_ENV_WEBGPU_0) {
-    if (!IsSupportGuaranteedWebGPU(capability) &&
-        !IsEnabledByExtension(_, capability)) {
-      return _.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
-             << "Capability " << capability_str()
-             << " is not allowed by WebGPU specification"
-             << " (or requires extension)";
     }
   }
 

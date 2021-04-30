@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -662,6 +662,8 @@ namespace bgfx
 		/// matching id.
 		uint16_t deviceId;
 
+		uint64_t capabilities; //!< Capabilities initialization mask (default: UINT64_MAX).
+
 		bool debug;   //!< Enable device for debuging.
 		bool profile; //!< Enable device for profiling.
 
@@ -799,8 +801,10 @@ namespace bgfx
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB` - Texture as sRGB format is supported.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED` - Texture format is emulated.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - Texture format can be used from vertex shader.
-		///   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE` - Texture format can be used as image from compute
-		///     shader.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ` - Texture format can be used as image
+		///     and read from.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE` - Texture format can be used as image
+		///     and written to.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
 		///     buffer.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
@@ -821,6 +825,7 @@ namespace bgfx
 		uint32_t size;            //!< Data size.
 		uint32_t startIndex;      //!< First index.
 		IndexBufferHandle handle; //!< Index buffer handle.
+		bool isIndex16;           //!< Index buffer format is 16-bits if true, otherwise it is 32-bit.
 	};
 
 	/// Transient vertex buffer.
@@ -889,7 +894,8 @@ namespace bgfx
 		///
 		/// @param[in] _handle Render target texture handle.
 		/// @param[in] _access Access. See `Access::Enum`.
-		/// @param[in] _layer Cubemap side or depth layer/slice.
+		/// @param[in] _layer Cubemap side or depth layer/slice to use.
+		/// @param[in] _numLayers Number of texture layer/slice(s) in array to use.
 		/// @param[in] _mip Mip level.
 		/// @param[in] _resolve Resolve flags. See: `BGFX_RESOLVE_*`
 		///
@@ -897,14 +903,16 @@ namespace bgfx
 			  TextureHandle _handle
 			, Access::Enum _access = Access::Write
 			, uint16_t _layer = 0
+			, uint16_t _numLayers = 1
 			, uint16_t _mip = 0
 			, uint8_t _resolve = BGFX_RESOLVE_AUTO_GEN_MIPS
 			);
 
-		Access::Enum  access; //!< Attachement access. See `Access::Enum`.
+		Access::Enum  access; //!< Attachment access. See `Access::Enum`.
 		TextureHandle handle; //!< Render target texture handle.
 		uint16_t mip;         //!< Mip level.
-		uint16_t layer;       //!< Cubemap side or depth layer/slice.
+		uint16_t layer;       //!< Cubemap side or depth layer/slice to use.
+		uint16_t numLayers;   //!< Number of texture layer/slice(s) in array to use.
 		uint8_t  resolve;     //!< Resolve flags. See: `BGFX_RESOLVE_*`
 	};
 
@@ -2438,6 +2446,7 @@ namespace bgfx
 	///   for the duration of frame, and it can be reused for multiple draw
 	///   calls.
 	/// @param[in] _num Number of indices to allocate.
+	/// @param[in] _index32 Set to `true` if input indices will be 32-bit.
 	///
 	/// @remarks
 	///   Only 16-bit index buffer is supported.
@@ -2447,6 +2456,7 @@ namespace bgfx
 	void allocTransientIndexBuffer(
 		  TransientIndexBuffer* _tib
 		, uint32_t _num
+		, bool _index32 = false
 		);
 
 	/// Allocate transient vertex buffer.
@@ -2619,6 +2629,18 @@ namespace bgfx
 		, uint16_t _numLayers
 		, TextureFormat::Enum _format
 		, uint64_t _flags
+		);
+
+	/// Validate frame buffer parameters.
+	///
+	/// @param[in] _num Number of attachments.
+	/// @param[in] _attachment Attachment texture info. See: `bgfx::Attachment`.
+	///
+	/// @returns True if frame buffer can be successfully created.
+	///
+	bool isFrameBufferValid(
+		  uint8_t _num
+		, const Attachment* _attachment
 		);
 
 	/// Calculate amount of memory required for texture.

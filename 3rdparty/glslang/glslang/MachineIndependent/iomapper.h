@@ -33,7 +33,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef GLSLANG_WEB
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
 
 #ifndef _IOMAPPER_INCLUDED
 #define _IOMAPPER_INCLUDED
@@ -52,7 +52,7 @@ namespace glslang {
 
 class TIntermediate;
 struct TVarEntryInfo {
-    int id;
+    long long id;
     TIntermSymbol* symbol;
     bool live;
     int newBinding;
@@ -87,6 +87,35 @@ struct TVarEntryInfo {
             return lPoints > rPoints;
         }
     };
+
+    struct TOrderByPriorityAndLive {
+        // ordering:
+        // 1) do live variables first
+        // 2) has both binding and set
+        // 3) has binding but no set
+        // 4) has no binding but set
+        // 5) has no binding and no set
+        inline bool operator()(const TVarEntryInfo& l, const TVarEntryInfo& r) {
+
+            const TQualifier& lq = l.symbol->getQualifier();
+            const TQualifier& rq = r.symbol->getQualifier();
+
+            // simple rules:
+            // has binding gives 2 points
+            // has set gives 1 point
+            // who has the most points is more important.
+            int lPoints = (lq.hasBinding() ? 2 : 0) + (lq.hasSet() ? 1 : 0);
+            int rPoints = (rq.hasBinding() ? 2 : 0) + (rq.hasSet() ? 1 : 0);
+
+            if (l.live != r.live)
+                return l.live > r.live;
+
+            if (lPoints != rPoints)
+                return lPoints > rPoints;
+
+            return l.id < r.id;
+        }
+    };
 };
 
 // Base class for shared TIoMapResolver services, used by several derivations.
@@ -107,8 +136,8 @@ public:
     void endCollect(EShLanguage) override {}
     void reserverResourceSlot(TVarEntryInfo& /*ent*/, TInfoSink& /*infoSink*/) override {}
     void reserverStorageSlot(TVarEntryInfo& /*ent*/, TInfoSink& /*infoSink*/) override {}
-    int getBaseBinding(TResourceType res, unsigned int set) const;
-    const std::vector<std::string>& getResourceSetBinding() const;
+    int getBaseBinding(EShLanguage stage, TResourceType res, unsigned int set) const;
+    const std::vector<std::string>& getResourceSetBinding(EShLanguage stage) const;
     virtual TResourceType getResourceType(const glslang::TType& type) = 0;
     bool doAutoBindingMapping() const;
     bool doAutoLocationMapping() const;
@@ -122,9 +151,11 @@ public:
     int resolveInOutLocation(EShLanguage stage, TVarEntryInfo& ent) override;
     int resolveInOutComponent(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
     int resolveInOutIndex(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
-    void addStage(EShLanguage stage) override {
-        if (stage < EShLangCount)
+    void addStage(EShLanguage stage, TIntermediate& stageIntermediate) override {
+        if (stage < EShLangCount) {
             stageMask[stage] = true;
+            stageIntermediates[stage] = &stageIntermediate;
+        }
     }
     uint32_t computeTypeLocationSize(const TType& type, EShLanguage stage);
 
@@ -139,6 +170,8 @@ protected:
     int nextInputLocation;
     int nextOutputLocation;
     bool stageMask[EShLangCount + 1];
+    const TIntermediate* stageIntermediates[EShLangCount];
+
     // Return descriptor set specific base if there is one, and the generic base otherwise.
     int selectBaseBinding(int base, int descriptorSetBase) const {
         return descriptorSetBase != -1 ? descriptorSetBase : base;
@@ -186,7 +219,7 @@ protected:
     }
 };
 
-// Defaulf I/O resolver for OpenGL
+// Default I/O resolver for OpenGL
 struct TDefaultGlslIoResolver : public TDefaultIoResolverBase {
 public:
     typedef std::map<TString, int> TVarSlotMap;  // <resourceName, location/binding>
@@ -203,7 +236,6 @@ public:
     void endCollect(EShLanguage) override;
     void reserverStorageSlot(TVarEntryInfo& ent, TInfoSink& infoSink) override;
     void reserverResourceSlot(TVarEntryInfo& ent, TInfoSink& infoSink) override;
-    const TString& getAccessName(const TIntermSymbol*);
     // in/out symbol and uniform symbol are stored in the same resourceSlotMap, the storage key is used to identify each type of symbol.
     // We use stage and storage qualifier to construct a storage key. it can help us identify the same storage resource used in different stage.
     // if a resource is a program resource and we don't need know it usage stage, we can use same stage to build storage key.
@@ -263,10 +295,12 @@ public:
 class TGlslIoMapper : public TIoMapper {
 public:
     TGlslIoMapper() {
-        memset(inVarMaps,     0, sizeof(TVarLiveMap*)   * EShLangCount);
-        memset(outVarMaps,    0, sizeof(TVarLiveMap*)   * EShLangCount);
-        memset(uniformVarMap, 0, sizeof(TVarLiveMap*)   * EShLangCount);
-        memset(intermediates, 0, sizeof(TIntermediate*) * EShLangCount);
+        memset(inVarMaps,     0, sizeof(TVarLiveMap*)   * (EShLangCount + 1));
+        memset(outVarMaps,    0, sizeof(TVarLiveMap*)   * (EShLangCount + 1));
+        memset(uniformVarMap, 0, sizeof(TVarLiveMap*)   * (EShLangCount + 1));
+        memset(intermediates, 0, sizeof(TIntermediate*) * (EShLangCount + 1));
+        profile = ENoProfile;
+        version = 0;
     }
     virtual ~TGlslIoMapper() {
         for (size_t stage = 0; stage < EShLangCount; stage++) {
@@ -293,10 +327,12 @@ public:
                 *uniformVarMap[EShLangCount];
     TIntermediate* intermediates[EShLangCount];
     bool hadError = false;
+    EProfile profile;
+    int version;
 };
 
 } // end namespace glslang
 
 #endif // _IOMAPPER_INCLUDED
 
-#endif //  GLSLANG_WEB
+#endif // !GLSLANG_WEB && !GLSLANG_ANGLE

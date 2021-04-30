@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -633,6 +633,26 @@ namespace bgfx
 		bool aon9;
 	};
 
+	struct DxbcSFI0
+	{
+		uint64_t data;
+	};
+
+	struct DxbcSPDB
+	{
+		stl::vector<uint8_t> debugCode;
+	};
+
+	struct DxbcRDEF
+	{
+		stl::vector<uint8_t> rdefCode;
+	};
+
+	struct DxbcSTAT
+	{
+		stl::vector<uint8_t> statCode;
+	};
+
 	int32_t read(bx::ReaderSeekerI* _reader, DxbcShader& _shader, bx::Error* _err);
 	int32_t write(bx::WriterI* _writer, const DxbcShader& _shader, bx::Error* _err);
 
@@ -641,6 +661,8 @@ namespace bgfx
 
 	typedef void (*DxbcFilterFn)(DxbcInstruction& _instruction, void* _userData);
 	void filter(DxbcShader& _dst, const DxbcShader& _src, DxbcFilterFn _fn, void* _userData, bx::Error* _err = NULL);
+
+#define DXBC_MAX_CHUNKS 32
 
 	struct DxbcContext
 	{
@@ -657,6 +679,11 @@ namespace bgfx
 		DxbcSignature inputSignature;
 		DxbcSignature outputSignature;
 		DxbcShader shader;
+		DxbcSFI0 sfi0;
+		DxbcSPDB spdb;
+		DxbcRDEF rdef;
+		DxbcSTAT stat;
+		uint32_t chunksFourcc[DXBC_MAX_CHUNKS];
 	};
 
 	int32_t read(bx::ReaderSeekerI* _reader, DxbcContext& _dxbc, bx::Error* _err);

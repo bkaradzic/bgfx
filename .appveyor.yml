@@ -6,7 +6,11 @@ os:
 environment:
   matrix:
   - TOOLSET: vs2017
-  - TOOLSET: vs2019
+#  - TOOLSET: vs2019
+
+platform:
+  - Win32
+  - x64
 
 configuration:
   - Debug

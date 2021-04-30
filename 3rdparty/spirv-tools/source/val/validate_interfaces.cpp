@@ -437,6 +437,19 @@ spv_result_t GetLocationsForVariable(
 
 spv_result_t ValidateLocations(ValidationState_t& _,
                                const Instruction* entry_point) {
+  // According to Vulkan 14.1 only the following execution models have
+  // locations assigned.
+  switch (entry_point->GetOperandAs<SpvExecutionModel>(0)) {
+    case SpvExecutionModelVertex:
+    case SpvExecutionModelTessellationControl:
+    case SpvExecutionModelTessellationEvaluation:
+    case SpvExecutionModelGeometry:
+    case SpvExecutionModelFragment:
+      break;
+    default:
+      return SPV_SUCCESS;
+  }
+
   // Locations are stored as a combined location and component values.
   std::unordered_set<uint32_t> input_locations;
   std::unordered_set<uint32_t> output_locations_index0;

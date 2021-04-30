@@ -142,6 +142,10 @@ class ScalarReplacementPass : public Pass {
   // of |inst| and the store is not to volatile memory.
   bool CheckStore(const Instruction* inst, uint32_t index) const;
 
+  // Returns true if |index| is the pointer operand of an OpImageTexelPointer
+  // instruction.
+  bool CheckImageTexelPointer(uint32_t index) const;
+
   // Creates a variable of type |typeId| from the |index|'th element of
   // |varInst|. The new variable is added to |replacements|.  If the variable
   // could not be created, then |nullptr| is appended to |replacements|.
@@ -198,6 +202,21 @@ class ScalarReplacementPass : public Pass {
   // variable from the original store data input.  Returns true if successful.
   bool ReplaceWholeStore(Instruction* store,
                          const std::vector<Instruction*>& replacements);
+
+  // Replaces the DebugDeclare to the entire composite.
+  //
+  // Generates a DebugValue with Deref operation for each element in the
+  // scalarized variable from the original DebugDeclare.  Returns true if
+  // successful.
+  bool ReplaceWholeDebugDeclare(Instruction* dbg_decl,
+                                const std::vector<Instruction*>& replacements);
+
+  // Replaces the DebugValue to the entire composite.
+  //
+  // Generates a DebugValue for each element in the scalarized variable from
+  // the original DebugValue.  Returns true if successful.
+  bool ReplaceWholeDebugValue(Instruction* dbg_value,
+                              const std::vector<Instruction*>& replacements);
 
   // Replaces an access chain to the composite variable with either a direct use
   // of the appropriate replacement variable or another access chain with the

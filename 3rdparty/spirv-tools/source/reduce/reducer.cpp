@@ -54,10 +54,10 @@ void Reducer::SetInterestingnessFunction(
 }
 
 Reducer::ReductionResultStatus Reducer::Run(
-    std::vector<uint32_t>&& binary_in, std::vector<uint32_t>* binary_out,
+    const std::vector<uint32_t>& binary_in, std::vector<uint32_t>* binary_out,
     spv_const_reducer_options options,
     spv_validator_options validator_options) {
-  std::vector<uint32_t> current_binary(std::move(binary_in));
+  std::vector<uint32_t> current_binary(binary_in);
 
   spvtools::SpirvTools tools(target_env_);
   assert(tools.IsValid() && "Failed to create SPIRV-Tools interface");
@@ -138,13 +138,13 @@ void Reducer::AddDefaultReductionPasses() {
 }
 
 void Reducer::AddReductionPass(
-    std::unique_ptr<ReductionOpportunityFinder>&& finder) {
+    std::unique_ptr<ReductionOpportunityFinder> finder) {
   passes_.push_back(
       spvtools::MakeUnique<ReductionPass>(target_env_, std::move(finder)));
-}
+} 
 
 void Reducer::AddCleanupReductionPass(
-    std::unique_ptr<ReductionOpportunityFinder>&& finder) {
+    std::unique_ptr<ReductionOpportunityFinder> finder) {
   cleanup_passes_.push_back(
       spvtools::MakeUnique<ReductionPass>(target_env_, std::move(finder)));
 }
@@ -183,7 +183,8 @@ Reducer::ReductionResultStatus Reducer::RunPasses(
       consumer_(SPV_MSG_INFO, nullptr, {},
                 ("Trying pass " + pass->GetName() + ".").c_str());
       do {
-        auto maybe_result = pass->TryApplyReduction(*current_binary);
+        auto maybe_result =
+            pass->TryApplyReduction(*current_binary, options->target_function);
         if (maybe_result.empty()) {
           // For this round, the pass has no more opportunities (chunks) to
           // apply, so move on to the next pass.

@@ -2,7 +2,7 @@
 #define VULKAN_IOS_H_ 1
 
 /*
-** Copyright (c) 2015-2020 The Khronos Group Inc.
+** Copyright 2015-2021 The Khronos Group Inc.
 **
 ** SPDX-License-Identifier: Apache-2.0
 */
@@ -20,7 +20,7 @@ extern "C" {
 
 
 #define VK_MVK_ios_surface 1
-#define VK_MVK_IOS_SURFACE_SPEC_VERSION   2
+#define VK_MVK_IOS_SURFACE_SPEC_VERSION   3
 #define VK_MVK_IOS_SURFACE_EXTENSION_NAME "VK_MVK_ios_surface"
 typedef VkFlags VkIOSSurfaceCreateFlagsMVK;
 typedef struct VkIOSSurfaceCreateInfoMVK {

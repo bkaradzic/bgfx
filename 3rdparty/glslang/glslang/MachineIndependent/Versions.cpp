@@ -170,7 +170,7 @@ void TParseVersions::initializeExtensionBehavior()
     for (size_t ii = 0; ii < sizeof(exts) / sizeof(exts[0]); ii++) {
         // Add only extensions which require > spv1.0 to save space in map
         if (exts[ii].minSpvVersion > EShTargetSpv_1_0) {
-            extensionMinSpv[E_GL_EXT_ray_tracing] = exts[ii].minSpvVersion;
+            extensionMinSpv[exts[ii].extensionName] = exts[ii].minSpvVersion;
         }
     }
 
@@ -305,6 +305,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_tessellation_point_size]              = EBhDisable;
     extensionBehavior[E_GL_EXT_texture_buffer]                       = EBhDisable;
     extensionBehavior[E_GL_EXT_texture_cube_map_array]               = EBhDisable;
+    extensionBehavior[E_GL_EXT_null_initializer]                     = EBhDisable;
 
     // OES matching AEP
     extensionBehavior[E_GL_OES_geometry_shader]          = EBhDisable;
@@ -327,6 +328,10 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_ray_flags_primitive_culling] = EBhDisable;
     extensionBehavior[E_GL_EXT_blend_func_extended]         = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_implicit_conversions] = EBhDisable;
+    extensionBehavior[E_GL_EXT_fragment_shading_rate]       = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_image_int64]   = EBhDisable;
+    extensionBehavior[E_GL_EXT_terminate_invocation]        = EBhDisable;
+    extensionBehavior[E_GL_EXT_shared_memory_block]         = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -371,6 +376,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_YUV_target 1\n"
             "#define GL_EXT_shader_texture_lod 1\n"
             "#define GL_EXT_shadow_samplers 1\n"
+            "#define GL_EXT_fragment_shading_rate 1\n"
 
             // AEP
             "#define GL_ANDROID_extension_pack_es31a 1\n"
@@ -404,11 +410,14 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             ;
 
-            if (isEsProfile() && version >= 300) {
+            if (version >= 300) {
                 preamble += "#define GL_NV_shader_noperspective_interpolation 1\n";
             }
+            if (version >= 310) {
+                preamble += "#define GL_EXT_null_initializer 1\n";
+            }
 
-    } else {
+    } else { // !isEsProfile()
         preamble =
             "#define GL_FRAGMENT_PRECISION_HIGH 1\n"
             "#define GL_ARB_texture_rectangle 1\n"
@@ -463,6 +472,8 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_buffer_reference_uvec2 1\n"
             "#define GL_EXT_demote_to_helper_invocation 1\n"
             "#define GL_EXT_debug_printf 1\n"
+            "#define GL_EXT_fragment_shading_rate 1\n"
+            "#define GL_EXT_shared_memory_block 1\n"
 
             // GL_KHR_shader_subgroup
             "#define GL_KHR_shader_subgroup_basic 1\n"
@@ -474,11 +485,12 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_KHR_shader_subgroup_clustered 1\n"
             "#define GL_KHR_shader_subgroup_quad 1\n"
 
-            "#define E_GL_EXT_shader_atomic_int64 1\n"
-            "#define E_GL_EXT_shader_realtime_clock 1\n"
-            "#define E_GL_EXT_ray_tracing 1\n"
-            "#define E_GL_EXT_ray_query 1\n"
-            "#define E_GL_EXT_ray_flags_primitive_culling 1\n"
+            "#define GL_EXT_shader_image_int64 1\n"
+            "#define GL_EXT_shader_atomic_int64 1\n"
+            "#define GL_EXT_shader_realtime_clock 1\n"
+            "#define GL_EXT_ray_tracing 1\n"
+            "#define GL_EXT_ray_query 1\n"
+            "#define GL_EXT_ray_flags_primitive_culling 1\n"
 
             "#define GL_AMD_shader_ballot 1\n"
             "#define GL_AMD_shader_trinary_minmax 1\n"
@@ -532,6 +544,9 @@ void TParseVersions::getPreamble(std::string& preamble)
             if (profile == ECompatibilityProfile)
                 preamble += "#define GL_compatibility_profile 1\n";
         }
+        if (version >= 140) {
+            preamble += "#define GL_EXT_null_initializer 1\n";
+        }
 #endif // GLSLANG_WEB
     }
 
@@ -557,6 +572,11 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_GOOGLE_cpp_style_line_directive 1\n"
             "#define GL_GOOGLE_include_directive 1\n"
             "#define GL_KHR_blend_equation_advanced 1\n"
+            ;
+
+    // other general extensions
+    preamble +=
+            "#define GL_EXT_terminate_invocation 1\n"
             ;
 #endif
 
@@ -762,7 +782,8 @@ bool TParseVersions::checkExtensionsRequested(const TSourceLoc& loc, int numExte
 // Use when there are no profile/version to check, it's just an error if one of the
 // extensions is not present.
 //
-void TParseVersions::requireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[], const char* featureDesc)
+void TParseVersions::requireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[],
+    const char* featureDesc)
 {
     if (checkExtensionsRequested(loc, numExtensions, extensions, featureDesc))
         return;
@@ -781,7 +802,8 @@ void TParseVersions::requireExtensions(const TSourceLoc& loc, int numExtensions,
 // Use by preprocessor when there are no profile/version to check, it's just an error if one of the
 // extensions is not present.
 //
-void TParseVersions::ppRequireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[], const char* featureDesc)
+void TParseVersions::ppRequireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[],
+    const char* featureDesc)
 {
     if (checkExtensionsRequested(loc, numExtensions, extensions, featureDesc))
         return;
@@ -847,12 +869,13 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
         error(getCurrentLoc(), "behavior not supported:", "#extension", behaviorString);
         return;
     }
+    bool on = behavior != EBhDisable;
 
     // check if extension is used with correct shader stage
     checkExtensionStage(getCurrentLoc(), extension);
 
     // check if extension has additional requirements
-    extensionRequires(getCurrentLoc(), extension ,behaviorString);
+    extensionRequires(getCurrentLoc(), extension, behaviorString);
 
     // update the requested extension
     updateExtensionBehavior(extension, behavior);
@@ -916,6 +939,32 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
         updateExtensionBehavior(line, "GL_EXT_shader_explicit_arithmetic_types_int64", behaviorString);
     else if (strcmp(extension, "GL_EXT_shader_subgroup_extended_types_float16") == 0)
         updateExtensionBehavior(line, "GL_EXT_shader_explicit_arithmetic_types_float16", behaviorString);
+
+    // see if we need to update the numeric features
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_int8") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_int8, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_int16") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_int16, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_int32") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_int32, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_int64") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_int64, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_float16") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_float16, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_float32") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_float32, on);
+    else if (strcmp(extension, "GL_EXT_shader_explicit_arithmetic_types_float64") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_explicit_arithmetic_types_float64, on);
+    else if (strcmp(extension, "GL_EXT_shader_implicit_conversions") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::shader_implicit_conversions, on);
+    else if (strcmp(extension, "GL_ARB_gpu_shader_fp64") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::gpu_shader_fp64, on);
+    else if (strcmp(extension, "GL_AMD_gpu_shader_int16") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::gpu_shader_int16, on);
+    else if (strcmp(extension, "GL_AMD_gpu_shader_half_float") == 0)
+        intermediate.updateNumericFeature(TNumericFeatures::gpu_shader_half_float, on);
 }
 
 void TParseVersions::updateExtensionBehavior(const char* extension, TExtensionBehavior behavior)
@@ -951,8 +1000,8 @@ void TParseVersions::updateExtensionBehavior(const char* extension, TExtensionBe
         } else {
             if (iter->second == EBhDisablePartial)
                 warn(getCurrentLoc(), "extension is only partially supported:", "#extension", extension);
-            if (behavior == EBhEnable || behavior == EBhRequire || behavior == EBhDisable)
-                intermediate.updateRequestedExtension(extension, behavior);
+            if (behavior != EBhDisable)
+                intermediate.addRequestedExtension(extension);
             iter->second = behavior;
         }
     }
@@ -1224,7 +1273,7 @@ void TParseVersions::spvRemoved(const TSourceLoc& loc, const char* op)
 // Call for any operation removed because Vulkan SPIR-V is being generated.
 void TParseVersions::vulkanRemoved(const TSourceLoc& loc, const char* op)
 {
-    if (spvVersion.vulkan > 0)
+    if (spvVersion.vulkan > 0 && !spvVersion.vulkanRelaxed)
         error(loc, "not allowed when using GLSL for Vulkan", op, "");
 }
 

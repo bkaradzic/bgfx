@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -134,7 +134,7 @@ namespace bgfx { namespace gl
 
 				SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
 
-				import(1);
+				import(version);
 
 				return swapChain;
 			}
@@ -179,22 +179,39 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void GlContext::import(int webGLVersion)
+	template<typename Fn>
+	static Fn getProcAddress(int _version, const char* _name)
+	{
+		Fn func = reinterpret_cast<Fn>(emscripten_webgl1_get_proc_address(_name) );
+		if (NULL == func && _version >= 2)
+		{
+			func = reinterpret_cast<Fn>(emscripten_webgl2_get_proc_address(_name) );
+		}
+
+		return func;
+	}
+
+	void GlContext::import(int _webGLVersion)
 	{
 		BX_TRACE("Import:");
-#		define GL_EXTENSION(_optional, _proto, _func, _import)                                                                                                   \
-			{                                                                                                                                                    \
-				if (NULL == _func)                                                                                                                               \
-				{                                                                                                                                                \
-					_func = (_proto)emscripten_webgl1_get_proc_address(#_import);                                                                                \
-					if (!_func && webGLVersion >= 2)                                                                                                             \
-					    _func = (_proto)emscripten_webgl2_get_proc_address(#_import);                                                                            \
-					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                                                                                           \
-					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create WebGL/OpenGLES context. GetProcAddress(\"%s\")", #_import); \
-				}                                                                                                                                                \
-			}
+
+#	define GL_EXTENSION(_optional, _proto, _func, _import)                          \
+	{                                                                               \
+		if (NULL == _func)                                                          \
+		{                                                                           \
+			_func = getProcAddress<_proto>(_webGLVersion, #_import);                \
+			BX_TRACE("\t%p " #_func " (" #_import ")", _func);                      \
+			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize        \
+				, "Failed to create WebGL/OpenGLES context. GetProcAddress(\"%s\")" \
+				, #_import                                                          \
+				);                                                                  \
+		}                                                                           \
+	}
 
 #	include "glimports.h"
+
+#	undef GL_EXTENSION
+
 	}
 
 } /* namespace gl */ } // namespace bgfx

@@ -1,7 +1,7 @@
 /**
  * cgltf_write - a single-file glTF 2.0 writer written in C99.
  *
- * Version: 1.6
+ * Version: 1.10
  *
  * Website: https://github.com/jkuhlmann/cgltf
  *
@@ -68,6 +68,7 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <float.h>
 
 #define CGLTF_EXTENSION_FLAG_TEXTURE_TRANSFORM      (1 << 0)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_UNLIT        (1 << 1)
@@ -75,6 +76,12 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 #define CGLTF_EXTENSION_FLAG_LIGHTS_PUNCTUAL        (1 << 3)
 #define CGLTF_EXTENSION_FLAG_DRACO_MESH_COMPRESSION (1 << 4)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_CLEARCOAT    (1 << 5)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_IOR          (1 << 6)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_SPECULAR     (1 << 7)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_TRANSMISSION (1 << 8)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN        (1 << 9)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_VARIANTS     (1 << 10)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_VOLUME       (1 << 11)
 
 typedef struct {
 	char* buffer;
@@ -92,6 +99,13 @@ typedef struct {
 } cgltf_write_context;
 
 #define CGLTF_MIN(a, b) (a < b ? a : b)
+
+#ifdef FLT_DECIMAL_DIG
+	// FLT_DECIMAL_DIG is C11
+	#define CGLTF_DECIMAL_DIG (FLT_DECIMAL_DIG)
+#else
+	#define CGLTF_DECIMAL_DIG 9
+#endif
 
 #define CGLTF_SPRINTF(...) { \
 		context->tmp = snprintf ( context->cursor, context->remaining, __VA_ARGS__ ); \
@@ -193,7 +207,7 @@ static void cgltf_write_extras(cgltf_write_context* context, const cgltf_extras*
 		char* json_string = ((char*) context->data->file_data) + extras->start_offset;
 		cgltf_write_indent(context);
 		CGLTF_SPRINTF("%s", "\"extras\": ");
-		CGLTF_SNPRINTF(length, "%s", json_string);
+		CGLTF_SNPRINTF(length, "%.*s", (int)(extras->end_offset - extras->start_offset), json_string);
 		context->needs_comma = 1;
 	}
 }
@@ -221,7 +235,7 @@ static void cgltf_write_floatprop(cgltf_write_context* context, const char* labe
 	{
 		cgltf_write_indent(context);
 		CGLTF_SPRINTF("\"%s\": ", label);
-		CGLTF_SPRINTF("%g", val);
+		CGLTF_SPRINTF("%.*g", CGLTF_DECIMAL_DIG, val);
 		context->needs_comma = 1;
 
 		if (context->cursor)
@@ -253,11 +267,11 @@ static void cgltf_write_floatarrayprop(cgltf_write_context* context, const char*
 	{
 		if (i != 0)
 		{
-			CGLTF_SPRINTF(", %g", vals[i]);
+			CGLTF_SPRINTF(", %.*g", CGLTF_DECIMAL_DIG, vals[i]);
 		}
 		else
 		{
-			CGLTF_SPRINTF("%g", vals[i]);
+			CGLTF_SPRINTF("%.*g", CGLTF_DECIMAL_DIG, vals[i]);
 		}
 	}
 	CGLTF_SPRINTF("]");
@@ -409,13 +423,15 @@ static void cgltf_write_primitive(cgltf_write_context* context, const cgltf_prim
 	}
 	cgltf_write_extras(context, &prim->extras);
 
-	cgltf_bool has_extensions = prim->has_draco_mesh_compression;
-	if (has_extensions) {
+	if (prim->has_draco_mesh_compression || prim->mappings_count > 0)
+	{
 		cgltf_write_line(context, "\"extensions\": {");
 
-		if (prim->has_draco_mesh_compression) {
+		if (prim->has_draco_mesh_compression)
+		{
 			context->extension_flags |= CGLTF_EXTENSION_FLAG_DRACO_MESH_COMPRESSION;
-			if (prim->attributes_count == 0 || prim->indices == 0) {
+			if (prim->attributes_count == 0 || prim->indices == 0)
+			{
 				context->required_extension_flags |= CGLTF_EXTENSION_FLAG_DRACO_MESH_COMPRESSION;				 
 			}
 
@@ -428,6 +444,28 @@ static void cgltf_write_primitive(cgltf_write_context* context, const cgltf_prim
 				CGLTF_WRITE_IDXPROP(attr->name, attr->data, context->data->accessors);
 			}
 			cgltf_write_line(context, "}");
+			cgltf_write_line(context, "}");
+		}
+
+		if (prim->mappings_count > 0)
+		{
+			context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_VARIANTS;
+			cgltf_write_line(context, "\"KHR_materials_variants\": {");
+			cgltf_write_line(context, "\"mappings\": [");
+			for (cgltf_size i = 0; i < prim->mappings_count; ++i)
+			{
+				const cgltf_material_mapping* map = prim->mappings + i;
+				cgltf_write_line(context, "{");
+				CGLTF_WRITE_IDXPROP("material", map->material, context->data->materials);
+
+				cgltf_write_indent(context);
+				CGLTF_SPRINTF("\"variants\": [%d]", (int)map->variant);
+				context->needs_comma = 1;
+
+				cgltf_write_extras(context, &map->extras);
+				cgltf_write_line(context, "}");
+			}
+			cgltf_write_line(context, "]");
 			cgltf_write_line(context, "}");
 		}
 
@@ -460,6 +498,7 @@ static void cgltf_write_mesh(cgltf_write_context* context, const cgltf_mesh* mes
 static void cgltf_write_buffer_view(cgltf_write_context* context, const cgltf_buffer_view* view)
 {
 	cgltf_write_line(context, "{");
+	cgltf_write_strprop(context, "name", view->name);
 	CGLTF_WRITE_IDXPROP("buffer", view->buffer, context->data->buffers);
 	cgltf_write_intprop(context, "byteLength", (int)view->size, -1);
 	cgltf_write_intprop(context, "byteOffset", (int)view->offset, 0);
@@ -473,6 +512,7 @@ static void cgltf_write_buffer_view(cgltf_write_context* context, const cgltf_bu
 static void cgltf_write_buffer(cgltf_write_context* context, const cgltf_buffer* buffer)
 {
 	cgltf_write_line(context, "{");
+	cgltf_write_strprop(context, "name", buffer->name);
 	cgltf_write_strprop(context, "uri", buffer->uri);
 	cgltf_write_intprop(context, "byteLength", (int)buffer->size, -1);
 	cgltf_write_extras(context, &buffer->extras);
@@ -502,6 +542,31 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_CLEARCOAT;
 	}
 
+	if (material->has_transmission)
+	{
+		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_TRANSMISSION;
+	}
+
+	if (material->has_volume)
+	{
+		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_VOLUME;
+	}
+
+	if (material->has_ior)
+	{
+		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_IOR;
+	}
+
+	if (material->has_specular)
+	{
+		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_SPECULAR;
+	}
+
+	if (material->has_sheen)
+	{
+		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN;
+	}
+
 	if (material->has_pbr_metallic_roughness)
 	{
 		const cgltf_pbr_metallic_roughness* params = &material->pbr_metallic_roughness;
@@ -518,7 +583,7 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 		cgltf_write_line(context, "}");
 	}
 
-	if (material->unlit || material->has_pbr_specular_glossiness || material->has_clearcoat)
+	if (material->unlit || material->has_pbr_specular_glossiness || material->has_clearcoat || material->has_ior || material->has_specular || material->has_transmission || material->has_sheen || material->has_volume)
 	{
 		cgltf_write_line(context, "\"extensions\": {");
 		if (material->has_clearcoat)
@@ -530,6 +595,63 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 			CGLTF_WRITE_TEXTURE_INFO("clearcoatNormalTexture", params->clearcoat_normal_texture);
 			cgltf_write_floatprop(context, "clearcoatFactor", params->clearcoat_factor, 0.0f);
 			cgltf_write_floatprop(context, "clearcoatRoughnessFactor", params->clearcoat_roughness_factor, 0.0f);
+			cgltf_write_line(context, "}");
+		}
+		if (material->has_ior)
+		{
+			const cgltf_ior* params = &material->ior;
+			cgltf_write_line(context, "\"KHR_materials_ior\": {");
+			cgltf_write_floatprop(context, "ior", params->ior, 1.5f);
+			cgltf_write_line(context, "}");
+		}
+		if (material->has_specular)
+		{
+			const cgltf_specular* params = &material->specular;
+			cgltf_write_line(context, "\"KHR_materials_specular\": {");
+			CGLTF_WRITE_TEXTURE_INFO("specularTexture", params->specular_texture);
+			CGLTF_WRITE_TEXTURE_INFO("specularColorTexture", params->specular_color_texture);
+			cgltf_write_floatprop(context, "specularFactor", params->specular_factor, 1.0f);
+			if (cgltf_check_floatarray(params->specular_color_factor, 3, 1.0f))
+			{
+				cgltf_write_floatarrayprop(context, "specularColorFactor", params->specular_color_factor, 3);
+			}
+			cgltf_write_line(context, "}");
+		}
+		if (material->has_transmission)
+		{
+			const cgltf_transmission* params = &material->transmission;
+			cgltf_write_line(context, "\"KHR_materials_transmission\": {");
+			CGLTF_WRITE_TEXTURE_INFO("transmissionTexture", params->transmission_texture);
+			cgltf_write_floatprop(context, "transmissionFactor", params->transmission_factor, 0.0f);
+			cgltf_write_line(context, "}");
+		}
+		if (material->has_volume)
+		{
+			const cgltf_volume* params = &material->volume;
+			cgltf_write_line(context, "\"KHR_materials_volume\": {");
+			CGLTF_WRITE_TEXTURE_INFO("thicknessTexture", params->thickness_texture);
+			cgltf_write_floatprop(context, "thicknessFactor", params->thickness_factor, 0.0f);
+			if (cgltf_check_floatarray(params->attenuation_color, 3, 1.0f))
+			{
+				cgltf_write_floatarrayprop(context, "attenuationColor", params->attenuation_color, 3);
+			}
+			if (params->attenuation_distance < FLT_MAX) 
+			{
+				cgltf_write_floatprop(context, "attenuationDistance", params->attenuation_distance, FLT_MAX);
+			}
+			cgltf_write_line(context, "}");
+		}
+		if (material->has_sheen)
+		{
+			const cgltf_sheen* params = &material->sheen;
+			cgltf_write_line(context, "\"KHR_materials_sheen\": {");
+			CGLTF_WRITE_TEXTURE_INFO("sheenColorTexture", params->sheen_color_texture);
+			CGLTF_WRITE_TEXTURE_INFO("sheenRoughnessTexture", params->sheen_roughness_texture);
+			if (cgltf_check_floatarray(params->sheen_color_factor, 3, 0.0f))
+			{
+				cgltf_write_floatarrayprop(context, "sheenColorFactor", params->sheen_color_factor, 3);
+			}
+			cgltf_write_floatprop(context, "sheenRoughnessFactor", params->sheen_roughness_factor, 0.0f);
 			cgltf_write_line(context, "}");
 		}
 		if (material->has_pbr_specular_glossiness)
@@ -694,6 +816,7 @@ static void cgltf_write_animation(cgltf_write_context* context, const cgltf_anim
 static void cgltf_write_sampler(cgltf_write_context* context, const cgltf_sampler* sampler)
 {
 	cgltf_write_line(context, "{");
+	cgltf_write_strprop(context, "name", sampler->name);
 	cgltf_write_intprop(context, "magFilter", sampler->mag_filter, 0);
 	cgltf_write_intprop(context, "minFilter", sampler->min_filter, 0);
 	cgltf_write_intprop(context, "wrapS", sampler->wrap_s, 10497);
@@ -765,6 +888,7 @@ static void cgltf_write_scene(cgltf_write_context* context, const cgltf_scene* s
 static void cgltf_write_accessor(cgltf_write_context* context, const cgltf_accessor* accessor)
 {
 	cgltf_write_line(context, "{");
+	cgltf_write_strprop(context, "name", accessor->name);
 	CGLTF_WRITE_IDXPROP("bufferView", accessor->buffer_view, context->data->buffer_views);
 	cgltf_write_intprop(context, "componentType", cgltf_int_from_component_type(accessor->component_type), 0);
 	cgltf_write_strprop(context, "type", cgltf_str_from_type(accessor->type));
@@ -824,9 +948,17 @@ static void cgltf_write_camera(cgltf_write_context* context, const cgltf_camera*
 	else if (camera->type == cgltf_camera_type_perspective)
 	{
 		cgltf_write_line(context, "\"perspective\": {");
-		cgltf_write_floatprop(context, "aspectRatio", camera->data.perspective.aspect_ratio, -1.0f);
+
+		if (camera->data.perspective.has_aspect_ratio) {
+			cgltf_write_floatprop(context, "aspectRatio", camera->data.perspective.aspect_ratio, -1.0f);
+		}
+
 		cgltf_write_floatprop(context, "yfov", camera->data.perspective.yfov, -1.0f);
-		cgltf_write_floatprop(context, "zfar", camera->data.perspective.zfar, -1.0f);
+
+		if (camera->data.perspective.has_zfar) {
+			cgltf_write_floatprop(context, "zfar", camera->data.perspective.zfar, -1.0f);
+		}
+
 		cgltf_write_floatprop(context, "znear", camera->data.perspective.znear, -1.0f);
 		cgltf_write_extras(context, &camera->data.perspective.extras);
 		cgltf_write_line(context, "}");
@@ -837,6 +969,8 @@ static void cgltf_write_camera(cgltf_write_context* context, const cgltf_camera*
 
 static void cgltf_write_light(cgltf_write_context* context, const cgltf_light* light)
 {
+	context->extension_flags |= CGLTF_EXTENSION_FLAG_LIGHTS_PUNCTUAL;
+
 	cgltf_write_line(context, "{");
 	cgltf_write_strprop(context, "type", cgltf_str_from_light_type(light->type));
 	if (light->name)
@@ -857,6 +991,16 @@ static void cgltf_write_light(cgltf_write_context* context, const cgltf_light* l
 		cgltf_write_floatprop(context, "outerConeAngle", light->spot_outer_cone_angle, 3.14159265358979323846f/4.0f);
 		cgltf_write_line(context, "}");
 	}
+	cgltf_write_line(context, "}");
+}
+
+static void cgltf_write_variant(cgltf_write_context* context, const cgltf_material_variant* variant)
+{
+	context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_VARIANTS;
+
+	cgltf_write_line(context, "{");
+	cgltf_write_strprop(context, "name", variant->name);
+	cgltf_write_extras(context, &variant->extras);
 	cgltf_write_line(context, "}");
 }
 
@@ -899,6 +1043,21 @@ static void cgltf_write_extensions(cgltf_write_context* context, uint32_t extens
 	}
 	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_CLEARCOAT) {
 		cgltf_write_stritem(context, "KHR_materials_clearcoat");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_IOR) {
+		cgltf_write_stritem(context, "KHR_materials_ior");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_SPECULAR) {
+		cgltf_write_stritem(context, "KHR_materials_specular");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_TRANSMISSION) {
+		cgltf_write_stritem(context, "KHR_materials_transmission");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN) {
+		cgltf_write_stritem(context, "KHR_materials_sheen");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_VARIANTS) {
+		cgltf_write_stritem(context, "KHR_materials_variants");
 	}
 }
 
@@ -1056,33 +1215,52 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 		cgltf_write_line(context, "]");
 	}
 
-	if (data->lights_count > 0)
+	if (data->lights_count > 0 || data->variants_count > 0)
 	{
 		cgltf_write_line(context, "\"extensions\": {");
 
-		cgltf_write_line(context, "\"KHR_lights_punctual\": {");
-		cgltf_write_line(context, "\"lights\": [");
-		for (cgltf_size i = 0; i < data->lights_count; ++i)
+		if (data->lights_count > 0)
 		{
-			cgltf_write_light(context, data->lights + i);
+			cgltf_write_line(context, "\"KHR_lights_punctual\": {");
+			cgltf_write_line(context, "\"lights\": [");
+			for (cgltf_size i = 0; i < data->lights_count; ++i)
+			{
+				cgltf_write_light(context, data->lights + i);
+			}
+			cgltf_write_line(context, "]");
+			cgltf_write_line(context, "}");
 		}
-		cgltf_write_line(context, "]");
-		cgltf_write_line(context, "}");
+
+		if (data->variants_count)
+		{
+			cgltf_write_line(context, "\"KHR_materials_variants\": {");
+			cgltf_write_line(context, "\"variants\": [");
+			for (cgltf_size i = 0; i < data->variants_count; ++i)
+			{
+				cgltf_write_variant(context, data->variants + i);
+			}
+			cgltf_write_line(context, "]");
+			cgltf_write_line(context, "}");
+		}
 
 		cgltf_write_line(context, "}");
 	}
 
-	if (context->extension_flags != 0) {
+	if (context->extension_flags != 0)
+	{
 		cgltf_write_line(context, "\"extensionsUsed\": [");
 		cgltf_write_extensions(context, context->extension_flags);
 		cgltf_write_line(context, "]");
 	}
 
-	if (context->required_extension_flags != 0) {
+	if (context->required_extension_flags != 0)
+	{
 		cgltf_write_line(context, "\"extensionsRequired\": [");
 		cgltf_write_extensions(context, context->required_extension_flags);
 		cgltf_write_line(context, "]");
 	}
+
+	cgltf_write_extras(context, &data->extras);
 
 	CGLTF_SPRINTF("\n}\n");
 

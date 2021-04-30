@@ -71,7 +71,7 @@ bool WrapOpKill::ReplaceWithFunctionCall(Instruction* inst) {
   if (call_inst == nullptr) {
     return false;
   }
-  call_inst->UpdateDebugInfo(inst);
+  call_inst->UpdateDebugInfoFrom(inst);
 
   Instruction* return_inst = nullptr;
   uint32_t return_type_id = GetOwningFunctionsReturnType(inst);
@@ -164,7 +164,6 @@ uint32_t WrapOpKill::GetKillingFuncId(SpvOp opcode) {
   bb->AddInstruction(std::move(kill_inst));
 
   // Add the bb to the function
-  bb->SetParent((*killing_func).get());
   (*killing_func)->AddBasicBlock(std::move(bb));
 
   // Add the function to the module.

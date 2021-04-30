@@ -49,7 +49,7 @@ namespace Spv
     {
         public const uint MagicNumber = 0x07230203;
         public const uint Version = 0x00010500;
-        public const uint Revision = 3;
+        public const uint Revision = 4;
         public const uint OpCodeMask = 0xffff;
         public const uint WordCountShift = 16;
 
@@ -164,10 +164,16 @@ namespace Spv
             SampleInterlockUnorderedEXT = 5369,
             ShadingRateInterlockOrderedEXT = 5370,
             ShadingRateInterlockUnorderedEXT = 5371,
+            SharedLocalMemorySizeINTEL = 5618,
+            RoundingModeRTPINTEL = 5620,
+            RoundingModeRTNINTEL = 5621,
+            FloatingPointModeALTINTEL = 5622,
+            FloatingPointModeIEEEINTEL = 5623,
             MaxWorkgroupSizeINTEL = 5893,
             MaxWorkDimINTEL = 5894,
             NoGlobalOffsetINTEL = 5895,
             NumSIMDWorkitemsINTEL = 5896,
+            SchedulerTargetFmaxMhzINTEL = 5903,
         }
 
         public enum StorageClass
@@ -200,6 +206,8 @@ namespace Spv
             PhysicalStorageBuffer = 5349,
             PhysicalStorageBufferEXT = 5349,
             CodeSectionINTEL = 5605,
+            DeviceOnlyINTEL = 5936,
+            HostOnlyINTEL = 5937,
         }
 
         public enum Dim
@@ -270,6 +278,8 @@ namespace Spv
             Rg8ui = 37,
             R16ui = 38,
             R8ui = 39,
+            R64ui = 40,
+            R64i = 41,
         }
 
         public enum ImageChannelOrder
@@ -369,6 +379,8 @@ namespace Spv
             NSZ = 2,
             AllowRecip = 3,
             Fast = 4,
+            AllowContractFastINTEL = 16,
+            AllowReassocINTEL = 17,
         }
 
         public enum FPFastMathModeMask
@@ -379,6 +391,8 @@ namespace Spv
             NSZ = 0x00000004,
             AllowRecip = 0x00000008,
             Fast = 0x00000010,
+            AllowContractFastINTEL = 0x00010000,
+            AllowReassocINTEL = 0x00020000,
         }
 
         public enum FPRoundingMode
@@ -393,6 +407,7 @@ namespace Spv
         {
             Export = 0,
             Import = 1,
+            LinkOnceODR = 2,
         }
 
         public enum AccessQualifier
@@ -480,12 +495,22 @@ namespace Spv
             RestrictPointerEXT = 5355,
             AliasedPointer = 5356,
             AliasedPointerEXT = 5356,
+            SIMTCallINTEL = 5599,
             ReferencedIndirectlyINTEL = 5602,
+            ClobberINTEL = 5607,
+            SideEffectsINTEL = 5608,
+            VectorComputeVariableINTEL = 5624,
+            FuncParamIOKindINTEL = 5625,
+            VectorComputeFunctionINTEL = 5626,
+            StackCallINTEL = 5627,
+            GlobalVariableOffsetINTEL = 5628,
             CounterBuffer = 5634,
             HlslCounterBufferGOOGLE = 5634,
             HlslSemanticGOOGLE = 5635,
             UserSemantic = 5635,
             UserTypeGOOGLE = 5636,
+            FunctionRoundingModeINTEL = 5822,
+            FunctionDenormModeINTEL = 5823,
             RegisterINTEL = 5825,
             MemoryINTEL = 5826,
             NumbanksINTEL = 5827,
@@ -498,6 +523,17 @@ namespace Spv
             MergeINTEL = 5834,
             BankBitsINTEL = 5835,
             ForcePow2DepthINTEL = 5836,
+            BurstCoalesceINTEL = 5899,
+            CacheSizeINTEL = 5900,
+            DontStaticallyCoalesceINTEL = 5901,
+            PrefetchINTEL = 5902,
+            StallEnableINTEL = 5905,
+            FuseLoopsInFunctionINTEL = 5907,
+            BufferLocationINTEL = 5921,
+            IOPipeStorageINTEL = 5944,
+            FunctionFloatingPointModeINTEL = 6080,
+            SingleElementVectorINTEL = 6085,
+            VectorComputeCallableFunctionINTEL = 6087,
         }
 
         public enum BuiltIn
@@ -556,8 +592,10 @@ namespace Spv
             BaseVertex = 4424,
             BaseInstance = 4425,
             DrawIndex = 4426,
+            PrimitiveShadingRateKHR = 4432,
             DeviceIndex = 4438,
             ViewIndex = 4440,
+            ShadingRateKHR = 4444,
             BaryCoordNoPerspAMD = 4992,
             BaryCoordNoPerspCentroidAMD = 4993,
             BaryCoordNoPerspSampleAMD = 4994,
@@ -608,7 +646,6 @@ namespace Spv
             ObjectToWorldNV = 5330,
             WorldToObjectKHR = 5331,
             WorldToObjectNV = 5331,
-            HitTKHR = 5332,
             HitTNV = 5332,
             HitKindKHR = 5333,
             HitKindNV = 5333,
@@ -652,6 +689,7 @@ namespace Spv
             LoopCoalesceINTEL = 20,
             MaxInterleavingINTEL = 21,
             SpeculatedIterationsINTEL = 22,
+            NoFusionINTEL = 23,
         }
 
         public enum LoopControlMask
@@ -673,6 +711,7 @@ namespace Spv
             LoopCoalesceINTEL = 0x00100000,
             MaxInterleavingINTEL = 0x00200000,
             SpeculatedIterationsINTEL = 0x00400000,
+            NoFusionINTEL = 0x00800000,
         }
 
         public enum FunctionControlShift
@@ -874,8 +913,12 @@ namespace Spv
             GroupNonUniformQuad = 68,
             ShaderLayer = 69,
             ShaderViewportIndex = 70,
+            FragmentShadingRateKHR = 4422,
             SubgroupBallotKHR = 4423,
             DrawParameters = 4427,
+            WorkgroupMemoryExplicitLayoutKHR = 4428,
+            WorkgroupMemoryExplicitLayout8BitAccessKHR = 4429,
+            WorkgroupMemoryExplicitLayout16BitAccessKHR = 4430,
             SubgroupVoteKHR = 4431,
             StorageBuffer16BitAccess = 4433,
             StorageUniformBufferBlock16 = 4433,
@@ -898,12 +941,15 @@ namespace Spv
             RoundingModeRTE = 4467,
             RoundingModeRTZ = 4468,
             RayQueryProvisionalKHR = 4471,
-            RayTraversalPrimitiveCullingProvisionalKHR = 4478,
+            RayQueryKHR = 4472,
+            RayTraversalPrimitiveCullingKHR = 4478,
+            RayTracingKHR = 4479,
             Float16ImageAMD = 5008,
             ImageGatherBiasLodAMD = 5009,
             FragmentMaskAMD = 5010,
             StencilExportEXT = 5013,
             ImageReadWriteLodAMD = 5015,
+            Int64ImageEXT = 5016,
             ShaderClockKHR = 5055,
             SampleMaskOverrideCoverageNV = 5249,
             GeometryShaderPassthroughNV = 5251,
@@ -963,21 +1009,41 @@ namespace Spv
             SubgroupBufferBlockIOINTEL = 5569,
             SubgroupImageBlockIOINTEL = 5570,
             SubgroupImageMediaBlockIOINTEL = 5579,
+            RoundToInfinityINTEL = 5582,
+            FloatingPointModeINTEL = 5583,
             IntegerFunctions2INTEL = 5584,
             FunctionPointersINTEL = 5603,
             IndirectReferencesINTEL = 5604,
+            AsmINTEL = 5606,
+            AtomicFloat32MinMaxEXT = 5612,
+            AtomicFloat64MinMaxEXT = 5613,
+            AtomicFloat16MinMaxEXT = 5616,
+            VectorComputeINTEL = 5617,
+            VectorAnyINTEL = 5619,
+            ExpectAssumeKHR = 5629,
             SubgroupAvcMotionEstimationINTEL = 5696,
             SubgroupAvcMotionEstimationIntraINTEL = 5697,
             SubgroupAvcMotionEstimationChromaINTEL = 5698,
+            VariableLengthArrayINTEL = 5817,
+            FunctionFloatControlINTEL = 5821,
             FPGAMemoryAttributesINTEL = 5824,
+            FPFastMathModeINTEL = 5837,
+            ArbitraryPrecisionIntegersINTEL = 5844,
             UnstructuredLoopControlsINTEL = 5886,
             FPGALoopControlsINTEL = 5888,
             KernelAttributesINTEL = 5892,
             FPGAKernelAttributesINTEL = 5897,
+            FPGAMemoryAccessesINTEL = 5898,
+            FPGAClusterAttributesINTEL = 5904,
+            LoopFuseINTEL = 5906,
+            FPGABufferLocationINTEL = 5920,
+            USMStorageClassesINTEL = 5935,
+            IOPipesINTEL = 5943,
             BlockingPipesINTEL = 5945,
             FPGARegINTEL = 5948,
             AtomicFloat32AddEXT = 6033,
             AtomicFloat64AddEXT = 6034,
+            LongConstantCompositeINTEL = 6089,
         }
 
         public enum RayFlagsShift
@@ -1026,6 +1092,35 @@ namespace Spv
         {
             RayQueryCandidateIntersectionTriangleKHR = 0,
             RayQueryCandidateIntersectionAABBKHR = 1,
+        }
+
+        public enum FragmentShadingRateShift
+        {
+            Vertical2Pixels = 0,
+            Vertical4Pixels = 1,
+            Horizontal2Pixels = 2,
+            Horizontal4Pixels = 3,
+        }
+
+        public enum FragmentShadingRateMask
+        {
+            MaskNone = 0,
+            Vertical2Pixels = 0x00000001,
+            Vertical4Pixels = 0x00000002,
+            Horizontal2Pixels = 0x00000004,
+            Horizontal4Pixels = 0x00000008,
+        }
+
+        public enum FPDenormMode
+        {
+            Preserve = 0,
+            FlushToZero = 1,
+        }
+
+        public enum FPOperationMode
+        {
+            IEEE = 0,
+            ALT = 1,
         }
 
         public enum Op
@@ -1381,7 +1476,12 @@ namespace Spv
             OpSubgroupAnyKHR = 4429,
             OpSubgroupAllEqualKHR = 4430,
             OpSubgroupReadInvocationKHR = 4432,
-            OpTypeRayQueryProvisionalKHR = 4472,
+            OpTraceRayKHR = 4445,
+            OpExecuteCallableKHR = 4446,
+            OpConvertUToAccelerationStructureKHR = 4447,
+            OpIgnoreIntersectionKHR = 4448,
+            OpTerminateRayKHR = 4449,
+            OpTypeRayQueryKHR = 4472,
             OpRayQueryInitializeKHR = 4473,
             OpRayQueryTerminateKHR = 4474,
             OpRayQueryGenerateIntersectionKHR = 4475,
@@ -1404,15 +1504,11 @@ namespace Spv
             OpWritePackedPrimitiveIndices4x8NV = 5299,
             OpReportIntersectionKHR = 5334,
             OpReportIntersectionNV = 5334,
-            OpIgnoreIntersectionKHR = 5335,
             OpIgnoreIntersectionNV = 5335,
-            OpTerminateRayKHR = 5336,
             OpTerminateRayNV = 5336,
             OpTraceNV = 5337,
-            OpTraceRayKHR = 5337,
             OpTypeAccelerationStructureKHR = 5341,
             OpTypeAccelerationStructureNV = 5341,
-            OpExecuteCallableKHR = 5344,
             OpExecuteCallableNV = 5344,
             OpTypeCooperativeMatrixNV = 5358,
             OpCooperativeMatrixLoadNV = 5359,
@@ -1447,8 +1543,15 @@ namespace Spv
             OpUSubSatINTEL = 5596,
             OpIMul32x16INTEL = 5597,
             OpUMul32x16INTEL = 5598,
-            OpFunctionPointerINTEL = 5600,
+            OpConstFunctionPointerINTEL = 5600,
             OpFunctionPointerCallINTEL = 5601,
+            OpAsmTargetINTEL = 5609,
+            OpAsmINTEL = 5610,
+            OpAsmCallINTEL = 5611,
+            OpAtomicFMinEXT = 5614,
+            OpAtomicFMaxEXT = 5615,
+            OpAssumeTrueKHR = 5630,
+            OpExpectKHR = 5631,
             OpDecorateString = 5632,
             OpDecorateStringGOOGLE = 5632,
             OpMemberDecorateString = 5633,
@@ -1571,7 +1674,12 @@ namespace Spv
             OpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL = 5814,
             OpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL = 5815,
             OpSubgroupAvcSicGetInterRawSadsINTEL = 5816,
+            OpVariableLengthArrayINTEL = 5818,
+            OpSaveMemoryINTEL = 5819,
+            OpRestoreMemoryINTEL = 5820,
             OpLoopControlINTEL = 5887,
+            OpPtrCastToCrossWorkgroupINTEL = 5934,
+            OpCrossWorkgroupCastToPtrINTEL = 5938,
             OpReadPipeBlockingINTEL = 5946,
             OpWritePipeBlockingINTEL = 5947,
             OpFPGARegINTEL = 5949,
@@ -1593,6 +1701,10 @@ namespace Spv
             OpRayQueryGetIntersectionObjectToWorldKHR = 6031,
             OpRayQueryGetIntersectionWorldToObjectKHR = 6032,
             OpAtomicFAddEXT = 6035,
+            OpTypeBufferSurfaceINTEL = 6086,
+            OpTypeStructContinuedINTEL = 6090,
+            OpConstantCompositeContinuedINTEL = 6091,
+            OpSpecConstantCompositeContinuedINTEL = 6092,
         }
     }
 }

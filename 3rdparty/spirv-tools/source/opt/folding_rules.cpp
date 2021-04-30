@@ -470,7 +470,7 @@ uint32_t PerformFloatingPointOperation(analysis::ConstantManager* const_mgr,
     float fval = val.getAsFloat();                                           \
     if (!IsValidResult(fval)) return 0;                                      \
     words = val.GetWords();                                                  \
-  }
+  } static_assert(true, "require extra semicolon")
   switch (opcode) {
     case SpvOpFMul:
       FOLD_OP(*);
@@ -522,7 +522,7 @@ uint32_t PerformIntegerOperation(analysis::ConstantManager* const_mgr,
       uint32_t val = input1->GetU32() op input2->GetU32(); \
       words.push_back(val);                                \
     }                                                      \
-  }
+  } static_assert(true, "require extra semicalon")
   switch (opcode) {
     case SpvOpIMul:
       FOLD_OP(*);
@@ -1467,7 +1467,7 @@ FoldingRule CompositeConstructFeedingExtract() {
             type_mgr->GetType(element_def->type_id())->AsVector();
         if (element_type) {
           uint32_t vector_size = element_type->element_count();
-          if (vector_size < element_index) {
+          if (vector_size <= element_index) {
             // The element we want comes after this vector.
             element_index -= vector_size;
           } else {

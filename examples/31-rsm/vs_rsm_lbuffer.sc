@@ -16,21 +16,6 @@ uniform mat4 u_invMvpShadow;
 SAMPLER2D(s_shadowMap, 2);  // Used to reconstruct 3d position for lights
 SAMPLER2D(s_rsm,       3);  // Reflective shadow map, used to scale/color light
 
-float toClipSpaceDepth(float _depthTextureZ)
-{
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
-	return _depthTextureZ;
-#else
-	return _depthTextureZ * 2.0 - 1.0;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
-}
-
-vec3 clipToWorld(mat4 _invViewProj, vec3 _clipPos)
-{
-	vec4 wpos = mul(_invViewProj, vec4(_clipPos, 1.0) );
-	return wpos.xyz / wpos.w;
-}
-
 void main()
 {
 	// Calculate vertex position
@@ -41,9 +26,9 @@ void main()
 	float deviceDepth = texture2DLod(s_shadowMap, texCoord, 0).x;
 	float depth       = toClipSpaceDepth(deviceDepth);
 	vec3 clip = vec3(texCoord * 2.0 - 1.0, depth);
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
+#if !BGFX_SHADER_LANGUAGE_GLSL
 	clip.y = -clip.y;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
+#endif // !BGFX_SHADER_LANGUAGE_GLSL
 	vec3 wPos = clipToWorld(u_invMvpShadow, clip);
 	wPos.y -= 0.001;  // Would be much better to perturb in normal direction, but I didn't do that.
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -710,7 +710,6 @@ namespace bgfx { namespace d3d9
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				| BGFX_CAPS_FRAGMENT_DEPTH
 				| BGFX_CAPS_SWAP_CHAIN
-				| ( (UINT16_MAX < m_caps.MaxVertexIndex) ? BGFX_CAPS_INDEX32 : 0)
 				| ( (m_caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES) ? BGFX_CAPS_TEXTURE_BLIT : 0)
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| (m_occlusionQuerySupport ? BGFX_CAPS_OCCLUSION_QUERY : 0)
@@ -2455,6 +2454,12 @@ namespace bgfx { namespace d3d9
 					bx::read(&reader, texInfo);
 				}
 
+				if (!isShaderVerLess(magic, 10) )
+				{
+					uint16_t texFormat = 0;
+					bx::read(&reader, texFormat);
+				}
+
 				const char* kind = "invalid";
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
@@ -3671,15 +3676,8 @@ namespace bgfx { namespace d3d9
 			const TextureD3D9& src = m_textures[blit.m_src.idx];
 			const TextureD3D9& dst = m_textures[blit.m_dst.idx];
 
-			uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
-			uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
-			uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
-			uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
-			uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
-			uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
-
-			RECT srcRect = { LONG(blit.m_srcX), LONG(blit.m_srcY), LONG(blit.m_srcX + width), LONG(blit.m_srcY + height) };
-			RECT dstRect = { LONG(blit.m_dstX), LONG(blit.m_dstY), LONG(blit.m_dstX + width), LONG(blit.m_dstY + height) };
+			RECT srcRect = { LONG(blit.m_srcX), LONG(blit.m_srcY), LONG(blit.m_srcX + blit.m_width), LONG(blit.m_srcY + blit.m_height) };
+			RECT dstRect = { LONG(blit.m_dstX), LONG(blit.m_dstY), LONG(blit.m_dstX + blit.m_width), LONG(blit.m_dstY + blit.m_height) };
 
 			IDirect3DSurface9* srcSurface = src.getSurface(uint8_t(blit.m_srcZ), blit.m_srcMip);
 			IDirect3DSurface9* dstSurface = dst.getSurface(uint8_t(blit.m_dstZ), blit.m_dstMip);
@@ -4259,8 +4257,6 @@ namespace bgfx { namespace d3d9
 						DX_CHECK(device->SetStreamSource(numStreams, vb.m_ptr, 0, stride) );
 					}
 
-					currentState.m_numVertices = numVertices;
-
 					if (0 < numStreams)
 					{
 						if (instanced)
@@ -4317,7 +4313,8 @@ namespace bgfx { namespace d3d9
 						if (UINT32_MAX == draw.m_numIndices)
 						{
 							const IndexBufferD3D9& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-							const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+							const bool isIndex16     = draw.isIndex16();
+							const uint32_t indexSize = isIndex16 ? 2 : 4;
 							numIndices        = ib.m_size/indexSize;
 							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
 							numInstances      = draw.m_numInstances;
@@ -4450,8 +4447,14 @@ namespace bgfx { namespace d3d9
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x8c : 0x8f
-					, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
+					, " %s / " BX_COMPILER_NAME
+					  " / " BX_CPU_NAME
+					  " / " BX_ARCH_NAME
+					  " / " BX_PLATFORM_NAME
+					  " / Version 1.%d.%d (commit: " BGFX_REV_SHA1 ")"
 					, getRendererName()
+					, BGFX_API_VERSION
+					, BGFX_REV_NUMBER
 					);
 
 				const D3DADAPTER_IDENTIFIER9& identifier = m_identifier;

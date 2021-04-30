@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -76,7 +76,7 @@ namespace entry
 #		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
 		if(win_impl)
-		{ 
+		{
 			glfwSetWindowUserPointer(_window, nullptr);
 			wl_egl_window_destroy(win_impl);
 		}
@@ -495,7 +495,7 @@ namespace entry
 			while (NULL != m_windows[0]
 			&&     !glfwWindowShouldClose(m_windows[0]))
 			{
-				glfwWaitEvents();
+				glfwWaitEventsTimeout(0.016);
 
 				for (uint32_t ii = 0; ii < ENTRY_CONFIG_MAX_GAMEPADS; ++ii)
 				{
@@ -799,13 +799,11 @@ namespace entry
 
 	const Event* poll()
 	{
-		glfwPostEmptyEvent();
 		return s_ctx.m_eventQueue.poll();
 	}
 
 	const Event* poll(WindowHandle _handle)
 	{
-		glfwPostEmptyEvent();
 		return s_ctx.m_eventQueue.poll(_handle);
 	}
 
@@ -825,7 +823,6 @@ namespace entry
 		msg->m_title = _title;
 		msg->m_handle.idx = s_ctx.m_windowAlloc.alloc();
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 		return msg->m_handle;
 	}
 
@@ -834,7 +831,6 @@ namespace entry
 		Msg* msg = new Msg(GLFW_WINDOW_DESTROY);
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
@@ -844,7 +840,6 @@ namespace entry
 		msg->m_y = _y;
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
@@ -854,7 +849,6 @@ namespace entry
 		msg->m_height = _height;
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
@@ -863,7 +857,6 @@ namespace entry
 		msg->m_title = _title;
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
@@ -876,7 +869,6 @@ namespace entry
 		Msg* msg = new Msg(GLFW_WINDOW_TOGGLE_FULL_SCREEN);
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
@@ -885,7 +877,6 @@ namespace entry
 		msg->m_value = _lock;
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 	}
 
 	int32_t MainThreadEntry::threadFunc(bx::Thread* _thread, void* _userData)
@@ -899,7 +890,6 @@ namespace entry
 		Msg* msg = new Msg(GLFW_WINDOW_DESTROY);
 		msg->m_handle.idx = 0;
 		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
 
 		return result;
 	}

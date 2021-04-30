@@ -147,6 +147,10 @@ EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECo
 #ifdef GLSLANG_WEB
     const Versioning* Es300Desktop130 = nullptr;
     const Versioning* Es310Desktop420 = nullptr;
+#elif defined(GLSLANG_ANGLE)
+    const Versioning* Es300Desktop130 = nullptr;
+    const Versioning* Es310Desktop420 = nullptr;
+    const Versioning* Es310Desktop450 = nullptr;
 #else
     const Versioning Es300Desktop130Version[] = { { EEsProfile,      0, 300, 0, nullptr },
                                                   { EDesktopProfile, 0, 130, 0, nullptr },
@@ -415,7 +419,7 @@ void AddTabledBuiltin(TString& decls, const BuiltInFunction& function)
 // See if the tabled versioning information allows the current version.
 bool ValidVersion(const BuiltInFunction& function, int version, EProfile profile, const SpvVersion& /* spVersion */)
 {
-#ifdef GLSLANG_WEB
+#if defined(GLSLANG_WEB) || defined(GLSLANG_ANGLE)
     // all entries in table are valid
     return true;
 #endif
@@ -499,12 +503,14 @@ TBuiltIns::TBuiltIns()
     prefixes[EbtFloat] =  "";
     prefixes[EbtInt]   = "i";
     prefixes[EbtUint]  = "u";
-#ifndef GLSLANG_WEB
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
     prefixes[EbtFloat16] = "f16";
     prefixes[EbtInt8]  = "i8";
     prefixes[EbtUint8] = "u8";
     prefixes[EbtInt16]  = "i16";
     prefixes[EbtUint16] = "u16";
+    prefixes[EbtInt64]  = "i64";
+    prefixes[EbtUint64] = "u64";
 #endif
 
     postfixes[2] = "2";
@@ -516,7 +522,9 @@ TBuiltIns::TBuiltIns()
     dimMap[Esd3D] = 3;
     dimMap[EsdCube] = 3;
 #ifndef GLSLANG_WEB
+#ifndef GLSLANG_ANGLE
     dimMap[Esd1D] = 1;
+#endif
     dimMap[EsdRect] = 2;
     dimMap[EsdBuffer] = 1;
     dimMap[EsdSubpass] = 2;  // potentially unused for now
@@ -541,6 +549,9 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 #ifdef GLSLANG_WEB
     version = 310;
     profile = EEsProfile;
+#elif defined(GLSLANG_ANGLE)
+    version = 450;
+    profile = ECoreProfile;
 #endif
     addTabledBuiltins(version, profile, spvVersion);
 
@@ -586,6 +597,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec4  fwidthCoarse(vec4  p);"
     );
 
+#ifndef GLSLANG_ANGLE
     TString derivativesAndControl16bits (
         "float16_t dFdx(float16_t);"
         "f16vec2   dFdx(f16vec2);"
@@ -919,7 +931,203 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-    if (profile != EEsProfile && version >= 450) {
+    if (profile == EEsProfile && version >= 310) {  // Explicit Types
+      commonBuiltins.append(
+
+        "float64_t sqrt(float64_t);"
+        "f64vec2  sqrt(f64vec2);"
+        "f64vec3  sqrt(f64vec3);"
+        "f64vec4  sqrt(f64vec4);"
+
+        "float64_t inversesqrt(float64_t);"
+        "f64vec2  inversesqrt(f64vec2);"
+        "f64vec3  inversesqrt(f64vec3);"
+        "f64vec4  inversesqrt(f64vec4);"
+
+        "float64_t abs(float64_t);"
+        "f64vec2  abs(f64vec2);"
+        "f64vec3  abs(f64vec3);"
+        "f64vec4  abs(f64vec4);"
+
+        "float64_t sign(float64_t);"
+        "f64vec2  sign(f64vec2);"
+        "f64vec3  sign(f64vec3);"
+        "f64vec4  sign(f64vec4);"
+
+        "float64_t floor(float64_t);"
+        "f64vec2  floor(f64vec2);"
+        "f64vec3  floor(f64vec3);"
+        "f64vec4  floor(f64vec4);"
+
+        "float64_t trunc(float64_t);"
+        "f64vec2  trunc(f64vec2);"
+        "f64vec3  trunc(f64vec3);"
+        "f64vec4  trunc(f64vec4);"
+
+        "float64_t round(float64_t);"
+        "f64vec2  round(f64vec2);"
+        "f64vec3  round(f64vec3);"
+        "f64vec4  round(f64vec4);"
+
+        "float64_t roundEven(float64_t);"
+        "f64vec2  roundEven(f64vec2);"
+        "f64vec3  roundEven(f64vec3);"
+        "f64vec4  roundEven(f64vec4);"
+
+        "float64_t ceil(float64_t);"
+        "f64vec2  ceil(f64vec2);"
+        "f64vec3  ceil(f64vec3);"
+        "f64vec4  ceil(f64vec4);"
+
+        "float64_t fract(float64_t);"
+        "f64vec2  fract(f64vec2);"
+        "f64vec3  fract(f64vec3);"
+        "f64vec4  fract(f64vec4);"
+
+        "float64_t mod(float64_t, float64_t);"
+        "f64vec2  mod(f64vec2 , float64_t);"
+        "f64vec3  mod(f64vec3 , float64_t);"
+        "f64vec4  mod(f64vec4 , float64_t);"
+        "f64vec2  mod(f64vec2 , f64vec2);"
+        "f64vec3  mod(f64vec3 , f64vec3);"
+        "f64vec4  mod(f64vec4 , f64vec4);"
+
+        "float64_t modf(float64_t, out float64_t);"
+        "f64vec2  modf(f64vec2,  out f64vec2);"
+        "f64vec3  modf(f64vec3,  out f64vec3);"
+        "f64vec4  modf(f64vec4,  out f64vec4);"
+
+        "float64_t min(float64_t, float64_t);"
+        "f64vec2  min(f64vec2,  float64_t);"
+        "f64vec3  min(f64vec3,  float64_t);"
+        "f64vec4  min(f64vec4,  float64_t);"
+        "f64vec2  min(f64vec2,  f64vec2);"
+        "f64vec3  min(f64vec3,  f64vec3);"
+        "f64vec4  min(f64vec4,  f64vec4);"
+
+        "float64_t max(float64_t, float64_t);"
+        "f64vec2  max(f64vec2 , float64_t);"
+        "f64vec3  max(f64vec3 , float64_t);"
+        "f64vec4  max(f64vec4 , float64_t);"
+        "f64vec2  max(f64vec2 , f64vec2);"
+        "f64vec3  max(f64vec3 , f64vec3);"
+        "f64vec4  max(f64vec4 , f64vec4);"
+
+        "float64_t clamp(float64_t, float64_t, float64_t);"
+        "f64vec2  clamp(f64vec2 , float64_t, float64_t);"
+        "f64vec3  clamp(f64vec3 , float64_t, float64_t);"
+        "f64vec4  clamp(f64vec4 , float64_t, float64_t);"
+        "f64vec2  clamp(f64vec2 , f64vec2 , f64vec2);"
+        "f64vec3  clamp(f64vec3 , f64vec3 , f64vec3);"
+        "f64vec4  clamp(f64vec4 , f64vec4 , f64vec4);"
+
+        "float64_t mix(float64_t, float64_t, float64_t);"
+        "f64vec2  mix(f64vec2,  f64vec2,  float64_t);"
+        "f64vec3  mix(f64vec3,  f64vec3,  float64_t);"
+        "f64vec4  mix(f64vec4,  f64vec4,  float64_t);"
+        "f64vec2  mix(f64vec2,  f64vec2,  f64vec2);"
+        "f64vec3  mix(f64vec3,  f64vec3,  f64vec3);"
+        "f64vec4  mix(f64vec4,  f64vec4,  f64vec4);"
+        "float64_t mix(float64_t, float64_t, bool);"
+        "f64vec2  mix(f64vec2,  f64vec2,  bvec2);"
+        "f64vec3  mix(f64vec3,  f64vec3,  bvec3);"
+        "f64vec4  mix(f64vec4,  f64vec4,  bvec4);"
+
+        "float64_t step(float64_t, float64_t);"
+        "f64vec2  step(f64vec2 , f64vec2);"
+        "f64vec3  step(f64vec3 , f64vec3);"
+        "f64vec4  step(f64vec4 , f64vec4);"
+        "f64vec2  step(float64_t, f64vec2);"
+        "f64vec3  step(float64_t, f64vec3);"
+        "f64vec4  step(float64_t, f64vec4);"
+
+        "float64_t smoothstep(float64_t, float64_t, float64_t);"
+        "f64vec2  smoothstep(f64vec2 , f64vec2 , f64vec2);"
+        "f64vec3  smoothstep(f64vec3 , f64vec3 , f64vec3);"
+        "f64vec4  smoothstep(f64vec4 , f64vec4 , f64vec4);"
+        "f64vec2  smoothstep(float64_t, float64_t, f64vec2);"
+        "f64vec3  smoothstep(float64_t, float64_t, f64vec3);"
+        "f64vec4  smoothstep(float64_t, float64_t, f64vec4);"
+
+        "float64_t length(float64_t);"
+        "float64_t length(f64vec2);"
+        "float64_t length(f64vec3);"
+        "float64_t length(f64vec4);"
+
+        "float64_t distance(float64_t, float64_t);"
+        "float64_t distance(f64vec2 , f64vec2);"
+        "float64_t distance(f64vec3 , f64vec3);"
+        "float64_t distance(f64vec4 , f64vec4);"
+
+        "float64_t dot(float64_t, float64_t);"
+        "float64_t dot(f64vec2 , f64vec2);"
+        "float64_t dot(f64vec3 , f64vec3);"
+        "float64_t dot(f64vec4 , f64vec4);"
+
+        "f64vec3 cross(f64vec3, f64vec3);"
+
+        "float64_t normalize(float64_t);"
+        "f64vec2  normalize(f64vec2);"
+        "f64vec3  normalize(f64vec3);"
+        "f64vec4  normalize(f64vec4);"
+
+        "float64_t faceforward(float64_t, float64_t, float64_t);"
+        "f64vec2  faceforward(f64vec2,  f64vec2,  f64vec2);"
+        "f64vec3  faceforward(f64vec3,  f64vec3,  f64vec3);"
+        "f64vec4  faceforward(f64vec4,  f64vec4,  f64vec4);"
+
+        "float64_t reflect(float64_t, float64_t);"
+        "f64vec2  reflect(f64vec2 , f64vec2 );"
+        "f64vec3  reflect(f64vec3 , f64vec3 );"
+        "f64vec4  reflect(f64vec4 , f64vec4 );"
+
+        "float64_t refract(float64_t, float64_t, float64_t);"
+        "f64vec2  refract(f64vec2 , f64vec2 , float64_t);"
+        "f64vec3  refract(f64vec3 , f64vec3 , float64_t);"
+        "f64vec4  refract(f64vec4 , f64vec4 , float64_t);"
+
+        "f64mat2 matrixCompMult(f64mat2, f64mat2);"
+        "f64mat3 matrixCompMult(f64mat3, f64mat3);"
+        "f64mat4 matrixCompMult(f64mat4, f64mat4);"
+        "f64mat2x3 matrixCompMult(f64mat2x3, f64mat2x3);"
+        "f64mat2x4 matrixCompMult(f64mat2x4, f64mat2x4);"
+        "f64mat3x2 matrixCompMult(f64mat3x2, f64mat3x2);"
+        "f64mat3x4 matrixCompMult(f64mat3x4, f64mat3x4);"
+        "f64mat4x2 matrixCompMult(f64mat4x2, f64mat4x2);"
+        "f64mat4x3 matrixCompMult(f64mat4x3, f64mat4x3);"
+
+        "f64mat2   outerProduct(f64vec2, f64vec2);"
+        "f64mat3   outerProduct(f64vec3, f64vec3);"
+        "f64mat4   outerProduct(f64vec4, f64vec4);"
+        "f64mat2x3 outerProduct(f64vec3, f64vec2);"
+        "f64mat3x2 outerProduct(f64vec2, f64vec3);"
+        "f64mat2x4 outerProduct(f64vec4, f64vec2);"
+        "f64mat4x2 outerProduct(f64vec2, f64vec4);"
+        "f64mat3x4 outerProduct(f64vec4, f64vec3);"
+        "f64mat4x3 outerProduct(f64vec3, f64vec4);"
+
+        "f64mat2   transpose(f64mat2);"
+        "f64mat3   transpose(f64mat3);"
+        "f64mat4   transpose(f64mat4);"
+        "f64mat2x3 transpose(f64mat3x2);"
+        "f64mat3x2 transpose(f64mat2x3);"
+        "f64mat2x4 transpose(f64mat4x2);"
+        "f64mat4x2 transpose(f64mat2x4);"
+        "f64mat3x4 transpose(f64mat4x3);"
+        "f64mat4x3 transpose(f64mat3x4);"
+
+        "float64_t determinant(f64mat2);"
+        "float64_t determinant(f64mat3);"
+        "float64_t determinant(f64mat4);"
+
+        "f64mat2 inverse(f64mat2);"
+        "f64mat3 inverse(f64mat3);"
+        "f64mat4 inverse(f64mat4);"
+
+        "\n");
+    }
+
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 310)) {
         commonBuiltins.append(
 
             "int64_t abs(int64_t);"
@@ -986,25 +1194,25 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "u64vec3  mix(u64vec3,  u64vec3,  bvec3);"
             "u64vec4  mix(u64vec4,  u64vec4,  bvec4);"
 
-            "int64_t doubleBitsToInt64(double);"
-            "i64vec2 doubleBitsToInt64(dvec2);"
-            "i64vec3 doubleBitsToInt64(dvec3);"
-            "i64vec4 doubleBitsToInt64(dvec4);"
+            "int64_t doubleBitsToInt64(float64_t);"
+            "i64vec2 doubleBitsToInt64(f64vec2);"
+            "i64vec3 doubleBitsToInt64(f64vec3);"
+            "i64vec4 doubleBitsToInt64(f64vec4);"
 
-            "uint64_t doubleBitsToUint64(double);"
-            "u64vec2  doubleBitsToUint64(dvec2);"
-            "u64vec3  doubleBitsToUint64(dvec3);"
-            "u64vec4  doubleBitsToUint64(dvec4);"
+            "uint64_t doubleBitsToUint64(float64_t);"
+            "u64vec2  doubleBitsToUint64(f64vec2);"
+            "u64vec3  doubleBitsToUint64(f64vec3);"
+            "u64vec4  doubleBitsToUint64(f64vec4);"
 
-            "double int64BitsToDouble(int64_t);"
-            "dvec2  int64BitsToDouble(i64vec2);"
-            "dvec3  int64BitsToDouble(i64vec3);"
-            "dvec4  int64BitsToDouble(i64vec4);"
+            "float64_t int64BitsToDouble(int64_t);"
+            "f64vec2  int64BitsToDouble(i64vec2);"
+            "f64vec3  int64BitsToDouble(i64vec3);"
+            "f64vec4  int64BitsToDouble(i64vec4);"
 
-            "double uint64BitsToDouble(uint64_t);"
-            "dvec2  uint64BitsToDouble(u64vec2);"
-            "dvec3  uint64BitsToDouble(u64vec3);"
-            "dvec4  uint64BitsToDouble(u64vec4);"
+            "float64_t uint64BitsToDouble(uint64_t);"
+            "f64vec2  uint64BitsToDouble(u64vec2);"
+            "f64vec3  uint64BitsToDouble(u64vec3);"
+            "f64vec4  uint64BitsToDouble(u64vec4);"
 
             "int64_t  packInt2x32(ivec2);"
             "uint64_t packUint2x32(uvec2);"
@@ -1173,6 +1381,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n"
         );
     }
+#endif // !GLSLANG_ANGLE
 
     if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 430)) {
@@ -1210,6 +1419,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 440) {
         commonBuiltins.append(
             "uint64_t atomicMin(coherent volatile inout uint64_t, uint64_t);"
@@ -1271,7 +1481,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void atomicStore(coherent volatile out double, double, int, int, int);"
             "\n");
     }
-#endif
+#endif // !GLSLANG_ANGLE
+#endif // !GLSLANG_WEB
 
     if ((profile == EEsProfile && version >= 300) ||
         (profile != EEsProfile && version >= 150)) { // GL_ARB_shader_bit_encoding
@@ -1311,6 +1522,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 150) {  // ARB_gpu_shader_fp64
             commonBuiltins.append(
                 "double fma(double, double, double);"
@@ -1319,6 +1531,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "dvec4  fma(dvec4,  dvec4,  dvec4 );"
                 "\n");
     }
+
+    if (profile == EEsProfile && version >= 310) {  // ARB_gpu_shader_fp64
+            commonBuiltins.append(
+                "float64_t fma(float64_t, float64_t, float64_t);"
+                "f64vec2  fma(f64vec2,  f64vec2,  f64vec2 );"
+                "f64vec3  fma(f64vec3,  f64vec3,  f64vec3 );"
+                "f64vec4  fma(f64vec4,  f64vec4,  f64vec4 );"
+                "\n");
+    }
+#endif
 
     if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 400)) {
@@ -1336,6 +1558,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 150) { // ARB_gpu_shader_fp64
         commonBuiltins.append(
             "double frexp(double, out int);"
@@ -1353,6 +1576,22 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
     }
+
+    if (profile == EEsProfile && version >= 310) { // ARB_gpu_shader_fp64
+        commonBuiltins.append(
+            "float64_t frexp(float64_t, out int);"
+            "f64vec2  frexp( f64vec2, out ivec2);"
+            "f64vec3  frexp( f64vec3, out ivec3);"
+            "f64vec4  frexp( f64vec4, out ivec4);"
+
+            "float64_t ldexp(float64_t, int);"
+            "f64vec2  ldexp( f64vec2, ivec2);"
+            "f64vec3  ldexp( f64vec3, ivec3);"
+            "f64vec4  ldexp( f64vec4, ivec4);"
+
+            "\n");
+    }
+#endif
 #endif
 
     if ((profile == EEsProfile && version >= 300) ||
@@ -1462,6 +1701,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
 #ifndef GLSLANG_WEB
+#ifndef GLSLANG_ANGLE
     //
     // Original-style texture functions existing in all stages.
     // (Per-stage functions below.)
@@ -1610,6 +1850,37 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "\n");
         }
     }
+    else if (spvVersion.vulkanRelaxed) {
+        //
+        // Atomic counter functions act as aliases to normal atomic functions.
+        // replace definitions to take 'volatile coherent uint' instead of 'atomic_uint'
+        // and map to equivalent non-counter atomic op
+        //
+        if ((profile != EEsProfile && version >= 300) ||
+            (profile == EEsProfile && version >= 310)) {
+            commonBuiltins.append(
+                "uint atomicCounterIncrement(volatile coherent uint);"
+                "uint atomicCounterDecrement(volatile coherent uint);"
+                "uint atomicCounter(volatile coherent uint);"
+
+                "\n");
+        }
+        if (profile != EEsProfile && version >= 460) {
+            commonBuiltins.append(
+                "uint atomicCounterAdd(volatile coherent uint, uint);"
+                "uint atomicCounterSubtract(volatile coherent uint, uint);"
+                "uint atomicCounterMin(volatile coherent uint, uint);"
+                "uint atomicCounterMax(volatile coherent uint, uint);"
+                "uint atomicCounterAnd(volatile coherent uint, uint);"
+                "uint atomicCounterOr(volatile coherent uint, uint);"
+                "uint atomicCounterXor(volatile coherent uint, uint);"
+                "uint atomicCounterExchange(volatile coherent uint, uint);"
+                "uint atomicCounterCompSwap(volatile coherent uint, uint, uint);"
+
+                "\n");
+        }
+    }
+#endif // !GLSLANG_ANGLE
 
     // Bitfield
     if ((profile == EEsProfile && version >= 310) ||
@@ -1752,6 +2023,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     // GL_ARB_shader_ballot
     if (profile != EEsProfile && version >= 450) {
         commonBuiltins.append(
@@ -3072,6 +3344,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "bool textureFootprintGradClampNV(sampler2D, vec2, vec2, vec2, float, int, bool, out gl_TextureFootprint2DNV);"
             "\n");
     }
+#endif // !GLSLANG_ANGLE
 
     if ((profile == EEsProfile && version >= 300 && version < 310) ||
         (profile != EEsProfile && version >= 150 && version < 450)) { // GL_EXT_shader_integer_mix
@@ -3091,8 +3364,9 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                               "\n");
     }
 
+#ifndef GLSLANG_ANGLE
     // GL_AMD_gpu_shader_half_float/Explicit types
-    if (profile != EEsProfile && version >= 450) {
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 310)) {
         commonBuiltins.append(
             "float16_t radians(float16_t);"
             "f16vec2   radians(f16vec2);"
@@ -3440,7 +3714,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
     // Explicit types
-    if (profile != EEsProfile && version >= 450) {
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 310)) {
         commonBuiltins.append(
             "int8_t abs(int8_t);"
             "i8vec2 abs(i8vec2);"
@@ -3941,28 +4215,30 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f64vec3   log2(f64vec3);"
             "f64vec4   log2(f64vec4);"
             "\n");
-        }
-        if (profile != EEsProfile && version >= 450) {
-            stageBuiltins[EShLangFragment].append(derivativesAndControl64bits);
-            stageBuiltins[EShLangFragment].append(
-                "float64_t interpolateAtCentroid(float64_t);"
-                "f64vec2   interpolateAtCentroid(f64vec2);"
-                "f64vec3   interpolateAtCentroid(f64vec3);"
-                "f64vec4   interpolateAtCentroid(f64vec4);"
+    }
 
-                "float64_t interpolateAtSample(float64_t, int);"
-                "f64vec2   interpolateAtSample(f64vec2,   int);"
-                "f64vec3   interpolateAtSample(f64vec3,   int);"
-                "f64vec4   interpolateAtSample(f64vec4,   int);"
+    if (profile != EEsProfile && version >= 450) {
+        stageBuiltins[EShLangFragment].append(derivativesAndControl64bits);
+        stageBuiltins[EShLangFragment].append(
+            "float64_t interpolateAtCentroid(float64_t);"
+            "f64vec2   interpolateAtCentroid(f64vec2);"
+            "f64vec3   interpolateAtCentroid(f64vec3);"
+            "f64vec4   interpolateAtCentroid(f64vec4);"
 
-                "float64_t interpolateAtOffset(float64_t, f64vec2);"
-                "f64vec2   interpolateAtOffset(f64vec2,   f64vec2);"
-                "f64vec3   interpolateAtOffset(f64vec3,   f64vec2);"
-                "f64vec4   interpolateAtOffset(f64vec4,   f64vec2);"
+            "float64_t interpolateAtSample(float64_t, int);"
+            "f64vec2   interpolateAtSample(f64vec2,   int);"
+            "f64vec3   interpolateAtSample(f64vec3,   int);"
+            "f64vec4   interpolateAtSample(f64vec4,   int);"
 
-                "\n");
+            "float64_t interpolateAtOffset(float64_t, f64vec2);"
+            "f64vec2   interpolateAtOffset(f64vec2,   f64vec2);"
+            "f64vec3   interpolateAtOffset(f64vec3,   f64vec2);"
+            "f64vec4   interpolateAtOffset(f64vec4,   f64vec2);"
+
+            "\n");
 
     }
+#endif // !GLSLANG_ANGLE
 
     //============================================================================
     //
@@ -3978,6 +4254,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     if (spvVersion.vulkan == 0 && IncludeLegacy(version, profile, spvVersion))
         stageBuiltins[EShLangVertex].append("vec4 ftransform();");
 
+#ifndef GLSLANG_ANGLE
     //
     // Original-style texture Functions with lod.
     //
@@ -4037,6 +4314,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "\n");
         }
     }
+#endif // !GLSLANG_ANGLE
 
     if ((profile != EEsProfile && version >= 150) ||
         (profile == EEsProfile && version >= 310)) {
@@ -4057,7 +4335,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void EndPrimitive();"
             "\n");
     }
-#endif
+#endif // !GLSLANG_WEB
 
     //============================================================================
     //
@@ -4096,7 +4374,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 #ifndef GLSLANG_WEB
     if ((profile != EEsProfile && version >= 420) || esBarrier) {
-        if (spvVersion.vulkan == 0) {
+        if (spvVersion.vulkan == 0 || spvVersion.vulkanRelaxed) {
             commonBuiltins.append("void memoryBarrierAtomicCounter();");
         }
         commonBuiltins.append("void memoryBarrierImage();");
@@ -4117,6 +4395,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
     commonBuiltins.append("void debugPrintfEXT();\n");
 
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 450) {
         // coopMatStoreNV perhaps ought to have "out" on the buf parameter, but
         // adding it introduces undesirable tempArgs on the stack. What we want
@@ -4240,6 +4519,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
     }
+#endif // !GLSLANG_ANGLE
 
     // GL_ARB_derivative_control
     if (profile != EEsProfile && version >= 400) {
@@ -4277,6 +4557,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "bool helperInvocationEXT();"
         "\n");
 
+#ifndef GLSLANG_ANGLE
     // GL_AMD_shader_explicit_vertex_parameter
     if (profile != EEsProfile && version >= 450) {
         stageBuiltins[EShLangFragment].append(
@@ -4390,9 +4671,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
         stageBuiltins[EShLangAnyHit].append(
             "void ignoreIntersectionNV();"
-            "void ignoreIntersectionEXT();"
             "void terminateRayNV();"
-            "void terminateRayEXT();"
             "\n");
         stageBuiltins[EShLangClosestHit].append(
             "void traceNV(accelerationStructureNV,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
@@ -4411,12 +4690,14 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void executeCallableEXT(uint, int);"
             "\n");
     }
+#endif // !GLSLANG_ANGLE
 
     //E_SPV_NV_compute_shader_derivatives
     if ((profile == EEsProfile && version >= 320) || (profile != EEsProfile && version >= 450)) {
         stageBuiltins[EShLangCompute].append(derivativeControls);
         stageBuiltins[EShLangCompute].append("\n");
     }
+#ifndef GLSLANG_ANGLE
     if (profile != EEsProfile && version >= 450) {
         stageBuiltins[EShLangCompute].append(derivativesAndControl16bits);
         stageBuiltins[EShLangCompute].append(derivativesAndControl64bits);
@@ -4429,7 +4710,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void writePackedPrimitiveIndices4x8NV(uint, uint);"
             "\n");
     }
-#endif
+#endif // !GLSLANG_ANGLE
+#endif // !GLSLANG_WEB
 
     //============================================================================
     //
@@ -4466,7 +4748,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-#ifndef GLSLANG_WEB
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
     if (spvVersion.spv == 0 && IncludeLegacy(version, profile, spvVersion)) {
         //
         // Matrix state. p. 31, 32, 37, 39, 40.
@@ -4584,7 +4866,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
     }
-#endif
+#endif // !GLSLANG_WEB && !GLSLANG_ANGLE
 
     //============================================================================
     //
@@ -4615,6 +4897,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
 #ifndef GLSLANG_WEB
+#ifndef GLSLANG_ANGLE
     //============================================================================
     //
     // Define the interface to the mesh/task shader.
@@ -4702,6 +4985,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "\n");
         }
     }
+#endif // !GLSLANG_ANGLE
 
     //============================================================================
     //
@@ -4814,6 +5098,13 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in int gl_VertexIndex;"
                 "in int gl_InstanceIndex;"
                 );
+
+        if (spvVersion.vulkan > 0 && version >= 140 && spvVersion.vulkanRelaxed)
+            stageBuiltins[EShLangVertex].append(
+                "in int gl_VertexID;"         // declare with 'in' qualifier
+                "in int gl_InstanceID;"
+                );
+
         if (version >= 440) {
             stageBuiltins[EShLangVertex].append(
                 "in int gl_BaseVertexARB;"
@@ -4851,7 +5142,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "mediump float gl_PointSize;" // needs qualifier fixed later
                 );
         } else {
-            if (spvVersion.vulkan == 0)
+            if (spvVersion.vulkan == 0 || spvVersion.vulkanRelaxed)
                 stageBuiltins[EShLangVertex].append(
                     "in highp int gl_VertexID;"      // needs qualifier fixed later
                     "in highp int gl_InstanceID;"    // needs qualifier fixed later
@@ -4894,6 +5185,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangVertex].append(
+            "out highp int gl_PrimitiveShadingRateEXT;" // GL_EXT_fragment_shading_rate
+            "\n");
+    }
 
     //============================================================================
     //
@@ -5004,6 +5300,12 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangGeometry].append(
             "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
             "in highp int gl_ViewIndex;"       // GL_EXT_multiview
+            "\n");
+    }
+
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangGeometry].append(
+            "out highp int gl_PrimitiveShadingRateEXT;" // GL_EXT_fragment_shading_rate
             "\n");
     }
 
@@ -5304,6 +5606,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in vec3 gl_BaryCoordNoPerspNV;"
                 );
 
+        if (version >= 450)
+            stageBuiltins[EShLangFragment].append(
+                "flat in int gl_ShadingRateEXT;" // GL_EXT_fragment_shading_rate
+            );
+
     } else {
         // ES profile
 
@@ -5362,6 +5669,10 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in vec3 gl_BaryCoordNV;"
                 "in vec3 gl_BaryCoordNoPerspNV;"
                 );
+        if (version >= 310)
+            stageBuiltins[EShLangFragment].append(
+                "flat in highp int gl_ShadingRateEXT;" // GL_EXT_fragment_shading_rate
+            );
     }
 #endif
 
@@ -5372,6 +5683,21 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
 #ifndef GLSLANG_WEB
 
+    if ((profile != EEsProfile && version >= 140) ||
+        (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangFragment].append(
+            "flat in highp int gl_DeviceIndex;"     // GL_EXT_device_group
+            "flat in highp int gl_ViewIndex;"       // GL_EXT_multiview
+            "\n");
+    }
+
+    if (version >= 300 /* both ES and non-ES */) {
+        stageBuiltins[EShLangFragment].append(
+            "flat in highp uint gl_ViewID_OVR;"     // GL_OVR_multiview, GL_OVR_multiview2
+            "\n");
+    }
+
+#ifndef GLSLANG_ANGLE
     // GL_ARB_shader_ballot
     if (profile != EEsProfile && version >= 450) {
         const char* ballotDecls =
@@ -5382,6 +5708,15 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in uint64_t gl_SubGroupGtMaskARB;"
             "in uint64_t gl_SubGroupLeMaskARB;"
             "in uint64_t gl_SubGroupLtMaskARB;"
+            "\n";
+        const char* rtBallotDecls =
+            "uniform volatile uint gl_SubGroupSizeARB;"
+            "in volatile uint     gl_SubGroupInvocationARB;"
+            "in volatile uint64_t gl_SubGroupEqMaskARB;"
+            "in volatile uint64_t gl_SubGroupGeMaskARB;"
+            "in volatile uint64_t gl_SubGroupGtMaskARB;"
+            "in volatile uint64_t gl_SubGroupLeMaskARB;"
+            "in volatile uint64_t gl_SubGroupLtMaskARB;"
             "\n";
         const char* fragmentBallotDecls =
             "uniform uint gl_SubGroupSizeARB;"
@@ -5400,14 +5735,13 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangFragment]      .append(fragmentBallotDecls);
         stageBuiltins[EShLangMeshNV]        .append(ballotDecls);
         stageBuiltins[EShLangTaskNV]        .append(ballotDecls);
-    }
-
-    if ((profile != EEsProfile && version >= 140) ||
-        (profile == EEsProfile && version >= 310)) {
-        stageBuiltins[EShLangFragment].append(
-            "flat in highp int gl_DeviceIndex;"     // GL_EXT_device_group
-            "flat in highp int gl_ViewIndex;"       // GL_EXT_multiview
-            "\n");
+        stageBuiltins[EShLangRayGen]        .append(rtBallotDecls);
+        stageBuiltins[EShLangIntersect]     .append(rtBallotDecls);
+        // No volatile qualifier on these builtins in any-hit
+        stageBuiltins[EShLangAnyHit]        .append(ballotDecls);
+        stageBuiltins[EShLangClosestHit]    .append(rtBallotDecls);
+        stageBuiltins[EShLangMiss]          .append(rtBallotDecls);
+        stageBuiltins[EShLangCallable]      .append(rtBallotDecls);
     }
 
     // GL_KHR_shader_subgroup
@@ -5445,6 +5779,21 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in highp   uint  gl_NumSubgroups;"
             "in highp   uint  gl_SubgroupID;"
             "\n";
+        // These builtins are volatile for RT stages
+        const char* rtSubgroupDecls =
+            "in mediump volatile uint  gl_SubgroupSize;"
+            "in mediump volatile uint  gl_SubgroupInvocationID;"
+            "in highp   volatile uvec4 gl_SubgroupEqMask;"
+            "in highp   volatile uvec4 gl_SubgroupGeMask;"
+            "in highp   volatile uvec4 gl_SubgroupGtMask;"
+            "in highp   volatile uvec4 gl_SubgroupLeMask;"
+            "in highp   volatile uvec4 gl_SubgroupLtMask;"
+            // GL_NV_shader_sm_builtins
+            "in highp    uint  gl_WarpsPerSMNV;"
+            "in highp    uint  gl_SMCountNV;"
+            "in highp volatile uint  gl_WarpIDNV;"
+            "in highp volatile uint  gl_SMIDNV;"
+            "\n";
 
         stageBuiltins[EShLangVertex]        .append(subgroupDecls);
         stageBuiltins[EShLangTessControl]   .append(subgroupDecls);
@@ -5457,12 +5806,13 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangMeshNV]        .append(computeSubgroupDecls);
         stageBuiltins[EShLangTaskNV]        .append(subgroupDecls);
         stageBuiltins[EShLangTaskNV]        .append(computeSubgroupDecls);
-        stageBuiltins[EShLangRayGen]        .append(subgroupDecls);
-        stageBuiltins[EShLangIntersect]     .append(subgroupDecls);
+        stageBuiltins[EShLangRayGen]        .append(rtSubgroupDecls);
+        stageBuiltins[EShLangIntersect]     .append(rtSubgroupDecls);
+        // No volatile qualifier on these builtins in any-hit
         stageBuiltins[EShLangAnyHit]        .append(subgroupDecls);
-        stageBuiltins[EShLangClosestHit]    .append(subgroupDecls);
-        stageBuiltins[EShLangMiss]          .append(subgroupDecls);
-        stageBuiltins[EShLangCallable]      .append(subgroupDecls);
+        stageBuiltins[EShLangClosestHit]    .append(rtSubgroupDecls);
+        stageBuiltins[EShLangMiss]          .append(rtSubgroupDecls);
+        stageBuiltins[EShLangCallable]      .append(rtSubgroupDecls);
     }
 
     // GL_NV_ray_tracing/GL_EXT_ray_tracing
@@ -5530,7 +5880,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in    float  gl_RayTminNV;"
             "in    float  gl_RayTminEXT;"
             "in    float  gl_RayTmaxNV;"
-            "in    float  gl_RayTmaxEXT;"
+            "in volatile float gl_RayTmaxEXT;"
             "in    mat4x3 gl_ObjectToWorldNV;"
             "in    mat4x3 gl_ObjectToWorldEXT;"
             "in    mat3x4 gl_ObjectToWorld3x4EXT;"
@@ -5613,6 +5963,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangCallable].append(callableDecls);
 
     }
+
     if ((profile != EEsProfile && version >= 140)) {
         const char *deviceIndex =
             "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
@@ -5623,12 +5974,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangAnyHit].append(deviceIndex);
         stageBuiltins[EShLangClosestHit].append(deviceIndex);
         stageBuiltins[EShLangMiss].append(deviceIndex);
-    }
-
-    if (version >= 300 /* both ES and non-ES */) {
-        stageBuiltins[EShLangFragment].append(
-            "flat in highp uint gl_ViewID_OVR;"     // GL_OVR_multiview, GL_OVR_multiview2
-            "\n");
     }
 
     if ((profile != EEsProfile && version >= 420) ||
@@ -5654,7 +5999,59 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append("const int gl_StorageSemanticsImage    = 0x800;\n");
         commonBuiltins.append("const int gl_StorageSemanticsOutput   = 0x1000;\n");
     }
-#endif
+
+    // Adding these to common built-ins triggers an assert due to a memory corruption in related code when testing
+    // So instead add to each stage individually, avoiding the GLSLang bug
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 310)) {
+        for (int stage=EShLangVertex; stage<EShLangCount; stage++)
+        {
+            stageBuiltins[static_cast<EShLanguage>(stage)].append("const highp int gl_ShadingRateFlag2VerticalPixelsEXT       = 1;\n");
+            stageBuiltins[static_cast<EShLanguage>(stage)].append("const highp int gl_ShadingRateFlag4VerticalPixelsEXT       = 2;\n");
+            stageBuiltins[static_cast<EShLanguage>(stage)].append("const highp int gl_ShadingRateFlag2HorizontalPixelsEXT     = 4;\n");
+            stageBuiltins[static_cast<EShLanguage>(stage)].append("const highp int gl_ShadingRateFlag4HorizontalPixelsEXT     = 8;\n");
+        }
+    }
+    
+    // GL_EXT_shader_image_int64
+    if ((profile != EEsProfile && version >= 420) ||
+        (profile == EEsProfile && version >= 310)) {
+            
+        const TBasicType bTypes[] = { EbtInt64, EbtUint64 };
+        for (int ms = 0; ms <= 1; ++ms) { // loop over "bool" multisample or not
+            for (int arrayed = 0; arrayed <= 1; ++arrayed) { // loop over "bool" arrayed or not
+                for (int dim = Esd1D; dim < EsdSubpass; ++dim) { // 1D, ..., buffer
+                    if ((dim == Esd1D || dim == EsdRect) && profile == EEsProfile)
+                        continue;
+                    
+                    if ((dim == Esd3D || dim == EsdRect || dim == EsdBuffer) && arrayed)
+                        continue;
+                    
+                    if (dim != Esd2D && ms)
+                        continue;
+                    
+                    // Loop over the bTypes
+                    for (size_t bType = 0; bType < sizeof(bTypes)/sizeof(TBasicType); ++bType) {
+                        //
+                        // Now, make all the function prototypes for the type we just built...
+                        //
+                        TSampler sampler;
+                    
+                        sampler.setImage(bTypes[bType], (TSamplerDim)dim, arrayed ? true : false,
+                                                                          false,
+                                                                          ms      ? true : false);
+
+                        TString typeName = sampler.getString();
+
+                        addQueryFunctions(sampler, typeName, version, profile);
+                        addImageFunctions(sampler, typeName, version, profile);
+                    }
+                }
+            }
+        }
+    }
+#endif // !GLSLANG_ANGLE
+    
+#endif // !GLSLANG_WEB
 
     // printf("%s\n", commonBuiltins.c_str());
     // printf("%s\n", stageBuiltins[EShLangFragment].c_str());
@@ -5672,13 +6069,16 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
     //
 
     // enumerate all the types
+    const TBasicType bTypes[] = { EbtFloat, EbtInt, EbtUint,
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+        EbtFloat16
+#endif
+    };
 #ifdef GLSLANG_WEB
-    const TBasicType bTypes[] = { EbtFloat, EbtInt, EbtUint };
     bool skipBuffer = true;
     bool skipCubeArrayed = true;
     const int image = 0;
 #else
-    const TBasicType bTypes[] = { EbtFloat, EbtInt, EbtUint, EbtFloat16 };
     bool skipBuffer = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 140);
     bool skipCubeArrayed = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 130);
     for (int image = 0; image <= 1; ++image) // loop over "bool" image vs sampler
@@ -5704,7 +6104,11 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
 #ifdef GLSLANG_WEB
                     for (int dim = Esd2D; dim <= EsdCube; ++dim) { // 2D, 3D, and Cube
 #else
+#if defined(GLSLANG_ANGLE)
+                    for (int dim = Esd2D; dim < EsdNumDims; ++dim) { // 2D, ..., buffer, subpass
+#else
                     for (int dim = Esd1D; dim < EsdNumDims; ++dim) { // 1D, ..., buffer, subpass
+#endif
                         if (dim == EsdSubpass && spvVersion.vulkan == 0)
                             continue;
                         if (dim == EsdSubpass && (image || shadow || arrayed))
@@ -5743,7 +6147,6 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
 #endif
                             if (shadow && (bTypes[bType] == EbtInt || bTypes[bType] == EbtUint))
                                 continue;
-
                             //
                             // Now, make all the function prototypes for the type we just built...
                             //
@@ -5968,8 +6371,16 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
 
     if ( profile != EEsProfile ||
         (profile == EEsProfile && version >= 310)) {
-        if (sampler.type == EbtInt || sampler.type == EbtUint) {
-            const char* dataType = sampler.type == EbtInt ? "highp int" : "highp uint";
+        if (sampler.type == EbtInt || sampler.type == EbtUint || sampler.type == EbtInt64 || sampler.type == EbtUint64 ) {
+            
+            const char* dataType;
+            switch (sampler.type) {
+                case(EbtInt): dataType = "highp int"; break;
+                case(EbtUint): dataType = "highp uint"; break;
+                case(EbtInt64): dataType = "highp int64_t"; break;
+                case(EbtUint64): dataType = "highp uint64_t"; break;
+                default: dataType = "";
+            }
 
             const int numBuiltins = 7;
 
@@ -6125,6 +6536,9 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
 #ifdef GLSLANG_WEB
     profile = EEsProfile;
     version = 310;
+#elif defined(GLSLANG_ANGLE)
+    profile = ECoreProfile;
+    version = 450;
 #endif
 
     //
@@ -6201,7 +6615,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                     continue;
 
                                 // loop over 16-bit floating-point texel addressing
-#ifdef GLSLANG_WEB
+#if defined(GLSLANG_WEB) || defined(GLSLANG_ANGLE)
                                 const int f16TexAddr = 0;
 #else
                                 for (int f16TexAddr = 0; f16TexAddr <= 1; ++f16TexAddr)
@@ -6214,7 +6628,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                         totalDims--;
                                     }
                                     // loop over "bool" lod clamp
-#ifdef GLSLANG_WEB
+#if defined(GLSLANG_WEB) || defined(GLSLANG_ANGLE)
                                     const int lodClamp = 0;
 #else
                                     for (int lodClamp = 0; lodClamp <= 1 ;++lodClamp)
@@ -6226,7 +6640,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                             continue;
 
                                         // loop over "bool" sparse or not
-#ifdef GLSLANG_WEB
+#if defined(GLSLANG_WEB) || defined(GLSLANG_ANGLE)
                                         const int sparse = 0;
 #else
                                         for (int sparse = 0; sparse <= 1; ++sparse)
@@ -6281,7 +6695,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                                 s.append("Offset");
                                             if (lodClamp)
                                                 s.append("Clamp");
-                                            if (lodClamp || sparse)
+                                            if (lodClamp != 0 || sparse)
                                                 s.append("ARB");
                                             s.append("(");
 
@@ -6381,7 +6795,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                             s.append(");\n");
 
                                             // Add to the per-language set of built-ins
-                                            if (bias || lodClamp) {
+                                            if (!grad && (bias || lodClamp != 0)) {
                                                 stageBuiltins[EShLangFragment].append(s);
                                                 stageBuiltins[EShLangCompute].append(s);
                                             } else
@@ -6410,6 +6824,9 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
 #ifdef GLSLANG_WEB
     profile = EEsProfile;
     version = 310;
+#elif defined(GLSLANG_ANGLE)
+    profile = ECoreProfile;
+    version = 450;
 #endif
 
     switch (sampler.dim) {
@@ -6653,6 +7070,9 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
 #ifdef GLSLANG_WEB
     version = 310;
     profile = EEsProfile;
+#elif defined(GLSLANG_ANGLE)
+    version = 450;
+    profile = ECoreProfile;
 #endif
 
     //
@@ -7081,6 +7501,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
         s.append("\n");
     }
 
+#ifndef GLSLANG_ANGLE
     // atomic counters (some in compute below)
     if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 420)) {
@@ -7117,6 +7538,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
 
         s.append("\n");
     }
+#endif // !GLSLANG_ANGLE
 
     // GL_ARB_cull_distance
     if (profile != EEsProfile && version >= 450) {
@@ -7133,6 +7555,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
         s.append(builtInConstant);
     }
 
+#ifndef GLSLANG_ANGLE
     // SPV_NV_mesh_shader
     if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         snprintf(builtInConstant, maxSize, "const int gl_MaxMeshOutputVerticesNV = %d;", resources.maxMeshOutputVerticesNV);
@@ -7155,6 +7578,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
 
         s.append("\n");
     }
+#endif
 #endif
 
     s.append("\n");
@@ -7239,6 +7663,9 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 #ifdef GLSLANG_WEB
     version = 310;
     profile = EEsProfile;
+#elif defined(GLSLANG_ANGLE)
+    version = 450;
+    profile = ECoreProfile;
 #endif
 
     //
@@ -7264,6 +7691,12 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         if (spvVersion.vulkan == 0) {
             SpecialQualifier("gl_VertexID",   EvqVertexId,   EbvVertexId,   symbolTable);
             SpecialQualifier("gl_InstanceID", EvqInstanceId, EbvInstanceId, symbolTable);
+        }
+
+        if (spvVersion.vulkan > 0 && spvVersion.vulkanRelaxed) {
+            // treat these built-ins as aliases of VertexIndex and InstanceIndex
+            BuiltInVariable("gl_VertexID", EbvVertexIndex, symbolTable);
+            BuiltInVariable("gl_InstanceID", EbvInstanceIndex, symbolTable);
         }
 
         if (profile != EEsProfile) {
@@ -7428,7 +7861,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
     case EShLangTessEvaluation:
     case EShLangGeometry:
-#endif
+#endif // !GLSLANG_WEB
         SpecialQualifier("gl_Position",   EvqPosition,   EbvPosition,   symbolTable);
         SpecialQualifier("gl_PointSize",  EvqPointSize,  EbvPointSize,  symbolTable);
 
@@ -7589,7 +8022,21 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
             BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
-#endif
+
+		if (language == EShLangGeometry || language == EShLangVertex) {
+			if ((profile == EEsProfile && version >= 310) ||
+				(profile != EEsProfile && version >= 450)) {
+				symbolTable.setVariableExtensions("gl_PrimitiveShadingRateEXT", 1, &E_GL_EXT_fragment_shading_rate);
+				BuiltInVariable("gl_PrimitiveShadingRateEXT", EbvPrimitiveShadingRateKHR, symbolTable);
+
+				symbolTable.setVariableExtensions("gl_ShadingRateFlag2VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+				symbolTable.setVariableExtensions("gl_ShadingRateFlag4VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+				symbolTable.setVariableExtensions("gl_ShadingRateFlag2HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+				symbolTable.setVariableExtensions("gl_ShadingRateFlag4HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+			}
+		}
+
+#endif // !GLSLANG_WEB
         break;
 
     case EShLangFragment:
@@ -8095,7 +8542,18 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         symbolTable.setFunctionExtensions("helperInvocationEXT",            1, &E_GL_EXT_demote_to_helper_invocation);
-#endif
+
+        if ((profile == EEsProfile && version >= 310) ||
+            (profile != EEsProfile && version >= 450)) {
+            symbolTable.setVariableExtensions("gl_ShadingRateEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            BuiltInVariable("gl_ShadingRateEXT", EbvShadingRateKHR, symbolTable);
+
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+        }
+#endif // !GLSLANG_WEB
         break;
 
     case EShLangCompute:
@@ -8227,10 +8685,18 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("dFdyCoarse",             1, &E_GL_NV_compute_shader_derivatives);
             symbolTable.setFunctionExtensions("fwidthCoarse",           1, &E_GL_NV_compute_shader_derivatives);
         }
-#endif
+
+        if ((profile == EEsProfile && version >= 310) ||
+            (profile != EEsProfile && version >= 450)) {
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+        }
+#endif // !GLSLANG_WEB
         break;
 
-#ifndef GLSLANG_WEB
+#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
     case EShLangRayGen:
     case EShLangIntersect:
     case EShLangAnyHit:
@@ -8281,9 +8747,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("reportIntersectionNV", 1, &E_GL_NV_ray_tracing);
             symbolTable.setFunctionExtensions("reportIntersectionEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setFunctionExtensions("ignoreIntersectionNV", 1, &E_GL_NV_ray_tracing);
-            symbolTable.setFunctionExtensions("ignoreIntersectionEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setFunctionExtensions("terminateRayNV", 1, &E_GL_NV_ray_tracing);
-            symbolTable.setFunctionExtensions("terminateRayEXT", 1, &E_GL_EXT_ray_tracing);
             symbolTable.setFunctionExtensions("executeCallableNV", 1, &E_GL_NV_ray_tracing);
             symbolTable.setFunctionExtensions("executeCallableEXT", 1, &E_GL_EXT_ray_tracing);
 
@@ -8375,6 +8839,13 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
             BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
             BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
+        }
+        if ((profile == EEsProfile && version >= 310) ||
+            (profile != EEsProfile && version >= 450)) {
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
         }
         break;
 
@@ -8520,6 +8991,14 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
             BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
+
+        if ((profile == EEsProfile && version >= 310) ||
+            (profile != EEsProfile && version >= 450)) {
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+        }
         break;
 
     case EShLangTaskNV:
@@ -8620,6 +9099,13 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
             BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
+        if ((profile == EEsProfile && version >= 310) ||
+            (profile != EEsProfile && version >= 450)) {
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag2HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+            symbolTable.setVariableExtensions("gl_ShadingRateFlag4HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+        }
         break;
 #endif
 
@@ -8689,12 +9175,34 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("memoryBarrierAtomicCounter", EOpMemoryBarrierAtomicCounter);
     symbolTable.relateToOperator("memoryBarrierImage",         EOpMemoryBarrierImage);
 
+    if (spvVersion.vulkanRelaxed) {
+        //
+        // functions signature have been replaced to take uint operations on buffer variables
+        // remap atomic counter functions to atomic operations
+        //
+        symbolTable.relateToOperator("memoryBarrierAtomicCounter", EOpMemoryBarrierBuffer);
+    }
+
     symbolTable.relateToOperator("atomicLoad",     EOpAtomicLoad);
     symbolTable.relateToOperator("atomicStore",    EOpAtomicStore);
 
     symbolTable.relateToOperator("atomicCounterIncrement", EOpAtomicCounterIncrement);
     symbolTable.relateToOperator("atomicCounterDecrement", EOpAtomicCounterDecrement);
     symbolTable.relateToOperator("atomicCounter",          EOpAtomicCounter);
+
+    if (spvVersion.vulkanRelaxed) {
+        //
+        // functions signature have been replaced to take uint operations
+        // remap atomic counter functions to atomic operations
+        //
+        // these atomic counter functions do not match signatures of glsl
+        // atomic functions, so they will be remapped to semantically
+        // equivalent functions in the parser
+        //
+        symbolTable.relateToOperator("atomicCounterIncrement", EOpNull);
+        symbolTable.relateToOperator("atomicCounterDecrement", EOpNull);
+        symbolTable.relateToOperator("atomicCounter", EOpNull);
+    }
 
     symbolTable.relateToOperator("clockARB",     EOpReadClockSubgroupKHR);
     symbolTable.relateToOperator("clock2x32ARB", EOpReadClockSubgroupKHR);
@@ -8712,6 +9220,23 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("atomicCounterXor",      EOpAtomicCounterXor);
         symbolTable.relateToOperator("atomicCounterExchange", EOpAtomicCounterExchange);
         symbolTable.relateToOperator("atomicCounterCompSwap", EOpAtomicCounterCompSwap);
+    }
+
+    if (spvVersion.vulkanRelaxed) {
+        //
+        // functions signature have been replaced to take 'uint' instead of 'atomic_uint'
+        // remap atomic counter functions to non-counter atomic ops so
+        // functions act as aliases to non-counter atomic ops
+        //
+        symbolTable.relateToOperator("atomicCounterAdd", EOpAtomicAdd);
+        symbolTable.relateToOperator("atomicCounterSubtract", EOpAtomicSubtract);
+        symbolTable.relateToOperator("atomicCounterMin", EOpAtomicMin);
+        symbolTable.relateToOperator("atomicCounterMax", EOpAtomicMax);
+        symbolTable.relateToOperator("atomicCounterAnd", EOpAtomicAnd);
+        symbolTable.relateToOperator("atomicCounterOr", EOpAtomicOr);
+        symbolTable.relateToOperator("atomicCounterXor", EOpAtomicXor);
+        symbolTable.relateToOperator("atomicCounterExchange", EOpAtomicExchange);
+        symbolTable.relateToOperator("atomicCounterCompSwap", EOpAtomicCompSwap);
     }
 
     symbolTable.relateToOperator("fma",               EOpFma);
@@ -9091,10 +9616,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     case EShLangClosestHit:
     case EShLangMiss:
         if (profile != EEsProfile && version >= 460) {
-            symbolTable.relateToOperator("traceNV", EOpTrace);
-            symbolTable.relateToOperator("traceRayEXT", EOpTrace);
-            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallable);
-            symbolTable.relateToOperator("executeCallableEXT", EOpExecuteCallable);
+            symbolTable.relateToOperator("traceNV", EOpTraceNV);
+            symbolTable.relateToOperator("traceRayEXT", EOpTraceKHR);
+            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallableNV);
+            symbolTable.relateToOperator("executeCallableEXT", EOpExecuteCallableKHR);
         }
         break;
     case EShLangIntersect:
@@ -9105,16 +9630,14 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         break;
     case EShLangAnyHit:
         if (profile != EEsProfile && version >= 460) {
-            symbolTable.relateToOperator("ignoreIntersectionNV", EOpIgnoreIntersection);
-            symbolTable.relateToOperator("ignoreIntersectionEXT", EOpIgnoreIntersection);
-            symbolTable.relateToOperator("terminateRayNV", EOpTerminateRay);
-            symbolTable.relateToOperator("terminateRayEXT", EOpTerminateRay);
+            symbolTable.relateToOperator("ignoreIntersectionNV", EOpIgnoreIntersectionNV);
+            symbolTable.relateToOperator("terminateRayNV", EOpTerminateRayNV);
         }
         break;
     case EShLangCallable:
         if (profile != EEsProfile && version >= 460) {
-            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallable);
-            symbolTable.relateToOperator("executeCallableEXT", EOpExecuteCallable);
+            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallableNV);
+            symbolTable.relateToOperator("executeCallableEXT", EOpExecuteCallableKHR);
         }
         break;
     case EShLangMeshNV:
@@ -9133,7 +9656,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     default:
         assert(false && "Language not supported");
     }
-#endif
+#endif // !GLSLANG_WEB
 }
 
 //
@@ -9148,6 +9671,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources)
 {
 #ifndef GLSLANG_WEB
+#if defined(GLSLANG_ANGLE)
+    profile = ECoreProfile;
+    version = 450;
+#endif
     if (profile != EEsProfile && version >= 430 && version < 440) {
         symbolTable.setVariableExtensions("gl_MaxTransformFeedbackBuffers", 1, &E_GL_ARB_enhanced_layouts);
         symbolTable.setVariableExtensions("gl_MaxTransformFeedbackInterleavedComponents", 1, &E_GL_ARB_enhanced_layouts);

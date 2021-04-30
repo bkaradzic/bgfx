@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Arm Limited
+ * Copyright 2018-2021 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #ifndef SPIRV_CROSS_PARSED_IR_HPP
@@ -139,6 +146,7 @@ public:
 	void mark_used_as_array_length(ID id);
 	uint32_t increase_bound_by(uint32_t count);
 	Bitset get_buffer_block_flags(const SPIRVariable &var) const;
+	Bitset get_buffer_block_type_flags(const SPIRType &type) const;
 
 	void add_typed_id(Types type, ID id);
 	void remove_typed_id(Types type, ID id);
@@ -208,6 +216,14 @@ public:
 
 	void make_constant_null(uint32_t id, uint32_t type, bool add_to_typed_id_set);
 
+	void fixup_reserved_names();
+
+	static void sanitize_underscores(std::string &str);
+	static void sanitize_identifier(std::string &str, bool member, bool allow_reserved_prefixes);
+	static bool is_globally_reserved_identifier(std::string &str, bool allow_reserved_prefixes);
+
+	uint32_t get_spirv_version() const;
+
 private:
 	template <typename T>
 	T &get(uint32_t id)
@@ -225,6 +241,8 @@ private:
 	mutable uint32_t loop_iteration_depth_soft = 0;
 	std::string empty_string;
 	Bitset cleared_bitset;
+
+	std::unordered_set<uint32_t> meta_needing_name_fixup;
 };
 } // namespace SPIRV_CROSS_NAMESPACE
 

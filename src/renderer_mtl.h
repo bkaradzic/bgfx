@@ -67,8 +67,6 @@ namespace bgfx { namespace mtl
 	// objects with creation functions starting with 'new' has a refcount 1 after creation, object must be destroyed with release.
 	// commandBuffer, commandEncoders are autoreleased objects. Needs AutoreleasePool!
 
-#define MTL_MAX_FRAMES_IN_FLIGHT (3)
-
 #define MTL_CLASS(name)                                   \
 	class name                                            \
 	{                                                     \
@@ -1115,7 +1113,7 @@ namespace bgfx { namespace mtl
 		int m_releaseWriteIndex;
 		int m_releaseReadIndex;
 		typedef stl::vector<NSObject*> ResourceArray;
-		ResourceArray m_release[MTL_MAX_FRAMES_IN_FLIGHT];
+		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
 
 	struct TimerQueryMtl

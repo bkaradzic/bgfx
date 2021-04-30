@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 Arm Limited
+ * Copyright 2015-2021 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #ifndef SPIRV_CROSS_COMMON_HPP
@@ -295,8 +302,20 @@ struct Instruction
 {
 	uint16_t op = 0;
 	uint16_t count = 0;
+	// If offset is 0 (not a valid offset into the instruction stream),
+	// we have an instruction stream which is embedded in the object.
 	uint32_t offset = 0;
 	uint32_t length = 0;
+
+	inline bool is_embedded() const
+	{
+		return offset == 0;
+	}
+};
+
+struct EmbeddedInstruction : Instruction
+{
+	SmallVector<uint32_t> ops;
 };
 
 enum Types
@@ -357,28 +376,6 @@ public:
 		return TypedID<U>(*this);
 	}
 
-	bool operator==(const TypedID &other) const
-	{
-		return id == other.id;
-	}
-
-	bool operator!=(const TypedID &other) const
-	{
-		return id != other.id;
-	}
-
-	template <Types type>
-	bool operator==(const TypedID<type> &other) const
-	{
-		return id == uint32_t(other);
-	}
-
-	template <Types type>
-	bool operator!=(const TypedID<type> &other) const
-	{
-		return id != uint32_t(other);
-	}
-
 private:
 	uint32_t id = 0;
 };
@@ -401,26 +398,6 @@ public:
 	operator uint32_t() const
 	{
 		return id;
-	}
-
-	bool operator==(const TypedID &other) const
-	{
-		return id == other.id;
-	}
-
-	bool operator!=(const TypedID &other) const
-	{
-		return id != other.id;
-	}
-
-	bool operator==(const TypedID<TypeNone> &other) const
-	{
-		return id == uint32_t(other);
-	}
-
-	bool operator!=(const TypedID<TypeNone> &other) const
-	{
-		return id != uint32_t(other);
 	}
 
 private:
@@ -558,6 +535,7 @@ struct SPIRType : IVariant
 
 		// Keep internal types at the end.
 		ControlPointArray,
+		Interpolant,
 		Char
 	};
 
@@ -763,7 +741,9 @@ struct SPIRBlock : IVariant
 
 		Return, // Block ends with return.
 		Unreachable, // Noop
-		Kill // Discard
+		Kill, // Discard
+		IgnoreIntersection, // Ray Tracing
+		TerminateRay // Ray Tracing
 	};
 
 	enum Merge
@@ -1615,6 +1595,13 @@ enum ExtendedDecorations
 	// addition of swizzles to keep the generated code compiling.
 	SPIRVCrossDecorationTessIOOriginalInputTypeID,
 
+	// Apply to any access chain of an interface variable used with pull-model interpolation, where the variable is a
+	// vector but the resulting pointer is a scalar; stores the component index that is to be accessed by the chain.
+	// This is used when emitting calls to interpolation functions on the chain in MSL: in this case, the component
+	// must be applied to the result, since pull-model interpolants in MSL cannot be swizzled directly, but the
+	// results of interpolation can.
+	SPIRVCrossDecorationInterpolantComponentExpr,
+
 	SPIRVCrossDecorationCount
 };
 
@@ -1634,6 +1621,7 @@ struct Meta
 		uint32_t offset = 0;
 		uint32_t xfb_buffer = 0;
 		uint32_t xfb_stride = 0;
+		uint32_t stream = 0;
 		uint32_t array_stride = 0;
 		uint32_t matrix_stride = 0;
 		uint32_t input_attachment = 0;

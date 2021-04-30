@@ -45,6 +45,14 @@ spv_result_t spvBinaryHeaderGet(const spv_const_binary binary,
   // TODO: Validation checking?
   pHeader->magic = spvFixWord(binary->code[SPV_INDEX_MAGIC_NUMBER], endian);
   pHeader->version = spvFixWord(binary->code[SPV_INDEX_VERSION_NUMBER], endian);
+  // Per 2.3.1 version's high and low bytes are 0
+  if ((pHeader->version & 0x000000ff) || pHeader->version & 0xff000000)
+    return SPV_ERROR_INVALID_BINARY;
+  // Minimum version was 1.0 and max version is defined by SPV_VERSION.
+  if (pHeader->version < SPV_SPIRV_VERSION_WORD(1, 0) ||
+      pHeader->version > SPV_VERSION)
+    return SPV_ERROR_INVALID_BINARY;
+
   pHeader->generator =
       spvFixWord(binary->code[SPV_INDEX_GENERATOR_NUMBER], endian);
   pHeader->bound = spvFixWord(binary->code[SPV_INDEX_BOUND], endian);
@@ -647,7 +655,9 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_COMPOSITE_TYPE:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION:
-    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY: {
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY:
+    case SPV_OPERAND_TYPE_FPDENORM_MODE:
+    case SPV_OPERAND_TYPE_FPOPERATION_MODE: {
       // A single word that is a plain enum value.
 
       // Map an optional operand type to its corresponding concrete type.

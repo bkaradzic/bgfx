@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -513,7 +513,7 @@ namespace bgfx { namespace hlsl
 			hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
 			if (SUCCEEDED(hr) )
 			{
-				if (D3D_SIT_SAMPLER == bindDesc.Type)
+				if (D3D_SIT_SAMPLER == bindDesc.Type || D3D_SIT_TEXTURE == bindDesc.Type)
 				{
 					BX_TRACE("\t%s, %d, %d, %d"
 						, bindDesc.Name
@@ -523,7 +523,10 @@ namespace bgfx { namespace hlsl
 						);
 
 					bx::StringView end = bx::strFind(bindDesc.Name, "Sampler");
-					if (!end.isEmpty() )
+					if (end.isEmpty())
+						end = bx::strFind(bindDesc.Name, "Texture");
+
+					if (!end.isEmpty())
 					{
 						Uniform un;
 						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );
@@ -533,6 +536,10 @@ namespace bgfx { namespace hlsl
 						un.regCount = uint16_t(bindDesc.BindCount);
 						_uniforms.push_back(un);
 					}
+				}
+				else
+				{
+					BX_TRACE("\t%s, unknown bind data", bindDesc.Name);
 				}
 			}
 		}
@@ -656,7 +663,7 @@ namespace bgfx { namespace hlsl
 		uint16_t attrs[bgfx::Attrib::Count];
 		uint16_t size = 0;
 
-		if (_version == 9)
+		if (_version < 400)
 		{
 			if (!getReflectionDataD3D9(code, uniforms) )
 			{
@@ -676,8 +683,6 @@ namespace bgfx { namespace hlsl
 			if (_firstPass
 			&&  unusedUniforms.size() > 0)
 			{
-				const size_t strLength = bx::strLen("uniform");
-
 				// first time through, we just find unused uniforms and get rid of them
 				std::string output;
 				bx::LineReader reader(_code.c_str() );
@@ -742,6 +747,7 @@ namespace bgfx { namespace hlsl
 				bx::write(_writer, un.regCount);
 				bx::write(_writer, un.texComponent);
 				bx::write(_writer, un.texDimension);
+				bx::write(_writer, un.texFormat);
 
 				BX_TRACE("%s, %s, %d, %d, %d"
 					, un.name.c_str()
@@ -777,7 +783,7 @@ namespace bgfx { namespace hlsl
 			bx::write(_writer, nul);
 		}
 
-		if (_version > 9)
+		if (_version >= 400)
 		{
 			bx::write(_writer, numAttrs);
 			bx::write(_writer, attrs, numAttrs*sizeof(uint16_t) );

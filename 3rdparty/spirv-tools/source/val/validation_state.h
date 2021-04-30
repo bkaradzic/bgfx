@@ -103,6 +103,10 @@ class ValidationState_t {
     // Members need not be listed in offset order
     bool scalar_block_layout = false;
 
+    // Use scalar block layout (as defined above) for Workgroup block
+    // variables.  See VK_KHR_workgroup_memory_explicit_layout.
+    bool workgroup_scalar_block_layout = false;
+
     // SPIR-V 1.4 allows us to select between any two composite values
     // of the same type.
     bool select_between_composites = false;
@@ -194,6 +198,9 @@ class ValidationState_t {
 
   /// Increments the module_layout_order_section_
   void ProgressToNextLayoutSectionOrder();
+
+  /// Determines if the op instruction is in a previous layout section
+  bool IsOpcodeInPreviousLayoutSection(SpvOp op);
 
   /// Determines if the op instruction is part of the current section
   bool IsOpcodeInCurrentLayoutSection(SpvOp op);
@@ -706,6 +713,22 @@ class ValidationState_t {
 
   // Validates the storage class for the target environment.
   bool IsValidStorageClass(SpvStorageClass storage_class) const;
+
+  // Takes a Vulkan Valid Usage ID (VUID) as |id| and optional |reference| and
+  // will return a non-empty string only if ID is known and targeting Vulkan.
+  // VUIDs are found in the Vulkan-Docs repo in the form "[[VUID-ref-ref-id]]"
+  // where "id" is always an 5 char long number (with zeros padding) and matches
+  // to |id|. |reference| is used if there is a "common validity" and the VUID
+  // shares the same |id| value.
+  //
+  // More details about Vulkan validation can be found in Vulkan Guide:
+  // https://github.com/KhronosGroup/Vulkan-Guide/blob/master/chapters/validation_overview.md
+  std::string VkErrorID(uint32_t id, const char* reference = nullptr) const;
+
+  // Testing method to allow setting the current layout section.
+  void SetCurrentLayoutSectionForTesting(ModuleLayoutSection section) {
+    current_layout_section_ = section;
+  }
 
  private:
   ValidationState_t(const ValidationState_t&);

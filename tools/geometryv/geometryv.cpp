@@ -644,9 +644,9 @@ typedef InterpolatorT<bx::lerp, bx::easeInOutQuad> Interpolator;
 
 void keyBindingHelp(const char* _bindings, const char* _description)
 {
-	ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), _bindings);
+	ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", _bindings);
 	ImGui::SameLine(140);
-	ImGui::Text(_description);
+	ImGui::Text("%s", _description);
 }
 
 void help(const char* _error = NULL)
@@ -908,6 +908,7 @@ int _main_(int _argc, char** _argv)
 					ImGui::Separator();
 					ImGui::TextColored(
 						  ImVec4(0.0f, 1.0f, 1.0f, 1.0f)
+						, "%s"
 						, view.m_fileList[view.m_fileIndex].c_str()
 						);
 				}
@@ -1050,7 +1051,7 @@ int _main_(int _argc, char** _argv)
 							;
 
 						ImGui::PushItemWidth(-1);
-						if (ImGui::ListBoxHeader("##empty", ImVec2(0.0f, listHeight) ) )
+						if (ImGui::BeginListBox("##empty", ImVec2(0.0f, listHeight) ) )
 						{
 							const int32_t itemCount = int32_t(view.m_fileList.size() );
 
@@ -1067,24 +1068,28 @@ int _main_(int _argc, char** _argv)
 								ImGui::SetScrollY(ImGui::GetScrollY() + (index-end+1)*itemHeight);
 							}
 
-							ImGuiListClipper clipper(itemCount, itemHeight);
+							ImGuiListClipper clipper;
+							clipper.Begin(itemCount, itemHeight);
 
-							for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
+							while (clipper.Step() )
 							{
-								ImGui::PushID(pos);
-
-								bool isSelected = uint32_t(pos) == view.m_fileIndex;
-								if (ImGui::Selectable(view.m_fileList[pos].c_str(), &isSelected) )
+								for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
 								{
-									view.m_fileIndex = pos;
-								}
+									ImGui::PushID(pos);
 
-								ImGui::PopID();
+									bool isSelected = uint32_t(pos) == view.m_fileIndex;
+									if (ImGui::Selectable(view.m_fileList[pos].c_str(), &isSelected) )
+									{
+										view.m_fileIndex = pos;
+									}
+
+									ImGui::PopID();
+								}
 							}
 
 							clipper.End();
 
-							ImGui::ListBoxFooter();
+							ImGui::EndListBox();
 						}
 
 						ImGui::PopFont();

@@ -2,7 +2,7 @@
 #define VULKAN_MACOS_H_ 1
 
 /*
-** Copyright (c) 2015-2020 The Khronos Group Inc.
+** Copyright 2015-2021 The Khronos Group Inc.
 **
 ** SPDX-License-Identifier: Apache-2.0
 */
@@ -20,7 +20,7 @@ extern "C" {
 
 
 #define VK_MVK_macos_surface 1
-#define VK_MVK_MACOS_SURFACE_SPEC_VERSION 2
+#define VK_MVK_MACOS_SURFACE_SPEC_VERSION 3
 #define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
 typedef VkFlags VkMacOSSurfaceCreateFlagsMVK;
 typedef struct VkMacOSSurfaceCreateInfoMVK {

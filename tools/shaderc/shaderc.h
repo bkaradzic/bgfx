@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -101,6 +101,7 @@ namespace bgfx
 		uint16_t regCount;
 		uint8_t texComponent;
 		uint8_t texDimension;
+		uint16_t texFormat;
 	};
 
 	struct Options

@@ -32,8 +32,11 @@ void main()
 	int NoofDrawcalls = int(u_cullingConfig.w);
 
 	int offset = 1;
-	temp[2 * tID    ] = uint(instancePredicates[2 * tID    ] ? 1 : 0); // load input into shared memory
-	temp[2 * tID + 1] = uint(instancePredicates[2 * tID + 1] ? 1 : 0);
+	bool predicate = instancePredicates[2 * tID];
+	temp[2 * tID] = uint(predicate ? 1 : 0);
+
+	predicate = instancePredicates[2 * tID + 1];
+	temp[2 * tID + 1] = uint(predicate ? 1 : 0);
 
 	int d;
 
@@ -80,7 +83,8 @@ void main()
 	int index = int(2 * tID);
 
 	// scatter results
-	if (instancePredicates[index])
+	predicate = instancePredicates[index];
+	if (predicate)
 	{
 		instanceDataOut[4 * temp[index]    ] = instanceDataIn[4 * index    ];
 		instanceDataOut[4 * temp[index] + 1] = instanceDataIn[4 * index + 1];
@@ -90,7 +94,8 @@ void main()
 
 	index = int(2 * tID + 1);
 
-	if (instancePredicates[index])
+	predicate = instancePredicates[index];
+	if (predicate)
 	{
 		instanceDataOut[4 * temp[index]    ] = instanceDataIn[4 * index    ];
 		instanceDataOut[4 * temp[index] + 1] = instanceDataIn[4 * index + 1];

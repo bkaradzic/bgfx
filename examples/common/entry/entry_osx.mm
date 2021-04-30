@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -199,13 +199,13 @@ namespace entry
 		{
 			NSRect  originalFrame = [_window frame];
 			NSRect  adjustFrame   = [_window contentRectForFrameRect: originalFrame];
-			
+
 			adjustFrame.origin.y = NSMaxY(NSScreen.screens[0].frame) - NSMaxY(adjustFrame);
-			
+
 			CGWarpMouseCursorPosition(CGPointMake(_x + adjustFrame.origin.x, _y + adjustFrame.origin.y));
 			CGAssociateMouseAndMouseCursorPosition(YES);
 		}
-		
+
 		void setMouseLock(NSWindow* _window, bool _lock)
 		{
 			NSWindow* newMouseLock = _lock ? _window : NULL;
@@ -216,10 +216,10 @@ namespace entry
 				{
 					NSRect  originalFrame = [_window frame];
 					NSRect  adjustFrame   = [_window contentRectForFrameRect: originalFrame];
-					
+
 					m_cmx = (int)adjustFrame.size.width / 2;
 					m_cmy = (int)adjustFrame.size.height / 2;
-					
+
 					setMousePos(_window, m_cmx, m_cmy);
 					[NSCursor hide];
 				}
@@ -235,14 +235,14 @@ namespace entry
 		uint8_t translateModifiers(int flags)
 		{
 			return 0
-				| (0 != (flags & NX_DEVICELSHIFTKEYMASK ) ) ? Modifier::LeftShift  : 0
-				| (0 != (flags & NX_DEVICERSHIFTKEYMASK ) ) ? Modifier::RightShift : 0
-				| (0 != (flags & NX_DEVICELALTKEYMASK ) )   ? Modifier::LeftAlt    : 0
-				| (0 != (flags & NX_DEVICERALTKEYMASK ) )   ? Modifier::RightAlt   : 0
-				| (0 != (flags & NX_DEVICELCTLKEYMASK ) )   ? Modifier::LeftCtrl   : 0
-				| (0 != (flags & NX_DEVICERCTLKEYMASK ) )   ? Modifier::RightCtrl  : 0
-				| (0 != (flags & NX_DEVICELCMDKEYMASK) )    ? Modifier::LeftMeta   : 0
-				| (0 != (flags & NX_DEVICERCMDKEYMASK) )    ? Modifier::RightMeta  : 0
+				| ( (0 != (flags & NX_DEVICELSHIFTKEYMASK) ) ? Modifier::LeftShift  : 0)
+				| ( (0 != (flags & NX_DEVICERSHIFTKEYMASK) ) ? Modifier::RightShift : 0)
+				| ( (0 != (flags & NX_DEVICELALTKEYMASK) )   ? Modifier::LeftAlt    : 0)
+				| ( (0 != (flags & NX_DEVICERALTKEYMASK) )   ? Modifier::RightAlt   : 0)
+				| ( (0 != (flags & NX_DEVICELCTLKEYMASK) )   ? Modifier::LeftCtrl   : 0)
+				| ( (0 != (flags & NX_DEVICERCTLKEYMASK) )   ? Modifier::RightCtrl  : 0)
+				| ( (0 != (flags & NX_DEVICELCMDKEYMASK) )   ? Modifier::LeftMeta   : 0)
+				| ( (0 != (flags & NX_DEVICERCMDKEYMASK) )   ? Modifier::RightMeta  : 0)
 				;
 		}
 
@@ -324,12 +324,12 @@ namespace entry
 				case NSEventTypeRightMouseDragged:
 				case NSEventTypeOtherMouseDragged:
 					getMousePos(window, &m_mx, &m_my);
-						
+
 					if (window == m_mouseLock)
 					{
 						m_mx -= m_cmx;
 						m_my -= m_cmy;
-							
+
 						setMousePos(window, m_cmx, m_cmy);
 					}
 
@@ -572,7 +572,7 @@ namespace entry
 		int32_t m_scroll;
 		int32_t m_style;
 		bool    m_exit;
-		
+
 		NSWindow* m_mouseLock;
 		int32_t m_cmx;
 		int32_t m_cmy;

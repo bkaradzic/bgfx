@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+# Copyright 2011-2021 Branimir Karadzic. All rights reserved.
 # License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 #
 
@@ -40,25 +40,25 @@ define shader-embedded
 endef
 
 vs_debugfont.bin.h : vs_debugfont.sc
-	$(call shader-embedded, v, vs_3_0, vs_4_0_level_9_1)
+	$(call shader-embedded, v, vs_3_0, vs_4_0)
 
 fs_debugfont.bin.h : fs_debugfont.sc
-	$(call shader-embedded, f, ps_3_0, ps_4_0_level_9_1)
+	$(call shader-embedded, f, ps_3_0, ps_4_0)
 
 vs_clear.bin.h : vs_clear.sc
-	$(call shader-embedded, v, vs_3_0, vs_4_0_level_9_1)
+	$(call shader-embedded, v, vs_3_0, vs_4_0)
 
 fs_clear0.bin.h : fs_clear0.sc
-	$(call shader-embedded, f, ps_3_0, ps_4_0_level_9_1)
+	$(call shader-embedded, f, ps_3_0, ps_4_0)
 
 fs_clear1.bin.h : fs_clear1.sc
-	$(call shader-embedded, f, ps_3_0, ps_4_0_level_9_1)
+	$(call shader-embedded, f, ps_3_0, ps_4_0)
 
 fs_clear2.bin.h : fs_clear2.sc
-	$(call shader-embedded, f, ps_3_0, ps_4_0_level_9_1)
+	$(call shader-embedded, f, ps_3_0, ps_4_0)
 
 fs_clear3.bin.h : fs_clear3.sc
-	$(call shader-embedded, f, ps_3_0, ps_4_0_level_9_1)
+	$(call shader-embedded, f, ps_3_0, ps_4_0)
 
 fs_clear4.bin.h : fs_clear4.sc
 	$(call shader-embedded, f, ps_3_0, ps_4_0)

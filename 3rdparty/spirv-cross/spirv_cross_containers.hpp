@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Hans-Kristian Arntzen
+ * Copyright 2019-2021 Hans-Kristian Arntzen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #ifndef SPIRV_CROSS_CONTAINERS_HPP
@@ -212,6 +219,10 @@ public:
 		this->buffer_size = count;
 	}
 
+	SmallVector(std::initializer_list<T> init) SPIRV_CROSS_NOEXCEPT : SmallVector(init.begin(), init.end())
+	{
+	}
+
 	SmallVector(SmallVector &&other) SPIRV_CROSS_NOEXCEPT : SmallVector()
 	{
 		*this = std::move(other);
@@ -328,8 +339,9 @@ public:
 			size_t target_capacity = buffer_capacity;
 			if (target_capacity == 0)
 				target_capacity = 1;
-			if (target_capacity < N)
-				target_capacity = N;
+
+			// Weird parens works around macro issues on Windows if NOMINMAX is not used.
+			target_capacity = (std::max)(target_capacity, N);
 
 			// Need to ensure there is a POT value of target capacity which is larger than count,
 			// otherwise this will overflow.

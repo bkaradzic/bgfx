@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 Arm Limited
+ * Copyright 2015-2021 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #include "spirv_cross.hpp"
@@ -89,7 +96,9 @@ bool Compiler::variable_storage_is_aliased(const SPIRVariable &v)
 bool Compiler::block_is_pure(const SPIRBlock &block)
 {
 	// This is a global side effect of the function.
-	if (block.terminator == SPIRBlock::Kill)
+	if (block.terminator == SPIRBlock::Kill ||
+	    block.terminator == SPIRBlock::TerminateRay ||
+	    block.terminator == SPIRBlock::IgnoreIntersection)
 		return false;
 
 	for (auto &i : block.ops)
@@ -151,11 +160,13 @@ bool Compiler::block_is_pure(const SPIRBlock &block)
 			return false;
 
 		// Ray tracing builtins are impure.
-		case OpReportIntersectionNV:
+		case OpReportIntersectionKHR:
 		case OpIgnoreIntersectionNV:
 		case OpTerminateRayNV:
 		case OpTraceNV:
+		case OpTraceRayKHR:
 		case OpExecuteCallableNV:
+		case OpExecuteCallableKHR:
 			return false;
 
 			// OpExtInst is potentially impure depending on extension, but GLSL builtins are at least pure.
@@ -535,10 +546,16 @@ bool Compiler::is_hidden_variable(const SPIRVariable &var, bool include_builtins
 		return false;
 	}
 
-	bool hidden = false;
-	if (check_active_interface_variables && storage_class_is_interface(var.storage))
-		hidden = active_interface_variables.find(var.self) == end(active_interface_variables);
-	return hidden;
+	// In SPIR-V 1.4 and up we must also use the active variable interface to disable global variables
+	// which are not part of the entry point.
+	if (ir.get_spirv_version() >= 0x10400 && var.storage != spv::StorageClassGeneric &&
+	    var.storage != spv::StorageClassFunction && !interface_variable_exists_in_entry_point(var.self))
+	{
+		return true;
+	}
+
+	return check_active_interface_variables && storage_class_is_interface(var.storage) &&
+	       active_interface_variables.find(var.self) == end(active_interface_variables);
 }
 
 bool Compiler::is_builtin_type(const SPIRType &type) const
@@ -699,8 +716,31 @@ bool Compiler::InterfaceVariableAccessHandler::handle(Op opcode, const uint32_t 
 	{
 		if (length < 5)
 			return false;
-		uint32_t extension_set = args[2];
-		if (compiler.get<SPIRExtension>(extension_set).ext == SPIRExtension::SPV_AMD_shader_explicit_vertex_parameter)
+		auto &extension_set = compiler.get<SPIRExtension>(args[2]);
+		switch (extension_set.ext)
+		{
+		case SPIRExtension::GLSL:
+		{
+			auto op = static_cast<GLSLstd450>(args[3]);
+
+			switch (op)
+			{
+			case GLSLstd450InterpolateAtCentroid:
+			case GLSLstd450InterpolateAtSample:
+			case GLSLstd450InterpolateAtOffset:
+			{
+				auto *var = compiler.maybe_get<SPIRVariable>(args[4]);
+				if (var && storage_class_is_interface(var->storage))
+					variables.insert(args[4]);
+				break;
+			}
+
+			default:
+				break;
+			}
+			break;
+		}
+		case SPIRExtension::SPV_AMD_shader_explicit_vertex_parameter:
 		{
 			enum AMDShaderExplicitVertexParameter
 			{
@@ -722,6 +762,10 @@ bool Compiler::InterfaceVariableAccessHandler::handle(Op opcode, const uint32_t 
 			default:
 				break;
 			}
+			break;
+		}
+		default:
+			break;
 		}
 		break;
 	}
@@ -771,9 +815,17 @@ unordered_set<VariableID> Compiler::get_active_interface_variables() const
 	InterfaceVariableAccessHandler handler(*this, variables);
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
 
-	// Make sure we preserve output variables which are only initialized, but never accessed by any code.
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, const SPIRVariable &var) {
-		if (var.storage == StorageClassOutput && var.initializer != ID(0))
+		if (var.storage != StorageClassOutput)
+			return;
+		if (!interface_variable_exists_in_entry_point(var.self))
+			return;
+
+		// An output variable which is just declared (but uninitialized) might be read by subsequent stages
+		// so we should force-enable these outputs,
+		// since compilation will fail if a subsequent stage attempts to read from the variable in question.
+		// Also, make sure we preserve output variables which are only initialized, but never accessed by any code.
+		if (var.initializer != ID(0) || get_execution_model() != ExecutionModelFragment)
 			variables.insert(var.self);
 	});
 
@@ -1652,6 +1704,161 @@ size_t Compiler::get_declared_struct_size_runtime_array(const SPIRType &type, si
 	return size;
 }
 
+uint32_t Compiler::evaluate_spec_constant_u32(const SPIRConstantOp &spec) const
+{
+	auto &result_type = get<SPIRType>(spec.basetype);
+	if (result_type.basetype != SPIRType::UInt && result_type.basetype != SPIRType::Int &&
+	    result_type.basetype != SPIRType::Boolean)
+	{
+		SPIRV_CROSS_THROW(
+		    "Only 32-bit integers and booleans are currently supported when evaluating specialization constants.\n");
+	}
+
+	if (!is_scalar(result_type))
+		SPIRV_CROSS_THROW("Spec constant evaluation must be a scalar.\n");
+
+	uint32_t value = 0;
+
+	const auto eval_u32 = [&](uint32_t id) -> uint32_t {
+		auto &type = expression_type(id);
+		if (type.basetype != SPIRType::UInt && type.basetype != SPIRType::Int && type.basetype != SPIRType::Boolean)
+		{
+			SPIRV_CROSS_THROW("Only 32-bit integers and booleans are currently supported when evaluating "
+			                  "specialization constants.\n");
+		}
+
+		if (!is_scalar(type))
+			SPIRV_CROSS_THROW("Spec constant evaluation must be a scalar.\n");
+		if (const auto *c = this->maybe_get<SPIRConstant>(id))
+			return c->scalar();
+		else
+			return evaluate_spec_constant_u32(this->get<SPIRConstantOp>(id));
+	};
+
+#define binary_spec_op(op, binary_op)                                              \
+	case Op##op:                                                                   \
+		value = eval_u32(spec.arguments[0]) binary_op eval_u32(spec.arguments[1]); \
+		break
+#define binary_spec_op_cast(op, binary_op, type)                                                         \
+	case Op##op:                                                                                         \
+		value = uint32_t(type(eval_u32(spec.arguments[0])) binary_op type(eval_u32(spec.arguments[1]))); \
+		break
+
+	// Support the basic opcodes which are typically used when computing array sizes.
+	switch (spec.opcode)
+	{
+		binary_spec_op(IAdd, +);
+		binary_spec_op(ISub, -);
+		binary_spec_op(IMul, *);
+		binary_spec_op(BitwiseAnd, &);
+		binary_spec_op(BitwiseOr, |);
+		binary_spec_op(BitwiseXor, ^);
+		binary_spec_op(LogicalAnd, &);
+		binary_spec_op(LogicalOr, |);
+		binary_spec_op(ShiftLeftLogical, <<);
+		binary_spec_op(ShiftRightLogical, >>);
+		binary_spec_op_cast(ShiftRightArithmetic, >>, int32_t);
+		binary_spec_op(LogicalEqual, ==);
+		binary_spec_op(LogicalNotEqual, !=);
+		binary_spec_op(IEqual, ==);
+		binary_spec_op(INotEqual, !=);
+		binary_spec_op(ULessThan, <);
+		binary_spec_op(ULessThanEqual, <=);
+		binary_spec_op(UGreaterThan, >);
+		binary_spec_op(UGreaterThanEqual, >=);
+		binary_spec_op_cast(SLessThan, <, int32_t);
+		binary_spec_op_cast(SLessThanEqual, <=, int32_t);
+		binary_spec_op_cast(SGreaterThan, >, int32_t);
+		binary_spec_op_cast(SGreaterThanEqual, >=, int32_t);
+#undef binary_spec_op
+#undef binary_spec_op_cast
+
+	case OpLogicalNot:
+		value = uint32_t(!eval_u32(spec.arguments[0]));
+		break;
+
+	case OpNot:
+		value = ~eval_u32(spec.arguments[0]);
+		break;
+
+	case OpSNegate:
+		value = uint32_t(-int32_t(eval_u32(spec.arguments[0])));
+		break;
+
+	case OpSelect:
+		value = eval_u32(spec.arguments[0]) ? eval_u32(spec.arguments[1]) : eval_u32(spec.arguments[2]);
+		break;
+
+	case OpUMod:
+	{
+		uint32_t a = eval_u32(spec.arguments[0]);
+		uint32_t b = eval_u32(spec.arguments[1]);
+		if (b == 0)
+			SPIRV_CROSS_THROW("Undefined behavior in UMod, b == 0.\n");
+		value = a % b;
+		break;
+	}
+
+	case OpSRem:
+	{
+		auto a = int32_t(eval_u32(spec.arguments[0]));
+		auto b = int32_t(eval_u32(spec.arguments[1]));
+		if (b == 0)
+			SPIRV_CROSS_THROW("Undefined behavior in SRem, b == 0.\n");
+		value = a % b;
+		break;
+	}
+
+	case OpSMod:
+	{
+		auto a = int32_t(eval_u32(spec.arguments[0]));
+		auto b = int32_t(eval_u32(spec.arguments[1]));
+		if (b == 0)
+			SPIRV_CROSS_THROW("Undefined behavior in SMod, b == 0.\n");
+		auto v = a % b;
+
+		// Makes sure we match the sign of b, not a.
+		if ((b < 0 && v > 0) || (b > 0 && v < 0))
+			v += b;
+		value = v;
+		break;
+	}
+
+	case OpUDiv:
+	{
+		uint32_t a = eval_u32(spec.arguments[0]);
+		uint32_t b = eval_u32(spec.arguments[1]);
+		if (b == 0)
+			SPIRV_CROSS_THROW("Undefined behavior in UDiv, b == 0.\n");
+		value = a / b;
+		break;
+	}
+
+	case OpSDiv:
+	{
+		auto a = int32_t(eval_u32(spec.arguments[0]));
+		auto b = int32_t(eval_u32(spec.arguments[1]));
+		if (b == 0)
+			SPIRV_CROSS_THROW("Undefined behavior in SDiv, b == 0.\n");
+		value = a / b;
+		break;
+	}
+
+	default:
+		SPIRV_CROSS_THROW("Unsupported spec constant opcode for evaluation.\n");
+	}
+
+	return value;
+}
+
+uint32_t Compiler::evaluate_constant_u32(uint32_t id) const
+{
+	if (const auto *c = maybe_get<SPIRConstant>(id))
+		return c->scalar();
+	else
+		return evaluate_spec_constant_u32(get<SPIRConstantOp>(id));
+}
+
 size_t Compiler::get_declared_struct_member_size(const SPIRType &struct_type, uint32_t index) const
 {
 	if (struct_type.member_types.empty())
@@ -1686,7 +1893,7 @@ size_t Compiler::get_declared_struct_member_size(const SPIRType &struct_type, ui
 	{
 		// For arrays, we can use ArrayStride to get an easy check.
 		bool array_size_literal = type.array_size_literal.back();
-		uint32_t array_size = array_size_literal ? type.array.back() : get<SPIRConstant>(type.array.back()).scalar();
+		uint32_t array_size = array_size_literal ? type.array.back() : evaluate_constant_u32(type.array.back());
 		return type_struct_member_array_stride(struct_type, index) * array_size;
 	}
 	else if (type.basetype == SPIRType::Struct)
@@ -1920,6 +2127,13 @@ bool Compiler::is_tessellation_shader(ExecutionModel model)
 	return model == ExecutionModelTessellationControl || model == ExecutionModelTessellationEvaluation;
 }
 
+bool Compiler::is_vertex_like_shader() const
+{
+	auto model = get_execution_model();
+	return model == ExecutionModelVertex || model == ExecutionModelGeometry ||
+	       model == ExecutionModelTessellationControl || model == ExecutionModelTessellationEvaluation;
+}
+
 bool Compiler::is_tessellation_shader() const
 {
 	return is_tessellation_shader(get_execution_model());
@@ -2083,16 +2297,22 @@ SPIREntryPoint &Compiler::get_entry_point()
 bool Compiler::interface_variable_exists_in_entry_point(uint32_t id) const
 {
 	auto &var = get<SPIRVariable>(id);
-	if (var.storage != StorageClassInput && var.storage != StorageClassOutput &&
-	    var.storage != StorageClassUniformConstant)
-		SPIRV_CROSS_THROW("Only Input, Output variables and Uniform constants are part of a shader linking interface.");
 
-	// This is to avoid potential problems with very old glslang versions which did
-	// not emit input/output interfaces properly.
-	// We can assume they only had a single entry point, and single entry point
-	// shaders could easily be assumed to use every interface variable anyways.
-	if (ir.entry_points.size() <= 1)
-		return true;
+	if (ir.get_spirv_version() < 0x10400)
+	{
+		if (var.storage != StorageClassInput && var.storage != StorageClassOutput &&
+		    var.storage != StorageClassUniformConstant)
+			SPIRV_CROSS_THROW("Only Input, Output variables and Uniform constants are part of a shader linking interface.");
+
+		// This is to avoid potential problems with very old glslang versions which did
+		// not emit input/output interfaces properly.
+		// We can assume they only had a single entry point, and single entry point
+		// shaders could easily be assumed to use every interface variable anyways.
+		if (ir.entry_points.size() <= 1)
+			return true;
+	}
+
+	// In SPIR-V 1.4 and later, all global resource variables must be present.
 
 	auto &execution = get_entry_point();
 	return find(begin(execution.interface_variables), end(execution.interface_variables), VariableID(id)) !=
@@ -2615,7 +2835,8 @@ const SPIRConstant &Compiler::get_constant(ConstantID id) const
 	return get<SPIRConstant>(id);
 }
 
-static bool exists_unaccessed_path_to_return(const CFG &cfg, uint32_t block, const unordered_set<uint32_t> &blocks)
+static bool exists_unaccessed_path_to_return(const CFG &cfg, uint32_t block, const unordered_set<uint32_t> &blocks,
+                                             unordered_set<uint32_t> &visit_cache)
 {
 	// This block accesses the variable.
 	if (blocks.find(block) != end(blocks))
@@ -2627,8 +2848,14 @@ static bool exists_unaccessed_path_to_return(const CFG &cfg, uint32_t block, con
 
 	// If any of our successors have a path to the end, there exists a path from block.
 	for (auto &succ : cfg.get_succeeding_edges(block))
-		if (exists_unaccessed_path_to_return(cfg, succ, blocks))
-			return true;
+	{
+		if (visit_cache.count(succ) == 0)
+		{
+			if (exists_unaccessed_path_to_return(cfg, succ, blocks, visit_cache))
+				return true;
+			visit_cache.insert(succ);
+		}
+	}
 
 	return false;
 }
@@ -2685,7 +2912,8 @@ void Compiler::analyze_parameter_preservation(
 		// void foo(int &var) { if (cond) var = 10; }
 		// Using read/write counts, we will think it's just an out variable, but it really needs to be inout,
 		// because if we don't write anything whatever we put into the function must return back to the caller.
-		if (exists_unaccessed_path_to_return(cfg, entry.entry_block, itr->second))
+		unordered_set<uint32_t> visit_cache;
+		if (exists_unaccessed_path_to_return(cfg, entry.entry_block, itr->second, visit_cache))
 			arg.read_count++;
 	}
 }
@@ -3643,23 +3871,55 @@ void Compiler::ActiveBuiltinHandler::handle_builtin(const SPIRType &type, BuiltI
 	}
 }
 
-bool Compiler::ActiveBuiltinHandler::handle(spv::Op opcode, const uint32_t *args, uint32_t length)
+void Compiler::ActiveBuiltinHandler::add_if_builtin(uint32_t id, bool allow_blocks)
 {
-	const auto add_if_builtin = [&](uint32_t id) {
-		// Only handles variables here.
-		// Builtins which are part of a block are handled in AccessChain.
-		auto *var = compiler.maybe_get<SPIRVariable>(id);
-		auto &decorations = compiler.ir.meta[id].decoration;
-		if (var && decorations.builtin)
+	// Only handle plain variables here.
+	// Builtins which are part of a block are handled in AccessChain.
+	// If allow_blocks is used however, this is to handle initializers of blocks,
+	// which implies that all members are written to.
+
+	auto *var = compiler.maybe_get<SPIRVariable>(id);
+	auto *m = compiler.ir.find_meta(id);
+	if (var && m)
+	{
+		auto &type = compiler.get<SPIRType>(var->basetype);
+		auto &decorations = m->decoration;
+		auto &flags = type.storage == StorageClassInput ?
+		              compiler.active_input_builtins : compiler.active_output_builtins;
+		if (decorations.builtin)
 		{
-			auto &type = compiler.get<SPIRType>(var->basetype);
-			auto &flags =
-			    type.storage == StorageClassInput ? compiler.active_input_builtins : compiler.active_output_builtins;
 			flags.set(decorations.builtin_type);
 			handle_builtin(type, decorations.builtin_type, decorations.decoration_flags);
 		}
-	};
+		else if (allow_blocks && compiler.has_decoration(type.self, DecorationBlock))
+		{
+			uint32_t member_count = uint32_t(type.member_types.size());
+			for (uint32_t i = 0; i < member_count; i++)
+			{
+				if (compiler.has_member_decoration(type.self, i, DecorationBuiltIn))
+				{
+					auto &member_type = compiler.get<SPIRType>(type.member_types[i]);
+					BuiltIn builtin = BuiltIn(compiler.get_member_decoration(type.self, i, DecorationBuiltIn));
+					flags.set(builtin);
+					handle_builtin(member_type, builtin, compiler.get_member_decoration_bitset(type.self, i));
+				}
+			}
+		}
+	}
+}
 
+void Compiler::ActiveBuiltinHandler::add_if_builtin(uint32_t id)
+{
+	add_if_builtin(id, false);
+}
+
+void Compiler::ActiveBuiltinHandler::add_if_builtin_or_block(uint32_t id)
+{
+	add_if_builtin(id, true);
+}
+
+bool Compiler::ActiveBuiltinHandler::handle(spv::Op opcode, const uint32_t *args, uint32_t length)
+{
 	switch (opcode)
 	{
 	case OpStore:
@@ -3797,6 +4057,17 @@ void Compiler::update_active_builtins()
 	clip_distance_count = 0;
 	ActiveBuiltinHandler handler(*this);
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
+
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, const SPIRVariable &var) {
+		if (var.storage != StorageClassOutput)
+			return;
+		if (!interface_variable_exists_in_entry_point(var.self))
+			return;
+
+		// Also, make sure we preserve output variables which are only initialized, but never accessed by any code.
+		if (var.initializer != ID(0))
+			handler.add_if_builtin_or_block(var.self);
+	});
 }
 
 // Returns whether this shader uses a builtin of the storage class

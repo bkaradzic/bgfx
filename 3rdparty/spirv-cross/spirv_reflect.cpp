@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Bradley Austin Davis
+ * Copyright 2018-2021 Bradley Austin Davis
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #include "spirv_reflect.hpp"
@@ -267,7 +274,6 @@ string CompilerReflection::compile()
 	json_stream = std::make_shared<simple_json::Stream>();
 	json_stream->set_current_locale_radix_character(current_locale_radix_character);
 	json_stream->begin_json_object();
-	fixup_type_alias();
 	reorder_type_alias();
 	emit_entry_points();
 	emit_types();
@@ -326,9 +332,6 @@ void CompilerReflection::emit_type(uint32_t type_id, bool &emitted_open_tag)
 {
 	auto &type = get<SPIRType>(type_id);
 	auto name = type_to_glsl(type);
-
-	if (type.type_alias != TypeID(0))
-		return;
 
 	if (!emitted_open_tag)
 	{
@@ -651,7 +654,7 @@ void CompilerReflection::emit_specialization_constants()
 		return;
 
 	json_stream->emit_json_key_array("specialization_constants");
-	for (const auto spec_const : specialization_constants)
+	for (const auto &spec_const : specialization_constants)
 	{
 		auto &c = get<SPIRConstant>(spec_const.id);
 		auto type = get<SPIRType>(c.constant_type);

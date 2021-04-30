@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -247,10 +247,26 @@ extern "C" uint32_t __stdcall GetModuleFileNameA(void* _module, char* _outFilePa
 
 #endif // BX_PLATFORM_WINDOWS
 
+struct RendererTypeRemap
+{
+	bx::StringView           name;
+	bgfx::RendererType::Enum type;
+};
+
+static RendererTypeRemap s_rendererTypeRemap[] =
+{
+	{ "gl",    bgfx::RendererType::OpenGL     },
+	{ "d3d11", bgfx::RendererType::Direct3D11 },
+	{ "d3d11", bgfx::RendererType::Direct3D12 },
+	{ "vk",    bgfx::RendererType::Vulkan     },
+	{ "mtl",   bgfx::RendererType::Metal      },
+};
+
 struct View
 {
 	View()
-		: m_cubeMapGeo(Geometry::Quad)
+		: m_rendererType(bgfx::RendererType::Count)
+		, m_cubeMapGeo(Geometry::Quad)
 		, m_outputFormat(Output::sRGB)
 		, m_fileIndex(0)
 		, m_scaleFn(0)
@@ -801,6 +817,8 @@ struct View
 			{
 				m_height = 720;
 			}
+
+			m_rendererType = getType(settings.get("view/renderer") );
 		}
 	}
 
@@ -823,6 +841,11 @@ struct View
 			bx::toString(tmp, sizeof(tmp), m_height);
 			settings.set("view/height", tmp);
 
+			if (m_rendererType != bgfx::RendererType::Count)
+			{
+				settings.set("view/renderer", getName(m_rendererType) );
+			}
+
 			bx::FileWriter writer;
 			if (bx::open(&writer, filePath) )
 			{
@@ -837,6 +860,7 @@ struct View
 	typedef stl::vector<std::string> FileList;
 	FileList m_fileList;
 
+	bgfx::RendererType::Enum m_rendererType;
 	bgfx::TextureInfo m_textureInfo;
 	Geometry::Enum m_cubeMapGeo;
 	Output::Enum m_outputFormat;
@@ -1104,11 +1128,16 @@ struct InterpolatorT
 
 	bool isActive() const
 	{
-		const double freq = double(bx::getHPFrequency() );
-		int64_t now = bx::getHPCounter();
-		float time = (float)(double(now - offset) / freq);
-		float lerp = bx::clamp(time, 0.0f, duration) / duration;
-		return lerp < 1.0f;
+		if (0.0f < duration)
+		{
+			const double freq = double(bx::getHPFrequency() );
+			int64_t now = bx::getHPCounter();
+			float time = (float)(double(now - offset) / freq);
+			float lerp = bx::clamp(time, 0.0f, duration) / duration;
+			return lerp < 1.0f;
+		}
+
+		return false;
 	}
 };
 
@@ -1118,9 +1147,9 @@ typedef InterpolatorT<bx::lerp,      bx::easeLinear>     InterpolatorLinear;
 
 void keyBindingHelp(const char* _bindings, const char* _description)
 {
-	ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), _bindings);
+	ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", _bindings);
 	ImGui::SameLine(100);
-	ImGui::Text(_description);
+	ImGui::Text("%s", _description);
 }
 
 void associate()
@@ -1219,7 +1248,7 @@ void help(const char* _error = NULL)
 
 	bx::printf(
 		  "texturev, bgfx texture viewer tool, version %d.%d.%d.\n"
-		  "Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2021 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		, BGFX_TEXTUREV_VERSION_MAJOR
 		, BGFX_TEXTUREV_VERSION_MINOR
@@ -1286,9 +1315,10 @@ int _main_(int _argc, char** _argv)
 	entry::setWindowSize(entry::WindowHandle{0}, view.m_width, view.m_height);
 
 	bgfx::Init init;
-	init.resolution.width = view.m_width;
-	init.resolution.width = view.m_height;
-	init.resolution.reset = BGFX_RESET_VSYNC;
+	init.type = view.m_rendererType;
+	init.resolution.width  = view.m_width;
+	init.resolution.height = view.m_height;
+	init.resolution.reset  = BGFX_RESET_VSYNC;
 
 	bgfx::init(init);
 
@@ -1633,6 +1663,7 @@ int _main_(int _argc, char** _argv)
 					ImGui::Separator();
 					ImGui::TextColored(
 						  ImVec4(0.0f, 1.0f, 1.0f, 1.0f)
+						, "%s"
 						, view.m_fileList[view.m_fileIndex].c_str()
 						);
 
@@ -1826,7 +1857,7 @@ int _main_(int _argc, char** _argv)
 							;
 
 						ImGui::PushItemWidth(-1);
-						if (ImGui::ListBoxHeader("##empty", ImVec2(0.0f, listHeight) ) )
+						if (ImGui::BeginListBox("##empty", ImVec2(0.0f, listHeight) ) )
 						{
 							const int32_t itemCount = int32_t(view.m_fileList.size() );
 
@@ -1843,24 +1874,28 @@ int _main_(int _argc, char** _argv)
 								ImGui::SetScrollY(ImGui::GetScrollY() + (index-end+1)*itemHeight);
 							}
 
-							ImGuiListClipper clipper(itemCount, itemHeight);
+							ImGuiListClipper clipper;
+							clipper.Begin(itemCount, itemHeight);
 
-							for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
+							while (clipper.Step() )
 							{
-								ImGui::PushID(pos);
-
-								bool isSelected = uint32_t(pos) == view.m_fileIndex;
-								if (ImGui::Selectable(view.m_fileList[pos].c_str(), &isSelected) )
+								for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
 								{
-									view.m_fileIndex = pos;
-								}
+									ImGui::PushID(pos);
 
-								ImGui::PopID();
+									bool isSelected = uint32_t(pos) == view.m_fileIndex;
+									if (ImGui::Selectable(view.m_fileList[pos].c_str(), &isSelected) )
+									{
+										view.m_fileIndex = pos;
+									}
+
+									ImGui::PopID();
+								}
 							}
 
 							clipper.End();
 
-							ImGui::ListBoxFooter();
+							ImGui::EndListBox();
 						}
 
 						ImGui::PopFont();
@@ -1877,7 +1912,7 @@ int _main_(int _argc, char** _argv)
 
 				ImGui::Text(
 					"texturev, bgfx texture viewer tool " ICON_KI_WRENCH ", version %d.%d.%d.\n"
-					"Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n"
+					"Copyright 2011-2021 Branimir Karadzic. All rights reserved.\n"
 					"License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n"
 					, BGFX_TEXTUREV_VERSION_MAJOR
 					, BGFX_TEXTUREV_VERSION_MINOR

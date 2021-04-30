@@ -87,11 +87,12 @@ inline const char* ProfileName(EProfile profile)
 // The union of all requested rule sets will be applied.
 //
 struct SpvVersion {
-    SpvVersion() : spv(0), vulkanGlsl(0), vulkan(0), openGl(0) {}
+    SpvVersion() : spv(0), vulkanGlsl(0), vulkan(0), openGl(0), vulkanRelaxed(false) {}
     unsigned int spv; // the version of SPIR-V to target, as defined by "word 1" of the SPIR-V binary header
     int vulkanGlsl;   // the version of GLSL semantics for Vulkan, from GL_KHR_vulkan_glsl, for "#define VULKAN XXX"
     int vulkan;       // the version of Vulkan, for which SPIR-V execution environment rules to use
     int openGl;       // the version of GLSL semantics for OpenGL, from GL_ARB_gl_spirv, for "#define GL_SPIRV XXX"
+    bool vulkanRelaxed; // relax changes to GLSL for Vulkan, allowing some GL-specific to be compiled to Vulkan SPIR-V target
 };
 
 //
@@ -199,6 +200,10 @@ const char* const E_GL_EXT_ray_query                        = "GL_EXT_ray_query"
 const char* const E_GL_EXT_ray_flags_primitive_culling      = "GL_EXT_ray_flags_primitive_culling";
 const char* const E_GL_EXT_blend_func_extended              = "GL_EXT_blend_func_extended";
 const char* const E_GL_EXT_shader_implicit_conversions      = "GL_EXT_shader_implicit_conversions";
+const char* const E_GL_EXT_fragment_shading_rate            = "GL_EXT_fragment_shading_rate";
+const char* const E_GL_EXT_shader_image_int64               = "GL_EXT_shader_image_int64";
+const char* const E_GL_EXT_null_initializer                 = "GL_EXT_null_initializer";
+const char* const E_GL_EXT_shared_memory_block              = "GL_EXT_shared_memory_block";
 
 // Arrays of extensions for the above viewportEXTs duplications
 
@@ -297,6 +302,7 @@ const char* const E_GL_EXT_shader_subgroup_extended_types_int8    = "GL_EXT_shad
 const char* const E_GL_EXT_shader_subgroup_extended_types_int16   = "GL_EXT_shader_subgroup_extended_types_int16";
 const char* const E_GL_EXT_shader_subgroup_extended_types_int64   = "GL_EXT_shader_subgroup_extended_types_int64";
 const char* const E_GL_EXT_shader_subgroup_extended_types_float16 = "GL_EXT_shader_subgroup_extended_types_float16";
+const char* const E_GL_EXT_terminate_invocation = "GL_EXT_terminate_invocation";
 
 const char* const E_GL_EXT_shader_atomic_float = "GL_EXT_shader_atomic_float";
 

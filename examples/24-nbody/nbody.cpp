@@ -368,7 +368,7 @@ public:
 				bx::swap(m_prevPositionBuffer0, m_prevPositionBuffer1);
 
 				// Update camera.
-				cameraUpdate(deltaTime, m_mouseState);
+				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 				float view[16];
 				cameraGetViewMtx(view);

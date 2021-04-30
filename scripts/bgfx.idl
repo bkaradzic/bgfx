@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(108)
+version(114)
 
 typedef "bool"
 typedef "char"
@@ -29,52 +29,52 @@ funcptr.ReleaseFn
 
 --- Color RGB/alpha/depth write. When it's not specified write will be disabled.
 flag.StateWrite { bits = 64 , base = 1 }
-	.R     --- Enable R write.
-	.G     --- Enable G write.
-	.B     --- Enable B write.
-	.A     --- Enable alpha write.
-	.Z ( 39 )	--- Enable depth write.
-	.Rgb { "R", "G", "B" }	--- Enable RGB write.
-	.Mask { "Rgb", "A", "Z" }	--- Write all channels mask.
+	.R                        --- Enable R write.
+	.G                        --- Enable G write.
+	.B                        --- Enable B write.
+	.A                        --- Enable alpha write.
+	.Z (39)                   --- Enable depth write.
+	.Rgb  { "R",   "G", "B" } --- Enable RGB write.
+	.Mask { "Rgb", "A", "Z" } --- Write all channels mask.
 
 --- Depth test state. When `BGFX_STATE_DEPTH_` is not specified depth test will be disabled.
 flag.StateDepthTest { bits = 64, shift = 4, range = 4, base = 1 , desc = "Depth test state" }
-	.Less		--- Enable depth test, less.
-	.Lequal		--- Enable depth test, less or equal.
-	.Equal		--- Enable depth test, equal.
-	.Gequal		--- Enable depth test, greater or equal.
-	.Greater	--- Enable depth test, greater.
-	.Notequal	--- Enable depth test, not equal.
-	.Never		--- Enable depth test, never.
-	.Always		--- Enable depth test, always.
+	.Less     --- Enable depth test, less.
+	.Lequal   --- Enable depth test, less or equal.
+	.Equal    --- Enable depth test, equal.
+	.Gequal   --- Enable depth test, greater or equal.
+	.Greater  --- Enable depth test, greater.
+	.Notequal --- Enable depth test, not equal.
+	.Never    --- Enable depth test, never.
+	.Always   --- Enable depth test, always.
 	()
 
 --- Use BGFX_STATE_BLEND_FUNC(_src, _dst) or BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB, _dstRGB, _srcA, _dstA)
 --- helper macros.
 flag.StateBlend { bits = 64, shift = 12, range = 16, base = 1, desc = "Blend state" }
-	.Zero             --- 0, 0, 0, 0
-	.One              --- 1, 1, 1, 1
-	.SrcColor         --- Rs, Gs, Bs, As
-	.InvSrcColor      --- 1-Rs, 1-Gs, 1-Bs, 1-As
-	.SrcAlpha         --- As, As, As, As
-	.InvSrcAlpha      --- 1-As, 1-As, 1-As, 1-As
-	.DstAlpha         --- Ad, Ad, Ad, Ad
-	.InvDstAlpha      --- 1-Ad, 1-Ad, 1-Ad ,1-Ad
-	.DstColor         --- Rd, Gd, Bd, Ad
-	.InvDstColor      --- 1-Rd, 1-Gd, 1-Bd, 1-Ad
-	.SrcAlphaSat      --- f, f, f, 1; f = min(As, 1-Ad)
-	.Factor           --- Blend factor
-	.InvFactor        --- 1-Blend factor
+	.Zero        --- 0, 0, 0, 0
+	.One         --- 1, 1, 1, 1
+	.SrcColor    --- Rs, Gs, Bs, As
+	.InvSrcColor --- 1-Rs, 1-Gs, 1-Bs, 1-As
+	.SrcAlpha    --- As, As, As, As
+	.InvSrcAlpha --- 1-As, 1-As, 1-As, 1-As
+	.DstAlpha    --- Ad, Ad, Ad, Ad
+	.InvDstAlpha --- 1-Ad, 1-Ad, 1-Ad ,1-Ad
+	.DstColor    --- Rd, Gd, Bd, Ad
+	.InvDstColor --- 1-Rd, 1-Gd, 1-Bd, 1-Ad
+	.SrcAlphaSat --- f, f, f, 1; f = min(As, 1-Ad)
+	.Factor      --- Blend factor
+	.InvFactor   --- 1-Blend factor
 	()
 
 --- Use BGFX_STATE_BLEND_EQUATION(_equation) or BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)
 --- helper macros.
 flag.StateBlendEquation { bits = 64, shift = 28, range = 6, base = 0, desc = "Blend equation" }
-	.Add              --- Blend add: src + dst.
-	.Sub              --- Blend subtract: src - dst.
-	.Revsub           --- Blend reverse subtract: dst - src.
-	.Min              --- Blend min: min(src, dst).
-	.Max              --- Blend max: max(src, dst).
+	.Add    --- Blend add: src + dst.
+	.Sub    --- Blend subtract: src - dst.
+	.Revsub --- Blend reverse subtract: dst - src.
+	.Min    --- Blend min: min(src, dst).
+	.Max    --- Blend max: max(src, dst).
 	()
 
 --- Cull state. When `BGFX_STATE_CULL_*` is not specified culling will be disabled.
@@ -202,14 +202,14 @@ flag.Clear { bits = 16 }
 --- Rendering state discard. When state is preserved in submit, rendering states can be discarded
 --- on a finer grain.
 flag.Discard { bits = 8, const, desc = "Discard flags" }
-	.None            (0x00) --- Preserve everything.
-	.Bindings        (0x01) --- Discard texture sampler and buffer bindings.
-	.IndexBuffer     (0x02) --- Discard index buffer.
-	.InstanceData    (0x04) --- Discard instance data.
-	.State           (0x08) --- Discard state.
-	.Transform       (0x10) --- Discard transform.
-	.VertexStreams   (0x20) --- Discard vertex streams.
-	.All             (0xff) --- Discard all states.
+	.None          (0x00) --- Preserve everything.
+	.Bindings      (0x01) --- Discard texture sampler and buffer bindings.
+	.IndexBuffer   (0x02) --- Discard index buffer.
+	.InstanceData  (0x04) --- Discard instance data.
+	.State         (0x08) --- Discard state and uniform bindings.
+	.Transform     (0x10) --- Discard transform.
+	.VertexStreams (0x20) --- Discard vertex streams.
+	.All           (0xff) --- Discard all states.
 	()
 
 flag.Debug { bits = 32 }
@@ -242,11 +242,11 @@ flag.BufferComputeType { bits = 16, shift = 4, range = 2, base = 1 }
 
 flag.Buffer { bits = 16, base = 8 }
 	.None(0)
-	.ComputeRead    --- Buffer will be read by shader.
-	.ComputeWrite   --- Buffer will be used for writing.
-	.DrawIndirect   --- Buffer will be used for storing draw indirect commands.
-	.AllowResize    --- Allow dynamic index/vertex buffer resize during update.
-	.Index32        --- Index buffer contains 32-bit indices.
+	.ComputeRead  --- Buffer will be read by shader.
+	.ComputeWrite --- Buffer will be used for writing.
+	.DrawIndirect --- Buffer will be used for storing draw indirect commands.
+	.AllowResize  --- Allow dynamic index/vertex buffer resize during update.
+	.Index32      --- Index buffer contains 32-bit indices.
 	.ComputeReadWrite { "ComputeRead" , "ComputeWrite" }
 	()
 
@@ -369,13 +369,12 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.Compute                --- Compute shaders are supported.
 	.ConservativeRaster     --- Conservative rasterization is supported.
 	.DrawIndirect           --- Draw indirect is supported.
-	.FragmentDepth          --- Fragment depth is accessible in fragment shader.
+	.FragmentDepth          --- Fragment depth is available in fragment shader.
 	.FragmentOrdering       --- Fragment ordering is available in fragment shader.
-	.FramebufferRw          --- Read/Write frame buffer attachments are supported.
 	.GraphicsDebugger       --- Graphics debugger is present.
-	.Reserved
 	.Hdr10                  --- HDR10 rendering is supported.
 	.Hidpi                  --- HiDPI rendering is supported.
+	.ImageRw                --- Image Read/Write is supported.
 	.Index32                --- 32-bit indices are supported.
 	.Instancing             --- Instancing is supported.
 	.OcclusionQuery         --- Occlusion query is supported.
@@ -384,7 +383,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.Texture_2dArray        --- 2D texture array is supported.
 	.Texture_3d             --- 3D textures are supported.
 	.TextureBlit            --- Texture blit is supported.
-	.TextureCompareReserved --- All texture compare modes are supported.
+	.TextureCompareReserved
 	.TextureCompareLequal   --- Texture compare less equal mode is supported.
 	.TextureCubeArray       --- Cubemap texture array is supported.
 	.TextureDirectAccess    --- CPU direct access to GPU texture memory.
@@ -392,10 +391,12 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.VertexAttribHalf       --- Vertex attribute half-float is supported.
 	.VertexAttribUint10     --- Vertex attribute 10_10_10_2 is supported.
 	.VertexId               --- Rendering with VertexID only is supported.
-	.TextureCompareAll { "TextureCompareReserved", "TextureCompareLequal" } --- All texture compare modes are supported.
+	.ViewportLayerArray     --- Viewport layer is available in vertex shader.
+	.TextureCompareAll      --- All texture compare modes are supported.
+	 { "TextureCompareReserved", "TextureCompareLequal" }
 	()
 
-flag.CapsFormat { bits = 16 }
+flag.CapsFormat { bits = 32 }
 	.TextureNone             --- Texture format is not supported.
 	.Texture_2d              --- Texture format is supported.
 	.Texture_2dSrgb          --- Texture as sRGB format is supported.
@@ -407,7 +408,8 @@ flag.CapsFormat { bits = 16 }
 	.TextureCubeSrgb         --- Texture as sRGB format is supported.
 	.TextureCubeEmulated     --- Texture format is emulated.
 	.TextureVertex           --- Texture format can be used from vertex shader.
-	.TextureImage            --- Texture format can be used as image from compute shader.
+	.TextureImageRead        --- Texture format can be used as image and read from.
+	.TextureImageWrite       --- Texture format can be used as image and written to.
 	.TextureFramebuffer      --- Texture format can be used as frame buffer.
 	.TextureFramebufferMsaa  --- Texture format can be used as MSAA frame buffer.
 	.TextureMsaa             --- Texture can be sampled as MSAA.
@@ -443,7 +445,7 @@ enum.Fatal { underscore, comment = "" }
 	.UnableToInitialize
 	.UnableToCreateTexture
 	.DeviceLost
-	()	-- end of enum
+	()
 
 --- Renderer backend type enum.
 enum.RendererType { comment = "Renderer types:" }
@@ -514,33 +516,33 @@ enum.AttribType { comment = "Attribute types:" }
 ---
 --- @attention Availability depends on Caps (see: formats).
 enum.TextureFormat { comment = "Texture formats:" }
-	.BC1                             --- DXT1 R5G6B5A1
-	.BC2                             --- DXT3 R5G6B5A4
-	.BC3                             --- DXT5 R5G6B5A8
-	.BC4                             --- LATC1/ATI1 R8
-	.BC5                             --- LATC2/ATI2 RG8
-	.BC6H                            --- BC6H RGB16F
-	.BC7                             --- BC7 RGB 4-7 bits per color channel, 0-8 bits alpha
-	.ETC1                            --- ETC1 RGB8
-	.ETC2                            --- ETC2 RGB8
-	.ETC2A                           --- ETC2 RGBA8
-	.ETC2A1                          --- ETC2 RGB8A1
-	.PTC12                           --- PVRTC1 RGB 2BPP
-	.PTC14                           --- PVRTC1 RGB 4BPP
-	.PTC12A                          --- PVRTC1 RGBA 2BPP
-	.PTC14A                          --- PVRTC1 RGBA 4BPP
-	.PTC22                           --- PVRTC2 RGBA 2BPP
-	.PTC24                           --- PVRTC2 RGBA 4BPP
-	.ATC                             --- ATC RGB 4BPP
-	.ATCE                            --- ATCE RGBA 8 BPP explicit alpha
-	.ATCI                            --- ATCI RGBA 8 BPP interpolated alpha
-	.ASTC4x4                         --- ASTC 4x4 8.0 BPP
-	.ASTC5x5                         --- ASTC 5x5 5.12 BPP
-	.ASTC6x6                         --- ASTC 6x6 3.56 BPP
-	.ASTC8x5                         --- ASTC 8x5 3.20 BPP
-	.ASTC8x6                         --- ASTC 8x6 2.67 BPP
-	.ASTC10x5                        --- ASTC 10x5 2.56 BPP
-	.Unknown                         --- Compressed formats above.
+	.BC1      --- DXT1 R5G6B5A1
+	.BC2      --- DXT3 R5G6B5A4
+	.BC3      --- DXT5 R5G6B5A8
+	.BC4      --- LATC1/ATI1 R8
+	.BC5      --- LATC2/ATI2 RG8
+	.BC6H     --- BC6H RGB16F
+	.BC7      --- BC7 RGB 4-7 bits per color channel, 0-8 bits alpha
+	.ETC1     --- ETC1 RGB8
+	.ETC2     --- ETC2 RGB8
+	.ETC2A    --- ETC2 RGBA8
+	.ETC2A1   --- ETC2 RGB8A1
+	.PTC12    --- PVRTC1 RGB 2BPP
+	.PTC14    --- PVRTC1 RGB 4BPP
+	.PTC12A   --- PVRTC1 RGBA 2BPP
+	.PTC14A   --- PVRTC1 RGBA 4BPP
+	.PTC22    --- PVRTC2 RGBA 2BPP
+	.PTC24    --- PVRTC2 RGBA 4BPP
+	.ATC      --- ATC RGB 4BPP
+	.ATCE     --- ATCE RGBA 8 BPP explicit alpha
+	.ATCI     --- ATCI RGBA 8 BPP interpolated alpha
+	.ASTC4x4  --- ASTC 4x4 8.0 BPP
+	.ASTC5x5  --- ASTC 5x5 5.12 BPP
+	.ASTC6x6  --- ASTC 6x6 3.56 BPP
+	.ASTC8x5  --- ASTC 8x5 3.20 BPP
+	.ASTC8x6  --- ASTC 8x6 2.67 BPP
+	.ASTC10x5 --- ASTC 10x5 2.56 BPP
+	.Unknown  --- Compressed formats above.
 	.R1
 	.A8
 	.R8
@@ -603,42 +605,42 @@ enum.TextureFormat { comment = "Texture formats:" }
 
 --- Uniform type enum.
 enum.UniformType          { comment = "Uniform types:" }
-	.Sampler [[Sampler.]]
-	.End     [[Reserved, do not use.]]
-	.Vec4    [[4 floats vector.]]
-	.Mat3    [[3x3 matrix.]]
-	.Mat4    [[4x4 matrix.]]
+	.Sampler --- Sampler.
+	.End     --- Reserved, do not use.
+	.Vec4    --- 4 floats vector.
+	.Mat3    --- 3x3 matrix.
+	.Mat4    --- 4x4 matrix.
 
 --- Backbuffer ratio enum.
 enum.BackbufferRatio      { comment = "Backbuffer ratios:" }
-	.Equal     [[Equal to backbuffer.]]
-	.Half      [[One half size of backbuffer.]]
-	.Quarter   [[One quarter size of backbuffer.]]
-	.Eighth    [[One eighth size of backbuffer.]]
-	.Sixteenth [[One sixteenth size of backbuffer.]]
-	.Double    [[Double size of backbuffer.]]
+	.Equal     --- Equal to backbuffer.
+	.Half      --- One half size of backbuffer.
+	.Quarter   --- One quarter size of backbuffer.
+	.Eighth    --- One eighth size of backbuffer.
+	.Sixteenth --- One sixteenth size of backbuffer.
+	.Double    --- Double size of backbuffer.
 
 --- Occlusion query result.
 enum.OcclusionQueryResult { comment = "Occlusion query results:" }
-	.Invisible [[Query failed test.]]
-	.Visible   [[Query passed test.]]
-	.NoResult  [[Query result is not available yet.]]
+	.Invisible --- Query failed test.
+	.Visible   --- Query passed test.
+	.NoResult  --- Query result is not available yet.
 
 --- Primitive topology.
 enum.Topology { underscore, comment = "Primitive topology:" }
-	.TriList   [[Triangle list.]]
-	.TriStrip  [[Triangle strip.]]
-	.LineList  [[Line list.]]
-	.LineStrip [[Line strip.]]
-	.PointList [[Point list.]]
+	.TriList   --- Triangle list.
+	.TriStrip  --- Triangle strip.
+	.LineList  --- Line list.
+	.LineStrip --- Line strip.
+	.PointList --- Point list.
 
 --- Topology conversion function.
 enum.TopologyConvert { underscore , comment = "Topology conversion functions:" }
-	.TriListFlipWinding  [[Flip winding order of triangle list.]]
-	.TriStripFlipWinding [[Flip winding order of trinagle strip.]]
-	.TriListToLineList   [[Convert triangle list to line list.]]
-	.TriStripToTriList   [[Convert triangle strip to triangle list.]]
-	.LineStripToLineList [[Convert line strip to line list.]]
+	.TriListFlipWinding  --- Flip winding order of triangle list.
+	.TriStripFlipWinding --- Flip winding order of triangle strip.
+	.TriListToLineList   --- Convert triangle list to line list.
+	.TriStripToTriList   --- Convert triangle strip to triangle list.
+	.LineStripToLineList --- Convert line strip to line list.
 
 --- Topology sort order.
 enum.TopologySort { underscore, comment = "Topology sort order:" , }
@@ -658,10 +660,10 @@ enum.TopologySort { underscore, comment = "Topology sort order:" , }
 
 --- View mode sets draw call sort order.
 enum.ViewMode { underscore, comment = "View modes:" }
-	.Default         [[Default sort order.]]
-	.Sequential      [[Sort in the same order in which submit calls were called.]]
-	.DepthAscending   [[Sort draw call depth in ascending order.]]
-	.DepthDescending  [[Sort draw call depth in descending order.]]
+	.Default         --- Default sort order.
+	.Sequential      --- Sort in the same order in which submit calls were called.
+	.DepthAscending  --- Sort draw call depth in ascending order.
+	.DepthDescending --- Sort draw call depth in descending order.
 
 --- Render frame enum.
 enum.RenderFrame { underscore, comment = "" }
@@ -673,35 +675,35 @@ enum.RenderFrame { underscore, comment = "" }
 
 --- GPU info.
 struct.GPU  { namespace = "Caps" }
-	.vendorId    "uint16_t"                --- Vendor PCI id. See `BGFX_PCI_ID_*`.
-	.deviceId    "uint16_t"                --- Device id.
+	.vendorId    "uint16_t" --- Vendor PCI id. See `BGFX_PCI_ID_*`.
+	.deviceId    "uint16_t" --- Device id.
 
 --- Renderer runtime limits.
 struct.Limits  { namespace = "Caps" }
-	.maxDrawCalls            "uint32_t"    --- Maximum number of draw calls.
-	.maxBlits                "uint32_t"    --- Maximum number of blit calls.
-	.maxTextureSize          "uint32_t"    --- Maximum texture size.
-	.maxTextureLayers        "uint32_t"    --- Maximum texture layers.
-	.maxViews                "uint32_t"    --- Maximum number of views.
-	.maxFrameBuffers         "uint32_t"    --- Maximum number of frame buffer handles.
-	.maxFBAttachments        "uint32_t"    --- Maximum number of frame buffer attachments.
-	.maxPrograms             "uint32_t"    --- Maximum number of program handles.
-	.maxShaders              "uint32_t"    --- Maximum number of shader handles.
-	.maxTextures             "uint32_t"    --- Maximum number of texture handles.
-	.maxTextureSamplers      "uint32_t"    --- Maximum number of texture samplers.
-	.maxComputeBindings      "uint32_t"    --- Maximum number of compute bindings.
-	.maxVertexLayouts        "uint32_t"    --- Maximum number of vertex format layouts.
-	.maxVertexStreams        "uint32_t"    --- Maximum number of vertex streams.
-	.maxIndexBuffers         "uint32_t"    --- Maximum number of index buffer handles.
-	.maxVertexBuffers        "uint32_t"    --- Maximum number of vertex buffer handles.
-	.maxDynamicIndexBuffers  "uint32_t"    --- Maximum number of dynamic index buffer handles.
-	.maxDynamicVertexBuffers "uint32_t"    --- Maximum number of dynamic vertex buffer handles.
-	.maxUniforms             "uint32_t"    --- Maximum number of uniform handles.
-	.maxOcclusionQueries     "uint32_t"    --- Maximum number of occlusion query handles.
-	.maxEncoders             "uint32_t"    --- Maximum number of encoder threads.
-	.minResourceCbSize       "uint32_t"    --- Minimum resource command buffer size.
-	.transientVbSize         "uint32_t"    --- Maximum transient vertex buffer size.
-	.transientIbSize         "uint32_t"    --- Maximum transient index buffer size.
+	.maxDrawCalls            "uint32_t" --- Maximum number of draw calls.
+	.maxBlits                "uint32_t" --- Maximum number of blit calls.
+	.maxTextureSize          "uint32_t" --- Maximum texture size.
+	.maxTextureLayers        "uint32_t" --- Maximum texture layers.
+	.maxViews                "uint32_t" --- Maximum number of views.
+	.maxFrameBuffers         "uint32_t" --- Maximum number of frame buffer handles.
+	.maxFBAttachments        "uint32_t" --- Maximum number of frame buffer attachments.
+	.maxPrograms             "uint32_t" --- Maximum number of program handles.
+	.maxShaders              "uint32_t" --- Maximum number of shader handles.
+	.maxTextures             "uint32_t" --- Maximum number of texture handles.
+	.maxTextureSamplers      "uint32_t" --- Maximum number of texture samplers.
+	.maxComputeBindings      "uint32_t" --- Maximum number of compute bindings.
+	.maxVertexLayouts        "uint32_t" --- Maximum number of vertex format layouts.
+	.maxVertexStreams        "uint32_t" --- Maximum number of vertex streams.
+	.maxIndexBuffers         "uint32_t" --- Maximum number of index buffer handles.
+	.maxVertexBuffers        "uint32_t" --- Maximum number of vertex buffer handles.
+	.maxDynamicIndexBuffers  "uint32_t" --- Maximum number of dynamic index buffer handles.
+	.maxDynamicVertexBuffers "uint32_t" --- Maximum number of dynamic vertex buffer handles.
+	.maxUniforms             "uint32_t" --- Maximum number of uniform handles.
+	.maxOcclusionQueries     "uint32_t" --- Maximum number of occlusion query handles.
+	.maxEncoders             "uint32_t" --- Maximum number of encoder threads.
+	.minResourceCbSize       "uint32_t" --- Minimum resource command buffer size.
+	.transientVbSize         "uint32_t" --- Maximum transient vertex buffer size.
+	.transientIbSize         "uint32_t" --- Maximum transient index buffer size.
 
 --- Renderer capabilities.
 struct.Caps
@@ -728,8 +730,10 @@ struct.Caps
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB` - Texture as sRGB format is supported.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED` - Texture format is emulated.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - Texture format can be used from vertex shader.
-		---   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE` - Texture format can be used as image from compute
-		---     shader.
+		---   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ` - Texture format can be used as image
+		---     and read from.
+		---   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE` - Texture format can be used as image
+		---     and written to.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
 		---     buffer.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
@@ -741,7 +745,7 @@ struct.Caps
 --- Internal data.
 struct.InternalData
 	.caps    "const Caps*" --- Renderer capabilities.
-	.context "void*"              --- GL context, or D3D device.
+	.context "void*"       --- GL context, or D3D device.
 
 --- Platform data.
 struct.PlatformData { ctor }
@@ -772,39 +776,39 @@ struct.Limits { namespace = "Init" }
 
 --- Initialization parameters used by `bgfx::init`.
 struct.Init { ctor }
-	.type            "RendererType::Enum"  --- Select rendering backend. When set to RendererType::Count
-	                                       --- a default rendering backend will be selected appropriate to the platform.
-	                                       --- See: `bgfx::RendererType`
+	.type            "RendererType::Enum" --- Select rendering backend. When set to RendererType::Count
+	                                      --- a default rendering backend will be selected appropriate to the platform.
+	                                      --- See: `bgfx::RendererType`
 
-	.vendorId       "uint16_t"             --- Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
-	                                       --- device.
-	                                       ---   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
-	                                       ---   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
-	                                       ---   - `BGFX_PCI_ID_AMD` - AMD adapter.
-	                                       ---   - `BGFX_PCI_ID_INTEL` - Intel adapter.
-	                                       ---   - `BGFX_PCI_ID_NVIDIA` - nVidia adapter.
+	.vendorId       "uint16_t"            --- Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
+	                                      --- device.
+	                                      ---   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
+	                                      ---   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
+	                                      ---   - `BGFX_PCI_ID_AMD` - AMD adapter.
+	                                      ---   - `BGFX_PCI_ID_INTEL` - Intel adapter.
+	                                      ---   - `BGFX_PCI_ID_NVIDIA` - nVidia adapter.
 
-	.deviceId       "uint16_t"             --- Device id. If set to 0 it will select first device, or device with
-	                                       --- matching id.
+	.deviceId       "uint16_t"            --- Device id. If set to 0 it will select first device, or device with
+	                                      --- matching id.
+	.capabilities   "uint64_t"            --- Capabilities initialization mask (default: UINT64_MAX).
+	.debug          "bool"                --- Enable device for debuging.
+	.profile        "bool"                --- Enable device for profiling.
+	.platformData   "PlatformData"        --- Platform data.
+	.resolution     "Resolution"          --- Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
+	.limits         "Limits"              --- Configurable runtime limits parameters.
+	.callback       "CallbackI*"          --- Provide application specific callback interface.
+	                                      --- See: `bgfx::CallbackI`
 
-	.debug          "bool"                 --- Enable device for debuging.
-	.profile        "bool"                 --- Enable device for profiling.
-	.platformData   "PlatformData"         --- Platform data.
-	.resolution     "Resolution"           --- Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
-	.limits         "Limits"               --- Configurable runtime limits parameters.
-	.callback       "CallbackI*"           --- Provide application specific callback interface.
-	                                       --- See: `bgfx::CallbackI`
-
-	.allocator      "bx::AllocatorI*"      --- Custom allocator. When a custom allocator is not
-	                                       --- specified, bgfx uses the CRT allocator. Bgfx assumes
-	                                       --- custom allocator is thread safe.
+	.allocator      "bx::AllocatorI*"     --- Custom allocator. When a custom allocator is not
+	                                      --- specified, bgfx uses the CRT allocator. Bgfx assumes
+	                                      --- custom allocator is thread safe.
 
 --- Memory must be obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.
 ---
 --- @attention It is illegal to create this structure on stack and pass it to any bgfx API.
 struct.Memory
-	.data "uint8_t*" [[Pointer to data.]]
-	.size "uint32_t" [[Data size.]]
+	.data "uint8_t*" --- Pointer to data.
+	.size "uint32_t" --- Data size.
 
 --- Transient index buffer.
 struct.TransientIndexBuffer
@@ -812,6 +816,7 @@ struct.TransientIndexBuffer
 	.size       "uint32_t"          --- Data size.
 	.startIndex "uint32_t"          --- First index.
 	.handle     "IndexBufferHandle" --- Index buffer handle.
+	.isIndex16  "bool"              --- Index buffer format is 16-bits if true, otherwise it is 32-bit.
 
 --- Transient vertex buffer.
 struct.TransientVertexBuffer
@@ -851,11 +856,12 @@ struct.UniformInfo
 
 --- Frame buffer texture attachment info.
 struct.Attachment { shortname }
-	.access  "Access::Enum"  --- Attachement access. See `Access::Enum`.
-	.handle  "TextureHandle" --- Render target texture handle.
-	.mip     "uint16_t"      --- Mip level.
-	.layer   "uint16_t"      --- Cubemap side or depth layer/slice.
-	.resolve "uint8_t"       --- Resolve flags. See: `BGFX_RESOLVE_*`
+	.access    "Access::Enum"  --- Attachment access. See `Access::Enum`.
+	.handle    "TextureHandle" --- Render target texture handle.
+	.mip       "uint16_t"      --- Mip level.
+	.layer     "uint16_t"      --- Cubemap side or depth layer/slice to use.
+	.numLayers "uint16_t"      --- Number of texture layer/slice(s) in array to use.
+	.resolve   "uint8_t"       --- Resolve flags. See: `BGFX_RESOLVE_*`
 
 --- Init attachment.
 func.Attachment.init
@@ -863,8 +869,10 @@ func.Attachment.init
 	.handle "TextureHandle" --- Render target texture handle.
 	.access "Access::Enum"  --- Access. See `Access::Enum`.
 	 { default = "Access::Write" }
-	.layer "uint16_t"       --- Cubemap side or depth layer/slice.
+	.layer "uint16_t"       --- Cubemap side or depth layer/slice to use.
 	 { default = 0 }
+	.numLayers "uint16_t"   --- Number of texture layer/slice(s) in array to use.
+	 { default = 1 }
 	.mip "uint16_t"         --- Mip level.
 	 { default = 0 }
 	.resolve "uint8_t"      --- Resolve flags. See: `BGFX_RESOLVE_*`
@@ -1070,7 +1078,7 @@ func.weldVertices
 	.num             "uint32_t"             --- Number of vertices in vertex stream.
 	.index32         "bool"                 --- Set to `true` if input indices are 32-bit.
 	.epsilon         "float"                --- Error tolerance for vertex position comparison.
-	 { default = "0.001f"                   }
+	 { default = "0.001f" }
 
 --- Convert index buffer for use with different primitive topologies.
 func.topologyConvert
@@ -1396,21 +1404,21 @@ func.destroy { cname = "destroy_dynamic_index_buffer" }
 
 --- Create empty dynamic vertex buffer.
 func.createDynamicVertexBuffer
-	"DynamicVertexBufferHandle"               --- Dynamic vertex buffer handle.
-	.num           "uint32_t"              --- Number of vertices.
-	.layout      "const VertexLayout&"   --- Vertex layout.
-	.flags         "uint16_t"              --- Buffer creation flags.
-	 { default = "BGFX_BUFFER_NONE" }     ---   - `BGFX_BUFFER_NONE` - No flags.
-	                                      ---   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
-	                                      ---   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
-	                                      ---       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
-	                                      ---   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
-	                                      ---   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of
-	                                      ---       data is passed. If this flag is not specified, and more data is passed on update, the buffer
-	                                      ---       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic
-	                                      ---       buffers.
-	                                      ---   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
-	                                      ---       index buffers.
+	"DynamicVertexBufferHandle"        --- Dynamic vertex buffer handle.
+	.num           "uint32_t"          --- Number of vertices.
+	.layout      "const VertexLayout&" --- Vertex layout.
+	.flags         "uint16_t"          --- Buffer creation flags.
+	 { default = "BGFX_BUFFER_NONE" }  ---   - `BGFX_BUFFER_NONE` - No flags.
+	                                   ---   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
+	                                   ---   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
+	                                   ---       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
+	                                   ---   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
+	                                   ---   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of
+	                                   ---       data is passed. If this flag is not specified, and more data is passed on update, the buffer
+	                                   ---       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic
+	                                   ---       buffers.
+	                                   ---   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
+	                                   ---       index buffers.
 
 --- Create dynamic vertex buffer and initialize it.
 func.createDynamicVertexBuffer { cname = "create_dynamic_vertex_buffer_mem" }
@@ -1466,10 +1474,12 @@ func.getAvailInstanceDataBuffer
 ---
 func.allocTransientIndexBuffer
 	"void"
-	.tib "TransientIndexBuffer*" { out } --- TransientIndexBuffer structure is filled and is valid
-	                                     --- for the duration of frame, and it can be reused for multiple draw
-	                                     --- calls.
-	.num "uint32_t"                      --- Number of indices to allocate.
+	.tib     "TransientIndexBuffer*" { out } --- TransientIndexBuffer structure is filled and is valid
+	                                         --- for the duration of frame, and it can be reused for multiple draw
+	                                         --- calls.
+	.num     "uint32_t"                      --- Number of indices to allocate.
+	.index32 "bool"                          --- Set to `true` if input indices will be 32-bit.
+	 { default = false }
 
 --- Allocate transient vertex buffer.
 func.allocTransientVertexBuffer
@@ -1582,6 +1592,12 @@ func.isTextureValid
 	.numLayers "uint16_t"            --- Number of layers in texture array.
 	.format    "TextureFormat::Enum" --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"            --- Texture flags. See `BGFX_TEXTURE_*`.
+
+--- Validate frame buffer parameters.
+func.isFrameBufferValid
+	"bool"                              --- True if frame buffer can be successfully created.
+	.num            "uint8_t"           --- Number of attachments.
+	.attachment     "const Attachment*" --- Attachment texture info. See: `bgfx::Attachment`.
 
 --- Calculate amount of memory required for texture.
 func.calcTextureSize
@@ -1833,7 +1849,7 @@ func.createFrameBuffer { cname = "create_frame_buffer_from_handles" }
 --- mip level.
 func.createFrameBuffer { cname = "create_frame_buffer_from_attachment" }
 	"FrameBufferHandle"                 --- Frame buffer handle.
-	.num            "uint8_t"           --- Number of attachements.
+	.num            "uint8_t"           --- Number of attachments.
 	.attachment     "const Attachment*" --- Attachment texture info. See: `bgfx::Attachment`.
 	.destroyTexture "bool"              --- If true, textures will be destroyed when
 	 { default = false }                --- frame buffer is destroyed.
@@ -2240,7 +2256,15 @@ func.Encoder.setVertexBuffer { cpponly }
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.Encoder.setVertexBuffer
+func.Encoder.setVertexBuffer { conly }
+	"void"
+	.stream       "uint8_t"            --- Vertex stream.
+	.handle       "VertexBufferHandle" --- Vertex buffer.
+	.startVertex  "uint32_t"           --- First vertex to render.
+	.numVertices  "uint32_t"           --- Number of vertices to render.
+
+--- Set vertex buffer for draw primitive.
+func.Encoder.setVertexBuffer { cname = "set_vertex_buffer_with_layout" }
 	"void"
 	.stream       "uint8_t"            --- Vertex stream.
 	.handle       "VertexBufferHandle" --- Vertex buffer.
@@ -2258,7 +2282,14 @@ func.Encoder.setVertexBuffer { cpponly }
 	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
+func.Encoder.setVertexBuffer { conly, cname = "set_dynamic_vertex_buffer" }
+	"void"
+	.stream       "uint8_t"                   --- Vertex stream.
+	.handle       "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
+	.startVertex  "uint32_t"                  --- First vertex to render.
+	.numVertices  "uint32_t"                  --- Number of vertices to render.
+
+func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer_with_layout" }
 	"void"
 	.stream       "uint8_t"                   --- Vertex stream.
 	.handle       "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
@@ -2276,7 +2307,15 @@ func.Encoder.setVertexBuffer { cpponly }
 	.tvb         "const TransientVertexBuffer*" --- Transient vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer" }
+func.Encoder.setVertexBuffer { conly, cname = "set_transient_vertex_buffer" }
+	"void"
+	.stream       "uint8_t"                      --- Vertex stream.
+	.tvb          "const TransientVertexBuffer*" --- Transient vertex buffer.
+	.startVertex  "uint32_t"                     --- First vertex to render.
+	.numVertices  "uint32_t"                     --- Number of vertices to render.
+
+--- Set vertex buffer for draw primitive.
+func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer_with_layout" }
 	"void"
 	.stream       "uint8_t"                      --- Vertex stream.
 	.tvb          "const TransientVertexBuffer*" --- Transient vertex buffer.
@@ -2770,12 +2809,24 @@ func.setVertexBuffer { cpponly }
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.setVertexBuffer
+func.setVertexBuffer { conly }
 	"void"
-	.stream      "uint8_t"            --- Vertex stream.
-	.handle      "VertexBufferHandle" --- Vertex buffer.
-	.startVertex "uint32_t"           --- First vertex to render.
-	.numVertices "uint32_t"           --- Number of vertices to render.
+	.stream      "uint8_t"                   --- Vertex stream.
+	.handle      "VertexBufferHandle"        --- Vertex buffer.
+	.startVertex "uint32_t"                  --- First vertex to render.
+	.numVertices "uint32_t"                  --- Number of vertices to render.
+
+--- Set vertex buffer for draw primitive.
+func.setVertexBuffer { cname = "set_vertex_buffer_with_layout" }
+	"void"
+	.stream      "uint8_t"                   --- Vertex stream.
+	.handle      "VertexBufferHandle"        --- Vertex buffer.
+	.startVertex "uint32_t"                  --- First vertex to render.
+	.numVertices "uint32_t"                  --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle"       --- Vertex layout for aliasing vertex buffer. If invalid
+	                                         --- handle is used, vertex layout used for creation
+	                                         --- of vertex buffer will be used.
+	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
 func.setVertexBuffer { cpponly }
@@ -2784,7 +2835,7 @@ func.setVertexBuffer { cpponly }
 	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
+func.setVertexBuffer { conly, cname = "set_dynamic_vertex_buffer" }
 	"void"
 	.stream      "uint8_t"                   --- Vertex stream.
 	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
@@ -2792,18 +2843,43 @@ func.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
 	.numVertices "uint32_t"                  --- Number of vertices to render.
 
 --- Set vertex buffer for draw primitive.
+func.setVertexBuffer { cname = "set_dynamic_vertex_buffer_with_layout" }
+	"void"
+	.stream      "uint8_t"                   --- Vertex stream.
+	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
+	.startVertex "uint32_t"                  --- First vertex to render.
+	.numVertices "uint32_t"                  --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle"       --- Vertex layout for aliasing vertex buffer. If invalid
+	                                         --- handle is used, vertex layout used for creation
+	                                         --- of vertex buffer will be used.
+	 { default = "BGFX_INVALID_HANDLE" }
+
+
+--- Set vertex buffer for draw primitive.
 func.setVertexBuffer { cpponly }
 	"void"
 	.stream      "uint8_t"                      --- Vertex stream.
 	.tvb         "const TransientVertexBuffer*" --- Transient vertex buffer.
 
 --- Set vertex buffer for draw primitive.
-func.setVertexBuffer { cname = "set_transient_vertex_buffer" }
+func.setVertexBuffer { conly, cname = "set_transient_vertex_buffer" }
 	"void"
 	.stream      "uint8_t"                      --- Vertex stream.
 	.tvb         "const TransientVertexBuffer*" --- Transient vertex buffer.
 	.startVertex "uint32_t"                     --- First vertex to render.
 	.numVertices "uint32_t"                     --- Number of vertices to render.
+
+--- Set vertex buffer for draw primitive.
+func.setVertexBuffer { cname = "set_transient_vertex_buffer_with_layout" }
+	"void"
+	.stream      "uint8_t"                      --- Vertex stream.
+	.tvb         "const TransientVertexBuffer*" --- Transient vertex buffer.
+	.startVertex "uint32_t"                     --- First vertex to render.
+	.numVertices "uint32_t"                     --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle"          --- Vertex layout for aliasing vertex buffer. If invalid
+	                                            --- handle is used, vertex layout used for creation
+	                                            --- of vertex buffer will be used.
+	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set number of vertices for auto generated vertices use in conjuction
 --- with gl_VertexID.

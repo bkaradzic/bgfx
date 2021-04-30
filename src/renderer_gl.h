@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -7,34 +7,45 @@
 #define BGFX_RENDERER_GL_H_HEADER_GUARD
 
 #define BGFX_USE_EGL (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
-			|| BX_PLATFORM_ANDROID                        \
-			|| BX_PLATFORM_BSD                            \
-			|| BX_PLATFORM_LINUX                          \
-			|| BX_PLATFORM_NX                             \
-			|| BX_PLATFORM_RPI                            \
-			|| BX_PLATFORM_WINDOWS                        \
-			) )
+	|| BX_PLATFORM_ANDROID                                \
+	|| BX_PLATFORM_BSD                                    \
+	|| BX_PLATFORM_LINUX                                  \
+	|| BX_PLATFORM_NX                                     \
+	|| BX_PLATFORM_RPI                                    \
+	|| BX_PLATFORM_WINDOWS                                \
+	) )
 
 #define BGFX_USE_HTML5 (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
-			|| BX_PLATFORM_EMSCRIPTEN                     \
-			) )
+	|| BX_PLATFORM_EMSCRIPTEN                               \
+	) )
 
-#define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && BX_PLATFORM_WINDOWS)
+#define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && (0 \
+	|| BX_PLATFORM_WINDOWS                              \
+	) )
+
 #define BGFX_USE_GLX (BGFX_CONFIG_RENDERER_OPENGL && (0 \
-			|| BX_PLATFORM_BSD                          \
-			|| BX_PLATFORM_LINUX                        \
-			) )
+	|| BX_PLATFORM_BSD                                  \
+	|| BX_PLATFORM_LINUX                                \
+	) )
 
 #define BGFX_USE_GL_DYNAMIC_LIB (0 \
-			|| BX_PLATFORM_BSD     \
-			|| BX_PLATFORM_LINUX   \
-			|| BX_PLATFORM_OSX     \
-			|| BX_PLATFORM_WINDOWS \
-			)
+	|| BX_PLATFORM_BSD             \
+	|| BX_PLATFORM_LINUX           \
+	|| BX_PLATFORM_OSX             \
+	|| BX_PLATFORM_WINDOWS         \
+	)
 
 // Keep a state cache of GL uniform values to avoid redundant uploads
 // on the following platforms.
 #define BGFX_GL_CONFIG_UNIFORM_CACHE BX_PLATFORM_EMSCRIPTEN
+
+#ifndef BGFX_GL_CONFIG_BLIT_EMULATION
+#	define BGFX_GL_CONFIG_BLIT_EMULATION 0
+#endif // BGFX_GL_CONFIG_BLIT_EMULATION
+
+#ifndef BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION
+#	define BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION 0
+#endif // BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION
 
 #define BGFX_GL_PROFILER_BEGIN(_view, _abgr)                                               \
 	BX_MACRO_BLOCK_BEGIN                                                                   \
@@ -613,6 +624,10 @@ typedef uint64_t GLuint64;
 #	define GL_MAX_SAMPLES 0x8D57
 #endif // GL_MAX_SAMPLES
 
+#ifndef GL_MAX_SAMPLES_IMG
+#   define GL_MAX_SAMPLES_IMG 0x9135
+#endif // GL_MAX_SAMPLES_IMG
+
 #ifndef GL_MAX_COLOR_ATTACHMENTS
 #	define GL_MAX_COLOR_ATTACHMENTS 0x8CDF
 #endif // GL_MAX_COLOR_ATTACHMENTS
@@ -965,6 +980,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_COMMAND_BARRIER_BIT
 #	define GL_COMMAND_BARRIER_BIT 0x00000040
 #endif // GL_COMMAND_BARRIER_BIT
+
+#ifndef GL_FIRST_VERTEX_CONVENTION
+#	define GL_FIRST_VERTEX_CONVENTION 0x8E4D
+#endif // GL_FIRST_VERTEX_CONVENTION
 
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242
@@ -1440,7 +1459,6 @@ namespace bgfx { namespace gl
 		uint16_t destroy();
 		void resolve();
 		void discard(uint16_t _flags);
-		void set();
 
 		SwapChainGL* m_swapChain;
 		GLuint m_fbo[2];
@@ -1460,6 +1478,7 @@ namespace bgfx { namespace gl
 			, m_constantBuffer(NULL)
 			, m_numPredefined(0)
 		{
+			m_instanceData[0] = -1;
 		}
 
 		void create(const ShaderGL& _vsh, const ShaderGL& _fsh);

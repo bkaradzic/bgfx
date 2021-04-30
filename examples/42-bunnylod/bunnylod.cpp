@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -265,7 +265,7 @@ public:
 		u_tint = bgfx::createUniform("u_tint", bgfx::UniformType::Vec4);
 
 		// Create program from shaders.
-		m_program = loadProgram("vs_callback", "fs_callback");
+		m_program = loadProgram("vs_bunnylod", "fs_bunnylod");
 
 		Mesh* mesh = meshLoad("meshes/bunny_patched.bin", true);
 		loadMesh(mesh);

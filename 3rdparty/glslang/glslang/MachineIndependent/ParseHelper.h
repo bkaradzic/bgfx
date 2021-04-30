@@ -67,7 +67,7 @@ struct TPragma {
 class TScanContext;
 class TPpContext;
 
-typedef std::set<int> TIdSetType;
+typedef std::set<long long> TIdSetType;
 typedef std::map<const TTypeList*, std::map<size_t, const TTypeList*>> TStructRecord;
 
 //
@@ -83,7 +83,8 @@ public:
           : TParseVersions(interm, version, profile, spvVersion, language, infoSink, forwardCompatible, messages),
             scopeMangler("::"),
             symbolTable(symbolTable),
-            statementNestingLevel(0), loopNestingLevel(0), structNestingLevel(0), controlFlowNestingLevel(0),
+            statementNestingLevel(0), loopNestingLevel(0), structNestingLevel(0), blockNestingLevel(0), controlFlowNestingLevel(0),
+            currentFunctionType(nullptr),
             postEntryPointReturn(false),
             contextPragma(true, false),
             beginInvocationInterlockCount(0), endInvocationInterlockCount(0),
@@ -91,7 +92,8 @@ public:
             limits(resources.limits),
             globalUniformBlock(nullptr),
             globalUniformBinding(TQualifier::layoutBindingEnd),
-            globalUniformSet(TQualifier::layoutSetEnd)
+            globalUniformSet(TQualifier::layoutSetEnd),
+            atomicCounterBlockSet(TQualifier::layoutSetEnd)
     {
         if (entryPoint != nullptr)
             sourceEntryPointName = *entryPoint;
@@ -153,10 +155,11 @@ public:
             extensionCallback(line, extension, behavior);
     }
 
-#ifdef ENABLE_HLSL
     // Manage the global uniform block (default uniforms in GLSL, $Global in HLSL)
     virtual void growGlobalUniformBlock(const TSourceLoc&, TType&, const TString& memberName, TTypeList* typeList = nullptr);
-#endif
+
+    // Manage global buffer (used for backing atomic counters in GLSL when using relaxed Vulkan semantics)
+    virtual void growAtomicCounterBlock(int binding, const TSourceLoc&, TType&, const TString& memberName, TTypeList* typeList = nullptr);
 
     // Potentially rename shader entry point function
     void renameShaderFunction(TString*& name) const
@@ -177,7 +180,8 @@ public:
     TSymbolTable& symbolTable;        // symbol table that goes with the current language, version, and profile
     int statementNestingLevel;        // 0 if outside all flow control or compound statements
     int loopNestingLevel;             // 0 if outside all loops
-    int structNestingLevel;           // 0 if outside blocks and structures
+    int structNestingLevel;           // 0 if outside structures
+    int blockNestingLevel;            // 0 if outside blocks
     int controlFlowNestingLevel;      // 0 if outside all flow control
     const TType* currentFunctionType; // the return type of the function that's currently being parsed
     bool functionReturnsValue;        // true if a non-void function has a return
@@ -228,7 +232,24 @@ protected:
     // override this to set the language-specific name
     virtual const char* getGlobalUniformBlockName() const { return ""; }
     virtual void setUniformBlockDefaults(TType&) const { }
-    virtual void finalizeGlobalUniformBlockLayout(TVariable&) { }
+    virtual void finalizeGlobalUniformBlockLayout(TVariable&) {}
+
+    // Manage the atomic counter block (used for atomic_uints with Vulkan-Relaxed)
+    TMap<int, TVariable*> atomicCounterBuffers;
+    unsigned int atomicCounterBlockSet;
+    TMap<int, int> atomicCounterBlockFirstNewMember;
+    // override this to set the language-specific name
+    virtual const char* getAtomicCounterBlockName() const { return ""; }
+    virtual void setAtomicCounterBlockDefaults(TType&) const {}
+    virtual void finalizeAtomicCounterBlockLayout(TVariable&) {}
+    bool isAtomicCounterBlock(const TSymbol& symbol) {
+        const TVariable* var = symbol.getAsVariable();
+        if (!var)
+            return false;
+        const auto& at = atomicCounterBuffers.find(var->getType().getQualifier().layoutBinding);
+        return (at != atomicCounterBuffers.end() && (*at).second->getType() == var->getType());
+    }
+
     virtual void outputMessage(const TSourceLoc&, const char* szReason, const char* szToken,
                                const char* szExtraInfoFormat, TPrefixType prefix,
                                va_list args);
@@ -291,6 +312,9 @@ public:
     bool parseShaderStrings(TPpContext&, TInputScanner& input, bool versionWillBeError = false) override;
     void parserError(const char* s);     // for bison's yyerror
 
+    virtual void growGlobalUniformBlock(const TSourceLoc&, TType&, const TString& memberName, TTypeList* typeList = nullptr) override;
+    virtual void growAtomicCounterBlock(int binding, const TSourceLoc&, TType&, const TString& memberName, TTypeList* typeList = nullptr) override;
+
     void reservedErrorCheck(const TSourceLoc&, const TString&);
     void reservedPpErrorCheck(const TSourceLoc&, const char* name, const char* op) override;
     bool lineContinuationCheck(const TSourceLoc&, bool endOfComment) override;
@@ -328,6 +352,7 @@ public:
     TIntermTyped* handleLengthMethod(const TSourceLoc&, TFunction*, TIntermNode*);
     void addInputArgumentConversions(const TFunction&, TIntermNode*&) const;
     TIntermTyped* addOutputArgumentConversions(const TFunction&, TIntermAggregate&) const;
+    TIntermTyped* addAssign(const TSourceLoc&, TOperator op, TIntermTyped* left, TIntermTyped* right);
     void builtInOpCheck(const TSourceLoc&, const TFunction&, TIntermOperator&);
     void nonOpBuiltInCheck(const TSourceLoc&, const TFunction&, TIntermAggregate&);
     void userFunctionCallCheck(const TSourceLoc&, TIntermAggregate&);
@@ -336,6 +361,10 @@ public:
     void handlePrecisionQualifier(const TSourceLoc&, TQualifier&, TPrecisionQualifier);
     void checkPrecisionQualifier(const TSourceLoc&, TPrecisionQualifier);
     void memorySemanticsCheck(const TSourceLoc&, const TFunction&, const TIntermOperator& callNode);
+
+    TIntermTyped* vkRelaxedRemapFunctionCall(const TSourceLoc&, TFunction*, TIntermNode*);
+    // returns true if the variable was remapped to something else
+    bool vkRelaxedRemapUniformVariable(const TSourceLoc&, TString&, const TPublicType&, TArraySizes*, TIntermTyped*, TType&);
 
     void assignError(const TSourceLoc&, const char* op, TString left, TString right);
     void unaryOpError(const TSourceLoc&, const char* op, TString operand);
@@ -363,7 +392,7 @@ public:
     void accStructCheck(const TSourceLoc & loc, const TType & type, const TString & identifier);
     void transparentOpaqueCheck(const TSourceLoc&, const TType&, const TString& identifier);
     void memberQualifierCheck(glslang::TPublicType&);
-    void globalQualifierFixCheck(const TSourceLoc&, TQualifier&);
+    void globalQualifierFixCheck(const TSourceLoc&, TQualifier&, bool isMemberCheck = false);
     void globalQualifierTypeCheck(const TSourceLoc&, const TQualifier&, const TPublicType&);
     bool structQualifierErrorCheck(const TSourceLoc&, const TPublicType& pType);
     void mergeQualifiers(const TSourceLoc&, TQualifier& dst, const TQualifier& src, bool force);
@@ -389,7 +418,7 @@ public:
     void arrayLimitCheck(const TSourceLoc&, const TString&, int size);
     void limitCheck(const TSourceLoc&, int value, const char* limit, const char* feature);
 
-    void inductiveLoopBodyCheck(TIntermNode*, int loopIndexId, TSymbolTable&);
+    void inductiveLoopBodyCheck(TIntermNode*, long long loopIndexId, TSymbolTable&);
     void constantIndexExpressionCheck(TIntermNode*);
 
     void setLayoutQualifier(const TSourceLoc&, TPublicType&, TString&);
@@ -414,6 +443,7 @@ public:
     TIntermTyped* constructBuiltIn(const TType&, TOperator, TIntermTyped*, const TSourceLoc&, bool subset);
     void inheritMemoryQualifiers(const TQualifier& from, TQualifier& to);
     void declareBlock(const TSourceLoc&, TTypeList& typeList, const TString* instanceName = 0, TArraySizes* arraySizes = 0);
+    void blockStorageRemap(const TSourceLoc&, const TString*, TQualifier&);
     void blockStageIoCheck(const TSourceLoc&, const TQualifier&);
     void blockQualifierCheck(const TSourceLoc&, const TQualifier&, bool instanceName);
     void fixBlockLocations(const TSourceLoc&, TQualifier&, TTypeList&, bool memberWithLocation, bool memberWithoutLocation);
@@ -458,6 +488,14 @@ protected:
     void finish() override;
 #endif
 
+    virtual const char* getGlobalUniformBlockName() const override;
+    virtual void finalizeGlobalUniformBlockLayout(TVariable&) override;
+    virtual void setUniformBlockDefaults(TType& block) const override;
+
+    virtual const char* getAtomicCounterBlockName() const override;
+    virtual void finalizeAtomicCounterBlockLayout(TVariable&) override;
+    virtual void setAtomicCounterBlockDefaults(TType& block) const override;
+
 public:
     //
     // Generally, bison productions, the scanner, and the PP need read/write access to these; just give them direct access
@@ -482,6 +520,7 @@ protected:
     TQualifier globalUniformDefaults;
     TQualifier globalInputDefaults;
     TQualifier globalOutputDefaults;
+    TQualifier globalSharedDefaults;
     TString currentCaller;        // name of last function body entered (not valid when at global scope)
 #ifndef GLSLANG_WEB
     int* atomicUintOffsets;       // to become an array of the right size to hold an offset per binding point

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -333,7 +333,7 @@ public:
 			const double freq = double(bx::getHPFrequency() );
 			const float deltaTime = float(frameTime/freq);
 
-			cameraUpdate(deltaTime, m_mouseState);
+			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 			float view[16];
 			cameraGetViewMtx(view);

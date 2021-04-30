@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -367,15 +367,29 @@ namespace bgfx
 	{
 		HRESULT hr = S_OK;
 
-		bool allowTearing = false;
+		uint32_t scdFlags = _scd.flags;
 
 #if BX_PLATFORM_WINDOWS
-		if (windowsVersionIs(Condition::GreaterEqual, 0x0604) )
+		IDXGIFactory5* factory5;
+		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
+
+		if (SUCCEEDED(hr) )
 		{
+			BOOL allowTearing = false;
 			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
 			//      will crash on pre Windows 8. Issue #1356.
-			hr = m_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
+			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
+
+			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+			scdFlags |= false
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD
+				? 0 // DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+				: 0
+				;
+
+			DX_RELEASE_I(factory5);
 		}
 
 		DXGI_SWAP_CHAIN_DESC scd;
@@ -393,10 +407,7 @@ namespace bgfx
 		scd.OutputWindow = (HWND)_scd.nwh;
 		scd.Windowed     = _scd.windowed;
 		scd.SwapEffect   = _scd.swapEffect;
-		scd.Flags        = 0
-			| _scd.flags
-			| (allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
-			;
+		scd.Flags        = scdFlags;
 
 		hr = m_factory->CreateSwapChain(
 			  _device
@@ -427,7 +438,7 @@ namespace bgfx
 		scd.Scaling     = _scd.scaling;
 		scd.SwapEffect  = _scd.swapEffect;
 		scd.AlphaMode   = _scd.alphaMode;
-		scd.Flags       = _scd.flags;
+		scd.Flags       = scdFlags;
 
 		if (NULL == _scd.ndt)
 		{
@@ -561,6 +572,68 @@ namespace bgfx
 		return S_OK;
 	}
 
+#if BX_PLATFORM_WINRT
+	HRESULT Dxgi::removeSwapChain(const SwapChainDesc& _scd, SwapChainI** _swapChain)
+	{
+		IInspectable *nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
+		ISwapChainPanelNative* swapChainPanelNative;
+
+		HRESULT hr = nativeWindow->QueryInterface(
+			  __uuidof(ISwapChainPanelNative)
+			, (void**)&swapChainPanelNative
+			);
+
+		if (SUCCEEDED(hr))
+		{
+			// Swap Chain Panel
+			if (NULL != swapChainPanelNative)
+			{
+				// Remove swap chain
+				hr = swapChainPanelNative->SetSwapChain(NULL);
+
+				if (FAILED(hr))
+				{
+					DX_RELEASE(swapChainPanelNative, 0);
+					BX_TRACE("Failed to SetSwapChain, hr %x.");
+					return hr;
+				}
+
+				DX_RELEASE_I(swapChainPanelNative);
+			}
+		}
+		else
+		{
+			// Swap Chain Background Panel
+			ISwapChainBackgroundPanelNative* swapChainBackgroundPanelNative = NULL;
+
+			hr = nativeWindow->QueryInterface(
+				__uuidof(ISwapChainBackgroundPanelNative)
+				, (void**)&swapChainBackgroundPanelNative
+			);
+
+			if (FAILED(hr))
+			{
+				return hr;
+			}
+
+			if (NULL != swapChainBackgroundPanelNative)
+			{
+				// Remove swap chain
+				hr = swapChainBackgroundPanelNative->SetSwapChain(NULL);
+
+				if (FAILED(hr))
+				{
+					DX_RELEASE(swapChainBackgroundPanelNative, 0);
+					BX_TRACE("Failed to SetSwapChain, hr %x.");
+					return hr;
+				}
+
+				DX_RELEASE_I(swapChainBackgroundPanelNative);
+			}
+		}
+	}
+#endif
+
 	void Dxgi::updateHdr10(SwapChainI* _swapChain, const SwapChainDesc& _scd)
 	{
 #if BX_PLATFORM_WINDOWS
@@ -639,7 +712,31 @@ namespace bgfx
 	{
 		HRESULT hr;
 
+		uint32_t scdFlags = _scd.flags;
+
 #if BX_PLATFORM_WINDOWS
+		IDXGIFactory5* factory5;
+		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
+
+		if (SUCCEEDED(hr))
+		{
+			BOOL allowTearing = false;
+			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
+			//      will crash on pre Windows 8. Issue #1356.
+			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
+
+			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+			scdFlags |= false
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD
+				? 0 // DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+				: 0
+				;
+
+			DX_RELEASE_I(factory5);
+		}
+
 		if (NULL != _nodeMask
 		&&  NULL != _presentQueue)
 		{
@@ -648,7 +745,7 @@ namespace bgfx
 				, _scd.width
 				, _scd.height
 				, _scd.format
-				, _scd.flags
+				, scdFlags
 				, _nodeMask
 				, _presentQueue
 				);
@@ -663,7 +760,7 @@ namespace bgfx
 				, _scd.width
 				, _scd.height
 				, _scd.format
-				, _scd.flags
+				, scdFlags
 				);
 		}
 

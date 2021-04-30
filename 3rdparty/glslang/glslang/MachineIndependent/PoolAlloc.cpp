@@ -35,28 +35,34 @@
 #include "../Include/Common.h"
 #include "../Include/PoolAlloc.h"
 
+#include "../Include/InitializeGlobals.h"
+#include "../OSDependent/osinclude.h"
+
 namespace glslang {
 
-namespace {
-thread_local TPoolAllocator* threadPoolAllocator = nullptr;
-
-TPoolAllocator* GetDefaultThreadPoolAllocator()
-{
-    thread_local TPoolAllocator defaultAllocator;
-    return &defaultAllocator;
-}
-} // anonymous namespace
+// Process-wide TLS index
+OS_TLSIndex PoolIndex;
 
 // Return the thread-specific current pool.
 TPoolAllocator& GetThreadPoolAllocator()
 {
-    return *(threadPoolAllocator ? threadPoolAllocator : GetDefaultThreadPoolAllocator());
+    return *static_cast<TPoolAllocator*>(OS_GetTLSValue(PoolIndex));
 }
 
 // Set the thread-specific current pool.
 void SetThreadPoolAllocator(TPoolAllocator* poolAllocator)
 {
-    threadPoolAllocator = poolAllocator;
+    OS_SetTLSValue(PoolIndex, poolAllocator);
+}
+
+// Process-wide set up of the TLS pool storage.
+bool InitializePoolIndex()
+{
+    // Allocate a TLS index.
+    if ((PoolIndex = OS_AllocTLSIndex()) == OS_INVALID_TLS_INDEX)
+        return false;
+
+    return true;
 }
 
 //

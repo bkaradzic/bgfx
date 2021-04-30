@@ -56,14 +56,17 @@ namespace ImGui
 		PushFont(Font::Mono);
 
 		PushItemWidth(-1);
-		if (ListBoxHeader("##empty", ImVec2(0.0f, 0.0f) ) )
+		if (BeginListBox("##empty", ImVec2(0.0f, 0.0f) ) )
 		{
 			const float lineHeight = GetTextLineHeightWithSpacing();
 
 			ImString chdir;
 
 			int pos = 0;
-			ImGuiListClipper clipper(FileList.size(), lineHeight);
+			ImGuiListClipper clipper;
+			clipper.Begin(FileList.size(), lineHeight);
+			clipper.Step();
+
 			for (FileInfoArray::const_iterator it = FileList.begin(), itEnd = FileList.end()
 				; it != itEnd
 				; ++it
@@ -109,7 +112,7 @@ namespace ImGui
 			}
 			clipper.End();
 
-			ListBoxFooter();
+			EndListBox();
 
 			if (!chdir.IsEmpty() )
 			{
