@@ -2982,13 +2982,26 @@ namespace bgfx { namespace d3d11
 					: 0
 					;
 
+			const uint32_t cmpFunc   = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+			const uint8_t  minFilter = s_textureFilter[0][(_flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT];
+			const uint8_t  magFilter = s_textureFilter[1][(_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
+			const uint8_t  mipFilter = s_textureFilter[2][(_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
+			const uint8_t  filter    = 0 == cmpFunc ? 0 : D3D11_COMPARISON_FILTERING_BIT;
+			const D3D11_FILTER d3dFilter = (D3D11_FILTER)(filter|minFilter|magFilter|mipFilter);
+			const D3D11_TEXTURE_ADDRESS_MODE addrU = s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
+			const D3D11_TEXTURE_ADDRESS_MODE addrV = s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
+			const D3D11_TEXTURE_ADDRESS_MODE addrW = s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
+
 			uint32_t hash;
 			ID3D11SamplerState* sampler;
 			if (!needBorderColor(_flags) )
 			{
 				bx::HashMurmur2A murmur;
 				murmur.begin();
-				murmur.add(_flags);
+				murmur.add(filter);
+				murmur.add(addrU);
+				murmur.add(addrV);
+				murmur.add(addrW);
 				murmur.add(-1);
 				hash = murmur.end();
 				_rgba = s_zero.m_zerof;
@@ -2999,7 +3012,10 @@ namespace bgfx { namespace d3d11
 			{
 				bx::HashMurmur2A murmur;
 				murmur.begin();
-				murmur.add(_flags);
+				murmur.add(filter);
+				murmur.add(addrU);
+				murmur.add(addrV);
+				murmur.add(addrW);
 				murmur.add(index);
 				hash = murmur.end();
 				_rgba = NULL == _rgba ? s_zero.m_zerof : _rgba;
@@ -3020,17 +3036,11 @@ namespace bgfx { namespace d3d11
 
 			if (NULL == sampler)
 			{
-				const uint32_t cmpFunc   = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
-				const uint8_t  minFilter = s_textureFilter[0][(_flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT];
-				const uint8_t  magFilter = s_textureFilter[1][(_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
-				const uint8_t  mipFilter = s_textureFilter[2][(_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
-				const uint8_t  filter    = 0 == cmpFunc ? 0 : D3D11_COMPARISON_FILTERING_BIT;
-
 				D3D11_SAMPLER_DESC sd;
-				sd.Filter         = (D3D11_FILTER)(filter|minFilter|magFilter|mipFilter);
-				sd.AddressU       = s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
-				sd.AddressV       = s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
-				sd.AddressW       = s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
+				sd.Filter         = d3dFilter;
+				sd.AddressU       = addrU;
+				sd.AddressV       = addrV;
+				sd.AddressW       = addrW;
 				sd.MipLODBias     = float(BGFX_CONFIG_MIP_LOD_BIAS);
 				sd.MaxAnisotropy  = m_maxAnisotropy;
 				sd.ComparisonFunc = 0 == cmpFunc ? D3D11_COMPARISON_NEVER : s_cmpFunc[cmpFunc];
