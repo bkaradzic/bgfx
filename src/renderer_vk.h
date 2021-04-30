@@ -695,7 +695,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		bool acquire(VkCommandBuffer _commandBuffer);
 		void present();
 
-		void transitionImage(VkCommandBuffer _commandBuffer, VkImageLayout _newLayout);
+		void transitionImage(VkCommandBuffer _commandBuffer);
 
 		VkQueue m_queue;
 		VkSwapchainCreateInfoKHR m_sci;

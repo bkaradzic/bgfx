@@ -6923,7 +6923,6 @@ VK_DESTROY
 		{
 			release(m_backBufferColorImageView[ii]);
 
-			m_backBufferColorImageLayout[ii] = VK_IMAGE_LAYOUT_UNDEFINED;
 			m_backBufferFence[ii] = VK_NULL_HANDLE;
 
 			release(m_presentDoneSemaphore[ii]);
@@ -7261,7 +7260,7 @@ VK_DESTROY
 					) );
 			}
 
-			transitionImage(_commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+			transitionImage(_commandBuffer);
 
 			m_needPresent = true;
 		}
@@ -7304,21 +7303,28 @@ VK_DESTROY
 		}
 	}
 
-	void SwapChainVK::transitionImage(VkCommandBuffer _commandBuffer, VkImageLayout _newLayout)
+	void SwapChainVK::transitionImage(VkCommandBuffer _commandBuffer)
 	{
 		VkImageLayout& layout = m_backBufferColorImageLayout[m_backBufferColorIdx];
-		if (_newLayout != layout)
-		{
-			setImageMemoryBarrier(
-				  _commandBuffer
-				, m_backBufferColorImage[m_backBufferColorIdx]
-				, VK_IMAGE_ASPECT_COLOR_BIT
-				, layout
-				, _newLayout
-			);
 
-			layout = _newLayout;
-		}
+		const bool toPresent = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL == layout;
+
+		const VkImageLayout newLayout = toPresent
+			? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+			: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+			;
+
+		layout = toPresent ? layout : VK_IMAGE_LAYOUT_UNDEFINED;
+
+		setImageMemoryBarrier(
+			  _commandBuffer
+			, m_backBufferColorImage[m_backBufferColorIdx]
+			, VK_IMAGE_ASPECT_COLOR_BIT
+			, layout
+			, newLayout
+		);
+
+		layout = newLayout;
 	}
 
 	void FrameBufferVK::create(uint8_t _num, const Attachment* _attachment)
@@ -8907,7 +8913,7 @@ VK_DESTROY
 			{
 				fb.resolve();
 
-				fb.m_swapChain.transitionImage(m_commandBuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+				fb.m_swapChain.transitionImage(m_commandBuffer);
 
 				m_cmd.addWaitSemaphore(fb.m_swapChain.m_lastImageAcquiredSemaphore, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 				m_cmd.addSignalSemaphore(fb.m_swapChain.m_lastImageRenderedSemaphore);
