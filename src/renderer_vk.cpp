@@ -6,6 +6,7 @@
 #include "bgfx_p.h"
 
 #if BGFX_CONFIG_RENDERER_VULKAN
+#	include <bx/pixelformat.h>
 #	include "renderer_vk.h"
 #	include "shader_spirv.h"
 
@@ -4059,8 +4060,9 @@ VK_IMPORT_DEVICE
 			rect[0].baseArrayLayer = 0;
 			rect[0].layerCount     = 1;
 
-			uint32_t numMrt = 1;
-			VkImageAspectFlags depthAspectMask = 0;
+			uint32_t numMrt;
+			bgfx::TextureFormat::Enum mrtFormat[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+			VkImageAspectFlags depthAspectMask;
 
 			const FrameBufferVK& fb = isValid(m_fbh)
 				? m_frameBuffers[m_fbh.idx]
@@ -4070,47 +4072,71 @@ VK_IMPORT_DEVICE
 			if (NULL == fb.m_nwh)
 			{
 				numMrt = fb.m_num;
+				for (uint8_t ii = 0; ii < fb.m_num; ++ii)
+				{
+					mrtFormat[ii] = bgfx::TextureFormat::Enum(m_textures[fb.m_texture[ii].idx].m_requestedFormat);
+				}
 				depthAspectMask = isValid(fb.m_depth) ? m_textures[fb.m_depth.idx].m_aspectMask : 0;
 				rect[0].layerCount = fb.m_attachment[0].numLayers;
 			}
 			else
 			{
+				numMrt = 1;
+				mrtFormat[0] = fb.m_swapChain.m_colorFormat;
 				depthAspectMask = fb.m_swapChain.m_backBufferDepthStencil.m_aspectMask;
 			}
 
-			VkClearAttachment attachments[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+			VkClearAttachment attachments[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS + 1];
 			uint32_t mrt = 0;
 
 			if (BGFX_CLEAR_COLOR & _clear.m_flags)
 			{
-				if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
+				for (uint32_t ii = 0; ii < numMrt; ++ii)
 				{
-					for (uint32_t ii = 0; ii < numMrt; ++ii)
-					{
-						attachments[mrt].colorAttachment = mrt;
-						attachments[mrt].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-						uint8_t index = bx::min<uint8_t>(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
-						bx::memCopy(&attachments[mrt].clearValue.color.float32, _palette[index], 16);
-						++mrt;
-					}
-				}
-				else
-				{
-					float frgba[4] =
-					{
-						_clear.m_index[0] * 1.0f / 255.0f,
-						_clear.m_index[1] * 1.0f / 255.0f,
-						_clear.m_index[2] * 1.0f / 255.0f,
-						_clear.m_index[3] * 1.0f / 255.0f,
-					};
+					attachments[mrt].colorAttachment = mrt;
+					attachments[mrt].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 
-					for (uint32_t ii = 0; ii < numMrt; ++ii)
+					VkClearColorValue& clearValue = attachments[mrt].clearValue.color;
+
+					const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(mrtFormat[ii]) );
+					const bx::EncodingType::Enum type = bx::EncodingType::Enum(blockInfo.encoding);
+
+					if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 					{
-						attachments[mrt].colorAttachment = mrt;
-						attachments[mrt].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-						bx::memCopy(&attachments[mrt].clearValue.color.float32, frgba, 16);
-						++mrt;
+						const uint8_t index = bx::min<uint8_t>(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
+
+						switch (type)
+						{
+						case bx::EncodingType::Int:
+						case bx::EncodingType::Uint:
+							clearValue.int32[0] = int32_t(_palette[index][0]);
+							clearValue.int32[1] = int32_t(_palette[index][1]);
+							clearValue.int32[2] = int32_t(_palette[index][2]);
+							clearValue.int32[3] = int32_t(_palette[index][3]);
+							break;
+						default:
+							bx::memCopy(&clearValue.float32, _palette[index], sizeof(clearValue.float32) );
+							break;
+						}
 					}
+					else
+					{
+						switch (type)
+						{
+						case bx::EncodingType::Int:
+						case bx::EncodingType::Uint:
+							clearValue.uint32[0] = _clear.m_index[0];
+							clearValue.uint32[1] = _clear.m_index[1];
+							clearValue.uint32[2] = _clear.m_index[2];
+							clearValue.uint32[3] = _clear.m_index[3];
+							break;
+						default:
+							bx::unpackRgba8(clearValue.float32, _clear.m_index);
+							break;
+						}
+					}
+
+					++mrt;
 				}
 			}
 
