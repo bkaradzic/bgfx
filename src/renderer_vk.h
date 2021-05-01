@@ -632,7 +632,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
 		VkImageLayout setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage = false);
 
-		VkResult createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget, ::VkImageView* _view) const;
+		VkResult createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view) const;
 
 		void*    m_directAccessPtr;
 		uint64_t m_flags;

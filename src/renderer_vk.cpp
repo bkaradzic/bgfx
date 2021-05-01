@@ -3223,6 +3223,10 @@ VK_IMPORT_DEVICE
 
 		VkSampler getSampler(uint32_t _samplerFlags, uint32_t _mipLevels)
 		{
+			const uint32_t borderColor = ((_samplerFlags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
+
+			_samplerFlags &= BGFX_SAMPLER_BITS_MASK;
+
 			bx::HashMurmur2A hash;
 			hash.begin();
 			hash.add(_samplerFlags);
@@ -3270,8 +3274,6 @@ VK_IMPORT_DEVICE
 				case BGFX_SAMPLER_MIN_ANISOTROPIC: sci.anisotropyEnable = m_deviceFeatures.samplerAnisotropy; break;
 			}
 
-			uint32_t borderColor = ( (_samplerFlags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
-
 			if (borderColor > 0)
 			{
 				sci.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
@@ -3283,9 +3285,11 @@ VK_IMPORT_DEVICE
 			return sampler;
 		}
 
-		VkImageView getCachedImageView(TextureHandle _handle, uint32_t _mip, uint32_t _numMips, VkImageViewType _type)
+		VkImageView getCachedImageView(TextureHandle _handle, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _stencil = false)
 		{
 			const TextureVK& texture = m_textures[_handle.idx];
+
+			_stencil = _stencil && !!(texture.m_aspectMask & VK_IMAGE_ASPECT_STENCIL_BIT);
 
 			bx::HashMurmur2A hash;
 			hash.begin();
@@ -3293,6 +3297,7 @@ VK_IMPORT_DEVICE
 			hash.add(_mip);
 			hash.add(_numMips);
 			hash.add(_type);
+			hash.add(_stencil);
 			uint32_t hashKey = hash.end();
 
 			VkImageView* viewCached = m_imageViewCache.find(hashKey);
@@ -3302,8 +3307,13 @@ VK_IMPORT_DEVICE
 				return *viewCached;
 			}
 
+			const VkImageAspectFlags aspectMask = 0
+				| VK_IMAGE_ASPECT_COLOR_BIT
+				| ( _stencil ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_DEPTH_BIT)
+				;
+
 			VkImageView view;
-			VK_CHECK(texture.createView(0, texture.m_numSides, _mip, _numMips, _type, false, &view) );
+			VK_CHECK(texture.createView(0, texture.m_numSides, _mip, _numMips, _type, aspectMask, false, &view) );
 			m_imageViewCache.add(hashKey, view, _handle.idx);
 
 			return view;
@@ -3772,13 +3782,12 @@ VK_IMPORT_DEVICE
 					case Binding::Texture:
 						{
 							TextureVK& texture = m_textures[bind.m_idx];
-							VkSampler sampler = getSampler(
-								(0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
-									? bind.m_samplerFlags
-									: (uint32_t)texture.m_flags
-								) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK)
-								, texture.m_numMips
-								);
+							const uint32_t samplerFlags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+								? bind.m_samplerFlags
+								: (uint32_t)texture.m_flags
+								;
+							const bool sampleStencil = !!(samplerFlags & BGFX_SAMPLER_SAMPLE_STENCIL);
+							VkSampler sampler = getSampler(samplerFlags, texture.m_numMips);
 
 							const VkImageViewType type = UINT32_MAX == bindInfo.index
 								? texture.m_type
@@ -3797,6 +3806,7 @@ VK_IMPORT_DEVICE
 								, 0
 								, texture.m_numMips
 								, type
+								, sampleStencil
 								);
 
 							wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -4313,7 +4323,6 @@ VK_IMPORT_DEVICE
 		uint32_t        m_numFramesInFlight;
 		CommandQueueVK  m_cmd;
 		VkCommandBuffer m_commandBuffer;
-
 
 		VkDevice m_device;
 		uint32_t m_globalQueueFamily;
@@ -6268,7 +6277,7 @@ VK_DESTROY
 		return oldLayout;
 	}
 
-	VkResult TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget, ::VkImageView* _view) const
+	VkResult TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view) const
 	{
 		VkResult result = VK_SUCCESS;
 
@@ -6291,14 +6300,6 @@ VK_DESTROY
 				);
 		}
 
-		VkImageView view = VK_NULL_HANDLE;
-
-		const VkImageAspectFlags aspectMask = 0
-			| VK_IMAGE_ASPECT_COLOR_BIT
-			| VK_IMAGE_ASPECT_DEPTH_BIT
-			| (_renderTarget ? VK_IMAGE_ASPECT_STENCIL_BIT : 0)
-			;
-
 		VkImageViewCreateInfo viewInfo;
 		viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.pNext      = NULL;
@@ -6310,7 +6311,7 @@ VK_DESTROY
 		viewInfo.viewType   = _type;
 		viewInfo.format     = m_format;
 		viewInfo.components = m_components;
-		viewInfo.subresourceRange.aspectMask     = m_aspectMask & aspectMask;
+		viewInfo.subresourceRange.aspectMask     = m_aspectMask & _aspectMask;
 		viewInfo.subresourceRange.baseMipLevel   = _mip;
 		viewInfo.subresourceRange.levelCount     = _numMips;
 		viewInfo.subresourceRange.baseArrayLayer = _layer;
@@ -6324,6 +6325,8 @@ VK_DESTROY
 				: _numLayers
 				;
 		}
+
+		VkImageView view = VK_NULL_HANDLE;
 
 		result = vkCreateImageView(
 			  s_renderVK->m_device
@@ -6977,7 +6980,7 @@ VK_DESTROY
 			return result;
 		}
 
-		result = m_backBufferDepthStencil.createView(0, 1, 0, 1, VK_IMAGE_VIEW_TYPE_2D, true, &m_backBufferDepthStencilImageView);
+		result = m_backBufferDepthStencil.createView(0, 1, 0, 1, VK_IMAGE_VIEW_TYPE_2D, m_backBufferDepthStencil.m_aspectMask, true, &m_backBufferDepthStencilImageView);
 
 		if (VK_SUCCESS != result)
 		{
@@ -7001,7 +7004,7 @@ VK_DESTROY
 				return result;
 			}
 
-			result = m_backBufferColorMsaa.createView(0, 1, 0, 1, VK_IMAGE_VIEW_TYPE_2D, true, &m_backBufferColorMsaaImageView);
+			result = m_backBufferColorMsaa.createView(0, 1, 0, 1, VK_IMAGE_VIEW_TYPE_2D, m_backBufferColorMsaa.m_aspectMask, true, &m_backBufferColorMsaaImageView);
 
 			if (VK_SUCCESS != result)
 			{
@@ -7412,6 +7415,7 @@ VK_DESTROY
 					, at.mip
 					, 1
 					, at.numLayers > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D
+					, texture.m_aspectMask
 					, true
 					, &m_textureImageViews[ii]
 					) );
