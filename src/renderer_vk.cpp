@@ -311,6 +311,7 @@ VK_IMPORT_DEVICE
 			EXT_conservative_rasterization,
 			EXT_line_rasterization,
 			EXT_shader_viewport_index_layer,
+			EXT_custom_border_color,
 
 			Count
 		};
@@ -333,7 +334,8 @@ VK_IMPORT_DEVICE
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                                                         , Layer::Count },
 		{ "VK_EXT_conservative_rasterization",      1, false, false, true                                                         , Layer::Count },
 		{ "VK_EXT_line_rasterization",              1, false, false, true                                                         , Layer::Count },
-		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                                                         , Layer::Count }
+		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                                                         , Layer::Count },
+		{ "VK_EXT_custom_border_color",             1, false, false, true                                                         , Layer::Count },
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1087,10 +1089,12 @@ VK_IMPORT_DEVICE
 
 			const bool headless = NULL == g_platformData.nwh;
 
-			VkPhysicalDeviceLineRasterizationFeaturesEXT lineRasterizationFeatures;
 			const void* nextFeatures = NULL;
+			VkPhysicalDeviceLineRasterizationFeaturesEXT lineRasterizationFeatures;
+			VkPhysicalDeviceCustomBorderColorFeaturesEXT customBorderColorFeatures;
 
 			bx::memSet(&lineRasterizationFeatures, 0, sizeof(lineRasterizationFeatures) );
+			bx::memSet(&customBorderColorFeatures, 0, sizeof(customBorderColorFeatures) );
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -1449,6 +1453,14 @@ VK_IMPORT_INSTANCE
 						lineRasterizationFeatures.pNext = NULL;
 					}
 
+					if (s_extension[Extension::EXT_custom_border_color].m_supported)
+					{
+						next->pNext = (VkBaseOutStructure*)&customBorderColorFeatures;
+						next = (VkBaseOutStructure*)&customBorderColorFeatures;
+						customBorderColorFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT;
+						customBorderColorFeatures.pNext = NULL;
+					}
+
 					nextFeatures = deviceFeatures2.pNext;
 
 					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
@@ -1464,6 +1476,11 @@ VK_IMPORT_INSTANCE
 				m_lineAASupport = true
 					&& s_extension[Extension::EXT_line_rasterization].m_supported
 					&& lineRasterizationFeatures.smoothLines
+					;
+
+				m_borderColorSupport = true
+					&& s_extension[Extension::EXT_custom_border_color].m_supported
+					&& customBorderColorFeatures.customBorderColors
 					;
 
 				m_timerQuerySupport = m_deviceProperties.limits.timestampComputeAndGraphics;
@@ -1992,6 +2009,7 @@ VK_IMPORT_DEVICE
 			m_descriptorSetCache.invalidate();
 			m_renderPassCache.invalidate();
 			m_samplerCache.invalidate();
+			m_samplerBorderColorCache.invalidate();
 			m_imageViewCache.invalidate();
 
 			for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
@@ -2508,7 +2526,7 @@ VK_IMPORT_DEVICE
 			bind.m_bind[0].m_idx = _blitter.m_texture.idx;
 			bind.m_bind[0].m_samplerFlags = (uint32_t)(texture.m_flags & BGFX_SAMPLER_BITS_MASK);
 
-			const VkDescriptorSet descriptorSet = getDescriptorSet(program, bind, scratchBuffer);
+			const VkDescriptorSet descriptorSet = getDescriptorSet(program, bind, scratchBuffer, NULL);
 
 			vkCmdBindDescriptorSets(
 				  m_commandBuffer
@@ -2522,7 +2540,7 @@ VK_IMPORT_DEVICE
 				);
 
 			const VertexBufferVK& vb  = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			VkDeviceSize offset = 0;
+			const VkDeviceSize offset = 0;
 			vkCmdBindVertexBuffers(m_commandBuffer, 0, 1, &vb.m_buffer, &offset);
 
 			const BufferVK& ib = m_indexBuffers[_blitter.m_ib->handle.idx];
@@ -2620,6 +2638,7 @@ VK_IMPORT_DEVICE
 			{
 				m_maxAnisotropy = maxAnisotropy;
 				m_samplerCache.invalidate();
+				m_samplerBorderColorCache.invalidate();
 			}
 
 			bool depthClamp = m_deviceFeatures.depthClamp && !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
@@ -3221,62 +3240,105 @@ VK_IMPORT_DEVICE
 			return getRenderPass(BX_COUNTOF(formats), formats, aspects, resolve, samples, _renderPass);
 		}
 
-		VkSampler getSampler(uint32_t _samplerFlags, uint32_t _mipLevels)
+		VkSampler getSampler(uint32_t _flags, VkFormat _format, const float _palette[][4])
 		{
-			const uint32_t borderColor = ((_samplerFlags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
+			uint32_t index = ((_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
+			index = bx::min<uint32_t>(BGFX_CONFIG_MAX_COLOR_PALETTE - 1, index);
 
-			_samplerFlags &= BGFX_SAMPLER_BITS_MASK;
+			_flags &= BGFX_SAMPLER_BITS_MASK;
+			_flags &= ~(m_deviceFeatures.samplerAnisotropy ? 0 : (BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC) );
 
-			bx::HashMurmur2A hash;
-			hash.begin();
-			hash.add(_samplerFlags);
-			hash.add(_mipLevels);
-			uint32_t hashKey = hash.end();
+			// Force both min+max anisotropic, can't be set individually.
+			_flags |= 0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) )
+					? BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC
+					: 0
+					;
 
-			VkSampler sampler = m_samplerCache.find(hashKey);
+			const float* rgba = NULL == _palette
+				? NULL
+				: _palette[index]
+				;
+
+			const bool needColor = true
+				&& needBorderColor(_flags)
+				&& NULL != rgba
+				&& m_borderColorSupport
+				;
+
+			uint32_t hashKey;
+			VkSampler sampler = VK_NULL_HANDLE;
+			if (!needColor)
+			{
+				bx::HashMurmur2A hash;
+				hash.begin();
+				hash.add(_flags);
+				hash.add(-1);
+				hash.add(VK_FORMAT_UNDEFINED);
+				hashKey = hash.end();
+
+				sampler = m_samplerCache.find(hashKey);
+			}
+			else
+			{
+				bx::HashMurmur2A hash;
+				hash.begin();
+				hash.add(_flags);
+				hash.add(index);
+				hash.add(_format);
+				hashKey = hash.end();
+
+				const uint32_t colorHashKey = m_samplerBorderColorCache.find(hashKey);
+				const uint32_t newColorHashKey = bx::hash<bx::HashMurmur2A>(rgba, sizeof(float) * 4);
+				if (newColorHashKey == colorHashKey)
+				{
+					sampler = m_samplerCache.find(hashKey);
+				}
+				else
+				{
+					m_samplerBorderColorCache.add(hashKey, newColorHashKey);
+				}
+			}
 
 			if (VK_NULL_HANDLE != sampler)
 			{
 				return sampler;
 			}
 
-			const uint32_t cmpFunc = (_samplerFlags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+			const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+
+			const float maxLodBias = m_deviceProperties.limits.maxSamplerLodBias;
+			const float lodBias = bx::clamp(float(BGFX_CONFIG_MIP_LOD_BIAS), -maxLodBias, maxLodBias);
 
 			VkSamplerCreateInfo sci;
 			sci.sType            = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 			sci.pNext            = NULL;
 			sci.flags            = 0;
-			sci.magFilter        = VK_FILTER_LINEAR;
-			sci.minFilter        = VK_FILTER_LINEAR;
-			sci.mipmapMode       = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-			sci.addressModeU     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
-			sci.addressModeV     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
-			sci.addressModeW     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
-			sci.mipLodBias       = float(BGFX_CONFIG_MIP_LOD_BIAS);
-			sci.anisotropyEnable = VK_FALSE;
+			sci.magFilter        = _flags & BGFX_SAMPLER_MAG_POINT ? VK_FILTER_NEAREST              : VK_FILTER_LINEAR;
+			sci.minFilter        = _flags & BGFX_SAMPLER_MIN_POINT ? VK_FILTER_NEAREST              : VK_FILTER_LINEAR;
+			sci.mipmapMode       = _flags & BGFX_SAMPLER_MIP_POINT ? VK_SAMPLER_MIPMAP_MODE_NEAREST : VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			sci.addressModeU     = s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
+			sci.addressModeV     = s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
+			sci.addressModeW     = s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
+			sci.mipLodBias       = lodBias;
+			sci.anisotropyEnable = !!(_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC) );
 			sci.maxAnisotropy    = m_maxAnisotropy;
 			sci.compareEnable    = 0 != cmpFunc;
 			sci.compareOp        = s_cmpFunc[cmpFunc];
 			sci.minLod           = 0.0f;
-			sci.maxLod           = (float)_mipLevels;
-			sci.borderColor      = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+			sci.maxLod           = VK_LOD_CLAMP_NONE;
+			sci.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 			sci.unnormalizedCoordinates = VK_FALSE;
 
-			switch (_samplerFlags & BGFX_SAMPLER_MAG_MASK)
+			VkSamplerCustomBorderColorCreateInfoEXT cbcci;
+			if (needColor)
 			{
-				case BGFX_SAMPLER_MAG_POINT:       sci.magFilter = VK_FILTER_NEAREST;                         break;
-				case BGFX_SAMPLER_MAG_ANISOTROPIC: sci.anisotropyEnable = m_deviceFeatures.samplerAnisotropy; break;
-			}
+				cbcci.sType = VK_STRUCTURE_TYPE_SAMPLER_CUSTOM_BORDER_COLOR_CREATE_INFO_EXT;
+				cbcci.pNext = NULL;
+				cbcci.format = _format;
+				bx::memCopy(cbcci.customBorderColor.float32, rgba, sizeof(cbcci.customBorderColor.float32) );
 
-			switch (_samplerFlags & BGFX_SAMPLER_MIN_MASK)
-			{
-				case BGFX_SAMPLER_MIN_POINT:       sci.minFilter = VK_FILTER_NEAREST;                         break;
-				case BGFX_SAMPLER_MIN_ANISOTROPIC: sci.anisotropyEnable = m_deviceFeatures.samplerAnisotropy; break;
-			}
-
-			if (borderColor > 0)
-			{
-				sci.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+				sci.pNext = &cbcci;
+				sci.borderColor = VK_BORDER_COLOR_FLOAT_CUSTOM_EXT;
 			}
 
 			VK_CHECK(vkCreateSampler(m_device, &sci, m_allocatorCb, &sampler) );
@@ -3613,7 +3675,7 @@ VK_IMPORT_DEVICE
 			return pipeline;
 		}
 
-		VkDescriptorSet getDescriptorSet(const ProgramVK& program, const RenderBind& renderBind, const ScratchBufferVK& scratchBuffer)
+		VkDescriptorSet getDescriptorSet(const ProgramVK& program, const RenderBind& renderBind, const ScratchBufferVK& scratchBuffer, const float _palette[][4])
 		{
 			const uint32_t vsize = program.m_vsh->m_size;
 			const uint32_t fsize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
@@ -3787,7 +3849,7 @@ VK_IMPORT_DEVICE
 								: (uint32_t)texture.m_flags
 								;
 							const bool sampleStencil = !!(samplerFlags & BGFX_SAMPLER_SAMPLE_STENCIL);
-							VkSampler sampler = getSampler(samplerFlags, texture.m_numMips);
+							VkSampler sampler = getSampler(samplerFlags, texture.m_format, _palette);
 
 							const VkImageViewType type = UINT32_MAX == bindInfo.index
 								? texture.m_type
@@ -4310,6 +4372,7 @@ VK_IMPORT_DEVICE
 		VkPhysicalDeviceFeatures         m_deviceFeatures;
 
 		bool m_lineAASupport;
+		bool m_borderColorSupport;
 		bool m_timerQuerySupport;
 
 		FrameBufferVK m_backBuffer;
@@ -4353,6 +4416,7 @@ VK_IMPORT_DEVICE
 		StateCacheLru<VkDescriptorSet, MAX_DESCRIPTOR_SETS> m_descriptorSetCache;
 		StateCacheT<VkRenderPass> m_renderPassCache;
 		StateCacheT<VkSampler> m_samplerCache;
+		StateCacheT<uint32_t> m_samplerBorderColorCache;
 		StateCacheLru<VkImageView, 1024> m_imageViewCache;
 
 		Resolution m_resolution;
@@ -4448,6 +4512,10 @@ VK_DESTROY
 	void release(VkDescriptorSet& _obj)
 	{
 		s_renderVK->release(_obj);
+	}
+
+	void release(uint32_t)
+	{
 	}
 
 	void ScratchBufferVK::create(uint32_t _size, uint32_t _count)
@@ -8239,7 +8307,7 @@ VK_DESTROY
 							}
 						}
 
-						const VkDescriptorSet descriptorSet = getDescriptorSet(program, renderBind, scratchBuffer);
+						const VkDescriptorSet descriptorSet = getDescriptorSet(program, renderBind, scratchBuffer, _render->m_colorPalette);
 
 						vkCmdBindDescriptorSets(
 							  m_commandBuffer
@@ -8530,7 +8598,7 @@ VK_DESTROY
 							}
 						}
 
-						const VkDescriptorSet descriptorSet = getDescriptorSet(program, renderBind, scratchBuffer);
+						const VkDescriptorSet descriptorSet = getDescriptorSet(program, renderBind, scratchBuffer, _render->m_colorPalette);
 
 						vkCmdBindDescriptorSets(
 							  m_commandBuffer
