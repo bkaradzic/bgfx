@@ -11,7 +11,6 @@
 #	define KHR_SURFACE_EXTENSION_NAME VK_KHR_ANDROID_SURFACE_EXTENSION_NAME
 #	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_ANDROID
 #elif BX_PLATFORM_LINUX
-//#	define VK_USE_PLATFORM_MIR_KHR
 #	define VK_USE_PLATFORM_XLIB_KHR
 #	define VK_USE_PLATFORM_XCB_KHR
 //#	define VK_USE_PLATFORM_WAYLAND_KHR
@@ -42,28 +41,33 @@
 			VK_IMPORT_FUNC(false, vkGetDeviceProcAddr);                    \
 			VK_IMPORT_FUNC(false, vkEnumerateInstanceExtensionProperties); \
 			VK_IMPORT_FUNC(false, vkEnumerateInstanceLayerProperties);     \
+			/* 1.1 */                                                      \
 			VK_IMPORT_FUNC(true,  vkEnumerateInstanceVersion);             \
 
-#define VK_IMPORT_INSTANCE_ANDROID \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateAndroidSurfaceKHR);
+#define VK_IMPORT_INSTANCE_ANDROID                                     \
+			/* VK_KHR_android_surface */                               \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateAndroidSurfaceKHR); \
 
 #define VK_IMPORT_INSTANCE_LINUX                                                           \
+			/* VK_KHR_xlib_surface */                                                      \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateXlibSurfaceKHR);                        \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceXlibPresentationSupportKHR); \
+			/* VK_KHR_xcb_surface */                                                       \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateXcbSurfaceKHR);                         \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceXcbPresentationSupportKHR);  \
 
+//			/* VK_KHR_wayland_surface */
 //			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWaylandSurfaceKHR);
 //			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWaylandPresentationSupportKHR);
-//			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMirSurfaceKHR);
-//			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMirPresentationSupportKHR);
 
-#define VK_IMPORT_INSTANCE_WINDOWS \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWin32SurfaceKHR); \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWin32PresentationSupportKHR);
+#define VK_IMPORT_INSTANCE_WINDOWS                                                          \
+			/* VK_KHR_win32_surface */                                                      \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWin32SurfaceKHR);                        \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWin32PresentationSupportKHR); \
 
-#define VK_IMPORT_INSTANCE_MACOS \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMacOSSurfaceMVK);
+#define VK_IMPORT_INSTANCE_MACOS                                     \
+			/* VK_MVK_macos_surface */                               \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMacOSSurfaceMVK); \
 
 #define VK_IMPORT_INSTANCE                                                             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyInstance);                         \
@@ -73,18 +77,20 @@
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceProperties);             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFormatProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFeatures);               \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceFeatures2KHR);           \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceImageFormatProperties);  \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceMemoryProperties);       \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMemoryProperties2KHR);   \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceQueueFamilyProperties);  \
+			VK_IMPORT_INSTANCE_FUNC(false, vkCreateDevice);                            \
+			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyDevice);                           \
+			/* VK_KHR_surface */                                                       \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceCapabilitiesKHR); \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceFormatsKHR);      \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfacePresentModesKHR); \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceSupportKHR);      \
-			VK_IMPORT_INSTANCE_FUNC(false, vkCreateDevice);                            \
-			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyDevice);                           \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroySurfaceKHR);                       \
+			/* VK_KHR_get_physical_device_properties2 */                               \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceFeatures2KHR);           \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMemoryProperties2KHR);   \
 			/* VK_EXT_debug_report */                                                  \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateDebugReportCallbackEXT);            \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroyDebugReportCallbackEXT);           \
@@ -93,11 +99,6 @@
 
 #define VK_IMPORT_DEVICE                                                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkGetDeviceQueue);                \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCreateSwapchainKHR);            \
-			VK_IMPORT_DEVICE_FUNC(true,  vkDestroySwapchainKHR);           \
-			VK_IMPORT_DEVICE_FUNC(true,  vkGetSwapchainImagesKHR);         \
-			VK_IMPORT_DEVICE_FUNC(true,  vkAcquireNextImageKHR);           \
-			VK_IMPORT_DEVICE_FUNC(true,  vkQueuePresentKHR);               \
 			VK_IMPORT_DEVICE_FUNC(false, vkCreateFence);                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkDestroyFence);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkCreateSemaphore);               \
@@ -189,6 +190,12 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkInvalidateMappedMemoryRanges);  \
 			VK_IMPORT_DEVICE_FUNC(false, vkBindBufferMemory);              \
 			VK_IMPORT_DEVICE_FUNC(false, vkBindImageMemory);               \
+			/* VK_KHR_swapchain */                                         \
+			VK_IMPORT_DEVICE_FUNC(true,  vkCreateSwapchainKHR);            \
+			VK_IMPORT_DEVICE_FUNC(true,  vkDestroySwapchainKHR);           \
+			VK_IMPORT_DEVICE_FUNC(true,  vkGetSwapchainImagesKHR);         \
+			VK_IMPORT_DEVICE_FUNC(true,  vkAcquireNextImageKHR);           \
+			VK_IMPORT_DEVICE_FUNC(true,  vkQueuePresentKHR);               \
 			/* VK_EXT_debug_marker */                                      \
 			VK_IMPORT_DEVICE_FUNC(true,  vkDebugMarkerSetObjectTagEXT);    \
 			VK_IMPORT_DEVICE_FUNC(true,  vkDebugMarkerSetObjectNameEXT);   \
