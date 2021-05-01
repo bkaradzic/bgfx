@@ -327,13 +327,13 @@ VK_IMPORT_DEVICE
 	//
 	static Extension s_extension[] =
 	{
-		{ "VK_EXT_debug_utils",                     1, false, false, BGFX_CONFIG_DEBUG_OBJECT_NAME, Layer::Count },
-		{ "VK_EXT_debug_report",                    1, false, false, BGFX_CONFIG_DEBUG            , Layer::Count },
-		{ "VK_EXT_memory_budget",                   1, false, false, true                         , Layer::Count },
-		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                         , Layer::Count },
-		{ "VK_EXT_conservative_rasterization",      1, false, false, true                         , Layer::Count },
-		{ "VK_EXT_line_rasterization",              1, false, false, true                         , Layer::Count },
-		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                         , Layer::Count }
+		{ "VK_EXT_debug_utils",                     1, false, false, BGFX_CONFIG_DEBUG_OBJECT_NAME || BGFX_CONFIG_DEBUG_ANNOTATION, Layer::Count },
+		{ "VK_EXT_debug_report",                    1, false, false, false                                                        , Layer::Count },
+		{ "VK_EXT_memory_budget",                   1, false, false, true                                                         , Layer::Count },
+		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                                                         , Layer::Count },
+		{ "VK_EXT_conservative_rasterization",      1, false, false, true                                                         , Layer::Count },
+		{ "VK_EXT_line_rasterization",              1, false, false, true                                                         , Layer::Count },
+		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                                                         , Layer::Count }
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -634,7 +634,7 @@ VK_IMPORT_DEVICE
 			, _messageCode
 			, _message
 			);
-		return VK_TRUE;
+		return VK_FALSE;
 	}
 
 	VkResult enumerateLayerProperties(VkPhysicalDevice _physicalDevice, uint32_t* _propertyCount, VkLayerProperties* _properties)
@@ -1150,6 +1150,8 @@ VK_IMPORT
 					s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_instance.m_initialize = true;
 					s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_device.m_initialize   = true;
 					s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_instance.m_initialize = true;
+
+					s_extension[Extension::EXT_debug_report].m_initialize = true;
 				}
 
 				dumpExtensions(VK_NULL_HANDLE, s_extension);
@@ -1876,10 +1878,8 @@ VK_IMPORT_DEVICE
 				vkSetDebugUtilsObjectNameEXT = stubSetDebugUtilsObjectNameEXT;
 			}
 
-			if (!s_extension[Extension::EXT_debug_utils].m_supported
-			||  NULL == vkCmdBeginDebugUtilsLabelEXT
-			||  NULL == vkCmdEndDebugUtilsLabelEXT
-			   )
+			if (NULL == vkCmdBeginDebugUtilsLabelEXT
+			||  NULL == vkCmdEndDebugUtilsLabelEXT)
 			{
 				vkCmdBeginDebugUtilsLabelEXT = stubCmdBeginDebugUtilsLabelEXT;
 				vkCmdEndDebugUtilsLabelEXT   = stubCmdEndDebugUtilsLabelEXT;

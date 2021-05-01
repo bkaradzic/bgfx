@@ -94,7 +94,6 @@
 			/* VK_EXT_debug_report */                                                  \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateDebugReportCallbackEXT);            \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroyDebugReportCallbackEXT);           \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkDebugReportMessageEXT);                   \
 			VK_IMPORT_INSTANCE_PLATFORM
 
 #define VK_IMPORT_DEVICE                                                   \
@@ -196,24 +195,11 @@
 			VK_IMPORT_DEVICE_FUNC(true,  vkGetSwapchainImagesKHR);         \
 			VK_IMPORT_DEVICE_FUNC(true,  vkAcquireNextImageKHR);           \
 			VK_IMPORT_DEVICE_FUNC(true,  vkQueuePresentKHR);               \
-			/* VK_EXT_debug_marker */                                      \
-			VK_IMPORT_DEVICE_FUNC(true,  vkDebugMarkerSetObjectTagEXT);    \
-			VK_IMPORT_DEVICE_FUNC(true,  vkDebugMarkerSetObjectNameEXT);   \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDebugMarkerBeginEXT);        \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDebugMarkerEndEXT);          \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDebugMarkerInsertEXT);       \
 			/* VK_EXT_debug_utils */                                       \
 			VK_IMPORT_DEVICE_FUNC(true,  vkSetDebugUtilsObjectNameEXT);    \
-			VK_IMPORT_DEVICE_FUNC(true,  vkSetDebugUtilsObjectTagEXT);     \
-			VK_IMPORT_DEVICE_FUNC(true,  vkQueueBeginDebugUtilsLabelEXT);  \
-			VK_IMPORT_DEVICE_FUNC(true,  vkQueueEndDebugUtilsLabelEXT);    \
-			VK_IMPORT_DEVICE_FUNC(true,  vkQueueInsertDebugUtilsLabelEXT); \
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdBeginDebugUtilsLabelEXT);    \
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdEndDebugUtilsLabelEXT);      \
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdInsertDebugUtilsLabelEXT);   \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCreateDebugUtilsMessengerEXT);  \
-			VK_IMPORT_DEVICE_FUNC(true,  vkDestroyDebugUtilsMessengerEXT); \
-			VK_IMPORT_DEVICE_FUNC(true,  vkSubmitDebugUtilsMessageEXT);    \
 
 #define VK_DESTROY                                \
 			VK_DESTROY_FUNC(Buffer);              \
