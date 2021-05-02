@@ -1112,6 +1112,8 @@ VK_IMPORT_DEVICE
 				m_renderDocDll = loadRenderDoc();
 			}
 
+			setGraphicsDebuggerPresent(NULL != m_renderDocDll);
+
 			m_vulkan1Dll = bx::dlopen(
 #if BX_PLATFORM_WINDOWS
 				"vulkan-1.dll"
