@@ -790,6 +790,8 @@ VK_IMPORT_DEVICE
 			VKENUM(VK_INCOMPLETE);
 			VKENUM(VK_ERROR_OUT_OF_HOST_MEMORY);
 			VKENUM(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+			VKENUM(VK_ERROR_OUT_OF_POOL_MEMORY);
+			VKENUM(VK_ERROR_FRAGMENTED_POOL);
 			VKENUM(VK_ERROR_INITIALIZATION_FAILED);
 			VKENUM(VK_ERROR_DEVICE_LOST);
 			VKENUM(VK_ERROR_MEMORY_MAP_FAILED);
@@ -2006,7 +2008,6 @@ VK_IMPORT_DEVICE
 
 			m_pipelineStateCache.invalidate();
 			m_descriptorSetLayoutCache.invalidate();
-			m_descriptorSetCache.invalidate();
 			m_renderPassCache.invalidate();
 			m_samplerCache.invalidate();
 			m_samplerBorderColorCache.invalidate();
@@ -3677,59 +3678,6 @@ VK_IMPORT_DEVICE
 
 		VkDescriptorSet getDescriptorSet(const ProgramVK& program, const RenderBind& renderBind, const ScratchBufferVK& scratchBuffer, const float _palette[][4])
 		{
-			const uint32_t vsize = program.m_vsh->m_size;
-			const uint32_t fsize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
-
-			bx::HashMurmur2A hash;
-			hash.begin(0);
-			hash.add(program.m_descriptorSetLayout);
-
-			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
-			{
-				const Binding& bind = renderBind.m_bind[stage];
-				hash.add(bind.m_type);
-				if (kInvalidHandle != bind.m_idx)
-				{
-					switch (bind.m_type)
-					{
-					case Binding::Image:
-						{
-							const TextureVK& texture = m_textures[bind.m_idx];
-							hash.add(texture.m_textureImage);
-							hash.add(bind.m_mip);
-						}
-						break;
-					case Binding::VertexBuffer:
-					case Binding::IndexBuffer:
-						{
-							const BufferVK& sb = bind.m_type == Binding::VertexBuffer ? m_vertexBuffers[bind.m_idx] : m_indexBuffers[bind.m_idx];
-							hash.add(sb.m_buffer);
-							hash.add(sb.m_size);
-						}
-						break;
-					case Binding::Texture:
-						{
-							const TextureVK& texture = m_textures[bind.m_idx];
-							hash.add(texture.m_textureImage);
-							hash.add(bind.m_samplerFlags);
-						}
-						break;
-					}
-				}
-			}
-			
-			hash.add(vsize);
-			hash.add(fsize);
-			hash.add(scratchBuffer.m_buffer);
-			uint32_t hashKey = hash.end();
-
-			VkDescriptorSet* descriptorSetCached = m_descriptorSetCache.find(hashKey);
-
-			if (NULL != descriptorSetCached)
-			{
-				return *descriptorSetCached;
-			}
-
 			VkDescriptorSet descriptorSet;
 
 			VkDescriptorSetAllocateInfo dsai;
@@ -3739,7 +3687,7 @@ VK_IMPORT_DEVICE
 			dsai.descriptorSetCount = 1;
 			dsai.pSetLayouts        = &program.m_descriptorSetLayout;
 
-			vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
+			VK_CHECK(vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet) );
 
 			VkDescriptorImageInfo  imageInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 			VkDescriptorBufferInfo bufferInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
@@ -3902,6 +3850,9 @@ VK_IMPORT_DEVICE
 				}
 			}
 
+			const uint32_t vsize = program.m_vsh->m_size;
+			const uint32_t fsize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
+
 			if (vsize > 0)
 			{
 				bufferInfo[bufferCount].buffer = scratchBuffer.m_buffer;
@@ -3944,7 +3895,8 @@ VK_IMPORT_DEVICE
 
 			vkUpdateDescriptorSets(m_device, wdsCount, wds, 0, NULL);
 
-			m_descriptorSetCache.add(hashKey, descriptorSet, 0);
+			VkDescriptorSet temp = descriptorSet;
+			release(temp);
 
 			return descriptorSet;
 		}
@@ -4413,7 +4365,6 @@ VK_IMPORT_DEVICE
 
 		StateCacheT<VkPipeline> m_pipelineStateCache;
 		StateCacheT<VkDescriptorSetLayout> m_descriptorSetLayoutCache;
-		StateCacheLru<VkDescriptorSet, MAX_DESCRIPTOR_SETS> m_descriptorSetCache;
 		StateCacheT<VkRenderPass> m_renderPassCache;
 		StateCacheT<VkSampler> m_samplerCache;
 		StateCacheT<uint32_t> m_samplerBorderColorCache;
@@ -8074,6 +8025,9 @@ VK_DESTROY
 		bool hasPredefined = false;
 		VkPipeline currentGraphicsPipeline = VK_NULL_HANDLE;
 		VkPipeline currentComputePipeline  = VK_NULL_HANDLE;
+		VkDescriptorSet currentDescriptorSet = VK_NULL_HANDLE;
+		uint32_t currentBindHash = 0;
+		uint32_t descriptorSetCount = 0;
 		VkIndexType currentIndexFormat = VK_INDEX_TYPE_MAX_ENUM;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
@@ -8293,13 +8247,13 @@ VK_DESTROY
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
 					{
+						const uint32_t vsize = program.m_vsh->m_size;
 						uint32_t numOffset = 0;
 						uint32_t offset = 0;
 
 						if (constantsChanged
 						||  hasPredefined)
 						{
-							const uint32_t vsize = program.m_vsh->m_size;
 							if (vsize > 0)
 							{
 								offset = scratchBuffer.write(m_vsScratch, vsize);
@@ -8307,7 +8261,27 @@ VK_DESTROY
 							}
 						}
 
-						const VkDescriptorSet descriptorSet = getDescriptorSet(program, renderBind, scratchBuffer, _render->m_colorPalette);
+						bx::HashMurmur2A hash;
+						hash.begin();
+						hash.add(program.m_descriptorSetLayout);
+						hash.add(renderBind.m_bind, sizeof(renderBind.m_bind) );
+						hash.add(vsize);
+						hash.add(0);
+						const uint32_t bindHash = hash.end();
+
+						if (currentBindHash != bindHash)
+						{
+							currentBindHash = bindHash;
+
+							currentDescriptorSet = getDescriptorSet(
+								  program
+								, renderBind
+								, scratchBuffer
+								, _render->m_colorPalette
+							);
+
+							descriptorSetCount++;
+						}
 
 						vkCmdBindDescriptorSets(
 							  m_commandBuffer
@@ -8315,7 +8289,7 @@ VK_DESTROY
 							, program.m_pipelineLayout
 							, 0
 							, 1
-							, &descriptorSet
+							, &currentDescriptorSet
 							, numOffset
 							, &offset
 							);
@@ -8578,15 +8552,14 @@ VK_DESTROY
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
 					{
+						const uint32_t vsize = program.m_vsh->m_size;
+						const uint32_t fsize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
 						uint32_t numOffset = 0;
 						uint32_t offsets[2] = { 0, 0 };
 
 						if (constantsChanged
 						||  hasPredefined)
 						{
-							const uint32_t vsize = program.m_vsh->m_size;
-							const uint32_t fsize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
-
 							if (vsize > 0)
 							{
 								offsets[numOffset++] = scratchBuffer.write(m_vsScratch, vsize);
@@ -8598,7 +8571,27 @@ VK_DESTROY
 							}
 						}
 
-						const VkDescriptorSet descriptorSet = getDescriptorSet(program, renderBind, scratchBuffer, _render->m_colorPalette);
+						bx::HashMurmur2A hash;
+						hash.begin();
+						hash.add(program.m_descriptorSetLayout);
+						hash.add(renderBind.m_bind, sizeof(renderBind.m_bind) );
+						hash.add(vsize);
+						hash.add(fsize);
+						const uint32_t bindHash = hash.end();
+
+						if (currentBindHash != bindHash)
+						{
+							currentBindHash = bindHash;
+
+							currentDescriptorSet = getDescriptorSet(
+								  program
+								, renderBind
+								, scratchBuffer
+								, _render->m_colorPalette
+							);
+
+							descriptorSetCount++;
+						}
 
 						vkCmdBindDescriptorSets(
 							  m_commandBuffer
@@ -8606,7 +8599,7 @@ VK_DESTROY
 							, program.m_pipelineLayout
 							, 0
 							, 1
-							, &descriptorSet
+							, &currentDescriptorSet
 							, numOffset
 							, offsets
 							);
@@ -8944,7 +8937,7 @@ VK_DESTROY
 				tvm.printf(10, pos++, 0x8b, " %6d | %6d | %6d "
 					, m_pipelineStateCache.getCount()
 					, m_descriptorSetLayoutCache.getCount()
-					, m_descriptorSetCache.getCount()
+					, descriptorSetCount
 					);
 				pos++;
 
