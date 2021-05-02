@@ -3050,12 +3050,12 @@ VK_IMPORT_DEVICE
 			}
 
 			bx::HashMurmur2A hash;
-			hash.begin(0);
+			hash.begin();
 			hash.add(_samples);
-			for (uint8_t ii = 0; ii < _num; ++ii)
+			hash.add(_formats, sizeof(VkFormat) * _num);
+			if (NULL != _resolve)
 			{
-				hash.add(_formats[ii]);
-				hash.add(NULL != _resolve ? _resolve[ii] : false);
+				hash.add(_resolve, sizeof(bool) * _num);
 			}
 			uint32_t hashKey = hash.end();
 
@@ -3429,9 +3429,7 @@ VK_IMPORT_DEVICE
 			ProgramVK& program = m_program[_program.idx];
 
 			_state &= 0
-				| BGFX_STATE_WRITE_RGB
-				| BGFX_STATE_WRITE_A
-				| BGFX_STATE_WRITE_Z
+				| BGFX_STATE_WRITE_MASK
 				| BGFX_STATE_DEPTH_TEST_MASK
 				| BGFX_STATE_BLEND_MASK
 				| BGFX_STATE_BLEND_EQUATION_MASK
@@ -5438,17 +5436,19 @@ VK_DESTROY
 			for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
 			{
 				const OcclusionQueryHandle& handle = m_handle[(m_control.m_read + ii) % size];
-
-				vkCmdCopyQueryPoolResults(
-					  commandBuffer
-					, m_queryPool
-					, handle.idx
-					, 1
-					, m_readback
-					, handle.idx * sizeof(uint32_t)
-					, sizeof(uint32_t)
-					, VK_QUERY_RESULT_WAIT_BIT
-					);
+				if (isValid(handle) )
+				{
+					vkCmdCopyQueryPoolResults(
+						  commandBuffer
+						, m_queryPool
+						, handle.idx
+						, 1
+						, m_readback
+						, handle.idx * sizeof(uint32_t)
+						, sizeof(uint32_t)
+						, VK_QUERY_RESULT_WAIT_BIT
+						);
+				}
 			}
 
 			setMemoryBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT);
@@ -7670,13 +7670,7 @@ VK_DESTROY
 		for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 		{
 			vkDestroy(m_commandList[ii].m_fence);
-
-			if (VK_NULL_HANDLE != m_commandList[ii].m_commandBuffer)
-			{
-				vkFreeCommandBuffers(s_renderVK->m_device, m_commandList[ii].m_commandPool, 1, &m_commandList[ii].m_commandBuffer);
-				m_commandList[ii].m_commandBuffer = VK_NULL_HANDLE;
-			}
-
+			m_commandList[ii].m_commandBuffer = VK_NULL_HANDLE;
 			vkDestroy(m_commandList[ii].m_commandPool);
 		}
 	}
@@ -8323,6 +8317,8 @@ VK_DESTROY
 
 				const RenderDraw& draw = renderItem.draw;
 
+				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
+
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
 				{
 					const bool occluded = true
@@ -8357,8 +8353,6 @@ VK_DESTROY
 					currentProgram = BGFX_INVALID_HANDLE;
 					currentState.m_scissor = !draw.m_scissor;
 				}
-
-				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
 				if (0 != draw.m_streamMask)
 				{
