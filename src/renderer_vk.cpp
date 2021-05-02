@@ -1162,6 +1162,9 @@ VK_IMPORT
 					s_extension[Extension::EXT_debug_report].m_initialize = true;
 				}
 
+				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY);
+				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER );
+
 				dumpExtensions(VK_NULL_HANDLE, s_extension);
 
 				if (s_layer[Layer::VK_LAYER_KHRONOS_validation].m_device.m_supported
@@ -1441,6 +1444,8 @@ VK_IMPORT_INSTANCE
 
 				BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.deviceName);
 
+				VkPhysicalDeviceFeatures supportedFeatures;
+
 				if (s_extension[Extension::KHR_get_physical_device_properties2].m_supported)
 				{
 					VkPhysicalDeviceFeatures2KHR deviceFeatures2;
@@ -1468,14 +1473,33 @@ VK_IMPORT_INSTANCE
 					nextFeatures = deviceFeatures2.pNext;
 
 					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
-					m_deviceFeatures = deviceFeatures2.features;
+					supportedFeatures = deviceFeatures2.features;
 				}
 				else
 				{
-					vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_deviceFeatures);
+					vkGetPhysicalDeviceFeatures(m_physicalDevice, &supportedFeatures);
 				}
 
-				m_deviceFeatures.robustBufferAccess = VK_FALSE;
+				memset(&m_deviceFeatures, 0, sizeof(m_deviceFeatures) );
+
+				m_deviceFeatures.fullDrawIndexUint32       = supportedFeatures.fullDrawIndexUint32;
+				m_deviceFeatures.imageCubeArray            = supportedFeatures.imageCubeArray            && (_init.capabilities & BGFX_CAPS_TEXTURE_CUBE_ARRAY);
+				m_deviceFeatures.independentBlend          = supportedFeatures.independentBlend          && (_init.capabilities & BGFX_CAPS_BLEND_INDEPENDENT);
+				m_deviceFeatures.multiDrawIndirect         = supportedFeatures.multiDrawIndirect         && (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT);
+				m_deviceFeatures.drawIndirectFirstInstance = supportedFeatures.drawIndirectFirstInstance && (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT);
+				m_deviceFeatures.depthClamp        = supportedFeatures.depthClamp;
+				m_deviceFeatures.fillModeNonSolid  = supportedFeatures.fillModeNonSolid;
+				m_deviceFeatures.largePoints       = supportedFeatures.largePoints;
+				m_deviceFeatures.samplerAnisotropy = supportedFeatures.samplerAnisotropy;
+				m_deviceFeatures.textureCompressionETC2 = supportedFeatures.textureCompressionETC2;
+				m_deviceFeatures.textureCompressionBC   = supportedFeatures.textureCompressionBC;
+				m_deviceFeatures.vertexPipelineStoresAndAtomics = supportedFeatures.vertexPipelineStoresAndAtomics;
+				m_deviceFeatures.fragmentStoresAndAtomics  = supportedFeatures.fragmentStoresAndAtomics;
+				m_deviceFeatures.shaderImageGatherExtended = supportedFeatures.shaderImageGatherExtended;
+				m_deviceFeatures.shaderStorageImageExtendedFormats = supportedFeatures.shaderStorageImageExtendedFormats;
+				m_deviceFeatures.shaderClipDistance   = supportedFeatures.shaderClipDistance;
+				m_deviceFeatures.shaderCullDistance   = supportedFeatures.shaderCullDistance;
+				m_deviceFeatures.shaderResourceMinLod = supportedFeatures.shaderResourceMinLod;
 
 				m_lineAASupport = true
 					&& s_extension[Extension::EXT_line_rasterization].m_supported
