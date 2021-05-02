@@ -8319,11 +8319,6 @@ VK_DESTROY
 					continue;
 				}
 
-				if (!isFrameBufferValid)
-				{
-					continue;
-				}
-
 				const RenderDraw& draw = renderItem.draw;
 
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
@@ -8335,13 +8330,15 @@ VK_DESTROY
 						;
 
 					if (occluded
+					||  !isFrameBufferValid
+					||  0 == draw.m_streamMask
 					||  _render->m_frameCache.isZeroArea(viewScissorRect, draw.m_scissor) )
 					{
 						continue;
 					}
 				}
 
-				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+				const uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
 				currentState.m_stateFlags = draw.m_stateFlags;
 
 				if (!beginRenderPass)
