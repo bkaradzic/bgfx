@@ -816,7 +816,7 @@ VK_IMPORT_DEVICE
 	}
 
 	template<typename Ty>
-	VkObjectType getType();
+	constexpr VkObjectType getType();
 
 	template<> VkObjectType getType<VkBuffer             >() { return VK_OBJECT_TYPE_BUFFER;                }
 	template<> VkObjectType getType<VkCommandPool        >() { return VK_OBJECT_TYPE_COMMAND_POOL;          }
@@ -1152,15 +1152,12 @@ VK_IMPORT
 			}
 
 			{
-				if (_init.debug)
-				{
-					s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_device.m_initialize   = true;
-					s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_instance.m_initialize = true;
-					s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_device.m_initialize   = true;
-					s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_instance.m_initialize = true;
+				s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_device.m_initialize   = _init.debug;
+				s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_instance.m_initialize = _init.debug;
+				s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_device.m_initialize   = _init.debug;
+				s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_instance.m_initialize = _init.debug;
 
-					s_extension[Extension::EXT_debug_report].m_initialize = true;
-				}
+				s_extension[Extension::EXT_debug_report].m_initialize = _init.debug;
 
 				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY);
 				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER );
