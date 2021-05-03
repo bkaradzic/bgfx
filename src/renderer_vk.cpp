@@ -6,9 +6,9 @@
 #include "bgfx_p.h"
 
 #if BGFX_CONFIG_RENDERER_VULKAN
-#	include <bx/pixelformat.h>
 #	include "renderer_vk.h"
 #	include "shader_spirv.h"
+#	include <bx/pixelformat.h>
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
@@ -816,7 +816,7 @@ VK_IMPORT_DEVICE
 	}
 
 	template<typename Ty>
-	VkObjectType getType();
+	constexpr VkObjectType getType();
 
 	template<> VkObjectType getType<VkBuffer             >() { return VK_OBJECT_TYPE_BUFFER;                }
 	template<> VkObjectType getType<VkCommandPool        >() { return VK_OBJECT_TYPE_COMMAND_POOL;          }
@@ -1152,15 +1152,12 @@ VK_IMPORT
 			}
 
 			{
-				if (_init.debug)
-				{
-					s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_device.m_initialize   = true;
-					s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_instance.m_initialize = true;
-					s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_device.m_initialize   = true;
-					s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_instance.m_initialize = true;
+				s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_device.m_initialize   = _init.debug;
+				s_layer[Layer::VK_LAYER_LUNARG_standard_validation].m_instance.m_initialize = _init.debug;
+				s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_device.m_initialize   = _init.debug;
+				s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_instance.m_initialize = _init.debug;
 
-					s_extension[Extension::EXT_debug_report].m_initialize = true;
-				}
+				s_extension[Extension::EXT_debug_report].m_initialize = _init.debug;
 
 				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY);
 				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER );
@@ -1528,7 +1525,7 @@ VK_IMPORT_INSTANCE
 					| (m_deviceFeatures.fullDrawIndexUint32 ? BGFX_CAPS_INDEX32 : 0)
 					| BGFX_CAPS_INSTANCING
 					| BGFX_CAPS_OCCLUSION_QUERY
-					| BGFX_CAPS_SWAP_CHAIN
+					| (!headless ? BGFX_CAPS_SWAP_CHAIN : 0)
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_3D
 					| BGFX_CAPS_TEXTURE_BLIT
@@ -2311,8 +2308,6 @@ VK_IMPORT_DEVICE
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
 		{
-			BX_ASSERT(NULL != m_backBuffer.m_nwh, "Creating window frame buffer in headless mode.");
-
 			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 			{
 				FrameBufferHandle handle = m_windows[ii];
@@ -2710,7 +2705,7 @@ VK_IMPORT_DEVICE
 			{
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				if (g_platformData.nwh != m_backBuffer.m_nwh)
+				if (m_backBuffer.m_nwh != g_platformData.nwh)
 				{
 					m_backBuffer.m_nwh = g_platformData.nwh;
 				}
@@ -4495,10 +4490,6 @@ VK_DESTROY
 	void release(VkDescriptorSet& _obj)
 	{
 		s_renderVK->release(_obj);
-	}
-
-	void release(uint32_t)
-	{
 	}
 
 	void ScratchBufferVK::create(uint32_t _size, uint32_t _count)
@@ -8053,8 +8044,7 @@ VK_DESTROY
 
 		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
 		bool hasPredefined = false;
-		VkPipeline currentGraphicsPipeline = VK_NULL_HANDLE;
-		VkPipeline currentComputePipeline  = VK_NULL_HANDLE;
+		VkPipeline currentPipeline = VK_NULL_HANDLE;
 		VkDescriptorSet currentDescriptorSet = VK_NULL_HANDLE;
 		uint32_t currentBindHash = 0;
 		uint32_t descriptorSetCount = 0;
@@ -8222,6 +8212,7 @@ VK_DESTROY
 					if (!wasCompute)
 					{
 						wasCompute = true;
+						currentBindHash = 0;
 
 						BGFX_VK_PROFILER_END();
 						setViewType(view, "C");
@@ -8240,9 +8231,9 @@ VK_DESTROY
 
 					const VkPipeline pipeline = getPipeline(key.m_program);
 
-					if (pipeline != currentComputePipeline)
+					if (currentPipeline != pipeline)
 					{
-						currentComputePipeline = pipeline;
+						currentPipeline = pipeline;
 						vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 					}
 
@@ -8375,7 +8366,11 @@ VK_DESTROY
 
 				if (!beginRenderPass)
 				{
-					wasCompute = false;
+					if (wasCompute)
+					{
+						wasCompute = false;
+						currentBindHash = 0;
+					}
 
 					BGFX_VK_PROFILER_END();
 					setViewType(view, " ");
@@ -8468,9 +8463,9 @@ VK_DESTROY
 							, uint8_t(draw.m_instanceDataStride/16)
 							);
 
-					if (pipeline != currentGraphicsPipeline)
+					if (currentPipeline != pipeline)
 					{
-						currentGraphicsPipeline = pipeline;
+						currentPipeline = pipeline;
 						vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 					}
 

@@ -298,6 +298,11 @@ VK_DESTROY_FUNC(DescriptorSet);
 #undef VK_DESTROY_FUNC
 
 	template<typename Ty>
+	void release(Ty)
+	{
+	}
+
+	template<typename Ty>
 	class StateCacheT
 	{
 	public:
