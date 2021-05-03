@@ -1848,6 +1848,11 @@ VK_IMPORT_DEVICE
 					m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
 					m_textVideoMem.clear();
 
+					for (uint8_t ii = 0; ii < BX_COUNTOF(m_swapchainFormats); ++ii)
+					{
+						m_swapchainFormats[ii] = TextureFormat::Enum(ii);
+					}
+
 					result = m_backBuffer.create(UINT16_MAX, g_platformData.nwh, m_resolution.width, m_resolution.height, m_resolution.format);
 
 					if (VK_SUCCESS != result)
@@ -2306,6 +2311,8 @@ VK_IMPORT_DEVICE
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
 		{
+			BX_ASSERT(NULL != m_backBuffer.m_nwh, "Creating window frame buffer in headless mode.");
+
 			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 			{
 				FrameBufferHandle handle = m_windows[ii];
@@ -4352,6 +4359,7 @@ VK_IMPORT_DEVICE
 		bool m_timerQuerySupport;
 
 		FrameBufferVK m_backBuffer;
+		TextureFormat::Enum m_swapchainFormats[TextureFormat::Count];
 
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -7240,8 +7248,10 @@ VK_DESTROY
 				&&  requestedVkFormat == surfaceFormats[jj].format)
 				{
 					selectedFormat = requested;
-					if (0 != ii)
+					if (0 != ii
+					&&  s_renderVK->m_swapchainFormats[_format] != selectedFormat)
 					{
+						s_renderVK->m_swapchainFormats[_format] = selectedFormat;
 						BX_TRACE(
 							"findSurfaceFormat: Surface format %s not found! Defaulting to %s."
 							, bimg::getName(bimg::TextureFormat::Enum(_format) )
