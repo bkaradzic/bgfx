@@ -5154,7 +5154,7 @@ namespace bgfx { namespace d3d12
 		s_renderD3D12->m_cmd.release(staging);
 	}
 
-	void TextureD3D12::resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve)
+	void TextureD3D12::resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
 	{
 		BX_UNUSED(_resolve);
 
@@ -5169,12 +5169,17 @@ namespace bgfx { namespace d3d12
 				, D3D12_RESOURCE_STATE_RESOLVE_DEST
 			);
 
-			_commandList->ResolveSubresource(m_singleMsaa
-				, 0
-				, m_ptr
-				, 0
-				, s_textureFormat[m_textureFormat].m_fmt
-			);
+			for (uint32_t ii = _layer; ii < _numLayers; ++ii)
+			{
+				const UINT resource = _mip + (ii * m_numMips);
+
+				_commandList->ResolveSubresource(m_singleMsaa
+					, resource
+					, m_ptr
+					, resource
+					, s_textureFormat[m_textureFormat].m_fmt
+				);
+			}
 
 			setResourceBarrier(_commandList
 				, m_singleMsaa
@@ -5499,7 +5504,7 @@ namespace bgfx { namespace d3d12
 				if (isValid(at.handle) )
 				{
 					TextureD3D12& texture = s_renderD3D12->m_textures[at.handle.idx];
-					texture.resolve(s_renderD3D12->m_commandList, at.resolve);
+					texture.resolve(s_renderD3D12->m_commandList, at.resolve, at.layer, at.numLayers, at.mip);
 				}
 			}
 		}
