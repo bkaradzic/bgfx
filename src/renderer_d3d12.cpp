@@ -4885,27 +4885,37 @@ namespace bgfx { namespace d3d12
 
 				if (1 < ti.numLayers)
 				{
-					m_srvd.ViewDimension = 1 < msaa.Count
-						? D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY
-						: D3D12_SRV_DIMENSION_TEXTURE2DARRAY
-						;
-					m_srvd.Texture2DArray.MostDetailedMip     = 0;
-					m_srvd.Texture2DArray.MipLevels           = ti.numMips;
-					m_srvd.Texture2DArray.FirstArraySlice     = 0;
-					m_srvd.Texture2DArray.ArraySize           = ti.numLayers;
-					m_srvd.Texture2DArray.PlaneSlice          = 0;
-					m_srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
+					if (1 < msaa.Count && !needResolve)
+					{
+						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+						m_srvd.Texture2DMSArray.FirstArraySlice = 0;
+						m_srvd.Texture2DMSArray.ArraySize       = ti.numLayers;
+					}
+					else
+					{
+						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+						m_srvd.Texture2DArray.MostDetailedMip     = 0;
+						m_srvd.Texture2DArray.MipLevels           = ti.numMips;
+						m_srvd.Texture2DArray.FirstArraySlice     = 0;
+						m_srvd.Texture2DArray.ArraySize           = ti.numLayers;
+						m_srvd.Texture2DArray.PlaneSlice          = 0;
+						m_srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
+					}
 				}
 				else
 				{
-					m_srvd.ViewDimension = 1 < msaa.Count
-						? D3D12_SRV_DIMENSION_TEXTURE2DMS
-						: D3D12_SRV_DIMENSION_TEXTURE2D
-						;
-					m_srvd.Texture2D.MostDetailedMip     = 0;
-					m_srvd.Texture2D.MipLevels           = ti.numMips;
-					m_srvd.Texture2D.PlaneSlice          = 0;
-					m_srvd.Texture2D.ResourceMinLODClamp = 0.0f;
+					if (1 < msaa.Count && !needResolve)
+					{
+						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+					}
+					else
+					{
+						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+						m_srvd.Texture2D.MostDetailedMip     = 0;
+						m_srvd.Texture2D.MipLevels           = ti.numMips;
+						m_srvd.Texture2D.PlaneSlice          = 0;
+						m_srvd.Texture2D.ResourceMinLODClamp = 0.0f;
+					}
 				}
 
 				if (1 < ti.numLayers)
