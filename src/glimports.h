@@ -308,6 +308,7 @@ GL_IMPORT______(true,  PFNGLENDQUERYPROC,                          glEndQuery);
 GL_IMPORT______(false, PFNGLFINISHPROC,                            glFinish);
 GL_IMPORT______(false, PFNGLFLUSHPROC,                             glFlush);
 GL_IMPORT______(true,  PFNGLFRAMEBUFFERRENDERBUFFERPROC,           glFramebufferRenderbuffer);
+GL_IMPORT______(true,  PFNGLFRAMEBUFFERTEXTUREPROC,                glFramebufferTexture);
 GL_IMPORT______(true,  PFNGLFRAMEBUFFERTEXTURE2DPROC,              glFramebufferTexture2D);
 GL_IMPORT______(true,  PFNGLFRAMEBUFFERTEXTURELAYERPROC,           glFramebufferTextureLayer);
 GL_IMPORT______(false, PFNGLFRONTFACE,                             glFrontFace);
