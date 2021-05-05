@@ -5216,12 +5216,14 @@ namespace bgfx { namespace gl
 		const bool writeOnly    = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 		const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE );
 		const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB);
+		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 		const bool textureArray = false
 			|| _target == GL_TEXTURE_2D_ARRAY
 			|| _target == GL_TEXTURE_CUBE_MAP_ARRAY
 			;
 
-		if (!writeOnly)
+		if (!writeOnly
+		|| (renderTarget && textureArray) )
 		{
 			GL_CHECK(glGenTextures(1, &m_id) );
 			BX_ASSERT(0 != m_id, "Failed to generate texture id.");
@@ -5305,8 +5307,6 @@ namespace bgfx { namespace gl
 				GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
 			}
 		}
-
-		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 
 		if (renderTarget)
 		{
