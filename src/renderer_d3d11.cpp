@@ -1314,6 +1314,17 @@ namespace bgfx { namespace d3d11
 					}
 				}
 
+				// support for SV_ViewportArrayIndex and SV_RenderTargetArrayIndex in the vertex shader is optional
+				{
+					D3D11_FEATURE_DATA_D3D11_OPTIONS3 data;
+					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS3, &data, sizeof(data) );
+					if (SUCCEEDED(hr)
+					&&  data.VPAndRTArrayIndexFromAnyShaderFeedingRasterizer)
+					{
+						g_caps.supported |= BGFX_CAPS_VIEWPORT_LAYER_ARRAY;
+					}
+				}
+
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
 					uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
