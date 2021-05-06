@@ -373,6 +373,12 @@ VK_IMPORT_DEVICE
 
 	static const VkFormat s_attribType[][4][2] =
 	{
+		{ // Int8 - Untested
+			{ VK_FORMAT_R8_SINT,                 VK_FORMAT_R8_SNORM                 },
+			{ VK_FORMAT_R8G8_SINT,               VK_FORMAT_R8G8_SNORM               },
+			{ VK_FORMAT_R8G8B8A8_SINT,           VK_FORMAT_R8G8B8A8_SNORM           },
+			{ VK_FORMAT_R8G8B8A8_SINT,           VK_FORMAT_R8G8B8A8_SNORM           },
+		},
 		{ // Uint8
 			{ VK_FORMAT_R8_UINT,                 VK_FORMAT_R8_UNORM                 },
 			{ VK_FORMAT_R8G8_UINT,               VK_FORMAT_R8G8_UNORM               },
@@ -390,6 +396,12 @@ VK_IMPORT_DEVICE
 			{ VK_FORMAT_R16G16_SINT,             VK_FORMAT_R16G16_SNORM             },
 			{ VK_FORMAT_R16G16B16_SINT,          VK_FORMAT_R16G16B16_SNORM          },
 			{ VK_FORMAT_R16G16B16A16_SINT,       VK_FORMAT_R16G16B16A16_SNORM       },
+		},
+		{ // Uint16
+			{ VK_FORMAT_R16_UINT,                VK_FORMAT_R16_UNORM                },
+			{ VK_FORMAT_R16G16_UINT,             VK_FORMAT_R16G16_UNORM             },
+			{ VK_FORMAT_R16G16B16_UINT,          VK_FORMAT_R16G16B16_UNORM          },
+			{ VK_FORMAT_R16G16B16A16_UINT,       VK_FORMAT_R16G16B16A16_UNORM       },
 		},
 		{ // Half
 			{ VK_FORMAT_R16_SFLOAT,              VK_FORMAT_R16_SFLOAT               },
