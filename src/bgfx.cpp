@@ -4517,7 +4517,7 @@ namespace bgfx
 			);
 
 		BGFX_ERROR_CHECK(false
-			|| is3DTexture
+			|| !is3DTexture
 			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D)
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
