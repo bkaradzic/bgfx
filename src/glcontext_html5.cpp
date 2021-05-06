@@ -140,7 +140,6 @@ namespace bgfx { namespace gl
 			}
 			error = (int) context;
 		}
-
 		BX_TRACE("Failed to create WebGL context. (Canvas handle: '%s', last attempt error %d)", canvas, error);
 		return NULL;
 	}
