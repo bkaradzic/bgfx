@@ -967,12 +967,18 @@ public:
 		m_gbufferTex[GBUFFER_RT_DEPTH]    = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D32F , pointSampleFlags);
 		m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
 
-		m_currentColor.init(m_size[0], m_size[1], bgfx::TextureFormat::RG11B10F, bilinearFlags);
-		m_previousColor.init(m_size[0], m_size[1], bgfx::TextureFormat::RG11B10F, bilinearFlags);
-		m_txaaColor.init(m_size[0], m_size[1], bgfx::TextureFormat::RG11B10F, bilinearFlags);
-		m_temporaryColor.init(m_size[0], m_size[1], bgfx::TextureFormat::RG11B10F, bilinearFlags);
-		m_previousNormal.init(m_size[0], m_size[1], bgfx::TextureFormat::RG11B10F, pointSampleFlags);
-		m_previousDenoise.init(m_size[0], m_size[1], bgfx::TextureFormat::RG11B10F, bilinearFlags);
+		bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RG11B10F;
+		if (!bgfx::isTextureValid(1, false, 1, format, bilinearFlags))
+		{
+			format = bgfx::TextureFormat::RGBA16F;
+		}
+
+		m_currentColor   .init(m_size[0], m_size[1], format, bilinearFlags);
+		m_previousColor  .init(m_size[0], m_size[1], format, bilinearFlags);
+		m_txaaColor      .init(m_size[0], m_size[1], format, bilinearFlags);
+		m_temporaryColor .init(m_size[0], m_size[1], format, bilinearFlags);
+		m_previousNormal .init(m_size[0], m_size[1], format, pointSampleFlags);
+		m_previousDenoise.init(m_size[0], m_size[1], format, bilinearFlags);
 	}
 
 	// all buffers set to destroy their textures

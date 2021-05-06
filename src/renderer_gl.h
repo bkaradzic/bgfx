@@ -1478,6 +1478,7 @@ namespace bgfx { namespace gl
 			, m_constantBuffer(NULL)
 			, m_numPredefined(0)
 		{
+			m_instanceData[0] = -1;
 		}
 
 		void create(const ShaderGL& _vsh, const ShaderGL& _fsh);

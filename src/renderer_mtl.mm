@@ -936,7 +936,7 @@ namespace bgfx { namespace mtl
 
 			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
 			fb.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
-			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, 0);
+			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, m_resolution.reset);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
@@ -2487,6 +2487,12 @@ namespace bgfx { namespace mtl
 			{
 				uint16_t texInfo = 0;
 				bx::read(&reader, texInfo);
+			}
+
+			if (!isShaderVerLess(magic, 10) )
+			{
+				uint16_t texFormat = 0;
+				bx::read(&reader, texFormat);
 			}
 		}
 

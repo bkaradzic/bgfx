@@ -53,19 +53,9 @@ vec3 calcLight(int _idx, mat3 _tbn, vec3 _wpos, vec3 _normal, vec3 _view)
 	return rgb;
 }
 
-mat3 mtx3FromCols(vec3 c0, vec3 c1, vec3 c2)
-{
-#if BGFX_SHADER_LANGUAGE_GLSL
-	return mat3(c0, c1, c2);
-#else
-	return transpose(mat3(c0, c1, c2));
-#endif
-}
-
-
 void main()
 {
-	mat3 tbn = mtx3FromCols(v_tangent, v_bitangent, v_normal);
+	mat3 tbn = mtxFromCols(v_tangent, v_bitangent, v_normal);
 
 	vec3 normal;
 	normal.xy = texture2D(s_texNormal, v_texcoord0).xy * 2.0 - 1.0;

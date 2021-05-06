@@ -19,6 +19,8 @@ namespace Bgfx
 {
 public static class bgfx
 {
+	public typealias ViewId = uint16;
+
 	$types
 
 	$funcs
@@ -56,31 +58,21 @@ local function convert_type_0(arg)
 		return arg.ctype:gsub("int32_t", "int")
 	elseif hasPrefix(arg.ctype, "uint16_t") then
 		return arg.ctype:gsub("uint16_t", "uint16")
-	elseif hasPrefix(arg.ctype, "bgfx_view_id_t") then
-		return arg.ctype:gsub("bgfx_view_id_t", "uint16")
 	elseif hasPrefix(arg.ctype, "uint8_t") then
 		return arg.ctype:gsub("uint8_t", "uint8")
 	elseif hasPrefix(arg.ctype, "uintptr_t") then
 		return arg.ctype:gsub("uintptr_t", "void*")
-	elseif arg.ctype == "bgfx_caps_gpu_t" then
-	    return arg.ctype:gsub("bgfx_caps_gpu_t", "uint32")
 	elseif arg.ctype == "const char*" then
 		return "char8*"
 	elseif hasPrefix(arg.ctype, "char") then
 		return arg.ctype:gsub("char", "char8")
 	elseif hasPrefix(arg.ctype, "byte") then
 		return arg.ctype:gsub("byte", "uint8")
-	elseif hasSuffix(arg.fulltype, "Handle") then
-		return arg.fulltype
-	elseif arg.ctype == "..." then
-		return "params Object[] args"
 	elseif arg.ctype == "va_list"
 		or arg.fulltype == "bx::AllocatorI*"
 		or arg.fulltype == "CallbackI*"
 		or arg.fulltype == "ReleaseFn" then
 		return "void*"
-	elseif arg.fulltype == "const ViewId*" then
-		return "uint16*"
 	end
 
 	return arg.fulltype

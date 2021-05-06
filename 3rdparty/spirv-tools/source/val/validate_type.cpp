@@ -427,7 +427,8 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
   if (spvIsVulkanEnv(_.context()->target_env) &&
       !_.options()->before_hlsl_legalization && ContainsOpaqueType(_, inst)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "In " << spvLogStringForEnv(_.context()->target_env)
+           << _.VkErrorID(4667) << "In "
+           << spvLogStringForEnv(_.context()->target_env)
            << ", OpTypeStruct must not contain an opaque type.";
   }
 
@@ -462,6 +463,7 @@ spv_result_t ValidateTypePointer(ValidationState_t& _,
 
   if (!_.IsValidStorageClass(storage_class)) {
     return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << _.VkErrorID(4643)
            << "Invalid storage class for target environment";
   }
 

@@ -187,6 +187,7 @@ struct TInputLanguage {
     EShLanguage stage;        // redundant information with other input, this one overrides when not EShSourceNone
     EShClient dialect;
     int dialectVersion;       // version of client's language definition, not the client (when not EShClientNone)
+    bool vulkanRulesRelaxed;
 };
 
 struct TClient {
@@ -427,6 +428,14 @@ enum TResourceType {
     EResCount
 };
 
+enum TBlockStorageClass
+{
+    EbsUniform = 0,
+    EbsStorageBuffer,
+    EbsPushConstant,
+    EbsNone,    // not a uniform or buffer variable
+    EbsCount,
+};
 
 // Make one TShader per shader that you will link into a program. Then
 //  - provide the shader through setStrings() or setStringsWithLengths()
@@ -483,6 +492,14 @@ public:
     GLSLANG_EXPORT void setNoStorageFormat(bool useUnknownFormat);
     GLSLANG_EXPORT void setNanMinMaxClamp(bool nanMinMaxClamp);
     GLSLANG_EXPORT void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode);
+    GLSLANG_EXPORT void addBlockStorageOverride(const char* nameStr, glslang::TBlockStorageClass backing);
+
+    GLSLANG_EXPORT void setGlobalUniformBlockName(const char* name);
+    GLSLANG_EXPORT void setAtomicCounterBlockName(const char* name);
+    GLSLANG_EXPORT void setGlobalUniformSet(unsigned int set);
+    GLSLANG_EXPORT void setGlobalUniformBinding(unsigned int binding);
+    GLSLANG_EXPORT void setAtomicCounterBlockSet(unsigned int set);
+    GLSLANG_EXPORT void setAtomicCounterBlockBinding(unsigned int binding);
 
     // For setting up the environment (cleared to nothingness in the constructor).
     // These must be called so that parsing is done for the right source language and
@@ -538,6 +555,9 @@ public:
 #else
     bool getEnvTargetHlslFunctionality1() const { return false; }
 #endif
+
+    void setEnvInputVulkanRulesRelaxed() { environment.input.vulkanRulesRelaxed = true; }
+    bool getEnvInputVulkanRulesRelaxed() const { return environment.input.vulkanRulesRelaxed; }
 
     // Interface to #include handlers.
     //
@@ -806,7 +826,7 @@ public:
     // Called by TSlotCollector to resolve resource locations or bindings
     virtual void reserverResourceSlot(TVarEntryInfo& ent, TInfoSink& infoSink) = 0;
     // Called by mapIO.addStage to set shader stage mask to mark a stage be added to this pipeline
-    virtual void addStage(EShLanguage stage) = 0;
+    virtual void addStage(EShLanguage stage, TIntermediate& stageIntermediate) = 0;
 };
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE
@@ -928,6 +948,7 @@ public:
 
 protected:
     GLSLANG_EXPORT bool linkStage(EShLanguage, EShMessages);
+    GLSLANG_EXPORT bool crossStageCheck(EShMessages);
 
     TPoolAllocator* pool;
     std::list<TShader*> stages[EShLangCount];

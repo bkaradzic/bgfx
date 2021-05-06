@@ -41,6 +41,7 @@ namespace ImGui
 #define IMGUI_FLAGS_NONE        UINT8_C(0x00)
 #define IMGUI_FLAGS_ALPHA_BLEND UINT8_C(0x01)
 
+	///
 	inline ImTextureID toId(bgfx::TextureHandle _handle, uint8_t _flags, uint8_t _mip)
 	{
 		union { struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; ImTextureID id; } tex;
@@ -104,11 +105,13 @@ namespace ImGui
 		return ImageButton(_handle, IMGUI_FLAGS_ALPHA_BLEND, 0, _size, _uv0, _uv1, _framePadding, _bgCol, _tintCol);
 	}
 
+	///
 	inline void NextLine()
 	{
 		SetCursorPosY(GetCursorPosY() + GetTextLineHeightWithSpacing() );
 	}
 
+	///
 	inline bool MouseOverArea()
 	{
 		return false
@@ -118,6 +121,12 @@ namespace ImGui
 //			|| ImGuizmo::IsOver()
 			;
 	}
+
+	///
+	void PushEnabled(bool _enabled);
+
+	///
+	void PopEnabled();
 
 } // namespace ImGui
 

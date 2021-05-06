@@ -1937,6 +1937,18 @@ SpvExecutionModel spvc_compiler_get_execution_model(spvc_compiler compiler)
 	return static_cast<SpvExecutionModel>(compiler->compiler->get_execution_model());
 }
 
+void spvc_compiler_update_active_builtins(spvc_compiler compiler)
+{
+       compiler->compiler->update_active_builtins();
+}
+
+spvc_bool spvc_compiler_has_active_builtin(spvc_compiler compiler, SpvBuiltIn builtin, SpvStorageClass storage)
+{
+	return compiler->compiler->has_active_builtin(static_cast<spv::BuiltIn>(builtin), static_cast<spv::StorageClass>(storage)) ?
+		SPVC_TRUE :
+		SPVC_FALSE;
+}
+
 spvc_type spvc_compiler_get_type_handle(spvc_compiler compiler, spvc_type_id id)
 {
 	// Should only throw if an intentionally garbage ID is passed, but the IDs are not type-safe.

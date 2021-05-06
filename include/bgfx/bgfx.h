@@ -662,6 +662,8 @@ namespace bgfx
 		/// matching id.
 		uint16_t deviceId;
 
+		uint64_t capabilities; //!< Capabilities initialization mask (default: UINT64_MAX).
+
 		bool debug;   //!< Enable device for debuging.
 		bool profile; //!< Enable device for profiling.
 
@@ -906,7 +908,7 @@ namespace bgfx
 			, uint8_t _resolve = BGFX_RESOLVE_AUTO_GEN_MIPS
 			);
 
-		Access::Enum  access; //!< Attachement access. See `Access::Enum`.
+		Access::Enum  access; //!< Attachment access. See `Access::Enum`.
 		TextureHandle handle; //!< Render target texture handle.
 		uint16_t mip;         //!< Mip level.
 		uint16_t layer;       //!< Cubemap side or depth layer/slice to use.
@@ -2627,6 +2629,18 @@ namespace bgfx
 		, uint16_t _numLayers
 		, TextureFormat::Enum _format
 		, uint64_t _flags
+		);
+
+	/// Validate frame buffer parameters.
+	///
+	/// @param[in] _num Number of attachments.
+	/// @param[in] _attachment Attachment texture info. See: `bgfx::Attachment`.
+	///
+	/// @returns True if frame buffer can be successfully created.
+	///
+	bool isFrameBufferValid(
+		  uint8_t _num
+		, const Attachment* _attachment
 		);
 
 	/// Calculate amount of memory required for texture.

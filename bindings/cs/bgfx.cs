@@ -553,7 +553,7 @@ public static partial class bgfx
 		InstanceData           = 0x00000004,
 	
 		/// <summary>
-		/// Discard state.
+		/// Discard state and uniform bindings.
 		/// </summary>
 		State                  = 0x00000008,
 	
@@ -2030,6 +2030,7 @@ public static partial class bgfx
 		public RendererType type;
 		public ushort vendorId;
 		public ushort deviceId;
+		public ulong capabilities;
 		public byte debug;
 		public byte profile;
 		public PlatformData platformData;
@@ -2951,6 +2952,17 @@ public static partial class bgfx
 	public static extern unsafe bool is_texture_valid(ushort _depth, bool _cubeMap, ushort _numLayers, TextureFormat _format, ulong _flags);
 	
 	/// <summary>
+	/// Validate frame buffer parameters.
+	/// </summary>
+	///
+	/// <param name="_num">Number of attachments.</param>
+	/// <param name="_attachment">Attachment texture info. See: `bgfx::Attachment`.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_is_frame_buffer_valid", CallingConvention = CallingConvention.Cdecl)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	public static extern unsafe bool is_frame_buffer_valid(byte _num, Attachment* _attachment);
+	
+	/// <summary>
 	/// Calculate amount of memory required for texture.
 	/// </summary>
 	///
@@ -3175,7 +3187,7 @@ public static partial class bgfx
 	/// mip level.
 	/// </summary>
 	///
-	/// <param name="_num">Number of attachements.</param>
+	/// <param name="_num">Number of attachments.</param>
 	/// <param name="_attachment">Attachment texture info. See: `bgfx::Attachment`.</param>
 	/// <param name="_destroyTexture">If true, textures will be destroyed when frame buffer is destroyed.</param>
 	///

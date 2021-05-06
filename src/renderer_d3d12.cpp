@@ -1021,6 +1021,7 @@ namespace bgfx { namespace d3d12
 				m_resolution.width  = _init.resolution.width;
 				m_resolution.height = _init.resolution.height;
 
+				m_windows[0] = BGFX_INVALID_HANDLE;
 				m_numWindows = 1;
 
 #if BX_PLATFORM_WINDOWS
@@ -1163,6 +1164,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					| BGFX_CAPS_IMAGE_RW
+					| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 					);
 				g_caps.limits.maxTextureSize     = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 				g_caps.limits.maxTextureLayers   = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
@@ -2851,6 +2853,7 @@ namespace bgfx { namespace d3d12
 				| BGFX_STATE_BLEND_INDEPENDENT
 				| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 				| BGFX_STATE_CULL_MASK
+				| BGFX_STATE_FRONT_CCW
 				| BGFX_STATE_MSAA
 				| BGFX_STATE_LINEAA
 				| BGFX_STATE_CONSERVATIVE_RASTER
@@ -4552,6 +4555,12 @@ namespace bgfx { namespace d3d12
 					bx::read(&reader, texInfo);
 				}
 
+				if (!isShaderVerLess(magic, 10) )
+				{
+					uint16_t texFormat = 0;
+					bx::read(&reader, texFormat);
+				}
+
 				const char* kind = "invalid";
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
@@ -4876,27 +4885,37 @@ namespace bgfx { namespace d3d12
 
 				if (1 < ti.numLayers)
 				{
-					m_srvd.ViewDimension = 1 < msaa.Count
-						? D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY
-						: D3D12_SRV_DIMENSION_TEXTURE2DARRAY
-						;
-					m_srvd.Texture2DArray.MostDetailedMip     = 0;
-					m_srvd.Texture2DArray.MipLevels           = ti.numMips;
-					m_srvd.Texture2DArray.FirstArraySlice     = 0;
-					m_srvd.Texture2DArray.ArraySize           = ti.numLayers;
-					m_srvd.Texture2DArray.PlaneSlice          = 0;
-					m_srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
+					if (1 < msaa.Count && !needResolve)
+					{
+						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+						m_srvd.Texture2DMSArray.FirstArraySlice = 0;
+						m_srvd.Texture2DMSArray.ArraySize       = ti.numLayers;
+					}
+					else
+					{
+						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+						m_srvd.Texture2DArray.MostDetailedMip     = 0;
+						m_srvd.Texture2DArray.MipLevels           = ti.numMips;
+						m_srvd.Texture2DArray.FirstArraySlice     = 0;
+						m_srvd.Texture2DArray.ArraySize           = ti.numLayers;
+						m_srvd.Texture2DArray.PlaneSlice          = 0;
+						m_srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
+					}
 				}
 				else
 				{
-					m_srvd.ViewDimension = 1 < msaa.Count
-						? D3D12_SRV_DIMENSION_TEXTURE2DMS
-						: D3D12_SRV_DIMENSION_TEXTURE2D
-						;
-					m_srvd.Texture2D.MostDetailedMip     = 0;
-					m_srvd.Texture2D.MipLevels           = ti.numMips;
-					m_srvd.Texture2D.PlaneSlice          = 0;
-					m_srvd.Texture2D.ResourceMinLODClamp = 0.0f;
+					if (1 < msaa.Count && !needResolve)
+					{
+						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+					}
+					else
+					{
+						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+						m_srvd.Texture2D.MostDetailedMip     = 0;
+						m_srvd.Texture2D.MipLevels           = ti.numMips;
+						m_srvd.Texture2D.PlaneSlice          = 0;
+						m_srvd.Texture2D.ResourceMinLODClamp = 0.0f;
+					}
 				}
 
 				if (1 < ti.numLayers)
@@ -5145,7 +5164,7 @@ namespace bgfx { namespace d3d12
 		s_renderD3D12->m_cmd.release(staging);
 	}
 
-	void TextureD3D12::resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve)
+	void TextureD3D12::resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
 	{
 		BX_UNUSED(_resolve);
 
@@ -5160,12 +5179,17 @@ namespace bgfx { namespace d3d12
 				, D3D12_RESOURCE_STATE_RESOLVE_DEST
 			);
 
-			_commandList->ResolveSubresource(m_singleMsaa
-				, 0
-				, m_ptr
-				, 0
-				, s_textureFormat[m_textureFormat].m_fmt
-			);
+			for (uint32_t ii = _layer; ii < _numLayers; ++ii)
+			{
+				const UINT resource = _mip + (ii * m_numMips);
+
+				_commandList->ResolveSubresource(m_singleMsaa
+					, resource
+					, m_ptr
+					, resource
+					, s_textureFormat[m_textureFormat].m_fmt
+				);
+			}
 
 			setResourceBarrier(_commandList
 				, m_singleMsaa
@@ -5490,7 +5514,7 @@ namespace bgfx { namespace d3d12
 				if (isValid(at.handle) )
 				{
 					TextureD3D12& texture = s_renderD3D12->m_textures[at.handle.idx];
-					texture.resolve(s_renderD3D12->m_commandList, at.resolve);
+					texture.resolve(s_renderD3D12->m_commandList, at.resolve, at.layer, at.numLayers, at.mip);
 				}
 			}
 		}

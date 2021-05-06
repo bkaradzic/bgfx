@@ -87,11 +87,12 @@ inline const char* ProfileName(EProfile profile)
 // The union of all requested rule sets will be applied.
 //
 struct SpvVersion {
-    SpvVersion() : spv(0), vulkanGlsl(0), vulkan(0), openGl(0) {}
+    SpvVersion() : spv(0), vulkanGlsl(0), vulkan(0), openGl(0), vulkanRelaxed(false) {}
     unsigned int spv; // the version of SPIR-V to target, as defined by "word 1" of the SPIR-V binary header
     int vulkanGlsl;   // the version of GLSL semantics for Vulkan, from GL_KHR_vulkan_glsl, for "#define VULKAN XXX"
     int vulkan;       // the version of Vulkan, for which SPIR-V execution environment rules to use
     int openGl;       // the version of GLSL semantics for OpenGL, from GL_ARB_gl_spirv, for "#define GL_SPIRV XXX"
+    bool vulkanRelaxed; // relax changes to GLSL for Vulkan, allowing some GL-specific to be compiled to Vulkan SPIR-V target
 };
 
 //

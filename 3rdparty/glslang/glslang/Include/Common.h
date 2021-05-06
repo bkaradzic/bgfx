@@ -287,6 +287,18 @@ template <class T> bool IsMultipleOfPow2(T number, int powerOf2)
     return ! (number & (powerOf2 - 1));
 }
 
+// Returns log2 of an integer power of 2.
+// T should be integral.
+template <class T> int IntLog2(T n)
+{
+    assert(IsPow2(n));
+    int result = 0;
+    while ((T(1) << result) != n) {
+      result++;
+    }
+    return result;
+}
+
 } // end namespace glslang
 
 #endif // _COMMON_INCLUDED_
