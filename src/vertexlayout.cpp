@@ -16,7 +16,7 @@ namespace bgfx
 {
 	static const uint8_t s_attribTypeSizeD3D9[AttribType::Count][4] =
 	{
-		{  4,  4,  4,  4 }, // int8
+		{  4,  4,  4,  4 }, // Int8
 		{  4,  4,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
 		{  4,  4,  8,  8 }, // Int16
