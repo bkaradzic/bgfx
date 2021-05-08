@@ -87,8 +87,8 @@ struct OcornutImguiContext
 			bgfx::setViewRect(m_viewId, 0, 0, uint16_t(width), uint16_t(height) );
 		}
 
-		const ImVec2 clip_off = _drawData->DisplayPos;         // (0,0) unless using multi-viewports
-		const ImVec2 clip_scale = _drawData->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
+		const ImVec2 clipPos   = _drawData->DisplayPos;       // (0,0) unless using multi-viewports
+		const ImVec2 clipScale = _drawData->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
 		// Render command lists
 		for (int32_t ii = 0, num = _drawData->CmdListsCount; ii < num; ++ii)
@@ -154,22 +154,24 @@ struct OcornutImguiContext
 					}
 
 					// Project scissor/clipping rectangles into framebuffer space
-					ImVec4 clip_rect;
-					clip_rect.x = (cmd->ClipRect.x - clip_off.x) * clip_scale.x;
-					clip_rect.y = (cmd->ClipRect.y - clip_off.y) * clip_scale.y;
-					clip_rect.z = (cmd->ClipRect.z - clip_off.x) * clip_scale.x;
-					clip_rect.w = (cmd->ClipRect.w - clip_off.y) * clip_scale.y;
+					ImVec4 clipRect;
+					clipRect.x = (cmd->ClipRect.x - clipPos.x) * clipScale.x;
+					clipRect.y = (cmd->ClipRect.y - clipPos.y) * clipScale.y;
+					clipRect.z = (cmd->ClipRect.z - clipPos.x) * clipScale.x;
+					clipRect.w = (cmd->ClipRect.w - clipPos.y) * clipScale.y;
 
-					if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
+					if (clipRect.x <  fb_width
+					&&  clipRect.y <  fb_height
+					&&  clipRect.z >= 0.0f
+					&&  clipRect.w >= 0.0f)
 					{
-                        const uint16_t xx = uint16_t(bx::max(clip_rect.x, 0.0f) );
-                        const uint16_t yy = uint16_t(bx::max(clip_rect.y, 0.0f) );
-                        bgfx::setScissor(xx, yy
-                            , uint16_t(bx::min(clip_rect.z, 65535.0f)-xx)
-                            , uint16_t(bx::min(clip_rect.w, 65535.0f)-yy)
-                            );
+						const uint16_t xx = uint16_t(bx::max(clipRect.x, 0.0f) );
+						const uint16_t yy = uint16_t(bx::max(clipRect.y, 0.0f) );
+						bgfx::setScissor(xx, yy
+								, uint16_t(bx::min(clipRect.z, 65535.0f)-xx)
+								, uint16_t(bx::min(clipRect.w, 65535.0f)-yy)
+								);
 
-						//bgfx::setScissor((int)clip_rect.x, (int)clip_rect.y, (int)clip_rect.z, (int)clip_rect.w);
 						bgfx::setState(state);
 						bgfx::setTexture(0, s_tex, th);
 						bgfx::setVertexBuffer(0, &tvb, 0, numVertices);
