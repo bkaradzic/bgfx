@@ -144,7 +144,7 @@ namespace bgfx { namespace webgpu
 
 	static const wgpu::VertexFormat s_attribType[][4][2] =
 	{
-		{ // Int8
+		{ // Int8 - Untested
 			{ wgpu::VertexFormat::Char2, wgpu::VertexFormat::Char2Norm },
 			{ wgpu::VertexFormat::Char2, wgpu::VertexFormat::Char2Norm },
 			{ wgpu::VertexFormat::Char4, wgpu::VertexFormat::Char4Norm },
@@ -167,6 +167,12 @@ namespace bgfx { namespace webgpu
 			{ wgpu::VertexFormat::Short2, wgpu::VertexFormat::Short2Norm },
 			{ wgpu::VertexFormat::Short4, wgpu::VertexFormat::Short4Norm },
 			{ wgpu::VertexFormat::Short4, wgpu::VertexFormat::Short4Norm },
+		},
+		{ // Uint16 - Untested
+			{ wgpu::VertexFormat::UShort2, wgpu::VertexFormat::UShort2Norm },
+			{ wgpu::VertexFormat::UShort2, wgpu::VertexFormat::UShort2Norm },
+			{ wgpu::VertexFormat::UShort4, wgpu::VertexFormat::UShort4Norm },
+			{ wgpu::VertexFormat::UShort4, wgpu::VertexFormat::UShort4Norm },
 		},
 		{ // Half
 			{ wgpu::VertexFormat::Half2, wgpu::VertexFormat::Half2 },

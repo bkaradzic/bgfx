@@ -83,7 +83,7 @@ namespace bgfx { namespace mtl
 
 	static const MTLVertexFormat s_attribType[][4][2] = //type, count, normalized
 	{
-		// Int8
+		//Int8
 		{
 			{ MTLVertexFormatChar2, MTLVertexFormatChar2Normalized },
 			{ MTLVertexFormatChar2, MTLVertexFormatChar2Normalized },
@@ -91,7 +91,7 @@ namespace bgfx { namespace mtl
 			{ MTLVertexFormatChar4, MTLVertexFormatChar4Normalized },
 		},
 
-		// Uint8
+		//Uint8
 		{
 			{ MTLVertexFormatUChar2, MTLVertexFormatUChar2Normalized },
 			{ MTLVertexFormatUChar2, MTLVertexFormatUChar2Normalized },

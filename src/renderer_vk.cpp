@@ -397,7 +397,7 @@ VK_IMPORT_DEVICE
 			{ VK_FORMAT_R16G16B16_SINT,          VK_FORMAT_R16G16B16_SNORM          },
 			{ VK_FORMAT_R16G16B16A16_SINT,       VK_FORMAT_R16G16B16A16_SNORM       },
 		},
-		{ // Uint16
+		{ // Uint16 - Untested
 			{ VK_FORMAT_R16_UINT,                VK_FORMAT_R16_UNORM                },
 			{ VK_FORMAT_R16G16_UINT,             VK_FORMAT_R16G16_UNORM             },
 			{ VK_FORMAT_R16G16B16_UINT,          VK_FORMAT_R16G16B16_UNORM          },
