@@ -492,6 +492,8 @@
 #define BGFX_CAPS_VERTEX_ATTRIB_UINT10      UINT64_C(0x0000000002000000) //!< Vertex attribute 10_10_10_2 is supported.
 #define BGFX_CAPS_VERTEX_ID                 UINT64_C(0x0000000004000000) //!< Rendering with VertexID only is supported.
 #define BGFX_CAPS_VIEWPORT_LAYER_ARRAY      UINT64_C(0x0000000008000000) //!< Viewport layer is available in vertex shader.
+#define BGFX_CAPS_VERTEX_ATTRIB_INT8        UINT64_C(0x0000000010000000) //!< Vertex attribute signed 8-8-8-8 is supported.
+#define BGFX_CAPS_VERTEX_ATTRIB_UINT16      UINT64_C(0x0000000020000000) //!< Vertex attribute unsigned 16-16 is supported.
 /// All texture compare modes are supported.
 #define BGFX_CAPS_TEXTURE_COMPARE_ALL (0 \
 	| BGFX_CAPS_TEXTURE_COMPARE_RESERVED \

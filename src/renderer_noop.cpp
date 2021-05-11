@@ -36,6 +36,8 @@ namespace bgfx { namespace noop
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
+				| BGFX_CAPS_VERTEX_ATTRIB_INT8
+				| BGFX_CAPS_VERTEX_ATTRIB_UINT16
 				;
 
 			// Pretend all features are available for all texture formats.

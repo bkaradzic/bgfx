@@ -302,6 +302,12 @@ namespace bgfx { namespace d3d9
 
 	static const uint8_t s_attribType[][4][2] =
 	{
+		{ // Int8 - Unsupported
+			{ 0,    0   },
+			{ 0,    0   },
+			{ 0,    0   },
+			{ 0,    0   },
+		},
 		{ // Uint8
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
 			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
@@ -319,6 +325,12 @@ namespace bgfx { namespace d3d9
 			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
 			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
 			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
+		},
+		{ // Int16 - Unsupported
+			{ 0,    0   },
+			{ 0,    0   },
+			{ 0,    0   },
+			{ 0,    0   },
 		},
 		{ // Half
 			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },

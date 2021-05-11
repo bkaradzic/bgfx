@@ -83,7 +83,15 @@ namespace bgfx { namespace mtl
 
 	static const MTLVertexFormat s_attribType[][4][2] = //type, count, normalized
 	{
-		// Uint8
+		//Int8
+		{
+			{ MTLVertexFormatChar2, MTLVertexFormatChar2Normalized },
+			{ MTLVertexFormatChar2, MTLVertexFormatChar2Normalized },
+			{ MTLVertexFormatChar3, MTLVertexFormatChar3Normalized },
+			{ MTLVertexFormatChar4, MTLVertexFormatChar4Normalized },
+		},
+
+		//Uint8
 		{
 			{ MTLVertexFormatUChar2, MTLVertexFormatUChar2Normalized },
 			{ MTLVertexFormatUChar2, MTLVertexFormatUChar2Normalized },
@@ -106,6 +114,14 @@ namespace bgfx { namespace mtl
 			{ MTLVertexFormatShort2, MTLVertexFormatShort2Normalized },
 			{ MTLVertexFormatShort3, MTLVertexFormatShort3Normalized },
 			{ MTLVertexFormatShort4, MTLVertexFormatShort4Normalized },
+		},
+
+		//UInt16
+		{
+			{ MTLVertexFormatUShort2, MTLVertexFormatUShort2Normalized },
+			{ MTLVertexFormatUShort2, MTLVertexFormatUShort2Normalized },
+			{ MTLVertexFormatUShort3, MTLVertexFormatUShort3Normalized },
+			{ MTLVertexFormatUShort4, MTLVertexFormatUShort4Normalized },
 		},
 
 		//Half
@@ -492,6 +508,8 @@ namespace bgfx { namespace mtl
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
+				| BGFX_CAPS_VERTEX_ATTRIB_INT8
+				| BGFX_CAPS_VERTEX_ATTRIB_UINT16
 				| BGFX_CAPS_VERTEX_ID
 				);
 

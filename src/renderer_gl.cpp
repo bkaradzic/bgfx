@@ -85,9 +85,11 @@ namespace bgfx { namespace gl
 
 	static const GLenum s_attribType[] =
 	{
+		GL_BYTE,                     // Int8
 		GL_UNSIGNED_BYTE,            // Uint8
 		GL_UNSIGNED_INT_10_10_10_2,  // Uint10
 		GL_SHORT,                    // Int16
+		GL_UNSIGNED_SHORT,           // UInt16
 		GL_HALF_FLOAT,               // Half
 		GL_FLOAT,                    // Float
 	};
@@ -2704,6 +2706,7 @@ namespace bgfx { namespace gl
 					? BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					: 0
 					;
+				g_caps.supported |= BGFX_CAPS_VERTEX_ATTRIB_INT8 | BGFX_CAPS_VERTEX_ATTRIB_UINT16;
 				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 					|| s_extension[Extension::EXT_frag_depth].m_supported
 					? BGFX_CAPS_FRAGMENT_DEPTH

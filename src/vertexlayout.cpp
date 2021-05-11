@@ -16,27 +16,33 @@ namespace bgfx
 {
 	static const uint8_t s_attribTypeSizeD3D9[AttribType::Count][4] =
 	{
+		{  4,  4,  4,  4 }, // Int8
 		{  4,  4,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
 		{  4,  4,  8,  8 }, // Int16
+		{  4,  4,  8,  8 }, // UInt16
 		{  4,  4,  8,  8 }, // Half
 		{  4,  8, 12, 16 }, // Float
 	};
 
 	static const uint8_t s_attribTypeSizeD3D1x[AttribType::Count][4] =
 	{
+		{  1,  2,  4,  4 }, // Int8
 		{  1,  2,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
 		{  2,  4,  8,  8 }, // Int16
+		{  2,  4,  8,  8 }, // UInt16
 		{  2,  4,  8,  8 }, // Half
 		{  4,  8, 12, 16 }, // Float
 	};
 
 	static const uint8_t s_attribTypeSizeGl[AttribType::Count][4] =
 	{
+		{  1,  2,  4,  4 }, // Int8
 		{  1,  2,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
 		{  2,  4,  6,  8 }, // Int16
+		{  2,  4,  6,  8 }, // UInt16
 		{  2,  4,  6,  8 }, // Half
 		{  4,  8, 12, 16 }, // Float
 	};
@@ -216,9 +222,11 @@ namespace bgfx
 		// AttribType must be in order how it appears in AttribType::Enum!
 		// id is unique and should not be changed if new AttribTypes are
 		// added.
+		{ AttribType::Int8 ,  0x0006 },
 		{ AttribType::Uint8,  0x0001 },
 		{ AttribType::Uint10, 0x0005 },
 		{ AttribType::Int16,  0x0002 },
+		{ AttribType::Uint16, 0x0007 },
 		{ AttribType::Half,   0x0003 },
 		{ AttribType::Float,  0x0004 },
 	};
