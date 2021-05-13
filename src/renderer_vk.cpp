@@ -3265,7 +3265,7 @@ VK_IMPORT_DEVICE
 				false
 			};
 			const VkSampleCountFlagBits samples = swapChain.m_sampler.Sample;
-			
+
 			return getRenderPass(BX_COUNTOF(formats), formats, aspects, resolve, samples, _renderPass);
 		}
 
@@ -3975,11 +3975,11 @@ VK_IMPORT_DEVICE
 					const uint8_t dstBpp = bimg::getBitsPerPixel(bimg::TextureFormat::BGRA8);
 					const uint32_t dstPitch = width * dstBpp / 8;
 					const uint32_t dstSize = height * dstPitch;
-					
+
 					void* dst = BX_ALLOC(g_allocator, dstSize);
 
 					bimg::imageConvert(g_allocator, dst, bimg::TextureFormat::BGRA8, src, bimg::TextureFormat::Enum(_swapChain.m_colorFormat), width, height, 1);
-					
+
 					_func(dst, width, height, dstPitch, _userData);
 
 					BX_FREE(g_allocator, dst);
@@ -5479,7 +5479,7 @@ VK_DESTROY
 
 			commandBuffer = s_renderVK->m_commandBuffer;
 
-			// resetting in the new command buffer prevents a false positive validation layer error 
+			// resetting in the new command buffer prevents a false positive validation layer error
 			const uint32_t count = BX_COUNTOF(m_handle);
 			vkCmdResetQueryPool(commandBuffer, m_queryPool, 0, count);
 
@@ -7293,14 +7293,17 @@ VK_DESTROY
 			{
 			case VK_SUCCESS:
 				break;
+
 			case VK_ERROR_SURFACE_LOST_KHR:
 				m_needToRecreateSurface = true;
 				BX_FALLTHROUGH;
+
 			case VK_ERROR_OUT_OF_DATE_KHR:
 				m_needToRefreshSwapchain = true;
 				return false;
+
 			default:
-				VK_CHECK(result);
+				BX_ASSERT(VK_SUCCESS == result, "vkAcquireNextImageKHR(...); VK error 0x%x: %s", vkresult, getName(vkresult) );
 				return false;
 			}
 
@@ -7344,12 +7347,14 @@ VK_DESTROY
 			case VK_ERROR_SURFACE_LOST_KHR:
 				m_needToRecreateSurface = true;
 				BX_FALLTHROUGH;
+
 			case VK_ERROR_OUT_OF_DATE_KHR:
 			case VK_SUBOPTIMAL_KHR:
 				m_needToRefreshSwapchain = true;
 				break;
+
 			default:
-				VK_CHECK(result);
+				BX_ASSERT(VK_SUCCESS == result, "vkQueuePresentKHR(...); VK error 0x%x: %s", vkresult, getName(vkresult) );
 				break;
 			}
 
@@ -8145,7 +8150,7 @@ VK_DESTROY
 					BGFX_VK_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
-					
+
 					if (_render->m_view[view].m_fbh.idx != fbh.idx)
 					{
 						fbh = _render->m_view[view].m_fbh;
@@ -8167,7 +8172,7 @@ VK_DESTROY
 						viewHasScissor  = !scissorRect.isZero();
 						viewScissorRect = viewHasScissor ? scissorRect : rect;
 						restoreScissor = false;
-					
+
 						rpbi.framebuffer = fb.m_currentFramebuffer;
 						rpbi.renderPass  = fb.m_renderPass;
 						rpbi.renderArea.offset.x = rect.m_x;
