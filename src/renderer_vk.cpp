@@ -7303,7 +7303,7 @@ VK_DESTROY
 				return false;
 
 			default:
-				BX_ASSERT(VK_SUCCESS == result, "vkAcquireNextImageKHR(...); VK error 0x%x: %s", vkresult, getName(vkresult) );
+				BX_ASSERT(VK_SUCCESS == result, "vkAcquireNextImageKHR(...); VK error 0x%x: %s", result, getName(result) );
 				return false;
 			}
 
@@ -7354,7 +7354,7 @@ VK_DESTROY
 				break;
 
 			default:
-				BX_ASSERT(VK_SUCCESS == result, "vkQueuePresentKHR(...); VK error 0x%x: %s", vkresult, getName(vkresult) );
+				BX_ASSERT(VK_SUCCESS == result, "vkQueuePresentKHR(...); VK error 0x%x: %s", result, getName(result) );
 				break;
 			}
 
