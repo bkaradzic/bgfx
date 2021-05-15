@@ -284,31 +284,6 @@ SPIRVariable *Compiler::maybe_get_backing_variable(uint32_t chain)
 	return var;
 }
 
-StorageClass Compiler::get_expression_effective_storage_class(uint32_t ptr)
-{
-	auto *var = maybe_get_backing_variable(ptr);
-
-	// If the expression has been lowered to a temporary, we need to use the Generic storage class.
-	// We're looking for the effective storage class of a given expression.
-	// An access chain or forwarded OpLoads from such access chains
-	// will generally have the storage class of the underlying variable, but if the load was not forwarded
-	// we have lost any address space qualifiers.
-	bool forced_temporary = ir.ids[ptr].get_type() == TypeExpression && !get<SPIRExpression>(ptr).access_chain &&
-	                        (forced_temporaries.count(ptr) != 0 || forwarded_temporaries.count(ptr) == 0);
-
-	if (var && !forced_temporary)
-	{
-		// Normalize SSBOs to StorageBuffer here.
-		if (var->storage == StorageClassUniform &&
-		    has_decoration(get<SPIRType>(var->basetype).self, DecorationBufferBlock))
-			return StorageClassStorageBuffer;
-		else
-			return var->storage;
-	}
-	else
-		return expression_type(ptr).storage;
-}
-
 void Compiler::register_read(uint32_t expr, uint32_t chain, bool forwarded)
 {
 	auto &e = get<SPIRExpression>(expr);
@@ -853,19 +828,79 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 
 		// It is possible for uniform storage classes to be passed as function parameters, so detect
 		// that. To detect function parameters, check of StorageClass of variable is function scope.
-		if (var.storage == StorageClassFunction || !type.pointer || is_builtin_variable(var))
+		if (var.storage == StorageClassFunction || !type.pointer)
 			return;
 
 		if (active_variables && active_variables->find(var.self) == end(*active_variables))
 			return;
 
+		// In SPIR-V 1.4 and up, every global must be present in the entry point interface list,
+		// not just IO variables.
+		bool active_in_entry_point = true;
+		if (ir.get_spirv_version() < 0x10400)
+		{
+			if (var.storage == StorageClassInput || var.storage == StorageClassOutput)
+				active_in_entry_point = interface_variable_exists_in_entry_point(var.self);
+		}
+		else
+			active_in_entry_point = interface_variable_exists_in_entry_point(var.self);
+
+		if (!active_in_entry_point)
+			return;
+
+		bool is_builtin = is_builtin_variable(var);
+
+		if (is_builtin)
+		{
+			if (var.storage != StorageClassInput && var.storage != StorageClassOutput)
+				return;
+
+			auto &list = var.storage == StorageClassInput ? res.builtin_inputs : res.builtin_outputs;
+			BuiltInResource resource;
+
+			if (has_decoration(type.self, DecorationBlock))
+			{
+				resource.resource = { var.self, var.basetype, type.self,
+				                      get_remapped_declared_block_name(var.self, false) };
+
+				for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
+				{
+					resource.value_type_id = type.member_types[i];
+					resource.builtin = BuiltIn(get_member_decoration(type.self, i, DecorationBuiltIn));
+					list.push_back(resource);
+				}
+			}
+			else
+			{
+				bool strip_array =
+						!has_decoration(var.self, DecorationPatch) && (
+								get_execution_model() == ExecutionModelTessellationControl ||
+								(get_execution_model() == ExecutionModelTessellationEvaluation &&
+								 var.storage == StorageClassInput));
+
+				resource.resource = { var.self, var.basetype, type.self, get_name(var.self) };
+
+				if (strip_array && !type.array.empty())
+					resource.value_type_id = get_variable_data_type(var).parent_type;
+				else
+					resource.value_type_id = get_variable_data_type_id(var);
+
+				assert(resource.value_type_id);
+
+				resource.builtin = BuiltIn(get_decoration(var.self, DecorationBuiltIn));
+				list.push_back(std::move(resource));
+			}
+			return;
+		}
+
 		// Input
-		if (var.storage == StorageClassInput && interface_variable_exists_in_entry_point(var.self))
+		if (var.storage == StorageClassInput)
 		{
 			if (has_decoration(type.self, DecorationBlock))
 			{
 				res.stage_inputs.push_back(
-				    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, false) });
+						{ var.self, var.basetype, type.self,
+						  get_remapped_declared_block_name(var.self, false) });
 			}
 			else
 				res.stage_inputs.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
@@ -876,12 +911,12 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 			res.subpass_inputs.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
 		}
 		// Outputs
-		else if (var.storage == StorageClassOutput && interface_variable_exists_in_entry_point(var.self))
+		else if (var.storage == StorageClassOutput)
 		{
 			if (has_decoration(type.self, DecorationBlock))
 			{
 				res.stage_outputs.push_back(
-				    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, false) });
+						{ var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, false) });
 			}
 			else
 				res.stage_outputs.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
@@ -3185,6 +3220,29 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 		break;
 	}
 
+	case OpSelect:
+	{
+		// In case of variable pointers, we might access a variable here.
+		// We cannot prove anything about these accesses however.
+		for (uint32_t i = 1; i < length; i++)
+		{
+			if (i >= 3)
+			{
+				auto *var = compiler.maybe_get_backing_variable(args[i]);
+				if (var)
+				{
+					accessed_variables_to_block[var->self].insert(current_block->self);
+					// Assume we can get partial writes to this variable.
+					partial_write_variables_to_block[var->self].insert(current_block->self);
+				}
+			}
+
+			// Might try to copy a Phi variable here.
+			notify_variable_access(args[i], current_block->self);
+		}
+		break;
+	}
+
 	case OpExtInst:
 	{
 		for (uint32_t i = 4; i < length; i++)
@@ -4071,7 +4129,7 @@ void Compiler::update_active_builtins()
 }
 
 // Returns whether this shader uses a builtin of the storage class
-bool Compiler::has_active_builtin(BuiltIn builtin, StorageClass storage)
+bool Compiler::has_active_builtin(BuiltIn builtin, StorageClass storage) const
 {
 	const Bitset *flags;
 	switch (storage)

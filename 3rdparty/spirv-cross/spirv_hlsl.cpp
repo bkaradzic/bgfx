@@ -570,7 +570,7 @@ void CompilerHLSL::emit_builtin_outputs_in_struct()
 		switch (builtin)
 		{
 		case BuiltInPosition:
-			type = "float4";
+			type = is_position_invariant() && backend.support_precise_qualifier ? "precise float4" : "float4";
 			semantic = legacy ? "POSITION" : "SV_Position";
 			break;
 
@@ -818,8 +818,8 @@ string CompilerHLSL::to_interpolation_qualifiers(const Bitset &flags)
 		res += "patch "; // Seems to be different in actual HLSL.
 	if (flags.get(DecorationSample))
 		res += "sample ";
-	if (flags.get(DecorationInvariant))
-		res += "invariant "; // Not supported?
+	if (flags.get(DecorationInvariant) && backend.support_precise_qualifier)
+		res += "precise "; // Not supported?
 
 	return res;
 }
@@ -865,24 +865,10 @@ void CompilerHLSL::emit_io_block(const SPIRVariable &var)
 	begin_scope();
 	type.member_name_cache.clear();
 
-	uint32_t base_location = get_decoration(var.self, DecorationLocation);
-
 	for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
 	{
-		string semantic;
-		if (has_member_decoration(type.self, i, DecorationLocation))
-		{
-			uint32_t location = get_member_decoration(type.self, i, DecorationLocation);
-			semantic = join(" : ", to_semantic(location, execution.model, var.storage));
-		}
-		else
-		{
-			// If the block itself has a location, but not its members, use the implicit location.
-			// There could be a conflict if the block members partially specialize the locations.
-			// It is unclear how SPIR-V deals with this. Assume this does not happen for now.
-			uint32_t location = base_location + i;
-			semantic = join(" : ", to_semantic(location, execution.model, var.storage));
-		}
+		uint32_t location = get_accumulated_member_location(var, i, false);
+		string semantic = join(" : ", to_semantic(location, execution.model, var.storage));
 
 		add_member_name(type, i);
 
@@ -2249,7 +2235,7 @@ void CompilerHLSL::emit_push_constant_block(const SPIRVariable &var)
 
 string CompilerHLSL::to_sampler_expression(uint32_t id)
 {
-	auto expr = join("_", to_expression(id));
+	auto expr = join("_", to_non_uniform_aware_expression(id));
 	auto index = expr.find_first_of('[');
 	if (index == string::npos)
 	{
@@ -2754,13 +2740,16 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 	bool proj = false;
 	const uint32_t *opt = nullptr;
 	auto *combined_image = maybe_get<SPIRCombinedImageSampler>(img);
-	auto img_expr = to_expression(combined_image ? combined_image->image : img);
+
+	if (combined_image && has_decoration(img, DecorationNonUniform))
+	{
+		set_decoration(combined_image->image, DecorationNonUniform);
+		set_decoration(combined_image->sampler, DecorationNonUniform);
+	}
+
+	auto img_expr = to_non_uniform_aware_expression(combined_image ? combined_image->image : img);
 
 	inherited_expressions.push_back(coord);
-
-	// Make sure non-uniform decoration is back-propagated to where it needs to be.
-	if (has_decoration(img, DecorationNonUniformEXT))
-		propagate_nonuniform_qualifier(img);
 
 	switch (op)
 	{
@@ -3016,7 +3005,7 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 	{
 		string sampler_expr;
 		if (combined_image)
-			sampler_expr = to_expression(combined_image->sampler);
+			sampler_expr = to_non_uniform_aware_expression(combined_image->sampler);
 		else
 			sampler_expr = to_sampler_expression(img);
 		expr += sampler_expr;
@@ -3812,6 +3801,10 @@ void CompilerHLSL::read_access_chain(string *expr, const string &lhs, const SPIR
 		SPIRV_CROSS_THROW("Reading types other than 32-bit from ByteAddressBuffer not yet supported, unless SM 6.2 and "
 		                  "native 16-bit types are enabled.");
 
+	string base = chain.base;
+	if (has_decoration(chain.self, DecorationNonUniform))
+		convert_non_uniform_expression(base, chain.self);
+
 	bool templated_load = hlsl_options.shader_model >= 62;
 	string load_expr;
 
@@ -3844,7 +3837,7 @@ void CompilerHLSL::read_access_chain(string *expr, const string &lhs, const SPIR
 		if (templated_load)
 			load_op = "Load";
 
-		load_expr = join(chain.base, ".", load_op, template_expr, "(", chain.dynamic_index, chain.static_index, ")");
+		load_expr = join(base, ".", load_op, template_expr, "(", chain.dynamic_index, chain.static_index, ")");
 	}
 	else if (type.columns == 1)
 	{
@@ -3866,7 +3859,7 @@ void CompilerHLSL::read_access_chain(string *expr, const string &lhs, const SPIR
 
 		for (uint32_t r = 0; r < type.vecsize; r++)
 		{
-			load_expr += join(chain.base, ".Load", template_expr, "(", chain.dynamic_index,
+			load_expr += join(base, ".Load", template_expr, "(", chain.dynamic_index,
 			                  chain.static_index + r * chain.matrix_stride, ")");
 			if (r + 1 < type.vecsize)
 				load_expr += ", ";
@@ -3915,7 +3908,7 @@ void CompilerHLSL::read_access_chain(string *expr, const string &lhs, const SPIR
 
 		for (uint32_t c = 0; c < type.columns; c++)
 		{
-			load_expr += join(chain.base, ".", load_op, template_expr, "(", chain.dynamic_index,
+			load_expr += join(base, ".", load_op, template_expr, "(", chain.dynamic_index,
 			                  chain.static_index + c * chain.matrix_stride, ")");
 			if (c + 1 < type.columns)
 				load_expr += ", ";
@@ -3944,7 +3937,7 @@ void CompilerHLSL::read_access_chain(string *expr, const string &lhs, const SPIR
 		{
 			for (uint32_t r = 0; r < type.vecsize; r++)
 			{
-				load_expr += join(chain.base, ".Load", template_expr, "(", chain.dynamic_index,
+				load_expr += join(base, ".Load", template_expr, "(", chain.dynamic_index,
 				                  chain.static_index + c * (type.width / 8) + r * chain.matrix_stride, ")");
 
 				if ((r + 1 < type.vecsize) || (c + 1 < type.columns))
@@ -3980,9 +3973,6 @@ void CompilerHLSL::emit_load(const Instruction &instruction)
 		uint32_t result_type = ops[0];
 		uint32_t id = ops[1];
 		uint32_t ptr = ops[2];
-
-		if (has_decoration(ptr, DecorationNonUniformEXT))
-			propagate_nonuniform_qualifier(ptr);
 
 		auto &type = get<SPIRType>(result_type);
 		bool composite_load = !type.array.empty() || type.basetype == SPIRType::Struct;
@@ -4122,9 +4112,6 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 	// Make sure we trigger a read of the constituents in the access chain.
 	track_expression_read(chain.self);
 
-	if (has_decoration(chain.self, DecorationNonUniformEXT))
-		propagate_nonuniform_qualifier(chain.self);
-
 	SPIRType target_type;
 	target_type.basetype = SPIRType::UInt;
 	target_type.vecsize = type.vecsize;
@@ -4147,6 +4134,10 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 		                  "native 16-bit types are enabled.");
 
 	bool templated_store = hlsl_options.shader_model >= 62;
+
+	auto base = chain.base;
+	if (has_decoration(chain.self, DecorationNonUniform))
+		convert_non_uniform_expression(base, chain.self);
 
 	string template_expr;
 	if (templated_store)
@@ -4183,7 +4174,7 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 		}
 		else
 			store_op = "Store";
-		statement(chain.base, ".", store_op, template_expr, "(", chain.dynamic_index, chain.static_index, ", ",
+		statement(base, ".", store_op, template_expr, "(", chain.dynamic_index, chain.static_index, ", ",
 		          store_expr, ");");
 	}
 	else if (type.columns == 1)
@@ -4214,7 +4205,7 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 					store_expr = join(bitcast_op, "(", store_expr, ")");
 			}
 
-			statement(chain.base, ".Store", template_expr, "(", chain.dynamic_index,
+			statement(base, ".Store", template_expr, "(", chain.dynamic_index,
 			          chain.static_index + chain.matrix_stride * r, ", ", store_expr, ");");
 		}
 	}
@@ -4258,7 +4249,7 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 					store_expr = join(bitcast_op, "(", store_expr, ")");
 			}
 
-			statement(chain.base, ".", store_op, template_expr, "(", chain.dynamic_index,
+			statement(base, ".", store_op, template_expr, "(", chain.dynamic_index,
 			          chain.static_index + c * chain.matrix_stride, ", ", store_expr, ");");
 		}
 	}
@@ -4282,7 +4273,7 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 				auto bitcast_op = bitcast_glsl_op(target_type, type);
 				if (!bitcast_op.empty())
 					store_expr = join(bitcast_op, "(", store_expr, ")");
-				statement(chain.base, ".Store", template_expr, "(", chain.dynamic_index,
+				statement(base, ".Store", template_expr, "(", chain.dynamic_index,
 				          chain.static_index + c * (type.width / 8) + r * chain.matrix_stride, ", ", store_expr, ");");
 			}
 		}
@@ -4384,9 +4375,6 @@ void CompilerHLSL::emit_access_chain(const Instruction &instruction)
 			inherit_expression_dependencies(ops[1], ops[i]);
 			add_implied_read_expression(e, ops[i]);
 		}
-
-		if (has_decoration(ops[1], DecorationNonUniformEXT))
-			propagate_nonuniform_qualifier(ops[1]);
 	}
 	else
 	{
@@ -4486,13 +4474,16 @@ void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op)
 
 		if (data_type.storage == StorageClassImage || !chain)
 		{
-			statement(atomic_op, "(", to_expression(ops[0]), ", ", to_expression(ops[3]), ", ", to_expression(tmp_id),
-			          ");");
+			statement(atomic_op, "(", to_non_uniform_aware_expression(ops[0]), ", ",
+			          to_expression(ops[3]), ", ", to_expression(tmp_id), ");");
 		}
 		else
 		{
+			string base = chain->base;
+			if (has_decoration(chain->self, DecorationNonUniform))
+				convert_non_uniform_expression(base, chain->self);
 			// RWByteAddress buffer is always uint in its underlying type.
-			statement(chain->base, ".", atomic_op, "(", chain->dynamic_index, chain->static_index, ", ",
+			statement(base, ".", atomic_op, "(", chain->dynamic_index, chain->static_index, ", ",
 			          to_expression(ops[3]), ", ", to_expression(tmp_id), ");");
 		}
 	}
@@ -4510,14 +4501,17 @@ void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op)
 		SPIRType::BaseType expr_type;
 		if (data_type.storage == StorageClassImage || !chain)
 		{
-			statement(atomic_op, "(", to_expression(ops[2]), ", ", value_expr, ", ", to_name(id), ");");
+			statement(atomic_op, "(", to_non_uniform_aware_expression(ops[2]), ", ", value_expr, ", ", to_name(id), ");");
 			expr_type = data_type.basetype;
 		}
 		else
 		{
 			// RWByteAddress buffer is always uint in its underlying type.
+			string base = chain->base;
+			if (has_decoration(chain->self, DecorationNonUniform))
+				convert_non_uniform_expression(base, chain->self);
 			expr_type = SPIRType::UInt;
-			statement(chain->base, ".", atomic_op, "(", chain->dynamic_index, chain->static_index, ", ", value_expr,
+			statement(base, ".", atomic_op, "(", chain->dynamic_index, chain->static_index, ", ", value_expr,
 			          ", ", to_name(id), ");");
 		}
 
@@ -4618,13 +4612,35 @@ void CompilerHLSL::emit_subgroup_op(const Instruction &i)
 	}
 
 	case OpGroupNonUniformShuffle:
-		SPIRV_CROSS_THROW("Cannot trivially implement Shuffle in HLSL.");
+		emit_binary_func_op(result_type, id, ops[3], ops[4], "WaveReadLaneAt");
+		break;
 	case OpGroupNonUniformShuffleXor:
-		SPIRV_CROSS_THROW("Cannot trivially implement ShuffleXor in HLSL.");
+	{
+		bool forward = should_forward(ops[3]);
+		emit_op(ops[0], ops[1],
+		        join("WaveReadLaneAt(", to_unpacked_expression(ops[3]), ", ",
+		             "WaveGetLaneIndex() ^ ", to_enclosed_expression(ops[4]), ")"), forward);
+		inherit_expression_dependencies(ops[1], ops[3]);
+		break;
+	}
 	case OpGroupNonUniformShuffleUp:
-		SPIRV_CROSS_THROW("Cannot trivially implement ShuffleUp in HLSL.");
+	{
+		bool forward = should_forward(ops[3]);
+		emit_op(ops[0], ops[1],
+		        join("WaveReadLaneAt(", to_unpacked_expression(ops[3]), ", ",
+		             "WaveGetLaneIndex() - ", to_enclosed_expression(ops[4]), ")"), forward);
+		inherit_expression_dependencies(ops[1], ops[3]);
+		break;
+	}
 	case OpGroupNonUniformShuffleDown:
-		SPIRV_CROSS_THROW("Cannot trivially implement ShuffleDown in HLSL.");
+	{
+		bool forward = should_forward(ops[3]);
+		emit_op(ops[0], ops[1],
+		        join("WaveReadLaneAt(", to_unpacked_expression(ops[3]), ", ",
+		             "WaveGetLaneIndex() + ", to_enclosed_expression(ops[4]), ")"), forward);
+		inherit_expression_dependencies(ops[1], ops[3]);
+		break;
+	}
 
 	case OpGroupNonUniformAll:
 		emit_unary_func_op(result_type, id, ops[3], "WaveActiveAllTrue");
@@ -5150,7 +5166,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		auto dummy_samples_levels = join(get_fallback_name(id), "_dummy_parameter");
 		statement("uint ", dummy_samples_levels, ";");
 
-		auto expr = join("spvTextureSize(", to_expression(ops[2]), ", ",
+		auto expr = join("spvTextureSize(", to_non_uniform_aware_expression(ops[2]), ", ",
 		                 bitcast_expression(SPIRType::UInt, ops[3]), ", ", dummy_samples_levels, ")");
 
 		auto &restype = get<SPIRType>(ops[0]);
@@ -5176,9 +5192,9 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 
 		string expr;
 		if (uav)
-			expr = join("spvImageSize(", to_expression(ops[2]), ", ", dummy_samples_levels, ")");
+			expr = join("spvImageSize(", to_non_uniform_aware_expression(ops[2]), ", ", dummy_samples_levels, ")");
 		else
-			expr = join("spvTextureSize(", to_expression(ops[2]), ", 0u, ", dummy_samples_levels, ")");
+			expr = join("spvTextureSize(", to_non_uniform_aware_expression(ops[2]), ", 0u, ", dummy_samples_levels, ")");
 
 		auto &restype = get<SPIRType>(ops[0]);
 		expr = bitcast_expression(restype, SPIRType::UInt, expr);
@@ -5208,9 +5224,9 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		statement(variable_decl(type, to_name(id)), ";");
 
 		if (uav)
-			statement("spvImageSize(", to_expression(ops[2]), ", ", to_name(id), ");");
+			statement("spvImageSize(", to_non_uniform_aware_expression(ops[2]), ", ", to_name(id), ");");
 		else
-			statement("spvTextureSize(", to_expression(ops[2]), ", 0u, ", to_name(id), ");");
+			statement("spvTextureSize(", to_non_uniform_aware_expression(ops[2]), ", 0u, ", to_name(id), ");");
 
 		auto &restype = get<SPIRType>(ops[0]);
 		auto expr = bitcast_expression(restype, SPIRType::UInt, to_name(id));
@@ -5241,16 +5257,16 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 				if (operands != ImageOperandsSampleMask || instruction.length != 6)
 					SPIRV_CROSS_THROW("Multisampled image used in OpImageRead, but unexpected operand mask was used.");
 				uint32_t sample = ops[5];
-				imgexpr = join(to_expression(ops[2]), ".Load(int2(gl_FragCoord.xy), ", to_expression(sample), ")");
+				imgexpr = join(to_non_uniform_aware_expression(ops[2]), ".Load(int2(gl_FragCoord.xy), ", to_expression(sample), ")");
 			}
 			else
-				imgexpr = join(to_expression(ops[2]), ".Load(int3(int2(gl_FragCoord.xy), 0))");
+				imgexpr = join(to_non_uniform_aware_expression(ops[2]), ".Load(int3(int2(gl_FragCoord.xy), 0))");
 
 			pure = true;
 		}
 		else
 		{
-			imgexpr = join(to_expression(ops[2]), "[", to_expression(ops[3]), "]");
+			imgexpr = join(to_non_uniform_aware_expression(ops[2]), "[", to_expression(ops[3]), "]");
 			// The underlying image type in HLSL depends on the image format, unlike GLSL, where all images are "vec4",
 			// except that the underlying type changes how the data is interpreted.
 
@@ -5299,7 +5315,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 			value_expr = remap_swizzle(narrowed_type, expression_type(ops[2]).vecsize, value_expr);
 		}
 
-		statement(to_expression(ops[0]), "[", to_expression(ops[1]), "] = ", value_expr, ";");
+		statement(to_non_uniform_aware_expression(ops[0]), "[", to_expression(ops[1]), "] = ", value_expr, ";");
 		if (var && variable_storage_is_aliased(*var))
 			flush_all_aliased_variables();
 		break;
@@ -5311,10 +5327,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		uint32_t id = ops[1];
 
 		auto expr = to_expression(ops[2]);
-		if (has_decoration(id, DecorationNonUniformEXT) || has_decoration(ops[2], DecorationNonUniformEXT))
-			convert_non_uniform_expression(expression_type(ops[2]), expr);
 		expr += join("[", to_expression(ops[3]), "]");
-
 		auto &e = set<SPIRExpression>(id, expr, result_type, true);
 
 		// When using the pointer, we need to know which variable it is actually loaded from.
@@ -5492,7 +5505,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 
 	case OpArrayLength:
 	{
-		auto *var = maybe_get<SPIRVariable>(ops[2]);
+		auto *var = maybe_get_backing_variable(ops[2]);
 		if (!var)
 			SPIRV_CROSS_THROW("Array length must point directly to an SSBO block.");
 
@@ -5502,7 +5515,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 
 		// This must be 32-bit uint, so we're good to go.
 		emit_uninitialized_temporary_expression(ops[0], ops[1]);
-		statement(to_expression(ops[2]), ".GetDimensions(", to_expression(ops[1]), ");");
+		statement(to_non_uniform_aware_expression(ops[2]), ".GetDimensions(", to_expression(ops[1]), ");");
 		uint32_t offset = type_struct_member_offset(type, ops[3]);
 		uint32_t stride = type_struct_member_array_stride(type, ops[3]);
 		statement(to_expression(ops[1]), " = (", to_expression(ops[1]), " - ", offset, ") / ", stride, ";");
@@ -5717,6 +5730,9 @@ string CompilerHLSL::compile()
 	backend.can_return_array = false;
 	backend.nonuniform_qualifier = "NonUniformResourceIndex";
 	backend.support_case_fallthrough = false;
+
+	// SM 4.1 does not support precise for some reason.
+	backend.support_precise_qualifier = hlsl_options.shader_model >= 50 || hlsl_options.shader_model == 40;
 
 	fixup_type_alias();
 	reorder_type_alias();
