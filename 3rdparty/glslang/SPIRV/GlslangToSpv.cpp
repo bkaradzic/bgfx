@@ -4236,6 +4236,8 @@ spv::Id TGlslangToSpvTraverser::makeArraySizeId(const glslang::TArraySizes& arra
     glslang::TIntermTyped* specNode = arraySizes.getDimNode(dim);
     if (specNode != nullptr) {
         builder.clearAccessChain();
+        SpecConstantOpModeGuard spec_constant_op_mode_setter(&builder);
+        spec_constant_op_mode_setter.turnOnSpecConstantOpMode();
         specNode->traverse(this);
         return accessChainLoad(specNode->getAsTyped()->getType());
     }

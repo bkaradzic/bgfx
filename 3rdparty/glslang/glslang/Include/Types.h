@@ -115,6 +115,7 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
 #endif
 
     bool is1D()          const { return dim == Esd1D; }
+    bool is2D()          const { return dim == Esd2D; }
     bool isBuffer()      const { return dim == EsdBuffer; }
     bool isRect()        const { return dim == EsdRect; }
     bool isSubpass()     const { return dim == EsdSubpass; }

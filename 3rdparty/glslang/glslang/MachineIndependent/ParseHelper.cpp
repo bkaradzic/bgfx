@@ -2191,6 +2191,16 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
                               "[gl_MinProgramTexelOffset, gl_MaxProgramTexelOffset]");
                 }
             }
+
+            if (callNode.getOp() == EOpTextureOffset) {
+                TSampler s = arg0->getType().getSampler();
+                if (s.is2D() && s.isArrayed() && s.isShadow()) {
+                    if (isEsProfile())
+                        error(loc, "TextureOffset does not support sampler2DArrayShadow : ", "sampler", "ES Profile");
+                    else if (version <= 420)
+                        error(loc, "TextureOffset does not support sampler2DArrayShadow : ", "sampler", "version <= 420");
+                }
+            }
         }
 
         break;

@@ -1261,6 +1261,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "bvec3 notEqual(u64vec3, u64vec3);"
             "bvec4 notEqual(u64vec4, u64vec4);"
 
+            "int64_t bitCount(int64_t);"
+            "i64vec2 bitCount(i64vec2);"
+            "i64vec3 bitCount(i64vec3);"
+            "i64vec4 bitCount(i64vec4);"
+
+            "int64_t bitCount(uint64_t);"
+            "i64vec2 bitCount(u64vec2);"
+            "i64vec3 bitCount(u64vec3);"
+            "i64vec4 bitCount(u64vec4);"
+
             "int64_t findLSB(int64_t);"
             "i64vec2 findLSB(i64vec2);"
             "i64vec3 findLSB(i64vec3);"
