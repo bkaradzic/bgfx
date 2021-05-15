@@ -82,6 +82,7 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 #define CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN        (1 << 9)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_VARIANTS     (1 << 10)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_VOLUME       (1 << 11)
+#define CGLTF_EXTENSION_FLAG_TEXTURE_BASISU        (1 << 12)
 
 typedef struct {
 	char* buffer;
@@ -707,6 +708,18 @@ static void cgltf_write_texture(cgltf_write_context* context, const cgltf_textur
 	cgltf_write_strprop(context, "name", texture->name);
 	CGLTF_WRITE_IDXPROP("source", texture->image, context->data->images);
 	CGLTF_WRITE_IDXPROP("sampler", texture->sampler, context->data->samplers);
+
+	if (texture->has_basisu)
+	{
+		cgltf_write_line(context, "\"extensions\": {");
+		{
+			context->extension_flags |= CGLTF_EXTENSION_FLAG_TEXTURE_BASISU;
+			cgltf_write_line(context, "\"KHR_texture_basisu\": {");
+			CGLTF_WRITE_IDXPROP("source", texture->basisu_image, context->data->images);
+			cgltf_write_line(context, "}");
+		}
+		cgltf_write_line(context, "}");
+	}
 	cgltf_write_extras(context, &texture->extras);
 	cgltf_write_line(context, "}");
 }
@@ -1058,6 +1071,12 @@ static void cgltf_write_extensions(cgltf_write_context* context, uint32_t extens
 	}
 	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_VARIANTS) {
 		cgltf_write_stritem(context, "KHR_materials_variants");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_VOLUME) {
+		cgltf_write_stritem(context, "KHR_materials_volume");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_TEXTURE_BASISU) {
+		cgltf_write_stritem(context, "KHR_texture_basisu");
 	}
 }
 
