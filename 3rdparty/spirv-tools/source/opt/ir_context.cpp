@@ -214,10 +214,10 @@ Instruction* IRContext::KillInst(Instruction* inst) {
   return next_instruction;
 }
 
-void IRContext::KillNonSemanticInfo(Instruction* inst) {
+void IRContext::CollectNonSemanticTree(
+    Instruction* inst, std::unordered_set<Instruction*>* to_kill) {
   if (!inst->HasResultId()) return;
   std::vector<Instruction*> work_list;
-  std::vector<Instruction*> to_kill;
   std::unordered_set<Instruction*> seen;
   work_list.push_back(inst);
 
@@ -225,16 +225,12 @@ void IRContext::KillNonSemanticInfo(Instruction* inst) {
     auto* i = work_list.back();
     work_list.pop_back();
     get_def_use_mgr()->ForEachUser(
-        i, [&work_list, &to_kill, &seen](Instruction* user) {
+        i, [&work_list, to_kill, &seen](Instruction* user) {
           if (user->IsNonSemanticInstruction() && seen.insert(user).second) {
             work_list.push_back(user);
-            to_kill.push_back(user);
+            to_kill->insert(user);
           }
         });
-  }
-
-  for (auto* dead : to_kill) {
-    KillInst(dead);
   }
 }
 

@@ -124,6 +124,66 @@ Instruction* NonConstInput(IRContext* context, const analysis::Constant* c,
       inst->GetSingleWordInOperand(in_op));
 }
 
+std::vector<uint32_t> ExtractInts(uint64_t val) {
+  std::vector<uint32_t> words;
+  words.push_back(static_cast<uint32_t>(val));
+  words.push_back(static_cast<uint32_t>(val >> 32));
+  return words;
+}
+
+std::vector<uint32_t> GetWordsFromScalarIntConstant(
+    const analysis::IntConstant* c) {
+  assert(c != nullptr);
+  uint32_t width = c->type()->AsInteger()->width();
+  assert(width == 32 || width == 64);
+  if (width == 64) {
+    uint64_t uval = static_cast<uint64_t>(c->GetU64());
+    return ExtractInts(uval);
+  }
+  return {c->GetU32()};
+}
+
+std::vector<uint32_t> GetWordsFromScalarFloatConstant(
+    const analysis::FloatConstant* c) {
+  assert(c != nullptr);
+  uint32_t width = c->type()->AsFloat()->width();
+  assert(width == 32 || width == 64);
+  if (width == 64) {
+    utils::FloatProxy<double> result(c->GetDouble());
+    return result.GetWords();
+  }
+  utils::FloatProxy<float> result(c->GetFloat());
+  return result.GetWords();
+}
+
+std::vector<uint32_t> GetWordsFromNumericScalarOrVectorConstant(
+    analysis::ConstantManager* const_mgr, const analysis::Constant* c) {
+  if (const auto* float_constant = c->AsFloatConstant()) {
+    return GetWordsFromScalarFloatConstant(float_constant);
+  } else if (const auto* int_constant = c->AsIntConstant()) {
+    return GetWordsFromScalarIntConstant(int_constant);
+  } else if (const auto* vec_constant = c->AsVectorConstant()) {
+    std::vector<uint32_t> words;
+    for (const auto* comp : vec_constant->GetComponents()) {
+      auto comp_in_words =
+          GetWordsFromNumericScalarOrVectorConstant(const_mgr, comp);
+      words.insert(words.end(), comp_in_words.begin(), comp_in_words.end());
+    }
+    return words;
+  }
+  return {};
+}
+
+const analysis::Constant* ConvertWordsToNumericScalarOrVectorConstant(
+    analysis::ConstantManager* const_mgr, const std::vector<uint32_t>& words,
+    const analysis::Type* type) {
+  if (type->AsInteger() || type->AsFloat())
+    return const_mgr->GetConstant(type, words);
+  if (const auto* vec_type = type->AsVector())
+    return const_mgr->GetNumericVectorConstantWithWords(vec_type, words);
+  return nullptr;
+}
+
 // Returns the negation of |c|. |c| must be a 32 or 64 bit floating point
 // constant.
 uint32_t NegateFloatingPointConstant(analysis::ConstantManager* const_mgr,
@@ -144,13 +204,6 @@ uint32_t NegateFloatingPointConstant(analysis::ConstantManager* const_mgr,
   const analysis::Constant* negated_const =
       const_mgr->GetConstant(c->type(), std::move(words));
   return const_mgr->GetDefiningInstruction(negated_const)->result_id();
-}
-
-std::vector<uint32_t> ExtractInts(uint64_t val) {
-  std::vector<uint32_t> words;
-  words.push_back(static_cast<uint32_t>(val));
-  words.push_back(static_cast<uint32_t>(val >> 32));
-  return words;
 }
 
 // Negates the integer constant |c|. Returns the id of the defining instruction.
@@ -1796,6 +1849,33 @@ FoldingRule RedundantPhi() {
   };
 }
 
+FoldingRule BitCastScalarOrVector() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>& constants) {
+    assert(inst->opcode() == SpvOpBitcast && constants.size() == 1);
+    if (constants[0] == nullptr) return false;
+
+    const analysis::Type* type =
+        context->get_type_mgr()->GetType(inst->type_id());
+    if (HasFloatingPoint(type) && !inst->IsFloatingPointFoldingAllowed())
+      return false;
+
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+    std::vector<uint32_t> words =
+        GetWordsFromNumericScalarOrVectorConstant(const_mgr, constants[0]);
+    if (words.size() == 0) return false;
+
+    const analysis::Constant* bitcasted_constant =
+        ConvertWordsToNumericScalarOrVectorConstant(const_mgr, words, type);
+    auto new_feeder_id =
+        const_mgr->GetDefiningInstruction(bitcasted_constant, inst->type_id())
+            ->result_id();
+    inst->SetOpcode(SpvOpCopyObject);
+    inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {new_feeder_id}}});
+    return true;
+  };
+}
+
 FoldingRule RedundantSelect() {
   // An OpSelect instruction where both values are the same or the condition is
   // constant can be replaced by one of the values
@@ -2423,6 +2503,8 @@ void FoldingRules::AddFoldingRules() {
   // Note that the order in which rules are added to the list matters. If a rule
   // applies to the instruction, the rest of the rules will not be attempted.
   // Take that into consideration.
+  rules_[SpvOpBitcast].push_back(BitCastScalarOrVector());
+
   rules_[SpvOpCompositeConstruct].push_back(CompositeExtractFeedingConstruct);
 
   rules_[SpvOpCompositeExtract].push_back(InsertFeedingExtract());
