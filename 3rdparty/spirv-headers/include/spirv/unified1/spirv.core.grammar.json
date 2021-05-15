@@ -7257,7 +7257,11 @@
       "class"  : "Type-Declaration",
       "opcode" : 6086,
       "operands" : [
-        { "kind" : "IdResult" }
+        { "kind" : "IdResult" },
+        {
+          "kind" : "AccessQualifier",
+          "name" : "'AccessQualifier'"
+        }
       ],
       "capabilities" : [ "VectorComputeINTEL" ],
       "version" : "None"
@@ -8706,7 +8710,7 @@
         {
           "enumerant" : "Private",
           "value" : 6,
-          "capabilities" : [ "Shader" ]
+          "capabilities" : [ "Shader", "VectorComputeINTEL" ]
         },
         {
           "enumerant" : "Function",
