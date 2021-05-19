@@ -668,7 +668,7 @@ typedef struct bgfx_init_s
      * matching id.
      */
     uint16_t             deviceId;
-    uint64_t             capabilities;       /** Capabilities initialization mask.        */
+    uint64_t             capabilities;       /** Capabilities initialization mask (default: UINT64_MAX). */
     bool                 debug;              /** Enable device for debuging.              */
     bool                 profile;            /** Enable device for profiling.             */
     bgfx_platform_data_t platformData;       /** Platform data.                           */

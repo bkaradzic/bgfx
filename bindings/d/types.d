@@ -854,7 +854,7 @@ struct bgfx_init_t
 	 * matching id.
 	 */
 	ushort deviceId;
-	ulong capabilities; /// Capabilities initialization mask.
+	ulong capabilities; /// Capabilities initialization mask (default: UINT64_MAX).
 	bool debug_; /// Enable device for debuging.
 	bool profile; /// Enable device for profiling.
 	bgfx_platform_data_t platformData; /// Platform data.
