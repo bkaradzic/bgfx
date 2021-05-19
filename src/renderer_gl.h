@@ -1502,9 +1502,12 @@ namespace bgfx { namespace gl
 				{
 					Attrib::Enum attr = Attrib::Enum(m_unboundUsedAttrib[ii]);
 					GLint loc = m_attributes[attr];
-					GL_CHECK(lazyDisableVertexAttribArray(loc) );
+					lazyDisableVertexAttribArray(loc);
 				}
 			}
+
+			extern void applyLazyEnabledVertexAttributes();
+			applyLazyEnabledVertexAttributes();
 		}
 
 		void unbindAttributes();

@@ -1228,15 +1228,15 @@ namespace bgfx { namespace gl
 	{
 		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 		{
-			// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
-			// out redundant API calls to glEnable/DisableVertexAttribArray.
 			if (index >= 64)
 			{
+				// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
+				// out redundant API calls to glEnable/DisableVertexAttribArray.
 				GL_CHECK(glEnableVertexAttribArray(index) );
 				return;
 			}
 
-			uint64_t mask = UINT64_C(1) << index;
+			const uint64_t mask = UINT64_C(1) << index;
 			s_vertexAttribArraysPendingEnable  |=  mask & (~s_currentlyEnabledVertexAttribArrays);
 			s_vertexAttribArraysPendingDisable &= ~mask;
 		}
@@ -1250,15 +1250,15 @@ namespace bgfx { namespace gl
 	{
 		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 		{
-			// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
-			// out redundant API calls to glEnable/DisableVertexAttribArray.
 			if (index >= 64)
 			{
+				// On WebGL platform calling out to WebGL API is detrimental to performance, so optimize
+				// out redundant API calls to glEnable/DisableVertexAttribArray.
 				GL_CHECK(glDisableVertexAttribArray(index) );
 				return;
 			}
 
-			uint64_t mask = UINT64_C(1) << index;
+			const uint64_t mask = UINT64_C(1) << index;
 			s_vertexAttribArraysPendingDisable |=  mask & s_currentlyEnabledVertexAttribArrays;
 			s_vertexAttribArraysPendingEnable  &= ~mask;
 		}
@@ -2224,22 +2224,32 @@ namespace bgfx { namespace gl
 			m_version     = getGLString(GL_VERSION);
 			m_glslVersion = getGLString(GL_SHADING_LANGUAGE_VERSION);
 
-			int glVersion;
-			int majorGlVersion = 0;
-			int minorGlVersion = 0;
-			const char* version = m_version;
-
-			while (*version && !bx::isNumeric(*version) )
 			{
-				++version;
+				int32_t glVersion = 0;
+
+				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+				{
+					int32_t majorGlVersion = 0;
+					int32_t minorGlVersion = 0;
+					const char* version = m_version;
+
+					while (*version && !bx::isNumeric(*version) )
+					{
+						++version;
+					}
+
+					bx::fromString(&majorGlVersion, version);
+					bx::fromString(&minorGlVersion, version + 2);
+					glVersion = majorGlVersion*10 + minorGlVersion;
+
+					BX_TRACE("WebGL context version %d (%d.%d).", glVersion, majorGlVersion, minorGlVersion);
+				}
+
+				m_gles3 = false
+					||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+					|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && glVersion >= 30)
+					;
 			}
-
-			bx::fromString(&majorGlVersion, version);
-			bx::fromString(&minorGlVersion, version + 2);
-
-			glVersion = majorGlVersion*10 + minorGlVersion;
-
-			BX_TRACE("Parsed version %d (%d.%d).", glVersion, majorGlVersion, minorGlVersion);
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_vendorIds); ++ii)
 			{
@@ -2475,7 +2485,13 @@ namespace bgfx { namespace gl
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 				{
-					if (glVersion < 30)
+					if (m_gles3)
+					{
+						setTextureFormat(TextureFormat::R16F,    GL_R16F,    GL_RED,  0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
+						setTextureFormat(TextureFormat::RG16F,   GL_RG16F,   GL_RG,   0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
+						setTextureFormat(TextureFormat::RGBA16F, GL_RGBA16F, GL_RGBA, 0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
+					}
+					else
 					{
 						setTextureFormat(TextureFormat::RGBA16F, GL_RGBA, GL_RGBA, GL_HALF_FLOAT); // Note: this is actually GL_HALF_FLOAT_OES and not GL_HALF_FLOAT if compiling for GLES target.
 						setTextureFormat(TextureFormat::RGBA32F, GL_RGBA, GL_RGBA, GL_FLOAT);
@@ -2509,12 +2525,6 @@ namespace bgfx { namespace gl
 							s_textureFilter[TextureFormat::RGBA32F] = linear32F;
 						}
 					}
-					else
-					{
-						setTextureFormat(TextureFormat::R16F, GL_R16F, GL_RED, 0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
-						setTextureFormat(TextureFormat::RG16F, GL_RG16F, GL_RG, 0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
-						setTextureFormat(TextureFormat::RGBA16F, GL_RGBA16F, GL_RGBA, 0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
-					}
 
 					if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
 						&& (s_extension[Extension::WEBGL_depth_texture].m_supported
@@ -2528,7 +2538,7 @@ namespace bgfx { namespace gl
 					}
 
 					// OpenGL ES 3.0 depth formats.
-					if (glVersion >= 30)
+					if (m_gles3)
 					{
 						setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT16,  GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
 						setTextureFormat(TextureFormat::D24,   GL_DEPTH_COMPONENT24,  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
@@ -2542,7 +2552,7 @@ namespace bgfx { namespace gl
 				}
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+				||  m_gles3)
 				{
 					setTextureFormat(TextureFormat::R8I,     GL_R8I,      GL_RED_INTEGER,  GL_BYTE);
 					setTextureFormat(TextureFormat::R8U,     GL_R8UI,     GL_RED_INTEGER,  GL_UNSIGNED_BYTE);
@@ -2594,9 +2604,9 @@ namespace bgfx { namespace gl
 					// OpenGL ES does not have reversed BGRA4 and BGR5A1 support.
 					setTextureFormat(TextureFormat::RGBA4,  GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4);
 					setTextureFormat(TextureFormat::RGB5A1, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1);
-					setTextureFormat(TextureFormat::R5G6B5, GL_RGB, GL_RGB, GL_UNSIGNED_SHORT_5_6_5);
+					setTextureFormat(TextureFormat::R5G6B5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5);
 
-					if (glVersion < 30)
+					if (!m_gles3)
 					{
 						// OpenGL ES 2.0 uses unsized internal formats.
 						s_textureFormat[TextureFormat::RGB8].m_internalFmt = GL_RGB;
@@ -2711,17 +2721,17 @@ namespace bgfx { namespace gl
 					g_caps.formats[ii] = supported;
 				}
 
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
 					|| s_extension[Extension::OES_texture_3D].m_supported
 					? BGFX_CAPS_TEXTURE_3D
 					: 0
 					;
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
 					|| s_extension[Extension::EXT_shadow_samplers].m_supported
 					? BGFX_CAPS_TEXTURE_COMPARE_ALL
 					: 0
 					;
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
 					|| s_extension[Extension::OES_vertex_half_float].m_supported
 					? BGFX_CAPS_VERTEX_ATTRIB_HALF
 					: 0
@@ -2732,7 +2742,7 @@ namespace bgfx { namespace gl
 					? BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					: 0
 					;
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
 					|| s_extension[Extension::EXT_frag_depth].m_supported
 					? BGFX_CAPS_FRAGMENT_DEPTH
 					: 0
@@ -2745,7 +2755,7 @@ namespace bgfx { namespace gl
 					? BGFX_CAPS_FRAGMENT_ORDERING
 					: 0
 					;
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
 					|| s_extension[Extension::OES_element_index_uint].m_supported
 					? BGFX_CAPS_INDEX32
 					: 0
@@ -2800,14 +2810,14 @@ namespace bgfx { namespace gl
 				g_caps.supported |= false
 					|| s_extension[Extension::EXT_texture_array].m_supported
 					|| s_extension[Extension::EXT_gpu_shader4].m_supported
-					|| (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30) && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+					|| (m_gles3 && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 					? BGFX_CAPS_TEXTURE_2D_ARRAY
 					: 0
 					;
 
 				g_caps.supported |= false
 					|| s_extension[Extension::EXT_gpu_shader4].m_supported
-					|| (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30) && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+					|| (m_gles3 && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 					? BGFX_CAPS_VERTEX_ID
 					: 0
 					;
@@ -2825,7 +2835,7 @@ namespace bgfx { namespace gl
 				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				||  m_gles3
 				||  s_extension[Extension::EXT_draw_buffers  ].m_supported
 				||  s_extension[Extension::WEBGL_draw_buffers].m_supported)
 				{
@@ -2848,7 +2858,7 @@ namespace bgfx { namespace gl
 				}
 
 				m_vaoSupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-				   && (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+					&& (m_gles3
 						|| s_extension[Extension::ARB_vertex_array_object].m_supported
 						|| s_extension[Extension::OES_vertex_array_object].m_supported
 						);
@@ -2859,7 +2869,7 @@ namespace bgfx { namespace gl
 				}
 
 				m_samplerObjectSupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&& (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+					&& (m_gles3
 						|| s_extension[Extension::ARB_sampler_objects].m_supported
 						);
 
@@ -2868,7 +2878,7 @@ namespace bgfx { namespace gl
 					;
 
 				m_programBinarySupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&& (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+					&& (m_gles3
 						|| s_extension[Extension::ARB_get_program_binary].m_supported
 						|| s_extension[Extension::OES_get_program_binary].m_supported
 						|| s_extension[Extension::IMG_shader_binary     ].m_supported
@@ -2879,7 +2889,7 @@ namespace bgfx { namespace gl
 					|| s_extension[Extension::EXT_texture_swizzle].m_supported
 					;
 
-				m_depthTextureSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				m_depthTextureSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
 					|| s_extension[Extension::ANGLE_depth_texture       ].m_supported
 					|| s_extension[Extension::CHROMIUM_depth_texture    ].m_supported
 					|| s_extension[Extension::GOOGLE_depth_texture      ].m_supported
@@ -2974,8 +2984,7 @@ namespace bgfx { namespace gl
 					m_readPixelsFmt = GL_RGBA;
 				}
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
-				|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && glVersion >= 30) )
+				if (m_gles3)
 				{
 					g_caps.supported |= BGFX_CAPS_INSTANCING;
 				}
@@ -4541,6 +4550,7 @@ namespace bgfx { namespace gl
 		const char* m_renderer;
 		const char* m_version;
 		const char* m_glslVersion;
+		bool m_gles3;
 
 		Workaround m_workaround;
 
@@ -5172,8 +5182,6 @@ namespace bgfx { namespace gl
 				}
 			}
 		}
-
-		applyLazyEnabledVertexAttributes();
 	}
 
 	void ProgramGL::unbindAttributes()
@@ -6003,7 +6011,7 @@ namespace bgfx { namespace gl
 				bx::Error err;
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
-				&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
+				&&  !s_renderGL->m_gles3)
 				{
 					bx::write(&writer
 						, "#define centroid\n"
@@ -6395,9 +6403,9 @@ namespace bgfx { namespace gl
 					bx::write(&writer, '\0');
 				}
 				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 31)
-					 ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+					 ||  s_renderGL->m_gles3)
 				{
-					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+					if (s_renderGL->m_gles3)
 					{
 						bx::write(&writer, &err
 							, "#version 300 es\n"
@@ -7998,13 +8006,13 @@ namespace bgfx { namespace gl
 									}
 								}
 
-								program.bindAttributesEnd();
-
 								if (isValid(draw.m_instanceDataBuffer) )
 								{
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffers[draw.m_instanceDataBuffer.idx].m_id) );
 									program.bindInstanceData(draw.m_instanceDataStride, draw.m_instanceDataOffset);
 								}
+
+								program.bindAttributesEnd();
 							}
 						}
 					}
