@@ -626,6 +626,8 @@ namespace bgfx { namespace gl
 			NV_conservative_raster,
 			NV_copy_image,
 			NV_draw_buffers,
+			NV_draw_instanced,
+			NV_instanced_arrays,
 			NV_occlusion_query,
 			NV_texture_border_clamp,
 			NVX_gpu_memory_info,
@@ -841,6 +843,8 @@ namespace bgfx { namespace gl
 		{ "NV_conservative_raster",                   false,                             true  },
 		{ "NV_copy_image",                            false,                             true  },
 		{ "NV_draw_buffers",                          false,                             true  }, // GLES2 extension.
+		{ "NV_draw_instanced",                        false,                             true  }, // GLES2 extension.
+		{ "NV_instanced_arrays",                      false,                             true  }, // GLES2 extension.
 		{ "NV_occlusion_query",                       false,                             true  },
 		{ "NV_texture_border_clamp",                  false,                             true  }, // GLES2 extension.
 		{ "NVX_gpu_memory_info",                      false,                             true  },
@@ -2223,16 +2227,19 @@ namespace bgfx { namespace gl
 			int glVersion;
 			int majorGlVersion = 0;
 			int minorGlVersion = 0;
-			const char *version = m_version;
+			const char* version = m_version;
 
-			while(*version && (*version < '0' || *version > '9') )
+			while (*version && !bx::isNumeric(*version) )
 			{
 				++version;
 			}
 
-			majorGlVersion = atoi(version);
-			minorGlVersion = atoi(version + 2);
+			bx::fromString(&majorGlVersion, version);
+			bx::fromString(&minorGlVersion, version + 2);
+
 			glVersion = majorGlVersion*10 + minorGlVersion;
+
+			BX_TRACE("Parsed version %d (%d.%d).", glVersion, majorGlVersion, minorGlVersion);
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_vendorIds); ++ii)
 			{
@@ -2967,20 +2974,33 @@ namespace bgfx { namespace gl
 					m_readPixelsFmt = GL_RGBA;
 				}
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && glVersion >= 30) )
 				{
 					g_caps.supported |= BGFX_CAPS_INSTANCING;
 				}
 				else
 				{
 					if (s_extension[Extension::ANGLE_instanced_arrays].m_supported
-					||  s_extension[Extension::ARB_instanced_arrays].m_supported
-					||  s_extension[Extension::EXT_instanced_arrays].m_supported)
+					||  s_extension[Extension::  ARB_instanced_arrays].m_supported
+					||  s_extension[Extension::  EXT_instanced_arrays].m_supported
+					|| (s_extension[Extension::   NV_instanced_arrays].m_supported && s_extension[Extension::NV_draw_instanced].m_supported)
+					   )
 					{
 						if (NULL != glVertexAttribDivisor
 						&&  NULL != glDrawArraysInstanced
 						&&  NULL != glDrawElementsInstanced)
 						{
+							g_caps.supported |= BGFX_CAPS_INSTANCING;
+						}
+						else if (NULL != glVertexAttribDivisorNV
+							 &&  NULL != glDrawArraysInstancedNV
+							 &&  NULL != glDrawElementsInstancedNV)
+						{
+							glVertexAttribDivisor   = glVertexAttribDivisorNV;
+							glDrawArraysInstanced   = glDrawArraysInstancedNV;
+							glDrawElementsInstanced = glDrawElementsInstancedNV;
+
 							g_caps.supported |= BGFX_CAPS_INSTANCING;
 						}
 					}

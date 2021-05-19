@@ -447,6 +447,10 @@ GL_IMPORT_ARB__(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttri
 GL_IMPORT_ARB__(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
 GL_IMPORT_ARB__(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
 
+GL_IMPORT______(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisorNV);
+GL_IMPORT______(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstancedNV);
+GL_IMPORT______(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstancedNV);
+
 GL_IMPORT_ARB__(true,  PFNGLDRAWBUFFERSPROC,                       glDrawBuffers);
 
 GL_IMPORT_ARB__(true,  PFNGLINVALIDATEFRAMEBUFFERPROC,             glInvalidateFramebuffer);
@@ -547,11 +551,19 @@ GL_IMPORT_OES__(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBina
 GL_IMPORT_EXT__(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
 GL_IMPORT_EXT__(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
 GL_IMPORT_EXT__(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
+#elif BX_PLATFORM_EMSCRIPTEN
+GL_IMPORT_ANGLE(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
+GL_IMPORT_ANGLE(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
+GL_IMPORT_ANGLE(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
 #else
 GL_IMPORT_OES__(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
 GL_IMPORT_OES__(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstanced);
 GL_IMPORT_OES__(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstanced);
 #endif // BX_PLATFORM_IOS
+
+GL_IMPORT______(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisorNV);
+GL_IMPORT______(true,  PFNGLDRAWARRAYSINSTANCEDPROC,               glDrawArraysInstancedNV);
+GL_IMPORT______(true,  PFNGLDRAWELEMENTSINSTANCEDPROC,             glDrawElementsInstancedNV);
 
 GL_IMPORT_OES__(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexArray);
 GL_IMPORT_OES__(true,  PFNGLDELETEVERTEXARRAYSPROC,                glDeleteVertexArrays);
