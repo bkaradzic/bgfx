@@ -5135,6 +5135,11 @@ namespace bgfx { namespace gl
 		m_instanceData[used] = -1;
 	}
 
+	void ProgramGL::bindAttributesBegin()
+	{
+		bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib));
+	}
+
 	void ProgramGL::bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex)
 	{
 		for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
@@ -5184,6 +5189,34 @@ namespace bgfx { namespace gl
 		}
 	}
 
+	void ProgramGL::bindInstanceData(uint32_t _stride, uint32_t _baseVertex) const
+	{
+		uint32_t baseVertex = _baseVertex;
+		for (uint32_t ii = 0; -1 != m_instanceData[ii]; ++ii)
+		{
+			GLint loc = m_instanceData[ii];
+			lazyEnableVertexAttribArray(loc);
+			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex));
+			GL_CHECK(glVertexAttribDivisor(loc, 1));
+			baseVertex += 16;
+		}
+	}
+
+	void ProgramGL::bindAttributesEnd()
+	{
+		for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
+		{
+			if (Attrib::Count != m_unboundUsedAttrib[ii])
+			{
+				Attrib::Enum attr = Attrib::Enum(m_unboundUsedAttrib[ii]);
+				GLint loc = m_attributes[attr];
+				lazyDisableVertexAttribArray(loc);
+			}
+		}
+
+		applyLazyEnabledVertexAttributes();
+	}
+
 	void ProgramGL::unbindAttributes()
 	{
 		for(uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
@@ -5194,19 +5227,6 @@ namespace bgfx { namespace gl
 				GLint loc = m_attributes[attr];
 				lazyDisableVertexAttribArray(loc);
 			}
-		}
-	}
-
-	void ProgramGL::bindInstanceData(uint32_t _stride, uint32_t _baseVertex) const
-	{
-		uint32_t baseVertex = _baseVertex;
-		for (uint32_t ii = 0; -1 != m_instanceData[ii]; ++ii)
-		{
-			GLint loc = m_instanceData[ii];
-			lazyEnableVertexAttribArray(loc);
-			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex) );
-			GL_CHECK(glVertexAttribDivisor(loc, 1) );
-			baseVertex += 16;
 		}
 	}
 
