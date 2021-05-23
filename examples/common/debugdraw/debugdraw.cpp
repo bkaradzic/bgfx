@@ -2181,8 +2181,7 @@ struct DebugDrawEncoderImpl
 					| BGFX_STATE_WRITE_RGB
 					| BGFX_STATE_PT_LINES
 					| attrib.m_state
-					| BGFX_STATE_LINEAA
-					| BGFX_STATE_BLEND_ALPHA
+					| BGFX_STATE_MSAA
 					);
 				m_encoder->setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
 				bgfx::ProgramHandle program = s_dds.m_program[attrib.m_stipple ? 1 : 0];

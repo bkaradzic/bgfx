@@ -864,7 +864,17 @@ namespace bgfx { namespace mtl
 
 #if BX_PLATFORM_OSX || TARGET_OS_MACCATALYST
 			BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
-			bce.synchronizeTexture(texture.m_ptr, 0, _mip);
+            if (texture.m_type == TextureMtl::TextureCube)
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    bce.synchronizeTexture(texture.m_ptr, i, _mip);
+                }
+            }
+            else
+            {
+                bce.synchronizeTexture(texture.m_ptr, 0, _mip);
+            }
 			endEncoding();
 #endif  // BX_PLATFORM_OSX
 
@@ -883,7 +893,18 @@ namespace bgfx { namespace mtl
 				{ srcWidth, srcHeight, 1 },
 			};
 
-			texture.m_ptr.getBytes(_data, srcWidth*bpp/8, 0, region, _mip, 0);
+            if (texture.m_type == TextureMtl::TextureCube)
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    size_t offset = (srcWidth*srcHeight*bpp/8) * i;
+                    texture.m_ptr.getBytes(static_cast<char*>(_data) + offset, srcWidth*bpp/8, 0, region, _mip, i);
+                }
+            }
+            else
+            {
+                texture.m_ptr.getBytes(_data, srcWidth*bpp/8, 0, region, _mip, 0);
+            }
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
@@ -961,7 +982,7 @@ namespace bgfx { namespace mtl
 
 			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
 			fb.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
-			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, 0);
+			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, m_resolution.reset);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
