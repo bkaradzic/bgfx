@@ -4185,10 +4185,10 @@ namespace bgfx
 		s_ctx->destroyDynamicVertexBuffer(_handle);
 	}
 
-	uint32_t getAvailTransientIndexBuffer(uint32_t _num)
+	uint32_t getAvailTransientIndexBuffer(uint32_t _num, bool _index32)
 	{
 		BX_ASSERT(0 < _num, "Requesting 0 indices.");
-		return s_ctx->getAvailTransientIndexBuffer(_num);
+		return s_ctx->getAvailTransientIndexBuffer(_num, _index32);
 	}
 
 	uint32_t getAvailTransientVertexBuffer(uint32_t _num, const VertexLayout& _layout)
@@ -4239,15 +4239,15 @@ namespace bgfx
 			);
 	}
 
-	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexLayout& _layout, uint32_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint32_t _numIndices)
+	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexLayout& _layout, uint32_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint32_t _numIndices, bool _index32)
 	{
 		BGFX_MUTEX_SCOPE(s_ctx->m_resourceApiLock);
 
 		if (_numVertices == getAvailTransientVertexBuffer(_numVertices, _layout)
-		&&  _numIndices  == getAvailTransientIndexBuffer(_numIndices) )
+		&&  _numIndices  == getAvailTransientIndexBuffer(_numIndices, _index32) )
 		{
 			allocTransientVertexBuffer(_tvb, _numVertices, _layout);
-			allocTransientIndexBuffer(_tib, _numIndices);
+			allocTransientIndexBuffer(_tib, _numIndices, _index32);
 			return true;
 		}
 

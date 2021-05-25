@@ -2124,32 +2124,23 @@ namespace bgfx
 		{
 			m_cmdPre.finish();
 			m_cmdPost.finish();
-
-//			if (0 < m_numDropped)
-//			{
-//				BX_TRACE("Too many draw calls: %d, dropped %d (max: %d)"
-//					, m_numRenderItems+m_numDropped
-//					, m_numDropped
-//					, BGFX_CONFIG_MAX_DRAW_CALLS
-//					);
-//			}
 		}
 
 		void sort();
 
-		uint32_t getAvailTransientIndexBuffer(uint32_t _num)
+		uint32_t getAvailTransientIndexBuffer(uint32_t _num, uint16_t _indexSize)
 		{
-			uint32_t offset   = bx::strideAlign(m_iboffset, sizeof(uint16_t) );
-			uint32_t iboffset = offset + _num*sizeof(uint16_t);
+			const uint32_t offset = bx::strideAlign(m_iboffset, _indexSize);
+			uint32_t iboffset = offset + _num*_indexSize;
 			iboffset = bx::min<uint32_t>(iboffset, g_caps.limits.transientIbSize);
-			uint32_t num = (iboffset-offset)/sizeof(uint16_t);
+			const uint32_t num = (iboffset-offset)/_indexSize;
 			return num;
 		}
 
-		uint32_t allocTransientIndexBuffer(uint32_t& _num, uint32_t _indexSize)
+		uint32_t allocTransientIndexBuffer(uint32_t& _num, uint16_t _indexSize)
 		{
 			uint32_t offset = bx::strideAlign(m_iboffset, _indexSize);
-			uint32_t num    = getAvailTransientIndexBuffer(_num);
+			uint32_t num    = getAvailTransientIndexBuffer(_num, _indexSize);
 			m_iboffset = offset + num*_indexSize;
 			_num = num;
 
@@ -3714,11 +3705,13 @@ namespace bgfx
 			m_dynamicVertexBufferHandle.free(_handle.idx);
 		}
 
-		BGFX_API_FUNC(uint32_t getAvailTransientIndexBuffer(uint32_t _num) )
+		BGFX_API_FUNC(uint32_t getAvailTransientIndexBuffer(uint32_t _num, bool _index32) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			return m_submit->getAvailTransientIndexBuffer(_num);
+			const bool isIndex16     = !_index32;
+			const uint32_t indexSize = isIndex16 ? 2 : 4;
+			return m_submit->getAvailTransientIndexBuffer(_num, indexSize);
 		}
 
 		BGFX_API_FUNC(uint32_t getAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride) )

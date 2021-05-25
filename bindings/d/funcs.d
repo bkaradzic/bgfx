@@ -539,8 +539,9 @@ version(BindBgfx_Static)
 	 * Returns number of requested or maximum available indices.
 	 * Params:
 	 * _num = Number of required indices.
+	 * _index32 = Set to `true` if input indices will be 32-bit.
 	 */
-	uint bgfx_get_avail_transient_index_buffer(uint _num);
+	uint bgfx_get_avail_transient_index_buffer(uint _num, bool _index32);
 	
 	/**
 	 * Returns number of requested or maximum available vertices.
@@ -560,8 +561,6 @@ version(BindBgfx_Static)
 	
 	/**
 	 * Allocate transient index buffer.
-	 * Remarks:
-	 *   Only 16-bit index buffer is supported.
 	 * Params:
 	 * _tib = TransientIndexBuffer structure is filled and is valid
 	 * for the duration of frame, and it can be reused for multiple draw
@@ -586,8 +585,6 @@ version(BindBgfx_Static)
 	 * Check for required space and allocate transient vertex and index
 	 * buffers. If both space requirements are satisfied function returns
 	 * true.
-	 * Remarks:
-	 *   Only 16-bit index buffer is supported.
 	 * Params:
 	 * _tvb = TransientVertexBuffer structure is filled and is valid
 	 * for the duration of frame, and it can be reused for multiple draw
@@ -598,8 +595,9 @@ version(BindBgfx_Static)
 	 * for the duration of frame, and it can be reused for multiple draw
 	 * calls.
 	 * _numIndices = Number of indices to allocate.
+	 * _index32 = Set to `true` if input indices will be 32-bit.
 	 */
-	bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tvb, const(bgfx_vertex_layout_t)* _layout, uint _numVertices, bgfx_transient_index_buffer_t* _tib, uint _numIndices);
+	bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tvb, const(bgfx_vertex_layout_t)* _layout, uint _numVertices, bgfx_transient_index_buffer_t* _tib, uint _numIndices, bool _index32);
 	
 	/**
 	 * Allocate instance data buffer.
@@ -2729,8 +2727,9 @@ else
 		 * Returns number of requested or maximum available indices.
 		 * Params:
 		 * _num = Number of required indices.
+		 * _index32 = Set to `true` if input indices will be 32-bit.
 		 */
-		alias da_bgfx_get_avail_transient_index_buffer = uint function(uint _num);
+		alias da_bgfx_get_avail_transient_index_buffer = uint function(uint _num, bool _index32);
 		da_bgfx_get_avail_transient_index_buffer bgfx_get_avail_transient_index_buffer;
 		
 		/**
@@ -2753,8 +2752,6 @@ else
 		
 		/**
 		 * Allocate transient index buffer.
-		 * Remarks:
-		 *   Only 16-bit index buffer is supported.
 		 * Params:
 		 * _tib = TransientIndexBuffer structure is filled and is valid
 		 * for the duration of frame, and it can be reused for multiple draw
@@ -2781,8 +2778,6 @@ else
 		 * Check for required space and allocate transient vertex and index
 		 * buffers. If both space requirements are satisfied function returns
 		 * true.
-		 * Remarks:
-		 *   Only 16-bit index buffer is supported.
 		 * Params:
 		 * _tvb = TransientVertexBuffer structure is filled and is valid
 		 * for the duration of frame, and it can be reused for multiple draw
@@ -2793,8 +2788,9 @@ else
 		 * for the duration of frame, and it can be reused for multiple draw
 		 * calls.
 		 * _numIndices = Number of indices to allocate.
+		 * _index32 = Set to `true` if input indices will be 32-bit.
 		 */
-		alias da_bgfx_alloc_transient_buffers = bool function(bgfx_transient_vertex_buffer_t* _tvb, const(bgfx_vertex_layout_t)* _layout, uint _numVertices, bgfx_transient_index_buffer_t* _tib, uint _numIndices);
+		alias da_bgfx_alloc_transient_buffers = bool function(bgfx_transient_vertex_buffer_t* _tvb, const(bgfx_vertex_layout_t)* _layout, uint _numVertices, bgfx_transient_index_buffer_t* _tib, uint _numIndices, bool _index32);
 		da_bgfx_alloc_transient_buffers bgfx_alloc_transient_buffers;
 		
 		/**

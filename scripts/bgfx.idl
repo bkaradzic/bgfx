@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(114)
+version(115)
 
 typedef "bool"
 typedef "char"
@@ -1454,6 +1454,8 @@ func.destroy { cname = "destroy_dynamic_vertex_buffer" }
 func.getAvailTransientIndexBuffer
 	"uint32_t"      --- Number of requested or maximum available indices.
 	.num "uint32_t" --- Number of required indices.
+	.index32 "bool" --- Set to `true` if input indices will be 32-bit.
+	 { default = false }
 
 --- Returns number of requested or maximum available vertices.
 func.getAvailTransientVertexBuffer
@@ -1468,9 +1470,6 @@ func.getAvailInstanceDataBuffer
 	.stride "uint16_t" --- Stride per instance.
 
 --- Allocate transient index buffer.
----
---- @remarks
----   Only 16-bit index buffer is supported.
 ---
 func.allocTransientIndexBuffer
 	"void"
@@ -1494,9 +1493,6 @@ func.allocTransientVertexBuffer
 --- buffers. If both space requirements are satisfied function returns
 --- true.
 ---
---- @remarks
----   Only 16-bit index buffer is supported.
----
 func.allocTransientBuffers
 	"bool"
 	.tvb         "TransientVertexBuffer*" { out } --- TransientVertexBuffer structure is filled and is valid
@@ -1508,6 +1504,8 @@ func.allocTransientBuffers
 	                                              --- for the duration of frame, and it can be reused for multiple draw
 	                                              --- calls.
 	.numIndices  "uint32_t"                       --- Number of indices to allocate.
+	.index32 "bool"                               --- Set to `true` if input indices will be 32-bit.
+	 { default = false }
 
 --- Allocate instance data buffer.
 func.allocInstanceDataBuffer

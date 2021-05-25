@@ -2814,9 +2814,10 @@ public static class bgfx
 	/// </summary>
 	///
 	/// <param name="_num">Number of required indices.</param>
+	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 	///
 	[LinkName("bgfx_get_avail_transient_index_buffer")]
-	public static extern uint32 get_avail_transient_index_buffer(uint32 _num);
+	public static extern uint32 get_avail_transient_index_buffer(uint32 _num, bool _index32);
 	
 	/// <summary>
 	/// Returns number of requested or maximum available vertices.
@@ -2840,8 +2841,6 @@ public static class bgfx
 	
 	/// <summary>
 	/// Allocate transient index buffer.
-	/// @remarks
-	///   Only 16-bit index buffer is supported.
 	/// </summary>
 	///
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
@@ -2866,8 +2865,6 @@ public static class bgfx
 	/// Check for required space and allocate transient vertex and index
 	/// buffers. If both space requirements are satisfied function returns
 	/// true.
-	/// @remarks
-	///   Only 16-bit index buffer is supported.
 	/// </summary>
 	///
 	/// <param name="_tvb">TransientVertexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
@@ -2875,9 +2872,10 @@ public static class bgfx
 	/// <param name="_numVertices">Number of vertices to allocate.</param>
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 	/// <param name="_numIndices">Number of indices to allocate.</param>
+	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 	///
 	[LinkName("bgfx_alloc_transient_buffers")]
-	public static extern bool alloc_transient_buffers(TransientVertexBuffer* _tvb, VertexLayout* _layout, uint32 _numVertices, TransientIndexBuffer* _tib, uint32 _numIndices);
+	public static extern bool alloc_transient_buffers(TransientVertexBuffer* _tvb, VertexLayout* _layout, uint32 _numVertices, TransientIndexBuffer* _tib, uint32 _numIndices, bool _index32);
 	
 	/// <summary>
 	/// Allocate instance data buffer.
