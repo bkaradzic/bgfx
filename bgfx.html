@@ -302,6 +302,12 @@ tutorial.</p>
 </dd></dl>
 
 <dl class="cpp var">
+<dt id="_CPPv4N4bgfx4Init6limitsE">
+<span id="_CPPv3N4bgfx4Init6limitsE"></span><span id="_CPPv2N4bgfx4Init6limitsE"></span><span id="bgfx::Init::limits__Limits"></span><span class="target" id="structbgfx_1_1_init_1ac76769c4c0d9d1fbe4eeb5b652cb35d3"></span><a class="reference internal" href="#_CPPv4N4bgfx4Init6LimitsE" title="bgfx::Init::Limits">Limits</a> <code class="sig-name descname">limits</code><a class="headerlink" href="#_CPPv4N4bgfx4Init6limitsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Configurable runtime limits. </p>
+</dd></dl>
+
+<dl class="cpp var">
 <dt id="_CPPv4N4bgfx4Init8callbackE">
 <span id="_CPPv3N4bgfx4Init8callbackE"></span><span id="_CPPv2N4bgfx4Init8callbackE"></span><span id="bgfx::Init::callback__CallbackIP"></span><span class="target" id="structbgfx_1_1_init_1ae9d15764a47018bbe634615fff85ffd9"></span><a class="reference internal" href="#_CPPv4N4bgfx9CallbackIE" title="bgfx::CallbackI">CallbackI</a> *<code class="sig-name descname">callback</code><a class="headerlink" href="#_CPPv4N4bgfx4Init8callbackE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Provide application specific callback interface. See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_callback_i"><span class="std std-ref"><span class="pre">bgfx::CallbackI</span></span></a></code> </p>
@@ -1127,7 +1133,7 @@ tutorial.</p>
 <span id="_CPPv3N4bgfx4Caps9supportedE"></span><span id="_CPPv2N4bgfx4Caps9supportedE"></span><span id="bgfx::Caps::supported__uint64_t"></span><span class="target" id="structbgfx_1_1_caps_1a39b666b5fe440ad5e92748bb1fce60cf"></span>uint64_t <code class="sig-name descname">supported</code><a class="headerlink" href="#_CPPv4N4bgfx4Caps9supportedE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Supported functionality. </p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>See BGFX_CAPS_* flags at <a class="reference external" href="https://bkaradzic.github.io/bgfx/bgfx.html#available-caps">https://bkaradzic.github.io/bgfx/bgfx.html#available-caps</a> </p>
+<dt><strong>Attention</strong></dt><dd><p>See <code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_*</span></code> flags at <a class="reference external" href="https://bkaradzic.github.io/bgfx/bgfx.html#available-caps">https://bkaradzic.github.io/bgfx/bgfx.html#available-caps</a> </p>
 </dd>
 </dl>
 </p>
@@ -4958,6 +4964,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3N4bgfx12createShaderEPK6Memory"></span><span id="_CPPv2N4bgfx12createShaderEPK6Memory"></span><span id="bgfx::createShader__MemoryCP"></span><span class="target" id="namespacebgfx_1af575a29f8b3e555cb1b13f01fadbeb37"></span>ShaderHandle <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">createShader</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12createShaderEPK6Memory" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Create shader from memory buffer. </p>
 <p><dl class="simple">
+<dt><strong>Return</strong></dt><dd><p>Shader handle.</p>
+</dd>
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_create_shader</span></code>. </p>
 </dd>
 </dl>
@@ -5313,7 +5321,13 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3N4bgfx12VertexLayout5beginEN12RendererType4EnumE"></span><span id="_CPPv2N4bgfx12VertexLayout5beginEN12RendererType4EnumE"></span><span id="bgfx::VertexLayout::begin__RendererType::Enum"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a2b2998347928166ddf7b4c3a295b9bd9"></span><a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<code class="sig-name descname">begin</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv4N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <em>_renderer</em> = <a class="reference internal" href="#_CPPv4N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv4N4bgfx12RendererType4Enum4NoopE" title="bgfx::RendererType::Noop">Noop</a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout5beginEN12RendererType4EnumE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Start <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a>. </p>
 <p><dl class="simple">
+<dt><strong>Return</strong></dt><dd><p>Returns itself.</p>
+</dd>
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_begin</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_renderer</span></code>: Renderer backend type. See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_renderer_type"><span class="std std-ref"><span class="pre">bgfx::RendererType</span></span></a></code> </p></li>
+</ul>
 </dd>
 </dl>
 </p>
@@ -5335,6 +5349,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3N4bgfx12VertexLayout3addEN6Attrib4EnumE7uint8_tN10AttribType4EnumEbb"></span><span id="_CPPv2N4bgfx12VertexLayout3addEN6Attrib4EnumE7uint8_tN10AttribType4EnumEbb"></span><span id="bgfx::VertexLayout::add__Attrib::Enum.uint8_t.AttribType::Enum.b.b"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a3110387d08504540dcf93701b55ca4e5"></span><a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<code class="sig-name descname">add</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv4N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attrib</em>, uint8_t <em>_num</em>, <a class="reference internal" href="#_CPPv4N4bgfx10AttribTypeE" title="bgfx::AttribType">AttribType</a>::<a class="reference internal" href="#_CPPv4N4bgfx10AttribType4EnumE" title="bgfx::AttribType::Enum">Enum</a> <em>_type</em>, bool <em>_normalized</em> = false, bool <em>_asInt</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout3addEN6Attrib4EnumE7uint8_tN10AttribType4EnumEbb" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Add attribute to <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a>. </p>
 <p><dl class="simple">
+<dt><strong>Return</strong></dt><dd><p>Returns itself.</p>
+</dd>
 <dt><strong>Remark</strong></dt><dd><p>Must be called between begin/end.</p>
 </dd>
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_add</span></code>. </p>
@@ -5344,7 +5360,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of elements 1, 2, 3 or 4. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_type</span></code>: Element type. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_normalized</span></code>: When using fixed point <a class="reference internal" href="#structbgfx_1_1_attrib_type"><span class="std std-ref">AttribType</span></a> (f.e. Uint8) value will be normalized for vertex shader usage. When normalized is set to true, <a class="reference internal" href="#structbgfx_1_1_attrib_type_1a5cfa80e17fd4932a9704f95ed80ae3b4a68937a9abcfa9556980f9e127e234748"><span class="std std-ref">AttribType::Uint8</span></a> value in range 0-255 will be in range 0.0-1.0 in vertex shader. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_asInt</span></code>: Packaging rule for vertexPack, vertexUnpack, and vertexConvert for <a class="reference internal" href="#structbgfx_1_1_attrib_type_1a5cfa80e17fd4932a9704f95ed80ae3b4a68937a9abcfa9556980f9e127e234748"><span class="std std-ref">AttribType::Uint8</span></a> and <a class="reference internal" href="#structbgfx_1_1_attrib_type_1a5cfa80e17fd4932a9704f95ed80ae3b4ae0cd559664652e9d0086ea4316280f1b"><span class="std std-ref">AttribType::Int16</span></a>. Unpacking code must be implemented inside vertex shader.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_asInt</span></code>: Packaging rule for vertexPack, vertexUnpack, and vertexConvert for <a class="reference internal" href="#structbgfx_1_1_attrib_type_1a5cfa80e17fd4932a9704f95ed80ae3b4a68937a9abcfa9556980f9e127e234748"><span class="std std-ref">AttribType::Uint8</span></a> and <a class="reference internal" href="#structbgfx_1_1_attrib_type_1a5cfa80e17fd4932a9704f95ed80ae3b4ae0cd559664652e9d0086ea4316280f1b"><span class="std std-ref">AttribType::Int16</span></a>. Unpacking code must be implemented inside vertex shader. </p></li>
 </ul>
 </dd>
 </dl>
@@ -5356,6 +5372,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3N4bgfx12VertexLayout4skipE7uint8_t"></span><span id="_CPPv2N4bgfx12VertexLayout4skipE7uint8_t"></span><span id="bgfx::VertexLayout::skip__uint8_t"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a5b4ce3b9628b22a886508a0548c1e0cb"></span><a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<code class="sig-name descname">skip</code><span class="sig-paren">(</span>uint8_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout4skipE7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Skip _num bytes in vertex stream. </p>
 <p><dl class="simple">
+<dt><strong>Return</strong></dt><dd><p>Returns itself.</p>
+</dd>
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_skip</span></code>. </p>
 </dd>
 </dl>
@@ -5376,9 +5394,15 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="cpp function">
 <dt id="_CPPv4NK4bgfx12VertexLayout3hasEN6Attrib4EnumE">
 <span id="_CPPv3NK4bgfx12VertexLayout3hasEN6Attrib4EnumE"></span><span id="_CPPv2NK4bgfx12VertexLayout3hasEN6Attrib4EnumE"></span><span id="bgfx::VertexLayout::has__Attrib::EnumC"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a1da9c673f86b51221a30ee3626783c78"></span>bool <code class="sig-name descname">has</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv4N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attrib</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4bgfx12VertexLayout3hasEN6Attrib4EnumE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Returns true if <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> contains attribute. </p>
+<dd><p>Returns <code class="docutils literal notranslate"><span class="pre">true</span></code> if <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> contains attribute. </p>
 <p><dl class="simple">
+<dt><strong>Return</strong></dt><dd><p>True if <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> contains attribute.</p>
+</dd>
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_has</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_attrib</span></code>: Attribute semantics. See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_attrib"><span class="std std-ref"><span class="pre">bgfx::Attrib</span></span></a></code> </p></li>
+</ul>
 </dd>
 </dl>
 </p>
@@ -5388,18 +5412,68 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt id="_CPPv4NK4bgfx12VertexLayout9getOffsetEN6Attrib4EnumE">
 <span id="_CPPv3NK4bgfx12VertexLayout9getOffsetEN6Attrib4EnumE"></span><span id="_CPPv2NK4bgfx12VertexLayout9getOffsetEN6Attrib4EnumE"></span><span id="bgfx::VertexLayout::getOffset__Attrib::EnumC"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a754e7b0c5a0c27b9e3aaad13566151a9"></span>uint16_t <code class="sig-name descname">getOffset</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv4N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attrib</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4bgfx12VertexLayout9getOffsetEN6Attrib4EnumE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Returns relative attribute offset from the vertex. </p>
+<p><dl class="simple">
+<dt><strong>Return</strong></dt><dd><p>Relative attribute offset from the vertex. </p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_attrib</span></code>: Attribute semantics. See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_attrib"><span class="std std-ref"><span class="pre">bgfx::Attrib</span></span></a></code> </p></li>
+</ul>
+</dd>
+</dl>
+</p>
 </dd></dl>
 
 <dl class="cpp function">
 <dt id="_CPPv4NK4bgfx12VertexLayout9getStrideEv">
 <span id="_CPPv3NK4bgfx12VertexLayout9getStrideEv"></span><span id="_CPPv2NK4bgfx12VertexLayout9getStrideEv"></span><span id="bgfx::VertexLayout::getStrideC"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a1f12bca7a530bc1c01cfca30266a85de"></span>uint16_t <code class="sig-name descname">getStride</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4bgfx12VertexLayout9getStrideEv" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Returns vertex stride. </p>
+<p><dl class="simple">
+<dt><strong>Return</strong></dt><dd><p>Vertex stride. </p>
+</dd>
+</dl>
+</p>
 </dd></dl>
 
 <dl class="cpp function">
 <dt id="_CPPv4NK4bgfx12VertexLayout7getSizeE8uint32_t">
 <span id="_CPPv3NK4bgfx12VertexLayout7getSizeE8uint32_t"></span><span id="_CPPv2NK4bgfx12VertexLayout7getSizeE8uint32_t"></span><span id="bgfx::VertexLayout::getSize__uint32_tC"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a269660c1f51a12dda654f1d69cffd69a"></span>uint32_t <code class="sig-name descname">getSize</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4bgfx12VertexLayout7getSizeE8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Returns size of vertex buffer for number of vertices. </p>
+<p><dl class="simple">
+<dt><strong>Return</strong></dt><dd><p>Size of vertex buffer for number of vertices. </p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of vertices. </p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="cpp var">
+<dt id="_CPPv4N4bgfx12VertexLayout6m_hashE">
+<span id="_CPPv3N4bgfx12VertexLayout6m_hashE"></span><span id="_CPPv2N4bgfx12VertexLayout6m_hashE"></span><span id="bgfx::VertexLayout::m_hash__uint32_t"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a32439f8faf9f68d9ac021a91fe16d424"></span>uint32_t <code class="sig-name descname">m_hash</code><a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout6m_hashE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Hash. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N4bgfx12VertexLayout8m_strideE">
+<span id="_CPPv3N4bgfx12VertexLayout8m_strideE"></span><span id="_CPPv2N4bgfx12VertexLayout8m_strideE"></span><span id="bgfx::VertexLayout::m_stride__uint16_t"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a80a56f976bde20a46dd471a7cea9e445"></span>uint16_t <code class="sig-name descname">m_stride</code><a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout8m_strideE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Stride. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N4bgfx12VertexLayout8m_offsetE">
+<span id="_CPPv3N4bgfx12VertexLayout8m_offsetE"></span><span id="_CPPv2N4bgfx12VertexLayout8m_offsetE"></span><span id="bgfx::VertexLayout::m_offset__uint16_tA"></span><span class="target" id="structbgfx_1_1_vertex_layout_1ae5cfc316c1df05a165ad50cb6ce0177c"></span>uint16_t <code class="sig-name descname">m_offset</code>[<code class="sig-name descname">Count</code>]<a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout8m_offsetE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Attribute offsets. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N4bgfx12VertexLayout12m_attributesE">
+<span id="_CPPv3N4bgfx12VertexLayout12m_attributesE"></span><span id="_CPPv2N4bgfx12VertexLayout12m_attributesE"></span><span id="bgfx::VertexLayout::m_attributes__uint16_tA"></span><span class="target" id="structbgfx_1_1_vertex_layout_1adb4140562c657f2b6d8bee1c16b5eaec"></span>uint16_t <code class="sig-name descname">m_attributes</code>[<code class="sig-name descname">Count</code>]<a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout12m_attributesE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Used attributes. </p>
 </dd></dl>
 
 </div>
@@ -5858,14 +5932,15 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="cpp function">
-<dt id="_CPPv4N4bgfx28getAvailTransientIndexBufferE8uint32_t">
-<span id="_CPPv3N4bgfx28getAvailTransientIndexBufferE8uint32_t"></span><span id="_CPPv2N4bgfx28getAvailTransientIndexBufferE8uint32_t"></span><span id="bgfx::getAvailTransientIndexBuffer__uint32_t"></span><span class="target" id="namespacebgfx_1a6f7d3cc2105f88d41cbc1f2f1d0c2bd6"></span>uint32_t <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">getAvailTransientIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx28getAvailTransientIndexBufferE8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx28getAvailTransientIndexBufferE8uint32_tb">
+<span id="_CPPv3N4bgfx28getAvailTransientIndexBufferE8uint32_tb"></span><span id="_CPPv2N4bgfx28getAvailTransientIndexBufferE8uint32_tb"></span><span id="bgfx::getAvailTransientIndexBuffer__uint32_t.b"></span><span class="target" id="namespacebgfx_1a17b4d614364135f5762c142661902d06"></span>uint32_t <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">getAvailTransientIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, bool <em>_index32</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx28getAvailTransientIndexBufferE8uint32_tb" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Returns number of requested or maximum available indices. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_get_avail_transient_index_buffer</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of required indices.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of required indices. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_index32</span></code>: Set to <code class="docutils literal notranslate"><span class="pre">true</span></code> if input indices will be 32-bit.</p></li>
 </ul>
 </dd>
 </dl>
@@ -5877,8 +5952,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3N4bgfx25allocTransientIndexBufferEP20TransientIndexBuffer8uint32_tb"></span><span id="_CPPv2N4bgfx25allocTransientIndexBufferEP20TransientIndexBuffer8uint32_tb"></span><span id="bgfx::allocTransientIndexBuffer__TransientIndexBufferP.uint32_t.b"></span><span class="target" id="namespacebgfx_1a84f22d4feadc176f2b70846ae3b7c85f"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">allocTransientIndexBuffer</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx20TransientIndexBufferE" title="bgfx::TransientIndexBuffer">TransientIndexBuffer</a> *<em>_tib</em>, uint32_t <em>_num</em>, bool <em>_index32</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx25allocTransientIndexBufferEP20TransientIndexBuffer8uint32_tb" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Allocate transient index buffer. </p>
 <p><dl class="simple">
-<dt><strong>Remark</strong></dt><dd><p>Only 16-bit index buffer is supported.</p>
-</dd>
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_alloc_transient_index_buffer</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
