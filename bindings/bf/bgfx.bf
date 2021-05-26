@@ -2309,6 +2309,8 @@ public static class bgfx
 	/// Start VertexLayout.
 	/// </summary>
 	///
+	/// <param name="_rendererType">Renderer backend type. See: `bgfx::RendererType`</param>
+	///
 	[LinkName("bgfx_vertex_layout_begin")]
 	public static extern VertexLayout* vertex_layout_begin(VertexLayout* _this, RendererType _rendererType);
 	
@@ -2340,7 +2342,7 @@ public static class bgfx
 	public static extern void vertex_layout_decode(VertexLayout* _this, Attrib _attrib, uint8 * _num, AttribType* _type, bool* _normalized, bool* _asInt);
 	
 	/// <summary>
-	/// Returns true if VertexLayout contains attribute.
+	/// Returns `true` if VertexLayout contains attribute.
 	/// </summary>
 	///
 	/// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
@@ -2351,6 +2353,8 @@ public static class bgfx
 	/// <summary>
 	/// Skip `_num` bytes in vertex stream.
 	/// </summary>
+	///
+	/// <param name="_num">Number of bytes to skip.</param>
 	///
 	[LinkName("bgfx_vertex_layout_skip")]
 	public static extern VertexLayout* vertex_layout_skip(VertexLayout* _this, uint8 _num);
@@ -4399,7 +4403,7 @@ public static class bgfx
 	/// <param name="_id">View id.</param>
 	/// <param name="_program">Program.</param>
 	/// <param name="_depth">Depth for sorting.</param>
-	/// <param name="_flags">Which states to discard for next draw. See BGFX_DISCARD_</param>
+	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_submit")]
 	public static extern void submit(ViewId _id, ProgramHandle _program, uint32 _depth, uint8 _flags);
@@ -4412,7 +4416,7 @@ public static class bgfx
 	/// <param name="_program">Program.</param>
 	/// <param name="_occlusionQuery">Occlusion query.</param>
 	/// <param name="_depth">Depth for sorting.</param>
-	/// <param name="_flags">Which states to discard for next draw. See BGFX_DISCARD_</param>
+	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_submit_occlusion_query")]
 	public static extern void submit_occlusion_query(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32 _depth, uint8 _flags);
@@ -4428,7 +4432,7 @@ public static class bgfx
 	/// <param name="_start">First element in indirect buffer.</param>
 	/// <param name="_num">Number of dispatches.</param>
 	/// <param name="_depth">Depth for sorting.</param>
-	/// <param name="_flags">Which states to discard for next draw. See BGFX_DISCARD_</param>
+	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_submit_indirect")]
 	public static extern void submit_indirect(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint32 _depth, uint8 _flags);

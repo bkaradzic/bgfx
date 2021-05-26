@@ -26,6 +26,8 @@ version(BindBgfx_Static)
 	
 	/**
 	 * Start VertexLayout.
+	 * Params:
+	 * _rendererType = Renderer backend type. See: `bgfx::RendererType`
 	 */
 	bgfx_vertex_layout_t* bgfx_vertex_layout_begin(bgfx_vertex_layout_t* _this, bgfx_renderer_type_t _rendererType);
 	
@@ -58,7 +60,7 @@ version(BindBgfx_Static)
 	void bgfx_vertex_layout_decode(const(bgfx_vertex_layout_t)* _this, bgfx_attrib_t _attrib, byte* _num, bgfx_attrib_type_t* _type, bool* _normalized, bool* _asInt);
 	
 	/**
-	 * Returns true if VertexLayout contains attribute.
+	 * Returns `true` if VertexLayout contains attribute.
 	 * Params:
 	 * _attrib = Attribute semantics. See: `bgfx::Attrib`
 	 */
@@ -66,6 +68,8 @@ version(BindBgfx_Static)
 	
 	/**
 	 * Skip `_num` bytes in vertex stream.
+	 * Params:
+	 * _num = Number of bytes to skip.
 	 */
 	bgfx_vertex_layout_t* bgfx_vertex_layout_skip(bgfx_vertex_layout_t* _this, byte _num);
 	
@@ -2004,7 +2008,7 @@ version(BindBgfx_Static)
 	 * _id = View id.
 	 * _program = Program.
 	 * _depth = Depth for sorting.
-	 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
+	 * _flags = Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	 */
 	void bgfx_submit(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, byte _flags);
 	
@@ -2015,7 +2019,7 @@ version(BindBgfx_Static)
 	 * _program = Program.
 	 * _occlusionQuery = Occlusion query.
 	 * _depth = Depth for sorting.
-	 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
+	 * _flags = Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	 */
 	void bgfx_submit_occlusion_query(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, byte _flags);
 	
@@ -2029,7 +2033,7 @@ version(BindBgfx_Static)
 	 * _start = First element in indirect buffer.
 	 * _num = Number of dispatches.
 	 * _depth = Depth for sorting.
-	 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
+	 * _flags = Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	 */
 	void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, byte _flags);
 	
@@ -2167,6 +2171,8 @@ else
 		
 		/**
 		 * Start VertexLayout.
+		 * Params:
+		 * _rendererType = Renderer backend type. See: `bgfx::RendererType`
 		 */
 		alias da_bgfx_vertex_layout_begin = bgfx_vertex_layout_t* function(bgfx_vertex_layout_t* _this, bgfx_renderer_type_t _rendererType);
 		da_bgfx_vertex_layout_begin bgfx_vertex_layout_begin;
@@ -2202,7 +2208,7 @@ else
 		da_bgfx_vertex_layout_decode bgfx_vertex_layout_decode;
 		
 		/**
-		 * Returns true if VertexLayout contains attribute.
+		 * Returns `true` if VertexLayout contains attribute.
 		 * Params:
 		 * _attrib = Attribute semantics. See: `bgfx::Attrib`
 		 */
@@ -2211,6 +2217,8 @@ else
 		
 		/**
 		 * Skip `_num` bytes in vertex stream.
+		 * Params:
+		 * _num = Number of bytes to skip.
 		 */
 		alias da_bgfx_vertex_layout_skip = bgfx_vertex_layout_t* function(bgfx_vertex_layout_t* _this, byte _num);
 		da_bgfx_vertex_layout_skip bgfx_vertex_layout_skip;
@@ -4323,7 +4331,7 @@ else
 		 * _id = View id.
 		 * _program = Program.
 		 * _depth = Depth for sorting.
-		 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
+		 * _flags = Which states to discard for next draw. See `BGFX_DISCARD_*`.
 		 */
 		alias da_bgfx_submit = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint _depth, byte _flags);
 		da_bgfx_submit bgfx_submit;
@@ -4335,7 +4343,7 @@ else
 		 * _program = Program.
 		 * _occlusionQuery = Occlusion query.
 		 * _depth = Depth for sorting.
-		 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
+		 * _flags = Which states to discard for next draw. See `BGFX_DISCARD_*`.
 		 */
 		alias da_bgfx_submit_occlusion_query = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint _depth, byte _flags);
 		da_bgfx_submit_occlusion_query bgfx_submit_occlusion_query;
@@ -4350,7 +4358,7 @@ else
 		 * _start = First element in indirect buffer.
 		 * _num = Number of dispatches.
 		 * _depth = Depth for sorting.
-		 * _flags = Which states to discard for next draw. See BGFX_DISCARD_
+		 * _flags = Which states to discard for next draw. See `BGFX_DISCARD_*`.
 		 */
 		alias da_bgfx_submit_indirect = void function(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, ushort _start, ushort _num, uint _depth, byte _flags);
 		da_bgfx_submit_indirect bgfx_submit_indirect;

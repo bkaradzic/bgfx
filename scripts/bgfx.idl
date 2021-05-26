@@ -709,7 +709,7 @@ struct.Limits  { namespace = "Caps" }
 struct.Caps
 	.rendererType "RendererType::Enum" --- Renderer backend type. See: `bgfx::RendererType`
 	.supported    "uint64_t"           --- Supported functionality.
-	                                   ---   @attention See BGFX_CAPS_* flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
+	                                   ---   @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
 	.vendorId     "uint16_t"           --- Selected GPU vendor PCI id.
 	.deviceId     "uint16_t"           --- Selected GPU device id.
 	.homogeneousDepth "bool"           --- True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
@@ -978,8 +978,8 @@ handle "VertexLayoutHandle"
 
 --- Start VertexLayout.
 func.VertexLayout.begin
-	"VertexLayout&"
-	.rendererType    "RendererType::Enum"
+	"VertexLayout&"                       --- Returns itself.
+	.rendererType    "RendererType::Enum" --- Renderer backend type. See: `bgfx::RendererType`
 	{ default = "RendererType::Noop" }
 
 --- Add attribute to VertexLayout.
@@ -987,7 +987,7 @@ func.VertexLayout.begin
 --- @remarks Must be called between begin/end.
 ---
 func.VertexLayout.add
-	"VertexLayout&"
+	"VertexLayout&"                     --- Returns itself.
 	.attrib          "Attrib::Enum"     --- Attribute semantics. See: `bgfx::Attrib`
 	.num             "uint8_t"          --- Number of elements 1, 2, 3 or 4.
 	.type            "AttribType::Enum" --- Element type.
@@ -1008,15 +1008,15 @@ func.VertexLayout.decode { const }
 	.normalized "bool &"             { out } --- Attribute is normalized.
 	.asInt      "bool &"             { out } --- Attribute is packed as int.
 
---- Returns true if VertexLayout contains attribute.
+--- Returns `true` if VertexLayout contains attribute.
 func.VertexLayout.has { const }
-	"bool"
+	"bool"                 --- True if VertexLayout contains attribute.
 	.attrib "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
 --- Skip `_num` bytes in vertex stream.
 func.VertexLayout.skip
-	"VertexLayout&"
-	.num "uint8_t"
+	"VertexLayout&" --- Returns itself.
+	.num "uint8_t"  --- Number of bytes to skip.
 
 -- Notice: `end` is a keyword in lua.
 --- End VertexLayout.
@@ -1025,17 +1025,17 @@ func.VertexLayout["end"]
 
 --- Returns relative attribute offset from the vertex.
 func.VertexLayout.getOffset { const , cpponly }
-	"uint16_t"
+	"uint16_t"                --- Relative attribute offset from the vertex.
 	.attrib    "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
 --- Returns vertex stride.
 func.VertexLayout.getStride { const , cpponly }
-	"uint16_t"
+	"uint16_t" --- Vertex stride.
 
 --- Returns size of vertex buffer for number of vertices.
 func.VertexLayout.getSize { const, cpponly }
-	"uint32_t"
-	.num       "uint32_t"
+	"uint32_t"      --- Size of vertex buffer for number of vertices.
+	.num "uint32_t" --- Number of vertices.
 
 --- Pack vertex attribute into vertex stream format.
 func.vertexPack
@@ -2963,7 +2963,7 @@ func.submit
 	.program       "ProgramHandle" --- Program.
 	.depth         "uint32_t"      --- Depth for sorting.
 	{ default = 0 }
-	.flags         "uint8_t"       --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags         "uint8_t"       --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive with occlusion query for rendering.
@@ -2974,7 +2974,7 @@ func.submit { cname = "submit_occlusion_query" }
 	.occlusionQuery "OcclusionQueryHandle" --- Occlusion query.
 	.depth          "uint32_t"             --- Depth for sorting.
 	{ default = 0 }
-	.flags          "uint8_t"              --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags          "uint8_t"              --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive for rendering with index and instance data info from
@@ -2990,7 +2990,7 @@ func.submit { cname = "submit_indirect" }
 	{ default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
 	{ default = 0 }
-	.flags "uint8_t"                       --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags "uint8_t"                       --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Set compute index buffer.
