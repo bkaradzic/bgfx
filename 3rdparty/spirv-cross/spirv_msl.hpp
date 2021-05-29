@@ -799,8 +799,12 @@ protected:
 	{
 		struct LocationMeta
 		{
+			uint32_t base_type_id = 0;
 			uint32_t num_components = 0;
-			uint32_t ib_index = ~0u;
+			bool flat = false;
+			bool noperspective = false;
+			bool centroid = false;
+			bool sample = false;
 		};
 		std::unordered_map<uint32_t, LocationMeta> location_meta;
 		bool strip_array = false;
@@ -815,6 +819,9 @@ protected:
 	                                               SPIRType &ib_type, SPIRVariable &var, InterfaceBlockMeta &meta);
 	void add_plain_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
 	                                           SPIRType &ib_type, SPIRVariable &var, InterfaceBlockMeta &meta);
+	bool add_component_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
+	                                               SPIRVariable &var, const SPIRType &type,
+	                                               InterfaceBlockMeta &meta);
 	void add_plain_member_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
 	                                                  SPIRType &ib_type, SPIRVariable &var, uint32_t index,
 	                                                  InterfaceBlockMeta &meta);

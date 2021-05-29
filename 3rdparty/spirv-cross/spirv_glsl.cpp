@@ -359,10 +359,26 @@ void CompilerGLSL::remap_pls_variables()
 	}
 }
 
-void CompilerGLSL::remap_ext_framebuffer_fetch(uint32_t input_attachment_index, uint32_t color_location)
+void CompilerGLSL::remap_ext_framebuffer_fetch(uint32_t input_attachment_index, uint32_t color_location, bool coherent)
 {
 	subpass_to_framebuffer_fetch_attachment.push_back({ input_attachment_index, color_location });
-	inout_color_attachments.insert(color_location);
+	inout_color_attachments.push_back({ color_location, coherent });
+}
+
+bool CompilerGLSL::location_is_framebuffer_fetch(uint32_t location) const
+{
+	return std::find_if(begin(inout_color_attachments), end(inout_color_attachments),
+	                    [&](const std::pair<uint32_t, bool> &elem) {
+		                    return elem.first == location;
+	                    }) != end(inout_color_attachments);
+}
+
+bool CompilerGLSL::location_is_non_coherent_framebuffer_fetch(uint32_t location) const
+{
+	return std::find_if(begin(inout_color_attachments), end(inout_color_attachments),
+	                    [&](const std::pair<uint32_t, bool> &elem) {
+		                    return elem.first == location && !elem.second;
+	                    }) != end(inout_color_attachments);
 }
 
 void CompilerGLSL::find_static_extensions()
@@ -484,7 +500,22 @@ void CompilerGLSL::find_static_extensions()
 			SPIRV_CROSS_THROW("Can only use GL_EXT_shader_framebuffer_fetch in fragment shaders.");
 		if (options.vulkan_semantics)
 			SPIRV_CROSS_THROW("Cannot use EXT_shader_framebuffer_fetch in Vulkan GLSL.");
-		require_extension_internal("GL_EXT_shader_framebuffer_fetch");
+
+		bool has_coherent = false;
+		bool has_incoherent = false;
+
+		for (auto &att : inout_color_attachments)
+		{
+			if (att.second)
+				has_coherent = true;
+			else
+				has_incoherent = true;
+		}
+
+		if (has_coherent)
+			require_extension_internal("GL_EXT_shader_framebuffer_fetch");
+		if (has_incoherent)
+			require_extension_internal("GL_EXT_shader_framebuffer_fetch_non_coherent");
 	}
 
 	if (options.separate_shader_objects && !options.es && options.version < 410)
@@ -1693,6 +1724,12 @@ string CompilerGLSL::layout_for_variable(const SPIRVariable &var)
 			attr.push_back(join("location = ", get_decoration(var.self, DecorationLocation)));
 	}
 
+	if (get_execution_model() == ExecutionModelFragment && var.storage == StorageClassOutput &&
+	    location_is_non_coherent_framebuffer_fetch(get_decoration(var.self, DecorationLocation)))
+	{
+		attr.push_back("noncoherent");
+	}
+
 	// Transform feedback
 	bool uses_enhanced_layouts = false;
 	if (is_block && var.storage == StorageClassOutput)
@@ -2234,7 +2271,9 @@ const char *CompilerGLSL::to_storage_qualifiers_glsl(const SPIRVariable &var)
 			return "varying "; // Fragment outputs are renamed so they never hit this case.
 		else if (execution.model == ExecutionModelFragment && var.storage == StorageClassOutput)
 		{
-			if (inout_color_attachments.count(get_decoration(var.self, DecorationLocation)) != 0)
+			uint32_t loc = get_decoration(var.self, DecorationLocation);
+			bool is_inout = location_is_framebuffer_fetch(loc);
+			if (is_inout)
 				return "inout ";
 			else
 				return "out ";
@@ -3405,7 +3444,7 @@ void CompilerGLSL::emit_resources()
 
 		// Unused output I/O variables might still be required to implement framebuffer fetch.
 		if (var.storage == StorageClassOutput && !is_legacy() &&
-		    inout_color_attachments.count(get_decoration(var.self, DecorationLocation)) != 0)
+		    location_is_framebuffer_fetch(get_decoration(var.self, DecorationLocation)) != 0)
 		{
 			is_hidden = false;
 		}
@@ -4909,7 +4948,13 @@ string CompilerGLSL::convert_float_to_string(const SPIRConstant &c, uint32_t col
 
 			char print_buffer[32];
 			sprintf(print_buffer, "0x%xu", c.scalar(col, row));
-			res = join(bitcast_glsl_op(out_type, in_type), "(", print_buffer, ")");
+
+			const char *comment = "inf";
+			if (float_value == -numeric_limits<float>::infinity())
+				comment = "-inf";
+			else if (std::isnan(float_value))
+				comment = "nan";
+			res = join(bitcast_glsl_op(out_type, in_type), "(", print_buffer, " /* ", comment, " */)");
 		}
 		else
 		{
@@ -4976,7 +5021,13 @@ std::string CompilerGLSL::convert_double_to_string(const SPIRConstant &c, uint32
 			char print_buffer[64];
 			sprintf(print_buffer, "0x%llx%s", static_cast<unsigned long long>(u64_value),
 			        backend.long_long_literal_suffix ? "ull" : "ul");
-			res = join(bitcast_glsl_op(out_type, in_type), "(", print_buffer, ")");
+
+			const char *comment = "inf";
+			if (double_value == -numeric_limits<double>::infinity())
+				comment = "-inf";
+			else if (std::isnan(double_value))
+				comment = "nan";
+			res = join(bitcast_glsl_op(out_type, in_type), "(", print_buffer, " /* ", comment, " */)");
 		}
 		else
 		{
