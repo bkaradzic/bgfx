@@ -4794,6 +4794,14 @@ static int cgltf_parse_json_light(cgltf_options* options, jsmntok_t const* token
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
 
+	out_light->color[0] = 1.f;
+	out_light->color[1] = 1.f;
+	out_light->color[2] = 1.f;
+	out_light->intensity = 1.f;
+
+	out_light->spot_inner_cone_angle = 0.f;
+	out_light->spot_outer_cone_angle = 3.1415926535f / 4.0f;
+
 	int size = tokens[i].size;
 	++i;
 
