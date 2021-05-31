@@ -42,7 +42,7 @@
  || BGFX_SHADER_LANGUAGE_METAL
 #	define CONST(_x) static const _x
 #	define dFdx(_x) ddx(_x)
-#	define dFdy(_y) ddy(-_y)
+#	define dFdy(_y) ddy(-(_y))
 #	define inversesqrt(_x) rsqrt(_x)
 #	define fract(_x) frac(_x)
 
@@ -62,8 +62,8 @@
 #		if BGFX_SHADER_LANGUAGE_HLSL > 400 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
 #			define dFdxCoarse(_x) ddx_coarse(_x)
 #			define dFdxFine(_x)   ddx_fine(_x)
-#			define dFdyCoarse(_y) ddy_coarse(-_y)
-#			define dFdyFine(_y)   ddy_fine(-_y)
+#			define dFdyCoarse(_y) ddy_coarse(-(_y))
+#			define dFdyFine(_y)   ddy_fine(-(_y))
 #		endif // BGFX_SHADER_LANGUAGE_HLSL > 400
 
 #		if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
