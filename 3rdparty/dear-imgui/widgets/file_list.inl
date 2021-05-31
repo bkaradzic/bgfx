@@ -1,5 +1,7 @@
 #include <bx/bx.h>
-#include <dirent.h>
+#if !(BX_PLATFORM_PS4 || BX_PLATFORM_PS5)
+#	include <dirent.h>
+#endif
 #include <sys/stat.h>
 
 namespace ImGui
