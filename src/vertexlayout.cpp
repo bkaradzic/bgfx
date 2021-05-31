@@ -54,6 +54,7 @@ namespace bgfx
 		&s_attribTypeSizeGl,    // OpenGL
 		&s_attribTypeSizeD3D1x, // Vulkan
 		&s_attribTypeSizeD3D1x, // WebGPU
+		&s_attribTypeSizeGl,    // Agc TODO: (manderson) verify...
 		&s_attribTypeSizeD3D9,  // Count
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == RendererType::Count+1);

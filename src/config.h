@@ -58,6 +58,12 @@
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_GNM
 
+#	ifndef BGFX_CONFIG_RENDERER_AGC
+#		define BGFX_CONFIG_RENDERER_AGC (0 \
+					|| BX_PLATFORM_PS5     \
+					? 1 : 0)
+#	endif // BGFX_CONFIG_RENDERER_AGC
+
 #	ifndef BGFX_CONFIG_RENDERER_METAL
 #		define BGFX_CONFIG_RENDERER_METAL (0           \
 					|| (BX_PLATFORM_IOS && BX_CPU_ARM) \

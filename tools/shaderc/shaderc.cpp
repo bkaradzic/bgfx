@@ -1084,6 +1084,8 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BX_PLATFORM_LINUX");
 		preprocessor.setDefaultDefine("BX_PLATFORM_OSX");
 		preprocessor.setDefaultDefine("BX_PLATFORM_PS4");
+		preprocessor.setDefaultDefine("BX_PLATFORM_PS5");
+		preprocessor.setDefaultDefine("BX_PLATFORM_NX");
 		preprocessor.setDefaultDefine("BX_PLATFORM_WINDOWS");
 		preprocessor.setDefaultDefine("BX_PLATFORM_XBOXONE");
 
@@ -1185,6 +1187,18 @@ namespace bgfx
 		{
 			preprocessor.setDefine("BX_PLATFORM_PS4=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_PSSL=1");
+			preprocessor.setDefine("lit=lit_reserved");
+		}
+		else if (0 == bx::strCmpI(platform, "prospero") )
+		{
+			preprocessor.setDefine("BX_PLATFORM_PS5=1");
+			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_PSSL=1");
+			preprocessor.setDefine("lit=lit_reserved");
+		}
+		else if (0 == bx::strCmpI(platform, "nx") )
+		{
+			preprocessor.setDefine("BX_PLATFORM_NX=1");
+			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");  // TODO: (manderson) replace with NVN
 			preprocessor.setDefine("lit=lit_reserved");
 		}
 		else

@@ -28,6 +28,7 @@
 		)
 #define BGFX_PLATFORM_SUPPORTS_PSSL (0  \
 		|| BX_PLATFORM_PS4              \
+		|| BX_PLATFORM_PS5              \		// TODO: (manderson) Do we need a separate language for Agc
 		)
 #define BGFX_PLATFORM_SUPPORTS_ESSL (0  \
 		|| BX_PLATFORM_ANDROID          \

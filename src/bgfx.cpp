@@ -1848,7 +1848,7 @@ namespace bgfx
 		}
 
 		if (true
-		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_PS4)
+		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_PS4 || BX_PLATFORM_PS5)
 		&&  RendererType::Noop != m_init.type
 		&&  NULL == m_init.platformData.ndt
 		&&  NULL == m_init.platformData.nwh
@@ -2557,6 +2557,7 @@ namespace bgfx
 	BGFX_RENDERER_CONTEXT(gl);
 	BGFX_RENDERER_CONTEXT(vk);
 	BGFX_RENDERER_CONTEXT(webgpu);
+	BGFX_RENDERER_CONTEXT(agc);
 
 #undef BGFX_RENDERER_CONTEXT
 
@@ -2585,6 +2586,7 @@ namespace bgfx
 		{ gl::rendererCreate,     gl::rendererDestroy,     BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
 		{ vk::rendererCreate,     vk::rendererDestroy,     BGFX_RENDERER_VULKAN_NAME,     !!BGFX_CONFIG_RENDERER_VULKAN     }, // Vulkan
 		{ webgpu::rendererCreate, webgpu::rendererDestroy, BGFX_RENDERER_WEBGPU_NAME,     !!BGFX_CONFIG_RENDERER_WEBGPU     }, // WebGPU
+		{ agc::rendererCreate,    agc::rendererDestroy,    BGFX_RENDERER_AGC_NAME,        !!BGFX_CONFIG_RENDERER_AGC        }, // Agc
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 
@@ -2684,6 +2686,10 @@ namespace bgfx
 				else if (BX_ENABLED(BX_PLATFORM_PS4) )
 				{
 					score += RendererType::Gnm      == renderer ? 20 : 0;
+				}
+				else if (BX_ENABLED(BX_PLATFORM_PS5) )
+				{
+					score += RendererType::Agc      == renderer ? 20 : 0;
 				}
 				else if (BX_ENABLED(0
 					 ||  BX_PLATFORM_XBOXONE
