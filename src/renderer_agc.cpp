@@ -8,6 +8,7 @@
 namespace bgfx
 {
 
+#if 0
 #define BGFX_DECLARE_EMBEDDED_SHADER(_name)                                                     \
 			extern const uint8_t* BX_CONCATENATE(_name, _pssl);                                 \
 			extern const uint32_t BX_CONCATENATE(_name, _pssl_size);                            \
@@ -28,6 +29,7 @@ BGFX_DECLARE_EMBEDDED_SHADER(fs_clear6);
 BGFX_DECLARE_EMBEDDED_SHADER(fs_clear7);
 
 #undef BGFX_DECLARE_EMBEDDED_SHADER
+#endif
 
 } // namespace bgfx
 

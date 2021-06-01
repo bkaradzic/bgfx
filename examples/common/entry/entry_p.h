@@ -13,6 +13,11 @@
 
 #include "entry.h"
 
+// TODO: (manderson) Write entry for NX, ORBIS, PROSPERO
+#if BX_PLATFORM_NX || BX_PLATFORM_PS4 || BX_PLATFORM_PS5
+#	define ENTRY_CONFIG_USE_NOOP 1
+#endif
+
 #ifndef ENTRY_CONFIG_USE_NOOP
 #	define ENTRY_CONFIG_USE_NOOP 0
 #endif // ENTRY_CONFIG_USE_NOOP

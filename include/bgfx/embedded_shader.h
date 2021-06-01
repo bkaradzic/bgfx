@@ -75,7 +75,7 @@
 #if BGFX_PLATFORM_SUPPORTS_PSSL
 #	undef  BGFX_EMBEDDED_SHADER_PSSL
 #	define BGFX_EMBEDDED_SHADER_PSSL(_renderer, _name) \
-		{ _renderer, BX_CONCATENATE(_name, _pssl), BX_CONCATENATE(_name, _pssl_size) },
+		{ _renderer, BX_CONCATENATE(_name, _pssl), BX_CONCATENATE(_name, _pssl) },
 #endif // BGFX_PLATFORM_SUPPORTS_PSSL
 
 #if BGFX_PLATFORM_SUPPORTS_ESSL
@@ -109,17 +109,23 @@
 					BGFX_EMBEDDED_SHADER_DX9BC(bgfx::RendererType::Direct3D9,  _name)              \
 					BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D11, _name)              \
 					BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D12, _name)              \
-					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)              \
 					BGFX_EMBEDDED_SHADER_METAL(bgfx::RendererType::Metal,      _name)              \
 					BGFX_EMBEDDED_SHADER_NVN  (bgfx::RendererType::Nvn,        _name)              \
 					BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)              \
 					BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)              \
 					BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)              \
 					BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::WebGPU,     _name)              \
-					{ bgfx::RendererType::Noop,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 }, \
+					{ bgfx::RendererType::Gnm,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 },  \
+					{ bgfx::RendererType::Agc,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 },  \
+					{ bgfx::RendererType::Noop, (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 },  \
 					{ bgfx::RendererType::Count, NULL, 0 }                                         \
 				}                                                                                  \
 			}
+
+// TODO: (manderson) Add PSSL compiler.
+//					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)              \
+//					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Agc,        _name)              \
+
 
 #define BGFX_EMBEDDED_SHADER_END()                         \
 			{                                              \
