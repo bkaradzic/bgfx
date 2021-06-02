@@ -69,6 +69,13 @@ namespace entry
 
 } // namespace entry
 
+// Setup Prospero dlheap.
+#if BX_PLATFORM_PS5 || BX_PLATFORM_PS4
+size_t sceLibcStdThreadStackSize = 1ull << 20ull; // 2MB
+size_t sceLibcHeapSize = 2ull << 30ull; // 6GB
+unsigned int sceLibcHeapExtendedAlloc = 1u;
+#endif
+
 int main(int _argc, const char* const* _argv)
 {
 	return entry::main(_argc, _argv);

@@ -123,8 +123,8 @@
 			}
 
 // TODO: (manderson) Add PSSL compiler.
-//					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)              \
-//					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Agc,        _name)              \
+//					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)
+//					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Agc,        _name)
 
 
 #define BGFX_EMBEDDED_SHADER_END()                         \
