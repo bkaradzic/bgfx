@@ -1119,6 +1119,17 @@ VK_IMPORT_DEVICE
 					result = VK_RESULT_MAX_ENUM;
 				}
 			}
+#elif BX_PLATFORM_NX
+			{
+				VkViSurfaceCreateInfoNN createInfo = {};
+				createInfo.sType = VK_STRUCTURE_TYPE_VI_SURFACE_CREATE_INFO_NN;
+				createInfo.pNext = NULL;
+				createInfo.flags = 0;
+
+				createInfo.window = g_platformData.nwh;
+
+				result = vkCreateViSurfaceNN(m_instance, &createInfo, NULL, &m_surface);
+			}
 #else
 #	error "Figure out KHR surface..."
 #endif // BX_PLATFORM_
