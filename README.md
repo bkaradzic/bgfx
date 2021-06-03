@@ -460,6 +460,15 @@ https://www.peakfinder.org/
 
 ![PeakFinder](https://pfweb-c125.kxcdn.com/images/mobile/cards//en/cameramode.jpg)
 
+## Ember Sword
+
+Ember Sword is a free to play MMORPG running directly in your browser and is
+being developed and published by Bright Star Studios.
+
+https://embersword.com
+
+![Ember-Sword-ConceptArt5](https://user-images.githubusercontent.com/814772/120714133-a860ca80-c477-11eb-8680-f5a948dfd050.png)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
