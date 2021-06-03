@@ -23,6 +23,7 @@
  && !defined(BGFX_CONFIG_RENDERER_DIRECT3D11) \
  && !defined(BGFX_CONFIG_RENDERER_DIRECT3D12) \
  && !defined(BGFX_CONFIG_RENDERER_GNM)        \
+ && !defined(BGFX_CONFIG_RENDERER_AGC)        \
  && !defined(BGFX_CONFIG_RENDERER_METAL)      \
  && !defined(BGFX_CONFIG_RENDERER_NVN)        \
  && !defined(BGFX_CONFIG_RENDERER_OPENGL)     \
