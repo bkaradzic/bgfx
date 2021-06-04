@@ -2993,7 +2993,9 @@ namespace bgfx { namespace gl
 					if (s_extension[Extension::ANGLE_instanced_arrays].m_supported
 					||  s_extension[Extension::  ARB_instanced_arrays].m_supported
 					||  s_extension[Extension::  EXT_instanced_arrays].m_supported
+#if BGFX_CONFIG_RENDERER_OPENGLES && (BGFX_CONFIG_RENDERER_OPENGLES < 30)
 					|| (s_extension[Extension::   NV_instanced_arrays].m_supported && s_extension[Extension::NV_draw_instanced].m_supported)
+#endif
 					   )
 					{
 						if (NULL != glVertexAttribDivisor
@@ -3002,6 +3004,7 @@ namespace bgfx { namespace gl
 						{
 							g_caps.supported |= BGFX_CAPS_INSTANCING;
 						}
+#if BGFX_CONFIG_RENDERER_OPENGLES && (BGFX_CONFIG_RENDERER_OPENGLES < 30)
 						else if (NULL != glVertexAttribDivisorNV
 							 &&  NULL != glDrawArraysInstancedNV
 							 &&  NULL != glDrawElementsInstancedNV)
@@ -3012,6 +3015,7 @@ namespace bgfx { namespace gl
 
 							g_caps.supported |= BGFX_CAPS_INSTANCING;
 						}
+#endif
 					}
 
 					if (0 == (g_caps.supported & BGFX_CAPS_INSTANCING) )
