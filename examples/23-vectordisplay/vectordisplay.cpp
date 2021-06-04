@@ -10,7 +10,9 @@
 //   https://web.archive.org/web/20120313001837/http://paulbourke.net/dataformats/hershey/
 //
 #include <float.h>  // FLT_EPSILON
+#if !defined(__ORBIS__) && !defined(__PROSPERO__)
 #include <alloca.h> // alloca
+#endif
 
 #include <bx/math.h>
 
