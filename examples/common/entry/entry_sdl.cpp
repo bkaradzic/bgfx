@@ -65,10 +65,12 @@ namespace entry
 #		else
 		return (void*)wmi.info.x11.window;
 #		endif
-#	elif BX_PLATFORM_OSX
+#	elif BX_PLATFORM_OSX || BX_PLATFORM_IOS
 		return wmi.info.cocoa.window;
 #	elif BX_PLATFORM_WINDOWS
 		return wmi.info.win.window;
+#   elif BX_PLATFORM_ANDROID
+		return wmi.info.android.window;
 #	endif // BX_PLATFORM_
 	}
 
@@ -91,6 +93,8 @@ namespace entry
 #	elif BX_PLATFORM_OSX
 		pd.ndt          = NULL;
 #	elif BX_PLATFORM_WINDOWS
+		pd.ndt          = NULL;
+#	elif BX_PLATFORM_ANDROID
 		pd.ndt          = NULL;
 #	endif // BX_PLATFORM_
 		pd.nwh          = sdlNativeWindowHandle(_window);
