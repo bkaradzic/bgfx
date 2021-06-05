@@ -6199,7 +6199,7 @@ namespace bgfx { namespace gl
 					// Replace all instances of gl_FragDepth with bgfx_FragDepth.
 					for (bx::StringView fragDepth = bx::findIdentifierMatch(temp, "gl_FragDepth")
 						; !fragDepth.isEmpty()
-						; fragDepth = bx::findIdentifierMatch(fragDepth, "gl_FragDepth")
+						; fragDepth = bx::findIdentifierMatch(fragDepth.getPtr(), "gl_FragDepth")
 						)
 					{
 						char* insert = const_cast<char*>(fragDepth.getPtr() );
