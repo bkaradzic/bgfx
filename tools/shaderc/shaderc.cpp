@@ -263,11 +263,8 @@ namespace bgfx
 		NULL
 	};
 
-	static const char* s_integerVecs[] =
+	static const char* s_unsignedVecs[] =
 	{
-		"ivec2",
-		"ivec3",
-		"ivec4",
 		"uvec2",
 		"uvec3",
 		"uvec4",
@@ -2188,7 +2185,7 @@ namespace bgfx
 								const bool usesTextureArray       = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
 								const bool usesPacking            = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
 								const bool usesViewportLayerArray = !bx::findIdentifierMatch(input, s_ARB_shader_viewport_layer_array).isEmpty();
-								const bool usesIntegerVecs        = !bx::findIdentifierMatch(preprocessedInput, s_integerVecs).isEmpty();
+								const bool usesUnsignedVecs        = !bx::findIdentifierMatch(preprocessedInput, s_unsignedVecs).isEmpty();
 
 								if (profile->lang != ShadingLang::ESSL)
 								{
@@ -2196,7 +2193,7 @@ namespace bgfx
 										|| !bx::findIdentifierMatch(input, s_130).isEmpty()
 										|| usesInterpolationQualifiers
 										|| usesTexelFetch
-										|| usesIntegerVecs
+										|| usesUnsignedVecs
 										) );
 
 									bx::stringPrintf(code, "#version %d\n", need130 ? 130 : glsl_profile);
@@ -2324,7 +2321,7 @@ namespace bgfx
 								}
 								else
 								{
-									if ((glsl_profile < 300) && usesIntegerVecs)
+									if ((glsl_profile < 300) && usesUnsignedVecs)
 									{
 										glsl_profile = 300;
 									}
