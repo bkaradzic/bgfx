@@ -24,8 +24,10 @@ SHADER_TMP = $(TEMP)/tmp
 
 vs_%.bin.h : vs_%.sc
 	@echo [$(<)]
-	 $(SILENT) $(SHADERC) $(VS_FLAGS) --platform linux                  -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
+	 $(SILENT) $(SHADERC) $(VS_FLAGS) --platform linux   -p 120         -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
 	@cat $(SHADER_TMP) > $(@)
+	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform android                -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_essl
+	-@cat $(SHADER_TMP) >> $(@)	
 	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform linux   -p spirv       -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_spv
 	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform windows -p vs_3_0 -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx9
@@ -39,8 +41,10 @@ vs_%.bin.h : vs_%.sc
 
 fs_%.bin.h : fs_%.sc
 	@echo [$(<)]
-	 $(SILENT) $(SHADERC) $(FS_FLAGS) --platform linux                  -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
+	 $(SILENT) $(SHADERC) $(FS_FLAGS) --platform linux   -p 120         -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
 	@cat $(SHADER_TMP) > $(@)
+	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform android                -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_essl
+	-@cat $(SHADER_TMP) >> $(@)	
 	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform linux   -p spirv       -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_spv
 	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform windows -p ps_3_0 -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx9
@@ -56,6 +60,8 @@ cs_%.bin.h : cs_%.sc
 	@echo [$(<)]
 	 $(SILENT) $(SHADERC) $(CS_FLAGS) --platform linux -p 430           -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
 	@cat $(SHADER_TMP) > $(@)
+	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform android                -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_essl
+	-@cat $(SHADER_TMP) >> $(@)	
 #	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform linux   -p spirv       -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_spv
 #	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform windows -p cs_5_0 -O 1 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx11
