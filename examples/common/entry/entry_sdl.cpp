@@ -90,11 +90,7 @@ namespace entry
 #		else
 		pd.ndt          = wmi.info.x11.display;
 #		endif
-#	elif BX_PLATFORM_OSX
-		pd.ndt          = NULL;
-#	elif BX_PLATFORM_WINDOWS
-		pd.ndt          = NULL;
-#	elif BX_PLATFORM_ANDROID
+#	else
 		pd.ndt          = NULL;
 #	endif // BX_PLATFORM_
 		pd.nwh          = sdlNativeWindowHandle(_window);
