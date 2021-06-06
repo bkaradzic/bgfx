@@ -3710,7 +3710,7 @@ namespace bgfx
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
 			const bool isIndex16     = !_index32;
-			const uint32_t indexSize = isIndex16 ? 2 : 4;
+			const uint16_t indexSize = isIndex16 ? 2 : 4;
 			return m_submit->getAvailTransientIndexBuffer(_num, indexSize);
 		}
 
@@ -3764,7 +3764,7 @@ namespace bgfx
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
 			const bool isIndex16     = !_index32;
-			const uint32_t indexSize = isIndex16 ? 2 : 4;
+			const uint16_t indexSize = isIndex16 ? 2 : 4;
 			const uint32_t offset    = m_submit->allocTransientIndexBuffer(_num, indexSize);
 
 			TransientIndexBuffer& tib = *m_submit->m_transientIb;
