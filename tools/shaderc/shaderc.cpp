@@ -254,6 +254,23 @@ namespace bgfx
 		NULL
 	};
 
+	static const char* s_bitsToEncoders[] =
+	{
+		"floatBitsToUint",
+		"floatBitsToInt",
+		"intBitsToFloat",
+		"uintBitsToFloat",
+		NULL
+	};
+
+	static const char* s_unsignedVecs[] =
+	{
+		"uvec2",
+		"uvec3",
+		"uvec4",
+		NULL
+	};
+
 	const char* s_uniformTypeName[] =
 	{
 		"int",  "int",
@@ -2129,15 +2146,14 @@ namespace bgfx
 							const bx::StringView preprocessedInput(preprocessor.m_preprocessed.c_str() );
 							uint32_t glsl_profile = profile->id;
 
+							const bool usesBitsToEncoders = true
+								&& _options.shaderType == 'f'
+								&& !bx::findIdentifierMatch(preprocessedInput, s_bitsToEncoders).isEmpty()
+								;
+
 							if (!bx::strFind(preprocessedInput, "layout(std430").isEmpty()
 							||  !bx::strFind(preprocessedInput, "image2D").isEmpty()
-							|| (_options.shaderType == 'f'
-								&&  (!bx::strFind(preprocessedInput, "floatBitsToUint").isEmpty() ||
-									 !bx::strFind(preprocessedInput, "floatBitsToInt").isEmpty() ||
-									 !bx::strFind(preprocessedInput, "intBitsToFloat").isEmpty() ||
-									 !bx::strFind(preprocessedInput, "uintBitsToFloat").isEmpty()
-									) )
-								)
+							||  usesBitsToEncoders)
 							{
 								if (profile->lang == ShadingLang::GLSL
 								&&  glsl_profile < 430)
@@ -2169,6 +2185,7 @@ namespace bgfx
 								const bool usesTextureArray       = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
 								const bool usesPacking            = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
 								const bool usesViewportLayerArray = !bx::findIdentifierMatch(input, s_ARB_shader_viewport_layer_array).isEmpty();
+								const bool usesUnsignedVecs        = !bx::findIdentifierMatch(preprocessedInput, s_unsignedVecs).isEmpty();
 
 								if (profile->lang != ShadingLang::ESSL)
 								{
@@ -2176,6 +2193,7 @@ namespace bgfx
 										|| !bx::findIdentifierMatch(input, s_130).isEmpty()
 										|| usesInterpolationQualifiers
 										|| usesTexelFetch
+										|| usesUnsignedVecs
 										) );
 
 									bx::stringPrintf(code, "#version %d\n", need130 ? 130 : glsl_profile);
@@ -2303,6 +2321,11 @@ namespace bgfx
 								}
 								else
 								{
+									if ((glsl_profile < 300) && usesUnsignedVecs)
+									{
+										glsl_profile = 300;
+									}
+
 									if (glsl_profile > 100)
 									{
 										bx::stringPrintf(code, "#version %d es\n", glsl_profile);
