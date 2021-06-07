@@ -597,6 +597,7 @@ typedef struct cgltf_light {
 	cgltf_float range;
 	cgltf_float spot_inner_cone_angle;
 	cgltf_float spot_outer_cone_angle;
+	cgltf_extras extras;
 } cgltf_light;
 
 struct cgltf_node {
@@ -4881,6 +4882,10 @@ static int cgltf_parse_json_light(cgltf_options* options, jsmntok_t const* token
 					return i;
 				}
 			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_light->extras);
 		}
 		else
 		{
