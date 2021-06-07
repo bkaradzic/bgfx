@@ -1867,6 +1867,8 @@ FoldingRule BitCastScalarOrVector() {
 
     const analysis::Constant* bitcasted_constant =
         ConvertWordsToNumericScalarOrVectorConstant(const_mgr, words, type);
+    if (!bitcasted_constant) return false;
+
     auto new_feeder_id =
         const_mgr->GetDefiningInstruction(bitcasted_constant, inst->type_id())
             ->result_id();
