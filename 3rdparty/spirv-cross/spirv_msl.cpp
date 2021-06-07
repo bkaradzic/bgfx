@@ -15936,3 +15936,7 @@ const char *CompilerMSL::get_combined_sampler_suffix() const
 {
 	return sampler_name_suffix.c_str();
 }
+
+void CompilerMSL::emit_block_hints(const SPIRBlock &)
+{
+}
