@@ -78,7 +78,7 @@ namespace bgfx { namespace gnm
 
 		RendererType::Enum getRendererType() const override
 		{
-			return RendererType::Noop;
+			return RendererType::Gnm;
 		}
 
 		const char* getRendererName() const override
