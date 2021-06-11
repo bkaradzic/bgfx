@@ -115,6 +115,8 @@ struct OcornutImguiContext
 			ImDrawIdx* indices = (ImDrawIdx*)tib.data;
 			bx::memCopy(indices, drawList->IdxBuffer.begin(), numIndices * sizeof(ImDrawIdx) );
 
+			bgfx::Encoder* encoder = bgfx::begin();
+
 			uint32_t offset = 0;
 			for (const ImDrawCmd* cmd = drawList->CmdBuffer.begin(), *cmdEnd = drawList->CmdBuffer.end(); cmd != cmdEnd; ++cmd)
 			{
@@ -167,21 +169,23 @@ struct OcornutImguiContext
 					{
 						const uint16_t xx = uint16_t(bx::max(clipRect.x, 0.0f) );
 						const uint16_t yy = uint16_t(bx::max(clipRect.y, 0.0f) );
-						bgfx::setScissor(xx, yy
+						encoder->setScissor(xx, yy
 								, uint16_t(bx::min(clipRect.z, 65535.0f)-xx)
 								, uint16_t(bx::min(clipRect.w, 65535.0f)-yy)
 								);
 
-						bgfx::setState(state);
-						bgfx::setTexture(0, s_tex, th);
-						bgfx::setVertexBuffer(0, &tvb, 0, numVertices);
-						bgfx::setIndexBuffer(&tib, offset, cmd->ElemCount);
-						bgfx::submit(m_viewId, program);
+						encoder->setState(state);
+						encoder->setTexture(0, s_tex, th);
+						encoder->setVertexBuffer(0, &tvb, 0, numVertices);
+						encoder->setIndexBuffer(&tib, offset, cmd->ElemCount);
+						encoder->submit(m_viewId, program);
 					}
 				}
 
 				offset += cmd->ElemCount;
 			}
+
+			bgfx::end(encoder);
 		}
 	}
 
