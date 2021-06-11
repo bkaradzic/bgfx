@@ -14,6 +14,7 @@
 #include <kernel.h>
 #include <agc.h>
 #include <video_out.h>
+#include <math.h>
 
 //=============================================================================================
 
@@ -145,6 +146,7 @@ private:
 	sce::Agc::Core::BasicContext mCtxs[NumDisplayBuffers]{};
 	int mVideoHandle{};
 	sce::Agc::Label* mFrameLabels{};
+	uint8_t mPhase{};
 };
 
 //=============================================================================================
@@ -258,16 +260,24 @@ bool RendererContextAGC::createDisplayBuffers(const Init& _init)
 	drtSpec.m_height = rtSpec.m_height;
 	drtSpec.m_depthFormat = sce::Agc::CxDepthRenderTarget::DepthFormat::k32Float;
 	drtSpec.m_stencilFormat = sce::Agc::CxDepthRenderTarget::StencilFormat::k8UInt;
-	const sce::Agc::SizeAlign depthBufferSize = sce::Agc::Core::getSize(&drtSpec);
-	void* const depthMem = allocDmem(sce::Agc::SizeAlign(depthBufferSize.m_size, depthBufferSize.m_align));
+	sce::Agc::SizeAlign const depthSize = sce::Agc::Core::getSize(&drtSpec, sce::Agc::Core::DepthRenderTargetComponent::kDepth);
+	sce::Agc::SizeAlign const stencilSize = sce::Agc::Core::getSize(&drtSpec, sce::Agc::Core::DepthRenderTargetComponent::kStencil);
+	void* const depthMem = allocDmem(sce::Agc::SizeAlign(depthSize.m_size, depthSize.m_align));
+	void* const stencilMem = allocDmem(sce::Agc::SizeAlign(stencilSize.m_size, stencilSize.m_align));
 	drtSpec.m_depthReadAddress = depthMem;
 	drtSpec.m_depthWriteAddress = depthMem;
+	drtSpec.m_stencilReadAddress = stencilMem;
+	drtSpec.m_stencilWriteAddress = stencilMem;
 	error = sce::Agc::Core::initialize(&mDtr, &drtSpec);
 	SCE_AGC_ASSERT(error == SCE_OK);
 	if (error != SCE_OK) return false;
 	mDtr.setDepthClearValue(1.0f);
 
-	return false;
+	error = sce::Agc::Toolkit::init();
+	SCE_AGC_ASSERT(error == SCE_OK);
+	if (error != SCE_OK) return false;
+
+	return true;
 }
 
 //=============================================================================================
@@ -655,6 +665,47 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 
 	perfStats.gpuMemoryMax  = -INT64_MAX;
 	perfStats.gpuMemoryUsed = -INT64_MAX;
+
+	// Grab the right context for this frame
+	size_t const prevBuffer = mPhase;
+	size_t const curBuffer = (mPhase + 1) % NumDisplayBuffers;
+	mPhase = curBuffer;
+	while (mFrameLabels[curBuffer].m_value != 1)
+	{
+		// TODO: (manderson) Non busy wait? Semaphore, Fence?
+		sceKernelUsleep(1000);
+	}
+
+	mFrameLabels[curBuffer].m_value = 0;
+	sce::Agc::Core::BasicContext& ctx = mCtxs[curBuffer];
+	ctx.reset();
+	ctx.m_dcb.waitUntilSafeForRendering(mVideoHandle, curBuffer);
+
+	static double clr = 0.0;
+	clr += (0.0166667 / 2.5);
+	clr = fmod(clr, 1.0);
+
+	// Clear both color and depth targets by just using toolkit functions.
+	sce::Agc::Toolkit::Result tk0 = sce::Agc::Toolkit::clearRenderTargetCs(&ctx.m_dcb, &mRts[curBuffer], sce::Agc::Core::Encoder::encode({ clr, clr , clr, 1.0 }));
+	sce::Agc::Toolkit::Result tk1 = sce::Agc::Toolkit::clearDepthRenderTargetCs(&ctx.m_dcb, &mDtr);
+	ctx.resetToolkitChangesAndSyncToGl2(tk0 | tk1);
+
+	// Finally submit the workload to the GPU
+	ctx.m_dcb.setFlip(mVideoHandle, curBuffer, SCE_VIDEO_OUT_FLIP_MODE_VSYNC, 0);
+	sce::Agc::Core::gpuSyncEvent(
+		&ctx.m_dcb,
+		sce::Agc::Core::SyncWaitMode::kAsynchronous,
+		sce::Agc::Core::SyncCacheOp::kClearAll,
+		sce::Agc::Core::SyncLabelVisibility::kCpu,
+		&mFrameLabels[curBuffer],
+		1);
+	SceError error = sce::Agc::submitGraphics(
+		sce::Agc::GraphicsQueue::kNormal,
+		ctx.m_dcb.getSubmitPointer(),
+		ctx.m_dcb.getSubmitSize());
+	SCE_AGC_ASSERT(error == SCE_OK);
+	error = sce::Agc::suspendPoint();
+	SCE_AGC_ASSERT(error == SCE_OK);
 }
 
 //=============================================================================================
