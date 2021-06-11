@@ -52,8 +52,13 @@
 #endif // ENTRY_CONFIG_MAX_GAMEPADS
 
 #if !defined(ENTRY_DEFAULT_WIDTH) && !defined(ENTRY_DEFAULT_HEIGHT)
+#if BX_PLATFORM_PS5 // PS5 doesn't support 720p display mode.
+#	define ENTRY_DEFAULT_WIDTH  1920
+#	define ENTRY_DEFAULT_HEIGHT 1080
+#else
 #	define ENTRY_DEFAULT_WIDTH  1280
 #	define ENTRY_DEFAULT_HEIGHT 720
+#endif
 #elif !defined(ENTRY_DEFAULT_WIDTH) || !defined(ENTRY_DEFAULT_HEIGHT)
 #	error "Both ENTRY_DEFAULT_WIDTH and ENTRY_DEFAULT_HEIGHT must be defined."
 #endif // ENTRY_DEFAULT_WIDTH
