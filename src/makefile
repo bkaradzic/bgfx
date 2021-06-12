@@ -37,8 +37,8 @@ define shader-embedded
 	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform ios     -p metal -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_mtl
 	-@cat $(SHADER_TMP) >> $(@)
-	-@echo extern const uint8_t* $(basename $(<))_pssl;>> $(@)
-	-@echo extern const uint32_t $(basename $(<))_pssl_size;>> $(@)
+	-@printf "extern const uint8_t* $(basename $(<))_pssl;\n" | tr -d '\015' >> $(@)
+	-@printf "extern const uint32_t $(basename $(<))_pssl_size;\n" | tr -d '\015' >> $(@)
 endef
 
 vs_debugfont.bin.h : vs_debugfont.sc
