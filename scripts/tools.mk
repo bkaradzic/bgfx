@@ -8,11 +8,13 @@ SILENT?=@
 THISDIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 
 UNAME:=$(shell uname)
-ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
+ifeq ($(UNAME),$(filter Linux Darwin MINGW%,$(UNAME)))
 CMD_MKDIR=mkdir -p "$(1)"
 CMD_RMDIR=rm -r "$(1)"
-ifeq ($(UNAME),$(filter $(UNAME),Darwin))
+ifeq ($(UNAME),$(filter Darwin,$(UNAME)))
 OS=darwin
+else ifeq ($(UNAME),$(filter MINGW%,$(UNAME)))
+OS=windows
 else
 OS=linux
 endif
