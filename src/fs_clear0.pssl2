@@ -1,0 +1,15 @@
+/*
+uniform vec4 bgfx_clear_color[8];
+
+void main()
+{
+	gl_FragColor = bgfx_clear_color[0];
+}
+*/
+
+float4 bgfx_clear_color[8];
+
+float4 main() : S_TARGET_OUTPUT
+{
+	return bgfx_clear_color[0];
+}

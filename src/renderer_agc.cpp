@@ -15,61 +15,13 @@
 #include <agc.h>
 #include <video_out.h>
 #include <math.h>
+#include <shader/shader_reflection.h>
 
 //=============================================================================================
 
-namespace {
-
-//=============================================================================================
-
-// This is a temporary utility function to allocate direct memory. It's not important to understand how this works.
-uint8_t* allocDmem(sce::Agc::SizeAlign sizeAlign)
-{
-	if (!sizeAlign.m_size)
-	{
-		return nullptr;
-	}
-
-	static uint32_t allocCount = 0;
-	off_t offsetOut;
-
-	const size_t alignment = (sizeAlign.m_align + 0xffffu) & ~0xffffu;
-	const uint64_t size = (sizeAlign.m_size + 0xffffu) & ~0xffffu;
-
-	int32_t ret = sceKernelAllocateMainDirectMemory(size, alignment, SCE_KERNEL_MTYPE_C_SHARED, &offsetOut);
-	if (ret) {
-		printf("sceKernelAllocateMainDirectMemory error:0x%x size:0x%zx\n", ret, size);
-		return nullptr;
-	}
-
-	void* ptr = NULL;
-	char namedStr[32];
-	snprintf_s(namedStr, sizeof(namedStr), "bgfx %d_%zuKB", allocCount++, size >> 10);
-	ret = sceKernelMapNamedDirectMemory(&ptr, size, SCE_KERNEL_PROT_GPU_RW | SCE_KERNEL_PROT_CPU_RW, 0, offsetOut, alignment, namedStr);
-	SCE_AGC_ASSERT_MSG(ret == SCE_OK, "Unable to map memory");
-	return (uint8_t*)ptr;
-}
-
-//=============================================================================================
-
-void freeDmem(void* memVA)
-{
-	SceKernelVirtualQueryInfo info;
-	if (sceKernelVirtualQuery(memVA, 0, &info, sizeof(info)) < 0)
-	{
-		printf("virtual query failed for mem 0x%p", memVA);
-		return;
-	}
-	if (sceKernelReleaseDirectMemory(info.offset, (uintptr_t)info.end - (uintptr_t)info.start) < 0)
-	{
-		printf("error freeing direct memory\n");
-		return;
-	}
-}
-
-//=============================================================================================
-
-} // namespace 
+// TODO: (manderson) Replace with proper embedded shaders
+#include "vs_clear.pssl2.h"
+#include "fs_clear0.pssl2.h"
 
 //=============================================================================================
 
@@ -137,17 +89,110 @@ public:
 
 private:
 
+	struct FrameResources
+	{
+		sce::Agc::CxRenderTarget mRenderTarget{};
+		sce::Agc::Core::BasicContext mContext{};
+		sce::Agc::Label* mLabel{};
+	};
+
+	struct EmbeddedProgram
+	{
+		sce::Agc::Shader* mVsShader;
+		sce::Agc::Shader* mPsShader;
+		void* mVsBuf;
+		void* mPsBuf;
+	};
+
 	bool createDisplayBuffers(const Init& _init);
 	bool createScanoutBuffers();
 	bool createContext();
+	bool createEmbeddedProgram(EmbeddedProgram& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize);
+	bool createEmbeddedPrograms();
 
-	sce::Agc::CxRenderTarget mRts[NumDisplayBuffers]{};
-	sce::Agc::CxDepthRenderTarget mDtr;
-	sce::Agc::Core::BasicContext mCtxs[NumDisplayBuffers]{};
+	FrameResources mFrameResources[NumDisplayBuffers]{};
+	sce::Agc::CxDepthRenderTarget mDepthRenderTarget{};
 	int mVideoHandle{};
-	sce::Agc::Label* mFrameLabels{};
 	uint8_t mPhase{};
+
+	EmbeddedProgram mClearProgram;
 };
+
+//=============================================================================================
+
+} } // namespace agc bgfx
+
+//=============================================================================================
+
+namespace {
+
+//=============================================================================================
+
+// This is a temporary utility function to allocate direct memory. It's not important to understand how this works.
+uint8_t* allocDmem(sce::Agc::SizeAlign sizeAlign)
+{
+	if (!sizeAlign.m_size)
+	{
+		return nullptr;
+	}
+
+	static uint32_t allocCount = 0;
+	off_t offsetOut;
+
+	const size_t alignment = (sizeAlign.m_align + 0xffffu) & ~0xffffu;
+	const uint64_t size = (sizeAlign.m_size + 0xffffu) & ~0xffffu;
+
+	int32_t ret = sceKernelAllocateMainDirectMemory(size, alignment, SCE_KERNEL_MTYPE_C_SHARED, &offsetOut);
+	if (ret) {
+		printf("sceKernelAllocateMainDirectMemory error:0x%x size:0x%zx\n", ret, size);
+		return nullptr;
+	}
+
+	void* ptr = NULL;
+	char namedStr[32];
+	snprintf_s(namedStr, sizeof(namedStr), "bgfx %d_%zuKB", allocCount++, size >> 10);
+	ret = sceKernelMapNamedDirectMemory(&ptr, size, SCE_KERNEL_PROT_GPU_RW | SCE_KERNEL_PROT_CPU_RW, 0, offsetOut, alignment, namedStr);
+	SCE_AGC_ASSERT_MSG(ret == SCE_OK, "Unable to map memory");
+	return (uint8_t*)ptr;
+}
+
+//=============================================================================================
+
+void freeDmem(void* memVA)
+{
+	SceKernelVirtualQueryInfo info;
+	if (sceKernelVirtualQuery(memVA, 0, &info, sizeof(info)) < 0)
+	{
+		printf("virtual query failed for mem 0x%p", memVA);
+		return;
+	}
+	if (sceKernelReleaseDirectMemory(info.offset, (uintptr_t)info.end - (uintptr_t)info.start) < 0)
+	{
+		printf("error freeing direct memory\n");
+		return;
+	}
+}
+
+//=============================================================================================
+
+bool createShaderFromBin(sce::Agc::Shader*& shader, void* const bin)
+{
+	SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(bin);
+	void* const header = (void*)sceShaderGetProgramHeader(binaryHandle);
+	const void* const program = sceShaderGetProgram(binaryHandle);
+	SceError error = sce::Agc::createShader(&shader, header, program);
+	if (error != SCE_OK)
+		return false;
+	return true;
+}
+
+//=============================================================================================
+
+} // namespace 
+
+//=============================================================================================
+
+namespace bgfx { namespace agc {
 
 //=============================================================================================
 
@@ -226,7 +271,7 @@ bool RendererContextAGC::createDisplayBuffers(const Init& _init)
 	// Set up the RenderTarget spec.
 	// TODO: (manderson) As I understand it using k8_8_8_8Srgb will cause GPU to do implicit linear to sRGB conversion and
 	// I think that Bgfx expects output buffer to have no implicit gamma conversion.
-	sce::Agc::Core::RenderTargetSpec rtSpec;
+	sce::Agc::Core::RenderTargetSpec rtSpec{};
 	rtSpec.init();
 	rtSpec.m_width = _init.resolution.width;
 	rtSpec.m_height = _init.resolution.height;
@@ -240,21 +285,24 @@ bool RendererContextAGC::createDisplayBuffers(const Init& _init)
 	memset((void*)rtSpec.m_dataAddress, 0x80, rtSize.m_size);
 
 	// We can now initialize the render target. This will check that the dataAddress is properly aligned.
-	SceError error = sce::Agc::Core::initialize(&mRts[0], &rtSpec);
-	SCE_AGC_ASSERT_MSG(error == SCE_OK, "Failed to initialize RenderTarget.");
-	if (error != SCE_OK) return false;
+	SceError error = sce::Agc::Core::initialize(&mFrameResources[0].mRenderTarget, &rtSpec);
+	SCE_AGC_ASSERT(error == SCE_OK);
+	if (error != SCE_OK)
+		return false;
 
 	// Now that we have the first RT set up, we can create the others. They are identical to the first material, except for the RT memory.
+	sce::Agc::CxRenderTarget& baseRt = mFrameResources[0].mRenderTarget;
 	for (size_t i = 1; i < NumDisplayBuffers; ++i)
 	{
 		// You can just memcpy the CxRenderTarget, but doing so of course sidesteps the alignment checks in initialize().
-		memcpy(&mRts[i], &mRts[0], sizeof(mRts[0]));
-		mRts[i].setDataAddress(allocDmem(rtSize));
-		memset(mRts[i].getDataAddress(), 0x80, rtSize.m_size);
+		sce::Agc::CxRenderTarget& rt = mFrameResources[i].mRenderTarget;
+		memcpy(&rt, &baseRt, sizeof(baseRt));
+		rt.setDataAddress(allocDmem(rtSize));
+		memset(rt.getDataAddress(), 0x80, rtSize.m_size);
 	}
 
 	// Create and set up one depth target
-	sce::Agc::Core::DepthRenderTargetSpec drtSpec;
+	sce::Agc::Core::DepthRenderTargetSpec drtSpec{};
 	drtSpec.init();
 	drtSpec.m_width = rtSpec.m_width;
 	drtSpec.m_height = rtSpec.m_height;
@@ -268,14 +316,16 @@ bool RendererContextAGC::createDisplayBuffers(const Init& _init)
 	drtSpec.m_depthWriteAddress = depthMem;
 	drtSpec.m_stencilReadAddress = stencilMem;
 	drtSpec.m_stencilWriteAddress = stencilMem;
-	error = sce::Agc::Core::initialize(&mDtr, &drtSpec);
+	error = sce::Agc::Core::initialize(&mDepthRenderTarget, &drtSpec);
 	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK) return false;
-	mDtr.setDepthClearValue(1.0f);
+	if (error != SCE_OK)
+		return false;
+	mDepthRenderTarget.setDepthClearValue(1.0f);
 
 	error = sce::Agc::Toolkit::init();
 	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK) return false;
+	if (error != SCE_OK)
+		return false;
 
 	return true;
 }
@@ -286,16 +336,18 @@ bool RendererContextAGC::createScanoutBuffers()
 {
 	// First we need to select what we want to display on, which in this case is the TV, also known as SCE_VIDEO_OUT_BUS_TYPE_MAIN.
 	mVideoHandle = sceVideoOutOpen(SCE_USER_SERVICE_USER_ID_SYSTEM, SCE_VIDEO_OUT_BUS_TYPE_MAIN, 0, NULL);
-	SCE_AGC_ASSERT_MSG(mVideoHandle >= 0, "sceVideoOutOpen() returns handle=%d\n", mVideoHandle);
-	if (mVideoHandle < 0) return false;
+	SCE_AGC_ASSERT(mVideoHandle >= 0);
+	if (mVideoHandle < 0)
+		return false;
 
 	// Next we need to inform scan-out about the format of our buffers. This can be done by directly talking to VideoOut or
 	// by letting Agc::Core do the translation. To do so, we first need to get a RenderTargetSpec, which we can extract from
 	// the list of CxRenderTargets passed into the function.
-	sce::Agc::Core::RenderTargetSpec spec;
-	SceError error = sce::Agc::Core::translate(&spec, &mRts[0]);
+	sce::Agc::Core::RenderTargetSpec spec{};
+	SceError error = sce::Agc::Core::translate(&spec, &mFrameResources[0].mRenderTarget);
 	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK) return false;
+	if (error != SCE_OK)
+		return false;
 
 	// Next, we use this RenderTargetSpec to create a SceVideoOutBufferAttribute2 which tells VideoOut how it should interpret
 	// our buffers. VideoOut needs to know how the color data in the target should be interpreted, and since our pixel shader has
@@ -304,10 +356,11 @@ bool RendererContextAGC::createScanoutBuffers()
 	// should at some point do a gamma conversion (either implicit using an sRGB render target or explicit in shader code) so the
 	// output buffer *should* contain sRGB data, so leave this set to kSrgb, not sure what kBt709 is for, I can't find a translate
 	// prototype in the docs that takes a second Colorimetry value...?
-	SceVideoOutBufferAttribute2 attribute;
+	SceVideoOutBufferAttribute2 attribute{};
 	error = sce::Agc::Core::translate(&attribute, &spec, sce::Agc::Core::Colorimetry::kSrgb, sce::Agc::Core::Colorimetry::kBt709);
 	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK) return false;
+	if (error != SCE_OK)
+		return false;
 
 	// Ideally, all buffers should be registered with VideoOut in a single call to sceVideoOutRegisterBuffers2.
 	// The reason for this is that the buffers provided in each call get associated with one attribute slot in the API.
@@ -318,7 +371,7 @@ bool RendererContextAGC::createScanoutBuffers()
 	for (uint32_t i = 0; i < NumDisplayBuffers; ++i)
 	{
 		// We could manually call into VideoOut to set up the scan-out buffers, but Agc::Core provides a helper for this.
-		addresses[i].data = mRts[i].getDataAddress();
+		addresses[i].data = mFrameResources[i].mRenderTarget.getDataAddress();
 	}
 
 	// VideoOut internally groups scan-out buffers in sets. Every buffer in a set has the same attributes and switching (flipping) between
@@ -329,7 +382,8 @@ bool RendererContextAGC::createScanoutBuffers()
 	const int32_t setIndex = 0; // Call sceVideoOutUnregisterBuffers with this.
 	error = sceVideoOutRegisterBuffers2(mVideoHandle, setIndex, 0, addresses, NumDisplayBuffers, &attribute, SCE_VIDEO_OUT_BUFFER_ATTRIBUTE_CATEGORY_UNCOMPRESSED, nullptr);
 	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK) return false;
+	if (error != SCE_OK)
+		return false;
 	free(addresses);
 
 	return true;
@@ -339,28 +393,60 @@ bool RendererContextAGC::createScanoutBuffers()
 
 bool RendererContextAGC::createContext()
 {
-	// These labels are currently unused, but the intent is to use them for flip tracking.
-	mFrameLabels = (sce::Agc::Label*)allocDmem({ sizeof(sce::Agc::Label) * NumDisplayBuffers, sce::Agc::Alignment::kLabel });
-	
 	// Create a context for each buffered frame
 	for (uint32_t i = 0; i < NumDisplayBuffers; ++i)
 	{
-		mCtxs[i].m_dcb.init(
+		FrameResources& frameRes = mFrameResources[i];
+		sce::Agc::Core::BasicContext& ctx = frameRes.mContext;
+		ctx.m_dcb.init(
 			allocDmem({ DisplayCommandBufferSize, 4 }),
 			DisplayCommandBufferSize,
 			nullptr,
 			nullptr);
-		mCtxs[i].m_bdr.init(
-			&mCtxs[i].m_dcb,
-			&mCtxs[i].m_dcb);
-		mCtxs[i].m_sb.init(
+		ctx.m_bdr.init(
+			&ctx.m_dcb,
+			&ctx.m_dcb);
+		ctx.m_sb.init(
 			256, // This is the size of a chunk in the StateBuffer, defining the largest size of a load packet's payload
-			&mCtxs[i].m_dcb,
-			&mCtxs[i].m_dcb);
-		mFrameLabels[i].m_value = 1; // 1 means "not used by GPU"
+			&ctx.m_dcb,
+			&ctx.m_dcb);
+		frameRes.mLabel = (sce::Agc::Label*)allocDmem({ sizeof(sce::Agc::Label), sce::Agc::Alignment::kLabel });
+		frameRes.mLabel->m_value = 1; // 1 means "not used by GPU"
 	}
 
 	return true;
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::createEmbeddedProgram(EmbeddedProgram& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize)
+{
+	program.mVsBuf = allocDmem(sce::Agc::SizeAlign(vsSize, sce::Agc::Alignment::kShaderCode));
+	memcpy(program.mVsBuf, vsData, vsSize);
+	if (!createShaderFromBin(program.mVsShader, program.mVsBuf))
+	{
+		freeDmem(program.mVsBuf);
+		program.mVsBuf = nullptr;
+		return false;
+	}
+
+	program.mPsBuf = allocDmem(sce::Agc::SizeAlign(psSize, sce::Agc::Alignment::kShaderCode));
+	memcpy(program.mPsBuf, psData, psSize);
+	if (!createShaderFromBin(program.mPsShader, program.mPsBuf))
+	{
+		freeDmem(program.mPsBuf);
+		program.mPsBuf = nullptr;
+		return false;
+	}
+
+	return true;
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::createEmbeddedPrograms()
+{
+	return createEmbeddedProgram(mClearProgram, vs_clear_data, vs_clear_size, fs_clear0_data, fs_clear0_size);
 }
 
 //=============================================================================================
@@ -388,14 +474,14 @@ bool RendererContextAGC::init(const Init& _init)
 
 	SceError error = sce::Agc::init();
 	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK) return false;
+	if (error != SCE_OK)
+		return false;
 
 	if (!createDisplayBuffers(_init) ||
 		!createScanoutBuffers() ||
-		!createContext())
-	{
+		!createContext() ||
+		!createEmbeddedPrograms())
 		return false;
-	}
 
 	return true;
 }
@@ -670,14 +756,17 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 	size_t const prevBuffer = mPhase;
 	size_t const curBuffer = (mPhase + 1) % NumDisplayBuffers;
 	mPhase = curBuffer;
-	while (mFrameLabels[curBuffer].m_value != 1)
+	FrameResources& frameRes = mFrameResources[curBuffer];
+
+	// Wait till GPU finishes.
+	while (frameRes.mLabel->m_value != 1)
 	{
 		// TODO: (manderson) Non busy wait? Semaphore, Fence?
 		sceKernelUsleep(1000);
 	}
-
-	mFrameLabels[curBuffer].m_value = 0;
-	sce::Agc::Core::BasicContext& ctx = mCtxs[curBuffer];
+	frameRes.mLabel->m_value = 0;
+	
+	sce::Agc::Core::BasicContext& ctx = frameRes.mContext;
 	ctx.reset();
 	ctx.m_dcb.waitUntilSafeForRendering(mVideoHandle, curBuffer);
 
@@ -686,8 +775,8 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 	clr = fmod(clr, 1.0);
 
 	// Clear both color and depth targets by just using toolkit functions.
-	sce::Agc::Toolkit::Result tk0 = sce::Agc::Toolkit::clearRenderTargetCs(&ctx.m_dcb, &mRts[curBuffer], sce::Agc::Core::Encoder::encode({ clr, clr , clr, 1.0 }));
-	sce::Agc::Toolkit::Result tk1 = sce::Agc::Toolkit::clearDepthRenderTargetCs(&ctx.m_dcb, &mDtr);
+	sce::Agc::Toolkit::Result tk0 = sce::Agc::Toolkit::clearRenderTargetCs(&ctx.m_dcb, &frameRes.mRenderTarget, sce::Agc::Core::Encoder::encode({ clr, clr , clr, 1.0 }));
+	sce::Agc::Toolkit::Result tk1 = sce::Agc::Toolkit::clearDepthRenderTargetCs(&ctx.m_dcb, &mDepthRenderTarget);
 	ctx.resetToolkitChangesAndSyncToGl2(tk0 | tk1);
 
 	// Finally submit the workload to the GPU
@@ -697,7 +786,7 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 		sce::Agc::Core::SyncWaitMode::kAsynchronous,
 		sce::Agc::Core::SyncCacheOp::kClearAll,
 		sce::Agc::Core::SyncLabelVisibility::kCpu,
-		&mFrameLabels[curBuffer],
+		frameRes.mLabel,
 		1);
 	SceError error = sce::Agc::submitGraphics(
 		sce::Agc::GraphicsQueue::kNormal,

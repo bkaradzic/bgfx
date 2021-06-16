@@ -79,14 +79,14 @@
 #if BGFX_PLATFORM_SUPPORTS_PSSL
 #	undef  BGFX_EMBEDDED_SHADER_PSSL
 #	define BGFX_EMBEDDED_SHADER_PSSL(_renderer, _name) \
-		{ _renderer, BX_CONCATENATE(_name, _pssl), BX_CONCATENATE(_name, _pssl) },
+		{ _renderer, BX_CONCATENATE(_name, _pssl), BX_COUNTOF(BX_CONCATENATE(_name, _pssl)) },
 #endif // BGFX_PLATFORM_SUPPORTS_PSSL
 
 #if BGFX_PLATFORM_SUPPORTS_PSSL2
 #	undef  BGFX_EMBEDDED_SHADER_PSSL2
 #	define BGFX_EMBEDDED_SHADER_PSSL2(_renderer, _name) \
-		{ _renderer, BX_CONCATENATE(_name, _pssl2), BX_CONCATENATE(_name, _pssl2) },
-#endif // BGFX_PLATFORM_SUPPORTS_PSSL
+		{ _renderer, BX_CONCATENATE(_name, _pssl2), BX_COUNTOF(BX_CONCATENATE(_name, _pssl2)) },
+#endif // BGFX_PLATFORM_SUPPORTS_PSSL2
 
 #if BGFX_PLATFORM_SUPPORTS_ESSL
 #	undef  BGFX_EMBEDDED_SHADER_ESSL
@@ -115,8 +115,8 @@
 #if BGFX_PLATFORM_SUPPORTS_NVN
 #	undef  BGFX_EMBEDDED_SHADER_NVN
 #	define BGFX_EMBEDDED_SHADER_NVN(_renderer, _name) \
-		{ _renderer, BX_CONCATENATE(_name, _nvn), BX_CONCATENATE(_name, _nvn) },
-#endif // BGFX_PLATFORM_SUPPORTS_PSSL
+		{ _renderer, BX_CONCATENATE(_name, _nvn), BX_COUNTOF(BX_CONCATENATE(_name, _nvn)) },
+#endif // BGFX_PLATFORM_SUPPORTS_NVN
 
 #define BGFX_EMBEDDED_SHADER(_name)                                                                \
 			{                                                                                      \
@@ -139,7 +139,7 @@
 			}
 
 // TODO: (manderson) Add PSSL compiler.
-//					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)
+//					BGFX_EMBEDDED_SHADER_PSSL2(bgfx::RendererType::Agc,        _name)              \
 //					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Agc,        _name)
 
 

@@ -1,0 +1,33 @@
+/*
+#include "bgfx_shader.sh"
+
+uniform vec4 bgfx_clear_depth;
+
+void main()
+{
+	gl_Position = vec4(a_position.xy, bgfx_clear_depth.x, 1.0);
+}
+*/
+
+// Input struct
+struct VS_INPUT
+{
+    float4 a_position  :  POSITION;
+};
+
+// Output struct 
+struct VS_OUTPUT
+{
+    float4 vPosition  :  S_POSITION;
+};
+
+float4 bgfx_clear_depth;
+
+VS_OUTPUT main( VS_INPUT Input )
+{
+    VS_OUTPUT Output;
+
+    Output.vPosition = float4(Input.a_position.xy, bgfx_clear_depth.x, 1.0);
+
+    return Output;
+}
