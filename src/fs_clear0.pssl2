@@ -7,9 +7,13 @@ void main()
 }
 */
 
-float4 bgfx_clear_color[8];
+struct Srt {
+    float4 bgfx_clear_color[8];
+};
+
+Srt const* g_srt : S_SRT_DATA;
 
 float4 main() : S_TARGET_OUTPUT
 {
-	return bgfx_clear_color[0];
+	return g_srt->bgfx_clear_color[0];
 }

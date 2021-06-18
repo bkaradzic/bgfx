@@ -80,7 +80,7 @@ def main():
 	src = bin2c( agsFile, varName )
 	with open( outputFile, 'w' ) as fh:
 		fh.write( src )
-	os.unlink( agsFile )
+	#os.unlink( agsFile )
 
 #=============================================================================
 

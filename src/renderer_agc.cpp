@@ -16,6 +16,7 @@
 #include <video_out.h>
 #include <math.h>
 #include <shader/shader_reflection.h>
+#include "renderer.h"
 
 //=============================================================================================
 
@@ -96,26 +97,28 @@ private:
 		sce::Agc::Label* mLabel{};
 	};
 
-	struct EmbeddedProgram
+	struct ProgramAGC
 	{
-		sce::Agc::Shader* mVsShader;
-		sce::Agc::Shader* mPsShader;
 		void* mVsBuf;
 		void* mPsBuf;
+		sce::Agc::Shader* mVsShader;
+		sce::Agc::Shader* mPsShader;
 	};
 
+	bool verifyInit(const Init& _init);
 	bool createDisplayBuffers(const Init& _init);
 	bool createScanoutBuffers();
 	bool createContext();
-	bool createEmbeddedProgram(EmbeddedProgram& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize);
+	bool createEmbeddedProgram(ProgramAGC& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize);
 	bool createEmbeddedPrograms();
 
 	FrameResources mFrameResources[NumDisplayBuffers]{};
 	sce::Agc::CxDepthRenderTarget mDepthRenderTarget{};
 	int mVideoHandle{};
 	uint8_t mPhase{};
-
-	EmbeddedProgram mClearProgram;
+	ProgramAGC mClearProgram;
+	void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
+	UniformRegistry m_uniformReg;
 };
 
 //=============================================================================================
@@ -262,6 +265,24 @@ RendererContextAGC::RendererContextAGC()
 RendererContextAGC::~RendererContextAGC()
 {
 	// TODO: cleanup?
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::verifyInit(const Init& _init)
+{
+	// TODO: (manderson) We may want to be more clever here and choose an appropriate mode and 
+	// leterbox or scale into it, not sure yet how Bgfx handles this.
+	// As I understand it VideoOut will scale from one of these modes to the actual display mode.
+	return (_init.resolution.width == 3840 && _init.resolution.height == 2160) ||
+		   (_init.resolution.width == 3680 && _init.resolution.height == 2070) ||
+		   (_init.resolution.width == 3520 && _init.resolution.height == 1980) ||
+		   (_init.resolution.width == 3360 && _init.resolution.height == 1890) ||
+		   (_init.resolution.width == 3200 && _init.resolution.height == 1800) ||
+		   (_init.resolution.width == 2880 && _init.resolution.height == 1620) ||
+		   (_init.resolution.width == 2560 && _init.resolution.height == 1440) ||
+		   (_init.resolution.width == 2240 && _init.resolution.height == 1260) ||
+		   (_init.resolution.width == 1920 && _init.resolution.height == 1080);
 }
 
 //=============================================================================================
@@ -419,26 +440,21 @@ bool RendererContextAGC::createContext()
 
 //=============================================================================================
 
-bool RendererContextAGC::createEmbeddedProgram(EmbeddedProgram& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize)
+bool RendererContextAGC::createEmbeddedProgram(ProgramAGC& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize)
 {
 	program.mVsBuf = allocDmem(sce::Agc::SizeAlign(vsSize, sce::Agc::Alignment::kShaderCode));
+	program.mPsBuf = allocDmem(sce::Agc::SizeAlign(psSize, sce::Agc::Alignment::kShaderCode));
 	memcpy(program.mVsBuf, vsData, vsSize);
-	if (!createShaderFromBin(program.mVsShader, program.mVsBuf))
+	memcpy(program.mPsBuf, psData, psSize);
+	if (!createShaderFromBin(program.mVsShader, program.mVsBuf) ||
+		!createShaderFromBin(program.mPsShader, program.mPsBuf))
 	{
 		freeDmem(program.mVsBuf);
-		program.mVsBuf = nullptr;
-		return false;
-	}
-
-	program.mPsBuf = allocDmem(sce::Agc::SizeAlign(psSize, sce::Agc::Alignment::kShaderCode));
-	memcpy(program.mPsBuf, psData, psSize);
-	if (!createShaderFromBin(program.mPsShader, program.mPsBuf))
-	{
 		freeDmem(program.mPsBuf);
+		program.mVsBuf = nullptr;
 		program.mPsBuf = nullptr;
 		return false;
 	}
-
 	return true;
 }
 
@@ -455,22 +471,9 @@ bool RendererContextAGC::init(const Init& _init)
 {
 	// TODO: (manderson) cleanup?
 
-	// Validate display mode.
-	// TODO: (manderson) We may want to be more clever here and choose an appropriate mode and 
-	// leterbox or scale into it, not sure yet how Bgfx handles this.
-	// As I understand it VideoOut will scale from one of these modes to the actual display mode.
-	if (!((_init.resolution.width == 3840 && _init.resolution.height == 2160) ||
-		  (_init.resolution.width == 3680 && _init.resolution.height == 2070) ||
-		  (_init.resolution.width == 3520 && _init.resolution.height == 1980) ||
-		  (_init.resolution.width == 3360 && _init.resolution.height == 1890) ||
-		  (_init.resolution.width == 3200 && _init.resolution.height == 1800) ||
-		  (_init.resolution.width == 2880 && _init.resolution.height == 1620) ||
-		  (_init.resolution.width == 2560 && _init.resolution.height == 1440) ||
-		  (_init.resolution.width == 2240 && _init.resolution.height == 1260) ||
-		  (_init.resolution.width == 1920 && _init.resolution.height == 1080)))
-	{
+	// Validate initialization settings.
+	if (!verifyInit(_init))
 		return false;
-	}
 
 	SceError error = sce::Agc::init();
 	SCE_AGC_ASSERT(error == SCE_OK);
@@ -687,12 +690,25 @@ void RendererContextAGC::destroyFrameBuffer(FrameBufferHandle _handle)
 
 void RendererContextAGC::createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 {
+	if (NULL != m_uniforms[_handle.idx])
+	{
+		BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+	}
+
+	const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
+	void* data = BX_ALLOC(g_allocator, size);
+	bx::memSet(data, 0, size);
+	m_uniforms[_handle.idx] = data;
+	m_uniformReg.add(_handle, _name);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyUniform(UniformHandle _handle)
 {
+	BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+	m_uniforms[_handle.idx] = NULL;
+	m_uniformReg.remove(_handle);
 }
 
 //=============================================================================================
@@ -711,6 +727,7 @@ void RendererContextAGC::updateViewName(ViewId _id, const char* _name)
 
 void RendererContextAGC::updateUniform(uint16_t _loc, const void* _data, uint32_t _size)
 {
+	bx::memCopy(m_uniforms[_loc], _data, _size);
 }
 
 //=============================================================================================
@@ -752,49 +769,109 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 	perfStats.gpuMemoryMax  = -INT64_MAX;
 	perfStats.gpuMemoryUsed = -INT64_MAX;
 
-	// Grab the right context for this frame
-	size_t const prevBuffer = mPhase;
-	size_t const curBuffer = (mPhase + 1) % NumDisplayBuffers;
-	mPhase = curBuffer;
-	FrameResources& frameRes = mFrameResources[curBuffer];
 
-	// Wait till GPU finishes.
-	while (frameRes.mLabel->m_value != 1)
+
+
+
+
+
+
+
+	static ViewState viewState{};
+	viewState.reset(_render);
+	SortKey key{};
+	//uint16_t view = UINT16_MAX;
+
+	if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 	{
-		// TODO: (manderson) Non busy wait? Semaphore, Fence?
-		sceKernelUsleep(1000);
+		// Dispatch prologue---------------------------------------------------------------
+
+		// Grab the right context for this frame
+		//size_t const prevBuffer = mPhase;
+		size_t const curBuffer = (mPhase + 1) % NumDisplayBuffers;
+		mPhase = curBuffer;
+		FrameResources& frameRes = mFrameResources[curBuffer];
+
+		// Wait till GPU finishes.
+		while (frameRes.mLabel->m_value != 1)
+		{
+			// TODO: (manderson) Non busy wait? Semaphore, Fence?
+			sceKernelUsleep(1000);
+		}
+		frameRes.mLabel->m_value = 0;
+		
+		sce::Agc::Core::BasicContext& ctx = frameRes.mContext;
+		ctx.reset();
+		ctx.m_dcb.waitUntilSafeForRendering(mVideoHandle, curBuffer);
+
+		viewState.m_rect = _render->m_view[0].m_rect;
+
+		// TODO: (manderson) Replace with clearQuad screen clear.
+		static double clr = 0.0;
+		clr += (0.0166667 / 2.5);
+		clr = fmod(clr, 1.0);
+		sce::Agc::Toolkit::Result tk0 = sce::Agc::Toolkit::clearRenderTargetCs(&ctx.m_dcb, &frameRes.mRenderTarget, sce::Agc::Core::Encoder::encode({ clr, clr , clr, 1.0 }));
+		sce::Agc::Toolkit::Result tk1 = sce::Agc::Toolkit::clearDepthRenderTargetCs(&ctx.m_dcb, &mDepthRenderTarget);
+		ctx.resetToolkitChangesAndSyncToGl2(tk0 | tk1);
+
+		// Dispatch all render items ------------------------------------------------------
+
+		int32_t numItems = _render->m_numRenderItems;
+		for (int32_t item = 0; item < numItems;)
+		{
+			const uint64_t encodedKey = _render->m_sortKeys[item];
+			const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
+
+			//const bool viewChanged = key.m_view != view || item == numItems;
+
+			const uint32_t itemIdx  = _render->m_sortValues[item];
+			const RenderItem& renderItem = _render->m_renderItem[itemIdx];
+			//const RenderBind& renderBind = _render->m_renderItemBind[itemIdx];
+			item++;
+
+			// Compute dispatch -----------------------------------------------------------
+
+			if (isCompute)
+			{
+				const RenderCompute& compute = renderItem.compute;
+				//bool const constantsChanged = compute.m_uniformBegin < compute.m_uniformEnd;
+				rendererUpdateUniforms(this, _render->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
+
+				// ... do stuff ...
+
+				continue;
+			}
+			/*if (wasCompute)
+			{
+				// ... do transition stuff ...
+			}*/
+
+			// Draw dispatch --------------------------------------------------------------
+
+			const RenderDraw& draw = renderItem.draw;
+			//bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
+			rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
+
+			// ... do stuff ...
+		}
+
+		// Finally submit the workload to the GPU
+		ctx.m_dcb.setFlip(mVideoHandle, curBuffer, SCE_VIDEO_OUT_FLIP_MODE_VSYNC, 0);
+		sce::Agc::Core::gpuSyncEvent(
+			&ctx.m_dcb,
+			sce::Agc::Core::SyncWaitMode::kAsynchronous,
+			sce::Agc::Core::SyncCacheOp::kClearAll,
+			sce::Agc::Core::SyncLabelVisibility::kCpu,
+			frameRes.mLabel,
+			1);
+		SceError error = sce::Agc::submitGraphics(
+			sce::Agc::GraphicsQueue::kNormal,
+			ctx.m_dcb.getSubmitPointer(),
+			ctx.m_dcb.getSubmitSize());
+		SCE_AGC_ASSERT(error == SCE_OK);
+		error = sce::Agc::suspendPoint();
+		SCE_AGC_ASSERT(error == SCE_OK);
 	}
-	frameRes.mLabel->m_value = 0;
-	
-	sce::Agc::Core::BasicContext& ctx = frameRes.mContext;
-	ctx.reset();
-	ctx.m_dcb.waitUntilSafeForRendering(mVideoHandle, curBuffer);
-
-	static double clr = 0.0;
-	clr += (0.0166667 / 2.5);
-	clr = fmod(clr, 1.0);
-
-	// Clear both color and depth targets by just using toolkit functions.
-	sce::Agc::Toolkit::Result tk0 = sce::Agc::Toolkit::clearRenderTargetCs(&ctx.m_dcb, &frameRes.mRenderTarget, sce::Agc::Core::Encoder::encode({ clr, clr , clr, 1.0 }));
-	sce::Agc::Toolkit::Result tk1 = sce::Agc::Toolkit::clearDepthRenderTargetCs(&ctx.m_dcb, &mDepthRenderTarget);
-	ctx.resetToolkitChangesAndSyncToGl2(tk0 | tk1);
-
-	// Finally submit the workload to the GPU
-	ctx.m_dcb.setFlip(mVideoHandle, curBuffer, SCE_VIDEO_OUT_FLIP_MODE_VSYNC, 0);
-	sce::Agc::Core::gpuSyncEvent(
-		&ctx.m_dcb,
-		sce::Agc::Core::SyncWaitMode::kAsynchronous,
-		sce::Agc::Core::SyncCacheOp::kClearAll,
-		sce::Agc::Core::SyncLabelVisibility::kCpu,
-		frameRes.mLabel,
-		1);
-	SceError error = sce::Agc::submitGraphics(
-		sce::Agc::GraphicsQueue::kNormal,
-		ctx.m_dcb.getSubmitPointer(),
-		ctx.m_dcb.getSubmitSize());
-	SCE_AGC_ASSERT(error == SCE_OK);
-	error = sce::Agc::suspendPoint();
-	SCE_AGC_ASSERT(error == SCE_OK);
 }
 
 //=============================================================================================
