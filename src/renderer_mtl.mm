@@ -1900,15 +1900,25 @@ namespace bgfx { namespace mtl
 							 && NULL != arg.bufferStructType)
 						{
 							const char* name = utf8String(arg.name);
+							BX_UNUSED(name);
 
 							if (arg.index >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
 							{
-								BX_WARN(false, "Binding index is too large %d max is %d. User defined uniform '%s' won't be set.", int(arg.index - 1), BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1, name);
+								BX_TRACE(
+									  "Binding index is too large %d max is %d. "
+									  "User defined uniform '%s' won't be set."
+									, int32_t(arg.index - 1)
+									, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1
+									, name
+									);
 							}
 							else
 							{
-								ps->m_bindingTypes[arg.index-1] = fragmentBit ? PipelineStateMtl::BindToFragmentShader : PipelineStateMtl::BindToVertexShader;
-								BX_TRACE("buffer %s index:%d", name, uint32_t(arg.index-1) );
+								ps->m_bindingTypes[arg.index-1] = fragmentBit
+									? PipelineStateMtl::BindToFragmentShader
+									: PipelineStateMtl::BindToVertexShader
+									;
+								BX_TRACE("Buffer %s index: %d", name, int32_t(arg.index-1) );
 							}
 						}
 						else if (arg.type == MTLArgumentTypeTexture)
