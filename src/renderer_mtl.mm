@@ -880,7 +880,7 @@ namespace bgfx { namespace mtl
 
 			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-			bx::write(&writer, magic);
+			bx::write(&writer, magic, bx::ErrorAssert{});
 
 			TextureCreate tc;
 			tc.m_width     = _width;
@@ -891,7 +891,7 @@ namespace bgfx { namespace mtl
 			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap   = false;
 			tc.m_mem       = NULL;
-			bx::write(&writer, tc);
+			bx::write(&writer, tc, bx::ErrorAssert{});
 
 			texture.destroy();
 			texture.create(mem, texture.m_flags, 0);
@@ -2426,7 +2426,7 @@ namespace bgfx { namespace mtl
 
 	void writeString(bx::WriterI* _writer, const char* _str)
 	{
-		bx::write(_writer, _str, (int32_t)bx::strLen(_str) );
+		bx::write(_writer, _str, (int32_t)bx::strLen(_str), bx::ErrorAssert{});
 	}
 
 	void ShaderMtl::create(const Memory* _mem)
@@ -2453,7 +2453,7 @@ namespace bgfx { namespace mtl
 		}
 
 		uint16_t count;
-		bx::read(&reader, count);
+		bx::read(&reader, count, &err);
 
 		BX_TRACE("%s Shader consts %d"
 			, getShaderTypeName(magic)
@@ -2466,7 +2466,7 @@ namespace bgfx { namespace mtl
 			bx::read(&reader, nameSize, &err);
 
 			char name[256];
-			bx::read(&reader, &name, nameSize);
+			bx::read(&reader, &name, nameSize, &err);
 			name[nameSize] = '\0';
 
 			uint8_t type;
