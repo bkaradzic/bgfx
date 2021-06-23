@@ -776,7 +776,7 @@ namespace bgfx { namespace d3d11
 
 						for (int32_t ii = 0; ii < numGPUs; ++ii)
 						{
-							long long memSize;
+							int64_t memSize;
 							result = agsGetGPUMemorySize(m_ags, ii, &memSize);
 							if (AGS_SUCCESS == result)
 							{
