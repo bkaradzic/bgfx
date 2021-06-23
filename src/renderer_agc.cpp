@@ -46,47 +46,47 @@ public:
 	const char* getRendererName() const override;
 	bool isDeviceRemoved() override;
 	void flip() override;
-	void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override;
-	void destroyIndexBuffer(IndexBufferHandle _handle) override;
-	void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override;
-	void destroyVertexLayout(VertexLayoutHandle _handle) override;
-	void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override;
-	void destroyVertexBuffer(VertexBufferHandle _handle) override;
-	void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) override;
-	void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override;
-	void destroyDynamicIndexBuffer(IndexBufferHandle _handle) override;
-	void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override;
-	void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override;
-	void destroyDynamicVertexBuffer(VertexBufferHandle _handle) override;
-	void createShader(ShaderHandle _handle, const Memory* _mem) override;
-	void destroyShader(ShaderHandle _handle) override;
-	void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override;
-	void destroyProgram(ProgramHandle _handle) override;
-	void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) override;
-	void updateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip) override;
-	void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override;
+	void createIndexBuffer(IndexBufferHandle handle, const Memory* mem, uint16_t flags) override;
+	void destroyIndexBuffer(IndexBufferHandle handle) override;
+	void createVertexLayout(VertexLayoutHandle handle, const VertexLayout& layout) override;
+	void destroyVertexLayout(VertexLayoutHandle handle) override;
+	void createVertexBuffer(VertexBufferHandle handle, const Memory* mem, VertexLayoutHandle layoutHandle, uint16_t flags) override;
+	void destroyVertexBuffer(VertexBufferHandle handle) override;
+	void createDynamicIndexBuffer(IndexBufferHandle handle, uint32_t size, uint16_t flags) override;
+	void updateDynamicIndexBuffer(IndexBufferHandle handle, uint32_t offset, uint32_t size, const Memory* mem) override;
+	void destroyDynamicIndexBuffer(IndexBufferHandle handle) override;
+	void createDynamicVertexBuffer(VertexBufferHandle handle, uint32_t size, uint16_t flags) override;
+	void updateDynamicVertexBuffer(VertexBufferHandle handle, uint32_t offset, uint32_t size, const Memory* mem) override;
+	void destroyDynamicVertexBuffer(VertexBufferHandle handle) override;
+	void createShader(ShaderHandle handle, const Memory* mem) override;
+	void destroyShader(ShaderHandle handle) override;
+	void createProgram(ProgramHandle handle, ShaderHandle vsh, ShaderHandle fsh) override;
+	void destroyProgram(ProgramHandle handle) override;
+	void* createTexture(TextureHandle handle, const Memory* mem, uint64_t flags, uint8_t skip) override;
+	void updateTextureBegin(TextureHandle handle, uint8_t side, uint8_t mip) override;
+	void updateTexture(TextureHandle handle, uint8_t side, uint8_t mip, const Rect& rect, uint16_t z, uint16_t depth, uint16_t pitch, const Memory* mem) override;
 	void updateTextureEnd() override;
-	void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override;
-	void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override;
-	void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override;
-	uintptr_t getInternal(TextureHandle _handle) override;
-	void destroyTexture(TextureHandle _handle) override;
-	void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override;
-	void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override;
-	void destroyFrameBuffer(FrameBufferHandle _handle) override;
-	void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) override;
-	void destroyUniform(UniformHandle _handle) override;
-	void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override;
-	void updateViewName(ViewId _id, const char* _name) override;
-	void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) override;
-	void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override;
-	void setMarker(const char* _marker, uint16_t _len) override;
-	void setName(Handle _handle, const char* _name, uint16_t _len) override;
-	void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
-	void blitSetup(TextVideoMemBlitter& _blitter) override;
-	void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override;
+	void readTexture(TextureHandle handle, void* data, uint8_t mip) override;
+	void resizeTexture(TextureHandle handle, uint16_t width, uint16_t height, uint8_t numMips, uint16_t numLayers) override;
+	void overrideInternal(TextureHandle handle, uintptr_t ptr) override;
+	uintptr_t getInternal(TextureHandle handle) override;
+	void destroyTexture(TextureHandle handle) override;
+	void createFrameBuffer(FrameBufferHandle handle, uint8_t num, const Attachment* attachment) override;
+	void createFrameBuffer(FrameBufferHandle handle, void* nwh, uint32_t width, uint32_t height, TextureFormat::Enum format, TextureFormat::Enum depthFormat) override;
+	void destroyFrameBuffer(FrameBufferHandle handle) override;
+	void createUniform(UniformHandle handle, UniformType::Enum type, uint16_t num, const char* name) override;
+	void destroyUniform(UniformHandle handle) override;
+	void requestScreenShot(FrameBufferHandle handle, const char* filePath) override;
+	void updateViewName(ViewId id, const char* name) override;
+	void updateUniform(uint16_t loc, const void* data, uint32_t size) override;
+	void invalidateOcclusionQuery(OcclusionQueryHandle handle) override;
+	void setMarker(const char* marker, uint16_t len) override;
+	void setName(Handle handle, const char* name, uint16_t len) override;
+	void submit(Frame* render, ClearQuad& clearQuad, TextVideoMemBlitter& textVideoMemBlitter) override;
+	void blitSetup(TextVideoMemBlitter& blitter) override;
+	void blitRender(TextVideoMemBlitter& blitter, uint32_t numIndices) override;
 
-	bool init(const Init& _init);
+	bool init(const Init& init);
 
 private:
 
@@ -97,28 +97,57 @@ private:
 		sce::Agc::Label* mLabel{};
 	};
 
-	struct ProgramAGC
+	struct Shader
 	{
-		void* mVsBuf;
-		void* mPsBuf;
-		sce::Agc::Shader* mVsShader;
-		sce::Agc::Shader* mPsShader;
+		bool create(const Memory& mem, bool const embedded = false);
+		void destroy();
+
+		void* mBuf{};
+		sce::Agc::Shader* mShader{};
 	};
 
-	bool verifyInit(const Init& _init);
-	bool createDisplayBuffers(const Init& _init);
+	struct Program
+	{
+		bool create(Shader* const vsShader, Shader* const psShader);
+		void destroy();
+
+		Shader* mVsShader{};
+		Shader* mPsShader{};
+	};
+
+	struct IndexBuffer
+	{
+		bool create(const Memory& mem, uint16_t const flags) { return true; };
+		void destroy() {};
+	};
+
+	struct VertexBuffer
+	{
+		bool create(const Memory& mem, VertexLayoutHandle const layoutHandle, uint16_t const flags) { return true; };
+		void destroy() {};
+	};
+	
+	bool verifyInit(const Init& init);
+	bool createDisplayBuffers(const Init& init);
 	bool createScanoutBuffers();
 	bool createContext();
-	bool createEmbeddedProgram(ProgramAGC& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize);
+	bool createEmbeddedProgram(Program& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize);
 	bool createEmbeddedPrograms();
+
+	IndexBuffer mIndexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS]{};
+	VertexBuffer mVertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS]{};
+	Shader mShaders[BGFX_CONFIG_MAX_SHADERS]{};
+	Program mPrograms[BGFX_CONFIG_MAX_PROGRAMS]{};
+	VertexLayout mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS]{};
+
+	void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS]{};
+	UniformRegistry m_uniformReg{};
 
 	FrameResources mFrameResources[NumDisplayBuffers]{};
 	sce::Agc::CxDepthRenderTarget mDepthRenderTarget{};
 	int mVideoHandle{};
 	uint8_t mPhase{};
-	ProgramAGC mClearProgram;
-	void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
-	UniformRegistry m_uniformReg;
+	Program mClearProgram{};
 };
 
 //=============================================================================================
@@ -178,24 +207,57 @@ void freeDmem(void* memVA)
 
 //=============================================================================================
 
-bool createShaderFromBin(sce::Agc::Shader*& shader, void* const bin)
-{
-	SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(bin);
-	void* const header = (void*)sceShaderGetProgramHeader(binaryHandle);
-	const void* const program = sceShaderGetProgram(binaryHandle);
-	SceError error = sce::Agc::createShader(&shader, header, program);
-	if (error != SCE_OK)
-		return false;
-	return true;
-}
-
-//=============================================================================================
-
 } // namespace 
 
 //=============================================================================================
 
 namespace bgfx { namespace agc {
+
+//=============================================================================================
+
+bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
+{
+	if (embedded)
+	{
+		mBuf = allocDmem(sce::Agc::SizeAlign(mem.size, sce::Agc::Alignment::kShaderCode));
+		memcpy(mBuf, mem.data, mem.size);
+		SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(mBuf);
+		void* const header = (void*)sceShaderGetProgramHeader(binaryHandle);
+		const void* const program = sceShaderGetProgram(binaryHandle);
+		SceError error = sce::Agc::createShader(&mShader, header, program);
+		if (error != SCE_OK)
+		{
+			freeDmem(mBuf);
+			return false;
+		}
+		return true;
+	}
+	// TODO: (manderson) parse shader file.
+	return true;
+}
+
+//=============================================================================================
+
+void RendererContextAGC::Shader::destroy()
+{
+	// TODO: (manderson) destroy shader.
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::Program::create(Shader* const vsShader, Shader* const psShader)
+{
+	mVsShader = vsShader;
+	mPsShader = psShader;
+	return true;
+}
+
+//=============================================================================================
+
+void RendererContextAGC::Program::destroy()
+{
+	// TODO: (manderson) destroy program.
+}
 
 //=============================================================================================
 
@@ -269,33 +331,33 @@ RendererContextAGC::~RendererContextAGC()
 
 //=============================================================================================
 
-bool RendererContextAGC::verifyInit(const Init& _init)
+bool RendererContextAGC::verifyInit(const Init& init)
 {
 	// TODO: (manderson) We may want to be more clever here and choose an appropriate mode and 
 	// leterbox or scale into it, not sure yet how Bgfx handles this.
 	// As I understand it VideoOut will scale from one of these modes to the actual display mode.
-	return (_init.resolution.width == 3840 && _init.resolution.height == 2160) ||
-		   (_init.resolution.width == 3680 && _init.resolution.height == 2070) ||
-		   (_init.resolution.width == 3520 && _init.resolution.height == 1980) ||
-		   (_init.resolution.width == 3360 && _init.resolution.height == 1890) ||
-		   (_init.resolution.width == 3200 && _init.resolution.height == 1800) ||
-		   (_init.resolution.width == 2880 && _init.resolution.height == 1620) ||
-		   (_init.resolution.width == 2560 && _init.resolution.height == 1440) ||
-		   (_init.resolution.width == 2240 && _init.resolution.height == 1260) ||
-		   (_init.resolution.width == 1920 && _init.resolution.height == 1080);
+	return (init.resolution.width == 3840 && init.resolution.height == 2160) ||
+		   (init.resolution.width == 3680 && init.resolution.height == 2070) ||
+		   (init.resolution.width == 3520 && init.resolution.height == 1980) ||
+		   (init.resolution.width == 3360 && init.resolution.height == 1890) ||
+		   (init.resolution.width == 3200 && init.resolution.height == 1800) ||
+		   (init.resolution.width == 2880 && init.resolution.height == 1620) ||
+		   (init.resolution.width == 2560 && init.resolution.height == 1440) ||
+		   (init.resolution.width == 2240 && init.resolution.height == 1260) ||
+		   (init.resolution.width == 1920 && init.resolution.height == 1080);
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::createDisplayBuffers(const Init& _init)
+bool RendererContextAGC::createDisplayBuffers(const Init& init)
 {
 	// Set up the RenderTarget spec.
 	// TODO: (manderson) As I understand it using k8_8_8_8Srgb will cause GPU to do implicit linear to sRGB conversion and
 	// I think that Bgfx expects output buffer to have no implicit gamma conversion.
 	sce::Agc::Core::RenderTargetSpec rtSpec{};
 	rtSpec.init();
-	rtSpec.m_width = _init.resolution.width;
-	rtSpec.m_height = _init.resolution.height;
+	rtSpec.m_width = init.resolution.width;
+	rtSpec.m_height = init.resolution.height;
 	rtSpec.m_format = { sce::Agc::Core::TypedFormat::k8_8_8_8UNorm, sce::Agc::Core::Swizzle::kRGBA_R4S4 };
 	rtSpec.m_tileMode = sce::Agc::CxRenderTarget::TileMode::kRenderTarget;
 
@@ -440,19 +502,17 @@ bool RendererContextAGC::createContext()
 
 //=============================================================================================
 
-bool RendererContextAGC::createEmbeddedProgram(ProgramAGC& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize)
+bool RendererContextAGC::createEmbeddedProgram(Program& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize)
 {
-	program.mVsBuf = allocDmem(sce::Agc::SizeAlign(vsSize, sce::Agc::Alignment::kShaderCode));
-	program.mPsBuf = allocDmem(sce::Agc::SizeAlign(psSize, sce::Agc::Alignment::kShaderCode));
-	memcpy(program.mVsBuf, vsData, vsSize);
-	memcpy(program.mPsBuf, psData, psSize);
-	if (!createShaderFromBin(program.mVsShader, program.mVsBuf) ||
-		!createShaderFromBin(program.mPsShader, program.mPsBuf))
+	program.mVsShader = new Shader();
+	program.mPsShader = new Shader();
+	if (!program.mVsShader->create(Memory{(uint8_t*)vsData, (uint32_t)vsSize}, true) ||
+		!program.mPsShader->create(Memory{(uint8_t*)psData, (uint32_t)psSize}, true))
 	{
-		freeDmem(program.mVsBuf);
-		freeDmem(program.mPsBuf);
-		program.mVsBuf = nullptr;
-		program.mPsBuf = nullptr;
+		delete program.mVsShader;
+		delete program.mPsShader;
+		program.mVsShader = nullptr;
+		program.mPsShader = nullptr;
 		return false;
 	}
 	return true;
@@ -467,12 +527,12 @@ bool RendererContextAGC::createEmbeddedPrograms()
 
 //=============================================================================================
 
-bool RendererContextAGC::init(const Init& _init)
+bool RendererContextAGC::init(const Init& initParams)
 {
 	// TODO: (manderson) cleanup?
 
 	// Validate initialization settings.
-	if (!verifyInit(_init))
+	if (!verifyInit(initParams))
 		return false;
 
 	SceError error = sce::Agc::init();
@@ -480,7 +540,7 @@ bool RendererContextAGC::init(const Init& _init)
 	if (error != SCE_OK)
 		return false;
 
-	if (!createDisplayBuffers(_init) ||
+	if (!createDisplayBuffers(initParams) ||
 		!createScanoutBuffers() ||
 		!createContext() ||
 		!createEmbeddedPrograms())
@@ -518,116 +578,127 @@ void RendererContextAGC::flip()
 
 //=============================================================================================
 
-void RendererContextAGC::createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags)
+void RendererContextAGC::createIndexBuffer(IndexBufferHandle handle, const Memory* mem, uint16_t flags)
+{
+	mIndexBuffers[handle.idx].create(*mem, flags);
+}
+
+//=============================================================================================
+
+void RendererContextAGC::destroyIndexBuffer(IndexBufferHandle handle)
+{
+	mIndexBuffers[handle.idx].destroy();
+}
+
+//=============================================================================================
+
+void RendererContextAGC::createVertexLayout(VertexLayoutHandle handle, const VertexLayout& layout)
+{
+	VertexLayout& ourLayout = mVertexLayouts[handle.idx];
+	bx::memCopy(&ourLayout, &layout, sizeof(VertexLayout) );
+	dump(ourLayout);
+}
+
+//=============================================================================================
+
+void RendererContextAGC::destroyVertexLayout(VertexLayoutHandle handle)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::destroyIndexBuffer(IndexBufferHandle _handle)
+void RendererContextAGC::createVertexBuffer(VertexBufferHandle handle, const Memory* mem, VertexLayoutHandle layoutHandle, uint16_t flags)
+{
+	mVertexBuffers[handle.idx].create(*mem, layoutHandle, flags);
+}
+
+//=============================================================================================
+
+void RendererContextAGC::destroyVertexBuffer(VertexBufferHandle handle)
+{
+	mVertexBuffers[handle.idx].destroy();
+}
+
+//=============================================================================================
+
+void RendererContextAGC::createDynamicIndexBuffer(IndexBufferHandle handle, uint32_t size, uint16_t flags)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout)
+void RendererContextAGC::updateDynamicIndexBuffer(IndexBufferHandle handle, uint32_t offset, uint32_t size, const Memory* mem)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::destroyVertexLayout(VertexLayoutHandle _handle)
+void RendererContextAGC::destroyDynamicIndexBuffer(IndexBufferHandle handle)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags)
+void RendererContextAGC::createDynamicVertexBuffer(VertexBufferHandle handle, uint32_t size, uint16_t flags)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::destroyVertexBuffer(VertexBufferHandle _handle)
+void RendererContextAGC::updateDynamicVertexBuffer(VertexBufferHandle handle, uint32_t offset, uint32_t size, const Memory* mem)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags)
+void RendererContextAGC::destroyDynamicVertexBuffer(VertexBufferHandle handle)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem)
+void RendererContextAGC::createShader(ShaderHandle handle, const Memory* mem)
 {
+	mShaders[handle.idx].create(*mem);
 }
 
 //=============================================================================================
 
-void RendererContextAGC::destroyDynamicIndexBuffer(IndexBufferHandle _handle)
+void RendererContextAGC::destroyShader(ShaderHandle handle)
 {
+	mShaders[handle.idx].destroy();
 }
 
 //=============================================================================================
 
-void RendererContextAGC::createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags)
+void RendererContextAGC::createProgram(ProgramHandle handle, ShaderHandle vsh, ShaderHandle fsh)
 {
+	mPrograms[handle.idx].create(&mShaders[vsh.idx], isValid(fsh) ? &mShaders[fsh.idx] : nullptr);
 }
 
 //=============================================================================================
 
-void RendererContextAGC::updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem)
+void RendererContextAGC::destroyProgram(ProgramHandle handle)
 {
+	mPrograms[handle.idx].destroy();
 }
 
 //=============================================================================================
 
-void RendererContextAGC::destroyDynamicVertexBuffer(VertexBufferHandle _handle)
-{
-}
-
-//=============================================================================================
-
-void RendererContextAGC::createShader(ShaderHandle _handle, const Memory* _mem)
-{
-}
-
-//=============================================================================================
-
-void RendererContextAGC::destroyShader(ShaderHandle _handle)
-{
-}
-
-//=============================================================================================
-
-void RendererContextAGC::createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh)
-{
-}
-
-//=============================================================================================
-
-void RendererContextAGC::destroyProgram(ProgramHandle _handle)
-{
-}
-
-//=============================================================================================
-
-void* RendererContextAGC::createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip)
+void* RendererContextAGC::createTexture(TextureHandle handle, const Memory* mem, uint64_t flags, uint8_t skip)
 {
 	return NULL;
 }
 
 //=============================================================================================
 
-void RendererContextAGC::updateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip)
+void RendererContextAGC::updateTextureBegin(TextureHandle handle, uint8_t side, uint8_t mip)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
+void RendererContextAGC::updateTexture(TextureHandle handle, uint8_t side, uint8_t mip, const Rect& rect, uint16_t z, uint16_t depth, uint16_t pitch, const Memory* mem)
 {
 }
 
@@ -639,123 +710,123 @@ void RendererContextAGC::updateTextureEnd()
 
 //=============================================================================================
 
-void RendererContextAGC::readTexture(TextureHandle _handle, void* _data, uint8_t _mip)
+void RendererContextAGC::readTexture(TextureHandle handle, void* data, uint8_t mip)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers)
+void RendererContextAGC::resizeTexture(TextureHandle handle, uint16_t width, uint16_t height, uint8_t numMips, uint16_t numLayers)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::overrideInternal(TextureHandle _handle, uintptr_t _ptr)
+void RendererContextAGC::overrideInternal(TextureHandle handle, uintptr_t ptr)
 {
 }
 
 //=============================================================================================
 
-uintptr_t RendererContextAGC::getInternal(TextureHandle _handle)
+uintptr_t RendererContextAGC::getInternal(TextureHandle handle)
 {
 	return 0;
 }
 
 //=============================================================================================
 
-void RendererContextAGC::destroyTexture(TextureHandle _handle)
+void RendererContextAGC::destroyTexture(TextureHandle handle)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment)
+void RendererContextAGC::createFrameBuffer(FrameBufferHandle handle, uint8_t num, const Attachment* attachment)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
+void RendererContextAGC::createFrameBuffer(FrameBufferHandle handle, void* nwh, uint32_t width, uint32_t height, TextureFormat::Enum format, TextureFormat::Enum depthFormat)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::destroyFrameBuffer(FrameBufferHandle _handle)
+void RendererContextAGC::destroyFrameBuffer(FrameBufferHandle handle)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
+void RendererContextAGC::createUniform(UniformHandle handle, UniformType::Enum type, uint16_t num, const char* name)
 {
-	if (NULL != m_uniforms[_handle.idx])
+	if (NULL != m_uniforms[handle.idx])
 	{
-		BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+		BX_FREE(g_allocator, m_uniforms[handle.idx]);
 	}
 
-	const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
+	const uint32_t size = bx::alignUp(g_uniformTypeSize[type]*num, 16);
 	void* data = BX_ALLOC(g_allocator, size);
 	bx::memSet(data, 0, size);
-	m_uniforms[_handle.idx] = data;
-	m_uniformReg.add(_handle, _name);
+	m_uniforms[handle.idx] = data;
+	m_uniformReg.add(handle, name);
 }
 
 //=============================================================================================
 
-void RendererContextAGC::destroyUniform(UniformHandle _handle)
+void RendererContextAGC::destroyUniform(UniformHandle handle)
 {
-	BX_FREE(g_allocator, m_uniforms[_handle.idx]);
-	m_uniforms[_handle.idx] = NULL;
-	m_uniformReg.remove(_handle);
+	BX_FREE(g_allocator, m_uniforms[handle.idx]);
+	m_uniforms[handle.idx] = NULL;
+	m_uniformReg.remove(handle);
 }
 
 //=============================================================================================
 
-void RendererContextAGC::requestScreenShot(FrameBufferHandle _handle, const char* _filePath)
-{
-}
-
-//=============================================================================================
-
-void RendererContextAGC::updateViewName(ViewId _id, const char* _name)
+void RendererContextAGC::requestScreenShot(FrameBufferHandle handle, const char* filePath)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::updateUniform(uint16_t _loc, const void* _data, uint32_t _size)
-{
-	bx::memCopy(m_uniforms[_loc], _data, _size);
-}
-
-//=============================================================================================
-
-void RendererContextAGC::invalidateOcclusionQuery(OcclusionQueryHandle _handle)
+void RendererContextAGC::updateViewName(ViewId id, const char* name)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::setMarker(const char* _marker, uint16_t _len)
+void RendererContextAGC::updateUniform(uint16_t loc, const void* data, uint32_t size)
+{
+	bx::memCopy(m_uniforms[loc], data, size);
+}
+
+//=============================================================================================
+
+void RendererContextAGC::invalidateOcclusionQuery(OcclusionQueryHandle handle)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::setName(Handle _handle, const char* _name, uint16_t _len)
+void RendererContextAGC::setMarker(const char* marker, uint16_t len)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
+void RendererContextAGC::setName(Handle handle, const char* name, uint16_t len)
+{
+}
+
+//=============================================================================================
+
+void RendererContextAGC::submit(Frame* render, ClearQuad& clearQuad, TextVideoMemBlitter& textVideoMemBlitter)
 {
 	const int64_t timerFreq = bx::getHPFrequency();
 	const int64_t timeBegin = bx::getHPCounter();
 
-	Stats& perfStats = _render->m_perfStats;
+	Stats& perfStats = render->m_perfStats;
 	perfStats.cpuTimeBegin  = timeBegin;
 	perfStats.cpuTimeEnd    = timeBegin;
 	perfStats.cpuTimerFreq  = timerFreq;
@@ -778,11 +849,11 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 
 
 	static ViewState viewState{};
-	viewState.reset(_render);
+	viewState.reset(render);
 	SortKey key{};
 	//uint16_t view = UINT16_MAX;
 
-	if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
+	if (0 == (render->m_debug&BGFX_DEBUG_IFH) )
 	{
 		// Dispatch prologue---------------------------------------------------------------
 
@@ -804,7 +875,7 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 		ctx.reset();
 		ctx.m_dcb.waitUntilSafeForRendering(mVideoHandle, curBuffer);
 
-		viewState.m_rect = _render->m_view[0].m_rect;
+		viewState.m_rect = render->m_view[0].m_rect;
 
 		// TODO: (manderson) Replace with clearQuad screen clear.
 		static double clr = 0.0;
@@ -816,17 +887,17 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 
 		// Dispatch all render items ------------------------------------------------------
 
-		int32_t numItems = _render->m_numRenderItems;
+		int32_t numItems = render->m_numRenderItems;
 		for (int32_t item = 0; item < numItems;)
 		{
-			const uint64_t encodedKey = _render->m_sortKeys[item];
-			const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
+			const uint64_t encodedKey = render->m_sortKeys[item];
+			const bool isCompute = key.decode(encodedKey, render->m_viewRemap);
 
 			//const bool viewChanged = key.m_view != view || item == numItems;
 
-			const uint32_t itemIdx  = _render->m_sortValues[item];
-			const RenderItem& renderItem = _render->m_renderItem[itemIdx];
-			//const RenderBind& renderBind = _render->m_renderItemBind[itemIdx];
+			const uint32_t itemIdx  = render->m_sortValues[item];
+			const RenderItem& renderItem = render->m_renderItem[itemIdx];
+			//const RenderBind& renderBind = render->m_renderItemBind[itemIdx];
 			item++;
 
 			// Compute dispatch -----------------------------------------------------------
@@ -835,7 +906,7 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 			{
 				const RenderCompute& compute = renderItem.compute;
 				//bool const constantsChanged = compute.m_uniformBegin < compute.m_uniformEnd;
-				rendererUpdateUniforms(this, _render->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
+				rendererUpdateUniforms(this, render->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
 
 				// ... do stuff ...
 
@@ -850,7 +921,7 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 
 			const RenderDraw& draw = renderItem.draw;
 			//bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
-			rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
+			rendererUpdateUniforms(this, render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
 			// ... do stuff ...
 		}
@@ -876,13 +947,13 @@ void RendererContextAGC::submit(Frame* _render, ClearQuad& _clearQuad, TextVideo
 
 //=============================================================================================
 
-void RendererContextAGC::blitSetup(TextVideoMemBlitter& _blitter)
+void RendererContextAGC::blitSetup(TextVideoMemBlitter& blitter)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices)
+void RendererContextAGC::blitRender(TextVideoMemBlitter& blitter, uint32_t numIndices)
 {
 }
 
@@ -892,11 +963,11 @@ static RendererContextAGC* s_renderAGC;
 
 //=============================================================================================
 
-RendererContextI* rendererCreate(const Init& _init)
+RendererContextI* rendererCreate(const Init& init)
 {
-	BX_UNUSED(_init);
+	BX_UNUSED(init);
 	s_renderAGC = BX_NEW(g_allocator, RendererContextAGC);
-	if (!s_renderAGC->init(_init) )
+	if (!s_renderAGC->init(init) )
 	{
 		BX_DELETE(g_allocator, s_renderAGC);
 		s_renderAGC = NULL;
@@ -926,9 +997,9 @@ namespace bgfx { namespace agc {
 
 //=============================================================================================
 
-RendererContextI* rendererCreate(const Init& _init)
+RendererContextI* rendererCreate(const Init& init)
 {
-	BX_UNUSED(_init);
+	BX_UNUSED(init);
 	return NULL;
 }
 
