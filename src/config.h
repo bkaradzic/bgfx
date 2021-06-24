@@ -102,7 +102,6 @@
 					|| BX_PLATFORM_EMSCRIPTEN   \
 					|| BX_PLATFORM_IOS          \
 					|| BX_PLATFORM_RPI          \
-					|| BX_PLATFORM_NX           \
 					? BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION : 0)
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES
 
@@ -111,7 +110,6 @@
 					|| BX_PLATFORM_ANDROID    \
 					|| BX_PLATFORM_LINUX      \
 					|| BX_PLATFORM_WINDOWS    \
-					|| BX_PLATFORM_NX         \
 					|| BX_PLATFORM_OSX        \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_VULKAN
