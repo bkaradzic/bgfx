@@ -2327,6 +2327,11 @@ VK_IMPORT_DEVICE
 		{
 			FrameBufferVK& frameBuffer = m_frameBuffers[_handle.idx];
 
+			if (m_fbh.idx == _handle.idx)
+			{
+				m_fbh.idx = kInvalidHandle;
+			}
+
 			uint16_t denseIdx = frameBuffer.destroy();
 			if (UINT16_MAX != denseIdx)
 			{
@@ -7551,6 +7556,16 @@ VK_DESTROY
 
 	uint16_t FrameBufferVK::destroy()
 	{
+		for (uint8_t ii = 0, num = m_num; ii < num; ++ii)
+		{
+			TextureVK& texture = s_renderVK->m_textures[m_texture[ii].idx];
+			texture.setImageMemoryBarrier(s_renderVK->m_commandBuffer, texture.m_sampledLayout);
+			if (VK_NULL_HANDLE != texture.m_singleMsaaImage)
+			{
+				texture.setImageMemoryBarrier(s_renderVK->m_commandBuffer, texture.m_sampledLayout, true);
+			}
+		}
+
 		preReset();
 
 		if (NULL != m_nwh)
