@@ -585,9 +585,17 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		entry::WindowHandle defaultWindow = { 0 };
 
-		bx::FilePath fp(_argv[0]);
 		char title[bx::kMaxFilePath];
-		bx::strCopy(title, BX_COUNTOF(title), fp.getBaseName() );
+		if (_argc > 0)
+		{
+			bx::FilePath fp(_argv[0]);
+			bx::strCopy(title, BX_COUNTOF(title), fp.getBaseName());
+		}
+		else
+		{
+			// some platforms pass the exe name
+			bx::strCopy(title, BX_COUNTOF(title), "bgfx Example");
+		}
 
 		entry::setWindowTitle(defaultWindow, title);
 		setWindowSize(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
