@@ -83,7 +83,8 @@ Languages:
  * [Pascal language API bindings](https://github.com/Akira13641/PasBGFX)
  * [Python language API bindings #1](https://github.com/fbertola/bgfx-python#-----bgfx-python--)
  * [Python language API bindings #2](https://github.com/jnadro/pybgfx#pybgfx)
- * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
+ * [Rust language API bindings (obsolete)](https://github.com/rhoot/bgfx-rs)
+ * [Rust language API bindings (new)](https://github.com/emoon/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
 
 Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&f=live)
