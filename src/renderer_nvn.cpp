@@ -7,10 +7,32 @@
 
 #if BGFX_CONFIG_RENDERER_NVN
 
+#include "renderer_nvn.h"
+
+#if BX_PLATFORM_NX
+extern "C"
+{
+	PFNNVNGENERICFUNCPTRPROC NVNAPIENTRY nvnBootstrapLoader(const char* name);
+}
+#endif
+
 namespace bgfx { namespace nvn
 {
 	struct RendererContextNVN : public RendererContextI
 	{
+		NVNnativeWindow m_Hwnd = nullptr;
+
+		PFNNVNBOOTSTRAPLOADERPROC m_nvnLoader = nullptr;
+
+		NVNdevice m_Device;
+		nn::vi::Display* m_pDisplay = nullptr;
+		nn::vi::Layer* m_pLayer = nullptr;
+
+		int m_CommandBufferCommandAlignment = 0;
+		int m_CommandBufferControlAlignment = 0;
+		int m_maxAnisotropy = 1;
+		int m_UniformBufferAlignment = 0;
+
 		RendererContextNVN()
 		{
 			// Pretend all features are available.
@@ -84,6 +106,128 @@ namespace bgfx { namespace nvn
 		const char* getRendererName() const override
 		{
 			return BGFX_RENDERER_NVN_NAME;
+		}
+
+		// NVN on NX
+		bool nvnInit()
+		{
+			BX_ASSERT(m_Hwnd != nullptr, "No native window passed at initialization");
+
+			pfnc_nvnDeviceGetProcAddress = (PFNNVNDEVICEGETPROCADDRESSPROC)(*nvnBootstrapLoader)("nvnDeviceGetProcAddress");
+			nvnLoadCProcs(NULL, pfnc_nvnDeviceGetProcAddress);
+
+			return true;
+		}
+
+		void nvnShutdown()
+		{
+
+		}
+
+		static void debugLayerCallback(
+			NVNdebugCallbackSource source,
+			NVNdebugCallbackType type,
+			int id,
+			NVNdebugCallbackSeverity severity,
+			const char* message,
+			void* pUser
+		)
+		{
+			BX_TRACE("NVN Debug Layer Callback:\n");
+			BX_TRACE("  source:       0x%08x\n", source);
+			BX_TRACE("  type:         0x%08x\n", type);
+			BX_TRACE("  id:           0x%08x\n", id);
+			BX_TRACE("  severity:     0x%08x\n", severity);
+			BX_TRACE("  message:      %s\n", message);
+
+			BX_ASSERT(false, "NVN Debug layer callback hit");
+		}
+
+		bool nvnInitDevice(const Init& _init)
+		{
+			int deviceFlags = 0;
+
+			if (_init.debug) {
+				deviceFlags = NVN_DEVICE_FLAG_DEBUG_ENABLE_LEVEL_4_BIT;
+			}
+
+			NVNdeviceBuilder deviceBuilder;
+			nvnDeviceBuilderSetDefaults(&deviceBuilder);
+			nvnDeviceBuilderSetFlags(&deviceBuilder, deviceFlags);
+
+			if (!nvnDeviceInitialize(&m_Device, &deviceBuilder))
+			{
+				BX_ASSERT(false, "nvnDeviceInitialize");
+				return false;
+			}
+
+			nvnLoadCProcs(&m_Device, pfnc_nvnDeviceGetProcAddress);
+
+			/*
+				* Debug Layer Callback
+				* --------------------
+				* Install the debug layer callback if the debug layer was enabled during
+				* device initialization. It is possible to pass a pointer to the NVN API
+				* to remember and pass back through the debug callback.
+				*/
+			if (deviceFlags & NVN_DEVICE_FLAG_DEBUG_ENABLE_LEVEL_4_BIT)
+			{
+				nvnDeviceInstallDebugCallback(
+					&m_Device,
+					reinterpret_cast<PFNNVNDEBUGCALLBACKPROC>(&debugLayerCallback),
+					NULL, // For testing purposes; any pointer is OK here.
+					NVN_TRUE // NVN_TRUE = Enable the callback.
+				);
+			}
+
+			int apiMajor, apiMinor;
+			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_API_MAJOR_VERSION, &apiMajor);
+			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_API_MINOR_VERSION, &apiMinor);
+
+			// do quick API version check? is that even necessary?
+
+			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_COMMAND_BUFFER_COMMAND_ALIGNMENT, &m_CommandBufferCommandAlignment);
+			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_COMMAND_BUFFER_CONTROL_ALIGNMENT, &m_CommandBufferControlAlignment);
+			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_UNIFORM_BUFFER_ALIGNMENT, &m_UniformBufferAlignment);
+			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_MAX_TEXTURE_ANISOTROPY, &m_maxAnisotropy);
+
+			return true;
+		}
+
+		bool init(const Init& _init)
+		{
+			m_Hwnd = (NVNnativeWindow)g_platformData.nwh;
+
+			if (!m_Hwnd)
+			{
+				BX_ASSERT(false, "No hwnd provided");
+				return false;
+			}
+
+			if (!nvnInit())
+			{
+				return false;
+			}
+
+			if (!nvnInitDevice(_init))
+			{
+				return false;
+			}
+
+			//initializeMemoryPool();
+
+			//initializeSwapChain(_init);
+
+			//m_Queue.init(&m_Device, &m_SwapChain);
+
+			//initializeWindow(_init);
+
+			return true;
+		}
+
+		void shutdown()
+		{
+
 		}
 
 		bool isDeviceRemoved() override
@@ -276,11 +420,17 @@ namespace bgfx { namespace nvn
 	{
 		BX_UNUSED(_init);
 		s_renderNVN = BX_NEW(g_allocator, RendererContextNVN);
+		if (!s_renderNVN->init(_init))
+		{
+			BX_DELETE(g_allocator, s_renderNVN);
+			s_renderNVN = NULL;
+		}
 		return s_renderNVN;
 	}
 
 	void rendererDestroy()
 	{
+		s_renderNVN->shutdown();
 		BX_DELETE(g_allocator, s_renderNVN);
 		s_renderNVN = NULL;
 	}

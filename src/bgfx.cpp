@@ -2699,6 +2699,10 @@ namespace bgfx
 					score += RendererType::Direct3D12 == renderer ? 20 : 0;
 					score += RendererType::Direct3D11 == renderer ? 10 : 0;
 				}
+				else if (BX_ENABLED(BX_PLATFORM_NX))
+				{
+					score += RendererType::Nvn == renderer ? 20 : 0;
+				}
 
 				scores[numScores++] = (score<<8) | uint8_t(renderer);
 			}
