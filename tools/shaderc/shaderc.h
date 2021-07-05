@@ -68,10 +68,10 @@ namespace bgfx
 
 	bx::StringView nextWord(bx::StringView& _parse);
 
-	constexpr uint8_t kUniformFragmentBit  = 0x10;
-	constexpr uint8_t kUniformSamplerBit   = 0x20;
-	constexpr uint8_t kUniformReadOnlyBit  = 0x40;
-	constexpr uint8_t kUniformCompareBit   = 0x80;
+	constexpr uint8_t kUniformFragmentBit = 0x10;
+	constexpr uint8_t kUniformSamplerBit = 0x20;
+	constexpr uint8_t kUniformReadOnlyBit = 0x40;
+	constexpr uint8_t kUniformCompareBit = 0x80;
 	constexpr uint8_t kUniformMask = 0
 		| kUniformFragmentBit
 		| kUniformSamplerBit
@@ -151,6 +151,7 @@ namespace bgfx
 	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
 	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
 	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
+	bool compileNVNShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
 
 	const char* getPsslPreamble();
 
