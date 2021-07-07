@@ -126,6 +126,7 @@ namespace bgfx
 		bool depends;
 
 		bool debugInformation;
+		bool emitShaderSource;
 
 		bool avoidFlowControl;
 		bool noPreshader;
