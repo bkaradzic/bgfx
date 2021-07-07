@@ -34,6 +34,8 @@ namespace bgfx
 			HLSL,
 			Metal,
 			PSSL,
+			PSSL2,
+			NVN,
 			SpirV,
 
 			Count
@@ -47,6 +49,8 @@ namespace bgfx
 		"High-Level Shading Language (HLSL)",
 		"Metal Shading Language (MSL)",
 		"PlayStation Shader Language (PSSL)",
+		"PlayStation Shader Language 2 (PSSL2)",
+		"PlayStation Shader Language 2 (NVN)",
 		"Standard Portable Intermediate Representation - V (SPIR-V)",
 
 		"Unknown?!"
@@ -103,7 +107,9 @@ namespace bgfx
 		{  ShadingLang::HLSL,  400,    "s_4_0"      },
 		{  ShadingLang::HLSL,  500,    "s_5_0"      },
 		{  ShadingLang::Metal, 1000,   "metal"      },
-		{  ShadingLang::PSSL,  1000,   "pssl"       },
+		{  ShadingLang::PSSL,  9551,   "pssl"       },
+		{  ShadingLang::PSSL2, 9552,   "pssl2"      },
+		{  ShadingLang::NVN,   450,    "nvn"        },
 		{  ShadingLang::SpirV, 1311,   "spirv13-11" },
 		{  ShadingLang::SpirV, 1411,   "spirv14-11" },
 		{  ShadingLang::SpirV, 1512,   "spirv15-12" },
@@ -299,6 +305,7 @@ namespace bgfx
 		, preprocessOnly(false)
 		, depends(false)
 		, debugInformation(false)
+		, emitShaderSource(false)
 		, avoidFlowControl(false)
 		, noPreshader(false)
 		, partialPrecision(false)
@@ -324,6 +331,7 @@ namespace bgfx
 			"\t  preprocessOnly: %s\n"
 			"\t  depends: %s\n"
 			"\t  debugInformation: %s\n"
+			"\t  emitShaderSource: %s\n"
 			"\t  avoidFlowControl: %s\n"
 			"\t  noPreshader: %s\n"
 			"\t  partialPrecision: %s\n"
@@ -344,6 +352,7 @@ namespace bgfx
 			, preprocessOnly ? "true" : "false"
 			, depends ? "true" : "false"
 			, debugInformation ? "true" : "false"
+			, emitShaderSource ? "true" : "false"
 			, avoidFlowControl ? "true" : "false"
 			, noPreshader ? "true" : "false"
 			, partialPrecision ? "true" : "false"
@@ -973,6 +982,8 @@ namespace bgfx
 			"           ios\n"
 			"           linux\n"
 			"           orbis\n"
+			"           prospero\n"
+			"           nx\n"
 			"           osx\n"
 			"           windows\n"
 			"      -p, --profile <profile>   Shader model (default GLSL).\n"
@@ -1093,8 +1104,9 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_METAL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_PSSL");
-		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_SPIRV");
+		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_PSSL2");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_NVN");
+		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_SPIRV");
 
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_COMPUTE");
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
@@ -1192,7 +1204,7 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "prospero"))
 		{
 			preprocessor.setDefine("BX_PLATFORM_PS5=1");
-			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_PSSL=1");
+			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_PSSL2=1");
 			preprocessor.setDefine("lit=lit_reserved");
 		}
 		else if (0 == bx::strCmpI(platform, "nx"))
@@ -1472,6 +1484,14 @@ namespace bgfx
 			{
 				compiled = compilePSSLShader(_options, 0, input, _writer);
 			}
+			else if (profile->lang == ShadingLang::PSSL2)
+			{
+				//compiled = compilePSSL2Shader(_options, 0, input, _writer);
+			}
+			else if (profile->lang == ShadingLang::NVN)
+			{
+				compiled = compileNVNShader(_options, 0, input, _writer);
+			}
 			else
 			{
 				compiled = compileHLSLShader(_options, profile->id, input, _writer);
@@ -1492,7 +1512,7 @@ namespace bgfx
 				}
 				else
 				{
-					if (profile->lang != ShadingLang::PSSL)
+					if (profile->lang != ShadingLang::PSSL)  // BBI-TODO (dgalloway) this code looks wrong?  Why the !=
 					{
 						preprocessor.writef(getPsslPreamble());
 					}
@@ -1631,6 +1651,14 @@ namespace bgfx
 							{
 								compiled = compilePSSLShader(_options, 0, code, _writer);
 							}
+							else if (profile->lang == ShadingLang::PSSL2)
+							{
+								//compiled = compilePSSL2Shader(_options, 0, code, _writer);
+							}
+							else if (profile->lang == ShadingLang::NVN)
+							{
+								compiled = compileNVNShader(_options, 0, input, _writer);
+							}
 							else
 							{
 								compiled = compileHLSLShader(_options, profile->id, code, _writer);
@@ -1755,6 +1783,10 @@ namespace bgfx
 					if (profile->lang == ShadingLang::PSSL)
 					{
 						preprocessor.writef(getPsslPreamble());
+					}
+					else if (profile->lang == ShadingLang::PSSL2)
+					{
+						//preprocessor.writef(getPssl2Preamble());
 					}
 
 					preprocessor.writef(
@@ -2497,6 +2529,14 @@ namespace bgfx
 							{
 								compiled = compilePSSLShader(_options, 0, code, _writer);
 							}
+							else if (profile->lang == ShadingLang::PSSL2)
+							{
+								//compiled = compilePSSL2Shader(_options, 0, code, _writer);
+							}
+							else if (profile->lang == ShadingLang::NVN)
+							{
+								compiled = compileNVNShader(_options, 0, input, _writer);
+							}
 							else
 							{
 								compiled = compileHLSLShader(_options, profile->id, code, _writer);
@@ -2596,6 +2636,7 @@ namespace bgfx
 
 		{
 			options.debugInformation = cmdLine.hasArg('\0', "debug");
+			options.emitShaderSource = cmdLine.hasArg('\0', "emitShaderSource");
 			options.avoidFlowControl = cmdLine.hasArg('\0', "avoid-flow-control");
 			options.noPreshader = cmdLine.hasArg('\0', "no-preshader");
 			options.partialPrecision = cmdLine.hasArg('\0', "partial-precision");
