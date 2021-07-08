@@ -575,7 +575,7 @@ ReturnCode fpp_doinclude( struct Global *global )
 
     global->workp = global->work;
 
-    while( (c = fpp_get(global)) != '\n' && c != EOF_CHAR )
+    while( (c = fpp_get(global)) != '\n' && c != '\r' && c != EOF_CHAR )
         if( (ret = fpp_save( global, c )) )       /* Put it away.                */
             return( ret );
 
