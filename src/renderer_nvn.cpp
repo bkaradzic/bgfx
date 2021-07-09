@@ -1,13 +1,16 @@
-/*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
- */
+/********************************************************
+*   (c) Mojang. All rights reserved                     *
+*   (c) Microsoft. All rights reserved.                 *
+*********************************************************/
 
 #include "bgfx_p.h"
 
 #if BGFX_CONFIG_RENDERER_NVN
 
 #include "renderer_nvn.h"
+#include "renderer_nvn/resources.h"
+
+#include <nn/nn_Log.h>
 
 #if BX_PLATFORM_NX
 extern "C"
@@ -18,6 +21,16 @@ extern "C"
 
 namespace bgfx { namespace nvn
 {
+	//
+	//
+	//
+
+	NVNdevice* g_nvnDevice = NULL;
+
+	//
+	// RendererContextNVN
+	//
+
 	struct RendererContextNVN : public RendererContextI
 	{
 		NVNnativeWindow m_Hwnd = nullptr;
@@ -32,6 +45,18 @@ namespace bgfx { namespace nvn
 		int m_CommandBufferControlAlignment = 0;
 		int m_maxAnisotropy = 1;
 		int m_UniformBufferAlignment = 0;
+
+		TexturesSamplersPool m_TextureSamplersPool;
+		DoubleBufferedResource<CommandMemoryPool> m_CommandMemoryPools;
+		std::unique_ptr<UniformRingBuffer> m_frameUniformBuffer;
+
+		TextureNVN m_textures[BGFX_CONFIG_MAX_TEXTURES];
+
+		SwapChainNVN m_SwapChain;
+		CommandQueueNVN m_Queue;
+
+		NVNsync* m_PreviousFrameSync = nullptr; // BBI-TODO: (tstump 1) change this from previous frame to array to we can do triple buffering
+		uint64_t m_SubmitCounter = 0;
 
 		RendererContextNVN()
 		{
@@ -194,6 +219,40 @@ namespace bgfx { namespace nvn
 			return true;
 		}
 
+		void initializeMemoryPool()
+		{
+			const size_t initialRingSize = BGFX_CONFIG_MAX_DRAW_CALLS * 64;
+
+			m_TextureSamplersPool.init(&m_Device);
+			m_CommandMemoryPools.init(&m_Device);
+			m_frameUniformBuffer = std::make_unique<UniformRingBuffer>(initialRingSize);
+		}
+
+		void initializeSwapChain(const Init& _init)
+		{
+			m_SwapChain.create(m_Hwnd, &m_Device, _init.resolution, bgfx::TextureFormat::Enum::RGBA8, bgfx::TextureFormat::Enum::D24S8);
+			m_Queue.init(&m_Device, &m_SwapChain);
+		}
+
+		void initializeWindow(const Init& _init)
+		{
+#if 0
+			for (int ii = 0; ii < SwapChainBufferCount; ii++)
+			{
+				nvnSyncInitialize(&m_DisplayFence[ii], &m_Device);
+			}
+
+			if (nn::oe::GetOperationMode() == nn::oe::OperationMode_Console) {
+				g_caps.displayWidth = 1920;
+				g_caps.displayHeight = 1080;
+			}
+			else {
+				g_caps.displayWidth = 1280;
+				g_caps.displayHeight = 720;
+			}
+#endif
+		}
+
 		bool init(const Init& _init)
 		{
 			m_Hwnd = (NVNnativeWindow)g_platformData.nwh;
@@ -214,20 +273,34 @@ namespace bgfx { namespace nvn
 				return false;
 			}
 
-			//initializeMemoryPool();
+			g_nvnDevice = &m_Device;
 
-			//initializeSwapChain(_init);
-
-			//m_Queue.init(&m_Device, &m_SwapChain);
-
-			//initializeWindow(_init);
+			initializeMemoryPool();
+			initializeSwapChain(_init);
+			initializeWindow(_init);
 
 			return true;
 		}
 
 		void shutdown()
 		{
+			//for (int ii = 0; ii < SwapChainBufferCount; ii++)
+			//{
+			//	nvnSyncFinalize(&m_DisplayFence[ii]);
+			//}
 
+			//m_activeSamplersCount = 0;
+			//m_samplers.invalidate();
+			//m_Queue.shutdown();
+
+			m_SwapChain.destroy();
+
+			m_frameUniformBuffer.reset();
+			m_CommandMemoryPools.shutdown();
+			m_TextureSamplersPool.shutdown();
+
+			g_nvnDevice = NULL;
+			nvnDeviceFinalize(&m_Device);
 		}
 
 		bool isDeviceRemoved() override
@@ -303,8 +376,10 @@ namespace bgfx { namespace nvn
 		{
 		}
 
-		void* createTexture(TextureHandle /*_handle*/, const Memory* /*_mem*/, uint64_t /*_flags*/, uint8_t /*_skip*/) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) override
 		{
+			m_textures[_handle.idx].create(&m_Device, _mem, _flags, _skip);
+			m_TextureSamplersPool.set(_handle.idx, &m_textures[_handle.idx].m_ptr);
 			return NULL;
 		}
 
@@ -385,8 +460,86 @@ namespace bgfx { namespace nvn
 		{
 		}
 
-		void submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& /*_textVideoMemBlitter*/) override
+		void _processViewItems(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 		{
+			BGFX_PROFILER_SCOPE("gfx::_processViewItems", 0xff2040ff);
+
+			BX_UNUSED(_clearQuad);
+			BX_UNUSED(_textVideoMemBlitter);
+
+			uint16_t view = UINT16_MAX;
+			SortKey key;
+
+			int32_t numItems = _render->m_numRenderItems;
+			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
+			{
+				const uint64_t encodedKey = _render->m_sortKeys[item];
+				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
+
+				const bool viewChanged = 0
+					|| key.m_view != view
+					|| item == numItems
+					;
+
+				const uint32_t itemIdx = _render->m_sortValues[item];
+				const RenderItem& renderItem = _render->m_renderItem[itemIdx];
+				const RenderBind& renderBind = _render->m_renderItemBind[itemIdx];
+				++item;
+
+				BX_UNUSED(renderItem);
+				BX_UNUSED(renderBind);
+				BX_UNUSED(viewChanged);
+				BX_UNUSED(isCompute);
+			}
+		}
+
+		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override
+		{
+			BGFX_PROFILER_SCOPE("gfx::submit", 0xff2040ff);
+
+			_render->sort();
+
+			if (0 == (_render->m_debug & BGFX_DEBUG_IFH))
+			{
+				{
+					BGFX_PROFILER_SCOPE("gfx::acquireNextScanBuffer", 0xff2040ff);
+
+					m_SwapChain.acquireNext();
+
+					// TODO REMOVE
+					m_Queue.waitForIdle();
+
+					m_CommandMemoryPools.swap();
+				}
+
+				{
+					BGFX_PROFILER_SCOPE("gfx::waitForPreviousFrame", 0xff2040ff);
+
+					if (m_PreviousFrameSync != nullptr)
+					{
+						m_Queue.finish(m_PreviousFrameSync);
+						m_PreviousFrameSync = nullptr;
+					}
+
+					if (m_SubmitCounter > 0)
+					{
+						m_frameUniformBuffer->setCompletedFence(m_SubmitCounter);
+					}
+
+					m_SubmitCounter++;
+					m_frameUniformBuffer->setCurrentFence(m_SubmitCounter);
+				}
+
+				CommandListNVN& cmd = *m_Queue.alloc(m_CommandMemoryPools.get(), "submit");
+
+				m_TextureSamplersPool.bind(cmd.get());
+
+				_processViewItems(_render, _clearQuad, _textVideoMemBlitter);
+
+				m_PreviousFrameSync = m_Queue.kick();
+				m_SwapChain.present(&m_Queue.m_GfxQueue);
+			}
+#if 0
 			const int64_t timerFreq = bx::getHPFrequency();
 			const int64_t timeBegin = bx::getHPCounter();
 
@@ -403,6 +556,7 @@ namespace bgfx { namespace nvn
 
 			perfStats.gpuMemoryMax  = -INT64_MAX;
 			perfStats.gpuMemoryUsed = -INT64_MAX;
+#endif
 		}
 
 		void blitSetup(TextVideoMemBlitter& /*_blitter*/) override
@@ -414,7 +568,33 @@ namespace bgfx { namespace nvn
 		}
 	};
 
-	static RendererContextNVN* s_renderNVN;
+	static RendererContextNVN* s_renderNVN = NULL;
+
+	void OutOfCommandBufferMemoryEventCallback(NVNcommandBuffer* cmdBuf,
+		NVNcommandBufferMemoryEvent event,
+		size_t minSize,
+		void* callbackData)
+	{
+		const size_t size = std::max(size_t{ 512 }, minSize);
+
+		CommandMemoryPool& pools = s_renderNVN->m_CommandMemoryPools.get();
+
+		MemoryPool& poolCommands = pools[MemoryPoolType::CommandBufferCommands];
+		MemoryPool& poolControls = pools[MemoryPoolType::CommandBufferControls];
+
+		switch (event)
+		{
+		case NVNcommandBufferMemoryEvent::NVN_COMMAND_BUFFER_MEMORY_EVENT_OUT_OF_COMMAND_MEMORY:
+			nvnCommandBufferAddCommandMemory(cmdBuf, poolCommands.GetMemoryPool(), poolCommands.GetNewMemoryChunkOffset(size, s_renderNVN->m_CommandBufferCommandAlignment), size);
+			break;
+		case NVNcommandBufferMemoryEvent::NVN_COMMAND_BUFFER_MEMORY_EVENT_OUT_OF_CONTROL_MEMORY:
+			nvnCommandBufferAddControlMemory(cmdBuf, static_cast<uint8_t*>(poolControls.GetMemory()) + poolControls.GetNewMemoryChunkOffset(size, s_renderNVN->m_CommandBufferControlAlignment), size);
+			break;
+		default:
+			BX_ASSERT(false, "Unknown event");
+			break;
+		}
+	}
 
 	RendererContextI* rendererCreate(const Init& _init)
 	{
@@ -425,6 +605,7 @@ namespace bgfx { namespace nvn
 			BX_DELETE(g_allocator, s_renderNVN);
 			s_renderNVN = NULL;
 		}
+
 		return s_renderNVN;
 	}
 
