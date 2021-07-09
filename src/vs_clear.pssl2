@@ -9,26 +9,15 @@ void main()
 }
 */
 
-// Input struct
-struct VS_INPUT
-{
-    float4 a_position;
-};
-
-struct Srt {
-	RegularBuffer<VS_INPUT> vertices;
-    float4 bgfx_clear_depth;
-};
+float4 bgfx_clear_depth;
 
 // Output struct 
 struct VS_OUTPUT
 {
-    float4 vPosition  :  S_POSITION;
+    float4 vPosition : S_POSITION;
 };
 
-Srt const* g_srt : S_SRT_DATA;
-
-VS_OUTPUT main( uint vertexId : S_VERTEX_ID)
+VS_OUTPUT main(float4 a_position : POSITION)
 {
     VS_OUTPUT Output;
 

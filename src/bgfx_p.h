@@ -1382,6 +1382,20 @@ namespace bgfx
 			return BX_PLACEMENT_NEW(data, UniformBuffer)(size);
 		}
 
+		static UniformBuffer* finishAndTrim(UniformBuffer* const _uniformBuffer)
+		{
+			_uniformBuffer->write(UniformType::End);
+			if (_uniformBuffer->m_size > _uniformBuffer->m_pos)
+			{
+				UniformBuffer* const newBuffer = create(_uniformBuffer->m_pos);
+				bx::memCopy(newBuffer->m_buffer, _uniformBuffer->m_buffer, _uniformBuffer->m_pos);
+				destroy(_uniformBuffer);
+				return newBuffer;
+			}
+			_uniformBuffer->m_pos = 0;
+			return _uniformBuffer;
+		}
+
 		static void destroy(UniformBuffer* _uniformBuffer)
 		{
 			_uniformBuffer->~UniformBuffer();
@@ -1471,7 +1485,7 @@ namespace bgfx
 			m_pos = _pos;
 		}
 
-		void finish()
+		UniformBuffer* finish(bool const trim = false)
 		{
 			write(UniformType::End);
 			m_pos = 0;
