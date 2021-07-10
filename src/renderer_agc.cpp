@@ -22,12 +22,6 @@
 
 //=============================================================================================
 
-// TODO: (manderson) Replace with proper embedded shaders
-#include "vs_clear.pssl2.h"
-#include "fs_clear0.pssl2.h"
-
-//=============================================================================================
-
 namespace bgfx { namespace agc {
 
 //=============================================================================================
@@ -101,14 +95,14 @@ private:
 
 	struct Shader
 	{
-		bool create(const Memory& mem, bool const embedded = false);
+		bool create(const Memory& mem);
 		void destroy();
 
-		void* mBuf{};
-		sce::Agc::Shader* mShader{};
 		UniformBuffer* mUniforms{};
 		std::array<PredefinedUniform, PredefinedUniform::Count> mPredefinedUniforms{};
 		std::array<int8_t, Attrib::Count> mAttributeSlots{};
+		void* mBuf{};
+		sce::Agc::Shader* mShader{};
 	};
 
 	struct Program
@@ -166,8 +160,8 @@ private:
 	VertexLayout mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS]{};
 	stl::vector<std::function<bool()>> mDestroyList;
 
-	void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS]{};
-	UniformRegistry m_uniformReg{};
+	void* mUniforms[BGFX_CONFIG_MAX_UNIFORMS]{};
+	UniformRegistry mUniformReg{};
 
 	FrameResources mFrameResources[NumDisplayBuffers]{};
 	sce::Agc::CxDepthRenderTarget mDepthRenderTarget{};
@@ -1099,25 +1093,25 @@ void RendererContextAGC::destroyFrameBuffer(FrameBufferHandle handle)
 
 void RendererContextAGC::createUniform(UniformHandle handle, UniformType::Enum type, uint16_t num, const char* name)
 {
-	if (NULL != m_uniforms[handle.idx])
+	if (NULL != mUniforms[handle.idx])
 	{
-		BX_FREE(g_allocator, m_uniforms[handle.idx]);
+		BX_FREE(g_allocator, mUniforms[handle.idx]);
 	}
 
 	const uint32_t size = bx::alignUp(g_uniformTypeSize[type]*num, 16);
 	void* data = BX_ALLOC(g_allocator, size);
 	bx::memSet(data, 0, size);
-	m_uniforms[handle.idx] = data;
-	m_uniformReg.add(handle, name);
+	mUniforms[handle.idx] = data;
+	mUniformReg.add(handle, name);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyUniform(UniformHandle handle)
 {
-	BX_FREE(g_allocator, m_uniforms[handle.idx]);
-	m_uniforms[handle.idx] = NULL;
-	m_uniformReg.remove(handle);
+	BX_FREE(g_allocator, mUniforms[handle.idx]);
+	mUniforms[handle.idx] = NULL;
+	mUniformReg.remove(handle);
 }
 
 //=============================================================================================
@@ -1136,7 +1130,7 @@ void RendererContextAGC::updateViewName(ViewId id, const char* name)
 
 void RendererContextAGC::updateUniform(uint16_t loc, const void* data, uint32_t size)
 {
-	bx::memCopy(m_uniforms[loc], data, size);
+	bx::memCopy(mUniforms[loc], data, size);
 }
 
 //=============================================================================================
@@ -1210,14 +1204,14 @@ void RendererContextAGC::clearRect(ClearQuad& clearQuad, const Rect& rect, const
 
 				if (m_clearQuadColor.idx == kInvalidHandle)
 				{
-					const UniformRegInfo* infoClearColor = m_uniformReg.find("bgfx_clear_color");
+					const UniformRegInfo* infoClearColor = mUniformReg.find("bgfx_clear_color");
 					if (NULL != infoClearColor)
 						m_clearQuadColor = infoClearColor->m_handle;
 				}
 
 				if (m_clearQuadDepth.idx == kInvalidHandle)
 				{
-					const UniformRegInfo* infoClearDepth = m_uniformReg.find("bgfx_clear_depth");
+					const UniformRegInfo* infoClearDepth = mUniformReg.find("bgfx_clear_depth");
 					if (NULL != infoClearDepth)
 						m_clearQuadDepth = infoClearDepth->m_handle;
 				}
