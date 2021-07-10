@@ -1485,7 +1485,7 @@ namespace bgfx
 			m_pos = _pos;
 		}
 
-		UniformBuffer* finish(bool const trim = false)
+		void finish()
 		{
 			write(UniformType::End);
 			m_pos = 0;
