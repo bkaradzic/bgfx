@@ -17,12 +17,8 @@
 #include <math.h>
 #include <shader/shader_reflection.h>
 #include "renderer.h"
-
-//=============================================================================================
-
-// TODO: (manderson) Replace with proper embedded shaders
-#include "vs_clear.pssl2.h"
-#include "fs_clear0.pssl2.h"
+#include <functional>
+#include <array>
 
 //=============================================================================================
 
@@ -99,11 +95,17 @@ private:
 
 	struct Shader
 	{
-		bool create(const Memory& mem, bool const embedded = false);
+		bool create(const Memory& mem);
 		void destroy();
 
+		UniformBuffer* mUniforms{};
+		std::array<PredefinedUniform, PredefinedUniform::Count> mPredefinedUniforms{};
+		std::array<int8_t, Attrib::Count> mAttributeSlots{};
 		void* mBuf{};
 		sce::Agc::Shader* mShader{};
+		uint16_t mNumUniforms{};
+		uint8_t mNumAttributes{};
+		uint8_t mNumPredefinedUniforms{};
 	};
 
 	struct Program
@@ -115,33 +117,52 @@ private:
 		Shader* mPsShader{};
 	};
 
-	struct IndexBuffer
+	struct Buffer
 	{
-		bool create(const Memory& mem, uint16_t const flags) { return true; };
-		void destroy() {};
+	protected:
+		Buffer() = default;
+	
+	public:
+		virtual ~Buffer() = default;
+		bool update(uint32_t const offset, uint32_t const size, const uint8_t* const data);
+		virtual void destroy();
+
+		uint8_t* mBuffer{};
+		uint32_t mSize{};
 	};
 
-	struct VertexBuffer
+	struct IndexBuffer final : public Buffer
 	{
-		bool create(const Memory& mem, VertexLayoutHandle const layoutHandle, uint16_t const flags) { return true; };
-		void destroy() {};
+		bool create(uint16_t const flags, uint32_t const size, const uint8_t* const data);
+		void destroy() override;
+
+		uint16_t mFlags{};
+	};
+
+	struct VertexBuffer final : public Buffer
+	{
+		bool create(VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data);
+		void destroy() override;
+
+		VertexLayoutHandle mLayoutHandle{kInvalidHandle};
 	};
 	
 	bool verifyInit(const Init& init);
 	bool createDisplayBuffers(const Init& init);
 	bool createScanoutBuffers();
 	bool createContext();
-	bool createEmbeddedProgram(Program& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize);
-	bool createEmbeddedPrograms();
+	void tickDestroyList(bool const force = false);
+	void clearRect(ClearQuad& clearQuad, const Rect& rect, const Clear& clear, const float palette[][4]);
 
 	IndexBuffer mIndexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS]{};
 	VertexBuffer mVertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS]{};
 	Shader mShaders[BGFX_CONFIG_MAX_SHADERS]{};
 	Program mPrograms[BGFX_CONFIG_MAX_PROGRAMS]{};
 	VertexLayout mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS]{};
+	stl::vector<std::function<bool()>> mDestroyList;
 
-	void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS]{};
-	UniformRegistry m_uniformReg{};
+	void* mUniforms[BGFX_CONFIG_MAX_UNIFORMS]{};
+	UniformRegistry mUniformReg{};
 
 	FrameResources mFrameResources[NumDisplayBuffers]{};
 	sce::Agc::CxDepthRenderTarget mDepthRenderTarget{};
@@ -171,6 +192,7 @@ uint8_t* allocDmem(sce::Agc::SizeAlign sizeAlign)
 	static uint32_t allocCount = 0;
 	off_t offsetOut;
 
+	// TODO: (manderson) Min alignment and size 64k???
 	const size_t alignment = (sizeAlign.m_align + 0xffffu) & ~0xffffu;
 	const uint64_t size = (sizeAlign.m_size + 0xffffu) & ~0xffffu;
 
@@ -215,24 +237,226 @@ namespace bgfx { namespace agc {
 
 //=============================================================================================
 
-bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
+static RendererContextAGC* sRendererAGC;
+
+//=============================================================================================
+
+bool RendererContextAGC::Shader::create(const Memory& mem)
 {
-	if (embedded)
+	/*mBuf = allocDmem(sce::Agc::SizeAlign(mem.size, sce::Agc::Alignment::kShaderCode));
+	bx::memCopy(mBuf, mem.data, mem.size);
+	SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(mBuf);
+	void* const header = (void*)sceShaderGetProgramHeader(binaryHandle);
+	const void* const program = sceShaderGetProgram(binaryHandle);
+	SceError const error = sce::Agc::createShader(&mShader, header, program);
+	if (error != SCE_OK)
 	{
-		mBuf = allocDmem(sce::Agc::SizeAlign(mem.size, sce::Agc::Alignment::kShaderCode));
-		memcpy(mBuf, mem.data, mem.size);
-		SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(mBuf);
-		void* const header = (void*)sceShaderGetProgramHeader(binaryHandle);
-		const void* const program = sceShaderGetProgram(binaryHandle);
-		SceError error = sce::Agc::createShader(&mShader, header, program);
-		if (error != SCE_OK)
-		{
-			freeDmem(mBuf);
-			return false;
-		}
-		return true;
+		freeDmem(mBuf);
+		return false;
 	}
-	// TODO: (manderson) parse shader file.
+	return true;*/
+
+	bx::MemoryReader reader{mem.data, mem.size};
+
+	uint32_t magic{};
+	bx::read(&reader, magic);
+
+	uint8_t fragmentBit{};
+	if (isShaderType(magic, 'F'))
+	{
+		fragmentBit = kUniformFragmentBit;
+	}
+	else if (!isShaderType(magic, 'V') &&
+			 !isShaderType(magic, 'V'))
+	{
+		BGFX_FATAL(false, Fatal::InvalidShader, "Unknown shader format %x.", magic);
+		return false;
+	}
+
+
+	uint32_t hashIn{};
+	bx::read(&reader, hashIn);
+
+	uint32_t hashOut{};
+	if (isShaderVerLess(magic, 6) )
+	{
+		hashOut = hashIn;
+	}
+	else
+	{
+		bx::read(&reader, hashOut);
+	}
+
+	uint16_t count{};
+	bx::read(&reader, count);
+
+	BX_TRACE("%s Shader consts %d"
+		, getShaderTypeName(magic)
+		, count
+		);
+
+	mNumPredefinedUniforms = 0;
+	mNumUniforms = count;
+
+	if (count > 0)
+	{
+		for (uint32_t ii = 0; ii < count; ++ii)
+		{
+			uint8_t nameSize{};
+			bx::read(&reader, nameSize);
+
+			char* name = (char*)alloca(nameSize+1);
+			bx::read(&reader, &name, nameSize);
+			name[nameSize] = '\0';
+
+			uint8_t type{};
+			bx::read(&reader, type);
+
+			uint8_t num{};
+			bx::read(&reader, num);
+
+			uint16_t regIndex{};
+			bx::read(&reader, regIndex);
+
+			uint16_t regCount{};
+			bx::read(&reader, regCount);
+
+			// TODO: (manderson) Maybe this will be there?
+			/*if (!isShaderVerLess(magic, 8) )
+			{
+				uint16_t texInfo = 0;
+				bx::read(&reader, texInfo);
+			}*/
+
+			const char* kind{"invalid"};
+
+			PredefinedUniform::Enum const predefined{nameToPredefinedUniformEnum(name)};
+			if (predefined != PredefinedUniform::Count)
+			{
+				kind = "predefined";
+				mPredefinedUniforms[mNumPredefinedUniforms].m_loc = regIndex;
+				mPredefinedUniforms[mNumPredefinedUniforms].m_count = regCount;
+				mPredefinedUniforms[mNumPredefinedUniforms].m_type = uint8_t(predefined | fragmentBit);
+				mNumPredefinedUniforms++;
+			}
+			else if ((kUniformSamplerBit & type) == 0)
+			{
+				const UniformRegInfo* info = sRendererAGC->mUniformReg.find(name);
+				BX_WARN(info != nullptr, "User defined uniform '%s' is not found, it won't be set.", name);
+
+				if (info != nullptr)
+				{
+					if (mUniforms == nullptr)
+					{
+						mUniforms = UniformBuffer::create(4<<10);
+					}
+
+					kind = "user";
+					mUniforms->writeUniformHandle((UniformType::Enum)(type | fragmentBit), regIndex, info->m_handle, regCount * num);
+				}
+			}
+			else
+			{
+				kind = "sampler";
+				// TODO: (manderson) Capture uniforms?
+			}
+
+			BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
+				, kind
+				, name
+				, getUniformTypeName(UniformType::Enum(type&~kUniformMask))
+				, num
+				, regIndex
+				, regCount
+			);
+			BX_UNUSED(kind);
+		}
+
+		if (mUniforms != nullptr)
+		{
+			mUniforms = UniformBuffer::finishAndTrim(mUniforms);
+		}
+	}
+
+	uint32_t shaderSize{};
+	bx::read(&reader, shaderSize);
+
+	const uint32_t* source = reinterpret_cast<const uint32_t*>(reader.getDataPtr());
+	bx::skip(&reader, shaderSize + 1);
+
+	uint8_t numAttrs{};
+	bx::read(&reader, numAttrs);
+
+	bool isInstanced[numAttrs];
+	bool atLeastOneInstanced = false;
+
+	std::fill(mAttributeSlots.begin(), mAttributeSlots.end(), -1);
+
+	for (uint32_t ii = 0; ii < numAttrs; ++ii)
+	{
+		uint8_t slotPlusInstanceFlag;
+		bx::read(&reader, slotPlusInstanceFlag);
+
+		constexpr uint8_t IS_INSTANCE_FLAG = 128;
+		if (slotPlusInstanceFlag & IS_INSTANCE_FLAG) {
+			isInstanced[ii] = true;
+			atLeastOneInstanced = true;
+		}
+		uint8_t const slot = slotPlusInstanceFlag & ~IS_INSTANCE_FLAG;
+
+		uint16_t id;
+		bx::read(&reader, id);
+
+		Attrib::Enum attr = idToAttrib(id);
+
+		if (Attrib::Count != attr)
+		{
+			mAttributeSlots[attr] = static_cast<int8_t>(slot);
+			mNumAttributes++;
+		}
+	}
+
+/*
+	if (BGFX_CHUNK_MAGIC_FSH == magic)
+	{
+		BX_CHECK(m_pixelShader == nullptr,"No m_pixelShader set");
+		m_pixelShader = BX_NEW(g_allocator, EmbeddedPixelShaderWithSource);
+		m_pixelShader->m_source = source;
+		m_pixelShader->initialize(s_renderGNM->m_garlicAllocator, s_renderGNM->m_onionAllocator, "ShaderGNM pixel");
+	}
+	else if (BGFX_CHUNK_MAGIC_VSH == magic)
+	{
+		BX_CHECK(m_vertexShader == nullptr,"No m_vertexShader set");
+		m_vertexShader = BX_NEW(g_allocator, EmbeddedVertexShaderWithSource);
+		m_vertexShader->m_source = source;
+		m_vertexShader->initialize(s_renderGNM->m_garlicAllocator, s_renderGNM->m_onionAllocator, "ShaderGNM vertex");
+		if (atLeastOneInstanced) {
+			Gnm::FetchShaderInstancingMode instancingData[numAttrs];
+			for (int i = 0; i < numAttrs; ++i) {
+				instancingData[i] = isInstanced[i] ? Gnm::kFetchShaderUseInstanceId : Gnm::kFetchShaderUseVertexIndex;
+			}
+
+			m_vertexShader->initializeFetchShader(s_renderGNM->m_garlicAllocator,instancingData,numAttrs);
+		}
+		else {
+			m_vertexShader->initializeFetchShader(s_renderGNM->m_garlicAllocator);
+		}
+	}
+	else
+	{
+		BGFX_FATAL(BGFX_CHUNK_MAGIC_CSH == magic, bgfx::Fatal::InvalidShader, "Expected shader to be frag,vert, or compute.");
+	}
+*/
+
+	uint16_t constantBufferSize = 0;
+	bx::read(&reader, constantBufferSize);
+
+	if (0 < constantBufferSize)
+	{
+		//m_constantBufferSize = constantBufferSize;
+		//BX_TRACE("\tCB size: %d", m_constantBufferSize);
+	}
+
 	return true;
 }
 
@@ -257,6 +481,105 @@ bool RendererContextAGC::Program::create(Shader* const vsShader, Shader* const p
 void RendererContextAGC::Program::destroy()
 {
 	// TODO: (manderson) destroy program.
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::Buffer::update(uint32_t const offset, uint32_t const size, const uint8_t* const data)
+{
+	uint8_t* const newBuffer = allocDmem({mSize, 16});
+	if (newBuffer == nullptr)
+	{
+		return false;
+	}
+	if (mBuffer != nullptr)
+	{
+		uint32_t const beforeSize = offset;
+		if (beforeSize > 0)
+		{
+			memcpy(newBuffer, mBuffer, beforeSize);
+		}
+		uint32_t const afterSize = mSize - (offset + size);
+		if (afterSize > 0)
+		{
+			memcpy(newBuffer + offset + size, mBuffer + offset + size, afterSize);
+		}
+		sRendererAGC->mDestroyList.push_back([count=(int32_t)NumDisplayBuffers,buffer=mBuffer]() mutable {
+			count--;
+			if (count <= 0)
+			{
+				freeDmem(buffer);
+				return true;
+			}
+			return false;
+		});
+	}
+	mBuffer = newBuffer;
+	memcpy(mBuffer + offset, data, size);
+
+	return true;
+}
+
+//=============================================================================================
+
+void RendererContextAGC::Buffer::destroy()
+{
+	if (mBuffer != nullptr)
+	{
+		sRendererAGC->mDestroyList.push_back([count=(int32_t)NumDisplayBuffers,buffer=mBuffer]() mutable {
+			count--;
+			if (count <= 0)
+			{
+				freeDmem(buffer);
+				return true;
+			}
+			return false;
+		});
+	}
+	mBuffer = nullptr;
+	mSize = 0;
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::IndexBuffer::create(uint16_t const flags, uint32_t const size, const uint8_t* const data)
+{
+	mFlags = flags;
+	mSize = size;
+	if (data != nullptr)
+	{
+		return update(0, mSize, data);
+	}
+	return true;
+}
+
+//=============================================================================================
+
+void RendererContextAGC::IndexBuffer::destroy()
+{
+	Buffer::destroy();
+	mFlags = 0;
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::VertexBuffer::create(VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data)
+{
+	mLayoutHandle = layoutHandle;
+	mSize = size;
+	if (data != nullptr)
+	{
+		return update(0, mSize, data);
+	}
+	return true;
+}
+
+//=============================================================================================
+
+void RendererContextAGC::VertexBuffer::destroy()
+{
+	Buffer::destroy();
+	mLayoutHandle = {kInvalidHandle};
 }
 
 //=============================================================================================
@@ -502,31 +825,6 @@ bool RendererContextAGC::createContext()
 
 //=============================================================================================
 
-bool RendererContextAGC::createEmbeddedProgram(Program& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize)
-{
-	program.mVsShader = new Shader();
-	program.mPsShader = new Shader();
-	if (!program.mVsShader->create(Memory{(uint8_t*)vsData, (uint32_t)vsSize}, true) ||
-		!program.mPsShader->create(Memory{(uint8_t*)psData, (uint32_t)psSize}, true))
-	{
-		delete program.mVsShader;
-		delete program.mPsShader;
-		program.mVsShader = nullptr;
-		program.mPsShader = nullptr;
-		return false;
-	}
-	return true;
-}
-
-//=============================================================================================
-
-bool RendererContextAGC::createEmbeddedPrograms()
-{
-	return createEmbeddedProgram(mClearProgram, vs_clear_data, vs_clear_size, fs_clear0_data, fs_clear0_size);
-}
-
-//=============================================================================================
-
 bool RendererContextAGC::init(const Init& initParams)
 {
 	// TODO: (manderson) cleanup?
@@ -542,8 +840,7 @@ bool RendererContextAGC::init(const Init& initParams)
 
 	if (!createDisplayBuffers(initParams) ||
 		!createScanoutBuffers() ||
-		!createContext() ||
-		!createEmbeddedPrograms())
+		!createContext())
 		return false;
 
 	return true;
@@ -580,7 +877,7 @@ void RendererContextAGC::flip()
 
 void RendererContextAGC::createIndexBuffer(IndexBufferHandle handle, const Memory* mem, uint16_t flags)
 {
-	mIndexBuffers[handle.idx].create(*mem, flags);
+	mIndexBuffers[handle.idx].create(flags, mem->size, mem->data);
 }
 
 //=============================================================================================
@@ -595,7 +892,7 @@ void RendererContextAGC::destroyIndexBuffer(IndexBufferHandle handle)
 void RendererContextAGC::createVertexLayout(VertexLayoutHandle handle, const VertexLayout& layout)
 {
 	VertexLayout& ourLayout = mVertexLayouts[handle.idx];
-	bx::memCopy(&ourLayout, &layout, sizeof(VertexLayout) );
+	memcpy(&ourLayout, &layout, sizeof(VertexLayout) );
 	dump(ourLayout);
 }
 
@@ -609,7 +906,7 @@ void RendererContextAGC::destroyVertexLayout(VertexLayoutHandle handle)
 
 void RendererContextAGC::createVertexBuffer(VertexBufferHandle handle, const Memory* mem, VertexLayoutHandle layoutHandle, uint16_t flags)
 {
-	mVertexBuffers[handle.idx].create(*mem, layoutHandle, flags);
+	mVertexBuffers[handle.idx].create(layoutHandle, flags, mem->size, mem->data);
 }
 
 //=============================================================================================
@@ -623,36 +920,42 @@ void RendererContextAGC::destroyVertexBuffer(VertexBufferHandle handle)
 
 void RendererContextAGC::createDynamicIndexBuffer(IndexBufferHandle handle, uint32_t size, uint16_t flags)
 {
+	mIndexBuffers[handle.idx].create(flags, size, nullptr);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::updateDynamicIndexBuffer(IndexBufferHandle handle, uint32_t offset, uint32_t size, const Memory* mem)
 {
+	mIndexBuffers[handle.idx].update(offset, bx::uint32_min(size, mem->size), mem->data);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyDynamicIndexBuffer(IndexBufferHandle handle)
 {
+	mIndexBuffers[handle.idx].destroy();
 }
 
 //=============================================================================================
 
 void RendererContextAGC::createDynamicVertexBuffer(VertexBufferHandle handle, uint32_t size, uint16_t flags)
 {
+	mVertexBuffers[handle.idx].create({kInvalidHandle}, flags, size, nullptr);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::updateDynamicVertexBuffer(VertexBufferHandle handle, uint32_t offset, uint32_t size, const Memory* mem)
 {
+	mVertexBuffers[handle.idx].update(offset, bx::uint32_min(size, mem->size), mem->data);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyDynamicVertexBuffer(VertexBufferHandle handle)
 {
+	mVertexBuffers[handle.idx].destroy();
 }
 
 //=============================================================================================
@@ -761,25 +1064,25 @@ void RendererContextAGC::destroyFrameBuffer(FrameBufferHandle handle)
 
 void RendererContextAGC::createUniform(UniformHandle handle, UniformType::Enum type, uint16_t num, const char* name)
 {
-	if (NULL != m_uniforms[handle.idx])
+	if (NULL != mUniforms[handle.idx])
 	{
-		BX_FREE(g_allocator, m_uniforms[handle.idx]);
+		BX_FREE(g_allocator, mUniforms[handle.idx]);
 	}
 
 	const uint32_t size = bx::alignUp(g_uniformTypeSize[type]*num, 16);
 	void* data = BX_ALLOC(g_allocator, size);
 	bx::memSet(data, 0, size);
-	m_uniforms[handle.idx] = data;
-	m_uniformReg.add(handle, name);
+	mUniforms[handle.idx] = data;
+	mUniformReg.add(handle, name);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyUniform(UniformHandle handle)
 {
-	BX_FREE(g_allocator, m_uniforms[handle.idx]);
-	m_uniforms[handle.idx] = NULL;
-	m_uniformReg.remove(handle);
+	BX_FREE(g_allocator, mUniforms[handle.idx]);
+	mUniforms[handle.idx] = NULL;
+	mUniformReg.remove(handle);
 }
 
 //=============================================================================================
@@ -798,7 +1101,7 @@ void RendererContextAGC::updateViewName(ViewId id, const char* name)
 
 void RendererContextAGC::updateUniform(uint16_t loc, const void* data, uint32_t size)
 {
-	bx::memCopy(m_uniforms[loc], data, size);
+	bx::memCopy(mUniforms[loc], data, size);
 }
 
 //=============================================================================================
@@ -817,6 +1120,113 @@ void RendererContextAGC::setMarker(const char* marker, uint16_t len)
 
 void RendererContextAGC::setName(Handle handle, const char* name, uint16_t len)
 {
+}
+
+//=============================================================================================
+
+void RendererContextAGC::clearRect(ClearQuad& clearQuad, const Rect& rect, const Clear& clear, const float palette[][4])
+{
+#if 0
+	// Create AGC Buffer and VertexAttrib table.
+				const GLuint defaultVao = m_vao;
+				if (0 != defaultVao)
+				{
+					GL_CHECK(glBindVertexArray(defaultVao) );
+				}
+
+				GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+				GL_CHECK(glDisable(GL_CULL_FACE) );
+				GL_CHECK(glDisable(GL_BLEND) );
+
+				GLboolean colorMask = !!(BGFX_CLEAR_COLOR & _clear.m_flags);
+				GL_CHECK(glColorMask(colorMask, colorMask, colorMask, colorMask) );
+
+				if (BGFX_CLEAR_DEPTH & _clear.m_flags)
+				{
+					GL_CHECK(glEnable(GL_DEPTH_TEST) );
+					GL_CHECK(glDepthFunc(GL_ALWAYS) );
+					GL_CHECK(glDepthMask(GL_TRUE) );
+				}
+				else
+				{
+					GL_CHECK(glDisable(GL_DEPTH_TEST) );
+				}
+
+				if (BGFX_CLEAR_STENCIL & _clear.m_flags)
+				{
+					GL_CHECK(glEnable(GL_STENCIL_TEST) );
+					GL_CHECK(glStencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS, _clear.m_stencil,  0xff) );
+					GL_CHECK(glStencilOpSeparate(GL_FRONT_AND_BACK, GL_REPLACE, GL_REPLACE, GL_REPLACE) );
+				}
+				else
+				{
+					GL_CHECK(glDisable(GL_STENCIL_TEST) );
+				}
+
+				VertexBufferGL& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
+				VertexLayout& layout = _clearQuad.m_layout;
+
+				GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
+
+				ProgramGL& program = m_program[_clearQuad.m_program[numMrt-1].idx];
+				setProgram(program.m_id);
+				program.bindAttributesBegin();
+				program.bindAttributes(layout, 0);
+				program.bindAttributesEnd();
+
+				if (m_clearQuadColor.idx == kInvalidHandle)
+				{
+					const UniformRegInfo* infoClearColor = mUniformReg.find("bgfx_clear_color");
+					if (NULL != infoClearColor)
+						m_clearQuadColor = infoClearColor->m_handle;
+				}
+
+				if (m_clearQuadDepth.idx == kInvalidHandle)
+				{
+					const UniformRegInfo* infoClearDepth = mUniformReg.find("bgfx_clear_depth");
+					if (NULL != infoClearDepth)
+						m_clearQuadDepth = infoClearDepth->m_handle;
+				}
+
+				float mrtClearDepth[4] = { g_caps.homogeneousDepth ? (_clear.m_depth * 2.0f - 1.0f) : _clear.m_depth };
+				updateUniform(m_clearQuadDepth.idx, mrtClearDepth, sizeof(float)*4);
+
+				float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
+
+				if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
+				{
+					for (uint32_t ii = 0; ii < numMrt; ++ii)
+					{
+						uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
+						bx::memCopy(mrtClearColor[ii], _palette[index], 16);
+					}
+				}
+				else
+				{
+					float rgba[4] =
+					{
+						_clear.m_index[0] * 1.0f / 255.0f,
+						_clear.m_index[1] * 1.0f / 255.0f,
+						_clear.m_index[2] * 1.0f / 255.0f,
+						_clear.m_index[3] * 1.0f / 255.0f,
+					};
+
+					for (uint32_t ii = 0; ii < numMrt; ++ii)
+					{
+						bx::memCopy(mrtClearColor[ii], rgba, 16);
+					}
+				}
+
+				updateUniform(m_clearQuadColor.idx, mrtClearColor[0], numMrt * sizeof(float) * 4);
+
+				commit(*program.m_constantBuffer);
+
+				GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP
+					, 0
+					, 4
+					) );
+			}
+#endif
 }
 
 //=============================================================================================
@@ -844,13 +1254,20 @@ void RendererContextAGC::submit(Frame* render, ClearQuad& clearQuad, TextVideoMe
 
 
 
+	ProgramHandle currentProgram{kInvalidHandle};
+	ProgramHandle boundProgram{kInvalidHandle};
+	SortKey key{};
+	uint16_t view{UINT16_MAX};
+	FrameBufferHandle fbh{BGFX_CONFIG_MAX_FRAME_BUFFERS};
 
+	BlitState bs{render};
 
-
+	bool viewHasScissor{false};
+	Rect viewScissorRect{};
+	viewScissorRect.clear();
 
 	static ViewState viewState{};
 	viewState.reset(render);
-	SortKey key{};
 	//uint16_t view = UINT16_MAX;
 
 	if (0 == (render->m_debug&BGFX_DEBUG_IFH) )
@@ -893,13 +1310,50 @@ void RendererContextAGC::submit(Frame* render, ClearQuad& clearQuad, TextVideoMe
 			const uint64_t encodedKey = render->m_sortKeys[item];
 			const bool isCompute = key.decode(encodedKey, render->m_viewRemap);
 
-			//const bool viewChanged = key.m_view != view || item == numItems;
+			const bool viewChanged = key.m_view != view || item == numItems;
 
 			const uint32_t itemIdx  = render->m_sortValues[item];
 			const RenderItem& renderItem = render->m_renderItem[itemIdx];
 			//const RenderBind& renderBind = render->m_renderItemBind[itemIdx];
 			item++;
 
+			// Update View-----------------------------------------------------------------
+
+			if (viewChanged)
+			{
+				view = key.m_view;
+				currentProgram = BGFX_INVALID_HANDLE;
+
+				// Handle framebuffer change.
+				/*if (render->m_view[view].m_fbh.idx != fbh.idx)
+				{
+					fbh = _render->m_view[view].m_fbh;
+					resolutionHeight = _render->m_resolution.height;
+					resolutionHeight = setFrameBuffer(fbh, resolutionHeight, discardFlags);
+				}*/
+
+				viewState.m_rect = render->m_view[view].m_rect;
+				const Rect& scissorRect = render->m_view[view].m_scissor;
+				viewHasScissor = !scissorRect.isZero();
+				viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
+
+				/*GL_CHECK(glViewport(viewState.m_rect.m_x
+					, resolutionHeight-viewState.m_rect.m_height-viewState.m_rect.m_y
+					, viewState.m_rect.m_width
+					, viewState.m_rect.m_height
+					) );*/
+
+				Clear& clear = render->m_view[view].m_clear;
+				//discardFlags = clear.m_flags & BGFX_CLEAR_DISCARD_MASK;
+
+				if ((clear.m_flags & BGFX_CLEAR_MASK) != BGFX_CLEAR_NONE)
+				{
+					clearRect(clearQuad, viewState.m_rect, clear, render->m_colorPalette);
+				}
+
+				//submitBlit(bs, view);
+			}
+			
 			// Compute dispatch -----------------------------------------------------------
 
 			if (isCompute)
@@ -943,6 +1397,32 @@ void RendererContextAGC::submit(Frame* render, ClearQuad& clearQuad, TextVideoMe
 		error = sce::Agc::suspendPoint();
 		SCE_AGC_ASSERT(error == SCE_OK);
 	}
+
+	// Process destroy list.
+	tickDestroyList();
+}
+
+//=============================================================================================
+
+void RendererContextAGC::tickDestroyList(bool const force)
+{
+	for (auto it = mDestroyList.begin(); it != mDestroyList.end();)
+	{
+		const auto& callback = *it;
+		bool removed = callback();
+		if (force)
+		{
+			while (!removed)
+			{
+				removed = callback();
+			}
+		}
+		if (removed)
+		{
+			// TODO: (manderson) swap with end - 1 instead of erase, tinystl doesn't have iter_swap...
+			it = mDestroyList.erase(it);
+		}
+	}
 }
 
 //=============================================================================================
@@ -959,28 +1439,24 @@ void RendererContextAGC::blitRender(TextVideoMemBlitter& blitter, uint32_t numIn
 
 //=============================================================================================
 
-static RendererContextAGC* s_renderAGC;
-
-//=============================================================================================
-
 RendererContextI* rendererCreate(const Init& init)
 {
 	BX_UNUSED(init);
-	s_renderAGC = BX_NEW(g_allocator, RendererContextAGC);
-	if (!s_renderAGC->init(init) )
+	sRendererAGC = BX_NEW(g_allocator, RendererContextAGC);
+	if (!sRendererAGC->init(init) )
 	{
-		BX_DELETE(g_allocator, s_renderAGC);
-		s_renderAGC = NULL;
+		BX_DELETE(g_allocator, sRendererAGC);
+		sRendererAGC = NULL;
 	}
-	return s_renderAGC;
+	return sRendererAGC;
 }
 
 //=============================================================================================
 
 void rendererDestroy()
 {
-	BX_DELETE(g_allocator, s_renderAGC);
-	s_renderAGC = NULL;
+	BX_DELETE(g_allocator, sRendererAGC);
+	sRendererAGC = NULL;
 }
 
 //=============================================================================================
