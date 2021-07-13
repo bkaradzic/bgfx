@@ -8,7 +8,9 @@
 IMAGE2D_RO(s_texOcclusionDepthIn, r32f, 0);
 IMAGE2D_WR(s_texOcclusionDepthOut, r32f, 1);
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_inputRTSize;
+BGFX_END_UNIFORM_BLOCK
 
 NUM_THREADS(16, 16, 1)
 void main()

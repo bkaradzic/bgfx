@@ -6,7 +6,9 @@ SAMPLER2D(s_texColor,  0);
 SAMPLER2D(s_texNormal, 1);
 SAMPLER2D(s_texDepth,  2);
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_pomParam;
+BGFX_END_UNIFORM_BLOCK
 
 #define u_shading_type         u_pomParam.x
 #define u_show_diffuse_texture u_pomParam.y

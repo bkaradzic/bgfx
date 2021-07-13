@@ -8,8 +8,10 @@ $output v_lightCenterScale, v_color0
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_sphereInfo;
 uniform mat4 u_invMvpShadow;
+BGFX_END_UNIFORM_BLOCK
 
 
 // Note texture binding starts at slot 2.  Problem is that vert textures and frag textures are different.

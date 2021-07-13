@@ -5,7 +5,10 @@
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsShadow)
 uniform vec4 u_lightPos;
+BGFX_END_UNIFORM_BLOCK
+
 #if SHADOW_PACKED_DEPTH
 SAMPLER2D(s_shadowMap, 0);
 #	define Sampler sampler2D

@@ -10,9 +10,11 @@ $input v_texcoord0
 SAMPLER2D(s_normal, 0);
 SAMPLER2D(s_depth,  1);
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_lightPosRadius[1];
 uniform vec4 u_lightRgbInnerR[1];
 uniform mat4 u_mtx;
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

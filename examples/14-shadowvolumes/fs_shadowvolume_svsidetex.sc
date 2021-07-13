@@ -7,7 +7,9 @@ $input v_k
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_svparams;
+BGFX_END_UNIFORM_BLOCK
 
 #define u_dfail u_svparams.y
 

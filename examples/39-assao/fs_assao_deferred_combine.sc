@@ -11,7 +11,9 @@ SAMPLER2D(s_color, 0);
 SAMPLER2D(s_normal, 1);
 SAMPLER2D(s_ao, 2);
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_combineParams[2];
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {
@@ -40,4 +42,3 @@ void main()
 
 	gl_FragColor = vec4(albedoColor * light * ao, 1.0f);
 } 
- 

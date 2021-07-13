@@ -1,10 +1,12 @@
 $input a_position, a_tangent, a_bitangent, a_texcoord0
 $output v_texcoord0, v_ts_light_pos, v_ts_view_pos, v_ts_frag_pos
 
+#include "../common/common.sh"
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform mat4 u_norm_mtx;
 uniform vec4 u_light_pos;
-
-#include "../common/common.sh"
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

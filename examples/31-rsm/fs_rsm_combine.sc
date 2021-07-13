@@ -14,11 +14,13 @@ SAMPLER2D(s_depth,  3);
 SAMPLER2DSHADOW(s_shadowMap, 4);
 
 // Single directional light for entire scene
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_lightDir;
 uniform mat4 u_invMvp;
 uniform mat4 u_lightMtx;
 uniform vec4 u_shadowDimsInv;
 uniform vec4 u_rsmAmount;
+BGFX_END_UNIFORM_BLOCK
 
 float hardShadow(sampler2DShadow _sampler, vec4 _shadowCoord, float _bias)
 {

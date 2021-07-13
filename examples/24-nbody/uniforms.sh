@@ -3,7 +3,9 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_params[3];
+BGFX_END_UNIFORM_BLOCK
 
 #define threadGroupUpdateSize 512
 

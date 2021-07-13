@@ -28,13 +28,13 @@
 #	define EARLY_DEPTH_STENCIL
 #endif // BGFX_SHADER_LANGUAGE_HLSL > 300 && BGFX_SHADER_TYPE_FRAGMENT
 
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 #	define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = _type[](
 #	define ARRAY_END() )
 #else
 #	define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = {
 #	define ARRAY_END() }
-#endif // BGFX_SHADER_LANGUAGE_GLSL
+#endif // BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 
 #if BGFX_SHADER_LANGUAGE_HLSL \
  || BGFX_SHADER_LANGUAGE_PSSL \
@@ -552,13 +552,13 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define texture2DBias(_sampler, _coord, _bias)      texture2D(_sampler, _coord, _bias)
 #	define textureCubeBias(_sampler, _coord, _bias)    textureCube(_sampler, _coord, _bias)
 
-#	if BGFX_SHADER_LANGUAGE_GLSL >= 130
+#	if BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_NVN
 #		define texture2D(_sampler, _coord)      texture(_sampler, _coord)
 #		define texture2DArray(_sampler, _coord) texture(_sampler, _coord)
 #		define texture3D(_sampler, _coord)      texture(_sampler, _coord)
 #		define texture2DLod(_sampler, _coord, _lod)                textureLod(_sampler, _coord, _lod)
 #		define texture2DLodOffset(_sampler, _coord, _lod, _offset) textureLodOffset(_sampler, _coord, _lod, _offset)
-#	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130
+#	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_NVN
 
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_mtx, _vec); }
@@ -575,46 +575,46 @@ vec2 vec2_splat(float _x) { return vec2(_x, _x); }
 vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
 vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
 
-#if BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
+#if BGFX_SHADER_LANGUAGE_GLSL >= 130  || BGFX_SHADER_LANGUAGE_NVN|| BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
 uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
 uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
 uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
-#endif // BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
+#endif // BGFX_SHADER_LANGUAGE_GLSL >= 130  || BGFX_SHADER_LANGUAGE_NVN|| BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
 
 mat4 mtxFromRows(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 	return transpose(mat4(_0, _1, _2, _3) );
 #else
 	return mat4(_0, _1, _2, _3);
-#endif // BGFX_SHADER_LANGUAGE_GLSL
+#endif // BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 }
 mat4 mtxFromCols(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 	return mat4(_0, _1, _2, _3);
 #else
 	return transpose(mat4(_0, _1, _2, _3) );
-#endif // BGFX_SHADER_LANGUAGE_GLSL
+#endif // BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 }
 mat3 mtxFromRows(vec3 _0, vec3 _1, vec3 _2)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 	return transpose(mat3(_0, _1, _2) );
 #else
 	return mat3(_0, _1, _2);
-#endif // BGFX_SHADER_LANGUAGE_GLSL
+#endif // BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 }
 mat3 mtxFromCols(vec3 _0, vec3 _1, vec3 _2)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 	return mat3(_0, _1, _2);
 #else
 	return transpose(mat3(_0, _1, _2) );
-#endif // BGFX_SHADER_LANGUAGE_GLSL
+#endif // BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 }
 
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 #define mtxFromRows3(_0, _1, _2)     transpose(mat3(_0, _1, _2) )
 #define mtxFromRows4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3) )
 #define mtxFromCols3(_0, _1, _2)               mat3(_0, _1, _2)
@@ -624,8 +624,17 @@ mat3 mtxFromCols(vec3 _0, vec3 _1, vec3 _2)
 #define mtxFromRows4(_0, _1, _2, _3)           mat4(_0, _1, _2, _3)
 #define mtxFromCols3(_0, _1, _2)     transpose(mat3(_0, _1, _2) )
 #define mtxFromCols4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3) )
-#endif // BGFX_SHADER_LANGUAGE_GLSL
+#endif // BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 
+#if BGFX_SHADER_NEEDS_UNIFORMS_BLOCK > 0
+#	define BGFX_BEGIN_UNIFORM_BLOCK(Name) layout(std140) uniform Name {
+#	define BGFX_END_UNIFORM_BLOCK };
+#else
+#	define BGFX_BEGIN_UNIFORM_BLOCK(Name)
+#	define BGFX_END_UNIFORM_BLOCK
+#endif
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsBuiltin)
 uniform vec4  u_viewRect;
 uniform vec4  u_viewTexel;
 uniform mat4  u_view;
@@ -638,6 +647,8 @@ uniform mat4  u_model[BGFX_CONFIG_MAX_BONES];
 uniform mat4  u_modelView;
 uniform mat4  u_modelViewProj;
 uniform vec4  u_alphaRef4;
+BGFX_END_UNIFORM_BLOCK
+
 #define u_alphaRef u_alphaRef4.x
 
 #endif // __cplusplus

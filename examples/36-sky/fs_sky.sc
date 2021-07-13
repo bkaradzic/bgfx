@@ -5,11 +5,13 @@ $input v_skyColor, v_screenPos, v_viewDir
 * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 */
 
+#include "../common/common.sh"
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_parameters; // x - sun size, y - sun bloom, z - exposition, w - time
 uniform vec4 u_sunDirection;
 uniform vec4 u_sunLuminance;
-
-#include "../common/common.sh"
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

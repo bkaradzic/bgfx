@@ -8,10 +8,13 @@ $input v_normal, v_texcoord0
 #include "../common/common.sh"
 
 SAMPLER2D(s_texLightmap,  0);
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_sunDirection;
 uniform vec4 u_sunLuminance;
 uniform vec4 u_skyLuminance;
 uniform vec4 u_parameters;
+BGFX_END_UNIFORM_BLOCK
 
 // https://www.shadertoy.com/view/4ssXRX
 // http://www.loopit.dk/banding_in_games.pdf

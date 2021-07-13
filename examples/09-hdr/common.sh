@@ -5,8 +5,11 @@
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_offset[16];
 uniform vec4 u_tonemap;
+BGFX_END_UNIFORM_BLOCK
+
 #define u_time u_tonemap.w
 
 float reinhard(float _x)

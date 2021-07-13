@@ -1,5 +1,8 @@
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_params[19];
 uniform vec4 u_rect;
+BGFX_END_UNIFORM_BLOCK
 
 #define u_viewportPixelSize					u_params[0].xy 
 #define u_halfViewportPixelSize				u_params[0].zw 

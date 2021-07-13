@@ -8,7 +8,10 @@ $input v_texcoord0
 #include "../common/common.sh"
 SAMPLER2D(s_shadowMap0, 4);
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_params2;
+BGFX_END_UNIFORM_BLOCK
+
 #define u_depthValuePow u_params2.x
 
 void main()

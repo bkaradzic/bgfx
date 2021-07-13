@@ -104,6 +104,27 @@ namespace bgfx {
 			}
 		}
 
+		constexpr bool isImage(GLSLCpiqTypeEnum type)
+		{
+			switch (type)
+			{
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_1D:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_2D:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_3D:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_2D_RECT:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_CUBE:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_BUFFER:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_1D_ARRAY:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_2D_ARRAY:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_CUBE_MAP_ARRAY:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_2D_MULTISAMPLE:
+			case GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_IMAGE_2D_MULTISAMPLE_ARRAY:
+				return true;
+			default:
+				return false;
+			}
+		}
+
 		bool fillUniformData(Uniform& target, const Options& _options, const UniformData& uniformData)
 		{
 			target.name = uniformData.m_Name;
@@ -121,7 +142,7 @@ namespace bgfx {
 				{GLSLCpiqTypeEnum::GLSLC_PIQ_TYPE_MAT4, {bgfx::UniformType::Enum::Mat4, sizeof(float) * 4 * 4}},
 			};
 
-			if (isSampler(uniformData.m_Type))
+			if (isSampler(uniformData.m_Type) || isImage(uniformData.m_Type))
 			{
 				target.type = UniformType::Enum(bgfx::UniformType::Sampler | kUniformSamplerBit);
 				target.num = 1;
@@ -209,6 +230,8 @@ namespace bgfx {
 						bx::write(_writer, un.num);
 						bx::write(_writer, un.regIndex);
 						bx::write(_writer, un.regCount);
+						bx::write(_writer, un.texComponent); // BBI-NOTE: (tstump) this isn't added in the version of bgfx the game is based off
+						bx::write(_writer, un.texDimension);
 					}
 				}
 			}
@@ -355,9 +378,9 @@ namespace bgfx {
 
 						if (uniformData.m_BlockNdx != -1)
 						{
-							if (isSampler(uniform->type))
+							if (isSampler(uniform->type) || isImage(uniform->type))
 							{
-								printError("Samplers are expected to be declared as a global uniform, but this one is in a uniform block: " + uniformData.m_Name);
+								printError("Samplers are expected to be declared as a global uniform, but this one is in a uniform block: " + uniformData.m_Name + "\n");
 							}
 							else
 							{
@@ -366,11 +389,11 @@ namespace bgfx {
 						}
 						else
 						{
-							if (isSampler(uniform->type)) {
+							if (isSampler(uniform->type) || isImage(uniform->type)) {
 								reflectionInfo.m_GlobalUniforms.push_back(uniformData);
 							}
 							else {
-								printError("All uniforms should've been in a uniform block, or should've been a global sampler, but this one isn't: " + uniformData.m_Name);
+								printError("All uniforms should've been in a uniform block, or should've been a global sampler, but this one isn't: " + uniformData.m_Name + "\n");
 								return false;
 							}
 						}

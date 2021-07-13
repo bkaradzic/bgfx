@@ -50,7 +50,7 @@ namespace bgfx
 		"Metal Shading Language (MSL)",
 		"PlayStation Shader Language (PSSL)",
 		"PlayStation Shader Language 2 (PSSL2)",
-		"PlayStation Shader Language 2 (NVN)",
+		"OpenGL Shading Language (NVN)",
 		"Standard Portable Intermediate Representation - V (SPIR-V)",
 
 		"Unknown?!"
@@ -986,6 +986,7 @@ namespace bgfx
 			"           nx\n"
 			"           osx\n"
 			"           windows\n"
+			"           nx\n"
 			"      -p, --profile <profile>   Shader model (default GLSL).\n"
 		);
 
@@ -1212,6 +1213,7 @@ namespace bgfx
 			preprocessor.setDefine("BX_PLATFORM_NX=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_NVN=1");
 			preprocessor.setDefine("lit=lit_reserved");
+			preprocessor.setDefine("BGFX_SHADER_NEEDS_UNIFORMS_BLOCK=1");
 		}
 		else
 		{
@@ -1507,12 +1509,13 @@ namespace bgfx
 			else
 			{
 				if (profile->lang == ShadingLang::GLSL
-					|| profile->lang == ShadingLang::ESSL)
+					|| profile->lang == ShadingLang::ESSL
+					|| profile->lang == ShadingLang::NVN)
 				{
 				}
 				else
 				{
-					if (profile->lang != ShadingLang::PSSL)  // BBI-TODO (dgalloway) this code looks wrong?  Why the !=
+					if (profile->lang == ShadingLang::PSSL)
 					{
 						preprocessor.writef(getPsslPreamble());
 					}
@@ -1601,8 +1604,11 @@ namespace bgfx
 						bx::write(_writer, outputHash);
 
 						if (profile->lang == ShadingLang::GLSL
-							|| profile->lang == ShadingLang::ESSL)
+							|| profile->lang == ShadingLang::ESSL
+							|| profile->lang == ShadingLang::NVN)
 						{
+							const bool usesGpuShader4 = !bx::findIdentifierMatch(input, s_EXT_gpu_shader4).isEmpty() || profile->lang == ShadingLang::NVN;
+
 							if (profile->lang == ShadingLang::ESSL)
 							{
 								bx::stringPrintf(code, "#version 310 es\n");
@@ -1616,17 +1622,31 @@ namespace bgfx
 								);
 							}
 
+							if (usesGpuShader4)
+							{
+								bx::stringPrintf(code
+									, "#extension GL_EXT_gpu_shader4 : enable\n"
+								);
+							}
+
 #if 1
 							code += preprocessor.m_preprocessed;
 
-							bx::write(_writer, uint16_t(0));
+							if (profile->lang == ShadingLang::NVN)
+							{
+								compiled = compileNVNShader(_options, 0, code, _writer);
+							}
+							else
+							{
+								bx::write(_writer, uint16_t(0));
 
-							uint32_t shaderSize = (uint32_t)code.size();
-							bx::write(_writer, shaderSize);
-							bx::write(_writer, code.c_str(), shaderSize);
-							bx::write(_writer, uint8_t(0));
+								uint32_t shaderSize = (uint32_t)code.size();
+								bx::write(_writer, shaderSize);
+								bx::write(_writer, code.c_str(), shaderSize);
+								bx::write(_writer, uint8_t(0));
 
-							compiled = true;
+								compiled = true;
+							}
 #else
 							code += _comment;
 							code += preprocessor.m_preprocessed;
@@ -1694,9 +1714,10 @@ namespace bgfx
 			else
 			{
 				if (profile->lang == ShadingLang::GLSL
-					|| profile->lang == ShadingLang::ESSL)
+					|| profile->lang == ShadingLang::ESSL
+					|| profile->lang == ShadingLang::NVN)
 				{
-					if (profile->lang != ShadingLang::ESSL)
+					if (profile->lang == ShadingLang::GLSL || profile->lang == ShadingLang::NVN)
 					{
 						// bgfx shadow2D/Proj behave like EXT_shadow_samplers
 						// not as GLSL language 1.2 specs shadow2D/Proj.
@@ -2162,7 +2183,8 @@ namespace bgfx
 						}
 
 						if (profile->lang == ShadingLang::GLSL
-							|| profile->lang == ShadingLang::ESSL)
+							|| profile->lang == ShadingLang::ESSL
+							|| profile->lang == ShadingLang::NVN)
 						{
 							const bx::StringView preprocessedInput(preprocessor.m_preprocessed.c_str());
 							uint32_t glsl_profile = profile->id;
@@ -2201,7 +2223,7 @@ namespace bgfx
 									;
 
 								const bool usesInstanceID = !bx::findIdentifierMatch(input, "gl_InstanceID").isEmpty();
-								const bool usesGpuShader4 = !bx::findIdentifierMatch(input, s_EXT_gpu_shader4).isEmpty();
+								const bool usesGpuShader4 = !bx::findIdentifierMatch(input, s_EXT_gpu_shader4).isEmpty() || profile->lang == ShadingLang::NVN;
 								const bool usesTexelFetch = !bx::findIdentifierMatch(input, s_texelFetch).isEmpty();
 								const bool usesTextureMS = !bx::findIdentifierMatch(input, s_ARB_texture_multisample).isEmpty();
 								const bool usesTextureArray = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
@@ -2463,6 +2485,12 @@ namespace bgfx
 							{
 								bx::stringPrintf(code, "#version %d\n", glsl_profile);
 
+								if (profile->lang == ShadingLang::NVN)
+								{
+									bx::stringPrintf(code, "#extension GL_ARB_shader_draw_parameters : enable\n");
+									bx::stringPrintf(code, "#extension GL_NV_shadow_samplers_cube : enable\n");
+								}
+
 								bx::stringPrintf(code
 									, "#define texture2DLod       textureLod\n"
 									"#define texture2DGrad      textureGrad\n"
@@ -2483,6 +2511,19 @@ namespace bgfx
 									, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
 									"#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
 								);
+
+								if (profile->lang == ShadingLang::NVN)
+								{
+									if ('v' == _options.shaderType)
+									{
+										bx::stringPrintf(code,
+											"out gl_PerVertex\n"
+											"{\n"
+											"  vec4 gl_Position;\n"
+											"};\n"
+										);
+									}
+								}
 							}
 
 							if ((profile->lang == ShadingLang::GLSL && glsl_profile > 400)
@@ -2509,7 +2550,14 @@ namespace bgfx
 									glsl_profile |= 0x80000000;
 								}
 
-								compiled = compileGLSLShader(_options, glsl_profile, code, _writer);
+								if (profile->lang == ShadingLang::NVN)
+								{
+									compiled = compileNVNShader(_options, 0, code, _writer);
+								}
+								else
+								{
+									compiled = compileGLSLShader(_options, glsl_profile, code, _writer);
+								}
 							}
 						}
 						else
@@ -2532,10 +2580,6 @@ namespace bgfx
 							else if (profile->lang == ShadingLang::PSSL2)
 							{
 								//compiled = compilePSSL2Shader(_options, 0, code, _writer);
-							}
-							else if (profile->lang == ShadingLang::NVN)
-							{
-								compiled = compileNVNShader(_options, 0, input, _writer);
 							}
 							else
 							{

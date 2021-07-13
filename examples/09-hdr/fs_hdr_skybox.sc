@@ -8,7 +8,10 @@ $input v_texcoord0
 #include "common.sh"
 
 SAMPLERCUBE(s_texCube, 0);
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform mat4 u_mtx;
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

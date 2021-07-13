@@ -9,6 +9,7 @@ $input v_normal, v_view
 
 #define MAX_NUM_LIGHTS 5
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_params;
 uniform vec4 u_ambient;
 uniform vec4 u_diffuse;
@@ -16,6 +17,7 @@ uniform vec4 u_color;
 uniform vec4 u_specular_shininess;
 uniform vec4 u_lightPosRadius[MAX_NUM_LIGHTS];
 uniform vec4 u_lightRgbInnerR[MAX_NUM_LIGHTS];
+BGFX_END_UNIFORM_BLOCK
 
 #define u_ambientPass  u_params.x
 #define u_lightingPass u_params.y

@@ -10,7 +10,9 @@ $input v_lightCenterScale, v_color0
 SAMPLER2D(s_normal, 0); // Normal output from gbuffer
 SAMPLER2D(s_depth,  1);  // Depth output from gbuffer
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform mat4 u_invMvp;
+BGFX_END_UNIFORM_BLOCK
 
 float toClipSpaceDepth(float _depthTextureZ)
 {

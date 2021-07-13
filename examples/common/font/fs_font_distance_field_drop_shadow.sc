@@ -4,7 +4,9 @@ $input v_color0, v_color1, v_texcoord0, v_texcoord1, v_texcoord2
 
 SAMPLERCUBE(s_texColor, 0);
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_params;
+BGFX_END_UNIFORM_BLOCK
 
 #define u_distanceMultiplier     u_params.y
 #define u_dropShadowSoftener     u_params.z

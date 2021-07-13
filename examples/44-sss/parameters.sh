@@ -6,7 +6,9 @@
 #ifndef PARAMETERS_SH
 #define PARAMETERS_SH
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_params[12];
+BGFX_END_UNIFORM_BLOCK
 
 #define u_frameIdx					(u_params[0].x)
 #define u_shadowRadius				(u_params[0].y)

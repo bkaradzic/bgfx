@@ -9,8 +9,10 @@
  *   http://web.archive.org/web/20190103162638/http://linedef.com/virtual-texture-demo.html
  */
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_vt_settings_1;
 uniform vec4 u_vt_settings_2;
+BGFX_END_UNIFORM_BLOCK
 
 #define VirtualTextureSize u_vt_settings_1.x
 #define AtlasScale u_vt_settings_1.y

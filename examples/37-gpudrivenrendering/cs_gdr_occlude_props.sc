@@ -11,8 +11,10 @@ BUFFER_RO(instanceDataIn, vec4, 1);
 BUFFER_RW(drawcallInstanceCount, uint, 2);
 BUFFER_WR(instancePredicates, bool, 3);
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_inputRTSize;
 uniform vec4 u_cullingConfig;
+BGFX_END_UNIFORM_BLOCK
 
 NUM_THREADS(64, 1, 1)
 void main()

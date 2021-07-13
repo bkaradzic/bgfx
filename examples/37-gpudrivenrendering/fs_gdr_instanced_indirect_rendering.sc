@@ -7,7 +7,9 @@ $input v_materialID
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_color[32];
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

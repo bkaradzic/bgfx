@@ -7,7 +7,9 @@ $input v_pos, v_view, v_normal, v_color0
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_time;
+BGFX_END_UNIFORM_BLOCK
 
 vec2 blinn(vec3 _lightDir, vec3 _normal, vec3 _viewDir)
 {

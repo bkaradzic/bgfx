@@ -5,7 +5,9 @@
 
 #include <bgfx_shader.sh>
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_params[4];
+BGFX_END_UNIFORM_BLOCK
 
 #define u_lightDir     u_params[0].xyz
 #define u_shininess    u_params[0].w

@@ -5,6 +5,7 @@
 
 #include "common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_params0;
 uniform vec4 u_params1;
 uniform vec4 u_params2;
@@ -28,6 +29,7 @@ uniform vec4 u_tetraNormalYellow;
 uniform vec4 u_tetraNormalBlue;
 uniform vec4 u_tetraNormalRed;
 #endif
+BGFX_END_UNIFORM_BLOCK
 
 SAMPLER2D(s_shadowMap0, 4);
 SAMPLER2D(s_shadowMap1, 5);

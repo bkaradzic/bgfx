@@ -6,6 +6,8 @@ $input v_normal, v_view
  */
 
 #include "../common/common.sh"
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_params;
 uniform vec4 u_svparams;
 uniform vec4 u_ambient;
@@ -15,6 +17,8 @@ uniform vec4 u_specular_shininess;
 uniform vec4 u_fog;
 uniform vec4 u_lightPosRadius;
 uniform vec4 u_lightRgbInnerR;
+BGFX_END_UNIFORM_BLOCK
+
 SAMPLER2D(s_texStencil, 1);
 
 #define u_ambientPass   u_params.x

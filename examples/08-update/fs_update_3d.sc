@@ -8,7 +8,10 @@ $input v_texcoord0
 #include "../common/common.sh"
 
 SAMPLER3D(s_texColor, 0);
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_time;
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

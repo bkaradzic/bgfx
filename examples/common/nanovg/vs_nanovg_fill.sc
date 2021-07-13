@@ -5,11 +5,13 @@ $output v_position, v_texcoord0
 
 #define NEED_HALF_TEXEL (BGFX_SHADER_LANGUAGE_HLSL < 400)
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_viewSize;
 
 #if NEED_HALF_TEXEL
 uniform vec4 u_halfTexel;
 #endif // NEED_HALF_TEXEL
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

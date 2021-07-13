@@ -19,7 +19,9 @@ BUFFER_RW(drawcallData, uvec4, 4);
 //culled instance data
 BUFFER_WR(instanceDataOut, vec4, 5);
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_cullingConfig;
+BGFX_END_UNIFORM_BLOCK
 
 // Based on Parallel Prefix Sum (Scan) with CUDA by Mark Harris
 SHARED uint temp[2048];

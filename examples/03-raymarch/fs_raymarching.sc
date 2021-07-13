@@ -15,8 +15,10 @@ $input v_color0, v_texcoord0
 #include "../common/common.sh"
 #include "iq_sdf.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform mat4 u_mtx;
 uniform vec4 u_lightDirTime;
+BGFX_END_UNIFORM_BLOCK
 
 #define u_lightDir u_lightDirTime.xyz
 #define u_time     u_lightDirTime.w

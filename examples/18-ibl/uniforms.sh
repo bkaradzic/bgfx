@@ -3,7 +3,10 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_params[12];
+BGFX_END_UNIFORM_BLOCK
+
 #define u_mtx0          u_params[0]
 #define u_mtx1          u_params[1]
 #define u_mtx2          u_params[2]

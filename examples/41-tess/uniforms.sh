@@ -1,6 +1,7 @@
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_params[2];
-
+BGFX_END_UNIFORM_BLOCK
 
 #define u_DmapFactor u_params[0].x
 #define u_LodFactor u_params[0].y

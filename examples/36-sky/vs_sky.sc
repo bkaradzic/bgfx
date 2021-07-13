@@ -6,13 +6,14 @@ $output v_skyColor, v_screenPos, v_viewDir
 * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 */
 
+#include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_sunDirection;
 uniform vec4 u_skyLuminanceXYZ;
 uniform vec4 u_parameters; // x - sun size, y - sun bloom, z - exposition
 uniform vec4 u_perezCoeff[5];
-
-#include "../common/common.sh"
+BGFX_END_UNIFORM_BLOCK
 
 vec3 Perez(vec3 A,vec3 B,vec3 C,vec3 D, vec3 E,float costeta, float cosgamma)
 {

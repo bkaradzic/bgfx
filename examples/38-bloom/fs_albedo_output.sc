@@ -7,7 +7,9 @@ $input v_wpos, v_view, v_normal, v_tangent, v_bitangent, v_texcoord0
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_color;
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

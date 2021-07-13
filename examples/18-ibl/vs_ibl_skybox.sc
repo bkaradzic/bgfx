@@ -9,7 +9,9 @@ $output v_dir
 #include "../common/common.sh"
 #include "uniforms.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform mat4 u_mtx;
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

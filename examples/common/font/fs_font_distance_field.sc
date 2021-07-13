@@ -4,7 +4,9 @@ $input v_color0, v_texcoord0
 
 SAMPLERCUBE(s_texColor, 0);
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_params;
+BGFX_END_UNIFORM_BLOCK
 
 #define u_distanceMultiplier     u_params.y
 

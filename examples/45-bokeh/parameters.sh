@@ -7,7 +7,9 @@
 #define PARAMETERS_SH
 
 // struct PassUniforms
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_params[13];
+BGFX_END_UNIFORM_BLOCK
 
 #define u_depthUnpackConsts			(u_params[0].xy)
 #define u_frameIdx					(u_params[0].z)

@@ -9,7 +9,10 @@ $input v_pos, v_view, v_normal, v_texcoord0
 
 SAMPLER2D(s_texColor, 0);
 SAMPLER2D(s_texStipple, 1);
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_stipple;
+BGFX_END_UNIFORM_BLOCK
 
 vec2 blinn(vec3 _lightDir, vec3 _normal, vec3 _viewDir)
 {

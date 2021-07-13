@@ -8,8 +8,11 @@ $output  v_normal, v_view, v_shadowcoord
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform mat4 u_lightMtx;
 uniform vec4 u_params1;
+BGFX_END_UNIFORM_BLOCK
+
 #define u_shadowMapOffset u_params1.y
 
 void main()

@@ -5,7 +5,9 @@
 
 #include "bgfx_shader.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 bgfx_clear_color[8];
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

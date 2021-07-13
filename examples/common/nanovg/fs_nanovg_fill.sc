@@ -4,6 +4,7 @@ $input v_position, v_texcoord0
 
 #define EDGE_AA 1
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform mat3 u_scissorMat;
 uniform mat3 u_paintMat;
 uniform vec4 u_innerCol;
@@ -11,6 +12,7 @@ uniform vec4 u_outerCol;
 uniform vec4 u_scissorExtScale;
 uniform vec4 u_extentRadius;
 uniform vec4 u_params;
+BGFX_END_UNIFORM_BLOCK
 
 SAMPLER2D(s_tex, 0);
 

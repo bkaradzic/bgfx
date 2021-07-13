@@ -7,7 +7,10 @@ $input v_texcoord0
 
 #include <bgfx_shader.sh>
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_imageLodEnabled;
+BGFX_END_UNIFORM_BLOCK
+
 SAMPLERCUBE(s_texColor, 0);
 
 #define u_imageLod     u_imageLodEnabled.x

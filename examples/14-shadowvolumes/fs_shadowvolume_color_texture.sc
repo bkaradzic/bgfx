@@ -6,7 +6,11 @@ $input v_texcoord0
  */
 
 #include "../common/common.sh"
+
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_color;
+BGFX_END_UNIFORM_BLOCK
+
 SAMPLER2D(s_texColor, 0);
 
 void main()

@@ -7,7 +7,10 @@ $input v_position
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_depthScaleOffset;  // for GL, map depth values into [0, 1] range
+BGFX_END_UNIFORM_BLOCK
+
 #define u_depthScale u_depthScaleOffset.x
 #define u_depthOffset u_depthScaleOffset.y
 

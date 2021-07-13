@@ -5,8 +5,11 @@
 
 #include "bgfx_compute.sh"
 
-IMAGE2D_ARRAY_WR(s_texColor, rgba8, 0);
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_time;
+BGFX_END_UNIFORM_BLOCK
+
+IMAGE2D_ARRAY_WR(s_texColor, rgba8, 0);
 
 NUM_THREADS(16, 16, 1)
 void main()

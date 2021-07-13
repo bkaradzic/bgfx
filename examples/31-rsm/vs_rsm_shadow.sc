@@ -8,7 +8,9 @@ $output v_normal // RSM shadow
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_tint;
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

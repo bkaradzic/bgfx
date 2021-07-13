@@ -8,7 +8,9 @@ $output v_view, v_normal, v_shadowcoord
 
 #include "../common/common.sh"
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform mat4 u_lightMtx;
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

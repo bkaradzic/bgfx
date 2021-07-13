@@ -10,7 +10,9 @@ $input v_texcoord0
 SAMPLER2D(s_tex, 0);
 
 // pixel size of the target texture.
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_pixelSize;
+BGFX_END_UNIFORM_BLOCK
 
 void main()
 {

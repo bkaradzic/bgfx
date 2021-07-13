@@ -6,7 +6,9 @@
 #ifndef PARAMETERS_SH
 #define PARAMETERS_SH
 
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsCommon)
 uniform vec4 u_params[13];
+BGFX_END_UNIFORM_BLOCK
 
 #define u_jitterCurr				(u_params[0].xy)
 #define u_jitterPrev				(u_params[0].zw)
