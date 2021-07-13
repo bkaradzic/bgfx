@@ -17,8 +17,8 @@
 #include <math.h>
 #include <shader/shader_reflection.h>
 #include "renderer.h"
-#include <vector>
 #include <functional>
+#include <array>
 
 //=============================================================================================
 
@@ -103,6 +103,9 @@ private:
 		std::array<int8_t, Attrib::Count> mAttributeSlots{};
 		void* mBuf{};
 		sce::Agc::Shader* mShader{};
+		uint16_t mNumUniforms{};
+		uint8_t mNumAttributes{};
+		uint8_t mNumPredefinedUniforms{};
 	};
 
 	struct Program
@@ -148,8 +151,6 @@ private:
 	bool createDisplayBuffers(const Init& init);
 	bool createScanoutBuffers();
 	bool createContext();
-	bool createEmbeddedProgram(Program& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize);
-	bool createEmbeddedPrograms();
 	void tickDestroyList(bool const force = false);
 	void clearRect(ClearQuad& clearQuad, const Rect& rect, const Clear& clear, const float palette[][4]);
 
@@ -240,25 +241,22 @@ static RendererContextAGC* sRendererAGC;
 
 //=============================================================================================
 
-bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
+bool RendererContextAGC::Shader::create(const Memory& mem)
 {
-	if (embedded)
+	/*mBuf = allocDmem(sce::Agc::SizeAlign(mem.size, sce::Agc::Alignment::kShaderCode));
+	bx::memCopy(mBuf, mem.data, mem.size);
+	SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(mBuf);
+	void* const header = (void*)sceShaderGetProgramHeader(binaryHandle);
+	const void* const program = sceShaderGetProgram(binaryHandle);
+	SceError const error = sce::Agc::createShader(&mShader, header, program);
+	if (error != SCE_OK)
 	{
-		mBuf = allocDmem(sce::Agc::SizeAlign(mem.size, sce::Agc::Alignment::kShaderCode));
-		bx::memCopy(mBuf, mem.data, mem.size);
-		SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(mBuf);
-		void* const header = (void*)sceShaderGetProgramHeader(binaryHandle);
-		const void* const program = sceShaderGetProgram(binaryHandle);
-		SceError const error = sce::Agc::createShader(&mShader, header, program);
-		if (error != SCE_OK)
-		{
-			freeDmem(mBuf);
-			return false;
-		}
-		return true;
+		freeDmem(mBuf);
+		return false;
 	}
+	return true;*/
 
-	bx::MemoryReader reader{_mem->data, _mem->size};
+	bx::MemoryReader reader{mem.data, mem.size};
 
 	uint32_t magic{};
 	bx::read(&reader, magic);
@@ -266,7 +264,7 @@ bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
 	uint8_t fragmentBit{};
 	if (isShaderType(magic, 'F'))
 	{
-		fragmentBit = BGFX_UNIFORM_FRAGMENTBIT;
+		fragmentBit = kUniformFragmentBit;
 	}
 	else if (!isShaderType(magic, 'V') &&
 			 !isShaderType(magic, 'V'))
@@ -275,7 +273,6 @@ bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
 		return false;
 	}
 
-	uint8_t const fragmentBit{BGFX_CHUNK_MAGIC_FSH == magic ? BGFX_UNIFORM_FRAGMENTBIT : 0};
 
 	uint32_t hashIn{};
 	bx::read(&reader, hashIn);
@@ -298,8 +295,8 @@ bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
 		, count
 		);
 
-	m_numPredefined{0};
-	m_numUniforms{count};
+	mNumPredefinedUniforms = 0;
+	mNumUniforms = count;
 
 	if (count > 0)
 	{
@@ -337,12 +334,12 @@ bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
 			if (predefined != PredefinedUniform::Count)
 			{
 				kind = "predefined";
-				m_predefined[m_numPredefined].m_loc = regIndex;
-				m_predefined[m_numPredefined].m_count = regCount;
-				m_predefined[m_numPredefined].m_type = uint8_t(predefined | fragmentBit);
-				m_numPredefined++;
+				mPredefinedUniforms[mNumPredefinedUniforms].m_loc = regIndex;
+				mPredefinedUniforms[mNumPredefinedUniforms].m_count = regCount;
+				mPredefinedUniforms[mNumPredefinedUniforms].m_type = uint8_t(predefined | fragmentBit);
+				mNumPredefinedUniforms++;
 			}
-			else if ((BGFX_UNIFORM_SAMPLERBIT & type) == 0)
+			else if ((kUniformSamplerBit & type) == 0)
 			{
 				const UniformRegInfo* info = sRendererAGC->mUniformReg.find(name);
 				BX_WARN(info != nullptr, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -367,7 +364,7 @@ bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
 			BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
 				, kind
 				, name
-				, getUniformTypeName(UniformType::Enum(type&~BGFX_UNIFORM_MASK))
+				, getUniformTypeName(UniformType::Enum(type&~kUniformMask))
 				, num
 				, regIndex
 				, regCount
@@ -377,7 +374,7 @@ bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
 
 		if (mUniforms != nullptr)
 		{
-			mUniforms = UniformBuffer::finishAndTrim();
+			mUniforms = UniformBuffer::finishAndTrim(mUniforms);
 		}
 	}
 
@@ -390,7 +387,7 @@ bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
 	uint8_t numAttrs{};
 	bx::read(&reader, numAttrs);
 
-	bool isInstanced[numAttrs]{};
+	bool isInstanced[numAttrs];
 	bool atLeastOneInstanced = false;
 
 	std::fill(mAttributeSlots.begin(), mAttributeSlots.end(), -1);
@@ -456,8 +453,8 @@ bool RendererContextAGC::Shader::create(const Memory& mem, bool const embedded)
 
 	if (0 < constantBufferSize)
 	{
-		m_constantBufferSize = constantBufferSize;
-		BX_TRACE("\tCB size: %d", m_constantBufferSize);
+		//m_constantBufferSize = constantBufferSize;
+		//BX_TRACE("\tCB size: %d", m_constantBufferSize);
 	}
 
 	return true;
@@ -828,31 +825,6 @@ bool RendererContextAGC::createContext()
 
 //=============================================================================================
 
-bool RendererContextAGC::createEmbeddedProgram(Program& program, const uint8_t* const vsData, size_t const vsSize, const uint8_t* const psData, size_t psSize)
-{
-	program.mVsShader = BX_NEW(g_allocator, Shader);
-	program.mPsShader = BX_NEW(g_allocator, Shader);
-	if (!program.mVsShader->create(Memory{(uint8_t*)vsData, (uint32_t)vsSize}, true) ||
-		!program.mPsShader->create(Memory{(uint8_t*)psData, (uint32_t)psSize}, true))
-	{
-		delete program.mVsShader;
-		delete program.mPsShader;
-		program.mVsShader = nullptr;
-		program.mPsShader = nullptr;
-		return false;
-	}
-	return true;
-}
-
-//=============================================================================================
-
-bool RendererContextAGC::createEmbeddedPrograms()
-{
-	return createEmbeddedProgram(mClearProgram, vs_clear_data, vs_clear_size, fs_clear0_data, fs_clear0_size);
-}
-
-//=============================================================================================
-
 bool RendererContextAGC::init(const Init& initParams)
 {
 	// TODO: (manderson) cleanup?
@@ -868,8 +840,7 @@ bool RendererContextAGC::init(const Init& initParams)
 
 	if (!createDisplayBuffers(initParams) ||
 		!createScanoutBuffers() ||
-		!createContext() ||
-		!createEmbeddedPrograms())
+		!createContext())
 		return false;
 
 	return true;
@@ -1155,6 +1126,7 @@ void RendererContextAGC::setName(Handle handle, const char* name, uint16_t len)
 
 void RendererContextAGC::clearRect(ClearQuad& clearQuad, const Rect& rect, const Clear& clear, const float palette[][4])
 {
+#if 0
 	// Create AGC Buffer and VertexAttrib table.
 				const GLuint defaultVao = m_vao;
 				if (0 != defaultVao)
@@ -1254,6 +1226,7 @@ void RendererContextAGC::clearRect(ClearQuad& clearQuad, const Rect& rect, const
 					, 4
 					) );
 			}
+#endif
 }
 
 //=============================================================================================
