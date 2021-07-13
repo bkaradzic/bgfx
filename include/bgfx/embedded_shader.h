@@ -20,9 +20,11 @@
 #define BGFX_EMBEDDED_SHADER_NVN(...)
 #define BGFX_EMBEDDED_SHADER_SPIRV(...)
 
-#define BGFX_PLATFORM_SUPPORTS_DX9BC (0 \
-		|| BX_PLATFORM_WINDOWS          \
-		)
+// manderson: Ignore DX9.
+//#define BGFX_PLATFORM_SUPPORTS_DX9BC (0 \
+//		|| BX_PLATFORM_WINDOWS          \
+//		)
+#define BGFX_PLATFORM_SUPPORTS_DX9BC 0
 #define BGFX_PLATFORM_SUPPORTS_DXBC (0  \
 		|| BX_PLATFORM_WINDOWS          \
 		|| BX_PLATFORM_WINRT            \
@@ -130,9 +132,9 @@
 					BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)              \
 					BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)              \
 					BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::WebGPU,     _name)              \
-					{ bgfx::RendererType::Nvn,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 },  \
-					{ bgfx::RendererType::Gnm,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 },  \
-					{ bgfx::RendererType::Agc,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 },  \
+					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)              \
+					BGFX_EMBEDDED_SHADER_PSSL2(bgfx::RendererType::Agc,        _name)              \
+					BGFX_EMBEDDED_SHADER_NVN  (bgfx::RendererType::Nvn,        _name)              \
 					{ bgfx::RendererType::Noop, (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 },  \
 					{ bgfx::RendererType::Count, NULL, 0 }                                         \
 				}                                                                                  \
