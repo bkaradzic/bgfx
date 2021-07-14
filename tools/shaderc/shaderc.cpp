@@ -1488,7 +1488,7 @@ namespace bgfx
 			}
 			else if (profile->lang == ShadingLang::PSSL2)
 			{
-				//compiled = compilePSSL2Shader(_options, 0, input, _writer);
+				compiled = compilePSSL2Shader(_options, 0, input, _writer);
 			}
 			else if (profile->lang == ShadingLang::NVN)
 			{
@@ -1673,7 +1673,7 @@ namespace bgfx
 							}
 							else if (profile->lang == ShadingLang::PSSL2)
 							{
-								//compiled = compilePSSL2Shader(_options, 0, code, _writer);
+								compiled = compilePSSL2Shader(_options, 0, code, _writer);
 							}
 							else if (profile->lang == ShadingLang::NVN)
 							{
@@ -1807,7 +1807,7 @@ namespace bgfx
 					}
 					else if (profile->lang == ShadingLang::PSSL2)
 					{
-						//preprocessor.writef(getPssl2Preamble());
+						preprocessor.writef(getPssl2Preamble());
 					}
 
 					preprocessor.writef(
@@ -2579,7 +2579,7 @@ namespace bgfx
 							}
 							else if (profile->lang == ShadingLang::PSSL2)
 							{
-								//compiled = compilePSSL2Shader(_options, 0, code, _writer);
+								compiled = compilePSSL2Shader(_options, 0, code, _writer);
 							}
 							else
 							{
