@@ -739,7 +739,7 @@ namespace bgfx {
 						if (memberKlass == SceShaderArrayType)
 						{  //BBI-NOTE only support single dimensional arrays currently :|
 
-							SceShaderTypeHandle elemTy = sceShaderGetArrayElement(md, type);
+							SceShaderTypeHandle elemTy = sceShaderGetArrayElement(md, memberType);
 
 							while (SceShaderArrayType == sceShaderGetTypeClass(md, elemTy))
 								elemTy = sceShaderGetArrayElement(md, elemTy);
@@ -751,7 +751,9 @@ namespace bgfx {
 								un,
 								names);
 
-							auto arraySize = sceShaderGetArraySize(md, type);
+							auto arraySize = sceShaderGetArraySize(md, memberType);
+
+
 							un.name.assign(name);
 							un.num = arraySize;
 							un.regCount = un.regCount * arraySize;
