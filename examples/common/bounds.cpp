@@ -1243,11 +1243,6 @@ bool overlap(const Aabb& _aabb, const Vec3& _pos)
 		;
 }
 
-bool overlap(const Aabb& _aabb, const Sphere& _sphere)
-{
-	return overlap(_sphere, _aabb);
-}
-
 bool overlap(const Aabb& _aabbA, const Aabb& _aabbB)
 {
 	return true
@@ -1328,11 +1323,6 @@ bool overlap(const Aabb& _aabb, const Triangle& _triangle)
 	return true;
 }
 
-bool overlap(const Aabb& _aabb, const Cylinder& _cylinder)
-{
-	return overlap(_cylinder, _aabb);
-}
-
 bool overlap(const Aabb& _aabb, const Capsule& _capsule)
 {
 	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, getCenter(_aabb) );
@@ -1371,29 +1361,9 @@ bool overlap(const Capsule& _capsule, const Vec3& _pos)
 	return overlap(Sphere{pos, _capsule.radius}, _pos);
 }
 
-bool overlap(const Capsule& _capsule, const Sphere& _sphere)
-{
-	return overlap(_sphere, _capsule);
-}
-
-bool overlap(const Capsule& _capsule, const Aabb& _aabb)
-{
-	return overlap(_aabb, _capsule);
-}
-
 bool overlap(const Capsule& _capsule, const Plane& _plane)
 {
 	return distance(_plane, LineSegment{_capsule.pos, _capsule.end}) <= _capsule.radius;
-}
-
-bool overlap(const Capsule& _capsule, const Triangle& _triangle)
-{
-	return overlap(_triangle, _capsule);
-}
-
-bool overlap(const Capsule& _capsule, const Cylinder& _cylinder)
-{
-	return overlap(_cylinder, _capsule);
 }
 
 bool overlap(const Capsule& _capsuleA, const Capsule& _capsuleB)
@@ -1443,47 +1413,11 @@ bool overlap(const Capsule& _capsuleA, const Capsule& _capsuleB)
 	return overlap(_capsuleB, Sphere{closestA, _capsuleA.radius});
 }
 
-bool overlap(const Capsule& _capsule, const Cone& _cone)
-{
-	BX_UNUSED(_capsule, _cone);
-	return false;
-}
-
-bool overlap(const Capsule& _capsule, const Disk& _disk)
-{
-	return overlap(_disk, _capsule);
-}
-
-bool overlap(const Capsule& _capsule, const Obb& _obb)
-{
-	return overlap(_obb, _capsule);
-}
-
 bool overlap(const Cone& _cone, const Vec3& _pos)
 {
 	float tt;
 	const Vec3 pos = closestPoint(LineSegment{_cone.pos, _cone.end}, _pos, tt);
 	return overlap(Disk{pos, normalize(sub(_cone.end, _cone.pos) ), lerp(_cone.radius, 0.0f, tt)}, _pos);
-}
-
-bool overlap(const Cone& _cone, const Sphere& _sphere)
-{
-	return overlap(_sphere, _cone);
-}
-
-bool overlap(const Cone& _cone, const Aabb& _aabb)
-{
-	return overlap(_aabb, _cone);
-}
-
-bool overlap(const Cone& _cone, const Plane& _plane)
-{
-	return overlap(_plane, _cone);
-}
-
-bool overlap(const Cone& _cone, const Triangle& _triangle)
-{
-	return overlap(_triangle, _cone);
 }
 
 bool overlap(const Cone& _cone, const Cylinder& _cylinder)
@@ -1540,11 +1474,6 @@ bool overlap(const Cylinder& _cylinder, const Plane& _plane)
 	return false;
 }
 
-bool overlap(const Cylinder& _cylinder, const Triangle& _triangle)
-{
-	return overlap(_triangle, _cylinder);
-}
-
 bool overlap(const Cylinder& _cylinderA, const Cylinder& _cylinderB)
 {
 	BX_UNUSED(_cylinderA, _cylinderB);
@@ -1554,12 +1483,6 @@ bool overlap(const Cylinder& _cylinderA, const Cylinder& _cylinderB)
 bool overlap(const Cylinder& _cylinder, const Capsule& _capsule)
 {
 	BX_UNUSED(_cylinder, _capsule);
-	return false;
-}
-
-bool overlap(const Cylinder& _cylinder, const Cone& _cone)
-{
-	BX_UNUSED(_cylinder, _cone);
 	return false;
 }
 
@@ -1588,16 +1511,6 @@ bool overlap(const Disk& _disk, const Vec3& _pos)
 	return distanceSq(_disk.center, _pos) <= square(_disk.radius);
 }
 
-bool overlap(const Disk& _disk, const Sphere& _sphere)
-{
-	return overlap(_sphere, _disk);
-}
-
-bool overlap(const Disk& _disk, const Aabb& _aabb)
-{
-	return overlap(_aabb, _disk);
-}
-
 bool overlap(const Disk& _disk, const Plane& _plane)
 {
 	Plane plane;
@@ -1611,16 +1524,6 @@ bool overlap(const Disk& _disk, const Plane& _plane)
 	return overlap(_plane, Sphere{_disk.center, _disk.radius});
 }
 
-bool overlap(const Disk& _disk, const Triangle& _triangle)
-{
-	return overlap(_triangle, _disk);
-}
-
-bool overlap(const Disk& _disk, const Cylinder& _cylinder)
-{
-	return overlap(_cylinder, _disk);
-}
-
 bool overlap(const Disk& _disk, const Capsule& _capsule)
 {
 	if (!overlap(_capsule, Sphere{_disk.center, _disk.radius}) )
@@ -1632,12 +1535,6 @@ bool overlap(const Disk& _disk, const Capsule& _capsule)
 	calcPlane(plane, _disk.normal, _disk.center);
 
 	return overlap(_capsule, plane);
-}
-
-bool overlap(const Disk& _disk, const Cone& _cone)
-{
-	BX_UNUSED(_disk, _cone);
-	return false;
 }
 
 bool overlap(const Disk& _diskA, const Disk& _diskB)
@@ -1693,16 +1590,6 @@ bool overlap(const Obb& _obb, const Vec3& _pos)
 	return overlap(aabb, pos);
 }
 
-bool overlap(const Obb& _obb, const Sphere& _sphere)
-{
-	return overlap(_sphere, _obb);
-}
-
-bool overlap(const Obb& _obb, const Aabb& _aabb)
-{
-	return overlap(_aabb, _obb);
-}
-
 bool overlap(const Obb& _obb, const Plane& _plane)
 {
 	Srt srt = toSrt(_obb.mtx);
@@ -1719,17 +1606,6 @@ bool overlap(const Obb& _obb, const Plane& _plane)
 	const float radius = dot(srt.scale, bx::abs(axis) );
 
 	return dist <= radius;
-}
-
-bool overlap(const Obb& _obb, const Triangle& _triangle)
-{
-	return overlap(_triangle, _obb);
-}
-
-bool overlap(const Obb& _obb, const Cylinder& _cylinder)
-{
-	BX_UNUSED(_obb, _cylinder);
-	return false;
 }
 
 bool overlap(const Obb& _obb, const Capsule& _capsule)
@@ -1751,17 +1627,6 @@ bool overlap(const Obb& _obb, const Capsule& _capsule)
 	return overlap(aabb, capsule);
 }
 
-bool overlap(const Obb& _obb, const Cone& _cone)
-{
-	BX_UNUSED(_obb, _cone);
-	return false;
-}
-
-bool overlap(const Obb& _obb, const Disk& _disk)
-{
-	return overlap(_disk, _obb);
-}
-
 bool overlap(const Obb& _obbA, const Obb& _obbB)
 {
 	BX_UNUSED(_obbA, _obbB);
@@ -1778,37 +1643,12 @@ bool overlap(const Plane& _plane, const Vec3& _pos)
 	return isNearZero(distance(_plane, _pos) );
 }
 
-bool overlap(const Plane& _plane, const Sphere& _sphere)
-{
-	return overlap(_sphere, _plane);
-}
-
-bool overlap(const Plane& _plane, const Aabb& _aabb)
-{
-	return overlap(_aabb, _plane);
-}
-
 bool overlap(const Plane& _planeA, const Plane& _planeB)
 {
 	const Vec3  dir = cross(_planeA.normal, _planeB.normal);
 	const float len = length(dir);
 
 	return !isNearZero(len);
-}
-
-bool overlap(const Plane& _plane, const Triangle& _triangle)
-{
-	return overlap(_triangle, _plane);
-}
-
-bool overlap(const Plane& _plane, const Cylinder& _cylinder)
-{
-	return overlap(_cylinder, _plane);
-}
-
-bool overlap(const Plane& _plane, const Capsule& _capsule)
-{
-	return overlap(_capsule, _plane);
 }
 
 bool overlap(const Plane& _plane, const Cone& _cone)
@@ -1830,16 +1670,6 @@ bool overlap(const Plane& _plane, const Cone& _cone)
 		);
 
 	return overlap(_plane, LineSegment{pos, _cone.end});
-}
-
-bool overlap(const Plane& _plane, const Disk& _disk)
-{
-	return overlap(_disk, _plane);
-}
-
-bool overlap(const Plane& _plane, const Obb& _obb)
-{
-	return overlap(_obb, _plane);
 }
 
 bool overlap(const Sphere& _sphere, const Vec3& _pos)
@@ -1887,11 +1717,6 @@ bool overlap(const Sphere& _sphere, const Triangle& _triangle)
 		;
 }
 
-bool overlap(const Sphere& _sphere, const Cylinder& _cylinder)
-{
-	return overlap(_cylinder, _sphere);
-}
-
 bool overlap(const Sphere& _sphere, const Capsule& _capsule)
 {
 	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, _sphere.center);
@@ -1932,16 +1757,6 @@ bool overlap(const Triangle& _triangle, const Vec3& _pos)
 		&& uvw.y >= 0.0f
 		&& uvw.z >= 0.0f
 		;
-}
-
-bool overlap(const Triangle& _triangle, const Sphere& _sphere)
-{
-	return overlap(_sphere, _triangle);
-}
-
-bool overlap(const Triangle& _triangle, const Aabb& _aabb)
-{
-	return overlap(_aabb, _triangle);
 }
 
 bool overlap(const Triangle& _triangle, const Plane& _plane)
@@ -2175,4 +1990,3 @@ bool overlap(const Triangle& _triangle, const Obb& _obb)
 
 	return overlap(triangle, aabb);
 }
-

@@ -40,7 +40,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 45
+#define SPVC_C_API_VERSION_MINOR 47
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -98,6 +98,13 @@ typedef struct spvc_reflected_resource
 	spvc_type_id type_id;
 	const char *name;
 } spvc_reflected_resource;
+
+typedef struct spvc_reflected_builtin_resource
+{
+	SpvBuiltIn builtin;
+	spvc_type_id value_type_id;
+	spvc_reflected_resource resource;
+} spvc_reflected_builtin_resource;
 
 /* See C++ API. */
 typedef struct spvc_entry_point
@@ -220,6 +227,14 @@ typedef enum spvc_resource_type
 	SPVC_RESOURCE_TYPE_RAY_QUERY = 13,
 	SPVC_RESOURCE_TYPE_INT_MAX = 0x7fffffff
 } spvc_resource_type;
+
+typedef enum spvc_builtin_resource_type
+{
+	SPVC_BUILTIN_RESOURCE_TYPE_UNKNOWN = 0,
+	SPVC_BUILTIN_RESOURCE_TYPE_STAGE_INPUT = 1,
+	SPVC_BUILTIN_RESOURCE_TYPE_STAGE_OUTPUT = 2,
+	SPVC_BUILTIN_RESOURCE_TYPE_INT_MAX = 0x7fffffff
+} spvc_builtin_resource_type;
 
 /* Maps to spirv_cross::SPIRType::BaseType. */
 typedef enum spvc_basetype
@@ -722,6 +737,10 @@ SPVC_PUBLIC_API spvc_result spvc_compiler_flatten_buffer_block(spvc_compiler com
 
 SPVC_PUBLIC_API spvc_bool spvc_compiler_variable_is_depth_or_compare(spvc_compiler compiler, spvc_variable_id id);
 
+SPVC_PUBLIC_API spvc_result spvc_compiler_mask_stage_output_by_location(spvc_compiler compiler,
+                                                                        unsigned location, unsigned component);
+SPVC_PUBLIC_API spvc_result spvc_compiler_mask_stage_output_by_builtin(spvc_compiler compiler, SpvBuiltIn builtin);
+
 /*
  * HLSL specifics.
  * Maps to C++ API.
@@ -805,6 +824,11 @@ SPVC_PUBLIC_API spvc_result spvc_resources_get_resource_list_for_type(spvc_resou
                                                                       const spvc_reflected_resource **resource_list,
                                                                       size_t *resource_size);
 
+SPVC_PUBLIC_API spvc_result spvc_resources_get_builtin_resource_list_for_type(
+		spvc_resources resources, spvc_builtin_resource_type type,
+		const spvc_reflected_builtin_resource **resource_list,
+		size_t *resource_size);
+
 /*
  * Decorations.
  * Maps to C++ API.
@@ -861,6 +885,8 @@ SPVC_PUBLIC_API unsigned spvc_compiler_get_execution_mode_argument(spvc_compiler
 SPVC_PUBLIC_API unsigned spvc_compiler_get_execution_mode_argument_by_index(spvc_compiler compiler,
                                                                             SpvExecutionMode mode, unsigned index);
 SPVC_PUBLIC_API SpvExecutionModel spvc_compiler_get_execution_model(spvc_compiler compiler);
+SPVC_PUBLIC_API void spvc_compiler_update_active_builtins(spvc_compiler compiler);
+SPVC_PUBLIC_API spvc_bool spvc_compiler_has_active_builtin(spvc_compiler compiler, SpvBuiltIn builtin, SpvStorageClass storage);
 
 /*
  * Type query interface.

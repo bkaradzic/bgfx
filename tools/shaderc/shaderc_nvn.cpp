@@ -232,6 +232,7 @@ namespace bgfx {
 						bx::write(_writer, un.regCount);
 						bx::write(_writer, un.texComponent); // BBI-NOTE: (tstump) this isn't added in the version of bgfx the game is based off
 						bx::write(_writer, un.texDimension);
+						bx::write(_writer, un.texFormat); // BBI-NOTE: (manderson) new in version 10
 					}
 				}
 			}

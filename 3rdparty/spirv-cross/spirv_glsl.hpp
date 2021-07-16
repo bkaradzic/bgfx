@@ -65,7 +65,8 @@ enum AccessChainFlagBits
 	ACCESS_CHAIN_PTR_CHAIN_BIT = 1 << 2,
 	ACCESS_CHAIN_SKIP_REGISTER_EXPRESSION_READ_BIT = 1 << 3,
 	ACCESS_CHAIN_LITERAL_MSB_FORCE_ID = 1 << 4,
-	ACCESS_CHAIN_FLATTEN_ALL_MEMBERS_BIT = 1 << 5
+	ACCESS_CHAIN_FLATTEN_ALL_MEMBERS_BIT = 1 << 5,
+	ACCESS_CHAIN_FORCE_COMPOSITE_BIT = 1 << 6
 };
 typedef uint32_t AccessChainFlags;
 
@@ -177,7 +178,8 @@ public:
 
 	// Redirect a subpassInput reading from input_attachment_index to instead load its value from
 	// the color attachment at location = color_location. Requires ESSL.
-	void remap_ext_framebuffer_fetch(uint32_t input_attachment_index, uint32_t color_location);
+	// If coherent, uses GL_EXT_shader_framebuffer_fetch, if not, uses noncoherent variant.
+	void remap_ext_framebuffer_fetch(uint32_t input_attachment_index, uint32_t color_location, bool coherent);
 
 	explicit CompilerGLSL(std::vector<uint32_t> spirv_)
 	    : Compiler(std::move(spirv_))
@@ -249,6 +251,16 @@ public:
 	// - Samplers which are statically used at least once with Dref opcodes.
 	// - Images which are statically used at least once with Dref opcodes.
 	bool variable_is_depth_or_compare(VariableID id) const;
+
+	// If a shader output is active in this stage, but inactive in a subsequent stage,
+	// this can be signalled here. This can be used to work around certain cross-stage matching problems
+	// which plagues MSL and HLSL in certain scenarios.
+	// An output which matches one of these will not be emitted in stage output interfaces, but rather treated as a private
+	// variable.
+	// This option is only meaningful for MSL and HLSL, since GLSL matches by location directly.
+	// Masking builtins only takes effect if the builtin in question is part of the stage output interface.
+	void mask_stage_output_by_location(uint32_t location, uint32_t component);
+	void mask_stage_output_by_builtin(spv::BuiltIn builtin);
 
 protected:
 	struct ShaderSubgroupSupportHelper
@@ -375,6 +387,7 @@ protected:
 	virtual std::string constant_expression_vector(const SPIRConstant &c, uint32_t vector);
 	virtual void emit_fixup();
 	virtual std::string variable_decl(const SPIRType &type, const std::string &name, uint32_t id = 0);
+	virtual bool variable_decl_is_remapped_storage(const SPIRVariable &var, spv::StorageClass storage) const;
 	virtual std::string to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id);
 
 	struct TextureFunctionBaseArguments
@@ -569,6 +582,7 @@ protected:
 		bool use_array_constructor = false;
 		bool needs_row_major_load_workaround = false;
 		bool support_pointer_to_pointer = false;
+		bool support_precise_qualifier = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
@@ -616,6 +630,8 @@ protected:
 	void emit_trinary_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, uint32_t op2,
 	                          const char *op);
 	void emit_binary_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
+	void emit_atomic_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
+	void emit_atomic_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, uint32_t op2, const char *op);
 
 	void emit_unary_func_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op,
 	                             SPIRType::BaseType input_type, SPIRType::BaseType expected_result_type);
@@ -661,6 +677,9 @@ protected:
 	std::string access_chain_internal(uint32_t base, const uint32_t *indices, uint32_t count, AccessChainFlags flags,
 	                                  AccessChainMeta *meta);
 
+	spv::StorageClass get_expression_effective_storage_class(uint32_t ptr);
+	virtual bool access_chain_needs_stage_io_builtin_translation(uint32_t base);
+
 	virtual void prepare_access_chain_for_scalar_access(std::string &expr, const SPIRType &type,
 	                                                    spv::StorageClass storage, bool &is_packed);
 
@@ -691,6 +710,7 @@ protected:
 	void emit_uninitialized_temporary(uint32_t type, uint32_t id);
 	SPIRExpression &emit_uninitialized_temporary_expression(uint32_t type, uint32_t id);
 	void append_global_func_args(const SPIRFunction &func, uint32_t index, SmallVector<std::string> &arglist);
+	std::string to_non_uniform_aware_expression(uint32_t id);
 	std::string to_expression(uint32_t id, bool register_expression_read = true);
 	std::string to_composite_constructor_expression(uint32_t id, bool uses_buffer_offset);
 	std::string to_rerolled_array_expression(const std::string &expr, const SPIRType &type);
@@ -716,17 +736,17 @@ protected:
 	virtual std::string to_qualifiers_glsl(uint32_t id);
 	void fixup_io_block_patch_qualifiers(const SPIRVariable &var);
 	void emit_output_variable_initializer(const SPIRVariable &var);
-	const char *to_precision_qualifiers_glsl(uint32_t id);
+	std::string to_precision_qualifiers_glsl(uint32_t id);
 	virtual const char *to_storage_qualifiers_glsl(const SPIRVariable &var);
-	const char *flags_to_qualifiers_glsl(const SPIRType &type, const Bitset &flags);
+	std::string flags_to_qualifiers_glsl(const SPIRType &type, const Bitset &flags);
 	const char *format_to_glsl(spv::ImageFormat format);
 	virtual std::string layout_for_member(const SPIRType &type, uint32_t index);
 	virtual std::string to_interpolation_qualifiers(const Bitset &flags);
 	std::string layout_for_variable(const SPIRVariable &variable);
 	std::string to_combined_image_sampler(VariableID image_id, VariableID samp_id);
 	virtual bool skip_argument(uint32_t id) const;
-	virtual void emit_array_copy(const std::string &lhs, uint32_t rhs_id, spv::StorageClass lhs_storage,
-	                             spv::StorageClass rhs_storage);
+	virtual void emit_array_copy(const std::string &lhs, uint32_t lhs_id, uint32_t rhs_id,
+	                             spv::StorageClass lhs_storage, spv::StorageClass rhs_storage);
 	virtual void emit_block_hints(const SPIRBlock &block);
 	virtual std::string to_initializer_expression(const SPIRVariable &var);
 	virtual std::string to_zero_initialized_expression(uint32_t type_id);
@@ -741,6 +761,7 @@ protected:
 	uint32_t type_to_packed_alignment(const SPIRType &type, const Bitset &flags, BufferPackingStandard packing);
 	uint32_t type_to_packed_array_stride(const SPIRType &type, const Bitset &flags, BufferPackingStandard packing);
 	uint32_t type_to_packed_size(const SPIRType &type, const Bitset &flags, BufferPackingStandard packing);
+	uint32_t type_to_location_count(const SPIRType &type) const;
 
 	std::string bitcast_glsl(const SPIRType &result_type, uint32_t arg);
 	virtual std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type);
@@ -838,7 +859,9 @@ protected:
 
 	// GL_EXT_shader_framebuffer_fetch support.
 	std::vector<std::pair<uint32_t, uint32_t>> subpass_to_framebuffer_fetch_attachment;
-	std::unordered_set<uint32_t> inout_color_attachments;
+	std::vector<std::pair<uint32_t, bool>> inout_color_attachments;
+	bool location_is_framebuffer_fetch(uint32_t location) const;
+	bool location_is_non_coherent_framebuffer_fetch(uint32_t location) const;
 	bool subpass_input_is_framebuffer_fetch(uint32_t id) const;
 	void emit_inout_fragment_outputs_copy_to_subpass_inputs();
 	const SPIRVariable *find_subpass_input_by_attachment_index(uint32_t index) const;
@@ -881,7 +904,7 @@ protected:
 	virtual void cast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type);
 	void unroll_array_from_complex_load(uint32_t target_id, uint32_t source_id, std::string &expr);
 	bool unroll_array_to_complex_store(uint32_t target_id, uint32_t source_id);
-	void convert_non_uniform_expression(const SPIRType &type, std::string &expr);
+	void convert_non_uniform_expression(std::string &expr, uint32_t ptr_id);
 
 	void handle_store_to_invariant_variable(uint32_t store_id, uint32_t value_id);
 	void disallow_forwarding_in_expression_chain(const SPIRExpression &expr);
@@ -900,9 +923,16 @@ protected:
 	void fixup_type_alias();
 	void reorder_type_alias();
 
-	void propagate_nonuniform_qualifier(uint32_t id);
-
 	static const char *vector_swizzle(int vecsize, int index);
+
+	bool is_stage_output_location_masked(uint32_t location, uint32_t component) const;
+	bool is_stage_output_builtin_masked(spv::BuiltIn builtin) const;
+	bool is_stage_output_variable_masked(const SPIRVariable &var) const;
+	bool is_stage_output_block_member_masked(const SPIRVariable &var, uint32_t index, bool strip_array) const;
+	uint32_t get_accumulated_member_location(const SPIRVariable &var, uint32_t mbr_idx, bool strip_array) const;
+	uint32_t get_declared_member_location(const SPIRVariable &var, uint32_t mbr_idx, bool strip_array) const;
+	std::unordered_set<LocationComponentPair, InternalHasher> masked_output_locations;
+	std::unordered_set<uint32_t> masked_output_builtins;
 
 private:
 	void init();

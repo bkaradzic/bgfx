@@ -403,8 +403,10 @@ class IRContext {
   // instruction exists.
   Instruction* KillInst(Instruction* inst);
 
-  // Removes the non-semantic instruction tree that uses |inst|'s result id.
-  void KillNonSemanticInfo(Instruction* inst);
+  // Collects the non-semantic instruction tree that uses |inst|'s result id
+  // to be killed later.
+  void CollectNonSemanticTree(Instruction* inst,
+                              std::unordered_set<Instruction*>* to_kill);
 
   // Returns true if all of the given analyses are valid.
   bool AreAnalysesValid(Analysis set) { return (set & valid_analyses_) == set; }

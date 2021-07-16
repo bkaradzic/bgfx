@@ -663,6 +663,8 @@ namespace bgfx
 		/// matching id.
 		uint16_t deviceId;
 
+		uint64_t capabilities; //!< Capabilities initialization mask (default: UINT64_MAX).
+
 		bool debug;   //!< Enable device for debuging.
 		bool profile; //!< Enable device for profiling.
 
@@ -686,7 +688,7 @@ namespace bgfx
 			uint32_t transientIbSize;   //!< Maximum transient index buffer size.
 		};
 
-		Limits limits; // Configurable runtime limits.
+		Limits limits; //!< Configurable runtime limits.
 
 		/// Provide application specific callback interface.
 		/// See: `bgfx::CallbackI`
@@ -732,7 +734,7 @@ namespace bgfx
 
 		/// Supported functionality.
 		///
-		/// @attention See BGFX_CAPS_* flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
+		/// @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
 		///
 		uint64_t supported;
 
@@ -907,7 +909,7 @@ namespace bgfx
 			, uint8_t _resolve = BGFX_RESOLVE_AUTO_GEN_MIPS
 			);
 
-		Access::Enum  access; //!< Attachement access. See `Access::Enum`.
+		Access::Enum  access; //!< Attachment access. See `Access::Enum`.
 		TextureHandle handle; //!< Render target texture handle.
 		uint16_t mip;         //!< Mip level.
 		uint16_t layer;       //!< Cubemap side or depth layer/slice to use.
@@ -925,7 +927,7 @@ namespace bgfx
 		uint16_t num; //!< Number of matrices.
 	};
 
-	///
+	/// View id.
 	typedef uint16_t ViewId;
 
 	/// View stats.
@@ -1706,6 +1708,9 @@ namespace bgfx
 
 		/// Start VertexLayout.
 		///
+		/// @param[in] _renderer Renderer backend type. See: `bgfx::RendererType`
+		/// @returns Returns itself.
+		///
 		/// @attention C99 equivalent is `bgfx_vertex_layout_begin`.
 		///
 		VertexLayout& begin(RendererType::Enum _renderer = RendererType::Noop);
@@ -1728,6 +1733,7 @@ namespace bgfx
 		/// @param[in] _asInt Packaging rule for vertexPack, vertexUnpack, and
 		///   vertexConvert for AttribType::Uint8 and AttribType::Int16.
 		///   Unpacking code must be implemented inside vertex shader.
+		/// @returns Returns itself.
 		///
 		/// @remarks
 		///   Must be called between begin/end.
@@ -1743,6 +1749,8 @@ namespace bgfx
 			);
 
 		/// Skip _num bytes in vertex stream.
+		///
+		/// @returns Returns itself.
 		///
 		/// @attention C99 equivalent is `bgfx_vertex_layout_skip`.
 		///
@@ -1760,25 +1768,39 @@ namespace bgfx
 			, bool& _asInt
 			) const;
 
-		/// Returns true if VertexLayout contains attribute.
+		/// Returns `true` if VertexLayout contains attribute.
+		///
+		/// @param[in] _attrib Attribute semantics. See: `bgfx::Attrib`
+		/// @returns True if VertexLayout contains attribute.
 		///
 		/// @attention C99 equivalent is `bgfx_vertex_layout_has`.
 		///
 		bool has(Attrib::Enum _attrib) const { return UINT16_MAX != m_attributes[_attrib]; }
 
 		/// Returns relative attribute offset from the vertex.
+		///
+		/// @param[in] _attrib Attribute semantics. See: `bgfx::Attrib`
+		/// @returns Relative attribute offset from the vertex.
+		///
 		uint16_t getOffset(Attrib::Enum _attrib) const { return m_offset[_attrib]; }
 
 		/// Returns vertex stride.
+		///
+		/// @returns Vertex stride.
+		///
 		uint16_t getStride() const { return m_stride; }
 
 		/// Returns size of vertex buffer for number of vertices.
+		///
+		/// @param[in] _num Number of vertices.
+		/// @returns Size of vertex buffer for number of vertices.
+		///
 		uint32_t getSize(uint32_t _num) const { return _num*m_stride; }
 
-		uint32_t m_hash;
-		uint16_t m_stride;
-		uint16_t m_offset[Attrib::Count];
-		uint16_t m_attributes[Attrib::Count];
+		uint32_t m_hash;                      //!< Hash.
+		uint16_t m_stride;                    //!< Stride.
+		uint16_t m_offset[Attrib::Count];     //!< Attribute offsets.
+		uint16_t m_attributes[Attrib::Count]; //!< Used attributes.
 	};
 
 	/// Pack vertex attribute into vertex stream format.
@@ -2410,10 +2432,14 @@ namespace bgfx
 	/// Returns number of requested or maximum available indices.
 	///
 	/// @param[in] _num Number of required indices.
+	/// @param[in] _index32 Set to `true` if input indices will be 32-bit.
 	///
 	/// @attention C99 equivalent is `bgfx_get_avail_transient_index_buffer`.
 	///
-	uint32_t getAvailTransientIndexBuffer(uint32_t _num);
+	uint32_t getAvailTransientIndexBuffer(
+		  uint32_t _num
+		, bool _index32 = false
+		);
 
 	/// Returns number of requested or maximum available vertices.
 	///
@@ -2447,9 +2473,6 @@ namespace bgfx
 	/// @param[in] _num Number of indices to allocate.
 	/// @param[in] _index32 Set to `true` if input indices will be 32-bit.
 	///
-	/// @remarks
-	///   Only 16-bit index buffer is supported.
-	///
 	/// @attention C99 equivalent is `bgfx_alloc_transient_index_buffer`.
 	///
 	void allocTransientIndexBuffer(
@@ -2478,8 +2501,16 @@ namespace bgfx
 	/// buffers. If both space requirements are satisfied function returns
 	/// true.
 	///
-	/// @remarks
-	///   Only 16-bit index buffer is supported.
+	/// @param[out] _tvb TransientVertexBuffer structure is filled and is valid
+	///   for the duration of frame, and it can be reused for multiple draw
+	///   calls.
+	/// @param[in] _layout Vertex layout.
+	/// @param[in] _numVertices Number of vertices to allocate.
+	/// @param[out] _tib TransientIndexBuffer structure is filled and is valid
+	///   for the duration of frame, and it can be reused for multiple draw
+	///   calls.
+	/// @param[in] _numIndices Number of indices to allocate.
+	/// @param[in] _index32 Set to `true` if input indices will be 32-bit.
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_transient_buffers`.
 	///
@@ -2489,6 +2520,7 @@ namespace bgfx
 		, uint32_t _numVertices
 		, TransientIndexBuffer* _tib
 		, uint32_t _numIndices
+		, bool _index32 = false
 		);
 
 	/// Allocate instance data buffer.
@@ -2525,6 +2557,8 @@ namespace bgfx
 	void destroy(IndirectBufferHandle _handle);
 
 	/// Create shader from memory buffer.
+	///
+	/// @returns Shader handle.
 	///
 	/// @attention C99 equivalent is `bgfx_create_shader`.
 	///
@@ -2628,6 +2662,18 @@ namespace bgfx
 		, uint16_t _numLayers
 		, TextureFormat::Enum _format
 		, uint64_t _flags
+		);
+
+	/// Validate frame buffer parameters.
+	///
+	/// @param[in] _num Number of attachments.
+	/// @param[in] _attachment Attachment texture info. See: `bgfx::Attachment`.
+	///
+	/// @returns True if frame buffer can be successfully created.
+	///
+	bool isFrameBufferValid(
+		  uint8_t _num
+		, const Attachment* _attachment
 		);
 
 	/// Calculate amount of memory required for texture.

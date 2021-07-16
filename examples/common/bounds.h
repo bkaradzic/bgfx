@@ -445,4 +445,6 @@ bool overlap(const Triangle& _triangle, const Disk& _disk);
 ///
 bool overlap(const Triangle& _triangle, const Obb& _obb);
 
+#include "bounds.inl"
+
 #endif // BOUNDS_H_HEADER_GUARD

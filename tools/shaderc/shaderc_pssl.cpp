@@ -903,6 +903,9 @@ namespace bgfx {
 								bx::write(_writer, un.num);
 								bx::write(_writer, un.regIndex);
 								bx::write(_writer, un.regCount);
+								bx::write(_writer, un.texComponent); // BBI-NOTE: (manderson) additional info added in recent versions.
+								bx::write(_writer, un.texDimension);
+								bx::write(_writer, un.texFormat);
 
 								BX_TRACE("%s, %s, %d, %d, %d"
 									, un.name.c_str()

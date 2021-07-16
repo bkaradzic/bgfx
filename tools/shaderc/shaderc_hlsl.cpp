@@ -756,6 +756,8 @@ namespace bgfx {
 					BX_TRACE("texComponent:%d", un.texComponent);
 					bx::write(_writer, un.texDimension);
 					BX_TRACE("texDimension:%d", un.texDimension);
+					bx::write(_writer, un.texFormat);
+					BX_TRACE("texFormat:%d", un.texFormat);
 
 					//BX_TRACE("%s, %s, %d, %d, %d"
 					//	, un.name.c_str()

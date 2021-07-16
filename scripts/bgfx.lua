@@ -187,7 +187,7 @@ function bgfxProjectBase(_kind, _defines)
 			"BGFX_CONFIG_DEBUG_ANNOTATION=0", -- does not work
 		}
 
-		local generator = "out/Default"
+		local generator = "out/Cmake"
 
 		configuration { "wasm*" }
 			defines {
@@ -198,10 +198,13 @@ function bgfxProjectBase(_kind, _defines)
 		configuration { "not wasm*" }
 			includedirs {
 				path.join(DAWN_DIR, "src/include"),
-				path.join(DAWN_DIR, "third_party/vulkan-headers/include"),
+				path.join(DAWN_DIR, "third_party/vulkan-deps/vulkan-headers/src/include"),
 				path.join(DAWN_DIR, generator, "gen/src/include"),
 			}
 
+			files {
+				path.join(DAWN_DIR, generator, "gen/src/dawn/webgpu_cpp.cpp"),
+			}
 		configuration { "vs*" }
 			defines {
 				"NTDDI_VERSION=NTDDI_WIN10_RS2",
@@ -296,7 +299,7 @@ if _OPTIONS["with-webgpu"] then
 			}
 
 		configuration { "not wasm*" }
-			local generator = "out/Default"
+			local generator = "out/Cmake"
 
 			includedirs {
 				path.join(DAWN_DIR, "src/include"),
@@ -305,27 +308,34 @@ if _OPTIONS["with-webgpu"] then
 
 			libdirs {
 				path.join(DAWN_DIR, generator),
-				path.join(DAWN_DIR, generator, "lib/Debug"),
+				path.join(DAWN_DIR, generator, "src/common/Debug"),
+				path.join(DAWN_DIR, generator, "src/dawn/Debug"),
+				path.join(DAWN_DIR, generator, "src/dawn_native/Debug"),
+				path.join(DAWN_DIR, generator, "src/dawn_platform/Debug"),
+				path.join(DAWN_DIR, generator, "third_party/tint/src/Debug"),
+				path.join(DAWN_DIR, generator, "third_party/vulkan-deps/spirv-tools/src/source/Debug"),
+				path.join(DAWN_DIR, generator, "third_party/vulkan-deps/spirv-tools/src/source/opt/Debug"),
+				path.join(DAWN_DIR, generator, "third_party/vulkan-deps/spirv-cross/src/Debug"),
 			}
 
 			links {
 				-- shared
-				"dawn_proc_shared",
-				"dawn_native_shared",
-				"shaderc_spvc_shared",
+				--"dawn_proc_shared",
+				--"dawn_native_shared",
+				--"shaderc_spvc_shared",
 				-- static
-				--"dawn_common",
-				--"dawn_proc",
-				--"dawn_native",
-				--"dawn_platform",
-				------"shaderc",
-				--"shaderc_spvc",
-				--"SPIRV-tools",
-				--"SPIRV-tools-opt",
-				--"spirv-cross-cored",
-				--"spirv-cross-hlsld",
-				--"spirv-cross-glsld",
-				--"spirv-cross-msld",
+				"dawn_common",
+				"dawn_proc",
+				"dawn_native",
+				"dawn_platform",
+				----"shaderc",
+				"tint",
+				"SPIRV-Tools",
+				"SPIRV-Tools-opt",
+				"spirv-cross-cored",
+				"spirv-cross-hlsld",
+				"spirv-cross-glsld",
+				"spirv-cross-msld",
 				--"spirv-cross-reflectd",
 			}
 

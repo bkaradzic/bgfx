@@ -58,6 +58,7 @@
 #include <map>
 #include <memory>
 #include <thread>
+#include <set>
 
 #include "../glslang/OSDependent/osinclude.h"
 
@@ -111,6 +112,7 @@ bool NaNClamp = false;
 bool stripDebugInfo = false;
 bool beQuiet = false;
 bool VulkanRulesRelaxed = false;
+bool autoSampledTextures = false;
 
 //
 // Return codes from main/exit().
@@ -165,6 +167,7 @@ int ReflectOptions = EShReflectionDefault;
 int Options = 0;
 const char* ExecutableName = nullptr;
 const char* binaryFileName = nullptr;
+const char* depencyFileName = nullptr;
 const char* entryPointName = nullptr;
 const char* sourceEntryPointName = nullptr;
 const char* shaderStageName = nullptr;
@@ -655,6 +658,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         HlslEnable16BitTypes = true;
                     } else if (lowerword == "hlsl-dx9-compatible") {
                         HlslDX9compatible = true;
+                    } else if (lowerword == "auto-sampled-textures") { 
+                        autoSampledTextures = true;
                     } else if (lowerword == "invert-y" ||  // synonyms
                                lowerword == "iy") {
                         Options |= EOptionInvertY;
@@ -798,6 +803,11 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         break;
                     } else if (lowerword == "quiet") {
                         beQuiet = true;
+                    } else if (lowerword == "depfile") {
+                        if (argc <= 1)
+                            Error("no <depfile-name> provided", lowerword.c_str());
+                        depencyFileName = argv[1];
+                        bumpArg();
                     } else if (lowerword == "version") {
                         Options |= EOptionDumpVersions;
                     } else if (lowerword == "help") {
@@ -1135,6 +1145,23 @@ struct ShaderCompUnit {
     }
 };
 
+// Writes a depfile similar to gcc -MMD foo.c
+bool writeDepFile(std::string depfile, std::vector<std::string>& binaryFiles, const std::vector<std::string>& sources)
+{
+    std::ofstream file(depfile);
+    if (file.fail())
+        return false;
+
+    for (auto it = binaryFiles.begin(); it != binaryFiles.end(); it++) {
+        file << *it << ":";
+        for (auto it = sources.begin(); it != sources.end(); it++) {
+            file << " " << *it;
+        }
+        file << std::endl;
+    }
+    return true;
+}
+
 //
 // For linking mode: Will independently parse each compilation unit, but then put them
 // in the same program and link them together, making at most one linked module per
@@ -1151,6 +1178,12 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
     EShMessages messages = EShMsgDefault;
     SetMessageOptions(messages);
 
+    DirStackFileIncluder includer;
+    std::for_each(IncludeDirectoryList.rbegin(), IncludeDirectoryList.rend(), [&includer](const std::string& dir) {
+        includer.pushExternalLocalDirectory(dir); });
+
+    std::vector<std::string> sources;
+
     //
     // Per-shader processing...
     //
@@ -1158,6 +1191,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
     glslang::TProgram& program = *new glslang::TProgram;
     for (auto it = compUnits.cbegin(); it != compUnits.cend(); ++it) {
         const auto &compUnit = *it;
+        for (int i = 0; i < compUnit.count; i++) {
+            sources.push_back(compUnit.fileNameList[i]);
+        }
         glslang::TShader* shader = new glslang::TShader(compUnit.stage);
         shader->setStringsWithLengthsAndNames(compUnit.text, NULL, compUnit.fileNameList, compUnit.count);
         if (entryPointName)
@@ -1188,6 +1224,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         }
         shader->setNoStorageFormat((Options & EOptionNoStorageFormat) != 0);
         shader->setResourceSetBinding(baseResourceSetBinding[compUnit.stage]);
+
+        if (autoSampledTextures)
+            shader->setTextureSamplerTransformMode(EShTexSampTransUpgradeTextureRemoveSampler);
 
         if (Options & EOptionAutoMapBindings)
             shader->setAutoMapBindings(true);
@@ -1252,9 +1291,6 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         const int defaultVersion = Options & EOptionDefaultDesktop ? 110 : 100;
 
-        DirStackFileIncluder includer;
-        std::for_each(IncludeDirectoryList.rbegin(), IncludeDirectoryList.rend(), [&includer](const std::string& dir) {
-            includer.pushExternalLocalDirectory(dir); });
 #ifndef GLSLANG_WEB
         if (Options & EOptionOutputPreprocessed) {
             std::string str;
@@ -1314,6 +1350,8 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
     }
 #endif
 
+    std::vector<std::string> outputFiles;
+
     // Dump SPIR-V
     if (Options & EOptionSpv) {
         if (CompileFailed || LinkFailed)
@@ -1343,6 +1381,8 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                         } else {
                             glslang::OutputSpvBin(spirv, GetBinaryName((EShLanguage)stage));
                         }
+
+                        outputFiles.push_back(GetBinaryName((EShLanguage)stage));
 #ifndef GLSLANG_WEB
                         if (!SpvToolsDisassembler && (Options & EOptionHumanReadableSpv))
                             spv::Disassemble(std::cout, spirv);
@@ -1351,6 +1391,13 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                 }
             }
         }
+    }
+
+    if (depencyFileName && !(CompileFailed || LinkFailed)) {
+        std::set<std::string> includedFiles = includer.getIncludedFiles();
+        sources.insert(sources.end(), includedFiles.begin(), includedFiles.end());
+
+        writeDepFile(depencyFileName, outputFiles, sources);
     }
 
     // Free everything up, program has to go before the shaders
@@ -1772,7 +1819,10 @@ void usage()
            "                                    without explicit bindings\n"
            "  --auto-map-locations | --aml      automatically locate input/output lacking\n"
            "                                    'location' (fragile, not cross stage)\n"
+           "  --auto-sampled-textures           Removes sampler variables and converts\n" 
+           "                                    existing textures to sampled textures\n"
            "  --client {vulkan<ver>|opengl<ver>} see -V and -G\n"
+           "  --depfile <file>                  writes depfile for build systems\n"
            "  --dump-builtin-symbols            prints builtin symbol table prior each compile\n"
            "  -dumpfullversion | -dumpversion   print bare major.minor.patchlevel\n"
            "  --flatten-uniform-arrays | --fua  flatten uniform texture/sampler arrays to\n"

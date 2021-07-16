@@ -5,6 +5,17 @@
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
+<p align="center">
+    <a href="#what-is-it">What is it?</a> -
+    <a href="https://bkaradzic.github.io/bgfx/build.html">Building</a> -
+    <a href="https://bkaradzic.github.io/bgfx/overview.html#getting-involved">Getting Involved</a> -
+    <a href="https://bkaradzic.github.io/bgfx/examples.html">Examples</a> -
+    <a href="https://bkaradzic.github.io/bgfx/bgfx.html">API Reference</a> -
+    <a href="https://bkaradzic.github.io/bgfx/tools.html">Tools</a> -
+    <a href="#who-is-using-it-madewithbgfx">Who is using it?</a> -
+    <a href="#license-bsd-2-clause">License</a>
+</p>
+
 [![Build Status](https://travis-ci.com/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.com/bkaradzic/bgfx)
 [![Build status](https://ci.appveyor.com/api/projects/status/ipa3ojgeaet1oko5?svg=true)](https://ci.appveyor.com/project/bkaradzic/bgfx)
 [![License](https://img.shields.io/badge/license-BSD--2%20clause-blue.svg)](https://bkaradzic.github.io/bgfx/license.html)
@@ -12,6 +23,8 @@
 
  * [GitHub Discussions](https://github.com/bkaradzic/bgfx/discussions)
  * [Discord Chat](https://discord.gg/9eMbv7J)
+ * [AppVeyor CI](https://ci.appveyor.com/project/bkaradzic/bgfx)
+ * [Travis CI](https://travis-ci.com/bkaradzic/bgfx)
 
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
 -------------------------------------------------------------
@@ -70,26 +83,9 @@ Languages:
  * [Pascal language API bindings](https://github.com/Akira13641/PasBGFX)
  * [Python language API bindings #1](https://github.com/fbertola/bgfx-python#-----bgfx-python--)
  * [Python language API bindings #2](https://github.com/jnadro/pybgfx#pybgfx)
- * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
+ * [Rust language API bindings (obsolete)](https://github.com/rhoot/bgfx-rs)
+ * [Rust language API bindings (new)](https://github.com/emoon/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
-
-[Building](https://bkaradzic.github.io/bgfx/build.html)
-----------------------------------------------------
-
- - AppVeyor https://ci.appveyor.com/project/bkaradzic/bgfx
- - TravisCI https://travis-ci.com/bkaradzic/bgfx
-
-[Getting involved](https://bkaradzic.github.io/bgfx/overview.html#getting-involved)
------------------------------------------------------------------------------------
-
-[Examples](https://bkaradzic.github.io/bgfx/examples.html)
-----------------------------------------------------------
-
-[API Reference](https://bkaradzic.github.io/bgfx/bgfx.html)
------------------------------------------------------------
-
-[Tools](https://bkaradzic.github.io/bgfx/tools.html)
-----------------------------------------------------
 
 Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&f=live)
 -------------------------------------------------------------------------------------
@@ -455,6 +451,24 @@ easy to understand, challenging gameplay.
 https://codenamesgame.com/
 
 ![Codenames](https://codenamesgame.com/img/game-features-img-1.jpg)
+
+## PeakFinder
+
+PeakFinder shows the names of all mountains and peaks with a 360° panorama display.
+More than 850'000 peaks - from Mount Everest to the little hill around the corner.
+
+https://www.peakfinder.org/
+
+![PeakFinder](https://pfweb-c125.kxcdn.com/images/mobile/cards//en/cameramode.jpg)
+
+## Ember Sword
+
+Ember Sword is a free to play MMORPG running directly in your browser and is
+being developed and published by Bright Star Studios.
+
+https://embersword.com
+
+![Ember-Sword-ConceptArt5](https://user-images.githubusercontent.com/814772/120714133-a860ca80-c477-11eb-8680-f5a948dfd050.png)
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------

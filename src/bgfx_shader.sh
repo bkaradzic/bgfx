@@ -43,7 +43,7 @@
  || BGFX_SHADER_LANGUAGE_METAL
 #	define CONST(_x) static const _x
 #	define dFdx(_x) ddx(_x)
-#	define dFdy(_y) ddy(-_y)
+#	define dFdy(_y) ddy(-(_y))
 #	define inversesqrt(_x) rsqrt(_x)
 #	define fract(_x) frac(_x)
 
@@ -63,8 +63,8 @@
 #		if BGFX_SHADER_LANGUAGE_HLSL > 400 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_PSSL2 ||BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
 #			define dFdxCoarse(_x) ddx_coarse(_x)
 #			define dFdxFine(_x)   ddx_fine(_x)
-#			define dFdyCoarse(_y) ddy_coarse(-_y)
-#			define dFdyFine(_y)   ddy_fine(-_y)
+#			define dFdyCoarse(_y) ddy_coarse(-(_y))
+#			define dFdyFine(_y)   ddy_fine(-(_y))
 #		endif // BGFX_SHADER_LANGUAGE_HLSL > 400
 
 #		if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
@@ -296,6 +296,20 @@ vec4 bgfxTexelFetchOffset(BgfxSampler2D _sampler, ivec2 _coord, int _lod, ivec2 
 }
 
 vec2 bgfxTextureSize(BgfxSampler2D _sampler, int _lod)
+{
+	vec2 result;
+	_sampler.m_texture.GetDimensions(result.x, result.y);
+	return result;
+}
+
+vec2 bgfxTextureSize(BgfxISampler2D _sampler, int _lod)
+{
+	vec2 result;
+	_sampler.m_texture.GetDimensions(result.x, result.y);
+	return result;
+}
+
+vec2 bgfxTextureSize(BgfxUSampler2D _sampler, int _lod)
 {
 	vec2 result;
 	_sampler.m_texture.GetDimensions(result.x, result.y);

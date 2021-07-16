@@ -247,10 +247,26 @@ extern "C" uint32_t __stdcall GetModuleFileNameA(void* _module, char* _outFilePa
 
 #endif // BX_PLATFORM_WINDOWS
 
+struct RendererTypeRemap
+{
+	bx::StringView           name;
+	bgfx::RendererType::Enum type;
+};
+
+static RendererTypeRemap s_rendererTypeRemap[] =
+{
+	{ "gl",    bgfx::RendererType::OpenGL     },
+	{ "d3d11", bgfx::RendererType::Direct3D11 },
+	{ "d3d11", bgfx::RendererType::Direct3D12 },
+	{ "vk",    bgfx::RendererType::Vulkan     },
+	{ "mtl",   bgfx::RendererType::Metal      },
+};
+
 struct View
 {
 	View()
-		: m_cubeMapGeo(Geometry::Quad)
+		: m_rendererType(bgfx::RendererType::Count)
+		, m_cubeMapGeo(Geometry::Quad)
 		, m_outputFormat(Output::sRGB)
 		, m_fileIndex(0)
 		, m_scaleFn(0)
@@ -801,6 +817,8 @@ struct View
 			{
 				m_height = 720;
 			}
+
+			m_rendererType = getType(settings.get("view/renderer") );
 		}
 	}
 
@@ -823,6 +841,11 @@ struct View
 			bx::toString(tmp, sizeof(tmp), m_height);
 			settings.set("view/height", tmp);
 
+			if (m_rendererType != bgfx::RendererType::Count)
+			{
+				settings.set("view/renderer", getName(m_rendererType) );
+			}
+
 			bx::FileWriter writer;
 			if (bx::open(&writer, filePath) )
 			{
@@ -837,6 +860,7 @@ struct View
 	typedef stl::vector<std::string> FileList;
 	FileList m_fileList;
 
+	bgfx::RendererType::Enum m_rendererType;
 	bgfx::TextureInfo m_textureInfo;
 	Geometry::Enum m_cubeMapGeo;
 	Output::Enum m_outputFormat;
@@ -1291,9 +1315,10 @@ int _main_(int _argc, char** _argv)
 	entry::setWindowSize(entry::WindowHandle{0}, view.m_width, view.m_height);
 
 	bgfx::Init init;
-	init.resolution.width = view.m_width;
+	init.type = view.m_rendererType;
+	init.resolution.width  = view.m_width;
 	init.resolution.height = view.m_height;
-	init.resolution.reset = BGFX_RESET_VSYNC;
+	init.resolution.reset  = BGFX_RESET_VSYNC;
 
 	bgfx::init(init);
 

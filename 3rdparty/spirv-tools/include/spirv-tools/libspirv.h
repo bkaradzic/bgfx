@@ -589,6 +589,8 @@ SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetRelaxLogicalPointer(
 // 3) Pointers that are actaul parameters on function calls do not have to point
 //    to the same type pointed as the formal parameter.  The types just need to
 //    logically match.
+// 4) GLSLstd450 Interpolate* instructions can have a load of an interpolant
+//    for a first argument.
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetBeforeHlslLegalization(
     spv_validator_options options, bool val);
 

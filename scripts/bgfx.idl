@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(112)
+version(115)
 
 typedef "bool"
 typedef "char"
@@ -206,7 +206,7 @@ flag.Discard { bits = 8, const, desc = "Discard flags" }
 	.Bindings      (0x01) --- Discard texture sampler and buffer bindings.
 	.IndexBuffer   (0x02) --- Discard index buffer.
 	.InstanceData  (0x04) --- Discard instance data.
-	.State         (0x08) --- Discard state.
+	.State         (0x08) --- Discard state and uniform bindings.
 	.Transform     (0x10) --- Discard transform.
 	.VertexStreams (0x20) --- Discard vertex streams.
 	.All           (0xff) --- Discard all states.
@@ -709,7 +709,7 @@ struct.Limits  { namespace = "Caps" }
 struct.Caps
 	.rendererType "RendererType::Enum" --- Renderer backend type. See: `bgfx::RendererType`
 	.supported    "uint64_t"           --- Supported functionality.
-	                                   ---   @attention See BGFX_CAPS_* flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
+	                                   ---   @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
 	.vendorId     "uint16_t"           --- Selected GPU vendor PCI id.
 	.deviceId     "uint16_t"           --- Selected GPU device id.
 	.homogeneousDepth "bool"           --- True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
@@ -790,7 +790,7 @@ struct.Init { ctor }
 
 	.deviceId       "uint16_t"            --- Device id. If set to 0 it will select first device, or device with
 	                                      --- matching id.
-
+	.capabilities   "uint64_t"            --- Capabilities initialization mask (default: UINT64_MAX).
 	.debug          "bool"                --- Enable device for debuging.
 	.profile        "bool"                --- Enable device for profiling.
 	.platformData   "PlatformData"        --- Platform data.
@@ -856,7 +856,7 @@ struct.UniformInfo
 
 --- Frame buffer texture attachment info.
 struct.Attachment { shortname }
-	.access    "Access::Enum"  --- Attachement access. See `Access::Enum`.
+	.access    "Access::Enum"  --- Attachment access. See `Access::Enum`.
 	.handle    "TextureHandle" --- Render target texture handle.
 	.mip       "uint16_t"      --- Mip level.
 	.layer     "uint16_t"      --- Cubemap side or depth layer/slice to use.
@@ -978,8 +978,8 @@ handle "VertexLayoutHandle"
 
 --- Start VertexLayout.
 func.VertexLayout.begin
-	"VertexLayout&"
-	.rendererType    "RendererType::Enum"
+	"VertexLayout&"                       --- Returns itself.
+	.rendererType    "RendererType::Enum" --- Renderer backend type. See: `bgfx::RendererType`
 	{ default = "RendererType::Noop" }
 
 --- Add attribute to VertexLayout.
@@ -987,7 +987,7 @@ func.VertexLayout.begin
 --- @remarks Must be called between begin/end.
 ---
 func.VertexLayout.add
-	"VertexLayout&"
+	"VertexLayout&"                     --- Returns itself.
 	.attrib          "Attrib::Enum"     --- Attribute semantics. See: `bgfx::Attrib`
 	.num             "uint8_t"          --- Number of elements 1, 2, 3 or 4.
 	.type            "AttribType::Enum" --- Element type.
@@ -1008,15 +1008,15 @@ func.VertexLayout.decode { const }
 	.normalized "bool &"             { out } --- Attribute is normalized.
 	.asInt      "bool &"             { out } --- Attribute is packed as int.
 
---- Returns true if VertexLayout contains attribute.
+--- Returns `true` if VertexLayout contains attribute.
 func.VertexLayout.has { const }
-	"bool"
+	"bool"                 --- True if VertexLayout contains attribute.
 	.attrib "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
 --- Skip `_num` bytes in vertex stream.
 func.VertexLayout.skip
-	"VertexLayout&"
-	.num "uint8_t"
+	"VertexLayout&" --- Returns itself.
+	.num "uint8_t"  --- Number of bytes to skip.
 
 -- Notice: `end` is a keyword in lua.
 --- End VertexLayout.
@@ -1025,17 +1025,17 @@ func.VertexLayout["end"]
 
 --- Returns relative attribute offset from the vertex.
 func.VertexLayout.getOffset { const , cpponly }
-	"uint16_t"
+	"uint16_t"                --- Relative attribute offset from the vertex.
 	.attrib    "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
 --- Returns vertex stride.
 func.VertexLayout.getStride { const , cpponly }
-	"uint16_t"
+	"uint16_t" --- Vertex stride.
 
 --- Returns size of vertex buffer for number of vertices.
 func.VertexLayout.getSize { const, cpponly }
-	"uint32_t"
-	.num       "uint32_t"
+	"uint32_t"      --- Size of vertex buffer for number of vertices.
+	.num "uint32_t" --- Number of vertices.
 
 --- Pack vertex attribute into vertex stream format.
 func.vertexPack
@@ -1454,6 +1454,8 @@ func.destroy { cname = "destroy_dynamic_vertex_buffer" }
 func.getAvailTransientIndexBuffer
 	"uint32_t"      --- Number of requested or maximum available indices.
 	.num "uint32_t" --- Number of required indices.
+	.index32 "bool" --- Set to `true` if input indices will be 32-bit.
+	 { default = false }
 
 --- Returns number of requested or maximum available vertices.
 func.getAvailTransientVertexBuffer
@@ -1468,9 +1470,6 @@ func.getAvailInstanceDataBuffer
 	.stride "uint16_t" --- Stride per instance.
 
 --- Allocate transient index buffer.
----
---- @remarks
----   Only 16-bit index buffer is supported.
 ---
 func.allocTransientIndexBuffer
 	"void"
@@ -1494,9 +1493,6 @@ func.allocTransientVertexBuffer
 --- buffers. If both space requirements are satisfied function returns
 --- true.
 ---
---- @remarks
----   Only 16-bit index buffer is supported.
----
 func.allocTransientBuffers
 	"bool"
 	.tvb         "TransientVertexBuffer*" { out } --- TransientVertexBuffer structure is filled and is valid
@@ -1508,6 +1504,8 @@ func.allocTransientBuffers
 	                                              --- for the duration of frame, and it can be reused for multiple draw
 	                                              --- calls.
 	.numIndices  "uint32_t"                       --- Number of indices to allocate.
+	.index32 "bool"                               --- Set to `true` if input indices will be 32-bit.
+	 { default = false }
 
 --- Allocate instance data buffer.
 func.allocInstanceDataBuffer
@@ -1592,6 +1590,12 @@ func.isTextureValid
 	.numLayers "uint16_t"            --- Number of layers in texture array.
 	.format    "TextureFormat::Enum" --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"            --- Texture flags. See `BGFX_TEXTURE_*`.
+
+--- Validate frame buffer parameters.
+func.isFrameBufferValid
+	"bool"                              --- True if frame buffer can be successfully created.
+	.num            "uint8_t"           --- Number of attachments.
+	.attachment     "const Attachment*" --- Attachment texture info. See: `bgfx::Attachment`.
 
 --- Calculate amount of memory required for texture.
 func.calcTextureSize
@@ -1843,7 +1847,7 @@ func.createFrameBuffer { cname = "create_frame_buffer_from_handles" }
 --- mip level.
 func.createFrameBuffer { cname = "create_frame_buffer_from_attachment" }
 	"FrameBufferHandle"                 --- Frame buffer handle.
-	.num            "uint8_t"           --- Number of attachements.
+	.num            "uint8_t"           --- Number of attachments.
 	.attachment     "const Attachment*" --- Attachment texture info. See: `bgfx::Attachment`.
 	.destroyTexture "bool"              --- If true, textures will be destroyed when
 	 { default = false }                --- frame buffer is destroyed.
@@ -2959,7 +2963,7 @@ func.submit
 	.program       "ProgramHandle" --- Program.
 	.depth         "uint32_t"      --- Depth for sorting.
 	{ default = 0 }
-	.flags         "uint8_t"       --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags         "uint8_t"       --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive with occlusion query for rendering.
@@ -2970,7 +2974,7 @@ func.submit { cname = "submit_occlusion_query" }
 	.occlusionQuery "OcclusionQueryHandle" --- Occlusion query.
 	.depth          "uint32_t"             --- Depth for sorting.
 	{ default = 0 }
-	.flags          "uint8_t"              --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags          "uint8_t"              --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive for rendering with index and instance data info from
@@ -2986,7 +2990,7 @@ func.submit { cname = "submit_indirect" }
 	{ default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
 	{ default = 0 }
-	.flags "uint8_t"                       --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags "uint8_t"                       --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Set compute index buffer.

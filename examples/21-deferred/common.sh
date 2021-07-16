@@ -44,19 +44,3 @@ vec3 calcLight(vec3 _wpos, vec3 _normal, vec3 _view, vec3 _lightPos, float _ligh
 	vec3 rgb = _lightRgb * saturate(lc.y) * attn;
 	return rgb;
 }
-
-float toClipSpaceDepth(float _depthTextureZ)
-{
-#if BGFX_SHADER_LANGUAGE_GLSL
-	return _depthTextureZ * 2.0 - 1.0;
-#else
-	return _depthTextureZ;
-#endif // BGFX_SHADER_LANGUAGE_GLSL
-}
-
-vec3 clipToWorld(mat4 _invViewProj, vec3 _clipPos)
-{
-	vec4 wpos = mul(_invViewProj, vec4(_clipPos, 1.0) );
-	return wpos.xyz / wpos.w;
-}
-

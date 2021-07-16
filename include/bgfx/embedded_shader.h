@@ -93,7 +93,7 @@
 #if BGFX_PLATFORM_SUPPORTS_ESSL
 #	undef  BGFX_EMBEDDED_SHADER_ESSL
 #	define BGFX_EMBEDDED_SHADER_ESSL(_renderer, _name) \
-		{ _renderer, BX_CONCATENATE(_name, _glsl), BX_COUNTOF(BX_CONCATENATE(_name, _glsl) ) },
+		{ _renderer, BX_CONCATENATE(_name, _essl), BX_COUNTOF(BX_CONCATENATE(_name, _essl) ) },
 #endif // BGFX_PLATFORM_SUPPORTS_ESSL
 
 #if BGFX_PLATFORM_SUPPORTS_GLSL
@@ -168,7 +168,18 @@ namespace bgfx
 		Data data[RendererType::Count];
 	};
 
-	ShaderHandle createEmbeddedShader(const bgfx::EmbeddedShader* _es, RendererType::Enum _type, const char* _name);
+	/// Create shader from embedded shader data.
+	///
+	/// @param[in] _es Pointer to `BGFX_EMBEDDED_SHADER` data.
+	/// @param[in] _type Renderer backend type. See: `bgfx::RendererType`
+	/// @param[in] _name Shader name.
+	/// @returns Shader handle.
+	///
+	ShaderHandle createEmbeddedShader(
+		  const bgfx::EmbeddedShader* _es
+		, RendererType::Enum _type
+		, const char* _name
+		);
 
 } // namespace bgfx
 

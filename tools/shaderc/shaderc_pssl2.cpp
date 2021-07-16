@@ -970,6 +970,8 @@ namespace bgfx {
 					BX_TRACE("texComponent:%d", un.texComponent);
 					bx::write(_writer, un.texDimension);
 					BX_TRACE("texDimension:%d", un.texDimension);
+					bx::write(_writer, un.texFormat); // BBI-NOTE: (manderson) new in version 10
+					BX_TRACE("texFormat:%d", un.texFormat);
 				}
 			}
 
