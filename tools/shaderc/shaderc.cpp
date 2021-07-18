@@ -974,7 +974,7 @@ namespace bgfx
 			);
 
 		bx::printf(
-			  "Usage: shaderc -f <in> -o <out> --type <v/f> --platform <platform>\n"
+			  "Usage: shaderc -f <in> -o <out> --type <v/f/c> --platform <platform>\n"
 
 			  "\n"
 			  "Options:\n"
@@ -1019,7 +1019,7 @@ namespace bgfx
 			  "      --preprocess              Preprocess only.\n"
 			  "      --define <defines>        Add defines to preprocessor (semicolon separated).\n"
 			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
-			  "      --type <type>             Shader type (vertex, fragment)\n"
+			  "      --type <type>             Shader type (vertex, fragment, compute)\n"
 			  "      --varyingdef <file path>  Path to varying.def.sc file.\n"
 			  "      --verbose                 Verbose.\n"
 
