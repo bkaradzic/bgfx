@@ -16,11 +16,45 @@ namespace bgfx
 	void* findModule(const char* _name)
 	{
 #if BX_PLATFORM_WINDOWS
-		return (void*)GetModuleHandleA(_name);
+		HANDLE process = GetCurrentProcess();
+		DWORD size;
+		BOOL result = EnumProcessModules(process
+						, NULL
+						, 0
+						, &size
+						);
+		if (0 != result)
+		{
+			HMODULE* modules = (HMODULE*)alloca(size);
+			result = EnumProcessModules(process
+				, modules
+				, size
+				, &size
+				);
+
+			if (0 != result)
+			{
+				char moduleName[MAX_PATH];
+				for (uint32_t ii = 0, num = uint32_t(size/sizeof(HMODULE) ); ii < num; ++ii)
+				{
+					result = GetModuleBaseNameA(process
+								, modules[ii]
+								, moduleName
+								, BX_COUNTOF(moduleName)
+								);
+					if (0 != result
+					&&  0 == bx::strCmpI(_name, moduleName) )
+					{
+						return (void*)modules[ii];
+					}
+				}
+			}
+		}
 #else
 		BX_UNUSED(_name);
-		return NULL;
 #endif
+
+		return NULL;
 	}
 
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
