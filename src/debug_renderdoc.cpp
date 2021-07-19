@@ -13,46 +13,14 @@
 
 namespace bgfx
 {
-	bool findModule(const char* _name)
+	void* findModule(const char* _name)
 	{
 #if BX_PLATFORM_WINDOWS
-		HANDLE process = GetCurrentProcess();
-		DWORD size;
-		BOOL result = EnumProcessModules(process
-						, NULL
-						, 0
-						, &size
-						);
-		if (0 != result)
-		{
-			HMODULE* modules = (HMODULE*)alloca(size);
-			result = EnumProcessModules(process
-				, modules
-				, size
-				, &size
-				);
-
-			if (0 != result)
-			{
-				char moduleName[MAX_PATH];
-				for (uint32_t ii = 0, num = uint32_t(size/sizeof(HMODULE) ); ii < num; ++ii)
-				{
-					result = GetModuleBaseNameA(process
-								, modules[ii]
-								, moduleName
-								, BX_COUNTOF(moduleName)
-								);
-					if (0 != result
-					&&  0 == bx::strCmpI(_name, moduleName) )
-					{
-						return true;
-					}
-				}
-			}
-		}
-#endif // BX_PLATFORM_WINDOWS
+		return (void*)GetModuleHandleA(_name);
+#else
 		BX_UNUSED(_name);
-		return false;
+		return NULL;
+#endif
 	}
 
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
@@ -72,13 +40,17 @@ namespace bgfx
 			return NULL;
 		}
 
-		void* renderDocDll = bx::dlopen(
 #if BX_PLATFORM_WINDOWS
-				"renderdoc.dll"
+		// If RenderDoc is already injected in the process then use the already present DLL
+		void* renderDocDll = findModule("renderdoc.dll");
+		if (NULL == renderDocDll)
+		{
+			// Load the RenderDoc DLL from its default installation location
+			renderDocDll = bx::dlopen("C:\\Program Files\\RenderDoc\\renderdoc.dll");
+		}
 #else
-				"./librenderdoc.so"
-#endif // BX_PLATFORM_WINDOWS
-				);
+		void* renderDocDll = bx::dlopen("./librenderdoc.so");
+#endif
 
 		if (NULL != renderDocDll)
 		{
@@ -89,7 +61,7 @@ namespace bgfx
 			{
 				s_renderDoc->SetCaptureFilePathTemplate(BGFX_CONFIG_RENDERDOC_LOG_FILEPATH);
 
- 				s_renderDoc->SetFocusToggleKeys(NULL, 0);
+				s_renderDoc->SetFocusToggleKeys(NULL, 0);
 
 				RENDERDOC_InputButton captureKeys[] = BGFX_CONFIG_RENDERDOC_CAPTURE_KEYS;
 				s_renderDoc->SetCaptureKeys(captureKeys, BX_COUNTOF(captureKeys) );
