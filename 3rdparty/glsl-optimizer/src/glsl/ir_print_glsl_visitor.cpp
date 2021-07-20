@@ -1344,7 +1344,7 @@ void print_float (string_buffer& buffer, float f)
 	// that so compiler output matches.
 	if (posE != NULL)
 	{
-		if((posE[1] == '+' || posE[1] == '-') && posE[2] == '0')
+		if((posE[1] == '+' || posE[1] == '-') && posE[2] == '0' && posE[3] == '0')
 		{
 			char* p = posE+2;
 			while (p[0])

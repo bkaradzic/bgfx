@@ -91,6 +91,7 @@ namespace bgfx
 			, regCount(0)
 			, texComponent(0)
 			, texDimension(0)
+			, texFormat(0)
 		{
 		}
 
