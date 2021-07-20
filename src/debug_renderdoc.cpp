@@ -16,6 +16,8 @@ namespace bgfx
 	void* findModule(const char* _name)
 	{
 #if BX_PLATFORM_WINDOWS
+		// NOTE: there was some reason to do it this way instead of simply calling GetModuleHandleA,
+		// but not sure what it was.
 		HANDLE process = GetCurrentProcess();
 		DWORD size;
 		BOOL result = EnumProcessModules(process
@@ -52,7 +54,7 @@ namespace bgfx
 		}
 #else
 		BX_UNUSED(_name);
-#endif
+#endif // BX_PLATFORM_WINDOWS
 
 		return NULL;
 	}
@@ -74,17 +76,19 @@ namespace bgfx
 			return NULL;
 		}
 
-#if BX_PLATFORM_WINDOWS
 		// If RenderDoc is already injected in the process then use the already present DLL
 		void* renderDocDll = findModule("renderdoc.dll");
 		if (NULL == renderDocDll)
 		{
-			// Load the RenderDoc DLL from its default installation location
-			renderDocDll = bx::dlopen("C:\\Program Files\\RenderDoc\\renderdoc.dll");
-		}
+			// TODO: try common installation paths before looking in current directory
+			renderDocDll = bx::dlopen(
+#if BX_PLATFORM_WINDOWS
+					"renderdoc.dll"
 #else
-		void* renderDocDll = bx::dlopen("./librenderdoc.so");
-#endif
+					"./librenderdoc.so"
+#endif // BX_PLATFORM_WINDOWS
+					);
+		}
 
 		if (NULL != renderDocDll)
 		{
