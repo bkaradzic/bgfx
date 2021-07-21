@@ -2370,6 +2370,13 @@ namespace bgfx
 											  "#define shadow2DProj shadow2DProjEXT\n"
 											);
 									}
+									else
+									{
+										bx::stringPrintf(code
+											, "#define shadow2D(_sampler, _coord) texture(_sampler, _coord)\n"
+											  "#define shadow2DProj(_sampler, _coord) textureProj(_sampler, _coord)\n"
+											);
+									}
 
 									if (usesGpuShader5)
 									{
