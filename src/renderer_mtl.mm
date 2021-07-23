@@ -3266,6 +3266,7 @@ namespace bgfx { namespace mtl
 	{
 		if (NULL == m_drawableTexture)
 		{
+			[m_metalLayer nextDrawable];
 			m_drawable = m_metalLayer.nextDrawable;
 			if (m_drawable != NULL)
 			{
