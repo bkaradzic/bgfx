@@ -370,7 +370,7 @@ void OcornutImguiContext::beginFrame(
     const int64_t frameTime = now - m_last;
     m_last = now;
     const double freq = double(bx::getHPFrequency() );
-    io.DeltaTime = float(frameTime/freq);
+    io.DeltaTime = bx::max(float(frameTime/freq), 0.001f);
 
     io.MousePos = ImVec2( (float)_mx, (float)_my);
     io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);

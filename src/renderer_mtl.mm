@@ -4462,38 +4462,50 @@ namespace bgfx { namespace mtl
 
 					uint32_t numVertices = draw.m_numVertices;
 					uint8_t  numStreams  = 0;
-					for (uint32_t idx = 0, streamMask = draw.m_streamMask
-						; 0 != streamMask
-						; streamMask >>= 1, idx += 1, ++numStreams
-						)
-					{
-						const uint32_t ntz = bx::uint32_cnttz(streamMask);
-						streamMask >>= ntz;
-						idx         += ntz;
+                    
+                    if (draw.m_streamMask == UINT8_MAX)
+                    {
+                        currentState.m_stream[0].m_layoutHandle = BGFX_INVALID_HANDLE;
+                        currentState.m_stream[0].m_handle = BGFX_INVALID_HANDLE;
+                        currentState.m_stream[0].m_startVertex = 0;
+                        numStreams = 1u;
+                    }
+                    else
+                    {
+                        for (uint32_t idx = 0, streamMask = draw.m_streamMask
+                            ; 0 != streamMask
+                            ; streamMask >>= 1, idx += 1, ++numStreams
+                            )
+                        {
+                            const uint32_t ntz = bx::uint32_cnttz(streamMask);
+                            streamMask >>= ntz;
+                            idx         += ntz;
 
-						currentState.m_stream[idx].m_layoutHandle   = draw.m_stream[idx].m_layoutHandle;
-						currentState.m_stream[idx].m_handle         = draw.m_stream[idx].m_handle;
-						currentState.m_stream[idx].m_startVertex    = draw.m_stream[idx].m_startVertex;
+                            currentState.m_stream[idx].m_layoutHandle   = draw.m_stream[idx].m_layoutHandle;
+                            currentState.m_stream[idx].m_handle         = draw.m_stream[idx].m_handle;
+                            currentState.m_stream[idx].m_startVertex    = draw.m_stream[idx].m_startVertex;
 
-						const uint16_t handle = draw.m_stream[idx].m_handle.idx;
-						const VertexBufferMtl& vb = m_vertexBuffers[handle];
-						const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
-							? draw.m_stream[idx].m_layoutHandle.idx
-							: vb.m_layoutHandle.idx;
-						const VertexLayout& layout = m_vertexLayouts[decl];
-						const uint32_t stride = layout.m_stride;
+                            const uint16_t handle = draw.m_stream[idx].m_handle.idx;
 
-						layouts[numStreams] = &layout;
+                            const VertexBufferMtl& vb = m_vertexBuffers[handle];
+                            const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
+                                ? draw.m_stream[idx].m_layoutHandle.idx
+                                : vb.m_layoutHandle.idx;
+                            const VertexLayout& layout = m_vertexLayouts[decl];
+                            const uint32_t stride = layout.m_stride;
 
-						numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
-							? vb.m_size/stride
-							: draw.m_numVertices
-							, numVertices
-							);
-						const uint32_t offset = draw.m_stream[idx].m_startVertex * stride;
+                            layouts[numStreams] = &layout;
 
-						rce.setVertexBuffer(vb.m_ptr, offset, idx+1);
-					}
+                            numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
+                                ? vb.m_size/stride
+                                : draw.m_numVertices
+                                , numVertices
+                                );
+                            const uint32_t offset = draw.m_stream[idx].m_startVertex * stride;
+
+                            rce.setVertexBuffer(vb.m_ptr, offset, idx+1);
+                        }
+                    }
 
 					currentState.m_numVertices = numVertices;
 
