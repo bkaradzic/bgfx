@@ -134,7 +134,7 @@ typedef struct VkVideoCapabilitiesKHR {
 
 typedef struct VkPhysicalDeviceVideoFormatInfoKHR {
     VkStructureType              sType;
-    const void*                  pNext;
+    void*                        pNext;
     VkImageUsageFlags            imageUsage;
     const VkVideoProfilesKHR*    pVideoProfiles;
 } VkPhysicalDeviceVideoFormatInfoKHR;
