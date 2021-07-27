@@ -20,7 +20,7 @@ extern "C" {
 
 
 #define VK_VERSION_1_0 1
-#include "vulkan/vk_platform.h"
+#include "vk_platform.h"
 
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 
