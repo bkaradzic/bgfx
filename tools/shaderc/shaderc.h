@@ -117,6 +117,7 @@ namespace bgfx
 
 		std::string	inputFilePath;
 		std::string	outputFilePath;
+		std::string debugDatabaseDir;
 
 		std::vector<std::string> includeDirs;
 		std::vector<std::string> defines;

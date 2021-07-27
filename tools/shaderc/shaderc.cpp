@@ -1033,12 +1033,12 @@ namespace bgfx
 			"      --type <type>             Shader type (vertex, fragment)\n"
 			"      --varyingdef <file path>  Path to varying.def.sc file.\n"
 			"      --verbose                 Verbose.\n"
+			"      --debug <file path>       Debug information and optional file path of debug database files\n"
 
 			"\n"
 			"Options (DX9 and DX11 only):\n"
 
 			"\n"
-			"      --debug                   Debug information.\n"
 			"      --disasm                  Disassemble compiled shader.\n"
 			"  -O <level>                    Optimization level (0, 1, 2, 3).\n"
 			"      --Werror                  Treat warnings as errors.\n"
@@ -2220,8 +2220,8 @@ namespace bgfx
 								;
 
 							if (!bx::strFind(preprocessedInput, "layout(std430").isEmpty()
-							||  !bx::strFind(preprocessedInput, "image2D").isEmpty()
-							||  usesBitsToEncoders)
+								|| !bx::strFind(preprocessedInput, "image2D").isEmpty()
+								|| usesBitsToEncoders)
 							{
 								if (profile->lang == ShadingLang::GLSL
 									&& glsl_profile < 430)
@@ -2253,7 +2253,7 @@ namespace bgfx
 								const bool usesTextureArray = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
 								const bool usesPacking = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
 								const bool usesViewportLayerArray = !bx::findIdentifierMatch(input, s_ARB_shader_viewport_layer_array).isEmpty();
-								const bool usesUnsignedVecs        = !bx::findIdentifierMatch(preprocessedInput, s_unsignedVecs).isEmpty();
+								const bool usesUnsignedVecs = !bx::findIdentifierMatch(preprocessedInput, s_unsignedVecs).isEmpty();
 
 								if (profile->lang != ShadingLang::ESSL)
 								{
@@ -2262,7 +2262,7 @@ namespace bgfx
 										|| usesInterpolationQualifiers
 										|| usesTexelFetch
 										|| usesUnsignedVecs
-										) );
+										));
 
 									bx::stringPrintf(code, "#version %d\n", need130 ? 130 : glsl_profile);
 									glsl_profile = 130;
@@ -2509,7 +2509,7 @@ namespace bgfx
 											"		, vec4(v0.w, v1.w, v2.w, v3.w)\n"
 											"		);\n"
 											"}\n"
-											;											
+											;
 									}
 								}
 							}
@@ -2832,6 +2832,13 @@ namespace bgfx
 				{
 					bx::printf("ERROR: Failed to parse varying def file: \"%s\" No input/output semantics will be generated in the code!\n", varyingdef);
 				}
+			}
+
+			// BBI-TODO (dgalloway 2) check if directory exists?
+			std::string defaultDebugDatabaseDir = dir + "debugdatabase";
+			const char* debugDatabaseDir = cmdLine.findOption("debug", defaultDebugDatabaseDir.c_str());
+			{
+				options.debugDatabaseDir = debugDatabaseDir;
 			}
 
 			const size_t padding = 16384;

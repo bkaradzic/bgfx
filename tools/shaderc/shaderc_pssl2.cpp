@@ -769,6 +769,7 @@ namespace bgfx {
 								names);
 
 							un.name.assign(name);
+							un.num = 1;
 							un.regIndex = sceShaderGetMemberOffset(md, m);
 						}
 
@@ -1139,18 +1140,29 @@ namespace bgfx {
 				shaderType += "_prospero";
 			}
 
+
+			std::vector<std::string> cmdLineOptions;
+
+			cmdLineOptions.push_back("-profile");
+			cmdLineOptions.push_back(shaderType);
+			cmdLineOptions.push_back(_options.inputFilePath.c_str());
+			cmdLineOptions.push_back("-Wsuppress=6923,20087,20088");  // 6923 implicit type narrowing, 20087 unreferenced formal parameter, 20088 unreferenced local variable
+
 			// BBI-TODO (dgalloway 1) debug option
 			if (debug)
 			{
-				//compileOptions.optimizeForDebug = 1;
-				//compileOptions.optimizationLevel = 0;
-				//compileOptions.useFastmath = 0;
+				cmdLineOptions.push_back("-Od");						// Optimize for debug
+				cmdLineOptions.push_back("-O0");						// OptimizationLevel = 0;
+				cmdLineOptions.push_back("-nofastmath");				// disable aggressive floating point optimization
+				cmdLineOptions.push_back("-debug-info");				// specify the creation agsd files
+				cmdLineOptions.push_back("-debug-info-path");
+				cmdLineOptions.push_back(_options.debugDatabaseDir);	// where to store the agsd files
 			}
 			else
 			{
 				if (_options.optimize) {
-					// "-fastmath"
-					// "-O3"
+					cmdLineOptions.push_back("-fastmath");
+					cmdLineOptions.push_back("-O3");
 				}
 			}
 
@@ -1170,20 +1182,16 @@ namespace bgfx {
 				srcFile.text = _code.data();
 				srcFile.size = static_cast<uint32_t>(_code.size());
 
-				char const* const opts[] =
+				const char** opts = new const char* [cmdLineOptions.size()];
+
+				for (int i = 0; i < cmdLineOptions.size(); i++)
 				{
-					"-fastmath",
-					"-Wsuppress=6923,20087,20088"  // 6923 implicit type narrowing, 20087 unreferenced formal parameter, 20088 unreferenced local variable
-					"-O3",
-					"-profile",
-					shaderType.c_str(),
-					_options.inputFilePath.c_str()
-				};
+					opts[i] = cmdLineOptions[i].c_str();
+				}
 
 				compileOptions.userData = &srcFile;
-				compileOptions.argc = uint32_t(sizeof(opts) / sizeof(opts[0]));
+				compileOptions.argc = (uint32_t)cmdLineOptions.size();
 				compileOptions.argv = opts;
-
 
 				const sce::Prospero::Wave::Psslc::Output* compileOutput = sce::Prospero::Wave::Psslc::run(&compileOptions, &callbackList);
 
@@ -1196,7 +1204,6 @@ namespace bgfx {
 					{
 
 						SceShaderBinaryHandle const sl = sceShaderGetBinaryHandle(compileOutput->programData);
-
 
 						if (nullptr == sl)
 						{
@@ -1245,12 +1252,57 @@ namespace bgfx {
 						// End
 						BX_TRACE("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
 
-						// BBI-TODO (dgalloway 1) Write debug files for GPU Debugger
+						if (debug && compileOutput->agsdFileCount != 0 && compileOutput->agsdFiles[0].dataSize > 0)
+						{
+							static const std::string sGnmGpuDebuggerPath = _options.debugDatabaseDir;
+
+							std::string shaderFile;
+							if (_options.inputFilePath.find_last_of("\\/") != std::string::npos)
+							{
+								shaderFile = _options.inputFilePath.substr(_options.inputFilePath.find_last_of("\\/") + 1, _options.inputFilePath.size());
+							}
+							else
+							{
+								shaderFile = _options.inputFilePath;
+							}
+
+							std::string debugExt(compileOutput->agsdFiles[0].debugExt);
+							std::string shaderFileExt;
+							if (debugExt.find_last_of("\\/") != std::string::npos)	// BBI-NOTE (dgalloway) should we be ignoring the parts before the last '/' in the debugExt?
+							{
+								shaderFileExt = debugExt.substr(debugExt.find_last_of("\\/") + 1, debugExt.size());
+							}
+							else
+							{
+								shaderFileExt = debugExt;
+							}
+
+							static std::atomic<int> sFileUniqueCounter = 0;
+
+							std::string outputAGSDFile = sGnmGpuDebuggerPath + shaderFile + std::string("_") + std::to_string(sFileUniqueCounter++) + std::string("_") + _options.shaderType + shaderFileExt;
+
+							FILE* glslcOutputFileHandle = nullptr;
+
+							if (fopen_s(&glslcOutputFileHandle, outputAGSDFile.c_str(), "wb") != 0)
+							{
+								BX_ASSERT(false, "Failed to open file %s", outputAGSDFile.c_str());
+							}
+							if (!glslcOutputFileHandle)
+							{
+								BX_ASSERT(false, "Can't write file %s", outputAGSDFile.c_str());
+							}
+
+							fwrite(compileOutput->agsdFiles[0].data, compileOutput->agsdFiles[0].dataSize, 1, glslcOutputFileHandle);
+							fclose(glslcOutputFileHandle);
+						}
 					}
 				}
 
 				// BBI-TODO(dgalloway 2)
 				//delete shaderData;
+
+				delete[] opts;
+
 			}
 
 			return true;
