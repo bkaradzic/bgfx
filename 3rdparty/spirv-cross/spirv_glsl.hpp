@@ -1,5 +1,6 @@
 /*
  * Copyright 2015-2021 Arm Limited
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +19,6 @@
  * At your option, you may choose to accept this material under either:
  *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
  *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
- * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #ifndef SPIRV_CROSS_GLSL_HPP
@@ -132,6 +132,9 @@ public:
 		// In GLSL, force use of I/O block flattening, similar to
 		// what happens on legacy GLSL targets for blocks and structs.
 		bool force_flattened_io_blocks = false;
+
+		// If non-zero, controls layout(num_views = N) in; in GL_OVR_multiview2.
+		uint32_t ovr_multiview_view_count = 0;
 
 		enum Precision
 		{
