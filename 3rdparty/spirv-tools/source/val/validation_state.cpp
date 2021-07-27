@@ -520,16 +520,38 @@ void ValidationState_t::RegisterDebugInstruction(const Instruction* inst) {
 void ValidationState_t::RegisterInstruction(Instruction* inst) {
   if (inst->id()) all_definitions_.insert(std::make_pair(inst->id(), inst));
 
-  // If the instruction is using an OpTypeSampledImage as an operand, it should
-  // be recorded. The validator will ensure that all usages of an
-  // OpTypeSampledImage and its definition are in the same basic block.
+  // Some validation checks are easier by getting all the consumers
   for (uint16_t i = 0; i < inst->operands().size(); ++i) {
     const spv_parsed_operand_t& operand = inst->operand(i);
-    if (SPV_OPERAND_TYPE_ID == operand.type) {
+    if ((SPV_OPERAND_TYPE_ID == operand.type) ||
+        (SPV_OPERAND_TYPE_TYPE_ID == operand.type)) {
       const uint32_t operand_word = inst->word(operand.offset);
       Instruction* operand_inst = FindDef(operand_word);
-      if (operand_inst && SpvOpSampledImage == operand_inst->opcode()) {
+      if (!operand_inst) {
+        continue;
+      }
+
+      // If the instruction is using an OpTypeSampledImage as an operand, it
+      // should be recorded. The validator will ensure that all usages of an
+      // OpTypeSampledImage and its definition are in the same basic block.
+      if ((SPV_OPERAND_TYPE_ID == operand.type) &&
+          (SpvOpSampledImage == operand_inst->opcode())) {
         RegisterSampledImageConsumer(operand_word, inst);
+      }
+
+      // In order to track storage classes (not Function) used per execution
+      // model we can't use RegisterExecutionModelLimitation on instructions
+      // like OpTypePointer which are going to be in the pre-function section.
+      // Instead just need to register storage class usage for consumers in a
+      // function block.
+      if (inst->function()) {
+        if (operand_inst->opcode() == SpvOpTypePointer) {
+          RegisterStorageClassConsumer(
+              operand_inst->GetOperandAs<SpvStorageClass>(1), inst);
+        } else if (operand_inst->opcode() == SpvOpVariable) {
+          RegisterStorageClassConsumer(
+              operand_inst->GetOperandAs<SpvStorageClass>(2), inst);
+        }
       }
     }
   }
@@ -548,6 +570,57 @@ std::vector<Instruction*> ValidationState_t::getSampledImageConsumers(
 void ValidationState_t::RegisterSampledImageConsumer(uint32_t sampled_image_id,
                                                      Instruction* consumer) {
   sampled_image_consumers_[sampled_image_id].push_back(consumer);
+}
+
+void ValidationState_t::RegisterStorageClassConsumer(
+    SpvStorageClass storage_class, Instruction* consumer) {
+  if (spvIsVulkanEnv(context()->target_env)) {
+    if (storage_class == SpvStorageClassOutput) {
+      std::string errorVUID = VkErrorID(4644);
+      function(consumer->function()->id())
+          ->RegisterExecutionModelLimitation([errorVUID](
+              SpvExecutionModel model, std::string* message) {
+            if (model == SpvExecutionModelGLCompute ||
+                model == SpvExecutionModelRayGenerationKHR ||
+                model == SpvExecutionModelIntersectionKHR ||
+                model == SpvExecutionModelAnyHitKHR ||
+                model == SpvExecutionModelClosestHitKHR ||
+                model == SpvExecutionModelMissKHR ||
+                model == SpvExecutionModelCallableKHR) {
+              if (message) {
+                *message =
+                    errorVUID +
+                    "in Vulkan evironment, Output Storage Class must not be "
+                    "used in GLCompute, RayGenerationKHR, IntersectionKHR, "
+                    "AnyHitKHR, ClosestHitKHR, MissKHR, or CallableKHR "
+                    "execution models";
+              }
+              return false;
+            }
+            return true;
+          });
+    }
+
+    if (storage_class == SpvStorageClassWorkgroup) {
+      std::string errorVUID = VkErrorID(4645);
+      function(consumer->function()->id())
+          ->RegisterExecutionModelLimitation([errorVUID](
+              SpvExecutionModel model, std::string* message) {
+            if (model != SpvExecutionModelGLCompute &&
+                model != SpvExecutionModelTaskNV &&
+                model != SpvExecutionModelMeshNV) {
+              if (message) {
+                *message =
+                    errorVUID +
+                    "in Vulkan evironment, Workgroup Storage Class is limited "
+                    "to MeshNV, TaskNV, and GLCompute execution model";
+              }
+              return false;
+            }
+            return true;
+          });
+    }
+  }
 }
 
 uint32_t ValidationState_t::getIdBound() const { return id_bound_; }
@@ -1696,6 +1769,10 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-None-04642);
     case 4643:
       return VUID_WRAP(VUID-StandaloneSpirv-None-04643);
+    case 4644:
+      return VUID_WRAP(VUID-StandaloneSpirv-None-04644);
+    case 4645:
+      return VUID_WRAP(VUID-StandaloneSpirv-None-04645);
     case 4651:
       return VUID_WRAP(VUID-StandaloneSpirv-OpVariable-04651);
     case 4652:
@@ -1748,6 +1825,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpMemoryBarrier-04732);
     case 4733:
       return VUID_WRAP(VUID-StandaloneSpirv-OpMemoryBarrier-04733);
+    case 4780:
+      return VUID_WRAP(VUID-StandaloneSpirv-Result-04780);
     default:
       return "";  // unknown id
   }

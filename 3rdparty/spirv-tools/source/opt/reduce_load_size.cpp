@@ -139,7 +139,7 @@ bool ReduceLoadSize::ShouldReplaceExtract(Instruction* inst) {
 
   all_elements_used =
       !def_use_mgr->WhileEachUser(op_inst, [&elements_used](Instruction* use) {
-        if (use->IsOpenCL100DebugInstr()) return true;
+        if (use->IsCommonDebugInstr()) return true;
         if (use->opcode() != SpvOpCompositeExtract ||
             use->NumInOperands() == 1) {
           return false;

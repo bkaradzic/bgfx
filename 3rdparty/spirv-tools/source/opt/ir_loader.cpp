@@ -53,10 +53,12 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
   // struct DebugScope.
   if (opcode == SpvOpExtInst && spvExtInstIsDebugInfo(inst->ext_inst_type)) {
     const uint32_t ext_inst_index = inst->words[kExtInstSetIndex];
-    if (inst->ext_inst_type == SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100) {
-      const OpenCLDebugInfo100Instructions ext_inst_key =
-          OpenCLDebugInfo100Instructions(ext_inst_index);
-      if (ext_inst_key == OpenCLDebugInfo100DebugScope) {
+    if (inst->ext_inst_type == SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100 ||
+        inst->ext_inst_type ==
+            SPV_EXT_INST_TYPE_NONSEMANTIC_VULKAN_DEBUGINFO_100) {
+      const CommonDebugInfoInstructions ext_inst_key =
+          CommonDebugInfoInstructions(ext_inst_index);
+      if (ext_inst_key == CommonDebugInfoDebugScope) {
         uint32_t inlined_at = 0;
         if (inst->num_words > kInlinedAtIndex)
           inlined_at = inst->words[kInlinedAtIndex];
@@ -65,7 +67,7 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
         module()->SetContainsDebugInfo();
         return true;
       }
-      if (ext_inst_key == OpenCLDebugInfo100DebugNoScope) {
+      if (ext_inst_key == CommonDebugInfoDebugNoScope) {
         last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
         module()->SetContainsDebugInfo();
         return true;

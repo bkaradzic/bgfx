@@ -465,6 +465,10 @@ class ValidationState_t {
   void RegisterSampledImageConsumer(uint32_t sampled_image_id,
                                     Instruction* consumer);
 
+  // Record a function's storage class consumer instruction
+  void RegisterStorageClassConsumer(SpvStorageClass storage_class,
+                                    Instruction* consumer);
+
   /// Returns the set of Global Variables.
   std::unordered_set<uint32_t>& global_vars() { return global_vars_; }
 

@@ -514,6 +514,13 @@ Optimizer::PassToken CreateDeadInsertElimPass();
 // eliminated with standard dead code elimination.
 Optimizer::PassToken CreateAggressiveDCEPass();
 
+// Creates a remove-unused-interface-variables pass.
+// Removes variables referenced on the |OpEntryPoint| instruction that are not
+// referenced in the entry point function or any function in its call tree. Note
+// that this could cause the shader interface to no longer match other shader
+// stages.
+Optimizer::PassToken CreateRemoveUnusedInterfaceVariablesPass();
+
 // Creates an empty pass.
 // This is deprecated and will be removed.
 // TODO(jaebaek): remove this pass after handling glslang's broken unit tests.

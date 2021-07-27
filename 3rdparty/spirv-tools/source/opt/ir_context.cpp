@@ -30,7 +30,8 @@ static const int kSpvDecorateBuiltinInIdx = 2;
 static const int kEntryPointInterfaceInIdx = 3;
 static const int kEntryPointFunctionIdInIdx = 1;
 
-// Constants for OpenCL.DebugInfo.100 extension instructions.
+// Constants for OpenCL.DebugInfo.100 / NonSemantic.Vulkan.DebugInfo.100
+// extension instructions.
 static const uint32_t kDebugFunctionOperandFunctionIndex = 13;
 static const uint32_t kDebugGlobalVariableOperandVariableIndex = 11;
 
@@ -437,8 +438,7 @@ void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
   if (opcode == SpvOpVariable || IsConstantInst(opcode)) {
     for (auto it = module()->ext_inst_debuginfo_begin();
          it != module()->ext_inst_debuginfo_end(); ++it) {
-      if (it->GetOpenCL100DebugOpcode() !=
-          OpenCLDebugInfo100DebugGlobalVariable)
+      if (it->GetCommonDebugOpcode() != CommonDebugInfoDebugGlobalVariable)
         continue;
       auto& operand = it->GetOperand(kDebugGlobalVariableOperandVariableIndex);
       if (operand.words[0] == id) {
@@ -1033,6 +1033,12 @@ bool IRContext::CheckCFG() {
   }
 
   return true;
+}
+
+bool IRContext::IsReachable(const opt::BasicBlock& bb) {
+  auto enclosing_function = bb.GetParent();
+  return GetDominatorAnalysis(enclosing_function)
+      ->Dominates(enclosing_function->entry().get(), &bb);
 }
 }  // namespace opt
 }  // namespace spvtools

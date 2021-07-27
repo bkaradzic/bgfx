@@ -3112,6 +3112,7 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
       case OpenCLDebugInfo100DebugMacroDef:
       case OpenCLDebugInfo100DebugMacroUndef:
       case OpenCLDebugInfo100DebugImportedEntity:
+      case OpenCLDebugInfo100DebugModuleINTEL:
         break;
       case OpenCLDebugInfo100InstructionsMax:
         assert(0);
