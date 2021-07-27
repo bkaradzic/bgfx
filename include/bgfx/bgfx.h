@@ -1748,6 +1748,13 @@ namespace bgfx
 			, bool _asInt = false
 			);
 
+		static uint16_t encode(
+			  uint8_t _num
+			, AttribType::Enum _type
+			, bool _normalized = false
+			, bool _asInt = false
+		);
+
 		/// Skip _num bytes in vertex stream.
 		///
 		/// @returns Returns itself.

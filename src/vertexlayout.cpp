@@ -92,13 +92,18 @@ namespace bgfx
 		m_hash = murmur.end();
 	}
 
-	VertexLayout& VertexLayout::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
+	uint16_t VertexLayout::encode(uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
 	{
 		const uint16_t encodedNorm = (_normalized&1)<<7;
 		const uint16_t encodedType = (_type&7)<<3;
 		const uint16_t encodedNum  = (_num-1)&3;
 		const uint16_t encodeAsInt = (_asInt&(!!"\x1\x1\x1\x0\x0"[_type]) )<<8;
-		m_attributes[_attrib] = encodedNorm|encodedType|encodedNum|encodeAsInt;
+		return encodedNorm|encodedType|encodedNum|encodeAsInt;
+	}
+
+	VertexLayout& VertexLayout::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
+	{
+		m_attributes[_attrib] = encode(_num, _type, _normalized, _asInt);
 
 		m_offset[_attrib] = m_stride;
 		m_stride += (*s_attribTypeSize[m_hash])[_type][_num-1];
