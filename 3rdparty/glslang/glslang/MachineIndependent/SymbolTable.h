@@ -319,6 +319,15 @@ public:
     virtual TParameter& operator[](int i) { assert(writable); return parameters[i]; }
     virtual const TParameter& operator[](int i) const { return parameters[i]; }
 
+#ifndef GLSLANG_WEB
+    virtual void setSpirvInstruction(const TSpirvInstruction& inst)
+    {
+        relateToOperator(EOpSpirvInst);
+        spirvInst = inst;
+    }
+    virtual const TSpirvInstruction& getSpirvInstruction() const { return spirvInst; }
+#endif
+
 #if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
     virtual void dump(TInfoSink& infoSink, bool complete = false) const override;
 #endif
@@ -342,6 +351,10 @@ protected:
                                // This is important for a static member function that has member variables in scope,
                                // but is not allowed to use them, or see hidden symbols instead.
     int  defaultParamCount;
+
+#ifndef GLSLANG_WEB
+    TSpirvInstruction spirvInst; // SPIR-V instruction qualifiers
+#endif
 };
 
 //

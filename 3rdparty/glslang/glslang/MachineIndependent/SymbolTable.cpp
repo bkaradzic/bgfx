@@ -77,6 +77,7 @@ void TType::buildMangledName(TString& mangledName) const
     case EbtAtomicUint:         mangledName += "au";     break;
     case EbtAccStruct:          mangledName += "as";     break;
     case EbtRayQuery:           mangledName += "rq";     break;
+    case EbtSpirvType:          mangledName += "spv-t";  break;
 #endif
     case EbtSampler:
         switch (sampler.type) {
@@ -390,6 +391,9 @@ TFunction::TFunction(const TFunction& copyOf) : TSymbol(copyOf)
     implicitThis = copyOf.implicitThis;
     illegalImplicitThis = copyOf.illegalImplicitThis;
     defaultParamCount = copyOf.defaultParamCount;
+#ifndef GLSLANG_WEB
+    spirvInst = copyOf.spirvInst;
+#endif
 }
 
 TFunction* TFunction::clone() const

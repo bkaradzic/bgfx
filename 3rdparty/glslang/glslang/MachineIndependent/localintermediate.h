@@ -328,7 +328,10 @@ public:
         textureSamplerTransformMode(EShTexSampTransKeep),
         needToLegalize(false),
         binaryDoubleOutput(false),
+        subgroupUniformControlFlow(false),
         usePhysicalStorageBuffer(false),
+        spirvRequirement(nullptr),
+        spirvExecutionMode(nullptr),
         uniformLocationBase(0)
 #endif
     {
@@ -864,6 +867,18 @@ public:
 
     void setBinaryDoubleOutput() { binaryDoubleOutput = true; }
     bool getBinaryDoubleOutput() { return binaryDoubleOutput; }
+
+    void setSubgroupUniformControlFlow() { subgroupUniformControlFlow = true; }
+    bool getSubgroupUniformControlFlow() const { return subgroupUniformControlFlow; }
+
+    // GL_EXT_spirv_intrinsics
+    void insertSpirvRequirement(const TSpirvRequirement* spirvReq);
+    bool hasSpirvRequirement() const { return spirvRequirement != nullptr; }
+    const TSpirvRequirement& getSpirvRequirement() const { return *spirvRequirement; }
+    void insertSpirvExecutionMode(int executionMode, const TIntermAggregate* args = nullptr);
+    void insertSpirvExecutionModeId(int executionMode, const TIntermAggregate* args);
+    bool hasSpirvExecutionMode() const { return spirvExecutionMode != nullptr; }
+    const TSpirvExecutionMode& getSpirvExecutionMode() const { return *spirvExecutionMode; }
 #endif // GLSLANG_WEB
 
     void addBlockStorageOverride(const char* nameStr, TBlockStorageClass backing)
@@ -1115,7 +1130,11 @@ protected:
 
     bool needToLegalize;
     bool binaryDoubleOutput;
+    bool subgroupUniformControlFlow;
     bool usePhysicalStorageBuffer;
+
+    TSpirvRequirement* spirvRequirement;
+    TSpirvExecutionMode* spirvExecutionMode;
 
     std::unordered_map<std::string, int> uniformLocationOverrides;
     int uniformLocationBase;

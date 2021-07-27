@@ -71,6 +71,9 @@ enum TOperator {
     EOpFunctionCall,
     EOpFunction,        // For function definition
     EOpParameters,      // an aggregate listing the parameters to a function
+#ifndef GLSLANG_WEB
+    EOpSpirvInst,
+#endif
 
     //
     // Unary operators
@@ -1616,8 +1619,15 @@ public:
     virtual       TIntermUnary* getAsUnaryNode()       { return this; }
     virtual const TIntermUnary* getAsUnaryNode() const { return this; }
     virtual void updatePrecision();
+#ifndef GLSLANG_WEB
+    void setSpirvInstruction(const TSpirvInstruction& inst) { spirvInst = inst; }
+    const TSpirvInstruction& getSpirvInstruction() const { return spirvInst; }
+#endif
 protected:
     TIntermTyped* operand;
+#ifndef GLSLANG_WEB
+    TSpirvInstruction spirvInst;
+#endif
 };
 
 typedef TVector<TIntermNode*> TIntermSequence;
@@ -1648,6 +1658,10 @@ public:
     bool getDebug() const { return debug; }
     void setPragmaTable(const TPragmaTable& pTable);
     const TPragmaTable& getPragmaTable() const { return *pragmaTable; }
+#ifndef GLSLANG_WEB
+    void setSpirvInstruction(const TSpirvInstruction& inst) { spirvInst = inst; }
+    const TSpirvInstruction& getSpirvInstruction() const { return spirvInst; }
+#endif
 protected:
     TIntermAggregate(const TIntermAggregate&); // disallow copy constructor
     TIntermAggregate& operator=(const TIntermAggregate&); // disallow assignment operator
@@ -1658,6 +1672,9 @@ protected:
     bool optimize;
     bool debug;
     TPragmaTable* pragmaTable;
+#ifndef GLSLANG_WEB
+    TSpirvInstruction spirvInst;
+#endif
 };
 
 //

@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 11.5.0 2021-06-23
+
+### Other changes
+* Implement GLSL_EXT_shader_atomic_float2
+* Implement GL_EXT_spirv_intrinsics
+* Fixed SPIR-V remapper not remapping OpExtInst instruction set IDs
+* only declare compatibility gl_ variables in compatibility mode
+* Add support for float spec const vector initialization
+* Implement GL_EXT_subgroup_uniform_control_flow.
+* Fix arrays dimensioned with spec constant sized gl_WorkGroupSize
+* Add support for 64bit integer scalar and vector types to bitCount() builtin
+
 ## 11.4.0 2021-04-22
 
 ### Other changes

@@ -1092,12 +1092,31 @@ TFunction* TParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunct
     TSymbol* symbol = symbolTable.find(function.getMangledName(), &builtIn);
     if (symbol && symbol->getAsFunction() && builtIn)
         requireProfile(loc, ~EEsProfile, "redefinition of built-in function");
+#ifndef GLSLANG_WEB
+    // Check the validity of using spirv_literal qualifier
+    for (int i = 0; i < function.getParamCount(); ++i) {
+        if (function[i].type->getQualifier().isSpirvLiteral() && function.getBuiltInOp() != EOpSpirvInst)
+            error(loc, "'spirv_literal' can only be used on functions defined with 'spirv_instruction' for argument",
+                  function.getName().c_str(), "%d", i + 1);
+    }
+
+    // For function declaration with SPIR-V instruction qualifier, always ignore the built-in function and
+    // respect this redeclared one.
+    if (symbol && builtIn && function.getBuiltInOp() == EOpSpirvInst)
+        symbol = nullptr;
+#endif
     const TFunction* prevDec = symbol ? symbol->getAsFunction() : 0;
     if (prevDec) {
         if (prevDec->isPrototyped() && prototype)
             profileRequires(loc, EEsProfile, 300, nullptr, "multiple prototypes for same function");
         if (prevDec->getType() != function.getType())
             error(loc, "overloaded functions must have the same return type", function.getName().c_str(), "");
+#ifndef GLSLANG_WEB
+        if (prevDec->getSpirvInstruction() != function.getSpirvInstruction()) {
+            error(loc, "overloaded functions must have the same qualifiers", function.getName().c_str(),
+                  "spirv_instruction");
+        }
+#endif
         for (int i = 0; i < prevDec->getParamCount(); ++i) {
             if ((*prevDec)[i].type->getQualifier().storage != function[i].type->getQualifier().storage)
                 error(loc, "overloaded functions must have the same parameter storage qualifiers for argument", function[i].type->getStorageQualifierString(), "%d", i+1);
@@ -1299,6 +1318,15 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
                         if (lValueErrorCheck(arguments->getLoc(), "assign", arg->getAsTyped()))
                             error(arguments->getLoc(), "Non-L-value cannot be passed for 'out' or 'inout' parameters.", "out", "");
                     }
+#ifndef GLSLANG_WEB
+                    if (formalQualifier.isSpirvLiteral()) {
+                        if (!arg->getAsTyped()->getQualifier().isFrontEndConstant()) {
+                            error(arguments->getLoc(),
+                                  "Non front-end constant expressions cannot be passed for 'spirv_literal' parameters.",
+                                  "spirv_literal", "");
+                        }
+                    }
+#endif
                     const TType& argType = arg->getAsTyped()->getType();
                     const TQualifier& argQualifier = argType.getQualifier();
                     if (argQualifier.isMemory() && (argType.containsOpaque() || argType.isReference())) {
@@ -1353,6 +1381,11 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
             if (builtIn && fnCandidate->getBuiltInOp() != EOpNull) {
                 // A function call mapped to a built-in operation.
                 result = handleBuiltInFunctionCall(loc, arguments, *fnCandidate);
+#ifndef GLSLANG_WEB
+            } else if (fnCandidate->getBuiltInOp() == EOpSpirvInst) {
+                // When SPIR-V instruction qualifier is specified, the function call is still mapped to a built-in operation.
+                result = handleBuiltInFunctionCall(loc, arguments, *fnCandidate);
+#endif
             } else {
                 // This is a function call not mapped to built-in operator.
                 // It could still be a built-in function, but only if PureOperatorBuiltins == false.
@@ -1429,6 +1462,35 @@ TIntermTyped* TParseContext::handleBuiltInFunctionCall(TSourceLoc loc, TIntermNo
                                       static_cast<TIntermTyped*>(arguments)->getCompleteString().c_str());
     } else if (result->getAsOperator())
         builtInOpCheck(loc, function, *result->getAsOperator());
+
+#ifndef GLSLANG_WEB
+    // Special handling for function call with SPIR-V instruction qualifier specified
+    if (function.getBuiltInOp() == EOpSpirvInst) {
+        if (auto agg = result->getAsAggregate()) {
+            // Propogate spirv_by_reference/spirv_literal from parameters to arguments
+            auto& sequence = agg->getSequence();
+            for (unsigned i = 0; i < sequence.size(); ++i) {
+                if (function[i].type->getQualifier().isSpirvByReference())
+                    sequence[i]->getAsTyped()->getQualifier().setSpirvByReference();
+                if (function[i].type->getQualifier().isSpirvLiteral())
+                    sequence[i]->getAsTyped()->getQualifier().setSpirvLiteral();
+            }
+
+            // Attach the function call to SPIR-V intruction
+            agg->setSpirvInstruction(function.getSpirvInstruction());
+        } else if (auto unaryNode = result->getAsUnaryNode()) {
+            // Propogate spirv_by_reference/spirv_literal from parameters to arguments
+            if (function[0].type->getQualifier().isSpirvByReference())
+                unaryNode->getOperand()->getQualifier().setSpirvByReference();
+            if (function[0].type->getQualifier().isSpirvLiteral())
+                unaryNode->getOperand()->getQualifier().setSpirvLiteral();
+
+            // Attach the function call to SPIR-V intruction
+            unaryNode->setSpirvInstruction(function.getSpirvInstruction());
+        } else
+            assert(0);
+    }
+#endif
 
     return result;
 }
@@ -2279,18 +2341,23 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
                 error(loc, "only supported on image with format r64i", fnCandidate.getName().c_str(), "");
             else if (callNode.getType().getBasicType() == EbtUint64 && imageType.getQualifier().getFormat() != ElfR64ui)
                 error(loc, "only supported on image with format r64ui", fnCandidate.getName().c_str(), "");
-        } else {
-            bool isImageAtomicOnFloatAllowed = ((fnCandidate.getName().compare(0, 14, "imageAtomicAdd") == 0) ||
-                (fnCandidate.getName().compare(0, 15, "imageAtomicLoad") == 0) ||
-                (fnCandidate.getName().compare(0, 16, "imageAtomicStore") == 0) ||
-                (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") == 0));
-            if (imageType.getSampler().type == EbtFloat && isImageAtomicOnFloatAllowed &&
-                (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") != 0)) // imageAtomicExchange doesn't require GL_EXT_shader_atomic_float
+        } else if (imageType.getSampler().type == EbtFloat) {
+            if (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") == 0) {
+                // imageAtomicExchange doesn't require an extension
+            } else if ((fnCandidate.getName().compare(0, 14, "imageAtomicAdd") == 0) ||
+                       (fnCandidate.getName().compare(0, 15, "imageAtomicLoad") == 0) ||
+                       (fnCandidate.getName().compare(0, 16, "imageAtomicStore") == 0)) {
                 requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float, fnCandidate.getName().c_str());
-            if (!isImageAtomicOnFloatAllowed)
+            } else if ((fnCandidate.getName().compare(0, 14, "imageAtomicMin") == 0) ||
+                       (fnCandidate.getName().compare(0, 14, "imageAtomicMax") == 0)) {
+                requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float2, fnCandidate.getName().c_str());
+            } else {
                 error(loc, "only supported on integer images", fnCandidate.getName().c_str(), "");
-            else if (imageType.getQualifier().getFormat() != ElfR32f && isEsProfile())
+            }
+            if (imageType.getQualifier().getFormat() != ElfR32f && isEsProfile())
                 error(loc, "only supported on image with format r32f", fnCandidate.getName().c_str(), "");
+        } else {
+            error(loc, "not supported on this image type", fnCandidate.getName().c_str(), "");
         }
 
         const size_t maxArgs = imageType.getSampler().isMultiSample() ? 5 : 4;
@@ -2319,16 +2386,28 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             memorySemanticsCheck(loc, fnCandidate, callNode);
             if ((callNode.getOp() == EOpAtomicAdd || callNode.getOp() == EOpAtomicExchange ||
                 callNode.getOp() == EOpAtomicLoad || callNode.getOp() == EOpAtomicStore) &&
-                (arg0->getType().isFloatingDomain())) {
+                (arg0->getType().getBasicType() == EbtFloat ||
+                 arg0->getType().getBasicType() == EbtDouble)) {
                 requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float, fnCandidate.getName().c_str());
+            } else if ((callNode.getOp() == EOpAtomicAdd || callNode.getOp() == EOpAtomicExchange ||
+                        callNode.getOp() == EOpAtomicLoad || callNode.getOp() == EOpAtomicStore ||
+                        callNode.getOp() == EOpAtomicMin || callNode.getOp() == EOpAtomicMax) &&
+                       arg0->getType().isFloatingDomain()) {
+                requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float2, fnCandidate.getName().c_str());
             }
         } else if (arg0->getType().getBasicType() == EbtInt64 || arg0->getType().getBasicType() == EbtUint64) {
             const char* const extensions[2] = { E_GL_NV_shader_atomic_int64,
                                                 E_GL_EXT_shader_atomic_int64 };
             requireExtensions(loc, 2, extensions, fnCandidate.getName().c_str());
         } else if ((callNode.getOp() == EOpAtomicAdd || callNode.getOp() == EOpAtomicExchange) &&
-                   (arg0->getType().isFloatingDomain())) {
+                   (arg0->getType().getBasicType() == EbtFloat ||
+                    arg0->getType().getBasicType() == EbtDouble)) {
             requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float, fnCandidate.getName().c_str());
+        } else if ((callNode.getOp() == EOpAtomicAdd || callNode.getOp() == EOpAtomicExchange ||
+                    callNode.getOp() == EOpAtomicLoad || callNode.getOp() == EOpAtomicStore ||
+                    callNode.getOp() == EOpAtomicMin || callNode.getOp() == EOpAtomicMax) &&
+                   arg0->getType().isFloatingDomain()) {
+            requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float2, fnCandidate.getName().c_str());
         }
         break;
     }
@@ -2931,7 +3010,8 @@ void TParseContext::reservedErrorCheck(const TSourceLoc& loc, const TString& ide
     // "Identifiers starting with "gl_" are reserved for use by OpenGL, and may not be
     // declared in a shader; this results in a compile-time error."
     if (! symbolTable.atBuiltInLevel()) {
-        if (builtInName(identifier))
+        if (builtInName(identifier) && !extensionTurnedOn(E_GL_EXT_spirv_intrinsics))
+            // The extension GL_EXT_spirv_intrinsics allows us to declare identifiers starting with "gl_".
             error(loc, "identifiers starting with \"gl_\" are reserved", identifier.c_str(), "");
 
         // "__" are not supposed to be an error.  ES 300 (and desktop) added the clarification:
@@ -2939,7 +3019,8 @@ void TParseContext::reservedErrorCheck(const TSourceLoc& loc, const TString& ide
         // reserved; using such a name does not itself result in an error, but may result
         // in undefined behavior."
         // however, before that, ES tests required an error.
-        if (identifier.find("__") != TString::npos) {
+        if (identifier.find("__") != TString::npos && !extensionTurnedOn(E_GL_EXT_spirv_intrinsics)) {
+            // The extension GL_EXT_spirv_intrinsics allows us to declare identifiers starting with "__".
             if (isEsProfile() && version < 300)
                 error(loc, "identifiers containing consecutive underscores (\"__\") are reserved, and an error if version < 300", identifier.c_str(), "");
             else
@@ -2960,14 +3041,16 @@ void TParseContext::reservedPpErrorCheck(const TSourceLoc& loc, const char* iden
     // single underscore) are also reserved, and defining such a name results in a
     // compile-time error."
     // however, before that, ES tests required an error.
-    if (strncmp(identifier, "GL_", 3) == 0)
+    if (strncmp(identifier, "GL_", 3) == 0 && !extensionTurnedOn(E_GL_EXT_spirv_intrinsics))
+        // The extension GL_EXT_spirv_intrinsics allows us to declare macros prefixed with "GL_".
         ppError(loc, "names beginning with \"GL_\" can't be (un)defined:", op,  identifier);
     else if (strncmp(identifier, "defined", 8) == 0)
         if (relaxedErrors())
             ppWarn(loc, "\"defined\" is (un)defined:", op,  identifier);
         else
             ppError(loc, "\"defined\" can't be (un)defined:", op,  identifier);
-    else if (strstr(identifier, "__") != 0) {
+    else if (strstr(identifier, "__") != 0 && !extensionTurnedOn(E_GL_EXT_spirv_intrinsics)) {
+        // The extension GL_EXT_spirv_intrinsics allows us to declare macros prefixed with "__".
         if (isEsProfile() && version >= 300 &&
             (strcmp(identifier, "__LINE__") == 0 ||
              strcmp(identifier, "__FILE__") == 0 ||
@@ -3115,6 +3198,7 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
     bool matrixInMatrix = false;
     bool arrayArg = false;
     bool floatArgument = false;
+    bool intArgument = false;
     for (int arg = 0; arg < function.getParamCount(); ++arg) {
         if (function[arg].type->isArray()) {
             if (function[arg].type->isUnsizedArray()) {
@@ -3145,6 +3229,8 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
             specConstType = true;
         if (function[arg].type->isFloatingDomain())
             floatArgument = true;
+        if (function[arg].type->isIntegerDomain())
+            intArgument = true;
         if (type.isStruct()) {
             if (function[arg].type->contains16BitFloat()) {
                 requireFloat16Arithmetic(loc, "constructor", "can't construct structure containing 16-bit type");
@@ -3250,6 +3336,15 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
                 // and aren't making an array.
                 makeSpecConst = ! floatArgument && ! type.isArray();
                 break;
+
+            case EOpConstructVec2:
+            case EOpConstructVec3:
+            case EOpConstructVec4:
+                // This was the list of valid ones, if they aren't converting from int
+                // and aren't making an array.
+                makeSpecConst = ! intArgument && !type.isArray();
+                break;
+
             default:
                 // anything else wasn't white-listed in the spec as a conversion
                 makeSpecConst = false;
@@ -3582,6 +3677,14 @@ void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& q
     if (!nonuniformOkay && qualifier.isNonUniform())
         error(loc, "for non-parameter, can only apply to 'in' or no storage qualifier", "nonuniformEXT", "");
 
+#ifndef GLSLANG_WEB
+    if (qualifier.isSpirvByReference())
+        error(loc, "can only apply to parameter", "spirv_by_reference", "");
+
+    if (qualifier.isSpirvLiteral())
+        error(loc, "can only apply to parameter", "spirv_literal", "");
+#endif
+
     // Storage qualifier isn't ready for memberQualifierCheck, we should skip invariantCheck for it.
     if (!isMemberCheck || structNestingLevel > 0)
         invariantCheck(loc, qualifier);
@@ -3841,6 +3944,41 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
     MERGE_SINGLETON(readonly);
     MERGE_SINGLETON(writeonly);
     MERGE_SINGLETON(nonUniform);
+#endif
+
+#ifndef GLSLANG_WEB
+    // SPIR-V storage class qualifier (GL_EXT_spirv_intrinsics)
+    dst.spirvStorageClass = src.spirvStorageClass;
+
+    // SPIR-V decorate qualifiers (GL_EXT_spirv_intrinsics)
+    if (src.hasSprivDecorate()) {
+        if (dst.hasSprivDecorate()) {
+            const TSpirvDecorate& srcSpirvDecorate = src.getSpirvDecorate();
+            TSpirvDecorate& dstSpirvDecorate = dst.getSpirvDecorate();
+            for (auto& decorate : srcSpirvDecorate.decorates) {
+                if (dstSpirvDecorate.decorates.find(decorate.first) != dstSpirvDecorate.decorates.end())
+                    error(loc, "too many SPIR-V decorate qualifiers", "spirv_decorate", "(decoration=%u)", decorate.first);
+                else
+                    dstSpirvDecorate.decorates.insert(decorate);
+            }
+
+            for (auto& decorateId : srcSpirvDecorate.decorateIds) {
+                if (dstSpirvDecorate.decorateIds.find(decorateId.first) != dstSpirvDecorate.decorateIds.end())
+                    error(loc, "too many SPIR-V decorate qualifiers", "spirv_decorate_id", "(decoration=%u)", decorateId.first);
+                else
+                    dstSpirvDecorate.decorateIds.insert(decorateId);
+            }
+
+            for (auto& decorateString : srcSpirvDecorate.decorateStrings) {
+                if (dstSpirvDecorate.decorates.find(decorateString.first) != dstSpirvDecorate.decorates.end())
+                    error(loc, "too many SPIR-V decorate qualifiers", "spirv_decorate_string", "(decoration=%u)", decorateString.first);
+                else
+                    dstSpirvDecorate.decorates.insert(decorateString);
+            }
+        } else {
+            dst.spirvDecorate = src.spirvDecorate;
+        }
+    }
 #endif
 
     if (repeated)
@@ -4806,6 +4944,17 @@ void TParseContext::paramCheckFix(const TSourceLoc& loc, const TQualifier& quali
     }
     if (qualifier.isNonUniform())
         type.getQualifier().nonUniform = qualifier.nonUniform;
+#ifndef GLSLANG_WEB
+    if (qualifier.isSpirvByReference())
+        type.getQualifier().setSpirvByReference();
+    if (qualifier.isSpirvLiteral()) {
+        if (type.getBasicType() == EbtFloat || type.getBasicType() == EbtInt || type.getBasicType() == EbtUint ||
+            type.getBasicType() == EbtBool)
+            type.getQualifier().setSpirvLiteral();
+        else
+            error(loc, "cannot use spirv_literal qualifier", type.getBasicTypeString().c_str(), "");
+#endif
+    }
 
     paramCheckFixStorage(loc, qualifier.storage, type);
 }
@@ -5873,6 +6022,9 @@ void TParseContext::layoutObjectCheck(const TSourceLoc& loc, const TSymbol& symb
         case EvqVaryingIn:
         case EvqVaryingOut:
             if (!type.getQualifier().isTaskMemory() &&
+#ifndef GLSLANG_WEB
+                !type.getQualifier().hasSprivDecorate() &&
+#endif
                 (type.getBasicType() != EbtBlock ||
                  (!(*type.getStruct())[0].type->getQualifier().hasLocation() &&
                    (*type.getStruct())[0].type->getQualifier().builtIn == EbvNone)))
@@ -5934,6 +6086,11 @@ void TParseContext::layoutMemberLocationArrayCheck(const TSourceLoc& loc, bool m
 // Do layout error checking with respect to a type.
 void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
 {
+#ifndef GLSLANG_WEB
+    if (extensionTurnedOn(E_GL_EXT_spirv_intrinsics))
+        return; // Skip any check if GL_EXT_spirv_intrinsics is turned on
+#endif
+
     const TQualifier& qualifier = type.getQualifier();
 
     // first, intra-layout qualifier-only error checking
@@ -7940,6 +8097,10 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
             memberQualifier.perViewNV = currentBlockQualifier.perViewNV;
         if (currentBlockQualifier.perTaskNV)
             memberQualifier.perTaskNV = currentBlockQualifier.perTaskNV;
+        if (memberQualifier.storage == EvqSpirvStorageClass)
+            error(memberLoc, "member cannot have a spirv_storage_class qualifier", memberType.getFieldName().c_str(), "");
+        if (memberQualifier.hasSprivDecorate() && !memberQualifier.getSpirvDecorate().decorateIds.empty())
+            error(memberLoc, "member cannot have a spirv_decorate_id qualifier", memberType.getFieldName().c_str(), "");
 #endif
         if ((currentBlockQualifier.storage == EvqUniform || currentBlockQualifier.storage == EvqBuffer) && (memberQualifier.isInterpolation() || memberQualifier.isAuxiliary()))
             error(memberLoc, "member of uniform or buffer block cannot have an auxiliary or interpolation qualifier", memberType.getFieldName().c_str(), "");
