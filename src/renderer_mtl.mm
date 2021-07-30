@@ -3183,7 +3183,7 @@ namespace bgfx { namespace mtl
 		}
 		if (@available(macOS 10.13.2, *))
 		{
-      m_metalLayer.maximumDrawableCount = bx::clamp((int)_numBackBuffers, 2, 3);
+      m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(_numBackBuffers, 2, 3);
 		}
 #endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 #endif // BX_PLATFORM_OSX
