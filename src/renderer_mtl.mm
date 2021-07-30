@@ -936,7 +936,7 @@ namespace bgfx { namespace mtl
 
 			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
 			fb.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
-			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, m_resolution.reset);
+			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, m_resolution.reset, m_resolution.maxFrameLatency);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
@@ -1262,7 +1262,7 @@ namespace bgfx { namespace mtl
 				}
 				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				m_mainFrameBuffer.m_swapChain->resize(m_mainFrameBuffer, _resolution.width, _resolution.height, _resolution.reset);
+				m_mainFrameBuffer.m_swapChain->resize(m_mainFrameBuffer, _resolution.width, _resolution.height, _resolution.reset, m_resolution.maxFrameLatency);
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 				{
@@ -3171,7 +3171,7 @@ namespace bgfx { namespace mtl
 		retain(m_metalLayer);
 	}
 
-	void SwapChainMtl::resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags)
+	void SwapChainMtl::resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags, uint32_t _maximumDrawableCount)
 	{
 		const int32_t sampleCount = s_msaa[(_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
@@ -3180,6 +3180,10 @@ namespace bgfx { namespace mtl
 		if (@available(macOS 10.13, *))
 		{
 			m_metalLayer.displaySyncEnabled = 0 != (_flags&BGFX_RESET_VSYNC);
+		}
+		if (@available(macOS 10.13.2, *))
+		{
+			m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(_maximumDrawableCount, 2, 3);
 		}
 #endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 #endif // BX_PLATFORM_OSX
