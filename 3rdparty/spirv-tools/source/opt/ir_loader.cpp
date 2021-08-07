@@ -17,6 +17,7 @@
 #include <utility>
 
 #include "DebugInfo.h"
+#include "NonSemanticVulkanDebugInfo100.h"
 #include "OpenCLDebugInfo100.h"
 #include "source/ext_inst.h"
 #include "source/opt/log.h"
@@ -230,6 +231,35 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
                 function_->AddDebugInstructionInHeader(std::move(spv_inst));
               else
                 block_->AddInstruction(std::move(spv_inst));
+              break;
+            }
+            default: {
+              Errorf(consumer_, src, loc,
+                     "Debug info extension instruction other than DebugScope, "
+                     "DebugNoScope, DebugFunctionDefinition, DebugDeclare, and "
+                     "DebugValue found inside function",
+                     opcode);
+              return false;
+            }
+          }
+        } else if (inst->ext_inst_type ==
+                   SPV_EXT_INST_TYPE_NONSEMANTIC_VULKAN_DEBUGINFO_100) {
+          const NonSemanticVulkanDebugInfo100Instructions ext_inst_key =
+              NonSemanticVulkanDebugInfo100Instructions(ext_inst_index);
+          switch (ext_inst_key) {
+            case NonSemanticVulkanDebugInfo100DebugDeclare:
+            case NonSemanticVulkanDebugInfo100DebugValue:
+            case NonSemanticVulkanDebugInfo100DebugScope:
+            case NonSemanticVulkanDebugInfo100DebugNoScope:
+            case NonSemanticVulkanDebugInfo100DebugFunctionDefinition: {
+              if (block_ == nullptr) {  // Inside function but outside blocks
+                Errorf(consumer_, src, loc,
+                       "Debug info extension instruction found inside function "
+                       "but outside block",
+                       opcode);
+              } else {
+                block_->AddInstruction(std::move(spv_inst));
+              }
               break;
             }
             default: {

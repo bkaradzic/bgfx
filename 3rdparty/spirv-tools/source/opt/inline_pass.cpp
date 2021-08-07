@@ -403,6 +403,14 @@ bool InlinePass::InlineEntryBlock(
       callee2caller, inlined_at_ctx, new_blk_ptr, callee_first_block);
 
   while (callee_inst_itr != callee_first_block->end()) {
+    // Don't inline function definition links, the calling function is not a
+    // definition.
+    if (callee_inst_itr->GetVulkan100DebugOpcode() ==
+        NonSemanticVulkanDebugInfo100DebugFunctionDefinition) {
+      ++callee_inst_itr;
+      continue;
+    }
+
     if (!InlineSingleInstruction(
             callee2caller, new_blk_ptr->get(), &*callee_inst_itr,
             context()->get_debug_info_mgr()->BuildDebugInlinedAtChain(
