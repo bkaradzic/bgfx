@@ -8689,6 +8689,10 @@
         {
           "enumerant" : "Const",
           "value" : "0x0008"
+        },
+        {
+          "enumerant" : "OptNoneINTEL",
+          "value" : "0x10000"
         }
       ]
     },
@@ -13451,6 +13455,12 @@
           "enumerant" : "LongConstantCompositeINTEL",
           "value" : 6089,
           "extensions" : [ "SPV_INTEL_long_constant_composite" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "OptNoneINTEL",
+          "value" : 6094,
+          "extensions" : [ "SPV_INTEL_optnone" ],
           "version" : "None"
         },
         {

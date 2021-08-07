@@ -734,7 +734,8 @@
                     "Inline": 0,
                     "DontInline": 1,
                     "Pure": 2,
-                    "Const": 3
+                    "Const": 3,
+                    "OptNoneINTEL": 16
                 }
             },
             {
@@ -1036,6 +1037,7 @@
                     "AtomicFloat32AddEXT": 6033,
                     "AtomicFloat64AddEXT": 6034,
                     "LongConstantCompositeINTEL": 6089,
+                    "OptNoneINTEL": 6094,
                     "AtomicFloat16AddEXT": 6095,
                     "DebugInfoModuleINTEL": 6114
                 }
