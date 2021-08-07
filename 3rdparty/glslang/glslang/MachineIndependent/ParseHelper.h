@@ -241,6 +241,7 @@ protected:
     // override this to set the language-specific name
     virtual const char* getAtomicCounterBlockName() const { return ""; }
     virtual void setAtomicCounterBlockDefaults(TType&) const {}
+    virtual void setInvariant(const TSourceLoc& loc, const char* builtin) {}
     virtual void finalizeAtomicCounterBlockLayout(TVariable&) {}
     bool isAtomicCounterBlock(const TSymbol& symbol) {
         const TVariable* var = symbol.getAsVariable();
@@ -511,6 +512,7 @@ protected:
     virtual const char* getAtomicCounterBlockName() const override;
     virtual void finalizeAtomicCounterBlockLayout(TVariable&) override;
     virtual void setAtomicCounterBlockDefaults(TType& block) const override;
+    virtual void setInvariant(const TSourceLoc& loc, const char* builtin) override;
 
 public:
     //

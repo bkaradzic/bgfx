@@ -316,6 +316,7 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
     MERGE_TRUE(useUnknownFormat);
     MERGE_TRUE(hlslOffsets);
     MERGE_TRUE(useStorageBuffer);
+    MERGE_TRUE(invariantAll);
     MERGE_TRUE(hlslIoMapping);
 
     // TODO: sourceFile

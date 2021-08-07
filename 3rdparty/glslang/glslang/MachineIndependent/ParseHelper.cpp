@@ -327,6 +327,16 @@ void TParseContext::setAtomicCounterBlockDefaults(TType& block) const
     block.getQualifier().layoutMatrix = ElmRowMajor;
 }
 
+void TParseContext::setInvariant(const TSourceLoc& loc, const char* builtin) {
+    TSymbol* symbol = symbolTable.find(builtin);
+    if (symbol && symbol->getType().getQualifier().isPipeOutput()) {
+        if (intermediate.inIoAccessed(builtin))
+            warn(loc, "changing qualification after use", "invariant", builtin);
+        TSymbol* csymbol = symbolTable.copyUp(symbol);
+        csymbol->getWritableType().getQualifier().invariant = true;
+    }
+}
+
 void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& tokens)
 {
 #ifndef GLSLANG_WEB
@@ -404,8 +414,33 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
         intermediate.setUseVariablePointers();
     } else if (tokens[0].compare("once") == 0) {
         warn(loc, "not implemented", "#pragma once", "");
-    } else if (tokens[0].compare("glslang_binary_double_output") == 0)
+    } else if (tokens[0].compare("glslang_binary_double_output") == 0) {
         intermediate.setBinaryDoubleOutput();
+    } else if (spvVersion.spv > 0 && tokens[0].compare("STDGL") == 0 &&
+               tokens[1].compare("invariant") == 0 && tokens[3].compare("all") == 0) {
+        intermediate.setInvariantAll();
+        // Set all builtin out variables invariant if declared
+        setInvariant(loc, "gl_Position");
+        setInvariant(loc, "gl_PointSize");
+        setInvariant(loc, "gl_ClipDistance");
+        setInvariant(loc, "gl_CullDistance");
+        setInvariant(loc, "gl_TessLevelOuter");
+        setInvariant(loc, "gl_TessLevelInner");
+        setInvariant(loc, "gl_PrimitiveID");
+        setInvariant(loc, "gl_Layer");
+        setInvariant(loc, "gl_ViewportIndex");
+        setInvariant(loc, "gl_FragDepth");
+        setInvariant(loc, "gl_SampleMask");
+        setInvariant(loc, "gl_ClipVertex");
+        setInvariant(loc, "gl_FrontColor");
+        setInvariant(loc, "gl_BackColor");
+        setInvariant(loc, "gl_FrontSecondaryColor");
+        setInvariant(loc, "gl_BackSecondaryColor");
+        setInvariant(loc, "gl_TexCoord");
+        setInvariant(loc, "gl_FogFragCoord");
+        setInvariant(loc, "gl_FragColor");
+        setInvariant(loc, "gl_FragData");
+    }
 #endif
 }
 
@@ -2409,6 +2444,14 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
                    arg0->getType().isFloatingDomain()) {
             requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float2, fnCandidate.getName().c_str());
         }
+
+        const TIntermTyped* base = TIntermediate::findLValueBase(arg0, true , true);
+        const TType* refType = (base->getType().isReference()) ? base->getType().getReferentType() : nullptr;
+        const TQualifier& qualifier = (refType != nullptr) ? refType->getQualifier() : base->getType().getQualifier();
+        if (qualifier.storage != EvqShared && qualifier.storage != EvqBuffer)
+            error(loc,"Atomic memory function can only be used for shader storage block member or shared variable.",
+            fnCandidate.getName().c_str(), "");
+
         break;
     }
 
@@ -3651,6 +3694,8 @@ void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& q
         profileRequires(loc, ENoProfile, 130, nullptr, "out for stage outputs");
         profileRequires(loc, EEsProfile, 300, nullptr, "out for stage outputs");
         qualifier.storage = EvqVaryingOut;
+        if (intermediate.isInvariantAll())
+            qualifier.invariant = true;
         break;
     case EvqInOut:
         qualifier.storage = EvqVaryingIn;
@@ -3667,7 +3712,7 @@ void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& q
         if (blockName == nullptr &&
             qualifier.layoutPacking == ElpStd430)
         {
-            error(loc, "it is invalid to declare std430 qualifier on uniform", "", "");
+            requireExtensions(loc, 1, &E_GL_EXT_scalar_block_layout, "default std430 layout for uniform");
         }
         break;
     default:

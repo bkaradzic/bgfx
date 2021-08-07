@@ -347,13 +347,13 @@ void ProcessBindingBase(int& argc, char**& argv, glslang::TResourceType res)
         lang = FindLanguage(argv[arg++], false);
     }
 
-    if ((argc - arg) > 2 && isdigit(argv[arg+0][0]) && isdigit(argv[arg+1][0])) {
+    if ((argc - arg) >= 2 && isdigit(argv[arg+0][0]) && isdigit(argv[arg+1][0])) {
         // Parse a per-set binding base
-        while ((argc - arg) > 2 && isdigit(argv[arg+0][0]) && isdigit(argv[arg+1][0])) {
+        do {
             const int baseNum = atoi(argv[arg++]);
             const int setNum = atoi(argv[arg++]);
             perSetBase[setNum] = baseNum;
-        }
+        } while ((argc - arg) >= 2 && isdigit(argv[arg + 0][0]) && isdigit(argv[arg + 1][0]));
     } else {
         // Parse single binding base
         singleBase = atoi(argv[arg++]);
