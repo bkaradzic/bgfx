@@ -10,9 +10,12 @@
 #include "resources.h"
 #include <bimg/bimg.h>
 #include <nvn/nvn.h>
+#include <nn/nn_Log.h>
 
 namespace bgfx { namespace nvn
 {
+	extern NVNdevice* g_nvnDevice;
+
 	struct TextureFormatInfo
 	{
 		NVNformat m_fmt;
@@ -91,25 +94,56 @@ namespace bgfx { namespace nvn
 		{ NVN_FORMAT_RGBA16F,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // RGBA16F
 		{ NVN_FORMAT_RGBA16SN,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // RGBA16S
 		{ NVN_FORMAT_RGBA32I,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // RGBA32I
-		{ NVN_FORMAT_RGBA32UI,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // RGBA32U
-		{ NVN_FORMAT_RGBA32F,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // RGBA32F
-		{ NVN_FORMAT_BGR565,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // R5G6B5
-		{ NVN_FORMAT_NONE,					NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // RGBA4
-		{ NVN_FORMAT_NONE,					NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // RGB5A1
-		{ NVN_FORMAT_RGB10A2,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // RGB10A2
-		{ NVN_FORMAT_R11G11B10F,			NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // RG11B10F
-		{ NVN_FORMAT_NONE,					NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // UnknownDepth
-		{ NVN_FORMAT_R16,					NVN_FORMAT_DEPTH16,			NVN_FORMAT_NONE					}, // D16
-		{ NVN_FORMAT_DEPTH24,				NVN_FORMAT_DEPTH24,			NVN_FORMAT_NONE					}, // D24
-		{ NVN_FORMAT_DEPTH24_STENCIL8,		NVN_FORMAT_DEPTH24_STENCIL8,NVN_FORMAT_NONE					}, // D24S8
-		{ NVN_FORMAT_NONE,					NVN_FORMAT_NONE,			NVN_FORMAT_NONE					}, // D32
-		{ NVN_FORMAT_DEPTH32F,				NVN_FORMAT_DEPTH32F,        NVN_FORMAT_NONE					}, // D16F
-		{ NVN_FORMAT_DEPTH32F,				NVN_FORMAT_DEPTH32F,        NVN_FORMAT_NONE					}, // D24F
-		{ NVN_FORMAT_DEPTH32F,				NVN_FORMAT_DEPTH32F,        NVN_FORMAT_NONE					}, // D32F
-		{ NVN_FORMAT_DEPTH24_STENCIL8,		NVN_FORMAT_DEPTH24_STENCIL8,NVN_FORMAT_NONE					}, // D0S8
+		{ NVN_FORMAT_RGBA32UI, NVN_FORMAT_NONE, NVN_FORMAT_NONE					}, // RGBA32U
+		{ NVN_FORMAT_RGBA32F,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE }, // RGBA32F
+		{ NVN_FORMAT_BGR565,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE }, // R5G6B5
+		{ NVN_FORMAT_NONE,					NVN_FORMAT_NONE,			NVN_FORMAT_NONE }, // RGBA4
+		{ NVN_FORMAT_NONE,					NVN_FORMAT_NONE,			NVN_FORMAT_NONE }, // RGB5A1
+		{ NVN_FORMAT_RGB10A2,				NVN_FORMAT_NONE,			NVN_FORMAT_NONE }, // RGB10A2
+		{ NVN_FORMAT_R11G11B10F,			NVN_FORMAT_NONE,			NVN_FORMAT_NONE }, // RG11B10F
+		{ NVN_FORMAT_NONE,					NVN_FORMAT_NONE,			NVN_FORMAT_NONE }, // UnknownDepth
+		{ NVN_FORMAT_R16,					NVN_FORMAT_DEPTH16,			NVN_FORMAT_NONE }, // D16
+		{ NVN_FORMAT_DEPTH24,				NVN_FORMAT_DEPTH24,			NVN_FORMAT_NONE }, // D24
+		{ NVN_FORMAT_DEPTH24_STENCIL8,		NVN_FORMAT_DEPTH24_STENCIL8,NVN_FORMAT_NONE }, // D24S8
+		{ NVN_FORMAT_NONE,					NVN_FORMAT_NONE,			NVN_FORMAT_NONE }, // D32
+		{ NVN_FORMAT_DEPTH32F,				NVN_FORMAT_DEPTH32F,        NVN_FORMAT_NONE }, // D16F
+		{ NVN_FORMAT_DEPTH32F,				NVN_FORMAT_DEPTH32F,        NVN_FORMAT_NONE }, // D24F
+		{ NVN_FORMAT_DEPTH32F,				NVN_FORMAT_DEPTH32F,        NVN_FORMAT_NONE }, // D32F
+		{ NVN_FORMAT_DEPTH24_STENCIL8,		NVN_FORMAT_DEPTH24_STENCIL8,NVN_FORMAT_NONE }, // D0S8
 	};
 
 	static_assert(TextureFormat::Count == BX_COUNTOF(s_textureFormat), "");
+
+	//
+	//
+	//
+
+	void CopyOperation::createBuffer(size_t _size, CopyOperation::Data* _data)
+	{
+		_data->m_size = _size;
+
+		size_t poolSize = nn::util::align_up(_size, NVN_MEMORY_POOL_STORAGE_GRANULARITY);
+		_data->m_mem = BX_ALIGNED_ALLOC(g_allocator, poolSize, NVN_MEMORY_POOL_STORAGE_ALIGNMENT);
+
+		NVNmemoryPoolBuilder poolBuilder;
+		nvnMemoryPoolBuilderSetDefaults(&poolBuilder);
+		nvnMemoryPoolBuilderSetDevice(&poolBuilder, g_nvnDevice);
+		nvnMemoryPoolBuilderSetFlags(&poolBuilder, NVN_MEMORY_POOL_FLAGS_CPU_UNCACHED_BIT | NVN_MEMORY_POOL_FLAGS_GPU_UNCACHED_BIT);
+		nvnMemoryPoolBuilderSetStorage(&poolBuilder, _data->m_mem, poolSize);
+		if (nvnMemoryPoolInitialize(&_data->m_pool, &poolBuilder) == NVN_FALSE)
+		{
+			BX_ASSERT(false, "Failed to create memory pool.");
+		}
+
+		NVNbufferBuilder bufferBuilder;
+		nvnBufferBuilderSetDefaults(&bufferBuilder);
+		nvnBufferBuilderSetDevice(&bufferBuilder, g_nvnDevice);
+		nvnBufferBuilderSetStorage(&bufferBuilder, &_data->m_pool, 0, _size);
+		if (nvnBufferInitialize(&_data->m_buffer, &bufferBuilder) == NVN_FALSE)
+		{
+			BX_ASSERT(false, "Failed to create buffer.");
+		}
+	}
 
 	//
 	//
@@ -126,24 +160,27 @@ namespace bgfx { namespace nvn
 
 		nvnTextureBuilderSetStorage(&_builder, m_pool.GetMemoryPool(), 0);
 
-		BX_ASSERT(nvnTextureInitialize(&m_ptr, &_builder), "Texture creation failed");
+		if (nvnTextureInitialize(&m_ptr, &_builder) == NVN_FALSE)
+		{
+			BX_ASSERT(false, "Texture creation failed.");
+		}
 
 		m_created = true;
 	}
 
-	void TextureNVN::create(NVNdevice* _device, const Memory* _mem, uint32_t _flags, uint8_t _skip)
+	void TextureNVN::create(NVNdevice* _device, const Memory* _mem, uint32_t _flags, uint8_t _skip, CopyOperation& _copyOp)
 	{
 		bimg::ImageContainer imageContainer;
 
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size))
 		{
 			uint8_t numMips = imageContainer.m_numMips;
-			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips - 1));
+			uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips - 1));
 			numMips -= startLod;
 			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(imageContainer.m_format);
-			const uint32_t textureWidth = bx::uint32_max(blockInfo.blockWidth, imageContainer.m_width >> startLod);
-			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height >> startLod);
-			const uint16_t numLayers = imageContainer.m_numLayers;
+			uint32_t textureWidth = bx::uint32_max(blockInfo.blockWidth, imageContainer.m_width >> startLod);
+			uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height >> startLod);
+			uint16_t numLayers = imageContainer.m_numLayers;
 
 			m_flags = _flags;
 			m_width = textureWidth;
@@ -156,6 +193,8 @@ namespace bgfx { namespace nvn
 
 			if (imageContainer.m_cubeMap)
 			{
+				BX_ASSERT(numLayers == 1, "Cubemap arrays not supported.");
+				numLayers = 6;
 				m_type = TextureCube;
 			}
 			else if (imageContainer.m_depth > 1)
@@ -168,19 +207,15 @@ namespace bgfx { namespace nvn
 			}
 
 			m_numMips = numMips;
-			const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
-			//const uint32_t numSrd = numSides * numMips;
-
-			uint32_t kk = 0;
 
 			//const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat));
-			//const bool swizzle = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool swizzle = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
 
-			//const bool writeOnly = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
-			//const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+			//const bool writeOnly = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
+			//const bool computeWrite = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
 			const bool srgb = 0 != (m_flags & BGFX_TEXTURE_SRGB);
-			//const bool blit = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
+			//const bool blit = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
 
 		/*	BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s RT[%c], BO[%c], CW[%c]%s."
 				, this - s_renderNVN->m_textures
@@ -195,78 +230,6 @@ namespace bgfx { namespace nvn
 				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
 			);*/
 
-			for (uint8_t side = 0; side < numSides; ++side)
-			{
-				for (uint8_t lod = 0; lod < numMips; ++lod)
-				{
-					bimg::ImageMip mip;
-					if (bimg::imageGetRawData(imageContainer, side, lod + startLod, _mem->data, _mem->size, mip))
-					{
-						//BX_ASSERT(false, "TODO");
-						/*if (convert)
-						{
-							const uint32_t pitch = bx::strideAlign(bx::max<uint32_t>(mip.m_width, 4)*bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							const uint32_t slice = bx::strideAlign(bx::max<uint32_t>(mip.m_height, 4)*pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-							const uint32_t size = slice * mip.m_depth;
-
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
-							bimg::imageDecodeToBgra8(
-								g_allocator
-								, temp
-								, mip.m_data
-								, mip.m_width
-								, mip.m_height
-								, pitch
-								, mip.m_format
-							);
-
-							srd[kk].pData = temp;
-							srd[kk].RowPitch = pitch;
-							srd[kk].SlicePitch = slice;
-						}
-						else if (compressed)
-						{
-							const uint32_t pitch = bx::strideAlign((mip.m_width / blockInfo.blockWidth)*mip.m_blockSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							const uint32_t slice = bx::strideAlign((mip.m_height / blockInfo.blockHeight)*pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-							const uint32_t size = slice * mip.m_depth;
-
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
-							bimg::imageCopy(temp
-								, mip.m_height / blockInfo.blockHeight
-								, (mip.m_width / blockInfo.blockWidth)*mip.m_blockSize
-								, mip.m_depth
-								, mip.m_data
-								, pitch
-							);
-
-							srd[kk].pData = temp;
-							srd[kk].RowPitch = pitch;
-							srd[kk].SlicePitch = slice;
-						}
-						else
-						{
-							const uint32_t pitch = bx::strideAlign(mip.m_width*mip.m_bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							const uint32_t slice = bx::strideAlign(mip.m_height*pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice*mip.m_depth);
-							bimg::imageCopy(temp
-								, mip.m_height
-								, mip.m_width*mip.m_bpp / 8
-								, mip.m_depth
-								, mip.m_data
-								, pitch
-							);
-
-							srd[kk].pData = temp;
-							srd[kk].RowPitch = pitch;
-							srd[kk].SlicePitch = slice;
-						}*/
-
-						++kk;
-					}
-				}
-			}
-
 			NVNtextureBuilder textureBuilder;
 			nvnTextureBuilderSetDevice(&textureBuilder, _device);
 			nvnTextureBuilderSetDefaults(&textureBuilder);
@@ -277,16 +240,6 @@ namespace bgfx { namespace nvn
 			{
 				BX_ASSERT(!srgb, "SRGB DepthBuffer ???");
 				format = s_textureFormat[m_textureFormat].m_fmtDsv;
-				// BX_ASSERT(false, "TODO");
-				/*resourceDesc.Format = s_textureFormat[m_textureFormat].m_fmt;
-				resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-				state |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
-				state &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-
-				clearValue = (D3D12_CLEAR_VALUE*)alloca(sizeof(D3D12_CLEAR_VALUE));
-				clearValue->Format = s_textureFormat[m_textureFormat].m_fmtDsv;
-				clearValue->DepthStencil.Depth = 1.0f;
-				clearValue->DepthStencil.Stencil = 0;*/
 			}
 			else if (renderTarget)
 			{
@@ -296,94 +249,6 @@ namespace bgfx { namespace nvn
 
 			nvnTextureBuilderSetFormat(&textureBuilder, format);
 
-			/*const uint32_t msaaQuality = bx::uint32_satsub((m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
-			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
-
-			bx::memSet(&m_srvd, 0, sizeof(m_srvd));
-			m_srvd.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-			m_srvd.Format = s_textureFormat[m_textureFormat].m_fmtSrv;
-			DXGI_FORMAT format = s_textureFormat[m_textureFormat].m_fmt;
-			if (swizzle)
-			{
-				format = srgb ? DXGI_FORMAT_RGBA8_UNORM_SRGB : DXGI_FORMAT_RGBA8_UNORM;
-				m_srvd.Format = format;
-			}
-			else if (srgb)
-			{
-				format = s_textureFormat[m_textureFormat].m_fmtSrgb;
-				m_srvd.Format = format;
-				BX_WARN(format != DXGI_FORMAT_UNKNOWN, "sRGB not supported for texture format %d", m_textureFormat);
-			}
-
-			m_uavd.Format = m_srvd.Format;
-
-			ID3D12Device* device = s_renderD3D12->m_device;
-			ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
-
-			D3D12_RESOURCE_DESC resourceDesc;
-			resourceDesc.Alignment = 1 < msaa.Count ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : 0;
-			resourceDesc.Width = textureWidth;
-			resourceDesc.Height = textureHeight;
-			resourceDesc.MipLevels = numMips;
-			resourceDesc.Format = format;
-			resourceDesc.SampleDesc = msaa;
-			resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-			resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-			resourceDesc.DepthOrArraySize = numSides;
-			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;*/
-
-
-
-			//D3D12_CLEAR_VALUE* clearValue = NULL;
-			//if (bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat)))
-			//{
-			//	resourceDesc.Format = s_textureFormat[m_textureFormat].m_fmt;
-			//	resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-			//	state |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			//	state &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-
-			//	clearValue = (D3D12_CLEAR_VALUE*)alloca(sizeof(D3D12_CLEAR_VALUE));
-			//	clearValue->Format = s_textureFormat[m_textureFormat].m_fmtDsv;
-			//	clearValue->DepthStencil.Depth = 1.0f;
-			//	clearValue->DepthStencil.Stencil = 0;
-			//}
-			//else if (renderTarget)
-			//{
-			//	resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-			//	state |= D3D12_RESOURCE_STATE_RENDER_TARGET;
-			//	state &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-
-			//	clearValue = (D3D12_CLEAR_VALUE*)alloca(sizeof(D3D12_CLEAR_VALUE));
-			//	clearValue->Format = resourceDesc.Format;
-			//	clearValue->Color[0] = 0.0f;
-			//	clearValue->Color[1] = 0.0f;
-			//	clearValue->Color[2] = 0.0f;
-			//	clearValue->Color[3] = 0.0f;
-			//}
-
-			//if (writeOnly)
-			//{
-			//	resourceDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-			//	state &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-			//}
-
-			//if (computeWrite)
-			//{
-			//	resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-			//}
-
-			//if (blit)
-			//{
-			//	state = D3D12_RESOURCE_STATE_COPY_DEST;
-			//}
-
-			//const bool directAccess = s_renderD3D12->m_directAccessSupport
-			//	&& !renderTarget
-			//	//				&& !readBack
-			//	&& !blit
-			//	&& !writeOnly
-			//	;
-
 			switch (m_type)
 			{
 			case Texture2D:
@@ -391,140 +256,111 @@ namespace bgfx { namespace nvn
 				nvnTextureBuilderSetTarget(&textureBuilder, NVN_TEXTURE_TARGET_2D);
 				break;
 			case TextureCube:
+				nvnTextureBuilderSetSize3D(&textureBuilder, textureWidth, textureHeight, 6); // BBI-NOTE: (tstump) hopefully this is correct
+				nvnTextureBuilderSetTarget(&textureBuilder, NVN_TEXTURE_TARGET_CUBEMAP);
 				return;
-				/*	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-					if (imageContainer.m_cubeMap)
-					{
-						if (1 < numLayers)
-						{
-							m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-							m_srvd.TextureCubeArray.MostDetailedMip = 0;
-							m_srvd.TextureCubeArray.MipLevels = numMips;
-							m_srvd.TextureCubeArray.ResourceMinLODClamp = 0.0f;
-							m_srvd.TextureCubeArray.NumCubes = numLayers;
-						}
-						else
-						{
-							m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-							m_srvd.TextureCube.MostDetailedMip = 0;
-							m_srvd.TextureCube.MipLevels = numMips;
-							m_srvd.TextureCube.ResourceMinLODClamp = 0.0f;
-						}
-					}
-					else
-					{
-						if (1 < numLayers)
-						{
-							m_srvd.ViewDimension = 1 < msaa.Count
-								? D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY
-								: D3D12_SRV_DIMENSION_TEXTURE2DARRAY
-								;
-							m_srvd.Texture2DArray.MostDetailedMip = 0;
-							m_srvd.Texture2DArray.MipLevels = numMips;
-							m_srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
-							m_srvd.Texture2DArray.ArraySize = numLayers;
-						}
-						else
-						{
-							m_srvd.ViewDimension = 1 < msaa.Count
-								? D3D12_SRV_DIMENSION_TEXTURE2DMS
-								: D3D12_SRV_DIMENSION_TEXTURE2D
-								;
-							m_srvd.Texture2D.MostDetailedMip = 0;
-							m_srvd.Texture2D.MipLevels = numMips;
-							m_srvd.Texture2D.ResourceMinLODClamp = 0.0f;
-						}
-					}
-
-					if (1 < numLayers)
-					{
-						m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-						m_uavd.Texture2DArray.MipSlice = 0;
-						m_uavd.Texture2DArray.PlaneSlice = 0;
-					}
-					else
-					{
-						m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-						m_uavd.Texture2D.MipSlice = 0;
-						m_uavd.Texture2D.PlaneSlice = 0;
-					}
-
-					if (TextureCube == m_type)
-					{
-						m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-						m_uavd.Texture2DArray.MipSlice = 0;
-						m_uavd.Texture2DArray.ArraySize = 6;
-					}
-
-					break;*/
-
 			case Texture3D:
 				nvnTextureBuilderSetSize3D(&textureBuilder, textureWidth, textureHeight, m_depth);
 				nvnTextureBuilderSetTarget(&textureBuilder, NVN_TEXTURE_TARGET_3D);
-				// resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-				// resourceDesc.DepthOrArraySize = uint16_t(m_depth);
-				// m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
-				// m_srvd.Texture3D.MostDetailedMip = 0;
-				// m_srvd.Texture3D.MipLevels = numMips;
-				// m_srvd.Texture3D.ResourceMinLODClamp = 0.0f;
-				// 
-				// m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
-				// m_uavd.Texture3D.MipSlice = 0;
-				// m_uavd.Texture3D.FirstWSlice = 0;
-				// m_uavd.Texture3D.WSize = 0;
 				break;
+			}
+
+			nvnTextureBuilderSetLevels(&textureBuilder, (m_numMips != 0) ? m_numMips : 1);
+
+			if (swizzle)
+			{
+				// map BGRA to RGBA
+				nvnTextureBuilderSetSwizzle(&textureBuilder,
+					NVN_TEXTURE_SWIZZLE_B,
+					NVN_TEXTURE_SWIZZLE_G,
+					NVN_TEXTURE_SWIZZLE_R,
+					NVN_TEXTURE_SWIZZLE_A);
 			}
 
 			create(_device, textureBuilder);
 
-			/*m_ptr = createCommittedResource(device, HeapProperty::Texture, &resourceDesc, clearValue, renderTarget);
-
-			if (directAccess)
+			struct ImageInfo
 			{
-				DX_CHECK(m_ptr->Map(0, NULL, &m_directAccessPtr));
-			}
+				const uint8_t* m_data;
+				uint8_t m_mip;
+				uint16_t m_layer;
+				uint32_t m_pitch;
+				uint32_t m_width;
+				uint32_t m_height;
+				uint32_t m_depth;
+				uint32_t m_size;
+				uint32_t m_offset;
+			};
 
-			if (kk != 0)
+			ImageInfo* imageInfo = (ImageInfo*)alloca(numLayers * numMips * sizeof(ImageInfo));
+			int numImageInfo = 0;
+
+			const uint32_t alignment = 1;
+
+			uint32_t bufferSize = 0;
+
+			for (uint16_t layer = 0; layer < numLayers; ++layer)
 			{
-				uint64_t uploadBufferSize;
-				device->GetCopyableFootprints(&resourceDesc, 0, numSrd, 0, NULL, NULL, NULL, &uploadBufferSize);
-
-				ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, uint32_t(uploadBufferSize));
-
-				setState(commandList, D3D12_RESOURCE_STATE_COPY_DEST);
-
-				uint64_t result = UpdateSubresources(commandList
-					, m_ptr
-					, staging
-					, 0
-					, 0
-					, numSrd
-					, srd
-				);
-				BX_ASSERT(0 != result, "Invalid size"); BX_UNUSED(result);
-				BX_TRACE("Update subresource %" PRId64, result);
-
-				setState(commandList, state);
-
-				s_renderD3D12->m_cmd.release(staging);
-			}
-			else
-			{
-				setState(commandList, state);
-			}
-
-			if (0 != kk)
-			{
-				kk = 0;
-				for (uint8_t side = 0; side < numSides; ++side)
+				for (uint8_t lod = 0; lod < numMips; ++lod)
 				{
-					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
+					bimg::ImageMip mip;
+					if (bimg::imageGetRawData(imageContainer, layer, lod + startLod, _mem->data, _mem->size, mip))
 					{
-						BX_FREE(g_allocator, const_cast<void*>(srd[kk].pData));
-						++kk;
+						const uint32_t pitch = bx::strideAlign(mip.m_width * mip.m_bpp / 8, alignment);
+						const uint32_t slice = bx::strideAlign(mip.m_height * pitch, alignment);
+						const uint32_t size = slice * mip.m_depth;
+
+						ImageInfo& info = imageInfo[numImageInfo++];
+						info.m_mip = lod;
+						info.m_layer = layer;
+						info.m_pitch = pitch;
+						info.m_width = mip.m_width;
+						info.m_height = mip.m_height;
+						info.m_depth = mip.m_depth;
+						info.m_size = size;
+						info.m_data = mip.m_data;
+						info.m_offset = bufferSize;
+
+						bufferSize += nn::util::align_up(size, NVN_MEMORY_POOL_STORAGE_GRANULARITY); // make sure each subcopy is aligned
 					}
 				}
-			}*/
+			}
+
+			if (numImageInfo != 0)
+			{
+				_copyOp.m_data = (CopyOperation::Data*)BX_ALLOC(g_allocator, sizeof(CopyOperation::Data));
+				_copyOp.createBuffer(bufferSize, _copyOp.m_data);
+				_copyOp.m_ops.reserve(numImageInfo);
+
+				uint8_t* dst = (uint8_t*)nvnBufferMap(&_copyOp.m_data->m_buffer);
+
+				for (int i = 0; i < numImageInfo; ++i)
+				{
+					const ImageInfo& info = imageInfo[i];
+
+					bimg::imageCopy(dst + info.m_offset, info.m_height, info.m_pitch, 1, info.m_data, info.m_pitch);
+
+					CopyOperation::Op op;
+					op.m_dstData = &m_ptr;
+					op.m_offset = info.m_offset;
+					op.m_memSize = info.m_size;
+
+					nvnTextureViewSetDefaults(&op.m_dstView);
+					nvnTextureViewSetLayers(&op.m_dstView, info.m_layer, 1);
+					nvnTextureViewSetLevels(&op.m_dstView, info.m_mip, 1);
+
+					op.m_dstRegion.xoffset = 0;
+					op.m_dstRegion.yoffset = 0;
+					op.m_dstRegion.zoffset = 0;
+					op.m_dstRegion.width = info.m_width;
+					op.m_dstRegion.height = info.m_height;
+					op.m_dstRegion.depth = 1;
+
+					_copyOp.m_ops.push_back(op);
+				}
+
+				nvnBufferFlushMappedRange(&_copyOp.m_data->m_buffer, 0, bufferSize);
+			}
 		}
 	}
 
@@ -540,8 +376,33 @@ namespace bgfx { namespace nvn
 		}
 	}
 
-	void TextureNVN::update(NVNcommandBuffer*, uint8_t, uint8_t, const Rect&, uint16_t, uint16_t, uint16_t, const Memory*)
+	void TextureNVN::update(NVNcommandBuffer* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
+#if 0
+		bool isTextureArray = false;
+
+		CopyOperation copyOp;
+		copyOp.m_data = (CopyOperation::Data*)BX_ALLOC(g_allocator, sizeof(CopyOperation::Data));
+
+		CopyOperation::Op op;
+		op.m_dstData = &m_ptr;
+		op.m_offset = 0;
+		op.m_memSize = 0;
+
+		nvnTextureViewSetDefaults(&op.m_dstView);
+		nvnTextureViewSetLayers(&op.m_dstView, isTextureArray ? _z : _side, 1);
+		nvnTextureViewSetLevels(&op.m_dstView, _mip, 1);
+
+		op.m_dstRegion.xoffset = _rect.m_x;
+		op.m_dstRegion.yoffset = _rect.m_y;
+		op.m_dstRegion.zoffset = _z;
+		op.m_dstRegion.width = _rect.m_width;
+		op.m_dstRegion.height = _rect.m_height;
+		op.m_dstRegion.depth = 1;
+
+		copyOp.m_ops.push_back(op);
+#endif
+
 		// TODO
 		/*D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -714,7 +575,10 @@ namespace bgfx { namespace nvn
 	BackBuffer SwapChainNVN::acquireNext()
 	{
 		BX_ASSERT(m_Created, "SwapChain wasn't created");
-		BX_ASSERT(nvnWindowAcquireTexture(&m_Window, &m_WindowSync, &m_Current) == NVN_WINDOW_ACQUIRE_TEXTURE_RESULT_SUCCESS, "AcquireNext failed");
+		if (nvnWindowAcquireTexture(&m_Window, &m_WindowSync, &m_Current) != NVN_WINDOW_ACQUIRE_TEXTURE_RESULT_SUCCESS)
+		{
+			BX_ASSERT(false, "AcquireNext failed");
+		}
 
 		nvnSyncWait(&m_WindowSync, NVN_WAIT_TIMEOUT_MAXIMUM);
 
@@ -828,28 +692,11 @@ namespace bgfx { namespace nvn
 			nvnQueueBuilderSetDevice(&queueBuilder, m_Device);
 			nvnQueueBuilderSetDefaults(&queueBuilder);
 			nvnQueueBuilderSetComputeMemorySize(&queueBuilder, 0);
-
-			BX_ASSERT(nvnQueueInitialize(&m_GfxQueue, &queueBuilder), "nvnQueueInitialize");
+			if (nvnQueueInitialize(&m_GfxQueue, &queueBuilder) != NVN_TRUE)
+			{
+				BX_ASSERT(false, "nvnQueueInitialize");
+			}
 		}
-
-		/*D3D12_COMMAND_QUEUE_DESC queueDesc;
-		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-		queueDesc.Priority = 0;
-		queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-		queueDesc.NodeMask = 1;
-		DX_CHECK(_device->CreateCommandQueue(&queueDesc
-			, IID_ID3D12CommandQueue
-			, (void**)&m_commandQueue
-		));
-
-		m_completedFence = 0;
-		m_currentFence = 0;
-		DX_CHECK(_device->CreateFence(0
-			, D3D12_FENCE_FLAG_NONE
-			, IID_ID3D12Fence
-			, (void**)&m_fence
-		));
-		*/
 
 		for (auto& fence : m_fences)
 		{
@@ -988,6 +835,417 @@ namespace bgfx { namespace nvn
 		}
 
 		return false;
+	}
+
+	//
+	//
+	//
+
+	uint32_t ShaderUniformBuffer::computeHash(const std::vector<UniformReference>& _uniforms)
+	{
+		uint32_t size = (uint32_t)(_uniforms.size() * sizeof(UniformReference));
+		return bx::hash<bx::HashMurmur2A>((void*)_uniforms.data(), size);
+	}
+
+	void ShaderUniformBuffer::create(uint32_t _size, std::vector<UniformReference>&& _uniforms)
+	{
+		m_uniforms = std::move(_uniforms);
+		m_size = _size;
+
+		for (const UniformReference& data : m_uniforms)
+		{
+			BX_UNUSED(data);
+		}
+
+		m_data = (uint8_t*)BX_ALLOC(g_allocator, m_size);
+		memset(m_data, 0, m_size);
+
+		m_buffer = BX_NEW(g_allocator, BufferNVN);
+		m_buffer->create(m_size, nullptr, 0, 0, BufferNVN::Usage::UniformBuffer);
+
+		m_gpuAddress = nvnBufferGetAddress(&m_buffer->m_buffer);
+	}
+
+	void ShaderUniformBuffer::destroy()
+	{
+		m_uniforms.clear();
+		m_size = 0;
+		BX_FREE(g_allocator, m_data);
+		BX_DELETE(g_allocator, m_buffer);
+		m_data = nullptr;
+		m_buffer = nullptr;
+		m_gpuAddress = 0;
+	}
+
+	void ShaderUniformBuffer::update(NVNcommandBuffer* _cmdBuf)
+	{
+		bool dirty = false;
+
+		// resolve uniform data
+		// if uniforms dirty, copy into m_data and issue update
+		for (const UniformReference& uniformRef : m_uniforms)
+		{
+			BX_ASSERT(uniformRef.m_data != nullptr, "Invalid uniform src data.");
+			memcpy(m_data + uniformRef.m_index, uniformRef.m_data, uniformRef.m_count);
+			dirty = true;
+		}
+
+		if (dirty)
+		{
+			nvnCommandBufferUpdateUniformBuffer(_cmdBuf, m_gpuAddress, m_size, 0, m_size, m_data);
+		}
+	}
+
+	//
+	//
+	//
+
+	void UniformBufferRegistry::destroy()
+	{
+		for (Entry& e : m_buffers)
+		{
+			e.m_buffer.destroy();
+		}
+
+		m_buffers.clear();
+	}
+
+	uint32_t UniformBufferRegistry::find(const uint32_t _hash) const
+	{
+		uint32_t count = (uint32_t)m_buffers.size();
+		for (uint32_t index = 0; index < count; ++index)
+		{
+			if (m_buffers[index].m_hash == _hash)
+			{
+				return index;
+			}
+		}
+
+		return InvalidEntry;
+	}
+
+	uint32_t UniformBufferRegistry::add(const uint32_t _hash, ShaderUniformBuffer&& _buf)
+	{
+		uint32_t index = (uint32_t)m_buffers.size();
+
+		Entry e;
+		e.m_hash = _hash;
+		e.m_buffer = std::move(_buf);
+		m_buffers.push_back(std::move(e));
+
+		return index;
+	}
+
+	ShaderUniformBuffer& UniformBufferRegistry::get(const uint32_t _index)
+	{
+		BX_ASSERT(_index < m_buffers.size(), "Invalid uniform buffer.");
+		return m_buffers[_index].m_buffer;
+	}
+
+	//
+	//
+	//
+
+	void ShaderNVN::create(NVNdevice* _device, const Memory* _mem, UniformRegistry& _uniformRegistry, UniformBufferRegistry& _uniformBuffers)
+	{
+		bx::MemoryReader reader(_mem->data, _mem->size);
+
+		uint32_t magic;
+		bx::read(&reader, magic);
+
+		const bool hasTexData = !isShaderVerLess(magic, 8);
+		const bool hasTexFormat = !isShaderVerLess(magic, 10);
+
+		uint32_t hashIn;
+		bx::read(&reader, hashIn);
+
+		uint32_t hashOut;
+		bx::read(&reader, hashOut);
+
+		m_stage = NVNshaderStage::NVN_SHADER_STAGE_LARGE;
+		const char* kStageName[6] =
+		{
+			"vertex",
+			"fragment",
+			"geometry",
+			"tess control",
+			"tess eval",
+			"compute"
+		};
+
+		if (isShaderType(magic, 'F'))
+		{
+			m_stage = NVNshaderStage::NVN_SHADER_STAGE_FRAGMENT;
+		}
+		else if (isShaderType(magic, 'V'))
+		{
+			m_stage = NVNshaderStage::NVN_SHADER_STAGE_VERTEX;
+		}
+		else if (isShaderType(magic, 'C'))
+		{
+			m_stage = NVNshaderStage::NVN_SHADER_STAGE_COMPUTE;
+		}
+
+		BX_ASSERT(m_stage != NVNshaderStage::NVN_SHADER_STAGE_LARGE, "Invalid shader stage");
+
+		const bool fragment = (NVNshaderStage::NVN_SHADER_STAGE_FRAGMENT == m_stage);
+		const uint8_t fragmentBit = fragment ? kUniformFragmentBit : 0;
+
+		const auto readUniformBlock = [&](const uint8_t uniformBufferIndex, std::vector<ShaderUniformBuffer::UniformReference>* uniforms)
+		{
+			uint16_t count;
+			bx::read(&reader, count);
+
+			for (size_t i = 0; i < count; i++)
+			{
+				uint8_t nameSize = 0;
+				bx::read(&reader, nameSize);
+
+				char name[256] = {};
+				bx::read(&reader, &name, nameSize);
+
+				uint8_t type;
+				bx::read(&reader, type);
+
+				uint8_t num = 0;
+				bx::read(&reader, num);
+
+				uint16_t regIndex = 0;
+				bx::read(&reader, regIndex);
+
+				uint16_t regCount = 0;
+				bx::read(&reader, regCount);
+
+				if (hasTexData)
+				{
+					uint16_t texInfo = 0;
+					bx::read(&reader, texInfo);
+				}
+
+				if (hasTexFormat)
+				{
+					uint16_t texFormat = 0;
+					bx::read(&reader, texFormat);
+				}
+
+				if (uniforms != nullptr)
+				{
+					BX_ASSERT(0 == (kUniformSamplerBit & type), "Sampler found in uniform block, not supported.");
+
+					ShaderUniformBuffer::UniformReference u;
+					u.m_index = regIndex; // actually byte offset
+					u.m_count = regCount * num; // actually size in bytes
+
+					PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
+					if (PredefinedUniform::Count != predefined)
+					{
+						m_predefined[m_numPredefined].m_loc = regIndex;
+						m_predefined[m_numPredefined].m_count = regCount;
+						m_predefined[m_numPredefined].m_type = uint8_t(predefined | fragmentBit);
+						m_numPredefined++;
+
+						u.m_predefined = predefined;
+					}
+					else
+					{
+						const UniformRegInfo* info = _uniformRegistry.find(name);
+						BX_ASSERT(info != nullptr, "Unknown uniform: %s", name);
+						u.m_handle = info->m_handle;
+					}
+
+					uniforms->push_back(u);
+				}
+			}
+		};
+
+		// BBI-TODO: (tstump) rework all of this:
+		//  step 1: read all uniforms
+		//  step 2: read "global" uniforms (ie: samplers)
+		//  step 3: read "user" uniform blocks
+
+		// All uniforms
+		readUniformBlock(0, nullptr);
+
+		// Global uniforms (ie: samplers)
+		readUniformBlock(0, nullptr);
+
+		// Uniform Blocks
+		uint8_t uniformBlockCount = 0;
+		bx::read(&reader, uniformBlockCount);
+
+		for (int uniformBlockIdx = 0; uniformBlockIdx < uniformBlockCount; uniformBlockIdx++)
+		{
+			uint8_t nameSize = 0;
+			bx::read(&reader, nameSize);
+
+			char name[256] = {};
+			bx::read(&reader, &name, nameSize);
+
+			uint32_t uniformSize;
+			bx::read(&reader, uniformSize);
+
+			BX_ASSERT(uniformBlockIdx < std::numeric_limits<uint8_t>::max(), "Too many uniform blocks");
+
+			std::vector<ShaderUniformBuffer::UniformReference> uniformRefs;
+			readUniformBlock(static_cast<uint8_t>(uniformBlockIdx), &uniformRefs);
+
+			// compute hash from uniformRefs
+			// get cbuffer index for hash from cbuffer repository
+			// set cbuffer index in m_constantBuffers
+
+			uint32_t cbHash = ShaderUniformBuffer::computeHash(uniformRefs);
+			BX_UNUSED(cbHash);
+
+			uint32_t index = _uniformBuffers.find(cbHash);
+			if (index == UniformBufferRegistry::InvalidEntry)
+			{
+				// add
+				ShaderUniformBuffer cb;
+				cb.create(uniformSize, std::move(uniformRefs));
+				index = _uniformBuffers.add(cbHash, std::move(cb));
+			}
+
+			m_constantBuffers.push_back(index);
+		}
+
+		// Stage inputs
+
+		bx::memSet(m_attrMask, 0, sizeof(m_attrMask));
+		bx::memSet(m_attrRemap, 0xFF, sizeof(m_attrRemap));
+
+		uint32_t stageInputCount = 0;
+		bx::read(&reader, stageInputCount);
+
+		for (size_t stageInputIdx = 0; stageInputIdx < stageInputCount; stageInputIdx++)
+		{
+			uint8_t type;
+			bx::read(&reader, type);
+
+			bgfx::Attrib::Enum attr = (bgfx::Attrib::Enum)type;
+
+			uint8_t nameSize = 0;
+			bx::read(&reader, nameSize);
+
+			char name[256] = {};
+			bx::read(&reader, &name, nameSize);
+
+			int32_t location = 0;
+			bx::read(&reader, location);
+
+			if (Attrib::Count != attr)
+			{
+				m_attrMask[attr] = UINT16_MAX;
+				m_attrRemap[attr] = static_cast<uint8_t>(location);
+			}
+		}
+
+		uint32_t shaderControlSize = 0;
+		uint32_t shaderCodeSize = 0;
+
+		bx::read(&reader, shaderControlSize);
+		bx::read(&reader, shaderCodeSize);
+
+		const void* shaderControl = reader.getDataPtr();
+
+		m_control.clear();
+		m_control.resize(shaderControlSize);
+		::memcpy(m_control.data(), shaderControl, shaderControlSize);
+
+		bx::skip(&reader, shaderControlSize);
+		const void* shaderCode = reader.getDataPtr();
+
+		bx::skip(&reader, shaderCodeSize);
+
+		/*
+		* Shader code is not allowed to be in the last 1024 bytes of a memory pool,
+		* additional padding is added to ensure that does not happen.
+		*/
+
+		m_codeMemoryPool.Init(
+			nullptr,
+			shaderCodeSize + 1024,
+			NVN_MEMORY_POOL_FLAGS_CPU_UNCACHED_BIT | NVN_MEMORY_POOL_FLAGS_GPU_CACHED_BIT | NVN_MEMORY_POOL_FLAGS_SHADER_CODE_BIT,
+			_device
+		);
+
+		ptrdiff_t codePoolOffset = m_codeMemoryPool.GetNewMemoryChunkOffset(shaderCodeSize, NVN_MEMORY_POOL_STORAGE_ALIGNMENT);
+		m_code = static_cast<uint8_t*>(m_codeMemoryPool.GetMemory()) + codePoolOffset;
+		m_codeSize = shaderCodeSize;
+		::memcpy(m_code, shaderCode, m_codeSize);
+
+		NVNbufferBuilder codeBufferBuilder;
+		nvnBufferBuilderSetDefaults(&codeBufferBuilder);
+		nvnBufferBuilderSetDevice(&codeBufferBuilder, _device);
+		nvnBufferBuilderSetStorage(&codeBufferBuilder, m_codeMemoryPool.GetMemoryPool(), codePoolOffset, m_codeSize);
+
+		nvnBufferInitialize(&m_codeBuffer, &codeBufferBuilder);
+
+		m_shader.data = nvnBufferGetAddress(&m_codeBuffer);
+		m_shader.control = m_control.data();
+	}
+
+	void ProgramNVN::create(NVNdevice* _device, const ShaderNVN* _vsh, const ShaderNVN* _fsh)
+	{
+		BX_ASSERT(_vsh && _vsh->m_code, "Vertex shader doesn't exist.");
+
+		m_Stages = 0;
+		m_vsh = _vsh;
+		m_fsh = _fsh;
+
+		std::array<NVNshaderData, 2> shaderData;
+		bool hasFrag = false;
+
+		::memcpy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined * sizeof(PredefinedUniform));
+		m_numPredefined = _vsh->m_numPredefined;
+
+		shaderData[0] = _vsh->m_shader;
+
+		m_Stages |= NVNshaderStageBits::NVN_SHADER_STAGE_VERTEX_BIT;
+
+		if (NULL != _fsh)
+		{
+			BX_ASSERT(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
+			hasFrag = true;
+
+			m_Stages |= NVNshaderStageBits::NVN_SHADER_STAGE_FRAGMENT_BIT;
+
+			m_fsh = _fsh;
+			::memcpy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined * sizeof(PredefinedUniform));
+			m_numPredefined += _fsh->m_numPredefined;
+
+			shaderData[1] = _fsh->m_shader;
+		}
+		else
+		{
+			// BBI-TODO: (tstump) in bgfx, is a program with a NULL fragment shader considered a compute shader?
+			BX_TRACE("NULL fragment shader, is this a compute shader?");
+			m_Stages = NVNshaderStageBits::NVN_SHADER_STAGE_COMPUTE_BIT;
+		}
+
+		nvnProgramInitialize(&m_program, _device);
+
+		if (!nvnProgramSetShaders(&m_program, hasFrag ? 2 : 1, &shaderData[0]))
+		{
+			BX_ASSERT(false, "Failed to set pre-compiled headers");
+		}
+	}
+
+	//
+	//
+	//
+
+	void VertexLayoutNVN::create(const VertexLayout& _vertexLayout)
+	{
+	}
+
+	//
+	//
+	//
+
+	void VertexBufferNVN::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
+	{
+		BufferNVN::create(_size, _data, _flags, 0, BufferNVN::Usage::VertexBuffer);
+		m_layoutHandle = _layoutHandle;
 	}
 } }
 

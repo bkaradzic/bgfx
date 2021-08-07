@@ -64,13 +64,13 @@ namespace bgfx { namespace nvn
 		static const size_t g_MinimumPoolSize = NVN_MEMORY_POOL_STORAGE_GRANULARITY;
 
 	private:
-		std::atomic<ptrdiff_t>      m_CurrentWriteOffset = { 0 };
-		NVNmemoryPool               m_MemoryPool;
+		ptrdiff_t m_CurrentWriteOffset = 0;
+		NVNmemoryPool m_MemoryPool;
 		void* m_OwnedMemory = nullptr;
 		void* m_CpuMemory = nullptr;
-		size_t                      m_Size = 0;
-		int                         m_Flags = 0;
-		bool						m_SelfAllocatedMemory = false;
+		size_t m_Size = 0;
+		int m_Flags = 0;
+		bool m_SelfAllocatedMemory = false;
 
 	public:
 		MemoryPool()
@@ -81,10 +81,7 @@ namespace bgfx { namespace nvn
 
 		~MemoryPool()
 		{
-			if (m_CpuMemory != NULL)
-			{
-				Shutdown();
-			}
+			Shutdown();
 		}
 
 		void Init(void* pMemory, size_t size, int flags, NVNdevice* pDevice)
@@ -146,7 +143,7 @@ namespace bgfx { namespace nvn
 
 		void Reset()
 		{
-			m_CurrentWriteOffset.store(0);
+			m_CurrentWriteOffset = 0;
 		}
 
 		void Shutdown()
@@ -154,7 +151,7 @@ namespace bgfx { namespace nvn
 			if (m_OwnedMemory != NULL)
 			{
 				m_Size = 0;
-				m_CurrentWriteOffset.store(0);
+				m_CurrentWriteOffset = 0;
 
 				nvnMemoryPoolFinalize(&m_MemoryPool);
 
@@ -169,7 +166,8 @@ namespace bgfx { namespace nvn
 
 		ptrdiff_t GetNewMemoryChunkOffset(size_t size, size_t alignment)
 		{
-			const ptrdiff_t resultOffset = atomicAlignedAllocOffset(m_CurrentWriteOffset, size, alignment);
+			const ptrdiff_t resultOffset = m_CurrentWriteOffset;
+			m_CurrentWriteOffset += nn::util::align_up(size, alignment);
 
 			if ((static_cast<size_t>(resultOffset) + size) > m_Size)
 			{

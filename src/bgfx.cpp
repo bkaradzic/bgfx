@@ -1945,6 +1945,8 @@ namespace bgfx
 			m_clearColor[ii][3] = 1.0f;
 		}
 
+		m_colorPaletteDirty = 2;
+
 		m_vertexLayoutRef.init();
 
 		CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RendererInit);

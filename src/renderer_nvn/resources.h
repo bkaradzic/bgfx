@@ -8,8 +8,37 @@
 
 #include "memory.h"
 
+#define BGFX_NVN_UNIFORMLOCATION_REGISTERMASK 0xFFFF
+#define BGFX_NVN_UNIFORMLOCATION_INDEX_MASK 0xFFFF0000
+#define BGFX_NVN_UNIFORMLOCATION_INDEX_SHIFT (16)
+
 namespace bgfx { namespace nvn
 {
+	struct CopyOperation
+	{
+		struct Data
+		{
+			uint32_t m_size;
+			void* m_mem;
+			NVNmemoryPool m_pool;
+			NVNbuffer m_buffer;
+		};
+
+		struct Op
+		{
+			uint32_t m_offset;
+			uint32_t m_memSize;
+			NVNtextureView m_dstView;
+			NVNcopyRegion m_dstRegion;
+			NVNtexture* m_dstData;
+		};
+
+		void createBuffer(size_t _size, CopyOperation::Data* _data);
+
+		Data* m_data;
+		std::vector<Op> m_ops;
+	};
+
 	template<typename T>
 	class DoubleBufferedResource
 	{
@@ -64,7 +93,7 @@ namespace bgfx { namespace nvn
 		{
 		}
 
-		void create(NVNdevice* _device, const Memory* _mem, uint32_t _flags, uint8_t _skip);
+		void create(NVNdevice* _device, const Memory* _mem, uint32_t _flags, uint8_t _skip, CopyOperation& _copyOp);
 		void create(NVNdevice* _device, NVNtextureBuilder& _builder);
 		void destroy();
 		void update(NVNcommandBuffer* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
@@ -192,6 +221,150 @@ namespace bgfx { namespace nvn
 		typedef stl::vector<ID3D12Resource*> ResourceArray;
 		ResourceArray m_release[256];
 		*/
+	};
+
+	struct ShaderUniformBuffer
+	{
+		struct UniformReference
+		{
+			uint8_t m_predefined = PredefinedUniform::Enum::Count;
+			UniformHandle m_handle = { kInvalidHandle };
+			void* m_data = nullptr;
+			uint16_t m_index = 0;
+			uint16_t m_count = 0;
+		};
+
+		static uint32_t computeHash(const std::vector<UniformReference>& _uniforms);
+
+		void create(uint32_t _size, std::vector<UniformReference>&& _uniforms);
+		void destroy();
+
+		void update(NVNcommandBuffer* _cmdBuf);
+
+		uint32_t m_size = 0;
+		uint8_t* m_data; // cpu side interim data
+		BufferNVN* m_buffer; // actual gpu buffer
+		NVNbufferAddress m_gpuAddress;
+		std::vector<UniformReference> m_uniforms;
+	};
+
+	struct UniformBufferRegistry
+	{
+		struct Entry
+		{
+			uint32_t m_hash;
+			ShaderUniformBuffer m_buffer;
+		};
+
+		static constexpr uint32_t InvalidEntry = ~0;
+
+		void destroy();
+
+		uint32_t find(const uint32_t _hash) const;
+		uint32_t add(const uint32_t _hash, ShaderUniformBuffer&& _buf);
+		ShaderUniformBuffer& get(const uint32_t _index);
+
+		std::vector<Entry> m_buffers;
+	};
+
+	struct ShaderNVN
+	{
+		ShaderNVN()
+			: m_code(NULL)
+			, m_hash(0)
+			, m_numUniforms(0)
+			, m_numPredefined(0)
+			, m_stage(NVNshaderStage::NVN_SHADER_STAGE_LARGE)
+		{
+		}
+
+		void create(NVNdevice* _device, const Memory* _mem, UniformRegistry& _uniformRegistry, UniformBufferRegistry& _uniformBuffers);
+
+		void destroy()
+		{
+			m_constantBuffers.clear();
+
+			m_numPredefined = 0;
+			m_control.clear();
+
+			//m_shader.Finalize( &g_Device );
+
+			if (NULL != m_code)
+			{
+				release(m_code);
+				m_code = NULL;
+				m_hash = 0;
+			}
+
+			m_codeMemoryPool.Shutdown();
+		}
+
+		NVNshaderData m_shader;
+		NVNshaderStage m_stage;
+		NVNbuffer m_codeBuffer;
+
+		uint8_t* m_code = nullptr;
+		std::vector<uint8_t> m_control;
+
+		size_t m_codeSize = 0;
+		MemoryPool m_codeMemoryPool;
+
+		std::vector<uint32_t> m_constantBuffers;
+
+		PredefinedUniform m_predefined[PredefinedUniform::Count];
+		uint16_t m_attrMask[Attrib::Count];
+		uint8_t m_attrRemap[Attrib::Count];
+
+		uint32_t m_hash = 0;
+
+		uint16_t m_numUniforms = 0;
+		uint8_t m_numPredefined = 0;
+		uint8_t m_numAttrs = 0;
+
+		uint16_t m_size = 0;
+	};
+
+	struct ProgramNVN
+	{
+		ProgramNVN()
+		{
+		}
+
+		void create(NVNdevice* _device, const ShaderNVN* _vsh, const ShaderNVN* _fsh);
+
+		void destroy()
+		{
+			nvnProgramFinalize(&m_program);
+		}
+
+		const ShaderNVN* m_vsh;
+		const ShaderNVN* m_fsh;
+
+		int m_Stages = 0;
+
+		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
+		uint8_t m_numPredefined;
+
+		NVNprogram m_program;
+	};
+
+	struct VertexLayoutNVN
+	{
+		void create(const VertexLayout& _vertexLayout);
+
+		std::vector<NVNvertexAttribState> m_attribStates;
+	};
+
+	struct VertexBufferNVN : public BufferNVN
+	{
+		VertexBufferNVN()
+			: BufferNVN()
+		{
+		}
+
+		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags);
+
+		VertexLayoutHandle m_layoutHandle;
 	};
 } }
 

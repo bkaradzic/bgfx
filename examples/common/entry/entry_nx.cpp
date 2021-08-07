@@ -16,12 +16,14 @@
 #include <bx/timer.h>
 #include <bx/uint32_t.h>
 
+#include <nn/fs.h>
 #include <nn/mem.h>
 #include <nn/nn_Abort.h>
 #include <nn/nn_Assert.h>
 #include <nn/nn_Common.h>
 #include <nn/nn_Log.h>
 #include <nn/os.h>
+#include <nn/oe.h>
 
 #include <nn/vi.h>
 
@@ -119,13 +121,36 @@ namespace entry
 			mNvAllocator.init();
 		}
 
+		void _initFileSystem()
+		{
+			size_t cacheSize = 0;
+			nn::Result result = nn::fs::QueryMountRomCacheSize(&cacheSize);
+			BX_ASSERT(result.IsSuccess(), "Couldn't query rom cache size.");
+
+			mMountRomCacheBuffer = (char*)BX_ALLOC(&mNvAllocator.mAllocator, cacheSize);
+			BX_ASSERT(mMountRomCacheBuffer != nullptr, "Failed to initialize filesystem cache.");
+
+			result = nn::fs::MountRom("rom", mMountRomCacheBuffer, cacheSize);
+			BX_ASSERT(result.IsSuccess(), "Couldn't mount rom.");
+		}
+
+		void _shutdownFileSystem()
+		{
+			nn::fs::Unmount("rom");
+			BX_FREE(&mNvAllocator.mAllocator, mMountRomCacheBuffer);
+		}
+
 		void run(int _argc, char* _argv[])
 		{
 			nn::os::SetThreadName((nn::os::ThreadType*)nn::os::GetCurrentThread(), "MAIN");
 			nn::os::ChangeThreadPriority((nn::os::ThreadType*)nn::os::GetCurrentThread(), nn::os::DefaultThreadPriority - 2);
 
+			int width, height;
+			nn::oe::GetDefaultDisplayResolution(&width, &height); // configure entry::s_width/entry::s_height to use this
+
 			_initWindow();
 			_initMemory();
+			_initFileSystem();
 
 			MainThreadEntry mte;
 			mte.m_argc = _argc;
@@ -152,6 +177,8 @@ namespace entry
 			nn::vi::DestroyLayer(mLayer);
 			nn::vi::CloseDisplay(mDisplay);
 
+			_shutdownFileSystem();
+
 			mNvAllocator.shutdown();
 		}
 
@@ -164,6 +191,7 @@ namespace entry
 
 		NvAllocator mNvAllocator;
 		char* mGraphicsMemory = nullptr;
+		char* mMountRomCacheBuffer = nullptr;
 	};
 
 	static Context s_ctx;

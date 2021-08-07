@@ -128,6 +128,12 @@ namespace bgfx {
 		bool fillUniformData(Uniform& target, const Options& _options, const UniformData& uniformData)
 		{
 			target.name = uniformData.m_Name;
+			size_t pos = target.name.rfind('['); // array uniforms end up with '[0]' on the end, strip it out to get the actual uniform name
+			if (pos != std::string::npos)
+			{
+				target.name.erase(pos);
+			}
+
 			target.regIndex = uniformData.m_BlockOffset;
 
 			struct UniformMapping
