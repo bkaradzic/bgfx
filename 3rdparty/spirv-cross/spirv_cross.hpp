@@ -765,6 +765,10 @@ protected:
 		// Return true if traversal should continue.
 		// If false, traversal will end immediately.
 		virtual bool handle(spv::Op opcode, const uint32_t *args, uint32_t length) = 0;
+		virtual bool handle_terminator(const SPIRBlock &)
+		{
+			return true;
+		}
 
 		virtual bool follow_function_call(const SPIRFunction &)
 		{
@@ -979,6 +983,7 @@ protected:
 		bool id_is_phi_variable(uint32_t id) const;
 		bool id_is_potential_temporary(uint32_t id) const;
 		bool handle(spv::Op op, const uint32_t *args, uint32_t length) override;
+		bool handle_terminator(const SPIRBlock &block) override;
 
 		Compiler &compiler;
 		SPIRFunction &entry;

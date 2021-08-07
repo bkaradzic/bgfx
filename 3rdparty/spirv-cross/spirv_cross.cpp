@@ -1659,6 +1659,9 @@ bool Compiler::traverse_all_reachable_opcodes(const SPIRBlock &block, OpcodeHand
 		}
 	}
 
+	if (!handler.handle_terminator(block))
+		return false;
+
 	return true;
 }
 
@@ -3053,6 +3056,27 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::id_is_potential_temporary(uint
 
 	// Temporaries are not created before we start emitting code.
 	return compiler.ir.ids[id].empty() || (compiler.ir.ids[id].get_type() == TypeExpression);
+}
+
+bool Compiler::AnalyzeVariableScopeAccessHandler::handle_terminator(const SPIRBlock &block)
+{
+	switch (block.terminator)
+	{
+	case SPIRBlock::Return:
+		if (block.return_value)
+			notify_variable_access(block.return_value, block.self);
+		break;
+
+	case SPIRBlock::Select:
+	case SPIRBlock::MultiSelect:
+		notify_variable_access(block.condition, block.self);
+		break;
+
+	default:
+		break;
+	}
+
+	return true;
 }
 
 bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint32_t *args, uint32_t length)
