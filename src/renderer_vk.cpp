@@ -2327,6 +2327,11 @@ VK_IMPORT_DEVICE
 		{
 			FrameBufferVK& frameBuffer = m_frameBuffers[_handle.idx];
 
+			if (_handle.idx == m_fbh.idx)
+			{
+				setFrameBuffer(BGFX_INVALID_HANDLE, false);
+			}
+
 			uint16_t denseIdx = frameBuffer.destroy();
 			if (UINT16_MAX != denseIdx)
 			{
@@ -2748,7 +2753,7 @@ VK_IMPORT_DEVICE
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
-		void setFrameBuffer(FrameBufferHandle _fbh)
+		void setFrameBuffer(FrameBufferHandle _fbh, bool _acquire = true)
 		{
 			BX_ASSERT(false
 				  ||  isValid(_fbh)
@@ -2815,15 +2820,19 @@ VK_IMPORT_DEVICE
 
 				newFrameBuffer.acquire(m_commandBuffer);
 			}
-			else
+
+			if (_acquire)
 			{
 				int64_t start = bx::getHPCounter();
 
 				newFrameBuffer.acquire(m_commandBuffer);
 
 				int64_t now = bx::getHPCounter();
-
-				m_presentElapsed += now - start;
+				
+				if (NULL == newFrameBuffer.m_nwh)
+				{
+					m_presentElapsed += now - start;
+				}
 			}
 
 			m_fbh = _fbh;
