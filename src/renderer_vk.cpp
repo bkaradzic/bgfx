@@ -3965,6 +3965,7 @@ VK_IMPORT_DEVICE
 				if (_swapChain.m_colorFormat == TextureFormat::RGBA8)
 				{
 					bimg::imageSwizzleBgra8(src, pitch, width, height, src, pitch);
+					_func(src, width, height, pitch, _userData);
 				}
 				else if (_swapChain.m_colorFormat == TextureFormat::BGRA8)
 				{
