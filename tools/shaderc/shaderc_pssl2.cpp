@@ -15,6 +15,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+
 #endif
 
 
@@ -776,7 +777,7 @@ namespace bgfx {
 						if (!sceShaderIsMemberUsed(md, m))
 						{
 							BX_TRACE("unused member");
-							//BBI-TODO (dgalloway 2) how to handle this (does this need a two pass or just ignore)
+							//BBI-TODO (dgalloway 3) how to handle this (does this need a two pass or just ignore)
 						}
 						else
 						{
@@ -915,7 +916,7 @@ namespace bgfx {
 
 				if (!structures.empty())
 				{
-					// BBI-TODO (dgalloway 1) assert that there is one and only one CB / structure
+					// BBI-TODO (dgalloway 3) assert that there is one and only one CB / structure
 					// otherwise we will have to handle it differently
 					for (auto const s : structures)
 					{
@@ -1001,7 +1002,7 @@ namespace bgfx {
 			//{ UniformType::Sampler, sce::Prospero::Binary::PsslType::kTypeInt1     },
 		};
 
-		UniformType::Enum findUniformType(int _type) // BBI-TODO use correct type
+		UniformType::Enum findUniformType(int _type) // BBI-TODO (dgalloway 3) use correct type
 		{
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_uniformRemap); ++ii)
 			{
@@ -1086,12 +1087,13 @@ namespace bgfx {
 
 				bx::FilePath temp(bx::Dir::Temp);
 				bx::strCopy(tempDir, BX_COUNTOF(tempDir), temp);
-			} // BBI-TODO (dgalloway) if we want to load the DLL from the environment path instead of having the dll's copied to the shaderc.exe location
+			} // BBI-NOTE (dgalloway) if we want to load the DLL from the environment path instead of having the dll's copied to the shaderc.exe location
 
 			std::string variant = "test";
 
 			bool debug = _options.debugInformation;
 
+			// BBI-TODO (dgalloway 2) finish implementing dumping pssl2 shader source
 			if (0) //_options.emitShaderSource)
 			{
 				const char* profile = _options.profile.c_str();
@@ -1148,7 +1150,6 @@ namespace bgfx {
 			cmdLineOptions.push_back(_options.inputFilePath.c_str());
 			cmdLineOptions.push_back("-Wsuppress=6923,20087,20088");  // 6923 implicit type narrowing, 20087 unreferenced formal parameter, 20088 unreferenced local variable
 
-			// BBI-TODO (dgalloway 1) debug option
 			if (debug)
 			{
 				cmdLineOptions.push_back("-Od");						// Optimize for debug
@@ -1168,7 +1169,7 @@ namespace bgfx {
 
 
 			{
-				// BBI-TODO (dgalloway 2) handle _options.defines and pass into compile options
+				// BBI-TODO (dgalloway 3) handle _options.defines and pass into compile options?
 				//_options.defines
 
 				sce::Prospero::Wave::Psslc::CallbackList callbackList;
@@ -1195,7 +1196,7 @@ namespace bgfx {
 
 				const sce::Prospero::Wave::Psslc::Output* compileOutput = sce::Prospero::Wave::Psslc::run(&compileOptions, &callbackList);
 
-				// BBI-TODO (dgalloway 2) would be good to print out the compileOutput->diagnostics here to help when debugging shaders when things go wrong
+				// BBI-TODO (dgalloway 4) would be good to print out the compileOutput->diagnostics here to help when debugging shaders when things go wrong
 
 				if (compileOutput)
 				{
@@ -1208,7 +1209,6 @@ namespace bgfx {
 						if (nullptr == sl)
 						{
 							std::cerr << "File '" << _options.inputFilePath << "' did not generate program data\n";
-							// BBI-TODO error situation
 							return false;
 						}
 
@@ -1256,40 +1256,30 @@ namespace bgfx {
 						{
 							static const std::string sGnmGpuDebuggerPath = _options.debugDatabaseDir;
 
-							std::string shaderFile;
-							if (_options.inputFilePath.find_last_of("\\/") != std::string::npos)
+							bx::FilePath filePath(_options.debugDatabaseDir.c_str());
+
+							filePath.join(compileOutput->agsdFiles[0].debugExt);
+
+							if (!(bx::makeAll(filePath.getPath())))
 							{
-								shaderFile = _options.inputFilePath.substr(_options.inputFilePath.find_last_of("\\/") + 1, _options.inputFilePath.size());
-							}
-							else
-							{
-								shaderFile = _options.inputFilePath;
+								fprintf(stderr, "Error: Could not make path for debug AGSD files.");
+								return false;
 							}
 
-							std::string debugExt(compileOutput->agsdFiles[0].debugExt);
-							std::string shaderFileExt;
-							if (debugExt.find_last_of("\\/") != std::string::npos)	// BBI-NOTE (dgalloway) should we be ignoring the parts before the last '/' in the debugExt?
-							{
-								shaderFileExt = debugExt.substr(debugExt.find_last_of("\\/") + 1, debugExt.size());
-							}
-							else
-							{
-								shaderFileExt = debugExt;
-							}
-
-							static std::atomic<int> sFileUniqueCounter = 0;
-
-							std::string outputAGSDFile = sGnmGpuDebuggerPath + shaderFile + std::string("_") + std::to_string(sFileUniqueCounter++) + std::string("_") + _options.shaderType + shaderFileExt;
+							std::string outputAGSDFile(filePath.getCPtr());
 
 							FILE* glslcOutputFileHandle = nullptr;
 
 							if (fopen_s(&glslcOutputFileHandle, outputAGSDFile.c_str(), "wb") != 0)
 							{
-								BX_ASSERT(false, "Failed to open file %s", outputAGSDFile.c_str());
+								fprintf(stderr, "Error: Could not open file %s.", outputAGSDFile.c_str());
+								return false;
+
 							}
 							if (!glslcOutputFileHandle)
 							{
-								BX_ASSERT(false, "Can't write file %s", outputAGSDFile.c_str());
+								fprintf(stderr, "Error: Could not write file %s.", outputAGSDFile.c_str());
+								return false;
 							}
 
 							fwrite(compileOutput->agsdFiles[0].data, compileOutput->agsdFiles[0].dataSize, 1, glslcOutputFileHandle);
@@ -1297,14 +1287,14 @@ namespace bgfx {
 						}
 					}
 				}
-
-				// BBI-TODO(dgalloway 2)
-				//delete shaderData;
+				else
+				{
+					fprintf(stderr, "Error: No compile output for %s", _options.inputFilePath.c_str());
+					return false;
+				}
 
 				delete[] opts;
-
 			}
-
 			return true;
 		}
 
