@@ -401,44 +401,54 @@ public:
 			bgfx::ViewId hdrHBlurTonemap = shuffle[9];
 
 			// Set views.
+			bgfx::resetView(hdrSkybox);
 			bgfx::setViewName(hdrSkybox, "Skybox");
 			bgfx::setViewClear(hdrSkybox, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
 			bgfx::setViewRect(hdrSkybox, 0, 0, bgfx::BackbufferRatio::Equal);
 			bgfx::setViewFrameBuffer(hdrSkybox, m_fbh);
 
+			bgfx::resetView(hdrMesh);
 			bgfx::setViewName(hdrMesh, "Mesh");
 			bgfx::setViewClear(hdrMesh, BGFX_CLEAR_DISCARD_DEPTH | BGFX_CLEAR_DISCARD_STENCIL);
 			bgfx::setViewRect(hdrMesh, 0, 0, bgfx::BackbufferRatio::Equal);
 			bgfx::setViewFrameBuffer(hdrMesh, m_fbh);
 
+			bgfx::resetView(hdrLuminance);
 			bgfx::setViewName(hdrLuminance, "Luminance");
 			bgfx::setViewRect(hdrLuminance, 0, 0, 128, 128);
 			bgfx::setViewFrameBuffer(hdrLuminance, m_lum[0]);
 
+			bgfx::resetView(hdrLumScale0);
 			bgfx::setViewName(hdrLumScale0, "Downscale luminance 0");
 			bgfx::setViewRect(hdrLumScale0, 0, 0, 64, 64);
 			bgfx::setViewFrameBuffer(hdrLumScale0, m_lum[1]);
 
+			bgfx::resetView(hdrLumScale1);
 			bgfx::setViewName(hdrLumScale1, "Downscale luminance 1");
 			bgfx::setViewRect(hdrLumScale1, 0, 0, 16, 16);
 			bgfx::setViewFrameBuffer(hdrLumScale1, m_lum[2]);
 
+			bgfx::resetView(hdrLumScale2);
 			bgfx::setViewName(hdrLumScale2, "Downscale luminance 2");
 			bgfx::setViewRect(hdrLumScale2, 0, 0, 4, 4);
 			bgfx::setViewFrameBuffer(hdrLumScale2, m_lum[3]);
 
+			bgfx::resetView(hdrLumScale3);
 			bgfx::setViewName(hdrLumScale3, "Downscale luminance 3");
 			bgfx::setViewRect(hdrLumScale3, 0, 0, 1, 1);
 			bgfx::setViewFrameBuffer(hdrLumScale3, m_lum[4]);
 
+			bgfx::resetView(hdrBrightness);
 			bgfx::setViewName(hdrBrightness, "Brightness");
 			bgfx::setViewRect(hdrBrightness, 0, 0, bgfx::BackbufferRatio::Half);
 			bgfx::setViewFrameBuffer(hdrBrightness, m_bright);
 
+			bgfx::resetView(hdrVBlur);
 			bgfx::setViewName(hdrVBlur, "Blur vertical");
 			bgfx::setViewRect(hdrVBlur, 0, 0, bgfx::BackbufferRatio::Eighth);
 			bgfx::setViewFrameBuffer(hdrVBlur, m_blur);
 
+			bgfx::resetView(hdrHBlurTonemap);
 			bgfx::setViewName(hdrHBlurTonemap, "Blur horizontal + tonemap");
 			bgfx::setViewRect(hdrHBlurTonemap, 0, 0, bgfx::BackbufferRatio::Equal);
 			bgfx::FrameBufferHandle invalid = BGFX_INVALID_HANDLE;

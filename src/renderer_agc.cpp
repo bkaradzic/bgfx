@@ -63,6 +63,52 @@ void freeDmem(void* memVA)
 
 //=============================================================================================
 
+bool tileSurface(void *tiledData, const void *untiledSurface, sce::Agc::Core::TextureSpec spec, uint32_t mipLevel, uint32_t arraySlice)
+{
+	int ret; (void)ret;
+
+	sce::AgcGpuAddress::SurfaceDescription desc;
+	ret = sce::Agc::Core::translate(&desc, &spec);
+	if (ret != SCE_OK) {
+		return false;
+	}
+
+	sce::AgcGpuAddress::SurfaceSummary summary;
+	ret = sce::AgcGpuAddress::computeSurfaceSummary(&summary, &desc);
+	if (ret != SCE_OK) {
+		return false;
+	}
+
+	uint32_t totalBitsPerElement;
+	uint32_t texelsPerElement;
+	{
+		sce::Agc::Core::ElementDimensions elemDim;
+		ret = sce::Agc::Core::translate(&elemDim, spec.m_format.m_format);
+		if (ret != SCE_OK) {
+			return false;
+		}
+		totalBitsPerElement = (UINT32_C(1) << elemDim.m_bytesPerElementLog2) << 3;
+		texelsPerElement = elemDim.m_texelsPerElementWide * elemDim.m_texelsPerElementTall;
+	}
+
+	sce::Agc::SizeAlign sizeAlign = sce::Agc::Core::getSize(&spec);
+	ret = sce::AgcGpuAddress::tileSurface(
+		tiledData,
+		sizeAlign.m_size,
+		untiledSurface,
+		spec.getWidth() * spec.getHeight() * (totalBitsPerElement / texelsPerElement) / 8,
+		&summary,
+		mipLevel,
+		arraySlice);
+	if (ret != SCE_OK) {
+		return false;
+	}
+
+	return SCE_OK;
+}
+
+//=============================================================================================
+
 } // namespace 
 
 //=============================================================================================
@@ -122,12 +168,10 @@ static std::unordered_map<uint16_t, AttribFormat> sAttribFormatIndex{
 	ATTRIB_FORMAT(1, Uint10, false, k10_10_10_2UInt, kX, k1, k1, k1),
 	ATTRIB_FORMAT(2, Uint10, false, k10_10_10_2UInt, kX, kY, k1, k1),
 	ATTRIB_FORMAT(3, Uint10, false, k10_10_10_2UInt, kX, kY, kZ, k1),
-	ATTRIB_FORMAT(4, Uint10, false, k10_10_10_2UInt, kX, kY, kZ, kW),
 
 	ATTRIB_FORMAT(1, Uint10, true, k10_10_10_2UNorm, kX, k1, k1, k1),
 	ATTRIB_FORMAT(2, Uint10, true, k10_10_10_2UNorm, kX, kY, k1, k1),
 	ATTRIB_FORMAT(3, Uint10, true, k10_10_10_2UNorm, kX, kY, kZ, k1),
-	ATTRIB_FORMAT(4, Uint10, true, k10_10_10_2UNorm, kX, kY, kZ, kW),
 };
 
 #undef ATTRIB_FORMAT
@@ -164,7 +208,7 @@ static const PrimTypeInfo sPrimTypeInfo[Topology::Count] =
 //=============================================================================================
 
 #define CULL_MODE( mode ) \
-		sce::Agc::CxPrimitiveSetup::CullFace::mode \
+		sce::Agc::CxPrimitiveSetup::CullFace::mode
 
 static const sce::Agc::CxPrimitiveSetup::CullFace sCullMode[] =
 {
@@ -178,7 +222,7 @@ static const sce::Agc::CxPrimitiveSetup::CullFace sCullMode[] =
 //=============================================================================================
 
 #define DEPTH_FUNC( func ) \
-		sce::Agc::CxDepthStencilControl::DepthFunction::func \
+		sce::Agc::CxDepthStencilControl::DepthFunction::func
 
 static const sce::Agc::CxDepthStencilControl::DepthFunction sDepthFunc[] =
 {
@@ -323,6 +367,205 @@ static const BlendFactor sBlendFactor[] =
 };
 
 #undef BLEND_FACTOR
+
+//=============================================================================================
+
+struct TextureFormatInfo
+{
+	sce::Agc::Core::TypedFormat m_fmt{};
+	sce::Agc::Core::TypedFormat m_fmtSrgb{};
+	sce::Agc::Core::Swizzle m_swzl{};
+	uint32_t m_flags{};
+	uint32_t m_bpp{};
+	bool m_compressed{};
+};
+
+#define TEXTURE_FORMAT(fmt, fmtSrbg, swzl, flags, bpp, compressed) \
+{ \
+	sce::Agc::Core::TypedFormat::fmt, \
+	sce::Agc::Core::TypedFormat::fmtSrbg, \
+	sce::Agc::Core::Swizzle::swzl, \
+	flags, \
+	bpp, \
+	compressed \
+}
+
+#define TEXTURE_FORMAT_UNSUPPORTED() \
+{ \
+	sce::Agc::Core::TypedFormat::kLast, \
+	sce::Agc::Core::TypedFormat::kLast, \
+	sce::Agc::Core::Swizzle::kLast, \
+	BGFX_CAPS_FORMAT_TEXTURE_NONE, \
+	0, \
+	false \
+}
+
+// TODO: (manderson) MSAA?
+#define TEXTURE_CAPS_FLAGS \
+	(BGFX_CAPS_FORMAT_TEXTURE_2D | BGFX_CAPS_FORMAT_TEXTURE_3D | BGFX_CAPS_FORMAT_TEXTURE_CUBE | BGFX_CAPS_FORMAT_TEXTURE_VERTEX)
+
+#define TEXTURE_CAPS_FLAGS_SRGB \
+	(BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB | BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB | BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB)
+
+#define TEXTURE_CAPS_FLAGS_FRAMEBUFFER \
+	(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER)
+
+static const TextureFormatInfo sTextureFormat[] =
+{
+	TEXTURE_FORMAT( kBc1UNorm, kBc1Srgb, kRGB1_R3S34, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB, 0, true ),													// BC1
+	TEXTURE_FORMAT( kBc2UNorm, kBc2Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB, 0, true ),													// BC2
+	TEXTURE_FORMAT( kBc3UNorm, kBc3Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB, 0, true ),													// BC3
+	TEXTURE_FORMAT( kBc4UNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS, 0, true ),																				// BC4
+	TEXTURE_FORMAT( kBc5UNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS, 0, true),																				// BC5
+	TEXTURE_FORMAT( kBc6SFloat, kLast, kRGB1_R3S34, TEXTURE_CAPS_FLAGS, 0, true),																				// BC6H
+	TEXTURE_FORMAT( kBc7UNorm, kBc7Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB, 0, true),													// BC7
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ETC1
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ETC2
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ETC2A
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ETC2A1
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC12
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC14
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC12A
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC14A
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC22
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC24
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ATC
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ATCE
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ATCI
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC4x4
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC5x5
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC6x6
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC8x5
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC8x6
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC10x5
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// Unknown
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// R1
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// A8
+	TEXTURE_FORMAT( k8UNorm, k8Srgb, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 8, false ),						// R8
+	TEXTURE_FORMAT( k8SInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 8, false ),													// R8I
+	TEXTURE_FORMAT( k8UInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 8, false ),													// R8U
+	TEXTURE_FORMAT( k8SNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 8, false ),												// R8S
+	TEXTURE_FORMAT( k16UNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16
+	TEXTURE_FORMAT( k16SInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16I
+	TEXTURE_FORMAT( k16UInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16U
+	TEXTURE_FORMAT( k16Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16F
+	TEXTURE_FORMAT( k16SNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16S
+	TEXTURE_FORMAT( k32SInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// R321
+	TEXTURE_FORMAT( k32UInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// R32U
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// R32F
+	TEXTURE_FORMAT( k8_8UNorm, k8_8Srgb, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),				// RG8
+	TEXTURE_FORMAT( k8_8SInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// RG8I
+	TEXTURE_FORMAT( k8_8UInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// RG8U
+	TEXTURE_FORMAT( k8_8SNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),											// RG8S
+	TEXTURE_FORMAT( k16_16UNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16
+	TEXTURE_FORMAT( k16_16SInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16I
+	TEXTURE_FORMAT( k16_16UInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16U
+	TEXTURE_FORMAT( k16_16Float, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16F
+	TEXTURE_FORMAT( k16_16SNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16S
+	TEXTURE_FORMAT( k32_32SInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),											// RG321
+	TEXTURE_FORMAT( k32_32UInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),											// RG32U
+	TEXTURE_FORMAT( k32_32Float, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),											// RG32F
+	TEXTURE_FORMAT( k8_8_8_8UNorm, k8_8_8_8Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),		// RGB8
+	TEXTURE_FORMAT( k8_8_8_8SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGB8I
+	TEXTURE_FORMAT( k8_8_8_8UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGB8U
+	TEXTURE_FORMAT( k8_8_8_8SNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGB8S
+	TEXTURE_FORMAT( k9_9_9_5Float, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGB9E5F
+	TEXTURE_FORMAT( k8_8_8_8UNorm, k8_8_8_8Srgb, kBGRA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),		// BGRA8
+	TEXTURE_FORMAT( k8_8_8_8UNorm, k8_8_8_8Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),		// RGBA8
+	TEXTURE_FORMAT( k8_8_8_8SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGBA8I
+	TEXTURE_FORMAT( k8_8_8_8UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGBA8U
+	TEXTURE_FORMAT( k8_8_8_8SNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGBA8S
+	TEXTURE_FORMAT( k16_16_16_16UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16
+	TEXTURE_FORMAT( k16_16_16_16SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16I
+	TEXTURE_FORMAT( k16_16_16_16UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16U
+	TEXTURE_FORMAT( k16_16_16_16Float, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16F
+	TEXTURE_FORMAT( k16_16_16_16SNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16S
+	TEXTURE_FORMAT( k32_32_32_32SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 128, false ),										// RGBA32I
+	TEXTURE_FORMAT( k32_32_32_32UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 128, false ),										// RGBA32U
+	TEXTURE_FORMAT( k32_32_32_32Float, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 128, false ),									// RGBA32F
+	TEXTURE_FORMAT( k5_6_5UNorm, kLast, kRGB1_R3S34, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),											// R5G6B5
+	TEXTURE_FORMAT( k4_4_4_4UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),											// RGBA4
+	TEXTURE_FORMAT( k5_5_5_1UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),											// RGB5A1
+	TEXTURE_FORMAT( k10_10_10_2UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),										// RGB10A2
+	TEXTURE_FORMAT( k11_11_10Float, kLast, kRGB1_R3S34, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),										// RG11B10F
+
+	// TODO: (manderson) Depth formats.
+	// NOTE: (manderson) AFAICT only 16bit unorm and 32bit float are supported depth formats.
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// UnknownDepth
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D16
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D24
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D24S8
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D32
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D16F
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D24F
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D32F
+	TEXTURE_FORMAT_UNSUPPORTED(),																																// D0S8
+};
+
+#undef TEXTURE_FORMAT
+#undef TEXTURE_FORMAT_UNSUPPORTED
+
+//=============================================================================================
+
+#define TEXTURE_WRAP_MODE( mode ) \
+		sce::Agc::Core::Sampler::WrapMode::mode
+
+static const sce::Agc::Core::Sampler::WrapMode sWrapMode[] =
+{
+	TEXTURE_WRAP_MODE( kWrap ),
+	TEXTURE_WRAP_MODE( kMirror ),
+	TEXTURE_WRAP_MODE( kClampLastTexel ),
+	TEXTURE_WRAP_MODE( kClampBorder ),
+};
+
+#undef TEXTURE_WRAP_MODE
+
+//=============================================================================================
+
+#define TEXTURE_FILTER_MODE( mode ) \
+		sce::Agc::Core::Sampler::FilterMode::mode
+
+static const sce::Agc::Core::Sampler::FilterMode sFilterMode[] =
+{
+	TEXTURE_FILTER_MODE( kBilinear ),
+	TEXTURE_FILTER_MODE( kPoint ),
+	TEXTURE_FILTER_MODE( kAnisoBilinear ),
+};
+
+#undef TEXTURE_FILTER_MODE
+
+//=============================================================================================
+
+#define TEXTURE_MIP_FILTER_MODE( mode ) \
+		sce::Agc::Core::Sampler::MipFilterMode::mode
+
+static const sce::Agc::Core::Sampler::MipFilterMode sMipFilterMode[] =
+{
+	TEXTURE_MIP_FILTER_MODE( kLinear ),
+	TEXTURE_MIP_FILTER_MODE( kPoint ),
+};
+
+#undef TEXTURE_MIP_FILTER_MODE
+
+//=============================================================================================
+
+#define TEXTURE_DEPTH_COMPARE_MODE( mode ) \
+		sce::Agc::Core::Sampler::DepthCompare::mode
+
+static const sce::Agc::Core::Sampler::DepthCompare sDepthCompareMode[] =
+{
+	TEXTURE_DEPTH_COMPARE_MODE( kNever ), // not used
+	TEXTURE_DEPTH_COMPARE_MODE( kLess ),
+	TEXTURE_DEPTH_COMPARE_MODE( kLessEqual ),
+	TEXTURE_DEPTH_COMPARE_MODE( kEqual ),
+	TEXTURE_DEPTH_COMPARE_MODE( kGreaterEqual ),
+	TEXTURE_DEPTH_COMPARE_MODE( kGreater ),
+	TEXTURE_DEPTH_COMPARE_MODE( kNotEqual ),
+	TEXTURE_DEPTH_COMPARE_MODE( kNever ),
+	TEXTURE_DEPTH_COMPARE_MODE( kAlways ),
+};
+
+#undef TEXTURE_DEPTH_COMPARE_MODE
 
 //=============================================================================================
 
@@ -650,31 +893,297 @@ void RendererContextAGC::VertexBuffer::destroy()
 
 //=============================================================================================
 
+void RendererContextAGC::Texture::setSampler(sce::Agc::Core::Sampler& sampler, uint64_t const flags)
+{
+	// TODO: (manderson) depth compare?
+	auto const u = sWrapMode[(flags & BGFX_SAMPLER_U_MASK) >> BGFX_SAMPLER_U_SHIFT];
+	auto const v = sWrapMode[(flags & BGFX_SAMPLER_V_MASK) >> BGFX_SAMPLER_V_SHIFT];
+	auto const w = sWrapMode[(flags & BGFX_SAMPLER_W_MASK) >> BGFX_SAMPLER_W_SHIFT];
+	auto const mag = sFilterMode[(flags & BGFX_SAMPLER_MAG_MASK) >> BGFX_SAMPLER_MAG_SHIFT];
+	auto const min = sFilterMode[(flags & BGFX_SAMPLER_MIN_MASK) >> BGFX_SAMPLER_MIN_SHIFT];
+	auto const mip = sMipFilterMode[(flags & BGFX_SAMPLER_MIP_MASK) >> BGFX_SAMPLER_MIP_SHIFT];
+	auto const compare = sDepthCompareMode[(flags & BGFX_SAMPLER_COMPARE_MASK) >> BGFX_SAMPLER_COMPARE_SHIFT];
+	sampler.init()
+		.setWrapMode(u, v, w)
+		.setXyFilterMode(mag, min)
+		.setMipFilterMode(mip)
+		.setDepthCompareFunction(compare)
+		.setZFilterMode(sce::Agc::Core::Sampler::ZFilterMode::kLinear)
+		.setAnisotropyRatio(sce::Agc::Core::Sampler::AnisotropyRatio::k16);
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip)
+{
+	bimg::ImageContainer imageContainer;
+	if (bimg::imageParse(imageContainer, data, size))
+	{
+		uint8_t const startLod = bx::min<uint8_t>(mipSkip, imageContainer.m_numMips-1);
+
+		bimg::TextureInfo ti;
+		bimg::imageGetSize( &ti
+			, uint16_t(imageContainer.m_width>>startLod)
+			, uint16_t(imageContainer.m_height>>startLod)
+			, uint16_t(imageContainer.m_depth>>startLod)
+			, imageContainer.m_cubeMap
+			, 1 < imageContainer.m_numMips
+			, imageContainer.m_numLayers
+			, imageContainer.m_format );
+		ti.numMips = bx::min<uint8_t>(imageContainer.m_numMips-startLod, ti.numMips);
+
+		bool const srgb = (flags & BGFX_TEXTURE_SRGB) != 0;
+		bool const rt = (flags & BGFX_TEXTURE_RT) != 0;
+		bool const depth = bimg::isDepth(ti.format);
+
+		const TextureFormatInfo& tf = sTextureFormat[ti.format];
+		sce::Agc::Core::TypedFormat const typedFormat = srgb ? tf.m_fmtSrgb : tf.m_fmt;
+		if (typedFormat == sce::Agc::Core::TypedFormat::kLast)
+		{
+			// TODO: (manderson) Use error texture (pink texture) for missing formats or convert.
+			return false;
+		}
+
+		mSpec.init();
+		mSpec.m_format = sce::Agc::Core::DataFormat( { typedFormat, tf.m_swzl } );
+		if (ti.cubeMap)
+		{
+			mSpec.m_type = sce::Agc::Core::Texture::Type::kCubemap;
+			mSpec.m_numSlices = 6 * ti.numLayers;
+			mSpec.m_depth = 1;
+		}
+		else if (imageContainer.m_depth > 1)
+		{
+			mSpec.m_type = sce::Agc::Core::Texture::Type::k3d;
+			mSpec.m_numSlices = 1;
+			mSpec.m_depth = ti.depth;
+		}
+		else
+		{
+			mSpec.m_type = ti.numLayers > 1 ? sce::Agc::Core::Texture::Type::k2dArray : sce::Agc::Core::Texture::Type::k2d;
+			mSpec.m_numSlices = ti.numLayers;
+			mSpec.m_depth = 1;
+		}
+		mSpec.m_width = ti.width;
+		mSpec.m_height = ti.height;
+		mSpec.m_tileMode = depth ? sce::Agc::Core::Texture::TileMode::kDepth : (rt ? sce::Agc::Core::Texture::TileMode::kRenderTarget : sce::Agc::Core::Texture::TileMode::kLinear); // TODO: (manderson) Use block tile mode
+		mSpec.m_numMips = ti.numMips;
+		//mSpec.m_numFragments = sce::Agc::Core::Texture::NumFragments::k1;
+
+		sce::Agc::SizeAlign const alignedSize = sce::Agc::Core::getSize(&mSpec);
+		mBuffer = allocDmem(alignedSize);
+		if (mBuffer == nullptr)
+		{
+			return false;
+		}
+		mSpec.m_dataAddress = mBuffer;
+		SceError error = sce::Agc::Core::initialize(&mTexture, &mSpec);
+		if (error != SCE_OK)
+		{
+			freeDmem(mBuffer);
+			return false;
+		}
+
+		for (uint32_t slice = 0; slice < mSpec.m_numSlices; slice++)
+		{
+			for (uint32_t mip = 0; mip < mSpec.m_numMips; mip++)
+			{
+				bimg::ImageMip imgMip;
+				if (bimg::imageGetRawData(imageContainer, slice, mip+startLod, data, size, imgMip))
+				{
+					error = tileSurface(mTexture.getDataAddress(), imgMip.m_data, mSpec, mip, slice);
+					if (error != SCE_OK)
+					{
+						freeDmem(mBuffer);
+						return false;
+					}
+				}
+			}
+		}
+
+		// Set default sampler.
+		setSampler(mSampler, flags);
+
+		// Create stencil buffer if format requires one.
+		if (ti.format == bimg::TextureFormat::D24S8)
+		{
+			sce::Agc::Core::DepthRenderTargetSpec drtSpec{};
+			drtSpec.init();
+			drtSpec.m_width = ti.width;
+			drtSpec.m_height = ti.height;
+			drtSpec.m_stencilFormat = sce::Agc::CxDepthRenderTarget::StencilFormat::k8UInt;
+			sce::Agc::SizeAlign const stencilSize = sce::Agc::Core::getSize(&drtSpec, sce::Agc::Core::DepthRenderTargetComponent::kStencil);
+			mStencilBuffer = allocDmem(sce::Agc::SizeAlign(stencilSize.m_size, stencilSize.m_align));
+		}
+
+		mFlags = flags;
+		mFormat = ti.format;
+
+		return true;
+	}
+	return false;
+}
+
+//=============================================================================================
+
+void RendererContextAGC::Texture::destroy()
+{
+	if (mBuffer != nullptr || mStencilBuffer != nullptr)
+	{
+		sRendererAGC->mDestroyList.push_back([count=(int32_t)NumDisplayBuffers,textureBuffer=mBuffer,stencilBuffer=mStencilBuffer]() mutable {
+			count--;
+			if (count <= 0)
+			{
+				if (textureBuffer != nullptr)
+				{
+					freeDmem(textureBuffer);
+				}
+				if (stencilBuffer != nullptr)
+				{
+					freeDmem(stencilBuffer);
+				}
+				return true;
+			}
+			return false;
+		});
+	}
+	mBuffer = nullptr;
+	mStencilBuffer = nullptr;
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::FrameBuffer::create(uint8_t const num, const Attachment* const attachments)
+{
+	mWidth = 0;
+	mHeight = 0;
+	mNumAttachments = 0;
+	mDepthTarget.init(); // blank depth target.
+	for (uint32_t i = 0; i < num; i++)
+	{
+		const Attachment& attachment = attachments[i];
+		if (isValid(attachment.handle))
+		{
+			Texture& texture = sRendererAGC->mTextures[attachment.handle.idx];
+
+			uint32_t const width  = bx::uint32_max(texture.mSpec.m_width  >> attachment.mip, 1);
+			uint32_t const height = bx::uint32_max(texture.mSpec.m_height >> attachment.mip, 1);
+			if (mWidth != 0)
+			{
+				if (width != mWidth || height != mHeight)
+				{
+					// ERROR: dimensions don't match.
+					return false;
+				}
+			}
+			else
+			{
+				mWidth = width;
+				mHeight = height;
+			}
+
+			if (!bimg::isDepth(texture.mFormat))
+			{
+				if (texture.mSpec.m_tileMode != sce::Agc::Core::Texture::TileMode::kRenderTarget)
+				{
+					// ERROR: Not a render target.
+					return false;
+				}
+
+				sce::Agc::Core::RenderTargetSpec spec;
+				spec.init();
+				spec.m_format = texture.mSpec.m_format;
+				spec.m_numSlices = texture.mSpec.m_numSlices;
+				spec.m_depth = texture.mSpec.m_depth;
+				spec.m_width = texture.mSpec.m_width;
+				spec.m_height = texture.mSpec.m_height;
+				spec.m_numMips = texture.mSpec.m_numMips;
+				spec.m_tileMode = sce::Agc::CxRenderTarget::TileMode::kRenderTarget;
+				spec.m_dataAddress = texture.mSpec.m_dataAddress;
+				SceError error = sce::Agc::Core::initialize(&mColorTargets[mNumAttachments], &spec);
+				if (error != SCE_OK)
+				{
+					// ERROR!
+					return false;
+				}
+				mColorTargets[mNumAttachments].setSlot(mNumAttachments)
+					.setCurrentMipLevel(attachment.mip)
+					.setBaseArraySliceIndex(attachment.layer);
+				mColorHandles[mNumAttachments] = attachment.handle;
+				mNumAttachments++;
+			}
+			else
+			{
+				if (texture.mSpec.m_tileMode != sce::Agc::Core::Texture::TileMode::kDepth ||texture.mSpec.m_numMips > 1 || texture.mSpec.m_numSlices > 1)
+				{
+					// ERROR: Don't support depth texture arrays or mipmaps... yet?
+					return false;
+				}
+
+				sce::Agc::Core::DepthRenderTargetSpec spec;
+				spec.init();
+				spec.m_depthFormat = sce::Agc::CxDepthRenderTarget::DepthFormat::k32Float;
+				spec.m_stencilFormat = texture.mStencilBuffer != nullptr ? sce::Agc::CxDepthRenderTarget::StencilFormat::k8UInt : spec.m_stencilFormat;
+				spec.m_width = texture.mSpec.m_width;
+				spec.m_height = texture.mSpec.m_height;
+				spec.m_depthReadAddress = texture.mBuffer;
+				spec.m_depthWriteAddress = texture.mBuffer;
+				spec.m_stencilReadAddress = texture.mStencilBuffer;
+				spec.m_stencilWriteAddress = texture.mStencilBuffer;
+				SceError error = sce::Agc::Core::initialize(&mDepthTarget, &spec);
+				if (error != SCE_OK)
+				{
+					// ERROR!
+					return false;
+				}
+				mDepthHandle = attachment.handle;
+			}
+		}
+	}
+
+	// Clear remaining color targets.
+	for (uint32_t i = mNumAttachments; i < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; i++)
+	{
+		mColorTargets[i].init()
+			.setSlot(i);
+	}
+
+	return false;
+}
+
+//=============================================================================================
+
+void RendererContextAGC::FrameBuffer::destroy()
+{
+
+}
+
+//=============================================================================================
+
 RendererContextAGC::RendererContextAGC()
 {
-	// Pretend all features are available.
 	g_caps.supported = 0
-		| BGFX_CAPS_ALPHA_TO_COVERAGE
+		//| BGFX_CAPS_ALPHA_TO_COVERAGE
 		| BGFX_CAPS_BLEND_INDEPENDENT
-		| BGFX_CAPS_COMPUTE
-		| BGFX_CAPS_CONSERVATIVE_RASTER
-		| BGFX_CAPS_DRAW_INDIRECT
+		//| BGFX_CAPS_COMPUTE
+		//| BGFX_CAPS_CONSERVATIVE_RASTER
+		//| BGFX_CAPS_DRAW_INDIRECT
 		| BGFX_CAPS_FRAGMENT_DEPTH
 		| BGFX_CAPS_FRAGMENT_ORDERING
-		| BGFX_CAPS_GRAPHICS_DEBUGGER
-		| BGFX_CAPS_HIDPI
+		//| BGFX_CAPS_GRAPHICS_DEBUGGER
+		//| BGFX_CAPS_HIDPI
 		| BGFX_CAPS_INDEX32
-		| BGFX_CAPS_INSTANCING
-		| BGFX_CAPS_OCCLUSION_QUERY
+		//| BGFX_CAPS_INSTANCING
+		//| BGFX_CAPS_OCCLUSION_QUERY
 		| BGFX_CAPS_RENDERER_MULTITHREADED
-		| BGFX_CAPS_SWAP_CHAIN
+		//| BGFX_CAPS_SWAP_CHAIN
 		| BGFX_CAPS_TEXTURE_2D_ARRAY
 		| BGFX_CAPS_TEXTURE_3D
-		| BGFX_CAPS_TEXTURE_BLIT
+		//| BGFX_CAPS_TEXTURE_BLIT
 		| BGFX_CAPS_TEXTURE_COMPARE_ALL
 		| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 		| BGFX_CAPS_TEXTURE_CUBE_ARRAY
-		| BGFX_CAPS_TEXTURE_READ_BACK
+		//| BGFX_CAPS_TEXTURE_READ_BACK
 		| BGFX_CAPS_VERTEX_ATTRIB_HALF
 		| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 		;
@@ -682,25 +1191,7 @@ RendererContextAGC::RendererContextAGC()
 	// Pretend all features are available for all texture formats.
 	for (uint32_t formatIdx = 0; formatIdx < TextureFormat::Count; ++formatIdx)
 	{
-		g_caps.formats[formatIdx] = 0
-			| BGFX_CAPS_FORMAT_TEXTURE_NONE
-			| BGFX_CAPS_FORMAT_TEXTURE_2D
-			| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
-			| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
-			| BGFX_CAPS_FORMAT_TEXTURE_3D
-			| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
-			| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
-			| BGFX_CAPS_FORMAT_TEXTURE_CUBE
-			| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
-			| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
-			| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
-			| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
-			| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
-			| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-			| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-			| BGFX_CAPS_FORMAT_TEXTURE_MSAA
-			| BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
-			;
+		g_caps.formats[formatIdx] = sTextureFormat[formatIdx].m_flags;
 	}
 
 	// Pretend we have no limits
@@ -797,6 +1288,9 @@ bool RendererContextAGC::createDisplayBuffers(const Init& init)
 	SCE_AGC_ASSERT(error == SCE_OK);
 	if (error != SCE_OK)
 		return false;
+
+	mWidth = init.resolution.width;
+	mHeight = init.resolution.height;
 
 	return true;
 }
@@ -907,6 +1401,20 @@ bool RendererContextAGC::init(const Init& initParams)
 		!createScanoutBuffers() ||
 		!createContext())
 		return false;
+
+	mBlitDraw.clear();
+	mBlitBind.clear();
+	mBlitDraw.m_stateFlags = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z;
+	mBlitDraw.m_scissor = UINT16_MAX;
+	mBlitBind.m_bind[0].m_type = (uint8_t)Binding::Texture;
+	mBlitBind.m_bind[0].m_samplerFlags = BGFX_SAMPLER_UVW_CLAMP;
+
+	mClearDraw.clear();
+	mClearBind.clear();
+	mClearDraw.m_stateFlags = BGFX_STATE_PT_TRISTRIP;
+	mBlitDraw.m_scissor = UINT16_MAX;
+
+	mVsync = initParams.resolution.reset == BGFX_RESET_VSYNC;
 
 	return true;
 }
@@ -1055,7 +1563,8 @@ void RendererContextAGC::destroyProgram(ProgramHandle handle)
 
 void* RendererContextAGC::createTexture(TextureHandle handle, const Memory* mem, uint64_t flags, uint8_t skip)
 {
-	return NULL;
+	mTextures[handle.idx].create(flags, mem->size, mem->data, skip);
+	return nullptr;
 }
 
 //=============================================================================================
@@ -1105,24 +1614,28 @@ uintptr_t RendererContextAGC::getInternal(TextureHandle handle)
 
 void RendererContextAGC::destroyTexture(TextureHandle handle)
 {
+	mTextures[handle.idx].destroy();
 }
 
 //=============================================================================================
 
 void RendererContextAGC::createFrameBuffer(FrameBufferHandle handle, uint8_t num, const Attachment* attachment)
 {
+	mFrameBuffers[handle.idx].create(num, attachment);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::createFrameBuffer(FrameBufferHandle handle, void* nwh, uint32_t width, uint32_t height, TextureFormat::Enum format, TextureFormat::Enum depthFormat)
 {
+	// Error?
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyFrameBuffer(FrameBufferHandle handle)
 {
+	mFrameBuffers[handle.idx].destroy();
 }
 
 //=============================================================================================
@@ -1225,7 +1738,7 @@ RendererContextAGC::VertexBindInfo::VertexBindInfo( ProgramHandle const programH
 			mAttribs[i] = { attrib, stream.m_handle, stream.m_layoutHandle, stream.m_startVertex };
 		}
 	}
-	mHash = bx::hash<bx::HashMurmur2A>(&mAttribs[0], mCount * sizeof(VertexBindInfo));
+	mHash = bx::hash<bx::HashMurmur2A>(&mAttribs[0], mCount * sizeof(VertexAttribBindInfo));
 }
 
 //=============================================================================================
@@ -1275,8 +1788,9 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 
 //=============================================================================================
 
-bool RendererContextAGC::bindVertexAttributes(const VertexBindInfo& bindInfo)
+bool RendererContextAGC::bindVertexAttributes(const RenderDraw& draw)
 {
+	VertexBindInfo const bindInfo{ mFrameState.mProgramHandle, draw };
 	if (mFrameState.mVertexAttribHash != bindInfo.mHash)
 	{
 		VertexBinding binding;
@@ -1294,22 +1808,6 @@ bool RendererContextAGC::bindVertexAttributes(const VertexBindInfo& bindInfo)
 		return false;
 	}
 	return true;
-}
-
-//=============================================================================================
-
-bool RendererContextAGC::bindVertexAttributes(const ProgramHandle& programHandle, VertexBufferHandle const bufferHandle, VertexLayoutHandle const layoutHandle, uint32_t const baseVertex )
-{
-	VertexBindInfo const bindInfo{ programHandle, bufferHandle, layoutHandle, baseVertex };
-	return bindVertexAttributes(bindInfo);
-}
-
-//=============================================================================================
-
-bool RendererContextAGC::bindVertexAttributes()
-{
-	VertexBindInfo const bindInfo{ mFrameState.mKey.m_program, mFrameState.mRenderItem->draw };
-	return bindVertexAttributes(bindInfo);
 }
 
 //=============================================================================================
@@ -1340,6 +1838,46 @@ void RendererContextAGC::setShaderUniform4f(uint8_t const flags, uint32_t const 
 void RendererContextAGC::setShaderUniform4x4f(uint8_t const flags, uint32_t const regIndex, const void* const val, uint32_t const numRegs)
 {
 	setShaderUniform(flags, regIndex, val, numRegs);
+}
+
+//=============================================================================================
+
+void RendererContextAGC::bindFrameBuffer(FrameBufferHandle const frameBufferHandle)
+{
+	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+	if (mFrameState.mFrameBufferHandle.idx != frameBufferHandle.idx)
+	{
+		if (isValid(frameBufferHandle))
+		{
+			const FrameBuffer& fb = mFrameBuffers[frameBufferHandle.idx];
+			uint32_t const c = bx::uint32_max(mFrameState.mNumFrameBufferAttachments, fb.mNumAttachments);
+			for (uint32_t i = 0; i < c; i++)
+			{
+				ctx.m_sb.setState(fb.mColorTargets[i]);
+			}
+			ctx.m_sb.setState(fb.mDepthTarget);
+			mFrameState.mNumFrameBufferAttachments = fb.mNumAttachments;
+		}
+		else
+		{
+			ctx.m_sb.setState(displayRes.mRenderTarget)
+				.setState(mDepthRenderTarget);
+			uint32_t const c = bx::uint32_max(mFrameState.mNumFrameBufferAttachments, 1);
+			if (c > 1)
+			{
+				sce::Agc::CxRenderTarget blankRenderTarget;
+				blankRenderTarget.init();
+				for (uint32_t i = 1; i < c; i++)
+				{
+					ctx.m_sb.setState(blankRenderTarget.setSlot(i));
+				}
+			}
+			mFrameState.mNumFrameBufferAttachments = 1;
+		}
+		mFrameState.mFrameBufferHandle = frameBufferHandle;
+
+	}
 }
 
 //=============================================================================================
@@ -1377,7 +1915,31 @@ bool RendererContextAGC::bindUniformBuffer(bool const isFragment)
 
 //=============================================================================================
 
-bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, const RenderDraw& draw, bool const isFragment)
+void RendererContextAGC::overridePredefined(ShaderHandle const shaderHandle)
+{
+	Shader& shader = mShaders[shaderHandle.idx];
+	for (uint32_t i = 0; i < shader.m_numPredefined; i++)
+	{
+		const PredefinedUniform& predefined = shader.m_predefined[i];
+		uint8_t const flags = predefined.m_type&kUniformFragmentBit;
+		switch (predefined.m_type&(~kUniformFragmentBit))
+		{
+			case PredefinedUniform::ModelViewProj:
+			{
+				setShaderUniform4x4f(flags
+					, predefined.m_loc
+					, mFrameState.mOverrideMVP
+					, bx::uint32_min(4, predefined.m_count)
+					);
+			}
+			break;
+		}
+	}
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, const RenderDraw& draw, bool const isFragment, bool const _overridePredefined)
 {
 	Shader& shader = mShaders[shaderHandle.idx];
 	if (shader.mUniformBufferSize > 0)
@@ -1483,8 +2045,15 @@ bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, con
 		// NOTE: (manderson) This will always write any predifined uniforms used by the shader
 		// to the uniform buffer, this could be optimized with some dirty state checking. When
 		// we bind the uniform buffer it will do nothing if the buffer contents haven't changed, but
-		// we could avoid the additional memcpy for the actual uniforms. 
-		mFrameState.mViewState.setPredefined<4>(this, mFrameState.mView, shader, mFrameState.mFrame, draw);
+		// we could avoid the additional memcpy for the actual uniforms.
+		if (!_overridePredefined)
+		{
+			mFrameState.mViewState.setPredefined<4>(this, mFrameState.mView, shader, mFrameState.mFrame, draw);
+		}
+		else
+		{
+			overridePredefined(shaderHandle);
+		}
 
 		// Bind the uniform buffer.
 		if (!bindUniformBuffer(isFragment))
@@ -1503,10 +2072,148 @@ bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, con
 
 //=============================================================================================
 
-bool RendererContextAGC::bindProgram(const ProgramHandle& programHandle, const RenderDraw& draw)
+void RendererContextAGC::bindSamplers(const RenderBind& bindings, bool const vertexStage, bool const fragmentStage, bool const computeStage)
+{
+	sce::Agc::Core::Texture blankTexture{};
+	sce::Agc::Core::Sampler blankSampler{};
+	blankTexture.init();
+	blankSampler.init();
+	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+	for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; stage++)
+	{
+		const Binding& bind = bindings.m_bind[stage];
+		Binding& curBind = mFrameState.mBindState.m_bind[stage];
+		bool const force = bind.m_type != curBind.m_type || mFrameState.mProgramChanged;
+		switch (bind.m_type)
+		{
+			case Binding::Image:
+			{
+			}
+			break;
+
+			case Binding::Texture:
+			{
+				if (force || bind.m_idx != curBind.m_idx)
+				{
+					if (bind.m_idx != kInvalidHandle)
+					{
+						Texture& texture = mTextures[bind.m_idx];
+						if (vertexStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
+								.setTextures(stage, 1, &texture.mTexture);
+						}
+						if (fragmentStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kPs)
+								.setTextures(stage, 1, &texture.mTexture);
+						}
+						if (computeStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kCs)
+								.setTextures(stage, 1, &texture.mTexture);
+						}
+					}
+					else
+					{
+						if (vertexStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
+								.setTextures(stage, 1, &blankTexture);
+						}
+						if (fragmentStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kPs)
+								.setTextures(stage, 1, &blankTexture);
+						}
+						if (computeStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kCs)
+								.setTextures(stage, 1, &blankTexture);
+						}
+					}
+					curBind.m_idx = bind.m_idx;
+				}				
+				
+				if (bind.m_idx != kInvalidHandle)
+				{
+					Texture& texture = mTextures[bind.m_idx];
+					uint32_t const textureSamplerFlags = (uint32_t)(texture.mFlags & BGFX_SAMPLER_BITS_MASK);
+					uint32_t const flags = (bind.m_samplerFlags & BGFX_SAMPLER_INTERNAL_DEFAULT) != 0 ? textureSamplerFlags : bind.m_samplerFlags;
+					if (force || curBind.m_samplerFlags != flags)
+					{
+						sce::Agc::Core::Sampler sampler{};
+						sce::Agc::Core::Sampler* samplerPtr{ &texture.mSampler };
+						if (flags != textureSamplerFlags)
+						{
+							Texture::setSampler(sampler, flags);
+							samplerPtr = &sampler;
+						}
+
+						if (vertexStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
+								.setSamplers(stage, 1, samplerPtr);
+						}
+						if (fragmentStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kPs)
+								.setSamplers(stage, 1, samplerPtr);
+						}
+						if (computeStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kCs)
+								.setSamplers(stage, 1, samplerPtr);
+						}
+
+						curBind.m_samplerFlags = flags;
+					}
+				}
+				else
+				{
+					if (force || curBind.m_samplerFlags != UINT32_MAX)
+					{
+						if (vertexStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
+								.setSamplers(stage, 1, &blankSampler);
+						}
+						if (fragmentStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kPs)
+								.setSamplers(stage, 1, &blankSampler);
+						}
+						if (computeStage)
+						{
+							ctx.m_bdr.getStage(sce::Agc::ShaderType::kCs)
+								.setSamplers(stage, 1, &blankSampler);
+						}
+						curBind.m_samplerFlags = UINT32_MAX;
+					}
+				}
+			}
+			break;
+
+			case Binding::IndexBuffer:
+			{
+			}
+			break;
+
+			case Binding::VertexBuffer:
+			{
+			}
+			break;
+		}
+	}
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::bindProgram(ProgramHandle const programHandle, const RenderDraw& draw, const RenderBind& bind, bool const overridePredefined)
 {
 	Program& program = mPrograms[programHandle.idx];
-	Shader* const vtxShader = &mShaders[program.mVertexShaderHandle.idx];
+	const Shader& vtxShader = mShaders[program.mVertexShaderHandle.idx];
 	Shader* const frgShader = isValid(program.mFragmentShaderHandle) ? &mShaders[program.mFragmentShaderHandle.idx] : nullptr;
 
 	// Bind shaders.
@@ -1516,38 +2223,35 @@ bool RendererContextAGC::bindProgram(const ProgramHandle& programHandle, const R
 		DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 		sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 		uint64_t const primType = (draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT;
-		ctx.setShaders(nullptr, vtxShader->mShader, frgShader != nullptr ? frgShader->mShader : nullptr, sPrimTypeInfo[primType].m_type);
+		ctx.setShaders(nullptr, vtxShader.mShader, frgShader != nullptr ? frgShader->mShader : nullptr, sPrimTypeInfo[primType].m_type);
 		mFrameState.mProgramHandle = programHandle;
 	}
 
 	// Commit vertex shader uniforms.
-	if (!bindShaderUniforms(program.mVertexShaderHandle, draw, false))
+	bool const vtxSamplers = vtxShader.mNumSamplers > 0;
+	if (!bindShaderUniforms(program.mVertexShaderHandle, draw, false, overridePredefined))
 	{
 		return false;
 	}
 
 	// Bind fragment shader uniforms.
+	bool frgSamplers{};
 	if (frgShader != nullptr)
 	{
-		if (!bindShaderUniforms(program.mFragmentShaderHandle, draw, true))
+		frgSamplers = frgShader->mNumSamplers > 0;
+		if (!bindShaderUniforms(program.mFragmentShaderHandle, draw, true, overridePredefined))
 		{
 			return false;
 		}
 	}
 
-	// HACK: (manderson) Ignore draw with samplers until we hook them up, need to flush the
-	// uniforms though so do all of the binding.
-	if (vtxShader->mNumSamplers > 0 || frgShader->mNumSamplers > 0)
-		return false;
+	// Bind samplers.
+	if (vtxSamplers || frgSamplers)
+	{
+		bindSamplers(bind, vtxSamplers, frgSamplers, false);
+	}
 
 	return true;
-}
-
-//=============================================================================================
-
-bool RendererContextAGC::bindProgram()
-{
-	return bindProgram(mFrameState.mKey.m_program, mFrameState.mRenderItem->draw);
 }
 
 //=============================================================================================
@@ -1556,16 +2260,16 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 {
 	RenderDraw& currentState = mFrameState.mDrawState;
 
-	// Firgure out what needs updating. If the view changed or the last render item
-	// was compute flush everything.
+	bool const changedView = mFrameState.mFixedStateView != mFrameState.mView;
+	mFrameState.mFixedStateView = mFrameState.mView;
+
+	// Firgure out what needs updating.
 	uint64_t changedFlags{};
 	uint64_t changedStencil{};
 	uint32_t changedBlendColor{};
-	if (mFrameState.mViewChanged || mFrameState.mWasCompute)
+	if (0)//mFrameState.mWasCompute)
 	{
 		currentState.clear();
-		currentState.m_scissor = !draw.m_scissor;
-
 		changedFlags = BGFX_STATE_MASK;
 		changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
 		changedBlendColor = ~0u;
@@ -1584,22 +2288,34 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 
-	// Push scissor.
-	uint16_t const scissor = draw.m_scissor;
-	if (currentState.m_scissor != scissor)
+	// Push viewport.
+	const Rect& viewportRect = mFrameState.mViewState.m_rect;
+	if (viewportRect.m_x != mFrameState.mViewportState.m_x ||
+		viewportRect.m_y != mFrameState.mViewportState.m_y ||
+		viewportRect.m_width != mFrameState.mViewportState.m_width ||
+		viewportRect.m_height != mFrameState.mViewportState.m_height)
 	{
-		currentState.m_scissor = scissor;
+		sce::Agc::CxViewport cxViewport;
+		sce::Agc::Core::setViewport(&cxViewport, viewportRect.m_width, viewportRect.m_height, viewportRect.m_x, viewportRect.m_y, -1.0f, 1.0f);
+		ctx.m_sb.setState(cxViewport);
+		mFrameState.mViewportState = viewportRect;
+	}
 
-		Rect scissorRect;
-		if (scissor == UINT16_MAX)
-		{
-			scissorRect = mFrameState.mScissorRect;
-		}
-		else
-		{
-			scissorRect.setIntersect(mFrameState.mScissorRect, mFrameState.mFrame->m_frameCache.m_rectCache.m_cache[scissor]);
-		}
-
+	// Push scissor.
+	Rect scissorRect{};
+	if (draw.m_scissor == UINT16_MAX)
+	{
+		scissorRect = mFrameState.mViewScissor;
+	}
+	else
+	{
+		scissorRect.setIntersect(mFrameState.mViewScissor, mFrameState.mFrame->m_frameCache.m_rectCache.m_cache[draw.m_scissor]);
+	}
+	if (scissorRect.m_x != mFrameState.mScissorState.m_x ||
+		scissorRect.m_y != mFrameState.mScissorState.m_y ||
+		scissorRect.m_width != mFrameState.mScissorState.m_width ||
+		scissorRect.m_height != mFrameState.mScissorState.m_height)
+	{
 		sce::Agc::CxScreenScissor cxScissor;
 		cxScissor.init()
 			.setLeft( scissorRect.m_x )
@@ -1607,6 +2323,7 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 			.setRight( scissorRect.m_x + scissorRect.m_width )
 			.setBottom( scissorRect.m_y + scissorRect.m_height );
 		ctx.m_sb.setState(cxScissor);
+		mFrameState.mScissorState = scissorRect;
 	}
 
 	// Push changed state.
@@ -1627,9 +2344,9 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 		| BGFX_STATE_WRITE_A						// *
 		| BGFX_STATE_WRITE_RGB						// *
 		| BGFX_STATE_WRITE_Z;						// *
-	if ((changedFlags & stateBits) != 0 || changedStencil != 0 || changedBlendColor != 0)
+	if ((changedFlags & stateBits) != 0 || changedStencil != 0 || changedBlendColor != 0 || changedView)
 	{
-		uint32_t const numRt = 1; //getNumRt();
+		uint32_t const numRt = mFrameState.mNumFrameBufferAttachments;
 
 		// Primitive mode.
 		uint64_t const primModeBits = 0
@@ -1673,7 +2390,7 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 			bool const depthWrite = (BGFX_STATE_WRITE_Z & draw.m_stateFlags) != 0;
 			uint64_t const depthFunc = (draw.m_stateFlags & BGFX_STATE_DEPTH_TEST_MASK) >> BGFX_STATE_DEPTH_TEST_SHIFT;
 			cxDepthStencil.init()
-				.setDepthWrite(depthWrite ? sce::Agc::CxDepthStencilControl::DepthWrite::kDisable : sce::Agc::CxDepthStencilControl::DepthWrite::kEnable)
+				.setDepthWrite(depthWrite ? sce::Agc::CxDepthStencilControl::DepthWrite::kEnable : sce::Agc::CxDepthStencilControl::DepthWrite::kDisable)
 				.setDepth(depthFunc == 0 ? sce::Agc::CxDepthStencilControl::Depth::kDisable : sce::Agc::CxDepthStencilControl::Depth::kEnable)
 				.setDepthFunction(sDepthFunc[depthFunc]);
 			
@@ -1759,7 +2476,7 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 			| BGFX_STATE_BLEND_EQUATION_MASK
 			| BGFX_STATE_BLEND_INDEPENDENT
 			| BGFX_STATE_BLEND_MASK;
-		if ((changedFlags & blendingBits) != 0 || changedBlendColor)
+		if ((changedFlags & blendingBits) != 0 || changedBlendColor != 0 || changedView)
 		{
 			// TODO: (manderson) hook this up once MRT works.
 			bool const independent = (draw.m_stateFlags & BGFX_STATE_BLEND_INDEPENDENT) != 0;
@@ -1864,7 +2581,7 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 		uint64_t const bufferMaskBits = 0
 			| BGFX_STATE_WRITE_RGB
 			| BGFX_STATE_WRITE_A;
-		if ((changedFlags & bufferMaskBits) != 0)
+		if ((changedFlags & bufferMaskBits) != 0 || changedView)
 		{
 			uint32_t const mask = 0
 				| ((draw.m_stateFlags & BGFX_STATE_WRITE_R) != 0 ? (1 << 0) : 0)
@@ -1884,13 +2601,6 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 	}
 }
 
-
-//=============================================================================================
-
-void RendererContextAGC::bindFixedState()
-{
-	bindFixedState(mFrameState.mRenderItem->draw);
-}
 
 //=============================================================================================
 
@@ -1925,18 +2635,22 @@ void RendererContextAGC::beginFrame(Frame* const frame)
 	mFrameState.mDrawState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 	mFrameState.mBindState.clear();
 	mFrameState.mViewState.reset( mFrameState.mFrame );
-	mFrameState.mViewState.m_rect = mFrameState.mFrame->m_view[0].m_rect;
+	mFrameState.mViewportState.clear();
+	mFrameState.mScissorState.clear();
 	//displayRes.mBlitState = { displayRes.mFrame };
-	mFrameState.mScissorRect.clear();
+	mFrameState.mViewScissor.clear();
 	mFrameState.mProgramHandle = { kInvalidHandle };
 	mFrameState.mFrameBufferHandle = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 	mFrameState.mNumItems = mFrameState.mFrame->m_numRenderItems;
 	mFrameState.mVertexAttribHash = 0;
 	mFrameState.mItem = 0;
 	mFrameState.mView = UINT16_MAX;
+	mFrameState.mFixedStateView = UINT16_MAX;
 	mFrameState.mIsCompute = false;
 	mFrameState.mWasCompute = false;
-	mFrameState.mWireframeFill = !!(mFrameState.mFrame->m_debug&BGFX_DEBUG_WIREFRAME);
+	mFrameState.mWireframeFill = (mFrameState.mFrame->m_debug & BGFX_DEBUG_WIREFRAME) != 0;
+	mFrameState.mBlitting = false;
+	mFrameState.mNumFrameBufferAttachments = 0;
 
 	// Init perf stats.
 	// TODO: (manderson) hooks these up...
@@ -1988,6 +2702,7 @@ bool RendererContextAGC::nextItem()
 		mFrameState.mItemIdx = mFrameState.mFrame->m_sortValues[mFrameState.mItem];
 		mFrameState.mRenderItem = &(mFrameState.mFrame->m_renderItem[mFrameState.mItemIdx]);
 		mFrameState.mRenderBind = &(mFrameState.mFrame->m_renderItemBind[mFrameState.mItemIdx]);
+		mFrameState.mBlitting = false;
 		mFrameState.mItem++;
 		return true;
 	}
@@ -1998,47 +2713,79 @@ bool RendererContextAGC::nextItem()
 
 void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 {
-	// TODO: (manderson) support only clearing viewport and MRT (I think the toolkit clear methods automatically clear MRTs).
-	// NOTE: (manderson) Doesn't look like the toolkit clear methods support different clear colors for each MRT.
-	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
-	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 	const Clear& clear = mFrameState.mFrame->m_view[mFrameState.mView].m_clear;
-	sce::Agc::Toolkit::Result tk0{}, tk1{};
-	bool haveWork = false;
-	if ((clear.m_flags & BGFX_CLEAR_COLOR) != 0)
+	if ((clear.m_flags & BGFX_CLEAR_MASK) != 0)
 	{
+		uint32_t const numRt = mFrameState.mNumFrameBufferAttachments;
+
+		// Make sure scissor is full viewport.
+		Rect prevViewScissor = mFrameState.mViewScissor;
+		mFrameState.mViewScissor = mFrameState.mViewState.m_rect;
+
+		// TODO: (manderson) Disable scissor and set stencil flags.
+		mClearDraw.m_stateFlags &= ~(BGFX_STATE_WRITE_MASK | BGFX_STATE_DEPTH_TEST_MASK);
+		mClearDraw.m_stateFlags |= (clear.m_flags & BGFX_CLEAR_COLOR) != 0 ? (BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A) : 0;
+		mClearDraw.m_stateFlags |= (clear.m_flags & BGFX_CLEAR_DEPTH) != 0 ? (BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_WRITE_Z) : 0;
+		mClearDraw.m_stencil = (clear.m_flags & BGFX_CLEAR_STENCIL) != 0 ? (BGFX_STENCIL_TEST_ALWAYS | BGFX_STENCIL_FUNC_REF(clear.m_stencil) | BGFX_STENCIL_FUNC_RMASK(0xff) | BGFX_STENCIL_OP_FAIL_S_REPLACE | BGFX_STENCIL_OP_FAIL_Z_REPLACE | BGFX_STENCIL_OP_PASS_Z_REPLACE) : 0;
+
+		mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS] = clearQuad.m_layout;
+		Stream& stream = mClearDraw.m_stream[0];
+		stream.m_startVertex = 0;
+		stream.m_handle = clearQuad.m_vb;
+		stream.m_layoutHandle = { BGFX_CONFIG_MAX_VERTEX_LAYOUTS };
+		mClearDraw.setStreamBit(0, clearQuad.m_vb);
+
+		if (mClearQuadColor.idx == kInvalidHandle)
+		{
+			const UniformRegInfo* const infoClearColor = mUniformReg.find("bgfx_clear_color");
+			if (infoClearColor != nullptr)
+				mClearQuadColor = infoClearColor->m_handle;
+		}
+
+		if (mClearQuadDepth.idx == kInvalidHandle)
+		{
+			const UniformRegInfo* const infoClearDepth = mUniformReg.find("bgfx_clear_depth");
+			if (infoClearDepth != nullptr)
+				mClearQuadDepth = infoClearDepth->m_handle;
+		}
+
+		float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 		if ((clear.m_flags & BGFX_CLEAR_COLOR_USE_PALETTE) != 0)
 		{
-			uint8_t const index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clear.m_index[0]);
-			const float* const rgba = mFrameState.mFrame->m_colorPalette[index];
-			float const rr = rgba[0];
-			float const gg = rgba[1];
-			float const bb = rgba[2];
-			float const aa = rgba[3];
-			tk0 = sce::Agc::Toolkit::clearRenderTargetCs(&ctx.m_dcb, &displayRes.mRenderTarget, sce::Agc::Core::Encoder::encode({ rr, gg , bb, aa }));
-			haveWork = true;
+			for (uint32_t i = 0; i < numRt; ++i)
+			{
+				uint8_t const index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clear.m_index[i]);
+				const float* const rgba = mFrameState.mFrame->m_colorPalette[index];
+				bx::memCopy(mrtClearColor[i], rgba, 16);
+			}
 		}
 		else
 		{
-			float const rr = clear.m_index[0]*1.0f/255.0f;
-			float const gg = clear.m_index[1]*1.0f/255.0f;
-			float const bb = clear.m_index[2]*1.0f/255.0f;
-			float const aa = clear.m_index[3]*1.0f/255.0f;
-			tk0 = sce::Agc::Toolkit::clearRenderTargetCs(&ctx.m_dcb, &displayRes.mRenderTarget, sce::Agc::Core::Encoder::encode({ rr, gg , bb, aa }));
-			haveWork = true;
+			float const rgba[4]{
+				clear.m_index[0] * (1.0f / 255.0f),
+				clear.m_index[1] * (1.0f / 255.0f),
+				clear.m_index[2] * (1.0f / 255.0f),
+				clear.m_index[3] * (1.0f / 255.0f),
+			};
+			for (uint32_t i = 0; i < numRt; ++i)
+			{
+				bx::memCopy(mrtClearColor[i], rgba, 16);
+			}
 		}
-	}
+		updateUniform(mClearQuadColor.idx, mrtClearColor[0], numRt * sizeof(float) * 4);
 
-	if ((clear.m_flags & BGFX_CLEAR_DEPTH) != 0)
-	{
-		mDepthRenderTarget.setDepthClearValue(clear.m_depth);
-		tk1 = sce::Agc::Toolkit::clearDepthRenderTargetCs(&ctx.m_dcb, &mDepthRenderTarget);
-		haveWork = true;
-	}
+		float mrtClearDepth[4] = { g_caps.homogeneousDepth ? (clear.m_depth * 2.0f - 1.0f) : clear.m_depth };
+		updateUniform(mClearQuadDepth.idx, mrtClearDepth, sizeof(float) * 4);
 
-	if (haveWork)
-	{
-		ctx.resetToolkitChangesAndSyncToGl2(tk0 | tk1);
+		if (bindProgram(clearQuad.m_program[numRt], mClearDraw, mClearBind, true) &&
+			bindVertexAttributes(mClearDraw))
+		{
+			bindFixedState(mClearDraw);
+			submitDrawCall(mClearDraw);
+		}
+
+		// Restore view scissor.
+		mFrameState.mViewScissor = prevViewScissor;
 	}
 }
 
@@ -2047,36 +2794,16 @@ void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 void RendererContextAGC::viewChanged(const ClearQuad& clearQuad)
 {
 	mFrameState.mView = mFrameState.mKey.m_view;
+	const View& view = mFrameState.mFrame->m_view[mFrameState.mView];
 
-	mFrameState.mProgramHandle = { kInvalidHandle };
+	mFrameState.mViewState.m_rect = view.m_rect;
+	const Rect& scissorRect = view.m_scissor;
+	bool const viewHasScissor = !scissorRect.isZero();
+	mFrameState.mViewScissor = viewHasScissor ? scissorRect : mFrameState.mViewState.m_rect;
 
-	// Handle framebuffer change.
-	/*if (render->m_view[view].m_fbh.idx != fbh.idx)
-	{
-		fbh = _render->m_view[view].m_fbh;
-		resolutionHeight = _render->m_resolution.height;
-		resolutionHeight = setFrameBuffer(fbh, resolutionHeight, discardFlags);
-	}*/
+	bindFrameBuffer(view.m_fbh);
 
 	clearRect(clearQuad);
-
-	mFrameState.mViewState.m_rect = mFrameState.mFrame->m_view[mFrameState.mView].m_rect;
-	const Rect& scissorRect = mFrameState.mFrame->m_view[mFrameState.mView].m_scissor;
-	bool const viewHasScissor = !scissorRect.isZero();
-	mFrameState.mScissorRect = viewHasScissor ? scissorRect : mFrameState.mViewState.m_rect;
-
-	// Viewport.
-	const Rect& viewport = mFrameState.mViewState.m_rect;
-	sce::Agc::CxViewport cxViewport;
-	sce::Agc::Core::setViewport(&cxViewport, viewport.m_width, viewport.m_height, viewport.m_x, viewport.m_y, -1.0f, 1.0f);
-
-	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
-	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
-	sce::Agc::CxRenderTargetMask const rtMask = sce::Agc::CxRenderTargetMask().init().setMask(0, 0xf);
-	ctx.m_sb.setState(rtMask)
-		.setState(displayRes.mRenderTarget)
-		.setState(mDepthRenderTarget)
-		.setState(cxViewport);
 
 	//submitBlit(bs, view);
 }
@@ -2099,10 +2826,8 @@ bool RendererContextAGC::submitCompute()
 
 //=============================================================================================
 
-bool RendererContextAGC::submitDrawCall()
+bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 {
-	// TODO: (manderson) cache index buffer state.
-	const RenderDraw& draw = mFrameState.mRenderItem->draw;
 	uint64_t const primType = (draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT;
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
@@ -2138,7 +2863,7 @@ bool RendererContextAGC::submitDrawCall()
 		{
 			ctx.drawIndexAuto(mFrameState.mNumBufferVertices);
 		}
-		else if (draw.m_numVertices > sPrimTypeInfo[primType].m_min)
+		else if (draw.m_numVertices >= sPrimTypeInfo[primType].m_min)
 		{
 			ctx.drawIndexAuto(draw.m_numVertices);
 		}
@@ -2160,25 +2885,23 @@ bool RendererContextAGC::submitDraw()
 		// ... do transition stuff ...
 	}*/
 
+	const ProgramHandle& programHandle = mFrameState.mKey.m_program;
 	const RenderDraw& draw = mFrameState.mRenderItem->draw;
+	const RenderBind& bind = *mFrameState.mRenderBind;
+
 	if (draw.m_uniformBegin < draw.m_uniformEnd)
 	{
 		rendererUpdateUniforms(this, mFrameState.mFrame->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 		mUniformClock++;
 	}
 
-	if (isValid(mFrameState.mKey.m_program) && draw.m_streamMask != UINT8_MAX)
+	if (isValid(programHandle) &&
+		draw.m_streamMask != UINT8_MAX && draw.m_streamMask != 0 &&
+		bindProgram(programHandle, draw, bind, false) &&
+		bindVertexAttributes(draw))
 	{
-		if (!bindProgram())
-			return false;
-		
-		if (!bindVertexAttributes())
-			return false;
-
-		bindFixedState();
-
-		submitDrawCall();
-
+		bindFixedState(draw);
+		submitDrawCall(draw);
 		return true;
 	}
 
@@ -2192,7 +2915,7 @@ void RendererContextAGC::endFrame()
 	// Finally submit the workload to the GPU
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
-	ctx.m_dcb.setFlip(mVideoHandle, mPhase, SCE_VIDEO_OUT_FLIP_MODE_VSYNC, 0);
+	ctx.m_dcb.setFlip(mVideoHandle, mPhase, mVsync ? SCE_VIDEO_OUT_FLIP_MODE_VSYNC : SCE_VIDEO_OUT_FLIP_MODE_ASAP, 0);
 	sce::Agc::Core::gpuSyncEvent(
 		&ctx.m_dcb,
 		sce::Agc::Core::SyncWaitMode::kAsynchronous,
@@ -2235,6 +2958,11 @@ void RendererContextAGC::submit(Frame* frame, ClearQuad& clearQuad, TextVideoMem
 			submitDraw();
 		}
 
+		if (frame->m_debug & BGFX_DEBUG_TEXT)
+		{
+			blit(this, textVideoMemBlitter, frame->m_textVideoMem);
+		}
+
 		endFrame();
 	}
 
@@ -2269,12 +2997,55 @@ void RendererContextAGC::tickDestroyList(bool const force)
 
 void RendererContextAGC::blitSetup(TextVideoMemBlitter& blitter)
 {
+	// Blit to back buffer.
+	mFrameState.mView = UINT16_MAX;
+	mFrameState.mViewState.m_rect = { 0, 0, (uint16_t)mWidth, (uint16_t)mHeight };
+	mFrameState.mViewScissor = mFrameState.mViewState.m_rect;
+	bindFrameBuffer({ kInvalidHandle });
+
+	// Override model view projection.
+	bx::mtxOrtho(mFrameState.mOverrideMVP, 0.0f, (float)mWidth, (float)mHeight, 0.0f, 0.0f, 1000.0f, 0.0f, g_caps.homogeneousDepth);
+
+	// Set texture stage.
+	mBlitBind.m_bind[0].m_idx = blitter.m_texture.idx;
+
+	// Bind program and set fixed function state.
+	if (bindProgram(blitter.m_program, mBlitDraw, mBlitBind, true))
+	{
+		bindFixedState(mBlitDraw);
+		mFrameState.mBlitting = true;
+	}
 }
 
 //=============================================================================================
 
 void RendererContextAGC::blitRender(TextVideoMemBlitter& blitter, uint32_t numIndices)
 {
+	if (mFrameState.mBlitting)
+	{
+		uint32_t const numVertices = numIndices*4/6;
+		if (numVertices > 0)
+		{
+			// Update buffers.
+			mIndexBuffers[blitter.m_ib->handle.idx].update(0, numIndices * 2, blitter.m_ib->data);
+			mVertexBuffers[blitter.m_vb->handle.idx].update(0, numVertices * blitter.m_layout.m_stride, blitter.m_vb->data);
+
+			// Set draw streams (use temp vertex layout handle).
+			mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS] = blitter.m_layout;
+			Stream& stream = mBlitDraw.m_stream[0];
+			stream.m_startVertex = 0;
+			stream.m_handle = blitter.m_vb->handle;
+			stream.m_layoutHandle = { BGFX_CONFIG_MAX_VERTEX_LAYOUTS };
+			mBlitDraw.setStreamBit(0, blitter.m_vb->handle);
+			mBlitDraw.m_indexBuffer = blitter.m_ib->handle;
+			mBlitDraw.m_numIndices = numIndices;
+
+			if (bindVertexAttributes(mBlitDraw))
+			{
+				submitDrawCall(mBlitDraw);
+			}
+		}
+	}
 }
 
 //=============================================================================================

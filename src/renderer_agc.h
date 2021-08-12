@@ -40,7 +40,9 @@ public:
 	enum : size_t
 	{
 		NumDisplayBuffers = 2,
-		DisplayCommandBufferSize = 1024 * 1024,
+	
+		// TODO: (manderson) make this grow as needed...
+		DisplayCommandBufferSize = 4 * 1024 * 1024,
 	};
 
 	RendererContextAGC();
@@ -155,7 +157,36 @@ private:
 
 		VertexLayoutHandle mLayoutHandle{kInvalidHandle};
 	};
+
+	struct Texture
+	{
+		static void setSampler(sce::Agc::Core::Sampler& sampler, uint64_t const flags);
+		bool create(uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip);
+		void destroy();
+
+		uint8_t* mBuffer{};
+		uint8_t* mStencilBuffer{};
+		sce::Agc::Core::TextureSpec mSpec{};
+		sce::Agc::Core::Texture mTexture{};
+		sce::Agc::Core::Sampler mSampler{};
+		uint64_t mFlags;
+		bimg::TextureFormat::Enum mFormat;
+	};
 	
+	struct FrameBuffer
+	{
+		bool create(uint8_t const num, const Attachment* const attachment);
+		void destroy();
+
+		TextureHandle mColorHandles[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS]{};
+		sce::Agc::CxRenderTarget mColorTargets[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS]{};
+		TextureHandle mDepthHandle{ kInvalidHandle };
+		sce::Agc::CxDepthRenderTarget mDepthTarget{};
+		uint32_t mWidth{};
+		uint32_t mHeight{};
+		uint32_t mNumAttachments{};
+	};
+
 	struct VertexAttribBindInfo
 	{
 		Attrib::Enum mAttrib{};
@@ -200,11 +231,14 @@ private:
 		RenderDraw mDrawState{};
 		RenderBind mBindState{};
 		ViewState mViewState{};
+		Rect mViewportState{};
+		Rect mScissorState{};
 		//BlitState mBlitState{};
-		Rect mScissorRect{};
+		Rect mViewScissor{};
 		ProgramHandle mProgramHandle{};
 		FrameBufferHandle mFrameBufferHandle{};
 		uint64_t mEncodedKey{};
+		float mOverrideMVP[16];
 		uint32_t mNumItems{};
 		uint32_t mItem{};
 		uint32_t mItemIdx{};
@@ -212,12 +246,15 @@ private:
 		uint32_t mNumBufferVertices{};
 		uint32_t mVertexAttribHash{};
 		uint16_t mView{};
+		uint16_t mFixedStateView{};
+		uint8_t mNumFrameBufferAttachments{};
 		bool mIsCompute{};
 		bool mWasCompute{};
 		bool mViewChanged{};
 		bool mProgramChanged{};
 		bool mUniformBufferDirty{};
 		bool mWireframeFill{};
+		bool mBlitting{};
 	};
 
 	bool verifyInit(const Init& init);
@@ -227,29 +264,32 @@ private:
 	void beginFrame(Frame* const frame);
 	void waitForGPU();
 	bool getVertexBinding(VertexBinding& binding, const VertexBindInfo& bindInfo);
+	void bindFrameBuffer(FrameBufferHandle const frameBufferHandle);
 	bool bindUniformBuffer(bool const isFragment);
-	bool bindShaderUniforms(ShaderHandle const shaderHandle, const RenderDraw& draw, bool const isFragment);
-	bool bindProgram(const ProgramHandle& programHandle, const RenderDraw& draw);
-	bool bindProgram();
-	bool bindVertexAttributes(const VertexBindInfo& bindInfo);
-	bool bindVertexAttributes(const ProgramHandle& programHandle, VertexBufferHandle const bufferHandle, VertexLayoutHandle const layoutHandle = { kInvalidHandle }, uint32_t const baseVertex = 0 );
-	bool bindVertexAttributes();
+	void overridePredefined(ShaderHandle const shaderHandle);
+	bool bindShaderUniforms(ShaderHandle const shaderHandle, const RenderDraw& draw, bool const isFragment, bool overridePredefined);
+	void bindSamplers(const RenderBind& bind, bool const vertexStage, bool const fragmentStage, bool const computeStage);
+	bool bindProgram(ProgramHandle const programHandle, const RenderDraw& draw, const RenderBind& bind, bool const overridePredefined);
+	bool bindVertexAttributes(const RenderDraw& draw);
 	void bindFixedState(const RenderDraw& draw);
-	void bindFixedState();
+	bool submitDrawCall(const RenderDraw& draw);
 	bool nextItem();
 	void clearRect(const ClearQuad& clearQuad);
 	void viewChanged(const ClearQuad& clearQuad);
 	bool submitCompute();
-	bool submitDrawCall();
 	bool submitDraw();
 	void endFrame();
 	void tickDestroyList(bool const force = false);
 
-	IndexBuffer mIndexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS]{};
-	VertexBuffer mVertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS]{};
-	Shader mShaders[BGFX_CONFIG_MAX_SHADERS]{};
-	Program mPrograms[BGFX_CONFIG_MAX_PROGRAMS]{};
-	VertexLayout mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS]{};
+ 	// NOTE: (manderson) We add + 1 to each resource type limit to have
+	// an explicit unused handle we can use if needed.
+	IndexBuffer mIndexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS + 1]{};
+	VertexBuffer mVertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS + 1]{};
+	Shader mShaders[BGFX_CONFIG_MAX_SHADERS + 1]{};
+	Program mPrograms[BGFX_CONFIG_MAX_PROGRAMS + 1]{};
+	VertexLayout mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS + 1]{};
+	Texture mTextures[BGFX_CONFIG_MAX_TEXTURES + 1]{};
+	FrameBuffer mFrameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS + 1]{};
 	std::vector<std::function<bool()>> mDestroyList;
 
 	void* mUniforms[BGFX_CONFIG_MAX_UNIFORMS]{};
@@ -258,9 +298,18 @@ private:
 	DisplayResources mDisplayResources[NumDisplayBuffers]{};
 	FrameState mFrameState{};
 	sce::Agc::CxDepthRenderTarget mDepthRenderTarget{};
+	RenderDraw mBlitDraw{};
+	RenderBind mBlitBind{};
+	RenderDraw mClearDraw{};
+	RenderBind mClearBind{};
+	UniformHandle mClearQuadColor{kInvalidHandle};
+	UniformHandle mClearQuadDepth{kInvalidHandle};
 	uint64_t mUniformClock{};
 	int mVideoHandle{};
+	uint32_t mWidth{};
+	uint32_t mHeight{};
 	uint8_t mPhase{};
+	bool mVsync{};
 };
 
 //=============================================================================================
