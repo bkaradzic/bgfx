@@ -3367,7 +3367,7 @@ namespace bgfx { namespace d3d11
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-#define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
+#define CASE_IMPLEMENT_UNIFORM(_uniform) \
 		case UniformType::_uniform: \
 		case UniformType::_uniform|kUniformFragmentBit: \
 				{ \
@@ -3401,9 +3401,9 @@ namespace bgfx { namespace d3d11
 					}
 					break;
 
-				CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4,    F, float);
-				CASE_IMPLEMENT_UNIFORM(Mat4,    F, float);
+				CASE_IMPLEMENT_UNIFORM(Sampler);
+				CASE_IMPLEMENT_UNIFORM(Vec4);
+				CASE_IMPLEMENT_UNIFORM(Mat4);
 
 				case UniformType::End:
 					break;
