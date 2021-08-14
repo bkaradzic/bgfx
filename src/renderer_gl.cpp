@@ -4181,22 +4181,6 @@ namespace bgfx { namespace gl
 
 				uint32_t loc = _uniformBuffer.read();
 
-#define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _type) \
-		case UniformType::_uniform: \
-				{ \
-					_type* value = (_type*)data; \
-					setUniform##_glsuffix(loc, num, value); \
-				} \
-				break;
-
-#define CASE_IMPLEMENT_UNIFORM_T(_uniform, _glsuffix, _type) \
-		case UniformType::_uniform: \
-				{ \
-					_type* value = (_type*)data; \
-					setUniform##_glsuffix(loc, num, GL_FALSE, value); \
-				} \
-				break;
-
 				switch (type)
 				{
 #if BX_PLATFORM_EMSCRIPTEN
@@ -4204,19 +4188,42 @@ namespace bgfx { namespace gl
 				// since they need to marshal an array over from Wasm to JS, so optimize the case when there is exactly one
 				// uniform to upload.
 				case UniformType::Sampler:
-					if (num > 1) setUniform1iv(loc, num, (int*)data);
-					else setUniform1i(loc, *(int*)data);
+					if (num > 1)
+					{
+						setUniform1iv(loc, num, (int32_t*)data);
+					}
+					else
+					{
+						setUniform1i(loc, *(int32_t*)data);
+					}
 					break;
 				case UniformType::Vec4:
-					if (num > 1) setUniform4fv(loc, num, (float*)data);
-					else setUniform4f(loc, ( (float*)data)[0], ( (float*)data)[1], ( (float*)data)[2], ( (float*)data)[3]);
+					if (num > 1)
+					{
+						setUniform4fv(loc, num, (float*)data);
+					}
+					else
+					{
+						float* vec4 = (float*)data;
+						setUniform4f(loc, vec4[0], vec4[1], vec4[2], vec4[3]);
+					}
 					break;
 #else
-				CASE_IMPLEMENT_UNIFORM(Sampler, 1iv, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4,    4fv, float);
+				case UniformType::Sampler:
+					setUniform1iv(loc, num, (int32_t*)data);
+					break;
+
+				case UniformType::Vec4:
+					setUniform4fv(loc, num, (float*)data);
+					break;
 #endif
-				CASE_IMPLEMENT_UNIFORM_T(Mat3, Matrix3fv, float);
-				CASE_IMPLEMENT_UNIFORM_T(Mat4, Matrix4fv, float);
+				case UniformType::Mat3:
+					setUniformMatrix3fv(loc, num, GL_FALSE, (float*)data);
+					break;
+
+				case UniformType::Mat4:
+					setUniformMatrix4fv(loc, num, GL_FALSE, (float*)data);
+					break;
 
 				case UniformType::End:
 					break;
@@ -4225,10 +4232,6 @@ namespace bgfx { namespace gl
 					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _uniformBuffer.getPos(), opcode, type, loc, num, copy);
 					break;
 				}
-
-#undef CASE_IMPLEMENT_UNIFORM
-#undef CASE_IMPLEMENT_UNIFORM_T
-
 			}
 		}
 
