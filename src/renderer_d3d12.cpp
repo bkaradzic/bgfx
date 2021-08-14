@@ -3198,24 +3198,28 @@ namespace bgfx { namespace d3d12
 						 }
 					}
 					break;
+
 				case UniformType::Sampler:
 				case UniformType::Sampler | kUniformFragmentBit:
 					{
 						setShaderUniform(uint8_t(type), loc, data, num);
 					}
 					break;
+
 				case UniformType::Vec4:
 				case UniformType::Vec4 | kUniformFragmentBit:
 					{
 						setShaderUniform(uint8_t(type), loc, data, num);
 					}
 					break;
+
 				case UniformType::Mat4:
 				case UniformType::Mat4 | kUniformFragmentBit:
 					{
 						setShaderUniform(uint8_t(type), loc, data, num);
 					}
 					break;
+
 				case UniformType::End:
 					break;
 
