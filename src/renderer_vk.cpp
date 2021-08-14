@@ -4057,14 +4057,6 @@ VK_IMPORT_DEVICE
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-#define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type)                   \
-				case UniformType::_uniform:                                  \
-				case UniformType::_uniform|kUniformFragmentBit:              \
-						{                                                    \
-							setShaderUniform(uint8_t(type), loc, data, num); \
-						}                                                    \
-						break;
-
 				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
@@ -4095,9 +4087,18 @@ VK_IMPORT_DEVICE
 				case UniformType::Sampler|kUniformFragmentBit:
 					// do nothing, but VkDescriptorSetImageInfo would be set before drawing
 					break;
-//				CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4,    F, float);
-				CASE_IMPLEMENT_UNIFORM(Mat4,    F, float);
+				case UniformType::Vec4:
+				case UniformType::Vec4 | kUniformFragmentBit:
+				{
+					setShaderUniform(uint8_t(type), loc, data, num);
+				}
+				break;
+				case UniformType::Mat4:
+				case UniformType::Mat4 | kUniformFragmentBit:
+				{
+					setShaderUniform(uint8_t(type), loc, data, num);
+				}
+				break;
 
 				case UniformType::End:
 					break;
@@ -4106,7 +4107,6 @@ VK_IMPORT_DEVICE
 					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _uniformBuffer.getPos(), opcode, type, loc, num, copy);
 					break;
 				}
-#undef CASE_IMPLEMENT_UNIFORM
 			}
 		}
 
