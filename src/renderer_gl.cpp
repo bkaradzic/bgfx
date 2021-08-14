@@ -4181,7 +4181,7 @@ namespace bgfx { namespace gl
 
 				uint32_t loc = _uniformBuffer.read();
 
-#define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _dxsuffix, _type) \
+#define CASE_IMPLEMENT_UNIFORM(_uniform, _glsuffix, _type) \
 		case UniformType::_uniform: \
 				{ \
 					_type* value = (_type*)data; \
@@ -4189,7 +4189,7 @@ namespace bgfx { namespace gl
 				} \
 				break;
 
-#define CASE_IMPLEMENT_UNIFORM_T(_uniform, _glsuffix, _dxsuffix, _type) \
+#define CASE_IMPLEMENT_UNIFORM_T(_uniform, _glsuffix, _type) \
 		case UniformType::_uniform: \
 				{ \
 					_type* value = (_type*)data; \
@@ -4212,11 +4212,11 @@ namespace bgfx { namespace gl
 					else setUniform4f(loc, ( (float*)data)[0], ( (float*)data)[1], ( (float*)data)[2], ( (float*)data)[3]);
 					break;
 #else
-				CASE_IMPLEMENT_UNIFORM(Sampler, 1iv, I, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4,    4fv, F, float);
+				CASE_IMPLEMENT_UNIFORM(Sampler, 1iv, int);
+				CASE_IMPLEMENT_UNIFORM(Vec4,    4fv, float);
 #endif
-				CASE_IMPLEMENT_UNIFORM_T(Mat3, Matrix3fv, F, float);
-				CASE_IMPLEMENT_UNIFORM_T(Mat4, Matrix4fv, F, float);
+				CASE_IMPLEMENT_UNIFORM_T(Mat3, Matrix3fv, float);
+				CASE_IMPLEMENT_UNIFORM_T(Mat4, Matrix4fv, float);
 
 				case UniformType::End:
 					break;
