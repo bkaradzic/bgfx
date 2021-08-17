@@ -1,8 +1,9 @@
 ## How to contribute?
 
 Everyone is welcome to contribute to bgfx by submitting bug reports, testing on
-different platforms, writing examples, improving documentation, profiling and
-optimizing, helping newcomers, telling others about bgfx, etc.
+different platforms, writing examples (see [Help Needed](https://github.com/bkaradzic/bgfx/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+needed%22)
+for ideas), improving documentation, profiling and optimizing, helping
+newcomers, telling others about bgfx, etc.
 
 If you have just quick oneliner question it's prefereable to ask it at chat
 https://discord.gg/9eMbv7J instead opening new issue.
