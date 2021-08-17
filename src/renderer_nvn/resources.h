@@ -26,11 +26,21 @@ namespace bgfx { namespace nvn
 
 		struct Op
 		{
-			uint32_t m_offset;
-			uint32_t m_memSize;
+			enum TargetType
+			{
+				Texture = 0,
+				Buffer
+			};
+
+			TargetType m_type;
+			uint32_t m_offset = 0;
+			uint32_t m_memSize = 0;
+
 			NVNtextureView m_dstView;
 			NVNcopyRegion m_dstRegion;
-			NVNtexture* m_dstData;
+			NVNtexture* m_dstTexture = nullptr;
+
+			NVNbufferAddress m_dstBuffer = 0;
 		};
 
 		void createBuffer(size_t _size, CopyOperation::Data* _data);
@@ -87,23 +97,23 @@ namespace bgfx { namespace nvn
 			TextureCube,
 		};
 
+		static uint16_t getCaps(TextureFormat::Enum _fmt);
+
 		TextureNVN()
 			: m_numMips(0)
 			, m_created(false)
 		{
 		}
 
-		void create(NVNdevice* _device, const Memory* _mem, uint32_t _flags, uint8_t _skip, CopyOperation& _copyOp);
+		void create(NVNdevice* _device, const Memory* _mem, uint64_t _flags, uint8_t _skip, CopyOperation& _copyOp);
 		void create(NVNdevice* _device, NVNtextureBuilder& _builder);
 		void destroy();
 		void update(NVNcommandBuffer* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 
 		bool m_created;
 
-		int m_handle = -1;
-
 		NVNtexture m_ptr;
-		uint32_t m_flags;
+		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
@@ -128,8 +138,8 @@ namespace bgfx { namespace nvn
 
 	struct BackBuffer
 	{
-		TextureNVN* m_Color = nullptr;
-		TextureNVN* m_Depth = nullptr;
+		TextureNVN* m_color = nullptr;
+		TextureNVN* m_depth = nullptr;
 	};
 
 	struct SwapChainNVN
@@ -143,28 +153,37 @@ namespace bgfx { namespace nvn
 		BackBuffer acquireNext();
 		BackBuffer get();
 
-		std::array<TextureNVN, TextureCount> m_ColorTextures;
-		std::array<TextureNVN, TextureCount> m_DepthTextures;
+		std::array<TextureNVN, TextureCount> m_colorTextures;
+		std::array<TextureNVN, TextureCount> m_depthTextures;
 
-		NVNwindow m_Window;
-		bool m_Created = false;
-		NVNsync m_WindowSync;
-		int m_Current = 0;
+		NVNwindow m_window;
+		bool m_created = false;
+		NVNsync m_windowSync;
+		int m_current = 0;
+	};
+
+	struct PipelineVboState
+	{
+		static constexpr uint8_t MaxAttributes = 16; // NVN_DEVICE_INFO_VERTEX_ATTRIBUTES
+		static constexpr uint8_t MaxStreams = 16; // NVN_DEVICE_INFO_VERTEX_BUFFER_BINDINGS
+
+		int m_numAttributes = 0;
+		int m_numStreams = 0;
+
+		NVNvertexAttribState m_attribStates[MaxAttributes];
+		NVNvertexStreamState m_streamStates[MaxStreams];
 	};
 
 	struct CommandListNVN
 	{
 	public:
-		std::array<NVNtexture*, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS> m_CurrentColor = {};
-		NVNtexture* m_CurrentDepth = nullptr;
-		NVNdrawPrimitive m_PrimitiveTopology = NVNdrawPrimitive::NVN_DRAW_PRIMITIVE_TRIANGLES;
-		//ProgramNVN* m_CurrentProgram = nullptr;
+		std::array<NVNtexture*, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS> m_currentColor = {};
+		NVNtexture* m_currentDepth = nullptr;
 
-		//const IndexBufferNVN* m_CurrentIndexBuffer = nullptr;
-		NVNbufferAddress m_CurrentIndexBufferAddress = 0;
-		NVNindexType m_CurrentIndexBufferIndexType = NVNindexType::NVN_INDEX_TYPE_UNSIGNED_SHORT;
+		NVNbufferAddress m_currentIndexBufferAddress = 0;
+		NVNindexType m_currentIndexBufferIndexType = NVNindexType::NVN_INDEX_TYPE_UNSIGNED_SHORT;
 
-		//std::array<PipelineVboBindPoint, PipelineVboBindPoint::MaxBindPoints> m_VboBindings;
+		PipelineVboState m_currentVboState;
 		//std::array<UniformScratchMemory, BGFX_NVN_MAXUNIFORMBUFFER> m_UniformScratch;
 
 		void init(NVNdevice* _device);
@@ -244,7 +263,6 @@ namespace bgfx { namespace nvn
 		uint32_t m_size = 0;
 		uint8_t* m_data; // cpu side interim data
 		BufferNVN* m_buffer; // actual gpu buffer
-		NVNbufferAddress m_gpuAddress;
 		std::vector<UniformReference> m_uniforms;
 	};
 
@@ -296,6 +314,7 @@ namespace bgfx { namespace nvn
 				m_hash = 0;
 			}
 
+			nvnBufferFinalize(&m_codeBuffer);
 			m_codeMemoryPool.Shutdown();
 		}
 
@@ -364,7 +383,26 @@ namespace bgfx { namespace nvn
 
 		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags);
 
-		VertexLayoutHandle m_layoutHandle;
+		VertexLayoutHandle m_layoutHandle = BGFX_INVALID_HANDLE;
+	};
+
+	struct FrameBufferNVN
+	{
+		void create(uint8_t _num, const Attachment* _attachment);
+
+		uint32_t m_width;
+		uint32_t m_height;
+
+		uint8_t m_numAttachments;
+		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+
+		uint8_t m_numTargets;
+
+		TextureHandle m_colorTargets[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		TextureHandle m_depthTarget;
+
+		NVNtextureView m_colorViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		NVNtextureView m_depthView;
 	};
 } }
 

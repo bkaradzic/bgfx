@@ -992,7 +992,7 @@ namespace
 			float tanHalfFOVY = 1.0f / m_proj2[1*4+1];    // = tanf( drawContext.Camera.GetYFOV( ) * 0.5f );
 			float tanHalfFOVX = 1.0F / m_proj2[0];    // = tanHalfFOVY * drawContext.Camera.GetAspect( );
 
-			if (bgfx::getRendererType() == bgfx::RendererType::OpenGL)
+			if (bgfx::getCaps()->originBottomLeft)
 			{
 				vec2Set(m_uniforms.m_ndcToViewMul, tanHalfFOVX * 2.0f, tanHalfFOVY * 2.0f);
 				vec2Set(m_uniforms.m_ndcToViewAdd, tanHalfFOVX * -1.0f, tanHalfFOVY * -1.0f);

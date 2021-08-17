@@ -26,6 +26,7 @@
 #include <nn/oe.h>
 
 #include <nn/vi.h>
+#include <nn/hid.h>
 
 #include <nv/nv_MemoryManagement.h>
 
@@ -33,6 +34,8 @@ namespace entry
 {
 	struct MainThreadEntry
 	{
+		bool m_running = false;
+
 		int m_argc;
 		const char* const* m_argv;
 
@@ -134,6 +137,43 @@ namespace entry
 			BX_ASSERT(result.IsSuccess(), "Couldn't mount rom.");
 		}
 
+		void _initInput()
+		{
+			nn::hid::InitializeTouchScreen();
+		}
+
+		void _updateInput()
+		{
+			m_prevTouchState = m_touchState;
+			nn::hid::GetTouchScreenState(&m_touchState);
+
+			bool hasInput = m_touchState.count > 0;
+			bool hadInput = m_prevTouchState.count > 0;
+
+			if (hasInput)
+			{
+				int32_t x = m_touchState.touches[0].x;
+				int32_t y = m_touchState.touches[0].y;
+				int32_t mw = 0;
+
+				if (!hadInput)
+				{
+					m_eventQueue.postMouseEvent({ UINT16_MAX }, x, y, mw);
+				}
+
+				m_eventQueue.postMouseEvent({ UINT16_MAX }, x, y, mw, MouseButton::Enum::Left, true);
+			}
+			else if (hadInput)
+			{
+				int32_t x = m_prevTouchState.touches[0].x;
+				int32_t y = m_prevTouchState.touches[0].y;
+				int32_t mw = 0;
+
+				m_eventQueue.postMouseEvent({ UINT16_MAX }, x, y, mw, MouseButton::Enum::Left, false);
+				m_eventQueue.postMouseEvent({ UINT16_MAX }, x, y, mw);
+			}
+		}
+
 		void _shutdownFileSystem()
 		{
 			nn::fs::Unmount("rom");
@@ -143,7 +183,6 @@ namespace entry
 		void run(int _argc, char* _argv[])
 		{
 			nn::os::SetThreadName((nn::os::ThreadType*)nn::os::GetCurrentThread(), "MAIN");
-			nn::os::ChangeThreadPriority((nn::os::ThreadType*)nn::os::GetCurrentThread(), nn::os::DefaultThreadPriority - 2);
 
 			int width, height;
 			nn::oe::GetDefaultDisplayResolution(&width, &height); // configure entry::s_width/entry::s_height to use this
@@ -151,6 +190,7 @@ namespace entry
 			_initWindow();
 			_initMemory();
 			_initFileSystem();
+			_initInput();
 
 			MainThreadEntry mte;
 			mte.m_argc = _argc;
@@ -162,12 +202,18 @@ namespace entry
 			thread.init(mte.threadFunc, &mte);
 			m_init = true;
 
+			// wait for thread to start and change its affinity
+			while (!mte.m_running)
+			{
+				nn::os::YieldThread();
+			}
+
 			while (!m_exit)
 			{
+				_updateInput();
 				bgfx::renderFrame();
 
 				// poll messages for exit?
-				nn::os::YieldThread();
 			}
 
 			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame()) {};
@@ -192,24 +238,27 @@ namespace entry
 		NvAllocator mNvAllocator;
 		char* mGraphicsMemory = nullptr;
 		char* mMountRomCacheBuffer = nullptr;
+
+		EventQueue m_eventQueue;
+		nn::hid::TouchScreenState<1> m_touchState;
+		nn::hid::TouchScreenState<1> m_prevTouchState;
 	};
 
 	static Context s_ctx;
 
 	const Event* poll()
 	{
-		return NULL;
+		return s_ctx.m_eventQueue.poll();
 	}
 
 	const Event* poll(WindowHandle _handle)
 	{
-		BX_UNUSED(_handle);
-		return NULL;
+		return s_ctx.m_eventQueue.poll(_handle);
 	}
 
 	void release(const Event* _event)
 	{
-		BX_UNUSED(_event);
+		s_ctx.m_eventQueue.release(_event);
 	}
 
 	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
@@ -256,9 +305,13 @@ namespace entry
 
 	int32_t MainThreadEntry::threadFunc(bx::Thread* /*_thread*/, void* _userData)
 	{
+		// change this thread to run on the second core
+		int idealCore = 1;
 		nn::os::SetThreadName((nn::os::ThreadType*)nn::os::GetCurrentThread(), "EXAMPLE");
+		nn::os::SetThreadCoreMask((nn::os::ThreadType*)nn::os::GetCurrentThread(), idealCore, (1 << idealCore));
 
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
+		self->m_running = true; // let the main thread continue
 		int32_t result = main(self->m_argc, self->m_argv);
 		//PostMessage(s_ctx.m_hwnd[0], WM_QUIT, 0, 0);
 		return result;

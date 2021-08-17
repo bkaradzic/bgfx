@@ -415,7 +415,7 @@ mat3 cofactor(mat4 _m)
 
 float toClipSpaceDepth(float _depthTextureZ)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 	return _depthTextureZ * 2.0 - 1.0;
 #else
 	return _depthTextureZ;

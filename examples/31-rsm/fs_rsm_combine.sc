@@ -83,7 +83,7 @@ void main()
 	float deviceDepth = texture2D(s_depth, texCoord).x;
 	float depth       = toClipSpaceDepth(deviceDepth);
 	vec3 clip = vec3(texCoord * 2.0 - 1.0, depth);
-#if !BGFX_SHADER_LANGUAGE_GLSL
+#if !BGFX_SHADER_LANGUAGE_GLSL && !BGFX_SHADER_LANGUAGE_NVN
 	clip.y = -clip.y;
 #endif // !BGFX_SHADER_LANGUAGE_GLSL
 	vec3 wpos = clipToWorld(u_invMvp, clip);
@@ -92,7 +92,7 @@ void main()
 	vec3 posOffset = wpos + n.xyz * shadowMapOffset;
 	vec4 shadowCoord = mul(u_lightMtx, vec4(posOffset, 1.0) );
 
-#if !BGFX_SHADER_LANGUAGE_GLSL
+#if !BGFX_SHADER_LANGUAGE_GLSL && !BGFX_SHADER_LANGUAGE_NVN
 	shadowCoord.y *= -1.0;
 #endif // !BGFX_SHADER_LANGUAGE_GLSL
 
@@ -102,7 +102,7 @@ void main()
 	shadowCoord.xy /= shadowCoord.w;
 	shadowCoord.xy = shadowCoord.xy*0.5 + 0.5;
 
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 	shadowCoord.z = shadowCoord.z*0.5 + 0.5;
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 

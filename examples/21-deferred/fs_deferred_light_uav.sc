@@ -26,7 +26,7 @@ void main()
 	float depth       = toClipSpaceDepth(deviceDepth);
 
 	vec3 clip = vec3(v_texcoord0 * 2.0 - 1.0, depth);
-#if !BGFX_SHADER_LANGUAGE_GLSL
+#if !BGFX_SHADER_LANGUAGE_GLSL && !BGFX_SHADER_LANGUAGE_NVN
 	clip.y = -clip.y;
 #endif // !BGFX_SHADER_LANGUAGE_GLSL
 	vec3 wpos = clipToWorld(u_mtx, clip);

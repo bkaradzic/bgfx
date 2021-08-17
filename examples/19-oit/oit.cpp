@@ -186,16 +186,8 @@ public:
 
 		// Setup root path for binary shaders. Shader binaries are different
 		// for each renderer.
-		switch (caps->rendererType)
-		{
-		default:
-			break;
 
-		case bgfx::RendererType::OpenGL:
-		case bgfx::RendererType::OpenGLES:
-			s_flipV = true;
-			break;
-		}
+		s_flipV = bgfx::getCaps()->originBottomLeft;
 
 		// Imgui.
 		imguiCreate();

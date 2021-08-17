@@ -186,6 +186,11 @@ namespace bgfx { namespace nvn
 		{
 			return m_CpuMemory;
 		}
+
+		size_t GetSize() const
+		{
+			return m_Size;
+		}
 	};
 
 	struct BufferNVN
@@ -224,6 +229,7 @@ namespace bgfx { namespace nvn
 
 		MemoryPool m_pool;
 		NVNbuffer m_buffer;
+		NVNbufferAddress m_gpuAddress = 0;
 
 		uint32_t getSize() const
 		{
@@ -234,7 +240,7 @@ namespace bgfx { namespace nvn
 		{
 			_cpuAddress = static_cast<uint8_t*>(m_pool.GetMemory()) + _offset;
 
-			_gpuAddress = nvnBufferGetAddress(&m_buffer) + _offset;
+			_gpuAddress = m_gpuAddress + _offset;
 		}
 	};
 
@@ -254,8 +260,6 @@ namespace bgfx { namespace nvn
 		}
 	};
 
-	using UniformRingBuffer = bgfx::RingBuffer<BufferNVN*, NVNbufferAddress, void*, RingBufferNVNAllocator<0, BufferNVN::Usage::UniformBuffer>>;
-
 	enum class MemoryPoolType
 	{
 		CommandBufferCommands,
@@ -271,7 +275,7 @@ namespace bgfx { namespace nvn
 
 	static const std::array<MemoryPoolSetup, static_cast<size_t>(MemoryPoolType::Count)> MemoryPoolFlags =
 	{
-		MemoryPoolSetup{512, NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_CPU_UNCACHED_BIT | NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_GPU_CACHED_BIT},
+		MemoryPoolSetup{8192, NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_CPU_UNCACHED_BIT | NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_GPU_CACHED_BIT},
 		MemoryPoolSetup{512, NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_CPU_CACHED_BIT | NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_GPU_NO_ACCESS_BIT}
 	};
 

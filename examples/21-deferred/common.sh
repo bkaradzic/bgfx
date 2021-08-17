@@ -37,7 +37,7 @@ vec4 powRgba(vec4 _rgba, float _pow)
 vec3 calcLight(vec3 _wpos, vec3 _normal, vec3 _view, vec3 _lightPos, float _lightRadius, vec3 _lightRgb, float _lightInner)
 {
 	vec3 lp = _lightPos - _wpos;
-	float attn = 1.0 - smoothstep(_lightInner, 1.0, length(lp) / _lightRadius);
+	float attn = 1.0 - smoothstep(_lightInner, 1.0, clamp(length(lp) / _lightRadius, 0.0, 1.0));
 	vec3 lightDir = normalize(lp);
 	vec2 bln = blinn(lightDir, _normal, _view);
 	vec4 lc = lit(bln.x, bln.y, 1.0);

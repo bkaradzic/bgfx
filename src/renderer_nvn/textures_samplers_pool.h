@@ -18,13 +18,19 @@ namespace bgfx { namespace nvn
 
 		void set(const int _index, NVNsampler* _sampler);
 		void set(const int _index, NVNtexture* _texture);
+		void set(const int _index, NVNtexture* _texture, NVNtextureView* _view);
 
-		int getSamplerID(const int _index)
+		int getSamplerID(const int _index) const
 		{
 			return _index + m_numReservedSamplers;
 		}
 
-		int getTextureID(const int _index)
+		int getTextureID(const int _index) const
+		{
+			return _index + m_numReservedTextures;
+		}
+
+		int getImageId(const int _index) const
 		{
 			return _index + m_numReservedTextures;
 		}
@@ -37,6 +43,9 @@ namespace bgfx { namespace nvn
 
 		int m_numReservedTextures = 0;
 		int m_numReservedSamplers = 0;
+
+		int m_numTextures = 0;
+		int m_numSamplers = 0;
 	};
 } }
 

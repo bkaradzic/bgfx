@@ -1167,17 +1167,14 @@ public:
 
 		// Setup root path for binary shaders. Shader binaries are different
 		// for each renderer.
+
+		s_flipV = bgfx::getCaps()->originBottomLeft;
+
 		switch (bgfx::getRendererType() )
 		{
 			case bgfx::RendererType::Direct3D9:
 				s_texelHalf = 0.5f;
 				break;
-
-			case bgfx::RendererType::OpenGL:
-			case bgfx::RendererType::OpenGLES:
-				s_flipV = true;
-				break;
-
 			default:
 				break;
 		}

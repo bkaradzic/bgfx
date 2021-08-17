@@ -28,7 +28,7 @@ void main()
 	float deviceDepth = texture2DLod(s_shadowMap, texCoord, 0).x;
 	float depth       = toClipSpaceDepth(deviceDepth);
 	vec3 clip = vec3(texCoord * 2.0 - 1.0, depth);
-#if !BGFX_SHADER_LANGUAGE_GLSL
+#if !BGFX_SHADER_LANGUAGE_GLSL && !BGFX_SHADER_LANGUAGE_NVN
 	clip.y = -clip.y;
 #endif // !BGFX_SHADER_LANGUAGE_GLSL
 	vec3 wPos = clipToWorld(u_invMvpShadow, clip);

@@ -61,6 +61,8 @@ namespace bgfx { namespace nvn
 			BX_ASSERT(false, "Failed to build the buffer");
 		}
 
+		m_gpuAddress = nvnBufferGetAddress(&m_buffer);
+
 		if (_data)
 		{
 			update(0, _size, _data);

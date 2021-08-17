@@ -53,7 +53,7 @@ void main()
 			//transform World space aaBox to NDC
 			vec4 clipPos = mul( u_viewProj, vec4(boxCorners[i], 1) );
 
-#if BGFX_SHADER_LANGUAGE_GLSL 
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 			clipPos.z = 0.5 * ( clipPos.z + clipPos.w );
 #endif
 			clipPos.z = max(clipPos.z, 0);
@@ -88,7 +88,7 @@ void main()
 		if (dims.x <= 2 && dims.y <= 2)
 			mip = level_lower;
 
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL|| BGFX_SHADER_LANGUAGE_NVN
 		boxUVs.y = 1.0 - boxUVs.y;
 		boxUVs.w = 1.0 - boxUVs.w;
 #endif

@@ -704,7 +704,7 @@ public:
 							grid[xoffset-zpitch].m_val - grid[xoffset+zpitch].m_val,
 						};
 
-						bx::store(grid[xoffset].m_normal, bx::normalize(normal) );
+						bx::store(grid[xoffset].m_normal, normal); // bx::normalize(normal) ); // no need to normalize here when it's also done in the shader
 					}
 				}
 			}

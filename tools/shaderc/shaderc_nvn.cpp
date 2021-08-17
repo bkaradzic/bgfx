@@ -6,6 +6,7 @@
 #include "../../../bgfx/tools/shaderc/shaderc.h"
 #include <atomic>
 #include <map>
+#include <functional>
 
 #if defined(BGFX_NVN)
 #include <nvnTool/nvnTool_GlslcInterface.h>
@@ -332,100 +333,115 @@ namespace bgfx {
 
 			ShaderReflectionInfo reflectionInfo;
 
+			int sectionTypes[GLSLC_NUM_SECTION_TYPES] = { -1, -1, -1, -1, -1 };
+			BX_STATIC_ASSERT(BX_COUNTOF(sectionTypes) == GLSLC_NUM_SECTION_TYPES, "");
+
 			for (uint32_t i = 0; i < compileOutput->numSections; ++i)
 			{
 				GLSLCsectionTypeEnum type = compileOutput->headers[i].genericHeader.common.type;
-
-				if (type == GLSLC_SECTION_TYPE_REFLECTION)
+				if (sectionTypes[type] != -1)
 				{
-					void* data = ((char*)compileOutput) + (compileOutput->headers[i].genericHeader.common.dataOffset);
+					printError(std::string{ "More than one section encountered for type " } + std::to_string(type) + std::string{ " This wasn't expected" });
+					return false;
+				}
 
-					const GLSLCprogramReflectionHeader* reflectionHeader = &(compileOutput->headers[i].programReflectionHeader);
-					const char* stringPool = (const char*)data + reflectionHeader->stringPoolOffset;
+				sectionTypes[type] = i;
+			}
 
-					const GLSLCuniformBlockInfo* uniformBlock = (GLSLCuniformBlockInfo*)((char*)data + reflectionHeader->uniformBlockOffset);
-					for (uint32_t j = 0; j < reflectionHeader->numUniformBlocks; ++j)
+			{
+				int sectionIndex = sectionTypes[GLSLC_SECTION_TYPE_REFLECTION];
+				if (sectionIndex < 0)
+				{
+					printError("Failed to find reflection data.");
+					return false;
+				}
+
+				const GLSLCprogramReflectionHeader* reflectionHeader = &(compileOutput->headers[sectionIndex].programReflectionHeader);
+				void* data = ((char*)compileOutput) + (reflectionHeader->common.dataOffset);
+				const char* stringPool = (const char*)data + reflectionHeader->stringPoolOffset;
+
+				const GLSLCuniformBlockInfo* uniformBlock = (GLSLCuniformBlockInfo*)((char*)data + reflectionHeader->uniformBlockOffset);
+				for (uint32_t j = 0; j < reflectionHeader->numUniformBlocks; ++j)
+				{
+					UniformBlockData uniformBlockData;
+
+					for (uint32_t k = 0; k < 6; ++k)
+						uniformBlockData.m_Bindings[k] = uniformBlock->bindings[k];
+
+					uniformBlockData.m_Name = stringPool + uniformBlock->nameInfo.nameOffset;
+					uniformBlockData.m_Size = uniformBlock->size;
+					uniformBlockData.m_NumActiveVariables = uniformBlock->numActiveVariables;
+					uniformBlockData.m_StagesReferencedIn = static_cast<uint8_t>(uniformBlock->stagesReferencedIn);
+
+					reflectionInfo.m_UniformBlocks.push_back(uniformBlockData);
+
+					++uniformBlock;
+				}
+
+				GLSLCuniformInfo* uniform = (GLSLCuniformInfo*)((char*)data + reflectionHeader->uniformOffset);
+				for (uint32_t j = 0; j < reflectionHeader->numUniforms; ++j)
+				{
+					UniformData uniformData;
+
+					uniformData.m_Name = stringPool + uniform->nameInfo.nameOffset;
+					uniformData.m_Type = uniform->type;
+					uniformData.m_BlockNdx = uniform->blockNdx;
+					uniformData.m_BlockOffset = uniform->blockOffset;
+
+					for (uint32_t k = 0; k < 6; ++k)
 					{
-						UniformBlockData uniformBlockData;
-
-						for (uint32_t k = 0; k < 6; ++k)
-							uniformBlockData.m_Bindings[k] = uniformBlock->bindings[k];
-
-						uniformBlockData.m_Name = stringPool + uniformBlock->nameInfo.nameOffset;
-						uniformBlockData.m_Size = uniformBlock->size;
-						uniformBlockData.m_NumActiveVariables = uniformBlock->numActiveVariables;
-						uniformBlockData.m_StagesReferencedIn = static_cast<uint8_t>(uniformBlock->stagesReferencedIn);
-
-						reflectionInfo.m_UniformBlocks.push_back(uniformBlockData);
-
-						++uniformBlock;
+						uniformData.m_Bindings[k] = uniform->bindings[k];
 					}
 
-					GLSLCuniformInfo* uniform = (GLSLCuniformInfo*)((char*)data + reflectionHeader->uniformOffset);
-					for (uint32_t j = 0; j < reflectionHeader->numUniforms; ++j)
+					uniformData.m_IsArray = uniform->isArray;
+					uniformData.m_SizeOfArray = uniform->sizeOfArray;
+					uniformData.m_ArrayStride = uniform->arrayStride;
+					uniformData.m_MatrixStride = uniform->matrixStride;
+					uniformData.m_IsRowMajor = uniform->isRowMajor;
+					uniformData.m_StagesReferencedIn = static_cast<uint8_t>(uniform->stagesReferencedIn);
+
+					if (uniformData.m_BlockNdx != -1)
 					{
-						UniformData uniformData;
-
-						uniformData.m_Name = stringPool + uniform->nameInfo.nameOffset;
-						uniformData.m_Type = uniform->type;
-						uniformData.m_BlockNdx = uniform->blockNdx;
-						uniformData.m_BlockOffset = uniform->blockOffset;
-
-						for (uint32_t k = 0; k < 6; ++k)
+						if (isSampler(uniform->type) || isImage(uniform->type))
 						{
-							uniformData.m_Bindings[k] = uniform->bindings[k];
-						}
-
-						uniformData.m_IsArray = uniform->isArray;
-						uniformData.m_SizeOfArray = uniform->sizeOfArray;
-						uniformData.m_ArrayStride = uniform->arrayStride;
-						uniformData.m_MatrixStride = uniform->matrixStride;
-						uniformData.m_IsRowMajor = uniform->isRowMajor;
-						uniformData.m_StagesReferencedIn = static_cast<uint8_t>(uniform->stagesReferencedIn);
-
-						if (uniformData.m_BlockNdx != -1)
-						{
-							if (isSampler(uniform->type) || isImage(uniform->type))
-							{
-								printError("Samplers are expected to be declared as a global uniform, but this one is in a uniform block: " + uniformData.m_Name + "\n");
-							}
-							else
-							{
-								reflectionInfo.m_UniformBlocks[uniformData.m_BlockNdx].m_Uniforms.push_back(uniformData);
-							}
+							printError("Samplers are expected to be declared as a global uniform, but this one is in a uniform block: " + uniformData.m_Name + "\n");
 						}
 						else
 						{
-							if (isSampler(uniform->type) || isImage(uniform->type)) {
-								reflectionInfo.m_GlobalUniforms.push_back(uniformData);
-							}
-							else {
-								printError("All uniforms should've been in a uniform block, or should've been a global sampler, but this one isn't: " + uniformData.m_Name + "\n");
-								return false;
-							}
+							reflectionInfo.m_UniformBlocks[uniformData.m_BlockNdx].m_Uniforms.push_back(uniformData);
 						}
-
-						++uniform;
 					}
-
-					GLSLCprogramInputInfo* programInput = (GLSLCprogramInputInfo*)((char*)data + reflectionHeader->programInputsOffset);
-					for (uint32_t j = 0; j < reflectionHeader->numProgramInputs; ++j)
+					else
 					{
-						VertexAttributeData vertexAttributeData;
-						vertexAttributeData.m_Name = stringPool + programInput->nameInfo.nameOffset;
-						vertexAttributeData.m_Type = programInput->type;
-						vertexAttributeData.m_IsArray = programInput->isArray;
-						vertexAttributeData.m_SizeOfArray = programInput->sizeOfArray;
-						vertexAttributeData.m_Location = programInput->location;
-						vertexAttributeData.m_IsPerPatch = programInput->isPerPatch;
-						vertexAttributeData.m_StagesReferencedIn = static_cast<uint8_t>(programInput->stagesReferencedIn);
-
-						if (vertexAttributeData.m_StagesReferencedIn & currentShaderStageBits) {
-							reflectionInfo.m_VertexAttributes.push_back(vertexAttributeData);
+						if (isSampler(uniform->type) || isImage(uniform->type)) {
+							reflectionInfo.m_GlobalUniforms.push_back(uniformData);
 						}
-
-						++programInput;
+						else {
+							printError("All uniforms should've been in a uniform block, or should've been a global sampler, but this one isn't: " + uniformData.m_Name + "\n");
+							return false;
+						}
 					}
+
+					++uniform;
+				}
+
+				GLSLCprogramInputInfo* programInput = (GLSLCprogramInputInfo*)((char*)data + reflectionHeader->programInputsOffset);
+				for (uint32_t j = 0; j < reflectionHeader->numProgramInputs; ++j)
+				{
+					VertexAttributeData vertexAttributeData;
+					vertexAttributeData.m_Name = stringPool + programInput->nameInfo.nameOffset;
+					vertexAttributeData.m_Type = programInput->type;
+					vertexAttributeData.m_IsArray = programInput->isArray;
+					vertexAttributeData.m_SizeOfArray = programInput->sizeOfArray;
+					vertexAttributeData.m_Location = programInput->location;
+					vertexAttributeData.m_IsPerPatch = programInput->isPerPatch;
+					vertexAttributeData.m_StagesReferencedIn = static_cast<uint8_t>(programInput->stagesReferencedIn);
+
+					if (vertexAttributeData.m_StagesReferencedIn & currentShaderStageBits) {
+						reflectionInfo.m_VertexAttributes.push_back(vertexAttributeData);
+					}
+
+					++programInput;
 				}
 			}
 
@@ -505,44 +521,59 @@ namespace bgfx {
 
 			// Actual shader code
 			{
-				bool alreadyHadCode = false;
+				using SectionCallback = std::function<bool(const GLSLCsectionHeaderUnion& _header)>;
 
-				for (uint32_t i = 0; i < compileOutput->numSections; ++i)
+				auto processGpuCode = [&](const GLSLCsectionHeaderUnion& _header)
 				{
-					GLSLCsectionTypeEnum type = compileOutput->headers[i].genericHeader.common.type;
+					const GLSLCgpuCodeHeader* gpuHeader = &(_header.gpuCodeHeader);
 
-					if (type == GLSLC_SECTION_TYPE_GPU_CODE)
+					/*
+					 * Grab a pointer to the data section of the header. The control offset and
+					 * data offset from the gpu code header are offsets from this pointer.
+					 */
+					void* data = ((char*)compileOutput) + gpuHeader->common.dataOffset;
+
+					if (gpuHeader->stage != currentShaderStage)
 					{
-						if (alreadyHadCode)
-						{
-							printError("More than one gpu code section encountered. This wasn't expected");
-							return false;
-						}
-						else
-						{
-							alreadyHadCode = true;
-						}
-
-						const GLSLCgpuCodeHeader* gpuHeader = &(compileOutput->headers[i].gpuCodeHeader);
-
-						/*
-						 * Grab a pointer to the data section of the header. The control offset and
-						 * data offset from the gpu code header are offsets from this pointer.
-						 */
-						void* data = ((char*)compileOutput) + gpuHeader->common.dataOffset;
-
-						if (gpuHeader->stage != currentShaderStage)
-						{
-							printError("Got a gpu shader code for stage " + std::to_string(gpuHeader->stage) + " but was expecting stage " + std::to_string(currentShaderStage));
-							return false;
-						}
+						printError("Got a gpu shader code for stage " + std::to_string(gpuHeader->stage) + " but was expecting stage " + std::to_string(currentShaderStage));
+						return false;
+					}
 
 
-						bx::write(_writer, uint32_t{ gpuHeader->controlSize });
-						bx::write(_writer, uint32_t{ gpuHeader->dataSize });
+					bx::write(_writer, uint32_t{ gpuHeader->controlSize });
+					bx::write(_writer, uint32_t{ gpuHeader->dataSize });
 
-						bx::write(_writer, ((char*)data + gpuHeader->controlOffset), gpuHeader->controlSize);
-						bx::write(_writer, ((char*)data + gpuHeader->dataOffset), gpuHeader->dataSize);
+					bx::write(_writer, ((char*)data + gpuHeader->controlOffset), gpuHeader->controlSize);
+					bx::write(_writer, ((char*)data + gpuHeader->dataOffset), gpuHeader->dataSize);
+
+					return true;
+				};
+
+				auto processSection = [&](int _section, SectionCallback _cb)
+				{
+					if (_section < 0)
+					{
+						printError("Section not found.");
+						return false;
+					}
+
+					return _cb(compileOutput->headers[_section]);
+				};
+
+				if (!processSection(sectionTypes[GLSLC_SECTION_TYPE_GPU_CODE], processGpuCode))
+				{
+					printError("Failed to process gpu code.");
+					return false;
+				}
+
+				if (_options.debugInformation)
+				{
+					GLSLCdebuggerOutputError err;
+					glslcWriteOutputsToDiskForDebugger(_options.debugDatabaseDir.c_str(), &compileOutput, 1, &err);
+					if (err != GLSLC_DEBUGGER_OUTPUT_SUCCESS)
+					{
+						printError(std::string{ "Failed to write debug data: " } + std::to_string(err));
+						return false;
 					}
 				}
 			}
