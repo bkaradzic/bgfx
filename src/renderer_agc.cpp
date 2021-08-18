@@ -63,52 +63,6 @@ void freeDmem(void* memVA)
 
 //=============================================================================================
 
-bool tileSurface(void *tiledData, const void *untiledSurface, sce::Agc::Core::TextureSpec spec, uint32_t mipLevel, uint32_t arraySlice)
-{
-	int ret; (void)ret;
-
-	sce::AgcGpuAddress::SurfaceDescription desc;
-	ret = sce::Agc::Core::translate(&desc, &spec);
-	if (ret != SCE_OK) {
-		return false;
-	}
-
-	sce::AgcGpuAddress::SurfaceSummary summary;
-	ret = sce::AgcGpuAddress::computeSurfaceSummary(&summary, &desc);
-	if (ret != SCE_OK) {
-		return false;
-	}
-
-	uint32_t totalBitsPerElement;
-	uint32_t texelsPerElement;
-	{
-		sce::Agc::Core::ElementDimensions elemDim;
-		ret = sce::Agc::Core::translate(&elemDim, spec.m_format.m_format);
-		if (ret != SCE_OK) {
-			return false;
-		}
-		totalBitsPerElement = (UINT32_C(1) << elemDim.m_bytesPerElementLog2) << 3;
-		texelsPerElement = elemDim.m_texelsPerElementWide * elemDim.m_texelsPerElementTall;
-	}
-
-	sce::Agc::SizeAlign sizeAlign = sce::Agc::Core::getSize(&spec);
-	ret = sce::AgcGpuAddress::tileSurface(
-		tiledData,
-		sizeAlign.m_size,
-		untiledSurface,
-		spec.getWidth() * spec.getHeight() * (totalBitsPerElement / texelsPerElement) / 8,
-		&summary,
-		mipLevel,
-		arraySlice);
-	if (ret != SCE_OK) {
-		return false;
-	}
-
-	return SCE_OK;
-}
-
-//=============================================================================================
-
 } // namespace 
 
 //=============================================================================================
@@ -194,14 +148,13 @@ struct PrimTypeInfo
 		sub \
 	}
 
-static const PrimTypeInfo sPrimTypeInfo[Topology::Count] =
-{
-	PRIM_TYPE( kTriList, 3, 3, 0 ),
-	PRIM_TYPE( kTriStrip, 3, 1, 2 ),
-	PRIM_TYPE( kLineList, 2, 2, 0 ),
-	PRIM_TYPE( kLineStrip, 2, 1, 1 ),
-	PRIM_TYPE( kPointList, 1, 1, 0 ),
-};
+static const std::array<PrimTypeInfo, Topology::Enum::Count> sPrimTypeInfo{{
+	PRIM_TYPE(kTriList, 3, 3, 0),
+	PRIM_TYPE(kTriStrip, 3, 1, 2),
+	PRIM_TYPE(kLineList, 2, 2, 0),
+	PRIM_TYPE(kLineStrip, 2, 1, 1),
+	PRIM_TYPE(kPointList, 1, 1, 0),
+}};
 
 #undef PRIM_TYPE
 
@@ -210,12 +163,11 @@ static const PrimTypeInfo sPrimTypeInfo[Topology::Count] =
 #define CULL_MODE( mode ) \
 		sce::Agc::CxPrimitiveSetup::CullFace::mode
 
-static const sce::Agc::CxPrimitiveSetup::CullFace sCullMode[] =
-{
+static const std::array<sce::Agc::CxPrimitiveSetup::CullFace, 3> sCullMode{{
 	CULL_MODE( kNone ),
 	CULL_MODE( kFront ),
 	CULL_MODE( kBack ),
-};
+}};
 
 #undef CULL_MODE
 
@@ -224,8 +176,7 @@ static const sce::Agc::CxPrimitiveSetup::CullFace sCullMode[] =
 #define DEPTH_FUNC( func ) \
 		sce::Agc::CxDepthStencilControl::DepthFunction::func
 
-static const sce::Agc::CxDepthStencilControl::DepthFunction sDepthFunc[] =
-{
+static const std::array<sce::Agc::CxDepthStencilControl::DepthFunction, 9> sDepthFunc{{
 	DEPTH_FUNC( kAlways ),
 	DEPTH_FUNC( kLess ),
 	DEPTH_FUNC( kLessEqual ),
@@ -235,7 +186,7 @@ static const sce::Agc::CxDepthStencilControl::DepthFunction sDepthFunc[] =
 	DEPTH_FUNC( kNotEqual ),
 	DEPTH_FUNC( kNever ),
 	DEPTH_FUNC( kAlways ),
-};
+}};
 
 #undef DEPTH_FUNC
 
@@ -253,8 +204,7 @@ struct StencilFunc
 		sce::Agc::CxDepthStencilControl::StencilFunctionBack::func \
 	}
 
-static const StencilFunc sStencilFunc[] =
-{
+static const std::array<StencilFunc, 9> sStencilFunc{{
 	STENCIL_FUNC( kAlways ),
 	STENCIL_FUNC( kLess ),
 	STENCIL_FUNC( kLessEqual ),
@@ -264,7 +214,7 @@ static const StencilFunc sStencilFunc[] =
 	STENCIL_FUNC( kNotEqual ),
 	STENCIL_FUNC( kNever ),
 	STENCIL_FUNC( kAlways ),
-};
+}};
 
 #undef STENCIL_FUNC
 
@@ -290,8 +240,7 @@ struct StencilOp
 		sce::Agc::CxStencilOpControl::StencilZFailBackOp::op \
 	}
 
-static const StencilOp sStencilOp[] =
-{
+static const std::array<StencilOp, 8> sStencilOp{{
 	STENCIL_OP( kZero ),
 	STENCIL_OP( kKeep ),
 	STENCIL_OP( kReplaceTest ),
@@ -300,7 +249,7 @@ static const StencilOp sStencilOp[] =
 	STENCIL_OP( kSubWrap ),
 	STENCIL_OP( kSubClamp ),
 	STENCIL_OP( kInvert ),
-};
+}};
 
 #undef STENCIL_OP
 
@@ -318,14 +267,13 @@ struct BlendFunc
 		sce::Agc::CxBlendControl::AlphaBlendFunc::func \
 	}
 
-static const BlendFunc sBlendFunc[] =
-{
+static const std::array<BlendFunc, 5> sBlendFunc{{
 	BLEND_FUNC( kAdd ),
 	BLEND_FUNC( kSubtract ),
 	BLEND_FUNC( kReverseSubtract ),
 	BLEND_FUNC( kMin ),
 	BLEND_FUNC( kMax ),
-};
+}};
 
 #undef BLEND_FUNC
 
@@ -348,8 +296,7 @@ struct BlendFactor
 		sce::Agc::CxBlendControl::AlphaDestMultiplier::aFactor, usesConst \
 	}
 
-static const BlendFactor sBlendFactor[] =
-{
+static const std::array<BlendFactor, 14> sBlendFactor{{
 	BLEND_FACTOR( kZero, kZero, false ),
 	BLEND_FACTOR( kZero, kZero, false ),
 	BLEND_FACTOR( kOne, kOne, false ),
@@ -364,41 +311,11 @@ static const BlendFactor sBlendFactor[] =
 	BLEND_FACTOR( kSrcAlphaSaturate, kOne, false ),
 	BLEND_FACTOR( kConstantColor, kConstantColor, true ),
 	BLEND_FACTOR( kOneMinusConstantColor, kOneMinusConstantColor, true ),
-};
+}};
 
 #undef BLEND_FACTOR
 
 //=============================================================================================
-
-struct TextureFormatInfo
-{
-	sce::Agc::Core::TypedFormat m_fmt{};
-	sce::Agc::Core::TypedFormat m_fmtSrgb{};
-	sce::Agc::Core::Swizzle m_swzl{};
-	uint32_t m_flags{};
-	uint32_t m_bpp{};
-	bool m_compressed{};
-};
-
-#define TEXTURE_FORMAT(fmt, fmtSrbg, swzl, flags, bpp, compressed) \
-{ \
-	sce::Agc::Core::TypedFormat::fmt, \
-	sce::Agc::Core::TypedFormat::fmtSrbg, \
-	sce::Agc::Core::Swizzle::swzl, \
-	flags, \
-	bpp, \
-	compressed \
-}
-
-#define TEXTURE_FORMAT_UNSUPPORTED() \
-{ \
-	sce::Agc::Core::TypedFormat::kLast, \
-	sce::Agc::Core::TypedFormat::kLast, \
-	sce::Agc::Core::Swizzle::kLast, \
-	BGFX_CAPS_FORMAT_TEXTURE_NONE, \
-	0, \
-	false \
-}
 
 // TODO: (manderson) MSAA?
 #define TEXTURE_CAPS_FLAGS \
@@ -410,99 +327,144 @@ struct TextureFormatInfo
 #define TEXTURE_CAPS_FLAGS_FRAMEBUFFER \
 	(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER)
 
-static const TextureFormatInfo sTextureFormat[] =
+struct TextureFormatInfo
 {
-	TEXTURE_FORMAT( kBc1UNorm, kBc1Srgb, kRGB1_R3S34, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB, 0, true ),													// BC1
-	TEXTURE_FORMAT( kBc2UNorm, kBc2Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB, 0, true ),													// BC2
-	TEXTURE_FORMAT( kBc3UNorm, kBc3Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB, 0, true ),													// BC3
-	TEXTURE_FORMAT( kBc4UNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS, 0, true ),																				// BC4
-	TEXTURE_FORMAT( kBc5UNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS, 0, true),																				// BC5
-	TEXTURE_FORMAT( kBc6SFloat, kLast, kRGB1_R3S34, TEXTURE_CAPS_FLAGS, 0, true),																				// BC6H
-	TEXTURE_FORMAT( kBc7UNorm, kBc7Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB, 0, true),													// BC7
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ETC1
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ETC2
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ETC2A
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ETC2A1
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC12
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC14
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC12A
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC14A
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC22
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// PTC24
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ATC
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ATCE
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ATCI
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC4x4
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC5x5
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC6x6
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC8x5
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC8x6
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// ASTC10x5
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// Unknown
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// R1
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// A8
-	TEXTURE_FORMAT( k8UNorm, k8Srgb, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 8, false ),						// R8
-	TEXTURE_FORMAT( k8SInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 8, false ),													// R8I
-	TEXTURE_FORMAT( k8UInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 8, false ),													// R8U
-	TEXTURE_FORMAT( k8SNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 8, false ),												// R8S
-	TEXTURE_FORMAT( k16UNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16
-	TEXTURE_FORMAT( k16SInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16I
-	TEXTURE_FORMAT( k16UInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16U
-	TEXTURE_FORMAT( k16Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16F
-	TEXTURE_FORMAT( k16SNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// R16S
-	TEXTURE_FORMAT( k32SInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// R321
-	TEXTURE_FORMAT( k32UInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// R32U
-	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// R32F
-	TEXTURE_FORMAT( k8_8UNorm, k8_8Srgb, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),				// RG8
-	TEXTURE_FORMAT( k8_8SInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// RG8I
-	TEXTURE_FORMAT( k8_8UInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),												// RG8U
-	TEXTURE_FORMAT( k8_8SNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),											// RG8S
-	TEXTURE_FORMAT( k16_16UNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16
-	TEXTURE_FORMAT( k16_16SInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16I
-	TEXTURE_FORMAT( k16_16UInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16U
-	TEXTURE_FORMAT( k16_16Float, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16F
-	TEXTURE_FORMAT( k16_16SNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RG16S
-	TEXTURE_FORMAT( k32_32SInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),											// RG321
-	TEXTURE_FORMAT( k32_32UInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),											// RG32U
-	TEXTURE_FORMAT( k32_32Float, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),											// RG32F
-	TEXTURE_FORMAT( k8_8_8_8UNorm, k8_8_8_8Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),		// RGB8
-	TEXTURE_FORMAT( k8_8_8_8SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGB8I
-	TEXTURE_FORMAT( k8_8_8_8UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGB8U
-	TEXTURE_FORMAT( k8_8_8_8SNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGB8S
-	TEXTURE_FORMAT( k9_9_9_5Float, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGB9E5F
-	TEXTURE_FORMAT( k8_8_8_8UNorm, k8_8_8_8Srgb, kBGRA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),		// BGRA8
-	TEXTURE_FORMAT( k8_8_8_8UNorm, k8_8_8_8Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),		// RGBA8
-	TEXTURE_FORMAT( k8_8_8_8SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGBA8I
-	TEXTURE_FORMAT( k8_8_8_8UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGBA8U
-	TEXTURE_FORMAT( k8_8_8_8SNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),											// RGBA8S
-	TEXTURE_FORMAT( k16_16_16_16UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16
-	TEXTURE_FORMAT( k16_16_16_16SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16I
-	TEXTURE_FORMAT( k16_16_16_16UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16U
-	TEXTURE_FORMAT( k16_16_16_16Float, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16F
-	TEXTURE_FORMAT( k16_16_16_16SNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 64, false ),										// RGBA16S
-	TEXTURE_FORMAT( k32_32_32_32SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 128, false ),										// RGBA32I
-	TEXTURE_FORMAT( k32_32_32_32UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 128, false ),										// RGBA32U
-	TEXTURE_FORMAT( k32_32_32_32Float, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 128, false ),									// RGBA32F
-	TEXTURE_FORMAT( k5_6_5UNorm, kLast, kRGB1_R3S34, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),											// R5G6B5
-	TEXTURE_FORMAT( k4_4_4_4UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),											// RGBA4
-	TEXTURE_FORMAT( k5_5_5_1UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 16, false ),											// RGB5A1
-	TEXTURE_FORMAT( k10_10_10_2UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),										// RGB10A2
-	TEXTURE_FORMAT( k11_11_10Float, kLast, kRGB1_R3S34, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),										// RG11B10F
-
-	// TODO: (manderson) Depth formats.
-	// NOTE: (manderson) AFAICT only 16bit unorm and 32bit float are supported depth formats.
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// UnknownDepth
-	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D16
-	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D24
-	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D24S8
-	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D32
-	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D16F
-	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D24F
-	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, 32, false ),												// D32F
-	TEXTURE_FORMAT_UNSUPPORTED(),																																// D0S8
+	sce::Agc::Core::TypedFormat m_fmt{};
+	sce::Agc::Core::TypedFormat m_fmtSrgb{};
+	sce::Agc::Core::Swizzle m_swzl{};
+	uint32_t m_flags{};
+	bool m_convert{};
 };
 
+#define TEXTURE_FORMAT(fmt, fmtSrbg, swzl, flags) \
+{ \
+	sce::Agc::Core::TypedFormat::fmt, \
+	sce::Agc::Core::TypedFormat::fmtSrbg, \
+	sce::Agc::Core::Swizzle::swzl, \
+	flags, \
+	false \
+}
+
+#define TEXTURE_FORMAT_CONVERT() \
+{ \
+	sce::Agc::Core::TypedFormat::k8_8_8_8UNorm, \
+	sce::Agc::Core::TypedFormat::k8_8_8_8Srgb, \
+	sce::Agc::Core::Swizzle::kBGRA_R4S4, \
+	TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, \
+	true \
+}
+
+#define TEXTURE_FORMAT_CONVERT_FMT(fmt) \
+{ \
+	sce::Agc::Core::TypedFormat::fmt, \
+	sce::Agc::Core::TypedFormat::kLast, \
+	sce::Agc::Core::Swizzle::kBGRA_R4S4, \
+	TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER, \
+	true \
+}
+
+#define TEXTURE_FORMAT_UNSUPPORTED() \
+{ \
+	sce::Agc::Core::TypedFormat::kLast, \
+	sce::Agc::Core::TypedFormat::kLast, \
+	sce::Agc::Core::Swizzle::kLast, \
+	BGFX_CAPS_FORMAT_TEXTURE_NONE, \
+	false \
+}
+
+static const std::array<TextureFormatInfo, TextureFormat::Enum::Count> sTextureFormat{{
+	TEXTURE_FORMAT( kBc1UNorm, kBc1Srgb, kRGB1_R3S34, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB ),											// BC1
+	TEXTURE_FORMAT( kBc2UNorm, kBc2Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB ),											// BC2
+	TEXTURE_FORMAT( kBc3UNorm, kBc3Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB ),											// BC3
+	TEXTURE_FORMAT( kBc4UNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS ),																			// BC4
+	TEXTURE_FORMAT( kBc5UNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS ),																		// BC5
+	TEXTURE_FORMAT( kBc6SFloat, kLast, kRGB1_R3S34, TEXTURE_CAPS_FLAGS ),																		// BC6H
+	TEXTURE_FORMAT( kBc7UNorm, kBc7Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB ),											// BC7
+	TEXTURE_FORMAT_CONVERT(),																													// ETC1
+	TEXTURE_FORMAT_CONVERT(),																													// ETC2
+	TEXTURE_FORMAT_CONVERT(),																													// ETC2A
+	TEXTURE_FORMAT_CONVERT(),																													// ETC2A1
+	TEXTURE_FORMAT_CONVERT(),																													// PTC12
+	TEXTURE_FORMAT_CONVERT(),																													// PTC14
+	TEXTURE_FORMAT_CONVERT(),																													// PTC12A
+	TEXTURE_FORMAT_CONVERT(),																													// PTC14A
+	TEXTURE_FORMAT_CONVERT(),																													// PTC22
+	TEXTURE_FORMAT_CONVERT(),																													// PTC24
+	TEXTURE_FORMAT_CONVERT(),																													// ATC
+	TEXTURE_FORMAT_CONVERT(),																													// ATCE
+	TEXTURE_FORMAT_CONVERT(),																													// ATCI
+	TEXTURE_FORMAT_CONVERT(),																													// ASTC4x4
+	TEXTURE_FORMAT_CONVERT(),																													// ASTC5x5
+	TEXTURE_FORMAT_CONVERT(),																													// ASTC6x6
+	TEXTURE_FORMAT_CONVERT(),																													// ASTC8x5
+	TEXTURE_FORMAT_CONVERT(),																													// ASTC8x6
+	TEXTURE_FORMAT_CONVERT(),																													// ASTC10x5
+	TEXTURE_FORMAT_UNSUPPORTED(),																												// Unknown
+	TEXTURE_FORMAT_UNSUPPORTED(),																												// R1
+	TEXTURE_FORMAT( k8UNorm, k8Srgb, k000R_R1S14, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),				// A8
+	TEXTURE_FORMAT( k8UNorm, k8Srgb, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),				// R8
+	TEXTURE_FORMAT( k8SInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R8I
+	TEXTURE_FORMAT( k8UInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R8U
+	TEXTURE_FORMAT( k8SNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R8S
+	TEXTURE_FORMAT( k16UNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R16
+	TEXTURE_FORMAT( k16SInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R16I
+	TEXTURE_FORMAT( k16UInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R16U
+	TEXTURE_FORMAT( k16Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R16F
+	TEXTURE_FORMAT( k16SNorm, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R16S
+	TEXTURE_FORMAT( k32SInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R321
+	TEXTURE_FORMAT( k32UInt, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R32U
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// R32F
+	TEXTURE_FORMAT( k8_8UNorm, k8_8Srgb, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),			// RG8
+	TEXTURE_FORMAT( k8_8SInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG8I
+	TEXTURE_FORMAT( k8_8UInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG8U
+	TEXTURE_FORMAT( k8_8SNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG8S
+	TEXTURE_FORMAT( k16_16UNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG16
+	TEXTURE_FORMAT( k16_16SInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG16I
+	TEXTURE_FORMAT( k16_16UInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG16U
+	TEXTURE_FORMAT( k16_16Float, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG16F
+	TEXTURE_FORMAT( k16_16SNorm, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG16S
+	TEXTURE_FORMAT( k32_32SInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG321
+	TEXTURE_FORMAT( k32_32UInt, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG32U
+	TEXTURE_FORMAT( k32_32Float, kLast, kRG01_R2S24, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RG32F
+	TEXTURE_FORMAT_CONVERT(),																													// RGB8
+	TEXTURE_FORMAT_CONVERT_FMT( k8_8_8_8SInt ),																									// RGB8I
+	TEXTURE_FORMAT_CONVERT_FMT( k8_8_8_8UInt ),																									// RGB8U
+	TEXTURE_FORMAT_CONVERT_FMT( k8_8_8_8SNorm ),																								// RGB8S
+	TEXTURE_FORMAT( k9_9_9_5Float, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RGB9E5F
+	TEXTURE_FORMAT( k8_8_8_8UNorm, k8_8_8_8Srgb, kBGRA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),	// BGRA8
+	TEXTURE_FORMAT( k8_8_8_8UNorm, k8_8_8_8Srgb, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_SRGB | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),	// RGBA8
+	TEXTURE_FORMAT( k8_8_8_8SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RGBA8I
+	TEXTURE_FORMAT( k8_8_8_8UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// RGBA8U
+	TEXTURE_FORMAT( k8_8_8_8SNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RGBA8S
+	TEXTURE_FORMAT( k16_16_16_16UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),								// RGBA16
+	TEXTURE_FORMAT( k16_16_16_16SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RGBA16I
+	TEXTURE_FORMAT( k16_16_16_16UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RGBA16U
+	TEXTURE_FORMAT( k16_16_16_16Float, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),								// RGBA16F
+	TEXTURE_FORMAT( k16_16_16_16SNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),								// RGBA16S
+	TEXTURE_FORMAT( k32_32_32_32SInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RGBA32I
+	TEXTURE_FORMAT( k32_32_32_32UInt, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RGBA32U
+	TEXTURE_FORMAT( k32_32_32_32Float, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),								// RGBA32F
+	TEXTURE_FORMAT( k5_6_5UNorm, kLast, kRGB1_R3S34, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),										// R5G6B5
+	TEXTURE_FORMAT( k4_4_4_4UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RGBA4
+	TEXTURE_FORMAT( k5_5_5_1UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RGB5A1
+	TEXTURE_FORMAT( k10_10_10_2UNorm, kLast, kRGBA_R4S4, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RGB10A2
+	TEXTURE_FORMAT( k11_11_10Float, kLast, kRGB1_R3S34, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),									// RG11B10F
+
+	// TODO: (manderson) Depth formats.
+	TEXTURE_FORMAT_UNSUPPORTED(),																												// UnknownDepth
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// D16
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// D24
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// D24S8
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// D32
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// D16F
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// D24F
+	TEXTURE_FORMAT( k32Float, kLast, kR001_R1S1, TEXTURE_CAPS_FLAGS | TEXTURE_CAPS_FLAGS_FRAMEBUFFER ),											// D32F
+	TEXTURE_FORMAT_UNSUPPORTED(),																												// D0S8
+}};
+
 #undef TEXTURE_FORMAT
+#undef TEXTURE_FORMAT_CONVERT
+#undef TEXTURE_FORMAT_CONVERT_FMT
 #undef TEXTURE_FORMAT_UNSUPPORTED
 
 //=============================================================================================
@@ -510,13 +472,12 @@ static const TextureFormatInfo sTextureFormat[] =
 #define TEXTURE_WRAP_MODE( mode ) \
 		sce::Agc::Core::Sampler::WrapMode::mode
 
-static const sce::Agc::Core::Sampler::WrapMode sWrapMode[] =
-{
+static const std::array<sce::Agc::Core::Sampler::WrapMode, 4> sWrapMode{{
 	TEXTURE_WRAP_MODE( kWrap ),
 	TEXTURE_WRAP_MODE( kMirror ),
 	TEXTURE_WRAP_MODE( kClampLastTexel ),
 	TEXTURE_WRAP_MODE( kClampBorder ),
-};
+}};
 
 #undef TEXTURE_WRAP_MODE
 
@@ -525,12 +486,11 @@ static const sce::Agc::Core::Sampler::WrapMode sWrapMode[] =
 #define TEXTURE_FILTER_MODE( mode ) \
 		sce::Agc::Core::Sampler::FilterMode::mode
 
-static const sce::Agc::Core::Sampler::FilterMode sFilterMode[] =
-{
+static const std::array<sce::Agc::Core::Sampler::FilterMode, 3> sFilterMode{{
 	TEXTURE_FILTER_MODE( kBilinear ),
 	TEXTURE_FILTER_MODE( kPoint ),
 	TEXTURE_FILTER_MODE( kAnisoBilinear ),
-};
+}};
 
 #undef TEXTURE_FILTER_MODE
 
@@ -539,11 +499,10 @@ static const sce::Agc::Core::Sampler::FilterMode sFilterMode[] =
 #define TEXTURE_MIP_FILTER_MODE( mode ) \
 		sce::Agc::Core::Sampler::MipFilterMode::mode
 
-static const sce::Agc::Core::Sampler::MipFilterMode sMipFilterMode[] =
-{
+static const std::array<sce::Agc::Core::Sampler::MipFilterMode, 2> sMipFilterMode{{
 	TEXTURE_MIP_FILTER_MODE( kLinear ),
 	TEXTURE_MIP_FILTER_MODE( kPoint ),
-};
+}};
 
 #undef TEXTURE_MIP_FILTER_MODE
 
@@ -552,8 +511,7 @@ static const sce::Agc::Core::Sampler::MipFilterMode sMipFilterMode[] =
 #define TEXTURE_DEPTH_COMPARE_MODE( mode ) \
 		sce::Agc::Core::Sampler::DepthCompare::mode
 
-static const sce::Agc::Core::Sampler::DepthCompare sDepthCompareMode[] =
-{
+static const std::array<sce::Agc::Core::Sampler::DepthCompare, 9> sDepthCompareMode{{
 	TEXTURE_DEPTH_COMPARE_MODE( kNever ), // not used
 	TEXTURE_DEPTH_COMPARE_MODE( kLess ),
 	TEXTURE_DEPTH_COMPARE_MODE( kLessEqual ),
@@ -563,7 +521,7 @@ static const sce::Agc::Core::Sampler::DepthCompare sDepthCompareMode[] =
 	TEXTURE_DEPTH_COMPARE_MODE( kNotEqual ),
 	TEXTURE_DEPTH_COMPARE_MODE( kNever ),
 	TEXTURE_DEPTH_COMPARE_MODE( kAlways ),
-};
+}};
 
 #undef TEXTURE_DEPTH_COMPARE_MODE
 
@@ -573,8 +531,32 @@ static RendererContextAGC* sRendererAGC;
 
 //=============================================================================================
 
+RendererContextAGC::Resource::Resource()
+{
+	mInflightCounter = std::make_shared<InflightCounter>();
+}
+
+//=============================================================================================
+
+void RendererContextAGC::Resource::setInflight()
+{
+	if (mInflightCounter->mFrameClock != sRendererAGC->mFrameClock)
+	{
+		mInflightCounter->mCount++;
+		mInflightCounter->mFrameClock = sRendererAGC->mFrameClock;
+
+		DisplayResources& displayRes = *(sRendererAGC->mFrameState.mDisplayRes);
+		displayRes.mInflightCounters.push_back(mInflightCounter);
+	}
+}
+
+//=============================================================================================
+
 bool RendererContextAGC::Shader::create(const Memory& mem)
 {
+	// Run constructor to reset object.
+	new (this) Shader{};
+
 	bx::MemoryReader reader{mem.data, mem.size};
 
 	uint32_t magic{};
@@ -769,12 +751,18 @@ bool RendererContextAGC::Shader::create(const Memory& mem)
 void RendererContextAGC::Shader::destroy()
 {
 	// TODO: (manderson) destroy shader.
+	
+	// Run destructor.
+	this->~Shader();
 }
 
 //=============================================================================================
 
 bool RendererContextAGC::Program::create(ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle)
 {
+	// Run constructor to reset object.
+	new (this) Program{};
+
 	mVertexShaderHandle = vertexShaderHandle;
 	mFragmentShaderHandle = fragmentShaderHandle;
 	return true;
@@ -785,46 +773,69 @@ bool RendererContextAGC::Program::create(ShaderHandle const vertexShaderHandle, 
 void RendererContextAGC::Program::destroy()
 {
 	// TODO: (manderson) destroy program.
+
+	// Run destructor.
+	this->~Program();
 }
 
 //=============================================================================================
 
 bool RendererContextAGC::Buffer::update(uint32_t const offset, uint32_t const size, const uint8_t* const data)
 {
-	// TODO: (manderson) Once things are up and running consider N buffering to avoid malloc and memcpy, or possibly
-	// staging buffer with GPU copy?
+	// If the buffer is not inflight and it's size hasn't changed we can update it's contents directly,
+	// otherwise we need to modify a copy of the current buffer and discard the current buffer when it's
+	// not inflight.
 	uint32_t const requestSize = offset + size;
 	uint32_t const newSize = mSize > requestSize ? mSize : requestSize;
-	uint8_t* const newBuffer = allocDmem({newSize, 16});
-	if (newBuffer == nullptr)
-	{
-		return false;
-	}
-	if (mBuffer != nullptr)
-	{
-		uint32_t const beforeSize = mSize < offset ? mSize : offset;
-		if (beforeSize > 0)
+	uint8_t* newBuffer = mBuffer;
+	if (mInflightCounter->mCount > 0 || newSize > mSize)
+	{		
+		// Allocate new buffer.
+		newBuffer = allocDmem({newSize, 16});
+		if (newBuffer == nullptr)
 		{
-			memcpy(newBuffer, mBuffer, beforeSize);
-		}
-		uint32_t const afterSize = mSize > requestSize ? (mSize - requestSize) : 0;
-		if (afterSize > 0)
-		{
-			memcpy(newBuffer + requestSize, mBuffer + requestSize, afterSize);
-		}
-		sRendererAGC->mDestroyList.push_back([count=(int32_t)NumDisplayBuffers,buffer=mBuffer]() mutable {
-			count--;
-			if (count <= 0)
-			{
-				freeDmem(buffer);
-				return true;
-			}
 			return false;
-		});
+		}
+
+		// Copy previous contents, don't bother with portion we are going to update.
+		if (mBuffer != nullptr)
+		{
+			uint32_t const beforeSize = mSize < offset ? mSize : offset;
+			if (beforeSize > 0)
+			{
+				memcpy(newBuffer, mBuffer, beforeSize);
+			}
+			uint32_t const afterSize = mSize > requestSize ? (mSize - requestSize) : 0;
+			if (afterSize > 0)
+			{
+				memcpy(newBuffer + requestSize, mBuffer + requestSize, afterSize);
+			}
+		}	
 	}
-	mBuffer = newBuffer;
+
+	// Update buffer.
+	memcpy(newBuffer + offset, data, size);
+
+	// If we allocated a new buffer queue to old one for delete once it's not inflight.
+	if (newBuffer != mBuffer)
+	{
+		if (mBuffer != nullptr)
+		{
+			sRendererAGC->mDestroyList.push_back([inflightCounter=mInflightCounter,buffer=mBuffer]() mutable {
+				if (inflightCounter->mCount == 0)
+				{
+					freeDmem(buffer);
+					return true;
+				}
+				return false;
+			});
+		}
+		mInflightCounter = std::make_shared<InflightCounter>();
+		mBuffer = newBuffer;
+	}
+
+	// Update size.
 	mSize = newSize;
-	memcpy(mBuffer + offset, data, size);
 
 	return true;
 }
@@ -835,9 +846,8 @@ void RendererContextAGC::Buffer::destroy()
 {
 	if (mBuffer != nullptr)
 	{
-		sRendererAGC->mDestroyList.push_back([count=(int32_t)NumDisplayBuffers,buffer=mBuffer]() mutable {
-			count--;
-			if (count <= 0)
+		sRendererAGC->mDestroyList.push_back([inflightCounter=mInflightCounter,buffer=mBuffer]() mutable {
+			if (inflightCounter->mCount == 0)
 			{
 				freeDmem(buffer);
 				return true;
@@ -853,6 +863,9 @@ void RendererContextAGC::Buffer::destroy()
 
 bool RendererContextAGC::IndexBuffer::create(uint16_t const flags, uint32_t const size, const uint8_t* const data)
 {
+	// Run constructor to reset object.
+	new (this) IndexBuffer{};
+
 	mFlags = flags;
 	mSize = 0;
 	if (data != nullptr)
@@ -868,12 +881,18 @@ void RendererContextAGC::IndexBuffer::destroy()
 {
 	Buffer::destroy();
 	mFlags = 0;
+
+	// Run destructor.
+	this->~IndexBuffer();
 }
 
 //=============================================================================================
 
 bool RendererContextAGC::VertexBuffer::create(VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data)
 {
+	// Run constructor to reset object.
+	new (this) VertexBuffer{};
+
 	mLayoutHandle = layoutHandle;
 	mSize = 0;
 	if (data != nullptr)
@@ -889,13 +908,142 @@ void RendererContextAGC::VertexBuffer::destroy()
 {
 	Buffer::destroy();
 	mLayoutHandle = {kInvalidHandle};
+
+	// Run destructor.
+	this->~VertexBuffer();
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::Texture::tileSurface(void* const tiledSurface, const sce::Agc::Core::TextureSpec& tiledSpec, uint32_t const arraySlice, uint32_t const mipLevel, const void* const untiledSurface, uint32_t const untiledSize, bimg::TextureFormat::Enum const untiledFormat, uint32_t untiledBlockPitch, const sce::AgcGpuAddress::SurfaceRegion& region)
+{
+	SceError ret;
+
+	sce::AgcGpuAddress::SurfaceDescription desc{};
+	ret = sce::Agc::Core::translate(&desc, &tiledSpec);
+	if (ret != SCE_OK) {
+		return false;
+	}
+
+	// Verify region.
+	if ((region.m_left % desc.m_texelsPerElementWide) != 0 ||
+		(region.m_top % desc.m_texelsPerElementTall) != 0 ||
+		(region.m_right % desc.m_texelsPerElementWide) != 0 ||
+		(region.m_bottom % desc.m_texelsPerElementTall) != 0)
+	{
+		return false;
+	}
+
+	sce::AgcGpuAddress::SurfaceSummary summary{};
+	ret = sce::AgcGpuAddress::computeSurfaceSummary(&summary, &desc);
+	if (ret != SCE_OK) {
+		return false;
+	}
+
+	// NOTE: (manderson) I am assuming that if pitch is specified it is block pitch for compressed
+	// textures.
+	uint32_t const width = region.m_right - region.m_left;
+	uint32_t const height = region.m_bottom - region.m_top;
+	uint32_t const depth = region.m_back - region.m_front;
+
+	// Convert texture format if required.
+	const bimg::ImageBlockInfo& bgraBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::BGRA8);
+	const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(untiledFormat);
+	const TextureFormatInfo& tf = sTextureFormat[untiledFormat];
+	uint32_t pitch = untiledBlockPitch == UINT16_MAX ? (width / blockInfo.blockWidth * blockInfo.blockSize) : untiledBlockPitch;
+	uint32_t size = bx::uint32_min(height / blockInfo.blockHeight * pitch * depth, untiledSize);
+	uint8_t* ptr = (uint8_t*)untiledSurface;
+	sce::AgcGpuAddress::SurfaceRegion adjustedRegion{region};
+	if (tf.m_convert)
+	{
+		// NOTE: (manderson) Conversion routine doesn't support 3d textures.
+		// NOTE: (manderson) Conversion doesn't support variable source pitch...
+		if (depth > 1 || untiledBlockPitch != UINT16_MAX)
+		{
+			return false;
+		}
+
+		// NOTE: (manderson) For some texture formats that we convert (Compressed formats) the slice width, height, and depth cannot
+		// be below 4, after we convert tileSurface will fail if the mip size isn't orig >> mipLevel, so pass the expected width and height to tileSurface.
+		sce::AgcGpuAddress::SurfaceRegion const maxRegion{
+			0,
+			0,
+			0, 
+			bx::max<uint32_t>(tiledSpec.m_width >> mipLevel, 1),
+			bx::max<uint32_t>(tiledSpec.m_height >> mipLevel, 1),
+			bx::max<uint32_t>(tiledSpec.m_depth >> mipLevel, 1)
+		};
+		adjustedRegion = {
+			bx::min<uint32_t>(region.m_left, maxRegion.m_right),
+			bx::min<uint32_t>(region.m_top, maxRegion.m_bottom),
+			bx::min<uint32_t>(region.m_front, maxRegion.m_back),
+			bx::min<uint32_t>(region.m_right, maxRegion.m_right),
+			bx::min<uint32_t>(region.m_bottom, maxRegion.m_bottom),
+			bx::min<uint32_t>(region.m_back, maxRegion.m_back)
+		};
+		if ((adjustedRegion.m_right - adjustedRegion.m_left) == 0 ||
+			(adjustedRegion.m_bottom - adjustedRegion.m_top) == 0 ||
+			(adjustedRegion.m_back - adjustedRegion.m_front) == 0)
+		{
+			BX_FREE(g_allocator, ptr);
+			return false;
+		}
+
+		pitch = width / bgraBlockInfo.blockWidth * bgraBlockInfo.blockSize;
+		size = height / bgraBlockInfo.blockHeight * pitch * depth;
+		ptr = (uint8_t*)BX_ALLOC(g_allocator, size);
+		bimg::imageDecodeToBgra8(g_allocator,
+			ptr,
+			untiledSurface,
+			width,
+			height,
+			pitch,
+			untiledFormat);
+	}
+
+	// Calc element region (an element is the sce equivelant for block).
+	sce::AgcGpuAddress::SurfaceRegion elementRegion{
+		adjustedRegion.m_left / desc.m_texelsPerElementWide,
+		adjustedRegion.m_top / desc.m_texelsPerElementTall,
+		adjustedRegion.m_front,
+		adjustedRegion.m_right / desc.m_texelsPerElementWide,
+		adjustedRegion.m_bottom / desc.m_texelsPerElementTall,
+		adjustedRegion.m_back
+	};
+
+	// Calc element row & slice pitch, this assumes the pitch is for a row of elements
+	// (texels for uncompressed images, blocks for compressed).
+	uint32_t const elementRowPitch = pitch >> desc.m_bytesPerElementLog2;
+	uint32_t const elementSlicePitch = (elementRegion.m_bottom - elementRegion.m_top) * elementRowPitch;
+
+	// Do it!
+	sce::Agc::SizeAlign sizeAlign = sce::Agc::Core::getSize(&tiledSpec);
+	ret = sce::AgcGpuAddress::tileSurfaceRegionFromPaddedBuffer(
+		tiledSurface,
+		sizeAlign.m_size,
+		ptr,
+		size,
+		&summary,
+		&elementRegion,
+		mipLevel,
+		arraySlice,
+		elementRowPitch,
+		elementSlicePitch);
+	if (ptr != untiledSurface)
+	{
+		BX_FREE(g_allocator, ptr);
+	}
+	if (ret != SCE_OK) {
+		return false;
+	}
+
+	return true;
 }
 
 //=============================================================================================
 
 void RendererContextAGC::Texture::setSampler(sce::Agc::Core::Sampler& sampler, uint64_t const flags)
 {
-	// TODO: (manderson) depth compare?
 	auto const u = sWrapMode[(flags & BGFX_SAMPLER_U_MASK) >> BGFX_SAMPLER_U_SHIFT];
 	auto const v = sWrapMode[(flags & BGFX_SAMPLER_V_MASK) >> BGFX_SAMPLER_V_SHIFT];
 	auto const w = sWrapMode[(flags & BGFX_SAMPLER_W_MASK) >> BGFX_SAMPLER_W_SHIFT];
@@ -903,11 +1051,24 @@ void RendererContextAGC::Texture::setSampler(sce::Agc::Core::Sampler& sampler, u
 	auto const min = sFilterMode[(flags & BGFX_SAMPLER_MIN_MASK) >> BGFX_SAMPLER_MIN_SHIFT];
 	auto const mip = sMipFilterMode[(flags & BGFX_SAMPLER_MIP_MASK) >> BGFX_SAMPLER_MIP_SHIFT];
 	auto const compare = sDepthCompareMode[(flags & BGFX_SAMPLER_COMPARE_MASK) >> BGFX_SAMPLER_COMPARE_SHIFT];
+
+	auto border = sce::Agc::Core::Sampler::BorderColor::kOpaqueBlack;
+	uint32_t borderIndex = 0;
+	if ((flags & BGFX_SAMPLER_U_BORDER) == BGFX_SAMPLER_U_BORDER ||
+		(flags & BGFX_SAMPLER_V_BORDER) == BGFX_SAMPLER_V_BORDER ||
+		(flags & BGFX_SAMPLER_W_BORDER) == BGFX_SAMPLER_W_BORDER)
+	{
+		border = sce::Agc::Core::Sampler::BorderColor::kFromTable;
+		borderIndex = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
+	}
+
 	sampler.init()
 		.setWrapMode(u, v, w)
 		.setXyFilterMode(mag, min)
 		.setMipFilterMode(mip)
 		.setDepthCompareFunction(compare)
+		.setBorderColor(border)
+		.setBorderColorTableIndex(borderIndex)
 		.setZFilterMode(sce::Agc::Core::Sampler::ZFilterMode::kLinear)
 		.setAnisotropyRatio(sce::Agc::Core::Sampler::AnisotropyRatio::k16);
 }
@@ -916,6 +1077,11 @@ void RendererContextAGC::Texture::setSampler(sce::Agc::Core::Sampler& sampler, u
 
 bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip)
 {
+	// Run constructor to reset object.
+	new (this) Texture{};
+
+	// NOTE: (manderson) Texture is valid if mBuffer != nullptr.
+
 	bimg::ImageContainer imageContainer;
 	if (bimg::imageParse(imageContainer, data, size))
 	{
@@ -940,7 +1106,7 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 		sce::Agc::Core::TypedFormat const typedFormat = srgb ? tf.m_fmtSrgb : tf.m_fmt;
 		if (typedFormat == sce::Agc::Core::TypedFormat::kLast)
 		{
-			// TODO: (manderson) Use error texture (pink texture) for missing formats or convert.
+			mTexture.init(); // blank texture.
 			return false;
 		}
 
@@ -968,19 +1134,22 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 		mSpec.m_height = ti.height;
 		mSpec.m_tileMode = depth ? sce::Agc::Core::Texture::TileMode::kDepth : (rt ? sce::Agc::Core::Texture::TileMode::kRenderTarget : sce::Agc::Core::Texture::TileMode::kLinear); // TODO: (manderson) Use block tile mode
 		mSpec.m_numMips = ti.numMips;
-		//mSpec.m_numFragments = sce::Agc::Core::Texture::NumFragments::k1;
 
 		sce::Agc::SizeAlign const alignedSize = sce::Agc::Core::getSize(&mSpec);
 		mBuffer = allocDmem(alignedSize);
 		if (mBuffer == nullptr)
 		{
+			mTexture.init(); // blank texture.
 			return false;
 		}
+
 		mSpec.m_dataAddress = mBuffer;
 		SceError error = sce::Agc::Core::initialize(&mTexture, &mSpec);
 		if (error != SCE_OK)
 		{
+			mTexture.init(); // blank texture.
 			freeDmem(mBuffer);
+			mBuffer = nullptr;
 			return false;
 		}
 
@@ -991,10 +1160,27 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 				bimg::ImageMip imgMip;
 				if (bimg::imageGetRawData(imageContainer, slice, mip+startLod, data, size, imgMip))
 				{
-					error = tileSurface(mTexture.getDataAddress(), imgMip.m_data, mSpec, mip, slice);
-					if (error != SCE_OK)
+					// Verify format.
+					if (imgMip.m_format != ti.format)
 					{
+						mTexture.init();
+						return false;
+					}
+
+					// Tile surface to buffer.
+					sce::AgcGpuAddress::SurfaceRegion const region{
+						0,
+						0,
+						0,
+						imgMip.m_width,
+						imgMip.m_height,
+						imgMip.m_depth
+					};
+					if (!tileSurface(mBuffer, mSpec, slice, mip, imgMip.m_data, imgMip.m_size, imgMip.m_format, UINT16_MAX, region))
+					{
+						mTexture.init(); // blank texture.
 						freeDmem(mBuffer);
+						mBuffer = nullptr;
 						return false;
 					}
 				}
@@ -1014,6 +1200,13 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 			drtSpec.m_stencilFormat = sce::Agc::CxDepthRenderTarget::StencilFormat::k8UInt;
 			sce::Agc::SizeAlign const stencilSize = sce::Agc::Core::getSize(&drtSpec, sce::Agc::Core::DepthRenderTargetComponent::kStencil);
 			mStencilBuffer = allocDmem(sce::Agc::SizeAlign(stencilSize.m_size, stencilSize.m_align));
+			if (mStencilBuffer == nullptr)
+			{
+				mTexture.init(); // blank texture.
+				freeDmem(mBuffer);
+				mBuffer = nullptr;
+				return false;
+			}
 		}
 
 		mFlags = flags;
@@ -1025,14 +1218,83 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 }
 
 //=============================================================================================
+bool RendererContextAGC::Texture::update(uint8_t const slice, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data)
+{
+	// Was texture initialized successfully?
+	if (mBuffer == nullptr)
+	{
+		return false;
+	}
+
+	// If the texture is not inflight we can update it's contents directly, otherwise we need to
+	// modify a copy of the current texture and discard the current buffer when it's not inflight.
+	uint8_t* newBuffer = mBuffer;
+	if (mInflightCounter->mCount != 0)
+	{
+		sce::Agc::SizeAlign const alignedSize = sce::Agc::Core::getSize(&mSpec);
+		newBuffer = allocDmem(alignedSize);
+		if (newBuffer == nullptr)
+		{
+			return false;
+		}
+		mTexture.setDataAddress(newBuffer);
+
+		// Copy existing contents, if we are updating the whole texture we don't need to do this.
+		// TODO: (manderson) investigate copying only region that isn't updated, this is made difficult
+		// by the fact that the existing buffer is tiled.
+		bool isFullMip = rect.m_x == 0 && rect.m_width == bx::max<uint32_t>(mSpec.m_width >> mip, 1) &&
+						 rect.m_y == 0 && rect.m_height == bx::max<uint32_t>(mSpec.m_height >> mip, 1) &&
+						 z == 0 && depth == bx::max<uint32_t>(mSpec.m_depth >> mip, 1);
+		if (!isFullMip)
+		{
+			memcpy(newBuffer, mBuffer, alignedSize.m_size);
+		}
+	}
+
+	// Tile update rect into buffer.
+	sce::AgcGpuAddress::SurfaceRegion const region{
+		(uint32_t)rect.m_x,
+		(uint32_t)rect.m_y,
+		(uint32_t)z,
+		(uint32_t)rect.m_x + (uint32_t)rect.m_width,
+		(uint32_t)rect.m_y + (uint32_t)rect.m_height,
+		(uint32_t)z + depth
+	};
+	if (!tileSurface(newBuffer, mSpec, slice, mip, data, size, mFormat, pitch, region))
+	{
+		if (newBuffer != mBuffer)
+		{
+			freeDmem(newBuffer);
+		}
+		return false;
+	}
+
+	// Discard old buffer if we needed to allocated a new one (old buffer is inflight)
+	if (newBuffer != mBuffer)
+	{
+		sRendererAGC->mDestroyList.push_back([inflightCounter=mInflightCounter,buffer=mBuffer]() mutable {
+			if (inflightCounter->mCount == 0)
+			{
+				freeDmem(buffer);
+				return true;
+			}
+			return false;
+		});
+		mInflightCounter = std::make_shared<InflightCounter>();
+		mBuffer = newBuffer;
+	}
+
+	return true;
+}
+
+//=============================================================================================
 
 void RendererContextAGC::Texture::destroy()
 {
 	if (mBuffer != nullptr || mStencilBuffer != nullptr)
 	{
-		sRendererAGC->mDestroyList.push_back([count=(int32_t)NumDisplayBuffers,textureBuffer=mBuffer,stencilBuffer=mStencilBuffer]() mutable {
-			count--;
-			if (count <= 0)
+		sRendererAGC->mDestroyList.push_back([inflightCounter=mInflightCounter,textureBuffer=mBuffer,stencilBuffer=mStencilBuffer]() mutable {
+			if (inflightCounter->mCount == 0)
 			{
 				if (textureBuffer != nullptr)
 				{
@@ -1049,12 +1311,25 @@ void RendererContextAGC::Texture::destroy()
 	}
 	mBuffer = nullptr;
 	mStencilBuffer = nullptr;
+
+	// Run destructor.
+	this->~Texture();
+}
+
+//=============================================================================================
+
+RendererContextAGC::FrameBuffer::FrameBuffer()
+{
+	mColorHandles.fill({ kInvalidHandle });
 }
 
 //=============================================================================================
 
 bool RendererContextAGC::FrameBuffer::create(uint8_t const num, const Attachment* const attachments)
 {
+	// Run constructor to reset object.
+	new (this) FrameBuffer{};
+
 	mWidth = 0;
 	mHeight = 0;
 	mNumAttachments = 0;
@@ -1155,7 +1430,8 @@ bool RendererContextAGC::FrameBuffer::create(uint8_t const num, const Attachment
 
 void RendererContextAGC::FrameBuffer::destroy()
 {
-
+	// Run destructor.
+	this->~FrameBuffer();
 }
 
 //=============================================================================================
@@ -1377,6 +1653,7 @@ bool RendererContextAGC::createContext()
 			&ctx.m_dcb);
 		displayRes.mLabel = (sce::Agc::Label*)allocDmem({ sizeof(sce::Agc::Label), sce::Agc::Alignment::kLabel });
 		displayRes.mLabel->m_value = 1; // 1 means "not used by GPU"
+		displayRes.mBorderColorBuffer = (float*)allocDmem({BGFX_CONFIG_MAX_COLOR_PALETTE * sizeof(float) * 4, 256});
 	}
 
 	return true;
@@ -1577,6 +1854,7 @@ void RendererContextAGC::updateTextureBegin(TextureHandle handle, uint8_t side, 
 
 void RendererContextAGC::updateTexture(TextureHandle handle, uint8_t side, uint8_t mip, const Rect& rect, uint16_t z, uint16_t depth, uint16_t pitch, const Memory* mem)
 {
+	mTextures[handle.idx].update(side, mip, rect, z, depth, pitch, mem->size, mem->data);
 }
 
 //=============================================================================================
@@ -1680,6 +1958,7 @@ void RendererContextAGC::updateViewName(ViewId id, const char* name)
 void RendererContextAGC::updateUniform(uint16_t loc, const void* data, uint32_t size)
 {
 	bx::memCopy(mUniforms[loc], data, size);
+	mUniformClock++;
 }
 
 //=============================================================================================
@@ -1698,20 +1977,6 @@ void RendererContextAGC::setMarker(const char* marker, uint16_t len)
 
 void RendererContextAGC::setName(Handle handle, const char* name, uint16_t len)
 {
-}
-
-//=============================================================================================
-
-RendererContextAGC::VertexBindInfo::VertexBindInfo( ProgramHandle const programHandle, VertexBufferHandle const bufferHandle, VertexLayoutHandle layoutHandle, uint32_t const baseVertex )
-{
-	const Program& program{ sRendererAGC->mPrograms[programHandle.idx] };
-	const Shader& vertexShader{ sRendererAGC->mShaders[program.mVertexShaderHandle.idx] };
-	mCount = vertexShader.mNumAttributes;
-	for (uint32_t i = 0; i < mCount; i++)
-	{
-		mAttribs[i] = { vertexShader.mAttributes[i], bufferHandle, layoutHandle, baseVertex };
-	}
-	mHash = bx::hash<bx::HashMurmur2A>(&mAttribs[0], mCount * sizeof(VertexBindInfo));
 }
 
 //=============================================================================================
@@ -1767,6 +2032,8 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 		}
 		const AttribFormat& format = it->second;
 		
+		binding.mBufferHandles[i].idx = attribBindInfo.mBufferHandle.idx;
+
 		// Initialize buffer struct.
 		uint32_t const offs = attribBindInfo.mBaseVertex * layout.m_stride;
 		uint32_t const count = (buffer.mSize - offs) / layout.m_stride;
@@ -1803,6 +2070,14 @@ bool RendererContextAGC::bindVertexAttributes(const RenderDraw& draw)
 				.setVertexBuffers(0, binding.mCount, &binding.mBuffers[0]);
 			mFrameState.mNumBufferVertices = binding.mNumBufferVertices;
 			mFrameState.mVertexAttribHash = bindInfo.mHash;
+
+			// Flag buffers as inflight.
+			for (uint32_t i = 0; i < binding.mCount; i++)
+			{
+				VertexBuffer& buffer = mVertexBuffers[binding.mBufferHandles[i].idx];
+				buffer.setInflight();
+			}
+
 			return true;
 		}
 		return false;
@@ -1850,7 +2125,8 @@ void RendererContextAGC::bindFrameBuffer(FrameBufferHandle const frameBufferHand
 	{
 		if (isValid(frameBufferHandle))
 		{
-			const FrameBuffer& fb = mFrameBuffers[frameBufferHandle.idx];
+			FrameBuffer& fb = mFrameBuffers[frameBufferHandle.idx];
+			fb.setInflight();
 			uint32_t const c = bx::uint32_max(mFrameState.mNumFrameBufferAttachments, fb.mNumAttachments);
 			for (uint32_t i = 0; i < c; i++)
 			{
@@ -2099,6 +2375,7 @@ void RendererContextAGC::bindSamplers(const RenderBind& bindings, bool const ver
 					if (bind.m_idx != kInvalidHandle)
 					{
 						Texture& texture = mTextures[bind.m_idx];
+						texture.setInflight();
 						if (vertexStage)
 						{
 							ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
@@ -2213,7 +2490,7 @@ void RendererContextAGC::bindSamplers(const RenderBind& bindings, bool const ver
 bool RendererContextAGC::bindProgram(ProgramHandle const programHandle, const RenderDraw& draw, const RenderBind& bind, bool const overridePredefined)
 {
 	Program& program = mPrograms[programHandle.idx];
-	const Shader& vtxShader = mShaders[program.mVertexShaderHandle.idx];
+	Shader& vtxShader = mShaders[program.mVertexShaderHandle.idx];
 	Shader* const frgShader = isValid(program.mFragmentShaderHandle) ? &mShaders[program.mFragmentShaderHandle.idx] : nullptr;
 
 	// Bind shaders.
@@ -2225,6 +2502,12 @@ bool RendererContextAGC::bindProgram(ProgramHandle const programHandle, const Re
 		uint64_t const primType = (draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT;
 		ctx.setShaders(nullptr, vtxShader.mShader, frgShader != nullptr ? frgShader->mShader : nullptr, sPrimTypeInfo[primType].m_type);
 		mFrameState.mProgramHandle = programHandle;
+		program.setInflight();
+		vtxShader.setInflight();
+		if (frgShader != nullptr)
+		{
+			frgShader->setInflight();
+		}
 	}
 
 	// Commit vertex shader uniforms.
@@ -2687,6 +2970,18 @@ void RendererContextAGC::waitForGPU()
 	displayRes.mLabel->m_value = 0;
 	ctx.reset();
 	ctx.m_dcb.waitUntilSafeForRendering(mVideoHandle, mPhase);
+
+	// Decrment the inflight count of all resources used by this command buffer for it's
+	// previous frame.
+	landResources();
+
+	// Set border colors, this palette is shared with clear colors, but
+	// just copy all of them incase they are used as uv border colors.
+	memcpy(displayRes.mBorderColorBuffer, mFrameState.mFrame->m_colorPalette, BGFX_CONFIG_MAX_COLOR_PALETTE * sizeof(float) * 4);
+	sce::Agc::CxBorderColorTableAddrGfx borderColorTableAddrGfx{};
+	borderColorTableAddrGfx.init()
+		.setBase(displayRes.mBorderColorBuffer);
+	ctx.m_sb.setState(borderColorTableAddrGfx);
 }
 
 //=============================================================================================
@@ -2762,10 +3057,10 @@ void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 		else
 		{
 			float const rgba[4]{
-				clear.m_index[0] * (1.0f / 255.0f),
-				clear.m_index[1] * (1.0f / 255.0f),
-				clear.m_index[2] * (1.0f / 255.0f),
-				clear.m_index[3] * (1.0f / 255.0f),
+				(float)clear.m_index[0] * (1.0f / 255.0f),
+				(float)clear.m_index[1] * (1.0f / 255.0f),
+				(float)clear.m_index[2] * (1.0f / 255.0f),
+				(float)clear.m_index[3] * (1.0f / 255.0f),
 			};
 			for (uint32_t i = 0; i < numRt; ++i)
 			{
@@ -2816,7 +3111,6 @@ bool RendererContextAGC::submitCompute()
 	if (compute.m_uniformBegin < compute.m_uniformEnd)
 	{
 		rendererUpdateUniforms(this, mFrameState.mFrame->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
-		mUniformClock++;
 	}
 
 	// ... do stuff ...
@@ -2833,11 +3127,12 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 	if (isValid(draw.m_indexBuffer))
 	{
-		const IndexBuffer& indexBuffer = mIndexBuffers[draw.m_indexBuffer.idx];
+		IndexBuffer& indexBuffer = mIndexBuffers[draw.m_indexBuffer.idx];
 		uint32_t const indexSize = draw.isIndex16() ? 2 : 4;
 		uint32_t const numIndices = indexBuffer.mSize / indexSize;
 		if (draw.m_indexBuffer.idx != mFrameState.mDrawState.m_indexBuffer.idx)
 		{
+			indexBuffer.setInflight();
 			ctx.m_dcb.setIndexSize(indexSize == 2 ? sce::Agc::IndexSize::k16 : sce::Agc::IndexSize::k32);
 			ctx.m_dcb.setIndexBuffer(indexBuffer.mBuffer);
 			ctx.m_dcb.setIndexCount(numIndices);
@@ -2892,7 +3187,6 @@ bool RendererContextAGC::submitDraw()
 	if (draw.m_uniformBegin < draw.m_uniformEnd)
 	{
 		rendererUpdateUniforms(this, mFrameState.mFrame->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
-		mUniformClock++;
 	}
 
 	if (isValid(programHandle) &&
@@ -2930,6 +3224,7 @@ void RendererContextAGC::endFrame()
 	SCE_AGC_ASSERT(error == SCE_OK);
 	error = sce::Agc::suspendPoint();
 	SCE_AGC_ASSERT(error == SCE_OK);
+	mFrameClock++;
 }
 
 //=============================================================================================
@@ -2972,6 +3267,21 @@ void RendererContextAGC::submit(Frame* frame, ClearQuad& clearQuad, TextVideoMem
 
 //=============================================================================================
 
+void RendererContextAGC::landResources()
+{
+	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+	for (auto& counter : displayRes.mInflightCounters)
+	{
+		if (counter->mCount > 0)
+		{
+			counter->mCount--;
+		}
+	}
+	displayRes.mInflightCounters.clear();
+}
+
+//=============================================================================================
+
 void RendererContextAGC::tickDestroyList(bool const force)
 {
 	for (auto it = mDestroyList.begin(); it != mDestroyList.end();)
@@ -2985,11 +3295,7 @@ void RendererContextAGC::tickDestroyList(bool const force)
 				removed = callback();
 			}
 		}
-		if (removed)
-		{
-			// TODO: (manderson) swap with end - 1 instead of erase, tinystl doesn't have iter_swap...
-			it = mDestroyList.erase(it);
-		}
+		it = removed ? mDestroyList.erase(it) : it + 1;
 	}
 }
 

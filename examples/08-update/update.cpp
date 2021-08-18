@@ -652,11 +652,11 @@ public:
 					const uint16_t tx = m_rng.gen()%(kTexture2dSize-tw);
 					const uint16_t ty = m_rng.gen()%(kTexture2dSize-th);
 
-					uint8_t* dst = &m_texture2dData[(ty*kTexture2dSize+tx)*4];
+					uint8_t* dst = &m_texture2dData[(ty*pitch)+(tx*4)];
 					uint8_t* next = dst + pitch;
 
 					// Using makeRef to pass texture memory without copying.
-					const bgfx::Memory* mem = bgfx::makeRef(dst, tw*th*4);
+					const bgfx::Memory* mem = bgfx::makeRef(dst, pitch*th);
 
 					for (uint32_t yy = 0; yy < th; ++yy, dst = next, next += pitch)
 					{

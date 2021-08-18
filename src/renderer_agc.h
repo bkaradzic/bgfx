@@ -26,6 +26,7 @@
 #include <array>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 //=============================================================================================
 
@@ -98,7 +99,29 @@ public:
 
 private:
 
-	struct Shader
+	struct InflightCounter
+	{
+		uint64_t mFrameClock{};
+		uint32_t mCount{};
+	};
+
+	// We use a shared pointer to track inflight resources so that if a resource update occurs while a
+	// resource is inflight we can queue the resource to be discarded once it's not inflight and
+	// create a clone with the requested update. The queue used to delete the resource uses the old
+	// inflight counter to determine when it is safe to delete the resource and the updated clone uses
+	// a new counter. Using this method we can simply write updates to an existing resource without discarding
+	// when the resource is not inflight. No double/triple buffering or staging buffers are required as all 
+	// resource memory is either directly updated or cloned and updated by the CPU.
+	struct Resource
+	{
+		Resource();
+		virtual ~Resource() = default;
+		void setInflight();
+
+		std::shared_ptr<InflightCounter> mInflightCounter{};
+	};
+
+	struct Shader final : public Resource
 	{
 		bool create(const Memory& mem);
 		void destroy();
@@ -119,22 +142,17 @@ private:
 		uint8_t mNumAttributes{};
 	};
 
-	struct Program
+	struct Program final : public Resource
 	{
 		bool create(ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle);
 		void destroy();
 
-		ShaderHandle mVertexShaderHandle{ kInvalidHandle };
-		ShaderHandle mFragmentShaderHandle{ kInvalidHandle };
+		ShaderHandle mVertexShaderHandle{kInvalidHandle};
+		ShaderHandle mFragmentShaderHandle{kInvalidHandle};
 	};
 
-	struct Buffer
+	struct Buffer : public Resource
 	{
-	protected:
-		Buffer() = default;
-	
-	public:
-		virtual ~Buffer() = default;
 		bool update(uint32_t const offset, uint32_t const size, const uint8_t* const data);
 		virtual void destroy();
 
@@ -158,10 +176,12 @@ private:
 		VertexLayoutHandle mLayoutHandle{kInvalidHandle};
 	};
 
-	struct Texture
+	struct Texture final : public Resource
 	{
+		static bool tileSurface(void* const tiledSurface, const sce::Agc::Core::TextureSpec& tiledSpec, uint32_t const arraySlice, uint32_t const mipLevel, const void* const untiledSurface, uint32_t const untiledSize, bimg::TextureFormat::Enum const untiledFormat, uint32_t untiledBlockPitch, const sce::AgcGpuAddress::SurfaceRegion& region);
 		static void setSampler(sce::Agc::Core::Sampler& sampler, uint64_t const flags);
 		bool create(uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip);
+		bool update(uint8_t const side, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data);
 		void destroy();
 
 		uint8_t* mBuffer{};
@@ -169,18 +189,19 @@ private:
 		sce::Agc::Core::TextureSpec mSpec{};
 		sce::Agc::Core::Texture mTexture{};
 		sce::Agc::Core::Sampler mSampler{};
-		uint64_t mFlags;
-		bimg::TextureFormat::Enum mFormat;
+		uint64_t mFlags{};
+		bimg::TextureFormat::Enum mFormat{bimg::TextureFormat::Count};
 	};
 	
-	struct FrameBuffer
+	struct FrameBuffer final : public Resource
 	{
+		FrameBuffer();
 		bool create(uint8_t const num, const Attachment* const attachment);
 		void destroy();
 
-		TextureHandle mColorHandles[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS]{};
-		sce::Agc::CxRenderTarget mColorTargets[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS]{};
-		TextureHandle mDepthHandle{ kInvalidHandle };
+		std::array<TextureHandle, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS> mColorHandles{};
+		std::array<sce::Agc::CxRenderTarget, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS> mColorTargets{};
+		TextureHandle mDepthHandle{kInvalidHandle};
 		sce::Agc::CxDepthRenderTarget mDepthTarget{};
 		uint32_t mWidth{};
 		uint32_t mHeight{};
@@ -192,12 +213,11 @@ private:
 		Attrib::Enum mAttrib{};
 		VertexBufferHandle mBufferHandle{};
 		VertexLayoutHandle mLayoutHandle{};
-		uint32_t mBaseVertex;
+		uint32_t mBaseVertex{};
 	};
 
 	struct VertexBindInfo
 	{
-		VertexBindInfo( ProgramHandle const programHandle, VertexBufferHandle const bufferHandle, VertexLayoutHandle layoutHandle = { kInvalidHandle }, uint32_t const baseVertex = 0 );
 		VertexBindInfo( ProgramHandle const programHandle, const RenderDraw& draw);
 
 		std::array<VertexAttribBindInfo, Attrib::Count> mAttribs{};
@@ -207,6 +227,7 @@ private:
 
 	struct VertexBinding
 	{
+		std::array<VertexBufferHandle, Attrib::Count> mBufferHandles{};
 		std::array<sce::Agc::Core::Buffer, Attrib::Count> mBuffers{};
 		std::array<sce::Agc::Core::VertexAttribute, Attrib::Count> mAttribs{};
 		uint32_t mCount{};
@@ -218,6 +239,8 @@ private:
 		sce::Agc::CxRenderTarget mRenderTarget{};
 		sce::Agc::Core::BasicContext mContext{};
 		sce::Agc::Label* mLabel{};
+		float* mBorderColorBuffer{};
+		std::vector<std::shared_ptr<InflightCounter>> mInflightCounters;
 	};
 
 	struct FrameState
@@ -279,23 +302,24 @@ private:
 	bool submitCompute();
 	bool submitDraw();
 	void endFrame();
+	void landResources();
 	void tickDestroyList(bool const force = false);
 
  	// NOTE: (manderson) We add + 1 to each resource type limit to have
 	// an explicit unused handle we can use if needed.
-	IndexBuffer mIndexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS + 1]{};
-	VertexBuffer mVertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS + 1]{};
-	Shader mShaders[BGFX_CONFIG_MAX_SHADERS + 1]{};
-	Program mPrograms[BGFX_CONFIG_MAX_PROGRAMS + 1]{};
-	VertexLayout mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS + 1]{};
-	Texture mTextures[BGFX_CONFIG_MAX_TEXTURES + 1]{};
-	FrameBuffer mFrameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS + 1]{};
+	std::array<IndexBuffer, BGFX_CONFIG_MAX_INDEX_BUFFERS + 1> mIndexBuffers{};
+	std::array<VertexBuffer,BGFX_CONFIG_MAX_VERTEX_BUFFERS + 1> mVertexBuffers{};
+	std::array<Shader, BGFX_CONFIG_MAX_VERTEX_BUFFERS + 1> mShaders{};
+	std::array<Program, BGFX_CONFIG_MAX_PROGRAMS + 1> mPrograms{};
+	std::array<VertexLayout, BGFX_CONFIG_MAX_VERTEX_LAYOUTS + 1> mVertexLayouts{};
+	std::array<Texture, BGFX_CONFIG_MAX_TEXTURES + 1> mTextures{};
+	std::array<FrameBuffer, BGFX_CONFIG_MAX_FRAME_BUFFERS + 1> mFrameBuffers{};
 	std::vector<std::function<bool()>> mDestroyList;
 
-	void* mUniforms[BGFX_CONFIG_MAX_UNIFORMS]{};
+	std::array<void*, BGFX_CONFIG_MAX_UNIFORMS> mUniforms{};
 	UniformRegistry mUniformReg{};
 
-	DisplayResources mDisplayResources[NumDisplayBuffers]{};
+	std::array<DisplayResources, NumDisplayBuffers> mDisplayResources{};
 	FrameState mFrameState{};
 	sce::Agc::CxDepthRenderTarget mDepthRenderTarget{};
 	RenderDraw mBlitDraw{};
@@ -304,6 +328,7 @@ private:
 	RenderBind mClearBind{};
 	UniformHandle mClearQuadColor{kInvalidHandle};
 	UniformHandle mClearQuadDepth{kInvalidHandle};
+	uint64_t mFrameClock{};
 	uint64_t mUniformClock{};
 	int mVideoHandle{};
 	uint32_t mWidth{};
