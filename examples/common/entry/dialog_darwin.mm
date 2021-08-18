@@ -58,16 +58,15 @@ bool openFileSelectionDialog(
 							 )
 {
 	NSMutableArray* fileTypes = [NSMutableArray arrayWithCapacity:10];
-	bx::Error err;
 	
-	for (bx::LineReader lr(_filter); !lr.isDone() && err.isOk();)
+	for (bx::LineReader lr(_filter); !lr.isDone();)
 	{
 		const bx::StringView line = lr.next();
 		const bx::StringView sep  = bx::strFind(line, '|');
 		
 		if (!sep.isEmpty() )
 		{
-			for (Split split(bx::strTrim(bx::StringView(sep.getPtr()+1, line.getTerm() ), " "), ' '); !split.isDone() && err.isOk();)
+			for (Split split(bx::strTrim(bx::StringView(sep.getPtr()+1, line.getTerm() ), " "), ' '); !split.isDone();)
 			{
 				const bx::StringView token = split.next();
 				
@@ -82,45 +81,54 @@ bool openFileSelectionDialog(
 	}
 	
 	__block NSString* fileName = nil;
-	bx::Semaphore semaphore;
-	bx::Semaphore* psemaphore = &semaphore;
-	
-	CFRunLoopPerformBlock([[NSRunLoop mainRunLoop] getCFRunLoop],
-						  kCFRunLoopCommonModes,
-				    ^{
-						NSSavePanel* panel = nil;
-						
-						if ( FileSelectionDialogType::Open == _type)
-						{
-							NSOpenPanel* openPanel = [NSOpenPanel openPanel];
-							openPanel.canChooseFiles = TRUE;
-							openPanel.allowsMultipleSelection = FALSE;
-							openPanel.canChooseDirectories = FALSE;
-							panel = openPanel;
-						}
-						else
-						{
-							panel = [NSSavePanel savePanel];
-						}
-						
-						panel.message = [[NSString alloc] initWithBytes:_title.getPtr() length:_title.getLength() encoding:NSASCIIStringEncoding];
-						panel.directoryURL = [NSURL URLWithString:@(_inOutFilePath.getCPtr())];
-						panel.allowedFileTypes = fileTypes;
-						
-						if ([panel runModal] == NSModalResponseOK)
-						{
-							NSURL* url = [panel URL];
-							if (nil != url)
-							{
-								fileName = [url path];
-								[fileName retain];
-							}
-					   	}
-						[panel close];
-						psemaphore->post();
-				   });
+	void (^invokeDialog)(void) = ^{
+		NSSavePanel* panel = nil;
+		if ( FileSelectionDialogType::Open == _type)
+		{
+			NSOpenPanel* openPanel = [NSOpenPanel openPanel];
+			openPanel.canChooseFiles = TRUE;
+			openPanel.allowsMultipleSelection = FALSE;
+			openPanel.canChooseDirectories = FALSE;
+			panel = openPanel;
+		}
+		else
+		{
+			panel = [NSSavePanel savePanel];
+		}
 
-	semaphore.wait();
+		panel.message = [[NSString alloc] initWithBytes:_title.getPtr() length:_title.getLength() encoding:NSASCIIStringEncoding];
+		panel.directoryURL = [NSURL URLWithString:@(_inOutFilePath.getCPtr())];
+		panel.allowedFileTypes = fileTypes;
+
+		if ([panel runModal] == NSModalResponseOK)
+		{
+			NSURL* url = [panel URL];
+			if (nil != url)
+			{
+				fileName = [url path];
+				[fileName retain];
+			}
+		}
+		[panel close];
+	};
+
+	if ([NSThread isMainThread])
+	{
+		invokeDialog();
+	}
+	else
+	{
+		bx::Semaphore semaphore;
+		bx::Semaphore* psemaphore = &semaphore;
+
+		CFRunLoopPerformBlock([[NSRunLoop mainRunLoop] getCFRunLoop],
+				kCFRunLoopCommonModes,
+				^{
+			invokeDialog();
+			psemaphore->post();
+		});
+		semaphore.wait();
+	}
 
 	if ( fileName != nil )
 	{
