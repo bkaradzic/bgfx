@@ -218,8 +218,6 @@ private:
 
 	struct VertexBindInfo
 	{
-		VertexBindInfo( ProgramHandle const programHandle, const RenderDraw& draw);
-
 		std::array<VertexAttribBindInfo, Attrib::Count> mAttribs{};
 		uint32_t mCount{};
 		uint32_t mHash{};
@@ -227,7 +225,6 @@ private:
 
 	struct VertexBinding
 	{
-		std::array<VertexBufferHandle, Attrib::Count> mBufferHandles{};
 		std::array<sce::Agc::Core::Buffer, Attrib::Count> mBuffers{};
 		std::array<sce::Agc::Core::VertexAttribute, Attrib::Count> mAttribs{};
 		uint32_t mCount{};
@@ -268,6 +265,7 @@ private:
 		uint32_t mUniformBufferSize{};
 		uint32_t mNumBufferVertices{};
 		uint32_t mVertexAttribHash{};
+		uint32_t mNumFrameBufferDraws{};
 		uint16_t mView{};
 		uint16_t mFixedStateView{};
 		uint8_t mNumFrameBufferAttachments{};
@@ -278,6 +276,8 @@ private:
 		bool mUniformBufferDirty{};
 		bool mWireframeFill{};
 		bool mBlitting{};
+		bool mFlushFrameBufferColor{};
+		bool mFlushFrameBufferDepth{};
 	};
 
 	bool verifyInit(const Init& init);
@@ -286,6 +286,7 @@ private:
 	bool createContext();
 	void beginFrame(Frame* const frame);
 	void waitForGPU();
+	bool getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHandle const programHandle, const RenderDraw& draw);
 	bool getVertexBinding(VertexBinding& binding, const VertexBindInfo& bindInfo);
 	void bindFrameBuffer(FrameBufferHandle const frameBufferHandle);
 	bool bindUniformBuffer(bool const isFragment);

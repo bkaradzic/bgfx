@@ -89,42 +89,42 @@ struct AttribFormat
 	}
 
 static std::unordered_map<uint16_t, AttribFormat> sAttribFormatIndex{
-	ATTRIB_FORMAT(1, Float, false, k32Float, kX, k1, k1, k1),
-	ATTRIB_FORMAT(2, Float, false, k32_32Float, kX, kY, k1, k1),
+	ATTRIB_FORMAT(1, Float, false, k32Float, kX, k0, k0, k1),
+	ATTRIB_FORMAT(2, Float, false, k32_32Float, kX, kY, k0, k1),
 	ATTRIB_FORMAT(3, Float, false, k32_32_32Float, kX, kY, kZ, k1),
 	ATTRIB_FORMAT(4, Float, false, k32_32_32_32Float, kX, kY, kZ, kW),
 
-	ATTRIB_FORMAT(1, Half, false, k16Float, kX, k1, k1, k1),
-	ATTRIB_FORMAT(2, Half, false, k16_16Float, kX, kY, k1, k1),
+	ATTRIB_FORMAT(1, Half, false, k16Float, kX, k0, k0, k1),
+	ATTRIB_FORMAT(2, Half, false, k16_16Float, kX, kY, k0, k1),
 	ATTRIB_FORMAT(3, Half, false, k16_16_16_16Float, kX, kY, kZ, k1),
 	ATTRIB_FORMAT(4, Half, false, k16_16_16_16Float, kX, kY, kZ, kW),
 
-	ATTRIB_FORMAT(1, Uint8, true, k8UNorm, kX, k1, k1, k1),
-	ATTRIB_FORMAT(2, Uint8, true, k8_8UNorm, kX, kY, k1, k1),
+	ATTRIB_FORMAT(1, Uint8, true, k8UNorm, kX, k0, k0, k1),
+	ATTRIB_FORMAT(2, Uint8, true, k8_8UNorm, kX, kY, k0, k1),
 	ATTRIB_FORMAT(3, Uint8, true, k8_8_8_8UNorm, kX, kY, kZ, k1),
 	ATTRIB_FORMAT(4, Uint8, true, k8_8_8_8UNorm, kX, kY, kZ, kW),
 
-	ATTRIB_FORMAT(1, Uint8, false, k8UInt, kX, k1, k1, k1),
-	ATTRIB_FORMAT(2, Uint8, false, k8_8UInt, kX, kY, k1, k1),
+	ATTRIB_FORMAT(1, Uint8, false, k8UInt, kX, k0, k0, k1),
+	ATTRIB_FORMAT(2, Uint8, false, k8_8UInt, kX, kY, k0, k1),
 	ATTRIB_FORMAT(3, Uint8, false, k8_8_8_8UInt, kX, kY, kZ, k1),
 	ATTRIB_FORMAT(4, Uint8, false, k8_8_8_8UInt, kX, kY, kZ, kW),
 
-	ATTRIB_FORMAT(1, Int16, true, k16UNorm, kX, k1, k1, k1),
-	ATTRIB_FORMAT(2, Int16, true, k16_16UNorm, kX, kY, k1, k1),
-	ATTRIB_FORMAT(3, Int16, true, k16_16_16_16UNorm, kX, kY, kZ, k1),
-	ATTRIB_FORMAT(4, Int16, true, k16_16_16_16UNorm, kX, kY, kZ, kW),
+	ATTRIB_FORMAT(1, Int16, true, k16SNorm, kX, k0, k0, k1),
+	ATTRIB_FORMAT(2, Int16, true, k16_16SNorm, kX, kY, k0, k1),
+	ATTRIB_FORMAT(3, Int16, true, k16_16_16_16SNorm, kX, kY, kZ, k1),
+	ATTRIB_FORMAT(4, Int16, true, k16_16_16_16SNorm, kX, kY, kZ, kW),
 
-	ATTRIB_FORMAT(1, Int16, false, k16UInt, kX, k1, k1, k1),
-	ATTRIB_FORMAT(2, Int16, false, k16_16UInt, kX, kY, k1, k1),
-	ATTRIB_FORMAT(3, Int16, false, k16_16_16_16UInt, kX, kY, kZ, k1),
-	ATTRIB_FORMAT(4, Int16, false, k16_16_16_16UInt, kX, kY, kZ, kW),
+	ATTRIB_FORMAT(1, Int16, false, k16SInt, kX, k0, k0, k1),
+	ATTRIB_FORMAT(2, Int16, false, k16_16SInt, kX, kY, k0, k1),
+	ATTRIB_FORMAT(3, Int16, false, k16_16_16_16SInt, kX, kY, kZ, k1),
+	ATTRIB_FORMAT(4, Int16, false, k16_16_16_16SInt, kX, kY, kZ, kW),
 
-	ATTRIB_FORMAT(1, Uint10, false, k10_10_10_2UInt, kX, k1, k1, k1),
-	ATTRIB_FORMAT(2, Uint10, false, k10_10_10_2UInt, kX, kY, k1, k1),
+	ATTRIB_FORMAT(1, Uint10, false, k10_10_10_2UInt, kX, k0, k0, k1),
+	ATTRIB_FORMAT(2, Uint10, false, k10_10_10_2UInt, kX, kY, k0, k1),
 	ATTRIB_FORMAT(3, Uint10, false, k10_10_10_2UInt, kX, kY, kZ, k1),
 
-	ATTRIB_FORMAT(1, Uint10, true, k10_10_10_2UNorm, kX, k1, k1, k1),
-	ATTRIB_FORMAT(2, Uint10, true, k10_10_10_2UNorm, kX, kY, k1, k1),
+	ATTRIB_FORMAT(1, Uint10, true, k10_10_10_2UNorm, kX, k0, k0, k1),
+	ATTRIB_FORMAT(2, Uint10, true, k10_10_10_2UNorm, kX, kY, k0, k1),
 	ATTRIB_FORMAT(3, Uint10, true, k10_10_10_2UNorm, kX, kY, kZ, k1),
 };
 
@@ -1981,37 +1981,60 @@ void RendererContextAGC::setName(Handle handle, const char* name, uint16_t len)
 
 //=============================================================================================
 
-RendererContextAGC::VertexBindInfo::VertexBindInfo( ProgramHandle const programHandle, const RenderDraw& draw )
+bool RendererContextAGC::getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHandle const programHandle, const RenderDraw& draw)
 {
-	const Program& program{ sRendererAGC->mPrograms[programHandle.idx] };
-	const Shader& vertexShader{ sRendererAGC->mShaders[program.mVertexShaderHandle.idx] };
+	// Iterate through attributes required by the vertex shader and find a vertex stream that
+	// provides the attribute in the draw streams.
+	const Program& program{ mPrograms[programHandle.idx] };
+	const Shader& vertexShader{ mShaders[program.mVertexShaderHandle.idx] };
 	const Stream* const streams{ draw.m_stream };
 	uint8_t const streamMask{ draw.m_streamMask };
-	mCount = vertexShader.mNumAttributes;
-	for (uint32_t i = 0; i < mCount; i++)
+	bindInfo.mCount = vertexShader.mNumAttributes;
+	for (uint32_t i = 0; i < bindInfo.mCount; i++)
 	{
+		// Use the last stream that has the attribute required by the vertex shader.
 		Attrib::Enum const attrib = vertexShader.mAttributes[i];
+		bool found{};
 		for (uint32_t idx = 0, mask = streamMask;
 			 0 != mask;
 			 mask >>= 1, idx += 1)
 		{
+			// This bit of code just skips over streams that aren't set, so the next stream
+			// the loop visits is the next one that is actually set.
 			uint32_t const ntz = bx::uint32_cnttz(mask);
 			mask >>= ntz;
 			idx += ntz;
 
 			const Stream& stream = streams[idx];
-			mAttribs[i] = { attrib, stream.m_handle, stream.m_layoutHandle, stream.m_startVertex };
+			const VertexBuffer& buffer = mVertexBuffers[stream.m_handle.idx];
+			VertexLayoutHandle const layoutHandle = isValid(stream.m_layoutHandle) ? stream.m_layoutHandle : buffer.mLayoutHandle;
+			const VertexLayout& layout = mVertexLayouts[layoutHandle.idx];
+			if (layout.has(attrib))
+			{
+				bindInfo.mAttribs[i] = { attrib, stream.m_handle, layoutHandle, stream.m_startVertex };
+				found = true;
+			}
+		}
+
+		// If we didn't find any streams that have the attribute we can't draw!
+		if (!found)
+		{
+			// ERROR: Missing vertex attribute stream.
+			return false;
 		}
 	}
-	mHash = bx::hash<bx::HashMurmur2A>(&mAttribs[0], mCount * sizeof(VertexAttribBindInfo));
+	
+	// Calc hash for dirty state check.
+	bindInfo.mHash = bx::hash<bx::HashMurmur2A>(&bindInfo.mAttribs[0], bindInfo.mCount * sizeof(VertexAttribBindInfo));
+
+	return true;
 }
 
 //=============================================================================================
 
 bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBindInfo& bindInfo)
 {
-	// NOTE: (manderson) Ignore asInt bit in encoded attribute.
-	constexpr uint16_t asIntMask = (1 << 8);
+	// Build vertex binding from bind info.
 	sce::Agc::Core::BufferSpec spec{};
 	SceError error{};
 	binding.mNumBufferVertices = UINT32_MAX;
@@ -2021,19 +2044,40 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 		const VertexAttribBindInfo& attribBindInfo = bindInfo.mAttribs[i];
 		Attrib::Enum const attrib = attribBindInfo.mAttrib;
 		const VertexBuffer& buffer = mVertexBuffers[attribBindInfo.mBufferHandle.idx];
-		const VertexLayout& layout = mVertexLayouts[isValid(attribBindInfo.mLayoutHandle) ? attribBindInfo.mLayoutHandle.idx : buffer.mLayoutHandle.idx];
+		const VertexLayout& layout = mVertexLayouts[attribBindInfo.mLayoutHandle.idx];
+
+		// Clean up attribute flags (some examples have invalid attibute flags).
+		// Flags for reference:
+		//		uint16_t VertexLayout::encode(uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
+		//		{
+		//			const uint16_t encodedNorm = (_normalized&1)<<7;
+		//			const uint16_t encodedType = (_type&7)<<3;
+		//			const uint16_t encodedNum  = (_num-1)&3;
+		//			const uint16_t encodeAsInt = (_asInt&(!!"\x1\x1\x1\x0\x0"[_type]) )<<8;
+		//			return encodedNorm|encodedType|encodedNum|encodeAsInt;
+		//		}
+		// Ignore AsInt, all of the other render contexts ignore this, not sure what it's for.
+		constexpr uint16_t normalizedMask = (1 << 7);
+		constexpr uint16_t asIntMask = (1 << 8);
+		uint16_t cleanupMask = asIntMask;
+		uint16_t encodedAttrib = layout.m_attributes[attrib];
+		uint16_t const attribType = (encodedAttrib >> 3) & 0x7;
+		if ((attribType == AttribType::Float || attribType == AttribType::Half) &&
+			(encodedAttrib & normalizedMask) != 0)
+		{
+			cleanupMask |= normalizedMask;
+		}
+		encodedAttrib &= ~cleanupMask;
 		
 		// Lookup attribute format.
-		auto it = sAttribFormatIndex.find(layout.m_attributes[attrib] & ~asIntMask);
+		auto it = sAttribFormatIndex.find(encodedAttrib);
 		if (it == sAttribFormatIndex.end())
 		{
-			// ERROR!
+			// ERROR: Invalid vertex atrribute format.
 			return false;
 		}
 		const AttribFormat& format = it->second;
 		
-		binding.mBufferHandles[i].idx = attribBindInfo.mBufferHandle.idx;
-
 		// Initialize buffer struct.
 		uint32_t const offs = attribBindInfo.mBaseVertex * layout.m_stride;
 		uint32_t const count = (buffer.mSize - offs) / layout.m_stride;
@@ -2042,7 +2086,7 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 		error = sce::Agc::Core::initialize(&binding.mBuffers[i], &spec);
 		if (error != SCE_OK)
 		{
-			// ERROR!
+			// ERROR: Failed to create agc vertex buffer.
 			return false;
 		}
 
@@ -2057,31 +2101,42 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 
 bool RendererContextAGC::bindVertexAttributes(const RenderDraw& draw)
 {
-	VertexBindInfo const bindInfo{ mFrameState.mProgramHandle, draw };
-	if (mFrameState.mVertexAttribHash != bindInfo.mHash)
+	// Get bind info from the draw's vertex streams, if this fails we can't draw.
+	VertexBindInfo bindInfo{};
+	if (!getVertexBindInfo(bindInfo, mFrameState.mProgramHandle, draw))
 	{
-		VertexBinding binding;
-		if (getVertexBinding(binding, bindInfo))
-		{
-			DisplayResources& displayRes = *(mFrameState.mDisplayRes);
-			sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
-			ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
-				.setVertexAttributes(0, binding.mCount, &binding.mAttribs[0])
-				.setVertexBuffers(0, binding.mCount, &binding.mBuffers[0]);
-			mFrameState.mNumBufferVertices = binding.mNumBufferVertices;
-			mFrameState.mVertexAttribHash = bindInfo.mHash;
-
-			// Flag buffers as inflight.
-			for (uint32_t i = 0; i < binding.mCount; i++)
-			{
-				VertexBuffer& buffer = mVertexBuffers[binding.mBufferHandles[i].idx];
-				buffer.setInflight();
-			}
-
-			return true;
-		}
 		return false;
 	}
+
+	// If the bind info hasn't changed we are good, do nothing.
+	if (mFrameState.mVertexAttribHash == bindInfo.mHash)
+	{
+		return true;
+	}
+	
+	// Get actual agc binding, if this fails we can't draw.
+	VertexBinding binding{};
+	if (!getVertexBinding(binding, bindInfo))
+	{
+		return false;
+	}
+
+	// Bind vertex streams.
+	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+	ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
+		.setVertexAttributes(0, binding.mCount, &binding.mAttribs[0])
+		.setVertexBuffers(0, binding.mCount, &binding.mBuffers[0]);
+	mFrameState.mNumBufferVertices = binding.mNumBufferVertices;
+	mFrameState.mVertexAttribHash = bindInfo.mHash;
+
+	// Flag buffers as inflight.
+	for (uint32_t i = 0; i < bindInfo.mCount; i++)
+	{
+		VertexBuffer& buffer = mVertexBuffers[bindInfo.mAttribs[i].mBufferHandle.idx];
+		buffer.setInflight();
+	}
+
 	return true;
 }
 
@@ -2097,7 +2152,7 @@ void RendererContextAGC::setShaderUniform(uint8_t const flags, uint32_t const re
 	}
 	else
 	{
-		// ERROR constant buffer size mismatch!
+		// ERROR: constant buffer size mismatch!
 	}
 }
 
@@ -2123,6 +2178,16 @@ void RendererContextAGC::bindFrameBuffer(FrameBufferHandle const frameBufferHand
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 	if (mFrameState.mFrameBufferHandle.idx != frameBufferHandle.idx)
 	{
+		// If the current render targets are not the scanout buffers (default render targets)
+		// make sure the textures are flushed in case we sample them in subsequent views. This is
+		// the equivalent of an image memory barrier in Vulkan.
+		if (mFrameState.mNumFrameBufferDraws > 0 &&
+			(mFrameState.mFlushFrameBufferColor || mFrameState.mFlushFrameBufferDepth))
+		{
+			sce::Agc::Core::SyncCacheOp const mask = (mFrameState.mFlushFrameBufferColor ? sce::Agc::Core::SyncCacheOp::kFlushUncompressedColorBufferForTexture : sce::Agc::Core::SyncCacheOp::kNone) |
+													 (mFrameState.mFlushFrameBufferDepth ? sce::Agc::Core::SyncCacheOp::kFlushUncompressedDepthBufferForTexture : sce::Agc::Core::SyncCacheOp::kNone);
+			sce::Agc::Core::gpuSyncEvent(&ctx.m_dcb, sce::Agc::Core::SyncWaitMode::kDrainGraphics, mask);
+		}
 		if (isValid(frameBufferHandle))
 		{
 			FrameBuffer& fb = mFrameBuffers[frameBufferHandle.idx];
@@ -2131,8 +2196,10 @@ void RendererContextAGC::bindFrameBuffer(FrameBufferHandle const frameBufferHand
 			for (uint32_t i = 0; i < c; i++)
 			{
 				ctx.m_sb.setState(fb.mColorTargets[i]);
+				mFrameState.mFlushFrameBufferColor = mFrameState.mFlushFrameBufferColor || isValid(fb.mColorHandles[i]);
 			}
 			ctx.m_sb.setState(fb.mDepthTarget);
+			mFrameState.mFlushFrameBufferDepth = isValid(fb.mDepthHandle);
 			mFrameState.mNumFrameBufferAttachments = fb.mNumAttachments;
 		}
 		else
@@ -2150,9 +2217,13 @@ void RendererContextAGC::bindFrameBuffer(FrameBufferHandle const frameBufferHand
 				}
 			}
 			mFrameState.mNumFrameBufferAttachments = 1;
+
+			// Shouldn't read the scanout render targets so don't bother flushing.
+			mFrameState.mFlushFrameBufferColor = false;
+			mFrameState.mFlushFrameBufferDepth = false;
 		}
 		mFrameState.mFrameBufferHandle = frameBufferHandle;
-
+		mFrameState.mNumFrameBufferDraws = 0;
 	}
 }
 
@@ -2884,7 +2955,6 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 	}
 }
 
-
 //=============================================================================================
 
 void RendererContextAGC::beginFrame(Frame* const frame)
@@ -2934,6 +3004,9 @@ void RendererContextAGC::beginFrame(Frame* const frame)
 	mFrameState.mWireframeFill = (mFrameState.mFrame->m_debug & BGFX_DEBUG_WIREFRAME) != 0;
 	mFrameState.mBlitting = false;
 	mFrameState.mNumFrameBufferAttachments = 0;
+	mFrameState.mNumFrameBufferDraws = 0;
+	mFrameState.mFlushFrameBufferColor = false;
+	mFrameState.mFlushFrameBufferDepth = false;
 
 	// Init perf stats.
 	// TODO: (manderson) hooks these up...
@@ -3142,10 +3215,12 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 		if (draw.m_numIndices == UINT32_MAX)
 		{
 			ctx.drawIndexOffset(0, numIndices);
+			mFrameState.mNumFrameBufferDraws++;
 		}
 		else if (draw.m_numIndices >= sPrimTypeInfo[primType].m_min)
 		{
 			ctx.drawIndexOffset(draw.m_startIndex, draw.m_numIndices);
+			mFrameState.mNumFrameBufferDraws++;
 		}
 		else
 		{
@@ -3157,10 +3232,12 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 		if (draw.m_numVertices == UINT32_MAX)
 		{
 			ctx.drawIndexAuto(mFrameState.mNumBufferVertices);
+			mFrameState.mNumFrameBufferDraws++;
 		}
 		else if (draw.m_numVertices >= sPrimTypeInfo[primType].m_min)
 		{
 			ctx.drawIndexAuto(draw.m_numVertices);
+			mFrameState.mNumFrameBufferDraws++;
 		}
 		else
 		{
