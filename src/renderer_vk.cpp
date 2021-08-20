@@ -6118,10 +6118,24 @@ VK_DESTROY
 		region.bufferImageHeight = 0;
 		region.imageSubresource.aspectMask     = m_aspectMask;
 		region.imageSubresource.mipLevel       = _mip;
-		region.imageSubresource.baseArrayLayer = _side;
+		region.imageSubresource.baseArrayLayer = 0;
 		region.imageSubresource.layerCount     = 1;
-		region.imageOffset = { _rect.m_x, _rect.m_y, _z };
+		region.imageOffset = { _rect.m_x, _rect.m_y, 0 };
 		region.imageExtent = { _rect.m_width, _rect.m_height, _depth };
+
+		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
+		{
+			region.imageOffset.z = _z;
+		}
+		else if (VK_IMAGE_VIEW_TYPE_CUBE == m_type
+		||       VK_IMAGE_VIEW_TYPE_CUBE_ARRAY == m_type)
+		{
+			region.imageSubresource.baseArrayLayer = _z * 6 + _side;
+		}
+		else
+		{
+			region.imageSubresource.baseArrayLayer = _z;
+		}
 
 		copyBufferToTexture(_commandBuffer, stagingBuffer, 1, &region);
 
