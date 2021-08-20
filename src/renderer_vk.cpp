@@ -2829,7 +2829,7 @@ VK_IMPORT_DEVICE
 
 				int64_t now = bx::getHPCounter();
 				
-				if (NULL == newFrameBuffer.m_nwh)
+				if (NULL != newFrameBuffer.m_nwh)
 				{
 					m_presentElapsed += now - start;
 				}
