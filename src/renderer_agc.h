@@ -219,7 +219,11 @@ private:
 	struct VertexBindInfo
 	{
 		std::array<VertexAttribBindInfo, Attrib::Count> mAttribs{};
-		uint32_t mCount{};
+		VertexBufferHandle mInstanceBufferHandle{kInvalidHandle};
+		uint32_t mInstanceBufferOffset{};
+		uint32_t mInstanceBufferStride{};
+		uint16_t mInstanceBufferAttribCount{};
+		uint16_t mCount{};
 		uint32_t mHash{};
 	};
 
@@ -306,15 +310,15 @@ private:
 	void landResources();
 	void tickDestroyList(bool const force = false);
 
- 	// NOTE: (manderson) We add + 1 to each resource type limit to have
-	// an explicit unused handle we can use if needed.
-	std::array<IndexBuffer, BGFX_CONFIG_MAX_INDEX_BUFFERS + 1> mIndexBuffers{};
-	std::array<VertexBuffer,BGFX_CONFIG_MAX_VERTEX_BUFFERS + 1> mVertexBuffers{};
-	std::array<Shader, BGFX_CONFIG_MAX_VERTEX_BUFFERS + 1> mShaders{};
-	std::array<Program, BGFX_CONFIG_MAX_PROGRAMS + 1> mPrograms{};
+ 	// NOTE: (manderson) We add + 1 to the vertex layouts as we use the extra slot
+	// for non tracked veretx layouts (clear and blit draws).
+	std::array<IndexBuffer, BGFX_CONFIG_MAX_INDEX_BUFFERS> mIndexBuffers{};
+	std::array<VertexBuffer,BGFX_CONFIG_MAX_VERTEX_BUFFERS> mVertexBuffers{};
+	std::array<Shader, BGFX_CONFIG_MAX_VERTEX_BUFFERS> mShaders{};
+	std::array<Program, BGFX_CONFIG_MAX_PROGRAMS> mPrograms{};
 	std::array<VertexLayout, BGFX_CONFIG_MAX_VERTEX_LAYOUTS + 1> mVertexLayouts{};
-	std::array<Texture, BGFX_CONFIG_MAX_TEXTURES + 1> mTextures{};
-	std::array<FrameBuffer, BGFX_CONFIG_MAX_FRAME_BUFFERS + 1> mFrameBuffers{};
+	std::array<Texture, BGFX_CONFIG_MAX_TEXTURES> mTextures{};
+	std::array<FrameBuffer, BGFX_CONFIG_MAX_FRAME_BUFFERS> mFrameBuffers{};
 	std::vector<std::function<bool()>> mDestroyList;
 
 	std::array<void*, BGFX_CONFIG_MAX_UNIFORMS> mUniforms{};

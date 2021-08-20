@@ -1449,7 +1449,7 @@ RendererContextAGC::RendererContextAGC()
 		//| BGFX_CAPS_GRAPHICS_DEBUGGER
 		//| BGFX_CAPS_HIDPI
 		| BGFX_CAPS_INDEX32
-		//| BGFX_CAPS_INSTANCING
+		| BGFX_CAPS_INSTANCING
 		//| BGFX_CAPS_OCCLUSION_QUERY
 		| BGFX_CAPS_RENDERER_MULTITHREADED
 		//| BGFX_CAPS_SWAP_CHAIN
@@ -1989,8 +1989,9 @@ bool RendererContextAGC::getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHand
 	const Shader& vertexShader{ mShaders[program.mVertexShaderHandle.idx] };
 	const Stream* const streams{ draw.m_stream };
 	uint8_t const streamMask{ draw.m_streamMask };
-	bindInfo.mCount = vertexShader.mNumAttributes;
-	for (uint32_t i = 0; i < bindInfo.mCount; i++)
+	uint32_t missingAttribCount{};
+	bindInfo.mCount = 0;
+	for (uint32_t i = 0; i < vertexShader.mNumAttributes; i++)
 	{
 		// Use the last stream that has the attribute required by the vertex shader.
 		Attrib::Enum const attrib = vertexShader.mAttributes[i];
@@ -2011,21 +2012,44 @@ bool RendererContextAGC::getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHand
 			const VertexLayout& layout = mVertexLayouts[layoutHandle.idx];
 			if (layout.has(attrib))
 			{
-				bindInfo.mAttribs[i] = { attrib, stream.m_handle, layoutHandle, stream.m_startVertex };
+				bindInfo.mAttribs[bindInfo.mCount] = { attrib, stream.m_handle, layoutHandle, stream.m_startVertex };
 				found = true;
 			}
 		}
 
-		// If we didn't find any streams that have the attribute we can't draw!
+		// Track missing attributes, we will try and hook them up to instance
+		// data if we have any.
 		if (!found)
 		{
-			// ERROR: Missing vertex attribute stream.
+			missingAttribCount++;
+		}
+		else
+		{
+			bindInfo.mCount++;
+		}
+	}
+
+	// Try and hook mising attributes up to instance buffer.
+	if (missingAttribCount > 0)
+	{
+		// If we have no instance data or not enough attributes we can't satisfy the vertex shader's inputs,
+		// don't make the draw call.
+		uint16_t const instanceBufferAttribCount = draw.m_instanceDataStride / 16;
+		if (isValid(draw.m_instanceDataBuffer) && missingAttribCount <= instanceBufferAttribCount)
+		{
+			bindInfo.mInstanceBufferHandle = draw.m_instanceDataBuffer;
+			bindInfo.mInstanceBufferOffset = draw.m_instanceDataOffset;
+			bindInfo.mInstanceBufferStride = draw.m_instanceDataStride;
+			bindInfo.mInstanceBufferAttribCount = instanceBufferAttribCount;
+		}
+		else
+		{
 			return false;
 		}
 	}
 	
 	// Calc hash for dirty state check.
-	bindInfo.mHash = bx::hash<bx::HashMurmur2A>(&bindInfo.mAttribs[0], bindInfo.mCount * sizeof(VertexAttribBindInfo));
+	bindInfo.mHash = bx::hash<bx::HashMurmur2A>(&bindInfo, sizeof(VertexBindInfo));
 
 	return true;
 }
@@ -2034,10 +2058,11 @@ bool RendererContextAGC::getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHand
 
 bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBindInfo& bindInfo)
 {
-	// Build vertex binding from bind info.
+	// Build vertex binding from bind info attributes.
 	sce::Agc::Core::BufferSpec spec{};
 	SceError error{};
 	binding.mNumBufferVertices = UINT32_MAX;
+	binding.mCount = 0;
 	for (uint32_t i = 0; i < bindInfo.mCount; i++)
 	{
 		// Get buffer and layout.
@@ -2083,7 +2108,7 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 		uint32_t const count = (buffer.mSize - offs) / layout.m_stride;
 		binding.mNumBufferVertices = bx::uint32_min(binding.mNumBufferVertices, count);
 		spec.initAsVertexBuffer(buffer.mBuffer + offs, { format.mTypedFormat, format.mSwizzle }, layout.m_stride, count);
-		error = sce::Agc::Core::initialize(&binding.mBuffers[i], &spec);
+		error = sce::Agc::Core::initialize(&binding.mBuffers[binding.mCount], &spec);
 		if (error != SCE_OK)
 		{
 			// ERROR: Failed to create agc vertex buffer.
@@ -2091,9 +2116,35 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 		}
 
 		// Set vertex attribute struct.
-		binding.mAttribs[i] = { i, format.mAttribFormat, layout.m_offset[attrib], sce::Agc::Core::VertexAttribute::Index::kVertexId };
+		binding.mAttribs[binding.mCount] = { binding.mCount, format.mAttribFormat, layout.m_offset[attrib], sce::Agc::Core::VertexAttribute::Index::kVertexId };
+		binding.mCount++;
 	}
-	binding.mCount = bindInfo.mCount;
+
+	// Build remaining vertex binding from instance attributes.
+	if (bindInfo.mInstanceBufferAttribCount > 0)
+	{
+		const VertexBuffer& buffer = mVertexBuffers[bindInfo.mInstanceBufferHandle.idx];
+		uint32_t const offs = bindInfo.mInstanceBufferOffset;	
+		uint32_t const count = (buffer.mSize - offs) / bindInfo.mInstanceBufferStride;
+		uint32_t attribOffs{};
+		for (uint32_t i = 0; i < bindInfo.mInstanceBufferAttribCount; i++)
+		{
+			// Initialize buffer struct.
+			spec.initAsVertexBuffer(buffer.mBuffer + offs, {sce::Agc::Core::TypedFormat::k32_32_32_32Float, sce::Agc::Core::createSwizzle(sce::Agc::Core::ChannelSelect::kX, sce::Agc::Core::ChannelSelect::kY, sce::Agc::Core::ChannelSelect::kZ, sce::Agc::Core::ChannelSelect::kW)}, bindInfo.mInstanceBufferStride, count);
+			error = sce::Agc::Core::initialize(&binding.mBuffers[binding.mCount], &spec);
+			if (error != SCE_OK)
+			{
+				// ERROR: Failed to create agc vertex buffer.
+				return false;
+			}
+
+			// Set vertex attribute struct.
+			binding.mAttribs[binding.mCount] = { binding.mCount, sce::Agc::Core::VertexAttribute::Format::k32_32_32_32Float, attribOffs, sce::Agc::Core::VertexAttribute::Index::kInstanceId };
+			binding.mCount++;
+			attribOffs += 16;
+		}
+	}
+
 	return true;
 }
 
@@ -3198,6 +3249,11 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 	uint64_t const primType = (draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT;
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+	if (draw.m_numInstances	!= mFrameState.mDrawState.m_numInstances)
+	{
+		ctx.m_dcb.setNumInstances(draw.m_numInstances);
+		mFrameState.mDrawState.m_numInstances = draw.m_numInstances;
+	}
 	if (isValid(draw.m_indexBuffer))
 	{
 		IndexBuffer& indexBuffer = mIndexBuffers[draw.m_indexBuffer.idx];
