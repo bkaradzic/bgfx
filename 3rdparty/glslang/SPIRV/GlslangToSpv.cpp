@@ -1033,6 +1033,10 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
         return spv::BuiltInIncomingRayFlagsKHR;
     case glslang::EbvGeometryIndex:
         return spv::BuiltInRayGeometryIndexKHR;
+    case glslang::EbvCurrentRayTimeNV:
+        builder.addExtension(spv::E_SPV_NV_ray_tracing_motion_blur);
+        builder.addCapability(spv::CapabilityRayTracingMotionBlurNV);
+        return spv::BuiltInCurrentRayTimeNV;
 
     // barycentrics
     case glslang::EbvBaryCoordNV:
@@ -3018,6 +3022,7 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
     case glslang::EOpIgnoreIntersectionNV:
     case glslang::EOpTerminateRayNV:
     case glslang::EOpTraceNV:
+    case glslang::EOpTraceRayMotionNV:
     case glslang::EOpTraceKHR:
     case glslang::EOpExecuteCallableNV:
     case glslang::EOpExecuteCallableKHR:
@@ -3317,9 +3322,11 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
                 bool cond = glslangOperands[arg]->getAsConstantUnion()->getConstArray()[0].getBConst();
                 operands.push_back(builder.makeIntConstant(cond ? 1 : 0));
              } else if ((arg == 10 && glslangOp == glslang::EOpTraceKHR) ||
+                        (arg == 11 && glslangOp == glslang::EOpTraceRayMotionNV) ||
                         (arg == 1  && glslangOp == glslang::EOpExecuteCallableKHR)) {
-                 const int opdNum = glslangOp == glslang::EOpTraceKHR ? 10 : 1;
-                 const int set = glslangOp == glslang::EOpTraceKHR ? 0 : 1;
+                 const int opdNum = glslangOp == glslang::EOpTraceKHR ? 10 : (glslangOp == glslang::EOpTraceRayMotionNV ? 11 : 1);
+                 const int set = glslangOp == glslang::EOpExecuteCallableKHR ? 1 : 0;
+
                  const int location = glslangOperands[opdNum]->getAsConstantUnion()->getConstArray()[0].getUConst();
                  auto itNode = locationToSymbol[set].find(location);
                  visitSymbol(itNode->second);
@@ -8321,6 +8328,11 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
         break;
     case glslang::EOpTraceNV:
         builder.createNoResultOp(spv::OpTraceNV, operands);
+        return 0;
+    case glslang::EOpTraceRayMotionNV:
+        builder.addExtension(spv::E_SPV_NV_ray_tracing_motion_blur);
+        builder.addCapability(spv::CapabilityRayTracingMotionBlurNV);
+        builder.createNoResultOp(spv::OpTraceRayMotionNV, operands);
         return 0;
     case glslang::EOpTraceKHR:
         builder.createNoResultOp(spv::OpTraceRayKHR, operands);

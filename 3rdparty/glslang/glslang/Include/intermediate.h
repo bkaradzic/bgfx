@@ -926,6 +926,7 @@ enum TOperator {
     EOpMul32x16,
 
     EOpTraceNV,
+    EOpTraceRayMotionNV,
     EOpTraceKHR,
     EOpReportIntersection,
     EOpIgnoreIntersectionNV,

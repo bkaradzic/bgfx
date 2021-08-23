@@ -2812,6 +2812,7 @@ void Builder::accessChainStore(Id rvalue, Decoration nonUniform, spv::MemoryAcce
         accessChain.component == NoResult) {
         for (unsigned int i = 0; i < accessChain.swizzle.size(); ++i) {
             accessChain.indexChain.push_back(makeUintConstant(accessChain.swizzle[i]));
+            accessChain.instr = NoResult;
 
             Id base = collapseAccessChain();
             addDecoration(base, nonUniform);
