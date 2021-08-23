@@ -17,7 +17,7 @@
 {16, "X-LEGEND", "Mesa-IR/SPIR-V Translator", "X-LEGEND Mesa-IR/SPIR-V Translator"},
 {17, "Khronos", "SPIR-V Tools Linker", "Khronos SPIR-V Tools Linker"},
 {18, "Wine", "VKD3D Shader Compiler", "Wine VKD3D Shader Compiler"},
-{19, "Clay", "Clay Shader Compiler", "Clay Clay Shader Compiler"},
+{19, "Tellusim", "Clay Shader Compiler", "Tellusim Clay Shader Compiler"},
 {20, "W3C WebGPU Group", "WHLSL Shader Translator", "W3C WebGPU Group WHLSL Shader Translator"},
 {21, "Google", "Clspv", "Google Clspv"},
 {22, "Google", "MLIR SPIR-V Serializer", "Google MLIR SPIR-V Serializer"},

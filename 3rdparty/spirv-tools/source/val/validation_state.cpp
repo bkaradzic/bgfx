@@ -1262,16 +1262,13 @@ const Instruction* ValidationState_t::TracePointer(
   return base_ptr;
 }
 
-bool ValidationState_t::ContainsSizedIntOrFloatType(uint32_t id, SpvOp type,
-                                                    uint32_t width) const {
-  if (type != SpvOpTypeInt && type != SpvOpTypeFloat) return false;
-
+bool ValidationState_t::ContainsType(
+    uint32_t id, const std::function<bool(const Instruction*)>& f,
+    bool traverse_all_types) const {
   const auto inst = FindDef(id);
   if (!inst) return false;
 
-  if (inst->opcode() == type) {
-    return inst->GetOperandAs<uint32_t>(1u) == width;
-  }
+  if (f(inst)) return true;
 
   switch (inst->opcode()) {
     case SpvOpTypeArray:
@@ -1281,24 +1278,45 @@ bool ValidationState_t::ContainsSizedIntOrFloatType(uint32_t id, SpvOp type,
     case SpvOpTypeImage:
     case SpvOpTypeSampledImage:
     case SpvOpTypeCooperativeMatrixNV:
-      return ContainsSizedIntOrFloatType(inst->GetOperandAs<uint32_t>(1u), type,
-                                         width);
+      return ContainsType(inst->GetOperandAs<uint32_t>(1u), f,
+                          traverse_all_types);
     case SpvOpTypePointer:
       if (IsForwardPointer(id)) return false;
-      return ContainsSizedIntOrFloatType(inst->GetOperandAs<uint32_t>(2u), type,
-                                         width);
-    case SpvOpTypeFunction:
-    case SpvOpTypeStruct: {
-      for (uint32_t i = 1; i < inst->operands().size(); ++i) {
-        if (ContainsSizedIntOrFloatType(inst->GetOperandAs<uint32_t>(i), type,
-                                        width))
-          return true;
+      if (traverse_all_types) {
+        return ContainsType(inst->GetOperandAs<uint32_t>(2u), f,
+                            traverse_all_types);
       }
-      return false;
-    }
+      break;
+    case SpvOpTypeFunction:
+    case SpvOpTypeStruct:
+      if (inst->opcode() == SpvOpTypeFunction && !traverse_all_types) {
+        return false;
+      }
+      for (uint32_t i = 1; i < inst->operands().size(); ++i) {
+        if (ContainsType(inst->GetOperandAs<uint32_t>(i), f,
+                         traverse_all_types)) {
+          return true;
+        }
+      }
+      break;
     default:
-      return false;
+      break;
   }
+
+  return false;
+}
+
+bool ValidationState_t::ContainsSizedIntOrFloatType(uint32_t id, SpvOp type,
+                                                    uint32_t width) const {
+  if (type != SpvOpTypeInt && type != SpvOpTypeFloat) return false;
+
+  const auto f = [type, width](const Instruction* inst) {
+    if (inst->opcode() == type) {
+      return inst->GetOperandAs<uint32_t>(1u) == width;
+    }
+    return false;
+  };
+  return ContainsType(id, f);
 }
 
 bool ValidationState_t::ContainsLimitedUseIntOrFloatType(uint32_t id) const {
@@ -1311,6 +1329,13 @@ bool ValidationState_t::ContainsLimitedUseIntOrFloatType(uint32_t id) const {
     return true;
   }
   return false;
+}
+
+bool ValidationState_t::ContainsRuntimeArray(uint32_t id) const {
+  const auto f = [](const Instruction* inst) {
+    return inst->opcode() == SpvOpTypeRuntimeArray;
+  };
+  return ContainsType(id, f, /* traverse_all_types = */ false);
 }
 
 bool ValidationState_t::IsValidStorageClass(

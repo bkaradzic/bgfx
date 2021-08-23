@@ -595,6 +595,17 @@ class ValidationState_t {
   // 16-bit float that is not generally enabled for use.
   bool ContainsLimitedUseIntOrFloatType(uint32_t id) const;
 
+  // Returns true if |id| is a type that contains a runtime-sized array.
+  // Does not consider a pointers as contains the array.
+  bool ContainsRuntimeArray(uint32_t id) const;
+
+  // Generic type traversal.
+  // Only traverse pointers and functions if |traverse_all_types| is true.
+  // Recursively tests |f| against the type hierarchy headed by |id|.
+  bool ContainsType(uint32_t id,
+                    const std::function<bool(const Instruction*)>& f,
+                    bool traverse_all_types = true) const;
+
   // Gets value from OpConstant and OpSpecConstant as uint64.
   // Returns false on failure (no instruction, wrong instruction, not int).
   bool GetConstantValUint64(uint32_t id, uint64_t* val) const;

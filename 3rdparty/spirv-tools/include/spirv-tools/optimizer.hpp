@@ -19,6 +19,7 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "libspirv.hpp"
@@ -27,6 +28,7 @@ namespace spvtools {
 
 namespace opt {
 class Pass;
+struct DescriptorSetAndBinding;
 }
 
 // C++ interface for SPIR-V optimization functionalities. It wraps the context
@@ -853,6 +855,16 @@ Optimizer::PassToken CreateAmdExtToKhrPass();
 // of HLSL legalization and should be called after interpolants have been
 // propagated into their final positions.
 Optimizer::PassToken CreateInterpolateFixupPass();
+
+// Creates a convert-to-sampled-image pass to convert images and/or
+// samplers with given pairs of descriptor set and binding to sampled image.
+// If a pair of an image and a sampler have the same pair of descriptor set and
+// binding that is one of the given pairs, they will be converted to a sampled
+// image. In addition, if only an image has the descriptor set and binding that
+// is one of the given pairs, it will be converted to a sampled image as well.
+Optimizer::PassToken CreateConvertToSampledImagePass(
+    const std::vector<opt::DescriptorSetAndBinding>&
+        descriptor_set_binding_pairs);
 
 }  // namespace spvtools
 

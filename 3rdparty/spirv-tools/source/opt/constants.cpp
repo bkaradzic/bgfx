@@ -432,6 +432,12 @@ uint32_t ConstantManager::GetSIntConst(int32_t val) {
   return GetDefiningInstruction(c)->result_id();
 }
 
+uint32_t ConstantManager::GetUIntConst(uint32_t val) {
+  Type* uint_type = context()->get_type_mgr()->GetUIntType();
+  const Constant* c = GetConstant(uint_type, {val});
+  return GetDefiningInstruction(c)->result_id();
+}
+
 std::vector<const analysis::Constant*> Constant::GetVectorComponents(
     analysis::ConstantManager* const_mgr) const {
   std::vector<const analysis::Constant*> components;

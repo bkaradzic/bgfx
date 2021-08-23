@@ -506,12 +506,10 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
       return recursive_status;
     // Check matrix stride.
     if (SpvOpTypeMatrix == opcode) {
-      for (auto& decoration : vstate.id_decorations(id)) {
-        if (SpvDecorationMatrixStride == decoration.dec_type() &&
-            !IsAlignedTo(decoration.params()[0], alignment))
-          return fail(memberIdx)
-                 << "is a matrix with stride " << decoration.params()[0]
-                 << " not satisfying alignment to " << alignment;
+      const auto stride = constraint.matrix_stride;
+      if (!IsAlignedTo(stride, alignment)) {
+        return fail(memberIdx) << "is a matrix with stride " << stride
+                               << " not satisfying alignment to " << alignment;
       }
     }
 
