@@ -48,7 +48,7 @@ project ("texturev")
 
 	if _OPTIONS["with-glfw"] then
 		defines { "ENTRY_CONFIG_USE_GLFW=1" }
-		links   { "glfw3" }
+		links   { "glfw" }
 
 		configuration { "linux or freebsd" }
 			links {
