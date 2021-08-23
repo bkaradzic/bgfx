@@ -653,6 +653,7 @@ enum class BuiltIn : unsigned {
     HitTNV = 5332,
     HitKindKHR = 5333,
     HitKindNV = 5333,
+    CurrentRayTimeNV = 5334,
     IncomingRayFlagsKHR = 5351,
     IncomingRayFlagsNV = 5351,
     RayGeometryIndexKHR = 5352,
@@ -991,6 +992,7 @@ enum class Capability : unsigned {
     StorageTexelBufferArrayNonUniformIndexing = 5312,
     StorageTexelBufferArrayNonUniformIndexingEXT = 5312,
     RayTracingNV = 5340,
+    RayTracingMotionBlurNV = 5341,
     VulkanMemoryModel = 5345,
     VulkanMemoryModelKHR = 5345,
     VulkanMemoryModelDeviceScope = 5346,
@@ -1546,6 +1548,8 @@ enum class Op : unsigned {
     OpIgnoreIntersectionNV = 5335,
     OpTerminateRayNV = 5336,
     OpTraceNV = 5337,
+    OpTraceMotionNV = 5338,
+    OpTraceRayMotionNV = 5339,
     OpTypeAccelerationStructureKHR = 5341,
     OpTypeAccelerationStructureNV = 5341,
     OpExecuteCallableNV = 5344,
@@ -2191,6 +2195,8 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpIgnoreIntersectionNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTerminateRayNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTraceNV: *hasResult = false; *hasResultType = false; break;
+    case Op::OpTraceMotionNV: *hasResult = false; *hasResultType = false; break;
+    case Op::OpTraceRayMotionNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTypeAccelerationStructureNV: *hasResult = true; *hasResultType = false; break;
     case Op::OpExecuteCallableNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTypeCooperativeMatrixNV: *hasResult = true; *hasResultType = false; break;

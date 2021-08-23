@@ -4754,6 +4754,52 @@
       "version" : "None"
     },
     {
+      "opname" : "OpTraceMotionNV",
+      "class"  : "Reserved",
+      "opcode" : 5338,
+      "operands" : [
+
+        { "kind" : "IdRef", "name" : "'Accel'" },
+        { "kind" : "IdRef", "name" : "'Ray Flags'" },
+        { "kind" : "IdRef", "name" : "'Cull Mask'" },
+        { "kind" : "IdRef", "name" : "'SBT Offset'" },
+        { "kind" : "IdRef", "name" : "'SBT Stride'" },
+        { "kind" : "IdRef", "name" : "'Miss Index'" },
+        { "kind" : "IdRef", "name" : "'Ray Origin'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmin'" },
+        { "kind" : "IdRef", "name" : "'Ray Direction'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmax'" },
+        { "kind" : "IdRef", "name" : "'Time'" },
+        { "kind" : "IdRef", "name" : "'PayloadId'" }
+      ],
+      "capabilities" : [ "RayTracingMotionBlurNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing_motion_blur" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTraceRayMotionNV",
+      "class"  : "Reserved",
+      "opcode" : 5339,
+      "operands" : [
+
+        { "kind" : "IdRef", "name" : "'Accel'" },
+        { "kind" : "IdRef", "name" : "'Ray Flags'" },
+        { "kind" : "IdRef", "name" : "'Cull Mask'" },
+        { "kind" : "IdRef", "name" : "'SBT Offset'" },
+        { "kind" : "IdRef", "name" : "'SBT Stride'" },
+        { "kind" : "IdRef", "name" : "'Miss Index'" },
+        { "kind" : "IdRef", "name" : "'Ray Origin'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmin'" },
+        { "kind" : "IdRef", "name" : "'Ray Direction'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmax'" },
+        { "kind" : "IdRef", "name" : "'Time'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "RayTracingMotionBlurNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing_motion_blur" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpTypeAccelerationStructureNV",
       "class"  : "Reserved",
       "opcode" : 5341,
@@ -7631,24 +7677,6 @@
       "version" : "None"
     },
     {
-      "opname" : "OpArbitraryFloatPowNINTEL",
-      "class"  : "@exclude",
-      "opcode" : 5882,
-      "operands" : [
-        { "kind" : "IdResultType" },
-        { "kind" : "IdResult" },
-        { "kind" : "IdRef", "name" : "'A'" },
-        { "kind" : "LiteralInteger", "name" : "'M1'" },
-        { "kind" : "IdRef", "name" : "'B'" },
-        { "kind" : "LiteralInteger", "name" : "'Mout'" },
-        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
-        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
-        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
-      ],
-      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
-      "version" : "None"
-    },
-    {
       "opname" : "OpLoopControlINTEL",
       "class"  : "Reserved",
       "opcode" : 5887,
@@ -8692,7 +8720,9 @@
         },
         {
           "enumerant" : "OptNoneINTEL",
-          "value" : "0x10000"
+          "value" : "0x10000",
+          "capabilities" : [  "OptNoneINTEL" ],
+          "version" : "None"
         }
       ]
     },
@@ -12053,6 +12083,13 @@
           "version" : "None"
         },
         {
+          "enumerant" : "CurrentRayTimeNV",
+          "value" : 5334,
+          "capabilities" : [ "RayTracingMotionBlurNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing_motion_blur" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "IncomingRayFlagsNV",
           "value" : 5351,
           "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
@@ -13082,6 +13119,13 @@
           "value" : 5340,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RayTracingMotionBlurNV",
+          "value" : 5341,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_ray_tracing_motion_blur" ],
           "version" : "None"
         },
         {

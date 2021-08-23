@@ -69,7 +69,7 @@
         <id value="16"  vendor="X-LEGEND"   tool="Mesa-IR/SPIR-V Translator" comment="Contact Metora Wang, github:metora/MesaGLSLCompiler"/>
         <id value="17"  vendor="Khronos" tool="SPIR-V Tools Linker" comment="Contact David Neto, dneto@google.com"/>
         <id value="18"  vendor="Wine" tool="VKD3D Shader Compiler" comment="Contact wine-devel@winehq.org"/>
-        <id value="19"  vendor="Clay" tool="Clay Shader Compiler" comment="Contact info@clayengine.com"/>
+        <id value="19"  vendor="Tellusim" tool="Clay Shader Compiler" comment="Contact info@tellusim.com"/>
         <id value="20"  vendor="W3C WebGPU Group" tool="WHLSL Shader Translator" comment="https://github.com/gpuweb/WHLSL"/>
         <id value="21"  vendor="Google" tool="Clspv" comment="Contact David Neto, dneto@google.com"/>
         <id value="22"  vendor="Google" tool="MLIR SPIR-V Serializer" comment="Contact Lei Zhang, antiagainst@google.com"/>
