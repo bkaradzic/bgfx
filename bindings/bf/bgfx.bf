@@ -1335,6 +1335,11 @@ public static class bgfx
 		Noop,
 	
 		/// <summary>
+		/// AGC
+		/// </summary>
+		Agc,
+	
+		/// <summary>
 		/// Direct3D 9.0
 		/// </summary>
 		Direct3D9,

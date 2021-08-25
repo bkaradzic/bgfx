@@ -44,6 +44,7 @@ namespace bgfx
 	static const uint8_t (*s_attribTypeSize[])[AttribType::Count][4] =
 	{
 		&s_attribTypeSizeD3D9,  // Noop
+		&s_attribTypeSizeD3D1x, // Agc
 		&s_attribTypeSizeD3D9,  // Direct3D9
 		&s_attribTypeSizeD3D1x, // Direct3D11
 		&s_attribTypeSizeD3D1x, // Direct3D12
