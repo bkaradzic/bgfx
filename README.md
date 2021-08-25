@@ -16,7 +16,6 @@
     <a href="#license-bsd-2-clause">License</a>
 </p>
 
-[![Build Status](https://travis-ci.com/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.com/bkaradzic/bgfx)
 [![Build status](https://ci.appveyor.com/api/projects/status/ipa3ojgeaet1oko5?svg=true)](https://ci.appveyor.com/project/bkaradzic/bgfx)
 [![License](https://img.shields.io/badge/license-BSD--2%20clause-blue.svg)](https://bkaradzic.github.io/bgfx/license.html)
 [![Join the chat at https://discord.gg/9eMbv7J](https://img.shields.io/discord/712512073522872352?color=%237289DA&label=bgfx&logo=discord&logoColor=white)](https://discord.gg/9eMbv7J)
@@ -24,7 +23,6 @@
  * [GitHub Discussions](https://github.com/bkaradzic/bgfx/discussions)
  * [Discord Chat](https://discord.gg/9eMbv7J)
  * [AppVeyor CI](https://ci.appveyor.com/project/bkaradzic/bgfx)
- * [Travis CI](https://travis-ci.com/bkaradzic/bgfx)
 
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
 -------------------------------------------------------------
