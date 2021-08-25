@@ -46,6 +46,7 @@ namespace bgfx {
 			uint32_t    m_Size;
 			uint32_t    m_NumActiveVariables;
 			uint8_t     m_StagesReferencedIn;
+			uint8_t     m_Slot;
 
 			std::vector<UniformData> m_Uniforms;
 		};
@@ -372,6 +373,7 @@ namespace bgfx {
 					uniformBlockData.m_Size = uniformBlock->size;
 					uniformBlockData.m_NumActiveVariables = uniformBlock->numActiveVariables;
 					uniformBlockData.m_StagesReferencedIn = static_cast<uint8_t>(uniformBlock->stagesReferencedIn);
+					uniformBlockData.m_Slot = (uniformBlock->bindings[currentShaderStage] != -1) ? (uint8_t)uniformBlock->bindings[currentShaderStage] : 0;
 
 					reflectionInfo.m_UniformBlocks.push_back(uniformBlockData);
 
@@ -499,6 +501,7 @@ namespace bgfx {
 					bx::write(_writer, uniformBlock.m_Name.c_str(), nameSize);
 				}
 
+				bx::write(_writer, uniformBlock.m_Slot);
 				bx::write(_writer, (uint32_t)uniformBlock.m_Size);
 
 				writeUniforms(_options, _writer, { uniformBlock.m_Uniforms });

@@ -100,7 +100,8 @@ namespace bgfx
 			for (uint32_t ii = 0, num = _program.m_numPredefined; ii < num; ++ii)
 			{
 				const PredefinedUniform& predefined = _program.m_predefined[ii];
-				uint8_t flags = predefined.m_type&kUniformFragmentBit;
+				// BBI-NOTE: all renderers check for `_flags & kUniformFragmentBit` already and the NVN backend needs to know what predefined uniform it is
+				uint8_t flags = predefined.m_type;
 				switch (predefined.m_type&(~kUniformFragmentBit) )
 				{
 				case PredefinedUniform::ViewRect:
@@ -124,6 +125,8 @@ namespace bgfx
 						float frect[4];
 						frect[0] = 1.0f/float(m_rect.m_width);
 						frect[1] = 1.0f/float(m_rect.m_height);
+						frect[2] = m_rect.m_width;
+						frect[3] = m_rect.m_height;
 
 						_renderer->setShaderUniform4f(flags
 							, predefined.m_loc

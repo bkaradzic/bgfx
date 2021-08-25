@@ -29,6 +29,53 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 namespace bgfx { namespace nvn
 {
 
+	struct TimerQueryNVN
+	{
+		static constexpr uint32_t kQueryStride = sizeof(NVNcounterData); // nvnCommandBufferReportCounter writes 16 bytes, usually 2 uint64_t except for zcull stats which is 4 uint32_t
+
+		TimerQueryNVN()
+			: m_control(BX_COUNTOF(m_query))
+		{
+		}
+
+		bool init();
+		void destroy();
+
+		uint32_t begin(uint32_t _resultIdx);
+		void end(uint32_t _idx);
+
+		void update();
+
+		struct Result
+		{
+			void reset()
+			{
+				m_begin = 0;
+				m_end = 0;
+				m_pending = 0;
+			}
+
+			uint64_t m_begin;
+			uint64_t m_end;
+			uint32_t m_pending;
+		};
+
+		struct Query
+		{
+			bool m_ready;
+			uint32_t m_resultIdx;
+			uint32_t m_completed;
+		};
+
+		int64_t m_frequency;
+
+		Result m_result[BGFX_CONFIG_MAX_VIEWS + 1];
+		Query m_query[BGFX_CONFIG_MAX_VIEWS * 4];
+
+		BufferNVN m_buffer;
+		bx::RingBufferControl m_control;
+	};
+
 } }
 
 #endif // BGFX_RENDERER_NVN_H_HEADER_GUARD

@@ -14,10 +14,60 @@ namespace bgfx { namespace nvn
 {
 	extern NVNdevice* g_nvnDevice;
 
+	//
+	//
+	//
+
+	AllocatorNVN g_allocatorNVN;
+
+	void AllocatorNVN::init(size_t _poolSize)
+	{
+		m_mem = BX_ALLOC(g_allocator, _poolSize);
+		m_size = _poolSize;
+		m_allocator.Initialize(m_mem, m_size);
+
+		m_totalFree = m_allocator.GetTotalFreeSize();
+		m_largestFree = m_allocator.GetAllocatableSize();
+		m_highwater = 0;
+	}
+
+	void AllocatorNVN::release()
+	{
+		// BBI-TODO: (tstump 3) check for leftover allocations? doesn't really matter since we release the entire heap below anyway.
+		m_allocator.Finalize();
+		BX_FREE(g_allocator, m_mem);
+		m_mem = nullptr;
+	}
+
+	void* AllocatorNVN::realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line)
+	{
+		if (_ptr)
+		{
+			_ptr = m_allocator.Reallocate(_ptr, _size);
+		}
+		else
+		{
+			_ptr = _size ? m_allocator.Allocate(_size, _align ? _align : 1) : nullptr;
+		}
+
+		if (_size)
+		{
+			BX_ASSERT(_ptr != nullptr, "Allocation failed for size %d (free: %d largest: %d)", _size, m_totalFree, m_largestFree);
+		}
+
+		m_totalFree = m_allocator.GetTotalFreeSize();
+		m_largestFree = m_allocator.GetAllocatableSize();
+		m_highwater = bx::max(m_highwater, m_size - m_totalFree);
+
+		return _ptr;
+	}
+
+	//
+	//
+	//
+
 	void BufferNVN::create(uint32_t _size, void* _data, uint16_t _flags, uint32_t _stride, Usage _usage)
 	{
-		BX_UNUSED(_stride);
-
 		if (m_created)
 		{
 			BX_ASSERT(false, "Trying to create before destroy");
@@ -80,6 +130,7 @@ namespace bgfx { namespace nvn
 			nvnBufferFlushMappedRange(&m_buffer, _offset, _size);
 		}
 	}
+
 } }
 
 #endif // BGFX_CONFIG_RENDERER_NVN

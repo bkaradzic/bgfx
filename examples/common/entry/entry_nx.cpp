@@ -46,29 +46,30 @@ namespace entry
 	{
 		struct NvAllocator
 		{
+			bx::DefaultAllocator mAllocator;
+
 			void* mSystemMemory = nullptr;
 			void* mGraphicsMemory = nullptr;
-			void* mDevToolsMemory = nullptr;
 
 			nn::mem::StandardAllocator mGraphicsAllocator;
-			nn::mem::StandardAllocator mDevToolsAllocator;
 
-			bx::DefaultAllocator mAllocator;
+			void* mDevToolsMemory = nullptr;
+			nn::mem::StandardAllocator mDevToolsAllocator;
 
 			void init()
 			{
 				constexpr int systemMemSize = 16 * 1024 * 1024;
-				constexpr int graphicsMemSize = 1024 * 1024 * 1024; // 1GB memory allocated?
-				constexpr int devToolsMemSize = 512 * 1024 * 1024; // graphics tools require 512MB
+				constexpr int graphicsMemSize = 8 * 1024 * 1024; // used during device init
 
 				mSystemMemory = BX_ALLOC(&mAllocator, systemMemSize);
 				mGraphicsMemory = BX_ALLOC(&mAllocator, graphicsMemSize);
-				mDevToolsMemory = BX_ALLOC(&mAllocator, devToolsMemSize);
 
 				mGraphicsAllocator.Initialize(mGraphicsMemory, graphicsMemSize);
-				mDevToolsAllocator.Initialize(mDevToolsMemory, devToolsMemSize);
-
 				nv::SetGraphicsAllocator(NvAllocator::nvAllocateFunction, NvAllocator::nvFreeFunction, NvAllocator::nvReallocateFunction, &mGraphicsAllocator);
+
+				constexpr int devToolsMemSize = 512 * 1024 * 1024; // graphics tools require 512MB
+				mDevToolsMemory = BX_ALLOC(&mAllocator, devToolsMemSize);
+				mDevToolsAllocator.Initialize(mDevToolsMemory, devToolsMemSize);
 				nv::SetGraphicsDevtoolsAllocator(NvAllocator::nvAllocateFunction, NvAllocator::nvFreeFunction, NvAllocator::nvReallocateFunction, &mDevToolsAllocator);
 
 				nv::InitializeGraphics(mSystemMemory, systemMemSize);
@@ -76,16 +77,16 @@ namespace entry
 
 			void shutdown()
 			{
-				mGraphicsAllocator.Finalize();
-				mDevToolsAllocator.Finalize();
-
-				BX_FREE(&mAllocator, mDevToolsMemory);
-				BX_FREE(&mAllocator, mGraphicsMemory);
 				BX_FREE(&mAllocator, mSystemMemory);
-
-				mDevToolsMemory = nullptr;
-				mGraphicsMemory = nullptr;
 				mSystemMemory = nullptr;
+
+				mGraphicsAllocator.Finalize();
+				BX_FREE(&mAllocator, mGraphicsMemory);
+				mGraphicsMemory = nullptr;
+
+				mDevToolsAllocator.Finalize();
+				BX_FREE(&mAllocator, mDevToolsMemory);
+				mDevToolsMemory = nullptr;
 			}
 
 			// Graphics allocation functions
@@ -186,6 +187,8 @@ namespace entry
 
 			int width, height;
 			nn::oe::GetDefaultDisplayResolution(&width, &height); // configure entry::s_width/entry::s_height to use this
+
+			nn::oe::SetPerformanceConfiguration(nn::oe::PerformanceMode_Normal, nn::oe::PerformanceConfiguration_Cpu1020MhzGpu384MhzEmc1331Mhz);
 
 			_initWindow();
 			_initMemory();

@@ -8,6 +8,7 @@
 
 #include <array>
 #include <atomic>
+#include <nn/mem.h>
 #include <nn/perf/perf_Profile.h>
 #include <nn/util/util_BytePtr.h>
 #include <nvn/nvn.h>
@@ -18,6 +19,24 @@
 
 namespace bgfx { namespace nvn
 {
+	struct AllocatorNVN : bx::AllocatorI
+	{
+		void init(size_t _poolSize);
+		void release();
+
+		void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) override;
+
+		size_t m_size = 0;
+		size_t m_totalFree = 0;
+		size_t m_largestFree = 0;
+		size_t m_highwater = 0;
+
+		void* m_mem = nullptr;
+		nn::mem::StandardAllocator m_allocator;
+	};
+
+	extern AllocatorNVN g_allocatorNVN;
+
 	template<typename TPtr>
 	TPtr atomicAlignedAllocOffset(std::atomic<TPtr>& _offset, const size_t _size, const size_t _alignment)
 	{
@@ -114,7 +133,7 @@ namespace bgfx { namespace nvn
 			if (m_OwnedMemory == NULL)
 			{
 				/* Allocate memory of the aligned size at the correct address alignment. */
-				m_OwnedMemory = BX_ALIGNED_ALLOC(g_allocator, m_Size, NVN_MEMORY_POOL_STORAGE_ALIGNMENT);
+				m_OwnedMemory = BX_ALIGNED_ALLOC(&g_allocatorNVN, m_Size, NVN_MEMORY_POOL_STORAGE_ALIGNMENT);
 				m_SelfAllocatedMemory = true;
 			}
 
@@ -157,7 +176,7 @@ namespace bgfx { namespace nvn
 
 				if (m_SelfAllocatedMemory)
 				{
-					BX_ALIGNED_FREE(g_allocator, m_OwnedMemory, NVN_MEMORY_POOL_STORAGE_ALIGNMENT);
+					BX_ALIGNED_FREE(&g_allocatorNVN, m_OwnedMemory, NVN_MEMORY_POOL_STORAGE_ALIGNMENT);
 				}
 
 				m_OwnedMemory = NULL;
@@ -244,82 +263,6 @@ namespace bgfx { namespace nvn
 		}
 	};
 
-	template<int TFlags, BufferNVN::Usage TUsage>
-	struct RingBufferNVNAllocator {
-		using Ptr = BufferNVN*;
-
-		static Ptr allocate(const uint64_t _size) {
-			auto nvnBuffer = BX_NEW(g_allocator, BufferNVN);
-			nvnBuffer->create(static_cast<uint32_t>(_size), nullptr, TFlags, 1, TUsage);
-			return nvnBuffer;
-		}
-
-		static void release(Ptr _buffer) {
-			_buffer->destroy();
-			BX_DELETE(g_allocator, _buffer);
-		}
-	};
-
-	enum class MemoryPoolType
-	{
-		CommandBufferCommands,
-		CommandBufferControls,
-		Count
-	};
-
-	struct MemoryPoolSetup
-	{
-		size_t mSize = 0;
-		int mFlags = 0;
-	};
-
-	static const std::array<MemoryPoolSetup, static_cast<size_t>(MemoryPoolType::Count)> MemoryPoolFlags =
-	{
-		MemoryPoolSetup{8192, NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_CPU_UNCACHED_BIT | NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_GPU_CACHED_BIT},
-		MemoryPoolSetup{512, NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_CPU_CACHED_BIT | NVNmemoryPoolFlags::NVN_MEMORY_POOL_FLAGS_GPU_NO_ACCESS_BIT}
-	};
-
-	class CommandMemoryPool
-	{
-	public:
-		static constexpr size_t CommandListCount = 256;
-
-		MemoryPool& operator[](const MemoryPoolType type)
-		{
-			BX_ASSERT(static_cast<int>(type) >= 0 && static_cast<int>(type) < static_cast<int>(MemoryPoolType::Count), "Invalid type");
-
-			return m_Pools[static_cast<size_t>(type)];
-		}
-
-		void init(NVNdevice* _device)
-		{
-			for (int i = 0; i < MemoryPoolFlags.size(); i++)
-			{
-				const MemoryPoolSetup& poolSetup = MemoryPoolFlags[i];
-
-				m_Pools[i].Init(nullptr, poolSetup.mSize * CommandListCount, poolSetup.mFlags, _device);
-			}
-		}
-
-		void shutdown()
-		{
-			for (int i = 0; i < MemoryPoolFlags.size(); i++)
-			{
-				m_Pools[i].Shutdown();
-			}
-		}
-
-		void reset()
-		{
-			for (int i = 0; i < MemoryPoolFlags.size(); i++)
-			{
-				m_Pools[i].Reset();
-			}
-		}
-
-	private:
-		std::array<MemoryPool, static_cast<size_t>(MemoryPoolType::Count)> m_Pools;
-	};
 } }
 
 #endif // BGFX_NVN_MEMORY_H_HEADER_GUARD

@@ -12,6 +12,14 @@
 #define BGFX_NVN_UNIFORMLOCATION_INDEX_MASK 0xFFFF0000
 #define BGFX_NVN_UNIFORMLOCATION_INDEX_SHIFT (16)
 
+#if !defined(BGFX_CONFIG_NVN_COMMAND_BUFFER_COMMAND_SIZE)
+#define BGFX_CONFIG_NVN_COMMAND_BUFFER_COMMAND_SIZE (32 * 1024 * 1024)
+#endif
+
+#if !defined(BGFX_CONFIG_NVN_COMMAND_BUFFER_CONTROL_SIZE)
+#define BGFX_CONFIG_NVN_COMMAND_BUFFER_CONTROL_SIZE (512 * 1024)
+#endif
+
 namespace bgfx { namespace nvn
 {
 	struct CopyOperation
@@ -47,45 +55,6 @@ namespace bgfx { namespace nvn
 
 		Data* m_data;
 		std::vector<Op> m_ops;
-	};
-
-	template<typename T>
-	class DoubleBufferedResource
-	{
-	public:
-		DoubleBufferedResource() = default;
-		~DoubleBufferedResource() = default;
-
-		template<typename... TArgs>
-		void init(TArgs&&... args)
-		{
-			for (auto& resource : m_Resources)
-			{
-				resource.init(std::forward<TArgs>(args)...);
-			}
-		}
-
-		void shutdown()
-		{
-			for (auto& resource : m_Resources)
-			{
-				resource.shutdown();
-			}
-		}
-
-		void swap()
-		{
-			m_Current = 1 - m_Current;
-			get().reset();
-		}
-
-		T& get()
-		{
-			return m_Resources[m_Current];
-		}
-	private:
-		std::array<T, 2> m_Resources;
-		uint8_t m_Current = 0;
 	};
 
 	struct TextureNVN
@@ -144,21 +113,20 @@ namespace bgfx { namespace nvn
 
 	struct SwapChainNVN
 	{
-		static constexpr uint8_t TextureCount = 2;
-
-		void create(NVNnativeWindow _nativeWindow, NVNdevice* _device, const bgfx::Resolution& _size, const bgfx::TextureFormat::Enum _colorFormat, const bgfx::TextureFormat::Enum _depthFormat);
+		void create(int _textureCount, NVNnativeWindow _nativeWindow, NVNdevice* _device, const bgfx::Resolution& _size, const bgfx::TextureFormat::Enum _colorFormat, const bgfx::TextureFormat::Enum _depthFormat);
 		void destroy();
 		void present(NVNqueue* _queue);
 
 		BackBuffer acquireNext();
 		BackBuffer get();
 
-		std::array<TextureNVN, TextureCount> m_colorTextures;
-		std::array<TextureNVN, TextureCount> m_depthTextures;
+		std::vector<TextureNVN> m_colorTextures;
+		TextureNVN m_depthTexture;
 
 		NVNwindow m_window;
 		bool m_created = false;
 		NVNsync m_windowSync;
+		int m_numTextures = 0;
 		int m_current = 0;
 	};
 
@@ -194,8 +162,17 @@ namespace bgfx { namespace nvn
 
 		NVNcommandBuffer* get();
 
+		void getUsage(size_t& _usageCommand, size_t& _usageControl) const;
+
 	private:
+		MemoryPool m_poolCommand;
+		MemoryPool m_poolControl;
+
+		NVNdevice* m_device;
 		NVNcommandBuffer m_cmd;
+
+		size_t m_usageCommand = 0;
+		size_t m_usageControl = 0;
 
 		NVNcommandHandle _end();
 		void _resetState();
@@ -207,7 +184,7 @@ namespace bgfx { namespace nvn
 
 		void init(NVNdevice* _device, SwapChainNVN* _swapChain);
 		void shutdown();
-		CommandListNVN* alloc(CommandMemoryPool& commandMemoryPool, const char* name);
+		CommandListNVN* alloc(const char* name);
 		NVNsync* kick();
 		bool waitIsFenceSignaled(NVNsync* _waitFence, const uint64_t _ms = NVN_WAIT_TIMEOUT_MAXIMUM);
 		void finish(NVNsync* _waitFence = nullptr, bool _finishAll = false);
@@ -222,7 +199,7 @@ namespace bgfx { namespace nvn
 			HANDLE m_event;
 		};*/
 
-		static constexpr size_t CommandListCount = 256;
+		static constexpr size_t CommandListCount = BGFX_CONFIG_MAX_FRAME_LATENCY;
 
 		NVNdevice* m_Device = nullptr;
 		SwapChainNVN* m_SwapChain = nullptr;
@@ -248,22 +225,29 @@ namespace bgfx { namespace nvn
 		{
 			uint8_t m_predefined = PredefinedUniform::Enum::Count;
 			UniformHandle m_handle = { kInvalidHandle };
-			void* m_data = nullptr;
 			uint16_t m_index = 0;
 			uint16_t m_count = 0;
+			uint32_t m_dirtySize = 0;
+			void* m_data;
 		};
 
-		static uint32_t computeHash(const std::vector<UniformReference>& _uniforms);
+		static uint32_t computeHash(const std::vector<UniformReference>& _uniforms, const uint32_t _stage);
 
 		void create(uint32_t _size, std::vector<UniformReference>&& _uniforms);
 		void destroy();
 
-		void update(NVNcommandBuffer* _cmdBuf);
+		bool update(NVNcommandBuffer* _cmdBuf);
 
 		uint32_t m_size = 0;
-		uint8_t* m_data; // cpu side interim data
 		BufferNVN* m_buffer; // actual gpu buffer
 		std::vector<UniformReference> m_uniforms;
+	};
+
+	struct UniformNVN
+	{
+		uint32_t m_loc = UINT32_MAX; // just used for predefined uniforms
+		void* m_mem = nullptr;
+		std::vector<ShaderUniformBuffer::UniformReference*> m_references;
 	};
 
 	struct UniformBufferRegistry
@@ -328,7 +312,13 @@ namespace bgfx { namespace nvn
 		size_t m_codeSize = 0;
 		MemoryPool m_codeMemoryPool;
 
-		std::vector<uint32_t> m_constantBuffers;
+		struct UniformBufferBinding
+		{
+			uint32_t m_handle;
+			uint8_t m_slot;
+		};
+
+		std::vector<UniformBufferBinding> m_constantBuffers;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint16_t m_attrMask[Attrib::Count];

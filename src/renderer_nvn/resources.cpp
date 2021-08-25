@@ -131,7 +131,7 @@ namespace bgfx { namespace nvn
 		_data->m_size = _size;
 
 		size_t poolSize = nn::util::align_up(_size, NVN_MEMORY_POOL_STORAGE_GRANULARITY);
-		_data->m_mem = BX_ALIGNED_ALLOC(g_allocator, poolSize, NVN_MEMORY_POOL_STORAGE_ALIGNMENT);
+		_data->m_mem = BX_ALIGNED_ALLOC(&g_allocatorNVN, poolSize, NVN_MEMORY_POOL_STORAGE_ALIGNMENT);
 
 		NVNmemoryPoolBuilder poolBuilder;
 		nvnMemoryPoolBuilderSetDefaults(&poolBuilder);
@@ -289,12 +289,28 @@ namespace bgfx { namespace nvn
 			switch (m_type)
 			{
 			case Texture2D:
-				nvnTextureBuilderSetSize2D(&textureBuilder, textureWidth, textureHeight);
-				nvnTextureBuilderSetTarget(&textureBuilder, NVN_TEXTURE_TARGET_2D);
+				if (imageContainer.m_numLayers > 1)
+				{
+					nvnTextureBuilderSetSize3D(&textureBuilder, textureWidth, textureHeight, imageContainer.m_numLayers);
+					nvnTextureBuilderSetTarget(&textureBuilder, NVN_TEXTURE_TARGET_2D_ARRAY);
+				}
+				else
+				{
+					nvnTextureBuilderSetSize2D(&textureBuilder, textureWidth, textureHeight);
+					nvnTextureBuilderSetTarget(&textureBuilder, NVN_TEXTURE_TARGET_2D);
+				}
 				break;
 			case TextureCube:
-				nvnTextureBuilderSetSize2D(&textureBuilder, textureWidth, textureHeight);
-				nvnTextureBuilderSetTarget(&textureBuilder, NVN_TEXTURE_TARGET_CUBEMAP);
+				if (imageContainer.m_numLayers > 1)
+				{
+					nvnTextureBuilderSetSize3D(&textureBuilder, textureWidth, textureHeight, imageContainer.m_numLayers);
+					nvnTextureBuilderSetTarget(&textureBuilder, NVN_TEXTURE_TARGET_CUBEMAP_ARRAY);
+				}
+				else
+				{
+					nvnTextureBuilderSetSize2D(&textureBuilder, textureWidth, textureHeight);
+					nvnTextureBuilderSetTarget(&textureBuilder, NVN_TEXTURE_TARGET_CUBEMAP);
+				}
 				break;
 			case Texture3D:
 				nvnTextureBuilderSetSize3D(&textureBuilder, textureWidth, textureHeight, m_depth);
@@ -346,6 +362,8 @@ namespace bgfx { namespace nvn
 
 			uint32_t bufferSize = 0;
 
+			uint16_t numSides = numLayers * ((m_type == TextureCube) ? 6 : 1);
+
 			for (uint16_t layer = 0; layer < numLayers; ++layer)
 			{
 				for (uint8_t lod = 0; lod < numMips; ++lod)
@@ -386,7 +404,7 @@ namespace bgfx { namespace nvn
 
 			if (numImageInfo != 0)
 			{
-				_copyOp.m_data = (CopyOperation::Data*)BX_ALLOC(g_allocator, sizeof(CopyOperation::Data));
+				_copyOp.m_data = (CopyOperation::Data*)BX_ALLOC(&g_allocatorNVN, sizeof(CopyOperation::Data));
 				_copyOp.createBuffer(bufferSize, _copyOp.m_data);
 				_copyOp.m_ops.reserve(numImageInfo);
 
@@ -401,7 +419,7 @@ namespace bgfx { namespace nvn
 					if (convert)
 					{
 						bimg::imageDecodeToBgra8(
-							g_allocator
+							&g_allocatorNVN
 							, dst + info.m_offset
 							, info.m_data
 							, info.m_width
@@ -471,7 +489,7 @@ namespace bgfx { namespace nvn
 		bool isTextureArray = false;
 
 		CopyOperation copyOp;
-		copyOp.m_data = (CopyOperation::Data*)BX_ALLOC(g_allocator, sizeof(CopyOperation::Data));
+		copyOp.m_data = (CopyOperation::Data*)BX_ALLOC(&g_allocatorNVN, sizeof(CopyOperation::Data));
 
 		CopyOperation::Op op;
 		op.m_type = CopyOperation::Op::Texture;
@@ -591,12 +609,14 @@ namespace bgfx { namespace nvn
 	//
 	//
 
-	void SwapChainNVN::create(NVNnativeWindow _nativeWindow, NVNdevice* _device, const bgfx::Resolution& _size, const bgfx::TextureFormat::Enum _colorFormat, const bgfx::TextureFormat::Enum _depthFormat)
+	void SwapChainNVN::create(int _textureCount, NVNnativeWindow _nativeWindow, NVNdevice* _device, const bgfx::Resolution& _size, const bgfx::TextureFormat::Enum _colorFormat, const bgfx::TextureFormat::Enum _depthFormat)
 	{
-		BX_ASSERT(!bimg::isDepth(bimg::TextureFormat::Enum(_colorFormat)), "Color shouldn't be a depth format");
-		BX_ASSERT(bimg::isDepth(bimg::TextureFormat::Enum(_depthFormat)), "Depth should be a depth format");
+		BX_ASSERT(!bimg::isDepth((bimg::TextureFormat::Enum)_colorFormat), "Color shouldn't be a depth format");
+		BX_ASSERT(bimg::isDepth((bimg::TextureFormat::Enum)_depthFormat), "Depth should be a depth format");
 
 		BX_ASSERT(!m_created, "Should destroy first");
+
+		m_numTextures = _textureCount;
 
 		nvnSyncInitialize(&m_windowSync, _device);
 
@@ -606,39 +626,36 @@ namespace bgfx { namespace nvn
 		nvnWindowBuilderSetDevice(&windowBuilder, _device);
 		nvnWindowBuilderSetNativeWindow(&windowBuilder, _nativeWindow);
 
-		std::array<NVNtexture*, TextureCount> nvnColors;
+		std::vector<NVNtexture*> nvnColors;
 
-		// BBI-TODO: (tstump 1) don't create depth buffers for each scan buffer, it's not needed
+		nvnColors.resize(_textureCount);
+		m_colorTextures.resize(_textureCount);
 
-		for (int i = 0; i < TextureCount; i++) {
-			{
-				NVNtextureBuilder colorBuilder;
-				nvnTextureBuilderSetDefaults(&colorBuilder);
-				nvnTextureBuilderSetDevice(&colorBuilder, _device);
-				nvnTextureBuilderSetFlags(&colorBuilder, NVN_TEXTURE_FLAGS_DISPLAY_BIT | NVN_TEXTURE_FLAGS_COMPRESSIBLE_BIT);
-				nvnTextureBuilderSetTarget(&colorBuilder, NVN_TEXTURE_TARGET_2D);
-				nvnTextureBuilderSetFormat(&colorBuilder, s_textureFormat[uint8_t(_colorFormat)].m_fmt);
-				nvnTextureBuilderSetSize2D(&colorBuilder, _size.width, _size.height);
+		for (int i = 0; i < _textureCount; i++) {
+			NVNtextureBuilder colorBuilder;
+			nvnTextureBuilderSetDefaults(&colorBuilder);
+			nvnTextureBuilderSetDevice(&colorBuilder, _device);
+			nvnTextureBuilderSetFlags(&colorBuilder, NVN_TEXTURE_FLAGS_DISPLAY_BIT | NVN_TEXTURE_FLAGS_COMPRESSIBLE_BIT);
+			nvnTextureBuilderSetTarget(&colorBuilder, NVN_TEXTURE_TARGET_2D);
+			nvnTextureBuilderSetFormat(&colorBuilder, s_textureFormat[_colorFormat].m_fmt);
+			nvnTextureBuilderSetSize2D(&colorBuilder, _size.width, _size.height);
 
-				m_colorTextures[i].create(_device, colorBuilder);
+			m_colorTextures[i].create(_device, colorBuilder);
 
-				nvnColors[i] = &m_colorTextures[i].m_ptr;
-			}
-
-			{
-				NVNtextureBuilder depthBuilder;
-				nvnTextureBuilderSetDefaults(&depthBuilder);
-				nvnTextureBuilderSetDevice(&depthBuilder, _device);
-				nvnTextureBuilderSetFlags(&depthBuilder, NVN_TEXTURE_FLAGS_COMPRESSIBLE_BIT);
-				nvnTextureBuilderSetTarget(&depthBuilder, NVN_TEXTURE_TARGET_2D);
-				nvnTextureBuilderSetFormat(&depthBuilder, s_textureFormat[uint8_t(_depthFormat)].m_fmtDsv);
-				nvnTextureBuilderSetSize2D(&depthBuilder, _size.width, _size.height);
-
-				m_depthTextures[i].create(_device, depthBuilder);
-			}
+			nvnColors[i] = &m_colorTextures[i].m_ptr;
 		}
 
-		nvnWindowBuilderSetTextures(&windowBuilder, TextureCount, nvnColors.data());
+		NVNtextureBuilder depthBuilder;
+		nvnTextureBuilderSetDefaults(&depthBuilder);
+		nvnTextureBuilderSetDevice(&depthBuilder, _device);
+		nvnTextureBuilderSetFlags(&depthBuilder, NVN_TEXTURE_FLAGS_COMPRESSIBLE_BIT);
+		nvnTextureBuilderSetTarget(&depthBuilder, NVN_TEXTURE_TARGET_2D);
+		nvnTextureBuilderSetFormat(&depthBuilder, s_textureFormat[_depthFormat].m_fmtDsv);
+		nvnTextureBuilderSetSize2D(&depthBuilder, _size.width, _size.height);
+
+		m_depthTexture.create(_device, depthBuilder);
+
+		nvnWindowBuilderSetTextures(&windowBuilder, _textureCount, nvnColors.data());
 		nvnWindowInitialize(&m_window, &windowBuilder);
 
 		m_created = true;
@@ -650,11 +667,12 @@ namespace bgfx { namespace nvn
 		{
 			nvnWindowFinalize(&m_window);
 
-			for (int i = 0; i < TextureCount; i++)
+			for (int i = 0; i < m_numTextures; i++)
 			{
 				m_colorTextures[i].destroy();
-				m_depthTextures[i].destroy();
 			}
+
+			m_depthTexture.destroy();
 
 			nvnSyncFinalize(&m_windowSync);
 
@@ -678,7 +696,7 @@ namespace bgfx { namespace nvn
 	BackBuffer SwapChainNVN::get()
 	{
 		BX_ASSERT(m_created, "SwapChain wasn't created");
-		return BackBuffer{ &m_colorTextures[m_current], &m_depthTextures[m_current] };
+		return BackBuffer{ &m_colorTextures[m_current], &m_depthTexture };
 	}
 
 	void SwapChainNVN::present(NVNqueue* _queue)
@@ -695,9 +713,11 @@ namespace bgfx { namespace nvn
 
 	void CommandListNVN::init(NVNdevice* _device)
 	{
-		nvnCommandBufferInitialize(&m_cmd, _device);
+		m_device = _device;
+		m_poolCommand.Init(nullptr, BGFX_CONFIG_NVN_COMMAND_BUFFER_COMMAND_SIZE, NVN_MEMORY_POOL_FLAGS_CPU_UNCACHED_BIT | NVN_MEMORY_POOL_FLAGS_GPU_CACHED_BIT, _device);
+		m_poolControl.Init(nullptr, BGFX_CONFIG_NVN_COMMAND_BUFFER_CONTROL_SIZE, NVN_MEMORY_POOL_FLAGS_CPU_CACHED_BIT | NVN_MEMORY_POOL_FLAGS_GPU_NO_ACCESS_BIT, _device);
 
-		nvnCommandBufferSetMemoryCallback(&m_cmd, OutOfCommandBufferMemoryEventCallback);
+		nvnCommandBufferInitialize(&m_cmd, m_device);
 	}
 
 	void CommandListNVN::shutdown()
@@ -709,12 +729,12 @@ namespace bgfx { namespace nvn
 	{
 		NN_PERF_BEGIN_MEASURE_NAME_GPU(&m_cmd, name);
 
-		OutOfCommandBufferMemoryEventCallback(&m_cmd, NVNcommandBufferMemoryEvent::NVN_COMMAND_BUFFER_MEMORY_EVENT_OUT_OF_COMMAND_MEMORY, 512, nullptr);
-		OutOfCommandBufferMemoryEventCallback(&m_cmd, NVNcommandBufferMemoryEvent::NVN_COMMAND_BUFFER_MEMORY_EVENT_OUT_OF_CONTROL_MEMORY, 512, nullptr);
+		_resetState();
+
+		nvnCommandBufferAddCommandMemory(&m_cmd, m_poolCommand.GetMemoryPool(), 0, BGFX_CONFIG_NVN_COMMAND_BUFFER_COMMAND_SIZE);
+		nvnCommandBufferAddControlMemory(&m_cmd, m_poolControl.GetMemory(), BGFX_CONFIG_NVN_COMMAND_BUFFER_CONTROL_SIZE);
 
 		nvnCommandBufferBeginRecording(&m_cmd);
-
-		_resetState();
 	}
 
 	void CommandListNVN::submit(NVNqueue* queue, NVNsync* fence)
@@ -731,11 +751,22 @@ namespace bgfx { namespace nvn
 		return &m_cmd;
 	}
 
+	void CommandListNVN::getUsage(size_t& _usageCommand, size_t& _usageControl) const
+	{
+		_usageCommand = m_usageCommand;
+		_usageControl = m_usageControl;
+	}
+
 	NVNcommandHandle CommandListNVN::_end()
 	{
 		NN_PERF_END_MEASURE_GPU(&m_cmd);
 
-		return nvnCommandBufferEndRecording(&m_cmd);
+		NVNcommandHandle handle = nvnCommandBufferEndRecording(&m_cmd);
+
+		m_usageCommand = nvnCommandBufferGetCommandMemoryUsed(&m_cmd);
+		m_usageControl = nvnCommandBufferGetControlMemoryUsed(&m_cmd);
+
+		return handle;
 	}
 
 	void CommandListNVN::_resetState()
@@ -747,14 +778,8 @@ namespace bgfx { namespace nvn
 
 		m_currentDepth = nullptr;
 
-		//m_CurrentIndexBuffer = nullptr;
 		m_currentIndexBufferIndexType = NVNindexType::NVN_INDEX_TYPE_UNSIGNED_SHORT;
 		m_currentIndexBufferAddress = 0;
-
-		//m_CurrentProgram = nullptr;
-
-		//std::fill(m_VboBindings.begin(), m_VboBindings.end(), PipelineVboBindPoint{});
-		//std::fill(m_UniformScratch.begin(), m_UniformScratch.end(), UniformScratchMemory{});
 	}
 
 	//
@@ -763,11 +788,7 @@ namespace bgfx { namespace nvn
 
 	CommandQueueNVN::CommandQueueNVN()
 		: m_control(CommandListCount)
-		/* : m_currentFence(0)
-		, m_completedFence(0)
-		, m_control(BX_COUNTOF(m_commandList))*/
 	{
-		// BX_STATIC_ASSERT(BX_COUNTOF(m_commandList) == BX_COUNTOF(m_release));
 	}
 
 	void CommandQueueNVN::init(NVNdevice* _device, SwapChainNVN* _swapChain)
@@ -776,13 +797,12 @@ namespace bgfx { namespace nvn
 		m_SwapChain = _swapChain;
 
 		{
-			int defMemSize = 0;
-			nvnDeviceGetInteger(_device, NVN_DEVICE_INFO_QUEUE_COMMAND_MEMORY_DEFAULT_SIZE, &defMemSize);
+			int commandMemorySize = 64 * 1024; // 64 * 1024 is NVN_DEVICE_INFO_QUEUE_COMMAND_MEMORY_DEFAULT_SIZE
 
 			NVNqueueBuilder queueBuilder;
 			nvnQueueBuilderSetDevice(&queueBuilder, m_Device);
 			nvnQueueBuilderSetDefaults(&queueBuilder);
-			nvnQueueBuilderSetCommandMemorySize(&queueBuilder, defMemSize);
+			nvnQueueBuilderSetCommandMemorySize(&queueBuilder, commandMemorySize);
 			if (nvnQueueInitialize(&m_GfxQueue, &queueBuilder) != NVN_TRUE)
 			{
 				BX_ASSERT(false, "nvnQueueInitialize");
@@ -819,7 +839,7 @@ namespace bgfx { namespace nvn
 		nvnQueueFinalize(&m_GfxQueue);
 	}
 
-	CommandListNVN* CommandQueueNVN::alloc(CommandMemoryPool& commandMemoryPool, const char* name)
+	CommandListNVN* CommandQueueNVN::alloc(const char* name)
 	{
 		while (0 == m_control.reserve(1))
 		{
@@ -889,39 +909,17 @@ namespace bgfx { namespace nvn
 
 	void CommandQueueNVN::flush()
 	{
-		// QueuePresentTexture
 		CpuMeasureScope("PresentTexture");
-		// nvnQueuePresentTexture
-		// nvnQueueFenceSync(&m_GfxQueue, fence, NVN_SYNC_CONDITION_ALL_GPU_COMMANDS_COMPLETE, 0);
 		nvnQueueFlush(&m_GfxQueue);
-		//m_GfxQueue.Present(m_SwapChain, 1);
 	}
-
-	// void release(ID3D12Resource* _ptr) {}
 
 	bool CommandQueueNVN::consume(const uint64_t _ms)
 	{
-		// nn::gfx::CommandBuffer& commandList = m_commandList[m_control.m_read];
 		NVNsync& fence = m_fences[m_control.m_read];
 
 		if (waitIsFenceSignaled(&fence, _ms))
 		{
-			/*CloseHandle(commandList.m_event);
-			commandList.m_event = NULL;
-			m_completedFence = m_fence->GetCompletedValue();
-			BX_WARN(UINT64_MAX != m_completedFence, "D3D12: Device lost.");
-
-			m_commandQueue->Wait(m_fence, m_completedFence);
-
-			ResourceArray& ra = m_release[m_control.m_read];
-			for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
-			{
-				DX_RELEASE(*it, 0);
-			}
-			ra.clear();*/
-
 			m_control.consume(1);
-
 			return true;
 		}
 
@@ -932,10 +930,14 @@ namespace bgfx { namespace nvn
 	//
 	//
 
-	uint32_t ShaderUniformBuffer::computeHash(const std::vector<UniformReference>& _uniforms)
+	uint32_t ShaderUniformBuffer::computeHash(const std::vector<UniformReference>& _uniforms, const uint32_t _stage)
 	{
 		uint32_t size = (uint32_t)(_uniforms.size() * sizeof(UniformReference));
-		return bx::hash<bx::HashMurmur2A>((void*)_uniforms.data(), size);
+		bx::HashMurmur2A murmur;
+		murmur.begin();
+		murmur.add((void*)_uniforms.data(), size);
+		murmur.add(_stage);
+		return murmur.end();
 	}
 
 	void ShaderUniformBuffer::create(uint32_t _size, std::vector<UniformReference>&& _uniforms)
@@ -943,15 +945,7 @@ namespace bgfx { namespace nvn
 		m_uniforms = std::move(_uniforms);
 		m_size = _size;
 
-		for (const UniformReference& data : m_uniforms)
-		{
-			BX_UNUSED(data);
-		}
-
-		m_data = (uint8_t*)BX_ALLOC(g_allocator, m_size);
-		memset(m_data, 0, m_size);
-
-		m_buffer = BX_NEW(g_allocator, BufferNVN);
+		m_buffer = BX_NEW(&g_allocatorNVN, BufferNVN);
 		m_buffer->create(m_size, nullptr, 0, 0, BufferNVN::Usage::UniformBuffer);
 	}
 
@@ -959,31 +953,28 @@ namespace bgfx { namespace nvn
 	{
 		m_uniforms.clear();
 		m_size = 0;
-		BX_FREE(g_allocator, m_data);
-		BX_DELETE(g_allocator, m_buffer);
-		m_data = nullptr;
+		BX_DELETE(&g_allocatorNVN, m_buffer);
 		m_buffer = nullptr;
 	}
 
-	void ShaderUniformBuffer::update(NVNcommandBuffer* _cmdBuf)
+	bool ShaderUniformBuffer::update(NVNcommandBuffer* _cmdBuf)
 	{
 		bool dirty = false;
 
-		// resolve uniform data
-		// if uniforms dirty, copy into m_data and issue update
-		for (const UniformReference& uniformRef : m_uniforms)
+		for (UniformReference& uniformRef : m_uniforms)
 		{
 			if (uniformRef.m_data != nullptr)
 			{
-				memcpy(m_data + uniformRef.m_index, uniformRef.m_data, uniformRef.m_count);
-				dirty = true;
+				if (uniformRef.m_dirtySize > 0)
+				{
+					nvnCommandBufferUpdateUniformBuffer(_cmdBuf, m_buffer->m_gpuAddress, m_size, uniformRef.m_index, uniformRef.m_dirtySize, uniformRef.m_data);
+					uniformRef.m_dirtySize = 0;
+					dirty = true;
+				}
 			}
 		}
 
-		if (dirty)
-		{
-			nvnCommandBufferUpdateUniformBuffer(_cmdBuf, m_buffer->m_gpuAddress, m_size, 0, m_size, m_data);
-		}
+		return dirty;
 	}
 
 	//
@@ -1137,7 +1128,7 @@ namespace bgfx { namespace nvn
 					if (PredefinedUniform::Count != predefined)
 					{
 						m_predefined[m_numPredefined].m_loc = regIndex;
-						m_predefined[m_numPredefined].m_count = regCount;
+						m_predefined[m_numPredefined].m_count = regCount / 16; // this has to be the number of vector registers (16 bytes)
 						m_predefined[m_numPredefined].m_type = uint8_t(predefined | fragmentBit);
 						m_numPredefined++;
 
@@ -1154,11 +1145,6 @@ namespace bgfx { namespace nvn
 				}
 			}
 		};
-
-		// BBI-TODO: (tstump) rework all of this:
-		//  step 1: read all uniforms
-		//  step 2: read "global" uniforms (ie: samplers)
-		//  step 3: read "user" uniform blocks
 
 		// All uniforms
 		readUniformBlock(0, nullptr);
@@ -1178,6 +1164,9 @@ namespace bgfx { namespace nvn
 			char name[256] = {};
 			bx::read(&reader, &name, nameSize);
 
+			uint8_t slot;
+			bx::read(&reader, slot);
+
 			uint32_t uniformSize;
 			bx::read(&reader, uniformSize);
 
@@ -1186,11 +1175,7 @@ namespace bgfx { namespace nvn
 			std::vector<ShaderUniformBuffer::UniformReference> uniformRefs;
 			readUniformBlock(static_cast<uint8_t>(uniformBlockIdx), &uniformRefs);
 
-			// compute hash from uniformRefs
-			// get cbuffer index for hash from cbuffer repository
-			// set cbuffer index in m_constantBuffers
-
-			uint32_t cbHash = ShaderUniformBuffer::computeHash(uniformRefs);
+			uint32_t cbHash = ShaderUniformBuffer::computeHash(uniformRefs, 0);
 
 			uint32_t index = _uniformBuffers.find(cbHash);
 			if (index == UniformBufferRegistry::InvalidEntry)
@@ -1201,7 +1186,11 @@ namespace bgfx { namespace nvn
 				index = _uniformBuffers.add(cbHash, std::move(cb));
 			}
 
-			m_constantBuffers.push_back(index);
+			UniformBufferBinding binding;
+			binding.m_handle = index;
+			binding.m_slot = slot;
+
+			m_constantBuffers.push_back(binding);
 		}
 
 		// Stage inputs
