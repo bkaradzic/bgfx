@@ -1196,8 +1196,6 @@ namespace bgfx {
 
 				const sce::Prospero::Wave::Psslc::Output* compileOutput = sce::Prospero::Wave::Psslc::run(&compileOptions, &callbackList);
 
-				// BBI-TODO (dgalloway 4) would be good to print out the compileOutput->diagnostics here to help when debugging shaders when things go wrong
-
 				if (compileOutput)
 				{
 
@@ -1284,6 +1282,13 @@ namespace bgfx {
 
 							fwrite(compileOutput->agsdFiles[0].data, compileOutput->agsdFiles[0].dataSize, 1, glslcOutputFileHandle);
 							fclose(glslcOutputFileHandle);
+						}
+					}
+					else
+					{
+						for (int i = 0; i < compileOutput->diagnosticCount; ++i)
+						{												// BBI-TODO (dgalloway 4) maybe indicate file and type of diagnostic?
+							fprintf(stderr, "Line: %d Column: %d  %s\n", /*compileOutput->diagnostics[i].level, info/warning/error */ compileOutput->diagnostics[i].location->lineNumber, compileOutput->diagnostics[i].location->columnNumber, compileOutput->diagnostics[i].message);
 						}
 					}
 				}

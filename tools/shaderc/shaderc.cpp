@@ -1544,6 +1544,10 @@ namespace bgfx
 					{
 						preprocessor.writef(getPsslPreamble());
 					}
+					else if (profile->lang == ShadingLang::PSSL2)
+					{
+						preprocessor.writef(getPssl2Preamble());
+					}
 
 					preprocessor.writef(
 						"#define lowp\n"
