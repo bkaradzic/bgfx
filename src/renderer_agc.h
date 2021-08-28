@@ -38,12 +38,19 @@ struct RendererContextAGC final : public RendererContextI
 {
 public:
 
-	enum : size_t
+	enum : uint32_t
 	{
 		NumDisplayBuffers = 2,
 	
 		// TODO: (manderson) make this grow as needed...
-		DisplayCommandBufferSize = 4 * 1024 * 1024,
+		DisplayCommandBufferSize = 16 * 1024 * 1024,
+
+		VertexStage = 1 << 0,
+		FragmentStage = 1 << 1,
+		ComputeStage = 1 << 2,
+
+		Graphics = 1 << 0,
+		Compute = 1 << 1,
 	};
 
 	RendererContextAGC();
@@ -99,12 +106,6 @@ public:
 
 private:
 
-	struct InflightCounter
-	{
-		uint64_t mFrameClock{};
-		uint32_t mCount{};
-	};
-
 	// We use a shared pointer to track inflight resources so that if a resource update occurs while a
 	// resource is inflight we can queue the resource to be discarded once it's not inflight and
 	// create a clone with the requested update. The queue used to delete the resource uses the old
@@ -112,78 +113,73 @@ private:
 	// a new counter. Using this method we can simply write updates to an existing resource without discarding
 	// when the resource is not inflight. No double/triple buffering or staging buffers are required as all 
 	// resource memory is either directly updated or cloned and updated by the CPU.
+	// (Inflight = queued for GPU use).
+
+	struct InflightCounter
+	{
+		uint64_t mFrameClock{};
+		uint32_t mCount{};
+	};
+
 	struct Resource
 	{
 		Resource();
 		virtual ~Resource() = default;
-		void setInflight();
 
-		std::shared_ptr<InflightCounter> mInflightCounter{};
+		std::shared_ptr<InflightCounter> mInflightCounter;
 	};
 
 	struct Shader final : public Resource
 	{
-		bool create(const Memory& mem);
-		void destroy();
-
 		// renderer.h has a template function to push predefined uniforms
 		// so these need to be named to match the code in renderer.h
 		std::array<PredefinedUniform, PredefinedUniform::Count> m_predefined{};
 		uint8_t m_numPredefined{};
 
 		std::array<Attrib::Enum, Attrib::Count> mAttributes{};
+		sce::Agc::Core::Buffer mBuffer{};
 		UniformBuffer* mUniforms{};
 		uint8_t* mCompiledCode{};
 		sce::Agc::Shader* mShader{};
 		uint8_t* mUniformBuffer{};
+		uint8_t* mCommandBuffer{};
 		uint64_t mUniformClock{};
-		uint32_t mNumSamplers{};
+		uint64_t mUniformBufferClock{};
 		uint16_t mUniformBufferSize{};
+		uint8_t mNumTextures{};
+		uint8_t mStage{};
 		uint8_t mNumAttributes{};
+		bool mUniformBufferDirty{};
 	};
 
 	struct Program final : public Resource
 	{
-		bool create(ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle);
-		void destroy();
-
 		ShaderHandle mVertexShaderHandle{kInvalidHandle};
 		ShaderHandle mFragmentShaderHandle{kInvalidHandle};
 	};
 
 	struct Buffer : public Resource
 	{
-		bool update(uint32_t const offset, uint32_t const size, const uint8_t* const data);
-		virtual void destroy();
-
+		sce::Agc::Core::Buffer mComputeBuffer{};
 		uint8_t* mBuffer{};
 		uint32_t mSize{};
+		uint16_t mFlags{};
+		uint16_t mStride{};
+
 	};
 
 	struct IndexBuffer final : public Buffer
 	{
-		bool create(uint16_t const flags, uint32_t const size, const uint8_t* const data);
-		void destroy() override;
-
-		uint16_t mFlags{};
+		//uint16_t mFlags{};
 	};
 
 	struct VertexBuffer final : public Buffer
 	{
-		bool create(VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data);
-		void destroy() override;
-
 		VertexLayoutHandle mLayoutHandle{kInvalidHandle};
 	};
 
 	struct Texture final : public Resource
 	{
-		static bool tileSurface(void* const tiledSurface, const sce::Agc::Core::TextureSpec& tiledSpec, uint32_t const arraySlice, uint32_t const mipLevel, const void* const untiledSurface, uint32_t const untiledSize, bimg::TextureFormat::Enum const untiledFormat, uint32_t untiledBlockPitch, const sce::AgcGpuAddress::SurfaceRegion& region);
-		static void setSampler(sce::Agc::Core::Sampler& sampler, uint64_t const flags);
-		bool create(uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip);
-		bool update(uint8_t const side, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data);
-		void destroy();
-
 		uint8_t* mBuffer{};
 		uint8_t* mStencilBuffer{};
 		sce::Agc::Core::TextureSpec mSpec{};
@@ -196,10 +192,8 @@ private:
 	struct FrameBuffer final : public Resource
 	{
 		FrameBuffer();
-		bool create(uint8_t const num, const Attachment* const attachment);
-		void destroy();
 
-		std::array<TextureHandle, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS> mColorHandles{};
+		std::array<TextureHandle, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS> mColorHandles;
 		std::array<sce::Agc::CxRenderTarget, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS> mColorTargets{};
 		TextureHandle mDepthHandle{kInvalidHandle};
 		sce::Agc::CxDepthRenderTarget mDepthTarget{};
@@ -208,22 +202,21 @@ private:
 		uint32_t mNumAttachments{};
 	};
 
+	// We hash this, so keep it small.
 	struct VertexAttribBindInfo
 	{
-		Attrib::Enum mAttrib{};
-		VertexBufferHandle mBufferHandle{};
-		VertexLayoutHandle mLayoutHandle{};
-		uint32_t mBaseVertex{};
+		uint16_t mBufferIndex;
+		uint16_t mAttribParams;			// DWORD 1
+		uint32_t mBufferOffset;			// DWORD 2
+		uint16_t mAttribOffset;
+		uint16_t mStride:15;
+		uint16_t mIsInstanceAttrib:1;	// DWORD 3
 	};
 
 	struct VertexBindInfo
 	{
 		std::array<VertexAttribBindInfo, Attrib::Count> mAttribs{};
-		VertexBufferHandle mInstanceBufferHandle{kInvalidHandle};
-		uint32_t mInstanceBufferOffset{};
-		uint32_t mInstanceBufferStride{};
-		uint16_t mInstanceBufferAttribCount{};
-		uint16_t mCount{};
+		uint32_t mCount{};
 		uint32_t mHash{};
 	};
 
@@ -231,8 +224,16 @@ private:
 	{
 		std::array<sce::Agc::Core::Buffer, Attrib::Count> mBuffers{};
 		std::array<sce::Agc::Core::VertexAttribute, Attrib::Count> mAttribs{};
+		uint32_t mNumVertices{};
+		uint32_t mNumInstances{};
 		uint32_t mCount{};
-		uint32_t mNumBufferVertices{};
+	};
+
+	struct ViewPerfCounter
+	{
+		volatile uint64_t* mGPUTimeStamps[2]{};
+		int64_t mCPUTimeStamps[2]{};
+		uint16_t mViewId{};
 	};
 
 	struct DisplayResources
@@ -241,7 +242,9 @@ private:
 		sce::Agc::Core::BasicContext mContext{};
 		sce::Agc::Label* mLabel{};
 		float* mBorderColorBuffer{};
-		std::vector<std::shared_ptr<InflightCounter>> mInflightCounters;
+		std::array<ViewPerfCounter, BGFX_CONFIG_MAX_VIEWS + 1> mViewPerfCounters{};
+		std::vector<std::shared_ptr<InflightCounter>> mInflightCounters{};
+		uint32_t mNumViews{};
 	};
 
 	struct FrameState
@@ -250,7 +253,7 @@ private:
 		Frame* mFrame{};
 		const RenderItem* mRenderItem{};
 		const RenderBind* mRenderBind{};
-		uint8_t* mUniformBuffer{};
+		ViewPerfCounter* mViewPerfCounter{};
 		SortKey mKey{};
 		RenderDraw mDrawState{};
 		RenderBind mBindState{};
@@ -260,79 +263,121 @@ private:
 		//BlitState mBlitState{};
 		Rect mViewScissor{};
 		ProgramHandle mProgramHandle{};
+		ShaderHandle mShaderHandle{};
 		FrameBufferHandle mFrameBufferHandle{};
-		uint64_t mEncodedKey{};
 		float mOverrideMVP[16];
 		uint32_t mNumItems{};
 		uint32_t mItem{};
-		uint32_t mItemIdx{};
-		uint32_t mUniformBufferSize{};
-		uint32_t mNumBufferVertices{};
+		uint32_t mNumVertices{};
 		uint32_t mVertexAttribHash{};
-		uint32_t mNumFrameBufferDraws{};
 		uint16_t mView{};
 		uint16_t mFixedStateView{};
 		uint8_t mNumFrameBufferAttachments{};
 		bool mIsCompute{};
-		bool mWasCompute{};
 		bool mViewChanged{};
 		bool mProgramChanged{};
-		bool mUniformBufferDirty{};
 		bool mWireframeFill{};
 		bool mBlitting{};
-		bool mFlushFrameBufferColor{};
-		bool mFlushFrameBufferDepth{};
+		bool mHaveColorBuffer{};
+		bool mHaveDepthBuffer{};
+		bool mShouldFlushGraphics{};
+		bool mShouldFlushCompute{};
+	};
+
+	struct PerfCounters
+	{
+		std::array<ViewStats, BGFX_CONFIG_MAX_VIEWS> mViewStats;
+		std::array<uint32_t, Topology::Count> mNumInstances{};
+		std::array<uint32_t, Topology::Count> mNumPrimsRendered{};
+		int64_t mFrameTimeStamp{};
+		int64_t mResetTimeStamp{};
+		int64_t mDrawTimeStamp{};
+		int64_t mCPUFrameTime{};
+		int64_t mCPUMinFrameTime{};
+		int64_t mCPUMaxFrameTime{};
+		int64_t mCPUSubmitTime{};
+		int64_t mCPUMinSubmitTime{};
+		int64_t mCPUMaxSubmitTime{};
+		int64_t mGPUFrameTime{};
+		int64_t mGPUMinFrameTime{};
+		int64_t mGPUMaxFrameTime{};
+		uint32_t mNumViews{};
 	};
 
 	bool verifyInit(const Init& init);
 	bool createDisplayBuffers(const Init& init);
 	bool createScanoutBuffers();
 	bool createContext();
+	void setResourceInflight(Resource& resource);
+	void landResources();
+	bool updateBuffer(Buffer& buffer, uint32_t const offset, uint32_t const size, const uint8_t* const data);
+	void destroyBuffer(Buffer& buffer);
+	bool createVertexBuffer(VertexBuffer& vertexBuffer, VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data);
+	void destroyVertexBuffer(VertexBuffer& vertexBuffer);
+	bool createIndexBuffer(IndexBuffer& indexBuffer, uint16_t const flags, uint32_t const size, const uint8_t* const data);
+	void destroyIndexBuffer(IndexBuffer& indexBuffer);
+	bool createShader(Shader& shader, const Memory& mem);
+	void destroyShader(Shader& shader);
+	bool createProgram(Program& program, ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle);
+	void destroyProgram(Program& program);
+	bool tileSurface(void* const tiledSurface, const sce::Agc::Core::TextureSpec& tiledSpec, uint32_t const arraySlice, uint32_t const mipLevel, const void* const untiledSurface, uint32_t const untiledSize, bimg::TextureFormat::Enum const untiledFormat, uint32_t untiledBlockPitch, const sce::AgcGpuAddress::SurfaceRegion& region);
+	void setSampler(sce::Agc::Core::Sampler& sampler, uint64_t const flags);
+	bool createTexture(Texture& texture, uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip);
+	bool updateTexture(Texture& texture, uint8_t const side, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data);
+	void destroyTexture(Texture& texture);
+	bool createFrameBuffer(FrameBuffer& frameBuffer, uint8_t const num, const Attachment* const attachment);
+	void destroyFrameBuffer(FrameBuffer& frameBuffer);
 	void beginFrame(Frame* const frame);
 	void waitForGPU();
-	bool getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHandle const programHandle, const RenderDraw& draw);
-	bool getVertexBinding(VertexBinding& binding, const VertexBindInfo& bindInfo);
-	void bindFrameBuffer(FrameBufferHandle const frameBufferHandle);
-	bool bindUniformBuffer(bool const isFragment);
-	void overridePredefined(ShaderHandle const shaderHandle);
-	bool bindShaderUniforms(ShaderHandle const shaderHandle, const RenderDraw& draw, bool const isFragment, bool overridePredefined);
-	void bindSamplers(const RenderBind& bind, bool const vertexStage, bool const fragmentStage, bool const computeStage);
-	bool bindProgram(ProgramHandle const programHandle, const RenderDraw& draw, const RenderBind& bind, bool const overridePredefined);
-	bool bindVertexAttributes(const RenderDraw& draw);
-	void bindFixedState(const RenderDraw& draw);
-	bool submitDrawCall(const RenderDraw& draw);
+	void flushGPU(uint32_t const parts);
 	bool nextItem();
-	void clearRect(const ClearQuad& clearQuad);
 	void viewChanged(const ClearQuad& clearQuad);
 	bool submitCompute();
 	bool submitDraw();
+	void submitDebugText(TextVideoMemBlitter& textVideoMemBlitter);
 	void endFrame();
-	void landResources();
 	void tickDestroyList(bool const force = false);
+	void bindFrameBuffer(FrameBufferHandle const frameBufferHandle);
+	bool bindVertexAttributes(const RenderDraw& draw);
+	bool getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHandle const programHandle, const RenderDraw& draw);
+	uint16_t cleanupEncodedAttrib(uint16_t const encodedAttrib);
+	bool getVertexBinding(VertexBinding& binding, const VertexBindInfo& bindInfo);
+	bool bindProgram(ProgramHandle const programHandle, const RenderItem& item, const RenderBind& bind, bool const isCompute, bool const overridePredefined);
+	bool bindShaderUniforms(ShaderHandle const shaderHandle, const RenderItem& item, bool const isCompute, bool const overridePredefined);
+	bool bindUniformBuffer(ShaderHandle const shaderHandle);
+	void overridePredefined(ShaderHandle const shaderHandle);
+	void bindSamplers(const RenderBind& bind, uint32_t const stages);
+	void bindFixedState(const RenderDraw& draw);
+	bool submitDrawCall(const RenderDraw& draw);
+	void submitDispatch(const RenderCompute& compute);
+	void clearRect(const ClearQuad& clearQuad);
+	void startViewPerfCounter();
+	void stopViewPerfCounter();
 
  	// NOTE: (manderson) We add + 1 to the vertex layouts as we use the extra slot
 	// for non tracked veretx layouts (clear and blit draws).
 	std::array<IndexBuffer, BGFX_CONFIG_MAX_INDEX_BUFFERS> mIndexBuffers{};
 	std::array<VertexBuffer,BGFX_CONFIG_MAX_VERTEX_BUFFERS> mVertexBuffers{};
-	std::array<Shader, BGFX_CONFIG_MAX_VERTEX_BUFFERS> mShaders{};
+	std::array<Shader, BGFX_CONFIG_MAX_SHADERS> mShaders{};
 	std::array<Program, BGFX_CONFIG_MAX_PROGRAMS> mPrograms{};
 	std::array<VertexLayout, BGFX_CONFIG_MAX_VERTEX_LAYOUTS + 1> mVertexLayouts{};
 	std::array<Texture, BGFX_CONFIG_MAX_TEXTURES> mTextures{};
 	std::array<FrameBuffer, BGFX_CONFIG_MAX_FRAME_BUFFERS> mFrameBuffers{};
 	std::vector<std::function<bool()>> mDestroyList;
-
 	std::array<void*, BGFX_CONFIG_MAX_UNIFORMS> mUniforms{};
 	UniformRegistry mUniformReg{};
-
+	char mViewNames[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME]{};
 	std::array<DisplayResources, NumDisplayBuffers> mDisplayResources{};
 	FrameState mFrameState{};
+	PerfCounters mPerfCounters{};
 	sce::Agc::CxDepthRenderTarget mDepthRenderTarget{};
-	RenderDraw mBlitDraw{};
+	RenderItem mBlitItem{};
 	RenderBind mBlitBind{};
-	RenderDraw mClearDraw{};
+	RenderItem mClearItem{};
 	RenderBind mClearBind{};
 	UniformHandle mClearQuadColor{kInvalidHandle};
 	UniformHandle mClearQuadDepth{kInvalidHandle};
+	TextVideoMem mTextVideoMem;
 	uint64_t mFrameClock{};
 	uint64_t mUniformClock{};
 	int mVideoHandle{};

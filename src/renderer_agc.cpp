@@ -531,31 +531,46 @@ static RendererContextAGC* sRendererAGC;
 
 //=============================================================================================
 
-RendererContextAGC::Resource::Resource()
+RendererContextAGC::Resource::Resource():
+	mInflightCounter{std::make_shared<InflightCounter>()}
 {
-	mInflightCounter = std::make_shared<InflightCounter>();
 }
 
 //=============================================================================================
 
-void RendererContextAGC::Resource::setInflight()
+void RendererContextAGC::setResourceInflight(Resource& resource)
 {
-	if (mInflightCounter->mFrameClock != sRendererAGC->mFrameClock)
+	if (resource.mInflightCounter->mFrameClock != mFrameClock)
 	{
-		mInflightCounter->mCount++;
-		mInflightCounter->mFrameClock = sRendererAGC->mFrameClock;
+		resource.mInflightCounter->mCount++;
+		resource.mInflightCounter->mFrameClock = mFrameClock;
 
-		DisplayResources& displayRes = *(sRendererAGC->mFrameState.mDisplayRes);
-		displayRes.mInflightCounters.push_back(mInflightCounter);
+		DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+		displayRes.mInflightCounters.push_back(resource.mInflightCounter);
 	}
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::Shader::create(const Memory& mem)
+void RendererContextAGC::landResources()
+{
+	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+	for (auto& counter : displayRes.mInflightCounters)
+	{
+		if (counter->mCount > 0)
+		{
+			counter->mCount--;
+		}
+	}
+	displayRes.mInflightCounters.clear();
+}
+
+//=============================================================================================
+
+bool RendererContextAGC::createShader(Shader& shader, const Memory& mem)
 {
 	// Run constructor to reset object.
-	new (this) Shader{};
+	new (&shader) Shader{};
 
 	bx::MemoryReader reader{mem.data, mem.size};
 
@@ -563,12 +578,20 @@ bool RendererContextAGC::Shader::create(const Memory& mem)
 	bx::read(&reader, magic);
 
 	uint8_t fragmentBit{};
-	if (isShaderType(magic, 'F'))
+	if (isShaderType(magic, 'V'))
 	{
+		shader.mStage = VertexStage;
+	}
+	else if (isShaderType(magic, 'F'))
+	{
+		shader.mStage = FragmentStage;
 		fragmentBit = kUniformFragmentBit;
 	}
-	else if (!isShaderType(magic, 'V') &&
-			 !isShaderType(magic, 'V'))
+	else if (isShaderType(magic, 'C'))
+	{
+		shader.mStage = ComputeStage;
+	}
+	else
 	{
 		BGFX_FATAL(false, Fatal::InvalidShader, "Unknown shader format %x.", magic);
 		return false;
@@ -596,9 +619,9 @@ bool RendererContextAGC::Shader::create(const Memory& mem)
 		, count
 		);
 
-	m_numPredefined = 0;
+	shader.m_numPredefined = 0;
 
-	mNumSamplers = 0;
+	shader.mNumTextures = 0;
 	if (count > 0)
 	{
 		for (uint32_t ii = 0; ii < count; ++ii)
@@ -642,32 +665,32 @@ bool RendererContextAGC::Shader::create(const Memory& mem)
 			if (predefined != PredefinedUniform::Count)
 			{
 				kind = "predefined";
-				m_predefined[m_numPredefined].m_loc = regIndex;
-				m_predefined[m_numPredefined].m_count = regCount;
-				m_predefined[m_numPredefined].m_type = uint8_t(predefined | fragmentBit);
-				m_numPredefined++;
+				shader.m_predefined[shader.m_numPredefined].m_loc = regIndex;
+				shader.m_predefined[shader.m_numPredefined].m_count = regCount;
+				shader.m_predefined[shader.m_numPredefined].m_type = uint8_t(predefined | fragmentBit);
+				shader.m_numPredefined++;
 			}
 			else if ((kUniformSamplerBit & type) == 0)
 			{
-				const UniformRegInfo* info = sRendererAGC->mUniformReg.find(name);
+				const UniformRegInfo* info = mUniformReg.find(name);
 				BX_WARN(info != nullptr, "User defined uniform '%s' is not found, it won't be set.", name);
 
 				if (info != nullptr)
 				{
-					if (mUniforms == nullptr)
+					if (shader.mUniforms == nullptr)
 					{
-						mUniforms = UniformBuffer::create(4<<10);
+						shader.mUniforms = UniformBuffer::create(4<<10);
 					}
 
 					kind = "user";
-					mUniforms->writeUniformHandle((UniformType::Enum)(type | fragmentBit), regIndex, info->m_handle, regCount);
+					shader.mUniforms->writeUniformHandle((UniformType::Enum)(type | fragmentBit), regIndex, info->m_handle, regCount);
 				}
 			}
 			else
 			{
+				// TODO: (manderson) Looks like for compute shaders buffers/images aren't included.
 				kind = "sampler";
-				mNumSamplers++;
-				// TODO: (manderson) Capture samplers?
+				shader.mNumTextures++;
 			}
 
 			BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
@@ -681,9 +704,9 @@ bool RendererContextAGC::Shader::create(const Memory& mem)
 			BX_UNUSED(kind);
 		}
 
-		if (mUniforms != nullptr)
+		if (shader.mUniforms != nullptr)
 		{
-			mUniforms = UniformBuffer::finishAndTrim(mUniforms);
+			shader.mUniforms = UniformBuffer::finishAndTrim(shader.mUniforms);
 		}
 	}
 
@@ -693,38 +716,25 @@ bool RendererContextAGC::Shader::create(const Memory& mem)
 	const uint32_t* source = reinterpret_cast<const uint32_t*>(reader.getDataPtr());
 	bx::skip(&reader, shaderSize + 1);
 
-	mCompiledCode = allocDmem(sce::Agc::SizeAlign(shaderSize, sce::Agc::Alignment::kShaderCode));
-	bx::memCopy(mCompiledCode, source, shaderSize);
-	SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(mCompiledCode);
+	shader.mCompiledCode = allocDmem(sce::Agc::SizeAlign(shaderSize, sce::Agc::Alignment::kShaderCode));
+	bx::memCopy(shader.mCompiledCode, source, shaderSize);
+	SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(shader.mCompiledCode);
 	void* const header = (void*)sceShaderGetProgramHeader(binaryHandle);
 	const void* const program = sceShaderGetProgram(binaryHandle);
-	SceError const error = sce::Agc::createShader(&mShader, header, program);
+	SceError const error = sce::Agc::createShader(&shader.mShader, header, program);
 	if (error != SCE_OK)
 	{
-		freeDmem(mCompiledCode);
+		freeDmem(shader.mCompiledCode);
 		return false;
 	}
 
 	uint8_t numAttrs{};
 	bx::read(&reader, numAttrs);
 
-	//bool isInstanced[numAttrs];
-	//bool atLeastOneInstanced = false;
+	std::fill(shader.mAttributes.begin(), shader.mAttributes.end(), Attrib::Count);
 
-	std::fill(mAttributes.begin(), mAttributes.end(), Attrib::Count);
-
-	for (uint32_t ii = 0; ii < numAttrs; ++ii)
+	for (uint32_t i = 0; i < numAttrs; ++i)
 	{
-		/*uint8_t slotPlusInstanceFlag;
-		bx::read(&reader, slotPlusInstanceFlag);
-
-		constexpr uint8_t IS_INSTANCE_FLAG = 128;
-		if (slotPlusInstanceFlag & IS_INSTANCE_FLAG) {
-			isInstanced[ii] = true;
-			atLeastOneInstanced = true;
-		}
-		uint8_t const slot = slotPlusInstanceFlag & ~IS_INSTANCE_FLAG;*/
-
 		uint16_t id;
 		bx::read(&reader, id);
 
@@ -732,15 +742,28 @@ bool RendererContextAGC::Shader::create(const Memory& mem)
 
 		if (Attrib::Count != attr)
 		{
-			mAttributes[mNumAttributes] = attr;
-			mNumAttributes++;
+			shader.mAttributes[shader.mNumAttributes] = attr;
+			shader.mNumAttributes++;
 		}
 	}
 
-	bx::read(&reader, mUniformBufferSize);
-	if (mUniformBufferSize > 0)
+	bx::read(&reader, shader.mUniformBufferSize);
+	if (shader.mUniformBufferSize > 0)
 	{
-		mUniformBuffer = (uint8_t*)BX_ALLOC(g_allocator, mUniformBufferSize);
+		// Allocate staging buffer for uniform data. When we bind this shader to
+		// draw we will copy the staging buffers contents into the command buffer.
+		shader.mUniformBuffer = (uint8_t*)BX_ALLOC(g_allocator, shader.mUniformBufferSize);
+
+		// Init the constant buffer struct, we will set it's pointer to the space we
+		// allocate from the command buffer when we bind uniform data.
+		sce::Agc::Core::BufferSpec spec;
+		spec.initAsConstantBuffer(nullptr, shader.mUniformBufferSize);
+		SceError error = sce::Agc::Core::initialize(&shader.mBuffer, &spec);
+		if (error != SCE_OK)
+		{
+			// ERROR!
+			return false;
+		}
 	}
 
 	return true;
@@ -748,47 +771,72 @@ bool RendererContextAGC::Shader::create(const Memory& mem)
 
 //=============================================================================================
 
-void RendererContextAGC::Shader::destroy()
+void RendererContextAGC::destroyShader(Shader& shader)
 {
-	// TODO: (manderson) destroy shader.
-	
+	// These can safely be deleted as they are used only by the CPU
+	if (shader.mUniforms != nullptr)
+	{
+		UniformBuffer::destroy(shader.mUniforms);
+		shader.mUniforms = nullptr;
+	}
+	if (shader.mUniformBuffer != nullptr)
+	{
+		BX_FREE(g_allocator, shader.mUniformBuffer);
+		shader.mUniformBuffer = nullptr;
+	}
+
+	if (shader.mCompiledCode != nullptr)
+	{
+		mDestroyList.push_back([inflightCounter=shader.mInflightCounter,buffer=shader.mCompiledCode]() mutable {
+			if (inflightCounter->mCount == 0)
+			{
+				freeDmem(buffer);
+				return true;
+			}
+			return false;
+		});
+	}
+	shader.mCompiledCode = nullptr;
+
+	// TODO: (manderson) mShader?
+
 	// Run destructor.
-	this->~Shader();
+	(&shader)->~Shader();
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::Program::create(ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle)
+bool RendererContextAGC::createProgram(Program& program, ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle)
 {
 	// Run constructor to reset object.
-	new (this) Program{};
+	new (&program) Program{};
 
-	mVertexShaderHandle = vertexShaderHandle;
-	mFragmentShaderHandle = fragmentShaderHandle;
+	program.mVertexShaderHandle = vertexShaderHandle;
+	program.mFragmentShaderHandle = fragmentShaderHandle;
 	return true;
 }
 
 //=============================================================================================
 
-void RendererContextAGC::Program::destroy()
+void RendererContextAGC::destroyProgram(Program& program)
 {
 	// TODO: (manderson) destroy program.
 
 	// Run destructor.
-	this->~Program();
+	(&program)->~Program();
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::Buffer::update(uint32_t const offset, uint32_t const size, const uint8_t* const data)
+bool RendererContextAGC::updateBuffer(Buffer& buffer, uint32_t const offset, uint32_t const size, const uint8_t* const data)
 {
 	// If the buffer is not inflight and it's size hasn't changed we can update it's contents directly,
 	// otherwise we need to modify a copy of the current buffer and discard the current buffer when it's
 	// not inflight.
 	uint32_t const requestSize = offset + size;
-	uint32_t const newSize = mSize > requestSize ? mSize : requestSize;
-	uint8_t* newBuffer = mBuffer;
-	if (mInflightCounter->mCount > 0 || newSize > mSize)
+	uint32_t const newSize = buffer.mSize > requestSize ? buffer.mSize : requestSize;
+	uint8_t* newBuffer = buffer.mBuffer;
+	if (buffer.mInflightCounter->mCount > 0 || newSize > buffer.mSize)
 	{		
 		// Allocate new buffer.
 		newBuffer = allocDmem({newSize, 16});
@@ -798,30 +846,43 @@ bool RendererContextAGC::Buffer::update(uint32_t const offset, uint32_t const si
 		}
 
 		// Copy previous contents, don't bother with portion we are going to update.
-		if (mBuffer != nullptr)
+		if (buffer.mBuffer != nullptr)
 		{
-			uint32_t const beforeSize = mSize < offset ? mSize : offset;
+			uint32_t const beforeSize = buffer.mSize < offset ? buffer.mSize : offset;
 			if (beforeSize > 0)
 			{
-				memcpy(newBuffer, mBuffer, beforeSize);
+				memcpy(newBuffer, buffer.mBuffer, beforeSize);
 			}
-			uint32_t const afterSize = mSize > requestSize ? (mSize - requestSize) : 0;
+			uint32_t const afterSize = buffer.mSize > requestSize ? (buffer.mSize - requestSize) : 0;
 			if (afterSize > 0)
 			{
-				memcpy(newBuffer + requestSize, mBuffer + requestSize, afterSize);
+				memcpy(newBuffer + requestSize, buffer.mBuffer + requestSize, afterSize);
 			}
 		}	
 	}
 
 	// Update buffer.
-	memcpy(newBuffer + offset, data, size);
+	if (data != nullptr)
+	{
+		memcpy(newBuffer + offset, data, size);
+	}
+
+	// If the size or pointer changed update compute buffer.
+	if (newSize != buffer.mSize || newBuffer != buffer.mBuffer)
+	{
+		SceError const ret = sce::Agc::Core::initialize(&(buffer.mComputeBuffer), &sce::Agc::Core::BufferSpec().initAsRegularBuffer(newBuffer, buffer.mStride, newSize / buffer.mStride));
+		if (ret != SCE_OK)
+		{
+			return false;
+		}
+	}
 
 	// If we allocated a new buffer queue to old one for delete once it's not inflight.
-	if (newBuffer != mBuffer)
+	if (newBuffer != buffer.mBuffer)
 	{
-		if (mBuffer != nullptr)
+		if (buffer.mBuffer != nullptr)
 		{
-			sRendererAGC->mDestroyList.push_back([inflightCounter=mInflightCounter,buffer=mBuffer]() mutable {
+			mDestroyList.push_back([inflightCounter=buffer.mInflightCounter,buffer=buffer.mBuffer]() mutable {
 				if (inflightCounter->mCount == 0)
 				{
 					freeDmem(buffer);
@@ -830,23 +891,23 @@ bool RendererContextAGC::Buffer::update(uint32_t const offset, uint32_t const si
 				return false;
 			});
 		}
-		mInflightCounter = std::make_shared<InflightCounter>();
-		mBuffer = newBuffer;
+		buffer.mInflightCounter = std::make_shared<InflightCounter>();
+		buffer.mBuffer = newBuffer;
 	}
 
 	// Update size.
-	mSize = newSize;
+	buffer.mSize = newSize;
 
 	return true;
 }
 
 //=============================================================================================
 
-void RendererContextAGC::Buffer::destroy()
+void RendererContextAGC::destroyBuffer(Buffer& buffer)
 {
-	if (mBuffer != nullptr)
+	if (buffer.mBuffer != nullptr)
 	{
-		sRendererAGC->mDestroyList.push_back([inflightCounter=mInflightCounter,buffer=mBuffer]() mutable {
+		mDestroyList.push_back([inflightCounter=buffer.mInflightCounter,buffer=buffer.mBuffer]() mutable {
 			if (inflightCounter->mCount == 0)
 			{
 				freeDmem(buffer);
@@ -855,67 +916,68 @@ void RendererContextAGC::Buffer::destroy()
 			return false;
 		});
 	}
-	mBuffer = nullptr;
-	mSize = 0;
+	buffer.mBuffer = nullptr;
+	buffer.mSize = 0;
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::IndexBuffer::create(uint16_t const flags, uint32_t const size, const uint8_t* const data)
+bool RendererContextAGC::createIndexBuffer(IndexBuffer& indexBuffer, uint16_t const flags, uint32_t const size, const uint8_t* const data)
 {
 	// Run constructor to reset object.
-	new (this) IndexBuffer{};
+	new (&indexBuffer) IndexBuffer{};
 
-	mFlags = flags;
-	mSize = 0;
-	if (data != nullptr)
+	indexBuffer.mFlags = flags;
+	indexBuffer.mStride = flags & BGFX_BUFFER_INDEX32 ? 4 : 2;
+	if (data != nullptr || (flags & BGFX_BUFFER_COMPUTE_READ_WRITE) != 0)
 	{
-		return update(0, size, data);
+		return updateBuffer(indexBuffer, 0, size, data);
 	}
 	return true;
 }
 
 //=============================================================================================
 
-void RendererContextAGC::IndexBuffer::destroy()
+void RendererContextAGC::destroyIndexBuffer(IndexBuffer& indexBuffer)
 {
-	Buffer::destroy();
-	mFlags = 0;
+	destroyBuffer(indexBuffer);
+	indexBuffer.mFlags = 0;
 
 	// Run destructor.
-	this->~IndexBuffer();
+	(&indexBuffer)->~IndexBuffer();
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::VertexBuffer::create(VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data)
+bool RendererContextAGC::createVertexBuffer(VertexBuffer& vertexBuffer, VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data)
 {
 	// Run constructor to reset object.
-	new (this) VertexBuffer{};
+	new (&vertexBuffer) VertexBuffer{};
 
-	mLayoutHandle = layoutHandle;
-	mSize = 0;
-	if (data != nullptr)
+	vertexBuffer.mLayoutHandle = layoutHandle;
+	vertexBuffer.mFlags = flags;
+	vertexBuffer.mStride = isValid(layoutHandle) ? mVertexLayouts[layoutHandle.idx].m_stride : 16;
+	if (data != nullptr || (flags & BGFX_BUFFER_COMPUTE_READ_WRITE) != 0)
 	{
-		return update(0, size, data);
+		return updateBuffer(vertexBuffer, 0, size, data);
 	}
 	return true;
 }
 
 //=============================================================================================
 
-void RendererContextAGC::VertexBuffer::destroy()
+void RendererContextAGC::destroyVertexBuffer(VertexBuffer& vertexBuffer)
 {
-	Buffer::destroy();
-	mLayoutHandle = {kInvalidHandle};
+	destroyBuffer(vertexBuffer);
+	vertexBuffer.mLayoutHandle = {kInvalidHandle};
 
 	// Run destructor.
-	this->~VertexBuffer();
+	(&vertexBuffer)->~VertexBuffer();
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::Texture::tileSurface(void* const tiledSurface, const sce::Agc::Core::TextureSpec& tiledSpec, uint32_t const arraySlice, uint32_t const mipLevel, const void* const untiledSurface, uint32_t const untiledSize, bimg::TextureFormat::Enum const untiledFormat, uint32_t untiledBlockPitch, const sce::AgcGpuAddress::SurfaceRegion& region)
+bool RendererContextAGC::tileSurface(void* const tiledSurface, const sce::Agc::Core::TextureSpec& tiledSpec, uint32_t const arraySlice, uint32_t const mipLevel, const void* const untiledSurface, uint32_t const untiledSize, bimg::TextureFormat::Enum const untiledFormat, uint32_t untiledBlockPitch, const sce::AgcGpuAddress::SurfaceRegion& region)
 {
 	SceError ret;
 
@@ -1042,7 +1104,7 @@ bool RendererContextAGC::Texture::tileSurface(void* const tiledSurface, const sc
 
 //=============================================================================================
 
-void RendererContextAGC::Texture::setSampler(sce::Agc::Core::Sampler& sampler, uint64_t const flags)
+void RendererContextAGC::setSampler(sce::Agc::Core::Sampler& sampler, uint64_t const flags)
 {
 	auto const u = sWrapMode[(flags & BGFX_SAMPLER_U_MASK) >> BGFX_SAMPLER_U_SHIFT];
 	auto const v = sWrapMode[(flags & BGFX_SAMPLER_V_MASK) >> BGFX_SAMPLER_V_SHIFT];
@@ -1075,10 +1137,10 @@ void RendererContextAGC::Texture::setSampler(sce::Agc::Core::Sampler& sampler, u
 
 //=============================================================================================
 
-bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip)
+bool RendererContextAGC::createTexture(Texture& texture, uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip)
 {
 	// Run constructor to reset object.
-	new (this) Texture{};
+	new (&texture) Texture{};
 
 	// NOTE: (manderson) Texture is valid if mBuffer != nullptr.
 
@@ -1100,62 +1162,64 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 
 		bool const srgb = (flags & BGFX_TEXTURE_SRGB) != 0;
 		bool const rt = (flags & BGFX_TEXTURE_RT) != 0;
+		bool const computeWrite = (flags & BGFX_TEXTURE_COMPUTE_WRITE) != 0;
 		bool const depth = bimg::isDepth(ti.format);
 
 		const TextureFormatInfo& tf = sTextureFormat[ti.format];
 		sce::Agc::Core::TypedFormat const typedFormat = srgb ? tf.m_fmtSrgb : tf.m_fmt;
 		if (typedFormat == sce::Agc::Core::TypedFormat::kLast)
 		{
-			mTexture.init(); // blank texture.
+			texture.mTexture.init(); // blank texture.
 			return false;
 		}
 
-		mSpec.init();
-		mSpec.m_format = sce::Agc::Core::DataFormat( { typedFormat, tf.m_swzl } );
+		texture.mSpec.init();
+		texture.mSpec.m_format = sce::Agc::Core::DataFormat( { typedFormat, tf.m_swzl } );
 		if (ti.cubeMap)
 		{
-			mSpec.m_type = sce::Agc::Core::Texture::Type::kCubemap;
-			mSpec.m_numSlices = 6 * ti.numLayers;
-			mSpec.m_depth = 1;
+			texture.mSpec.m_type = sce::Agc::Core::Texture::Type::kCubemap;
+			texture.mSpec.m_numSlices = 6 * ti.numLayers;
+			texture.mSpec.m_depth = 1;
 		}
 		else if (imageContainer.m_depth > 1)
 		{
-			mSpec.m_type = sce::Agc::Core::Texture::Type::k3d;
-			mSpec.m_numSlices = 1;
-			mSpec.m_depth = ti.depth;
+			texture.mSpec.m_type = sce::Agc::Core::Texture::Type::k3d;
+			texture.mSpec.m_numSlices = 1;
+			texture.mSpec.m_depth = ti.depth;
 		}
 		else
 		{
-			mSpec.m_type = ti.numLayers > 1 ? sce::Agc::Core::Texture::Type::k2dArray : sce::Agc::Core::Texture::Type::k2d;
-			mSpec.m_numSlices = ti.numLayers;
-			mSpec.m_depth = 1;
+			texture.mSpec.m_type = ti.numLayers > 1 ? sce::Agc::Core::Texture::Type::k2dArray : sce::Agc::Core::Texture::Type::k2d;
+			texture.mSpec.m_numSlices = ti.numLayers;
+			texture.mSpec.m_depth = 1;
 		}
-		mSpec.m_width = ti.width;
-		mSpec.m_height = ti.height;
-		mSpec.m_tileMode = depth ? sce::Agc::Core::Texture::TileMode::kDepth : (rt ? sce::Agc::Core::Texture::TileMode::kRenderTarget : sce::Agc::Core::Texture::TileMode::kLinear); // TODO: (manderson) Use block tile mode
-		mSpec.m_numMips = ti.numMips;
+		texture.mSpec.m_width = ti.width;
+		texture.mSpec.m_height = ti.height;
+		texture.mSpec.m_tileMode = depth ? sce::Agc::Core::Texture::TileMode::kDepth : (rt ? sce::Agc::Core::Texture::TileMode::kRenderTarget : sce::Agc::Core::Texture::TileMode::kLinear); // TODO: (manderson) Use block tile mode
+		texture.mSpec.m_numMips = ti.numMips;
+		texture.mSpec.m_enableWrite = computeWrite ? 1 : 0;
 
-		sce::Agc::SizeAlign const alignedSize = sce::Agc::Core::getSize(&mSpec);
-		mBuffer = allocDmem(alignedSize);
-		if (mBuffer == nullptr)
+		sce::Agc::SizeAlign const alignedSize = sce::Agc::Core::getSize(&texture.mSpec);
+		texture.mBuffer = allocDmem(alignedSize);
+		if (texture.mBuffer == nullptr)
 		{
-			mTexture.init(); // blank texture.
+			texture.mTexture.init(); // blank texture.
 			return false;
 		}
 
-		mSpec.m_dataAddress = mBuffer;
-		SceError error = sce::Agc::Core::initialize(&mTexture, &mSpec);
+		texture.mSpec.m_dataAddress = texture.mBuffer;
+		SceError error = sce::Agc::Core::initialize(&texture.mTexture, &texture.mSpec);
 		if (error != SCE_OK)
 		{
-			mTexture.init(); // blank texture.
-			freeDmem(mBuffer);
-			mBuffer = nullptr;
+			texture.mTexture.init(); // blank texture.
+			freeDmem(texture.mBuffer);
+			texture.mBuffer = nullptr;
 			return false;
 		}
 
-		for (uint32_t slice = 0; slice < mSpec.m_numSlices; slice++)
+		for (uint32_t slice = 0; slice < texture.mSpec.m_numSlices; slice++)
 		{
-			for (uint32_t mip = 0; mip < mSpec.m_numMips; mip++)
+			for (uint32_t mip = 0; mip < texture.mSpec.m_numMips; mip++)
 			{
 				bimg::ImageMip imgMip;
 				if (bimg::imageGetRawData(imageContainer, slice, mip+startLod, data, size, imgMip))
@@ -1163,7 +1227,7 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 					// Verify format.
 					if (imgMip.m_format != ti.format)
 					{
-						mTexture.init();
+						texture.mTexture.init();
 						return false;
 					}
 
@@ -1176,11 +1240,11 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 						imgMip.m_height,
 						imgMip.m_depth
 					};
-					if (!tileSurface(mBuffer, mSpec, slice, mip, imgMip.m_data, imgMip.m_size, imgMip.m_format, UINT16_MAX, region))
+					if (!tileSurface(texture.mBuffer, texture.mSpec, slice, mip, imgMip.m_data, imgMip.m_size, imgMip.m_format, UINT16_MAX, region))
 					{
-						mTexture.init(); // blank texture.
-						freeDmem(mBuffer);
-						mBuffer = nullptr;
+						texture.mTexture.init(); // blank texture.
+						freeDmem(texture.mBuffer);
+						texture.mBuffer = nullptr;
 						return false;
 					}
 				}
@@ -1188,7 +1252,7 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 		}
 
 		// Set default sampler.
-		setSampler(mSampler, flags);
+		setSampler(texture.mSampler, flags);
 
 		// Create stencil buffer if format requires one.
 		if (ti.format == bimg::TextureFormat::D24S8)
@@ -1199,18 +1263,18 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 			drtSpec.m_height = ti.height;
 			drtSpec.m_stencilFormat = sce::Agc::CxDepthRenderTarget::StencilFormat::k8UInt;
 			sce::Agc::SizeAlign const stencilSize = sce::Agc::Core::getSize(&drtSpec, sce::Agc::Core::DepthRenderTargetComponent::kStencil);
-			mStencilBuffer = allocDmem(sce::Agc::SizeAlign(stencilSize.m_size, stencilSize.m_align));
-			if (mStencilBuffer == nullptr)
+			texture.mStencilBuffer = allocDmem(sce::Agc::SizeAlign(stencilSize.m_size, stencilSize.m_align));
+			if (texture.mStencilBuffer == nullptr)
 			{
-				mTexture.init(); // blank texture.
-				freeDmem(mBuffer);
-				mBuffer = nullptr;
+				texture.mTexture.init(); // blank texture.
+				freeDmem(texture.mBuffer);
+				texture.mBuffer = nullptr;
 				return false;
 			}
 		}
 
-		mFlags = flags;
-		mFormat = ti.format;
+		texture.mFlags = flags;
+		texture.mFormat = ti.format;
 
 		return true;
 	}
@@ -1218,36 +1282,35 @@ bool RendererContextAGC::Texture::create(uint64_t const flags, uint32_t const si
 }
 
 //=============================================================================================
-bool RendererContextAGC::Texture::update(uint8_t const slice, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data)
+bool RendererContextAGC::updateTexture(Texture& texture, uint8_t const slice, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data)
 {
 	// Was texture initialized successfully?
-	if (mBuffer == nullptr)
+	if (texture.mBuffer == nullptr)
 	{
 		return false;
 	}
 
 	// If the texture is not inflight we can update it's contents directly, otherwise we need to
 	// modify a copy of the current texture and discard the current buffer when it's not inflight.
-	uint8_t* newBuffer = mBuffer;
-	if (mInflightCounter->mCount != 0)
+	uint8_t* newBuffer = texture.mBuffer;
+	if (texture.mInflightCounter->mCount != 0)
 	{
-		sce::Agc::SizeAlign const alignedSize = sce::Agc::Core::getSize(&mSpec);
+		sce::Agc::SizeAlign const alignedSize = sce::Agc::Core::getSize(&texture.mSpec);
 		newBuffer = allocDmem(alignedSize);
 		if (newBuffer == nullptr)
 		{
 			return false;
 		}
-		mTexture.setDataAddress(newBuffer);
 
 		// Copy existing contents, if we are updating the whole texture we don't need to do this.
 		// TODO: (manderson) investigate copying only region that isn't updated, this is made difficult
 		// by the fact that the existing buffer is tiled.
-		bool isFullMip = rect.m_x == 0 && rect.m_width == bx::max<uint32_t>(mSpec.m_width >> mip, 1) &&
-						 rect.m_y == 0 && rect.m_height == bx::max<uint32_t>(mSpec.m_height >> mip, 1) &&
-						 z == 0 && depth == bx::max<uint32_t>(mSpec.m_depth >> mip, 1);
+		bool isFullMip = rect.m_x == 0 && rect.m_width == bx::max<uint32_t>(texture.mSpec.m_width >> mip, 1) &&
+						 rect.m_y == 0 && rect.m_height == bx::max<uint32_t>(texture.mSpec.m_height >> mip, 1) &&
+						 z == 0 && depth == bx::max<uint32_t>(texture.mSpec.m_depth >> mip, 1);
 		if (!isFullMip)
 		{
-			memcpy(newBuffer, mBuffer, alignedSize.m_size);
+			memcpy(newBuffer, texture.mBuffer, alignedSize.m_size);
 		}
 	}
 
@@ -1260,9 +1323,9 @@ bool RendererContextAGC::Texture::update(uint8_t const slice, uint8_t const mip,
 		(uint32_t)rect.m_y + (uint32_t)rect.m_height,
 		(uint32_t)z + depth
 	};
-	if (!tileSurface(newBuffer, mSpec, slice, mip, data, size, mFormat, pitch, region))
+	if (!tileSurface(newBuffer, texture.mSpec, slice, mip, data, size, texture.mFormat, pitch, region))
 	{
-		if (newBuffer != mBuffer)
+		if (newBuffer != texture.mBuffer)
 		{
 			freeDmem(newBuffer);
 		}
@@ -1270,9 +1333,9 @@ bool RendererContextAGC::Texture::update(uint8_t const slice, uint8_t const mip,
 	}
 
 	// Discard old buffer if we needed to allocated a new one (old buffer is inflight)
-	if (newBuffer != mBuffer)
+	if (newBuffer != texture.mBuffer)
 	{
-		sRendererAGC->mDestroyList.push_back([inflightCounter=mInflightCounter,buffer=mBuffer]() mutable {
+		mDestroyList.push_back([inflightCounter=texture.mInflightCounter,buffer=texture.mBuffer]() mutable {
 			if (inflightCounter->mCount == 0)
 			{
 				freeDmem(buffer);
@@ -1280,8 +1343,9 @@ bool RendererContextAGC::Texture::update(uint8_t const slice, uint8_t const mip,
 			}
 			return false;
 		});
-		mInflightCounter = std::make_shared<InflightCounter>();
-		mBuffer = newBuffer;
+		texture.mTexture.setDataAddress(newBuffer);
+		texture.mInflightCounter = std::make_shared<InflightCounter>();
+		texture.mBuffer = newBuffer;
 	}
 
 	return true;
@@ -1289,11 +1353,11 @@ bool RendererContextAGC::Texture::update(uint8_t const slice, uint8_t const mip,
 
 //=============================================================================================
 
-void RendererContextAGC::Texture::destroy()
+void RendererContextAGC::destroyTexture(Texture& texture)
 {
-	if (mBuffer != nullptr || mStencilBuffer != nullptr)
+	if (texture.mBuffer != nullptr || texture.mStencilBuffer != nullptr)
 	{
-		sRendererAGC->mDestroyList.push_back([inflightCounter=mInflightCounter,textureBuffer=mBuffer,stencilBuffer=mStencilBuffer]() mutable {
+		mDestroyList.push_back([inflightCounter=texture.mInflightCounter,textureBuffer=texture.mBuffer,stencilBuffer=texture.mStencilBuffer]() mutable {
 			if (inflightCounter->mCount == 0)
 			{
 				if (textureBuffer != nullptr)
@@ -1309,11 +1373,11 @@ void RendererContextAGC::Texture::destroy()
 			return false;
 		});
 	}
-	mBuffer = nullptr;
-	mStencilBuffer = nullptr;
+	texture.mBuffer = nullptr;
+	texture.mStencilBuffer = nullptr;
 
 	// Run destructor.
-	this->~Texture();
+	(&texture)->~Texture();
 }
 
 //=============================================================================================
@@ -1325,27 +1389,27 @@ RendererContextAGC::FrameBuffer::FrameBuffer()
 
 //=============================================================================================
 
-bool RendererContextAGC::FrameBuffer::create(uint8_t const num, const Attachment* const attachments)
+bool RendererContextAGC::createFrameBuffer(FrameBuffer& frameBuffer, uint8_t const num, const Attachment* const attachments)
 {
 	// Run constructor to reset object.
-	new (this) FrameBuffer{};
+	new (&frameBuffer) FrameBuffer{};
 
-	mWidth = 0;
-	mHeight = 0;
-	mNumAttachments = 0;
-	mDepthTarget.init(); // blank depth target.
+	frameBuffer.mWidth = 0;
+	frameBuffer.mHeight = 0;
+	frameBuffer.mNumAttachments = 0;
+	frameBuffer.mDepthTarget.init(); // blank depth target.
 	for (uint32_t i = 0; i < num; i++)
 	{
 		const Attachment& attachment = attachments[i];
 		if (isValid(attachment.handle))
 		{
-			Texture& texture = sRendererAGC->mTextures[attachment.handle.idx];
+			Texture& texture = mTextures[attachment.handle.idx];
 
 			uint32_t const width  = bx::uint32_max(texture.mSpec.m_width  >> attachment.mip, 1);
 			uint32_t const height = bx::uint32_max(texture.mSpec.m_height >> attachment.mip, 1);
-			if (mWidth != 0)
+			if (frameBuffer.mWidth != 0)
 			{
-				if (width != mWidth || height != mHeight)
+				if (width != frameBuffer.mWidth || height != frameBuffer.mHeight)
 				{
 					// ERROR: dimensions don't match.
 					return false;
@@ -1353,8 +1417,8 @@ bool RendererContextAGC::FrameBuffer::create(uint8_t const num, const Attachment
 			}
 			else
 			{
-				mWidth = width;
-				mHeight = height;
+				frameBuffer.mWidth = width;
+				frameBuffer.mHeight = height;
 			}
 
 			if (!bimg::isDepth(texture.mFormat))
@@ -1375,17 +1439,17 @@ bool RendererContextAGC::FrameBuffer::create(uint8_t const num, const Attachment
 				spec.m_numMips = texture.mSpec.m_numMips;
 				spec.m_tileMode = sce::Agc::CxRenderTarget::TileMode::kRenderTarget;
 				spec.m_dataAddress = texture.mSpec.m_dataAddress;
-				SceError error = sce::Agc::Core::initialize(&mColorTargets[mNumAttachments], &spec);
+				SceError error = sce::Agc::Core::initialize(&frameBuffer.mColorTargets[frameBuffer.mNumAttachments], &spec);
 				if (error != SCE_OK)
 				{
 					// ERROR!
 					return false;
 				}
-				mColorTargets[mNumAttachments].setSlot(mNumAttachments)
+				frameBuffer.mColorTargets[frameBuffer.mNumAttachments].setSlot(frameBuffer.mNumAttachments)
 					.setCurrentMipLevel(attachment.mip)
 					.setBaseArraySliceIndex(attachment.layer);
-				mColorHandles[mNumAttachments] = attachment.handle;
-				mNumAttachments++;
+				frameBuffer.mColorHandles[frameBuffer.mNumAttachments] = attachment.handle;
+				frameBuffer.mNumAttachments++;
 			}
 			else
 			{
@@ -1405,33 +1469,33 @@ bool RendererContextAGC::FrameBuffer::create(uint8_t const num, const Attachment
 				spec.m_depthWriteAddress = texture.mBuffer;
 				spec.m_stencilReadAddress = texture.mStencilBuffer;
 				spec.m_stencilWriteAddress = texture.mStencilBuffer;
-				SceError error = sce::Agc::Core::initialize(&mDepthTarget, &spec);
+				SceError error = sce::Agc::Core::initialize(&frameBuffer.mDepthTarget, &spec);
 				if (error != SCE_OK)
 				{
 					// ERROR!
 					return false;
 				}
-				mDepthHandle = attachment.handle;
+				frameBuffer.mDepthHandle = attachment.handle;
 			}
 		}
 	}
 
 	// Clear remaining color targets.
-	for (uint32_t i = mNumAttachments; i < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; i++)
+	for (uint32_t i = frameBuffer.mNumAttachments; i < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; i++)
 	{
-		mColorTargets[i].init()
+		frameBuffer.mColorTargets[i].init()
 			.setSlot(i);
 	}
 
-	return false;
+	return true;
 }
 
 //=============================================================================================
 
-void RendererContextAGC::FrameBuffer::destroy()
+void RendererContextAGC::destroyFrameBuffer(FrameBuffer& frameBuffer)
 {
 	// Run destructor.
-	this->~FrameBuffer();
+	(&frameBuffer)->~FrameBuffer();
 }
 
 //=============================================================================================
@@ -1441,7 +1505,7 @@ RendererContextAGC::RendererContextAGC()
 	g_caps.supported = 0
 		//| BGFX_CAPS_ALPHA_TO_COVERAGE
 		| BGFX_CAPS_BLEND_INDEPENDENT
-		//| BGFX_CAPS_COMPUTE
+		| BGFX_CAPS_COMPUTE
 		//| BGFX_CAPS_CONSERVATIVE_RASTER
 		//| BGFX_CAPS_DRAW_INDIRECT
 		| BGFX_CAPS_FRAGMENT_DEPTH
@@ -1679,19 +1743,28 @@ bool RendererContextAGC::init(const Init& initParams)
 		!createContext())
 		return false;
 
-	mBlitDraw.clear();
+	mBlitItem.draw.clear();
+	mBlitItem.draw.m_stateFlags = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z;
+	mBlitItem.draw.m_scissor = UINT16_MAX;
 	mBlitBind.clear();
-	mBlitDraw.m_stateFlags = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z;
-	mBlitDraw.m_scissor = UINT16_MAX;
 	mBlitBind.m_bind[0].m_type = (uint8_t)Binding::Texture;
 	mBlitBind.m_bind[0].m_samplerFlags = BGFX_SAMPLER_UVW_CLAMP;
 
-	mClearDraw.clear();
+	mClearItem.draw.clear();
+	mClearItem.draw.m_stateFlags = BGFX_STATE_PT_TRISTRIP;
+	mBlitItem.draw.m_scissor = UINT16_MAX;
 	mClearBind.clear();
-	mClearDraw.m_stateFlags = BGFX_STATE_PT_TRISTRIP;
-	mBlitDraw.m_scissor = UINT16_MAX;
 
 	mVsync = initParams.resolution.reset == BGFX_RESET_VSYNC;
+
+	mTextVideoMem.resize(false, mWidth, mHeight);
+	mTextVideoMem.clear();
+
+	// Init reserved part of view names.
+	for (uint32_t i = 0; i < BGFX_CONFIG_MAX_VIEWS; i++)
+	{
+		bx::snprintf(mViewNames[i], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", i);
+	}
 
 	return true;
 }
@@ -1727,14 +1800,14 @@ void RendererContextAGC::flip()
 
 void RendererContextAGC::createIndexBuffer(IndexBufferHandle handle, const Memory* mem, uint16_t flags)
 {
-	mIndexBuffers[handle.idx].create(flags, mem->size, mem->data);
+	createIndexBuffer(mIndexBuffers[handle.idx], flags, mem->size, mem->data);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyIndexBuffer(IndexBufferHandle handle)
 {
-	mIndexBuffers[handle.idx].destroy();
+	destroyIndexBuffer(mIndexBuffers[handle.idx]);
 }
 
 //=============================================================================================
@@ -1756,91 +1829,91 @@ void RendererContextAGC::destroyVertexLayout(VertexLayoutHandle handle)
 
 void RendererContextAGC::createVertexBuffer(VertexBufferHandle handle, const Memory* mem, VertexLayoutHandle layoutHandle, uint16_t flags)
 {
-	mVertexBuffers[handle.idx].create(layoutHandle, flags, mem->size, mem->data);
+	createVertexBuffer(mVertexBuffers[handle.idx], layoutHandle, flags, mem->size, mem->data);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyVertexBuffer(VertexBufferHandle handle)
 {
-	mVertexBuffers[handle.idx].destroy();
+	destroyVertexBuffer(mVertexBuffers[handle.idx]);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::createDynamicIndexBuffer(IndexBufferHandle handle, uint32_t size, uint16_t flags)
 {
-	mIndexBuffers[handle.idx].create(flags, size, nullptr);
+	createIndexBuffer(mIndexBuffers[handle.idx], flags, size, nullptr);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::updateDynamicIndexBuffer(IndexBufferHandle handle, uint32_t offset, uint32_t size, const Memory* mem)
 {
-	mIndexBuffers[handle.idx].update(offset, bx::uint32_min(size, mem->size), mem->data);
+	updateBuffer(mIndexBuffers[handle.idx], offset, bx::uint32_min(size, mem->size), mem->data);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyDynamicIndexBuffer(IndexBufferHandle handle)
 {
-	mIndexBuffers[handle.idx].destroy();
+	destroyIndexBuffer(mIndexBuffers[handle.idx]);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::createDynamicVertexBuffer(VertexBufferHandle handle, uint32_t size, uint16_t flags)
 {
-	mVertexBuffers[handle.idx].create({kInvalidHandle}, flags, size, nullptr);
+	createVertexBuffer(mVertexBuffers[handle.idx], {kInvalidHandle}, flags, size, nullptr);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::updateDynamicVertexBuffer(VertexBufferHandle handle, uint32_t offset, uint32_t size, const Memory* mem)
 {
-	mVertexBuffers[handle.idx].update(offset, bx::uint32_min(size, mem->size), mem->data);
+	updateBuffer(mVertexBuffers[handle.idx], offset, bx::uint32_min(size, mem->size), mem->data);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyDynamicVertexBuffer(VertexBufferHandle handle)
 {
-	mVertexBuffers[handle.idx].destroy();
+	destroyVertexBuffer(mVertexBuffers[handle.idx]);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::createShader(ShaderHandle handle, const Memory* mem)
 {
-	mShaders[handle.idx].create(*mem);
+	createShader(mShaders[handle.idx], *mem);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyShader(ShaderHandle handle)
 {
-	mShaders[handle.idx].destroy();
+	destroyShader(mShaders[handle.idx]);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::createProgram(ProgramHandle handle, ShaderHandle vsh, ShaderHandle fsh)
 {
-	mPrograms[handle.idx].create(vsh, fsh);
+	createProgram(mPrograms[handle.idx], vsh, fsh);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::destroyProgram(ProgramHandle handle)
 {
-	mPrograms[handle.idx].destroy();
+	destroyProgram(mPrograms[handle.idx]);
 }
 
 //=============================================================================================
 
 void* RendererContextAGC::createTexture(TextureHandle handle, const Memory* mem, uint64_t flags, uint8_t skip)
 {
-	mTextures[handle.idx].create(flags, mem->size, mem->data, skip);
+	createTexture(mTextures[handle.idx], flags, mem->size, mem->data, skip);
 	return nullptr;
 }
 
@@ -1854,7 +1927,7 @@ void RendererContextAGC::updateTextureBegin(TextureHandle handle, uint8_t side, 
 
 void RendererContextAGC::updateTexture(TextureHandle handle, uint8_t side, uint8_t mip, const Rect& rect, uint16_t z, uint16_t depth, uint16_t pitch, const Memory* mem)
 {
-	mTextures[handle.idx].update(side, mip, rect, z, depth, pitch, mem->size, mem->data);
+	updateTexture(mTextures[handle.idx], side, mip, rect, z, depth, pitch, mem->size, mem->data);
 }
 
 //=============================================================================================
@@ -1892,14 +1965,14 @@ uintptr_t RendererContextAGC::getInternal(TextureHandle handle)
 
 void RendererContextAGC::destroyTexture(TextureHandle handle)
 {
-	mTextures[handle.idx].destroy();
+	destroyTexture(mTextures[handle.idx]);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::createFrameBuffer(FrameBufferHandle handle, uint8_t num, const Attachment* attachment)
 {
-	mFrameBuffers[handle.idx].create(num, attachment);
+	createFrameBuffer(mFrameBuffers[handle.idx], num, attachment);
 }
 
 //=============================================================================================
@@ -1913,7 +1986,7 @@ void RendererContextAGC::createFrameBuffer(FrameBufferHandle handle, void* nwh, 
 
 void RendererContextAGC::destroyFrameBuffer(FrameBufferHandle handle)
 {
-	mFrameBuffers[handle.idx].destroy();
+	destroyFrameBuffer(mFrameBuffers[handle.idx]);
 }
 
 //=============================================================================================
@@ -1951,6 +2024,9 @@ void RendererContextAGC::requestScreenShot(FrameBufferHandle handle, const char*
 
 void RendererContextAGC::updateViewName(ViewId id, const char* name)
 {
+	bx::strCopy(&(mViewNames[id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]),
+		BGFX_CONFIG_MAX_VIEW_NAME - BGFX_CONFIG_MAX_VIEW_NAME_RESERVED,
+		name);
 }
 
 //=============================================================================================
@@ -1985,11 +2061,11 @@ bool RendererContextAGC::getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHand
 {
 	// Iterate through attributes required by the vertex shader and find a vertex stream that
 	// provides the attribute in the draw streams.
-	const Program& program{ mPrograms[programHandle.idx] };
-	const Shader& vertexShader{ mShaders[program.mVertexShaderHandle.idx] };
-	const Stream* const streams{ draw.m_stream };
-	uint8_t const streamMask{ draw.m_streamMask };
-	uint32_t missingAttribCount{};
+	const Program& program{mPrograms[programHandle.idx]};
+	const Shader& vertexShader{mShaders[program.mVertexShaderHandle.idx]};
+	const Stream* const streams{draw.m_stream};
+	uint8_t const streamMask{draw.m_streamMask};
+	int32_t posIndex = -1;
 	bindInfo.mCount = 0;
 	for (uint32_t i = 0; i < vertexShader.mNumAttributes; i++)
 	{
@@ -2012,46 +2088,86 @@ bool RendererContextAGC::getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHand
 			const VertexLayout& layout = mVertexLayouts[layoutHandle.idx];
 			if (layout.has(attrib))
 			{
-				bindInfo.mAttribs[bindInfo.mCount] = { attrib, stream.m_handle, layoutHandle, stream.m_startVertex };
+				bindInfo.mAttribs[bindInfo.mCount] = {stream.m_handle.idx, layout.m_attributes[attrib], stream.m_startVertex * layout.m_stride, layout.m_offset[attrib], layout.m_stride, 0};
+				if (attrib == Attrib::Position)
+				{
+					posIndex = i;
+				}
 				found = true;
 			}
 		}
-
-		// Track missing attributes, we will try and hook them up to instance
-		// data if we have any.
-		if (!found)
-		{
-			missingAttribCount++;
-		}
-		else
+		if (found)
 		{
 			bindInfo.mCount++;
 		}
 	}
 
-	// Try and hook mising attributes up to instance buffer.
-	if (missingAttribCount > 0)
+	// Try and hook missing attributes up to instance buffer.
+	uint32_t numRemainingAttribs = vertexShader.mNumAttributes - bindInfo.mCount;
+	if (numRemainingAttribs > 0)
 	{
-		// If we have no instance data or not enough attributes we can't satisfy the vertex shader's inputs,
-		// don't make the draw call.
-		uint16_t const instanceBufferAttribCount = draw.m_instanceDataStride / 16;
-		if (isValid(draw.m_instanceDataBuffer) && missingAttribCount <= instanceBufferAttribCount)
+		// Assume if we have instance vertex data that the remaining attribs are instance data
+		// attributes.
+		// TODO: (manderson) flag attributes as instance so there is no assumption here.
+		if (isValid(draw.m_instanceDataBuffer))
 		{
-			bindInfo.mInstanceBufferHandle = draw.m_instanceDataBuffer;
-			bindInfo.mInstanceBufferOffset = draw.m_instanceDataOffset;
-			bindInfo.mInstanceBufferStride = draw.m_instanceDataStride;
-			bindInfo.mInstanceBufferAttribCount = instanceBufferAttribCount;
+			uint32_t const instanceBufferAttribCount = bx::min<uint32_t>(draw.m_instanceDataStride / 16, numRemainingAttribs);
+			for (uint32_t i = 0; i < instanceBufferAttribCount; i++)
+			{
+				bindInfo.mAttribs[bindInfo.mCount] = {draw.m_instanceDataBuffer.idx, 0, draw.m_instanceDataOffset, (uint16_t)(i * 16), draw.m_instanceDataStride, 1};
+				bindInfo.mCount++;
+			}
+			numRemainingAttribs -= instanceBufferAttribCount;
 		}
-		else
+
+		// Point any remaining attributes at the position data (this is what d3d11 and vulkan appear to do).
+		// If don't have a position attribute don't issue the draw call.
+		if (numRemainingAttribs > 0)
 		{
-			return false;
+			if (posIndex == -1)
+			{
+				return false;
+			}
+			for (uint32_t i = 0; i < numRemainingAttribs; i++)
+			{
+				bindInfo.mAttribs[bindInfo.mCount] = bindInfo.mAttribs[posIndex];
+				bindInfo.mCount++;
+			}
+			numRemainingAttribs = 0;
 		}
 	}
-	
+
 	// Calc hash for dirty state check.
-	bindInfo.mHash = bx::hash<bx::HashMurmur2A>(&bindInfo, sizeof(VertexBindInfo));
+	bindInfo.mHash = bx::hash<bx::HashMurmur2A>(&(bindInfo.mAttribs[0]), sizeof(VertexAttribBindInfo) * bindInfo.mCount);
 
 	return true;
+}
+
+//=============================================================================================
+
+uint16_t RendererContextAGC::cleanupEncodedAttrib(uint16_t const encodedAttrib)
+{
+	// Clean up attribute flags (some examples have invalid attibute flags).
+	// Flags for reference:
+	//		uint16_t VertexLayout::encode(uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
+	//		{
+	//			const uint16_t encodedNorm = (_normalized&1)<<7;
+	//			const uint16_t encodedType = (_type&7)<<3;
+	//			const uint16_t encodedNum  = (_num-1)&3;
+	//			const uint16_t encodeAsInt = (_asInt&(!!"\x1\x1\x1\x0\x0"[_type]) )<<8;
+	//			return encodedNorm|encodedType|encodedNum|encodeAsInt;
+	//		}
+	// Ignore AsInt, all of the other render contexts ignore this, not sure what it's for.
+	constexpr uint16_t normalizedMask = (1 << 7);
+	constexpr uint16_t asIntMask = (1 << 8);
+	uint16_t cleanupMask = asIntMask;
+	uint16_t const attribType = (encodedAttrib >> 3) & 0x7;
+	if ((attribType == AttribType::Float || attribType == AttribType::Half) &&
+		(encodedAttrib & normalizedMask) != 0)
+	{
+		cleanupMask |= normalizedMask;
+	}
+	return (encodedAttrib & ~cleanupMask);
 }
 
 //=============================================================================================
@@ -2061,77 +2177,32 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 	// Build vertex binding from bind info attributes.
 	sce::Agc::Core::BufferSpec spec{};
 	SceError error{};
-	binding.mNumBufferVertices = UINT32_MAX;
-	binding.mCount = 0;
+	binding.mNumVertices = 0;
+	binding.mNumInstances = 0;
+	binding.mCount = bindInfo.mCount;
 	for (uint32_t i = 0; i < bindInfo.mCount; i++)
 	{
-		// Get buffer and layout.
 		const VertexAttribBindInfo& attribBindInfo = bindInfo.mAttribs[i];
-		Attrib::Enum const attrib = attribBindInfo.mAttrib;
-		const VertexBuffer& buffer = mVertexBuffers[attribBindInfo.mBufferHandle.idx];
-		const VertexLayout& layout = mVertexLayouts[attribBindInfo.mLayoutHandle.idx];
+		const VertexBuffer& buffer = mVertexBuffers[attribBindInfo.mBufferIndex];
+		uint32_t const count = (buffer.mSize - attribBindInfo.mBufferOffset) / attribBindInfo.mStride;
 
-		// Clean up attribute flags (some examples have invalid attibute flags).
-		// Flags for reference:
-		//		uint16_t VertexLayout::encode(uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
-		//		{
-		//			const uint16_t encodedNorm = (_normalized&1)<<7;
-		//			const uint16_t encodedType = (_type&7)<<3;
-		//			const uint16_t encodedNum  = (_num-1)&3;
-		//			const uint16_t encodeAsInt = (_asInt&(!!"\x1\x1\x1\x0\x0"[_type]) )<<8;
-		//			return encodedNorm|encodedType|encodedNum|encodeAsInt;
-		//		}
-		// Ignore AsInt, all of the other render contexts ignore this, not sure what it's for.
-		constexpr uint16_t normalizedMask = (1 << 7);
-		constexpr uint16_t asIntMask = (1 << 8);
-		uint16_t cleanupMask = asIntMask;
-		uint16_t encodedAttrib = layout.m_attributes[attrib];
-		uint16_t const attribType = (encodedAttrib >> 3) & 0x7;
-		if ((attribType == AttribType::Float || attribType == AttribType::Half) &&
-			(encodedAttrib & normalizedMask) != 0)
+		// Is this a vertex or instance attribute?		
+		if (!attribBindInfo.mIsInstanceAttrib)
 		{
-			cleanupMask |= normalizedMask;
-		}
-		encodedAttrib &= ~cleanupMask;
-		
-		// Lookup attribute format.
-		auto it = sAttribFormatIndex.find(encodedAttrib);
-		if (it == sAttribFormatIndex.end())
-		{
-			// ERROR: Invalid vertex atrribute format.
-			return false;
-		}
-		const AttribFormat& format = it->second;
-		
-		// Initialize buffer struct.
-		uint32_t const offs = attribBindInfo.mBaseVertex * layout.m_stride;
-		uint32_t const count = (buffer.mSize - offs) / layout.m_stride;
-		binding.mNumBufferVertices = bx::uint32_min(binding.mNumBufferVertices, count);
-		spec.initAsVertexBuffer(buffer.mBuffer + offs, { format.mTypedFormat, format.mSwizzle }, layout.m_stride, count);
-		error = sce::Agc::Core::initialize(&binding.mBuffers[binding.mCount], &spec);
-		if (error != SCE_OK)
-		{
-			// ERROR: Failed to create agc vertex buffer.
-			return false;
-		}
-
-		// Set vertex attribute struct.
-		binding.mAttribs[binding.mCount] = { binding.mCount, format.mAttribFormat, layout.m_offset[attrib], sce::Agc::Core::VertexAttribute::Index::kVertexId };
-		binding.mCount++;
-	}
-
-	// Build remaining vertex binding from instance attributes.
-	if (bindInfo.mInstanceBufferAttribCount > 0)
-	{
-		const VertexBuffer& buffer = mVertexBuffers[bindInfo.mInstanceBufferHandle.idx];
-		uint32_t const offs = bindInfo.mInstanceBufferOffset;	
-		uint32_t const count = (buffer.mSize - offs) / bindInfo.mInstanceBufferStride;
-		uint32_t attribOffs{};
-		for (uint32_t i = 0; i < bindInfo.mInstanceBufferAttribCount; i++)
-		{
+			// Lookup attribute format.
+			uint16_t const encodedAttrib = cleanupEncodedAttrib(attribBindInfo.mAttribParams);
+			auto it = sAttribFormatIndex.find(encodedAttrib);
+			if (it == sAttribFormatIndex.end())
+			{
+				// ERROR: Invalid vertex atrribute format.
+				return false;
+			}
+			const AttribFormat& format = it->second;
+			
 			// Initialize buffer struct.
-			spec.initAsVertexBuffer(buffer.mBuffer + offs, {sce::Agc::Core::TypedFormat::k32_32_32_32Float, sce::Agc::Core::createSwizzle(sce::Agc::Core::ChannelSelect::kX, sce::Agc::Core::ChannelSelect::kY, sce::Agc::Core::ChannelSelect::kZ, sce::Agc::Core::ChannelSelect::kW)}, bindInfo.mInstanceBufferStride, count);
-			error = sce::Agc::Core::initialize(&binding.mBuffers[binding.mCount], &spec);
+			binding.mNumVertices = binding.mNumVertices == 0 || binding.mNumVertices > count ? count : binding.mNumVertices;
+			spec.initAsVertexBuffer(buffer.mBuffer + attribBindInfo.mBufferOffset, {format.mTypedFormat, format.mSwizzle}, attribBindInfo.mStride, count);
+			error = sce::Agc::Core::initialize(&binding.mBuffers[i], &spec);
 			if (error != SCE_OK)
 			{
 				// ERROR: Failed to create agc vertex buffer.
@@ -2139,9 +2210,22 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 			}
 
 			// Set vertex attribute struct.
-			binding.mAttribs[binding.mCount] = { binding.mCount, sce::Agc::Core::VertexAttribute::Format::k32_32_32_32Float, attribOffs, sce::Agc::Core::VertexAttribute::Index::kInstanceId };
-			binding.mCount++;
-			attribOffs += 16;
+			binding.mAttribs[i] = {i, format.mAttribFormat, attribBindInfo.mAttribOffset, sce::Agc::Core::VertexAttribute::Index::kVertexId};
+		}
+		else
+		{
+			// Initialize buffer struct.
+			binding.mNumInstances = binding.mNumInstances == 0 || binding.mNumInstances > count ? count : binding.mNumInstances;
+			spec.initAsVertexBuffer(buffer.mBuffer + attribBindInfo.mBufferOffset, {sce::Agc::Core::TypedFormat::k32_32_32_32Float, sce::Agc::Core::createSwizzle(sce::Agc::Core::ChannelSelect::kX, sce::Agc::Core::ChannelSelect::kY, sce::Agc::Core::ChannelSelect::kZ, sce::Agc::Core::ChannelSelect::kW)}, attribBindInfo.mStride, count);
+			error = sce::Agc::Core::initialize(&binding.mBuffers[i], &spec);
+			if (error != SCE_OK)
+			{
+				// ERROR: Failed to create agc vertex buffer.
+				return false;
+			}
+
+			// Set vertex attribute struct.
+			binding.mAttribs[i] = {i, sce::Agc::Core::VertexAttribute::Format::k32_32_32_32Float, attribBindInfo.mAttribOffset, sce::Agc::Core::VertexAttribute::Index::kInstanceId};
 		}
 	}
 
@@ -2160,7 +2244,8 @@ bool RendererContextAGC::bindVertexAttributes(const RenderDraw& draw)
 	}
 
 	// If the bind info hasn't changed we are good, do nothing.
-	if (mFrameState.mVertexAttribHash == bindInfo.mHash)
+	// Every time a new program is bound, the stage bindings are cleared.
+	if (mFrameState.mVertexAttribHash == bindInfo.mHash && !mFrameState.mProgramChanged)
 	{
 		return true;
 	}
@@ -2178,14 +2263,14 @@ bool RendererContextAGC::bindVertexAttributes(const RenderDraw& draw)
 	ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
 		.setVertexAttributes(0, binding.mCount, &binding.mAttribs[0])
 		.setVertexBuffers(0, binding.mCount, &binding.mBuffers[0]);
-	mFrameState.mNumBufferVertices = binding.mNumBufferVertices;
+	mFrameState.mNumVertices = binding.mNumVertices;
 	mFrameState.mVertexAttribHash = bindInfo.mHash;
 
 	// Flag buffers as inflight.
 	for (uint32_t i = 0; i < bindInfo.mCount; i++)
 	{
-		VertexBuffer& buffer = mVertexBuffers[bindInfo.mAttribs[i].mBufferHandle.idx];
-		buffer.setInflight();
+		VertexBuffer& buffer = mVertexBuffers[bindInfo.mAttribs[i].mBufferIndex];
+		setResourceInflight(buffer);
 	}
 
 	return true;
@@ -2195,15 +2280,23 @@ bool RendererContextAGC::bindVertexAttributes(const RenderDraw& draw)
 
 void RendererContextAGC::setShaderUniform(uint8_t const flags, uint32_t const regIndex, const void* const val, uint32_t const numRegs)
 {
-	size_t const len = numRegs*16;
-	if ((regIndex + len) <= mFrameState.mUniformBufferSize)
+	if (isValid(mFrameState.mShaderHandle))
 	{
-		mFrameState.mUniformBufferDirty = mFrameState.mUniformBufferDirty || memcmp(&mFrameState.mUniformBuffer[regIndex], val, len) != 0;
-		memcpy(&mFrameState.mUniformBuffer[regIndex], val, len);
+		Shader& shader = mShaders[mFrameState.mShaderHandle.idx];
+		uint32_t const len = numRegs*16;
+		if ((regIndex + len) <= shader.mUniformBufferSize)
+		{
+			shader.mUniformBufferDirty = shader.mUniformBufferDirty || memcmp(&(shader.mUniformBuffer[regIndex]), val, len) != 0;
+			memcpy(&shader.mUniformBuffer[regIndex], val, len);
+		}
+		else
+		{
+			// ERROR: constant buffer size mismatch!
+		}
 	}
 	else
 	{
-		// ERROR: constant buffer size mismatch!
+		// ERROR: Invalid shader handle.
 	}
 }
 
@@ -2223,34 +2316,71 @@ void RendererContextAGC::setShaderUniform4x4f(uint8_t const flags, uint32_t cons
 
 //=============================================================================================
 
+void RendererContextAGC::flushGPU(uint32_t const parts)
+{
+	// Figure out what to flush.
+	sce::Agc::Core::SyncWaitMode mode = sce::Agc::Core::SyncWaitMode::kNone;
+	sce::Agc::Core::SyncCacheOp mask = sce::Agc::Core::SyncCacheOp::kNone;
+	bool const flushGraphics = (parts & Graphics) != 0 && mFrameState.mShouldFlushGraphics;
+	bool const flushCompute = (parts & Compute) != 0 && mFrameState.mShouldFlushCompute;
+	if (flushGraphics && flushCompute)
+	{
+		mode = sce::Agc::Core::SyncWaitMode::kDrainGraphicsAndCompute;
+		mask = (mFrameState.mHaveColorBuffer ? sce::Agc::Core::SyncCacheOp::kFlushUncompressedColorBufferForTexture : sce::Agc::Core::SyncCacheOp::kNone) |
+			   (mFrameState.mHaveDepthBuffer ? sce::Agc::Core::SyncCacheOp::kFlushUncompressedDepthBufferForTexture : sce::Agc::Core::SyncCacheOp::kNone) |
+			   sce::Agc::Core::SyncCacheOp::kInvalidateGl01;
+	}
+	else if (flushGraphics)
+	{
+		mode = sce::Agc::Core::SyncWaitMode::kDrainGraphics;
+		mask = (mFrameState.mHaveColorBuffer ? sce::Agc::Core::SyncCacheOp::kFlushUncompressedColorBufferForTexture : sce::Agc::Core::SyncCacheOp::kNone) |
+			   (mFrameState.mHaveDepthBuffer ? sce::Agc::Core::SyncCacheOp::kFlushUncompressedDepthBufferForTexture : sce::Agc::Core::SyncCacheOp::kNone);
+	}
+	else if (flushCompute)
+	{
+		mode = sce::Agc::Core::SyncWaitMode::kDrainCompute;
+		mask = sce::Agc::Core::SyncCacheOp::kInvalidateGl01;
+	}
+
+	// Flush. This doesn't sync CPU at all, it just adds a command to tell the GPU
+	// to wait till graphice/compute finishes and flush caches before continuing.
+	if (mode != sce::Agc::Core::SyncWaitMode::kNone && mask != sce::Agc::Core::SyncCacheOp::kNone)
+	{
+		DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+		sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+		sce::Agc::Core::gpuSyncEvent(&ctx.m_dcb, mode, mask);
+	}
+
+	// Clear dirty flags.
+	mFrameState.mShouldFlushGraphics = false;
+	mFrameState.mShouldFlushCompute = false;
+}
+
+//=============================================================================================
+
 void RendererContextAGC::bindFrameBuffer(FrameBufferHandle const frameBufferHandle)
 {
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 	if (mFrameState.mFrameBufferHandle.idx != frameBufferHandle.idx)
 	{
-		// If the current render targets are not the scanout buffers (default render targets)
-		// make sure the textures are flushed in case we sample them in subsequent views. This is
-		// the equivalent of an image memory barrier in Vulkan.
-		if (mFrameState.mNumFrameBufferDraws > 0 &&
-			(mFrameState.mFlushFrameBufferColor || mFrameState.mFlushFrameBufferDepth))
-		{
-			sce::Agc::Core::SyncCacheOp const mask = (mFrameState.mFlushFrameBufferColor ? sce::Agc::Core::SyncCacheOp::kFlushUncompressedColorBufferForTexture : sce::Agc::Core::SyncCacheOp::kNone) |
-													 (mFrameState.mFlushFrameBufferDepth ? sce::Agc::Core::SyncCacheOp::kFlushUncompressedDepthBufferForTexture : sce::Agc::Core::SyncCacheOp::kNone);
-			sce::Agc::Core::gpuSyncEvent(&ctx.m_dcb, sce::Agc::Core::SyncWaitMode::kDrainGraphics, mask);
-		}
+		// Make sure render targets are flushed in case they are an input for the next
+		// view.
+		flushGPU(Graphics | Compute);
+
 		if (isValid(frameBufferHandle))
 		{
 			FrameBuffer& fb = mFrameBuffers[frameBufferHandle.idx];
-			fb.setInflight();
+			setResourceInflight(fb);
 			uint32_t const c = bx::uint32_max(mFrameState.mNumFrameBufferAttachments, fb.mNumAttachments);
+			mFrameState.mHaveColorBuffer = false;
 			for (uint32_t i = 0; i < c; i++)
 			{
 				ctx.m_sb.setState(fb.mColorTargets[i]);
-				mFrameState.mFlushFrameBufferColor = mFrameState.mFlushFrameBufferColor || isValid(fb.mColorHandles[i]);
+				mFrameState.mHaveColorBuffer = mFrameState.mHaveColorBuffer || isValid(fb.mColorHandles[i]);
 			}
 			ctx.m_sb.setState(fb.mDepthTarget);
-			mFrameState.mFlushFrameBufferDepth = isValid(fb.mDepthHandle);
+			mFrameState.mHaveDepthBuffer = isValid(fb.mDepthHandle);
 			mFrameState.mNumFrameBufferAttachments = fb.mNumAttachments;
 		}
 		else
@@ -2269,44 +2399,48 @@ void RendererContextAGC::bindFrameBuffer(FrameBufferHandle const frameBufferHand
 			}
 			mFrameState.mNumFrameBufferAttachments = 1;
 
-			// Shouldn't read the scanout render targets so don't bother flushing.
-			mFrameState.mFlushFrameBufferColor = false;
-			mFrameState.mFlushFrameBufferDepth = false;
+			// We don't have to flush graphics because the scanout buffers should never be
+			// inputs.
+			mFrameState.mHaveColorBuffer = false;
+			mFrameState.mHaveDepthBuffer = false;
 		}
 		mFrameState.mFrameBufferHandle = frameBufferHandle;
-		mFrameState.mNumFrameBufferDraws = 0;
 	}
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::bindUniformBuffer(bool const isFragment)
+bool RendererContextAGC::bindUniformBuffer(ShaderHandle const shaderHandle)
 {
-	if (mFrameState.mUniformBufferSize > 0 && (mFrameState.mProgramChanged || mFrameState.mUniformBufferDirty))
+	// Every time a new program is bound, the stage bindings are cleared.
+	Shader& shader = mShaders[shaderHandle.idx];
+	if (shader.mUniformBufferSize > 0 && (shader.mUniformBufferDirty || mFrameState.mProgramChanged))
 	{
+		// Is we have already copied the uniform data for this program to the command buffer
+		// and it's valid (the uniform data hasn't changed) then we can just reuse it, otherwise
+		// we need to allocate command buffer space and copy the data.
 		DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 		sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
-		uint8_t* const uniformBuffer = (uint8_t*)ctx.m_dcb.allocateTopDown(mFrameState.mUniformBufferSize, 16);
-		if (uniformBuffer == nullptr)
+		uint8_t* uniformBuffer = shader.mCommandBuffer;
+		if (shader.mUniformBufferDirty || shader.mUniformBufferClock != mFrameClock)
 		{
-			// ERROR!
-			return false;
-		}
-		memcpy(uniformBuffer, mFrameState.mUniformBuffer, mFrameState.mUniformBufferSize);
-
-		sce::Agc::Core::Buffer buffer;
-		sce::Agc::Core::BufferSpec spec;
-		spec.initAsConstantBuffer(uniformBuffer, mFrameState.mUniformBufferSize);
-		SceError error = sce::Agc::Core::initialize(&buffer, &spec);
-		if (error != SCE_OK)
-		{
-			// ERROR!
-			return false;
+			uniformBuffer = (uint8_t*)ctx.m_dcb.allocateTopDown(shader.mUniformBufferSize, 16);
+			if (uniformBuffer == nullptr)
+			{
+				// ERROR!
+				return false;
+			}
+			memcpy(uniformBuffer, shader.mUniformBuffer, shader.mUniformBufferSize);
+			shader.mBuffer.setDataAddress(uniformBuffer);
+			shader.mCommandBuffer = uniformBuffer;
+			shader.mUniformBufferClock = mFrameClock;
+			shader.mUniformBufferDirty = false;
 		}
 
 		// Bind the uniform buffer.
-		ctx.m_bdr.getStage(isFragment ? sce::Agc::ShaderType::kPs : sce::Agc::ShaderType::kGs)
-			.setConstantBuffers(0, 1, &buffer);
+		sce::Agc::ShaderType const shaderType = shader.mStage == VertexStage ? sce::Agc::ShaderType::kGs : (shader.mStage == FragmentStage ? sce::Agc::ShaderType::kPs : sce::Agc::ShaderType::kCs);
+		ctx.m_bdr.getStage(shaderType)
+			.setConstantBuffers(0, 1, &shader.mBuffer);
 	}
 	return true;
 }
@@ -2337,20 +2471,12 @@ void RendererContextAGC::overridePredefined(ShaderHandle const shaderHandle)
 
 //=============================================================================================
 
-bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, const RenderDraw& draw, bool const isFragment, bool const _overridePredefined)
+bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, const RenderItem& item, bool const isCompute, bool const _overridePredefined)
 {
 	Shader& shader = mShaders[shaderHandle.idx];
 	if (shader.mUniformBufferSize > 0)
 	{
-		mFrameState.mUniformBuffer = shader.mUniformBuffer;
-		mFrameState.mUniformBufferSize = shader.mUniformBufferSize;
-		mFrameState.mUniformBufferDirty = false;
-
-		#define CLEAR_UNIFORM_BUFFER()				\
-			mFrameState.mUniformBuffer = nullptr; 	\
-			mFrameState.mUniformBufferSize = 0; 	\
-			mFrameState.mUniformBufferDirty = false;
-
+		mFrameState.mShaderHandle = shaderHandle;
 		if (shader.mUniformClock != mUniformClock && shader.mUniforms != nullptr)
 		{		
 			// Iterate through uniforms.
@@ -2426,7 +2552,7 @@ bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, con
 					default:
 					{
 						BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", shader.mUniforms->getPos(), opcode, type, loc, num, copy);
-						CLEAR_UNIFORM_BUFFER();
+						mFrameState.mShaderHandle = { kInvalidHandle };
 						return false;
 					}
 					break;
@@ -2446,7 +2572,14 @@ bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, con
 		// we could avoid the additional memcpy for the actual uniforms.
 		if (!_overridePredefined)
 		{
-			mFrameState.mViewState.setPredefined<4>(this, mFrameState.mView, shader, mFrameState.mFrame, draw);
+			if (isCompute)
+			{
+				mFrameState.mViewState.setPredefined<4>(this, mFrameState.mView, shader, mFrameState.mFrame, item.compute);
+			}
+			else
+			{
+				mFrameState.mViewState.setPredefined<4>(this, mFrameState.mView, shader, mFrameState.mFrame, item.draw);
+			}
 		}
 		else
 		{
@@ -2454,90 +2587,79 @@ bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, con
 		}
 
 		// Bind the uniform buffer.
-		if (!bindUniformBuffer(isFragment))
+		if (!bindUniformBuffer(shaderHandle))
 		{
-			CLEAR_UNIFORM_BUFFER();
+			mFrameState.mShaderHandle = { kInvalidHandle };
 			return false;
 		}
+
+		mFrameState.mShaderHandle = { kInvalidHandle };
 	}
-
-	CLEAR_UNIFORM_BUFFER();
-
-	#undef CLEAR_UNIFORM_BUFFER
 
 	return true;
 }
 
 //=============================================================================================
 
-void RendererContextAGC::bindSamplers(const RenderBind& bindings, bool const vertexStage, bool const fragmentStage, bool const computeStage)
+void RendererContextAGC::bindSamplers(const RenderBind& bindings, uint32_t const stages)
 {
-	sce::Agc::Core::Texture blankTexture{};
-	sce::Agc::Core::Sampler blankSampler{};
-	blankTexture.init();
-	blankSampler.init();
+	#define INVOKE_STAGE_FUNC(func, ...) \
+		if ((stages & VertexStage) != 0) \
+		{ \
+			ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs) \
+				.func(__VA_ARGS__); \
+		} \
+		if ((stages & FragmentStage) != 0) \
+		{ \
+			ctx.m_bdr.getStage(sce::Agc::ShaderType::kPs) \
+				.func(__VA_ARGS__); \
+		} \
+		if ((stages & ComputeStage) != 0) \
+		{ \
+			ctx.m_bdr.getStage(sce::Agc::ShaderType::kCs) \
+				.func(__VA_ARGS__); \
+		}
+
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 	for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; stage++)
 	{
 		const Binding& bind = bindings.m_bind[stage];
-		Binding& curBind = mFrameState.mBindState.m_bind[stage];
-		bool const force = bind.m_type != curBind.m_type || mFrameState.mProgramChanged;
-		switch (bind.m_type)
+		if (bind.m_idx != kInvalidHandle)
 		{
-			case Binding::Image:
+			Binding& curBind = mFrameState.mBindState.m_bind[stage];
+			bool const force = bind.m_type != curBind.m_type || mFrameState.mProgramChanged;
+			switch (bind.m_type)
 			{
-			}
-			break;
-
-			case Binding::Texture:
-			{
-				if (force || bind.m_idx != curBind.m_idx)
+				case Binding::Image:
 				{
-					if (bind.m_idx != kInvalidHandle)
+					if (force || bind.m_idx != curBind.m_idx)
 					{
 						Texture& texture = mTextures[bind.m_idx];
-						texture.setInflight();
-						if (vertexStage)
+						setResourceInflight(texture);
+						if (bind.m_access != Access::Read)
 						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
-								.setTextures(stage, 1, &texture.mTexture);
+							INVOKE_STAGE_FUNC(setRwTextures, stage, 1, &texture.mTexture);
 						}
-						if (fragmentStage)
+						else
 						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kPs)
-								.setTextures(stage, 1, &texture.mTexture);
+							INVOKE_STAGE_FUNC(setTextures, stage, 1, &texture.mTexture);
 						}
-						if (computeStage)
-						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kCs)
-								.setTextures(stage, 1, &texture.mTexture);
-						}
-					}
-					else
-					{
-						if (vertexStage)
-						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
-								.setTextures(stage, 1, &blankTexture);
-						}
-						if (fragmentStage)
-						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kPs)
-								.setTextures(stage, 1, &blankTexture);
-						}
-						if (computeStage)
-						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kCs)
-								.setTextures(stage, 1, &blankTexture);
-						}
-					}
-					curBind.m_idx = bind.m_idx;
-				}				
-				
-				if (bind.m_idx != kInvalidHandle)
+						curBind.m_idx = bind.m_idx;
+					}				
+				}
+				break;
+
+				case Binding::Texture:
 				{
 					Texture& texture = mTextures[bind.m_idx];
+					if (force || bind.m_idx != curBind.m_idx)
+					{
+						setResourceInflight(texture);
+						INVOKE_STAGE_FUNC(setTextures, stage, 1, &texture.mTexture);
+						curBind.m_idx = bind.m_idx;
+					}				
+
 					uint32_t const textureSamplerFlags = (uint32_t)(texture.mFlags & BGFX_SAMPLER_BITS_MASK);
 					uint32_t const flags = (bind.m_samplerFlags & BGFX_SAMPLER_INTERNAL_DEFAULT) != 0 ? textureSamplerFlags : bind.m_samplerFlags;
 					if (force || curBind.m_samplerFlags != flags)
@@ -2546,74 +2668,71 @@ void RendererContextAGC::bindSamplers(const RenderBind& bindings, bool const ver
 						sce::Agc::Core::Sampler* samplerPtr{ &texture.mSampler };
 						if (flags != textureSamplerFlags)
 						{
-							Texture::setSampler(sampler, flags);
+							setSampler(sampler, flags);
 							samplerPtr = &sampler;
 						}
-
-						if (vertexStage)
-						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
-								.setSamplers(stage, 1, samplerPtr);
-						}
-						if (fragmentStage)
-						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kPs)
-								.setSamplers(stage, 1, samplerPtr);
-						}
-						if (computeStage)
-						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kCs)
-								.setSamplers(stage, 1, samplerPtr);
-						}
-
+						INVOKE_STAGE_FUNC(setSamplers, stage, 1, samplerPtr);
 						curBind.m_samplerFlags = flags;
 					}
 				}
-				else
+				break;
+
+				case Binding::IndexBuffer:
 				{
-					if (force || curBind.m_samplerFlags != UINT32_MAX)
+					if (force || bind.m_idx != curBind.m_idx)
 					{
-						if (vertexStage)
+						IndexBuffer& indexBuffer = mIndexBuffers[bind.m_idx];
+						if (bind.m_access != Access::Read)
 						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kGs)
-								.setSamplers(stage, 1, &blankSampler);
+							INVOKE_STAGE_FUNC(setRwBuffers, stage, 1, &(indexBuffer.mComputeBuffer));
 						}
-						if (fragmentStage)
+						else
 						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kPs)
-								.setSamplers(stage, 1, &blankSampler);
+							INVOKE_STAGE_FUNC(setBuffers, stage, 1, &(indexBuffer.mComputeBuffer));
 						}
-						if (computeStage)
+						curBind.m_idx = bind.m_idx;
+					}
+
+				}
+				break;
+
+				case Binding::VertexBuffer:
+				{
+					if (force || bind.m_idx != curBind.m_idx)
+					{
+						const VertexBuffer& vertexBuffer = mVertexBuffers[bind.m_idx];
+						if (bind.m_access != Access::Read)
 						{
-							ctx.m_bdr.getStage(sce::Agc::ShaderType::kCs)
-								.setSamplers(stage, 1, &blankSampler);
+							INVOKE_STAGE_FUNC(setRwBuffers, stage, 1, &(vertexBuffer.mComputeBuffer));
 						}
-						curBind.m_samplerFlags = UINT32_MAX;
+						else
+						{
+							INVOKE_STAGE_FUNC(setBuffers, stage, 1, &(vertexBuffer.mComputeBuffer));
+						}
+						curBind.m_idx = bind.m_idx;
 					}
 				}
+				break;
 			}
-			break;
-
-			case Binding::IndexBuffer:
-			{
-			}
-			break;
-
-			case Binding::VertexBuffer:
-			{
-			}
-			break;
+			curBind.m_type = bind.m_type;
 		}
 	}
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::bindProgram(ProgramHandle const programHandle, const RenderDraw& draw, const RenderBind& bind, bool const overridePredefined)
+bool RendererContextAGC::bindProgram(ProgramHandle const programHandle, const RenderItem& item, const RenderBind& bind, bool const isCompute, bool const overridePredefined)
 {
 	Program& program = mPrograms[programHandle.idx];
 	Shader& vtxShader = mShaders[program.mVertexShaderHandle.idx];
 	Shader* const frgShader = isValid(program.mFragmentShaderHandle) ? &mShaders[program.mFragmentShaderHandle.idx] : nullptr;
+	
+	// Sanity check.
+	if ((isCompute && (vtxShader.mStage != ComputeStage || frgShader != nullptr)) ||
+	    (!isCompute && (vtxShader.mStage != VertexStage || (frgShader != nullptr && frgShader->mStage != FragmentStage))))
+	{
+		return false;
+	}
 
 	// Bind shaders.
 	mFrameState.mProgramChanged = programHandle.idx != mFrameState.mProgramHandle.idx;
@@ -2621,39 +2740,47 @@ bool RendererContextAGC::bindProgram(ProgramHandle const programHandle, const Re
 	{
 		DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 		sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
-		uint64_t const primType = (draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT;
-		ctx.setShaders(nullptr, vtxShader.mShader, frgShader != nullptr ? frgShader->mShader : nullptr, sPrimTypeInfo[primType].m_type);
-		mFrameState.mProgramHandle = programHandle;
-		program.setInflight();
-		vtxShader.setInflight();
+		if (isCompute)
+		{
+			ctx.setCsShader(vtxShader.mShader);
+		}
+		else
+		{
+			uint64_t const primType = (item.draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT;
+			ctx.setShaders(nullptr, vtxShader.mShader, frgShader != nullptr ? frgShader->mShader : nullptr, sPrimTypeInfo[primType].m_type);
+		}
+		setResourceInflight(program);
+		setResourceInflight(vtxShader);
 		if (frgShader != nullptr)
 		{
-			frgShader->setInflight();
+			setResourceInflight(*frgShader);
 		}
+		mFrameState.mProgramHandle = programHandle;
 	}
 
+	// TODO: (manderson) Looks like compute shaders don't have images/buffers in uniform reflection data.
 	// Commit vertex shader uniforms.
-	bool const vtxSamplers = vtxShader.mNumSamplers > 0;
-	if (!bindShaderUniforms(program.mVertexShaderHandle, draw, false, overridePredefined))
+	uint32_t bindStages = vtxShader.mStage;//vtxShader.mNumTextures > 0 ? vtxShader.mStage : 0;
+	if (!bindShaderUniforms(program.mVertexShaderHandle, item, isCompute, overridePredefined))
 	{
 		return false;
 	}
 
 	// Bind fragment shader uniforms.
-	bool frgSamplers{};
 	if (frgShader != nullptr)
 	{
-		frgSamplers = frgShader->mNumSamplers > 0;
-		if (!bindShaderUniforms(program.mFragmentShaderHandle, draw, true, overridePredefined))
+		//bindStages |= frgShader->mNumTextures > 0 ? frgShader->mStage : 0;
+		bindStages |= frgShader->mStage;
+		if (!bindShaderUniforms(program.mFragmentShaderHandle, item, isCompute, overridePredefined))
 		{
 			return false;
 		}
 	}
 
 	// Bind samplers.
-	if (vtxSamplers || frgSamplers)
+	if (bindStages != 0)
 	{
-		bindSamplers(bind, vtxSamplers, frgSamplers, false);
+		bindSamplers(bind, bindStages);
 	}
 
 	return true;
@@ -2665,27 +2792,12 @@ void RendererContextAGC::bindFixedState(const RenderDraw& draw)
 {
 	RenderDraw& currentState = mFrameState.mDrawState;
 
-	bool const changedView = mFrameState.mFixedStateView != mFrameState.mView;
-	mFrameState.mFixedStateView = mFrameState.mView;
-
 	// Firgure out what needs updating.
-	uint64_t changedFlags{};
-	uint64_t changedStencil{};
-	uint32_t changedBlendColor{};
-	if (0)//mFrameState.mWasCompute)
-	{
-		currentState.clear();
-		changedFlags = BGFX_STATE_MASK;
-		changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-		changedBlendColor = ~0u;
-	}
-	else
-	{
-		changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
-		changedStencil = currentState.m_stencil ^ draw.m_stencil;
-		changedBlendColor = currentState.m_rgba ^ draw.m_rgba;
-
-	}
+	bool const changedView = mFrameState.mFixedStateView != mFrameState.mView;
+	uint64_t const changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+	uint64_t const changedStencil = currentState.m_stencil ^ draw.m_stencil;
+	uint32_t const changedBlendColor = currentState.m_rgba ^ draw.m_rgba;
+	mFrameState.mFixedStateView = mFrameState.mView;
 	currentState.m_stateFlags = draw.m_stateFlags;
 	currentState.m_stencil = draw.m_stencil;
 	currentState.m_rgba = draw.m_rgba;
@@ -3021,19 +3133,19 @@ void RendererContextAGC::beginFrame(Frame* const frame)
 	{
 		//BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
 		TransientIndexBuffer* const ib = mFrameState.mFrame->m_transientIb;
-		mIndexBuffers[ib->handle.idx].update(0, mFrameState.mFrame->m_iboffset, ib->data);
+		updateBuffer(mIndexBuffers[ib->handle.idx], 0, mFrameState.mFrame->m_iboffset, ib->data);
 	}
 	if (0 < mFrameState.mFrame->m_vboffset)
 	{
 		//BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
 		TransientVertexBuffer* const vb = mFrameState.mFrame->m_transientVb;
-		mVertexBuffers[vb->handle.idx].update(0, mFrameState.mFrame->m_vboffset, vb->data);
+		updateBuffer(mVertexBuffers[vb->handle.idx], 0, mFrameState.mFrame->m_vboffset, vb->data);
 	}
 
 	// Sort frame items.
 	mFrameState.mFrame->sort();
 
-	// Init state bits.
+	// Init frame state bits.
 	mFrameState.mDrawState.clear();
 	mFrameState.mDrawState.m_stateFlags = BGFX_STATE_NONE;
 	mFrameState.mDrawState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
@@ -3051,39 +3163,31 @@ void RendererContextAGC::beginFrame(Frame* const frame)
 	mFrameState.mView = UINT16_MAX;
 	mFrameState.mFixedStateView = UINT16_MAX;
 	mFrameState.mIsCompute = false;
-	mFrameState.mWasCompute = false;
 	mFrameState.mWireframeFill = (mFrameState.mFrame->m_debug & BGFX_DEBUG_WIREFRAME) != 0;
 	mFrameState.mBlitting = false;
 	mFrameState.mNumFrameBufferAttachments = 0;
-	mFrameState.mNumFrameBufferDraws = 0;
-	mFrameState.mFlushFrameBufferColor = false;
-	mFrameState.mFlushFrameBufferDepth = false;
+	mFrameState.mHaveColorBuffer = false;
+	mFrameState.mHaveDepthBuffer = false;
+	mFrameState.mShouldFlushGraphics = false;
+	mFrameState.mShouldFlushCompute = false;
+	mFrameState.mViewPerfCounter = nullptr;
 
-	// Init perf stats.
-	// TODO: (manderson) hooks these up...
-	const int64_t timerFreq = bx::getHPFrequency();
-	const int64_t timeBegin = bx::getHPCounter();
-
+	// Reset/initialize frame perf stats.
 	Stats& perfStats = frame->m_perfStats;
-	perfStats.cpuTimeBegin  = timeBegin;
-	perfStats.cpuTimeEnd    = timeBegin;
-	perfStats.cpuTimerFreq  = timerFreq;
-
-	perfStats.gpuTimeBegin  = 0;
-	perfStats.gpuTimeEnd    = 0;
-	perfStats.gpuTimerFreq  = 1000000000;
-
-	bx::memSet(perfStats.numPrims, 0, sizeof(perfStats.numPrims) );
-
-	perfStats.gpuMemoryMax  = -INT64_MAX;
-	perfStats.gpuMemoryUsed = -INT64_MAX;
+	perfStats.cpuTimeBegin = bx::getHPCounter();
+	perfStats.cpuTimerFreq = bx::getHPFrequency();
+	perfStats.gpuTimerFreq = sce::Agc::Constants::kGpuRefClockFrequency;
+	bx::memSet(perfStats.numPrims, 0, sizeof(perfStats.numPrims));
+	perfStats.numDraw = 0;
+	mPerfCounters.mNumInstances.fill(0);
+	mPerfCounters.mNumPrimsRendered.fill(0);
 }
 
 //=============================================================================================
 
 void RendererContextAGC::waitForGPU()
 {
-	// Wait till GPU finishes.
+	// Wait till GPU finishes the last submit of this phase.
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 	while (displayRes.mLabel->m_value != 1)
@@ -3092,12 +3196,59 @@ void RendererContextAGC::waitForGPU()
 		sceKernelUsleep(1000);
 	}
 	displayRes.mLabel->m_value = 0;
-	ctx.reset();
-	ctx.m_dcb.waitUntilSafeForRendering(mVideoHandle, mPhase);
+
+	// Update view perf stats. We have to do this after we know that the GPU
+	// has finished this frame's work, we know at this point that the time stamp
+	// pointers will have valid values.
+	for (uint32_t i = 0; i < displayRes.mNumViews; i++)
+	{
+		// TODO: (manderson) Include view name.
+		const ViewPerfCounter& viewPerfCounter = displayRes.mViewPerfCounters[i];
+		ViewStats& viewStats = mPerfCounters.mViewStats[i];
+		bx::strCopy(viewStats.name, 256, mViewNames[viewPerfCounter.mViewId]);
+		viewStats.view = viewPerfCounter.mViewId;
+		viewStats.cpuTimeBegin = viewPerfCounter.mCPUTimeStamps[0];
+		viewStats.cpuTimeEnd = viewPerfCounter.mCPUTimeStamps[1];
+		if (viewPerfCounter.mGPUTimeStamps[0] != nullptr && viewPerfCounter.mGPUTimeStamps[1] != nullptr)
+		{
+			viewStats.gpuTimeBegin = *viewPerfCounter.mGPUTimeStamps[0];
+			viewStats.gpuTimeEnd = *viewPerfCounter.mGPUTimeStamps[1];
+		}
+		else
+		{
+			viewStats.gpuTimeBegin = 0;
+			viewStats.gpuTimeEnd = 0;
+		}
+	}
+	mPerfCounters.mNumViews = displayRes.mNumViews;
+	displayRes.mNumViews = 0;
+
+	// NOTE: Use the last view timer for full frame GPU time.
+	ViewPerfCounter& viewPerfCounter = displayRes.mViewPerfCounters[BGFX_CONFIG_MAX_VIEWS];
+	Stats& perfStats = mFrameState.mFrame->m_perfStats;
+	if (viewPerfCounter.mGPUTimeStamps[0] != nullptr && viewPerfCounter.mGPUTimeStamps[0] != nullptr)
+	{
+		perfStats.gpuTimeBegin = *viewPerfCounter.mGPUTimeStamps[0];
+		perfStats.gpuTimeEnd = *viewPerfCounter.mGPUTimeStamps[1];
+	}
+	else
+	{
+		perfStats.gpuTimeBegin = 0;
+		perfStats.gpuTimeEnd = 0;
+	}
 
 	// Decrment the inflight count of all resources used by this command buffer for it's
 	// previous frame.
 	landResources();
+
+	// Reset context and add command to have the GPU wait till the scanout buffer for this
+	// phase is not on screen.
+	ctx.reset();
+	ctx.m_dcb.waitUntilSafeForRendering(mVideoHandle, mPhase);
+
+	// Start frame timer.
+	viewPerfCounter.mGPUTimeStamps[0] = sce::Agc::Core::writeTimestamp(&ctx.m_dcb, &ctx.m_dcb, sce::Agc::Core::TimestampType::kBottomOfPipe);
+	viewPerfCounter.mGPUTimeStamps[1] = nullptr;
 
 	// Set border colors, this palette is shared with clear colors, but
 	// just copy all of them incase they are used as uv border colors.
@@ -3114,13 +3265,12 @@ bool RendererContextAGC::nextItem()
 {
 	if (mFrameState.mItem < mFrameState.mNumItems)
 	{
-		mFrameState.mEncodedKey = mFrameState.mFrame->m_sortKeys[mFrameState.mItem];
-		mFrameState.mWasCompute = mFrameState.mIsCompute;
-		mFrameState.mIsCompute = mFrameState.mKey.decode(mFrameState.mEncodedKey, mFrameState.mFrame->m_viewRemap);
+		uint64_t const encodedKey = mFrameState.mFrame->m_sortKeys[mFrameState.mItem];
+		mFrameState.mIsCompute = mFrameState.mKey.decode(encodedKey, mFrameState.mFrame->m_viewRemap);
 		mFrameState.mViewChanged = mFrameState.mKey.m_view != mFrameState.mView;
-		mFrameState.mItemIdx = mFrameState.mFrame->m_sortValues[mFrameState.mItem];
-		mFrameState.mRenderItem = &(mFrameState.mFrame->m_renderItem[mFrameState.mItemIdx]);
-		mFrameState.mRenderBind = &(mFrameState.mFrame->m_renderItemBind[mFrameState.mItemIdx]);
+		uint32_t const itemIndex = mFrameState.mFrame->m_sortValues[mFrameState.mItem];
+		mFrameState.mRenderItem = &(mFrameState.mFrame->m_renderItem[itemIndex]);
+		mFrameState.mRenderBind = &(mFrameState.mFrame->m_renderItemBind[itemIndex]);
 		mFrameState.mBlitting = false;
 		mFrameState.mItem++;
 		return true;
@@ -3142,17 +3292,17 @@ void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 		mFrameState.mViewScissor = mFrameState.mViewState.m_rect;
 
 		// TODO: (manderson) Disable scissor and set stencil flags.
-		mClearDraw.m_stateFlags &= ~(BGFX_STATE_WRITE_MASK | BGFX_STATE_DEPTH_TEST_MASK);
-		mClearDraw.m_stateFlags |= (clear.m_flags & BGFX_CLEAR_COLOR) != 0 ? (BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A) : 0;
-		mClearDraw.m_stateFlags |= (clear.m_flags & BGFX_CLEAR_DEPTH) != 0 ? (BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_WRITE_Z) : 0;
-		mClearDraw.m_stencil = (clear.m_flags & BGFX_CLEAR_STENCIL) != 0 ? (BGFX_STENCIL_TEST_ALWAYS | BGFX_STENCIL_FUNC_REF(clear.m_stencil) | BGFX_STENCIL_FUNC_RMASK(0xff) | BGFX_STENCIL_OP_FAIL_S_REPLACE | BGFX_STENCIL_OP_FAIL_Z_REPLACE | BGFX_STENCIL_OP_PASS_Z_REPLACE) : 0;
+		mClearItem.draw.m_stateFlags &= ~(BGFX_STATE_WRITE_MASK | BGFX_STATE_DEPTH_TEST_MASK);
+		mClearItem.draw.m_stateFlags |= (clear.m_flags & BGFX_CLEAR_COLOR) != 0 ? (BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A) : 0;
+		mClearItem.draw.m_stateFlags |= (clear.m_flags & BGFX_CLEAR_DEPTH) != 0 ? (BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_WRITE_Z) : 0;
+		mClearItem.draw.m_stencil = (clear.m_flags & BGFX_CLEAR_STENCIL) != 0 ? (BGFX_STENCIL_TEST_ALWAYS | BGFX_STENCIL_FUNC_REF(clear.m_stencil) | BGFX_STENCIL_FUNC_RMASK(0xff) | BGFX_STENCIL_OP_FAIL_S_REPLACE | BGFX_STENCIL_OP_FAIL_Z_REPLACE | BGFX_STENCIL_OP_PASS_Z_REPLACE) : 0;
 
 		mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS] = clearQuad.m_layout;
-		Stream& stream = mClearDraw.m_stream[0];
+		Stream& stream = mClearItem.draw.m_stream[0];
 		stream.m_startVertex = 0;
 		stream.m_handle = clearQuad.m_vb;
 		stream.m_layoutHandle = { BGFX_CONFIG_MAX_VERTEX_LAYOUTS };
-		mClearDraw.setStreamBit(0, clearQuad.m_vb);
+		mClearItem.draw.setStreamBit(0, clearQuad.m_vb);
 
 		if (mClearQuadColor.idx == kInvalidHandle)
 		{
@@ -3196,11 +3346,11 @@ void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 		float mrtClearDepth[4] = { g_caps.homogeneousDepth ? (clear.m_depth * 2.0f - 1.0f) : clear.m_depth };
 		updateUniform(mClearQuadDepth.idx, mrtClearDepth, sizeof(float) * 4);
 
-		if (bindProgram(clearQuad.m_program[numRt], mClearDraw, mClearBind, true) &&
-			bindVertexAttributes(mClearDraw))
+		if (bindProgram(clearQuad.m_program[numRt], mClearItem, mClearBind, false, true) &&
+			bindVertexAttributes(mClearItem.draw))
 		{
-			bindFixedState(mClearDraw);
-			submitDrawCall(mClearDraw);
+			bindFixedState(mClearItem.draw);
+			submitDrawCall(mClearItem.draw);
 		}
 
 		// Restore view scissor.
@@ -3210,15 +3360,50 @@ void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 
 //=============================================================================================
 
+void RendererContextAGC::startViewPerfCounter()
+{
+	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+	ViewPerfCounter& viewPerfCounter = displayRes.mViewPerfCounters[displayRes.mNumViews];
+	viewPerfCounter.mViewId = mFrameState.mView;
+	viewPerfCounter.mCPUTimeStamps[0] = bx::getHPCounter();
+	viewPerfCounter.mCPUTimeStamps[1] = 0;
+	viewPerfCounter.mGPUTimeStamps[0] = sce::Agc::Core::writeTimestamp(&ctx.m_dcb, &ctx.m_dcb, sce::Agc::Core::TimestampType::kBottomOfPipe);
+	viewPerfCounter.mGPUTimeStamps[1] = nullptr;
+	mFrameState.mViewPerfCounter = &viewPerfCounter;
+	displayRes.mNumViews++;
+}
+
+//=============================================================================================
+
+void RendererContextAGC::stopViewPerfCounter()
+{
+	if (mFrameState.mViewPerfCounter != nullptr)
+	{
+		DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+		sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+		ViewPerfCounter& viewPerfCounter = *mFrameState.mViewPerfCounter;
+		viewPerfCounter.mCPUTimeStamps[1] = bx::getHPCounter();
+		viewPerfCounter.mGPUTimeStamps[1] = sce::Agc::Core::writeTimestamp(&ctx.m_dcb, &ctx.m_dcb, sce::Agc::Core::TimestampType::kBottomOfPipe);
+		mFrameState.mViewPerfCounter = nullptr;
+	}
+}
+
+//=============================================================================================
+
 void RendererContextAGC::viewChanged(const ClearQuad& clearQuad)
 {
+	// End previous view timer.
+	stopViewPerfCounter();
+
+	// Update view.
 	mFrameState.mView = mFrameState.mKey.m_view;
 	const View& view = mFrameState.mFrame->m_view[mFrameState.mView];
-
 	mFrameState.mViewState.m_rect = view.m_rect;
-	const Rect& scissorRect = view.m_scissor;
-	bool const viewHasScissor = !scissorRect.isZero();
-	mFrameState.mViewScissor = viewHasScissor ? scissorRect : mFrameState.mViewState.m_rect;
+	mFrameState.mViewScissor = !view.m_scissor.isZero() ? view.m_scissor : mFrameState.mViewState.m_rect;
+
+	// Start view timer.
+	startViewPerfCounter();
 
 	bindFrameBuffer(view.m_fbh);
 
@@ -3231,15 +3416,38 @@ void RendererContextAGC::viewChanged(const ClearQuad& clearQuad)
 
 bool RendererContextAGC::submitCompute()
 {
-	const RenderCompute& compute = mFrameState.mRenderItem->compute;
+	const ProgramHandle& programHandle = mFrameState.mKey.m_program;
+	const RenderItem& item = *mFrameState.mRenderItem;
+	const RenderBind& bind = *mFrameState.mRenderBind;
+	const RenderCompute& compute = item.compute;
+
 	if (compute.m_uniformBegin < compute.m_uniformEnd)
 	{
 		rendererUpdateUniforms(this, mFrameState.mFrame->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
 	}
 
-	// ... do stuff ...
+	if (isValid(programHandle) &&
+		bindProgram(programHandle, item, bind, true, false))
+	{
+		submitDispatch(compute);
+		return true;
+	}
 
-	return true;
+	return false;
+}
+
+//=============================================================================================
+
+void RendererContextAGC::submitDispatch(const RenderCompute& compute)
+{
+	// We should sync gpu on each compute dispatch as the outputs of the previous draw/dispatch may
+	// be the inputs for this dispatch.
+	flushGPU(Graphics | Compute);
+
+	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+	ctx.dispatch(compute.m_numX, compute.m_numY, compute.m_numZ);
+	mFrameState.mShouldFlushCompute = true;
 }
 
 //=============================================================================================
@@ -3247,36 +3455,47 @@ bool RendererContextAGC::submitCompute()
 bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 {
 	uint64_t const primType = (draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT;
+	const PrimTypeInfo& primTypeInfo = sPrimTypeInfo[primType];
+
+	// Set instance count.
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 	if (draw.m_numInstances	!= mFrameState.mDrawState.m_numInstances)
 	{
 		ctx.m_dcb.setNumInstances(draw.m_numInstances);
 		mFrameState.mDrawState.m_numInstances = draw.m_numInstances;
+		mPerfCounters.mNumInstances[primType] += draw.m_numInstances;
 	}
+
+	uint32_t drawStart{};
+	uint32_t drawCount{};
 	if (isValid(draw.m_indexBuffer))
 	{
+		// Bind index buffer.
 		IndexBuffer& indexBuffer = mIndexBuffers[draw.m_indexBuffer.idx];
 		uint32_t const indexSize = draw.isIndex16() ? 2 : 4;
 		uint32_t const numIndices = indexBuffer.mSize / indexSize;
 		if (draw.m_indexBuffer.idx != mFrameState.mDrawState.m_indexBuffer.idx)
 		{
-			indexBuffer.setInflight();
+			setResourceInflight(indexBuffer);
 			ctx.m_dcb.setIndexSize(indexSize == 2 ? sce::Agc::IndexSize::k16 : sce::Agc::IndexSize::k32);
 			ctx.m_dcb.setIndexBuffer(indexBuffer.mBuffer);
 			ctx.m_dcb.setIndexCount(numIndices);
 			mFrameState.mDrawState.m_indexBuffer = draw.m_indexBuffer;
 		}
-		
-		if (draw.m_numIndices == UINT32_MAX)
+
+		// Submit draw call.
+		drawCount = numIndices;
+		if (draw.m_numIndices != UINT32_MAX)
 		{
-			ctx.drawIndexOffset(0, numIndices);
-			mFrameState.mNumFrameBufferDraws++;
+			drawStart = draw.m_startIndex;
+			drawCount = draw.m_numIndices;
 		}
-		else if (draw.m_numIndices >= sPrimTypeInfo[primType].m_min)
+		if (drawCount >= primTypeInfo.m_min)
 		{
-			ctx.drawIndexOffset(draw.m_startIndex, draw.m_numIndices);
-			mFrameState.mNumFrameBufferDraws++;
+			// Sync gpu If a compute dispatch occurred and we haven't flushed compute.
+			flushGPU(Compute);
+			ctx.drawIndexOffset(drawStart, drawCount);
 		}
 		else
 		{
@@ -3285,15 +3504,16 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 	}
 	else
 	{
-		if (draw.m_numVertices == UINT32_MAX)
+		drawCount = mFrameState.mNumVertices;
+		if (draw.m_numVertices != UINT32_MAX)
 		{
-			ctx.drawIndexAuto(mFrameState.mNumBufferVertices);
-			mFrameState.mNumFrameBufferDraws++;
+			drawCount = draw.m_numVertices;
 		}
-		else if (draw.m_numVertices >= sPrimTypeInfo[primType].m_min)
+		if (drawCount >= primTypeInfo.m_min)
 		{
-			ctx.drawIndexAuto(draw.m_numVertices);
-			mFrameState.mNumFrameBufferDraws++;
+			// Sync gpu If a compute dispatch occurred and we haven't flushed compute.
+			flushGPU(Compute);
+			ctx.drawIndexAuto(drawCount);
 		}
 		else
 		{
@@ -3301,6 +3521,15 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 		}
 	}
 
+	// Update counters.
+	uint32_t const numPrims = ((drawCount / primTypeInfo.m_div) - primTypeInfo.m_sub);
+	mFrameState.mFrame->m_perfStats.numPrims[primType] += numPrims;
+	mFrameState.mFrame->m_perfStats.numDraw++;
+	mPerfCounters.mNumPrimsRendered[primType] += numPrims * draw.m_numInstances;
+
+	// We have draw something we should flush graphics.
+	mFrameState.mShouldFlushGraphics = true;
+	
 	return true;
 }
 
@@ -3308,14 +3537,10 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 
 bool RendererContextAGC::submitDraw()
 {
-	/*if (mFrameState.mWasCompute)
-	{
-		// ... do transition stuff ...
-	}*/
-
 	const ProgramHandle& programHandle = mFrameState.mKey.m_program;
-	const RenderDraw& draw = mFrameState.mRenderItem->draw;
+	const RenderItem& item = *mFrameState.mRenderItem;
 	const RenderBind& bind = *mFrameState.mRenderBind;
+	const RenderDraw& draw = item.draw;
 
 	if (draw.m_uniformBegin < draw.m_uniformEnd)
 	{
@@ -3324,11 +3549,12 @@ bool RendererContextAGC::submitDraw()
 
 	if (isValid(programHandle) &&
 		draw.m_streamMask != UINT8_MAX && draw.m_streamMask != 0 &&
-		bindProgram(programHandle, draw, bind, false) &&
+		bindProgram(programHandle, item, bind, false, false) &&
 		bindVertexAttributes(draw))
 	{
 		bindFixedState(draw);
 		submitDrawCall(draw);
+
 		return true;
 	}
 
@@ -3339,9 +3565,16 @@ bool RendererContextAGC::submitDraw()
 
 void RendererContextAGC::endFrame()
 {
-	// Finally submit the workload to the GPU
+	// End previous view timer.
+	stopViewPerfCounter();
+
+	// Get time stamp for full frame.
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+	ViewPerfCounter& viewPerfCounter = displayRes.mViewPerfCounters[BGFX_CONFIG_MAX_VIEWS];
+	viewPerfCounter.mGPUTimeStamps[1] = sce::Agc::Core::writeTimestamp(&ctx.m_dcb, &ctx.m_dcb, sce::Agc::Core::TimestampType::kBottomOfPipe);
+
+	// Finally submit the workload to the GPU
 	ctx.m_dcb.setFlip(mVideoHandle, mPhase, mVsync ? SCE_VIDEO_OUT_FLIP_MODE_VSYNC : SCE_VIDEO_OUT_FLIP_MODE_ASAP, 0);
 	sce::Agc::Core::gpuSyncEvent(
 		&ctx.m_dcb,
@@ -3362,14 +3595,133 @@ void RendererContextAGC::endFrame()
 
 //=============================================================================================
 
+void RendererContextAGC::submitDebugText(TextVideoMemBlitter& textVideoMemBlitter)
+{
+	// Update perf counters.
+	Stats& perfStats = mFrameState.mFrame->m_perfStats;
+	perfStats.cpuTimeEnd = bx::getHPCounter();
+	perfStats.viewStats = &(mPerfCounters.mViewStats[0]);
+	perfStats.numViews = mPerfCounters.mNumViews;
+	mPerfCounters.mCPUFrameTime = perfStats.cpuTimeEnd - mPerfCounters.mFrameTimeStamp;
+	mPerfCounters.mCPUSubmitTime = perfStats.cpuTimeEnd - perfStats.cpuTimeBegin;
+	mPerfCounters.mGPUFrameTime = perfStats.gpuTimeEnd - perfStats.gpuTimeBegin;
+	mPerfCounters.mFrameTimeStamp = perfStats.cpuTimeEnd;
+	if (mPerfCounters.mFrameTimeStamp >= mPerfCounters.mResetTimeStamp)
+	{
+		mPerfCounters.mCPUMinFrameTime = INT64_MAX;
+		mPerfCounters.mCPUMaxFrameTime = 0;
+		mPerfCounters.mCPUMinSubmitTime = INT64_MAX;
+		mPerfCounters.mCPUMaxSubmitTime = 0;
+		mPerfCounters.mGPUMinFrameTime = INT64_MAX;
+		mPerfCounters.mGPUMaxFrameTime = 0;
+		mPerfCounters.mResetTimeStamp = mPerfCounters.mFrameTimeStamp + (perfStats.cpuTimerFreq * 10);
+	}
+	mPerfCounters.mCPUMinFrameTime = bx::min<int64_t>(mPerfCounters.mCPUMinFrameTime, mPerfCounters.mCPUFrameTime);
+	mPerfCounters.mCPUMaxFrameTime = bx::max<int64_t>(mPerfCounters.mCPUMaxFrameTime, mPerfCounters.mCPUFrameTime);
+	mPerfCounters.mCPUMinSubmitTime = bx::min<int64_t>(mPerfCounters.mCPUMinSubmitTime, mPerfCounters.mCPUSubmitTime);
+	mPerfCounters.mCPUMaxSubmitTime = bx::max<int64_t>(mPerfCounters.mCPUMaxSubmitTime, mPerfCounters.mCPUSubmitTime);
+	mPerfCounters.mGPUMinFrameTime = bx::min<int64_t>(mPerfCounters.mGPUMinFrameTime, mPerfCounters.mGPUFrameTime);
+	mPerfCounters.mGPUMaxFrameTime = bx::max<int64_t>(mPerfCounters.mGPUMaxFrameTime, mPerfCounters.mGPUFrameTime);
+
+	// Draw debug text.
+	if (mFrameState.mFrame->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS))
+	{
+		TextVideoMem& tvm = mTextVideoMem;
+		if (perfStats.cpuTimeEnd >= mPerfCounters.mDrawTimeStamp)
+		{
+			mPerfCounters.mDrawTimeStamp = mPerfCounters.mFrameTimeStamp + perfStats.cpuTimerFreq;
+
+			double const cpuFreq = (double)perfStats.cpuTimerFreq;
+			double const cpuToMs = 1000.0 / cpuFreq;
+			double const gpuFreq = (double)perfStats.gpuTimerFreq;
+			double const gpuToMs = 1000.0 / gpuFreq;
+
+			tvm.clear();
+
+			uint16_t pos = 0;
+			tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x8c : 0x8f, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " / Version 1.%d.%d (commit: " BGFX_REV_SHA1 ")",
+				getRendererName(),
+				BGFX_API_VERSION,
+				BGFX_REV_NUMBER);
+
+			pos = 10;
+			tvm.printf(10, pos++, 0x8b, "       CPU Frame: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
+				, (double)mPerfCounters.mCPUFrameTime * cpuToMs
+				, (double)mPerfCounters.mCPUMinFrameTime * cpuToMs
+				, (double)mPerfCounters.mCPUMaxFrameTime * cpuToMs
+				, cpuFreq / (double)mPerfCounters.mCPUFrameTime);
+
+			tvm.printf(10, pos++, 0x8b, "       CPU Submit: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
+				, (double)mPerfCounters.mCPUSubmitTime * cpuToMs
+				, (double)mPerfCounters.mCPUMinSubmitTime * cpuToMs
+				, (double)mPerfCounters.mCPUMaxSubmitTime * cpuToMs
+				, cpuFreq / (double)mPerfCounters.mCPUSubmitTime);
+
+			tvm.printf(10, pos++, 0x8b, "       GPU Frame: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
+				, (double)mPerfCounters.mGPUFrameTime * gpuToMs
+				, (double)mPerfCounters.mGPUMinFrameTime * gpuToMs
+				, (double)mPerfCounters.mGPUMaxFrameTime * gpuToMs
+				, gpuFreq / (double)mPerfCounters.mGPUFrameTime);
+
+			tvm.printf(10, pos++, 0x8b, "   Submitted: %5d (draw %5d, compute %4d, blit %4d) ",
+				perfStats.numDraw + perfStats.numCompute + perfStats.numBlit,
+				perfStats.numDraw,
+				perfStats.numCompute,
+				perfStats.numBlit);
+
+			for (uint32_t i = 0; i < Topology::Count; i++)
+			{
+				tvm.printf(10, pos++, 0x8b, "   %9s: submitted: %7d (#inst: %5d), rendered: %7d ",
+					getName(Topology::Enum(i)),
+					perfStats.numPrims[i],
+					mPerfCounters.mNumInstances[i],
+					mPerfCounters.mNumPrimsRendered[i]);
+			}
+
+			tvm.printf(10, pos++, 0x8b, "     DVB used: %7d ", mFrameState.mFrame->m_vboffset);
+			tvm.printf(10, pos++, 0x8b, "     DIB used: %7d ", mFrameState.mFrame->m_iboffset);
+
+			pos++;
+			tvm.printf(10, pos++, 0x89, "%37s", "View Stats");
+
+			double cpuTotal = 0.0;
+			double gpuTotal = 0.0;
+			for (int i = 0; i < perfStats.numViews; i++)
+			{
+				const ViewStats& viewStats = perfStats.viewStats[i];
+				double const cpuTime = (double)(viewStats.cpuTimeEnd - viewStats.cpuTimeBegin) * cpuToMs;
+				double const gpuTime = (double)(viewStats.gpuTimeEnd - viewStats.gpuTimeBegin) * gpuToMs;
+				tvm.printf(10, pos++, 0x8b, "%16s: CPU %5.2f GPU %5.2f",
+					viewStats.name,
+					cpuTime,
+					gpuTime);
+				cpuTotal += cpuTime;
+				gpuTotal += gpuTime;
+			}
+
+			tvm.printf(10, pos++, 0x8f, "%16s: CPU %5.2f GPU %5.2f", "Total",
+				cpuTotal,
+				gpuTotal);
+		}
+
+		blit(this, textVideoMemBlitter, tvm);
+	}
+	else if (mFrameState.mFrame->m_debug & BGFX_DEBUG_TEXT)
+	{
+		blit(this, textVideoMemBlitter, mFrameState.mFrame->m_textVideoMem);
+	}
+}
+
+//=============================================================================================
+
 void RendererContextAGC::submit(Frame* frame, ClearQuad& clearQuad, TextVideoMemBlitter& textVideoMemBlitter)
 {
 	beginFrame(frame);
 
-	if (0 == (frame->m_debug&BGFX_DEBUG_IFH))
-	{
-		waitForGPU();
+	waitForGPU();
 
+	if ((frame->m_debug & BGFX_DEBUG_IFH) == 0)
+	{
 		while (nextItem())
 		{
 			if (mFrameState.mViewChanged)
@@ -3380,37 +3732,20 @@ void RendererContextAGC::submit(Frame* frame, ClearQuad& clearQuad, TextVideoMem
 			if (mFrameState.mIsCompute)
 			{
 				submitCompute();
-				continue;
 			}
-
-			submitDraw();
+			else
+			{
+				submitDraw();
+			}
 		}
-
-		if (frame->m_debug & BGFX_DEBUG_TEXT)
-		{
-			blit(this, textVideoMemBlitter, frame->m_textVideoMem);
-		}
-
-		endFrame();
 	}
+
+	submitDebugText(textVideoMemBlitter);
+
+	endFrame();
 
 	// Process destroy list.
 	tickDestroyList();
-}
-
-//=============================================================================================
-
-void RendererContextAGC::landResources()
-{
-	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
-	for (auto& counter : displayRes.mInflightCounters)
-	{
-		if (counter->mCount > 0)
-		{
-			counter->mCount--;
-		}
-	}
-	displayRes.mInflightCounters.clear();
 }
 
 //=============================================================================================
@@ -3449,9 +3784,9 @@ void RendererContextAGC::blitSetup(TextVideoMemBlitter& blitter)
 	mBlitBind.m_bind[0].m_idx = blitter.m_texture.idx;
 
 	// Bind program and set fixed function state.
-	if (bindProgram(blitter.m_program, mBlitDraw, mBlitBind, true))
+	if (bindProgram(blitter.m_program, mBlitItem, mBlitBind, false, true))
 	{
-		bindFixedState(mBlitDraw);
+		bindFixedState(mBlitItem.draw);
 		mFrameState.mBlitting = true;
 	}
 }
@@ -3466,22 +3801,22 @@ void RendererContextAGC::blitRender(TextVideoMemBlitter& blitter, uint32_t numIn
 		if (numVertices > 0)
 		{
 			// Update buffers.
-			mIndexBuffers[blitter.m_ib->handle.idx].update(0, numIndices * 2, blitter.m_ib->data);
-			mVertexBuffers[blitter.m_vb->handle.idx].update(0, numVertices * blitter.m_layout.m_stride, blitter.m_vb->data);
+			updateBuffer(mIndexBuffers[blitter.m_ib->handle.idx], 0, numIndices * 2, blitter.m_ib->data);
+			updateBuffer(mVertexBuffers[blitter.m_vb->handle.idx], 0, numVertices * blitter.m_layout.m_stride, blitter.m_vb->data);
 
 			// Set draw streams (use temp vertex layout handle).
 			mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS] = blitter.m_layout;
-			Stream& stream = mBlitDraw.m_stream[0];
+			Stream& stream = mBlitItem.draw.m_stream[0];
 			stream.m_startVertex = 0;
 			stream.m_handle = blitter.m_vb->handle;
 			stream.m_layoutHandle = { BGFX_CONFIG_MAX_VERTEX_LAYOUTS };
-			mBlitDraw.setStreamBit(0, blitter.m_vb->handle);
-			mBlitDraw.m_indexBuffer = blitter.m_ib->handle;
-			mBlitDraw.m_numIndices = numIndices;
+			mBlitItem.draw.setStreamBit(0, blitter.m_vb->handle);
+			mBlitItem.draw.m_indexBuffer = blitter.m_ib->handle;
+			mBlitItem.draw.m_numIndices = numIndices;
 
-			if (bindVertexAttributes(mBlitDraw))
+			if (bindVertexAttributes(mBlitItem.draw))
 			{
-				submitDrawCall(mBlitDraw);
+				submitDrawCall(mBlitItem.draw);
 			}
 		}
 	}
