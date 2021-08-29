@@ -611,6 +611,7 @@ enum.UniformType          { comment = "Uniform types:" }
 	.Vec4    --- 4 floats vector.
 	.Mat3    --- 3x3 matrix.
 	.Mat4    --- 4x4 matrix.
+	()
 
 --- Backbuffer ratio enum.
 enum.BackbufferRatio      { comment = "Backbuffer ratios:" }
@@ -620,12 +621,14 @@ enum.BackbufferRatio      { comment = "Backbuffer ratios:" }
 	.Eighth    --- One eighth size of backbuffer.
 	.Sixteenth --- One sixteenth size of backbuffer.
 	.Double    --- Double size of backbuffer.
+	()
 
 --- Occlusion query result.
 enum.OcclusionQueryResult { comment = "Occlusion query results:" }
 	.Invisible --- Query failed test.
 	.Visible   --- Query passed test.
 	.NoResult  --- Query result is not available yet.
+	()
 
 --- Primitive topology.
 enum.Topology { underscore, comment = "Primitive topology:" }
@@ -634,6 +637,7 @@ enum.Topology { underscore, comment = "Primitive topology:" }
 	.LineList  --- Line list.
 	.LineStrip --- Line strip.
 	.PointList --- Point list.
+	()
 
 --- Topology conversion function.
 enum.TopologyConvert { underscore , comment = "Topology conversion functions:" }
@@ -642,6 +646,7 @@ enum.TopologyConvert { underscore , comment = "Topology conversion functions:" }
 	.TriListToLineList   --- Convert triangle list to line list.
 	.TriStripToTriList   --- Convert triangle strip to triangle list.
 	.LineStripToLineList --- Convert line strip to line list.
+	()
 
 --- Topology sort order.
 enum.TopologySort { underscore, comment = "Topology sort order:" , }
@@ -665,6 +670,7 @@ enum.ViewMode { underscore, comment = "View modes:" }
 	.Sequential      --- Sort in the same order in which submit calls were called.
 	.DepthAscending  --- Sort draw call depth in ascending order.
 	.DepthDescending --- Sort draw call depth in descending order.
+	()
 
 --- Render frame enum.
 enum.RenderFrame { underscore, comment = "" }
