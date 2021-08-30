@@ -7320,6 +7320,7 @@ VK_DESTROY
 				BX_FALLTHROUGH;
 
 			case VK_ERROR_OUT_OF_DATE_KHR:
+			case VK_SUBOPTIMAL_KHR:
 				m_needToRefreshSwapchain = true;
 				return false;
 
