@@ -178,6 +178,21 @@ namespace bgfx {
 			return s_remapInputSemantic[bgfx::Attrib::Count];
 		}
 
+		struct InputSemantic
+		{
+			InputSemantic()
+				: type(bgfx::Attrib::Count)
+				, slot(0)
+			{
+			}
+
+			std::string name;
+			uint16_t type;
+			uint16_t slot;
+		};
+
+		typedef std::vector<InputSemantic> InputSemanticArray;
+
 		// --------------------------------------------------------------------------/
 		// iterate over all structs
 		template <typename Fn>
@@ -821,7 +836,7 @@ namespace bgfx {
 			}
 		}
 
-		static bool getReflectionDataPSSL2(const SceShaderBinaryHandle& sl, UniformArray& _uniforms, uint16_t& size, uint16_t* _attrs, uint8_t& _numAttrs)
+		static bool getReflectionDataPSSL2(const SceShaderBinaryHandle& sl, UniformArray& _uniforms, uint16_t& size, InputSemanticArray& _inputSemantics)
 		{
 			// --------------------------------------------------------------------------/
 			// dump reflection
@@ -876,8 +891,20 @@ namespace bgfx {
 						const RemapInputSemantic& ris = findInputSemantic(semaName, uint8_t(semaIndex));
 						if (ris.m_attr != bgfx::Attrib::Count)
 						{
-							_attrs[_numAttrs] = bgfx::attribToId(ris.m_attr);
-							++_numAttrs;
+							uint16_t slot = apiSlot;
+
+							// if semantic names start with i_ this indicates instancing.
+							if ((name[0] == 'i') && (name[1] == '_')) {
+								slot |= 128; //  IS_INSTANCE_FLAG;
+							}
+
+							InputSemantic is;
+
+							is.name = name;
+							is.slot = slot;
+							is.type = bgfx::attribToId(ris.m_attr);
+
+							_inputSemantics.push_back(is);
 						}
 					}
 
@@ -1211,12 +1238,12 @@ namespace bgfx {
 						}
 
 						UniformArray uniforms;
-						uint8_t numAttrs = 0;
-						uint16_t attrs[bgfx::Attrib::Count];
+						InputSemanticArray inputSemantics;
+
 						uint16_t constantBufferSize = 0;
 
 						//printReflectionDataPSSL2(sl);
-						getReflectionDataPSSL2(sl, uniforms, constantBufferSize, attrs, numAttrs);
+						getReflectionDataPSSL2(sl, uniforms, constantBufferSize, inputSemantics);
 
 						if (!writeUniforms(_options, _writer, uniforms))
 						{
@@ -1234,13 +1261,20 @@ namespace bgfx {
 						BX_TRACE("nul:");
 
 
-						// Write attributes
+						// Write attributes (input semantics)
+						uint8_t numAttrs = (uint8_t)inputSemantics.size();
 						bx::write(_writer, numAttrs);
 						BX_TRACE("numAttrs:%d", numAttrs);
-						bx::write(_writer, attrs, numAttrs * sizeof(uint16_t));
-						for (int i = 0; i < numAttrs; i++)
+
+						for (InputSemanticArray::const_iterator it = inputSemantics.begin(); it != inputSemantics.end(); ++it)
 						{
-							BX_TRACE("attr %d : %d", i, attrs[i]);
+							const InputSemantic& semantic = *it;
+
+							BX_TRACE("%s (string not saved)", semantic.name.c_str());
+							bx::write(_writer, semantic.slot);
+							BX_TRACE("slot: % d", semantic.slot);
+							bx::write(_writer, semantic.type);
+							BX_TRACE("type:%d", semantic.type);
 						}
 
 						// Write constant buffer size
