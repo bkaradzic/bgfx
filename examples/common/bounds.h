@@ -11,39 +11,39 @@
 ///
 struct Aabb
 {
-	bx::Vec3 min;
-	bx::Vec3 max;
+	bx::Vec3 min = bx::init::None;
+	bx::Vec3 max = bx::init::None;
 };
 
 ///
 struct Capsule
 {
-	bx::Vec3 pos;
-	bx::Vec3 end;
+	bx::Vec3 pos = bx::init::None;
+	bx::Vec3 end = bx::init::None;
 	float    radius;
 };
 
 ///
 struct Cone
 {
-	bx::Vec3 pos;
-	bx::Vec3 end;
+	bx::Vec3 pos = bx::init::None;
+	bx::Vec3 end = bx::init::None;
 	float    radius;
 };
 
 ///
 struct Cylinder
 {
-	bx::Vec3 pos;
-	bx::Vec3 end;
+	bx::Vec3 pos = bx::init::None;
+	bx::Vec3 end = bx::init::None;
 	float    radius;
 };
 
 ///
 struct Disk
 {
-	bx::Vec3 center;
-	bx::Vec3 normal;
+	bx::Vec3 center = bx::init::None;
+	bx::Vec3 normal = bx::init::None;
 	float    radius;
 };
 
@@ -56,30 +56,30 @@ struct Obb
 ///
 struct Sphere
 {
-	bx::Vec3 center;
+	bx::Vec3 center = bx::init::None;
 	float    radius;
 };
 
 ///
 struct Triangle
 {
-	bx::Vec3 v0;
-	bx::Vec3 v1;
-	bx::Vec3 v2;
+	bx::Vec3 v0 = bx::init::None;
+	bx::Vec3 v1 = bx::init::None;
+	bx::Vec3 v2 = bx::init::None;
 };
 
 ///
 struct Ray
 {
-	bx::Vec3 pos;
-	bx::Vec3 dir;
+	bx::Vec3 pos = bx::init::None;
+	bx::Vec3 dir = bx::init::None;
 };
 
 ///
 struct Hit
 {
-	bx::Vec3  pos;
-	bx::Plane plane;
+	bx::Vec3  pos   = bx::init::None;
+	bx::Plane plane = bx::init::None;
 };
 
 ///

@@ -128,7 +128,8 @@ void aabbTransformToObb(Obb& _obb, const Aabb& _aabb, const float* _mtx)
 
 void toAabb(Aabb& _outAabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
-	Vec3 mn, mx;
+	Vec3 mn(init::None);
+	Vec3 mx(init::None);
 	uint8_t* vertex = (uint8_t*)_vertices;
 
 	mn = mx = load<Vec3>(vertex);
@@ -149,7 +150,8 @@ void toAabb(Aabb& _outAabb, const void* _vertices, uint32_t _numVertices, uint32
 
 void toAabb(Aabb& _outAabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
-	Vec3 mn, mx;
+	Vec3 mn(init::None);
+	Vec3 mx(init::None);
 	uint8_t* vertex = (uint8_t*)_vertices;
 	mn = mx = mul(load<Vec3>(vertex), _mtx);
 
@@ -282,7 +284,7 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 
 	uint8_t* vertex = (uint8_t*)_vertices;
 
-	Vec3 center;
+	Vec3 center(init::None);
 	float* position = (float*)&vertex[0];
 	center.x = position[0];
 	center.y = position[1];
@@ -500,9 +502,7 @@ bool intersect(const Ray& _ray, const Obb& _obb, Hit* _hit)
 
 bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit)
 {
-	Plane plane;
-	plane.normal = _disk.normal;
-	plane.dist   = -dot(_disk.center, _disk.normal);
+	Plane plane(_disk.normal, -dot(_disk.center, _disk.normal) );
 
 	Hit tmpHit;
 	_hit = NULL != _hit ? _hit : &tmpHit;
@@ -597,8 +597,8 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 		return intersect(_ray, sphere, _hit);
 	}
 
-	Plane plane;
-	Vec3 pos;
+	Plane plane(init::None);
+	Vec3 pos(init::None);
 
 	if (0.0f >= height)
 	{
@@ -907,9 +907,9 @@ Interval projectToAxis(const Vec3& _axis, const Triangle& _triangle)
 
 struct Srt
 {
-	Quaternion rotation;
-	Vec3       translation;
-	Vec3       scale;
+	Quaternion rotation    = init::Identity;
+	Vec3       translation = init::Zero;
+	Vec3       scale       = init::Zero;
 };
 
 Srt toSrt(const void* _mtx)
@@ -1026,8 +1026,8 @@ bool isNearZero(const Vec3& _v)
 
 struct Line
 {
-	Vec3 pos;
-	Vec3 dir;
+	Vec3 pos = init::None;
+	Vec3 dir = init::None;
 };
 
 inline Vec3 getPointAt(const Line& _line, float _t)
@@ -1222,7 +1222,7 @@ Vec3 closestPoint(const Obb& _obb, const Vec3& _point)
 
 Vec3 closestPoint(const Triangle& _triangle, const Vec3& _point)
 {
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _triangle);
 
 	const Vec3 pos = closestPoint(plane, _point);
@@ -1284,7 +1284,7 @@ bool overlap(const Aabb& _aabb, const Triangle& _triangle)
 		return false;
 	}
 
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _triangle);
 
 	if (!overlap(_aabb, plane) )
@@ -1343,7 +1343,7 @@ bool overlap(const Aabb& _aabb, const Disk& _disk)
 		return false;
 	}
 
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _disk.normal, _disk.center);
 
 	return overlap(_aabb, plane);
@@ -1500,7 +1500,7 @@ bool overlap(const Cylinder& _cylinder, const Obb& _obb)
 
 bool overlap(const Disk& _disk, const Vec3& _pos)
 {
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _disk.normal, _disk.center);
 
 	if (!isNearZero(distance(plane, _pos) ) )
@@ -1513,7 +1513,7 @@ bool overlap(const Disk& _disk, const Vec3& _pos)
 
 bool overlap(const Disk& _disk, const Plane& _plane)
 {
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _disk.normal, _disk.center);
 
 	if (!overlap(plane, _plane) )
@@ -1531,7 +1531,7 @@ bool overlap(const Disk& _disk, const Capsule& _capsule)
 		return false;
 	}
 
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _disk.normal, _disk.center);
 
 	return overlap(_capsule, plane);
@@ -1539,10 +1539,10 @@ bool overlap(const Disk& _disk, const Capsule& _capsule)
 
 bool overlap(const Disk& _diskA, const Disk& _diskB)
 {
-	Plane planeA;
+	Plane planeA(init::None);
 	calcPlane(planeA, _diskA.normal, _diskA.center);
 
-	Plane planeB;
+	Plane planeB(init::None);
 	calcPlane(planeB, _diskB);
 
 	Line line;
@@ -1571,7 +1571,7 @@ bool overlap(const Disk& _disk, const Obb& _obb)
 		return false;
 	}
 
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _disk.normal, _disk.center);
 
 	return overlap(_obb, plane);
@@ -1699,7 +1699,7 @@ bool overlap(const Sphere& _sphere, const Plane& _plane)
 
 bool overlap(const Sphere& _sphere, const Triangle& _triangle)
 {
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _triangle);
 
 	if (!overlap(_sphere, plane) )
@@ -1737,7 +1737,7 @@ bool overlap(const Sphere& _sphere, const Disk& _disk)
 		return false;
 	}
 
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _disk.normal, _disk.center);
 
 	return overlap(_sphere, plane);
@@ -1807,7 +1807,7 @@ bool overlap(const Triangle& _triangleA, const Triangle& _triangleB)
 template<typename Ty>
 bool overlap(const Triangle& _triangle, const Ty& _ty)
 {
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _triangle);
 
 	plane.normal = neg(plane.normal);
@@ -1966,7 +1966,7 @@ bool overlap(const Triangle& _triangle, const Disk& _disk)
 		return false;
 	}
 
-	Plane plane;
+	Plane plane(init::None);
 	calcPlane(plane, _disk.normal, _disk.center);
 
 	return overlap(_triangle, plane);
