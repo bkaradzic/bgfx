@@ -1262,19 +1262,28 @@ namespace bgfx {
 
 
 						// Write attributes (input semantics)
-						uint8_t numAttrs = (uint8_t)inputSemantics.size();
+						uint8_t numAttrs = 0;
+
+						if ('v' == _options.shaderType) // Only care about input semantic on vertex shaders
+						{
+							numAttrs = (uint8_t)inputSemantics.size();
+						}
+
 						bx::write(_writer, numAttrs);
 						BX_TRACE("numAttrs:%d", numAttrs);
 
-						for (InputSemanticArray::const_iterator it = inputSemantics.begin(); it != inputSemantics.end(); ++it)
+						if (numAttrs != 0)
 						{
-							const InputSemantic& semantic = *it;
+							for (InputSemanticArray::const_iterator it = inputSemantics.begin(); it != inputSemantics.end(); ++it)
+							{
+								const InputSemantic& semantic = *it;
 
-							BX_TRACE("%s (string not saved)", semantic.name.c_str());
-							bx::write(_writer, semantic.slot);
-							BX_TRACE("slot: % d", semantic.slot);
-							bx::write(_writer, semantic.type);
-							BX_TRACE("type:%d", semantic.type);
+								BX_TRACE("%s (string not saved)", semantic.name.c_str());
+								bx::write(_writer, semantic.slot);
+								BX_TRACE("slot: % d", semantic.slot);
+								bx::write(_writer, semantic.type);
+								BX_TRACE("type:%d", semantic.type);
+							}
 						}
 
 						// Write constant buffer size
