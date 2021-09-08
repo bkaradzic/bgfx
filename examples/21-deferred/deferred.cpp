@@ -586,6 +586,13 @@ public:
 					bgfx::setViewRect(kRenderPassDebugLights,  0, 0, uint16_t(m_width), uint16_t(m_height) );
 					bgfx::setViewRect(kRenderPassDebugGBuffer, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
+					bgfx::setViewName(kRenderPassGeometry,     "RenderPassGeometry" );
+					bgfx::setViewName(kRenderPassClearUav,     "RenderPassClearUav" );
+					bgfx::setViewName(kRenderPassLight,        "RenderPassLight" );
+					bgfx::setViewName(kRenderPassCombine,      "RenderPassCombine" );
+					bgfx::setViewName(kRenderPassDebugLights,  "RenderPassDebugLights" );
+					bgfx::setViewName(kRenderPassDebugGBuffer, "RenderPassDebugGBuffer" );
+
 					if (!m_useUav)
 					{
 						bgfx::setViewFrameBuffer(kRenderPassLight, m_lightBuffer);

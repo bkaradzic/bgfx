@@ -53,6 +53,8 @@ public:
 		Compute = 1 << 1,
 	};
 
+	static void initEmbeddedShaders();
+
 	RendererContextAGC();
 	~RendererContextAGC();
 	RendererType::Enum getRendererType() const override;
@@ -102,7 +104,7 @@ public:
 	void setShaderUniform4f(uint8_t const flags, uint32_t const regIndex, const void* const val, uint32_t const numRegs);
 	void setShaderUniform4x4f(uint8_t const flags, uint32_t const regIndex, const void* const val, uint32_t const numRegs);
 
-	bool init(const Init& init);
+	void init(const Init& init);
 
 private:
 
@@ -149,6 +151,7 @@ private:
 		uint8_t mNumTextures{};
 		uint8_t mStage{};
 		uint8_t mNumAttributes{};
+		uint8_t mNumInstanceAttributes{};
 		bool mUniformBufferDirty{};
 	};
 
@@ -170,7 +173,6 @@ private:
 
 	struct IndexBuffer final : public Buffer
 	{
-		//uint16_t mFlags{};
 	};
 
 	struct VertexBuffer final : public Buffer
@@ -260,7 +262,7 @@ private:
 		ViewState mViewState{};
 		Rect mViewportState{};
 		Rect mScissorState{};
-		//BlitState mBlitState{};
+		BlitState mBlitState{};
 		Rect mViewScissor{};
 		ProgramHandle mProgramHandle{};
 		ShaderHandle mShaderHandle{};
@@ -304,36 +306,37 @@ private:
 		uint32_t mNumViews{};
 	};
 
-	bool verifyInit(const Init& init);
-	bool createDisplayBuffers(const Init& init);
-	bool createScanoutBuffers();
-	bool createContext();
+	void verifyInit(const Init& init);
+	void createDisplayBuffers(const Init& init);
+	void createScanoutBuffers();
+	void createContext();
 	void setResourceInflight(Resource& resource);
 	void landResources();
-	bool updateBuffer(Buffer& buffer, uint32_t const offset, uint32_t const size, const uint8_t* const data);
+	void updateBuffer(Buffer& buffer, uint32_t const offset, uint32_t const size, const uint8_t* const data);
 	void destroyBuffer(Buffer& buffer);
-	bool createVertexBuffer(VertexBuffer& vertexBuffer, VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data);
+	void createVertexBuffer(VertexBuffer& vertexBuffer, VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data);
 	void destroyVertexBuffer(VertexBuffer& vertexBuffer);
-	bool createIndexBuffer(IndexBuffer& indexBuffer, uint16_t const flags, uint32_t const size, const uint8_t* const data);
+	void createIndexBuffer(IndexBuffer& indexBuffer, uint16_t const flags, uint32_t const size, const uint8_t* const data);
 	void destroyIndexBuffer(IndexBuffer& indexBuffer);
-	bool createShader(Shader& shader, const Memory& mem);
+	void createShader(Shader& shader, const Memory& mem);
 	void destroyShader(Shader& shader);
-	bool createProgram(Program& program, ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle);
+	void createProgram(Program& program, ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle);
 	void destroyProgram(Program& program);
 	bool tileSurface(void* const tiledSurface, const sce::Agc::Core::TextureSpec& tiledSpec, uint32_t const arraySlice, uint32_t const mipLevel, const void* const untiledSurface, uint32_t const untiledSize, bimg::TextureFormat::Enum const untiledFormat, uint32_t untiledBlockPitch, const sce::AgcGpuAddress::SurfaceRegion& region);
 	void setSampler(sce::Agc::Core::Sampler& sampler, uint64_t const flags);
-	bool createTexture(Texture& texture, uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip);
-	bool updateTexture(Texture& texture, uint8_t const side, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data);
+	void createTexture(Texture& texture, uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip);
+	void updateTexture(Texture& texture, uint8_t const side, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data);
 	void destroyTexture(Texture& texture);
-	bool createFrameBuffer(FrameBuffer& frameBuffer, uint8_t const num, const Attachment* const attachment);
+	void createFrameBuffer(FrameBuffer& frameBuffer, uint8_t const num, const Attachment* const attachment);
 	void destroyFrameBuffer(FrameBuffer& frameBuffer);
 	void beginFrame(Frame* const frame);
 	void waitForGPU();
 	void flushGPU(uint32_t const parts);
 	bool nextItem();
 	void viewChanged(const ClearQuad& clearQuad);
-	bool submitCompute();
-	bool submitDraw();
+	void submitViewBlits(uint16_t const view);
+	void submitCompute();
+	void submitDraw();
 	void submitDebugText(TextVideoMemBlitter& textVideoMemBlitter);
 	void endFrame();
 	void tickDestroyList(bool const force = false);
@@ -343,16 +346,18 @@ private:
 	uint16_t cleanupEncodedAttrib(uint16_t const encodedAttrib);
 	bool getVertexBinding(VertexBinding& binding, const VertexBindInfo& bindInfo);
 	bool bindProgram(ProgramHandle const programHandle, const RenderItem& item, const RenderBind& bind, bool const isCompute, bool const overridePredefined);
-	bool bindShaderUniforms(ShaderHandle const shaderHandle, const RenderItem& item, bool const isCompute, bool const overridePredefined);
-	bool bindUniformBuffer(ShaderHandle const shaderHandle);
+	void bindShaderUniforms(ShaderHandle const shaderHandle, const RenderItem& item, bool const isCompute, bool const overridePredefined);
+	void bindUniformBuffer(ShaderHandle const shaderHandle);
 	void overridePredefined(ShaderHandle const shaderHandle);
 	void bindSamplers(const RenderBind& bind, uint32_t const stages);
 	void bindFixedState(const RenderDraw& draw);
-	bool submitDrawCall(const RenderDraw& draw);
+	void submitDrawCall(const RenderDraw& draw);
 	void submitDispatch(const RenderCompute& compute);
 	void clearRect(const ClearQuad& clearQuad);
 	void startViewPerfCounter();
 	void stopViewPerfCounter();
+	void pushMarker(const char* const str);
+	void popMarker();
 
  	// NOTE: (manderson) We add + 1 to the vertex layouts as we use the extra slot
 	// for non tracked veretx layouts (clear and blit draws).
@@ -371,12 +376,16 @@ private:
 	FrameState mFrameState{};
 	PerfCounters mPerfCounters{};
 	sce::Agc::CxDepthRenderTarget mDepthRenderTarget{};
-	RenderItem mBlitItem{};
-	RenderBind mBlitBind{};
+	RenderItem mTextItem{};
+	RenderBind mTextBind{};
 	RenderItem mClearItem{};
 	RenderBind mClearBind{};
+	RenderItem mBlitItem{};
+	RenderBind mBlitBind{};
 	UniformHandle mClearQuadColor{kInvalidHandle};
 	UniformHandle mClearQuadDepth{kInvalidHandle};
+	UniformHandle mBlitSrcOffset{kInvalidHandle};
+	UniformHandle mBlitDstOffset{kInvalidHandle};
 	TextVideoMem mTextVideoMem;
 	uint64_t mFrameClock{};
 	uint64_t mUniformClock{};
@@ -386,6 +395,10 @@ private:
 	uint8_t mPhase{};
 	bool mVsync{};
 };
+
+//=============================================================================================
+
+void initEmbeddedShaders();
 
 //=============================================================================================
 

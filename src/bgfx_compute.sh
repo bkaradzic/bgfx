@@ -79,6 +79,9 @@
 #define COMP_r32ui    uint
 #define COMP_rg32ui   uint2
 #define COMP_rgba32ui uint4
+#define COMP_r32i     int
+#define COMP_rg32i    int2
+#define COMP_rgba32i  int4
 #define COMP_r32f     float
 #define COMP_r16f     float
 #define COMP_rg16f    float2
@@ -254,6 +257,10 @@ __IMAGE_IMPL_A(float4,      xyzw, vec4,  xyzw)
 __IMAGE_IMPL_A(uint,        x,    uvec4, xxxx)
 __IMAGE_IMPL_A(uint2,       xy,   uvec4, xyyy)
 __IMAGE_IMPL_A(uint4,       xyzw, uvec4, xyzw)
+
+__IMAGE_IMPL_A(int,         x,    ivec4, xxxx)
+__IMAGE_IMPL_A(int2,        xy,   ivec4, xyyy)
+__IMAGE_IMPL_A(int4,        xyzw, ivec4, xyzw)
 
 #if BGFX_SHADER_LANGUAGE_HLSL
 __IMAGE_IMPL_A(unorm float,       x,    vec4,  xxxx)

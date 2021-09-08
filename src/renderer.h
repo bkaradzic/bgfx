@@ -29,6 +29,8 @@ namespace bgfx
 
 	struct BlitState
 	{
+		BlitState() = default;
+
 		BlitState(const Frame* _frame)
 			: m_frame(_frame)
 			, m_item(0)

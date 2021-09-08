@@ -588,6 +588,8 @@ public:
 					updateTextureCubeRectBgra8(m_textureCube[0], face.m_side, rect.m_x, rect.m_y, rect.m_width, rect.m_height, m_rr, m_gg, m_bb);
 					if (m_blitSupported)
 					{
+						// NOTE: I don't think we want to copy this rect for all cubemap
+						// sides, only the one, changed depth to 1.
 						bgfx::blit(
 							  0
 							, m_textureCube[1]
@@ -602,6 +604,7 @@ public:
 							, face.m_side
 							, rect.m_width
 							, rect.m_height
+							, 1
 							);
 					}
 
@@ -621,6 +624,8 @@ public:
 						updateTextureCubeRectBgra8(m_textureCube[0], face.m_side, rect.m_x, rect.m_y, rect.m_width, rect.m_height, 0, 0, 0);
 						if (m_blitSupported)
 						{
+							// NOTE: I don't think we want to copy this rect for all cubemap
+							// sides, only the one, changed depth to 1.
 							bgfx::blit(
 								  0
 								, m_textureCube[1]
@@ -635,6 +640,7 @@ public:
 								, face.m_side
 								, rect.m_width
 								, rect.m_height
+								, 1
 								);
 						}
 

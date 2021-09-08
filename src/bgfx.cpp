@@ -19,6 +19,12 @@
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,      BX_MAKEFOURCC('b', 'g', 0, 1) );
 BX_ERROR_RESULT(BGFX_ERROR_FRAME_BUFFER_VALIDATION, BX_MAKEFOURCC('b', 'g', 0, 2) );
 
+#if BGFX_CONFIG_RENDERER_AGC
+namespace bgfx { namespace agc {
+	void initEmbeddedShaders();
+} }
+#endif
+
 namespace bgfx
 {
 #define BGFX_API_THREAD_MAGIC UINT32_C(0x78666762)
@@ -2016,6 +2022,12 @@ namespace bgfx
 
 		m_textVideoMemBlitter.init();
 		m_clearQuad.init();
+
+		// Init Agc embedded shaders. Might as well take advantage of the existing embedded shader
+		// interface rather that creating one from scratch for the Agc renderer.
+		#if BGFX_CONFIG_RENDERER_AGC
+		agc::initEmbeddedShaders();
+		#endif
 
 		m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.transientVbSize);
 		m_submit->m_transientIb = createTransientIndexBuffer(_init.limits.transientIbSize);
@@ -5391,7 +5403,7 @@ namespace bgfx
 
 	void blit(ViewId _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
 	{
-		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, 0, _srcX, _srcY, 0, _width, _height, 0);
+		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, 0, _srcX, _srcY, 0, _width, _height, UINT16_MAX);
 	}
 
 	void blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)

@@ -11,6 +11,10 @@
 
 //=============================================================================================
 
+#include "bgfx/embedded_shader.h"
+
+//=============================================================================================
+
 namespace {
 
 //=============================================================================================
@@ -68,6 +72,11 @@ void freeDmem(void* memVA)
 //=============================================================================================
 
 namespace bgfx { namespace agc {
+
+//=============================================================================================
+
+// Uncomment this to enforce that all vertex shader inputs are satisfied for each draw call.
+//#define STRICT_VERTEX_ATTRIBUTES
 
 //=============================================================================================
 
@@ -527,6 +536,53 @@ static const std::array<sce::Agc::Core::Sampler::DepthCompare, 9> sDepthCompareM
 
 //=============================================================================================
 
+// Embedded shaders
+#include "cs_blit_f2f_2d.bin.h"
+#include "cs_blit_f2f_3d.bin.h"
+
+//=============================================================================================
+
+static const bgfx::EmbeddedShader sEmbeddedShaders[] =
+{
+	BGFX_EMBEDDED_SHADER(cs_blit_f2f_2d),
+	BGFX_EMBEDDED_SHADER(cs_blit_f2f_3d),
+	BGFX_EMBEDDED_SHADER_END()
+};
+
+//=============================================================================================
+
+enum : uint32_t
+{
+	BlitTexture2D = 0,
+	BlitTexture3D,
+
+	BlitShaderFloatToFloat = 16,
+};
+
+struct BlitProgram
+{
+	const char* const mShaderName{};
+	ProgramHandle mProgramHandle{kInvalidHandle};
+};
+
+#define BLIT_PROGRAM(textureType, shaderType, name) \
+	{ \
+		(textureType | shaderType), \
+		{ \
+			name, \
+			{kInvalidHandle}, \
+		} \
+	}
+
+std::unordered_map<uint32_t, BlitProgram> sBlitPrograms{
+	BLIT_PROGRAM(BlitTexture2D, BlitShaderFloatToFloat, "cs_blit_f2f_2d"),
+	BLIT_PROGRAM(BlitTexture3D, BlitShaderFloatToFloat, "cs_blit_f2f_3d"),
+};
+
+#undef BLIT_PROGRAM
+
+//=============================================================================================
+
 static RendererContextAGC* sRendererAGC;
 
 //=============================================================================================
@@ -567,7 +623,7 @@ void RendererContextAGC::landResources()
 
 //=============================================================================================
 
-bool RendererContextAGC::createShader(Shader& shader, const Memory& mem)
+void RendererContextAGC::createShader(Shader& shader, const Memory& mem)
 {
 	// Run constructor to reset object.
 	new (&shader) Shader{};
@@ -593,10 +649,8 @@ bool RendererContextAGC::createShader(Shader& shader, const Memory& mem)
 	}
 	else
 	{
-		BGFX_FATAL(false, Fatal::InvalidShader, "Unknown shader format %x.", magic);
-		return false;
+		BGFX_FATAL(false, Fatal::UnableToInitialize, "FATAL: Failed to create shader. Corrupt header.");
 	}
-
 
 	uint32_t hashIn{};
 	bx::read(&reader, hashIn);
@@ -613,11 +667,6 @@ bool RendererContextAGC::createShader(Shader& shader, const Memory& mem)
 
 	uint16_t count{};
 	bx::read(&reader, count);
-
-	BX_TRACE("%s Shader consts %d"
-		, getShaderTypeName(magic)
-		, count
-		);
 
 	shader.m_numPredefined = 0;
 
@@ -659,12 +708,9 @@ bool RendererContextAGC::createShader(Shader& shader, const Memory& mem)
 				bx::read(&reader, texFormat);
 			}
 
-			const char* kind{"invalid"};
-
 			PredefinedUniform::Enum const predefined{nameToPredefinedUniformEnum(name)};
 			if (predefined != PredefinedUniform::Count)
 			{
-				kind = "predefined";
 				shader.m_predefined[shader.m_numPredefined].m_loc = regIndex;
 				shader.m_predefined[shader.m_numPredefined].m_count = regCount;
 				shader.m_predefined[shader.m_numPredefined].m_type = uint8_t(predefined | fragmentBit);
@@ -673,7 +719,10 @@ bool RendererContextAGC::createShader(Shader& shader, const Memory& mem)
 			else if ((kUniformSamplerBit & type) == 0)
 			{
 				const UniformRegInfo* info = mUniformReg.find(name);
-				BX_WARN(info != nullptr, "User defined uniform '%s' is not found, it won't be set.", name);
+				if (info == nullptr)
+				{
+					BX_TRACE("WARNING: User defined uniform: %s is not found, it won't be set.", name);
+				}
 
 				if (info != nullptr)
 				{
@@ -681,27 +730,14 @@ bool RendererContextAGC::createShader(Shader& shader, const Memory& mem)
 					{
 						shader.mUniforms = UniformBuffer::create(4<<10);
 					}
-
-					kind = "user";
 					shader.mUniforms->writeUniformHandle((UniformType::Enum)(type | fragmentBit), regIndex, info->m_handle, regCount);
 				}
 			}
 			else
 			{
 				// TODO: (manderson) Looks like for compute shaders buffers/images aren't included.
-				kind = "sampler";
 				shader.mNumTextures++;
 			}
-
-			BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
-				, kind
-				, name
-				, getUniformTypeName(UniformType::Enum(type&~kUniformMask))
-				, num
-				, regIndex
-				, regCount
-			);
-			BX_UNUSED(kind);
 		}
 
 		if (shader.mUniforms != nullptr)
@@ -717,33 +753,61 @@ bool RendererContextAGC::createShader(Shader& shader, const Memory& mem)
 	bx::skip(&reader, shaderSize + 1);
 
 	shader.mCompiledCode = allocDmem(sce::Agc::SizeAlign(shaderSize, sce::Agc::Alignment::kShaderCode));
+	BGFX_FATAL(shader.mCompiledCode != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to create shader. Failed to allocate %d bytes for shader binary.", shaderSize);
 	bx::memCopy(shader.mCompiledCode, source, shaderSize);
 	SceShaderBinaryHandle const binaryHandle = sceShaderGetBinaryHandle(shader.mCompiledCode);
 	void* const header = (void*)sceShaderGetProgramHeader(binaryHandle);
 	const void* const program = sceShaderGetProgram(binaryHandle);
 	SceError const error = sce::Agc::createShader(&shader.mShader, header, program);
-	if (error != SCE_OK)
-	{
-		freeDmem(shader.mCompiledCode);
-		return false;
-	}
+	BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: Failed to create shader. Likely compiled shader data is corrupt.");
 
 	uint8_t numAttrs{};
 	bx::read(&reader, numAttrs);
 
 	std::fill(shader.mAttributes.begin(), shader.mAttributes.end(), Attrib::Count);
 
-	for (uint32_t i = 0; i < numAttrs; ++i)
+	// TODO: (manderson) For some reason the shader compiler is including attributes for non vertex shaders, ignore them.
+	if (shader.mStage == VertexStage)
 	{
-		uint16_t id;
-		bx::read(&reader, id);
-
-		Attrib::Enum attr = idToAttrib(id);
-
-		if (Attrib::Count != attr)
+		uint8_t const InstanceFlag = 1 << 7;
+		for (uint32_t i = 0; i < numAttrs; ++i)
 		{
-			shader.mAttributes[shader.mNumAttributes] = attr;
-			shader.mNumAttributes++;
+			// NOTE: It simplifes (and is more optimal when binding) if all of the attibute slots are written in
+			// order, this is how the shader compiler worked before the addition of the explicit inclusion
+			// of attribute slots. It looks like attributes are still written in slot order, so the slot number is
+			// redundant, we just use it as a flag to indicate an attribute is per-instance rather than per vertex.
+			// Verify this assumption with BGFX_FATAL().
+			uint16_t slot;
+			bx::read(&reader, slot);
+			BGFX_FATAL((slot & ~InstanceFlag) == i, Fatal::UnableToInitialize, "FATAL: Failed to create shader. Shader input slots are not ordered properly.");
+
+			uint16_t id;
+			bx::read(&reader, id);
+
+			// Is this a per instance attribute?
+			if ((slot & InstanceFlag) != 0)
+			{
+				shader.mNumInstanceAttributes++;
+				continue;
+			}
+
+			Attrib::Enum attr = idToAttrib(id);
+
+			if (Attrib::Count != attr)
+			{
+				shader.mAttributes[shader.mNumAttributes] = attr;
+				shader.mNumAttributes++;
+			}
+		}
+	}
+	else
+	{
+		for (uint32_t i = 0; i < numAttrs; ++i)
+		{
+			uint16_t slot;
+			bx::read(&reader, slot);
+			uint16_t id;
+			bx::read(&reader, id);
 		}
 	}
 
@@ -753,20 +817,15 @@ bool RendererContextAGC::createShader(Shader& shader, const Memory& mem)
 		// Allocate staging buffer for uniform data. When we bind this shader to
 		// draw we will copy the staging buffers contents into the command buffer.
 		shader.mUniformBuffer = (uint8_t*)BX_ALLOC(g_allocator, shader.mUniformBufferSize);
+		BGFX_FATAL(shader.mUniformBuffer != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to create shader. Failed to allocate %d bytes for uniform buffer.", shader.mUniformBufferSize);
 
 		// Init the constant buffer struct, we will set it's pointer to the space we
 		// allocate from the command buffer when we bind uniform data.
 		sce::Agc::Core::BufferSpec spec;
 		spec.initAsConstantBuffer(nullptr, shader.mUniformBufferSize);
 		SceError error = sce::Agc::Core::initialize(&shader.mBuffer, &spec);
-		if (error != SCE_OK)
-		{
-			// ERROR!
-			return false;
-		}
+		BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: Failed to create shader. Failed to create shader uniform buffer view.");
 	}
-
-	return true;
 }
 
 //=============================================================================================
@@ -806,14 +865,13 @@ void RendererContextAGC::destroyShader(Shader& shader)
 
 //=============================================================================================
 
-bool RendererContextAGC::createProgram(Program& program, ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle)
+void RendererContextAGC::createProgram(Program& program, ShaderHandle const vertexShaderHandle, ShaderHandle const fragmentShaderHandle)
 {
 	// Run constructor to reset object.
 	new (&program) Program{};
 
 	program.mVertexShaderHandle = vertexShaderHandle;
 	program.mFragmentShaderHandle = fragmentShaderHandle;
-	return true;
 }
 
 //=============================================================================================
@@ -828,7 +886,7 @@ void RendererContextAGC::destroyProgram(Program& program)
 
 //=============================================================================================
 
-bool RendererContextAGC::updateBuffer(Buffer& buffer, uint32_t const offset, uint32_t const size, const uint8_t* const data)
+void RendererContextAGC::updateBuffer(Buffer& buffer, uint32_t const offset, uint32_t const size, const uint8_t* const data)
 {
 	// If the buffer is not inflight and it's size hasn't changed we can update it's contents directly,
 	// otherwise we need to modify a copy of the current buffer and discard the current buffer when it's
@@ -840,10 +898,7 @@ bool RendererContextAGC::updateBuffer(Buffer& buffer, uint32_t const offset, uin
 	{		
 		// Allocate new buffer.
 		newBuffer = allocDmem({newSize, 16});
-		if (newBuffer == nullptr)
-		{
-			return false;
-		}
+		BGFX_FATAL( newBuffer != nullptr, Fatal::UnableToInitialize, "FATAL: Buffer update failed. Failed to allocate %d bytes.", newSize);
 
 		// Copy previous contents, don't bother with portion we are going to update.
 		if (buffer.mBuffer != nullptr)
@@ -868,13 +923,10 @@ bool RendererContextAGC::updateBuffer(Buffer& buffer, uint32_t const offset, uin
 	}
 
 	// If the size or pointer changed update compute buffer.
-	if (newSize != buffer.mSize || newBuffer != buffer.mBuffer)
+	if ((buffer.mFlags & BGFX_BUFFER_COMPUTE_READ_WRITE) != 0 && (newSize != buffer.mSize || newBuffer != buffer.mBuffer))
 	{
 		SceError const ret = sce::Agc::Core::initialize(&(buffer.mComputeBuffer), &sce::Agc::Core::BufferSpec().initAsRegularBuffer(newBuffer, buffer.mStride, newSize / buffer.mStride));
-		if (ret != SCE_OK)
-		{
-			return false;
-		}
+		BGFX_FATAL(ret == SCE_OK, Fatal::UnableToInitialize, "FATAL: Buffer update failed. Failed to update compute buffer view.");
 	}
 
 	// If we allocated a new buffer queue to old one for delete once it's not inflight.
@@ -897,8 +949,6 @@ bool RendererContextAGC::updateBuffer(Buffer& buffer, uint32_t const offset, uin
 
 	// Update size.
 	buffer.mSize = newSize;
-
-	return true;
 }
 
 //=============================================================================================
@@ -922,18 +972,17 @@ void RendererContextAGC::destroyBuffer(Buffer& buffer)
 
 //=============================================================================================
 
-bool RendererContextAGC::createIndexBuffer(IndexBuffer& indexBuffer, uint16_t const flags, uint32_t const size, const uint8_t* const data)
+void RendererContextAGC::createIndexBuffer(IndexBuffer& indexBuffer, uint16_t const flags, uint32_t const size, const uint8_t* const data)
 {
 	// Run constructor to reset object.
 	new (&indexBuffer) IndexBuffer{};
 
 	indexBuffer.mFlags = flags;
 	indexBuffer.mStride = flags & BGFX_BUFFER_INDEX32 ? 4 : 2;
-	if (data != nullptr || (flags & BGFX_BUFFER_COMPUTE_READ_WRITE) != 0)
+	if (data != nullptr || (flags & BGFX_BUFFER_COMPUTE_WRITE) != 0)
 	{
 		return updateBuffer(indexBuffer, 0, size, data);
 	}
-	return true;
 }
 
 //=============================================================================================
@@ -949,19 +998,20 @@ void RendererContextAGC::destroyIndexBuffer(IndexBuffer& indexBuffer)
 
 //=============================================================================================
 
-bool RendererContextAGC::createVertexBuffer(VertexBuffer& vertexBuffer, VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data)
+void RendererContextAGC::createVertexBuffer(VertexBuffer& vertexBuffer, VertexLayoutHandle const layoutHandle, uint16_t const flags, uint32_t const size, const uint8_t* const data)
 {
 	// Run constructor to reset object.
 	new (&vertexBuffer) VertexBuffer{};
 
+	// NOTE: If no layout is provided we assume that the stride is vec4 (16bytes). This assumption
+	// only comes into play if the buffers is used by compute.
 	vertexBuffer.mLayoutHandle = layoutHandle;
 	vertexBuffer.mFlags = flags;
 	vertexBuffer.mStride = isValid(layoutHandle) ? mVertexLayouts[layoutHandle.idx].m_stride : 16;
-	if (data != nullptr || (flags & BGFX_BUFFER_COMPUTE_READ_WRITE) != 0)
+	if (data != nullptr || (flags & BGFX_BUFFER_COMPUTE_WRITE) != 0)
 	{
 		return updateBuffer(vertexBuffer, 0, size, data);
 	}
-	return true;
 }
 
 //=============================================================================================
@@ -983,7 +1033,8 @@ bool RendererContextAGC::tileSurface(void* const tiledSurface, const sce::Agc::C
 
 	sce::AgcGpuAddress::SurfaceDescription desc{};
 	ret = sce::Agc::Core::translate(&desc, &tiledSpec);
-	if (ret != SCE_OK) {
+	if (ret != SCE_OK)
+	{
 		return false;
 	}
 
@@ -998,7 +1049,8 @@ bool RendererContextAGC::tileSurface(void* const tiledSurface, const sce::Agc::C
 
 	sce::AgcGpuAddress::SurfaceSummary summary{};
 	ret = sce::AgcGpuAddress::computeSurfaceSummary(&summary, &desc);
-	if (ret != SCE_OK) {
+	if (ret != SCE_OK)
+	{
 		return false;
 	}
 
@@ -1137,12 +1189,10 @@ void RendererContextAGC::setSampler(sce::Agc::Core::Sampler& sampler, uint64_t c
 
 //=============================================================================================
 
-bool RendererContextAGC::createTexture(Texture& texture, uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip)
+void RendererContextAGC::createTexture(Texture& texture, uint64_t const flags, uint32_t const size, const uint8_t* const data, uint8_t const mipSkip)
 {
 	// Run constructor to reset object.
 	new (&texture) Texture{};
-
-	// NOTE: (manderson) Texture is valid if mBuffer != nullptr.
 
 	bimg::ImageContainer imageContainer;
 	if (bimg::imageParse(imageContainer, data, size))
@@ -1167,11 +1217,7 @@ bool RendererContextAGC::createTexture(Texture& texture, uint64_t const flags, u
 
 		const TextureFormatInfo& tf = sTextureFormat[ti.format];
 		sce::Agc::Core::TypedFormat const typedFormat = srgb ? tf.m_fmtSrgb : tf.m_fmt;
-		if (typedFormat == sce::Agc::Core::TypedFormat::kLast)
-		{
-			texture.mTexture.init(); // blank texture.
-			return false;
-		}
+		BGFX_FATAL(typedFormat != sce::Agc::Core::TypedFormat::kLast, Fatal::UnableToInitialize, "FATAL: Failed to create texture. Unsupported texture format.");
 
 		texture.mSpec.init();
 		texture.mSpec.m_format = sce::Agc::Core::DataFormat( { typedFormat, tf.m_swzl } );
@@ -1201,21 +1247,11 @@ bool RendererContextAGC::createTexture(Texture& texture, uint64_t const flags, u
 
 		sce::Agc::SizeAlign const alignedSize = sce::Agc::Core::getSize(&texture.mSpec);
 		texture.mBuffer = allocDmem(alignedSize);
-		if (texture.mBuffer == nullptr)
-		{
-			texture.mTexture.init(); // blank texture.
-			return false;
-		}
+		BGFX_FATAL(texture.mBuffer != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to create texture. Failed to allocate: %d bytes for image data.", alignedSize.m_size);
 
 		texture.mSpec.m_dataAddress = texture.mBuffer;
 		SceError error = sce::Agc::Core::initialize(&texture.mTexture, &texture.mSpec);
-		if (error != SCE_OK)
-		{
-			texture.mTexture.init(); // blank texture.
-			freeDmem(texture.mBuffer);
-			texture.mBuffer = nullptr;
-			return false;
-		}
+		BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: Failed to create texture. Failed to initialize texture view.");
 
 		for (uint32_t slice = 0; slice < texture.mSpec.m_numSlices; slice++)
 		{
@@ -1227,8 +1263,8 @@ bool RendererContextAGC::createTexture(Texture& texture, uint64_t const flags, u
 					// Verify format.
 					if (imgMip.m_format != ti.format)
 					{
-						texture.mTexture.init();
-						return false;
+						BX_TRACE("WARNING: Texture data format doesn't match texture format. Ignoring data, texture may appear corrupt.");
+						continue;
 					}
 
 					// Tile surface to buffer.
@@ -1242,10 +1278,7 @@ bool RendererContextAGC::createTexture(Texture& texture, uint64_t const flags, u
 					};
 					if (!tileSurface(texture.mBuffer, texture.mSpec, slice, mip, imgMip.m_data, imgMip.m_size, imgMip.m_format, UINT16_MAX, region))
 					{
-						texture.mTexture.init(); // blank texture.
-						freeDmem(texture.mBuffer);
-						texture.mBuffer = nullptr;
-						return false;
+						BX_TRACE("WARNING: Failed to tile texture data. Texture may appear corrupt.");
 					}
 				}
 			}
@@ -1264,32 +1297,17 @@ bool RendererContextAGC::createTexture(Texture& texture, uint64_t const flags, u
 			drtSpec.m_stencilFormat = sce::Agc::CxDepthRenderTarget::StencilFormat::k8UInt;
 			sce::Agc::SizeAlign const stencilSize = sce::Agc::Core::getSize(&drtSpec, sce::Agc::Core::DepthRenderTargetComponent::kStencil);
 			texture.mStencilBuffer = allocDmem(sce::Agc::SizeAlign(stencilSize.m_size, stencilSize.m_align));
-			if (texture.mStencilBuffer == nullptr)
-			{
-				texture.mTexture.init(); // blank texture.
-				freeDmem(texture.mBuffer);
-				texture.mBuffer = nullptr;
-				return false;
-			}
+			BGFX_FATAL(texture.mStencilBuffer != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to create texture. Failed to allocate: %d bytes for stencil buffer.", stencilSize.m_size);
 		}
 
 		texture.mFlags = flags;
 		texture.mFormat = ti.format;
-
-		return true;
 	}
-	return false;
 }
 
 //=============================================================================================
-bool RendererContextAGC::updateTexture(Texture& texture, uint8_t const slice, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data)
+void RendererContextAGC::updateTexture(Texture& texture, uint8_t const slice, uint8_t const mip, const Rect& rect, uint16_t const z, uint16_t const depth, uint16_t const pitch, uint32_t const size, const uint8_t* const data)
 {
-	// Was texture initialized successfully?
-	if (texture.mBuffer == nullptr)
-	{
-		return false;
-	}
-
 	// If the texture is not inflight we can update it's contents directly, otherwise we need to
 	// modify a copy of the current texture and discard the current buffer when it's not inflight.
 	uint8_t* newBuffer = texture.mBuffer;
@@ -1297,10 +1315,7 @@ bool RendererContextAGC::updateTexture(Texture& texture, uint8_t const slice, ui
 	{
 		sce::Agc::SizeAlign const alignedSize = sce::Agc::Core::getSize(&texture.mSpec);
 		newBuffer = allocDmem(alignedSize);
-		if (newBuffer == nullptr)
-		{
-			return false;
-		}
+		BGFX_FATAL(newBuffer != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to update texture. Failed to allocate: %d bytes for image data.", alignedSize.m_size);
 
 		// Copy existing contents, if we are updating the whole texture we don't need to do this.
 		// TODO: (manderson) investigate copying only region that isn't updated, this is made difficult
@@ -1325,11 +1340,7 @@ bool RendererContextAGC::updateTexture(Texture& texture, uint8_t const slice, ui
 	};
 	if (!tileSurface(newBuffer, texture.mSpec, slice, mip, data, size, texture.mFormat, pitch, region))
 	{
-		if (newBuffer != texture.mBuffer)
-		{
-			freeDmem(newBuffer);
-		}
-		return false;
+		BX_TRACE("WARNING: Failed to tile texture data. Texture may appear corrupt.");
 	}
 
 	// Discard old buffer if we needed to allocated a new one (old buffer is inflight)
@@ -1347,8 +1358,6 @@ bool RendererContextAGC::updateTexture(Texture& texture, uint8_t const slice, ui
 		texture.mInflightCounter = std::make_shared<InflightCounter>();
 		texture.mBuffer = newBuffer;
 	}
-
-	return true;
 }
 
 //=============================================================================================
@@ -1389,7 +1398,7 @@ RendererContextAGC::FrameBuffer::FrameBuffer()
 
 //=============================================================================================
 
-bool RendererContextAGC::createFrameBuffer(FrameBuffer& frameBuffer, uint8_t const num, const Attachment* const attachments)
+void RendererContextAGC::createFrameBuffer(FrameBuffer& frameBuffer, uint8_t const num, const Attachment* const attachments)
 {
 	// Run constructor to reset object.
 	new (&frameBuffer) FrameBuffer{};
@@ -1409,11 +1418,7 @@ bool RendererContextAGC::createFrameBuffer(FrameBuffer& frameBuffer, uint8_t con
 			uint32_t const height = bx::uint32_max(texture.mSpec.m_height >> attachment.mip, 1);
 			if (frameBuffer.mWidth != 0)
 			{
-				if (width != frameBuffer.mWidth || height != frameBuffer.mHeight)
-				{
-					// ERROR: dimensions don't match.
-					return false;
-				}
+				BGFX_FATAL(width == frameBuffer.mWidth && height == frameBuffer.mHeight, Fatal::UnableToInitialize, "FATAL: Failed to create framebuffer. Framebuffer attachment dimensions don't match. Framebuffer attachments must all be the same dimensions.");
 			}
 			else
 			{
@@ -1423,11 +1428,7 @@ bool RendererContextAGC::createFrameBuffer(FrameBuffer& frameBuffer, uint8_t con
 
 			if (!bimg::isDepth(texture.mFormat))
 			{
-				if (texture.mSpec.m_tileMode != sce::Agc::Core::Texture::TileMode::kRenderTarget)
-				{
-					// ERROR: Not a render target.
-					return false;
-				}
+				BGFX_FATAL(texture.mSpec.m_tileMode == sce::Agc::Core::Texture::TileMode::kRenderTarget, Fatal::UnableToInitialize, "FATAL: Failed to create framebuffer. Invalid framebuffer color attachment tile mode. Perhaps texture wasn't initialized as a render target?");
 
 				sce::Agc::Core::RenderTargetSpec spec;
 				spec.init();
@@ -1440,11 +1441,7 @@ bool RendererContextAGC::createFrameBuffer(FrameBuffer& frameBuffer, uint8_t con
 				spec.m_tileMode = sce::Agc::CxRenderTarget::TileMode::kRenderTarget;
 				spec.m_dataAddress = texture.mSpec.m_dataAddress;
 				SceError error = sce::Agc::Core::initialize(&frameBuffer.mColorTargets[frameBuffer.mNumAttachments], &spec);
-				if (error != SCE_OK)
-				{
-					// ERROR!
-					return false;
-				}
+				BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "Failed to initialize framebuffer color attachment render target view.");
 				frameBuffer.mColorTargets[frameBuffer.mNumAttachments].setSlot(frameBuffer.mNumAttachments)
 					.setCurrentMipLevel(attachment.mip)
 					.setBaseArraySliceIndex(attachment.layer);
@@ -1453,11 +1450,10 @@ bool RendererContextAGC::createFrameBuffer(FrameBuffer& frameBuffer, uint8_t con
 			}
 			else
 			{
-				if (texture.mSpec.m_tileMode != sce::Agc::Core::Texture::TileMode::kDepth ||texture.mSpec.m_numMips > 1 || texture.mSpec.m_numSlices > 1)
-				{
-					// ERROR: Don't support depth texture arrays or mipmaps... yet?
-					return false;
-				}
+				// TODO: (manderson) Don't support depth texture arrays or mipmaps... yet?
+				BGFX_FATAL(texture.mSpec.m_tileMode == sce::Agc::Core::Texture::TileMode::kDepth, Fatal::UnableToInitialize, "FATAL: Failed to create framebuffer. Invalid framebuffer depth attachment tile mode. Perhaps texture format isn't a depth format?");
+				BGFX_FATAL(texture.mSpec.m_numMips == 1, Fatal::UnableToInitialize, "FATAL: Failed to create framebuffer. Mipmapped depth textures not supported as frame buffer depth attachments.");
+				BGFX_FATAL(texture.mSpec.m_numSlices == 1, Fatal::UnableToInitialize, "FATAL: Failed to create framebuffer. Depth texture arrays not supported as frame buffer depth attachments.");
 
 				sce::Agc::Core::DepthRenderTargetSpec spec;
 				spec.init();
@@ -1470,11 +1466,7 @@ bool RendererContextAGC::createFrameBuffer(FrameBuffer& frameBuffer, uint8_t con
 				spec.m_stencilReadAddress = texture.mStencilBuffer;
 				spec.m_stencilWriteAddress = texture.mStencilBuffer;
 				SceError error = sce::Agc::Core::initialize(&frameBuffer.mDepthTarget, &spec);
-				if (error != SCE_OK)
-				{
-					// ERROR!
-					return false;
-				}
+				BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: Failed to create framebuffer. Failed to initialize framebuffer depth attachment render target view.");
 				frameBuffer.mDepthHandle = attachment.handle;
 			}
 		}
@@ -1486,8 +1478,6 @@ bool RendererContextAGC::createFrameBuffer(FrameBuffer& frameBuffer, uint8_t con
 		frameBuffer.mColorTargets[i].init()
 			.setSlot(i);
 	}
-
-	return true;
 }
 
 //=============================================================================================
@@ -1519,7 +1509,7 @@ RendererContextAGC::RendererContextAGC()
 		//| BGFX_CAPS_SWAP_CHAIN
 		| BGFX_CAPS_TEXTURE_2D_ARRAY
 		| BGFX_CAPS_TEXTURE_3D
-		//| BGFX_CAPS_TEXTURE_BLIT
+		| BGFX_CAPS_TEXTURE_BLIT
 		| BGFX_CAPS_TEXTURE_COMPARE_ALL
 		| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 		| BGFX_CAPS_TEXTURE_CUBE_ARRAY
@@ -1551,25 +1541,25 @@ RendererContextAGC::~RendererContextAGC()
 
 //=============================================================================================
 
-bool RendererContextAGC::verifyInit(const Init& init)
+void RendererContextAGC::verifyInit(const Init& init)
 {
 	// TODO: (manderson) We may want to be more clever here and choose an appropriate mode and 
 	// leterbox or scale into it, not sure yet how Bgfx handles this.
 	// As I understand it VideoOut will scale from one of these modes to the actual display mode.
-	return (init.resolution.width == 3840 && init.resolution.height == 2160) ||
-		   (init.resolution.width == 3680 && init.resolution.height == 2070) ||
-		   (init.resolution.width == 3520 && init.resolution.height == 1980) ||
-		   (init.resolution.width == 3360 && init.resolution.height == 1890) ||
-		   (init.resolution.width == 3200 && init.resolution.height == 1800) ||
-		   (init.resolution.width == 2880 && init.resolution.height == 1620) ||
-		   (init.resolution.width == 2560 && init.resolution.height == 1440) ||
-		   (init.resolution.width == 2240 && init.resolution.height == 1260) ||
-		   (init.resolution.width == 1920 && init.resolution.height == 1080);
+	BGFX_FATAL((init.resolution.width == 3840 && init.resolution.height == 2160) ||
+		   	   (init.resolution.width == 3680 && init.resolution.height == 2070) ||
+		       (init.resolution.width == 3520 && init.resolution.height == 1980) ||
+		       (init.resolution.width == 3360 && init.resolution.height == 1890) ||
+		       (init.resolution.width == 3200 && init.resolution.height == 1800) ||
+		       (init.resolution.width == 2880 && init.resolution.height == 1620) ||
+		       (init.resolution.width == 2560 && init.resolution.height == 1440) ||
+		       (init.resolution.width == 2240 && init.resolution.height == 1260) ||
+		       (init.resolution.width == 1920 && init.resolution.height == 1080), Fatal::UnableToInitialize, "FATAL: Invalid init resolution.");
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::createDisplayBuffers(const Init& init)
+void RendererContextAGC::createDisplayBuffers(const Init& init)
 {
 	// Set up the RenderTarget spec.
 	// TODO: (manderson) As I understand it using k8_8_8_8Srgb will cause GPU to do implicit linear to sRGB conversion and
@@ -1585,13 +1575,12 @@ bool RendererContextAGC::createDisplayBuffers(const Init& init)
 	sce::Agc::SizeAlign const rtSize = sce::Agc::Core::getSize(&rtSpec);
 	// Then we can allocate the required memory backing and assign it to the spec.
 	rtSpec.m_dataAddress = allocDmem(rtSize);
+	BGFX_FATAL(rtSpec.m_dataAddress != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to allocate %d bytes for display color buffer.", rtSize.m_size);
 	memset((void*)rtSpec.m_dataAddress, 0x80, rtSize.m_size);
 
 	// We can now initialize the render target. This will check that the dataAddress is properly aligned.
 	SceError error = sce::Agc::Core::initialize(&mDisplayResources[0].mRenderTarget, &rtSpec);
-	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK)
-		return false;
+	BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: Failed to initialize display color buffer view.");
 
 	// Now that we have the first RT set up, we can create the others. They are identical to the first material, except for the RT memory.
 	sce::Agc::CxRenderTarget& baseRt = mDisplayResources[0].mRenderTarget;
@@ -1600,8 +1589,10 @@ bool RendererContextAGC::createDisplayBuffers(const Init& init)
 		// You can just memcpy the CxRenderTarget, but doing so of course sidesteps the alignment checks in initialize().
 		sce::Agc::CxRenderTarget& rt = mDisplayResources[i].mRenderTarget;
 		memcpy(&rt, &baseRt, sizeof(baseRt));
-		rt.setDataAddress(allocDmem(rtSize));
-		memset(rt.getDataAddress(), 0x80, rtSize.m_size);
+		void* const ptr = allocDmem(rtSize);
+		BGFX_FATAL(ptr != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to allocate %d bytes for display color buffer.", rtSize.m_size);
+		memset(ptr, 0x80, rtSize.m_size);
+		rt.setDataAddress(ptr);
 	}
 
 	// Create and set up one depth target
@@ -1614,45 +1605,37 @@ bool RendererContextAGC::createDisplayBuffers(const Init& init)
 	sce::Agc::SizeAlign const depthSize = sce::Agc::Core::getSize(&drtSpec, sce::Agc::Core::DepthRenderTargetComponent::kDepth);
 	sce::Agc::SizeAlign const stencilSize = sce::Agc::Core::getSize(&drtSpec, sce::Agc::Core::DepthRenderTargetComponent::kStencil);
 	void* const depthMem = allocDmem(sce::Agc::SizeAlign(depthSize.m_size, depthSize.m_align));
+	BGFX_FATAL(depthMem != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to allocate %d bytes for display depth buffer.", depthSize.m_size);
 	void* const stencilMem = allocDmem(sce::Agc::SizeAlign(stencilSize.m_size, stencilSize.m_align));
+	BGFX_FATAL(stencilMem != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to allocate %d bytes for display stencil buffer.", stencilSize.m_size);
 	drtSpec.m_depthReadAddress = depthMem;
 	drtSpec.m_depthWriteAddress = depthMem;
 	drtSpec.m_stencilReadAddress = stencilMem;
 	drtSpec.m_stencilWriteAddress = stencilMem;
 	error = sce::Agc::Core::initialize(&mDepthRenderTarget, &drtSpec);
-	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK)
-		return false;
+	BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: Failed to initialize display depth-stencil buffer view.");
 
-	error = sce::Agc::Toolkit::init();
-	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK)
-		return false;
+	//error = sce::Agc::Toolkit::init();
+	//BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FILL IN THE BLANK");
 
 	mWidth = init.resolution.width;
 	mHeight = init.resolution.height;
-
-	return true;
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::createScanoutBuffers()
+void RendererContextAGC::createScanoutBuffers()
 {
 	// First we need to select what we want to display on, which in this case is the TV, also known as SCE_VIDEO_OUT_BUS_TYPE_MAIN.
 	mVideoHandle = sceVideoOutOpen(SCE_USER_SERVICE_USER_ID_SYSTEM, SCE_VIDEO_OUT_BUS_TYPE_MAIN, 0, NULL);
-	SCE_AGC_ASSERT(mVideoHandle >= 0);
-	if (mVideoHandle < 0)
-		return false;
+	BGFX_FATAL(mVideoHandle >= 0, Fatal::UnableToInitialize, "FATAL: sceVideoOutOpen() failed.");
 
 	// Next we need to inform scan-out about the format of our buffers. This can be done by directly talking to VideoOut or
 	// by letting Agc::Core do the translation. To do so, we first need to get a RenderTargetSpec, which we can extract from
 	// the list of CxRenderTargets passed into the function.
 	sce::Agc::Core::RenderTargetSpec spec{};
 	SceError error = sce::Agc::Core::translate(&spec, &mDisplayResources[0].mRenderTarget);
-	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK)
-		return false;
+	BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: Failed to translate to display color buffer specification from it's view.");
 
 	// Next, we use this RenderTargetSpec to create a SceVideoOutBufferAttribute2 which tells VideoOut how it should interpret
 	// our buffers. VideoOut needs to know how the color data in the target should be interpreted, and since our pixel shader has
@@ -1663,9 +1646,7 @@ bool RendererContextAGC::createScanoutBuffers()
 	// prototype in the docs that takes a second Colorimetry value...?
 	SceVideoOutBufferAttribute2 attribute{};
 	error = sce::Agc::Core::translate(&attribute, &spec, sce::Agc::Core::Colorimetry::kSrgb, sce::Agc::Core::Colorimetry::kBt709);
-	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK)
-		return false;
+	BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: Failed to translate to display color buffer video out specification from it's render target specification.");
 
 	// Ideally, all buffers should be registered with VideoOut in a single call to sceVideoOutRegisterBuffers2.
 	// The reason for this is that the buffers provided in each call get associated with one attribute slot in the API.
@@ -1673,6 +1654,7 @@ bool RendererContextAGC::createScanoutBuffers()
 	// new attribute slots. When processing a flip, there is significant extra cost associated with switching attribute
 	// slots, which should be avoided.
 	SceVideoOutBuffers* addresses = (SceVideoOutBuffers*)calloc(NumDisplayBuffers, sizeof(SceVideoOutBuffers));
+	BGFX_FATAL(addresses != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to allocate %d bytes for scan out buffers.", NumDisplayBuffers * sizeof(SceVideoOutBuffers));
 	for (uint32_t i = 0; i < NumDisplayBuffers; ++i)
 	{
 		// We could manually call into VideoOut to set up the scan-out buffers, but Agc::Core provides a helper for this.
@@ -1686,17 +1668,13 @@ bool RendererContextAGC::createScanoutBuffers()
 	// modifies the set.
 	const int32_t setIndex = 0; // Call sceVideoOutUnregisterBuffers with this.
 	error = sceVideoOutRegisterBuffers2(mVideoHandle, setIndex, 0, addresses, NumDisplayBuffers, &attribute, SCE_VIDEO_OUT_BUFFER_ATTRIBUTE_CATEGORY_UNCOMPRESSED, nullptr);
-	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK)
-		return false;
+	BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: sceVideoOutRegisterBuffers2() failed.");
 	free(addresses);
-
-	return true;
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::createContext()
+void RendererContextAGC::createContext()
 {
 	// Create a context for each buffered frame
 	for (uint32_t i = 0; i < NumDisplayBuffers; ++i)
@@ -1716,57 +1694,69 @@ bool RendererContextAGC::createContext()
 			&ctx.m_dcb,
 			&ctx.m_dcb);
 		displayRes.mLabel = (sce::Agc::Label*)allocDmem({ sizeof(sce::Agc::Label), sce::Agc::Alignment::kLabel });
+		BGFX_FATAL(displayRes.mLabel != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to allocate %d bytes for context label.", sizeof(sce::Agc::Label));
 		displayRes.mLabel->m_value = 1; // 1 means "not used by GPU"
 		displayRes.mBorderColorBuffer = (float*)allocDmem({BGFX_CONFIG_MAX_COLOR_PALETTE * sizeof(float) * 4, 256});
+		BGFX_FATAL(displayRes.mBorderColorBuffer != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to allocate %d bytes for texture border color buffer.", BGFX_CONFIG_MAX_COLOR_PALETTE * sizeof(float) * 4);
 	}
-
-	return true;
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::init(const Init& initParams)
+void RendererContextAGC::initEmbeddedShaders()
 {
-	// TODO: (manderson) cleanup?
+	// Create programs for blit types from embedded shaders.
+	for (auto& pair : sBlitPrograms)
+	{
+		BlitProgram& blitProgram = pair.second;
+		ShaderHandle const csh = bgfx::createEmbeddedShader(sEmbeddedShaders, RendererType::Agc, blitProgram.mShaderName);
+		BGFX_FATAL(isValid(csh), Fatal::UnableToInitialize, "FATAL: Failed to create embedded shader %s.", blitProgram.mShaderName);
+		blitProgram.mProgramHandle = bgfx::createProgram(csh, {kInvalidHandle}, true);
+	}
+}
 
+//=============================================================================================
+
+void RendererContextAGC::init(const Init& initParams)
+{
 	// Validate initialization settings.
-	if (!verifyInit(initParams))
-		return false;
+	verifyInit(initParams);
 
 	SceError error = sce::Agc::init();
-	SCE_AGC_ASSERT(error == SCE_OK);
-	if (error != SCE_OK)
-		return false;
+	BGFX_FATAL(error == SCE_OK, Fatal::UnableToInitialize, "FATAL: Failed to init Agc library.");
 
-	if (!createDisplayBuffers(initParams) ||
-		!createScanoutBuffers() ||
-		!createContext())
-		return false;
-
-	mBlitItem.draw.clear();
-	mBlitItem.draw.m_stateFlags = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z;
-	mBlitItem.draw.m_scissor = UINT16_MAX;
-	mBlitBind.clear();
-	mBlitBind.m_bind[0].m_type = (uint8_t)Binding::Texture;
-	mBlitBind.m_bind[0].m_samplerFlags = BGFX_SAMPLER_UVW_CLAMP;
+	createDisplayBuffers(initParams);
+	createScanoutBuffers();
+	createContext();
 
 	mClearItem.draw.clear();
 	mClearItem.draw.m_stateFlags = BGFX_STATE_PT_TRISTRIP;
-	mBlitItem.draw.m_scissor = UINT16_MAX;
+	mClearItem.draw.m_scissor = UINT16_MAX;
 	mClearBind.clear();
 
-	mVsync = initParams.resolution.reset == BGFX_RESET_VSYNC;
+	mBlitItem.compute.clear(BGFX_DISCARD_ALL);
+	mBlitBind.clear();
+	mBlitBind.m_bind[0].m_type = (uint8_t)Binding::Image;
+	mBlitBind.m_bind[0].m_access =  (uint8_t)Access::Read;
+	mBlitBind.m_bind[1].m_type = (uint8_t)Binding::Image;
+	mBlitBind.m_bind[1].m_access = (uint8_t)Access::Write;
 
+	mTextItem.draw.clear();
+	mTextItem.draw.m_stateFlags = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z;
+	mTextItem.draw.m_scissor = UINT16_MAX;
+	mTextBind.clear();
+	mTextBind.m_bind[0].m_type = (uint8_t)Binding::Texture;
+	mTextBind.m_bind[0].m_samplerFlags = BGFX_SAMPLER_UVW_CLAMP;
 	mTextVideoMem.resize(false, mWidth, mHeight);
 	mTextVideoMem.clear();
+
+	mVsync = initParams.resolution.reset == BGFX_RESET_VSYNC;
 
 	// Init reserved part of view names.
 	for (uint32_t i = 0; i < BGFX_CONFIG_MAX_VIEWS; i++)
 	{
 		bx::snprintf(mViewNames[i], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", i);
 	}
-
-	return true;
 }
 
 //=============================================================================================
@@ -2091,7 +2081,7 @@ bool RendererContextAGC::getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHand
 				bindInfo.mAttribs[bindInfo.mCount] = {stream.m_handle.idx, layout.m_attributes[attrib], stream.m_startVertex * layout.m_stride, layout.m_offset[attrib], layout.m_stride, 0};
 				if (attrib == Attrib::Position)
 				{
-					posIndex = i;
+					posIndex = bindInfo.mCount;
 				}
 				found = true;
 			}
@@ -2102,39 +2092,55 @@ bool RendererContextAGC::getVertexBindInfo(VertexBindInfo& bindInfo, ProgramHand
 		}
 	}
 
-	// Try and hook missing attributes up to instance buffer.
-	uint32_t numRemainingAttribs = vertexShader.mNumAttributes - bindInfo.mCount;
+	// Point any remaining attributes at the position data (this is what d3d11 and vulkan appear to do).
+	// If don't have a position attribute don't issue the draw call.
+	uint32_t const numRemainingAttribs = vertexShader.mNumAttributes - bindInfo.mCount;
 	if (numRemainingAttribs > 0)
 	{
-		// Assume if we have instance vertex data that the remaining attribs are instance data
-		// attributes.
-		// TODO: (manderson) flag attributes as instance so there is no assumption here.
-		if (isValid(draw.m_instanceDataBuffer))
+#if defined(STRICT_VERTEX_ATTRIBUTES)
+		BX_TRACE("WARNING: Missing %d vertex shader attribute inputs. Draw(s) will be ignored.", numRemainingAttribs);
+		return false;
+#else
+		if (posIndex == -1)
 		{
-			uint32_t const instanceBufferAttribCount = bx::min<uint32_t>(draw.m_instanceDataStride / 16, numRemainingAttribs);
-			for (uint32_t i = 0; i < instanceBufferAttribCount; i++)
-			{
-				bindInfo.mAttribs[bindInfo.mCount] = {draw.m_instanceDataBuffer.idx, 0, draw.m_instanceDataOffset, (uint16_t)(i * 16), draw.m_instanceDataStride, 1};
-				bindInfo.mCount++;
-			}
-			numRemainingAttribs -= instanceBufferAttribCount;
+			BX_TRACE("WARNING: Missing %d vertex shader attribute inputs and position is unavailable as substitute. Draw(s) will be ignored.", numRemainingAttribs);
+			return false;
 		}
+		for (uint32_t i = 0; i < numRemainingAttribs; i++)
+		{
+			bindInfo.mAttribs[bindInfo.mCount] = bindInfo.mAttribs[posIndex];
+			bindInfo.mCount++;
+		}
+#endif
+	}
 
-		// Point any remaining attributes at the position data (this is what d3d11 and vulkan appear to do).
-		// If don't have a position attribute don't issue the draw call.
-		if (numRemainingAttribs > 0)
+	// Hook up instance data.
+	if (vertexShader.mNumInstanceAttributes > 0)
+	{
+		if (!isValid(draw.m_instanceDataBuffer))
 		{
-			if (posIndex == -1)
-			{
-				return false;
-			}
-			for (uint32_t i = 0; i < numRemainingAttribs; i++)
-			{
-				bindInfo.mAttribs[bindInfo.mCount] = bindInfo.mAttribs[posIndex];
-				bindInfo.mCount++;
-			}
-			numRemainingAttribs = 0;
+			BX_TRACE("WARNING: Missing %d vertex shader instance inputs. Draw(s) will be ignored.", vertexShader.mNumInstanceAttributes);
+			return false;
 		}
+		uint32_t const instanceBufferAttribCount = draw.m_instanceDataStride / 16;
+		if (instanceBufferAttribCount < vertexShader.mNumInstanceAttributes)
+		{
+			BX_TRACE("WARNING: Missing %d vertex shader instance inputs. Draw(s) will be ignored.", vertexShader.mNumInstanceAttributes - instanceBufferAttribCount);
+			return false;
+		}
+#if defined(STRICT_VERTEX_ATTRIBUTES)
+		else if (instanceBufferAttribCount > vertexShader.mNumInstanceAttributes)
+		{
+			BX_TRACE("WARNING: %d extra instance inputs not used by vertex shader. Draw(s) will be ignored.", instanceBufferAttribCount - vertexShader.mNumInstanceAttributes);
+			return false;
+		}
+#else
+		for (uint32_t i = 0; i < vertexShader.mNumInstanceAttributes; i++)
+		{
+			bindInfo.mAttribs[bindInfo.mCount] = {draw.m_instanceDataBuffer.idx, 0, draw.m_instanceDataOffset, (uint16_t)(i * 16), draw.m_instanceDataStride, 1};
+			bindInfo.mCount++;
+		}
+#endif
 	}
 
 	// Calc hash for dirty state check.
@@ -2194,7 +2200,7 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 			auto it = sAttribFormatIndex.find(encodedAttrib);
 			if (it == sAttribFormatIndex.end())
 			{
-				// ERROR: Invalid vertex atrribute format.
+				BX_TRACE("WARNING: Unsupported vertex attribute data type. Draw(s) will be ignored.");
 				return false;
 			}
 			const AttribFormat& format = it->second;
@@ -2205,7 +2211,7 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 			error = sce::Agc::Core::initialize(&binding.mBuffers[i], &spec);
 			if (error != SCE_OK)
 			{
-				// ERROR: Failed to create agc vertex buffer.
+				BX_TRACE("WARNING: Failed to create vertex attribute buffer view. Draw(s) will be ignored.");
 				return false;
 			}
 
@@ -2220,7 +2226,7 @@ bool RendererContextAGC::getVertexBinding(VertexBinding& binding, const VertexBi
 			error = sce::Agc::Core::initialize(&binding.mBuffers[i], &spec);
 			if (error != SCE_OK)
 			{
-				// ERROR: Failed to create agc vertex buffer.
+				BX_TRACE("WARNING: Failed to create instance attribute buffer view. Draw(s) will be ignored.");
 				return false;
 			}
 
@@ -2280,24 +2286,12 @@ bool RendererContextAGC::bindVertexAttributes(const RenderDraw& draw)
 
 void RendererContextAGC::setShaderUniform(uint8_t const flags, uint32_t const regIndex, const void* const val, uint32_t const numRegs)
 {
-	if (isValid(mFrameState.mShaderHandle))
-	{
-		Shader& shader = mShaders[mFrameState.mShaderHandle.idx];
-		uint32_t const len = numRegs*16;
-		if ((regIndex + len) <= shader.mUniformBufferSize)
-		{
-			shader.mUniformBufferDirty = shader.mUniformBufferDirty || memcmp(&(shader.mUniformBuffer[regIndex]), val, len) != 0;
-			memcpy(&shader.mUniformBuffer[regIndex], val, len);
-		}
-		else
-		{
-			// ERROR: constant buffer size mismatch!
-		}
-	}
-	else
-	{
-		// ERROR: Invalid shader handle.
-	}
+	BGFX_FATAL(isValid(mFrameState.mShaderHandle), Fatal::UnableToInitialize, "FATAL: Invalid shader handle. All shader uniform writes need to happen within bindShaderUniforms().");
+	Shader& shader = mShaders[mFrameState.mShaderHandle.idx];
+	uint32_t const len = numRegs*16;
+	BGFX_FATAL((regIndex + len) <= shader.mUniformBufferSize, Fatal::UnableToInitialize, "FATAL: Invalid shader uniform address. Perhaps wrong datatype or array size?");
+	shader.mUniformBufferDirty = shader.mUniformBufferDirty || memcmp(&(shader.mUniformBuffer[regIndex]), val, len) != 0;
+	memcpy(&shader.mUniformBuffer[regIndex], val, len);
 }
 
 //=============================================================================================
@@ -2410,7 +2404,7 @@ void RendererContextAGC::bindFrameBuffer(FrameBufferHandle const frameBufferHand
 
 //=============================================================================================
 
-bool RendererContextAGC::bindUniformBuffer(ShaderHandle const shaderHandle)
+void RendererContextAGC::bindUniformBuffer(ShaderHandle const shaderHandle)
 {
 	// Every time a new program is bound, the stage bindings are cleared.
 	Shader& shader = mShaders[shaderHandle.idx];
@@ -2425,11 +2419,7 @@ bool RendererContextAGC::bindUniformBuffer(ShaderHandle const shaderHandle)
 		if (shader.mUniformBufferDirty || shader.mUniformBufferClock != mFrameClock)
 		{
 			uniformBuffer = (uint8_t*)ctx.m_dcb.allocateTopDown(shader.mUniformBufferSize, 16);
-			if (uniformBuffer == nullptr)
-			{
-				// ERROR!
-				return false;
-			}
+			BGFX_FATAL(uniformBuffer != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to bind uniform buffer. Failed to allocate %d bytes from command buffer.", shader.mUniformBufferSize);
 			memcpy(uniformBuffer, shader.mUniformBuffer, shader.mUniformBufferSize);
 			shader.mBuffer.setDataAddress(uniformBuffer);
 			shader.mCommandBuffer = uniformBuffer;
@@ -2442,7 +2432,6 @@ bool RendererContextAGC::bindUniformBuffer(ShaderHandle const shaderHandle)
 		ctx.m_bdr.getStage(shaderType)
 			.setConstantBuffers(0, 1, &shader.mBuffer);
 	}
-	return true;
 }
 
 //=============================================================================================
@@ -2471,11 +2460,12 @@ void RendererContextAGC::overridePredefined(ShaderHandle const shaderHandle)
 
 //=============================================================================================
 
-bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, const RenderItem& item, bool const isCompute, bool const _overridePredefined)
+void RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, const RenderItem& item, bool const isCompute, bool const _overridePredefined)
 {
 	Shader& shader = mShaders[shaderHandle.idx];
 	if (shader.mUniformBufferSize > 0)
 	{
+		// NOTE: All setShaderUniform*() calls have to happen within this scope.
 		mFrameState.mShaderHandle = shaderHandle;
 		if (shader.mUniformClock != mUniformClock && shader.mUniforms != nullptr)
 		{		
@@ -2551,15 +2541,12 @@ bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, con
 
 					default:
 					{
-						BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", shader.mUniforms->getPos(), opcode, type, loc, num, copy);
-						mFrameState.mShaderHandle = { kInvalidHandle };
-						return false;
+						BX_TRACE("WARNING: Invalid uniform data type. Uniform will not be set.");
 					}
 					break;
 				}
 
 				#undef CASE_IMPLEMENT_UNIFORM
-
 			}
 
 			shader.mUniformClock = mUniformClock;
@@ -2587,16 +2574,10 @@ bool RendererContextAGC::bindShaderUniforms(ShaderHandle const shaderHandle, con
 		}
 
 		// Bind the uniform buffer.
-		if (!bindUniformBuffer(shaderHandle))
-		{
-			mFrameState.mShaderHandle = { kInvalidHandle };
-			return false;
-		}
+		bindUniformBuffer(shaderHandle);
 
 		mFrameState.mShaderHandle = { kInvalidHandle };
 	}
-
-	return true;
 }
 
 //=============================================================================================
@@ -2731,6 +2712,7 @@ bool RendererContextAGC::bindProgram(ProgramHandle const programHandle, const Re
 	if ((isCompute && (vtxShader.mStage != ComputeStage || frgShader != nullptr)) ||
 	    (!isCompute && (vtxShader.mStage != VertexStage || (frgShader != nullptr && frgShader->mStage != FragmentStage))))
 	{
+		BX_TRACE("WARNING: Invalid shader(s). Program bind failed, draw/dispatch will be ignored.");
 		return false;
 	}
 
@@ -2758,26 +2740,20 @@ bool RendererContextAGC::bindProgram(ProgramHandle const programHandle, const Re
 		mFrameState.mProgramHandle = programHandle;
 	}
 
-	// TODO: (manderson) Looks like compute shaders don't have images/buffers in uniform reflection data.
+	// TODO: (manderson) Looks like compute shaders don't have images/buffers in uniform reflection data, so update samplers
 	// Commit vertex shader uniforms.
 	uint32_t bindStages = vtxShader.mStage;//vtxShader.mNumTextures > 0 ? vtxShader.mStage : 0;
-	if (!bindShaderUniforms(program.mVertexShaderHandle, item, isCompute, overridePredefined))
-	{
-		return false;
-	}
-
-	// Bind fragment shader uniforms.
+	bindShaderUniforms(program.mVertexShaderHandle, item, isCompute, overridePredefined);
 	if (frgShader != nullptr)
 	{
 		//bindStages |= frgShader->mNumTextures > 0 ? frgShader->mStage : 0;
 		bindStages |= frgShader->mStage;
-		if (!bindShaderUniforms(program.mFragmentShaderHandle, item, isCompute, overridePredefined))
-		{
-			return false;
-		}
+		bindShaderUniforms(program.mFragmentShaderHandle, item, isCompute, overridePredefined);
 	}
 
 	// Bind samplers.
+	// TODO: (manderson) add sampler count to compute shaders so we can ignore this call when
+	// no textures/buffers are used by the shader.
 	if (bindStages != 0)
 	{
 		bindSamplers(bind, bindStages);
@@ -3153,7 +3129,7 @@ void RendererContextAGC::beginFrame(Frame* const frame)
 	mFrameState.mViewState.reset( mFrameState.mFrame );
 	mFrameState.mViewportState.clear();
 	mFrameState.mScissorState.clear();
-	//displayRes.mBlitState = { displayRes.mFrame };
+	mFrameState.mBlitState = { mFrameState.mFrame };
 	mFrameState.mViewScissor.clear();
 	mFrameState.mProgramHandle = { kInvalidHandle };
 	mFrameState.mFrameBufferHandle = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -3205,7 +3181,7 @@ void RendererContextAGC::waitForGPU()
 		// TODO: (manderson) Include view name.
 		const ViewPerfCounter& viewPerfCounter = displayRes.mViewPerfCounters[i];
 		ViewStats& viewStats = mPerfCounters.mViewStats[i];
-		bx::strCopy(viewStats.name, 256, mViewNames[viewPerfCounter.mViewId]);
+		bx::strCopy(viewStats.name, 256, viewPerfCounter.mViewId < BGFX_CONFIG_MAX_VIEWS ? mViewNames[viewPerfCounter.mViewId] : "---");
 		viewStats.view = viewPerfCounter.mViewId;
 		viewStats.cpuTimeBegin = viewPerfCounter.mCPUTimeStamps[0];
 		viewStats.cpuTimeEnd = viewPerfCounter.mCPUTimeStamps[1];
@@ -3285,6 +3261,20 @@ void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 	const Clear& clear = mFrameState.mFrame->m_view[mFrameState.mView].m_clear;
 	if ((clear.m_flags & BGFX_CLEAR_MASK) != 0)
 	{
+		// Lookup uniforms.
+		if (mClearQuadColor.idx == kInvalidHandle)
+		{
+			const UniformRegInfo* const info = mUniformReg.find("bgfx_clear_color");
+			BGFX_FATAL(info != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to find bgfx_clear_color uniform.");
+			mClearQuadColor = info->m_handle;
+		}
+		if (mClearQuadDepth.idx == kInvalidHandle)
+		{
+			const UniformRegInfo* const info = mUniformReg.find("bgfx_clear_depth");
+			BGFX_FATAL(info != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to find bgfx_clear_depth uniform.");
+			mClearQuadDepth = info->m_handle;
+		}
+
 		uint32_t const numRt = mFrameState.mNumFrameBufferAttachments;
 
 		// Make sure scissor is full viewport.
@@ -3303,20 +3293,6 @@ void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 		stream.m_handle = clearQuad.m_vb;
 		stream.m_layoutHandle = { BGFX_CONFIG_MAX_VERTEX_LAYOUTS };
 		mClearItem.draw.setStreamBit(0, clearQuad.m_vb);
-
-		if (mClearQuadColor.idx == kInvalidHandle)
-		{
-			const UniformRegInfo* const infoClearColor = mUniformReg.find("bgfx_clear_color");
-			if (infoClearColor != nullptr)
-				mClearQuadColor = infoClearColor->m_handle;
-		}
-
-		if (mClearQuadDepth.idx == kInvalidHandle)
-		{
-			const UniformRegInfo* const infoClearDepth = mUniformReg.find("bgfx_clear_depth");
-			if (infoClearDepth != nullptr)
-				mClearQuadDepth = infoClearDepth->m_handle;
-		}
 
 		float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 		if ((clear.m_flags & BGFX_CLEAR_COLOR_USE_PALETTE) != 0)
@@ -3346,12 +3322,17 @@ void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 		float mrtClearDepth[4] = { g_caps.homogeneousDepth ? (clear.m_depth * 2.0f - 1.0f) : clear.m_depth };
 		updateUniform(mClearQuadDepth.idx, mrtClearDepth, sizeof(float) * 4);
 
+		// Add marker for clear.
+		pushMarker("Clear");
+
 		if (bindProgram(clearQuad.m_program[numRt], mClearItem, mClearBind, false, true) &&
 			bindVertexAttributes(mClearItem.draw))
 		{
 			bindFixedState(mClearItem.draw);
 			submitDrawCall(mClearItem.draw);
 		}
+
+		popMarker();
 
 		// Restore view scissor.
 		mFrameState.mViewScissor = prevViewScissor;
@@ -3360,8 +3341,27 @@ void RendererContextAGC::clearRect(const ClearQuad& clearQuad)
 
 //=============================================================================================
 
+void RendererContextAGC::pushMarker(const char* const str)
+{
+	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+	ctx.m_dcb.pushMarker(str);
+}
+
+//=============================================================================================
+
+void RendererContextAGC::popMarker()
+{
+	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
+	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
+	ctx.m_dcb.popMarker();
+}
+
+//=============================================================================================
+
 void RendererContextAGC::startViewPerfCounter()
 {
+	pushMarker(mFrameState.mView < BGFX_CONFIG_MAX_VIEWS ? mViewNames[mFrameState.mView] : "---");
 	DisplayResources& displayRes = *(mFrameState.mDisplayRes);
 	sce::Agc::Core::BasicContext& ctx = displayRes.mContext;
 	ViewPerfCounter& viewPerfCounter = displayRes.mViewPerfCounters[displayRes.mNumViews];
@@ -3386,6 +3386,7 @@ void RendererContextAGC::stopViewPerfCounter()
 		viewPerfCounter.mCPUTimeStamps[1] = bx::getHPCounter();
 		viewPerfCounter.mGPUTimeStamps[1] = sce::Agc::Core::writeTimestamp(&ctx.m_dcb, &ctx.m_dcb, sce::Agc::Core::TimestampType::kBottomOfPipe);
 		mFrameState.mViewPerfCounter = nullptr;
+		popMarker();
 	}
 }
 
@@ -3398,23 +3399,214 @@ void RendererContextAGC::viewChanged(const ClearQuad& clearQuad)
 
 	// Update view.
 	mFrameState.mView = mFrameState.mKey.m_view;
-	const View& view = mFrameState.mFrame->m_view[mFrameState.mView];
-	mFrameState.mViewState.m_rect = view.m_rect;
-	mFrameState.mViewScissor = !view.m_scissor.isZero() ? view.m_scissor : mFrameState.mViewState.m_rect;
 
 	// Start view timer.
 	startViewPerfCounter();
+
+	const View& view = mFrameState.mFrame->m_view[mFrameState.mView];
+	mFrameState.mViewState.m_rect = view.m_rect;
+	mFrameState.mViewScissor = !view.m_scissor.isZero() ? view.m_scissor : mFrameState.mViewState.m_rect;
 
 	bindFrameBuffer(view.m_fbh);
 
 	clearRect(clearQuad);
 
-	//submitBlit(bs, view);
+	// TODO: (manderson) Does this need to happen after view frame buffer is cleared? It will require another
+	// GPU sync.
+	submitViewBlits(mFrameState.mView);
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::submitCompute()
+void RendererContextAGC::submitViewBlits(uint16_t const view)
+{
+	if (!mFrameState.mBlitState.hasItem(view))
+	{
+		return;
+	}
+
+	// Lookup uniforms.
+	if (mBlitSrcOffset.idx == kInvalidHandle)
+	{
+		const UniformRegInfo* const info = mUniformReg.find("u_srcOffset");
+		BGFX_FATAL(info != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to find u_srcOffset uniform.");
+		mBlitSrcOffset = info->m_handle;
+	}
+	if (mBlitDstOffset.idx == kInvalidHandle)
+	{
+		const UniformRegInfo* const info = mUniformReg.find("u_dstOffset");
+		BGFX_FATAL(info != nullptr, Fatal::UnableToInitialize, "FATAL: Failed to find u_dstOffset uniform.");
+		mBlitDstOffset = info->m_handle;
+	}
+
+	// Add marker for blits.
+	pushMarker("Blits");
+
+	// Flush GPU.
+	flushGPU(Graphics | Compute);
+
+	// Function to adjust texture type, returns k1d for invalid type.
+	const auto aliasType = [](sce::Agc::Core::Texture::Type const type)
+	{
+		switch(type)
+		{
+		case sce::Agc::Core::Texture::Type::k2d:
+		case sce::Agc::Core::Texture::Type::k2dArray:
+		case sce::Agc::Core::Texture::Type::kCubemap:
+			return sce::Agc::Core::Texture::Type::k2dArray;
+		case sce::Agc::Core::Texture::Type::k3d:
+			return sce::Agc::Core::Texture::Type::k3d;
+		default:
+			return sce::Agc::Core::Texture::Type::k1d;
+		}
+	};
+
+	// Use compute to blit between textures.
+	sce::Agc::Core::Texture srcTmp{};
+	sce::Agc::Core::Texture dstTmp{};
+	while (mFrameState.mBlitState.hasItem(view))
+	{
+		const BlitItem& blit = mFrameState.mBlitState.advance();
+		Texture& srcTxtr = mTextures[blit.m_src.idx];
+		Texture& dstTxtr = mTextures[blit.m_dst.idx];
+
+		// Sanity checks.
+		if (blit.m_width == 0 || blit.m_height == 0 || blit.m_depth == 0)
+		{
+			BX_TRACE("WARNING: Invalid texture region: width: %d, height: %d, depth: %d. Texture blit will be ignored.", blit.m_width, blit.m_height, blit.m_depth);
+			continue;
+		}
+		else if (dstTxtr.mFormat != srcTxtr.mFormat)
+		{
+			BX_TRACE("WARNING: Texture formats don't match. Texture blit will be ignored.");
+			continue;
+		}
+
+		// Get src and dst textures. Copy texture views as we will adjust them.
+		sce::Agc::Core::Texture& src = srcTxtr.mTexture;
+		sce::Agc::Core::Texture& dst = dstTxtr.mTexture;
+		srcTmp = src;
+		dstTmp = dst;
+
+		// Adjust texture view types.
+		src.setType(aliasType(src.getType()));
+		dst.setType(aliasType(dst.getType()));
+		sce::Agc::Core::Texture::Type const srcType = src.getType();
+		sce::Agc::Core::Texture::Type const dstType = dst.getType();
+
+		// Make sure the texture views have the same type.
+		// NOTE: sce::Agc::Core::Texture::Type::k1d means the original texture type was invalid,
+		// this should never happen.
+		if (srcType != dstType || srcType == sce::Agc::Core::Texture::Type::k1d)
+		{
+			BX_TRACE("WARNING: Texture types don't match. Texture blit will be ignored.");
+			continue;
+		}
+
+		// Determine which program to use.
+		// NOTE: Float4 read and float4 write should work if texture format equality is
+		// enforced, it may not work if blits between different formats has to be supported.
+		// If more shader variants are required we just need to include the embedded shader and
+		// add it to the BlitShader enum near the top of the file.
+		uint32_t blitProgram = BlitShaderFloatToFloat;
+		switch (srcType)
+		{
+		case sce::Agc::Core::Texture::Type::k2dArray:
+			blitProgram |= BlitTexture2D;
+			break;
+		case sce::Agc::Core::Texture::Type::k3d:
+			blitProgram |= BlitTexture3D;
+			break;
+		default:
+			break;
+		}
+
+		// Fetch the proper program.
+		auto it = sBlitPrograms.find(blitProgram);
+		if (it == sBlitPrograms.end())
+		{
+			BX_TRACE("WARNING: Failed to find appropriate texture blit compute shader. Texture blit will be ignored.");
+			continue;
+		}
+
+		// Set blit image bindings.
+		mBlitBind.m_bind[0].m_idx = blit.m_src.idx;
+		mBlitBind.m_bind[1].m_idx = blit.m_dst.idx;
+
+		// Set blit dispatch settings.
+		std::array<float,4> srcOffset;
+		std::array<float,4> dstOffset;
+		uint32_t srcSlice;
+		uint32_t dstSlice;
+		uint32_t numSlices;
+		mBlitItem.compute.m_numX = blit.m_width;
+		mBlitItem.compute.m_numY = blit.m_height;
+		if (srcType == sce::Agc::Core::Texture::Type::k3d)
+		{
+			mBlitItem.compute.m_numZ = blit.m_depth;
+			srcOffset = {(float)blit.m_srcX, (float)blit.m_srcY, (float)blit.m_srcZ, 0.0f};
+			dstOffset = {(float)blit.m_dstX, (float)blit.m_dstY, (float)blit.m_dstZ, 0.0f};
+			srcSlice = 0;
+			dstSlice = 0;
+			numSlices = 1;
+		}
+		else
+		{
+			mBlitItem.compute.m_numZ = 1;
+			srcOffset = {(float)blit.m_srcX, (float)blit.m_srcY, 0.0f, 0.0f};
+			dstOffset = {(float)blit.m_dstX, (float)blit.m_dstY, 0.0f, 0.0f};
+			srcSlice = blit.m_srcZ;
+			dstSlice = blit.m_dstZ;
+			numSlices = blit.m_depth;
+		}
+
+		// Set src and dst coord offsets so we blit the requested region.
+		updateUniform(mBlitSrcOffset.idx, &srcOffset[0], sizeof(float) * 4);
+		updateUniform(mBlitDstOffset.idx, &dstOffset[0], sizeof(float) * 4);
+
+		// Flush GPU compute as we don't know if a previous blit is an input of this
+		// blit. This will do nothing if this is the first blit (we already flushed
+		// both graphics and compute when this method was entered).
+		flushGPU(Compute);
+
+		// Dispatch for each slice.
+		uint32_t const lastSrcSlice = src.getLastArraySliceIndex();
+		uint32_t const lastDstSlice = dst.getLastArraySliceIndex();
+		src.setMipLevelRange(blit.m_srcMip, blit.m_srcMip);
+		dst.setMipLevelRange(blit.m_dstMip, blit.m_dstMip);
+		for (uint32_t i = 0; i < numSlices; i++)
+		{
+			// Set the slice we read from and write to.
+			uint32_t const clampedSrcSlice = bx::min<uint32_t>(srcSlice + i, lastSrcSlice);
+			uint32_t const clampedDstSlice = bx::min<uint32_t>(dstSlice + i, lastDstSlice);
+			src.setArrayView(clampedSrcSlice, clampedSrcSlice);
+			dst.setArrayView(clampedDstSlice, clampedDstSlice);
+
+			// Force the samplers to rebind as the underlying texture view has been updated.
+			mFrameState.mBindState.m_bind[0].m_idx = kInvalidHandle;
+			mFrameState.mBindState.m_bind[1].m_idx = kInvalidHandle;
+			
+			// Ignore the GPU compute flush between slice dispatches.
+			mFrameState.mShouldFlushCompute = false;
+			
+			// Bind the program and dispatch the compute job. 
+			if (bindProgram(it->second.mProgramHandle, mBlitItem, mBlitBind, true, false))
+			{
+				submitDispatch(mBlitItem.compute);
+			}
+		}
+
+		// Restore texture views.
+		srcTxtr.mTexture = srcTmp;
+		dstTxtr.mTexture = dstTmp;
+	}
+
+	popMarker();
+}
+
+//=============================================================================================
+
+void RendererContextAGC::submitCompute()
 {
 	const ProgramHandle& programHandle = mFrameState.mKey.m_program;
 	const RenderItem& item = *mFrameState.mRenderItem;
@@ -3426,14 +3618,17 @@ bool RendererContextAGC::submitCompute()
 		rendererUpdateUniforms(this, mFrameState.mFrame->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
 	}
 
-	if (isValid(programHandle) &&
-		bindProgram(programHandle, item, bind, true, false))
+	// Sanity checks.
+	if (!isValid(programHandle))
 	{
-		submitDispatch(compute);
-		return true;
+		BX_TRACE("WARNING: Invalid program. Dispatch will be ignored.");
+		return;
 	}
 
-	return false;
+	if (bindProgram(programHandle, item, bind, true, false))
+	{
+		submitDispatch(compute);
+	}
 }
 
 //=============================================================================================
@@ -3452,7 +3647,7 @@ void RendererContextAGC::submitDispatch(const RenderCompute& compute)
 
 //=============================================================================================
 
-bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
+void RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 {
 	uint64_t const primType = (draw.m_stateFlags & BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT;
 	const PrimTypeInfo& primTypeInfo = sPrimTypeInfo[primType];
@@ -3493,13 +3688,15 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 		}
 		if (drawCount >= primTypeInfo.m_min)
 		{
-			// Sync gpu If a compute dispatch occurred and we haven't flushed compute.
+			// Flush compute in case it's output is an input to this draw, this will only flush if
+			// an unflush dispatch has occurred. Graphics is flushed between views (one view's output
+			// may be the next's view's input).
 			flushGPU(Compute);
 			ctx.drawIndexOffset(drawStart, drawCount);
 		}
 		else
 		{
-			return false;
+			BX_TRACE("WARNING: Not enough indices for draw call primitive type. Draw call will be ignored.");
 		}
 	}
 	else
@@ -3511,13 +3708,15 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 		}
 		if (drawCount >= primTypeInfo.m_min)
 		{
-			// Sync gpu If a compute dispatch occurred and we haven't flushed compute.
+			// Flush compute in case it's output is an input to this draw, this will only flush if
+			// an unflush dispatch has occurred. Graphics is flushed between views (one view's output
+			// may be the next's view's input).
 			flushGPU(Compute);
 			ctx.drawIndexAuto(drawCount);
 		}
 		else
 		{
-			return false;
+			BX_TRACE("WARNING: Not enough vertices for draw call primitive type. Draw call will be ignored.");
 		}
 	}
 
@@ -3529,13 +3728,11 @@ bool RendererContextAGC::submitDrawCall(const RenderDraw& draw)
 
 	// We have draw something we should flush graphics.
 	mFrameState.mShouldFlushGraphics = true;
-	
-	return true;
 }
 
 //=============================================================================================
 
-bool RendererContextAGC::submitDraw()
+void RendererContextAGC::submitDraw()
 {
 	const ProgramHandle& programHandle = mFrameState.mKey.m_program;
 	const RenderItem& item = *mFrameState.mRenderItem;
@@ -3547,18 +3744,25 @@ bool RendererContextAGC::submitDraw()
 		rendererUpdateUniforms(this, mFrameState.mFrame->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 	}
 
-	if (isValid(programHandle) &&
-		draw.m_streamMask != UINT8_MAX && draw.m_streamMask != 0 &&
-		bindProgram(programHandle, item, bind, false, false) &&
+	// Sanity checks.
+	if (!isValid(programHandle))
+	{
+		BX_TRACE("WARNING: Invalid program. Draw call will be ignored.");
+		return;
+	}
+	else if (draw.m_streamMask == UINT8_MAX || draw.m_streamMask == 0)
+	{
+		// This causes spam...
+		//BX_TRACE("WARNING: Invalid vertex stream(s). Draw will be ignored.");
+		return;
+	}
+
+	if (bindProgram(programHandle, item, bind, false, false) &&
 		bindVertexAttributes(draw))
 	{
 		bindFixedState(draw);
 		submitDrawCall(draw);
-
-		return true;
 	}
-
-	return false;
 }
 
 //=============================================================================================
@@ -3597,6 +3801,9 @@ void RendererContextAGC::endFrame()
 
 void RendererContextAGC::submitDebugText(TextVideoMemBlitter& textVideoMemBlitter)
 {
+	// Submit any remaining blits first.
+	submitViewBlits(BGFX_CONFIG_MAX_VIEWS);
+
 	// Update perf counters.
 	Stats& perfStats = mFrameState.mFrame->m_perfStats;
 	perfStats.cpuTimeEnd = bx::getHPCounter();
@@ -3781,12 +3988,12 @@ void RendererContextAGC::blitSetup(TextVideoMemBlitter& blitter)
 	bx::mtxOrtho(mFrameState.mOverrideMVP, 0.0f, (float)mWidth, (float)mHeight, 0.0f, 0.0f, 1000.0f, 0.0f, g_caps.homogeneousDepth);
 
 	// Set texture stage.
-	mBlitBind.m_bind[0].m_idx = blitter.m_texture.idx;
+	mTextBind.m_bind[0].m_idx = blitter.m_texture.idx;
 
 	// Bind program and set fixed function state.
-	if (bindProgram(blitter.m_program, mBlitItem, mBlitBind, false, true))
+	if (bindProgram(blitter.m_program, mTextItem, mTextBind, false, true))
 	{
-		bindFixedState(mBlitItem.draw);
+		bindFixedState(mTextItem.draw);
 		mFrameState.mBlitting = true;
 	}
 }
@@ -3806,17 +4013,17 @@ void RendererContextAGC::blitRender(TextVideoMemBlitter& blitter, uint32_t numIn
 
 			// Set draw streams (use temp vertex layout handle).
 			mVertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS] = blitter.m_layout;
-			Stream& stream = mBlitItem.draw.m_stream[0];
+			Stream& stream = mTextItem.draw.m_stream[0];
 			stream.m_startVertex = 0;
 			stream.m_handle = blitter.m_vb->handle;
 			stream.m_layoutHandle = { BGFX_CONFIG_MAX_VERTEX_LAYOUTS };
-			mBlitItem.draw.setStreamBit(0, blitter.m_vb->handle);
-			mBlitItem.draw.m_indexBuffer = blitter.m_ib->handle;
-			mBlitItem.draw.m_numIndices = numIndices;
+			mTextItem.draw.setStreamBit(0, blitter.m_vb->handle);
+			mTextItem.draw.m_indexBuffer = blitter.m_ib->handle;
+			mTextItem.draw.m_numIndices = numIndices;
 
-			if (bindVertexAttributes(mBlitItem.draw))
+			if (bindVertexAttributes(mTextItem.draw))
 			{
-				submitDrawCall(mBlitItem.draw);
+				submitDrawCall(mTextItem.draw);
 			}
 		}
 	}
@@ -3826,13 +4033,8 @@ void RendererContextAGC::blitRender(TextVideoMemBlitter& blitter, uint32_t numIn
 
 RendererContextI* rendererCreate(const Init& init)
 {
-	BX_UNUSED(init);
 	sRendererAGC = BX_NEW(g_allocator, RendererContextAGC);
-	if (!sRendererAGC->init(init) )
-	{
-		BX_DELETE(g_allocator, sRendererAGC);
-		sRendererAGC = NULL;
-	}
+	sRendererAGC->init(init);
 	return sRendererAGC;
 }
 
@@ -3841,7 +4043,14 @@ RendererContextI* rendererCreate(const Init& init)
 void rendererDestroy()
 {
 	BX_DELETE(g_allocator, sRendererAGC);
-	sRendererAGC = NULL;
+	sRendererAGC = nullptr;
+}
+
+//=============================================================================================
+
+void initEmbeddedShaders()
+{
+	RendererContextAGC::initEmbeddedShaders();
 }
 
 //=============================================================================================
@@ -3861,7 +4070,7 @@ namespace bgfx { namespace agc {
 RendererContextI* rendererCreate(const Init& init)
 {
 	BX_UNUSED(init);
-	return NULL;
+	return nullptr;
 }
 
 //=============================================================================================
