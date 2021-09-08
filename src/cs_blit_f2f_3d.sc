@@ -19,7 +19,7 @@ BGFX_END_UNIFORM_BLOCK
 NUM_THREADS(4, 4, 4)
 void main()
 {
-	ivec3 srcCoord = (ivec3)(u_srcOffset.xyz + gl_GlobalInvocationID.xyz);
-	ivec3 dstCoord = (ivec3)(u_dstOffset.xyz + gl_GlobalInvocationID.xyz);
+	ivec3 srcCoord = ivec3(u_srcOffset.xyz + gl_GlobalInvocationID.xyz);
+	ivec3 dstCoord = ivec3(u_dstOffset.xyz + gl_GlobalInvocationID.xyz);
 	imageStore(s_dstTexture, dstCoord, imageLoad(s_srcTexture, srcCoord));
 }
