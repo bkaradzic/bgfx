@@ -3,30 +3,30 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-/*
- *
- * AUTO GENERATED FROM IDL! DO NOT EDIT! (source : temp.defines.h)
- *
- * More info about IDL:
- * https://gist.github.com/bkaradzic/05a1c86a6dd57bf86e2d828878e88dc2#bgfx-is-switching-to-idl-to-generate-api
- *
- */
+ /*
+  *
+  * AUTO GENERATED FROM IDL! DO NOT EDIT! (source : temp.defines.h)
+  *
+  * More info about IDL:
+  * https://gist.github.com/bkaradzic/05a1c86a6dd57bf86e2d828878e88dc2#bgfx-is-switching-to-idl-to-generate-api
+  *
+  */
 
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
 #define BGFX_API_VERSION UINT32_C(115)
 
-/**
- * Color RGB/alpha/depth write. When it's not specified write will be disabled.
- *
- */
+  /**
+   * Color RGB/alpha/depth write. When it's not specified write will be disabled.
+   *
+   */
 #define BGFX_STATE_WRITE_R                        UINT64_C(0x0000000000000001) //!< Enable R write.
 #define BGFX_STATE_WRITE_G                        UINT64_C(0x0000000000000002) //!< Enable G write.
 #define BGFX_STATE_WRITE_B                        UINT64_C(0x0000000000000004) //!< Enable B write.
 #define BGFX_STATE_WRITE_A                        UINT64_C(0x0000000000000008) //!< Enable alpha write.
 #define BGFX_STATE_WRITE_Z                        UINT64_C(0x0000004000000000) //!< Enable depth write.
-/// Enable RGB write.
+   /// Enable RGB write.
 #define BGFX_STATE_WRITE_RGB (0 \
 	| BGFX_STATE_WRITE_R \
 	| BGFX_STATE_WRITE_G \
@@ -56,11 +56,11 @@
 #define BGFX_STATE_DEPTH_TEST_SHIFT               4                            //!< Depth test state bit shift
 #define BGFX_STATE_DEPTH_TEST_MASK                UINT64_C(0x00000000000000f0) //!< Depth test state bit mask
 
-/**
- * Use BGFX_STATE_BLEND_FUNC(_src, _dst) or BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB, _dstRGB, _srcA, _dstA)
- * helper macros.
- *
- */
+ /**
+  * Use BGFX_STATE_BLEND_FUNC(_src, _dst) or BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB, _dstRGB, _srcA, _dstA)
+  * helper macros.
+  *
+  */
 #define BGFX_STATE_BLEND_ZERO                     UINT64_C(0x0000000000001000) //!< 0, 0, 0, 0
 #define BGFX_STATE_BLEND_ONE                      UINT64_C(0x0000000000002000) //!< 1, 1, 1, 1
 #define BGFX_STATE_BLEND_SRC_COLOR                UINT64_C(0x0000000000003000) //!< Rs, Gs, Bs, As
@@ -77,11 +77,11 @@
 #define BGFX_STATE_BLEND_SHIFT                    12                           //!< Blend state bit shift
 #define BGFX_STATE_BLEND_MASK                     UINT64_C(0x000000000ffff000) //!< Blend state bit mask
 
-/**
- * Use BGFX_STATE_BLEND_EQUATION(_equation) or BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)
- * helper macros.
- *
- */
+  /**
+   * Use BGFX_STATE_BLEND_EQUATION(_equation) or BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)
+   * helper macros.
+   *
+   */
 #define BGFX_STATE_BLEND_EQUATION_ADD             UINT64_C(0x0000000000000000) //!< Blend add: src + dst.
 #define BGFX_STATE_BLEND_EQUATION_SUB             UINT64_C(0x0000000010000000) //!< Blend subtract: src - dst.
 #define BGFX_STATE_BLEND_EQUATION_REVSUB          UINT64_C(0x0000000020000000) //!< Blend reverse subtract: dst - src.
@@ -90,19 +90,19 @@
 #define BGFX_STATE_BLEND_EQUATION_SHIFT           28                           //!< Blend equation bit shift
 #define BGFX_STATE_BLEND_EQUATION_MASK            UINT64_C(0x00000003f0000000) //!< Blend equation bit mask
 
-/**
- * Cull state. When `BGFX_STATE_CULL_*` is not specified culling will be disabled.
- *
- */
+   /**
+	* Cull state. When `BGFX_STATE_CULL_*` is not specified culling will be disabled.
+	*
+	*/
 #define BGFX_STATE_CULL_CW                        UINT64_C(0x0000001000000000) //!< Cull clockwise triangles.
 #define BGFX_STATE_CULL_CCW                       UINT64_C(0x0000002000000000) //!< Cull counter-clockwise triangles.
 #define BGFX_STATE_CULL_SHIFT                     36                           //!< Culling mode bit shift
 #define BGFX_STATE_CULL_MASK                      UINT64_C(0x0000003000000000) //!< Culling mode bit mask
 
-/**
- * Alpha reference value.
- *
- */
+	/**
+	 * Alpha reference value.
+	 *
+	 */
 #define BGFX_STATE_ALPHA_REF_SHIFT                40                           //!< Alpha reference bit shift
 #define BGFX_STATE_ALPHA_REF_MASK                 UINT64_C(0x0000ff0000000000) //!< Alpha reference bit mask
 #define BGFX_STATE_ALPHA_REF(v) ( ( (uint64_t)(v)<<BGFX_STATE_ALPHA_REF_SHIFT )&BGFX_STATE_ALPHA_REF_MASK)
@@ -114,19 +114,19 @@
 #define BGFX_STATE_PT_SHIFT                       48                           //!< Primitive type bit shift
 #define BGFX_STATE_PT_MASK                        UINT64_C(0x0007000000000000) //!< Primitive type bit mask
 
-/**
- * Point size value.
- *
- */
+	 /**
+	  * Point size value.
+	  *
+	  */
 #define BGFX_STATE_POINT_SIZE_SHIFT               52                           //!< Point size bit shift
 #define BGFX_STATE_POINT_SIZE_MASK                UINT64_C(0x00f0000000000000) //!< Point size bit mask
 #define BGFX_STATE_POINT_SIZE(v) ( ( (uint64_t)(v)<<BGFX_STATE_POINT_SIZE_SHIFT )&BGFX_STATE_POINT_SIZE_MASK)
 
-/**
- * Enable MSAA write when writing into MSAA frame buffer.
- * This flag is ignored when not writing into MSAA frame buffer.
- *
- */
+	  /**
+	   * Enable MSAA write when writing into MSAA frame buffer.
+	   * This flag is ignored when not writing into MSAA frame buffer.
+	   *
+	   */
 #define BGFX_STATE_MSAA                           UINT64_C(0x0100000000000000) //!< Enable MSAA rasterization.
 #define BGFX_STATE_LINEAA                         UINT64_C(0x0200000000000000) //!< Enable line AA rasterization.
 #define BGFX_STATE_CONSERVATIVE_RASTER            UINT64_C(0x0400000000000000) //!< Enable conservative rasterization.
@@ -134,8 +134,8 @@
 #define BGFX_STATE_FRONT_CCW                      UINT64_C(0x0000008000000000) //!< Front counter-clockwise (default is clockwise).
 #define BGFX_STATE_BLEND_INDEPENDENT              UINT64_C(0x0000000400000000) //!< Enable blend independent.
 #define BGFX_STATE_BLEND_ALPHA_TO_COVERAGE        UINT64_C(0x0000000800000000) //!< Enable alpha to coverage.
-/// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
-/// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
+	   /// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
+	   /// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
 #define BGFX_STATE_DEFAULT (0 \
 	| BGFX_STATE_WRITE_RGB \
 	| BGFX_STATE_WRITE_A \
@@ -155,19 +155,19 @@
 
 #define BGFX_STATE_RESERVED_MASK                  UINT64_C(0xe000000000000000)
 
-/**
- * Set stencil ref value.
- *
- */
+ /**
+  * Set stencil ref value.
+  *
+  */
 #define BGFX_STENCIL_FUNC_REF_SHIFT               0
 
 #define BGFX_STENCIL_FUNC_REF_MASK                UINT32_C(0x000000ff)
 #define BGFX_STENCIL_FUNC_REF(v) ( ( (uint32_t)(v)<<BGFX_STENCIL_FUNC_REF_SHIFT )&BGFX_STENCIL_FUNC_REF_MASK)
 
-/**
- * Set stencil rmask value.
- *
- */
+  /**
+   * Set stencil rmask value.
+   *
+   */
 #define BGFX_STENCIL_FUNC_RMASK_SHIFT             8
 
 #define BGFX_STENCIL_FUNC_RMASK_MASK              UINT32_C(0x0000ff00)
@@ -253,11 +253,11 @@
 	)
 
 
-/**
- * Rendering state discard. When state is preserved in submit, rendering states can be discarded
- * on a finer grain.
- *
- */
+   /**
+	* Rendering state discard. When state is preserved in submit, rendering states can be discarded
+	* on a finer grain.
+	*
+	*/
 #define BGFX_DISCARD_NONE                         UINT8_C(0x00) //!< Preserve everything.
 #define BGFX_DISCARD_BINDINGS                     UINT8_C(0x01) //!< Discard texture sampler and buffer bindings.
 #define BGFX_DISCARD_INDEX_BUFFER                 UINT8_C(0x02) //!< Discard index buffer.
@@ -270,8 +270,8 @@
 #define BGFX_DEBUG_NONE                           UINT32_C(0x00000000) //!< No debug.
 #define BGFX_DEBUG_WIREFRAME                      UINT32_C(0x00000001) //!< Enable wireframe for all primitives.
 
-/// Enable infinitely fast hardware test. No draw calls will be submitted to driver.
-/// It's useful when profiling to quickly assess bottleneck between CPU and GPU.
+	/// Enable infinitely fast hardware test. No draw calls will be submitted to driver.
+	/// It's useful when profiling to quickly assess bottleneck between CPU and GPU.
 #define BGFX_DEBUG_IFH                            UINT32_C(0x00000002)
 #define BGFX_DEBUG_STATS                          UINT32_C(0x00000004) //!< Enable statistics display.
 #define BGFX_DEBUG_TEXT                           UINT32_C(0x00000008) //!< Enable debug text display.
@@ -445,8 +445,8 @@
 #define BGFX_RESET_CAPTURE                        UINT32_C(0x00000200) //!< Begin screen capture.
 #define BGFX_RESET_FLUSH_AFTER_RENDER             UINT32_C(0x00002000) //!< Flush rendering after submitting to GPU.
 
-/// This flag specifies where flip occurs. Default behaviour is that flip occurs
-/// before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+ /// This flag specifies where flip occurs. Default behaviour is that flip occurs
+ /// before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 #define BGFX_RESET_FLIP_AFTER_RENDER              UINT32_C(0x00004000)
 #define BGFX_RESET_SRGB_BACKBUFFER                UINT32_C(0x00008000) //!< Enable sRGB backbuffer.
 #define BGFX_RESET_HDR10                          UINT32_C(0x00010000) //!< Enable HDR10 rendering.
@@ -489,6 +489,7 @@
 #define BGFX_CAPS_VERTEX_ATTRIB_UINT10            UINT64_C(0x0000000002000000) //!< Vertex attribute 10_10_10_2 is supported.
 #define BGFX_CAPS_VERTEX_ID                       UINT64_C(0x0000000004000000) //!< Rendering with VertexID only is supported.
 #define BGFX_CAPS_VIEWPORT_LAYER_ARRAY            UINT64_C(0x0000000008000000) //!< Viewport layer is available in vertex shader.
+#define BGFX_CAPS_STRUCTURED_BUFFERS              UINT64_C(0x0000000010000000) //!< Structured buffers are supported.
 /// All texture compare modes are supported.
 #define BGFX_CAPS_TEXTURE_COMPARE_ALL (0 \
 	| BGFX_CAPS_TEXTURE_COMPARE_RESERVED \

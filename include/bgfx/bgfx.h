@@ -406,6 +406,7 @@ namespace bgfx
 	BGFX_HANDLE(UniformHandle)
 	BGFX_HANDLE(VertexBufferHandle)
 	BGFX_HANDLE(VertexLayoutHandle)
+	BGFX_HANDLE(ShaderBufferHandle)
 
 	/// Callback interface to implement application specific behavior.
 	/// Cached items are currently used for OpenGL and Direct3D 12 binary
@@ -994,6 +995,7 @@ namespace bgfx
 
 		int64_t textureMemoryUsed;          //!< Estimate of texture memory used.
 		int64_t rtMemoryUsed;               //!< Estimate of render target memory used.
+		int64_t shaderBufferMemoryUsed;     //!< Estimate of structure buffer memory used.
 		int32_t transientVbUsed;            //!< Amount of transient vertex buffer used.
 		int32_t transientIbUsed;            //!< Amount of transient index buffer used.
 
@@ -1559,6 +1561,20 @@ namespace bgfx
 			, IndirectBufferHandle _handle
 			, Access::Enum _access
 			);
+
+		/// Set (SRV) buffer to texture slot
+		///
+		/// @param[in] _stage Texture unit.
+		/// @param[in] _sampler Program sampler.
+		/// @param[in] _handle Buffer handle.
+		///
+		/// @attention C99 equivalent is `bgfx_set_compute_indirect_buffer`.
+		///
+		void setBuffer(
+			  uint8_t _stage
+			, UniformHandle _sampler
+			, ShaderBufferHandle _handle
+		);
 
 		/// Set compute image from texture.
 		///
@@ -2361,6 +2377,74 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_destroy_dynamic_index_buffer`.
 	///
 	void destroy(DynamicIndexBufferHandle _handle);
+
+		/// Create empty shader buffer .
+	///
+	/// @param[in] _count Number of elements in buffer.
+	/// @param[in] _stride Stride of buffer element in bytes.
+	/// @returns Shader buffer handle.
+	///
+	ShaderBufferHandle createShaderBuffer(
+		uint32_t _count
+		, uint32_t _stride
+		, uint8_t _type
+	);
+
+	/// Create shader buffer and initialize it.
+	///
+	/// @param[in] _mem Shader buffer data.
+	/// @param[in] _stride Stride of buffer element in bytes.
+	/// @returns Shader buffer handle.
+	///
+	ShaderBufferHandle createShaderBuffer(
+		const Memory* _mem
+		, uint32_t _stride
+		, uint8_t _type
+		);
+
+	/// Create shader buffer and initialize it.
+	///
+	/// @param[in] _stride Stride of buffer element in bytes.
+	/// @param[in] _count Number of elements in buffer.
+	/// @param[in] _mem Shader buffer data.
+	/// @returns Shader buffer handle.
+	///
+	void updateShaderBuffer(
+		  ShaderBufferHandle _handle
+		, const Memory* _mem
+	);
+
+	/// Set shader buffer debug name.
+	///
+	/// @param[in] _handle Shader buffer handle.
+	/// @param[in] _name Shader buffer name.
+	/// @param[in] _len Shader buffer name length (if length is INT32_MAX, it's expected
+	///   that _name is zero terminated string.
+	///
+	void setName(
+		ShaderBufferHandle _handle
+		, const char* _name
+		, int32_t _len = INT32_MAX
+	);
+
+
+	/// Destroy shader buffer.
+	///
+	/// @param[in] _handle Shader buffer handle.
+	///
+	void destroy(ShaderBufferHandle _handle);
+
+	/// Get shader buffer information.
+	///
+	/// @param[in] _handle Shader buffer handle.
+	/// @param[in] _stride Location to optionally store stride of buffer elements.
+	/// @param[in] _count Location to optionally store count of buffer elements.
+	///
+	void getShaderBufferInfo(
+		  ShaderBufferHandle _handle
+		, uint32_t* _stride
+		, uint32_t* _count
+	);
 
 	/// Create empty dynamic vertex buffer.
 	///

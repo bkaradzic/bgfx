@@ -8,12 +8,12 @@
 
 #include <bx/bx.h>
 
-// # Configuration options for bgfx.
-//
-// Any of `BGFX_CONFIG_*` options that's inside `#ifndef` block can be configured externally
-// via compiler options.
-//
-// When selecting rendering backends select all backends you want to include in the build.
+ // # Configuration options for bgfx.
+ //
+ // Any of `BGFX_CONFIG_*` options that's inside `#ifndef` block can be configured externally
+ // via compiler options.
+ //
+ // When selecting rendering backends select all backends you want to include in the build.
 
 #ifndef BGFX_CONFIG_DEBUG
 #	define BGFX_CONFIG_DEBUG 0
@@ -281,6 +281,10 @@ BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS m
 #ifndef BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS
 #	define BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS (4<<10)
 #endif // BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS
+
+#ifndef BGFX_CONFIG_MAX_SHADER_BUFFERS
+#	define BGFX_CONFIG_MAX_SHADER_BUFFERS (4<<10)
+#endif // BGFX_CONFIG_MAX_SHADER_BUFFERS
 
 #ifndef BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE
 #	define BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE (1<<20)

@@ -2031,6 +2031,18 @@ namespace bgfx { namespace nvn
 			m_resources.m_textures[_handle.idx].destroy();
 		}
 
+		void createShaderBuffer(ShaderBufferHandle, uint32_t, uint32_t) override
+		{
+		}
+
+		void updateShaderBuffer(ShaderBufferHandle, const Memory*) override
+		{
+		}
+
+		void destroyShaderBuffer(ShaderBufferHandle) override
+		{
+		}
+
 		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override
 		{
 			FrameBufferNVN& fb = m_resources.m_frameBuffers[_handle.idx];

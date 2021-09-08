@@ -1391,6 +1391,24 @@ void RendererContextAGC::destroyTexture(Texture& texture)
 
 //=============================================================================================
 
+void RendererContextAGC::createShaderBuffer(ShaderBufferHandle, uint32_t, uint32_t) override
+{
+}
+
+//=============================================================================================
+
+void RendererContextAGC::updateShaderBuffer(ShaderBufferHandle, const Memory*) override
+{
+}
+
+//=============================================================================================
+
+void RendererContextAGC::destroyShaderBuffer(ShaderBufferHandle) override
+{
+}
+
+//=============================================================================================
+
 RendererContextAGC::FrameBuffer::FrameBuffer()
 {
 	mColorHandles.fill({ kInvalidHandle });
