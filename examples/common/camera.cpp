@@ -264,9 +264,9 @@ struct Camera
 	MouseCoords m_mouseNow;
 	MouseCoords m_mouseLast;
 
-	bx::Vec3 m_eye;
-	bx::Vec3 m_at;
-	bx::Vec3 m_up;
+	bx::Vec3 m_eye = bx::init::Zero;
+	bx::Vec3 m_at  = bx::init::Zero;
+	bx::Vec3 m_up  = bx::init::Zero;
 	float m_horizontalAngle;
 	float m_verticalAngle;
 

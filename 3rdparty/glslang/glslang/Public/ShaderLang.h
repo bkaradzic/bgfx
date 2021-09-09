@@ -508,7 +508,7 @@ public:
     //
     // setEnvInput:    The input source language and stage. If generating code for a
     //                 specific client, the input client semantics to use and the
-    //                 version of the that client's input semantics to use, otherwise
+    //                 version of that client's input semantics to use, otherwise
     //                 use EShClientNone and version of 0, e.g. for validation mode.
     //                 Note 'version' does not describe the target environment,
     //                 just the version of the source dialect to compile under.
@@ -722,7 +722,7 @@ class TObjectReflection {
 public:
     GLSLANG_EXPORT TObjectReflection(const std::string& pName, const TType& pType, int pOffset, int pGLDefineType, int pSize, int pIndex);
 
-    GLSLANG_EXPORT const TType* getType() const { return type; }
+    const TType* getType() const { return type; }
     GLSLANG_EXPORT int getBinding() const;
     GLSLANG_EXPORT void dump() const;
     static TObjectReflection badReflection() { return TObjectReflection(); }

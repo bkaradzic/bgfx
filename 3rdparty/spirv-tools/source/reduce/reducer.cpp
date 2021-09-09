@@ -28,6 +28,7 @@
 #include "source/reduce/remove_unused_instruction_reduction_opportunity_finder.h"
 #include "source/reduce/remove_unused_struct_member_reduction_opportunity_finder.h"
 #include "source/reduce/simple_conditional_branch_to_branch_opportunity_finder.h"
+#include "source/reduce/structured_construct_to_block_reduction_opportunity_finder.h"
 #include "source/reduce/structured_loop_to_selection_reduction_opportunity_finder.h"
 #include "source/spirv_reducer_options.h"
 
@@ -113,6 +114,8 @@ void Reducer::AddDefaultReductionPasses() {
   AddReductionPass(
       spvtools::MakeUnique<OperandToDominatingIdReductionOpportunityFinder>());
   AddReductionPass(spvtools::MakeUnique<
+                   StructuredConstructToBlockReductionOpportunityFinder>());
+  AddReductionPass(spvtools::MakeUnique<
                    StructuredLoopToSelectionReductionOpportunityFinder>());
   AddReductionPass(
       spvtools::MakeUnique<MergeBlocksReductionOpportunityFinder>());
@@ -141,7 +144,7 @@ void Reducer::AddReductionPass(
     std::unique_ptr<ReductionOpportunityFinder> finder) {
   passes_.push_back(
       spvtools::MakeUnique<ReductionPass>(target_env_, std::move(finder)));
-} 
+}
 
 void Reducer::AddCleanupReductionPass(
     std::unique_ptr<ReductionOpportunityFinder> finder) {

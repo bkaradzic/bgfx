@@ -222,6 +222,13 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
 
         if (opcode == SpvOpAtomicFAddEXT) {
           // result type being float checked already
+          if ((_.GetBitWidth(result_type) == 16) &&
+              (!_.HasCapability(SpvCapabilityAtomicFloat16AddEXT))) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << spvOpcodeString(opcode)
+                   << ": float add atomics require the AtomicFloat32AddEXT "
+                      "capability";
+          }
           if ((_.GetBitWidth(result_type) == 32) &&
               (!_.HasCapability(SpvCapabilityAtomicFloat32AddEXT))) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)

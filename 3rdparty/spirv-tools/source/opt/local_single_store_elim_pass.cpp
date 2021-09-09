@@ -123,6 +123,9 @@ void LocalSingleStoreElimPass::InitExtensionAllowList() {
       "SPV_EXT_fragment_invocation_density",
       "SPV_EXT_physical_storage_buffer",
       "SPV_KHR_terminate_invocation",
+      "SPV_KHR_subgroup_uniform_control_flow",
+      "SPV_KHR_integer_dot_product",
+      "SPV_EXT_shader_image_int64",
   });
 }
 bool LocalSingleStoreElimPass::ProcessVariable(Instruction* var_inst) {
@@ -221,9 +224,9 @@ Instruction* LocalSingleStoreElimPass::FindSingleStoreAndCheckUses(
       case SpvOpCopyObject:
         break;
       case SpvOpExtInst: {
-        auto dbg_op = user->GetOpenCL100DebugOpcode();
-        if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
-            dbg_op == OpenCLDebugInfo100DebugValue) {
+        auto dbg_op = user->GetCommonDebugOpcode();
+        if (dbg_op == CommonDebugInfoDebugDeclare ||
+            dbg_op == CommonDebugInfoDebugValue) {
           break;
         }
         return nullptr;
@@ -290,9 +293,9 @@ bool LocalSingleStoreElimPass::RewriteLoads(
   bool modified = false;
   for (Instruction* use : uses) {
     if (use->opcode() == SpvOpStore) continue;
-    auto dbg_op = use->GetOpenCL100DebugOpcode();
-    if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
-        dbg_op == OpenCLDebugInfo100DebugValue)
+    auto dbg_op = use->GetCommonDebugOpcode();
+    if (dbg_op == CommonDebugInfoDebugDeclare ||
+        dbg_op == CommonDebugInfoDebugValue)
       continue;
     if (use->opcode() == SpvOpLoad &&
         dominator_analysis->Dominates(store_inst, use)) {

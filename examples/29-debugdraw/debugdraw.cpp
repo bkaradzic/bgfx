@@ -601,7 +601,7 @@ void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 
 	case Shape::Type::Plane:
 		{
-			bx::Plane plane;
+			bx::Plane plane(bx::init::None);
 			bx::calcPlane(plane, bx::normalize(bx::Vec3{0.0f, 1.0f, 1.0f}), _pos);
 			_outShape = Shape(plane);
 		}
@@ -688,7 +688,7 @@ void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 
 	case Shape::Type::Plane:
 		{
-			bx::Plane plane;
+			bx::Plane plane(bx::init::None);
 			bx::calcPlane(plane, bx::normalize(bx::Vec3{1.0f, 1.0f, 0.0f}), _pos);
 			_outShape = Shape(plane);
 		}
@@ -999,7 +999,7 @@ public:
 				const bx::Vec3 normal = { 0.0f,  1.0f, 0.0f };
 				const bx::Vec3 pos    = { 0.0f, -2.0f, 0.0f };
 
-				bx::Plane plane;
+				bx::Plane plane(bx::init::None);
 				bx::calcPlane(plane, normal, pos);
 
 				dde.setColor(false

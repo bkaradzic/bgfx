@@ -11,7 +11,6 @@
 #	define KHR_SURFACE_EXTENSION_NAME VK_KHR_ANDROID_SURFACE_EXTENSION_NAME
 #	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_ANDROID
 #elif BX_PLATFORM_LINUX
-//#	define VK_USE_PLATFORM_MIR_KHR
 #	define VK_USE_PLATFORM_XLIB_KHR
 #	define VK_USE_PLATFORM_XCB_KHR
 //#	define VK_USE_PLATFORM_WAYLAND_KHR
@@ -42,28 +41,33 @@
 			VK_IMPORT_FUNC(false, vkGetDeviceProcAddr);                    \
 			VK_IMPORT_FUNC(false, vkEnumerateInstanceExtensionProperties); \
 			VK_IMPORT_FUNC(false, vkEnumerateInstanceLayerProperties);     \
+			/* 1.1 */                                                      \
 			VK_IMPORT_FUNC(true,  vkEnumerateInstanceVersion);             \
 
-#define VK_IMPORT_INSTANCE_ANDROID \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateAndroidSurfaceKHR);
+#define VK_IMPORT_INSTANCE_ANDROID                                     \
+			/* VK_KHR_android_surface */                               \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateAndroidSurfaceKHR); \
 
 #define VK_IMPORT_INSTANCE_LINUX                                                           \
+			/* VK_KHR_xlib_surface */                                                      \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateXlibSurfaceKHR);                        \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceXlibPresentationSupportKHR); \
+			/* VK_KHR_xcb_surface */                                                       \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateXcbSurfaceKHR);                         \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceXcbPresentationSupportKHR);  \
 
+//			/* VK_KHR_wayland_surface */
 //			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWaylandSurfaceKHR);
 //			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWaylandPresentationSupportKHR);
-//			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMirSurfaceKHR);
-//			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMirPresentationSupportKHR);
 
-#define VK_IMPORT_INSTANCE_WINDOWS \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWin32SurfaceKHR); \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWin32PresentationSupportKHR);
+#define VK_IMPORT_INSTANCE_WINDOWS                                                          \
+			/* VK_KHR_win32_surface */                                                      \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWin32SurfaceKHR);                        \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWin32PresentationSupportKHR); \
 
-#define VK_IMPORT_INSTANCE_MACOS \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMacOSSurfaceMVK);
+#define VK_IMPORT_INSTANCE_MACOS                                     \
+			/* VK_MVK_macos_surface */                               \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMacOSSurfaceMVK); \
 
 #define VK_IMPORT_INSTANCE                                                             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyInstance);                         \
@@ -73,31 +77,27 @@
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceProperties);             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFormatProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFeatures);               \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceFeatures2KHR);           \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceImageFormatProperties);  \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceMemoryProperties);       \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMemoryProperties2KHR);   \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceQueueFamilyProperties);  \
+			VK_IMPORT_INSTANCE_FUNC(false, vkCreateDevice);                            \
+			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyDevice);                           \
+			/* VK_KHR_surface */                                                       \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceCapabilitiesKHR); \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceFormatsKHR);      \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfacePresentModesKHR); \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceSupportKHR);      \
-			VK_IMPORT_INSTANCE_FUNC(false, vkCreateDevice);                            \
-			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyDevice);                           \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroySurfaceKHR);                       \
+			/* VK_KHR_get_physical_device_properties2 */                               \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceFeatures2KHR);           \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMemoryProperties2KHR);   \
 			/* VK_EXT_debug_report */                                                  \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateDebugReportCallbackEXT);            \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroyDebugReportCallbackEXT);           \
-			VK_IMPORT_INSTANCE_FUNC(true,  vkDebugReportMessageEXT);                   \
 			VK_IMPORT_INSTANCE_PLATFORM
 
 #define VK_IMPORT_DEVICE                                                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkGetDeviceQueue);                \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCreateSwapchainKHR);            \
-			VK_IMPORT_DEVICE_FUNC(true,  vkDestroySwapchainKHR);           \
-			VK_IMPORT_DEVICE_FUNC(true,  vkGetSwapchainImagesKHR);         \
-			VK_IMPORT_DEVICE_FUNC(true,  vkAcquireNextImageKHR);           \
-			VK_IMPORT_DEVICE_FUNC(true,  vkQueuePresentKHR);               \
 			VK_IMPORT_DEVICE_FUNC(false, vkCreateFence);                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkDestroyFence);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkCreateSemaphore);               \
@@ -144,6 +144,8 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkAllocateDescriptorSets);        \
 			VK_IMPORT_DEVICE_FUNC(false, vkFreeDescriptorSets);            \
 			VK_IMPORT_DEVICE_FUNC(false, vkUpdateDescriptorSets);          \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateQueryPool);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyQueryPool);              \
 			VK_IMPORT_DEVICE_FUNC(false, vkQueueSubmit);                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkQueueWaitIdle);                 \
 			VK_IMPORT_DEVICE_FUNC(false, vkDeviceWaitIdle);                \
@@ -167,7 +169,6 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindDescriptorSets);         \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindIndexBuffer);            \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindVertexBuffers);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdUpdateBuffer);               \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearColorImage);            \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearDepthStencilImage);     \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearAttachments);           \
@@ -177,30 +178,28 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImage);                  \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImageToBuffer);          \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBlitImage);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdResetQueryPool);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdWriteTimestamp);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdBeginQuery);                 \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdEndQuery);                   \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyQueryPoolResults);       \
 			VK_IMPORT_DEVICE_FUNC(false, vkMapMemory);                     \
 			VK_IMPORT_DEVICE_FUNC(false, vkUnmapMemory);                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkFlushMappedMemoryRanges);       \
 			VK_IMPORT_DEVICE_FUNC(false, vkInvalidateMappedMemoryRanges);  \
 			VK_IMPORT_DEVICE_FUNC(false, vkBindBufferMemory);              \
 			VK_IMPORT_DEVICE_FUNC(false, vkBindImageMemory);               \
-			/* VK_EXT_debug_marker */                                      \
-			VK_IMPORT_DEVICE_FUNC(true,  vkDebugMarkerSetObjectTagEXT);    \
-			VK_IMPORT_DEVICE_FUNC(true,  vkDebugMarkerSetObjectNameEXT);   \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDebugMarkerBeginEXT);        \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDebugMarkerEndEXT);          \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDebugMarkerInsertEXT);       \
+			/* VK_KHR_swapchain */                                         \
+			VK_IMPORT_DEVICE_FUNC(true,  vkCreateSwapchainKHR);            \
+			VK_IMPORT_DEVICE_FUNC(true,  vkDestroySwapchainKHR);           \
+			VK_IMPORT_DEVICE_FUNC(true,  vkGetSwapchainImagesKHR);         \
+			VK_IMPORT_DEVICE_FUNC(true,  vkAcquireNextImageKHR);           \
+			VK_IMPORT_DEVICE_FUNC(true,  vkQueuePresentKHR);               \
 			/* VK_EXT_debug_utils */                                       \
 			VK_IMPORT_DEVICE_FUNC(true,  vkSetDebugUtilsObjectNameEXT);    \
-			VK_IMPORT_DEVICE_FUNC(true,  vkSetDebugUtilsObjectTagEXT);     \
-			VK_IMPORT_DEVICE_FUNC(true,  vkQueueBeginDebugUtilsLabelEXT);  \
-			VK_IMPORT_DEVICE_FUNC(true,  vkQueueEndDebugUtilsLabelEXT);    \
-			VK_IMPORT_DEVICE_FUNC(true,  vkQueueInsertDebugUtilsLabelEXT); \
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdBeginDebugUtilsLabelEXT);    \
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdEndDebugUtilsLabelEXT);      \
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdInsertDebugUtilsLabelEXT);   \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCreateDebugUtilsMessengerEXT);  \
-			VK_IMPORT_DEVICE_FUNC(true,  vkDestroyDebugUtilsMessengerEXT); \
-			VK_IMPORT_DEVICE_FUNC(true,  vkSubmitDebugUtilsMessageEXT);    \
 
 #define VK_DESTROY                                \
 			VK_DESTROY_FUNC(Buffer);              \
@@ -211,11 +210,12 @@
 			VK_DESTROY_FUNC(Framebuffer);         \
 			VK_DESTROY_FUNC(Image);               \
 			VK_DESTROY_FUNC(ImageView);           \
-			VK_DESTROY_FUNC(Sampler);             \
 			VK_DESTROY_FUNC(Pipeline);            \
 			VK_DESTROY_FUNC(PipelineCache);       \
 			VK_DESTROY_FUNC(PipelineLayout);      \
+			VK_DESTROY_FUNC(QueryPool);           \
 			VK_DESTROY_FUNC(RenderPass);          \
+			VK_DESTROY_FUNC(Sampler);             \
 			VK_DESTROY_FUNC(Semaphore);           \
 			VK_DESTROY_FUNC(ShaderModule);        \
 			VK_DESTROY_FUNC(SwapchainKHR);        \
@@ -294,20 +294,13 @@ namespace bgfx { namespace vk
 VK_DESTROY
 VK_DESTROY_FUNC(DeviceMemory);
 VK_DESTROY_FUNC(SurfaceKHR);
+VK_DESTROY_FUNC(DescriptorSet);
 #undef VK_DESTROY_FUNC
 
-	struct DslBinding
+	template<typename Ty>
+	void release(Ty)
 	{
-		enum Enum
-		{
-//			CombinedImageSampler,
-			VertexUniformBuffer,
-			FragmentUniformBuffer,
-//			StorageBuffer,
-
-			Count
-		};
-	};
+	}
 
 	template<typename Ty>
 	class StateCacheT
@@ -371,25 +364,17 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		{
 		}
 
-		void create(uint32_t _size, uint32_t _count, uint32_t _maxDescriptors);
+		void create(uint32_t _size, uint32_t _count);
 		void destroy();
 		void reset();
 		uint32_t write(const void* _data, uint32_t _size);
 		void flush();
 
-		VkDescriptorSet& getCurrentDS()
-		{
-			return m_descriptorSet[m_currentDs - 1];
-		}
-
-		VkDescriptorSet* m_descriptorSet;
 		VkBuffer m_buffer;
 		VkDeviceMemory m_deviceMem;
 		uint8_t* m_data;
 		uint32_t m_size;
 		uint32_t m_pos;
-		uint32_t m_currentDs;
-		uint32_t m_maxDescriptors;
 	};
 
 	struct BufferVK
@@ -534,30 +519,11 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		{
 		}
 
-		VkResult init()
-		{
-			return VK_SUCCESS;
-		}
-
-		void shutdown()
-		{
-		}
-
-		uint32_t begin(uint32_t _resultIdx)
-		{
-			BX_UNUSED(_resultIdx);
-			return 0;
-		}
-
-		void end(uint32_t _idx)
-		{
-			BX_UNUSED(_idx);
-		}
-
-		bool update()
-		{
-			return false;
-		}
+		VkResult init();
+		void shutdown();
+		uint32_t begin(uint32_t _resultIdx);
+		void end(uint32_t _idx);
+		bool update();
 
 		struct Result
 		{
@@ -575,17 +541,44 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		struct Query
 		{
-			uint32_t m_begin;
-			uint32_t m_end;
-			uint32_t m_resultIdx;
-			bool     m_ready;
+			uint32_t  m_resultIdx;
+			bool      m_ready;
+			uint64_t  m_completed;
 		};
 
 		uint64_t m_frequency;
 
 		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
-
 		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
+
+		VkBuffer m_readback;
+		VkDeviceMemory m_readbackMemory;
+		VkQueryPool m_queryPool;
+		const uint64_t* m_queryResult;
+		bx::RingBufferControl m_control;
+	};
+
+	struct OcclusionQueryVK
+	{
+		OcclusionQueryVK()
+			: m_control(BX_COUNTOF(m_handle) )
+		{
+		}
+
+		VkResult init();
+		void shutdown();
+		void begin(OcclusionQueryHandle _handle);
+		void end();
+		void flush(Frame* _render);
+		void resolve(Frame* _render);
+		void invalidate(OcclusionQueryHandle _handle);
+
+		OcclusionQueryHandle m_handle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
+
+		VkBuffer m_readback;
+		VkDeviceMemory m_readbackMemory;
+		VkQueryPool m_queryPool;
+		const uint32_t* m_queryResult;
 		bx::RingBufferControl m_control;
 	};
 
@@ -630,7 +623,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
 		VkImageLayout setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage = false);
 
-		VkResult createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _renderTarget, ::VkImageView* _view) const;
+		VkResult createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view) const;
 
 		void*    m_directAccessPtr;
 		uint64_t m_flags;
@@ -657,6 +650,8 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		VkImage        m_singleMsaaImage;
 		VkDeviceMemory m_singleMsaaDeviceMem;
 		VkImageLayout  m_currentSingleMsaaImageLayout;
+
+		VkImageLayout m_sampledLayout;
 
 		ReadbackVK m_readback;
 
@@ -698,7 +693,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		bool acquire(VkCommandBuffer _commandBuffer);
 		void present();
 
-		void transitionImage(VkCommandBuffer _commandBuffer, VkImageLayout _newLayout);
+		void transitionImage(VkCommandBuffer _commandBuffer);
 
 		VkQueue m_queue;
 		VkSwapchainCreateInfoKHR m_sci;
@@ -784,6 +779,7 @@ VK_DESTROY_FUNC(SurfaceKHR);
 		SwapChainVK m_swapChain;
 		void* m_nwh;
 		bool m_needPresent;
+		bool m_needResolve;
 
 		VkImageView m_textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		VkFramebuffer m_framebuffer;
@@ -813,13 +809,15 @@ VK_DESTROY_FUNC(SurfaceKHR);
 
 		uint32_t m_numFramesInFlight;
 
-		uint32_t m_currentFrameInFlight = 0;
-		uint32_t m_consumeIndex = 0;
+		uint32_t m_currentFrameInFlight;
+		uint32_t m_consumeIndex;
 
 		VkCommandBuffer m_activeCommandBuffer;
 
-		VkFence m_upcomingFence;
-		VkFence m_kickedFence;
+		VkFence m_currentFence;
+		VkFence m_completedFence;
+
+		uint64_t m_submitted;
 
 		struct CommandList
 		{

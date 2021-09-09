@@ -442,7 +442,8 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
              << " components, but given " << offset_size;
     }
 
-    if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (!_.options()->before_hlsl_legalization &&
+        spvIsVulkanEnv(_.context()->target_env)) {
       if (opcode != SpvOpImageGather && opcode != SpvOpImageDrefGather &&
           opcode != SpvOpImageSparseGather &&
           opcode != SpvOpImageSparseDrefGather) {
@@ -1509,8 +1510,8 @@ spv_result_t ValidateImageRead(ValidationState_t& _, const Instruction* inst) {
   if (spvIsVulkanEnv(target_env)) {
     if (_.GetDimension(actual_result_type) != 4) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "Expected " << GetActualResultTypeStr(opcode)
-             << " to have 4 components";
+             << _.VkErrorID(4780) << "Expected "
+             << GetActualResultTypeStr(opcode) << " to have 4 components";
     }
   }  // Check OpenCL below, after we get the image info.
 

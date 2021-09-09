@@ -1,5 +1,6 @@
 /*
  * Copyright 2015-2021 Arm Limited
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +19,6 @@
  * At your option, you may choose to accept this material under either:
  *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
  *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
- * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #ifndef SPIRV_CROSS_COMMON_HPP
@@ -417,6 +417,11 @@ struct IVariant
 	virtual ~IVariant() = default;
 	virtual IVariant *clone(ObjectPoolBase *pool) = 0;
 	ID self = 0;
+
+protected:
+	IVariant() = default;
+	IVariant(const IVariant&) = default;
+	IVariant &operator=(const IVariant&) = default;
 };
 
 #define SPIRV_CROSS_DECLARE_CLONE(T)                                \
@@ -1763,6 +1768,22 @@ struct SetBindingPair
 	}
 };
 
+struct LocationComponentPair
+{
+	uint32_t location;
+	uint32_t component;
+
+	inline bool operator==(const LocationComponentPair &other) const
+	{
+		return location == other.location && component == other.component;
+	}
+
+	inline bool operator<(const LocationComponentPair &other) const
+	{
+		return location < other.location || (location == other.location && component < other.component);
+	}
+};
+
 struct StageSetBinding
 {
 	spv::ExecutionModel model;
@@ -1782,6 +1803,14 @@ struct InternalHasher
 		// Quality of hash doesn't really matter here.
 		auto hash_set = std::hash<uint32_t>()(value.desc_set);
 		auto hash_binding = std::hash<uint32_t>()(value.binding);
+		return (hash_set * 0x10001b31) ^ hash_binding;
+	}
+
+	inline size_t operator()(const LocationComponentPair &value) const
+	{
+		// Quality of hash doesn't really matter here.
+		auto hash_set = std::hash<uint32_t>()(value.location);
+		auto hash_binding = std::hash<uint32_t>()(value.component);
 		return (hash_set * 0x10001b31) ^ hash_binding;
 	}
 

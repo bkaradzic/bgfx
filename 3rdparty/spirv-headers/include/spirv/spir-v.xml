@@ -69,7 +69,7 @@
         <id value="16"  vendor="X-LEGEND"   tool="Mesa-IR/SPIR-V Translator" comment="Contact Metora Wang, github:metora/MesaGLSLCompiler"/>
         <id value="17"  vendor="Khronos" tool="SPIR-V Tools Linker" comment="Contact David Neto, dneto@google.com"/>
         <id value="18"  vendor="Wine" tool="VKD3D Shader Compiler" comment="Contact wine-devel@winehq.org"/>
-        <id value="19"  vendor="Clay" tool="Clay Shader Compiler" comment="Contact info@clayengine.com"/>
+        <id value="19"  vendor="Tellusim" tool="Clay Shader Compiler" comment="Contact info@tellusim.com"/>
         <id value="20"  vendor="W3C WebGPU Group" tool="WHLSL Shader Translator" comment="https://github.com/gpuweb/WHLSL"/>
         <id value="21"  vendor="Google" tool="Clspv" comment="Contact David Neto, dneto@google.com"/>
         <id value="22"  vendor="Google" tool="MLIR SPIR-V Serializer" comment="Contact Lei Zhang, antiagainst@google.com"/>
@@ -80,7 +80,8 @@
         <id value="27"  vendor="Embark Studios" tool="Rust GPU Compiler Backend" comment="https://github.com/embarkstudios/rust-gpu"/>
         <id value="28"  vendor="gfx-rs community" tool="Naga" comment="https://github.com/gfx-rs/naga"/>
         <id value="29"  vendor="Mikkosoft Productions" tool="MSP Shader Compiler" comment="Contact Mikko Rasa, tdb@tdb.fi"/>
-        <unused start="30" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="30"  vendor="SpvGenTwo community" tool="SpvGenTwo SPIR-V IR Tools" comment="https://github.com/rAzoR8/SpvGenTwo"/>
+        <unused start="31" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->
@@ -130,13 +131,15 @@
     <ids type="opcode" start="5952" end="6015" vendor="Codeplay" comment="Contact victor@codeplay.com"/>
     <ids type="opcode" start="6016" end="6079" vendor="Khronos" comment="Contact @tobski"/>
     <ids type="opcode" start="6080" end="6143" vendor="Intel" comment="Contact mariusz.merecki@intel.com"/>
+    <ids type="opcode" start="6144" end="6271" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
+    <ids type="opcode" start="6272" end="6399" vendor="Huawei" comment="Contact wanghuilong2@xunweitech.com"/>
     <!-- Opcode enumerants to reserve for future use. To get a block, allocate
          multiples of 64 starting at the lowest available point in this
          block and add a corresponding <ids> tag immediately above. Make
          sure to fill in the vendor attribute, and preferably add a contact
          person/address in a comment attribute. -->
     <!-- Example new block: <ids type="opcode" start="XXXX" end="XXXX+64n-1" vendor="Add vendor" comment="Contact TBD"/> -->
-    <ids type="opcode" start="6144" end="65535" comment="Opcode range reservable for future use by vendors"/>
+    <ids type="opcode" start="6400" end="65535" comment="Opcode range reservable for future use by vendors"/>
     <!-- End reservations of opcodes -->
 
 
@@ -156,13 +159,15 @@
     <ids type="enumerant" start="5952" end="6015" vendor="Codeplay" comment="Contact victor@codeplay.com"/>
     <ids type="enumerant" start="6016" end="6079" vendor="Khronos" comment="Contact @tobski"/>
     <ids type="enumerant" start="6080" end="6143" vendor="Intel" comment="Contact mariusz.merecki@intel.com"/>
+    <ids type="enumerant" start="6144" end="6271" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
+    <ids type="enumerant" start="6272" end="6399" vendor="Huawei" comment="Contact wanghuilong2@xunweitech.com"/>
     <!-- Enumerants to reserve for future use. To get a block, allocate
          multiples of 64 starting at the lowest available point in this
          block and add a corresponding <ids> tag immediately above. Make
          sure to fill in the vendor attribute, and preferably add a contact
          person/address in a comment attribute. -->
     <!-- Example new block: <ids type="enumerant" start="XXXX" end="XXXX+64n-1" vendor="Add vendor" comment="Contact TBD"/> -->
-    <ids type="enumerant" start="6144" end="4294967295" comment="Enumerant range reservable for future use by vendors"/>
+    <ids type="enumerant" start="6400" end="4294967295" comment="Enumerant range reservable for future use by vendors"/>
     <!-- End reservations of enumerants -->
 
 
@@ -182,8 +187,8 @@
 
     <!-- Reserved loop control bits -->
     <ids type="LoopControl" start="0" end="15" vendor="Khronos" comment="Reserved LoopControl bits, not available to vendors - see the SPIR-V Specification"/>
-    <ids type="LoopControl" start="16" end="23" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
-    <ids type="LoopControl" start="24" end="30" comment="Unreserved bits reservable for use by vendors"/>
+    <ids type="LoopControl" start="16" end="24" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
+    <ids type="LoopControl" start="25" end="30" comment="Unreserved bits reservable for use by vendors"/>
     <ids type="LoopControl" start="31" end="31" vendor="Khronos" comment="Reserved LoopControl bit, not available to vendors"/>
 
 

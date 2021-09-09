@@ -112,12 +112,12 @@ namespace bgfx { namespace gl
 
 		// Work around bug https://bugs.chromium.org/p/chromium/issues/detail?id=1045643 in Chrome
 		// by having alpha always enabled.
-		s_attrs.alpha = true;
-		s_attrs.premultipliedAlpha = false;
-		s_attrs.depth = true;
-		s_attrs.stencil = true;
+		s_attrs.alpha                     = true;
+		s_attrs.premultipliedAlpha        = false;
+		s_attrs.depth                     = true;
+		s_attrs.stencil                   = true;
 		s_attrs.enableExtensionsByDefault = true;
-		s_attrs.antialias = false;
+		s_attrs.antialias                 = false;
 
 		s_attrs.minorVersion = 0;
 		const char* canvas = (const char*) _nwh;

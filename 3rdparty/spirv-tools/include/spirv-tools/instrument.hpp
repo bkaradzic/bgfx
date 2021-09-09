@@ -178,6 +178,7 @@ static const int kInstErrorBuffOOBUniform = 4;
 static const int kInstErrorBuffOOBStorage = 5;
 static const int kInstErrorBuffOOBUniformTexel = 6;
 static const int kInstErrorBuffOOBStorageTexel = 7;
+static const int kInstErrorMax = kInstErrorBuffOOBStorageTexel;
 
 // Direct Input Buffer Offsets
 //

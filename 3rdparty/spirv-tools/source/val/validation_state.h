@@ -465,6 +465,10 @@ class ValidationState_t {
   void RegisterSampledImageConsumer(uint32_t sampled_image_id,
                                     Instruction* consumer);
 
+  // Record a function's storage class consumer instruction
+  void RegisterStorageClassConsumer(SpvStorageClass storage_class,
+                                    Instruction* consumer);
+
   /// Returns the set of Global Variables.
   std::unordered_set<uint32_t>& global_vars() { return global_vars_; }
 
@@ -590,6 +594,17 @@ class ValidationState_t {
   // Returns true if |id| is a type id that contains a 8- or 16-bit int or
   // 16-bit float that is not generally enabled for use.
   bool ContainsLimitedUseIntOrFloatType(uint32_t id) const;
+
+  // Returns true if |id| is a type that contains a runtime-sized array.
+  // Does not consider a pointers as contains the array.
+  bool ContainsRuntimeArray(uint32_t id) const;
+
+  // Generic type traversal.
+  // Only traverse pointers and functions if |traverse_all_types| is true.
+  // Recursively tests |f| against the type hierarchy headed by |id|.
+  bool ContainsType(uint32_t id,
+                    const std::function<bool(const Instruction*)>& f,
+                    bool traverse_all_types = true) const;
 
   // Gets value from OpConstant and OpSpecConstant as uint64.
   // Returns false on failure (no instruction, wrong instruction, not int).

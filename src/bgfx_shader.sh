@@ -42,7 +42,7 @@
  || BGFX_SHADER_LANGUAGE_METAL
 #	define CONST(_x) static const _x
 #	define dFdx(_x) ddx(_x)
-#	define dFdy(_y) ddy(-_y)
+#	define dFdy(_y) ddy(-(_y))
 #	define inversesqrt(_x) rsqrt(_x)
 #	define fract(_x) frac(_x)
 
@@ -62,8 +62,8 @@
 #		if BGFX_SHADER_LANGUAGE_HLSL > 400 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
 #			define dFdxCoarse(_x) ddx_coarse(_x)
 #			define dFdxFine(_x)   ddx_fine(_x)
-#			define dFdyCoarse(_y) ddy_coarse(-_y)
-#			define dFdyFine(_y)   ddy_fine(-_y)
+#			define dFdyCoarse(_y) ddy_coarse(-(_y))
+#			define dFdyFine(_y)   ddy_fine(-(_y))
 #		endif // BGFX_SHADER_LANGUAGE_HLSL > 400
 
 #		if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
@@ -315,17 +315,55 @@ vec2 bgfxTextureSize(BgfxUSampler2D _sampler, int _lod)
 	return result;
 }
 
-vec4 bgfxTextureGather(BgfxSampler2D _sampler, vec2 _coord)
+vec4 bgfxTextureGather0(BgfxSampler2D _sampler, vec2 _coord)
 {
-	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord );
+	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord);
 }
-vec4 bgfxTextureGatherOffset(BgfxSampler2D _sampler, vec2 _coord, ivec2 _offset)
+vec4 bgfxTextureGather1(BgfxSampler2D _sampler, vec2 _coord)
 {
-	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord, _offset );
+	return _sampler.m_texture.GatherGreen(_sampler.m_sampler, _coord);
 }
-vec4 bgfxTextureGather(BgfxSampler2DArray _sampler, vec3 _coord)
+vec4 bgfxTextureGather2(BgfxSampler2D _sampler, vec2 _coord)
 {
-	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord );
+	return _sampler.m_texture.GatherBlue(_sampler.m_sampler, _coord);
+}
+vec4 bgfxTextureGather3(BgfxSampler2D _sampler, vec2 _coord)
+{
+	return _sampler.m_texture.GatherAlpha(_sampler.m_sampler, _coord);
+}
+
+vec4 bgfxTextureGatherOffset0(BgfxSampler2D _sampler, vec2 _coord, ivec2 _offset)
+{
+	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord, _offset);
+}
+vec4 bgfxTextureGatherOffset1(BgfxSampler2D _sampler, vec2 _coord, ivec2 _offset)
+{
+	return _sampler.m_texture.GatherGreen(_sampler.m_sampler, _coord, _offset);
+}
+vec4 bgfxTextureGatherOffset2(BgfxSampler2D _sampler, vec2 _coord, ivec2 _offset)
+{
+	return _sampler.m_texture.GatherBlue(_sampler.m_sampler, _coord, _offset);
+}
+vec4 bgfxTextureGatherOffset3(BgfxSampler2D _sampler, vec2 _coord, ivec2 _offset)
+{
+	return _sampler.m_texture.GatherAlpha(_sampler.m_sampler, _coord, _offset);
+}
+
+vec4 bgfxTextureGather0(BgfxSampler2DArray _sampler, vec3 _coord)
+{
+	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord);
+}
+vec4 bgfxTextureGather1(BgfxSampler2DArray _sampler, vec3 _coord)
+{
+	return _sampler.m_texture.GatherGreen(_sampler.m_sampler, _coord);
+}
+vec4 bgfxTextureGather2(BgfxSampler2DArray _sampler, vec3 _coord)
+{
+	return _sampler.m_texture.GatherBlue(_sampler.m_sampler, _coord);
+}
+vec4 bgfxTextureGather3(BgfxSampler2DArray _sampler, vec3 _coord)
+{
+	return _sampler.m_texture.GatherAlpha(_sampler.m_sampler, _coord);
 }
 
 ivec4 bgfxTexelFetch(BgfxISampler2D _sampler, ivec2 _coord, int _lod)
@@ -440,8 +478,8 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define texelFetch(_sampler, _coord, _lod) bgfxTexelFetch(_sampler, _coord, _lod)
 #		define texelFetchOffset(_sampler, _coord, _lod, _offset) bgfxTexelFetchOffset(_sampler, _coord, _lod, _offset)
 #		define textureSize(_sampler, _lod) bgfxTextureSize(_sampler, _lod)
-#		define textureGather(_sampler, _coord) bgfxTextureGather(_sampler, _coord)
-#		define textureGatherOffset(_sampler, _coord, _offset) bgfxTextureGatherOffset(_sampler, _coord, _offset)
+#		define textureGather(_sampler, _coord, _comp) bgfxTextureGather ## _comp(_sampler, _coord)
+#		define textureGatherOffset(_sampler, _coord, _offset, _comp) bgfxTextureGatherOffset ## _comp(_sampler, _coord, _offset)
 #	else
 
 #		define sampler2DShadow sampler2D

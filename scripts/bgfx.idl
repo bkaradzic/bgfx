@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(114)
+version(115)
 
 typedef "bool"
 typedef "char"
@@ -450,6 +450,7 @@ enum.Fatal { underscore, comment = "" }
 --- Renderer backend type enum.
 enum.RendererType { comment = "Renderer types:" }
 	.Noop       --- No rendering.
+	.Agc        --- AGC
 	.Direct3D9  --- Direct3D 9.0
 	.Direct3D11 --- Direct3D 11.0
 	.Direct3D12 --- Direct3D 12.0
@@ -610,6 +611,7 @@ enum.UniformType          { comment = "Uniform types:" }
 	.Vec4    --- 4 floats vector.
 	.Mat3    --- 3x3 matrix.
 	.Mat4    --- 4x4 matrix.
+	()
 
 --- Backbuffer ratio enum.
 enum.BackbufferRatio      { comment = "Backbuffer ratios:" }
@@ -619,12 +621,14 @@ enum.BackbufferRatio      { comment = "Backbuffer ratios:" }
 	.Eighth    --- One eighth size of backbuffer.
 	.Sixteenth --- One sixteenth size of backbuffer.
 	.Double    --- Double size of backbuffer.
+	()
 
 --- Occlusion query result.
 enum.OcclusionQueryResult { comment = "Occlusion query results:" }
 	.Invisible --- Query failed test.
 	.Visible   --- Query passed test.
 	.NoResult  --- Query result is not available yet.
+	()
 
 --- Primitive topology.
 enum.Topology { underscore, comment = "Primitive topology:" }
@@ -633,6 +637,7 @@ enum.Topology { underscore, comment = "Primitive topology:" }
 	.LineList  --- Line list.
 	.LineStrip --- Line strip.
 	.PointList --- Point list.
+	()
 
 --- Topology conversion function.
 enum.TopologyConvert { underscore , comment = "Topology conversion functions:" }
@@ -641,6 +646,7 @@ enum.TopologyConvert { underscore , comment = "Topology conversion functions:" }
 	.TriListToLineList   --- Convert triangle list to line list.
 	.TriStripToTriList   --- Convert triangle strip to triangle list.
 	.LineStripToLineList --- Convert line strip to line list.
+	()
 
 --- Topology sort order.
 enum.TopologySort { underscore, comment = "Topology sort order:" , }
@@ -664,6 +670,7 @@ enum.ViewMode { underscore, comment = "View modes:" }
 	.Sequential      --- Sort in the same order in which submit calls were called.
 	.DepthAscending  --- Sort draw call depth in ascending order.
 	.DepthDescending --- Sort draw call depth in descending order.
+	()
 
 --- Render frame enum.
 enum.RenderFrame { underscore, comment = "" }
@@ -709,7 +716,7 @@ struct.Limits  { namespace = "Caps" }
 struct.Caps
 	.rendererType "RendererType::Enum" --- Renderer backend type. See: `bgfx::RendererType`
 	.supported    "uint64_t"           --- Supported functionality.
-	                                   ---   @attention See BGFX_CAPS_* flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
+	                                   ---   @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
 	.vendorId     "uint16_t"           --- Selected GPU vendor PCI id.
 	.deviceId     "uint16_t"           --- Selected GPU device id.
 	.homogeneousDepth "bool"           --- True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
@@ -978,8 +985,8 @@ handle "VertexLayoutHandle"
 
 --- Start VertexLayout.
 func.VertexLayout.begin
-	"VertexLayout&"
-	.rendererType    "RendererType::Enum"
+	"VertexLayout&"                       --- Returns itself.
+	.rendererType    "RendererType::Enum" --- Renderer backend type. See: `bgfx::RendererType`
 	{ default = "RendererType::Noop" }
 
 --- Add attribute to VertexLayout.
@@ -987,7 +994,7 @@ func.VertexLayout.begin
 --- @remarks Must be called between begin/end.
 ---
 func.VertexLayout.add
-	"VertexLayout&"
+	"VertexLayout&"                     --- Returns itself.
 	.attrib          "Attrib::Enum"     --- Attribute semantics. See: `bgfx::Attrib`
 	.num             "uint8_t"          --- Number of elements 1, 2, 3 or 4.
 	.type            "AttribType::Enum" --- Element type.
@@ -1008,15 +1015,15 @@ func.VertexLayout.decode { const }
 	.normalized "bool &"             { out } --- Attribute is normalized.
 	.asInt      "bool &"             { out } --- Attribute is packed as int.
 
---- Returns true if VertexLayout contains attribute.
+--- Returns `true` if VertexLayout contains attribute.
 func.VertexLayout.has { const }
-	"bool"
+	"bool"                 --- True if VertexLayout contains attribute.
 	.attrib "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
 --- Skip `_num` bytes in vertex stream.
 func.VertexLayout.skip
-	"VertexLayout&"
-	.num "uint8_t"
+	"VertexLayout&" --- Returns itself.
+	.num "uint8_t"  --- Number of bytes to skip.
 
 -- Notice: `end` is a keyword in lua.
 --- End VertexLayout.
@@ -1025,17 +1032,17 @@ func.VertexLayout["end"]
 
 --- Returns relative attribute offset from the vertex.
 func.VertexLayout.getOffset { const , cpponly }
-	"uint16_t"
+	"uint16_t"                --- Relative attribute offset from the vertex.
 	.attrib    "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
 --- Returns vertex stride.
 func.VertexLayout.getStride { const , cpponly }
-	"uint16_t"
+	"uint16_t" --- Vertex stride.
 
 --- Returns size of vertex buffer for number of vertices.
 func.VertexLayout.getSize { const, cpponly }
-	"uint32_t"
-	.num       "uint32_t"
+	"uint32_t"      --- Size of vertex buffer for number of vertices.
+	.num "uint32_t" --- Number of vertices.
 
 --- Pack vertex attribute into vertex stream format.
 func.vertexPack
@@ -1454,6 +1461,8 @@ func.destroy { cname = "destroy_dynamic_vertex_buffer" }
 func.getAvailTransientIndexBuffer
 	"uint32_t"      --- Number of requested or maximum available indices.
 	.num "uint32_t" --- Number of required indices.
+	.index32 "bool" --- Set to `true` if input indices will be 32-bit.
+	 { default = false }
 
 --- Returns number of requested or maximum available vertices.
 func.getAvailTransientVertexBuffer
@@ -1468,9 +1477,6 @@ func.getAvailInstanceDataBuffer
 	.stride "uint16_t" --- Stride per instance.
 
 --- Allocate transient index buffer.
----
---- @remarks
----   Only 16-bit index buffer is supported.
 ---
 func.allocTransientIndexBuffer
 	"void"
@@ -1494,9 +1500,6 @@ func.allocTransientVertexBuffer
 --- buffers. If both space requirements are satisfied function returns
 --- true.
 ---
---- @remarks
----   Only 16-bit index buffer is supported.
----
 func.allocTransientBuffers
 	"bool"
 	.tvb         "TransientVertexBuffer*" { out } --- TransientVertexBuffer structure is filled and is valid
@@ -1508,6 +1511,8 @@ func.allocTransientBuffers
 	                                              --- for the duration of frame, and it can be reused for multiple draw
 	                                              --- calls.
 	.numIndices  "uint32_t"                       --- Number of indices to allocate.
+	.index32 "bool"                               --- Set to `true` if input indices will be 32-bit.
+	 { default = false }
 
 --- Allocate instance data buffer.
 func.allocInstanceDataBuffer
@@ -2965,7 +2970,7 @@ func.submit
 	.program       "ProgramHandle" --- Program.
 	.depth         "uint32_t"      --- Depth for sorting.
 	{ default = 0 }
-	.flags         "uint8_t"       --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags         "uint8_t"       --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive with occlusion query for rendering.
@@ -2976,7 +2981,7 @@ func.submit { cname = "submit_occlusion_query" }
 	.occlusionQuery "OcclusionQueryHandle" --- Occlusion query.
 	.depth          "uint32_t"             --- Depth for sorting.
 	{ default = 0 }
-	.flags          "uint8_t"              --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags          "uint8_t"              --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Submit primitive for rendering with index and instance data info from
@@ -2992,7 +2997,7 @@ func.submit { cname = "submit_indirect" }
 	{ default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
 	{ default = 0 }
-	.flags "uint8_t"                       --- Which states to discard for next draw. See BGFX_DISCARD_
+	.flags "uint8_t"                       --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Set compute index buffer.

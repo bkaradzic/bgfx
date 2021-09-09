@@ -150,6 +150,7 @@ enum ExecutionMode {
     ExecutionModeSubgroupsPerWorkgroupId = 37,
     ExecutionModeLocalSizeId = 38,
     ExecutionModeLocalSizeHintId = 39,
+    ExecutionModeSubgroupUniformControlFlowKHR = 4421,
     ExecutionModePostDepthCoverage = 4446,
     ExecutionModeDenormPreserve = 4459,
     ExecutionModeDenormFlushToZero = 4460,
@@ -409,6 +410,7 @@ enum FPRoundingMode {
 enum LinkageType {
     LinkageTypeExport = 0,
     LinkageTypeImport = 1,
+    LinkageTypeLinkOnceODR = 2,
     LinkageTypeMax = 0x7fffffff,
 };
 
@@ -650,6 +652,7 @@ enum BuiltIn {
     BuiltInHitTNV = 5332,
     BuiltInHitKindKHR = 5333,
     BuiltInHitKindNV = 5333,
+    BuiltInCurrentRayTimeNV = 5334,
     BuiltInIncomingRayFlagsKHR = 5351,
     BuiltInIncomingRayFlagsNV = 5351,
     BuiltInRayGeometryIndexKHR = 5352,
@@ -986,6 +989,7 @@ enum Capability {
     CapabilityStorageTexelBufferArrayNonUniformIndexing = 5312,
     CapabilityStorageTexelBufferArrayNonUniformIndexingEXT = 5312,
     CapabilityRayTracingNV = 5340,
+    CapabilityRayTracingMotionBlurNV = 5341,
     CapabilityVulkanMemoryModel = 5345,
     CapabilityVulkanMemoryModelKHR = 5345,
     CapabilityVulkanMemoryModelDeviceScope = 5346,
@@ -1010,8 +1014,12 @@ enum Capability {
     CapabilityFunctionPointersINTEL = 5603,
     CapabilityIndirectReferencesINTEL = 5604,
     CapabilityAsmINTEL = 5606,
+    CapabilityAtomicFloat32MinMaxEXT = 5612,
+    CapabilityAtomicFloat64MinMaxEXT = 5613,
+    CapabilityAtomicFloat16MinMaxEXT = 5616,
     CapabilityVectorComputeINTEL = 5617,
     CapabilityVectorAnyINTEL = 5619,
+    CapabilityExpectAssumeKHR = 5629,
     CapabilitySubgroupAvcMotionEstimationINTEL = 5696,
     CapabilitySubgroupAvcMotionEstimationIntraINTEL = 5697,
     CapabilitySubgroupAvcMotionEstimationChromaINTEL = 5698,
@@ -1035,6 +1043,7 @@ enum Capability {
     CapabilityAtomicFloat32AddEXT = 6033,
     CapabilityAtomicFloat64AddEXT = 6034,
     CapabilityLongConstantCompositeINTEL = 6089,
+    CapabilityAtomicFloat16AddEXT = 6095,
     CapabilityMax = 0x7fffffff,
 };
 
@@ -1102,15 +1111,15 @@ enum FragmentShadingRateMask {
 };
 
 enum FPDenormMode {
-  FPDenormModePreserve = 0,
-  FPDenormModeFlushToZero = 1,
-  FPDenormModeMax = 0x7fffffff,
+    FPDenormModePreserve = 0,
+    FPDenormModeFlushToZero = 1,
+    FPDenormModeMax = 0x7fffffff,
 };
 
 enum FPOperationMode {
-  FPOperationModeIEEE = 0,
-  FPOperationModeALT = 1,
-  FPOperationModeMax = 0x7fffffff,
+    FPOperationModeIEEE = 0,
+    FPOperationModeALT = 1,
+    FPOperationModeMax = 0x7fffffff,
 };
 
 enum Op {
@@ -1496,6 +1505,8 @@ enum Op {
     OpIgnoreIntersectionNV = 5335,
     OpTerminateRayNV = 5336,
     OpTraceNV = 5337,
+    OpTraceMotionNV = 5338,
+    OpTraceRayMotionNV = 5339,
     OpTypeAccelerationStructureKHR = 5341,
     OpTypeAccelerationStructureNV = 5341,
     OpExecuteCallableNV = 5344,
@@ -1537,6 +1548,10 @@ enum Op {
     OpAsmTargetINTEL = 5609,
     OpAsmINTEL = 5610,
     OpAsmCallINTEL = 5611,
+    OpAtomicFMinEXT = 5614,
+    OpAtomicFMaxEXT = 5615,
+    OpAssumeTrueKHR = 5630,
+    OpExpectKHR = 5631,
     OpDecorateString = 5632,
     OpDecorateStringGOOGLE = 5632,
     OpMemberDecorateString = 5633,
@@ -2079,6 +2094,8 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpIgnoreIntersectionNV: *hasResult = false; *hasResultType = false; break;
     case OpTerminateRayNV: *hasResult = false; *hasResultType = false; break;
     case OpTraceNV: *hasResult = false; *hasResultType = false; break;
+    case OpTraceMotionNV: *hasResult = false; *hasResultType = false; break;
+    case OpTraceRayMotionNV: *hasResult = false; *hasResultType = false; break;
     case OpTypeAccelerationStructureNV: *hasResult = true; *hasResultType = false; break;
     case OpExecuteCallableNV: *hasResult = false; *hasResultType = false; break;
     case OpTypeCooperativeMatrixNV: *hasResult = true; *hasResultType = false; break;
@@ -2119,6 +2136,10 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpAsmTargetINTEL: *hasResult = true; *hasResultType = true; break;
     case OpAsmINTEL: *hasResult = true; *hasResultType = true; break;
     case OpAsmCallINTEL: *hasResult = true; *hasResultType = true; break;
+    case OpAtomicFMinEXT: *hasResult = true; *hasResultType = true; break;
+    case OpAtomicFMaxEXT: *hasResult = true; *hasResultType = true; break;
+    case OpAssumeTrueKHR: *hasResult = false; *hasResultType = false; break;
+    case OpExpectKHR: *hasResult = true; *hasResultType = true; break;
     case OpDecorateString: *hasResult = false; *hasResultType = false; break;
     case OpMemberDecorateString: *hasResult = false; *hasResultType = false; break;
     case OpVmeImageINTEL: *hasResult = true; *hasResultType = true; break;

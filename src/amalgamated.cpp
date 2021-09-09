@@ -11,6 +11,7 @@
 #include "glcontext_wgl.cpp"
 #include "glcontext_html5.cpp"
 #include "nvapi.cpp"
+#include "renderer_agc.cpp"
 #include "renderer_d3d11.cpp"
 #include "renderer_d3d12.cpp"
 #include "renderer_d3d9.cpp"

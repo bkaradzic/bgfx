@@ -254,6 +254,23 @@ namespace bgfx
 		NULL
 	};
 
+	static const char* s_bitsToEncoders[] =
+	{
+		"floatBitsToUint",
+		"floatBitsToInt",
+		"intBitsToFloat",
+		"uintBitsToFloat",
+		NULL
+	};
+
+	static const char* s_unsignedVecs[] =
+	{
+		"uvec2",
+		"uvec3",
+		"uvec4",
+		NULL
+	};
+
 	const char* s_uniformTypeName[] =
 	{
 		"int",  "int",
@@ -957,7 +974,7 @@ namespace bgfx
 			);
 
 		bx::printf(
-			  "Usage: shaderc -f <in> -o <out> --type <v/f> --platform <platform>\n"
+			  "Usage: shaderc -f <in> -o <out> --type <v/f/c> --platform <platform>\n"
 
 			  "\n"
 			  "Options:\n"
@@ -1002,7 +1019,7 @@ namespace bgfx
 			  "      --preprocess              Preprocess only.\n"
 			  "      --define <defines>        Add defines to preprocessor (semicolon separated).\n"
 			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
-			  "      --type <type>             Shader type (vertex, fragment)\n"
+			  "      --type <type>             Shader type (vertex, fragment, compute)\n"
 			  "      --varyingdef <file path>  Path to varying.def.sc file.\n"
 			  "      --verbose                 Verbose.\n"
 
@@ -2129,15 +2146,14 @@ namespace bgfx
 							const bx::StringView preprocessedInput(preprocessor.m_preprocessed.c_str() );
 							uint32_t glsl_profile = profile->id;
 
+							const bool usesBitsToEncoders = true
+								&& _options.shaderType == 'f'
+								&& !bx::findIdentifierMatch(preprocessedInput, s_bitsToEncoders).isEmpty()
+								;
+
 							if (!bx::strFind(preprocessedInput, "layout(std430").isEmpty()
 							||  !bx::strFind(preprocessedInput, "image2D").isEmpty()
-							|| (_options.shaderType == 'f'
-								&&  (!bx::strFind(preprocessedInput, "floatBitsToUint").isEmpty() ||
-									 !bx::strFind(preprocessedInput, "floatBitsToInt").isEmpty() ||
-									 !bx::strFind(preprocessedInput, "intBitsToFloat").isEmpty() ||
-									 !bx::strFind(preprocessedInput, "uintBitsToFloat").isEmpty()
-									) )
-								)
+							||  usesBitsToEncoders)
 							{
 								if (profile->lang == ShadingLang::GLSL
 								&&  glsl_profile < 430)
@@ -2169,6 +2185,7 @@ namespace bgfx
 								const bool usesTextureArray       = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
 								const bool usesPacking            = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
 								const bool usesViewportLayerArray = !bx::findIdentifierMatch(input, s_ARB_shader_viewport_layer_array).isEmpty();
+								const bool usesUnsignedVecs        = !bx::findIdentifierMatch(preprocessedInput, s_unsignedVecs).isEmpty();
 
 								if (profile->lang != ShadingLang::ESSL)
 								{
@@ -2176,6 +2193,7 @@ namespace bgfx
 										|| !bx::findIdentifierMatch(input, s_130).isEmpty()
 										|| usesInterpolationQualifiers
 										|| usesTexelFetch
+										|| usesUnsignedVecs
 										) );
 
 									bx::stringPrintf(code, "#version %d\n", need130 ? 130 : glsl_profile);
@@ -2303,6 +2321,11 @@ namespace bgfx
 								}
 								else
 								{
+									if ((glsl_profile < 300) && usesUnsignedVecs)
+									{
+										glsl_profile = 300;
+									}
+
 									if (glsl_profile > 100)
 									{
 										bx::stringPrintf(code, "#version %d es\n", glsl_profile);
@@ -2312,49 +2335,6 @@ namespace bgfx
 											);
 										bx::stringPrintf(code, "precision highp float;\n");
 										bx::stringPrintf(code, "precision highp int;\n");
-									}
-									else
-									{
-										code +=
-											"mat2 transpose(mat2 _mtx)\n"
-											"{\n"
-											"	vec2 v0 = _mtx[0];\n"
-											"	vec2 v1 = _mtx[1];\n"
-											"\n"
-											"	return mat2(\n"
-											"		  vec2(v0.x, v1.x)\n"
-											"		, vec2(v0.y, v1.y)\n"
-											"		);\n"
-											"}\n"
-											"\n"
-											"mat3 transpose(mat3 _mtx)\n"
-											"{\n"
-											"	vec3 v0 = _mtx[0];\n"
-											"	vec3 v1 = _mtx[1];\n"
-											"	vec3 v2 = _mtx[2];\n"
-											"\n"
-											"	return mat3(\n"
-											"		  vec3(v0.x, v1.x, v2.x)\n"
-											"		, vec3(v0.y, v1.y, v2.y)\n"
-											"		, vec3(v0.z, v1.z, v2.z)\n"
-											"		);\n"
-											"}\n"
-											"\n"
-											"mat4 transpose(mat4 _mtx)\n"
-											"{\n"
-											"	vec4 v0 = _mtx[0];\n"
-											"	vec4 v1 = _mtx[1];\n"
-											"	vec4 v2 = _mtx[2];\n"
-											"	vec4 v3 = _mtx[3];\n"
-											"\n"
-											"	return mat4(\n"
-											"		  vec4(v0.x, v1.x, v2.x, v3.x)\n"
-											"		, vec4(v0.y, v1.y, v2.y, v3.y)\n"
-											"		, vec4(v0.z, v1.z, v2.z, v3.z)\n"
-											"		, vec4(v0.w, v1.w, v2.w, v3.w)\n"
-											"		);\n"
-											"}\n"
-											;
 									}
 
 									// Pretend that all extensions are available.
@@ -2418,6 +2398,50 @@ namespace bgfx
 										bx::stringPrintf(code
 											, "#extension GL_EXT_texture_array : enable\n"
 											);
+									}
+
+									if (glsl_profile == 100)
+									{
+										code +=
+											"mat2 transpose(mat2 _mtx)\n"
+											"{\n"
+											"	vec2 v0 = _mtx[0];\n"
+											"	vec2 v1 = _mtx[1];\n"
+											"\n"
+											"	return mat2(\n"
+											"		  vec2(v0.x, v1.x)\n"
+											"		, vec2(v0.y, v1.y)\n"
+											"		);\n"
+											"}\n"
+											"\n"
+											"mat3 transpose(mat3 _mtx)\n"
+											"{\n"
+											"	vec3 v0 = _mtx[0];\n"
+											"	vec3 v1 = _mtx[1];\n"
+											"	vec3 v2 = _mtx[2];\n"
+											"\n"
+											"	return mat3(\n"
+											"		  vec3(v0.x, v1.x, v2.x)\n"
+											"		, vec3(v0.y, v1.y, v2.y)\n"
+											"		, vec3(v0.z, v1.z, v2.z)\n"
+											"		);\n"
+											"}\n"
+											"\n"
+											"mat4 transpose(mat4 _mtx)\n"
+											"{\n"
+											"	vec4 v0 = _mtx[0];\n"
+											"	vec4 v1 = _mtx[1];\n"
+											"	vec4 v2 = _mtx[2];\n"
+											"	vec4 v3 = _mtx[3];\n"
+											"\n"
+											"	return mat4(\n"
+											"		  vec4(v0.x, v1.x, v2.x, v3.x)\n"
+											"		, vec4(v0.y, v1.y, v2.y, v3.y)\n"
+											"		, vec4(v0.z, v1.z, v2.z, v3.z)\n"
+											"		, vec4(v0.w, v1.w, v2.w, v3.w)\n"
+											"		);\n"
+											"}\n"
+											;											
 									}
 								}
 							}

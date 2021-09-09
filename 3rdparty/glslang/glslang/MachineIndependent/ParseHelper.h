@@ -241,6 +241,7 @@ protected:
     // override this to set the language-specific name
     virtual const char* getAtomicCounterBlockName() const { return ""; }
     virtual void setAtomicCounterBlockDefaults(TType&) const {}
+    virtual void setInvariant(const TSourceLoc& loc, const char* builtin) {}
     virtual void finalizeAtomicCounterBlockLayout(TVariable&) {}
     bool isAtomicCounterBlock(const TSymbol& symbol) {
         const TVariable* var = symbol.getAsVariable();
@@ -470,6 +471,22 @@ public:
     void handleSwitchAttributes(const TAttributes& attributes, TIntermNode*);
     // Determine loop control from attributes
     void handleLoopAttributes(const TAttributes& attributes, TIntermNode*);
+    // Function attributes
+    void handleFunctionAttributes(const TSourceLoc&, const TAttributes&, TFunction*);
+
+    // GL_EXT_spirv_intrinsics
+    TSpirvRequirement* makeSpirvRequirement(const TSourceLoc& loc, const TString& name,
+                                            const TIntermAggregate* extensions, const TIntermAggregate* capabilities);
+    TSpirvRequirement* mergeSpirvRequirements(const TSourceLoc& loc, TSpirvRequirement* spirvReq1,
+                                                TSpirvRequirement* spirvReq2);
+    TSpirvTypeParameters* makeSpirvTypeParameters(const TSourceLoc& loc, const TIntermConstantUnion* constant);
+    TSpirvTypeParameters* makeSpirvTypeParameters(const TPublicType& type);
+    TSpirvTypeParameters* mergeSpirvTypeParameters(TSpirvTypeParameters* spirvTypeParams1,
+                                                   TSpirvTypeParameters* spirvTypeParams2);
+    TSpirvInstruction* makeSpirvInstruction(const TSourceLoc& loc, const TString& name, const TString& value);
+    TSpirvInstruction* makeSpirvInstruction(const TSourceLoc& loc, const TString& name, int value);
+    TSpirvInstruction* mergeSpirvInstruction(const TSourceLoc& loc, TSpirvInstruction* spirvInst1,
+                                             TSpirvInstruction* spirvInst2);
 #endif
 
     void checkAndResizeMeshViewDim(const TSourceLoc&, TType&, bool isBlockMember);
@@ -495,6 +512,7 @@ protected:
     virtual const char* getAtomicCounterBlockName() const override;
     virtual void finalizeAtomicCounterBlockLayout(TVariable&) override;
     virtual void setAtomicCounterBlockDefaults(TType& block) const override;
+    virtual void setInvariant(const TSourceLoc& loc, const char* builtin) override;
 
 public:
     //

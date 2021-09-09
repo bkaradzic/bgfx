@@ -449,7 +449,7 @@ local function codetemp(func)
 
 	if func.class then
 		-- It's a member function
-		cargs[1] = func.this  .. " _this"
+		cargs[1] = func.this .. " _this"
 		conversion[1] = func.this_conversion
 		cppfunc = "This->" .. func.name
 		callargs[1] = "_this"

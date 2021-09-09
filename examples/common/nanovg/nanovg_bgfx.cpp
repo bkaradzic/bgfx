@@ -1324,3 +1324,19 @@ void nvgluSetViewFramebuffer(bgfx::ViewId _viewId, NVGLUframebuffer* _framebuffe
 	bgfx::setViewFrameBuffer(_viewId, _framebuffer->handle);
 	bgfx::setViewMode(_viewId, bgfx::ViewMode::Sequential);
 }
+
+int nvgCreateBgfxTexture(struct NVGcontext *_ctx,
+                         bgfx::TextureHandle _id,
+                         int _width,
+                         int _height,
+                         int _flags) {
+    struct NVGparams *params = nvgInternalParams(_ctx);
+    struct GLNVGcontext *gl = (struct GLNVGcontext *)params->userPtr;
+    struct GLNVGtexture *tex = glnvg__allocTexture(gl);
+    tex->id = _id;
+    tex->width = _width;
+    tex->height = _height;
+    tex->flags = _flags;
+    tex->type = NVG_TEXTURE_RGBA;
+    return tex->id.idx;
+}

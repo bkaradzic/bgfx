@@ -529,7 +529,12 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             case EbtDouble:
             case EbtFloat16:
             case EbtFloat: newConstArray[i].setDConst(-unionArray[i].getDConst()); break;
-            case EbtInt:   newConstArray[i].setIConst(-unionArray[i].getIConst()); break;
+            // Note: avoid UBSAN error regarding negating 0x80000000
+            case EbtInt:   newConstArray[i].setIConst(
+                                unionArray[i].getIConst() == 0x80000000
+                                    ? -0x7FFFFFFF - 1
+                                    : -unionArray[i].getIConst());
+                           break;
             case EbtUint:  newConstArray[i].setUConst(static_cast<unsigned int>(-static_cast<int>(unionArray[i].getUConst())));  break;
 #ifndef GLSLANG_WEB
             case EbtInt8:  newConstArray[i].setI8Const(-unionArray[i].getI8Const()); break;

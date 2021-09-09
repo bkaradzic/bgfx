@@ -329,9 +329,9 @@ BGFX_C_API void bgfx_destroy_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_ha
 	bgfx::destroy(handle.cpp);
 }
 
-BGFX_C_API uint32_t bgfx_get_avail_transient_index_buffer(uint32_t _num)
+BGFX_C_API uint32_t bgfx_get_avail_transient_index_buffer(uint32_t _num, bool _index32)
 {
-	return bgfx::getAvailTransientIndexBuffer(_num);
+	return bgfx::getAvailTransientIndexBuffer(_num, _index32);
 }
 
 BGFX_C_API uint32_t bgfx_get_avail_transient_vertex_buffer(uint32_t _num, const bgfx_vertex_layout_t * _layout)
@@ -356,10 +356,10 @@ BGFX_C_API void bgfx_alloc_transient_vertex_buffer(bgfx_transient_vertex_buffer_
 	bgfx::allocTransientVertexBuffer((bgfx::TransientVertexBuffer*)_tvb, _num, layout);
 }
 
-BGFX_C_API bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_layout_t * _layout, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices)
+BGFX_C_API bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_layout_t * _layout, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices, bool _index32)
 {
 	const bgfx::VertexLayout & layout = *(const bgfx::VertexLayout *)_layout;
-	return bgfx::allocTransientBuffers((bgfx::TransientVertexBuffer*)_tvb, layout, _numVertices, (bgfx::TransientIndexBuffer*)_tib, _numIndices);
+	return bgfx::allocTransientBuffers((bgfx::TransientVertexBuffer*)_tvb, layout, _numVertices, (bgfx::TransientIndexBuffer*)_tib, _numIndices, _index32);
 }
 
 BGFX_C_API void bgfx_alloc_instance_data_buffer(bgfx_instance_data_buffer_t* _idb, uint32_t _num, uint16_t _stride)

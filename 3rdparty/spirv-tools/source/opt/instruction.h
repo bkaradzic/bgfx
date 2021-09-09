@@ -22,7 +22,9 @@
 #include <utility>
 #include <vector>
 
+#include "NonSemanticVulkanDebugInfo100.h"
 #include "OpenCLDebugInfo100.h"
+#include "source/common_debug_info.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/latest_version_spirv_header.h"
 #include "source/opcode.h"
@@ -550,9 +552,27 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // OpenCLDebugInfo100InstructionsMax.
   OpenCLDebugInfo100Instructions GetOpenCL100DebugOpcode() const;
 
+  // Returns debug opcode of a NonSemantic.Vulkan.DebugInfo.100 instruction. If
+  // it is not a NonSemantic.Vulkan.DebugInfo.100 instruction, just returns
+  // NonSemanticVulkanDebugInfo100InstructionsMax.
+  NonSemanticVulkanDebugInfo100Instructions GetVulkan100DebugOpcode() const;
+
+  // Returns debug opcode of an OpenCL.100.DebugInfo or
+  // NonSemantic.Vulkan.DebugInfo.100 instruction. Since these overlap, we
+  // return the OpenCLDebugInfo code
+  CommonDebugInfoInstructions GetCommonDebugOpcode() const;
+
   // Returns true if it is an OpenCL.DebugInfo.100 instruction.
   bool IsOpenCL100DebugInstr() const {
     return GetOpenCL100DebugOpcode() != OpenCLDebugInfo100InstructionsMax;
+  }
+  // Returns true if it is a NonSemantic.Vulkan.DebugInfo.100 instruction.
+  bool IsVulkan100DebugInstr() const {
+    return GetVulkan100DebugOpcode() !=
+           NonSemanticVulkanDebugInfo100InstructionsMax;
+  }
+  bool IsCommonDebugInstr() const {
+    return GetCommonDebugOpcode() != CommonDebugInfoInstructionsMax;
   }
 
   // Returns true if this instructions a non-semantic instruction.

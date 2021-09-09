@@ -506,12 +506,10 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
       return recursive_status;
     // Check matrix stride.
     if (SpvOpTypeMatrix == opcode) {
-      for (auto& decoration : vstate.id_decorations(id)) {
-        if (SpvDecorationMatrixStride == decoration.dec_type() &&
-            !IsAlignedTo(decoration.params()[0], alignment))
-          return fail(memberIdx)
-                 << "is a matrix with stride " << decoration.params()[0]
-                 << " not satisfying alignment to " << alignment;
+      const auto stride = constraint.matrix_stride;
+      if (!IsAlignedTo(stride, alignment)) {
+        return fail(memberIdx) << "is a matrix with stride " << stride
+                               << " not satisfying alignment to " << alignment;
       }
     }
 
@@ -549,17 +547,23 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
       // limitation to this check if the array size is a spec constant or is a
       // runtime array then we will only check a single element. This means
       // some improper straddles might be missed.
-      for (uint32_t i = 0; i < num_elements; ++i) {
-        uint32_t next_offset = i * array_stride + offset;
-        if (SpvOpTypeStruct == element_inst->opcode() &&
-            SPV_SUCCESS != (recursive_status = checkLayout(
-                                typeId, storage_class_str, decoration_str,
-                                blockRules, scalar_block_layout,
-                                next_offset, constraints, vstate)))
-          return recursive_status;
-        // If offsets accumulate up to a 16-byte multiple stop checking since
-        // it will just repeat.
-        if (i > 0 && (next_offset % 16 == 0)) break;
+      if (SpvOpTypeStruct == element_inst->opcode()) {
+        std::vector<bool> seen(16, false);
+        for (uint32_t i = 0; i < num_elements; ++i) {
+          uint32_t next_offset = i * array_stride + offset;
+          // Stop checking if offsets repeat in terms of 16-byte multiples.
+          if (seen[next_offset % 16]) {
+            break;
+          }
+
+          if (SPV_SUCCESS !=
+              (recursive_status = checkLayout(
+                   typeId, storage_class_str, decoration_str, blockRules,
+                   scalar_block_layout, next_offset, constraints, vstate)))
+            return recursive_status;
+
+          seen[next_offset % 16] = true;
+        }
       }
 
       // Proceed to the element in case it is an array.

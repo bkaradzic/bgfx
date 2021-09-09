@@ -20,7 +20,6 @@
 #include <set>
 #include <vector>
 
-#include "OpenCLDebugInfo100.h"
 #include "source/cfa.h"
 #include "source/opt/basic_block.h"
 #include "source/opt/dominator_analysis.h"
@@ -226,9 +225,9 @@ MemPass::MemPass() {}
 
 bool MemPass::HasOnlySupportedRefs(uint32_t varId) {
   return get_def_use_mgr()->WhileEachUser(varId, [this](Instruction* user) {
-    auto dbg_op = user->GetOpenCL100DebugOpcode();
-    if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
-        dbg_op == OpenCLDebugInfo100DebugValue) {
+    auto dbg_op = user->GetCommonDebugOpcode();
+    if (dbg_op == CommonDebugInfoDebugDeclare ||
+        dbg_op == CommonDebugInfoDebugValue) {
       return true;
     }
     SpvOp op = user->opcode();

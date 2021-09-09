@@ -1484,29 +1484,12 @@ namespace bgfx { namespace gl
 		void create(const ShaderGL& _vsh, const ShaderGL& _fsh);
 		void destroy();
 		void init();
-		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
-		void unbindInstanceData() const;
 
-		void bindAttributesBegin()
-		{
-			bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
-		}
-
+		void bindAttributesBegin();
 		void bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex = 0);
-
-		void bindAttributesEnd()
-		{
-			for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
-			{
-				if (Attrib::Count != m_unboundUsedAttrib[ii])
-				{
-					Attrib::Enum attr = Attrib::Enum(m_unboundUsedAttrib[ii]);
-					GLint loc = m_attributes[attr];
-					GL_CHECK(lazyDisableVertexAttribArray(loc) );
-				}
-			}
-		}
-
+		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
+		void bindAttributesEnd();
+		void unbindInstanceData() const;
 		void unbindAttributes();
 
 		GLuint m_id;

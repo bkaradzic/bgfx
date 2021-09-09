@@ -25,18 +25,20 @@ all: $(BIN)
 
 define shader-embedded
 	@echo [$(<)]
-	 $(SILENT) $(SHADERC) --type $(1) --platform linux                 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
-	 @cat $(SHADER_TMP) > $(@)
-	-$(SILENT) $(SHADERC) --type $(1) --platform linux   -p spirv      -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_spv
-	-@cat $(SHADER_TMP) >> $(@)
-	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p $(2)  -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx9
-	-@cat $(SHADER_TMP) >> $(@)
-	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p $(3)  -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx11
-	-@cat $(SHADER_TMP) >> $(@)
-	-$(SILENT) $(SHADERC) --type $(1) --platform ios     -p metal -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_mtl
-	-@cat $(SHADER_TMP) >> $(@)
-	-@echo extern const uint8_t* $(basename $(<))_pssl;>> $(@)
-	-@echo extern const uint32_t $(basename $(<))_pssl_size;>> $(@)
+	 $(SILENT) $(SHADERC) --type $(1) --platform linux   -p 120        -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_glsl
+	 @cat "$(SHADER_TMP)" > $(@)
+	-$(SILENT) $(SHADERC) --type $(1) --platform android               -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_essl
+	-@cat "$(SHADER_TMP)" >> $(@)	 
+	-$(SILENT) $(SHADERC) --type $(1) --platform linux   -p spirv      -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_spv
+	-@cat "$(SHADER_TMP)" >> $(@)
+	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p $(2)  -O 3 -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dx9
+	-@cat "$(SHADER_TMP)" >> $(@)
+	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p $(3)  -O 3 -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dx11
+	-@cat "$(SHADER_TMP)" >> $(@)
+	-$(SILENT) $(SHADERC) --type $(1) --platform ios     -p metal -O 3 -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_mtl
+	-@cat "$(SHADER_TMP)" >> $(@)
+	-@printf "extern const uint8_t* $(basename $(<))_pssl;\n" | tr -d '\015' >> $(@)
+	-@printf "extern const uint32_t $(basename $(<))_pssl_size;\n" | tr -d '\015' >> $(@)
 endef
 
 vs_debugfont.bin.h : vs_debugfont.sc

@@ -1739,7 +1739,7 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
         case EbtUint:
             switch (from) {
             case EbtInt:
-                return version >= 400 || getSource() == EShSourceHlsl;
+                return version >= 400 || getSource() == EShSourceHlsl || IsRequestedExtension(E_GL_ARB_gpu_shader5);
             case EbtBool:
                 return getSource() == EShSourceHlsl;
             case EbtInt16:
@@ -2676,7 +2676,11 @@ TIntermTyped* TIntermediate::addSwizzle(TSwizzleSelectors<selectorType>& selecto
 // 'swizzleOkay' says whether or not it is okay to consider a swizzle
 // a valid part of the dereference chain.
 //
-const TIntermTyped* TIntermediate::findLValueBase(const TIntermTyped* node, bool swizzleOkay)
+// 'BufferReferenceOk' says if type is buffer_reference, the routine stop to find the most left node.
+//
+//
+
+const TIntermTyped* TIntermediate::findLValueBase(const TIntermTyped* node, bool swizzleOkay , bool bufferReferenceOk)
 {
     do {
         const TIntermBinary* binary = node->getAsBinaryNode();
@@ -2694,6 +2698,8 @@ const TIntermTyped* TIntermediate::findLValueBase(const TIntermTyped* node, bool
                 return nullptr;
         }
         node = node->getAsBinaryNode()->getLeft();
+        if (bufferReferenceOk && node->isReference())
+            return node;
     } while (true);
 }
 

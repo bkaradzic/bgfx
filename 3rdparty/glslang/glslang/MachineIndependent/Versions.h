@@ -136,6 +136,7 @@ const char* const E_GL_ARB_explicit_attrib_location     = "GL_ARB_explicit_attri
 const char* const E_GL_ARB_explicit_uniform_location    = "GL_ARB_explicit_uniform_location";
 const char* const E_GL_ARB_shader_image_load_store      = "GL_ARB_shader_image_load_store";
 const char* const E_GL_ARB_shader_atomic_counters       = "GL_ARB_shader_atomic_counters";
+const char* const E_GL_ARB_shader_atomic_counter_ops    = "GL_ARB_shader_atomic_counter_ops";
 const char* const E_GL_ARB_shader_draw_parameters       = "GL_ARB_shader_draw_parameters";
 const char* const E_GL_ARB_shader_group_vote            = "GL_ARB_shader_group_vote";
 const char* const E_GL_ARB_derivative_control           = "GL_ARB_derivative_control";
@@ -204,6 +205,8 @@ const char* const E_GL_EXT_fragment_shading_rate            = "GL_EXT_fragment_s
 const char* const E_GL_EXT_shader_image_int64               = "GL_EXT_shader_image_int64";
 const char* const E_GL_EXT_null_initializer                 = "GL_EXT_null_initializer";
 const char* const E_GL_EXT_shared_memory_block              = "GL_EXT_shared_memory_block";
+const char* const E_GL_EXT_subgroup_uniform_control_flow    = "GL_EXT_subgroup_uniform_control_flow";
+const char* const E_GL_EXT_spirv_intrinsics                 = "GL_EXT_spirv_intrinsics";
 
 // Arrays of extensions for the above viewportEXTs duplications
 
@@ -245,6 +248,7 @@ const char* const E_GL_NV_shader_noperspective_interpolation    = "GL_NV_shader_
 const char* const E_GL_NV_shader_subgroup_partitioned           = "GL_NV_shader_subgroup_partitioned";
 const char* const E_GL_NV_shading_rate_image                    = "GL_NV_shading_rate_image";
 const char* const E_GL_NV_ray_tracing                           = "GL_NV_ray_tracing";
+const char* const E_GL_NV_ray_tracing_motion_blur               = "GL_NV_ray_tracing_motion_blur";
 const char* const E_GL_NV_fragment_shader_barycentric           = "GL_NV_fragment_shader_barycentric";
 const char* const E_GL_NV_compute_shader_derivatives            = "GL_NV_compute_shader_derivatives";
 const char* const E_GL_NV_shader_texture_footprint              = "GL_NV_shader_texture_footprint";
@@ -305,6 +309,7 @@ const char* const E_GL_EXT_shader_subgroup_extended_types_float16 = "GL_EXT_shad
 const char* const E_GL_EXT_terminate_invocation = "GL_EXT_terminate_invocation";
 
 const char* const E_GL_EXT_shader_atomic_float = "GL_EXT_shader_atomic_float";
+const char* const E_GL_EXT_shader_atomic_float2 = "GL_EXT_shader_atomic_float2";
 
 // Arrays of extensions for the above AEP duplications
 

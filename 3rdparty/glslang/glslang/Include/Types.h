@@ -44,10 +44,13 @@
 #include "../Include/BaseTypes.h"
 #include "../Public/ShaderLang.h"
 #include "arrays.h"
+#include "SpirvIntrinsics.h"
 
 #include <algorithm>
 
 namespace glslang {
+
+class TIntermAggregate;
 
 const int GlslangMaxTypeLength = 200;  // TODO: need to print block/struct one member per line, so this can stay bounded
 
@@ -115,6 +118,7 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
 #endif
 
     bool is1D()          const { return dim == Esd1D; }
+    bool is2D()          const { return dim == Esd2D; }
     bool isBuffer()      const { return dim == EsdBuffer; }
     bool isRect()        const { return dim == EsdRect; }
     bool isSubpass()     const { return dim == EsdSubpass; }
@@ -486,7 +490,6 @@ enum TShaderInterface
     EsiCount
 };
 
-
 class TQualifier {
 public:
     static const int layoutNotSet = -1;
@@ -500,6 +503,8 @@ public:
 #ifndef GLSLANG_WEB
         noContraction = false;
         nullInit = false;
+        spirvByReference = false;
+        spirvLiteral = false;
 #endif
         defaultBlock = false;
     }
@@ -517,6 +522,12 @@ public:
         nullInit = false;
         defaultBlock = false;
         clearLayout();
+#ifndef GLSLANG_WEB
+        spirvStorageClass = -1;
+        spirvDecorate = nullptr;
+        spirvByReference = false;
+        spirvLiteral = false;
+#endif
     }
 
     void clearInterstage()
@@ -595,6 +606,10 @@ public:
     bool isPervertexNV() const { return false; }
     void setNullInit() { }
     bool isNullInit() const { return false; }
+    void setSpirvByReference() { }
+    bool isSpirvByReference() { return false; }
+    void setSpirvLiteral() { }
+    bool isSpirvLiteral() { return false; }
 #else
     bool noContraction: 1; // prevent contraction and reassociation, e.g., for 'precise' keyword, and expressions it affects
     bool nopersp      : 1;
@@ -617,6 +632,8 @@ public:
     bool shadercallcoherent : 1;
     bool nonprivate   : 1;
     bool nullInit : 1;
+    bool spirvByReference : 1;
+    bool spirvLiteral : 1;
     bool isWriteOnly() const { return writeonly; }
     bool isReadOnly() const { return readonly; }
     bool isRestrict() const { return restrict; }
@@ -654,6 +671,10 @@ public:
     bool isPervertexNV() const { return pervertexNV; }
     void setNullInit() { nullInit = true; }
     bool isNullInit() const { return nullInit; }
+    void setSpirvByReference() { spirvByReference = true; }
+    bool isSpirvByReference() const { return spirvByReference; }
+    void setSpirvLiteral() { spirvLiteral = true; }
+    bool isSpirvLiteral() const { return spirvLiteral; }
 #endif
 
     bool isPipeInput() const
@@ -947,6 +968,10 @@ public:
     bool layoutViewportRelative;
     int layoutSecondaryViewportRelativeOffset;
     bool layoutShaderRecord;
+
+    // GL_EXT_spirv_intrinsics
+    int spirvStorageClass;
+    TSpirvDecorate* spirvDecorate;
 #endif
 
     bool hasUniformLayout() const
@@ -1078,6 +1103,15 @@ public:
     {
         return nonUniform;
     }
+
+    // GL_EXT_spirv_intrinsics
+    bool hasSprivDecorate() const { return spirvDecorate != nullptr; }
+    void setSpirvDecorate(int decoration, const TIntermAggregate* args = nullptr);
+    void setSpirvDecorateId(int decoration, const TIntermAggregate* args);
+    void setSpirvDecorateString(int decoration, const TIntermAggregate* args);
+    const TSpirvDecorate& getSpirvDecorate() const { assert(spirvDecorate); return *spirvDecorate; }
+    TSpirvDecorate& getSpirvDecorate() { assert(spirvDecorate); return *spirvDecorate; }
+    TString getSpirvDecorateQualifierString() const;
 #endif
     bool hasSpecConstantId() const
     {
@@ -1422,6 +1456,10 @@ public:
     const TType* userDef;
     TSourceLoc loc;
     TArraySizes* typeParameters;
+#ifndef GLSLANG_WEB
+    // SPIR-V type defined by spirv_type directive
+    TSpirvType* spirvType;
+#endif
 
 #ifdef GLSLANG_WEB
     bool isCoopmat() const { return false; }
@@ -1440,6 +1478,9 @@ public:
         loc = l;
         typeParameters = nullptr;
         coopmat = false;
+#ifndef GLSLANG_WEB
+        spirvType = nullptr;
+#endif
     }
 
     void initQualifiers(bool global = false)
@@ -1476,6 +1517,11 @@ public:
         return matrixCols == 0 && vectorSize == 1 && arraySizes == nullptr && userDef == nullptr;
     }
 
+#ifndef GLSLANG_WEB
+    // GL_EXT_spirv_intrinsics
+    void setSpirvType(const TSpirvInstruction& spirvInst, const TSpirvTypeParameters* typeParams = nullptr);
+#endif
+
     // "Image" is a superset of "Subpass"
     bool isImage()   const { return basicType == EbtSampler && sampler.isImage(); }
     bool isSubpass() const { return basicType == EbtSampler && sampler.isSubpass(); }
@@ -1493,6 +1539,9 @@ public:
                    bool isVector = false) :
                             basicType(t), vectorSize(vs), matrixCols(mc), matrixRows(mr), vector1(isVector && vs == 1), coopmat(false),
                             arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 sampler.clear();
                                 qualifier.clear();
@@ -1504,6 +1553,9 @@ public:
           bool isVector = false) :
                             basicType(t), vectorSize(vs), matrixCols(mc), matrixRows(mr), vector1(isVector && vs == 1), coopmat(false),
                             arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 sampler.clear();
                                 qualifier.clear();
@@ -1517,6 +1569,9 @@ public:
                             basicType(p.basicType),
                             vectorSize(p.vectorSize), matrixCols(p.matrixCols), matrixRows(p.matrixRows), vector1(false), coopmat(p.coopmat),
                             arraySizes(p.arraySizes), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(p.typeParameters)
+#ifndef GLSLANG_WEB
+                            , spirvType(p.spirvType)
+#endif
                             {
                                 if (basicType == EbtSampler)
                                     sampler = p.sampler;
@@ -1551,6 +1606,9 @@ public:
         basicType(EbtSampler), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
         arraySizes(as), structure(nullptr), fieldName(nullptr), typeName(nullptr),
         sampler(sampler), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+        , spirvType(nullptr)
+#endif
     {
         qualifier.clear();
         qualifier.storage = q;
@@ -1601,6 +1659,9 @@ public:
     TType(TTypeList* userDef, const TString& n) :
                             basicType(EbtStruct), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
                             arraySizes(nullptr), structure(userDef), fieldName(nullptr), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 sampler.clear();
                                 qualifier.clear();
@@ -1610,6 +1671,9 @@ public:
     TType(TTypeList* userDef, const TString& n, const TQualifier& q) :
                             basicType(EbtBlock), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
                             qualifier(q), arraySizes(nullptr), structure(userDef), fieldName(nullptr), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 sampler.clear();
                                 typeName = NewPoolTString(n.c_str());
@@ -1618,6 +1682,9 @@ public:
     explicit TType(TBasicType t, const TType &p, const TString& n) :
                             basicType(t), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false),
                             arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 assert(t == EbtReference);
                                 typeName = NewPoolTString(n.c_str());
@@ -1648,6 +1715,9 @@ public:
             referentType = copyOf.referentType;
         }
         typeParameters = copyOf.typeParameters;
+#ifndef GLSLANG_WEB
+        spirvType = copyOf.spirvType;
+#endif
         coopmat = copyOf.isCoopMat();
     }
 
@@ -1769,7 +1839,7 @@ public:
     }
     virtual bool isOpaque() const { return basicType == EbtSampler
 #ifndef GLSLANG_WEB
-         || basicType == EbtAtomicUint || basicType == EbtAccStruct || basicType == EbtRayQuery
+            || basicType == EbtAtomicUint || basicType == EbtAccStruct || basicType == EbtRayQuery
 #endif
         ; }
     virtual bool isBuiltIn() const { return getQualifier().builtIn != EbvNone; }
@@ -2017,8 +2087,6 @@ public:
         }
     }
 
-
-
     const char* getBasicString() const
     {
         return TType::getBasicString(basicType);
@@ -2049,6 +2117,7 @@ public:
         case EbtRayQuery:          return "rayQueryEXT";
         case EbtReference:         return "reference";
         case EbtString:            return "string";
+        case EbtSpirvType:         return "spirv_type";
 #endif
         default:                   return "unknown type";
         }
@@ -2068,6 +2137,9 @@ public:
         const auto appendStr  = [&](const char* s)  { typeString.append(s); };
         const auto appendUint = [&](unsigned int u) { typeString.append(std::to_string(u).c_str()); };
         const auto appendInt  = [&](int i)          { typeString.append(std::to_string(i).c_str()); };
+
+        if (qualifier.hasSprivDecorate())
+            appendStr(qualifier.getSpirvDecorateQualifierString().c_str());
 
         if (qualifier.hasLayout()) {
             // To reduce noise, skip this if the only layout is an xfb_buffer
@@ -2218,6 +2290,10 @@ public:
             appendStr(" nonuniform");
         if (qualifier.isNullInit())
             appendStr(" null-init");
+        if (qualifier.isSpirvByReference())
+            appendStr(" spirv_by_reference");
+        if (qualifier.isSpirvLiteral())
+            appendStr(" spirv_literal");
         appendStr(" ");
         appendStr(getStorageQualifierString());
         if (isArray()) {
@@ -2454,6 +2530,15 @@ public:
                 (typeParameters != nullptr && right.typeParameters != nullptr && *typeParameters == *right.typeParameters));
     }
 
+#ifndef GLSLANG_WEB
+    // See if two type's SPIR-V type contents match
+    bool sameSpirvType(const TType& right) const
+    {
+        return ((spirvType == nullptr && right.spirvType == nullptr) ||
+                (spirvType != nullptr && right.spirvType != nullptr && *spirvType == *right.spirvType));
+    }
+#endif
+
     // See if two type's elements match in all ways except basic type
     bool sameElementShape(const TType& right) const
     {
@@ -2492,7 +2577,11 @@ public:
     // See if two types match in all ways (just the actual type, not qualification)
     bool operator==(const TType& right) const
     {
+#ifndef GLSLANG_WEB
+        return sameElementType(right) && sameArrayness(right) && sameTypeParameters(right) && sameSpirvType(right);
+#else
         return sameElementType(right) && sameArrayness(right) && sameTypeParameters(right);
+#endif
     }
 
     bool operator!=(const TType& right) const
@@ -2511,6 +2600,10 @@ public:
         return 0;
     }
 
+#ifndef GLSLANG_WEB
+    const TSpirvType& getSpirvType() const { assert(spirvType); return *spirvType; }
+#endif
+
 protected:
     // Require consumer to pick between deep copy and shallow copy.
     TType(const TType& type);
@@ -2522,6 +2615,19 @@ protected:
     void deepCopy(const TType& copyOf, TMap<TTypeList*,TTypeList*>& copiedMap)
     {
         shallowCopy(copyOf);
+
+#ifndef GLSLANG_WEB
+        // GL_EXT_spirv_intrinsics
+        if (copyOf.qualifier.spirvDecorate) {
+            qualifier.spirvDecorate = new TSpirvDecorate;
+            *qualifier.spirvDecorate = *copyOf.qualifier.spirvDecorate;
+        }
+
+        if (copyOf.spirvType) {
+            spirvType = new TSpirvType;
+            *spirvType = *copyOf.spirvType;
+        }
+#endif
 
         if (copyOf.arraySizes) {
             arraySizes = new TArraySizes;
@@ -2582,6 +2688,9 @@ protected:
     TString *typeName;          // for structure type name
     TSampler sampler;
     TArraySizes* typeParameters;// nullptr unless a parameterized type; can be shared across types
+#ifndef GLSLANG_WEB
+    TSpirvType* spirvType;  // SPIR-V type defined by spirv_type directive
+#endif
 };
 
 } // end namespace glslang

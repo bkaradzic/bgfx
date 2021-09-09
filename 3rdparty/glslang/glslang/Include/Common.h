@@ -195,6 +195,10 @@ template <class K, class D, class HASH = std::hash<K>, class PRED = std::equal_t
 class TUnorderedMap : public std::unordered_map<K, D, HASH, PRED, pool_allocator<std::pair<K const, D> > > {
 };
 
+template <class K, class CMP = std::less<K> >
+class TSet : public std::set<K, CMP, pool_allocator<K> > {
+};
+
 //
 // Persistent string memory.  Should only be used for strings that survive
 // across compiles/links.

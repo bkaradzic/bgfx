@@ -238,11 +238,11 @@ void GenerateSSAOShadowsInternal( out float outShadowTerm, out vec4 outEdges, ou
     float pixZ, pixLZ, pixTZ, pixRZ, pixBZ;
 
 #if BGFX_SHADER_LANGUAGE_GLSL  
-    vec4 valuesUL     = textureGather(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize + vec2(0.0,u_halfViewportPixelSize.y)).wzyx;
-    vec4 valuesBR     = textureGatherOffset(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize + vec2(0.0,u_halfViewportPixelSize.y), ivec2( 1, -1 ) ).wzyx;
+    vec4 valuesUL     = textureGather(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize + vec2(0.0,u_halfViewportPixelSize.y), 0).wzyx;
+    vec4 valuesBR     = textureGatherOffset(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize + vec2(0.0,u_halfViewportPixelSize.y), ivec2( 1, -1 ), 0).wzyx;
 #else
-    vec4 valuesUL     = textureGather(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize );
-    vec4 valuesBR     = textureGatherOffset(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize, ivec2( 1, 1 ) );
+    vec4 valuesUL     = textureGather(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize, 0);
+    vec4 valuesBR     = textureGatherOffset(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize, ivec2( 1, 1 ), 0);
 #endif
 
     // get this pixel's viewspace depth
