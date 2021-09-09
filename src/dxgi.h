@@ -100,7 +100,7 @@ namespace bgfx
 		void trim();
 
 		///
-		bool tearingSupported();
+		bool tearingSupported() const;
 
 		///
 		void* m_dxgiDll;

@@ -788,7 +788,7 @@ namespace bgfx
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	}
 
-	bool Dxgi::tearingSupported()
+	bool Dxgi::tearingSupported() const
 	{
 		return m_tearingSupported;
 	}

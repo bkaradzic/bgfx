@@ -2288,10 +2288,13 @@ namespace bgfx { namespace d3d11
 					&&  m_needPresent)
 					{
 						uint32_t presentFlags = 0;
-						if (!syncInterval && (m_dxgi.tearingSupported()))
+
+						if (!syncInterval
+						&&  m_dxgi.tearingSupported() )
 						{
 							presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
 						}
+
 						hr = m_swapChain->Present(syncInterval, presentFlags);
 
 						m_needPresent = false;
