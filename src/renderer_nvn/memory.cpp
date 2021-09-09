@@ -125,7 +125,7 @@ namespace bgfx { namespace nvn
 	{
 		if (_data)
 		{
-			const auto ptrAddr = static_cast<uint8_t*>(nvnBufferMap(&m_buffer));
+			uint8_t* ptrAddr = static_cast<uint8_t*>(nvnBufferMap(&m_buffer));
 			::memcpy(ptrAddr + _offset, _data, _size);
 			nvnBufferFlushMappedRange(&m_buffer, _offset, _size);
 		}

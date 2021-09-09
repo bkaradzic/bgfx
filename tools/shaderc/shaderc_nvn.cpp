@@ -439,7 +439,8 @@ namespace bgfx {
 					vertexAttributeData.m_IsPerPatch = programInput->isPerPatch;
 					vertexAttributeData.m_StagesReferencedIn = static_cast<uint8_t>(programInput->stagesReferencedIn);
 
-					if (vertexAttributeData.m_StagesReferencedIn & currentShaderStageBits) {
+					// a location of -1 means that the attribute is a varying attribute rather than a vertex attribute
+					if ((vertexAttributeData.m_StagesReferencedIn & currentShaderStageBits) && (vertexAttributeData.m_Location != -1)) {
 						reflectionInfo.m_VertexAttributes.push_back(vertexAttributeData);
 					}
 
@@ -513,7 +514,7 @@ namespace bgfx {
 			for (const VertexAttributeData& attribute : reflectionInfo.m_VertexAttributes)
 			{
 				const bgfx::Attrib::Enum attType = toAttribEnum(attribute.m_Name.c_str());
-				bx::write(_writer, static_cast<uint8_t>(attType));
+				bx::write(_writer, static_cast<uint8_t>(attType)); // if attType == bgfx::Attrib::Count then it's instance data
 
 				uint8_t nameSize = (uint8_t)attribute.m_Name.size();
 				bx::write(_writer, nameSize);

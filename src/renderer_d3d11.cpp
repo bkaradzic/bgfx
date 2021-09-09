@@ -3743,7 +3743,7 @@ namespace bgfx {
 			m_size = _size;
 			m_flags = _flags;
 
-			const bool needUav = 0 != (_flags & (BGFX_BUFFER_COMPUTE_WRITE | BGFX_BUFFER_DRAW_INDIRECT));
+			const bool needUav = 0 != (_flags & (BGFX_BUFFER_COMPUTE_WRITE | BGFX_BUFFER_DRAW_INDIRECT)) || isShaderBuffer;
 			const bool needSrv = 0 != (_flags & BGFX_BUFFER_COMPUTE_READ) || isShaderBuffer;
 			const bool drawIndirect = 0 != (_flags & BGFX_BUFFER_DRAW_INDIRECT);
 			m_dynamic = NULL == _data && !needUav || isShaderBuffer;
@@ -3858,6 +3858,7 @@ namespace bgfx {
 #else
 				desc.Usage = D3D11_USAGE_DYNAMIC;
 				desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+				desc.StructureByteStride = _stride;
 
 				DX_CHECK(device->CreateBuffer(&desc
 					, NULL
@@ -5814,6 +5815,21 @@ namespace bgfx {
 								}
 								break;
 
+								case Binding::ShaderBuffer:
+								{
+									BufferD3D11& buffer = m_shaderBuffers[bind.m_idx];
+									if (Access::Read != bind.m_access)
+									{
+										uav[stage] = buffer.m_uav;
+									}
+									else
+									{
+										m_textureStage.m_srv[stage] = buffer.m_srv;
+									}
+									m_textureStage.m_sampler[stage] = NULL;
+								}
+								break;
+
 								case Binding::IndexBuffer:
 								case Binding::VertexBuffer:
 								{
@@ -6140,6 +6156,14 @@ namespace bgfx {
 									{
 										TextureD3D11& texture = m_textures[bind.m_idx];
 										texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette);
+									}
+									break;
+
+									case Binding::ShaderBuffer:
+									{
+										BufferD3D11& buffer = m_shaderBuffers[bind.m_idx];
+										m_textureStage.m_srv[stage] = buffer.m_srv;
+										m_textureStage.m_sampler[stage] = NULL;
 									}
 									break;
 

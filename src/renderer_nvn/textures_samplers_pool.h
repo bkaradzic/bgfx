@@ -6,6 +6,8 @@
 #ifndef BGFX_NVN_TEXTURES_SAMPLERS_POOL_H_HEADER_GUARD
 #define BGFX_NVN_TEXTURES_SAMPLERS_POOL_H_HEADER_GUARD
 
+#if BGFX_CONFIG_RENDERER_NVN
+
 #include "memory.h"
 #include <nvn/nvn.h>
 
@@ -48,5 +50,7 @@ namespace bgfx { namespace nvn
 		int m_numSamplers = 0;
 	};
 } }
+
+#endif // BGFX_CONFIG_RENDERER_NVN
 
 #endif // BGFX_NVN_TEXTURES_SAMPLERS_POOL_H_HEADER_GUARD

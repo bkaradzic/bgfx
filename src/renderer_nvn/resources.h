@@ -6,6 +6,8 @@
 #ifndef BGFX_NVN_RESOURCES_H_HEADER_GUARD
 #define BGFX_NVN_RESOURCES_H_HEADER_GUARD
 
+#if BGFX_CONFIG_RENDERER_NVN
+
 #include "memory.h"
 
 #define BGFX_NVN_UNIFORMLOCATION_REGISTERMASK 0xFFFF
@@ -70,6 +72,7 @@ namespace bgfx { namespace nvn
 
 		TextureNVN()
 			: m_numMips(0)
+			, m_numSamples(0)
 			, m_created(false)
 		{
 		}
@@ -78,6 +81,7 @@ namespace bgfx { namespace nvn
 		void create(NVNdevice* _device, NVNtextureBuilder& _builder);
 		void destroy();
 		void update(NVNcommandBuffer* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
+		void resolve(NVNcommandBuffer* _commandList, TextureNVN& _msaaTex, const Rect& _rect);
 
 		bool m_created;
 
@@ -90,6 +94,7 @@ namespace bgfx { namespace nvn
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
 		uint8_t m_numMips;
+		uint8_t m_numSamples;
 		MemoryPool m_pool;
 	};
 
@@ -113,21 +118,27 @@ namespace bgfx { namespace nvn
 
 	struct SwapChainNVN
 	{
+		static constexpr int MaxWidth = 1920;
+		static constexpr int MaxHeight = 1080;
+
 		void create(int _textureCount, NVNnativeWindow _nativeWindow, NVNdevice* _device, const bgfx::Resolution& _size, const bgfx::TextureFormat::Enum _colorFormat, const bgfx::TextureFormat::Enum _depthFormat);
 		void destroy();
 		void present(NVNqueue* _queue);
+		void resolve(NVNcommandBuffer* _commandList, const Resolution& _resolution);
 
 		BackBuffer acquireNext();
 		BackBuffer get();
 
 		std::vector<TextureNVN> m_colorTextures;
 		TextureNVN m_depthTexture;
+		TextureNVN m_colorMsaa;
 
 		NVNwindow m_window;
 		bool m_created = false;
 		NVNsync m_windowSync;
 		int m_numTextures = 0;
 		int m_current = 0;
+		int m_msaa = 0;
 	};
 
 	struct PipelineVboState
@@ -135,7 +146,6 @@ namespace bgfx { namespace nvn
 		static constexpr uint8_t MaxAttributes = 16; // NVN_DEVICE_INFO_VERTEX_ATTRIBUTES
 		static constexpr uint8_t MaxStreams = 16; // NVN_DEVICE_INFO_VERTEX_BUFFER_BINDINGS
 
-		int m_numAttributes = 0;
 		int m_numStreams = 0;
 
 		NVNvertexAttribState m_attribStates[MaxAttributes];
@@ -162,7 +172,7 @@ namespace bgfx { namespace nvn
 
 		NVNcommandBuffer* get();
 
-		void getUsage(size_t& _usageCommand, size_t& _usageControl) const;
+		void getUsage(size_t& _usageCommand, size_t& _usageControl, size_t& _hwCommand, size_t& _hwControl) const;
 
 	private:
 		MemoryPool m_poolCommand;
@@ -173,6 +183,9 @@ namespace bgfx { namespace nvn
 
 		size_t m_usageCommand = 0;
 		size_t m_usageControl = 0;
+
+		static size_t m_hwCommand;
+		static size_t m_hwControl;
 
 		NVNcommandHandle _end();
 		void _resetState();
@@ -323,6 +336,8 @@ namespace bgfx { namespace nvn
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint16_t m_attrMask[Attrib::Count];
 		uint8_t m_attrRemap[Attrib::Count];
+		uint8_t m_instanceLoc[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
+		uint8_t m_numInstanceData = 0;
 
 		uint32_t m_hash = 0;
 
@@ -331,6 +346,8 @@ namespace bgfx { namespace nvn
 		uint8_t m_numAttrs = 0;
 
 		uint16_t m_size = 0;
+
+		char* m_name = nullptr;
 	};
 
 	struct ProgramNVN
@@ -349,7 +366,7 @@ namespace bgfx { namespace nvn
 		const ShaderNVN* m_vsh;
 		const ShaderNVN* m_fsh;
 
-		int m_Stages = 0;
+		int m_stages = 0;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
@@ -394,6 +411,27 @@ namespace bgfx { namespace nvn
 		NVNtextureView m_colorViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		NVNtextureView m_depthView;
 	};
+
+	struct OcclusionQueryNVN
+	{
+		OcclusionQueryNVN()
+			: m_control(BX_COUNTOF(m_handle))
+		{
+		}
+
+		void init();
+		void destroy();
+		void begin(NVNcommandBuffer* _commandList, Frame* _render, OcclusionQueryHandle _handle);
+		void end(NVNcommandBuffer* _commandList);
+		void invalidate(OcclusionQueryHandle _handle);
+
+		BufferNVN m_buffer;
+		OcclusionQueryHandle m_handle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
+		bx::RingBufferControl m_control;
+	};
+
 } }
+
+#endif // BGFX_CONFIG_RENDERER_NVN
 
 #endif // BGFX_NVN_RESOURCES_H_HEADER_GUARD

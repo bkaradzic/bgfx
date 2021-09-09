@@ -11,7 +11,9 @@ SAMPLER2D(s_albedo, 0);
 SAMPLER2D(s_normal, 1);
 
 // struct ModelUniforms
+BGFX_BEGIN_UNIFORM_BLOCK(UniformsMaterial)
 uniform vec4 u_modelParams[2];
+BGFX_END_UNIFORM_BLOCK
 
 #define u_color				(u_modelParams[0].xyz)
 #define u_lightPosition		(u_modelParams[1].xyz)

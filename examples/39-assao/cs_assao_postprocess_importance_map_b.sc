@@ -44,7 +44,7 @@ void main()
 		uint sum = uint(saturate(retVal) * 255.0 + 0.5);
     
 		// save every 9th to avoid InterlockedAdd congestion - since we're blurring, this is good enough; compensated by multiplying LoadCounterAvgDiv by 9
-#if BGFX_SHADER_LANGUAGE_GLSL 
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		if( ((dtID.x % 3) + ((dim.y-1-dtID.y) % 3)) == 0  )
 #else
 		if( ((dtID.x % 3) + (dtID.y % 3)) == 0  )

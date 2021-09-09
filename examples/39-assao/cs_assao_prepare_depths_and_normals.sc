@@ -81,14 +81,14 @@ void main()
 	if (all(lessThan(dtID.xy, dim) ) )
 	{
 		ivec2 baseCoords = ivec2(dtID.xy) * 2;
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		vec2 upperLeftUV = (vec2(dtID.xy) + vec2(0.25,0.75)) * u_viewport2xPixelSize;
 #else
 		vec2 upperLeftUV = (vec2(dtID.xy) + vec2(0.25,0.25)) * u_viewport2xPixelSize;
 #endif
 
 		ivec2 baseCoord = ivec2(dtID.xy) * 2;
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		float z0 = ScreenSpaceToViewSpaceDepth( texelFetchOffset(s_depthSource, baseCoord, 0, ivec2( 0, 1 ) ).x );
 		float z1 = ScreenSpaceToViewSpaceDepth( texelFetchOffset(s_depthSource, baseCoord, 0, ivec2( 1, 1 ) ).x );
 		float z2 = ScreenSpaceToViewSpaceDepth( texelFetchOffset(s_depthSource, baseCoord, 0, ivec2( 0, 0 ) ).x );
@@ -112,7 +112,7 @@ void main()
 		pixZs[1][2] = z2;
 		pixZs[2][2] = z3;
 
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		// left 2
 		pixZs[0][1] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, 0 ) ).x ); 
 		pixZs[0][2] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, -1 ) ).x ); 
@@ -149,7 +149,7 @@ void main()
 		vec4 edges3 = CalculateEdges( pixZs[2][2], pixZs[1][2], pixZs[3][2], pixZs[2][1], pixZs[2][3] );
 
 		vec2 viewportPixelSize = u_viewportPixelSize;
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		viewportPixelSize.y = -viewportPixelSize.y;
 #endif
 
@@ -177,7 +177,7 @@ void main()
 		vec3 norm2 = CalculateNormal( edges2, pixPos[1][2], pixPos[0][2], pixPos[2][2], pixPos[1][1], pixPos[1][3] );
 		vec3 norm3 = CalculateNormal( edges3, pixPos[2][2], pixPos[1][2], pixPos[3][2], pixPos[2][1], pixPos[2][3] );
 
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		imageStore(s_normalsOutputUAV, baseCoords + ivec2( 0, 1 ), vec4( norm0 * 0.5 + 0.5, 0.0 ));
 		imageStore(s_normalsOutputUAV, baseCoords + ivec2( 1, 1 ), vec4( norm1 * 0.5 + 0.5, 0.0 ));
 		imageStore(s_normalsOutputUAV, baseCoords + ivec2( 0, 0 ), vec4( norm2 * 0.5 + 0.5, 0.0 ));

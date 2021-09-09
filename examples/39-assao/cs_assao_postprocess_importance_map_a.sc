@@ -29,7 +29,7 @@ void main()
 
 		vec2 halfPixel = u_quarterResPixelSize * 0.5f;
 
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		halfPixel.y = -halfPixel.y;
 #endif 
 		vec4 vals;

@@ -443,6 +443,11 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define textureSize(_sampler, _lod) bgfxTextureSize(_sampler, _lod)
 #		define textureGather(_sampler, _coord) bgfxTextureGather(_sampler, _coord)
 #		define textureGatherOffset(_sampler, _coord, _offset) bgfxTextureGatherOffset(_sampler, _coord, _offset)
+
+#		define BUFFER_RO(_name, _struct, _reg) StructuredBuffer<_struct> _name : REGISTER(t, _reg)
+#		define BUFFER_RW(_name, _struct, _reg) RWStructuredBuffer<_struct> _name : REGISTER(u, _reg)
+#		define BUFFER_WR(_name, _struct, _reg) BUFFER_RW(_name, _struct, _reg)
+
 #	else
 
 #		define sampler2DShadow sampler2D
@@ -501,6 +506,10 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 #		define texture2DGrad(_sampler, _coord, _dPdx, _dPdy) tex2Dgrad(_sampler, _coord, _dPdx, _dPdy)
 #		define texture3DLod(_sampler, _coord, _level) tex3Dlod(_sampler, vec4( (_coord).xyz, _level) )
 #		define textureCubeLod(_sampler, _coord, _level) texCUBElod(_sampler, vec4( (_coord).xyz, _level) )
+
+#		define BUFFER_RO(_name, _struct, _reg) StructuredBuffer<_struct> _name : REGISTER(t, _reg)
+#		define BUFFER_RW(_name, _struct, _reg) RWStructuredBuffer<_struct> _name : REGISTER(u, _reg)
+#		define BUFFER_WR(_name, _struct, _reg) BUFFER_RW(_name, _struct, _reg)
 
 #	endif // BGFX_SHADER_LANGUAGE_HLSL > 300
 
@@ -582,6 +591,16 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define ISAMPLER3D(_name, _reg) uniform isampler3D _name
 #	define USAMPLER3D(_name, _reg) uniform usampler3D _name
 #endif
+
+#define __BUFFER_XX(_name, _type, _reg, _access)                \
+	layout(std430, binding=_reg) _access buffer _name ## Buffer \
+	{                                                           \
+		_type _name[];                                          \
+	}
+
+#define BUFFER_RO(_name, _type, _reg) __BUFFER_XX(_name, _type, _reg, readonly)
+#define BUFFER_RW(_name, _type, _reg) __BUFFER_XX(_name, _type, _reg, readwrite)
+#define BUFFER_WR(_name, _type, _reg) __BUFFER_XX(_name, _type, _reg, writeonly)
 
 #	define texture2DBias(_sampler, _coord, _bias)      texture2D(_sampler, _coord, _bias)
 #	define textureCubeBias(_sampler, _coord, _bias)    textureCube(_sampler, _coord, _bias)

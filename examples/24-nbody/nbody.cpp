@@ -173,7 +173,7 @@ public:
 				);
 
 			// Create particle program from shaders.
-			m_particleProgram = loadProgram("vs_particle", "fs_particle");
+			m_particleProgram = loadProgram("vs_nbody_particle", "fs_nbody_particle");
 
 			// Setup compute buffers
 			bgfx::VertexLayout computeVertexLayout;

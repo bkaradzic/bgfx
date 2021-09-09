@@ -35,7 +35,7 @@ void main()
 
 		// calculate index in the four deinterleaved source array texture
 		int mx = (int(pixPos.x) % 2);
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		int dimy = imageSize(s_target).y; 
 		int my = (int(dimy-1-pixPos.y) % 2);
 #else
@@ -64,19 +64,19 @@ void main()
 		float fmye  = (edgesLRTB.w - edgesLRTB.z);
 
 		// calculate final sampling offsets and sample using bilinear filter
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		vec2  uvH = (dtID.xy + vec2( fmx + fmxe - 0.5, 1.0 - (0.5 - fmy) ) ) * 0.5 * u_halfViewportPixelSize;
 #else
 		vec2  uvH = (dtID.xy + vec2( fmx + fmxe - 0.5, 0.5 - fmy ) ) * 0.5 * u_halfViewportPixelSize;
 #endif
 		float   aoH = texture2DArrayLod(s_finalSSAO, vec3( uvH, ih ), 0 ).x;
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		vec2  uvV = (dtID.xy + vec2( 0.5 - fmx, 1.0 - (fmy - 0.5 + fmye) ) ) * 0.5 * u_halfViewportPixelSize;
 #else
 		vec2  uvV = (dtID.xy + vec2( 0.5 - fmx, fmy - 0.5 + fmye ) ) * 0.5 * u_halfViewportPixelSize;
 #endif
 		float   aoV = texture2DArrayLod(s_finalSSAO, vec3( uvV, iv ), 0 ).x;
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		vec2  uvD = (dtID.xy + vec2( fmx - 0.5 + fmxe, 1.0 - (fmy - 0.5 + fmye) ) ) * 0.5 * u_halfViewportPixelSize;
 #else
 		vec2  uvD = (dtID.xy + vec2( fmx - 0.5 + fmxe, fmy - 0.5 + fmye ) ) * 0.5 * u_halfViewportPixelSize;

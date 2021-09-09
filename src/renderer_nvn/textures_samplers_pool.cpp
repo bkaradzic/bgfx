@@ -41,7 +41,12 @@ namespace bgfx { namespace nvn
 		 * The texture pool supports a max of 1048576 and the
 		 * sampler pool supports a max of 4096 descriptors.
 		 */
-		m_numTextures = m_numReservedTextures + BGFX_CONFIG_MAX_TEXTURES;
+
+		// just pad it out to double, we *should* never come close to hitting that.
+		// NVN supports over 1000000 textures in the pool and bgfx handles are only 16 bit so this is fine
+		int numTexturesAndImages = BGFX_CONFIG_MAX_TEXTURES * 2;
+
+		m_numTextures = m_numReservedTextures + numTexturesAndImages;
 		m_numSamplers = maxSamplers;
 
 		BX_ASSERT(m_numTextures <= maxTextures, "The platform doesn't support the maximum number of textures. Desired: %d, Supported: %d", m_numTextures, maxTextures);
@@ -81,7 +86,7 @@ namespace bgfx { namespace nvn
 	void TexturesSamplersPool::set(const int _index, NVNtexture* _texture, NVNtextureView* _view)
 	{
 		BX_ASSERT(_view != nullptr, "Texture view is required to register image.");
-		nvnTexturePoolRegisterImage(&m_TexturePool, m_numReservedTextures + _index, _texture, _view);
+		nvnTexturePoolRegisterImage(&m_TexturePool, m_numReservedTextures + BGFX_CONFIG_MAX_TEXTURES + _index, _texture, _view);
 	}
 
 	void TexturesSamplersPool::bind(NVNcommandBuffer* _cmd)

@@ -1567,13 +1567,15 @@ namespace bgfx
 		/// @param[in] _stage Texture unit.
 		/// @param[in] _sampler Program sampler.
 		/// @param[in] _handle Buffer handle.
+		/// @param[in] _access Buffer access. See `Access::Enum`.
 		///
-		/// @attention C99 equivalent is `bgfx_set_compute_indirect_buffer`.
+		/// @attention C99 equivalent is not implemented.
 		///
 		void setBuffer(
 			  uint8_t _stage
 			, UniformHandle _sampler
 			, ShaderBufferHandle _handle
+			, Access::Enum _access
 		);
 
 		/// Set compute image from texture.
@@ -2378,7 +2380,7 @@ namespace bgfx
 	///
 	void destroy(DynamicIndexBufferHandle _handle);
 
-		/// Create empty shader buffer .
+	/// Create empty shader buffer .
 	///
 	/// @param[in] _count Number of elements in buffer.
 	/// @param[in] _stride Stride of buffer element in bytes.
@@ -4099,6 +4101,22 @@ namespace bgfx
 		, IndirectBufferHandle _handle
 		, Access::Enum _access
 		);
+
+	/// Set (SRV) buffer to texture slot
+	///
+	/// @param[in] _stage Texture unit.
+	/// @param[in] _sampler Program sampler.
+	/// @param[in] _handle Buffer handle.
+	/// @param[in] _access Buffer access. See `Access::Enum`.
+	///
+	/// @attention C99 equivalent is not implemented.
+	///
+	void setBuffer(
+		uint8_t _stage
+		, UniformHandle _sampler
+		, ShaderBufferHandle _handle
+		, Access::Enum _access
+	);
 
 	/// Set compute image from texture.
 	///

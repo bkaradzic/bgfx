@@ -6,6 +6,8 @@
 #ifndef BGFX_NVN_MEMORY_H_HEADER_GUARD
 #define BGFX_NVN_MEMORY_H_HEADER_GUARD
 
+#if BGFX_CONFIG_RENDERER_NVN
+
 #include <array>
 #include <atomic>
 #include <nn/mem.h>
@@ -14,8 +16,6 @@
 #include <nvn/nvn.h>
 #include <nvn/nvn_FuncPtrInline.h>
 #include <vector>
-
-#include "../ringbuffer.h"
 
 namespace bgfx { namespace nvn
 {
@@ -264,5 +264,7 @@ namespace bgfx { namespace nvn
 	};
 
 } }
+
+#endif // BGFX_CONFIG_RENDERER_NVN
 
 #endif // BGFX_NVN_MEMORY_H_HEADER_GUARD

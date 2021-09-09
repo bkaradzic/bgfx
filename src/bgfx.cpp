@@ -3238,6 +3238,50 @@ namespace bgfx
 			}
 			break;
 
+			case CommandBuffer::CreateShaderBuffer:
+			{
+				BGFX_PROFILER_SCOPE("CreateShaderBuffer", 0xff2040ff);
+
+				ShaderBufferHandle handle;
+				_cmdbuf.read(handle);
+
+				uint32_t stride;
+				_cmdbuf.read(stride);
+
+				uint32_t size;
+				_cmdbuf.read(size);
+
+				m_renderCtx->createShaderBuffer(handle, size, stride);
+			}
+			break;
+
+			case CommandBuffer::UpdateShaderBuffer:
+			{
+				BGFX_PROFILER_SCOPE("UpdateShaderBuffer", 0xff2040ff);
+
+				ShaderBufferHandle handle;
+				_cmdbuf.read(handle);
+
+				const Memory* mem;
+				_cmdbuf.read(mem);
+
+				m_renderCtx->updateShaderBuffer(handle, mem);
+
+				release(mem);
+			}
+			break;
+
+			case CommandBuffer::DestroyShaderBuffer:
+			{
+				BGFX_PROFILER_SCOPE("DestroyShaderBuffer", 0xff2040ff);
+
+				ShaderBufferHandle handle;
+				_cmdbuf.read(handle);
+
+				m_renderCtx->destroyShaderBuffer(handle);
+			}
+			break;
+
 			case CommandBuffer::CreateFrameBuffer:
 			{
 				BGFX_PROFILER_SCOPE("CreateFrameBuffer", 0xff2040ff);
@@ -3917,6 +3961,14 @@ namespace bgfx
 		BGFX_ENCODER(setBuffer(_stage, handle, _access));
 	}
 
+	void Encoder::setBuffer(uint8_t _stage, UniformHandle _sampler, ShaderBufferHandle _handle, Access::Enum _access)
+	{
+		BGFX_CHECK_HANDLE("setBuffer/UniformHandle", s_ctx->m_uniformHandle, _sampler);
+		BGFX_CHECK_HANDLE_INVALID_OK("setBuffer/ShaderBufferHandle", s_ctx->m_shaderBufferHandle, _handle);
+		BX_ASSERT(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		BGFX_ENCODER(setBuffer(_stage, _sampler, _handle, _access));
+	}
+
 	void Encoder::setImage(uint8_t _stage, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 	{
 		BX_ASSERT(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
@@ -4216,6 +4268,46 @@ namespace bgfx
 	void destroy(DynamicVertexBufferHandle _handle)
 	{
 		s_ctx->destroyDynamicVertexBuffer(_handle);
+	}
+
+	ShaderBufferHandle createShaderBuffer(uint32_t _num, uint32_t _stride, uint8_t _type)
+	{
+		BGFX_CHECK_CAPS(BGFX_CAPS_STRUCTURED_BUFFERS, "Shader buffers not supported!");
+		BX_ASSERT(0 != _stride, "_stride can't be 0");
+		BX_ASSERT(0 != _num, "_count can't be 0");
+		return s_ctx->createShaderBuffer(_num, _stride);
+	}
+
+	ShaderBufferHandle createShaderBuffer(const Memory* _mem, uint32_t _stride, uint8_t _type)
+	{
+		BGFX_CHECK_CAPS(BGFX_CAPS_STRUCTURED_BUFFERS, "Shader buffers not supported!");
+		BX_ASSERT(0 != _stride, "_stride can't be 0");
+		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
+		return s_ctx->createShaderBuffer(_mem, _stride);
+	}
+
+	void updateShaderBuffer(ShaderBufferHandle _handle, const Memory* _mem)
+	{
+		BGFX_CHECK_CAPS(BGFX_CAPS_STRUCTURED_BUFFERS, "Shader buffers not supported!");
+		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
+		s_ctx->update(_handle, _mem);
+	}
+
+	void setName(ShaderBufferHandle _handle, const char* _name, int32_t _len)
+	{
+		s_ctx->setName(_handle, bx::StringView(_name, _len));
+	}
+
+	void destroy(ShaderBufferHandle _handle)
+	{
+		BGFX_CHECK_CAPS(BGFX_CAPS_STRUCTURED_BUFFERS, "Shader buffers not supported!");
+		s_ctx->destroyShaderBuffer(_handle);
+	}
+
+	void getShaderBufferInfo(ShaderBufferHandle _handle, uint32_t* _stride, uint32_t* _count)
+	{
+		BGFX_CHECK_CAPS(BGFX_CAPS_STRUCTURED_BUFFERS, "Shader buffers not supported!");
+		s_ctx->getShaderBufferInfo(_handle, _stride, _count);
 	}
 
 	uint32_t getAvailTransientIndexBuffer(uint32_t _num, bool _index32)
@@ -5381,6 +5473,12 @@ namespace bgfx
 	{
 		BGFX_CHECK_ENCODER0();
 		s_ctx->m_encoder0->setBuffer(_stage, _handle, _access);
+	}
+
+	void setBuffer(uint8_t _stage, UniformHandle _sampler, ShaderBufferHandle _handle, Access::Enum _access)
+	{
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setBuffer(_stage, _sampler, _handle, _access);
 	}
 
 	void setImage(uint8_t _stage, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)

@@ -37,7 +37,7 @@ void main()
 	if (all(lessThan(dtID.xy, dim) ) )
 	{ 
 		ivec2 baseCoord = ivec2(dtID.xy) * 2;
-#if BGFX_SHADER_LANGUAGE_GLSL 
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		float a = texelFetch(s_depthSource, baseCoord + ivec2( 0, 1 ), 0).x;
 		float b = texelFetch(s_depthSource, baseCoord + ivec2( 1, 1 ), 0).x;
 		float c = texelFetch(s_depthSource, baseCoord + ivec2( 0, 0 ), 0).x;

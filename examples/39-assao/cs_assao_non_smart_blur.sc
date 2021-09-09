@@ -19,7 +19,7 @@ void main()
 		vec2 inUV = (dtID.xy+vec2(0.5,0.5)) * u_halfViewportPixelSize;
 		vec2 halfPixel = u_halfViewportPixelSize * 0.5f;
 
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
 		halfPixel.y = -halfPixel.y;
 #endif
 

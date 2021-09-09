@@ -18,6 +18,10 @@
 #define BGFX_CONFIG_NVN_GRAPHICS_POOL_SIZE ((size_t)512 * (size_t)1024 * (size_t)1024) // default to 512MB
 #endif
 
+#if !defined(BGFX_CONFIG_NVN_MAX_SHADER_NAME)
+#define BGFX_CONFIG_NVN_MAX_SHADER_NAME 32
+#endif
+
 #if BX_PLATFORM_NX
 extern "C"
 {
@@ -32,6 +36,7 @@ namespace bgfx { namespace nvn
 	//
 
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
+	static char s_shaderName[BGFX_CONFIG_MAX_SHADERS][BGFX_CONFIG_NVN_MAX_SHADER_NAME];
 
 	struct PrimitiveInfo
 	{
@@ -270,6 +275,7 @@ namespace bgfx { namespace nvn
 		Resolution m_resolution;
 
 		TextureNVN m_textures[BGFX_CONFIG_MAX_TEXTURES];
+		BufferNVN m_shaderBuffers[BGFX_CONFIG_MAX_SHADER_BUFFERS];
 		BufferNVN m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferNVN m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
@@ -287,6 +293,7 @@ namespace bgfx { namespace nvn
 
 		MemoryPool m_shaderScratch;
 
+		OcclusionQueryNVN m_occlusionQuery;
 		TimerQueryNVN m_gpuTimer;
 
 		DrawStats m_drawStats;
@@ -314,7 +321,6 @@ namespace bgfx { namespace nvn
 			}
 
 			// give shaders 1MB of extra scratch memory
-			uint32_t alignment = 4096; // NVN_DEVICE_INFO_SHADER_SCRATCH_MEMORY_ALIGNMENT
 			uint32_t granularity = 131072; // NVN_DEVICE_INFO_SHADER_SCRATCH_MEMORY_GRANULARITY
 			m_shaderScratch.Init(nullptr, granularity * 8, NVN_MEMORY_POOL_FLAGS_CPU_NO_ACCESS_BIT | NVN_MEMORY_POOL_FLAGS_GPU_CACHED_BIT, g_nvnDevice);
 		}
@@ -346,7 +352,24 @@ namespace bgfx { namespace nvn
 
 		int getImageId(const uint16_t _texture, const uint8_t _mip)
 		{
-			return m_textureSamplersPool.m_numReservedTextures;
+			int numImages = m_imageCache.size();
+
+			int i = 0;
+			for (i = 0; i < numImages; ++i)
+			{
+				auto& it = m_imageCache[i];
+
+				int mip, numLevels;
+				nvnTextureViewGetLevels(&it.second, &mip, &numLevels);
+
+				if (it.first == _texture && mip == _mip)
+				{
+					return m_textureSamplersPool.m_numReservedTextures + BGFX_CONFIG_MAX_TEXTURES + i;
+				}
+			}
+
+			BX_ASSERT(false, "Failed to find image.");
+			return 0;
 		}
 
 		int getSamplerId(const uint32_t _samplerFlags, const float *_rgba)
@@ -454,6 +477,7 @@ namespace bgfx { namespace nvn
 			bool isCompute = false;
 			bool wasCompute = false;
 			bool programChanged = false;
+			uint8_t m_numSamples = 0;
 			uint16_t numTargets = 0;
 			uint16_t view = UINT16_MAX;
 			uint16_t programIndex = kInvalidHandle;
@@ -504,7 +528,7 @@ namespace bgfx { namespace nvn
 			nvnCommandBufferSetShaderScratchMemory(m_cmdList.get(), m_resources.m_shaderScratch.GetMemoryPool(), 0, m_resources.m_shaderScratch.GetSize());
 		}
 
-		void setFrameBuffer(uint16_t _count, NVNtexture** _colors, NVNtexture* _depth, NVNtextureView** _colorViews, NVNtextureView* _depthView)
+		void setFrameBuffer(uint16_t _count, NVNtexture** _colors, NVNtexture* _depth, NVNtextureView** _colorViews, NVNtextureView* _depthView, uint8_t _numSamples)
 		{
 			for (uint16_t i = 0; i < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++i)
 			{
@@ -512,6 +536,16 @@ namespace bgfx { namespace nvn
 			}
 
 			m_cmdList.m_currentDepth = _depth;
+
+			if (m_state.m_numSamples != _numSamples)
+			{
+				NVNmultisampleState msaaState;
+				nvnMultisampleStateSetDefaults(&msaaState);
+				nvnMultisampleStateSetMultisampleEnable(&msaaState, _numSamples > 0);
+				nvnMultisampleStateSetSamples(&msaaState, _numSamples);
+				nvnCommandBufferBindMultisampleState(m_cmdList.get(), &msaaState);
+				m_state.m_numSamples = _numSamples;
+			}
 
 			nvnCommandBufferBarrier(m_cmdList.get(), NVN_BARRIER_ORDER_FRAGMENTS_BIT);
 			nvnCommandBufferSetRenderTargets(m_cmdList.get(), _count, m_cmdList.m_currentColor.data(), _colorViews, m_cmdList.m_currentDepth, _depthView);
@@ -539,6 +573,8 @@ namespace bgfx { namespace nvn
 
 					memset(views.data(), 0, sizeof(NVNtextureView*) * BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
 
+					uint8_t numSamples = 0xFF;
+
 					if (!isValid(fbh))
 					{
 						count = 1;
@@ -546,6 +582,8 @@ namespace bgfx { namespace nvn
 						views[0] = nullptr;
 						depth = &_backBuffer.m_depth->m_ptr;
 						depthView = nullptr;
+
+						numSamples = _backBuffer.m_color->m_numSamples;
 
 						m_state.resolutionHeight = m_resources.m_resolution.height;
 					}
@@ -559,6 +597,8 @@ namespace bgfx { namespace nvn
 							TextureNVN& tex = m_resources.m_textures[handle.idx];
 							targets[i] = &tex.m_ptr;
 							views[i] = &fb.m_colorViews[i];
+							BX_ASSERT(numSamples == 0xFF || numSamples == tex.m_numSamples, "Mismatched samples count.");
+							numSamples = tex.m_numSamples;
 						}
 
 						if (isValid(fb.m_depthTarget))
@@ -566,6 +606,12 @@ namespace bgfx { namespace nvn
 							TextureNVN& tex = m_resources.m_textures[fb.m_depthTarget.idx];
 							depth = &tex.m_ptr;
 							depthView = &fb.m_depthView;
+							BX_ASSERT(numSamples == 0xFF || numSamples == tex.m_numSamples, "Mismatched samples count.");
+						}
+
+						if (numSamples == 0xFF)
+						{
+							numSamples = 0;
 						}
 
 						count = fb.m_numTargets;
@@ -573,7 +619,7 @@ namespace bgfx { namespace nvn
 						m_state.resolutionHeight = fb.m_height;
 					}
 
-					setFrameBuffer(count, targets.data(), depth, views.data(), depthView);
+					setFrameBuffer(count, targets.data(), depth, views.data(), depthView, numSamples);
 				}
 
 				m_state.view = _view;
@@ -715,7 +761,15 @@ namespace bgfx { namespace nvn
 					nvnTextureViewSetLayers(&dstView, blit.m_dstZ, 1);
 				}
 
-				nvnCommandBufferCopyTextureToTexture(m_cmdList.get(), &src.m_ptr, &srcView, &srcRegion, &dst.m_ptr, &dstView, &dstRegion, 0);
+				if (src.m_numSamples)
+				{
+					BX_ASSERT(dst.m_numSamples == 0, "Blitting from multisampled texture to multisampled texture not supported.");
+					nvnCommandBufferDownsample(m_cmdList.get(), &src.m_ptr, &dst.m_ptr);
+				}
+				else
+				{
+					nvnCommandBufferCopyTextureToTexture(m_cmdList.get(), &src.m_ptr, &srcView, &srcRegion, &dst.m_ptr, &dstView, &dstRegion, 0);
+				}
 			}
 		}
 
@@ -929,7 +983,7 @@ namespace bgfx { namespace nvn
 				if (m_state.programIndex != kInvalidHandle)
 				{
 					ProgramNVN& program = m_resources.m_program[m_state.programIndex];
-					nvnCommandBufferBindProgram(m_cmdList.get(), &program.m_program, program.m_Stages);
+					nvnCommandBufferBindProgram(m_cmdList.get(), &program.m_program, program.m_stages);
 				}
 				else
 				{
@@ -1035,6 +1089,10 @@ namespace bgfx { namespace nvn
 				addr = m_resources.m_vertexBuffers[_bind.m_idx].m_gpuAddress;
 				size = m_resources.m_vertexBuffers[_bind.m_idx].m_size;
 				break;
+			case Binding::ShaderBuffer:
+				addr = m_resources.m_shaderBuffers[_bind.m_idx].m_gpuAddress;
+				size = m_resources.m_shaderBuffers[_bind.m_idx].m_size;
+				break;
 			default:
 				break;
 			}
@@ -1062,6 +1120,7 @@ namespace bgfx { namespace nvn
 					bx::HashMurmur2A murmur;
 					murmur.begin();
 					murmur.add(&bind, sizeof(Binding));
+					murmur.add(m_state.isCompute);
 					uint32_t hash = murmur.end();
 
 					if (m_state.bindState[i] != hash)
@@ -1078,6 +1137,7 @@ namespace bgfx { namespace nvn
 							break;
 						case Binding::IndexBuffer:
 						case Binding::VertexBuffer:
+						case Binding::ShaderBuffer:
 							_bindBuffer(i, bind);
 							break;
 						default:
@@ -1088,13 +1148,13 @@ namespace bgfx { namespace nvn
 			}
 		}
 
-		void setInputLayout(const uint8_t _numStreams, const VertexLayout** _layouts, const uint32_t _numInstanceData)
+		void setInputLayout(const uint8_t _numStreams, const VertexLayout** _layouts, const uint32_t _instanceDataStride)
 		{
 			const ProgramNVN& program = m_resources.m_program[m_state.programIndex];
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
-			murmur.add(_numInstanceData);
+			murmur.add(_instanceDataStride);
 			for (uint8_t stream = 0; stream < _numStreams; ++stream)
 			{
 				murmur.add(_layouts[stream]->m_hash);
@@ -1105,7 +1165,6 @@ namespace bgfx { namespace nvn
 			PipelineVboState* vboState = m_resources.getPipelineVboState(layoutHash);
 			if (vboState == nullptr)
 			{
-				// create empty vbo state
 				vboState = m_resources.createPipelineVboState(layoutHash);
 
 				struct PipelineVboBindPoint
@@ -1148,7 +1207,7 @@ namespace bgfx { namespace nvn
 						{
 							if (currentBindingIndex >= PipelineVboState::MaxAttributes)
 							{
-								BX_ASSERT(false, "Exceeded the maximum number of vertex attributes (16)");
+								BX_ASSERT(false, "Exceeded the maximum number of vertex attributes (%d)", PipelineVboState::MaxAttributes);
 								continue;
 							}
 
@@ -1182,33 +1241,31 @@ namespace bgfx { namespace nvn
 				{
 					const PipelineVboBindPoint& currentBinding = vboBindings[bindingIndex];
 
-					const bool isSet = currentBinding.m_isSet;
-
-					NVNvertexAttribState& vaState = vboState->m_attribStates[vboState->m_numAttributes];
+					NVNvertexAttribState& vaState = vboState->m_attribStates[bindingIndex];
 					nvnVertexAttribStateSetDefaults(&vaState);
 
-					if (isSet)
+					if (currentBinding.m_isSet)
 					{
 						nvnVertexAttribStateSetStreamIndex(&vaState, currentBinding.m_streamIndex);
 						nvnVertexAttribStateSetFormat(&vaState, currentBinding.m_format, currentBinding.m_offset);
-						vboState->m_numAttributes++;
 					}
 				}
 
-				if (_numInstanceData > 0)
+				BX_ASSERT((program.m_vsh->m_numInstanceData * 16) <= _instanceDataStride, "Instance buffer stride too small: expected %d found %d.", program.m_vsh->m_numInstanceData * 16, _instanceDataStride);
+
+				if (program.m_vsh->m_numInstanceData > 0)
 				{
-					for (uint32_t inst = 0; inst < _numInstanceData; ++inst)
+					for (uint32_t inst = 0; inst < program.m_vsh->m_numInstanceData; ++inst)
 					{
-						NVNvertexAttribState& vaState = vboState->m_attribStates[vboState->m_numAttributes];
-						nvnVertexAttribStateSetDefaults(&vaState);
+						uint8_t loc = program.m_vsh->m_instanceLoc[inst];
+						NVNvertexAttribState& vaState = vboState->m_attribStates[loc];
 						nvnVertexAttribStateSetStreamIndex(&vaState, _numStreams);
 						nvnVertexAttribStateSetFormat(&vaState, NVN_FORMAT_RGBA32F, inst * 16);
-						vboState->m_numAttributes++;
 					}
 
 					NVNvertexStreamState& streamState = vboState->m_streamStates[vboState->m_numStreams];
 					nvnVertexStreamStateSetDefaults(&streamState);
-					nvnVertexStreamStateSetStride(&streamState, _numInstanceData * 16);
+					nvnVertexStreamStateSetStride(&streamState, _instanceDataStride);
 					nvnVertexStreamStateSetDivisor(&streamState, 1);
 					vboState->m_numStreams++;
 				}
@@ -1217,7 +1274,7 @@ namespace bgfx { namespace nvn
 			BX_ASSERT(vboState != nullptr, "Invalid vbo state.");
 
 			nvnCommandBufferBindVertexStreamState(m_cmdList.get(), vboState->m_numStreams, vboState->m_streamStates);
-			nvnCommandBufferBindVertexAttribState(m_cmdList.get(), vboState->m_numAttributes, vboState->m_attribStates);
+			nvnCommandBufferBindVertexAttribState(m_cmdList.get(), PipelineVboState::MaxAttributes, vboState->m_attribStates);
 		}
 
 		void bindVertexBuffers(const RenderDraw& _draw)
@@ -1275,20 +1332,19 @@ namespace bgfx { namespace nvn
 
 				m_state.drawState.m_numVertices = numVertices;
 
-				uint32_t numInstanceData = 0;
+				uint32_t instStride = 0;
 				if (isValid(_draw.m_instanceDataBuffer))
 				{
 					const VertexBufferNVN& inst = m_resources.m_vertexBuffers[_draw.m_instanceDataBuffer.idx];
-					const uint32_t instCount = _draw.m_numInstances;
-					const uint32_t instStride = _draw.m_instanceDataStride;
-					const uint32_t instOffset = _draw.m_instanceDataOffset;
-					numInstanceData = instStride / 16; // determine the number of texcoords to pass instance data in (always vec4, so 16 bytes)
+					uint32_t instCount = _draw.m_numInstances;
+					uint32_t instOffset = _draw.m_instanceDataOffset;
+					instStride = _draw.m_instanceDataStride;
 					buffers[numStreams] = { inst.m_gpuAddress + instOffset, instStride * instCount };
 				}
 
 				// this will set the current buffers and clear unused ones
 				nvnCommandBufferBindVertexBuffers(m_cmdList.get(), 0, BGFX_CONFIG_MAX_VERTEX_STREAMS + 1, buffers);
-				setInputLayout(numStreams, layouts, numInstanceData);
+				setInputLayout(numStreams, layouts, instStride);
 			}
 		}
 
@@ -1321,8 +1377,15 @@ namespace bgfx { namespace nvn
 				uint32_t numInstances = _draw.m_numInstances;
 				uint32_t numVertices = m_state.drawState.m_numVertices;
 
+				bool hasOcclusionQuery = 0 != (_draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
+
 				m_resources.m_drawStats.add(DrawStats::DispatchMesh, 1);
 				m_resources.m_drawStats.m_primStats[m_state.primitiveType.m_type].numInstances += numInstances;
+
+				if (hasOcclusionQuery)
+				{
+					m_resources.m_occlusionQuery.begin(m_cmdList.get(), m_render, _draw.m_occlusionQuery);
+				}
 
 				if (isValid(_draw.m_indexBuffer))
 				{
@@ -1397,6 +1460,11 @@ namespace bgfx { namespace nvn
 						nvnCommandBufferDrawArraysInstanced(m_cmdList.get(), prim.m_typeNVN, 0, numVertices, 0, numInstances);
 					}
 				}
+
+				if (hasOcclusionQuery)
+				{
+					m_resources.m_occlusionQuery.end(m_cmdList.get());
+				}
 			}
 		}
 
@@ -1406,9 +1474,16 @@ namespace bgfx { namespace nvn
 
 			if (isValid(_compute.m_indirectBuffer))
 			{
-				NVNbufferAddress indirectAddr = m_resources.m_vertexBuffers[_compute.m_indirectBuffer.idx].m_gpuAddress + (_compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
+				VertexBufferNVN& vb = m_resources.m_vertexBuffers[_compute.m_indirectBuffer.idx];
+				NVNbufferAddress indirectAddr = vb.m_gpuAddress + (_compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE);
+				uint32_t numIndirect = (UINT16_MAX == _compute.m_numIndirect) ? (vb.m_size / BGFX_CONFIG_DRAW_INDIRECT_STRIDE) : _compute.m_numIndirect;
+
 				nvnCommandBufferBarrier(m_cmdList.get(), NVN_BARRIER_ORDER_INDIRECT_DATA_BIT);
-				nvnCommandBufferDispatchComputeIndirect(m_cmdList.get(), indirectAddr);
+
+				for (uint32_t i = 0; i < numIndirect; ++i)
+				{
+					nvnCommandBufferDispatchComputeIndirect(m_cmdList.get(), indirectAddr + (i * BGFX_CONFIG_DRAW_INDIRECT_STRIDE));
+				}
 			}
 			else
 			{
@@ -1433,21 +1508,16 @@ namespace bgfx { namespace nvn
 
 		PFNNVNBOOTSTRAPLOADERPROC m_nvnLoader = nullptr;
 
-		NVNdevice m_Device;
-		nn::vi::Display* m_pDisplay = nullptr;
-		nn::vi::Layer* m_pLayer = nullptr;
+		NVNdevice m_device;
 
-		int m_CommandBufferCommandAlignment = 0;
-		int m_CommandBufferControlAlignment = 0;
 		int m_maxAnisotropy = 1;
-		int m_UniformBufferAlignment = 0;
 		int m_numFramesInFlight = BGFX_CONFIG_MAX_FRAME_LATENCY;
 		int m_currentFrameInFlight = 0;
 
 		ContextResources m_resources;
 
-		SwapChainNVN m_SwapChain;
-		CommandQueueNVN m_Queue;
+		SwapChainNVN m_swapChain;
+		CommandQueueNVN m_queue;
 		Commands* m_currentCommands = nullptr;
 
 		NVNsync* m_previousFrameSync[BGFX_CONFIG_MAX_FRAME_LATENCY];
@@ -1472,6 +1542,7 @@ namespace bgfx { namespace nvn
 				| BGFX_CAPS_INDEX32
 				| BGFX_CAPS_INSTANCING
 				| BGFX_CAPS_OCCLUSION_QUERY
+				| BGFX_CAPS_STRUCTURED_BUFFERS
 				| BGFX_CAPS_TEXTURE_2D_ARRAY
 				| BGFX_CAPS_TEXTURE_3D
 				| BGFX_CAPS_TEXTURE_BLIT
@@ -1570,13 +1641,13 @@ namespace bgfx { namespace nvn
 			nvnDeviceBuilderSetDefaults(&deviceBuilder);
 			nvnDeviceBuilderSetFlags(&deviceBuilder, deviceFlags);
 
-			if (!nvnDeviceInitialize(&m_Device, &deviceBuilder))
+			if (!nvnDeviceInitialize(&m_device, &deviceBuilder))
 			{
 				BX_ASSERT(false, "nvnDeviceInitialize");
 				return false;
 			}
 
-			nvnLoadCProcs(&m_Device, pfnc_nvnDeviceGetProcAddress);
+			nvnLoadCProcs(&m_device, pfnc_nvnDeviceGetProcAddress);
 
 			/*
 				* Debug Layer Callback
@@ -1588,7 +1659,7 @@ namespace bgfx { namespace nvn
 			if (deviceFlags & NVN_DEVICE_FLAG_DEBUG_ENABLE_LEVEL_4_BIT)
 			{
 				nvnDeviceInstallDebugCallback(
-					&m_Device,
+					&m_device,
 					reinterpret_cast<PFNNVNDEBUGCALLBACKPROC>(&debugLayerCallback),
 					NULL, // For testing purposes; any pointer is OK here.
 					NVN_TRUE // NVN_TRUE = Enable the callback.
@@ -1596,15 +1667,12 @@ namespace bgfx { namespace nvn
 			}
 
 			int apiMajor, apiMinor;
-			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_API_MAJOR_VERSION, &apiMajor);
-			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_API_MINOR_VERSION, &apiMinor);
+			nvnDeviceGetInteger(&m_device, NVN_DEVICE_INFO_API_MAJOR_VERSION, &apiMajor);
+			nvnDeviceGetInteger(&m_device, NVN_DEVICE_INFO_API_MINOR_VERSION, &apiMinor);
 
 			// do quick API version check? is that even necessary?
 
-			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_COMMAND_BUFFER_COMMAND_ALIGNMENT, &m_CommandBufferCommandAlignment);
-			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_COMMAND_BUFFER_CONTROL_ALIGNMENT, &m_CommandBufferControlAlignment);
-			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_UNIFORM_BUFFER_ALIGNMENT, &m_UniformBufferAlignment);
-			nvnDeviceGetInteger(&m_Device, NVN_DEVICE_INFO_MAX_TEXTURE_ANISOTROPY, &m_maxAnisotropy);
+			nvnDeviceGetInteger(&m_device, NVN_DEVICE_INFO_MAX_TEXTURE_ANISOTROPY, &m_maxAnisotropy);
 
 			return true;
 		}
@@ -1616,8 +1684,8 @@ namespace bgfx { namespace nvn
 
 		void initializeSwapChain(const Init& _init)
 		{
-			m_SwapChain.create(m_numFramesInFlight, m_Hwnd, &m_Device, _init.resolution, bgfx::TextureFormat::Enum::RGBA8, bgfx::TextureFormat::Enum::D24S8);
-			m_Queue.init(&m_Device, &m_SwapChain);
+			m_swapChain.create(m_numFramesInFlight, m_Hwnd, &m_device, _init.resolution, bgfx::TextureFormat::Enum::RGBA8, bgfx::TextureFormat::Enum::D24S8);
+			m_queue.init(&m_device, &m_swapChain);
 		}
 
 		void initializeWindow(const Init& _init)
@@ -1659,18 +1727,17 @@ namespace bgfx { namespace nvn
 				return false;
 			}
 
-			g_nvnDevice = &m_Device;
+			g_nvnDevice = &m_device;
 
 			initializeMemoryPool();
 			initializeSwapChain(_init);
 			initializeWindow(_init);
 
-			m_resources.m_resolution = _init.resolution;
-
 			m_resources.m_gpuTimer.init();
+			m_resources.m_occlusionQuery.init();
 
-			m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
-			m_textVideoMem.clear();
+			memset(&m_resources.m_resolution, 0xFF, sizeof(Resolution));
+			_updateResolution(_init.resolution);
 
 			// Init reserved part of view name.
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
@@ -1678,18 +1745,26 @@ namespace bgfx { namespace nvn
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED + 1, "%3d   ", ii);
 			}
 
+			for (int i = 0; i < BGFX_CONFIG_MAX_SHADERS; ++i)
+			{
+				s_shaderName[i][0] = '\0';
+			}
+
 			return true;
 		}
 
 		void shutdown()
 		{
-			m_Queue.shutdown();
-			m_SwapChain.destroy();
+			m_resources.m_gpuTimer.destroy();
+			m_resources.m_occlusionQuery.destroy();
+
+			m_queue.shutdown();
+			m_swapChain.destroy();
 
 			m_resources.m_textureSamplersPool.shutdown();
 
 			g_nvnDevice = NULL;
-			nvnDeviceFinalize(&m_Device);
+			nvnDeviceFinalize(&m_device);
 
 			for (int i = 0; i < PredefinedUniform::Count; ++i)
 			{
@@ -1710,7 +1785,7 @@ namespace bgfx { namespace nvn
 
 		void flip() override
 		{
-			m_SwapChain.present(&m_Queue.m_GfxQueue);
+			m_swapChain.present(&m_queue.m_GfxQueue);
 		}
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
@@ -1813,7 +1888,8 @@ namespace bgfx { namespace nvn
 		{
 			ShaderNVN& shader = m_resources.m_shaders[_handle.idx];
 
-			shader.create(&m_Device, _mem, m_resources.m_uniformReg, m_resources.m_uniformBuffers);
+			shader.create(&m_device, _mem, m_resources.m_uniformReg, m_resources.m_uniformBuffers);
+			shader.m_name = s_shaderName[_handle.idx];
 
 			// resolve uniform references in uniform buffers
 			for (const ShaderNVN::UniformBufferBinding& binding : shader.m_constantBuffers)
@@ -1881,7 +1957,7 @@ namespace bgfx { namespace nvn
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override
 		{
-			m_resources.m_program[_handle.idx].create(&m_Device, isValid(_vsh) ? &m_resources.m_shaders[_vsh.idx] : nullptr, isValid(_fsh) ? &m_resources.m_shaders[_fsh.idx] : nullptr);
+			m_resources.m_program[_handle.idx].create(&m_device, isValid(_vsh) ? &m_resources.m_shaders[_vsh.idx] : nullptr, isValid(_fsh) ? &m_resources.m_shaders[_fsh.idx] : nullptr);
 		}
 
 		void destroyProgram(ProgramHandle _handle) override
@@ -1892,7 +1968,7 @@ namespace bgfx { namespace nvn
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) override
 		{
 			CopyOperation copyOp;
-			m_resources.m_textures[_handle.idx].create(&m_Device, _mem, _flags, _skip, copyOp);
+			m_resources.m_textures[_handle.idx].create(&m_device, _mem, _flags, _skip, copyOp);
 			m_resources.m_textureSamplersPool.set(_handle.idx, &m_resources.m_textures[_handle.idx].m_ptr);
 			if (_flags & BGFX_TEXTURE_COMPUTE_WRITE)
 			{
@@ -1959,7 +2035,7 @@ namespace bgfx { namespace nvn
 				}
 			}
 
-			nvnBufferFlushMappedRange(&copyOp.m_data->m_buffer, 0, _mem->size);
+			nvnBufferFlushMappedRange(&copyOp.m_data->m_buffer, 0, size);
 
 			CopyOperation::Op op;
 			op.m_type = CopyOperation::Op::Texture;
@@ -2031,16 +2107,36 @@ namespace bgfx { namespace nvn
 			m_resources.m_textures[_handle.idx].destroy();
 		}
 
-		void createShaderBuffer(ShaderBufferHandle, uint32_t, uint32_t) override
+		void createShaderBuffer(ShaderBufferHandle _handle, uint32_t _size, uint32_t _stride) override
 		{
+			m_resources.m_shaderBuffers[_handle.idx].create(_size, nullptr, 0, _stride, BufferNVN::Usage::GenericGpu);
 		}
 
-		void updateShaderBuffer(ShaderBufferHandle, const Memory*) override
+		void updateShaderBuffer(ShaderBufferHandle _handle, const Memory* _mem) override
 		{
+			BufferNVN& buffer = m_resources.m_shaderBuffers[_handle.idx];
+
+			CopyOperation copyOp;
+			copyOp.m_data = (CopyOperation::Data*)BX_ALLOC(&g_allocatorNVN, sizeof(CopyOperation::Data));
+			copyOp.createBuffer(_mem->size, copyOp.m_data);
+
+			// populate src buffer
+			uint8_t* dst = (uint8_t*)nvnBufferMap(&copyOp.m_data->m_buffer);
+			memcpy(dst, _mem->data, _mem->size);
+			nvnBufferFlushMappedRange(&copyOp.m_data->m_buffer, 0, _mem->size);
+
+			CopyOperation::Op op;
+			op.m_type = CopyOperation::Op::Buffer;
+			op.m_dstBuffer = buffer.m_gpuAddress;
+			op.m_memSize = _mem->size;
+			copyOp.m_ops.push_back(op);
+
+			m_copyOperations.push_back(copyOp);
 		}
 
-		void destroyShaderBuffer(ShaderBufferHandle) override
+		void destroyShaderBuffer(ShaderBufferHandle _handle) override
 		{
+			m_resources.m_shaderBuffers[_handle.idx].destroy();
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override
@@ -2167,8 +2263,9 @@ namespace bgfx { namespace nvn
 			markUniformDirty(uniform, _size);
 		}
 
-		void invalidateOcclusionQuery(OcclusionQueryHandle /*_handle*/) override
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
 		{
+			m_resources.m_occlusionQuery.invalidate(_handle);
 		}
 
 		void setMarker(const char* _marker, uint16_t /*_len*/) override
@@ -2191,6 +2288,7 @@ namespace bgfx { namespace nvn
 				break;
 			case Handle::Shader:
 				// NVN only provides debug label support for programs, not individual shaders
+				strncpy(s_shaderName[_handle.idx], _name, bx::min(_len, uint16_t(BGFX_CONFIG_NVN_MAX_SHADER_NAME)));
 				break;
 			case Handle::Texture:
 				nvnTextureSetDebugLabel(&m_resources.m_textures[_handle.idx].m_ptr, _name);
@@ -2274,8 +2372,20 @@ namespace bgfx { namespace nvn
 			}
 		}
 
+		bool _isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
+		{
+			if (!isValid(_handle))
+			{
+				return true;
+			}
+
+			return _visible == (0 != _render->m_occlusion[_handle.idx]);
+		}
+
 		void _processItemCompute(Commands& _cmds, Frame* _render, const RenderCompute& _compute, const RenderBind& _bind)
 		{
+			BGFX_PROFILER_SCOPE("gfx::_processItemCompute", 0xff2040ff);
+
 			ProgramNVN& program = m_resources.m_program[_cmds.m_state.programIndex];
 
 			_cmds.m_state.viewState.setPredefined<4>(this, _cmds.m_state.view, program, _render, _compute);
@@ -2288,18 +2398,30 @@ namespace bgfx { namespace nvn
 
 		void _processItemDraw(Commands& _cmds, Frame* _render, const RenderDraw& _draw, const RenderBind& _bind)
 		{
-			ProgramNVN& program = m_resources.m_program[_cmds.m_state.programIndex];
+			BGFX_PROFILER_SCOPE("gfx::_processItemDraw", 0xff2040ff);
 
-			_cmds.setRasterState(_render, _draw);
+			bool hasOcclusionQuery = 0 != (_draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
 
-			_cmds.m_state.viewState.setPredefined<4>(this, _cmds.m_state.view, program, _render, _draw);
-			rendererUpdateUniforms(this, _render->m_uniformBuffer[_draw.m_uniformIdx], _draw.m_uniformBegin, _draw.m_uniformEnd);
+			bool occluded = true
+				&& !hasOcclusionQuery
+				&& !_isVisible(_render, _draw.m_occlusionQuery, 0 != (_draw.m_submitFlags & BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE))
+				;
 
-			_cmds.bindUniformBuffers(program); // potentially update uniform buffers for this draw
-			_cmds.bindSamplers(_bind, _render->m_colorPalette);
-			_cmds.bindVertexBuffers(_draw);
-			_cmds.bindIndexBuffer(_draw);
-			_cmds.draw(_draw);
+			if (!occluded)
+			{
+				ProgramNVN& program = m_resources.m_program[_cmds.m_state.programIndex];
+
+				_cmds.setRasterState(_render, _draw);
+
+				_cmds.m_state.viewState.setPredefined<4>(this, _cmds.m_state.view, program, _render, _draw);
+				rendererUpdateUniforms(this, _render->m_uniformBuffer[_draw.m_uniformIdx], _draw.m_uniformBegin, _draw.m_uniformEnd);
+
+				_cmds.bindUniformBuffers(program); // potentially update uniform buffers for this draw
+				_cmds.bindSamplers(_bind, _render->m_colorPalette);
+				_cmds.bindVertexBuffers(_draw);
+				_cmds.bindIndexBuffer(_draw);
+				_cmds.draw(_draw);
+			}
 		}
 
 		void _processViewItems(Commands& cmds, Frame* _render, Profiler<TimerQueryNVN>& _profiler)
@@ -2310,12 +2432,10 @@ namespace bgfx { namespace nvn
 
 			SortKey key;
 
-			BackBuffer backBuffer = m_SwapChain.get();
+			BackBuffer backBuffer = m_swapChain.get();
 
 			std::array<NVNtexture*, 1> defaultTarget = { &backBuffer.m_color->m_ptr };
-			cmds.setFrameBuffer(1, defaultTarget.data(), &backBuffer.m_depth->m_ptr, nullptr, nullptr);
-
-			int debugStackDepth = 0;
+			cmds.setFrameBuffer(1, defaultTarget.data(), &backBuffer.m_depth->m_ptr, nullptr, nullptr, backBuffer.m_color->m_numSamples);
 
 			int32_t numItems = _render->m_numRenderItems;
 			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
@@ -2335,18 +2455,11 @@ namespace bgfx { namespace nvn
 				{
 					if (item > 0)
 					{
+						nvnCommandBufferPopDebugGroup(cmds.m_cmdList.get());
 						_profiler.end();
 					}
 
 					_profiler.begin(key.m_view);
-
-					if (debugStackDepth > 0)
-					{
-						debugStackDepth--;
-						nvnCommandBufferPopDebugGroup(cmds.m_cmdList.get());
-					}
-
-					debugStackDepth++;
 					nvnCommandBufferPushDebugGroup(cmds.m_cmdList.get(), s_viewName[key.m_view]);
 
 					cmds.processBlits(_render);
@@ -2372,30 +2485,38 @@ namespace bgfx { namespace nvn
 
 			if (numItems > 0)
 			{
+				nvnCommandBufferPopDebugGroup(cmds.m_cmdList.get());
 				_profiler.end();
 			}
 
-			while (debugStackDepth--)
-			{
-				nvnCommandBufferPopDebugGroup(cmds.m_cmdList.get());
-			}
-
 			// reset back to the default backbuffer
-			cmds.setFrameBuffer(1, defaultTarget.data(), &backBuffer.m_depth->m_ptr, nullptr, nullptr);
+			cmds.setFrameBuffer(1, defaultTarget.data(), &backBuffer.m_depth->m_ptr, nullptr, nullptr, backBuffer.m_color->m_numSamples);
 		}
 
 		bool _updateResolution(const Resolution& _resolution)
 		{
 			bool changed = false;
+
+			if (m_resources.m_resolution.reset != _resolution.reset)
+			{
+				int interval = (_resolution.reset & BGFX_RESET_VSYNC) ? 1 : 0;
+				nvnWindowSetPresentInterval(&m_swapChain.m_window, interval);
+			}
+
 			if (m_resources.m_resolution.width != _resolution.width || m_resources.m_resolution.height != _resolution.height)
 			{
-				m_resources.m_resolution = _resolution;
+				BX_ASSERT(_resolution.width <= SwapChainNVN::MaxWidth, "Invalid width.");
+				BX_ASSERT(_resolution.height <= SwapChainNVN::MaxHeight, "Invalid height.");
 
 				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
 				m_textVideoMem.clear();
+				nvnWindowSetCrop(&m_swapChain.m_window, 0, 0, _resolution.width, _resolution.height);
 
 				changed = true;
 			}
+
+			m_resources.m_resolution = _resolution;
+
 			return changed;
 		}
 
@@ -2404,7 +2525,7 @@ namespace bgfx { namespace nvn
 			{
 				BGFX_PROFILER_SCOPE("gfx::acquireNextScanBuffer", 0xff2040ff);
 
-				m_SwapChain.acquireNext();
+				m_swapChain.acquireNext();
 			}
 
 			{
@@ -2412,7 +2533,7 @@ namespace bgfx { namespace nvn
 
 				if (m_previousFrameSync[m_currentFrameInFlight] != nullptr)
 				{
-					m_Queue.finish(m_previousFrameSync[m_currentFrameInFlight]);
+					m_queue.finish(m_previousFrameSync[m_currentFrameInFlight]);
 					m_previousFrameSync[m_currentFrameInFlight] = nullptr;
 				}
 			}
@@ -2435,7 +2556,15 @@ namespace bgfx { namespace nvn
 				, BGFX_REV_NUMBER
 			);
 
-			pos = 10;
+			pos = 8;
+
+			const uint32_t msaa = (m_resources.m_resolution.reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
+			tvm.printf(10, pos++, 0x8b, "  Reset flags: [%c] vsync, [%c] MSAAx%d, [%c] MaxAnisotropy "
+				, !!(m_resources.m_resolution.reset & BGFX_RESET_VSYNC) ? '\xfe' : ' '
+				, 0 != msaa ? '\xfe' : ' '
+				, 1 << msaa
+				, !!(m_resources.m_resolution.reset & BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
+			);
 
 			tvm.printf(10, pos++, 0x8b, "    Submitted: %5d (draw %5d, compute %4d) "
 				, _render->m_numRenderItems
@@ -2463,16 +2592,18 @@ namespace bgfx { namespace nvn
 			char memHighwater[16];
 			bx::prettify(memHighwater, BX_COUNTOF(memHighwater), g_allocatorNVN.m_highwater);
 
-			size_t cmdListMetrics[4] =
+			size_t cmdListMetrics[6] =
 			{
+				0,
 				0,
 				BGFX_CONFIG_NVN_COMMAND_BUFFER_COMMAND_SIZE,
 				0,
+				0,
 				BGFX_CONFIG_NVN_COMMAND_BUFFER_CONTROL_SIZE
 			};
-			_cmdList.getUsage(cmdListMetrics[0], cmdListMetrics[2]);
-			char cmdListUsage[4][16];
-			for (int i = 0; i < 4; ++i)
+			_cmdList.getUsage(cmdListMetrics[0], cmdListMetrics[3], cmdListMetrics[1], cmdListMetrics[4]);
+			char cmdListUsage[6][16];
+			for (int i = 0; i < 6; ++i)
 			{
 				bx::prettify(cmdListUsage[i], BX_COUNTOF(cmdListUsage[0]), cmdListMetrics[i]);
 			}
@@ -2481,7 +2612,7 @@ namespace bgfx { namespace nvn
 			tvm.printf(10, pos++, 0x8b, "     DVB size: %7d ", _render->m_vboffset);
 			tvm.printf(10, pos++, 0x8b, "     DIB size: %7d ", _render->m_iboffset);
 			tvm.printf(10, pos++, 0x8b, "     Mem free: %s [%s] - HW %s", memFreeTotal, memFreeLargest, memHighwater);
-			tvm.printf(10, pos++, 0x8b, " Command list: %s / %s - %s / %s", cmdListUsage[0], cmdListUsage[1], cmdListUsage[2], cmdListUsage[3]);
+			tvm.printf(10, pos++, 0x8b, " Command list: %s / %s [%s] - %s / %s [%s]", cmdListUsage[0], cmdListUsage[2], cmdListUsage[1], cmdListUsage[3], cmdListUsage[5], cmdListUsage[4]);
 
 			if (_profiler.m_enabled)
 			{
@@ -2531,6 +2662,8 @@ namespace bgfx { namespace nvn
 
 			size_t cmdUsageCommand = 0;
 			size_t cmdUsageControl = 0;
+			size_t cmdHwCommand = 0;
+			size_t cmdHwControl = 0;
 
 			if (0 == (_render->m_debug & BGFX_DEBUG_IFH))
 			{
@@ -2538,7 +2671,7 @@ namespace bgfx { namespace nvn
 
 				timeBegin = bx::getHPCounter();
 
-				CommandListNVN& cmd = *m_Queue.alloc("submit");
+				CommandListNVN& cmd = *m_queue.alloc("submit");
 				Commands cmds(cmd, _render, m_resources);
 				m_currentCommands = &cmds;
 
@@ -2560,12 +2693,14 @@ namespace bgfx { namespace nvn
 					blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 				}
 
+				m_swapChain.resolve(cmd.get(), m_resources.m_resolution);
+
 				m_resources.m_gpuTimer.end(frameQueryIdx);
 
 				m_currentCommands = nullptr;
-				m_previousFrameSync[m_currentFrameInFlight] = m_Queue.kick();
+				m_previousFrameSync[m_currentFrameInFlight] = m_queue.kick();
 
-				cmds.m_cmdList.getUsage(cmdUsageCommand, cmdUsageControl);
+				cmds.m_cmdList.getUsage(cmdUsageCommand, cmdUsageControl, cmdHwCommand, cmdHwControl);
 
 				timeEnd = bx::getHPCounter();
 			}

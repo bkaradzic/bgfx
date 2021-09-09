@@ -2669,13 +2669,13 @@ namespace bgfx
 			bind.m_mip = 0;
 		}
 
-		void setBuffer(uint8_t _stage, UniformHandle _sampler, ShaderBufferHandle _handle)
+		void setBuffer(uint8_t _stage, UniformHandle _sampler, ShaderBufferHandle _handle, Access::Enum _access)
 		{
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.m_idx = _handle.idx;
 			bind.m_type = uint8_t(Binding::ShaderBuffer);
 			bind.m_samplerFlags = 0;
-			//BBI-TODO (dgalloway) set format access etc? need to set samplerFlags?
+			bind.m_access = _access;
 
 			if (isValid(_sampler))
 			{
