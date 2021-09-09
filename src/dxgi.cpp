@@ -122,6 +122,7 @@ namespace bgfx
 		, m_factory(NULL)
 		, m_adapter(NULL)
 		, m_output(NULL)
+		, m_tearingSupported(false)
 	{
 	}
 
@@ -388,6 +389,8 @@ namespace bgfx
 				? 0 // DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
 				: 0
 				;
+
+			m_tearingSupported = allowTearing;
 
 			DX_RELEASE_I(factory5);
 		}
@@ -783,6 +786,11 @@ namespace bgfx
 			DX_RELEASE(device, 1);
 		}
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+	}
+
+	bool Dxgi::tearingSupported()
+	{
+		return m_tearingSupported;
 	}
 
 } // namespace bgfx

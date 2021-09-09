@@ -1508,7 +1508,19 @@ namespace bgfx { namespace d3d12
 
 				HRESULT hr = S_OK;
 				uint32_t syncInterval = !!(m_resolution.reset & BGFX_RESET_VSYNC);
-				uint32_t flags = 0 == syncInterval ? DXGI_PRESENT_RESTART : 0;
+				uint32_t flags = 0;
+				if (syncInterval)
+				{
+					flags |= DXGI_PRESENT_RESTART;
+				}
+				else
+				{
+					if (m_dxgi.tearingSupported())
+					{
+						flags |= DXGI_PRESENT_ALLOW_TEARING;
+					}
+				}
+
 				for (uint32_t ii = 1, num = m_numWindows; ii < num && SUCCEEDED(hr); ++ii)
 				{
 					FrameBufferD3D12& frameBuffer = m_frameBuffers[m_windows[ii].idx];
