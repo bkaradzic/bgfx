@@ -2288,7 +2288,7 @@ namespace bgfx { namespace d3d11
 					&&  m_needPresent)
 					{
 						uint32_t presentFlags = 0;
-						if (!(m_resolution.reset & BGFX_RESET_VSYNC) && (m_dxgi.tearingSupported()))
+						if (!syncInterval && (m_dxgi.tearingSupported()))
 						{
 							presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
 						}
