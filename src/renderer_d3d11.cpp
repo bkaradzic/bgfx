@@ -2287,7 +2287,12 @@ namespace bgfx { namespace d3d11
 					if (NULL != m_swapChain
 					&&  m_needPresent)
 					{
-						hr = m_swapChain->Present(syncInterval, 0);
+						uint32_t presentFlags = 0;
+						if (!syncInterval && (m_dxgi.tearingSupported()))
+						{
+							presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
+						}
+						hr = m_swapChain->Present(syncInterval, presentFlags);
 
 						m_needPresent = false;
 					}
