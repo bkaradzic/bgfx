@@ -6,10 +6,10 @@
 #include "terrain_common.sh"
 #include "fcull.sh"
 
-BUFFER_RO(u_SubdBufferIn, uint, 8);
-BUFFER_RW(u_CulledSubdBuffer, uint, 2);
-BUFFER_RO(u_VertexBuffer, vec4, 6);
-BUFFER_RO(u_IndexBuffer, uint, 7);
+BUFFER_RO(u_SubdBufferIn, uint, 3);
+BUFFER_RW(u_CulledSubdBuffer, uint, 4);
+BUFFER_RO(u_VertexBuffer, vec4, 7);
+BUFFER_RO(u_IndexBuffer, uint, 8);
 
 /**
  * Compute LoD Shader

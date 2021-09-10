@@ -7,7 +7,7 @@
 
 #ifndef __cplusplus
 
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
+#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_PSSL2
 
 #   define mat3x4 float4x3
 #   define mat4x3 float3x4
@@ -19,7 +19,7 @@
 
 mat4x3 mtxFromRows(vec4 _0, vec4 _1, vec4 _2)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
     return transpose(mat3x4(_0, _1, _2) );
 #else
 	return mat4x3(_0, _1, _2);
@@ -28,7 +28,7 @@ mat4x3 mtxFromRows(vec4 _0, vec4 _1, vec4 _2)
 
 vec4 mtxGetRow(mat4x3 _0, uint row)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
     return vec4(_0[0][row], _0[1][row], _0[2][row], _0[3][row]);
 #else
     return vec4(_0[row]);
@@ -37,7 +37,7 @@ vec4 mtxGetRow(mat4x3 _0, uint row)
 
 vec4 mtxGetRow(mat4 _0, uint row)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
     return vec4(_0[0][row], _0[1][row], _0[2][row], _0[3][row]);
 #else
     return vec4(_0[row]);
@@ -46,7 +46,7 @@ vec4 mtxGetRow(mat4 _0, uint row)
 
 vec4 mtxGetColumn(mat4 _0, uint column)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
     return vec4(_0[column]);
 #else
     return vec4(_0[0][column], _0[1][column], _0[2][column], _0[3][column]);
@@ -55,7 +55,7 @@ vec4 mtxGetColumn(mat4 _0, uint column)
 
 float mtxGetElement(mat4 _0, uint column, uint row)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_NVN
     return _0[column][row];
 #else
     return _0[row][column];

@@ -3,8 +3,8 @@
 #include "isubd.sh"
 #include "uniforms.sh"
 
-BUFFER_RW(u_AtomicCounterBuffer, uint, 4);
-BUFFER_RW(u_SubdBufferOut, uint, 1);
+BUFFER_RW(u_AtomicCounterBuffer, uint, 5);
+BUFFER_RW(u_SubdBufferOut, uint, 2);
 
 SAMPLER2D(u_DmapSampler, 0); // displacement map
 SAMPLER2D(u_SmapSampler, 1); // slope map

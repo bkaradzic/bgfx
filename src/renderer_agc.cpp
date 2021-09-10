@@ -1391,19 +1391,19 @@ void RendererContextAGC::destroyTexture(Texture& texture)
 
 //=============================================================================================
 
-void RendererContextAGC::createShaderBuffer(ShaderBufferHandle, uint32_t, uint32_t) override
+void RendererContextAGC::createShaderBuffer(ShaderBufferHandle, uint32_t, uint32_t)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::updateShaderBuffer(ShaderBufferHandle, const Memory*) override
+void RendererContextAGC::updateShaderBuffer(ShaderBufferHandle, const Memory*)
 {
 }
 
 //=============================================================================================
 
-void RendererContextAGC::destroyShaderBuffer(ShaderBufferHandle) override
+void RendererContextAGC::destroyShaderBuffer(ShaderBufferHandle)
 {
 }
 

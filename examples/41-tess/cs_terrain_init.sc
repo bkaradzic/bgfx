@@ -2,11 +2,11 @@
 
 #include "uniforms.sh"
 
-BUFFER_WR(u_SubdBufferOut, uint, 1);
-BUFFER_RW(u_CulledSubdBuffer, uint, 2);
-BUFFER_RW(indirectBuffer, uvec4, 3);
-BUFFER_RW(atomicCounterBuffer, uint, 4);
-BUFFER_WR(u_SubdBufferIn, uint, 8);
+BUFFER_WR(u_SubdBufferOut, uint, 2);
+BUFFER_WR(u_SubdBufferIn, uint, 3);
+BUFFER_RW(u_CulledSubdBuffer, uint, 4);
+BUFFER_RW(u_AtomicCounterBuffer, uint, 5);
+BUFFER_RW(u_IndirectBuffer, uvec4, 6);
 
 NUM_THREADS(1u, 1u, 1u)
 void main()
@@ -17,8 +17,8 @@ void main()
 		subd = 3u;
 	}
 
-	drawIndexedIndirect(indirectBuffer, 0u, subd, 0u, 0u, 0u, 0u);
-	dispatchIndirect(indirectBuffer, 1u, 2u / UPDATE_INDIRECT_VALUE_DIVIDE + 1u, 1u, 1u);
+	drawIndexedIndirect(u_IndirectBuffer, 0u, subd, 0u, 0u, 0u, 0u);
+	dispatchIndirect(u_IndirectBuffer, 1u, 2u / UPDATE_INDIRECT_VALUE_DIVIDE + 1u, 1u, 1u);
 
 	u_SubdBufferOut[0] = 0;
 	u_SubdBufferOut[1] = 1;
@@ -37,7 +37,7 @@ void main()
 
 	uint tmp;
 
-	atomicFetchAndExchange(atomicCounterBuffer[0], 0, tmp);
-	atomicFetchAndExchange(atomicCounterBuffer[1], 0, tmp);
-	atomicFetchAndExchange(atomicCounterBuffer[2], 2, tmp);
+	atomicFetchAndExchange(u_AtomicCounterBuffer[0], 0, tmp);
+	atomicFetchAndExchange(u_AtomicCounterBuffer[1], 0, tmp);
+	atomicFetchAndExchange(u_AtomicCounterBuffer[2], 2, tmp);
 }

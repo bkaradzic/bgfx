@@ -86,6 +86,9 @@ public:
 	void overrideInternal(TextureHandle handle, uintptr_t ptr) override;
 	uintptr_t getInternal(TextureHandle handle) override;
 	void destroyTexture(TextureHandle handle) override;
+	void createShaderBuffer(ShaderBufferHandle handle, uint32_t size, uint32_t stride) override;
+	void updateShaderBuffer(ShaderBufferHandle handle, const Memory* mem) override;
+	void destroyShaderBuffer(ShaderBufferHandle handle) override;
 	void createFrameBuffer(FrameBufferHandle handle, uint8_t num, const Attachment* attachment) override;
 	void createFrameBuffer(FrameBufferHandle handle, void* nwh, uint32_t width, uint32_t height, TextureFormat::Enum format, TextureFormat::Enum depthFormat) override;
 	void destroyFrameBuffer(FrameBufferHandle handle) override;

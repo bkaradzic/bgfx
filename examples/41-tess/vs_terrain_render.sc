@@ -3,9 +3,9 @@ $output v_texcoord0
 
 #include "terrain_common.sh"
 
-BUFFER_RO(u_CulledSubdBuffer, uint, 2);
-BUFFER_RO(u_VertexBuffer, vec4, 3);
-BUFFER_RO(u_IndexBuffer, uint, 4);
+BUFFER_RO(u_CulledSubdBuffer, uint, 4);
+BUFFER_RO(u_VertexBuffer, vec4, 7);
+BUFFER_RO(u_IndexBuffer, uint, 8);
 
 void main()
 {

@@ -536,6 +536,16 @@ namespace
 
 				m_uniforms.submit();
 
+				uint32_t const u_DmapSampler = 0;
+				uint32_t const u_SmapSampler = 1;
+				uint32_t const u_SubdBufferOut = 2;
+				uint32_t const u_SubdBufferIn = 3;
+				uint32_t const u_CulledSubdBuffer = 4;
+				uint32_t const u_AtomicCounterBuffer = 5;
+				uint32_t const u_IndirectBuffer = 6;
+				uint32_t const u_VertexBuffer = 7;
+				uint32_t const u_IndexBuffer = 8;
+
 				// update the subd buffers
 				if (m_restart)
 				{
@@ -552,33 +562,32 @@ namespace
 					loadSubdivisionBuffers();
 
 					//init indirect
-					bgfx::setBuffer(1, m_bufferSubd[m_pingPong], bgfx::Access::ReadWrite);
-					bgfx::setBuffer(2, m_bufferCulledSubd, bgfx::Access::ReadWrite);
-					bgfx::setBuffer(3, m_dispatchIndirect, bgfx::Access::ReadWrite);
-					bgfx::setBuffer(4, m_bufferCounter, bgfx::Access::ReadWrite);
-					bgfx::setBuffer(8, m_bufferSubd[1 - m_pingPong], bgfx::Access::ReadWrite);
+					bgfx::setBuffer(u_SubdBufferOut, m_bufferSubd[m_pingPong], bgfx::Access::ReadWrite);
+					bgfx::setBuffer(u_CulledSubdBuffer, m_bufferCulledSubd, bgfx::Access::ReadWrite);
+					bgfx::setBuffer(u_IndirectBuffer, m_dispatchIndirect, bgfx::Access::ReadWrite);
+					bgfx::setBuffer(u_AtomicCounterBuffer, m_bufferCounter, bgfx::Access::ReadWrite);
+					bgfx::setBuffer(u_SubdBufferIn, m_bufferSubd[1 - m_pingPong], bgfx::Access::ReadWrite);
 					bgfx::dispatch(0, m_programsCompute[PROGRAM_INIT_INDIRECT], 1, 1, 1);
-
 
 					m_restart = false;
 				}
 				else
 				{
 					// update batch
-					bgfx::setBuffer(3, m_dispatchIndirect, bgfx::Access::ReadWrite);
-					bgfx::setBuffer(4, m_bufferCounter, bgfx::Access::ReadWrite);
+					bgfx::setBuffer(u_IndirectBuffer, m_dispatchIndirect, bgfx::Access::ReadWrite);
+					bgfx::setBuffer(u_AtomicCounterBuffer, m_bufferCounter, bgfx::Access::ReadWrite);
 					bgfx::dispatch(0, m_programsCompute[PROGRAM_UPDATE_INDIRECT], 1, 1, 1);
 				}
 
-				bgfx::setBuffer(1, m_bufferSubd[m_pingPong], bgfx::Access::ReadWrite);
-				bgfx::setBuffer(2, m_bufferCulledSubd, bgfx::Access::ReadWrite);
-				bgfx::setBuffer(4, m_bufferCounter, bgfx::Access::ReadWrite);
-				bgfx::setBuffer(6, m_geometryVertices, bgfx::Access::Read);
-				bgfx::setBuffer(7, m_geometryIndices, bgfx::Access::Read);
-				bgfx::setBuffer(8, m_bufferSubd[1 - m_pingPong], bgfx::Access::Read);
+				bgfx::setBuffer(u_SubdBufferOut, m_bufferSubd[m_pingPong], bgfx::Access::ReadWrite);
+				bgfx::setBuffer(u_CulledSubdBuffer, m_bufferCulledSubd, bgfx::Access::ReadWrite);
+				bgfx::setBuffer(u_AtomicCounterBuffer, m_bufferCounter, bgfx::Access::ReadWrite);
+				bgfx::setBuffer(u_VertexBuffer, m_geometryVertices, bgfx::Access::Read);
+				bgfx::setBuffer(u_IndexBuffer, m_geometryIndices, bgfx::Access::Read);
+				bgfx::setBuffer(u_SubdBufferIn, m_bufferSubd[1 - m_pingPong], bgfx::Access::Read);
 				bgfx::setTransform(model);
 
-				bgfx::setTexture(0, m_samplers[TERRAIN_DMAP_SAMPLER], m_textures[TEXTURE_DMAP], BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+				bgfx::setTexture(u_DmapSampler, m_samplers[TERRAIN_DMAP_SAMPLER], m_textures[TEXTURE_DMAP], BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 
 				m_uniforms.submit();
 
@@ -586,23 +595,23 @@ namespace
 				bgfx::dispatch(0, m_programsCompute[PROGRAM_SUBD_CS_LOD], m_dispatchIndirect, 1);
 
 				// update draw
-				bgfx::setBuffer(3, m_dispatchIndirect, bgfx::Access::ReadWrite);
-				bgfx::setBuffer(4, m_bufferCounter, bgfx::Access::ReadWrite);
+				bgfx::setBuffer(u_IndirectBuffer, m_dispatchIndirect, bgfx::Access::ReadWrite);
+				bgfx::setBuffer(u_AtomicCounterBuffer, m_bufferCounter, bgfx::Access::ReadWrite);
 
 				m_uniforms.submit();
 
 				bgfx::dispatch(1, m_programsCompute[PROGRAM_UPDATE_DRAW], 1, 1, 1);
 
 				// render the terrain
-				bgfx::setTexture(0, m_samplers[TERRAIN_DMAP_SAMPLER], m_textures[TEXTURE_DMAP], BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-				bgfx::setTexture(1, m_samplers[TERRAIN_SMAP_SAMPLER], m_textures[TEXTURE_SMAP], BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC);
+				bgfx::setTexture(u_DmapSampler, m_samplers[TERRAIN_DMAP_SAMPLER], m_textures[TEXTURE_DMAP], BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+				bgfx::setTexture(u_SmapSampler, m_samplers[TERRAIN_SMAP_SAMPLER], m_textures[TEXTURE_SMAP], BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC);
 
 				bgfx::setTransform(model);
 				bgfx::setVertexBuffer(0, m_instancedGeometryVertices);
 				bgfx::setIndexBuffer(m_instancedGeometryIndices);
-				bgfx::setBuffer(2, m_bufferCulledSubd, bgfx::Access::Read);
-				bgfx::setBuffer(3, m_geometryVertices, bgfx::Access::Read);
-				bgfx::setBuffer(4, m_geometryIndices, bgfx::Access::Read);
+				bgfx::setBuffer(u_CulledSubdBuffer, m_bufferCulledSubd, bgfx::Access::Read);
+				bgfx::setBuffer(u_VertexBuffer, m_geometryVertices, bgfx::Access::Read);
+				bgfx::setBuffer(u_IndexBuffer, m_geometryIndices, bgfx::Access::Read);
 				bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS);
 
 				m_uniforms.submit();
