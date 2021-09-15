@@ -1393,7 +1393,7 @@ namespace bgfx { namespace nvn
 
 					uint32_t numIndices = _draw.m_numIndices;
 					uint32_t startIndex = _draw.m_startIndex;
-					const uint32_t indexSize = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+					const uint32_t indexSize = (ib.m_flags & BGFX_BUFFER_INDEX32) ? 4 : 2;
 
 					if (numIndices == UINT32_MAX)
 					{

@@ -75,6 +75,8 @@ namespace bgfx { namespace nvn
 		}
 
 		m_size = _size;
+		m_flags = _flags;
+
 		if (_stride > 0)
 		{
 			BX_ASSERT(_size % _stride == 0, "size was expected to be the full size in bytes, thus stride should evenly divide size");
