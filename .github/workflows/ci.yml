@@ -1,0 +1,97 @@
+name: ci
+on:
+  push:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  build:
+    name: Build bgfx-${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win-x64
+            platform-name: x64
+          - os: windows-latest
+            platform: win-x86
+            platform-name: Win32
+          - os: macos-latest
+            platform: osx-x64
+          - os: ubuntu-latest
+            platform: linux-x64
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: bkaradzic/bgfx.cmake
+      - uses: actions/checkout@v2
+        with:
+          path: bgfx
+      - uses: actions/checkout@v2
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - uses: actions/checkout@v2
+        with:
+          repository: bkaradzic/bx
+          path: bx
+      - if: matrix.os == 'ubuntu-latest'
+        run: | 
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev
+      - run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cmake -B build -A ${{ matrix.platform-name }}
+            cmake --build build --config Release
+          else 
+            cmake -B build -DCMAKE_BUILD_TYPE=Release 
+            cmake --build build
+          fi
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [ build ]
+    if: github.repository == 'bkaradzic/bgfx' && github.ref == 'refs/heads/master' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - id: version
+        run: |
+          API_VERSION=$(grep -Eo "BGFX_API_VERSION UINT32_C\([0-9]+\)" include/bgfx/defines.h | grep -Eo "[0-9]+" | tail -1)
+          REVISION=$(git rev-list HEAD --count)
+          SHA="${GITHUB_SHA}"
+          SHA7="${SHA::7}"
+          TAG="1.${API_VERSION}.${REVISION}-${SHA7}"
+          echo "::set-output name=revision::${REVISION}"
+          echo "::set-output name=sha::${SHA}"
+          echo "::set-output name=tag::${TAG}"
+      - run: |
+          sed "s/ BGFX_REV_NUMBER .*/ BGFX_REV_NUMBER ${{ steps.version.outputs.revision }}/g" src/version.h > version.tmp && mv version.tmp src/version.h
+          sed "s/ BGFX_REV_SHA1 .*/ BGFX_REV_SHA1 \"${{ steps.version.outputs.sha }}\"/g" src/version.h > version.tmp && mv version.tmp src/version.h
+      - name: Commit
+        id: commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/version.h
+          git commit -m "release: ${{ steps.version.outputs.tag }}."
+          git push
+          commitish=$(git rev-parse HEAD)
+          echo ::set-output name=commitish::${commitish}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          release_name: ${{ steps.version.outputs.tag }}
+          commitish: ${{ steps.commit.outputs.commitish }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
