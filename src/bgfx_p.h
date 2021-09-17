@@ -3195,21 +3195,29 @@ namespace bgfx
 			cmdbuf.write(_handle);
 		}
 
-		VertexLayoutHandle findVertexLayout(const VertexLayout& _layout)
+		VertexLayoutHandle findOrCreateVertexLayout(const VertexLayout& _layout, bool _refCountOnCreation = false)
 		{
 			VertexLayoutHandle layoutHandle = m_vertexLayoutRef.find(_layout.m_hash);
 
+			if (isValid(layoutHandle) )
+			{
+				return layoutHandle;
+			}
+
+			layoutHandle = { m_layoutHandle.alloc() };
 			if (!isValid(layoutHandle) )
 			{
-				layoutHandle.idx = m_layoutHandle.alloc();
-				if (!isValid(layoutHandle) )
-				{
-					return layoutHandle;
-				}
+				BX_TRACE("WARNING: Failed to allocate vertex layout handle (BGFX_CONFIG_MAX_VERTEX_LAYOUTS, max: %d).", BGFX_CONFIG_MAX_VERTEX_LAYOUTS);
+				return BGFX_INVALID_HANDLE;
+			}
 
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexLayout);
-				cmdbuf.write(layoutHandle);
-				cmdbuf.write(_layout);
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexLayout);
+			cmdbuf.write(layoutHandle);
+			cmdbuf.write(_layout);
+
+			if (_refCountOnCreation)
+			{
+				m_vertexLayoutRef.add(layoutHandle, _layout.m_hash);
 			}
 
 			return layoutHandle;
@@ -3219,10 +3227,9 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			VertexLayoutHandle handle = findVertexLayout(_layout);
+			VertexLayoutHandle handle = findOrCreateVertexLayout(_layout);
 			if (!isValid(handle) )
 			{
-				BX_TRACE("WARNING: Failed to allocate vertex layout handle (BGFX_CONFIG_MAX_VERTEX_LAYOUTS, max: %d).", BGFX_CONFIG_MAX_VERTEX_LAYOUTS);
 				return BGFX_INVALID_HANDLE;
 			}
 
@@ -3248,7 +3255,7 @@ namespace bgfx
 
 			if (isValid(handle) )
 			{
-				VertexLayoutHandle layoutHandle = findVertexLayout(_layout);
+				VertexLayoutHandle layoutHandle = findOrCreateVertexLayout(_layout);
 				if (!isValid(layoutHandle) )
 				{
 					BX_TRACE("WARNING: Failed to allocate vertex layout handle (BGFX_CONFIG_MAX_VERTEX_LAYOUTS, max: %d).", BGFX_CONFIG_MAX_VERTEX_LAYOUTS);
@@ -3558,7 +3565,7 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			VertexLayoutHandle layoutHandle = findVertexLayout(_layout);
+			VertexLayoutHandle layoutHandle = findOrCreateVertexLayout(_layout);
 			if (!isValid(layoutHandle) )
 			{
 				BX_TRACE("WARNING: Failed to allocate vertex layout handle (BGFX_CONFIG_MAX_VERTEX_LAYOUTS, max: %d).", BGFX_CONFIG_MAX_VERTEX_LAYOUTS);
@@ -3791,7 +3798,7 @@ namespace bgfx
 
 				if (NULL != _layout)
 				{
-					layoutHandle = findVertexLayout(*_layout);
+					layoutHandle = findOrCreateVertexLayout(*_layout);
 					m_vertexLayoutRef.add(handle, layoutHandle, _layout->m_hash);
 
 					stride = _layout->m_stride;
@@ -3830,32 +3837,19 @@ namespace bgfx
 			BX_ALIGNED_FREE(g_allocator, _tvb, 16);
 		}
 
-		BGFX_API_FUNC(void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexLayout& _layout) )
+		BGFX_API_FUNC(void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, VertexLayoutHandle _layoutHandle, uint16_t _stride) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			VertexLayoutHandle layoutHandle = m_vertexLayoutRef.find(_layout.m_hash);
+			const uint32_t offset = m_submit->allocTransientVertexBuffer(_num, _stride);
+			const TransientVertexBuffer& dvb = *m_submit->m_transientVb;
 
-			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
-
-			if (!isValid(layoutHandle) )
-			{
-				VertexLayoutHandle temp = { m_layoutHandle.alloc() };
-				layoutHandle = temp;
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexLayout);
-				cmdbuf.write(layoutHandle);
-				cmdbuf.write(_layout);
-				m_vertexLayoutRef.add(layoutHandle, _layout.m_hash);
-			}
-
-			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, _layout.m_stride);
-
-			_tvb->data = &dvb.data[offset];
-			_tvb->size = _num * _layout.m_stride;
-			_tvb->startVertex = bx::strideAlign(offset, _layout.m_stride)/_layout.m_stride;
-			_tvb->stride = _layout.m_stride;
-			_tvb->handle = dvb.handle;
-			_tvb->layoutHandle   = layoutHandle;
+			_tvb->data         = &dvb.data[offset];
+			_tvb->size         = _num * _stride;
+			_tvb->startVertex  = bx::strideAlign(offset, _stride)/_stride;
+			_tvb->stride       = _stride;
+			_tvb->handle       = dvb.handle;
+			_tvb->layoutHandle = _layoutHandle;
 		}
 
 		BGFX_API_FUNC(void allocInstanceDataBuffer(InstanceDataBuffer* _idb, uint32_t _num, uint16_t _stride) )
