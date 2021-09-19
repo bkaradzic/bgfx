@@ -253,7 +253,7 @@ namespace
 			m_width = _width;
 			m_height = _height;
 			m_debug = BGFX_DEBUG_NONE;
-			m_reset = BGFX_RESET_VSYNC;
+			m_reset = BGFX_RESET_MAXANISOTROPY;
 
 			bgfx::Init init;
 			init.type = args.m_type;
@@ -404,7 +404,7 @@ namespace
 									   ,
 									   1.0f, 0);
 
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0]), uint16_t(m_size[1]));
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0] / m_superSamplingFactor), uint16_t(m_size[1] / m_superSamplingFactor));
 					bgfx::setViewTransform(view, m_view, m_proj);
 					bgfx::setViewFrameBuffer(view, m_frameBuffer);
 
@@ -440,7 +440,7 @@ namespace
 					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 					bgfx::setTexture(0, s_color, m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
-					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
+					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, m_superSamplingFactor, m_superSamplingFactor);
 					bgfx::submit(view, m_copyLinearToGammaProgram);
 					++view;
 				}
@@ -450,10 +450,9 @@ namespace
 
 				showExampleDialog(this);
 
-				ImGui::SetNextWindowPos(
-					ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f), ImGuiCond_FirstUseEver);
+				ImGui::SetNextWindowPos(					ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f), ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowSize(
-					ImVec2(m_width / 4.0f, m_height / 1.35f), ImGuiCond_FirstUseEver);
+					ImVec2(m_width / 4.0f, m_height / 1.2f), ImGuiCond_FirstUseEver);
 				ImGui::Begin("Settings", NULL, 0);
 
 				ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
@@ -472,13 +471,23 @@ namespace
 
 					ImGui::SliderFloat("Super sampling", &m_superSamplingFactor, 1.0f, 2.0f);
 					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("2.0 means the scene is rendered at half window resolution");
+					{
+						ImGui::BeginTooltip();
+						ImGui::Text("2.0 means the scene is rendered at half window resolution");
+						ImGui::Text("1.0 means the scene is rendered at native window resolution");
+						ImGui::EndTooltip();
+					}
+
+					{
+						updateMagnifierTexture();
+						ImGui::Image(m_magnifierTexture, ImVec2(itemSize.x, itemSize.x));
+					}
 
 					ImGui::Separator();
 
 					ImGui::Checkbox("Apply FSR", &m_applyFsr);
 					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("Turn effect on and off");
+						ImGui::SetTooltip("Compare between FSR and bilinear interpolation of source image");
 
 					if(m_applyFsr)
 					{
@@ -498,13 +507,6 @@ namespace
 							if (ImGui::IsItemHovered())
 								ImGui::SetTooltip("Lower value means sharper");
 						}
-					}
-
-					{
-						updateMagnifierTexture();
-						ImGui::Separator();
-						ImGui::Text("Magnifier");
-						ImGui::Image(m_magnifierTexture, ImVec2(itemSize.x, itemSize.x));
 					}
 				}
 
