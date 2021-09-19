@@ -291,7 +291,6 @@ namespace
 			m_groundTexture = loadTexture("textures/fieldstone-rgba.dds");
 			m_normalTexture = loadTexture("textures/fieldstone-n.dds");
 
-			m_recreateFrameBuffers = false;
 			createFramebuffers();
 
 			// Vertex decl
@@ -370,19 +369,21 @@ namespace
 				const float deltaTime = float(frameTime / freq);
 				const bgfx::Caps *caps = bgfx::getCaps();
 
-				if (m_size[0] != (int32_t)m_width || m_size[1] != (int32_t)m_height || m_recreateFrameBuffers)
+				if (m_size[0] != (int32_t)m_width || m_size[1] != (int32_t)m_height)
 				{
 					destroyFramebuffers();
 					createFramebuffers();
-					m_recreateFrameBuffers = false;
 				}
 
 				// update animation time
-				const float rotationSpeed = 0.75f;
-				m_animationTime += deltaTime * rotationSpeed;
-				if (bx::kPi2 < m_animationTime)
+				const float rotationSpeed = 0.25f;
+				if(m_animateScene)
 				{
-					m_animationTime -= bx::kPi2;
+					m_animationTime += deltaTime * rotationSpeed;
+					if (bx::kPi2 < m_animationTime)
+					{
+						m_animationTime -= bx::kPi2;
+					}
 				}
 
 				// Update camera
@@ -393,7 +394,6 @@ namespace
 				updateUniforms();
 
 				bx::mtxProj(m_proj, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, caps->homogeneousDepth);
-				bx::mtxProj(m_proj2, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, false);
 
 				bgfx::ViewId view = 0;
 
@@ -461,11 +461,25 @@ namespace
 				ImVec2 const itemSize = ImGui::GetItemRectSize();
 
 				{
+					ImGui::Checkbox("Animate scene", &m_animateScene);
+
+					bool const resolutionChanged = ImGui::Combo("Antialiasing", &m_antiAliasingSetting, "none\0" "4x\0" "16x\0" "\0");
+					if (resolutionChanged)
+					{
+						destroyFramebuffers();
+						createFramebuffers();
+					}
+
+					ImGui::SliderFloat("Super sampling", &m_superSamplingFactor, 1.0f, 2.0f);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("2.0 means the scene is rendered at half window resolution");
+
+					ImGui::Separator();
+
 					ImGui::Checkbox("Apply FSR", &m_applyFsr);
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip("Turn effect on and off");
 
-					bool isChanged = false;
 					if(m_applyFsr)
 					{
 						ImGui::Checkbox("Apply sharpening", &m_applyFsrRcas);
@@ -477,21 +491,21 @@ namespace
 							ImGui::EndTooltip();
 						}
 
-						ImGui::Text("Sharpening controls:");
-						isChanged |= ImGui::SliderFloat("sharpening", &m_rcasAttenuation, 0.01f, 2.0f);
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip("Lower value means sharper");
-
+						if(m_applyFsrRcas)
+						{
+							ImGui::Text("Sharpening controls:");
+							ImGui::SliderFloat("sharpening", &m_rcasAttenuation, 0.01f, 2.0f);
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip("Lower value means sharper");
+						}
 					}
 
-					if (isChanged)
 					{
 						updateMagnifierTexture();
+						ImGui::Separator();
+						ImGui::Text("Magnifier");
+						ImGui::Image(m_magnifierTexture, ImVec2(itemSize.x, itemSize.x));
 					}
-
-					ImGui::Separator();
-
-					ImGui::Image(m_magnifierTexture, ImVec2(itemSize.x, itemSize.x));
 				}
 
 				ImGui::End();
@@ -582,7 +596,7 @@ namespace
 			unsigned halfWidth = (m_width / 2);
 			unsigned halfHeight = (m_height / 2);
 
-			bgfx::setViewName(view, "bokeh dof downsample");
+			bgfx::setViewName(view, "fsr easu");
 			bgfx::setViewRect(view, 0, 0, uint16_t(halfWidth), uint16_t(halfHeight));
 			bgfx::setViewTransform(view, NULL, _orthoProj);
 			bgfx::setViewFrameBuffer(view, m_dofQuarterInput.m_buffer);
@@ -594,7 +608,7 @@ namespace
 			++view;
 			lastTex = m_dofQuarterInput.m_texture;
 
-			bgfx::setViewName(view, "bokeh dof quarter");
+			bgfx::setViewName(view, "fsr rcas");
 			bgfx::setViewRect(view, 0, 0, uint16_t(halfWidth), uint16_t(halfHeight));
 			bgfx::setViewTransform(view, NULL, _orthoProj);
 			bgfx::setViewFrameBuffer(view, m_dofQuarterOutput.m_buffer);
@@ -613,10 +627,14 @@ namespace
 			m_size[0] = m_width;
 			m_size[1] = m_height;
 
-			const uint64_t bilinearFlags = 0 | BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+			uint64_t constexpr msaaFlags[] = { BGFX_TEXTURE_NONE, BGFX_TEXTURE_RT_MSAA_X4, BGFX_TEXTURE_RT_MSAA_X16 };
 
-			m_frameBufferTex[FRAMEBUFFER_RT_COLOR] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::RGBA16F, bilinearFlags);
-			m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D32F, bilinearFlags);
+			const uint64_t msaa = msaaFlags[m_antiAliasingSetting];
+			const uint64_t colorFlags = 0 | BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | msaa;
+			const uint64_t depthFlags = 0 | BGFX_TEXTURE_RT_WRITE_ONLY | msaa;
+
+			m_frameBufferTex[FRAMEBUFFER_RT_COLOR] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::RGBA16F, colorFlags);
+			m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D24S8, depthFlags);
 			m_frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_frameBufferTex), m_frameBufferTex, true);
 		}
 
@@ -649,23 +667,6 @@ namespace
 			}
 		}
 
-		static float bokehShapeFromAngle(int _lobeCount, float _radiusMin, float _radiusDelta2x, float _rotation, float _theta)
-		{
-			// don't shape for 0, 1 blades...
-			if (_lobeCount <= 1)
-			{
-				return 1.0f;
-			}
-
-			// divide edge into some number of lobes
-			const float invPeriod = float(_lobeCount) / (bx::kPi2);
-			float periodFraction = bx::fract(_theta * invPeriod + _rotation);
-
-			// apply triangle shape to each lobe to approximate blades of a camera aperture
-			periodFraction = bx::abs(periodFraction - 0.5f);
-			return periodFraction * _radiusDelta2x + _radiusMin;
-		}
-
 		void updateMagnifierTexture()
 		{
 			if (m_magnifierTexture.idx != bgfx::kInvalidHandle)
@@ -676,7 +677,6 @@ namespace
 			const uint32_t magnifierSize = 32;
 
 			const bgfx::Memory *mem = bgfx::alloc(magnifierSize * magnifierSize * 4);
-			//bx::memSet(mem->data, 0x00, bokehSize * bokehSize * 4);
 
 			// hoping texture deals with mem
 			m_magnifierTexture = bgfx::createTexture2D(magnifierSize, magnifierSize, false, 1, bgfx::TextureFormat::BGRA8, 0 | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_MAG_POINT, mem);
@@ -722,12 +722,10 @@ namespace
 		float m_lightRotation = 0.0f;
 		float m_texelHalf = 0.0f;
 		float m_fovY = 60.0f;
-		bool m_recreateFrameBuffers = false;
 		float m_animationTime = 0.0f;
 
 		float m_view[16];
 		float m_proj[16];
-		float m_proj2[16];
 		int32_t m_size[2];
 
 		// UI parameters
@@ -735,8 +733,10 @@ namespace
 		bool m_applyFsrRcas = true;
 		float m_superSamplingFactor = 2.0f;
 		float m_rcasAttenuation = 0.2f;
+		bool m_animateScene = false;
+		int32_t m_antiAliasingSetting = 2;
 	};
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleFsr, "46-fsr", "AMD FidelityFX-FSR");
+ENTRY_IMPLEMENT_MAIN(ExampleFsr, "46-fsr", "AMD FidelityFX-FSR\nFSR best result requires high quality antialiasing for the low resolution source image.");
