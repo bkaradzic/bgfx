@@ -7,24 +7,25 @@
 #define BGFX_RENDERER_H_HEADER_GUARD
 
 #include "bgfx_p.h"
+#include <utility>
 
 namespace bgfx
 {
 	inline constexpr uint32_t toAbgr8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
 	{
 		return 0
-			| (uint32_t(_r)<<24)
-			| (uint32_t(_g)<<16)
-			| (uint32_t(_b)<< 8)
-			| (uint32_t(_a)    )
+			| (uint32_t(_r) << 24)
+			| (uint32_t(_g) << 16)
+			| (uint32_t(_b) << 8)
+			| (uint32_t(_a))
 			;
 	}
 
-	constexpr uint32_t kColorFrame    = toAbgr8(0xff, 0xd7, 0xc9);
-	constexpr uint32_t kColorView     = toAbgr8(0xe4, 0xb4, 0x8e);
-	constexpr uint32_t kColorDraw     = toAbgr8(0xc6, 0xe5, 0xb9);
-	constexpr uint32_t kColorCompute  = toAbgr8(0xa7, 0xdb, 0xd8);
-	constexpr uint32_t kColorMarker   = toAbgr8(0xff, 0x00, 0x00);
+	constexpr uint32_t kColorFrame = toAbgr8(0xff, 0xd7, 0xc9);
+	constexpr uint32_t kColorView = toAbgr8(0xe4, 0xb4, 0x8e);
+	constexpr uint32_t kColorDraw = toAbgr8(0xc6, 0xe5, 0xb9);
+	constexpr uint32_t kColorCompute = toAbgr8(0xa7, 0xdb, 0xd8);
+	constexpr uint32_t kColorMarker = toAbgr8(0xff, 0x00, 0x00);
 	constexpr uint32_t kColorResource = toAbgr8(0xff, 0x40, 0x20);
 
 	struct BlitState
@@ -82,7 +83,7 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 			{
-				bx::memCopy(&m_view[ii].un.f4x4, &_frame->m_view[ii].m_view.un.f4x4, sizeof(Matrix4) );
+				bx::memCopy(&m_view[ii].un.f4x4, &_frame->m_view[ii].m_view.un.f4x4, sizeof(Matrix4));
 			}
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
@@ -90,12 +91,12 @@ namespace bgfx
 				bx::float4x4_mul(&m_viewProj[ii].un.f4x4
 					, &m_view[ii].un.f4x4
 					, &_frame->m_view[ii].m_proj.un.f4x4
-					);
+				);
 			}
 		}
 
-		template<uint16_t mtxRegs, typename RendererContext, typename Program, typename Draw>
-		void setPredefined(RendererContext* _renderer, uint16_t _view, const Program& _program, const Frame* _frame, const Draw& _draw)
+		template<uint16_t mtxRegs, typename RendererContext, typename Program, typename Draw, typename... ContextArgs>
+		void setPredefined(RendererContext* _renderer, uint16_t _view, const Program& _program, const Frame* _frame, const Draw& _draw, ContextArgs&&... _ctx)
 		{
 			const FrameCache& frameCache = _frame->m_frameCache;
 
@@ -104,176 +105,188 @@ namespace bgfx
 				const PredefinedUniform& predefined = _program.m_predefined[ii];
 				// BBI-NOTE: all renderers check for `_flags & kUniformFragmentBit` already and the NVN backend needs to know what predefined uniform it is
 				uint8_t flags = predefined.m_type;
-				switch (predefined.m_type&(~kUniformFragmentBit) )
+				switch (predefined.m_type & (~kUniformFragmentBit))
 				{
 				case PredefinedUniform::ViewRect:
-					{
-						float frect[4];
-						frect[0] = m_rect.m_x;
-						frect[1] = m_rect.m_y;
-						frect[2] = m_rect.m_width;
-						frect[3] = m_rect.m_height;
+				{
+					float frect[4];
+					frect[0] = m_rect.m_x;
+					frect[1] = m_rect.m_y;
+					frect[2] = m_rect.m_width;
+					frect[3] = m_rect.m_height;
 
-						_renderer->setShaderUniform4f(flags
-							, predefined.m_loc
-							, &frect[0]
-							, 1
-							);
-					}
-					break;
+					_renderer->setShaderUniform4f(flags
+						, predefined.m_loc
+						, &frect[0]
+						, 1
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::ViewTexel:
-					{
-						float frect[4];
-						frect[0] = 1.0f/float(m_rect.m_width);
-						frect[1] = 1.0f/float(m_rect.m_height);
-						frect[2] = m_rect.m_width;
-						frect[3] = m_rect.m_height;
+				{
+					float frect[4];
+					frect[0] = 1.0f / float(m_rect.m_width);
+					frect[1] = 1.0f / float(m_rect.m_height);
+					frect[2] = m_rect.m_width;
+					frect[3] = m_rect.m_height;
 
-						_renderer->setShaderUniform4f(flags
-							, predefined.m_loc
-							, &frect[0]
-							, 1
-							);
-					}
-					break;
+					_renderer->setShaderUniform4f(flags
+						, predefined.m_loc
+						, &frect[0]
+						, 1
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::View:
-					{
-						_renderer->setShaderUniform4x4f(flags
-							, predefined.m_loc
-							, m_view[_view].un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
-							);
-					}
-					break;
+				{
+					_renderer->setShaderUniform4x4f(flags
+						, predefined.m_loc
+						, m_view[_view].un.val
+						, bx::uint32_min(mtxRegs, predefined.m_count)
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::InvView:
+				{
+					if (_view != m_invViewCached)
 					{
-						if (_view != m_invViewCached)
-						{
-							m_invViewCached = _view;
-							bx::float4x4_inverse(&m_invView.un.f4x4
-								, &m_view[_view].un.f4x4
-								);
-						}
-
-						_renderer->setShaderUniform4x4f(flags
-							, predefined.m_loc
-							, m_invView.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
-							);
+						m_invViewCached = _view;
+						bx::float4x4_inverse(&m_invView.un.f4x4
+							, &m_view[_view].un.f4x4
+						);
 					}
-					break;
+
+					_renderer->setShaderUniform4x4f(flags
+						, predefined.m_loc
+						, m_invView.un.val
+						, bx::uint32_min(mtxRegs, predefined.m_count)
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::Proj:
-					{
-						_renderer->setShaderUniform4x4f(flags
-							, predefined.m_loc
-							, _frame->m_view[_view].m_proj.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
-							);
-					}
-					break;
+				{
+					_renderer->setShaderUniform4x4f(flags
+						, predefined.m_loc
+						, _frame->m_view[_view].m_proj.un.val
+						, bx::uint32_min(mtxRegs, predefined.m_count)
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::InvProj:
+				{
+					if (_view != m_invProjCached)
 					{
-						if (_view != m_invProjCached)
-						{
-							m_invProjCached = _view;
-							bx::float4x4_inverse(&m_invProj.un.f4x4
-								, &_frame->m_view[_view].m_proj.un.f4x4
-								);
-						}
-
-						_renderer->setShaderUniform4x4f(flags
-							, predefined.m_loc
-							, m_invProj.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
-							);
+						m_invProjCached = _view;
+						bx::float4x4_inverse(&m_invProj.un.f4x4
+							, &_frame->m_view[_view].m_proj.un.f4x4
+						);
 					}
-					break;
+
+					_renderer->setShaderUniform4x4f(flags
+						, predefined.m_loc
+						, m_invProj.un.val
+						, bx::uint32_min(mtxRegs, predefined.m_count)
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::ViewProj:
-					{
-						_renderer->setShaderUniform4x4f(flags
-							, predefined.m_loc
-							, m_viewProj[_view].un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
-							);
-					}
-					break;
+				{
+					_renderer->setShaderUniform4x4f(flags
+						, predefined.m_loc
+						, m_viewProj[_view].un.val
+						, bx::uint32_min(mtxRegs, predefined.m_count)
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::InvViewProj:
+				{
+					if (_view != m_invViewProjCached)
 					{
-						if (_view != m_invViewProjCached)
-						{
-							m_invViewProjCached = _view;
-							bx::float4x4_inverse(&m_invViewProj.un.f4x4
-								, &m_viewProj[_view].un.f4x4
-								);
-						}
-
-						_renderer->setShaderUniform4x4f(flags
-							, predefined.m_loc
-							, m_invViewProj.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
-							);
+						m_invViewProjCached = _view;
+						bx::float4x4_inverse(&m_invViewProj.un.f4x4
+							, &m_viewProj[_view].un.f4x4
+						);
 					}
-					break;
+
+					_renderer->setShaderUniform4x4f(flags
+						, predefined.m_loc
+						, m_invViewProj.un.val
+						, bx::uint32_min(mtxRegs, predefined.m_count)
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::Model:
-					{
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
-						_renderer->setShaderUniform4x4f(flags
-							, predefined.m_loc
-							, model.un.val
-							, bx::uint32_min(_draw.m_numMatrices*mtxRegs, predefined.m_count)
-							);
-					}
-					break;
+				{
+					const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
+					_renderer->setShaderUniform4x4f(flags
+						, predefined.m_loc
+						, model.un.val
+						, bx::uint32_min(_draw.m_numMatrices * mtxRegs, predefined.m_count)
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::ModelView:
-					{
-						Matrix4 modelView;
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
-						bx::model4x4_mul(&modelView.un.f4x4
-							, &model.un.f4x4
-							, &m_view[_view].un.f4x4
-							);
-						_renderer->setShaderUniform4x4f(flags
-							, predefined.m_loc
-							, modelView.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
-							);
-					}
-					break;
+				{
+					Matrix4 modelView;
+					const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
+					bx::model4x4_mul(&modelView.un.f4x4
+						, &model.un.f4x4
+						, &m_view[_view].un.f4x4
+					);
+					_renderer->setShaderUniform4x4f(flags
+						, predefined.m_loc
+						, modelView.un.val
+						, bx::uint32_min(mtxRegs, predefined.m_count)
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::ModelViewProj:
-					{
-						Matrix4 modelViewProj;
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
-						bx::model4x4_mul_viewproj4x4(&modelViewProj.un.f4x4
-							, &model.un.f4x4
-							, &m_viewProj[_view].un.f4x4
-							);
-						_renderer->setShaderUniform4x4f(flags
-							, predefined.m_loc
-							, modelViewProj.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
-							);
-					}
-					break;
+				{
+					Matrix4 modelViewProj;
+					const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
+					bx::model4x4_mul_viewproj4x4(&modelViewProj.un.f4x4
+						, &model.un.f4x4
+						, &m_viewProj[_view].un.f4x4
+					);
+					_renderer->setShaderUniform4x4f(flags
+						, predefined.m_loc
+						, modelViewProj.un.val
+						, bx::uint32_min(mtxRegs, predefined.m_count)
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				case PredefinedUniform::AlphaRef:
-					{
-						_renderer->setShaderUniform4f(flags
-							, predefined.m_loc
-							, &m_alphaRef
-							, 1
-							);
-					}
-					break;
+				{
+					_renderer->setShaderUniform4f(flags
+						, predefined.m_loc
+						, &m_alphaRef
+						, 1
+						, std::forward<ContextArgs>(_ctx)...
+					);
+				}
+				break;
 
 				default:
 					BX_ASSERT(false, "predefined %d not handled", predefined.m_type);
@@ -312,10 +325,10 @@ namespace bgfx
 			BX_ASSERT(UINT16_MAX != handle, "Failed to find handle.");
 
 			Data& data = m_data[handle];
-			data.m_hash   = _key;
-			data.m_value  = _value;
+			data.m_hash = _key;
+			data.m_value = _value;
 			data.m_parent = _parent;
-			m_hashMap.insert(stl::make_pair(_key, handle) );
+			m_hashMap.insert(stl::make_pair(_key, handle));
 
 			return bx::addressOf(m_data[handle].m_value);
 		}
@@ -323,7 +336,7 @@ namespace bgfx
 		Ty* find(uint64_t _key)
 		{
 			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
+			if (it != m_hashMap.end())
 			{
 				uint16_t handle = it->second;
 				m_alloc.touch(handle);
@@ -336,7 +349,7 @@ namespace bgfx
 		void invalidate(uint64_t _key)
 		{
 			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
+			if (it != m_hashMap.end())
 			{
 				uint16_t handle = it->second;
 				m_alloc.free(handle);
@@ -347,11 +360,11 @@ namespace bgfx
 
 		void invalidate(uint16_t _handle)
 		{
-			if (m_alloc.isValid(_handle) )
+			if (m_alloc.isValid(_handle))
 			{
 				m_alloc.free(_handle);
 				Data& data = m_data[_handle];
-				m_hashMap.erase(m_hashMap.find(data.m_hash) );
+				m_hashMap.erase(m_hashMap.find(data.m_hash));
 				release(data.m_value);
 			}
 		}
@@ -366,7 +379,7 @@ namespace bgfx
 				if (data.m_parent == _parent)
 				{
 					m_alloc.free(handle);
-					m_hashMap.erase(m_hashMap.find(data.m_hash) );
+					m_hashMap.erase(m_hashMap.find(data.m_hash));
 					release(data.m_value);
 				}
 				else
@@ -391,7 +404,7 @@ namespace bgfx
 
 		uint32_t getCount() const
 		{
-			return uint32_t(m_hashMap.size() );
+			return uint32_t(m_hashMap.size());
 		}
 
 	private:
@@ -414,13 +427,13 @@ namespace bgfx
 		void add(uint64_t _key, uint16_t _value)
 		{
 			invalidate(_key);
-			m_hashMap.insert(stl::make_pair(_key, _value) );
+			m_hashMap.insert(stl::make_pair(_key, _value));
 		}
 
 		uint16_t find(uint64_t _key)
 		{
 			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
+			if (it != m_hashMap.end())
 			{
 				return it->second;
 			}
@@ -431,7 +444,7 @@ namespace bgfx
 		void invalidate(uint64_t _key)
 		{
 			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
+			if (it != m_hashMap.end())
 			{
 				m_hashMap.erase(it);
 			}
@@ -444,7 +457,7 @@ namespace bgfx
 
 		uint32_t getCount() const
 		{
-			return uint32_t(m_hashMap.size() );
+			return uint32_t(m_hashMap.size());
 		}
 
 	private:
@@ -454,10 +467,10 @@ namespace bgfx
 
 	inline bool hasVertexStreamChanged(const RenderDraw& _current, const RenderDraw& _new)
 	{
-		if (_current.m_streamMask             != _new.m_streamMask
-		||  _current.m_instanceDataBuffer.idx != _new.m_instanceDataBuffer.idx
-		||  _current.m_instanceDataOffset     != _new.m_instanceDataOffset
-		||  _current.m_instanceDataStride     != _new.m_instanceDataStride)
+		if (_current.m_streamMask != _new.m_streamMask
+			|| _current.m_instanceDataBuffer.idx != _new.m_instanceDataBuffer.idx
+			|| _current.m_instanceDataOffset != _new.m_instanceDataOffset
+			|| _current.m_instanceDataStride != _new.m_instanceDataStride)
 		{
 			return true;
 		}
@@ -469,10 +482,10 @@ namespace bgfx
 		{
 			const uint32_t ntz = bx::uint32_cnttz(streamMask);
 			streamMask >>= ntz;
-			idx         += ntz;
+			idx += ntz;
 
-			if (_current.m_stream[idx].m_handle.idx  != _new.m_stream[idx].m_handle.idx
-			||  _current.m_stream[idx].m_startVertex != _new.m_stream[idx].m_startVertex)
+			if (_current.m_stream[idx].m_handle.idx != _new.m_stream[idx].m_handle.idx
+				|| _current.m_stream[idx].m_startVertex != _new.m_stream[idx].m_startVertex)
 			{
 				return true;
 			}
@@ -484,13 +497,13 @@ namespace bgfx
 	template<typename Ty>
 	struct Profiler
 	{
-		Profiler(Frame* _frame, Ty& _gpuTimer, const char (*_viewName)[BGFX_CONFIG_MAX_VIEW_NAME], bool _enabled = true)
+		Profiler(Frame* _frame, Ty& _gpuTimer, const char(*_viewName)[BGFX_CONFIG_MAX_VIEW_NAME], bool _enabled = true)
 			: m_viewName(_viewName)
 			, m_frame(_frame)
 			, m_gpuTimer(_gpuTimer)
 			, m_queryIdx(UINT32_MAX)
 			, m_numViews(0)
-			, m_enabled(_enabled && 0 != (_frame->m_debug & BGFX_DEBUG_PROFILER) )
+			, m_enabled(_enabled && 0 != (_frame->m_debug & BGFX_DEBUG_PROFILER))
 		{
 		}
 
@@ -512,14 +525,14 @@ namespace bgfx
 				bx::strCopy(viewStats.name
 					, BGFX_CONFIG_MAX_VIEW_NAME
 					, &m_viewName[_view][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-					);
+				);
 			}
 		}
 
 		void end()
 		{
 			if (m_enabled
-			&&  UINT32_MAX != m_queryIdx)
+				&& UINT32_MAX != m_queryIdx)
 			{
 				m_gpuTimer.end(m_queryIdx);
 
@@ -535,9 +548,9 @@ namespace bgfx
 			}
 		}
 
-		const char (*m_viewName)[BGFX_CONFIG_MAX_VIEW_NAME];
-		Frame*   m_frame;
-		Ty&      m_gpuTimer;
+		const char(*m_viewName)[BGFX_CONFIG_MAX_VIEW_NAME];
+		Frame* m_frame;
+		Ty& m_gpuTimer;
 		uint32_t m_queryIdx;
 		uint16_t m_numViews;
 		bool     m_enabled;

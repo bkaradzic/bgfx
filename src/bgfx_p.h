@@ -66,6 +66,7 @@
 
 namespace bgfx
 {
+
 #if BX_COMPILER_CLANG_ANALYZER
 	void __attribute__((analyzer_noreturn)) fatal(Fatal::Enum _code, const char* _format, ...);
 #else
@@ -159,6 +160,14 @@ namespace bgfx
 
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
 
+#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x3)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x5)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
+
+#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
+#define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
+#define BGFX_UNIFORM_MASK (BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT)
+
 #define BGFX_CLEAR_COLOR_USE_PALETTE UINT16_C(0x8000)
 #define BGFX_CLEAR_MASK (0                 \
 			| BGFX_CLEAR_COLOR             \
@@ -205,10 +214,10 @@ namespace tinystl
 				, uint32_t(this->end() - this->begin())
 				, sizeof(T)
 				, [](const void* _a, const void* _b) -> int32_t {
-				const T& lhs = *(const T*)(_a);
-				const T& rhs = *(const T*)(_b);
-				return lhs < rhs ? -1 : 1;
-			});
+					const T& lhs = *(const T*)(_a);
+					const T& rhs = *(const T*)(_b);
+					return lhs < rhs ? -1 : 1;
+				});
 		}
 	};
 
@@ -5277,7 +5286,7 @@ namespace bgfx
 			m_encoderStats[0].cpuTimeBegin = m_encoder[0].m_cpuTimeBegin;
 			m_encoderStats[0].cpuTimeEnd = m_encoder[0].m_cpuTimeEnd;
 			m_submit->m_perfStats.numEncoders = 1;
-		}
+	}
 #endif // BGFX_CONFIG_MULTITHREADED
 
 		EncoderStats* m_encoderStats;
@@ -5370,7 +5379,7 @@ namespace bgfx
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;
 		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);
-	};
+};
 
 #undef BGFX_API_FUNC
 
