@@ -162,6 +162,8 @@ namespace
 	{
 		void init(uint32_t _width, uint32_t _height, bgfx::TextureFormat::Enum _format, uint64_t _flags)
 		{
+			m_width = _width;
+			m_height = _height;
 			m_texture = bgfx::createTexture2D(uint16_t(_width), uint16_t(_height), false, 1, _format, _flags);
 			const bool destroyTextures = true;
 			m_buffer = bgfx::createFrameBuffer(1, &m_texture, destroyTextures);
@@ -173,11 +175,13 @@ namespace
 			bgfx::destroy(m_buffer);
 		}
 
+		uint32_t m_width;
+		uint32_t m_height;
 		bgfx::TextureHandle m_texture;
 		bgfx::FrameBufferHandle m_buffer;
 	};
 
-	void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
+	void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f, float _offsetX = 0.0f, float _offsetY = 0.0f)
 	{
 		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
 		{
@@ -185,10 +189,10 @@ namespace
 			bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 			PosTexCoord0Vertex *vertex = (PosTexCoord0Vertex *)vb.data;
 
-			const float minx = -_width;
-			const float maxx = _width;
-			const float miny = 0.0f;
-			const float maxy = _height * 2.0f;
+			const float minx = -_width - _offsetX / _width * 2.0f;
+			const float maxx = _width - _offsetX / _width * 2.0f;
+			const float miny = 0.0f - _offsetY / _height;
+			const float maxy = _height * 2.0f - _offsetY / _height;
 
 			const float texelHalfW = _texelHalf / _textureWidth;
 			const float texelHalfH = _texelHalf / _textureHeight;
@@ -300,7 +304,6 @@ namespace
 			cameraCreate();
 			cameraSetPosition({0.0f, 2.5f, -20.0f});
 			cameraSetVerticalAngle(-0.3f);
-			m_fovY = 60.0f;
 
 			// Init "prev" matrices, will be same for first frame
 			cameraGetViewMtx(m_view);
@@ -310,8 +313,9 @@ namespace
 			const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
 			m_texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
 
-			m_magnifierTexture.idx = bgfx::kInvalidHandle;
-			updateMagnifierTexture();
+			const uint32_t magnifierSize = 32;
+			m_magnifierTexture.init(magnifierSize, magnifierSize, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_MAG_POINT);
+			m_magnifierPos = ImVec2(m_width * 0.5f, m_height * 0.5f);
 
 			imguiCreate();
 		}
@@ -325,7 +329,6 @@ namespace
 
 			bgfx::destroy(m_normalTexture);
 			bgfx::destroy(m_groundTexture);
-			bgfx::destroy(m_magnifierTexture);
 
 			bgfx::destroy(m_forwardProgram);
 			bgfx::destroy(m_gridProgram);
@@ -334,6 +337,8 @@ namespace
 			m_fsrEasuUniforms.destroy();
 			m_fsrRcasUniforms.destroy();
 			m_modelUniforms.destroy();
+
+			m_magnifierTexture.destroy();
 
 			bgfx::destroy(s_albedo);
 			bgfx::destroy(s_color);
@@ -358,6 +363,12 @@ namespace
 				if (0 == m_width || 0 == m_height)
 				{
 					return true;
+				}
+
+				if(m_mouseState.m_buttons[entry::MouseButton::Left] && !ImGui::MouseOverArea())
+				{
+					m_magnifierPos.x = static_cast<float>(m_mouseState.m_mx);
+					m_magnifierPos.y = static_cast<float>(m_mouseState.m_my);
 				}
 
 				// Update frame timer
@@ -400,9 +411,7 @@ namespace
 				// Draw models into scene
 				{
 					bgfx::setViewName(view, "forward scene");
-					bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x7fb8ffff // clear to a sky blue
-									   ,
-									   1.0f, 0);
+					bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x7fb8ffff, 1.0f, 0);
 
 					bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0] / m_superSamplingFactor), uint16_t(m_size[1] / m_superSamplingFactor));
 					bgfx::setViewTransform(view, m_view, m_proj);
@@ -414,6 +423,8 @@ namespace
 
 					++view;
 				}
+
+				updateMagnifierTexture(view);
 
 				float orthoProj[16];
 				bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
@@ -450,11 +461,9 @@ namespace
 
 				showExampleDialog(this);
 
-				ImGui::SetNextWindowPos(					ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f), ImGuiCond_FirstUseEver);
-				ImGui::SetNextWindowSize(
-					ImVec2(m_width / 4.0f, m_height / 1.2f), ImGuiCond_FirstUseEver);
+				ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f), ImGuiCond_FirstUseEver);
+				ImGui::SetNextWindowSize(ImVec2(m_width / 4.0f, m_height / 1.2f), ImGuiCond_FirstUseEver);
 				ImGui::Begin("Settings", NULL, 0);
-
 				ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
 
 				ImVec2 const itemSize = ImGui::GetItemRectSize();
@@ -479,8 +488,7 @@ namespace
 					}
 
 					{
-						updateMagnifierTexture();
-						ImGui::Image(m_magnifierTexture, ImVec2(itemSize.x, itemSize.x));
+						ImGui::Image(m_magnifierTexture.m_texture, ImVec2(itemSize.x, itemSize.x));
 					}
 
 					ImGui::Separator();
@@ -529,7 +537,7 @@ namespace
 			const int32_t width = 6;
 			const int32_t length = 20;
 
-			float c0[] = {72.0f / 255.0f, 126.0f / 255.0f, 149.0f / 255.0f};  // blue
+			float c0[] = {235.0f  / 255.0f, 126.0f / 255.0f, 30.0f / 255.0f};  // orange
 			float c1[] = {235.0f / 255.0f, 146.0f / 255.0f, 251.0f / 255.0f}; // purple
 			float c2[] = {199.0f / 255.0f, 0.0f / 255.0f, 57.0f / 255.0f};	  // pink
 
@@ -663,25 +671,38 @@ namespace
 			FsrRcasCon(reinterpret_cast<AU1*>(&m_fsrRcasUniforms.Const0), m_rcasAttenuation);
 			m_fsrRcasUniforms.Sample.x = (hdr ? 1.0f : 0.0f);
 
-			{
-				float lightPosition[] = {0.0f, 6.0f, 10.0f};
-				bx::memCopy(m_modelUniforms.m_lightPosition, lightPosition, 3 * sizeof(float));
-			}
+			m_modelUniforms.m_lightPosition[0] = 0.0f;
+			m_modelUniforms.m_lightPosition[1] = 6.0f;
+			m_modelUniforms.m_lightPosition[2] = 10.0f;
 		}
 
-		void updateMagnifierTexture()
+		void updateMagnifierTexture(bgfx::ViewId& view)
 		{
-			if (m_magnifierTexture.idx != bgfx::kInvalidHandle)
+			const bgfx::Caps* caps = bgfx::getCaps();
+
+			float orthoProj[16];
+			bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
 			{
-				bgfx::destroy(m_magnifierTexture);
+				// clear out transform stack
+				float identity[16];
+				bx::mtxIdentity(identity);
+				bgfx::setTransform(identity);
 			}
 
-			const uint32_t magnifierSize = 32;
+			float scaleX = m_superSamplingFactor * (m_width + m_magnifierTexture.m_width * 2) / static_cast<float>(m_magnifierTexture.m_width);
+			float scaleY = m_superSamplingFactor * (m_height) / static_cast<float>(m_magnifierTexture.m_height);
+			float offsetX = m_superSamplingFactor * (m_magnifierPos.x - m_magnifierTexture.m_width * 0.5f);
+			float offsetY = m_superSamplingFactor * (m_magnifierPos.y - m_magnifierTexture.m_height * 0.5f);
 
-			const bgfx::Memory *mem = bgfx::alloc(magnifierSize * magnifierSize * 4);
-
-			// hoping texture deals with mem
-			m_magnifierTexture = bgfx::createTexture2D(magnifierSize, magnifierSize, false, 1, bgfx::TextureFormat::BGRA8, 0 | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_MAG_POINT, mem);
+			bgfx::setViewName(view, "magnifier");
+			bgfx::setViewRect(view, 0, 0, uint16_t(m_magnifierTexture.m_width), uint16_t(m_magnifierTexture.m_height));
+			bgfx::setViewTransform(view, NULL, orthoProj);
+			bgfx::setViewFrameBuffer(view, m_magnifierTexture.m_buffer);
+			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
+			bgfx::setTexture(0, s_color, m_frameBufferTex[FRAMEBUFFER_RT_COLOR], BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+			screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
+			bgfx::submit(view, m_copyLinearToGammaProgram);
+			++view;
 		}
 
 		uint32_t m_width;
@@ -718,7 +739,8 @@ namespace
 		Mesh *m_meshes[BX_COUNTOF(s_meshPaths)];
 		bgfx::TextureHandle m_groundTexture;
 		bgfx::TextureHandle m_normalTexture;
-		bgfx::TextureHandle m_magnifierTexture;
+		RenderTarget m_magnifierTexture;
+		ImVec2 m_magnifierPos;
 
 		uint32_t m_currFrame;
 		float m_lightRotation = 0.0f;
