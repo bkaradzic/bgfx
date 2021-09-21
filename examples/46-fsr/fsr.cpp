@@ -79,7 +79,7 @@ namespace
 	{
 		enum
 		{
-			NumVec4 = 5
+			NumVec4 = 3
 		};
 
 		void init()
@@ -101,14 +101,12 @@ namespace
 		{
 			struct
 			{
-				Vec4 Const0;
-				Vec4 Const1;
-				Vec4 Const2;
-				Vec4 Const3;
-				Vec4 Sample;
+				Vec4 ViewportSizeRcasAttenuation;
+				Vec4 SrcSize;
+				Vec4 DstSize;
 			};
 
-			float m_params[NumVec4 * 4];
+			uint32_t m_params[NumVec4 * 4];
 		};
 
 		bgfx::UniformHandle u_params;
@@ -272,19 +270,24 @@ namespace
 			bgfx::setDebug(m_debug);
 
 			// Create uniforms for screen passes and models
-			m_fsrEasuUniforms.init();
-			m_fsrRcasUniforms.init();
+			m_fsrUniforms.init();
 			m_modelUniforms.init();
 
 			// Create texture sampler uniforms (used when we bind textures)
 			s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
 			s_color = bgfx::createUniform("s_color", bgfx::UniformType::Sampler);
 			s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);
+			s_fsrInputTexture = bgfx::createUniform("InputTexture", bgfx::UniformType::Sampler);
 			
 			// Create program from shaders.
 			m_forwardProgram = loadProgram("vs_fsr_forward", "fs_fsr_forward");
 			m_gridProgram = loadProgram("vs_fsr_forward", "fs_fsr_forward_grid");
 			m_copyLinearToGammaProgram = loadProgram("vs_fsr_screenquad", "fs_fsr_copy_linear_to_gamma");
+
+			m_fsrEasu16Program = bgfx::createProgram(loadShader("cs_fsr_easu_16"), true);
+			m_fsrEasu32Program = bgfx::createProgram(loadShader("cs_fsr_easu_32"), true);
+			m_fsrRcas16Program = bgfx::createProgram(loadShader("cs_fsr_rcas_16"), true);
+			m_fsrRcas32Program = bgfx::createProgram(loadShader("cs_fsr_rcas_32"), true);
 
 			// Load some meshes
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_meshPaths); ++ii)
@@ -314,7 +317,7 @@ namespace
 			m_texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
 
 			const uint32_t magnifierSize = 32;
-			m_magnifierTexture.init(magnifierSize, magnifierSize, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_MAG_POINT);
+			m_magnifierTexture.init(magnifierSize, magnifierSize, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
 			m_magnifierPos = ImVec2(m_width * 0.5f, m_height * 0.5f);
 
 			imguiCreate();
@@ -333,9 +336,12 @@ namespace
 			bgfx::destroy(m_forwardProgram);
 			bgfx::destroy(m_gridProgram);
 			bgfx::destroy(m_copyLinearToGammaProgram);
+			bgfx::destroy(m_fsrEasu16Program);
+			bgfx::destroy(m_fsrEasu32Program);
+			bgfx::destroy(m_fsrRcas16Program);
+			bgfx::destroy(m_fsrRcas32Program);
 
-			m_fsrEasuUniforms.destroy();
-			m_fsrRcasUniforms.destroy();
+			m_fsrUniforms.destroy();
 			m_modelUniforms.destroy();
 
 			m_magnifierTexture.destroy();
@@ -343,6 +349,7 @@ namespace
 			bgfx::destroy(s_albedo);
 			bgfx::destroy(s_color);
 			bgfx::destroy(s_normal);
+			bgfx::destroy(s_fsrInputTexture);
 
 			destroyFramebuffers();
 
@@ -424,25 +431,33 @@ namespace
 					++view;
 				}
 
-				updateMagnifierTexture(view);
-
-				float orthoProj[16];
-				bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
-				{
-					// clear out transform stack
-					float identity[16];
-					bx::mtxIdentity(identity);
-					bgfx::setTransform(identity);
-				}
-
 				// optionally run FSR
 				if (m_applyFsr)
-				{
+				{	// TODO: run bilinear filter here as well
 					view = computeFsr(view, m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
 				}
 
 				// render result to screen
 				{
+					bgfx::TextureHandle srcTexture = m_frameBufferTex[FRAMEBUFFER_RT_COLOR];
+					float scale = m_superSamplingFactor;
+					if(m_applyFsr)
+					{
+						srcTexture = m_fsrEasuTexture;
+						scale = 1.0f;
+					}
+
+					updateMagnifierTexture(view, srcTexture, scale);
+
+					float orthoProj[16];
+					bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
+					{
+						// clear out transform stack
+						float identity[16];
+						bx::mtxIdentity(identity);
+						bgfx::setTransform(identity);
+					}
+
 					bgfx::setViewName(view, "display");
 					bgfx::setViewClear(view, BGFX_CLEAR_NONE, 0, 1.0f, 0);
 
@@ -450,8 +465,8 @@ namespace
 					bgfx::setViewTransform(view, NULL, orthoProj);
 					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
-					bgfx::setTexture(0, s_color, m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
-					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, m_superSamplingFactor, m_superSamplingFactor);
+					bgfx::setTexture(0, s_color, srcTexture);
+					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, scale, scale);
 					bgfx::submit(view, m_copyLinearToGammaProgram);
 					++view;
 				}
@@ -499,7 +514,7 @@ namespace
 
 					if(m_applyFsr)
 					{
-						ImGui::Checkbox("Apply sharpening", &m_applyFsrRcas);
+						ImGui::Checkbox("Apply FSR sharpening", &m_applyFsrRcas);
 						if (ImGui::IsItemHovered())
 						{
 							ImGui::BeginTooltip();
@@ -601,23 +616,21 @@ namespace
 		bgfx::ViewId computeFsr(bgfx::ViewId _pass, bgfx::TextureHandle _colorTexture)
 		{
 			bgfx::ViewId view = _pass;
-			/*bgfx::TextureHandle lastTex = _colorTexture;
 
-			unsigned halfWidth = (m_width / 2);
-			unsigned halfHeight = (m_height / 2);
+			// This value is the image region dimension that each thread group of the FSR shader operates on
+			static constexpr int threadGroupWorkRegionDim = 16;
+			int const dispatchX = (m_width + (threadGroupWorkRegionDim - 1)) / threadGroupWorkRegionDim;
+			int const dispatchY = (m_height + (threadGroupWorkRegionDim - 1)) / threadGroupWorkRegionDim;
 
-			bgfx::setViewName(view, "fsr easu");
-			bgfx::setViewRect(view, 0, 0, uint16_t(halfWidth), uint16_t(halfHeight));
-			bgfx::setViewTransform(view, NULL, _orthoProj);
-			bgfx::setViewFrameBuffer(view, m_dofQuarterInput.m_buffer);
-			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS);
-			bgfx::setTexture(0, s_color, lastTex);
-			bgfx::setTexture(1, s_depth, m_linearDepth.m_texture);
-			m_fsrEasuUniforms.submit();
-			// TODO: dispatch
-			++view;
-			lastTex = m_dofQuarterInput.m_texture;
+			{
+				m_fsrUniforms.submit();
+				bgfx::setTexture(0, s_fsrInputTexture, _colorTexture);
+				bgfx::setImage(1, m_fsrEasuTexture, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA32F);
+				bgfx::dispatch(view, m_fsrEasu32Program, dispatchX, dispatchY, 1);
+				++view;
+			}
 
+			/*
 			bgfx::setViewName(view, "fsr rcas");
 			bgfx::setViewRect(view, 0, 0, uint16_t(halfWidth), uint16_t(halfHeight));
 			bgfx::setViewTransform(view, NULL, _orthoProj);
@@ -646,37 +659,36 @@ namespace
 			m_frameBufferTex[FRAMEBUFFER_RT_COLOR] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::RGBA16F, colorFlags);
 			m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D24S8, depthFlags);
 			m_frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_frameBufferTex), m_frameBufferTex, true);
+
+			m_fsrEasuTexture = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
 		}
 
 		// all buffers set to destroy their textures
 		void destroyFramebuffers()
 		{
 			bgfx::destroy(m_frameBuffer);
+			bgfx::destroy(m_fsrEasuTexture);
 		}
 
 		void updateUniforms()
 		{
-			bool constexpr hdr = true;
+			float const srcWidth = static_cast<float>(m_width) / m_superSamplingFactor;
+			float const srcHeight = static_cast<float>(m_height) / m_superSamplingFactor;
 
-			uint32_t const srcWidth = static_cast<uint32_t>(m_width / m_superSamplingFactor);
-			uint32_t const srcHeight = static_cast<uint32_t>(m_height / m_superSamplingFactor);
-
-			FsrEasuCon( reinterpret_cast<AU1*>(&m_fsrEasuUniforms.Const0), reinterpret_cast<AU1*>(&m_fsrEasuUniforms.Const1),
-						reinterpret_cast<AU1*>(&m_fsrEasuUniforms.Const2), reinterpret_cast<AU1*>(&m_fsrEasuUniforms.Const3),
-						static_cast<AF1>(srcWidth), static_cast<AF1>(srcHeight),
-						static_cast<AF1>(m_width), static_cast<AF1>(m_height),
-						(AF1)m_width, (AF1)m_height);
-			m_fsrEasuUniforms.Sample.x = (hdr && !m_applyFsrRcas) ? 1.0f : 0.0f;
-
-			FsrRcasCon(reinterpret_cast<AU1*>(&m_fsrRcasUniforms.Const0), m_rcasAttenuation);
-			m_fsrRcasUniforms.Sample.x = (hdr ? 1.0f : 0.0f);
+			m_fsrUniforms.ViewportSizeRcasAttenuation.x = srcWidth;
+			m_fsrUniforms.ViewportSizeRcasAttenuation.y = srcHeight;
+			m_fsrUniforms.ViewportSizeRcasAttenuation.z = m_rcasAttenuation;
+			m_fsrUniforms.SrcSize.x = static_cast<float>(m_width);
+			m_fsrUniforms.SrcSize.y = static_cast<float>(m_height);
+			m_fsrUniforms.DstSize.x = static_cast<float>(m_width);
+			m_fsrUniforms.DstSize.y = static_cast<float>(m_height);
 
 			m_modelUniforms.m_lightPosition[0] = 0.0f;
 			m_modelUniforms.m_lightPosition[1] = 6.0f;
 			m_modelUniforms.m_lightPosition[2] = 10.0f;
 		}
 
-		void updateMagnifierTexture(bgfx::ViewId& view)
+		void updateMagnifierTexture(bgfx::ViewId& view, bgfx::TextureHandle srcTexture, float scale)
 		{
 			const bgfx::Caps* caps = bgfx::getCaps();
 
@@ -689,17 +701,17 @@ namespace
 				bgfx::setTransform(identity);
 			}
 
-			float scaleX = m_superSamplingFactor * (m_width + m_magnifierTexture.m_width * 2) / static_cast<float>(m_magnifierTexture.m_width);
-			float scaleY = m_superSamplingFactor * (m_height) / static_cast<float>(m_magnifierTexture.m_height);
-			float offsetX = m_superSamplingFactor * (m_magnifierPos.x - m_magnifierTexture.m_width * 0.5f);
-			float offsetY = m_superSamplingFactor * (m_magnifierPos.y - m_magnifierTexture.m_height * 0.5f);
+			float scaleX = scale * (m_width + m_magnifierTexture.m_width * 2) / static_cast<float>(m_magnifierTexture.m_width);
+			float scaleY = scale * (m_height) / static_cast<float>(m_magnifierTexture.m_height);
+			float offsetX = scale * (m_magnifierPos.x - m_magnifierTexture.m_width * 0.5f);
+			float offsetY = scale * (m_magnifierPos.y - m_magnifierTexture.m_height * 0.5f);
 
 			bgfx::setViewName(view, "magnifier");
 			bgfx::setViewRect(view, 0, 0, uint16_t(m_magnifierTexture.m_width), uint16_t(m_magnifierTexture.m_height));
 			bgfx::setViewTransform(view, NULL, orthoProj);
 			bgfx::setViewFrameBuffer(view, m_magnifierTexture.m_buffer);
 			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
-			bgfx::setTexture(0, s_color, m_frameBufferTex[FRAMEBUFFER_RT_COLOR], BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+			bgfx::setTexture(0, s_color, srcTexture, BGFX_SAMPLER_MAG_ANISOTROPIC | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 			screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
 			bgfx::submit(view, m_copyLinearToGammaProgram);
 			++view;
@@ -716,19 +728,24 @@ namespace
 		bgfx::ProgramHandle m_forwardProgram;
 		bgfx::ProgramHandle m_gridProgram;
 		bgfx::ProgramHandle m_copyLinearToGammaProgram;
+		bgfx::ProgramHandle m_fsrEasu16Program;
+		bgfx::ProgramHandle m_fsrEasu32Program;
+		bgfx::ProgramHandle m_fsrRcas16Program;
+		bgfx::ProgramHandle m_fsrRcas32Program;
 
 		// Shader uniforms
-		FsrUniforms m_fsrEasuUniforms;
-		FsrUniforms m_fsrRcasUniforms;
+		FsrUniforms m_fsrUniforms;
 		ModelUniforms m_modelUniforms;
 
 		// Uniforms to indentify texture samplers
 		bgfx::UniformHandle s_albedo;
 		bgfx::UniformHandle s_color;
 		bgfx::UniformHandle s_normal;
+		bgfx::UniformHandle s_fsrInputTexture;
 
 		bgfx::FrameBufferHandle m_frameBuffer;
 		bgfx::TextureHandle m_frameBufferTex[FRAMEBUFFER_RENDER_TARGETS];
+		bgfx::TextureHandle m_fsrEasuTexture;
 
 		struct Model
 		{

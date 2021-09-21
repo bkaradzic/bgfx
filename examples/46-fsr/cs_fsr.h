@@ -8,13 +8,12 @@
 
 #include "bgfx_compute.sh"
 
-uniform vec4 u_params[5];
+uniform vec4 u_params[3];
 
-#define Const0			(u_params[0])
-#define Const1			(u_params[1])
-#define Const2			(u_params[2])
-#define Const3			(u_params[3])
-#define Sample			(u_params[4])
+#define ViewportSizeRcasAttenuation			(u_params[0])
+#define SrcSize								(u_params[1])
+#define DstSize								(u_params[2])
+
 
 #define A_GPU 1
 
@@ -60,11 +59,13 @@ uniform vec4 u_params[5];
 
 #include "ffx_fsr1.h"
 
+AU4 Const0, Const1, Const2, Const3, Const4, Sample;
+
 void CurrFilter(AU2 pos)
 {
 #if SAMPLE_BILINEAR
     AF2 pp = (AF2(pos) * AF2_AU2(Const0.xy) + AF2_AU2(Const0.zw)) * AF2_AU2(Const1.xy) + AF2(0.5, -0.5) * AF2_AU2(Const1.zw);
-    imageStore(OutputTexture, ASU2(pos), textureLod(sampler2D(InputTexture,InputSampler), pp, 0.0));
+    imageStore(OutputTexture, ASU2(pos), texture2DLod(InputTexture, pp, 0.0));
 #endif
 #if SAMPLE_EASU
     #if SAMPLE_SLOW_FALLBACK
@@ -101,6 +102,17 @@ void CurrFilter(AU2 pos)
 NUM_THREADS(64, 1, 1)
 void main()
 {
+	// We set compute these constants on GPU because bgfx does not support uniform type uint.
+	FsrEasuCon(Const0, Const1, Const2, Const3,
+		ViewportSizeRcasAttenuation.x, ViewportSizeRcasAttenuation.y,  // Viewport size (top left aligned) in the input image which is to be scaled.
+		SrcSize.x, SrcSize.y,  // The size of the input image.
+		DstSize.x, DstSize.y); // The output resolution.
+	Sample.x = 0; // no HDR output
+#if SAMPLE_RCAS
+	FsrRcasCon(Const0, ViewportSizeRcasAttenuation.z);
+	Sample.x = 0;  // no HDR output
+#endif
+
     // Do remapping of local xy in workgroup for a more PS-like swizzle pattern.
     AU2 gxy = ARmp8x8(gl_LocalInvocationID.x) + AU2(gl_WorkGroupID.x << 4u, gl_WorkGroupID.y << 4u);
     CurrFilter(gxy);
