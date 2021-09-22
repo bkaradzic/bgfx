@@ -102,7 +102,7 @@ void CurrFilter(AU2 pos)
 NUM_THREADS(64, 1, 1)
 void main()
 {
-	// We set compute these constants on GPU because bgfx does not support uniform type uint.
+	// We compute these constants on GPU because bgfx does not support uniform type uint.
 	FsrEasuCon(Const0, Const1, Const2, Const3,
 		ViewportSizeRcasAttenuation.x, ViewportSizeRcasAttenuation.y,  // Viewport size (top left aligned) in the input image which is to be scaled.
 		SrcSize.x, SrcSize.y,  // The size of the input image.

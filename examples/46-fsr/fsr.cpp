@@ -504,7 +504,7 @@ namespace
 						createFramebuffers();
 					}
 
-					ImGui::Checkbox("Render Native resolution", &m_renderNativeResolution);
+					ImGui::Checkbox("Render native resolution", &m_renderNativeResolution);
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip("Disable super sampling and FSR");
 
@@ -531,17 +531,11 @@ namespace
 						{
 							ImGui::Checkbox("Apply FSR sharpening", &m_applyFsrRcas);
 							if (ImGui::IsItemHovered())
-							{
-								ImGui::BeginTooltip();
-								ImGui::Text("Apply the FidelityFX Super Resolution");
-								ImGui::Text("RCAS sharpening pass");
-								ImGui::EndTooltip();
-							}
+								ImGui::SetTooltip("Apply the FSR RCAS sharpening pass");
 
 							if(m_applyFsrRcas)
 							{
-								ImGui::Text("Sharpening controls:");
-								ImGui::SliderFloat("sharpening", &m_rcasAttenuation, 0.01f, 2.0f);
+								ImGui::SliderFloat("Sharpening attenuation", &m_rcasAttenuation, 0.01f, 2.0f);
 								if (ImGui::IsItemHovered())
 									ImGui::SetTooltip("Lower value means sharper");
 							}
@@ -801,4 +795,4 @@ namespace
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleFsr, "46-fsr", "AMD FidelityFX-FSR\nFSR best result requires high quality antialiasing for the low resolution source image.");
+ENTRY_IMPLEMENT_MAIN(ExampleFsr, "46-fsr", "AMD FidelityFX Super Resolution (FSR)\n\nFor an optimal FSR result high quality antialiasing for the low resolution source image and negative texture LOD bias is recommended.");
