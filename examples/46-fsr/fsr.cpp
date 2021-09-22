@@ -305,8 +305,9 @@ namespace
 
 			// Init camera
 			cameraCreate();
-			cameraSetPosition({0.0f, 2.5f, -20.0f});
-			cameraSetVerticalAngle(-0.3f);
+			cameraSetPosition({-10.0f, 2.5f, -0.0f});
+			cameraSetVerticalAngle(-0.2f);
+			cameraSetHorizontalAngle(0.8f);
 
 			// Init "prev" matrices, will be same for first frame
 			cameraGetViewMtx(m_view);
@@ -420,7 +421,8 @@ namespace
 					bgfx::setViewName(view, "forward scene");
 					bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x7fb8ffff, 1.0f, 0);
 
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0] / m_superSamplingFactor), uint16_t(m_size[1] / m_superSamplingFactor));
+					float const viewScale = m_renderNativeResolution ? 1.0f : 1.0f / m_superSamplingFactor;
+					bgfx::setViewRect(view, 0, 0, uint16_t(ceilf(m_size[0] * viewScale)), uint16_t(ceilf(m_size[1] * viewScale)));
 					bgfx::setViewTransform(view, m_view, m_proj);
 					bgfx::setViewFrameBuffer(view, m_frameBuffer);
 
@@ -432,18 +434,28 @@ namespace
 				}
 
 				// optionally run FSR
-				if (m_applyFsr)
+				if (m_applyFsr && !m_renderNativeResolution)
 				{	// TODO: run bilinear filter here as well
+					// TODO: run 16 bit as well
+					// TODO: refactor into separate class
+					// TODO: test Linux support
 					view = computeFsr(view, m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
 				}
 
 				// render result to screen
 				{
 					bgfx::TextureHandle srcTexture = m_frameBufferTex[FRAMEBUFFER_RT_COLOR];
-					float scale = m_superSamplingFactor;
-					if(m_applyFsr)
+					float scale = m_renderNativeResolution ? 1.0f : m_superSamplingFactor;
+					if(m_applyFsr && !m_renderNativeResolution)
 					{
-						srcTexture = m_fsrEasuTexture;
+						if(m_applyFsrRcas)
+						{
+							srcTexture = m_fsrRcasTexture32F;
+						}
+						else
+						{
+							srcTexture = m_fsrEasuTexture32F;
+						}
 						scale = 1.0f;
 					}
 
@@ -465,7 +477,7 @@ namespace
 					bgfx::setViewTransform(view, NULL, orthoProj);
 					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
-					bgfx::setTexture(0, s_color, srcTexture);
+					bgfx::setTexture(0, s_color, srcTexture, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, scale, scale);
 					bgfx::submit(view, m_copyLinearToGammaProgram);
 					++view;
@@ -486,49 +498,53 @@ namespace
 				{
 					ImGui::Checkbox("Animate scene", &m_animateScene);
 
-					bool const resolutionChanged = ImGui::Combo("Antialiasing", &m_antiAliasingSetting, "none\0" "4x\0" "16x\0" "\0");
-					if (resolutionChanged)
+					if (ImGui::Combo("Antialiasing", &m_antiAliasingSetting, "none\0" "4x\0" "16x\0" "\0"))
 					{
 						destroyFramebuffers();
 						createFramebuffers();
 					}
 
-					ImGui::SliderFloat("Super sampling", &m_superSamplingFactor, 1.0f, 2.0f);
+					ImGui::Checkbox("Render Native resolution", &m_renderNativeResolution);
 					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("Disable super sampling and FSR");
+
+					ImGui::Image(m_magnifierTexture.m_texture, ImVec2(itemSize.x, itemSize.x));
+
+					if(!m_renderNativeResolution)
 					{
-						ImGui::BeginTooltip();
-						ImGui::Text("2.0 means the scene is rendered at half window resolution");
-						ImGui::Text("1.0 means the scene is rendered at native window resolution");
-						ImGui::EndTooltip();
-					}
-
-					{
-						ImGui::Image(m_magnifierTexture.m_texture, ImVec2(itemSize.x, itemSize.x));
-					}
-
-					ImGui::Separator();
-
-					ImGui::Checkbox("Apply FSR", &m_applyFsr);
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("Compare between FSR and bilinear interpolation of source image");
-
-					if(m_applyFsr)
-					{
-						ImGui::Checkbox("Apply FSR sharpening", &m_applyFsrRcas);
+						ImGui::SliderFloat("Super sampling", &m_superSamplingFactor, 1.0f, 2.0f);
 						if (ImGui::IsItemHovered())
 						{
 							ImGui::BeginTooltip();
-							ImGui::Text("Apply the FidelityFX Super Resolution");
-							ImGui::Text("RCAS sharpening pass");
+							ImGui::Text("2.0 means the scene is rendered at half window resolution");
+							ImGui::Text("1.0 means the scene is rendered at native window resolution");
 							ImGui::EndTooltip();
 						}
 
-						if(m_applyFsrRcas)
+						ImGui::Separator();
+
+						ImGui::Checkbox("Apply FSR", &m_applyFsr);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip("Compare between FSR and bilinear interpolation of source image");
+
+						if(m_applyFsr)
 						{
-							ImGui::Text("Sharpening controls:");
-							ImGui::SliderFloat("sharpening", &m_rcasAttenuation, 0.01f, 2.0f);
+							ImGui::Checkbox("Apply FSR sharpening", &m_applyFsrRcas);
 							if (ImGui::IsItemHovered())
-								ImGui::SetTooltip("Lower value means sharper");
+							{
+								ImGui::BeginTooltip();
+								ImGui::Text("Apply the FidelityFX Super Resolution");
+								ImGui::Text("RCAS sharpening pass");
+								ImGui::EndTooltip();
+							}
+
+							if(m_applyFsrRcas)
+							{
+								ImGui::Text("Sharpening controls:");
+								ImGui::SliderFloat("sharpening", &m_rcasAttenuation, 0.01f, 2.0f);
+								if (ImGui::IsItemHovered())
+									ImGui::SetTooltip("Lower value means sharper");
+							}
 						}
 					}
 				}
@@ -622,25 +638,25 @@ namespace
 			int const dispatchX = (m_width + (threadGroupWorkRegionDim - 1)) / threadGroupWorkRegionDim;
 			int const dispatchY = (m_height + (threadGroupWorkRegionDim - 1)) / threadGroupWorkRegionDim;
 
+			// EASU pass (upscale)
 			{
+				bgfx::setViewName(view, "fsr easu");
 				m_fsrUniforms.submit();
 				bgfx::setTexture(0, s_fsrInputTexture, _colorTexture);
-				bgfx::setImage(1, m_fsrEasuTexture, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA32F);
+				bgfx::setImage(1, m_fsrEasuTexture32F, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA32F);
 				bgfx::dispatch(view, m_fsrEasu32Program, dispatchX, dispatchY, 1);
 				++view;
 			}
 
-			/*
-			bgfx::setViewName(view, "fsr rcas");
-			bgfx::setViewRect(view, 0, 0, uint16_t(halfWidth), uint16_t(halfHeight));
-			bgfx::setViewTransform(view, NULL, _orthoProj);
-			bgfx::setViewFrameBuffer(view, m_dofQuarterOutput.m_buffer);
-			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS);
-			bgfx::setTexture(0, s_color, lastTex);
-			m_fsrRcasUniforms.submit();
-			// TODO: dispatch
-			++view;
-			lastTex = m_dofQuarterOutput.m_texture;*/
+			// RCAS pass (sharpening)
+			{
+				bgfx::setViewName(view, "fsr rcas");
+				m_fsrUniforms.submit();
+				bgfx::setTexture(0, s_fsrInputTexture, m_fsrEasuTexture32F);
+				bgfx::setImage(1, m_fsrRcasTexture32F, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA32F);
+				bgfx::dispatch(view, m_fsrRcas32Program, dispatchX, dispatchY, 1);
+				++view;
+			}
 
 			return view;
 		}
@@ -660,14 +676,16 @@ namespace
 			m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D24S8, depthFlags);
 			m_frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_frameBufferTex), m_frameBufferTex, true);
 
-			m_fsrEasuTexture = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
+			m_fsrEasuTexture32F = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
+			m_fsrRcasTexture32F = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
 		}
 
 		// all buffers set to destroy their textures
 		void destroyFramebuffers()
 		{
 			bgfx::destroy(m_frameBuffer);
-			bgfx::destroy(m_fsrEasuTexture);
+			bgfx::destroy(m_fsrEasuTexture32F);
+			bgfx::destroy(m_fsrRcasTexture32F);
 		}
 
 		void updateUniforms()
@@ -701,6 +719,7 @@ namespace
 				bgfx::setTransform(identity);
 			}
 
+			// TODO: fix picking when not maximized
 			float scaleX = scale * (m_width + m_magnifierTexture.m_width * 2) / static_cast<float>(m_magnifierTexture.m_width);
 			float scaleY = scale * (m_height) / static_cast<float>(m_magnifierTexture.m_height);
 			float offsetX = scale * (m_magnifierPos.x - m_magnifierTexture.m_width * 0.5f);
@@ -711,7 +730,7 @@ namespace
 			bgfx::setViewTransform(view, NULL, orthoProj);
 			bgfx::setViewFrameBuffer(view, m_magnifierTexture.m_buffer);
 			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
-			bgfx::setTexture(0, s_color, srcTexture, BGFX_SAMPLER_MAG_ANISOTROPIC | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+			bgfx::setTexture(0, s_color, srcTexture, BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 			screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
 			bgfx::submit(view, m_copyLinearToGammaProgram);
 			++view;
@@ -745,7 +764,8 @@ namespace
 
 		bgfx::FrameBufferHandle m_frameBuffer;
 		bgfx::TextureHandle m_frameBufferTex[FRAMEBUFFER_RENDER_TARGETS];
-		bgfx::TextureHandle m_fsrEasuTexture;
+		bgfx::TextureHandle m_fsrEasuTexture32F;
+		bgfx::TextureHandle m_fsrRcasTexture32F;
 
 		struct Model
 		{
@@ -770,6 +790,7 @@ namespace
 		int32_t m_size[2];
 
 		// UI parameters
+		bool m_renderNativeResolution = false;
 		bool m_applyFsr = true;
 		bool m_applyFsrRcas = true;
 		float m_superSamplingFactor = 2.0f;
