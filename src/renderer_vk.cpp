@@ -6153,6 +6153,7 @@ VK_DESTROY
 		const bool needResolve = VK_NULL_HANDLE != m_singleMsaaImage;
 
 		const bool needMipGen = true
+			&& !needResolve
 			&& 0 != (m_flags & BGFX_TEXTURE_RT_MASK)
 			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
 			&& (_mip + 1) < m_numMips
@@ -6196,23 +6197,12 @@ VK_DESTROY
 				);
 		}
 
-		if (needResolve && needMipGen)
-		{
-			setMemoryBarrier(
-				  _commandBuffer
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				);
-		}
-
 		if (needMipGen)
 		{
-			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, needResolve);
+			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 			int32_t mipWidth  = bx::max<int32_t>(int32_t(m_width)  >> _mip, 1);
 			int32_t mipHeight = bx::max<int32_t>(int32_t(m_height) >> _mip, 1);
-
-			const VkImage image = needResolve ? m_singleMsaaImage : m_textureImage;
 
 			const VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 				? VK_FILTER_NEAREST
@@ -6246,7 +6236,7 @@ VK_DESTROY
 
 				vk::setImageMemoryBarrier(
 					  _commandBuffer
-					, image
+					, m_textureImage
 					, m_aspectMask
 					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
@@ -6258,9 +6248,9 @@ VK_DESTROY
 
 				vkCmdBlitImage(
 					  _commandBuffer
-					, image
+					, m_textureImage
 					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-					, image
+					, m_textureImage
 					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 					, 1
 					, &blit
@@ -6270,7 +6260,7 @@ VK_DESTROY
 
 			vk::setImageMemoryBarrier(
 				  _commandBuffer
-				, image
+				, m_textureImage
 				, m_aspectMask
 				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
