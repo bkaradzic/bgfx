@@ -2,20 +2,11 @@ $input a_position, a_normal, a_tangent, a_texcoord0
 $output v_wpos, v_view, v_normal, v_tangent, v_bitangent, v_texcoord0
 
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "../common/common.sh"
-
-mat3 mtx3FromCols(vec3 c0, vec3 c1, vec3 c2)
-{
-#ifdef BGFX_SHADER_LANGUAGE_GLSL
-	return mat3(c0, c1, c2);
-#else
-	return transpose(mat3(c0, c1, c2));
-#endif
-}
 
 void main()
 {
@@ -34,11 +25,11 @@ void main()
 	v_tangent = normalize(wtangent);
 	v_bitangent = cross(v_normal, v_tangent) * tangent.w;
 
-	mat3 tbn = mtx3FromCols(v_tangent, v_bitangent, v_normal);
+	mat3 tbn = mtxFromCols(v_tangent, v_bitangent, v_normal);
 
 	// eye position in world space
-	vec3 weyepos = mul(vec4(0.0, 0.0, 0.0, 1.0), u_view).xyz;	
+	vec3 weyepos = mul(vec4(0.0, 0.0, 0.0, 1.0), u_view).xyz;
 	// tangent space view dir
-	v_view = mul(weyepos - wpos, tbn);	
+	v_view = mul(weyepos - wpos, tbn);
 	v_texcoord0 = a_texcoord0;
 }

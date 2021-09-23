@@ -130,6 +130,7 @@ class InstBindlessCheckPass : public InstrumentPass {
     uint32_t ptr_id;
     uint32_t var_id;
     uint32_t desc_idx_id;
+    uint32_t strg_class;
     Instruction* ref_inst;
   } RefAnalysis;
 

@@ -183,7 +183,7 @@ bool RangeSliderFloat(const char* label, float* v1, float* v2, float v_min, floa
 
     // Tabbing or CTRL-clicking on Slider turns it into an input box
     bool start_text_input = false;
-    const bool tab_focus_requested = FocusableItemRegister(window, g.ActiveId == id);
+    const bool tab_focus_requested = (GetItemStatusFlags() & ImGuiItemStatusFlags_Focused) != 0;
     if (tab_focus_requested || (hovered && g.IO.MouseClicked[0]))
     {
         SetActiveID(id, window);

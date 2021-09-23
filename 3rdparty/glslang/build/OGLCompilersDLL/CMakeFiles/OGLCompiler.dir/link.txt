@@ -1,2 +1,0 @@
-/usr/bin/ar qc libOGLCompiler.a  CMakeFiles/OGLCompiler.dir/InitializeDll.cpp.o
-/usr/bin/ranlib libOGLCompiler.a

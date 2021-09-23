@@ -29,6 +29,7 @@
 #include "debuginfo.insts.inc"
 #include "glsl.std.450.insts.inc"
 #include "nonsemantic.clspvreflection.insts.inc"
+#include "nonsemantic.vulkan.debuginfo.100.insts.inc"
 #include "opencl.debuginfo.100.insts.inc"
 #include "opencl.std.insts.inc"
 
@@ -55,6 +56,9 @@ static const spv_ext_inst_group_t kGroups_1_0[] = {
      debuginfo_entries},
     {SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100,
      ARRAY_SIZE(opencl_debuginfo_100_entries), opencl_debuginfo_100_entries},
+    {SPV_EXT_INST_TYPE_NONSEMANTIC_VULKAN_DEBUGINFO_100,
+     ARRAY_SIZE(nonsemantic_vulkan_debuginfo_100_entries),
+     nonsemantic_vulkan_debuginfo_100_entries},
     {SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION,
      ARRAY_SIZE(nonsemantic_clspvreflection_entries),
      nonsemantic_clspvreflection_entries},
@@ -89,7 +93,6 @@ spv_result_t spvExtInstTableGet(spv_ext_inst_table* pExtInstTable,
     case SPV_ENV_UNIVERSAL_1_3:
     case SPV_ENV_VULKAN_1_1:
     case SPV_ENV_VULKAN_1_1_SPIRV_1_4:
-    case SPV_ENV_WEBGPU_0:
     case SPV_ENV_UNIVERSAL_1_4:
     case SPV_ENV_UNIVERSAL_1_5:
     case SPV_ENV_VULKAN_1_2:
@@ -127,6 +130,9 @@ spv_ext_inst_type_t spvExtInstImportTypeGet(const char* name) {
   if (!strcmp("OpenCL.DebugInfo.100", name)) {
     return SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100;
   }
+  if (!strcmp("NonSemantic.Vulkan.DebugInfo.100", name)) {
+    return SPV_EXT_INST_TYPE_NONSEMANTIC_VULKAN_DEBUGINFO_100;
+  }
   if (!strncmp("NonSemantic.ClspvReflection.", name, 28)) {
     return SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION;
   }
@@ -140,6 +146,7 @@ spv_ext_inst_type_t spvExtInstImportTypeGet(const char* name) {
 
 bool spvExtInstIsNonSemantic(const spv_ext_inst_type_t type) {
   if (type == SPV_EXT_INST_TYPE_NONSEMANTIC_UNKNOWN ||
+      type == SPV_EXT_INST_TYPE_NONSEMANTIC_VULKAN_DEBUGINFO_100 ||
       type == SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION) {
     return true;
   }

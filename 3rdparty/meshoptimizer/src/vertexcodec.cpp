@@ -80,14 +80,6 @@
 #include <wasm_simd128.h>
 #endif
 
-#ifndef TRACE
-#define TRACE 0
-#endif
-
-#if TRACE
-#include <stdio.h>
-#endif
-
 #ifdef SIMD_WASM
 #define wasmx_splat_v32x4(v, i) wasm_v32x4_shuffle(v, v, i, i, i, i)
 #define wasmx_unpacklo_v8x16(a, b) wasm_v8x16_shuffle(a, b, 0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23)
@@ -132,19 +124,6 @@ inline unsigned char unzigzag8(unsigned char v)
 {
 	return -(v & 1) ^ (v >> 1);
 }
-
-#if TRACE
-struct Stats
-{
-	size_t size;
-	size_t header;
-	size_t bitg[4];
-	size_t bitb[4];
-};
-
-Stats* bytestats;
-Stats vertexstats[256];
-#endif
 
 static bool encodeBytesGroupZero(const unsigned char* buffer)
 {
@@ -267,16 +246,7 @@ static unsigned char* encodeBytes(unsigned char* data, unsigned char* data_end, 
 
 		assert(data + best_size == next);
 		data = next;
-
-#if TRACE > 1
-		bytestats->bitg[bitslog2]++;
-		bytestats->bitb[bitslog2] += best_size;
-#endif
 	}
-
-#if TRACE > 1
-	bytestats->header += header_size;
-#endif
 
 	return data;
 }
@@ -306,19 +276,9 @@ static unsigned char* encodeVertexBlock(unsigned char* data, unsigned char* data
 			vertex_offset += vertex_size;
 		}
 
-#if TRACE
-		const unsigned char* olddata = data;
-		bytestats = &vertexstats[k];
-#endif
-
 		data = encodeBytes(data, data_end, buffer, (vertex_count + kByteGroupSize - 1) & ~(kByteGroupSize - 1));
 		if (!data)
 			return 0;
-
-#if TRACE
-		bytestats = 0;
-		vertexstats[k].size += data - olddata;
-#endif
 	}
 
 	memcpy(last_vertex, &vertex_data[vertex_size * (vertex_count - 1)], vertex_size);
@@ -750,18 +710,12 @@ static v128_t decodeShuffleMask(unsigned char mask0, unsigned char mask1)
 SIMD_TARGET
 static void wasmMoveMask(v128_t mask, unsigned char& mask0, unsigned char& mask1)
 {
-	v128_t mask_0 = wasm_v32x4_shuffle(mask, mask, 0, 2, 1, 3);
-
-	uint64_t mask_1a = wasm_i64x2_extract_lane(mask_0, 0) & 0x0804020108040201ull;
-	uint64_t mask_1b = wasm_i64x2_extract_lane(mask_0, 1) & 0x8040201080402010ull;
+	// magic constant found using z3 SMT assuming mask has 8 groups of 0xff or 0x00
+	const uint64_t magic = 0x000103070f1f3f80ull;
 
 	// TODO: This can use v8x16_bitmask in the future
-	uint64_t mask_2 = mask_1a | mask_1b;
-	uint64_t mask_4 = mask_2 | (mask_2 >> 16);
-	uint64_t mask_8 = mask_4 | (mask_4 >> 8);
-
-	mask0 = uint8_t(mask_8);
-	mask1 = uint8_t(mask_8 >> 32);
+	mask0 = uint8_t((wasm_i64x2_extract_lane(mask, 0) * magic) >> 56);
+	mask1 = uint8_t((wasm_i64x2_extract_lane(mask, 1) * magic) >> 56);
 }
 
 SIMD_TARGET
@@ -1086,10 +1040,6 @@ size_t meshopt_encodeVertexBuffer(unsigned char* buffer, size_t buffer_size, con
 	assert(vertex_size > 0 && vertex_size <= 256);
 	assert(vertex_size % 4 == 0);
 
-#if TRACE
-	memset(vertexstats, 0, sizeof(vertexstats));
-#endif
-
 	const unsigned char* vertex_data = static_cast<const unsigned char*>(vertices);
 
 	unsigned char* data = buffer;
@@ -1141,28 +1091,6 @@ size_t meshopt_encodeVertexBuffer(unsigned char* buffer, size_t buffer_size, con
 
 	assert(data >= buffer + tail_size);
 	assert(data <= buffer + buffer_size);
-
-#if TRACE
-	size_t total_size = data - buffer;
-
-	for (size_t k = 0; k < vertex_size; ++k)
-	{
-		const Stats& vsk = vertexstats[k];
-
-		printf("%2d: %d bytes\t%.1f%%\t%.1f bpv", int(k), int(vsk.size), double(vsk.size) / double(total_size) * 100, double(vsk.size) / double(vertex_count) * 8);
-
-#if TRACE > 1
-		printf("\t\thdr %d bytes\tbit0 %d (%d bytes)\tbit1 %d (%d bytes)\tbit2 %d (%d bytes)\tbit3 %d (%d bytes)",
-		       int(vsk.header),
-		       int(vsk.bitg[0]), int(vsk.bitb[0]),
-		       int(vsk.bitg[1]), int(vsk.bitb[1]),
-		       int(vsk.bitg[2]), int(vsk.bitb[2]),
-		       int(vsk.bitg[3]), int(vsk.bitb[3]));
-#endif
-
-		printf("\n");
-	}
-#endif
 
 	return data - buffer;
 }

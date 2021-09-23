@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -15,6 +15,18 @@ BX_ERROR_RESULT(BGFX_SHADER_SPIRV_INVALID_INSTRUCTION, BX_MAKEFOURCC('S', 'H', 0
 
 namespace bgfx
 {
+	constexpr uint8_t kSpirvVertexBinding   = 0;
+	constexpr uint8_t kSpirvFragmentBinding = 1;
+	constexpr uint8_t kSpirvBindShift       = 2;
+	constexpr uint8_t kSpirvSamplerShift    = 16;
+
+	constexpr uint8_t kSpirvOldVertexBinding    = 0;
+	constexpr uint8_t kSpirvOldFragmentBinding  = 48;
+	constexpr uint8_t kSpirvOldFragmentShift    = 48;
+	constexpr uint8_t kSpirvOldBufferShift      = 16;
+	constexpr uint8_t kSpirvOldImageShift       = 32;
+	constexpr uint8_t kSpirvOldTextureShift     = 16;
+
 	// Reference(s):
 	// - https://web.archive.org/web/20181126035927/https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.html
 	//

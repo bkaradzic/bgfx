@@ -101,7 +101,7 @@ class Type {
 
   Type(Kind k) : kind_(k) {}
 
-  virtual ~Type() {}
+  virtual ~Type() = default;
 
   // Attaches a decoration directly on this type.
   void AddDecoration(std::vector<uint32_t>&& d) {

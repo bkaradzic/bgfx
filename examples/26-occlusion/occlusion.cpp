@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -203,8 +203,9 @@ public:
 				const float deltaTime = float(frameTime/freq);
 
 				// Update camera.
+				cameraUpdate(deltaTime, m_state.m_mouse, ImGui::MouseOverArea() );
+
 				float view[16];
-				cameraUpdate(deltaTime, m_state.m_mouse);
 				cameraGetViewMtx(view);
 
 				// Set view and projection matrix for view 0.
