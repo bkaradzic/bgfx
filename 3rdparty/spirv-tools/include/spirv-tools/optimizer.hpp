@@ -19,6 +19,7 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "libspirv.hpp"
@@ -27,6 +28,7 @@ namespace spvtools {
 
 namespace opt {
 class Pass;
+struct DescriptorSetAndBinding;
 }
 
 // C++ interface for SPIR-V optimization functionalities. It wraps the context
@@ -68,11 +70,6 @@ class Optimizer {
   // The instance will have an empty message consumer, which ignores all
   // messages from the library. Use SetMessageConsumer() to supply a consumer
   // if messages are of concern.
-  //
-  // For collections of passes that are meant to transform the input into
-  // another execution environment, then the source environment should be
-  // supplied. e.g. for VulkanToWebGPUPasses the environment should be
-  // SPV_ENV_VULKAN_1_1 not SPV_ENV_WEBGPU_0.
   explicit Optimizer(spv_target_env env);
 
   // Disables copy/move constructor/assignment operations.
@@ -105,16 +102,6 @@ class Optimizer {
   // This sequence of passes is subject to constant review and will change
   // from time to time.
   Optimizer& RegisterSizePasses();
-
-  // Registers passes that have been prescribed for converting from Vulkan to
-  // WebGPU. This sequence of passes is subject to constant review and will
-  // change from time to time.
-  Optimizer& RegisterVulkanToWebGPUPasses();
-
-  // Registers passes that have been prescribed for converting from WebGPU to
-  // Vulkan. This sequence of passes is subject to constant review and will
-  // change from time to time.
-  Optimizer& RegisterWebGPUToVulkanPasses();
 
   // Registers passes that attempt to legalize the generated code.
   //
@@ -237,13 +224,6 @@ class Optimizer {
 // Creates a null pass.
 // A null pass does nothing to the SPIR-V module to be optimized.
 Optimizer::PassToken CreateNullPass();
-
-// Creates a strip-atomic-counter-memory pass.
-// A strip-atomic-counter-memory pass removes all usages of the
-// AtomicCounterMemory bit in Memory Semantics bitmasks. This bit is a no-op in
-// Vulkan, so isn't needed in that env. And the related capability is not
-// allowed in WebGPU, so it is not allowed in that env.
-Optimizer::PassToken CreateStripAtomicCounterMemoryPass();
 
 // Creates a strip-debug-info pass.
 // A strip-debug-info pass removes all debug instructions (as documented in
@@ -536,6 +516,13 @@ Optimizer::PassToken CreateDeadInsertElimPass();
 // eliminated with standard dead code elimination.
 Optimizer::PassToken CreateAggressiveDCEPass();
 
+// Creates a remove-unused-interface-variables pass.
+// Removes variables referenced on the |OpEntryPoint| instruction that are not
+// referenced in the entry point function or any function in its call tree. Note
+// that this could cause the shader interface to no longer match other shader
+// stages.
+Optimizer::PassToken CreateRemoveUnusedInterfaceVariablesPass();
+
 // Creates an empty pass.
 // This is deprecated and will be removed.
 // TODO(jaebaek): remove this pass after handling glslang's broken unit tests.
@@ -802,29 +789,10 @@ Optimizer::PassToken CreateUpgradeMemoryModelPass();
 // where an instruction is moved into a more deeply nested construct.
 Optimizer::PassToken CreateCodeSinkingPass();
 
-// Create a pass to adds initializers for OpVariable calls that require them
-// in WebGPU. Currently this pass naively initializes variables that are
-// missing an initializer with a null value. In the future it may initialize
-// variables to the first value stored in them, if that is a constant.
-Optimizer::PassToken CreateGenerateWebGPUInitializersPass();
-
 // Create a pass to fix incorrect storage classes.  In order to make code
 // generation simpler, DXC may generate code where the storage classes do not
 // match up correctly.  This pass will fix the errors that it can.
 Optimizer::PassToken CreateFixStorageClassPass();
-
-// Create a pass to legalize OpVectorShuffle operands going into WebGPU. WebGPU
-// forbids using 0xFFFFFFFF, which indicates an undefined result, so this pass
-// converts those literals to 0.
-Optimizer::PassToken CreateLegalizeVectorShufflePass();
-
-// Create a pass to decompose initialized variables into a seperate variable
-// declaration and an initial store.
-Optimizer::PassToken CreateDecomposeInitializedVariablesPass();
-
-// Create a pass to attempt to split up invalid unreachable merge-blocks and
-// continue-targets to legalize for WebGPU.
-Optimizer::PassToken CreateSplitInvalidUnreachablePass();
 
 // Creates a graphics robust access pass.
 //
@@ -878,6 +846,25 @@ Optimizer::PassToken CreateWrapOpKillPass();
 // VK_AMD_shader_trinary_minmax with equivalent code using core instructions and
 // capabilities.
 Optimizer::PassToken CreateAmdExtToKhrPass();
+
+// Replaces the internal version of GLSLstd450 InterpolateAt* extended
+// instructions with the externally valid version. The internal version allows
+// an OpLoad of the interpolant for the first argument. This pass removes the
+// OpLoad and replaces it with its pointer. glslang and possibly other
+// frontends will create the internal version for HLSL. This pass will be part
+// of HLSL legalization and should be called after interpolants have been
+// propagated into their final positions.
+Optimizer::PassToken CreateInterpolateFixupPass();
+
+// Creates a convert-to-sampled-image pass to convert images and/or
+// samplers with given pairs of descriptor set and binding to sampled image.
+// If a pair of an image and a sampler have the same pair of descriptor set and
+// binding that is one of the given pairs, they will be converted to a sampled
+// image. In addition, if only an image has the descriptor set and binding that
+// is one of the given pairs, it will be converted to a sampled image as well.
+Optimizer::PassToken CreateConvertToSampledImagePass(
+    const std::vector<opt::DescriptorSetAndBinding>&
+        descriptor_set_binding_pairs);
 
 }  // namespace spvtools
 

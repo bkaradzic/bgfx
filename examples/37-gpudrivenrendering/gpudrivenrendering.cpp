@@ -139,8 +139,8 @@ struct Camera
 
 	struct Interp3f
 	{
-		bx::Vec3 curr;
-		bx::Vec3 dest;
+		bx::Vec3 curr = bx::init::None;
+		bx::Vec3 dest = bx::init::None;
 	};
 
 	Interp3f m_target;
@@ -510,7 +510,7 @@ public:
 				;
 
 			// Create buffers for the HiZ pass
-			m_hiZDepthBuffer = bgfx::createFrameBuffer(uint16_t(m_hiZwidth), uint16_t(m_hiZheight), bgfx::TextureFormat::D32, tsFlags);
+			m_hiZDepthBuffer = bgfx::createFrameBuffer(uint16_t(m_hiZwidth), uint16_t(m_hiZheight), bgfx::TextureFormat::D32F, tsFlags);
 
 			bgfx::TextureHandle buffer = bgfx::createTexture2D(uint16_t(m_hiZwidth), uint16_t(m_hiZheight), true, 1, bgfx::TextureFormat::R32F, BGFX_TEXTURE_COMPUTE_WRITE | tsFlags);
 			m_hiZBuffer = bgfx::createFrameBuffer(1, &buffer, true);

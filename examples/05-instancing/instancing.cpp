@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -75,6 +75,9 @@ public:
 		m_height = _height;
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
+		m_useInstancing    = true;
+		m_lastFrameMissing = 0;
+		m_sideSize         = 11;
 
 		bgfx::Init init;
 		init.type     = args.m_type;
@@ -111,6 +114,7 @@ public:
 
 		// Create program from shaders.
 		m_program = loadProgram("vs_instancing", "fs_instancing");
+		m_program_non_instanced = loadProgram("vs_cubes", "fs_cubes");
 
 		m_timeOffset = bx::getHPCounter();
 
@@ -125,6 +129,7 @@ public:
 		bgfx::destroy(m_ibh);
 		bgfx::destroy(m_vbh);
 		bgfx::destroy(m_program);
+		bgfx::destroy(m_program_non_instanced);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -148,6 +153,47 @@ public:
 
 			showExampleDialog(this);
 
+			ImGui::SetNextWindowPos(
+				ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+			);
+			ImGui::SetNextWindowSize(
+				ImVec2(m_width / 5.0f, m_height / 2.0f)
+				, ImGuiCond_FirstUseEver
+			);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+			);
+
+			// Get renderer capabilities info.
+			const bgfx::Caps* caps = bgfx::getCaps();
+
+			// Check if instancing is supported.
+			const bool instancingSupported = 0 != (BGFX_CAPS_INSTANCING & caps->supported);
+			m_useInstancing &= instancingSupported;
+
+			ImGui::Text("%d draw calls", bgfx::getStats()->numDraw);
+
+			ImGui::PushEnabled(instancingSupported);
+			ImGui::Checkbox("Use Instancing", &m_useInstancing);
+			ImGui::PopEnabled();
+
+			ImGui::Text("Grid Side Size:");
+			ImGui::SliderInt("", (int*)&m_sideSize, 1, 512);
+
+			if (m_lastFrameMissing > 0)
+			{
+				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Couldn't draw %d cubes last frame", m_lastFrameMissing);
+			}
+
+			if (bgfx::getStats()->numDraw >= bgfx::getCaps()->limits.maxDrawCalls)
+			{
+				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Draw call limit reached!");
+			}
+
+			ImGui::End();
+
 			imguiEndFrame();
 
 			// Set view 0 default viewport.
@@ -159,80 +205,111 @@ public:
 
 			float time = (float)( (bx::getHPCounter() - m_timeOffset)/double(bx::getHPFrequency() ) );
 
-			// Get renderer capabilities info.
-			const bgfx::Caps* caps = bgfx::getCaps();
-
-			// Check if instancing is supported.
-			if (0 == (BGFX_CAPS_INSTANCING & caps->supported) )
+			if (!instancingSupported)
 			{
 				// When instancing is not supported by GPU, implement alternative
 				// code path that doesn't use instancing.
 				bool blink = uint32_t(time*3.0f)&1;
 				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Instancing is not supported by GPU. ");
+
+				m_useInstancing = false;
+			}
+
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
+
+			// Set view and projection matrix for view 0.
+			{
+				float view[16];
+				bx::mtxLookAt(view, eye, at);
+
+				float proj[16];
+				bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
+				bgfx::setViewTransform(0, view, proj);
+
+				// Set view 0 default viewport.
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+			}
+
+			m_lastFrameMissing = 0;
+
+			if (m_useInstancing)
+			{
+				// 80 bytes stride = 64 bytes for 4x4 matrix + 16 bytes for RGBA color.
+				const uint16_t instanceStride = 80;
+				// to total number of instances to draw
+				uint32_t totalCubes = m_sideSize * m_sideSize;
+
+				// figure out how big of a buffer is available
+				uint32_t drawnCubes = bgfx::getAvailInstanceDataBuffer(totalCubes, instanceStride);
+
+				// save how many we couldn't draw due to buffer room so we can display it
+				m_lastFrameMissing = totalCubes - drawnCubes;
+
+				bgfx::InstanceDataBuffer idb;
+				bgfx::allocInstanceDataBuffer(&idb, drawnCubes, instanceStride);
+
+				uint8_t* data = idb.data;
+
+				for (uint32_t ii = 0; ii < drawnCubes; ++ii)
+				{
+					uint32_t yy = ii / m_sideSize;
+					uint32_t xx = ii % m_sideSize;
+
+					float* mtx = (float*)data;
+					bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
+					mtx[12] = -15.0f + float(xx) * 3.0f;
+					mtx[13] = -15.0f + float(yy) * 3.0f;
+					mtx[14] = 0.0f;
+
+					float* color = (float*)&data[64];
+					color[0] = bx::sin(time + float(xx) / 11.0f) * 0.5f + 0.5f;
+					color[1] = bx::cos(time + float(yy) / 11.0f) * 0.5f + 0.5f;
+					color[2] = bx::sin(time * 3.0f) * 0.5f + 0.5f;
+					color[3] = 1.0f;
+
+					data += instanceStride;
+				}
+
+				// Set vertex and index buffer.
+				bgfx::setVertexBuffer(0, m_vbh);
+				bgfx::setIndexBuffer(m_ibh);
+
+				// Set instance data buffer.
+				bgfx::setInstanceDataBuffer(&idb);
+
+				// Set render states.
+				bgfx::setState(BGFX_STATE_DEFAULT);
+
+				// Submit primitive for rendering to view 0.
+				bgfx::submit(0, m_program);
 			}
 			else
 			{
-				const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
-				const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
-
-				// Set view and projection matrix for view 0.
+				// non-instanced path
+				for (uint32_t yy = 0; yy < m_sideSize; ++yy)
 				{
-					float view[16];
-					bx::mtxLookAt(view, eye, at);
-
-					float proj[16];
-					bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
-					bgfx::setViewTransform(0, view, proj);
-
-					// Set view 0 default viewport.
-					bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-				}
-
-				// 80 bytes stride = 64 bytes for 4x4 matrix + 16 bytes for RGBA color.
-				const uint16_t instanceStride = 80;
-				// 11x11 cubes
-				const uint32_t numInstances   = 121;
-
-				if (numInstances == bgfx::getAvailInstanceDataBuffer(numInstances, instanceStride) )
-				{
-					bgfx::InstanceDataBuffer idb;
-					bgfx::allocInstanceDataBuffer(&idb, numInstances, instanceStride);
-
-					uint8_t* data = idb.data;
-
-					// Write instance data for 11x11 cubes.
-					for (uint32_t yy = 0; yy < 11; ++yy)
+					for (uint32_t xx = 0; xx < m_sideSize; ++xx)
 					{
-						for (uint32_t xx = 0; xx < 11; ++xx)
-						{
-							float* mtx = (float*)data;
-							bx::mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
-							mtx[12] = -15.0f + float(xx)*3.0f;
-							mtx[13] = -15.0f + float(yy)*3.0f;
-							mtx[14] = 0.0f;
+						float mtx[16];
+						bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
+						mtx[12] = -15.0f + float(xx) * 3.0f;
+						mtx[13] = -15.0f + float(yy) * 3.0f;
+						mtx[14] = 0.0f;
 
-							float* color = (float*)&data[64];
-							color[0] = bx::sin(time+float(xx)/11.0f)*0.5f+0.5f;
-							color[1] = bx::cos(time+float(yy)/11.0f)*0.5f+0.5f;
-							color[2] = bx::sin(time*3.0f)*0.5f+0.5f;
-							color[3] = 1.0f;
+						// Set model matrix for rendering.
+						bgfx::setTransform(mtx);
 
-							data += instanceStride;
-						}
+						// Set vertex and index buffer.
+						bgfx::setVertexBuffer(0, m_vbh);
+						bgfx::setIndexBuffer(m_ibh);
+
+						// Set render states.
+						bgfx::setState(BGFX_STATE_DEFAULT);
+
+						// Submit primitive for rendering to view 0.
+						bgfx::submit(0, m_program_non_instanced);
 					}
-
-					// Set vertex and index buffer.
-					bgfx::setVertexBuffer(0, m_vbh);
-					bgfx::setIndexBuffer(m_ibh);
-
-					// Set instance data buffer.
-					bgfx::setInstanceDataBuffer(&idb);
-
-					// Set render states.
-					bgfx::setState(BGFX_STATE_DEFAULT);
-
-					// Submit primitive for rendering to view 0.
-					bgfx::submit(0, m_program);
 				}
 			}
 
@@ -252,9 +329,14 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
+	bool     m_useInstancing;
+	uint32_t m_lastFrameMissing;
+	uint32_t m_sideSize;
+
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle  m_ibh;
 	bgfx::ProgramHandle m_program;
+	bgfx::ProgramHandle m_program_non_instanced;
 
 	int64_t m_timeOffset;
 };

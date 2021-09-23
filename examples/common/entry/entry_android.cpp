@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -154,7 +154,7 @@ namespace entry
 			{
 				if (0 == AAsset_getRemainingLength(m_file) )
 				{
-					BX_ERROR_SET(_err, bx::kErrorRederWriterEof, "FileReader: EOF.");
+					BX_ERROR_SET(_err, bx::kErrorReaderWriterEof, "FileReader: EOF.");
 				}
 
 				return size >= 0 ? size : 0;

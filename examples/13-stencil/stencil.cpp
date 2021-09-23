@@ -992,7 +992,7 @@ public:
 			s_uniforms.m_time = time;
 
 			// Update camera.
-			cameraUpdate(deltaTime, m_mouseState);
+			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 			cameraGetViewMtx(m_viewState.m_view);
 
 			static float lightTimeAccumulator = 0.0f;

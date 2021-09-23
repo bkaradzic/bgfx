@@ -169,7 +169,7 @@ struct Camera
 {
 	Camera()
 	{
-		init(bx::Vec3(0.0f,0.0f,0.0f), 2.0f, 0.01f, 100.0f);
+		init(bx::init::Zero, 2.0f, 0.01f, 100.0f);
 	}
 
 	void init(const bx::Vec3& _center, float _distance, float _near, float _far)
@@ -265,8 +265,8 @@ struct Camera
 
 	struct Interp3f
 	{
-		bx::Vec3 curr;
-		bx::Vec3 dest;
+		bx::Vec3 curr = bx::init::None;
+		bx::Vec3 dest = bx::init::None;
 	};
 
 	Interp3f m_target;
@@ -1051,7 +1051,7 @@ int _main_(int _argc, char** _argv)
 							;
 
 						ImGui::PushItemWidth(-1);
-						if (ImGui::ListBoxHeader("##empty", ImVec2(0.0f, listHeight) ) )
+						if (ImGui::BeginListBox("##empty", ImVec2(0.0f, listHeight) ) )
 						{
 							const int32_t itemCount = int32_t(view.m_fileList.size() );
 
@@ -1089,7 +1089,7 @@ int _main_(int _argc, char** _argv)
 
 							clipper.End();
 
-							ImGui::ListBoxFooter();
+							ImGui::EndListBox();
 						}
 
 						ImGui::PopFont();

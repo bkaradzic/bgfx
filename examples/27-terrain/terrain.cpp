@@ -432,11 +432,11 @@ ExampleTerrain(const char* _name, const char* _description, const char* _url)
 			ImGui::End();
 			imguiEndFrame();
 
+			// Update camera.
+			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
+
 			if (!ImGui::MouseOverArea() )
 			{
-				// Update camera.
-				cameraUpdate(deltaTime, m_mouseState);
-
 				if (!!m_mouseState.m_buttons[entry::MouseButton::Left])
 				{
 					mousePickTerrain();

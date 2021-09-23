@@ -145,8 +145,10 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
   DebugScope last_scope(kNoDebugScope, kNoInlinedAt);
   const Instruction* last_line_inst = nullptr;
   bool between_merge_and_branch = false;
+  bool between_label_and_phi_var = false;
   auto write_inst = [binary, skip_nop, &last_scope, &last_line_inst,
-                     &between_merge_and_branch, this](const Instruction* i) {
+                     &between_merge_and_branch, &between_label_and_phi_var,
+                     this](const Instruction* i) {
     // Skip emitting line instructions between merge and branch instructions.
     auto opcode = i->opcode();
     if (between_merge_and_branch &&
@@ -175,13 +177,29 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
         last_line_inst = nullptr;
       }
     }
+
+    if (opcode == SpvOpLabel) {
+      between_label_and_phi_var = true;
+    } else if (opcode != SpvOpVariable && opcode != SpvOpPhi &&
+               opcode != SpvOpLine && opcode != SpvOpNoLine) {
+      between_label_and_phi_var = false;
+    }
+
     if (!(skip_nop && i->IsNop())) {
       const auto& scope = i->GetDebugScope();
       if (scope != last_scope) {
-        // Emit DebugScope |scope| to |binary|.
-        auto dbg_inst = ext_inst_debuginfo_.begin();
-        scope.ToBinary(dbg_inst->type_id(), context()->TakeNextId(),
-                       dbg_inst->GetSingleWordOperand(2), binary);
+        // Can only emit nonsemantic instructions after all phi instructions
+        // in a block so don't emit scope instructions before phi instructions
+        // for Vulkan.NonSemantic.DebugInfo.100.
+        if (!between_label_and_phi_var ||
+            context()
+                ->get_feature_mgr()
+                ->GetExtInstImportId_OpenCL100DebugInfo()) {
+          // Emit DebugScope |scope| to |binary|.
+          auto dbg_inst = ext_inst_debuginfo_.begin();
+          scope.ToBinary(dbg_inst->type_id(), context()->TakeNextId(),
+                         dbg_inst->GetSingleWordOperand(2), binary);
+        }
         last_scope = scope;
       }
 

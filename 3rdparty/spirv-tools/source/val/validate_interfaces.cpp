@@ -27,6 +27,10 @@ namespace spvtools {
 namespace val {
 namespace {
 
+// Limit the number of checked locations to 4096. Multiplied by 4 to represent
+// all the components. This limit is set to be well beyond practical use cases.
+const uint32_t kMaxLocations = 4096 * 4;
+
 // Returns true if \c inst is an input or output variable.
 bool is_interface_variable(const Instruction* inst, bool is_spv_1_4) {
   if (is_spv_1_4) {
@@ -347,6 +351,11 @@ spv_result_t GetLocationsForVariable(
       uint32_t num_components = NumConsumedComponents(_, sub_type);
       uint32_t array_location = location + (num_locations * array_idx);
       uint32_t start = array_location * 4;
+      if (kMaxLocations <= start) {
+        // Too many locations, give up.
+        break;
+      }
+
       uint32_t end = (array_location + num_locations) * 4;
       if (num_components != 0) {
         start += component;
@@ -416,6 +425,11 @@ spv_result_t GetLocationsForVariable(
       }
 
       uint32_t start = location * 4;
+      if (kMaxLocations <= start) {
+        // Too many locations, give up.
+        continue;
+      }
+
       uint32_t end = (location + num_locations) * 4;
       if (num_components != 0) {
         start += component;
@@ -454,12 +468,18 @@ spv_result_t ValidateLocations(ValidationState_t& _,
   std::unordered_set<uint32_t> input_locations;
   std::unordered_set<uint32_t> output_locations_index0;
   std::unordered_set<uint32_t> output_locations_index1;
+  std::unordered_set<uint32_t> seen;
   for (uint32_t i = 3; i < entry_point->operands().size(); ++i) {
     auto interface_id = entry_point->GetOperandAs<uint32_t>(i);
     auto interface_var = _.FindDef(interface_id);
     auto storage_class = interface_var->GetOperandAs<SpvStorageClass>(2);
     if (storage_class != SpvStorageClassInput &&
         storage_class != SpvStorageClassOutput) {
+      continue;
+    }
+    if (!seen.insert(interface_id).second) {
+      // Pre-1.4 an interface variable could be listed multiple times in an
+      // entry point. Validation for 1.4 or later is done elsewhere.
       continue;
     }
 

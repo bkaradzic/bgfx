@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -663,7 +663,7 @@ namespace bgfx { namespace hlsl
 		uint16_t attrs[bgfx::Attrib::Count];
 		uint16_t size = 0;
 
-		if (_version == 9)
+		if (_version < 400)
 		{
 			if (!getReflectionDataD3D9(code, uniforms) )
 			{
@@ -747,6 +747,7 @@ namespace bgfx { namespace hlsl
 				bx::write(_writer, un.regCount);
 				bx::write(_writer, un.texComponent);
 				bx::write(_writer, un.texDimension);
+				bx::write(_writer, un.texFormat);
 
 				BX_TRACE("%s, %s, %d, %d, %d"
 					, un.name.c_str()
@@ -782,7 +783,7 @@ namespace bgfx { namespace hlsl
 			bx::write(_writer, nul);
 		}
 
-		if (_version > 9)
+		if (_version >= 400)
 		{
 			bx::write(_writer, numAttrs);
 			bx::write(_writer, attrs, numAttrs*sizeof(uint16_t) );
