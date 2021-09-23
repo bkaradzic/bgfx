@@ -15,10 +15,6 @@
 
 #include <cmath>
 
-#define A_CPU
-#include "ffx_a.h"
-#include "ffx_fsr1.h"
-
 namespace
 {
 
