@@ -584,7 +584,6 @@ or _OPTIONS["with-combined-examples"] then
 		, "43-denoise"
 		, "44-sss"
 		, "45-bokeh"
-		, "46-fsr"
 		)
 
 	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm
