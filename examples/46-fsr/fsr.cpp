@@ -444,21 +444,19 @@ namespace
 				// render result to screen
 				{
 					bgfx::TextureHandle srcTexture = m_frameBufferTex[FRAMEBUFFER_RT_COLOR];
-					float scale = m_renderNativeResolution ? 1.0f : m_superSamplingFactor;
 					if(!m_renderNativeResolution)
 					{
-						if(m_applyFsrRcas)
+						if(m_applyFsr && m_applyFsrRcas)
 						{
-							srcTexture = m_fsrRcasTexture32F;
+							srcTexture = m_fsr16Bit ? m_fsrRcasTexture16F : m_fsrRcasTexture32F;
 						}
 						else
 						{
-							srcTexture = m_fsrEasuTexture32F;
+							srcTexture = m_fsr16Bit ? m_fsrEasuTexture16F : m_fsrEasuTexture32F;
 						}
-						scale = 1.0f;
 					}
 
-					updateMagnifierTexture(view, srcTexture, scale);
+					updateMagnifierTexture(view, srcTexture);
 
 					float orthoProj[16];
 					bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
@@ -477,7 +475,7 @@ namespace
 					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 					bgfx::setTexture(0, s_color, srcTexture, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, scale, scale);
+					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 					bgfx::submit(view, m_copyLinearToGammaProgram);
 					++view;
 				}
@@ -505,7 +503,7 @@ namespace
 
 					ImGui::Checkbox("Render native resolution", &m_renderNativeResolution);
 					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("Disable super sampling and FSR");
+						ImGui::SetTooltip("Disable super sampling and FSR.");
 
 					ImGui::Image(m_magnifierTexture.m_texture, ImVec2(itemSize.x, itemSize.x));
 
@@ -515,28 +513,38 @@ namespace
 						if (ImGui::IsItemHovered())
 						{
 							ImGui::BeginTooltip();
-							ImGui::Text("2.0 means the scene is rendered at half window resolution");
-							ImGui::Text("1.0 means the scene is rendered at native window resolution");
+							ImGui::Text("2.0 means the scene is rendered at half window resolution.");
+							ImGui::Text("1.0 means the scene is rendered at native window resolution.");
 							ImGui::EndTooltip();
 						}
 
 						ImGui::Separator();
 
+						ImGui::Checkbox("Use 16 Bit", &m_fsr16Bit);
+						if (ImGui::IsItemHovered())
+						{
+							ImGui::BeginTooltip();
+							ImGui::Text("For better performance and less memory consumption use 16 Bit precision.");
+							ImGui::Text("If disabled use 32 Bit per channel precision for FSR which works better on older hardware.");
+							ImGui::Text("FSR in 16 Bit precision is also prone to be broken in Direct3D11, Direct3D12 works though.");
+							ImGui::EndTooltip();
+						}
+
 						ImGui::Checkbox("Apply FSR", &m_applyFsr);
 						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip("Compare between FSR and bilinear interpolation of source image");
+							ImGui::SetTooltip("Compare between FSR and bilinear interpolation of source image.");
 
 						if(m_applyFsr)
 						{
 							ImGui::Checkbox("Apply FSR sharpening", &m_applyFsrRcas);
 							if (ImGui::IsItemHovered())
-								ImGui::SetTooltip("Apply the FSR RCAS sharpening pass");
+								ImGui::SetTooltip("Apply the FSR RCAS sharpening pass.");
 
 							if(m_applyFsrRcas)
 							{
 								ImGui::SliderFloat("Sharpening attenuation", &m_rcasAttenuation, 0.01f, 2.0f);
 								if (ImGui::IsItemHovered())
-									ImGui::SetTooltip("Lower value means sharper");
+									ImGui::SetTooltip("Lower value means sharper.");
 							}
 						}
 					}
@@ -630,10 +638,12 @@ namespace
 			static constexpr int threadGroupWorkRegionDim = 16;
 			int const dispatchX = (m_width + (threadGroupWorkRegionDim - 1)) / threadGroupWorkRegionDim;
 			int const dispatchY = (m_height + (threadGroupWorkRegionDim - 1)) / threadGroupWorkRegionDim;
+			bgfx::TextureFormat::Enum const format = m_fsr16Bit ? bgfx::TextureFormat::RGBA16F : bgfx::TextureFormat::RGBA32F;
+			bgfx::TextureHandle fsrEasuTexture = m_fsr16Bit ? m_fsrEasuTexture16F : m_fsrEasuTexture32F;
 
 			// EASU pass (upscale)
 			{
-				bgfx::ProgramHandle program = m_fsrEasu32Program;
+				bgfx::ProgramHandle program = m_fsr16Bit ? m_fsrEasu16Program : m_fsrEasu32Program;
 
 				if (!m_applyFsr)
 				{
@@ -643,7 +653,7 @@ namespace
 				bgfx::setViewName(view, "fsr easu");
 				m_fsrUniforms.submit();
 				bgfx::setTexture(0, s_fsrInputTexture, _colorTexture);
-				bgfx::setImage(1, m_fsrEasuTexture32F, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA32F);
+				bgfx::setImage(1, fsrEasuTexture, 0, bgfx::Access::Write, format);
 				bgfx::dispatch(view, program, dispatchX, dispatchY, 1);
 				++view;
 			}
@@ -651,12 +661,12 @@ namespace
 			// RCAS pass (sharpening)
 			if(m_applyFsrRcas)
 			{
-				bgfx::ProgramHandle program = m_fsrRcas32Program;
+				bgfx::ProgramHandle program = m_fsr16Bit ? m_fsrRcas16Program : m_fsrRcas32Program;
 
 				bgfx::setViewName(view, "fsr rcas");
 				m_fsrUniforms.submit();
-				bgfx::setTexture(0, s_fsrInputTexture, m_fsrEasuTexture32F);
-				bgfx::setImage(1, m_fsrRcasTexture32F, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA32F);
+				bgfx::setTexture(0, s_fsrInputTexture, fsrEasuTexture);
+				bgfx::setImage(1, m_fsr16Bit ? m_fsrRcasTexture16F : m_fsrRcasTexture32F, 0, bgfx::Access::Write, format);
 				bgfx::dispatch(view, program, dispatchX, dispatchY, 1);
 				++view;
 			}
@@ -679,6 +689,8 @@ namespace
 			m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D24S8, depthFlags);
 			m_frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_frameBufferTex), m_frameBufferTex, true);
 
+			m_fsrEasuTexture16F = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
+			m_fsrRcasTexture16F = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
 			m_fsrEasuTexture32F = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
 			m_fsrRcasTexture32F = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
 		}
@@ -687,6 +699,8 @@ namespace
 		void destroyFramebuffers()
 		{
 			bgfx::destroy(m_frameBuffer);
+			bgfx::destroy(m_fsrEasuTexture16F);
+			bgfx::destroy(m_fsrRcasTexture16F);
 			bgfx::destroy(m_fsrEasuTexture32F);
 			bgfx::destroy(m_fsrRcasTexture32F);
 		}
@@ -709,7 +723,7 @@ namespace
 			m_modelUniforms.m_lightPosition[2] = 10.0f;
 		}
 
-		void updateMagnifierTexture(bgfx::ViewId& view, bgfx::TextureHandle srcTexture, float scale)
+		void updateMagnifierTexture(bgfx::ViewId& view, bgfx::TextureHandle srcTexture)
 		{
 			const bgfx::Caps* caps = bgfx::getCaps();
 
@@ -723,10 +737,10 @@ namespace
 			}
 
 			// TODO: fix picking when not maximized
-			float scaleX = scale * (m_width + m_magnifierTexture.m_width * 2) / static_cast<float>(m_magnifierTexture.m_width);
-			float scaleY = scale * (m_height) / static_cast<float>(m_magnifierTexture.m_height);
-			float offsetX = scale * (m_magnifierPos.x - m_magnifierTexture.m_width * 0.5f);
-			float offsetY = scale * (m_magnifierPos.y - m_magnifierTexture.m_height * 0.5f);
+			float scaleX = (m_width + m_magnifierTexture.m_width * 2) / static_cast<float>(m_magnifierTexture.m_width);
+			float scaleY = (m_height) / static_cast<float>(m_magnifierTexture.m_height);
+			float offsetX = (m_magnifierPos.x - m_magnifierTexture.m_width * 0.5f);
+			float offsetY = (m_magnifierPos.y - m_magnifierTexture.m_height * 0.5f);
 
 			bgfx::setViewName(view, "magnifier");
 			bgfx::setViewRect(view, 0, 0, uint16_t(m_magnifierTexture.m_width), uint16_t(m_magnifierTexture.m_height));
@@ -769,6 +783,8 @@ namespace
 
 		bgfx::FrameBufferHandle m_frameBuffer;
 		bgfx::TextureHandle m_frameBufferTex[FRAMEBUFFER_RENDER_TARGETS];
+		bgfx::TextureHandle m_fsrEasuTexture16F;
+		bgfx::TextureHandle m_fsrRcasTexture16F;
 		bgfx::TextureHandle m_fsrEasuTexture32F;
 		bgfx::TextureHandle m_fsrRcasTexture32F;
 
@@ -801,6 +817,7 @@ namespace
 		float m_superSamplingFactor = 2.0f;
 		float m_rcasAttenuation = 0.2f;
 		bool m_animateScene = false;
+		bool m_fsr16Bit = false;
 		int32_t m_antiAliasingSetting = 2;
 	};
 
