@@ -17,10 +17,14 @@ uniform vec4 u_params[3];
 
 #define A_GPU 1
 
-#if BGFX_SHADER_LANGUAGE_GLSL == 1
+#if BGFX_SHADER_LANGUAGE_GLSL > 0
 #define A_GLSL 1
 #define A_SKIP_EXT 1
-#else
+#elif BGFX_SHADER_LANGUAGE_SPIRV > 0
+#define A_HLSL 1
+#define A_HLSL_6_2 1
+#define A_NO_16_BIT_CAST 1
+#elif BGFX_SHADER_LANGUAGE_HLSL > 0
 #define A_HLSL 1
 #endif
 
@@ -103,11 +107,13 @@ NUM_THREADS(64, 1, 1)
 void main()
 {
 	// We compute these constants on GPU because bgfx does not support uniform type uint.
+#if SAMPLE_EASU || SAMPLE_BILINEAR
 	FsrEasuCon(Const0, Const1, Const2, Const3,
 		ViewportSizeRcasAttenuation.x, ViewportSizeRcasAttenuation.y,  // Viewport size (top left aligned) in the input image which is to be scaled.
 		SrcSize.x, SrcSize.y,  // The size of the input image.
 		DstSize.x, DstSize.y); // The output resolution.
 	Sample.x = 0; // no HDR output
+#endif
 #if SAMPLE_RCAS
 	FsrRcasCon(Const0, ViewportSizeRcasAttenuation.z);
 	Sample.x = 0;  // no HDR output

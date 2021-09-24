@@ -280,6 +280,8 @@ namespace
 			m_gridProgram = loadProgram("vs_fsr_forward", "fs_fsr_forward_grid");
 			m_copyLinearToGammaProgram = loadProgram("vs_fsr_screenquad", "fs_fsr_copy_linear_to_gamma");
 
+			m_fsrBilinear16Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_16"), true);
+			m_fsrBilinear32Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_32"), true);
 			m_fsrEasu16Program = bgfx::createProgram(loadShader("cs_fsr_easu_16"), true);
 			m_fsrEasu32Program = bgfx::createProgram(loadShader("cs_fsr_easu_32"), true);
 			m_fsrRcas16Program = bgfx::createProgram(loadShader("cs_fsr_rcas_16"), true);
@@ -333,6 +335,8 @@ namespace
 			bgfx::destroy(m_forwardProgram);
 			bgfx::destroy(m_gridProgram);
 			bgfx::destroy(m_copyLinearToGammaProgram);
+			bgfx::destroy(m_fsrBilinear16Program);
+			bgfx::destroy(m_fsrBilinear32Program);
 			bgfx::destroy(m_fsrEasu16Program);
 			bgfx::destroy(m_fsrEasu32Program);
 			bgfx::destroy(m_fsrRcas16Program);
@@ -430,9 +434,8 @@ namespace
 				}
 
 				// optionally run FSR
-				if (m_applyFsr && !m_renderNativeResolution)
-				{	// TODO: run bilinear filter here as well
-					// TODO: run 16 bit as well
+				if (!m_renderNativeResolution)
+				{	// TODO: run 16 bit as well
 					// TODO: refactor into separate class
 					// TODO: test Linux support
 					view = computeFsr(view, m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
@@ -442,7 +445,7 @@ namespace
 				{
 					bgfx::TextureHandle srcTexture = m_frameBufferTex[FRAMEBUFFER_RT_COLOR];
 					float scale = m_renderNativeResolution ? 1.0f : m_superSamplingFactor;
-					if(m_applyFsr && !m_renderNativeResolution)
+					if(!m_renderNativeResolution)
 					{
 						if(m_applyFsrRcas)
 						{
@@ -630,21 +633,31 @@ namespace
 
 			// EASU pass (upscale)
 			{
+				bgfx::ProgramHandle program = m_fsrEasu32Program;
+
+				if (!m_applyFsr)
+				{
+					program = m_fsrBilinear32Program;
+				}
+
 				bgfx::setViewName(view, "fsr easu");
 				m_fsrUniforms.submit();
 				bgfx::setTexture(0, s_fsrInputTexture, _colorTexture);
 				bgfx::setImage(1, m_fsrEasuTexture32F, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA32F);
-				bgfx::dispatch(view, m_fsrEasu32Program, dispatchX, dispatchY, 1);
+				bgfx::dispatch(view, program, dispatchX, dispatchY, 1);
 				++view;
 			}
 
 			// RCAS pass (sharpening)
+			if(m_applyFsrRcas)
 			{
+				bgfx::ProgramHandle program = m_fsrRcas32Program;
+
 				bgfx::setViewName(view, "fsr rcas");
 				m_fsrUniforms.submit();
 				bgfx::setTexture(0, s_fsrInputTexture, m_fsrEasuTexture32F);
 				bgfx::setImage(1, m_fsrRcasTexture32F, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA32F);
-				bgfx::dispatch(view, m_fsrRcas32Program, dispatchX, dispatchY, 1);
+				bgfx::dispatch(view, program, dispatchX, dispatchY, 1);
 				++view;
 			}
 
@@ -737,6 +750,8 @@ namespace
 		bgfx::ProgramHandle m_forwardProgram;
 		bgfx::ProgramHandle m_gridProgram;
 		bgfx::ProgramHandle m_copyLinearToGammaProgram;
+		bgfx::ProgramHandle m_fsrBilinear16Program;
+		bgfx::ProgramHandle m_fsrBilinear32Program;
 		bgfx::ProgramHandle m_fsrEasu16Program;
 		bgfx::ProgramHandle m_fsrEasu32Program;
 		bgfx::ProgramHandle m_fsrRcas16Program;
