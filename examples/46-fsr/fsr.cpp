@@ -29,16 +29,14 @@ namespace
 	};
 
 	static const char *s_meshPaths[] =
-	{
-		"meshes/cube.bin",
-		"meshes/hollowcube.bin"
-	};
+		{
+			"meshes/cube.bin",
+			"meshes/hollowcube.bin"};
 
 	static const float s_meshScale[] =
-	{
-		0.45f,
-		0.30f
-	};
+		{
+			0.45f,
+			0.30f};
 
 	// Vertex decl for our screen space quad (used in deferred rendering)
 	struct PosTexCoord0Vertex
@@ -183,10 +181,10 @@ namespace
 			bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
 			PosTexCoord0Vertex *vertex = (PosTexCoord0Vertex *)vb.data;
 
-			const float minx = -_width - _offsetX / _width * 2.0f;
-			const float maxx = _width - _offsetX / _width * 2.0f;
-			const float miny = 0.0f - _offsetY / _height;
-			const float maxy = _height * 2.0f - _offsetY / _height;
+			const float minx = -_width - _offsetX;
+			const float maxx = _width - _offsetX;
+			const float miny = 0.0f - _offsetY;
+			const float maxy = _height * 2.0f - _offsetY;
 
 			const float texelHalfW = _texelHalf / _textureWidth;
 			const float texelHalfH = _texelHalf / _textureHeight;
@@ -274,7 +272,7 @@ namespace
 			s_color = bgfx::createUniform("s_color", bgfx::UniformType::Sampler);
 			s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);
 			s_fsrInputTexture = bgfx::createUniform("InputTexture", bgfx::UniformType::Sampler);
-			
+
 			// Create program from shaders.
 			m_forwardProgram = loadProgram("vs_fsr_forward", "fs_fsr_forward");
 			m_gridProgram = loadProgram("vs_fsr_forward", "fs_fsr_forward_grid");
@@ -317,7 +315,7 @@ namespace
 
 			const uint32_t magnifierSize = 32;
 			m_magnifierTexture.init(magnifierSize, magnifierSize, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
-			m_magnifierPos = ImVec2(m_width * 0.5f, m_height * 0.5f);
+			m_magnifierPos = ImVec2(0.5f, 0.5f);
 
 			imguiCreate();
 		}
@@ -375,8 +373,8 @@ namespace
 
 				if(m_mouseState.m_buttons[entry::MouseButton::Left] && !ImGui::MouseOverArea())
 				{
-					m_magnifierPos.x = static_cast<float>(m_mouseState.m_mx);
-					m_magnifierPos.y = static_cast<float>(m_mouseState.m_my);
+					m_magnifierPos.x = static_cast<float>(m_mouseState.m_mx) / m_width;
+					m_magnifierPos.y = static_cast<float>(m_mouseState.m_my) / m_height;
 				}
 
 				// Update frame timer
@@ -396,7 +394,7 @@ namespace
 
 				// update animation time
 				const float rotationSpeed = 0.25f;
-				if(m_animateScene)
+				if (m_animateScene)
 				{
 					m_animationTime += deltaTime * rotationSpeed;
 					if (bx::kPi2 < m_animationTime)
@@ -435,18 +433,19 @@ namespace
 
 				// optionally run FSR
 				if (!m_renderNativeResolution)
-				{	// TODO: run 16 bit as well
+				{
 					// TODO: refactor into separate class
-					// TODO: test Linux support
+					// TODO: Fix OpenGL Support
+					// TODO: Fix Vulkan Support
 					view = computeFsr(view, m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
 				}
 
 				// render result to screen
 				{
 					bgfx::TextureHandle srcTexture = m_frameBufferTex[FRAMEBUFFER_RT_COLOR];
-					if(!m_renderNativeResolution)
+					if (!m_renderNativeResolution)
 					{
-						if(m_applyFsr && m_applyFsrRcas)
+						if (m_applyFsr && m_applyFsrRcas)
 						{
 							srcTexture = m_fsr16Bit ? m_fsrRcasTexture16F : m_fsrRcasTexture32F;
 						}
@@ -495,7 +494,10 @@ namespace
 				{
 					ImGui::Checkbox("Animate scene", &m_animateScene);
 
-					if (ImGui::Combo("Antialiasing", &m_antiAliasingSetting, "none\0" "4x\0" "16x\0" "\0"))
+					if (ImGui::Combo("Antialiasing", &m_antiAliasingSetting, "none\0"
+																			 "4x\0"
+																			 "16x\0"
+																			 "\0"))
 					{
 						destroyFramebuffers();
 						createFramebuffers();
@@ -505,9 +507,9 @@ namespace
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip("Disable super sampling and FSR.");
 
-					ImGui::Image(m_magnifierTexture.m_texture, ImVec2(itemSize.x, itemSize.x));
+					ImGui::Image(m_magnifierTexture.m_texture, ImVec2(itemSize.x * 0.94f, itemSize.x * 0.94f));
 
-					if(!m_renderNativeResolution)
+					if (!m_renderNativeResolution)
 					{
 						ImGui::SliderFloat("Super sampling", &m_superSamplingFactor, 1.0f, 2.0f);
 						if (ImGui::IsItemHovered())
@@ -534,13 +536,13 @@ namespace
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip("Compare between FSR and bilinear interpolation of source image.");
 
-						if(m_applyFsr)
+						if (m_applyFsr)
 						{
 							ImGui::Checkbox("Apply FSR sharpening", &m_applyFsrRcas);
 							if (ImGui::IsItemHovered())
 								ImGui::SetTooltip("Apply the FSR RCAS sharpening pass.");
 
-							if(m_applyFsrRcas)
+							if (m_applyFsrRcas)
 							{
 								ImGui::SliderFloat("Sharpening attenuation", &m_rcasAttenuation, 0.01f, 2.0f);
 								if (ImGui::IsItemHovered())
@@ -569,7 +571,7 @@ namespace
 			const int32_t width = 6;
 			const int32_t length = 20;
 
-			float c0[] = {235.0f  / 255.0f, 126.0f / 255.0f, 30.0f / 255.0f};  // orange
+			float c0[] = {235.0f / 255.0f, 126.0f / 255.0f, 30.0f / 255.0f};  // orange
 			float c1[] = {235.0f / 255.0f, 146.0f / 255.0f, 251.0f / 255.0f}; // purple
 			float c2[] = {199.0f / 255.0f, 0.0f / 255.0f, 57.0f / 255.0f};	  // pink
 
@@ -659,7 +661,7 @@ namespace
 			}
 
 			// RCAS pass (sharpening)
-			if(m_applyFsrRcas)
+			if (m_applyFsrRcas)
 			{
 				bgfx::ProgramHandle program = m_fsr16Bit ? m_fsrRcas16Program : m_fsrRcas32Program;
 
@@ -679,7 +681,7 @@ namespace
 			m_size[0] = m_width;
 			m_size[1] = m_height;
 
-			uint64_t constexpr msaaFlags[] = { BGFX_TEXTURE_NONE, BGFX_TEXTURE_RT_MSAA_X4, BGFX_TEXTURE_RT_MSAA_X16 };
+			uint64_t constexpr msaaFlags[] = {BGFX_TEXTURE_NONE, BGFX_TEXTURE_RT_MSAA_X4, BGFX_TEXTURE_RT_MSAA_X16};
 
 			const uint64_t msaa = msaaFlags[m_antiAliasingSetting];
 			const uint64_t colorFlags = 0 | BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | msaa;
@@ -723,9 +725,9 @@ namespace
 			m_modelUniforms.m_lightPosition[2] = 10.0f;
 		}
 
-		void updateMagnifierTexture(bgfx::ViewId& view, bgfx::TextureHandle srcTexture)
+		void updateMagnifierTexture(bgfx::ViewId &view, bgfx::TextureHandle srcTexture)
 		{
-			const bgfx::Caps* caps = bgfx::getCaps();
+			const bgfx::Caps *caps = bgfx::getCaps();
 
 			float orthoProj[16];
 			bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
@@ -736,11 +738,12 @@ namespace
 				bgfx::setTransform(identity);
 			}
 
-			// TODO: fix picking when not maximized
-			float scaleX = (m_width + m_magnifierTexture.m_width * 2) / static_cast<float>(m_magnifierTexture.m_width);
-			float scaleY = (m_height) / static_cast<float>(m_magnifierTexture.m_height);
-			float offsetX = (m_magnifierPos.x - m_magnifierTexture.m_width * 0.5f);
-			float offsetY = (m_magnifierPos.y - m_magnifierTexture.m_height * 0.5f);
+			float invMagScaleX = 1.0f / static_cast<float>(m_magnifierTexture.m_width);
+			float invMagScaleY = 1.0f / static_cast<float>(m_magnifierTexture.m_height);
+			float scaleX = (m_width - m_magnifierTexture.m_width * 2.0f) * invMagScaleX;
+			float scaleY = (m_height - m_magnifierTexture.m_height * 2.0f) * invMagScaleY;
+			float offsetX = (m_magnifierPos.x) * scaleX;
+			float offsetY = (m_magnifierPos.y) * scaleY;
 
 			bgfx::setViewName(view, "magnifier");
 			bgfx::setViewRect(view, 0, 0, uint16_t(m_magnifierTexture.m_width), uint16_t(m_magnifierTexture.m_height));
