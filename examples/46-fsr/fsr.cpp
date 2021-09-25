@@ -14,6 +14,7 @@
 #include <bx/os.h>
 
 #include <cmath>
+#include <algorithm>
 
 namespace
 {
@@ -315,7 +316,7 @@ namespace
 
 			const uint32_t magnifierSize = 32;
 			m_magnifierTexture.init(magnifierSize, magnifierSize, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
-			m_magnifierPos = ImVec2(0.5f, 0.5f);
+			m_magnifierPos = ImVec2(m_width * 0.5f, m_height * 0.5f);
 
 			imguiCreate();
 		}
@@ -371,10 +372,10 @@ namespace
 					return true;
 				}
 
-				if(m_mouseState.m_buttons[entry::MouseButton::Left] && !ImGui::MouseOverArea())
+				if (m_mouseState.m_buttons[entry::MouseButton::Left] && !ImGui::MouseOverArea())
 				{
-					m_magnifierPos.x = static_cast<float>(m_mouseState.m_mx) / m_width;
-					m_magnifierPos.y = static_cast<float>(m_mouseState.m_my) / m_height;
+					m_magnifierPos.x = static_cast<float>(m_mouseState.m_mx);
+					m_magnifierPos.y = static_cast<float>(m_mouseState.m_my);
 				}
 
 				// Update frame timer
@@ -742,8 +743,8 @@ namespace
 			float invMagScaleY = 1.0f / static_cast<float>(m_magnifierTexture.m_height);
 			float scaleX = (m_width - m_magnifierTexture.m_width * 2.0f) * invMagScaleX;
 			float scaleY = (m_height - m_magnifierTexture.m_height * 2.0f) * invMagScaleY;
-			float offsetX = (m_magnifierPos.x) * scaleX;
-			float offsetY = (m_magnifierPos.y) * scaleY;
+			float offsetX = std::min(std::max(m_magnifierPos.x - m_magnifierTexture.m_width * 0.5f, 0.0f), static_cast<float>(m_width - m_magnifierTexture.m_width - 2)) * scaleX / m_width;
+			float offsetY = std::min(std::max(m_magnifierPos.y - m_magnifierTexture.m_height * 0.5f, 0.0f), static_cast<float>(m_height - m_magnifierTexture.m_height - 2)) * scaleY / m_height;
 
 			bgfx::setViewName(view, "magnifier");
 			bgfx::setViewRect(view, 0, 0, uint16_t(m_magnifierTexture.m_width), uint16_t(m_magnifierTexture.m_height));
