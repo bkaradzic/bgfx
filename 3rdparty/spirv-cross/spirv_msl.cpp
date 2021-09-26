@@ -877,12 +877,36 @@ void CompilerMSL::build_implicit_builtins()
 	if (need_position)
 	{
 		// If we can get away with returning void from entry point, we don't need to care.
-		// If there is at least one other stage output, we need to return [[position]].
-		need_position = false;
+		// If there is at least one other stage output, we need to return [[position]],
+		// so we need to create one if it doesn't appear in the SPIR-V. Before adding the
+		// implicit variable, check if it actually exists already, but just has not been used
+		// or initialized, and if so, mark it as active, and do not create the implicit variable.
+		bool has_output = false;
 		ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
 			if (var.storage == StorageClassOutput && interface_variable_exists_in_entry_point(var.self))
-				need_position = true;
+			{
+				has_output = true;
+
+				// Check if the var is the Position builtin
+				if (has_decoration(var.self, DecorationBuiltIn) && get_decoration(var.self, DecorationBuiltIn) == BuiltInPosition)
+					active_output_builtins.set(BuiltInPosition);
+
+				// If the var is a struct, check if any members is the Position builtin
+				auto &var_type = get_variable_element_type(var);
+				if (var_type.basetype == SPIRType::Struct)
+				{
+					auto mbr_cnt = var_type.member_types.size();
+					for (uint32_t mbr_idx = 0; mbr_idx < mbr_cnt; mbr_idx++)
+					{
+						auto builtin = BuiltInMax;
+						bool is_builtin = is_member_builtin(var_type, mbr_idx, &builtin);
+						if (is_builtin && builtin == BuiltInPosition)
+							active_output_builtins.set(BuiltInPosition);
+					}
+				}
+			}
 		});
+		need_position = has_output && !active_output_builtins.get(BuiltInPosition);
 	}
 
 	if (need_position)
@@ -3443,6 +3467,9 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 		// Add the output interface struct as a local variable to the entry function.
 		// If the entry point should return the output struct, set the entry function
 		// to return the output interface struct, otherwise to return nothing.
+		// Watch out for the rare case where the terminator of the last entry point block is a
+		// Kill, instead of a Return. Based on SPIR-V's block-domination rules, we assume that
+		// any block that has a Kill will also have a terminating Return, except the last block.
 		// Indicate the output var requires early initialization.
 		bool ep_should_return_output = !get_is_rasterization_disabled();
 		uint32_t rtn_id = ep_should_return_output ? ib_var_id : 0;
@@ -3452,7 +3479,7 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 			for (auto &blk_id : entry_func.blocks)
 			{
 				auto &blk = get<SPIRBlock>(blk_id);
-				if (blk.terminator == SPIRBlock::Return)
+				if (blk.terminator == SPIRBlock::Return || (blk.terminator == SPIRBlock::Kill && blk_id == entry_func.blocks.back()))
 					blk.return_value = rtn_id;
 			}
 			vars_needing_early_declaration.push_back(ib_var_id);
@@ -4262,9 +4289,6 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 		// In this case, we just flip transpose states, and emit the store, a transpose must be in the RHS expression, if any.
 		if (is_matrix(type) && lhs_e && lhs_e->need_transpose)
 		{
-			if (!rhs_e)
-				SPIRV_CROSS_THROW("Need to transpose right-side expression of a store to row-major matrix, but it is "
-				                  "not a SPIRExpression.");
 			lhs_e->need_transpose = false;
 
 			if (rhs_e && rhs_e->need_transpose)
@@ -4904,7 +4928,7 @@ void CompilerMSL::emit_custom_functions()
 		// "fadd" intrinsic support
 		case SPVFuncImplFAdd:
 			statement("template<typename T>");
-			statement("T spvFAdd(T l, T r)");
+			statement("[[clang::optnone]] T spvFAdd(T l, T r)");
 			begin_scope();
 			statement("return fma(T(1), l, r);");
 			end_scope();
@@ -4914,7 +4938,7 @@ void CompilerMSL::emit_custom_functions()
 		// "fsub" intrinsic support
 		case SPVFuncImplFSub:
 			statement("template<typename T>");
-			statement("T spvFSub(T l, T r)");
+			statement("[[clang::optnone]] T spvFSub(T l, T r)");
 			begin_scope();
 			statement("return fma(T(-1), r, l);");
 			end_scope();
@@ -4924,14 +4948,14 @@ void CompilerMSL::emit_custom_functions()
 		// "fmul' intrinsic support
 		case SPVFuncImplFMul:
 			statement("template<typename T>");
-			statement("T spvFMul(T l, T r)");
+			statement("[[clang::optnone]] T spvFMul(T l, T r)");
 			begin_scope();
 			statement("return fma(l, r, T(0));");
 			end_scope();
 			statement("");
 
 			statement("template<typename T, int Cols, int Rows>");
-			statement("vec<T, Cols> spvFMulVectorMatrix(vec<T, Rows> v, matrix<T, Cols, Rows> m)");
+			statement("[[clang::optnone]] vec<T, Cols> spvFMulVectorMatrix(vec<T, Rows> v, matrix<T, Cols, Rows> m)");
 			begin_scope();
 			statement("vec<T, Cols> res = vec<T, Cols>(0);");
 			statement("for (uint i = Rows; i > 0; --i)");
@@ -4948,7 +4972,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("");
 
 			statement("template<typename T, int Cols, int Rows>");
-			statement("vec<T, Rows> spvFMulMatrixVector(matrix<T, Cols, Rows> m, vec<T, Cols> v)");
+			statement("[[clang::optnone]] vec<T, Rows> spvFMulMatrixVector(matrix<T, Cols, Rows> m, vec<T, Cols> v)");
 			begin_scope();
 			statement("vec<T, Rows> res = vec<T, Rows>(0);");
 			statement("for (uint i = Cols; i > 0; --i)");
@@ -4960,8 +4984,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("");
 
 			statement("template<typename T, int LCols, int LRows, int RCols, int RRows>");
-			statement(
-			    "matrix<T, RCols, LRows> spvFMulMatrixMatrix(matrix<T, LCols, LRows> l, matrix<T, RCols, RRows> r)");
+			statement("[[clang::optnone]] matrix<T, RCols, LRows> spvFMulMatrixMatrix(matrix<T, LCols, LRows> l, matrix<T, RCols, RRows> r)");
 			begin_scope();
 			statement("matrix<T, RCols, LRows> res;");
 			statement("for (uint i = 0; i < RCols; i++)");
@@ -5695,8 +5718,9 @@ void CompilerMSL::emit_custom_functions()
 
 		case SPVFuncImplReflectScalar:
 			// Metal does not support scalar versions of these functions.
+			// Ensure fast-math is disabled to match Vulkan results.
 			statement("template<typename T>");
-			statement("inline T spvReflect(T i, T n)");
+			statement("[[clang::optnone]] T spvReflect(T i, T n)");
 			begin_scope();
 			statement("return i - T(2) * i * n * n;");
 			end_scope();
@@ -8490,13 +8514,27 @@ void CompilerMSL::emit_array_copy(const string &lhs, uint32_t lhs_id, uint32_t r
 
 	// Special considerations for stage IO variables.
 	// If the variable is actually backed by non-user visible device storage, we use array templates for those.
+	//
+	// Another special consideration is given to thread local variables which happen to have Offset decorations
+	// applied to them. Block-like types do not use array templates, so we need to force POD path if we detect
+	// these scenarios. This check isn't perfect since it would be technically possible to mix and match these things,
+	// and for a fully correct solution we might have to track array template state through access chains as well,
+	// but for all reasonable use cases, this should suffice.
+	// This special case should also only apply to Function/Private storage classes.
+	// We should not check backing variable for temporaries.
 	auto *lhs_var = maybe_get_backing_variable(lhs_id);
 	if (lhs_var && lhs_storage == StorageClassStorageBuffer && storage_class_array_is_thread(lhs_var->storage))
 		lhs_is_array_template = true;
+	else if (lhs_var && (lhs_storage == StorageClassFunction || lhs_storage == StorageClassPrivate) &&
+	         type_is_block_like(get<SPIRType>(lhs_var->basetype)))
+		lhs_is_array_template = false;
 
 	auto *rhs_var = maybe_get_backing_variable(rhs_id);
 	if (rhs_var && rhs_storage == StorageClassStorageBuffer && storage_class_array_is_thread(rhs_var->storage))
 		rhs_is_array_template = true;
+	else if (rhs_var && (rhs_storage == StorageClassFunction || rhs_storage == StorageClassPrivate) &&
+	         type_is_block_like(get<SPIRType>(rhs_var->basetype)))
+		rhs_is_array_template = false;
 
 	// If threadgroup storage qualifiers are *not* used:
 	// Avoid spvCopy* wrapper functions; Otherwise, spvUnsafeArray<> template cannot be used with that storage qualifier.
@@ -8743,7 +8781,8 @@ const char *CompilerMSL::get_memory_order(uint32_t)
 	return "memory_order_relaxed";
 }
 
-// Override for MSL-specific extension syntax instructions
+// Override for MSL-specific extension syntax instructions.
+// In some cases, deliberately select either the fast or precise versions of the MSL functions to match Vulkan math precision results.
 void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, const uint32_t *args, uint32_t count)
 {
 	auto op = static_cast<GLSLstd450>(eop);
@@ -8755,8 +8794,17 @@ void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, 
 
 	switch (op)
 	{
+	case GLSLstd450Sinh:
+		emit_unary_func_op(result_type, id, args[0], "fast::sinh");
+		break;
+	case GLSLstd450Cosh:
+		emit_unary_func_op(result_type, id, args[0], "fast::cosh");
+		break;
+	case GLSLstd450Tanh:
+		emit_unary_func_op(result_type, id, args[0], "precise::tanh");
+		break;
 	case GLSLstd450Atan2:
-		emit_binary_func_op(result_type, id, args[0], args[1], "atan2");
+		emit_binary_func_op(result_type, id, args[0], args[1], "precise::atan2");
 		break;
 	case GLSLstd450InverseSqrt:
 		emit_unary_func_op(result_type, id, args[0], "rsqrt");
@@ -8980,25 +9028,20 @@ void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, 
 		break;
 
 	case GLSLstd450Length:
-		// MSL does not support scalar versions here.
+		// MSL does not support scalar versions, so use abs().
 		if (expression_type(args[0]).vecsize == 1)
-		{
-			// Equivalent to abs().
 			emit_unary_func_op(result_type, id, args[0], "abs");
-		}
 		else
 			CompilerGLSL::emit_glsl_op(result_type, id, eop, args, count);
 		break;
 
 	case GLSLstd450Normalize:
 		// MSL does not support scalar versions here.
+		// Returns -1 or 1 for valid input, sign() does the job.
 		if (expression_type(args[0]).vecsize == 1)
-		{
-			// Returns -1 or 1 for valid input, sign() does the job.
 			emit_unary_func_op(result_type, id, args[0], "sign");
-		}
 		else
-			CompilerGLSL::emit_glsl_op(result_type, id, eop, args, count);
+			emit_unary_func_op(result_type, id, args[0], "fast::normalize");
 		break;
 
 	case GLSLstd450Reflect:
@@ -10628,15 +10671,9 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 				return "";
 			}
 		}
-		uint32_t comp;
-		uint32_t locn = get_member_location(type.self, index, &comp);
-		if (locn != k_unknown_location)
-		{
-			if (comp != k_unknown_component)
-				return string(" [[user(locn") + convert_to_string(locn) + "_" + convert_to_string(comp) + ")]]";
-			else
-				return string(" [[user(locn") + convert_to_string(locn) + ")]]";
-		}
+		string loc_qual = member_location_attribute_qualifier(type, index);
+		if (!loc_qual.empty())
+			return join(" [[", loc_qual, "]]");
 	}
 
 	// Tessellation control function inputs
@@ -10750,24 +10787,7 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 			}
 		}
 		else
-		{
-			uint32_t comp;
-			uint32_t locn = get_member_location(type.self, index, &comp);
-			if (locn != k_unknown_location)
-			{
-				// For user-defined attributes, this is fine. From Vulkan spec:
-				// A user-defined output variable is considered to match an input variable in the subsequent stage if
-				// the two variables are declared with the same Location and Component decoration and match in type
-				// and decoration, except that interpolation decorations are not required to match. For the purposes
-				// of interface matching, variables declared without a Component decoration are considered to have a
-				// Component decoration of zero.
-
-				if (comp != k_unknown_component && comp != 0)
-					quals = string("user(locn") + convert_to_string(locn) + "_" + convert_to_string(comp) + ")";
-				else
-					quals = string("user(locn") + convert_to_string(locn) + ")";
-			}
-		}
+			quals = member_location_attribute_qualifier(type, index);
 
 		if (builtin == BuiltInBaryCoordNV || builtin == BuiltInBaryCoordNoPerspNV)
 		{
@@ -10897,6 +10917,30 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 	}
 
 	return "";
+}
+
+// A user-defined output variable is considered to match an input variable in the subsequent
+// stage if the two variables are declared with the same Location and Component decoration and
+// match in type and decoration, except that interpolation decorations are not required to match.
+// For the purposes of interface matching, variables declared without a Component decoration are
+// considered to have a Component decoration of zero.
+string CompilerMSL::member_location_attribute_qualifier(const SPIRType &type, uint32_t index)
+{
+	string quals;
+	uint32_t comp;
+	uint32_t locn = get_member_location(type.self, index, &comp);
+	if (locn != k_unknown_location)
+	{
+		quals += "user(locn";
+		quals += convert_to_string(locn);
+		if (comp != k_unknown_component && comp != 0)
+		{
+			quals += "_";
+			quals += convert_to_string(comp);
+		}
+		quals += ")";
+	}
+	return quals;
 }
 
 // Returns the location decoration of the member with the specified index in the specified type.
@@ -13292,6 +13336,38 @@ string CompilerMSL::type_to_array_glsl(const SPIRType &type)
 	}
 }
 
+string CompilerMSL::constant_op_expression(const SPIRConstantOp &cop)
+{
+	auto &type = get<SPIRType>(cop.basetype);
+	string op;
+
+	switch (cop.opcode)
+	{
+	case OpQuantizeToF16:
+		switch (type.vecsize)
+		{
+		case 1:
+			op = "float(half(";
+			break;
+		case 2:
+			op = "float2(half2(";
+			break;
+		case 3:
+			op = "float3(half3(";
+			break;
+		case 4:
+			op = "float4(half4(";
+			break;
+		default:
+			SPIRV_CROSS_THROW("Illegal argument to OpSpecConstantOp QuantizeToF16.");
+		}
+		return join(op, to_expression(cop.arguments[0]), "))");
+
+	default:
+		return CompilerGLSL::constant_op_expression(cop);
+	}
+}
+
 bool CompilerMSL::variable_decl_is_remapped_storage(const SPIRVariable &variable, spv::StorageClass storage) const
 {
 	if (variable.storage == storage)
@@ -13880,18 +13956,21 @@ string CompilerMSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &in
 	assert(out_type.basetype != SPIRType::Boolean);
 	assert(in_type.basetype != SPIRType::Boolean);
 
-	bool integral_cast = type_is_integral(out_type) && type_is_integral(in_type);
-	bool same_size_cast = out_type.width == in_type.width;
+	bool integral_cast = type_is_integral(out_type) && type_is_integral(in_type) && (out_type.vecsize == in_type.vecsize);
+	bool same_size_cast = (out_type.width * out_type.vecsize) == (in_type.width * in_type.vecsize);
 
-	if (integral_cast && same_size_cast)
+	// Bitcasting can only be used between types of the same overall size.
+	// And always formally cast between integers, because it's trivial, and also
+	// because Metal can internally cast the results of some integer ops to a larger
+	// size (eg. short shift right becomes int), which means chaining integer ops
+	// together may introduce size variations that SPIR-V doesn't know about.
+	if (same_size_cast && !integral_cast)
 	{
-		// Trivial bitcast case, casts between integers.
-		return type_to_glsl(out_type);
+		return "as_type<" + type_to_glsl(out_type) + ">";
 	}
 	else
 	{
-		// Fall back to the catch-all bitcast in MSL.
-		return "as_type<" + type_to_glsl(out_type) + ">";
+		return type_to_glsl(out_type);
 	}
 }
 

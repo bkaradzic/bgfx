@@ -734,6 +734,7 @@ protected:
 
 	// Allow Metal to use the array<T> template to make arrays a value type
 	std::string type_to_array_glsl(const SPIRType &type) override;
+	std::string constant_op_expression(const SPIRConstantOp &cop) override;
 
 	// Threadgroup arrays can't have a wrapper type
 	std::string variable_decl(const SPIRVariable &variable) override;
@@ -866,6 +867,7 @@ protected:
 	std::string builtin_type_decl(spv::BuiltIn builtin, uint32_t id = 0);
 	std::string built_in_func_arg(spv::BuiltIn builtin, bool prefix_comma);
 	std::string member_attribute_qualifier(const SPIRType &type, uint32_t index);
+	std::string member_location_attribute_qualifier(const SPIRType &type, uint32_t index);
 	std::string argument_decl(const SPIRFunction::Parameter &arg);
 	std::string round_fp_tex_coords(std::string tex_coords, bool coord_is_fp);
 	uint32_t get_metal_resource_index(SPIRVariable &var, SPIRType::BaseType basetype, uint32_t plane = 0);

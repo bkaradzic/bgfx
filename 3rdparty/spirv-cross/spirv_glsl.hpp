@@ -386,7 +386,7 @@ protected:
 	virtual void emit_struct_padding_target(const SPIRType &type);
 	virtual std::string image_type_glsl(const SPIRType &type, uint32_t id = 0);
 	std::string constant_expression(const SPIRConstant &c);
-	std::string constant_op_expression(const SPIRConstantOp &cop);
+	virtual std::string constant_op_expression(const SPIRConstantOp &cop);
 	virtual std::string constant_expression_vector(const SPIRConstant &c, uint32_t vector);
 	virtual void emit_fixup();
 	virtual std::string variable_decl(const SPIRType &type, const std::string &name, uint32_t id = 0);

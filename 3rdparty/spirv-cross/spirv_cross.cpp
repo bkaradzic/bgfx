@@ -3282,6 +3282,10 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 	}
 
 	case OpArrayLength:
+		// Only result is a temporary.
+		notify_variable_access(args[1], current_block->self);
+		break;
+
 	case OpLine:
 	case OpNoLine:
 		// Uses literals, but cannot be a phi variable or temporary, so ignore.
