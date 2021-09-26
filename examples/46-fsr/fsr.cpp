@@ -174,6 +174,54 @@ namespace
 		bgfx::FrameBufferHandle m_buffer;
 	};
 
+	struct MagnifierWidget
+	{
+		void init(uint32_t _width, uint32_t _height)
+		{
+			const bgfx::Memory* mem = bgfx::alloc(_width * _height * sizeof(uint32_t));
+
+			uint32_t *pixels = const_cast<uint32_t*>((uint32_t* const)(mem->data));
+			memset(pixels, 0, mem->size);
+
+			uint32_t const white = 0xFFFFFFFF;
+			uint32_t const black = 0xFF000000;
+
+			uint32_t const y0 = 1;
+			uint32_t const y1 = _height - 3;
+			for (uint32_t x = 0; x < _width - 4; x++)
+			{
+				pixels[(y0 + 0) * _width + x + 1] = white;
+				pixels[(y0 + 1) * _width + x + 2] = black;
+				pixels[(y1 + 0) * _width + x + 1] = white;
+				pixels[(y1 + 1) * _width + x + 2] = black;
+			}
+			uint32_t const x0 = 1;
+			uint32_t const x1 = _width - 3;
+			for (uint32_t y = 0; y < _height - 3; y++)
+			{
+				pixels[(y + 1) * _width + x0 + 0] = white;
+				pixels[(y + 2) * _width + x0 + 1] = black;
+				pixels[(y + 1) * _width + x1 + 0] = white;
+				pixels[(y + 2) * _width + x1 + 1] = black;
+			}
+			pixels[(y1 + 0) * _width + 2] = white;
+
+			m_width = _width;
+			m_height = _height;
+			m_texture = bgfx::createTexture2D(uint16_t(_width), uint16_t(_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, mem);
+		}
+
+		void destroy()
+		{
+			// also responsible for destroying texture
+			bgfx::destroy(m_texture);
+		}
+
+		uint32_t m_width;
+		uint32_t m_height;
+		bgfx::TextureHandle m_texture;
+	};
+
 	void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f, float _offsetX = 0.0f, float _offsetY = 0.0f)
 	{
 		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
@@ -317,6 +365,7 @@ namespace
 			const uint32_t magnifierSize = 32;
 			m_magnifierTexture.init(magnifierSize, magnifierSize, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
 			m_magnifierPos = ImVec2(m_width * 0.5f, m_height * 0.5f);
+			m_magnifierWidget.init(magnifierSize + 6, magnifierSize + 6);
 
 			imguiCreate();
 		}
@@ -345,6 +394,7 @@ namespace
 			m_modelUniforms.destroy();
 
 			m_magnifierTexture.destroy();
+			m_magnifierWidget.destroy();
 
 			bgfx::destroy(s_albedo);
 			bgfx::destroy(s_color);
@@ -477,8 +527,23 @@ namespace
 					bgfx::setTexture(0, s_color, srcTexture, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 					bgfx::submit(view, m_copyLinearToGammaProgram);
-					++view;
 				}
+
+				// render magnifier widget
+				{
+					float invScreenScaleX = 1.0f / static_cast<float>(m_width);
+					float invScreenScaleY = 1.0f / static_cast<float>(m_height);
+					float scaleX = m_magnifierWidget.m_width * invScreenScaleX;
+					float scaleY = m_magnifierWidget.m_height * invScreenScaleY;
+					float offsetX = -std::min(std::max(m_magnifierPos.x - m_magnifierWidget.m_width * 0.5f, -3.0f), static_cast<float>(m_width - m_magnifierWidget.m_width + 3)) * invScreenScaleX;
+					float offsetY = -std::min(std::max(m_magnifierPos.y - m_magnifierWidget.m_height * 0.5f, -3.0f), static_cast<float>(m_height - m_magnifierWidget.m_height + 3)) * invScreenScaleY;
+
+					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_BLEND_ALPHA);
+					bgfx::setTexture(0, s_color, m_magnifierWidget.m_texture);
+					screenSpaceQuad(float(m_magnifierWidget.m_width), float(m_magnifierWidget.m_height), m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
+					bgfx::submit(view, m_copyLinearToGammaProgram);
+				}
+				++view;
 
 				// Draw UI
 				imguiBeginFrame(m_mouseState.m_mx, m_mouseState.m_my, (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0) | (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0) | (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0), m_mouseState.m_mz, uint16_t(m_width), uint16_t(m_height));
@@ -801,8 +866,10 @@ namespace
 		Mesh *m_meshes[BX_COUNTOF(s_meshPaths)];
 		bgfx::TextureHandle m_groundTexture;
 		bgfx::TextureHandle m_normalTexture;
+
 		RenderTarget m_magnifierTexture;
 		ImVec2 m_magnifierPos;
+		MagnifierWidget m_magnifierWidget;
 
 		uint32_t m_currFrame;
 		float m_lightRotation = 0.0f;
