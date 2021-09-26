@@ -27,6 +27,7 @@
 
 static const uint32_t kDebugValueOperandValueIndex = 5;
 static const uint32_t kDebugValueOperandExpressionIndex = 6;
+static const uint32_t kDebugDeclareOperandVariableIndex = 5;
 
 namespace spvtools {
 namespace opt {
@@ -172,10 +173,14 @@ bool ScalarReplacementPass::ReplaceWholeDebugDeclare(
   // Add DebugValue instruction with Indexes operand and Deref operation.
   int32_t idx = 0;
   for (const auto* var : replacements) {
+    Instruction* insert_before = var->NextNode();
+    while (insert_before->opcode() == SpvOpVariable)
+      insert_before = insert_before->NextNode();
+    assert(insert_before != nullptr && "unexpected end of list");
     Instruction* added_dbg_value =
         context()->get_debug_info_mgr()->AddDebugValueForDecl(
             dbg_decl, /*value_id=*/var->result_id(),
-            /*insert_before=*/var->NextNode(), /*scope_and_line=*/dbg_decl);
+            /*insert_before=*/insert_before, /*scope_and_line=*/dbg_decl);
 
     if (added_dbg_value == nullptr) return false;
     added_dbg_value->AddOperand(
@@ -864,6 +869,11 @@ bool ScalarReplacementPass::CheckUsesRelaxed(const Instruction* inst) const {
           case SpvOpImageTexelPointer:
             if (!CheckImageTexelPointer(index)) ok = false;
             break;
+          case SpvOpExtInst:
+            if (user->GetCommonDebugOpcode() != CommonDebugInfoDebugDeclare ||
+                !CheckDebugDeclare(index))
+              ok = false;
+            break;
           default:
             ok = false;
             break;
@@ -894,6 +904,12 @@ bool ScalarReplacementPass::CheckStore(const Instruction* inst,
     return false;
   return true;
 }
+
+bool ScalarReplacementPass::CheckDebugDeclare(uint32_t index) const {
+  if (index != kDebugDeclareOperandVariableIndex) return false;
+  return true;
+}
+
 bool ScalarReplacementPass::IsLargerThanSizeLimit(uint64_t length) const {
   if (max_num_elements_ == 0) {
     return false;

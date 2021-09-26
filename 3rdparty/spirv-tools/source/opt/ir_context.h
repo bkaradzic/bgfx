@@ -98,6 +98,7 @@ class IRContext {
         module_(new Module()),
         consumer_(std::move(c)),
         def_use_mgr_(nullptr),
+        feature_mgr_(nullptr),
         valid_analyses_(kAnalysisNone),
         constant_mgr_(nullptr),
         type_mgr_(nullptr),
@@ -116,6 +117,7 @@ class IRContext {
         module_(std::move(m)),
         consumer_(std::move(c)),
         def_use_mgr_(nullptr),
+        feature_mgr_(nullptr),
         valid_analyses_(kAnalysisNone),
         type_mgr_(nullptr),
         id_to_name_(nullptr),
@@ -769,6 +771,8 @@ class IRContext {
 
   // The instruction decoration manager for |module_|.
   std::unique_ptr<analysis::DecorationManager> decoration_mgr_;
+
+  // The feature manager for |module_|.
   std::unique_ptr<FeatureManager> feature_mgr_;
 
   // A map from instructions to the basic block they belong to. This mapping is

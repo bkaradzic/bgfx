@@ -16,7 +16,6 @@
 
 #include <initializer_list>
 
-#include "NonSemanticVulkanDebugInfo100.h"
 #include "OpenCLDebugInfo100.h"
 #include "source/disassemble.h"
 #include "source/opt/fold.h"
@@ -33,7 +32,7 @@ const uint32_t kLoadBaseIndex = 0;
 const uint32_t kPointerTypeStorageClassIndex = 0;
 const uint32_t kTypeImageSampledIndex = 5;
 
-// Constants for OpenCL.DebugInfo.100 / NonSemantic.Vulkan.DebugInfo.100
+// Constants for OpenCL.DebugInfo.100 / NonSemantic.Shader.DebugInfo.100
 // extension instructions.
 const uint32_t kExtInstSetIdInIdx = 0;
 const uint32_t kExtInstInstructionInIdx = 1;
@@ -74,8 +73,6 @@ Instruction::Instruction(IRContext* c, const spv_parsed_instruction_t& inst,
       unique_id_(c->TakeNextUniqueId()),
       dbg_line_insts_(std::move(dbg_line)),
       dbg_scope_(kNoDebugScope, kNoInlinedAt) {
-  assert((!IsDebugLineInst(opcode_) || dbg_line.empty()) &&
-         "Op(No)Line attaching to Op(No)Line found");
   for (uint32_t i = 0; i < inst.num_operands; ++i) {
     const auto& current_payload = inst.operands[i];
     std::vector<uint32_t> words(
@@ -83,6 +80,8 @@ Instruction::Instruction(IRContext* c, const spv_parsed_instruction_t& inst,
         inst.words + current_payload.offset + current_payload.num_words);
     operands_.emplace_back(current_payload.type, std::move(words));
   }
+  assert((!IsLineInst() || dbg_line.empty()) &&
+         "Op(No)Line attaching to Op(No)Line found");
 }
 
 Instruction::Instruction(IRContext* c, const spv_parsed_instruction_t& inst,
@@ -159,6 +158,10 @@ Instruction* Instruction::Clone(IRContext* c) const {
   clone->unique_id_ = c->TakeNextUniqueId();
   clone->operands_ = operands_;
   clone->dbg_line_insts_ = dbg_line_insts_;
+  for (auto& i : clone->dbg_line_insts_) {
+    i.unique_id_ = c->TakeNextUniqueId();
+    if (i.IsDebugLineInst()) i.SetResultId(c->TakeNextId());
+  }
   clone->dbg_scope_ = dbg_scope_;
   return clone;
 }
@@ -512,7 +515,7 @@ void Instruction::UpdateLexicalScope(uint32_t scope) {
   for (auto& i : dbg_line_insts_) {
     i.dbg_scope_.SetLexicalScope(scope);
   }
-  if (!IsDebugLineInst(opcode()) &&
+  if (!IsLineInst() &&
       context()->AreAnalysesValid(IRContext::kAnalysisDebugInfo)) {
     context()->get_debug_info_mgr()->AnalyzeDebugInst(this);
   }
@@ -523,22 +526,59 @@ void Instruction::UpdateDebugInlinedAt(uint32_t new_inlined_at) {
   for (auto& i : dbg_line_insts_) {
     i.dbg_scope_.SetInlinedAt(new_inlined_at);
   }
-  if (!IsDebugLineInst(opcode()) &&
+  if (!IsLineInst() &&
       context()->AreAnalysesValid(IRContext::kAnalysisDebugInfo)) {
     context()->get_debug_info_mgr()->AnalyzeDebugInst(this);
   }
 }
 
+void Instruction::ClearDbgLineInsts() {
+  if (context()->AreAnalysesValid(IRContext::kAnalysisDefUse)) {
+    auto def_use_mgr = context()->get_def_use_mgr();
+    for (auto& l_inst : dbg_line_insts_) def_use_mgr->ClearInst(&l_inst);
+  }
+  clear_dbg_line_insts();
+}
+
 void Instruction::UpdateDebugInfoFrom(const Instruction* from) {
   if (from == nullptr) return;
-  clear_dbg_line_insts();
+  ClearDbgLineInsts();
   if (!from->dbg_line_insts().empty())
-    dbg_line_insts().push_back(from->dbg_line_insts().back());
+    AddDebugLine(&from->dbg_line_insts().back());
   SetDebugScope(from->GetDebugScope());
-  if (!IsDebugLineInst(opcode()) &&
+  if (!IsLineInst() &&
       context()->AreAnalysesValid(IRContext::kAnalysisDebugInfo)) {
     context()->get_debug_info_mgr()->AnalyzeDebugInst(this);
   }
+}
+
+void Instruction::AddDebugLine(const Instruction* inst) {
+  dbg_line_insts_.push_back(*inst);
+  dbg_line_insts_.back().unique_id_ = context()->TakeNextUniqueId();
+  if (inst->IsDebugLineInst())
+    dbg_line_insts_.back().SetResultId(context_->TakeNextId());
+  if (context()->AreAnalysesValid(IRContext::kAnalysisDefUse))
+    context()->get_def_use_mgr()->AnalyzeInstDefUse(&dbg_line_insts_.back());
+}
+
+bool Instruction::IsDebugLineInst() const {
+  NonSemanticShaderDebugInfo100Instructions ext_opt = GetShader100DebugOpcode();
+  return ((ext_opt == NonSemanticShaderDebugInfo100DebugLine) ||
+          (ext_opt == NonSemanticShaderDebugInfo100DebugNoLine));
+}
+
+bool Instruction::IsLineInst() const { return IsLine() || IsNoLine(); }
+
+bool Instruction::IsLine() const {
+  if (opcode() == SpvOpLine) return true;
+  NonSemanticShaderDebugInfo100Instructions ext_opt = GetShader100DebugOpcode();
+  return ext_opt == NonSemanticShaderDebugInfo100DebugLine;
+}
+
+bool Instruction::IsNoLine() const {
+  if (opcode() == SpvOpNoLine) return true;
+  NonSemanticShaderDebugInfo100Instructions ext_opt = GetShader100DebugOpcode();
+  return ext_opt == NonSemanticShaderDebugInfo100DebugNoLine;
 }
 
 Instruction* Instruction::InsertBefore(std::unique_ptr<Instruction>&& inst) {
@@ -624,22 +664,22 @@ OpenCLDebugInfo100Instructions Instruction::GetOpenCL100DebugOpcode() const {
       GetSingleWordInOperand(kExtInstInstructionInIdx));
 }
 
-NonSemanticVulkanDebugInfo100Instructions Instruction::GetVulkan100DebugOpcode()
+NonSemanticShaderDebugInfo100Instructions Instruction::GetShader100DebugOpcode()
     const {
   if (opcode() != SpvOpExtInst) {
-    return NonSemanticVulkanDebugInfo100InstructionsMax;
+    return NonSemanticShaderDebugInfo100InstructionsMax;
   }
 
-  if (!context()->get_feature_mgr()->GetExtInstImportId_Vulkan100DebugInfo()) {
-    return NonSemanticVulkanDebugInfo100InstructionsMax;
+  if (!context()->get_feature_mgr()->GetExtInstImportId_Shader100DebugInfo()) {
+    return NonSemanticShaderDebugInfo100InstructionsMax;
   }
 
   if (GetSingleWordInOperand(kExtInstSetIdInIdx) !=
-      context()->get_feature_mgr()->GetExtInstImportId_Vulkan100DebugInfo()) {
-    return NonSemanticVulkanDebugInfo100InstructionsMax;
+      context()->get_feature_mgr()->GetExtInstImportId_Shader100DebugInfo()) {
+    return NonSemanticShaderDebugInfo100InstructionsMax;
   }
 
-  return NonSemanticVulkanDebugInfo100Instructions(
+  return NonSemanticShaderDebugInfo100Instructions(
       GetSingleWordInOperand(kExtInstInstructionInIdx));
 }
 
@@ -650,16 +690,16 @@ CommonDebugInfoInstructions Instruction::GetCommonDebugOpcode() const {
 
   const uint32_t opencl_set_id =
       context()->get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo();
-  const uint32_t vulkan_set_id =
-      context()->get_feature_mgr()->GetExtInstImportId_Vulkan100DebugInfo();
+  const uint32_t shader_set_id =
+      context()->get_feature_mgr()->GetExtInstImportId_Shader100DebugInfo();
 
-  if (!opencl_set_id && !vulkan_set_id) {
+  if (!opencl_set_id && !shader_set_id) {
     return CommonDebugInfoInstructionsMax;
   }
 
   const uint32_t used_set_id = GetSingleWordInOperand(kExtInstSetIdInIdx);
 
-  if (used_set_id != opencl_set_id && used_set_id != vulkan_set_id) {
+  if (used_set_id != opencl_set_id && used_set_id != shader_set_id) {
     return CommonDebugInfoInstructionsMax;
   }
 

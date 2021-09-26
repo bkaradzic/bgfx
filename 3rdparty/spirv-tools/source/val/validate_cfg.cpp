@@ -199,6 +199,18 @@ spv_result_t ValidateSwitch(ValidationState_t& _, const Instruction* inst) {
   // At least two operands (selector, default), any more than that are
   // literal/target.
 
+  const auto sel_type_id = _.GetOperandTypeId(inst, 0);
+  if (!_.IsIntScalarType(sel_type_id)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Selector type must be OpTypeInt";
+  }
+
+  const auto default_label = _.FindDef(inst->GetOperandAs<uint32_t>(1));
+  if (default_label->opcode() != SpvOpLabel) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Default must be an OpLabel instruction";
+  }
+
   // target operands must be OpLabel
   for (size_t i = 2; i < num_operands; i += 2) {
     // literal, id

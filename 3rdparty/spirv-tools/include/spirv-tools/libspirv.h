@@ -310,7 +310,7 @@ typedef enum spv_ext_inst_type_t {
   SPV_EXT_INST_TYPE_DEBUGINFO,
   SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100,
   SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION,
-  SPV_EXT_INST_TYPE_NONSEMANTIC_VULKAN_DEBUGINFO_100,
+  SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100,
 
   // Multiple distinct extended instruction set types could return this
   // value, if they are prefixed with NonSemantic. and are otherwise
@@ -658,6 +658,11 @@ SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetWorkgroupScalarBlockLayout(
 // Records whether or not the validator should skip validating standard
 // uniform/storage block layout.
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetSkipBlockLayout(
+    spv_validator_options options, bool val);
+
+// Records whether or not the validator should allow the LocalSizeId
+// decoration where the environment otherwise would not allow it.
+SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetAllowLocalSizeId(
     spv_validator_options options, bool val);
 
 // Creates an optimizer options object with default options. Returns a valid
