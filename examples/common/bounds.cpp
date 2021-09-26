@@ -1689,7 +1689,7 @@ bool overlap(const Disk& _disk, const Obb& _obb)
 
 bool overlap(const Obb& _obb, const Vec3& _pos)
 {
-	Srt srt = toSrt(_obb.mtx);
+	const Srt srt = toSrt(_obb.mtx);
 
 	Aabb aabb;
 	toAabb(aabb, srt.scale);
@@ -1702,7 +1702,7 @@ bool overlap(const Obb& _obb, const Vec3& _pos)
 
 bool overlap(const Obb& _obb, const Plane& _plane)
 {
-	Srt srt = toSrt(_obb.mtx);
+	const Srt srt = toSrt(_obb.mtx);
 
 	const Quaternion invRotation = invert(srt.rotation);
 	const Vec3 axis =
@@ -1720,7 +1720,7 @@ bool overlap(const Obb& _obb, const Plane& _plane)
 
 bool overlap(const Obb& _obb, const Capsule& _capsule)
 {
-	Srt srt = toSrt(_obb.mtx);
+	const Srt srt = toSrt(_obb.mtx);
 
 	Aabb aabb;
 	toAabb(aabb, srt.scale);
@@ -2086,7 +2086,7 @@ bool overlap(const Triangle& _triangle, const Disk& _disk)
 
 bool overlap(const Triangle& _triangle, const Obb& _obb)
 {
-	Srt srt = toSrt(_obb.mtx);
+	const Srt srt = toSrt(_obb.mtx);
 
 	Aabb aabb;
 	toAabb(aabb, srt.scale);
