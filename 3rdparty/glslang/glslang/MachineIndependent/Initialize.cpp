@@ -7701,6 +7701,11 @@ static void BuiltInVariable(const char* name, TBuiltInVariable builtIn, TSymbolT
     symQualifier.builtIn = builtIn;
 }
 
+static void RetargetVariable(const char* from, const char* to, TSymbolTable& symbolTable)
+{
+    symbolTable.retargetSymbol(from, to);
+}
+
 //
 // For built-in variables inside a named block.
 // SpecialQualifier() won't ever go inside a block; their member's qualifier come
@@ -7768,8 +7773,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
         if (spvVersion.vulkan > 0 && spvVersion.vulkanRelaxed) {
             // treat these built-ins as aliases of VertexIndex and InstanceIndex
-            BuiltInVariable("gl_VertexID", EbvVertexIndex, symbolTable);
-            BuiltInVariable("gl_InstanceID", EbvInstanceIndex, symbolTable);
+            RetargetVariable("gl_InstanceID", "gl_InstanceIndex", symbolTable);
+            RetargetVariable("gl_VertexID", "gl_VertexIndex", symbolTable);
         }
 
         if (profile != EEsProfile) {

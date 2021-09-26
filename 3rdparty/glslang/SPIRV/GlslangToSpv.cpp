@@ -3384,7 +3384,7 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
         const auto& spirvInst = node->getSpirvInstruction();
         if (spirvInst.set == "") {
             std::vector<spv::IdImmediate> idImmOps;
-            for (int i = 0; i < glslangOperands.size(); ++i) {
+            for (unsigned int i = 0; i < glslangOperands.size(); ++i) {
                 if (glslangOperands[i]->getAsTyped()->getQualifier().isSpirvLiteral()) {
                     // Translate the constant to a literal value
                     std::vector<unsigned> literals;
@@ -3940,12 +3940,14 @@ spv::Id TGlslangToSpvTraverser::getSampledType(const glslang::TSampler& sampler)
             builder.addExtension(spv::E_SPV_AMD_gpu_shader_half_float_fetch);
             builder.addCapability(spv::CapabilityFloat16ImageAMD);
             return builder.makeFloatType(16);
-        case glslang::EbtInt64:      return builder.makeIntType(64);
+        case glslang::EbtInt64:
             builder.addExtension(spv::E_SPV_EXT_shader_image_int64);
-            builder.addCapability(spv::CapabilityFloat16ImageAMD);
-        case glslang::EbtUint64:     return builder.makeUintType(64);
+            builder.addCapability(spv::CapabilityInt64ImageEXT);
+            return builder.makeIntType(64);
+        case glslang::EbtUint64:
             builder.addExtension(spv::E_SPV_EXT_shader_image_int64);
-            builder.addCapability(spv::CapabilityFloat16ImageAMD);
+            builder.addCapability(spv::CapabilityInt64ImageEXT);
+            return builder.makeUintType(64);
 #endif
         default:
             assert(0);
@@ -7506,6 +7508,8 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
         break;
     case glslang::EOpReadFirstInvocation:
         opCode = spv::OpSubgroupFirstInvocationKHR;
+        if (builder.isVectorType(typeId))
+            return CreateInvocationsVectorOperation(opCode, groupOperation, typeId, operands);
         break;
     case glslang::EOpBallot:
     {
@@ -7630,7 +7634,7 @@ spv::Id TGlslangToSpvTraverser::CreateInvocationsVectorOperation(spv::Op op, spv
     assert(op == spv::OpGroupFMin || op == spv::OpGroupUMin || op == spv::OpGroupSMin ||
            op == spv::OpGroupFMax || op == spv::OpGroupUMax || op == spv::OpGroupSMax ||
            op == spv::OpGroupFAdd || op == spv::OpGroupIAdd || op == spv::OpGroupBroadcast ||
-           op == spv::OpSubgroupReadInvocationKHR ||
+           op == spv::OpSubgroupReadInvocationKHR || op == spv::OpSubgroupFirstInvocationKHR ||
            op == spv::OpGroupFMinNonUniformAMD || op == spv::OpGroupUMinNonUniformAMD ||
            op == spv::OpGroupSMinNonUniformAMD ||
            op == spv::OpGroupFMaxNonUniformAMD || op == spv::OpGroupUMaxNonUniformAMD ||
@@ -7659,6 +7663,8 @@ spv::Id TGlslangToSpvTraverser::CreateInvocationsVectorOperation(spv::Op op, spv
             spvGroupOperands.push_back(scalar);
             spv::IdImmediate operand = { true, operands[1] };
             spvGroupOperands.push_back(operand);
+        } else if (op == spv::OpSubgroupFirstInvocationKHR) {
+            spvGroupOperands.push_back(scalar);
         } else if (op == spv::OpGroupBroadcast) {
             spv::IdImmediate scope = { true, builder.makeUintConstant(spv::ScopeSubgroup) };
             spvGroupOperands.push_back(scope);
